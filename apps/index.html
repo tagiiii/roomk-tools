@@ -85,6 +85,31 @@
       line-height: 1.5;
     }
 
+    /* ── メタバッジ ── */
+    .app-card__meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: var(--space-sm);
+    }
+
+    .meta-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      padding: 3px 8px;
+      border-radius: var(--radius-full);
+      font-size: 12px;
+      font-weight: 500;
+      background-color: #EEF3F8;
+      color: var(--color-primary);
+      line-height: 1.4;
+    }
+
+    .meta-badge .material-symbols-rounded {
+      font-size: 14px;
+    }
+
     .app-card__footer {
       padding: var(--space-sm) var(--space-md);
       border-top: 1px solid var(--color-border);
@@ -138,6 +163,17 @@
         <div class="app-card__body">
           <div class="app-card__name">トークテーマカード</div>
           <div class="app-card__desc">カードをめくってトークテーマを引くアイスブレイクツール。セッション開始時や話題に詰まったときに。</div>
+          <div class="app-card__meta">
+            <span class="meta-badge">
+              <span class="material-symbols-rounded">group</span>人数制限なし
+            </span>
+            <span class="meta-badge">
+              <span class="material-symbols-rounded">schedule</span>5〜10分
+            </span>
+            <span class="meta-badge">
+              <span class="material-symbols-rounded">person</span>小学生〜中学生
+            </span>
+          </div>
         </div>
         <div class="app-card__footer">
           <span class="material-symbols-rounded">wifi_off</span> オフライン動作
@@ -154,6 +190,17 @@
         <div class="app-card__body">
           <div class="app-card__name">チェックイン</div>
           <div class="app-card__desc">参加者が今の気持ちや状態を共有するチェックインツール。作戦会議の導入にも使える。</div>
+          <div class="app-card__meta">
+            <span class="meta-badge">
+              <span class="material-symbols-rounded">group</span>2人〜
+            </span>
+            <span class="meta-badge">
+              <span class="material-symbols-rounded">schedule</span>2〜3分
+            </span>
+            <span class="meta-badge">
+              <span class="material-symbols-rounded">person</span>全年齢
+            </span>
+          </div>
         </div>
         <div class="app-card__footer">
           <span class="material-symbols-rounded">cloud_sync</span> Firestore同期
@@ -170,6 +217,17 @@
         <div class="app-card__body">
           <div class="app-card__name">投票・集計</div>
           <div class="app-card__desc">リアルタイムで投票・集計ができるツール。複数の選択肢に対してその場で結果を確認できる。</div>
+          <div class="app-card__meta">
+            <span class="meta-badge">
+              <span class="material-symbols-rounded">group</span>2人〜
+            </span>
+            <span class="meta-badge">
+              <span class="material-symbols-rounded">schedule</span>3〜5分
+            </span>
+            <span class="meta-badge">
+              <span class="material-symbols-rounded">person</span>全年齢
+            </span>
+          </div>
         </div>
         <div class="app-card__footer">
           <span class="material-symbols-rounded">cloud_sync</span> Firestore同期
@@ -186,6 +244,17 @@
         <div class="app-card__body">
           <div class="app-card__name">いいセンいきまSHOW!</div>
           <div class="app-card__desc">数字でいいセンをいこう！リアルタイム対戦パーティーゲーム。中央値を当てた人が勝ち。</div>
+          <div class="app-card__meta">
+            <span class="meta-badge">
+              <span class="material-symbols-rounded">group</span>3人〜
+            </span>
+            <span class="meta-badge">
+              <span class="material-symbols-rounded">schedule</span>15〜30分
+            </span>
+            <span class="meta-badge">
+              <span class="material-symbols-rounded">person</span>小学生〜中学生
+            </span>
+          </div>
         </div>
         <div class="app-card__footer">
           <span class="material-symbols-rounded">cloud_sync</span> Realtime Database同期
