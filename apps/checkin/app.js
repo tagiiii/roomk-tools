@@ -8,8 +8,10 @@ const appEl = document.querySelector("#app");
 
 appEl.innerHTML = `
   <div class="card text-center">
-    <p class="text-lg text-bold">🚧 準備中</p>
+    <p class="text-lg text-bold">
+      <span class="material-symbols-rounded" style="vertical-align:middle;margin-right:4px">construction</span>準備中
+    </p>
     <p class="text-muted mt-sm">チェックインアプリは現在開発中です。</p>
-    <a href="../" class="btn btn--outline mt-md">← ツール一覧へ</a>
+    <a href="../" class="btn btn-ghost mt-md">← ツール一覧へ</a>
   </div>
 `;
