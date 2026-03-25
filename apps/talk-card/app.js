@@ -1,6 +1,6 @@
 // トークテーマカード アプリロジック
 // 共通モジュール: shuffle (M-3), copyToClipboard (M-2), popIn (M-5)
-import { shuffle, copyToClipboard, popIn } from '../../shared/js/utils.js';
+import { shuffle, copyToClipboard, popIn } from '../shared/js/utils.js';
 
 // ── お題リスト（100枚）──
 const topics = [

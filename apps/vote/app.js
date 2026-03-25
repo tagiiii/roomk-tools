@@ -2,7 +2,7 @@
 // TODO: アプリ仕様が確定したら実装する
 // 仕様: apps/vote/CLAUDE.md を参照
 
-import { generateSessionId, getQueryParam, escapeHtml, showToast } from "../../shared/js/utils.js";
+import { generateSessionId, getQueryParam, escapeHtml, showToast } from "../shared/js/utils.js";
 
 const appEl = document.querySelector("#app");
 
