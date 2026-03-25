@@ -1,0 +1,89 @@
+/* チェックインアプリ 固有スタイル */
+
+.checkin-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: var(--space-md);
+  margin-top: var(--space-lg);
+}
+
+.checkin-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-lg) var(--space-md);
+  background-color: var(--color-surface);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: border-color var(--transition), background-color var(--transition), transform var(--transition);
+  font-family: var(--font-family);
+  text-align: center;
+}
+
+.checkin-btn:hover {
+  border-color: var(--color-primary);
+  background-color: var(--color-surface-alt);
+  transform: translateY(-2px);
+}
+
+.checkin-btn.selected {
+  border-color: var(--color-primary);
+  background-color: var(--color-primary);
+  color: var(--color-text-on-primary);
+}
+
+.checkin-btn__emoji {
+  font-size: 40px;
+  line-height: 1;
+}
+
+.checkin-btn__label {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+}
+
+.result-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  margin-top: var(--space-md);
+}
+
+.result-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-sm) var(--space-md);
+  background-color: var(--color-surface);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-sm);
+}
+
+.result-item__emoji {
+  font-size: 28px;
+}
+
+.result-item__name {
+  flex: 1;
+  font-weight: var(--font-weight-bold);
+}
+
+.result-item__status {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.room-code {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.2em;
+  color: var(--color-primary);
+  text-align: center;
+  padding: var(--space-md);
+  background-color: var(--color-surface-alt);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  user-select: all;
+}

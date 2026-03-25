@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>roomK ツール一覧</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../shared/css/design-system.css" />
+  <style>
+    .portal-hero {
+      background-color: var(--color-primary);
+      color: #fff;
+      padding: var(--space-xl) var(--space-lg);
+      text-align: center;
+    }
+
+    .portal-hero__logo {
+      font-size: var(--font-size-2xl);
+      font-weight: 700;
+      letter-spacing: 0.04em;
+    }
+
+    .portal-hero__tagline {
+      margin-top: var(--space-xs);
+      font-size: var(--font-size-body);
+      opacity: 0.85;
+    }
+
+    .portal-main {
+      padding: var(--space-xl) var(--space-md);
+    }
+
+    .apps-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: var(--space-md);
+    }
+
+    .app-card {
+      display: flex;
+      flex-direction: column;
+      background-color: var(--color-surface);
+      border-radius: var(--radius-card);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+      text-decoration: none;
+      color: var(--color-text);
+      transition: box-shadow var(--transition-base), transform var(--transition-base);
+    }
+
+    .app-card:hover {
+      box-shadow: var(--shadow-md);
+      transform: translateY(-2px);
+      text-decoration: none;
+    }
+
+    .app-card__icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100px;
+      font-size: 48px;
+      background-color: #EEF3F8;
+    }
+
+    .app-card__body {
+      padding: var(--space-md);
+      flex: 1;
+    }
+
+    .app-card__name {
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .app-card__desc {
+      margin-top: var(--space-xs);
+      font-size: var(--font-size-sm);
+      color: var(--color-muted);
+      line-height: 1.5;
+    }
+
+    .app-card__footer {
+      padding: var(--space-sm) var(--space-md);
+      border-top: 1px solid var(--color-border);
+      font-size: var(--font-size-sm);
+      color: var(--color-muted);
+      display: flex;
+      align-items: center;
+      gap: var(--space-xs);
+    }
+
+    .section-title {
+      font-size: var(--font-size-lg);
+      font-weight: 700;
+      margin-bottom: var(--space-md);
+      color: var(--color-primary);
+    }
+
+    footer {
+      text-align: center;
+      padding: var(--space-xl) var(--space-md);
+      color: var(--color-muted);
+      font-size: var(--font-size-sm);
+      border-top: 1px solid var(--color-border);
+      margin-top: var(--space-xl);
+    }
+  </style>
+</head>
+<body>
+
+  <header class="portal-hero">
+    <div class="portal-hero__logo">roomK ツール</div>
+    <div class="portal-hero__tagline">オンライン支援現場で使えるWebツール集</div>
+  </header>
+
+  <main class="portal-main container container--wide">
+    <h2 class="section-title">アプリ一覧</h2>
+
+    <div class="apps-grid">
+
+      <!-- ============================= -->
+      <!-- トークテーマカード            -->
+      <!-- ============================= -->
+      <a class="app-card" href="talk-card/">
+        <div class="app-card__icon">🃏</div>
+        <div class="app-card__body">
+          <div class="app-card__name">トークテーマカード</div>
+          <div class="app-card__desc">カードをめくってトークテーマを引くアイスブレイクツール。セッション開始時や話題に詰まったときに。</div>
+        </div>
+        <div class="app-card__footer">📴 オフライン動作</div>
+      </a>
+
+      <!-- ============================= -->
+      <!-- チェックインアプリ            -->
+      <!-- ============================= -->
+      <a class="app-card" href="checkin/">
+        <div class="app-card__icon">✋</div>
+        <div class="app-card__body">
+          <div class="app-card__name">チェックイン</div>
+          <div class="app-card__desc">参加者が今の気持ちや状態を共有するチェックインツール。作戦会議の導入にも使える。</div>
+        </div>
+        <div class="app-card__footer">🔥 Firestore同期</div>
+      </a>
+
+      <!-- ============================= -->
+      <!-- 投票アプリ                    -->
+      <!-- ============================= -->
+      <a class="app-card" href="vote/">
+        <div class="app-card__icon">🗳️</div>
+        <div class="app-card__body">
+          <div class="app-card__name">投票・集計</div>
+          <div class="app-card__desc">リアルタイムで投票・集計ができるツール。複数の選択肢に対してその場で結果を確認できる。</div>
+        </div>
+        <div class="app-card__footer">🔥 Firestore同期</div>
+      </a>
+
+      <!-- ============================= -->
+      <!-- いいセンいきまSHOW!          -->
+      <!-- ============================= -->
+      <a class="app-card" href="iisen-show/">
+        <div class="app-card__icon">🎯</div>
+        <div class="app-card__body">
+          <div class="app-card__name">いいセンいきまSHOW!</div>
+          <div class="app-card__desc">数字でいいセンをいこう！リアルタイム対戦パーティーゲーム。中央値を当てた人が勝ち。</div>
+        </div>
+        <div class="app-card__footer">🔥 Realtime Database同期</div>
+      </a>
+
+      <!-- 新しいアプリはここに追加 -->
+
+    </div>
+  </main>
+
+  <footer>
+    &copy; roomK NPO &mdash; スタッフ専用ツール
+  </footer>
+
+</body>
+</html>

@@ -1,0 +1,175 @@
+/* トークテーマカード アプリ固有スタイル
+   共通スタイル（M-1〜M-6）は design-system.css に定義済み */
+
+/* ── レイアウト ── */
+.wrapper {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 48px 40px 80px;
+}
+
+/* ── ヘッダー ── */
+.tc-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.tc-header__title {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--color-primary);
+  letter-spacing: 0.04em;
+}
+
+.tc-header__sub {
+  font-size: var(--font-size-sub);
+  color: var(--color-muted);
+  margin-top: 6px;
+}
+
+/* ── お題表示エリア ── */
+.topic-area {
+  display: none;
+  background: var(--color-surface);
+  border: 2px solid var(--color-accent);
+  border-radius: var(--radius-box);
+  padding: 32px 40px;
+  margin-bottom: 36px;
+  text-align: center;
+}
+
+.topic-area.visible {
+  display: block;
+}
+
+.topic-area__label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-accent);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+.topic-area__text {
+  font-size: 42px;
+  font-weight: 700;
+  color: var(--color-primary);
+  line-height: 1.4;
+}
+
+.topic-area__actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 24px;
+  flex-wrap: wrap;
+}
+
+/* ── カードグリッド ── */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 28px;
+  margin-bottom: 32px;
+}
+
+/* ── カード（M-4 flip-card を使用）── */
+.card-grid .flip-card {
+  aspect-ratio: 2 / 3;
+}
+
+/* 裏面 */
+.card-face-back {
+  background-color: var(--color-primary);
+  background-image: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 10px,
+    rgba(255, 255, 255, 0.05) 10px,
+    rgba(255, 255, 255, 0.05) 20px
+  );
+  border-color: #163352;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.card-grid .flip-card:not(.dimmed):not(.flipped):hover .card-face-back {
+  background-color: #234d70;
+}
+
+.card-number {
+  font-size: 64px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.9);
+  line-height: 1;
+}
+
+.card-hint {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.5);
+  letter-spacing: 0.06em;
+}
+
+/* 表面 */
+.card-face-front {
+  background: var(--color-surface);
+  border-color: var(--color-accent);
+  padding: 24px 20px;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.card-topic {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--color-primary);
+  text-align: center;
+  line-height: 1.5;
+}
+
+/* ── 引き直しエリア ── */
+.redraw-area {
+  text-align: center;
+  margin-top: 8px;
+}
+
+/* ── プール残数 ── */
+.pool-info {
+  text-align: center;
+  font-size: 13px;
+  color: var(--color-muted);
+  margin-top: 20px;
+}
+
+/* ── レスポンシブ ── */
+@media (max-width: 600px) {
+  .wrapper {
+    padding: 28px 16px 60px;
+  }
+
+  .card-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+
+  .topic-area {
+    padding: 24px 20px;
+  }
+
+  .topic-area__text {
+    font-size: 28px;
+  }
+
+  .card-number {
+    font-size: 40px;
+  }
+
+  .card-topic {
+    font-size: 15px;
+  }
+
+  .card-hint {
+    font-size: 11px;
+  }
+}

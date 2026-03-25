@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>投票・集計 | roomK</title>
+  <link rel="stylesheet" href="../../shared/css/design-system.css" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <header class="app-header">
+    <div class="container">
+      <div class="app-header__title">🗳️ 投票・集計</div>
+      <div class="app-header__subtitle">みんなで決めよう</div>
+    </div>
+  </header>
+
+  <main class="container" style="padding-top: var(--space-lg); padding-bottom: var(--space-xl);">
+    <div id="app">
+      <div class="loading-overlay">
+        <div class="spinner"></div>
+        <p>読み込み中...</p>
+      </div>
+    </div>
+  </main>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

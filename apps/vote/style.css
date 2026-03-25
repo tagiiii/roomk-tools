@@ -1,0 +1,80 @@
+/* 投票アプリ 固有スタイル */
+
+.vote-options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  margin-top: var(--space-md);
+}
+
+.vote-option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-md);
+  background-color: var(--color-surface);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-family: var(--font-family);
+  font-size: var(--font-size-base);
+  text-align: left;
+  transition: border-color var(--transition), background-color var(--transition);
+  min-height: 56px;
+}
+
+.vote-option:hover {
+  border-color: var(--color-primary);
+  background-color: var(--color-surface-alt);
+}
+
+.vote-option.selected {
+  border-color: var(--color-primary);
+  background-color: var(--color-primary);
+  color: var(--color-text-on-primary);
+}
+
+.vote-option__label {
+  flex: 1;
+  font-weight: var(--font-weight-bold);
+}
+
+/* 結果バーグラフ */
+.result-bar-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  margin-top: var(--space-md);
+}
+
+.result-bar-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.result-bar-item__header {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+}
+
+.result-bar-item__bar-bg {
+  height: 28px;
+  background-color: var(--color-surface-alt);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.result-bar-item__bar {
+  height: 100%;
+  background-color: var(--color-primary);
+  border-radius: var(--radius-full);
+  transition: width 0.5s ease;
+  min-width: 4px;
+}
+
+.result-bar-item__bar--winner {
+  background-color: var(--color-secondary);
+}
