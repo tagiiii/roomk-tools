@@ -486,8 +486,8 @@ function showMsg(msg, isError = true) {
 const WORD_PAIRS = [
   // 食べ物
   { citizen: 'カレー',         wolf: 'シチュー' },
-  { citizen: 'ラーメン',       wolf: 'つけ麺' },
-  { citizen: 'うどん',         wolf: 'そうめん' },
+  { citizen: 'ラーメン',       wolf: 'チャーハン' },
+  { citizen: 'うどん',         wolf: 'パスタ' },
   { citizen: 'アイスクリーム', wolf: 'シャーベット' },
   { citizen: 'ハンバーグ',     wolf: 'ミートボール' },
   { citizen: 'たこ焼き',       wolf: '焼きそば' },
@@ -501,7 +501,7 @@ const WORD_PAIRS = [
   { citizen: 'ジュース',       wolf: 'お茶' },
   { citizen: 'ピザ',           wolf: 'グラタン' },
   // 動物
-  { citizen: '猫',             wolf: '犬' },
+  { citizen: '猫',             wolf: 'うさぎ' },
   { citizen: 'ウサギ',         wolf: 'モルモット' },
   { citizen: 'ライオン',       wolf: 'チーター' },
   { citizen: 'イルカ',         wolf: 'シャチ' },
@@ -511,19 +511,19 @@ const WORD_PAIRS = [
   { citizen: 'カエル',         wolf: 'イモリ' },
   // ゲーム・エンタメ
   { citizen: 'マンガ',         wolf: 'アニメ' },
-  { citizen: 'YouTube',        wolf: 'TikTok' },
+  { citizen: 'YouTube',        wolf: 'Instagram' },
   { citizen: 'カードゲーム',   wolf: 'ボードゲーム' },
   { citizen: 'スマホ',         wolf: 'タブレット' },
   // スポーツ
-  { citizen: 'サッカー',       wolf: 'フットサル' },
+  { citizen: 'サッカー',       wolf: 'ラグビー' },
   { citizen: 'バスケ',         wolf: 'ハンドボール' },
-  { citizen: '野球',           wolf: 'ソフトボール' },
+  { citizen: '野球',           wolf: 'ボウリング' },
   { citizen: 'テニス',         wolf: 'バドミントン' },
-  { citizen: 'スキー',         wolf: 'スノーボード' },
+  { citizen: 'スキー',         wolf: 'そり' },
   // 場所・乗り物
   { citizen: '電車',           wolf: 'バス' },
   { citizen: 'コンビニ',       wolf: 'スーパー' },
-  { citizen: '水族館',         wolf: '動物園' },
+  { citizen: '水族館',         wolf: '博物館' },
   { citizen: 'プール',         wolf: '海' },
   { citizen: '山',             wolf: '川' },
   { citizen: 'お風呂',         wolf: '温泉' },
@@ -535,13 +535,68 @@ const WORD_PAIRS = [
   { citizen: '虹',             wolf: '夕焼け' },
   { citizen: '花火',           wolf: 'キャンプファイヤー' },
   // その他
-  { citizen: '傘',             wolf: 'レインコート' },
+  { citizen: '傘',             wolf: '日傘' },
   { citizen: '自転車',         wolf: 'キックボード' },
   { citizen: '帽子',           wolf: 'ニット帽' },
-  { citizen: '誕生日',         wolf: 'クリスマス' },
-  { citizen: '写真',           wolf: '動画' },
+  { citizen: '誕生日',         wolf: 'お正月' },
+  { citizen: '写真',           wolf: 'イラスト' },
   { citizen: '公園',           wolf: '広場' },
   { citizen: '旅行',           wolf: 'おでかけ' },
+  { citizen: 'プレゼント',     wolf: 'お土産' },
+  { citizen: '時計',           wolf: 'カレンダー' },
+  { citizen: '夢',             wolf: '妄想' },
+  { citizen: '秘密基地',       wolf: '隠れ家' },
+  { citizen: '花',             wolf: '観葉植物' },
+  { citizen: 'ロボット',       wolf: 'AI' },
+  { citizen: 'マスク',         wolf: '手袋' },
+  { citizen: 'リュック',       wolf: 'ショルダーバッグ' },
+  // 食べ物（追加）
+  { citizen: 'おにぎり',       wolf: 'サンドイッチ' },
+  { citizen: '焼き肉',         wolf: 'しゃぶしゃぶ' },
+  { citizen: 'お寿司',         wolf: '刺し身' },
+  { citizen: 'から揚げ',       wolf: 'ナゲット' },
+  { citizen: 'ケーキ',         wolf: 'シュークリーム' },
+  { citizen: 'コーラ',         wolf: 'サイダー' },
+  { citizen: 'ホットケーキ',   wolf: 'フレンチトースト' },
+  { citizen: '餃子',           wolf: '春巻き' },
+  { citizen: 'かき氷',         wolf: 'フラッペ' },
+  { citizen: 'みそ汁',         wolf: 'スープ' },
+  // 動物（追加）
+  { citizen: 'タコ',           wolf: 'イカ' },
+  { citizen: 'クワガタ',       wolf: 'カブトムシ' },
+  { citizen: 'ハムスター',     wolf: 'リス' },
+  { citizen: 'ゴリラ',         wolf: 'チンパンジー' },
+  { citizen: 'サメ',           wolf: 'エイ' },
+  // ゲーム・エンタメ（追加）
+  { citizen: '映画',           wolf: 'ドラマ' },
+  { citizen: 'ゲーム機',       wolf: 'スマホゲーム' },
+  { citizen: '音楽',           wolf: 'ラジオ' },
+  { citizen: 'なぞなぞ',       wolf: 'クイズ' },
+  { citizen: 'ライブ',         wolf: 'フェス' },
+  { citizen: '絵を描く',       wolf: '工作' },
+  // スポーツ・遊び（追加）
+  { citizen: '水泳',           wolf: '飛び込み' },
+  { citizen: '体操',           wolf: 'ダンス' },
+  { citizen: 'バレーボール',   wolf: 'ドッジボール' },
+  { citizen: '柔道',           wolf: '剣道' },
+  { citizen: '釣り',           wolf: 'キャンプ' },
+  { citizen: '縄跳び',         wolf: 'フラフープ' },
+  { citizen: '鬼ごっこ',       wolf: 'だるまさんがころんだ' },
+  // 場所・乗り物（追加）
+  { citizen: '遊園地',         wolf: '縁日' },
+  { citizen: '映画館',         wolf: '劇場' },
+  { citizen: '図書館',         wolf: '本屋' },
+  { citizen: 'カフェ',         wolf: 'ファミレス' },
+  { citizen: '神社',           wolf: '公園' },
+  { citizen: '砂浜',           wolf: '岩場' },
+  { citizen: '駅',             wolf: '空港' },
+  // 季節・自然（追加）
+  { citizen: '星',             wolf: '月' },
+  { citizen: '台風',           wolf: '嵐' },
+  { citizen: '滝',             wolf: '噴水' },
+  { citizen: '朝',             wolf: '夜' },
+  { citizen: '森',             wolf: '林' },
+  { citizen: '湖',             wolf: '池' },
 ];
 
 // ── 定数・状態 ──
@@ -657,19 +712,24 @@ async function startGame() {
   if (nicks.length < 3) return;
 
   const pair = WORD_PAIRS[Math.floor(Math.random() * WORD_PAIRS.length)];
+  // 50%の確率で市民とウルフのお題を入れ替え（ペアから推測しにくくする）
+  const swapped     = Math.random() < 0.5;
+  const citizenWord = swapped ? pair.wolf    : pair.citizen;
+  const wolfWord    = swapped ? pair.citizen : pair.wolf;
+
   const shuffled = [...nicks].sort(() => Math.random() - 0.5);
   const wolfCount = Math.min(state.wolfCount, nicks.length - 1);
   const wolves = new Set(shuffled.slice(0, wolfCount));
 
   const update = {
     status: 'revealing',
-    citizenWord: pair.citizen,
-    wolfWord:    pair.wolf,
+    citizenWord,
+    wolfWord,
   };
   nicks.forEach(nick => {
     const isWolf = wolves.has(nick);
     update[`players/${nick}/isWolf`]  = isWolf;
-    update[`players/${nick}/word`]    = isWolf ? pair.wolf : pair.citizen;
+    update[`players/${nick}/word`]    = isWolf ? wolfWord : citizenWord;
     update[`players/${nick}/ready`]   = false;
     update[`players/${nick}/vote`]    = null;
   });
