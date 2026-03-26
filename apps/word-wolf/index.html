@@ -599,6 +599,11 @@ const WORD_PAIRS = [
   { citizen: '湖',             wolf: '池' },
 ];
 
+// ── ユーティリティ ──
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
 // ── 定数・状態 ──
 const SESSION_KEY = 'wordwolf_session';
 const CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -948,7 +953,7 @@ function handleVoting(room, players) {
       if (nick === state.nickname) return;
       const btn = document.createElement('button');
       btn.className = 'vote-btn';
-      btn.innerHTML = `<span>${nick}</span>
+      btn.innerHTML = `<span>${esc(nick)}</span>
         <span class="material-symbols-rounded" style="color:var(--color-muted)">arrow_forward_ios</span>`;
       btn.onclick = () => {
         if (state.myVote) return;
@@ -993,7 +998,7 @@ function handleResult(room, players) {
       const hostTag  = p.isHost ? '<span class="player-tag">ホスト</span>' : '';
       const meTag    = nick === state.nickname ? '<span class="player-tag me">あなた</span>' : '';
       return `<div class="vote-row">
-        <div class="player-name">${nick}${wolfTag}${hostTag}${meTag}</div>
+        <div class="player-name">${esc(nick)}${wolfTag}${hostTag}${meTag}</div>
         <span class="vote-num">${counts[nick] || 0}票</span>
       </div>`;
     }).join('');
@@ -1013,7 +1018,7 @@ function renderList(id, players, statusFn) {
     const hostTag = p.isHost ? '<span class="player-tag">ホスト</span>' : '';
     const status  = statusFn(p);
     return `<li class="player-item">
-      <div class="player-name">${nick}${hostTag}${meTag}</div>
+      <div class="player-name">${esc(nick)}${hostTag}${meTag}</div>
       ${status}
     </li>`;
   }).join('');
