@@ -463,6 +463,25 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
+// ── トースト通知（alert の代替）──
+function showMsg(msg, isError = true) {
+  const existing = document.getElementById('ww-toast');
+  if (existing) existing.remove();
+  const el = document.createElement('div');
+  el.id = 'ww-toast';
+  el.textContent = msg;
+  el.style.cssText = [
+    'position:fixed', 'bottom:24px', 'left:50%', 'transform:translateX(-50%)',
+    `background:${isError ? 'var(--color-error)' : 'var(--color-success)'}`,
+    'color:#fff', 'padding:12px 24px', 'border-radius:8px',
+    'font-size:14px', 'font-weight:500', 'z-index:9999',
+    'box-shadow:0 4px 16px rgba(0,0,0,0.25)', 'white-space:nowrap',
+    'pointer-events:none',
+  ].join(';');
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 3000);
+}
+
 // ── お題ペア（50組）──
 const WORD_PAIRS = [
   // 食べ物
@@ -569,8 +588,8 @@ function showOverlay(id, show) {
 
 // ── バリデーション ──
 function validNick(v) {
-  if (!v) { alert('ニックネームを入力してください'); return false; }
-  if (v.length > 8) { alert('ニックネームは8文字以内です'); return false; }
+  if (!v) { showMsg('ニックネームを入力してください'); return false; }
+  if (v.length > 8) { showMsg('ニックネームは8文字以内です'); return false; }
   return true;
 }
 
@@ -611,13 +630,13 @@ async function guestJoin() {
   const nickname = document.getElementById('guest-nickname').value.trim();
   const roomCode = document.getElementById('guest-code').value.trim().toUpperCase();
   if (!validNick(nickname)) return;
-  if (roomCode.length !== 4) { alert('ルームコードは4文字です'); return; }
+  if (roomCode.length !== 4) { showMsg('ルームコードは4文字です'); return; }
 
   const snap = await db.ref(`wordwolf_rooms/${roomCode}`).get();
-  if (!snap.exists()) { alert('ルームが見つかりません'); return; }
+  if (!snap.exists()) { showMsg('ルームが見つかりません'); return; }
   const room = snap.val();
-  if (room.status !== 'waiting') { alert('このゲームはすでに始まっています'); return; }
-  if (room.players?.[nickname]) { alert('そのニックネームはすでに使われています'); return; }
+  if (room.status !== 'waiting') { showMsg('このゲームはすでに始まっています'); return; }
+  if (room.players?.[nickname]) { showMsg('そのニックネームはすでに使われています'); return; }
 
   state.nickname = nickname; state.roomCode = roomCode; state.role = 'guest';
   state.discussionSecs = room.discussionSecs; state.wolfCount = room.wolfCount;
@@ -769,7 +788,7 @@ function startRoomListener() {
   state.roomRef.on('value', snap => {
     if (!snap.exists()) {
       if (state.role !== 'host') {
-        clearSession(); alert('ルームが終了しました'); showScreen('top');
+        clearSession(); showMsg('ホストがルームを終了しました', true); showScreen('top');
       }
       return;
     }
