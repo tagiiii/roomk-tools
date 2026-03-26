@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd /Users/tagishimasakatsu/dev/roomk-tools && bash scripts/lint.sh"
+          }
+        ]
+      }
+    ]
+  }
+}
