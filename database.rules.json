@@ -1,0 +1,16 @@
+{
+  "rules": {
+    "iisen_rooms": {
+      "$roomId": {
+        ".read": true,
+        ".write": true
+      }
+    },
+    "wordwolf_rooms": {
+      "$roomId": {
+        ".read": true,
+        ".write": true
+      }
+    }
+  }
+}

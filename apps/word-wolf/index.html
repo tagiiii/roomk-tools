@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+  <title>ワードウルフ | roomK</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
+  <link rel="stylesheet" href="../shared/css/design-system.css">
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+  <style>
+    /* ── 画面管理 ── */
+    .screen { display: none; min-height: 100dvh; }
+    .screen.active { display: flex; flex-direction: column; align-items: center; }
+    .page { width: 100%; max-width: 480px; padding: 40px 20px 80px; }
+
+    /* ── ヘッダー ── */
+    .ww-header {
+      text-align: center;
+      padding: 48px 0 32px;
+    }
+    .ww-header__icon {
+      width: 80px; height: 80px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--color-primary), #6B3FA0);
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 16px;
+    }
+    .ww-header__icon .material-symbols-rounded { font-size: 44px; color: #fff; }
+    .ww-header__title { font-size: 28px; font-weight: 700; color: var(--color-primary); }
+    .ww-header__sub { font-size: 14px; color: var(--color-muted); margin-top: 6px; }
+
+    /* ── ルームコード ── */
+    .room-code {
+      font-size: 48px; font-weight: 700;
+      letter-spacing: 0.15em; color: var(--color-primary);
+      text-align: center;
+    }
+
+    /* ── プレイヤーリスト ── */
+    .player-list { list-style: none; }
+    .player-item {
+      display: flex; align-items: center;
+      justify-content: space-between;
+      padding: 10px 0; border-bottom: 1px solid var(--color-border);
+      font-size: 15px;
+    }
+    .player-item:last-child { border-bottom: none; }
+    .player-name { display: flex; align-items: center; gap: 6px; }
+    .player-tag {
+      font-size: 11px; font-weight: 700;
+      padding: 2px 6px; border-radius: 4px;
+      background: var(--color-accent); color: #fff;
+    }
+    .player-tag.me { background: var(--color-muted); }
+    .player-tag.ready { background: var(--color-success); }
+    .player-tag.wolf { background: #6B3FA0; }
+
+    /* ── お題カード（フリップ）── */
+    .word-flip-card {
+      perspective: 800px;
+      height: 180px;
+      cursor: pointer;
+      margin-bottom: 24px;
+    }
+    .word-flip-inner {
+      position: relative; width: 100%; height: 100%;
+      transform-style: preserve-3d;
+      transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
+    }
+    .word-flip-card.flipped .word-flip-inner { transform: rotateY(180deg); }
+    .word-flip-face {
+      position: absolute; inset: 0;
+      backface-visibility: hidden; -webkit-backface-visibility: hidden;
+      border-radius: var(--radius-card);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 10px;
+    }
+    .word-flip-back {
+      background: linear-gradient(135deg, var(--color-primary), #6B3FA0);
+      background-image:
+        linear-gradient(135deg, var(--color-primary), #6B3FA0),
+        repeating-linear-gradient(-45deg, transparent, transparent 10px, rgba(255,255,255,0.05) 10px, rgba(255,255,255,0.05) 20px);
+      color: #fff; font-size: 14px;
+    }
+    .word-flip-front {
+      background: var(--color-surface);
+      border: 3px solid var(--color-accent);
+      transform: rotateY(180deg);
+    }
+    .word-flip-label { font-size: 13px; color: var(--color-muted); font-weight: 500; }
+    .word-flip-text { font-size: 38px; font-weight: 700; color: var(--color-primary); }
+
+    /* ── タイマー ── */
+    .timer-wrap { text-align: center; margin-bottom: 20px; }
+    .timer-val {
+      font-size: 64px; font-weight: 700;
+      color: var(--color-primary); line-height: 1;
+    }
+    .timer-val.urgent { color: var(--color-error); }
+    .timer-lbl { font-size: 13px; color: var(--color-muted); margin-top: 4px; }
+
+    /* ── 自分のお題チップ ── */
+    .my-word-chip {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 16px;
+      background: var(--color-primary);
+      color: #fff; border-radius: 999px;
+      font-size: 15px; font-weight: 700;
+    }
+
+    /* ── 投票ボタン ── */
+    .vote-btn {
+      display: flex; align-items: center;
+      justify-content: space-between;
+      width: 100%; padding: 14px 16px;
+      margin-bottom: 8px;
+      background: var(--color-surface);
+      border: 2px solid var(--color-border);
+      border-radius: 12px;
+      font-family: var(--font-base); font-size: 16px; font-weight: 500;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .vote-btn:hover { border-color: #6B3FA0; background: #F5F0FB; }
+    .vote-btn.selected { border-color: #6B3FA0; background: #F0EAF8; color: #6B3FA0; }
+
+    /* ── 結果 ── */
+    .result-banner {
+      text-align: center; padding: 24px;
+      background: linear-gradient(135deg, #F0EAF8, #E8F5F5);
+      border-radius: var(--radius-card);
+      margin-bottom: 16px;
+    }
+    .result-winner { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+    .result-words {
+      display: flex; gap: 16px;
+      justify-content: center; margin-top: 14px; flex-wrap: wrap;
+    }
+    .result-word-box { text-align: center; }
+    .result-word-label { font-size: 11px; color: var(--color-muted); margin-bottom: 4px; }
+    .result-word-chip {
+      display: inline-block; padding: 6px 14px;
+      border-radius: 8px; font-size: 15px; font-weight: 700; color: #fff;
+    }
+    .result-word-chip.citizen { background: var(--color-accent); }
+    .result-word-chip.wolf    { background: #6B3FA0; }
+
+    .vote-row {
+      display: flex; align-items: center;
+      justify-content: space-between;
+      padding: 10px 0; border-bottom: 1px solid var(--color-border);
+      font-size: 15px;
+    }
+    .vote-row:last-child { border-bottom: none; }
+    .vote-num { font-weight: 700; color: #6B3FA0; }
+
+    /* ── オーバーレイ ── */
+    .overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(28,63,94,0.88); z-index: 100;
+      flex-direction: column; align-items: center; justify-content: center;
+      gap: 16px; color: #fff; text-align: center; padding: 24px;
+    }
+    .overlay.show { display: flex; }
+    .overlay-title { font-size: 20px; font-weight: 700; }
+    .overlay-sub   { font-size: 14px; opacity: 0.8; }
+    .spinner {
+      width: 32px; height: 32px;
+      border: 3px solid rgba(255,255,255,0.3); border-top-color: #fff;
+      border-radius: 50%; animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Misc ── */
+    .section-lbl {
+      font-size: 13px; font-weight: 700;
+      color: var(--color-muted); letter-spacing: 0.06em;
+      text-transform: uppercase; margin-bottom: 8px;
+    }
+    .sep { margin-top: 8px; }
+    h2 { font-size: 20px; font-weight: 700; margin-bottom: 16px; color: var(--color-primary); }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════ -->
+<!-- TOP                                   -->
+<!-- ══════════════════════════════════════ -->
+<div id="screen-top" class="screen">
+  <div class="page">
+    <div class="ww-header">
+      <div class="ww-header__icon">
+        <span class="material-symbols-rounded">psychology</span>
+      </div>
+      <div class="ww-header__title">ワードウルフ</div>
+      <div class="ww-header__sub">ひとりだけ違うお題を持つのは誰？</div>
+    </div>
+    <div class="card">
+      <button class="btn btn-primary btn-full" onclick="goTo('host-setup')">
+        <span class="material-symbols-rounded">add_circle</span>ルームを作る
+      </button>
+      <button class="btn btn-secondary btn-full sep" onclick="goTo('guest-join')">
+        <span class="material-symbols-rounded">login</span>ルームに参加する
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════ -->
+<!-- HOST SETUP                            -->
+<!-- ══════════════════════════════════════ -->
+<div id="screen-host-setup" class="screen">
+  <div class="page">
+    <h2>ルームを作る</h2>
+    <div class="card">
+      <div class="form-group">
+        <label class="form-label">ニックネーム（8文字以内）</label>
+        <input class="form-input" id="host-nickname" type="text" maxlength="8" placeholder="例: たろう">
+      </div>
+      <div class="form-group">
+        <label class="form-label">討論時間</label>
+        <select class="form-select" id="discussion-time">
+          <option value="180">3分</option>
+          <option value="300" selected>5分</option>
+          <option value="420">7分</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">ウルフの人数</label>
+        <select class="form-select" id="wolf-count">
+          <option value="1" selected>1人</option>
+          <option value="2">2人</option>
+        </select>
+      </div>
+      <button class="btn btn-primary btn-full mt-md" onclick="hostCreateRoom()">
+        <span class="material-symbols-rounded">add_home</span>ルームを作成する
+      </button>
+      <button class="btn btn-ghost btn-full sep" onclick="goTo('top')">戻る</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════ -->
+<!-- GUEST JOIN                            -->
+<!-- ══════════════════════════════════════ -->
+<div id="screen-guest-join" class="screen">
+  <div class="page">
+    <h2>ルームに参加する</h2>
+    <div class="card">
+      <div class="form-group">
+        <label class="form-label">ニックネーム（8文字以内）</label>
+        <input class="form-input" id="guest-nickname" type="text" maxlength="8" placeholder="例: はなこ">
+      </div>
+      <div class="form-group">
+        <label class="form-label">ルームコード（4桁）</label>
+        <input class="form-input" id="guest-code" type="text" maxlength="4" placeholder="ABCD"
+               style="text-transform:uppercase;letter-spacing:.2em;font-size:24px;text-align:center">
+      </div>
+      <button class="btn btn-primary btn-full mt-md" onclick="guestJoin()">
+        <span class="material-symbols-rounded">login</span>参加する
+      </button>
+      <button class="btn btn-ghost btn-full sep" onclick="goTo('top')">戻る</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════ -->
+<!-- WAITING                               -->
+<!-- ══════════════════════════════════════ -->
+<div id="screen-waiting" class="screen">
+  <div class="page">
+    <!-- ホスト向けパネル -->
+    <div id="host-panel" style="display:none">
+      <div class="card" style="text-align:center">
+        <p class="section-lbl">ルームコード</p>
+        <p class="room-code" id="w-room-code">----</p>
+        <p style="font-size:14px;color:var(--color-muted);margin-top:6px">参加者に伝えてね</p>
+      </div>
+      <div class="card">
+        <p class="section-lbl">設定</p>
+        <p id="w-settings" style="font-size:14px;color:var(--color-muted)"></p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <strong style="font-size:16px">参加者</strong>
+        <span id="w-count" style="font-size:14px;color:var(--color-muted)"></span>
+      </div>
+      <ul class="player-list" id="w-player-list"></ul>
+    </div>
+
+    <div id="host-start-area" style="display:none">
+      <button class="btn btn-primary btn-full" id="btn-start" onclick="startGame()" disabled>
+        <span class="material-symbols-rounded">play_arrow</span>ゲームスタート
+      </button>
+      <p style="font-size:13px;color:var(--color-muted);text-align:center;margin-top:8px">3人以上でスタートできます</p>
+    </div>
+    <button class="btn btn-ghost btn-full mt-md" onclick="leaveGame()">
+      <span class="material-symbols-rounded">logout</span>退出する
+    </button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════ -->
+<!-- REVEALING（お題確認）                  -->
+<!-- ══════════════════════════════════════ -->
+<div id="screen-revealing" class="screen">
+  <div class="page">
+    <h2 style="text-align:center">あなたのお題を確認しよう</h2>
+    <p style="font-size:14px;color:var(--color-muted);text-align:center;margin-bottom:20px">
+      カードをタップしてお題を見る
+    </p>
+
+    <div class="word-flip-card" id="flip-card" onclick="flipCard()">
+      <div class="word-flip-inner">
+        <div class="word-flip-face word-flip-back">
+          <span class="material-symbols-rounded" style="font-size:40px;opacity:.7">touch_app</span>
+          <span>タップして確認</span>
+        </div>
+        <div class="word-flip-face word-flip-front">
+          <span class="word-flip-label">あなたのお題</span>
+          <span class="word-flip-text" id="my-word">---</span>
+        </div>
+      </div>
+    </div>
+
+    <div id="ready-area" style="display:none">
+      <button class="btn btn-primary btn-full" id="btn-ready" onclick="markReady()">
+        <span class="material-symbols-rounded">check_circle</span>確認した！
+      </button>
+    </div>
+
+    <div class="card mt-md">
+      <p class="section-lbl">準備状況</p>
+      <ul class="player-list" id="r-player-list"></ul>
+      <div id="host-discuss-btn" style="display:none;margin-top:12px">
+        <button class="btn btn-full" style="background:#6B3FA0;color:#fff;border-color:#6B3FA0" onclick="startDiscussion()">
+          <span class="material-symbols-rounded">record_voice_over</span>討論スタート！
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════ -->
+<!-- DISCUSSING（討論）                     -->
+<!-- ══════════════════════════════════════ -->
+<div id="screen-discussing" class="screen">
+  <div class="page">
+    <div class="timer-wrap">
+      <div class="timer-val" id="timer">5:00</div>
+      <div class="timer-lbl">残り時間</div>
+    </div>
+
+    <div style="text-align:center;margin-bottom:20px">
+      <div class="my-word-chip">
+        <span class="material-symbols-rounded" style="font-size:18px">label</span>
+        あなたのお題：<span id="d-my-word">---</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <p class="section-lbl">参加者</p>
+      <ul class="player-list" id="d-player-list"></ul>
+    </div>
+
+    <div id="host-vote-btn" style="display:none;margin-top:8px">
+      <button class="btn btn-full" style="background:#6B3FA0;color:#fff;border-color:#6B3FA0" onclick="moveToVoting()">
+        <span class="material-symbols-rounded">how_to_vote</span>投票フェーズへ
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════ -->
+<!-- VOTING（投票）                         -->
+<!-- ══════════════════════════════════════ -->
+<div id="screen-voting" class="screen">
+  <div class="page">
+    <h2>投票</h2>
+    <p style="font-size:14px;color:var(--color-muted);margin-bottom:16px">
+      ウルフだと思う人に投票してください
+    </p>
+
+    <div style="text-align:center;margin-bottom:16px">
+      <div class="my-word-chip">
+        <span class="material-symbols-rounded" style="font-size:18px">label</span>
+        あなたのお題：<span id="v-my-word">---</span>
+      </div>
+    </div>
+
+    <div id="vote-btns"></div>
+
+    <div id="voted-msg" class="card" style="display:none;text-align:center">
+      <span class="material-symbols-rounded" style="font-size:40px;color:var(--color-success)">check_circle</span>
+      <p style="font-weight:700;margin-top:8px">投票しました！</p>
+      <p id="vote-wait" style="font-size:13px;color:var(--color-muted);margin-top:4px"></p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════ -->
+<!-- RESULT（結果）                         -->
+<!-- ══════════════════════════════════════ -->
+<div id="screen-result" class="screen">
+  <div class="page">
+    <div class="result-banner">
+      <p class="result-winner" id="result-winner"></p>
+      <div class="result-words">
+        <div class="result-word-box">
+          <p class="result-word-label">市民のお題</p>
+          <span class="result-word-chip citizen" id="result-citizen"></span>
+        </div>
+        <div class="result-word-box">
+          <p class="result-word-label">ウルフのお題</p>
+          <span class="result-word-chip wolf" id="result-wolf-word"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <p class="section-lbl">投票結果</p>
+      <div id="result-votes"></div>
+    </div>
+
+    <div id="host-again-btn" style="display:none">
+      <button class="btn btn-primary btn-full" onclick="playAgain()">
+        <span class="material-symbols-rounded">replay</span>もう一度
+      </button>
+    </div>
+    <button class="btn btn-ghost btn-full sep" onclick="leaveGame()">
+      <span class="material-symbols-rounded">home</span>トップへ戻る
+    </button>
+  </div>
+</div>
+
+<!-- オーバーレイ -->
+<div class="overlay" id="reconnect-overlay">
+  <div class="spinner"></div>
+  <p class="overlay-title">再接続しています...</p>
+</div>
+<div class="overlay" id="host-off-overlay">
+  <span class="material-symbols-rounded" style="font-size:48px">signal_disconnected</span>
+  <p class="overlay-title">ホストが一時的に切断されました</p>
+  <p class="overlay-sub">再接続を待っています</p>
+  <button class="btn btn-ghost" style="margin-top:16px" onclick="leaveGame()">退出する</button>
+</div>
+
+<script>
+// ── Firebase 初期化 ──
+const firebaseConfig = {
+  apiKey: "AIzaSyC0bqQdDJeTAWrqFYqjOT1NsVFiunPemIw",
+  authDomain: "roomk-tools.firebaseapp.com",
+  databaseURL: "https://roomk-tools-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "roomk-tools",
+  storageBucket: "roomk-tools.firebasestorage.app",
+  messagingSenderId: "592193782148",
+  appId: "1:592193782148:web:1529f47cebab7dcd109dd1",
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+// ── お題ペア（50組）──
+const WORD_PAIRS = [
+  // 食べ物
+  { citizen: 'カレー',         wolf: 'シチュー' },
+  { citizen: 'ラーメン',       wolf: 'つけ麺' },
+  { citizen: 'うどん',         wolf: 'そうめん' },
+  { citizen: 'アイスクリーム', wolf: 'シャーベット' },
+  { citizen: 'ハンバーグ',     wolf: 'ミートボール' },
+  { citizen: 'たこ焼き',       wolf: '焼きそば' },
+  { citizen: 'チョコレート',   wolf: 'キャラメル' },
+  { citizen: 'プリン',         wolf: 'ゼリー' },
+  { citizen: 'グミ',           wolf: 'マシュマロ' },
+  { citizen: 'メロン',         wolf: 'スイカ' },
+  { citizen: 'いちご',         wolf: 'さくらんぼ' },
+  { citizen: 'ポテトチップス', wolf: 'えびせん' },
+  { citizen: 'パン',           wolf: 'ごはん' },
+  { citizen: 'ジュース',       wolf: 'お茶' },
+  { citizen: 'ピザ',           wolf: 'グラタン' },
+  // 動物
+  { citizen: '猫',             wolf: '犬' },
+  { citizen: 'ウサギ',         wolf: 'モルモット' },
+  { citizen: 'ライオン',       wolf: 'チーター' },
+  { citizen: 'イルカ',         wolf: 'シャチ' },
+  { citizen: 'パンダ',         wolf: 'コアラ' },
+  { citizen: 'ペンギン',       wolf: 'アザラシ' },
+  { citizen: 'チョウ',         wolf: 'ガ' },
+  { citizen: 'カエル',         wolf: 'イモリ' },
+  // ゲーム・エンタメ
+  { citizen: 'マンガ',         wolf: 'アニメ' },
+  { citizen: 'YouTube',        wolf: 'TikTok' },
+  { citizen: 'カードゲーム',   wolf: 'ボードゲーム' },
+  { citizen: 'スマホ',         wolf: 'タブレット' },
+  // スポーツ
+  { citizen: 'サッカー',       wolf: 'フットサル' },
+  { citizen: 'バスケ',         wolf: 'ハンドボール' },
+  { citizen: '野球',           wolf: 'ソフトボール' },
+  { citizen: 'テニス',         wolf: 'バドミントン' },
+  { citizen: 'スキー',         wolf: 'スノーボード' },
+  // 場所・乗り物
+  { citizen: '電車',           wolf: 'バス' },
+  { citizen: 'コンビニ',       wolf: 'スーパー' },
+  { citizen: '水族館',         wolf: '動物園' },
+  { citizen: 'プール',         wolf: '海' },
+  { citizen: '山',             wolf: '川' },
+  { citizen: 'お風呂',         wolf: '温泉' },
+  // 季節・自然
+  { citizen: '夏',             wolf: '冬' },
+  { citizen: '春',             wolf: '秋' },
+  { citizen: '桜',             wolf: '紅葉' },
+  { citizen: '雨',             wolf: '雪' },
+  { citizen: '虹',             wolf: '夕焼け' },
+  { citizen: '花火',           wolf: 'キャンプファイヤー' },
+  // その他
+  { citizen: '傘',             wolf: 'レインコート' },
+  { citizen: '自転車',         wolf: 'キックボード' },
+  { citizen: '帽子',           wolf: 'ニット帽' },
+  { citizen: '誕生日',         wolf: 'クリスマス' },
+  { citizen: '写真',           wolf: '動画' },
+  { citizen: '公園',           wolf: '広場' },
+  { citizen: '旅行',           wolf: 'おでかけ' },
+];
+
+// ── 定数・状態 ──
+const SESSION_KEY = 'wordwolf_session';
+const CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+
+const state = {
+  role: null, nickname: null, roomCode: null, roomRef: null,
+  currentScreen: null,
+  myWord: null, isWolf: false,
+  discussionSecs: 300, wolfCount: 1,
+  timerInterval: null,
+  myVote: null,
+  wordRevealed: false,
+  resultTriggered: false,
+};
+
+// ── セッション管理 ──
+function saveSession() {
+  sessionStorage.setItem(SESSION_KEY, JSON.stringify({
+    nickname: state.nickname, roomCode: state.roomCode, role: state.role,
+  }));
+}
+function loadSession() {
+  try { return JSON.parse(sessionStorage.getItem(SESSION_KEY)); } catch { return null; }
+}
+function clearSession() { sessionStorage.removeItem(SESSION_KEY); }
+
+// ── ルームコード生成 ──
+function genCode() {
+  return Array.from({ length: 4 }, () => CHARS[Math.floor(Math.random() * CHARS.length)]).join('');
+}
+
+// ── 画面管理 ──
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + id).classList.add('active');
+  state.currentScreen = id;
+}
+function goTo(id) { showScreen(id); }
+function showOverlay(id, show) {
+  document.getElementById(id).classList.toggle('show', show);
+}
+
+// ── バリデーション ──
+function validNick(v) {
+  if (!v) { alert('ニックネームを入力してください'); return false; }
+  if (v.length > 8) { alert('ニックネームは8文字以内です'); return false; }
+  return true;
+}
+
+// ── ホストルーム作成 ──
+async function hostCreateRoom() {
+  const nickname = document.getElementById('host-nickname').value.trim();
+  if (!validNick(nickname)) return;
+  const discussionSecs = parseInt(document.getElementById('discussion-time').value);
+  const wolfCount      = parseInt(document.getElementById('wolf-count').value);
+
+  let roomCode;
+  for (let i = 0; i < 5; i++) {
+    roomCode = genCode();
+    const snap = await db.ref(`wordwolf_rooms/${roomCode}`).get();
+    if (!snap.exists()) break;
+  }
+
+  state.nickname = nickname; state.roomCode = roomCode; state.role = 'host';
+  state.discussionSecs = discussionSecs; state.wolfCount = wolfCount;
+  state.roomRef = db.ref(`wordwolf_rooms/${roomCode}`);
+
+  await state.roomRef.set({
+    host: nickname, hostConnected: true,
+    status: 'waiting',
+    discussionSecs, wolfCount,
+    players: {
+      [nickname]: { isHost: true, isWolf: false, word: '', ready: false, vote: null },
+    },
+  });
+
+  state.roomRef.child('hostConnected').onDisconnect().set(false);
+  saveSession();
+  startRoomListener();
+}
+
+// ── ゲスト参加 ──
+async function guestJoin() {
+  const nickname = document.getElementById('guest-nickname').value.trim();
+  const roomCode = document.getElementById('guest-code').value.trim().toUpperCase();
+  if (!validNick(nickname)) return;
+  if (roomCode.length !== 4) { alert('ルームコードは4文字です'); return; }
+
+  const snap = await db.ref(`wordwolf_rooms/${roomCode}`).get();
+  if (!snap.exists()) { alert('ルームが見つかりません'); return; }
+  const room = snap.val();
+  if (room.status !== 'waiting') { alert('このゲームはすでに始まっています'); return; }
+  if (room.players?.[nickname]) { alert('そのニックネームはすでに使われています'); return; }
+
+  state.nickname = nickname; state.roomCode = roomCode; state.role = 'guest';
+  state.discussionSecs = room.discussionSecs; state.wolfCount = room.wolfCount;
+  state.roomRef = db.ref(`wordwolf_rooms/${roomCode}`);
+
+  await state.roomRef.child(`players/${nickname}`).set({
+    isHost: false, isWolf: false, word: '', ready: false, vote: null,
+  });
+  state.roomRef.child(`players/${nickname}`).onDisconnect().remove();
+  saveSession();
+  startRoomListener();
+}
+
+// ── ゲームスタート（ホストのみ）──
+async function startGame() {
+  const snap = await state.roomRef.child('players').get();
+  const nicks = Object.keys(snap.val() || {});
+  if (nicks.length < 3) return;
+
+  const pair = WORD_PAIRS[Math.floor(Math.random() * WORD_PAIRS.length)];
+  const shuffled = [...nicks].sort(() => Math.random() - 0.5);
+  const wolfCount = Math.min(state.wolfCount, nicks.length - 1);
+  const wolves = new Set(shuffled.slice(0, wolfCount));
+
+  const update = {
+    status: 'revealing',
+    citizenWord: pair.citizen,
+    wolfWord:    pair.wolf,
+  };
+  nicks.forEach(nick => {
+    const isWolf = wolves.has(nick);
+    update[`players/${nick}/isWolf`]  = isWolf;
+    update[`players/${nick}/word`]    = isWolf ? pair.wolf : pair.citizen;
+    update[`players/${nick}/ready`]   = false;
+    update[`players/${nick}/vote`]    = null;
+  });
+  await state.roomRef.update(update);
+  state.resultTriggered = false;
+}
+
+// ── カードフリップ ──
+function flipCard() {
+  if (state.wordRevealed) return;
+  state.wordRevealed = true;
+  document.getElementById('flip-card').classList.add('flipped');
+  document.getElementById('ready-area').style.display = 'block';
+}
+
+// ── 準備完了 ──
+async function markReady() {
+  document.getElementById('btn-ready').disabled = true;
+  await state.roomRef.child(`players/${state.nickname}/ready`).set(true);
+}
+
+// ── 討論スタート（ホスト）──
+async function startDiscussion() {
+  const endsAt = Date.now() + state.discussionSecs * 1000;
+  await state.roomRef.update({ status: 'discussing', discussionEndsAt: endsAt });
+}
+
+// ── タイマー ──
+function startTimer(endsAt) {
+  clearInterval(state.timerInterval);
+  const el = document.getElementById('timer');
+  state.timerInterval = setInterval(async () => {
+    const sec = Math.max(0, Math.ceil((endsAt - Date.now()) / 1000));
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    el.textContent = `${m}:${String(s).padStart(2, '0')}`;
+    el.classList.toggle('urgent', sec <= 30);
+    if (sec <= 0) {
+      clearInterval(state.timerInterval);
+      const st = await state.roomRef.child('status').get();
+      if (st.val() === 'discussing') state.roomRef.child('status').set('voting');
+    }
+  }, 500);
+}
+
+// ── 投票フェーズへ（ホスト手動）──
+async function moveToVoting() {
+  await state.roomRef.child('status').set('voting');
+}
+
+// ── 投票 ──
+async function submitVote(target) {
+  if (state.myVote) return;
+  state.myVote = target;
+  document.getElementById('vote-btns').style.display = 'none';
+  document.getElementById('voted-msg').style.display = 'block';
+  await state.roomRef.child(`players/${state.nickname}/vote`).set(target);
+}
+
+// ── 結果計算（ホストのみ）──
+async function computeResult(room, players) {
+  if (state.resultTriggered) return;
+  state.resultTriggered = true;
+
+  const counts = {};
+  Object.values(players).forEach(p => {
+    if (p.vote) counts[p.vote] = (counts[p.vote] || 0) + 1;
+  });
+  const maxV = Math.max(...Object.values(counts), 0);
+  const tops = Object.entries(counts).filter(([, v]) => v === maxV).map(([n]) => n);
+  const citizenWin = tops.length === 1 && players[tops[0]]?.isWolf === true;
+
+  await state.roomRef.update({ status: 'result', citizenWin, voteCounts: counts });
+}
+
+// ── もう一度 ──
+async function playAgain() {
+  clearInterval(state.timerInterval);
+  state.myVote = null; state.wordRevealed = false; state.myWord = null;
+  state.resultTriggered = false;
+  const snap = await state.roomRef.child('players').get();
+  const nicks = Object.keys(snap.val() || {});
+  const update = { status: 'waiting', citizenWin: null, voteCounts: null };
+  nicks.forEach(nick => {
+    update[`players/${nick}/isWolf`] = false;
+    update[`players/${nick}/word`]   = '';
+    update[`players/${nick}/ready`]  = false;
+    update[`players/${nick}/vote`]   = null;
+  });
+  await state.roomRef.update(update);
+}
+
+// ── 退出 ──
+async function leaveGame() {
+  clearInterval(state.timerInterval);
+  clearSession();
+  if (state.roomRef) {
+    if (state.role === 'host') {
+      await state.roomRef.remove();
+    } else {
+      await state.roomRef.child(`players/${state.nickname}`).remove();
+    }
+    state.roomRef.off();
+  }
+  Object.assign(state, {
+    role: null, nickname: null, roomCode: null, roomRef: null,
+    currentScreen: null, myWord: null, isWolf: false,
+    myVote: null, wordRevealed: false, resultTriggered: false,
+    timerInterval: null,
+  });
+  showScreen('top');
+}
+
+// ── Firebase リスナー ──
+function startRoomListener() {
+  state.roomRef.on('value', snap => {
+    if (!snap.exists()) {
+      if (state.role !== 'host') {
+        clearSession(); alert('ルームが終了しました'); showScreen('top');
+      }
+      return;
+    }
+    handleRoom(snap.val());
+  });
+}
+
+function handleRoom(room) {
+  const players = room.players || {};
+  if (state.role === 'guest') showOverlay('host-off-overlay', room.hostConnected === false);
+  switch (room.status) {
+    case 'waiting':    handleWaiting(room, players);    break;
+    case 'revealing':  handleRevealing(room, players);  break;
+    case 'discussing': handleDiscussing(room, players); break;
+    case 'voting':     handleVoting(room, players);     break;
+    case 'result':     handleResult(room, players);     break;
+  }
+}
+
+// ── 待機 ──
+function handleWaiting(room, players) {
+  if (state.currentScreen !== 'waiting') {
+    state.myVote = null; state.wordRevealed = false;
+    state.myWord = null; state.resultTriggered = false;
+    clearInterval(state.timerInterval);
+    showScreen('waiting');
+  }
+  const isHost = state.role === 'host';
+  const count  = Object.keys(players).length;
+
+  document.getElementById('host-panel').style.display      = isHost ? 'block' : 'none';
+  document.getElementById('host-start-area').style.display = isHost ? 'block' : 'none';
+
+  if (isHost) {
+    document.getElementById('w-room-code').textContent = state.roomCode;
+    const tLabel = { 180:'3分', 300:'5分', 420:'7分' }[room.discussionSecs] || '';
+    document.getElementById('w-settings').textContent =
+      `討論時間：${tLabel}　ウルフ：${room.wolfCount}人`;
+    document.getElementById('btn-start').disabled = count < 3;
+    state.discussionSecs = room.discussionSecs;
+    state.wolfCount = room.wolfCount;
+  }
+  document.getElementById('w-count').textContent = `${count}人`;
+  renderList('w-player-list', players, () => '');
+}
+
+// ── お題確認 ──
+function handleRevealing(room, players) {
+  if (state.currentScreen !== 'revealing') {
+    state.wordRevealed = false;
+    const me = players[state.nickname];
+    if (me) { state.myWord = me.word; state.isWolf = me.isWolf; }
+    document.getElementById('my-word').textContent = state.myWord || '';
+    document.getElementById('flip-card').classList.remove('flipped');
+    document.getElementById('ready-area').style.display  = 'none';
+    document.getElementById('btn-ready').disabled = false;
+    // 再接続時：すでに準備完了済みなら反映
+    if (players[state.nickname]?.ready) {
+      state.wordRevealed = true;
+      document.getElementById('flip-card').classList.add('flipped');
+    }
+    showScreen('revealing');
+  }
+  renderList('r-player-list', players, p =>
+    p.ready
+      ? '<span class="player-tag ready">準備OK</span>'
+      : '<span style="font-size:13px;color:var(--color-muted)">確認中</span>'
+  );
+  if (state.role === 'host') {
+    const allReady = Object.values(players).every(p => p.ready);
+    document.getElementById('host-discuss-btn').style.display = allReady ? 'block' : 'none';
+  }
+}
+
+// ── 討論 ──
+function handleDiscussing(room, players) {
+  if (state.currentScreen !== 'discussing') {
+    clearInterval(state.timerInterval);
+    document.getElementById('d-my-word').textContent = state.myWord || '';
+    document.getElementById('host-vote-btn').style.display =
+      state.role === 'host' ? 'block' : 'none';
+    showScreen('discussing');
+    startTimer(room.discussionEndsAt);
+  }
+  renderList('d-player-list', players, () => '');
+}
+
+// ── 投票 ──
+function handleVoting(room, players) {
+  clearInterval(state.timerInterval);
+  if (state.currentScreen !== 'voting') {
+    document.getElementById('v-my-word').textContent = state.myWord || '';
+    // ボタン生成
+    const wrap = document.getElementById('vote-btns');
+    wrap.innerHTML = '';
+    Object.keys(players).forEach(nick => {
+      if (nick === state.nickname) return;
+      const btn = document.createElement('button');
+      btn.className = 'vote-btn';
+      btn.innerHTML = `<span>${nick}</span>
+        <span class="material-symbols-rounded" style="color:var(--color-muted)">arrow_forward_ios</span>`;
+      btn.onclick = () => {
+        if (state.myVote) return;
+        document.querySelectorAll('.vote-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        setTimeout(() => submitVote(nick), 400);
+      };
+      wrap.appendChild(btn);
+    });
+    // 再接続時：すでに投票済み
+    if (state.myVote) {
+      wrap.style.display = 'none';
+      document.getElementById('voted-msg').style.display = 'block';
+    } else {
+      wrap.style.display = 'block';
+      document.getElementById('voted-msg').style.display = 'none';
+    }
+    showScreen('voting');
+  }
+  // 投票済み人数を更新
+  const voted = Object.values(players).filter(p => p.vote != null).length;
+  const total = Object.keys(players).length;
+  document.getElementById('vote-wait').textContent = `${voted} / ${total} 人が投票済み`;
+
+  if (voted >= total && state.role === 'host') computeResult(room, players);
+}
+
+// ── 結果 ──
+function handleResult(room, players) {
+  if (state.currentScreen !== 'result') {
+    clearInterval(state.timerInterval);
+    document.getElementById('result-winner').textContent =
+      room.citizenWin ? '市民の勝ち！ウルフをつかまえた！' : 'ウルフの勝ち！正体がバレなかった！';
+    document.getElementById('result-citizen').textContent   = room.citizenWord || '';
+    document.getElementById('result-wolf-word').textContent = room.wolfWord    || '';
+
+    const counts = room.voteCounts || {};
+    const sorted = Object.keys(players).sort((a, b) => (counts[b] || 0) - (counts[a] || 0));
+    document.getElementById('result-votes').innerHTML = sorted.map(nick => {
+      const p = players[nick];
+      const wolfTag  = p.isWolf ? '<span class="player-tag wolf">ウルフ</span>' : '';
+      const hostTag  = p.isHost ? '<span class="player-tag">ホスト</span>' : '';
+      const meTag    = nick === state.nickname ? '<span class="player-tag me">あなた</span>' : '';
+      return `<div class="vote-row">
+        <div class="player-name">${nick}${wolfTag}${hostTag}${meTag}</div>
+        <span class="vote-num">${counts[nick] || 0}票</span>
+      </div>`;
+    }).join('');
+
+    document.getElementById('host-again-btn').style.display =
+      state.role === 'host' ? 'block' : 'none';
+    showScreen('result');
+  }
+}
+
+// ── プレイヤーリスト描画 ──
+function renderList(id, players, statusFn) {
+  const ul = document.getElementById(id);
+  if (!ul) return;
+  ul.innerHTML = Object.entries(players).map(([nick, p]) => {
+    const meTag   = nick === state.nickname ? '<span class="player-tag me">あなた</span>' : '';
+    const hostTag = p.isHost ? '<span class="player-tag">ホスト</span>' : '';
+    const status  = statusFn(p);
+    return `<li class="player-item">
+      <div class="player-name">${nick}${hostTag}${meTag}</div>
+      ${status}
+    </li>`;
+  }).join('');
+}
+
+// ── 再接続 ──
+async function tryReconnect() {
+  const session = loadSession();
+  if (!session) return false;
+  const { nickname, roomCode, role } = session;
+  showOverlay('reconnect-overlay', true);
+  try {
+    const snap = await db.ref(`wordwolf_rooms/${roomCode}`).get();
+    if (!snap.exists()) { clearSession(); showOverlay('reconnect-overlay', false); return false; }
+    const room = snap.val();
+
+    state.nickname = nickname; state.roomCode = roomCode; state.role = role;
+    state.roomRef  = db.ref(`wordwolf_rooms/${roomCode}`);
+    state.discussionSecs = room.discussionSecs;
+    state.wolfCount      = room.wolfCount;
+
+    const me = (room.players || {})[nickname];
+    if (me) {
+      state.myWord = me.word;
+      state.isWolf = me.isWolf;
+      state.myVote = me.vote || null;
+    }
+
+    if (role === 'host') {
+      await state.roomRef.child('hostConnected').set(true);
+      state.roomRef.child('hostConnected').onDisconnect().set(false);
+    } else {
+      if (!room.players?.[nickname]) {
+        clearSession(); showOverlay('reconnect-overlay', false); return false;
+      }
+      state.roomRef.child(`players/${nickname}`).onDisconnect().remove();
+    }
+
+    showOverlay('reconnect-overlay', false);
+    startRoomListener();
+    return true;
+  } catch {
+    clearSession(); showOverlay('reconnect-overlay', false); return false;
+  }
+}
+
+// ── 初期化 ──
+tryReconnect().then(ok => { if (!ok) showScreen('top'); });
+</script>
+</body>
+</html>
