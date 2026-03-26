@@ -5,3 +5,12 @@
 !.claude/commands/*.md
 node_modules/
 *.local
+
+# 秘密情報・認証ファイル（誤コミット防止）
+.env
+.env.*
+*.pem
+*.key
+*service-account*.json
+*-credentials.json
+*-adminsdk-*.json
