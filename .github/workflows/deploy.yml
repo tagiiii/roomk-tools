@@ -15,8 +15,22 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # ─────────────────────────────────────────────
+  # Job 1: lint チェック（デプロイ前に実行）
+  # ─────────────────────────────────────────────
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run lint
+        run: bash scripts/lint.sh
+
+  # ─────────────────────────────────────────────
+  # Job 2: GitHub Pages デプロイ（lint 通過後）
+  # ─────────────────────────────────────────────
   deploy:
     runs-on: ubuntu-latest
+    needs: lint
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -28,3 +42,22 @@ jobs:
           path: ./apps
       - id: deployment
         uses: actions/deploy-pages@v4
+
+  # ─────────────────────────────────────────────
+  # Job 3: デプロイ後の疎通確認
+  # ─────────────────────────────────────────────
+  healthcheck:
+    runs-on: ubuntu-latest
+    needs: deploy
+    steps:
+      - name: GitHub Pages 疎通確認
+        run: |
+          echo "デプロイ完了を待機中..."
+          sleep 30
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" "https://tagiiii.github.io/roomk-tools/")
+          echo "HTTP ステータス: $STATUS"
+          if [ "$STATUS" != "200" ]; then
+            echo "❌ 疎通確認失敗 (HTTP $STATUS)"
+            exit 1
+          fi
+          echo "✅ 疎通確認OK (HTTP $STATUS)"
