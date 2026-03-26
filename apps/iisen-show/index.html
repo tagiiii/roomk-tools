@@ -722,14 +722,14 @@
     showReconnectOverlay(true);
 
     try {
-      const snap = await db.ref(`rooms/${roomCode}`).get();
+      const snap = await db.ref(`iisen_rooms/${roomCode}`).get();
       if (!snap.exists()) { clearSession(); showReconnectOverlay(false); return false; }
 
       const room = snap.val();
       state.nickname = nickname;
       state.roomCode = roomCode;
       state.role     = role;
-      state.roomRef  = db.ref(`rooms/${roomCode}`);
+      state.roomRef  = db.ref(`iisen_rooms/${roomCode}`);
 
       if (role === 'host') {
         await state.roomRef.child('hostConnected').set(true);
@@ -881,11 +881,11 @@
     let roomCode;
     for (let i = 0; i < 5; i++) {
       roomCode = generateRoomCode();
-      const snap = await db.ref(`rooms/${roomCode}`).get();
+      const snap = await db.ref(`iisen_rooms/${roomCode}`).get();
       if (!snap.exists()) break;
     }
     state.roomCode = roomCode;
-    state.roomRef  = db.ref(`rooms/${roomCode}`);
+    state.roomRef  = db.ref(`iisen_rooms/${roomCode}`);
 
     await state.roomRef.set({
       host:            nickname,
@@ -997,7 +997,7 @@
     if (roomCode.length !== 4) { showError('guest-join-error', 'ルームコードは4文字です'); return; }
     hideError('guest-join-error');
 
-    const snap = await db.ref(`rooms/${roomCode}`).get();
+    const snap = await db.ref(`iisen_rooms/${roomCode}`).get();
     if (!snap.exists()) {
       showError('guest-join-error', 'ルームが見つかりません'); return;
     }
@@ -1009,7 +1009,7 @@
       state.nickname = nickname;
       state.roomCode = roomCode;
       state.role     = 'guest';
-      state.roomRef  = db.ref(`rooms/${roomCode}`);
+      state.roomRef  = db.ref(`iisen_rooms/${roomCode}`);
       state.roomRef.child(`players/${nickname}`).onDisconnect().remove();
       saveSession();
       startRoomListener();
@@ -1026,7 +1026,7 @@
     state.nickname = nickname;
     state.roomCode = roomCode;
     state.role     = 'guest';
-    state.roomRef  = db.ref(`rooms/${roomCode}`);
+    state.roomRef  = db.ref(`iisen_rooms/${roomCode}`);
 
     const playerRef = state.roomRef.child(`players/${nickname}`);
     await playerRef.set({ score: 0, isHost: false, answer: null });

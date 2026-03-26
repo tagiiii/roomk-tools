@@ -24,16 +24,28 @@ roomk-tools/
 │   ├── talk-card/               # トークテーマカード
 │   ├── iisen-show/              # いいセンいきまSHOW!
 │   ├── checkin/                 # チェックインアプリ
-│   └── vote/                    # 投票・集計アプリ
+│   ├── vote/                    # 投票・集計アプリ
+│   ├── word-wolf/               # ワードウルフ
+│   └── name-change/             # 名前変えゲーム
 ├── docs/                        # ドキュメント類
 └── shared/                      # ※旧配置（使用しない。apps/shared/ を使うこと）
 ```
 
+### アプリのファイル構成パターン
+
+バックエンドの種類によってファイル構成が異なる。
+
+| パターン | 使用DB | ファイル構成 | 採用アプリ |
+|---------|--------|------------|----------|
+| **単一ファイル** | Realtime Database | `index.html` のみ（CSS・JS すべてインライン） | iisen-show, word-wolf, name-change |
+| **分割ファイル** | Firestore | `index.html` + `app.js`（+ 必要なら `style.css`） | checkin, vote |
+| **オフライン** | なし | `index.html` + `app.js` | talk-card |
+
 ### 新しいアプリを追加するとき
 
 1. `apps/{app-name}/` フォルダを作成
-2. 最低限のファイル: `index.html`, `app.js`（必要なら `style.css`）
-3. `apps/index.html` のツール一覧にリンクを追記
+2. 上表のパターンを参考にファイルを作成
+3. `apps/index.html` のツール一覧にカードを追記
 4. アプリ固有の仕様を `apps/{app-name}/CLAUDE.md` に記載
 
 ---
@@ -165,12 +177,44 @@ Realtime Database を使うアプリ（iisen-show など）は単一ファイル
 | サービス | 無料枠 | 主な用途 |
 |---------|--------|---------|
 | Firestore | 1GB / 50,000読 / 20,000書 per日 | checkin, vote |
-| Realtime Database | 1GB / 10GB転送 per月 | iisen-show |
+| Realtime Database | 1GB / 10GB転送 per月 | iisen-show, word-wolf, name-change |
 | Auth（匿名） | 無制限 | ユーザー識別 |
 
-### セキュリティルール の方針
+### Realtime Database パス命名規則
 
-- 書き込みには必ずバリデーション（型・長さ・範囲）を設ける
+**新しいアプリを追加するときもルール変更は不要。** 以下の命名規則に従うだけでよい。
+
+```
+{appname}_rooms/{roomCode}/...
+```
+
+| アプリ | パス |
+|--------|------|
+| iisen-show | `iisen_rooms/{roomCode}/` |
+| word-wolf | `wordwolf_rooms/{roomCode}/` |
+| name-change | `namechange_rooms/{roomCode}/` |
+| （新アプリ例） | `newapp_rooms/{roomCode}/` |
+
+#### 現在のセキュリティルール（変更不要）
+
+```json
+{
+  "rules": {
+    "$app_rooms": {
+      "$roomId": {
+        ".read": true,
+        ".write": true
+      }
+    }
+  }
+}
+```
+
+`$app_rooms` はワイルドカードで任意のトップレベルパスにマッチする。
+新アプリを追加してもルールの更新は**一切不要**。
+
+### その他のセキュリティ方針
+
 - 読み取りは原則公開（認証不要なツールのため）
 - ルームやセッションデータはゲーム・セッション終了後に削除する
 
@@ -180,6 +224,139 @@ Realtime Database を使うアプリ（iisen-show など）は単一ファイル
 HTTP リファラー制限済み:
 - `tagiiii.github.io/roomk-tools/*`
 - `localhost/*`
+
+---
+
+## 共通実装ルール
+
+全アプリで統一されているルール・パターンを以下にまとめる。
+
+### ルームコード形式
+
+| DB | 桁数 | 生成方法 | 採用アプリ |
+|----|------|---------|----------|
+| Realtime Database | **4桁**英数字 | 独自 `generateCode()`（紛らわしい文字除外） | iisen-show, word-wolf, name-change |
+| Firestore | **6桁**英数字 | `generateSessionId()`（utils.js） | checkin, vote |
+
+除外文字（紛らわしいもの）: `0`, `O`, `I`, `1` など
+
+### ニックネーム制約
+
+| 制約 | 内容 |
+|------|------|
+| 最大文字数 | 基本 **8文字**（name-change の参加者のみ12文字） |
+| 同ルーム内重複 | **NG**（参加時にチェックして弾く） |
+| 空文字 | **NG**（参加時にバリデーション） |
+
+### 画面遷移パターン（Realtime Database アプリ）
+
+```js
+// 全スクリーンに .screen クラス、表示中のみ .active を付与
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + id).classList.add('active');
+  state.currentScreen = id;
+}
+```
+
+画面IDの命名: `screen-{名前}` （例: `screen-top`, `screen-waiting`, `screen-voting`）
+
+### ホスト識別方法
+
+| DB | 識別方法 |
+|----|---------|
+| Realtime Database | Firebase の `players/{nick}/isHost: boolean` フィールド |
+| Firestore | URL クエリパラメータ `?host=1`（認証なし） |
+
+### ゲーム状態（status）の遷移パターン
+
+Realtime Database アプリは `status` フィールドでフェーズを管理する。
+Firebase リスナーで `status` の変化を検知して全員の画面を同期する。
+
+```
+// 典型的な遷移例
+waiting → [ゲーム固有フェーズ] → done / finished
+```
+
+ホストのみが `status` を更新できる（UIで制御）。
+
+### 切断時の挙動（Realtime Database アプリ）
+
+| 役割 | 挙動 |
+|------|------|
+| **ホスト切断** | `onDisconnect().remove()` でルームごと削除。ゲストにはオーバーレイを表示 |
+| **ゲスト切断** | `onDisconnect().remove()` でそのプレイヤーデータのみ削除 |
+
+```js
+// ホスト
+db.ref(`{appname}_rooms/${code}`).onDisconnect().remove();
+
+// ゲスト
+db.ref(`{appname}_rooms/${code}/players/${nick}`).onDisconnect().remove();
+```
+
+### セッションデータの自動削除
+
+ゲーム・セッション終了後は Firebase からデータを削除する。
+
+```js
+// ゲーム終了 → 30秒後に自動削除
+async function hostFinish() {
+  await roomRef.update({ status: 'done' });
+  setTimeout(() => roomRef.remove(), 30000);
+}
+```
+
+Firestore アプリも同様にセッション終了後に削除する。
+
+### 再接続（sessionStorage）
+
+Realtime Database アプリはページリロード時に sessionStorage から状態を復元する。
+
+```js
+// 保存
+sessionStorage.setItem('{app}_session', JSON.stringify({ roomCode, nickname, isHost, ... }));
+
+// 復元（window.load 時）
+window.addEventListener('load', async () => {
+  if (!await tryReconnect()) showScreen('top');
+});
+
+// TOPに戻るときにクリア
+sessionStorage.removeItem('{app}_session');
+```
+
+### XSS 対策
+
+ユーザー入力（ニックネーム・回答・名前など）を DOM に挿入する際は必ずエスケープする。
+
+```js
+// Realtime Database 単一ファイルアプリ（utils.js を使わない場合）
+function esc(s) {
+  return String(s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+// Firestore アプリ（utils.js を使う場合）
+import { escapeHtml } from '../shared/js/utils.js';
+```
+
+`innerHTML` への代入時は必ず `esc()` / `escapeHtml()` を通す。`textContent` への代入は不要。
+
+### 最小参加人数
+
+| 人数 | 適用アプリ |
+|------|----------|
+| 2人以上 | name-change |
+| 3人以上 | iisen-show, word-wolf |
+| 制限なし | talk-card, checkin, vote |
+
+### セキュリティ方針（性善説）
+
+Firebase Realtime Database はフィールドレベルの読み取り制御が難しい。
+`isWolf`・他プレイヤーの秘密情報などは **UIレベルで非表示**にするが、
+DevTools での確認は**性善説で許容**する（スタッフ監視下での使用のため）。
 
 ---
 

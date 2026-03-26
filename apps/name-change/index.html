@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>名前変えゲーム | roomK</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
+  <style>
+    :root {
+      --color-primary: #1C3F5E;
+      --color-accent:  #2E7D8C;
+      --color-bg:      #F5F2EC;
+      --color-surface: #FFFFFF;
+      --color-text:    #1A1A1A;
+      --color-muted:   #5A6270;
+      --color-border:  #C4D2D8;
+      --color-success: #1F6E3C;
+      --color-error:   #B91C1C;
+      --font-base: 'Noto Sans JP', sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: var(--font-base); background: var(--color-bg); color: var(--color-text); min-height: 100vh; }
+
+    /* Screen */
+    .screen { display: none; max-width: 480px; margin: 0 auto; padding: 24px 16px 40px; }
+    .screen.active { display: block; }
+
+    /* Header */
+    .app-header { text-align: center; padding: 28px 0 20px; }
+    .icon-wrap {
+      width: 64px; height: 64px; border-radius: 16px;
+      background: var(--color-primary);
+      display: flex; align-items: center; justify-content: center; margin: 0 auto 12px;
+    }
+    .icon-wrap .material-symbols-rounded { font-size: 32px; color: #fff; }
+    .app-header h1 { font-size: 1.5rem; font-weight: 700; color: var(--color-primary); }
+    .app-header p  { font-size: 0.85rem; color: var(--color-muted); margin-top: 4px; }
+
+    /* Card */
+    .card { background: var(--color-surface); border-radius: 12px; padding: 20px; margin-bottom: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+
+    /* Buttons */
+    .btn {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      width: 100%; padding: 14px 20px; border: none; border-radius: 10px;
+      font-family: var(--font-base); font-size: 1rem; font-weight: 700;
+      cursor: pointer; transition: opacity .15s, transform .1s; text-decoration: none;
+    }
+    .btn:active { transform: scale(0.97); }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+    .btn + .btn   { margin-top: 8px; }
+    .btn-primary  { background: var(--color-accent); color: #fff; }
+    .btn-secondary{ background: var(--color-surface); color: var(--color-primary); border: 2px solid var(--color-border); }
+    .btn-ghost    { background: transparent; color: var(--color-muted); }
+    .btn-lg       { padding: 18px 24px; font-size: 1.1rem; }
+    .btn-sm       { padding: 8px 14px; font-size: 0.85rem; }
+
+    /* Form */
+    .form-group { margin-bottom: 16px; }
+    .form-label { display: block; font-size: 0.85rem; font-weight: 700; color: var(--color-muted); margin-bottom: 6px; }
+    .form-input {
+      width: 100%; padding: 12px 14px; border: 2px solid var(--color-border); border-radius: 8px;
+      font-family: var(--font-base); font-size: 1rem; color: var(--color-text);
+      background: var(--color-bg); outline: none; transition: border-color .15s;
+    }
+    .form-input:focus { border-color: var(--color-accent); }
+
+    /* Room code */
+    .room-code-box { background: #EBF3F5; border-radius: 10px; padding: 16px; text-align: center; margin-bottom: 16px; }
+    .room-code-box .rc-label { font-size: 0.75rem; color: var(--color-muted); margin-bottom: 4px; }
+    .room-code-box .rc-code  { font-size: 2rem; font-weight: 700; letter-spacing: .2em; color: var(--color-primary); }
+
+    /* Player list */
+    .player-list { display: flex; flex-direction: column; gap: 8px; }
+    .player-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: var(--color-bg); border-radius: 8px; }
+    .player-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--color-primary); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem; flex-shrink: 0; }
+    .player-name   { font-weight: 500; flex: 1; }
+    .badge { font-size: 0.7rem; font-weight: 700; padding: 2px 8px; border-radius: 99px; }
+    .badge-gm      { background: var(--color-muted);    color: #fff; }
+    .badge-changer { background: #7C3AED;               color: #fff; }
+    .badge-voter   { background: var(--color-success);  color: #fff; }
+    .badge-pending { background: var(--color-border);   color: var(--color-muted); }
+
+    /* Section title */
+    .section-title { font-size: 0.8rem; font-weight: 700; color: var(--color-muted); margin-bottom: 10px; letter-spacing: .04em; }
+
+    /* Status text */
+    .status-text { text-align: center; color: var(--color-muted); font-size: 0.9rem; margin: 8px 0 16px; }
+
+    /* Divider */
+    .divider { border: none; border-top: 1px solid var(--color-border); margin: 16px 0; }
+
+    /* Alert */
+    .alert { padding: 12px 14px; border-radius: 8px; font-size: 0.85rem; margin-bottom: 12px; }
+    .alert-info { background: #EBF3F5; color: var(--color-accent); }
+
+    /* Waiting dots */
+    .dots::after { content: ''; animation: dots 1.5s infinite; }
+    @keyframes dots { 0%,20%{content:''} 40%{content:'.'} 60%{content:'..'} 80%,100%{content:'...'} }
+
+    /* Naming choice */
+    .choice-card {
+      border: 2px solid var(--color-border); border-radius: 10px;
+      padding: 16px; cursor: pointer; transition: border-color .15s, background .15s;
+      display: flex; align-items: flex-start; gap: 12px; margin-bottom: 10px;
+    }
+    .choice-card:hover { border-color: var(--color-accent); }
+    .choice-icon { font-size: 28px; color: var(--color-accent); flex-shrink: 0; margin-top: 2px; }
+    .choice-label { font-weight: 700; font-size: 0.95rem; margin-bottom: 2px; }
+    .choice-desc  { font-size: 0.8rem; color: var(--color-muted); }
+
+    /* Vote cards */
+    .vote-card {
+      background: var(--color-surface); border-radius: 12px; padding: 16px;
+      margin-bottom: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      border: 2px solid transparent; transition: border-color .15s;
+    }
+    .vote-card.answered { border-color: var(--color-success); }
+    .changed-name-label { font-size: 1.15rem; font-weight: 700; color: var(--color-primary); text-align: center; margin-bottom: 10px; }
+    .vote-options { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+    .vote-opt {
+      padding: 8px 14px; border-radius: 20px; border: 2px solid var(--color-border);
+      background: var(--color-bg); color: var(--color-text);
+      font-family: var(--font-base); font-size: 0.9rem; font-weight: 500;
+      cursor: pointer; transition: all .15s;
+    }
+    .vote-opt:hover:not(:disabled) { border-color: var(--color-accent); }
+    .vote-opt.selected { background: var(--color-accent); color: #fff; border-color: var(--color-accent); }
+    .vote-opt:disabled { opacity: .35; cursor: not-allowed; }
+
+    /* Result list */
+    .result-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px 4px; border-bottom: 1px solid var(--color-border);
+    }
+    .result-item:last-child { border-bottom: none; }
+    .result-changed {
+      font-size: 1rem; font-weight: 700; color: #7C3AED;
+      flex: 1; min-width: 0; word-break: break-all;
+    }
+    .result-arrow { color: var(--color-muted); font-size: 1rem; flex-shrink: 0; }
+    .result-original { font-size: 1rem; font-weight: 700; color: var(--color-primary); flex-shrink: 0; }
+    .result-count    { font-size: 0.75rem; font-weight: 700; color: var(--color-muted); background: var(--color-bg); border-radius: 99px; padding: 2px 8px; flex-shrink: 0; }
+
+    /* Done */
+    .done-circle { width: 80px; height: 80px; border-radius: 50%; background: var(--color-accent); display: flex; align-items: center; justify-content: center; margin: 32px auto 16px; }
+    .done-circle .material-symbols-rounded { font-size: 40px; color: #fff; }
+
+    /* Overlay */
+    .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 500; align-items: center; justify-content: center; }
+    .overlay.show { display: flex; }
+    .overlay-box { background: var(--color-surface); border-radius: 16px; padding: 28px 24px; max-width: 320px; width: 90%; text-align: center; }
+    .overlay-box h3 { font-size: 1.1rem; margin-bottom: 8px; }
+    .overlay-box p  { font-size: 0.9rem; color: var(--color-muted); margin-bottom: 20px; }
+
+    /* Toast */
+    #toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #333; color: #fff; padding: 12px 20px; border-radius: 8px; font-size: 0.9rem; opacity: 0; transition: opacity .3s; pointer-events: none; z-index: 1000; white-space: nowrap; }
+    #toast.show { opacity: 1; }
+  </style>
+</head>
+<body>
+
+<!-- ===== TOP ===== -->
+<div id="screen-top" class="screen">
+  <div class="app-header">
+    <div class="icon-wrap"><span class="material-symbols-rounded">manage_accounts</span></div>
+    <h1>名前変えゲーム</h1>
+    <p>変わった名前は誰のもの？</p>
+  </div>
+  <div class="card">
+    <button class="btn btn-primary btn-lg" onclick="goHostSetup()">
+      <span class="material-symbols-rounded">add_home</span>ルームを作る（GM）
+    </button>
+    <button class="btn btn-secondary" onclick="goGuestJoin()">
+      <span class="material-symbols-rounded">login</span>ルームに参加する
+    </button>
+  </div>
+</div>
+
+<!-- ===== HOST SETUP ===== -->
+<div id="screen-host-setup" class="screen">
+  <div class="app-header">
+    <h1>ルームを作る</h1>
+    <p>GMのニックネームを入力してください</p>
+  </div>
+  <div class="card">
+    <div class="form-group">
+      <label class="form-label">ニックネーム（1〜8文字）</label>
+      <input id="host-nickname" class="form-input" type="text" maxlength="8" placeholder="例：GM">
+    </div>
+    <button class="btn btn-primary" onclick="hostCreateRoom()">
+      <span class="material-symbols-rounded">add_circle</span>ルームを作成する
+    </button>
+    <button class="btn btn-ghost" onclick="showScreen('top')">
+      <span class="material-symbols-rounded">arrow_back</span>戻る
+    </button>
+  </div>
+</div>
+
+<!-- ===== GUEST JOIN ===== -->
+<div id="screen-guest-join" class="screen">
+  <div class="app-header">
+    <h1>ルームに参加する</h1>
+    <p>Metalifeでの元の名前を入力してください</p>
+  </div>
+  <div class="card">
+    <div class="form-group">
+      <label class="form-label">ルームコード（4文字）</label>
+      <input id="guest-code" class="form-input" type="text" maxlength="4" placeholder="例：ABCD"
+        style="text-transform:uppercase;letter-spacing:.15em;font-size:1.2rem;text-align:center;">
+    </div>
+    <div class="form-group">
+      <label class="form-label">元の名前（1〜12文字）</label>
+      <input id="guest-nickname" class="form-input" type="text" maxlength="12" placeholder="例：たろう">
+    </div>
+    <button class="btn btn-primary" onclick="guestJoin()">
+      <span class="material-symbols-rounded">login</span>参加する
+    </button>
+    <button class="btn btn-ghost" onclick="showScreen('top')">
+      <span class="material-symbols-rounded">arrow_back</span>戻る
+    </button>
+  </div>
+</div>
+
+<!-- ===== WAITING ===== -->
+<div id="screen-waiting" class="screen">
+  <div class="app-header">
+    <h1>参加者を待っています</h1>
+    <p>このコードを参加者に伝えてください</p>
+  </div>
+  <div class="room-code-box">
+    <div class="rc-label">ルームコード</div>
+    <div class="rc-code" id="waiting-code">----</div>
+  </div>
+  <div class="card">
+    <div class="section-title">参加者</div>
+    <div id="waiting-player-list" class="player-list"></div>
+  </div>
+  <div id="waiting-host-ctrl" style="display:none">
+    <button class="btn btn-primary btn-lg" id="waiting-start-btn" onclick="hostStartNaming()" disabled>
+      <span class="material-symbols-rounded">play_arrow</span>ゲームを始める
+    </button>
+    <p class="status-text" id="waiting-count-msg">2人以上で開始できます</p>
+  </div>
+  <div id="waiting-guest-msg" style="display:none">
+    <p class="status-text">GMがゲームを始めるまで待ってね<span class="dots"></span></p>
+  </div>
+</div>
+
+<!-- ===== NAMING ===== -->
+<div id="screen-naming" class="screen">
+  <!-- 選択前 -->
+  <div id="naming-choose">
+    <div class="app-header">
+      <h1>参加方法を選んでね</h1>
+      <p>Metalife で名前を変えた人は上を選んでね</p>
+    </div>
+    <div class="card">
+      <div class="choice-card" onclick="focusChangedName()">
+        <span class="material-symbols-rounded choice-icon">edit</span>
+        <div>
+          <div class="choice-label">名前を変えた</div>
+          <div class="choice-desc">変更後の名前を入力して参加</div>
+        </div>
+      </div>
+      <div class="form-group" style="padding: 0 4px;">
+        <input id="changed-name-input" class="form-input" type="text" maxlength="16"
+          placeholder="変更後の名前を入力" style="margin-bottom:8px;">
+        <button class="btn btn-primary" onclick="submitChangedName()">
+          <span class="material-symbols-rounded">check</span>この名前で参加
+        </button>
+      </div>
+      <hr class="divider">
+      <div class="choice-card" onclick="submitAsVoter()" style="margin-bottom:0">
+        <span class="material-symbols-rounded choice-icon">how_to_vote</span>
+        <div>
+          <div class="choice-label">名前を変えていない</div>
+          <div class="choice-desc">投票役として参加</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 送信後 -->
+  <div id="naming-done" style="display:none">
+    <div class="app-header">
+      <h1>入力完了！</h1>
+    </div>
+    <div class="card">
+      <p id="naming-done-text" style="text-align:center;font-weight:700;font-size:1rem;color:var(--color-accent);margin-bottom:16px;"></p>
+      <div class="section-title">みんなの入力状況</div>
+      <div id="naming-progress-list" class="player-list"></div>
+    </div>
+    <div id="naming-host-ctrl" style="display:none">
+      <button class="btn btn-primary" onclick="hostStartVoting()">
+        <span class="material-symbols-rounded">how_to_vote</span>投票フェーズへ進む
+      </button>
+      <p class="status-text" id="naming-host-status"></p>
+    </div>
+    <div id="naming-guest-wait" style="display:none">
+      <p class="status-text">GMが次のフェーズへ進めるまで待ってね<span class="dots"></span></p>
+    </div>
+  </div>
+
+  <!-- GM用（ゲーム開始直後） -->
+  <div id="naming-gm-view" style="display:none">
+    <div class="app-header">
+      <h1>名前変えフェーズ</h1>
+      <p>参加者が入力するのを待っています</p>
+    </div>
+    <div class="card">
+      <div class="section-title">みんなの入力状況</div>
+      <div id="naming-gm-list" class="player-list"></div>
+    </div>
+    <button class="btn btn-primary" onclick="hostStartVoting()">
+      <span class="material-symbols-rounded">how_to_vote</span>投票フェーズへ進む
+    </button>
+    <p class="status-text" id="naming-gm-status"></p>
+  </div>
+</div>
+
+<!-- ===== VOTING ===== -->
+<div id="screen-voting" class="screen">
+  <!-- 投票役 -->
+  <div id="voting-voter-section">
+    <div class="app-header">
+      <h1>投票タイム</h1>
+      <p>それぞれの名前は誰のもの？</p>
+    </div>
+    <div class="alert alert-info">
+      <span class="material-symbols-rounded" style="font-size:1rem;vertical-align:middle;">info</span>
+      同じ人を複数の名前に選ぶことはできません
+    </div>
+    <div id="voting-cards"></div>
+    <button class="btn btn-primary btn-lg" id="voting-submit-btn" onclick="submitVotes()" disabled>
+      <span class="material-symbols-rounded">send</span>投票する
+    </button>
+    <p id="voting-done-msg" class="status-text" style="display:none">
+      投票しました！GMが結果を発表するまで待ってね<span class="dots"></span>
+    </p>
+  </div>
+
+  <!-- 名前変え役 -->
+  <div id="voting-changer-section" style="display:none">
+    <div class="app-header">
+      <h1>投票中...</h1>
+      <p>投票役が答えを考えています</p>
+    </div>
+    <div class="card" style="text-align:center;padding:32px 20px;">
+      <span class="material-symbols-rounded" style="font-size:48px;color:#7C3AED;">manage_accounts</span>
+      <p style="font-weight:700;font-size:1.1rem;margin:12px 0 6px;">あなたが誰だかバレないように！</p>
+      <p class="status-text" id="voting-changer-progress" style="margin:0"></p>
+    </div>
+  </div>
+
+  <!-- GM -->
+  <div id="voting-gm-section" style="display:none">
+    <div class="app-header">
+      <h1>投票中</h1>
+      <p>全員が投票したら進めてください</p>
+    </div>
+    <div class="card">
+      <p id="voting-gm-status" class="status-text" style="margin:0"></p>
+    </div>
+    <button class="btn btn-primary btn-lg" onclick="hostStartRevealing()">
+      <span class="material-symbols-rounded">celebration</span>結果発表へ進む
+    </button>
+  </div>
+</div>
+
+<!-- ===== REVEALING ===== -->
+<div id="screen-revealing" class="screen">
+  <div class="app-header">
+    <h1>結果発表！</h1>
+  </div>
+
+  <!-- 結果一覧 -->
+  <div id="result-list-wrap" class="card" style="padding:12px 16px;">
+    <div id="result-list"></div>
+  </div>
+
+  <!-- コピーボタン -->
+  <button class="btn btn-secondary" id="result-copy-btn" onclick="copyResults()">
+    <span class="material-symbols-rounded">content_copy</span>結果をコピー（チャット用）
+  </button>
+
+  <!-- GM操作 -->
+  <div id="revealing-gm-ctrl" style="display:none; margin-top:8px;">
+    <button class="btn btn-primary btn-lg" onclick="hostFinish()">
+      <span class="material-symbols-rounded">check_circle</span>ゲーム終了
+    </button>
+  </div>
+  <!-- 参加者 -->
+  <div id="revealing-wait" style="display:none">
+    <p class="status-text">GMがゲームを終了するまで待ってね<span class="dots"></span></p>
+  </div>
+</div>
+
+<!-- ===== DONE ===== -->
+<div id="screen-done" class="screen" style="text-align:center;">
+  <div class="done-circle"><span class="material-symbols-rounded">celebration</span></div>
+  <h2 style="font-size:1.4rem;font-weight:700;color:var(--color-primary);margin-bottom:8px;">ゲーム終了！</h2>
+  <p style="color:var(--color-muted);margin-bottom:32px;">お疲れ様でした！</p>
+  <button class="btn btn-primary" style="max-width:480px;margin:0 auto;" onclick="goToTop()">
+    <span class="material-symbols-rounded">home</span>TOPに戻る
+  </button>
+</div>
+
+<!-- ===== HOST DISCONNECT ===== -->
+<div class="overlay" id="host-gone-overlay">
+  <div class="overlay-box">
+    <h3>GMが接続を切りました</h3>
+    <p>ゲームを続けることができません</p>
+    <button class="btn btn-primary" onclick="goToTop()">TOPに戻る</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+<script>
+// ===== Firebase =====
+firebase.initializeApp({
+  apiKey:            "AIzaSyC0bqQdDJeTAWrqFYqjOT1NsVFiunPemIw",
+  authDomain:        "roomk-tools.firebaseapp.com",
+  projectId:         "roomk-tools",
+  storageBucket:     "roomk-tools.firebasestorage.app",
+  messagingSenderId: "1023647201537",
+  appId:             "1:1023647201537:web:3daa48e56f1ec37fc2add9",
+  databaseURL:       "https://roomk-tools-default-rtdb.asia-southeast1.firebasedatabase.app"
+});
+const db = firebase.database();
+
+// ===== State =====
+const state = {
+  roomCode: null, nickname: null,
+  isHost: false,       // GM か否か
+  gameRole: null,      // 'changer' | 'voter' (参加者のみ)
+  roomRef: null,
+  currentScreen: 'top',
+  myVotes: {},         // { changerNick: guessedNick }
+  votingRendered: false,
+};
+
+// ===== Utils =====
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function toast(msg, d = 2500) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), d);
+}
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + id).classList.add('active');
+  state.currentScreen = id;
+  window.scrollTo(0, 0);
+}
+function initial(name) { return name ? name.charAt(0) : '?'; }
+function generateCode() {
+  const c = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let s = '';
+  for (let i = 0; i < 4; i++) s += c[Math.floor(Math.random() * c.length)];
+  return s;
+}
+function saveSession() {
+  sessionStorage.setItem('nc_session', JSON.stringify({
+    roomCode: state.roomCode, nickname: state.nickname,
+    isHost: state.isHost,     gameRole: state.gameRole
+  }));
+}
+function clearSession() { sessionStorage.removeItem('nc_session'); }
+
+// ===== Navigation =====
+function goHostSetup() { showScreen('host-setup'); }
+function goGuestJoin()  { showScreen('guest-join'); }
+function goToTop() {
+  if (state.roomRef) state.roomRef.off();
+  clearSession();
+  Object.assign(state, { roomCode:null, nickname:null, isHost:false, gameRole:null, roomRef:null, myVotes:{}, votingRendered:false });
+  showScreen('top');
+}
+function focusChangedName() {
+  document.getElementById('changed-name-input').focus();
+}
+
+// ===== Host: Create Room =====
+async function hostCreateRoom() {
+  const nick = document.getElementById('host-nickname').value.trim();
+  if (!nick)         { toast('ニックネームを入力してください'); return; }
+  if (nick.length > 8) { toast('8文字以内で入力してください'); return; }
+
+  const btn = (typeof event !== 'undefined' && event?.target?.closest('button')) || null;
+  if (btn) btn.disabled = true;
+  try {
+    let code;
+    do { code = generateCode(); } while ((await db.ref(`namechange_rooms/${code}`).get()).exists());
+
+    await db.ref(`namechange_rooms/${code}`).set({
+      host: nick, status: 'waiting',
+      revealIndex: 0, revealAnswer: false, revealOrder: null,
+      players: { [nick]: { isHost: true, gameRole: 'host', changedName: null, votes: null, ready: true } }
+    });
+    db.ref(`namechange_rooms/${code}`).onDisconnect().remove();
+
+    state.roomCode = code; state.nickname = nick; state.isHost = true;
+    state.roomRef = db.ref(`namechange_rooms/${code}`);
+    saveSession(); startListener();
+
+    document.getElementById('waiting-code').textContent = code;
+    document.getElementById('waiting-host-ctrl').style.display = 'block';
+    showScreen('waiting');
+  } catch(e) { toast('エラー: ' + e.message); if (btn) btn.disabled = false; }
+}
+
+// ===== Guest: Join =====
+async function guestJoin() {
+  const code = document.getElementById('guest-code').value.trim().toUpperCase();
+  const nick = document.getElementById('guest-nickname').value.trim();
+  if (!code || code.length !== 4) { toast('4文字のコードを入力してください'); return; }
+  if (!nick)          { toast('元の名前を入力してください'); return; }
+  if (nick.length > 12) { toast('12文字以内で入力してください'); return; }
+
+  const btn = (typeof event !== 'undefined' && event?.target?.closest('button')) || null;
+  if (btn) btn.disabled = true;
+  try {
+    const snap = await db.ref(`namechange_rooms/${code}`).get();
+    if (!snap.exists())                   { toast('ルームが見つかりません'); if(btn)btn.disabled=false; return; }
+    if (snap.val().status !== 'waiting')  { toast('すでにゲームが始まっています'); if(btn)btn.disabled=false; return; }
+    if (snap.val().players?.[nick])       { toast('その名前はすでに使われています'); if(btn)btn.disabled=false; return; }
+
+    await db.ref(`namechange_rooms/${code}/players/${nick}`).set({
+      isHost: false, gameRole: null, changedName: null, votes: null, ready: false
+    });
+    db.ref(`namechange_rooms/${code}/players/${nick}`).onDisconnect().remove();
+
+    state.roomCode = code; state.nickname = nick; state.isHost = false;
+    state.roomRef = db.ref(`namechange_rooms/${code}`);
+    saveSession(); startListener();
+
+    document.getElementById('waiting-code').textContent = code;
+    document.getElementById('waiting-guest-msg').style.display = 'block';
+    showScreen('waiting');
+  } catch(e) { toast('エラー: ' + e.message); if (btn) btn.disabled = false; }
+}
+
+// ===== Room Listener =====
+function startListener() {
+  state.roomRef.on('value', snap => {
+    if (!snap.exists()) {
+      if (!state.isHost) document.getElementById('host-gone-overlay').classList.add('show');
+      return;
+    }
+    handle(snap.val());
+  });
+}
+function handle(room) {
+  const players = room.players || {};
+  switch (room.status) {
+    case 'waiting':   renderWaiting(room, players);   break;
+    case 'naming':    renderNaming(room, players);    break;
+    case 'voting':    renderVoting(room, players);    break;
+    case 'revealing': renderRevealing(room, players); break;
+    case 'done':      showScreen('done');             break;
+  }
+}
+
+// ===== Waiting =====
+function renderWaiting(room, players) {
+  if (state.currentScreen !== 'waiting') {
+    document.getElementById('waiting-code').textContent = state.roomCode;
+    showScreen('waiting');
+  }
+  const list = document.getElementById('waiting-player-list');
+  list.innerHTML = '';
+  Object.entries(players).forEach(([nick, p]) => {
+    const d = document.createElement('div'); d.className = 'player-item';
+    d.innerHTML = `<div class="player-avatar">${esc(initial(nick))}</div>
+      <span class="player-name">${esc(nick)}</span>
+      ${p.isHost ? '<span class="badge badge-gm">GM</span>' : ''}`;
+    list.appendChild(d);
+  });
+  if (state.isHost) {
+    document.getElementById('waiting-host-ctrl').style.display = 'block';
+    document.getElementById('waiting-guest-msg').style.display = 'none';
+    const nonGM = Object.values(players).filter(p => !p.isHost).length;
+    const btn = document.getElementById('waiting-start-btn');
+    btn.disabled = nonGM < 2;
+    document.getElementById('waiting-count-msg').textContent =
+      nonGM < 2 ? '2人以上で開始できます' : `${nonGM}人が参加中`;
+  } else {
+    document.getElementById('waiting-host-ctrl').style.display = 'none';
+    document.getElementById('waiting-guest-msg').style.display = 'block';
+  }
+}
+
+async function hostStartNaming() {
+  await state.roomRef.update({ status: 'naming' });
+}
+
+// ===== Naming =====
+function renderNaming(room, players) {
+  if (state.currentScreen !== 'naming') showScreen('naming');
+  const me = players[state.nickname];
+  if (!me) return;
+
+  if (state.isHost) {
+    // GM view
+    document.getElementById('naming-choose').style.display = 'none';
+    document.getElementById('naming-done').style.display   = 'none';
+    document.getElementById('naming-gm-view').style.display = 'block';
+    const nonGM = Object.entries(players).filter(([,p]) => !p.isHost);
+    const readyCnt = nonGM.filter(([,p]) => p.ready).length;
+    document.getElementById('naming-gm-status').textContent =
+      readyCnt === nonGM.length ? '全員が入力済みです！' : `${readyCnt} / ${nonGM.length} 人が入力済み`;
+    renderNamingList(nonGM, 'naming-gm-list');
+
+  } else if (me.ready) {
+    // 送信済み → 待機表示
+    document.getElementById('naming-choose').style.display  = 'none';
+    document.getElementById('naming-gm-view').style.display = 'none';
+    document.getElementById('naming-done').style.display    = 'block';
+    document.getElementById('naming-host-ctrl').style.display  = 'none';
+    document.getElementById('naming-guest-wait').style.display = 'block';
+    document.getElementById('naming-done-text').textContent =
+      me.gameRole === 'changer'
+        ? `「${me.changedName}」に名前を変えました`
+        : '投票役として参加します';
+    const nonGM = Object.entries(players).filter(([,p]) => !p.isHost);
+    renderNamingList(nonGM, 'naming-progress-list');
+
+  } else {
+    // 未選択 → 選択フォーム表示
+    document.getElementById('naming-choose').style.display  = 'block';
+    document.getElementById('naming-done').style.display    = 'none';
+    document.getElementById('naming-gm-view').style.display = 'none';
+  }
+}
+
+function renderNamingList(nonGMEntries, containerId) {
+  const list = document.getElementById(containerId);
+  list.innerHTML = '';
+  nonGMEntries.forEach(([nick, p]) => {
+    const d = document.createElement('div'); d.className = 'player-item';
+    const badge = p.ready
+      ? (p.gameRole === 'changer'
+          ? '<span class="badge badge-changer">名前変え</span>'
+          : '<span class="badge badge-voter">投票</span>')
+      : '<span class="badge badge-pending">入力中...</span>';
+    d.innerHTML = `<div class="player-avatar">${esc(initial(nick))}</div>
+      <span class="player-name">${esc(nick)}</span>${badge}`;
+    list.appendChild(d);
+  });
+}
+
+async function submitChangedName() {
+  const name = document.getElementById('changed-name-input').value.trim();
+  if (!name)           { toast('変更後の名前を入力してください'); return; }
+  if (name.length > 16) { toast('16文字以内で入力してください'); return; }
+  await db.ref(`namechange_rooms/${state.roomCode}/players/${state.nickname}`).update(
+    { gameRole: 'changer', changedName: name, ready: true }
+  );
+  state.gameRole = 'changer'; saveSession();
+}
+
+async function submitAsVoter() {
+  await db.ref(`namechange_rooms/${state.roomCode}/players/${state.nickname}`).update(
+    { gameRole: 'voter', changedName: null, ready: true }
+  );
+  state.gameRole = 'voter'; saveSession();
+}
+
+async function hostStartVoting() {
+  await state.roomRef.update({ status: 'voting' });
+}
+
+// ===== Voting =====
+function renderVoting(room, players) {
+  if (state.currentScreen !== 'voting') {
+    showScreen('voting');
+    state.votingRendered = false;
+  }
+  const me = players[state.nickname];
+  if (!me) return;
+
+  const changers = Object.entries(players).filter(([,p]) => p.gameRole === 'changer');
+  const voters   = Object.entries(players).filter(([,p]) => p.gameRole === 'voter');
+  const votedCnt = voters.filter(([,p]) => p.votes != null).length;
+
+  ['voting-voter-section','voting-changer-section','voting-gm-section']
+    .forEach(id => document.getElementById(id).style.display = 'none');
+
+  if (state.isHost) {
+    document.getElementById('voting-gm-section').style.display = 'block';
+    document.getElementById('voting-gm-status').textContent =
+      voters.length === 0 ? '投票役がいません'
+      : votedCnt === voters.length ? '全員が投票しました！'
+      : `${votedCnt} / ${voters.length} 人が投票済み`;
+
+  } else if (me.gameRole === 'voter') {
+    document.getElementById('voting-voter-section').style.display = 'block';
+    const alreadyVoted = me.votes != null;
+    if (alreadyVoted) {
+      document.getElementById('voting-submit-btn').style.display = 'none';
+      document.getElementById('voting-done-msg').style.display   = 'block';
+    } else {
+      document.getElementById('voting-submit-btn').style.display = 'flex';
+      document.getElementById('voting-done-msg').style.display   = 'none';
+      if (!state.votingRendered) { renderVotingCards(changers); state.votingRendered = true; }
+    }
+
+  } else {
+    // changer
+    document.getElementById('voting-changer-section').style.display = 'block';
+    document.getElementById('voting-changer-progress').textContent =
+      `${votedCnt} / ${voters.length} 人が投票済み`;
+  }
+}
+
+function renderVotingCards(changers) {
+  const container = document.getElementById('voting-cards');
+  container.innerHTML = '';
+  state.myVotes = {};
+  // シャッフル表示
+  const shuffled = [...changers].sort(() => Math.random() - 0.5);
+  shuffled.forEach(([nick, p]) => {
+    const card = document.createElement('div');
+    card.className = 'vote-card'; card.dataset.changer = nick;
+
+    const nameEl = document.createElement('div');
+    nameEl.className = 'changed-name-label'; nameEl.textContent = p.changedName;
+
+    const opts = document.createElement('div');
+    opts.className = 'vote-options';
+    changers.forEach(([origNick]) => {
+      const btn = document.createElement('button');
+      btn.className = 'vote-opt'; btn.textContent = origNick;
+      btn.dataset.original = origNick;
+      btn.onclick = () => pickVote(card, nick, origNick, btn);
+      opts.appendChild(btn);
+    });
+    card.appendChild(nameEl); card.appendChild(opts);
+    container.appendChild(card);
+  });
+  updateSubmitBtn();
+}
+
+function pickVote(card, changerNick, guessedNick, clickedBtn) {
+  // 同カード内の前選択を解除
+  const prev = card.querySelector('.vote-opt.selected');
+  if (prev) {
+    const prevGuess = prev.dataset.original;
+    delete state.myVotes[changerNick];
+    prev.classList.remove('selected');
+    document.querySelectorAll(`.vote-opt[data-original="${CSS.escape(prevGuess)}"]`)
+      .forEach(b => { if (b !== prev) b.disabled = false; });
+  }
+  // 新しい選択
+  clickedBtn.classList.add('selected');
+  state.myVotes[changerNick] = guessedNick;
+  card.classList.add('answered');
+  // 他カードで同じ人を選べないようにする
+  document.querySelectorAll(`.vote-opt[data-original="${CSS.escape(guessedNick)}"]`)
+    .forEach(b => { if (b !== clickedBtn) b.disabled = true; });
+  updateSubmitBtn();
+}
+
+function updateSubmitBtn() {
+  const total = document.querySelectorAll('.vote-card').length;
+  document.getElementById('voting-submit-btn').disabled = Object.keys(state.myVotes).length < total;
+}
+
+async function submitVotes() {
+  if (Object.keys(state.myVotes).length < document.querySelectorAll('.vote-card').length) {
+    toast('全ての名前に答えてください'); return;
+  }
+  await db.ref(`namechange_rooms/${state.roomCode}/players/${state.nickname}/votes`).set(state.myVotes);
+  toast('投票しました！');
+}
+
+// ===== Host: Start Revealing =====
+async function hostStartRevealing() {
+  const snap = await state.roomRef.get();
+  const players = snap.val().players || {};
+  const changers = Object.keys(players).filter(n => players[n].gameRole === 'changer')
+                         .sort(() => Math.random() - 0.5);
+  await state.roomRef.update({ status: 'revealing', revealOrder: changers });
+}
+
+// ===== Revealing =====
+function renderRevealing(room, players) {
+  if (state.currentScreen !== 'revealing') showScreen('revealing');
+
+  const order  = room.revealOrder || [];
+  const voters = Object.entries(players).filter(([, p]) => p.gameRole === 'voter' && p.votes);
+  const total  = voters.length;
+  const list   = document.getElementById('result-list');
+  list.innerHTML = '';
+
+  order.forEach(nick => {
+    const p = players[nick];
+    if (!p) return;
+    const correct = voters.filter(([, vp]) => vp.votes[nick] === nick).length;
+    const countText = total > 0 ? `${total}人中${correct}人正解` : '';
+
+    const row = document.createElement('div');
+    row.className = 'result-item';
+    row.innerHTML =
+      `<span class="result-changed">${esc(p.changedName || '???')}</span>
+       <span class="result-arrow material-symbols-rounded">arrow_forward</span>
+       <span class="result-original">${esc(nick)}</span>
+       ${countText ? `<span class="result-count">${esc(countText)}</span>` : ''}`;
+    list.appendChild(row);
+  });
+
+  document.getElementById('revealing-gm-ctrl').style.display = state.isHost ? 'block' : 'none';
+  document.getElementById('revealing-wait').style.display     = state.isHost ? 'none'  : 'block';
+}
+
+// ===== Copy Results =====
+function copyResults() {
+  const rows = document.querySelectorAll('.result-item');
+  if (!rows.length) return;
+  const lines = ['【名前変えゲーム 結果】'];
+  rows.forEach(row => {
+    const changed  = row.querySelector('.result-changed')?.textContent  || '';
+    const original = row.querySelector('.result-original')?.textContent || '';
+    const count    = row.querySelector('.result-count')?.textContent    || '';
+    lines.push(`・${changed} → ${original}${count ? `（${count}）` : ''}`);
+  });
+  const text = lines.join('\n');
+  navigator.clipboard.writeText(text).then(() => {
+    toast('クリップボードにコピーしました！');
+  }).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = text; document.body.appendChild(ta);
+    ta.select(); document.execCommand('copy');
+    document.body.removeChild(ta);
+    toast('コピーしました！');
+  });
+}
+
+async function hostFinish() {
+  await state.roomRef.update({ status: 'done' });
+  setTimeout(() => state.roomRef.remove(), 30000);
+}
+
+// ===== Reconnect =====
+async function tryReconnect() {
+  const saved = sessionStorage.getItem('nc_session');
+  if (!saved) return false;
+  const { roomCode, nickname, isHost, gameRole } = JSON.parse(saved);
+  if (!roomCode || !nickname) return false;
+  try {
+    const snap = await db.ref(`namechange_rooms/${roomCode}`).get();
+    if (!snap.exists()) { clearSession(); return false; }
+    if (!snap.val().players?.[nickname]) { clearSession(); return false; }
+    state.roomCode = roomCode; state.nickname = nickname;
+    state.isHost = isHost;    state.gameRole = gameRole;
+    state.roomRef = db.ref(`namechange_rooms/${roomCode}`);
+    document.getElementById('waiting-code').textContent = roomCode;
+    startListener(); toast('セッションに再接続しました');
+    return true;
+  } catch(e) { clearSession(); return false; }
+}
+
+// ===== Init =====
+window.addEventListener('load', async () => {
+  if (!await tryReconnect()) showScreen('top');
+});
+</script>
+</body>
+</html>

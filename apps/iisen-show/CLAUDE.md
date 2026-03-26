@@ -41,7 +41,7 @@ TOP
 
 ## Firebase データ構造（Realtime Database）
 ```
-rooms/{roomCode}/
+iisen_rooms/{roomCode}/
   ├── host:             string        # ホストのニックネーム
   ├── status:           string        # waiting | selecting | answering | result | finished
   ├── currentQuestion:  string        # 現在の問題文
