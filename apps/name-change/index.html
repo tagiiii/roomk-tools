@@ -6,36 +6,22 @@
   <title>名前変えゲーム | roomK</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
+  <link rel="stylesheet" href="../shared/css/design-system.css">
   <style>
-    :root {
-      --color-primary: #1C3F5E;
-      --color-accent:  #2E7D8C;
-      --color-bg:      #F5F2EC;
-      --color-surface: #FFFFFF;
-      --color-text:    #1A1A1A;
-      --color-muted:   #5A6270;
-      --color-border:  #C4D2D8;
-      --color-success: #1F6E3C;
-      --color-error:   #B91C1C;
-      --font-base: 'Noto Sans JP', sans-serif;
-    }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: var(--font-base); background: var(--color-bg); color: var(--color-text); min-height: 100vh; }
-
     /* Screen */
     .screen { display: none; max-width: 480px; margin: 0 auto; padding: 24px 16px 40px; }
     .screen.active { display: block; }
 
     /* Header */
-    .app-header { text-align: center; padding: 28px 0 20px; }
+    .nc-header { text-align: center; padding: 28px 0 20px; }
     .icon-wrap {
       width: 64px; height: 64px; border-radius: 16px;
       background: var(--color-primary);
       display: flex; align-items: center; justify-content: center; margin: 0 auto 12px;
     }
     .icon-wrap .material-symbols-rounded { font-size: 32px; color: #fff; }
-    .app-header h1 { font-size: 1.5rem; font-weight: 700; color: var(--color-primary); }
-    .app-header p  { font-size: 0.85rem; color: var(--color-muted); margin-top: 4px; }
+    .nc-header h1 { font-size: 1.5rem; font-weight: 700; color: var(--color-primary); }
+    .nc-header p  { font-size: 0.85rem; color: var(--color-muted); margin-top: 4px; }
 
     /* Card */
     .card { background: var(--color-surface); border-radius: 12px; padding: 20px; margin-bottom: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
@@ -55,16 +41,6 @@
     .btn-ghost    { background: transparent; color: var(--color-muted); }
     .btn-lg       { padding: 18px 24px; font-size: 1.1rem; }
     .btn-sm       { padding: 8px 14px; font-size: 0.85rem; }
-
-    /* Form */
-    .form-group { margin-bottom: 16px; }
-    .form-label { display: block; font-size: 0.85rem; font-weight: 700; color: var(--color-muted); margin-bottom: 6px; }
-    .form-input {
-      width: 100%; padding: 12px 14px; border: 2px solid var(--color-border); border-radius: 8px;
-      font-family: var(--font-base); font-size: 1rem; color: var(--color-text);
-      background: var(--color-bg); outline: none; transition: border-color .15s;
-    }
-    .form-input:focus { border-color: var(--color-accent); }
 
     /* Room code */
     .room-code-box { background: #EBF3F5; border-radius: 10px; padding: 16px; text-align: center; margin-bottom: 16px; }
@@ -94,11 +70,6 @@
     /* Alert */
     .alert { padding: 12px 14px; border-radius: 8px; font-size: 0.85rem; margin-bottom: 12px; }
     .alert-info { background: #EBF3F5; color: var(--color-accent); }
-
-    /* Spacing utilities */
-    .mt-sm { margin-top:  8px; }
-    .mt-md { margin-top: 16px; }
-    .mt-lg { margin-top: 24px; }
 
     /* Waiting dots */
     .dots::after { content: ''; animation: dots 1.5s infinite; }
@@ -168,7 +139,7 @@
 
 <!-- ===== TOP ===== -->
 <div id="screen-top" class="screen">
-  <div class="app-header">
+  <div class="nc-header">
     <div class="icon-wrap"><span class="material-symbols-rounded">manage_accounts</span></div>
     <h1>名前変えゲーム</h1>
     <p>変わった名前は誰のもの？</p>
@@ -185,7 +156,7 @@
 
 <!-- ===== HOST SETUP ===== -->
 <div id="screen-host-setup" class="screen">
-  <div class="app-header">
+  <div class="nc-header">
     <h1>ルームを作る</h1>
     <p>GMのニックネームを入力してください</p>
   </div>
@@ -205,7 +176,7 @@
 
 <!-- ===== GUEST JOIN ===== -->
 <div id="screen-guest-join" class="screen">
-  <div class="app-header">
+  <div class="nc-header">
     <h1>ルームに参加する</h1>
     <p>Metalifeでの元の名前を入力してください</p>
   </div>
@@ -230,7 +201,7 @@
 
 <!-- ===== WAITING ===== -->
 <div id="screen-waiting" class="screen">
-  <div class="app-header">
+  <div class="nc-header">
     <h1>参加者を待っています</h1>
     <p>このコードを参加者に伝えてください</p>
   </div>
@@ -257,7 +228,7 @@
 <div id="screen-naming" class="screen">
   <!-- 選択前 -->
   <div id="naming-choose">
-    <div class="app-header">
+    <div class="nc-header">
       <h1>参加方法を選んでね</h1>
       <p>Metalife で名前を変えた人は上を選んでね</p>
     </div>
@@ -289,7 +260,7 @@
 
   <!-- 送信後 -->
   <div id="naming-done" style="display:none">
-    <div class="app-header">
+    <div class="nc-header">
       <h1>入力完了！</h1>
     </div>
     <div class="card">
@@ -310,7 +281,7 @@
 
   <!-- GM用（ゲーム開始直後） -->
   <div id="naming-gm-view" style="display:none">
-    <div class="app-header">
+    <div class="nc-header">
       <h1>名前変えフェーズ</h1>
       <p>参加者が入力するのを待っています</p>
     </div>
@@ -329,7 +300,7 @@
 <div id="screen-voting" class="screen">
   <!-- 投票役 -->
   <div id="voting-voter-section">
-    <div class="app-header">
+    <div class="nc-header">
       <h1>投票タイム</h1>
       <p>それぞれの名前は誰のもの？</p>
     </div>
@@ -348,7 +319,7 @@
 
   <!-- 名前変え役 -->
   <div id="voting-changer-section" style="display:none">
-    <div class="app-header">
+    <div class="nc-header">
       <h1>投票中...</h1>
       <p>投票役が答えを考えています</p>
     </div>
@@ -361,7 +332,7 @@
 
   <!-- GM -->
   <div id="voting-gm-section" style="display:none">
-    <div class="app-header">
+    <div class="nc-header">
       <h1>投票中</h1>
       <p>全員が投票したら進めてください</p>
     </div>
@@ -376,7 +347,7 @@
 
 <!-- ===== REVEALING ===== -->
 <div id="screen-revealing" class="screen">
-  <div class="app-header">
+  <div class="nc-header">
     <h1>結果発表！</h1>
   </div>
 
@@ -452,7 +423,7 @@ const state = {
 
 // ===== Utils =====
 function esc(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 function toast(msg, d = 2500) {
   const t = document.getElementById('toast');
