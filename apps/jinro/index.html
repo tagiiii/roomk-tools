@@ -1,0 +1,2279 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+  <title>人狼ゲーム | roomK</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
+  <link rel="stylesheet" href="../shared/css/design-system.css">
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+  <style>
+    /* ── レイアウト基盤 ── */
+    .screen { display: none; min-height: 100dvh; }
+    .screen.active { display: flex; flex-direction: column; align-items: center; }
+    .page { width: 100%; max-width: 480px; padding: 40px 20px 80px; }
+
+    /* ── ヘッダー ── */
+    .jn-header { text-align: center; padding: 48px 0 32px; }
+    .jn-header__icon {
+      width: 80px; height: 80px; border-radius: 50%;
+      background: linear-gradient(135deg, #1C3F5E, #4A1942);
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 16px;
+    }
+    .jn-header__icon .material-symbols-rounded { font-size: 44px; color: #fff; }
+    .jn-header__title { font-size: 28px; font-weight: 700; color: var(--color-primary); }
+    .jn-header__sub { font-size: 14px; color: var(--color-muted); margin-top: 6px; }
+
+    /* ── ルームコード ── */
+    .room-code {
+      font-size: 48px; font-weight: 700;
+      letter-spacing: 0.15em; color: var(--color-primary); text-align: center;
+    }
+
+    /* ── フェーズバッジ ── */
+    .phase-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 6px 14px; border-radius: 999px;
+      font-size: 13px; font-weight: 700; color: #fff;
+      margin-bottom: 20px;
+    }
+    .phase-badge.night   { background: #1e1b4b; }
+    .phase-badge.morning { background: #d97706; }
+    .phase-badge.day     { background: var(--color-accent); }
+    .phase-badge.vote    { background: #6B3FA0; }
+    .phase-badge.exec    { background: var(--color-error); }
+
+    /* ── 役職カード（フリップ）── */
+    .role-flip-card {
+      perspective: 800px; height: 220px;
+      cursor: pointer; margin-bottom: 24px;
+    }
+    .role-flip-inner {
+      position: relative; width: 100%; height: 100%;
+      transform-style: preserve-3d;
+      transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
+    }
+    .role-flip-card.flipped .role-flip-inner { transform: rotateY(180deg); }
+    .role-flip-face {
+      position: absolute; inset: 0;
+      backface-visibility: hidden; -webkit-backface-visibility: hidden;
+      border-radius: var(--radius-card);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 10px;
+    }
+    .role-flip-back {
+      background: linear-gradient(135deg, #1C3F5E, #4A1942);
+      color: #fff; font-size: 14px;
+    }
+    .role-flip-front {
+      transform: rotateY(180deg);
+      border: 3px solid var(--color-border);
+    }
+    .role-flip-front.village { background: #EFF9F8; border-color: var(--color-accent); }
+    .role-flip-front.wolf    { background: #FEF2F2; border-color: var(--color-error); }
+    .role-flip-front.third   { background: #F5F3FF; border-color: #7C3AED; }
+    .role-name {
+      font-size: 36px; font-weight: 700; color: var(--color-primary);
+    }
+    .role-faction {
+      font-size: 12px; font-weight: 700; padding: 3px 10px;
+      border-radius: 999px; color: #fff;
+    }
+    .role-faction.village { background: var(--color-accent); }
+    .role-faction.wolf    { background: var(--color-error); }
+    .role-faction.third   { background: #7C3AED; }
+    .role-desc { font-size: 12px; color: var(--color-muted); text-align: center; padding: 0 16px; }
+
+    /* ── 役職設定スピナー ── */
+    .role-config-grid {
+      display: flex; flex-direction: column; gap: 0;
+    }
+    .role-config-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 0; border-bottom: 1px solid var(--color-border);
+    }
+    .role-config-row:last-child { border-bottom: none; }
+    .role-config-name { font-size: 15px; font-weight: 500; }
+    .role-config-faction {
+      font-size: 10px; font-weight: 700; padding: 2px 6px;
+      border-radius: 4px; color: #fff; margin-left: 6px;
+    }
+    .role-config-faction.village { background: var(--color-accent); }
+    .role-config-faction.wolf    { background: var(--color-error); }
+    .role-config-faction.third   { background: #7C3AED; }
+    .role-spinner {
+      display: flex; align-items: center; gap: 8px;
+    }
+    .spinner-btn {
+      width: 28px; height: 28px; border-radius: 50%;
+      border: 2px solid var(--color-border);
+      background: var(--color-surface);
+      font-size: 18px; font-weight: 700; line-height: 1;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      color: var(--color-primary);
+    }
+    .spinner-btn:active { background: var(--color-bg); }
+    .spinner-count {
+      width: 28px; text-align: center;
+      font-size: 16px; font-weight: 700; color: var(--color-primary);
+    }
+    .role-total {
+      text-align: center; font-size: 14px;
+      padding: 10px 0; font-weight: 500;
+    }
+    .role-total.ok   { color: var(--color-success); }
+    .role-total.over { color: var(--color-error); }
+
+    /* ── プレイヤーリスト ── */
+    .player-list { list-style: none; }
+    .player-item {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 0; border-bottom: 1px solid var(--color-border);
+      font-size: 15px;
+    }
+    .player-item:last-child { border-bottom: none; }
+    .player-item.dead { opacity: 0.4; text-decoration: line-through; }
+    .player-name { display: flex; align-items: center; gap: 6px; }
+    .player-tag {
+      font-size: 11px; font-weight: 700; padding: 2px 6px;
+      border-radius: 4px; background: var(--color-accent); color: #fff;
+    }
+    .player-tag.me     { background: var(--color-muted); }
+    .player-tag.host   { background: var(--color-primary); }
+    .player-tag.wolf   { background: var(--color-error); }
+    .player-tag.dead   { background: #aaa; }
+    .player-tag.voted  { background: var(--color-success); }
+
+    /* ── 夜フェーズ ── */
+    .night-screen { background: #0f172a; }
+    .night-screen .page { color: #e2e8f0; }
+    .night-title { font-size: 22px; font-weight: 700; color: #e2e8f0; margin-bottom: 8px; }
+    .night-sub   { font-size: 14px; color: #94a3b8; margin-bottom: 24px; }
+    .night-panel {
+      background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
+      border-radius: var(--radius-card); padding: 20px; margin-bottom: 16px;
+    }
+    .night-panel h3 { font-size: 15px; font-weight: 700; color: #cbd5e1; margin-bottom: 14px; }
+    .night-waiting {
+      text-align: center; color: #64748b; font-size: 14px; padding: 24px 0;
+    }
+    .night-select {
+      width: 100%; padding: 10px 12px; border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.2);
+      background: rgba(255,255,255,0.08); color: #e2e8f0;
+      font-family: var(--font-base); font-size: 15px; margin-bottom: 12px;
+    }
+    .night-select option { background: #1e293b; color: #e2e8f0; }
+    .btn-night-action {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      width: 100%; padding: 12px; border-radius: 10px;
+      background: var(--color-accent); color: #fff;
+      border: none; font-family: var(--font-base); font-size: 15px; font-weight: 700;
+      cursor: pointer;
+    }
+    .btn-night-action:disabled { background: #334155; color: #64748b; cursor: default; }
+
+    /* ── 朝アナウンス ── */
+    .morning-log { display: flex; flex-direction: column; gap: 10px; }
+    .morning-entry {
+      background: var(--color-surface); border-radius: 10px;
+      padding: 14px 16px; display: flex; align-items: flex-start; gap: 12px;
+    }
+    .morning-entry .material-symbols-rounded { font-size: 22px; flex-shrink: 0; }
+    .morning-entry.kill    { border-left: 4px solid var(--color-error); }
+    .morning-entry.kill .material-symbols-rounded { color: var(--color-error); }
+    .morning-entry.safe    { border-left: 4px solid var(--color-success); }
+    .morning-entry.safe .material-symbols-rounded { color: var(--color-success); }
+    .morning-entry.info    { border-left: 4px solid var(--color-accent); }
+    .morning-entry.info .material-symbols-rounded { color: var(--color-accent); }
+    .morning-entry-text { font-size: 14px; line-height: 1.6; }
+
+    /* ── タイマー ── */
+    .timer-wrap { text-align: center; margin-bottom: 20px; }
+    .timer-val  { font-size: 64px; font-weight: 700; color: var(--color-primary); line-height: 1; }
+    .timer-val.urgent { color: var(--color-error); }
+    .timer-lbl  { font-size: 13px; color: var(--color-muted); margin-top: 4px; }
+
+    /* ── 投票ボタン ── */
+    .vote-btn {
+      display: flex; align-items: center; justify-content: space-between;
+      width: 100%; padding: 14px 16px; margin-bottom: 8px;
+      background: var(--color-surface); border: 2px solid var(--color-border);
+      border-radius: 12px; font-family: var(--font-base); font-size: 16px; font-weight: 500;
+      cursor: pointer; transition: border-color 0.15s, background 0.15s;
+    }
+    .vote-btn:hover   { border-color: #6B3FA0; background: #F5F0FB; }
+    .vote-btn.selected { border-color: #6B3FA0; background: #F0EAF8; color: #6B3FA0; }
+
+    /* ── 結果バナー ── */
+    .result-banner {
+      text-align: center; padding: 28px 20px;
+      border-radius: var(--radius-card); margin-bottom: 16px;
+    }
+    .result-banner.village { background: linear-gradient(135deg, #EFF9F8, #E0F2F7); border: 2px solid var(--color-accent); }
+    .result-banner.wolf    { background: linear-gradient(135deg, #FEF2F2, #FDECEA); border: 2px solid var(--color-error); }
+    .result-banner.third   { background: linear-gradient(135deg, #F5F3FF, #EDE9FE); border: 2px solid #7C3AED; }
+    .result-banner.draw    { background: linear-gradient(135deg, #F8F9FA, #EEF0F2); border: 2px solid var(--color-border); }
+    .result-title { font-size: 24px; font-weight: 700; color: var(--color-primary); margin-bottom: 6px; }
+    .result-sub   { font-size: 14px; color: var(--color-muted); }
+
+    /* ── 役割一覧（結果）── */
+    .role-reveal-list { display: flex; flex-direction: column; gap: 0; }
+    .role-reveal-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 0; border-bottom: 1px solid var(--color-border);
+      font-size: 14px;
+    }
+    .role-reveal-row:last-child { border-bottom: none; }
+    .role-reveal-row.dead { opacity: 0.5; }
+    .role-reveal-badge {
+      font-size: 12px; font-weight: 700; padding: 2px 8px;
+      border-radius: 6px; color: #fff;
+    }
+    .role-reveal-badge.village { background: var(--color-accent); }
+    .role-reveal-badge.wolf    { background: var(--color-error); }
+    .role-reveal-badge.third   { background: #7C3AED; }
+
+    /* ── オーバーレイ ── */
+    .overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(28,63,94,0.88); z-index: 100;
+      flex-direction: column; align-items: center; justify-content: center;
+      gap: 16px; color: #fff; text-align: center; padding: 24px;
+    }
+    .overlay.show { display: flex; }
+    .overlay-title { font-size: 20px; font-weight: 700; }
+    .overlay-sub   { font-size: 14px; opacity: 0.8; }
+    .spin-circle {
+      width: 32px; height: 32px;
+      border: 3px solid rgba(255,255,255,0.3); border-top-color: #fff;
+      border-radius: 50%; animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Misc ── */
+    .section-lbl {
+      font-size: 12px; font-weight: 700; color: var(--color-muted);
+      letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 10px;
+    }
+    h2 { font-size: 20px; font-weight: 700; margin-bottom: 16px; color: var(--color-primary); }
+    .sep { margin-top: 8px; }
+    .mt-sm { margin-top: 8px; }
+    .mt-md { margin-top: 16px; }
+    .info-chip {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 14px; background: var(--color-primary);
+      color: #fff; border-radius: 999px; font-size: 14px; font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══ TOP ══════════════════════════════════════════ -->
+<div id="screen-top" class="screen">
+  <div class="page">
+    <div class="jn-header">
+      <div class="jn-header__icon">
+        <span class="material-symbols-rounded">groups</span>
+      </div>
+      <div class="jn-header__title">人狼ゲーム</div>
+      <div class="jn-header__sub">正体を隠して生き残れ</div>
+    </div>
+    <div class="card">
+      <button class="btn btn-primary btn-full" onclick="goTo('host-setup')">
+        <span class="material-symbols-rounded">add_circle</span>ルームを作る（GM）
+      </button>
+      <button class="btn btn-secondary btn-full sep" onclick="goTo('guest-join')">
+        <span class="material-symbols-rounded">login</span>ルームに参加する
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ HOST SETUP ════════════════════════════════════ -->
+<div id="screen-host-setup" class="screen">
+  <div class="page">
+    <h2>ルームを作る</h2>
+    <div class="card">
+      <div class="form-group">
+        <label class="form-label">ニックネーム（8文字以内）</label>
+        <input class="form-input" id="host-nickname" type="text" maxlength="8" placeholder="例: たろう">
+      </div>
+      <div class="form-group">
+        <label class="form-label">昼の討論時間</label>
+        <select class="form-select" id="discussion-time">
+          <option value="180">3分</option>
+          <option value="300" selected>5分</option>
+          <option value="420">7分</option>
+          <option value="600">10分</option>
+        </select>
+      </div>
+      <button class="btn btn-primary btn-full mt-md" onclick="hostCreateRoom()">
+        <span class="material-symbols-rounded">add_home</span>ルームを作成する
+      </button>
+      <button class="btn btn-ghost btn-full sep" onclick="goTo('top')">戻る</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ GUEST JOIN ════════════════════════════════════ -->
+<div id="screen-guest-join" class="screen">
+  <div class="page">
+    <h2>ルームに参加する</h2>
+    <div class="card">
+      <div class="form-group">
+        <label class="form-label">ニックネーム（8文字以内）</label>
+        <input class="form-input" id="guest-nickname" type="text" maxlength="8" placeholder="例: はなこ">
+      </div>
+      <div class="form-group">
+        <label class="form-label">ルームコード（4桁）</label>
+        <input class="form-input" id="guest-code" type="text" maxlength="4" placeholder="ABCD"
+               style="text-transform:uppercase;letter-spacing:.2em;font-size:24px;text-align:center">
+      </div>
+      <button class="btn btn-primary btn-full mt-md" onclick="guestJoin()">
+        <span class="material-symbols-rounded">login</span>参加する
+      </button>
+      <button class="btn btn-ghost btn-full sep" onclick="goTo('top')">戻る</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ WAITING ═══════════════════════════════════════ -->
+<div id="screen-waiting" class="screen">
+  <div class="page">
+
+    <!-- GM パネル -->
+    <div id="gm-panel" style="display:none">
+      <div class="card" style="text-align:center">
+        <p class="section-lbl">ルームコード</p>
+        <p class="room-code" id="w-room-code">----</p>
+        <p style="font-size:13px;color:var(--color-muted);margin-top:6px">参加者に伝えてね</p>
+      </div>
+
+      <div class="card mt-md">
+        <p class="section-lbl">役職設定</p>
+        <div class="role-config-grid" id="role-config-grid"></div>
+        <p class="role-total" id="role-total">0 / 0 人</p>
+      </div>
+    </div>
+
+    <div class="card mt-md">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <strong style="font-size:16px">参加者</strong>
+        <span id="w-count" style="font-size:14px;color:var(--color-muted)"></span>
+      </div>
+      <ul class="player-list" id="w-player-list"></ul>
+    </div>
+
+    <div id="host-start-area" class="mt-md" style="display:none">
+      <button class="btn btn-primary btn-full" id="btn-start" onclick="startGame()" disabled>
+        <span class="material-symbols-rounded">play_arrow</span>ゲームスタート
+      </button>
+      <p id="start-hint" style="font-size:13px;color:var(--color-muted);text-align:center;margin-top:8px"></p>
+    </div>
+    <button class="btn btn-ghost btn-full mt-md" onclick="leaveGame()">
+      <span class="material-symbols-rounded">logout</span>退出する
+    </button>
+  </div>
+</div>
+
+<!-- ══ ROLE（役職確認）══════════════════════════════ -->
+<div id="screen-role" class="screen">
+  <div class="page">
+    <h2 style="text-align:center">あなたの役職を確認しよう</h2>
+    <p style="font-size:14px;color:var(--color-muted);text-align:center;margin-bottom:20px">
+      カードをタップして役職を見る
+    </p>
+
+    <div class="role-flip-card" id="role-flip-card" onclick="flipRoleCard()">
+      <div class="role-flip-inner">
+        <div class="role-flip-face role-flip-back">
+          <span class="material-symbols-rounded" style="font-size:40px;opacity:.6">touch_app</span>
+          <span>タップして確認</span>
+        </div>
+        <div class="role-flip-face role-flip-front" id="role-flip-front">
+          <span class="role-faction" id="role-faction-badge"></span>
+          <span class="role-name" id="role-name-text"></span>
+          <span class="role-desc" id="role-desc-text"></span>
+        </div>
+      </div>
+    </div>
+
+    <div id="role-extra-info" class="card" style="display:none">
+      <p class="section-lbl" id="role-extra-label"></p>
+      <p id="role-extra-content" style="font-size:15px;font-weight:700;color:var(--color-primary)"></p>
+    </div>
+
+    <div id="role-ready-area" style="display:none;margin-top:16px">
+      <button class="btn btn-primary btn-full" id="btn-role-ready" onclick="markRoleReady()">
+        <span class="material-symbols-rounded">check_circle</span>確認した！
+      </button>
+    </div>
+
+    <div class="card mt-md">
+      <p class="section-lbl">準備状況</p>
+      <ul class="player-list" id="role-player-list"></ul>
+      <div id="role-host-start-night" style="display:none;margin-top:12px">
+        <button class="btn btn-primary btn-full" onclick="startNight()">
+          <span class="material-symbols-rounded">dark_mode</span>夜フェーズへ
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ NIGHT（夜フェーズ）══════════════════════════ -->
+<div id="screen-night" class="screen night-screen">
+  <div class="page">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:24px;padding-top:8px">
+      <span class="phase-badge night">
+        <span class="material-symbols-rounded" style="font-size:16px">dark_mode</span>
+        <span id="night-day-label">1日目の夜</span>
+      </span>
+    </div>
+    <p class="night-title" id="night-role-title"></p>
+    <p class="night-sub" id="night-role-sub"></p>
+
+    <div id="night-action-area"></div>
+
+    <div class="night-panel" id="night-wait-panel" style="display:none">
+      <div class="night-waiting">
+        <span class="material-symbols-rounded" style="font-size:32px;display:block;margin-bottom:8px">hourglass_top</span>
+        ほかの人の行動を待っています...
+      </div>
+    </div>
+
+    <!-- GM 用：全員完了モニター -->
+    <div id="gm-night-panel" class="night-panel" style="display:none">
+      <h3>行動状況</h3>
+      <ul class="player-list" id="night-action-status-list"></ul>
+      <button class="btn-night-action mt-md" id="btn-resolve-night" onclick="doResolveNight()" disabled>
+        <span class="material-symbols-rounded">wb_sunny</span>朝を迎える
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MORNING（朝アナウンス）══════════════════════ -->
+<div id="screen-morning" class="screen">
+  <div class="page">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;padding-top:8px">
+      <span class="phase-badge morning">
+        <span class="material-symbols-rounded" style="font-size:16px">wb_sunny</span>
+        <span id="morning-day-label">2日目の朝</span>
+      </span>
+    </div>
+    <h2 style="margin-bottom:16px">夜が明けました</h2>
+
+    <div class="morning-log" id="morning-log"></div>
+
+    <div id="morning-seer-panel" class="card mt-md" style="display:none">
+      <p class="section-lbl">占い結果</p>
+      <p id="morning-seer-text" style="font-size:14px;line-height:1.6"></p>
+    </div>
+
+    <!-- ハンター道連れ選択（夜死亡時） -->
+    <div id="morning-hunter-panel" style="display:none">
+      <div class="card" style="background:#FEF2F2;border:2px solid var(--color-error);margin-top:16px">
+        <p class="section-lbl" style="color:var(--color-error)">ハンターの道連れ</p>
+        <p style="font-size:14px;margin-bottom:12px">道連れにする相手を選んでください</p>
+        <div id="morning-hunter-btns"></div>
+      </div>
+    </div>
+
+    <div id="morning-host-btn" class="mt-md" style="display:none">
+      <button class="btn btn-primary btn-full" onclick="startDay()">
+        <span class="material-symbols-rounded">record_voice_over</span>昼の討論へ
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ DAY（昼討論）══════════════════════════════════ -->
+<div id="screen-day" class="screen">
+  <div class="page">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;padding-top:8px">
+      <span class="phase-badge day">
+        <span class="material-symbols-rounded" style="font-size:16px">record_voice_over</span>
+        <span id="day-day-label">2日目の昼</span>
+      </span>
+    </div>
+
+    <div class="timer-wrap">
+      <div class="timer-val" id="timer">5:00</div>
+      <div class="timer-lbl">残り時間</div>
+    </div>
+
+    <div style="text-align:center;margin-bottom:20px">
+      <span class="info-chip">
+        <span class="material-symbols-rounded" style="font-size:18px">person</span>
+        <span id="day-role-chip"></span>
+      </span>
+    </div>
+
+    <div class="card">
+      <p class="section-lbl">生存者</p>
+      <ul class="player-list" id="day-player-list"></ul>
+    </div>
+
+    <div id="day-host-vote-btn" style="display:none;margin-top:16px">
+      <button class="btn btn-primary btn-full" onclick="moveToVote()">
+        <span class="material-symbols-rounded">how_to_vote</span>投票フェーズへ
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ VOTE（投票）════════════════════════════════════ -->
+<div id="screen-vote" class="screen">
+  <div class="page">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding-top:8px">
+      <span class="phase-badge vote">
+        <span class="material-symbols-rounded" style="font-size:16px">how_to_vote</span>投票
+      </span>
+    </div>
+    <h2>誰を処刑しますか？</h2>
+    <p style="font-size:14px;color:var(--color-muted);margin-bottom:16px">
+      人狼だと思う人に投票してください
+    </p>
+
+    <div id="vote-btns"></div>
+
+    <div id="voted-msg" class="card" style="display:none;text-align:center">
+      <span class="material-symbols-rounded" style="font-size:40px;color:var(--color-success)">check_circle</span>
+      <p style="font-weight:700;margin-top:8px">投票しました！</p>
+      <p id="vote-wait-label" style="font-size:13px;color:var(--color-muted);margin-top:4px"></p>
+    </div>
+
+    <!-- GM 強制進行（切断者がいる場合） -->
+    <div id="vote-force-btn" class="mt-md" style="display:none">
+      <button class="btn btn-secondary btn-full" onclick="forceVoteProceed()">
+        <span class="material-symbols-rounded">skip_next</span>切断者を除いて処刑を決定する
+      </button>
+    </div>
+
+    <!-- GM 同票処理パネル -->
+    <div id="tiebreak-panel" class="card mt-md" style="display:none">
+      <p class="section-lbl">同票！GMが処刑者を選んでください</p>
+      <div id="tiebreak-btns"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ EXECUTION（処刑処理）══════════════════════════ -->
+<div id="screen-execution" class="screen">
+  <div class="page">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding-top:8px">
+      <span class="phase-badge exec">
+        <span class="material-symbols-rounded" style="font-size:16px">gavel</span>処刑
+      </span>
+    </div>
+
+    <div id="execution-announce" class="card" style="text-align:center;margin-bottom:16px">
+      <span class="material-symbols-rounded" style="font-size:44px;color:var(--color-error)">gavel</span>
+      <p style="font-size:18px;font-weight:700;margin-top:12px">
+        <span id="exec-target-name"></span> が処刑されました
+      </p>
+      <p style="font-size:14px;color:var(--color-muted);margin-top:6px">
+        役職：<strong id="exec-target-role"></strong>
+      </p>
+    </div>
+
+    <!-- ハンター道連れ選択 -->
+    <div id="hunter-choice-panel" style="display:none">
+      <div class="card" style="background:#FEF2F2;border:2px solid var(--color-error)">
+        <p class="section-lbl" style="color:var(--color-error)">ハンターの道連れ</p>
+        <p style="font-size:14px;margin-bottom:12px">
+          道連れにする相手を選んでください
+        </p>
+        <div id="hunter-btns"></div>
+      </div>
+    </div>
+
+    <div id="exec-host-btn" class="mt-md" style="display:none">
+      <button class="btn btn-primary btn-full" id="btn-after-exec" onclick="afterExecution()">
+        <span class="material-symbols-rounded">arrow_forward</span>続ける
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ RESULT（結果）══════════════════════════════════ -->
+<div id="screen-result" class="screen">
+  <div class="page">
+    <div class="result-banner" id="result-banner">
+      <p class="result-title" id="result-title"></p>
+      <p class="result-sub"   id="result-sub"></p>
+    </div>
+
+    <div class="card mt-md">
+      <p class="section-lbl">全員の役職</p>
+      <div class="role-reveal-list" id="result-role-list"></div>
+    </div>
+
+    <div id="result-host-btn" class="mt-md" style="display:none">
+      <button class="btn btn-primary btn-full" onclick="playAgain()">
+        <span class="material-symbols-rounded">replay</span>もう一度
+      </button>
+    </div>
+    <button class="btn btn-ghost btn-full mt-md" onclick="leaveGame()">
+      <span class="material-symbols-rounded">home</span>トップへ戻る
+    </button>
+  </div>
+</div>
+
+<!-- オーバーレイ -->
+<div class="overlay" id="reconnect-overlay">
+  <div class="spin-circle"></div>
+  <p class="overlay-title">再接続しています...</p>
+</div>
+<div class="overlay" id="host-off-overlay">
+  <span class="material-symbols-rounded" style="font-size:48px">signal_disconnected</span>
+  <p class="overlay-title">GMが一時的に切断されました</p>
+  <p class="overlay-sub">再接続を待っています</p>
+  <button class="btn btn-ghost" style="margin-top:16px" onclick="leaveGame()">退出する</button>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════
+// Firebase 初期化
+// ══════════════════════════════════════════════════
+const firebaseConfig = {
+  apiKey: "AIzaSyC0bqQdDJeTAWrqFYqjOT1NsVFiunPemIw",
+  authDomain: "roomk-tools.firebaseapp.com",
+  databaseURL: "https://roomk-tools-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "roomk-tools",
+  storageBucket: "roomk-tools.firebasestorage.app",
+  messagingSenderId: "592193782148",
+  appId: "1:592193782148:web:1529f47cebab7dcd109dd1",
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+// ══════════════════════════════════════════════════
+// 定数
+// ══════════════════════════════════════════════════
+const SESSION_KEY = 'jinro_session';
+const CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+
+const ROLES = [
+  { id: '村人',       faction: 'village', desc: '夜の行動はありません',                         nightAction: false },
+  { id: '占い師',     faction: 'village', desc: '毎晩1人を占い、人狼陣営か調べられます',          nightAction: true  },
+  { id: '霊媒師',     faction: 'village', desc: '処刑された人の役職を知ることができます',          nightAction: true  },
+  { id: '騎士',       faction: 'village', desc: '毎晩1人を護衛し、人狼の襲撃から守ります',        nightAction: true  },
+  { id: 'パン屋',     faction: 'village', desc: '生存中は毎朝パンが届きます',                    nightAction: false },
+  { id: '共有者',     faction: 'village', desc: 'もう1人の共有者の名前を知っています',            nightAction: false },
+  { id: '猫又',       faction: 'village', desc: '噛まれたら人狼を道連れ、処刑されたらランダムで道連れ', nightAction: false },
+  { id: 'ハンター',   faction: 'village', desc: '死亡時に任意の1人を道連れにできます',            nightAction: false },
+  { id: '人狼',       faction: 'wolf',    desc: '仲間の人狼と協力して村人を襲撃します',           nightAction: true  },
+  { id: '狂人',       faction: 'wolf',    desc: '人狼の勝利が自分の勝利です',                    nightAction: false },
+  { id: '狂信者',     faction: 'wolf',    desc: '人狼が誰か分かります。占いでは白判定です',       nightAction: false },
+  { id: 'てるてる坊主', faction: 'third', desc: '規定日数生存して昼に処刑されると勝利です',       nightAction: false },
+  { id: '神様',       faction: 'third',   desc: '全員の役職を知った状態でスタートします',          nightAction: false },
+  { id: '妖狐',       faction: 'third',   desc: '人狼に噛まれても死にません。占われると死にます', nightAction: false },
+  { id: '背徳者',     faction: 'third',   desc: '妖狐が誰か分かります。妖狐死亡で後追いします',  nightAction: false },
+];
+
+// 役職初期設定（デフォルト）
+const DEFAULT_ROLE_COUNTS = {
+  '村人': 2, '占い師': 1, '人狼': 1,
+};
+
+// ══════════════════════════════════════════════════
+// 状態
+// ══════════════════════════════════════════════════
+const state = {
+  nickname:    null,
+  roomCode:    null,
+  roomRef:     null,
+  isHost:      false,
+  currentScreen: null,
+  // ゲーム中のローカルキャッシュ
+  myRole:       null,
+  myFaction:    null,
+  isAlive:      true,
+  wolfPartners: [],
+  sharerPartner: null,
+  foxPlayer:    null,
+  lastGuarded:  null,
+  lastGuardedDay:  0,
+  nightActionDone: false,
+  myVote:       null,
+  roleCounts:   { ...DEFAULT_ROLE_COUNTS },
+  timerInterval: null,
+  roleFlipped:  false,
+  resolveTriggered: false,
+  hunterResolved: false,
+};
+
+// ══════════════════════════════════════════════════
+// ユーティリティ
+// ══════════════════════════════════════════════════
+function esc(s) {
+  return String(s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+function genCode() {
+  return Array.from({ length: 4 }, () => CHARS[Math.floor(Math.random() * CHARS.length)]).join('');
+}
+
+function showMsg(msg, isError = true) {
+  const existing = document.getElementById('jn-toast');
+  if (existing) existing.remove();
+  const el = document.createElement('div');
+  el.id = 'jn-toast';
+  el.textContent = msg;
+  el.style.cssText = [
+    'position:fixed','bottom:24px','left:50%','transform:translateX(-50%)',
+    `background:${isError ? 'var(--color-error)' : 'var(--color-success)'}`,
+    'color:#fff','padding:12px 24px','border-radius:8px',
+    'font-size:14px','font-weight:500','z-index:9999',
+    'box-shadow:0 4px 16px rgba(0,0,0,0.25)','white-space:nowrap','pointer-events:none',
+  ].join(';');
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 3000);
+}
+
+function dayLabel(n) {
+  return `${n}日目`;
+}
+
+// ══════════════════════════════════════════════════
+// セッション管理
+// ══════════════════════════════════════════════════
+function saveSession() {
+  sessionStorage.setItem(SESSION_KEY, JSON.stringify({
+    nickname: state.nickname,
+    roomCode: state.roomCode,
+    isHost:   state.isHost,
+  }));
+}
+function loadSession() {
+  try { return JSON.parse(sessionStorage.getItem(SESSION_KEY)); } catch { return null; }
+}
+function clearSession() { sessionStorage.removeItem(SESSION_KEY); }
+
+// ══════════════════════════════════════════════════
+// 画面管理
+// ══════════════════════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + id).classList.add('active');
+  state.currentScreen = id;
+  // 夜画面は背景を暗くする
+  document.body.style.background = (id === 'night') ? '#0f172a' : '';
+}
+function goTo(id) { showScreen(id); }
+function showOverlay(id, show) {
+  document.getElementById(id).classList.toggle('show', show);
+}
+
+// ══════════════════════════════════════════════════
+// 役職設定 UI（待機画面 GM パネル）
+// ══════════════════════════════════════════════════
+function buildRoleConfigGrid() {
+  const grid = document.getElementById('role-config-grid');
+  grid.innerHTML = ROLES.map(r => `
+    <div class="role-config-row">
+      <div style="display:flex;align-items:center">
+        <span class="role-config-name">${esc(r.id)}</span>
+        <span class="role-config-faction ${r.faction}">${
+          r.faction === 'village' ? '村人陣営' : r.faction === 'wolf' ? '人狼陣営' : '第三陣営'
+        }</span>
+      </div>
+      <div class="role-spinner">
+        <button class="spinner-btn" onclick="changeRoleCount('${r.id}', -1)">-</button>
+        <span class="spinner-count" id="rc-${r.id}">${state.roleCounts[r.id] || 0}</span>
+        <button class="spinner-btn" onclick="changeRoleCount('${r.id}', +1)">+</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function changeRoleCount(roleId, delta) {
+  const cur = state.roleCounts[roleId] || 0;
+  const next = Math.max(0, cur + delta);
+  // 共有者は0か2のみ許可
+  if (roleId === '共有者' && next !== 0 && next !== 2) return;
+  state.roleCounts[roleId] = next;
+  document.getElementById(`rc-${roleId}`).textContent = next;
+  updateRoleTotalUI();
+  syncRoleConfigToFirebase();
+}
+
+function updateRoleTotalUI(playerCount) {
+  const total = Object.values(state.roleCounts).reduce((a, b) => a + b, 0);
+  const pc = playerCount ?? currentPlayerCount();
+  const el = document.getElementById('role-total');
+  if (!el) return;
+  el.textContent = `${total} / ${pc} 人`;
+  el.className = 'role-total ' + (total === pc && pc > 0 ? 'ok' : 'over');
+  updateStartButton(pc, total);
+}
+
+function currentPlayerCount() {
+  // リストの li 数から取得
+  return document.getElementById('w-player-list')?.childElementCount ?? 0;
+}
+
+function updateStartButton(playerCount, total) {
+  const btn = document.getElementById('btn-start');
+  const hint = document.getElementById('start-hint');
+  if (!btn) return;
+  const wolfCount = ROLES
+    .filter(r => r.faction === 'wolf')
+    .reduce((a, r) => a + (state.roleCounts[r.id] || 0), 0);
+  const vilCount = ROLES
+    .filter(r => r.faction === 'village')
+    .reduce((a, r) => a + (state.roleCounts[r.id] || 0), 0);
+  if (playerCount < 4) {
+    btn.disabled = true; hint.textContent = '4人以上でスタートできます'; return;
+  }
+  if (total !== playerCount) {
+    btn.disabled = true; hint.textContent = `役職の合計(${total})と参加者数(${playerCount})を合わせてください`; return;
+  }
+  if (wolfCount === 0) {
+    btn.disabled = true; hint.textContent = '人狼を1人以上設定してください'; return;
+  }
+  if (wolfCount >= vilCount) {
+    btn.disabled = true; hint.textContent = '村人陣営が人狼陣営以下になっています'; return;
+  }
+  btn.disabled = false;
+  hint.textContent = '';
+}
+
+async function syncRoleConfigToFirebase() {
+  if (!state.roomRef || !state.isHost) return;
+  await state.roomRef.child('roles').set(state.roleCounts);
+}
+
+// ══════════════════════════════════════════════════
+// ルーム作成 / 参加
+// ══════════════════════════════════════════════════
+function validNick(v) {
+  if (!v) { showMsg('ニックネームを入力してください'); return false; }
+  if (v.length > 8) { showMsg('ニックネームは8文字以内です'); return false; }
+  return true;
+}
+
+async function hostCreateRoom() {
+  const nickname = document.getElementById('host-nickname').value.trim();
+  if (!validNick(nickname)) return;
+  const discussionSecs = parseInt(document.getElementById('discussion-time').value);
+
+  let roomCode;
+  for (let i = 0; i < 5; i++) {
+    roomCode = genCode();
+    const snap = await db.ref(`jinro_rooms/${roomCode}`).get();
+    if (!snap.exists()) break;
+  }
+
+  state.nickname    = nickname;
+  state.roomCode    = roomCode;
+  state.isHost      = true;
+  state.roomRef     = db.ref(`jinro_rooms/${roomCode}`);
+
+  await state.roomRef.set({
+    host: nickname,
+    hostConnected: true,
+    status: 'waiting',
+    day: 1,
+    discussionSecs,
+    roles: state.roleCounts,
+    players: {
+      [nickname]: {
+        isHost: true,
+        role: null,
+        isAlive: true,
+        faction: null,
+        vote: null,
+        wolfVote: null,
+        nightAction: null,
+        actionDone: false,
+        lastGuarded: null,
+        lastGuardedDay: 0,
+        connected: true,
+      },
+    },
+  });
+
+  state.roomRef.child('hostConnected').onDisconnect().set(false);
+  saveSession();
+  buildRoleConfigGrid();
+  updateRoleTotalUI(1);
+  startRoomListener();
+}
+
+async function guestJoin() {
+  const nickname = document.getElementById('guest-nickname').value.trim();
+  const roomCode = document.getElementById('guest-code').value.trim().toUpperCase();
+  if (!validNick(nickname)) return;
+  if (roomCode.length !== 4) { showMsg('ルームコードは4文字です'); return; }
+
+  const snap = await db.ref(`jinro_rooms/${roomCode}`).get();
+  if (!snap.exists()) { showMsg('ルームが見つかりません'); return; }
+  const room = snap.val();
+  if (room.status !== 'waiting') { showMsg('このゲームはすでに始まっています'); return; }
+  if (room.players?.[nickname]) { showMsg('そのニックネームはすでに使われています'); return; }
+
+  state.nickname = nickname;
+  state.roomCode = roomCode;
+  state.isHost   = false;
+  state.roomRef  = db.ref(`jinro_rooms/${roomCode}`);
+
+  await state.roomRef.child(`players/${nickname}`).set({
+    isHost: false,
+    role: null,
+    isAlive: true,
+    faction: null,
+    vote: null,
+    wolfVote: null,
+    nightAction: null,
+    actionDone: false,
+    lastGuarded: null,
+    lastGuardedDay: 0,
+    connected: true,
+  });
+  state.roomRef.child(`players/${nickname}/connected`).onDisconnect().set(false);
+  saveSession();
+  startRoomListener();
+}
+
+// ══════════════════════════════════════════════════
+// ゲームスタート（GM のみ）
+// ══════════════════════════════════════════════════
+async function startGame() {
+  const snap = await state.roomRef.child('players').get();
+  const nicks = Object.keys(snap.val() || {});
+  const total  = Object.values(state.roleCounts).reduce((a, b) => a + b, 0);
+  if (nicks.length < 4 || total !== nicks.length) return;
+
+  // 役職配布はロジックスタブに委譲
+  await assignRoles(state.roomRef, nicks, state.roleCounts);
+}
+
+// ══════════════════════════════════════════════════
+// Firebase リスナー
+// ══════════════════════════════════════════════════
+function startRoomListener() {
+  state.roomRef.on('value', snap => {
+    if (!snap.exists()) {
+      if (!state.isHost) {
+        clearSession(); showMsg('GMがルームを終了しました'); showScreen('top');
+      }
+      return;
+    }
+    handleRoom(snap.val());
+  });
+}
+
+function handleRoom(room) {
+  const players = room.players || {};
+  if (!state.isHost) showOverlay('host-off-overlay', room.hostConnected === false);
+  switch (room.status) {
+    case 'waiting':   handleWaiting(room, players);   break;
+    case 'role':      handleRole(room, players);       break;
+    case 'night':     handleNight(room, players);      break;
+    case 'morning':   handleMorning(room, players);    break;
+    case 'day':       handleDay(room, players);        break;
+    case 'vote':      handleVote(room, players);       break;
+    case 'execution': handleExecution(room, players);  break;
+    case 'result':    handleResult(room, players);     break;
+  }
+}
+
+// ══════════════════════════════════════════════════
+// 待機画面
+// ══════════════════════════════════════════════════
+function handleWaiting(room, players) {
+  if (state.currentScreen !== 'waiting') {
+    clearInterval(state.timerInterval);
+    state.myRole = null; state.myVote = null; state.roleFlipped = false;
+    state.resolveTriggered = false;
+    showScreen('waiting');
+    document.getElementById('gm-panel').style.display      = state.isHost ? 'block' : 'none';
+    document.getElementById('host-start-area').style.display = state.isHost ? 'block' : 'none';
+    if (state.isHost) {
+      document.getElementById('w-room-code').textContent = state.roomCode;
+      buildRoleConfigGrid();
+    }
+  }
+  // 役職設定を Firebase から同期（他端末が更新した場合）
+  if (room.roles && state.isHost) {
+    state.roleCounts = { ...room.roles };
+    ROLES.forEach(r => {
+      const el = document.getElementById(`rc-${r.id}`);
+      if (el) el.textContent = state.roleCounts[r.id] || 0;
+    });
+  }
+  const count = Object.keys(players).length;
+  document.getElementById('w-count').textContent = `${count}人`;
+  renderPlayerList('w-player-list', players, (p, nick) => {
+    if (p.connected === false && state.isHost) {
+      return `<span style="font-size:12px;color:var(--color-muted)">切断中</span>
+              <button class="btn btn-danger btn-sm kick-btn" style="margin-left:8px" data-kick-nick="${esc(nick)}">退出</button>`;
+    }
+    if (p.connected === false) return '<span style="font-size:12px;color:var(--color-muted)">切断中</span>';
+    return '';
+  });
+  updateRoleTotalUI(count);
+}
+
+// ══════════════════════════════════════════════════
+// 役職確認画面
+// ══════════════════════════════════════════════════
+function handleRole(room, players) {
+  if (state.currentScreen !== 'role') {
+    const me = players[state.nickname];
+    if (me) {
+      state.myRole    = me.role;
+      state.myFaction = me.faction;
+      state.isAlive   = me.isAlive;
+      state.lastGuarded = me.lastGuarded || null;
+      state.lastGuardedDay = me.lastGuardedDay || 0;
+    }
+    // 役職表示のセットアップ
+    const roleDef = ROLES.find(r => r.id === state.myRole);
+    const front = document.getElementById('role-flip-front');
+    front.className = `role-flip-face role-flip-front ${state.myFaction || 'village'}`;
+    document.getElementById('role-name-text').textContent = state.myRole || '';
+    const badge = document.getElementById('role-faction-badge');
+    badge.textContent = factionLabel(state.myFaction);
+    badge.className = `role-faction ${state.myFaction || 'village'}`;
+    document.getElementById('role-desc-text').textContent = roleDef?.desc || '';
+    // フリップリセット
+    document.getElementById('role-flip-card').classList.remove('flipped');
+    state.roleFlipped = false;
+    document.getElementById('role-ready-area').style.display = 'none';
+    document.getElementById('btn-role-ready').disabled = false;
+    // 役職固有の追加情報
+    setupRoleExtraInfo(room, players, me);
+    showScreen('role');
+  }
+  // 準備状況リスト
+  renderPlayerList('role-player-list', players,
+    p => p.actionDone
+      ? '<span class="player-tag voted">準備OK</span>'
+      : '<span style="font-size:12px;color:var(--color-muted)">確認中</span>'
+  );
+  if (state.isHost) {
+    const allReady = Object.values(players).every(p => p.actionDone);
+    document.getElementById('role-host-start-night').style.display = allReady ? 'block' : 'none';
+  }
+}
+
+function setupRoleExtraInfo(room, players, me) {
+  const extraArea  = document.getElementById('role-extra-info');
+  const extraLabel = document.getElementById('role-extra-label');
+  const extraContent = document.getElementById('role-extra-content');
+  extraArea.style.display = 'none';
+
+  if (state.myRole === '人狼') {
+    const partners = Object.entries(players)
+      .filter(([n, p]) => p.role === '人狼' && n !== state.nickname)
+      .map(([n]) => n);
+    state.wolfPartners = partners;
+    if (partners.length > 0) {
+      extraArea.style.display = 'block';
+      extraLabel.textContent = '仲間の人狼';
+      extraContent.textContent = partners.map(esc).join('、');
+    }
+  } else if (state.myRole === '狂信者') {
+    const wolves = Object.entries(players)
+      .filter(([, p]) => p.role === '人狼')
+      .map(([n]) => n);
+    if (wolves.length > 0) {
+      extraArea.style.display = 'block';
+      extraLabel.textContent = '人狼プレイヤー';
+      extraContent.textContent = wolves.map(esc).join('、');
+    }
+  } else if (state.myRole === '共有者') {
+    const partner = Object.entries(players)
+      .filter(([n, p]) => p.role === '共有者' && n !== state.nickname)
+      .map(([n]) => n)[0] || null;
+    state.sharerPartner = partner;
+    if (partner) {
+      extraArea.style.display = 'block';
+      extraLabel.textContent = 'あなたの共有者';
+      extraContent.textContent = partner;
+    }
+  } else if (state.myRole === '背徳者') {
+    const fox = Object.entries(players).find(([, p]) => p.role === '妖狐')?.[0] || null;
+    state.foxPlayer = fox;
+    if (fox) {
+      extraArea.style.display = 'block';
+      extraLabel.textContent = '妖狐プレイヤー';
+      extraContent.textContent = fox;
+    }
+  } else if (state.myRole === '神様') {
+    extraArea.style.display = 'block';
+    extraLabel.textContent = '全員の役職';
+    extraContent.innerHTML = Object.entries(players)
+      .map(([n, p]) => `${esc(n)}：${esc(p.role || '?')}`)
+      .join('　');
+  }
+}
+
+function factionLabel(f) {
+  return f === 'village' ? '村人陣営' : f === 'wolf' ? '人狼陣営' : '第三陣営';
+}
+
+function flipRoleCard() {
+  if (state.roleFlipped) return;
+  state.roleFlipped = true;
+  document.getElementById('role-flip-card').classList.add('flipped');
+  document.getElementById('role-ready-area').style.display = 'block';
+}
+
+async function markRoleReady() {
+  document.getElementById('btn-role-ready').disabled = true;
+  await state.roomRef.child(`players/${state.nickname}/actionDone`).set(true);
+}
+
+async function startNight() {
+  // actionDone をリセットして夜フェーズへ
+  const snap = await state.roomRef.child('players').get();
+  const players = snap.val() || {};
+  const update = { status: 'night' };
+  // 行動不要な役職の actionDone を true に一括セット
+  Object.entries(players).forEach(([nick, p]) => {
+    const roleDef = ROLES.find(r => r.id === p.role);
+    update[`players/${nick}/actionDone`] = !p.isAlive || !roleDef?.nightAction;
+    update[`players/${nick}/nightAction`] = null;
+    update[`players/${nick}/wolfVote`]    = null;
+  });
+  await state.roomRef.update(update);
+}
+
+// ══════════════════════════════════════════════════
+// 夜フェーズ画面
+// ══════════════════════════════════════════════════
+function handleNight(room, players) {
+  if (state.currentScreen !== 'night') {
+    state.nightActionDone = false;
+    const me = players[state.nickname];
+    if (me) {
+      state.isAlive = me.isAlive;
+      state.lastGuarded = me.lastGuarded || null;
+      state.lastGuardedDay = me.lastGuardedDay || 0;
+    }
+    document.getElementById('night-day-label').textContent = `${dayLabel(room.day)}の夜`;
+    document.getElementById('night-role-title').textContent = state.myRole || '';
+    setupNightActionUI(room, players);
+    showScreen('night');
+  }
+
+  // GM パネル更新
+  if (state.isHost) {
+    document.getElementById('gm-night-panel').style.display = 'block';
+    updateNightStatusList(players);
+    const allDone = Object.values(players).every(p => p.actionDone);
+    document.getElementById('btn-resolve-night').disabled = !allDone;
+  }
+  // 人狼の wolfVote 集計（全員の wolfVote が揃ったら GM が nightAction にセット）
+  if (state.isHost) checkWolfVoteComplete(room, players);
+}
+
+function setupNightActionUI(room, players) {
+  const area = document.getElementById('night-action-area');
+  const waitPanel = document.getElementById('night-wait-panel');
+  area.innerHTML = '';
+
+  if (!state.isAlive) {
+    waitPanel.style.display = 'block';
+    document.getElementById('night-wait-panel').querySelector('.night-waiting').innerHTML =
+      '<span class="material-symbols-rounded" style="font-size:32px;display:block;margin-bottom:8px">bedtime</span>夜は静かに眠りましょう';
+    return;
+  }
+
+  const me = players[state.nickname];
+  if (!me) return;
+
+  const alivePlayers = Object.entries(players).filter(([, p]) => p.isAlive);
+
+  if (state.myRole === '占い師') {
+    document.getElementById('night-role-sub').textContent = '誰を占いますか？';
+    area.innerHTML = buildPlayerSelectPanel(
+      alivePlayers.filter(([n]) => n !== state.nickname),
+      'seer-target',
+      '占う',
+      `submitNightAction('seer')`
+    );
+    waitPanel.style.display = 'none';
+  } else if (state.myRole === '騎士') {
+    document.getElementById('night-role-sub').textContent = '誰を護衛しますか？';
+    const currentDay = room.day || 1;
+    const lastGuardDay = Number(me.lastGuardedDay) || 0;
+    const blockedTarget = (me.lastGuarded && lastGuardDay === currentDay - 1) ? me.lastGuarded : null;
+    const targets = alivePlayers.filter(([n]) => n !== state.nickname && n !== blockedTarget);
+    area.innerHTML = buildPlayerSelectPanel(targets, 'knight-target', '護衛する', `submitNightAction('knight')`);
+    waitPanel.style.display = 'none';
+  } else if (state.myRole === '人狼') {
+    document.getElementById('night-role-sub').textContent = '誰を襲撃しますか？';
+    const villageAlive = alivePlayers.filter(([, p]) => p.faction !== 'wolf');
+    area.innerHTML = buildWolfVotePanel(villageAlive);
+    waitPanel.style.display = 'none';
+  } else if (state.myRole === '霊媒師') {
+    if (room.day === 1) {
+      document.getElementById('night-role-sub').textContent = '今夜は行動がありません';
+      waitPanel.style.display = 'block';
+    } else {
+      const result = room.nightResult?.mediumResult;
+      document.getElementById('night-role-sub').textContent = '';
+      area.innerHTML = `<div class="night-panel">
+        <h3>霊視結果</h3>
+        <p style="font-size:15px;color:#e2e8f0">
+          ${result
+            ? `昨日処刑された <strong>${esc(room.lastExecuted || '?')}</strong> の役職は<br><strong style="font-size:20px">${esc(result)}</strong> でした`
+            : '昨日はまだ処刑されていません'}
+        </p>
+      </div>`;
+      waitPanel.style.display = 'none';
+    }
+  } else {
+    document.getElementById('night-role-sub').textContent = '夜は静かに待ちましょう';
+    waitPanel.style.display = 'block';
+  }
+}
+
+function buildPlayerSelectPanel(players, selectId, btnLabel, onclickFn) {
+  const opts = players.map(([n]) => `<option value="${esc(n)}">${esc(n)}</option>`).join('');
+  return `<div class="night-panel">
+    <select class="night-select" id="${selectId}">
+      <option value="">-- 選んでください --</option>
+      ${opts}
+    </select>
+    <button class="btn-night-action" id="btn-night-submit" onclick="${onclickFn}">
+      <span class="material-symbols-rounded">check_circle</span>${btnLabel}
+    </button>
+  </div>`;
+}
+
+function buildWolfVotePanel(targets) {
+  const wolfList = state.wolfPartners.length > 0
+    ? `<p style="font-size:13px;color:#94a3b8;margin-bottom:12px">仲間：${state.wolfPartners.map(esc).join('、')}</p>` : '';
+  const opts = targets.map(([n]) => `<option value="${esc(n)}">${esc(n)}</option>`).join('');
+  return `<div class="night-panel">
+    ${wolfList}
+    <h3>襲撃対象に投票</h3>
+    <select class="night-select" id="wolf-vote-target">
+      <option value="">-- 選んでください --</option>
+      ${opts}
+    </select>
+    <button class="btn-night-action" id="btn-wolf-vote" onclick="submitWolfVote()">
+      <span class="material-symbols-rounded">check_circle</span>投票する
+    </button>
+  </div>`;
+}
+
+function updateNightStatusList(players) {
+  const ul = document.getElementById('night-action-status-list');
+  if (!ul) return;
+  ul.innerHTML = Object.entries(players).map(([nick, p]) => {
+    const meTag = nick === state.nickname ? '<span class="player-tag me">あなた</span>' : '';
+    let tag;
+    if (p.actionDone) {
+      tag = '<span class="player-tag voted">完了</span>';
+    } else if (p.connected === false) {
+      tag = `<span style="font-size:12px;color:var(--color-muted)">切断中</span>
+             <button class="btn btn-secondary btn-sm skip-night-btn" style="margin-left:6px" data-skip-nick="${esc(nick)}">スキップ</button>`;
+    } else {
+      tag = `<span style="font-size:12px;color:var(--color-muted)">待機中</span>
+             <button class="btn btn-ghost btn-sm skip-night-btn" style="margin-left:6px" data-skip-nick="${esc(nick)}">スキップ</button>`;
+    }
+    return `<li class="player-item">
+      <div class="player-name">${esc(nick)}${meTag}</div>${tag}
+    </li>`;
+  }).join('');
+  ul.querySelectorAll('[data-skip-nick]').forEach(btn => {
+    btn.onclick = () => skipNightAction(btn.dataset.skipNick);
+  });
+}
+
+async function skipNightAction(nick) {
+  if (!state.isHost) return;
+  await state.roomRef.child(`players/${nick}`).update({ actionDone: true, nightAction: null, wolfVote: null });
+}
+
+async function submitNightAction(type) {
+  const selectId = type === 'seer' ? 'seer-target' : 'knight-target';
+  const target = document.getElementById(selectId)?.value;
+  if (!target) { showMsg('対象を選んでください'); return; }
+  document.getElementById('btn-night-submit').disabled = true;
+  await state.roomRef.child(`players/${state.nickname}`).update({
+    nightAction: target,
+    actionDone:  true,
+  });
+  document.getElementById('night-action-area').innerHTML = '';
+  document.getElementById('night-wait-panel').style.display = 'block';
+}
+
+async function submitWolfVote() {
+  const target = document.getElementById('wolf-vote-target')?.value;
+  if (!target) { showMsg('対象を選んでください'); return; }
+  document.getElementById('btn-wolf-vote').disabled = true;
+  await state.roomRef.child(`players/${state.nickname}/wolfVote`).set(target);
+  document.getElementById('night-action-area').innerHTML =
+    `<div class="night-panel"><p style="color:#94a3b8;text-align:center">${esc(target)} に投票しました</p></div>`;
+}
+
+async function doResolveNight() {
+  const snap = await state.roomRef.get();
+  await resolveNight(state.roomRef, snap.val());
+}
+
+async function checkWolfVoteComplete(room, players) {
+  const wolves = Object.entries(players).filter(([, p]) => p.role === '人狼' && p.isAlive);
+  if (wolves.length === 0) return;
+  if (!wolves.every(([, p]) => p.wolfVote)) return;
+  // 最多票を集計して nightAction にセット
+  const counts = {};
+  wolves.forEach(([, p]) => { counts[p.wolfVote] = (counts[p.wolfVote] || 0) + 1; });
+  const maxV = Math.max(...Object.values(counts));
+  const tops = Object.keys(counts).filter(k => counts[k] === maxV);
+  const target = tops[Math.floor(Math.random() * tops.length)];
+  // 全人狼に nightAction をセット（まだセットされていない場合）
+  for (const [nick, p] of wolves) {
+    if (!p.nightAction) {
+      await state.roomRef.child(`players/${nick}/nightAction`).set(target);
+      await state.roomRef.child(`players/${nick}/actionDone`).set(true);
+    }
+  }
+}
+
+function renderHunterChoiceButtons(containerId, targets) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  container.innerHTML = targets.map(([n]) =>
+    `<button class="vote-btn" data-hunter-target="${esc(n)}">${esc(n)}</button>`
+  ).join('');
+  container.querySelectorAll('[data-hunter-target]').forEach(btn => {
+    btn.onclick = () => submitHunterTarget(btn.dataset.hunterTarget);
+  });
+}
+
+// ══════════════════════════════════════════════════
+// 朝アナウンス画面
+// ══════════════════════════════════════════════════
+function handleMorning(room, players) {
+  if (state.currentScreen !== 'morning') {
+    state.hunterResolved = false;
+    document.getElementById('morning-day-label').textContent = `${dayLabel(room.day)}の朝`;
+    renderMorningLog(room);
+    showScreen('morning');
+  }
+
+  const hunterPending = room.hunterPending;
+  const hunterTarget  = room.hunterTarget;
+  const isHunterMe    = hunterPending === state.nickname;
+
+  const seerPanel = document.getElementById('morning-seer-panel');
+  const seerText  = document.getElementById('morning-seer-text');
+  const seerResults = room.nightResult?.seerResults || {};
+  let mySeerResult = seerResults[state.nickname];
+  if (!mySeerResult && state.myRole === '占い師' && room.nightResult?.seerResult) {
+    // 互換性: 旧フィールドが残っている場合はそれを表示
+    mySeerResult = room.nightResult.seerResult;
+  }
+  if (seerPanel && seerText) {
+    if (state.myRole === '占い師' && mySeerResult?.target) {
+      const resultLabel = mySeerResult.result === 'black'
+        ? '人狼陣営でした'
+        : mySeerResult.result === 'dead'
+          ? '妖狐でした（占いで死亡）'
+          : '人狼ではありませんでした';
+      seerPanel.style.display = 'block';
+      seerText.textContent = `昨夜占った ${mySeerResult.target} は ${resultLabel}`;
+    } else {
+      seerPanel.style.display = 'none';
+      seerText.textContent = '';
+    }
+  }
+
+  // ハンター道連れ選択UI（夜死亡時）
+  const morningHunterPanel = document.getElementById('morning-hunter-panel');
+  morningHunterPanel.style.display = (isHunterMe && !hunterTarget) ? 'block' : 'none';
+  if (isHunterMe && !hunterTarget) {
+    const alive = Object.entries(players).filter(([n, p]) => p.isAlive && n !== state.nickname);
+    renderHunterChoiceButtons('morning-hunter-btns', alive);
+  }
+
+  // ホスト: ハンターが選択済みなら道連れ処理
+  if (state.isHost && hunterPending && hunterTarget && !state.hunterResolved) {
+    state.hunterResolved = true;
+    resolveHunterKill(room, hunterTarget);
+    return;
+  }
+
+  // 昼の討論へボタン: ハンター選択待ちの間は非表示
+  const waitingForHunter = hunterPending && !hunterTarget;
+  document.getElementById('morning-host-btn').style.display =
+    (state.isHost && !waitingForHunter) ? 'block' : 'none';
+}
+
+function renderMorningLog(room) {
+  const log = room.morningLog || [];
+  const el = document.getElementById('morning-log');
+  if (log.length === 0) {
+    el.innerHTML = '<div class="morning-entry info"><span class="material-symbols-rounded">info</span><span class="morning-entry-text">昨夜は何も起きませんでした</span></div>';
+    return;
+  }
+  el.innerHTML = log.map(entry => {
+    const cls  = entry.type === 'kill' ? 'kill' : entry.type === 'safe' ? 'safe' : 'info';
+    const icon = entry.type === 'kill' ? 'skull' : entry.type === 'safe' ? 'security' : 'info';
+    return `<div class="morning-entry ${cls}">
+      <span class="material-symbols-rounded">${icon}</span>
+      <span class="morning-entry-text">${esc(entry.message)}</span>
+    </div>`;
+  }).join('');
+}
+
+async function startDay() {
+  const snap = await state.roomRef.get();
+  const room = snap.val();
+  // 朝のハンター道連れ後に勝敗が確定している場合は結果画面へ
+  if (room.winner) {
+    await state.roomRef.child('status').set('result');
+    return;
+  }
+  const endTs = Date.now() + (room.discussionSecs || 300) * 1000;
+  await state.roomRef.update({ status: 'day', discussionEndsAt: endTs });
+}
+
+// ══════════════════════════════════════════════════
+// 昼討論画面
+// ══════════════════════════════════════════════════
+function handleDay(room, players) {
+  if (state.currentScreen !== 'day') {
+    clearInterval(state.timerInterval);
+    document.getElementById('day-day-label').textContent = `${dayLabel(room.day)}の昼`;
+    document.getElementById('day-role-chip').textContent = `あなたの役職：${state.myRole || ''}`;
+    document.getElementById('day-host-vote-btn').style.display = state.isHost ? 'block' : 'none';
+    showScreen('day');
+    startTimer(room.discussionEndsAt, async () => {
+      if (state.isHost) await state.roomRef.child('status').set('vote');
+    });
+  }
+  renderPlayerList('day-player-list', players,
+    p => p.isAlive ? '' : '<span class="player-tag dead">死亡</span>',
+    p => !p.isAlive
+  );
+}
+
+function startTimer(endsAt, onEnd) {
+  clearInterval(state.timerInterval);
+  const el = document.getElementById('timer');
+  state.timerInterval = setInterval(async () => {
+    const sec = Math.max(0, Math.ceil((endsAt - Date.now()) / 1000));
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    el.textContent = `${m}:${String(s).padStart(2, '0')}`;
+    el.classList.toggle('urgent', sec <= 30);
+    if (sec <= 0) { clearInterval(state.timerInterval); await onEnd?.(); }
+  }, 500);
+}
+
+async function moveToVote() {
+  clearInterval(state.timerInterval);
+  const snap = await state.roomRef.child('players').get();
+  const players = snap.val() || {};
+  const update = { status: 'vote' };
+  Object.keys(players).forEach(nick => { update[`players/${nick}/vote`] = null; });
+  await state.roomRef.update(update);
+}
+
+// ══════════════════════════════════════════════════
+// 投票画面
+// ══════════════════════════════════════════════════
+function handleVote(room, players) {
+  clearInterval(state.timerInterval);
+  if (state.currentScreen !== 'vote') {
+    state.myVote = null;
+    const alive = Object.entries(players).filter(([, p]) => p.isAlive);
+    const wrap = document.getElementById('vote-btns');
+    wrap.innerHTML = '';
+    alive.forEach(([nick]) => {
+      if (nick === state.nickname) return;
+      const btn = document.createElement('button');
+      btn.className = 'vote-btn';
+      btn.innerHTML = `<span>${esc(nick)}</span>
+        <span class="material-symbols-rounded" style="color:var(--color-muted)">arrow_forward_ios</span>`;
+      btn.onclick = () => {
+        if (state.myVote) return;
+        document.querySelectorAll('.vote-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        setTimeout(() => castVote(nick), 400);
+      };
+      wrap.appendChild(btn);
+    });
+    document.getElementById('voted-msg').style.display = 'none';
+    wrap.style.display = 'block';
+    document.getElementById('tiebreak-panel').style.display = 'none';
+    showScreen('vote');
+  }
+  // 投票状況（切断者は「接続中」カウントから除外）
+  const aliveList = Object.entries(players).filter(([, p]) => p.isAlive);
+  const connectedAlive = aliveList.filter(([, p]) => p.connected !== false);
+  const voted = aliveList.filter(([, p]) => p.vote != null).length;
+  document.getElementById('vote-wait-label').textContent = `${voted} / ${aliveList.length} 人が投票済み`;
+
+  // 切断者を除く全員投票済みで自動進行
+  const connectedVoted = connectedAlive.filter(([, p]) => p.vote != null).length;
+  if (connectedVoted >= connectedAlive.length && connectedAlive.length > 0 && state.isHost && !state.resolveTriggered) {
+    computeExecution(room, players);
+  }
+
+  // GM 強制進行ボタン（切断者がいて投票が止まっている場合に表示）
+  if (state.isHost) {
+    const hasDisconnected = aliveList.some(([, p]) => p.connected === false && p.vote == null);
+    const forceBtn = document.getElementById('vote-force-btn');
+    if (forceBtn) forceBtn.style.display = (hasDisconnected && !state.resolveTriggered) ? 'block' : 'none';
+  }
+}
+
+async function forceVoteProceed() {
+  if (!state.isHost || state.resolveTriggered) return;
+  const snap = await state.roomRef.get();
+  const room = snap.val();
+  if (!room) return;
+  const players = room.players || {};
+  const eligibleVoters = Object.entries(players)
+    .filter(([, p]) => p.isAlive && p.connected !== false)
+    .map(([nick]) => nick);
+  if (eligibleVoters.length === 0) {
+    showMsg('接続中の参加者がいません');
+    return;
+  }
+  await computeExecution(room, players, { eligibleVoters, allowManualWhenEmpty: true });
+}
+
+async function castVote(target) {
+  state.myVote = target;
+  document.getElementById('vote-btns').style.display = 'none';
+  document.getElementById('voted-msg').style.display = 'block';
+  await state.roomRef.child(`players/${state.nickname}/vote`).set(target);
+}
+
+async function computeExecution(room, players, options = {}) {
+  if (!room || !players) return;
+  const aliveList = Object.entries(players).filter(([, p]) => p.isAlive);
+  const eligibleVoters = options.eligibleVoters?.length
+    ? new Set(options.eligibleVoters)
+    : new Set(aliveList.map(([nick]) => nick));
+  const eligibleList = aliveList.filter(([nick]) => eligibleVoters.has(nick));
+  if (eligibleList.length === 0) {
+    if (options.allowManualWhenEmpty) showMsg('進行できる参加者がいません');
+    return;
+  }
+  const counts = {};
+  eligibleList.forEach(([, p]) => {
+    if (p.vote) counts[p.vote] = (counts[p.vote] || 0) + 1;
+  });
+  const entries = Object.entries(counts);
+  if (entries.length === 0) {
+    if (options.allowManualWhenEmpty) {
+      const manualCandidates = eligibleList.map(([nick]) => nick);
+      if (manualCandidates.length === 0) {
+        showMsg('進行できる参加者がいません');
+        return;
+      }
+      showTieBreak(manualCandidates);
+    } else {
+      showMsg('まだ投票が揃っていません');
+    }
+    return;
+  }
+  const maxV = Math.max(...entries.map(([, v]) => v));
+  const tops = entries.filter(([, v]) => v === maxV).map(([nick]) => nick);
+
+  if (tops.length === 1) {
+    // 処刑確定
+    state.resolveTriggered = true;
+    await state.roomRef.update({ tieBreakTarget: null });
+    await resolveExecution(state.roomRef, room, tops[0]);
+  } else {
+    // 同票 → GM が選択
+    showTieBreak(tops);
+  }
+}
+
+function showTieBreak(candidates) {
+  const panel = document.getElementById('tiebreak-panel');
+  const btns  = document.getElementById('tiebreak-btns');
+  panel.style.display = 'block';
+  btns.innerHTML = candidates.map(nick =>
+    `<button class="vote-btn" data-tiebreak-target="${esc(nick)}">${esc(nick)}</button>`
+  ).join('');
+  btns.querySelectorAll('[data-tiebreak-target]').forEach(btn => {
+    btn.onclick = () => gmPickExecution(btn.dataset.tiebreakTarget);
+  });
+}
+
+async function gmPickExecution(target) {
+  state.resolveTriggered = true;
+  await state.roomRef.update({ tieBreakTarget: target });
+  const snap = await state.roomRef.get();
+  await resolveExecution(state.roomRef, snap.val(), target);
+}
+
+// ══════════════════════════════════════════════════
+// 処刑後画面
+// ══════════════════════════════════════════════════
+function handleExecution(room, players) {
+  if (state.currentScreen !== 'execution') {
+    state.hunterResolved = false;
+    const target = room.executionTarget || '';
+    const role   = room.lastExecutedRole || '不明';
+    document.getElementById('exec-target-name').textContent = target;
+    document.getElementById('exec-target-role').textContent = role;
+    showScreen('execution');
+  }
+
+  const hunterPending = room.hunterPending;
+  const hunterTarget  = room.hunterTarget;
+  const isHunterMe    = hunterPending === state.nickname;
+
+  // ハンター道連れ選択UI（自分がハンターで、まだ選択していない場合）
+  const hunterPanel = document.getElementById('hunter-choice-panel');
+  hunterPanel.style.display = (isHunterMe && !hunterTarget) ? 'block' : 'none';
+  if (isHunterMe && !hunterTarget) {
+    const alive = Object.entries(players).filter(([n, p]) => p.isAlive && n !== state.nickname);
+    renderHunterChoiceButtons('hunter-btns', alive);
+  }
+
+  // ハンターが選択済み → ホストが道連れ処理を実行
+  if (state.isHost && hunterPending && hunterTarget && !state.hunterResolved) {
+    state.hunterResolved = true;
+    resolveHunterKill(room, hunterTarget);
+    return;
+  }
+
+  // 続けるボタン：ハンター選択待ちの間は非表示
+  const waitingForHunter = hunterPending && !hunterTarget;
+  document.getElementById('exec-host-btn').style.display =
+    (state.isHost && !waitingForHunter) ? 'block' : 'none';
+}
+
+async function resolveHunterKill(room, hunterTarget) {
+  const players = room.players || {};
+  const targetPlayer = players[hunterTarget];
+  if (!targetPlayer || !targetPlayer.isAlive) {
+    await state.roomRef.update({ hunterPending: null, hunterTarget: null });
+    return;
+  }
+  const update = {
+    [`players/${hunterTarget}/isAlive`]: false,
+    hunterPending: null,
+    hunterTarget: null,
+  };
+  // ハンターに道連れされた相手がハンターだった場合の連鎖はなし（仕様上なし）
+  // 妖狐が道連れされた場合 → 背徳者後追い
+  if (targetPlayer.role === '妖狐') {
+    Object.entries(players).forEach(([n, p]) => {
+      if (p.role === '背徳者' && p.isAlive) update[`players/${n}/isAlive`] = false;
+    });
+  }
+  // 勝敗再判定
+  const nextPlayers = {};
+  Object.entries(players).forEach(([n, p]) => {
+    nextPlayers[n] = { ...p };
+    if (update[`players/${n}/isAlive`] === false) nextPlayers[n].isAlive = false;
+  });
+  const winner = checkVictory({ ...room, players: nextPlayers });
+  if (winner) update.winner = winner;
+  await state.roomRef.update(update);
+}
+
+async function submitHunterTarget(target) {
+  document.getElementById('hunter-choice-panel').style.display = 'none';
+  document.getElementById('morning-hunter-panel').style.display = 'none';
+  await state.roomRef.update({ hunterTarget: target });
+  // Codex の resolveHunter が Firebase を監視して処理
+}
+
+async function afterExecution() {
+  state.resolveTriggered = false;
+  const snap = await state.roomRef.get();
+  const room  = snap.val();
+  const winner = room.winner;
+  if (winner) {
+    await state.roomRef.child('status').set('result');
+  } else {
+    // 夜フェーズへ: day++ + 役職ごとの actionDone リセット
+    const players = room.players || {};
+    const update = {
+      status: 'night',
+      day:    (room.day || 1) + 1,
+      executionTarget:  null,
+      hunterPending:    null,
+      'nightResult/attacked':    null,
+      'nightResult/actuallyKilled': null,
+      'nightResult/guarded':     null,
+      'nightResult/seerResults': null,
+      'nightResult/seerResult': null,
+      'nightResult/mediumResult': room.lastExecutedRole || room.nightResult?.mediumResult || null,
+      morningLog: [],
+    };
+    Object.entries(players).forEach(([nick, p]) => {
+      const roleDef = ROLES.find(r => r.id === p.role);
+      update[`players/${nick}/actionDone`] = !p.isAlive || !roleDef?.nightAction;
+      update[`players/${nick}/nightAction`] = null;
+      update[`players/${nick}/wolfVote`]    = null;
+      update[`players/${nick}/vote`]        = null;
+    });
+    await state.roomRef.update(update);
+  }
+}
+
+// ══════════════════════════════════════════════════
+// 結果画面
+// ══════════════════════════════════════════════════
+function handleResult(room, players) {
+  if (state.currentScreen !== 'result') {
+    clearInterval(state.timerInterval);
+    const winner = room.winner;
+    const banner = document.getElementById('result-banner');
+    const titleMap = {
+      village: '村人陣営の勝利！',
+      wolf:    '人狼陣営の勝利！',
+      teruteru:'てるてる坊主の勝利！',
+      fox:     '妖狐の勝利！',
+      draw:    '引き分け',
+    };
+    banner.className = `result-banner ${winner === 'draw' ? 'draw' : winner || 'draw'}`;
+    document.getElementById('result-title').textContent = titleMap[winner] || '終了';
+    const kamiAlive = Object.values(players || {}).some(p => p.role === '神様' && p.isAlive);
+    document.getElementById('result-sub').textContent =
+      kamiAlive ? '神様が生存しているため、神様も勝利です' : '';
+
+    // 全員の役職リスト
+    const sorted = Object.entries(players).sort((a, b) => b[1].isAlive - a[1].isAlive);
+    document.getElementById('result-role-list').innerHTML = sorted.map(([nick, p]) => {
+      const meTag   = nick === state.nickname ? '<span class="player-tag me">あなた</span>' : '';
+      const hostTag = p.isHost ? '<span class="player-tag host">GM</span>' : '';
+      const dead    = !p.isAlive ? 'role-reveal-row dead' : 'role-reveal-row';
+      return `<div class="${dead}">
+        <div class="player-name">${esc(nick)}${meTag}${hostTag}</div>
+        <span class="role-reveal-badge ${p.faction || 'village'}">${esc(p.role || '?')}</span>
+      </div>`;
+    }).join('');
+
+    document.getElementById('result-host-btn').style.display = state.isHost ? 'block' : 'none';
+    showScreen('result');
+    // 30秒後に自動削除
+    if (state.isHost) setTimeout(() => state.roomRef?.remove(), 30000);
+  }
+}
+
+async function playAgain() {
+  clearInterval(state.timerInterval);
+  state.myRole = null; state.myVote = null;
+  state.lastGuarded = null; state.lastGuardedDay = 0;
+  state.roleFlipped = false; state.resolveTriggered = false; state.hunterResolved = false;
+  const snap = await state.roomRef.child('players').get();
+  const players = snap.val() || {};
+  const update = {
+    status: 'waiting', day: 1, winner: null,
+    executionTarget: null, lastExecuted: null, lastExecutedRole: null,
+    tieBreakTarget: null, hunterPending: null, morningLog: [],
+  };
+  Object.keys(players).forEach(nick => {
+    update[`players/${nick}/role`]        = null;
+    update[`players/${nick}/isAlive`]     = true;
+    update[`players/${nick}/faction`]     = null;
+    update[`players/${nick}/vote`]        = null;
+    update[`players/${nick}/wolfVote`]    = null;
+    update[`players/${nick}/nightAction`] = null;
+    update[`players/${nick}/actionDone`]  = false;
+    update[`players/${nick}/lastGuarded`] = null;
+    update[`players/${nick}/lastGuardedDay`] = 0;
+  });
+  await state.roomRef.update(update);
+}
+
+// ══════════════════════════════════════════════════
+// プレイヤーリスト描画
+// ══════════════════════════════════════════════════
+function renderPlayerList(id, players, statusFn, deadFn) {
+  const ul = document.getElementById(id);
+  if (!ul) return;
+  ul.innerHTML = Object.entries(players).map(([nick, p]) => {
+    const meTag   = nick === state.nickname ? '<span class="player-tag me">あなた</span>' : '';
+    const hostTag = p.isHost ? '<span class="player-tag host">GM</span>' : '';
+    const dead    = deadFn?.(p) ? ' dead' : '';
+    return `<li class="player-item${dead}">
+      <div class="player-name">${esc(nick)}${hostTag}${meTag}</div>
+      ${statusFn?.(p, nick) || ''}
+    </li>`;
+  }).join('');
+  ul.querySelectorAll('[data-kick-nick]').forEach(btn => {
+    btn.onclick = () => kickPlayer(btn.dataset.kickNick);
+  });
+}
+
+// ══════════════════════════════════════════════════
+// 退出
+// ══════════════════════════════════════════════════
+async function kickPlayer(nick) {
+  if (!state.isHost || !nick) return;
+  await state.roomRef.child(`players/${nick}`).remove();
+}
+
+async function leaveGame() {
+  clearInterval(state.timerInterval);
+  clearSession();
+  if (state.roomRef) {
+    if (state.isHost) {
+      await state.roomRef.remove();
+    } else {
+      await state.roomRef.child(`players/${state.nickname}`).remove();
+    }
+    state.roomRef.off();
+  }
+  Object.assign(state, {
+    nickname: null, roomCode: null, roomRef: null, isHost: false,
+    currentScreen: null, myRole: null, myFaction: null, isAlive: true,
+    wolfPartners: [], sharerPartner: null, foxPlayer: null,
+    lastGuarded: null, lastGuardedDay: 0, nightActionDone: false, myVote: null,
+    timerInterval: null, roleFlipped: false, resolveTriggered: false, hunterResolved: false,
+  });
+  showScreen('top');
+}
+
+// ══════════════════════════════════════════════════
+// 再接続
+// ══════════════════════════════════════════════════
+async function tryReconnect() {
+  const session = loadSession();
+  if (!session) return false;
+  const { nickname, roomCode, isHost } = session;
+  showOverlay('reconnect-overlay', true);
+  try {
+    const snap = await db.ref(`jinro_rooms/${roomCode}`).get();
+    if (!snap.exists()) { clearSession(); showOverlay('reconnect-overlay', false); return false; }
+    const room = snap.val();
+    state.nickname = nickname; state.roomCode = roomCode; state.isHost = isHost;
+    state.roomRef  = db.ref(`jinro_rooms/${roomCode}`);
+
+    const me = (room.players || {})[nickname];
+    if (me) {
+      state.myRole    = me.role;
+      state.myFaction = me.faction;
+      state.isAlive   = me.isAlive;
+      state.lastGuarded = me.lastGuarded || null;
+      state.lastGuardedDay = me.lastGuardedDay || 0;
+      state.myVote    = me.vote || null;
+    }
+    if (isHost) {
+      state.roleCounts = room.roles || { ...DEFAULT_ROLE_COUNTS };
+      await state.roomRef.child('hostConnected').set(true);
+      state.roomRef.child('hostConnected').onDisconnect().set(false);
+    } else {
+      if (!room.players?.[nickname]) {
+        clearSession(); showOverlay('reconnect-overlay', false); return false;
+      }
+      // 再接続: connected を true に戻し、切断時はまた false にする
+      await state.roomRef.child(`players/${nickname}/connected`).set(true);
+      state.roomRef.child(`players/${nickname}/connected`).onDisconnect().set(false);
+    }
+    showOverlay('reconnect-overlay', false);
+    startRoomListener();
+    return true;
+  } catch {
+    clearSession(); showOverlay('reconnect-overlay', false); return false;
+  }
+}
+
+// ══════════════════════════════════════════════════
+// ロジックスタブ（Codex が実装）
+// ══════════════════════════════════════════════════
+
+/**
+ * 役職をランダムに配布してゲームを開始する。
+ * @param {object} roomRef - Firebase Realtime Database の roomRef
+ * @param {string[]} nicks - 参加者ニックネーム配列
+ * @param {object} roleCounts - { 役職名: 人数, ... }
+ *
+ * 実装要件:
+ * - roleCounts に従って役職をシャッフル配布する
+ * - 各プレイヤーに role, faction を書き込む
+ * - 神様は全員の役職情報を知る（別途取得できるよう配慮）
+ * - 共有者は2人セットで存在する（roleCounts['共有者'] は 0 か 2 のみ）
+ * - 書き込み完了後に status を 'role' に更新し day=1, totalPlayers=nicks.length をセット
+ */
+async function assignRoles(roomRef, nicks, roleCounts) {
+  if (!roomRef || !Array.isArray(nicks) || nicks.length === 0) return;
+  const pool = [];
+  Object.entries(roleCounts || {}).forEach(([roleId, countRaw]) => {
+    const count = Number(countRaw) || 0;
+    for (let i = 0; i < count; i += 1) pool.push(roleId);
+  });
+  if (pool.length !== nicks.length) {
+    console.warn('assignRoles: player count and role count do not match');
+    return;
+  }
+
+  const shuffle = (arr) => {
+    const copy = [...arr];
+    for (let i = copy.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [copy[i], copy[j]] = [copy[j], copy[i]];
+    }
+    return copy;
+  };
+
+  const shuffledRoles = shuffle(pool);
+  const shuffledNicks = shuffle(nicks);
+  const updates = {
+    status: 'role',
+    day: 1,
+    totalPlayers: nicks.length,
+    winner: null,
+    executionTarget: null,
+    lastExecuted: null,
+    lastExecutedRole: null,
+    tieBreakTarget: null,
+    hunterPending: null,
+    hunterTarget: null,
+    foxPlayer: null,
+    morningLog: [],
+    'nightResult/attacked': null,
+    'nightResult/actuallyKilled': null,
+    'nightResult/guarded': null,
+    'nightResult/seerResults': null,
+    'nightResult/seerResult': null,
+    'nightResult/mediumResult': null,
+  };
+
+  let foxName = null;
+  shuffledNicks.forEach((nick, idx) => {
+    const role = shuffledRoles[idx];
+    const roleDef = ROLES.find(r => r.id === role);
+    const faction = roleDef?.faction || 'village';
+    updates[`players/${nick}/role`] = role;
+    updates[`players/${nick}/faction`] = faction;
+    updates[`players/${nick}/isAlive`] = true;
+    updates[`players/${nick}/vote`] = null;
+    updates[`players/${nick}/wolfVote`] = null;
+    updates[`players/${nick}/nightAction`] = null;
+    updates[`players/${nick}/actionDone`] = false;
+    updates[`players/${nick}/lastGuarded`] = null;
+    updates[`players/${nick}/lastGuardedDay`] = 0;
+    if (role === '妖狐') foxName = nick;
+  });
+  updates.foxPlayer = foxName;
+  await roomRef.update(updates);
+}
+
+/**
+ * 夜フェーズを解決して朝アナウンスを生成する。
+ * @param {object} roomRef - Firebase Realtime Database の roomRef
+ * @param {object} room - 現在の room スナップショット値
+ *
+ * 解決順序:
+ * 1. 占い師の占い（妖狐なら死亡＋背徳者後追い）
+ * 2. 人狼の襲撃 → 騎士護衛チェック → 妖狐耐性チェック
+ * 3. 猫又が噛まれた場合 → 噛んだ人狼1人を道連れ
+ * 4. パン屋の生死アナウンス
+ * 5. 霊媒師の結果（前日処刑者の役職）
+ *
+ * 書き込み:
+ * - players/{nick}/isAlive を更新
+ * - nightResult に結果を書き込む
+ * - morningLog に { type: 'kill'|'safe'|'info', message } の配列を書き込む
+ * - 騎士の lastGuarded を更新
+ * - 勝敗判定を実行して winner があれば書き込む
+ * - status を 'morning' に更新する
+ */
+async function resolveNight(roomRef, room) {
+  if (!roomRef || !room) return;
+  const basePlayers = room.players || {};
+  const players = {};
+  Object.entries(basePlayers).forEach(([nick, data]) => { players[nick] = { ...data }; });
+
+  const day = room.day || 1;
+  const logs = [];
+  const deaths = [];
+  const nightResult = {
+    attacked: null,
+    actuallyKilled: null,
+    guarded: null,
+    seerResults: {},
+    mediumResult: room.lastExecutedRole || null,
+  };
+  const updates = { status: 'morning' };
+
+  const describeDeath = (entry) => {
+    switch (entry.cause) {
+      case 'seer':
+        return `${entry.nick}さんが呪いに倒れました`;
+      case 'fox-follow':
+        return `${entry.nick}さんが妖狐の後を追いました`;
+      case 'wolf':
+        return `${entry.nick}さんが人狼に襲われました`;
+      case 'cat-vengeance':
+        return `${entry.nick}さんが猫又の呪いで倒れました`;
+      default:
+        return `${entry.nick}さんが亡くなっているのが見つかりました`;
+    }
+  };
+
+  const killPlayer = (nick, cause) => {
+    const player = players[nick];
+    if (!player || !player.isAlive) return false;
+    player.isAlive = false;
+    player.vote = null;
+    player.wolfVote = null;
+    player.nightAction = null;
+    const entry = { nick, role: player.role, cause };
+    deaths.push(entry);
+    logs.push({ type: 'kill', message: describeDeath(entry), day });
+    updates[`players/${nick}/isAlive`] = false;
+    updates[`players/${nick}/vote`] = null;
+    updates[`players/${nick}/wolfVote`] = null;
+    updates[`players/${nick}/nightAction`] = null;
+    updates[`players/${nick}/actionDone`] = true;
+    if (player.role === '妖狐') {
+      Object.entries(players).forEach(([n, p]) => {
+        if (p.role === '背徳者' && p.isAlive) killPlayer(n, 'fox-follow');
+      });
+    }
+    return true;
+  };
+
+  const seers = Object.entries(players).filter(([, p]) => p.role === '占い師' && p.isAlive);
+  seers.forEach(([nick, seer]) => {
+    const target = seer.nightAction;
+    if (!target) return;
+    const targetPlayer = players[target];
+    let result = 'white';
+    if (targetPlayer) {
+      if (targetPlayer.role === '人狼') result = 'black';
+      else if (targetPlayer.role === '妖狐') result = 'dead';
+    }
+    nightResult.seerResults[nick] = { target, result };
+    if (targetPlayer && targetPlayer.role === '妖狐') {
+      killPlayer(target, 'seer');
+    }
+  });
+
+  const knights = Object.entries(players).filter(([, p]) => p.role === '騎士' && p.isAlive);
+  const guardTargets = [];
+  knights.forEach(([nick, knight]) => {
+    const target = knight.nightAction;
+    if (target) {
+      guardTargets.push(target);
+      updates[`players/${nick}/lastGuarded`] = target;
+      updates[`players/${nick}/lastGuardedDay`] = day;
+    }
+  });
+  if (guardTargets.length > 0) {
+    nightResult.guarded = guardTargets.length === 1 ? guardTargets[0] : guardTargets.join('、');
+  }
+  const guardSet = new Set(guardTargets);
+
+  const wolves = Object.entries(players).filter(([, p]) => p.role === '人狼' && p.isAlive);
+  let attackTarget = null;
+  if (wolves.length > 0) {
+    const counts = {};
+    wolves.forEach(([, wolf]) => {
+      if (wolf.nightAction) counts[wolf.nightAction] = (counts[wolf.nightAction] || 0) + 1;
+    });
+    const entries = Object.entries(counts);
+    if (entries.length > 0) {
+      const maxVote = Math.max(...entries.map(([, v]) => v));
+      const top = entries.filter(([, v]) => v === maxVote).map(([t]) => t);
+      attackTarget = top[Math.floor(Math.random() * top.length)];
+    }
+  }
+
+  let catBitten = false;
+  if (attackTarget) {
+    nightResult.attacked = attackTarget;
+    if (guardSet.has(attackTarget)) {
+      logs.push({ type: 'safe', message: `${attackTarget}さんは騎士に守られました`, day });
+    } else {
+      const targetPlayer = players[attackTarget];
+      if (targetPlayer) {
+        if (targetPlayer.role === '妖狐') {
+          logs.push({ type: 'info', message: `${attackTarget}さんは人狼の襲撃を受けましたが無事でした`, day });
+        } else if (killPlayer(attackTarget, 'wolf')) {
+          nightResult.actuallyKilled = attackTarget;
+          if (targetPlayer.role === '猫又') catBitten = true;
+        }
+      }
+    }
+  }
+
+  if (catBitten) {
+    // 猫又を実際に噛んだ人狼（nightAction が attackTarget と一致）のみを対象に抽選
+    const attackingWolves = Object.entries(players)
+      .filter(([, p]) => p.role === '人狼' && p.isAlive && p.nightAction === attackTarget);
+    const catCandidates = attackingWolves.length > 0
+      ? attackingWolves
+      : Object.entries(players).filter(([, p]) => p.role === '人狼' && p.isAlive);
+    if (catCandidates.length > 0) {
+      const [wolfToKill] = catCandidates[Math.floor(Math.random() * catCandidates.length)];
+      killPlayer(wolfToKill, 'cat-vengeance');
+    }
+  }
+
+  const bakersBefore = Object.values(basePlayers).filter(p => p.role === 'パン屋' && p.isAlive).length;
+  const bakersAfter  = Object.values(players).filter(p => p.role === 'パン屋' && p.isAlive).length;
+  if (bakersAfter > 0) {
+    logs.push({ type: 'info', message: 'パン屋さんから焼きたてのパンが届きました', day });
+  } else if (bakersBefore > 0 && bakersAfter === 0) {
+    logs.push({ type: 'info', message: 'パン屋さんがいなくなり、パンは届きませんでした', day });
+  }
+
+  // ハンターが夜に死亡した場合 → 朝画面で道連れ選択UIを表示するために hunterPending をセット
+  const nightHunterDeath = deaths.find(d => d.role === 'ハンター');
+  updates.hunterPending = nightHunterDeath ? nightHunterDeath.nick : null;
+  updates.hunterTarget  = null;
+
+  updates.morningLog = logs;
+  updates['nightResult/attacked'] = nightResult.attacked || null;
+  updates['nightResult/actuallyKilled'] = nightResult.actuallyKilled || null;
+  updates['nightResult/guarded'] = nightResult.guarded || null;
+  updates['nightResult/seerResults'] =
+    Object.keys(nightResult.seerResults).length ? nightResult.seerResults : null;
+  updates['nightResult/seerResult'] = null;
+  updates['nightResult/mediumResult'] = nightResult.mediumResult || null;
+
+  const nextRoom = { ...room, players };
+  const winner = checkVictory(nextRoom);
+  if (winner) updates.winner = winner;
+
+  await roomRef.update(updates);
+}
+
+/**
+ * 昼の処刑を解決する。
+ * @param {object} roomRef - Firebase Realtime Database の roomRef
+ * @param {object} room - 現在の room スナップショット値
+ * @param {string} target - 処刑対象のニックネーム
+ *
+ * 処理:
+ * 1. target の isAlive を false にし lastExecuted, lastExecutedRole を書き込む
+ * 2. てるてる坊主の勝利判定（処刑死 + 規定日数）
+ * 3. 猫又が処刑された場合 → 生存者からランダム1人を道連れ
+ * 4. ハンターが処刑・道連れされた場合 → hunterPending をセット
+ * 5. 勝敗判定 checkVictory() を呼び出し winner を書き込む
+ * 6. status を 'execution' に更新
+ */
+async function resolveExecution(roomRef, room, target) {
+  if (!roomRef || !room || !target) return;
+  const basePlayers = room.players || {};
+  if (!basePlayers[target]) return;
+  const players = {};
+  Object.entries(basePlayers).forEach(([nick, data]) => { players[nick] = { ...data }; });
+  const targetPlayer = players[target];
+  if (!targetPlayer || !targetPlayer.isAlive) return;
+
+  const updates = {
+    status: 'execution',
+    executionTarget: target,
+    lastExecuted: target,
+    lastExecutedRole: targetPlayer.role || null,
+    tieBreakTarget: null,
+    hunterTarget: null,
+  };
+  const deaths = [];
+
+  const killPlayer = (nick, cause) => {
+    const player = players[nick];
+    if (!player || !player.isAlive) return false;
+    player.isAlive = false;
+    player.vote = null;
+    player.wolfVote = null;
+    player.nightAction = null;
+    const entry = { nick, role: player.role, cause };
+    deaths.push(entry);
+    updates[`players/${nick}/isAlive`] = false;
+    updates[`players/${nick}/vote`] = null;
+    updates[`players/${nick}/wolfVote`] = null;
+    updates[`players/${nick}/nightAction`] = null;
+    updates[`players/${nick}/actionDone`] = true;
+    if (player.role === '妖狐') {
+      Object.entries(players).forEach(([n, p]) => {
+        if (p.role === '背徳者' && p.isAlive) killPlayer(n, 'fox-follow');
+      });
+    }
+    return true;
+  };
+
+  killPlayer(target, 'execution');
+
+  let winner = null;
+  if (targetPlayer.role === 'てるてる坊主') {
+    const totalPlayers = room.totalPlayers || Object.keys(players).length;
+    const requiredDay = totalPlayers <= 4 ? 1 : (totalPlayers <= 6 ? 2 : 3);
+    if ((room.day || 1) >= requiredDay) {
+      winner = 'teruteru';
+    }
+  }
+
+  if (targetPlayer.role === '猫又') {
+    const candidates = Object.entries(players)
+      .filter(([nick, p]) => p.isAlive && nick !== target);
+    if (candidates.length > 0) {
+      const [victim] = candidates[Math.floor(Math.random() * candidates.length)];
+      killPlayer(victim, 'cat-revenge');
+    }
+  }
+
+  const hunterDeath = deaths.find(d => d.role === 'ハンター');
+  updates.hunterPending = hunterDeath ? hunterDeath.nick : null;
+
+  if (!winner) {
+    const nextRoom = { ...room, players };
+    winner = checkVictory(nextRoom);
+  }
+  if (winner) updates.winner = winner;
+
+  await roomRef.update(updates);
+}
+
+/**
+ * 勝敗を判定して勝者の faction 文字列を返す。返り値が null なら続行。
+ * @param {object} room - 現在の room スナップショット値
+ * @returns {'village'|'wolf'|'teruteru'|'fox'|'draw'|null}
+ *
+ * 優先順位:
+ * 1. てるてる坊主：昼処刑直後に呼ばれる場合のみ判定（呼び出し側で制御）
+ * 2. 妖狐：村人/人狼の勝利条件成立時に妖狐が生存 → 妖狐勝利（横取り）
+ * 3. 村人勝利：人狼が全員死亡
+ * 4. 人狼勝利：生存する人狼数 >= 生存する村人陣営数（第三陣営除く）
+ * 5. 全員死亡：draw
+ */
+function checkVictory(room) {
+  if (!room) return null;
+  const players = room.players || {};
+  const alive = Object.values(players).filter(p => p && p.isAlive);
+  if (alive.length === 0) return 'draw';
+
+  const foxAlive = alive.some(p => p.role === '妖狐');
+  const wolvesAlive = alive.filter(p => p.role === '人狼').length;
+  const villageAlive = alive.filter(p => p.faction === 'village').length;
+
+  if (wolvesAlive === 0) {
+    return foxAlive ? 'fox' : 'village';
+  }
+  if (wolvesAlive >= villageAlive) {
+    return foxAlive ? 'fox' : 'wolf';
+  }
+  return null;
+}
+
+// ══════════════════════════════════════════════════
+// 初期化
+// ══════════════════════════════════════════════════
+tryReconnect().then(ok => { if (!ok) showScreen('top'); });
+</script>
+</body>
+</html>
