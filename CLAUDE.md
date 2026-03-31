@@ -26,7 +26,8 @@ roomk-tools/
 │   ├── checkin/                 # チェックインアプリ
 │   ├── vote/                    # 投票・集計アプリ
 │   ├── word-wolf/               # ワードウルフ
-│   └── name-change/             # 名前変えゲーム
+│   ├── name-change/             # 名前変えゲーム
+│   └── jitsuwa-game/            # え!? 実は○○なんですかゲーム
 ├── docs/                        # ドキュメント類
 └── shared/                      # ※旧配置（使用しない。apps/shared/ を使うこと）
 ```
@@ -39,7 +40,7 @@ roomk-tools/
 |---------|--------|------------|----------|
 | **単一ファイル** | Realtime Database | `index.html` のみ（CSS・JS すべてインライン） | iisen-show, word-wolf, name-change |
 | **分割ファイル** | Firestore | `index.html` + `app.js`（+ 必要なら `style.css`） | checkin, vote |
-| **オフライン** | なし | `index.html` + `app.js` | talk-card |
+| **オフライン** | なし | `index.html` + `app.js` + `style.css` | talk-card, jitsuwa-game |
 
 ### 新しいアプリを追加するとき
 
@@ -147,6 +148,29 @@ Realtime Database を使うアプリ（iisen-show など）は単一ファイル
 <hr class="divider">
 ```
 
+### CSS 命名規則（アプリ固有スタイル）
+
+アプリ固有の CSS クラスには **アプリ名の短縮接頭辞** を付け、**BEM 記法**（`block__element`）で命名する。
+
+| アプリ | 接頭辞 | 例 |
+|--------|--------|-----|
+| talk-card | `.tc-` | `.tc-header__title` |
+| word-wolf | `.ww-` | `.ww-header__icon` |
+| iisen-show | `.is-` | `.is-score__label` |
+| name-change | `.nc-` | `.nc-panel__btn` |
+| jitsuwa-game | `.jitsuwa-` | `.jitsuwa-hero__sub` |
+| （新アプリ） | 2〜4文字 + `-` | — |
+
+design-system.css のカラー変数・スペーシング変数を積極的に再利用し、独自の固定値はなるべく使わない。
+
+**レスポンシブ対応のブレークポイント**: `600px` 以下でモバイル向けスタイルを上書き。
+
+```css
+@media (max-width: 600px) {
+  .wrapper { padding: 28px 16px 60px; }
+}
+```
+
 ---
 
 ## アイコン
@@ -248,6 +272,34 @@ HTTP リファラー制限済み:
 | 同ルーム内重複 | **NG**（参加時にチェックして弾く） |
 | 空文字 | **NG**（参加時にバリデーション） |
 
+### viewport 設定（Realtime Database アプリ）
+
+ゲーム中の誤ズームを防ぐため `maximum-scale=1` を必ず指定する。
+
+```html
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+```
+
+### 状態管理オブジェクト（Realtime Database アプリ）
+
+アプリ全体の状態を `const state = { ... }` にまとめる。最低限以下のフィールドを持つ。
+
+```js
+const state = {
+  // ユーザー情報
+  role: null,           // 'host' | 'guest'
+  nickname: null,
+  roomCode: null,
+  roomRef: null,        // Firebase 参照（db.ref(...)）
+
+  // 画面管理
+  currentScreen: null,  // showScreen() が更新する
+
+  // クリーンアップ用
+  timerInterval: null,  // setInterval の ID → 退出時に clearInterval
+};
+```
+
 ### 画面遷移パターン（Realtime Database アプリ）
 
 ```js
@@ -284,15 +336,43 @@ waiting → [ゲーム固有フェーズ] → done / finished
 
 | 役割 | 挙動 |
 |------|------|
-| **ホスト切断** | `onDisconnect().remove()` でルームごと削除。ゲストにはオーバーレイを表示 |
+| **ホスト切断** | `hostConnected` を `false` にセット。ゲストはこのフラグを監視してオーバーレイ表示 |
 | **ゲスト切断** | `onDisconnect().remove()` でそのプレイヤーデータのみ削除 |
 
 ```js
-// ホスト
-db.ref(`{appname}_rooms/${code}`).onDisconnect().remove();
+// ── ホスト：ルーム作成時に onDisconnect フックを設定 ──
+await roomRef.set({ host: nick, hostConnected: true, status: 'waiting', ... });
+roomRef.child('hostConnected').onDisconnect().set(false);
 
-// ゲスト
-db.ref(`{appname}_rooms/${code}/players/${nick}`).onDisconnect().remove();
+// ── ゲスト：参加時に設定 ──
+roomRef.child(`players/${nick}`).onDisconnect().remove();
+
+// ── ゲスト側リスナー：hostConnected を監視してオーバーレイ表示 ──
+roomRef.on('value', snap => {
+  const room = snap.val();
+  if (state.role === 'guest') {
+    showOverlay('host-off-overlay', room.hostConnected === false);
+  }
+  // ...
+});
+
+// ── オーバーレイの HTML ──
+// <div class="overlay" id="host-off-overlay">
+//   <span class="material-symbols-rounded">signal_disconnected</span>
+//   <p>ホストが切断されました</p>
+//   <button class="btn btn-ghost" onclick="leaveGame()">退出する</button>
+// </div>
+```
+
+**リスナーのクリーンアップ（重要）**: 退出・TOP 画面遷移時に必ず `roomRef.off()` を呼ぶ。呼ばないとリスナーが残り続けてメモリリークになる。
+
+```js
+function leaveGame() {
+  clearInterval(state.timerInterval);  // タイマーも停止
+  if (state.roomRef) state.roomRef.off();
+  clearSession();
+  showScreen('top');
+}
 ```
 
 ### セッションデータの自動削除
@@ -351,6 +431,71 @@ import { escapeHtml } from '../shared/js/utils.js';
 | 2人以上 | name-change |
 | 3人以上 | iisen-show, word-wolf |
 | 制限なし | talk-card, checkin, vote |
+
+### エラーメッセージ表示パターン
+
+フォームバリデーションなど**その場に表示するエラー**には `.error-msg` クラスを使う。
+
+```html
+<div class="error-msg" id="join-error"></div>
+
+<style>
+  .error-msg {
+    font-size: 13px;
+    color: var(--color-error);
+    background: #FEF2F2;
+    border-left: 3px solid var(--color-error);
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-bottom: 12px;
+    display: none;
+  }
+  .error-msg.visible { display: block; }
+</style>
+```
+
+```js
+// 表示
+const el = document.getElementById('join-error');
+el.textContent = 'ルームが見つかりません';
+el.classList.add('visible');
+
+// 非表示
+el.classList.remove('visible');
+```
+
+一時的な通知（操作結果など）は utils.js の `showToast()` を使う。単一ファイルアプリでは独自の `showMsg()` 関数で同等のトーストを実装する。
+
+### プレイヤーリスト描画パターン
+
+参加者リストを表示する場面が多いため、以下のパターンを共通テンプレートとして使う。
+
+```js
+// players: { [nickname]: { isHost, ... } } 形式の Firebase スナップショット値
+function renderList(containerId, players, statusFn) {
+  document.getElementById(containerId).innerHTML =
+    Object.entries(players).map(([nick, p]) => `
+      <li class="player-item">
+        <div class="player-name">
+          ${esc(nick)}
+          ${p.isHost ? '<span class="player-tag">ホスト</span>' : ''}
+          ${nick === state.nickname ? '<span class="player-tag me">あなた</span>' : ''}
+        </div>
+        ${statusFn(p)}
+      </li>
+    `).join('');
+}
+
+// 使用例（待機画面）
+renderList('player-list', players, () => '');
+
+// 使用例（準備確認画面）
+renderList('player-list', players, p =>
+  p.ready
+    ? '<span class="player-tag ready">準備OK</span>'
+    : '<span style="color:var(--color-muted);font-size:13px">確認中</span>'
+);
+```
 
 ### セキュリティ方針（性善説）
 
