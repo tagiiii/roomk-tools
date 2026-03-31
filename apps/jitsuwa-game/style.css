@@ -1,0 +1,298 @@
+/* え!? 実は○○なんですかゲーム アプリ固有スタイル
+   共通スタイル（M-1〜M-6）は design-system.css に定義済み */
+
+/* ── レイアウト ── */
+.wrapper {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 48px 40px 80px;
+}
+
+/* ── ヘッダー ── */
+.jitsuwa-hero {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.jitsuwa-hero__title {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--color-primary);
+  letter-spacing: 0.04em;
+}
+
+.jitsuwa-hero__sub {
+  font-size: var(--font-size-sub);
+  color: var(--color-muted);
+  margin-top: 6px;
+}
+
+/* ── プロンプト表示エリア ── */
+.prompt-panel {
+  display: none;
+  background: var(--color-surface);
+  border: 2px solid var(--color-accent);
+  border-radius: var(--radius-box);
+  padding: 32px 40px;
+  margin-bottom: 28px;
+  text-align: center;
+  box-shadow: 0 0 0 4px rgba(46, 125, 140, 0.12);
+}
+
+.prompt-panel.visible {
+  display: block;
+}
+
+.prompt-panel__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-accent);
+  letter-spacing: 0.08em;
+  margin-bottom: 12px;
+}
+
+.prompt-panel__label .material-symbols-rounded {
+  font-size: 18px;
+}
+
+.prompt-panel__text {
+  font-size: 36px;
+  font-weight: 700;
+  color: var(--color-primary);
+  line-height: 1.5;
+}
+
+.prompt-panel__actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 24px;
+  flex-wrap: wrap;
+}
+
+.prompt-panel__actions .material-symbols-rounded {
+  font-size: 18px;
+  vertical-align: middle;
+}
+
+/* ── コントロールバー ── */
+.control-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+}
+
+.control-bar .material-symbols-rounded {
+  font-size: 18px;
+  vertical-align: middle;
+}
+
+/* ── プール残数 ── */
+.pool-info {
+  font-size: 13px;
+  color: var(--color-muted);
+}
+
+/* ── カードグリッド ── */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 28px;
+  margin-bottom: 32px;
+}
+
+/* ── カード（M-4 flip-card を使用）── */
+.card-grid .flip-card {
+  aspect-ratio: 2 / 3;
+  cursor: pointer;
+}
+
+.card-grid .flip-card.dimmed {
+  cursor: default;
+}
+
+/* 裏面 */
+.card-face-back {
+  background-color: var(--color-accent);
+  background-image: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 10px,
+    rgba(255, 255, 255, 0.06) 10px,
+    rgba(255, 255, 255, 0.06) 20px
+  );
+  border-color: #236472;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.card-grid .flip-card:not(.dimmed):not(.flipped):hover .card-face-back {
+  background-color: #256e7c;
+}
+
+.card-grid .flip-card:not(.dimmed):not(.flipped):focus-visible .card-face-back {
+  outline: 3px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.card-number {
+  font-size: 64px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.9);
+  line-height: 1;
+}
+
+.card-hint {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.55);
+  letter-spacing: 0.06em;
+}
+
+/* 表面 */
+.card-face-front {
+  background: var(--color-surface);
+  border-color: var(--color-accent);
+  border-width: 2px;
+  padding: 20px 16px;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0;
+}
+
+.flip-card.flipped .card-face-front {
+  box-shadow: 0 0 0 3px rgba(46, 125, 140, 0.25);
+}
+
+.card-prompt {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--color-primary);
+  text-align: center;
+  line-height: 1.6;
+  word-break: break-all;
+}
+
+/* ── 引き直しエリア ── */
+.redraw-area {
+  text-align: center;
+  margin-top: 8px;
+}
+
+.redraw-area .material-symbols-rounded {
+  font-size: 18px;
+  vertical-align: middle;
+}
+
+/* ── 遊び方ガイド ── */
+.guide-card {
+  margin-top: 40px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  overflow: hidden;
+}
+
+.guide-card__summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 20px;
+  cursor: pointer;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-primary);
+  user-select: none;
+  list-style: none;
+}
+
+.guide-card__summary::-webkit-details-marker {
+  display: none;
+}
+
+.guide-card__summary .material-symbols-rounded {
+  font-size: 20px;
+  color: var(--color-accent);
+}
+
+.guide-card__chevron {
+  margin-left: auto;
+  transition: transform 0.2s ease;
+}
+
+.guide-card[open] .guide-card__chevron {
+  transform: rotate(180deg);
+}
+
+.guide-card__steps {
+  padding: 0 20px 20px;
+  margin: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.guide-card__steps li {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.step-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+  border-radius: 50%;
+  background-color: var(--color-accent);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.step-body {
+  font-size: var(--font-size-sm);
+  color: var(--color-text);
+  line-height: 1.6;
+  padding-top: 3px;
+}
+
+/* ── レスポンシブ ── */
+@media (max-width: 600px) {
+  .wrapper {
+    padding: 28px 16px 60px;
+  }
+
+  .card-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+
+  .prompt-panel {
+    padding: 24px 20px;
+  }
+
+  .prompt-panel__text {
+    font-size: 24px;
+  }
+
+  .card-number {
+    font-size: 40px;
+  }
+
+  .card-hint {
+    font-size: 11px;
+  }
+
+  .card-prompt {
+    font-size: 13px;
+  }
+}

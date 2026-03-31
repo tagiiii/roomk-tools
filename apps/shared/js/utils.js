@@ -32,12 +32,12 @@ export function copyToClipboard(text, btn = null, options = {}) {
 
   const onSuccess = () => {
     if (!btn) return;
-    const originalText  = btn.textContent;
+    const originalHTML  = btn.innerHTML;   // innerHTML で保存（アイコン span を含む）
     const originalClass = btn.className;
     btn.textContent = successText;
     btn.classList.add(successClass);
     setTimeout(() => {
-      btn.textContent = originalText;
+      btn.innerHTML   = originalHTML;      // innerHTML で復元
       btn.className   = originalClass;
     }, resetDelay);
   };

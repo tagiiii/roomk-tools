@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>え!? 実は○○なんですかゲーム | roomK</title>
+  <!-- Google Fonts（Noto Sans JP）-->
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
+  <!-- Material Symbols Rounded (FILL=1) -->
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet" />
+  <!-- 共通デザインシステム（M-1〜M-6）-->
+  <link rel="stylesheet" href="../shared/css/design-system.css" />
+  <!-- アプリ固有スタイル -->
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <div class="wrapper">
+
+    <!-- ヘッダー -->
+    <header class="jitsuwa-hero">
+      <h1 class="jitsuwa-hero__title">え!? 実は○○なんですかゲーム</h1>
+      <p class="jitsuwa-hero__sub">ある人の意外な一面を当てよう！</p>
+    </header>
+
+    <!-- プロンプト表示エリア（M-5 popIn で出現）-->
+    <section class="prompt-panel" id="promptPanel" aria-live="polite">
+      <p class="prompt-panel__label">
+        <span class="material-symbols-rounded">tips_and_updates</span>今回のお題！みんなで YES / NO を予想しよう
+      </p>
+      <p class="prompt-panel__text" id="promptText"></p>
+      <div class="prompt-panel__actions">
+        <button class="btn btn-primary" id="btnCopy" disabled>
+          <span class="material-symbols-rounded">content_copy</span>コピー
+        </button>
+        <button class="btn btn-secondary" id="btnNext">
+          <span class="material-symbols-rounded">refresh</span>新しいカードを引く
+        </button>
+      </div>
+    </section>
+
+    <!-- コントロールバー -->
+    <div class="control-bar">
+      <button class="btn btn-ghost btn-sm" id="btnReset">
+        <span class="material-symbols-rounded">replay</span>全カードをリセット
+      </button>
+      <span class="pool-info" id="poolInfo"></span>
+    </div>
+
+    <!-- カードグリッド（M-4 カードフリップ）-->
+    <div class="card-grid" id="cardGrid" role="group" aria-label="カード3枚"></div>
+
+    <!-- 引き直しエリア（お題選択前のみ表示）-->
+    <div class="redraw-area" id="redrawArea">
+      <button class="btn btn-ghost" id="btnRedraw">
+        <span class="material-symbols-rounded">casino</span>3枚引き直す
+      </button>
+    </div>
+
+    <!-- 遊び方ガイド -->
+    <details class="guide-card">
+      <summary class="guide-card__summary">
+        <span class="material-symbols-rounded">help</span>
+        <span>遊び方</span>
+        <span class="guide-card__chevron material-symbols-rounded">expand_more</span>
+      </summary>
+      <ol class="guide-card__steps">
+        <li>
+          <span class="step-num">1</span>
+          <span class="step-body">主役を1人決めよう。ホストはカード3枚の中から「これ聞いてみたい！」と思うお題をひとつクリックして全員に見せる。</span>
+        </li>
+        <li>
+          <span class="step-num">2</span>
+          <span class="step-body">参加者全員で「YES かな？ NO かな？」を予想して話し合おう。理由も言ってみると盛り上がる！</span>
+        </li>
+        <li>
+          <span class="step-num">3</span>
+          <span class="step-body">主役が「YES！」か「NO！」かを発表！予想が当たっても外れても「え!? そうなんですか！」と盛り上がろう。</span>
+        </li>
+      </ol>
+    </details>
+
+  </div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
