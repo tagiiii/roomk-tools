@@ -1392,7 +1392,12 @@
         state.themeOptions = Array.isArray(room.themeOptions) ? room.themeOptions : [];
         const myPlayer = getMyPlayer(players);
         if (myPlayer && Number.isFinite(Number(myPlayer.number)) && Number(myPlayer.number) > 0) {
-          state.myNumber = Number(myPlayer.number);
+          const newNumber = Number(myPlayer.number);
+          if (newNumber !== state.myNumber) {
+            // 数字が変わった = 新ラウンド開始。カード確認状態をリセット
+            state.numberRevealed = false;
+          }
+          state.myNumber = newNumber;
         }
         if (myPlayer && myPlayer.ready) {
           state.numberRevealed = true;
@@ -1768,6 +1773,8 @@
       if (flipCardEl) flipCardEl.classList.add("flipped");
       const readyArea = document.getElementById("ready-area");
       if (readyArea) readyArea.style.display = "block";
+      const confirmBtn = document.getElementById("btn-confirm-number");
+      if (confirmBtn) confirmBtn.style.display = "";
       state.numberRevealed = true;
     }
 
