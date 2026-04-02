@@ -715,6 +715,7 @@
 
     const SESSION_KEY = "ito_session";
     const ORPHAN_TTL_MS = 2 * 60 * 1000;
+    const DEFAULT_DISCUSSION_SECONDS = 3 * 60;
     const CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
     const THEMES = [
       "甘いお菓子", "夏らしいもの", "ドキドキするもの", "大きい動物",
@@ -1112,13 +1113,35 @@
     async function startPlaying() {
       if (state.role !== "host" || !state.roomRef) return;
       try {
-        const snap = await state.roomRef.get();
-        const room = snap.val() || {};
-        if (!room.theme) {
-          showMsg("お題を選んでください");
+        let abortReason = null;
+        const { committed } = await state.roomRef.transaction((room) => {
+          if (!room || room.status !== "revealing") {
+            abortReason = "invalid_state";
+            return;
+          }
+          const players = room.players || {};
+          const allReady = Object.keys(players).length > 0 && Object.values(players).every((p) => !!p.ready);
+          if (!allReady) {
+            abortReason = "not_ready";
+            return;
+          }
+          if (!room.theme) {
+            abortReason = "theme_missing";
+            return;
+          }
+          abortReason = null;
+          return {
+            ...room,
+            status: "playing",
+            discussionEndsAt: room.discussionEndsAt || (getEstimatedServerNow() + DEFAULT_DISCUSSION_SECONDS * 1000),
+          };
+        });
+
+        if (!committed) {
+          if (abortReason === "theme_missing") showMsg("お題を選んでください");
+          else if (abortReason === "not_ready") showMsg("全員の確認が終わってから進めます");
           return;
         }
-        await state.roomRef.update({ status: "playing" });
       } catch (e) {
         console.error(e);
         showMsg("発言フェーズへ進めませんでした");
