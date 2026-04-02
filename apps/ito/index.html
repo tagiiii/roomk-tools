@@ -985,7 +985,7 @@
         // トランザクション関数は競合が起きると複数回呼ばれる場合があり、
         // 乱数（number）もその都度再生成されるが、結果として最終コミット時の値が確定するため問題ない。
         const { committed } = await state.roomRef.transaction((room) => {
-          if (!room || room.status !== "waiting") {
+          if (!room || (room.status !== "waiting" && room.status !== "result")) {
             abortReason = "invalid_state";
             return; // undefined を返してトランザクション中止
           }
