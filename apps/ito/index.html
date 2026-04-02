@@ -459,7 +459,7 @@
     <div class="page">
       <div class="ito-header" style="padding-bottom:16px;">
         <div class="ito-header__title">カードを確認しよう</div>
-        <div class="ito-header__sub">自分の数字をそっとタップして確認！</div>
+        <div class="ito-header__sub">自分の数字をタップすると確認完了になります</div>
       </div>
 
       <div class="ito-flip-wrap">
@@ -670,6 +670,7 @@
       orphanTimer: null,    // ホスト永続切断時の孤立ルーム削除タイマーID（ゲスト側）
       myNumber: null,
       numberRevealed: false,
+      confirmingNumber: false,
     };
 
     const SESSION_KEY = "ito_session";
@@ -788,6 +789,7 @@
       state.orphanTimer = null;
       state.myNumber = null;
       state.numberRevealed = false;
+      state.confirmingNumber = false;
     }
 
     function validateNickname(nick) {
@@ -1034,12 +1036,15 @@
     }
 
     async function confirmNumber() {
-      if (!state.roomRef || !state.nickname) return;
+      if (!state.roomRef || !state.nickname || state.confirmingNumber) return;
+      state.confirmingNumber = true;
       try {
         await state.roomRef.child(`players/${state.nickname}/ready`).set(true);
       } catch (e) {
         console.error(e);
         showMsg("確認を送信できませんでした");
+      } finally {
+        state.confirmingNumber = false;
       }
     }
 
@@ -1205,7 +1210,7 @@
       const myPlayer = players[state.nickname];
       const confirmBtn = document.getElementById("btn-confirm-number");
       if (confirmBtn) {
-        confirmBtn.style.display = (state.numberRevealed && myPlayer && !myPlayer.ready) ? "" : "none";
+        confirmBtn.style.display = (state.numberRevealed && !state.confirmingNumber && myPlayer && !myPlayer.ready) ? "" : "none";
       }
 
       const allReady = Object.values(players).length > 0 && Object.values(players).every((p) => !!p.ready);
@@ -1465,11 +1470,13 @@
     // ── UI アクション ─────────────────────
 
     function flipCard() {
+      if (state.numberRevealed) return;
       const flipCardEl = document.getElementById("flip-card");
       if (flipCardEl) flipCardEl.classList.add("flipped");
       const readyArea = document.getElementById("ready-area");
       if (readyArea) readyArea.style.display = "block";
       state.numberRevealed = true;
+      confirmNumber();
     }
 
     async function copyRoomCode() {
