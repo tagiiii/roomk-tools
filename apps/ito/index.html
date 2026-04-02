@@ -117,6 +117,37 @@
     }
     .ito-theme-banner__label { font-size: 12px; opacity: 0.8; margin-bottom: 4px; font-weight: 500; letter-spacing: 0.05em; }
     .ito-theme-banner__text { font-size: 22px; font-weight: 700; }
+    .ito-theme-picker {
+      display: grid;
+      gap: 10px;
+    }
+    .ito-theme-option {
+      width: 100%;
+      padding: 14px 16px;
+      border-radius: 12px;
+      border: 1px solid var(--color-border);
+      background: var(--color-surface);
+      color: var(--color-primary);
+      font-size: 16px;
+      font-weight: 700;
+      font-family: var(--font-base);
+      cursor: pointer;
+      transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+    }
+    .ito-theme-option:hover {
+      transform: translateY(-1px);
+      border-color: var(--color-accent);
+    }
+    .ito-theme-option.selected {
+      background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+      border-color: transparent;
+      color: #fff;
+    }
+    .ito-theme-option:disabled {
+      cursor: default;
+      opacity: 0.75;
+      transform: none;
+    }
 
     /* ── タイマー ── */
     .ito-timer-wrap { text-align: center; margin: 16px 0; }
@@ -489,6 +520,14 @@
         <ul class="player-list" id="revealing-player-list"></ul>
       </div>
 
+      <div class="card" style="padding:20px; margin-bottom:16px;">
+        <div style="font-size:14px; font-weight:700; color:var(--color-primary); margin-bottom:8px;">お題を選ぼう</div>
+        <div style="font-size:13px; color:var(--color-muted); margin-bottom:12px;" id="revealing-theme-help">
+          ホストが3つの候補から1つ選びます
+        </div>
+        <div class="ito-theme-picker" id="revealing-theme-options"></div>
+      </div>
+
       <div id="btn-start-playing-wrap" style="display:none;">
         <button id="btn-start-playing" class="btn btn-primary btn-lg btn-full" onclick="startPlaying()">
           <span class="material-symbols-rounded">forum</span>
@@ -671,6 +710,7 @@
       myNumber: null,
       numberRevealed: false,
       confirmingNumber: false,
+      themeOptions: [],
     };
 
     const SESSION_KEY = "ito_session";
@@ -790,6 +830,7 @@
       state.myNumber = null;
       state.numberRevealed = false;
       state.confirmingNumber = false;
+      state.themeOptions = [];
     }
 
     function validateNickname(nick) {
@@ -828,6 +869,15 @@
           ${statusFn(nick, p)}
         </li>
       `).join("");
+    }
+
+    function pickThemeOptions(count = 3) {
+      const pool = [...THEMES];
+      for (let i = pool.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [pool[i], pool[j]] = [pool[j], pool[i]];
+      }
+      return pool.slice(0, Math.min(count, pool.length));
     }
 
     // ── ルーム作成 ──────────────────────────
@@ -975,9 +1025,8 @@
       clearTimeout(state.cleanupTimer);
       state.cleanupTimer = null;
 
-      // お題はトランザクション外で決める（トランザクションは複数回実行される場合があるが
-      // テーマはどの実行でも同じ値を使うので外で固定する）
-      const theme = THEMES[Math.floor(Math.random() * THEMES.length)];
+      // 候補はトランザクション外で固定して、競合再実行時も同じ候補を使う
+      const themeOptions = pickThemeOptions(3);
       // トランザクションが中断した理由を外部で受け取るための変数
       let abortReason = null;
 
@@ -1009,7 +1058,14 @@
             };
           });
 
-          return { ...room, status: "revealing", theme, discussionEndsAt: null, players: nextPlayers };
+          return {
+            ...room,
+            status: "revealing",
+            theme: "",
+            themeOptions,
+            discussionEndsAt: null,
+            players: nextPlayers
+          };
         });
 
         if (!committed) {
@@ -1051,10 +1107,28 @@
     async function startPlaying() {
       if (state.role !== "host" || !state.roomRef) return;
       try {
+        const snap = await state.roomRef.get();
+        const room = snap.val() || {};
+        if (!room.theme) {
+          showMsg("お題を選んでください");
+          return;
+        }
         await state.roomRef.update({ status: "playing" });
       } catch (e) {
         console.error(e);
         showMsg("発言フェーズへ進めませんでした");
+      }
+    }
+
+    async function selectTheme(index) {
+      if (state.role !== "host" || !state.roomRef) return;
+      const theme = state.themeOptions[index];
+      if (!theme) return;
+      try {
+        await state.roomRef.update({ theme });
+      } catch (e) {
+        console.error(e);
+        showMsg("お題を選べませんでした");
       }
     }
 
@@ -1151,6 +1225,7 @@
           }
         }
         const players = room.players || {};
+        state.themeOptions = Array.isArray(room.themeOptions) ? room.themeOptions : [];
         if (players[state.nickname] && players[state.nickname].number) {
           state.myNumber = players[state.nickname].number;
         }
@@ -1213,10 +1288,34 @@
         confirmBtn.style.display = (state.numberRevealed && !state.confirmingNumber && myPlayer && !myPlayer.ready) ? "" : "none";
       }
 
+      const themeHelp = document.getElementById("revealing-theme-help");
+      if (themeHelp) {
+        if (room.theme) {
+          themeHelp.textContent = `選択中のお題: ${room.theme}`;
+        } else if (state.role === "host") {
+          themeHelp.textContent = "ホストがお題を1つ選んでから発言フェーズへ進みます";
+        } else {
+          themeHelp.textContent = "ホストがお題を選んでいます";
+        }
+      }
+
+      const themeOptionsEl = document.getElementById("revealing-theme-options");
+      if (themeOptionsEl) {
+        const options = Array.isArray(room.themeOptions) ? room.themeOptions : [];
+        themeOptionsEl.innerHTML = options.map((theme, index) => `
+          <button
+            type="button"
+            class="ito-theme-option ${room.theme === theme ? "selected" : ""}"
+            onclick="selectTheme(${index})"
+            ${state.role === "host" ? "" : "disabled"}
+          >${esc(theme)}</button>
+        `).join("");
+      }
+
       const allReady = Object.values(players).length > 0 && Object.values(players).every((p) => !!p.ready);
       const startPlayingWrap = document.getElementById("btn-start-playing-wrap");
       if (startPlayingWrap) {
-        startPlayingWrap.style.display = (state.role === "host" && allReady) ? "" : "none";
+        startPlayingWrap.style.display = (state.role === "host" && allReady && !!room.theme) ? "" : "none";
       }
     }
 
