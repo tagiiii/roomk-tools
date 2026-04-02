@@ -378,13 +378,13 @@
 
       <div class="card" style="padding:20px;">
         <label style="display:block; font-size:13px; font-weight:700; margin-bottom:8px; color:var(--color-primary);">
-          ルームコード（4文字）
+          ルームコード（6文字）
         </label>
         <input
           type="text"
           id="guest-code"
-          maxlength="4"
-          placeholder="例：AB3Z"
+          maxlength="6"
+          placeholder="例：AB3XYZ"
           autocapitalize="characters"
           style="width:100%; padding:12px 14px; border:1px solid var(--color-border); border-radius:10px; font-size:24px; font-weight:700; letter-spacing:0.2em; text-align:center; font-family:var(--font-base); box-sizing:border-box; text-transform:uppercase;"
           oninput="this.value=this.value.toUpperCase()"
@@ -698,7 +698,7 @@
 
     function genCode() {
       let code = "";
-      for (let i = 0; i < 4; i++) {
+      for (let i = 0; i < 6; i++) {
         code += CHARS[Math.floor(Math.random() * CHARS.length)];
       }
       return code;
@@ -894,7 +894,7 @@
       const nick = nickInput ? nickInput.value.trim() : "";
 
       if (!roomCode) { showError("guest-error", "ルームコードを入力してください"); return; }
-      if (roomCode.length !== 4) { showError("guest-error", "ルームコードは4文字です"); return; }
+      if (roomCode.length !== 6) { showError("guest-error", "ルームコードは6文字です"); return; }
       const nickError = validateNickname(nick);
       if (nickError) { showError("guest-error", nickError); return; }
 

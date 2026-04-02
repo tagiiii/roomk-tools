@@ -329,8 +329,8 @@
         <input class="form-input" id="guest-nickname" type="text" maxlength="8" placeholder="例: はなこ">
       </div>
       <div class="form-group">
-        <label class="form-label">ルームコード（4桁）</label>
-        <input class="form-input" id="guest-code" type="text" maxlength="4" placeholder="ABCD"
+        <label class="form-label">ルームコード（6桁）</label>
+        <input class="form-input" id="guest-code" type="text" maxlength="6" placeholder="ABCDEF"
                style="text-transform:uppercase;letter-spacing:.2em;font-size:24px;text-align:center">
       </div>
       <button class="btn btn-primary btn-full mt-md" onclick="guestJoin()">
@@ -722,7 +722,7 @@ function esc(s) {
 }
 
 function genCode() {
-  return Array.from({ length: 4 }, () => CHARS[Math.floor(Math.random() * CHARS.length)]).join('');
+  return Array.from({ length: 6 }, () => CHARS[Math.floor(Math.random() * CHARS.length)]).join('');
 }
 
 function showMsg(msg, isError = true) {
@@ -945,7 +945,7 @@ async function guestJoin() {
   const nickname = document.getElementById('guest-nickname').value.trim();
   const roomCode = document.getElementById('guest-code').value.trim().toUpperCase();
   if (!validNick(nickname)) return;
-  if (roomCode.length !== 4) { showMsg('ルームコードは4文字です'); return; }
+  if (roomCode.length !== 6) { showMsg('ルームコードは6文字です'); return; }
 
   const roomRef = db.ref(`jinro_rooms/${roomCode}`);
   const preSnap = await roomRef.get();

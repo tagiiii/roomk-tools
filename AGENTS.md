@@ -235,7 +235,7 @@ HTTP リファラー制限済み:
 
 | DB | 桁数 | 生成方法 | 採用アプリ |
 |----|------|---------|----------|
-| Realtime Database | **4桁**英数字 | 独自 `generateCode()` / `genCode()`（紛らわしい文字除外） | iisen-show, word-wolf, name-change, jinro, ito |
+| Realtime Database | **6桁**英数字 | 独自 `generateCode()` / `genCode()`（紛らわしい文字除外） | iisen-show, word-wolf, name-change, jinro, ito |
 | Firestore | **6桁**英数字 | `generateSessionId()`（utils.js） | checkin, vote |
 
 除外文字（紛らわしいもの）: `0`, `O`, `I`, `1` など

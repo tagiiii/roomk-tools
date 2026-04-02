@@ -284,9 +284,9 @@
              placeholder="例：はなこ" autocomplete="off">
     </div>
     <div class="form-group">
-      <label class="form-label">ルームコード（4文字）</label>
+      <label class="form-label">ルームコード（6文字）</label>
       <input class="form-input form-input-code" id="guest-room-code" type="text"
-             maxlength="4" placeholder="XXXX" autocomplete="off"
+             maxlength="6" placeholder="XXXXXX" autocomplete="off"
              oninput="this.value = this.value.toUpperCase()">
     </div>
     <div class="error-msg" id="guest-join-error"></div>
@@ -748,7 +748,7 @@
   // ════════════════════════════════════
   function generateRoomCode() {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-    return Array.from({ length: 4 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+    return Array.from({ length: 6 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
   }
 
   function shuffle(arr) {
@@ -946,7 +946,7 @@
 
     const nicknameErr = validateNickname(nickname);
     if (nicknameErr) { showError('guest-join-error', nicknameErr); return; }
-    if (roomCode.length !== 4) { showError('guest-join-error', 'ルームコードは4文字です'); return; }
+    if (roomCode.length !== 6) { showError('guest-join-error', 'ルームコードは6文字です'); return; }
     hideError('guest-join-error');
 
     const roomRef = db.ref(`iisen_rooms/${roomCode}`);
