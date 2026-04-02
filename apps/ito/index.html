@@ -500,7 +500,7 @@
         ゲームスタート（2人以上）
       </button>
 
-      <button class="btn btn-ghost btn-full" style="margin-top:12px;" onclick="leaveGame()">
+      <button id="btn-leave-waiting" class="btn btn-ghost btn-full" style="margin-top:12px;" onclick="leaveGame()">
         <span class="material-symbols-rounded">logout</span>
         退出する
       </button>
@@ -559,7 +559,7 @@
         </button>
       </div>
 
-      <button class="btn btn-ghost btn-full" style="margin-top:12px;" onclick="leaveGame()">
+      <button id="btn-leave-revealing" class="btn btn-ghost btn-full" style="margin-top:12px; display:none;" onclick="leaveGame()">
         <span class="material-symbols-rounded">logout</span>
         退出する
       </button>
@@ -635,7 +635,7 @@
         </button>
       </div>
 
-      <button class="btn btn-ghost btn-full" style="margin-top:12px;" onclick="leaveGame()">
+      <button id="btn-leave-playing" class="btn btn-ghost btn-full" style="margin-top:12px; display:none;" onclick="leaveGame()">
         <span class="material-symbols-rounded">logout</span>
         退出する
       </button>
@@ -1340,6 +1340,9 @@
 
       const guestMsg = document.getElementById("waiting-guest-msg");
       if (guestMsg) guestMsg.style.display = state.role === "guest" ? "block" : "none";
+
+      const leaveBtn = document.getElementById("btn-leave-waiting");
+      if (leaveBtn) leaveBtn.style.display = state.role === "host" ? "" : "none";
     }
 
     function handleRevealing(room, players) {
@@ -1398,6 +1401,9 @@
       if (startPlayingWrap) {
         startPlayingWrap.style.display = (state.role === "host" && allReady && !!room.theme) ? "" : "none";
       }
+
+      const leaveBtn = document.getElementById("btn-leave-revealing");
+      if (leaveBtn) leaveBtn.style.display = state.role === "host" ? "" : "none";
     }
 
     function handlePlaying(room, players) {
@@ -1463,6 +1469,9 @@
       if (finishBtn) {
         finishBtn.style.display = state.role === "host" ? "" : "none";
       }
+
+      const leaveBtn = document.getElementById("btn-leave-playing");
+      if (leaveBtn) leaveBtn.style.display = state.role === "host" ? "" : "none";
     }
 
     function handleResult(room, players) {
