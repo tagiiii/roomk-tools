@@ -856,6 +856,11 @@
         && (getEstimatedServerNow() - disconnectedAt) >= ORPHAN_TTL_MS;
     }
 
+    function isDiscussionExpired(endsAt) {
+      const endsAtNum = Number(endsAt);
+      return Number.isFinite(endsAtNum) && getEstimatedServerNow() >= endsAtNum;
+    }
+
     function renderPlayerList(containerId, players, statusFn) {
       const container = document.getElementById(containerId);
       if (!container) return;
@@ -1084,7 +1089,7 @@
       if (state.role !== "host" || !state.roomRef) return;
       if (!Number.isFinite(secs) || secs <= 0) { showMsg("時間を正しく入力してください"); return; }
       try {
-        await state.roomRef.update({ discussionEndsAt: Date.now() + secs * 1000 });
+        await state.roomRef.update({ discussionEndsAt: getEstimatedServerNow() + secs * 1000 });
       } catch (e) {
         console.error(e);
         showMsg("タイマーを開始できませんでした");
@@ -1135,11 +1140,16 @@
     async function declare() {
       if (!state.roomRef || !state.nickname) return;
       try {
+        const roomSnap = await state.roomRef.child("discussionEndsAt").get();
+        if (!isDiscussionExpired(roomSnap.val())) {
+          showMsg("宣言は時間が経ってからできます");
+          return;
+        }
         const playerRef = state.roomRef.child(`players/${state.nickname}`);
         const snap = await playerRef.once("value");
         const player = snap.val();
         if (!player || player.declaredAt != null) return;
-        await playerRef.child("declaredAt").set(Date.now());
+        await playerRef.child("declaredAt").set(getEstimatedServerNow());
       } catch (e) {
         console.error(e);
         showMsg("宣言できませんでした");
@@ -1371,8 +1381,9 @@
       // 宣言ボタン表示制御
       const me = players[state.nickname];
       const declareBtn = document.getElementById("btn-declare");
+      const canDeclare = !!me && me.declaredAt == null && isDiscussionExpired(room.discussionEndsAt);
       if (declareBtn) {
-        declareBtn.style.display = (me && me.declaredAt == null) ? "" : "none";
+        declareBtn.style.display = canDeclare ? "" : "none";
       }
 
       // タイマーコントロール（ホスト・タイマー未開始時）
@@ -1498,7 +1509,7 @@
       }
 
       const tick = () => {
-        const remainSec = Math.max(0, Math.ceil((Number(endsAt) - Date.now()) / 1000));
+        const remainSec = Math.max(0, Math.ceil((Number(endsAt) - getEstimatedServerNow()) / 1000));
         const mm = String(Math.floor(remainSec / 60)).padStart(2, "0");
         const ss = String(remainSec % 60).padStart(2, "0");
         displayEl.textContent = `${mm}:${ss}`;
