@@ -235,7 +235,7 @@ HTTP リファラー制限済み:
 
 | DB | 桁数 | 生成方法 | 採用アプリ |
 |----|------|---------|----------|
-| Realtime Database | **4桁**英数字 | 独自 `generateCode()`（紛らわしい文字除外） | iisen-show, word-wolf, name-change |
+| Realtime Database | **4桁**英数字 | 独自 `generateCode()` / `genCode()`（紛らわしい文字除外） | iisen-show, word-wolf, name-change, jinro, ito |
 | Firestore | **6桁**英数字 | `generateSessionId()`（utils.js） | checkin, vote |
 
 除外文字（紛らわしいもの）: `0`, `O`, `I`, `1` など
@@ -280,20 +280,51 @@ waiting → [ゲーム固有フェーズ] → done / finished
 
 ホストのみが `status` を更新できる（UIで制御）。
 
+### Realtime Database 実装ルール
+
+Realtime Database アプリでは、ルーム作成・参加・ゲーム開始の各タイミングで
+read-then-write を避け、`transaction()` で原子的に状態を確定する。
+
+```js
+// ルーム作成: 空きコードの確保を transaction() で行う
+const ref = db.ref(`{appname}_rooms/${code}`);
+const { committed } = await ref.transaction((room) => room ? undefined : initialRoom);
+
+// 参加: status チェックと players 追加を同じ transaction() に含める
+const { committed } = await roomRef.transaction((room) => {
+  if (!room || room.status !== 'waiting') return;
+  const players = room.players || {};
+  if (players[nick]) return;
+  return { ...room, players: { ...players, [nick]: newPlayer } };
+});
+```
+
+- ルームコード確保は「存在確認してから `set()`」ではなく、ルームルートに対する `transaction()` で行う
+- 参加処理は `status` 判定と `players` 追加を別々にしない
+- ゲーム開始時に参加者一覧を固定する処理も、読み取り後の `update()` ではなくルーム全体 `transaction()` で行う
+- `status` はアプリ内で定数化することを推奨する
+- `leaveGame()` / `goToTop()` では `setInterval()` / `setTimeout()` / overlay 状態を必ず片付ける
+
 ### 切断時の挙動（Realtime Database アプリ）
 
 | 役割 | 挙動 |
 |------|------|
-| **ホスト切断** | `onDisconnect().remove()` でルームごと削除。ゲストにはオーバーレイを表示 |
+| **ホスト切断** | `hostConnected=false` と `hostDisconnectedAt=ServerValue.TIMESTAMP` を保存。ゲストにはオーバーレイを表示し、TTL 超過後は期限切れ扱いにする |
 | **ゲスト切断** | `onDisconnect().remove()` でそのプレイヤーデータのみ削除 |
 
 ```js
 // ホスト
-db.ref(`{appname}_rooms/${code}`).onDisconnect().remove();
+db.ref(`{appname}_rooms/${code}`).onDisconnect().update({
+  hostConnected: false,
+  hostDisconnectedAt: firebase.database.ServerValue.TIMESTAMP,
+});
 
 // ゲスト
 db.ref(`{appname}_rooms/${code}/players/${nick}`).onDisconnect().remove();
 ```
+
+再接続をサポートするアプリでは、ホスト側で `onDisconnect().remove()` を使わない。
+通常リロードでも切断扱いになるため、復帰フローと両立しない。
 
 ### セッションデータの自動削除
 
@@ -308,6 +339,21 @@ async function hostFinish() {
 ```
 
 Firestore アプリも同様にセッション終了後に削除する。
+
+ホスト切断後の孤立ルーム対策として、Realtime Database アプリは
+`hostDisconnectedAt` を使った TTL 判定も持つ。
+全員離脱後の完全自動削除はクライアントだけでは保証できないため、
+「期限切れ扱い + 次回アクセス時に削除」を基本方針とする。
+
+```js
+const ORPHAN_TTL_MS = 2 * 60 * 1000;
+
+function isRoomExpired(room) {
+  return room?.hostConnected === false
+    && Number.isFinite(Number(room.hostDisconnectedAt))
+    && (getEstimatedServerNow() - Number(room.hostDisconnectedAt)) >= ORPHAN_TTL_MS;
+}
+```
 
 ### 再接続（sessionStorage）
 
@@ -325,6 +371,22 @@ window.addEventListener('load', async () => {
 // TOPに戻るときにクリア
 sessionStorage.removeItem('{app}_session');
 ```
+
+再接続ありの Realtime Database アプリでは、次も合わせて実装する。
+
+```js
+db.ref('.info/serverTimeOffset').on('value', snap => {
+  state.serverTimeOffset = Number(snap.val()) || 0;
+});
+
+function getEstimatedServerNow() {
+  return Date.now() + (Number(state.serverTimeOffset) || 0);
+}
+```
+
+- TTL 判定は `Date.now()` のみで行わず、`.info/serverTimeOffset` を使ってサーバー時刻寄りに補正する
+- `joinRoom()`、`tryReconnect()`、ルーム監視の各タイミングで期限切れルームを検知し、`remove()` を試みる
+- ホスト再接続時は `hostConnected=true` と `hostDisconnectedAt=null` を戻す
 
 ### XSS 対策
 
