@@ -566,6 +566,10 @@
           ホストが3つの候補から1つ選びます
         </div>
         <div class="ito-theme-picker" id="revealing-theme-options"></div>
+        <button id="btn-copy-theme-options" class="btn btn-ghost btn-sm" style="margin-top:12px; display:none;" onclick="copyThemeOptions()">
+          <span class="material-symbols-rounded">content_copy</span>
+          お題候補をコピー
+        </button>
       </div>
 
       <div id="btn-start-playing-wrap" style="display:none;">
@@ -1461,6 +1465,11 @@
         `).join("");
       }
 
+      const copyThemesBtn = document.getElementById("btn-copy-theme-options");
+      if (copyThemesBtn) {
+        copyThemesBtn.style.display = (state.role === "host" && state.themeOptions.length > 0) ? "" : "none";
+      }
+
       const allReady = Object.values(players).length > 0 && Object.values(players).every((p) => !!p.ready);
       const startPlayingWrap = document.getElementById("btn-start-playing-wrap");
       if (startPlayingWrap) {
@@ -1755,6 +1764,35 @@
           document.body.removeChild(ta);
         }
         showMsg("ルームコードをコピーしました", false);
+      } catch (e) {
+        console.error(e);
+        showMsg("コピーできませんでした");
+      }
+    }
+
+    async function copyThemeOptions() {
+      const options = (state.themeOptions || []).filter(Boolean);
+      if (options.length === 0) {
+        showMsg("コピーするお題候補がありません");
+        return;
+      }
+      const text = [
+        "今日のお題候補です。番号で教えてね。",
+        ...options.map((theme, index) => `${index + 1}. ${theme}`)
+      ].join("\n");
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(text);
+        } else {
+          const ta = document.createElement("textarea");
+          ta.value = text;
+          ta.style.cssText = "position:fixed;opacity:0;";
+          document.body.appendChild(ta);
+          ta.focus(); ta.select();
+          document.execCommand("copy");
+          document.body.removeChild(ta);
+        }
+        showMsg("お題候補をコピーしました", false);
       } catch (e) {
         console.error(e);
         showMsg("コピーできませんでした");
