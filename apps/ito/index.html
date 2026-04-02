@@ -117,6 +117,22 @@
     }
     .ito-theme-banner__label { font-size: 12px; opacity: 0.8; margin-bottom: 4px; font-weight: 500; letter-spacing: 0.05em; }
     .ito-theme-banner__text { font-size: 22px; font-weight: 700; }
+    .ito-my-number-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0 auto 16px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.28);
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .ito-my-number-chip strong {
+      font-size: 18px;
+      letter-spacing: 0.04em;
+    }
     .ito-theme-picker {
       display: grid;
       gap: 10px;
@@ -576,6 +592,10 @@
       <div class="ito-theme-banner">
         <div class="ito-theme-banner__label">お題</div>
         <div class="ito-theme-banner__text" id="playing-theme"></div>
+        <div class="ito-my-number-chip">
+          <span class="material-symbols-rounded" style="font-size:18px;">tag</span>
+          あなたの数字 <strong id="playing-my-number">？</strong>
+        </div>
       </div>
 
       <!-- タイマー -->
@@ -1411,6 +1431,9 @@
 
       const themeEl = document.getElementById("playing-theme");
       if (themeEl) themeEl.textContent = room.theme || "";
+
+      const myNumberEl = document.getElementById("playing-my-number");
+      if (myNumberEl) myNumberEl.textContent = state.myNumber != null ? String(state.myNumber) : "？";
 
       updateTimer(room.discussionEndsAt);
 
