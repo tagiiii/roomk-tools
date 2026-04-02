@@ -645,10 +645,20 @@
 
       <!-- 宣言ボタン -->
       <div id="btn-declare-wrap" style="text-align:center; margin-bottom:16px;">
-        <button id="btn-declare" class="btn btn-primary btn-lg btn-full" onclick="declare()" style="display:none;">
+        <button id="btn-declare" class="btn btn-primary btn-lg btn-full" onclick="pendingDeclare()" style="display:none;">
           <span class="material-symbols-rounded">flag</span>
           宣言する！
         </button>
+        <div id="declare-confirm" style="display:none;">
+          <p style="font-size:14px; font-weight:700; margin-bottom:12px; color:var(--color-primary);">本当に宣言しますか？</p>
+          <div style="display:flex; gap:8px;">
+            <button class="btn btn-ghost btn-full" onclick="cancelDeclare()">やめる</button>
+            <button class="btn btn-primary btn-full" onclick="declare()">
+              <span class="material-symbols-rounded">flag</span>
+              宣言する
+            </button>
+          </div>
+        </div>
       </div>
 
       <!-- 答え合わせボタン（ホストのみ） -->
@@ -965,14 +975,33 @@
 
     function updateDeclareButton() {
       const declareBtn = document.getElementById("btn-declare");
+      const confirmEl = document.getElementById("declare-confirm");
       if (!declareBtn) return;
       const players = state.currentPlayers || {};
       const me = players[state.nickname];
       const canDeclare = state.currentStatus === "playing"
         && !!me
-        && me.declaredAt == null
-        && isDiscussionExpired(state.currentDiscussionEndsAt);
-      declareBtn.style.display = canDeclare ? "" : "none";
+        && me.declaredAt == null;
+      // 確認UI表示中は宣言ボタンを出さない
+      const confirmVisible = confirmEl && confirmEl.style.display !== "none";
+      declareBtn.style.display = (canDeclare && !confirmVisible) ? "" : "none";
+      // 宣言済みになったら確認UIも非表示に
+      if (confirmEl && (!canDeclare)) {
+        confirmEl.style.display = "none";
+      }
+    }
+
+    function pendingDeclare() {
+      const declareBtn = document.getElementById("btn-declare");
+      const confirmEl = document.getElementById("declare-confirm");
+      if (declareBtn) declareBtn.style.display = "none";
+      if (confirmEl) confirmEl.style.display = "block";
+    }
+
+    function cancelDeclare() {
+      const confirmEl = document.getElementById("declare-confirm");
+      if (confirmEl) confirmEl.style.display = "none";
+      updateDeclareButton();
     }
 
     function getMyPlayer(players) {
@@ -1236,7 +1265,7 @@
           return {
             ...room,
             status: "playing",
-            discussionEndsAt: room.discussionEndsAt || (getEstimatedServerNow() + DEFAULT_DISCUSSION_SECONDS * 1000),
+            discussionEndsAt: room.discussionEndsAt ?? null,
             recentThemes: [...((Array.isArray(room.recentThemes) ? room.recentThemes : []).filter((theme) => theme !== room.theme)), room.theme].slice(-RECENT_THEME_MEMORY),
           };
         });
@@ -1267,11 +1296,6 @@
     async function declare() {
       if (!state.roomRef || !state.nickname) return;
       try {
-        const roomSnap = await state.roomRef.child("discussionEndsAt").get();
-        if (!isDiscussionExpired(roomSnap.val())) {
-          showMsg("宣言は時間が経ってからできます");
-          return;
-        }
         const playerRef = state.roomRef.child(`players/${state.nickname}`);
         const snap = await playerRef.once("value");
         const player = snap.val();
@@ -1745,7 +1769,6 @@
       const readyArea = document.getElementById("ready-area");
       if (readyArea) readyArea.style.display = "block";
       state.numberRevealed = true;
-      confirmNumber();
     }
 
     async function copyRoomCode() {
