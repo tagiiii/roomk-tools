@@ -985,18 +985,19 @@
 
     let abortReason = null;
     const { committed, snapshot } = await roomRef.transaction((currentRoom) => {
-      if (!currentRoom) { abortReason = 'not_found'; return; }
-      if (isRoomExpired(currentRoom)) {
+      const roomForJoin = currentRoom || room;
+      if (!roomForJoin) { abortReason = 'not_found'; return; }
+      if (isRoomExpired(roomForJoin)) {
         abortReason = 'expired';
         return null;
       }
-      if (currentRoom.hostConnected === false) { abortReason = 'host_gone'; return; }
-      if (currentRoom.status !== 'waiting') { abortReason = 'not_waiting'; return; }
-      const players = currentRoom.players || {};
+      if (roomForJoin.hostConnected === false) { abortReason = 'host_gone'; return; }
+      if (roomForJoin.status !== 'waiting') { abortReason = 'not_waiting'; return; }
+      const players = roomForJoin.players || {};
       if (players[nickname]) { abortReason = 'nick_taken'; return; }
       abortReason = null;
       return {
-        ...currentRoom,
+        ...roomForJoin,
         players: {
           ...players,
           [nickname]: { score: 0, isHost: false, answer: null },

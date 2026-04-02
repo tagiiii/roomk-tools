@@ -920,18 +920,19 @@
         // 「スナップショット確認後にゲームが開始した」競合を防ぐ。
         let abortReason = null;
         const { committed, snapshot } = await roomRef.transaction((room) => {
-          if (!room) { abortReason = "not_found"; return; }
-          if (isRoomExpired(room)) {
+          const currentRoom = room || preRoom;
+          if (!currentRoom) { abortReason = "not_found"; return; }
+          if (isRoomExpired(currentRoom)) {
             abortReason = "expired";
             return null;
           }
-          if (room.status !== "waiting") { abortReason = "not_waiting"; return; }
-          if (room.hostConnected === false) { abortReason = "host_gone"; return; }
-          const players = room.players || {};
+          if (currentRoom.status !== "waiting") { abortReason = "not_waiting"; return; }
+          if (currentRoom.hostConnected === false) { abortReason = "host_gone"; return; }
+          const players = currentRoom.players || {};
           if (players[nick]) { abortReason = "nick_taken"; return; }
           abortReason = null;
           return {
-            ...room,
+            ...currentRoom,
             players: { ...players, [nick]: { isHost: false, number: 0, ready: false, declaredAt: null } },
           };
         });

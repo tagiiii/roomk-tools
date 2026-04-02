@@ -734,18 +734,19 @@ async function guestJoin() {
   }
   let abortReason = null;
   const { committed, snapshot } = await roomRef.transaction((room) => {
-    if (!room) { abortReason = 'not_found'; return; }
-    if (isRoomExpired(room)) {
+    const currentRoom = room || preRoom;
+    if (!currentRoom) { abortReason = 'not_found'; return; }
+    if (isRoomExpired(currentRoom)) {
       abortReason = 'expired';
       return null;
     }
-    if (room.hostConnected === false) { abortReason = 'host_gone'; return; }
-    if (room.status !== 'waiting') { abortReason = 'not_waiting'; return; }
-    const players = room.players || {};
+    if (currentRoom.hostConnected === false) { abortReason = 'host_gone'; return; }
+    if (currentRoom.status !== 'waiting') { abortReason = 'not_waiting'; return; }
+    const players = currentRoom.players || {};
     if (players[nickname]) { abortReason = 'nick_taken'; return; }
     abortReason = null;
     return {
-      ...room,
+      ...currentRoom,
       players: {
         ...players,
         [nickname]: { isHost: false, isWolf: false, word: '', ready: false, vote: null },
