@@ -936,6 +936,15 @@
       return pool.slice(0, Math.min(count, pool.length));
     }
 
+    function pickUniqueNumbers(count, max = 100) {
+      const pool = Array.from({ length: max }, (_, i) => i + 1);
+      for (let i = pool.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [pool[i], pool[j]] = [pool[j], pool[i]];
+      }
+      return pool.slice(0, count);
+    }
+
     function updateDeclareButton() {
       const declareBtn = document.getElementById("btn-declare");
       if (!declareBtn) return;
@@ -1119,13 +1128,18 @@
             abortReason = "too_few";
             return; // undefined を返してトランザクション中止
           }
+          if (nicknames.length > 100) {
+            abortReason = "too_many";
+            return;
+          }
           abortReason = null; // 成功パスではリセット
 
+          const assignedNumbers = pickUniqueNumbers(nicknames.length);
           const nextPlayers = {};
-          nicknames.forEach((n) => {
+          nicknames.forEach((n, index) => {
             nextPlayers[n] = {
               isHost: !!players[n].isHost,
-              number: Math.floor(Math.random() * 100) + 1,
+              number: assignedNumbers[index],
               ready: false,
               declaredAt: null,
             };
@@ -1143,6 +1157,7 @@
 
         if (!committed) {
           if (abortReason === "too_few") showMsg("2人以上で始められます");
+          if (abortReason === "too_many") showMsg("人数が多すぎます");
           // invalid_state は別のクライアントがすでに開始済みのケース。何もしない。
           return;
         }
