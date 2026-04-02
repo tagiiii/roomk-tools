@@ -582,12 +582,14 @@
     roomRef:         null,
     currentScreen:   'top',
     resultTriggered: false,
+    serverTimeOffset: 0,
   };
 
   // ════════════════════════════════════
   // セッション管理（再接続用）
   // ════════════════════════════════════
   const SESSION_KEY = 'iisen_session';
+  const ORPHAN_TTL_MS = 60 * 1000;
 
   function saveSession() {
     sessionStorage.setItem(SESSION_KEY, JSON.stringify({
@@ -612,6 +614,22 @@
     if (s) { s.score = score; sessionStorage.setItem(SESSION_KEY, JSON.stringify(s)); }
   }
 
+  function getEstimatedServerNow() {
+    return Date.now() + (Number(state.serverTimeOffset) || 0);
+  }
+
+  function getHostDisconnectedAt(room) {
+    const ts = room ? Number(room.hostDisconnectedAt) : NaN;
+    return Number.isFinite(ts) ? ts : null;
+  }
+
+  function isRoomExpired(room) {
+    const disconnectedAt = getHostDisconnectedAt(room);
+    return room?.hostConnected === false
+      && disconnectedAt != null
+      && (getEstimatedServerNow() - disconnectedAt) >= ORPHAN_TTL_MS;
+  }
+
   // ════════════════════════════════════
   // 再接続処理
   // ════════════════════════════════════
@@ -627,14 +645,23 @@
       if (!snap.exists()) { clearSession(); showReconnectOverlay(false); return false; }
 
       const room = snap.val();
+      if (isRoomExpired(room)) {
+        await db.ref(`iisen_rooms/${roomCode}`).remove().catch(() => {});
+        clearSession();
+        showReconnectOverlay(false);
+        return false;
+      }
       state.nickname = nickname;
       state.roomCode = roomCode;
       state.role     = role;
       state.roomRef  = db.ref(`iisen_rooms/${roomCode}`);
 
       if (role === 'host') {
-        await state.roomRef.child('hostConnected').set(true);
-        state.roomRef.child('hostConnected').onDisconnect().set(false);
+        await state.roomRef.update({ hostConnected: true, hostDisconnectedAt: null });
+        state.roomRef.onDisconnect().update({
+          hostConnected: false,
+          hostDisconnectedAt: firebase.database.ServerValue.TIMESTAMP,
+        });
       } else {
         const playerRef = state.roomRef.child(`players/${nickname}`);
         if (!room.players || !room.players[nickname]) {
@@ -660,33 +687,44 @@
 
   // ── ホスト切断オーバーレイ ──
   let _hostDisconnectTimer = null;
+  let _hostDisconnectDeadline = null;
 
-  function showHostDisconnectOverlay(show) {
+  function showHostDisconnectOverlay(show, room = null) {
     const overlay = document.getElementById('host-disconnect-overlay');
     overlay.style.display = show ? 'flex' : 'none';
 
     if (show && !_hostDisconnectTimer) {
-      let remaining = 60;
-      document.getElementById('host-disconnect-countdown').textContent = remaining;
+      const disconnectedAt = getHostDisconnectedAt(room);
+      _hostDisconnectDeadline = disconnectedAt == null
+        ? getEstimatedServerNow() + ORPHAN_TTL_MS
+        : disconnectedAt + ORPHAN_TTL_MS;
       _hostDisconnectTimer = setInterval(() => {
-        remaining--;
+        const remaining = Math.max(0, Math.ceil((_hostDisconnectDeadline - getEstimatedServerNow()) / 1000));
         document.getElementById('host-disconnect-countdown').textContent = remaining;
         if (remaining <= 0) {
           clearInterval(_hostDisconnectTimer);
           _hostDisconnectTimer = null;
+          _hostDisconnectDeadline = null;
           if (state.roomRef) state.roomRef.remove();
           leaveGame('ホストが再接続できなかったためゲームが終了しました');
         }
       }, 1000);
+    } else if (show && _hostDisconnectTimer) {
+      const disconnectedAt = getHostDisconnectedAt(room);
+      _hostDisconnectDeadline = disconnectedAt == null
+        ? getEstimatedServerNow() + ORPHAN_TTL_MS
+        : disconnectedAt + ORPHAN_TTL_MS;
     } else if (!show && _hostDisconnectTimer) {
       clearInterval(_hostDisconnectTimer);
       _hostDisconnectTimer = null;
+      _hostDisconnectDeadline = null;
     }
   }
 
   function leaveGame(msg) {
     clearInterval(_hostDisconnectTimer);
     _hostDisconnectTimer = null;
+    _hostDisconnectDeadline = null;
     clearSession();
     document.getElementById('host-disconnect-overlay').style.display = 'none';
     goToTop();
@@ -775,33 +813,46 @@
     if (err) { showError('host-nickname-error', err); return; }
     hideError('host-nickname-error');
 
-    state.nickname = nickname;
-    state.role = 'host';
-
     // ルームコード生成（衝突回避: 最大5回試行）
     let roomCode;
+    let roomRef = null;
     for (let i = 0; i < 5; i++) {
-      roomCode = generateRoomCode();
-      const snap = await db.ref(`iisen_rooms/${roomCode}`).get();
-      if (!snap.exists()) break;
+      const code = generateRoomCode();
+      const ref = db.ref(`iisen_rooms/${code}`);
+      const initialRoom = {
+        host:            nickname,
+        status:          'waiting',
+        currentQuestion: '',
+        round:           0,
+        usedQuestions:   [],
+        hostConnected:   true,
+        hostDisconnectedAt: null,
+        players: {
+          [nickname]: { score: 0, isHost: true, answer: null },
+        },
+      };
+      const { committed } = await ref.transaction((room) => room ? undefined : initialRoom);
+      if (committed) {
+        roomCode = code;
+        roomRef = ref;
+        break;
+      }
     }
+    if (!roomCode || !roomRef) {
+      showError('host-nickname-error', 'ルーム作成に失敗しました。もう一度お試しください');
+      return;
+    }
+
+    state.nickname = nickname;
+    state.role = 'host';
     state.roomCode = roomCode;
-    state.roomRef  = db.ref(`iisen_rooms/${roomCode}`);
+    state.roomRef  = roomRef;
 
-    await state.roomRef.set({
-      host:            nickname,
-      status:          'waiting',
-      currentQuestion: '',
-      round:           0,
-      usedQuestions:   [],
-      hostConnected:   true,
-      players: {
-        [nickname]: { score: 0, isHost: true, answer: null },
-      },
+    // ホスト切断時は切断時刻を残す。次回アクセス時に期限切れルームを掃除できる。
+    state.roomRef.onDisconnect().update({
+      hostConnected: false,
+      hostDisconnectedAt: firebase.database.ServerValue.TIMESTAMP,
     });
-
-    // ホスト切断時: hostConnected を false にする（ルームは保持）
-    state.roomRef.child('hostConnected').onDisconnect().set(false);
     saveSession();
 
     document.getElementById('host-step-nickname').style.display = 'none';
@@ -898,11 +949,19 @@
     if (roomCode.length !== 4) { showError('guest-join-error', 'ルームコードは4文字です'); return; }
     hideError('guest-join-error');
 
-    const snap = await db.ref(`iisen_rooms/${roomCode}`).get();
+    const roomRef = db.ref(`iisen_rooms/${roomCode}`);
+    const snap = await roomRef.get();
     if (!snap.exists()) {
       showError('guest-join-error', 'ルームが見つかりません'); return;
     }
     const room = snap.val();
+    if (isRoomExpired(room)) {
+      await db.ref(`iisen_rooms/${roomCode}`).remove().catch(() => {});
+      showError('guest-join-error', 'このルームは期限切れのため終了しました'); return;
+    }
+    if (room.hostConnected === false) {
+      showError('guest-join-error', 'ホストが切断されています'); return;
+    }
     const alreadyInRoom = room.players && room.players[nickname];
 
     // ゲーム中に同じニックネームで再参加（再接続）
@@ -910,7 +969,7 @@
       state.nickname = nickname;
       state.roomCode = roomCode;
       state.role     = 'guest';
-      state.roomRef  = db.ref(`iisen_rooms/${roomCode}`);
+      state.roomRef  = roomRef;
       state.roomRef.child(`players/${nickname}`).onDisconnect().remove();
       saveSession();
       startRoomListener();
@@ -924,13 +983,44 @@
       showError('guest-join-error', 'そのニックネームはすでに使われています'); return;
     }
 
+    let abortReason = null;
+    const { committed, snapshot } = await roomRef.transaction((currentRoom) => {
+      if (!currentRoom) { abortReason = 'not_found'; return; }
+      if (isRoomExpired(currentRoom)) {
+        abortReason = 'expired';
+        return null;
+      }
+      if (currentRoom.hostConnected === false) { abortReason = 'host_gone'; return; }
+      if (currentRoom.status !== 'waiting') { abortReason = 'not_waiting'; return; }
+      const players = currentRoom.players || {};
+      if (players[nickname]) { abortReason = 'nick_taken'; return; }
+      abortReason = null;
+      return {
+        ...currentRoom,
+        players: {
+          ...players,
+          [nickname]: { score: 0, isHost: false, answer: null },
+        },
+      };
+    });
+
+    if (!committed) {
+      if (abortReason === 'not_found')   { showError('guest-join-error', 'ルームが見つかりません'); return; }
+      if (abortReason === 'expired' && !snapshot?.val()) {
+        showError('guest-join-error', 'このルームは期限切れのため終了しました'); return;
+      }
+      if (abortReason === 'host_gone')   { showError('guest-join-error', 'ホストが切断されています'); return; }
+      if (abortReason === 'not_waiting') { showError('guest-join-error', 'このルームはすでにゲームが始まっています'); return; }
+      if (abortReason === 'nick_taken')  { showError('guest-join-error', 'そのニックネームはすでに使われています'); return; }
+      showError('guest-join-error', '参加に失敗しました'); return;
+    }
+
     state.nickname = nickname;
     state.roomCode = roomCode;
     state.role     = 'guest';
-    state.roomRef  = db.ref(`iisen_rooms/${roomCode}`);
+    state.roomRef  = roomRef;
 
     const playerRef = state.roomRef.child(`players/${nickname}`);
-    await playerRef.set({ score: 0, isHost: false, answer: null });
     playerRef.onDisconnect().remove();
     saveSession();
 
@@ -1011,8 +1101,13 @@
 
       // ホスト切断チェック（ゲストのみ）
       if (state.role === 'guest') {
+        if (isRoomExpired(room)) {
+          if (state.roomRef) state.roomRef.remove().catch(() => {});
+          leaveGame('ホストが再接続できなかったためゲームが終了しました');
+          return;
+        }
         if (room.hostConnected === false) {
-          showHostDisconnectOverlay(true);
+          showHostDisconnectOverlay(true, room);
           return;
         }
         showHostDisconnectOverlay(false);
@@ -1258,6 +1353,10 @@
   // ════════════════════════════════════
   tryReconnect().then(reconnected => {
     if (!reconnected) showScreen('top');
+  });
+  db.ref('.info/serverTimeOffset').on('value', snap => {
+    const offset = Number(snap.val());
+    state.serverTimeOffset = Number.isFinite(offset) ? offset : 0;
   });
 </script>
 </body>

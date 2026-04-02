@@ -658,6 +658,7 @@ const db = firebase.database();
 // ══════════════════════════════════════════════════
 const SESSION_KEY = 'jinro_session';
 const CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+const ORPHAN_TTL_MS = 2 * 60 * 1000;
 
 const ROLES = [
   { id: '村人',       faction: 'village', desc: '夜の行動はありません',                         nightAction: false },
@@ -703,7 +704,9 @@ const state = {
   nightActionDone: false,
   myVote:       null,
   roleCounts:   { ...DEFAULT_ROLE_COUNTS },
+  serverTimeOffset: 0,
   timerInterval: null,
+  orphanTimer: null,
   roleFlipped:  false,
   resolveTriggered: false,
   hunterResolved: false,
@@ -757,6 +760,22 @@ function loadSession() {
   try { return JSON.parse(sessionStorage.getItem(SESSION_KEY)); } catch { return null; }
 }
 function clearSession() { sessionStorage.removeItem(SESSION_KEY); }
+
+function getEstimatedServerNow() {
+  return Date.now() + (Number(state.serverTimeOffset) || 0);
+}
+
+function getHostDisconnectedAt(room) {
+  const ts = room ? Number(room.hostDisconnectedAt) : NaN;
+  return Number.isFinite(ts) ? ts : null;
+}
+
+function isRoomExpired(room) {
+  const disconnectedAt = getHostDisconnectedAt(room);
+  return room?.hostConnected === false
+    && disconnectedAt != null
+    && (getEstimatedServerNow() - disconnectedAt) >= ORPHAN_TTL_MS;
+}
 
 // ══════════════════════════════════════════════════
 // 画面管理
@@ -867,42 +886,55 @@ async function hostCreateRoom() {
   const discussionSecs = parseInt(document.getElementById('discussion-time').value);
 
   let roomCode;
+  let roomRef = null;
   for (let i = 0; i < 5; i++) {
-    roomCode = genCode();
-    const snap = await db.ref(`jinro_rooms/${roomCode}`).get();
-    if (!snap.exists()) break;
+    const code = genCode();
+    const ref = db.ref(`jinro_rooms/${code}`);
+    const initialRoom = {
+      host: nickname,
+      hostConnected: true,
+      hostDisconnectedAt: null,
+      status: 'waiting',
+      day: 1,
+      discussionSecs,
+      roles: state.roleCounts,
+      players: {
+        [nickname]: {
+          isHost: true,
+          role: null,
+          isAlive: true,
+          faction: null,
+          vote: null,
+          wolfVote: null,
+          nightAction: null,
+          actionDone: false,
+          lastGuarded: null,
+          lastGuardedDay: 0,
+          connected: true,
+        },
+      },
+    };
+    const { committed } = await ref.transaction((room) => room ? undefined : initialRoom);
+    if (committed) {
+      roomCode = code;
+      roomRef = ref;
+      break;
+    }
+  }
+  if (!roomCode || !roomRef) {
+    showMsg('ルーム作成に失敗しました');
+    return;
   }
 
   state.nickname    = nickname;
   state.roomCode    = roomCode;
   state.isHost      = true;
-  state.roomRef     = db.ref(`jinro_rooms/${roomCode}`);
+  state.roomRef     = roomRef;
 
-  await state.roomRef.set({
-    host: nickname,
-    hostConnected: true,
-    status: 'waiting',
-    day: 1,
-    discussionSecs,
-    roles: state.roleCounts,
-    players: {
-      [nickname]: {
-        isHost: true,
-        role: null,
-        isAlive: true,
-        faction: null,
-        vote: null,
-        wolfVote: null,
-        nightAction: null,
-        actionDone: false,
-        lastGuarded: null,
-        lastGuardedDay: 0,
-        connected: true,
-      },
-    },
+  state.roomRef.onDisconnect().update({
+    hostConnected: false,
+    hostDisconnectedAt: firebase.database.ServerValue.TIMESTAMP,
   });
-
-  state.roomRef.child('hostConnected').onDisconnect().set(false);
   saveSession();
   buildRoleConfigGrid();
   updateRoleTotalUI(1);
@@ -915,30 +947,58 @@ async function guestJoin() {
   if (!validNick(nickname)) return;
   if (roomCode.length !== 4) { showMsg('ルームコードは4文字です'); return; }
 
-  const snap = await db.ref(`jinro_rooms/${roomCode}`).get();
-  if (!snap.exists()) { showMsg('ルームが見つかりません'); return; }
-  const room = snap.val();
-  if (room.status !== 'waiting') { showMsg('このゲームはすでに始まっています'); return; }
-  if (room.players?.[nickname]) { showMsg('そのニックネームはすでに使われています'); return; }
+  const roomRef = db.ref(`jinro_rooms/${roomCode}`);
+  let abortReason = null;
+  const { committed, snapshot } = await roomRef.transaction((room) => {
+    if (!room) { abortReason = 'not_found'; return; }
+    if (isRoomExpired(room)) {
+      abortReason = 'expired';
+      return null;
+    }
+    if (room.hostConnected === false) { abortReason = 'host_gone'; return; }
+    if (room.status !== 'waiting') { abortReason = 'not_waiting'; return; }
+    const players = room.players || {};
+    if (players[nickname]) { abortReason = 'nick_taken'; return; }
+    abortReason = null;
+    return {
+      ...room,
+      players: {
+        ...players,
+        [nickname]: {
+          isHost: false,
+          role: null,
+          isAlive: true,
+          faction: null,
+          vote: null,
+          wolfVote: null,
+          nightAction: null,
+          actionDone: false,
+          lastGuarded: null,
+          lastGuardedDay: 0,
+          connected: true,
+        },
+      },
+    };
+  });
+
+  if (!committed) {
+    if (abortReason === 'not_found')   { showMsg('ルームが見つかりません'); return; }
+    if (abortReason === 'host_gone')   { showMsg('GMが切断されています'); return; }
+    if (abortReason === 'not_waiting') { showMsg('このゲームはすでに始まっています'); return; }
+    if (abortReason === 'nick_taken')  { showMsg('そのニックネームはすでに使われています'); return; }
+    showMsg('参加に失敗しました');
+    return;
+  }
+  if (abortReason === 'expired' && !snapshot.val()) {
+    showMsg('このルームは期限切れのため終了しました');
+    return;
+  }
 
   state.nickname = nickname;
   state.roomCode = roomCode;
   state.isHost   = false;
-  state.roomRef  = db.ref(`jinro_rooms/${roomCode}`);
+  state.roomRef  = roomRef;
 
-  await state.roomRef.child(`players/${nickname}`).set({
-    isHost: false,
-    role: null,
-    isAlive: true,
-    faction: null,
-    vote: null,
-    wolfVote: null,
-    nightAction: null,
-    actionDone: false,
-    lastGuarded: null,
-    lastGuardedDay: 0,
-    connected: true,
-  });
   state.roomRef.child(`players/${nickname}/connected`).onDisconnect().set(false);
   saveSession();
   startRoomListener();
@@ -948,13 +1008,37 @@ async function guestJoin() {
 // ゲームスタート（GM のみ）
 // ══════════════════════════════════════════════════
 async function startGame() {
-  const snap = await state.roomRef.child('players').get();
-  const nicks = Object.keys(snap.val() || {});
   const total  = Object.values(state.roleCounts).reduce((a, b) => a + b, 0);
-  if (nicks.length < 4 || total !== nicks.length) return;
+  let abortReason = null;
 
-  // 役職配布はロジックスタブに委譲
-  await assignRoles(state.roomRef, nicks, state.roleCounts);
+  const { committed } = await state.roomRef.transaction((room) => {
+    if (!room || room.status !== 'waiting') {
+      abortReason = 'invalid_state';
+      return;
+    }
+    const playerCount = Object.keys(room.players || {}).length;
+    if (playerCount < 4) {
+      abortReason = 'too_few';
+      return;
+    }
+    if (total !== playerCount) {
+      abortReason = 'count_mismatch';
+      return;
+    }
+    const nextRoom = buildRoleAssignmentRoom(room, state.roleCounts);
+    if (!nextRoom) {
+      abortReason = 'count_mismatch';
+      return;
+    }
+    abortReason = null;
+    return nextRoom;
+  });
+
+  if (!committed) {
+    if (abortReason === 'too_few') showMsg('4人以上でスタートできます');
+    if (abortReason === 'count_mismatch') showMsg('役職の合計と参加者数を合わせてください');
+    return;
+  }
 }
 
 // ══════════════════════════════════════════════════
@@ -974,7 +1058,28 @@ function startRoomListener() {
 
 function handleRoom(room) {
   const players = room.players || {};
-  if (!state.isHost) showOverlay('host-off-overlay', room.hostConnected === false);
+  if (!state.isHost) {
+    const hostGone = room.hostConnected === false;
+    const expired = isRoomExpired(room);
+    showOverlay('host-off-overlay', hostGone);
+    if (hostGone) {
+      const disconnectedAt = getHostDisconnectedAt(room);
+      const delay = disconnectedAt == null ? ORPHAN_TTL_MS : Math.max(0, disconnectedAt + ORPHAN_TTL_MS - getEstimatedServerNow());
+      if (expired) {
+        clearTimeout(state.orphanTimer);
+        state.orphanTimer = null;
+        if (state.roomRef) state.roomRef.remove().catch(() => {});
+      } else if (!state.orphanTimer) {
+        state.orphanTimer = setTimeout(() => {
+          state.orphanTimer = null;
+          if (state.roomRef) state.roomRef.remove().catch(() => {});
+        }, delay);
+      }
+    } else {
+      clearTimeout(state.orphanTimer);
+      state.orphanTimer = null;
+    }
+  }
   switch (room.status) {
     case 'waiting':   handleWaiting(room, players);   break;
     case 'role':      handleRole(room, players);       break;
@@ -1826,6 +1931,7 @@ async function kickPlayer(nick) {
 
 async function leaveGame() {
   clearInterval(state.timerInterval);
+  clearTimeout(state.orphanTimer);
   clearSession();
   if (state.roomRef) {
     if (state.isHost) {
@@ -1840,8 +1946,9 @@ async function leaveGame() {
     currentScreen: null, myRole: null, myFaction: null, isAlive: true,
     wolfPartners: [], sharerPartner: null, foxPlayer: null,
     lastGuarded: null, lastGuardedDay: 0, nightActionDone: false, myVote: null,
-    timerInterval: null, roleFlipped: false, resolveTriggered: false, hunterResolved: false,
+    timerInterval: null, orphanTimer: null, roleFlipped: false, resolveTriggered: false, hunterResolved: false,
   });
+  showOverlay('host-off-overlay', false);
   showScreen('top');
 }
 
@@ -1857,6 +1964,10 @@ async function tryReconnect() {
     const snap = await db.ref(`jinro_rooms/${roomCode}`).get();
     if (!snap.exists()) { clearSession(); showOverlay('reconnect-overlay', false); return false; }
     const room = snap.val();
+    if (isRoomExpired(room)) {
+      await db.ref(`jinro_rooms/${roomCode}`).remove().catch(() => {});
+      clearSession(); showOverlay('reconnect-overlay', false); return false;
+    }
     state.nickname = nickname; state.roomCode = roomCode; state.isHost = isHost;
     state.roomRef  = db.ref(`jinro_rooms/${roomCode}`);
 
@@ -1871,8 +1982,11 @@ async function tryReconnect() {
     }
     if (isHost) {
       state.roleCounts = room.roles || { ...DEFAULT_ROLE_COUNTS };
-      await state.roomRef.child('hostConnected').set(true);
-      state.roomRef.child('hostConnected').onDisconnect().set(false);
+      await state.roomRef.update({ hostConnected: true, hostDisconnectedAt: null });
+      state.roomRef.onDisconnect().update({
+        hostConnected: false,
+        hostDisconnectedAt: firebase.database.ServerValue.TIMESTAMP,
+      });
     } else {
       if (!room.players?.[nickname]) {
         clearSession(); showOverlay('reconnect-overlay', false); return false;
@@ -1893,29 +2007,20 @@ async function tryReconnect() {
 // ロジックスタブ（Codex が実装）
 // ══════════════════════════════════════════════════
 
-/**
- * 役職をランダムに配布してゲームを開始する。
- * @param {object} roomRef - Firebase Realtime Database の roomRef
- * @param {string[]} nicks - 参加者ニックネーム配列
- * @param {object} roleCounts - { 役職名: 人数, ... }
- *
- * 実装要件:
- * - roleCounts に従って役職をシャッフル配布する
- * - 各プレイヤーに role, faction を書き込む
- * - 神様は全員の役職情報を知る（別途取得できるよう配慮）
- * - 共有者は2人セットで存在する（roleCounts['共有者'] は 0 か 2 のみ）
- * - 書き込み完了後に status を 'role' に更新し day=1, totalPlayers=nicks.length をセット
- */
-async function assignRoles(roomRef, nicks, roleCounts) {
-  if (!roomRef || !Array.isArray(nicks) || nicks.length === 0) return;
+function buildRoleAssignmentRoom(room, roleCounts) {
+  if (!room) return null;
+  const players = room.players || {};
+  const nicks = Object.keys(players);
+  if (nicks.length === 0) return null;
+
   const pool = [];
   Object.entries(roleCounts || {}).forEach(([roleId, countRaw]) => {
     const count = Number(countRaw) || 0;
     for (let i = 0; i < count; i += 1) pool.push(roleId);
   });
   if (pool.length !== nicks.length) {
-    console.warn('assignRoles: player count and role count do not match');
-    return;
+    console.warn('buildRoleAssignmentRoom: player count and role count do not match');
+    return null;
   }
 
   const shuffle = (arr) => {
@@ -1929,7 +2034,30 @@ async function assignRoles(roomRef, nicks, roleCounts) {
 
   const shuffledRoles = shuffle(pool);
   const shuffledNicks = shuffle(nicks);
-  const updates = {
+  const nextPlayers = {};
+  let foxName = null;
+  shuffledNicks.forEach((nick, idx) => {
+    const role = shuffledRoles[idx];
+    const roleDef = ROLES.find(r => r.id === role);
+    const faction = roleDef?.faction || 'village';
+    nextPlayers[nick] = {
+      ...players[nick],
+      role,
+      faction,
+      isAlive: true,
+      vote: null,
+      wolfVote: null,
+      nightAction: null,
+      actionDone: false,
+      lastGuarded: null,
+      lastGuardedDay: 0,
+    };
+    if (role === '妖狐') foxName = nick;
+  });
+
+  return {
+    ...room,
+    roles: { ...(roleCounts || {}) },
     status: 'role',
     day: 1,
     totalPlayers: nicks.length,
@@ -1940,34 +2068,18 @@ async function assignRoles(roomRef, nicks, roleCounts) {
     tieBreakTarget: null,
     hunterPending: null,
     hunterTarget: null,
-    foxPlayer: null,
+    foxPlayer: foxName,
     morningLog: [],
-    'nightResult/attacked': null,
-    'nightResult/actuallyKilled': null,
-    'nightResult/guarded': null,
-    'nightResult/seerResults': null,
-    'nightResult/seerResult': null,
-    'nightResult/mediumResult': null,
+    nightResult: {
+      attacked: null,
+      actuallyKilled: null,
+      guarded: null,
+      seerResults: null,
+      seerResult: null,
+      mediumResult: null,
+    },
+    players: nextPlayers,
   };
-
-  let foxName = null;
-  shuffledNicks.forEach((nick, idx) => {
-    const role = shuffledRoles[idx];
-    const roleDef = ROLES.find(r => r.id === role);
-    const faction = roleDef?.faction || 'village';
-    updates[`players/${nick}/role`] = role;
-    updates[`players/${nick}/faction`] = faction;
-    updates[`players/${nick}/isAlive`] = true;
-    updates[`players/${nick}/vote`] = null;
-    updates[`players/${nick}/wolfVote`] = null;
-    updates[`players/${nick}/nightAction`] = null;
-    updates[`players/${nick}/actionDone`] = false;
-    updates[`players/${nick}/lastGuarded`] = null;
-    updates[`players/${nick}/lastGuardedDay`] = 0;
-    if (role === '妖狐') foxName = nick;
-  });
-  updates.foxPlayer = foxName;
-  await roomRef.update(updates);
 }
 
 /**
@@ -2273,6 +2385,10 @@ function checkVictory(room) {
 // ══════════════════════════════════════════════════
 // 初期化
 // ══════════════════════════════════════════════════
+db.ref('.info/serverTimeOffset').on('value', snap => {
+  const offset = Number(snap.val());
+  state.serverTimeOffset = Number.isFinite(offset) ? offset : 0;
+});
 tryReconnect().then(ok => { if (!ok) showScreen('top'); });
 </script>
 </body>
