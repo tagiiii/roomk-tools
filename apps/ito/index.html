@@ -122,6 +122,9 @@
       gap: 10px;
     }
     .ito-theme-option {
+      display: flex;
+      align-items: center;
+      gap: 12px;
       width: 100%;
       padding: 14px 16px;
       border-radius: 12px;
@@ -147,6 +150,27 @@
       cursor: default;
       opacity: 0.75;
       transform: none;
+    }
+    .ito-theme-option__num {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(28, 63, 94, 0.1);
+      color: var(--color-primary);
+      font-size: 14px;
+      font-weight: 700;
+      flex: 0 0 28px;
+    }
+    .ito-theme-option.selected .ito-theme-option__num {
+      background: rgba(255, 255, 255, 0.22);
+      color: #fff;
+    }
+    .ito-theme-option__text {
+      flex: 1;
+      text-align: left;
     }
 
     /* ── タイマー ── */
@@ -711,6 +735,9 @@
       numberRevealed: false,
       confirmingNumber: false,
       themeOptions: [],
+      currentPlayers: {},
+      currentStatus: null,
+      currentDiscussionEndsAt: null,
     };
 
     const SESSION_KEY = "ito_session";
@@ -832,6 +859,9 @@
       state.numberRevealed = false;
       state.confirmingNumber = false;
       state.themeOptions = [];
+      state.currentPlayers = {};
+      state.currentStatus = null;
+      state.currentDiscussionEndsAt = null;
     }
 
     function validateNickname(nick) {
@@ -884,6 +914,18 @@
         [pool[i], pool[j]] = [pool[j], pool[i]];
       }
       return pool.slice(0, Math.min(count, pool.length));
+    }
+
+    function updateDeclareButton() {
+      const declareBtn = document.getElementById("btn-declare");
+      if (!declareBtn) return;
+      const players = state.currentPlayers || {};
+      const me = players[state.nickname];
+      const canDeclare = state.currentStatus === "playing"
+        && !!me
+        && me.declaredAt == null
+        && isDiscussionExpired(state.currentDiscussionEndsAt);
+      declareBtn.style.display = canDeclare ? "" : "none";
     }
 
     // ── ルーム作成 ──────────────────────────
@@ -1233,6 +1275,8 @@
           return;
         }
         const room = snap.val() || {};
+        state.currentStatus = room.status || null;
+        state.currentDiscussionEndsAt = room.discussionEndsAt ?? null;
         if (state.role === "guest") {
           const hostGone = room.hostConnected === false;
           const expired = isRoomExpired(room);
@@ -1258,6 +1302,7 @@
           }
         }
         const players = room.players || {};
+        state.currentPlayers = players;
         state.themeOptions = Array.isArray(room.themeOptions) ? room.themeOptions : [];
         if (players[state.nickname] && players[state.nickname].number) {
           state.myNumber = players[state.nickname].number;
@@ -1341,7 +1386,10 @@
             class="ito-theme-option ${room.theme === theme ? "selected" : ""}"
             onclick="selectTheme(${index})"
             ${state.role === "host" ? "" : "disabled"}
-          >${esc(theme)}</button>
+          >
+            <span class="ito-theme-option__num">${index + 1}</span>
+            <span class="ito-theme-option__text">${esc(theme)}</span>
+          </button>
         `).join("");
       }
 
@@ -1402,12 +1450,7 @@
       }
 
       // 宣言ボタン表示制御
-      const me = players[state.nickname];
-      const declareBtn = document.getElementById("btn-declare");
-      const canDeclare = !!me && me.declaredAt == null && isDiscussionExpired(room.discussionEndsAt);
-      if (declareBtn) {
-        declareBtn.style.display = canDeclare ? "" : "none";
-      }
+      updateDeclareButton();
 
       // タイマーコントロール（ホスト・タイマー未開始時）
       const timerControls = document.getElementById("timer-controls");
@@ -1542,6 +1585,7 @@
           clearInterval(state.timerInterval);
           state.timerInterval = null;
         }
+        updateDeclareButton();
       };
       tick();
       state.timerInterval = setInterval(tick, 500);
