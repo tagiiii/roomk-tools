@@ -948,6 +948,11 @@
       declareBtn.style.display = canDeclare ? "" : "none";
     }
 
+    function getMyPlayer(players) {
+      if (!players || !state.nickname) return null;
+      return players[state.nickname] || null;
+    }
+
     // ── ルーム作成 ──────────────────────────
 
     async function createRoom() {
@@ -1324,10 +1329,11 @@
         const players = room.players || {};
         state.currentPlayers = players;
         state.themeOptions = Array.isArray(room.themeOptions) ? room.themeOptions : [];
-        if (players[state.nickname] && players[state.nickname].number) {
-          state.myNumber = players[state.nickname].number;
+        const myPlayer = getMyPlayer(players);
+        if (myPlayer && Number.isFinite(Number(myPlayer.number)) && Number(myPlayer.number) > 0) {
+          state.myNumber = Number(myPlayer.number);
         }
-        if (players[state.nickname] && players[state.nickname].ready) {
+        if (myPlayer && myPlayer.ready) {
           state.numberRevealed = true;
         }
         switch (room.status) {
@@ -1368,8 +1374,15 @@
     function handleRevealing(room, players) {
       showScreen("revealing");
 
+      const myPlayer = getMyPlayer(players);
+
       const numberEl = document.getElementById("my-number-display");
-      if (numberEl) numberEl.textContent = state.myNumber != null ? String(state.myNumber) : "？";
+      if (numberEl) {
+        const myNumber = myPlayer && Number.isFinite(Number(myPlayer.number)) && Number(myPlayer.number) > 0
+          ? Number(myPlayer.number)
+          : state.myNumber;
+        numberEl.textContent = myNumber != null ? String(myNumber) : "？";
+      }
 
       renderPlayerList("revealing-player-list", players, (nick, p) => {
         return p.ready
@@ -1383,7 +1396,6 @@
       const readyArea = document.getElementById("ready-area");
       if (readyArea) readyArea.style.display = state.numberRevealed ? "block" : "none";
 
-      const myPlayer = players[state.nickname];
       const confirmBtn = document.getElementById("btn-confirm-number");
       if (confirmBtn) {
         confirmBtn.style.display = (state.numberRevealed && !state.confirmingNumber && myPlayer && !myPlayer.ready) ? "" : "none";
@@ -1433,7 +1445,13 @@
       if (themeEl) themeEl.textContent = room.theme || "";
 
       const myNumberEl = document.getElementById("playing-my-number");
-      if (myNumberEl) myNumberEl.textContent = state.myNumber != null ? String(state.myNumber) : "？";
+      if (myNumberEl) {
+        const myPlayer = getMyPlayer(players);
+        const myNumber = myPlayer && Number.isFinite(Number(myPlayer.number)) && Number(myPlayer.number) > 0
+          ? Number(myPlayer.number)
+          : state.myNumber;
+        myNumberEl.textContent = myNumber != null ? String(myNumber) : "？";
+      }
 
       updateTimer(room.discussionEndsAt);
 
