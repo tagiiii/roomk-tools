@@ -902,6 +902,17 @@
 
       try {
         const roomRef = db.ref(`ito_rooms/${roomCode}`);
+        const preSnap = await roomRef.get();
+        if (!preSnap.exists()) {
+          showError("guest-error", "ルームが見つかりません");
+          return;
+        }
+        const preRoom = preSnap.val();
+        if (isRoomExpired(preRoom)) {
+          await roomRef.remove().catch(() => {});
+          showError("guest-error", "このルームは期限切れのため終了しました");
+          return;
+        }
 
         // ルーム全体に対して transaction() を実行。
         // status チェック・hostConnected チェック・ニックネーム重複チェック・

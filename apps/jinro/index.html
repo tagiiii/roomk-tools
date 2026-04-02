@@ -948,6 +948,14 @@ async function guestJoin() {
   if (roomCode.length !== 4) { showMsg('ルームコードは4文字です'); return; }
 
   const roomRef = db.ref(`jinro_rooms/${roomCode}`);
+  const preSnap = await roomRef.get();
+  if (!preSnap.exists()) { showMsg('ルームが見つかりません'); return; }
+  const preRoom = preSnap.val();
+  if (isRoomExpired(preRoom)) {
+    await roomRef.remove().catch(() => {});
+    showMsg('このルームは期限切れのため終了しました');
+    return;
+  }
   let abortReason = null;
   const { committed, snapshot } = await roomRef.transaction((room) => {
     if (!room) { abortReason = 'not_found'; return; }
