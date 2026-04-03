@@ -1,0 +1,274 @@
+/* ============================================
+   漢字さがし — App Styles
+   prefix: .ks-
+   ============================================ */
+
+/* ── Layout ── */
+.wrapper {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 48px 40px 80px;
+}
+
+/* ── Screen toggle ── */
+.ks-screen {
+  display: none;
+}
+.ks-screen.active {
+  display: block;
+}
+
+/* ── Header ── */
+.ks-header {
+  text-align: center;
+  margin-bottom: var(--space-lg);
+}
+.ks-header__title {
+  font-size: var(--font-size-2xl);
+  font-weight: 700;
+  color: var(--color-primary);
+  margin: 0;
+}
+.ks-header__sub {
+  font-size: var(--font-size-sub);
+  color: var(--color-muted);
+  margin-top: var(--space-xs);
+}
+
+/* ── Settings Card ── */
+.ks-card {
+  padding: 32px 28px;
+}
+.ks-settings__group {
+  margin-bottom: var(--space-lg);
+}
+.ks-settings__label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-size: var(--font-size-sub);
+  font-weight: 700;
+  color: var(--color-primary);
+  margin-bottom: var(--space-sm);
+}
+.ks-settings__label .material-symbols-rounded {
+  font-size: 20px;
+}
+.ks-settings__options {
+  display: flex;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+}
+
+/* ── Option Toggle Buttons ── */
+.ks-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 18px;
+  font-size: var(--font-size-sub);
+  font-weight: 500;
+  font-family: var(--font-base);
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-btn);
+  cursor: pointer;
+  transition: background var(--transition-base), border-color var(--transition-base), color var(--transition-base);
+}
+.ks-option:hover {
+  border-color: var(--color-accent);
+}
+.ks-option:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+.ks-option .material-symbols-rounded {
+  font-size: 20px;
+}
+.ks-option.active {
+  background: var(--color-accent);
+  color: #fff;
+  border-color: var(--color-accent);
+}
+
+/* ── Preview ── */
+.ks-preview {
+  text-align: center;
+  padding: var(--space-xl) 0;
+}
+.ks-preview__label {
+  font-size: var(--font-size-lg);
+  font-weight: 500;
+  color: var(--color-muted);
+  margin-bottom: var(--space-md);
+}
+.ks-preview__kanji {
+  font-size: min(30vw, 180px);
+  font-weight: 700;
+  color: var(--color-primary);
+  line-height: 1.2;
+  margin: 0 0 var(--space-sm);
+}
+.ks-preview__hint {
+  font-size: var(--font-size-sub);
+  color: var(--color-muted);
+  margin-bottom: var(--space-lg);
+}
+
+/* ── Play Screen ── */
+.ks-play__top {
+  margin-bottom: var(--space-md);
+}
+.ks-play__info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: var(--space-sm);
+}
+.ks-play__target {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--font-size-body);
+  font-weight: 700;
+  color: var(--color-primary);
+  background: rgba(28, 63, 94, 0.08);
+  padding: 4px 14px;
+  border-radius: var(--radius-full);
+}
+.ks-play__time {
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  color: var(--color-accent);
+  font-variant-numeric: tabular-nums;
+}
+.ks-play__time.ks-danger {
+  color: var(--color-error);
+}
+
+/* ── Timer Bar ── */
+.ks-timer {
+  width: 100%;
+  height: 8px;
+  background: var(--color-border);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+.ks-timer__fill {
+  height: 100%;
+  background: var(--color-accent);
+  border-radius: var(--radius-full);
+  transition: width 0.1s linear;
+  will-change: width;
+}
+.ks-timer.ks-danger .ks-timer__fill {
+  background: var(--color-error);
+}
+
+/* ── Kanji Grid ── */
+.ks-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--ks-cols, 6), 1fr);
+  gap: 4px;
+  max-width: 520px;
+  margin: 0 auto;
+}
+.ks-cell {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(20px, 5vw, 36px);
+  font-weight: 700;
+  color: var(--color-text);
+  background: var(--color-surface);
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--color-border);
+  transform: rotate(var(--cell-rotation, 0deg)) scale(var(--cell-scale, 1));
+  user-select: none;
+  line-height: 1;
+}
+
+/* ── Result: Found Highlight ── */
+.ks-cell--found {
+  background: rgba(46, 125, 140, 0.13);
+  border-color: var(--color-accent);
+  border-width: 2.5px;
+  color: var(--color-accent);
+  box-shadow: 0 0 0 3px rgba(46, 125, 140, 0.10);
+}
+
+/* ── Result Screen ── */
+.ks-result__header {
+  text-align: center;
+  margin-bottom: var(--space-lg);
+}
+.ks-result__prompt {
+  font-size: var(--font-size-lg);
+  font-weight: 500;
+  color: var(--color-muted);
+  margin-bottom: var(--space-xs);
+}
+.ks-result__prompt:empty {
+  display: none;
+}
+.ks-result__message {
+  font-size: var(--font-size-lg);
+  font-weight: 500;
+  color: var(--color-text);
+}
+.ks-result__message:empty {
+  display: none;
+}
+.ks-result__target {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  color: var(--color-accent);
+}
+.ks-result__count {
+  font-weight: 700;
+  color: var(--color-accent);
+}
+.ks-result__actions {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-md);
+  margin-top: var(--space-xl);
+}
+
+/* ── Accessibility: Reduced Motion ── */
+@media (prefers-reduced-motion: reduce) {
+  .ks-cell {
+    transform: none !important;
+  }
+  .ks-timer__fill {
+    transition: none;
+  }
+}
+
+/* ── Responsive ── */
+@media (max-width: 600px) {
+  .wrapper {
+    padding: 28px 16px 60px;
+  }
+  .ks-header__title {
+    font-size: var(--font-size-xl);
+  }
+  .ks-card {
+    padding: 24px 18px;
+  }
+  .ks-preview__kanji {
+    font-size: min(40vw, 140px);
+  }
+  .ks-cell {
+    font-size: clamp(16px, 4vw, 28px);
+  }
+  .ks-grid {
+    gap: 3px;
+  }
+  .ks-result__actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
