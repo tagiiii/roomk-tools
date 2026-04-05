@@ -79,61 +79,47 @@
   margin-top: 6px;
 }
 
-/* ── カードグリッド ── */
+/* ── お題候補カード ── */
 .isd-card-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 28px;
+  gap: 20px;
   margin-bottom: 24px;
 }
 
-.isd-card-grid .flip-card {
-  aspect-ratio: 2 / 3;
-}
-
-/* カード裏面 */
-.isd-card-back {
-  background-color: var(--color-accent);
-  background-image: repeating-linear-gradient(
-    -45deg,
-    transparent,
-    transparent 10px,
-    rgba(255, 255, 255, 0.07) 10px,
-    rgba(255, 255, 255, 0.07) 20px
-  );
-  border-color: #236872;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.isd-card-grid .flip-card:not(.dimmed):not(.flipped):hover .isd-card-back {
-  background-color: #35909e;
-}
-
-.isd-card-back__number {
-  font-size: 64px;
-  font-weight: 700;
-  color: rgba(255, 255, 255, 0.9);
-  line-height: 1;
-}
-
-.isd-card-back__hint {
-  font-size: 13px;
-  color: rgba(255, 255, 255, 0.5);
-  letter-spacing: 0.06em;
-}
-
-/* カード表面 */
-.isd-card-front {
-  background: var(--color-surface);
-  border-color: var(--color-accent);
+.isd-candidate {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 160px;
   padding: 24px 20px;
-  flex-direction: column;
-  gap: 12px;
+  background: var(--color-surface);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  transition: border-color var(--transition-base), box-shadow var(--transition-base), transform var(--transition-base), opacity var(--transition-base);
+  font-family: inherit;
 }
 
-.isd-card-front__text {
-  font-size: 22px;
+.isd-candidate:hover:not(:disabled) {
+  border-color: var(--color-accent);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.isd-candidate.selected {
+  border-color: var(--color-accent);
+  background: #EEF8F9;
+  box-shadow: 0 0 0 3px rgba(46, 125, 140, 0.2);
+}
+
+.isd-candidate.dimmed {
+  opacity: 0.35;
+}
+
+.isd-candidate__text {
+  font-size: 20px;
   font-weight: 700;
   color: var(--color-primary);
   text-align: center;
@@ -184,7 +170,9 @@
 
 .isd-topic__actions {
   display: flex;
+  gap: 12px;
   justify-content: center;
+  flex-wrap: wrap;
 }
 
 /* ── 結果画面 ── */
@@ -242,19 +230,17 @@
   }
 
   .isd-card-grid {
+    grid-template-columns: 1fr;
     gap: 12px;
   }
 
-  .isd-card-back__number {
-    font-size: 40px;
+  .isd-candidate {
+    min-height: 80px;
+    padding: 16px;
   }
 
-  .isd-card-back__hint {
-    font-size: 11px;
-  }
-
-  .isd-card-front__text {
-    font-size: 15px;
+  .isd-candidate__text {
+    font-size: 16px;
   }
 
   .isd-topic__question {

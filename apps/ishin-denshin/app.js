@@ -1,5 +1,5 @@
 // 以心伝心しないゲーム アプリロジック
-import { shuffle, popIn } from '../shared/js/utils.js';
+import { shuffle, copyToClipboard, popIn } from '../shared/js/utils.js';
 
 // ── お題リスト（100問）──
 const topics = [
@@ -178,33 +178,11 @@ function renderSelectScreen() {
   $candidateGrid.innerHTML = '';
 
   candidates.forEach((topic, i) => {
-    const card = document.createElement('div');
-    card.className = 'flip-card';
-    card.setAttribute('role', 'button');
-    card.setAttribute('tabindex', '0');
-    card.setAttribute('aria-label', `${i + 1}番のお題`);
-
-    card.innerHTML = `
-      <div class="flip-card-inner">
-        <div class="flip-card-face back isd-card-back">
-          <span class="isd-card-back__number">${i + 1}</span>
-          <span class="isd-card-back__hint">タップして選ぶ</span>
-        </div>
-        <div class="flip-card-face front isd-card-front">
-          <span class="isd-card-front__text">${topic}</span>
-        </div>
-      </div>
-    `;
-
-    const select = () => pickTopic(i, card, topic);
-    card.addEventListener('click', select);
-    card.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        select();
-      }
-    });
-
+    const card = document.createElement('button');
+    card.className = 'isd-candidate';
+    card.setAttribute('aria-label', `${i + 1}番のお題: ${topic}`);
+    card.innerHTML = `<span class="isd-candidate__text">${topic}</span>`;
+    card.addEventListener('click', () => pickTopic(i, topic));
     $candidateGrid.appendChild(card);
   });
 
@@ -212,19 +190,20 @@ function renderSelectScreen() {
 }
 
 // ── お題を選ぶ ──
-function pickTopic(idx, card, topic) {
-  // フリップ
-  card.classList.add('flipped');
-
-  // 他のカードを dimmed
-  document.querySelectorAll('#candidateGrid .flip-card').forEach((c, i) => {
-    if (i !== idx) c.classList.add('dimmed');
+function pickTopic(idx, topic) {
+  const cards = document.querySelectorAll('#candidateGrid .isd-candidate');
+  cards.forEach((c, i) => {
+    if (i === idx) {
+      c.classList.add('selected');
+    } else {
+      c.classList.add('dimmed');
+    }
+    c.disabled = true;
   });
 
-  // 少し待ってからお題表示画面へ
   setTimeout(() => {
     showTopicScreen(topic);
-  }, 600);
+  }, 400);
 }
 
 // ── お題表示画面 ──
@@ -260,5 +239,8 @@ function restart() {
 // ── イベント ──
 $startBtn.addEventListener('click', startGame);
 $nextBtn.addEventListener('click', handleNext);
+document.getElementById('btnCopy').addEventListener('click', function () {
+  copyToClipboard($topicText.textContent, this);
+});
 document.getElementById('btnRestart').addEventListener('click', restart);
 document.getElementById('btnBackToTop').addEventListener('click', restart);
