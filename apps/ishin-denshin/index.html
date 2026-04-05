@@ -46,7 +46,7 @@
     <div class="screen" id="screen-select">
       <div class="isd-select-header">
         <p class="isd-select-header__round" id="selectTitle"></p>
-        <p class="isd-select-header__guide">カードを選んでお題を決めよう</p>
+        <p class="isd-select-header__guide">みんなと「かぶらない」回答ができそうなお題を選ぼう</p>
       </div>
 
       <div class="isd-card-grid" id="candidateGrid"></div>
@@ -62,8 +62,11 @@
         </div>
         <p class="isd-topic__question" id="topicText"></p>
         <p class="isd-topic__guide">
-          チャットで回答してね！<br>
-          みんなと<strong>かぶらなかった人</strong>の勝ち！
+          チャットで回答してね！　みんなと<strong>かぶらなかった人</strong>の勝ち！
+        </p>
+        <p class="isd-topic__hint">
+          <span class="material-symbols-rounded">info</span>
+          全員の回答が出そろったら、被りを確認して次へ進もう
         </p>
         <div class="isd-topic__actions">
           <button class="btn btn-secondary" id="btnCopy">
@@ -81,6 +84,7 @@
       <div class="isd-final">
         <span class="material-symbols-rounded isd-final__icon">celebration</span>
         <h2 class="isd-final__title">おつかれさまでした！</h2>
+        <p class="isd-final__rounds" id="finalRounds"></p>
         <p class="isd-final__sub">
           いちばん「かぶらなかった人」は誰だったかな？
         </p>
@@ -88,9 +92,9 @@
           <button class="btn btn-primary" id="btnRestart">
             <span class="material-symbols-rounded">replay</span> もう一度遊ぶ
           </button>
-          <a class="btn btn-ghost" id="btnBackToTop" href="#">
+          <button class="btn btn-ghost" id="btnBackToTop">
             <span class="material-symbols-rounded">home</span> TOPに戻る
-          </a>
+          </button>
         </div>
       </div>
     </div>

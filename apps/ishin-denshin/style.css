@@ -111,11 +111,14 @@
 .isd-candidate.selected {
   border-color: var(--color-accent);
   background: #EEF8F9;
-  box-shadow: 0 0 0 3px rgba(46, 125, 140, 0.2);
+  box-shadow: 0 0 0 3px rgba(46, 125, 140, 0.25);
+  transform: scale(1.04);
 }
 
 .isd-candidate.dimmed {
-  opacity: 0.35;
+  opacity: 0.3;
+  transform: scale(0.96);
+  pointer-events: none;
 }
 
 .isd-candidate__text {
@@ -168,6 +171,23 @@
   font-weight: 700;
 }
 
+.isd-topic__hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--color-muted);
+  background: #EEF3F8;
+  border-radius: var(--radius-btn);
+  padding: 8px 16px;
+  margin-bottom: 32px;
+}
+
+.isd-topic__hint .material-symbols-rounded {
+  font-size: 16px;
+  color: var(--color-accent);
+}
+
 .isd-topic__actions {
   display: flex;
   gap: 12px;
@@ -190,6 +210,13 @@
   font-size: var(--font-size-xl);
   font-weight: 700;
   color: var(--color-primary);
+  margin-bottom: 8px;
+}
+
+.isd-final__rounds {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-accent);
   margin-bottom: 8px;
 }
 

@@ -224,6 +224,7 @@ function showTopicScreen(topic) {
 // ── 次へ / 結果発表へ ──
 function handleNext() {
   if (currentRound >= totalRounds) {
+    document.getElementById('finalRounds').textContent = `全 ${totalRounds} ラウンド終了`;
     showScreen('final');
     popIn(document.querySelector('.isd-final'));
   } else {

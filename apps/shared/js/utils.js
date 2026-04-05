@@ -30,33 +30,49 @@ export function copyToClipboard(text, btn = null, options = {}) {
     resetDelay   = 2500,
   } = options;
 
+  // 連打防止: リセット待ち中は何もしない
+  if (btn && btn.dataset.copyBusy) return Promise.resolve(false);
+
   const onSuccess = () => {
     if (!btn) return;
     const originalHTML  = btn.innerHTML;   // innerHTML で保存（アイコン span を含む）
     const originalClass = btn.className;
+    btn.dataset.copyBusy = '1';
     btn.textContent = successText;
     btn.classList.add(successClass);
     setTimeout(() => {
       btn.innerHTML   = originalHTML;      // innerHTML で復元
       btn.className   = originalClass;
+      delete btn.dataset.copyBusy;
     }, resetDelay);
   };
 
-  return navigator.clipboard.writeText(text).then(() => {
-    onSuccess();
-    return true;
-  }).catch(() => {
-    // フォールバック（非対応ブラウザ用）
-    const ta = document.createElement('textarea');
-    ta.value = text;
-    ta.style.cssText = 'position:fixed;opacity:0;pointer-events:none';
-    document.body.appendChild(ta);
-    ta.select();
-    const ok = document.execCommand('copy');
-    document.body.removeChild(ta);
-    if (ok) onSuccess();
-    return ok;
-  });
+  // navigator.clipboard が未定義の環境ではフォールバックを直接実行
+  const clipboardAvailable = typeof navigator !== 'undefined'
+    && navigator.clipboard
+    && typeof navigator.clipboard.writeText === 'function';
+
+  if (clipboardAvailable) {
+    return navigator.clipboard.writeText(text).then(() => {
+      onSuccess();
+      return true;
+    }).catch(() => {
+      return fallbackCopy(text, onSuccess);
+    });
+  }
+  return fallbackCopy(text, onSuccess);
+}
+
+function fallbackCopy(text, onSuccess) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.cssText = 'position:fixed;opacity:0;pointer-events:none';
+  document.body.appendChild(ta);
+  ta.select();
+  const ok = document.execCommand('copy');
+  document.body.removeChild(ta);
+  if (ok) onSuccess();
+  return Promise.resolve(ok);
 }
 
 /**
