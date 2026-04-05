@@ -1,0 +1,271 @@
+/* 以心伝心しないゲーム アプリ固有スタイル
+   共通スタイル（M-1〜M-6）は design-system.css に定義済み */
+
+/* ── レイアウト ── */
+.wrapper {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 48px 40px 80px;
+}
+
+/* ── 画面管理 ── */
+.screen {
+  display: none;
+  flex-direction: column;
+}
+
+.screen.active {
+  display: flex;
+}
+
+/* ── TOP画面 ── */
+.isd-hero {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.isd-hero__icon {
+  font-size: 64px;
+  color: var(--color-accent);
+  margin-bottom: 8px;
+}
+
+.isd-hero__title {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  color: var(--color-primary);
+  letter-spacing: 0.02em;
+}
+
+.isd-hero__sub {
+  font-size: var(--font-size-body);
+  color: var(--color-muted);
+  margin-top: 8px;
+  line-height: 1.6;
+}
+
+.isd-setup {
+  max-width: 360px;
+  margin: 0 auto;
+}
+
+.isd-setup__group {
+  margin-bottom: 24px;
+}
+
+.isd-setup__label {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text);
+  margin-bottom: 8px;
+}
+
+/* ── お題選択画面 ── */
+.isd-select-header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.isd-select-header__round {
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.isd-select-header__guide {
+  font-size: 14px;
+  color: var(--color-muted);
+  margin-top: 6px;
+}
+
+/* ── カードグリッド ── */
+.isd-card-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 28px;
+  margin-bottom: 24px;
+}
+
+.isd-card-grid .flip-card {
+  aspect-ratio: 2 / 3;
+}
+
+/* カード裏面 */
+.isd-card-back {
+  background-color: var(--color-accent);
+  background-image: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 10px,
+    rgba(255, 255, 255, 0.07) 10px,
+    rgba(255, 255, 255, 0.07) 20px
+  );
+  border-color: #236872;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.isd-card-grid .flip-card:not(.dimmed):not(.flipped):hover .isd-card-back {
+  background-color: #35909e;
+}
+
+.isd-card-back__number {
+  font-size: 64px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.9);
+  line-height: 1;
+}
+
+.isd-card-back__hint {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.5);
+  letter-spacing: 0.06em;
+}
+
+/* カード表面 */
+.isd-card-front {
+  background: var(--color-surface);
+  border-color: var(--color-accent);
+  padding: 24px 20px;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.isd-card-front__text {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--color-primary);
+  text-align: center;
+  line-height: 1.5;
+}
+
+/* ── お題表示画面 ── */
+.isd-topic {
+  text-align: center;
+}
+
+.isd-topic__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 16px;
+  border-radius: var(--radius-full);
+  font-size: 14px;
+  font-weight: 500;
+  background: #EEF3F8;
+  color: var(--color-primary);
+  margin-bottom: 32px;
+}
+
+.isd-topic__badge .material-symbols-rounded {
+  font-size: 16px;
+}
+
+.isd-topic__question {
+  font-size: 48px;
+  font-weight: 700;
+  color: var(--color-primary);
+  line-height: 1.4;
+  margin-bottom: 24px;
+}
+
+.isd-topic__guide {
+  font-size: 15px;
+  color: var(--color-muted);
+  line-height: 1.6;
+  margin-bottom: 40px;
+}
+
+.isd-topic__guide strong {
+  color: var(--color-accent);
+  font-weight: 700;
+}
+
+.isd-topic__actions {
+  display: flex;
+  justify-content: center;
+}
+
+/* ── 結果画面 ── */
+.isd-final {
+  text-align: center;
+}
+
+.isd-final__icon {
+  font-size: 72px;
+  color: var(--color-accent);
+  margin-bottom: 8px;
+}
+
+.isd-final__title {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  color: var(--color-primary);
+  margin-bottom: 8px;
+}
+
+.isd-final__sub {
+  font-size: var(--font-size-body);
+  color: var(--color-muted);
+  margin-bottom: 32px;
+  line-height: 1.6;
+}
+
+.isd-final__actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* ── プール残数 ── */
+.isd-pool-info {
+  text-align: center;
+  font-size: 13px;
+  color: var(--color-muted);
+  margin-top: 16px;
+}
+
+/* ── レスポンシブ ── */
+@media (max-width: 600px) {
+  .wrapper {
+    padding: 28px 16px 60px;
+  }
+
+  .isd-hero__icon {
+    font-size: 48px;
+  }
+
+  .isd-hero__title {
+    font-size: 22px;
+  }
+
+  .isd-card-grid {
+    gap: 12px;
+  }
+
+  .isd-card-back__number {
+    font-size: 40px;
+  }
+
+  .isd-card-back__hint {
+    font-size: 11px;
+  }
+
+  .isd-card-front__text {
+    font-size: 15px;
+  }
+
+  .isd-topic__question {
+    font-size: 32px;
+  }
+
+  .isd-topic__guide {
+    font-size: 14px;
+  }
+
+  .isd-final__icon {
+    font-size: 56px;
+  }
+}

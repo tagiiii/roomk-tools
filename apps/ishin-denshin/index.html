@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>以心伝心しないゲーム | roomK</title>
+  <!-- Google Fonts（Noto Sans JP）-->
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
+  <!-- Material Symbols Rounded -->
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet" />
+  <!-- 共通デザインシステム -->
+  <link rel="stylesheet" href="../shared/css/design-system.css" />
+  <!-- アプリ固有スタイル -->
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <div class="wrapper">
+
+    <!-- ===== TOP画面 ===== -->
+    <div class="screen active" id="screen-top">
+      <div class="isd-hero">
+        <span class="material-symbols-rounded isd-hero__icon">lightbulb</span>
+        <h1 class="isd-hero__title">以心伝心しないゲーム</h1>
+        <p class="isd-hero__sub">お題に対してみんなと<strong>かぶらない</strong>回答をしよう！</p>
+      </div>
+
+      <div class="isd-setup">
+        <div class="isd-setup__group">
+          <label class="isd-setup__label" for="roundSelect">ラウンド数</label>
+          <select class="form-select" id="roundSelect">
+            <option value="3">3 ラウンド</option>
+            <option value="5" selected>5 ラウンド</option>
+            <option value="7">7 ラウンド</option>
+            <option value="10">10 ラウンド</option>
+          </select>
+        </div>
+        <button class="btn btn-primary btn-full btn-lg" id="btnStart">
+          <span class="material-symbols-rounded">play_arrow</span>
+          ゲームスタート
+        </button>
+      </div>
+    </div>
+
+    <!-- ===== お題選択画面 ===== -->
+    <div class="screen" id="screen-select">
+      <div class="isd-select-header">
+        <p class="isd-select-header__round" id="selectTitle"></p>
+        <p class="isd-select-header__guide">カードを選んでお題を決めよう</p>
+      </div>
+
+      <div class="isd-card-grid" id="candidateGrid"></div>
+
+      <p class="isd-pool-info" id="poolInfo"></p>
+    </div>
+
+    <!-- ===== お題表示画面 ===== -->
+    <div class="screen" id="screen-topic">
+      <div class="isd-topic">
+        <div class="isd-topic__badge" id="roundBadge">
+          <span class="material-symbols-rounded">flag</span>
+        </div>
+        <p class="isd-topic__question" id="topicText"></p>
+        <p class="isd-topic__guide">
+          チャットで回答してね！<br>
+          みんなと<strong>かぶらなかった人</strong>の勝ち！
+        </p>
+        <div class="isd-topic__actions">
+          <button class="btn btn-primary btn-lg" id="btnNext">
+            <span class="material-symbols-rounded">arrow_forward</span> 次のラウンドへ
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 結果画面 ===== -->
+    <div class="screen" id="screen-final">
+      <div class="isd-final">
+        <span class="material-symbols-rounded isd-final__icon">celebration</span>
+        <h2 class="isd-final__title">おつかれさまでした！</h2>
+        <p class="isd-final__sub">
+          いちばん「かぶらなかった人」は誰だったかな？
+        </p>
+        <div class="isd-final__actions">
+          <button class="btn btn-primary" id="btnRestart">
+            <span class="material-symbols-rounded">replay</span> もう一度遊ぶ
+          </button>
+          <a class="btn btn-ghost" id="btnBackToTop" href="#">
+            <span class="material-symbols-rounded">home</span> TOPに戻る
+          </a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
