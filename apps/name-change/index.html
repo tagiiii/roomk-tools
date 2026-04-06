@@ -423,6 +423,7 @@ const state = {
   votingRendered: false,
 };
 const ORPHAN_TTL_MS = 2 * 60 * 1000;
+const ORPHAN_TTL_INGAME_MS = 30 * 60 * 1000;
 
 // ===== Utils =====
 function esc(s) {
@@ -463,11 +464,18 @@ function getHostDisconnectedAt(room) {
   return Number.isFinite(ts) ? ts : null;
 }
 
-function isRoomExpired(room) {
+const IN_GAME_STATUSES = ['naming', 'voting', 'revealing'];
+function isInGame(room) {
+  return room?.status && IN_GAME_STATUSES.includes(room.status);
+}
+function isRoomExpiredWith(room, ttl) {
   const disconnectedAt = getHostDisconnectedAt(room);
   return room?.hostConnected === false
     && disconnectedAt != null
-    && (getEstimatedServerNow() - disconnectedAt) >= ORPHAN_TTL_MS;
+    && (getEstimatedServerNow() - disconnectedAt) >= ttl;
+}
+function isRoomExpired(room) {
+  return isRoomExpiredWith(room, ORPHAN_TTL_MS);
 }
 
 // ===== Navigation =====
@@ -614,11 +622,12 @@ function startListener() {
     const room = snap.val();
     if (!state.isHost) {
       const hostGone = room.hostConnected === false;
-      const expired = isRoomExpired(room);
+      const ttl = isInGame(room) ? ORPHAN_TTL_INGAME_MS : ORPHAN_TTL_MS;
+      const expired = isRoomExpiredWith(room, ttl);
       document.getElementById('host-gone-overlay').classList.toggle('show', hostGone);
       if (hostGone) {
         const disconnectedAt = getHostDisconnectedAt(room);
-        const delay = disconnectedAt == null ? ORPHAN_TTL_MS : Math.max(0, disconnectedAt + ORPHAN_TTL_MS - getEstimatedServerNow());
+        const delay = disconnectedAt == null ? ttl : Math.max(0, disconnectedAt + ttl - getEstimatedServerNow());
         if (expired) {
           clearTimeout(state.orphanTimer);
           state.orphanTimer = null;
@@ -938,7 +947,8 @@ async function tryReconnect() {
     const snap = await db.ref(`namechange_rooms/${roomCode}`).get();
     if (!snap.exists()) { clearSession(); return false; }
     const room = snap.val();
-    if (isRoomExpired(room)) {
+    const ttl = isInGame(room) ? ORPHAN_TTL_INGAME_MS : ORPHAN_TTL_MS;
+    if (isRoomExpiredWith(room, ttl)) {
       await db.ref(`namechange_rooms/${roomCode}`).remove().catch(() => {});
       clearSession(); return false;
     }
