@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>興味スゴロク | roomK</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet" />
+  <link rel="stylesheet" href="../shared/css/design-system.css" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <div class="wrapper">
+
+    <!-- ============ 設定画面 ============ -->
+    <section class="screen ks-settings" id="screen-settings">
+      <header class="ks-header">
+        <h1 class="ks-header__title">興味スゴロク</h1>
+        <p class="ks-header__sub">サイコロを振ってマスに止まり、お題について話そう</p>
+      </header>
+
+      <div class="card">
+        <label class="ks-field">
+          <span class="ks-field__label">プレイヤー人数</span>
+          <select id="player-count" class="ks-select">
+            <option value="1">1人</option>
+            <option value="2" selected>2人</option>
+            <option value="3">3人</option>
+            <option value="4">4人</option>
+          </select>
+        </label>
+
+        <div class="ks-field">
+          <span class="ks-field__label">プレイヤーの名前</span>
+          <div id="player-names" class="ks-names"></div>
+        </div>
+
+        <label class="ks-field">
+          <span class="ks-field__label">マス数</span>
+          <select id="square-count" class="ks-select">
+            <option value="10">10マス（短め）</option>
+            <option value="15" selected>15マス（ふつう）</option>
+            <option value="20">20マス（長め）</option>
+          </select>
+        </label>
+
+        <div class="ks-field">
+          <span class="ks-field__label">テーマ（2つ以上選ぼう）</span>
+          <div class="ks-themes" id="theme-list"></div>
+        </div>
+
+        <div class="error-msg" id="settings-error"></div>
+
+        <button class="btn btn-primary btn-full btn-lg" id="btn-start">
+          <span class="material-symbols-rounded">play_arrow</span>
+          ゲームスタート
+        </button>
+      </div>
+    </section>
+
+    <!-- ============ ゲーム画面 ============ -->
+    <section class="screen ks-game" id="screen-game" style="display:none">
+      <header class="ks-header">
+        <h1 class="ks-header__title">興味スゴロク</h1>
+      </header>
+
+      <div class="ks-indicator" id="indicator"></div>
+
+      <div class="ks-board" id="board"></div>
+
+      <div class="ks-dice-area">
+        <div class="ks-dice" id="dice">?</div>
+        <button class="btn btn-primary btn-lg" id="btn-roll">
+          <span class="material-symbols-rounded">casino</span>
+          サイコロを振る
+        </button>
+      </div>
+
+      <div class="ks-actions">
+        <button class="btn btn-ghost" id="btn-back">
+          <span class="material-symbols-rounded">arrow_back</span>
+          設定に戻る
+        </button>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- ============ 質問モーダル ============ -->
+  <div class="ks-modal-bg" id="modal" style="display:none">
+    <div class="ks-modal pop-in">
+      <div class="ks-modal__theme" id="modal-theme"></div>
+      <div class="ks-modal__player" id="modal-player"></div>
+      <div class="ks-modal__question" id="modal-question"></div>
+      <div class="ks-modal__actions">
+        <button class="btn btn-secondary" id="btn-skip">
+          <span class="material-symbols-rounded">refresh</span>
+          別の質問
+        </button>
+        <button class="btn btn-primary" id="btn-next">
+          <span class="material-symbols-rounded">check</span>
+          話せた！次の人へ
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ ゴールモーダル ============ -->
+  <div class="ks-modal-bg" id="goal-modal" style="display:none">
+    <div class="ks-modal pop-in">
+      <div class="ks-goal__icon">
+        <span class="material-symbols-rounded">emoji_events</span>
+      </div>
+      <div class="ks-goal__title">ゴール！</div>
+      <div class="ks-goal__name" id="goal-name"></div>
+      <div class="ks-modal__actions">
+        <button class="btn btn-primary" id="btn-restart">
+          <span class="material-symbols-rounded">replay</span>
+          もう一度あそぶ
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

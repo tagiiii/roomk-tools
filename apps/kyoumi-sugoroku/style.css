@@ -1,0 +1,311 @@
+/* 興味スゴロク 固有スタイル（prefix: .ks-） */
+
+.wrapper {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 40px 24px 80px;
+}
+
+/* ── ヘッダー ── */
+.ks-header {
+  text-align: center;
+  margin-bottom: 28px;
+}
+.ks-header__title {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--color-primary);
+  letter-spacing: 0.04em;
+}
+.ks-header__sub {
+  font-size: var(--font-size-sub);
+  color: var(--color-muted);
+  margin-top: 6px;
+}
+
+/* ── 設定フォーム ── */
+.ks-field {
+  display: block;
+  margin-bottom: 20px;
+}
+.ks-field__label {
+  display: block;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-primary);
+  margin-bottom: 8px;
+}
+.ks-select,
+.ks-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1.5px solid var(--color-border);
+  border-radius: 8px;
+  background: #fff;
+  font-size: 15px;
+  font-family: inherit;
+  color: var(--color-text);
+}
+.ks-select:focus,
+.ks-input:focus {
+  outline: none;
+  border-color: var(--color-accent);
+}
+
+.ks-names {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.ks-name-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* ── テーマ選択 ── */
+.ks-themes {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+.ks-theme {
+  display: block;
+  cursor: pointer;
+}
+.ks-theme input { display: none; }
+.ks-theme__box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 14px 8px;
+  border: 2px solid var(--color-border);
+  border-radius: 10px;
+  background: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-muted);
+  text-align: center;
+  transition: all 0.15s;
+}
+.ks-theme__box .material-symbols-rounded {
+  font-size: 26px;
+}
+.ks-theme input:checked + .ks-theme__box {
+  border-color: var(--color-accent);
+  background: #E8F1F3;
+  color: var(--color-primary);
+}
+
+/* ── プレイヤーコマ色（pawn） ── */
+.ks-pawn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.ks-pawn--0 { background: #2E7D8C; }
+.ks-pawn--1 { background: #E08E45; }
+.ks-pawn--2 { background: #5A8F4A; }
+.ks-pawn--3 { background: #B5476B; }
+
+/* ── ゲーム画面：プレイヤーインジケーター ── */
+.ks-indicator {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+.ks-player-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px 6px 6px;
+  background: #fff;
+  border: 2px solid var(--color-border);
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-muted);
+  transition: all 0.2s;
+}
+.ks-player-label.is-current {
+  border-color: var(--color-accent);
+  color: var(--color-primary);
+  background: #E8F1F3;
+  transform: scale(1.05);
+}
+
+/* ── ボード ── */
+.ks-board {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+  background: var(--color-surface);
+  padding: 16px;
+  border-radius: var(--radius-box);
+  border: 1px solid var(--color-border);
+  margin-bottom: 24px;
+}
+.ks-square {
+  width: 58px;
+  height: 58px;
+  background: #EEF3F5;
+  border: 2px solid #C4D2D8;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  padding-top: 2px;
+}
+.ks-square.is-start {
+  background: #DEEBE8;
+  border-color: var(--color-accent);
+}
+.ks-square.is-goal {
+  background: #FFF4D6;
+  border-color: #D4A537;
+}
+.ks-square__num {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-muted);
+  line-height: 1;
+}
+.ks-square.is-goal .ks-square__num,
+.ks-square.is-start .ks-square__num {
+  color: var(--color-primary);
+  font-size: 14px;
+}
+.ks-square__pawns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1px;
+  justify-content: center;
+  margin-top: 2px;
+}
+.ks-square__pawns .ks-pawn {
+  width: 20px;
+  height: 20px;
+  font-size: 11px;
+}
+
+/* ── サイコロエリア ── */
+.ks-dice-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.ks-dice {
+  width: 88px;
+  height: 88px;
+  background: var(--color-primary);
+  color: #fff;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 56px;
+  font-weight: 700;
+  box-shadow: 0 6px 16px rgba(28, 63, 94, 0.25);
+}
+
+.ks-actions {
+  text-align: center;
+}
+
+/* ── モーダル ── */
+.ks-modal-bg {
+  position: fixed;
+  inset: 0;
+  background: rgba(28, 63, 94, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 20px;
+}
+.ks-modal {
+  background: #fff;
+  border-radius: var(--radius-box);
+  padding: 32px 28px 24px;
+  max-width: 440px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+}
+.ks-modal__theme {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: #E8F1F3;
+  color: var(--color-accent);
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 14px;
+}
+.ks-modal__theme .material-symbols-rounded { font-size: 18px; }
+.ks-modal__player {
+  font-size: 14px;
+  color: var(--color-muted);
+  margin-bottom: 10px;
+}
+.ks-modal__question {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--color-primary);
+  line-height: 1.5;
+  margin-bottom: 24px;
+}
+.ks-modal__actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* ── ゴール ── */
+.ks-goal__icon {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 8px;
+}
+.ks-goal__icon .material-symbols-rounded {
+  font-size: 64px;
+  color: #D4A537;
+}
+.ks-goal__title {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--color-primary);
+  margin-bottom: 8px;
+}
+.ks-goal__name {
+  font-size: 18px;
+  color: var(--color-text);
+  margin-bottom: 24px;
+}
+
+/* ── レスポンシブ ── */
+@media (max-width: 600px) {
+  .wrapper { padding: 24px 14px 60px; }
+  .ks-themes { grid-template-columns: repeat(2, 1fr); }
+  .ks-square { width: 48px; height: 48px; }
+  .ks-dice { width: 72px; height: 72px; font-size: 44px; }
+  .ks-modal__question { font-size: 18px; }
+}
