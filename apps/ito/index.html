@@ -763,7 +763,7 @@
       currentScreen: null,
       serverTimeOffset: 0,
       timerInterval: null,
-      cleanupTimer: null,   // finishGame() の30秒自動削除タイマーID
+      cleanupTimer: null,
       orphanTimer: null,    // ホスト永続切断時の孤立ルーム削除タイマーID（ゲスト側）
       myNumber: null,
       numberRevealed: false,
@@ -1151,10 +1151,6 @@
 
     async function startGame() {
       if (state.role !== "host" || !state.roomRef) return;
-      // 前のラウンドの自動削除タイマーをキャンセル
-      clearTimeout(state.cleanupTimer);
-      state.cleanupTimer = null;
-
       // 候補はトランザクション外で固定して、競合再実行時も同じ候補を使う
       const currentSnap = await state.roomRef.get();
       const currentRoom = currentSnap.val() || {};
@@ -1207,8 +1203,8 @@
 
         if (!committed) {
           if (abortReason === "too_few") showMsg("2人以上で始められます");
-          if (abortReason === "too_many") showMsg("人数が多すぎます");
-          // invalid_state は別のクライアントがすでに開始済みのケース。何もしない。
+          else if (abortReason === "too_many") showMsg("人数が多すぎます");
+          else if (abortReason === "invalid_state") showMsg("ルームが終了しています。トップへ戻ってください");
           return;
         }
         state.numberRevealed = false;
@@ -1311,10 +1307,6 @@
       if (state.role !== "host" || !state.roomRef) return;
       try {
         await state.roomRef.update({ status: "result" });
-        // タイマーIDを保持し、startGame() 時にキャンセルできるようにする
-        clearTimeout(state.cleanupTimer);
-        const refToRemove = state.roomRef;
-        state.cleanupTimer = setTimeout(() => { refToRemove.remove().catch(() => {}); }, 30000);
       } catch (e) {
         console.error(e);
         showMsg("答え合わせへ進めませんでした");
@@ -1732,7 +1724,7 @@
           clearSession();
           return false;
         }
-        if (room.status === "result") { clearSession(); return false; }
+        // result 画面でもリロード復帰を許可する（もう一度プレイのため）
 
         const players = room.players || {};
         const myPlayer = players[session.nickname];
