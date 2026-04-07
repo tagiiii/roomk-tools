@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ことばリレー | roomK</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet" />
+  <link rel="stylesheet" href="../shared/css/design-system.css" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <div class="wrapper">
+
+    <header class="kr-header">
+      <h1 class="kr-header__title">ことばリレー</h1>
+      <p class="kr-header__sub">スターターから始めて、つなぎ言葉で話を転がそう！</p>
+    </header>
+
+    <!-- スタート前 -->
+    <section class="kr-start" id="screenStart">
+      <p class="kr-start__lead">最初の一文（スターター）を引いてはじめよう。</p>
+      <button class="btn btn-primary btn-lg" id="btnStart">
+        <span class="material-symbols-rounded">play_arrow</span>
+        スターターを引く
+      </button>
+    </section>
+
+    <!-- ゲーム中 -->
+    <section class="kr-game" id="screenGame" hidden>
+
+      <!-- スターター表示 -->
+      <div class="kr-starter" id="starterArea">
+        <span class="kr-starter__label">スターター</span>
+        <p class="kr-starter__text" id="starterText"></p>
+      </div>
+
+      <!-- 履歴（積み上げ） -->
+      <div class="kr-history" id="historyArea" aria-live="polite"></div>
+
+      <!-- アクション -->
+      <div class="kr-actions">
+        <button class="btn btn-primary btn-lg" id="btnDraw">
+          <span class="material-symbols-rounded">style</span>
+          つなぎ言葉を引く
+        </button>
+        <button class="btn btn-ghost" id="btnPass">パス</button>
+      </div>
+
+      <div class="kr-footer-actions">
+        <button class="btn btn-secondary" id="btnAgain">もう一度（最初から）</button>
+        <button class="btn btn-ghost" id="btnEnd">おしまい</button>
+      </div>
+
+      <p class="kr-rule">
+        ルール: 前の人の文に「つなぎ言葉」を足して、次の人が一文つづける。<br>
+        詰まったら「パス」してOK。
+      </p>
+    </section>
+
+  </div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

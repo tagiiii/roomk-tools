@@ -1,0 +1,174 @@
+/* ことばリレー アプリ固有スタイル */
+
+.wrapper {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 48px 32px 80px;
+}
+
+/* ── ヘッダー ── */
+.kr-header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.kr-header__title {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--color-primary);
+  letter-spacing: 0.04em;
+}
+
+.kr-header__sub {
+  font-size: var(--font-size-sub);
+  color: var(--color-muted);
+  margin-top: 6px;
+}
+
+/* ── スタート画面 ── */
+.kr-start {
+  text-align: center;
+  background: var(--color-surface);
+  border: 2px dashed var(--color-border);
+  border-radius: var(--radius-box);
+  padding: 56px 24px;
+}
+
+.kr-start__lead {
+  font-size: 16px;
+  color: var(--color-text);
+  margin-bottom: 24px;
+}
+
+/* ── スターター ── */
+.kr-starter {
+  background: var(--color-surface);
+  border: 2px solid var(--color-accent);
+  border-radius: var(--radius-box);
+  padding: 24px 28px;
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.kr-starter__label {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-accent);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+.kr-starter__text {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--color-primary);
+  line-height: 1.5;
+}
+
+/* ── 履歴 ── */
+.kr-history {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 120px;
+  margin-bottom: 28px;
+}
+
+.kr-history__empty {
+  text-align: center;
+  color: var(--color-muted);
+  font-size: 14px;
+  padding: 32px 0;
+}
+
+.kr-history__item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 22px;
+  border-radius: var(--radius-box);
+  background: var(--color-surface);
+  border: 2px solid var(--color-border);
+  box-shadow: var(--shadow-sm);
+}
+
+.kr-card__num {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--color-bg);
+  color: var(--color-muted);
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.kr-card__word {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--color-primary);
+  line-height: 1.3;
+}
+
+/* タイプごとの色（左ボーダー＋背景うっすら） */
+.kr-card--go    { border-color: #4A90A4; background: #EFF6F8; }
+.kr-card--turn  { border-color: #C26B4A; background: #FBF1EC; }
+.kr-card--jump  { border-color: #7A4ABF; background: #F3EDFA; }
+.kr-card--plus  { border-color: #C99A2A; background: #FBF6E8; }
+.kr-card--like  { border-color: #2E8B57; background: #ECF6F0; }
+.kr-card--pass  { border-color: var(--color-muted); background: #F2F3F5; }
+.kr-card--pass .kr-card__word { color: var(--color-muted); }
+
+/* ── アクション ── */
+.kr-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.kr-footer-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.kr-rule {
+  text-align: center;
+  font-size: 13px;
+  color: var(--color-muted);
+  margin-top: 24px;
+  line-height: 1.7;
+}
+
+/* ── レスポンシブ ── */
+@media (max-width: 600px) {
+  .wrapper {
+    padding: 28px 16px 60px;
+  }
+
+  .kr-starter__text {
+    font-size: 20px;
+  }
+
+  .kr-card__word {
+    font-size: 22px;
+  }
+
+  .kr-history__item {
+    padding: 14px 16px;
+    gap: 12px;
+  }
+
+  .kr-start {
+    padding: 40px 16px;
+  }
+}
