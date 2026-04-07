@@ -2,8 +2,8 @@
   "rules": {
     "$app_rooms": {
       "$roomId": {
-        ".read": true,
-        ".write": true
+        ".read": "auth != null",
+        ".write": "auth != null"
       }
     }
   }
