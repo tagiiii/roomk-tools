@@ -1152,6 +1152,7 @@ async function tryReconnect() {
   const { nickname, roomCode, role } = session;
   showOverlay('reconnect-overlay', true);
   try {
+    await authReady;
     const snap = await db.ref(`wordwolf_rooms/${roomCode}`).get();
     if (!snap.exists()) { clearSession(); showOverlay('reconnect-overlay', false); return false; }
     const room = snap.val();

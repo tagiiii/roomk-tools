@@ -1979,6 +1979,7 @@ async function tryReconnect() {
   const { nickname, roomCode, isHost } = session;
   showOverlay('reconnect-overlay', true);
   try {
+    await authReady;
     const snap = await db.ref(`jinro_rooms/${roomCode}`).get();
     if (!snap.exists()) { clearSession(); showOverlay('reconnect-overlay', false); return false; }
     const room = snap.val();

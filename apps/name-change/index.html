@@ -951,6 +951,7 @@ async function tryReconnect() {
   const { roomCode, nickname, isHost, gameRole } = JSON.parse(saved);
   if (!roomCode || !nickname) return false;
   try {
+    await authReady;
     const snap = await db.ref(`namechange_rooms/${roomCode}`).get();
     if (!snap.exists()) { clearSession(); return false; }
     const room = snap.val();

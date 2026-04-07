@@ -1721,6 +1721,7 @@
           clearSession();
           return false;
         }
+        await authReady;
         const roomRef = db.ref(`ito_rooms/${session.roomCode}`);
         const snap = await roomRef.once("value");
         if (!snap.exists()) { clearSession(); return false; }
