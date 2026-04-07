@@ -35,32 +35,33 @@
   color: var(--color-primary);
   margin-bottom: 8px;
 }
-.ks-select,
-.ks-input {
-  width: 100%;
-  padding: 10px 12px;
-  border: 1.5px solid var(--color-border);
-  border-radius: 8px;
+/* ── トグルボタン群（人数・マス数）── */
+.ks-toggle {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.ks-toggle__btn {
+  flex: 1;
+  min-width: 64px;
+  padding: 12px 8px;
+  border: 2px solid var(--color-border);
+  border-radius: 10px;
   background: #fff;
   font-size: 15px;
+  font-weight: 700;
   font-family: inherit;
-  color: var(--color-text);
+  color: var(--color-muted);
+  cursor: pointer;
+  transition: all 0.15s;
 }
-.ks-select:focus,
-.ks-input:focus {
-  outline: none;
+.ks-toggle__btn:hover {
   border-color: var(--color-accent);
 }
-
-.ks-names {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.ks-name-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+.ks-toggle__btn.is-selected {
+  border-color: var(--color-accent);
+  background: var(--color-accent);
+  color: #fff;
 }
 
 /* ── テーマ選択 ── */
@@ -145,29 +146,32 @@
   transform: scale(1.05);
 }
 
-/* ── ボード ── */
+/* ── ボード（蛇行レイアウト）── */
 .ks-board {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
   justify-content: center;
   background: var(--color-surface);
-  padding: 16px;
+  padding: 20px;
   border-radius: var(--radius-box);
   border: 1px solid var(--color-border);
   margin-bottom: 24px;
+  max-width: 520px;
+  margin-left: auto;
+  margin-right: auto;
 }
 .ks-square {
-  width: 58px;
-  height: 58px;
+  aspect-ratio: 1 / 1;
   background: #EEF3F5;
   border: 2px solid #C4D2D8;
   border-radius: 10px;
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: flex-start;
   position: relative;
-  padding-top: 2px;
+  padding-top: 4px;
 }
 .ks-square.is-start {
   background: #DEEBE8;
@@ -270,8 +274,41 @@
   font-weight: 700;
   color: var(--color-primary);
   line-height: 1.5;
-  margin-bottom: 24px;
+  margin-bottom: 18px;
 }
+.ks-modal__choices {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+.ks-modal__choices:empty { display: none; }
+.ks-choice {
+  padding: 12px 16px;
+  border: 2px solid var(--color-border);
+  border-radius: 10px;
+  background: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-text);
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.ks-choice:hover {
+  border-color: var(--color-accent);
+  background: #E8F1F3;
+  color: var(--color-primary);
+}
+.ks-choice--free {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border-style: dashed;
+  color: var(--color-muted);
+}
+.ks-choice--free .material-symbols-rounded { font-size: 18px; }
 .ks-modal__actions {
   display: flex;
   gap: 10px;
@@ -305,7 +342,7 @@
 @media (max-width: 600px) {
   .wrapper { padding: 24px 14px 60px; }
   .ks-themes { grid-template-columns: repeat(2, 1fr); }
-  .ks-square { width: 48px; height: 48px; }
+  .ks-board { padding: 12px; gap: 6px; }
   .ks-dice { width: 72px; height: 72px; font-size: 44px; }
   .ks-modal__question { font-size: 18px; }
 }

@@ -21,29 +21,15 @@
       </header>
 
       <div class="card">
-        <label class="ks-field">
-          <span class="ks-field__label">プレイヤー人数</span>
-          <select id="player-count" class="ks-select">
-            <option value="1">1人</option>
-            <option value="2" selected>2人</option>
-            <option value="3">3人</option>
-            <option value="4">4人</option>
-          </select>
-        </label>
-
         <div class="ks-field">
-          <span class="ks-field__label">プレイヤーの名前</span>
-          <div id="player-names" class="ks-names"></div>
+          <span class="ks-field__label">何人であそぶ？</span>
+          <div class="ks-toggle" id="player-count" role="radiogroup" aria-label="プレイヤー人数"></div>
         </div>
 
-        <label class="ks-field">
+        <div class="ks-field">
           <span class="ks-field__label">マス数</span>
-          <select id="square-count" class="ks-select">
-            <option value="10">10マス（短め）</option>
-            <option value="15" selected>15マス（ふつう）</option>
-            <option value="20">20マス（長め）</option>
-          </select>
-        </label>
+          <div class="ks-toggle" id="square-count" role="radiogroup" aria-label="マス数"></div>
+        </div>
 
         <div class="ks-field">
           <span class="ks-field__label">テーマ（2つ以上選ぼう）</span>
@@ -93,6 +79,7 @@
       <div class="ks-modal__theme" id="modal-theme"></div>
       <div class="ks-modal__player" id="modal-player"></div>
       <div class="ks-modal__question" id="modal-question"></div>
+      <div class="ks-modal__choices" id="modal-choices"></div>
       <div class="ks-modal__actions">
         <button class="btn btn-secondary" id="btn-skip">
           <span class="material-symbols-rounded">refresh</span>
