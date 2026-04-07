@@ -8,6 +8,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
   <link rel="stylesheet" href="../shared/css/design-system.css">
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <style>
     /* ── 画面管理 ── */
@@ -753,6 +754,10 @@
     if (!firebase.apps.length) {
       firebase.initializeApp(firebaseConfig);
     }
+    const authReady = firebase.auth().signInAnonymously().catch((e) => {
+      console.error('[auth] anonymous sign-in failed', e);
+      throw e;
+    });
     const db = firebase.database();
 
     const state = {
@@ -1019,6 +1024,7 @@
       if (nickError) { showError("host-error", nickError); return; }
 
       try {
+        await authReady;
         let roomCode = null;
         let roomRef = null;
         for (let i = 0; i < 5; i++) {
@@ -1081,6 +1087,7 @@
       if (nickError) { showError("guest-error", nickError); return; }
 
       try {
+        await authReady;
         const roomRef = db.ref(`ito_rooms/${roomCode}`);
         const preSnap = await roomRef.get();
         if (!preSnap.exists()) {

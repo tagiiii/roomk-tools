@@ -7,6 +7,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <link rel="stylesheet" href="../shared/css/design-system.css">
   <style>
@@ -453,6 +454,10 @@
   };
 
   firebase.initializeApp(firebaseConfig);
+  const authReady = firebase.auth().signInAnonymously().catch((e) => {
+    console.error('[auth] anonymous sign-in failed', e);
+    throw e;
+  });
   const db = firebase.database();
 
   // ════════════════════════════════════
@@ -641,6 +646,7 @@
     showReconnectOverlay(true);
 
     try {
+      await authReady;
       const snap = await db.ref(`iisen_rooms/${roomCode}`).get();
       if (!snap.exists()) { clearSession(); showReconnectOverlay(false); return false; }
 
@@ -813,6 +819,8 @@
     if (err) { showError('host-nickname-error', err); return; }
     hideError('host-nickname-error');
 
+    await authReady;
+
     // ルームコード生成（衝突回避: 最大5回試行）
     let roomCode;
     let roomRef = null;
@@ -948,6 +956,8 @@
     if (nicknameErr) { showError('guest-join-error', nicknameErr); return; }
     if (roomCode.length !== 6) { showError('guest-join-error', 'ルームコードは6文字です'); return; }
     hideError('guest-join-error');
+
+    await authReady;
 
     const roomRef = db.ref(`iisen_rooms/${roomCode}`);
     const snap = await roomRef.get();

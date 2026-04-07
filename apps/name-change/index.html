@@ -396,6 +396,7 @@
 
 <!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
 <script>
 // ===== Firebase =====
@@ -407,6 +408,10 @@ firebase.initializeApp({
   messagingSenderId: "1023647201537",
   appId:             "1:1023647201537:web:3daa48e56f1ec37fc2add9",
   databaseURL:       "https://roomk-tools-default-rtdb.asia-southeast1.firebasedatabase.app"
+});
+const authReady = firebase.auth().signInAnonymously().catch((e) => {
+  console.error('[auth] anonymous sign-in failed', e);
+  throw e;
 });
 const db = firebase.database();
 
@@ -505,6 +510,7 @@ async function hostCreateRoom() {
   const btn = (typeof event !== 'undefined' && event?.target?.closest('button')) || null;
   if (btn) btn.disabled = true;
   try {
+    await authReady;
     let code;
     let roomRef = null;
     for (let i = 0; i < 5; i++) {
@@ -555,6 +561,7 @@ async function guestJoin() {
   const btn = (typeof event !== 'undefined' && event?.target?.closest('button')) || null;
   if (btn) btn.disabled = true;
   try {
+    await authReady;
     const roomRef = db.ref(`namechange_rooms/${code}`);
     const snap = await roomRef.get();
     if (!snap.exists())                   { toast('ルームが見つかりません'); if(btn)btn.disabled=false; return; }
