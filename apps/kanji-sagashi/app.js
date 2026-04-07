@@ -62,6 +62,7 @@ const state = {
   timeLimit: 20,
   currentRound: null,
   timerInterval: null,
+  revealTimeouts: [],
   timeRemaining: 0,
   revealed: false,
   usedIndices: [],
@@ -151,9 +152,12 @@ function renderGrid(containerId) {
   state.currentRound.cells.forEach(cell => {
     const div = document.createElement('div');
     div.className = 'ks-cell';
-    div.textContent = cell.char;
-    div.style.setProperty('--cell-rotation', `${cell.rotation}deg`);
-    div.style.setProperty('--cell-scale', cell.scale);
+    const inner = document.createElement('div');
+    inner.className = 'ks-cell__inner';
+    inner.textContent = cell.char;
+    inner.style.setProperty('--cell-rotation', `${cell.rotation}deg`);
+    inner.style.setProperty('--cell-scale', cell.scale);
+    div.appendChild(inner);
     if (cell.isTarget) div.dataset.target = 'true';
     container.appendChild(div);
   });
@@ -180,8 +184,19 @@ function startPlay() {
   startTimer();
 }
 
+// ── Cleanup helpers ──
+function clearTimers() {
+  if (state.timerInterval) {
+    clearInterval(state.timerInterval);
+    state.timerInterval = null;
+  }
+  state.revealTimeouts.forEach(clearTimeout);
+  state.revealTimeouts = [];
+}
+
 // ── Timer ──
 function startTimer() {
+  clearTimers();
   state.timeRemaining = state.timeLimit * 10; // tenths of second
   const total = state.timeRemaining;
   const fill = $('timer-fill');
@@ -219,6 +234,7 @@ function updateTimeDisplay(el, tenths) {
 // ── Time Up → Frozen Grid (no answers yet) ──
 function onTimeUp() {
   renderGrid('result-grid');
+  $('result-grid').classList.add('ks-grid--blurred');
   $('result-prompt').textContent = 'いくつ見つけられたかな？';
   $('result-message').textContent = '';
   $('result-actions-reveal').style.display = '';
@@ -232,6 +248,7 @@ function revealAnswers() {
   const round = state.currentRound;
   state.revealed = true;
 
+  $('result-grid').classList.remove('ks-grid--blurred');
   $('result-prompt').textContent = '';
   $('result-message').innerHTML =
     `<span class="ks-result__target">${round.target}</span> は <span class="ks-result__count">${round.targetCount}個</span> ありました！`;
@@ -243,28 +260,23 @@ function revealAnswers() {
   const cells = $('result-grid').querySelectorAll('.ks-cell');
   cells.forEach((cell, i) => {
     if (cell.dataset.target === 'true') {
-      setTimeout(() => {
+      const id = setTimeout(() => {
         cell.classList.add('ks-cell--found');
         popIn(cell);
       }, i * 40);
+      state.revealTimeouts.push(id);
     }
   });
 }
 
 // ── Navigation ──
 function nextRound() {
-  if (state.timerInterval) {
-    clearInterval(state.timerInterval);
-    state.timerInterval = null;
-  }
+  clearTimers();
   showPreview();
 }
 
 function goToSettings() {
-  if (state.timerInterval) {
-    clearInterval(state.timerInterval);
-    state.timerInterval = null;
-  }
+  clearTimers();
   state.usedIndices = [];
   showScreen('settings');
 }
