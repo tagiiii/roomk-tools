@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ことばガチャ | roomK</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet" />
+  <link rel="stylesheet" href="../shared/css/design-system.css" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="wrapper">
+
+    <!-- 画面A: TOP -->
+    <section class="kg-screen kg-screen--top active" id="screen-top">
+      <header class="kg-hero">
+        <h1 class="kg-hero__title">ことばガチャ</h1>
+        <p class="kg-hero__sub">ひとこと変えると、空気が変わる</p>
+      </header>
+      <div class="kg-top__action">
+        <button class="btn btn-primary btn-lg" id="btnStart">はじめる</button>
+      </div>
+    </section>
+
+    <!-- 画面B: カード画面 -->
+    <section class="kg-screen" id="screen-play">
+      <div class="kg-progress" id="progress">1 / 10</div>
+
+      <div class="kg-topic" id="topic" aria-live="polite"></div>
+
+      <div class="kg-choices" id="choices"></div>
+
+      <div class="kg-result" id="result" aria-live="polite">
+        <p class="kg-result__sentence" id="resultSentence"></p>
+        <p class="kg-result__hint" id="resultHint"></p>
+      </div>
+
+      <div class="kg-play__actions">
+        <button class="btn btn-ghost" id="btnBackTop">TOPにもどる</button>
+        <button class="btn btn-primary" id="btnNext" disabled>つぎのお題</button>
+      </div>
+    </section>
+
+    <!-- 画面C: おしまい -->
+    <section class="kg-screen" id="screen-end">
+      <header class="kg-hero">
+        <h1 class="kg-hero__title">10問ぜんぶ見たよ</h1>
+        <p class="kg-hero__sub">おつかれさま！</p>
+      </header>
+      <div class="kg-top__action">
+        <button class="btn btn-primary btn-lg" id="btnAgain">もう一回</button>
+        <button class="btn btn-ghost" id="btnBackTop2">TOPにもどる</button>
+      </div>
+    </section>
+
+  </div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

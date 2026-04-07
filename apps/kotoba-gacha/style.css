@@ -1,0 +1,173 @@
+/* ことばガチャ — アプリ固有スタイル */
+
+.wrapper {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 32px 20px 60px;
+  position: relative;
+}
+
+/* ── 画面切り替え ── */
+.kg-screen {
+  display: none;
+}
+.kg-screen.active {
+  display: block;
+  animation: kgFade 0.25s ease-out;
+}
+@keyframes kgFade {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── ヒーロー（TOP / おしまい） ── */
+.kg-hero {
+  text-align: center;
+  padding: 40px 16px 32px;
+}
+.kg-hero__title {
+  font-size: clamp(32px, 7vw, 48px);
+  font-weight: 700;
+  color: var(--color-primary);
+  letter-spacing: 0.04em;
+  margin: 0;
+}
+.kg-hero__sub {
+  margin-top: 12px;
+  font-size: var(--font-size-body);
+  color: var(--color-muted);
+}
+
+.kg-top__action {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+  margin-top: 20px;
+}
+.kg-top__action .btn {
+  min-width: 220px;
+}
+
+/* ── 進捗（控えめ） ── */
+.kg-progress {
+  text-align: right;
+  font-size: 12px;
+  color: var(--color-muted);
+  letter-spacing: 0.1em;
+  margin-bottom: 8px;
+}
+
+/* ── お題文 ── */
+.kg-topic {
+  text-align: center;
+  font-size: clamp(24px, 5.5vw, 40px);
+  font-weight: 700;
+  color: var(--color-text);
+  line-height: 1.5;
+  padding: 40px 12px 32px;
+  min-height: 140px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.kg-topic__slot {
+  display: inline-block;
+  min-width: 1.4em;
+  padding: 0 4px;
+  color: var(--color-accent);
+  border-bottom: 3px dashed var(--color-accent);
+  margin: 0 4px;
+}
+.kg-topic__slot.filled {
+  border-bottom: none;
+  color: var(--color-accent);
+}
+
+/* ── 選択肢カード ── */
+.kg-choices {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  margin: 8px 0 24px;
+  flex-wrap: wrap;
+}
+.kg-choice {
+  appearance: none;
+  border: 2px solid var(--color-border);
+  background: var(--color-surface);
+  border-radius: 14px;
+  min-width: 72px;
+  height: 96px;
+  padding: 0 16px;
+  white-space: nowrap;
+  font-size: 36px;
+  font-weight: 700;
+  color: var(--color-text);
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.15s ease, box-shadow 0.15s ease,
+              border-color 0.15s ease, opacity 0.15s ease;
+  font-family: inherit;
+}
+.kg-choice:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+.kg-choice.selected {
+  border-color: var(--color-accent);
+  background: #EAF3F5;
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+.kg-choice.dimmed {
+  opacity: 0.45;
+}
+
+/* ── 結果エリア ── */
+.kg-result {
+  min-height: 110px;
+  padding: 20px 16px;
+  margin: 8px 0 20px;
+  background: var(--color-surface);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-sm);
+  text-align: center;
+  display: none;
+}
+.kg-result.visible {
+  display: block;
+  animation: kgFade 0.2s ease-out;
+}
+.kg-result__sentence {
+  font-size: clamp(20px, 4.5vw, 30px);
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0 0 10px;
+  line-height: 1.5;
+}
+.kg-result__sentence .kg-particle {
+  color: var(--color-accent);
+}
+.kg-result__hint {
+  font-size: 15px;
+  color: var(--color-muted);
+  margin: 0;
+}
+
+/* ── プレイ画面下部アクション ── */
+.kg-play__actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+/* ── モバイル ── */
+@media (max-width: 600px) {
+  .wrapper { padding: 20px 14px 48px; }
+  .kg-topic { padding: 28px 8px 24px; min-height: 120px; }
+  .kg-choice { min-width: 64px; height: 84px; padding: 0 14px; font-size: 30px; }
+  .kg-hero { padding: 28px 12px 20px; }
+}
