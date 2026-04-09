@@ -521,6 +521,96 @@
   font-family: var(--font-base);
 }
 
+/* ── カレンダー管理 ── */
+.bb-cal-subsection {
+  margin-bottom: var(--space-lg);
+}
+.bb-cal-subsection__title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-primary);
+  margin-bottom: var(--space-sm);
+}
+.bb-cal-hours-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+.bb-cal-time-input {
+  width: 130px;
+}
+.bb-cal-hours-sep {
+  font-size: 16px;
+  color: var(--color-muted);
+}
+.bb-cal-toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  cursor: pointer;
+  font-size: 15px;
+}
+.bb-cal-toggle input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--color-accent);
+}
+.bb-cal-toggle__label {
+  color: var(--color-text);
+}
+.bb-cal-add-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+  margin-top: var(--space-sm);
+}
+.bb-cal-input-name {
+  flex: 1;
+  min-width: 100px;
+}
+.bb-cal-input-date {
+  width: 150px;
+}
+.bb-cal-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-btn);
+  margin-bottom: 4px;
+  font-size: 14px;
+}
+.bb-cal-item__text {
+  color: var(--color-text);
+}
+.bb-cal-item__delete {
+  background: none;
+  border: none;
+  color: var(--color-muted);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  transition: color 0.15s;
+}
+.bb-cal-item__delete:hover {
+  color: var(--color-error);
+}
+.bb-cal-empty {
+  font-size: 13px;
+  color: var(--color-muted);
+  padding: 8px 0;
+}
+.bb-cal-save-note {
+  font-size: 12px;
+  color: var(--color-muted);
+  text-align: center;
+  margin-top: var(--space-sm);
+}
+
 /* ── レスポンシブ ── */
 @media (max-width: 600px) {
   .bb-main {
@@ -530,5 +620,16 @@
   .bb-fab {
     bottom: 16px;
     right: 16px;
+  }
+  .bb-cal-add-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .bb-cal-input-date,
+  .bb-cal-input-name {
+    width: 100%;
+  }
+  .bb-cal-time-input {
+    width: 100%;
   }
 }

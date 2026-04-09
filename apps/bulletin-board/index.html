@@ -27,7 +27,7 @@
   <!-- ── 時間制限オーバーレイ ── -->
   <div class="bb-time-overlay" id="time-overlay">
     <span class="material-symbols-rounded bb-time-overlay__icon">schedule</span>
-    <p class="bb-time-overlay__text">この掲示板は <strong>9:30〜14:00</strong> に利用できます</p>
+    <p class="bb-time-overlay__text" id="time-overlay-text">この掲示板は現在利用時間外です</p>
   </div>
 
   <main class="container bb-main">
@@ -45,7 +45,7 @@
             <li>ニックネームと4桁PINは自分で管理してください（忘れるとログインできません）</li>
             <li>投稿やコメントは参加者全員に見えます</li>
             <li>管理者が不適切な投稿を削除することがあります</li>
-            <li>利用時間は <strong>9:30〜14:00</strong> です</li>
+            <li>利用時間はプログラムカレンダーに準じます（平日 9:00〜14:30）</li>
           </ul>
         </details>
       </div>
@@ -151,6 +151,53 @@
         <div id="invite-codes-list"></div>
       </div>
 
+      <!-- カレンダー管理 -->
+      <div class="card bb-admin-section" id="admin-calendar-section">
+        <h2 class="bb-admin-section__title">
+          <span class="material-symbols-rounded">calendar_month</span> 利用カレンダー管理
+        </h2>
+
+        <div class="bb-cal-subsection">
+          <h3 class="bb-cal-subsection__title">営業時間（JST）</h3>
+          <div class="bb-cal-hours-row">
+            <input class="bb-input bb-cal-time-input" id="cal-hours-start" type="time" />
+            <span class="bb-cal-hours-sep">〜</span>
+            <input class="bb-input bb-cal-time-input" id="cal-hours-end" type="time" />
+          </div>
+        </div>
+
+        <div class="bb-cal-subsection">
+          <label class="bb-cal-toggle">
+            <input type="checkbox" id="cal-weekends-off" />
+            <span class="bb-cal-toggle__label">土日は利用不可</span>
+          </label>
+        </div>
+
+        <div class="bb-cal-subsection">
+          <h3 class="bb-cal-subsection__title">休止期間</h3>
+          <div id="cal-periods-list"></div>
+          <div class="bb-cal-add-row">
+            <input class="bb-input bb-cal-input-name" id="cal-period-name" type="text" placeholder="名前（例: 春休み）" maxlength="20" />
+            <input class="bb-input bb-cal-input-date" id="cal-period-start" type="date" />
+            <span class="bb-cal-hours-sep">〜</span>
+            <input class="bb-input bb-cal-input-date" id="cal-period-end" type="date" />
+            <button class="btn btn-ghost btn-sm" id="btn-add-period" type="button">追加</button>
+          </div>
+        </div>
+
+        <div class="bb-cal-subsection">
+          <h3 class="bb-cal-subsection__title">個別休講日</h3>
+          <div id="cal-dates-list"></div>
+          <div class="bb-cal-add-row">
+            <input class="bb-input bb-cal-input-date" id="cal-new-date" type="date" />
+            <button class="btn btn-ghost btn-sm" id="btn-add-date" type="button">追加</button>
+          </div>
+        </div>
+
+        <button class="btn btn-primary btn-full" id="btn-save-calendar" type="button">カレンダーを保存</button>
+        <p class="bb-cal-save-note" id="cal-save-note">保存するとすぐに反映されます</p>
+      </div>
+
       <div class="card bb-admin-section bb-admin-notes">
         <h2 class="bb-admin-section__title">
           <span class="material-symbols-rounded">note_alt</span> 運用メモ
@@ -159,9 +206,10 @@
           <li>招待コードは<strong>誰に渡したか</strong>を別途記録してください</li>
           <li>投稿やコメントの削除は<strong>取り消せません</strong></li>
           <li>複数の管理者が同時に操作する可能性があります</li>
+          <li>カレンダー設定は<strong>最後に保存した人の内容が反映</strong>されます</li>
           <li>管理者PIN（9999）は参加者に共有しないでください</li>
           <li>PINを知っている人はその名前でログインできる前提です（本人確認の強さは限定的）</li>
-          <li>時間制限や管理者権限は厳密なセキュリティではなく<strong>運用ルール</strong>です</li>
+          <li>時間制限・カレンダー設定・管理者権限は厳密なセキュリティではなく<strong>運用ルール</strong>です</li>
         </ul>
       </div>
     </div>
