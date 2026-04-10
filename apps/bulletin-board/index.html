@@ -42,7 +42,7 @@
           </summary>
           <ul class="bb-guide__list">
             <li>招待コードが必要なクローズドの掲示板です</li>
-            <li>ニックネームと4桁のあいことばは自分で管理してください（忘れるとログインできません）</li>
+            <li>ニックネームと4桁のパスワードは自分で管理してください（忘れるとログインできません）</li>
             <li>投稿やコメントは参加者全員に見えます</li>
             <li>管理者が不適切な投稿を削除することがあります</li>
             <li>利用時間はプログラムカレンダーに準じます（平日 9:00〜14:30）</li>
@@ -60,7 +60,7 @@
         <form class="bb-auth-form" id="form-login">
           <label class="bb-label" for="login-nickname">ニックネーム</label>
           <input class="bb-input" id="login-nickname" type="text" maxlength="20" autocomplete="off" />
-          <label class="bb-label" for="login-pin">あいことば（4桁の数字）</label>
+          <label class="bb-label" for="login-pin">パスワード（4桁の数字）</label>
           <input class="bb-input" id="login-pin" type="password" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" autocomplete="off" />
           <div class="error-msg" id="login-error"></div>
           <button class="btn btn-primary btn-full" type="submit">ログイン</button>
@@ -72,9 +72,9 @@
           <input class="bb-input" id="reg-invite" type="text" maxlength="8" autocomplete="off" placeholder="管理者から受け取ったコード" />
           <label class="bb-label" for="reg-nickname">ニックネーム（20文字以内）</label>
           <input class="bb-input" id="reg-nickname" type="text" maxlength="20" autocomplete="off" />
-          <label class="bb-label" for="reg-pin">あいことば（4桁の数字）</label>
+          <label class="bb-label" for="reg-pin">パスワード（4桁の数字）</label>
           <input class="bb-input" id="reg-pin" type="password" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" autocomplete="off" />
-          <label class="bb-label" for="reg-pin-confirm">あいことば（確認）</label>
+          <label class="bb-label" for="reg-pin-confirm">パスワード（確認）</label>
           <input class="bb-input" id="reg-pin-confirm" type="password" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" autocomplete="off" />
           <div class="error-msg" id="register-error"></div>
           <button class="btn btn-primary btn-full" type="submit">登録する</button>
@@ -207,8 +207,8 @@
           <li>投稿やコメントの削除は<strong>取り消せません</strong></li>
           <li>複数の管理者が同時に操作する可能性があります</li>
           <li>カレンダー設定は<strong>最後に保存した人の内容が反映</strong>されます</li>
-          <li>管理者用あいことば（9999）は参加者に共有しないでください</li>
-          <li>あいことばを知っている人はその名前でログインできる前提です（本人確認の強さは限定的）</li>
+          <li>管理者用パスワード（9999）は参加者に共有しないでください</li>
+          <li>パスワードを知っている人はその名前でログインできる前提です（本人確認の強さは限定的）</li>
           <li>時間制限・カレンダー設定・管理者権限は厳密なセキュリティではなく<strong>運用ルール</strong>です</li>
         </ul>
       </div>
