@@ -937,9 +937,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // コメント投稿
   $("btn-post-comment").addEventListener("click", handlePostComment);
-  $("comment-text").addEventListener("keydown", (e) => {
-    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handlePostComment(); }
-  });
+  // Enter キーでの誤送信を防止（送信ボタンのみで投稿）
 
   // ナビゲーション
   $("btn-new-thread").addEventListener("click", () => showScreen("new-thread"));
