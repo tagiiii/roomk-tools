@@ -348,14 +348,14 @@ async function handleLogin(e) {
   const pin = $("login-pin").value;
 
   if (!nickname) { showError("login-error", "ニックネームを入力してください"); return; }
-  if (!/^\d{4}$/.test(pin)) { showError("login-error", "PINは4桁の数字で入力してください"); return; }
+  if (!/^\d{4}$/.test(pin)) { showError("login-error", "あいことばは4桁の数字で入力してください"); return; }
 
   try {
     const snap = await getDoc(doc(db, "bb-users", nickname));
     if (!snap.exists()) { showError("login-error", "ニックネームが見つかりません"); return; }
 
     const pinH = await hashPin(pin);
-    if (snap.data().pinHash !== pinH) { showError("login-error", "PINが正しくありません"); return; }
+    if (snap.data().pinHash !== pinH) { showError("login-error", "あいことばが正しくありません"); return; }
 
     const adminHash = await getAdminPinHash();
     const isAdmin = pinH === adminHash;
@@ -384,8 +384,8 @@ async function handleRegister(e) {
   if (!nickname) { showError("register-error", "ニックネームを入力してください"); return; }
   if (nickname.length > NICK_MAX) { showError("register-error", `ニックネームは${NICK_MAX}文字以内にしてください`); return; }
   if (/[/.]/.test(nickname)) { showError("register-error", "ニックネームに / や . は使えません"); return; }
-  if (!/^\d{4}$/.test(pin)) { showError("register-error", "PINは4桁の数字で入力してください"); return; }
-  if (pin !== pinConfirm) { showError("register-error", "PINが一致しません"); return; }
+  if (!/^\d{4}$/.test(pin)) { showError("register-error", "あいことばは4桁の数字で入力してください"); return; }
+  if (pin !== pinConfirm) { showError("register-error", "あいことばが一致しません"); return; }
 
   try {
     const pinH = await hashPin(pin);
