@@ -166,6 +166,26 @@ function checkServiceHours() {
 
 // ── カレンダー購読 ────────────────────────
 
+/** Firestore のカレンダーデータを安全なスキーマに正規化する */
+function normalizeCalendar(raw) {
+  const oh = raw?.operatingHours;
+  const validTime = (s) => typeof s === "string" && /^\d{2}:\d{2}$/.test(s);
+  return {
+    operatingHours: {
+      start: validTime(oh?.start) ? oh.start : "09:00",
+      end: validTime(oh?.end) ? oh.end : "14:30",
+    },
+    weekendsOff: typeof raw?.weekendsOff === "boolean" ? raw.weekendsOff : true,
+    closedPeriods: Array.isArray(raw?.closedPeriods)
+      ? raw.closedPeriods.filter(p => p && typeof p.name === "string" && typeof p.start === "string" && typeof p.end === "string")
+      : [],
+    closedDates: Array.isArray(raw?.closedDates)
+      ? raw.closedDates.filter(d => typeof d === "string")
+      : [],
+    updatedAt: raw?.updatedAt ?? null,
+  };
+}
+
 /** bb-config/calendar を onSnapshot で購読。初回データ受信を Promise で返す */
 function subscribeCalendar() {
   // 既に購読中なら何もしない
@@ -175,7 +195,7 @@ function subscribeCalendar() {
     let resolved = false;
     state.unsubCalendar = onSnapshot(doc(db, "bb-config", "calendar"), (snap) => {
       if (snap.exists()) {
-        state.calendar = snap.data();
+        state.calendar = normalizeCalendar(snap.data());
       } else {
         // ドキュメント未作成 → 全開放デフォルト（移行期間用）
         state.calendar = {
@@ -183,6 +203,7 @@ function subscribeCalendar() {
           weekendsOff: false,
           closedPeriods: [],
           closedDates: [],
+          updatedAt: null,
         };
       }
       // 購読中のカレンダー更新 → 時間制限を即再評価
@@ -191,7 +212,7 @@ function subscribeCalendar() {
     }, (err) => {
       console.error("カレンダー取得エラー:", err);
       // エラー時は制限的なデフォルト
-      state.calendar = { ...DEFAULT_CALENDAR };
+      state.calendar = normalizeCalendar(DEFAULT_CALENDAR);
       if (!resolved) { resolved = true; resolve(); }
     });
   });
@@ -737,9 +758,11 @@ function loadCalendarAdmin() {
   const cal = state.calendar;
   if (!cal) return;
 
-  // ドキュメント未作成時（updatedAt がない）→ 2026年度プリフィル
-  const data = cal.updatedAt ? cal : { ...DEFAULT_CALENDAR };
-  if (!cal.updatedAt) state.calendar = { ...data };
+  // ドキュメント未作成時（updatedAt がない）→ 2026年度プリフィル（ディープコピー）
+  if (!cal.updatedAt) {
+    state.calendar = JSON.parse(JSON.stringify(DEFAULT_CALENDAR));
+  }
+  const data = state.calendar;
 
   $("cal-hours-start").value = data.operatingHours?.start || "09:00";
   $("cal-hours-end").value = data.operatingHours?.end || "14:30";
@@ -832,15 +855,21 @@ function handleCalendarDelete(e) {
 }
 
 async function handleSaveCalendar() {
+  const startTime = $("cal-hours-start").value || "09:00";
+  const endTime = $("cal-hours-end").value || "14:30";
+
+  // 営業時間の前後関係バリデーション
+  if (parseTimeToMinutes(startTime) >= parseTimeToMinutes(endTime)) {
+    showToast("営業時間の開始は終了より前にしてください", "error");
+    return;
+  }
+
   const btn = $("btn-save-calendar");
   btn.disabled = true;
 
   try {
     const calData = {
-      operatingHours: {
-        start: $("cal-hours-start").value || "09:00",
-        end: $("cal-hours-end").value || "14:30",
-      },
+      operatingHours: { start: startTime, end: endTime },
       weekendsOff: $("cal-weekends-off").checked,
       closedPeriods: state.calendar.closedPeriods || [],
       closedDates: state.calendar.closedDates || [],
