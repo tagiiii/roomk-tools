@@ -104,6 +104,11 @@ function parseTimeToMinutes(timeStr) {
   return h * 60 + m;
 }
 
+/** テキストにURLが含まれるか判定 */
+function containsUrl(text) {
+  return /https?:\/\/\S+|www\.\S+/i.test(text);
+}
+
 /** エラーメッセージ表示 */
 function showError(id, msg) {
   const el = $(id);
@@ -510,6 +515,7 @@ async function handleCreateThread(e) {
   if (!title) { showError("new-thread-error", "タイトルを入力してください"); return; }
   if (title.length > TITLE_MAX) { showError("new-thread-error", `タイトルは${TITLE_MAX}文字以内にしてください`); return; }
   if (body.length > BODY_MAX) { showError("new-thread-error", `本文は${BODY_MAX}文字以内にしてください`); return; }
+  if (containsUrl(title) || containsUrl(body)) { showError("new-thread-error", "リンクは投稿できません"); return; }
 
   if (!state.currentUser.isAdmin && !checkServiceHours().allowed) {
     showToast("利用時間外です", "error"); return;
@@ -616,6 +622,7 @@ async function handlePostComment() {
   const text = $("comment-text").value.trim();
   if (!text) return;
   if (text.length > COMMENT_MAX) { showToast("コメントは1000文字以内にしてください", "error"); return; }
+  if (containsUrl(text)) { showToast("リンクは投稿できません", "error"); return; }
 
   if (!state.currentUser.isAdmin && !checkServiceHours().allowed) {
     showToast("利用時間外です", "error"); return;
