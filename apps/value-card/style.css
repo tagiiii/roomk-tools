@@ -1,0 +1,410 @@
+/* バリューカード アプリ固有スタイル
+   共通スタイル（M-1〜M-6）は design-system.css に定義済み */
+
+/* ── レイアウト ── */
+.wrapper {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 48px 40px 80px;
+}
+
+/* ── 画面切り替え ── */
+.screen {
+  display: none;
+}
+
+.screen.active {
+  display: block;
+}
+
+/* ── ヘッダー ── */
+.vc-header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.vc-header__title {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  color: var(--color-primary);
+  letter-spacing: 0.04em;
+}
+
+.vc-header__sub {
+  font-size: var(--font-size-sub);
+  color: var(--color-muted);
+  margin-top: 6px;
+}
+
+/* ── TOP 画面 ── */
+.vc-top-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.vc-howto {
+  display: none;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-box);
+  padding: 24px 28px;
+  margin-top: 8px;
+}
+
+.vc-howto.visible {
+  display: block;
+}
+
+.vc-howto__list {
+  list-style: none;
+  counter-reset: howto;
+  padding: 0;
+  margin: 0;
+}
+
+.vc-howto__list li {
+  counter-increment: howto;
+  position: relative;
+  padding-left: 32px;
+  margin-bottom: 12px;
+  font-size: var(--font-size-sub);
+  color: var(--color-text);
+  line-height: 1.6;
+}
+
+.vc-howto__list li:last-child {
+  margin-bottom: 0;
+}
+
+.vc-howto__list li::before {
+  content: counter(howto);
+  position: absolute;
+  left: 0;
+  top: 1px;
+  width: 22px;
+  height: 22px;
+  border-radius: var(--radius-full);
+  background: var(--color-accent);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── GAME 画面 ── */
+.vc-game-info {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.vc-game-info__count {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--font-size-sub);
+  color: var(--color-muted);
+}
+
+.vc-game-info__count .material-symbols-rounded {
+  font-size: 18px;
+}
+
+/* ── 手札エリア ── */
+.vc-hand {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 28px;
+}
+
+/* ── カード（共通） ── */
+.vc-card {
+  background: var(--color-surface);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-card);
+  padding: 16px 20px;
+  cursor: pointer;
+  transition: border-color var(--transition-base), box-shadow var(--transition-base);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.vc-card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.vc-card--selected {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px rgba(46, 125, 140, 0.15);
+}
+
+.vc-card__number {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-full);
+  background: var(--color-primary);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.vc-card__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.vc-card__keyword {
+  font-size: var(--font-size-body);
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.vc-card__desc {
+  font-size: var(--font-size-sm);
+  color: var(--color-muted);
+  margin-top: 2px;
+}
+
+/* ── GAME アクション ── */
+.vc-game-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+}
+
+.vc-game-actions .btn-secondary {
+  min-width: 160px;
+}
+
+/* ── RANKING 画面 ── */
+.vc-ranking-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 28px;
+}
+
+.vc-rank-item {
+  background: var(--color-surface);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-card);
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: box-shadow var(--transition-base);
+}
+
+.vc-rank-item:active {
+  box-shadow: var(--shadow-md);
+}
+
+.vc-rank-item.sortable-ghost {
+  opacity: 0.4;
+}
+
+.vc-rank-item.sortable-chosen {
+  box-shadow: var(--shadow-lg);
+}
+
+.vc-rank-item__number {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-full);
+  background: var(--color-accent);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.vc-rank-item__keyword {
+  flex: 1;
+  font-size: var(--font-size-body);
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.vc-rank-item__arrows {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.vc-rank-item__arrows button {
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--transition-base);
+  padding: 0;
+}
+
+.vc-rank-item__arrows button:hover {
+  background: #f0f0f0;
+}
+
+.vc-rank-item__arrows button:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.vc-rank-item__arrows .material-symbols-rounded {
+  font-size: 20px;
+}
+
+.vc-ranking-actions {
+  margin-top: 12px;
+}
+
+/* ── RESULT 画面 ── */
+.vc-result-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.vc-result-item {
+  background: var(--color-surface);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-card);
+  padding: 16px 20px;
+}
+
+.vc-result-item__top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.vc-result-item__number {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-full);
+  background: var(--color-accent);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.vc-result-item__keyword {
+  font-size: var(--font-size-body);
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.vc-result-item__desc {
+  font-size: var(--font-size-sm);
+  color: var(--color-muted);
+  margin-top: 2px;
+  margin-left: 40px;
+}
+
+.vc-result-item__memo {
+  margin-top: 12px;
+  margin-left: 40px;
+}
+
+.vc-result-item__memo textarea {
+  width: 100%;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  font-family: var(--font-base);
+  font-size: var(--font-size-sm);
+  color: var(--color-text);
+  resize: vertical;
+  min-height: 56px;
+  max-height: 120px;
+  line-height: 1.5;
+  box-sizing: border-box;
+}
+
+.vc-result-item__memo textarea::placeholder {
+  color: var(--color-muted);
+}
+
+.vc-result-item__memo textarea:focus {
+  outline: none;
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px rgba(46, 125, 140, 0.12);
+}
+
+.vc-result-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+/* ── レスポンシブ ── */
+@media (max-width: 600px) {
+  .wrapper {
+    padding: 28px 16px 60px;
+  }
+
+  .vc-header__title {
+    font-size: var(--font-size-lg);
+  }
+
+  .vc-card {
+    padding: 14px 16px;
+    gap: 12px;
+  }
+
+  .vc-card__number {
+    width: 28px;
+    height: 28px;
+    font-size: 12px;
+  }
+
+  .vc-card__keyword {
+    font-size: var(--font-size-sub);
+  }
+
+  .vc-card__desc {
+    font-size: 12px;
+  }
+
+  .vc-howto {
+    padding: 20px 20px;
+  }
+
+  .vc-result-item__memo {
+    margin-left: 0;
+  }
+
+  .vc-result-item__desc {
+    margin-left: 0;
+    margin-top: 8px;
+  }
+
+  .vc-result-item__top {
+    flex-wrap: wrap;
+  }
+}

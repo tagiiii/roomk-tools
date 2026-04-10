@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>バリューカード | roomK</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet" />
+  <link rel="stylesheet" href="../shared/css/design-system.css" />
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</head>
+<body>
+
+  <div class="wrapper">
+
+    <!-- TOP -->
+    <div class="screen active" id="screen-top">
+      <header class="vc-header">
+        <h1 class="vc-header__title">バリューカード</h1>
+        <p class="vc-header__sub">自分の「大事」を見つけるカードワーク</p>
+      </header>
+
+      <div class="vc-top-actions">
+        <button class="btn btn-primary btn-lg" id="btn-start">はじめる</button>
+        <button class="btn btn-ghost" id="btn-howto-toggle">あそびかた</button>
+      </div>
+
+      <div class="vc-howto" id="howto-panel">
+        <ol class="vc-howto__list">
+          <li>5枚のカードが配られます</li>
+          <li>カードを選んで「交換」すると、別のカードに入れ替わります（5回まで）</li>
+          <li>自分にとって大事な5枚を残しましょう</li>
+          <li>最後に大事な順番に並び替えます</li>
+          <li>完成した結果は画像で保存できます</li>
+        </ol>
+      </div>
+    </div>
+
+    <!-- GAME -->
+    <div class="screen" id="screen-game">
+      <header class="vc-header">
+        <h1 class="vc-header__title">カードを選ぼう</h1>
+        <p class="vc-header__sub">入れ替えたいカードをタップして「交換する」を押そう</p>
+      </header>
+
+      <div class="vc-game-info">
+        <span class="vc-game-info__count" id="exchange-count">
+          <span class="material-symbols-rounded">sync</span>
+          残り <strong id="exchange-num">5</strong> 回
+        </span>
+      </div>
+
+      <div class="vc-hand" id="hand-area"></div>
+
+      <div class="vc-game-actions">
+        <button class="btn btn-secondary" id="btn-exchange" disabled>
+          <span class="material-symbols-rounded">sync</span>
+          交換する
+        </button>
+        <button class="btn btn-primary btn-lg btn-full" id="btn-confirm">この5枚で決定する</button>
+      </div>
+    </div>
+
+    <!-- RANKING -->
+    <div class="screen" id="screen-ranking">
+      <header class="vc-header">
+        <h1 class="vc-header__title">順番を決めよう</h1>
+        <p class="vc-header__sub">いちばん大事なものが上にくるように並び替えよう</p>
+      </header>
+
+      <div class="vc-ranking-list" id="ranking-area"></div>
+
+      <div class="vc-ranking-actions">
+        <button class="btn btn-primary btn-lg btn-full" id="btn-finish-ranking">順番を決定する</button>
+      </div>
+    </div>
+
+    <!-- RESULT -->
+    <div class="screen" id="screen-result">
+      <header class="vc-header">
+        <h1 class="vc-header__title">あなたの「大事」</h1>
+        <p class="vc-header__sub">ひとことメモを書いてみよう（書かなくてもOK）</p>
+      </header>
+
+      <div class="vc-result-list" id="result-area"></div>
+
+      <div class="vc-result-actions">
+        <button class="btn btn-primary btn-lg" id="btn-save-image">
+          <span class="material-symbols-rounded">download</span>
+          画像を保存する
+        </button>
+        <button class="btn btn-ghost" id="btn-restart">最初からやり直す</button>
+      </div>
+    </div>
+
+  </div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
