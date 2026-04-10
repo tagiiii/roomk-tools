@@ -704,25 +704,34 @@ async function handleGenerateCodes() {
   btn.disabled = true;
 
   try {
-    const codes = new Set();
+    let created = 0;
     const maxAttempts = count * 5;
     let attempts = 0;
-    while (codes.size < count && attempts < maxAttempts) {
-      const code = generateInviteCode();
-      if (!codes.has(code)) {
-        const existing = await getDoc(doc(db, "bb-invite-codes", code));
-        if (!existing.exists()) codes.add(code);
-      }
-      attempts++;
-    }
-    if (codes.size < count) { showToast("一意なコードを十分に生成できませんでした", "error"); return; }
 
-    const batch = writeBatch(db);
-    for (const code of codes) {
-      batch.set(doc(db, "bb-invite-codes", code), { used: false, usedBy: null, createdAt: serverTimestamp(), usedAt: null });
+    while (created < count && attempts < maxAttempts) {
+      const code = generateInviteCode();
+      attempts++;
+      try {
+        // トランザクションで存在確認＋作成を原子化（競合時は自動リトライ）
+        await runTransaction(db, async (tx) => {
+          const snap = await tx.get(doc(db, "bb-invite-codes", code));
+          if (snap.exists()) throw new Error("collision");
+          tx.set(doc(db, "bb-invite-codes", code), {
+            used: false, usedBy: null, createdAt: serverTimestamp(), usedAt: null,
+          });
+        });
+        created++;
+      } catch (e) {
+        if (e.message === "collision") continue; // 衝突 → 別コードで再試行
+        throw e; // その他のエラーは上位へ
+      }
     }
-    await batch.commit();
-    showToast(`${count}件の招待コードを生成しました`, "success");
+
+    if (created < count) {
+      showToast(`${created}/${count}件のみ生成できました`, "info");
+    } else {
+      showToast(`${count}件の招待コードを生成しました`, "success");
+    }
     loadInviteCodes();
   } catch (err) {
     console.error(err);
