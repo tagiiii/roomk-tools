@@ -166,21 +166,38 @@ function checkServiceHours() {
 
 // ── カレンダー購読 ────────────────────────
 
+/** "HH:MM" が実在する時刻かチェック（00:00〜23:59） */
+function isValidTime(s) {
+  if (typeof s !== "string" || !/^\d{2}:\d{2}$/.test(s)) return false;
+  const [h, m] = s.split(":").map(Number);
+  return h >= 0 && h <= 23 && m >= 0 && m <= 59;
+}
+
+/** "YYYY-MM-DD" が実在する日付かチェック */
+function isValidDate(s) {
+  if (typeof s !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(s)) return false;
+  const [y, m, d] = s.split("-").map(Number);
+  if (m < 1 || m > 12 || d < 1 || d > 31) return false;
+  // 月末日の厳密チェック（閏年対応）
+  const dt = new Date(y, m - 1, d);
+  return dt.getFullYear() === y && dt.getMonth() === m - 1 && dt.getDate() === d;
+}
+
 /** Firestore のカレンダーデータを安全なスキーマに正規化する */
 function normalizeCalendar(raw) {
   const oh = raw?.operatingHours;
-  const validTime = (s) => typeof s === "string" && /^\d{2}:\d{2}$/.test(s);
   return {
     operatingHours: {
-      start: validTime(oh?.start) ? oh.start : "09:00",
-      end: validTime(oh?.end) ? oh.end : "14:30",
+      start: isValidTime(oh?.start) ? oh.start : "09:00",
+      end: isValidTime(oh?.end) ? oh.end : "14:30",
     },
     weekendsOff: typeof raw?.weekendsOff === "boolean" ? raw.weekendsOff : true,
     closedPeriods: Array.isArray(raw?.closedPeriods)
-      ? raw.closedPeriods.filter(p => p && typeof p.name === "string" && typeof p.start === "string" && typeof p.end === "string")
+      ? raw.closedPeriods.filter(p =>
+          p && typeof p.name === "string" && isValidDate(p.start) && isValidDate(p.end) && p.start <= p.end)
       : [],
     closedDates: Array.isArray(raw?.closedDates)
-      ? raw.closedDates.filter(d => typeof d === "string")
+      ? raw.closedDates.filter(d => isValidDate(d))
       : [],
     updatedAt: raw?.updatedAt ?? null,
   };
