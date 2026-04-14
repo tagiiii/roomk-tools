@@ -799,6 +799,14 @@
     sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
   }
 
+  function updateSessionRoundData(answer, vote) {
+    const session = loadSession();
+    if (!session) return;
+    if (answer !== undefined) session.answer = answer;
+    if (vote !== undefined) session.vote = vote;
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
+  }
+
   function getEstimatedServerNow() {
     return Date.now() + (Number(state.serverTimeOffset) || 0);
   }
@@ -854,7 +862,13 @@
       } else {
         const playerRef = roomRef.child(`players/${nickname}`);
         if (!room.players || !room.players[nickname]) {
-          await playerRef.set({ score: score || 0, isHost: false, answer: null, vote: null });
+          const session = loadSession();
+          await playerRef.set({
+            score: score || 0,
+            isHost: false,
+            answer: session?.answer ?? null,
+            vote: session?.vote ?? null,
+          });
         }
         playerRef.onDisconnect().remove();
       }
@@ -1012,21 +1026,26 @@
 
   function pickThemes(usedIndices) {
     const usedSet = new Set(usedIndices || []);
-    let available = THEMES.map((theme, index) => ({ t: theme, i: index }))
+    const unused = THEMES.map((theme, index) => ({ t: theme, i: index }))
       .filter(({ i }) => !usedSet.has(i));
 
-    if (available.length < 3) {
-      available = THEMES.map((theme, index) => ({ t: theme, i: index }));
+    if (unused.length >= 3) {
+      return shuffle(unused).slice(0, 3);
     }
 
-    return shuffle(available).slice(0, 3);
+    if (unused.length === 0) {
+      return shuffle(THEMES.map((theme, index) => ({ t: theme, i: index }))).slice(0, 3);
+    }
+
+    const used = THEMES.map((theme, index) => ({ t: theme, i: index }))
+      .filter(({ i }) => usedSet.has(i));
+    return [...unused, ...shuffle(used).slice(0, 3 - unused.length)];
   }
 
   function buildNextUsedThemes(currentUsed, pickedIndex) {
-    const uniqueUsed = [...new Set(currentUsed || [])];
-    const remaining = THEMES.length - uniqueUsed.length;
-    if (remaining < 3) return [pickedIndex];
-    return [...uniqueUsed, pickedIndex];
+    const updated = [...new Set([...(currentUsed || []), pickedIndex])];
+    if (updated.length >= THEMES.length) return [pickedIndex];
+    return updated;
   }
 
   function calcRoundOutcome(players) {
@@ -1190,6 +1209,7 @@
 
     state.votingTriggered = false;
     state.resultTriggered = false;
+    updateSessionRoundData(null, null);
 
     await state.roomRef.update(updates);
   }
@@ -1197,6 +1217,7 @@
   async function hostNextRound() {
     state.votingTriggered = false;
     state.resultTriggered = false;
+    updateSessionRoundData(null, null);
     await state.roomRef.update({
       status: STATUS.SELECTING,
       pendingThemes: pickThemes(state.usedThemes),
@@ -1275,7 +1296,7 @@
       }
       if (isRoomExpired(nextRoom)) {
         abortReason = 'expired';
-        return null;
+        return;
       }
       if (nextRoom.hostConnected === false) {
         abortReason = 'host_gone';
@@ -1305,7 +1326,8 @@
         showError('guest-join-error', 'ルームが見つかりません');
         return;
       }
-      if (abortReason === 'expired' && !txSnapshot?.val()) {
+      if (abortReason === 'expired') {
+        roomRef.remove().catch(() => {});
         showError('guest-join-error', 'このルームは期限切れのため終了しました');
         return;
       }
@@ -1352,6 +1374,7 @@
     hideError('answer-error');
     state.myAnswer = answer;
     await state.roomRef.child(`players/${state.nickname}/answer`).set(answer);
+    updateSessionRoundData(answer, undefined);
 
     document.getElementById('answer-input-area').style.display = 'none';
     document.getElementById('answer-submitted-area').style.display = 'block';
@@ -1363,6 +1386,7 @@
 
     state.myVote = targetName;
     await state.roomRef.child(`players/${state.nickname}/vote`).set(targetName);
+    updateSessionRoundData(undefined, targetName);
 
     document.getElementById('vote-input-area').style.display = 'none';
     document.getElementById('vote-submitted-area').style.display = 'block';
@@ -1406,8 +1430,11 @@
         return;
       }
 
-      const myScore = room.players?.[state.nickname]?.score;
-      if (myScore !== undefined) updateSessionScore(myScore);
+      const myPlayer = room.players?.[state.nickname];
+      if (myPlayer?.score !== undefined) updateSessionScore(myPlayer.score);
+      if (state.role === 'guest') {
+        updateSessionRoundData(myPlayer?.answer ?? null, myPlayer?.vote ?? null);
+      }
 
       state.players = room.players || {};
       state.currentTheme = room.currentTheme || '';
