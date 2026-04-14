@@ -1,0 +1,1719 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+  <title>たとえグランプリ</title>
+  <meta name="description" content="お題にたとえで答える、匿名投票つきの大喜利ゲーム">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+  <link rel="stylesheet" href="../shared/css/design-system.css">
+  <style>
+    .screen { display: none; min-height: 100dvh; }
+    .screen.active { display: flex; flex-direction: column; align-items: center; }
+
+    .tg-page {
+      width: 100%;
+      max-width: 520px;
+      padding: 40px 20px 80px;
+    }
+
+    .card { margin-bottom: 16px; }
+    .btn + .btn { margin-top: 10px; }
+
+    .tg-page-title { font-size: 22px; font-weight: 700; color: var(--color-primary); margin-bottom: 6px; }
+    .tg-page-sub { font-size: 14px; color: var(--color-muted); margin-bottom: 24px; }
+    .tg-section-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--color-muted);
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    .tg-error-msg {
+      display: none;
+      margin-bottom: 12px;
+      padding: 10px 14px;
+      border-radius: 8px;
+      border-left: 3px solid var(--color-error);
+      background: #FEF2F2;
+      color: var(--color-error);
+      font-size: 13px;
+    }
+    .tg-error-msg.visible { display: block; }
+
+    .tg-top-hero {
+      padding: 56px 0 32px;
+      text-align: center;
+    }
+    .tg-top-icon-wrap {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 76px;
+      height: 76px;
+      margin: 0 auto 20px;
+      border-radius: 22px;
+      background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+      box-shadow: var(--shadow-md);
+    }
+    .tg-top-icon-wrap .material-symbols-rounded {
+      font-size: 40px;
+      color: #fff;
+    }
+    .tg-top-title {
+      font-size: 30px;
+      font-weight: 700;
+      line-height: 1.3;
+      color: var(--color-primary);
+    }
+    .tg-top-sub {
+      margin-top: 10px;
+      color: var(--color-muted);
+      font-size: 14px;
+    }
+    .tg-top-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 40px;
+    }
+
+    .tg-room-code-box {
+      margin-bottom: 12px;
+      padding: 20px;
+      border-radius: 12px;
+      background: #EEF3F8;
+      color: var(--color-primary);
+      font-size: 52px;
+      font-weight: 700;
+      letter-spacing: 0.3em;
+      text-align: center;
+      cursor: pointer;
+      user-select: all;
+    }
+
+    .tg-player-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .tg-player-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border: 2px solid var(--color-border);
+      border-radius: 10px;
+      background: var(--color-surface);
+      font-size: 15px;
+    }
+    .tg-player-item.is-me {
+      border-color: var(--color-accent);
+      background: #EEF3F8;
+    }
+    .tg-player-avatar {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: var(--color-accent);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .tg-player-name {
+      flex: 1;
+      font-weight: 500;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .tg-badge-host {
+      margin-left: auto;
+      padding: 2px 8px;
+      border-radius: 20px;
+      background: var(--color-primary);
+      color: #fff;
+      font-size: 11px;
+    }
+
+    .spinner {
+      width: 48px;
+      height: 48px;
+      margin: 0 auto 20px;
+      border: 4px solid var(--color-border);
+      border-top-color: var(--color-accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    .tg-theme-choice {
+      display: block;
+      width: 100%;
+      margin-bottom: 12px;
+      padding: 18px 20px;
+      border: 2px solid var(--color-border);
+      border-radius: var(--radius-card);
+      background: var(--color-surface);
+      color: var(--color-text);
+      text-align: left;
+      font-family: var(--font-base);
+      font-size: 16px;
+      font-weight: 500;
+      line-height: 1.6;
+      cursor: pointer;
+      transition: border-color var(--transition-base), background var(--transition-base), transform 0.1s;
+    }
+    .tg-theme-choice:hover {
+      border-color: var(--color-accent);
+      background: #EEF3F8;
+    }
+    .tg-theme-choice:active { transform: scale(0.98); }
+
+    .tg-question-banner {
+      margin-bottom: 20px;
+      padding: 24px;
+      border-radius: var(--radius-card);
+      background: var(--color-primary);
+      color: #fff;
+      text-align: center;
+      font-size: 19px;
+      font-weight: 700;
+      line-height: 1.6;
+    }
+    .tg-answer-status,
+    .tg-vote-status {
+      margin-bottom: 16px;
+      text-align: center;
+      color: var(--color-muted);
+      font-size: 14px;
+    }
+    .tg-answer-submitted,
+    .tg-vote-submitted {
+      padding: 32px 20px;
+      text-align: center;
+      color: var(--color-success);
+      font-size: 20px;
+      font-weight: 700;
+      line-height: 1.6;
+    }
+    .tg-answer-submitted small,
+    .tg-vote-submitted small {
+      display: block;
+      margin-top: 8px;
+      color: var(--color-muted);
+      font-size: 14px;
+      font-weight: 400;
+    }
+    .tg-answer-counter {
+      margin-top: 6px;
+      text-align: right;
+      color: var(--color-muted);
+      font-size: 12px;
+    }
+
+    .tg-vote-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .tg-vote-card {
+      padding: 16px;
+      border: 2px solid var(--color-border);
+      border-radius: 14px;
+      background: var(--color-surface);
+      box-shadow: var(--shadow-sm);
+    }
+    .tg-vote-card.is-self {
+      border-color: var(--color-accent);
+      background: #EEF3F8;
+    }
+    .tg-vote-card.is-locked {
+      opacity: 0.72;
+    }
+    .tg-vote-card-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+    .tg-vote-label {
+      color: var(--color-muted);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+    .tg-vote-answer {
+      margin-bottom: 12px;
+      font-size: 18px;
+      font-weight: 700;
+      line-height: 1.6;
+      color: var(--color-primary);
+      word-break: break-word;
+    }
+    .tg-vote-note {
+      color: var(--color-muted);
+      font-size: 13px;
+    }
+
+    .tg-result-summary {
+      margin-bottom: 16px;
+      padding: 12px 14px;
+      border-radius: 10px;
+      background: #EEF3F8;
+      color: var(--color-primary);
+      font-size: 14px;
+      font-weight: 500;
+    }
+    .tg-result-item {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      margin-bottom: 10px;
+      padding: 14px 16px;
+      border: 2px solid var(--color-border);
+      border-radius: 12px;
+      background: var(--color-surface);
+    }
+    .tg-result-item.is-me {
+      border-color: var(--color-accent);
+      background: #EEF3F8;
+    }
+    .tg-result-item.is-winner {
+      border-color: #F0A500;
+      background: #FFFBEB;
+    }
+    .tg-result-rank {
+      min-width: 36px;
+      color: var(--color-primary);
+      font-size: 18px;
+      font-weight: 700;
+      line-height: 1.2;
+      text-align: center;
+    }
+    .tg-result-main {
+      flex: 1;
+      min-width: 0;
+    }
+    .tg-result-answer {
+      color: var(--color-primary);
+      font-size: 18px;
+      font-weight: 700;
+      line-height: 1.6;
+      word-break: break-word;
+    }
+    .tg-result-meta {
+      margin-top: 6px;
+      color: var(--color-muted);
+      font-size: 13px;
+    }
+    .tg-result-side {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 8px;
+      white-space: nowrap;
+    }
+    .tg-vote-count {
+      color: var(--color-primary);
+      font-size: 15px;
+      font-weight: 700;
+    }
+    .tg-delta {
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .tg-delta.plus { color: var(--color-success); }
+    .tg-delta.zero { color: var(--color-muted); }
+
+    .tg-score-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+      padding: 10px 14px;
+      border: 2px solid var(--color-border);
+      border-radius: 10px;
+      background: var(--color-surface);
+    }
+    .tg-score-item.is-me {
+      border-color: var(--color-accent);
+      background: #EEF3F8;
+    }
+    .tg-score-rank {
+      min-width: 32px;
+      font-size: 16px;
+      font-weight: 700;
+    }
+    .tg-score-name {
+      flex: 1;
+      min-width: 0;
+      font-size: 15px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .tg-score-pts {
+      color: var(--color-primary);
+      font-weight: 700;
+    }
+
+    .tg-winner-block {
+      margin-bottom: 32px;
+      text-align: center;
+    }
+    .tg-winner-label { color: var(--color-muted); font-size: 13px; }
+    .tg-winner-name { color: var(--color-primary); font-size: 30px; font-weight: 700; }
+    .tg-winner-score { margin-top: 4px; color: var(--color-muted); font-size: 18px; }
+
+    .tg-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 32px;
+      background: rgba(245, 242, 236, 0.95);
+      text-align: center;
+    }
+    .tg-overlay-title {
+      margin: 16px 0 8px;
+      color: var(--color-primary);
+      font-size: 18px;
+      font-weight: 700;
+    }
+    .tg-overlay-sub {
+      margin-bottom: 8px;
+      color: var(--color-muted);
+      font-size: 14px;
+    }
+    .tg-overlay-countdown {
+      margin: 12px 0 4px;
+      color: var(--color-error);
+      font-size: 52px;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .material-symbols-rounded {
+      font-family: 'Material Symbols Rounded';
+      font-weight: normal;
+      font-style: normal;
+      font-size: 20px;
+      line-height: 1;
+      letter-spacing: normal;
+      text-transform: none;
+      display: inline-block;
+      white-space: nowrap;
+      word-wrap: normal;
+      direction: ltr;
+      -webkit-font-feature-settings: 'liga';
+      font-feature-settings: 'liga';
+      -webkit-font-smoothing: antialiased;
+      vertical-align: middle;
+      user-select: none;
+    }
+
+    @media (max-width: 360px) {
+      .tg-top-title { font-size: 24px; }
+      .tg-room-code-box { font-size: 36px; }
+      .tg-question-banner { font-size: 17px; }
+      .tg-result-item { flex-direction: column; }
+      .tg-result-side {
+        flex-direction: row;
+        justify-content: space-between;
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="screen" id="screen-top">
+  <div class="tg-page">
+    <div class="tg-top-hero">
+      <div class="tg-top-icon-wrap">
+        <span class="material-symbols-rounded">emoji_objects</span>
+      </div>
+      <h1 class="tg-top-title">たとえ<br>グランプリ</h1>
+      <p class="tg-top-sub">お題をたとえで表現して、みんなでお気に入りを選ぶ大喜利ゲーム</p>
+    </div>
+    <div class="tg-top-buttons">
+      <button class="btn btn-primary btn-lg btn-full" onclick="goHostSetup()">
+        <span class="material-symbols-rounded">add_home</span>
+        ルームを作る（ホスト）
+      </button>
+      <button class="btn btn-secondary btn-lg btn-full" onclick="goGuestJoin()">
+        <span class="material-symbols-rounded">login</span>
+        ルームに参加する
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="screen" id="screen-host-setup">
+  <div class="tg-page">
+    <div id="host-step-nickname">
+      <h2 class="tg-page-title">ルームを作る</h2>
+      <p class="tg-page-sub">ホストのニックネームを入力してください</p>
+      <div class="form-group">
+        <label class="form-label">ニックネーム（1〜8文字）</label>
+        <input class="form-input" id="host-nickname" type="text" maxlength="8" placeholder="例：たろう" autocomplete="off">
+      </div>
+      <div class="tg-error-msg" id="host-nickname-error"></div>
+      <button class="btn btn-primary btn-full" onclick="hostCreateRoom()">ルームを作る</button>
+      <button class="btn btn-ghost btn-full" onclick="showScreen('top')">← 戻る</button>
+    </div>
+
+    <div id="host-step-room" style="display:none">
+      <h2 class="tg-page-title">参加者を待っています</h2>
+      <p class="tg-page-sub">このコードを参加者に伝えてください</p>
+
+      <div class="tg-room-code-box" id="host-room-code-display">----</div>
+      <button class="btn btn-ghost btn-full" id="host-copy-btn" onclick="hostCopyCode()">
+        <span class="material-symbols-rounded">content_copy</span>
+        コードをコピー
+      </button>
+
+      <hr class="divider">
+      <div class="tg-section-label">参加者（<span id="host-player-count">0</span>人 / 最低3人でスタート可）</div>
+      <div class="tg-player-list" id="host-player-list"></div>
+
+      <div class="mt-lg">
+        <button class="btn btn-primary btn-lg btn-full" id="btn-start-game" disabled onclick="hostStartGame()">
+          <span class="material-symbols-rounded">sports_esports</span>
+          ゲームを始める
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="screen" id="screen-guest-join">
+  <div class="tg-page">
+    <h2 class="tg-page-title">ルームに参加する</h2>
+    <p class="tg-page-sub">ニックネームとルームコードを入力してください</p>
+
+    <div class="form-group">
+      <label class="form-label">ニックネーム（1〜8文字）</label>
+      <input class="form-input" id="guest-nickname" type="text" maxlength="8" placeholder="例：はなこ" autocomplete="off">
+    </div>
+    <div class="form-group">
+      <label class="form-label">ルームコード（6文字）</label>
+      <input class="form-input" id="guest-room-code" type="text" maxlength="6" placeholder="XXXXXX" autocomplete="off" oninput="this.value = this.value.toUpperCase()">
+    </div>
+    <div class="tg-error-msg" id="guest-join-error"></div>
+    <button class="btn btn-primary btn-full" onclick="guestJoin()">参加する</button>
+    <button class="btn btn-ghost btn-full" onclick="showScreen('top')">← 戻る</button>
+  </div>
+</div>
+
+<div class="screen" id="screen-waiting">
+  <div class="tg-page">
+    <div class="text-center mt-lg">
+      <div class="spinner"></div>
+      <h2 class="tg-page-title">ゲーム開始を待っています</h2>
+      <p class="tg-page-sub">ホストがゲームを始めるまで待ってください</p>
+    </div>
+    <div class="tg-section-label" style="margin-top:24px">参加者</div>
+    <div class="tg-player-list" id="waiting-player-list"></div>
+  </div>
+</div>
+
+<div class="screen" id="screen-selecting">
+  <div class="tg-page">
+    <div id="selecting-host">
+      <h2 class="tg-page-title">お題を選ぼう</h2>
+      <p class="tg-page-sub">3つの中から遊びたいお題を選んでください</p>
+      <div id="theme-choices"></div>
+    </div>
+
+    <div id="selecting-guest" style="display:none">
+      <div class="text-center mt-lg">
+        <div class="spinner"></div>
+        <h2 class="tg-page-title mt-md">ホストがお題を選んでいます…</h2>
+        <p class="tg-page-sub">しばらくお待ちください</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="screen" id="screen-answering">
+  <div class="tg-page">
+    <div class="tg-section-label">第 <span id="round-num">1</span> ラウンド</div>
+    <div class="tg-question-banner" id="answer-theme-text"></div>
+    <div class="tg-answer-status" id="answer-status-text"></div>
+
+    <div id="answer-input-area">
+      <div class="form-group">
+        <label class="form-label">あなたのたとえ（30文字以内）</label>
+        <textarea class="form-input" id="answer-input" rows="3" maxlength="30" placeholder="例：アイスが3秒で降参する日"></textarea>
+        <div class="tg-answer-counter"><span id="answer-char-count">0</span> / 30</div>
+      </div>
+      <div class="tg-error-msg" id="answer-error"></div>
+      <button class="btn btn-primary btn-full btn-lg" onclick="submitAnswer()">回答を送信</button>
+    </div>
+
+    <div id="answer-submitted-area" style="display:none">
+      <div class="tg-answer-submitted">
+        <span class="material-symbols-rounded" style="font-size:48px;display:block;margin-bottom:8px;color:var(--color-success)">check_circle</span>
+        送信済み
+        <small>ほかの人の回答を待っています</small>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="screen" id="screen-voting">
+  <div class="tg-page">
+    <div class="tg-section-label">匿名投票</div>
+    <div class="tg-question-banner" id="vote-theme-text"></div>
+    <div class="tg-vote-status" id="vote-status-text"></div>
+
+    <div id="vote-input-area">
+      <div class="tg-vote-list" id="vote-list"></div>
+    </div>
+
+    <div id="vote-submitted-area" style="display:none">
+      <div class="tg-vote-submitted">
+        <span class="material-symbols-rounded" style="font-size:48px;display:block;margin-bottom:8px;color:var(--color-success)">how_to_vote</span>
+        投票済み
+        <small>ほかの人の投票を待っています</small>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="screen" id="screen-result">
+  <div class="tg-page">
+    <h2 class="tg-page-title pop-in">結果発表！</h2>
+    <p id="result-theme-label" class="text-muted" style="margin-bottom:16px"></p>
+
+    <div class="tg-result-summary" id="result-summary"></div>
+
+    <div class="tg-section-label">ラウンド結果</div>
+    <div id="result-list"></div>
+
+    <hr class="divider">
+
+    <div class="tg-section-label">現在のスコア</div>
+    <div id="score-list"></div>
+
+    <div id="result-host-actions" style="display:none; margin-top:24px">
+      <button class="btn btn-primary btn-full" onclick="hostNextRound()">次のラウンドへ →</button>
+      <button class="btn btn-ghost btn-full" onclick="hostEndGame()">ゲームを終了する</button>
+    </div>
+    <div id="result-guest-waiting" class="text-center text-muted mt-lg" style="display:none">
+      ホストの操作を待っています…
+    </div>
+  </div>
+</div>
+
+<div class="screen" id="screen-final">
+  <div class="tg-page">
+    <div class="tg-winner-block pop-in">
+      <div style="font-size:72px;line-height:1;margin-bottom:8px">
+        <span class="material-symbols-rounded" style="font-size:72px;color:#F0A500">emoji_events</span>
+      </div>
+      <div class="tg-winner-label">優勝！</div>
+      <div class="tg-winner-name" id="final-winner-name"></div>
+      <div class="tg-winner-score" id="final-winner-score"></div>
+    </div>
+
+    <div class="tg-section-label">最終順位</div>
+    <div id="final-ranking"></div>
+
+    <div class="mt-lg">
+      <button class="btn btn-secondary btn-full btn-lg" onclick="goToTop()">
+        <span class="material-symbols-rounded">replay</span>
+        もう一度遊ぶ
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="tg-overlay" id="reconnect-overlay">
+  <div class="spinner"></div>
+  <p class="tg-overlay-title">再接続しています...</p>
+</div>
+
+<div class="tg-overlay" id="host-disconnect-overlay">
+  <div class="spinner"></div>
+  <p class="tg-overlay-title">ホストが一時的に接続を失いました</p>
+  <p class="tg-overlay-sub">再接続を待っています</p>
+  <div class="tg-overlay-countdown" id="host-disconnect-countdown">120</div>
+  <p class="tg-overlay-sub">秒後に自動終了します</p>
+  <button class="btn btn-ghost btn-full" style="max-width:280px;margin-top:20px" onclick="leaveGame()">退出する</button>
+</div>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyC0bqQdDJeTAWrqFYqjOT1NsVFiunPemIw",
+    authDomain: "roomk-tools.firebaseapp.com",
+    databaseURL: "https://roomk-tools-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "roomk-tools",
+    storageBucket: "roomk-tools.firebasestorage.app",
+    messagingSenderId: "592193782148",
+    appId: "1:592193782148:web:1529f47cebab7dcd109dd1",
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const authReady = firebase.auth().signInAnonymously().catch((error) => {
+    console.error('[auth] anonymous sign-in failed', error);
+    throw error;
+  });
+  const db = firebase.database();
+
+  const THEMES = [
+    'めちゃくちゃ暑い日',
+    'めっちゃ寒い朝',
+    'とっても眠い朝',
+    'すごくワクワクする瞬間',
+    'めっちゃうれしいとき',
+    'ちょっとさみしい気持ち',
+    'すごく退屈な時間',
+    'めっちゃびっくりしたとき',
+    'ひさしぶりに会えたとき',
+    'がんばったあとにひと息つくとき',
+    'めちゃくちゃおいしいもの',
+    'とっても辛い食べ物',
+    '食べたら止まらないお菓子',
+    '最高においしいラーメン',
+    'おばあちゃんのつくるごはん',
+    'キンキンに冷えた飲み物',
+    'ふわふわのパンケーキ',
+    '焼きたてのパンのにおい',
+    'しゅわしゅわのジュース',
+    'とろけるアイス',
+    'すごい大雨',
+    '気持ちいい風',
+    'きれいな夕焼け',
+    'すごい雷',
+    '春のにおい',
+    '秋の夕暮れ',
+    '星がいっぱいの夜空',
+    '朝もやの景色',
+    '海の波',
+    'ひさしぶりの晴れの日',
+    'ものすごく大きいもの',
+    'すごく小さいもの',
+    'めちゃくちゃ速いもの',
+    'とってもゆっくりな動き',
+    'すごく重いカバン',
+    'めっちゃ高いところ',
+    'ふわっと軽いもの',
+    'なかなか終わらない5分',
+    '一瞬で過ぎる時間',
+    'ぐんぐん広がる感じ',
+    '休みの日の朝',
+    'めっちゃ気持ちいいお風呂',
+    'ふかふかの布団に入った瞬間',
+    '推しの新曲を聴いた瞬間',
+    '好きなものを好きなだけ食べていいとき',
+    'お気に入りの服を着た日',
+    'はじめての場所に行く前',
+    '靴がぴったり合ったとき',
+    'お気に入りの席',
+    '雨の日の家の中',
+    '宇宙',
+    '時間が止まったとき',
+    '透明人間になったとき',
+    '100年後の世界',
+    '雲の上',
+    '未来のまち',
+    'しゃべる冷蔵庫',
+    '空を泳ぐ魚',
+    '月の裏側',
+    '魔法のドア',
+  ];
+
+  const STATUS = {
+    WAITING: 'waiting',
+    SELECTING: 'selecting',
+    ANSWERING: 'answering',
+    VOTING: 'voting',
+    RESULT: 'result',
+    FINISHED: 'finished',
+  };
+
+  const SESSION_KEY = 'tatoegp_session';
+  const ORPHAN_TTL_MS = 2 * 60 * 1000;
+
+  const state = {
+    role: null,
+    nickname: '',
+    roomCode: '',
+    players: {},
+    currentTheme: '',
+    round: 0,
+    usedThemes: [],
+    answerOrder: [],
+    myAnswer: '',
+    myVote: null,
+    roomRef: null,
+    currentScreen: 'top',
+    votingTriggered: false,
+    resultTriggered: false,
+    serverTimeOffset: 0,
+  };
+
+  function saveSession() {
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify({
+      nickname: state.nickname,
+      roomCode: state.roomCode,
+      role: state.role,
+      score: 0,
+    }));
+  }
+
+  function loadSession() {
+    try {
+      return JSON.parse(sessionStorage.getItem(SESSION_KEY));
+    } catch {
+      return null;
+    }
+  }
+
+  function clearSession() {
+    sessionStorage.removeItem(SESSION_KEY);
+  }
+
+  function updateSessionScore(score) {
+    const session = loadSession();
+    if (!session) return;
+    session.score = score;
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
+  }
+
+  function getEstimatedServerNow() {
+    return Date.now() + (Number(state.serverTimeOffset) || 0);
+  }
+
+  function getHostDisconnectedAt(room) {
+    const timestamp = room ? Number(room.hostDisconnectedAt) : NaN;
+    return Number.isFinite(timestamp) ? timestamp : null;
+  }
+
+  function isRoomExpired(room) {
+    const disconnectedAt = getHostDisconnectedAt(room);
+    return room?.hostConnected === false
+      && disconnectedAt != null
+      && (getEstimatedServerNow() - disconnectedAt) >= ORPHAN_TTL_MS;
+  }
+
+  async function tryReconnect() {
+    const session = loadSession();
+    if (!session) return false;
+
+    const { nickname, roomCode, role, score } = session;
+    showReconnectOverlay(true);
+
+    try {
+      await authReady;
+      const roomRef = db.ref(`tatoegp_rooms/${roomCode}`);
+      const snapshot = await roomRef.get();
+      if (!snapshot.exists()) {
+        clearSession();
+        showReconnectOverlay(false);
+        return false;
+      }
+
+      const room = snapshot.val();
+      if (isRoomExpired(room)) {
+        await roomRef.remove().catch(() => {});
+        clearSession();
+        showReconnectOverlay(false);
+        return false;
+      }
+
+      state.nickname = nickname;
+      state.roomCode = roomCode;
+      state.role = role;
+      state.roomRef = roomRef;
+
+      if (role === 'host') {
+        await roomRef.update({ hostConnected: true, hostDisconnectedAt: null });
+        roomRef.onDisconnect().update({
+          hostConnected: false,
+          hostDisconnectedAt: firebase.database.ServerValue.TIMESTAMP,
+        });
+      } else {
+        const playerRef = roomRef.child(`players/${nickname}`);
+        if (!room.players || !room.players[nickname]) {
+          await playerRef.set({ score: score || 0, isHost: false, answer: null, vote: null });
+        }
+        playerRef.onDisconnect().remove();
+      }
+
+      showReconnectOverlay(false);
+      startRoomListener();
+      return true;
+    } catch {
+      clearSession();
+      showReconnectOverlay(false);
+      return false;
+    }
+  }
+
+  function showReconnectOverlay(show) {
+    document.getElementById('reconnect-overlay').style.display = show ? 'flex' : 'none';
+  }
+
+  let hostDisconnectTimer = null;
+  let hostDisconnectDeadline = null;
+
+  function showHostDisconnectOverlay(show, room = null) {
+    const overlay = document.getElementById('host-disconnect-overlay');
+    overlay.style.display = show ? 'flex' : 'none';
+
+    if (show && !hostDisconnectTimer) {
+      const disconnectedAt = getHostDisconnectedAt(room);
+      hostDisconnectDeadline = disconnectedAt == null
+        ? getEstimatedServerNow() + ORPHAN_TTL_MS
+        : disconnectedAt + ORPHAN_TTL_MS;
+
+      hostDisconnectTimer = setInterval(() => {
+        const remaining = Math.max(0, Math.ceil((hostDisconnectDeadline - getEstimatedServerNow()) / 1000));
+        document.getElementById('host-disconnect-countdown').textContent = remaining;
+        if (remaining <= 0) {
+          clearInterval(hostDisconnectTimer);
+          hostDisconnectTimer = null;
+          hostDisconnectDeadline = null;
+          if (state.roomRef) state.roomRef.remove().catch(() => {});
+          leaveGame('ホストが再接続できなかったためゲームが終了しました');
+        }
+      }, 1000);
+      return;
+    }
+
+    if (show && hostDisconnectTimer) {
+      const disconnectedAt = getHostDisconnectedAt(room);
+      hostDisconnectDeadline = disconnectedAt == null
+        ? getEstimatedServerNow() + ORPHAN_TTL_MS
+        : disconnectedAt + ORPHAN_TTL_MS;
+      return;
+    }
+
+    if (!show && hostDisconnectTimer) {
+      clearInterval(hostDisconnectTimer);
+      hostDisconnectTimer = null;
+      hostDisconnectDeadline = null;
+    }
+  }
+
+  function leaveGame(message) {
+    clearInterval(hostDisconnectTimer);
+    hostDisconnectTimer = null;
+    hostDisconnectDeadline = null;
+    document.getElementById('host-disconnect-overlay').style.display = 'none';
+    clearSession();
+    goToTop();
+    if (message) alert(message);
+  }
+
+  function showScreen(name) {
+    document.querySelectorAll('.screen').forEach((screen) => screen.classList.remove('active'));
+    const target = document.getElementById(`screen-${name}`);
+    if (!target) return;
+    target.classList.add('active');
+    state.currentScreen = name;
+  }
+
+  function generateRoomCode() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    return Array.from({ length: 6 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+  }
+
+  function shuffle(array) {
+    const next = [...array];
+    for (let index = next.length - 1; index > 0; index -= 1) {
+      const randomIndex = Math.floor(Math.random() * (index + 1));
+      [next[index], next[randomIndex]] = [next[randomIndex], next[index]];
+    }
+    return next;
+  }
+
+  function escapeHtml(value) {
+    return String(value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function validateNickname(value) {
+    const trimmed = value.trim();
+    if (!trimmed) return 'ニックネームを入力してください';
+    if (trimmed.length > 8) return '8文字以内で入力してください';
+    return null;
+  }
+
+  function showError(id, message) {
+    const element = document.getElementById(id);
+    if (!element) return;
+    element.textContent = message;
+    element.classList.add('visible');
+  }
+
+  function hideError(id) {
+    const element = document.getElementById(id);
+    if (!element) return;
+    element.classList.remove('visible');
+  }
+
+  function copyToClipboard(text, button) {
+    const original = button.innerHTML;
+    navigator.clipboard.writeText(text).then(() => {
+      button.innerHTML = '<span class="material-symbols-rounded">check</span> コピーしました！';
+      button.classList.add('done');
+      setTimeout(() => {
+        button.innerHTML = original;
+        button.classList.remove('done');
+      }, 2500);
+    });
+  }
+
+  function formatTheme(theme) {
+    return `「${theme}」って、たとえるなら？`;
+  }
+
+  function normalizeAnswer(raw) {
+    return raw.replace(/\s+/g, ' ').trim();
+  }
+
+  function getAnsweredEntries(players) {
+    return Object.entries(players || {})
+      .filter(([, player]) => typeof player.answer === 'string' && player.answer.trim() !== '')
+      .map(([name, player]) => ({ name, answer: player.answer, score: player.score || 0 }));
+  }
+
+  function getOrderedAnswerNames(players, answerOrder) {
+    const answeredNames = getAnsweredEntries(players).map(({ name }) => name);
+    const answeredSet = new Set(answeredNames);
+    const ordered = (Array.isArray(answerOrder) ? answerOrder : []).filter((name) => answeredSet.has(name));
+    const missing = answeredNames.filter((name) => !ordered.includes(name));
+    return [...ordered, ...missing];
+  }
+
+  function pickThemes(usedIndices) {
+    const usedSet = new Set(usedIndices || []);
+    let available = THEMES.map((theme, index) => ({ t: theme, i: index }))
+      .filter(({ i }) => !usedSet.has(i));
+
+    if (available.length < 3) {
+      available = THEMES.map((theme, index) => ({ t: theme, i: index }));
+    }
+
+    return shuffle(available).slice(0, 3);
+  }
+
+  function buildNextUsedThemes(currentUsed, pickedIndex) {
+    const uniqueUsed = [...new Set(currentUsed || [])];
+    const remaining = THEMES.length - uniqueUsed.length;
+    if (remaining < 3) return [pickedIndex];
+    return [...uniqueUsed, pickedIndex];
+  }
+
+  function calcRoundOutcome(players) {
+    const answeredEntries = getAnsweredEntries(players);
+    const answeredNames = answeredEntries.map(({ name }) => name);
+    const voteCounts = Object.fromEntries(answeredNames.map((name) => [name, 0]));
+
+    Object.values(players || {}).forEach((player) => {
+      const voteTarget = player?.vote;
+      if (voteTarget && Object.prototype.hasOwnProperty.call(voteCounts, voteTarget)) {
+        voteCounts[voteTarget] += 1;
+      }
+    });
+
+    const deltas = {};
+    answeredNames.forEach((name) => {
+      deltas[name] = (voteCounts[name] || 0) * 10;
+    });
+
+    const maxVotes = answeredNames.length
+      ? Math.max(...answeredNames.map((name) => voteCounts[name] || 0))
+      : 0;
+    const topNames = answeredNames.filter((name) => (voteCounts[name] || 0) === maxVotes);
+    const grandPrix = maxVotes > 0 && topNames.length === 1 ? topNames[0] : null;
+    if (grandPrix) deltas[grandPrix] += 10;
+
+    return { voteCounts, deltas, maxVotes, topNames, grandPrix };
+  }
+
+  function renderPlayerList(containerId, players) {
+    const element = document.getElementById(containerId);
+    if (!element) return;
+    element.innerHTML = '';
+
+    Object.entries(players || {}).forEach(([name, player]) => {
+      const isMe = name === state.nickname;
+      element.innerHTML += `
+        <div class="tg-player-item ${isMe ? 'is-me' : ''}">
+          <div class="tg-player-avatar">${escapeHtml(name.charAt(0).toUpperCase())}</div>
+          <span class="tg-player-name">${escapeHtml(name)}</span>
+          ${player.isHost ? '<span class="tg-badge-host">ホスト</span>' : ''}
+        </div>
+      `;
+    });
+  }
+
+  function renderScoreList(containerId, players) {
+    const element = document.getElementById(containerId);
+    if (!element) return;
+    element.innerHTML = '';
+
+    Object.entries(players || {})
+      .map(([name, player]) => ({ name, score: player.score || 0 }))
+      .sort((left, right) => right.score - left.score || left.name.localeCompare(right.name, 'ja'))
+      .forEach(({ name, score }, index) => {
+        const isMe = name === state.nickname;
+        element.innerHTML += `
+          <div class="tg-score-item ${isMe ? 'is-me' : ''}">
+            <div class="tg-score-rank">${index + 1}位</div>
+            <div class="tg-score-name">${escapeHtml(name)}${isMe ? '（あなた）' : ''}</div>
+            <div class="tg-score-pts">${score}pt</div>
+          </div>
+        `;
+      });
+  }
+
+  function goHostSetup() {
+    showScreen('host-setup');
+  }
+
+  function goGuestJoin() {
+    showScreen('guest-join');
+  }
+
+  async function hostCreateRoom() {
+    const nickname = document.getElementById('host-nickname').value.trim();
+    const error = validateNickname(nickname);
+    if (error) {
+      showError('host-nickname-error', error);
+      return;
+    }
+    hideError('host-nickname-error');
+
+    await authReady;
+
+    let roomCode = null;
+    let roomRef = null;
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      const code = generateRoomCode();
+      const ref = db.ref(`tatoegp_rooms/${code}`);
+      const initialRoom = {
+        host: nickname,
+        hostConnected: true,
+        hostDisconnectedAt: null,
+        status: STATUS.WAITING,
+        round: 0,
+        currentTheme: '',
+        usedThemes: [],
+        pendingThemes: null,
+        answerOrder: [],
+        players: {
+          [nickname]: { score: 0, isHost: true, answer: null, vote: null },
+        },
+      };
+      const { committed } = await ref.transaction((room) => room ? undefined : initialRoom);
+      if (committed) {
+        roomCode = code;
+        roomRef = ref;
+        break;
+      }
+    }
+
+    if (!roomCode || !roomRef) {
+      showError('host-nickname-error', 'ルーム作成に失敗しました。もう一度お試しください');
+      return;
+    }
+
+    state.nickname = nickname;
+    state.role = 'host';
+    state.roomCode = roomCode;
+    state.roomRef = roomRef;
+
+    roomRef.onDisconnect().update({
+      hostConnected: false,
+      hostDisconnectedAt: firebase.database.ServerValue.TIMESTAMP,
+    });
+    saveSession();
+
+    document.getElementById('host-step-nickname').style.display = 'none';
+    document.getElementById('host-step-room').style.display = 'block';
+    document.getElementById('host-room-code-display').textContent = roomCode;
+
+    startRoomListener();
+  }
+
+  function hostCopyCode() {
+    copyToClipboard(state.roomCode, document.getElementById('host-copy-btn'));
+  }
+
+  async function hostStartGame() {
+    await state.roomRef.update({
+      status: STATUS.SELECTING,
+      pendingThemes: pickThemes(state.usedThemes),
+    });
+  }
+
+  async function hostPickTheme(themeText, themeIndex) {
+    const updates = {
+      status: STATUS.ANSWERING,
+      round: (state.round || 0) + 1,
+      currentTheme: themeText,
+      usedThemes: buildNextUsedThemes(state.usedThemes, themeIndex),
+      pendingThemes: null,
+      answerOrder: [],
+    };
+
+    Object.keys(state.players || {}).forEach((name) => {
+      updates[`players/${name}/answer`] = null;
+      updates[`players/${name}/vote`] = null;
+    });
+
+    state.votingTriggered = false;
+    state.resultTriggered = false;
+
+    await state.roomRef.update(updates);
+  }
+
+  async function hostNextRound() {
+    state.votingTriggered = false;
+    state.resultTriggered = false;
+    await state.roomRef.update({
+      status: STATUS.SELECTING,
+      pendingThemes: pickThemes(state.usedThemes),
+    });
+  }
+
+  async function hostEndGame() {
+    await state.roomRef.update({ status: STATUS.FINISHED });
+    setTimeout(() => {
+      if (state.roomRef) state.roomRef.remove().catch(() => {});
+    }, 30000);
+  }
+
+  async function guestJoin() {
+    const nickname = document.getElementById('guest-nickname').value.trim();
+    const roomCode = document.getElementById('guest-room-code').value.trim().toUpperCase();
+
+    const nicknameError = validateNickname(nickname);
+    if (nicknameError) {
+      showError('guest-join-error', nicknameError);
+      return;
+    }
+    if (roomCode.length !== 6) {
+      showError('guest-join-error', 'ルームコードは6文字です');
+      return;
+    }
+    hideError('guest-join-error');
+
+    await authReady;
+
+    const roomRef = db.ref(`tatoegp_rooms/${roomCode}`);
+    const snapshot = await roomRef.get();
+    if (!snapshot.exists()) {
+      showError('guest-join-error', 'ルームが見つかりません');
+      return;
+    }
+
+    const room = snapshot.val();
+    if (isRoomExpired(room)) {
+      await roomRef.remove().catch(() => {});
+      showError('guest-join-error', 'このルームは期限切れのため終了しました');
+      return;
+    }
+    if (room.hostConnected === false) {
+      showError('guest-join-error', 'ホストが切断されています');
+      return;
+    }
+
+    const alreadyInRoom = room.players && room.players[nickname];
+    if (room.status !== STATUS.WAITING && alreadyInRoom) {
+      state.nickname = nickname;
+      state.roomCode = roomCode;
+      state.role = 'guest';
+      state.roomRef = roomRef;
+      roomRef.child(`players/${nickname}`).onDisconnect().remove();
+      saveSession();
+      startRoomListener();
+      return;
+    }
+
+    if (room.status !== STATUS.WAITING) {
+      showError('guest-join-error', 'このルームはすでにゲームが始まっています');
+      return;
+    }
+    if (alreadyInRoom) {
+      showError('guest-join-error', 'そのニックネームはすでに使われています');
+      return;
+    }
+
+    let abortReason = null;
+    const { committed, snapshot: txSnapshot } = await roomRef.transaction((currentRoom) => {
+      const nextRoom = currentRoom || room;
+      if (!nextRoom) {
+        abortReason = 'not_found';
+        return;
+      }
+      if (isRoomExpired(nextRoom)) {
+        abortReason = 'expired';
+        return null;
+      }
+      if (nextRoom.hostConnected === false) {
+        abortReason = 'host_gone';
+        return;
+      }
+      if (nextRoom.status !== STATUS.WAITING) {
+        abortReason = 'not_waiting';
+        return;
+      }
+      const players = nextRoom.players || {};
+      if (players[nickname]) {
+        abortReason = 'nick_taken';
+        return;
+      }
+      abortReason = null;
+      return {
+        ...nextRoom,
+        players: {
+          ...players,
+          [nickname]: { score: 0, isHost: false, answer: null, vote: null },
+        },
+      };
+    });
+
+    if (!committed) {
+      if (abortReason === 'not_found') {
+        showError('guest-join-error', 'ルームが見つかりません');
+        return;
+      }
+      if (abortReason === 'expired' && !txSnapshot?.val()) {
+        showError('guest-join-error', 'このルームは期限切れのため終了しました');
+        return;
+      }
+      if (abortReason === 'host_gone') {
+        showError('guest-join-error', 'ホストが切断されています');
+        return;
+      }
+      if (abortReason === 'not_waiting') {
+        showError('guest-join-error', 'このルームはすでにゲームが始まっています');
+        return;
+      }
+      if (abortReason === 'nick_taken') {
+        showError('guest-join-error', 'そのニックネームはすでに使われています');
+        return;
+      }
+      showError('guest-join-error', '参加に失敗しました');
+      return;
+    }
+
+    state.nickname = nickname;
+    state.roomCode = roomCode;
+    state.role = 'guest';
+    state.roomRef = roomRef;
+
+    roomRef.child(`players/${nickname}`).onDisconnect().remove();
+    saveSession();
+
+    showScreen('waiting');
+    startRoomListener();
+  }
+
+  async function submitAnswer() {
+    const input = document.getElementById('answer-input');
+    const answer = normalizeAnswer(input.value);
+    if (!answer) {
+      showError('answer-error', 'たとえを入力してください');
+      return;
+    }
+    if (answer.length > 30) {
+      showError('answer-error', '30文字以内で入力してください');
+      return;
+    }
+
+    hideError('answer-error');
+    state.myAnswer = answer;
+    await state.roomRef.child(`players/${state.nickname}/answer`).set(answer);
+
+    document.getElementById('answer-input-area').style.display = 'none';
+    document.getElementById('answer-submitted-area').style.display = 'block';
+  }
+
+  async function submitVote(targetName) {
+    if (!targetName || targetName === state.nickname) return;
+    if (state.players?.[state.nickname]?.vote) return;
+
+    state.myVote = targetName;
+    await state.roomRef.child(`players/${state.nickname}/vote`).set(targetName);
+
+    document.getElementById('vote-input-area').style.display = 'none';
+    document.getElementById('vote-submitted-area').style.display = 'block';
+  }
+
+  async function triggerVoting(players) {
+    const answerOrder = shuffle(getAnsweredEntries(players).map(({ name }) => name));
+    const updates = {
+      status: STATUS.VOTING,
+      answerOrder,
+    };
+
+    Object.keys(players || {}).forEach((name) => {
+      updates[`players/${name}/vote`] = null;
+    });
+
+    await state.roomRef.update(updates);
+  }
+
+  async function triggerResult(players) {
+    const { deltas } = calcRoundOutcome(players);
+    const updates = { status: STATUS.RESULT };
+
+    Object.entries(deltas).forEach(([name, delta]) => {
+      updates[`players/${name}/score`] = (players[name]?.score || 0) + delta;
+    });
+
+    await state.roomRef.update(updates);
+  }
+
+  function startRoomListener() {
+    state.roomRef.on('value', (snapshot) => {
+      const room = snapshot.val();
+
+      if (!room) {
+        if (state.currentScreen !== 'final') {
+          clearSession();
+          alert('ホストが退出したためゲームが終了しました');
+          goToTop();
+        }
+        return;
+      }
+
+      const myScore = room.players?.[state.nickname]?.score;
+      if (myScore !== undefined) updateSessionScore(myScore);
+
+      state.players = room.players || {};
+      state.currentTheme = room.currentTheme || '';
+      state.round = room.round || 0;
+      state.usedThemes = room.usedThemes || [];
+      state.answerOrder = room.answerOrder || [];
+      state.myAnswer = room.players?.[state.nickname]?.answer || '';
+      state.myVote = room.players?.[state.nickname]?.vote || null;
+
+      if (state.role === 'guest') {
+        if (isRoomExpired(room)) {
+          if (state.roomRef) state.roomRef.remove().catch(() => {});
+          leaveGame('ホストが再接続できなかったためゲームが終了しました');
+          return;
+        }
+        if (room.hostConnected === false) {
+          showHostDisconnectOverlay(true, room);
+          return;
+        }
+        showHostDisconnectOverlay(false);
+      }
+
+      switch (room.status) {
+        case STATUS.WAITING:
+          handleWaiting(room.players);
+          break;
+        case STATUS.SELECTING:
+          handleSelecting(room.pendingThemes);
+          break;
+        case STATUS.ANSWERING:
+          handleAnswering(room.players, room.currentTheme, room.round);
+          break;
+        case STATUS.VOTING:
+          handleVoting(room.players, room.currentTheme, room.answerOrder);
+          break;
+        case STATUS.RESULT:
+          handleResult(room.players, room.currentTheme, room.answerOrder);
+          break;
+        case STATUS.FINISHED:
+          handleFinished(room.players);
+          break;
+        default:
+          break;
+      }
+    });
+  }
+
+  function handleWaiting(players) {
+    const count = Object.keys(players || {}).length;
+
+    if (state.role === 'host') {
+      if (state.currentScreen !== 'host-setup') {
+        showScreen('host-setup');
+        document.getElementById('host-step-nickname').style.display = 'none';
+        document.getElementById('host-step-room').style.display = 'block';
+        document.getElementById('host-room-code-display').textContent = state.roomCode;
+      }
+      document.getElementById('host-player-count').textContent = count;
+      renderPlayerList('host-player-list', players);
+      document.getElementById('btn-start-game').disabled = count < 3;
+      return;
+    }
+
+    if (state.currentScreen !== 'waiting') showScreen('waiting');
+    renderPlayerList('waiting-player-list', players);
+  }
+
+  function handleSelecting(pendingThemes) {
+    if (state.currentScreen !== 'selecting') showScreen('selecting');
+
+    if (state.role === 'host') {
+      document.getElementById('selecting-host').style.display = 'block';
+      document.getElementById('selecting-guest').style.display = 'none';
+
+      const container = document.getElementById('theme-choices');
+      container.innerHTML = '';
+      (pendingThemes || []).forEach(({ t, i }) => {
+        const button = document.createElement('button');
+        button.className = 'tg-theme-choice';
+        button.textContent = formatTheme(t);
+        button.onclick = () => hostPickTheme(t, i);
+        container.appendChild(button);
+      });
+      return;
+    }
+
+    document.getElementById('selecting-host').style.display = 'none';
+    document.getElementById('selecting-guest').style.display = 'block';
+  }
+
+  function handleAnswering(players, theme, round) {
+    if (state.currentScreen !== 'answering') {
+      showScreen('answering');
+      state.votingTriggered = false;
+      document.getElementById('answer-input').value = '';
+      document.getElementById('answer-char-count').textContent = '0';
+      hideError('answer-error');
+    }
+
+    document.getElementById('round-num').textContent = round || 1;
+    document.getElementById('answer-theme-text').textContent = formatTheme(theme);
+
+    const total = Object.keys(players || {}).length;
+    const answered = getAnsweredEntries(players).length;
+    document.getElementById('answer-status-text').textContent = `${answered} 人 / ${total} 人が回答済み`;
+
+    const myAnswer = players?.[state.nickname]?.answer;
+    document.getElementById('answer-input-area').style.display = myAnswer ? 'none' : 'block';
+    document.getElementById('answer-submitted-area').style.display = myAnswer ? 'block' : 'none';
+
+    if (answered > 0 && answered === total && state.role === 'host' && !state.votingTriggered) {
+      state.votingTriggered = true;
+      triggerVoting(players);
+    }
+  }
+
+  function handleVoting(players, theme, answerOrder) {
+    if (state.currentScreen !== 'voting') {
+      showScreen('voting');
+      state.resultTriggered = false;
+    }
+
+    document.getElementById('vote-theme-text').textContent = formatTheme(theme);
+
+    const total = Object.keys(players || {}).length;
+    const voted = Object.values(players || {}).filter((player) => typeof player.vote === 'string' && player.vote).length;
+    document.getElementById('vote-status-text').textContent = `${voted} 人 / ${total} 人が投票済み`;
+
+    const myVote = players?.[state.nickname]?.vote || null;
+    document.getElementById('vote-input-area').style.display = myVote ? 'none' : 'block';
+    document.getElementById('vote-submitted-area').style.display = myVote ? 'block' : 'none';
+
+    const orderedNames = getOrderedAnswerNames(players, answerOrder);
+    const answersByName = Object.fromEntries(getAnsweredEntries(players).map((entry) => [entry.name, entry.answer]));
+    const list = document.getElementById('vote-list');
+    list.innerHTML = '';
+
+    orderedNames.forEach((name, index) => {
+      const isSelf = name === state.nickname;
+      const isLocked = Boolean(myVote);
+      const card = document.createElement('div');
+      card.className = `tg-vote-card${isSelf ? ' is-self' : ''}${isLocked ? ' is-locked' : ''}`;
+      card.innerHTML = `
+        <div class="tg-vote-card-head">
+          <div class="tg-vote-label">回答 ${index + 1}</div>
+          ${isSelf ? '<span class="badge badge-accent">あなた</span>' : '<span class="badge">匿名</span>'}
+        </div>
+        <div class="tg-vote-answer">${escapeHtml(answersByName[name] || '')}</div>
+        <div class="tg-vote-note">${isSelf ? '自分の回答には投票できません' : 'いちばん好きな回答を1つ選んでください'}</div>
+      `;
+
+      const button = document.createElement('button');
+      button.className = 'btn btn-primary btn-full btn-sm';
+      button.textContent = myVote && myVote === name ? '投票済み' : 'この回答に投票';
+      button.disabled = isSelf || Boolean(myVote);
+      button.onclick = () => submitVote(name);
+      card.appendChild(button);
+      list.appendChild(card);
+    });
+
+    if (voted > 0 && voted === total && state.role === 'host' && !state.resultTriggered) {
+      state.resultTriggered = true;
+      triggerResult(players);
+    }
+  }
+
+  function handleResult(players, theme, answerOrder) {
+    if (state.currentScreen !== 'result') showScreen('result');
+
+    document.getElementById('result-theme-label').textContent = `お題: ${formatTheme(theme)}`;
+    const { voteCounts, deltas, maxVotes, topNames, grandPrix } = calcRoundOutcome(players);
+
+    const summary = document.getElementById('result-summary');
+    if (grandPrix) {
+      summary.textContent = `${grandPrix} さんがグランプリ！ ${voteCounts[grandPrix]}票 + ボーナス10pt`;
+    } else if (maxVotes > 0 && topNames.length > 1) {
+      summary.textContent = `同率トップが ${topNames.length} 人いたため、グランプリボーナスはなしです。`;
+    } else {
+      summary.textContent = '今回は全員0票でした。次のラウンドでリベンジ！';
+    }
+
+    const orderIndex = new Map(getOrderedAnswerNames(players, answerOrder).map((name, index) => [name, index]));
+    const results = getAnsweredEntries(players)
+      .map(({ name, answer }) => ({
+        name,
+        answer,
+        votes: voteCounts[name] || 0,
+        delta: deltas[name] || 0,
+      }))
+      .sort((left, right) => {
+        if (right.votes !== left.votes) return right.votes - left.votes;
+        return (orderIndex.get(left.name) ?? 0) - (orderIndex.get(right.name) ?? 0);
+      });
+
+    const resultList = document.getElementById('result-list');
+    resultList.innerHTML = '';
+    results.forEach(({ name, answer, votes, delta }, index) => {
+      const isMe = name === state.nickname;
+      const isWinner = grandPrix === name;
+      resultList.innerHTML += `
+        <div class="tg-result-item${isMe ? ' is-me' : ''}${isWinner ? ' is-winner' : ''}">
+          <div class="tg-result-rank">${index + 1}位</div>
+          <div class="tg-result-main">
+            <div class="tg-result-answer">${escapeHtml(answer)}</div>
+            <div class="tg-result-meta">${escapeHtml(name)}${isMe ? '（あなた）' : ''}${isWinner ? ' ・ グランプリ' : ''}</div>
+          </div>
+          <div class="tg-result-side">
+            <div class="tg-vote-count">${votes}票</div>
+            <div class="tg-delta ${delta > 0 ? 'plus' : 'zero'}">${delta > 0 ? `+${delta}pt` : '±0pt'}</div>
+          </div>
+        </div>
+      `;
+    });
+
+    renderScoreList('score-list', players);
+
+    document.getElementById('result-host-actions').style.display = state.role === 'host' ? 'block' : 'none';
+    document.getElementById('result-guest-waiting').style.display = state.role === 'guest' ? 'block' : 'none';
+  }
+
+  function handleFinished(players) {
+    if (state.currentScreen !== 'final') showScreen('final');
+
+    const sorted = Object.entries(players || {})
+      .map(([name, player]) => ({ name, score: player.score || 0 }))
+      .sort((left, right) => right.score - left.score || left.name.localeCompare(right.name, 'ja'));
+
+    if (!sorted.length) return;
+
+    const winner = sorted[0];
+    document.getElementById('final-winner-name').textContent = winner.name;
+    document.getElementById('final-winner-score').textContent = `${winner.score}pt`;
+
+    const ranking = document.getElementById('final-ranking');
+    ranking.innerHTML = '';
+    sorted.forEach(({ name, score }, index) => {
+      const isMe = name === state.nickname;
+      ranking.innerHTML += `
+        <div class="tg-score-item ${isMe ? 'is-me' : ''}">
+          <div class="tg-score-rank">${index + 1}位</div>
+          <div class="tg-score-name">${escapeHtml(name)}${isMe ? '（あなた）' : ''}</div>
+          <div class="tg-score-pts">${score}pt</div>
+        </div>
+      `;
+    });
+  }
+
+  function goToTop() {
+    clearSession();
+    if (state.roomRef) {
+      state.roomRef.off();
+      state.roomRef = null;
+    }
+
+    clearInterval(hostDisconnectTimer);
+    hostDisconnectTimer = null;
+    hostDisconnectDeadline = null;
+    document.getElementById('host-disconnect-overlay').style.display = 'none';
+
+    Object.assign(state, {
+      role: null,
+      nickname: '',
+      roomCode: '',
+      players: {},
+      currentTheme: '',
+      round: 0,
+      usedThemes: [],
+      answerOrder: [],
+      myAnswer: '',
+      myVote: null,
+      currentScreen: 'top',
+      votingTriggered: false,
+      resultTriggered: false,
+    });
+
+    document.getElementById('host-nickname').value = '';
+    document.getElementById('guest-nickname').value = '';
+    document.getElementById('guest-room-code').value = '';
+    document.getElementById('answer-input').value = '';
+    document.getElementById('answer-char-count').textContent = '0';
+    document.getElementById('host-step-nickname').style.display = 'block';
+    document.getElementById('host-step-room').style.display = 'none';
+    document.getElementById('answer-input-area').style.display = 'block';
+    document.getElementById('answer-submitted-area').style.display = 'none';
+    document.getElementById('vote-input-area').style.display = 'block';
+    document.getElementById('vote-submitted-area').style.display = 'none';
+
+    hideError('host-nickname-error');
+    hideError('guest-join-error');
+    hideError('answer-error');
+    showScreen('top');
+  }
+
+  document.getElementById('answer-input').addEventListener('input', (event) => {
+    const normalized = normalizeAnswer(event.target.value);
+    document.getElementById('answer-char-count').textContent = String(normalized.length);
+  });
+
+  tryReconnect().then((reconnected) => {
+    if (!reconnected) showScreen('top');
+  });
+
+  db.ref('.info/serverTimeOffset').on('value', (snapshot) => {
+    const offset = Number(snapshot.val());
+    state.serverTimeOffset = Number.isFinite(offset) ? offset : 0;
+  });
+</script>
+</body>
+</html>
