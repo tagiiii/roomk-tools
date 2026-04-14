@@ -48,10 +48,23 @@
 
         <section class="qz-choices" id="choicesArea" aria-label="選択肢"></section>
 
+        <div class="qz-quiz-actions">
+          <button class="btn btn-ghost btn-sm" id="btnCopyQuestion">
+            <span class="material-symbols-rounded">content_copy</span>
+            問題をコピー
+          </button>
+        </div>
+
         <section class="qz-feedback card" id="feedbackCard" hidden aria-live="polite">
           <div class="qz-feedback__result" id="feedbackResult"></div>
           <p class="qz-feedback__answer" id="feedbackAnswer"></p>
           <p class="qz-feedback__explanation" id="feedbackExplanation"></p>
+          <div class="qz-feedback__actions">
+            <button class="btn btn-ghost btn-sm" id="btnCopyAnswer">
+              <span class="material-symbols-rounded">content_copy</span>
+              正解つきでコピー
+            </button>
+          </div>
         </section>
 
         <div class="qz-quiz-actions">

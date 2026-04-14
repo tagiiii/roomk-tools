@@ -264,6 +264,12 @@
   line-height: 1.7;
 }
 
+.qz-feedback__actions {
+  margin-top: 12px;
+  display: flex;
+  justify-content: center;
+}
+
 .qz-quiz-actions {
   display: flex;
   justify-content: center;

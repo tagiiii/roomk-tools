@@ -1,4 +1,4 @@
-import { shuffle, popIn } from '../shared/js/utils.js';
+import { shuffle, popIn, copyToClipboard } from '../shared/js/utils.js';
 import { QUIZ_PACKS } from './questions.js';
 
 const ALL_PACK = {
@@ -15,6 +15,8 @@ const ALL_PACK = {
 };
 
 const PACK_OPTIONS = [...QUIZ_PACKS, ALL_PACK];
+
+const QUESTIONS_PER_ROUND = 5;
 
 const state = {
   selectedPackId: null,
@@ -43,6 +45,8 @@ const endScore = document.getElementById('endScore');
 const endMessage = document.getElementById('endMessage');
 const btnReplay = document.getElementById('btnReplay');
 const btnBackTop = document.getElementById('btnBackTop');
+const btnCopyQuestion = document.getElementById('btnCopyQuestion');
+const btnCopyAnswer = document.getElementById('btnCopyAnswer');
 
 function showScreen(id) {
   screenTop.hidden = id !== 'top';
@@ -89,12 +93,16 @@ function renderPackCards() {
 function makeDeck() {
   const pack = getSelectedPack();
   if (!pack) return [];
-  // difficulty ごとにグループ化し、グループ内をシャッフルしてから結合
+  // difficulty ごとにシャッフルし、各層から抜いて結合（d1:1, d2:2, d3:2）
   const questions = pack.questions.map((q) => ({ ...q }));
   const d1 = shuffle(questions.filter((q) => q.difficulty === 1));
   const d2 = shuffle(questions.filter((q) => q.difficulty === 2));
   const d3 = shuffle(questions.filter((q) => q.difficulty === 3));
-  return [...d1, ...d2, ...d3];
+  return [
+    ...d1.slice(0, 1),
+    ...d2.slice(0, 2),
+    ...d3.slice(0, 2),
+  ];
 }
 
 function startQuiz() {
@@ -222,10 +230,40 @@ function backToTop() {
   showScreen('top');
 }
 
+/* ── コピー機能 ── */
+function formatQuestionText(q) {
+  const lines = [`【問題】`, q.question];
+  q.choices.forEach((c, i) => lines.push(`${i + 1}. ${c}`));
+  return lines.join('\n');
+}
+
+function copyQuestion() {
+  const q = state.deck[state.index];
+  if (!q) return;
+  copyToClipboard(formatQuestionText(q), btnCopyQuestion);
+}
+
+function copyAnswer() {
+  const q = state.deck[state.index];
+  if (!q) return;
+  const lines = [
+    formatQuestionText(q),
+    '',
+    `【正解】`,
+    `${q.answerIndex + 1}. ${q.choices[q.answerIndex]}`,
+    '',
+    `【解説】`,
+    q.explanation,
+  ];
+  copyToClipboard(lines.join('\n'), btnCopyAnswer);
+}
+
 btnStart.addEventListener('click', startQuiz);
 btnNext.addEventListener('click', goNext);
 btnReplay.addEventListener('click', startQuiz);
 btnBackTop.addEventListener('click', backToTop);
+btnCopyQuestion.addEventListener('click', copyQuestion);
+btnCopyAnswer.addEventListener('click', copyAnswer);
 
 renderPackCards();
 showScreen('top');
