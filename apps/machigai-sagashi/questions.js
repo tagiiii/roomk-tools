@@ -28,9 +28,8 @@ export const QUESTIONS = [
     wrongPart: '八転び → 八起き',
   },
 
-  // ── 四字熟語（1問） ──
   {
-    category: 'yojijukugo',
+    category: 'kotowaza',
     original: '温故知新',
     modified: '温古知新',
     answer: '「故」が「古」になっている（同じ読み「こ」）',
@@ -85,8 +84,7 @@ export const QUESTIONS = [
 ];
 
 export const CATEGORIES = {
-  kotowaza: { name: 'ことわざ', icon: 'menu_book' },
-  yojijukugo: { name: '四字熟語', icon: 'translate' },
+  kotowaza: { name: 'ことわざ・四字熟語', icon: 'menu_book' },
   koten: { name: '古典・名文', icon: 'history_edu' },
   phrase: { name: '慣用句', icon: 'record_voice_over' },
 };
