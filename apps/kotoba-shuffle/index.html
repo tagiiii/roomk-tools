@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ことばシャッフル | roomK</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet" />
+  <link rel="stylesheet" href="../shared/css/design-system.css" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="ks-app">
+
+    <!-- ===== TOP画面 ===== -->
+    <section class="ks-screen" id="screen-top">
+      <header class="ks-hero">
+        <span class="material-symbols-rounded ks-hero__icon">shuffle</span>
+        <h1 class="ks-hero__title">ことばシャッフル</h1>
+        <p class="ks-hero__sub">バラバラの文字をならべかえて、ことばを当てよう</p>
+      </header>
+
+      <section class="ks-top-panel card">
+        <h2 class="ks-top-panel__title">もんだいのレベル</h2>
+        <div class="ks-level-grid" id="levelGrid" role="radiogroup" aria-label="レベル選択"></div>
+        <div class="ks-top-panel__actions">
+          <button class="btn btn-primary btn-lg" id="btnStart" disabled>
+            <span class="material-symbols-rounded">play_arrow</span>
+            スタート
+          </button>
+        </div>
+      </section>
+    </section>
+
+    <!-- ===== プレイ画面 ===== -->
+    <section class="ks-screen" id="screen-play" hidden>
+      <div class="ks-play-shell">
+        <div class="ks-play-meta">
+          <span class="badge badge-primary" id="playLevel"></span>
+          <span class="ks-progress" id="playProgress">Q1 / 10</span>
+        </div>
+
+        <!-- シャッフルされた文字タイル -->
+        <div class="ks-tiles" id="tilesArea" role="group" aria-label="バラバラの文字"></div>
+
+        <!-- 回答スロット -->
+        <div class="ks-slots" id="slotsArea" role="group" aria-label="回答欄"></div>
+
+        <!-- ヒント -->
+        <div class="ks-hint" id="hintArea" hidden>
+          <span class="material-symbols-rounded">lightbulb</span>
+          <span id="hintText"></span>
+        </div>
+
+        <!-- アクションボタン -->
+        <div class="ks-play-actions">
+          <button class="btn btn-ghost" id="btnHint">
+            <span class="material-symbols-rounded">lightbulb</span>
+            ヒント
+          </button>
+          <button class="btn btn-ghost" id="btnReset">
+            <span class="material-symbols-rounded">restart_alt</span>
+            やりなおす
+          </button>
+        </div>
+
+        <!-- 正解フィードバック -->
+        <div class="ks-feedback card" id="feedbackArea" hidden>
+          <div class="ks-feedback__result" id="feedbackResult"></div>
+          <p class="ks-feedback__word" id="feedbackWord"></p>
+        </div>
+
+        <div class="ks-play-actions">
+          <button class="btn btn-secondary btn-lg" id="btnNext" hidden>
+            <span class="material-symbols-rounded">arrow_forward</span>
+            次のもんだい
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 終了画面 ===== -->
+    <section class="ks-screen" id="screen-end" hidden>
+      <div class="ks-end card">
+        <span class="material-symbols-rounded ks-end__icon">celebration</span>
+        <p class="ks-end__label">おわり</p>
+        <h2 class="ks-end__title" id="endLevel"></h2>
+        <p class="ks-end__score" id="endScore">0 / 0</p>
+        <p class="ks-end__sub" id="endMessage"></p>
+        <div class="ks-end__actions">
+          <button class="btn btn-primary btn-lg" id="btnReplay">
+            <span class="material-symbols-rounded">replay</span>
+            もう一度あそぶ
+          </button>
+          <button class="btn btn-ghost btn-lg" id="btnBackTop">
+            <span class="material-symbols-rounded">home</span>
+            TOPに戻る
+          </button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

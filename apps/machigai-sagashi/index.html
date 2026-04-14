@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>まちがいさがし | roomK</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet" />
+  <link rel="stylesheet" href="../shared/css/design-system.css" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="ms-app">
+
+    <!-- ===== TOP画面 ===== -->
+    <section class="ms-screen" id="screen-top">
+      <header class="ms-hero">
+        <span class="material-symbols-rounded ms-hero__icon">find_in_page</span>
+        <h1 class="ms-hero__title">まちがいさがし</h1>
+        <p class="ms-hero__sub">2つの文をくらべて、ちがうところを見つけよう</p>
+      </header>
+
+      <section class="ms-top-panel card">
+        <h2 class="ms-top-panel__title">ジャンルをえらぶ</h2>
+        <div class="ms-cat-grid" id="catGrid" role="radiogroup" aria-label="ジャンル選択"></div>
+        <div class="ms-top-panel__actions">
+          <button class="btn btn-primary btn-lg" id="btnStart" disabled>
+            <span class="material-symbols-rounded">play_arrow</span>
+            スタート
+          </button>
+        </div>
+      </section>
+    </section>
+
+    <!-- ===== プレイ画面 ===== -->
+    <section class="ms-screen" id="screen-play" hidden>
+      <div class="ms-play-shell">
+        <div class="ms-play-meta">
+          <span class="badge badge-primary" id="playCat"></span>
+          <span class="ms-progress" id="playProgress">Q1 / 10</span>
+        </div>
+
+        <div class="ms-compare">
+          <div class="ms-compare__col card">
+            <div class="ms-compare__label">
+              <span class="material-symbols-rounded">check_circle</span> 正しい文
+            </div>
+            <p class="ms-compare__text" id="originalText"></p>
+          </div>
+          <div class="ms-compare__col card ms-compare__col--target">
+            <div class="ms-compare__label">
+              <span class="material-symbols-rounded">help</span> まちがいはどこ？
+            </div>
+            <p class="ms-compare__text" id="modifiedText"></p>
+          </div>
+        </div>
+
+        <div class="ms-play-actions">
+          <button class="btn btn-primary btn-lg" id="btnReveal">
+            <span class="material-symbols-rounded">visibility</span>
+            こたえを見る
+          </button>
+        </div>
+
+        <div class="ms-feedback card" id="feedbackArea" hidden>
+          <div class="ms-feedback__label">
+            <span class="material-symbols-rounded">lightbulb</span> こたえ
+          </div>
+          <p class="ms-feedback__answer" id="feedbackAnswer"></p>
+          <p class="ms-feedback__detail" id="feedbackDetail"></p>
+        </div>
+
+        <div class="ms-play-actions">
+          <button class="btn btn-secondary btn-lg" id="btnNext" hidden>
+            <span class="material-symbols-rounded">arrow_forward</span>
+            次のもんだい
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 終了画面 ===== -->
+    <section class="ms-screen" id="screen-end" hidden>
+      <div class="ms-end card">
+        <span class="material-symbols-rounded ms-end__icon">celebration</span>
+        <p class="ms-end__label">おわり</p>
+        <h2 class="ms-end__title" id="endCat"></h2>
+        <p class="ms-end__score" id="endScore"></p>
+        <div class="ms-end__actions">
+          <button class="btn btn-primary btn-lg" id="btnReplay">
+            <span class="material-symbols-rounded">replay</span>
+            もう一度あそぶ
+          </button>
+          <button class="btn btn-ghost btn-lg" id="btnBackTop">
+            <span class="material-symbols-rounded">home</span>
+            TOPに戻る
+          </button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

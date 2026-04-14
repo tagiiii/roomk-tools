@@ -1,0 +1,406 @@
+/* ── ことばシャッフル（接頭辞: ks-） ── */
+
+.ks-app {
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 40px 20px 72px;
+}
+
+.ks-app [hidden] {
+  display: none !important;
+}
+
+.ks-screen[hidden] {
+  display: none;
+}
+
+.ks-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* ── ヒーロー ── */
+
+.ks-hero {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.ks-hero__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 88px;
+  height: 88px;
+  margin-bottom: 14px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #2e7d8c, #1c3f5e);
+  color: #fff;
+  font-size: 46px;
+  box-shadow: var(--shadow-md);
+}
+
+.ks-hero__title {
+  font-size: 34px;
+  line-height: 1.2;
+  color: var(--color-primary);
+}
+
+.ks-hero__sub {
+  margin-top: 8px;
+  font-size: 15px;
+  color: var(--color-muted);
+}
+
+/* ── TOPパネル ── */
+
+.ks-top-panel {
+  width: 100%;
+  padding: 28px;
+}
+
+.ks-top-panel__title {
+  text-align: center;
+  font-size: 22px;
+  color: var(--color-primary);
+  margin-bottom: 20px;
+}
+
+.ks-top-panel__actions {
+  margin-top: 22px;
+  display: flex;
+  justify-content: center;
+}
+
+/* ── レベル選択グリッド ── */
+
+.ks-level-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.ks-level-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 18px 12px;
+  background: var(--color-surface);
+  border: 2px solid var(--color-border);
+  border-radius: 18px;
+  cursor: pointer;
+  transition: transform var(--transition-base), border-color var(--transition-base), box-shadow var(--transition-base), background var(--transition-base);
+}
+
+.ks-level-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--color-accent);
+  box-shadow: var(--shadow-sm);
+}
+
+.ks-level-card:focus-visible {
+  outline: 3px solid var(--color-accent);
+  outline-offset: 3px;
+}
+
+.ks-level-card.is-selected {
+  border-color: var(--color-accent);
+  background: #eef8f9;
+  box-shadow: 0 0 0 3px rgba(46, 125, 140, 0.12);
+}
+
+.ks-level-card__icon {
+  font-size: 36px;
+  color: var(--color-primary);
+}
+
+.ks-level-card__label {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.ks-level-card__desc {
+  font-size: 13px;
+  color: var(--color-muted);
+}
+
+/* ── プレイ画面 ── */
+
+.ks-play-shell {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.ks-play-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.ks-progress {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+/* ── 文字タイル ── */
+
+.ks-tiles {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+}
+
+.ks-tile {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  border: 2px solid var(--color-border);
+  border-radius: 16px;
+  background: var(--color-surface);
+  font: inherit;
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--color-primary);
+  cursor: pointer;
+  transition: transform var(--transition-base), border-color var(--transition-base), box-shadow var(--transition-base), opacity var(--transition-base);
+}
+
+.ks-tile:hover:not(.ks-tile--used) {
+  transform: translateY(-2px);
+  border-color: var(--color-accent);
+  box-shadow: var(--shadow-sm);
+}
+
+.ks-tile:active:not(.ks-tile--used) {
+  transform: scale(0.95);
+}
+
+.ks-tile--used {
+  opacity: 0.2;
+  cursor: default;
+  pointer-events: none;
+}
+
+/* ── 回答スロット ── */
+
+.ks-slots {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  min-height: 80px;
+}
+
+.ks-slot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  border-radius: 16px;
+  font: inherit;
+  font-size: 32px;
+  font-weight: 700;
+  transition: transform var(--transition-base), background var(--transition-base), border-color var(--transition-base);
+}
+
+.ks-slot--empty {
+  border: 3px dashed var(--color-border);
+  background: transparent;
+  cursor: default;
+}
+
+.ks-slot--filled {
+  border: 2px solid var(--color-accent);
+  background: #eef8f9;
+  color: var(--color-primary);
+  cursor: pointer;
+}
+
+.ks-slot--filled:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.ks-slot--correct {
+  border-color: var(--color-success);
+  background: #edf8f0;
+  color: #0e4f27;
+}
+
+.ks-slot--wrong {
+  border-color: var(--color-error);
+  background: #fdf0f0;
+  color: #8f1717;
+}
+
+/* ── ヒント ── */
+
+.ks-hint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 18px;
+  border-radius: 14px;
+  background: #fef9e7;
+  border: 1px solid #f0e2a0;
+  font-size: 15px;
+  color: #7a6a0a;
+}
+
+.ks-hint .material-symbols-rounded {
+  font-size: 20px;
+  color: #c5a30a;
+}
+
+/* ── アクションボタン ── */
+
+.ks-play-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* ── フィードバック ── */
+
+.ks-feedback {
+  border: 2px solid var(--color-accent);
+  padding: 18px 22px;
+  text-align: center;
+}
+
+.ks-feedback__result {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-accent);
+}
+
+.ks-feedback__word {
+  margin-top: 6px;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+/* ── 終了画面 ── */
+
+.ks-end {
+  width: 100%;
+  text-align: center;
+  padding: 36px 28px;
+}
+
+.ks-end__icon {
+  font-size: 58px;
+  color: var(--color-accent);
+}
+
+.ks-end__label {
+  margin-top: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-muted);
+  letter-spacing: 0.06em;
+}
+
+.ks-end__title {
+  margin-top: 10px;
+  font-size: 28px;
+  color: var(--color-primary);
+}
+
+.ks-end__score {
+  margin-top: 14px;
+  font-size: 46px;
+  line-height: 1.2;
+  font-weight: 700;
+  color: var(--color-accent);
+}
+
+.ks-end__sub {
+  margin-top: 10px;
+  font-size: 16px;
+  color: var(--color-muted);
+}
+
+.ks-end__actions {
+  margin-top: 24px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+}
+
+/* ── レスポンシブ ── */
+
+@media (max-width: 600px) {
+  .ks-app {
+    padding: 24px 14px 48px;
+  }
+
+  .ks-hero__icon {
+    width: 72px;
+    height: 72px;
+    font-size: 38px;
+  }
+
+  .ks-hero__title {
+    font-size: 28px;
+  }
+
+  .ks-top-panel {
+    padding: 20px 16px;
+  }
+
+  .ks-level-card {
+    padding: 14px 10px;
+  }
+
+  .ks-level-card__icon {
+    font-size: 30px;
+  }
+
+  .ks-level-card__label {
+    font-size: 16px;
+  }
+
+  .ks-tile,
+  .ks-slot {
+    width: 58px;
+    height: 58px;
+    font-size: 26px;
+  }
+
+  .ks-tiles,
+  .ks-slots {
+    gap: 8px;
+  }
+
+  .ks-feedback__word {
+    font-size: 18px;
+  }
+
+  .ks-end__title {
+    font-size: 22px;
+  }
+
+  .ks-end__score {
+    font-size: 38px;
+  }
+
+  .ks-end__actions .btn {
+    width: 100%;
+  }
+}

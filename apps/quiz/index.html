@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>クイズパック | roomK</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet" />
+  <link rel="stylesheet" href="../shared/css/design-system.css" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="qz-app">
+    <section class="qz-screen qz-screen--top" id="screen-top">
+      <header class="qz-hero">
+        <span class="material-symbols-rounded qz-hero__icon">quiz</span>
+        <h1 class="qz-hero__title">クイズパック</h1>
+        <p class="qz-hero__sub">雑学3択と連続2択を、ひとつの画面でサクサク進めよう</p>
+      </header>
+
+      <section class="qz-top-panel card">
+        <div class="qz-top-panel__header">
+          <h2 class="qz-top-panel__title">パックをえらぶ</h2>
+          <p class="qz-top-panel__sub">ことばクイズや全部シャッフルでも遊べます</p>
+        </div>
+
+        <div class="qz-pack-grid" id="packGrid" role="list"></div>
+
+        <div class="qz-top-panel__actions">
+          <button class="btn btn-primary btn-lg" id="btnStart" disabled>
+            <span class="material-symbols-rounded">play_arrow</span>
+            スタート
+          </button>
+        </div>
+      </section>
+    </section>
+
+    <section class="qz-screen" id="screen-quiz" hidden>
+      <div class="qz-quiz-shell">
+        <div class="qz-quiz-meta">
+          <span class="badge badge-primary" id="quizPackName"></span>
+          <span class="qz-progress" id="quizProgress">Q1 / 10</span>
+        </div>
+
+        <section class="qz-question card">
+          <p class="qz-question__text" id="questionText" aria-live="polite"></p>
+        </section>
+
+        <section class="qz-choices" id="choicesArea" aria-label="選択肢"></section>
+
+        <section class="qz-feedback card" id="feedbackCard" hidden aria-live="polite">
+          <div class="qz-feedback__result" id="feedbackResult"></div>
+          <p class="qz-feedback__answer" id="feedbackAnswer"></p>
+          <p class="qz-feedback__explanation" id="feedbackExplanation"></p>
+        </section>
+
+        <div class="qz-quiz-actions">
+          <button class="btn btn-secondary btn-lg" id="btnNext" hidden>
+            <span class="material-symbols-rounded">arrow_forward</span>
+            次の問題へ
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section class="qz-screen" id="screen-end" hidden>
+      <div class="qz-end card">
+        <span class="material-symbols-rounded qz-end__icon">celebration</span>
+        <p class="qz-end__label">クイズ終了</p>
+        <h2 class="qz-end__title" id="endPackName"></h2>
+        <p class="qz-end__score" id="endScore">0 / 0</p>
+        <p class="qz-end__sub" id="endMessage"></p>
+
+        <div class="qz-end__actions">
+          <button class="btn btn-primary btn-lg" id="btnReplay">
+            <span class="material-symbols-rounded">replay</span>
+            もう一度あそぶ
+          </button>
+          <button class="btn btn-ghost btn-lg" id="btnBackTop">
+            <span class="material-symbols-rounded">home</span>
+            TOPに戻る
+          </button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
