@@ -17,7 +17,7 @@
       <header class="ms-hero">
         <span class="material-symbols-rounded ms-hero__icon">find_in_page</span>
         <h1 class="ms-hero__title">まちがいさがし</h1>
-        <p class="ms-hero__sub">2つの文をくらべて、ちがうところを見つけよう</p>
+        <p class="ms-hero__sub">ことばのまちがいを見つけて、正しく言いかえよう</p>
       </header>
 
       <section class="ms-top-panel card">
@@ -40,20 +40,13 @@
           <span class="ms-progress" id="playProgress">Q1 / 10</span>
         </div>
 
-        <div class="ms-compare">
-          <div class="ms-compare__col card">
-            <div class="ms-compare__label">
-              <span class="material-symbols-rounded">check_circle</span> 正しい文
-            </div>
-            <p class="ms-compare__text" id="originalText"></p>
+        <section class="ms-question card">
+          <div class="ms-question__label">
+            <span class="material-symbols-rounded">help</span> どこがおかしい？
           </div>
-          <div class="ms-compare__col card ms-compare__col--target">
-            <div class="ms-compare__label">
-              <span class="material-symbols-rounded">help</span> まちがいはどこ？
-            </div>
-            <p class="ms-compare__text" id="modifiedText"></p>
-          </div>
-        </div>
+          <p class="ms-question__text" id="modifiedText"></p>
+          <p class="ms-question__hint">正しく言うと？</p>
+        </section>
 
         <div class="ms-play-actions">
           <button class="btn btn-primary btn-lg" id="btnReveal">
@@ -62,13 +55,14 @@
           </button>
         </div>
 
-        <div class="ms-feedback card" id="feedbackArea" hidden>
+        <section class="ms-feedback card" id="feedbackArea" hidden>
           <div class="ms-feedback__label">
-            <span class="material-symbols-rounded">lightbulb</span> こたえ
+            <span class="material-symbols-rounded">check_circle</span> 正しい文
           </div>
-          <p class="ms-feedback__answer" id="feedbackAnswer"></p>
+          <p class="ms-feedback__original" id="feedbackOriginal"></p>
+          <p class="ms-feedback__diff" id="feedbackDiff"></p>
           <p class="ms-feedback__detail" id="feedbackDetail"></p>
-        </div>
+        </section>
 
         <div class="ms-play-actions">
           <button class="btn btn-secondary btn-lg" id="btnNext" hidden>

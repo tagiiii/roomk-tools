@@ -26,11 +26,11 @@ const catGrid      = document.getElementById('catGrid');
 const btnStart     = document.getElementById('btnStart');
 const playCat      = document.getElementById('playCat');
 const playProgress = document.getElementById('playProgress');
-const originalText = document.getElementById('originalText');
 const modifiedText = document.getElementById('modifiedText');
 const btnReveal    = document.getElementById('btnReveal');
 const feedbackArea = document.getElementById('feedbackArea');
-const feedbackAnswer = document.getElementById('feedbackAnswer');
+const feedbackOriginal = document.getElementById('feedbackOriginal');
+const feedbackDiff = document.getElementById('feedbackDiff');
 const feedbackDetail = document.getElementById('feedbackDetail');
 const btnNext      = document.getElementById('btnNext');
 const endCat       = document.getElementById('endCat');
@@ -104,7 +104,6 @@ function renderQuestion() {
   if (!q) { finishGame(); return; }
 
   playProgress.textContent = `Q${state.index + 1} / ${state.total}`;
-  originalText.textContent = q.original;
   modifiedText.textContent = q.modified;
 
   feedbackArea.hidden = true;
@@ -121,7 +120,8 @@ function revealAnswer() {
   const q = state.deck[state.index];
   if (!q) return;
 
-  feedbackAnswer.textContent = q.wrongPart;
+  feedbackOriginal.textContent = q.original;
+  feedbackDiff.textContent = q.wrongPart;
   feedbackDetail.textContent = q.answer;
   feedbackArea.hidden = false;
   btnReveal.hidden = true;

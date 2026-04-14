@@ -1,11 +1,11 @@
 /**
- * 文章版まちがいさがし — 問題データ（本番候補10問）
+ * 文章版まちがいさがし — 問題データ（本番候補15問）
  *
- * 1回の進行では5問を抜いて使う想定
- * 内訳: 助詞3 / 意味ズレ3 / 同音異字2 / 長文2
+ * 1回の進行では各カテゴリから5問を抜いて使う想定
+ * カテゴリごとに5問以上を保つこと（足りないとラウンドが短くなる）
  */
 export const QUESTIONS = [
-  // ── ことわざ（3問） ──
+  // ── ことわざ・四字熟語（5問） ──
   {
     category: 'kotowaza',
     original: '能ある鷹は爪を隠す',
@@ -35,8 +35,15 @@ export const QUESTIONS = [
     answer: '「故」が「古」になっている（同じ読み「こ」）',
     wrongPart: '古 → 故',
   },
+  {
+    category: 'kotowaza',
+    original: '弱肉強食',
+    modified: '弱肉強職',
+    answer: '「食」が「職」になっている',
+    wrongPart: '強職 → 強食',
+  },
 
-  // ── 古典・名文（3問） ──
+  // ── 古典・名文（5問） ──
   {
     category: 'koten',
     original: '夏草や兵どもが夢の跡',
@@ -58,8 +65,22 @@ export const QUESTIONS = [
     answer: '「抜けると」が「越えると」になっている',
     wrongPart: '越えると → 抜けると',
   },
+  {
+    category: 'koten',
+    original: '春はあけぼの',
+    modified: '春はあけもの',
+    answer: '「あけぼの」が「あけもの」になっている',
+    wrongPart: 'あけもの → あけぼの',
+  },
+  {
+    category: 'koten',
+    original: '古池や蛙飛びこむ水の音',
+    modified: '古池や蛙飛びこむ水の色',
+    answer: '「音」が「色」になっている',
+    wrongPart: '色 → 音',
+  },
 
-  // ── 慣用句（3問） ──
+  // ── 慣用句（5問） ──
   {
     category: 'phrase',
     original: '猫の手も借りたい',
@@ -80,6 +101,20 @@ export const QUESTIONS = [
     modified: '手に汗にぎる',
     answer: '「握る」がひらがなの「にぎる」になっている',
     wrongPart: 'にぎる → 握る',
+  },
+  {
+    category: 'phrase',
+    original: '目から鱗が落ちる',
+    modified: '目から涙が落ちる',
+    answer: '「鱗」が「涙」になっている',
+    wrongPart: '涙 → 鱗',
+  },
+  {
+    category: 'phrase',
+    original: '頭が上がらない',
+    modified: '頭は上がらない',
+    answer: '助詞「が」が「は」になっている',
+    wrongPart: '頭は → 頭が',
   },
 ];
 
