@@ -7,7 +7,7 @@ const CAT_OPTIONS = [
   ALL_CAT,
 ];
 
-const QUESTIONS_PER_ROUND = 8;
+const QUESTIONS_PER_ROUND = 5;
 
 /* ── 状態 ── */
 const state = {

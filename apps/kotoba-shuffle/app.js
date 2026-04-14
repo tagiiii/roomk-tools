@@ -9,7 +9,7 @@ const LEVELS = [
   { id: 'expert', label: 'ちょうせん', chars: 6, icon: 'looks_6',  desc: '6もじ' },
 ];
 
-const QUESTIONS_PER_ROUND = 8;
+const QUESTIONS_PER_ROUND = 5;
 
 /* ── 状態 ── */
 const state = {

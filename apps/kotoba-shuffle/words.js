@@ -47,8 +47,6 @@ export const WORDS = [
   { difficulty: 4, word: 'くわがた', hint: 'はさみのような角を持つ虫' },
   { difficulty: 4, word: 'きんぎょ', hint: '赤い小さな魚' },
   { difficulty: 4, word: 'どんぐり', hint: '秋に木から落ちる' },
-  { difficulty: 4, word: 'まないた', hint: '料理で使う板' },
-  { difficulty: 4, word: 'ほうたい', hint: 'けがに巻くもの' },
 
   // ── 5文字 ──
   { difficulty: 5, word: 'かたつむり', hint: '殻を背負って歩く' },
@@ -59,14 +57,12 @@ export const WORDS = [
   { difficulty: 5, word: 'こいのぼり', hint: '5月の空をおよぐ' },
   { difficulty: 5, word: 'だるまさん', hint: '赤くて丸い人形' },
   { difficulty: 5, word: 'あいことば', hint: '秘密の合言葉' },
-  { difficulty: 5, word: 'あめんぼう', hint: '水の上を歩く虫' },
 
   { difficulty: 5, word: 'なつまつり', hint: '夏の楽しい行事' },
   { difficulty: 5, word: 'かくれんぼ', hint: 'かくれる遊び' },
   { difficulty: 5, word: 'ぬいぐるみ', hint: 'やわらかい人形' },
   { difficulty: 5, word: 'おとしだま', hint: 'お正月にもらえる' },
   { difficulty: 5, word: 'かぶとむし', hint: '夏に人気の虫' },
-  { difficulty: 5, word: 'おてつだい', hint: '手伝うこと' },
 
   // ── 6文字 ──
   { difficulty: 6, word: 'しんかんせん', hint: 'とても速い電車' },
