@@ -575,6 +575,11 @@
         <small>ほかの人の回答を待っています</small>
       </div>
     </div>
+
+    <div id="answer-host-actions" style="display:none; margin-top:24px">
+      <button class="btn btn-ghost btn-full" id="btn-force-close-answer" onclick="hostCloseAnswering()">回答を締め切って投票へ</button>
+      <p class="text-muted text-center" id="answer-host-hint" style="margin-top:8px"></p>
+    </div>
   </div>
 </div>
 
@@ -594,6 +599,11 @@
         投票済み
         <small>ほかの人の投票を待っています</small>
       </div>
+    </div>
+
+    <div id="vote-host-actions" style="display:none; margin-top:24px">
+      <button class="btn btn-ghost btn-full" id="btn-force-close-vote" onclick="hostCloseVoting()">投票を締め切って結果へ</button>
+      <p class="text-muted text-center" id="vote-host-hint" style="margin-top:8px"></p>
     </div>
   </div>
 </div>
@@ -1417,6 +1427,32 @@
     await state.roomRef.update(updates);
   }
 
+  async function hostCloseAnswering() {
+    if (state.role !== 'host' || state.votingTriggered) return;
+    const players = state.players || {};
+    const answered = getAnsweredEntries(players).length;
+    if (answered === 0) return;
+    state.votingTriggered = true;
+    try {
+      await triggerVoting(players);
+    } catch (error) {
+      console.error('[tatoe-gp] hostCloseAnswering failed', error);
+      state.votingTriggered = false;
+    }
+  }
+
+  async function hostCloseVoting() {
+    if (state.role !== 'host' || state.resultTriggered) return;
+    const players = state.players || {};
+    state.resultTriggered = true;
+    try {
+      await triggerResult(players);
+    } catch (error) {
+      console.error('[tatoe-gp] hostCloseVoting failed', error);
+      state.resultTriggered = false;
+    }
+  }
+
   function startRoomListener() {
     state.roomRef.on('value', (snapshot) => {
       const room = snapshot.val();
@@ -1545,6 +1581,24 @@
     document.getElementById('answer-input-area').style.display = myAnswer ? 'none' : 'block';
     document.getElementById('answer-submitted-area').style.display = myAnswer ? 'block' : 'none';
 
+    const answerHostActions = document.getElementById('answer-host-actions');
+    if (state.role === 'host') {
+      answerHostActions.style.display = 'block';
+      const remaining = Math.max(0, total - answered);
+      const btn = document.getElementById('btn-force-close-answer');
+      btn.disabled = answered === 0 || state.votingTriggered;
+      const hint = document.getElementById('answer-host-hint');
+      if (answered === 0) {
+        hint.textContent = '回答が1件以上ないと投票に進めません';
+      } else if (remaining > 0) {
+        hint.textContent = `未回答の ${remaining} 人は回答なしとして進めます`;
+      } else {
+        hint.textContent = '全員が回答済みです';
+      }
+    } else {
+      answerHostActions.style.display = 'none';
+    }
+
     if (answered > 0 && answered === total && state.role === 'host' && !state.votingTriggered) {
       state.votingTriggered = true;
       triggerVoting(players);
@@ -1594,6 +1648,22 @@
       card.appendChild(button);
       list.appendChild(card);
     });
+
+    const voteHostActions = document.getElementById('vote-host-actions');
+    if (state.role === 'host') {
+      voteHostActions.style.display = 'block';
+      const remaining = Math.max(0, total - voted);
+      const btn = document.getElementById('btn-force-close-vote');
+      btn.disabled = state.resultTriggered;
+      const hint = document.getElementById('vote-host-hint');
+      if (remaining > 0) {
+        hint.textContent = `未投票の ${remaining} 人は0票として進めます`;
+      } else {
+        hint.textContent = '全員が投票済みです';
+      }
+    } else {
+      voteHostActions.style.display = 'none';
+    }
 
     if (voted > 0 && voted === total && state.role === 'host' && !state.resultTriggered) {
       state.resultTriggered = true;
