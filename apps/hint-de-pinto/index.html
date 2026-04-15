@@ -987,9 +987,12 @@ async function autoTransitionToReview(room, players, opts = {}) {
     missingHintIds: missing.length ? missing : null,
   };
 
-  // ホスト = 回答者 かつ 未提出者なし → review スキップして直接 answer へ
-  // （未提出者がいるならホストが確認できるよう review を通す）
-  if (state.nickname === guesser && missing.length === 0) {
+  // ホスト = 回答者の場合は review をスキップして直接 answer へ
+  // （review を通すとホスト=回答者にヒントが見えてしまい情報漏洩になる。
+  //  また review 画面は guesser を除外する設計なので、guesser=ホスト時に開くと
+  //  確定ボタンを押せる人がいなくなり進行が詰まる）
+  // 未提出者は round.hints に存在しないため answer 画面で自然に表示されない
+  if (state.nickname === guesser) {
     await state.roomRef.child('round').update(roundUpdates);
     await state.roomRef.update({ status: 'answer' });
   } else {
