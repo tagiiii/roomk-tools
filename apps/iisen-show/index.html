@@ -364,6 +364,12 @@
         <small>他の人の回答を待っています</small>
       </div>
     </div>
+
+    <!-- ホスト用：回答を締め切って結果へ -->
+    <div id="answer-host-actions" style="display:none; margin-top:24px">
+      <button class="btn btn-ghost btn-full" id="btn-force-close-answer" onclick="hostCloseAnswering()">回答を締め切って結果へ</button>
+      <p class="text-muted text-center" id="answer-host-hint" style="margin-top:8px"></p>
+    </div>
   </div>
 </div>
 
@@ -1200,6 +1206,24 @@
     document.getElementById('answer-status-text').textContent =
       `${answered} 人 / ${total} 人が回答済み`;
 
+    const answerHostActions = document.getElementById('answer-host-actions');
+    if (state.role === 'host') {
+      answerHostActions.style.display = 'block';
+      const remaining = Math.max(0, total - answered);
+      const btn = document.getElementById('btn-force-close-answer');
+      btn.disabled = answered === 0 || state.resultTriggered;
+      const hint = document.getElementById('answer-host-hint');
+      if (answered === 0) {
+        hint.textContent = '回答が1件以上ないと結果に進めません';
+      } else if (remaining > 0) {
+        hint.textContent = `未回答の ${remaining} 人は集計から除外して進めます`;
+      } else {
+        hint.textContent = '全員が回答済みです';
+      }
+    } else {
+      answerHostActions.style.display = 'none';
+    }
+
     // 全員回答済み → ホストのみスコア計算してresultへ
     if (answered > 0 && answered === total && state.role === 'host' && !state.resultTriggered) {
       state.resultTriggered = true;
@@ -1214,6 +1238,22 @@
       updates[`players/${name}/score`] = (players[name]?.score || 0) + delta;
     }
     await state.roomRef.update(updates);
+  }
+
+  async function hostCloseAnswering() {
+    if (state.role !== 'host' || state.resultTriggered) return;
+    const snap = await state.roomRef.child('players').get();
+    const players = snap.val() || {};
+    const answered = Object.values(players)
+      .filter(p => p.answer !== null && p.answer !== undefined).length;
+    if (answered === 0) return;
+    state.resultTriggered = true;
+    try {
+      await triggerResult(players);
+    } catch (error) {
+      console.error('[iisen-show] hostCloseAnswering failed', error);
+      state.resultTriggered = false;
+    }
   }
 
   // ── result ──

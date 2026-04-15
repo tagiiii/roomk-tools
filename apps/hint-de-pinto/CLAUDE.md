@@ -123,7 +123,8 @@ hintpinto_rooms/{roomCode}/
   │    │    └── {nickname}/
   │    │         ├── text:       string        # 入力されたヒント原文
   │    │         └── normalized: string        # 正規化後の文字列
-  │    ├── excludedHintIds: string[]       # 除外するニックネームの配列（重複自動検出 + ホスト手動追加）
+  │    ├── excludedHintIds: string[]       # 除外するニックネームの配列（重複自動検出 + ホスト手動追加 + 未提出者）
+  │    ├── missingHintIds:  string[]       # ホスト締切時に未提出だった人の配列（review 画面でバッジ表示用）
   │    ├── answer:         string | null   # 回答者の回答（パス時は null）
   │    ├── passed:         boolean         # パスしたか
   │    └── isCorrect:      boolean | null  # ホストの判定結果
@@ -145,6 +146,7 @@ hintpinto_rooms/{roomCode}/
 - **ゲーム開始**: `transaction()` で `turnOrder` を確定し、`status` を `clue-input` に遷移
 - **ヒント提出**: 各プレイヤーが `round/hints/{nickname}` に `set()` するだけ（競合なし）
 - **重複判定・除外確定**: ホスト端末で全ヒントを読み取り → 正規化で重複検出 → `excludedHintIds` を `update()` で書き込む。ホストは画面上でさらに手動トグルして追加除外も可能
+- **ヒント締切（ホスト救済）**: 1人でも提出しない参加者がいても進行を止めないよう、ホストは `screen-clue` の「ヒントを締め切って確認へ」ボタンで強制的に `clue-review` に遷移できる。未提出者は `missingHintIds` に記録され、review 画面ではホストにのみ「未提出」バッジ付きで表示される（ゲスト側には可視化しない）。提出が1件以上あることが条件
 - **回答者に secretWord を見せない**: UI レベルで制御（回答者の画面にはヒントのみ表示）
 - **参加制限**: `transaction()` 内で `status === 'waiting'` を確認し、ゲーム中は参加を拒否
 

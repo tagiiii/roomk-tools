@@ -314,6 +314,12 @@
       </div>
     </div>
     <p class="hdp-status-text" id="clue-progress"></p>
+
+    <!-- ホスト用：ヒント入力を締め切って確認画面へ -->
+    <div id="clue-host-actions" style="display:none;margin-top:16px">
+      <button class="btn btn-ghost btn-full" id="btn-force-close-clue" onclick="hostCloseClueInput()">ヒントを締め切って確認へ</button>
+      <p class="hdp-status-text" id="clue-host-hint" style="margin-top:8px"></p>
+    </div>
   </div>
 </div>
 
@@ -520,6 +526,7 @@ let answerHandled = false;
 let historySaved = false;
 let reviewExcluded = new Set();
 let reviewAutoExcluded = new Set();
+let reviewMissingSet = new Set();
 let reviewHintsData = {};
 
 function resetRoundFlags() {
@@ -528,6 +535,7 @@ function resetRoundFlags() {
   historySaved = false;
   reviewExcluded = new Set();
   reviewAutoExcluded = new Set();
+  reviewMissingSet = new Set();
   reviewHintsData = {};
 }
 
@@ -792,6 +800,7 @@ async function startGame() {
         secretWord: word,
         hints: null,
         excludedHintIds: null,
+        missingHintIds: null,
         answer: null,
         passed: false,
         isCorrect: null,
@@ -928,19 +937,42 @@ function handleClueInput(room, players) {
   const submitted = Object.keys(round.hints || {}).length;
   document.getElementById('clue-progress').textContent = `${submitted} / ${hintGivers.length} 人が送信済み`;
 
+  // ホスト用：締切ボタン
+  const clueHostActions = document.getElementById('clue-host-actions');
+  if (state.role === 'host' && hintGivers.length > 0) {
+    clueHostActions.style.display = 'block';
+    const remaining = Math.max(0, hintGivers.length - submitted);
+    const btn = document.getElementById('btn-force-close-clue');
+    btn.disabled = submitted === 0 || clueReviewTriggered;
+    const hint = document.getElementById('clue-host-hint');
+    if (submitted === 0) {
+      hint.textContent = 'ヒントが1件以上ないと進められません';
+    } else if (remaining > 0) {
+      hint.textContent = `未提出の ${remaining} 人は未提出として進めます`;
+    } else {
+      hint.textContent = '全員が提出済みです';
+    }
+  } else {
+    clueHostActions.style.display = 'none';
+  }
+
   // ホスト: 全員提出 → clue-review へ
   if (state.role === 'host' && !clueReviewTriggered && submitted >= hintGivers.length && hintGivers.length > 0) {
     clueReviewTriggered = true;
-    autoTransitionToReview(room);
+    autoTransitionToReview(room, players);
   }
 }
 
-async function autoTransitionToReview(room) {
+async function autoTransitionToReview(room, players, opts = {}) {
   const round = room.round;
   const hints = round.hints || {};
   const guesser = round.guesser;
+  const hintGivers = Object.keys(players || {}).filter(n => n !== guesser);
 
-  // 重複検出
+  // 未提出者の検出（ホスト締切時のみ発生しうる）
+  const missing = hintGivers.filter(n => !hints[n]);
+
+  // 重複検出（提出済みヒントのみで判定）
   const normCounts = {};
   Object.values(hints).forEach(h => {
     normCounts[h.normalized] = (normCounts[h.normalized] || 0) + 1;
@@ -950,13 +982,38 @@ async function autoTransitionToReview(room) {
     if (normCounts[h.normalized] > 1) excluded.push(nick);
   });
 
-  // ホスト = 回答者の場合 → review スキップ
-  if (state.nickname === guesser) {
-    await state.roomRef.child('round').update({ excludedHintIds: excluded.length ? excluded : null });
+  const roundUpdates = {
+    excludedHintIds: excluded.length ? excluded : null,
+    missingHintIds: missing.length ? missing : null,
+  };
+
+  // ホスト = 回答者 かつ 未提出者なし → review スキップして直接 answer へ
+  // （未提出者がいるならホストが確認できるよう review を通す）
+  if (state.nickname === guesser && missing.length === 0) {
+    await state.roomRef.child('round').update(roundUpdates);
     await state.roomRef.update({ status: 'answer' });
   } else {
-    await state.roomRef.child('round').update({ excludedHintIds: excluded.length ? excluded : null });
+    await state.roomRef.child('round').update(roundUpdates);
     await state.roomRef.update({ status: 'clue-review' });
+  }
+}
+
+async function hostCloseClueInput() {
+  if (state.role !== 'host' || clueReviewTriggered) return;
+  try {
+    const snap = await state.roomRef.get();
+    const room = snap.val();
+    if (!room || room.status !== 'clue-input') return;
+    const players = room.players || {};
+    const round = room.round || {};
+    const hintGivers = Object.keys(players).filter(n => n !== round.guesser);
+    const submitted = Object.keys(round.hints || {}).length;
+    if (hintGivers.length === 0 || submitted === 0) return;
+    clueReviewTriggered = true;
+    await autoTransitionToReview(room, players);
+  } catch (error) {
+    console.error('[hint-de-pinto] hostCloseClueInput failed', error);
+    clueReviewTriggered = false;
   }
 }
 
@@ -979,11 +1036,21 @@ function handleClueReview(room, players) {
 
 function initReviewScreen(round) {
   const hints = round.hints || {};
-  reviewHintsData = hints;
+  const missingNicks = round.missingHintIds || [];
 
-  // 重複検出
+  // 未提出者を synthetic エントリとして合成（ホスト画面にだけ見せる）
+  reviewHintsData = { ...hints };
+  reviewMissingSet = new Set();
+  missingNicks.forEach(nick => {
+    if (!reviewHintsData[nick]) {
+      reviewHintsData[nick] = { text: '', normalized: '', missing: true };
+      reviewMissingSet.add(nick);
+    }
+  });
+
+  // 重複検出（提出済みヒントのみで判定）
   const normCounts = {};
-  Object.values(hints).forEach(h => {
+  Object.entries(hints).forEach(([, h]) => {
     normCounts[h.normalized] = (normCounts[h.normalized] || 0) + 1;
   });
 
@@ -991,6 +1058,8 @@ function initReviewScreen(round) {
   Object.entries(hints).forEach(([nick, h]) => {
     if (normCounts[h.normalized] > 1) reviewAutoExcluded.add(nick);
   });
+  // 未提出も自動除外扱い（トグル不可）
+  reviewMissingSet.forEach(nick => reviewAutoExcluded.add(nick));
   reviewExcluded = new Set(reviewAutoExcluded);
 
   renderReviewCards();
@@ -1002,10 +1071,17 @@ function renderReviewCards() {
     const encodedNick = encodeURIComponent(nick);
     const isExcl = reviewExcluded.has(nick);
     const isAuto = reviewAutoExcluded.has(nick);
+    const isMissing = reviewMissingSet.has(nick);
+    let badge = '';
+    if (isMissing) badge = '<span class="hdp-hint-card__badge">未提出</span>';
+    else if (isAuto) badge = '<span class="hdp-hint-card__badge">重複</span>';
+    const text = isMissing
+      ? '<span style="color:var(--color-muted);font-style:italic">（未提出）</span>'
+      : esc(h.text);
     return `<div class="hdp-hint-card ${isExcl ? 'excluded' : ''}" data-nick="${esc(nick)}">
       <div class="hdp-hint-card__body">
-        <div class="hdp-hint-card__text ${isExcl ? 'strikethrough' : ''}">${esc(h.text)}</div>
-        <div><span class="hdp-hint-card__author">${esc(nick)}</span>${isAuto ? '<span class="hdp-hint-card__badge">重複</span>' : ''}</div>
+        <div class="hdp-hint-card__text ${isExcl && !isMissing ? 'strikethrough' : ''}">${text}</div>
+        <div><span class="hdp-hint-card__author">${esc(nick)}</span>${badge}</div>
       </div>
       <button class="hdp-hint-card__toggle" onclick="toggleHint('${encodedNick}')" ${isAuto ? 'disabled' : ''}>
         <span class="material-symbols-rounded">${isExcl ? 'visibility_off' : 'visibility'}</span>
@@ -1270,6 +1346,7 @@ async function nextRound() {
         secretWord: word,
         hints: null,
         excludedHintIds: null,
+        missingHintIds: null,
         answer: null,
         passed: false,
         isCorrect: null,
@@ -1318,6 +1395,7 @@ async function playAgain() {
         secretWord: word,
         hints: null,
         excludedHintIds: null,
+        missingHintIds: null,
         answer: null,
         passed: false,
         isCorrect: null,
