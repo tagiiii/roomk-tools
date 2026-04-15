@@ -580,6 +580,14 @@
         </button>
       </div>
 
+      <!-- ホスト用：確認を締め切って強制的に発言フェーズへ -->
+      <div id="btn-force-start-playing-wrap" style="display:none;">
+        <button id="btn-force-start-playing" class="btn btn-ghost btn-full" onclick="hostForceStartPlaying()">
+          確認を締め切って発言へ
+        </button>
+        <p id="force-start-hint" style="font-size:13px; color:var(--color-muted); text-align:center; margin-top:8px;"></p>
+      </div>
+
       <button id="btn-leave-revealing" class="btn btn-ghost btn-full" style="margin-top:12px; display:none;" onclick="leaveGame()">
         <span class="material-symbols-rounded">logout</span>
         退出する
@@ -1245,8 +1253,9 @@
       }
     }
 
-    async function startPlaying() {
+    async function startPlaying(options = {}) {
       if (state.role !== "host" || !state.roomRef) return;
+      const force = !!options.force;
       try {
         let abortReason = null;
         const { committed } = await state.roomRef.transaction((room) => {
@@ -1255,10 +1264,12 @@
             return;
           }
           const players = room.players || {};
-          const allReady = Object.keys(players).length > 0 && Object.values(players).every((p) => !!p.ready);
-          if (!allReady) {
-            abortReason = "not_ready";
-            return;
+          if (!force) {
+            const allReady = Object.keys(players).length > 0 && Object.values(players).every((p) => !!p.ready);
+            if (!allReady) {
+              abortReason = "not_ready";
+              return;
+            }
           }
           if (!room.theme) {
             abortReason = "theme_missing";
@@ -1282,6 +1293,11 @@
         console.error(e);
         showMsg("発言フェーズへ進めませんでした");
       }
+    }
+
+    async function hostForceStartPlaying() {
+      if (state.role !== "host" || !state.roomRef) return;
+      await startPlaying({ force: true });
     }
 
     async function selectTheme(index) {
@@ -1498,10 +1514,25 @@
         copyThemesBtn.style.display = (state.role === "host" && state.themeOptions.length > 0) ? "" : "none";
       }
 
-      const allReady = Object.values(players).length > 0 && Object.values(players).every((p) => !!p.ready);
+      const playerList = Object.values(players);
+      const totalPlayers = playerList.length;
+      const readyCount = playerList.filter((p) => !!p.ready).length;
+      const allReady = totalPlayers > 0 && readyCount === totalPlayers;
       const startPlayingWrap = document.getElementById("btn-start-playing-wrap");
       if (startPlayingWrap) {
         startPlayingWrap.style.display = (state.role === "host" && allReady && !!room.theme) ? "" : "none";
+      }
+
+      // ホスト用：未確認者がいるときだけ締切ボタンを表示
+      const forceWrap = document.getElementById("btn-force-start-playing-wrap");
+      if (forceWrap) {
+        const showForce = state.role === "host" && totalPlayers > 0 && !allReady && !!room.theme;
+        forceWrap.style.display = showForce ? "" : "none";
+        if (showForce) {
+          const remaining = totalPlayers - readyCount;
+          const hint = document.getElementById("force-start-hint");
+          if (hint) hint.textContent = `未確認の ${remaining} 人は数字未確認のまま進めます`;
+        }
       }
 
       const leaveBtn = document.getElementById("btn-leave-revealing");
