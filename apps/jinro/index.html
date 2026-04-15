@@ -549,11 +549,12 @@
       <p id="vote-wait-label" style="font-size:13px;color:var(--color-muted);margin-top:4px"></p>
     </div>
 
-    <!-- GM 強制進行（切断者がいる場合） -->
+    <!-- GM 強制進行（未投票者がいる場合） -->
     <div id="vote-force-btn" class="mt-md" style="display:none">
       <button class="btn btn-secondary btn-full" onclick="forceVoteProceed()">
-        <span class="material-symbols-rounded">skip_next</span>切断者を除いて処刑を決定する
+        <span class="material-symbols-rounded">skip_next</span>未投票者を除いて処刑を決定する
       </button>
+      <p id="vote-force-hint" style="font-size:13px;color:var(--color-muted);text-align:center;margin-top:8px"></p>
     </div>
 
     <!-- GM 同票処理パネル -->
@@ -1651,11 +1652,23 @@ function handleVote(room, players) {
     computeExecution(room, players);
   }
 
-  // GM 強制進行ボタン（切断者がいて投票が止まっている場合に表示）
+  // GM 強制進行ボタン（未投票者がいる場合に表示。切断者だけでなく、接続中で未投票の人も含む）
   if (state.isHost) {
-    const hasDisconnected = aliveList.some(([, p]) => p.connected === false && p.vote == null);
+    const unvoted = aliveList.filter(([, p]) => p.vote == null);
     const forceBtn = document.getElementById('vote-force-btn');
-    if (forceBtn) forceBtn.style.display = (hasDisconnected && !state.resolveTriggered) ? 'block' : 'none';
+    const show = unvoted.length > 0 && !state.resolveTriggered && aliveList.length > 0;
+    if (forceBtn) forceBtn.style.display = show ? 'block' : 'none';
+    if (show) {
+      const hint = document.getElementById('vote-force-hint');
+      if (hint) {
+        const dc = unvoted.filter(([, p]) => p.connected === false).length;
+        const cc = unvoted.length - dc;
+        const parts = [];
+        if (dc > 0) parts.push(`切断中 ${dc} 人`);
+        if (cc > 0) parts.push(`接続中だが未投票 ${cc} 人`);
+        hint.textContent = `${parts.join(' + ')} を除いて集計します`;
+      }
+    }
   }
 }
 
