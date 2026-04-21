@@ -1,0 +1,1140 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+  <title>いくつ言える？ | roomK</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
+  <link rel="stylesheet" href="../shared/css/design-system.css">
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+  <script src="themes.js"></script>
+  <style>
+    /* ── 画面管理 ── */
+    .screen { display: none; min-height: 100dvh; }
+    .screen.active { display: flex; flex-direction: column; align-items: center; }
+    .page { width: 100%; max-width: 520px; padding: 40px 20px 80px; }
+
+    /* ── ヘッダー ── */
+    .ii-header { text-align: center; padding: 40px 0 28px; }
+    .ii-header__icon {
+      width: 80px; height: 80px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 16px;
+    }
+    .ii-header__icon .material-symbols-rounded { font-size: 44px; color: #fff; }
+    .ii-header__title { font-size: 28px; font-weight: 700; color: var(--color-primary); }
+    .ii-header__sub { font-size: 14px; color: var(--color-muted); margin-top: 6px; }
+
+    /* ── ルームコード ── */
+    .room-code {
+      font-size: 42px; font-weight: 700;
+      letter-spacing: 0.15em; color: var(--color-primary);
+      text-align: center;
+    }
+
+    /* ── プレイヤーリスト ── */
+    .player-list { list-style: none; }
+    .player-item {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 0; border-bottom: 1px solid var(--color-border);
+      font-size: 15px;
+    }
+    .player-item:last-child { border-bottom: none; }
+    .player-name { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .player-tag {
+      font-size: 11px; font-weight: 700;
+      padding: 2px 6px; border-radius: 4px;
+      background: var(--color-accent); color: #fff;
+    }
+    .player-tag.me { background: var(--color-muted); }
+
+    /* ── お題表示 ── */
+    .ii-theme {
+      padding: 20px 16px;
+      background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+      color: #fff;
+      border-radius: var(--radius-card);
+      text-align: center;
+      margin-bottom: 16px;
+    }
+    .ii-theme__label {
+      font-size: 12px; font-weight: 700;
+      letter-spacing: 0.1em; opacity: 0.85;
+      margin-bottom: 6px;
+    }
+    .ii-theme__text {
+      font-size: 22px; font-weight: 700; line-height: 1.3;
+    }
+
+    /* ── タイマー ── */
+    .ii-timer {
+      text-align: center;
+      margin-bottom: 16px;
+    }
+    .ii-timer__val {
+      font-size: 44px; font-weight: 700;
+      color: var(--color-primary); line-height: 1;
+      font-variant-numeric: tabular-nums;
+    }
+    .ii-timer__lbl { font-size: 12px; color: var(--color-muted); margin-top: 4px; }
+
+    /* ── 個数 ── */
+    .ii-count {
+      text-align: center;
+      margin: 4px 0 12px;
+    }
+    .ii-count__num {
+      font-size: 28px; font-weight: 700; color: var(--color-accent);
+      font-variant-numeric: tabular-nums;
+    }
+    .ii-count__unit { font-size: 14px; color: var(--color-muted); margin-left: 4px; }
+
+    /* ── 入力欄 ── */
+    .ii-input-row {
+      display: flex; gap: 8px; margin-bottom: 14px;
+    }
+    .ii-input-row .form-input { flex: 1; }
+    .ii-input-row .btn { flex-shrink: 0; padding-left: 16px; padding-right: 16px; }
+
+    /* ── 自分の回答リスト ── */
+    .ii-answer-list { list-style: none; }
+    .ii-answer-item {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 8px 12px;
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: 8px;
+      margin-bottom: 6px;
+      font-size: 15px;
+      word-break: break-word;
+    }
+    .ii-answer-item__text { flex: 1; }
+    .ii-answer-item__del {
+      background: none; border: none; padding: 4px;
+      color: var(--color-muted); cursor: pointer;
+      display: flex; align-items: center;
+    }
+    .ii-answer-item__del:hover { color: var(--color-error); }
+    .ii-answer-empty {
+      font-size: 13px; color: var(--color-muted);
+      text-align: center; padding: 12px;
+    }
+
+    /* ── review タイルグリッド ── */
+    .ii-tile-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 8px;
+    }
+    .ii-tile {
+      padding: 10px 12px;
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: 10px;
+      font-size: 14px;
+      word-break: break-word;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .ii-tile__text { font-weight: 500; color: var(--color-text); }
+    .ii-tile__by { font-size: 11px; color: var(--color-muted); }
+    .ii-tile--dup {
+      background: #F0EAF8;
+      border-color: var(--color-accent);
+    }
+    .ii-tile--dup .ii-tile__text { color: var(--color-accent); font-weight: 700; }
+
+    /* ── お題候補（候補ボタン） ── */
+    .ii-theme-suggest {
+      font-size: 13px; color: var(--color-muted);
+      margin-top: 6px;
+    }
+
+    /* ── エラー ── */
+    .error-msg {
+      font-size: 13px;
+      color: var(--color-error);
+      background: #FEF2F2;
+      border-left: 3px solid var(--color-error);
+      border-radius: 8px;
+      padding: 10px 14px;
+      margin-bottom: 12px;
+      display: none;
+    }
+    .error-msg.visible { display: block; }
+
+    /* ── オーバーレイ ── */
+    .overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(28,63,94,0.88); z-index: 100;
+      flex-direction: column; align-items: center; justify-content: center;
+      gap: 16px; color: #fff; text-align: center; padding: 24px;
+    }
+    .overlay.show { display: flex; }
+    .overlay-title { font-size: 20px; font-weight: 700; }
+    .overlay-sub   { font-size: 14px; opacity: 0.8; }
+    .spinner {
+      width: 32px; height: 32px;
+      border: 3px solid rgba(255,255,255,0.3); border-top-color: #fff;
+      border-radius: 50%; animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Misc ── */
+    .section-lbl {
+      font-size: 13px; font-weight: 700;
+      color: var(--color-muted); letter-spacing: 0.06em;
+      text-transform: uppercase; margin-bottom: 8px;
+    }
+    .sep { margin-top: 8px; }
+    .mt-sm { margin-top: 8px; }
+    .row-between {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    h2 { font-size: 20px; font-weight: 700; margin-bottom: 16px; color: var(--color-primary); }
+    .history-round {
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--color-border);
+    }
+    .history-round:last-child { border-bottom: none; }
+    .history-theme {
+      font-size: 15px; font-weight: 700;
+      color: var(--color-primary);
+      margin-bottom: 8px;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════ -->
+<!-- TOP                                   -->
+<!-- ══════════════════════════════════════ -->
+<div id="screen-top" class="screen">
+  <div class="page">
+    <div class="ii-header">
+      <div class="ii-header__icon">
+        <span class="material-symbols-rounded">format_list_numbered</span>
+      </div>
+      <div class="ii-header__title">いくつ言える？</div>
+      <div class="ii-header__sub">お題にいくつ答えられるかな？</div>
+    </div>
+    <div class="card">
+      <button class="btn btn-primary btn-full" onclick="goTo('host-setup')">
+        <span class="material-symbols-rounded">add_circle</span>ルームを作る
+      </button>
+      <button class="btn btn-secondary btn-full sep" onclick="goTo('guest-join')">
+        <span class="material-symbols-rounded">login</span>ルームに参加する
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════ -->
+<!-- HOST SETUP                            -->
+<!-- ══════════════════════════════════════ -->
+<div id="screen-host-setup" class="screen">
+  <div class="page">
+    <h2>ルームを作る</h2>
+    <div class="card">
+      <div class="error-msg" id="host-error"></div>
+      <div class="form-group">
+        <label class="form-label">ニックネーム（8文字以内）</label>
+        <input class="form-input" id="host-nickname" type="text" maxlength="8" placeholder="例: たろう">
+      </div>
+      <button class="btn btn-primary btn-full mt-md" onclick="hostCreateRoom()">
+        <span class="material-symbols-rounded">add_home</span>ルームを作成する
+      </button>
+      <button class="btn btn-ghost btn-full sep" onclick="goTo('top')">戻る</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════ -->
+<!-- GUEST JOIN                            -->
+<!-- ══════════════════════════════════════ -->
+<div id="screen-guest-join" class="screen">
+  <div class="page">
+    <h2>ルームに参加する</h2>
+    <div class="card">
+      <div class="error-msg" id="guest-error"></div>
+      <div class="form-group">
+        <label class="form-label">ニックネーム（8文字以内）</label>
+        <input class="form-input" id="guest-nickname" type="text" maxlength="8" placeholder="例: はなこ">
+      </div>
+      <div class="form-group">
+        <label class="form-label">ルームコード（6桁）</label>
+        <input class="form-input" id="guest-code" type="text" maxlength="6" placeholder="ABCDEF"
+               style="text-transform:uppercase;letter-spacing:.2em;font-size:24px;text-align:center">
+      </div>
+      <button class="btn btn-primary btn-full mt-md" onclick="guestJoin()">
+        <span class="material-symbols-rounded">login</span>参加する
+      </button>
+      <button class="btn btn-ghost btn-full sep" onclick="goTo('top')">戻る</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════ -->
+<!-- WAITING                               -->
+<!-- ══════════════════════════════════════ -->
+<div id="screen-waiting" class="screen">
+  <div class="page">
+    <!-- ホストのみルームコード表示 -->
+    <div id="w-host-code-card" style="display:none">
+      <div class="card" style="text-align:center">
+        <p class="section-lbl">ルームコード</p>
+        <p class="room-code" id="w-room-code">------</p>
+        <p style="font-size:14px;color:var(--color-muted);margin-top:6px">参加者に伝えてね</p>
+      </div>
+    </div>
+
+    <div class="card mt-md">
+      <div class="row-between">
+        <strong style="font-size:16px">参加者</strong>
+        <span id="w-count" style="font-size:14px;color:var(--color-muted)"></span>
+      </div>
+      <ul class="player-list" id="w-player-list"></ul>
+    </div>
+
+    <!-- ホスト用: お題設定 -->
+    <div id="w-host-panel" style="display:none" class="mt-md">
+      <div class="card">
+        <p class="section-lbl">お題</p>
+        <div class="form-group">
+          <input class="form-input" id="w-theme-input" type="text" maxlength="40" placeholder="例: 最近ハマっていること">
+          <div class="ii-theme-suggest">
+            <button class="btn btn-ghost btn-sm mt-sm" onclick="pickRandomTheme()">
+              <span class="material-symbols-rounded">shuffle</span>ランダムに1つ
+            </button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">制限時間</label>
+          <select class="form-select" id="w-duration">
+            <option value="60">60秒</option>
+            <option value="90" selected>90秒</option>
+          </select>
+        </div>
+        <div class="error-msg" id="w-error"></div>
+        <button class="btn btn-primary btn-full mt-md" onclick="startRound()">
+          <span class="material-symbols-rounded">play_arrow</span>このお題ではじめる
+        </button>
+      </div>
+    </div>
+
+    <button class="btn btn-ghost btn-full mt-md" onclick="leaveGame()">
+      <span class="material-symbols-rounded">logout</span>退出する
+    </button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════ -->
+<!-- INPUT                                 -->
+<!-- ══════════════════════════════════════ -->
+<div id="screen-input" class="screen">
+  <div class="page">
+    <div class="ii-theme">
+      <div class="ii-theme__label">おだい</div>
+      <div class="ii-theme__text" id="i-theme">---</div>
+    </div>
+
+    <div class="ii-timer">
+      <div class="ii-timer__val" id="i-timer">0:00</div>
+      <div class="ii-timer__lbl">のこり時間</div>
+    </div>
+
+    <div class="ii-count">
+      <span class="ii-count__num" id="i-count">0</span>
+      <span class="ii-count__unit">個</span>
+    </div>
+
+    <div class="ii-input-row">
+      <input class="form-input" id="i-answer" type="text" maxlength="24" placeholder="おもいついた答え" autocomplete="off">
+      <button class="btn btn-primary" onclick="addAnswer()">
+        <span class="material-symbols-rounded">add</span>
+      </button>
+    </div>
+    <div class="error-msg" id="i-error"></div>
+
+    <ul class="ii-answer-list" id="i-answer-list"></ul>
+
+    <div id="i-host-panel" style="display:none" class="mt-md">
+      <button class="btn btn-ghost btn-full" onclick="hostEndInput()">
+        <span class="material-symbols-rounded">stop</span>時間前に終了する
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════ -->
+<!-- REVIEW                                -->
+<!-- ══════════════════════════════════════ -->
+<div id="screen-review" class="screen">
+  <div class="page">
+    <div class="ii-theme">
+      <div class="ii-theme__label">おだい</div>
+      <div class="ii-theme__text" id="r-theme">---</div>
+    </div>
+
+    <div class="ii-count">
+      <span class="ii-count__num" id="r-mycount">0</span>
+      <span class="ii-count__unit">個 答えられたよ</span>
+    </div>
+
+    <div class="card">
+      <div class="row-between">
+        <strong style="font-size:15px">みんなの答え</strong>
+        <button id="r-toggle-name" class="btn btn-ghost btn-sm" style="display:none" onclick="toggleShowNames()">
+          <span class="material-symbols-rounded" id="r-toggle-icon">visibility_off</span>
+          <span id="r-toggle-label">名前を表示</span>
+        </button>
+      </div>
+      <div class="ii-tile-grid" id="r-tiles"></div>
+      <p id="r-empty" class="ii-answer-empty" style="display:none">まだ答えがありません</p>
+    </div>
+
+    <div id="r-host-panel" style="display:none" class="mt-md">
+      <button class="btn btn-primary btn-full" onclick="hostNextRound()">
+        <span class="material-symbols-rounded">navigate_next</span>次のお題
+      </button>
+      <button class="btn btn-ghost btn-full sep" onclick="hostFinish()">
+        <span class="material-symbols-rounded">flag</span>終了する
+      </button>
+    </div>
+    <button class="btn btn-ghost btn-full mt-md" onclick="leaveGame()">
+      <span class="material-symbols-rounded">logout</span>退出する
+    </button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════ -->
+<!-- FINISHED                              -->
+<!-- ══════════════════════════════════════ -->
+<div id="screen-finished" class="screen">
+  <div class="page">
+    <h2 style="text-align:center">ふりかえり</h2>
+    <div id="f-rounds"></div>
+    <button class="btn btn-primary btn-full mt-md" onclick="leaveGame()">
+      <span class="material-symbols-rounded">home</span>トップへ戻る
+    </button>
+  </div>
+</div>
+
+<!-- オーバーレイ -->
+<div class="overlay" id="reconnect-overlay">
+  <div class="spinner"></div>
+  <p class="overlay-title">再接続しています...</p>
+</div>
+<div class="overlay" id="host-off-overlay">
+  <span class="material-symbols-rounded" style="font-size:48px">signal_disconnected</span>
+  <p class="overlay-title">ホストが一時的に切断されました</p>
+  <p class="overlay-sub">再接続を待っています</p>
+  <button class="btn btn-ghost" style="margin-top:16px" onclick="leaveGame()">退出する</button>
+</div>
+
+<script>
+// ── Firebase 初期化 ──
+const firebaseConfig = {
+  apiKey: "AIzaSyC0bqQdDJeTAWrqFYqjOT1NsVFiunPemIw",
+  authDomain: "roomk-tools.firebaseapp.com",
+  databaseURL: "https://roomk-tools-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "roomk-tools",
+  storageBucket: "roomk-tools.firebasestorage.app",
+  messagingSenderId: "592193782148",
+  appId: "1:592193782148:web:1529f47cebab7dcd109dd1",
+};
+firebase.initializeApp(firebaseConfig);
+const authReady = firebase.auth().signInAnonymously().catch((e) => {
+  console.error('[auth] anonymous sign-in failed', e);
+  throw e;
+});
+const db = firebase.database();
+
+// ── 定数 ──
+const SESSION_KEY = 'ikutsu_session';
+const ORPHAN_TTL_MS = 2 * 60 * 1000;
+const CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+const MAX_ANSWER_LEN = 24;
+const AUTO_DELETE_AFTER_FINISH_MS = 30_000;
+
+// ── 状態 ──
+const state = {
+  role: null, nickname: null, roomCode: null, roomRef: null,
+  currentScreen: null,
+  serverTimeOffset: 0,
+  timerInterval: null,
+  countdownEndAt: null,
+  orphanTimer: null,
+  finishDeleteTimer: null,
+  myAnswers: [],        // 現ラウンドの自分の回答(ローカルキャッシュ)
+  round: 0,
+  showNames: false,     // review 画面のホストローカル表示切替
+  autoAdvanced: false,  // ゲスト側でタイマーを input→review 自動遷移時の二重防止
+};
+
+// ── セッション管理 ──
+function saveSession() {
+  sessionStorage.setItem(SESSION_KEY, JSON.stringify({
+    nickname: state.nickname, roomCode: state.roomCode, role: state.role,
+  }));
+}
+function loadSession() {
+  try { return JSON.parse(sessionStorage.getItem(SESSION_KEY)); } catch { return null; }
+}
+function clearSession() { sessionStorage.removeItem(SESSION_KEY); }
+
+function getEstimatedServerNow() {
+  return Date.now() + (Number(state.serverTimeOffset) || 0);
+}
+function getHostDisconnectedAt(room) {
+  const ts = room ? Number(room.hostDisconnectedAt) : NaN;
+  return Number.isFinite(ts) ? ts : null;
+}
+function isRoomExpired(room) {
+  const disconnectedAt = getHostDisconnectedAt(room);
+  return room?.hostConnected === false
+    && disconnectedAt != null
+    && (getEstimatedServerNow() - disconnectedAt) >= ORPHAN_TTL_MS;
+}
+
+// ── 便利関数 ──
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+function genCode() {
+  return Array.from({ length: 6 }, () => CHARS[Math.floor(Math.random() * CHARS.length)]).join('');
+}
+function showError(id, msg) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  if (!msg) { el.classList.remove('visible'); el.textContent = ''; return; }
+  el.textContent = msg; el.classList.add('visible');
+}
+function showMsg(msg, isError = true) {
+  const existing = document.getElementById('ii-toast');
+  if (existing) existing.remove();
+  const el = document.createElement('div');
+  el.id = 'ii-toast';
+  el.textContent = msg;
+  el.style.cssText = [
+    'position:fixed', 'bottom:24px', 'left:50%', 'transform:translateX(-50%)',
+    `background:${isError ? 'var(--color-error)' : 'var(--color-success)'}`,
+    'color:#fff', 'padding:12px 24px', 'border-radius:8px',
+    'font-size:14px', 'font-weight:500', 'z-index:9999',
+    'box-shadow:0 4px 16px rgba(0,0,0,0.25)', 'white-space:nowrap',
+    'pointer-events:none',
+  ].join(';');
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 3000);
+}
+
+// ── 画面管理 ──
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + id).classList.add('active');
+  state.currentScreen = id;
+}
+function goTo(id) {
+  showError('host-error', '');
+  showError('guest-error', '');
+  showScreen(id);
+}
+function showOverlay(id, show) {
+  document.getElementById(id).classList.toggle('show', show);
+}
+
+// ── バリデーション ──
+function validNick(v) {
+  if (!v) return 'ニックネームを入力してください';
+  if (v.length > 8) return 'ニックネームは8文字以内です';
+  return null;
+}
+
+// ── お題候補 ──
+function pickRandomTheme() {
+  const themes = Array.isArray(window.IKUTSU_THEMES) ? window.IKUTSU_THEMES : [];
+  if (themes.length === 0) return;
+  const pick = themes[Math.floor(Math.random() * themes.length)];
+  document.getElementById('w-theme-input').value = pick;
+}
+
+// ── ホスト: ルーム作成 ──
+async function hostCreateRoom() {
+  showError('host-error', '');
+  const nickname = document.getElementById('host-nickname').value.trim();
+  const nickErr = validNick(nickname);
+  if (nickErr) { showError('host-error', nickErr); return; }
+
+  await authReady;
+
+  let roomCode = null; let roomRef = null;
+  for (let i = 0; i < 5; i++) {
+    const code = genCode();
+    const ref = db.ref(`ikutsu_rooms/${code}`);
+    const initialRoom = {
+      host: nickname,
+      hostConnected: true,
+      hostDisconnectedAt: null,
+      status: 'waiting',
+      round: 0,
+      players: {
+        [nickname]: { isHost: true, joinedAt: firebase.database.ServerValue.TIMESTAMP, answers: [] },
+      },
+    };
+    const { committed } = await ref.transaction((room) => room ? undefined : initialRoom);
+    if (committed) { roomCode = code; roomRef = ref; break; }
+  }
+  if (!roomCode) { showError('host-error', 'ルーム作成に失敗しました'); return; }
+
+  state.role = 'host'; state.nickname = nickname;
+  state.roomCode = roomCode; state.roomRef = roomRef;
+
+  state.roomRef.onDisconnect().update({
+    hostConnected: false,
+    hostDisconnectedAt: firebase.database.ServerValue.TIMESTAMP,
+  });
+  saveSession();
+  startRoomListener();
+}
+
+// ── ゲスト: 参加 ──
+async function guestJoin() {
+  showError('guest-error', '');
+  const nickname = document.getElementById('guest-nickname').value.trim();
+  const roomCode = document.getElementById('guest-code').value.trim().toUpperCase();
+  const nickErr = validNick(nickname);
+  if (nickErr) { showError('guest-error', nickErr); return; }
+  if (roomCode.length !== 6) { showError('guest-error', 'ルームコードは6文字です'); return; }
+
+  await authReady;
+
+  const roomRef = db.ref(`ikutsu_rooms/${roomCode}`);
+  const preSnap = await roomRef.get();
+  if (!preSnap.exists()) { showError('guest-error', 'ルームが見つかりません'); return; }
+  const preRoom = preSnap.val();
+  if (isRoomExpired(preRoom)) {
+    await roomRef.remove().catch(() => {});
+    showError('guest-error', 'このルームは期限切れのため終了しました'); return;
+  }
+
+  let abortReason = null;
+  const { committed } = await roomRef.transaction((room) => {
+    const cur = room;
+    if (!cur) { abortReason = 'not_found'; return; }
+    if (isRoomExpired(cur)) { abortReason = 'expired'; return; }
+    if (cur.hostConnected === false) { abortReason = 'host_gone'; return; }
+    if (cur.status === 'finished') { abortReason = 'finished'; return; }
+    if (cur.status !== 'waiting') { abortReason = 'in_progress'; return; }
+    const players = cur.players || {};
+    if (players[nickname]) { abortReason = 'nick_taken'; return; }
+    abortReason = null;
+    return {
+      ...cur,
+      players: {
+        ...players,
+        [nickname]: { isHost: false, joinedAt: firebase.database.ServerValue.TIMESTAMP, answers: [] },
+      },
+    };
+  });
+
+  if (!committed) {
+    if (abortReason === 'expired') {
+      await roomRef.remove().catch(() => {});
+    }
+    const map = {
+      not_found: 'ルームが見つかりません',
+      host_gone: 'ホストが切断されています',
+      in_progress: 'このルームはすでに進行中です',
+      finished: 'このルームはすでに終了しています',
+      nick_taken: 'そのニックネームはすでに使われています',
+      expired: 'このルームは期限切れのため終了しました',
+    };
+    showError('guest-error', map[abortReason] || '参加に失敗しました');
+    return;
+  }
+
+  state.role = 'guest'; state.nickname = nickname;
+  state.roomCode = roomCode; state.roomRef = roomRef;
+
+  state.roomRef.child(`players/${nickname}`).onDisconnect().remove();
+  saveSession();
+  startRoomListener();
+}
+
+// ── ホスト: ラウンド開始 ──
+async function startRound() {
+  if (state.role !== 'host') return;
+  showError('w-error', '');
+  const theme = document.getElementById('w-theme-input').value.trim();
+  if (!theme) { showError('w-error', 'お題を入力してください'); return; }
+  if (theme.length > 40) { showError('w-error', 'お題は40文字以内です'); return; }
+  const durationSec = parseInt(document.getElementById('w-duration').value, 10) || 90;
+  let abortReason = null;
+  const { committed } = await state.roomRef.transaction((room) => {
+    if (!room) { abortReason = 'not_found'; return; }
+    if (room.status !== 'waiting') { abortReason = 'bad_status'; return; }
+    const players = room.players || {};
+    const resetPlayers = {};
+    Object.keys(players).forEach(nick => {
+      resetPlayers[nick] = { ...(players[nick] || {}), answers: [] };
+    });
+    abortReason = null;
+    return {
+      ...room,
+      status: 'input',
+      theme,
+      round: (room.round || 0) + 1,
+      durationSec,
+      endAt: getEstimatedServerNow() + durationSec * 1000,
+      players: resetPlayers,
+    };
+  });
+  if (!committed) {
+    showError('w-error', abortReason === 'bad_status' ? 'すでにラウンドが進行しています' : '開始に失敗しました');
+  }
+}
+
+// ── 回答の追加・削除 ──
+async function addAnswer() {
+  if (state.currentScreen !== 'input') return;
+  const input = document.getElementById('i-answer');
+  const val = (input.value || '').trim();
+  showError('i-error', '');
+  if (!val) return;
+  if (val.length > MAX_ANSWER_LEN) { showError('i-error', `${MAX_ANSWER_LEN}文字以内で入力してください`); return; }
+
+  // ローカル先行更新で体感を早く
+  state.myAnswers = [...state.myAnswers, val];
+  input.value = '';
+  renderMyAnswers();
+
+  try {
+    await state.roomRef.child(`players/${state.nickname}/answers`).set(state.myAnswers);
+  } catch (e) {
+    // 失敗したらロールバック
+    state.myAnswers = state.myAnswers.slice(0, -1);
+    renderMyAnswers();
+    showError('i-error', '送信に失敗しました');
+  }
+}
+async function removeAnswer(index) {
+  if (state.currentScreen !== 'input') return;
+  if (index < 0 || index >= state.myAnswers.length) return;
+  const prev = state.myAnswers.slice();
+  state.myAnswers = state.myAnswers.filter((_, i) => i !== index);
+  renderMyAnswers();
+  try {
+    await state.roomRef.child(`players/${state.nickname}/answers`).set(state.myAnswers);
+  } catch (e) {
+    state.myAnswers = prev;
+    renderMyAnswers();
+    showError('i-error', '削除に失敗しました');
+  }
+}
+
+// ── 入力画面の描画 ──
+function renderMyAnswers() {
+  document.getElementById('i-count').textContent = state.myAnswers.length;
+  const list = document.getElementById('i-answer-list');
+  if (state.myAnswers.length === 0) {
+    list.innerHTML = '<li class="ii-answer-empty">おもいついた答えを書いてみよう</li>';
+    return;
+  }
+  list.innerHTML = state.myAnswers.map((a, i) => `
+    <li class="ii-answer-item">
+      <span class="ii-answer-item__text">${esc(a)}</span>
+      <button class="ii-answer-item__del" aria-label="削除" onclick="removeAnswer(${i})">
+        <span class="material-symbols-rounded">close</span>
+      </button>
+    </li>
+  `).join('');
+}
+
+// ── タイマー ──
+function startCountdown(endAt) {
+  if (state.countdownEndAt === endAt && state.timerInterval) return;
+  clearInterval(state.timerInterval);
+  state.countdownEndAt = endAt;
+  const el = document.getElementById('i-timer');
+  const tick = () => {
+    const sec = Math.max(0, Math.ceil((endAt - getEstimatedServerNow()) / 1000));
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    el.textContent = `${m}:${String(s).padStart(2, '0')}`;
+    if (sec <= 0) {
+      clearInterval(state.timerInterval);
+      state.timerInterval = null;
+      // ホストのみ status を進める
+      if (state.role === 'host' && !state.autoAdvanced) {
+        state.autoAdvanced = true;
+        moveToReview().catch(() => { state.autoAdvanced = false; });
+      }
+    }
+  };
+  tick();
+  state.timerInterval = setInterval(tick, 250);
+}
+
+// ── ホスト: 時間前に終了 ──
+async function hostEndInput() {
+  if (state.role !== 'host') return;
+  clearInterval(state.timerInterval);
+  state.timerInterval = null;
+  await moveToReview();
+}
+
+async function moveToReview() {
+  if (state.role !== 'host') return;
+  await state.roomRef.transaction((room) => {
+    if (!room || room.status !== 'input') return;
+    const round = room.round || 1;
+    const players = room.players || {};
+    const snapshotAnswers = {};
+    Object.keys(players).forEach(nick => {
+      const ans = Array.isArray(players[nick]?.answers) ? players[nick].answers : [];
+      snapshotAnswers[nick] = ans;
+    });
+    return {
+      ...room,
+      status: 'review',
+      history: {
+        ...(room.history || {}),
+        [round]: { theme: room.theme || '', answers: snapshotAnswers },
+      },
+    };
+  });
+}
+
+// ── ホスト: 次のお題 / 終了 ──
+async function hostNextRound() {
+  if (state.role !== 'host') return;
+  document.getElementById('w-theme-input').value = '';
+  showError('w-error', '');
+  await state.roomRef.update({ status: 'waiting', theme: null, endAt: null });
+}
+async function hostFinish() {
+  if (state.role !== 'host') return;
+  await state.roomRef.update({ status: 'finished' });
+}
+
+// ── review: 名前表示トグル(ホストのみ、ローカル state) ──
+function toggleShowNames() {
+  state.showNames = !state.showNames;
+  const icon = document.getElementById('r-toggle-icon');
+  const label = document.getElementById('r-toggle-label');
+  icon.textContent = state.showNames ? 'visibility' : 'visibility_off';
+  label.textContent = state.showNames ? '名前を隠す' : '名前を表示';
+  renderReviewTiles();
+}
+
+// ── 退出 ──
+async function leaveGame() {
+  clearInterval(state.timerInterval);
+  clearTimeout(state.orphanTimer);
+  clearTimeout(state.finishDeleteTimer);
+  clearSession();
+  if (state.roomRef) {
+    try {
+      if (state.role === 'host') {
+        await state.roomRef.remove();
+      } else {
+        await state.roomRef.child(`players/${state.nickname}`).remove();
+      }
+    } catch {}
+    state.roomRef.off();
+  }
+  Object.assign(state, {
+    role: null, nickname: null, roomCode: null, roomRef: null,
+    currentScreen: null, timerInterval: null, countdownEndAt: null, orphanTimer: null, finishDeleteTimer: null,
+    myAnswers: [], round: 0, showNames: false, autoAdvanced: false,
+  });
+  showOverlay('host-off-overlay', false);
+  showOverlay('reconnect-overlay', false);
+  showScreen('top');
+}
+
+// ── Firebase リスナー ──
+function startRoomListener() {
+  state.roomRef.on('value', snap => {
+    if (!snap.exists()) {
+      if (state.role !== 'host') {
+        clearSession(); showMsg('ホストがルームを終了しました'); showScreen('top');
+      }
+      return;
+    }
+    handleRoom(snap.val());
+  });
+}
+
+let _reviewCache = null; // 最新の review 用データ(描画トグル用にキャッシュ)
+
+function handleRoom(room) {
+  const players = room.players || {};
+  state.round = room.round || 0;
+
+  // ホスト切断オーバーレイ(ゲストのみ)
+  if (state.role === 'guest') {
+    const hostGone = room.hostConnected === false;
+    showOverlay('host-off-overlay', hostGone);
+    if (hostGone) {
+      const disconnectedAt = getHostDisconnectedAt(room);
+      const delay = disconnectedAt == null
+        ? ORPHAN_TTL_MS
+        : Math.max(0, disconnectedAt + ORPHAN_TTL_MS - getEstimatedServerNow());
+      if (isRoomExpired(room)) {
+        clearTimeout(state.orphanTimer); state.orphanTimer = null;
+        if (state.roomRef) state.roomRef.remove().catch(() => {});
+      } else if (!state.orphanTimer) {
+        state.orphanTimer = setTimeout(() => {
+          state.orphanTimer = null;
+          if (state.roomRef) state.roomRef.remove().catch(() => {});
+        }, delay);
+      }
+    } else {
+      clearTimeout(state.orphanTimer); state.orphanTimer = null;
+    }
+  }
+
+  switch (room.status) {
+    case 'waiting':  handleWaiting(room, players);  break;
+    case 'input':    handleInput(room, players);    break;
+    case 'review':   handleReview(room, players);   break;
+    case 'finished': handleFinished(room);          break;
+  }
+}
+
+// ── 待機 ──
+function handleWaiting(room, players) {
+  if (state.currentScreen !== 'waiting') {
+    clearInterval(state.timerInterval); state.timerInterval = null;
+    state.countdownEndAt = null;
+    state.myAnswers = [];
+    state.autoAdvanced = false;
+    showScreen('waiting');
+  }
+  const isHost = state.role === 'host';
+  document.getElementById('w-host-code-card').style.display = isHost ? 'block' : 'none';
+  document.getElementById('w-host-panel').style.display     = isHost ? 'block' : 'none';
+  if (isHost) {
+    document.getElementById('w-room-code').textContent = state.roomCode;
+  }
+  document.getElementById('w-count').textContent = `${Object.keys(players).length}人`;
+  renderPlayerList('w-player-list', players);
+}
+
+// ── 入力 ──
+function handleInput(room, players) {
+  if (state.currentScreen !== 'input') {
+    // 自分の現ラウンド回答を復元(再接続対応)
+    const me = players[state.nickname];
+    state.myAnswers = Array.isArray(me?.answers) ? me.answers.slice() : [];
+    state.autoAdvanced = false;
+    document.getElementById('i-answer').value = '';
+    showError('i-error', '');
+    document.getElementById('i-host-panel').style.display = state.role === 'host' ? 'block' : 'none';
+    showScreen('input');
+    // Enter で追加
+    const input = document.getElementById('i-answer');
+    input.onkeydown = (e) => { if (e.key === 'Enter') { e.preventDefault(); addAnswer(); } };
+  }
+  document.getElementById('i-theme').textContent = room.theme || '';
+  // 他タブ・他端末から自分の回答が書き換わったとき(通常は自分のみが書くので滅多にないが念のため同期)
+  const me = players[state.nickname];
+  const remote = Array.isArray(me?.answers) ? me.answers : [];
+  if (remote.length !== state.myAnswers.length
+      || remote.some((v, i) => v !== state.myAnswers[i])) {
+    state.myAnswers = remote.slice();
+  }
+  renderMyAnswers();
+  if (room.endAt) startCountdown(Number(room.endAt));
+}
+
+// ── review ──
+function handleReview(room, players) {
+  const round = room.round || 1;
+  const hist = (room.history && room.history[round]) || null;
+  const theme = hist?.theme || room.theme || '';
+  const answersByNick = hist?.answers || {};
+  _reviewCache = { theme, answersByNick };
+
+  if (state.currentScreen !== 'review') {
+    clearInterval(state.timerInterval); state.timerInterval = null;
+    state.countdownEndAt = null;
+    state.autoAdvanced = false;
+    showScreen('review');
+  }
+  document.getElementById('r-theme').textContent = theme;
+  const mine = Array.isArray(answersByNick[state.nickname]) ? answersByNick[state.nickname] : [];
+  document.getElementById('r-mycount').textContent = mine.length;
+
+  const isHost = state.role === 'host';
+  document.getElementById('r-host-panel').style.display = isHost ? 'block' : 'none';
+  document.getElementById('r-toggle-name').style.display = isHost ? 'inline-flex' : 'none';
+
+  renderReviewTiles();
+}
+
+function renderReviewTiles() {
+  if (!_reviewCache) return;
+  const { answersByNick } = _reviewCache;
+  const tiles = [];
+  const counts = {};
+  Object.entries(answersByNick).forEach(([nick, arr]) => {
+    (Array.isArray(arr) ? arr : []).forEach(a => {
+      const key = String(a).trim().toLowerCase();
+      if (!key) return;
+      counts[key] = (counts[key] || 0) + 1;
+    });
+  });
+  Object.entries(answersByNick).forEach(([nick, arr]) => {
+    (Array.isArray(arr) ? arr : []).forEach(a => {
+      const key = String(a).trim().toLowerCase();
+      if (!key) return;
+      tiles.push({ nick, text: a, dup: (counts[key] || 0) >= 2 });
+    });
+  });
+
+  const grid = document.getElementById('r-tiles');
+  const empty = document.getElementById('r-empty');
+  if (tiles.length === 0) {
+    grid.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+  const showNames = state.role === 'host' && state.showNames;
+  grid.innerHTML = tiles.map(t => `
+    <div class="ii-tile ${t.dup ? 'ii-tile--dup' : ''}">
+      <span class="ii-tile__text">${esc(t.text)}</span>
+      ${showNames ? `<span class="ii-tile__by">${esc(t.nick)}</span>` : ''}
+    </div>
+  `).join('');
+}
+
+// ── 終了 ──
+function handleFinished(room) {
+  if (state.currentScreen !== 'finished') {
+    clearInterval(state.timerInterval); state.timerInterval = null;
+    state.countdownEndAt = null;
+    showScreen('finished');
+  }
+  const history = room.history || {};
+  const rounds = Object.keys(history).map(n => parseInt(n, 10)).filter(Number.isFinite).sort((a, b) => a - b);
+  const wrap = document.getElementById('f-rounds');
+  if (rounds.length === 0) {
+    wrap.innerHTML = '<p style="text-align:center;color:var(--color-muted);font-size:14px">ラウンドはありませんでした</p>';
+  } else {
+    wrap.innerHTML = rounds.map(r => {
+      const h = history[r] || {};
+      const theme = h.theme || '';
+      const answersByNick = h.answers || {};
+      const all = [];
+      const counts = {};
+      Object.values(answersByNick).forEach(arr => {
+        (Array.isArray(arr) ? arr : []).forEach(a => {
+          const key = String(a).trim().toLowerCase();
+          if (!key) return;
+          counts[key] = (counts[key] || 0) + 1;
+        });
+      });
+      Object.values(answersByNick).forEach(arr => {
+        (Array.isArray(arr) ? arr : []).forEach(a => {
+          const key = String(a).trim().toLowerCase();
+          if (!key) return;
+          all.push({ text: a, dup: (counts[key] || 0) >= 2 });
+        });
+      });
+      const tileHtml = all.length === 0
+        ? '<p class="ii-answer-empty">回答はありませんでした</p>'
+        : `<div class="ii-tile-grid">${all.map(t =>
+            `<div class="ii-tile ${t.dup ? 'ii-tile--dup' : ''}">
+               <span class="ii-tile__text">${esc(t.text)}</span>
+             </div>`
+          ).join('')}</div>`;
+      return `
+        <div class="history-round">
+          <div class="history-theme">第${r}問：${esc(theme)}</div>
+          ${tileHtml}
+        </div>`;
+    }).join('');
+  }
+
+  // ホスト側のみ自動削除タイマーを持つ
+  if (state.role === 'host' && !state.finishDeleteTimer) {
+    state.finishDeleteTimer = setTimeout(() => {
+      state.finishDeleteTimer = null;
+      if (state.roomRef) state.roomRef.remove().catch(() => {});
+    }, AUTO_DELETE_AFTER_FINISH_MS);
+  }
+}
+
+// ── プレイヤーリスト描画 ──
+function renderPlayerList(id, players) {
+  const ul = document.getElementById(id);
+  if (!ul) return;
+  ul.innerHTML = Object.entries(players).map(([nick, p]) => {
+    const hostTag = p?.isHost ? '<span class="player-tag">ホスト</span>' : '';
+    const meTag = nick === state.nickname ? '<span class="player-tag me">あなた</span>' : '';
+    return `<li class="player-item">
+      <div class="player-name">${esc(nick)}${hostTag}${meTag}</div>
+    </li>`;
+  }).join('');
+}
+
+// ── 再接続 ──
+async function tryReconnect() {
+  const session = loadSession();
+  if (!session) return false;
+  const { nickname, roomCode, role } = session;
+  showOverlay('reconnect-overlay', true);
+  try {
+    await authReady;
+    const ref = db.ref(`ikutsu_rooms/${roomCode}`);
+    const snap = await ref.get();
+    if (!snap.exists()) { clearSession(); showOverlay('reconnect-overlay', false); return false; }
+    const room = snap.val();
+    if (isRoomExpired(room)) {
+      await ref.remove().catch(() => {});
+      clearSession(); showOverlay('reconnect-overlay', false); return false;
+    }
+
+    state.role = role; state.nickname = nickname;
+    state.roomCode = roomCode; state.roomRef = ref;
+
+    if (role === 'host') {
+      await ref.update({ hostConnected: true, hostDisconnectedAt: null });
+      ref.onDisconnect().update({
+        hostConnected: false,
+        hostDisconnectedAt: firebase.database.ServerValue.TIMESTAMP,
+      });
+    } else {
+      if (!room.players?.[nickname]) {
+        clearSession(); showOverlay('reconnect-overlay', false); return false;
+      }
+      ref.child(`players/${nickname}`).onDisconnect().remove();
+    }
+
+    showOverlay('reconnect-overlay', false);
+    startRoomListener();
+    return true;
+  } catch {
+    clearSession(); showOverlay('reconnect-overlay', false); return false;
+  }
+}
+
+// ── 初期化 ──
+db.ref('.info/serverTimeOffset').on('value', snap => {
+  const offset = Number(snap.val());
+  state.serverTimeOffset = Number.isFinite(offset) ? offset : 0;
+});
+tryReconnect().then(ok => { if (!ok) showScreen('top'); });
+</script>
+</body>
+</html>
