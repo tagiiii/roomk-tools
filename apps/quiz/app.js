@@ -4,7 +4,7 @@ import { QUIZ_PACKS } from './questions.js';
 const ALL_PACK = {
   id: 'all-shuffle',
   name: 'ぜんぶシャッフル',
-  description: '5つのパックをまぜてランダム出題',
+  description: '6つのパックをまぜてランダム出題',
   icon: 'shuffle',
   questions: QUIZ_PACKS.flatMap((pack) =>
     pack.questions.map((question) => ({
