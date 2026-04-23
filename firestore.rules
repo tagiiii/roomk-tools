@@ -8,6 +8,9 @@ service cloud.firestore {
     match /bb-invite-codes/{code} {
       allow read, write: if true;
     }
+    match /bb-config/{docId} {
+      allow read, write: if true;
+    }
     match /bb-threads/{threadId} {
       allow read, write: if true;
       match /comments/{commentId} {
