@@ -1,5 +1,5 @@
 // ことば探偵
-// TODO: 移植中。仕様: apps/codenames/AGENTS.md を参照
+// 仕様: apps/codenames/AGENTS.md を参照
 // 移植元: https://github.com/tagiiii/codename_game （codename_game/src/）
 
 import { copyToClipboard, escapeHtml, showToast } from "../shared/js/utils.js";
@@ -9,6 +9,7 @@ import {
   generatePlayerId,
   getStartConditions,
   joinRoom,
+  leaveRoom,
   normalizeRoomId,
   restartGame,
   revealCard,
@@ -75,6 +76,23 @@ function stopRoomSubscription() {
   if (state.unsubscribe) state.unsubscribe();
   state.unsubscribe = null;
   state.subscribedRoomId = "";
+}
+
+async function handleLeaveRoom() {
+  const roomId = state.roomId;
+  const playerId = state.playerId;
+
+  try {
+    if (roomId && playerId) {
+      await leaveRoom(roomId, playerId);
+    }
+  } catch (error) {
+    console.warn("[codenames] leaveRoom failed", error);
+  } finally {
+    clearSession();
+    showToast("ホームに戻りました", "info");
+    navigate("home");
+  }
 }
 
 function render() {
@@ -771,9 +789,7 @@ document.addEventListener("click", async (event) => {
   }
 
   if (event.target.closest("#leave-room")) {
-    clearSession();
-    showToast("ホームに戻りました", "info");
-    navigate("home");
+    await handleLeaveRoom();
     return;
   }
 

@@ -159,6 +159,38 @@ export async function joinRoom(roomId, player) {
 }
 
 /**
+ * ロビー退出時にプレイヤーをルームから除外する。
+ * 進行中・終了後のゲームは盤面整合性を優先して参加者を残す。
+ * @param {string} roomId
+ * @param {string} playerId
+ * @returns {Promise<void>}
+ */
+export async function leaveRoom(roomId, playerId) {
+  const roomRef = doc(db, ROOMS_COLLECTION, normalizeRoomId(roomId));
+
+  await runTransaction(db, async (transaction) => {
+    const snapshot = await transaction.get(roomRef);
+    if (!snapshot.exists()) return;
+
+    const room = snapshot.data();
+    if (room.gamePhase !== "lobby") return;
+
+    const players = Array.isArray(room.players) ? room.players : [];
+    const leaver = players.find((p) => p.id === playerId);
+    if (!leaver) return;
+
+    if (leaver.isHost) {
+      transaction.delete(roomRef);
+      return;
+    }
+
+    transaction.update(roomRef, {
+      players: players.filter((p) => p.id !== playerId),
+    });
+  });
+}
+
+/**
  * プレイヤーのチーム・役割を更新する。
  * @param {string} roomId
  * @param {string} playerId

@@ -17,12 +17,24 @@ NC='\033[0m'
 ERRORS=0
 WARNINGS=0
 
-# チェック対象の Realtime Database アプリ
+# チェック対象の単一ファイルアプリ
 APP_FILES=(
   "apps/iisen-show/index.html"
   "apps/word-wolf/index.html"
   "apps/name-change/index.html"
 )
+
+# チェック対象の分割ファイルアプリ
+SPLIT_APP_HTML_FILES=(
+  "apps/codenames/index.html"
+)
+
+SPLIT_APP_JS_FILES=(
+  "apps/codenames/app.js"
+)
+
+XSS_FILES=("${APP_FILES[@]}" "${SPLIT_APP_JS_FILES[@]}")
+CSS_FILES=("${APP_FILES[@]}" "${SPLIT_APP_HTML_FILES[@]}")
 
 echo ""
 echo -e "${BOLD}${BLUE}🔍 roomK lint チェック開始${NC}"
@@ -36,7 +48,7 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 echo ""
 echo -e "${BOLD}[SEC-1] XSS チェック${NC} — innerHTML + \${} に esc() なし"
 
-for f in "${APP_FILES[@]}"; do
+for f in "${XSS_FILES[@]}"; do
   [ -f "$f" ] || continue
   while IFS=: read -r line_num content; do
     echo -e "  ${RED}[ERROR]${NC} $f:$line_num"
@@ -57,7 +69,7 @@ echo ""
 echo -e "${BOLD}[SEC-2] esc() シングルクォートエスケープチェック${NC}"
 
 SEC2_OK=true
-for f in "${APP_FILES[@]}"; do
+for f in "${XSS_FILES[@]}"; do
   [ -f "$f" ] || continue
 
   # esc() チェック
@@ -90,7 +102,7 @@ echo ""
 echo -e "${BOLD}[CSS-1] design-system.css リンクチェック${NC}"
 
 CSS1_OK=true
-for f in "${APP_FILES[@]}"; do
+for f in "${CSS_FILES[@]}"; do
   [ -f "$f" ] || continue
   if ! grep -q "design-system.css" "$f"; then
     echo -e "  ${RED}[ERROR]${NC} $f — design-system.css がリンクされていません"
@@ -108,7 +120,7 @@ echo ""
 echo -e "${BOLD}[CSS-2] :root 重複定義チェック${NC}"
 
 CSS2_OK=true
-for f in "${APP_FILES[@]}"; do
+for f in "${CSS_FILES[@]}"; do
   [ -f "$f" ] || continue
   if grep -q "design-system.css" "$f" && grep -qE "^\s*:root\s*\{" "$f"; then
     line_num=$(grep -nE "^\s*:root\s*\{" "$f" | head -1 | cut -d: -f1)
@@ -159,7 +171,7 @@ echo -e "${BOLD}[REF-3] 重複ユーティリティ関数チェック${NC}"
 
 REF3_OK=true
 UTILS_FUNCS=("function shuffle(" "function escapeHtml(")
-for f in "${APP_FILES[@]}"; do
+for f in "${XSS_FILES[@]}"; do
   [ -f "$f" ] || continue
   for func in "${UTILS_FUNCS[@]}"; do
     if grep -q "$func" "$f"; then
