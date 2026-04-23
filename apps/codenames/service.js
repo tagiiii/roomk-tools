@@ -245,6 +245,60 @@ export async function startGame(roomId, hostPlayerId) {
 }
 
 /**
+ * ヒントを送信する。
+ * @param {string} roomId
+ * @param {{ word: string, count: number, byPlayerId: string, team: Team }} hint
+ * @returns {Promise<void>}
+ */
+export async function submitHint(roomId, hint) {
+  const roomRef = doc(db, ROOMS_COLLECTION, normalizeRoomId(roomId));
+
+  await runTransaction(db, async (transaction) => {
+    const snapshot = await transaction.get(roomRef);
+    if (!snapshot.exists()) {
+      throw new Error("ルームが見つかりません");
+    }
+
+    const room = snapshot.data();
+    if (room.gamePhase !== "in_progress") {
+      throw new Error("ゲーム中ではありません");
+    }
+    if (room.turnTeam !== hint.team) {
+      throw new Error("ターンが切り替わりました");
+    }
+    if (room.turnPhase !== "waiting_hint") {
+      throw new Error("今はヒントを送れません");
+    }
+
+    const players = Array.isArray(room.players) ? room.players : [];
+    const player = players.find((p) => p.id === hint.byPlayerId);
+    if (!player || player.team !== hint.team || player.role !== "spymaster") {
+      throw new Error("ヒント役だけがヒントを送れます");
+    }
+
+    const word = String(hint.word || "").trim();
+    const count = Number(hint.count);
+    if (!word) {
+      throw new Error("ヒントを入力してください");
+    }
+    if (!Number.isInteger(count) || count < 1 || count > 9) {
+      throw new Error("枚数は1〜9から選んでください");
+    }
+
+    transaction.update(roomRef, {
+      currentHint: {
+        word,
+        count,
+        byPlayerId: hint.byPlayerId,
+        updatedAt: Timestamp.now(),
+      },
+      turnPhase: "guessing",
+      remainingGuesses: count + 1,
+    });
+  });
+}
+
+/**
  * ルームを1回取得する。
  * @param {string} roomId
  * @returns {Promise<object | null>}

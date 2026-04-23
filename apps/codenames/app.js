@@ -10,6 +10,7 @@ import {
   joinRoom,
   normalizeRoomId,
   startGame,
+  submitHint,
   subscribeToRoom,
   updatePlayerRole,
 } from "./service.js";
@@ -25,6 +26,7 @@ const state = {
   unsubscribe: null,
   subscribedRoomId: "",
   loading: false,
+  submitting: false,
   error: "",
 };
 
@@ -244,11 +246,42 @@ function renderGame() {
 
   ensureRoomSubscription();
 
+  if (!state.room) {
+    appEl.innerHTML = `
+      <div class="loading-overlay">
+        <div class="spinner"></div>
+        <p>ゲームを読み込み中...</p>
+      </div>
+    `;
+    return;
+  }
+
+  const currentPlayer = state.room.players?.find((p) => p.id === state.playerId);
+  if (!currentPlayer) {
+    appEl.innerHTML = `
+      <section class="card cn-panel">
+        <h1 class="cn-title">参加者が見つかりません</h1>
+        <button class="btn btn-ghost btn-full mt-lg" id="leave-room" type="button">ホームへ戻る</button>
+      </section>
+    `;
+    return;
+  }
+
   appEl.innerHTML = `
-    <section class="card cn-panel text-center">
-      <span class="material-symbols-rounded cn-game-icon">flag</span>
-      <h1 class="cn-title">ゲーム開始しました</h1>
-      <p class="text-muted">カード画面は次の段階で移植します。</p>
+    <section class="card cn-panel cn-game-panel">
+      <div class="cn-game-header">
+        <div>
+          <p class="text-muted">ルーム ${esc(state.roomId)}</p>
+          <h1 class="cn-title">${esc(turnTitle(state.room))}</h1>
+        </div>
+        <div class="cn-role-chip">${esc(teamLabel(currentPlayer.team))} / ${esc(roleLabel(currentPlayer.role))}</div>
+      </div>
+      ${renderHintArea(state.room, currentPlayer)}
+      ${state.error ? `<div class="alert alert-error">${esc(state.error)}</div>` : ""}
+      <div class="cn-board" aria-label="単語カード">
+        ${renderCards(state.room.cards || [], currentPlayer)}
+      </div>
+      <p class="text-muted">カード公開とターン終了は次の段階で移植します。</p>
       <button class="btn btn-ghost btn-full mt-lg" id="leave-room" type="button">ホームへ戻る</button>
     </section>
   `;
@@ -260,6 +293,7 @@ function ensureRoomSubscription() {
   state.subscribedRoomId = state.roomId;
   state.unsubscribe = subscribeToRoom(state.roomId, (room) => {
     state.loading = false;
+    state.submitting = false;
     state.room = room;
     if (!room) {
       state.error = "ルームが見つかりません";
@@ -338,6 +372,79 @@ function renderStartConditions(players) {
 
 function canStart(players) {
   return getStartConditions(players).every((condition) => condition.ok);
+}
+
+function turnTitle(room) {
+  const team = teamLabel(room.turnTeam);
+  if (room.turnPhase === "waiting_hint") return `${team}のヒント待ち`;
+  return `${team}の推理中 残り${room.remainingGuesses || 0}`;
+}
+
+function renderHintArea(room, currentPlayer) {
+  const canSubmitHint =
+    room.turnTeam === currentPlayer.team &&
+    currentPlayer.role === "spymaster" &&
+    room.turnPhase === "waiting_hint";
+
+  if (canSubmitHint) {
+    const options = Array.from({ length: 9 }, (_, index) => {
+      const count = index + 1;
+      return `<option value="${count}">${count}まい</option>`;
+    }).join("");
+
+    return `
+      <form id="hint-form" class="cn-hint-form">
+        <label class="form-group">
+          <span class="form-label">ヒント</span>
+          <input class="form-input" name="hintWord" maxlength="12" autocomplete="off" placeholder="例: どうぶつ" required />
+        </label>
+        <label class="form-group">
+          <span class="form-label">枚数</span>
+          <select class="form-select" name="hintCount">${options}</select>
+        </label>
+        <button class="btn btn-primary" type="submit" ${state.submitting ? "disabled" : ""}>
+          ${state.submitting ? "送信中..." : "ヒント送信"}
+        </button>
+      </form>
+    `;
+  }
+
+  if (room.currentHint && room.turnPhase === "guessing") {
+    return `
+      <div class="cn-current-hint">
+        <span class="text-muted">現在のヒント</span>
+        <strong>「${esc(room.currentHint.word)}」${Number(room.currentHint.count)}まい</strong>
+        <span class="badge badge-accent">残り${Number(room.remainingGuesses || 0)}</span>
+      </div>
+    `;
+  }
+
+  return `<div class="alert alert-info">ヒント役がヒントを考えています。</div>`;
+}
+
+function renderCards(cards, currentPlayer) {
+  return cards.map((card) => {
+    const visibleRole = card.revealed || currentPlayer.role === "spymaster";
+    const roleClass = visibleRole ? `cn-card--${card.role}` : "cn-card--hidden";
+    const revealedClass = card.revealed ? "cn-card--revealed" : "";
+    const marker = currentPlayer.role === "spymaster" || card.revealed
+      ? `<span class="cn-card-marker">${esc(cardRoleLabel(card.role))}</span>`
+      : "";
+
+    return `
+      <button class="cn-card ${roleClass} ${revealedClass}" type="button" disabled>
+        ${marker}
+        <span class="cn-card-word">${esc(card.word)}</span>
+      </button>
+    `;
+  }).join("");
+}
+
+function cardRoleLabel(role) {
+  if (role === "red") return "赤";
+  if (role === "blue") return "青";
+  if (role === "assassin") return "トラップ";
+  return "中立";
 }
 
 async function handleCreate(form) {
@@ -431,6 +538,38 @@ async function handleStartGame() {
   }
 }
 
+async function handleHintSubmit(form) {
+  if (!state.room || !state.playerId || state.submitting) return;
+  const currentPlayer = state.room.players?.find((p) => p.id === state.playerId);
+  if (!currentPlayer) return;
+
+  const formData = new FormData(form);
+  const word = String(formData.get("hintWord") || "").trim();
+  const count = Number(formData.get("hintCount"));
+  if (!word) {
+    state.error = "ヒントを入力してください";
+    renderGame();
+    return;
+  }
+
+  state.submitting = true;
+  state.error = "";
+  renderGame();
+
+  try {
+    await submitHint(state.roomId, {
+      word,
+      count,
+      byPlayerId: state.playerId,
+      team: currentPlayer.team,
+    });
+  } catch (error) {
+    state.error = error.message || "ヒント送信に失敗しました";
+    state.submitting = false;
+    renderGame();
+  }
+}
+
 document.addEventListener("click", async (event) => {
   const routeButton = event.target.closest("[data-route]");
   if (routeButton) {
@@ -474,6 +613,7 @@ document.addEventListener("submit", async (event) => {
   try {
     if (event.target.id === "create-form") await handleCreate(event.target);
     if (event.target.id === "join-form") await handleJoin(event.target);
+    if (event.target.id === "hint-form") await handleHintSubmit(event.target);
   } catch (error) {
     state.error = error.message;
     render();
