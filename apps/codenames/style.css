@@ -3,4 +3,95 @@
  * design-system.css の変数（--color-*, --space-*）を優先して使う
  */
 
-/* 移植時にここへ追記 */
+.cn-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.cn-title {
+  font-size: var(--font-size-xl);
+  line-height: 1.35;
+}
+
+.cn-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.cn-actions {
+  display: grid;
+  gap: var(--space-sm);
+}
+
+.cn-lobby-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+}
+
+.cn-room-code {
+  font-size: var(--font-size-2xl);
+  letter-spacing: 0.08em;
+  line-height: 1.2;
+  color: var(--color-primary);
+}
+
+.cn-status-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-sm);
+}
+
+.cn-status {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  padding: var(--space-md);
+  background: #EEF3F8;
+  border-radius: var(--radius-sm);
+}
+
+.cn-section-title {
+  margin-top: var(--space-md);
+  font-size: var(--font-size-lg);
+}
+
+.cn-player-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  list-style: none;
+}
+
+.cn-player {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  padding: var(--space-md);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+}
+
+.cn-player > span:first-child {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  font-weight: 700;
+}
+
+@media (max-width: 520px) {
+  .cn-lobby-header,
+  .cn-player {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .cn-status-grid {
+    grid-template-columns: 1fr;
+  }
+}

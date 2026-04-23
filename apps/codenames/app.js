@@ -2,21 +2,363 @@
 // TODO: 移植中。仕様: apps/codenames/AGENTS.md を参照
 // 移植元: https://github.com/tagiiii/codename_game （codename_game/src/）
 
-import { escapeHtml } from "../shared/js/utils.js";
+import { copyToClipboard, escapeHtml, showToast } from "../shared/js/utils.js";
+import {
+  createRoom,
+  generatePlayerId,
+  joinRoom,
+  normalizeRoomId,
+  subscribeToRoom,
+} from "./service.js";
 import { wordSets } from "./words.js";
 
-// 疎通確認用の import。実装時に使用する。
-void escapeHtml;
-
 const appEl = document.querySelector("#app");
+const SESSION_KEY = "codenames_session";
 
-appEl.innerHTML = `
-  <div class="card text-center">
-    <p class="text-lg text-bold">
-      <span class="material-symbols-rounded" style="vertical-align:middle;margin-right:4px">construction</span>準備中
-    </p>
-    <p class="text-muted mt-sm">ことば探偵は現在移植中です。</p>
-    <p class="text-muted mt-xs">単語セット ${wordSets.length} 種を読み込みました。</p>
-    <a href="../" class="btn btn-ghost mt-md">← ツール一覧へ</a>
-  </div>
-`;
+const state = {
+  roomId: "",
+  playerId: "",
+  room: null,
+  unsubscribe: null,
+  subscribedRoomId: "",
+  loading: false,
+  error: "",
+};
+
+const esc = escapeHtml;
+
+function getRoute() {
+  return (window.location.hash || "#home").replace("#", "");
+}
+
+function navigate(route) {
+  window.location.hash = route;
+}
+
+function saveSession() {
+  sessionStorage.setItem(SESSION_KEY, JSON.stringify({
+    roomId: state.roomId,
+    playerId: state.playerId,
+  }));
+}
+
+function restoreSession() {
+  try {
+    const saved = JSON.parse(sessionStorage.getItem(SESSION_KEY) || "null");
+    if (!saved?.roomId || !saved?.playerId) return false;
+    state.roomId = saved.roomId;
+    state.playerId = saved.playerId;
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function clearSession() {
+  sessionStorage.removeItem(SESSION_KEY);
+  state.roomId = "";
+  state.playerId = "";
+  state.room = null;
+  stopRoomSubscription();
+}
+
+function stopRoomSubscription() {
+  if (state.unsubscribe) state.unsubscribe();
+  state.unsubscribe = null;
+  state.subscribedRoomId = "";
+}
+
+function render() {
+  const route = getRoute();
+  if (route === "create") return renderCreate();
+  if (route === "join") return renderJoin();
+  if (route === "lobby") return renderLobby();
+  return renderHome();
+}
+
+function renderHome() {
+  stopRoomSubscription();
+  appEl.innerHTML = `
+    <section class="card cn-panel">
+      <p class="badge badge-accent">Firestore同期</p>
+      <h1 class="cn-title">ことば探偵</h1>
+      <p class="text-muted">ヒント役の言葉をもとに、チームで相談しながら単語カードを見つけるゲームです。</p>
+      ${state.error ? `<div class="alert alert-error mt-md">${esc(state.error)}</div>` : ""}
+      <div class="cn-actions mt-lg">
+        <button class="btn btn-primary btn-full" data-route="create">
+          <span class="material-symbols-rounded">add_circle</span>ルームを作る
+        </button>
+        <button class="btn btn-secondary btn-full" data-route="join">
+          <span class="material-symbols-rounded">login</span>ルームに参加する
+        </button>
+      </div>
+    </section>
+  `;
+}
+
+function renderCreate() {
+  const wordOptions = wordSets.map((set) => (
+    `<option value="${esc(set.id)}">${esc(set.label)}</option>`
+  )).join("");
+
+  appEl.innerHTML = `
+    <section class="card cn-panel">
+      <h1 class="cn-title">ルームを作る</h1>
+      <form id="create-form" class="cn-form">
+        <label class="form-group">
+          <span class="form-label">あなたの名前</span>
+          <input class="form-input" name="nickname" maxlength="8" autocomplete="nickname" placeholder="例: たろう" required />
+        </label>
+        <label class="form-group">
+          <span class="form-label">単語セット</span>
+          <select class="form-select" name="wordSetId">${wordOptions}</select>
+        </label>
+        <label class="form-group">
+          <span class="form-label">先攻チーム</span>
+          <select class="form-select" name="firstTeam">
+            <option value="red">赤チーム</option>
+            <option value="blue">青チーム</option>
+          </select>
+        </label>
+        ${state.error ? `<div class="alert alert-error">${esc(state.error)}</div>` : ""}
+        <div class="cn-actions">
+          <button class="btn btn-primary btn-full" type="submit" ${state.loading ? "disabled" : ""}>
+            ${state.loading ? "作成中..." : "ルームを作成"}
+          </button>
+          <button class="btn btn-ghost btn-full" type="button" data-route="home">戻る</button>
+        </div>
+      </form>
+    </section>
+  `;
+}
+
+function renderJoin() {
+  appEl.innerHTML = `
+    <section class="card cn-panel">
+      <h1 class="cn-title">ルームに参加する</h1>
+      <form id="join-form" class="cn-form">
+        <label class="form-group">
+          <span class="form-label">あなたの名前</span>
+          <input class="form-input" name="nickname" maxlength="8" autocomplete="nickname" placeholder="例: はなこ" required />
+        </label>
+        <label class="form-group">
+          <span class="form-label">ルームコード</span>
+          <input class="form-input cn-room-code-input" name="roomId" maxlength="6" autocomplete="off" placeholder="例: ABC234" required />
+        </label>
+        ${state.error ? `<div class="alert alert-error">${esc(state.error)}</div>` : ""}
+        <div class="cn-actions">
+          <button class="btn btn-primary btn-full" type="submit" ${state.loading ? "disabled" : ""}>
+            ${state.loading ? "参加中..." : "参加する"}
+          </button>
+          <button class="btn btn-ghost btn-full" type="button" data-route="home">戻る</button>
+        </div>
+      </form>
+    </section>
+  `;
+}
+
+function renderLobby() {
+  if (!state.roomId || !state.playerId) {
+    if (!restoreSession()) {
+      state.error = "参加情報が見つかりません。もう一度入室してください。";
+      navigate("home");
+      return;
+    }
+  }
+
+  ensureRoomSubscription();
+
+  if (!state.room) {
+    appEl.innerHTML = `
+      <div class="loading-overlay">
+        <div class="spinner"></div>
+        <p>ルームを読み込み中...</p>
+      </div>
+    `;
+    return;
+  }
+
+  const currentPlayer = state.room.players?.find((p) => p.id === state.playerId);
+  const players = state.room.players || [];
+  const playerList = players.map((player) => `
+    <li class="cn-player">
+      <span>
+        ${esc(player.name)}
+        ${player.isHost ? '<span class="badge badge-primary">ホスト</span>' : ""}
+      </span>
+      <span class="text-muted">${esc(teamLabel(player.team))} / ${esc(roleLabel(player.role))}</span>
+    </li>
+  `).join("");
+
+  appEl.innerHTML = `
+    <section class="card cn-panel">
+      <div class="cn-lobby-header">
+        <div>
+          <p class="text-muted">ルームコード</p>
+          <h1 class="cn-room-code">${esc(state.roomId)}</h1>
+        </div>
+        <button class="btn btn-secondary btn-sm" id="copy-room-code" type="button">
+          <span class="material-symbols-rounded">content_copy</span>コピー
+        </button>
+      </div>
+      <div class="alert alert-info mt-md">
+        ロビー画面は移植中です。今回は作成・参加と参加者一覧の確認までできます。
+      </div>
+      <div class="cn-status-grid mt-lg">
+        <div class="cn-status">
+          <span class="text-muted">あなた</span>
+          <strong>${esc(currentPlayer?.name || "不明")}</strong>
+        </div>
+        <div class="cn-status">
+          <span class="text-muted">参加人数</span>
+          <strong>${players.length} / 8</strong>
+        </div>
+      </div>
+      <h2 class="cn-section-title">参加者</h2>
+      <ul class="cn-player-list">${playerList}</ul>
+      ${state.error ? `<div class="alert alert-error mt-md">${esc(state.error)}</div>` : ""}
+      <button class="btn btn-ghost btn-full mt-lg" id="leave-room" type="button">ホームへ戻る</button>
+    </section>
+  `;
+}
+
+function ensureRoomSubscription() {
+  if (state.unsubscribe && state.subscribedRoomId === state.roomId) return;
+  stopRoomSubscription();
+  state.subscribedRoomId = state.roomId;
+  state.unsubscribe = subscribeToRoom(state.roomId, (room) => {
+    state.room = room;
+    if (!room) {
+      state.error = "ルームが見つかりません";
+      clearSession();
+      navigate("home");
+      return;
+    }
+    if (getRoute() === "lobby") renderLobby();
+  }, (error) => {
+    state.error = error.message || "ルームの読み込みに失敗しました";
+    renderLobby();
+  });
+}
+
+function validateNickname(value) {
+  const nickname = String(value || "").trim();
+  if (!nickname) throw new Error("名前を入力してください");
+  if (nickname.length > 8) throw new Error("名前は8文字以内にしてください");
+  return nickname;
+}
+
+function teamLabel(team) {
+  return team === "blue" ? "青チーム" : "赤チーム";
+}
+
+function roleLabel(role) {
+  return role === "spymaster" ? "ヒント役" : "探す役";
+}
+
+async function handleCreate(form) {
+  const formData = new FormData(form);
+  const nickname = validateNickname(formData.get("nickname"));
+  const wordSetId = String(formData.get("wordSetId") || "");
+  const firstTeam = String(formData.get("firstTeam") || "red") === "blue" ? "blue" : "red";
+  const wordSet = wordSets.find((set) => set.id === wordSetId) || wordSets[0];
+  const playerId = generatePlayerId();
+
+  state.loading = true;
+  state.error = "";
+  renderCreate();
+
+  try {
+    const roomId = await createRoom({
+      id: playerId,
+      name: nickname,
+      team: "red",
+      role: "guesser",
+    }, wordSet.words, firstTeam);
+    state.roomId = roomId;
+    state.playerId = playerId;
+    state.room = null;
+    saveSession();
+    navigate("lobby");
+  } catch (error) {
+    state.error = error.message || "ルーム作成に失敗しました";
+    state.loading = false;
+    renderCreate();
+  }
+}
+
+async function handleJoin(form) {
+  const formData = new FormData(form);
+  const nickname = validateNickname(formData.get("nickname"));
+  const roomId = normalizeRoomId(formData.get("roomId"));
+  if (!roomId) throw new Error("ルームコードを入力してください");
+
+  const playerId = generatePlayerId();
+  state.loading = true;
+  state.error = "";
+  renderJoin();
+
+  try {
+    await joinRoom(roomId, {
+      id: playerId,
+      name: nickname,
+      team: "red",
+      role: "guesser",
+    });
+    state.roomId = roomId;
+    state.playerId = playerId;
+    state.room = null;
+    saveSession();
+    navigate("lobby");
+  } catch (error) {
+    state.error = error.message || "ルーム参加に失敗しました";
+    state.loading = false;
+    renderJoin();
+  }
+}
+
+document.addEventListener("click", async (event) => {
+  const routeButton = event.target.closest("[data-route]");
+  if (routeButton) {
+    state.error = "";
+    navigate(routeButton.dataset.route);
+    return;
+  }
+
+  const copyButton = event.target.closest("#copy-room-code");
+  if (copyButton) {
+    await copyToClipboard(state.roomId, copyButton, { successText: "コピー済み" });
+    return;
+  }
+
+  if (event.target.closest("#leave-room")) {
+    clearSession();
+    showToast("ホームに戻りました", "info");
+    navigate("home");
+  }
+});
+
+document.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  try {
+    if (event.target.id === "create-form") await handleCreate(event.target);
+    if (event.target.id === "join-form") await handleJoin(event.target);
+  } catch (error) {
+    state.error = error.message;
+    render();
+  }
+});
+
+document.addEventListener("input", (event) => {
+  if (event.target.classList.contains("cn-room-code-input")) {
+    event.target.value = normalizeRoomId(event.target.value);
+  }
+});
+
+window.addEventListener("hashchange", render);
+
+if (getRoute() === "home" && restoreSession()) {
+  navigate("lobby");
+} else {
+  render();
+}

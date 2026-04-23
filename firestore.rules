@@ -14,5 +14,10 @@ service cloud.firestore {
         allow read, write: if true;
       }
     }
+
+    // ことば探偵 — ルームコード共有型ゲーム
+    match /codenames_rooms/{roomId} {
+      allow read, write: if true;
+    }
   }
 }
