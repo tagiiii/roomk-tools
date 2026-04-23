@@ -6,9 +6,12 @@ import { copyToClipboard, escapeHtml, showToast } from "../shared/js/utils.js";
 import {
   createRoom,
   generatePlayerId,
+  getStartConditions,
   joinRoom,
   normalizeRoomId,
+  startGame,
   subscribeToRoom,
+  updatePlayerRole,
 } from "./service.js";
 import { wordSets } from "./words.js";
 
@@ -73,6 +76,7 @@ function render() {
   if (route === "create") return renderCreate();
   if (route === "join") return renderJoin();
   if (route === "lobby") return renderLobby();
+  if (route === "game") return renderGame();
   return renderHome();
 }
 
@@ -180,6 +184,7 @@ function renderLobby() {
 
   const currentPlayer = state.room.players?.find((p) => p.id === state.playerId);
   const players = state.room.players || [];
+  const startable = canStart(players);
   const playerList = players.map((player) => `
     <li class="cn-player">
       <span>
@@ -199,24 +204,51 @@ function renderLobby() {
         </div>
         <button class="btn btn-secondary btn-sm" id="copy-room-code" type="button">
           <span class="material-symbols-rounded">content_copy</span>コピー
-        </button>
+      </button>
       </div>
-      <div class="alert alert-info mt-md">
-        ロビー画面は移植中です。今回は作成・参加と参加者一覧の確認までできます。
-      </div>
+      ${currentPlayer ? renderPlayerControls(currentPlayer) : ""}
       <div class="cn-status-grid mt-lg">
         <div class="cn-status">
           <span class="text-muted">あなた</span>
           <strong>${esc(currentPlayer?.name || "不明")}</strong>
+          <span class="text-muted">${esc(teamLabel(currentPlayer?.team))} / ${esc(roleLabel(currentPlayer?.role))}</span>
         </div>
         <div class="cn-status">
           <span class="text-muted">参加人数</span>
           <strong>${players.length} / 8</strong>
         </div>
       </div>
+      <h2 class="cn-section-title">開始条件</h2>
+      <ul class="cn-condition-list">${renderStartConditions(players)}</ul>
       <h2 class="cn-section-title">参加者</h2>
       <ul class="cn-player-list">${playerList}</ul>
       ${state.error ? `<div class="alert alert-error mt-md">${esc(state.error)}</div>` : ""}
+      ${currentPlayer?.isHost ? `
+        <button class="btn btn-primary btn-full mt-lg" id="start-game" type="button" ${!startable || state.loading ? "disabled" : ""}>
+          ${state.loading ? "開始中..." : "ゲーム開始"}
+        </button>
+      ` : '<p class="text-muted mt-lg">ホストがゲームを開始するまで待ってください。</p>'}
+      <button class="btn btn-ghost btn-full mt-lg" id="leave-room" type="button">ホームへ戻る</button>
+    </section>
+  `;
+}
+
+function renderGame() {
+  if (!state.roomId || !state.playerId) {
+    if (!restoreSession()) {
+      state.error = "参加情報が見つかりません。もう一度入室してください。";
+      navigate("home");
+      return;
+    }
+  }
+
+  ensureRoomSubscription();
+
+  appEl.innerHTML = `
+    <section class="card cn-panel text-center">
+      <span class="material-symbols-rounded cn-game-icon">flag</span>
+      <h1 class="cn-title">ゲーム開始しました</h1>
+      <p class="text-muted">カード画面は次の段階で移植します。</p>
       <button class="btn btn-ghost btn-full mt-lg" id="leave-room" type="button">ホームへ戻る</button>
     </section>
   `;
@@ -227,6 +259,7 @@ function ensureRoomSubscription() {
   stopRoomSubscription();
   state.subscribedRoomId = state.roomId;
   state.unsubscribe = subscribeToRoom(state.roomId, (room) => {
+    state.loading = false;
     state.room = room;
     if (!room) {
       state.error = "ルームが見つかりません";
@@ -234,7 +267,12 @@ function ensureRoomSubscription() {
       navigate("home");
       return;
     }
+    if (room.gamePhase === "in_progress" && getRoute() === "lobby") {
+      navigate("game");
+      return;
+    }
     if (getRoute() === "lobby") renderLobby();
+    if (getRoute() === "game") renderGame();
   }, (error) => {
     state.error = error.message || "ルームの読み込みに失敗しました";
     renderLobby();
@@ -254,6 +292,52 @@ function teamLabel(team) {
 
 function roleLabel(role) {
   return role === "spymaster" ? "ヒント役" : "探す役";
+}
+
+function renderPlayerControls(currentPlayer) {
+  const teamButtons = ["red", "blue"].map((team) => `
+    <button
+      class="btn ${currentPlayer.team === team ? "btn-primary" : "btn-secondary"} btn-sm"
+      type="button"
+      data-team="${team}"
+      ${state.loading ? "disabled" : ""}
+    >${teamLabel(team)}</button>
+  `).join("");
+
+  const roleButtons = ["spymaster", "guesser"].map((role) => `
+    <button
+      class="btn ${currentPlayer.role === role ? "btn-primary" : "btn-secondary"} btn-sm"
+      type="button"
+      data-role="${role}"
+      ${state.loading ? "disabled" : ""}
+    >${roleLabel(role)}</button>
+  `).join("");
+
+  return `
+    <div class="cn-controls">
+      <div>
+        <p class="form-label">チーム</p>
+        <div class="cn-toggle-row">${teamButtons}</div>
+      </div>
+      <div>
+        <p class="form-label">役割</p>
+        <div class="cn-toggle-row">${roleButtons}</div>
+      </div>
+    </div>
+  `;
+}
+
+function renderStartConditions(players) {
+  return getStartConditions(players).map((condition) => `
+    <li class="${condition.ok ? "cn-condition-ok" : "cn-condition-ng"}">
+      <span class="material-symbols-rounded">${condition.ok ? "check_circle" : "radio_button_unchecked"}</span>
+      ${esc(condition.label)}
+    </li>
+  `).join("");
+}
+
+function canStart(players) {
+  return getStartConditions(players).every((condition) => condition.ok);
 }
 
 async function handleCreate(form) {
@@ -317,6 +401,36 @@ async function handleJoin(form) {
   }
 }
 
+async function handlePlayerUpdate(updates) {
+  if (!state.roomId || !state.playerId || state.loading) return;
+  state.loading = true;
+  state.error = "";
+  renderLobby();
+
+  try {
+    await updatePlayerRole(state.roomId, state.playerId, updates);
+  } catch (error) {
+    state.error = error.message || "変更に失敗しました";
+    state.loading = false;
+    renderLobby();
+  }
+}
+
+async function handleStartGame() {
+  if (!state.roomId || !state.playerId || state.loading) return;
+  state.loading = true;
+  state.error = "";
+  renderLobby();
+
+  try {
+    await startGame(state.roomId, state.playerId);
+  } catch (error) {
+    state.error = error.message || "ゲーム開始に失敗しました";
+    state.loading = false;
+    renderLobby();
+  }
+}
+
 document.addEventListener("click", async (event) => {
   const routeButton = event.target.closest("[data-route]");
   if (routeButton) {
@@ -335,6 +449,23 @@ document.addEventListener("click", async (event) => {
     clearSession();
     showToast("ホームに戻りました", "info");
     navigate("home");
+    return;
+  }
+
+  const teamButton = event.target.closest("[data-team]");
+  if (teamButton) {
+    await handlePlayerUpdate({ team: teamButton.dataset.team });
+    return;
+  }
+
+  const roleButton = event.target.closest("[data-role]");
+  if (roleButton) {
+    await handlePlayerUpdate({ role: roleButton.dataset.role });
+    return;
+  }
+
+  if (event.target.closest("#start-game")) {
+    await handleStartGame();
   }
 });
 

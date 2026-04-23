@@ -158,6 +158,93 @@ export async function joinRoom(roomId, player) {
 }
 
 /**
+ * プレイヤーのチーム・役割を更新する。
+ * @param {string} roomId
+ * @param {string} playerId
+ * @param {Partial<Pick<Player, "team" | "role">>} updates
+ * @returns {Promise<void>}
+ */
+export async function updatePlayerRole(roomId, playerId, updates) {
+  const roomRef = doc(db, ROOMS_COLLECTION, normalizeRoomId(roomId));
+
+  await runTransaction(db, async (transaction) => {
+    const snapshot = await transaction.get(roomRef);
+    if (!snapshot.exists()) {
+      throw new Error("ルームが見つかりません");
+    }
+
+    const room = snapshot.data();
+    if (room.gamePhase !== "lobby") {
+      throw new Error("ゲーム開始後は変更できません");
+    }
+
+    const players = Array.isArray(room.players) ? room.players : [];
+    const currentPlayer = players.find((p) => p.id === playerId);
+    if (!currentPlayer) {
+      throw new Error("参加者が見つかりません");
+    }
+
+    const nextPlayer = { ...currentPlayer, ...updates };
+    if (!["red", "blue"].includes(nextPlayer.team)) {
+      throw new Error("チームを選んでください");
+    }
+    if (!["spymaster", "guesser"].includes(nextPlayer.role)) {
+      throw new Error("役割を選んでください");
+    }
+
+    if (nextPlayer.role === "spymaster") {
+      const existingSpymaster = players.find((p) =>
+        p.id !== playerId && p.team === nextPlayer.team && p.role === "spymaster"
+      );
+      if (existingSpymaster) {
+        throw new Error(`${teamLabel(nextPlayer.team)}のヒント役は既にいます`);
+      }
+    }
+
+    transaction.update(roomRef, {
+      players: players.map((p) => p.id === playerId ? nextPlayer : p),
+    });
+  });
+}
+
+/**
+ * ゲームを開始する。
+ * @param {string} roomId
+ * @param {string} hostPlayerId
+ * @returns {Promise<void>}
+ */
+export async function startGame(roomId, hostPlayerId) {
+  const roomRef = doc(db, ROOMS_COLLECTION, normalizeRoomId(roomId));
+
+  await runTransaction(db, async (transaction) => {
+    const snapshot = await transaction.get(roomRef);
+    if (!snapshot.exists()) {
+      throw new Error("ルームが見つかりません");
+    }
+
+    const room = snapshot.data();
+    if (room.gamePhase !== "lobby") {
+      throw new Error("このルームはすでに開始しています");
+    }
+
+    const players = Array.isArray(room.players) ? room.players : [];
+    const hostPlayer = players.find((p) => p.id === hostPlayerId);
+    if (!hostPlayer?.isHost) {
+      throw new Error("ホストだけがゲームを開始できます");
+    }
+
+    const conditions = getStartConditions(players);
+    if (!conditions.every((condition) => condition.ok)) {
+      throw new Error("開始条件を満たしていません");
+    }
+
+    transaction.update(roomRef, {
+      gamePhase: "in_progress",
+    });
+  });
+}
+
+/**
  * ルームを1回取得する。
  * @param {string} roomId
  * @returns {Promise<object | null>}
@@ -189,4 +276,31 @@ export function subscribeToRoom(roomId, callback, onError = console.error) {
  */
 export function normalizeRoomId(roomId) {
   return String(roomId || "").trim().toUpperCase();
+}
+
+/**
+ * 開始条件を返す。
+ * @param {Player[]} players
+ * @returns {{ id: string, label: string, ok: boolean }[]}
+ */
+export function getStartConditions(players) {
+  const redPlayers = players.filter((p) => p.team === "red");
+  const bluePlayers = players.filter((p) => p.team === "blue");
+  const redSpymaster = redPlayers.some((p) => p.role === "spymaster");
+  const blueSpymaster = bluePlayers.some((p) => p.role === "spymaster");
+  const redGuessers = redPlayers.filter((p) => p.role === "guesser");
+  const blueGuessers = bluePlayers.filter((p) => p.role === "guesser");
+
+  return [
+    { id: "red-count", label: "赤チーム: 2人以上", ok: redPlayers.length >= 2 },
+    { id: "blue-count", label: "青チーム: 2人以上", ok: bluePlayers.length >= 2 },
+    { id: "red-spymaster", label: "赤チーム: ヒント役1人", ok: redSpymaster },
+    { id: "blue-spymaster", label: "青チーム: ヒント役1人", ok: blueSpymaster },
+    { id: "red-guesser", label: "赤チーム: 探す役1人以上", ok: redGuessers.length >= 1 },
+    { id: "blue-guesser", label: "青チーム: 探す役1人以上", ok: blueGuessers.length >= 1 },
+  ];
+}
+
+function teamLabel(team) {
+  return team === "blue" ? "青チーム" : "赤チーム";
 }
