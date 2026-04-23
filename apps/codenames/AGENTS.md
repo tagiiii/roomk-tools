@@ -88,7 +88,7 @@ roomK 共通の「学校・勉強・テストを避ける／恋愛・暴力・�
 
 ## 移植状況
 
-- [ ] 単語セット移植（`src/data/wordSets.ts` → `apps/codenames/words.js`）
+- [x] 単語セット移植（`src/data/wordSets.ts` → `apps/codenames/words.js`）
 - [ ] ルーム作成・参加フロー
 - [ ] ロビー（チーム・役割選択 + 開始条件バリデーション）
 - [ ] ゲーム画面（5×5 カードグリッド）
