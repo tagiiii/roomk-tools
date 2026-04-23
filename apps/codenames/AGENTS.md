@@ -93,8 +93,8 @@ roomK 共通の「学校・勉強・テストを避ける／恋愛・暴力・�
 - [x] ロビー（チーム・役割選択 + 開始条件バリデーション）
 - [x] ゲーム画面（5×5 カードグリッド）
 - [x] ヒント送信（ヒント役のみ表示）
-- [ ] カード公開 transaction
-- [ ] ターン終了 transaction
-- [ ] 結果画面・再戦
-- [ ] 再接続（sessionStorage）
-- [ ] 退出・クリーンアップ（listener off / TTL 任せ）
+- [x] カード公開 transaction
+- [x] ターン終了 transaction
+- [x] 結果画面・再戦
+- [x] 再接続（sessionStorage）
+- [x] 退出・クリーンアップ（listener off / TTL 任せ）

@@ -5,10 +5,13 @@
 import { copyToClipboard, escapeHtml, showToast } from "../shared/js/utils.js";
 import {
   createRoom,
+  endTurn,
   generatePlayerId,
   getStartConditions,
   joinRoom,
   normalizeRoomId,
+  restartGame,
+  revealCard,
   startGame,
   submitHint,
   subscribeToRoom,
@@ -27,6 +30,7 @@ const state = {
   subscribedRoomId: "",
   loading: false,
   submitting: false,
+  notification: null,
   error: "",
 };
 
@@ -79,6 +83,7 @@ function render() {
   if (route === "join") return renderJoin();
   if (route === "lobby") return renderLobby();
   if (route === "game") return renderGame();
+  if (route === "finish") return renderFinish();
   return renderHome();
 }
 
@@ -184,6 +189,11 @@ function renderLobby() {
     return;
   }
 
+  if (state.room.gamePhase === "finished" && !state.notification?.visible) {
+    navigate("finish");
+    return;
+  }
+
   const currentPlayer = state.room.players?.find((p) => p.id === state.playerId);
   const players = state.room.players || [];
   const startable = canStart(players);
@@ -281,8 +291,55 @@ function renderGame() {
       <div class="cn-board" aria-label="単語カード">
         ${renderCards(state.room.cards || [], currentPlayer)}
       </div>
-      <p class="text-muted">カード公開とターン終了は次の段階で移植します。</p>
+      ${renderTurnActions(state.room, currentPlayer)}
       <button class="btn btn-ghost btn-full mt-lg" id="leave-room" type="button">ホームへ戻る</button>
+    </section>
+    ${renderNotification()}
+  `;
+}
+
+function renderFinish() {
+  if (!state.roomId || !state.playerId) {
+    if (!restoreSession()) {
+      state.error = "参加情報が見つかりません。もう一度入室してください。";
+      navigate("home");
+      return;
+    }
+  }
+
+  ensureRoomSubscription();
+
+  if (!state.room) {
+    appEl.innerHTML = `
+      <div class="loading-overlay">
+        <div class="spinner"></div>
+        <p>結果を読み込み中...</p>
+      </div>
+    `;
+    return;
+  }
+
+  const currentPlayer = state.room.players?.find((p) => p.id === state.playerId);
+  const winner = state.room.winner;
+  const isWinner = currentPlayer?.team === winner;
+
+  appEl.innerHTML = `
+    <section class="card cn-panel cn-game-panel">
+      <div class="cn-result cn-result--${esc(winner || "neutral")}">
+        <p class="text-muted">結果</p>
+        <h1 class="cn-title">${esc(teamLabel(winner))}が全部見つけました</h1>
+        <p class="text-bold">${isWinner ? "勝ち" : "負け"}</p>
+      </div>
+      ${state.error ? `<div class="alert alert-error">${esc(state.error)}</div>` : ""}
+      <div class="cn-board" aria-label="公開された単語カード">
+        ${renderCards(state.room.cards || [], { ...currentPlayer, role: "spymaster" }, { revealAll: true })}
+      </div>
+      ${currentPlayer?.isHost ? `
+        <button class="btn btn-primary btn-full mt-lg" id="restart-game" type="button" ${state.loading ? "disabled" : ""}>
+          ${state.loading ? "準備中..." : "もう一度"}
+        </button>
+      ` : ""}
+      <button class="btn btn-ghost btn-full mt-md" id="leave-room" type="button">退出</button>
     </section>
   `;
 }
@@ -305,8 +362,21 @@ function ensureRoomSubscription() {
       navigate("game");
       return;
     }
+    if (room.gamePhase === "finished" && ["game", "lobby"].includes(getRoute())) {
+      if (state.notification?.visible) {
+        renderGame();
+        return;
+      }
+      navigate("finish");
+      return;
+    }
+    if (room.gamePhase === "lobby" && ["game", "finish"].includes(getRoute())) {
+      navigate("lobby");
+      return;
+    }
     if (getRoute() === "lobby") renderLobby();
     if (getRoute() === "game") renderGame();
+    if (getRoute() === "finish") renderFinish();
   }, (error) => {
     state.error = error.message || "ルームの読み込みに失敗しました";
     renderLobby();
@@ -422,17 +492,23 @@ function renderHintArea(room, currentPlayer) {
   return `<div class="alert alert-info">ヒント役がヒントを考えています。</div>`;
 }
 
-function renderCards(cards, currentPlayer) {
+function renderCards(cards, currentPlayer, options = {}) {
   return cards.map((card) => {
-    const visibleRole = card.revealed || currentPlayer.role === "spymaster";
+    const visibleRole = options.revealAll || card.revealed || currentPlayer.role === "spymaster";
     const roleClass = visibleRole ? `cn-card--${card.role}` : "cn-card--hidden";
     const revealedClass = card.revealed ? "cn-card--revealed" : "";
-    const marker = currentPlayer.role === "spymaster" || card.revealed
+    const marker = visibleRole
       ? `<span class="cn-card-marker">${esc(cardRoleLabel(card.role))}</span>`
       : "";
+    const canClick = canRevealCard(card, currentPlayer);
 
     return `
-      <button class="cn-card ${roleClass} ${revealedClass}" type="button" disabled>
+      <button
+        class="cn-card ${roleClass} ${revealedClass} ${canClick ? "cn-card--clickable" : ""}"
+        type="button"
+        data-card-index="${card.index}"
+        ${canClick ? "" : "disabled"}
+      >
         ${marker}
         <span class="cn-card-word">${esc(card.word)}</span>
       </button>
@@ -445,6 +521,43 @@ function cardRoleLabel(role) {
   if (role === "blue") return "青";
   if (role === "assassin") return "トラップ";
   return "中立";
+}
+
+function canRevealCard(card, currentPlayer) {
+  return !!card &&
+    !state.submitting &&
+    !card.revealed &&
+    state.room?.gamePhase === "in_progress" &&
+    state.room?.turnPhase === "guessing" &&
+    state.room?.turnTeam === currentPlayer.team &&
+    currentPlayer.role === "guesser";
+}
+
+function renderTurnActions(room, currentPlayer) {
+  const canPass = !state.submitting &&
+    room.gamePhase === "in_progress" &&
+    room.turnPhase === "guessing" &&
+    room.turnTeam === currentPlayer.team &&
+    currentPlayer.role === "guesser";
+
+  if (!canPass && currentPlayer.role !== "guesser") return "";
+
+  return `
+    <div class="cn-actions">
+      <button class="btn btn-secondary btn-full" id="end-turn" type="button" ${canPass ? "" : "disabled"}>
+        ${state.submitting ? "送信中..." : "ターンを終了（パス）"}
+      </button>
+    </div>
+  `;
+}
+
+function renderNotification() {
+  if (!state.notification?.visible) return "";
+  return `
+    <button class="cn-notification cn-notification--${esc(state.notification.type)}" id="notification-close" type="button">
+      <span>${esc(state.notification.message)}</span>
+    </button>
+  `;
 }
 
 async function handleCreate(form) {
@@ -570,6 +683,79 @@ async function handleHintSubmit(form) {
   }
 }
 
+async function handleRevealCard(cardIndex) {
+  if (!state.room || state.submitting) return;
+  const currentPlayer = state.room.players?.find((p) => p.id === state.playerId);
+  const card = state.room.cards?.[cardIndex];
+  if (!currentPlayer || !canRevealCard(card, currentPlayer)) return;
+
+  state.submitting = true;
+  state.error = "";
+  renderGame();
+
+  try {
+    const result = await revealCard(state.roomId, cardIndex, state.room.turnTeam);
+    if (result.endedByTrap) {
+      showNotification("トラップカード\nチャレンジ終了", "danger");
+    }
+  } catch (error) {
+    state.error = error.message || "カード公開に失敗しました";
+    state.submitting = false;
+    renderGame();
+  }
+}
+
+async function handleEndTurn() {
+  if (!state.room || state.submitting) return;
+  const currentPlayer = state.room.players?.find((p) => p.id === state.playerId);
+  if (!currentPlayer || currentPlayer.role !== "guesser" || currentPlayer.team !== state.room.turnTeam) return;
+
+  state.submitting = true;
+  state.error = "";
+  renderGame();
+
+  try {
+    await endTurn(state.roomId, state.room.turnTeam);
+  } catch (error) {
+    state.error = error.message || "ターン終了に失敗しました";
+    state.submitting = false;
+    renderGame();
+  }
+}
+
+async function handleRestartGame() {
+  if (!state.roomId || !state.playerId || state.loading) return;
+  state.loading = true;
+  state.error = "";
+  renderFinish();
+
+  try {
+    await restartGame(state.roomId, state.playerId);
+  } catch (error) {
+    state.error = error.message || "もう一度始める準備に失敗しました";
+    state.loading = false;
+    renderFinish();
+  }
+}
+
+function showNotification(message, type = "info") {
+  state.notification = { message, type, visible: true };
+  renderGame();
+  setTimeout(() => {
+    closeNotification();
+  }, 2500);
+}
+
+function closeNotification() {
+  if (!state.notification?.visible) return;
+  state.notification = null;
+  if (state.room?.gamePhase === "finished") {
+    navigate("finish");
+  } else {
+    render();
+  }
+}
+
 document.addEventListener("click", async (event) => {
   const routeButton = event.target.closest("[data-route]");
   if (routeButton) {
@@ -605,6 +791,27 @@ document.addEventListener("click", async (event) => {
 
   if (event.target.closest("#start-game")) {
     await handleStartGame();
+    return;
+  }
+
+  const cardButton = event.target.closest("[data-card-index]");
+  if (cardButton) {
+    await handleRevealCard(Number(cardButton.dataset.cardIndex));
+    return;
+  }
+
+  if (event.target.closest("#end-turn")) {
+    await handleEndTurn();
+    return;
+  }
+
+  if (event.target.closest("#restart-game")) {
+    await handleRestartGame();
+    return;
+  }
+
+  if (event.target.closest("#notification-close")) {
+    closeNotification();
   }
 });
 

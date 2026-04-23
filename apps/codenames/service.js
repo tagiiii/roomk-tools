@@ -101,6 +101,7 @@ export async function createRoom(hostPlayer, words, firstTeam) {
       currentHint: null,
       remainingGuesses: 0,
       cards: generateCards(words, firstTeam),
+      wordSetWords: words,
       players: [{ ...hostPlayer, isHost: true }],
       firstTeam,
       winner: null,
@@ -299,6 +300,144 @@ export async function submitHint(roomId, hint) {
 }
 
 /**
+ * カードを公開する。
+ * @param {string} roomId
+ * @param {number} cardIndex
+ * @param {Team} expectedTurnTeam
+ * @returns {Promise<{ changed: boolean, endedByTrap: boolean }>}
+ */
+export async function revealCard(roomId, cardIndex, expectedTurnTeam) {
+  const roomRef = doc(db, ROOMS_COLLECTION, normalizeRoomId(roomId));
+
+  return runTransaction(db, async (transaction) => {
+    const snapshot = await transaction.get(roomRef);
+    if (!snapshot.exists()) {
+      throw new Error("ルームが見つかりません");
+    }
+
+    const room = snapshot.data();
+    if (room.gamePhase !== "in_progress") {
+      throw new Error("ゲーム中ではありません");
+    }
+    if (room.turnTeam !== expectedTurnTeam) {
+      throw new Error("ターンが切り替わりました");
+    }
+    if (room.turnPhase !== "guessing") {
+      throw new Error("今はカードを選べません");
+    }
+
+    const cards = Array.isArray(room.cards) ? room.cards : [];
+    const card = cards[cardIndex];
+    if (!card) {
+      throw new Error("カードが見つかりません");
+    }
+    if (card.revealed) {
+      return { changed: false, endedByTrap: false };
+    }
+
+    const updatedCards = cards.map((c, index) =>
+      index === cardIndex ? { ...c, revealed: true } : c
+    );
+    const updates = { cards: updatedCards };
+
+    if (card.role === "assassin") {
+      updates.gamePhase = "finished";
+      updates.winner = room.turnTeam === "red" ? "blue" : "red";
+      transaction.update(roomRef, updates);
+      return { changed: true, endedByTrap: true };
+    }
+
+    if (card.role === room.turnTeam) {
+      const remainingGuesses = Math.max(Number(room.remainingGuesses || 0) - 1, 0);
+      updates.remainingGuesses = remainingGuesses;
+
+      const ownCards = updatedCards.filter((c) => c.role === room.turnTeam);
+      const revealedOwnCards = ownCards.filter((c) => c.revealed);
+      if (revealedOwnCards.length === ownCards.length) {
+        updates.gamePhase = "finished";
+        updates.winner = room.turnTeam;
+      } else if (remainingGuesses === 0) {
+        Object.assign(updates, nextTurnUpdates(room.turnTeam));
+      }
+    } else {
+      Object.assign(updates, nextTurnUpdates(room.turnTeam));
+    }
+
+    transaction.update(roomRef, updates);
+    return { changed: true, endedByTrap: false };
+  });
+}
+
+/**
+ * ターンを終了する。
+ * @param {string} roomId
+ * @param {Team} expectedTurnTeam
+ * @returns {Promise<void>}
+ */
+export async function endTurn(roomId, expectedTurnTeam) {
+  const roomRef = doc(db, ROOMS_COLLECTION, normalizeRoomId(roomId));
+
+  await runTransaction(db, async (transaction) => {
+    const snapshot = await transaction.get(roomRef);
+    if (!snapshot.exists()) {
+      throw new Error("ルームが見つかりません");
+    }
+
+    const room = snapshot.data();
+    if (room.gamePhase !== "in_progress") {
+      throw new Error("ゲーム中ではありません");
+    }
+    if (room.turnTeam !== expectedTurnTeam) {
+      throw new Error("ターンが切り替わりました");
+    }
+    if (room.turnPhase !== "guessing") {
+      throw new Error("今はターンを終了できません");
+    }
+
+    transaction.update(roomRef, nextTurnUpdates(room.turnTeam));
+  });
+}
+
+/**
+ * 同じ参加者・役割でロビーに戻す。
+ * @param {string} roomId
+ * @param {string} hostPlayerId
+ * @returns {Promise<void>}
+ */
+export async function restartGame(roomId, hostPlayerId) {
+  const roomRef = doc(db, ROOMS_COLLECTION, normalizeRoomId(roomId));
+
+  await runTransaction(db, async (transaction) => {
+    const snapshot = await transaction.get(roomRef);
+    if (!snapshot.exists()) {
+      throw new Error("ルームが見つかりません");
+    }
+
+    const room = snapshot.data();
+    const players = Array.isArray(room.players) ? room.players : [];
+    const hostPlayer = players.find((p) => p.id === hostPlayerId);
+    if (!hostPlayer?.isHost) {
+      throw new Error("ホストだけがもう一度始められます");
+    }
+
+    const sourceWords = Array.isArray(room.wordSetWords) && room.wordSetWords.length >= 25
+      ? room.wordSetWords
+      : (room.cards || []).map((card) => card.word);
+    const firstTeam = room.firstTeam || "red";
+
+    transaction.update(roomRef, {
+      gamePhase: "lobby",
+      turnTeam: firstTeam,
+      turnPhase: "waiting_hint",
+      currentHint: null,
+      remainingGuesses: 0,
+      cards: generateCards(sourceWords, firstTeam),
+      winner: null,
+    });
+  });
+}
+
+/**
  * ルームを1回取得する。
  * @param {string} roomId
  * @returns {Promise<object | null>}
@@ -357,4 +496,13 @@ export function getStartConditions(players) {
 
 function teamLabel(team) {
   return team === "blue" ? "青チーム" : "赤チーム";
+}
+
+function nextTurnUpdates(currentTeam) {
+  return {
+    turnTeam: currentTeam === "red" ? "blue" : "red",
+    turnPhase: "waiting_hint",
+    currentHint: null,
+    remainingGuesses: 0,
+  };
 }
