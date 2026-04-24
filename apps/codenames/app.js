@@ -83,6 +83,14 @@ function stopRoomSubscription() {
 async function handleLeaveRoom() {
   const roomId = state.roomId;
   const playerId = state.playerId;
+  const currentPlayer = state.room?.players?.find((p) => p.id === playerId);
+
+  if (state.room?.gamePhase === "in_progress" && currentPlayer) {
+    state.error = "ゲーム中は退出できません。結果画面まで進めてから退出してください。";
+    showToast("ゲーム中は退出できません", "error");
+    renderGame();
+    return;
+  }
 
   try {
     if (roomId && playerId) {
@@ -303,7 +311,6 @@ function renderGame() {
         ${renderCards(state.room.cards || [], currentPlayer)}
       </div>
       ${renderTurnActions(state.room, currentPlayer)}
-      <button class="btn btn-ghost btn-full mt-lg" id="leave-room" type="button">ホームへ戻る</button>
     </section>
     ${renderNotification()}
   `;
