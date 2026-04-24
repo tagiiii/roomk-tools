@@ -116,6 +116,7 @@ export async function createRoom(hostPlayer, words, firstTeam) {
       players: [{ ...hostPlayer, isHost: true }],
       firstTeam,
       winner: null,
+      finishReason: null,
     };
 
     const created = await runTransaction(db, async (transaction) => {
@@ -463,20 +464,27 @@ export async function revealCard(roomId, cardIndex, expectedTurnTeam) {
     if (card.role === "assassin") {
       updates.gamePhase = "finished";
       updates.winner = room.turnTeam === "red" ? "blue" : "red";
+      updates.finishReason = "trap";
       transaction.update(roomRef, updates);
       return { changed: true, endedByTrap: true };
+    }
+
+    if (["red", "blue"].includes(card.role)) {
+      const teamCards = updatedCards.filter((c) => c.role === card.role);
+      const revealedTeamCards = teamCards.filter((c) => c.revealed);
+      if (revealedTeamCards.length === teamCards.length) {
+        updates.gamePhase = "finished";
+        updates.winner = card.role;
+        updates.finishReason = "all_found";
+        transaction.update(roomRef, updates);
+        return { changed: true, endedByTrap: false };
+      }
     }
 
     if (card.role === room.turnTeam) {
       const remainingGuesses = Math.max(Number(room.remainingGuesses || 0) - 1, 0);
       updates.remainingGuesses = remainingGuesses;
-
-      const ownCards = updatedCards.filter((c) => c.role === room.turnTeam);
-      const revealedOwnCards = ownCards.filter((c) => c.revealed);
-      if (revealedOwnCards.length === ownCards.length) {
-        updates.gamePhase = "finished";
-        updates.winner = room.turnTeam;
-      } else if (remainingGuesses === 0) {
+      if (remainingGuesses === 0) {
         Object.assign(updates, nextTurnUpdates(room.turnTeam));
       }
     } else {
@@ -553,6 +561,7 @@ export async function restartGame(roomId, hostPlayerId) {
       remainingGuesses: 0,
       cards: generateCards(sourceWords, firstTeam),
       winner: null,
+      finishReason: null,
     });
   });
 }

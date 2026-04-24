@@ -344,13 +344,15 @@ function renderFinish() {
   const currentPlayer = state.room.players?.find((p) => p.id === state.playerId);
   const winner = state.room.winner;
   const isWinner = currentPlayer?.team === winner;
+  const result = resultSummary(state.room);
 
   appEl.innerHTML = `
     <section class="card cn-panel cn-game-panel">
       <div class="cn-result cn-result--${esc(winner || "neutral")}">
         <p class="text-muted">結果</p>
-        <h1 class="cn-title">${esc(teamLabel(winner))}が全部見つけました</h1>
-        <p class="text-bold">${isWinner ? "勝ち" : "負け"}</p>
+        <h1 class="cn-title">${esc(result.title)}</h1>
+        <p>${esc(result.detail)}</p>
+        <p class="text-bold">${isWinner ? "あなたのチームの勝ち" : "あなたのチームの負け"}</p>
       </div>
       ${state.error ? `<div class="alert alert-error">${esc(state.error)}</div>` : ""}
       <div class="cn-board" aria-label="公開された単語カード">
@@ -428,6 +430,35 @@ function teamLabel(team) {
 
 function roleLabel(role) {
   return role === "spymaster" ? "ヒント役" : "探す役";
+}
+
+function resultSummary(room) {
+  const winner = room.winner;
+  if (!winner) {
+    return {
+      title: "ゲーム終了",
+      detail: "結果を確認しています。",
+    };
+  }
+
+  const reason = room.finishReason || inferFinishReason(room);
+  if (reason === "trap") {
+    const loser = winner === "red" ? "blue" : "red";
+    return {
+      title: `${teamLabel(loser)}がトラップカードを選びました`,
+      detail: `${teamLabel(winner)}の勝ちです。`,
+    };
+  }
+
+  return {
+    title: `${teamLabel(winner)}のカードが全部見つかりました`,
+    detail: `${teamLabel(winner)}の勝ちです。`,
+  };
+}
+
+function inferFinishReason(room) {
+  const revealedTrap = (room.cards || []).some((card) => card.role === "assassin" && card.revealed);
+  return revealedTrap ? "trap" : "all_found";
 }
 
 function renderLobbyPlayer(player, canEditAssignments) {

@@ -33,6 +33,7 @@ codenames_rooms/{roomId}
   - remainingGuesses: number
   - firstTeam: "red" | "blue"
   - winner: "red" | "blue" | null
+  - finishReason: "all_found" | "trap" | null
   - cards: Card[]               // 25枚の配列（index / word / role / revealed）
   - players: Player[]           // id / name / team / role / isHost
 ```
@@ -58,6 +59,7 @@ codenames_rooms/{roomId}
 
 - ルームコードは 6桁英数字（`generateSessionId()` を使用）
 - カードは 25枚（先攻9・後攻8・中立7・トラップ1）
+- 終了理由は `finishReason` で管理し、結果画面では「全部見つかった」「トラップを選んだ」を分けて表示する
 - **開始条件**: 各チーム2人以上 ＋ 各チームにヒント役1人 ＋ 各チーム探す役1人以上
 - ヒント送信・カード公開・ターン終了は Firestore transaction で整合性担保（`runTransaction`）
 - ゲーム画面では現在のターン・フェーズ・自チームかどうかを上部の強調帯で常時表示する
