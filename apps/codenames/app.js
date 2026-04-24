@@ -35,6 +35,7 @@ const state = {
   submitting: false,
   notification: null,
   error: "",
+  lastTurnBannerKey: "",
 };
 
 const esc = escapeHtml;
@@ -301,10 +302,11 @@ function renderGame() {
       <div class="cn-game-header">
         <div>
           <p class="text-muted">ルーム ${esc(state.roomId)}</p>
-          <h1 class="cn-title">${esc(turnTitle(state.room))}</h1>
+          <h1 class="cn-title">ことば探偵</h1>
         </div>
         <div class="cn-role-chip">${esc(teamLabel(currentPlayer.team))} / ${esc(roleLabel(currentPlayer.role))}</div>
       </div>
+      ${renderTurnBanner(state.room, currentPlayer)}
       ${renderHintArea(state.room, currentPlayer)}
       ${state.error ? `<div class="alert alert-error">${esc(state.error)}</div>` : ""}
       <div class="cn-board" aria-label="単語カード">
@@ -493,6 +495,29 @@ function turnTitle(room) {
   const team = teamLabel(room.turnTeam);
   if (room.turnPhase === "waiting_hint") return `${team}のヒント待ち`;
   return `${team}の推理中 残り${room.remainingGuesses || 0}`;
+}
+
+function renderTurnBanner(room, currentPlayer) {
+  const turnKey = `${room.turnTeam}:${room.turnPhase}`;
+  const shouldPulse = state.lastTurnBannerKey !== turnKey;
+  state.lastTurnBannerKey = turnKey;
+  const isMyTeam = room.turnTeam === currentPlayer.team;
+  const phaseLabel = room.turnPhase === "waiting_hint" ? "ヒント待ち" : "カード選び";
+  const actionText = room.turnPhase === "waiting_hint"
+    ? "ヒント役がヒントを出します"
+    : `探す役がカードを選びます（残り${Number(room.remainingGuesses || 0)}）`;
+  const myTurnText = isMyTeam ? "あなたのチームの番です" : "相手チームの番です";
+
+  return `
+    <div class="cn-turn-banner cn-turn-banner--${esc(room.turnTeam)} ${shouldPulse ? "cn-turn-banner--pulse" : ""}" aria-live="polite">
+      <div>
+        <span class="cn-turn-kicker">${esc(phaseLabel)}</span>
+        <strong>${esc(turnTitle(room))}</strong>
+        <span>${esc(actionText)}</span>
+      </div>
+      <span class="cn-turn-side">${esc(myTurnText)}</span>
+    </div>
+  `;
 }
 
 function renderHintArea(room, currentPlayer) {
