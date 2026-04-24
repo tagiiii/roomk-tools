@@ -240,6 +240,62 @@
   animation: cn-turn-pulse 520ms ease-out;
 }
 
+.cn-score-board {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-sm);
+}
+
+.cn-score {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  min-height: 64px;
+  padding: var(--space-sm) var(--space-md);
+  border: 2px solid var(--color-border);
+  border-left-width: 6px;
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+}
+
+.cn-score > span:first-child {
+  font-weight: 700;
+}
+
+.cn-score strong {
+  font-size: var(--font-size-xl);
+  line-height: 1;
+}
+
+.cn-score small {
+  color: var(--color-muted);
+  font-size: var(--font-size-sm);
+}
+
+.cn-score--red {
+  border-left-color: #B91C1C;
+}
+
+.cn-score--blue {
+  border-left-color: #1D4ED8;
+}
+
+.cn-score--active {
+  background: #EEF3F8;
+  border-color: var(--color-accent);
+}
+
+.cn-score-turn {
+  flex: none;
+  padding: 4px 8px;
+  border-radius: var(--radius-full);
+  color: #fff;
+  background: var(--color-accent);
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+}
+
 @keyframes cn-turn-pulse {
   from {
     transform: translateY(-4px);
@@ -419,7 +475,8 @@
   }
 
   .cn-status-grid,
-  .cn-condition-list {
+  .cn-condition-list,
+  .cn-score-board {
     grid-template-columns: 1fr;
   }
 

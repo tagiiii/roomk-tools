@@ -308,6 +308,7 @@ function renderGame() {
         <div class="cn-role-chip">${esc(teamLabel(currentPlayer.team))} / ${esc(roleLabel(currentPlayer.role))}</div>
       </div>
       ${renderTurnBanner(state.room, currentPlayer)}
+      ${renderScoreBoard(state.room)}
       ${renderHintArea(state.room, currentPlayer)}
       ${state.error ? `<div class="alert alert-error">${esc(state.error)}</div>` : ""}
       <div class="cn-board" aria-label="単語カード">
@@ -561,6 +562,31 @@ function renderTurnBanner(room, currentPlayer) {
         <span>${esc(actionText)}</span>
       </div>
       <span class="cn-turn-side">${esc(myTurnText)}</span>
+    </div>
+  `;
+}
+
+function renderScoreBoard(room) {
+  const scores = ["red", "blue"].map((team) => {
+    const cards = (room.cards || []).filter((card) => card.role === team);
+    const found = cards.filter((card) => card.revealed).length;
+    return {
+      team,
+      found,
+      total: cards.length,
+      isTurn: room.turnTeam === team,
+    };
+  });
+
+  return `
+    <div class="cn-score-board" aria-label="見つけたカード">
+      ${scores.map((score) => `
+        <div class="cn-score cn-score--${esc(score.team)} ${score.isTurn ? "cn-score--active" : ""}">
+          <span>${esc(teamLabel(score.team))}</span>
+          <strong>${score.found}<small>/${score.total}</small></strong>
+          ${score.isTurn ? '<span class="cn-score-turn">いまの番</span>' : ""}
+        </div>
+      `).join("")}
     </div>
   `;
 }
