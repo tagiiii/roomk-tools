@@ -40,6 +40,7 @@ const state = {
   notification: null,
   error: "",
   lastTurnBannerKey: "",
+  pendingCardIndex: null,
 };
 
 const esc = escapeHtml;
@@ -322,6 +323,7 @@ function renderGame() {
       ${renderHostPlayerManagement(state.room, currentPlayer)}
     </section>
     ${renderNotification()}
+    ${renderCardConfirmModal(currentPlayer)}
   `;
 }
 
@@ -794,6 +796,31 @@ function renderNotification() {
   `;
 }
 
+function renderCardConfirmModal(currentPlayer) {
+  if (!Number.isInteger(state.pendingCardIndex) || !state.room) return "";
+  const card = state.room.cards?.[state.pendingCardIndex];
+  if (!card || !canRevealCard(card, currentPlayer)) return "";
+
+  const canSeeRole = currentPlayer.role === "spymaster";
+  return `
+    <div class="cn-modal" role="dialog" aria-modal="true" aria-labelledby="card-confirm-title">
+      <button class="cn-modal-backdrop" type="button" data-card-confirm-close aria-label="確認を閉じる"></button>
+      <div class="cn-card-confirm">
+        <p class="text-muted" id="card-confirm-title">このカードを開きますか？</p>
+        <strong>${esc(card.word)}</strong>
+        ${canSeeRole ? `<span class="badge badge-primary">${esc(cardRoleLabel(card.role))}</span>` : ""}
+        <p class="text-muted">開くと取り消せません。</p>
+        <div class="cn-card-confirm-actions">
+          <button class="btn btn-ghost" type="button" id="card-confirm-cancel">やめる</button>
+          <button class="btn btn-primary" type="button" id="card-confirm-open" ${state.submitting ? "disabled" : ""}>
+            ${state.submitting ? "公開中..." : "開く"}
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
 async function handleCreate(form) {
   const formData = new FormData(form);
   const nickname = validateNickname(formData.get("nickname"));
@@ -942,10 +969,10 @@ async function handleRevealCard(cardIndex) {
   const currentPlayer = state.room.players?.find((p) => p.id === state.playerId);
   const card = state.room.cards?.[cardIndex];
   if (!currentPlayer || !canRevealCard(card, currentPlayer)) return;
-  if (!window.confirm(`「${card.word}」を開きますか？`)) return;
 
   state.submitting = true;
   state.error = "";
+  state.pendingCardIndex = null;
   renderGame();
 
   try {
@@ -958,6 +985,28 @@ async function handleRevealCard(cardIndex) {
     state.submitting = false;
     renderGame();
   }
+}
+
+function handleCardSelect(cardIndex) {
+  if (!state.room || state.submitting) return;
+  const currentPlayer = state.room.players?.find((p) => p.id === state.playerId);
+  const card = state.room.cards?.[cardIndex];
+  if (!currentPlayer || !canRevealCard(card, currentPlayer)) return;
+
+  state.pendingCardIndex = cardIndex;
+  state.error = "";
+  renderGame();
+}
+
+function closeCardConfirm() {
+  if (!Number.isInteger(state.pendingCardIndex)) return;
+  state.pendingCardIndex = null;
+  renderGame();
+}
+
+async function handleConfirmCardReveal() {
+  if (!Number.isInteger(state.pendingCardIndex)) return;
+  await handleRevealCard(state.pendingCardIndex);
 }
 
 async function handleResetHint() {
@@ -1129,7 +1178,20 @@ document.addEventListener("click", async (event) => {
 
   const cardButton = event.target.closest("[data-card-index]");
   if (cardButton) {
-    await handleRevealCard(Number(cardButton.dataset.cardIndex));
+    handleCardSelect(Number(cardButton.dataset.cardIndex));
+    return;
+  }
+
+  if (event.target.closest("#card-confirm-open")) {
+    await handleConfirmCardReveal();
+    return;
+  }
+
+  if (
+    event.target.closest("#card-confirm-cancel") ||
+    event.target.closest("[data-card-confirm-close]")
+  ) {
+    closeCardConfirm();
     return;
   }
 
@@ -1161,6 +1223,12 @@ document.addEventListener("click", async (event) => {
 
   if (event.target.closest("#notification-close")) {
     closeNotification();
+  }
+});
+
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && Number.isInteger(state.pendingCardIndex)) {
+    closeCardConfirm();
   }
 });
 

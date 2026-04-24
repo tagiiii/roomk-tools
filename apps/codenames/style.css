@@ -440,6 +440,49 @@
   overflow-wrap: anywhere;
 }
 
+.cn-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  display: grid;
+  place-items: center;
+  padding: var(--space-lg);
+}
+
+.cn-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: rgba(26, 26, 26, 0.56);
+}
+
+.cn-card-confirm {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: var(--space-md);
+  width: min(420px, 92vw);
+  padding: var(--space-lg);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-box);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-lg);
+}
+
+.cn-card-confirm strong {
+  color: var(--color-primary);
+  font-size: clamp(28px, 8vw, 44px);
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+  text-align: center;
+}
+
+.cn-card-confirm-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-sm);
+}
+
 .cn-result {
   padding: var(--space-lg);
   border-radius: var(--radius-sm);
@@ -540,5 +583,9 @@
     min-height: 64px;
     padding: 20px 5px 8px 7px;
     font-size: 13px;
+  }
+
+  .cn-card-confirm-actions {
+    grid-template-columns: 1fr;
   }
 }
