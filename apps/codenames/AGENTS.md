@@ -25,7 +25,7 @@ roomK では「語彙を使う」より **「連想を言葉にする／相手�
 ```
 codenames_rooms/{roomId}
   - createdAt: Timestamp
-  - expiresAt: Timestamp        // TTL（3時間）
+  - expiresAt: Timestamp        // 3時間の失効判定に使用
   - gamePhase: "lobby" | "in_progress" | "finished"
   - turnTeam: "red" | "blue"
   - turnPhase: "waiting_hint" | "guessing"
@@ -61,7 +61,8 @@ codenames_rooms/{roomId}
 - **開始条件**: 各チーム2人以上 ＋ 各チームにヒント役1人 ＋ 各チーム探す役1人以上
 - ヒント送信・カード公開・ターン終了は Firestore transaction で整合性担保（`runTransaction`）
 - ロビー外での役割変更は不可
-- ルームは 3時間で自動失効（TTL）、`expiresAt` 設定必須
+- ルームは 3時間で失効、`expiresAt` 設定必須
+- Firebase Spark 運用のため Firestore TTL ポリシーは使わない。参加・再接続時に期限切れを検知したらクライアント側で削除を試み、完全放置ルームは必要に応じて Console で手動清掃する
 - 同一プレイヤーの重複参加不可（id 一致でブロック）
 - 最大8人
 
@@ -97,4 +98,4 @@ roomK 共通の「学校・勉強・テストを避ける／恋愛・暴力・�
 - [x] ターン終了 transaction
 - [x] 結果画面・再戦
 - [x] 再接続（sessionStorage）
-- [x] 退出・クリーンアップ（listener off / TTL 任せ）
+- [x] 退出・クリーンアップ（listener off / 期限切れ検知削除）

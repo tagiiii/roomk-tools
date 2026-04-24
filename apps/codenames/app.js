@@ -5,9 +5,11 @@
 import { copyToClipboard, escapeHtml, showToast } from "../shared/js/utils.js";
 import {
   createRoom,
+  deleteExpiredRoom,
   endTurn,
   generatePlayerId,
   getStartConditions,
+  isRoomExpired,
   joinRoom,
   leaveRoom,
   normalizeRoomId,
@@ -372,6 +374,16 @@ function ensureRoomSubscription() {
     state.room = room;
     if (!room) {
       state.error = "ルームが見つかりません";
+      clearSession();
+      navigate("home");
+      return;
+    }
+    if (isRoomExpired(room)) {
+      const expiredRoomId = state.roomId;
+      state.error = "このルームは期限切れです";
+      void deleteExpiredRoom(expiredRoomId).catch((error) => {
+        console.warn("[codenames] deleteExpiredRoom failed", error);
+      });
       clearSession();
       navigate("home");
       return;

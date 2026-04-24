@@ -80,6 +80,17 @@ export function generateCards(words, firstTeam) {
 }
 
 /**
+ * ルームの期限切れ判定。
+ * @param {object | null} room
+ * @param {number} nowMs
+ * @returns {boolean}
+ */
+export function isRoomExpired(room, nowMs = Date.now()) {
+  const expiresAtMs = room?.expiresAt?.toMillis?.();
+  return Number.isFinite(expiresAtMs) && expiresAtMs < nowMs;
+}
+
+/**
  * ルームを作成する。
  * @param {Omit<Player, "isHost">} hostPlayer
  * @param {string[]} words
@@ -130,15 +141,16 @@ export async function joinRoom(roomId, player) {
   const normalizedRoomId = normalizeRoomId(roomId);
   const roomRef = doc(db, ROOMS_COLLECTION, normalizedRoomId);
 
-  await runTransaction(db, async (transaction) => {
+  const result = await runTransaction(db, async (transaction) => {
     const snapshot = await transaction.get(roomRef);
     if (!snapshot.exists()) {
       throw new Error("ルームが見つかりません");
     }
 
     const room = snapshot.data();
-    if (room.expiresAt?.toMillis?.() < Date.now()) {
-      throw new Error("このルームは期限切れです");
+    if (isRoomExpired(room)) {
+      transaction.delete(roomRef);
+      return "expired";
     }
     if (room.gamePhase !== "lobby") {
       throw new Error("このルームはすでに開始しています");
@@ -155,6 +167,31 @@ export async function joinRoom(roomId, player) {
     transaction.update(roomRef, {
       players: [...players, { ...player, isHost: false }],
     });
+    return "joined";
+  });
+
+  if (result === "expired") {
+    throw new Error("このルームは期限切れです");
+  }
+}
+
+/**
+ * 期限切れルームを削除する。未期限切れ・存在なしなら何もしない。
+ * @param {string} roomId
+ * @returns {Promise<boolean>} 削除した場合 true
+ */
+export async function deleteExpiredRoom(roomId) {
+  const roomRef = doc(db, ROOMS_COLLECTION, normalizeRoomId(roomId));
+
+  return runTransaction(db, async (transaction) => {
+    const snapshot = await transaction.get(roomRef);
+    if (!snapshot.exists()) return false;
+
+    const room = snapshot.data();
+    if (!isRoomExpired(room)) return false;
+
+    transaction.delete(roomRef);
+    return true;
   });
 }
 
