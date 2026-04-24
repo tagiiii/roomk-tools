@@ -1196,46 +1196,76 @@
   }
 
   async function hostStartGame() {
-    await state.roomRef.update({
-      status: STATUS.SELECTING,
-      pendingThemes: pickThemes(state.usedThemes),
+    let abortReason = null;
+    const { committed } = await state.roomRef.transaction((room) => {
+      if (!room) { abortReason = 'not_found'; return; }
+      if (room.hostConnected === false) { abortReason = 'host_gone'; return; }
+      if (room.status !== STATUS.WAITING) { abortReason = 'bad_status'; return; }
+      if (Object.keys(room.players || {}).length < 3) { abortReason = 'too_few'; return; }
+      abortReason = null;
+      return {
+        ...room,
+        status: STATUS.SELECTING,
+        pendingThemes: pickThemes(room.usedThemes),
+      };
     });
+    if (!committed && abortReason === 'too_few') {
+      showError('host-nickname-error', '3人以上で開始できます');
+    }
   }
 
   async function hostPickTheme(themeText, themeIndex) {
-    const updates = {
-      status: STATUS.ANSWERING,
-      round: (state.round || 0) + 1,
-      currentTheme: themeText,
-      usedThemes: buildNextUsedThemes(state.usedThemes, themeIndex),
-      pendingThemes: null,
-      answerOrder: [],
-    };
-
-    Object.keys(state.players || {}).forEach((name) => {
-      updates[`players/${name}/answer`] = null;
-      updates[`players/${name}/vote`] = null;
-    });
-
     state.votingTriggered = false;
     state.resultTriggered = false;
     updateSessionRoundData(null, null);
 
-    await state.roomRef.update(updates);
+    let abortReason = null;
+    const { committed } = await state.roomRef.transaction((room) => {
+      if (!room) { abortReason = 'not_found'; return; }
+      if (room.status !== STATUS.SELECTING) { abortReason = 'bad_status'; return; }
+      const pendingThemes = Array.isArray(room.pendingThemes) ? room.pendingThemes : [];
+      const selected = pendingThemes.find(({ t, i }) => t === themeText && i === themeIndex);
+      if (!selected) { abortReason = 'theme_missing'; return; }
+      const nextPlayers = {};
+      Object.entries(room.players || {}).forEach(([name, player]) => {
+        nextPlayers[name] = { ...player, answer: null, vote: null };
+      });
+      abortReason = null;
+      return {
+        ...room,
+        status: STATUS.ANSWERING,
+        round: (room.round || 0) + 1,
+        currentTheme: themeText,
+        usedThemes: buildNextUsedThemes(room.usedThemes, themeIndex),
+        pendingThemes: null,
+        answerOrder: [],
+        players: nextPlayers,
+      };
+    });
+    if (!committed && abortReason === 'theme_missing') {
+      alert('お題が更新されました。もう一度選んでください');
+    }
   }
 
   async function hostNextRound() {
     state.votingTriggered = false;
     state.resultTriggered = false;
     updateSessionRoundData(null, null);
-    await state.roomRef.update({
-      status: STATUS.SELECTING,
-      pendingThemes: pickThemes(state.usedThemes),
+    await state.roomRef.transaction((room) => {
+      if (!room || room.status !== STATUS.RESULT) return;
+      return {
+        ...room,
+        status: STATUS.SELECTING,
+        pendingThemes: pickThemes(room.usedThemes),
+      };
     });
   }
 
   async function hostEndGame() {
-    await state.roomRef.update({ status: STATUS.FINISHED });
+    await state.roomRef.transaction((room) => {
+      if (!room || room.status === STATUS.FINISHED) return;
+      return { ...room, status: STATUS.FINISHED };
+    });
     setTimeout(() => {
       if (state.roomRef) state.roomRef.remove().catch(() => {});
     }, 30000);
@@ -1403,28 +1433,45 @@
   }
 
   async function triggerVoting(players) {
-    const answerOrder = shuffle(getAnsweredEntries(players).map(({ name }) => name));
-    const updates = {
-      status: STATUS.VOTING,
-      answerOrder,
-    };
-
-    Object.keys(players || {}).forEach((name) => {
-      updates[`players/${name}/vote`] = null;
+    const { committed } = await state.roomRef.transaction((room) => {
+      if (!room || room.status !== STATUS.ANSWERING) return;
+      const currentPlayers = room.players || players || {};
+      const answeredEntries = getAnsweredEntries(currentPlayers);
+      if (answeredEntries.length === 0) return;
+      const answerOrder = shuffle(answeredEntries.map(({ name }) => name));
+      const nextPlayers = {};
+      Object.entries(currentPlayers).forEach(([name, player]) => {
+        nextPlayers[name] = { ...player, vote: null };
+      });
+      return {
+        ...room,
+        status: STATUS.VOTING,
+        answerOrder,
+        players: nextPlayers,
+      };
     });
-
-    await state.roomRef.update(updates);
+    return committed;
   }
 
   async function triggerResult(players) {
-    const { deltas } = calcRoundOutcome(players);
-    const updates = { status: STATUS.RESULT };
-
-    Object.entries(deltas).forEach(([name, delta]) => {
-      updates[`players/${name}/score`] = (players[name]?.score || 0) + delta;
+    const { committed } = await state.roomRef.transaction((room) => {
+      if (!room || room.status !== STATUS.VOTING) return;
+      const currentPlayers = room.players || players || {};
+      const { deltas } = calcRoundOutcome(currentPlayers);
+      const nextPlayers = {};
+      Object.entries(currentPlayers).forEach(([name, player]) => {
+        nextPlayers[name] = {
+          ...player,
+          score: (player?.score || 0) + (deltas[name] || 0),
+        };
+      });
+      return {
+        ...room,
+        status: STATUS.RESULT,
+        players: nextPlayers,
+      };
     });
-
-    await state.roomRef.update(updates);
+    return committed;
   }
 
   async function hostCloseAnswering() {
@@ -1434,7 +1481,8 @@
     if (answered === 0) return;
     state.votingTriggered = true;
     try {
-      await triggerVoting(players);
+      const advanced = await triggerVoting(players);
+      if (!advanced) state.votingTriggered = false;
     } catch (error) {
       console.error('[tatoe-gp] hostCloseAnswering failed', error);
       state.votingTriggered = false;
@@ -1446,7 +1494,8 @@
     const players = state.players || {};
     state.resultTriggered = true;
     try {
-      await triggerResult(players);
+      const advanced = await triggerResult(players);
+      if (!advanced) state.resultTriggered = false;
     } catch (error) {
       console.error('[tatoe-gp] hostCloseVoting failed', error);
       state.resultTriggered = false;
@@ -1601,7 +1650,12 @@
 
     if (answered > 0 && answered === total && state.role === 'host' && !state.votingTriggered) {
       state.votingTriggered = true;
-      triggerVoting(players);
+      triggerVoting(players)
+        .then((advanced) => { if (!advanced) state.votingTriggered = false; })
+        .catch((error) => {
+          console.error('[tatoe-gp] auto triggerVoting failed', error);
+          state.votingTriggered = false;
+        });
     }
   }
 
@@ -1667,7 +1721,12 @@
 
     if (voted > 0 && voted === total && state.role === 'host' && !state.resultTriggered) {
       state.resultTriggered = true;
-      triggerResult(players);
+      triggerResult(players)
+        .then((advanced) => { if (!advanced) state.resultTriggered = false; })
+        .catch((error) => {
+          console.error('[tatoe-gp] auto triggerResult failed', error);
+          state.resultTriggered = false;
+        });
     }
   }
 

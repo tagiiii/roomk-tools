@@ -694,7 +694,28 @@ function renderWaiting(room, players) {
 }
 
 async function hostStartNaming() {
-  await state.roomRef.update({ status: 'naming' });
+  let abortReason = null;
+  const { committed } = await state.roomRef.transaction((room) => {
+    if (!room) { abortReason = 'not_found'; return; }
+    if (room.hostConnected === false) { abortReason = 'host_gone'; return; }
+    if (room.status !== 'waiting') { abortReason = 'bad_status'; return; }
+    const players = room.players || {};
+    const nonGM = Object.values(players).filter(p => !p.isHost);
+    if (nonGM.length < 2) { abortReason = 'too_few'; return; }
+    abortReason = null;
+    return {
+      ...room,
+      status: 'naming',
+      revealIndex: 0,
+      revealAnswer: false,
+      revealOrder: null,
+    };
+  });
+  if (!committed) {
+    if (abortReason === 'too_few') toast('2人以上で開始できます');
+    else if (abortReason === 'bad_status') toast('すでにゲームが始まっています');
+    else toast('開始に失敗しました');
+  }
 }
 
 // ===== Naming =====
@@ -770,7 +791,35 @@ async function submitAsVoter() {
 }
 
 async function hostStartVoting() {
-  await state.roomRef.update({ status: 'voting' });
+  let abortReason = null;
+  const { committed } = await state.roomRef.transaction((room) => {
+    if (!room) { abortReason = 'not_found'; return; }
+    if (room.status !== 'naming') { abortReason = 'bad_status'; return; }
+    const players = room.players || {};
+    const entries = Object.entries(players);
+    const nonGM = entries.filter(([, p]) => !p.isHost);
+    const changers = nonGM.filter(([, p]) => p.ready && p.gameRole === 'changer');
+    const voters = nonGM.filter(([, p]) => p.ready && p.gameRole === 'voter');
+    if (nonGM.some(([, p]) => !p.ready)) { abortReason = 'not_ready'; return; }
+    if (changers.length === 0) { abortReason = 'no_changer'; return; }
+    if (voters.length === 0) { abortReason = 'no_voter'; return; }
+
+    const nextPlayers = {};
+    entries.forEach(([nick, p]) => {
+      nextPlayers[nick] = { ...p, votes: null };
+    });
+    abortReason = null;
+    return { ...room, status: 'voting', players: nextPlayers };
+  });
+  if (!committed) {
+    const messages = {
+      bad_status: '今は投票フェーズへ進めません',
+      not_ready: '全員の入力が終わってから進めてください',
+      no_changer: '名前を変えた人が1人以上必要です',
+      no_voter: '投票役が1人以上必要です',
+    };
+    toast(messages[abortReason] || '投票フェーズへ進めませんでした');
+  }
 }
 
 // ===== Voting =====
@@ -879,11 +928,32 @@ async function submitVotes() {
 
 // ===== Host: Start Revealing =====
 async function hostStartRevealing() {
-  const snap = await state.roomRef.get();
-  const players = snap.val().players || {};
-  const changers = Object.keys(players).filter(n => players[n].gameRole === 'changer')
-                         .sort(() => Math.random() - 0.5);
-  await state.roomRef.update({ status: 'revealing', revealOrder: changers });
+  let abortReason = null;
+  const { committed } = await state.roomRef.transaction((room) => {
+    if (!room) { abortReason = 'not_found'; return; }
+    if (room.status !== 'voting') { abortReason = 'bad_status'; return; }
+    const players = room.players || {};
+    const changers = Object.keys(players).filter(n => players[n].gameRole === 'changer');
+    const voters = Object.entries(players).filter(([, p]) => p.gameRole === 'voter');
+    if (changers.length === 0) { abortReason = 'no_changer'; return; }
+    if (voters.length === 0) { abortReason = 'no_voter'; return; }
+    if (voters.some(([, p]) => p.votes == null)) { abortReason = 'not_voted'; return; }
+    abortReason = null;
+    return {
+      ...room,
+      status: 'revealing',
+      revealOrder: changers.sort(() => Math.random() - 0.5),
+    };
+  });
+  if (!committed) {
+    const messages = {
+      bad_status: '今は結果発表へ進めません',
+      no_changer: '名前を変えた人がいません',
+      no_voter: '投票役がいません',
+      not_voted: '全員が投票してから進めてください',
+    };
+    toast(messages[abortReason] || '結果発表へ進めませんでした');
+  }
 }
 
 // ===== Revealing =====
@@ -940,7 +1010,10 @@ function copyResults() {
 }
 
 async function hostFinish() {
-  await state.roomRef.update({ status: 'done' });
+  await state.roomRef.transaction((room) => {
+    if (!room || room.status === 'done') return;
+    return { ...room, status: 'done' };
+  });
   setTimeout(() => state.roomRef.remove(), 30000);
 }
 

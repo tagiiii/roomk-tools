@@ -861,8 +861,11 @@ async function markReady() {
 
 // ── 討論スタート（ホスト）──
 async function startDiscussion() {
-  const endsAt = Date.now() + state.discussionSecs * 1000;
-  await state.roomRef.update({ status: 'discussing', discussionEndsAt: endsAt });
+  const endsAt = getEstimatedServerNow() + state.discussionSecs * 1000;
+  await state.roomRef.transaction((room) => {
+    if (!room || room.status !== 'revealing') return;
+    return { ...room, status: 'discussing', discussionEndsAt: endsAt };
+  });
 }
 
 // ── タイマー ──
@@ -870,22 +873,29 @@ function startTimer(endsAt) {
   clearInterval(state.timerInterval);
   const el = document.getElementById('timer');
   state.timerInterval = setInterval(async () => {
-    const sec = Math.max(0, Math.ceil((endsAt - Date.now()) / 1000));
+    const sec = Math.max(0, Math.ceil((endsAt - getEstimatedServerNow()) / 1000));
     const m = Math.floor(sec / 60);
     const s = sec % 60;
     el.textContent = `${m}:${String(s).padStart(2, '0')}`;
     el.classList.toggle('urgent', sec <= 30);
     if (sec <= 0) {
       clearInterval(state.timerInterval);
-      const st = await state.roomRef.child('status').get();
-      if (st.val() === 'discussing') state.roomRef.child('status').set('voting');
+      if (state.role === 'host') {
+        await state.roomRef.transaction((room) => {
+          if (!room || room.status !== 'discussing') return;
+          return { ...room, status: 'voting' };
+        });
+      }
     }
   }, 500);
 }
 
 // ── 投票フェーズへ（ホスト手動）──
 async function moveToVoting() {
-  await state.roomRef.child('status').set('voting');
+  await state.roomRef.transaction((room) => {
+    if (!room || room.status !== 'discussing') return;
+    return { ...room, status: 'voting' };
+  });
 }
 
 // ── 投票 ──
@@ -902,15 +912,19 @@ async function computeResult(room, players) {
   if (state.resultTriggered) return;
   state.resultTriggered = true;
 
-  const counts = {};
-  Object.values(players).forEach(p => {
-    if (p.vote) counts[p.vote] = (counts[p.vote] || 0) + 1;
+  const { committed } = await state.roomRef.transaction((currentRoom) => {
+    if (!currentRoom || currentRoom.status !== 'voting') return;
+    const currentPlayers = currentRoom.players || players || {};
+    const counts = {};
+    Object.values(currentPlayers).forEach(p => {
+      if (p.vote) counts[p.vote] = (counts[p.vote] || 0) + 1;
+    });
+    const maxV = Math.max(...Object.values(counts), 0);
+    const tops = Object.entries(counts).filter(([, v]) => v === maxV).map(([n]) => n);
+    const citizenWin = tops.length === 1 && currentPlayers[tops[0]]?.isWolf === true;
+    return { ...currentRoom, status: 'result', citizenWin, voteCounts: counts };
   });
-  const maxV = Math.max(...Object.values(counts), 0);
-  const tops = Object.entries(counts).filter(([, v]) => v === maxV).map(([n]) => n);
-  const citizenWin = tops.length === 1 && players[tops[0]]?.isWolf === true;
-
-  await state.roomRef.update({ status: 'result', citizenWin, voteCounts: counts });
+  if (!committed) state.resultTriggered = false;
 }
 
 // ── もう一度 ──
@@ -918,16 +932,26 @@ async function playAgain() {
   clearInterval(state.timerInterval);
   state.myVote = null; state.wordRevealed = false; state.myWord = null;
   state.resultTriggered = false;
-  const snap = await state.roomRef.child('players').get();
-  const nicks = Object.keys(snap.val() || {});
-  const update = { status: 'waiting', citizenWin: null, voteCounts: null };
-  nicks.forEach(nick => {
-    update[`players/${nick}/isWolf`] = false;
-    update[`players/${nick}/word`]   = '';
-    update[`players/${nick}/ready`]  = false;
-    update[`players/${nick}/vote`]   = null;
+  await state.roomRef.transaction((room) => {
+    if (!room || room.status !== 'result') return;
+    const nextPlayers = {};
+    Object.entries(room.players || {}).forEach(([nick, player]) => {
+      nextPlayers[nick] = {
+        ...player,
+        isWolf: false,
+        word: '',
+        ready: false,
+        vote: null,
+      };
+    });
+    return {
+      ...room,
+      status: 'waiting',
+      citizenWin: null,
+      voteCounts: null,
+      players: nextPlayers,
+    };
   });
-  await state.roomRef.update(update);
 }
 
 // ── 退出 ──
@@ -1122,7 +1146,12 @@ function handleVoting(room, players) {
     voteHostActions.style.display = 'none';
   }
 
-  if (voted >= total && state.role === 'host') computeResult(room, players);
+  if (voted >= total && state.role === 'host') {
+    computeResult(room, players).catch((error) => {
+      console.error('[word-wolf] auto computeResult failed', error);
+      state.resultTriggered = false;
+    });
+  }
 }
 
 async function hostCloseVoting() {
@@ -1134,6 +1163,7 @@ async function hostCloseVoting() {
     await computeResult(room, room.players || {});
   } catch (error) {
     console.error('[word-wolf] hostCloseVoting failed', error);
+    state.resultTriggered = false;
   }
 }
 

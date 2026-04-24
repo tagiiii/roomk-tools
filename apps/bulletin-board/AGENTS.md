@@ -19,7 +19,7 @@ apps/bulletin-board/
 ├── index.html   # HTML構造（5画面）
 ├── app.js       # 全ロジック
 ├── style.css    # アプリ固有スタイル（接頭辞: .bb-）
-└── CLAUDE.md    # 本ファイル
+└── AGENTS.md    # 本ファイル
 ```
 
 ---
