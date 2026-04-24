@@ -16,25 +16,25 @@
     <section class="kg-screen kg-screen--top active" id="screen-top">
       <header class="kg-hero">
         <h1 class="kg-hero__title">ことばガチャ</h1>
-        <p class="kg-hero__sub">ひとこと変えると、空気が変わる</p>
+        <p class="kg-hero__sub">ぴったりな一言、あててみよう</p>
       </header>
       <div class="kg-top__action">
         <button class="btn btn-primary btn-lg" id="btnStart">はじめる</button>
       </div>
     </section>
 
-    <!-- 画面B: カード画面 -->
+    <!-- 画面B: 出題画面 -->
     <section class="kg-screen" id="screen-play">
       <div class="kg-progress" id="progress">1 / 10</div>
 
-      <div class="kg-topic" id="topic" aria-live="polite"></div>
-
-      <div class="kg-choices" id="choices"></div>
-
-      <div class="kg-result" id="result" aria-live="polite">
-        <p class="kg-result__sentence" id="resultSentence"></p>
-        <p class="kg-result__hint" id="resultHint"></p>
+      <div class="kg-prompt">
+        <p class="kg-prompt__label">こんな感じ、なのはどれ?</p>
+        <p class="kg-prompt__hint" id="promptHint" aria-live="polite"></p>
       </div>
+
+      <div class="kg-options" id="options"></div>
+
+      <div class="kg-feedback" id="feedback" aria-live="polite"></div>
 
       <div class="kg-play__actions">
         <button class="btn btn-ghost" id="btnBackTop">TOPにもどる</button>
@@ -46,7 +46,7 @@
     <section class="kg-screen" id="screen-end">
       <header class="kg-hero">
         <h1 class="kg-hero__title">10問ぜんぶ見たよ</h1>
-        <p class="kg-hero__sub">おつかれさま！</p>
+        <p class="kg-hero__sub" id="endScore"></p>
       </header>
       <div class="kg-top__action">
         <button class="btn btn-primary btn-lg" id="btnAgain">もう一回</button>

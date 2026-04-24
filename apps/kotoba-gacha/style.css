@@ -59,101 +59,122 @@
   margin-bottom: 8px;
 }
 
-/* ── お題文 ── */
-.kg-topic {
+/* ── お題プロンプト（当てにいく「空気」） ── */
+.kg-prompt {
   text-align: center;
-  font-size: clamp(24px, 5.5vw, 40px);
-  font-weight: 700;
-  color: var(--color-text);
-  line-height: 1.5;
-  padding: 40px 12px 32px;
-  min-height: 140px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  padding: 20px 12px 24px;
 }
-.kg-topic__slot {
+.kg-prompt__label {
+  font-size: 13px;
+  color: var(--color-muted);
+  margin: 0 0 14px;
+  letter-spacing: 0.06em;
+}
+.kg-prompt__hint {
   display: inline-block;
-  min-width: 1.4em;
-  padding: 0 4px;
-  color: var(--color-accent);
-  border-bottom: 3px dashed var(--color-accent);
-  margin: 0 4px;
-}
-.kg-topic__slot.filled {
-  border-bottom: none;
-  color: var(--color-accent);
+  font-size: clamp(22px, 5vw, 30px);
+  font-weight: 700;
+  color: var(--color-primary);
+  background: var(--color-surface);
+  border: 2px dashed var(--color-accent);
+  border-radius: var(--radius-card);
+  padding: 16px 24px;
+  margin: 0;
+  line-height: 1.5;
+  max-width: 100%;
 }
 
-/* ── 選択肢カード ── */
-.kg-choices {
+/* ── 選択肢（完成文カード） ── */
+.kg-options {
   display: flex;
-  justify-content: center;
-  gap: 14px;
-  margin: 8px 0 24px;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 12px;
+  margin: 8px 0 16px;
 }
-.kg-choice {
+.kg-option {
   appearance: none;
   border: 2px solid var(--color-border);
   background: var(--color-surface);
-  border-radius: 14px;
-  min-width: 72px;
-  height: 96px;
-  padding: 0 16px;
-  white-space: nowrap;
-  font-size: 36px;
-  font-weight: 700;
-  color: var(--color-text);
+  border-radius: var(--radius-card);
+  padding: 18px 20px;
   cursor: pointer;
   box-shadow: var(--shadow-sm);
   transition: transform 0.15s ease, box-shadow 0.15s ease,
-              border-color 0.15s ease, opacity 0.15s ease;
+              border-color 0.15s ease, background 0.15s ease, opacity 0.15s ease;
   font-family: inherit;
-}
-.kg-choice:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
-}
-.kg-choice.selected {
-  border-color: var(--color-accent);
-  background: #EAF3F5;
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
-}
-.kg-choice.dimmed {
-  opacity: 0.45;
-}
-
-/* ── 結果エリア ── */
-.kg-result {
-  min-height: 110px;
-  padding: 20px 16px;
-  margin: 8px 0 20px;
-  background: var(--color-surface);
-  border-radius: var(--radius-card);
-  box-shadow: var(--shadow-sm);
   text-align: center;
-  display: none;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
 }
-.kg-result.visible {
-  display: block;
-  animation: kgFade 0.2s ease-out;
+.kg-option:not(.revealed):hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--color-accent);
 }
-.kg-result__sentence {
-  font-size: clamp(20px, 4.5vw, 30px);
+.kg-option__sentence {
+  font-size: clamp(20px, 4.5vw, 28px);
   font-weight: 700;
   color: var(--color-text);
-  margin: 0 0 10px;
-  line-height: 1.5;
+  line-height: 1.4;
 }
-.kg-result__sentence .kg-particle {
+.kg-option__particle {
   color: var(--color-accent);
 }
-.kg-result__hint {
-  font-size: 15px;
+.kg-option__hint {
+  display: none;
+  font-size: 14px;
   color: var(--color-muted);
-  margin: 0;
+  line-height: 1.4;
+}
+.kg-option.revealed {
+  cursor: default;
+}
+.kg-option.revealed .kg-option__hint {
+  display: block;
+}
+.kg-option.revealed:not(.correct) {
+  opacity: 0.55;
+}
+.kg-option.correct {
+  border-color: var(--color-success);
+  background: #EAF5EE;
+  animation: kgPop 0.3s ease-out;
+}
+.kg-option.correct .kg-option__hint {
+  color: var(--color-success);
+  font-weight: 500;
+}
+.kg-option.wrong {
+  border-color: var(--color-error);
+  opacity: 1;
+}
+@keyframes kgPop {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.04); }
+  100% { transform: scale(1); }
+}
+
+/* ── 正解/不正解フィードバック ── */
+.kg-feedback {
+  text-align: center;
+  font-size: 18px;
+  font-weight: 700;
+  height: 30px;
+  margin: 6px 0 12px;
+  visibility: hidden;
+}
+.kg-feedback.visible {
+  visibility: visible;
+  animation: kgFade 0.3s ease-out;
+}
+.kg-feedback.correct {
+  color: var(--color-success);
+}
+.kg-feedback.wrong {
+  color: var(--color-error);
 }
 
 /* ── プレイ画面下部アクション ── */
@@ -167,7 +188,8 @@
 /* ── モバイル ── */
 @media (max-width: 600px) {
   .wrapper { padding: 20px 14px 48px; }
-  .kg-topic { padding: 28px 8px 24px; min-height: 120px; }
-  .kg-choice { min-width: 64px; height: 84px; padding: 0 14px; font-size: 30px; }
   .kg-hero { padding: 28px 12px 20px; }
+  .kg-prompt { padding: 12px 4px 18px; }
+  .kg-prompt__hint { padding: 14px 18px; }
+  .kg-option { padding: 16px 14px; }
 }

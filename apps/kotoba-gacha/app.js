@@ -1,8 +1,8 @@
-// ことばガチャ — ひとこと変えると、空気が変わる
+// ことばガチャ — 空気にぴったりな言い方を当てる
 import { shuffle } from '../shared/js/utils.js';
 
 // ── お題データ ─────────────────────────────────────
-// template 内の ◯ が選択肢で置き換わる
+// template 内の ◯ が助詞の位置
 const QUESTIONS = [
   {
     template: 'ぼく◯ラーメンがすき',
@@ -82,7 +82,8 @@ const QUESTIONS = [
 const state = {
   deck: [],
   index: 0,
-  selected: null, // 現在選択中の助詞
+  answered: false,
+  correctCount: 0,
 };
 
 // ── DOM ─────────────────────────────────────
@@ -92,13 +93,12 @@ const elScreens = {
   play: $('screen-play'),
   end:  $('screen-end'),
 };
-const elProgress     = $('progress');
-const elTopic        = $('topic');
-const elChoices      = $('choices');
-const elResult       = $('result');
-const elResultSent   = $('resultSentence');
-const elResultHint   = $('resultHint');
-const elBtnNext      = $('btnNext');
+const elProgress   = $('progress');
+const elPromptHint = $('promptHint');
+const elOptions    = $('options');
+const elFeedback   = $('feedback');
+const elBtnNext    = $('btnNext');
+const elEndScore   = $('endScore');
 
 // ── 画面切替 ─────────────────────────────────────
 function showScreen(name) {
@@ -113,80 +113,67 @@ function esc(s) {
     .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
-// ── テンプレートを「前・◯・後」に分解 ─────────────────────────────────────
+// ── テンプレートを「前・後」に分解 ─────────────────────────────────────
 function splitTemplate(template) {
   const i = template.indexOf('◯');
   return { before: template.slice(0, i), after: template.slice(i + 1) };
 }
 
+// ── デッキ生成（お題順・選択肢順・正解をランダム化） ─────────────────────────────────────
+function buildDeck() {
+  return shuffle(QUESTIONS).map((q) => {
+    const targetIndex = Math.floor(Math.random() * q.choices.length);
+    const target = q.choices[targetIndex];
+    const displayed = shuffle(q.choices.slice());
+    return { template: q.template, choices: displayed, target };
+  });
+}
+
 // ── 問題描画 ─────────────────────────────────────
 function renderQuestion() {
   const q = state.deck[state.index];
-  state.selected = null;
+  state.answered = false;
 
   elProgress.textContent = `${state.index + 1} / ${state.deck.length}`;
+  elPromptHint.textContent = q.target.hint;
 
-  // お題文（◯はスロット）
-  const { before, after } = splitTemplate(q.template);
-  elTopic.innerHTML =
-    `${esc(before)}<span class="kg-topic__slot" id="topicSlot">◯</span>${esc(after)}`;
-
-  // 選択肢
-  elChoices.innerHTML = '';
+  elOptions.innerHTML = '';
   q.choices.forEach((c) => {
+    const { before, after } = splitTemplate(q.template);
     const btn = document.createElement('button');
     btn.type = 'button';
-    btn.className = 'kg-choice';
-    btn.textContent = c.particle;
+    btn.className = 'kg-option';
     btn.dataset.particle = c.particle;
-    btn.addEventListener('click', () => selectChoice(c));
-    elChoices.appendChild(btn);
+    btn.innerHTML = `
+      <span class="kg-option__sentence">${esc(before)}<span class="kg-option__particle">${esc(c.particle)}</span>${esc(after)}</span>
+      <span class="kg-option__hint">${esc(c.hint)}</span>
+    `;
+    btn.addEventListener('click', () => pickOption(btn, c));
+    elOptions.appendChild(btn);
   });
 
-  // 結果エリアを隠す
-  elResult.classList.remove('visible');
-  elResultSent.innerHTML = '';
-  elResultHint.textContent = '';
-
-  // つぎボタンは未選択時は非活性
+  elFeedback.textContent = '';
+  elFeedback.className = 'kg-feedback';
   elBtnNext.disabled = true;
 }
 
-// ── 選択肢クリック ─────────────────────────────────────
-function selectChoice(choice) {
-  const q = state.deck[state.index];
-  state.selected = choice;
+// ── 選択 → 答え合わせ ─────────────────────────────────────
+function pickOption(btn, choice) {
+  if (state.answered) return;
+  state.answered = true;
 
-  // カードの見た目を更新
-  [...elChoices.children].forEach((btn) => {
-    btn.classList.remove('selected', 'dimmed');
-    if (btn.dataset.particle === choice.particle) {
-      btn.classList.add('selected');
-    } else {
-      btn.classList.add('dimmed');
-    }
+  const q = state.deck[state.index];
+  const isCorrect = choice.particle === q.target.particle;
+  if (isCorrect) state.correctCount++;
+
+  [...elOptions.children].forEach((el) => {
+    el.classList.add('revealed');
+    if (el.dataset.particle === q.target.particle) el.classList.add('correct');
+    if (el === btn && !isCorrect) el.classList.add('wrong');
   });
 
-  // お題の◯を選んだ助詞に置き換え（再度タップし直しても切り替わる）
-  const slot = $('topicSlot');
-  slot.textContent = choice.particle;
-  slot.classList.add('filled');
-  // 軽い pop アニメ
-  slot.animate(
-    [
-      { transform: 'scale(0.8)', opacity: 0.4 },
-      { transform: 'scale(1.15)', opacity: 1 },
-      { transform: 'scale(1)', opacity: 1 },
-    ],
-    { duration: 260, easing: 'ease-out' }
-  );
-
-  // 結果エリア：完成文 + ヒント
-  const { before, after } = splitTemplate(q.template);
-  elResultSent.innerHTML =
-    `${esc(before)}<span class="kg-particle">${esc(choice.particle)}</span>${esc(after)}`;
-  elResultHint.textContent = choice.hint;
-  elResult.classList.add('visible');
+  elFeedback.textContent = isCorrect ? 'せいかい!' : 'せいかいは こっち';
+  elFeedback.className = 'kg-feedback visible ' + (isCorrect ? 'correct' : 'wrong');
 
   elBtnNext.disabled = false;
 }
@@ -195,6 +182,7 @@ function selectChoice(choice) {
 function next() {
   state.index++;
   if (state.index >= state.deck.length) {
+    elEndScore.textContent = `${state.deck.length}問中 ${state.correctCount}問あたったよ`;
     showScreen('end');
     return;
   }
@@ -203,8 +191,9 @@ function next() {
 
 // ── 開始 / リスタート ─────────────────────────────────────
 function startGame() {
-  state.deck = shuffle(QUESTIONS);
+  state.deck = buildDeck();
   state.index = 0;
+  state.correctCount = 0;
   renderQuestion();
   showScreen('play');
 }
