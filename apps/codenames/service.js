@@ -527,6 +527,118 @@ export async function endTurn(roomId, expectedTurnTeam) {
 }
 
 /**
+ * ホストが現在のターンを強制終了する。
+ * @param {string} roomId
+ * @param {string} hostPlayerId
+ * @returns {Promise<void>}
+ */
+export async function forceEndTurn(roomId, hostPlayerId) {
+  const roomRef = doc(db, ROOMS_COLLECTION, normalizeRoomId(roomId));
+
+  await runTransaction(db, async (transaction) => {
+    const snapshot = await transaction.get(roomRef);
+    if (!snapshot.exists()) {
+      throw new Error("ルームが見つかりません");
+    }
+
+    const room = snapshot.data();
+    if (room.gamePhase !== "in_progress") {
+      throw new Error("ゲーム中ではありません");
+    }
+
+    const players = Array.isArray(room.players) ? room.players : [];
+    const hostPlayer = players.find((p) => p.id === hostPlayerId);
+    if (!hostPlayer?.isHost) {
+      throw new Error("ホストだけがターンを進められます");
+    }
+
+    transaction.update(roomRef, nextTurnUpdates(room.turnTeam));
+  });
+}
+
+/**
+ * ヒントを取り消して、同じチームのヒント待ちに戻す。
+ * @param {string} roomId
+ * @param {string} actorPlayerId
+ * @returns {Promise<void>}
+ */
+export async function resetHint(roomId, actorPlayerId) {
+  const roomRef = doc(db, ROOMS_COLLECTION, normalizeRoomId(roomId));
+
+  await runTransaction(db, async (transaction) => {
+    const snapshot = await transaction.get(roomRef);
+    if (!snapshot.exists()) {
+      throw new Error("ルームが見つかりません");
+    }
+
+    const room = snapshot.data();
+    if (room.gamePhase !== "in_progress") {
+      throw new Error("ゲーム中ではありません");
+    }
+    if (room.turnPhase !== "guessing") {
+      throw new Error("今はヒントを取り消せません");
+    }
+    const hintCount = Number(room.currentHint?.count);
+    const expectedRemainingGuesses = Number.isFinite(hintCount) ? hintCount + 1 : null;
+    if (expectedRemainingGuesses !== Number(room.remainingGuesses || 0)) {
+      throw new Error("カードを選んだ後はヒントを取り消せません");
+    }
+
+    const players = Array.isArray(room.players) ? room.players : [];
+    const actorPlayer = players.find((p) => p.id === actorPlayerId);
+    const isCurrentSpymaster =
+      actorPlayer?.team === room.turnTeam && actorPlayer.role === "spymaster";
+    if (!actorPlayer?.isHost && !isCurrentSpymaster) {
+      throw new Error("ホストまたは現在のヒント役だけが取り消せます");
+    }
+
+    transaction.update(roomRef, {
+      turnPhase: "waiting_hint",
+      currentHint: null,
+      remainingGuesses: 0,
+    });
+  });
+}
+
+/**
+ * ホストが勝者を指定してゲームを終了する。
+ * @param {string} roomId
+ * @param {string} hostPlayerId
+ * @param {Team} winner
+ * @returns {Promise<void>}
+ */
+export async function finishGame(roomId, hostPlayerId, winner) {
+  const roomRef = doc(db, ROOMS_COLLECTION, normalizeRoomId(roomId));
+
+  await runTransaction(db, async (transaction) => {
+    const snapshot = await transaction.get(roomRef);
+    if (!snapshot.exists()) {
+      throw new Error("ルームが見つかりません");
+    }
+
+    const room = snapshot.data();
+    if (room.gamePhase !== "in_progress") {
+      throw new Error("ゲーム中ではありません");
+    }
+    if (!["red", "blue"].includes(winner)) {
+      throw new Error("勝者を選んでください");
+    }
+
+    const players = Array.isArray(room.players) ? room.players : [];
+    const hostPlayer = players.find((p) => p.id === hostPlayerId);
+    if (!hostPlayer?.isHost) {
+      throw new Error("ホストだけがゲームを終了できます");
+    }
+
+    transaction.update(roomRef, {
+      gamePhase: "finished",
+      winner,
+      finishReason: "manual",
+    });
+  });
+}
+
+/**
  * 同じ参加者・役割でロビーに戻す。
  * @param {string} roomId
  * @param {string} hostPlayerId

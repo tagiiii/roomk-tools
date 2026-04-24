@@ -273,6 +273,12 @@
   font-size: var(--font-size-sm);
 }
 
+.cn-score-remaining {
+  color: var(--color-muted);
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+}
+
 .cn-score--red {
   border-left-color: #B91C1C;
 }
@@ -325,6 +331,7 @@
 .cn-current-hint {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   flex-wrap: wrap;
   gap: var(--space-sm);
   padding: var(--space-md);
@@ -335,6 +342,24 @@
 .cn-current-hint strong {
   font-size: var(--font-size-lg);
   color: var(--color-primary);
+}
+
+.cn-host-controls {
+  display: grid;
+  gap: var(--space-sm);
+  margin-top: var(--space-md);
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--color-border);
+}
+
+.cn-host-controls .cn-section-title {
+  margin-top: 0;
+}
+
+.cn-host-control-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-sm);
 }
 
 .cn-board {
@@ -490,6 +515,10 @@
   }
 
   .cn-hint-form {
+    grid-template-columns: 1fr;
+  }
+
+  .cn-host-control-grid {
     grid-template-columns: 1fr;
   }
 

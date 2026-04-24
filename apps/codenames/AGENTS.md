@@ -33,7 +33,7 @@ codenames_rooms/{roomId}
   - remainingGuesses: number
   - firstTeam: "red" | "blue"
   - winner: "red" | "blue" | null
-  - finishReason: "all_found" | "trap" | null
+  - finishReason: "all_found" | "trap" | "manual" | null
   - cards: Card[]               // 25枚の配列（index / word / role / revealed）
   - players: Player[]           // id / name / team / role / isHost
 ```
@@ -64,6 +64,8 @@ codenames_rooms/{roomId}
 - ヒント送信・カード公開・ターン終了は Firestore transaction で整合性担保（`runTransaction`）
 - ゲーム画面では現在のターン・フェーズ・自チームかどうかを上部の強調帯で常時表示する
 - ゲーム画面では赤/青それぞれの「見つけたカード数 / 全カード数」を常時表示する。相手チームのカードを選んだ場合も、そのチームの見つけた枚数に含める
+- カード公開前に確認ダイアログを出す。ヒントはカード公開前のみ、ホストまたは現在のヒント役が取り消して出し直せる
+- ホストはゲーム中にターン強制終了、ロビー戻し、勝者指定での終了ができる
 - チーム・役割の割り当てはホストのみ変更可能。ゲーム中も途中離脱対応のためホストが調整できる
 - ホストはロビー・ゲーム中に、途中離脱などで残った参加者データを削除できる（ホスト自身は削除不可）
 - ゲーム中は退出不可。参加情報を消すと途中復帰できず進行不能になり得るため、退出はロビーまたは結果画面でのみ許可する

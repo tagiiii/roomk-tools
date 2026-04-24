@@ -7,6 +7,8 @@ import {
   createRoom,
   deleteExpiredRoom,
   endTurn,
+  finishGame,
+  forceEndTurn,
   generatePlayerId,
   getStartConditions,
   isRoomExpired,
@@ -15,6 +17,7 @@ import {
   normalizeRoomId,
   removePlayerFromRoom,
   restartGame,
+  resetHint,
   revealCard,
   startGame,
   submitHint,
@@ -315,6 +318,7 @@ function renderGame() {
         ${renderCards(state.room.cards || [], currentPlayer)}
       </div>
       ${renderTurnActions(state.room, currentPlayer)}
+      ${renderHostGameControls(state.room, currentPlayer)}
       ${renderHostPlayerManagement(state.room, currentPlayer)}
     </section>
     ${renderNotification()}
@@ -443,6 +447,13 @@ function resultSummary(room) {
   }
 
   const reason = room.finishReason || inferFinishReason(room);
+  if (reason === "manual") {
+    return {
+      title: `${teamLabel(winner)}の勝ちで終了しました`,
+      detail: "ホストがゲームを終了しました。",
+    };
+  }
+
   if (reason === "trap") {
     const loser = winner === "red" ? "blue" : "red";
     return {
@@ -584,6 +595,7 @@ function renderScoreBoard(room) {
         <div class="cn-score cn-score--${esc(score.team)} ${score.isTurn ? "cn-score--active" : ""}">
           <span>${esc(teamLabel(score.team))}</span>
           <strong>${score.found}<small>/${score.total}</small></strong>
+          <span class="cn-score-remaining">あと${Math.max(score.total - score.found, 0)}</span>
           ${score.isTurn ? '<span class="cn-score-turn">いまの番</span>' : ""}
         </div>
       `).join("")}
@@ -621,11 +633,24 @@ function renderHintArea(room, currentPlayer) {
   }
 
   if (room.currentHint && room.turnPhase === "guessing") {
+    const canResetHint = !state.submitting &&
+      Number(room.remainingGuesses || 0) === Number(room.currentHint.count || 0) + 1 && (
+      currentPlayer.isHost ||
+      (currentPlayer.team === room.turnTeam && currentPlayer.role === "spymaster")
+    );
+
     return `
       <div class="cn-current-hint">
-        <span class="text-muted">現在のヒント</span>
-        <strong>「${esc(room.currentHint.word)}」${Number(room.currentHint.count)}まい</strong>
-        <span class="badge badge-accent">残り${Number(room.remainingGuesses || 0)}</span>
+        <div>
+          <span class="text-muted">現在のヒント</span>
+          <strong>「${esc(room.currentHint.word)}」${Number(room.currentHint.count)}まい</strong>
+          <span class="badge badge-accent">残り${Number(room.remainingGuesses || 0)}</span>
+        </div>
+        ${canResetHint ? `
+          <button class="btn btn-secondary btn-sm" id="reset-hint" type="button">
+            ヒントを出し直す
+          </button>
+        ` : ""}
       </div>
     `;
   }
@@ -681,14 +706,44 @@ function renderTurnActions(room, currentPlayer) {
     room.turnTeam === currentPlayer.team &&
     currentPlayer.role === "guesser";
 
-  if (!canPass && currentPlayer.role !== "guesser") return "";
+  const showPass = currentPlayer.role === "guesser";
+  const showForceEnd = currentPlayer.isHost && room.gamePhase === "in_progress";
+  if (!showPass && !showForceEnd) return "";
 
   return `
     <div class="cn-actions">
-      <button class="btn btn-secondary btn-full" id="end-turn" type="button" ${canPass ? "" : "disabled"}>
-        ${state.submitting ? "送信中..." : "ターンを終了（パス）"}
-      </button>
+      ${showPass ? `
+        <button class="btn btn-secondary btn-full" id="end-turn" type="button" ${canPass ? "" : "disabled"}>
+          ${state.submitting ? "送信中..." : "ターンを終了（パス）"}
+        </button>
+      ` : ""}
+      ${showForceEnd ? `
+        <button class="btn btn-secondary btn-full" id="force-end-turn" type="button" ${state.submitting ? "disabled" : ""}>
+          ホスト: ターンを進める
+        </button>
+      ` : ""}
     </div>
+  `;
+}
+
+function renderHostGameControls(room, currentPlayer) {
+  if (!currentPlayer.isHost || room.gamePhase !== "in_progress") return "";
+
+  return `
+    <section class="cn-host-controls" aria-label="ホスト操作">
+      <h2 class="cn-section-title">ホスト操作</h2>
+      <div class="cn-host-control-grid">
+        <button class="btn btn-secondary" id="abort-to-lobby" type="button" ${state.loading ? "disabled" : ""}>
+          ロビーへ戻す
+        </button>
+        <button class="btn btn-danger" data-finish-winner="red" type="button" ${state.loading ? "disabled" : ""}>
+          赤勝ちで終了
+        </button>
+        <button class="btn btn-danger" data-finish-winner="blue" type="button" ${state.loading ? "disabled" : ""}>
+          青勝ちで終了
+        </button>
+      </div>
+    </section>
   `;
 }
 
@@ -887,6 +942,7 @@ async function handleRevealCard(cardIndex) {
   const currentPlayer = state.room.players?.find((p) => p.id === state.playerId);
   const card = state.room.cards?.[cardIndex];
   if (!currentPlayer || !canRevealCard(card, currentPlayer)) return;
+  if (!window.confirm(`「${card.word}」を開きますか？`)) return;
 
   state.submitting = true;
   state.error = "";
@@ -899,6 +955,24 @@ async function handleRevealCard(cardIndex) {
     }
   } catch (error) {
     state.error = error.message || "カード公開に失敗しました";
+    state.submitting = false;
+    renderGame();
+  }
+}
+
+async function handleResetHint() {
+  if (!state.room || state.submitting) return;
+  if (!window.confirm("いまのヒントを取り消して、ヒント待ちに戻しますか？")) return;
+
+  state.submitting = true;
+  state.error = "";
+  renderGame();
+
+  try {
+    await resetHint(state.roomId, state.playerId);
+    showToast("ヒントを取り消しました", "success");
+  } catch (error) {
+    state.error = error.message || "ヒントの取り消しに失敗しました";
     state.submitting = false;
     renderGame();
   }
@@ -918,6 +992,57 @@ async function handleEndTurn() {
   } catch (error) {
     state.error = error.message || "ターン終了に失敗しました";
     state.submitting = false;
+    renderGame();
+  }
+}
+
+async function handleForceEndTurn() {
+  if (!state.room || state.submitting) return;
+  if (!window.confirm("ホスト操作で現在のターンを終了して、次のチームに進めますか？")) return;
+
+  state.submitting = true;
+  state.error = "";
+  renderGame();
+
+  try {
+    await forceEndTurn(state.roomId, state.playerId);
+  } catch (error) {
+    state.error = error.message || "ターンを進められませんでした";
+    state.submitting = false;
+    renderGame();
+  }
+}
+
+async function handleFinishGame(winner) {
+  if (!state.roomId || !state.playerId || state.loading) return;
+  if (!window.confirm(`${teamLabel(winner)}の勝ちとしてゲームを終了しますか？`)) return;
+
+  state.loading = true;
+  state.error = "";
+  renderGame();
+
+  try {
+    await finishGame(state.roomId, state.playerId, winner);
+  } catch (error) {
+    state.error = error.message || "ゲーム終了に失敗しました";
+    state.loading = false;
+    renderGame();
+  }
+}
+
+async function handleAbortToLobby() {
+  if (!state.roomId || !state.playerId || state.loading) return;
+  if (!window.confirm("ゲームを中止してロビーに戻しますか？盤面は作り直されます。")) return;
+
+  state.loading = true;
+  state.error = "";
+  renderGame();
+
+  try {
+    await restartGame(state.roomId, state.playerId);
+  } catch (error) {
+    state.error = error.message || "ロビーへ戻せませんでした";
+    state.loading = false;
     renderGame();
   }
 }
@@ -997,6 +1122,11 @@ document.addEventListener("click", async (event) => {
     return;
   }
 
+  if (event.target.closest("#reset-hint")) {
+    await handleResetHint();
+    return;
+  }
+
   const cardButton = event.target.closest("[data-card-index]");
   if (cardButton) {
     await handleRevealCard(Number(cardButton.dataset.cardIndex));
@@ -1005,6 +1135,22 @@ document.addEventListener("click", async (event) => {
 
   if (event.target.closest("#end-turn")) {
     await handleEndTurn();
+    return;
+  }
+
+  if (event.target.closest("#force-end-turn")) {
+    await handleForceEndTurn();
+    return;
+  }
+
+  const finishWinnerButton = event.target.closest("[data-finish-winner]");
+  if (finishWinnerButton) {
+    await handleFinishGame(finishWinnerButton.dataset.finishWinner);
+    return;
+  }
+
+  if (event.target.closest("#abort-to-lobby")) {
+    await handleAbortToLobby();
     return;
   }
 
