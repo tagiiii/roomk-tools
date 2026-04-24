@@ -111,7 +111,6 @@ function renderHome() {
   stopRoomSubscription();
   appEl.innerHTML = `
     <section class="card cn-panel">
-      <p class="badge badge-accent">Firestore同期</p>
       <h1 class="cn-title">ことば探偵</h1>
       <p class="text-muted">ヒント役の言葉をもとに、チームで相談しながら単語カードを見つけるゲームです。</p>
       ${state.error ? `<div class="alert alert-error mt-md">${esc(state.error)}</div>` : ""}
