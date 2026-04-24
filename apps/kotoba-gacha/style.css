@@ -84,6 +84,22 @@
   max-width: 100%;
 }
 
+/* ── コピー導線 ── */
+.kg-copy {
+  display: flex;
+  justify-content: center;
+  margin: -4px 0 18px;
+}
+.kg-copy .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+}
+.kg-copy .material-symbols-rounded {
+  font-size: 18px;
+}
+
 /* ── 選択肢（完成文カード） ── */
 .kg-options {
   display: flex;
@@ -119,6 +135,11 @@
   font-weight: 700;
   color: var(--color-text);
   line-height: 1.4;
+}
+.kg-option__num {
+  color: var(--color-accent);
+  margin-right: 10px;
+  font-feature-settings: "palt";
 }
 .kg-option__particle {
   color: var(--color-accent);

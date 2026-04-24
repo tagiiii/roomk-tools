@@ -1,5 +1,8 @@
 // ことばガチャ — 空気にぴったりな言い方を当てる
-import { shuffle } from '../shared/js/utils.js';
+import { shuffle, copyToClipboard } from '../shared/js/utils.js';
+
+// 選択肢につける番号（①〜⑤。候補は最大3つだが余裕を持って）
+const NUMBERS = ['①', '②', '③', '④', '⑤'];
 
 // ── お題データ ─────────────────────────────────────
 // template 内の ◯ が助詞の位置
@@ -98,6 +101,7 @@ const elPromptHint = $('promptHint');
 const elOptions    = $('options');
 const elFeedback   = $('feedback');
 const elBtnNext    = $('btnNext');
+const elBtnCopy    = $('btnCopy');
 const elEndScore   = $('endScore');
 
 // ── 画面切替 ─────────────────────────────────────
@@ -138,14 +142,14 @@ function renderQuestion() {
   elPromptHint.textContent = q.target.hint;
 
   elOptions.innerHTML = '';
-  q.choices.forEach((c) => {
+  q.choices.forEach((c, i) => {
     const { before, after } = splitTemplate(q.template);
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'kg-option';
     btn.dataset.particle = c.particle;
     btn.innerHTML = `
-      <span class="kg-option__sentence">${esc(before)}<span class="kg-option__particle">${esc(c.particle)}</span>${esc(after)}</span>
+      <span class="kg-option__sentence"><span class="kg-option__num">${NUMBERS[i]}</span>${esc(before)}<span class="kg-option__particle">${esc(c.particle)}</span>${esc(after)}</span>
       <span class="kg-option__hint">${esc(c.hint)}</span>
     `;
     btn.addEventListener('click', () => pickOption(btn, c));
@@ -199,8 +203,24 @@ function startGame() {
 }
 
 // ── イベント ─────────────────────────────────────
+// ── 現在のお題をチャット用テキストにする ─────────────────────────────────────
+function buildCopyText() {
+  const q = state.deck[state.index];
+  const lines = [
+    'こんな感じ、なのはどれ?',
+    `「${q.target.hint}」`,
+    '',
+    ...q.choices.map((c, i) => {
+      const { before, after } = splitTemplate(q.template);
+      return `${NUMBERS[i]} ${before}${c.particle}${after}`;
+    }),
+  ];
+  return lines.join('\n');
+}
+
 $('btnStart').addEventListener('click', startGame);
 $('btnNext').addEventListener('click', next);
 $('btnBackTop').addEventListener('click', () => showScreen('top'));
 $('btnBackTop2').addEventListener('click', () => showScreen('top'));
 $('btnAgain').addEventListener('click', startGame);
+elBtnCopy.addEventListener('click', () => copyToClipboard(buildCopyText(), elBtnCopy, { successText: 'コピーしました!' }));
