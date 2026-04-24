@@ -228,13 +228,14 @@ export async function leaveRoom(roomId, playerId) {
 }
 
 /**
- * プレイヤーのチーム・役割を更新する。
+ * プレイヤーのチーム・役割をホストが更新する。
  * @param {string} roomId
- * @param {string} playerId
+ * @param {string} targetPlayerId
  * @param {Partial<Pick<Player, "team" | "role">>} updates
+ * @param {string} actorPlayerId
  * @returns {Promise<void>}
  */
-export async function updatePlayerRole(roomId, playerId, updates) {
+export async function updatePlayerRole(roomId, targetPlayerId, updates, actorPlayerId) {
   const roomRef = doc(db, ROOMS_COLLECTION, normalizeRoomId(roomId));
 
   await runTransaction(db, async (transaction) => {
@@ -249,12 +250,21 @@ export async function updatePlayerRole(roomId, playerId, updates) {
     }
 
     const players = Array.isArray(room.players) ? room.players : [];
-    const currentPlayer = players.find((p) => p.id === playerId);
-    if (!currentPlayer) {
+    const actorPlayer = players.find((p) => p.id === actorPlayerId);
+    if (!actorPlayer?.isHost) {
+      throw new Error("ホストだけが役割を変更できます");
+    }
+
+    const targetPlayer = players.find((p) => p.id === targetPlayerId);
+    if (!targetPlayer) {
       throw new Error("参加者が見つかりません");
     }
 
-    const nextPlayer = { ...currentPlayer, ...updates };
+    const nextPlayer = {
+      ...targetPlayer,
+      team: updates.team ?? targetPlayer.team,
+      role: updates.role ?? targetPlayer.role,
+    };
     if (!["red", "blue"].includes(nextPlayer.team)) {
       throw new Error("チームを選んでください");
     }
@@ -264,7 +274,7 @@ export async function updatePlayerRole(roomId, playerId, updates) {
 
     if (nextPlayer.role === "spymaster") {
       const existingSpymaster = players.find((p) =>
-        p.id !== playerId && p.team === nextPlayer.team && p.role === "spymaster"
+        p.id !== targetPlayerId && p.team === nextPlayer.team && p.role === "spymaster"
       );
       if (existingSpymaster) {
         throw new Error(`${teamLabel(nextPlayer.team)}のヒント役は既にいます`);
@@ -272,7 +282,7 @@ export async function updatePlayerRole(roomId, playerId, updates) {
     }
 
     transaction.update(roomRef, {
-      players: players.map((p) => p.id === playerId ? nextPlayer : p),
+      players: players.map((p) => p.id === targetPlayerId ? nextPlayer : p),
     });
   });
 }

@@ -216,15 +216,8 @@ function renderLobby() {
   const currentPlayer = state.room.players?.find((p) => p.id === state.playerId);
   const players = state.room.players || [];
   const startable = canStart(players);
-  const playerList = players.map((player) => `
-    <li class="cn-player">
-      <span>
-        ${esc(player.name)}
-        ${player.isHost ? '<span class="badge badge-primary">ホスト</span>' : ""}
-      </span>
-      <span class="text-muted">${esc(teamLabel(player.team))} / ${esc(roleLabel(player.role))}</span>
-    </li>
-  `).join("");
+  const canEditAssignments = Boolean(currentPlayer?.isHost);
+  const playerList = players.map((player) => renderLobbyPlayer(player, canEditAssignments)).join("");
 
   appEl.innerHTML = `
     <section class="card cn-panel">
@@ -237,7 +230,6 @@ function renderLobby() {
           <span class="material-symbols-rounded">content_copy</span>コピー
       </button>
       </div>
-      ${currentPlayer ? renderPlayerControls(currentPlayer) : ""}
       <div class="cn-status-grid mt-lg">
         <div class="cn-status">
           <span class="text-muted">あなた</span>
@@ -427,11 +419,27 @@ function roleLabel(role) {
   return role === "spymaster" ? "ヒント役" : "探す役";
 }
 
-function renderPlayerControls(currentPlayer) {
+function renderLobbyPlayer(player, canEditAssignments) {
+  return `
+    <li class="cn-player">
+      <div class="cn-player-info">
+        <span>
+          ${esc(player.name)}
+          ${player.isHost ? '<span class="badge badge-primary">ホスト</span>' : ""}
+        </span>
+        <span class="text-muted">${esc(teamLabel(player.team))} / ${esc(roleLabel(player.role))}</span>
+      </div>
+      ${canEditAssignments ? renderPlayerControls(player) : ""}
+    </li>
+  `;
+}
+
+function renderPlayerControls(player) {
   const teamButtons = ["red", "blue"].map((team) => `
     <button
-      class="btn ${currentPlayer.team === team ? "btn-primary" : "btn-secondary"} btn-sm"
+      class="btn ${player.team === team ? "btn-primary" : "btn-secondary"} btn-sm"
       type="button"
+      data-player-id="${esc(player.id)}"
       data-team="${team}"
       ${state.loading ? "disabled" : ""}
     >${teamLabel(team)}</button>
@@ -439,15 +447,16 @@ function renderPlayerControls(currentPlayer) {
 
   const roleButtons = ["spymaster", "guesser"].map((role) => `
     <button
-      class="btn ${currentPlayer.role === role ? "btn-primary" : "btn-secondary"} btn-sm"
+      class="btn ${player.role === role ? "btn-primary" : "btn-secondary"} btn-sm"
       type="button"
+      data-player-id="${esc(player.id)}"
       data-role="${role}"
       ${state.loading ? "disabled" : ""}
     >${roleLabel(role)}</button>
   `).join("");
 
   return `
-    <div class="cn-controls">
+    <div class="cn-player-controls">
       <div>
         <p class="form-label">チーム</p>
         <div class="cn-toggle-row">${teamButtons}</div>
@@ -650,14 +659,14 @@ async function handleJoin(form) {
   }
 }
 
-async function handlePlayerUpdate(updates) {
-  if (!state.roomId || !state.playerId || state.loading) return;
+async function handlePlayerUpdate(targetPlayerId, updates) {
+  if (!state.roomId || !state.playerId || !targetPlayerId || state.loading) return;
   state.loading = true;
   state.error = "";
   renderLobby();
 
   try {
-    await updatePlayerRole(state.roomId, state.playerId, updates);
+    await updatePlayerRole(state.roomId, targetPlayerId, updates, state.playerId);
   } catch (error) {
     state.error = error.message || "変更に失敗しました";
     state.loading = false;
@@ -806,13 +815,13 @@ document.addEventListener("click", async (event) => {
 
   const teamButton = event.target.closest("[data-team]");
   if (teamButton) {
-    await handlePlayerUpdate({ team: teamButton.dataset.team });
+    await handlePlayerUpdate(teamButton.dataset.playerId, { team: teamButton.dataset.team });
     return;
   }
 
   const roleButton = event.target.closest("[data-role]");
   if (roleButton) {
-    await handlePlayerUpdate({ role: roleButton.dataset.role });
+    await handlePlayerUpdate(roleButton.dataset.playerId, { role: roleButton.dataset.role });
     return;
   }
 
