@@ -245,8 +245,8 @@ export async function updatePlayerRole(roomId, targetPlayerId, updates, actorPla
     }
 
     const room = snapshot.data();
-    if (room.gamePhase !== "lobby") {
-      throw new Error("ゲーム開始後は変更できません");
+    if (!["lobby", "in_progress"].includes(room.gamePhase)) {
+      throw new Error("このタイミングでは変更できません");
     }
 
     const players = Array.isArray(room.players) ? room.players : [];
@@ -283,6 +283,47 @@ export async function updatePlayerRole(roomId, targetPlayerId, updates, actorPla
 
     transaction.update(roomRef, {
       players: players.map((p) => p.id === targetPlayerId ? nextPlayer : p),
+    });
+  });
+}
+
+/**
+ * ホストが残った参加者データをルームから除外する。
+ * @param {string} roomId
+ * @param {string} targetPlayerId
+ * @param {string} actorPlayerId
+ * @returns {Promise<void>}
+ */
+export async function removePlayerFromRoom(roomId, targetPlayerId, actorPlayerId) {
+  const roomRef = doc(db, ROOMS_COLLECTION, normalizeRoomId(roomId));
+
+  await runTransaction(db, async (transaction) => {
+    const snapshot = await transaction.get(roomRef);
+    if (!snapshot.exists()) {
+      throw new Error("ルームが見つかりません");
+    }
+
+    const room = snapshot.data();
+    if (!["lobby", "in_progress"].includes(room.gamePhase)) {
+      throw new Error("このタイミングでは整理できません");
+    }
+
+    const players = Array.isArray(room.players) ? room.players : [];
+    const actorPlayer = players.find((p) => p.id === actorPlayerId);
+    if (!actorPlayer?.isHost) {
+      throw new Error("ホストだけが参加者を整理できます");
+    }
+
+    const targetPlayer = players.find((p) => p.id === targetPlayerId);
+    if (!targetPlayer) {
+      throw new Error("参加者が見つかりません");
+    }
+    if (targetPlayer.isHost) {
+      throw new Error("ホストは削除できません");
+    }
+
+    transaction.update(roomRef, {
+      players: players.filter((p) => p.id !== targetPlayerId),
     });
   });
 }

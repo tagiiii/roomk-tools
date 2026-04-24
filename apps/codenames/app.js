@@ -13,6 +13,7 @@ import {
   joinRoom,
   leaveRoom,
   normalizeRoomId,
+  removePlayerFromRoom,
   restartGame,
   revealCard,
   startGame,
@@ -313,6 +314,7 @@ function renderGame() {
         ${renderCards(state.room.cards || [], currentPlayer)}
       </div>
       ${renderTurnActions(state.room, currentPlayer)}
+      ${renderHostPlayerManagement(state.room, currentPlayer)}
     </section>
     ${renderNotification()}
   `;
@@ -438,7 +440,19 @@ function renderLobbyPlayer(player, canEditAssignments) {
         </span>
         <span class="text-muted">${esc(teamLabel(player.team))} / ${esc(roleLabel(player.role))}</span>
       </div>
-      ${canEditAssignments ? renderPlayerControls(player) : ""}
+      ${canEditAssignments ? `
+        <div class="cn-player-actions">
+          ${renderPlayerControls(player)}
+          ${player.isHost ? "" : `
+            <button
+              class="btn btn-danger btn-sm"
+              type="button"
+              data-remove-player-id="${esc(player.id)}"
+              ${state.loading ? "disabled" : ""}
+            >削除</button>
+          `}
+        </div>
+      ` : ""}
     </li>
   `;
 }
@@ -621,6 +635,44 @@ function renderTurnActions(room, currentPlayer) {
   `;
 }
 
+function renderHostPlayerManagement(room, currentPlayer) {
+  if (!currentPlayer.isHost) return "";
+
+  const players = room.players || [];
+  const playerItems = players.map((player) => `
+    <li class="cn-player">
+      <div class="cn-player-info">
+        <span>
+          ${esc(player.name)}
+          ${player.isHost ? '<span class="badge badge-primary">ホスト</span>' : ""}
+        </span>
+        <span class="text-muted">${esc(teamLabel(player.team))} / ${esc(roleLabel(player.role))}</span>
+      </div>
+      <div class="cn-player-actions">
+        ${renderPlayerControls(player)}
+        ${player.isHost ? "" : `
+          <button
+            class="btn btn-danger btn-sm"
+            type="button"
+            data-remove-player-id="${esc(player.id)}"
+            ${state.loading ? "disabled" : ""}
+          >削除</button>
+        `}
+      </div>
+    </li>
+  `).join("");
+
+  return `
+    <section class="cn-player-management" aria-label="参加者管理">
+      <div>
+        <h2 class="cn-section-title">参加者管理</h2>
+        <p class="text-muted">途中で抜けた人が残った場合は削除し、必要に応じて役割を調整してください。</p>
+      </div>
+      <ul class="cn-player-list">${playerItems}</ul>
+    </section>
+  `;
+}
+
 function renderNotification() {
   if (!state.notification?.visible) return "";
   return `
@@ -695,14 +747,34 @@ async function handlePlayerUpdate(targetPlayerId, updates) {
   if (!state.roomId || !state.playerId || !targetPlayerId || state.loading) return;
   state.loading = true;
   state.error = "";
-  renderLobby();
+  render();
 
   try {
     await updatePlayerRole(state.roomId, targetPlayerId, updates, state.playerId);
   } catch (error) {
     state.error = error.message || "変更に失敗しました";
     state.loading = false;
-    renderLobby();
+    render();
+  }
+}
+
+async function handleRemovePlayer(targetPlayerId) {
+  if (!state.roomId || !state.playerId || !targetPlayerId || state.loading) return;
+  const targetPlayer = state.room?.players?.find((p) => p.id === targetPlayerId);
+  const targetName = targetPlayer?.name || "この参加者";
+  if (!window.confirm(`${targetName}さんを参加者一覧から削除しますか？`)) return;
+
+  state.loading = true;
+  state.error = "";
+  render();
+
+  try {
+    await removePlayerFromRoom(state.roomId, targetPlayerId, state.playerId);
+    showToast("参加者を削除しました", "success");
+  } catch (error) {
+    state.error = error.message || "参加者の削除に失敗しました";
+    state.loading = false;
+    render();
   }
 }
 
@@ -854,6 +926,12 @@ document.addEventListener("click", async (event) => {
   const roleButton = event.target.closest("[data-role]");
   if (roleButton) {
     await handlePlayerUpdate(roleButton.dataset.playerId, { role: roleButton.dataset.role });
+    return;
+  }
+
+  const removePlayerButton = event.target.closest("[data-remove-player-id]");
+  if (removePlayerButton) {
+    await handleRemovePlayer(removePlayerButton.dataset.removePlayerId);
     return;
   }
 
