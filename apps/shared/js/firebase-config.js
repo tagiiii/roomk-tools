@@ -27,6 +27,7 @@ export const db = getFirestore(app);
 export const auth = getAuth(app);
 
 // 匿名認証でサインイン（セッション管理用）
-signInAnonymously(auth).catch((error) => {
+export const authReady = signInAnonymously(auth).catch((error) => {
   console.error("匿名認証に失敗しました:", error);
+  return null;
 });

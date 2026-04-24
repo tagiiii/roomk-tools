@@ -77,6 +77,7 @@ function clearSession() {
   state.roomId = "";
   state.playerId = "";
   state.room = null;
+  state.pendingCardIndex = null;
   stopRoomSubscription();
 }
 
@@ -383,6 +384,7 @@ function ensureRoomSubscription() {
     state.loading = false;
     state.submitting = false;
     state.room = room;
+    clearInvalidPendingCard();
     if (!room) {
       state.error = "ルームが見つかりません";
       clearSession();
@@ -422,6 +424,15 @@ function ensureRoomSubscription() {
     state.error = error.message || "ルームの読み込みに失敗しました";
     renderLobby();
   });
+}
+
+function clearInvalidPendingCard() {
+  if (!Number.isInteger(state.pendingCardIndex) || !state.room) return;
+  const currentPlayer = state.room.players?.find((p) => p.id === state.playerId);
+  const card = state.room.cards?.[state.pendingCardIndex];
+  if (!currentPlayer || !canRevealCard(card, currentPlayer)) {
+    state.pendingCardIndex = null;
+  }
 }
 
 function validateNickname(value) {
@@ -976,7 +987,7 @@ async function handleRevealCard(cardIndex) {
   renderGame();
 
   try {
-    const result = await revealCard(state.roomId, cardIndex, state.room.turnTeam);
+    const result = await revealCard(state.roomId, cardIndex, state.room.turnTeam, state.playerId);
     if (result.endedByTrap) {
       showNotification("トラップカード\nチャレンジ終了", "danger");
     }
@@ -1037,7 +1048,7 @@ async function handleEndTurn() {
   renderGame();
 
   try {
-    await endTurn(state.roomId, state.room.turnTeam);
+    await endTurn(state.roomId, state.room.turnTeam, state.playerId);
   } catch (error) {
     state.error = error.message || "ターン終了に失敗しました";
     state.submitting = false;

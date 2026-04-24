@@ -5,7 +5,7 @@ import {
   runTransaction,
   Timestamp,
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
-import { db } from "../shared/js/firebase-config.js";
+import { auth, authReady, db } from "../shared/js/firebase-config.js";
 import { generateSessionId, shuffle } from "../shared/js/utils.js";
 
 export const ROOMS_COLLECTION = "codenames_rooms";
@@ -27,6 +27,7 @@ const CARD_DISTRIBUTION = {
  * @typedef {Object} Player
  * @property {string} id
  * @property {string} name
+ * @property {string=} authUid
  * @property {Team} team
  * @property {Role} role
  * @property {boolean} isHost
@@ -98,6 +99,8 @@ export function isRoomExpired(room, nowMs = Date.now()) {
  * @returns {Promise<string>}
  */
 export async function createRoom(hostPlayer, words, firstTeam) {
+  const authUser = await ensureAuthenticated();
+
   for (let attempt = 0; attempt < 10; attempt += 1) {
     const roomId = generateRoomId();
     const roomRef = doc(db, ROOMS_COLLECTION, roomId);
@@ -113,7 +116,7 @@ export async function createRoom(hostPlayer, words, firstTeam) {
       remainingGuesses: 0,
       cards: generateCards(words, firstTeam),
       wordSetWords: words,
-      players: [{ ...hostPlayer, isHost: true }],
+      players: [{ ...hostPlayer, authUid: authUser.uid, isHost: true }],
       firstTeam,
       winner: null,
       finishReason: null,
@@ -139,6 +142,8 @@ export async function createRoom(hostPlayer, words, firstTeam) {
  * @returns {Promise<void>}
  */
 export async function joinRoom(roomId, player) {
+  const authUser = await ensureAuthenticated();
+
   const normalizedRoomId = normalizeRoomId(roomId);
   const roomRef = doc(db, ROOMS_COLLECTION, normalizedRoomId);
 
@@ -166,7 +171,7 @@ export async function joinRoom(roomId, player) {
     }
 
     transaction.update(roomRef, {
-      players: [...players, { ...player, isHost: false }],
+      players: [...players, { ...player, authUid: authUser.uid, isHost: false }],
     });
     return "joined";
   });
@@ -182,6 +187,8 @@ export async function joinRoom(roomId, player) {
  * @returns {Promise<boolean>} 削除した場合 true
  */
 export async function deleteExpiredRoom(roomId) {
+  await ensureAuthenticated();
+
   const roomRef = doc(db, ROOMS_COLLECTION, normalizeRoomId(roomId));
 
   return runTransaction(db, async (transaction) => {
@@ -204,6 +211,8 @@ export async function deleteExpiredRoom(roomId) {
  * @returns {Promise<void>}
  */
 export async function leaveRoom(roomId, playerId) {
+  await ensureAuthenticated();
+
   const roomRef = doc(db, ROOMS_COLLECTION, normalizeRoomId(roomId));
 
   await runTransaction(db, async (transaction) => {
@@ -216,6 +225,7 @@ export async function leaveRoom(roomId, playerId) {
     const players = Array.isArray(room.players) ? room.players : [];
     const leaver = players.find((p) => p.id === playerId);
     if (!leaver) return;
+    assertActorMatchesSession(leaver);
 
     if (leaver.isHost) {
       transaction.delete(roomRef);
@@ -237,6 +247,8 @@ export async function leaveRoom(roomId, playerId) {
  * @returns {Promise<void>}
  */
 export async function updatePlayerRole(roomId, targetPlayerId, updates, actorPlayerId) {
+  await ensureAuthenticated();
+
   const roomRef = doc(db, ROOMS_COLLECTION, normalizeRoomId(roomId));
 
   await runTransaction(db, async (transaction) => {
@@ -255,6 +267,7 @@ export async function updatePlayerRole(roomId, targetPlayerId, updates, actorPla
     if (!actorPlayer?.isHost) {
       throw new Error("ホストだけが役割を変更できます");
     }
+    assertActorMatchesSession(actorPlayer);
 
     const targetPlayer = players.find((p) => p.id === targetPlayerId);
     if (!targetPlayer) {
@@ -296,6 +309,8 @@ export async function updatePlayerRole(roomId, targetPlayerId, updates, actorPla
  * @returns {Promise<void>}
  */
 export async function removePlayerFromRoom(roomId, targetPlayerId, actorPlayerId) {
+  await ensureAuthenticated();
+
   const roomRef = doc(db, ROOMS_COLLECTION, normalizeRoomId(roomId));
 
   await runTransaction(db, async (transaction) => {
@@ -314,6 +329,7 @@ export async function removePlayerFromRoom(roomId, targetPlayerId, actorPlayerId
     if (!actorPlayer?.isHost) {
       throw new Error("ホストだけが参加者を整理できます");
     }
+    assertActorMatchesSession(actorPlayer);
 
     const targetPlayer = players.find((p) => p.id === targetPlayerId);
     if (!targetPlayer) {
@@ -336,6 +352,8 @@ export async function removePlayerFromRoom(roomId, targetPlayerId, actorPlayerId
  * @returns {Promise<void>}
  */
 export async function startGame(roomId, hostPlayerId) {
+  await ensureAuthenticated();
+
   const roomRef = doc(db, ROOMS_COLLECTION, normalizeRoomId(roomId));
 
   await runTransaction(db, async (transaction) => {
@@ -354,6 +372,7 @@ export async function startGame(roomId, hostPlayerId) {
     if (!hostPlayer?.isHost) {
       throw new Error("ホストだけがゲームを開始できます");
     }
+    assertActorMatchesSession(hostPlayer);
 
     const conditions = getStartConditions(players);
     if (!conditions.every((condition) => condition.ok)) {
@@ -373,6 +392,8 @@ export async function startGame(roomId, hostPlayerId) {
  * @returns {Promise<void>}
  */
 export async function submitHint(roomId, hint) {
+  await ensureAuthenticated();
+
   const roomRef = doc(db, ROOMS_COLLECTION, normalizeRoomId(roomId));
 
   await runTransaction(db, async (transaction) => {
@@ -397,6 +418,7 @@ export async function submitHint(roomId, hint) {
     if (!player || player.team !== hint.team || player.role !== "spymaster") {
       throw new Error("ヒント役だけがヒントを送れます");
     }
+    assertActorMatchesSession(player);
 
     const word = String(hint.word || "").trim();
     const count = Number(hint.count);
@@ -425,9 +447,12 @@ export async function submitHint(roomId, hint) {
  * @param {string} roomId
  * @param {number} cardIndex
  * @param {Team} expectedTurnTeam
+ * @param {string} actorPlayerId
  * @returns {Promise<{ changed: boolean, endedByTrap: boolean }>}
  */
-export async function revealCard(roomId, cardIndex, expectedTurnTeam) {
+export async function revealCard(roomId, cardIndex, expectedTurnTeam, actorPlayerId) {
+  await ensureAuthenticated();
+
   const roomRef = doc(db, ROOMS_COLLECTION, normalizeRoomId(roomId));
 
   return runTransaction(db, async (transaction) => {
@@ -446,6 +471,7 @@ export async function revealCard(roomId, cardIndex, expectedTurnTeam) {
     if (room.turnPhase !== "guessing") {
       throw new Error("今はカードを選べません");
     }
+    assertCurrentGuesser(room, actorPlayerId);
 
     const cards = Array.isArray(room.cards) ? room.cards : [];
     const card = cards[cardIndex];
@@ -500,9 +526,12 @@ export async function revealCard(roomId, cardIndex, expectedTurnTeam) {
  * ターンを終了する。
  * @param {string} roomId
  * @param {Team} expectedTurnTeam
+ * @param {string} actorPlayerId
  * @returns {Promise<void>}
  */
-export async function endTurn(roomId, expectedTurnTeam) {
+export async function endTurn(roomId, expectedTurnTeam, actorPlayerId) {
+  await ensureAuthenticated();
+
   const roomRef = doc(db, ROOMS_COLLECTION, normalizeRoomId(roomId));
 
   await runTransaction(db, async (transaction) => {
@@ -521,6 +550,7 @@ export async function endTurn(roomId, expectedTurnTeam) {
     if (room.turnPhase !== "guessing") {
       throw new Error("今はターンを終了できません");
     }
+    assertCurrentGuesser(room, actorPlayerId);
 
     transaction.update(roomRef, nextTurnUpdates(room.turnTeam));
   });
@@ -533,6 +563,8 @@ export async function endTurn(roomId, expectedTurnTeam) {
  * @returns {Promise<void>}
  */
 export async function forceEndTurn(roomId, hostPlayerId) {
+  await ensureAuthenticated();
+
   const roomRef = doc(db, ROOMS_COLLECTION, normalizeRoomId(roomId));
 
   await runTransaction(db, async (transaction) => {
@@ -551,6 +583,7 @@ export async function forceEndTurn(roomId, hostPlayerId) {
     if (!hostPlayer?.isHost) {
       throw new Error("ホストだけがターンを進められます");
     }
+    assertActorMatchesSession(hostPlayer);
 
     transaction.update(roomRef, nextTurnUpdates(room.turnTeam));
   });
@@ -563,6 +596,8 @@ export async function forceEndTurn(roomId, hostPlayerId) {
  * @returns {Promise<void>}
  */
 export async function resetHint(roomId, actorPlayerId) {
+  await ensureAuthenticated();
+
   const roomRef = doc(db, ROOMS_COLLECTION, normalizeRoomId(roomId));
 
   await runTransaction(db, async (transaction) => {
@@ -591,6 +626,7 @@ export async function resetHint(roomId, actorPlayerId) {
     if (!actorPlayer?.isHost && !isCurrentSpymaster) {
       throw new Error("ホストまたは現在のヒント役だけが取り消せます");
     }
+    assertActorMatchesSession(actorPlayer);
 
     transaction.update(roomRef, {
       turnPhase: "waiting_hint",
@@ -608,6 +644,8 @@ export async function resetHint(roomId, actorPlayerId) {
  * @returns {Promise<void>}
  */
 export async function finishGame(roomId, hostPlayerId, winner) {
+  await ensureAuthenticated();
+
   const roomRef = doc(db, ROOMS_COLLECTION, normalizeRoomId(roomId));
 
   await runTransaction(db, async (transaction) => {
@@ -629,6 +667,7 @@ export async function finishGame(roomId, hostPlayerId, winner) {
     if (!hostPlayer?.isHost) {
       throw new Error("ホストだけがゲームを終了できます");
     }
+    assertActorMatchesSession(hostPlayer);
 
     transaction.update(roomRef, {
       gamePhase: "finished",
@@ -645,6 +684,8 @@ export async function finishGame(roomId, hostPlayerId, winner) {
  * @returns {Promise<void>}
  */
 export async function restartGame(roomId, hostPlayerId) {
+  await ensureAuthenticated();
+
   const roomRef = doc(db, ROOMS_COLLECTION, normalizeRoomId(roomId));
 
   await runTransaction(db, async (transaction) => {
@@ -659,6 +700,7 @@ export async function restartGame(roomId, hostPlayerId) {
     if (!hostPlayer?.isHost) {
       throw new Error("ホストだけがもう一度始められます");
     }
+    assertActorMatchesSession(hostPlayer);
 
     const sourceWords = Array.isArray(room.wordSetWords) && room.wordSetWords.length >= 25
       ? room.wordSetWords
@@ -737,6 +779,32 @@ export function getStartConditions(players) {
 
 function teamLabel(team) {
   return team === "blue" ? "青チーム" : "赤チーム";
+}
+
+async function ensureAuthenticated() {
+  await authReady;
+  if (!auth.currentUser) {
+    throw new Error("接続準備が完了していません。少し待ってもう一度お試しください");
+  }
+  return auth.currentUser;
+}
+
+function assertActorMatchesSession(player) {
+  if (!player) {
+    throw new Error("参加者が見つかりません");
+  }
+  if (player.authUid && player.authUid !== auth.currentUser?.uid) {
+    throw new Error("この参加者として操作する権限がありません");
+  }
+}
+
+function assertCurrentGuesser(room, actorPlayerId) {
+  const players = Array.isArray(room.players) ? room.players : [];
+  const actorPlayer = players.find((p) => p.id === actorPlayerId);
+  if (!actorPlayer || actorPlayer.team !== room.turnTeam || actorPlayer.role !== "guesser") {
+    throw new Error("現在の探す役だけが操作できます");
+  }
+  assertActorMatchesSession(actorPlayer);
 }
 
 function nextTurnUpdates(currentTeam) {

@@ -35,11 +35,11 @@ codenames_rooms/{roomId}
   - winner: "red" | "blue" | null
   - finishReason: "all_found" | "trap" | "manual" | null
   - cards: Card[]               // 25枚の配列（index / word / role / revealed）
-  - players: Player[]           // id / name / team / role / isHost
+  - players: Player[]           // id / name / authUid / team / role / isHost
 ```
 
 **Card**: `{ index: number, word: string, role: "red" | "blue" | "neutral" | "assassin", revealed: boolean }`
-**Player**: `{ id: string, name: string, team: "red" | "blue", role: "spymaster" | "guesser", isHost: boolean }`
+**Player**: `{ id: string, name: string, authUid?: string, team: "red" | "blue", role: "spymaster" | "guesser", isHost: boolean }`
 
 ※ `assassin` は UI では「トラップカード」と表示。内部識別子として `assassin` を維持。
 ※ `spymaster` は UI では「ヒント役」、`guesser` は「探す役」と表示。
@@ -61,7 +61,7 @@ codenames_rooms/{roomId}
 - カードは 25枚（先攻9・後攻8・中立7・トラップ1）
 - 終了理由は `finishReason` で管理し、結果画面では「全部見つかった」「トラップを選んだ」を分けて表示する
 - **開始条件**: 各チーム2人以上 ＋ 各チームにヒント役1人 ＋ 各チーム探す役1人以上
-- ヒント送信・カード公開・ターン終了は Firestore transaction で整合性担保（`runTransaction`）
+- ヒント送信・カード公開・ターン終了は Firestore transaction で整合性担保（`runTransaction`）。カード公開・ターン終了は現在のターンチームの探す役だけが実行できる
 - ゲーム画面では現在のターン・フェーズ・自チームかどうかを上部の強調帯で常時表示する
 - ゲーム画面では赤/青それぞれの「見つけたカード数 / 全カード数」を常時表示する。相手チームのカードを選んだ場合も、そのチームの見つけた枚数に含める
 - カード公開前にアプリ内確認モーダルを出す。ヒントはカード公開前のみ、ホストまたは現在のヒント役が取り消して出し直せる
@@ -70,6 +70,7 @@ codenames_rooms/{roomId}
 - ホストはロビー・ゲーム中に、途中離脱などで残った参加者データを削除できる（ホスト自身は削除不可）
 - ゲーム中は退出不可。参加情報を消すと途中復帰できず進行不能になり得るため、退出はロビーまたは結果画面でのみ許可する
 - ルームは 3時間で失効、`expiresAt` 設定必須
+- Firestore 書き込みは匿名認証済みユーザーのみ許可する。クライアント側では書き込み前に `authReady` を待つ。新規参加者には `authUid` を保存し、service 経由の操作では本人の匿名認証 UID と一致するか確認する
 - Firebase Spark 運用のため Firestore TTL ポリシーは使わない。参加・再接続時に期限切れを検知したらクライアント側で削除を試み、完全放置ルームは必要に応じて Console で手動清掃する
 - 同一プレイヤーの重複参加不可（id 一致でブロック）
 - 最大8人
