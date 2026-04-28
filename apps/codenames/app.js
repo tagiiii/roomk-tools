@@ -647,7 +647,7 @@ function renderHintArea(room, currentPlayer) {
 
   if (room.currentHint && room.turnPhase === "guessing") {
     const canResetHint = !state.submitting &&
-      Number(room.remainingGuesses || 0) === Number(room.currentHint.count || 0) + 1 && (
+      Number(room.remainingGuesses || 0) === Number(room.currentHint.count || 0) && (
       currentPlayer.isHost ||
       (currentPlayer.team === room.turnTeam && currentPlayer.role === "spymaster")
     );

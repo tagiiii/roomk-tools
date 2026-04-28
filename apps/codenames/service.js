@@ -437,7 +437,7 @@ export async function submitHint(roomId, hint) {
         updatedAt: Timestamp.now(),
       },
       turnPhase: "guessing",
-      remainingGuesses: count + 1,
+      remainingGuesses: count,
     });
   });
 }
@@ -614,7 +614,7 @@ export async function resetHint(roomId, actorPlayerId) {
       throw new Error("今はヒントを取り消せません");
     }
     const hintCount = Number(room.currentHint?.count);
-    const expectedRemainingGuesses = Number.isFinite(hintCount) ? hintCount + 1 : null;
+    const expectedRemainingGuesses = Number.isFinite(hintCount) ? hintCount : null;
     if (expectedRemainingGuesses !== Number(room.remainingGuesses || 0)) {
       throw new Error("カードを選んだ後はヒントを取り消せません");
     }
