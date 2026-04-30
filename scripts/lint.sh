@@ -17,24 +17,24 @@ NC='\033[0m'
 ERRORS=0
 WARNINGS=0
 
-# チェック対象の単一ファイルアプリ
-APP_FILES=(
+# チェック対象ファイル
+ALL_HTML_FILES=(apps/*/index.html)
+ALL_JS_FILES=(apps/*/app.js)
+
+# Realtime Database アプリ
+RTDB_HTML_FILES=(
+  "apps/hint-de-pinto/index.html"
   "apps/iisen-show/index.html"
-  "apps/word-wolf/index.html"
+  "apps/ikutsu-ieru/index.html"
+  "apps/ito/index.html"
+  "apps/jinro/index.html"
   "apps/name-change/index.html"
+  "apps/tatoe-gp/index.html"
+  "apps/word-wolf/index.html"
 )
 
-# チェック対象の分割ファイルアプリ
-SPLIT_APP_HTML_FILES=(
-  "apps/codenames/index.html"
-)
-
-SPLIT_APP_JS_FILES=(
-  "apps/codenames/app.js"
-)
-
-XSS_FILES=("${APP_FILES[@]}" "${SPLIT_APP_JS_FILES[@]}")
-CSS_FILES=("${APP_FILES[@]}" "${SPLIT_APP_HTML_FILES[@]}")
+XSS_FILES=("${ALL_HTML_FILES[@]}" "${ALL_JS_FILES[@]}")
+CSS_FILES=("${ALL_HTML_FILES[@]}")
 
 echo ""
 echo -e "${BOLD}${BLUE}🔍 roomK lint チェック開始${NC}"
@@ -74,7 +74,7 @@ for f in "${XSS_FILES[@]}"; do
 
   # esc() チェック
   if grep -q "function esc(" "$f"; then
-    if ! grep -A3 "function esc(" "$f" | grep -q "&#39;"; then
+    if ! grep -A8 "function esc(" "$f" | grep -q "&#39;"; then
       line_num=$(grep -n "function esc(" "$f" | head -1 | cut -d: -f1)
       echo -e "  ${RED}[ERROR]${NC} $f:$line_num — esc() に .replace(/'/g,'&#39;') がありません"
       ERRORS=$((ERRORS + 1))
@@ -84,7 +84,7 @@ for f in "${XSS_FILES[@]}"; do
 
   # escapeHtml() チェック
   if grep -q "function escapeHtml(" "$f"; then
-    if ! grep -A5 "function escapeHtml(" "$f" | grep -q "&#39;"; then
+    if ! grep -A8 "function escapeHtml(" "$f" | grep -q "&#39;"; then
       line_num=$(grep -n "function escapeHtml(" "$f" | head -1 | cut -d: -f1)
       echo -e "  ${RED}[ERROR]${NC} $f:$line_num — escapeHtml() に .replace(/'/g,'&#39;') がありません"
       ERRORS=$((ERRORS + 1))
@@ -96,7 +96,7 @@ $SEC2_OK && echo -e "  ${GREEN}OK${NC}"
 
 # ─────────────────────────────────────────────────────
 # [CSS-1] design-system.css リンクチェック
-#   Realtime DB アプリが design-system.css を読み込んでいるか
+#   各アプリが design-system.css を読み込んでいるか
 # ─────────────────────────────────────────────────────
 echo ""
 echo -e "${BOLD}[CSS-1] design-system.css リンクチェック${NC}"
@@ -130,6 +130,26 @@ for f in "${CSS_FILES[@]}"; do
   fi
 done
 $CSS2_OK && echo -e "  ${GREEN}OK${NC}"
+
+# ─────────────────────────────────────────────────────
+# [VIEWPORT-1] Realtime Database アプリ viewport チェック
+#   ゲーム中の誤ズーム防止のため maximum-scale=1 を指定しているか
+# ─────────────────────────────────────────────────────
+echo ""
+echo -e "${BOLD}[VIEWPORT-1] Realtime Database viewport チェック${NC}"
+
+VIEWPORT1_OK=true
+for f in "${RTDB_HTML_FILES[@]}"; do
+  [ -f "$f" ] || continue
+  if ! grep -qE '<meta[^>]+name=["'\'']viewport["'\''][^>]+maximum-scale=1' "$f"; then
+    line_num=$(grep -nE '<meta[^>]+name=["'\'']viewport["'\'']' "$f" | head -1 | cut -d: -f1)
+    [ -n "$line_num" ] || line_num=1
+    echo -e "  ${RED}[ERROR]${NC} $f:$line_num — Realtime Database アプリは viewport に maximum-scale=1 を指定してください"
+    ERRORS=$((ERRORS + 1))
+    VIEWPORT1_OK=false
+  fi
+done
+$VIEWPORT1_OK && echo -e "  ${GREEN}OK${NC}"
 
 # ─────────────────────────────────────────────────────
 # [REF-1] .app-header 誤使用チェック (name-change)
@@ -184,6 +204,30 @@ for f in "${XSS_FILES[@]}"; do
   done
 done
 $REF3_OK && echo -e "  ${GREEN}OK${NC}"
+
+# ─────────────────────────────────────────────────────
+# [REF-4] ホスト切断 TTL チェック
+#   RTDB アプリの ORPHAN_TTL(_MS) は AGENTS.md 推奨の 2分（2 * 60 * 1000）に揃える
+#   ※ ゲーム中フェーズ用の延長 TTL（例: ORPHAN_TTL_INGAME_MS）は対象外
+# ─────────────────────────────────────────────────────
+echo ""
+echo -e "${BOLD}[REF-4] ホスト切断 TTL チェック${NC}"
+
+REF4_OK=true
+for f in "${RTDB_HTML_FILES[@]}"; do
+  [ -f "$f" ] || continue
+  while IFS=: read -r line_num content; do
+    # ORPHAN_TTL_INGAME_MS など派生定数は対象外
+    echo "$content" | grep -qE 'ORPHAN_TTL(_MS)?\s*=' || continue
+    if ! echo "$content" | grep -qE '=\s*2\s*\*\s*60\s*\*\s*1000'; then
+      echo -e "  ${YELLOW}[WARN]${NC} $f:$line_num — ORPHAN_TTL は 2 * 60 * 1000（2分）推奨です"
+      echo -e "         ${content}"
+      WARNINGS=$((WARNINGS + 1))
+      REF4_OK=false
+    fi
+  done < <(grep -nE 'ORPHAN_TTL(_MS)?\s*=' "$f")
+done
+$REF4_OK && echo -e "  ${GREEN}OK${NC}"
 
 # ─────────────────────────────────────────────────────
 # 結果サマリ
