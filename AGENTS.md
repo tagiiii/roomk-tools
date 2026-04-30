@@ -147,6 +147,29 @@ Realtime Database を使うアプリ（iisen-show など）は単一ファイル
 <hr class="divider">
 ```
 
+### CSS 命名規則（アプリ固有スタイル）
+
+アプリ固有の CSS クラスには **アプリ名の短縮接頭辞** を付け、**BEM 記法**（`block__element`）で命名する。
+
+| アプリ | 接頭辞 | 例 |
+|--------|--------|-----|
+| talk-card | `.tc-` | `.tc-header__title` |
+| word-wolf | `.ww-` | `.ww-header__icon` |
+| iisen-show | `.is-` | `.is-score__label` |
+| name-change | `.nc-` | `.nc-panel__btn` |
+| jitsuwa-game | `.jitsuwa-` | `.jitsuwa-hero__sub` |
+| （新アプリ） | 2〜4文字 + `-` | — |
+
+design-system.css のカラー変数・スペーシング変数を積極的に再利用し、独自の固定値はなるべく使わない。
+
+**レスポンシブ対応のブレークポイント**: `600px` 以下でモバイル向けスタイルを上書き。
+
+```css
+@media (max-width: 600px) {
+  .wrapper { padding: 28px 16px 60px; }
+}
+```
+
 ---
 
 ## アイコン
@@ -248,6 +271,35 @@ HTTP リファラー制限済み:
 | 同ルーム内重複 | **NG**（参加時にチェックして弾く） |
 | 空文字 | **NG**（参加時にバリデーション） |
 
+### viewport 設定（Realtime Database アプリ）
+
+Realtime Database アプリでは、ゲーム中の誤ズームで操作が崩れることを防ぐため `maximum-scale=1` を指定する。
+`maximum-scale=1` はアクセシビリティ上は推奨されない指定だが、roomK ツールでは画面共有中の安定した進行を優先する。
+
+```html
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+```
+
+### 状態管理オブジェクト（Realtime Database アプリ）
+
+アプリ全体の状態を `const state = { ... }` にまとめる。最低限以下のフィールドを持つ。
+
+```js
+const state = {
+  // ユーザー情報
+  role: null,           // 'host' | 'guest'
+  nickname: null,
+  roomCode: null,
+  roomRef: null,        // Firebase 参照（db.ref(...)）
+
+  // 画面管理
+  currentScreen: null,  // showScreen() が更新する
+
+  // クリーンアップ用
+  timerInterval: null,  // setInterval の ID → 退出時に clearInterval
+};
+```
+
 ### 画面遷移パターン（Realtime Database アプリ）
 
 ```js
@@ -346,7 +398,7 @@ Firestore アプリも同様にセッション終了後に削除する。
 「期限切れ扱い + 次回アクセス時に削除」を基本方針とする。
 
 ```js
-const ORPHAN_TTL_MS = 2 * 60 * 1000;
+const ORPHAN_TTL_MS = 2 * 60 * 1000; // 推奨: 2分（lint [REF-4] で検出）
 
 function isRoomExpired(room) {
   return room?.hostConnected === false
@@ -354,6 +406,8 @@ function isRoomExpired(room) {
     && (getEstimatedServerNow() - Number(room.hostDisconnectedAt)) >= ORPHAN_TTL_MS;
 }
 ```
+
+TTL は **2分（`2 * 60 * 1000`）に統一**する。短すぎると一時的な通信切れで誤って期限切れになり、長すぎると孤立ルームが残る。スタッフが Zoom を切り替える程度の中断は吸収しつつ、本当の離脱は次の参加時までに片付く長さとして 2分 を採用している。ゲーム中フェーズで意図的に長く取りたい場合（例: `name-change` の `ORPHAN_TTL_INGAME_MS = 30分`）は別定数で持つ。
 
 ### 再接続（sessionStorage）
 
@@ -413,6 +467,71 @@ import { escapeHtml } from '../shared/js/utils.js';
 | 2人以上 | name-change |
 | 3人以上 | iisen-show, word-wolf |
 | 制限なし | talk-card, checkin, vote |
+
+### 選択肢・カードの番号付け
+
+参加者が画面共有越しにチャット・口頭で「2番！」と答えられるよう、**複数の選択肢を一覧表示する画面では番号を付ける**。
+
+#### 番号は丸数字（`①②③`）で統一
+
+```js
+const NUMBERS = ['①', '②', '③', '④', '⑤'];
+```
+
+- 半角数字 + ピリオド（`1.`）ではなく丸数字を使う（roomK 内で統一）
+- 配列の index から自動採番する（3択以外にも拡張できるよう）
+- 5つ以上の選択肢が必要な場合は配列を拡張する
+
+#### 適用する画面
+
+- クイズの選択肢（quiz, kyoumi-sugoroku など）
+- ホストが複数のお題から選ぶカード（iisen-show, tatoe-gp, jitsuwa-game, ishin-denshin など）
+- 「自由に話す」など特殊扱いの選択肢には番号を付けない
+
+#### マークアップとスタイル
+
+番号とテキストを別 `span` に分けて flex レイアウトで配置する。番号はアクセントカラー。
+
+```html
+<button class="xx-choice">
+  <span class="xx-choice__num">①</span>
+  <span class="xx-choice__text">選択肢のテキスト</span>
+</button>
+```
+
+```css
+.xx-choice {
+  display: flex;
+  align-items: center; /* または flex-start */
+  gap: 10px;
+  text-align: left;
+}
+.xx-choice__num {
+  color: var(--color-accent);
+  font-weight: 700;
+  font-feature-settings: "palt";
+  flex-shrink: 0;
+}
+.xx-choice__text {
+  flex: 1;
+}
+```
+
+#### チャット貼り付け用コピー機能
+
+「問題をコピー」「答えをコピー」など、チャット貼り付け用のテキスト生成機能がある場合も同じ `①②③` 形式で出力する（UIとコピー先で表記を一致させる）。
+
+```js
+choices.forEach((c, i) => lines.push(`${NUMBERS[i]} ${c}`));
+```
+
+#### アクセシビリティ
+
+選択肢が画像やアイコンを含む場合は `aria-label` で番号と内容を明示する。
+
+```js
+btn.setAttribute('aria-label', `${i + 1}番のお題: ${topic}`);
+```
 
 ### セキュリティ方針（性善説）
 
