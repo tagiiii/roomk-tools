@@ -158,7 +158,9 @@
     }
 
     .tg-theme-choice {
-      display: block;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
       width: 100%;
       margin-bottom: 12px;
       padding: 18px 20px;
@@ -174,6 +176,13 @@
       cursor: pointer;
       transition: border-color var(--transition-base), background var(--transition-base), transform 0.1s;
     }
+    .tg-theme-choice__num {
+      flex-shrink: 0;
+      color: var(--color-accent);
+      font-weight: 700;
+      font-feature-settings: "palt";
+    }
+    .tg-theme-choice__text { flex: 1; }
     .tg-theme-choice:hover {
       border-color: var(--color-accent);
       background: #EEF3F8;
@@ -687,6 +696,7 @@
     throw error;
   });
   const db = firebase.database();
+  const CHOICE_NUMBERS = ['①', '②', '③', '④', '⑤'];
 
   const THEMES = [
     'めちゃくちゃ暑い日',
@@ -1596,10 +1606,14 @@
 
       const container = document.getElementById('theme-choices');
       container.innerHTML = '';
-      (pendingThemes || []).forEach(({ t, i }) => {
+      (pendingThemes || []).forEach(({ t, i }, index) => {
         const button = document.createElement('button');
         button.className = 'tg-theme-choice';
-        button.textContent = formatTheme(t);
+        button.setAttribute('aria-label', `${index + 1}番のお題: ${formatTheme(t)}`);
+        button.innerHTML = `
+          <span class="tg-theme-choice__num">${CHOICE_NUMBERS[index]}</span>
+          <span class="tg-theme-choice__text">${escapeHtml(formatTheme(t))}</span>
+        `;
         button.onclick = () => hostPickTheme(t, i);
         container.appendChild(button);
       });

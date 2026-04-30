@@ -1,5 +1,7 @@
 // 以心伝心しないゲーム アプリロジック
-import { shuffle, copyToClipboard, popIn } from '../shared/js/utils.js';
+import { shuffle, copyToClipboard, popIn, escapeHtml } from '../shared/js/utils.js';
+
+const NUMBERS = ['①', '②', '③', '④', '⑤'];
 
 // ── お題リスト（100問）──
 const topics = [
@@ -181,7 +183,10 @@ function renderSelectScreen() {
     const card = document.createElement('button');
     card.className = 'isd-candidate';
     card.setAttribute('aria-label', `${i + 1}番のお題: ${topic}`);
-    card.innerHTML = `<span class="isd-candidate__text">${topic}</span>`;
+    card.innerHTML = `
+      <span class="isd-candidate__num">${NUMBERS[i]}</span>
+      <span class="isd-candidate__text">${escapeHtml(topic)}</span>
+    `;
     card.addEventListener('click', () => pickTopic(i, topic));
     $candidateGrid.appendChild(card);
   });

@@ -91,6 +91,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-direction: column;
+  gap: 12px;
   min-height: 160px;
   padding: 24px 20px;
   background: var(--color-surface);
@@ -119,6 +121,14 @@
   opacity: 0.3;
   transform: scale(0.96);
   pointer-events: none;
+}
+
+.isd-candidate__num {
+  color: var(--color-accent);
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1;
+  font-feature-settings: "palt";
 }
 
 .isd-candidate__text {

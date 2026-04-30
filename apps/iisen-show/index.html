@@ -91,7 +91,8 @@
 
     /* ── 問題選択 ── */
     .question-choice {
-      display: block; width: 100%; text-align: left;
+      display: flex; width: 100%; text-align: left;
+      align-items: flex-start; gap: 10px;
       padding: 18px 20px; margin-bottom: 12px;
       background: var(--color-surface);
       border: 2px solid var(--color-border); border-radius: var(--radius-card);
@@ -99,6 +100,13 @@
       line-height: 1.5; cursor: pointer;
       transition: border-color var(--transition-base), background var(--transition-base), transform 0.1s;
     }
+    .question-choice__num {
+      flex-shrink: 0;
+      color: var(--color-accent);
+      font-weight: 700;
+      font-feature-settings: "palt";
+    }
+    .question-choice__text { flex: 1; }
     .question-choice:hover  { border-color: var(--color-accent); background: #EEF3F8; }
     .question-choice:active { transform: scale(0.98); }
 
@@ -601,6 +609,7 @@
   // ════════════════════════════════════
   const SESSION_KEY = 'iisen_session';
   const ORPHAN_TTL_MS = 60 * 1000;
+  const CHOICE_NUMBERS = ['①', '②', '③', '④', '⑤'];
 
   function saveSession() {
     sessionStorage.setItem(SESSION_KEY, JSON.stringify({
@@ -1171,10 +1180,14 @@
 
       const container = document.getElementById('question-choices');
       container.innerHTML = '';
-      (pendingQuestions || []).forEach(({ q, i }) => {
+      (pendingQuestions || []).forEach(({ q, i }, index) => {
         const btn = document.createElement('button');
         btn.className   = 'question-choice';
-        btn.textContent = q;
+        btn.setAttribute('aria-label', `${index + 1}番の問題: ${q}`);
+        btn.innerHTML = `
+          <span class="question-choice__num">${CHOICE_NUMBERS[index]}</span>
+          <span class="question-choice__text">${escapeHtml(q)}</span>
+        `;
         btn.onclick     = () => hostPickQuestion(q, i);
         container.appendChild(btn);
       });

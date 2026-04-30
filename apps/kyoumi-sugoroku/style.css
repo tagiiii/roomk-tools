@@ -294,6 +294,18 @@
   font-family: inherit;
   cursor: pointer;
   transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+}
+.ks-choice__num {
+  color: var(--color-accent);
+  font-feature-settings: "palt";
+  flex-shrink: 0;
+}
+.ks-choice__text {
+  flex: 1;
 }
 .ks-choice:hover {
   border-color: var(--color-accent);

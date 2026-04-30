@@ -1,5 +1,7 @@
-import { shuffle, popIn, copyToClipboard } from '../shared/js/utils.js';
+import { shuffle, popIn, copyToClipboard, escapeHtml } from '../shared/js/utils.js';
 import { QUIZ_PACKS } from './questions.js';
+
+const NUMBERS = ['①', '②', '③', '④', '⑤'];
 
 const ALL_PACK = {
   id: 'all-shuffle',
@@ -153,7 +155,7 @@ function renderChoices(question) {
     const button = document.createElement('button');
     button.type = 'button';
     button.className = 'qz-choice';
-    button.textContent = choice;
+    button.innerHTML = `<span class="qz-choice__num">${NUMBERS[index]}</span><span class="qz-choice__text">${escapeHtml(choice)}</span>`;
     button.addEventListener('click', () => answerQuestion(index));
     choicesArea.appendChild(button);
   });
@@ -188,7 +190,7 @@ function answerQuestion(choiceIndex) {
   if (isCorrect) state.score += 1;
 
   feedbackResult.textContent = isCorrect ? 'せいかい！' : 'おしい！';
-  feedbackAnswer.textContent = `正解: ${current.choices[current.answerIndex]}`;
+  feedbackAnswer.textContent = `正解: ${NUMBERS[current.answerIndex]} ${current.choices[current.answerIndex]}`;
   feedbackExplanation.textContent = current.explanation;
   feedbackCard.hidden = false;
   btnNext.hidden = false;
@@ -233,7 +235,7 @@ function backToTop() {
 /* ── コピー機能 ── */
 function formatQuestionText(q) {
   const lines = [`【問題】`, q.question];
-  q.choices.forEach((c, i) => lines.push(`${i + 1}. ${c}`));
+  q.choices.forEach((c, i) => lines.push(`${NUMBERS[i]} ${c}`));
   return lines.join('\n');
 }
 
@@ -250,7 +252,7 @@ function copyAnswer() {
     formatQuestionText(q),
     '',
     `【正解】`,
-    `${q.answerIndex + 1}. ${q.choices[q.answerIndex]}`,
+    `${NUMBERS[q.answerIndex]} ${q.choices[q.answerIndex]}`,
     '',
     `【解説】`,
     q.explanation,

@@ -201,6 +201,20 @@
   padding: 18px 22px;
   cursor: pointer;
   transition: transform var(--transition-base), border-color var(--transition-base), background var(--transition-base), box-shadow var(--transition-base);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+}
+
+.qz-choice__num {
+  color: var(--color-accent);
+  font-feature-settings: "palt";
+  flex-shrink: 0;
+}
+
+.qz-choice__text {
+  flex: 1;
 }
 
 .qz-choice:hover:not(:disabled) {

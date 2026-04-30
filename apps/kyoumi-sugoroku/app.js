@@ -1,6 +1,8 @@
 // 興味スゴロク アプリロジック
 import { shuffle, popIn, escapeHtml } from '../shared/js/utils.js';
 
+const NUMBERS = ['①', '②', '③', '④', '⑤'];
+
 // ── テーマ & 質問データ ──
 const THEMES = {
   suki:    { label: '好きなもの',       icon: 'favorite' },
@@ -378,10 +380,10 @@ function renderModalContent() {
   const choicesEl = $('modal-choices');
   choicesEl.innerHTML = '';
   if (question.choices && question.choices.length) {
-    question.choices.forEach((c) => {
+    question.choices.forEach((c, i) => {
       const btn = document.createElement('button');
       btn.className = 'ks-choice';
-      btn.textContent = c;
+      btn.innerHTML = `<span class="ks-choice__num">${NUMBERS[i]}</span><span class="ks-choice__text">${escapeHtml(c)}</span>`;
       btn.addEventListener('click', closeQuestionAndAdvance);
       choicesEl.appendChild(btn);
     });

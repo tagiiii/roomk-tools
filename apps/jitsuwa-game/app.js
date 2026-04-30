@@ -1,6 +1,8 @@
 // え!? 実は○○なんですかゲーム アプリロジック
 // 共通モジュール: shuffle (M-3), copyToClipboard (M-2), popIn (M-5)
-import { shuffle, copyToClipboard, popIn } from '../shared/js/utils.js';
+import { shuffle, copyToClipboard, popIn, escapeHtml } from '../shared/js/utils.js';
+
+const NUMBERS = ['①', '②', '③', '④', '⑤'];
 
 // ── プロンプトリスト（126枚）──
 const prompts = [
@@ -175,11 +177,12 @@ function render() {
     card.innerHTML = `
       <div class="flip-card-inner">
         <div class="flip-card-face back card-face-back">
-          <span class="card-number">${i + 1}</span>
+          <span class="card-number">${NUMBERS[i]}</span>
           <span class="card-hint">クリックでお題をひらく</span>
         </div>
         <div class="flip-card-face front card-face-front">
-          <span class="card-prompt">${prompt}</span>
+          <span class="card-front-number">${NUMBERS[i]}</span>
+          <span class="card-prompt">${escapeHtml(prompt)}</span>
         </div>
       </div>
     `;

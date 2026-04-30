@@ -178,6 +178,14 @@
   word-break: break-all;
 }
 
+.card-front-number {
+  color: var(--color-accent);
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1;
+  font-feature-settings: "palt";
+}
+
 /* ── 引き直しエリア ── */
 .redraw-area {
   text-align: center;
