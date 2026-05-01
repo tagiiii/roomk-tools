@@ -579,9 +579,6 @@
       <p style="font-size:18px;font-weight:700;margin-top:12px">
         <span id="exec-target-name"></span> が処刑されました
       </p>
-      <p style="font-size:14px;color:var(--color-muted);margin-top:6px">
-        役職：<strong id="exec-target-role"></strong>
-      </p>
     </div>
 
     <!-- ハンター道連れ選択 -->
@@ -669,7 +666,7 @@ const ORPHAN_TTL_MS = 2 * 60 * 1000;
 const ROLES = [
   { id: '村人',       faction: 'village', desc: '夜の行動はありません',                         nightAction: false },
   { id: '占い師',     faction: 'village', desc: '毎晩1人を占い、人狼陣営か調べられます',          nightAction: true  },
-  { id: '霊媒師',     faction: 'village', desc: '処刑された人の役職を知ることができます',          nightAction: true  },
+  { id: '霊媒師',     faction: 'village', desc: '処刑された人が人狼だったか分かります',              nightAction: true  },
   { id: '騎士',       faction: 'village', desc: '毎晩1人を護衛し、人狼の襲撃から守ります',        nightAction: true  },
   { id: 'パン屋',     faction: 'village', desc: '生存中は毎朝パンが届きます',                    nightAction: false },
   { id: '共有者',     faction: 'village', desc: 'もう1人の共有者の名前を知っています',            nightAction: false },
@@ -1348,12 +1345,13 @@ function setupNightActionUI(room, players) {
       waitPanel.style.display = 'block';
     } else {
       const result = room.nightResult?.mediumResult;
+      const verdict = result === '人狼' ? '人狼だった' : '人狼ではなかった';
       document.getElementById('night-role-sub').textContent = '';
       area.innerHTML = `<div class="night-panel">
         <h3>霊視結果</h3>
         <p style="font-size:15px;color:#e2e8f0">
           ${result
-            ? `昨日処刑された <strong>${esc(room.lastExecuted || '?')}</strong> の役職は<br><strong style="font-size:20px">${esc(result)}</strong> でした`
+            ? `昨日処刑された <strong>${esc(room.lastExecuted || '?')}</strong> は<br><strong style="font-size:20px">${verdict}</strong>`
             : '昨日はまだ処刑されていません'}
         </p>
       </div>`;
@@ -1764,9 +1762,7 @@ function handleExecution(room, players) {
   if (state.currentScreen !== 'execution') {
     state.hunterResolved = false;
     const target = room.executionTarget || '';
-    const role   = room.lastExecutedRole || '不明';
     document.getElementById('exec-target-name').textContent = target;
-    document.getElementById('exec-target-role').textContent = role;
     showScreen('execution');
   }
 
@@ -2124,7 +2120,7 @@ function buildRoleAssignmentRoom(room, roleCounts) {
  * 2. 人狼の襲撃 → 騎士護衛チェック → 妖狐耐性チェック
  * 3. 猫又が噛まれた場合 → 噛んだ人狼1人を道連れ
  * 4. パン屋の生死アナウンス
- * 5. 霊媒師の結果（前日処刑者の役職）
+ * 5. 霊媒師の結果（前日処刑者が人狼だったか否か）
  *
  * 書き込み:
  * - players/{nick}/isAlive を更新
