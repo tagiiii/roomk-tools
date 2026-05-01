@@ -74,11 +74,8 @@ jinro_rooms/{roomCode}/
     lastGuarded:    string | null    // 騎士専用
 
   nightResult/
-    attacked:       string | null
-    actuallyKilled: string | null
-    guarded:        string | null
-    seerResult:     { target: string, result: 'black' | 'white' | 'dead' } | null
-    mediumResult:   string | null
+    seerResults:    { [seerNick]: { target: string, result: 'black' | 'white' | 'dead' } } | null
+    mediumResult:   'wolf' | 'not_wolf' | null
 
   morningLog:       array            // { type, message, day }
   executionTarget:  string | null

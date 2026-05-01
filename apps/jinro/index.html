@@ -1843,9 +1843,6 @@ async function afterExecution() {
       day:    (room.day || 1) + 1,
       executionTarget:  null,
       hunterPending:    null,
-      'nightResult/attacked':    null,
-      'nightResult/actuallyKilled': null,
-      'nightResult/guarded':     null,
       'nightResult/seerResults': null,
       'nightResult/seerResult': null,
       'nightResult/mediumResult': typeof room.lastExecutedWasWolf === 'boolean'
@@ -2101,9 +2098,6 @@ function buildRoleAssignmentRoom(room, roleCounts) {
     foxPlayer: foxName,
     morningLog: [],
     nightResult: {
-      attacked: null,
-      actuallyKilled: null,
-      guarded: null,
       seerResults: null,
       seerResult: null,
       mediumResult: null,
@@ -2142,9 +2136,6 @@ async function resolveNight(roomRef, room) {
   const logs = [];
   const deaths = [];
   const nightResult = {
-    attacked: null,
-    actuallyKilled: null,
-    guarded: null,
     seerResults: {},
     mediumResult: typeof room.lastExecutedWasWolf === 'boolean'
       ? (room.lastExecutedWasWolf ? 'wolf' : 'not_wolf')
@@ -2216,9 +2207,6 @@ async function resolveNight(roomRef, room) {
       updates[`players/${nick}/lastGuardedDay`] = day;
     }
   });
-  if (guardTargets.length > 0) {
-    nightResult.guarded = guardTargets.length === 1 ? guardTargets[0] : guardTargets.join('、');
-  }
   const guardSet = new Set(guardTargets);
 
   const wolves = Object.entries(players).filter(([, p]) => p.role === '人狼' && p.isAlive);
@@ -2237,15 +2225,11 @@ async function resolveNight(roomRef, room) {
   }
 
   let catBitten = false;
-  if (attackTarget) {
-    nightResult.attacked = attackTarget;
-    if (!guardSet.has(attackTarget)) {
-      const targetPlayer = players[attackTarget];
-      if (targetPlayer && targetPlayer.role !== '妖狐') {
-        if (killPlayer(attackTarget, 'wolf')) {
-          nightResult.actuallyKilled = attackTarget;
-          if (targetPlayer.role === '猫又') catBitten = true;
-        }
+  if (attackTarget && !guardSet.has(attackTarget)) {
+    const targetPlayer = players[attackTarget];
+    if (targetPlayer && targetPlayer.role !== '妖狐') {
+      if (killPlayer(attackTarget, 'wolf')) {
+        if (targetPlayer.role === '猫又') catBitten = true;
       }
     }
   }
@@ -2280,9 +2264,6 @@ async function resolveNight(roomRef, room) {
     logs.unshift({ type: 'info', message: '昨夜は誰も死亡しませんでした', day });
   }
   updates.morningLog = logs;
-  updates['nightResult/attacked'] = nightResult.attacked || null;
-  updates['nightResult/actuallyKilled'] = nightResult.actuallyKilled || null;
-  updates['nightResult/guarded'] = nightResult.guarded || null;
   updates['nightResult/seerResults'] =
     Object.keys(nightResult.seerResults).length ? nightResult.seerResults : null;
   updates['nightResult/seerResult'] = null;
