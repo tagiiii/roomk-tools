@@ -83,7 +83,7 @@ jinro_rooms/{roomCode}/
   morningLog:       array            // { type, message, day }
   executionTarget:  string | null
   lastExecuted:     string | null
-  lastExecutedRole: string | null
+  lastExecutedWasWolf: boolean | null  // 霊媒師用：処刑者が人狼だったか
   hunterPending:    string | null    // ハンター道連れ待機
   winner:           'village' | 'wolf' | 'teruteru' | 'fox' | 'draw' | null
   foxPlayer:        string | null

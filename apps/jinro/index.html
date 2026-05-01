@@ -1345,7 +1345,7 @@ function setupNightActionUI(room, players) {
       waitPanel.style.display = 'block';
     } else {
       const result = room.nightResult?.mediumResult;
-      const verdict = result === '人狼' ? '人狼だった' : '人狼ではなかった';
+      const verdict = result === 'wolf' ? '人狼だった' : '人狼ではなかった';
       document.getElementById('night-role-sub').textContent = '';
       area.innerHTML = `<div class="night-panel">
         <h3>霊視結果</h3>
@@ -1848,7 +1848,9 @@ async function afterExecution() {
       'nightResult/guarded':     null,
       'nightResult/seerResults': null,
       'nightResult/seerResult': null,
-      'nightResult/mediumResult': room.lastExecutedRole || room.nightResult?.mediumResult || null,
+      'nightResult/mediumResult': typeof room.lastExecutedWasWolf === 'boolean'
+        ? (room.lastExecutedWasWolf ? 'wolf' : 'not_wolf')
+        : (room.nightResult?.mediumResult || null),
       morningLog: [],
     };
     Object.entries(players).forEach(([nick, p]) => {
@@ -1911,7 +1913,7 @@ async function playAgain() {
   const players = snap.val() || {};
   const update = {
     status: 'waiting', day: 1, winner: null,
-    executionTarget: null, lastExecuted: null, lastExecutedRole: null,
+    executionTarget: null, lastExecuted: null, lastExecutedWasWolf: null,
     tieBreakTarget: null, hunterPending: null, morningLog: [],
   };
   Object.keys(players).forEach(nick => {
@@ -2092,7 +2094,7 @@ function buildRoleAssignmentRoom(room, roleCounts) {
     winner: null,
     executionTarget: null,
     lastExecuted: null,
-    lastExecutedRole: null,
+    lastExecutedWasWolf: null,
     tieBreakTarget: null,
     hunterPending: null,
     hunterTarget: null,
@@ -2144,7 +2146,9 @@ async function resolveNight(roomRef, room) {
     actuallyKilled: null,
     guarded: null,
     seerResults: {},
-    mediumResult: room.lastExecutedRole || null,
+    mediumResult: typeof room.lastExecutedWasWolf === 'boolean'
+      ? (room.lastExecutedWasWolf ? 'wolf' : 'not_wolf')
+      : null,
   };
   const updates = { status: 'morning' };
 
@@ -2299,7 +2303,7 @@ async function resolveNight(roomRef, room) {
  * @param {string} target - 処刑対象のニックネーム
  *
  * 処理:
- * 1. target の isAlive を false にし lastExecuted, lastExecutedRole を書き込む
+ * 1. target の isAlive を false にし lastExecuted, lastExecutedWasWolf を書き込む
  * 2. てるてる坊主の勝利判定（処刑死 + 規定日数）
  * 3. 猫又が処刑された場合 → 生存者からランダム1人を道連れ
  * 4. ハンターが処刑・道連れされた場合 → hunterPending をセット
@@ -2319,7 +2323,7 @@ async function resolveExecution(roomRef, room, target) {
     status: 'execution',
     executionTarget: target,
     lastExecuted: target,
-    lastExecutedRole: targetPlayer.role || null,
+    lastExecutedWasWolf: targetPlayer.role === '人狼',
     tieBreakTarget: null,
     hunterTarget: null,
   };
