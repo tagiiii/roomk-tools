@@ -704,6 +704,7 @@ const state = {
   foxPlayer:    null,
   lastGuarded:  null,
   lastGuardedDay:  0,
+  currentDay: 1,
   nightActionDone: false,
   myVote:       null,
   roleCounts:   { ...DEFAULT_ROLE_COUNTS },
@@ -762,7 +763,29 @@ function saveSession() {
 function loadSession() {
   try { return JSON.parse(sessionStorage.getItem(SESSION_KEY)); } catch { return null; }
 }
-function clearSession() { sessionStorage.removeItem(SESSION_KEY); }
+function guardMemoryKey(roomCode = state.roomCode, nickname = state.nickname) {
+  if (!roomCode || !nickname) return null;
+  return `${SESSION_KEY}_guard_${roomCode}_${nickname}`;
+}
+function saveGuardMemory(target, day) {
+  const key = guardMemoryKey();
+  if (!key) return;
+  sessionStorage.setItem(key, JSON.stringify({ target, day }));
+}
+function loadGuardMemory(roomCode = state.roomCode, nickname = state.nickname) {
+  const key = guardMemoryKey(roomCode, nickname);
+  if (!key) return null;
+  try { return JSON.parse(sessionStorage.getItem(key)); } catch { return null; }
+}
+function clearGuardMemory(roomCode = state.roomCode, nickname = state.nickname) {
+  const key = guardMemoryKey(roomCode, nickname);
+  if (key) sessionStorage.removeItem(key);
+}
+function clearSession() {
+  const session = loadSession();
+  clearGuardMemory(session?.roomCode, session?.nickname);
+  sessionStorage.removeItem(SESSION_KEY);
+}
 
 function getEstimatedServerNow() {
   return Date.now() + (Number(state.serverTimeOffset) || 0);
@@ -913,7 +936,6 @@ async function hostCreateRoom() {
           wolfVote: null,
           nightAction: null,
           actionDone: false,
-          lastGuarded: null,
           lastGuardedDay: 0,
           connected: true,
         },
@@ -989,7 +1011,6 @@ async function guestJoin() {
           wolfVote: null,
           nightAction: null,
           actionDone: false,
-          lastGuarded: null,
           lastGuardedDay: 0,
           connected: true,
         },
@@ -1155,8 +1176,9 @@ function handleRole(room, players) {
       state.myRole    = me.role;
       state.myFaction = me.faction;
       state.isAlive   = me.isAlive;
-      state.lastGuarded = me.lastGuarded || null;
-      state.lastGuardedDay = me.lastGuardedDay || 0;
+      const guardMemory = loadGuardMemory();
+      state.lastGuarded = guardMemory?.target || null;
+      state.lastGuardedDay = Number(guardMemory?.day) || 0;
     }
     // 役職表示のセットアップ
     const roleDef = ROLES.find(r => r.id === state.myRole);
@@ -1277,11 +1299,13 @@ async function startNight() {
 function handleNight(room, players) {
   if (state.currentScreen !== 'night') {
     state.nightActionDone = false;
+    state.currentDay = room.day || 1;
     const me = players[state.nickname];
     if (me) {
       state.isAlive = me.isAlive;
-      state.lastGuarded = me.lastGuarded || null;
-      state.lastGuardedDay = me.lastGuardedDay || 0;
+      const guardMemory = loadGuardMemory();
+      state.lastGuarded = guardMemory?.target || null;
+      state.lastGuardedDay = Number(guardMemory?.day) || 0;
     }
     document.getElementById('night-day-label').textContent = `${dayLabel(room.day)}の夜`;
     document.getElementById('night-role-title').textContent = state.myRole || '';
@@ -1329,8 +1353,10 @@ function setupNightActionUI(room, players) {
   } else if (state.myRole === '騎士') {
     document.getElementById('night-role-sub').textContent = '誰を護衛しますか？';
     const currentDay = room.day || 1;
-    const lastGuardDay = Number(me.lastGuardedDay) || 0;
-    const blockedTarget = (me.lastGuarded && lastGuardDay === currentDay - 1) ? me.lastGuarded : null;
+    const guardMemory = loadGuardMemory();
+    const lastGuarded = guardMemory?.target || state.lastGuarded;
+    const lastGuardDay = Number(guardMemory?.day ?? state.lastGuardedDay) || 0;
+    const blockedTarget = (lastGuarded && lastGuardDay === currentDay - 1) ? lastGuarded : null;
     const targets = alivePlayers.filter(([n]) => n !== state.nickname && n !== blockedTarget);
     area.innerHTML = buildPlayerSelectPanel(targets, 'knight-target', '護衛する', `submitNightAction('knight')`);
     waitPanel.style.display = 'none';
@@ -1427,6 +1453,9 @@ async function submitNightAction(type) {
   const target = document.getElementById(selectId)?.value;
   if (!target) { showMsg('対象を選んでください'); return; }
   document.getElementById('btn-night-submit').disabled = true;
+  if (type === 'knight') {
+    saveGuardMemory(target, state.currentDay || 1);
+  }
   await state.roomRef.child(`players/${state.nickname}`).update({
     nightAction: target,
     actionDone:  true,
@@ -1905,6 +1934,7 @@ async function playAgain() {
   clearInterval(state.timerInterval);
   state.myRole = null; state.myVote = null;
   state.lastGuarded = null; state.lastGuardedDay = 0;
+  clearGuardMemory();
   state.roleFlipped = false; state.resolveTriggered = false; state.hunterResolved = false;
   const snap = await state.roomRef.child('players').get();
   const players = snap.val() || {};
@@ -1921,7 +1951,6 @@ async function playAgain() {
     update[`players/${nick}/wolfVote`]    = null;
     update[`players/${nick}/nightAction`] = null;
     update[`players/${nick}/actionDone`]  = false;
-    update[`players/${nick}/lastGuarded`] = null;
     update[`players/${nick}/lastGuardedDay`] = 0;
   });
   await state.roomRef.update(update);
@@ -1971,7 +2000,7 @@ async function leaveGame() {
     nickname: null, roomCode: null, roomRef: null, isHost: false,
     currentScreen: null, myRole: null, myFaction: null, isAlive: true,
     wolfPartners: [], sharerPartner: null, foxPlayer: null,
-    lastGuarded: null, lastGuardedDay: 0, nightActionDone: false, myVote: null,
+    lastGuarded: null, lastGuardedDay: 0, currentDay: 1, nightActionDone: false, myVote: null,
     timerInterval: null, orphanTimer: null, roleFlipped: false, resolveTriggered: false, hunterResolved: false,
   });
   showOverlay('host-off-overlay', false);
@@ -2003,8 +2032,9 @@ async function tryReconnect() {
       state.myRole    = me.role;
       state.myFaction = me.faction;
       state.isAlive   = me.isAlive;
-      state.lastGuarded = me.lastGuarded || null;
-      state.lastGuardedDay = me.lastGuardedDay || 0;
+      const guardMemory = loadGuardMemory(roomCode, nickname);
+      state.lastGuarded = guardMemory?.target || null;
+      state.lastGuardedDay = Number(guardMemory?.day) || 0;
       state.myVote    = me.vote || null;
     }
     if (isHost) {
@@ -2076,7 +2106,6 @@ function buildRoleAssignmentRoom(room, roleCounts) {
       wolfVote: null,
       nightAction: null,
       actionDone: false,
-      lastGuarded: null,
       lastGuardedDay: 0,
     };
     if (role === '妖狐') foxName = nick;
@@ -2122,7 +2151,7 @@ function buildRoleAssignmentRoom(room, roleCounts) {
  * - players/{nick}/isAlive を更新
  * - nightResult に結果を書き込む
  * - morningLog に { type: 'kill'|'safe'|'info', message } の配列を書き込む
- * - 騎士の lastGuarded を更新
+ * - 夜行動の一時データをクリアする
  * - 勝敗判定を実行して winner があれば書き込む
  * - status を 'morning' に更新する
  */
@@ -2203,7 +2232,7 @@ async function resolveNight(roomRef, room) {
     const target = knight.nightAction;
     if (target) {
       guardTargets.push(target);
-      updates[`players/${nick}/lastGuarded`] = target;
+      updates[`players/${nick}/lastGuarded`] = null;
       updates[`players/${nick}/lastGuardedDay`] = day;
     }
   });
@@ -2263,6 +2292,10 @@ async function resolveNight(roomRef, room) {
   if (!logs.some(entry => entry.type === 'kill')) {
     logs.unshift({ type: 'info', message: '昨夜は誰も死亡しませんでした', day });
   }
+  Object.keys(players).forEach((nick) => {
+    updates[`players/${nick}/nightAction`] = null;
+    updates[`players/${nick}/wolfVote`] = null;
+  });
   updates.morningLog = logs;
   updates['nightResult/seerResults'] =
     Object.keys(nightResult.seerResults).length ? nightResult.seerResults : null;

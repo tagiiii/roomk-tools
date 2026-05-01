@@ -71,7 +71,7 @@ jinro_rooms/{roomCode}/
     wolfVote:       string | null    // 人狼専用の集団投票
     nightAction:    string | null
     actionDone:     boolean
-    lastGuarded:    string | null    // 騎士専用
+    lastGuardedDay: number           // 騎士専用。対象名は公開DBに残さない
 
   nightResult/
     seerResults:    { [seerNick]: { target: string, result: 'black' | 'white' | 'dead' } } | null
@@ -120,7 +120,7 @@ waiting → night（1日目夜）→ morning → day → vote → execution → 
 
 - **猫又道連れ相手がハンター** → ハンターの道連れも発動（`hunterPending` セット）
 - **猫又道連れ相手がてるてる坊主** → 昼処刑以外なので勝利条件不成立
-- **騎士の連続護衛禁止** → `lastGuarded` と比較してUIレベルで弾く
+- **騎士の連続護衛禁止** → 本人の `sessionStorage` に保存した前夜護衛先と比較してUIレベルで弾く。公開DBには護衛先名を残さない
 - **霊媒師1日目夜** → `actionDone: true` 自動セット（行動なし）
 - **全員死亡** → `winner: 'draw'` 表示
 - **猫又処刑時に生存者1人** → 道連れ候補なしのフォールバック
