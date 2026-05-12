@@ -3,20 +3,40 @@ import { QUIZ_PACKS } from './questions.js';
 
 const NUMBERS = ['①', '②', '③', '④', '⑤'];
 
-const ALL_PACK = {
+function createShufflePack({ id, name, description, icon, packs }) {
+  return {
+    id,
+    name,
+    description,
+    icon,
+    questions: packs.flatMap((pack) =>
+      pack.questions.map((question) => ({
+        ...question,
+        sourcePackName: pack.name,
+      }))
+    ),
+  };
+}
+
+const NANDOKU_PACKS = QUIZ_PACKS.filter((pack) => pack.id.startsWith('nandoku-'));
+
+const NANDOKU_SHUFFLE_PACK = createShufflePack({
+  id: 'nandoku-shuffle',
+  name: '難読まぜこぜ',
+  description: `${NANDOKU_PACKS.length}つの難読パックをまぜてランダム出題`,
+  icon: 'shuffle',
+  packs: NANDOKU_PACKS,
+});
+
+const ALL_PACK = createShufflePack({
   id: 'all-shuffle',
   name: 'ぜんぶシャッフル',
-  description: '10のパックをまぜてランダム出題',
+  description: `${QUIZ_PACKS.length}のパックをまぜてランダム出題`,
   icon: 'shuffle',
-  questions: QUIZ_PACKS.flatMap((pack) =>
-    pack.questions.map((question) => ({
-      ...question,
-      sourcePackName: pack.name,
-    }))
-  ),
-};
+  packs: QUIZ_PACKS,
+});
 
-const PACK_OPTIONS = [...QUIZ_PACKS, ALL_PACK];
+const PACK_OPTIONS = [...QUIZ_PACKS, NANDOKU_SHUFFLE_PACK, ALL_PACK];
 
 const QUESTIONS_PER_ROUND = 5;
 
