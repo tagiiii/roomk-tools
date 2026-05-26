@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>塗り絵カレンダー | roomK</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet" />
+  <link rel="stylesheet" href="../shared/css/design-system.css" />
+  <style>
+    body {
+      background: var(--color-bg);
+    }
+
+    .nw-wrapper {
+      max-width: 920px;
+      margin-inline: auto;
+      padding: var(--space-lg) var(--space-md) var(--space-xl);
+    }
+
+    /* ── ヘッダー ── */
+    .nw-header {
+      text-align: center;
+      margin-bottom: var(--space-md);
+    }
+
+    .nw-header__title {
+      font-size: var(--font-size-xl);
+      font-weight: 700;
+      color: var(--color-primary);
+      letter-spacing: 0.02em;
+    }
+
+    .nw-header__sub {
+      margin-top: var(--space-xs);
+      font-size: var(--font-size-sub);
+      color: var(--color-muted);
+    }
+
+    /* ── カテゴリ凡例 ── */
+    .nw-legend {
+      background: var(--color-surface);
+      border-radius: var(--radius-card);
+      box-shadow: var(--shadow-sm);
+      padding: var(--space-md);
+      margin-bottom: var(--space-md);
+    }
+
+    .nw-legend__hint {
+      font-size: var(--font-size-sm);
+      color: var(--color-muted);
+      text-align: center;
+      margin-bottom: var(--space-sm);
+    }
+
+    .nw-cats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-sm);
+      justify-content: center;
+    }
+
+    .nw-cat-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      border: 2px solid var(--color-border);
+      border-radius: var(--radius-btn);
+      background: var(--color-surface);
+      color: var(--color-text);
+      font-family: var(--font-base);
+      font-size: var(--font-size-sub);
+      font-weight: 500;
+      cursor: pointer;
+      transition: border-color var(--transition-base), box-shadow var(--transition-base), transform 0.1s;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .nw-cat-btn:hover {
+      border-color: var(--color-primary);
+    }
+
+    .nw-cat-btn[aria-pressed="true"] {
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 2px var(--color-primary);
+      transform: scale(1.02);
+    }
+
+    .nw-cat-btn[aria-pressed="true"] .nw-cat-btn__check {
+      display: inline-flex;
+    }
+
+    .nw-cat-btn__swatch {
+      width: 18px;
+      height: 18px;
+      border-radius: 4px;
+      border: 1px solid rgba(0, 0, 0, 0.18);
+      flex-shrink: 0;
+    }
+
+    .nw-cat-btn__icon {
+      font-size: 18px;
+      color: var(--color-muted);
+    }
+
+    .nw-cat-btn[aria-pressed="true"] .nw-cat-btn__icon {
+      color: var(--color-primary);
+    }
+
+    .nw-cat-btn__check {
+      display: none;
+      font-size: 16px;
+      color: var(--color-primary);
+      margin-left: 2px;
+    }
+
+    /* 消しゴム用：色のスウォッチではなくアイコンで表現 */
+    .nw-cat-btn--eraser .nw-cat-btn__swatch {
+      background: repeating-linear-gradient(45deg, #fff, #fff 3px, #E5E7EB 3px, #E5E7EB 6px);
+    }
+
+    /* ── ツールバー ── */
+    .nw-toolbar {
+      display: flex;
+      justify-content: center;
+      gap: var(--space-sm);
+      margin-bottom: var(--space-md);
+    }
+
+    /* ── グリッド ── */
+    .nw-grid-wrap {
+      background: var(--color-surface);
+      border-radius: var(--radius-card);
+      box-shadow: var(--shadow-sm);
+      padding: var(--space-md);
+      overflow-x: auto;
+    }
+
+    .nw-grid {
+      display: grid;
+      grid-template-columns: 56px repeat(7, minmax(64px, 1fr));
+      background: var(--color-border);
+      gap: 1px;
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      user-select: none;
+      -webkit-user-select: none;
+      min-width: 560px;
+    }
+
+    .nw-grid__corner,
+    .nw-grid__day,
+    .nw-grid__hour,
+    .nw-cell {
+      background: var(--color-surface);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      color: var(--color-muted);
+    }
+
+    .nw-grid__corner,
+    .nw-grid__day {
+      height: 32px;
+      font-weight: 700;
+      color: var(--color-primary);
+      font-size: 13px;
+      background: #EEF3F8;
+    }
+
+    .nw-grid__day--sat { color: #1D4ED8; }
+    .nw-grid__day--sun { color: #B91C1C; }
+
+    .nw-grid__hour {
+      height: 22px;
+      font-size: 11px;
+      font-feature-settings: "tnum";
+    }
+
+    .nw-cell {
+      height: 22px;
+      cursor: pointer;
+      touch-action: none;
+      transition: filter var(--transition-base);
+    }
+
+    .nw-cell:hover {
+      filter: brightness(0.92);
+    }
+
+    .nw-cell--latenight {
+      background: #F4F6F8;
+    }
+
+    /* ── レスポンシブ ── */
+    @media (max-width: 600px) {
+      .nw-wrapper {
+        padding: var(--space-md) 8px var(--space-lg);
+      }
+      .nw-legend {
+        padding: var(--space-sm);
+      }
+      .nw-cat-btn {
+        padding: 6px 10px;
+        font-size: 13px;
+      }
+      .nw-cat-btn__swatch {
+        width: 16px;
+        height: 16px;
+      }
+      .nw-cat-btn__icon {
+        font-size: 16px;
+      }
+      .nw-grid {
+        grid-template-columns: 44px repeat(7, minmax(48px, 1fr));
+        min-width: 380px;
+      }
+      .nw-grid__corner,
+      .nw-grid__day {
+        font-size: 12px;
+        height: 28px;
+      }
+      .nw-grid__hour {
+        font-size: 10px;
+        height: 20px;
+      }
+      .nw-cell {
+        height: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="nw-wrapper">
+
+    <header class="nw-header">
+      <h1 class="nw-header__title">塗り絵カレンダー</h1>
+      <p class="nw-header__sub">ここ1週間の過ごし方を、色で塗ってみよう</p>
+    </header>
+
+    <section class="nw-legend" aria-label="色の選択">
+      <p class="nw-legend__hint">色を選んで、マスをクリックかドラッグで塗ろう</p>
+      <div class="nw-cats" id="nwCats" role="group" aria-label="カテゴリ"></div>
+    </section>
+
+    <div class="nw-toolbar">
+      <button class="btn btn-ghost btn-sm" id="btnClear">
+        <span class="material-symbols-rounded" aria-hidden="true">refresh</span>
+        すべてクリア
+      </button>
+    </div>
+
+    <div class="nw-grid-wrap">
+      <div class="nw-grid" id="nwGrid" role="grid" aria-label="1週間×24時間のグリッド"></div>
+    </div>
+
+  </div>
+
+  <script>
+    // ─────────────────────────────────────────────
+    // データ
+    // ─────────────────────────────────────────────
+    const CATEGORIES = [
+      { id: 1, label: '予定',         color: '#5B8FB9', icon: 'event' },
+      { id: 2, label: '自分で決めた',   color: '#E07A5F', icon: 'star' },
+      { id: 3, label: '生活',         color: '#81B29A', icon: 'restaurant' },
+      { id: 4, label: '寝てる',       color: '#9B89B3', icon: 'bedtime' },
+      { id: 5, label: 'ひとり時間',    color: '#F2CC8F', icon: 'weekend' },
+    ];
+    const ERASER = { id: 0, label: 'けす', icon: 'ink_eraser' };
+
+    const DAYS = ['月', '火', '水', '木', '金', '土', '日'];
+    const HOURS = 24;
+    const STORAGE_KEY = 'nurie-week:v1';
+    const LATE_NIGHT_HOURS = new Set([0, 1, 2, 3, 4, 5, 23]);
+
+    // ─────────────────────────────────────────────
+    // 状態
+    // ─────────────────────────────────────────────
+    const state = {
+      cells: new Array(DAYS.length * HOURS).fill(0),
+      activeCategory: 1,
+      isDrawing: false,
+    };
+
+    function cellIndex(day, hour) {
+      return day * HOURS + hour;
+    }
+
+    // ─────────────────────────────────────────────
+    // 保存・読み込み
+    // ─────────────────────────────────────────────
+    function load() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return;
+        const v = JSON.parse(raw);
+        if (Array.isArray(v) && v.length === state.cells.length) {
+          state.cells = v.map(n => (Number.isInteger(n) && n >= 0 && n <= 5) ? n : 0);
+        }
+      } catch {}
+    }
+    let saveTimer = null;
+    function save() {
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(() => {
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state.cells)); } catch {}
+      }, 150);
+    }
+
+    // ─────────────────────────────────────────────
+    // 描画
+    // ─────────────────────────────────────────────
+    function renderCategories() {
+      const wrap = document.getElementById('nwCats');
+      wrap.innerHTML = '';
+      const items = [...CATEGORIES, ERASER];
+      items.forEach(cat => {
+        const btn = document.createElement('button');
+        btn.className = 'nw-cat-btn' + (cat.id === 0 ? ' nw-cat-btn--eraser' : '');
+        btn.type = 'button';
+        btn.setAttribute('aria-pressed', String(cat.id === state.activeCategory));
+        btn.dataset.catId = String(cat.id);
+
+        const swatch = document.createElement('span');
+        swatch.className = 'nw-cat-btn__swatch';
+        if (cat.color) swatch.style.background = cat.color;
+        btn.appendChild(swatch);
+
+        const icon = document.createElement('span');
+        icon.className = 'material-symbols-rounded nw-cat-btn__icon';
+        icon.setAttribute('aria-hidden', 'true');
+        icon.textContent = cat.icon;
+        btn.appendChild(icon);
+
+        const label = document.createElement('span');
+        label.textContent = cat.label;
+        btn.appendChild(label);
+
+        const check = document.createElement('span');
+        check.className = 'material-symbols-rounded nw-cat-btn__check';
+        check.setAttribute('aria-hidden', 'true');
+        check.textContent = 'check';
+        btn.appendChild(check);
+
+        btn.addEventListener('click', () => {
+          state.activeCategory = cat.id;
+          updateCategoryPressed();
+        });
+        wrap.appendChild(btn);
+      });
+    }
+
+    function updateCategoryPressed() {
+      document.querySelectorAll('.nw-cat-btn').forEach(b => {
+        b.setAttribute('aria-pressed', String(Number(b.dataset.catId) === state.activeCategory));
+      });
+    }
+
+    function renderGrid() {
+      const grid = document.getElementById('nwGrid');
+      grid.innerHTML = '';
+
+      // ヘッダー行（角の空セル + 曜日）
+      const corner = document.createElement('div');
+      corner.className = 'nw-grid__corner';
+      corner.textContent = '時／曜日';
+      corner.setAttribute('aria-hidden', 'true');
+      grid.appendChild(corner);
+
+      DAYS.forEach((d, i) => {
+        const cell = document.createElement('div');
+        cell.className = 'nw-grid__day';
+        if (i === 5) cell.classList.add('nw-grid__day--sat');
+        if (i === 6) cell.classList.add('nw-grid__day--sun');
+        cell.textContent = d;
+        cell.setAttribute('role', 'columnheader');
+        grid.appendChild(cell);
+      });
+
+      // 各時間行
+      for (let h = 0; h < HOURS; h++) {
+        const hourLabel = document.createElement('div');
+        hourLabel.className = 'nw-grid__hour';
+        hourLabel.textContent = `${h}時`;
+        hourLabel.setAttribute('role', 'rowheader');
+        grid.appendChild(hourLabel);
+
+        for (let d = 0; d < DAYS.length; d++) {
+          const idx = cellIndex(d, h);
+          const cell = document.createElement('div');
+          cell.className = 'nw-cell' + (LATE_NIGHT_HOURS.has(h) ? ' nw-cell--latenight' : '');
+          cell.dataset.idx = String(idx);
+          cell.setAttribute('role', 'gridcell');
+          cell.setAttribute('aria-label', `${DAYS[d]}曜 ${h}時`);
+          applyCellStyle(cell, state.cells[idx]);
+          grid.appendChild(cell);
+        }
+      }
+    }
+
+    function applyCellStyle(el, catId) {
+      const isLate = LATE_NIGHT_HOURS.has(Number(el.dataset.idx) % HOURS);
+      if (!catId) {
+        el.style.backgroundColor = isLate ? '#F4F6F8' : '';
+      } else {
+        const cat = CATEGORIES.find(c => c.id === catId);
+        el.style.backgroundColor = cat ? cat.color : '';
+      }
+    }
+
+    // ─────────────────────────────────────────────
+    // ペイント
+    // ─────────────────────────────────────────────
+    function paintCell(el) {
+      if (!el || !el.classList.contains('nw-cell')) return;
+      const idx = Number(el.dataset.idx);
+      if (state.cells[idx] === state.activeCategory) return;
+      state.cells[idx] = state.activeCategory;
+      applyCellStyle(el, state.activeCategory);
+      save();
+    }
+
+    function bindGridEvents() {
+      const grid = document.getElementById('nwGrid');
+
+      grid.addEventListener('pointerdown', (e) => {
+        const cell = e.target.closest('.nw-cell');
+        if (!cell) return;
+        e.preventDefault();
+        state.isDrawing = true;
+        try { grid.setPointerCapture(e.pointerId); } catch {}
+        paintCell(cell);
+      });
+
+      grid.addEventListener('pointerover', (e) => {
+        if (!state.isDrawing) return;
+        const cell = e.target.closest('.nw-cell');
+        paintCell(cell);
+      });
+
+      // pointer events では capture 中 pointermove で coord から要素を拾う方が確実
+      grid.addEventListener('pointermove', (e) => {
+        if (!state.isDrawing) return;
+        const el = document.elementFromPoint(e.clientX, e.clientY);
+        if (el && el.classList.contains('nw-cell')) paintCell(el);
+      });
+
+      const endDraw = () => { state.isDrawing = false; };
+      document.addEventListener('pointerup', endDraw);
+      document.addEventListener('pointercancel', endDraw);
+      window.addEventListener('blur', endDraw);
+    }
+
+    function bindClear() {
+      document.getElementById('btnClear').addEventListener('click', () => {
+        if (!confirm('全部の色をけしますか？')) return;
+        state.cells.fill(0);
+        document.querySelectorAll('.nw-cell').forEach(el => applyCellStyle(el, 0));
+        save();
+      });
+    }
+
+    // ─────────────────────────────────────────────
+    // 起動
+    // ─────────────────────────────────────────────
+    load();
+    renderCategories();
+    renderGrid();
+    bindGridEvents();
+    bindClear();
+  </script>
+
+</body>
+</html>
