@@ -1,0 +1,1125 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>キャパグラフ | roomK</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet" />
+  <link rel="stylesheet" href="../shared/css/design-system.css" />
+  <style>
+    body {
+      background: var(--color-bg);
+    }
+
+    .kg-wrapper {
+      max-width: 880px;
+      margin-inline: auto;
+      padding: var(--space-lg) var(--space-md) var(--space-xl);
+    }
+
+    /* ── ヘッダー ── */
+    .kg-header {
+      text-align: center;
+      margin-bottom: var(--space-lg);
+    }
+
+    .kg-header__title {
+      font-size: var(--font-size-xl);
+      font-weight: 700;
+      color: var(--color-primary);
+      letter-spacing: 0.02em;
+    }
+
+    .kg-header__hint {
+      margin-top: var(--space-xs);
+      font-size: var(--font-size-sub);
+      color: var(--color-muted);
+      line-height: 1.6;
+    }
+
+    /* ── 週送り ── */
+    .kg-weeknav {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-sm);
+      margin-bottom: var(--space-md);
+    }
+
+    .kg-weeknav__label {
+      min-width: 200px;
+      text-align: center;
+      font-size: var(--font-size-body);
+      font-weight: 500;
+      color: var(--color-primary);
+    }
+
+    .kg-weeknav__btn {
+      width: 40px;
+      height: 40px;
+      padding: 0;
+      border-radius: var(--radius-full);
+      border: 2px solid var(--color-border);
+      background: var(--color-surface);
+      color: var(--color-primary);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: background-color var(--transition-base), border-color var(--transition-base);
+    }
+    .kg-weeknav__btn:hover {
+      background: #EEF3F8;
+      border-color: var(--color-primary);
+    }
+    .kg-weeknav__btn:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+
+    /* ── グラフ ── */
+    .kg-chart-card {
+      background: var(--color-surface);
+      border-radius: var(--radius-card);
+      box-shadow: var(--shadow-sm);
+      padding: var(--space-md) var(--space-md) var(--space-sm);
+      margin-bottom: var(--space-lg);
+    }
+
+    .kg-chart {
+      position: relative;
+      display: grid;
+      grid-template-columns: 36px 1fr;
+      gap: 8px;
+      user-select: none;
+    }
+
+    /* Y軸 */
+    .kg-chart__yaxis {
+      position: relative;
+      height: 280px;
+      font-size: 11px;
+      color: var(--color-muted);
+    }
+    .kg-chart__yaxis-tick {
+      position: absolute;
+      right: 4px;
+      transform: translateY(50%);
+      line-height: 1;
+    }
+
+    /* 描画エリア */
+    .kg-chart__plot {
+      position: relative;
+      height: 280px;
+      border-bottom: 1.5px solid var(--color-border);
+      border-left: 1.5px solid var(--color-border);
+      background:
+        repeating-linear-gradient(
+          to top,
+          transparent 0,
+          transparent calc(20% - 1px),
+          rgba(0, 0, 0, 0.04) calc(20% - 1px),
+          rgba(0, 0, 0, 0.04) 20%
+        );
+    }
+
+    .kg-chart__bars {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      align-items: end;
+      padding: 0 8px;
+      gap: 6px;
+    }
+
+    .kg-chart__col {
+      position: relative;
+      height: 100%;
+      display: flex;
+      flex-direction: column-reverse;
+      align-items: stretch;
+      cursor: pointer;
+      transition: filter var(--transition-base);
+    }
+
+    .kg-chart__col:hover {
+      filter: brightness(0.96);
+    }
+
+    .kg-chart__col[data-active="true"] {
+      outline: 2px dashed var(--color-accent);
+      outline-offset: 2px;
+      border-radius: var(--radius-sm);
+    }
+
+    .kg-chart__seg {
+      width: 100%;
+      transition: height var(--transition-base);
+    }
+
+    .kg-chart__seg:first-child {
+      border-top-left-radius: 4px;
+      border-top-right-radius: 4px;
+    }
+
+    /* キャパライン */
+    .kg-chart__capline {
+      position: absolute;
+      left: -2px;
+      right: 0;
+      height: 18px;
+      transform: translateY(-50%);
+      cursor: grab;
+      touch-action: none;
+      z-index: 5;
+    }
+    .kg-chart__capline:active {
+      cursor: grabbing;
+    }
+    .kg-chart__capline::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      height: 2px;
+      background: var(--color-primary);
+      box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.6);
+    }
+    .kg-chart__capline-handle {
+      position: absolute;
+      right: -2px;
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      background: var(--color-primary);
+      color: #fff;
+      border-radius: var(--radius-full);
+      font-size: 12px;
+      font-weight: 600;
+      line-height: 1;
+      white-space: nowrap;
+      pointer-events: none;
+    }
+    .kg-chart__capline-handle .material-symbols-rounded {
+      font-size: 14px;
+    }
+
+    /* X軸ラベル */
+    .kg-chart__xaxis {
+      grid-column: 2;
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 6px;
+      padding: 6px 8px 0;
+      font-size: 12px;
+      color: var(--color-muted);
+      text-align: center;
+    }
+    .kg-chart__xlabel {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      line-height: 1.2;
+    }
+    .kg-chart__xlabel--today {
+      color: var(--color-accent);
+      font-weight: 700;
+    }
+    .kg-chart__xlabel-day {
+      font-size: 14px;
+      font-weight: 500;
+    }
+    .kg-chart__xlabel-date {
+      font-size: 10px;
+      opacity: 0.7;
+    }
+
+    /* ── 入力エリア ── */
+    .kg-input-card {
+      background: var(--color-surface);
+      border-radius: var(--radius-card);
+      box-shadow: var(--shadow-sm);
+      padding: var(--space-md);
+      margin-bottom: var(--space-lg);
+    }
+
+    .kg-input__head {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: var(--space-md);
+      font-size: var(--font-size-body);
+      font-weight: 700;
+      color: var(--color-primary);
+    }
+    .kg-input__head .material-symbols-rounded {
+      font-size: 22px;
+      color: var(--color-accent);
+    }
+
+    .kg-input__row {
+      display: grid;
+      grid-template-columns: 130px 1fr;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 0;
+      border-bottom: 1px dashed var(--color-border);
+    }
+    .kg-input__row:last-child {
+      border-bottom: none;
+    }
+
+    .kg-input__tag {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: var(--font-size-body);
+      color: var(--color-text);
+      font-weight: 500;
+    }
+    .kg-input__swatch {
+      width: 14px;
+      height: 14px;
+      border-radius: 4px;
+      flex-shrink: 0;
+    }
+
+    .kg-input__btns {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 4px;
+    }
+
+    .kg-input__btn {
+      min-height: 36px;
+      padding: 6px 0;
+      border: 2px solid var(--color-border);
+      border-radius: var(--radius-sm);
+      background: var(--color-surface);
+      color: var(--color-muted);
+      font-family: var(--font-base);
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color var(--transition-base), border-color var(--transition-base), color var(--transition-base);
+      -webkit-tap-highlight-color: transparent;
+    }
+    .kg-input__btn:hover:not(:disabled) {
+      border-color: var(--color-primary);
+    }
+    .kg-input__btn[data-active="true"] {
+      background: var(--color-primary);
+      border-color: var(--color-primary);
+      color: #fff;
+    }
+
+    /* ── タグ編集 ── */
+    .kg-tags-card {
+      background: var(--color-surface);
+      border-radius: var(--radius-card);
+      box-shadow: var(--shadow-sm);
+      padding: var(--space-md);
+      margin-bottom: var(--space-lg);
+    }
+
+    .kg-tags__summary {
+      list-style: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: var(--font-size-body);
+      font-weight: 700;
+      color: var(--color-primary);
+      user-select: none;
+    }
+    .kg-tags__summary::-webkit-details-marker {
+      display: none;
+    }
+    .kg-tags__summary .material-symbols-rounded {
+      font-size: 22px;
+      color: var(--color-accent);
+      transition: transform var(--transition-base);
+    }
+    details[open] > .kg-tags__summary .material-symbols-rounded.kg-tags__chevron {
+      transform: rotate(90deg);
+    }
+
+    .kg-tags__list {
+      list-style: none;
+      margin-top: var(--space-md);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .kg-tag-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 8px;
+      border-radius: var(--radius-sm);
+      background: #FAFAF7;
+    }
+    .kg-tag-row__swatch {
+      width: 18px;
+      height: 18px;
+      border-radius: 5px;
+      flex-shrink: 0;
+    }
+    .kg-tag-row__input {
+      flex: 1;
+      padding: 6px 10px;
+      border: 1.5px solid transparent;
+      border-radius: var(--radius-sm);
+      background: transparent;
+      font-family: var(--font-base);
+      font-size: var(--font-size-sub);
+      color: var(--color-text);
+      transition: border-color var(--transition-base), background-color var(--transition-base);
+    }
+    .kg-tag-row__input:focus {
+      outline: none;
+      border-color: var(--color-accent);
+      background: var(--color-surface);
+    }
+    .kg-tag-row__remove {
+      width: 30px;
+      height: 30px;
+      border: none;
+      background: transparent;
+      color: var(--color-muted);
+      border-radius: var(--radius-full);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: background-color var(--transition-base), color var(--transition-base);
+      opacity: 0.7;
+    }
+    .kg-tag-row__remove:hover {
+      background: #F1E5E5;
+      color: var(--color-error);
+      opacity: 1;
+    }
+    .kg-tag-row__remove .material-symbols-rounded {
+      font-size: 18px;
+    }
+
+    .kg-tags__add {
+      margin-top: var(--space-md);
+      display: flex;
+      gap: var(--space-sm);
+    }
+    .kg-tags__add-input {
+      flex: 1;
+      padding: 10px 12px;
+      border: 2px solid var(--color-border);
+      border-radius: var(--radius-btn);
+      font-family: var(--font-base);
+      font-size: var(--font-size-sub);
+      background: var(--color-surface);
+      transition: border-color var(--transition-base);
+    }
+    .kg-tags__add-input:focus {
+      outline: none;
+      border-color: var(--color-accent);
+    }
+
+    /* ── フッター ── */
+    .kg-footer {
+      text-align: center;
+      margin-top: var(--space-lg);
+    }
+    .kg-footer .btn {
+      gap: 6px;
+    }
+    .kg-footer .material-symbols-rounded {
+      font-size: 18px;
+    }
+
+    /* ── レスポンシブ ── */
+    @media (max-width: 600px) {
+      .kg-wrapper {
+        padding: var(--space-md) 12px var(--space-lg);
+      }
+      .kg-header__title { font-size: 22px; }
+      .kg-chart__yaxis,
+      .kg-chart__plot { height: 220px; }
+      .kg-chart {
+        grid-template-columns: 28px 1fr;
+      }
+      .kg-input__row {
+        grid-template-columns: 100px 1fr;
+        gap: 8px;
+      }
+      .kg-input__tag { font-size: 14px; }
+      .kg-input__btn { font-size: 14px; min-height: 34px; }
+      .kg-weeknav__label { min-width: 160px; font-size: 14px; }
+      .kg-chart__capline-handle { font-size: 11px; padding: 2px 6px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="kg-wrapper">
+
+    <header class="kg-header">
+      <h1 class="kg-header__title">キャパグラフ</h1>
+      <p class="kg-header__hint">
+        1週間のがんばり量を見える化。<br>
+        グラフの上の線は<strong>キャパライン</strong>。自分でドラッグして「これ以上はしんどい」のラインを決めよう。
+      </p>
+    </header>
+
+    <!-- 週送り -->
+    <div class="kg-weeknav">
+      <button class="kg-weeknav__btn" id="kgPrevWeek" type="button" aria-label="前の週へ">
+        <span class="material-symbols-rounded" aria-hidden="true">chevron_left</span>
+      </button>
+      <div class="kg-weeknav__label" id="kgWeekLabel">—</div>
+      <button class="kg-weeknav__btn" id="kgNextWeek" type="button" aria-label="次の週へ">
+        <span class="material-symbols-rounded" aria-hidden="true">chevron_right</span>
+      </button>
+    </div>
+
+    <!-- グラフ -->
+    <section class="kg-chart-card">
+      <div class="kg-chart">
+        <div class="kg-chart__yaxis" id="kgYAxis"></div>
+        <div class="kg-chart__plot" id="kgPlot">
+          <div class="kg-chart__bars" id="kgBars"></div>
+          <div class="kg-chart__capline" id="kgCapline" role="slider"
+               aria-label="キャパライン（上下にドラッグで調整）"
+               tabindex="0">
+            <div class="kg-chart__capline-handle">
+              <span class="material-symbols-rounded" aria-hidden="true">unfold_more</span>
+              <span id="kgCaplineValue">15</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="kg-chart__xaxis" id="kgXAxis"></div>
+    </section>
+
+    <!-- 入力 -->
+    <section class="kg-input-card">
+      <div class="kg-input__head">
+        <span class="material-symbols-rounded" aria-hidden="true">edit_calendar</span>
+        <span id="kgInputDateLabel">入力する日を選んでね</span>
+      </div>
+      <div id="kgInputRows"></div>
+    </section>
+
+    <!-- タグ編集 -->
+    <section class="kg-tags-card">
+      <details>
+        <summary class="kg-tags__summary">
+          <span class="material-symbols-rounded kg-tags__chevron" aria-hidden="true">chevron_right</span>
+          <span class="material-symbols-rounded" aria-hidden="true">tune</span>
+          タグの編集
+        </summary>
+        <ul class="kg-tags__list" id="kgTagList"></ul>
+        <div class="kg-tags__add">
+          <input
+            type="text"
+            class="kg-tags__add-input"
+            id="kgTagAddInput"
+            placeholder="新しいタグを追加（例：部活）"
+            maxlength="20"
+            autocomplete="off"
+          />
+          <button class="btn btn-secondary btn-sm" id="kgTagAddBtn" type="button">
+            ふやす
+          </button>
+        </div>
+      </details>
+    </section>
+
+    <!-- リセット -->
+    <footer class="kg-footer">
+      <button class="btn btn-ghost btn-sm" id="kgResetWeek" type="button">
+        <span class="material-symbols-rounded" aria-hidden="true">restart_alt</span>
+        この週の入力をリセット
+      </button>
+    </footer>
+
+  </div>
+
+  <script>
+    // ─────────────────────────────────────────────
+    // 定数
+    // ─────────────────────────────────────────────
+    const STORAGE_KEY = 'kyapa-graph:v1';
+    const DAY_LABELS = ['月', '火', '水', '木', '金', '土', '日'];
+    const SCORE_MIN = 0;
+    const SCORE_MAX = 5;
+    const Y_AXIS_TICKS = 5; // 0, 1/5, 2/5, 3/5, 4/5, 5/5
+    const DEFAULT_CAPACITY = 15;
+
+    const DEFAULT_TAGS = [
+      { id: 'school',   label: '学校',         color: '#5B8FB9', removable: false },
+      { id: 'class',    label: '授業',         color: '#9B89B3', removable: false },
+      { id: 'homework', label: '宿題',         color: '#E07A5F', removable: false },
+      { id: 'lesson',   label: '習い事',       color: '#81B29A', removable: false },
+      { id: 'test',     label: 'テスト',       color: '#C9676A', removable: false },
+      { id: 'friends',  label: '人といる時間', color: '#F2CC8F', removable: false },
+      { id: 'home',     label: '家のお手伝い', color: '#B5C28C', removable: false },
+      { id: 'mytime',   label: '自分の時間',   color: '#D4A5A5', removable: false }
+    ];
+
+    const PALETTE = [
+      '#5B8FB9', '#9B89B3', '#E07A5F', '#81B29A',
+      '#C9676A', '#F2CC8F', '#B5C28C', '#D4A5A5',
+      '#6FA8C9', '#A89DC4', '#D88E7A', '#94BFA8'
+    ];
+
+    // ─────────────────────────────────────────────
+    // 状態
+    // ─────────────────────────────────────────────
+    const state = {
+      days: {},                      // { 'YYYY-MM-DD': { tagId: score } }
+      tags: DEFAULT_TAGS.slice(),
+      capacity: DEFAULT_CAPACITY,
+      weekStart: null,               // 表示中の週の月曜（Date）
+      activeDateKey: null            // 入力中の日付キー
+    };
+
+    // ─────────────────────────────────────────────
+    // ユーティリティ
+    // ─────────────────────────────────────────────
+    function clamp(v, min, max) {
+      return Math.max(min, Math.min(max, v));
+    }
+
+    function clampInt(v, min, max) {
+      const n = Number(v);
+      if (!Number.isFinite(n)) return min;
+      return clamp(Math.round(n), min, max);
+    }
+
+    function pad2(n) { return String(n).padStart(2, '0'); }
+
+    function getDateKey(date) {
+      return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`;
+    }
+
+    function getWeekStart(date) {
+      const d = new Date(date);
+      d.setHours(0, 0, 0, 0);
+      const day = d.getDay(); // 0=日, 1=月, ..., 6=土
+      const diff = day === 0 ? -6 : 1 - day;
+      d.setDate(d.getDate() + diff);
+      return d;
+    }
+
+    function addDays(date, n) {
+      const d = new Date(date);
+      d.setDate(d.getDate() + n);
+      return d;
+    }
+
+    function getWeekDates(weekStart) {
+      return Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
+    }
+
+    function formatWeekLabel(weekStart) {
+      const end = addDays(weekStart, 6);
+      const sameMonth = weekStart.getMonth() === end.getMonth();
+      const s = `${weekStart.getMonth() + 1}/${weekStart.getDate()}`;
+      const e = sameMonth ? `${end.getDate()}` : `${end.getMonth() + 1}/${end.getDate()}`;
+      return `${s} 〜 ${e}`;
+    }
+
+    function isSameDate(a, b) {
+      return a.getFullYear() === b.getFullYear() &&
+             a.getMonth() === b.getMonth() &&
+             a.getDate() === b.getDate();
+    }
+
+    function uniqueTagId() {
+      return 't_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    }
+
+    function nextPaletteColor() {
+      const used = new Set(state.tags.map(t => t.color));
+      return PALETTE.find(c => !used.has(c)) || PALETTE[state.tags.length % PALETTE.length];
+    }
+
+    // ─────────────────────────────────────────────
+    // 保存・読み込み
+    // ─────────────────────────────────────────────
+    function load() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return;
+        const v = JSON.parse(raw);
+        if (!v || typeof v !== 'object') return;
+
+        if (v.days && typeof v.days === 'object') {
+          for (const key of Object.keys(v.days)) {
+            const dayData = v.days[key];
+            if (!dayData || typeof dayData !== 'object') continue;
+            const cleaned = {};
+            for (const tagId of Object.keys(dayData)) {
+              cleaned[tagId] = clampInt(dayData[tagId], SCORE_MIN, SCORE_MAX);
+            }
+            state.days[key] = cleaned;
+          }
+        }
+
+        if (Array.isArray(v.tags) && v.tags.length > 0) {
+          const valid = v.tags
+            .filter(t => t && typeof t.id === 'string' && typeof t.label === 'string')
+            .map(t => ({
+              id: t.id,
+              label: t.label.slice(0, 30),
+              color: typeof t.color === 'string' && /^#[0-9A-Fa-f]{6}$/.test(t.color)
+                ? t.color
+                : PALETTE[0],
+              removable: t.removable !== false
+            }));
+          if (valid.length > 0) state.tags = valid;
+        }
+
+        if (Number.isFinite(v.capacity)) {
+          state.capacity = clamp(Math.round(v.capacity), 0, 200);
+        }
+      } catch (_) {}
+    }
+
+    let saveTimer = null;
+    function save() {
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(() => {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify({
+            days: state.days,
+            tags: state.tags,
+            capacity: state.capacity
+          }));
+        } catch (_) {}
+      }, 150);
+    }
+
+    // ─────────────────────────────────────────────
+    // スケール計算
+    // ─────────────────────────────────────────────
+    function computeYMax() {
+      const weekDates = getWeekDates(state.weekStart);
+      let dataMax = 0;
+      weekDates.forEach(d => {
+        const k = getDateKey(d);
+        const day = state.days[k];
+        if (!day) return;
+        let sum = 0;
+        for (const tagId of Object.keys(day)) sum += day[tagId];
+        if (sum > dataMax) dataMax = sum;
+      });
+      // 余白を持たせる
+      const target = Math.max(dataMax, state.capacity, 10);
+      // 5の倍数に丸める
+      const yMax = Math.ceil((target + 2) / 5) * 5;
+      return Math.max(yMax, 5);
+    }
+
+    // ─────────────────────────────────────────────
+    // 描画: Y軸
+    // ─────────────────────────────────────────────
+    function renderYAxis(yMax) {
+      const el = document.getElementById('kgYAxis');
+      el.innerHTML = '';
+      for (let i = 0; i <= Y_AXIS_TICKS; i++) {
+        const v = Math.round((yMax * i) / Y_AXIS_TICKS);
+        const tick = document.createElement('div');
+        tick.className = 'kg-chart__yaxis-tick';
+        tick.style.bottom = `${(i / Y_AXIS_TICKS) * 100}%`;
+        tick.textContent = v;
+        el.appendChild(tick);
+      }
+    }
+
+    // ─────────────────────────────────────────────
+    // 描画: 棒グラフ
+    // ─────────────────────────────────────────────
+    function renderBars(yMax) {
+      const bars = document.getElementById('kgBars');
+      bars.innerHTML = '';
+      const weekDates = getWeekDates(state.weekStart);
+
+      weekDates.forEach((d) => {
+        const key = getDateKey(d);
+        const col = document.createElement('div');
+        col.className = 'kg-chart__col';
+        col.setAttribute('data-date-key', key);
+        if (key === state.activeDateKey) col.setAttribute('data-active', 'true');
+
+        const dayData = state.days[key] || {};
+        state.tags.forEach(tag => {
+          const score = dayData[tag.id] || 0;
+          if (score <= 0) return;
+          const seg = document.createElement('div');
+          seg.className = 'kg-chart__seg';
+          seg.style.background = tag.color;
+          seg.style.height = `${(score / yMax) * 100}%`;
+          seg.title = `${tag.label}: ${score}`;
+          col.appendChild(seg);
+        });
+
+        col.addEventListener('click', () => {
+          setActiveDate(key);
+        });
+
+        bars.appendChild(col);
+      });
+    }
+
+    // ─────────────────────────────────────────────
+    // 描画: X軸
+    // ─────────────────────────────────────────────
+    function renderXAxis() {
+      const el = document.getElementById('kgXAxis');
+      el.innerHTML = '';
+      const today = new Date();
+      const weekDates = getWeekDates(state.weekStart);
+
+      weekDates.forEach((d, i) => {
+        const wrap = document.createElement('div');
+        wrap.className = 'kg-chart__xlabel';
+        if (isSameDate(d, today)) wrap.classList.add('kg-chart__xlabel--today');
+
+        const day = document.createElement('div');
+        day.className = 'kg-chart__xlabel-day';
+        day.textContent = DAY_LABELS[i];
+
+        const date = document.createElement('div');
+        date.className = 'kg-chart__xlabel-date';
+        date.textContent = `${d.getMonth() + 1}/${d.getDate()}`;
+
+        wrap.appendChild(day);
+        wrap.appendChild(date);
+        el.appendChild(wrap);
+      });
+    }
+
+    // ─────────────────────────────────────────────
+    // 描画: キャパライン
+    // ─────────────────────────────────────────────
+    function renderCapline(yMax) {
+      const line = document.getElementById('kgCapline');
+      const value = document.getElementById('kgCaplineValue');
+      const ratio = clamp(state.capacity / yMax, 0, 1);
+      line.style.bottom = `calc(${ratio * 100}% - 1px)`;
+      value.textContent = state.capacity;
+    }
+
+    // ─────────────────────────────────────────────
+    // キャパラインのドラッグ
+    // ─────────────────────────────────────────────
+    function bindCaplineDrag() {
+      const line = document.getElementById('kgCapline');
+      const plot = document.getElementById('kgPlot');
+      let dragging = false;
+      let yMaxCached = 5;
+
+      function pointerMove(e) {
+        if (!dragging) return;
+        const rect = plot.getBoundingClientRect();
+        const y = e.clientY - rect.top;
+        const ratio = clamp(1 - (y / rect.height), 0, 1);
+        const newCap = clampInt(ratio * yMaxCached, 0, yMaxCached);
+        if (newCap !== state.capacity) {
+          state.capacity = newCap;
+          renderCapline(yMaxCached);
+          save();
+        }
+      }
+
+      function pointerUp(e) {
+        if (!dragging) return;
+        dragging = false;
+        try { line.releasePointerCapture(e.pointerId); } catch (_) {}
+        window.removeEventListener('pointermove', pointerMove);
+        window.removeEventListener('pointerup', pointerUp);
+        // ドラッグ後に yMax が変わる可能性は低いが念のため再描画
+        renderAll();
+      }
+
+      line.addEventListener('pointerdown', (e) => {
+        dragging = true;
+        yMaxCached = computeYMax();
+        try { line.setPointerCapture(e.pointerId); } catch (_) {}
+        window.addEventListener('pointermove', pointerMove);
+        window.addEventListener('pointerup', pointerUp);
+        e.preventDefault();
+      });
+
+      // キーボード操作
+      line.addEventListener('keydown', (e) => {
+        const yMax = computeYMax();
+        let delta = 0;
+        if (e.key === 'ArrowUp')   delta = 1;
+        if (e.key === 'ArrowDown') delta = -1;
+        if (e.key === 'PageUp')    delta = 5;
+        if (e.key === 'PageDown')  delta = -5;
+        if (delta === 0) return;
+        e.preventDefault();
+        state.capacity = clampInt(state.capacity + delta, 0, yMax);
+        renderCapline(yMax);
+        save();
+      });
+    }
+
+    // ─────────────────────────────────────────────
+    // 描画: 入力エリア
+    // ─────────────────────────────────────────────
+    function renderInput() {
+      const label = document.getElementById('kgInputDateLabel');
+      const rows = document.getElementById('kgInputRows');
+      rows.innerHTML = '';
+
+      if (!state.activeDateKey) {
+        label.textContent = '入力する日を選んでね（グラフのバーをタップ）';
+        return;
+      }
+
+      // ラベル: 「5/26 (水)」形式
+      const [y, m, d] = state.activeDateKey.split('-').map(Number);
+      const date = new Date(y, m - 1, d);
+      const dayIdx = (date.getDay() + 6) % 7; // 月=0..日=6
+      label.textContent = `${m}/${d}（${DAY_LABELS[dayIdx]}）のがんばり量を入力`;
+
+      const dayData = state.days[state.activeDateKey] || {};
+
+      state.tags.forEach(tag => {
+        const row = document.createElement('div');
+        row.className = 'kg-input__row';
+
+        const tagEl = document.createElement('div');
+        tagEl.className = 'kg-input__tag';
+        const sw = document.createElement('span');
+        sw.className = 'kg-input__swatch';
+        sw.style.background = tag.color;
+        const txt = document.createElement('span');
+        txt.textContent = tag.label;
+        tagEl.appendChild(sw);
+        tagEl.appendChild(txt);
+
+        const btns = document.createElement('div');
+        btns.className = 'kg-input__btns';
+        const current = dayData[tag.id] || 0;
+        for (let i = SCORE_MIN; i <= SCORE_MAX; i++) {
+          const b = document.createElement('button');
+          b.type = 'button';
+          b.className = 'kg-input__btn';
+          b.textContent = String(i);
+          if (i === current) b.setAttribute('data-active', 'true');
+          b.addEventListener('click', () => {
+            setScore(state.activeDateKey, tag.id, i);
+          });
+          btns.appendChild(b);
+        }
+
+        row.appendChild(tagEl);
+        row.appendChild(btns);
+        rows.appendChild(row);
+      });
+    }
+
+    // ─────────────────────────────────────────────
+    // 描画: タグ編集
+    // ─────────────────────────────────────────────
+    function renderTagList() {
+      const ul = document.getElementById('kgTagList');
+      ul.innerHTML = '';
+      state.tags.forEach(tag => {
+        const li = document.createElement('li');
+        li.className = 'kg-tag-row';
+
+        const sw = document.createElement('span');
+        sw.className = 'kg-tag-row__swatch';
+        sw.style.background = tag.color;
+
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'kg-tag-row__input';
+        input.value = tag.label;
+        input.maxLength = 20;
+        input.addEventListener('change', () => {
+          const v = (input.value || '').trim();
+          if (!v) {
+            input.value = tag.label;
+            return;
+          }
+          tag.label = v;
+          save();
+          renderAll();
+        });
+
+        li.appendChild(sw);
+        li.appendChild(input);
+
+        const rm = document.createElement('button');
+        rm.type = 'button';
+        rm.className = 'kg-tag-row__remove';
+        rm.setAttribute('aria-label', `${tag.label} を削除`);
+        const ic = document.createElement('span');
+        ic.className = 'material-symbols-rounded';
+        ic.setAttribute('aria-hidden', 'true');
+        ic.textContent = 'close';
+        rm.appendChild(ic);
+        rm.addEventListener('click', () => removeTag(tag.id));
+        li.appendChild(rm);
+
+        ul.appendChild(li);
+      });
+    }
+
+    // ─────────────────────────────────────────────
+    // 操作
+    // ─────────────────────────────────────────────
+    function setActiveDate(key) {
+      state.activeDateKey = key;
+      renderBars(computeYMax());
+      renderInput();
+    }
+
+    function setScore(dateKey, tagId, score) {
+      if (!state.days[dateKey]) state.days[dateKey] = {};
+      const v = clampInt(score, SCORE_MIN, SCORE_MAX);
+      if (v === 0) {
+        delete state.days[dateKey][tagId];
+        if (Object.keys(state.days[dateKey]).length === 0) {
+          delete state.days[dateKey];
+        }
+      } else {
+        state.days[dateKey][tagId] = v;
+      }
+      save();
+      renderAll();
+    }
+
+    function addTag(label) {
+      const v = (label || '').trim();
+      if (!v) return;
+      state.tags.push({
+        id: uniqueTagId(),
+        label: v.slice(0, 20),
+        color: nextPaletteColor(),
+        removable: true
+      });
+      save();
+      renderAll();
+    }
+
+    function removeTag(tagId) {
+      const idx = state.tags.findIndex(t => t.id === tagId);
+      if (idx < 0) return;
+      if (state.tags.length <= 1) {
+        alert('タグを全部消すことはできません');
+        return;
+      }
+      if (!confirm(`「${state.tags[idx].label}」を消しますか？\n入力済みのデータからもこのタグの値が消えます。`)) return;
+
+      // 入力済みデータからもこのタグを除去
+      for (const key of Object.keys(state.days)) {
+        if (state.days[key][tagId] != null) {
+          delete state.days[key][tagId];
+          if (Object.keys(state.days[key]).length === 0) {
+            delete state.days[key];
+          }
+        }
+      }
+      state.tags.splice(idx, 1);
+      save();
+      renderAll();
+    }
+
+    function shiftWeek(delta) {
+      state.weekStart = addDays(state.weekStart, delta * 7);
+      // 表示中の週からアクティブ日を選び直す
+      const weekDates = getWeekDates(state.weekStart);
+      const today = new Date();
+      const todayKey = getDateKey(today);
+      const todayInWeek = weekDates.find(d => getDateKey(d) === todayKey);
+      state.activeDateKey = todayInWeek ? todayKey : getDateKey(weekDates[0]);
+      renderAll();
+    }
+
+    function resetWeek() {
+      if (!confirm('この週の入力を全部リセットしますか？\n（タグとキャパラインは残ります）')) return;
+      const weekDates = getWeekDates(state.weekStart);
+      weekDates.forEach(d => {
+        delete state.days[getDateKey(d)];
+      });
+      save();
+      renderAll();
+    }
+
+    // ─────────────────────────────────────────────
+    // 全体描画
+    // ─────────────────────────────────────────────
+    function renderAll() {
+      const yMax = computeYMax();
+      document.getElementById('kgWeekLabel').textContent = formatWeekLabel(state.weekStart);
+      renderYAxis(yMax);
+      renderBars(yMax);
+      renderXAxis();
+      renderCapline(yMax);
+      renderInput();
+      renderTagList();
+    }
+
+    // ─────────────────────────────────────────────
+    // バインド
+    // ─────────────────────────────────────────────
+    function bindControls() {
+      document.getElementById('kgPrevWeek').addEventListener('click', () => shiftWeek(-1));
+      document.getElementById('kgNextWeek').addEventListener('click', () => shiftWeek(1));
+      document.getElementById('kgResetWeek').addEventListener('click', resetWeek);
+
+      const addInput = document.getElementById('kgTagAddInput');
+      const addBtn = document.getElementById('kgTagAddBtn');
+      addBtn.addEventListener('click', () => {
+        addTag(addInput.value);
+        addInput.value = '';
+      });
+      addInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          addTag(addInput.value);
+          addInput.value = '';
+        }
+      });
+
+      // リサイズ時にキャパラインの位置を再計算
+      let resizeTimer = null;
+      window.addEventListener('resize', () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => renderCapline(computeYMax()), 150);
+      });
+    }
+
+    // ─────────────────────────────────────────────
+    // 起動
+    // ─────────────────────────────────────────────
+    load();
+    const now = new Date();
+    state.weekStart = getWeekStart(now);
+    state.activeDateKey = getDateKey(now);
+    bindControls();
+    bindCaplineDrag();
+    renderAll();
+  </script>
+
+</body>
+</html>
