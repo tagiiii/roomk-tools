@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>おとなトークカード | roomK</title>
+  <!-- Google Fonts（Noto Sans JP）-->
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
+  <!-- 共通デザインシステム（M-1〜M-6）-->
+  <link rel="stylesheet" href="../shared/css/design-system.css" />
+  <!-- アプリ固有スタイル -->
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <div class="wrapper">
+
+    <!-- ヘッダー -->
+    <header class="ot-header">
+      <h1 class="ot-header__title">おとなトークカード</h1>
+      <p class="ot-header__sub">大人どうしで質問し合う雑談タイム。カードをめくってお題を引こう。子どもたちも、大人の「ほんと」を聞けます。</p>
+    </header>
+
+    <!-- カテゴリフィルター -->
+    <div class="ot-filter" id="catFilter" role="group" aria-label="質問のカテゴリ"></div>
+
+    <!-- お題表示エリア（M-5 popIn で出現）-->
+    <section class="ot-topic" id="topicArea" aria-live="polite">
+      <p class="ot-topic__label" id="topicLabel"></p>
+      <p class="ot-topic__text" id="topicText"></p>
+      <div class="ot-topic__actions">
+        <button class="btn btn-primary" id="btnCopy">コピーする</button>
+        <button class="btn btn-secondary" id="btnNext">別のカードを引く</button>
+      </div>
+    </section>
+
+    <!-- カードグリッド（M-4 カードフリップ）-->
+    <div class="ot-grid" id="cardGrid"></div>
+
+    <!-- 引き直しエリア -->
+    <div class="ot-redraw" id="redrawArea">
+      <button class="btn btn-ghost" id="btnRedraw">3枚引き直す</button>
+    </div>
+
+    <!-- プール残数 -->
+    <p class="ot-pool" id="poolInfo"></p>
+
+  </div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

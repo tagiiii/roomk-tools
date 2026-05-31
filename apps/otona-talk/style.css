@@ -1,0 +1,222 @@
+/* おとなトークカード アプリ固有スタイル
+   共通スタイル（M-1〜M-6）は design-system.css に定義済み */
+
+/* ── レイアウト ── */
+.wrapper {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 48px 40px 80px;
+}
+
+/* ── ヘッダー ── */
+.ot-header {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.ot-header__title {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--color-primary);
+  letter-spacing: 0.04em;
+}
+
+.ot-header__sub {
+  font-size: var(--font-size-sub);
+  color: var(--color-muted);
+  margin-top: 6px;
+}
+
+/* ── カテゴリフィルター ── */
+.ot-filter {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 36px;
+}
+
+.ot-chip {
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-muted);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  padding: 6px 14px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.ot-chip:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.ot-chip.is-active {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: #fff;
+}
+
+/* ── お題表示エリア ── */
+.ot-topic {
+  display: none;
+  background: var(--color-surface);
+  border: 2px solid var(--color-accent);
+  border-radius: var(--radius-box);
+  padding: 32px 40px;
+  margin-bottom: 36px;
+  text-align: center;
+}
+
+.ot-topic.visible {
+  display: block;
+}
+
+.ot-topic__label {
+  display: inline-block;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-accent);
+  letter-spacing: 0.06em;
+  margin-bottom: 14px;
+}
+
+.ot-topic__text {
+  font-size: 38px;
+  font-weight: 700;
+  color: var(--color-primary);
+  line-height: 1.45;
+}
+
+.ot-topic__actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 24px;
+  flex-wrap: wrap;
+}
+
+/* ── カードグリッド ── */
+.ot-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 28px;
+  margin-bottom: 32px;
+}
+
+/* ── カード（M-4 flip-card を使用）── */
+.ot-grid .flip-card {
+  aspect-ratio: 2 / 3;
+}
+
+/* 裏面 */
+.ot-card-back {
+  background-color: var(--color-primary);
+  background-image: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 10px,
+    rgba(255, 255, 255, 0.05) 10px,
+    rgba(255, 255, 255, 0.05) 20px
+  );
+  border-color: #163352;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ot-grid .flip-card:not(.dimmed):not(.flipped):hover .ot-card-back {
+  background-color: #234d70;
+}
+
+.ot-card__num {
+  font-size: 64px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.9);
+  line-height: 1;
+}
+
+.ot-card__hint {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.5);
+  letter-spacing: 0.06em;
+}
+
+/* 表面 */
+.ot-card-front {
+  background: var(--color-surface);
+  border-color: var(--color-accent);
+  padding: 22px 18px;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ot-card__cat {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-accent);
+  letter-spacing: 0.04em;
+  background: rgba(46, 125, 140, 0.1);
+  border-radius: 999px;
+  padding: 3px 10px;
+}
+
+.ot-card__topic {
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--color-primary);
+  text-align: center;
+  line-height: 1.5;
+}
+
+/* ── 引き直しエリア ── */
+.ot-redraw {
+  text-align: center;
+  margin-top: 8px;
+}
+
+/* ── プール残数 ── */
+.ot-pool {
+  text-align: center;
+  font-size: 13px;
+  color: var(--color-muted);
+  margin-top: 20px;
+}
+
+/* ── レスポンシブ ── */
+@media (max-width: 600px) {
+  .wrapper {
+    padding: 28px 16px 60px;
+  }
+
+  .ot-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+
+  .ot-topic {
+    padding: 24px 20px;
+  }
+
+  .ot-topic__text {
+    font-size: 26px;
+  }
+
+  .ot-card__num {
+    font-size: 40px;
+  }
+
+  .ot-card__topic {
+    font-size: 14px;
+  }
+
+  .ot-card__cat {
+    font-size: 10px;
+  }
+
+  .ot-card__hint {
+    font-size: 11px;
+  }
+}
