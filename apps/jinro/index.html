@@ -45,7 +45,7 @@
     .phase-badge.morning { background: #d97706; }
     .phase-badge.day     { background: var(--color-accent); }
     .phase-badge.vote    { background: #6B3FA0; }
-    .phase-badge.exec    { background: var(--color-error); }
+    .phase-badge.exec    { background: var(--color-primary); }
 
     /* ── 役職カード（フリップ）── */
     .role-flip-card {
@@ -184,8 +184,8 @@
       padding: 14px 16px; display: flex; align-items: flex-start; gap: 12px;
     }
     .morning-entry .material-symbols-rounded { font-size: 22px; flex-shrink: 0; }
-    .morning-entry.kill    { border-left: 4px solid var(--color-error); }
-    .morning-entry.kill .material-symbols-rounded { color: var(--color-error); }
+    .morning-entry.kill    { border-left: 4px solid #94a3b8; }
+    .morning-entry.kill .material-symbols-rounded { color: #64748b; }
     .morning-entry.safe    { border-left: 4px solid var(--color-success); }
     .morning-entry.safe .material-symbols-rounded { color: var(--color-success); }
     .morning-entry.info    { border-left: 4px solid var(--color-accent); }
@@ -269,6 +269,63 @@
       padding: 8px 14px; background: var(--color-primary);
       color: #fff; border-radius: 999px; font-size: 14px; font-weight: 700;
     }
+
+    /* ── 遊び方・役職モーダル ── */
+    .rules-fab {
+      position: fixed; right: 16px; bottom: 16px; z-index: 200;
+      width: 48px; height: 48px; border-radius: 50%;
+      border: none; cursor: pointer;
+      background: var(--color-primary); color: #fff;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .rules-fab .material-symbols-rounded { font-size: 26px; }
+    .rules-modal {
+      display: none; position: fixed; inset: 0; z-index: 300;
+      background: rgba(28,63,94,0.55);
+      align-items: flex-end; justify-content: center;
+    }
+    .rules-modal.show { display: flex; }
+    .rules-sheet {
+      width: 100%; max-width: 480px; max-height: 88dvh;
+      background: var(--color-surface);
+      border-radius: 20px 20px 0 0;
+      display: flex; flex-direction: column; overflow: hidden;
+    }
+    .rules-head {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 20px; border-bottom: 1px solid var(--color-border); flex-shrink: 0;
+    }
+    .rules-head strong { font-size: 17px; color: var(--color-primary); }
+    .rules-close {
+      border: none; background: none; cursor: pointer;
+      color: var(--color-muted); display: flex; padding: 4px;
+    }
+    .rules-body {
+      padding: 16px 20px 32px; overflow-y: auto;
+      font-size: 14px; line-height: 1.7; color: var(--color-text);
+    }
+    .rules-h { font-size: 16px; font-weight: 700; color: var(--color-primary); margin: 20px 0 6px; }
+    .rules-h:first-child { margin-top: 0; }
+    .rules-body p { margin: 0 0 6px; }
+    .rules-flow, .rules-win { padding-left: 20px; margin: 6px 0; }
+    .rules-flow li, .rules-win li { margin-bottom: 5px; }
+    .rules-note { font-size: 13px; color: var(--color-muted); margin-top: 4px; }
+    .rules-sub {
+      font-size: 12px; font-weight: 700; color: #fff;
+      display: inline-block; padding: 3px 10px; border-radius: 999px; margin: 16px 0 8px;
+    }
+    .rules-sub.village { background: var(--color-accent); }
+    .rules-sub.wolf    { background: var(--color-error); }
+    .rules-sub.third   { background: #7C3AED; }
+    .rules-roles { list-style: none; padding: 0; margin: 0; }
+    .rules-roles li {
+      padding: 8px 0; border-bottom: 1px solid var(--color-border);
+      display: flex; flex-direction: column; gap: 2px;
+    }
+    .rules-roles li:last-child { border-bottom: none; }
+    .rules-role-name { font-weight: 700; color: var(--color-primary); }
+    .rules-role-desc { font-size: 13px; color: var(--color-muted); }
   </style>
 </head>
 <body>
@@ -289,6 +346,9 @@
       </button>
       <button class="btn btn-secondary btn-full sep" onclick="goTo('guest-join')">
         <span class="material-symbols-rounded">login</span>ルームに参加する
+      </button>
+      <button class="btn btn-ghost btn-full sep" onclick="openRules()">
+        <span class="material-symbols-rounded">help</span>遊び方・役職を見る
       </button>
     </div>
   </div>
@@ -478,9 +538,9 @@
 
     <!-- ハンター道連れ選択（夜死亡時） -->
     <div id="morning-hunter-panel" style="display:none">
-      <div class="card" style="background:#FEF2F2;border:2px solid var(--color-error);margin-top:16px">
-        <p class="section-lbl" style="color:var(--color-error)">ハンターの道連れ</p>
-        <p style="font-size:14px;margin-bottom:12px">道連れにする相手を選んでください</p>
+      <div class="card" style="background:#EFF9F8;border:2px solid var(--color-accent);margin-top:16px">
+        <p class="section-lbl" style="color:var(--color-accent)">ハンター</p>
+        <p style="font-size:14px;margin-bottom:12px">いっしょに 退場する相手を 選んでください</p>
         <div id="morning-hunter-btns"></div>
       </div>
     </div>
@@ -536,9 +596,9 @@
         <span class="material-symbols-rounded" style="font-size:16px">how_to_vote</span>投票
       </span>
     </div>
-    <h2>誰を処刑しますか？</h2>
-    <p style="font-size:14px;color:var(--color-muted);margin-bottom:16px">
-      人狼だと思う人に投票してください
+    <h2 id="vote-title">だれを 追放しますか？</h2>
+    <p id="vote-sub" style="font-size:14px;color:var(--color-muted);margin-bottom:16px">
+      人狼だと思う人に 投票してください
     </p>
 
     <div id="vote-btns"></div>
@@ -552,14 +612,14 @@
     <!-- GM 強制進行（未投票者がいる場合） -->
     <div id="vote-force-btn" class="mt-md" style="display:none">
       <button class="btn btn-secondary btn-full" onclick="forceVoteProceed()">
-        <span class="material-symbols-rounded">skip_next</span>未投票者を除いて処刑を決定する
+        <span class="material-symbols-rounded">skip_next</span>まだ投票していない人を のぞいて 決める
       </button>
       <p id="vote-force-hint" style="font-size:13px;color:var(--color-muted);text-align:center;margin-top:8px"></p>
     </div>
 
     <!-- GM 同票処理パネル -->
     <div id="tiebreak-panel" class="card mt-md" style="display:none">
-      <p class="section-lbl">同票！GMが処刑者を選んでください</p>
+      <p class="section-lbl" id="tiebreak-label">同票です。どうしますか？（GM）</p>
       <div id="tiebreak-btns"></div>
     </div>
   </div>
@@ -570,23 +630,18 @@
   <div class="page">
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding-top:8px">
       <span class="phase-badge exec">
-        <span class="material-symbols-rounded" style="font-size:16px">gavel</span>処刑
+        <span class="material-symbols-rounded" style="font-size:16px">logout</span>追放
       </span>
     </div>
 
-    <div id="execution-announce" class="card" style="text-align:center;margin-bottom:16px">
-      <span class="material-symbols-rounded" style="font-size:44px;color:var(--color-error)">gavel</span>
-      <p style="font-size:18px;font-weight:700;margin-top:12px">
-        <span id="exec-target-name"></span> が処刑されました
-      </p>
-    </div>
+    <div id="execution-announce" class="card" style="text-align:center;margin-bottom:16px"></div>
 
     <!-- ハンター道連れ選択 -->
     <div id="hunter-choice-panel" style="display:none">
-      <div class="card" style="background:#FEF2F2;border:2px solid var(--color-error)">
-        <p class="section-lbl" style="color:var(--color-error)">ハンターの道連れ</p>
+      <div class="card" style="background:#EFF9F8;border:2px solid var(--color-accent)">
+        <p class="section-lbl" style="color:var(--color-accent)">ハンター</p>
         <p style="font-size:14px;margin-bottom:12px">
-          道連れにする相手を選んでください
+          いっしょに 退場する相手を 選んでください
         </p>
         <div id="hunter-btns"></div>
       </div>
@@ -636,6 +691,22 @@
   <button class="btn btn-ghost" style="margin-top:16px" onclick="leaveGame()">退出する</button>
 </div>
 
+<!-- 遊び方・役職 モーダル + 常設ボタン -->
+<button class="rules-fab" id="rules-fab" onclick="openRules()" aria-label="遊び方・役職">
+  <span class="material-symbols-rounded">help</span>
+</button>
+<div class="rules-modal" id="rules-modal" onclick="if(event.target===this)closeRules()">
+  <div class="rules-sheet">
+    <div class="rules-head">
+      <strong>遊び方・役職</strong>
+      <button class="rules-close" onclick="closeRules()" aria-label="閉じる">
+        <span class="material-symbols-rounded">close</span>
+      </button>
+    </div>
+    <div class="rules-body" id="rules-body"></div>
+  </div>
+</div>
+
 <script>
 // ══════════════════════════════════════════════════
 // Firebase 初期化
@@ -664,21 +735,21 @@ const CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const ORPHAN_TTL_MS = 2 * 60 * 1000;
 
 const ROLES = [
-  { id: '村人',       faction: 'village', desc: '夜の行動はありません',                         nightAction: false },
-  { id: '占い師',     faction: 'village', desc: '毎晩1人を占い、人狼陣営か調べられます',          nightAction: true  },
-  { id: '霊媒師',     faction: 'village', desc: '処刑された人が人狼だったか分かります',              nightAction: true  },
-  { id: '騎士',       faction: 'village', desc: '毎晩1人を護衛し、人狼の襲撃から守ります',        nightAction: true  },
-  { id: 'パン屋',     faction: 'village', desc: '生存中は毎朝パンが届きます',                    nightAction: false },
-  { id: '共有者',     faction: 'village', desc: 'もう1人の共有者の名前を知っています',            nightAction: false },
-  { id: '猫又',       faction: 'village', desc: '噛まれたら人狼を道連れ、処刑されたらランダムで道連れ', nightAction: false },
-  { id: 'ハンター',   faction: 'village', desc: '死亡時に任意の1人を道連れにできます',            nightAction: false },
-  { id: '人狼',       faction: 'wolf',    desc: '仲間の人狼と協力して村人を襲撃します',           nightAction: true  },
-  { id: '狂人',       faction: 'wolf',    desc: '人狼の勝利が自分の勝利です',                    nightAction: false },
-  { id: '狂信者',     faction: 'wolf',    desc: '人狼が誰か分かります。占いでは白判定です',       nightAction: false },
-  { id: 'てるてる坊主', faction: 'third', desc: '規定日数生存して昼に処刑されると勝利です',       nightAction: false },
-  { id: '神様',       faction: 'third',   desc: '全員の役職を知った状態でスタートします',          nightAction: false },
-  { id: '妖狐',       faction: 'third',   desc: '人狼に噛まれても死にません。占われると死にます', nightAction: false },
-  { id: '背徳者',     faction: 'third',   desc: '妖狐が誰か分かります。妖狐死亡で後追いします',  nightAction: false },
+  { id: '村人',       faction: 'village', desc: '夜の行動は ありません',                              nightAction: false },
+  { id: '占い師',     faction: 'village', desc: '毎晩1人を占って、人狼チームか どうか 調べられます',     nightAction: true  },
+  { id: '霊媒師',     faction: 'village', desc: '追放された人が 人狼だったか わかります',                nightAction: true  },
+  { id: '騎士',       faction: 'village', desc: '夜に1人を守って、人狼から まもります（自分も 守れます／初日はお休み）', nightAction: true  },
+  { id: 'パン屋',     faction: 'village', desc: '元気なあいだは 毎朝 パンが届きます',                   nightAction: false },
+  { id: '共有者',     faction: 'village', desc: 'もう1人の共有者の 名前を 知っています',                nightAction: false },
+  { id: '猫又',       faction: 'village', desc: '夜に ねらわれたら人狼を1人、追放されたら だれか1人を いっしょに退場させます', nightAction: false },
+  { id: 'ハンター',   faction: 'village', desc: '退場するとき、すきな1人を いっしょに退場させられます',   nightAction: false },
+  { id: '人狼',       faction: 'wolf',    desc: '仲間の人狼と 力を合わせて、夜に1人を ねらいます',       nightAction: true  },
+  { id: '狂人',       faction: 'wolf',    desc: '人狼の勝利が 自分の勝利です',                         nightAction: false },
+  { id: '狂信者',     faction: 'wolf',    desc: '人狼が だれか わかります。占いでは 白（人狼でない）と 出ます', nightAction: false },
+  { id: 'てるてる坊主', faction: 'third', desc: '決められた日まで 生きのこって、昼に 追放されると 勝ちです', nightAction: false },
+  { id: '神様',       faction: 'third',   desc: '全員の役職を 知った状態で スタートします',              nightAction: false },
+  { id: '妖狐',       faction: 'third',   desc: '人狼に ねらわれても 退場しません。占われると 退場します', nightAction: false },
+  { id: '背徳者',     faction: 'third',   desc: '妖狐が だれか わかります。妖狐が退場すると いっしょに退場します', nightAction: false },
 ];
 
 // 役職初期設定（デフォルト）
@@ -714,6 +785,7 @@ const state = {
   roleFlipped:  false,
   resolveTriggered: false,
   hunterResolved: false,
+  renderedVoteRound: 0,
 };
 
 // ══════════════════════════════════════════════════
@@ -816,6 +888,50 @@ function showScreen(id) {
 function goTo(id) { showScreen(id); }
 function showOverlay(id, show) {
   document.getElementById(id).classList.toggle('show', show);
+}
+
+// ══════════════════════════════════════════════════
+// 遊び方・役職モーダル
+// ══════════════════════════════════════════════════
+function buildRulesContent() {
+  const byFaction = { village: [], wolf: [], third: [] };
+  ROLES.forEach(r => { (byFaction[r.faction] || byFaction.village).push(r); });
+  const factionTitle = { village: '村人チーム', wolf: '人狼チーム', third: '第三陣営' };
+  const roleSections = ['village', 'wolf', 'third'].map(f => `
+    <p class="rules-sub ${f}">${factionTitle[f]}</p>
+    <ul class="rules-roles">
+      ${byFaction[f].map(r => `<li>
+        <span class="rules-role-name">${esc(r.id)}</span>
+        <span class="rules-role-desc">${esc(r.desc)}</span>
+      </li>`).join('')}
+    </ul>`).join('');
+  return `
+    <h3 class="rules-h">どんなゲーム？</h3>
+    <p>村の中に かくれている「人狼」を、みんなの話し合いで 見つけ出すゲームです。人狼は 正体を かくして 生きのこることを めざします。</p>
+    <h3 class="rules-h">ゲームの流れ</h3>
+    <ol class="rules-flow">
+      <li><b>夜</b>：占い師や人狼などが、こっそり動きます（1日目の夜は おそいません）</li>
+      <li><b>朝</b>：夜のあいだに 起きたことが 知らされます</li>
+      <li><b>昼</b>：みんなで 話し合って、あやしい人を 考えます</li>
+      <li><b>投票</b>：いちばん あやしい人を 1人 えらびます（追放）</li>
+    </ol>
+    <p class="rules-note">この流れを くりかえします。</p>
+    <h3 class="rules-h">勝ち負け</h3>
+    <ul class="rules-win">
+      <li><b>村人チーム</b>：人狼を ぜんいん 見つけたら 勝ち</li>
+      <li><b>人狼チーム</b>：人狼と 村人が 同じ人数に なったら 勝ち</li>
+      <li><b>第三陣営</b>：それぞれの 目標を 達成したら 勝ち</li>
+    </ul>
+    <h3 class="rules-h">役職いちらん</h3>
+    ${roleSections}
+  `;
+}
+function openRules() {
+  document.getElementById('rules-body').innerHTML = buildRulesContent();
+  document.getElementById('rules-modal').classList.add('show');
+}
+function closeRules() {
+  document.getElementById('rules-modal').classList.remove('show');
 }
 
 // ══════════════════════════════════════════════════
@@ -1135,8 +1251,17 @@ function handleRoom(room) {
 function handleWaiting(room, players) {
   if (state.currentScreen !== 'waiting') {
     clearInterval(state.timerInterval);
-    state.myRole = null; state.myVote = null; state.roleFlipped = false;
+    // 前ゲームのローカル状態を初期化（再戦に備えて各クライアントで実施）
+    state.myRole = null; state.myFaction = null; state.myVote = null;
+    state.isAlive = true; state.roleFlipped = false;
+    state.wolfPartners = []; state.sharerPartner = null; state.foxPlayer = null;
+    state.nightActionDone = false; state.currentDay = 1;
     state.resolveTriggered = false;
+    state.renderedVoteRound = 0;
+    // 前ゲームの護衛メモリ（sessionStorage）を各クライアントで消す。
+    // playAgain は GM 端末でしか走らないため、ここで全員クリアして翌ゲームの連続護衛誤判定を防ぐ
+    state.lastGuarded = null; state.lastGuardedDay = 0;
+    clearGuardMemory();
     showScreen('waiting');
     document.getElementById('gm-panel').style.display      = state.isHost ? 'block' : 'none';
     document.getElementById('host-start-area').style.display = state.isHost ? 'block' : 'none';
@@ -1280,13 +1405,19 @@ async function markRoleReady() {
 
 async function startNight() {
   // actionDone をリセットして夜フェーズへ
-  const snap = await state.roomRef.child('players').get();
-  const players = snap.val() || {};
+  const snap = await state.roomRef.get();
+  const room = snap.val() || {};
+  const players = room.players || {};
+  const isFirstNight = (room.day || 1) === 1;
   const update = { status: 'night' };
   // 行動不要な役職の actionDone を true に一括セット
+  // 初日の夜は襲撃なし。人狼・騎士は行動なし、霊媒師も霊視対象がいないため行動なし扱い
+  const firstNightNoAction = ['人狼', '騎士', '霊媒師'];
   Object.entries(players).forEach(([nick, p]) => {
     const roleDef = ROLES.find(r => r.id === p.role);
-    update[`players/${nick}/actionDone`] = !p.isAlive || !roleDef?.nightAction;
+    const noAction = !p.isAlive || !roleDef?.nightAction
+      || (isFirstNight && firstNightNoAction.includes(p.role));
+    update[`players/${nick}/actionDone`] = noAction;
     update[`players/${nick}/nightAction`] = null;
     update[`players/${nick}/wolfVote`]    = null;
   });
@@ -1342,7 +1473,7 @@ function setupNightActionUI(room, players) {
   const alivePlayers = Object.entries(players).filter(([, p]) => p.isAlive);
 
   if (state.myRole === '占い師') {
-    document.getElementById('night-role-sub').textContent = '誰を占いますか？';
+    document.getElementById('night-role-sub').textContent = 'だれを 占いますか？';
     area.innerHTML = buildPlayerSelectPanel(
       alivePlayers.filter(([n]) => n !== state.nickname),
       'seer-target',
@@ -1351,37 +1482,70 @@ function setupNightActionUI(room, players) {
     );
     waitPanel.style.display = 'none';
   } else if (state.myRole === '騎士') {
-    document.getElementById('night-role-sub').textContent = '誰を護衛しますか？';
-    const currentDay = room.day || 1;
-    const guardMemory = loadGuardMemory();
-    const lastGuarded = guardMemory?.target || state.lastGuarded;
-    const lastGuardDay = Number(guardMemory?.day ?? state.lastGuardedDay) || 0;
-    const blockedTarget = (lastGuarded && lastGuardDay === currentDay - 1) ? lastGuarded : null;
-    const targets = alivePlayers.filter(([n]) => n !== state.nickname && n !== blockedTarget);
-    area.innerHTML = buildPlayerSelectPanel(targets, 'knight-target', '護衛する', `submitNightAction('knight')`);
-    waitPanel.style.display = 'none';
+    if ((room.day || 1) === 1) {
+      // 初日の夜は襲撃がないので護衛もなし（翌日の連続護衛ブロックも残さない）
+      document.getElementById('night-role-sub').textContent = '初日の夜は 守らなくて 大丈夫です';
+      area.innerHTML = `<div class="night-panel">
+        <p style="font-size:13px;color:#94a3b8;line-height:1.7">初日の夜は 襲撃が ないので、守らなくて 大丈夫です。<br>静かに 待ちましょう。</p>
+      </div>`;
+      waitPanel.style.display = 'block';
+    } else {
+      document.getElementById('night-role-sub').textContent = 'だれを 守りますか？（自分も 守れます）';
+      const currentDay = room.day || 1;
+      const guardMemory = loadGuardMemory();
+      const lastGuarded = guardMemory?.target || state.lastGuarded;
+      const lastGuardDay = Number(guardMemory?.day ?? state.lastGuardedDay) || 0;
+      // 前の夜と同じ相手は連続で守れない（自分を含む）
+      const blockedTarget = (lastGuarded && lastGuardDay === currentDay - 1) ? lastGuarded : null;
+      const targets = alivePlayers.filter(([n]) => n !== blockedTarget);
+      area.innerHTML = buildPlayerSelectPanel(targets, 'knight-target', '守る', `submitNightAction('knight')`);
+      waitPanel.style.display = 'none';
+    }
   } else if (state.myRole === '人狼') {
-    document.getElementById('night-role-sub').textContent = '誰を襲撃しますか？';
     const villageAlive = alivePlayers.filter(([, p]) => p.faction !== 'wolf');
-    area.innerHTML = buildWolfVotePanel(villageAlive);
-    waitPanel.style.display = 'none';
+    if ((room.day || 1) === 1) {
+      // 初日の夜は襲撃なし。仲間の確認だけ
+      document.getElementById('night-role-sub').textContent = '初日の夜は おそいません';
+      const wolfList = state.wolfPartners.length > 0
+        ? `仲間：${state.wolfPartners.map(esc).join('、')}`
+        : 'ほかに 人狼は いません';
+      area.innerHTML = `<div class="night-panel">
+        <p style="font-size:14px;color:#cbd5e1;margin-bottom:10px">${wolfList}</p>
+        <p style="font-size:13px;color:#94a3b8;line-height:1.7">初日の夜は だれも おそいません。<br>仲間を 覚えて、静かに 待ちましょう。</p>
+      </div>`;
+      waitPanel.style.display = 'block';
+    } else {
+      document.getElementById('night-role-sub').textContent = '今夜、だれを ねらいますか？';
+      area.innerHTML = buildWolfVotePanel(villageAlive);
+      waitPanel.style.display = 'none';
+    }
   } else if (state.myRole === '霊媒師') {
     if (room.day === 1) {
+      // 初日は霊視対象がいない（startNight で自動完了済み）
       document.getElementById('night-role-sub').textContent = '今夜は行動がありません';
       waitPanel.style.display = 'block';
     } else {
       const result = room.nightResult?.mediumResult;
       const verdict = result === 'wolf' ? '人狼だった' : '人狼ではなかった';
+      const resultHtml = result
+        ? `昨日 追放された <strong>${esc(room.lastExecuted || '?')}</strong> は<br><strong style="font-size:20px">${verdict}</strong>`
+        : '昨日は まだ だれも 追放されていません';
       document.getElementById('night-role-sub').textContent = '';
-      area.innerHTML = `<div class="night-panel">
-        <h3>霊視結果</h3>
-        <p style="font-size:15px;color:#e2e8f0">
-          ${result
-            ? `昨日処刑された <strong>${esc(room.lastExecuted || '?')}</strong> は<br><strong style="font-size:20px">${verdict}</strong>`
-            : '昨日はまだ処刑されていません'}
-        </p>
-      </div>`;
-      waitPanel.style.display = 'none';
+      if (me?.actionDone) {
+        // 再接続などで確認済みなら結果だけ表示して待機
+        area.innerHTML = `<div class="night-panel"><h3>霊視結果</h3>
+          <p style="font-size:15px;color:#e2e8f0">${resultHtml}</p></div>`;
+        waitPanel.style.display = 'block';
+      } else {
+        area.innerHTML = `<div class="night-panel">
+          <h3>霊視結果</h3>
+          <p style="font-size:15px;color:#e2e8f0;margin-bottom:14px">${resultHtml}</p>
+          <button class="btn-night-action" id="btn-medium-done" onclick="markMediumDone()">
+            <span class="material-symbols-rounded">check_circle</span>確認した
+          </button>
+        </div>`;
+        waitPanel.style.display = 'none';
+      }
     }
   } else {
     document.getElementById('night-role-sub').textContent = '夜は静かに待ちましょう';
@@ -1390,7 +1554,10 @@ function setupNightActionUI(room, players) {
 }
 
 function buildPlayerSelectPanel(players, selectId, btnLabel, onclickFn) {
-  const opts = players.map(([n]) => `<option value="${esc(n)}">${esc(n)}</option>`).join('');
+  const opts = players.map(([n]) => {
+    const label = n === state.nickname ? `${esc(n)}（自分）` : esc(n);
+    return `<option value="${esc(n)}">${label}</option>`;
+  }).join('');
   return `<div class="night-panel">
     <select class="night-select" id="${selectId}">
       <option value="">-- 選んでください --</option>
@@ -1408,7 +1575,7 @@ function buildWolfVotePanel(targets) {
   const opts = targets.map(([n]) => `<option value="${esc(n)}">${esc(n)}</option>`).join('');
   return `<div class="night-panel">
     ${wolfList}
-    <h3>襲撃対象に投票</h3>
+    <h3>ねらう人に 投票</h3>
     <select class="night-select" id="wolf-vote-target">
       <option value="">-- 選んでください --</option>
       ${opts}
@@ -1460,6 +1627,15 @@ async function submitNightAction(type) {
     nightAction: target,
     actionDone:  true,
   });
+  document.getElementById('night-action-area').innerHTML = '';
+  document.getElementById('night-wait-panel').style.display = 'block';
+}
+
+// 霊媒師：結果を確認して完了（霊媒師には能動的な選択がないため確認で actionDone）
+async function markMediumDone() {
+  const btn = document.getElementById('btn-medium-done');
+  if (btn) btn.disabled = true;
+  await state.roomRef.child(`players/${state.nickname}/actionDone`).set(true);
   document.getElementById('night-action-area').innerHTML = '';
   document.getElementById('night-wait-panel').style.display = 'block';
 }
@@ -1534,12 +1710,12 @@ function handleMorning(room, players) {
   if (seerPanel && seerText) {
     if (state.myRole === '占い師' && mySeerResult?.target) {
       const resultLabel = mySeerResult.result === 'black'
-        ? '人狼陣営でした'
+        ? '人狼チームでした'
         : mySeerResult.result === 'dead'
-          ? '妖狐でした（占いで死亡）'
-          : '人狼ではありませんでした';
+          ? '妖狐でした（占いで 退場）'
+          : '人狼チームでは ありませんでした';
       seerPanel.style.display = 'block';
-      seerText.textContent = `昨夜占った ${mySeerResult.target} は ${resultLabel}`;
+      seerText.textContent = `昨夜 占った ${mySeerResult.target} は ${resultLabel}`;
     } else {
       seerPanel.style.display = 'none';
       seerText.textContent = '';
@@ -1571,12 +1747,12 @@ function renderMorningLog(room) {
   const log = room.morningLog || [];
   const el = document.getElementById('morning-log');
   if (log.length === 0) {
-    el.innerHTML = '<div class="morning-entry info"><span class="material-symbols-rounded">info</span><span class="morning-entry-text">昨夜は何も起きませんでした</span></div>';
+    el.innerHTML = '<div class="morning-entry info"><span class="material-symbols-rounded">info</span><span class="morning-entry-text">昨夜は おだやかな 夜でした</span></div>';
     return;
   }
   el.innerHTML = log.map(entry => {
     const cls  = entry.type === 'kill' ? 'kill' : entry.type === 'safe' ? 'safe' : 'info';
-    const icon = entry.type === 'kill' ? 'skull' : entry.type === 'safe' ? 'security' : 'info';
+    const icon = entry.type === 'kill' ? 'waving_hand' : entry.type === 'safe' ? 'security' : 'info';
     return `<div class="morning-entry ${cls}">
       <span class="material-symbols-rounded">${icon}</span>
       <span class="morning-entry-text">${esc(entry.message)}</span>
@@ -1611,7 +1787,7 @@ function handleDay(room, players) {
     });
   }
   renderPlayerList('day-player-list', players,
-    p => p.isAlive ? '' : '<span class="player-tag dead">死亡</span>',
+    p => p.isAlive ? '' : '<span class="player-tag dead">退場</span>',
     p => !p.isAlive
   );
 }
@@ -1633,7 +1809,7 @@ async function moveToVote() {
   clearInterval(state.timerInterval);
   const snap = await state.roomRef.child('players').get();
   const players = snap.val() || {};
-  const update = { status: 'vote' };
+  const update = { status: 'vote', voteRound: 1, runoffCandidates: null };
   Object.keys(players).forEach(nick => { update[`players/${nick}/vote`] = null; });
   await state.roomRef.update(update);
 }
@@ -1643,12 +1819,17 @@ async function moveToVote() {
 // ══════════════════════════════════════════════════
 function handleVote(room, players) {
   clearInterval(state.timerInterval);
-  if (state.currentScreen !== 'vote') {
+  const round = room.voteRound || 1;
+  const runoff = Array.isArray(room.runoffCandidates) ? room.runoffCandidates : null;
+  // 初回入場時、または決選投票でラウンドが変わったときに投票ボタンを作り直す
+  if (state.currentScreen !== 'vote' || state.renderedVoteRound !== round) {
     state.myVote = null;
+    state.renderedVoteRound = round;
     const alive = Object.entries(players).filter(([, p]) => p.isAlive);
+    const candidates = runoff ? alive.filter(([nick]) => runoff.includes(nick)) : alive;
     const wrap = document.getElementById('vote-btns');
     wrap.innerHTML = '';
-    alive.forEach(([nick]) => {
+    candidates.forEach(([nick]) => {
       if (nick === state.nickname) return;
       const btn = document.createElement('button');
       btn.className = 'vote-btn';
@@ -1658,30 +1839,48 @@ function handleVote(room, players) {
         if (state.myVote) return;
         document.querySelectorAll('.vote-btn').forEach(b => b.classList.remove('selected'));
         btn.classList.add('selected');
-        setTimeout(() => castVote(nick), 400);
+        setTimeout(() => castVote(nick, round), 400);
       };
       wrap.appendChild(btn);
     });
-    document.getElementById('voted-msg').style.display = 'none';
-    wrap.style.display = 'block';
+    document.getElementById('vote-title').textContent = runoff ? 'けっせん投票' : 'だれを 追放しますか？';
+    document.getElementById('vote-sub').textContent = runoff
+      ? '同じ票だった人の中から、もう一度 えらびます'
+      : '人狼だと思う人に 投票してください';
+    // このラウンドで既に投票済み（再接続など）なら投票UIを出さず投票済み表示にする。
+    // ただし票が現在の候補に含まれる場合のみ（決選開始直前の遅延書き込みでロックされるのを防ぐ）
+    const candidateNames = new Set(candidates.map(([nick]) => nick));
+    const myExistingVote = players[state.nickname]?.vote;
+    if (myExistingVote && candidateNames.has(myExistingVote)) {
+      state.myVote = myExistingVote;
+      wrap.style.display = 'none';
+      document.getElementById('voted-msg').style.display = 'block';
+    } else {
+      state.myVote = null;
+      wrap.style.display = 'block';
+      document.getElementById('voted-msg').style.display = 'none';
+    }
     document.getElementById('tiebreak-panel').style.display = 'none';
     showScreen('vote');
   }
   // 投票状況（切断者は「接続中」カウントから除外）
+  // 決選投票中は候補への票だけを「投票済み」とみなす（候補外の遅延票で誤進行しないように）
+  const runoffSet = runoff ? new Set(runoff) : null;
+  const hasValidVote = (p) => p.vote != null && (!runoffSet || runoffSet.has(p.vote));
   const aliveList = Object.entries(players).filter(([, p]) => p.isAlive);
   const connectedAlive = aliveList.filter(([, p]) => p.connected !== false);
-  const voted = aliveList.filter(([, p]) => p.vote != null).length;
+  const voted = aliveList.filter(([, p]) => hasValidVote(p)).length;
   document.getElementById('vote-wait-label').textContent = `${voted} / ${aliveList.length} 人が投票済み`;
 
   // 切断者を除く全員投票済みで自動進行
-  const connectedVoted = connectedAlive.filter(([, p]) => p.vote != null).length;
+  const connectedVoted = connectedAlive.filter(([, p]) => hasValidVote(p)).length;
   if (connectedVoted >= connectedAlive.length && connectedAlive.length > 0 && state.isHost && !state.resolveTriggered) {
     computeExecution(room, players);
   }
 
   // GM 強制進行ボタン（未投票者がいる場合に表示。切断者だけでなく、接続中で未投票の人も含む）
   if (state.isHost) {
-    const unvoted = aliveList.filter(([, p]) => p.vote == null);
+    const unvoted = aliveList.filter(([, p]) => !hasValidVote(p));
     const forceBtn = document.getElementById('vote-force-btn');
     const show = unvoted.length > 0 && !state.resolveTriggered && aliveList.length > 0;
     if (forceBtn) forceBtn.style.display = show ? 'block' : 'none';
@@ -1715,7 +1914,15 @@ async function forceVoteProceed() {
   await computeExecution(room, players, { eligibleVoters, allowManualWhenEmpty: true });
 }
 
-async function castVote(target) {
+async function castVote(target, voteRound) {
+  // 投票確定直前にラウンドが変わっていたら（決選投票が始まった等）何もしない。
+  // 旧ラウンドの遅延 setTimeout が候補外票を書き込むのを防ぐ
+  const snap = await state.roomRef.get();
+  const room = snap.val();
+  if (!room) return;
+  if (voteRound != null && (room.voteRound || 1) !== voteRound) return;
+  const runoff = Array.isArray(room.runoffCandidates) ? room.runoffCandidates : null;
+  if (runoff && !runoff.includes(target)) return;
   state.myVote = target;
   document.getElementById('vote-btns').style.display = 'none';
   document.getElementById('voted-msg').style.display = 'block';
@@ -1733,19 +1940,29 @@ async function computeExecution(room, players, options = {}) {
     if (options.allowManualWhenEmpty) showMsg('進行できる参加者がいません');
     return;
   }
+  // 投票者集合（eligibleList）と追放候補集合（validCandidates）は別物。
+  // 決選投票中は候補を runoffCandidates に限定し、候補外への票（遅延書き込み等）は無視する
+  const aliveNames = new Set(aliveList.map(([nick]) => nick));
+  const runoff = Array.isArray(room.runoffCandidates)
+    ? room.runoffCandidates.filter(n => aliveNames.has(n))
+    : null;
+  const validCandidates = (runoff && runoff.length) ? runoff : aliveList.map(([nick]) => nick);
+  const validCandidateSet = new Set(validCandidates);
+
   const counts = {};
   eligibleList.forEach(([, p]) => {
-    if (p.vote) counts[p.vote] = (counts[p.vote] || 0) + 1;
+    if (p.vote && validCandidateSet.has(p.vote)) {
+      counts[p.vote] = (counts[p.vote] || 0) + 1;
+    }
   });
   const entries = Object.entries(counts);
   if (entries.length === 0) {
     if (options.allowManualWhenEmpty) {
-      const manualCandidates = eligibleList.map(([nick]) => nick);
-      if (manualCandidates.length === 0) {
+      if (validCandidates.length === 0) {
         showMsg('進行できる参加者がいません');
         return;
       }
-      showTieBreak(manualCandidates);
+      showTieBreak(validCandidates);
     } else {
       showMsg('まだ投票が揃っていません');
     }
@@ -1767,21 +1984,55 @@ async function computeExecution(room, players, options = {}) {
 
 function showTieBreak(candidates) {
   const panel = document.getElementById('tiebreak-panel');
+  const label = document.getElementById('tiebreak-label');
   const btns  = document.getElementById('tiebreak-btns');
   panel.style.display = 'block';
-  btns.innerHTML = candidates.map(nick =>
-    `<button class="vote-btn" data-tiebreak-target="${esc(nick)}">${esc(nick)}</button>`
-  ).join('');
-  btns.querySelectorAll('[data-tiebreak-target]').forEach(btn => {
-    btn.onclick = () => gmPickExecution(btn.dataset.tiebreakTarget);
-  });
+  if (label) label.textContent = '同票です。どうしますか？（GM）';
+  const names = candidates.map(esc).join('・');
+  btns.innerHTML = `
+    <button class="btn btn-primary btn-full" id="tb-runoff">
+      <span class="material-symbols-rounded">how_to_vote</span>決選投票をする
+    </button>
+    <p style="font-size:12px;color:var(--color-muted);margin:6px 0 14px">${names} の中から もう一度 投票します</p>
+    <button class="btn btn-secondary btn-full" id="tb-skip">
+      <span class="material-symbols-rounded">do_not_disturb_on</span>今日は だれも 追放しない
+    </button>`;
+  document.getElementById('tb-runoff').onclick = () => startRunoff(candidates);
+  document.getElementById('tb-skip').onclick   = () => skipExecution();
 }
 
-async function gmPickExecution(target) {
-  state.resolveTriggered = true;
-  await state.roomRef.update({ tieBreakTarget: target });
+// 決選投票：同票だった候補者だけを対象に、生存者全員で投票し直す
+async function startRunoff(candidates) {
+  if (!state.isHost) return;
+  state.resolveTriggered = false;
   const snap = await state.roomRef.get();
-  await resolveExecution(state.roomRef, snap.val(), target);
+  const room = snap.val();
+  if (!room) return;
+  const players = room.players || {};
+  const update = {
+    runoffCandidates: candidates,
+    voteRound: (room.voteRound || 1) + 1,
+    tieBreakTarget: null,
+  };
+  Object.keys(players).forEach(nick => { update[`players/${nick}/vote`] = null; });
+  document.getElementById('tiebreak-panel').style.display = 'none';
+  await state.roomRef.update(update);
+}
+
+// スキップ：今日は誰も追放せずに次の夜へ
+async function skipExecution() {
+  if (!state.isHost || state.resolveTriggered) return;
+  state.resolveTriggered = true;
+  await state.roomRef.update({
+    status: 'execution',
+    executionTarget: null,
+    lastExecuted: null,
+    lastExecutedWasWolf: null,
+    tieBreakTarget: null,
+    hunterPending: null,
+    hunterTarget: null,
+    runoffCandidates: null,
+  });
 }
 
 // ══════════════════════════════════════════════════
@@ -1791,7 +2042,16 @@ function handleExecution(room, players) {
   if (state.currentScreen !== 'execution') {
     state.hunterResolved = false;
     const target = room.executionTarget || '';
-    document.getElementById('exec-target-name').textContent = target;
+    const announce = document.getElementById('execution-announce');
+    if (target) {
+      announce.innerHTML = `
+        <span class="material-symbols-rounded" style="font-size:44px;color:var(--color-primary)">waving_hand</span>
+        <p style="font-size:18px;font-weight:700;margin-top:12px">${esc(target)} を 追放しました</p>`;
+    } else {
+      announce.innerHTML = `
+        <span class="material-symbols-rounded" style="font-size:44px;color:var(--color-muted)">do_not_disturb_on</span>
+        <p style="font-size:18px;font-weight:700;margin-top:12px">今日は だれも 追放されませんでした</p>`;
+    }
     showScreen('execution');
   }
 
@@ -1872,11 +2132,14 @@ async function afterExecution() {
       day:    (room.day || 1) + 1,
       executionTarget:  null,
       hunterPending:    null,
+      runoffCandidates: null,
+      voteRound:        1,
+      // 追放された人の霊媒結果。スキップ（追放なし）の場合は null
       'nightResult/seerResults': null,
       'nightResult/seerResult': null,
       'nightResult/mediumResult': typeof room.lastExecutedWasWolf === 'boolean'
         ? (room.lastExecutedWasWolf ? 'wolf' : 'not_wolf')
-        : (room.nightResult?.mediumResult || null),
+        : null,
       morningLog: [],
     };
     Object.entries(players).forEach(([nick, p]) => {
@@ -1925,8 +2188,9 @@ function handleResult(room, players) {
 
     document.getElementById('result-host-btn').style.display = state.isHost ? 'block' : 'none';
     showScreen('result');
-    // 30秒後に自動削除
-    if (state.isHost) setTimeout(() => state.roomRef?.remove(), 30000);
+    // 結果画面では自動削除しない（振り返り・再戦を妨げないため）。
+    // クリーンアップは「トップへ戻る」(leaveGame) の即時削除と、
+    // ホスト切断時の onDisconnect + 2分TTL（ORPHAN_TTL_MS）に任せる
   }
 }
 
@@ -1936,12 +2200,14 @@ async function playAgain() {
   state.lastGuarded = null; state.lastGuardedDay = 0;
   clearGuardMemory();
   state.roleFlipped = false; state.resolveTriggered = false; state.hunterResolved = false;
+  state.renderedVoteRound = 0;
   const snap = await state.roomRef.child('players').get();
   const players = snap.val() || {};
   const update = {
     status: 'waiting', day: 1, winner: null,
     executionTarget: null, lastExecuted: null, lastExecutedWasWolf: null,
     tieBreakTarget: null, hunterPending: null, morningLog: [],
+    runoffCandidates: null, voteRound: 1,
   };
   Object.keys(players).forEach(nick => {
     update[`players/${nick}/role`]        = null;
@@ -2001,7 +2267,9 @@ async function leaveGame() {
     currentScreen: null, myRole: null, myFaction: null, isAlive: true,
     wolfPartners: [], sharerPartner: null, foxPlayer: null,
     lastGuarded: null, lastGuardedDay: 0, currentDay: 1, nightActionDone: false, myVote: null,
-    timerInterval: null, orphanTimer: null, roleFlipped: false, resolveTriggered: false, hunterResolved: false,
+    timerInterval: null, orphanTimer: null,
+    roleFlipped: false, resolveTriggered: false, hunterResolved: false,
+    renderedVoteRound: 0,
   });
   showOverlay('host-off-overlay', false);
   showScreen('top');
@@ -2124,6 +2392,8 @@ function buildRoleAssignmentRoom(room, roleCounts) {
     tieBreakTarget: null,
     hunterPending: null,
     hunterTarget: null,
+    runoffCandidates: null,
+    voteRound: 1,
     foxPlayer: foxName,
     morningLog: [],
     nightResult: {
@@ -2175,15 +2445,15 @@ async function resolveNight(roomRef, room) {
   const describeDeath = (entry) => {
     switch (entry.cause) {
       case 'seer':
-        return `${entry.nick}さんが呪いに倒れました`;
+        return `${entry.nick}さんが 占われて 退場しました`;
       case 'fox-follow':
-        return `${entry.nick}さんが妖狐の後を追いました`;
+        return `${entry.nick}さんが 妖狐の あとを追って 退場しました`;
       case 'wolf':
-        return `${entry.nick}さんが人狼に襲われました`;
+        return `${entry.nick}さんが 人狼に選ばれて 退場しました`;
       case 'cat-vengeance':
-        return `${entry.nick}さんが猫又の呪いで倒れました`;
+        return `${entry.nick}さんが 猫又と いっしょに 退場しました`;
       default:
-        return `${entry.nick}さんが亡くなっているのが見つかりました`;
+        return `${entry.nick}さんが 退場していました`;
     }
   };
 
@@ -2254,7 +2524,8 @@ async function resolveNight(roomRef, room) {
   }
 
   let catBitten = false;
-  if (attackTarget && !guardSet.has(attackTarget)) {
+  // 初日（1日目）の夜は襲撃なし
+  if (day > 1 && attackTarget && !guardSet.has(attackTarget)) {
     const targetPlayer = players[attackTarget];
     if (targetPlayer && targetPlayer.role !== '妖狐') {
       if (killPlayer(attackTarget, 'wolf')) {
@@ -2279,9 +2550,9 @@ async function resolveNight(roomRef, room) {
   const bakersBefore = Object.values(basePlayers).filter(p => p.role === 'パン屋' && p.isAlive).length;
   const bakersAfter  = Object.values(players).filter(p => p.role === 'パン屋' && p.isAlive).length;
   if (bakersAfter > 0) {
-    logs.push({ type: 'info', message: 'パン屋さんから焼きたてのパンが届きました', day });
+    logs.push({ type: 'info', message: 'パン屋さんから 焼きたてのパンが 届きました', day });
   } else if (bakersBefore > 0 && bakersAfter === 0) {
-    logs.push({ type: 'info', message: 'パン屋さんがいなくなり、パンは届きませんでした', day });
+    logs.push({ type: 'info', message: 'パン屋さんが 退場して、パンは 届きませんでした', day });
   }
 
   // ハンターが夜に死亡した場合 → 朝画面で道連れ選択UIを表示するために hunterPending をセット
@@ -2290,7 +2561,8 @@ async function resolveNight(roomRef, room) {
   updates.hunterTarget  = null;
 
   if (!logs.some(entry => entry.type === 'kill')) {
-    logs.unshift({ type: 'info', message: '昨夜は誰も死亡しませんでした', day });
+    const peaceMsg = day === 1 ? '初日の夜は おだやかに 明けました' : '昨夜は だれも 退場しませんでした';
+    logs.unshift({ type: 'info', message: peaceMsg, day });
   }
   Object.keys(players).forEach((nick) => {
     updates[`players/${nick}/nightAction`] = null;
@@ -2339,6 +2611,7 @@ async function resolveExecution(roomRef, room, target) {
     lastExecutedWasWolf: targetPlayer.role === '人狼',
     tieBreakTarget: null,
     hunterTarget: null,
+    runoffCandidates: null,
   };
   const deaths = [];
 
