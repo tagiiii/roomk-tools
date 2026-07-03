@@ -3,6 +3,8 @@
 !.claude/settings.json
 !.claude/commands/
 !.claude/commands/*.md
+!.claude/skills/
+!.claude/skills/**
 node_modules/
 *.local
 
