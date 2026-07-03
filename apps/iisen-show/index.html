@@ -894,10 +894,33 @@
   // ════════════════════════════════════
   async function hostStartGame() {
     const picks = pickQuestions(state.usedQuestions);
-    await state.roomRef.update({
-      status:           'selecting',
-      pendingQuestions: picks,
+    let abortReason = null;
+    const { committed } = await state.roomRef.transaction((room) => {
+      if (!room || room.status !== 'waiting') {
+        abortReason = 'invalid_state';
+        return;
+      }
+      const players = room.players || {};
+      if (Object.keys(players).length < 3) {
+        abortReason = 'too_few';
+        return;
+      }
+
+      abortReason = null;
+      return {
+        ...room,
+        status:           'selecting',
+        pendingQuestions: picks,
+      };
     });
+
+    if (!committed) {
+      if (abortReason === 'too_few') {
+        alert('3人以上で始められます');
+      } else {
+        alert('ゲームを開始できませんでした。ルームの状態を確認してください');
+      }
+    }
   }
 
   // ════════════════════════════════════

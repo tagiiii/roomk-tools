@@ -429,6 +429,7 @@ const state = {
 };
 const ORPHAN_TTL_MS = 2 * 60 * 1000;
 const ORPHAN_TTL_INGAME_MS = 30 * 60 * 1000;
+const SESSION_KEY = 'nc_session';
 
 // ===== Utils =====
 function esc(s) {
@@ -453,12 +454,12 @@ function generateCode() {
   return s;
 }
 function saveSession() {
-  sessionStorage.setItem('nc_session', JSON.stringify({
+  sessionStorage.setItem(SESSION_KEY, JSON.stringify({
     roomCode: state.roomCode, nickname: state.nickname,
     isHost: state.isHost,     gameRole: state.gameRole
   }));
 }
-function clearSession() { sessionStorage.removeItem('nc_session'); }
+function clearSession() { sessionStorage.removeItem(SESSION_KEY); }
 
 function getEstimatedServerNow() {
   return Date.now() + (Number(state.serverTimeOffset) || 0);
@@ -1019,7 +1020,7 @@ async function hostFinish() {
 
 // ===== Reconnect =====
 async function tryReconnect() {
-  const saved = sessionStorage.getItem('nc_session');
+  const saved = sessionStorage.getItem(SESSION_KEY);
   if (!saved) return false;
   const { roomCode, nickname, isHost, gameRole } = JSON.parse(saved);
   if (!roomCode || !nickname) return false;

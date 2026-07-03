@@ -502,7 +502,7 @@ const WORDS = [
    定数
    ════════════════════════════════════════════════ */
 const CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-const ORPHAN_TTL = 2 * 60 * 1000;
+const ORPHAN_TTL_MS = 2 * 60 * 1000;
 const SESSION_KEY = 'hdp_session';
 const DB_PREFIX = 'hintpinto_rooms';
 
@@ -625,7 +625,7 @@ function getHostDisconnectedAt(room) {
 
 function isRoomExpired(room) {
   const dt = getHostDisconnectedAt(room);
-  return room?.hostConnected === false && dt != null && (getEstServerNow() - dt) >= ORPHAN_TTL;
+  return room?.hostConnected === false && dt != null && (getEstServerNow() - dt) >= ORPHAN_TTL_MS;
 }
 
 function pickWord(usedWords) {
@@ -851,7 +851,7 @@ function handleRoom(room) {
         state.roomRef.remove().catch(() => {});
       } else if (!state.orphanTimer) {
         const dt = getHostDisconnectedAt(room);
-        const delay = dt == null ? ORPHAN_TTL : Math.max(0, dt + ORPHAN_TTL - getEstServerNow());
+        const delay = dt == null ? ORPHAN_TTL_MS : Math.max(0, dt + ORPHAN_TTL_MS - getEstServerNow());
         state.orphanTimer = setTimeout(() => {
           state.orphanTimer = null;
           if (state.roomRef) state.roomRef.remove().catch(() => {});
