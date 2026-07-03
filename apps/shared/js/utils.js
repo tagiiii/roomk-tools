@@ -179,6 +179,7 @@ export function showToast(message, type = 'info', duration = 3000) {
   if (!toast) {
     toast = document.createElement('div');
     toast.id = 'toast';
+    toast.setAttribute('aria-atomic', 'true');
     Object.assign(toast.style, {
       position: 'fixed',
       bottom: '24px',
@@ -199,6 +200,10 @@ export function showToast(message, type = 'info', duration = 3000) {
     });
     document.body.appendChild(toast);
   }
+
+  // スクリーンリーダー通知: エラーは即時(assertive)、それ以外は穏当(polite)
+  toast.setAttribute('role', type === 'error' ? 'alert' : 'status');
+  toast.setAttribute('aria-live', type === 'error' ? 'assertive' : 'polite');
 
   const colors = { success: '#1F6E3C', error: '#B91C1C', info: '#1D4ED8' };
   toast.style.backgroundColor = colors[type] ?? colors.info;
