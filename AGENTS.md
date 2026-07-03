@@ -37,7 +37,7 @@ roomk-tools/
 
 | パターン | 使用DB | ファイル構成 | 採用アプリ |
 |---------|--------|------------|----------|
-| **単一ファイル** | Realtime Database | `index.html` のみ（CSS・JS すべてインライン） | iisen-show, word-wolf, name-change |
+| **単一ファイル** | Realtime Database | `index.html` のみ（CSS・JS インライン、共有 `rtdb-utils.js` は参照可） | iisen-show, word-wolf, name-change |
 | **分割ファイル** | Firestore | `index.html` + `app.js`（+ 必要なら `style.css`） | checkin, vote |
 | **オフライン** | なし | `index.html` + `app.js` | talk-card |
 
@@ -62,6 +62,18 @@ roomk-tools/
 <script type="module" src="app.js"></script>
 ```
 
+Realtime Database の単一ファイルアプリでは、Firebase SDK の後・メインのインライン `<script>` の前に通常スクリプトとして読み込む。
+
+```html
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+<script src="../shared/js/rtdb-utils.js"></script>
+<script>
+  // Firebase 初期化とアプリ本体
+</script>
+```
+
 ```js
 // JS (ESモジュール)
 import { shuffle, copyToClipboard, popIn } from '../shared/js/utils.js';
@@ -82,6 +94,20 @@ import { db, auth } from '../shared/js/firebase-config.js';
 | `escapeHtml(str)` | XSS対策のHTMLエスケープ |
 | `showToast(message, type?, duration?)` | トースト通知（success / error / info） |
 
+### rtdb-utils.js（非モジュール通常スクリプト）
+
+Realtime Database 単一ファイルアプリ向けの共有ヘルパー。`window.RoomkRTDB` 名前空間に公開する。
+**後方互換で追加のみ。破壊的変更をする場合は `?v=` 付き読み込みに切り替えること。**
+
+| API | 説明 |
+|-----|------|
+| `initServerTime(db)` | `db.ref('.info/serverTimeOffset')` を購読し、共有JS内部に時刻オフセットを保持 |
+| `now()` | `Date.now() + offset` を返す（未初期化時は offset 0） |
+| `getHostDisconnectedAt(room)` | `room.hostDisconnectedAt` を数値化し、有効なら timestamp、無効なら `null` |
+| `isRoomExpired(room, ttlMs = 2 * 60 * 1000)` | `hostConnected === false` かつ TTL 超過なら `true` |
+| `generateRoomCode(length = 6)` | 紛らわしい文字を除外した英数字ルームコードを生成 |
+| `showToast(message, isError = true, durationMs = 3000)` | CSS依存なしの固定表示トースト（DOM id: `roomk-toast`） |
+
 ### firebase-config.js
 
 Firebase SDK v10.14.1 (compat ではなくモジュール版) で Firestore と匿名認証を初期化済み。
@@ -92,7 +118,7 @@ import { db, auth } from '../shared/js/firebase-config.js';
 // auth: Auth インスタンス（匿名サインイン済み）
 ```
 
-Realtime Database を使うアプリ（iisen-show など）は単一ファイルで独自に初期化している。
+Realtime Database を使うアプリ（iisen-show など）は単一ファイルで独自に初期化し、共通処理は `rtdb-utils.js` を利用する。
 
 ---
 
@@ -258,7 +284,7 @@ HTTP リファラー制限済み:
 
 | DB | 桁数 | 生成方法 | 採用アプリ |
 |----|------|---------|----------|
-| Realtime Database | **6桁**英数字 | 独自 `generateCode()` / `genCode()`（紛らわしい文字除外） | iisen-show, word-wolf, name-change, jinro, ito |
+| Realtime Database | **6桁**英数字 | `RoomkRTDB.generateRoomCode()`（必要に応じてローカル alias） | iisen-show, word-wolf, name-change, jinro, ito |
 | Firestore | **6桁**英数字 | `generateSessionId()`（utils.js） | checkin, vote |
 
 除外文字（紛らわしいもの）: `0`, `O`, `I`, `1` など
@@ -401,9 +427,7 @@ Firestore アプリも同様にセッション終了後に削除する。
 const ORPHAN_TTL_MS = 2 * 60 * 1000; // 推奨: 2分（lint [REF-4] で検出）
 
 function isRoomExpired(room) {
-  return room?.hostConnected === false
-    && Number.isFinite(Number(room.hostDisconnectedAt))
-    && (getEstimatedServerNow() - Number(room.hostDisconnectedAt)) >= ORPHAN_TTL_MS;
+  return RoomkRTDB.isRoomExpired(room, ORPHAN_TTL_MS);
 }
 ```
 
@@ -426,19 +450,14 @@ window.addEventListener('load', async () => {
 sessionStorage.removeItem('{app}_session');
 ```
 
-再接続ありの Realtime Database アプリでは、次も合わせて実装する。
+再接続ありの Realtime Database アプリでは、Firebase 初期化直後にサーバー時刻補正を開始し、時刻計算は `RoomkRTDB.now()` を使う。
 
 ```js
-db.ref('.info/serverTimeOffset').on('value', snap => {
-  state.serverTimeOffset = Number(snap.val()) || 0;
-});
-
-function getEstimatedServerNow() {
-  return Date.now() + (Number(state.serverTimeOffset) || 0);
-}
+RoomkRTDB.initServerTime(db);
+const getEstimatedServerNow = RoomkRTDB.now;
 ```
 
-- TTL 判定は `Date.now()` のみで行わず、`.info/serverTimeOffset` を使ってサーバー時刻寄りに補正する
+- TTL 判定は `Date.now()` のみで行わず、`RoomkRTDB.now()` / `RoomkRTDB.isRoomExpired()` でサーバー時刻寄りに補正する
 - `joinRoom()`、`tryReconnect()`、ルーム監視の各タイミングで期限切れルームを検知し、`remove()` を試みる
 - ホスト再接続時は `hostConnected=true` と `hostDisconnectedAt=null` を戻す
 

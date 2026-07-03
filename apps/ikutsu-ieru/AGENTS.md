@@ -75,7 +75,7 @@ screen-finished
 - アプリタイトル + サブ説明
 - 「ルームを作る」/「ルームに参加」切替
 - ニックネーム入力(最大8文字、同ルーム内重複NG、空NG)
-- 参加時は4桁ルームコード入力
+- 参加時は6桁ルームコード入力
 
 ### screen-waiting
 - ルームコード表示(コピーボタン付き)
@@ -117,7 +117,7 @@ screen-finished
 
 | 項目 | 適用内容 |
 |------|---------|
-| ルームコード | 6桁英数字(紛らわしい文字除外)、独自 `genCode()`(既存アプリと同構成) |
+| ルームコード | 6桁英数字(紛らわしい文字除外)、`RoomkRTDB.generateRoomCode()` をローカル alias で利用 |
 | ニックネーム | 最大8文字、重複NG、空NG |
 | viewport | `maximum-scale=1` を指定 |
 | 状態管理 | `const state = { role, nickname, roomCode, roomRef, currentScreen, timerInterval, ... }` |
@@ -181,7 +181,7 @@ window.IKUTSU_THEMES = [
 
 ### タイマー同期
 - ホストが開始時に `endAt`(サーバー時刻基準)を書き込む
-- 各端末は `.info/serverTimeOffset` で補正した `endAt - (Date.now() + offset)` で残り時間を計算
+- 各端末は `RoomkRTDB.now()` で補正した `endAt - RoomkRTDB.now()` で残り時間を計算
 - Firebase リスナーから同じ `endAt` が流れるたびにカウントダウンを再起動しない(値が変わったときのみ再初期化)
 - 0 になった瞬間にゲストは自動で `review` 表示に切り替わる(`status` 変更待ち)
 - `status` 更新は**ホストのみ**が行う(ゲストが勝手に進めない)

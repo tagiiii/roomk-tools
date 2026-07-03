@@ -10,6 +10,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+  <script src="../shared/js/rtdb-utils.js"></script>
   <link rel="stylesheet" href="../shared/css/design-system.css">
   <style>
     .screen { display: none; min-height: 100dvh; }
@@ -696,6 +697,7 @@
     throw error;
   });
   const db = firebase.database();
+  RoomkRTDB.initServerTime(db);
   const CHOICE_NUMBERS = ['①', '②', '③', '④', '⑤'];
 
   const THEMES = [
@@ -788,7 +790,6 @@
     currentScreen: 'top',
     votingTriggered: false,
     resultTriggered: false,
-    serverTimeOffset: 0,
   };
 
   function saveSession() {
@@ -827,20 +828,11 @@
     sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
   }
 
-  function getEstimatedServerNow() {
-    return Date.now() + (Number(state.serverTimeOffset) || 0);
-  }
-
-  function getHostDisconnectedAt(room) {
-    const timestamp = room ? Number(room.hostDisconnectedAt) : NaN;
-    return Number.isFinite(timestamp) ? timestamp : null;
-  }
+  const getEstimatedServerNow = RoomkRTDB.now;
+  const getHostDisconnectedAt = RoomkRTDB.getHostDisconnectedAt;
 
   function isRoomExpired(room) {
-    const disconnectedAt = getHostDisconnectedAt(room);
-    return room?.hostConnected === false
-      && disconnectedAt != null
-      && (getEstimatedServerNow() - disconnectedAt) >= ORPHAN_TTL_MS;
+    return RoomkRTDB.isRoomExpired(room, ORPHAN_TTL_MS);
   }
 
   async function tryReconnect() {
@@ -967,10 +959,7 @@
     state.currentScreen = name;
   }
 
-  function generateRoomCode() {
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-    return Array.from({ length: 6 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
-  }
+  const generateRoomCode = RoomkRTDB.generateRoomCode;
 
   function shuffle(array) {
     const next = [...array];
@@ -1880,10 +1869,6 @@
     if (!reconnected) showScreen('top');
   });
 
-  db.ref('.info/serverTimeOffset').on('value', (snapshot) => {
-    const offset = Number(snapshot.val());
-    state.serverTimeOffset = Number.isFinite(offset) ? offset : 0;
-  });
 </script>
 </body>
 </html>

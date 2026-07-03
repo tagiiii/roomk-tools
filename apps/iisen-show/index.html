@@ -9,6 +9,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+  <script src="../shared/js/rtdb-utils.js"></script>
   <link rel="stylesheet" href="../shared/css/design-system.css">
   <style>
     /* ── 画面管理 ── */
@@ -473,6 +474,7 @@
     throw e;
   });
   const db = firebase.database();
+  RoomkRTDB.initServerTime(db);
 
   // ════════════════════════════════════
   // 問題リスト
@@ -601,7 +603,6 @@
     roomRef:         null,
     currentScreen:   'top',
     resultTriggered: false,
-    serverTimeOffset: 0,
   };
 
   // ════════════════════════════════════
@@ -634,20 +635,11 @@
     if (s) { s.score = score; sessionStorage.setItem(SESSION_KEY, JSON.stringify(s)); }
   }
 
-  function getEstimatedServerNow() {
-    return Date.now() + (Number(state.serverTimeOffset) || 0);
-  }
-
-  function getHostDisconnectedAt(room) {
-    const ts = room ? Number(room.hostDisconnectedAt) : NaN;
-    return Number.isFinite(ts) ? ts : null;
-  }
+  const getEstimatedServerNow = RoomkRTDB.now;
+  const getHostDisconnectedAt = RoomkRTDB.getHostDisconnectedAt;
 
   function isRoomExpired(room) {
-    const disconnectedAt = getHostDisconnectedAt(room);
-    return room?.hostConnected === false
-      && disconnectedAt != null
-      && (getEstimatedServerNow() - disconnectedAt) >= ORPHAN_TTL_MS;
+    return RoomkRTDB.isRoomExpired(room, ORPHAN_TTL_MS);
   }
 
   // ════════════════════════════════════
@@ -767,10 +759,7 @@
   // ════════════════════════════════════
   // ユーティリティ
   // ════════════════════════════════════
-  function generateRoomCode() {
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-    return Array.from({ length: 6 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
-  }
+  const generateRoomCode = RoomkRTDB.generateRoomCode;
 
   function shuffle(arr) {
     const a = [...arr];
@@ -1440,10 +1429,6 @@
   // ════════════════════════════════════
   tryReconnect().then(reconnected => {
     if (!reconnected) showScreen('top');
-  });
-  db.ref('.info/serverTimeOffset').on('value', snap => {
-    const offset = Number(snap.val());
-    state.serverTimeOffset = Number.isFinite(offset) ? offset : 0;
   });
 </script>
 </body>

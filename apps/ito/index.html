@@ -10,6 +10,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+  <script src="../shared/js/rtdb-utils.js"></script>
   <style>
     /* ── 画面管理 ── */
     .screen { display: none; min-height: 100dvh; }
@@ -767,6 +768,7 @@
       throw e;
     });
     const db = firebase.database();
+    RoomkRTDB.initServerTime(db);
 
     const state = {
       role: null,
@@ -774,7 +776,6 @@
       roomCode: null,
       roomRef: null,
       currentScreen: null,
-      serverTimeOffset: 0,
       timerInterval: null,
       cleanupTimer: null,
       orphanTimer: null,    // ホスト永続切断時の孤立ルーム削除タイマーID（ゲスト側）
@@ -791,7 +792,6 @@
     const ORPHAN_TTL_MS = 2 * 60 * 1000;
     const DEFAULT_DISCUSSION_SECONDS = 3 * 60;
     const RECENT_THEME_MEMORY = 8;
-    const CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
     const THEMES = [
       "甘いお菓子", "すっぱい食べもの", "やわらかい食べもの", "あたたかい飲みもの",
       "ひんやりするもの", "おなかがすくもの", "いいにおいがしそうなもの", "朝に食べたくなるもの",
@@ -824,13 +824,7 @@
         .replace(/'/g, "&#39;");
     }
 
-    function genCode() {
-      let code = "";
-      for (let i = 0; i < 6; i++) {
-        code += CHARS[Math.floor(Math.random() * CHARS.length)];
-      }
-      return code;
-    }
+    const genCode = RoomkRTDB.generateRoomCode;
 
     function showScreen(id) {
       document.querySelectorAll(".screen").forEach((el) => el.classList.remove("active"));
@@ -930,20 +924,11 @@
       return "";
     }
 
-    function getEstimatedServerNow() {
-      return Date.now() + (Number(state.serverTimeOffset) || 0);
-    }
-
-    function getHostDisconnectedAt(room) {
-      const ts = room ? Number(room.hostDisconnectedAt) : NaN;
-      return Number.isFinite(ts) ? ts : null;
-    }
+    const getEstimatedServerNow = RoomkRTDB.now;
+    const getHostDisconnectedAt = RoomkRTDB.getHostDisconnectedAt;
 
     function isRoomExpired(room) {
-      const disconnectedAt = getHostDisconnectedAt(room);
-      return room?.hostConnected === false
-        && disconnectedAt != null
-        && (getEstimatedServerNow() - disconnectedAt) >= ORPHAN_TTL_MS;
+      return RoomkRTDB.isRoomExpired(room, ORPHAN_TTL_MS);
     }
 
     function isDiscussionExpired(endsAt) {
@@ -1870,10 +1855,6 @@
     // ── 起動 ─────────────────────────────
 
     window.addEventListener("load", async () => {
-      db.ref(".info/serverTimeOffset").on("value", (snap) => {
-        const offset = Number(snap.val());
-        state.serverTimeOffset = Number.isFinite(offset) ? offset : 0;
-      });
       if (!await tryReconnect()) showScreen("top");
     });
   </script>

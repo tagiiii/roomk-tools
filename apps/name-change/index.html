@@ -398,6 +398,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+<script src="../shared/js/rtdb-utils.js"></script>
 <script>
 // ===== Firebase =====
 firebase.initializeApp({
@@ -414,6 +415,7 @@ const authReady = firebase.auth().signInAnonymously().catch((e) => {
   throw e;
 });
 const db = firebase.database();
+RoomkRTDB.initServerTime(db);
 
 // ===== State =====
 const state = {
@@ -422,7 +424,6 @@ const state = {
   gameRole: null,      // 'changer' | 'voter' (参加者のみ)
   roomRef: null,
   currentScreen: 'top',
-  serverTimeOffset: 0,
   orphanTimer: null,
   myVotes: {},         // { changerNick: guessedNick }
   votingRendered: false,
@@ -447,12 +448,7 @@ function showScreen(id) {
   window.scrollTo(0, 0);
 }
 function initial(name) { return name ? name.charAt(0) : '?'; }
-function generateCode() {
-  const c = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  let s = '';
-  for (let i = 0; i < 6; i++) s += c[Math.floor(Math.random() * c.length)];
-  return s;
-}
+const generateCode = RoomkRTDB.generateRoomCode;
 function saveSession() {
   sessionStorage.setItem(SESSION_KEY, JSON.stringify({
     roomCode: state.roomCode, nickname: state.nickname,
@@ -461,24 +457,15 @@ function saveSession() {
 }
 function clearSession() { sessionStorage.removeItem(SESSION_KEY); }
 
-function getEstimatedServerNow() {
-  return Date.now() + (Number(state.serverTimeOffset) || 0);
-}
-
-function getHostDisconnectedAt(room) {
-  const ts = room ? Number(room.hostDisconnectedAt) : NaN;
-  return Number.isFinite(ts) ? ts : null;
-}
+const getEstimatedServerNow = RoomkRTDB.now;
+const getHostDisconnectedAt = RoomkRTDB.getHostDisconnectedAt;
 
 const IN_GAME_STATUSES = ['naming', 'voting', 'revealing'];
 function isInGame(room) {
   return room?.status && IN_GAME_STATUSES.includes(room.status);
 }
 function isRoomExpiredWith(room, ttl) {
-  const disconnectedAt = getHostDisconnectedAt(room);
-  return room?.hostConnected === false
-    && disconnectedAt != null
-    && (getEstimatedServerNow() - disconnectedAt) >= ttl;
+  return RoomkRTDB.isRoomExpired(room, ttl);
 }
 function isRoomExpired(room) {
   return isRoomExpiredWith(room, ORPHAN_TTL_MS);
@@ -1055,10 +1042,6 @@ async function tryReconnect() {
 
 // ===== Init =====
 window.addEventListener('load', async () => {
-  db.ref('.info/serverTimeOffset').on('value', snap => {
-    const offset = Number(snap.val());
-    state.serverTimeOffset = Number.isFinite(offset) ? offset : 0;
-  });
   if (!await tryReconnect()) showScreen('top');
 });
 </script>

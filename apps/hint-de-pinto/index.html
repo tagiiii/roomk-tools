@@ -10,6 +10,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+  <script src="../shared/js/rtdb-utils.js"></script>
   <style>
     /* ── 画面管理 ── */
     .screen { display: none; min-height: 100dvh; }
@@ -470,10 +471,7 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const authReady = firebase.auth().signInAnonymously().catch(e => { console.error('[auth]', e); throw e; });
 const db = firebase.database();
-db.ref('.info/serverTimeOffset').on('value', snap => {
-  const v = Number(snap.val());
-  state.serverTimeOffset = Number.isFinite(v) ? v : 0;
-});
+RoomkRTDB.initServerTime(db);
 
 /* ════════════════════════════════════════════════
    お題リスト (90語)
@@ -501,7 +499,6 @@ const WORDS = [
 /* ════════════════════════════════════════════════
    定数
    ════════════════════════════════════════════════ */
-const CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const ORPHAN_TTL_MS = 2 * 60 * 1000;
 const SESSION_KEY = 'hdp_session';
 const DB_PREFIX = 'hintpinto_rooms';
@@ -515,7 +512,6 @@ const state = {
   roomCode: null,
   roomRef: null,
   currentScreen: null,
-  serverTimeOffset: 0,
   orphanTimer: null,
   cleanupTimer: null,
 };
@@ -546,9 +542,7 @@ function esc(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 
-function genCode() {
-  return Array.from({length:6}, () => CHARS[Math.floor(Math.random()*CHARS.length)]).join('');
-}
+const genCode = RoomkRTDB.generateRoomCode;
 
 function shuffle(arr) {
   const a = [...arr];
@@ -582,16 +576,7 @@ function showScreen(name) {
   state.currentScreen = name;
 }
 
-function showMsg(msg, isError = true) {
-  const existing = document.getElementById('hdp-toast');
-  if (existing) existing.remove();
-  const el = document.createElement('div');
-  el.id = 'hdp-toast';
-  el.textContent = msg;
-  el.style.cssText = `position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:${isError ? 'var(--color-error)' : 'var(--color-success)'};color:#fff;padding:12px 24px;border-radius:8px;font-size:14px;font-weight:500;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,0.25);white-space:nowrap;pointer-events:none`;
-  document.body.appendChild(el);
-  setTimeout(() => el.remove(), 3000);
-}
+const showMsg = RoomkRTDB.showToast;
 
 function showOverlay(id, show) {
   document.getElementById(id).classList.toggle('show', show);
@@ -616,16 +601,11 @@ function validNick(v) {
   return null;
 }
 
-function getEstServerNow() { return Date.now() + (Number(state.serverTimeOffset) || 0); }
-
-function getHostDisconnectedAt(room) {
-  const ts = room ? Number(room.hostDisconnectedAt) : NaN;
-  return Number.isFinite(ts) ? ts : null;
-}
+const getEstServerNow = RoomkRTDB.now;
+const getHostDisconnectedAt = RoomkRTDB.getHostDisconnectedAt;
 
 function isRoomExpired(room) {
-  const dt = getHostDisconnectedAt(room);
-  return room?.hostConnected === false && dt != null && (getEstServerNow() - dt) >= ORPHAN_TTL_MS;
+  return RoomkRTDB.isRoomExpired(room, ORPHAN_TTL_MS);
 }
 
 function pickWord(usedWords) {
