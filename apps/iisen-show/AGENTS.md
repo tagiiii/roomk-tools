@@ -43,6 +43,8 @@ TOP
 ```
 iisen_rooms/{roomCode}/
   ├── host:             string        # ホストのニックネーム
+  ├── hostConnected:    boolean       # ホスト接続状態
+  ├── hostDisconnectedAt: number|null # ホスト切断時刻
   ├── status:           string        # waiting | selecting | answering | result | finished
   ├── currentQuestion:  string        # 現在の問題文
   ├── round:            number        # 現在のラウンド数
@@ -56,15 +58,17 @@ iisen_rooms/{roomCode}/
 ```
 
 ## 離脱時の挙動
-- **ホスト離脱**: `onDisconnect().remove()` でルームごと削除 → ゲストにアラート表示
+- **ホスト離脱**: `onDisconnect().update()` で `hostConnected=false` と `hostDisconnectedAt=ServerValue.TIMESTAMP` を保存。ゲストにはオーバーレイを表示し、2分TTL（`ORPHAN_TTL_MS`）超過後に期限切れルームとして削除を試みる
 - **ゲスト離脱**: `onDisconnect().remove()` でそのプレイヤーデータのみ削除
+- ホスト再接続時は `hostConnected=true` / `hostDisconnectedAt=null` に戻し、`sessionStorage: iisen_session` から復帰する
+- TTL 判定は `.info/serverTimeOffset` を使ったサーバー推定時刻で行う
 
 ## 特有のルール・制約
 - ルームコードは6桁英数字（紛らわしい文字除外）
 - ニックネームは1〜8文字・同ルーム内重複NG
 - 3人以上でないとゲーム開始不可
 - 問題は重複しないようにトラッキング（全問使用後はリセット）
-- ゲーム終了30秒後にFirestoreデータを自動削除
+- ゲーム終了30秒後に Realtime Database のルームデータを自動削除
 - Firebase設定は `firebaseConfig` の `YOUR_*` プレースホルダーを差し替えること
   - **Realtime Database** を使用（Firestoreではない）
   - `databaseURL` の設定が必須

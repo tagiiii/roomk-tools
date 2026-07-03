@@ -49,6 +49,8 @@ TOP
 ```
 namechange_rooms/{roomCode}/
   ├── host:          string        # GM のニックネーム
+  ├── hostConnected: boolean       # GM 接続状態
+  ├── hostDisconnectedAt: number|null # GM 切断時刻
   ├── status:        string        # waiting | naming | voting | revealing | done
   ├── revealOrder:   string[]      # 発表順（changers をシャッフル）
   ├── revealIndex:   number        # 現在の発表インデックス
@@ -68,5 +70,7 @@ namechange_rooms/{roomCode}/
 - GM のニックネームは1〜8文字
 - 変更後の名前は1〜16文字
 - 参加者2人以上でゲーム開始可
-- GM 切断時はルームごと削除（`onDisconnect().remove()`）
+- GM 切断時は `onDisconnect().update()` で `hostConnected=false` と `hostDisconnectedAt=ServerValue.TIMESTAMP` を保存し、参加者側にオーバーレイを表示する
+- 孤立ルームの TTL は通常2分（`ORPHAN_TTL_MS`）。ただし `naming` / `voting` / `revealing` 中は、ゲーム進行中の一時切断を吸収するため30分（`ORPHAN_TTL_INGAME_MS`）に延長する
+- GM 再接続時は `hostConnected=true` / `hostDisconnectedAt=null` に戻し、`sessionStorage: nc_session` から復帰する
 - ゲーム終了30秒後にデータを自動削除
