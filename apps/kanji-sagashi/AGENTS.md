@@ -16,7 +16,7 @@
 ## 技術スタック
 - オフラインアプリ（Firebase不要・ログイン不要）
 - 共通デザインシステム使用
-- ファイル構成: `index.html` + `app.js` + `style.css`
+- ファイル構成: `index.html` + `questions.js` + `app.js` + `style.css`
 
 ## 画面構成・フロー
 
@@ -52,12 +52,15 @@
 | むずかしい | 7×7 | 5〜8個 | ±30° | 大 | 中〜高 (2-3) |
 
 ## 問題データ
-`app.js` 内の `const QUESTIONS = [...]` を直接編集する。
+`questions.js` の `QUESTIONS` を編集する。`app.js` は `./questions.js` から ES module import して参照する。
 
 各問題の構造:
 ```js
 { target: '犬', distractors: ['大', '太', '天'], visualDifficulty: 1 }
 ```
+
+現在は全50問。難度内訳は visualDifficulty 1:15問 / 2:16問 / 3:19問。
+Phase 4 / CX-5 で監査済み15問を追加し、問題データを `questions.js` に外部分離した。
 
 ### 問題作成ガイドライン
 - `target` と `distractors` は視覚的に似た漢字を選ぶ

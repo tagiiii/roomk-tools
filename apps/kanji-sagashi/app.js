@@ -1,53 +1,9 @@
 import { shuffle, popIn } from '../shared/js/utils.js';
+import { QUESTIONS } from './questions.js';
 
 /* ============================================
    漢字さがし — Game Logic
    ============================================ */
-
-// ── Question Bank ──
-// visualDifficulty: 1 = easy, 2 = moderate, 3 = hard
-const QUESTIONS = [
-  // --- visualDifficulty 1 ---
-  { target: '犬', distractors: ['大', '太', '天'], visualDifficulty: 1 },
-  { target: '土', distractors: ['士', '工', '十'], visualDifficulty: 1 },
-  { target: '人', distractors: ['入', '八', '大'], visualDifficulty: 1 },
-  { target: '木', distractors: ['本', '末', '未'], visualDifficulty: 1 },
-  { target: '口', distractors: ['日', '目', '田'], visualDifficulty: 1 },
-  { target: '力', distractors: ['刀', '九', '方'], visualDifficulty: 1 },
-  { target: '山', distractors: ['出', '凸', '岳'], visualDifficulty: 1 },
-  { target: '火', distractors: ['水', '氷', '永'], visualDifficulty: 1 },
-  { target: '上', distractors: ['下', '止', '正'], visualDifficulty: 1 },
-  { target: '王', distractors: ['玉', '主', '生'], visualDifficulty: 1 },
-  { target: '右', distractors: ['左', '石', '有'], visualDifficulty: 1 },
-  { target: '円', distractors: ['丹', '内', '月'], visualDifficulty: 1 },
-
-  // --- visualDifficulty 2 ---
-  { target: '日', distractors: ['目', '白', '田'], visualDifficulty: 2 },
-  { target: '末', distractors: ['未', '本', '木'], visualDifficulty: 2 },
-  { target: '刀', distractors: ['力', '万', '方'], visualDifficulty: 2 },
-  { target: '由', distractors: ['甲', '申', '田'], visualDifficulty: 2 },
-  { target: '矢', distractors: ['失', '央', '大'], visualDifficulty: 2 },
-  { target: '午', distractors: ['牛', '干', '千'], visualDifficulty: 2 },
-  { target: '休', distractors: ['体', '件', '仕'], visualDifficulty: 2 },
-  { target: '待', distractors: ['持', '特', '時'], visualDifficulty: 2 },
-  { target: '池', distractors: ['地', '他', '也'], visualDifficulty: 2 },
-  { target: '冬', distractors: ['各', '久', '夕'], visualDifficulty: 2 },
-  { target: '用', distractors: ['角', '同', '周'], visualDifficulty: 2 },
-  { target: '手', distractors: ['毛', '千', '牛'], visualDifficulty: 2 },
-
-  // --- visualDifficulty 3 ---
-  { target: '己', distractors: ['已', '巳', '巴'], visualDifficulty: 3 },
-  { target: '間', distractors: ['問', '聞', '閉'], visualDifficulty: 3 },
-  { target: '鳥', distractors: ['烏', '島', '馬'], visualDifficulty: 3 },
-  { target: '幸', distractors: ['辛', '辞', '幹'], visualDifficulty: 3 },
-  { target: '貸', distractors: ['貨', '賃', '貧'], visualDifficulty: 3 },
-  { target: '折', distractors: ['析', '所', '近'], visualDifficulty: 3 },
-  { target: '博', distractors: ['薄', '専', '簿'], visualDifficulty: 3 },
-  { target: '候', distractors: ['侯', '伏', '俊'], visualDifficulty: 3 },
-  { target: '陸', distractors: ['睦', '隆', '隊'], visualDifficulty: 3 },
-  { target: '衰', distractors: ['哀', '衷', '表'], visualDifficulty: 3 },
-  { target: '令', distractors: ['今', '合', '会'], visualDifficulty: 3 },
-];
 
 // ── Difficulty Presets ──
 const PRESETS = {

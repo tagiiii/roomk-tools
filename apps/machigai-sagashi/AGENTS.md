@@ -20,6 +20,8 @@ TOP（ジャンル選択） → PLAY（5問） → END
 ## 問題データ
 
 `questions.js` の `QUESTIONS` と `CATEGORIES` を編集する。
+現在は45問構成（kotowaza 15 / koten 15 / phrase 5 / bunpo 10）。`bunpo` は主述のねじれ・照応のずれなど、日常文の文法的な違和感を扱う。
+追加時は各カテゴリ5問以上を保ち、`modified` 内の誤り箇所を `wrongPart` で一意に示せる問題だけを追加する。
 
 | フィールド | 内容 |
 |-----------|------|

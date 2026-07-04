@@ -79,6 +79,150 @@ const QUESTIONS = [
       { particle: 'が', hint: 'それに目がいく感じ' },
     ],
   },
+  {
+    template: '広場◯かけっこした',
+    choices: [
+      { particle: 'で', hint: 'その場所で起きた感じ' },
+      { particle: 'を', hint: '広場ぜんぶ走りぬけた感じ' },
+    ],
+  },
+  {
+    template: 'すべりだい◯のぼる',
+    choices: [
+      { particle: 'を', hint: 'ふつうに動作を言ってる感じ' },
+      { particle: 'に', hint: 'そこを目指してる感じ' },
+      { particle: 'へ', hint: '上の方に向かっていく感じ' },
+    ],
+  },
+  {
+    template: 'おじいちゃんの家◯行く',
+    choices: [
+      { particle: 'へ', hint: 'その方向に向かう感じ' },
+      { particle: 'に', hint: '到着先を指してる感じ' },
+    ],
+  },
+  {
+    template: 'かさ◯もって出かけた',
+    choices: [
+      { particle: 'を', hint: 'かさそのものを持った感じ' },
+      { particle: 'も', hint: 'ほかの荷物にくわえて持った感じ' },
+    ],
+  },
+  {
+    template: 'にわとり小屋◯たまごを取り出した',
+    choices: [
+      { particle: 'で', hint: 'その場所でやった感じ' },
+      { particle: 'から', hint: 'そこから出した感じ' },
+    ],
+  },
+  {
+    template: '妹◯おかしをわけた',
+    choices: [
+      { particle: 'に', hint: 'あげる相手をはっきり言う感じ' },
+      { particle: 'と', hint: '一緒にわけあった感じ' },
+    ],
+  },
+  {
+    template: 'まいあさ7時◯おきる',
+    choices: [
+      { particle: 'に', hint: 'その時こくをきっちり言う感じ' },
+      { particle: 'は', hint: 'ほかの日とくらべて言う感じ' },
+    ],
+  },
+  {
+    template: '公園◯家まで走った',
+    choices: [
+      { particle: 'から', hint: 'そこがスタートって感じ' },
+      { particle: 'を', hint: 'そこを通りぬけて行った感じ' },
+    ],
+  },
+  {
+    template: '9時◯ねむくなってきた',
+    choices: [
+      { particle: 'から', hint: 'そのあたりを境に変わる感じ' },
+      { particle: 'に', hint: 'ちょうどその時こくの感じ' },
+    ],
+  },
+  {
+    template: 'にわとりの声◯めがさめた',
+    choices: [
+      { particle: 'で', hint: 'それが理由になってる感じ' },
+      { particle: 'に', hint: 'その音にはっとした感じ' },
+    ],
+  },
+  {
+    template: 'ジュース◯コップに入れた',
+    choices: [
+      { particle: 'を', hint: 'ジュースそのものを注いだ感じ' },
+      { particle: 'も', hint: 'ほかの飲みものにくわえて入れた感じ' },
+    ],
+  },
+  {
+    template: '夜9時◯おきてた',
+    choices: [
+      { particle: 'まで', hint: 'そこが終わりの時こくの感じ' },
+      { particle: 'に', hint: 'その時こくちょうどの感じ' },
+      { particle: 'から', hint: 'そこが始まりの時こくの感じ' },
+    ],
+  },
+  {
+    template: '土曜日◯水やりをたのむね',
+    choices: [
+      { particle: 'まで', hint: 'それまでの間ずっとって感じ' },
+      { particle: 'に', hint: 'その日を目安にしてる感じ' },
+    ],
+  },
+  {
+    template: 'おかし◯ほしい',
+    choices: [
+      { particle: 'が', hint: 'ほしい気持ちがつよい感じ' },
+      { particle: 'だけ', hint: 'ほかはいらない、それだけの感じ' },
+      { particle: 'も', hint: 'ほかにくわえてほしい感じ' },
+    ],
+  },
+  {
+    template: 'すな場◯ずっとあそんでた',
+    choices: [
+      { particle: 'で', hint: 'その場所であそんでた感じ' },
+      { particle: 'に', hint: 'そこに入りびたってた感じ' },
+    ],
+  },
+  {
+    template: 'あめが3つぶ◯落ちてきた',
+    choices: [
+      { particle: 'だけ', hint: 'ほんの少しだけって感じ' },
+      { particle: 'も', hint: 'それなりの数っていう感じ' },
+    ],
+  },
+  {
+    template: 'おばあちゃん◯電話した',
+    choices: [
+      { particle: 'と', hint: 'ふたりで話した感じ' },
+      { particle: 'に', hint: 'こちらから連絡した感じ' },
+    ],
+  },
+  {
+    template: 'まど◯てるてるぼうずをつるした',
+    choices: [
+      { particle: 'に', hint: 'そこが場所だと言う感じ' },
+      { particle: 'から', hint: 'そこから下げてる感じ' },
+    ],
+  },
+  {
+    template: 'つくえの下◯かくれた',
+    choices: [
+      { particle: 'に', hint: 'そこが場所だと言う感じ' },
+      { particle: 'へ', hint: 'そこに向かってもぐりこむ感じ' },
+    ],
+  },
+  {
+    template: 'メダカ◯すいそうで飼ってる',
+    choices: [
+      { particle: 'を', hint: 'メダカの世話をしてる感じ' },
+      { particle: 'は', hint: 'メダカについて話してる感じ' },
+      { particle: 'も', hint: 'ほかの生き物に続けて飼ってる感じ' },
+    ],
+  },
 ];
 
 // ── 状態 ─────────────────────────────────────
