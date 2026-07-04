@@ -198,6 +198,29 @@ ruby rt {
 }
 
 .ka-slide {
+  --ka-fit: 1;
+  --ka-fs-title: 46px;
+  --ka-fs-choice: 36px;
+  --ka-fs-list: 34px;
+  --ka-fs-answer: 36px;
+  --ka-fs-answer-label: 18px;
+  --ka-fs-explain: 29px;
+  --ka-title-mt: 22px;
+  --ka-body-mt: 28px;
+  --ka-choices-mt: 28px;
+  --ka-choices-gap: 16px;
+  --ka-choice-minh: 86px;
+  --ka-choice-pad-v: 18px;
+  --ka-choice-pad-h: 22px;
+  --ka-list-mt: 26px;
+  --ka-list-pad-v: 20px;
+  --ka-list-pad-h: 22px;
+  --ka-reveal-mt: 24px;
+  --ka-reveal-pad-v: 22px;
+  --ka-reveal-pad-h: 26px;
+  --ka-explain-mt: 18px;
+  --ka-explain-pad-v: 20px;
+  --ka-explain-pad-h: 24px;
   position: absolute;
   inset: 0;
   display: flex;
@@ -205,6 +228,39 @@ ruby rt {
   padding: 52px 72px 76px;
   opacity: 1;
 }
+
+/* 答え表示後は問題文・選択肢をコンパクトにし、答え・解説の場所を確保する */
+.ka-slide--reveal {
+  --ka-fs-title: 31px;
+  --ka-fs-choice: 24px;
+  --ka-fs-list: 24px;
+  --ka-fs-answer: 31px;
+  --ka-fs-answer-label: 15px;
+  --ka-fs-explain: 26px;
+  --ka-title-mt: 14px;
+  --ka-body-mt: 18px;
+  --ka-choices-mt: 14px;
+  --ka-choices-gap: 10px;
+  --ka-choice-minh: 0px;
+  --ka-choice-pad-v: 10px;
+  --ka-choice-pad-h: 16px;
+  --ka-list-mt: 12px;
+  --ka-list-pad-v: 10px;
+  --ka-list-pad-h: 16px;
+  --ka-reveal-mt: 16px;
+  --ka-reveal-pad-v: 14px;
+  --ka-reveal-pad-h: 20px;
+  --ka-explain-mt: 12px;
+  --ka-explain-pad-v: 14px;
+  --ka-explain-pad-h: 20px;
+  padding-top: 40px;
+}
+
+/* 収まらないスライドだけエンジンが段階的に縮小する（js/engine.js の fitSlide） */
+.ka-slide--fit-1 { --ka-fit: 0.9; }
+.ka-slide--fit-2 { --ka-fit: 0.8; }
+.ka-slide--fit-3 { --ka-fit: 0.7; }
+.ka-slide--fit-4 { --ka-fit: 0.6; }
 
 .ka-slide--teal {
   --ka-accent: var(--ka-teal);
@@ -266,10 +322,10 @@ ruby rt {
 }
 
 .ka-slide__title {
-  margin: 22px 0 0;
+  margin: var(--ka-title-mt, 22px) 0 0;
   color: var(--ka-ink);
   font-family: var(--ka-head-font);
-  font-size: 46px;
+  font-size: calc(var(--ka-fs-title, 46px) * var(--ka-fit, 1));
   font-weight: 900;
   line-height: 1.25;
   letter-spacing: 0;
@@ -293,11 +349,11 @@ ruby rt {
 .ka-slide__body {
   flex: 1;
   min-height: 0;
-  margin-top: 28px;
+  margin-top: var(--ka-body-mt, 28px);
 }
 
 .ka-question {
-  font-size: 42px;
+  font-size: calc(42px * var(--ka-fit, 1));
   font-weight: 900;
   line-height: 1.45;
 }
@@ -305,16 +361,16 @@ ruby rt {
 .ka-choices {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  margin-top: 28px;
+  gap: var(--ka-choices-gap, 16px);
+  margin-top: var(--ka-choices-mt, 28px);
 }
 
 .ka-choice {
-  min-height: 86px;
+  min-height: calc(var(--ka-choice-minh, 86px) * var(--ka-fit, 1));
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 18px 22px;
+  padding: calc(var(--ka-choice-pad-v, 18px) * var(--ka-fit, 1)) calc(var(--ka-choice-pad-h, 22px) * var(--ka-fit, 1));
   border: 2px solid var(--ka-line);
   border-radius: 8px;
   background: var(--ka-white);
@@ -329,7 +385,7 @@ ruby rt {
 .ka-choice__num {
   flex: none;
   color: var(--ka-teal);
-  font-size: 36px;
+  font-size: calc(var(--ka-fs-choice, 36px) * var(--ka-fit, 1));
   font-weight: 900;
   font-feature-settings: "palt";
 }
@@ -337,7 +393,7 @@ ruby rt {
 .ka-choice__text {
   flex: 1;
   color: var(--ka-ink);
-  font-size: 36px;
+  font-size: calc(var(--ka-fs-choice, 36px) * var(--ka-fit, 1));
   font-weight: 900;
   line-height: 1.3;
 }
@@ -346,22 +402,22 @@ ruby rt {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 14px;
-  margin-top: 26px;
+  margin-top: var(--ka-list-mt, 26px);
 }
 
 .ka-list__item {
-  padding: 20px 22px;
+  padding: calc(var(--ka-list-pad-v, 20px) * var(--ka-fit, 1)) calc(var(--ka-list-pad-h, 22px) * var(--ka-fit, 1));
   border: 1.5px solid var(--ka-line);
   border-radius: 8px;
   background: var(--ka-white);
-  font-size: 34px;
+  font-size: calc(var(--ka-fs-list, 34px) * var(--ka-fit, 1));
   font-weight: 900;
   line-height: 1.35;
 }
 
 .ka-reveal {
-  margin-top: 24px;
-  padding: 22px 26px;
+  margin-top: var(--ka-reveal-mt, 24px);
+  padding: calc(var(--ka-reveal-pad-v, 22px) * var(--ka-fit, 1)) calc(var(--ka-reveal-pad-h, 26px) * var(--ka-fit, 1));
   border-radius: 8px;
   background: var(--ka-accent-tint);
   border: 2px solid var(--ka-accent);
@@ -369,7 +425,7 @@ ruby rt {
 
 .ka-reveal__label {
   color: var(--ka-accent);
-  font-size: 18px;
+  font-size: calc(var(--ka-fs-answer-label, 18px) * var(--ka-fit, 1));
   font-weight: 900;
   letter-spacing: 0.08em;
 }
@@ -377,19 +433,19 @@ ruby rt {
 .ka-reveal__text {
   margin-top: 8px;
   color: var(--ka-ink);
-  font-size: 36px;
+  font-size: calc(var(--ka-fs-answer, 36px) * var(--ka-fit, 1));
   font-weight: 900;
   line-height: 1.4;
 }
 
 .ka-explanation {
-  margin-top: 18px;
-  padding: 20px 24px;
+  margin-top: var(--ka-explain-mt, 18px);
+  padding: calc(var(--ka-explain-pad-v, 20px) * var(--ka-fit, 1)) calc(var(--ka-explain-pad-h, 24px) * var(--ka-fit, 1));
   border-left: 8px solid var(--ka-coral);
   border-radius: 8px;
   background: var(--ka-white);
   color: var(--ka-ink);
-  font-size: 29px;
+  font-size: calc(var(--ka-fs-explain, 29px) * var(--ka-fit, 1));
   font-weight: 700;
   line-height: 1.55;
 }
@@ -401,7 +457,7 @@ ruby rt {
   background: var(--ka-white);
   border: 1.5px solid var(--ka-line);
   color: var(--ka-ink-soft);
-  font-size: 30px;
+  font-size: calc(30px * var(--ka-fit, 1));
   font-weight: 700;
   line-height: 1.55;
 }

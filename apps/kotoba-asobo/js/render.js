@@ -100,7 +100,8 @@
   function renderQuestionSlide(slide, step) {
     const q = slide.question;
     const title = q.type === 'open' ? 'みんなで考える問い' : slide.title;
-    let body = '<div class="ka-question">' + rubyText(q.question) + '</div>';
+    // タイトルにそのまま問題文が入るスライドでは、本文側に問題文を繰り返さない。
+    let body = title === q.question ? '' : '<div class="ka-question">' + rubyText(q.question) + '</div>';
     if (q.type === 'choice' || q.type === 'pair') {
       body += choicesHtml(slide, step);
     } else if (q.type === 'order') {
@@ -113,7 +114,9 @@
     body += revealHtml(q, step);
     body += explanationHtml(q, step);
 
-    return '<section class="ka-slide ka-slide--' + esc(slide.accent) + '">' +
+    // 答え表示後は問題文・選択肢をコンパクトにして、答え・解説の場所を確保する。
+    const revealCls = step >= 1 && q.type !== 'open' ? ' ka-slide--reveal' : '';
+    return '<section class="ka-slide ka-slide--' + esc(slide.accent) + revealCls + '">' +
       '<div class="ka-slide__part"><span class="material-symbols-rounded">' + esc(slide.icon) + '</span>' + rubyText(slide.partLabel) + '</div>' +
       '<h1 class="ka-slide__title">' + rubyText(title) + '</h1>' +
       '<div class="ka-slide__body">' + body + '</div>' +

@@ -149,9 +149,25 @@
     }
   }
 
+  // 1280x720 に収まらないスライドだけ、段階的にコンパクト表示へ切り替える。
+  const FIT_CLASSES = ['ka-slide--fit-1', 'ka-slide--fit-2', 'ka-slide--fit-3', 'ka-slide--fit-4'];
+
+  function fitSlide(container) {
+    const slide = container.querySelector('.ka-slide');
+    const body = slide ? slide.querySelector('.ka-slide__body') : null;
+    if (!body) return;
+    FIT_CLASSES.forEach((cls) => slide.classList.remove(cls));
+    for (let level = 0; level < FIT_CLASSES.length; level += 1) {
+      if (body.scrollHeight <= body.clientHeight + 1) break;
+      if (level > 0) slide.classList.remove(FIT_CLASSES[level - 1]);
+      slide.classList.add(FIT_CLASSES[level]);
+    }
+  }
+
   function renderDeck() {
     const slide = slides[idx];
     $('ka-slide-root').innerHTML = R.renderProjectionSlide(slide, step);
+    fitSlide($('ka-slide-root'));
     $('ka-footer-count').textContent = (idx + 1) + ' / ' + slides.length;
     $('ka-footer-part').textContent = slide.partLabel || '全体';
     $('ka-nav-prev').style.visibility = idx === 0 && step === 0 ? 'hidden' : 'visible';
@@ -261,6 +277,7 @@
     $('ka-pv-title').textContent = R.slideSummary(slide);
     $('ka-pv-lead').textContent = (slide.partLabel || '全体') + ' / ' + session.title;
     $('ka-pv-preview').innerHTML = R.renderProjectionSlide(slide, step);
+    fitSlide($('ka-pv-preview'));
     const facts = R.presenterFacts(slide, session);
     $('ka-pv-facts').innerHTML = facts.map(([term, value]) => (
       '<dt>' + R.esc(term) + '</dt><dd>' + R.rubyText(value || '') + '</dd>'
@@ -365,6 +382,13 @@
         fit();
         renderDeck();
         send({ t: 'idx', i: idx, step });
+      }
+      // Web フォント読み込みで行数が変わるため、確定後にフィット判定をやり直す。
+      if (document.fonts && document.fonts.ready) {
+        document.fonts.ready.then(() => {
+          if (isPresenter) renderPresenter();
+          else renderDeck();
+        });
       }
     } catch (error) {
       showError(error.message);
