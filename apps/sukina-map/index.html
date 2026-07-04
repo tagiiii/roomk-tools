@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>すきなことマップ | roomK</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet" />
+  <link rel="stylesheet" href="../shared/css/design-system.css" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="sm-shell">
+    <header class="sm-header">
+      <div>
+        <h1 class="sm-header__title">すきなことマップ</h1>
+        <p class="sm-header__sub">すき・気になるものを ならべて、じぶんのマップを そだてよう</p>
+      </div>
+      <a class="sm-header__link" href="../">
+        <span class="material-symbols-rounded" aria-hidden="true">home</span>
+        ツール一覧
+      </a>
+    </header>
+
+    <main class="sm-main">
+      <section class="screen" id="screen-start" aria-labelledby="start-title"></section>
+      <section class="screen" id="screen-load-confirm" aria-labelledby="load-confirm-title"></section>
+      <section class="screen" id="screen-map" aria-labelledby="map-title"></section>
+      <section class="screen" id="screen-save" aria-labelledby="save-title"></section>
+    </main>
+  </div>
+
+  <div class="sm-toast" id="toast" role="status" aria-live="polite"></div>
+  <input class="sm-file-input" id="recordFile" type="file" accept="application/json,.json" />
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
