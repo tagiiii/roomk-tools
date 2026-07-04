@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>つよみカード | roomK</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet" />
+  <link rel="stylesheet" href="../shared/css/design-system.css" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <div class="wrapper">
+
+    <!-- TOP -->
+    <div class="screen active" id="screen-top">
+      <header class="ty-header">
+        <h1 class="ty-header__title">つよみカード</h1>
+        <p class="ty-header__sub">「そういうところが あるかも」を いっしょに ながめるカード</p>
+      </header>
+
+      <div class="ty-top-actions">
+        <button class="btn btn-primary btn-lg" id="btn-start">はじめる</button>
+        <button class="btn btn-ghost" id="btn-howto-toggle">あそびかた</button>
+      </div>
+
+      <div class="ty-howto" id="howto-panel">
+        <ol class="ty-howto__list">
+          <li>まず、じぶんに「あるかも」と思うカードを えらぶ（なくても OK）</li>
+          <li>つぎに、メンターが「見えた あるかも」を えらぶ</li>
+          <li>さいごに、ふたりの カードを ならべて ながめる</li>
+        </ol>
+        <p class="ty-howto__note">ここに あるのは ぜんぶ「たまに 出る力」。まいかい 出せなくて だいじょうぶ。</p>
+      </div>
+    </div>
+
+    <!-- PICK（子ども・メンター共用） -->
+    <div class="screen" id="screen-pick">
+      <header class="ty-header">
+        <h1 class="ty-header__title" id="pick-title"></h1>
+        <p class="ty-header__sub" id="pick-sub"></p>
+      </header>
+
+      <!-- 「えらばない」も正式なこたえ。カードと同格に置く -->
+      <div class="ty-noanswer" id="noanswer-row" role="group" aria-label="えらばないときのこたえ">
+        <button type="button" class="ty-noanswer__btn" data-key="wakaranai" aria-pressed="false">わからない</button>
+        <button type="button" class="ty-noanswer__btn" data-key="erabanai" aria-pressed="false">きょうは えらばない</button>
+      </div>
+      <p class="ty-noanswer-reply" id="noanswer-reply" aria-live="polite"></p>
+
+      <div class="ty-grid" id="card-grid"></div>
+
+      <div class="ty-actions">
+        <button class="btn btn-primary btn-lg btn-full" id="btn-pick-next"></button>
+        <button class="btn btn-ghost" id="btn-pick-back" hidden>まえに もどる</button>
+      </div>
+    </div>
+
+    <!-- SHOW（見せ合い） -->
+    <div class="screen" id="screen-show">
+      <header class="ty-header">
+        <h1 class="ty-header__title">ならべて ながめよう</h1>
+        <p class="ty-header__sub">ふたりの「あるかも」を ゆっくり ながめてみよう</p>
+      </header>
+
+      <section class="ty-show-group">
+        <h2 class="ty-show-group__title">
+          <span class="material-symbols-rounded" aria-hidden="true">face</span>
+          じぶんで えらんだ「あるかも」
+        </h2>
+        <div class="ty-show-cards" id="show-kid"></div>
+      </section>
+
+      <section class="ty-show-group">
+        <h2 class="ty-show-group__title">
+          <span class="material-symbols-rounded" aria-hidden="true">visibility</span>
+          メンターから 見えた「あるかも」
+        </h2>
+        <div class="ty-show-cards" id="show-mentor"></div>
+      </section>
+
+      <p class="ty-show-note">ここに あるのは ぜんぶ「たまに 出る力」。まいかい 出せなくて だいじょうぶ。</p>
+
+      <div class="ty-marker" id="show-marker"></div>
+
+      <div class="ty-actions">
+        <button class="btn btn-secondary" id="btn-save-json">
+          <span class="material-symbols-rounded">download</span>
+          えらんだカードを ほぞん（JSON）
+        </button>
+        <button class="btn btn-ghost" id="btn-show-back">まえに もどる</button>
+        <button class="btn btn-ghost" id="btn-restart">さいしょから</button>
+      </div>
+    </div>
+
+  </div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,301 @@
+/* つよみカード アプリ固有スタイル
+   共通スタイル（M-1〜M-6）は design-system.css に定義済み */
+
+/* ── レイアウト ── */
+.wrapper {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 48px 40px 80px;
+}
+
+/* ── 画面切り替え ── */
+.screen {
+  display: none;
+}
+
+.screen.active {
+  display: block;
+}
+
+/* ── ヘッダー ── */
+.ty-header {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.ty-header__title {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  color: var(--color-primary);
+  letter-spacing: 0.04em;
+}
+
+.ty-header__sub {
+  font-size: var(--font-size-sub);
+  color: var(--color-muted);
+  margin-top: 6px;
+  line-height: 1.6;
+}
+
+/* ── TOP 画面 ── */
+.ty-top-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.ty-howto {
+  display: none;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-box);
+  padding: 24px 28px;
+  margin-top: 8px;
+}
+
+.ty-howto.visible {
+  display: block;
+}
+
+.ty-howto__list {
+  list-style: none;
+  counter-reset: howto;
+  padding: 0;
+  margin: 0;
+}
+
+.ty-howto__list li {
+  counter-increment: howto;
+  position: relative;
+  padding-left: 32px;
+  margin-bottom: 12px;
+  font-size: var(--font-size-sub);
+  color: var(--color-text);
+  line-height: 1.6;
+}
+
+.ty-howto__list li::before {
+  content: counter(howto);
+  position: absolute;
+  left: 0;
+  top: 1px;
+  width: 22px;
+  height: 22px;
+  border-radius: var(--radius-full);
+  background: var(--color-accent);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ty-howto__note {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--color-border);
+  font-size: var(--font-size-sm);
+  color: var(--color-muted);
+  line-height: 1.6;
+}
+
+/* ── 「えらばない」ボタン（カードと同格の正式なこたえ）── */
+.ty-noanswer {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.ty-noanswer__btn {
+  background: var(--color-surface);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-full);
+  padding: 10px 20px;
+  font-family: var(--font-base);
+  font-size: var(--font-size-sub);
+  color: var(--color-text);
+  cursor: pointer;
+  transition: border-color var(--transition-base), box-shadow var(--transition-base);
+}
+
+.ty-noanswer__btn:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.ty-noanswer__btn[aria-pressed="true"] {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px rgba(46, 125, 140, 0.15);
+}
+
+/* ── えらばない選択を尊重する一言 ── */
+.ty-noanswer-reply {
+  min-height: 1.6em;
+  text-align: center;
+  font-size: var(--font-size-sm);
+  color: var(--color-muted);
+  margin-bottom: 12px;
+}
+
+/* ── カードグリッド ── */
+.ty-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-bottom: 28px;
+}
+
+.ty-card {
+  background: var(--color-surface);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-card);
+  padding: 12px 14px;
+  font-family: var(--font-base);
+  font-size: var(--font-size-sub);
+  color: var(--color-text);
+  text-align: left;
+  line-height: 1.5;
+  cursor: pointer;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  transition: border-color var(--transition-base), box-shadow var(--transition-base);
+}
+
+.ty-card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+/* 未選択カードのグレーアウトはしない（心理的安全設計） */
+.ty-card--selected {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px rgba(46, 125, 140, 0.15);
+}
+
+.ty-card__num {
+  color: var(--color-accent);
+  font-weight: 700;
+  font-feature-settings: "palt";
+  flex-shrink: 0;
+}
+
+.ty-card__text {
+  flex: 1;
+}
+
+.ty-card__check {
+  flex-shrink: 0;
+  font-size: 20px;
+  color: var(--color-accent);
+  visibility: hidden;
+}
+
+.ty-card--selected .ty-card__check {
+  visibility: visible;
+}
+
+/* ── アクション ── */
+.ty-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+/* ── 見せ合い画面 ── */
+.ty-show-group {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-box);
+  padding: 20px 24px;
+  margin-bottom: 16px;
+}
+
+.ty-show-group__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--font-size-sub);
+  font-weight: 700;
+  color: var(--color-primary);
+  margin-bottom: 14px;
+}
+
+.ty-show-group__title .material-symbols-rounded {
+  font-size: 20px;
+  color: var(--color-accent);
+}
+
+.ty-show-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ty-show-card {
+  background: var(--color-bg);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-card);
+  padding: 12px 16px;
+  font-size: var(--font-size-sub);
+  color: var(--color-text);
+  line-height: 1.5;
+}
+
+/* 「わからない」「えらばない」もカードと同じ見た目（同格のこたえ） */
+.ty-show-card--answer {
+  color: var(--color-muted);
+}
+
+.ty-show-note {
+  text-align: center;
+  font-size: var(--font-size-sm);
+  color: var(--color-muted);
+  line-height: 1.6;
+  margin: 20px 0 8px;
+}
+
+.ty-marker {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--font-size-sm);
+  color: var(--color-muted);
+  margin-bottom: 20px;
+}
+
+.ty-marker .material-symbols-rounded {
+  font-size: 18px;
+}
+
+/* ── レスポンシブ ── */
+@media (max-width: 600px) {
+  .wrapper {
+    padding: 28px 16px 60px;
+  }
+
+  .ty-header__title {
+    font-size: var(--font-size-lg);
+  }
+
+  .ty-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ty-card {
+    padding: 12px 14px;
+  }
+
+  .ty-howto {
+    padding: 20px 20px;
+  }
+
+  .ty-show-group {
+    padding: 16px 16px;
+  }
+}
