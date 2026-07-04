@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>チェックアウトカード | roomK</title>
+  <!-- Google Fonts（Noto Sans JP）-->
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
+  <!-- Material Symbols Rounded -->
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet" />
+  <!-- 共通デザインシステム -->
+  <link rel="stylesheet" href="../shared/css/design-system.css" />
+  <!-- アプリ固有スタイル -->
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <div class="ck-wrapper">
+
+    <!-- ヘッダー -->
+    <header class="ck-header">
+      <span class="material-symbols-rounded ck-header__icon">waving_hand</span>
+      <h1 class="ck-header__title">チェックアウトカード</h1>
+      <p class="ck-header__sub">きょうの さいごに、1まいだけ。</p>
+    </header>
+
+    <!-- カード＋アクション -->
+    <main class="ck-main" id="mainArea">
+      <div class="ck-card-area" aria-live="polite">
+        <div class="flip-card ck-card" id="flipCard" role="button" tabindex="0" aria-label="カードをひく">
+          <div class="flip-card-inner">
+            <div class="flip-card-face back ck-card__back">
+              <span class="material-symbols-rounded ck-card__back-icon">style</span>
+              <span class="ck-card__back-text">きょうの 1まい</span>
+            </div>
+            <div class="flip-card-face front ck-card__front">
+              <p class="ck-card__question" id="questionText"></p>
+              <p class="ck-card__note">わからない・ないしょ・パス もぜんぶ正解</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="ck-actions">
+        <button class="btn btn-primary btn-lg" id="btnDraw">カードをひく</button>
+        <button class="btn btn-secondary btn-lg" id="btnRedraw" hidden>べつのカードにする</button>
+        <button class="btn btn-ghost" id="btnPass">きょうはパス</button>
+      </div>
+    </main>
+
+    <!-- パス後の一言（これだけ表示して終わる）-->
+    <section class="ck-pass" id="passArea" hidden>
+      <span class="material-symbols-rounded ck-pass__icon">waving_hand</span>
+      <p class="ck-pass__text" id="passText"></p>
+    </section>
+
+  </div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

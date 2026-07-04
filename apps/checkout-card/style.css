@@ -1,0 +1,176 @@
+/* チェックアウトカード アプリ固有スタイル
+   共通スタイル（M-1〜M-6）は design-system.css に定義済み */
+
+/* hidden 属性を .btn 等の display 指定より優先させる */
+[hidden] {
+  display: none !important;
+}
+
+/* ── レイアウト（カードを画面中央に）── */
+.ck-wrapper {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 40px 24px 16px;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── ヘッダー ── */
+.ck-header {
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.ck-header__icon {
+  font-size: 32px;
+  color: var(--color-accent);
+}
+
+.ck-header__title {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--color-primary);
+  letter-spacing: 0.04em;
+}
+
+.ck-header__sub {
+  font-size: var(--font-size-sub);
+  color: var(--color-muted);
+  margin-top: 4px;
+}
+
+/* ── メインエリア ── */
+.ck-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 32px;
+}
+
+/* ── カード（M-4 flip-card を使用）── */
+.ck-card-area {
+  display: flex;
+  justify-content: center;
+}
+
+.ck-card {
+  width: 100%;
+  max-width: 520px;
+  aspect-ratio: 3 / 2;
+}
+
+/* 裏面 */
+.ck-card__back {
+  background-color: var(--color-primary);
+  background-image: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 10px,
+    rgba(255, 255, 255, 0.05) 10px,
+    rgba(255, 255, 255, 0.05) 20px
+  );
+  border-color: #163352;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ck-card:not(.flipped):hover .ck-card__back {
+  background-color: #234d70;
+}
+
+.ck-card__back-icon {
+  font-size: 56px;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.ck-card__back-text {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.6);
+  letter-spacing: 0.08em;
+}
+
+/* 表面 */
+.ck-card__front {
+  background: var(--color-surface);
+  border-color: var(--color-accent);
+  padding: 32px 36px;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.ck-card__question {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--color-primary);
+  text-align: center;
+  line-height: 1.6;
+  /* 分かち書きの空白位置でのみ折り返す */
+  word-break: keep-all;
+  text-wrap: balance;
+}
+
+.ck-card__note {
+  font-size: 13px;
+  color: var(--color-muted);
+  text-align: center;
+}
+
+/* ── アクション ── */
+.ck-actions {
+  display: flex;
+  gap: 14px;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* ── パス後の一言 ── */
+.ck-pass {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 14px;
+  text-align: center;
+}
+
+.ck-pass__icon {
+  font-size: 56px;
+  color: var(--color-accent);
+}
+
+.ck-pass__text {
+  font-size: 30px;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+/* ── レスポンシブ ── */
+@media (max-width: 600px) {
+  .ck-wrapper {
+    padding: 28px 16px 12px;
+  }
+
+  .ck-card {
+    aspect-ratio: 4 / 3;
+  }
+
+  .ck-card__front {
+    padding: 24px 20px;
+  }
+
+  .ck-card__question {
+    font-size: 21px;
+  }
+
+  .ck-card__note {
+    font-size: 11px;
+  }
+
+  .ck-pass__text {
+    font-size: 24px;
+  }
+}
