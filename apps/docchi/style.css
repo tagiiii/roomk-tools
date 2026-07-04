@@ -1,0 +1,283 @@
+/* どっちにする？ アプリ固有スタイル（接頭辞 dc- / BEM）
+   共通スタイルは design-system.css に定義済み */
+
+/* ── レイアウト ── */
+.wrapper {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 48px 40px 80px;
+}
+
+/* ── 画面切り替え ── */
+.dc-screen {
+  display: none;
+}
+
+.dc-screen--active {
+  display: block;
+}
+
+/* ── ヘッダー（トップ画面）── */
+.dc-header {
+  text-align: center;
+  margin-bottom: 36px;
+}
+
+.dc-header__icon {
+  font-size: 44px;
+  color: var(--color-accent);
+}
+
+.dc-header__title {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--color-primary);
+  letter-spacing: 0.04em;
+  margin-top: 4px;
+}
+
+.dc-header__sub {
+  font-size: var(--font-size-sub);
+  color: var(--color-muted);
+  margin-top: 8px;
+}
+
+/* ── カテゴリ選択 ── */
+.dc-cat {
+  text-align: center;
+  margin-bottom: 36px;
+}
+
+.dc-cat__label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-muted);
+  letter-spacing: 0.08em;
+  margin-bottom: 14px;
+}
+
+.dc-cat__list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+
+.dc-cat__chip {
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: 2px solid var(--color-border);
+  border-radius: 999px;
+  padding: 10px 22px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+}
+
+.dc-cat__chip:hover {
+  border-color: var(--color-accent);
+}
+
+.dc-cat__chip--on {
+  color: #fff;
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  font-weight: 700;
+}
+
+.dc-start {
+  text-align: center;
+}
+
+/* ── ツールバー（カード画面）── */
+.dc-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.dc-toolbar__cat {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-muted);
+  letter-spacing: 0.06em;
+}
+
+/* ── カード ── */
+.dc-card {
+  background: var(--color-surface);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-box);
+  padding: 40px 36px 28px;
+  text-align: center;
+}
+
+.dc-card__q {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--color-primary);
+  line-height: 1.4;
+  margin-bottom: 28px;
+}
+
+/* ── 2択エリア ── */
+.dc-vs {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: stretch;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.dc-vs__mark {
+  align-self: center;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-muted);
+}
+
+/* ── 選択肢（番号付け規約: 丸数字 + アクセントカラー）── */
+.dc-choice {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  text-align: left;
+  font-family: inherit;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--color-primary);
+  line-height: 1.35;
+  background: var(--color-bg);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-box);
+  padding: 26px 22px;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background-color 0.2s ease, opacity 0.3s ease;
+}
+
+.dc-choice:hover {
+  border-color: var(--color-accent);
+}
+
+.dc-choice__num {
+  color: var(--color-accent);
+  font-weight: 700;
+  font-feature-settings: "palt";
+  flex-shrink: 0;
+}
+
+.dc-choice__text {
+  flex: 1;
+}
+
+/* ③④（どっちもいい・どっちでもない）は少し控えめに */
+.dc-alt {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.dc-choice--alt {
+  font-size: 17px;
+  font-weight: 500;
+  color: var(--color-text);
+  padding: 14px 16px;
+  justify-content: center;
+  text-align: center;
+}
+
+/* 選択時のふわっとしたハイライト（正解演出・効果音なし） */
+@keyframes dc-pick-in {
+  0%   { transform: scale(1); }
+  45%  { transform: scale(1.03); }
+  100% { transform: scale(1); }
+}
+
+.dc-choice--picked {
+  border-color: var(--color-accent);
+  background: #e7f1f3;
+  animation: dc-pick-in 0.45s ease;
+}
+
+.dc-card--answered .dc-choice:not(.dc-choice--picked) {
+  opacity: 0.55;
+}
+
+/* ── そっと添える文言 ── */
+.dc-card__note {
+  font-size: 13px;
+  color: var(--color-muted);
+}
+
+/* ── つぎへ ── */
+.dc-next {
+  text-align: center;
+  margin-top: 24px;
+}
+
+/* ── メンター向け追い質問例 ── */
+.dc-ask {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--color-muted);
+  margin-top: 22px;
+}
+
+.dc-ask .material-symbols-rounded {
+  font-size: 16px;
+}
+
+/* ── レスポンシブ ── */
+@media (max-width: 600px) {
+  .wrapper {
+    padding: 28px 16px 60px;
+  }
+
+  .dc-header__title {
+    font-size: 24px;
+  }
+
+  .dc-card {
+    padding: 26px 18px 20px;
+  }
+
+  .dc-card__q {
+    font-size: 20px;
+    margin-bottom: 20px;
+  }
+
+  /* 縦積み: ① / vs / ② */
+  .dc-vs {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .dc-choice {
+    font-size: 20px;
+    padding: 18px 16px;
+  }
+
+  /* ③④は折り返しを避けて縦積みに */
+  .dc-alt {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .dc-choice--alt {
+    font-size: 15px;
+    padding: 12px 10px;
+  }
+
+  .dc-cat__chip {
+    font-size: 14px;
+    padding: 8px 16px;
+  }
+}
