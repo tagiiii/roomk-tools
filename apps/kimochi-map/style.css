@@ -1,0 +1,284 @@
+/* きもちのことばマップ アプリ固有スタイル
+   共通スタイルは design-system.css に定義済み
+
+   グループ色はすべて彩度・明度をそろえた穏やかな色にする。
+   ネガティブ系グループを暗い色・警告色にしない（グループに優劣をつけない）。 */
+
+/* ── レイアウト ── */
+.wrapper {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 48px 40px 80px;
+}
+
+/* ── ヘッダー ── */
+.km-header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.km-header__title {
+  font-size: var(--font-size-sub);
+  font-weight: 700;
+  color: var(--color-muted);
+  letter-spacing: 0.08em;
+}
+
+.km-header__question {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--color-primary);
+  line-height: 1.5;
+  margin-top: 10px;
+}
+
+.km-header__sub {
+  font-size: var(--font-size-sub);
+  color: var(--color-muted);
+  margin-top: 8px;
+}
+
+/* ── 「えらばない」ボタン（ことばと同格の正式なこたえ）── */
+.km-noanswer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.km-noanswer__btn {
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-full);
+  padding: 9px 18px;
+  cursor: pointer;
+  transition: border-color var(--transition-base), background var(--transition-base);
+}
+
+.km-noanswer__btn:hover {
+  border-color: var(--color-accent);
+}
+
+.km-noanswer__btn.is-active {
+  border-color: var(--color-accent);
+  background: rgba(46, 125, 140, 0.08);
+  font-weight: 700;
+}
+
+/* ── えらばない選択を尊重する一言 ── */
+.km-gentle {
+  text-align: center;
+  font-size: 15px;
+  color: var(--color-accent);
+  font-weight: 500;
+  margin-bottom: 14px;
+}
+
+/* ── 選択パネル ── */
+.km-panel {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-box);
+  padding: 18px 22px;
+  margin-bottom: 24px;
+  box-shadow: var(--shadow-sm);
+}
+
+.km-panel__hint {
+  font-size: var(--font-size-sm);
+  color: var(--color-muted);
+  text-align: center;
+  margin-bottom: 12px;
+}
+
+.km-panel__rows {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.km-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+}
+
+.km-row__word {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-primary);
+  min-width: 8em;
+}
+
+.km-row__sizes {
+  display: flex;
+  gap: 6px;
+}
+
+.km-size {
+  font-family: inherit;
+  font-size: 12px;
+  color: var(--color-muted);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  padding: 4px 12px;
+  cursor: pointer;
+  transition: border-color var(--transition-base), background var(--transition-base);
+}
+
+.km-size:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.km-size.is-active {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: #fff;
+  font-weight: 700;
+}
+
+.km-row__remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  border-radius: var(--radius-full);
+  color: var(--color-muted);
+  cursor: pointer;
+  padding: 4px;
+  margin-left: auto;
+}
+
+.km-row__remove:hover {
+  color: var(--color-text);
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.km-row__remove .material-symbols-rounded {
+  font-size: 18px;
+}
+
+.km-panel__actions {
+  text-align: center;
+  margin-top: 12px;
+}
+
+/* ── ことばマップ ── */
+.km-map {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.km-group {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-box);
+  padding: 18px 20px;
+}
+
+/* グループ色（どれも同じトーンの穏やかな色。良し悪しの意味を持たせない） */
+.km-group--niko  { --km-c: #5B9E63; --km-c-soft: #EAF3EB; }
+.km-group--poka  { --km-c: #B9884C; --km-c-soft: #F7EFE3; }
+.km-group--moya  { --km-c: #8B7FB8; --km-c-soft: #EFEDF7; }
+.km-group--zawa  { --km-c: #5D8CB0; --km-c-soft: #E8F0F6; }
+.km-group--gutta { --km-c: #A97F97; --km-c-soft: #F4ECF1; }
+.km-group--suki  { --km-c: #3F9CA8; --km-c-soft: #E6F2F4; }
+
+.km-group__name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--km-c);
+  margin-bottom: 12px;
+}
+
+.km-group__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: var(--radius-full);
+  background: var(--km-c);
+  flex-shrink: 0;
+}
+
+.km-group__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* ── ことばチップ ── */
+.km-chip {
+  font-family: inherit;
+  font-size: 15px;
+  color: var(--color-text);
+  background: var(--km-c-soft);
+  border: 1.5px solid transparent;
+  border-radius: var(--radius-full);
+  padding: 7px 14px;
+  cursor: pointer;
+  transition: border-color var(--transition-base), background var(--transition-base),
+              font-size var(--transition-base);
+}
+
+.km-chip:hover {
+  border-color: var(--km-c);
+}
+
+.km-chip.is-selected {
+  background: var(--color-surface);
+  border: 2px solid var(--km-c);
+  font-weight: 700;
+  box-shadow: var(--shadow-sm);
+}
+
+/* 「ちかくのことば」のゆるいハイライト */
+.km-chip.is-near {
+  border: 1.5px dashed var(--km-c);
+}
+
+/* 大きさ（数値は使わず、見た目の大きさだけで表す） */
+.km-chip--small {
+  font-size: 12px;
+  padding: 5px 11px;
+}
+
+.km-chip--big {
+  font-size: 19px;
+  padding: 9px 18px;
+}
+
+/* ── レスポンシブ ── */
+@media (max-width: 600px) {
+  .wrapper {
+    padding: 28px 16px 60px;
+  }
+
+  .km-header__question {
+    font-size: 20px;
+  }
+
+  .km-map {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .km-group {
+    padding: 14px 14px;
+  }
+
+  .km-row__word {
+    min-width: 100%;
+  }
+}

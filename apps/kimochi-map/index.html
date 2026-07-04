@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>きもちのことばマップ | roomK</title>
+  <!-- Google Fonts（Noto Sans JP）-->
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
+  <!-- Material Symbols Rounded（絵文字は使わない）-->
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet" />
+  <!-- 共通デザインシステム -->
+  <link rel="stylesheet" href="../shared/css/design-system.css" />
+  <!-- アプリ固有スタイル -->
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <div class="wrapper">
+
+    <!-- ヘッダー -->
+    <header class="km-header">
+      <h1 class="km-header__title">きもちのことばマップ</h1>
+      <p class="km-header__question">きょうの きもちに ちかい ことばは ある？</p>
+      <p class="km-header__sub">さいきんの きもちでも OK。いくつ えらんでも いいし、えらばなくても いいよ。</p>
+    </header>
+
+    <!-- 「えらばない」も正式なこたえ。ことばチップと同格に置く -->
+    <div class="km-noanswer" id="noAnswerRow" role="group" aria-label="えらばないときのこたえ">
+      <button type="button" class="km-noanswer__btn" data-key="wakaranai" aria-pressed="false">わからない</button>
+      <button type="button" class="km-noanswer__btn" data-key="doredemo" aria-pressed="false">どれでもない</button>
+      <button type="button" class="km-noanswer__btn" data-key="erabanai" aria-pressed="false">きょうは えらばない</button>
+    </div>
+
+    <!-- えらばない選択を尊重する一言 -->
+    <p class="km-gentle" id="gentleMsg" aria-live="polite" hidden></p>
+
+    <!-- 選択パネル（ことばを選んだときだけ表示）-->
+    <section class="km-panel" id="selectionPanel" hidden>
+      <p class="km-panel__hint">ちかくの ことばも ふんわり ひかってるよ。こっちのほうが ちかい？</p>
+      <div class="km-panel__rows" id="selectionRows"></div>
+      <div class="km-panel__actions">
+        <button type="button" class="btn btn-ghost btn-sm" id="btnClear">けす</button>
+      </div>
+    </section>
+
+    <!-- ことばマップ -->
+    <main class="km-map" id="mapArea"></main>
+
+  </div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
