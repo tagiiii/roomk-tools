@@ -1,0 +1,1654 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+  <title>まぎれ絵師 | roomK</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
+  <link rel="stylesheet" href="../shared/css/design-system.css">
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+  <script src="../shared/js/rtdb-utils.js"></script>
+  <style>
+    /* ── 画面管理 ── */
+    .screen { display: none; min-height: 100dvh; }
+    .screen.active { display: flex; flex-direction: column; align-items: center; }
+    .page { width: 100%; max-width: 560px; padding: 40px 20px 80px; }
+
+    /* ── ヘッダー ── */
+    .mgr-header { text-align: center; padding: 48px 0 32px; }
+    .mgr-header__icon {
+      width: 80px; height: 80px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 16px;
+    }
+    .mgr-header__icon .material-symbols-rounded { font-size: 44px; color: #fff; }
+    .mgr-header__title { font-size: 28px; font-weight: 700; color: var(--color-primary); }
+    .mgr-header__sub { font-size: 14px; color: var(--color-muted); margin-top: 8px; line-height: 1.7; }
+
+    /* ── ルームコード ── */
+    .mgr-room-code {
+      font-size: 48px; font-weight: 700; letter-spacing: 0.15em;
+      color: var(--color-primary); text-align: center;
+    }
+
+    /* ── プレイヤーリスト ── */
+    .mgr-player-list { list-style: none; }
+    .mgr-player-item {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 0; border-bottom: 1px solid var(--color-border); font-size: 15px;
+    }
+    .mgr-player-item:last-child { border-bottom: none; }
+    .mgr-player-item__name { display: flex; align-items: center; gap: 6px; }
+    .mgr-tag {
+      font-size: 11px; font-weight: 700; padding: 2px 6px;
+      border-radius: 4px; background: var(--color-accent); color: #fff;
+    }
+    .mgr-tag--me { background: var(--color-muted); }
+    .mgr-tag--ok { background: var(--color-success); }
+    .mgr-tag--fake { background: var(--color-primary); }
+
+    /* ── 役わりカード ── */
+    .mgr-role-card {
+      border-radius: var(--radius-card); padding: 28px 20px;
+      text-align: center; cursor: pointer;
+      background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+      background-image:
+        linear-gradient(135deg, var(--color-primary), var(--color-accent)),
+        repeating-linear-gradient(-45deg, transparent, transparent 10px, rgba(255,255,255,0.05) 10px, rgba(255,255,255,0.05) 20px);
+      color: #fff; margin-bottom: 20px;
+    }
+    .mgr-role-card--open {
+      background: var(--color-surface);
+      border: 3px solid var(--color-accent);
+      color: var(--color-text); cursor: default;
+    }
+    .mgr-role-card__label { font-size: 13px; color: var(--color-muted); font-weight: 500; }
+    .mgr-role-card__word { font-size: 38px; font-weight: 700; color: var(--color-primary); margin: 6px 0; }
+    .mgr-role-card__fake-title { font-size: 24px; font-weight: 700; color: var(--color-primary); margin: 6px 0; }
+    .mgr-role-card__note { font-size: 14px; color: var(--color-muted); line-height: 1.7; }
+    .mgr-role-card__hint {
+      display: inline-block; margin-top: 12px; padding: 6px 14px;
+      border-radius: 999px; background: var(--color-bg);
+      font-size: 14px; font-weight: 700; color: var(--color-accent);
+    }
+
+    /* ── ホスト向け折りたたみ（画面共有対策） ── */
+    .mgr-secret { margin-bottom: 10px; border: 1px solid var(--color-border); border-radius: 10px; background: var(--color-surface); }
+    .mgr-secret summary {
+      list-style: none; cursor: pointer; padding: 12px 14px;
+      font-size: 14px; font-weight: 700; color: var(--color-primary);
+      display: flex; align-items: center; gap: 6px;
+    }
+    .mgr-secret summary::-webkit-details-marker { display: none; }
+    .mgr-secret summary .material-symbols-rounded { font-size: 18px; color: var(--color-muted); }
+    .mgr-secret__body { padding: 0 14px 12px; font-size: 16px; font-weight: 700; }
+
+    /* ── キャンバス ── */
+    .mgr-canvas-wrap {
+      background: #fff; border: 2px solid var(--color-border);
+      border-radius: 12px; overflow: hidden; margin-bottom: 12px;
+    }
+    .mgr-canvas { display: block; width: 100%; height: auto; touch-action: none; }
+    .mgr-canvas--active { border-color: var(--color-accent); }
+
+    /* ── 手番・凡例 ── */
+    .mgr-turn {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 8px; margin-bottom: 10px; flex-wrap: wrap;
+    }
+    .mgr-turn__now { font-size: 16px; font-weight: 700; color: var(--color-primary); }
+    .mgr-turn__count { font-size: 13px; color: var(--color-muted); }
+    .mgr-legend { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+    .mgr-legend__chip {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 4px 10px; border-radius: 999px;
+      background: var(--color-surface); border: 1px solid var(--color-border);
+      font-size: 13px;
+    }
+    .mgr-legend__chip--now { border-color: var(--color-accent); background: #EAF4F5; font-weight: 700; }
+    .mgr-legend__dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+
+    /* ── お題チップ ── */
+    .mgr-topic-chip {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 16px; background: var(--color-primary); color: #fff;
+      border-radius: 999px; font-size: 15px; font-weight: 700;
+    }
+    .mgr-topic-chip--fake { background: var(--color-accent); }
+
+    /* ── 描画操作バー ── */
+    .mgr-drawbar { text-align: center; margin-bottom: 12px; }
+    .mgr-drawbar__hint { font-size: 14px; color: var(--color-muted); margin-bottom: 8px; }
+    .mgr-drawbar__btns { display: flex; gap: 8px; justify-content: center; }
+
+    /* ── 投票ボタン ── */
+    .mgr-vote-btn {
+      display: flex; align-items: center; justify-content: space-between;
+      width: 100%; padding: 14px 16px; margin-bottom: 8px;
+      background: var(--color-surface); border: 2px solid var(--color-border);
+      border-radius: 12px; font-family: var(--font-base);
+      font-size: 16px; font-weight: 500; cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .mgr-vote-btn:hover { border-color: var(--color-accent); background: #EAF4F5; }
+    .mgr-vote-btn.selected { border-color: var(--color-accent); background: #E0EFF1; color: var(--color-accent); }
+
+    /* ── 結果 ── */
+    .mgr-result-banner {
+      text-align: center; padding: 24px 16px;
+      background: linear-gradient(135deg, #E8F5F5, #F0EAF8);
+      border-radius: var(--radius-card); margin-bottom: 16px;
+    }
+    .mgr-result-banner__title { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+    .mgr-result-banner__sub { font-size: 14px; color: var(--color-muted); }
+    .mgr-vote-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 0; border-bottom: 1px solid var(--color-border); font-size: 15px;
+    }
+    .mgr-vote-row:last-child { border-bottom: none; }
+    .mgr-vote-row__num { font-weight: 700; color: var(--color-accent); }
+    .mgr-guess-box {
+      text-align: center; padding: 16px;
+      background: var(--color-surface); border: 2px solid var(--color-accent);
+      border-radius: 12px; margin-bottom: 12px;
+    }
+    .mgr-guess-box__label { font-size: 13px; color: var(--color-muted); margin-bottom: 4px; }
+    .mgr-guess-box__text { font-size: 26px; font-weight: 700; color: var(--color-primary); }
+
+    /* ── ホスト用バナー（まぎれ絵師退出時） ── */
+    .mgr-host-banner {
+      background: #FDF3E7; border: 1px solid #E8C9A0;
+      border-radius: 12px; padding: 14px; margin-bottom: 12px;
+      font-size: 14px;
+    }
+
+    /* ── オーバーレイ ── */
+    .mgr-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(28,63,94,0.88); z-index: 100;
+      flex-direction: column; align-items: center; justify-content: center;
+      gap: 16px; color: #fff; text-align: center; padding: 24px;
+    }
+    .mgr-overlay.show { display: flex; }
+    .mgr-overlay__title { font-size: 20px; font-weight: 700; }
+    .mgr-overlay__sub { font-size: 14px; opacity: 0.8; }
+    .mgr-spinner {
+      width: 32px; height: 32px;
+      border: 3px solid rgba(255,255,255,0.3); border-top-color: #fff;
+      border-radius: 50%; animation: mgr-spin 0.7s linear infinite;
+    }
+    @keyframes mgr-spin { to { transform: rotate(360deg); } }
+
+    /* ── Misc ── */
+    .mgr-section-lbl {
+      font-size: 13px; font-weight: 700; color: var(--color-muted);
+      letter-spacing: 0.06em; margin-bottom: 8px;
+    }
+    .mgr-sep { margin-top: 8px; }
+    .mgr-center { text-align: center; }
+    h2 { font-size: 20px; font-weight: 700; margin-bottom: 16px; color: var(--color-primary); }
+
+    @media (max-width: 600px) {
+      .page { padding: 28px 14px 60px; }
+      .mgr-header { padding: 32px 0 24px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════ TOP ══════════════════ -->
+<div id="screen-top" class="screen">
+  <div class="page">
+    <div class="mgr-header">
+      <div class="mgr-header__icon"><span class="material-symbols-rounded">brush</span></div>
+      <div class="mgr-header__title">まぎれ絵師</div>
+      <div class="mgr-header__sub">
+        みんなで 1まいの絵を 1筆ずつかいて かんせいさせよう。<br>
+        でも ひとりだけ、お題を しらない「まぎれ絵師」が まぎれこんでいる！
+      </div>
+    </div>
+    <div class="card">
+      <button class="btn btn-primary btn-full" onclick="goTo('host-setup')">
+        <span class="material-symbols-rounded">add_circle</span>ルームを作る
+      </button>
+      <button class="btn btn-secondary btn-full mgr-sep" onclick="goTo('guest-join')">
+        <span class="material-symbols-rounded">login</span>ルームに参加する
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ HOST SETUP ══════════════════ -->
+<div id="screen-host-setup" class="screen">
+  <div class="page">
+    <h2>ルームを作る</h2>
+    <div class="card">
+      <div class="form-group">
+        <label class="form-label">ニックネーム（8文字以内）</label>
+        <input class="form-input" id="host-nickname" type="text" maxlength="8" placeholder="例: たろう">
+      </div>
+      <p style="font-size:13px;color:var(--color-muted);margin-bottom:12px">ルームを作った人は かかずに すすめる係になります</p>
+      <button class="btn btn-primary btn-full" onclick="hostCreateRoom()">
+        <span class="material-symbols-rounded">add_home</span>ルームを作成する
+      </button>
+      <button class="btn btn-ghost btn-full mgr-sep" onclick="goTo('top')">戻る</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ GUEST JOIN ══════════════════ -->
+<div id="screen-guest-join" class="screen">
+  <div class="page">
+    <h2>ルームに参加する</h2>
+    <div class="card">
+      <div class="form-group">
+        <label class="form-label">ニックネーム（8文字以内）</label>
+        <input class="form-input" id="guest-nickname" type="text" maxlength="8" placeholder="例: はなこ">
+      </div>
+      <div class="form-group">
+        <label class="form-label">ルームコード（6桁）</label>
+        <input class="form-input" id="guest-code" type="text" maxlength="6" placeholder="ABCDEF"
+               style="text-transform:uppercase;letter-spacing:.2em;font-size:24px;text-align:center">
+      </div>
+      <button class="btn btn-primary btn-full mt-md" onclick="guestJoin()">
+        <span class="material-symbols-rounded">login</span>参加する
+      </button>
+      <button class="btn btn-ghost btn-full mgr-sep" onclick="goTo('top')">戻る</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ WAITING ══════════════════ -->
+<div id="screen-waiting" class="screen">
+  <div class="page">
+    <div id="w-host-panel" style="display:none">
+      <div class="card mgr-center">
+        <p class="mgr-section-lbl">ルームコード</p>
+        <p class="mgr-room-code" id="w-room-code">----</p>
+        <p style="font-size:14px;color:var(--color-muted);margin-top:6px">参加者に伝えてね</p>
+      </div>
+    </div>
+
+    <div class="card mt-md">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <strong style="font-size:16px">参加者</strong>
+        <span id="w-count" style="font-size:14px;color:var(--color-muted)"></span>
+      </div>
+      <ul class="mgr-player-list" id="w-player-list"></ul>
+    </div>
+
+    <div id="w-host-start" class="mt-md" style="display:none">
+      <button class="btn btn-primary btn-full" id="btn-start" onclick="hostStartGame()" disabled>
+        <span class="material-symbols-rounded">play_arrow</span>ゲームをはじめる
+      </button>
+      <p style="font-size:13px;color:var(--color-muted);text-align:center;margin-top:8px">ホストのほかに3人以上で はじめられます</p>
+    </div>
+    <button class="btn btn-ghost btn-full mt-md" onclick="leaveGame()">
+      <span class="material-symbols-rounded">logout</span>退出する
+    </button>
+  </div>
+</div>
+
+<!-- ══════════════════ REVEAL ROLE ══════════════════ -->
+<div id="screen-reveal" class="screen">
+  <div class="page">
+    <h2 class="mgr-center">じゅんびをしよう</h2>
+
+    <!-- ゲスト用 -->
+    <div id="rv-guest-area" style="display:none">
+      <div class="mgr-role-card" id="rv-card" onclick="revealRoleCard()">
+        <span class="material-symbols-rounded" style="font-size:40px;opacity:.7">touch_app</span>
+        <p style="margin-top:8px;font-size:14px">タップして じぶんのカードを見る</p>
+      </div>
+      <div id="rv-confirm-area" style="display:none">
+        <button class="btn btn-primary btn-full" id="btn-confirm" onclick="confirmRole()">
+          <span class="material-symbols-rounded">check_circle</span>かくにんした
+        </button>
+      </div>
+    </div>
+
+    <!-- ホスト用 -->
+    <div id="rv-host-area" style="display:none">
+      <p style="font-size:13px;color:var(--color-muted);margin-bottom:10px">画面共有中は とじたまま すすめられます。見るときだけタップ。</p>
+      <details class="mgr-secret" id="rv-secret-topic">
+        <summary><span class="material-symbols-rounded">visibility</span>お題（タップで見る）</summary>
+        <div class="mgr-secret__body" id="rv-topic-body"></div>
+      </details>
+      <details class="mgr-secret" id="rv-secret-fake">
+        <summary><span class="material-symbols-rounded">visibility</span>まぎれ絵師（タップで見る）</summary>
+        <div class="mgr-secret__body" id="rv-fake-body"></div>
+      </details>
+      <div class="mt-md">
+        <button class="btn btn-primary btn-full" id="btn-start-drawing" onclick="hostStartDrawing()" disabled>
+          <span class="material-symbols-rounded">brush</span>かきはじめる
+        </button>
+        <p style="font-size:13px;color:var(--color-muted);text-align:center;margin-top:8px">全員が「かくにんした」を押すと はじめられます</p>
+      </div>
+    </div>
+
+    <div id="rv-host-banner"></div>
+
+    <div class="card mt-md">
+      <p class="mgr-section-lbl">かくにん状況 <span id="rv-count"></span></p>
+      <ul class="mgr-player-list" id="rv-player-list"></ul>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ DRAWING ══════════════════ -->
+<div id="screen-drawing" class="screen">
+  <div class="page">
+    <div class="mgr-turn">
+      <span class="mgr-turn__now" id="dr-now"></span>
+      <span class="mgr-turn__count" id="dr-count"></span>
+    </div>
+    <div class="mgr-legend" id="dr-legend"></div>
+
+    <div class="mgr-canvas-wrap" id="dr-canvas-wrap">
+      <canvas class="mgr-canvas" id="cv-draw" width="600" height="450"></canvas>
+    </div>
+
+    <div class="mgr-drawbar" id="dr-bar">
+      <p class="mgr-drawbar__hint" id="dr-hint"></p>
+      <div class="mgr-drawbar__btns" id="dr-confirm-btns" style="display:none">
+        <button class="btn btn-primary" id="btn-stroke-ok" onclick="confirmStroke()">
+          <span class="material-symbols-rounded">check</span>これでOK
+        </button>
+        <button class="btn btn-secondary" onclick="retryStroke()">
+          <span class="material-symbols-rounded">replay</span>かきなおす
+        </button>
+      </div>
+    </div>
+
+    <div class="mgr-center" id="dr-topic-chip-area" style="margin-bottom:12px"></div>
+
+    <div id="dr-host-area" style="display:none">
+      <details class="mgr-secret">
+        <summary><span class="material-symbols-rounded">visibility</span>お題とまぎれ絵師（タップで見る）</summary>
+        <div class="mgr-secret__body" id="dr-secret-body"></div>
+      </details>
+      <div id="dr-host-banner"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ DISCUSSION ══════════════════ -->
+<div id="screen-discussion" class="screen">
+  <div class="page">
+    <h2 class="mgr-center">そうだんタイム</h2>
+    <p style="font-size:14px;color:var(--color-muted);text-align:center;margin-bottom:16px">
+      声でもチャットでもOK。「まぎれ絵師は だれか」を話し合おう
+    </p>
+
+    <div class="mgr-canvas-wrap">
+      <canvas class="mgr-canvas" id="cv-disc" width="600" height="450"></canvas>
+    </div>
+    <div class="mgr-legend" id="di-legend"></div>
+
+    <div class="mgr-center" id="di-topic-chip-area" style="margin-bottom:16px"></div>
+
+    <div id="di-host-area" style="display:none">
+      <details class="mgr-secret">
+        <summary><span class="material-symbols-rounded">visibility</span>お題とまぎれ絵師（タップで見る）</summary>
+        <div class="mgr-secret__body" id="di-secret-body"></div>
+      </details>
+      <div id="di-host-banner"></div>
+      <button class="btn btn-primary btn-full mt-md" onclick="hostStartVoting()">
+        <span class="material-symbols-rounded">how_to_vote</span>とうひょうへ
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ VOTING ══════════════════ -->
+<div id="screen-voting" class="screen">
+  <div class="page">
+    <h2>とうひょう</h2>
+    <p style="font-size:14px;color:var(--color-muted);margin-bottom:16px" id="vt-desc">
+      まぎれ絵師だと思う人に とうひょうしよう
+    </p>
+
+    <div class="mgr-canvas-wrap">
+      <canvas class="mgr-canvas" id="cv-vote" width="600" height="450"></canvas>
+    </div>
+
+    <div id="vt-btns"></div>
+
+    <div id="vt-voted-msg" class="card mgr-center" style="display:none">
+      <span class="material-symbols-rounded" style="font-size:40px;color:var(--color-success)">check_circle</span>
+      <p style="font-weight:700;margin-top:8px">とうひょうしました</p>
+    </div>
+    <p id="vt-progress" style="font-size:13px;color:var(--color-muted);text-align:center;margin-top:8px"></p>
+
+    <div id="vt-host-area" style="display:none;margin-top:16px">
+      <div id="vt-host-banner"></div>
+      <button class="btn btn-ghost btn-full" id="btn-close-vote" onclick="hostCloseVoting()">とうひょうを しめきって けっかへ</button>
+      <p id="vt-host-hint" style="font-size:13px;color:var(--color-muted);text-align:center;margin-top:8px"></p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ RESULT ══════════════════ -->
+<div id="screen-result" class="screen">
+  <div class="page">
+    <div id="rs-banner"></div>
+
+    <div class="mgr-canvas-wrap">
+      <canvas class="mgr-canvas" id="cv-result" width="600" height="450"></canvas>
+    </div>
+    <div class="mgr-legend" id="rs-legend"></div>
+
+    <div id="rs-body"></div>
+
+    <div id="rs-host-actions" class="mt-md" style="display:none">
+      <button class="btn btn-primary btn-full" onclick="hostNextRound()">
+        <span class="material-symbols-rounded">replay</span>つぎのラウンドへ
+      </button>
+      <button class="btn btn-ghost btn-full mgr-sep" onclick="hostFinish()">
+        <span class="material-symbols-rounded">flag</span>おわる
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ DONE ══════════════════ -->
+<div id="screen-done" class="screen">
+  <div class="page mgr-center">
+    <div class="mgr-header">
+      <div class="mgr-header__icon"><span class="material-symbols-rounded">celebration</span></div>
+      <div class="mgr-header__title">おしまい！</div>
+      <div class="mgr-header__sub">あそんでくれて ありがとう</div>
+    </div>
+    <button class="btn btn-primary btn-full" onclick="leaveGame()">
+      <span class="material-symbols-rounded">home</span>トップへ戻る
+    </button>
+  </div>
+</div>
+
+<!-- オーバーレイ -->
+<div class="mgr-overlay" id="reconnect-overlay">
+  <div class="mgr-spinner"></div>
+  <p class="mgr-overlay__title">再接続しています...</p>
+</div>
+<div class="mgr-overlay" id="host-off-overlay">
+  <span class="material-symbols-rounded" style="font-size:48px">signal_disconnected</span>
+  <p class="mgr-overlay__title">ホストが一時的に切断されました</p>
+  <p class="mgr-overlay__sub">再接続を待っています</p>
+  <button class="btn btn-ghost" style="margin-top:16px" onclick="leaveGame()">退出する</button>
+</div>
+
+<script>
+// ── Firebase 初期化 ──
+const firebaseConfig = {
+  apiKey: "AIzaSyC0bqQdDJeTAWrqFYqjOT1NsVFiunPemIw",
+  authDomain: "roomk-tools.firebaseapp.com",
+  databaseURL: "https://roomk-tools-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "roomk-tools",
+  storageBucket: "roomk-tools.firebasestorage.app",
+  messagingSenderId: "592193782148",
+  appId: "1:592193782148:web:1529f47cebab7dcd109dd1",
+};
+firebase.initializeApp(firebaseConfig);
+const authReady = firebase.auth().signInAnonymously().catch((e) => {
+  console.error('[auth] anonymous sign-in failed', e);
+  throw e;
+});
+const db = firebase.database();
+RoomkRTDB.initServerTime(db);
+
+const showMsg = RoomkRTDB.showToast;
+const genCode = RoomkRTDB.generateRoomCode;
+const getEstimatedServerNow = RoomkRTDB.now;
+const getHostDisconnectedAt = RoomkRTDB.getHostDisconnectedAt;
+
+// ── 定数 ──
+const SESSION_KEY = 'magire_session';
+const ORPHAN_TTL_MS = 2 * 60 * 1000;
+const ROOMS_PATH = 'magire_rooms';
+const CANVAS_W = 600;
+const CANVAS_H = 450;
+const MIN_GUESTS = 3;
+const LAPS = 2; // 全員が2周かいたら終了
+
+const STATUS = {
+  WAITING: 'waiting',
+  REVEAL: 'reveal_role',
+  DRAWING: 'drawing',
+  DISCUSSION: 'discussion',
+  VOTING: 'voting',
+  RESULT: 'result',
+  DONE: 'done',
+};
+
+const PALETTE = ['#E4572E', '#2E7D8C', '#6B3FA0', '#1F6E3C', '#D81B60', '#E8A200', '#3B6FD4', '#7A5230'];
+
+// ── お題データ（60個・カテゴリ付き） ──
+const TOPICS = [
+  // どうぶつ
+  { w: 'ねこ', c: 'どうぶつ' }, { w: 'いぬ', c: 'どうぶつ' }, { w: 'ぞう', c: 'どうぶつ' },
+  { w: 'きりん', c: 'どうぶつ' }, { w: 'うさぎ', c: 'どうぶつ' }, { w: 'ペンギン', c: 'どうぶつ' },
+  { w: 'パンダ', c: 'どうぶつ' }, { w: 'かめ', c: 'どうぶつ' }, { w: 'ちょうちょ', c: 'どうぶつ' },
+  { w: 'たこ', c: 'どうぶつ' },
+  // たべもの
+  { w: 'りんご', c: 'たべもの' }, { w: 'バナナ', c: 'たべもの' }, { w: 'おにぎり', c: 'たべもの' },
+  { w: 'ピザ', c: 'たべもの' }, { w: 'ソフトクリーム', c: 'たべもの' }, { w: 'ケーキ', c: 'たべもの' },
+  { w: 'めだまやき', c: 'たべもの' }, { w: 'ラーメン', c: 'たべもの' }, { w: 'すいか', c: 'たべもの' },
+  { w: 'ドーナツ', c: 'たべもの' },
+  // のりもの
+  { w: 'しんかんせん', c: 'のりもの' }, { w: 'ひこうき', c: 'のりもの' }, { w: 'ヨット', c: 'のりもの' },
+  { w: 'じてんしゃ', c: 'のりもの' }, { w: 'きゅうきゅうしゃ', c: 'のりもの' }, { w: 'ヘリコプター', c: 'のりもの' },
+  { w: 'ロケット', c: 'のりもの' }, { w: 'バス', c: 'のりもの' }, { w: 'トラック', c: 'のりもの' },
+  { w: 'キャンピングカー', c: 'のりもの' },
+  // しぜん
+  { w: 'にじ', c: 'しぜん' }, { w: 'たいよう', c: 'しぜん' }, { w: 'つき', c: 'しぜん' },
+  { w: 'ほし', c: 'しぜん' }, { w: 'やま', c: 'しぜん' }, { w: 'うみ', c: 'しぜん' },
+  { w: 'さくら', c: 'しぜん' }, { w: 'ひまわり', c: 'しぜん' }, { w: 'ゆきだるま', c: 'しぜん' },
+  { w: 'かみなり', c: 'しぜん' },
+  // どうぐ
+  { w: 'かさ', c: 'どうぐ' }, { w: 'めがね', c: 'どうぐ' }, { w: 'はさみ', c: 'どうぐ' },
+  { w: 'とけい', c: 'どうぐ' }, { w: 'カメラ', c: 'どうぐ' }, { w: 'スプーン', c: 'どうぐ' },
+  { w: 'ぼうし', c: 'どうぐ' }, { w: 'リュック', c: 'どうぐ' }, { w: 'でんきゅう', c: 'どうぐ' },
+  { w: 'ほうき', c: 'どうぐ' },
+  // まち・あそびば
+  { w: 'かんらんしゃ', c: 'まち・あそびば' }, { w: 'おしろ', c: 'まち・あそびば' }, { w: 'ふんすい', c: 'まち・あそびば' },
+  { w: 'テント', c: 'まち・あそびば' }, { w: 'すべりだい', c: 'まち・あそびば' }, { w: 'ブランコ', c: 'まち・あそびば' },
+  { w: 'とうだい', c: 'まち・あそびば' }, { w: 'タワー', c: 'まち・あそびば' }, { w: 'いえ', c: 'まち・あそびば' },
+  { w: 'メリーゴーランド', c: 'まち・あそびば' },
+];
+
+// ── ユーティリティ ──
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+function shuffleArr(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// ── 状態 ──
+const state = {
+  role: null, nickname: null, roomCode: null, roomRef: null,
+  currentScreen: null,
+  round: 0,
+  lastRoom: null,
+  // 描画
+  isPointerDrawing: false,
+  currentPoints: [],
+  pendingStroke: null,
+  turnIndexAtDraw: null,
+  strokeSubmitting: false,
+  lastRenderKey: '',
+  // 進行
+  myVote: null,
+  roleRevealed: false,
+  resultTriggered: false,
+  // クリーンアップ
+  orphanTimer: null,
+  doneTimer: null,
+};
+
+// ── セッション管理 ──
+function saveSession() {
+  sessionStorage.setItem(SESSION_KEY, JSON.stringify({
+    nickname: state.nickname, roomCode: state.roomCode, role: state.role,
+  }));
+}
+function loadSession() {
+  try { return JSON.parse(sessionStorage.getItem(SESSION_KEY)); } catch { return null; }
+}
+function clearSession() { sessionStorage.removeItem(SESSION_KEY); }
+
+function isRoomExpired(room) {
+  return RoomkRTDB.isRoomExpired(room, ORPHAN_TTL_MS);
+}
+
+// ── 画面管理 ──
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + id).classList.add('active');
+  state.currentScreen = id;
+}
+function goTo(id) { showScreen(id); }
+function showOverlay(id, show) {
+  document.getElementById(id).classList.toggle('show', show);
+}
+
+// ── バリデーション ──
+function validNick(v) {
+  if (!v) { showMsg('ニックネームを入力してください'); return false; }
+  if (v.length > 8) { showMsg('ニックネームは8文字以内です'); return false; }
+  return true;
+}
+
+// ── ゲスト一覧ヘルパー ──
+function guestNames(players) {
+  return Object.keys(players || {}).filter(n => !players[n].isHost);
+}
+
+// ── ホスト: ルーム作成 ──
+async function hostCreateRoom() {
+  const nickname = document.getElementById('host-nickname').value.trim();
+  if (!validNick(nickname)) return;
+  await authReady;
+
+  let roomCode = null;
+  let roomRef = null;
+  for (let i = 0; i < 5; i++) {
+    const code = genCode();
+    const ref = db.ref(`${ROOMS_PATH}/${code}`);
+    const initialRoom = {
+      host: nickname, hostConnected: true, hostDisconnectedAt: null,
+      status: STATUS.WAITING,
+      round: 0,
+      players: {
+        [nickname]: { isHost: true, confirmed: false, vote: null },
+      },
+    };
+    const { committed } = await ref.transaction((room) => room ? undefined : initialRoom);
+    if (committed) { roomCode = code; roomRef = ref; break; }
+  }
+  if (!roomCode || !roomRef) { showMsg('ルーム作成に失敗しました'); return; }
+
+  state.nickname = nickname; state.roomCode = roomCode; state.role = 'host';
+  state.roomRef = roomRef;
+
+  state.roomRef.onDisconnect().update({
+    hostConnected: false,
+    hostDisconnectedAt: firebase.database.ServerValue.TIMESTAMP,
+  });
+  saveSession();
+  startRoomListener();
+}
+
+// ── ゲスト: 参加 ──
+async function guestJoin() {
+  const nickname = document.getElementById('guest-nickname').value.trim();
+  const roomCode = document.getElementById('guest-code').value.trim().toUpperCase();
+  if (!validNick(nickname)) return;
+  if (roomCode.length !== 6) { showMsg('ルームコードは6文字です'); return; }
+  await authReady;
+
+  const roomRef = db.ref(`${ROOMS_PATH}/${roomCode}`);
+  const preSnap = await roomRef.get();
+  if (!preSnap.exists()) { showMsg('ルームが見つかりません'); return; }
+  const preRoom = preSnap.val();
+  if (isRoomExpired(preRoom)) {
+    await roomRef.remove().catch(() => {});
+    showMsg('このルームは期限切れのため終了しました');
+    return;
+  }
+
+  let abortReason = null;
+  const { committed, snapshot } = await roomRef.transaction((room) => {
+    const currentRoom = room || preRoom;
+    if (!currentRoom) { abortReason = 'not_found'; return; }
+    if (isRoomExpired(currentRoom)) { abortReason = 'expired'; return null; }
+    if (currentRoom.hostConnected === false) { abortReason = 'host_gone'; return; }
+    if (currentRoom.status !== STATUS.WAITING) { abortReason = 'not_waiting'; return; }
+    const players = currentRoom.players || {};
+    if (players[nickname]) { abortReason = 'nick_taken'; return; }
+    abortReason = null;
+    return {
+      ...currentRoom,
+      players: {
+        ...players,
+        [nickname]: { isHost: false, confirmed: false, vote: null },
+      },
+    };
+  });
+
+  if (!committed) {
+    if (abortReason === 'not_found')   { showMsg('ルームが見つかりません'); return; }
+    if (abortReason === 'host_gone')   { showMsg('ホストが切断されています'); return; }
+    if (abortReason === 'not_waiting') { showMsg('このゲームはすでに始まっています'); return; }
+    if (abortReason === 'nick_taken')  { showMsg('そのニックネームはすでに使われています'); return; }
+    showMsg('参加に失敗しました');
+    return;
+  }
+  if (abortReason === 'expired' && !snapshot.val()) {
+    showMsg('このルームは期限切れのため終了しました');
+    return;
+  }
+
+  state.nickname = nickname; state.roomCode = roomCode; state.role = 'guest';
+  state.roomRef = roomRef;
+
+  state.roomRef.child(`players/${nickname}`).onDisconnect().remove();
+  saveSession();
+  startRoomListener();
+}
+
+// ── ラウンドの初期データを作る（transaction 内で使用） ──
+function buildRoundGame(room) {
+  const players = room.players || {};
+  const guests = guestNames(players);
+  if (guests.length < MIN_GUESTS) return null;
+
+  const used = Array.isArray(room.usedTopics) ? room.usedTopics : [];
+  let available = TOPICS.map((_, i) => i).filter(i => !used.includes(i));
+  let usedReset = false;
+  if (available.length === 0) { available = TOPICS.map((_, i) => i); usedReset = true; }
+  const topicIndex = available[Math.floor(Math.random() * available.length)];
+  const topic = TOPICS[topicIndex];
+
+  const fakeArtist = guests[Math.floor(Math.random() * guests.length)];
+  const drawOrder = shuffleArr(guests);
+  const colors = {};
+  drawOrder.forEach((n, i) => { colors[n] = PALETTE[i % PALETTE.length]; });
+
+  const nextPlayers = {};
+  Object.entries(players).forEach(([nick, p]) => {
+    nextPlayers[nick] = { ...p, confirmed: false, vote: null };
+  });
+
+  return {
+    usedTopics: usedReset ? [topicIndex] : [...used, topicIndex],
+    players: nextPlayers,
+    game: {
+      topicWord: topic.w,
+      topicCategory: topic.c,
+      fakeArtist,
+      drawOrder,
+      colors,
+      turnIndex: 0,
+      strokes: null,
+      result: null,
+    },
+  };
+}
+
+// ── ホスト: ゲーム開始 ──
+async function hostStartGame() {
+  let abortReason = null;
+  const { committed } = await state.roomRef.transaction((room) => {
+    if (!room || room.status !== STATUS.WAITING) { abortReason = 'invalid_state'; return; }
+    const built = buildRoundGame(room);
+    if (!built) { abortReason = 'too_few'; return; }
+    abortReason = null;
+    return { ...room, ...built, status: STATUS.REVEAL, round: 1 };
+  });
+  if (!committed && abortReason === 'too_few') {
+    showMsg(`ホストのほかに${MIN_GUESTS}人以上で はじめられます`);
+  }
+}
+
+// ── ホスト: 次のラウンド ──
+async function hostNextRound() {
+  let abortReason = null;
+  const { committed } = await state.roomRef.transaction((room) => {
+    if (!room || room.status !== STATUS.RESULT) { abortReason = 'invalid_state'; return; }
+    const built = buildRoundGame(room);
+    if (!built) { abortReason = 'too_few'; return; }
+    abortReason = null;
+    return { ...room, ...built, status: STATUS.REVEAL, round: (room.round || 1) + 1 };
+  });
+  if (!committed && abortReason === 'too_few') {
+    showMsg(`ホストのほかに${MIN_GUESTS}人以上で つづけられます`);
+  }
+}
+
+// ── 役わりカード ──
+function revealRoleCard() {
+  if (state.roleRevealed) return;
+  state.roleRevealed = true;
+  renderRoleCard();
+  document.getElementById('rv-confirm-area').style.display = 'block';
+}
+
+function renderRoleCard() {
+  const card = document.getElementById('rv-card');
+  if (!state.roleRevealed || !state.lastRoom || !state.lastRoom.game) return;
+  const g = state.lastRoom.game;
+  card.classList.add('mgr-role-card--open');
+  if (g.fakeArtist === state.nickname) {
+    card.innerHTML = [
+      '<p class="mgr-role-card__fake-title">きみは まぎれ絵師！</p>',
+      '<p class="mgr-role-card__note">お題を しらないまま、バレないように 1筆ずつ かこう</p>',
+      `<span class="mgr-role-card__hint">ヒント → カテゴリ: ${esc(g.topicCategory)}</span>`,
+    ].join('');
+  } else {
+    card.innerHTML = [
+      '<p class="mgr-role-card__label">あなたへのお題</p>',
+      `<p class="mgr-role-card__word">${esc(g.topicWord)}</p>`,
+      `<p class="mgr-role-card__note">カテゴリ: ${esc(g.topicCategory)}／まぎれ絵師に バレないようにね</p>`,
+    ].join('');
+  }
+}
+
+async function confirmRole() {
+  document.getElementById('btn-confirm').disabled = true;
+  await state.roomRef.child(`players/${state.nickname}/confirmed`).set(true);
+}
+
+// ── ホスト: 描画開始 ──
+async function hostStartDrawing() {
+  await state.roomRef.transaction((room) => {
+    if (!room || room.status !== STATUS.REVEAL) return;
+    return { ...room, status: STATUS.DRAWING };
+  });
+}
+
+// ── ホスト: そうだん → とうひょう ──
+async function hostStartVoting() {
+  await state.roomRef.transaction((room) => {
+    if (!room || room.status !== STATUS.DISCUSSION) return;
+    return { ...room, status: STATUS.VOTING };
+  });
+}
+
+// ── キャンバス描画 ──
+function sortedStrokes(game) {
+  const strokes = (game && game.strokes) || {};
+  return Object.keys(strokes).sort().map(k => strokes[k]);
+}
+
+function drawStrokeOn(ctx, stroke) {
+  const pts = stroke.points || [];
+  if (!pts.length) return;
+  ctx.strokeStyle = stroke.color || '#1A1A1A';
+  ctx.lineWidth = 4;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.beginPath();
+  ctx.moveTo(pts[0][0], pts[0][1]);
+  if (pts.length === 1) {
+    ctx.lineTo(pts[0][0] + 0.1, pts[0][1]);
+  } else {
+    for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
+  }
+  ctx.stroke();
+}
+
+function renderCanvas(canvasId, strokes, pending) {
+  const cv = document.getElementById(canvasId);
+  if (!cv) return;
+  const ctx = cv.getContext('2d');
+  ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
+  strokes.forEach(s => drawStrokeOn(ctx, s));
+  if (pending) drawStrokeOn(ctx, pending);
+}
+
+// ── ポインタ入力（1筆） ──
+const drawCanvas = document.getElementById('cv-draw');
+
+function canDrawNow() {
+  const room = state.lastRoom;
+  if (!room || room.status !== STATUS.DRAWING || !room.game) return false;
+  if (state.role === 'host') return false;
+  if (state.pendingStroke || state.strokeSubmitting) return false;
+  const g = room.game;
+  const order = g.drawOrder || [];
+  const ti = g.turnIndex || 0;
+  if (ti >= order.length * LAPS) return false;
+  return order[ti % order.length] === state.nickname;
+}
+
+function toLogicalPoint(e) {
+  const rect = drawCanvas.getBoundingClientRect();
+  const x = (e.clientX - rect.left) * (CANVAS_W / rect.width);
+  const y = (e.clientY - rect.top) * (CANVAS_H / rect.height);
+  return [
+    Math.max(0, Math.min(CANVAS_W, Math.round(x))),
+    Math.max(0, Math.min(CANVAS_H, Math.round(y))),
+  ];
+}
+
+drawCanvas.addEventListener('pointerdown', (e) => {
+  if (!canDrawNow()) return;
+  e.preventDefault();
+  drawCanvas.setPointerCapture(e.pointerId);
+  state.isPointerDrawing = true;
+  state.currentPoints = [toLogicalPoint(e)];
+});
+
+drawCanvas.addEventListener('pointermove', (e) => {
+  if (!state.isPointerDrawing) return;
+  e.preventDefault();
+  const pt = toLogicalPoint(e);
+  const last = state.currentPoints[state.currentPoints.length - 1];
+  const dx = pt[0] - last[0];
+  const dy = pt[1] - last[1];
+  if (dx * dx + dy * dy < 4) return; // 2px 未満は間引き
+  if (state.currentPoints.length >= 600) return;
+  state.currentPoints.push(pt);
+  const ctx = drawCanvas.getContext('2d');
+  ctx.strokeStyle = myColor() || '#1A1A1A';
+  ctx.lineWidth = 4;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.beginPath();
+  ctx.moveTo(last[0], last[1]);
+  ctx.lineTo(pt[0], pt[1]);
+  ctx.stroke();
+});
+
+function endPointerStroke() {
+  if (!state.isPointerDrawing) return;
+  state.isPointerDrawing = false;
+  const room = state.lastRoom;
+  const g = room && room.game;
+  state.pendingStroke = {
+    points: state.currentPoints,
+    color: myColor() || '#1A1A1A',
+    by: state.nickname,
+  };
+  state.turnIndexAtDraw = (g && g.turnIndex) || 0;
+  state.currentPoints = [];
+  renderCanvas('cv-draw', sortedStrokes(g), state.pendingStroke);
+  updateDrawBar(room);
+}
+drawCanvas.addEventListener('pointerup', (e) => { e.preventDefault(); endPointerStroke(); });
+drawCanvas.addEventListener('pointercancel', () => endPointerStroke());
+
+function myColor() {
+  const g = state.lastRoom && state.lastRoom.game;
+  return g && g.colors ? g.colors[state.nickname] : null;
+}
+
+// ── 1筆の確定 / かきなおし ──
+async function confirmStroke() {
+  if (!state.pendingStroke || state.strokeSubmitting) return;
+  state.strokeSubmitting = true;
+  document.getElementById('btn-stroke-ok').disabled = true;
+  const stroke = state.pendingStroke;
+  const idx = state.turnIndexAtDraw;
+  try {
+    await state.roomRef.child('game/strokes').push(stroke);
+    await state.roomRef.child('game/turnIndex').transaction((i) => {
+      return (i === idx || i == null) ? idx + 1 : undefined;
+    });
+  } catch (error) {
+    console.error('[magire-eshi] confirmStroke failed', error);
+    showMsg('送信に失敗しました。もう一度ためしてください');
+  } finally {
+    state.pendingStroke = null;
+    state.strokeSubmitting = false;
+    document.getElementById('btn-stroke-ok').disabled = false;
+    if (state.lastRoom) handleRoom(state.lastRoom);
+  }
+}
+
+function retryStroke() {
+  state.pendingStroke = null;
+  state.currentPoints = [];
+  const g = state.lastRoom && state.lastRoom.game;
+  renderCanvas('cv-draw', sortedStrokes(g), null);
+  updateDrawBar(state.lastRoom);
+}
+
+// ── 投票 ──
+async function submitVote(target) {
+  if (state.myVote) return;
+  state.myVote = target;
+  document.getElementById('vt-btns').style.display = 'none';
+  document.getElementById('vt-voted-msg').style.display = 'block';
+  await state.roomRef.child(`players/${state.nickname}/vote`).set(target);
+}
+
+// ── 開票（ホストのみ） ──
+async function computeResult() {
+  if (state.resultTriggered) return;
+  state.resultTriggered = true;
+  const { committed } = await state.roomRef.transaction((room) => {
+    if (!room || room.status !== STATUS.VOTING || !room.game) return;
+    const players = room.players || {};
+    const fake = room.game.fakeArtist;
+    const counts = {};
+    guestNames(players).forEach((nick) => {
+      const v = players[nick].vote;
+      if (v) counts[v] = (counts[v] || 0) + 1;
+    });
+
+    let outcome;
+    if (!players[fake]) {
+      outcome = 'aborted';
+    } else {
+      const values = Object.values(counts);
+      const maxV = values.length ? Math.max(...values) : 0;
+      const tops = Object.entries(counts).filter(([, v]) => v === maxV).map(([n]) => n);
+      const caught = maxV > 0 && tops.length === 1 && tops[0] === fake;
+      outcome = caught ? 'caught' : 'escaped';
+    }
+    return {
+      ...room,
+      status: STATUS.RESULT,
+      game: {
+        ...room.game,
+        result: { outcome, voteCounts: counts, reversalGuess: null, reversalJudge: null },
+      },
+    };
+  });
+  if (!committed) state.resultTriggered = false;
+}
+
+async function hostCloseVoting() {
+  if (state.role !== 'host' || state.resultTriggered) return;
+  try {
+    await computeResult();
+  } catch (error) {
+    console.error('[magire-eshi] hostCloseVoting failed', error);
+    state.resultTriggered = false;
+  }
+}
+
+// ── ホスト: ラウンド中断（まぎれ絵師の退出時） ──
+async function hostAbortRound() {
+  await state.roomRef.transaction((room) => {
+    if (!room || !room.game) return;
+    const s = room.status;
+    if (s !== STATUS.REVEAL && s !== STATUS.DRAWING && s !== STATUS.DISCUSSION && s !== STATUS.VOTING) return;
+    return {
+      ...room,
+      status: STATUS.RESULT,
+      game: {
+        ...room.game,
+        result: { outcome: 'aborted', voteCounts: null, reversalGuess: null, reversalJudge: null },
+      },
+    };
+  });
+}
+
+// ── 逆転当て ──
+async function submitReversalGuess() {
+  const input = document.getElementById('rs-guess-input');
+  if (!input) return;
+  const text = input.value.trim();
+  if (!text) { showMsg('お題だと思うことばを入力してください'); return; }
+  if (text.length > 20) { showMsg('20文字以内で入力してください'); return; }
+  await state.roomRef.child('game/result/reversalGuess').set(text);
+}
+
+async function judgeReversal(win) {
+  await state.roomRef.child('game/result/reversalJudge').set(win ? 'win' : 'lose');
+}
+
+// ── ホスト: 終了 ──
+async function hostFinish() {
+  await state.roomRef.update({ status: STATUS.DONE });
+  clearTimeout(state.doneTimer);
+  state.doneTimer = setTimeout(() => {
+    if (state.roomRef) state.roomRef.remove().catch(() => {});
+  }, 30000);
+}
+
+// ── 退出 ──
+async function leaveGame() {
+  clearTimeout(state.orphanTimer);
+  clearTimeout(state.doneTimer);
+  clearSession();
+  if (state.roomRef) {
+    try {
+      if (state.role === 'host') {
+        await state.roomRef.remove();
+      } else {
+        await state.roomRef.child(`players/${state.nickname}`).remove();
+      }
+    } catch { /* すでに削除済みなら無視 */ }
+    state.roomRef.off();
+  }
+  Object.assign(state, {
+    role: null, nickname: null, roomCode: null, roomRef: null,
+    currentScreen: null, round: 0, lastRoom: null,
+    isPointerDrawing: false, currentPoints: [], pendingStroke: null,
+    turnIndexAtDraw: null, strokeSubmitting: false, lastRenderKey: '',
+    myVote: null, roleRevealed: false, resultTriggered: false,
+    orphanTimer: null, doneTimer: null,
+  });
+  showOverlay('host-off-overlay', false);
+  showOverlay('reconnect-overlay', false);
+  showScreen('top');
+}
+
+// ── Firebase リスナー ──
+function startRoomListener() {
+  state.roomRef.on('value', (snap) => {
+    if (!snap.exists()) {
+      if (state.role !== 'host') {
+        clearSession();
+        showMsg('ルームが終了しました', true);
+        state.roomRef.off();
+        showScreen('top');
+      }
+      return;
+    }
+    handleRoom(snap.val());
+  });
+}
+
+function handleRoom(room) {
+  state.lastRoom = room;
+  const players = room.players || {};
+
+  // ゲスト: ホスト切断監視
+  if (state.role === 'guest') {
+    const hostGone = room.hostConnected === false;
+    const expired = isRoomExpired(room);
+    showOverlay('host-off-overlay', hostGone);
+    if (hostGone) {
+      const disconnectedAt = getHostDisconnectedAt(room);
+      const delay = disconnectedAt == null
+        ? ORPHAN_TTL_MS
+        : Math.max(0, disconnectedAt + ORPHAN_TTL_MS - getEstimatedServerNow());
+      if (expired) {
+        clearTimeout(state.orphanTimer);
+        state.orphanTimer = null;
+        if (state.roomRef) state.roomRef.remove().catch(() => {});
+      } else if (!state.orphanTimer) {
+        state.orphanTimer = setTimeout(() => {
+          state.orphanTimer = null;
+          if (state.roomRef) state.roomRef.remove().catch(() => {});
+        }, delay);
+      }
+    } else {
+      clearTimeout(state.orphanTimer);
+      state.orphanTimer = null;
+    }
+  }
+
+  // ラウンドが変わったらローカル状態をリセット
+  if ((room.round || 0) !== state.round) {
+    state.round = room.round || 0;
+    state.myVote = null;
+    state.roleRevealed = false;
+    state.resultTriggered = false;
+    state.pendingStroke = null;
+    state.currentPoints = [];
+    state.isPointerDrawing = false;
+    state.lastRenderKey = '';
+    // ホスト用の折りたたみを全てとじ直す（画面共有対策）
+    document.querySelectorAll('details.mgr-secret').forEach(d => d.removeAttribute('open'));
+  }
+
+  switch (room.status) {
+    case STATUS.WAITING:    handleWaiting(room, players);    break;
+    case STATUS.REVEAL:     handleReveal(room, players);     break;
+    case STATUS.DRAWING:    handleDrawing(room, players);    break;
+    case STATUS.DISCUSSION: handleDiscussion(room, players); break;
+    case STATUS.VOTING:     handleVoting(room, players);     break;
+    case STATUS.RESULT:     handleResult(room, players);     break;
+    case STATUS.DONE:       handleDone(room);                break;
+  }
+}
+
+// ── 共通描画パーツ ──
+function renderPlayerList(id, players, statusFn) {
+  const ul = document.getElementById(id);
+  if (!ul) return;
+  ul.innerHTML = Object.entries(players).map(([nick, p]) => {
+    const meTag = nick === state.nickname ? '<span class="mgr-tag mgr-tag--me">あなた</span>' : '';
+    const hostTag = p.isHost ? '<span class="mgr-tag">ホスト</span>' : '';
+    const status = statusFn ? statusFn(nick, p) : '';
+    return `<li class="mgr-player-item">
+      <div class="mgr-player-item__name">${esc(nick)}${hostTag}${meTag}</div>
+      ${status}
+    </li>`;
+  }).join('');
+}
+
+function renderLegend(elId, game, players) {
+  const el = document.getElementById(elId);
+  if (!el || !game) return;
+  const order = game.drawOrder || [];
+  const ti = game.turnIndex || 0;
+  const total = order.length * LAPS;
+  const nowDrawer = (state.lastRoom && state.lastRoom.status === STATUS.DRAWING && ti < total)
+    ? order[ti % order.length] : null;
+  el.innerHTML = order.map((nick) => {
+    const color = (game.colors || {})[nick] || '#1A1A1A';
+    const isNow = nick === nowDrawer;
+    const gone = players && !players[nick] ? '（退出）' : '';
+    return `<span class="mgr-legend__chip${isNow ? ' mgr-legend__chip--now' : ''}">
+      <span class="mgr-legend__dot" style="background:${esc(color)}"></span>${esc(nick)}${gone}
+    </span>`;
+  }).join('');
+}
+
+function topicChipHtml(game) {
+  if (!game) return '';
+  if (game.fakeArtist === state.nickname) {
+    return `<span class="mgr-topic-chip mgr-topic-chip--fake">
+      <span class="material-symbols-rounded" style="font-size:18px">theater_comedy</span>
+      まぎれ絵師（カテゴリ: ${esc(game.topicCategory)}）
+    </span>`;
+  }
+  return `<span class="mgr-topic-chip">
+    <span class="material-symbols-rounded" style="font-size:18px">label</span>
+    お題「${esc(game.topicWord)}」
+  </span>`;
+}
+
+function hostFakeGoneBannerHtml(game, players) {
+  if (!game || !players || players[game.fakeArtist]) return '';
+  return `<div class="mgr-host-banner">
+    まぎれ絵師が退出したため、このラウンドは つづけられません。
+    <button class="btn btn-secondary btn-sm mgr-sep" onclick="hostAbortRound()">このラウンドを おわる</button>
+  </div>`;
+}
+
+// ── 待機 ──
+function handleWaiting(room, players) {
+  if (state.currentScreen !== 'waiting') showScreen('waiting');
+  const isHost = state.role === 'host';
+  const guests = guestNames(players);
+
+  document.getElementById('w-host-panel').style.display = isHost ? 'block' : 'none';
+  document.getElementById('w-host-start').style.display = isHost ? 'block' : 'none';
+  if (isHost) {
+    document.getElementById('w-room-code').textContent = state.roomCode;
+    document.getElementById('btn-start').disabled = guests.length < MIN_GUESTS;
+  }
+  document.getElementById('w-count').textContent = `${Object.keys(players).length}人`;
+  renderPlayerList('w-player-list', players, null);
+}
+
+// ── お題くばり ──
+function handleReveal(room, players) {
+  const isHost = state.role === 'host';
+  const g = room.game || {};
+  if (state.currentScreen !== 'reveal') {
+    document.getElementById('rv-guest-area').style.display = isHost ? 'none' : 'block';
+    document.getElementById('rv-host-area').style.display = isHost ? 'block' : 'none';
+    if (!isHost) {
+      const card = document.getElementById('rv-card');
+      card.classList.remove('mgr-role-card--open');
+      card.innerHTML = '<span class="material-symbols-rounded" style="font-size:40px;opacity:.7">touch_app</span>'
+        + '<p style="margin-top:8px;font-size:14px">タップして じぶんのカードを見る</p>';
+      document.getElementById('rv-confirm-area').style.display = 'none';
+      document.getElementById('btn-confirm').disabled = false;
+      // 再接続時: かくにん済みなら反映
+      const me = players[state.nickname];
+      if (me && me.confirmed) {
+        state.roleRevealed = true;
+        renderRoleCard();
+        document.getElementById('rv-confirm-area').style.display = 'block';
+        document.getElementById('btn-confirm').disabled = true;
+      }
+    }
+    showScreen('reveal');
+  }
+  if (state.roleRevealed && !isHost) renderRoleCard();
+
+  if (isHost) {
+    document.getElementById('rv-topic-body').textContent = `${g.topicWord || ''}（${g.topicCategory || ''}）`;
+    document.getElementById('rv-fake-body').textContent = g.fakeArtist || '';
+    document.getElementById('rv-host-banner').innerHTML = hostFakeGoneBannerHtml(g, players);
+  }
+
+  const guests = guestNames(players);
+  const confirmedCount = guests.filter(n => players[n].confirmed).length;
+  document.getElementById('rv-count').textContent = `${confirmedCount} / ${guests.length} 人`;
+  renderPlayerList('rv-player-list', players, (nick, p) => {
+    if (p.isHost) return '<span style="font-size:13px;color:var(--color-muted)">すすめる係</span>';
+    return p.confirmed
+      ? '<span class="mgr-tag mgr-tag--ok">かくにん済み</span>'
+      : '<span style="font-size:13px;color:var(--color-muted)">かくにん中</span>';
+  });
+  if (isHost) {
+    const allConfirmed = guests.length >= MIN_GUESTS && guests.every(n => players[n].confirmed);
+    document.getElementById('btn-start-drawing').disabled = !allConfirmed || !players[g.fakeArtist];
+  }
+}
+
+// ── おえかき ──
+function updateDrawBar(room) {
+  const g = (room && room.game) || {};
+  const order = g.drawOrder || [];
+  const ti = g.turnIndex || 0;
+  const total = order.length * LAPS;
+  const hint = document.getElementById('dr-hint');
+  const confirmBtns = document.getElementById('dr-confirm-btns');
+  const wrap = document.getElementById('dr-canvas-wrap');
+  const drawer = ti < total ? order[ti % order.length] : null;
+  const isMyTurn = drawer === state.nickname && state.role !== 'host';
+
+  confirmBtns.style.display = 'none';
+  wrap.classList.remove('mgr-canvas--active');
+
+  if (ti >= total) {
+    hint.textContent = 'かんせい！ まもなく そうだんタイム';
+    return;
+  }
+  if (state.role === 'host') {
+    hint.textContent = `いま かくのは ${drawer || ''} さん`;
+    return;
+  }
+  if (!isMyTurn) {
+    hint.textContent = `${drawer || ''} さんが かいています`;
+    return;
+  }
+  if (state.pendingStroke) {
+    hint.textContent = 'この1筆で いい？';
+    confirmBtns.style.display = 'flex';
+    return;
+  }
+  hint.textContent = 'あなたのばん！ キャンバスに 1筆だけ かこう';
+  wrap.classList.add('mgr-canvas--active');
+}
+
+function handleDrawing(room, players) {
+  const g = room.game || {};
+  const order = g.drawOrder || [];
+  const ti = g.turnIndex || 0;
+  const total = order.length * LAPS;
+  const isHost = state.role === 'host';
+
+  if (state.currentScreen !== 'drawing') {
+    document.getElementById('dr-host-area').style.display = isHost ? 'block' : 'none';
+    document.getElementById('dr-topic-chip-area').innerHTML = isHost ? '' : topicChipHtml(g);
+    showScreen('drawing');
+    state.lastRenderKey = '';
+  }
+
+  document.getElementById('dr-now').textContent =
+    ti < total ? `いま かくひと: ${order[ti % order.length] || ''}` : 'かんせい！';
+  document.getElementById('dr-count').textContent = `${Math.min(ti + 1, total)} / ${total} 筆`;
+  renderLegend('dr-legend', g, players);
+  updateDrawBar(room);
+
+  // ストローク再描画（本数かラウンドが変わったときのみ）
+  const strokes = sortedStrokes(g);
+  const renderKey = `${room.round}:${strokes.length}`;
+  if (renderKey !== state.lastRenderKey && !state.isPointerDrawing) {
+    state.lastRenderKey = renderKey;
+    renderCanvas('cv-draw', strokes, state.pendingStroke);
+  }
+
+  if (isHost) {
+    document.getElementById('dr-secret-body').textContent =
+      `お題「${g.topicWord || ''}」（${g.topicCategory || ''}）／まぎれ絵師: ${g.fakeArtist || ''}`;
+    document.getElementById('dr-host-banner').innerHTML = hostFakeGoneBannerHtml(g, players);
+
+    // 全員が描き終わったら そうだんタイムへ
+    if (ti >= total) {
+      state.roomRef.transaction((r) => {
+        if (!r || r.status !== STATUS.DRAWING) return;
+        const rg = r.game || {};
+        if ((rg.turnIndex || 0) < (rg.drawOrder || []).length * LAPS) return;
+        return { ...r, status: STATUS.DISCUSSION };
+      });
+    } else {
+      // 手番のプレイヤーが退出していたらスキップ
+      const drawer = order[ti % order.length];
+      if (drawer && !players[drawer]) {
+        state.roomRef.child('game/turnIndex').transaction((i) => (i === ti ? i + 1 : undefined));
+      }
+    }
+  }
+}
+
+// ── そうだんタイム ──
+function handleDiscussion(room, players) {
+  const g = room.game || {};
+  const isHost = state.role === 'host';
+  if (state.currentScreen !== 'discussion') {
+    document.getElementById('di-host-area').style.display = isHost ? 'block' : 'none';
+    document.getElementById('di-topic-chip-area').innerHTML = isHost ? '' : topicChipHtml(g);
+    showScreen('discussion');
+  }
+  renderCanvas('cv-disc', sortedStrokes(g), null);
+  renderLegend('di-legend', g, players);
+  if (isHost) {
+    document.getElementById('di-secret-body').textContent =
+      `お題「${g.topicWord || ''}」（${g.topicCategory || ''}）／まぎれ絵師: ${g.fakeArtist || ''}`;
+    document.getElementById('di-host-banner').innerHTML = hostFakeGoneBannerHtml(g, players);
+  }
+}
+
+// ── とうひょう ──
+function handleVoting(room, players) {
+  const g = room.game || {};
+  const isHost = state.role === 'host';
+  const guests = guestNames(players);
+
+  if (state.currentScreen !== 'voting') {
+    document.getElementById('vt-desc').style.display = isHost ? 'none' : 'block';
+    const wrap = document.getElementById('vt-btns');
+    wrap.innerHTML = '';
+    if (!isHost) {
+      guests.forEach((nick) => {
+        if (nick === state.nickname) return;
+        const btn = document.createElement('button');
+        btn.className = 'mgr-vote-btn';
+        btn.innerHTML = `<span>${esc(nick)}</span>`
+          + '<span class="material-symbols-rounded" style="color:var(--color-muted)">arrow_forward_ios</span>';
+        btn.onclick = () => {
+          if (state.myVote) return;
+          document.querySelectorAll('.mgr-vote-btn').forEach(b => b.classList.remove('selected'));
+          btn.classList.add('selected');
+          setTimeout(() => submitVote(nick), 300);
+        };
+        wrap.appendChild(btn);
+      });
+    }
+    // 再接続時: すでに投票済みなら反映
+    const me = players[state.nickname];
+    if (me && me.vote) state.myVote = me.vote;
+    wrap.style.display = state.myVote || isHost ? 'none' : 'block';
+    document.getElementById('vt-voted-msg').style.display = state.myVote ? 'block' : 'none';
+    showScreen('voting');
+  }
+
+  renderCanvas('cv-vote', sortedStrokes(g), null);
+
+  const voted = guests.filter(n => players[n].vote != null).length;
+  document.getElementById('vt-progress').textContent = `${voted} / ${guests.length} 人が とうひょう済み`;
+
+  const hostArea = document.getElementById('vt-host-area');
+  hostArea.style.display = isHost ? 'block' : 'none';
+  if (isHost) {
+    document.getElementById('vt-host-banner').innerHTML = hostFakeGoneBannerHtml(g, players);
+    const remaining = Math.max(0, guests.length - voted);
+    document.getElementById('btn-close-vote').disabled = state.resultTriggered;
+    document.getElementById('vt-host-hint').textContent = remaining > 0
+      ? `まだ ${remaining} 人が とうひょう中です（しめきると 票なしで すすみます）`
+      : '全員が とうひょう済みです';
+    if (guests.length > 0 && voted >= guests.length) {
+      computeResult().catch((error) => {
+        console.error('[magire-eshi] auto computeResult failed', error);
+        state.resultTriggered = false;
+      });
+    }
+  }
+}
+
+// ── けっか ──
+function handleResult(room, players) {
+  const g = room.game || {};
+  const result = g.result || {};
+  const isHost = state.role === 'host';
+  const isFake = g.fakeArtist === state.nickname;
+
+  if (state.currentScreen !== 'result') showScreen('result');
+  renderCanvas('cv-result', sortedStrokes(g), null);
+  renderLegend('rs-legend', g, players);
+
+  const outcome = result.outcome;
+  const judged = result.reversalJudge; // null | 'win' | 'lose'
+  const finalPhase = outcome === 'escaped' || outcome === 'aborted' || judged;
+
+  // バナー
+  let bannerTitle = '';
+  let bannerSub = '';
+  if (outcome === 'escaped') {
+    bannerTitle = 'まぎれ絵師の かち！';
+    bannerSub = 'とうひょうでは つかまらなかった（にげきり成功）';
+  } else if (outcome === 'aborted') {
+    bannerTitle = 'このラウンドは ここまで';
+    bannerSub = 'まぎれ絵師が 退出しました';
+  } else if (outcome === 'caught') {
+    if (judged === 'win') {
+      bannerTitle = 'まぎれ絵師の かち！';
+      bannerSub = 'つかまったけど お題を あてた（逆転成功）';
+    } else if (judged === 'lose') {
+      bannerTitle = 'みんなの かち！';
+      bannerSub = 'まぎれ絵師を つかまえて、お題も まもりきった';
+    } else {
+      bannerTitle = 'まぎれ絵師 みつかる！？';
+      bannerSub = 'でも まだ 逆転のチャンスがある…';
+    }
+  }
+  const bannerEl = document.getElementById('rs-banner');
+  bannerEl.innerHTML = `<div class="mgr-result-banner">
+    <p class="mgr-result-banner__title">${esc(bannerTitle)}</p>
+    <p class="mgr-result-banner__sub">${esc(bannerSub)}</p>
+  </div>`;
+
+  // 本文
+  const parts = [];
+
+  // まぎれ絵師の正体（開票後は全員に公開）
+  parts.push(`<div class="card mgr-center" style="margin-bottom:12px">
+    <p class="mgr-section-lbl">まぎれ絵師は…</p>
+    <p style="font-size:24px;font-weight:700;color:var(--color-primary)">${esc(g.fakeArtist || '')} <span class="mgr-tag mgr-tag--fake">まぎれ絵師</span></p>
+  </div>`);
+
+  // お題の表示
+  // - 決着後（にげきり / 逆転判定済み / 中断）: 全員に公開
+  // - 逆転当ての最中: まぎれ絵師本人には見せない。
+  //   ホスト画面は画面共有されうるので折りたたみ（タップで見る）にする
+  if (finalPhase) {
+    parts.push(`<div class="card mgr-center" style="margin-bottom:12px">
+      <p class="mgr-section-lbl">お題</p>
+      <p style="font-size:24px;font-weight:700;color:var(--color-primary)">「${esc(g.topicWord || '')}」</p>
+    </div>`);
+  } else if (isHost) {
+    parts.push(`<details class="mgr-secret"><summary><span class="material-symbols-rounded">visibility</span>お題（タップで見る）</summary>
+      <div class="mgr-secret__body">「${esc(g.topicWord || '')}」（${esc(g.topicCategory || '')}）</div></details>`);
+  } else if (!isFake) {
+    parts.push(`<div class="card mgr-center" style="margin-bottom:12px">
+      <p class="mgr-section-lbl">お題</p>
+      <p style="font-size:24px;font-weight:700;color:var(--color-primary)">「${esc(g.topicWord || '')}」</p>
+    </div>`);
+  }
+
+  // 逆転当てフェーズ
+  if (outcome === 'caught' && !judged) {
+    if (!result.reversalGuess) {
+      if (isFake) {
+        parts.push(`<div class="card" style="margin-bottom:12px">
+          <p style="font-weight:700;margin-bottom:8px">逆転のチャンス！ お題を あててみよう</p>
+          <p style="font-size:13px;color:var(--color-muted);margin-bottom:8px">ヒント → カテゴリ: ${esc(g.topicCategory || '')}</p>
+          <input class="form-input" id="rs-guess-input" type="text" maxlength="20" placeholder="お題は これだ！">
+          <button class="btn btn-primary btn-full mt-md" onclick="submitReversalGuess()">こたえる</button>
+        </div>`);
+      } else {
+        parts.push(`<div class="card mgr-center" style="margin-bottom:12px">
+          <p style="font-size:14px;color:var(--color-muted)">${esc(g.fakeArtist || '')} さんが お題を あてようとしています…</p>
+        </div>`);
+      }
+    } else {
+      parts.push(`<div class="mgr-guess-box">
+        <p class="mgr-guess-box__label">${esc(g.fakeArtist || '')} さんの こたえ</p>
+        <p class="mgr-guess-box__text">「${esc(result.reversalGuess)}」</p>
+      </div>`);
+      if (isHost) {
+        parts.push(`<div style="display:flex;gap:8px;margin-bottom:12px">
+          <button class="btn btn-primary btn-full" onclick="judgeReversal(true)">あたり</button>
+          <button class="btn btn-secondary btn-full" onclick="judgeReversal(false)">はずれ</button>
+        </div>`);
+      } else {
+        parts.push('<p style="font-size:13px;color:var(--color-muted);text-align:center;margin-bottom:12px">ホストが 判定しています…</p>');
+      }
+    }
+  }
+
+  // 逆転当ての結果表示
+  if (outcome === 'caught' && judged && result.reversalGuess) {
+    parts.push(`<div class="mgr-guess-box">
+      <p class="mgr-guess-box__label">${esc(g.fakeArtist || '')} さんの こたえ</p>
+      <p class="mgr-guess-box__text">「${esc(result.reversalGuess)}」</p>
+    </div>`);
+  }
+
+  // 投票結果
+  const counts = result.voteCounts || {};
+  if (outcome !== 'aborted' && Object.keys(players).length) {
+    const guests = guestNames(players);
+    const sorted = [...guests].sort((a, b) => (counts[b] || 0) - (counts[a] || 0));
+    const rows = sorted.map((nick) => {
+      const fakeTag = nick === g.fakeArtist ? ' <span class="mgr-tag mgr-tag--fake">まぎれ絵師</span>' : '';
+      const meTag = nick === state.nickname ? ' <span class="mgr-tag mgr-tag--me">あなた</span>' : '';
+      return `<div class="mgr-vote-row">
+        <div class="mgr-player-item__name">${esc(nick)}${fakeTag}${meTag}</div>
+        <span class="mgr-vote-row__num">${counts[nick] || 0}票</span>
+      </div>`;
+    }).join('');
+    parts.push(`<div class="card"><p class="mgr-section-lbl">とうひょうけっか</p>${rows}</div>`);
+  }
+
+  const bodyEl = document.getElementById('rs-body');
+  // 入力中のテキストを消さないよう、内容が変わるときだけ書き換える
+  const bodyHtml = parts.join('');
+  if (bodyEl.dataset.rendered !== bodyHtml) {
+    bodyEl.dataset.rendered = bodyHtml;
+    bodyEl.innerHTML = bodyHtml;
+  }
+
+  document.getElementById('rs-host-actions').style.display = (isHost && finalPhase) ? 'block' : 'none';
+}
+
+// ── おしまい ──
+function handleDone(room) {
+  if (state.currentScreen !== 'done') showScreen('done');
+  if (state.role === 'host' && !state.doneTimer) {
+    state.doneTimer = setTimeout(() => {
+      if (state.roomRef) state.roomRef.remove().catch(() => {});
+    }, 30000);
+  }
+}
+
+// ── 再接続 ──
+async function tryReconnect() {
+  const session = loadSession();
+  if (!session) return false;
+  const { nickname, roomCode, role } = session;
+  showOverlay('reconnect-overlay', true);
+  try {
+    await authReady;
+    const ref = db.ref(`${ROOMS_PATH}/${roomCode}`);
+    const snap = await ref.get();
+    if (!snap.exists()) { clearSession(); showOverlay('reconnect-overlay', false); return false; }
+    const room = snap.val();
+    if (isRoomExpired(room)) {
+      await ref.remove().catch(() => {});
+      clearSession(); showOverlay('reconnect-overlay', false); return false;
+    }
+
+    state.nickname = nickname; state.roomCode = roomCode; state.role = role;
+    state.roomRef = ref;
+    state.round = -1; // 初回 handleRoom でラウンド状態を必ずリセットさせる
+
+    if (role === 'host') {
+      await state.roomRef.update({ hostConnected: true, hostDisconnectedAt: null });
+      state.roomRef.onDisconnect().update({
+        hostConnected: false,
+        hostDisconnectedAt: firebase.database.ServerValue.TIMESTAMP,
+      });
+    } else {
+      if (!room.players || !room.players[nickname]) {
+        clearSession(); showOverlay('reconnect-overlay', false); return false;
+      }
+      state.roomRef.child(`players/${nickname}`).onDisconnect().remove();
+    }
+
+    showOverlay('reconnect-overlay', false);
+    startRoomListener();
+    return true;
+  } catch {
+    clearSession(); showOverlay('reconnect-overlay', false); return false;
+  }
+}
+
+// ── 初期化 ──
+tryReconnect().then(ok => { if (!ok) showScreen('top'); });
+</script>
+</body>
+</html>
