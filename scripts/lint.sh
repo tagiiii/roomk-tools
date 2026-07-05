@@ -28,8 +28,13 @@ RTDB_HTML_FILES=(
   "apps/ikutsu-ieru/index.html"
   "apps/ito/index.html"
   "apps/jinro/index.html"
+  "apps/kakure-number/index.html"
+  "apps/koedake-theater/index.html"
+  "apps/magire-eshi/index.html"
   "apps/name-change/index.html"
+  "apps/pittari-meter/index.html"
   "apps/tatoe-gp/index.html"
+  "apps/uso-jisho/index.html"
   "apps/word-wolf/index.html"
 )
 
