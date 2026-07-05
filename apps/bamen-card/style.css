@@ -1,0 +1,331 @@
+.bm-shell {
+  width: min(960px, 100%);
+  margin: 0 auto;
+  padding: 32px 24px 80px;
+}
+
+.bm-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
+}
+
+.bm-header__title {
+  color: var(--color-primary);
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+}
+
+.bm-header__sub {
+  color: var(--color-muted);
+  font-size: var(--font-size-sub);
+  margin-top: 4px;
+}
+
+.bm-header__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 8px 12px;
+  border-radius: var(--radius-btn);
+  color: var(--color-primary);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.bm-header__link:focus-visible,
+.bm-mode:focus-visible {
+  outline: 3px solid var(--color-accent);
+  outline-offset: 3px;
+}
+
+.bm-main {
+  min-width: 0;
+}
+
+.screen {
+  display: none;
+}
+
+.screen.active {
+  display: block;
+}
+
+.bm-panel {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-xl);
+}
+
+/* モード決定後の切り替えは控えめなフェードのみ */
+.bm-panel--in {
+  animation: bm-fade-in 0.22s ease-out;
+}
+
+@keyframes bm-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.bm-panel__title {
+  color: var(--color-primary);
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.bm-panel__lead {
+  color: var(--color-muted);
+  margin-top: var(--space-xs);
+  line-height: 1.8;
+}
+
+/* 4つのモードは同格（色・大きさ・並びで差をつけない） */
+.bm-mode-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: var(--space-lg);
+}
+
+.bm-mode {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  width: 100%;
+  min-height: 96px;
+  padding: 16px;
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--transition-base), border-color var(--transition-base), transform var(--transition-base);
+}
+
+.bm-mode:hover {
+  border-color: var(--color-accent);
+  background: #F3FAFA;
+  transform: translateY(-2px);
+}
+
+.bm-mode__num {
+  color: var(--color-accent);
+  font-feature-settings: "palt";
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.bm-mode__icon {
+  color: var(--color-primary);
+  flex-shrink: 0;
+  font-size: 26px;
+}
+
+.bm-mode__body {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.bm-mode__label {
+  font-weight: 700;
+  overflow-wrap: break-word;
+  word-break: keep-all;
+}
+
+.bm-mode__desc {
+  color: var(--color-muted);
+  font-size: var(--font-size-sm);
+  line-height: 1.7;
+}
+
+.bm-talk-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.bm-talk-head__icon {
+  color: var(--color-accent);
+  font-size: 32px;
+}
+
+.bm-section {
+  margin-top: var(--space-lg);
+}
+
+/* 「まず / つぎに」の2ステップ見出し。入口カードをばめんにひも付ける */
+.bm-step {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.bm-step__label {
+  flex-shrink: 0;
+  padding: 3px 14px;
+  border-radius: var(--radius-full);
+  background: var(--color-accent);
+  color: #fff;
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+}
+
+.bm-step__title {
+  color: var(--color-primary);
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.bm-caption {
+  margin-top: var(--space-md);
+  color: var(--color-muted);
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+}
+
+.bm-list {
+  display: grid;
+  gap: 8px;
+  margin-top: var(--space-sm);
+  padding-left: 0;
+  list-style: none;
+}
+
+.bm-list__item {
+  padding: 10px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: #FBFCFD;
+  overflow-wrap: anywhere;
+}
+
+.bm-hero-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: var(--space-sm);
+  padding: var(--space-lg);
+  border: 2px solid var(--color-accent);
+  border-radius: var(--radius-box);
+  background: #F3FAFA;
+}
+
+.bm-hero-card__icon {
+  color: var(--color-accent);
+  flex-shrink: 0;
+  font-size: 40px;
+}
+
+.bm-hero-card__name {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  line-height: 1.6;
+  overflow-wrap: break-word;
+  word-break: keep-all;
+}
+
+.bm-entry__card {
+  display: flex;
+  align-items: center;
+  margin-top: var(--space-sm);
+  padding: var(--space-lg);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-box);
+  background: #F9FBFC;
+}
+
+.bm-entry__text {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  line-height: 1.7;
+  overflow-wrap: break-word;
+  word-break: keep-all;
+}
+
+.bm-entry .bm-muted {
+  margin-top: var(--space-xs);
+}
+
+.bm-muted {
+  color: var(--color-muted);
+  font-size: var(--font-size-sm);
+  line-height: 1.7;
+}
+
+.bm-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: var(--space-lg);
+}
+
+.bm-actions--tight {
+  margin-top: var(--space-md);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
+@media (max-width: 600px) {
+  html,
+  body {
+    overflow-x: hidden;
+  }
+
+  .bm-shell {
+    padding: 24px 14px 56px;
+  }
+
+  .bm-header {
+    display: block;
+  }
+
+  .bm-header__link {
+    margin-top: var(--space-sm);
+  }
+
+  .bm-panel {
+    padding: var(--space-lg);
+  }
+
+  .bm-panel__title {
+    font-size: var(--font-size-lg);
+  }
+
+  .bm-mode-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .bm-actions .btn {
+    width: 100%;
+  }
+}
