@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>作戦会議コンテンツ制作計画 — roomK</title>
+<style>
+  :root {
+    --primary: #1C3F5E;
+    --accent: #2E7D8C;
+    --bg: #F5F2EC;
+    --surface: #FFFFFF;
+    --text: #1A1A1A;
+    --muted: #5A6270;
+    --border: #C4D2D8;
+    --success: #1F6E3C;
+    --warn: #9A6700;
+    --error: #B91C1C;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Hiragino Sans", "Noto Sans JP", "Yu Gothic", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.75;
+  }
+  .wrap { max-width: 920px; margin: 0 auto; padding: 40px 20px 100px; }
+  header h1 { color: var(--primary); font-size: 26px; margin: 0 0 4px; }
+  header .sub { color: var(--muted); font-size: 14px; margin-bottom: 8px; }
+  h2 {
+    color: var(--primary);
+    font-size: 20px;
+    border-left: 5px solid var(--accent);
+    padding-left: 12px;
+    margin: 48px 0 16px;
+  }
+  h3 { color: var(--primary); font-size: 17px; margin: 28px 0 8px; }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin: 16px 0;
+  }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; background: var(--surface); }
+  th, td { border: 1px solid var(--border); padding: 8px 10px; text-align: left; vertical-align: top; }
+  th { background: #E8EEF1; color: var(--primary); white-space: nowrap; }
+  .table-scroll { overflow-x: auto; }
+  .badge {
+    display: inline-block; font-size: 11.5px; font-weight: 700;
+    padding: 2px 10px; border-radius: 999px; white-space: nowrap;
+  }
+  .badge-p1 { background: #E3F0E8; color: var(--success); }
+  .badge-p2 { background: #FFF4DE; color: var(--warn); }
+  .badge-tech { background: #E8EEF1; color: var(--accent); }
+  ul { padding-left: 22px; }
+  li { margin: 4px 0; }
+  .note { font-size: 13px; color: var(--muted); }
+  .decision { border-left: 4px solid var(--success); background: #F3F8F4; padding: 12px 16px; border-radius: 0 8px 8px 0; margin: 12px 0; }
+  .caution { border-left: 4px solid var(--warn); background: #FDF8EE; padding: 12px 16px; border-radius: 0 8px 8px 0; margin: 12px 0; }
+
+  .content-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin: 24px 0;
+    overflow: hidden;
+  }
+  .content-block__head {
+    padding: 16px 24px 12px;
+    border-bottom: 1px solid var(--border);
+    background: #FAFCFC;
+  }
+  .content-block__head h3 { margin: 0 0 4px; }
+  .content-block__meta { font-size: 12.5px; color: var(--muted); }
+  .content-block__body { padding: 16px 24px 20px; }
+  .prompt-box { position: relative; margin-top: 12px; }
+  .prompt-box textarea {
+    width: 100%;
+    height: 300px;
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+    font-size: 12px;
+    line-height: 1.6;
+    padding: 14px;
+    padding-top: 44px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: #F8F9FA;
+    color: #333;
+    resize: vertical;
+  }
+  .copy-btn {
+    position: absolute; top: 8px; right: 8px;
+    background: var(--accent); color: #fff;
+    border: none; border-radius: 6px;
+    padding: 6px 16px; font-size: 13px; font-weight: 700;
+    cursor: pointer;
+  }
+  .copy-btn:hover { opacity: 0.85; }
+  .copy-btn.copied { background: var(--success); }
+  .toc { font-size: 14px; }
+  .toc a { color: var(--accent); text-decoration: none; }
+  .toc a:hover { text-decoration: underline; }
+  footer { margin-top: 60px; font-size: 12px; color: var(--muted); text-align: center; }
+  @media (max-width: 600px) {
+    .wrap { padding: 24px 12px 60px; }
+    .content-block__body, .content-block__head { padding-left: 14px; padding-right: 14px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>作戦会議コンテンツ 制作計画</h1>
+  <div class="sub">roomK オンラインメンタリング「コンテンツ実施」枠の新規ツール制作ロードマップ ／ 2026-07-04 作成</div>
+</header>
+
+<div class="card">
+  <strong>この計画書の使い方</strong>
+  <ul>
+    <li>上から順に1本ずつ作ります。各コンテンツの「実装プロンプト」をコピーして、Claude Code（Fable 5）にそのまま貼り付ければ実装が始まります。</li>
+    <li>1本作るごとに「実装 → メンター実機確認 → 文言の別視点監査 → コミット → 実際のセッションで使用」まで回してから次に進みます。</li>
+    <li>フェーズ2の4本は、フェーズ1の運用で見えたことを反映してから着手します（プロンプトは叩き台として掲載）。</li>
+  </ul>
+</div>
+
+<h2>0. 決定事項と設計原則</h2>
+
+<div class="decision">
+  <strong>決定事項（2026-07-04 確認済み）</strong>
+  <ul>
+    <li><strong>操作形態</strong>: メンターの画面共有が基本。子どもが URL を開いて操作する回もある前提で、スマホ・タブレットでも使えるようにする（ルームコード同期は使わない）。</li>
+    <li><strong>記録方針</strong>: サーバー保存なし。回をまたぐコンテンツは「さくせん会議」と同じ JSON 書き出し／読み込み方式。使い捨てでよいものは保存機能自体を持たない。</li>
+    <li><strong>規模</strong>: フェーズ1の4本を先行制作し、フェーズ2の4本は運用の様子を見て着手判断。</li>
+  </ul>
+</div>
+
+<h3>全コンテンツ共通の設計原則（codex 相談で確定）</h3>
+<div class="card">
+  <ul>
+    <li><strong>「パス」「わからない」「保留」「なんとなく」を正式な回答として設計する。</strong>ボタンとして用意し、選んでも進行が止まらない。これが最重要原則。</li>
+    <li>評価・比較・数値化・ランキング・連続記録・バッジ・賞賛演出を入れない（数値化は「キャパグラフ」だけの意図的な例外）。</li>
+    <li>「答えられない自分」を意識させない。0件・無回答でも画面が成立する。</li>
+    <li>成果物（JSON・画面）が子どもへの評価物・証拠物に見えないようにする。</li>
+    <li>学校・勉強・成績・登校・恋愛・ダーク系の話題は出さない（AGENTS.md コンテンツガイドライン準拠）。</li>
+    <li>年間の使用バランスとして、自己理解系ばかり連続させない。「毎回自分について語らされる」状態を避け、遊び寄りコンテンツと交互に使う。</li>
+  </ul>
+</div>
+
+<h2>1. 全体ロードマップ</h2>
+
+<div class="table-scroll">
+<table>
+  <tr>
+    <th>順</th><th>コンテンツ</th><th>フェーズ</th><th>主な役割</th><th>所要</th><th>記録</th><th>心理的負荷</th>
+  </tr>
+  <tr>
+    <td>1</td><td><a href="#c1">どっちにする？</a></td><td><span class="badge badge-p1">先行</span></td>
+    <td>自己決定の練習・関係構築</td><td>5〜10分</td><td>なし</td><td>最小</td>
+  </tr>
+  <tr>
+    <td>2</td><td><a href="#c2">チェックアウトカード</a></td><td><span class="badge badge-p1">先行</span></td>
+    <td>面談の締め・次回への接続</td><td>1〜2分</td><td>なし</td><td>最小</td>
+  </tr>
+  <tr>
+    <td>3</td><td><a href="#c3">すきなことマップ</a></td><td><span class="badge badge-p1">先行</span></td>
+    <td>興味関心の可視化・蓄積</td><td>10〜15分</td><td>JSON</td><td>低〜中</td>
+  </tr>
+  <tr>
+    <td>4</td><td><a href="#c4">きもちのことばマップ</a></td><td><span class="badge badge-p1">先行</span></td>
+    <td>感情の言語化</td><td>5〜10分</td><td>なし</td><td>中（設計で低減）</td>
+  </tr>
+  <tr>
+    <td>5</td><td><a href="#c5">つよみカード</a></td><td><span class="badge badge-p2">様子見</span></td>
+    <td>自己理解（強みの発見）</td><td>10〜15分</td><td>JSON（任意）</td><td>中</td>
+  </tr>
+  <tr>
+    <td>6</td><td><a href="#c6">チャレンジのたね</a></td><td><span class="badge badge-p2">様子見</span></td>
+    <td>自己実現（さくせん会議の前段）</td><td>10分</td><td>JSON</td><td>中</td>
+  </tr>
+  <tr>
+    <td>7</td><td><a href="#c7">みらいの引き出し</a></td><td><span class="badge badge-p2">様子見</span></td>
+    <td>選択肢と世界との接続</td><td>10〜15分</td><td>JSON（任意）</td><td>中</td>
+  </tr>
+  <tr>
+    <td>8</td><td><a href="#c8">ばめんカード</a></td><td><span class="badge badge-p2">様子見</span></td>
+    <td>経験の整理・語りの練習</td><td>10〜15分</td><td>なし</td><td>中〜高（再設計済み）</td>
+  </tr>
+</table>
+</div>
+
+<h3>この順番の理由</h3>
+<div class="card">
+  <ul>
+    <li><strong>1・2 が先頭</strong>: 実装が最も軽く、心理的リスクが最小で、毎週どの子にも使える。制作→運用のサイクルを最速で1周させ、以降の型を作る。</li>
+    <li><strong>3 で蓄積型の型を作る</strong>: JSON 入出力（さくせん会議方式）を新コンテンツで初めて使う。今後のコンテンツ選びの土台（その子の興味データ）にもなる。</li>
+    <li><strong>4 は重要だが慎重に</strong>: 感情を直球で聞く設計になりやすいため、1〜3 の運用感覚を得てから作る。</li>
+    <li><strong>5〜8 は運用判断</strong>: つよみ・チャレンジ・みらい・ばめんは、子どもとの関係性やフェーズ1の反応を見てから。特に 7・8 は codex 指摘を受けて当初案から再設計済み（職業→世界の入口、実話→架空も可）。</li>
+  </ul>
+</div>
+
+<div class="caution">
+  <strong>codex 相談で当初案から変えた点</strong>
+  <ul>
+    <li>順番を「自己理解系が先」から「低負荷・遊び寄りが先」に組み替え（毎回自分を語らされる負荷の回避）。</li>
+    <li>「チェックアウトカード」は独立コンテンツではなく超軽量ミニツールとして位置づけ、将来は全ツール共通の終了部品化も検討。</li>
+    <li>「みらいの引き出し」は職業カタログをやめ、場所・自然・ものづくり等の「世界の入口」に変更。反応も数値でなく「のぞいてみる／あとで見る／今はいい」。</li>
+    <li>「ものがたりカード」は実話の語り直しをやめ、「今日の小さな場面／好きな作品の場面／架空の主人公」も選べる「ばめんカード」に再設計。</li>
+    <li>「チャレンジのたね」はさくせん会議への入口専用と明確化。「ながめる・保留・やめる」も成功扱い。</li>
+  </ul>
+</div>
+
+<h2>2. 制作の進め方（1本ごとの手順）</h2>
+<div class="card">
+  <ol>
+    <li>下の実装プロンプトをコピーして Claude Code に貼り付ける。</li>
+    <li>実装完了後、<code>bash scripts/lint.sh</code> の通過とローカル動作を確認する。</li>
+    <li>カード文言・お題などのコンテンツデータを<strong>別セッションのエージェントに監査させる</strong>（プロンプト例: 「apps/○○/ のお題データを AGENTS.md のコンテンツガイドラインに照らして全件監査して」）。kotoba-asobo で実績のある手順。</li>
+    <li>メンター（自分）が実機で一巡し、文言・テンポ・負荷感を調整する。</li>
+    <li>コミットして GitHub Pages へデプロイし、実際のセッションで使う。</li>
+    <li>使用感メモ（子どもの反応・詰まった箇所）を残してから次のコンテンツへ。</li>
+  </ol>
+</div>
+
+<h2>3. フェーズ1（先行4本）</h2>
+
+<!-- ============ 1 ============ -->
+<div class="content-block" id="c1">
+  <div class="content-block__head">
+    <h3>1. どっちにする？</h3>
+    <div class="content-block__meta">
+      <span class="badge badge-p1">フェーズ1</span>
+      <span class="badge badge-tech">オフライン単一構成・保存なし</span>
+      　自己決定の練習／関係構築　・　5〜10分
+    </div>
+  </div>
+  <div class="content-block__body">
+    <p>軽い2択のお題カードをめくり、どちらかを選んで話すだけのツール。「自分で選んでいい」という感覚を、いちばん小さな形で毎週練習できる。理由は聞かなくてもよく、「なんとなく」が正式な回答。</p>
+    <p class="note"><strong>リスクと対策</strong>: 最小リスク。ただし「理由を言って」が圧にならないよう、理由の入力欄や必須化は作らない。優劣・正誤がつく2択（どっちが正しい？系）はデータに入れない。</p>
+    <div class="prompt-box">
+      <button class="copy-btn" onclick="copyPrompt(this)">コピー</button>
+      <textarea readonly>roomK ツール群に新しいアプリ「どっちにする？」を追加してください。new-app-scaffold スキルがあれば使い、リポジトリの AGENTS.md の共通仕様に必ず従ってください。
+
+# アプリ概要
+- フォルダ: apps/docchi/、CSS接頭辞: dc-（BEM記法）
+- 用途: 不登校の小中学生との1対1オンライン面談で、メンターが画面共有して使う。子どもは口頭・チャットで答える。子どもが自分のスマホでURLを開いて使う回もあるためモバイル対応必須。
+- 目的: 軽い2択を選ぶことで「自分で決めていい」という感覚を育てる。関係づくりのアイスブレイクにも使う。
+- 所要時間: 5〜10分（カード5〜10枚程度）
+
+# 技術構成
+- talk-card 型のオフライン構成（index.html + app.js）。Firebase・localStorage 等の永続化は一切使わない。
+- ../shared/css/design-system.css と Material Symbols Rounded を使用。絵文字禁止。
+- レスポンシブ対応（600px以下）。画面共有で見やすい大きめの文字。
+
+# 画面と進行
+1. トップ画面: タイトル、「はじめる」ボタン、カテゴリ選択（すべて／たべもの／あそび／もしも／どうぶつ／せいかつ）
+2. カード画面: 2択のお題を大きく表示。選択肢には丸数字（①②）を付ける（AGENTS.md の番号付け規約に従う）。
+   - メンターが子どもの答えを聞いてから①か②をタップすると、選んだ方がふわっとハイライトされる（演出は控えめ、正解演出・効果音なし）
+   - 「③ どっちもいい」「④ どっちでもない」も常に正式な選択肢として表示する
+   - 「つぎへ」でいつでも次のカードへ（スキップ自由、スキップに確認や記録は不要）
+   - 画面下に小さく、メンター向けの軽い追い質問例を1つ表示（例: 「いつからすき？」）。押し付けにならないトーンで。
+3. カードはシャッフル出題。何枚やったかのカウントや成績表示はしない。
+
+# お題データ
+- 2択のお題を80問以上、JS内の配列で持つ。カテゴリ別に分ける。
+- トーン: 「きのこの山 vs たけのこの里」「朝ごはんはパン vs ごはん」「もしもすけるなら 空をとぶ vs 透明になる」のような、どちらを選んでも楽しい軽い2択のみ。
+- 禁止: 学校・勉強・宿題・成績・登校を連想させるもの、恋愛、怖い話・死、優劣や正誤がつく2択、答えにくい個人的な事情に触れる2択（家族構成・友だちの有無など）。
+- 「理由」を強制する仕組みは作らない。理由入力欄も作らない。
+
+# 心理的安全設計（最重要）
+- 「なんとなく」で選んでよいことをUI文言で伝える（例: カード画面に小さく「りゆうは なくてもOK」）。
+- パス・スキップはいつでも可能で、咎める表示を出さない。
+- 選択の集計・履歴・振り返り機能は作らない（その場で流れて消えるのが正しい）。
+
+# 完成条件
+- bash scripts/lint.sh が通る
+- apps/index.html のポータル（「すべてのツール」セクション）にカードを追加
+- apps/docchi/AGENTS.md にアプリ固有仕様を記載
+- ユーザー入力は扱わないが、DOM挿入するお題文字列も esc() を通す
+- 実装後、お題80問がガイドライン（上記の禁止事項）に適合しているかセルフチェックした結果を報告する</textarea>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 2 ============ -->
+<div class="content-block" id="c2">
+  <div class="content-block__head">
+    <h3>2. チェックアウトカード</h3>
+    <div class="content-block__meta">
+      <span class="badge badge-p1">フェーズ1</span>
+      <span class="badge badge-tech">オフライン単一構成・保存なし</span>
+      　面談の締め・次回への接続　・　1〜2分
+    </div>
+  </div>
+  <div class="content-block__body">
+    <p>面談の最後に1問だけ引く超軽量ツール。「今日の体験を次回につなげる」ための問いを、評価に見えない形で投げかける。作戦会議の流れに「チェックアウト」を正式に組み込むための道具。</p>
+    <p class="note"><strong>リスクと対策</strong>: 「今日どうだった？」はメンターからの評価質問に見えることがある（codex 指摘）。問いプールは「次はどれがよさそう？」「今日はここまででOK？」など、子どもが選ぶ・決める形の問いに寄せる。</p>
+    <div class="prompt-box">
+      <button class="copy-btn" onclick="copyPrompt(this)">コピー</button>
+      <textarea readonly>roomK ツール群に新しいアプリ「チェックアウトカード」を追加してください。new-app-scaffold スキルがあれば使い、リポジトリの AGENTS.md の共通仕様に必ず従ってください。
+
+# アプリ概要
+- フォルダ: apps/checkout-card/、CSS接頭辞: ck-（BEM記法）
+- 用途: 不登校の小中学生との1対1オンライン面談の最後の1〜2分に、メンターが画面共有して1問だけ引くミニツール。
+- 目的: 面談の締めくくりに、今日の体験を次回へつなげる短い問いかけをする。メンターによる評価・感想の聞き取りに見えないことが最重要。
+- 所要時間: 1〜2分（1問だけ。長引かせない設計）
+
+# 技術構成
+- talk-card 型のオフライン構成（index.html + app.js 程度の最小構成）。Firebase・永続化は一切使わない。
+- ../shared/css/design-system.css と Material Symbols Rounded を使用。絵文字禁止。
+- 1画面完結。トップ画面すら省き、開いたら即カードが引ける状態にする。
+- レスポンシブ対応（600px以下）。
+
+# 画面と進行
+- 画面中央に大きなカード。「カードをひく」でランダムに1問表示（カードフリップ演出 M-4 を使ってよい）。
+- 「べつのカードにする」でいつでも引き直せる（回数制限なし、記録なし）。
+- 「きょうはパス」ボタンを正式に用意する。押すと「OK！また来週！」のような軽い一言だけ表示して終わる。
+- 連続で同じ問いが出ないようにする。それ以外の出題履歴・集計は持たない。
+
+# 問いデータ
+- 20問以上をJS内の配列で持つ。トーンは軽く、答えが一言で済むもの。
+- 問いの方向性（この3種類をバランスよく）:
+  1. 次回につなぐ問い: 「つぎの作戦会議で やってみたいことある？」「つぎは どんなゲームがよさそう？」
+  2. 今日を軽く締める問い: 「きょうは ここまでで OK？」「きょういちばん わらったのは どのへん？」
+  3. ゆるい未来の問い: 「来週までに たのしみなこと ある？」（「がんばること」は聞かない）
+- 禁止: 「今日はどうだった？」「何を学んだ？」「がんばれた？」など評価・感想・成果を問うもの。学校・勉強・登校関連。「目標」「宿題」という語。
+- どの問いにも「わからない・ないしょ・パス もぜんぶ正解」と小さく添える。
+
+# 心理的安全設計（最重要）
+- 答えなくても面談が終われる。パスが失敗に見えない文言にする。
+- メンター向けの注意書きを画面のすみに小さく1行（例: 「1問だけ。ふかぼりしない」）。
+
+# 完成条件
+- bash scripts/lint.sh が通る
+- apps/index.html のポータル（「すべてのツール」セクション）にカードを追加
+- apps/checkout-card/AGENTS.md にアプリ固有仕様を記載
+- 実装後、問い20問が「評価に見えないか」の観点で適合しているかセルフチェックした結果を報告する</textarea>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 3 ============ -->
+<div class="content-block" id="c3">
+  <div class="content-block__head">
+    <h3>3. すきなことマップ</h3>
+    <div class="content-block__meta">
+      <span class="badge badge-p1">フェーズ1</span>
+      <span class="badge badge-tech">オフライン + JSON入出力（さくせん会議方式）</span>
+      　興味関心の可視化・蓄積　・　10〜15分
+    </div>
+  </div>
+  <div class="content-block__body">
+    <p>「すき」「ちょっと気になる」を書き出してマップに置いていく、回をまたいで育てる蓄積型ツール。数週間〜数か月かけてその子の興味の地形図ができ、以降のコンテンツ選び・お知らせ（イベント案内）の土台になる。</p>
+    <p class="note"><strong>リスクと対策</strong>: 「好きなことがない」と感じる子に負荷がかかる（codex 指摘）。「すき」より弱い関心──「ちょっと気になる」「見るのはあり」「まえはすきだった」──を正式な置き場所として用意し、0個でも成立する導入お題から始める。kyoumi-sugoroku（会話のきっかけ）とは「蓄積する」点で役割分担。</p>
+    <div class="prompt-box">
+      <button class="copy-btn" onclick="copyPrompt(this)">コピー</button>
+      <textarea readonly>roomK ツール群に新しいアプリ「すきなことマップ」を追加してください。new-app-scaffold スキルがあれば使い、リポジトリの AGENTS.md の共通仕様、および apps/sakusen-kaigi/（JSON入出力方式の先行実装）を必ず参照してください。
+
+# アプリ概要
+- フォルダ: apps/sukina-map/、CSS接頭辞: sk 以外（sakusen-kaigi が sk- を使用済みのため sm- とする。BEM記法）
+- 用途: 不登校の小中学生との1対1オンライン面談で、メンターが画面共有して操作する（子どもの発言をメンターが入力する）。
+- 目的: 好き・気になるものを書き出してマップに置き、回をまたいで興味の地形図を育てる。興味関心を広げる対話の土台にする。
+- 所要時間: 1回 10〜15分。初回はまっさら、2回目以降は前回の JSON を読み込んで続きから。
+
+# 技術構成
+- sakusen-kaigi と同じ方式:
+  - index.html + app.js + style.css のオフライン構成。Firebase 不使用。
+  - localStorage / sessionStorage / IndexedDB / Cookie は一切呼ばない。
+  - 記録は JSON ファイルのダウンロード／アップロードのみ（Blob + <a download> / <input type="file"> + FileReader）。
+  - ファイルには個人名を入れない。sakusen-kaigi と同じ「色×動物」の fileMarker 方式を使う。
+  - record.app = "sukina-map"、schemaVersion = 1。インポート検証（app一致・サイズ上限・schemaVersion・文字列長切り詰め）も sakusen-kaigi の AGENTS.md の方式に準拠。
+  - dirty フラグ + beforeunload で保存忘れを防ぐ。
+- ../shared/css/design-system.css と Material Symbols Rounded を使用。絵文字禁止。
+- レスポンシブ対応（600px以下）。画面共有で見やすいこと優先。
+
+# マップの設計
+- 中央に「じぶん」、そのまわりに興味アイテムをチップ（付箋風カード）として配置するマップ。ドラッグ移動できるとよいが、実装が複雑になるなら「近さレーン方式」（後述）でもよい。
+- アイテムには「近さ」を設定する。近さは数値ではなく4段階の言葉:
+  ① だいすき・よくやる　② すき　③ ちょっと気になる　④ 見るのはあり／まえはすきだった
+- 「近さレーン方式」の場合: 中央から同心円状（または横並びレーン）に4段階のエリアを描き、チップをエリアに置く。
+- アイテムの追加: 自由入力（20文字以内）＋カテゴリ候補チップからの選択の両方。カテゴリ例: ゲーム・動画・音楽・つくる・かく・動物・のりもの・スポーツ・たべもの・しらべる・あつめる・その他。
+- アイテムの編集・移動・削除ができる。削除に「本当に消しますか」以上の重い確認は不要。
+- 導入お題: マップが空のとき「さいきん見たもの・さわったものから探してみよう」のような、0個からでも始められる声かけを表示する。
+
+# データ構造の目安
+- items: [{ id, label, category, closeness(1-4), createdAt }] 最大100件。
+- 並び替え・ランキング・件数の集計表示はしない。「増えた数」を強調しない。
+
+# 心理的安全設計（最重要）
+- 「すきなことがない」でも成立する: 弱い関心（③④）から置けることをUIで最初に示す。
+- アイテム数の目標・ノルマ・達成表示を出さない。
+- 「近さ」が下がる（すき→気になる に移動する）操作を、否定的な演出なしで自然にできるようにする。興味は変わっていいというトーン。
+- 診断・タイプ分け・おすすめ表示はしない。マップは眺めて話すための材料。
+
+# 禁止事項
+- 学校・勉強・成績・登校を連想させるカテゴリや例、恋愛、ダーク系。
+- 評価・比較・数値化・バッジ・連続記録。
+
+# 完成条件
+- bash scripts/lint.sh が通る
+- apps/index.html のポータル（「すべてのツール」セクション）にカードを追加
+- apps/sukina-map/AGENTS.md にアプリ固有仕様（データ構造・インポート検証ルール含む）を記載
+- ユーザー入力の DOM 挿入は必ず esc() を通す
+- JSON 書き出し→読み込みの往復で items が完全に復元されることを確認して報告する</textarea>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 4 ============ -->
+<div class="content-block" id="c4">
+  <div class="content-block__head">
+    <h3>4. きもちのことばマップ</h3>
+    <div class="content-block__meta">
+      <span class="badge badge-p1">フェーズ1</span>
+      <span class="badge badge-tech">オフライン単一構成・保存なし</span>
+      　感情の言語化　・　5〜10分
+    </div>
+  </div>
+  <div class="content-block__body">
+    <p>感情のことば（60〜80語）をゆるいグループでマップ表示し、「今日の気持ちに近いことば」を探して眺めるツール。「なんとなく嫌」「疲れた」を、その子のペースで少しずつ細かい言葉に置き換えていく。checkin（今の状態共有）との違いは「語彙を増やす・近い言葉を探す」こと。</p>
+    <p class="note"><strong>リスクと対策</strong>: 気持ちを直球で聞かれるとしんどい子がいる（codex 指摘）。「わからない」「どれでもない」「今日は選ばない」を正式ボタンにし、強さは数値でなく「ちいさめ・ふつう・おおきめ」の3語。記録は残さず使い捨て（気持ちを証拠化しない）。</p>
+    <div class="prompt-box">
+      <button class="copy-btn" onclick="copyPrompt(this)">コピー</button>
+      <textarea readonly>roomK ツール群に新しいアプリ「きもちのことばマップ」を追加してください。new-app-scaffold スキルがあれば使い、リポジトリの AGENTS.md の共通仕様に必ず従ってください。
+
+# アプリ概要
+- フォルダ: apps/kimochi-map/、CSS接頭辞: km-（BEM記法）
+- 用途: 不登校の小中学生との1対1オンライン面談で、メンターが画面共有して使う。子どもは口頭・チャットで答える。子ども自身がURLを開いてタップする回もある。
+- 目的: 感情語彙のマップから「今日（または最近）の気持ちに近いことば」を探して眺め、気持ちを言葉にする練習をする。診断や記録のためではなく、語彙と対話のためのツール。
+- 所要時間: 5〜10分
+
+# 技術構成
+- talk-card 型のオフライン構成（index.html + app.js + 必要なら style.css）。Firebase・localStorage 等の永続化は一切使わない。リロードで消えるのが正しい仕様。
+- ../shared/css/design-system.css と Material Symbols Rounded を使用。絵文字禁止。
+- レスポンシブ対応（600px以下）。
+
+# 感情語彙データ
+- 60〜80語をJS内の配列で持つ。小学校中学年でも読めるひらがな・やさしい漢字。
+- ゆるいグループ（5〜7グループ）に分ける。グループ名は医学・心理用語でなく子どもの言葉: 例「にこにこ系」「ぽかぽか系」「もやもや系」「ざわざわ系」「ぐったり系」「すっきり系」。
+- 各グループ内で「近い言葉」が隣り合うように配置する（例: もやもや系の中に「もやもや／なんとなくいや／ひっかかる／はっきりしない」）。
+- ネガティブ語彙も必ず入れるが、深刻すぎる語（絶望・消えたい等）は入れない。「つらい」「しんどい」程度まで。
+- グループに優劣・色の良し悪しをつけない（ネガティブ系を暗い色・警告色にしない）。
+
+# 画面と進行
+1. マップ画面: 全グループのことばがチップ状に一覧できる。タップ（クリック）で選択、複数選択可。
+2. 画面上部の問いかけ: 「きょうの きもちに ちかい ことばは ある？」（「今の気持ちは？」と直球で聞かない）。
+3. 正式ボタンとして常時表示: 「わからない」「どれでもない」「きょうは えらばない」。押すとその選択が尊重される軽い一言（例: 「OK、それも だいじな こたえ」）を出して、マップは眺めるだけモードで居られる。
+4. ことばを選んだら、任意で「大きさ」を選べる: 「ちいさめ／ふつう／おおきめ」の3語（数値・スライダー・パーセントは使わない）。スキップ可。
+5. 選んだことばの「近くにあることば」がゆるくハイライトされ、「こっちのほうが近い？」と探索できる。
+6. 「けす」でいつでも選択解除。終了ボタンや結果画面は作らない（閉じて終わり）。
+
+# 心理的安全設計（最重要）
+- 選ばない・わからないが正式な回答であることを、ボタンの配置と文言で示す（すみに小さくではなく、他の選択肢と同格に置く）。
+- 選んだ内容の記録・保存・コピー機能を作らない。気持ちを証拠化しない。
+- 診断・分析・アドバイス・「この気持ちのときは〜しよう」的な表示は一切しない。
+- メンター向けの一言を画面すみに小さく: 「ことばを さがすだけで OK。ふかぼりしない」。
+
+# 禁止事項
+- 学校・勉強・成績・登校関連の文脈、恋愛、死・自傷を連想させる語彙。
+- 気持ちの点数化・グラフ化・履歴化。
+
+# 完成条件
+- bash scripts/lint.sh が通る
+- apps/index.html のポータル（「すべてのツール」セクション）にカードを追加
+- apps/kimochi-map/AGENTS.md にアプリ固有仕様（語彙リスト方針含む）を記載
+- 実装後、全語彙が「小学校中学年が読めるか」「深刻すぎないか」の観点で適合しているかセルフチェックした結果を報告する</textarea>
+    </div>
+  </div>
+</div>
+
+<h2>4. フェーズ2（様子見4本・叩き台プロンプト）</h2>
+<p class="note">フェーズ1の運用で見えたこと（子どもの反応・使いやすさ・JSON運用の負担感）を反映してから着手します。プロンプトは現時点の叩き台で、着手前に見直します。</p>
+
+<!-- ============ 5 ============ -->
+<div class="content-block" id="c5">
+  <div class="content-block__head">
+    <h3>5. つよみカード</h3>
+    <div class="content-block__meta">
+      <span class="badge badge-p2">フェーズ2</span>
+      <span class="badge badge-tech">オフライン + JSON書き出し（任意）</span>
+      　自己理解（強みの発見）　・　10〜15分
+    </div>
+  </div>
+  <div class="content-block__body">
+    <p>「〜なところがあるかも」と語尾を弱めた強みカードを、子どもとメンターがそれぞれ選んで見せ合うツール。value-card（価値観＝大事にしたいこと）とは「強み＝たまに出る力」という軸の違いで住み分ける。</p>
+    <p class="note"><strong>リスクと対策</strong>: 褒められるのが苦手な子にはきつい（codex 指摘）。カードは断定形にしない・「メンターから見えたところ」というフレーミングにする・褒め演出を入れない。</p>
+    <div class="prompt-box">
+      <button class="copy-btn" onclick="copyPrompt(this)">コピー</button>
+      <textarea readonly>roomK ツール群に新しいアプリ「つよみカード」を追加してください。new-app-scaffold スキルがあれば使い、リポジトリの AGENTS.md の共通仕様、および apps/value-card/（近い先行実装）を必ず参照してください。
+
+# アプリ概要
+- フォルダ: apps/tsuyomi-card/、CSS接頭辞: ty-（tc- は talk-card が使用済みのため不可。BEM記法）
+- 用途: 不登校の小中学生との1対1オンライン面談で、メンターが画面共有して操作する。
+- 目的: 「そういうところがあるかも」という弱いトーンの強みカードを、子どもとメンターがそれぞれ選んで見せ合い、自己理解と関係構築につなげる。
+- 所要時間: 10〜15分
+
+# 技術構成
+- talk-card 型のオフライン構成。永続化なし。ただし「えらんだカードをJSONで保存」ボタンだけ任意機能として付ける（sakusen-kaigi 方式の書き出しのみ。読み込みは不要）。
+- ../shared/css/design-system.css と Material Symbols Rounded を使用。絵文字禁止。
+- レスポンシブ対応（600px以下）。
+
+# カードデータ
+- 40枚以上。文言は必ず非断定形: 「さいごまで見ちゃう集中力が あるかも」「人のへんかに 気づくほうかも」「じぶんのペースを もってるかも」など。
+- 「あなたは〇〇だ」という断定形、学校・勉強文脈の強み（成績・テスト・発表など）、他人との比較を含む文言は禁止。
+- 小学校中学年でも読める表現。
+
+# 画面と進行
+1. カード一覧から、まず子どもが「じぶんに あるかも」と思うカードを選ぶ（メンターが代理操作）。0枚でもOK、上限3枚程度。
+2. 次にメンターが「メンターから見えたところ」としてカードを選ぶ（1〜2枚）。
+3. 見せ合い画面: 両者のカードを並べて眺める。一致・不一致の判定や祝福演出はしない。「同じのあった！」はメンターが口頭で言えばよい。
+4. 「わからない」「きょうは えらばない」を正式ボタンとして用意。
+5. 任意でJSON書き出し（fileMarker は色×動物方式、個人名なし）。
+
+# 心理的安全設計（最重要）
+- 選ばれなかったカード＝弱み、という見え方を作らない（未選択カードのグレーアウトや✕表示をしない）。
+- 「たまに出る力」というトーンをUI文言に一貫させる。毎回出せなくていい。
+- 枚数の多寡を比較しない・数を表示しない。
+
+# 完成条件
+- bash scripts/lint.sh が通る／ポータル登録／apps/tsuyomi-card/AGENTS.md 作成
+- カード40枚が非断定形・ガイドライン適合かセルフチェックした結果を報告する</textarea>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 6 ============ -->
+<div class="content-block" id="c6">
+  <div class="content-block__head">
+    <h3>6. チャレンジのたね</h3>
+    <div class="content-block__meta">
+      <span class="badge badge-p2">フェーズ2</span>
+      <span class="badge badge-tech">オフライン + JSON入出力</span>
+      　自己実現（さくせん会議の前段）　・　10分
+    </div>
+  </div>
+  <div class="content-block__body">
+    <p>「ちょっとやってみたいかも」を集めておく、たねポケットのようなツール。さくせん会議（GPDC）が「決めて試す」段階なのに対し、こちらは「まだ決めない」段階専用。たねは「ためす」だけでなく「ながめる・ほりゅう・やめる」も全部正式な扱い。</p>
+    <p class="note"><strong>リスクと対策</strong>: 「やること」を決めさせると失敗の証拠になりやすい（codex 指摘）。たねの状態に成功/失敗の概念を持ち込まない。さくせん会議とのカニバリを避けるため、このツールでは計画を立てない。</p>
+    <div class="prompt-box">
+      <button class="copy-btn" onclick="copyPrompt(this)">コピー</button>
+      <textarea readonly>roomK ツール群に新しいアプリ「チャレンジのたね」を追加してください。new-app-scaffold スキルがあれば使い、リポジトリの AGENTS.md の共通仕様、および apps/sakusen-kaigi/（JSON方式・GPDC の本体）を必ず参照してください。
+
+# アプリ概要
+- フォルダ: apps/challenge-tane/、CSS接頭辞: ct-（BEM記法）
+- 用途: 不登校の小中学生との1対1オンライン面談で、メンターが画面共有して操作する。
+- 目的: 「ちょっとやってみたいかも」というたねを集めておく置き場。さくせん会議（GPDC）の前段で、ここでは計画を立てない・決めない。たねが育ったらさくせん会議に持ち込む。
+- 所要時間: 1回10分程度。回をまたいで JSON で育てる。
+
+# 技術構成
+- sakusen-kaigi と同じ JSON 入出力方式（永続化ゼロ、色×動物 fileMarker、record.app = "challenge-tane"、schemaVersion = 1、インポート検証も同方式）。
+- ../shared/css/design-system.css と Material Symbols Rounded を使用。絵文字禁止。
+- レスポンシブ対応（600px以下）。
+
+# データと画面
+- たね: { id, label(30文字以内), memo(任意60文字以内), status, createdAt } 最大50件。
+- status は4種類で全部同格（成功/失敗の順序をつけない）:
+  「ためしてみたい」「ながめておく」「ほりゅう」「もういいかな」
+- 画面: たねがポケット（またはプランター）風のエリアに status ごとに並ぶ。追加・編集・status 変更・削除ができる。
+- 「もういいかな」にしたたねは消えずに、たたんだエリアに残る（やめる＝なかったことにしない、でも目立たせない）。
+- さくせん会議への接続: 「ためしてみたい」のたねに「さくせん会議で そうだんする」ボタンを置き、押すとたねの文言をコピーして apps/sakusen-kaigi/ へのリンクを表示する（データ連携はコピーのみ。JSON統合はしない）。
+
+# 心理的安全設計（最重要）
+- たねの数・達成率・経過日数を表示しない。
+- status 変更に理由を求めない。「もういいかな」への変更も1タップ、否定的演出なし。
+- 「ながめておく」「ほりゅう」が中途半端に見えない文言・並び順にする（4つを並列に扱う）。
+
+# 禁止事項
+- 学校・勉強・登校関連の例示、期限・リマインダー・進捗バー、がんばれ系の応援文言。
+
+# 完成条件
+- bash scripts/lint.sh が通る／ポータル登録／apps/challenge-tane/AGENTS.md 作成
+- JSON 書き出し→読み込みの往復確認、および文言のガイドライン適合セルフチェックを報告する</textarea>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 7 ============ -->
+<div class="content-block" id="c7">
+  <div class="content-block__head">
+    <h3>7. みらいの引き出し</h3>
+    <div class="content-block__meta">
+      <span class="badge badge-p2">フェーズ2</span>
+      <span class="badge badge-tech">オフライン + JSON書き出し（任意）</span>
+      　選択肢と世界との接続　・　10〜15分
+    </div>
+  </div>
+  <div class="content-block__body">
+    <p>職業カタログではなく「世界の入口」（場所・自然・動物・ものづくり・音・食べもの…）を引き出しを開けるように眺めるツール。反応は「のぞいてみる／あとで見る／今はいい」の3種類だけ。すきなことマップの運用データが溜まってから作ると精度が上がる。</p>
+    <p class="note"><strong>リスクと対策</strong>: 職業・将来を前面に出すと進路圧になる（codex 指摘で当初案から再設計）。「しょうらい」「しごと」「しんろ」という語をUIに出さない。</p>
+    <div class="prompt-box">
+      <button class="copy-btn" onclick="copyPrompt(this)">コピー</button>
+      <textarea readonly>roomK ツール群に新しいアプリ「みらいの引き出し」を追加してください。new-app-scaffold スキルがあれば使い、リポジトリの AGENTS.md の共通仕様に必ず従ってください。
+
+# アプリ概要
+- フォルダ: apps/mirai-hikidashi/、CSS接頭辞: mh-（BEM記法）
+- 用途: 不登校の小中学生との1対1オンライン面談で、メンターが画面共有して使う。
+- 目的: 世界にはいろんな入口があることを、引き出しを開けるように軽く眺める。興味の入口を広げるツールであり、進路・職業選択のツールではない。
+- 所要時間: 10〜15分（引き出し3〜5個ひらく程度）
+
+# 最重要の設計方針
+- 職業名を主役にしない。「場所・自然・動物・ものづくり・音・食べもの・のりもの・宇宙・海・ことば・えがく・きかい・ひとを手伝う」のような「世界の入口」を単位にする。
+- UI文言に「しょうらい」「しごと」「職業」「しんろ」「夢」を出さない。アプリ名の「みらい」はタイトルのみに留める。
+- 反応は数値でなく3種類: 「のぞいてみる」「あとで見る」「今はいい」。全部同格で、「今はいい」に否定的演出をしない。
+
+# 技術構成
+- talk-card 型のオフライン構成。永続化なし。「のぞいてみる／あとで見る」に入れた引き出しをJSON書き出しできる任意機能のみ（sakusen-kaigi 方式、書き出しのみ）。
+- ../shared/css/design-system.css と Material Symbols Rounded を使用。絵文字禁止（引き出しのアイコンも Material Symbols から選ぶ）。
+- レスポンシブ対応（600px以下）。
+
+# コンテンツデータ
+- 引き出し（世界の入口）を20個以上。各引き出しの中身:
+  - 入口の名前（例: 「うみの世界」「音の世界」「つくる世界」）
+  - 中をのぞいた説明: 2〜3文。子どもの言葉で、その世界の面白さの入口だけ見せる。
+  - 「こんなことしてる人がいる」: 具体的な活動を3〜4個（職業名でなく活動で書く: 「魚の名前を全部おぼえてる人」「海の音だけ録音してる人」など）
+  - 「ちょっとのぞくなら」: 家でできる小さな入口を1〜2個（動画を見る・図鑑を見る程度。外出や購入を前提にしない）
+- 禁止: 学校・勉強・資格・受験の文脈、「なるためには」系の説明、年収・すごさランキング。
+
+# 画面と進行
+1. 引き出しがグリッド状に並ぶ棚の画面。ランダム表示ボタン「どれか あけてみる」も置く。
+2. 引き出しをタップすると中身が開く（開く演出は控えめに）。
+3. 中身画面に「のぞいてみる」「あとで見る」「今はいい」の3ボタン。押したら棚に戻る。
+4. 棚画面で「のぞいてみる」「あとで見る」に入れた引き出しに小さな目印がつく。集計・件数表示はしない。
+
+# 完成条件
+- bash scripts/lint.sh が通る／ポータル登録／apps/mirai-hikidashi/AGENTS.md 作成
+- 全引き出しの文言が「進路・職業圧になっていないか」の観点で適合しているかセルフチェックした結果を報告する</textarea>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 8 ============ -->
+<div class="content-block" id="c8">
+  <div class="content-block__head">
+    <h3>8. ばめんカード</h3>
+    <div class="content-block__meta">
+      <span class="badge badge-p2">フェーズ2</span>
+      <span class="badge badge-tech">オフライン単一構成・保存なし</span>
+      　経験の整理・語りの練習　・　10〜15分
+    </div>
+  </div>
+  <div class="content-block__body">
+    <p>当初案「ものがたりカード（実話の語り直し）」を再設計したもの。「今日の小さな場面」「すきな作品の場面」「架空の主人公の場面」の3モードから選べるため、自分の話をしたくない日は作品や架空の話で語りの練習ができる。8本の中で最も負荷が高いため最後。</p>
+    <p class="note"><strong>リスクと対策</strong>: 実話モードは家庭・学校の話題に触れやすい（codex 指摘）。実話を強制しない3モード構成にし、語られた内容をアプリは一切記録しない。</p>
+    <div class="prompt-box">
+      <button class="copy-btn" onclick="copyPrompt(this)">コピー</button>
+      <textarea readonly>roomK ツール群に新しいアプリ「ばめんカード」を追加してください。new-app-scaffold スキルがあれば使い、リポジトリの AGENTS.md の共通仕様に必ず従ってください。
+
+# アプリ概要
+- フォルダ: apps/bamen-card/、CSS接頭辞: bm-（BEM記法）
+- 用途: 不登校の小中学生との1対1オンライン面談で、メンターが画面共有して使う。
+- 目的: 「場面」を切り取って話す練習。出来事を整理して語る力を、実話に限定せず、好きな作品や架空の話でも育てられる。
+- 所要時間: 10〜15分
+
+# 3つのモード（最重要）
+起動時に3つから選ぶ。どれを選んでも同格で、実話モードを推奨扱いしない。
+1. きょうの小さなばめん: 最近あった小さな場面をひとつ切り取って話す（大事件でなくていい: 「朝、ねこが窓の外にいた」レベルを例示する）
+2. すきな作品のばめん: ゲーム・アニメ・動画・本などの好きな場面を紹介する
+3. そうぞうの主人公のばめん: カードが提示する架空の主人公（例: 「雲の上でパンやをやってる人」）のある1日の場面を想像して話す
+
+# 進行の支援カード
+- どのモードでも「話の入口カード」を引ける: 「その場面は どこ？」「そこに なにが見える？」「音は する？」など、場面を描写するための軽い問い15問以上。
+- 5W1H の詰問にならないトーン。「なんで？」系の問いは入れない。
+- パス・カードの引き直しは自由。話が続かなくても成立する（1つの問いだけで終わってよい）。
+
+# 技術構成
+- talk-card 型のオフライン構成（index.html + app.js）。永続化・記録・保存機能は一切作らない。語られた内容をアプリに入力する欄も作らない（話すのは口頭。アプリは場面カードと問いを出すだけ）。
+- ../shared/css/design-system.css と Material Symbols Rounded を使用。絵文字禁止。
+- レスポンシブ対応（600px以下）。
+
+# コンテンツデータ
+- そうぞうの主人公カード: 20枚以上。ユーモラスで安全な架空設定のみ。
+- 話の入口カード: 15問以上。
+- 禁止: 学校・勉強・登校の場面例、家族関係に踏み込む問い（「家でどうだった？」等）、嫌だった場面を促す問い、恋愛、怖い話。
+
+# 心理的安全設計
+- モード選択画面に「きょうは 話をきくだけでも OK」の選択肢を置く（メンターが主人公カードで話すのを聞くモード）。
+- 語りの上手さを評価する要素（タイマー・文字数・採点）を一切入れない。
+
+# 完成条件
+- bash scripts/lint.sh が通る／ポータル登録／apps/bamen-card/AGENTS.md 作成
+- 主人公カード・問いカード全件のガイドライン適合セルフチェックを報告する</textarea>
+    </div>
+  </div>
+</div>
+
+<h2>5. 運用しながら決めること（未決事項）</h2>
+<div class="card">
+  <p>codex 相談で挙がったが、今決めなくてよい事項。フェーズ1の運用中に判断します。</p>
+  <ul>
+    <li>低学年寄りの子と中学生で文言セットを分けるか（まずは全年齢ひらがな多めで統一）</li>
+    <li>メンター専用メモ（子どもに見せない画面）が必要か（まずは作らない）</li>
+    <li>保護者・運営に共有する成果物を作るか（まずは作らない。「証拠化しない」哲学を優先）</li>
+    <li>チェックアウトカードを全ツール共通の終了部品に組み込むか（単体運用で価値検証後）</li>
+    <li>JSON ファイルの管理がメンター運用として続けられるか（負担が大きければ再検討）</li>
+    <li>年間の「遊び系 : 自己理解系」の使用比率（運用ログを見て調整）</li>
+    <li>センシティブな話題が出たときのメンター対応手順（ツール外の運用ルールとして整備）</li>
+  </ul>
+</div>
+
+<footer>roomK 作戦会議コンテンツ制作計画 ／ docs/content-plan.html ／ 計画立案: Claude Fable 5 × codex 相談</footer>
+</div>
+
+<script>
+function copyPrompt(btn) {
+  var ta = btn.parentElement.querySelector('textarea');
+  var done = function () {
+    btn.textContent = 'コピーしました';
+    btn.classList.add('copied');
+    setTimeout(function () {
+      btn.textContent = 'コピー';
+      btn.classList.remove('copied');
+    }, 1800);
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(ta.value).then(done, function () { fallback(ta, done); });
+  } else {
+    fallback(ta, done);
+  }
+}
+function fallback(ta, done) {
+  ta.focus();
+  ta.select();
+  try { document.execCommand('copy'); done(); } catch (e) { /* noop */ }
+  window.getSelection().removeAllRanges();
+}
+</script>
+</body>
+</html>
