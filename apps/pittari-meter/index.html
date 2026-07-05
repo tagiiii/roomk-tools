@@ -1,0 +1,1602 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+  <title>ピッタリメーター</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+  <script src="../shared/js/rtdb-utils.js"></script>
+  <link rel="stylesheet" href="../shared/css/design-system.css">
+  <style>
+    /* ── 画面管理 ── */
+    .screen { display: none; min-height: 100dvh; }
+    .screen.active { display: flex; flex-direction: column; align-items: center; }
+
+    .ptm-page {
+      width: 100%;
+      max-width: 520px;
+      padding: 40px 20px 80px;
+    }
+
+    .card { margin-bottom: 16px; }
+    .btn + .btn { margin-top: 10px; }
+
+    /* ── フォーム ── */
+    .ptm-input-code { font-size: 28px; font-weight: 700; text-align: center; letter-spacing: 0.25em; }
+
+    .ptm-error {
+      font-size: 13px; color: var(--color-error);
+      padding: 10px 14px; background: #FEF2F2;
+      border-radius: 8px; border-left: 3px solid var(--color-error);
+      margin-bottom: 12px; display: none;
+    }
+    .ptm-error.visible { display: block; }
+
+    /* ── 共通見出し ── */
+    .ptm-title { font-size: 22px; font-weight: 700; color: var(--color-primary); margin-bottom: 6px; }
+    .ptm-sub   { font-size: 14px; color: var(--color-muted); margin-bottom: 24px; }
+    .ptm-label {
+      font-size: 12px; font-weight: 700; color: var(--color-muted);
+      letter-spacing: 0.07em; text-transform: uppercase; margin-bottom: 10px;
+    }
+
+    /* ── TOP ── */
+    .ptm-hero { text-align: center; padding: 56px 0 32px; }
+    .ptm-hero__icon {
+      display: flex; align-items: center; justify-content: center;
+      width: 72px; height: 72px; margin: 0 auto 20px;
+      background: var(--color-primary); border-radius: 20px;
+    }
+    .ptm-hero__icon .material-symbols-rounded { font-size: 40px; color: #fff; }
+    .ptm-hero__title { font-size: 30px; font-weight: 700; color: var(--color-primary); line-height: 1.3; }
+    .ptm-hero__sub   { font-size: 14px; color: var(--color-muted); margin-top: 10px; line-height: 1.7; }
+    .ptm-hero__buttons { display: flex; flex-direction: column; gap: 12px; margin-top: 40px; }
+
+    /* ── ルームコード ── */
+    .ptm-code-box {
+      font-size: 52px; font-weight: 700; letter-spacing: 0.3em;
+      color: var(--color-primary); text-align: center;
+      padding: 20px; background: #EEF3F8; border-radius: 12px;
+      cursor: pointer; user-select: all; margin-bottom: 12px;
+    }
+
+    /* ── プレイヤーリスト ── */
+    .ptm-players { display: flex; flex-direction: column; gap: 8px; }
+    .ptm-player {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 14px; background: var(--color-surface);
+      border-radius: 10px; border: 2px solid var(--color-border); font-size: 15px;
+    }
+    .ptm-player--me { border-color: var(--color-accent); background: #EEF3F8; }
+    .ptm-player__avatar {
+      width: 34px; height: 34px; border-radius: 50%;
+      background: var(--color-accent); color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 700; flex-shrink: 0;
+    }
+    .ptm-player__name { flex: 1; font-weight: 500; }
+    .ptm-player__badge {
+      font-size: 11px; background: var(--color-primary); color: #fff;
+      padding: 2px 8px; border-radius: 20px; margin-left: auto;
+    }
+
+    /* ── スピナー ── */
+    .spinner {
+      width: 48px; height: 48px; margin: 0 auto 20px;
+      border: 4px solid var(--color-border); border-top-color: var(--color-accent);
+      border-radius: 50%; animation: spin 0.8s linear infinite;
+    }
+
+    /* ── ものさし（軸ペア）バナー ── */
+    .ptm-axis {
+      display: flex; align-items: center; gap: 8px;
+      margin-bottom: 20px;
+    }
+    .ptm-axis__side {
+      flex: 1; text-align: center;
+      padding: 14px 8px; border-radius: 12px;
+      font-size: 16px; font-weight: 700; line-height: 1.4;
+      color: #fff;
+    }
+    .ptm-axis__side--left  { background: var(--color-primary); }
+    .ptm-axis__side--right { background: var(--color-accent); }
+    .ptm-axis__arrow {
+      flex-shrink: 0; color: var(--color-muted);
+      display: flex; align-items: center;
+    }
+
+    /* ── メーター表示（静的表示・reveal 共通）── */
+    .ptm-meter { position: relative; margin: 8px 0 4px; }
+    .ptm-meter--flagged { padding-top: 46px; }
+    .ptm-meter__track {
+      position: relative; height: 22px; border-radius: 11px;
+      background: linear-gradient(90deg, #DCE7EE, #D3E5E4);
+      border: 2px solid var(--color-border);
+      overflow: hidden;
+    }
+    .ptm-meter__zone { position: absolute; top: 0; bottom: 0; }
+    .ptm-meter__zone--z1 { background: #FBEFD3; }
+    .ptm-meter__zone--z2 { background: #F6D88F; }
+    .ptm-meter__zone--z3 { background: #F0A500; }
+    .ptm-meter__targetline {
+      position: absolute; top: -2px; bottom: -2px; width: 4px;
+      transform: translateX(-50%);
+      background: var(--color-primary); border-radius: 2px;
+    }
+    .ptm-meter__flag {
+      position: absolute; top: 0; transform: translateX(-50%);
+      background: var(--color-primary); color: #fff;
+      font-size: 16px; font-weight: 700; line-height: 1;
+      padding: 8px 12px; border-radius: 10px;
+      white-space: nowrap;
+    }
+    .ptm-meter__flag::after {
+      content: ''; position: absolute; left: 50%; bottom: -6px;
+      transform: translateX(-50%);
+      border: 6px solid transparent; border-bottom: none;
+      border-top: 6px solid var(--color-primary);
+    }
+    .ptm-meter__ticks { position: relative; height: 22px; margin-top: 4px; }
+    .ptm-meter__tick {
+      position: absolute; transform: translateX(-50%);
+      font-size: 11px; font-weight: 700; color: var(--color-muted);
+    }
+    .ptm-meter__pins { position: relative; margin-top: 2px; }
+    .ptm-pin {
+      position: absolute; transform: translateX(-50%);
+      display: flex; flex-direction: column; align-items: center;
+      max-width: 110px;
+    }
+    .ptm-pin__tri {
+      width: 0; height: 0;
+      border: 7px solid transparent; border-top: none;
+      border-bottom: 9px solid var(--color-accent);
+    }
+    .ptm-pin__name {
+      margin-top: 2px;
+      font-size: 11px; font-weight: 700; color: var(--color-primary);
+      background: #EEF3F8; border: 1px solid var(--color-border);
+      border-radius: 8px; padding: 2px 7px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      max-width: 110px;
+    }
+
+    /* ── スライダー（回答用）── */
+    .ptm-slide { position: relative; padding-top: 52px; }
+    .ptm-slide__bubble {
+      position: absolute; top: 0;
+      transform: translateX(-50%);
+      background: var(--color-accent); color: #fff;
+      font-size: 20px; font-weight: 700; line-height: 1;
+      padding: 10px 14px; border-radius: 12px;
+      white-space: nowrap; pointer-events: none;
+    }
+    .ptm-slide__bubble::after {
+      content: ''; position: absolute; left: 50%; bottom: -6px;
+      transform: translateX(-50%);
+      border: 6px solid transparent; border-bottom: none;
+      border-top: 6px solid var(--color-accent);
+    }
+    .ptm-slide__input {
+      -webkit-appearance: none; appearance: none;
+      width: 100%; height: 52px; margin: 0;
+      background: transparent; cursor: pointer;
+      touch-action: pan-y;
+    }
+    .ptm-slide__input:focus { outline: none; }
+    .ptm-slide__input::-webkit-slider-runnable-track {
+      height: 22px; border-radius: 11px;
+      background: linear-gradient(90deg, #DCE7EE, #D3E5E4);
+      border: 2px solid var(--color-border);
+    }
+    .ptm-slide__input::-webkit-slider-thumb {
+      -webkit-appearance: none; appearance: none;
+      width: 46px; height: 46px; margin-top: -14px;
+      border-radius: 50%;
+      background: var(--color-accent);
+      border: 5px solid #fff;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    }
+    .ptm-slide__input::-moz-range-track {
+      height: 22px; border-radius: 11px;
+      background: linear-gradient(90deg, #DCE7EE, #D3E5E4);
+      border: 2px solid var(--color-border);
+    }
+    .ptm-slide__input::-moz-range-thumb {
+      width: 46px; height: 46px;
+      border-radius: 50%;
+      background: var(--color-accent);
+      border: 5px solid #fff;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    }
+
+    /* ── ヒント表示 ── */
+    .ptm-hint-banner {
+      background: var(--color-surface);
+      border: 3px solid var(--color-accent);
+      border-radius: var(--radius-card, 14px);
+      padding: 18px 20px; text-align: center;
+      margin-bottom: 20px;
+    }
+    .ptm-hint-banner__label { font-size: 12px; font-weight: 700; color: var(--color-muted); margin-bottom: 4px; }
+    .ptm-hint-banner__text  { font-size: 26px; font-weight: 700; color: var(--color-primary); line-height: 1.4; word-break: break-all; }
+
+    /* ── 考え中表示 ── */
+    .ptm-thinking { text-align: center; padding: 28px 12px; }
+    .ptm-thinking__text { font-size: 17px; font-weight: 700; color: var(--color-primary); }
+    .ptm-thinking__sub  { font-size: 13px; color: var(--color-muted); margin-top: 6px; }
+
+    /* ── 進行ステータス ── */
+    .ptm-progress { text-align: center; font-size: 14px; color: var(--color-muted); margin: 14px 0; }
+
+    /* ── きめた後の表示 ── */
+    .ptm-decided { text-align: center; padding: 24px 12px 8px; }
+    .ptm-decided__msg {
+      font-size: 20px; font-weight: 700; color: var(--color-success);
+      margin-bottom: 4px;
+    }
+    .ptm-decided__sub { font-size: 13px; color: var(--color-muted); margin-bottom: 16px; }
+
+    /* ── 得点演出 ── */
+    .ptm-score-pop { text-align: center; margin: 24px 0; }
+    .ptm-score-pop__round {
+      font-size: 34px; font-weight: 700; color: var(--color-accent); line-height: 1.2;
+    }
+    .ptm-score-pop__total { font-size: 15px; color: var(--color-muted); margin-top: 6px; }
+
+    /* ── きょうのきろく ── */
+    .ptm-record { text-align: center; padding: 24px 0 8px; }
+    .ptm-record__label { font-size: 14px; font-weight: 700; color: var(--color-muted); }
+    .ptm-record__score { font-size: 52px; font-weight: 700; color: var(--color-primary); line-height: 1.2; }
+    .ptm-record__sub   { font-size: 14px; color: var(--color-muted); margin-top: 6px; }
+
+    /* ── オーバーレイ ── */
+    .ptm-overlay {
+      position: fixed; inset: 0; z-index: 100;
+      background: rgba(245,242,236,0.95);
+      display: none; flex-direction: column;
+      align-items: center; justify-content: center;
+      text-align: center; padding: 32px;
+    }
+    .ptm-overlay__title { font-size: 18px; font-weight: 700; color: var(--color-primary); margin: 16px 0 8px; }
+    .ptm-overlay__sub   { font-size: 14px; color: var(--color-muted); margin-bottom: 8px; }
+    .ptm-overlay__countdown {
+      font-size: 52px; font-weight: 700; color: var(--color-error);
+      line-height: 1; margin: 12px 0 4px;
+    }
+
+    /* ── Material Symbols ── */
+    .material-symbols-rounded {
+      font-family: 'Material Symbols Rounded';
+      font-weight: normal; font-style: normal; font-size: 20px; line-height: 1;
+      letter-spacing: normal; text-transform: none; display: inline-block;
+      white-space: nowrap; word-wrap: normal; direction: ltr;
+      -webkit-font-feature-settings: 'liga'; font-feature-settings: 'liga';
+      -webkit-font-smoothing: antialiased; vertical-align: middle; user-select: none;
+    }
+    .btn .material-symbols-rounded { font-size: 20px; }
+
+    @media (max-width: 600px) {
+      .ptm-page { padding: 28px 14px 60px; }
+      .ptm-hero__title { font-size: 25px; }
+      .ptm-code-box { font-size: 36px; }
+      .ptm-axis__side { font-size: 14px; padding: 12px 6px; }
+      .ptm-hint-banner__text { font-size: 22px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════
+     SCREEN: TOP
+════════════════════════════════════ -->
+<div class="screen" id="screen-top">
+  <div class="ptm-page">
+    <div class="ptm-hero">
+      <div class="ptm-hero__icon">
+        <span class="material-symbols-rounded">speed</span>
+      </div>
+      <h1 class="ptm-hero__title">ピッタリメーター</h1>
+      <p class="ptm-hero__sub">ヒントを たよりに、みんなで メーターの位置を ぴったり合わせる 協力ゲーム</p>
+    </div>
+    <div class="ptm-hero__buttons">
+      <button class="btn btn-primary btn-lg btn-full" onclick="goHostSetup()">
+        <span class="material-symbols-rounded">add_home</span>
+        ルームを作る（ホスト）
+      </button>
+      <button class="btn btn-secondary btn-lg btn-full" onclick="goGuestJoin()">
+        <span class="material-symbols-rounded">login</span>
+        ルームに参加する
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════
+     SCREEN: HOST SETUP
+════════════════════════════════════ -->
+<div class="screen" id="screen-host-setup">
+  <div class="ptm-page">
+
+    <div id="host-step-nickname">
+      <h2 class="ptm-title">ルームを作る</h2>
+      <p class="ptm-sub">ホストのニックネームを入力してください</p>
+      <div class="form-group">
+        <label class="form-label">ニックネーム（1〜8文字）</label>
+        <input class="form-input" id="host-nickname" type="text" maxlength="8"
+               placeholder="例：たろう" autocomplete="off">
+      </div>
+      <div class="ptm-error" id="host-nickname-error"></div>
+      <button class="btn btn-primary btn-full" onclick="hostCreateRoom()">ルームを作る</button>
+      <button class="btn btn-ghost btn-full" onclick="showScreen('top')">← 戻る</button>
+    </div>
+
+    <div id="host-step-room" style="display:none">
+      <h2 class="ptm-title">参加者を待っています</h2>
+      <p class="ptm-sub">このコードを参加者に伝えてください</p>
+
+      <div class="ptm-code-box" id="host-room-code-display">----</div>
+      <button class="btn btn-ghost btn-full" id="host-copy-btn" onclick="hostCopyCode()">
+        <span class="material-symbols-rounded">content_copy</span>
+        コードをコピー
+      </button>
+
+      <hr class="divider">
+      <div class="ptm-label">ゲスト（<span id="host-guest-count">0</span>人 / 2〜8人で遊べます）</div>
+      <div class="ptm-players" id="host-player-list"></div>
+
+      <div class="mt-lg">
+        <button class="btn btn-primary btn-lg btn-full" id="btn-start-game"
+                disabled onclick="hostStartGame()">
+          <span class="material-symbols-rounded">sports_esports</span>
+          ゲームを始める
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════════════════════════════════════
+     SCREEN: GUEST JOIN
+════════════════════════════════════ -->
+<div class="screen" id="screen-guest-join">
+  <div class="ptm-page">
+    <h2 class="ptm-title">ルームに参加する</h2>
+    <p class="ptm-sub">ニックネームとルームコードを入力してください</p>
+
+    <div class="form-group">
+      <label class="form-label">ニックネーム（1〜8文字）</label>
+      <input class="form-input" id="guest-nickname" type="text" maxlength="8"
+             placeholder="例：はなこ" autocomplete="off">
+    </div>
+    <div class="form-group">
+      <label class="form-label">ルームコード（6文字）</label>
+      <input class="form-input ptm-input-code" id="guest-room-code" type="text"
+             maxlength="6" placeholder="XXXXXX" autocomplete="off"
+             oninput="this.value = this.value.toUpperCase()">
+    </div>
+    <div class="ptm-error" id="guest-join-error"></div>
+    <button class="btn btn-primary btn-full" onclick="guestJoin()">参加する</button>
+    <button class="btn btn-ghost btn-full" onclick="showScreen('top')">← 戻る</button>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════
+     SCREEN: GUEST WAITING
+════════════════════════════════════ -->
+<div class="screen" id="screen-waiting">
+  <div class="ptm-page">
+    <div class="text-center mt-lg">
+      <div class="spinner"></div>
+      <h2 class="ptm-title">ゲーム開始を待っています</h2>
+      <p class="ptm-sub">ホストがゲームを始めるまで待ってください</p>
+    </div>
+    <div class="ptm-label" style="margin-top:24px">参加者</div>
+    <div class="ptm-players" id="waiting-player-list"></div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════
+     SCREEN: HINTING（出題者がヒントを考える）
+════════════════════════════════════ -->
+<div class="screen" id="screen-hinting">
+  <div class="ptm-page">
+    <div class="ptm-label">ラウンド <span id="hinting-round-num">1</span> ・ ものさし</div>
+    <div class="ptm-axis" id="hinting-axis"></div>
+
+    <!-- 出題者用 -->
+    <div id="hinting-speaker" style="display:none">
+      <div class="card">
+        <div class="ptm-label">ターゲット（きみだけに見えているよ）</div>
+        <div id="hinting-target-meter"></div>
+      </div>
+      <p class="ptm-sub" style="margin-bottom:12px">この位置に ぴったりの ことばを 入力してね</p>
+      <div class="form-group">
+        <label class="form-label">ヒント（1〜20文字）</label>
+        <input class="form-input" id="hint-input" type="text" maxlength="20"
+               placeholder="例：にくまん" autocomplete="off">
+      </div>
+      <div class="ptm-error" id="hint-error"></div>
+      <button class="btn btn-primary btn-lg btn-full" onclick="speakerSubmitHint()">ヒントをおくる</button>
+    </div>
+
+    <!-- 出題者以外用 -->
+    <div id="hinting-waiting" style="display:none">
+      <div class="ptm-thinking">
+        <div class="spinner"></div>
+        <div class="ptm-thinking__text" id="hinting-waiting-text"></div>
+        <div class="ptm-thinking__sub">ヒントが届くまで待ってね</div>
+      </div>
+    </div>
+
+    <!-- ホスト用: 出題者が切断したとき -->
+    <div id="hinting-host-actions" style="display:none; margin-top:24px">
+      <button class="btn btn-secondary btn-full" onclick="hostChangeSpeaker()">出題者をかえる</button>
+      <p class="text-muted text-center" style="margin-top:8px; font-size:13px">出題者の接続が切れています。新しいものさしで別の人に交代できます</p>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════
+     SCREEN: GUESSING（メーターを合わせる）
+════════════════════════════════════ -->
+<div class="screen" id="screen-guessing">
+  <div class="ptm-page">
+    <div class="ptm-label">ラウンド <span id="guessing-round-num">1</span> ・ ものさし</div>
+    <div class="ptm-axis" id="guessing-axis"></div>
+
+    <div class="ptm-hint-banner">
+      <div class="ptm-hint-banner__label" id="guessing-hint-by"></div>
+      <div class="ptm-hint-banner__text" id="guessing-hint-text"></div>
+    </div>
+
+    <!-- 回答するゲスト用 -->
+    <div id="guessing-answer-area" style="display:none">
+      <div id="guessing-slider-area">
+        <p class="ptm-sub" style="margin-bottom:8px">メーターを うごかして、「ここだ」と思う位置で きめてね</p>
+        <div class="ptm-slide">
+          <div class="ptm-slide__bubble" id="guess-bubble">50</div>
+          <input type="range" class="ptm-slide__input" id="guess-slider"
+                 min="0" max="100" step="1" value="50"
+                 oninput="onSliderInput()" aria-label="メーターの位置（0から100）">
+          <div class="ptm-meter__ticks" id="guess-ticks"></div>
+        </div>
+        <div class="mt-lg">
+          <button class="btn btn-primary btn-lg btn-full" onclick="guestDecide()">きめた</button>
+        </div>
+      </div>
+      <div id="guessing-decided-area" style="display:none">
+        <div class="ptm-decided">
+          <div class="ptm-decided__msg">
+            <span class="material-symbols-rounded" style="font-size:28px; color:var(--color-success)">check_circle</span>
+            きめた！（<span id="decided-value">50</span>）
+          </div>
+          <div class="ptm-decided__sub">みんなが きめるまで 待ってね</div>
+          <button class="btn btn-ghost" onclick="guestUndecide()">えらびなおす</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 出題者用 -->
+    <div id="guessing-speaker-area" style="display:none">
+      <div class="card">
+        <div class="ptm-label">ターゲット（きみだけに見えているよ）</div>
+        <div id="guessing-target-meter"></div>
+      </div>
+      <p class="text-muted text-center" style="font-size:14px">みんなが メーターを うごかしているよ</p>
+    </div>
+
+    <!-- ホスト用 -->
+    <div id="guessing-host-area" style="display:none">
+      <div class="ptm-thinking" style="padding:16px 12px">
+        <div class="ptm-thinking__text">みんなが メーターを うごかしているよ</div>
+      </div>
+      <button class="btn btn-primary btn-lg btn-full" id="btn-reveal" disabled onclick="hostReveal()">
+        <span class="material-symbols-rounded">campaign</span>
+        けっか発表
+      </button>
+      <p class="text-muted text-center" id="reveal-hint" style="margin-top:8px; font-size:13px"></p>
+    </div>
+
+    <div class="ptm-progress" id="guessing-progress"></div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════
+     SCREEN: REVEAL（結果発表）
+════════════════════════════════════ -->
+<div class="screen" id="screen-reveal">
+  <div class="ptm-page">
+    <h2 class="ptm-title pop-in">けっか発表！</h2>
+    <p class="ptm-sub" id="reveal-hint-label"></p>
+
+    <div class="ptm-axis" id="reveal-axis"></div>
+    <div class="card">
+      <div id="reveal-meter"></div>
+    </div>
+
+    <div class="ptm-score-pop pop-in">
+      <div class="ptm-score-pop__round" id="reveal-round-score"></div>
+      <div class="ptm-score-pop__total" id="reveal-total-score"></div>
+    </div>
+
+    <!-- ホストのみ -->
+    <div id="reveal-host-actions" style="display:none; margin-top:16px">
+      <button class="btn btn-primary btn-full" onclick="hostNextRound()">つぎのラウンドへ →</button>
+      <button class="btn btn-ghost btn-full" onclick="hostFinish()">おわる</button>
+    </div>
+    <div id="reveal-guest-waiting" class="text-center text-muted mt-lg" style="display:none">
+      ホストの操作を待っています…
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════
+     SCREEN: DONE（きょうのきろく）
+════════════════════════════════════ -->
+<div class="screen" id="screen-done">
+  <div class="ptm-page">
+    <div class="ptm-record pop-in">
+      <span class="material-symbols-rounded" style="font-size:64px; color:#F0A500">celebration</span>
+      <div class="ptm-record__label" style="margin-top:12px">きょうのきろく</div>
+      <div class="ptm-record__score">チームで <span id="done-total-score">0</span>点！</div>
+      <div class="ptm-record__sub" id="done-round-count"></div>
+    </div>
+
+    <div class="ptm-label" style="margin-top:24px">あそんだメンバー</div>
+    <div class="ptm-players" id="done-player-list"></div>
+
+    <div class="mt-lg">
+      <button class="btn btn-secondary btn-full btn-lg" onclick="goToTop()">
+        <span class="material-symbols-rounded">home</span>
+        TOPにもどる
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- 再接続中オーバーレイ -->
+<div class="ptm-overlay" id="reconnect-overlay">
+  <div class="spinner"></div>
+  <p class="ptm-overlay__title">再接続しています...</p>
+</div>
+
+<!-- ホスト切断オーバーレイ（ゲスト用） -->
+<div class="ptm-overlay" id="host-disconnect-overlay">
+  <div class="spinner"></div>
+  <p class="ptm-overlay__title">ホストが一時的に接続を失いました</p>
+  <p class="ptm-overlay__sub">再接続を待っています</p>
+  <div class="ptm-overlay__countdown" id="host-disconnect-countdown">120</div>
+  <p class="ptm-overlay__sub">秒後に自動終了します</p>
+  <button class="btn btn-ghost btn-full" style="max-width:280px;margin-top:20px"
+          onclick="leaveGame()">退出する</button>
+</div>
+
+<script>
+  // ════════════════════════════════════
+  // Firebase 設定
+  // ════════════════════════════════════
+  const firebaseConfig = {
+    apiKey:            "AIzaSyC0bqQdDJeTAWrqFYqjOT1NsVFiunPemIw",
+    authDomain:        "roomk-tools.firebaseapp.com",
+    databaseURL:       "https://roomk-tools-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId:         "roomk-tools",
+    storageBucket:     "roomk-tools.firebasestorage.app",
+    messagingSenderId: "592193782148",
+    appId:             "1:592193782148:web:1529f47cebab7dcd109dd1",
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const authReady = firebase.auth().signInAnonymously().catch((e) => {
+    console.error('[auth] anonymous sign-in failed', e);
+    throw e;
+  });
+  const db = firebase.database();
+  RoomkRTDB.initServerTime(db);
+
+  // ════════════════════════════════════
+  // ものさし（軸ペア）データ: 50ペア
+  // 感覚で位置を答えられる軸のみ。学校・勉強・成績・恋愛、
+  // 優劣や好き嫌いを他人と比べさせる軸は入れない。
+  // ════════════════════════════════════
+  const AXES = [
+    { left: 'ひんやり',       right: 'あつあつ' },
+    { left: 'ちいさい',       right: 'でっかい' },
+    { left: 'しずか',         right: 'にぎやか' },
+    { left: 'やわらかい',     right: 'かたい' },
+    { left: '朝にたべたい',   right: '夜にたべたい' },
+    { left: 'インドア',       right: 'アウトドア' },
+    { left: 'かるい',         right: 'おもい' },
+    { left: 'ゆっくり',       right: 'はやい' },
+    { left: 'つるつる',       right: 'ざらざら' },
+    { left: 'さらさら',       right: 'ねばねば' },
+    { left: 'あまい',         right: 'からい' },
+    { left: 'まるい',         right: 'かくかく' },
+    { left: 'みじかい',       right: 'ながい' },
+    { left: 'ふわふわ',       right: 'ずっしり' },
+    { left: 'しろくろ',       right: 'カラフル' },
+    { left: 'むかしっぽい',   right: 'みらいっぽい' },
+    { left: '和風',           right: '洋風' },
+    { left: 'なつっぽい',     right: 'ふゆっぽい' },
+    { left: 'あさがた',       right: 'よるがた' },
+    { left: 'うみっぽい',     right: 'やまっぽい' },
+    { left: 'ひとりでやる',   right: 'みんなでやる' },
+    { left: 'からだをつかう', right: 'あたまをつかう' },
+    { left: 'かわいい',       right: 'かっこいい' },
+    { left: 'じみ',           right: 'はで' },
+    { left: 'きんちょうする', right: 'リラックスする' },
+    { left: 'やすい',         right: 'たかい' },
+    { left: 'よく見かける',   right: 'めったに見ない' },
+    { left: 'あっさり',       right: 'こってり' },
+    { left: 'かわいている',   right: 'みずみずしい' },
+    { left: 'まっくら',       right: 'まぶしい' },
+    { left: 'せまい',         right: 'ひろい' },
+    { left: 'ひくいところ',   right: 'たかいところ' },
+    { left: 'アナログ',       right: 'デジタル' },
+    { left: 'しぜんっぽい',   right: 'きかいっぽい' },
+    { left: 'いなかっぽい',   right: 'とかいっぽい' },
+    { left: 'すぐできる',     right: 'じかんがかかる' },
+    { left: 'ちかい',         right: 'とおい' },
+    { left: 'まいにちつかう', right: 'ときどきつかう' },
+    { left: 'はるっぽい',     right: 'あきっぽい' },
+    { left: 'あめっぽい',     right: 'はれっぽい' },
+    { left: 'もちはこべる',   right: 'もちはこべない' },
+    { left: 'まっすぐ',       right: 'ぐにゃぐにゃ' },
+    { left: 'がんじょう',     right: 'こわれやすい' },
+    { left: 'あかるいいろ',   right: 'くらいいろ' },
+    { left: 'ふんわりかおる', right: 'つんとくる' },
+    { left: 'のんびり',       right: 'ばたばた' },
+    { left: 'サクサク',       right: 'もちもち' },
+    { left: 'ぺらぺら',       right: 'ぶあつい' },
+    { left: 'きらきら',       right: 'しぶい' },
+    { left: 'わくわく',       right: 'ほっとする' },
+  ];
+
+  // ════════════════════════════════════
+  // 定数・状態管理
+  // ════════════════════════════════════
+  const ST = {
+    WAITING:  'waiting',
+    HINTING:  'hinting',
+    GUESSING: 'guessing',
+    REVEAL:   'reveal',
+    DONE:     'done',
+  };
+
+  const MIN_GUESTS = 2;
+  const MAX_GUESTS = 8;
+  const SESSION_KEY = 'pittari_session';
+  const ORPHAN_TTL_MS = 2 * 60 * 1000;
+  const ROOM_DELETE_DELAY_MS = 30 * 1000;
+
+  const state = {
+    role:          null,   // 'host' | 'guest'
+    nickname:      '',
+    roomCode:      '',
+    roomRef:       null,
+    players:       {},
+    room:          null,   // 最新のルームスナップショット
+    currentScreen: 'top',
+    guessRoundKey: null,   // guessing 画面の初期化済みラウンド識別子
+    revealRoundKey: null,  // reveal 画面の描画済みラウンド識別子
+  };
+
+  // ════════════════════════════════════
+  // セッション管理（再接続用）
+  // ════════════════════════════════════
+  function saveSession() {
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify({
+      nickname: state.nickname,
+      roomCode: state.roomCode,
+      role:     state.role,
+    }));
+  }
+
+  function loadSession() {
+    try { return JSON.parse(sessionStorage.getItem(SESSION_KEY)); }
+    catch { return null; }
+  }
+
+  function clearSession() {
+    sessionStorage.removeItem(SESSION_KEY);
+  }
+
+  const getEstimatedServerNow = RoomkRTDB.now;
+  const getHostDisconnectedAt = RoomkRTDB.getHostDisconnectedAt;
+  const generateRoomCode = RoomkRTDB.generateRoomCode;
+
+  function isRoomExpired(room) {
+    return RoomkRTDB.isRoomExpired(room, ORPHAN_TTL_MS);
+  }
+
+  // ════════════════════════════════════
+  // ユーティリティ
+  // ════════════════════════════════════
+  function esc(s) {
+    return String(s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  function shuffleList(arr) {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  function validateNickname(value) {
+    const t = value.trim();
+    if (t.length === 0) return 'ニックネームを入力してください';
+    if (t.length > 8)   return '8文字以内で入力してください';
+    return null;
+  }
+
+  function showError(id, msg) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = msg;
+    el.classList.add('visible');
+  }
+
+  function hideError(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.classList.remove('visible');
+  }
+
+  function copyToClipboard(text, btn) {
+    const original = btn.innerHTML;
+    navigator.clipboard.writeText(text).then(() => {
+      btn.innerHTML = '<span class="material-symbols-rounded">check</span> コピーしました！';
+      setTimeout(() => { btn.innerHTML = original; }, 2500);
+    });
+  }
+
+  function showScreen(name) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    const el = document.getElementById('screen-' + name);
+    if (el) {
+      el.classList.add('active');
+      state.currentScreen = name;
+    }
+  }
+
+  // ゲスト（回答参加者）だけを取り出す
+  function guestNames(players) {
+    return Object.entries(players || {})
+      .filter(([, p]) => !p.isHost)
+      .map(([name]) => name);
+  }
+
+  // 使っていない軸をランダムに1つ選ぶ（使い切ったらリセット）
+  function pickAxisIndex(usedAxes) {
+    const used = usedAxes || [];
+    let candidates = AXES.map((_, i) => i).filter(i => !used.includes(i));
+    if (candidates.length === 0) candidates = AXES.map((_, i) => i);
+    return candidates[Math.floor(Math.random() * candidates.length)];
+  }
+
+  function randomTarget() {
+    return Math.floor(Math.random() * 101); // 0〜100
+  }
+
+  // ════════════════════════════════════
+  // 再接続処理
+  // ════════════════════════════════════
+  async function tryReconnect() {
+    const session = loadSession();
+    if (!session) return false;
+
+    const { nickname, roomCode, role } = session;
+    showReconnectOverlay(true);
+
+    try {
+      await authReady;
+      const snap = await db.ref(`pittari_rooms/${roomCode}`).get();
+      if (!snap.exists()) { clearSession(); showReconnectOverlay(false); return false; }
+
+      const room = snap.val();
+      if (isRoomExpired(room)) {
+        await db.ref(`pittari_rooms/${roomCode}`).remove().catch(() => {});
+        clearSession();
+        showReconnectOverlay(false);
+        return false;
+      }
+      state.nickname = nickname;
+      state.roomCode = roomCode;
+      state.role     = role;
+      state.roomRef  = db.ref(`pittari_rooms/${roomCode}`);
+
+      if (role === 'host') {
+        await state.roomRef.update({ hostConnected: true, hostDisconnectedAt: null });
+        state.roomRef.onDisconnect().update({
+          hostConnected: false,
+          hostDisconnectedAt: firebase.database.ServerValue.TIMESTAMP,
+        });
+      } else {
+        const playerRef = state.roomRef.child(`players/${nickname}`);
+        if (!room.players || !room.players[nickname]) {
+          // 切断で消えていたら再追加
+          await playerRef.set({ isHost: false, guess: null, decided: false });
+        }
+        playerRef.onDisconnect().remove();
+      }
+
+      showReconnectOverlay(false);
+      startRoomListener();
+      return true;
+    } catch {
+      clearSession();
+      showReconnectOverlay(false);
+      return false;
+    }
+  }
+
+  function showReconnectOverlay(show) {
+    document.getElementById('reconnect-overlay').style.display = show ? 'flex' : 'none';
+  }
+
+  // ── ホスト切断オーバーレイ ──
+  let _hostDisconnectTimer = null;
+  let _hostDisconnectDeadline = null;
+
+  function showHostDisconnectOverlay(show, room = null) {
+    const overlay = document.getElementById('host-disconnect-overlay');
+    overlay.style.display = show ? 'flex' : 'none';
+
+    if (show && !_hostDisconnectTimer) {
+      const disconnectedAt = getHostDisconnectedAt(room);
+      _hostDisconnectDeadline = disconnectedAt == null
+        ? getEstimatedServerNow() + ORPHAN_TTL_MS
+        : disconnectedAt + ORPHAN_TTL_MS;
+      _hostDisconnectTimer = setInterval(() => {
+        const remaining = Math.max(0, Math.ceil((_hostDisconnectDeadline - getEstimatedServerNow()) / 1000));
+        document.getElementById('host-disconnect-countdown').textContent = remaining;
+        if (remaining <= 0) {
+          clearInterval(_hostDisconnectTimer);
+          _hostDisconnectTimer = null;
+          _hostDisconnectDeadline = null;
+          if (state.roomRef) state.roomRef.remove().catch(() => {});
+          leaveGame('ホストが再接続できなかったためゲームが終了しました');
+        }
+      }, 1000);
+    } else if (show && _hostDisconnectTimer) {
+      const disconnectedAt = getHostDisconnectedAt(room);
+      _hostDisconnectDeadline = disconnectedAt == null
+        ? getEstimatedServerNow() + ORPHAN_TTL_MS
+        : disconnectedAt + ORPHAN_TTL_MS;
+    } else if (!show && _hostDisconnectTimer) {
+      clearInterval(_hostDisconnectTimer);
+      _hostDisconnectTimer = null;
+      _hostDisconnectDeadline = null;
+    }
+  }
+
+  function leaveGame(msg) {
+    clearInterval(_hostDisconnectTimer);
+    _hostDisconnectTimer = null;
+    _hostDisconnectDeadline = null;
+    clearSession();
+    document.getElementById('host-disconnect-overlay').style.display = 'none';
+    goToTop();
+    if (msg) alert(msg);
+  }
+
+  // ════════════════════════════════════
+  // TOP ナビゲーション
+  // ════════════════════════════════════
+  function goHostSetup() { showScreen('host-setup'); }
+  function goGuestJoin()  { showScreen('guest-join'); }
+
+  // ════════════════════════════════════
+  // ホスト: ルーム作成
+  // ════════════════════════════════════
+  async function hostCreateRoom() {
+    const nickname = document.getElementById('host-nickname').value.trim();
+    const err = validateNickname(nickname);
+    if (err) { showError('host-nickname-error', err); return; }
+    hideError('host-nickname-error');
+
+    await authReady;
+
+    let roomCode;
+    let roomRef = null;
+    for (let i = 0; i < 5; i++) {
+      const code = generateRoomCode();
+      const ref = db.ref(`pittari_rooms/${code}`);
+      const initialRoom = {
+        host:               nickname,
+        status:             ST.WAITING,
+        hostConnected:      true,
+        hostDisconnectedAt: null,
+        teamScore:          0,
+        roundsDone:         0,
+        usedAxes:           [],
+        players: {
+          [nickname]: { isHost: true, guess: null, decided: false },
+        },
+      };
+      const { committed } = await ref.transaction((room) => room ? undefined : initialRoom);
+      if (committed) {
+        roomCode = code;
+        roomRef = ref;
+        break;
+      }
+    }
+    if (!roomCode || !roomRef) {
+      showError('host-nickname-error', 'ルーム作成に失敗しました。もう一度お試しください');
+      return;
+    }
+
+    state.nickname = nickname;
+    state.role = 'host';
+    state.roomCode = roomCode;
+    state.roomRef  = roomRef;
+
+    state.roomRef.onDisconnect().update({
+      hostConnected: false,
+      hostDisconnectedAt: firebase.database.ServerValue.TIMESTAMP,
+    });
+    saveSession();
+
+    document.getElementById('host-step-nickname').style.display = 'none';
+    document.getElementById('host-step-room').style.display    = 'block';
+    document.getElementById('host-room-code-display').textContent = roomCode;
+
+    startRoomListener();
+  }
+
+  function hostCopyCode() {
+    copyToClipboard(state.roomCode, document.getElementById('host-copy-btn'));
+  }
+
+  // ════════════════════════════════════
+  // ゲスト: 参加
+  // ════════════════════════════════════
+  async function guestJoin() {
+    const nickname = document.getElementById('guest-nickname').value.trim();
+    const roomCode = document.getElementById('guest-room-code').value.trim().toUpperCase();
+
+    const nicknameErr = validateNickname(nickname);
+    if (nicknameErr) { showError('guest-join-error', nicknameErr); return; }
+    if (roomCode.length !== 6) { showError('guest-join-error', 'ルームコードは6文字です'); return; }
+    hideError('guest-join-error');
+
+    await authReady;
+
+    const roomRef = db.ref(`pittari_rooms/${roomCode}`);
+    const snap = await roomRef.get();
+    if (!snap.exists()) {
+      showError('guest-join-error', 'ルームが見つかりません'); return;
+    }
+    const room = snap.val();
+    if (isRoomExpired(room)) {
+      await roomRef.remove().catch(() => {});
+      showError('guest-join-error', 'このルームは期限切れのため終了しました'); return;
+    }
+    if (room.hostConnected === false) {
+      showError('guest-join-error', 'ホストが切断されています'); return;
+    }
+    const alreadyInRoom = room.players && room.players[nickname];
+
+    // ゲーム中に同じニックネームで再参加（再接続扱い）
+    if (room.status !== ST.WAITING && alreadyInRoom) {
+      state.nickname = nickname;
+      state.roomCode = roomCode;
+      state.role     = 'guest';
+      state.roomRef  = roomRef;
+      state.roomRef.child(`players/${nickname}`).onDisconnect().remove();
+      saveSession();
+      startRoomListener();
+      return;
+    }
+
+    if (room.status !== ST.WAITING) {
+      showError('guest-join-error', 'このルームはすでにゲームが始まっています'); return;
+    }
+    if (alreadyInRoom) {
+      showError('guest-join-error', 'そのニックネームはすでに使われています'); return;
+    }
+
+    let abortReason = null;
+    const { committed, snapshot } = await roomRef.transaction((currentRoom) => {
+      const roomForJoin = currentRoom || room;
+      if (!roomForJoin) { abortReason = 'not_found'; return; }
+      if (isRoomExpired(roomForJoin)) { abortReason = 'expired'; return null; }
+      if (roomForJoin.hostConnected === false) { abortReason = 'host_gone'; return; }
+      if (roomForJoin.status !== ST.WAITING) { abortReason = 'not_waiting'; return; }
+      const players = roomForJoin.players || {};
+      if (players[nickname]) { abortReason = 'nick_taken'; return; }
+      if (guestNames(players).length >= MAX_GUESTS) { abortReason = 'full'; return; }
+      abortReason = null;
+      return {
+        ...roomForJoin,
+        players: {
+          ...players,
+          [nickname]: { isHost: false, guess: null, decided: false },
+        },
+      };
+    });
+
+    if (!committed) {
+      if (abortReason === 'not_found')   { showError('guest-join-error', 'ルームが見つかりません'); return; }
+      if (abortReason === 'expired' && !snapshot?.val()) {
+        showError('guest-join-error', 'このルームは期限切れのため終了しました'); return;
+      }
+      if (abortReason === 'host_gone')   { showError('guest-join-error', 'ホストが切断されています'); return; }
+      if (abortReason === 'not_waiting') { showError('guest-join-error', 'このルームはすでにゲームが始まっています'); return; }
+      if (abortReason === 'nick_taken')  { showError('guest-join-error', 'そのニックネームはすでに使われています'); return; }
+      if (abortReason === 'full')        { showError('guest-join-error', 'このルームは満員です（ゲストは8人まで）'); return; }
+      showError('guest-join-error', '参加に失敗しました'); return;
+    }
+
+    state.nickname = nickname;
+    state.roomCode = roomCode;
+    state.role     = 'guest';
+    state.roomRef  = roomRef;
+
+    state.roomRef.child(`players/${nickname}`).onDisconnect().remove();
+    saveSession();
+
+    showScreen('waiting');
+    startRoomListener();
+  }
+
+  // ════════════════════════════════════
+  // ホスト: ゲーム開始
+  // ════════════════════════════════════
+  async function hostStartGame() {
+    let abortReason = null;
+    const { committed } = await state.roomRef.transaction((room) => {
+      if (!room || room.status !== ST.WAITING) {
+        abortReason = 'invalid_state';
+        return;
+      }
+      const guests = guestNames(room.players);
+      if (guests.length < MIN_GUESTS) {
+        abortReason = 'too_few';
+        return;
+      }
+      abortReason = null;
+
+      const turnOrder = shuffleList(guests);
+      const axisIndex = pickAxisIndex(room.usedAxes);
+      const players = {};
+      for (const [name, p] of Object.entries(room.players)) {
+        players[name] = { ...p, guess: null, decided: false };
+      }
+      return {
+        ...room,
+        status:    ST.HINTING,
+        players,
+        turnOrder,
+        turnIndex: 0,
+        teamScore: 0,
+        roundsDone: 0,
+        usedAxes:  [axisIndex],
+        round: {
+          number:    1,
+          axisIndex,
+          target:    randomTarget(),
+          speaker:   turnOrder[0],
+          hint:      null,
+          results:   null,
+          roundScore: null,
+        },
+      };
+    });
+
+    if (!committed) {
+      if (abortReason === 'too_few') {
+        alert(`ゲストが${MIN_GUESTS}人以上で始められます`);
+      } else {
+        alert('ゲームを開始できませんでした。ルームの状態を確認してください');
+      }
+    }
+  }
+
+  // ════════════════════════════════════
+  // 出題者: ヒント送信（hinting → guessing）
+  // ════════════════════════════════════
+  async function speakerSubmitHint() {
+    const hint = document.getElementById('hint-input').value.trim();
+    if (hint.length === 0)  { showError('hint-error', 'ヒントを入力してください'); return; }
+    if (hint.length > 20)   { showError('hint-error', '20文字以内で入力してください'); return; }
+    hideError('hint-error');
+
+    await state.roomRef.update({
+      'round/hint': hint,
+      status: ST.GUESSING,
+    });
+  }
+
+  // ════════════════════════════════════
+  // ゲスト: メーターをきめる / えらびなおす
+  // ════════════════════════════════════
+  function onSliderInput() {
+    const slider = document.getElementById('guess-slider');
+    updateBubble(Number(slider.value));
+  }
+
+  function updateBubble(value) {
+    const bubble = document.getElementById('guess-bubble');
+    bubble.textContent = value;
+    // サム幅46pxぶんのオフセット補正
+    bubble.style.left = `calc(${value}% + ${(0.5 - value / 100) * 46}px)`;
+  }
+
+  async function guestDecide() {
+    const value = Number(document.getElementById('guess-slider').value);
+    await state.roomRef.child(`players/${state.nickname}`).update({
+      guess: value,
+      decided: true,
+    });
+  }
+
+  async function guestUndecide() {
+    // 前回きめた位置からえらびなおす（ローカルで復元してから decided を戻す）
+    const prev = state.room?.players?.[state.nickname]?.guess;
+    if (prev !== null && prev !== undefined) {
+      document.getElementById('guess-slider').value = prev;
+      updateBubble(Number(prev));
+    }
+    await state.roomRef.child(`players/${state.nickname}`).update({ decided: false });
+  }
+
+  // ════════════════════════════════════
+  // ホスト: けっか発表（guessing → reveal）
+  // ════════════════════════════════════
+  function calcPoints(diff) {
+    if (diff <= 5)  return 3;
+    if (diff <= 12) return 2;
+    if (diff <= 25) return 1;
+    return 0;
+  }
+
+  async function hostReveal() {
+    const snap = await state.roomRef.get();
+    const room = snap.val();
+    if (!room || room.status !== ST.GUESSING || !room.round) return;
+
+    const target = Number(room.round.target);
+    const results = {};
+    let roundScore = 0;
+    for (const [name, p] of Object.entries(room.players || {})) {
+      if (p.isHost || name === room.round.speaker) continue;
+      if (!p.decided || p.guess === null || p.guess === undefined) continue;
+      const guess = Number(p.guess);
+      results[name] = guess;
+      roundScore += calcPoints(Math.abs(guess - target));
+    }
+    if (Object.keys(results).length === 0) return;
+
+    await state.roomRef.update({
+      status: ST.REVEAL,
+      'round/results': results,
+      'round/roundScore': roundScore,
+      teamScore: (room.teamScore || 0) + roundScore,
+      roundsDone: (room.roundsDone || 0) + 1,
+    });
+  }
+
+  // ════════════════════════════════════
+  // ホスト: 次のラウンド / 出題者交代 / 終了
+  // ════════════════════════════════════
+
+  // 次に出題者になれるゲストを turnOrder から探す
+  function findNextSpeaker(room, fromIndex) {
+    const order = room.turnOrder || [];
+    if (order.length === 0) return null;
+    for (let step = 0; step < order.length; step++) {
+      const idx = (fromIndex + step) % order.length;
+      const name = order[idx];
+      if (room.players && room.players[name] && !room.players[name].isHost) {
+        return { name, index: idx };
+      }
+    }
+    return null;
+  }
+
+  async function startNewRound(room, { keepNumber = false } = {}) {
+    const next = findNextSpeaker(room, ((room.turnIndex || 0) + 1) % (room.turnOrder || [1]).length);
+    if (!next) {
+      alert('出題できるゲストがいません');
+      return;
+    }
+    const axisIndex = pickAxisIndex(room.usedAxes);
+    const usedBase = (room.usedAxes || []);
+    const usedAxes = usedBase.includes(axisIndex) ? [axisIndex] : [...usedBase, axisIndex];
+
+    const updates = {
+      status:    ST.HINTING,
+      turnIndex: next.index,
+      usedAxes,
+      round: {
+        number:    keepNumber ? (room.round?.number || 1) : (room.round?.number || 0) + 1,
+        axisIndex,
+        target:    randomTarget(),
+        speaker:   next.name,
+        hint:      null,
+        results:   null,
+        roundScore: null,
+      },
+    };
+    for (const [name, p] of Object.entries(room.players || {})) {
+      if (p.isHost) continue;
+      updates[`players/${name}/guess`]   = null;
+      updates[`players/${name}/decided`] = false;
+    }
+    await state.roomRef.update(updates);
+  }
+
+  async function hostNextRound() {
+    const snap = await state.roomRef.get();
+    const room = snap.val();
+    if (!room || room.status !== ST.REVEAL) return;
+    await startNewRound(room);
+  }
+
+  // 出題者が切断したとき（hinting 中のみ）: 新しいものさしで交代
+  async function hostChangeSpeaker() {
+    const snap = await state.roomRef.get();
+    const room = snap.val();
+    if (!room || room.status !== ST.HINTING) return;
+    await startNewRound(room, { keepNumber: true });
+  }
+
+  async function hostFinish() {
+    await state.roomRef.update({ status: ST.DONE });
+    setTimeout(() => state.roomRef && state.roomRef.remove().catch(() => {}), ROOM_DELETE_DELAY_MS);
+  }
+
+  // ════════════════════════════════════
+  // メーター描画部品
+  // ════════════════════════════════════
+  const TICK_VALUES = [0, 25, 50, 75, 100];
+
+  function ticksHTML() {
+    let html = '';
+    for (const v of TICK_VALUES) {
+      html += `<span class="ptm-meter__tick" style="left:${v}%">${v}</span>`;
+    }
+    return html;
+  }
+
+  // 出題者向け: ターゲット位置だけを示すメーター
+  function renderTargetMeter(containerId, target) {
+    const el = document.getElementById(containerId);
+    if (!el) return;
+    const t = Number(target);
+    let html = '';
+    html += `<div class="ptm-meter ptm-meter--flagged">`;
+    html += `<div class="ptm-meter__flag" style="left:${t}%">${t}</div>`;
+    html += `<div class="ptm-meter__track">`;
+    html += `<div class="ptm-meter__targetline" style="left:${t}%"></div>`;
+    html += `</div>`;
+    html += `<div class="ptm-meter__ticks">${ticksHTML()}</div>`;
+    html += `</div>`;
+    el.innerHTML = html;
+  }
+
+  // 結果発表: ターゲット + 得点ゾーン + 全員のピン
+  function renderRevealMeter(containerId, target, results, myName) {
+    const el = document.getElementById(containerId);
+    if (!el) return;
+    const t = Number(target);
+
+    const zone = (range, cls) => {
+      const lo = Math.max(0, t - range);
+      const hi = Math.min(100, t + range);
+      return `<div class="ptm-meter__zone ${cls}" style="left:${lo}%; width:${hi - lo}%"></div>`;
+    };
+
+    // ピンのレーン割り当て（近い位置は下の段へずらす）
+    const pins = Object.entries(results || {})
+      .map(([name, guess]) => ({ name, guess: Number(guess) }))
+      .sort((a, b) => a.guess - b.guess);
+    const laneEnds = [];
+    for (const pin of pins) {
+      let lane = laneEnds.findIndex(end => pin.guess - end >= 16);
+      if (lane === -1) { lane = laneEnds.length; laneEnds.push(pin.guess); }
+      else laneEnds[lane] = pin.guess;
+      pin.lane = lane;
+    }
+    const laneHeight = 40;
+    const pinsHeight = Math.max(1, laneEnds.length) * laneHeight + 6;
+
+    let html = '';
+    html += `<div class="ptm-meter ptm-meter--flagged">`;
+    html += `<div class="ptm-meter__flag" style="left:${t}%">ターゲット ${t}</div>`;
+    html += `<div class="ptm-meter__track">`;
+    html += zone(25, 'ptm-meter__zone--z1');
+    html += zone(12, 'ptm-meter__zone--z2');
+    html += zone(5,  'ptm-meter__zone--z3');
+    html += `<div class="ptm-meter__targetline" style="left:${t}%"></div>`;
+    html += `</div>`;
+    html += `<div class="ptm-meter__pins" style="height:${pinsHeight}px">`;
+    for (const pin of pins) {
+      const left = Math.min(97, Math.max(3, pin.guess));
+      const meMark = pin.name === myName ? '（あなた）' : '';
+      html += `<div class="ptm-pin" style="left:${left}%; top:${pin.lane * laneHeight}px">`;
+      html += `<div class="ptm-pin__tri"></div>`;
+      html += `<div class="ptm-pin__name">${esc(pin.name)}${meMark}・${pin.guess}</div>`;
+      html += `</div>`;
+    }
+    html += `</div>`;
+    html += `<div class="ptm-meter__ticks" style="margin-top:0">${ticksHTML()}</div>`;
+    html += `</div>`;
+    el.innerHTML = html;
+  }
+
+  function renderAxis(containerId, axis) {
+    const el = document.getElementById(containerId);
+    if (!el || !axis) return;
+    let html = '';
+    html += `<div class="ptm-axis__side ptm-axis__side--left">${esc(axis.left)}<br><span style="font-size:11px; font-weight:400; opacity:0.8">0のほう</span></div>`;
+    html += `<div class="ptm-axis__arrow"><span class="material-symbols-rounded">sync_alt</span></div>`;
+    html += `<div class="ptm-axis__side ptm-axis__side--right">${esc(axis.right)}<br><span style="font-size:11px; font-weight:400; opacity:0.8">100のほう</span></div>`;
+    el.innerHTML = html;
+  }
+
+  // ════════════════════════════════════
+  // Firebase リスナー
+  // ════════════════════════════════════
+  function startRoomListener() {
+    state.roomRef.on('value', snapshot => {
+      const room = snapshot.val();
+
+      if (!room) {
+        if (state.currentScreen !== 'done') {
+          clearSession();
+          alert('ホストが退出したためゲームが終了しました');
+          goToTop();
+        }
+        return;
+      }
+
+      state.room    = room;
+      state.players = room.players || {};
+
+      // ホスト切断チェック（ゲストのみ）
+      if (state.role === 'guest') {
+        if (isRoomExpired(room)) {
+          if (state.roomRef) state.roomRef.remove().catch(() => {});
+          leaveGame('ホストが再接続できなかったためゲームが終了しました');
+          return;
+        }
+        if (room.hostConnected === false && room.status !== ST.DONE) {
+          showHostDisconnectOverlay(true, room);
+          return;
+        }
+        showHostDisconnectOverlay(false);
+      }
+
+      switch (room.status) {
+        case ST.WAITING:  handleWaiting(room);  break;
+        case ST.HINTING:  handleHinting(room);  break;
+        case ST.GUESSING: handleGuessing(room); break;
+        case ST.REVEAL:   handleReveal(room);   break;
+        case ST.DONE:     handleDone(room);     break;
+      }
+    });
+  }
+
+  // ── waiting ──
+  function handleWaiting(room) {
+    const guests = guestNames(room.players);
+
+    if (state.role === 'host') {
+      if (state.currentScreen !== 'host-setup') {
+        showScreen('host-setup');
+        document.getElementById('host-step-nickname').style.display = 'none';
+        document.getElementById('host-step-room').style.display     = 'block';
+        document.getElementById('host-room-code-display').textContent = state.roomCode;
+      }
+      document.getElementById('host-guest-count').textContent = guests.length;
+      renderPlayerList('host-player-list', room.players);
+      document.getElementById('btn-start-game').disabled = guests.length < MIN_GUESTS;
+    } else {
+      if (state.currentScreen !== 'waiting') showScreen('waiting');
+      renderPlayerList('waiting-player-list', room.players);
+    }
+  }
+
+  // ── hinting ──
+  function handleHinting(room) {
+    if (state.currentScreen !== 'hinting') {
+      showScreen('hinting');
+      document.getElementById('hint-input').value = '';
+      hideError('hint-error');
+      state.guessRoundKey = null;
+      state.revealRoundKey = null;
+    }
+
+    const round = room.round || {};
+    const axis  = AXES[round.axisIndex] || null;
+    document.getElementById('hinting-round-num').textContent = round.number || 1;
+    renderAxis('hinting-axis', axis);
+
+    const isSpeaker = state.role === 'guest' && state.nickname === round.speaker;
+    document.getElementById('hinting-speaker').style.display = isSpeaker ? 'block' : 'none';
+    document.getElementById('hinting-waiting').style.display = isSpeaker ? 'none' : 'block';
+
+    if (isSpeaker) {
+      renderTargetMeter('hinting-target-meter', round.target);
+    } else {
+      document.getElementById('hinting-waiting-text').textContent =
+        `${round.speaker}さんが かんがえちゅう…`;
+    }
+
+    // ホスト: 出題者が切断していたら交代ボタンを出す
+    const speakerGone = !(room.players && room.players[round.speaker]);
+    document.getElementById('hinting-host-actions').style.display =
+      (state.role === 'host' && speakerGone) ? 'block' : 'none';
+  }
+
+  // ── guessing ──
+  function handleGuessing(room) {
+    const round = room.round || {};
+    const roundKey = `${round.number}:${round.axisIndex}`;
+
+    if (state.currentScreen !== 'guessing' || state.guessRoundKey !== roundKey) {
+      showScreen('guessing');
+      state.guessRoundKey = roundKey;
+      state.revealRoundKey = null;
+      const slider = document.getElementById('guess-slider');
+      slider.value = 50;
+      updateBubble(50);
+      document.getElementById('guess-ticks').innerHTML = ticksHTML();
+    }
+
+    const axis = AXES[round.axisIndex] || null;
+    document.getElementById('guessing-round-num').textContent = round.number || 1;
+    renderAxis('guessing-axis', axis);
+    document.getElementById('guessing-hint-by').textContent  = `${round.speaker}さんのヒント`;
+    document.getElementById('guessing-hint-text').textContent = round.hint || '';
+
+    const isSpeaker  = state.role === 'guest' && state.nickname === round.speaker;
+    const isAnswerer = state.role === 'guest' && !isSpeaker;
+
+    document.getElementById('guessing-answer-area').style.display  = isAnswerer ? 'block' : 'none';
+    document.getElementById('guessing-speaker-area').style.display = isSpeaker ? 'block' : 'none';
+    document.getElementById('guessing-host-area').style.display    = state.role === 'host' ? 'block' : 'none';
+
+    // 回答者: 自分の decided 状態で入力/確定表示を切り替え
+    if (isAnswerer) {
+      const me = room.players?.[state.nickname];
+      const decided = !!me?.decided;
+      document.getElementById('guessing-slider-area').style.display  = decided ? 'none' : 'block';
+      document.getElementById('guessing-decided-area').style.display = decided ? 'block' : 'none';
+      if (decided) {
+        document.getElementById('decided-value').textContent = me.guess;
+      }
+      // 未決定時のスライダー位置はローカル操作を優先する
+      // （リスナーの再描画で位置を書き戻さない）
+    }
+
+    if (isSpeaker) {
+      renderTargetMeter('guessing-target-meter', round.target);
+    }
+
+    // 進行状況
+    const answerers = Object.entries(room.players || {})
+      .filter(([name, p]) => !p.isHost && name !== round.speaker);
+    const decidedCount = answerers.filter(([, p]) => p.decided).length;
+    document.getElementById('guessing-progress').textContent =
+      `きめた人 ${decidedCount}人 / ${answerers.length}人`;
+
+    if (state.role === 'host') {
+      const btn = document.getElementById('btn-reveal');
+      btn.disabled = decidedCount === 0;
+      const hint = document.getElementById('reveal-hint');
+      if (decidedCount === 0) {
+        hint.textContent = 'だれかが きめると 発表できます';
+      } else if (decidedCount < answerers.length) {
+        hint.textContent = 'きめた人だけで けっかを出せます';
+      } else {
+        hint.textContent = 'みんな きめました！';
+      }
+    }
+  }
+
+  // ── reveal ──
+  function handleReveal(room) {
+    const round = room.round || {};
+    const roundKey = `${round.number}:${round.axisIndex}`;
+
+    if (state.currentScreen !== 'reveal' || state.revealRoundKey !== roundKey) {
+      showScreen('reveal');
+      state.revealRoundKey = roundKey;
+      state.guessRoundKey = null;
+
+      const axis = AXES[round.axisIndex] || null;
+      renderAxis('reveal-axis', axis);
+      document.getElementById('reveal-hint-label').textContent =
+        `${round.speaker}さんのヒント「${round.hint || ''}」`;
+      renderRevealMeter('reveal-meter', round.target, round.results, state.nickname);
+
+      const roundScore = Number(round.roundScore) || 0;
+      document.getElementById('reveal-round-score').textContent = `チームで +${roundScore}点！`;
+      document.getElementById('reveal-total-score').textContent =
+        `ごうけい ${room.teamScore || 0}点（${room.roundsDone || 0}ラウンド）`;
+    }
+
+    document.getElementById('reveal-host-actions').style.display =
+      state.role === 'host' ? 'block' : 'none';
+    document.getElementById('reveal-guest-waiting').style.display =
+      state.role === 'guest' ? 'block' : 'none';
+  }
+
+  // ── done ──
+  function handleDone(room) {
+    if (state.currentScreen !== 'done') showScreen('done');
+    showHostDisconnectOverlay(false);
+
+    document.getElementById('done-total-score').textContent = room.teamScore || 0;
+    document.getElementById('done-round-count').textContent =
+      `${room.roundsDone || 0}ラウンド あそんだよ`;
+    renderPlayerList('done-player-list', room.players);
+  }
+
+  // ════════════════════════════════════
+  // プレイヤーリスト描画
+  // ════════════════════════════════════
+  function renderPlayerList(containerId, players) {
+    const el = document.getElementById(containerId);
+    if (!el) return;
+    let html = '';
+    Object.entries(players || {}).forEach(([name, p]) => {
+      const isMe = name === state.nickname;
+      const meCls = isMe ? ' ptm-player--me' : '';
+      const badge = p.isHost ? '<span class="ptm-player__badge">ホスト</span>' : '';
+      const meTag = isMe ? '（あなた）' : '';
+      html += `<div class="ptm-player${meCls}">`;
+      html += `<div class="ptm-player__avatar">${esc(name.charAt(0).toUpperCase())}</div>`;
+      html += `<span class="ptm-player__name">${esc(name)}${meTag}</span>`;
+      html += badge;
+      html += `</div>`;
+    });
+    el.innerHTML = html;
+  }
+
+  // ════════════════════════════════════
+  // TOP に戻る（状態リセット）
+  // ════════════════════════════════════
+  function goToTop() {
+    clearSession();
+    if (state.roomRef) {
+      state.roomRef.off();
+      state.roomRef = null;
+    }
+    Object.assign(state, {
+      role: null, nickname: '', roomCode: '',
+      players: {}, room: null,
+      guessRoundKey: null, revealRoundKey: null,
+    });
+
+    document.getElementById('host-nickname').value   = '';
+    document.getElementById('guest-nickname').value  = '';
+    document.getElementById('guest-room-code').value = '';
+    document.getElementById('host-step-nickname').style.display = 'block';
+    document.getElementById('host-step-room').style.display     = 'none';
+
+    showScreen('top');
+  }
+
+  // ════════════════════════════════════
+  // 初期化（セッションがあれば自動再接続）
+  // ════════════════════════════════════
+  tryReconnect().then(reconnected => {
+    if (!reconnected) showScreen('top');
+  });
+</script>
+</body>
+</html>
