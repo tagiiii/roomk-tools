@@ -1,0 +1,1701 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+  <title>うそつき辞書</title>
+  <meta name="description" content="めずらしいことばに「それっぽい意味」をでっちあげて、本物をあてっこするパーティーゲーム">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+  <script src="../shared/js/rtdb-utils.js"></script>
+  <link rel="stylesheet" href="../shared/css/design-system.css">
+  <style>
+    .screen { display: none; min-height: 100dvh; }
+    .screen.active { display: flex; flex-direction: column; align-items: center; }
+
+    .uj-page {
+      width: 100%;
+      max-width: 520px;
+      padding: 40px 20px 80px;
+    }
+
+    .card { margin-bottom: 16px; }
+    .btn + .btn { margin-top: 10px; }
+
+    .uj-page__title { font-size: 22px; font-weight: 700; color: var(--color-primary); margin-bottom: 6px; }
+    .uj-page__sub { font-size: 14px; color: var(--color-muted); margin-bottom: 24px; }
+    .uj-section-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--color-muted);
+      letter-spacing: 0.07em;
+      margin-bottom: 10px;
+    }
+
+    .uj-error {
+      display: none;
+      margin-bottom: 12px;
+      padding: 10px 14px;
+      border-radius: 8px;
+      border-left: 3px solid var(--color-error);
+      background: #FEF2F2;
+      color: var(--color-error);
+      font-size: 13px;
+    }
+    .uj-error.visible { display: block; }
+
+    .uj-hero {
+      padding: 56px 0 32px;
+      text-align: center;
+    }
+    .uj-hero__icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 76px;
+      height: 76px;
+      margin: 0 auto 20px;
+      border-radius: 22px;
+      background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+      box-shadow: var(--shadow-md);
+    }
+    .uj-hero__icon .material-symbols-rounded {
+      font-size: 40px;
+      color: #fff;
+    }
+    .uj-hero__title {
+      font-size: 30px;
+      font-weight: 700;
+      line-height: 1.3;
+      color: var(--color-primary);
+    }
+    .uj-hero__sub {
+      margin-top: 10px;
+      color: var(--color-muted);
+      font-size: 14px;
+      line-height: 1.7;
+    }
+    .uj-hero__buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 40px;
+    }
+
+    .uj-room-code {
+      margin-bottom: 12px;
+      padding: 20px;
+      border-radius: 12px;
+      background: #EEF3F8;
+      color: var(--color-primary);
+      font-size: 52px;
+      font-weight: 700;
+      letter-spacing: 0.3em;
+      text-align: center;
+      cursor: pointer;
+      user-select: all;
+    }
+
+    .uj-player-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .uj-player {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border: 2px solid var(--color-border);
+      border-radius: 10px;
+      background: var(--color-surface);
+      font-size: 15px;
+    }
+    .uj-player.is-me {
+      border-color: var(--color-accent);
+      background: #EEF3F8;
+    }
+    .uj-player__avatar {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: var(--color-accent);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .uj-player__name {
+      flex: 1;
+      font-weight: 500;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .uj-player__host-badge {
+      margin-left: auto;
+      padding: 2px 8px;
+      border-radius: 20px;
+      background: var(--color-primary);
+      color: #fff;
+      font-size: 11px;
+    }
+
+    .spinner {
+      width: 48px;
+      height: 48px;
+      margin: 0 auto 20px;
+      border: 4px solid var(--color-border);
+      border-top-color: var(--color-accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    .uj-word-card {
+      margin-bottom: 20px;
+      padding: 28px 24px;
+      border-radius: var(--radius-card);
+      background: var(--color-primary);
+      color: #fff;
+      text-align: center;
+    }
+    .uj-word-card__kana {
+      font-size: 14px;
+      opacity: 0.85;
+      letter-spacing: 0.15em;
+      margin-bottom: 6px;
+    }
+    .uj-word-card__word {
+      font-size: 34px;
+      font-weight: 700;
+      line-height: 1.4;
+      word-break: keep-all;
+      overflow-wrap: anywhere;
+    }
+    .uj-word-card__note {
+      margin-top: 10px;
+      font-size: 13px;
+      opacity: 0.85;
+    }
+
+    .uj-secret {
+      margin-bottom: 20px;
+      border: 2px dashed var(--color-border);
+      border-radius: 12px;
+      background: var(--color-surface);
+    }
+    .uj-secret summary {
+      padding: 14px 16px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--color-accent);
+      user-select: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .uj-secret__body {
+      padding: 0 16px 16px;
+      font-size: 16px;
+      line-height: 1.7;
+      color: var(--color-text);
+    }
+
+    .uj-status-line {
+      margin-bottom: 16px;
+      text-align: center;
+      color: var(--color-muted);
+      font-size: 14px;
+    }
+
+    .uj-submit-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+    .uj-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border: 2px solid var(--color-border);
+      border-radius: 20px;
+      background: var(--color-surface);
+      font-size: 13px;
+      color: var(--color-muted);
+    }
+    .uj-chip.is-done {
+      border-color: var(--color-success);
+      color: var(--color-success);
+      font-weight: 700;
+    }
+    .uj-chip .material-symbols-rounded { font-size: 16px; }
+
+    .uj-submitted {
+      padding: 32px 20px;
+      text-align: center;
+      color: var(--color-success);
+      font-size: 20px;
+      font-weight: 700;
+      line-height: 1.6;
+    }
+    .uj-submitted small {
+      display: block;
+      margin-top: 8px;
+      color: var(--color-muted);
+      font-size: 14px;
+      font-weight: 400;
+    }
+    .uj-char-count {
+      margin-top: 6px;
+      text-align: right;
+      color: var(--color-muted);
+      font-size: 12px;
+    }
+
+    .uj-choice {
+      margin-bottom: 12px;
+      padding: 16px;
+      border: 2px solid var(--color-border);
+      border-radius: 14px;
+      background: var(--color-surface);
+      box-shadow: var(--shadow-sm);
+    }
+    .uj-choice.is-mine {
+      border-color: var(--color-accent);
+      background: #EEF3F8;
+    }
+    .uj-choice.is-voted {
+      border-color: var(--color-primary);
+    }
+    .uj-choice.is-real {
+      border-color: var(--color-success);
+      background: #F0FAF4;
+    }
+    .uj-choice__head {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .uj-choice__num {
+      color: var(--color-accent);
+      font-size: 18px;
+      font-weight: 700;
+      font-feature-settings: "palt";
+      flex-shrink: 0;
+    }
+    .uj-choice__badge {
+      padding: 2px 10px;
+      border-radius: 20px;
+      background: var(--color-accent);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .uj-choice__badge--real {
+      background: var(--color-success);
+    }
+    .uj-choice__badge--muted {
+      background: var(--color-muted);
+    }
+    .uj-choice__text {
+      font-size: 16px;
+      font-weight: 500;
+      line-height: 1.7;
+      color: var(--color-text);
+      word-break: break-word;
+    }
+    .uj-choice__meta {
+      margin-top: 8px;
+      font-size: 13px;
+      color: var(--color-muted);
+      line-height: 1.6;
+    }
+    .uj-choice__points {
+      color: var(--color-success);
+      font-weight: 700;
+    }
+    .uj-choice .btn { margin-top: 12px; }
+
+    .uj-score {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+      padding: 10px 14px;
+      border: 2px solid var(--color-border);
+      border-radius: 10px;
+      background: var(--color-surface);
+    }
+    .uj-score.is-me {
+      border-color: var(--color-accent);
+      background: #EEF3F8;
+    }
+    .uj-score__name {
+      flex: 1;
+      min-width: 0;
+      font-size: 15px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .uj-score__delta {
+      color: var(--color-success);
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .uj-score__pts {
+      color: var(--color-primary);
+      font-weight: 700;
+    }
+
+    .uj-reveal-answer {
+      margin-bottom: 20px;
+      padding: 20px;
+      border-radius: var(--radius-card);
+      border: 2px solid var(--color-success);
+      background: #F0FAF4;
+      text-align: center;
+    }
+    .uj-reveal-answer__label {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--color-success);
+      margin-bottom: 8px;
+    }
+    .uj-reveal-answer__word {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--color-primary);
+    }
+    .uj-reveal-answer__kana {
+      font-size: 13px;
+      color: var(--color-muted);
+      margin-bottom: 8px;
+    }
+    .uj-reveal-answer__meaning {
+      font-size: 16px;
+      line-height: 1.7;
+      color: var(--color-text);
+    }
+
+    .uj-host-hint {
+      margin-top: 8px;
+      text-align: center;
+      color: var(--color-muted);
+      font-size: 13px;
+    }
+
+    .uj-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 32px;
+      background: rgba(245, 242, 236, 0.95);
+      text-align: center;
+    }
+    .uj-overlay__title {
+      margin: 16px 0 8px;
+      color: var(--color-primary);
+      font-size: 18px;
+      font-weight: 700;
+    }
+    .uj-overlay__sub {
+      margin-bottom: 8px;
+      color: var(--color-muted);
+      font-size: 14px;
+    }
+    .uj-overlay__countdown {
+      margin: 12px 0 4px;
+      color: var(--color-error);
+      font-size: 52px;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .material-symbols-rounded {
+      font-family: 'Material Symbols Rounded';
+      font-weight: normal;
+      font-style: normal;
+      font-size: 20px;
+      line-height: 1;
+      letter-spacing: normal;
+      text-transform: none;
+      display: inline-block;
+      white-space: nowrap;
+      word-wrap: normal;
+      direction: ltr;
+      -webkit-font-feature-settings: 'liga';
+      font-feature-settings: 'liga';
+      -webkit-font-smoothing: antialiased;
+      vertical-align: middle;
+      user-select: none;
+    }
+
+    @media (max-width: 600px) {
+      .uj-page { padding: 28px 16px 60px; }
+      .uj-hero__title { font-size: 26px; }
+      .uj-room-code { font-size: 38px; }
+      .uj-word-card__word { font-size: 28px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="screen" id="screen-top">
+  <div class="uj-page">
+    <div class="uj-hero">
+      <div class="uj-hero__icon">
+        <span class="material-symbols-rounded">menu_book</span>
+      </div>
+      <h1 class="uj-hero__title">うそつき辞書</h1>
+      <p class="uj-hero__sub">めずらしいことばに「それっぽい意味」をでっちあげて、<br>どれが本物かあてっこするゲーム</p>
+    </div>
+    <div class="uj-hero__buttons">
+      <button class="btn btn-primary btn-lg btn-full" onclick="goHostSetup()">
+        <span class="material-symbols-rounded">add_home</span>
+        ルームをつくる（ホスト）
+      </button>
+      <button class="btn btn-secondary btn-lg btn-full" onclick="goGuestJoin()">
+        <span class="material-symbols-rounded">login</span>
+        ルームに参加する
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="screen" id="screen-host-setup">
+  <div class="uj-page">
+    <div id="host-step-nickname">
+      <h2 class="uj-page__title">ルームをつくる</h2>
+      <p class="uj-page__sub">ホストのニックネームを入力してください</p>
+      <div class="form-group">
+        <label class="form-label">ニックネーム（1〜8文字）</label>
+        <input class="form-input" id="host-nickname" type="text" maxlength="8" placeholder="例：たろう" autocomplete="off">
+      </div>
+      <div class="uj-error" id="host-nickname-error"></div>
+      <button class="btn btn-primary btn-full" onclick="hostCreateRoom()">ルームをつくる</button>
+      <button class="btn btn-ghost btn-full" onclick="showScreen('top')">← もどる</button>
+    </div>
+
+    <div id="host-step-room" style="display:none">
+      <h2 class="uj-page__title">参加者を待っています</h2>
+      <p class="uj-page__sub">このコードを参加者に伝えてください</p>
+
+      <div class="uj-room-code" id="host-room-code-display">----</div>
+      <button class="btn btn-ghost btn-full" id="host-copy-btn" onclick="hostCopyCode()">
+        <span class="material-symbols-rounded">content_copy</span>
+        コードをコピー
+      </button>
+
+      <hr class="divider">
+      <div class="uj-section-label">参加者（<span id="host-guest-count">0</span>人 / 2〜8人であそべます）</div>
+      <div class="uj-player-list" id="host-player-list"></div>
+
+      <div class="mt-lg">
+        <button class="btn btn-primary btn-lg btn-full" id="btn-start-game" disabled onclick="hostStartGame()">
+          <span class="material-symbols-rounded">sports_esports</span>
+          はじめる
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="screen" id="screen-guest-join">
+  <div class="uj-page">
+    <h2 class="uj-page__title">ルームに参加する</h2>
+    <p class="uj-page__sub">ニックネームとルームコードを入力してください</p>
+
+    <div class="form-group">
+      <label class="form-label">ニックネーム（1〜8文字）</label>
+      <input class="form-input" id="guest-nickname" type="text" maxlength="8" placeholder="例：はなこ" autocomplete="off">
+    </div>
+    <div class="form-group">
+      <label class="form-label">ルームコード（6文字）</label>
+      <input class="form-input" id="guest-room-code" type="text" maxlength="6" placeholder="XXXXXX" autocomplete="off" oninput="this.value = this.value.toUpperCase()">
+    </div>
+    <div class="uj-error" id="guest-join-error"></div>
+    <button class="btn btn-primary btn-full" onclick="guestJoin()">参加する</button>
+    <button class="btn btn-ghost btn-full" onclick="showScreen('top')">← もどる</button>
+  </div>
+</div>
+
+<div class="screen" id="screen-waiting">
+  <div class="uj-page">
+    <div class="text-center mt-lg">
+      <div class="spinner"></div>
+      <h2 class="uj-page__title">はじまるのを待っています</h2>
+      <p class="uj-page__sub">ホストがはじめるまで待ってください</p>
+    </div>
+    <div class="uj-section-label" style="margin-top:24px">参加者</div>
+    <div class="uj-player-list" id="waiting-player-list"></div>
+  </div>
+</div>
+
+<div class="screen" id="screen-writing">
+  <div class="uj-page">
+    <div class="uj-section-label">第 <span id="writing-round-num">1</span> ラウンド</div>
+    <div class="uj-word-card">
+      <div class="uj-word-card__kana" id="writing-kana"></div>
+      <div class="uj-word-card__word" id="writing-word"></div>
+      <div class="uj-word-card__note">こんなことば、きいたことある？</div>
+    </div>
+
+    <details class="uj-secret" id="host-secret" style="display:none">
+      <summary>
+        <span class="material-symbols-rounded">visibility</span>
+        本当の意味（タップで見る）
+      </summary>
+      <div class="uj-secret__body" id="host-secret-text"></div>
+    </details>
+
+    <div id="writing-input-area" style="display:none">
+      <div class="form-group">
+        <label class="form-label">それっぽい意味をでっちあげよう（1〜40文字）</label>
+        <textarea class="form-input" id="entry-input" rows="3" maxlength="40" placeholder="例：雨の日にだけ見えるもようのこと。"></textarea>
+        <div class="uj-char-count"><span id="entry-char-count">0</span> / 40</div>
+      </div>
+      <div class="uj-error" id="entry-error"></div>
+      <button class="btn btn-primary btn-full btn-lg" onclick="submitEntry()">だす</button>
+    </div>
+
+    <div id="writing-submitted-area" style="display:none">
+      <div class="uj-submitted">
+        <span class="material-symbols-rounded" style="font-size:48px;display:block;margin-bottom:8px;color:var(--color-success)">check_circle</span>
+        だしました
+        <small>みんながかき終わるのを待っています</small>
+      </div>
+    </div>
+
+    <div class="uj-section-label">かき終わった人</div>
+    <div class="uj-submit-chips" id="writing-chips"></div>
+
+    <div id="writing-host-actions" style="display:none">
+      <button class="btn btn-primary btn-full btn-lg" id="btn-to-voting" disabled onclick="hostToVoting()">とうひょうにすすむ</button>
+      <button class="btn btn-ghost btn-full" id="btn-force-voting" style="display:none" onclick="hostToVoting()">先にすすむ</button>
+      <p class="uj-host-hint" id="writing-host-hint"></p>
+    </div>
+  </div>
+</div>
+
+<div class="screen" id="screen-voting">
+  <div class="uj-page">
+    <div class="uj-section-label">第 <span id="voting-round-num">1</span> ラウンド・とうひょう</div>
+    <div class="uj-word-card">
+      <div class="uj-word-card__kana" id="voting-kana"></div>
+      <div class="uj-word-card__word" id="voting-word"></div>
+      <div class="uj-word-card__note">どれが本物の意味だとおもう？</div>
+    </div>
+    <div class="uj-status-line" id="voting-status"></div>
+
+    <div id="voting-list"></div>
+
+    <div id="voting-host-actions" style="display:none">
+      <button class="btn btn-primary btn-full btn-lg" id="btn-to-reveal" disabled onclick="hostToReveal()">けっかをみる</button>
+      <button class="btn btn-ghost btn-full" id="btn-force-reveal" style="display:none" onclick="hostToReveal()">先にすすむ</button>
+      <p class="uj-host-hint" id="voting-host-hint"></p>
+    </div>
+  </div>
+</div>
+
+<div class="screen" id="screen-reveal">
+  <div class="uj-page">
+    <div class="uj-section-label">第 <span id="reveal-round-num">1</span> ラウンド・けっか</div>
+
+    <div class="uj-reveal-answer pop-in">
+      <div class="uj-reveal-answer__label">本物の意味はこれ</div>
+      <div class="uj-reveal-answer__kana" id="reveal-kana"></div>
+      <div class="uj-reveal-answer__word" id="reveal-word"></div>
+      <div class="uj-reveal-answer__meaning" id="reveal-meaning"></div>
+    </div>
+
+    <div class="uj-section-label">みんなの答え合わせ</div>
+    <div id="reveal-list"></div>
+
+    <hr class="divider">
+
+    <div class="uj-section-label">いまのポイント</div>
+    <div id="reveal-score-list"></div>
+
+    <div id="reveal-host-actions" style="display:none; margin-top:24px">
+      <button class="btn btn-primary btn-full" onclick="hostNextRound()">つぎへ</button>
+      <button class="btn btn-ghost btn-full" onclick="hostFinish()">おわる</button>
+    </div>
+    <div id="reveal-guest-waiting" class="text-center text-muted mt-lg" style="display:none">
+      ホストの操作を待っています…
+    </div>
+  </div>
+</div>
+
+<div class="screen" id="screen-done">
+  <div class="uj-page">
+    <div class="text-center" style="padding:40px 0 24px">
+      <span class="material-symbols-rounded" style="font-size:64px;color:var(--color-accent)">celebration</span>
+      <h2 class="uj-page__title" style="margin-top:12px">おしまい！</h2>
+      <p class="uj-page__sub">あそんでくれてありがとう</p>
+    </div>
+
+    <div class="uj-section-label">みんなのポイント</div>
+    <div id="done-score-list"></div>
+
+    <div class="mt-lg">
+      <button class="btn btn-secondary btn-full btn-lg" onclick="goToTop()">
+        <span class="material-symbols-rounded">home</span>
+        TOPにもどる
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="uj-overlay" id="reconnect-overlay">
+  <div class="spinner"></div>
+  <p class="uj-overlay__title">再接続しています...</p>
+</div>
+
+<div class="uj-overlay" id="host-disconnect-overlay">
+  <div class="spinner"></div>
+  <p class="uj-overlay__title">ホストが一時的に接続を失いました</p>
+  <p class="uj-overlay__sub">再接続を待っています</p>
+  <div class="uj-overlay__countdown" id="host-disconnect-countdown">120</div>
+  <p class="uj-overlay__sub">秒後に自動終了します</p>
+  <button class="btn btn-ghost btn-full" style="max-width:280px;margin-top:20px" onclick="leaveGame()">退出する</button>
+</div>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyC0bqQdDJeTAWrqFYqjOT1NsVFiunPemIw",
+    authDomain: "roomk-tools.firebaseapp.com",
+    databaseURL: "https://roomk-tools-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "roomk-tools",
+    storageBucket: "roomk-tools.firebasestorage.app",
+    messagingSenderId: "592193782148",
+    appId: "1:592193782148:web:1529f47cebab7dcd109dd1",
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const authReady = firebase.auth().signInAnonymously().catch((error) => {
+    console.error('[auth] anonymous sign-in failed', error);
+    throw error;
+  });
+  const db = firebase.database();
+  RoomkRTDB.initServerTime(db);
+
+  const NUMBERS = ['①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨', '⑩'];
+
+  // お題: 実在する日本語のめずらしいことば
+  // { word: 表示することば, kana: よみがな, meaning: 本当の意味（短い一文） }
+  const WORDS = [
+    // ようすのことば
+    { word: 'やおら', kana: 'やおら', meaning: 'ゆっくりと静かに動きはじめるようす。' },
+    { word: 'やにわに', kana: 'やにわに', meaning: 'その場でいきなり何かをするようす。' },
+    { word: 'たまさか', kana: 'たまさか', meaning: 'たまたま、まれにしか起こらないようす。' },
+    { word: 'あけすけ', kana: 'あけすけ', meaning: 'かくしごとをせず、なんでもそのまま言うようす。' },
+    { word: 'おざなり', kana: 'おざなり', meaning: 'その場かぎりの、いいかげんなやり方のこと。' },
+    { word: 'のべつまくなし', kana: 'のべつまくなし', meaning: '休みなくずっと続くようす。' },
+    { word: 'とどのつまり', kana: 'とどのつまり', meaning: 'いろいろあったすえの、けっきょくのところということ。' },
+    { word: 'おちゃのこさいさい', kana: 'おちゃのこさいさい', meaning: 'とてもかんたんにできること。' },
+    { word: 'べらぼう', kana: 'べらぼう', meaning: '程度がふつうではないほど大きいこと。' },
+    { word: 'がらんどう', kana: 'がらんどう', meaning: '中に何もなくて、広くがらんとしていること。' },
+    { word: 'たわわ', kana: 'たわわ', meaning: '実がたくさんついて、枝がしなっているようす。' },
+    { word: 'ちゃきちゃき', kana: 'ちゃきちゃき', meaning: '生まれも育ちもずっとその土地であること。' },
+    // 古い道具・もの
+    { word: 'ひしゃく', kana: 'ひしゃく', meaning: '水をすくうための、長い柄のついた道具のこと。' },
+    { word: 'たらい', kana: 'たらい', meaning: '水をためて洗いものをする、平たくて丸い入れ物のこと。' },
+    { word: 'ふいご', kana: 'ふいご', meaning: '火を強くするために風を送る道具のこと。' },
+    { word: 'おひつ', kana: 'おひつ', meaning: 'たきあがったごはんを入れておく木の入れ物のこと。' },
+    { word: 'せいろ', kana: 'せいろ', meaning: '湯気で食べ物をむすための木の道具のこと。' },
+    { word: 'つづら', kana: 'つづら', meaning: '着物などをしまっておく、ふたつきのかごのこと。' },
+    { word: 'こより', kana: 'こより', meaning: '紙を細くねじって、ひものようにしたもの。' },
+    { word: 'あんどん', kana: 'あんどん', meaning: '紙をはったわくの中に火をともす、昔の明かりのこと。' },
+    { word: 'おかもち', kana: 'おかもち', meaning: '出前の料理を運ぶための、取っ手のついた箱のこと。' },
+    { word: 'うだつ', kana: 'うだつ', meaning: '屋根の両はしに作られた、火事をふせぐための小さなかべのこと。' },
+    { word: 'びいどろ', kana: 'びいどろ', meaning: 'ガラスをさす昔のことば。' },
+    { word: 'しゃっぽ', kana: 'しゃっぽ', meaning: 'ぼうしをさす昔のことば。' },
+    // 動物
+    { word: 'バビルサ', kana: 'ばびるさ', meaning: 'きばが上にのびてくる、イノシシのなかまの動物のこと。' },
+    { word: 'ハダカデバネズミ', kana: 'はだかでばねずみ', meaning: '毛がほとんどなく、土の中でくらすネズミのなかまのこと。' },
+    { word: 'クズリ', kana: 'くずり', meaning: '体は小さいのに力がとても強い、イタチのなかまの動物のこと。' },
+    { word: 'ツチブタ', kana: 'つちぶた', meaning: '長い舌でアリをなめて食べる、アフリカの動物のこと。' },
+    { word: 'テングザル', kana: 'てんぐざる', meaning: '鼻が大きくたれさがった、サルのなかまのこと。' },
+    { word: 'オコジョ', kana: 'おこじょ', meaning: '冬になると毛が白くなる、小さなイタチのなかまのこと。' },
+    { word: 'キンカジュー', kana: 'きんかじゅー', meaning: '夜に木の上で果物を食べる、しっぽの長い動物のこと。' },
+    { word: 'ヤブイヌ', kana: 'やぶいぬ', meaning: '森にすんでいて泳ぎがうまい、足の短い犬のなかまのこと。' },
+    // 食べ物
+    { word: 'ぬた', kana: 'ぬた', meaning: '野菜や魚介を酢みそであえた料理のこと。' },
+    { word: 'がんもどき', kana: 'がんもどき', meaning: 'くずした豆腐に野菜をまぜて揚げた食べ物のこと。' },
+    { word: 'ずんだ', kana: 'ずんだ', meaning: 'ゆでた枝豆をすりつぶして作るあんのこと。' },
+    { word: 'すいとん', kana: 'すいとん', meaning: '小麦粉のだんごが入った汁もののこと。' },
+    { word: 'ういろう', kana: 'ういろう', meaning: '米の粉と砂糖で作る、もちもちしたおかしのこと。' },
+    { word: 'おこし', kana: 'おこし', meaning: '米などを飴でかためた、ぱりぱりしたおかしのこと。' },
+    { word: 'いぶりがっこ', kana: 'いぶりがっこ', meaning: 'だいこんをけむりでいぶってから漬けた、秋田の漬物のこと。' },
+    { word: 'ごまめ', kana: 'ごまめ', meaning: '小さなイワシを干した食べ物のこと。' },
+    { word: 'へしこ', kana: 'へしこ', meaning: '魚をぬかに漬けこんだ、福井のあたりの食べ物のこと。' },
+    // 方言
+    { word: 'めんこい', kana: 'めんこい', meaning: '「かわいい」という意味の、北のほうのことば。' },
+    { word: 'なまら', kana: 'なまら', meaning: '「とても」という意味の、北海道のことば。' },
+    { word: 'でら', kana: 'でら', meaning: '「すごく」という意味の、名古屋のあたりのことば。' },
+    { word: 'はんなり', kana: 'はんなり', meaning: '上品ではなやかなようすをあらわす、京都のことば。' },
+    { word: 'なんくるないさ', kana: 'なんくるないさ', meaning: '「なんとかなるよ」という意味の、沖縄のことば。' },
+    // からだ・くらし
+    { word: 'たなごころ', kana: 'たなごころ', meaning: '手のひらをさす古いことば。' },
+    { word: 'ぼんのくぼ', kana: 'ぼんのくぼ', meaning: '首のうしろの、まんなかのくぼんだところのこと。' },
+    { word: 'おとがい', kana: 'おとがい', meaning: 'あごをさす古いことば。' },
+    { word: 'ねこばば', kana: 'ねこばば', meaning: 'ひろったものをだまって自分のものにしてしまうこと。' },
+  ];
+
+  const STATUS = {
+    WAITING: 'waiting',
+    WRITING: 'writing',
+    VOTING: 'voting',
+    REVEAL: 'reveal',
+    DONE: 'done',
+  };
+
+  const SESSION_KEY = 'usojisho_session';
+  const ORPHAN_TTL_MS = 2 * 60 * 1000;
+  const MIN_GUESTS = 2;
+  const MAX_GUESTS = 8;
+  const ENTRY_MAX_LEN = 40;
+  const POINT_CORRECT = 2;   // 本物を当てたら +2
+  const POINT_FOOLED = 1;    // 自分のうそが1票あつめるごとに +1
+
+  const state = {
+    role: null,
+    nickname: '',
+    roomCode: '',
+    roomRef: null,
+    players: {},
+    currentScreen: 'top',
+    renderedRound: 0,
+  };
+
+  function esc(value) {
+    return String(value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  const shuffle = (array) => {
+    const next = [...array];
+    for (let index = next.length - 1; index > 0; index -= 1) {
+      const randomIndex = Math.floor(Math.random() * (index + 1));
+      [next[index], next[randomIndex]] = [next[randomIndex], next[index]];
+    }
+    return next;
+  };
+
+  function saveSession() {
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify({
+      nickname: state.nickname,
+      roomCode: state.roomCode,
+      role: state.role,
+      score: 0,
+    }));
+  }
+
+  function loadSession() {
+    try {
+      return JSON.parse(sessionStorage.getItem(SESSION_KEY));
+    } catch {
+      return null;
+    }
+  }
+
+  function clearSession() {
+    sessionStorage.removeItem(SESSION_KEY);
+  }
+
+  function updateSessionScore(score) {
+    const session = loadSession();
+    if (!session) return;
+    session.score = score;
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
+  }
+
+  const getEstimatedServerNow = RoomkRTDB.now;
+  const getHostDisconnectedAt = RoomkRTDB.getHostDisconnectedAt;
+  const generateRoomCode = RoomkRTDB.generateRoomCode;
+
+  function isRoomExpired(room) {
+    return RoomkRTDB.isRoomExpired(room, ORPHAN_TTL_MS);
+  }
+
+  function getGuestNames(players) {
+    return Object.entries(players || {})
+      .filter(([, player]) => !player.isHost)
+      .map(([name]) => name);
+  }
+
+  function calcDeltas(choices, votes) {
+    const deltas = {};
+    Object.entries(votes || {}).forEach(([voter, index]) => {
+      const choice = (choices || [])[index];
+      if (!choice) return;
+      if (choice.author == null) {
+        deltas[voter] = (deltas[voter] || 0) + POINT_CORRECT;
+      } else {
+        deltas[choice.author] = (deltas[choice.author] || 0) + POINT_FOOLED;
+      }
+    });
+    return deltas;
+  }
+
+  function pickWordIndex(room) {
+    const used = new Set(room.usedWords || []);
+    let pool = WORDS.map((_, index) => index).filter((index) => !used.has(index));
+    if (pool.length === 0) pool = WORDS.map((_, index) => index);
+    return pool[Math.floor(Math.random() * pool.length)];
+  }
+
+  // ---------- 再接続 ----------
+
+  async function tryReconnect() {
+    const session = loadSession();
+    if (!session) return false;
+
+    const { nickname, roomCode, role, score } = session;
+    showReconnectOverlay(true);
+
+    try {
+      await authReady;
+      const roomRef = db.ref(`uso_rooms/${roomCode}`);
+      const snapshot = await roomRef.get();
+      if (!snapshot.exists()) {
+        clearSession();
+        showReconnectOverlay(false);
+        return false;
+      }
+
+      const room = snapshot.val();
+      if (isRoomExpired(room)) {
+        await roomRef.remove().catch(() => {});
+        clearSession();
+        showReconnectOverlay(false);
+        return false;
+      }
+
+      state.nickname = nickname;
+      state.roomCode = roomCode;
+      state.role = role;
+      state.roomRef = roomRef;
+
+      if (role === 'host') {
+        await roomRef.update({ hostConnected: true, hostDisconnectedAt: null });
+        roomRef.onDisconnect().update({
+          hostConnected: false,
+          hostDisconnectedAt: firebase.database.ServerValue.TIMESTAMP,
+        });
+      } else {
+        const playerRef = roomRef.child(`players/${nickname}`);
+        if (!room.players || !room.players[nickname]) {
+          await playerRef.set({ isHost: false, score: score || 0 });
+        }
+        playerRef.onDisconnect().remove();
+      }
+
+      showReconnectOverlay(false);
+      startRoomListener();
+      return true;
+    } catch {
+      clearSession();
+      showReconnectOverlay(false);
+      return false;
+    }
+  }
+
+  function showReconnectOverlay(show) {
+    document.getElementById('reconnect-overlay').style.display = show ? 'flex' : 'none';
+  }
+
+  // ---------- ホスト切断オーバーレイ ----------
+
+  let hostDisconnectTimer = null;
+  let hostDisconnectDeadline = null;
+
+  function showHostDisconnectOverlay(show, room = null) {
+    const overlay = document.getElementById('host-disconnect-overlay');
+    overlay.style.display = show ? 'flex' : 'none';
+
+    if (show && !hostDisconnectTimer) {
+      const disconnectedAt = getHostDisconnectedAt(room);
+      hostDisconnectDeadline = disconnectedAt == null
+        ? getEstimatedServerNow() + ORPHAN_TTL_MS
+        : disconnectedAt + ORPHAN_TTL_MS;
+
+      hostDisconnectTimer = setInterval(() => {
+        const remaining = Math.max(0, Math.ceil((hostDisconnectDeadline - getEstimatedServerNow()) / 1000));
+        document.getElementById('host-disconnect-countdown').textContent = remaining;
+        if (remaining <= 0) {
+          clearInterval(hostDisconnectTimer);
+          hostDisconnectTimer = null;
+          hostDisconnectDeadline = null;
+          if (state.roomRef) state.roomRef.remove().catch(() => {});
+          leaveGame('ホストが再接続できなかったためゲームが終了しました');
+        }
+      }, 1000);
+      return;
+    }
+
+    if (show && hostDisconnectTimer) {
+      const disconnectedAt = getHostDisconnectedAt(room);
+      hostDisconnectDeadline = disconnectedAt == null
+        ? getEstimatedServerNow() + ORPHAN_TTL_MS
+        : disconnectedAt + ORPHAN_TTL_MS;
+      return;
+    }
+
+    if (!show && hostDisconnectTimer) {
+      clearInterval(hostDisconnectTimer);
+      hostDisconnectTimer = null;
+      hostDisconnectDeadline = null;
+    }
+  }
+
+  function leaveGame(message) {
+    clearInterval(hostDisconnectTimer);
+    hostDisconnectTimer = null;
+    hostDisconnectDeadline = null;
+    document.getElementById('host-disconnect-overlay').style.display = 'none';
+    clearSession();
+    goToTop();
+    if (message) alert(message);
+  }
+
+  // ---------- 画面遷移・共通 UI ----------
+
+  function showScreen(name) {
+    document.querySelectorAll('.screen').forEach((screen) => screen.classList.remove('active'));
+    const target = document.getElementById(`screen-${name}`);
+    if (!target) return;
+    target.classList.add('active');
+    state.currentScreen = name;
+  }
+
+  function validateNickname(value) {
+    const trimmed = value.trim();
+    if (!trimmed) return 'ニックネームを入力してください';
+    if (trimmed.length > 8) return '8文字以内で入力してください';
+    if (/[.#$\[\]\/]/.test(trimmed)) return '記号 . # $ [ ] / は使えません';
+    return null;
+  }
+
+  function showError(id, message) {
+    const element = document.getElementById(id);
+    if (!element) return;
+    element.textContent = message;
+    element.classList.add('visible');
+  }
+
+  function hideError(id) {
+    const element = document.getElementById(id);
+    if (!element) return;
+    element.classList.remove('visible');
+  }
+
+  function copyToClipboard(text, button) {
+    const original = button.innerHTML;
+    navigator.clipboard.writeText(text).then(() => {
+      button.innerHTML = '<span class="material-symbols-rounded">check</span> コピーしました！';
+      setTimeout(() => {
+        button.innerHTML = original;
+      }, 2500);
+    });
+  }
+
+  function renderPlayerList(containerId, players) {
+    const element = document.getElementById(containerId);
+    if (!element) return;
+    element.innerHTML = '';
+
+    Object.entries(players || {}).forEach(([name, player]) => {
+      const isMe = name === state.nickname;
+      const hostBadge = player.isHost ? '<span class="uj-player__host-badge">ホスト</span>' : '';
+      element.innerHTML += [
+        `<div class="uj-player ${isMe ? 'is-me' : ''}">`,
+        `<div class="uj-player__avatar">${esc(name.charAt(0).toUpperCase())}</div>`,
+        `<span class="uj-player__name">${esc(name)}${isMe ? '（あなた）' : ''}</span>`,
+        hostBadge,
+        '</div>',
+      ].join('');
+    });
+  }
+
+  function renderScoreList(containerId, players, deltas = null) {
+    const element = document.getElementById(containerId);
+    if (!element) return;
+    element.innerHTML = '';
+
+    getGuestNames(players)
+      .sort((left, right) => left.localeCompare(right, 'ja'))
+      .forEach((name) => {
+        const isMe = name === state.nickname;
+        const score = players[name]?.score || 0;
+        const delta = deltas ? (deltas[name] || 0) : null;
+        const deltaHtml = delta ? `<span class="uj-score__delta">+${delta}</span>` : '';
+        element.innerHTML += [
+          `<div class="uj-score ${isMe ? 'is-me' : ''}">`,
+          `<span class="uj-score__name">${esc(name)}${isMe ? '（あなた）' : ''}</span>`,
+          deltaHtml,
+          `<span class="uj-score__pts">${score}ポイント</span>`,
+          '</div>',
+        ].join('');
+      });
+  }
+
+  // ---------- ルーム作成・参加 ----------
+
+  function goHostSetup() {
+    showScreen('host-setup');
+  }
+
+  function goGuestJoin() {
+    showScreen('guest-join');
+  }
+
+  async function hostCreateRoom() {
+    const nickname = document.getElementById('host-nickname').value.trim();
+    const error = validateNickname(nickname);
+    if (error) {
+      showError('host-nickname-error', error);
+      return;
+    }
+    hideError('host-nickname-error');
+
+    await authReady;
+
+    let roomCode = null;
+    let roomRef = null;
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      const code = generateRoomCode();
+      const ref = db.ref(`uso_rooms/${code}`);
+      const initialRoom = {
+        host: nickname,
+        hostConnected: true,
+        hostDisconnectedAt: null,
+        status: STATUS.WAITING,
+        round: 0,
+        wordIndex: 0,
+        usedWords: [],
+        entries: null,
+        choices: null,
+        votes: null,
+        players: {
+          [nickname]: { isHost: true, score: 0 },
+        },
+      };
+      const { committed } = await ref.transaction((room) => room ? undefined : initialRoom);
+      if (committed) {
+        roomCode = code;
+        roomRef = ref;
+        break;
+      }
+    }
+
+    if (!roomCode || !roomRef) {
+      showError('host-nickname-error', 'ルーム作成に失敗しました。もう一度お試しください');
+      return;
+    }
+
+    state.nickname = nickname;
+    state.role = 'host';
+    state.roomCode = roomCode;
+    state.roomRef = roomRef;
+
+    roomRef.onDisconnect().update({
+      hostConnected: false,
+      hostDisconnectedAt: firebase.database.ServerValue.TIMESTAMP,
+    });
+    saveSession();
+
+    document.getElementById('host-step-nickname').style.display = 'none';
+    document.getElementById('host-step-room').style.display = 'block';
+    document.getElementById('host-room-code-display').textContent = roomCode;
+
+    startRoomListener();
+  }
+
+  function hostCopyCode() {
+    copyToClipboard(state.roomCode, document.getElementById('host-copy-btn'));
+  }
+
+  async function guestJoin() {
+    const nickname = document.getElementById('guest-nickname').value.trim();
+    const roomCode = document.getElementById('guest-room-code').value.trim().toUpperCase();
+
+    const nicknameError = validateNickname(nickname);
+    if (nicknameError) {
+      showError('guest-join-error', nicknameError);
+      return;
+    }
+    if (roomCode.length !== 6) {
+      showError('guest-join-error', 'ルームコードは6文字です');
+      return;
+    }
+    hideError('guest-join-error');
+
+    await authReady;
+
+    const roomRef = db.ref(`uso_rooms/${roomCode}`);
+    const snapshot = await roomRef.get();
+    if (!snapshot.exists()) {
+      showError('guest-join-error', 'ルームが見つかりません');
+      return;
+    }
+
+    const room = snapshot.val();
+    if (isRoomExpired(room)) {
+      await roomRef.remove().catch(() => {});
+      showError('guest-join-error', 'このルームは期限切れのため終了しました');
+      return;
+    }
+    if (room.hostConnected === false) {
+      showError('guest-join-error', 'ホストが切断されています');
+      return;
+    }
+
+    const alreadyInRoom = room.players && room.players[nickname];
+    if (room.status !== STATUS.WAITING && alreadyInRoom) {
+      state.nickname = nickname;
+      state.roomCode = roomCode;
+      state.role = 'guest';
+      state.roomRef = roomRef;
+      roomRef.child(`players/${nickname}`).onDisconnect().remove();
+      saveSession();
+      startRoomListener();
+      return;
+    }
+
+    if (room.status !== STATUS.WAITING) {
+      showError('guest-join-error', 'このルームはすでにゲームが始まっています');
+      return;
+    }
+    if (alreadyInRoom) {
+      showError('guest-join-error', 'そのニックネームはすでに使われています');
+      return;
+    }
+
+    let abortReason = null;
+    const { committed } = await roomRef.transaction((currentRoom) => {
+      const nextRoom = currentRoom || room;
+      if (!nextRoom) { abortReason = 'not_found'; return; }
+      if (isRoomExpired(nextRoom)) { abortReason = 'expired'; return; }
+      if (nextRoom.hostConnected === false) { abortReason = 'host_gone'; return; }
+      if (nextRoom.status !== STATUS.WAITING) { abortReason = 'not_waiting'; return; }
+      const players = nextRoom.players || {};
+      if (players[nickname]) { abortReason = 'nick_taken'; return; }
+      const guestCount = Object.values(players).filter((player) => !player.isHost).length;
+      if (guestCount >= MAX_GUESTS) { abortReason = 'full'; return; }
+      abortReason = null;
+      return {
+        ...nextRoom,
+        players: {
+          ...players,
+          [nickname]: { isHost: false, score: 0 },
+        },
+      };
+    });
+
+    if (!committed) {
+      const messages = {
+        not_found: 'ルームが見つかりません',
+        expired: 'このルームは期限切れのため終了しました',
+        host_gone: 'ホストが切断されています',
+        not_waiting: 'このルームはすでにゲームが始まっています',
+        nick_taken: 'そのニックネームはすでに使われています',
+        full: `このルームは満員です（ゲストは${MAX_GUESTS}人まで）`,
+      };
+      if (abortReason === 'expired') roomRef.remove().catch(() => {});
+      showError('guest-join-error', messages[abortReason] || '参加に失敗しました');
+      return;
+    }
+
+    state.nickname = nickname;
+    state.roomCode = roomCode;
+    state.role = 'guest';
+    state.roomRef = roomRef;
+
+    roomRef.child(`players/${nickname}`).onDisconnect().remove();
+    saveSession();
+
+    showScreen('waiting');
+    startRoomListener();
+  }
+
+  // ---------- ゲーム進行（ホスト操作） ----------
+
+  async function hostStartGame() {
+    let abortReason = null;
+    const { committed } = await state.roomRef.transaction((room) => {
+      if (!room) { abortReason = 'not_found'; return; }
+      if (room.status !== STATUS.WAITING) { abortReason = 'bad_status'; return; }
+      const guestCount = Object.values(room.players || {}).filter((player) => !player.isHost).length;
+      if (guestCount < MIN_GUESTS) { abortReason = 'too_few'; return; }
+      if (guestCount > MAX_GUESTS) { abortReason = 'too_many'; return; }
+      abortReason = null;
+      const wordIndex = pickWordIndex(room);
+      return {
+        ...room,
+        status: STATUS.WRITING,
+        round: 1,
+        wordIndex,
+        usedWords: [wordIndex],
+        entries: null,
+        choices: null,
+        votes: null,
+      };
+    });
+    if (!committed && abortReason === 'too_few') {
+      showError('host-nickname-error', `ゲストが${MIN_GUESTS}人以上で始められます`);
+    }
+  }
+
+  async function hostToVoting() {
+    if (state.role !== 'host') return;
+    await state.roomRef.transaction((room) => {
+      if (!room || room.status !== STATUS.WRITING) return;
+      const entries = room.entries || {};
+      const entryList = Object.entries(entries)
+        .filter(([, text]) => typeof text === 'string' && text.trim() !== '')
+        .map(([author, text]) => ({ text, author }));
+      if (entryList.length === 0) return;
+      const word = WORDS[room.wordIndex] || WORDS[0];
+      const choices = shuffle([...entryList, { text: word.meaning, author: null }]);
+      return {
+        ...room,
+        status: STATUS.VOTING,
+        choices,
+        votes: null,
+      };
+    });
+  }
+
+  async function hostToReveal() {
+    if (state.role !== 'host') return;
+    await state.roomRef.transaction((room) => {
+      if (!room || room.status !== STATUS.VOTING) return;
+      const deltas = calcDeltas(room.choices, room.votes);
+      const nextPlayers = {};
+      Object.entries(room.players || {}).forEach(([name, player]) => {
+        nextPlayers[name] = {
+          ...player,
+          score: (player?.score || 0) + (deltas[name] || 0),
+        };
+      });
+      return {
+        ...room,
+        status: STATUS.REVEAL,
+        players: nextPlayers,
+      };
+    });
+  }
+
+  async function hostNextRound() {
+    if (state.role !== 'host') return;
+    await state.roomRef.transaction((room) => {
+      if (!room || room.status !== STATUS.REVEAL) return;
+      const wordIndex = pickWordIndex(room);
+      const used = [...new Set([...(room.usedWords || []), wordIndex])];
+      return {
+        ...room,
+        status: STATUS.WRITING,
+        round: (room.round || 0) + 1,
+        wordIndex,
+        usedWords: used.length >= WORDS.length ? [wordIndex] : used,
+        entries: null,
+        choices: null,
+        votes: null,
+      };
+    });
+  }
+
+  async function hostFinish() {
+    if (state.role !== 'host') return;
+    await state.roomRef.transaction((room) => {
+      if (!room || room.status === STATUS.DONE) return;
+      return { ...room, status: STATUS.DONE };
+    });
+    setTimeout(() => {
+      if (state.roomRef) state.roomRef.remove().catch(() => {});
+    }, 30000);
+  }
+
+  // ---------- ゲスト操作 ----------
+
+  async function submitEntry() {
+    const input = document.getElementById('entry-input');
+    const text = input.value.replace(/\s+/g, ' ').trim();
+    if (!text) {
+      showError('entry-error', 'それっぽい意味を入力してください');
+      return;
+    }
+    if (text.length > ENTRY_MAX_LEN) {
+      showError('entry-error', `${ENTRY_MAX_LEN}文字以内で入力してください`);
+      return;
+    }
+    hideError('entry-error');
+    await state.roomRef.child(`entries/${state.nickname}`).set(text);
+  }
+
+  async function submitVote(index) {
+    const room = state.lastRoom;
+    if (!room || room.status !== STATUS.VOTING) return;
+    const choices = room.choices || [];
+    const choice = choices[index];
+    if (!choice) return;
+    if (choice.author === state.nickname) return;
+    if (room.votes && room.votes[state.nickname] != null) return;
+    await state.roomRef.child(`votes/${state.nickname}`).set(index);
+  }
+
+  // ---------- ルーム監視 ----------
+
+  function startRoomListener() {
+    state.roomRef.on('value', (snapshot) => {
+      const room = snapshot.val();
+
+      if (!room) {
+        if (state.currentScreen !== 'done') {
+          clearSession();
+          alert('ホストが退出したためゲームが終了しました');
+          goToTop();
+        }
+        return;
+      }
+
+      state.lastRoom = room;
+      state.players = room.players || {};
+
+      const myPlayer = room.players?.[state.nickname];
+      if (state.role === 'guest' && myPlayer?.score !== undefined) {
+        updateSessionScore(myPlayer.score);
+      }
+
+      if (state.role === 'guest' && room.status !== STATUS.DONE) {
+        if (isRoomExpired(room)) {
+          if (state.roomRef) state.roomRef.remove().catch(() => {});
+          leaveGame('ホストが再接続できなかったためゲームが終了しました');
+          return;
+        }
+        if (room.hostConnected === false) {
+          showHostDisconnectOverlay(true, room);
+          return;
+        }
+        showHostDisconnectOverlay(false);
+      }
+
+      switch (room.status) {
+        case STATUS.WAITING:
+          handleWaiting(room);
+          break;
+        case STATUS.WRITING:
+          handleWriting(room);
+          break;
+        case STATUS.VOTING:
+          handleVoting(room);
+          break;
+        case STATUS.REVEAL:
+          handleReveal(room);
+          break;
+        case STATUS.DONE:
+          handleDone(room);
+          break;
+        default:
+          break;
+      }
+    });
+  }
+
+  // ---------- 各フェーズの描画 ----------
+
+  function handleWaiting(room) {
+    const players = room.players || {};
+    const guestCount = getGuestNames(players).length;
+
+    if (state.role === 'host') {
+      if (state.currentScreen !== 'host-setup') {
+        showScreen('host-setup');
+        document.getElementById('host-step-nickname').style.display = 'none';
+        document.getElementById('host-step-room').style.display = 'block';
+        document.getElementById('host-room-code-display').textContent = state.roomCode;
+      }
+      document.getElementById('host-guest-count').textContent = guestCount;
+      renderPlayerList('host-player-list', players);
+      document.getElementById('btn-start-game').disabled = guestCount < MIN_GUESTS || guestCount > MAX_GUESTS;
+      return;
+    }
+
+    if (state.currentScreen !== 'waiting') showScreen('waiting');
+    renderPlayerList('waiting-player-list', players);
+  }
+
+  function resetWritingUI() {
+    document.getElementById('entry-input').value = '';
+    document.getElementById('entry-char-count').textContent = '0';
+    hideError('entry-error');
+    document.getElementById('host-secret').removeAttribute('open');
+  }
+
+  function handleWriting(room) {
+    if (state.currentScreen !== 'writing') showScreen('writing');
+    if (state.renderedRound !== room.round) {
+      state.renderedRound = room.round;
+      resetWritingUI();
+    }
+
+    const word = WORDS[room.wordIndex] || WORDS[0];
+    document.getElementById('writing-round-num').textContent = room.round || 1;
+    document.getElementById('writing-word').textContent = word.word;
+    document.getElementById('writing-kana').textContent = word.kana;
+
+    const entries = room.entries || {};
+    const guests = getGuestNames(room.players);
+    const submittedCount = guests.filter((name) => typeof entries[name] === 'string' && entries[name].trim() !== '').length;
+    const entryCount = Object.values(entries).filter((text) => typeof text === 'string' && text.trim() !== '').length;
+
+    const chips = document.getElementById('writing-chips');
+    chips.innerHTML = '';
+    guests.forEach((name) => {
+      const done = typeof entries[name] === 'string' && entries[name].trim() !== '';
+      const icon = done ? 'check_circle' : 'edit';
+      chips.innerHTML += [
+        `<span class="uj-chip ${done ? 'is-done' : ''}">`,
+        `<span class="material-symbols-rounded">${icon}</span>`,
+        esc(name),
+        '</span>',
+      ].join('');
+    });
+
+    const secret = document.getElementById('host-secret');
+    const hostActions = document.getElementById('writing-host-actions');
+    const inputArea = document.getElementById('writing-input-area');
+    const submittedArea = document.getElementById('writing-submitted-area');
+
+    if (state.role === 'host') {
+      secret.style.display = 'block';
+      document.getElementById('host-secret-text').textContent = word.meaning;
+      inputArea.style.display = 'none';
+      submittedArea.style.display = 'none';
+      hostActions.style.display = 'block';
+
+      const allDone = guests.length > 0 && submittedCount === guests.length;
+      document.getElementById('btn-to-voting').disabled = !allDone;
+      const forceBtn = document.getElementById('btn-force-voting');
+      forceBtn.style.display = (!allDone && entryCount > 0) ? 'block' : 'none';
+      const hint = document.getElementById('writing-host-hint');
+      if (allDone) {
+        hint.textContent = '全員がかき終わりました';
+      } else if (entryCount > 0) {
+        hint.textContent = 'まだの人は、このラウンドはとうひょうだけ参加します';
+      } else {
+        hint.textContent = 'だれかが1つ以上だすとすすめます';
+      }
+      return;
+    }
+
+    secret.style.display = 'none';
+    hostActions.style.display = 'none';
+    const mySubmitted = typeof entries[state.nickname] === 'string' && entries[state.nickname].trim() !== '';
+    inputArea.style.display = mySubmitted ? 'none' : 'block';
+    submittedArea.style.display = mySubmitted ? 'block' : 'none';
+  }
+
+  function handleVoting(room) {
+    if (state.currentScreen !== 'voting') showScreen('voting');
+
+    const word = WORDS[room.wordIndex] || WORDS[0];
+    document.getElementById('voting-round-num').textContent = room.round || 1;
+    document.getElementById('voting-word').textContent = word.word;
+    document.getElementById('voting-kana').textContent = word.kana;
+
+    const choices = room.choices || [];
+    const votes = room.votes || {};
+    const guests = getGuestNames(room.players);
+    const votedCount = guests.filter((name) => votes[name] != null).length;
+    document.getElementById('voting-status').textContent = `${votedCount}人 / ${guests.length}人 がとうひょうずみ`;
+
+    const myVote = votes[state.nickname];
+    const hasVoted = myVote != null;
+
+    const list = document.getElementById('voting-list');
+    list.innerHTML = '';
+    choices.forEach((choice, index) => {
+      const isMine = choice.author === state.nickname;
+      const isMyVote = hasVoted && Number(myVote) === index;
+      const card = document.createElement('div');
+      card.className = `uj-choice${isMine ? ' is-mine' : ''}${isMyVote ? ' is-voted' : ''}`;
+
+      const badges = [];
+      if (isMine) badges.push('<span class="uj-choice__badge">じぶんの</span>');
+      if (isMyVote) badges.push('<span class="uj-choice__badge uj-choice__badge--muted">とうひょうした</span>');
+      card.innerHTML = [
+        '<div class="uj-choice__head">',
+        `<span class="uj-choice__num">${NUMBERS[index] || `(${index + 1})`}</span>`,
+        badges.join(''),
+        '</div>',
+        `<div class="uj-choice__text">${esc(choice.text)}</div>`,
+      ].join('');
+      card.setAttribute('aria-label', `${index + 1}番の意味: ${choice.text}`);
+
+      if (state.role === 'guest' && !hasVoted) {
+        const button = document.createElement('button');
+        button.className = 'btn btn-primary btn-full btn-sm';
+        button.textContent = 'とうひょうする';
+        button.disabled = isMine;
+        if (isMine) button.textContent = 'じぶんのにはとうひょうできません';
+        button.onclick = () => submitVote(index);
+        card.appendChild(button);
+      }
+      list.appendChild(card);
+    });
+
+    const hostActions = document.getElementById('voting-host-actions');
+    if (state.role === 'host') {
+      hostActions.style.display = 'block';
+      const allVoted = guests.length > 0 && votedCount === guests.length;
+      document.getElementById('btn-to-reveal').disabled = !allVoted;
+      const forceBtn = document.getElementById('btn-force-reveal');
+      forceBtn.style.display = allVoted ? 'none' : 'block';
+      const hint = document.getElementById('voting-host-hint');
+      if (allVoted) {
+        hint.textContent = '全員がとうひょうしました';
+      } else {
+        hint.textContent = 'まだの人はとうひょうなしですすみます';
+      }
+    } else {
+      hostActions.style.display = 'none';
+    }
+  }
+
+  function handleReveal(room) {
+    if (state.currentScreen !== 'reveal') showScreen('reveal');
+
+    const word = WORDS[room.wordIndex] || WORDS[0];
+    document.getElementById('reveal-round-num').textContent = room.round || 1;
+    document.getElementById('reveal-word').textContent = word.word;
+    document.getElementById('reveal-kana').textContent = word.kana;
+    document.getElementById('reveal-meaning').textContent = word.meaning;
+
+    const choices = room.choices || [];
+    const votes = room.votes || {};
+    const deltas = calcDeltas(choices, votes);
+
+    const votersByChoice = {};
+    Object.entries(votes).forEach(([voter, index]) => {
+      const key = Number(index);
+      if (!votersByChoice[key]) votersByChoice[key] = [];
+      votersByChoice[key].push(voter);
+    });
+
+    const list = document.getElementById('reveal-list');
+    list.innerHTML = '';
+    choices.forEach((choice, index) => {
+      const isReal = choice.author == null;
+      const voters = votersByChoice[index] || [];
+      const card = document.createElement('div');
+      card.className = `uj-choice${isReal ? ' is-real' : ''}`;
+
+      const badge = isReal
+        ? '<span class="uj-choice__badge uj-choice__badge--real">ほんもの</span>'
+        : `<span class="uj-choice__badge">${esc(choice.author)}さんのうそ</span>`;
+
+      const metaParts = [];
+      if (voters.length > 0) {
+        metaParts.push(`とうひょう: ${voters.map((name) => esc(name)).join('、')}`);
+        if (isReal) {
+          metaParts.push(`<span class="uj-choice__points">あてた人 +${POINT_CORRECT}ポイント</span>`);
+        } else {
+          metaParts.push(`<span class="uj-choice__points">${esc(choice.author)}さん +${voters.length * POINT_FOOLED}ポイント</span>`);
+        }
+      } else {
+        metaParts.push('とうひょうなし');
+      }
+
+      card.innerHTML = [
+        '<div class="uj-choice__head">',
+        `<span class="uj-choice__num">${NUMBERS[index] || `(${index + 1})`}</span>`,
+        badge,
+        '</div>',
+        `<div class="uj-choice__text">${esc(choice.text)}</div>`,
+        `<div class="uj-choice__meta">${metaParts.join(' ・ ')}</div>`,
+      ].join('');
+      list.appendChild(card);
+    });
+
+    renderScoreList('reveal-score-list', room.players, deltas);
+
+    document.getElementById('reveal-host-actions').style.display = state.role === 'host' ? 'block' : 'none';
+    document.getElementById('reveal-guest-waiting').style.display = state.role === 'guest' ? 'block' : 'none';
+  }
+
+  function handleDone(room) {
+    if (state.currentScreen !== 'done') showScreen('done');
+    renderScoreList('done-score-list', room.players);
+  }
+
+  // ---------- 退出 ----------
+
+  function goToTop() {
+    clearSession();
+    if (state.roomRef) {
+      state.roomRef.off();
+      state.roomRef = null;
+    }
+
+    clearInterval(hostDisconnectTimer);
+    hostDisconnectTimer = null;
+    hostDisconnectDeadline = null;
+    document.getElementById('host-disconnect-overlay').style.display = 'none';
+
+    Object.assign(state, {
+      role: null,
+      nickname: '',
+      roomCode: '',
+      players: {},
+      lastRoom: null,
+      currentScreen: 'top',
+      renderedRound: 0,
+    });
+
+    document.getElementById('host-nickname').value = '';
+    document.getElementById('guest-nickname').value = '';
+    document.getElementById('guest-room-code').value = '';
+    document.getElementById('host-step-nickname').style.display = 'block';
+    document.getElementById('host-step-room').style.display = 'none';
+    resetWritingUI();
+
+    hideError('host-nickname-error');
+    hideError('guest-join-error');
+    hideError('entry-error');
+    showScreen('top');
+  }
+
+  document.getElementById('entry-input').addEventListener('input', (event) => {
+    const normalized = event.target.value.replace(/\s+/g, ' ').trim();
+    document.getElementById('entry-char-count').textContent = String(normalized.length);
+  });
+
+  tryReconnect().then((reconnected) => {
+    if (!reconnected) showScreen('top');
+  });
+
+</script>
+</body>
+</html>
