@@ -1,0 +1,1354 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+  <title>かくれナンバー</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+  <script src="../shared/js/rtdb-utils.js"></script>
+  <link rel="stylesheet" href="../shared/css/design-system.css">
+  <style>
+    /* ── 画面管理（AGENTS.md 共通パターン） ── */
+    .screen { display: none; min-height: 100dvh; }
+    .screen.active { display: flex; flex-direction: column; align-items: center; }
+
+    .kkn-page {
+      width: 100%;
+      max-width: 480px;
+      padding: 40px 20px 80px;
+    }
+
+    .card { margin-bottom: 16px; }
+    .btn + .btn { margin-top: 10px; }
+
+    /* ── フォーム追加スタイル ── */
+    .kkn-input--code { font-size: 28px; font-weight: 700; text-align: center; letter-spacing: 0.25em; }
+
+    /* ── エラー表示 ── */
+    .kkn-error {
+      font-size: 13px; color: var(--color-error);
+      padding: 10px 14px; background: #FEF2F2;
+      border-radius: 8px; border-left: 3px solid var(--color-error);
+      margin-bottom: 12px; display: none;
+    }
+    .kkn-error.visible { display: block; }
+
+    /* ── ページ共通ヘッダー ── */
+    .kkn-page__title { font-size: 22px; font-weight: 700; color: var(--color-primary); margin-bottom: 6px; }
+    .kkn-page__sub   { font-size: 14px; color: var(--color-muted); margin-bottom: 24px; }
+    .kkn-section-label {
+      font-size: 12px; font-weight: 700; color: var(--color-muted);
+      letter-spacing: 0.07em; text-transform: uppercase; margin-bottom: 10px;
+    }
+
+    /* ── TOP画面 ── */
+    .kkn-hero { text-align: center; padding: 56px 0 32px; }
+    .kkn-hero__icon-wrap {
+      display: flex; align-items: center; justify-content: center;
+      width: 72px; height: 72px; margin: 0 auto 20px;
+      background: var(--color-primary); border-radius: 20px;
+    }
+    .kkn-hero__icon-wrap .material-symbols-rounded { font-size: 40px; color: #fff; }
+    .kkn-hero__title { font-size: 30px; font-weight: 700; color: var(--color-primary); line-height: 1.3; }
+    .kkn-hero__sub   { font-size: 14px; color: var(--color-muted); margin-top: 10px; }
+    .kkn-hero__buttons { display: flex; flex-direction: column; gap: 12px; margin-top: 40px; }
+
+    /* ── ルームコード表示 ── */
+    .kkn-room-code {
+      font-size: 52px; font-weight: 700; letter-spacing: 0.3em;
+      color: var(--color-primary); text-align: center;
+      padding: 20px; background: #EEF3F8; border-radius: 12px;
+      cursor: pointer; user-select: all; margin-bottom: 12px;
+    }
+
+    /* ── プレイヤーリスト ── */
+    .kkn-player-list { display: flex; flex-direction: column; gap: 8px; }
+    .kkn-player {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 14px; background: var(--color-surface);
+      border-radius: 10px; border: 2px solid var(--color-border); font-size: 15px;
+    }
+    .kkn-player--me { border-color: var(--color-accent); background: #EEF3F8; }
+    .kkn-player__avatar {
+      width: 34px; height: 34px; border-radius: 50%;
+      background: var(--color-accent); color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 700; flex-shrink: 0;
+    }
+    .kkn-player__name { flex: 1; font-weight: 500; }
+    .kkn-player__badge-host {
+      font-size: 11px; background: var(--color-primary); color: #fff;
+      padding: 2px 8px; border-radius: 20px; margin-left: auto;
+    }
+
+    /* ── スピナー（サイズ override）── */
+    .spinner {
+      width: 48px; height: 48px; margin: 0 auto 20px;
+      border: 4px solid var(--color-border); border-top-color: var(--color-accent);
+      border-radius: 50%; animation: spin 0.8s linear infinite;
+    }
+
+    /* ── ラウンドバナー ── */
+    .kkn-round-banner {
+      background: var(--color-primary); color: #fff;
+      border-radius: var(--radius-card); padding: 16px 24px;
+      text-align: center; font-size: 16px; font-weight: 700;
+      line-height: 1.5; margin-bottom: 16px;
+    }
+    .kkn-talk-hint {
+      font-size: 13px; color: var(--color-muted); text-align: center;
+      line-height: 1.6; margin-bottom: 16px;
+    }
+
+    /* ── 数字カードグリッド（ゲスト） ── */
+    .kkn-number-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 10px; margin-bottom: 20px;
+    }
+    .kkn-number-card {
+      background: var(--color-surface); border: 2px solid var(--color-border);
+      border-radius: 12px; padding: 12px 6px; text-align: center;
+    }
+    .kkn-number-card--me { border-color: var(--color-accent); background: #EEF3F8; }
+    .kkn-number-card__name {
+      font-size: 12px; font-weight: 700; color: var(--color-muted);
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      margin-bottom: 4px;
+    }
+    .kkn-number-card--me .kkn-number-card__name { color: var(--color-accent); }
+    .kkn-number-card__value {
+      font-size: 34px; font-weight: 700; color: var(--color-primary); line-height: 1.2;
+    }
+    .kkn-number-card--me .kkn-number-card__value { color: var(--color-accent); }
+
+    /* ── 予想ステッパー ── */
+    .kkn-stepper { display: flex; align-items: stretch; gap: 10px; margin-bottom: 8px; }
+    .kkn-stepper__btn {
+      width: 64px; min-height: 64px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      background: var(--color-surface); color: var(--color-primary);
+      border: 2px solid var(--color-border); border-radius: 12px;
+      font-family: var(--font-base); cursor: pointer;
+      transition: border-color var(--transition-base), background var(--transition-base), transform 0.1s;
+      touch-action: manipulation;
+    }
+    .kkn-stepper__btn:hover  { border-color: var(--color-accent); background: #EEF3F8; }
+    .kkn-stepper__btn:active { transform: scale(0.95); }
+    .kkn-stepper__btn .material-symbols-rounded { font-size: 30px; }
+    .kkn-stepper__input {
+      flex: 1; width: 100%; min-width: 0;
+      font-family: var(--font-base); font-size: 32px; font-weight: 700;
+      text-align: center; color: var(--color-primary);
+      border: 2px solid var(--color-border); border-radius: 12px;
+      background: var(--color-surface);
+    }
+    .kkn-stepper__input:focus { outline: none; border-color: var(--color-accent); }
+    .kkn-range-note {
+      font-size: 12px; color: var(--color-muted); text-align: center; margin-bottom: 16px;
+    }
+
+    /* ── 提出済み表示 ── */
+    .kkn-submitted {
+      text-align: center; padding: 24px 20px;
+      font-size: 18px; font-weight: 700; color: var(--color-success);
+      line-height: 1.6;
+    }
+    .kkn-submitted__guess { font-size: 34px; color: var(--color-primary); margin: 4px 0; }
+    .kkn-submitted small {
+      display: block; font-size: 14px; font-weight: 400;
+      color: var(--color-muted); margin-top: 8px;
+    }
+
+    /* ── 提出状況（ホスト） ── */
+    .kkn-status-count {
+      text-align: center; font-size: 14px; color: var(--color-muted); margin-bottom: 16px;
+    }
+    .kkn-submit-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+    .kkn-submit-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 14px; background: var(--color-surface);
+      border-radius: 10px; border: 2px solid var(--color-border); font-size: 15px;
+    }
+    .kkn-submit-item--done { border-color: var(--color-success); }
+    .kkn-submit-item__name { flex: 1; font-weight: 500; }
+    .kkn-submit-item__state { display: flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 700; }
+    .kkn-submit-item--done .kkn-submit-item__state { color: var(--color-success); }
+    .kkn-submit-item__state { color: var(--color-muted); }
+
+    /* ── 公開画面 ── */
+    .kkn-total-box {
+      text-align: center; padding: 20px; background: #EEF3F8;
+      border-radius: 12px; margin-bottom: 20px;
+    }
+    .kkn-total-box__label { font-size: 13px; font-weight: 700; color: var(--color-muted); }
+    .kkn-total-box__value { font-size: 52px; font-weight: 700; color: var(--color-primary); line-height: 1.2; }
+    .kkn-reveal-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+    .kkn-reveal-row {
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px 14px; background: var(--color-surface);
+      border-radius: 10px; border: 2px solid var(--color-border);
+    }
+    .kkn-reveal-row--me { border-color: var(--color-accent); }
+    .kkn-reveal-row--closest { border-color: #F0A500; background: #FFFBEB; }
+    .kkn-reveal-row__number {
+      font-size: 24px; font-weight: 700; color: var(--color-primary);
+      min-width: 40px; text-align: center; flex-shrink: 0;
+    }
+    .kkn-reveal-row__name { flex: 1; font-weight: 700; font-size: 15px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .kkn-reveal-row__left { font-size: 11px; color: var(--color-muted); font-weight: 400; }
+    .kkn-reveal-row__guess { font-size: 13px; color: var(--color-muted); white-space: nowrap; }
+    .kkn-reveal-row__guess strong { font-size: 17px; color: var(--color-text); }
+    .kkn-reveal-badge {
+      font-size: 12px; font-weight: 700; padding: 3px 10px;
+      border-radius: 20px; white-space: nowrap; flex-shrink: 0;
+    }
+    .kkn-reveal-badge--closest { background: #F0A500; color: #fff; }
+    .kkn-reveal-badge--exact   { background: var(--color-success); color: #fff; }
+
+    /* ── 累計スコア（控えめ） ── */
+    .kkn-score-chips {
+      display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px;
+    }
+    .kkn-score-chip {
+      font-size: 13px; color: var(--color-muted);
+      background: var(--color-surface); border: 1px solid var(--color-border);
+      border-radius: 20px; padding: 4px 12px;
+    }
+    .kkn-score-chip--me { border-color: var(--color-accent); color: var(--color-text); }
+
+    /* ── おしまい画面 ── */
+    .kkn-done-hero { text-align: center; padding: 40px 0 24px; }
+    .kkn-done-hero .material-symbols-rounded { font-size: 64px; color: var(--color-accent); }
+    .kkn-done-hero__title { font-size: 26px; font-weight: 700; color: var(--color-primary); margin-top: 8px; }
+
+    /* ── オーバーレイ ── */
+    .kkn-overlay {
+      position: fixed; inset: 0; z-index: 100;
+      background: rgba(245,242,236,0.95);
+      display: none; flex-direction: column;
+      align-items: center; justify-content: center;
+      text-align: center; padding: 32px;
+    }
+    .kkn-overlay__title { font-size: 18px; font-weight: 700; color: var(--color-primary); margin: 16px 0 8px; }
+    .kkn-overlay__sub   { font-size: 14px; color: var(--color-muted); margin-bottom: 8px; }
+    .kkn-overlay__countdown {
+      font-size: 52px; font-weight: 700; color: var(--color-error);
+      line-height: 1; margin: 12px 0 4px;
+    }
+
+    /* ── Material Symbols ── */
+    .material-symbols-rounded {
+      font-family: 'Material Symbols Rounded';
+      font-weight: normal; font-style: normal; font-size: 20px; line-height: 1;
+      letter-spacing: normal; text-transform: none; display: inline-block;
+      white-space: nowrap; word-wrap: normal; direction: ltr;
+      -webkit-font-feature-settings: 'liga'; font-feature-settings: 'liga';
+      -webkit-font-smoothing: antialiased; vertical-align: middle; user-select: none;
+    }
+    .btn .material-symbols-rounded { font-size: 20px; }
+
+    @media (max-width: 600px) {
+      .kkn-page { padding: 28px 16px 60px; }
+      .kkn-number-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 360px) {
+      .kkn-hero__title { font-size: 24px; }
+      .kkn-room-code { font-size: 36px; }
+      .kkn-total-box__value { font-size: 40px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════
+     SCREEN: TOP
+════════════════════════════════════ -->
+<div class="screen" id="screen-top">
+  <div class="kkn-page">
+    <div class="kkn-hero">
+      <div class="kkn-hero__icon-wrap">
+        <span class="material-symbols-rounded">visibility_off</span>
+      </div>
+      <h1 class="kkn-hero__title">かくれナンバー</h1>
+      <p class="kkn-hero__sub">じぶんの数字だけ見えない！<br>声できき合って、みんなの合計をよそうしよう</p>
+    </div>
+    <div class="kkn-hero__buttons">
+      <button class="btn btn-primary btn-lg btn-full" onclick="goHostSetup()">
+        <span class="material-symbols-rounded">add_home</span>
+        ルームを作る（ホスト）
+      </button>
+      <button class="btn btn-secondary btn-lg btn-full" onclick="goGuestJoin()">
+        <span class="material-symbols-rounded">login</span>
+        ルームに参加する
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════
+     SCREEN: HOST SETUP
+════════════════════════════════════ -->
+<div class="screen" id="screen-host-setup">
+  <div class="kkn-page">
+
+    <!-- Step 1: ニックネーム入力 -->
+    <div id="host-step-nickname">
+      <h2 class="kkn-page__title">ルームを作る</h2>
+      <p class="kkn-page__sub">ホストのニックネームを入力してください</p>
+      <div class="form-group">
+        <label class="form-label">ニックネーム（1〜8文字）</label>
+        <input class="form-input" id="host-nickname" type="text" maxlength="8"
+               placeholder="例：たろう" autocomplete="off">
+      </div>
+      <div class="kkn-error" id="host-nickname-error"></div>
+      <button class="btn btn-primary btn-full" onclick="hostCreateRoom()">ルームを作る</button>
+      <button class="btn btn-ghost btn-full" onclick="showScreen('top')">← 戻る</button>
+    </div>
+
+    <!-- Step 2: ルーム待機 -->
+    <div id="host-step-room" style="display:none">
+      <h2 class="kkn-page__title">参加者を待っています</h2>
+      <p class="kkn-page__sub">このコードを参加者に伝えてください</p>
+
+      <div class="kkn-room-code" id="host-room-code-display">----</div>
+      <button class="btn btn-ghost btn-full" id="host-copy-btn" onclick="hostCopyCode()">
+        <span class="material-symbols-rounded">content_copy</span>
+        コードをコピー
+      </button>
+
+      <hr class="divider">
+      <div class="kkn-section-label">参加者（ゲスト <span id="host-guest-count">0</span>人 / 3〜8人で遊べます）</div>
+      <div class="kkn-player-list" id="host-player-list"></div>
+
+      <div class="mt-lg">
+        <button class="btn btn-primary btn-lg btn-full" id="btn-start-game"
+                disabled onclick="hostStartRound()">
+          <span class="material-symbols-rounded">playing_cards</span>
+          はじめる
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════════════════════════════════════
+     SCREEN: GUEST JOIN
+════════════════════════════════════ -->
+<div class="screen" id="screen-guest-join">
+  <div class="kkn-page">
+    <h2 class="kkn-page__title">ルームに参加する</h2>
+    <p class="kkn-page__sub">ニックネームとルームコードを入力してください</p>
+
+    <div class="form-group">
+      <label class="form-label">ニックネーム（1〜8文字）</label>
+      <input class="form-input" id="guest-nickname" type="text" maxlength="8"
+             placeholder="例：はなこ" autocomplete="off">
+    </div>
+    <div class="form-group">
+      <label class="form-label">ルームコード（6文字）</label>
+      <input class="form-input kkn-input--code" id="guest-room-code" type="text"
+             maxlength="6" placeholder="XXXXXX" autocomplete="off"
+             oninput="this.value = this.value.toUpperCase()">
+    </div>
+    <div class="kkn-error" id="guest-join-error"></div>
+    <button class="btn btn-primary btn-full" onclick="guestJoin()">参加する</button>
+    <button class="btn btn-ghost btn-full" onclick="showScreen('top')">← 戻る</button>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════
+     SCREEN: GUEST WAITING
+════════════════════════════════════ -->
+<div class="screen" id="screen-waiting">
+  <div class="kkn-page">
+    <div class="text-center mt-lg">
+      <div class="spinner"></div>
+      <h2 class="kkn-page__title">はじまるのを待っています</h2>
+      <p class="kkn-page__sub">ホストがはじめるまで待ってください</p>
+    </div>
+    <div class="kkn-section-label" style="margin-top:24px">参加者</div>
+    <div class="kkn-player-list" id="waiting-player-list"></div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════
+     SCREEN: THINKING（数字くばり・予想）
+════════════════════════════════════ -->
+<div class="screen" id="screen-thinking">
+  <div class="kkn-page">
+    <div class="kkn-round-banner">ラウンド <span id="thinking-round-num">1</span></div>
+
+    <!-- ゲスト用 -->
+    <div id="thinking-guest" style="display:none">
+      <p class="kkn-talk-hint">じぶんの数字だけ「？」。「わたしの数字、大きい？」みたいに声できき合って、全員の合計をよそうしよう</p>
+      <div class="kkn-number-grid" id="thinking-number-grid"></div>
+
+      <div id="guess-input-area">
+        <div class="kkn-section-label">全員の合計（？もふくむ）のよそう</div>
+        <div class="kkn-stepper">
+          <button type="button" class="kkn-stepper__btn" aria-label="1へらす" onclick="stepGuess(-1)">
+            <span class="material-symbols-rounded">remove</span>
+          </button>
+          <input class="kkn-stepper__input" id="guess-input" type="number" inputmode="numeric" step="1">
+          <button type="button" class="kkn-stepper__btn" aria-label="1ふやす" onclick="stepGuess(1)">
+            <span class="material-symbols-rounded">add</span>
+          </button>
+        </div>
+        <p class="kkn-range-note" id="guess-range-note"></p>
+        <div class="kkn-error" id="guess-error"></div>
+        <button class="btn btn-primary btn-lg btn-full" onclick="submitGuess()">きめた</button>
+      </div>
+
+      <div id="guess-submitted-area" style="display:none">
+        <div class="kkn-submitted">
+          <span class="material-symbols-rounded" style="font-size:44px;display:block;margin-bottom:4px;color:var(--color-success)">check_circle</span>
+          きめた！
+          <div class="kkn-submitted__guess" id="my-guess-display"></div>
+          <small id="guess-waiting-count"></small>
+        </div>
+      </div>
+    </div>
+
+    <!-- ホスト用（数字は表示しない） -->
+    <div id="thinking-host" style="display:none">
+      <p class="kkn-talk-hint">みんなが声できき合いながら考える時間です</p>
+      <div class="kkn-status-count" id="host-submit-count"></div>
+      <div class="kkn-submit-list" id="host-submit-list"></div>
+      <button class="btn btn-ghost btn-full" id="btn-close-round" onclick="hostCloseRound()">しめきる</button>
+      <p class="text-muted text-center text-sm" id="host-close-hint" style="margin-top:8px"></p>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════
+     SCREEN: REVEAL（一斉公開）
+════════════════════════════════════ -->
+<div class="screen" id="screen-reveal">
+  <div class="kkn-page">
+    <h2 class="kkn-page__title pop-in">こたえあわせ</h2>
+    <p class="kkn-page__sub">ラウンド <span id="reveal-round-num">1</span></p>
+
+    <div class="kkn-total-box">
+      <div class="kkn-total-box__label">ほんとうの合計</div>
+      <div class="kkn-total-box__value" id="reveal-total">0</div>
+    </div>
+
+    <div class="kkn-section-label">みんなの数字とよそう</div>
+    <div class="kkn-reveal-list" id="reveal-list"></div>
+
+    <div class="kkn-section-label">これまでのポイント</div>
+    <div class="kkn-score-chips" id="reveal-score-chips"></div>
+
+    <!-- ホストのみ -->
+    <div id="reveal-host-actions" style="display:none; margin-top:8px">
+      <button class="btn btn-primary btn-full" onclick="hostStartRound()">つぎへ</button>
+      <button class="btn btn-ghost btn-full" onclick="hostFinish()">おわる</button>
+    </div>
+    <!-- ゲストのみ -->
+    <div id="reveal-guest-waiting" class="text-center text-muted mt-lg" style="display:none">
+      ホストの操作を待っています…
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════
+     SCREEN: DONE
+════════════════════════════════════ -->
+<div class="screen" id="screen-done">
+  <div class="kkn-page">
+    <div class="kkn-done-hero pop-in">
+      <span class="material-symbols-rounded">celebration</span>
+      <div class="kkn-done-hero__title">おしまい！</div>
+      <p class="kkn-page__sub" style="margin-top:8px">あそんでくれてありがとう</p>
+    </div>
+
+    <div class="kkn-section-label">きょうのポイント</div>
+    <div class="kkn-score-chips" id="done-score-chips"></div>
+
+    <div class="mt-lg">
+      <button class="btn btn-secondary btn-full btn-lg" onclick="goToTop()">
+        <span class="material-symbols-rounded">home</span>
+        TOPにもどる
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- 再接続中オーバーレイ -->
+<div class="kkn-overlay" id="reconnect-overlay">
+  <div class="spinner"></div>
+  <p class="kkn-overlay__title">再接続しています...</p>
+</div>
+
+<!-- ホスト切断オーバーレイ（ゲスト用） -->
+<div class="kkn-overlay" id="host-disconnect-overlay">
+  <div class="spinner"></div>
+  <p class="kkn-overlay__title">ホストが一時的に接続を失いました</p>
+  <p class="kkn-overlay__sub">再接続を待っています</p>
+  <div class="kkn-overlay__countdown" id="host-disconnect-countdown">120</div>
+  <p class="kkn-overlay__sub">秒後に自動終了します</p>
+  <button class="btn btn-ghost btn-full" style="max-width:280px;margin-top:20px"
+          onclick="leaveGame()">退出する</button>
+</div>
+
+<script>
+  // ════════════════════════════════════
+  // Firebase 設定
+  // ════════════════════════════════════
+  const firebaseConfig = {
+    apiKey:            "AIzaSyC0bqQdDJeTAWrqFYqjOT1NsVFiunPemIw",
+    authDomain:        "roomk-tools.firebaseapp.com",
+    databaseURL:       "https://roomk-tools-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId:         "roomk-tools",
+    storageBucket:     "roomk-tools.firebasestorage.app",
+    messagingSenderId: "592193782148",
+    appId:             "1:592193782148:web:1529f47cebab7dcd109dd1",
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const authReady = firebase.auth().signInAnonymously().catch((e) => {
+    console.error('[auth] anonymous sign-in failed', e);
+    throw e;
+  });
+  const db = firebase.database();
+  RoomkRTDB.initServerTime(db);
+
+  // ════════════════════════════════════
+  // 定数
+  // ════════════════════════════════════
+  const ROOMS_PATH = 'kakure_rooms';
+  const SESSION_KEY = 'kakure_session';
+  const ORPHAN_TTL_MS = 2 * 60 * 1000;
+  const MIN_GUESTS = 3;
+  const MAX_GUESTS = 8;
+  const ST = {
+    WAITING:  'waiting',
+    THINKING: 'thinking',
+    REVEAL:   'reveal',
+    DONE:     'done',
+  };
+
+  // ════════════════════════════════════
+  // 状態管理
+  // ════════════════════════════════════
+  const state = {
+    role:            null,   // 'host' | 'guest'
+    nickname:        '',
+    roomCode:        '',
+    roomRef:         null,
+    players:         {},
+    currentScreen:   'top',
+    lastRoundNumber: 0,      // thinking 画面のUIリセット判定用
+    revealTriggered: false,  // 二重集計防止（ホスト）
+    timerInterval:   null,
+  };
+
+  // ════════════════════════════════════
+  // セッション管理（再接続用）
+  // ════════════════════════════════════
+  function saveSession() {
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify({
+      nickname: state.nickname,
+      roomCode: state.roomCode,
+      role:     state.role,
+      score:    0,
+    }));
+  }
+
+  function loadSession() {
+    try { return JSON.parse(sessionStorage.getItem(SESSION_KEY)); }
+    catch { return null; }
+  }
+
+  function clearSession() {
+    sessionStorage.removeItem(SESSION_KEY);
+  }
+
+  function updateSessionScore(score) {
+    const s = loadSession();
+    if (s) { s.score = score; sessionStorage.setItem(SESSION_KEY, JSON.stringify(s)); }
+  }
+
+  const getEstimatedServerNow = RoomkRTDB.now;
+  const getHostDisconnectedAt = RoomkRTDB.getHostDisconnectedAt;
+  const generateRoomCode = RoomkRTDB.generateRoomCode;
+
+  function isRoomExpired(room) {
+    return RoomkRTDB.isRoomExpired(room, ORPHAN_TTL_MS);
+  }
+
+  // ════════════════════════════════════
+  // ユーティリティ
+  // ════════════════════════════════════
+  function esc(s) {
+    return String(s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  function validateNickname(value) {
+    const t = value.trim();
+    if (t.length === 0) return 'ニックネームを入力してください';
+    if (t.length > 8)   return '8文字以内で入力してください';
+    if (/[.#$\[\]\/]/.test(t)) return '記号 . # $ [ ] / は使えません';
+    return null;
+  }
+
+  function showError(id, msg) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = msg;
+    el.classList.add('visible');
+  }
+
+  function hideError(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.classList.remove('visible');
+  }
+
+  function copyToClipboard(text, btn) {
+    const original = btn.innerHTML;
+    navigator.clipboard.writeText(text).then(() => {
+      btn.innerHTML = '<span class="material-symbols-rounded">check</span> コピーしました！';
+      setTimeout(() => { btn.innerHTML = original; }, 2500);
+    });
+  }
+
+  function guestNames(players) {
+    return Object.entries(players || {})
+      .filter(([, p]) => p && !p.isHost)
+      .map(([name]) => name);
+  }
+
+  // ════════════════════════════════════
+  // 画面切替
+  // ════════════════════════════════════
+  function showScreen(name) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    const el = document.getElementById('screen-' + name);
+    if (el) {
+      el.classList.add('active');
+      state.currentScreen = name;
+    }
+  }
+
+  // ════════════════════════════════════
+  // 再接続処理
+  // ════════════════════════════════════
+  async function tryReconnect() {
+    const session = loadSession();
+    if (!session) return false;
+
+    const { nickname, roomCode, role, score } = session;
+    showReconnectOverlay(true);
+
+    try {
+      await authReady;
+      const snap = await db.ref(`${ROOMS_PATH}/${roomCode}`).get();
+      if (!snap.exists()) { clearSession(); showReconnectOverlay(false); return false; }
+
+      const room = snap.val();
+      if (isRoomExpired(room)) {
+        await db.ref(`${ROOMS_PATH}/${roomCode}`).remove().catch(() => {});
+        clearSession();
+        showReconnectOverlay(false);
+        return false;
+      }
+      state.nickname = nickname;
+      state.roomCode = roomCode;
+      state.role     = role;
+      state.roomRef  = db.ref(`${ROOMS_PATH}/${roomCode}`);
+
+      if (role === 'host') {
+        await state.roomRef.update({ hostConnected: true, hostDisconnectedAt: null });
+        state.roomRef.onDisconnect().update({
+          hostConnected: false,
+          hostDisconnectedAt: firebase.database.ServerValue.TIMESTAMP,
+        });
+      } else {
+        const playerRef = state.roomRef.child(`players/${nickname}`);
+        if (!room.players || !room.players[nickname]) {
+          // 切断で削除されていたら保存済みスコアで再追加
+          await playerRef.set({ score: score || 0, isHost: false });
+        }
+        playerRef.onDisconnect().remove();
+      }
+
+      showReconnectOverlay(false);
+      startRoomListener();
+      return true;
+    } catch {
+      clearSession();
+      showReconnectOverlay(false);
+      return false;
+    }
+  }
+
+  function showReconnectOverlay(show) {
+    document.getElementById('reconnect-overlay').style.display = show ? 'flex' : 'none';
+  }
+
+  // ── ホスト切断オーバーレイ ──
+  let _hostDisconnectTimer = null;
+  let _hostDisconnectDeadline = null;
+
+  function showHostDisconnectOverlay(show, room = null) {
+    const overlay = document.getElementById('host-disconnect-overlay');
+    overlay.style.display = show ? 'flex' : 'none';
+
+    if (show && !_hostDisconnectTimer) {
+      const disconnectedAt = getHostDisconnectedAt(room);
+      _hostDisconnectDeadline = disconnectedAt == null
+        ? getEstimatedServerNow() + ORPHAN_TTL_MS
+        : disconnectedAt + ORPHAN_TTL_MS;
+      _hostDisconnectTimer = setInterval(() => {
+        const remaining = Math.max(0, Math.ceil((_hostDisconnectDeadline - getEstimatedServerNow()) / 1000));
+        document.getElementById('host-disconnect-countdown').textContent = remaining;
+        if (remaining <= 0) {
+          clearInterval(_hostDisconnectTimer);
+          _hostDisconnectTimer = null;
+          _hostDisconnectDeadline = null;
+          if (state.roomRef) state.roomRef.remove();
+          leaveGame('ホストが再接続できなかったため終了しました');
+        }
+      }, 1000);
+    } else if (show && _hostDisconnectTimer) {
+      const disconnectedAt = getHostDisconnectedAt(room);
+      _hostDisconnectDeadline = disconnectedAt == null
+        ? getEstimatedServerNow() + ORPHAN_TTL_MS
+        : disconnectedAt + ORPHAN_TTL_MS;
+    } else if (!show && _hostDisconnectTimer) {
+      clearInterval(_hostDisconnectTimer);
+      _hostDisconnectTimer = null;
+      _hostDisconnectDeadline = null;
+    }
+  }
+
+  function leaveGame(msg) {
+    clearInterval(_hostDisconnectTimer);
+    _hostDisconnectTimer = null;
+    _hostDisconnectDeadline = null;
+    clearSession();
+    document.getElementById('host-disconnect-overlay').style.display = 'none';
+    goToTop();
+    if (msg) alert(msg);
+  }
+
+  // ════════════════════════════════════
+  // TOP ナビゲーション
+  // ════════════════════════════════════
+  function goHostSetup() { showScreen('host-setup'); }
+  function goGuestJoin()  { showScreen('guest-join'); }
+
+  // ════════════════════════════════════
+  // ホスト: ルーム作成
+  // ════════════════════════════════════
+  async function hostCreateRoom() {
+    const nickname = document.getElementById('host-nickname').value.trim();
+    const err = validateNickname(nickname);
+    if (err) { showError('host-nickname-error', err); return; }
+    hideError('host-nickname-error');
+
+    await authReady;
+
+    // ルームコード生成（衝突回避: 最大5回試行）
+    let roomCode;
+    let roomRef = null;
+    for (let i = 0; i < 5; i++) {
+      const code = generateRoomCode();
+      const ref = db.ref(`${ROOMS_PATH}/${code}`);
+      const initialRoom = {
+        host:               nickname,
+        status:             ST.WAITING,
+        hostConnected:      true,
+        hostDisconnectedAt: null,
+        players: {
+          [nickname]: { isHost: true, score: 0 },
+        },
+      };
+      const { committed } = await ref.transaction((room) => room ? undefined : initialRoom);
+      if (committed) {
+        roomCode = code;
+        roomRef = ref;
+        break;
+      }
+    }
+    if (!roomCode || !roomRef) {
+      showError('host-nickname-error', 'ルーム作成に失敗しました。もう一度お試しください');
+      return;
+    }
+
+    state.nickname = nickname;
+    state.role = 'host';
+    state.roomCode = roomCode;
+    state.roomRef  = roomRef;
+
+    // ホスト切断時は切断時刻を残す。次回アクセス時に期限切れルームを掃除できる。
+    state.roomRef.onDisconnect().update({
+      hostConnected: false,
+      hostDisconnectedAt: firebase.database.ServerValue.TIMESTAMP,
+    });
+    saveSession();
+
+    document.getElementById('host-step-nickname').style.display = 'none';
+    document.getElementById('host-step-room').style.display    = 'block';
+    document.getElementById('host-room-code-display').textContent = roomCode;
+
+    startRoomListener();
+  }
+
+  function hostCopyCode() {
+    copyToClipboard(state.roomCode, document.getElementById('host-copy-btn'));
+  }
+
+  // ════════════════════════════════════
+  // ゲスト: 参加
+  // ════════════════════════════════════
+  async function guestJoin() {
+    const nickname = document.getElementById('guest-nickname').value.trim();
+    const roomCode = document.getElementById('guest-room-code').value.trim().toUpperCase();
+
+    const nicknameErr = validateNickname(nickname);
+    if (nicknameErr) { showError('guest-join-error', nicknameErr); return; }
+    if (roomCode.length !== 6) { showError('guest-join-error', 'ルームコードは6文字です'); return; }
+    hideError('guest-join-error');
+
+    await authReady;
+
+    const roomRef = db.ref(`${ROOMS_PATH}/${roomCode}`);
+    const snap = await roomRef.get();
+    if (!snap.exists()) {
+      showError('guest-join-error', 'ルームが見つかりません'); return;
+    }
+    const room = snap.val();
+    if (isRoomExpired(room)) {
+      await roomRef.remove().catch(() => {});
+      showError('guest-join-error', 'このルームは期限切れのため終了しました'); return;
+    }
+    if (room.hostConnected === false) {
+      showError('guest-join-error', 'ホストが切断されています'); return;
+    }
+    const alreadyInRoom = room.players && room.players[nickname];
+
+    // ゲーム中に同じニックネームで再入室（復帰扱い）
+    if (room.status !== ST.WAITING && alreadyInRoom) {
+      state.nickname = nickname;
+      state.roomCode = roomCode;
+      state.role     = 'guest';
+      state.roomRef  = roomRef;
+      state.roomRef.child(`players/${nickname}`).onDisconnect().remove();
+      saveSession();
+      startRoomListener();
+      return;
+    }
+
+    if (room.status !== ST.WAITING) {
+      showError('guest-join-error', 'このルームはすでにゲームが始まっています'); return;
+    }
+    if (alreadyInRoom) {
+      showError('guest-join-error', 'そのニックネームはすでに使われています'); return;
+    }
+
+    let abortReason = null;
+    const { committed, snapshot } = await roomRef.transaction((currentRoom) => {
+      const roomForJoin = currentRoom || room;
+      if (!roomForJoin) { abortReason = 'not_found'; return; }
+      if (isRoomExpired(roomForJoin)) {
+        abortReason = 'expired';
+        return null;
+      }
+      if (roomForJoin.hostConnected === false) { abortReason = 'host_gone'; return; }
+      if (roomForJoin.status !== ST.WAITING) { abortReason = 'not_waiting'; return; }
+      const players = roomForJoin.players || {};
+      if (players[nickname]) { abortReason = 'nick_taken'; return; }
+      const guestCount = Object.values(players).filter(p => p && !p.isHost).length;
+      if (guestCount >= MAX_GUESTS) { abortReason = 'full'; return; }
+      abortReason = null;
+      return {
+        ...roomForJoin,
+        players: {
+          ...players,
+          [nickname]: { isHost: false, score: 0 },
+        },
+      };
+    });
+
+    if (!committed) {
+      if (abortReason === 'not_found')   { showError('guest-join-error', 'ルームが見つかりません'); return; }
+      if (abortReason === 'expired' && !snapshot?.val()) {
+        showError('guest-join-error', 'このルームは期限切れのため終了しました'); return;
+      }
+      if (abortReason === 'host_gone')   { showError('guest-join-error', 'ホストが切断されています'); return; }
+      if (abortReason === 'not_waiting') { showError('guest-join-error', 'このルームはすでにゲームが始まっています'); return; }
+      if (abortReason === 'nick_taken')  { showError('guest-join-error', 'そのニックネームはすでに使われています'); return; }
+      if (abortReason === 'full')        { showError('guest-join-error', 'このルームは満員です（ゲストは8人まで）'); return; }
+      showError('guest-join-error', '参加に失敗しました'); return;
+    }
+
+    state.nickname = nickname;
+    state.roomCode = roomCode;
+    state.role     = 'guest';
+    state.roomRef  = roomRef;
+
+    state.roomRef.child(`players/${nickname}`).onDisconnect().remove();
+    saveSession();
+
+    showScreen('waiting');
+    startRoomListener();
+  }
+
+  // ════════════════════════════════════
+  // ホスト: ラウンド開始（数字を配る）
+  //   waiting からの初回開始と reveal からの「つぎへ」で共用。
+  //   配った時点の数字と合計を round に固定する。
+  // ════════════════════════════════════
+  async function hostStartRound() {
+    if (state.role !== 'host' || !state.roomRef) return;
+
+    let abortReason = null;
+    const { committed } = await state.roomRef.transaction((room) => {
+      if (!room) { abortReason = 'not_found'; return; }
+      if (room.status !== ST.WAITING && room.status !== ST.REVEAL) {
+        abortReason = 'invalid_state';
+        return;
+      }
+      const guests = guestNames(room.players);
+      if (guests.length < MIN_GUESTS) { abortReason = 'too_few'; return; }
+
+      const numbers = {};
+      let total = 0;
+      for (const name of guests) {
+        const v = Math.floor(Math.random() * 10) + 1; // 1〜10（重複あり）
+        numbers[name] = v;
+        total += v;
+      }
+
+      abortReason = null;
+      return {
+        ...room,
+        status: ST.THINKING,
+        round: {
+          number:      ((room.round && room.round.number) || 0) + 1,
+          numbers:     numbers,
+          total:       total,
+          minSum:      guests.length * 1,
+          maxSum:      guests.length * 10,
+          guesses:     null,
+          scoreDeltas: null,
+        },
+      };
+    });
+
+    if (!committed) {
+      if (abortReason === 'too_few') {
+        alert('ゲストが3人以上そろうと始められます');
+      } else {
+        alert('始められませんでした。ルームの状態を確認してください');
+      }
+    }
+  }
+
+  // ════════════════════════════════════
+  // ゲスト: 予想の入力・送信
+  // ════════════════════════════════════
+  let _guessRange = { min: 0, max: 0 };
+
+  function stepGuess(delta) {
+    const input = document.getElementById('guess-input');
+    const mid = Math.round((_guessRange.min + _guessRange.max) / 2);
+    const current = input.value === '' ? mid : Number(input.value);
+    const base = Number.isFinite(current) ? current : mid;
+    const next = Math.min(_guessRange.max, Math.max(_guessRange.min, base + delta));
+    input.value = next;
+    hideError('guess-error');
+  }
+
+  async function submitGuess() {
+    const raw = document.getElementById('guess-input').value.trim();
+    const num = Number(raw);
+
+    if (raw === '' || !Number.isInteger(num)) {
+      showError('guess-error', '整数を入力してください');
+      return;
+    }
+    if (num < _guessRange.min || num > _guessRange.max) {
+      showError('guess-error', `${_guessRange.min}〜${_guessRange.max} の間で入力してください`);
+      return;
+    }
+    hideError('guess-error');
+
+    await state.roomRef.child(`round/guesses/${state.nickname}`).set(num);
+  }
+
+  // ════════════════════════════════════
+  // 得点計算
+  //   いちばん近い人 +2（同着は全員 +2）、ぴったりはさらに +1
+  //   退出済み（players にいない）ゲストの予想は集計から除外
+  // ════════════════════════════════════
+  function calcDeltas(round, players) {
+    const entries = Object.entries((round && round.guesses) || {})
+      .filter(([name]) => players && players[name])
+      .map(([name, g]) => ({ name, diff: Math.abs(Number(g) - round.total) }));
+
+    if (entries.length === 0) return {};
+
+    const minDiff = Math.min(...entries.map(e => e.diff));
+    const deltas = {};
+    for (const { name, diff } of entries) {
+      let d = 0;
+      if (diff === minDiff) d += 2;
+      if (diff === 0) d += 1;
+      if (d > 0) deltas[name] = d;
+    }
+    return deltas;
+  }
+
+  async function triggerReveal(room) {
+    const deltas = calcDeltas(room.round, room.players);
+    const updates = { status: ST.REVEAL, 'round/scoreDeltas': deltas };
+    for (const [name, d] of Object.entries(deltas)) {
+      updates[`players/${name}/score`] = ((room.players[name] && room.players[name].score) || 0) + d;
+    }
+    await state.roomRef.update(updates);
+  }
+
+  // ホスト: しめきる（1人でも未提出のまま進めたいとき）
+  async function hostCloseRound() {
+    if (state.role !== 'host' || state.revealTriggered) return;
+    const snap = await state.roomRef.get();
+    const room = snap.val();
+    if (!room || room.status !== ST.THINKING) return;
+    const guessCount = Object.keys((room.round && room.round.guesses) || {}).length;
+    if (guessCount === 0) return;
+    state.revealTriggered = true;
+    try {
+      await triggerReveal(room);
+    } catch (error) {
+      console.error('[kakure-number] hostCloseRound failed', error);
+      state.revealTriggered = false;
+    }
+  }
+
+  // ════════════════════════════════════
+  // ホスト: おわる
+  // ════════════════════════════════════
+  async function hostFinish() {
+    await state.roomRef.update({ status: ST.DONE });
+    // 全員が最終画面を見た後にデータ削除（30秒後）
+    setTimeout(() => state.roomRef && state.roomRef.remove(), 30000);
+  }
+
+  // ════════════════════════════════════
+  // Firebase リスナー
+  // ════════════════════════════════════
+  function startRoomListener() {
+    state.roomRef.on('value', snapshot => {
+      const room = snapshot.val();
+
+      if (!room) {
+        if (state.currentScreen !== 'done') {
+          clearSession();
+          alert('ホストが退出したため終了しました');
+          goToTop();
+        }
+        return;
+      }
+
+      // 自分のスコアを sessionStorage に同期（ゲストの再接続用）
+      const myScore = room.players && room.players[state.nickname] && room.players[state.nickname].score;
+      if (myScore !== undefined) updateSessionScore(myScore);
+
+      state.players = room.players || {};
+
+      // ホスト切断チェック（ゲストのみ）
+      if (state.role === 'guest') {
+        if (isRoomExpired(room)) {
+          if (state.roomRef) state.roomRef.remove().catch(() => {});
+          leaveGame('ホストが再接続できなかったため終了しました');
+          return;
+        }
+        if (room.hostConnected === false) {
+          showHostDisconnectOverlay(true, room);
+          return;
+        }
+        showHostDisconnectOverlay(false);
+      }
+
+      switch (room.status) {
+        case ST.WAITING:  handleWaiting(room);  break;
+        case ST.THINKING: handleThinking(room); break;
+        case ST.REVEAL:   handleReveal(room);   break;
+        case ST.DONE:     handleDone(room);     break;
+      }
+    });
+  }
+
+  // ── waiting ──
+  function handleWaiting(room) {
+    const players = room.players || {};
+    const guestCount = guestNames(players).length;
+
+    if (state.role === 'host') {
+      if (state.currentScreen !== 'host-setup') {
+        showScreen('host-setup');
+        document.getElementById('host-step-nickname').style.display = 'none';
+        document.getElementById('host-step-room').style.display     = 'block';
+        document.getElementById('host-room-code-display').textContent = state.roomCode;
+      }
+      document.getElementById('host-guest-count').textContent = guestCount;
+      renderPlayerList('host-player-list', players);
+      document.getElementById('btn-start-game').disabled = guestCount < MIN_GUESTS;
+    } else {
+      if (state.currentScreen !== 'waiting') showScreen('waiting');
+      renderPlayerList('waiting-player-list', players);
+    }
+  }
+
+  // ── thinking ──
+  function handleThinking(room) {
+    const round   = room.round || {};
+    const players = room.players || {};
+    const numbers = round.numbers || {};
+    const guesses = round.guesses || {};
+    const dealt   = Object.keys(numbers);
+
+    if (state.currentScreen !== 'thinking') showScreen('thinking');
+
+    // 新しいラウンドならUIをリセット
+    if (round.number !== state.lastRoundNumber) {
+      state.lastRoundNumber = round.number;
+      state.revealTriggered = false;
+      _guessRange = { min: round.minSum || dealt.length, max: round.maxSum || dealt.length * 10 };
+      const input = document.getElementById('guess-input');
+      input.value = Math.round((_guessRange.min + _guessRange.max) / 2);
+      input.min = _guessRange.min;
+      input.max = _guessRange.max;
+      hideError('guess-error');
+    }
+
+    document.getElementById('thinking-round-num').textContent = round.number || 1;
+
+    const submittedCount = dealt.filter(name => guesses[name] !== undefined).length;
+
+    if (state.role === 'guest') {
+      document.getElementById('thinking-guest').style.display = 'block';
+      document.getElementById('thinking-host').style.display  = 'none';
+      renderNumberGrid(numbers);
+
+      const mySubmitted = guesses[state.nickname] !== undefined;
+      document.getElementById('guess-input-area').style.display     = mySubmitted ? 'none' : 'block';
+      document.getElementById('guess-submitted-area').style.display = mySubmitted ? 'block' : 'none';
+      document.getElementById('guess-range-note').textContent =
+        `よそうできるのは ${_guessRange.min}〜${_guessRange.max}`;
+      if (mySubmitted) {
+        document.getElementById('my-guess-display').textContent = guesses[state.nickname];
+        document.getElementById('guess-waiting-count').textContent =
+          `${submittedCount} 人 / ${dealt.length} 人がきめた`;
+      }
+      return;
+    }
+
+    // ホスト: 提出状況のみ表示（数字・合計は一切表示しない）
+    document.getElementById('thinking-guest').style.display = 'none';
+    document.getElementById('thinking-host').style.display  = 'block';
+
+    document.getElementById('host-submit-count').textContent =
+      `${submittedCount} 人 / ${dealt.length} 人がきめた`;
+
+    const listEl = document.getElementById('host-submit-list');
+    listEl.innerHTML = '';
+    dealt.forEach((name) => {
+      const done = guesses[name] !== undefined;
+      const gone = !players[name];
+      const stateHtml = done
+        ? '<span class="kkn-submit-item__state"><span class="material-symbols-rounded" style="font-size:16px">check_circle</span>きめた</span>'
+        : gone
+          ? '<span class="kkn-submit-item__state">退出中</span>'
+          : '<span class="kkn-submit-item__state">考え中…</span>';
+      listEl.innerHTML += `
+        <div class="kkn-submit-item ${done ? 'kkn-submit-item--done' : ''}">
+          <span class="kkn-submit-item__name">${esc(name)}</span>
+          ${stateHtml}
+        </div>`;
+    });
+
+    const presentUnsubmitted = dealt.filter(name => players[name] && guesses[name] === undefined);
+    const btn = document.getElementById('btn-close-round');
+    btn.disabled = submittedCount === 0 || state.revealTriggered;
+    const hint = document.getElementById('host-close-hint');
+    if (submittedCount === 0) {
+      hint.textContent = '予想が1件以上あるとしめきれます';
+    } else if (presentUnsubmitted.length > 0) {
+      hint.textContent = `まだの ${presentUnsubmitted.length} 人を待たずに進めます`;
+    } else {
+      hint.textContent = '全員がきめると自動でこたえあわせに進みます';
+    }
+
+    // 全員提出済み → ホストのみ自動でこたえあわせへ
+    if (submittedCount > 0 && presentUnsubmitted.length === 0 && !state.revealTriggered) {
+      state.revealTriggered = true;
+      triggerReveal(room).catch((error) => {
+        console.error('[kakure-number] triggerReveal failed', error);
+        state.revealTriggered = false;
+      });
+    }
+  }
+
+  // ゲスト用: 数字カードグリッド（自分の数字だけ「？」）
+  function renderNumberGrid(numbers) {
+    const grid = document.getElementById('thinking-number-grid');
+    grid.innerHTML = '';
+    Object.entries(numbers).forEach(([name, value]) => {
+      const isMe = name === state.nickname;
+      const shown = isMe ? '？' : esc(String(value));
+      grid.innerHTML += `
+        <div class="kkn-number-card ${isMe ? 'kkn-number-card--me' : ''}">
+          <div class="kkn-number-card__name">${esc(name)}${isMe ? '（あなた）' : ''}</div>
+          <div class="kkn-number-card__value">${shown}</div>
+        </div>`;
+    });
+  }
+
+  // ── reveal ──
+  function handleReveal(room) {
+    if (state.currentScreen !== 'reveal') showScreen('reveal');
+
+    const round   = room.round || {};
+    const players = room.players || {};
+    const numbers = round.numbers || {};
+    const guesses = round.guesses || {};
+    const deltas  = round.scoreDeltas || {};
+
+    document.getElementById('reveal-round-num').textContent = round.number || 1;
+    document.getElementById('reveal-total').textContent = round.total ?? '-';
+
+    const listEl = document.getElementById('reveal-list');
+    listEl.innerHTML = '';
+    Object.keys(numbers).forEach((name) => {
+      const isMe   = name === state.nickname;
+      const gone   = !players[name];
+      const guess  = guesses[name];
+      const delta  = deltas[name] || 0;
+      const exact  = delta >= 3;
+      const closest = delta >= 2;
+
+      let cls = 'kkn-reveal-row';
+      if (isMe) cls += ' kkn-reveal-row--me';
+      if (closest) cls += ' kkn-reveal-row--closest';
+
+      const badge = exact
+        ? '<span class="kkn-reveal-badge kkn-reveal-badge--exact">ぴったり +3</span>'
+        : closest
+          ? '<span class="kkn-reveal-badge kkn-reveal-badge--closest">いちばん近い +2</span>'
+          : '';
+
+      const guessHtml = guess !== undefined
+        ? `よそう <strong>${esc(String(guess))}</strong>`
+        : 'よそうなし';
+      const leftTag = gone ? '<span class="kkn-reveal-row__left">（退出）</span>' : '';
+      const meTag = isMe ? '<span style="font-size:11px;color:var(--color-accent)">（あなた）</span>' : '';
+
+      listEl.innerHTML += `
+        <div class="${cls}">
+          <div class="kkn-reveal-row__number">${esc(String(numbers[name]))}</div>
+          <div class="kkn-reveal-row__name">${esc(name)}${meTag}${leftTag}</div>
+          <div class="kkn-reveal-row__guess">${guessHtml}</div>
+          ${badge}
+        </div>`;
+    });
+
+    renderScoreChips('reveal-score-chips', players);
+
+    document.getElementById('reveal-host-actions').style.display =
+      state.role === 'host' ? 'block' : 'none';
+    document.getElementById('reveal-guest-waiting').style.display =
+      state.role === 'guest' ? 'block' : 'none';
+  }
+
+  // 累計ポイント（控えめ表示・順位づけしない。参加順ではなく名前順で固定）
+  function renderScoreChips(containerId, players) {
+    const el = document.getElementById(containerId);
+    if (!el) return;
+    el.innerHTML = '';
+    Object.entries(players || {})
+      .filter(([, p]) => p && !p.isHost)
+      .forEach(([name, p]) => {
+        const isMe = name === state.nickname;
+        el.innerHTML += `
+          <span class="kkn-score-chip ${isMe ? 'kkn-score-chip--me' : ''}">${esc(name)} ${Number(p.score) || 0}pt</span>`;
+      });
+  }
+
+  // ── done ──
+  function handleDone(room) {
+    if (state.currentScreen !== 'done') showScreen('done');
+    renderScoreChips('done-score-chips', room.players);
+  }
+
+  // ════════════════════════════════════
+  // プレイヤーリスト描画
+  // ════════════════════════════════════
+  function renderPlayerList(containerId, players) {
+    const el = document.getElementById(containerId);
+    if (!el) return;
+    el.innerHTML = '';
+    Object.entries(players || {}).forEach(([name, p]) => {
+      const isMe = name === state.nickname;
+      el.innerHTML += `
+        <div class="kkn-player ${isMe ? 'kkn-player--me' : ''}">
+          <div class="kkn-player__avatar">${esc(name.charAt(0).toUpperCase())}</div>
+          <span class="kkn-player__name">${esc(name)}${isMe ? '（あなた）' : ''}</span>
+          ${p.isHost ? '<span class="kkn-player__badge-host">ホスト</span>' : ''}
+        </div>`;
+    });
+  }
+
+  // ════════════════════════════════════
+  // TOP に戻る（状態リセット）
+  // ════════════════════════════════════
+  function goToTop() {
+    clearSession();
+    if (state.roomRef) {
+      state.roomRef.off();
+      state.roomRef = null;
+    }
+    if (state.timerInterval) {
+      clearInterval(state.timerInterval);
+      state.timerInterval = null;
+    }
+    clearInterval(_hostDisconnectTimer);
+    _hostDisconnectTimer = null;
+    _hostDisconnectDeadline = null;
+    document.getElementById('host-disconnect-overlay').style.display = 'none';
+    document.getElementById('reconnect-overlay').style.display = 'none';
+
+    Object.assign(state, {
+      role: null, nickname: '', roomCode: '',
+      players: {}, lastRoundNumber: 0, revealTriggered: false,
+    });
+
+    // フォームリセット
+    document.getElementById('host-nickname').value    = '';
+    document.getElementById('guest-nickname').value   = '';
+    document.getElementById('guest-room-code').value  = '';
+    document.getElementById('host-step-nickname').style.display = 'block';
+    document.getElementById('host-step-room').style.display     = 'none';
+
+    showScreen('top');
+  }
+
+  // ════════════════════════════════════
+  // 初期化（セッションがあれば自動再接続）
+  // ════════════════════════════════════
+  tryReconnect().then(reconnected => {
+    if (!reconnected) showScreen('top');
+  });
+</script>
+</body>
+</html>
