@@ -99,5 +99,24 @@
   </main>
 
   <script type="module" src="app.js"></script>
+  <script src="../shared/js/howto.js"></script>
+  <script>
+    RoomkHowto.init({
+      title: 'あそびかた',
+      lead: 'すきなパックをえらんで、みんなでクイズに挑戦するツール。1回のクイズは5問。',
+      sections: [
+        { heading: 'はじめかた', items: [
+          'あそびたいパックをえらぶ',
+          '「スタート」を押す',
+        ] },
+        { heading: 'すすめかた', items: [
+          '問題を読んで、答えだと思う選択肢を押す',
+          '正解と解説をたしかめたら、「次の問題へ」を押す',
+          '「問題をコピー」や「正解つきでコピー」を押すと、チャットに貼りつけられる',
+        ] },
+        { heading: 'おわりかた', text: '5問おわると結果が出る。「もう一度あそぶ」か「TOPに戻る」をえらぶ。' },
+      ],
+    });
+  </script>
 </body>
 </html>

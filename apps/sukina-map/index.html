@@ -34,5 +34,24 @@
   <input class="sm-file-input" id="recordFile" type="file" accept="application/json,.json" />
 
   <script type="module" src="app.js"></script>
+  <script src="../shared/js/howto.js"></script>
+  <script>
+    RoomkHowto.init({
+      title: 'つかいかた',
+      lead: 'すき・気になるものを カードにして、「じぶん」のまわりに ならべていくツール。',
+      sections: [
+        { heading: 'はじめかた', items: [
+          'はじめてのときは「はじめて マップをつくる」をおす',
+          '2回目からは「前回のファイルをひらく」で つづきから',
+        ] },
+        { heading: 'すすめかた', items: [
+          '「カードをふやす」をおして、すき・気になるものを かく',
+          '「ちょっと気になる」くらいのものでも OK',
+          'カードをタップすると、なまえ・ジャンル・近さを あとから かえられる',
+        ] },
+        { heading: 'おわりかた', text: '「きょうはここまで（ほぞんする）」をおして、マップのファイルをダウンロードしたら おしまい。' },
+      ],
+    });
+  </script>
 </body>
 </html>

@@ -88,5 +88,27 @@
   <script src="data/manifest.js"></script>
   <script src="js/render.js"></script>
   <script src="js/engine.js"></script>
+  <script src="../shared/js/howto.js"></script>
+  <script>
+    // セッション選択画面（トップ）のみ表示。投影画面・発表者ビューには出さない
+    if (!new URLSearchParams(location.search).get('session')) {
+      RoomkHowto.init({
+        title: 'つかいかた',
+        lead: '国語ワークショップの進行スライドを映すツール。',
+        sections: [
+          { heading: 'はじめかた', items: ['一覧からセッションを1つ選ぶと、スライドがはじまる'] },
+          {
+            heading: 'すすめかた',
+            items: [
+              '画面の左右のボタンか、キーボードの矢印キーでスライドを進める・戻す',
+              '「答え表示」を押すと、答えのあるスライドで答えが出てくる',
+              '「全画面」を押すと、画面いっぱいに大きく映せる',
+            ],
+          },
+          { heading: 'おわりかた', text: '好きなところで終わってOK。ブラウザで戻ると、セッション選択にもどれる。' },
+        ],
+      });
+    }
+  </script>
 </body>
 </html>

@@ -31,5 +31,23 @@
   <div class="mh-toast" id="toast" role="status" aria-live="polite"></div>
 
   <script type="module" src="app.js"></script>
+  <script src="../shared/js/howto.js"></script>
+  <script>
+    RoomkHowto.init({
+      title: 'つかいかた',
+      lead: 'いろんな「せかいの入口」を、すこしずつ のぞいてみるところ。ぜんぶ見なくて だいじょうぶ。',
+      sections: [
+        { heading: 'はじめかた', items: [
+          '気になる入口をおす（「どれか ひとつ ひらいてみる」でもOK）',
+        ] },
+        { heading: 'すすめかた', items: [
+          '中を読んだら、「のぞいてみる」「あとで見る」「今はいい」のどれかをおす。どれをえらんでもいいよ',
+          '「いちらんにもどる」をおすと、ほかの入口も見られる（えらばなくてもOK）',
+          'えらんだ反応は、あとから いつでも かえられるよ',
+        ] },
+        { heading: 'おわりかた', text: 'すきなタイミングでおわってOK。「ファイルにのこす」をおすと、気になった入口をファイルにのこせるよ（のこさなくてもOK）。' },
+      ],
+    });
+  </script>
 </body>
 </html>

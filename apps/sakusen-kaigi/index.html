@@ -47,5 +47,27 @@
   <input class="sk-file-input" id="recordFile" type="file" accept="application/json,.json" />
 
   <script type="module" src="app.js"></script>
+  <script src="../shared/js/howto.js"></script>
+  <script>
+    RoomkHowto.init({
+      title: 'つかいかた',
+      lead: 'めあてを決めて、さくせんを立てて、次の会議までためして、ふりかえるツール。',
+      sections: [
+        { heading: 'はじめかた', items: [
+          'はじめてのときは「はじめて さくせん会議をする」を押す',
+          '2回目からは「前回のファイルをひらく」で、ほぞんしたファイルをえらぶ',
+        ] },
+        { heading: 'すすめかた', items: [
+          '画面にそって、めあてとさくせんを決めていく',
+          'ひとつ前にもどりたいときは「← もどる」を押す',
+          'ためしたさくせんは、次の会議で「ふりかえる」を押してふりかえる',
+        ] },
+        { heading: 'おわりかた', items: [
+          '「きょうの会議をおわる」を押す',
+          '「記録ファイルをダウンロード」でファイルをほぞんする（このアプリはデータをどこにも保存しない）',
+        ] },
+      ],
+    });
+  </script>
 </body>
 </html>

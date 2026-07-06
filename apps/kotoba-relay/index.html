@@ -62,5 +62,23 @@
   </div>
 
   <script type="module" src="app.js"></script>
+  <script src="../shared/js/howto.js"></script>
+  <script>
+    RoomkHowto.init({
+      title: 'あそびかた',
+      lead: '最初の一文に「つなぎ言葉」を足しながら、みんなで順番に話をつづけていくあそび。',
+      sections: [
+        { heading: 'はじめかた', items: [
+          '「スターターを引く」を押して、最初の一文を出す',
+        ] },
+        { heading: 'すすめかた', items: [
+          '「つなぎ言葉を引く」を押して、出てきたことばに続く一文を考えて話す',
+          'つぎの人も同じように、つなぎ言葉を引いて話をつづける',
+          'こまったら「パス」を押してOK',
+        ] },
+        { heading: 'おわりかた', text: '「おしまい」を押すと最初の画面にもどる。「もう一度（最初から）」で新しいスターターからやりなおせる。' },
+      ],
+    });
+  </script>
 </body>
 </html>

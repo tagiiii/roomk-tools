@@ -49,6 +49,7 @@ roomk-tools/
 3. `apps/index.html` のツール一覧にカードを追記
 4. アプリ固有の仕様を `apps/{app-name}/AGENTS.md` に記載
 5. `apps/updates.json` の先頭に更新情報を追記（下記「更新情報」参照）
+6. 共通の「あそびかた／つかいかた」モーダル（`shared/js/howto.js`、下記参照）を組み込む
 
 ### 更新情報（`apps/updates.json`）
 
@@ -128,6 +129,35 @@ Realtime Database 単一ファイルアプリ向けの共有ヘルパー。`wind
 | `isRoomExpired(room, ttlMs = 2 * 60 * 1000)` | `hostConnected === false` かつ TTL 超過なら `true` |
 | `generateRoomCode(length = 6)` | 紛らわしい文字を除外した英数字ルームコードを生成 |
 | `showToast(message, isError = true, durationMs = 3000)` | CSS依存なしの固定表示トースト（DOM id: `roomk-toast`） |
+
+### howto.js（非モジュール通常スクリプト）
+
+全アプリ共通の「あそびかた／つかいかた」モーダル。右下の「？」FAB からボトムシート型モーダルを開く。
+CSS はスクリプトが自己注入するため、読み込みと `init()` 呼び出しだけでよい。
+**後方互換で追加のみ。破壊的変更をする場合は `?v=` 付き読み込みに切り替えること。**
+
+```html
+<!-- </body> 直前・既存スクリプトの後に追加。Material Symbols のリンクが head に必要 -->
+<script src="../shared/js/howto.js"></script>
+<script>
+  RoomkHowto.init({
+    title: 'あそびかた',   // ゲーム系。内省・実用ツール系は「つかいかた」
+    lead: 'どんなアプリかを1〜2文で。',
+    sections: [
+      { heading: 'はじめかた', items: ['「ルームを作る」を押す'] },  // items は ol で描画
+      { heading: 'すすめかた', items: ['…'] },
+      { heading: 'おわりかた', text: '文章のみの段落も書ける。' },
+    ],
+    position: 'right',    // 既存の固定右下要素と衝突する場合のみ 'left'
+  });
+</script>
+```
+
+文言ルール:
+- 読者は子ども。ボタン名は画面の実際のラベルを「」で正確に引用する
+- **メンター向けの注意書き・声かけのコツは書かない**（AGENTS.md にのみ書く）
+- 分量はスクロールなしで読み切れる程度（lead 1〜2文 + 各セクション1〜4項目）
+- 新しいアプリを追加するときも必ず組み込む
 
 ### firebase-config.js
 

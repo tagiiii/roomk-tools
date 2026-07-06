@@ -96,5 +96,30 @@
   </main>
 
   <script type="module" src="app.js"></script>
+  <script src="../shared/js/howto.js"></script>
+  <script>
+    RoomkHowto.init({
+      title: 'あそびかた',
+      lead: '文の中にかくれた、ことばのまちがいを見つけるあそび。1回で5問。',
+      sections: [
+        {
+          heading: 'はじめかた',
+          items: [
+            'ジャンルをえらぶ（「ぜんぶシャッフル」もえらべる）',
+            '「スタート」を押す',
+          ],
+        },
+        {
+          heading: 'すすめかた',
+          items: [
+            '出てきた文の、どこがおかしいか考える',
+            '「こたえを見る」を押すと、正しい文とせつめいが出てくる',
+            '「次のもんだい」を押して進む',
+          ],
+        },
+        { heading: 'おわりかた', text: '5問おわると、おわりの画面になる。「もう一度あそぶ」でつづけてあそべる。' },
+      ],
+    });
+  </script>
 </body>
 </html>

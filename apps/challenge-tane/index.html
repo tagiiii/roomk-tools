@@ -35,5 +35,27 @@
   <input class="ct-file-input" id="recordFile" type="file" accept="application/json,.json" />
 
   <script type="module" src="app.js"></script>
+  <script src="../shared/js/howto.js"></script>
+  <script>
+    RoomkHowto.init({
+      title: 'つかいかた',
+      lead: '「やってみたいかも」とおもったことを「たね」として ためておくところ。ここでは まだ 計画は立てないよ。',
+      sections: [
+        { heading: 'はじめかた', items: [
+          'はじめてなら「はじめて つかう」をおす',
+          '前につかったことがあるなら「前回のファイルをひらく」で、ほぞんしたファイルをえらぶ',
+        ] },
+        { heading: 'すすめかた', items: [
+          '「あたらしいたねを ふやす」をおして、やってみたいかも と思ったことを書く',
+          'たねを入れるポケットは 4つのどれでもOK。あとから いつでも うごかせるよ',
+          '「なおす」をおすと、書きなおしたり けしたりできる',
+        ] },
+        { heading: 'おわりかた', items: [
+          '「きょうのぶんを ほぞんする」をおして、記録ファイルをダウンロードする',
+          'つぎのときは、そのファイルをひらくと つづきができるよ',
+        ] },
+      ],
+    });
+  </script>
 </body>
 </html>

@@ -104,5 +104,24 @@
   </div>
 
   <script type="module" src="app.js"></script>
+  <script src="../shared/js/howto.js"></script>
+  <script>
+    RoomkHowto.init({
+      title: 'あそびかた',
+      lead: 'にている漢字がならんだ中から、お題の漢字がいくつあるかをさがす観察ゲーム。',
+      sections: [
+        { heading: 'はじめかた', items: [
+          'むずかしさと制限時間をえらんで、「はじめる」を押す',
+          'さがす漢字をたしかめて、「スタート」を押す',
+        ] },
+        { heading: 'すすめかた', items: [
+          '時間がおわるまでに、お題の漢字がいくつあるか数える',
+          '何個見つけたか言い合ってから、「答えを見る」を押す',
+          '「次の問題」で続ける。「設定を変える」で最初の画面にもどる',
+        ] },
+        { heading: 'おわりかた', text: '好きなタイミングで終わってOK。とくに操作はいらない。' },
+      ],
+    });
+  </script>
 </body>
 </html>

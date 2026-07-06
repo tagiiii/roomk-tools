@@ -51,6 +51,7 @@ description: roomK ツール群に新しいアプリを追加するときの手�
 - [ ] apps/{name}/ 一式（パターン準拠）
 - [ ] apps/index.html にカード追加
 - [ ] apps/updates.json に更新情報を追記（type: "new"）
+- [ ] 共通「あそびかた／つかいかた」モーダル組み込み（shared/js/howto.js、AGENTS.md「howto.js」参照）
 - [ ] apps/{name}/AGENTS.md（逸脱の明文化を含む）
 - [ ] lint.sh の RTDB_HTML_FILES（RTDB の場合）
 - [ ] lint パス

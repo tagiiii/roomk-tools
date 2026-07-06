@@ -61,5 +61,24 @@
   </div>
 
   <script type="module" src="app.js"></script>
+  <script src="../shared/js/howto.js"></script>
+  <script>
+    RoomkHowto.init({
+      title: 'あそびかた',
+      lead: 'かるい2たくから すきなほうを えらんで あそぶツール。どっちを えらんでも OK！',
+      sections: [
+        { heading: 'はじめかた', items: [
+          'カテゴリをえらぶ（「すべて」のままでもOK）',
+          '「はじめる」をおす',
+        ] },
+        { heading: 'すすめかた', items: [
+          'すきなほうを タップする。「どっちもいい」「どっちでもない」をえらんでもOK',
+          'えらびなおすのも 自由',
+          '「つぎへ」をおすと、つぎのおだいが出てくる',
+        ] },
+        { heading: 'おわりかた', text: 'すきなタイミングで おわってOK。「トップにもどる」でカテゴリをえらびなおせるよ。' },
+      ],
+    });
+  </script>
 </body>
 </html>
