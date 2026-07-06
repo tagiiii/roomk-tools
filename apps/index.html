@@ -141,6 +141,56 @@
       margin-top: var(--space-xl);
     }
 
+    /* ── 利用シーン絞り込み ── */
+    .scene-filter {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-xs);
+      margin-bottom: var(--space-md);
+    }
+
+    .scene-filter__chip {
+      padding: 6px 14px;
+      border-radius: var(--radius-full);
+      border: 1px solid var(--color-border);
+      background-color: var(--color-surface);
+      color: var(--color-text);
+      font-family: inherit;
+      font-size: var(--font-size-sm);
+      font-weight: 500;
+      cursor: pointer;
+      transition: background-color var(--transition-base), color var(--transition-base);
+    }
+
+    .scene-filter__chip[aria-pressed="true"] {
+      background-color: var(--color-primary);
+      border-color: var(--color-primary);
+      color: #fff;
+    }
+
+    /* カード内の利用シーンバッジ（data-scenes から自動描画） */
+    .app-card__scenes {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-top: var(--space-sm);
+    }
+
+    .scene-badge {
+      padding: 1px 8px;
+      border-radius: var(--radius-full);
+      border: 1px solid var(--color-primary);
+      color: var(--color-primary);
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 1.6;
+    }
+
+    /* display: flex が UA の [hidden] を上書きするため明示 */
+    .app-card[hidden] {
+      display: none;
+    }
+
     /* ── 更新情報（スタッフ向け） ── */
     .updates-panel {
       background-color: var(--color-surface);
@@ -278,16 +328,25 @@
     </section>
 
     <!-- ============================================= -->
-    <!-- コトバであそぼ！                               -->
+    <!-- ツール一覧（利用シーンで絞り込み）             -->
     <!-- ============================================= -->
     <section class="portal-section">
-      <h2 class="section-title">コトバであそぼ！</h2>
-      <p class="section-desc">クイズ・脳トレ・ことば遊びなど、ことばワークショップ向けのツール</p>
+      <h2 class="section-title">ツール一覧</h2>
+      <p class="section-desc">利用シーンでしぼりこめます。複数のシーンで使えるツールには複数のバッジがつきます。</p>
+
+      <div class="scene-filter" role="group" aria-label="利用シーンでしぼりこむ">
+        <button class="scene-filter__chip" type="button" data-scene="all" aria-pressed="true">すべて</button>
+        <button class="scene-filter__chip" type="button" data-scene="kotoba" aria-pressed="false">コトバであそぼ！</button>
+        <button class="scene-filter__chip" type="button" data-scene="bodoge" aria-pressed="false">ボドゲクラブ</button>
+        <button class="scene-filter__chip" type="button" data-scene="hiroba" aria-pressed="false">ひろば</button>
+        <button class="scene-filter__chip" type="button" data-scene="circle" aria-pressed="false">サークルタイム</button>
+        <button class="scene-filter__chip" type="button" data-scene="sakusen" aria-pressed="false">作戦会議</button>
+      </div>
 
       <div class="apps-grid">
 
         <!-- クイズパック -->
-        <a class="app-card" href="quiz/">
+        <a class="app-card" href="quiz/" data-scenes="kotoba circle hiroba">
           <div class="app-card__icon">
             <span class="material-symbols-rounded">quiz</span>
           </div>
@@ -312,7 +371,7 @@
         </a>
 
         <!-- ことばシャッフル -->
-        <a class="app-card" href="kotoba-shuffle/">
+        <a class="app-card" href="kotoba-shuffle/" data-scenes="kotoba circle hiroba">
           <div class="app-card__icon">
             <span class="material-symbols-rounded">shuffle</span>
           </div>
@@ -337,7 +396,7 @@
         </a>
 
         <!-- 漢字さがし -->
-        <a class="app-card" href="kanji-sagashi/">
+        <a class="app-card" href="kanji-sagashi/" data-scenes="kotoba circle hiroba">
           <div class="app-card__icon">
             <span class="material-symbols-rounded">search</span>
           </div>
@@ -362,7 +421,7 @@
         </a>
 
         <!-- ことばガチャ -->
-        <a class="app-card" href="kotoba-gacha/">
+        <a class="app-card" href="kotoba-gacha/" data-scenes="kotoba">
           <div class="app-card__icon">
             <span class="material-symbols-rounded">auto_awesome</span>
           </div>
@@ -387,7 +446,7 @@
         </a>
 
         <!-- ことばリレー -->
-        <a class="app-card" href="kotoba-relay/">
+        <a class="app-card" href="kotoba-relay/" data-scenes="kotoba circle">
           <div class="app-card__icon">
             <span class="material-symbols-rounded">forum</span>
           </div>
@@ -412,7 +471,7 @@
         </a>
 
         <!-- たとえグランプリ -->
-        <a class="app-card" href="tatoe-gp/">
+        <a class="app-card" href="tatoe-gp/" data-scenes="kotoba bodoge">
           <div class="app-card__icon">
             <span class="material-symbols-rounded">emoji_objects</span>
           </div>
@@ -437,7 +496,7 @@
         </a>
 
         <!-- まちがいさがし -->
-        <a class="app-card" href="machigai-sagashi/">
+        <a class="app-card" href="machigai-sagashi/" data-scenes="kotoba circle hiroba">
           <div class="app-card__icon">
             <span class="material-symbols-rounded">find_in_page</span>
           </div>
@@ -462,7 +521,7 @@
         </a>
 
         <!-- ヒントでピント -->
-        <a class="app-card" href="hint-de-pinto/">
+        <a class="app-card" href="hint-de-pinto/" data-scenes="kotoba bodoge">
           <div class="app-card__icon">
             <span class="material-symbols-rounded">lightbulb</span>
           </div>
@@ -487,7 +546,7 @@
         </a>
 
         <!-- ことば探偵 -->
-        <a class="app-card" href="codenames/">
+        <a class="app-card" href="codenames/" data-scenes="kotoba bodoge">
           <div class="app-card__icon">
             <span class="material-symbols-rounded">search</span>
           </div>
@@ -512,7 +571,7 @@
         </a>
 
         <!-- コトバであそぼ -->
-        <a class="app-card" href="kotoba-asobo/">
+        <a class="app-card" href="kotoba-asobo/" data-scenes="kotoba">
           <div class="app-card__icon">
             <span class="material-symbols-rounded">text_fields</span>
           </div>
@@ -536,20 +595,8 @@
           </div>
         </a>
 
-      </div>
-    </section>
-
-    <!-- ============================================= -->
-    <!-- すべてのツール                                 -->
-    <!-- ============================================= -->
-    <section class="portal-section">
-      <h2 class="section-title">すべてのツール</h2>
-      <p class="section-desc">アイスブレイク・パーティーゲーム・対話ツールなど</p>
-
-      <div class="apps-grid">
-
         <!-- トークテーマカード -->
-        <a class="app-card" href="talk-card/">
+        <a class="app-card" href="talk-card/" data-scenes="circle hiroba sakusen">
           <div class="app-card__icon">
             <span class="material-symbols-rounded">style</span>
           </div>
@@ -574,7 +621,7 @@
         </a>
 
         <!-- おとなトークカード -->
-        <a class="app-card" href="otona-talk/">
+        <a class="app-card" href="otona-talk/" data-scenes="circle">
           <div class="app-card__icon">
             <span class="material-symbols-rounded">record_voice_over</span>
           </div>
@@ -599,7 +646,7 @@
         </a>
 
         <!-- どっちにする？ -->
-        <a class="app-card" href="docchi/">
+        <a class="app-card" href="docchi/" data-scenes="sakusen">
           <div class="app-card__icon">
             <span class="material-symbols-rounded">alt_route</span>
           </div>
@@ -624,7 +671,7 @@
         </a>
 
         <!-- チェックアウトカード -->
-        <a class="app-card" href="checkout-card/">
+        <a class="app-card" href="checkout-card/" data-scenes="sakusen">
           <div class="app-card__icon">
             <span class="material-symbols-rounded">waving_hand</span>
           </div>
@@ -649,7 +696,7 @@
         </a>
 
         <!-- すきなことマップ -->
-        <a class="app-card" href="sukina-map/">
+        <a class="app-card" href="sukina-map/" data-scenes="sakusen">
           <div class="app-card__icon">
             <span class="material-symbols-rounded">travel_explore</span>
           </div>
@@ -674,7 +721,7 @@
         </a>
 
         <!-- きもちのことばマップ -->
-        <a class="app-card" href="kimochi-map/">
+        <a class="app-card" href="kimochi-map/" data-scenes="sakusen">
           <div class="app-card__icon">
             <span class="material-symbols-rounded">mood</span>
           </div>
@@ -699,7 +746,7 @@
         </a>
 
         <!-- つよみカード -->
-        <a class="app-card" href="tsuyomi-card/">
+        <a class="app-card" href="tsuyomi-card/" data-scenes="sakusen">
           <div class="app-card__icon">
             <span class="material-symbols-rounded">flare</span>
           </div>
@@ -778,7 +825,7 @@
         -->
 
         <!-- いいセンいきまSHOW! -->
-        <a class="app-card" href="iisen-show/">
+        <a class="app-card" href="iisen-show/" data-scenes="bodoge circle">
           <div class="app-card__icon">
             <span class="material-symbols-rounded">sports_esports</span>
           </div>
@@ -803,7 +850,7 @@
         </a>
 
         <!-- ワードウルフ -->
-        <a class="app-card" href="word-wolf/">
+        <a class="app-card" href="word-wolf/" data-scenes="bodoge circle">
           <div class="app-card__icon">
             <span class="material-symbols-rounded">psychology</span>
           </div>
@@ -828,7 +875,7 @@
         </a>
 
         <!-- 人狼ゲーム -->
-        <a class="app-card" href="jinro/">
+        <a class="app-card" href="jinro/" data-scenes="bodoge">
           <div class="app-card__icon">
             <span class="material-symbols-rounded">groups</span>
           </div>
@@ -853,7 +900,7 @@
         </a>
 
         <!-- 名前変えゲーム -->
-        <a class="app-card" href="name-change/">
+        <a class="app-card" href="name-change/" data-scenes="bodoge circle">
           <div class="app-card__icon">
             <span class="material-symbols-rounded">manage_accounts</span>
           </div>
@@ -878,7 +925,7 @@
         </a>
 
         <!-- え!? 実は○○なんですかゲーム -->
-        <a class="app-card" href="jitsuwa-game/">
+        <a class="app-card" href="jitsuwa-game/" data-scenes="circle hiroba sakusen">
           <div class="app-card__icon">
             <span class="material-symbols-rounded">search_insights</span>
           </div>
@@ -903,7 +950,7 @@
         </a>
 
         <!-- ito クモノイト -->
-        <a class="app-card" href="ito/">
+        <a class="app-card" href="ito/" data-scenes="bodoge circle sakusen">
           <div class="app-card__icon">
             <span class="material-symbols-rounded">filter_1</span>
           </div>
@@ -928,7 +975,7 @@
         </a>
 
         <!-- 以心伝心しないゲーム -->
-        <a class="app-card" href="ishin-denshin/">
+        <a class="app-card" href="ishin-denshin/" data-scenes="circle hiroba">
           <div class="app-card__icon">
             <span class="material-symbols-rounded">lightbulb</span>
           </div>
@@ -953,7 +1000,7 @@
         </a>
 
         <!-- うそつき辞書 -->
-        <a class="app-card" href="uso-jisho/">
+        <a class="app-card" href="uso-jisho/" data-scenes="bodoge">
           <div class="app-card__icon">
             <span class="material-symbols-rounded">auto_stories</span>
           </div>
@@ -978,7 +1025,7 @@
         </a>
 
         <!-- まぎれ絵師 -->
-        <a class="app-card" href="magire-eshi/">
+        <a class="app-card" href="magire-eshi/" data-scenes="bodoge">
           <div class="app-card__icon">
             <span class="material-symbols-rounded">brush</span>
           </div>
@@ -1003,7 +1050,7 @@
         </a>
 
         <!-- ピッタリメーター -->
-        <a class="app-card" href="pittari-meter/">
+        <a class="app-card" href="pittari-meter/" data-scenes="bodoge">
           <div class="app-card__icon">
             <span class="material-symbols-rounded">tune</span>
           </div>
@@ -1028,7 +1075,7 @@
         </a>
 
         <!-- かくれナンバー -->
-        <a class="app-card" href="kakure-number/">
+        <a class="app-card" href="kakure-number/" data-scenes="bodoge">
           <div class="app-card__icon">
             <span class="material-symbols-rounded">visibility_off</span>
           </div>
@@ -1053,7 +1100,7 @@
         </a>
 
         <!-- こえだけシアター -->
-        <a class="app-card" href="koedake-theater/">
+        <a class="app-card" href="koedake-theater/" data-scenes="bodoge">
           <div class="app-card__icon">
             <span class="material-symbols-rounded">theater_comedy</span>
           </div>
@@ -1078,7 +1125,7 @@
         </a>
 
         <!-- みんなでランキング -->
-        <a class="app-card" href="minna-ranking/">
+        <a class="app-card" href="minna-ranking/" data-scenes="hiroba sakusen">
           <div class="app-card__icon">
             <span class="material-symbols-rounded">format_list_numbered</span>
           </div>
@@ -1103,7 +1150,7 @@
         </a>
 
         <!-- 興味スゴロク -->
-        <a class="app-card" href="kyoumi-sugoroku/">
+        <a class="app-card" href="kyoumi-sugoroku/" data-scenes="hiroba sakusen">
           <div class="app-card__icon">
             <span class="material-symbols-rounded">casino</span>
           </div>
@@ -1152,7 +1199,7 @@
         -->
 
         <!-- 塗り絵カレンダー -->
-        <a class="app-card" href="nurie-week/">
+        <a class="app-card" href="nurie-week/" data-scenes="sakusen">
           <div class="app-card__icon">
             <span class="material-symbols-rounded">calendar_view_week</span>
           </div>
@@ -1177,7 +1224,7 @@
         </a>
 
         <!-- みえないがんばり -->
-        <a class="app-card" href="mienai-ganbari/">
+        <a class="app-card" href="mienai-ganbari/" data-scenes="sakusen">
           <div class="app-card__icon">
             <span class="material-symbols-rounded">eco</span>
           </div>
@@ -1202,7 +1249,7 @@
         </a>
 
         <!-- バリューカード -->
-        <a class="app-card" href="value-card/">
+        <a class="app-card" href="value-card/" data-scenes="sakusen">
           <div class="app-card__icon">
             <span class="material-symbols-rounded">favorite</span>
           </div>
@@ -1227,7 +1274,7 @@
         </a>
 
         <!-- いくつ言える？ -->
-        <a class="app-card" href="ikutsu-ieru/">
+        <a class="app-card" href="ikutsu-ieru/" data-scenes="circle hiroba sakusen">
           <div class="app-card__icon">
             <span class="material-symbols-rounded">format_list_numbered</span>
           </div>
@@ -1252,7 +1299,7 @@
         </a>
 
         <!-- キャパグラフ -->
-        <a class="app-card" href="kyapa-graph/">
+        <a class="app-card" href="kyapa-graph/" data-scenes="sakusen">
           <div class="app-card__icon">
             <span class="material-symbols-rounded">monitoring</span>
           </div>
@@ -1277,7 +1324,7 @@
         </a>
 
         <!-- さくせん会議 -->
-        <a class="app-card" href="sakusen-kaigi/">
+        <a class="app-card" href="sakusen-kaigi/" data-scenes="sakusen">
           <div class="app-card__icon">
             <span class="material-symbols-rounded">route</span>
           </div>
@@ -1301,7 +1348,7 @@
           </div>
         </a>
 
-        <a class="app-card" href="challenge-tane/">
+        <a class="app-card" href="challenge-tane/" data-scenes="sakusen">
           <div class="app-card__icon">
             <span class="material-symbols-rounded">potted_plant</span>
           </div>
@@ -1325,7 +1372,7 @@
           </div>
         </a>
 
-        <a class="app-card" href="mirai-hikidashi/">
+        <a class="app-card" href="mirai-hikidashi/" data-scenes="sakusen">
           <div class="app-card__icon">
             <span class="material-symbols-rounded">shelves</span>
           </div>
@@ -1350,7 +1397,7 @@
         </a>
 
         <!-- ばめんカード -->
-        <a class="app-card" href="bamen-card/">
+        <a class="app-card" href="bamen-card/" data-scenes="sakusen">
           <div class="app-card__icon">
             <span class="material-symbols-rounded">theaters</span>
           </div>
@@ -1375,7 +1422,7 @@
         </a>
 
         <!-- きょうの2たく -->
-        <a class="app-card" href="nitaku-board/">
+        <a class="app-card" href="nitaku-board/" data-scenes="hiroba circle">
           <div class="app-card__icon">
             <span class="material-symbols-rounded">how_to_vote</span>
           </div>
@@ -1481,6 +1528,49 @@
           flagCards(entries);
         })
         .catch(() => { /* 取得失敗時は更新情報欄を出さない */ });
+    })();
+  </script>
+
+  <script>
+    // 利用シーンの絞り込みとバッジ描画: 各カードの data-scenes 属性が正本。
+    (function () {
+      const SCENE_LABELS = {
+        kotoba: 'コトバ',
+        bodoge: 'ボドゲ',
+        hiroba: 'ひろば',
+        circle: 'サークル',
+        sakusen: '作戦会議',
+      };
+
+      const cards = document.querySelectorAll('.apps-grid .app-card');
+
+      // カード下部にシーンバッジを描画
+      cards.forEach((card) => {
+        const scenes = (card.dataset.scenes || '').split(' ').filter((s) => SCENE_LABELS[s]);
+        if (scenes.length === 0) return;
+        const row = document.createElement('div');
+        row.className = 'app-card__scenes';
+        scenes.forEach((s) => {
+          const badge = document.createElement('span');
+          badge.className = 'scene-badge';
+          badge.textContent = SCENE_LABELS[s];
+          row.appendChild(badge);
+        });
+        card.querySelector('.app-card__body').appendChild(row);
+      });
+
+      // フィルタチップで絞り込み
+      const chips = document.querySelectorAll('.scene-filter__chip');
+      chips.forEach((chip) => {
+        chip.addEventListener('click', () => {
+          chips.forEach((c) => c.setAttribute('aria-pressed', String(c === chip)));
+          const scene = chip.dataset.scene;
+          cards.forEach((card) => {
+            const scenes = (card.dataset.scenes || '').split(' ');
+            card.hidden = scene !== 'all' && !scenes.includes(scene);
+          });
+        });
+      });
     })();
   </script>
 
