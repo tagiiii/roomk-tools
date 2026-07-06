@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>みんなでランキング | roomK</title>
+  <!-- Google Fonts（Noto Sans JP）-->
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
+  <!-- Material Symbols Rounded -->
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet" />
+  <!-- 共通デザインシステム -->
+  <link rel="stylesheet" href="../shared/css/design-system.css" />
+  <!-- アプリ固有スタイル -->
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <div class="wrapper">
+
+    <!-- ヘッダー -->
+    <header class="mr-header">
+      <h1 class="mr-header__title">みんなでランキング</h1>
+      <p class="mr-header__sub">すきな順に ならべてあそぼう。うちらのランキングができたらOK！</p>
+    </header>
+
+    <!-- トップ: お題のえらび方 3択 -->
+    <section class="mr-screen active" id="screen-top">
+      <div class="mr-menu">
+        <button type="button" class="mr-menu__btn" id="btnGacha">
+          <span class="material-symbols-rounded mr-menu__icon">casino</span>
+          <span class="mr-menu__label">お題ガチャ</span>
+          <span class="mr-menu__desc">ランダムにお題が出てくる</span>
+        </button>
+        <button type="button" class="mr-menu__btn" id="btnList">
+          <span class="material-symbols-rounded mr-menu__icon">list_alt</span>
+          <span class="mr-menu__label">お題をえらぶ</span>
+          <span class="mr-menu__desc">一覧からすきなお題をえらぶ</span>
+        </button>
+        <button type="button" class="mr-menu__btn" id="btnCreate">
+          <span class="material-symbols-rounded mr-menu__icon">edit</span>
+          <span class="mr-menu__label">じぶんたちでつくる</span>
+          <span class="mr-menu__desc">お題もアイテムも自由に入力</span>
+        </button>
+      </div>
+      <p class="mr-note">合意しなくてもOK。1人でならべてあそんでもOK！</p>
+    </section>
+
+    <!-- お題一覧 -->
+    <section class="mr-screen" id="screen-list">
+      <div class="mr-subhead">
+        <button type="button" class="btn btn-ghost btn-sm" id="btnListBack">
+          <span class="material-symbols-rounded">arrow_back</span>もどる
+        </button>
+        <h2 class="mr-subhead__title">お題をえらぶ</h2>
+      </div>
+      <div class="mr-topic-list" id="topicList"></div>
+    </section>
+
+    <!-- じぶんたちでつくる -->
+    <section class="mr-screen" id="screen-create">
+      <div class="mr-subhead">
+        <button type="button" class="btn btn-ghost btn-sm" id="btnCreateBack">
+          <span class="material-symbols-rounded">arrow_back</span>もどる
+        </button>
+        <h2 class="mr-subhead__title">じぶんたちでつくる</h2>
+      </div>
+      <div class="mr-form">
+        <label class="mr-form__label" for="createTopic">お題（30文字まで）</label>
+        <input type="text" class="mr-form__input" id="createTopic" maxlength="30" placeholder="例：うちらのすきな〇〇" />
+        <p class="mr-form__label">アイテム（15文字まで・2〜8個）</p>
+        <div class="mr-form__items" id="createItems"></div>
+        <button type="button" class="btn btn-primary btn-full" id="btnCreateStart">ならべはじめる</button>
+      </div>
+    </section>
+
+    <!-- ランキング -->
+    <section class="mr-screen" id="screen-rank">
+      <div class="mr-rank__head">
+        <p class="mr-rank__label">お題</p>
+        <h2 class="mr-rank__topic" id="rankTopic"></h2>
+        <p class="mr-note">けっかは きょうの気分でOK。「うえとタイ」でうえのカードと同じ順位にできるよ。</p>
+      </div>
+
+      <ul class="mr-rank__list" id="rankList"></ul>
+
+      <div class="mr-add">
+        <input type="text" class="mr-form__input" id="addItemInput" maxlength="15" placeholder="アイテムをついか（15文字まで）" />
+        <button type="button" class="btn btn-secondary" id="btnAddItem">ついか</button>
+      </div>
+
+      <section class="mr-out">
+        <p class="mr-out__title">
+          <span class="material-symbols-rounded">inventory_2</span>ランクがい
+        </p>
+        <p class="mr-out__empty" id="outEmpty">「ランクがいへ」でうつしたアイテムがここに入るよ</p>
+        <ul class="mr-out__list" id="outList"></ul>
+      </section>
+
+      <div class="mr-actions">
+        <button type="button" class="btn btn-primary" id="btnCopy">
+          <span class="material-symbols-rounded">content_copy</span>けっかをコピー
+        </button>
+        <button type="button" class="btn btn-secondary" id="btnNextTopic">
+          <span class="material-symbols-rounded">refresh</span>つぎのお題へ
+        </button>
+      </div>
+    </section>
+
+  </div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
