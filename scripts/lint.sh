@@ -236,6 +236,58 @@ done
 $REF4_OK && echo -e "  ${GREEN}OK${NC}"
 
 # ─────────────────────────────────────────────────────
+# [PORTAL-1] updates.json 整合チェック
+#   JSON として妥当か・必須フィールド・date 形式・
+#   type の値・app がポータル上の実在アプリかを検証
+# ─────────────────────────────────────────────────────
+echo ""
+echo -e "${BOLD}[PORTAL-1] updates.json 整合チェック${NC}"
+
+PORTAL1_OUT=$(python3 - <<'PYEOF'
+import json, os, re
+
+try:
+    with open('apps/updates.json', encoding='utf-8') as f:
+        entries = json.load(f)
+except FileNotFoundError:
+    print('apps/updates.json がありません')
+    raise SystemExit
+except Exception as e:
+    print(f'apps/updates.json を JSON として読み込めません: {e}')
+    raise SystemExit
+
+if not isinstance(entries, list):
+    print('apps/updates.json のトップレベルは配列にしてください')
+    raise SystemExit
+
+for i, e in enumerate(entries, 1):
+    where = f'エントリ {i}'
+    if not isinstance(e, dict):
+        print(f'{where}: オブジェクトではありません')
+        continue
+    for key in ('date', 'app', 'type', 'text'):
+        if key not in e:
+            print(f'{where}: "{key}" がありません')
+    if not re.fullmatch(r'\d{4}-\d{2}-\d{2}', str(e.get('date', ''))):
+        print(f'{where}: date は YYYY-MM-DD 形式にしてください → {e.get("date")!r}')
+    if e.get('type') not in ('new', 'update'):
+        print(f'{where}: type は "new" か "update" にしてください → {e.get("type")!r}')
+    app = e.get('app')
+    if app is not None and not os.path.isdir(os.path.join('apps', str(app))):
+        print(f'{where}: apps/{app}/ が存在しません')
+PYEOF
+)
+
+if [ -n "$PORTAL1_OUT" ]; then
+  while IFS= read -r line; do
+    echo -e "  ${RED}[ERROR]${NC} $line"
+    ERRORS=$((ERRORS + 1))
+  done <<< "$PORTAL1_OUT"
+else
+  echo -e "  ${GREEN}OK${NC}"
+fi
+
+# ─────────────────────────────────────────────────────
 # 結果サマリ
 # ─────────────────────────────────────────────────────
 echo ""

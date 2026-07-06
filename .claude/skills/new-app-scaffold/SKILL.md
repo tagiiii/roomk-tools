@@ -29,6 +29,8 @@ description: roomK ツール群に新しいアプリを追加するときの手�
 - `app-card__name` / `app-card__desc`
 - `meta-badge` × 3（人数・所要時間・特記事項）
 
+あわせて `apps/updates.json` の**先頭**に更新情報を1エントリ追記する（`type: "new"`、フォーマットは AGENTS.md「更新情報」参照）。ポータルの更新情報欄と NEW フラグはここから自動描画される。
+
 ## 3. AGENTS.md 作成
 
 `apps/{app-name}/AGENTS.md` を必ず作る。見出し構成の見本:
@@ -48,6 +50,7 @@ description: roomK ツール群に新しいアプリを追加するときの手�
 
 - [ ] apps/{name}/ 一式（パターン準拠）
 - [ ] apps/index.html にカード追加
+- [ ] apps/updates.json に更新情報を追記（type: "new"）
 - [ ] apps/{name}/AGENTS.md（逸脱の明文化を含む）
 - [ ] lint.sh の RTDB_HTML_FILES（RTDB の場合）
 - [ ] lint パス

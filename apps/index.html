@@ -141,6 +141,112 @@
       margin-top: var(--space-xl);
     }
 
+    /* ── 更新情報（スタッフ向け） ── */
+    .updates-panel {
+      background-color: var(--color-surface);
+      border-radius: var(--radius-card);
+      box-shadow: var(--shadow-sm);
+      padding: var(--space-md) var(--space-lg);
+      margin-bottom: var(--space-xl);
+    }
+
+    .updates-panel__title {
+      display: flex;
+      align-items: center;
+      gap: var(--space-xs);
+      font-size: var(--font-size-lg);
+      font-weight: 700;
+      color: var(--color-primary);
+    }
+
+    .updates-panel__title .material-symbols-rounded {
+      font-size: 22px;
+    }
+
+    .updates-list {
+      list-style: none;
+      margin: var(--space-sm) 0 0;
+      padding: 0;
+    }
+
+    .updates-list__item {
+      display: flex;
+      align-items: baseline;
+      gap: var(--space-sm);
+      padding: 6px 0;
+      font-size: var(--font-size-sm);
+      border-top: 1px solid var(--color-border);
+    }
+
+    .updates-list__item:first-child {
+      border-top: none;
+    }
+
+    /* display: flex が UA の [hidden] を上書きするため明示 */
+    .updates-list__item[hidden] {
+      display: none;
+    }
+
+    .updates-list__date {
+      color: var(--color-muted);
+      flex-shrink: 0;
+      font-feature-settings: "tnum";
+    }
+
+    .updates-list__tag {
+      flex-shrink: 0;
+      padding: 1px 8px;
+      border-radius: var(--radius-full);
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 1.6;
+    }
+
+    .updates-list__tag--new {
+      background-color: var(--color-accent);
+      color: #fff;
+    }
+
+    .updates-list__tag--update {
+      background-color: #EEF3F8;
+      color: var(--color-primary);
+    }
+
+    .updates-list__text {
+      flex: 1;
+      line-height: 1.5;
+    }
+
+    .updates-list__text a {
+      color: inherit;
+    }
+
+    .updates-panel__more {
+      margin-top: var(--space-sm);
+    }
+
+    /* カード右上の NEW / 更新 フラグ（updates.json から自動付与） */
+    .app-card {
+      position: relative;
+    }
+
+    .app-card__flag {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      padding: 2px 10px;
+      border-radius: var(--radius-full);
+      font-size: 12px;
+      font-weight: 700;
+      background-color: var(--color-accent);
+      color: #fff;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .app-card__flag--update {
+      background-color: var(--color-primary);
+    }
+
     footer {
       text-align: center;
       padding: var(--space-xl) var(--space-md);
@@ -159,6 +265,17 @@
   </header>
 
   <main class="portal-main container container--wide">
+
+    <!-- ============================================= -->
+    <!-- 更新情報（updates.json から描画・スタッフ向け） -->
+    <!-- ============================================= -->
+    <section class="updates-panel" id="updates-panel" hidden>
+      <h2 class="updates-panel__title">
+        <span class="material-symbols-rounded">campaign</span>更新情報
+      </h2>
+      <ul class="updates-list" id="updates-list"></ul>
+      <button class="btn btn-ghost btn-sm updates-panel__more" id="updates-more" hidden>すべて表示</button>
+    </section>
 
     <!-- ============================================= -->
     <!-- コトバであそぼ！                               -->
@@ -1292,6 +1409,80 @@
   <footer>
     &copy; 2026 tagiiii
   </footer>
+
+  <script>
+    // 更新情報の描画: apps/updates.json が正本。
+    // 直近 FLAG_DAYS 日以内の更新は該当アプリのカードに NEW / 更新 フラグも付ける。
+    (function () {
+      const FLAG_DAYS = 14;
+      const DEFAULT_SHOWN = 5;
+
+      function esc(s) {
+        return String(s)
+          .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+      }
+
+      function isRecent(dateStr) {
+        const t = Date.parse(dateStr);
+        return Number.isFinite(t) && Date.now() - t < FLAG_DAYS * 24 * 60 * 60 * 1000;
+      }
+
+      function renderList(entries) {
+        const panel = document.getElementById('updates-panel');
+        const list = document.getElementById('updates-list');
+        const moreBtn = document.getElementById('updates-more');
+
+        list.innerHTML = entries.map((e, i) => {
+          const tag = e.type === 'new'
+            ? '<span class="updates-list__tag updates-list__tag--new">NEW</span>'
+            : '<span class="updates-list__tag updates-list__tag--update">更新</span>';
+          const text = e.app
+            ? `<a href="${esc(e.app)}/">${esc(e.text)}</a>`
+            : esc(e.text);
+          const hidden = i >= DEFAULT_SHOWN ? ' hidden' : '';
+          return `<li class="updates-list__item"${hidden}>` +
+            `<span class="updates-list__date">${esc(e.date.replace(/-/g, '/'))}</span>` +
+            tag +
+            `<span class="updates-list__text">${text}</span></li>`;
+        }).join('');
+
+        if (entries.length > DEFAULT_SHOWN) {
+          moreBtn.hidden = false;
+          moreBtn.addEventListener('click', () => {
+            const collapsed = moreBtn.textContent === 'すべて表示';
+            list.querySelectorAll('.updates-list__item').forEach((li, i) => {
+              li.hidden = !collapsed && i >= DEFAULT_SHOWN;
+            });
+            moreBtn.textContent = collapsed ? '閉じる' : 'すべて表示';
+          });
+        }
+
+        panel.hidden = entries.length === 0;
+      }
+
+      function flagCards(entries) {
+        entries.forEach((e) => {
+          if (!e.app || !isRecent(e.date)) return;
+          const card = document.querySelector(`.app-card[href="${CSS.escape(e.app)}/"]`);
+          if (!card || card.querySelector('.app-card__flag')) return;
+          const flag = document.createElement('span');
+          flag.className = 'app-card__flag' + (e.type === 'new' ? '' : ' app-card__flag--update');
+          flag.textContent = e.type === 'new' ? 'NEW' : '更新';
+          card.appendChild(flag);
+        });
+      }
+
+      fetch('updates.json')
+        .then((res) => { if (!res.ok) throw new Error(res.status); return res.json(); })
+        .then((entries) => {
+          entries.sort((a, b) => String(b.date).localeCompare(String(a.date)));
+          renderList(entries);
+          flagCards(entries);
+        })
+        .catch(() => { /* 取得失敗時は更新情報欄を出さない */ });
+    })();
+  </script>
 
 </body>
 </html>
