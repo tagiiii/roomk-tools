@@ -124,6 +124,33 @@
       font-size: 16px;
     }
 
+    /* カードフッターの説明スライドリンク（data-slides から自動描画） */
+    .app-card__slides {
+      margin-left: auto;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      padding: 3px 10px;
+      border-radius: var(--radius-full);
+      font-size: 12px;
+      font-weight: 500;
+      background-color: #EEF3F8;
+      color: var(--color-primary);
+      line-height: 1.4;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: background-color var(--transition-base);
+    }
+
+    .app-card__slides:hover,
+    .app-card__slides:focus-visible {
+      background-color: #DCE7F1;
+    }
+
+    .app-card__slides .material-symbols-rounded {
+      font-size: 14px;
+    }
+
     .section-title {
       font-size: var(--font-size-lg);
       font-weight: 700;
@@ -471,7 +498,7 @@
         </a>
 
         <!-- たとえグランプリ -->
-        <a class="app-card" href="tatoe-gp/" data-scenes="kotoba bodoge">
+        <a class="app-card" href="tatoe-gp/" data-slides data-scenes="kotoba bodoge">
           <div class="app-card__icon">
             <span class="material-symbols-rounded">emoji_objects</span>
           </div>
@@ -521,7 +548,7 @@
         </a>
 
         <!-- ヒントでピント -->
-        <a class="app-card" href="hint-de-pinto/" data-scenes="kotoba bodoge">
+        <a class="app-card" href="hint-de-pinto/" data-slides data-scenes="kotoba bodoge">
           <div class="app-card__icon">
             <span class="material-symbols-rounded">lightbulb</span>
           </div>
@@ -546,7 +573,7 @@
         </a>
 
         <!-- ことば探偵 -->
-        <a class="app-card" href="codenames/" data-scenes="kotoba bodoge">
+        <a class="app-card" href="codenames/" data-slides data-scenes="kotoba bodoge">
           <div class="app-card__icon">
             <span class="material-symbols-rounded">search</span>
           </div>
@@ -825,7 +852,7 @@
         -->
 
         <!-- いいセンいきまSHOW! -->
-        <a class="app-card" href="iisen-show/" data-scenes="bodoge circle">
+        <a class="app-card" href="iisen-show/" data-slides data-scenes="bodoge circle">
           <div class="app-card__icon">
             <span class="material-symbols-rounded">sports_esports</span>
           </div>
@@ -850,7 +877,7 @@
         </a>
 
         <!-- ワードウルフ -->
-        <a class="app-card" href="word-wolf/" data-scenes="bodoge circle">
+        <a class="app-card" href="word-wolf/" data-slides data-scenes="bodoge circle">
           <div class="app-card__icon">
             <span class="material-symbols-rounded">psychology</span>
           </div>
@@ -875,7 +902,7 @@
         </a>
 
         <!-- 人狼ゲーム -->
-        <a class="app-card" href="jinro/" data-scenes="bodoge">
+        <a class="app-card" href="jinro/" data-slides data-scenes="bodoge">
           <div class="app-card__icon">
             <span class="material-symbols-rounded">groups</span>
           </div>
@@ -900,7 +927,7 @@
         </a>
 
         <!-- 名前変えゲーム -->
-        <a class="app-card" href="name-change/" data-scenes="bodoge circle">
+        <a class="app-card" href="name-change/" data-slides data-scenes="bodoge circle">
           <div class="app-card__icon">
             <span class="material-symbols-rounded">manage_accounts</span>
           </div>
@@ -950,7 +977,7 @@
         </a>
 
         <!-- ito クモノイト -->
-        <a class="app-card" href="ito/" data-scenes="bodoge circle sakusen">
+        <a class="app-card" href="ito/" data-slides data-scenes="bodoge circle sakusen">
           <div class="app-card__icon">
             <span class="material-symbols-rounded">filter_1</span>
           </div>
@@ -1000,7 +1027,7 @@
         </a>
 
         <!-- うそつき辞書 -->
-        <a class="app-card" href="uso-jisho/" data-scenes="bodoge">
+        <a class="app-card" href="uso-jisho/" data-slides data-scenes="bodoge">
           <div class="app-card__icon">
             <span class="material-symbols-rounded">auto_stories</span>
           </div>
@@ -1025,7 +1052,7 @@
         </a>
 
         <!-- まぎれ絵師 -->
-        <a class="app-card" href="magire-eshi/" data-scenes="bodoge">
+        <a class="app-card" href="magire-eshi/" data-slides data-scenes="bodoge">
           <div class="app-card__icon">
             <span class="material-symbols-rounded">brush</span>
           </div>
@@ -1050,7 +1077,7 @@
         </a>
 
         <!-- ピッタリメーター -->
-        <a class="app-card" href="pittari-meter/" data-scenes="bodoge">
+        <a class="app-card" href="pittari-meter/" data-slides data-scenes="bodoge">
           <div class="app-card__icon">
             <span class="material-symbols-rounded">tune</span>
           </div>
@@ -1075,7 +1102,7 @@
         </a>
 
         <!-- かくれナンバー -->
-        <a class="app-card" href="kakure-number/" data-scenes="bodoge">
+        <a class="app-card" href="kakure-number/" data-slides data-scenes="bodoge">
           <div class="app-card__icon">
             <span class="material-symbols-rounded">visibility_off</span>
           </div>
@@ -1100,7 +1127,7 @@
         </a>
 
         <!-- こえだけシアター -->
-        <a class="app-card" href="koedake-theater/" data-scenes="bodoge">
+        <a class="app-card" href="koedake-theater/" data-slides data-scenes="bodoge">
           <div class="app-card__icon">
             <span class="material-symbols-rounded">theater_comedy</span>
           </div>
@@ -1589,6 +1616,33 @@
 
       window.addEventListener('hashchange', () => applyScene(sceneFromHash()));
       applyScene(sceneFromHash());
+    })();
+  </script>
+  <script>
+    // 説明スライドへのリンク: data-slides 属性を持つカードのフッターにバッジを描画。
+    // カード本体が <a> のためリンクを入れ子にせず、クリックで slides.html を別タブに開く。
+    (function () {
+      document.querySelectorAll('.app-card[data-slides]').forEach((card) => {
+        const footer = card.querySelector('.app-card__footer');
+        if (!footer) return;
+        const name = card.querySelector('.app-card__name');
+        const badge = document.createElement('span');
+        badge.className = 'app-card__slides';
+        badge.setAttribute('role', 'link');
+        badge.setAttribute('tabindex', '0');
+        badge.setAttribute('aria-label', (name ? name.textContent + 'の' : '') + '説明スライドを開く');
+        badge.innerHTML = '<span class="material-symbols-rounded">co_present</span>スライド';
+        const open = (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          window.open(card.getAttribute('href') + 'slides.html', '_blank', 'noopener');
+        };
+        badge.addEventListener('click', open);
+        badge.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') open(e);
+        });
+        footer.appendChild(badge);
+      });
     })();
   </script>
 
