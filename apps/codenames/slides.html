@@ -249,9 +249,9 @@ function board(showColor){
 const SLIDES = [
   /* 1 */ { type:'divider', accent:'teal', icon:'waving_hand', jp:'チェックイン', en:'check-in',
     sub:'今の気分を、ひとことどうぞ',
-    note:'まずはチェックインから！\n今の気分や、最近あったことを、ひとことチャットか声で教えてね😊\n（ことば探偵の説明は、このあとすぐ！）' },
+    note:'まずはチェックインから！\n今の気分や、最近あったことを、ひとことチャットか声で教えてね\n（ことば探偵の説明は、このあとすぐ！）' },
 
-  /* 2 */ { type:'title', note:'今日のゲームは『ことば探偵』🔍\nヒント役が出す“ひとつの言葉”をたよりに、チームで相談しながら、自分たちの味方カードを当てていく連想ゲームだよ！' },
+  /* 2 */ { type:'title', note:'今日のゲームは『ことば探偵』\nヒント役が出す“ひとつの言葉”をたよりに、チームで相談しながら、自分たちの味方カードを当てていく連想ゲームだよ！' },
 
   /* 3 */ { type:'content', accent:'teal', section:'ゲームについて', sectionEn:'summary',
     headline:'ヒントの<span class="hl">ことば</span>から、<br>味方のカードを当てる<ruby>連想<rt>れんそう</rt></ruby>ゲーム',
@@ -276,7 +276,7 @@ const SLIDES = [
         <div class="role-row"><span class="material-symbols-rounded">search</span><div><b>探す役（1人〜）</b><span class="d">ヒントから相談して、カードを選ぶ人</span></div></div>
       </div>
     </div>`,
-    note:'チームは赤と青の2つ。それぞれに役割が2つあります。\n🗣ヒント役（各チーム1人）… どのカードが味方かを知っていて、ヒントを出す人。\n🔍探す役（各チーム1人以上）… ヒントをもとに相談して、カードを選ぶ人。' },
+    note:'チームは赤と青の2つ。それぞれに役割が2つあります。\nヒント役（各チーム1人）… どのカードが味方かを知っていて、ヒントを出す人。\n探す役（各チーム1人以上）… ヒントをもとに相談して、カードを選ぶ人。' },
 
   /* 5 */ { type:'content', accent:'blue', section:'ゲーム説明', sectionEn:'explain', num:'2',
     headline:'25枚のことばカード。<br><span class="ul">色が分かるのはヒント役だけ</span>',
@@ -307,7 +307,7 @@ const SLIDES = [
       <div class="row"><div class="row__ic"><span class="material-symbols-rounded">check_circle</span></div><div><div class="row__t">味方カードなら大成功 → 続けてもう1枚</div><div class="row__d">ヒントの数字のぶんまで、続けて選べる</div></div></div>
       <div class="row"><div class="row__ic"><span class="material-symbols-rounded">swap_horiz</span></div><div><div class="row__t">関係ない／相手のカードを選んだら交代</div><div class="row__d">そのターンは終わり。相手チームの番になる（自信がなければパスもOK）</div></div></div>
     </div>`,
-    note:'探す役は、ヒントから「どれが味方かな？」をチームで相談して選びます。\n✅味方カードなら、続けてもう1枚えらべる（数字のぶんまで）。\n🔁関係ないカードや相手のカードを選ぶと、そこで相手チームの番に交代。自信がなければパスもOK！' },
+    note:'探す役は、ヒントから「どれが味方かな？」をチームで相談して選びます。\n味方カードなら、続けてもう1枚えらべる（数字のぶんまで）。\n関係ないカードや相手のカードを選ぶと、そこで相手チームの番に交代。自信がなければパスもOK！' },
 
   /* 8 */ { type:'content', accent:'coral', section:'ゲーム説明', sectionEn:'explain', num:'5',
     headline:'カードは4種類。<br><span class="hl">トラップを選ぶと即まけ！</span>',
@@ -316,7 +316,7 @@ const SLIDES = [
       <div class="row"><div class="row__ic" style="color:#fff;background:#C2B69E"><span class="material-symbols-rounded">do_not_disturb_on</span></div><div><div class="row__t">相手カード／関係ないカード → 番が交代</div><div class="row__d">相手の色を選ぶと、相手を助けてしまうことも</div></div></div>
       <div class="row"><div class="row__ic" style="color:#fff;background:#3A3A3A"><span class="material-symbols-rounded">skull</span></div><div><div class="row__t">トラップカード → 選んだら、そのチームは即まけ</div><div class="row__d">25枚に1枚だけまぎれてる。ぜったいに当てないで！</div></div></div>
     </div>`,
-    note:'カードは4種類。\n🔵味方カード…全部先に見つけたチームが勝ち！\n⚪関係ないカード／🔴相手カード…選ぶと番が交代。\n💀トラップカード…これを選んだら、そのチームは即まけ。1枚だけまぎれてるよ、気をつけて！' },
+    note:'カードは4種類。\n味方カード…全部先に見つけたチームが勝ち！\n関係ないカード／相手カード…選ぶと番が交代。\nトラップカード…これを選んだら、そのチームは即まけ。1枚だけまぎれてるよ、気をつけて！' },
 
   /* 9 */ { type:'content', accent:'blue', section:'Q&A', sectionEn:'question & answer',
     headline:'よくある<ruby>質問<rt>しつもん</rt></ruby>',
@@ -325,11 +325,11 @@ const SLIDES = [
       <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>カードに書いてある言葉を、そのまま言ってもいい？</div><div class="qa__a"><span class="qa__badge a">A</span>それはNG。ちがう言葉で連想してね。</div></div>
       <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>自信がないときは？</div><div class="qa__a"><span class="qa__badge a">A</span>むりせずパス（やめる）してOK。相手チームの番になります。</div></div>
     </div>`,
-    note:'よくある質問だよ📣\nQ. ヒントは長くてもいい？→ A. ことば1つだけ。文章はNG！\nQ. カードの言葉そのものを言っていい？→ A. それはNG。ちがう言葉で連想してね。\nQ. 自信がないとき→ A. むりせずパスもOK。相手チームの番になります。' },
+    note:'よくある質問だよ\nQ. ヒントは長くてもいい？→ A. ことば1つだけ。文章はNG！\nQ. カードの言葉そのものを言っていい？→ A. それはNG。ちがう言葉で連想してね。\nQ. 自信がないとき→ A. むりせずパスもOK。相手チームの番になります。' },
 
   /* 10 */ { type:'divider', accent:'blue', icon:'live_help', jp:'質問タイム', en:'any questions?',
     sub:'気になることはある？',
-    note:'ここまでで、質問がある人はいるかな？\nマイクON か チャットで教えてね！🙋' },
+    note:'ここまでで、質問がある人はいるかな？\nマイクON か チャットで教えてね！' },
 
   /* 11 */ { type:'divider', accent:'coral', icon:'how_to_reg', jp:'参加確認', en:"let's check",
     sub:'チャットで教えてね',
@@ -337,7 +337,7 @@ const SLIDES = [
 
   /* 12 */ { type:'divider', accent:'teal', solid:true, icon:'rocket_launch', jp:'＼ ゲームスタート ／', en:'game start',
     sub:'まずはチーム分けから！',
-    note:'それでは、ことば探偵スタート！🔍\nまずはチーム分けと役割決めから。わからなくなったら、いつでも聞いてね😊' },
+    note:'それでは、ことば探偵スタート！\nまずはチーム分けと役割決めから。わからなくなったら、いつでも聞いてね' },
 
   /* 13 */ { type:'divider', accent:'teal', icon:'groups', jp:'チーム発表', en:'teams',
     sub:'自分の色と役割をチェック',
@@ -353,7 +353,7 @@ const SLIDES = [
 
   /* 16 */ { type:'divider', accent:'teal', solid:true, icon:'emoji_events', jp:'けっか', en:'result',
     sub:'おつかれさま！',
-    note:'けっか発表！🎉\nどっちのチームが先に味方を全部見つけられたかな？ 最後にひとことずつ、ふりかえってみよう。' },
+    note:'けっか発表！\nどっちのチームが先に味方を全部見つけられたかな？ 最後にひとことずつ、ふりかえってみよう。' },
 ];
 
 /* ===== ウィンドウ間同期 ===== */

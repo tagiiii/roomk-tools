@@ -3,17 +3,17 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>かくれナンバー — 説明スライド</title>
+<title>名前変えゲーム — 説明スライド</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap" rel="stylesheet" />
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@48,500,1,0" rel="stylesheet" />
 <style>
   :root{
-    --ink:#434343; --ink-soft:#6B6B6B; --paper:#FAFAFA; --white:#FFFFFF;
-    --line:#E6E6E6; --muted:#9A9A9A;
-    --teal:#2E7D8C; --coral:#E07A5F; --blue:#1C3F5E;
-    --acc:var(--teal); --acc-tint:#E4F0F2;
+    --ink:#1C3F5E; --ink-soft:#5A6270; --paper:#F8F6F1; --white:#FFFFFF;
+    --line:#DDE5E9; --muted:#9AA4AD;
+    --teal:#2E7D8C; --purple:#7C3AED; --green:#1F6E3C; --navy:#1C3F5E;
+    --acc:var(--teal); --acc-tint:#E4EFF1;
     --font:"Zen Kaku Gothic New", -apple-system, "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif;
   }
   *{ box-sizing:border-box; margin:0; padding:0; }
@@ -23,9 +23,9 @@
   ruby rt{ font-size:.42em; font-weight:700; color:var(--acc); letter-spacing:0; transform:translateY(2px); }
 
   /* accent themes（スライドごとに切替） */
-  .accent-teal { --acc:var(--teal); --acc-tint:#E4F0F2; }
-  .accent-coral{ --acc:var(--coral);--acc-tint:#FBEDE8; }
-  .accent-blue { --acc:var(--blue); --acc-tint:#E7EDF3; }
+  .accent-teal  { --acc:var(--teal);  --acc-tint:#E4EFF1; }
+  .accent-purple{ --acc:var(--purple);--acc-tint:#F0E9FC; }
+  .accent-green { --acc:var(--green); --acc-tint:#E5F1E9; }
 
   /* ===================== 発表（デッキ） ===================== */
   #deck{ position:fixed; inset:0; }
@@ -53,6 +53,21 @@
   .headline .ul{ background:linear-gradient(transparent 62%, var(--acc-tint) 62%); padding:0 2px; }
   .body{ margin-top:30px; flex:1; min-height:0; }
 
+  /* 2パネル */
+  .cols{ display:grid; grid-template-columns:1fr 1fr; gap:24px; height:100%; }
+  .panel{ background:var(--white); border:1.5px solid var(--line); border-radius:18px; padding:26px 28px; display:flex; flex-direction:column; gap:14px; }
+  .panel--purple{ border-color:#DCC9F6; background:linear-gradient(180deg,#F5EEFD,#fff); }
+  .panel--green { border-color:#BFDCC9; background:linear-gradient(180deg,#EDF6F0,#fff); }
+  .team-head{ display:flex; align-items:center; gap:14px; }
+  .team-ic{ width:56px; height:56px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; }
+  .team-ic .material-symbols-rounded{ font-size:34px; }
+  .teal-bg{ background:var(--teal); } .purple-bg{ background:var(--purple); } .green-bg{ background:var(--green); } .navy-bg{ background:var(--navy); }
+  .team-name{ font-size:28px; font-weight:900; color:var(--ink); }
+  .role-row{ display:flex; gap:12px; align-items:flex-start; }
+  .role-row .material-symbols-rounded{ font-size:26px; color:var(--acc); flex:none; margin-top:3px; }
+  .role-row b{ font-size:23px; font-weight:900; color:var(--ink); }
+  .role-row .d{ font-size:19px; color:var(--ink-soft); display:block; margin-top:2px; line-height:1.5; }
+
   /* 箇条書き行 */
   .rows{ display:flex; flex-direction:column; gap:16px; }
   .row{ display:flex; gap:18px; align-items:flex-start; background:var(--white); border:1.5px solid var(--line); border-radius:16px; padding:20px 24px; }
@@ -61,35 +76,36 @@
   .row__t{ font-size:25px; font-weight:900; color:var(--ink); line-height:1.4; }
   .row__d{ font-size:20px; color:var(--ink-soft); margin-top:3px; line-height:1.5; }
 
-  /* プレイヤーカード（かくれナンバーの見え方デモ） */
-  .pc-wrap{ display:flex; gap:40px; align-items:center; height:100%; }
-  .pcards{ display:grid; grid-template-columns:repeat(3,1fr); gap:14px; flex:none; width:560px; }
-  .pcard{ background:var(--white); border:2px solid var(--line); border-radius:16px; padding:18px 10px 16px; text-align:center;
-    box-shadow:0 2px 6px rgba(0,0,0,.05); }
-  .pcard__name{ font-size:19px; font-weight:700; color:var(--ink-soft); margin-bottom:6px; }
-  .pcard__num{ font-size:52px; font-weight:900; color:var(--blue); line-height:1.1; font-variant-numeric:tabular-nums; }
-  .pcard--me{ border-color:var(--teal); background:var(--acc-tint); }
-  .pcard--me .pcard__name{ color:var(--teal); }
-  .pcard--me .pcard__num{ color:var(--teal); }
-  .pc-legend{ flex:1; display:flex; flex-direction:column; gap:16px; }
-  .pc-note{ font-size:23px; color:var(--ink-soft); line-height:1.65; }
-  .pc-note b{ color:var(--acc); font-weight:900; }
+  /* ゲームのながれ（4ステップ） */
+  .flow{ display:flex; align-items:center; gap:10px; height:100%; }
+  .fstep{ flex:1; background:var(--white); border:1.5px solid var(--line); border-radius:18px; padding:30px 16px 28px; text-align:center; display:flex; flex-direction:column; align-items:center; gap:12px; }
+  .fstep__num{ width:38px; height:38px; border-radius:50%; background:var(--acc); color:#fff; font-size:21px; font-weight:900; display:flex; align-items:center; justify-content:center; }
+  .fstep__ic{ width:64px; height:64px; border-radius:16px; background:var(--acc-tint); color:var(--acc); display:flex; align-items:center; justify-content:center; }
+  .fstep__ic .material-symbols-rounded{ font-size:38px; }
+  .fstep__t{ font-size:23px; font-weight:900; color:var(--ink); line-height:1.35; }
+  .fstep__d{ font-size:17px; color:var(--ink-soft); line-height:1.5; }
+  .farrow{ flex:none; color:var(--muted); }
+  .farrow .material-symbols-rounded{ font-size:34px; }
 
-  /* せりふ吹き出し（探り合いデモ） */
-  .talk{ display:flex; flex-direction:column; gap:18px; }
-  .bubble{ display:inline-flex; align-items:center; gap:14px; background:var(--white); border:2px solid var(--acc);
-    border-radius:999px; padding:16px 30px; font-size:27px; font-weight:900; color:var(--ink); align-self:flex-start;
-    box-shadow:0 6px 16px rgba(0,0,0,.08); }
-  .bubble .material-symbols-rounded{ font-size:30px; color:var(--acc); }
-  .bubble--r{ align-self:flex-end; border-color:var(--coral); }
-  .bubble--r .material-symbols-rounded{ color:var(--coral); }
-  .talk-mean{ font-size:22px; color:var(--ink-soft); line-height:1.6; margin-top:6px; }
-  .talk-mean b{ color:var(--acc); font-weight:900; }
+  /* 投票カードの模式図 */
+  .vote-demo{ display:flex; flex-direction:column; gap:18px; align-items:stretch; height:100%; justify-content:center; }
+  .vmock{ background:var(--white); border:1.5px solid var(--line); border-radius:18px; padding:24px 30px; box-shadow:0 8px 22px rgba(0,0,0,.08); }
+  .vmock__label{ font-size:17px; font-weight:700; color:var(--muted); letter-spacing:.06em; }
+  .vmock__name{ font-size:34px; font-weight:900; color:var(--purple); margin-top:4px; }
+  .vmock__q{ font-size:19px; color:var(--ink-soft); margin-top:8px; }
+  .vmock__opts{ display:flex; gap:12px; margin-top:14px; flex-wrap:wrap; }
+  .chip{ padding:10px 26px; border-radius:999px; border:2px solid var(--line); background:var(--paper); font-size:21px; font-weight:700; color:var(--ink); }
+  .chip.sel{ background:var(--acc); border-color:var(--acc); color:#fff; }
+  .vote-rule{ display:flex; gap:14px; align-items:center; background:var(--acc-tint); border-radius:14px; padding:16px 22px; font-size:21px; font-weight:700; color:var(--ink); }
+  .vote-rule .material-symbols-rounded{ font-size:26px; color:var(--acc); flex:none; }
 
-  /* 得点バッジ */
-  .pt{ display:inline-flex; align-items:center; justify-content:center; min-width:84px; height:48px; padding:0 14px;
-    border-radius:12px; color:#fff; font-size:26px; font-weight:900; flex:none; }
-  .pt--near{ background:var(--teal); } .pt--exact{ background:var(--coral); } .pt--zero{ background:#B9B9B9; }
+  /* 結果一覧の模式図 */
+  .result-demo{ display:flex; flex-direction:column; gap:14px; height:100%; justify-content:center; }
+  .rrow{ display:flex; align-items:center; gap:18px; background:var(--white); border:1.5px solid var(--line); border-radius:16px; padding:18px 28px; }
+  .rrow__changed{ font-size:27px; font-weight:900; color:var(--purple); flex:1; }
+  .rrow__arrow{ color:var(--muted); flex:none; } .rrow__arrow .material-symbols-rounded{ font-size:28px; }
+  .rrow__orig{ font-size:27px; font-weight:900; color:var(--ink); flex:none; }
+  .rrow__count{ font-size:18px; font-weight:700; color:var(--ink-soft); background:var(--acc-tint); border-radius:999px; padding:6px 16px; flex:none; }
 
   /* Q&A */
   .qa{ display:flex; flex-direction:column; gap:16px; }
@@ -97,7 +113,7 @@
   .qa__q{ display:flex; gap:13px; align-items:flex-start; font-size:23px; font-weight:900; color:var(--ink); }
   .qa__a{ display:flex; gap:13px; align-items:flex-start; font-size:21px; color:var(--ink-soft); margin-top:8px; line-height:1.5; }
   .qa__badge{ flex:none; width:34px; height:34px; border-radius:9px; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:900; font-size:19px; }
-  .qa__badge.q{ background:var(--blue); } .qa__badge.a{ background:var(--coral); }
+  .qa__badge.q{ background:var(--navy); } .qa__badge.a{ background:var(--teal); }
 
   /* タイトルスライド */
   .title-slide{ align-items:center; justify-content:center; text-align:center; padding-bottom:76px; }
@@ -136,8 +152,8 @@
 
   /* ナビ矢印 */
   .nav{ position:absolute; top:50%; transform:translateY(-50%); z-index:5; width:54px; height:54px; border-radius:50%; border:none; cursor:pointer;
-    background:rgba(67,67,67,.1); color:var(--ink); display:flex; align-items:center; justify-content:center; transition:.2s; opacity:0; }
-  #stage:hover .nav{ opacity:.5; } .nav:hover{ opacity:1 !important; background:rgba(67,67,67,.2); }
+    background:rgba(28,63,94,.1); color:var(--ink); display:flex; align-items:center; justify-content:center; transition:.2s; opacity:0; }
+  #stage:hover .nav{ opacity:.5; } .nav:hover{ opacity:1 !important; background:rgba(28,63,94,.2); }
   .nav .material-symbols-rounded{ font-size:32px; } .nav.prev{ left:16px; } .nav.next{ right:16px; }
 
   /* ツールバー */
@@ -164,7 +180,7 @@
   #pvNote:focus{ outline:none; border-color:var(--teal); box-shadow:0 0 0 3px rgba(46,125,140,.15); }
   .pv-actions{ display:flex; gap:10px; margin-top:14px; align-items:center; }
   .pv-copy{ flex:1; cursor:pointer; border:none; border-radius:12px; padding:15px; font-family:var(--font); font-size:18px; font-weight:900; color:#fff; background:var(--teal); display:flex; align-items:center; justify-content:center; gap:10px; box-shadow:0 6px 16px rgba(46,125,140,.28); transition:.15s; }
-  .pv-copy:active{ transform:translateY(1px); } .pv-copy.done{ background:#1F5E6B; }
+  .pv-copy:active{ transform:translateY(1px); } .pv-copy.done{ background:#256877; }
   .pv-copy .material-symbols-rounded{ font-size:22px; }
   .pv-reset{ cursor:pointer; border:1px solid var(--line); background:#fff; color:var(--muted); border-radius:12px; padding:15px 16px; font-family:var(--font); font-weight:700; font-size:14px; }
   .pv-reset:hover{ background:#F5F7F9; }
@@ -184,7 +200,7 @@
     <button class="nav next" id="navNext" aria-label="次へ"><span class="material-symbols-rounded">chevron_right</span></button>
     <div id="slides"></div>
     <div class="footer">
-      <div class="brand"><span class="material-symbols-rounded">visibility_off</span>かくれナンバー</div>
+      <div class="brand"><span class="material-symbols-rounded">manage_accounts</span>名前変えゲーム</div>
       <div class="dots" id="dots"></div>
       <div class="counter" id="counter">1 / 1</div>
     </div>
@@ -219,117 +235,124 @@
 </div>
 
 <script>
-/* ===== プレイヤーカードビルダー（自分の数字だけ「？」の見え方） ===== */
-function pcards(){
-  const players=[
-    ['ソラ','7'],['ミント','2'],['ラムネ','9'],
-    ['ポポ','5'],['わたし','？',true],
-  ];
-  return '<div class="pcards">'+players.map(([name,num,me])=>
-    `<div class="pcard${me?' pcard--me':''}"><div class="pcard__name">${name}</div><div class="pcard__num">${num}</div></div>`
-  ).join('')+'</div>';
-}
-
 const SLIDES = [
   /* 1 */ { type:'divider', accent:'teal', icon:'waving_hand', jp:'チェックイン', en:'check-in',
     sub:'今の気分を、ひとことどうぞ',
-    note:'まずはチェックインから！\n今の気分や、最近あったことを、ひとことチャットか声で教えてね\n（かくれナンバーの説明は、このあとすぐ！）' },
+    note:'まずはチェックインから！\n今の気分や、最近あったことを、ひとことチャットか声で教えてね\n（名前変えゲームの説明は、このあとすぐ！）' },
 
-  /* 2 */ { type:'title', note:'今日のゲームは『かくれナンバー』\n自分の数字だけが見えない、ふしぎな推理ゲーム。みんなに聞いたりヒントを集めたりして、全員の数字の合計を予想するよ！' },
+  /* 2 */ { type:'title', note:'今日のゲームは『名前変えゲーム』！\nMetalifeでこっそり名前を変えた人がいるよ。変わった名前がだれのものか、みんなで当てる推理ゲームだよ' },
 
   /* 3 */ { type:'content', accent:'teal', section:'ゲームについて', sectionEn:'summary',
-    headline:'<span class="hl">自分の数字だけ見えない</span>。<br>みんなの合計を予想する<ruby>推理<rt>すいり</rt></ruby>ゲーム',
+    headline:'<span class="hl">変わった名前</span>は、だれのもの？<br>みんなで当てる<ruby>推理<rt>すいり</rt></ruby>ゲーム',
     body:`<div class="rows">
-      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">casino</span></div><div><div class="row__t">1〜10の数字が、ひとりに1つくばられる</div><div class="row__d">くばるのはアプリ。同じ数字の人がいることもあるよ</div></div></div>
-      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">visibility_off</span></div><div><div class="row__t">他の人の数字は見える。自分のだけ「？」</div><div class="row__d">自分にだけ見えない、がこのゲームのいちばんの面白さ</div></div></div>
-      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">record_voice_over</span></div><div><div class="row__t">声で探り合って、全員の合計を予想する</div><div class="row__d">ゲームの本体は声のやりとり。画面はそのお手伝い</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">edit</span></div><div><div class="row__t">Metalife でこっそり名前チェンジ</div><div class="row__d">名前を変える人と、当てる人に分かれてあそぶよ</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">how_to_vote</span></div><div><div class="row__t">「この名前、あの人っぽい！」を投票</div><div class="row__d">名前のえらび方や、しゃべり方がヒントになるかも</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">celebration</span></div><div><div class="row__t">最後にまとめて答え合わせ</div><div class="row__d">勝ち負けはないよ。「何人に見やぶられたか」を楽しもう</div></div></div>
     </div>`,
-    note:'『かくれナンバー』は、ひとりに1つ、1〜10の数字がくばられる推理ゲーム。\n他の人の数字は見えるのに、自分のだけ「？」で見えない！\n声で探り合いながら、全員の数字の合計（自分の？も入れて）を予想するよ。' },
+    note:'『名前変えゲーム』は、Metalifeで名前を変えた人がだれなのかを当てる推理ゲーム。\n名前を変える人と、当てる人に分かれてあそびます。\n勝ち負けはなくて、「何人に見やぶられたかな？」をみんなで楽しむゲームだよ' },
 
-  /* 4 */ { type:'content', accent:'blue', section:'ゲーム説明', sectionEn:'explain', num:'1',
-    headline:'画面の見方：<span class="ul">自分だけ「？」</span>',
-    body:`<div class="pc-wrap">${pcards()}
-      <div class="pc-legend">
-        <div class="pc-note">みんなの数字は<b>ふつうに見える</b>。</div>
-        <div class="pc-note">でも自分のところだけ「<b>？</b>」。<br>自分の数字は、まわりのみんなが知ってる。</div>
-        <div class="pc-note" style="font-size:20px;color:var(--muted)">※ この例だと、合計は「？」しだいで 24〜33 のどれか</div>
+  /* 4 */ { type:'content', accent:'purple', section:'ゲーム説明', sectionEn:'explain', num:'1',
+    headline:'<ruby>役割<rt>やくわり</rt></ruby>は3つ',
+    body:`<div class="rows">
+      <div class="row"><div class="row__ic navy-bg" style="color:#fff"><span class="material-symbols-rounded">supervisor_account</span></div><div><div class="row__t">GM（進行役）</div><div class="row__d">ルームを作って、ゲームを進める人。投票や名前変えはしないよ</div></div></div>
+      <div class="row"><div class="row__ic purple-bg" style="color:#fff"><span class="material-symbols-rounded">edit</span></div><div><div class="row__t">名前変え役</div><div class="row__d">Metalife で名前を変えて、変えた名前をアプリに入力する人</div></div></div>
+      <div class="row"><div class="row__ic green-bg" style="color:#fff"><span class="material-symbols-rounded">how_to_vote</span></div><div><div class="row__t">投票役</div><div class="row__d">名前を変えていない人。変わった名前がだれのものか投票する</div></div></div>
+    </div>`,
+    note:'役割は3つあります。\nGM（進行役）… ルームを作ってゲームを進める人。投票はしません。\n名前変え役… Metalifeで名前を変えて、変えた名前をアプリに入力する人。\n投票役… 名前を変えていない人。変わった名前がだれのものか投票します。' },
+
+  /* 5 */ { type:'content', accent:'teal', section:'ゲーム説明', sectionEn:'explain', num:'2',
+    headline:'ゲームの<span class="hl">ながれ</span>は4ステップ',
+    body:`<div class="flow">
+      <div class="fstep"><div class="fstep__num">1</div><div class="fstep__ic"><span class="material-symbols-rounded">login</span></div><div class="fstep__t">ルームに集合</div><div class="fstep__d">コードを入れて<br>元の名前で参加</div></div>
+      <div class="farrow"><span class="material-symbols-rounded">chevron_right</span></div>
+      <div class="fstep"><div class="fstep__num">2</div><div class="fstep__ic"><span class="material-symbols-rounded">edit</span></div><div class="fstep__t">名前チェンジ</div><div class="fstep__d">変える人は Metalife で<br>名前を変えて入力</div></div>
+      <div class="farrow"><span class="material-symbols-rounded">chevron_right</span></div>
+      <div class="fstep"><div class="fstep__num">3</div><div class="fstep__ic"><span class="material-symbols-rounded">how_to_vote</span></div><div class="fstep__t">投票タイム</div><div class="fstep__d">どの名前がだれか<br>考えて投票</div></div>
+      <div class="farrow"><span class="material-symbols-rounded">chevron_right</span></div>
+      <div class="fstep"><div class="fstep__num">4</div><div class="fstep__ic"><span class="material-symbols-rounded">celebration</span></div><div class="fstep__t">答え合わせ</div><div class="fstep__d">まとめて<br>結果発表！</div></div>
+    </div>`,
+    note:'ゲームのながれは4ステップ。\n①ルームに集合（コードを入れて、元の名前で参加）\n②名前チェンジ（変える人はMetalifeで名前を変えて、アプリに入力）\n③投票タイム（どの名前がだれのものか投票）\n④答え合わせ（まとめて結果発表！）' },
+
+  /* 6 */ { type:'content', accent:'purple', section:'ゲーム説明', sectionEn:'explain', num:'3',
+    headline:'「変えた？ 変えてない？」を選ぶ',
+    body:`<div class="cols">
+      <div class="panel panel--purple">
+        <div class="team-head"><div class="team-ic purple-bg"><span class="material-symbols-rounded">edit</span></div><div class="team-name">名前を変えた</div></div>
+        <div class="role-row"><span class="material-symbols-rounded" style="color:var(--purple)">keyboard</span><div><b>変更後の名前を入力</b><span class="d">Metalife で変えた名前を、そのままアプリに入れてね</span></div></div>
+        <div class="role-row"><span class="material-symbols-rounded" style="color:var(--purple)">visibility_off</span><div><b>バレないようにドキドキ</b><span class="d">自分だと気づかれにくい名前だと盛り上がるよ</span></div></div>
+      </div>
+      <div class="panel panel--green">
+        <div class="team-head"><div class="team-ic green-bg"><span class="material-symbols-rounded">how_to_vote</span></div><div class="team-name">名前を変えていない</div></div>
+        <div class="role-row"><span class="material-symbols-rounded" style="color:var(--green)">touch_app</span><div><b>ボタンを押すだけでOK</b><span class="d">「名前を変えていない」を選ぶと投票役になるよ</span></div></div>
+        <div class="role-row"><span class="material-symbols-rounded" style="color:var(--green)">psychology</span><div><b>推理の準備をしよう</b><span class="d">だれがどんな名前にしそうか、想像しておこう</span></div></div>
       </div>
     </div>`,
-    note:'ゲームがはじまると、こんな画面になるよ。\n他の人のニックネームと数字はふつうに見えるけど、自分のところだけ「？」。\nつまり、自分の数字を知ってるのは自分以外の全員！ふしぎでしょ' },
+    note:'ゲームが始まったら、アプリで「名前を変えた」か「名前を変えていない」を選びます。\n名前を変えた人 → Metalifeで変えた名前を、そのままアプリに入力してね。\n変えていない人 → ボタンを押すだけで投票役になるよ。' },
 
-  /* 5 */ { type:'content', accent:'coral', section:'ゲーム説明', sectionEn:'explain', num:'2',
-    headline:'1ラウンドの<ruby>流<rt>なが</rt></ruby>れは3ステップ',
-    body:`<div class="rows">
-      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">forum</span></div><div><div class="row__t">① 声やチャットで探り合う</div><div class="row__d">「わたしの数字、大きい？」など、みんなに聞いてヒントを集める</div></div></div>
-      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">calculate</span></div><div><div class="row__t">② 合計を予想して「きめた」</div><div class="row__d">見えてる数字＋自分の「？」を想像して、合計の数字を入力</div></div></div>
-      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">celebration</span></div><div><div class="row__t">③ こたえあわせ</div><div class="row__d">全員の数字と本当の合計がオープン！ 自分の数字もやっと分かる</div></div></div>
+  /* 7 */ { type:'content', accent:'green', section:'ゲーム説明', sectionEn:'explain', num:'4',
+    headline:'投票タイム：<span class="hl">名前ごとに1人</span>を選ぶ',
+    body:`<div class="vote-demo">
+      <div class="vmock">
+        <div class="vmock__label">この名前はだれのもの？</div>
+        <div class="vmock__name">うちゅうねこ</div>
+        <div class="vmock__opts"><span class="chip">たろう</span><span class="chip sel">はな</span><span class="chip">みく</span></div>
+      </div>
+      <div class="vote-rule"><span class="material-symbols-rounded">rule</span>同じ人を、2つの名前に選ぶことはできないよ（1人1つまで）</div>
+      <div class="vote-rule"><span class="material-symbols-rounded">send</span>全部の名前に選び終わったら「投票する」を押そう</div>
     </div>`,
-    note:'1ラウンドの流れは3ステップ。\n①声やチャットでヒントを集めて、②合計を予想して「きめた」ボタン、③全員そろったら、こたえあわせ！\n自分の数字が何だったかも、ここでやっと分かるよ。' },
+    note:'投票タイムでは、変わった名前が1つずつ表示されるよ。\n「この名前はだれのもの？」を考えて、名前ごとに1人を選ぼう。\n同じ人を2つの名前に選ぶことはできません（1人1つまで）。\n全部選び終わったら「投票する」を押してね。' },
 
-  /* 6 */ { type:'content', accent:'teal', section:'ゲーム説明', sectionEn:'explain', num:'3',
-    headline:'<ruby>探<rt>さぐ</rt></ruby>り<ruby>合<rt>あ</rt></ruby>いのコツ：<span class="hl">聞いていい</span>んです',
-    body:`<div class="talk">
-      <div class="bubble"><span class="material-symbols-rounded">record_voice_over</span>わたしの数字、大きい？</div>
-      <div class="bubble bubble--r"><span class="material-symbols-rounded">chat</span>んー、まあまあかな…</div>
-      <div class="talk-mean">自分の数字のことを、みんなに<b>どんどん聞いてOK</b>。それがこのゲーム！<br>聞かれた人が<b>ウソをついていいか（あり／なし）</b>は、はじめにみんなで決めよう。</div>
+  /* 8 */ { type:'content', accent:'teal', section:'ゲーム説明', sectionEn:'explain', num:'5',
+    headline:'まとめて<span class="hl">答え合わせ</span>！',
+    body:`<div class="result-demo">
+      <div class="rrow"><span class="rrow__changed">うちゅうねこ</span><span class="rrow__arrow material-symbols-rounded">arrow_forward</span><span class="rrow__orig">はな</span><span class="rrow__count">3人中2人正解</span></div>
+      <div class="rrow"><span class="rrow__changed">モグモグ大王</span><span class="rrow__arrow material-symbols-rounded">arrow_forward</span><span class="rrow__orig">たろう</span><span class="rrow__count">3人中3人正解</span></div>
+      <div class="vote-rule"><span class="material-symbols-rounded">sentiment_satisfied</span>勝ち負け・得点はなし。「見やぶられたかどうか」をみんなで楽しもう</div>
     </div>`,
-    note:'探り合いのコツ！\n「わたしの数字、大きい？」「5より上？」って、みんなにどんどん聞いてOK。それがこのゲームだよ。\n聞かれた人がウソをついていいか（ウソあり／なし）は、はじめにみんなで決めよう' },
+    note:'全員が投票したら、まとめて答え合わせ！\n「変わった名前 → 元の名前」と、何人が正解したかが表示されるよ。\n勝ち負けや得点はありません。「見やぶられた〜！」「当たった！」をみんなで楽しもう' },
 
-  /* 7 */ { type:'content', accent:'coral', section:'ゲーム説明', sectionEn:'explain', num:'4',
-    headline:'<ruby>得点<rt>とくてん</rt></ruby>：いちばん<ruby>近<rt>ちか</rt></ruby>い人に<span class="hl">＋2点</span>',
-    body:`<div class="rows">
-      <div class="row"><div class="pt pt--near">＋2点</div><div><div class="row__t">本当の合計に、いちばん近かった人</div><div class="row__d">同じ近さの人がいたら、全員＋2点</div></div></div>
-      <div class="row"><div class="pt pt--exact">＋3点</div><div><div class="row__t">ぴったり当てたら、さらに＋1点</div><div class="row__d">合わせて＋3点。ねらってみよう</div></div></div>
-      <div class="row"><div class="pt pt--zero">±0</div><div><div class="row__t">はずれても、減点なし・脱落なし</div><div class="row__d">順位も出ないよ。次のラウンドでまた挑戦！</div></div></div>
-    </div>`,
-    note:'得点はシンプル！\n本当の合計にいちばん近かった人が＋2点（同着は全員）。ぴったりなら、さらに＋1点で合計＋3点\nはずれても減点なし、脱落もなし。何ラウンドでも挑戦できるよ。' },
-
-  /* 8 */ { type:'content', accent:'blue', section:'Q&A', sectionEn:'question & answer',
+  /* 9 */ { type:'content', accent:'green', section:'Q&A', sectionEn:'question & answer',
     headline:'よくある<ruby>質問<rt>しつもん</rt></ruby>',
     body:`<div class="qa">
-      <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>自分の数字のこと、聞いてもいいの？</div><div class="qa__a"><span class="qa__badge a">A</span>OK！それがこのゲーム。「大きい？」「偶数？」なんでも聞いてみよう。</div></div>
-      <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>聞かれたとき、ウソをついてもいい？</div><div class="qa__a"><span class="qa__badge a">A</span>「ウソあり」にするかは、はじめにみんなで決めるよ。どっちでも楽しい！</div></div>
-      <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>予想がはずれちゃったら？</div><div class="qa__a"><span class="qa__badge a">A</span>減点なし・脱落なし。次のラウンドで、また挑戦できるよ。</div></div>
+      <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>名前は、いつ変えるの？</div><div class="qa__a"><span class="qa__badge a">A</span>ゲームが始まってからの「名前チェンジタイム」で変えるよ。やり方がわからなかったら聞いてね。</div></div>
+      <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>どんな名前にしてもいい？</div><div class="qa__a"><span class="qa__badge a">A</span>自分だとバレにくい名前がおすすめ！ ただし、見た人が嫌な気持ちになる名前はナシでお願いします。</div></div>
+      <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>名前を変えたくないときは？</div><div class="qa__a"><span class="qa__badge a">A</span>変えなくてOK！ 投票役として推理を楽しんでね（変える人と投票する人が、1人ずつ以上いればあそべるよ）。</div></div>
     </div>`,
-    note:'よくある質問だよ\nQ. 自分の数字のこと、聞いていい？→ A. OK！それがこのゲーム。\nQ. ウソをついてもいい？→ A. 「ウソあり」にするかは、はじめにみんなで決めよう。\nQ. はずれたら？→ A. 減点なし・脱落なし。次のラウンドでまた挑戦！' },
+    note:'よくある質問だよ\nQ. 名前はいつ変えるの？→ A. ゲームが始まってからの「名前チェンジタイム」で変えるよ。\nQ. どんな名前でもいい？→ A. バレにくい名前がおすすめ！ 嫌な気持ちになる名前はナシでね。\nQ. 変えたくないときは？→ A. 変えなくてOK。投票役として推理を楽しもう！' },
 
-  /* 9 */ { type:'divider', accent:'blue', icon:'live_help', jp:'質問タイム', en:'any questions?',
+  /* 10 */ { type:'divider', accent:'green', icon:'live_help', jp:'質問タイム', en:'any questions?',
     sub:'気になることはある？',
     note:'ここまでで、質問がある人はいるかな？\nマイクON か チャットで教えてね！' },
 
-  /* 10 */ { type:'divider', accent:'coral', icon:'how_to_reg', jp:'参加確認', en:"let's check",
+  /* 11 */ { type:'divider', accent:'purple', icon:'how_to_reg', jp:'参加確認', en:"let's check",
     sub:'チャットで教えてね',
     note:'やってみたい人〜？\n「①参加」「②見学」「③その他」を、チャットで教えてね！' },
 
-  /* 11 */ { type:'divider', accent:'teal', solid:true, icon:'rocket_launch', jp:'＼ ゲームスタート ／', en:'game start',
-    sub:'ルームコードを送るよ！',
-    note:'それでは、かくれナンバー スタート！\nこのあとルームコードをチャットに送るので、ニックネームとコードを入れて入ってね。わからなくなったら、いつでも聞いてね' },
+  /* 12 */ { type:'divider', accent:'teal', solid:true, icon:'rocket_launch', jp:'＼ ゲームスタート ／', en:'game start',
+    sub:'まずはルームに集合！',
+    note:'それでは、名前変えゲームスタート！\nまずはルームに集合するよ。わからなくなったら、いつでも聞いてね' },
 
-  /* 12 */ { type:'divider', accent:'teal', icon:'casino', jp:'数字がくばられたよ', en:'numbers dealt',
-    sub:'自分のが「？」なら、そのままでOK',
-    note:'数字がくばられたよ！\n自分のところが「？」になってたら、それで正解。こわれてないよ\nみんなの数字をよ〜く見ておこう。' },
+  /* 13 */ { type:'divider', accent:'teal', icon:'login', jp:'ルームに集合', en:'join the room',
+    sub:'コード＋いまの名前で参加してね',
+    note:'ルームコードをチャットで送るよ！\n「ルームに参加する」を押して、コードと、いまのMetalifeでの名前（元の名前）を入れて参加してね。' },
 
-  /* 13 */ { type:'divider', accent:'coral', icon:'record_voice_over', jp:'さぐりあいタイム', en:'talk time',
-    sub:'聞いて、予想して、「きめた」！',
-    note:'さぐりあいタイム！\n「わたしの数字、大きい？」って、どんどん聞いてみよう。\n合計の予想が決まったら、数字を入れて「きめた」ボタンを押してね。' },
+  /* 14 */ { type:'divider', accent:'purple', icon:'edit', jp:'名前チェンジタイム', en:'name change',
+    sub:'変える人は Metalife で変身！',
+    note:'名前チェンジタイム！\n名前を変える人 → Metalifeで名前を変えて、アプリに「変更後の名前」を入力してね。\n変えない人 → 「名前を変えていない」を押して投票役になってね。' },
 
-  /* 14 */ { type:'divider', accent:'blue', icon:'celebration', jp:'こたえあわせ', en:'reveal',
-    sub:'本当の合計は…？',
-    note:'全員そろったので、こたえあわせ！\n本当の合計と、みんなの予想が出るよ。自分の数字もチェックしてみてね' },
+  /* 15 */ { type:'divider', accent:'green', icon:'how_to_vote', jp:'投票タイム', en:'voting',
+    sub:'この名前、だれっぽい？',
+    note:'投票タイム！\nそれぞれの名前がだれのものか、よ〜く考えて選んでね。\n全部選んだら「投票する」を押すのを忘れずに！' },
 
-  /* 15 */ { type:'divider', accent:'teal', icon:'replay', jp:'つぎのラウンド', en:'next round',
-    sub:'新しい数字でもう一回！',
-    note:'つぎのラウンドにいくよ〜！\n新しい数字がくばられるから、さっきのヒントはリセット。また探り合いからスタート！' },
-
-  /* 16 */ { type:'divider', accent:'teal', solid:true, icon:'emoji_events', jp:'けっか', en:'result',
-    sub:'おつかれさま！',
-    note:'かくれナンバー、おしまい！\nぴったり当たった瞬間もあったね。最後に「今日いちばんドキドキした場面」を、ひとことずつ教えて！' },
+  /* 16 */ { type:'divider', accent:'teal', solid:true, icon:'celebration', jp:'けっか', en:'result',
+    sub:'何人に見やぶられたかな？',
+    note:'けっか発表！\n変わった名前の正体を、まとめてオープンするよ。\n見やぶられた人も、だませた人も、最後にひとことずつ感想を聞かせてね！' },
 ];
 
 /* ===== ウィンドウ間同期 ===== */
-const channel = ('BroadcastChannel' in window) ? new BroadcastChannel('kakure_number_deck') : null;
-function send(msg){ if(channel) channel.postMessage(msg); try{ localStorage.setItem('kkn_msg', JSON.stringify({...msg,_t:Date.now()})); }catch(e){} }
-function onMsg(h){ if(channel) channel.onmessage=(e)=>h(e.data); window.addEventListener('storage',(e)=>{ if(e.key==='kkn_msg'&&e.newValue){ try{ h(JSON.parse(e.newValue)); }catch(err){} } }); }
+const channel = ('BroadcastChannel' in window) ? new BroadcastChannel('name_change_deck') : null;
+function send(msg){ if(channel) channel.postMessage(msg); try{ localStorage.setItem('nmc_msg', JSON.stringify({...msg,_t:Date.now()})); }catch(e){} }
+function onMsg(h){ if(channel) channel.onmessage=(e)=>h(e.data); window.addEventListener('storage',(e)=>{ if(e.key==='nmc_msg'&&e.newValue){ try{ h(JSON.parse(e.newValue)); }catch(err){} } }); }
 const isPresenter = new URLSearchParams(location.search).get('view')==='presenter';
 
 /* ===== レンダリング ===== */
@@ -337,14 +360,14 @@ function slideHTML(s){
   const acc = s.accent ? `accent-${s.accent}` : 'accent-teal';
   if(s.type==='title'){
     return `<section class="slide title-slide accent-teal">
-      <div class="title-ic"><span class="material-symbols-rounded">visibility_off</span></div>
-      <div class="title-jp">かくれナンバー</div>
-      <div class="title-en">kakure number</div>
-      <div class="title-tag">〜 見えないのは、自分の数字だけ 〜</div>
+      <div class="title-ic"><span class="material-symbols-rounded">manage_accounts</span></div>
+      <div class="title-jp">名前変えゲーム</div>
+      <div class="title-en">namae kae game</div>
+      <div class="title-tag">〜 変わった名前は、だれのもの？ 〜</div>
       <div class="title-meta">
-        <span class="m"><span class="material-symbols-rounded">group</span>ゲスト3〜8人（+ホスト）</span>
-        <span class="m"><span class="material-symbols-rounded">schedule</span>20分くらい</span>
-        <span class="m"><span class="material-symbols-rounded">psychology_alt</span>数字の推理ゲーム</span>
+        <span class="m"><span class="material-symbols-rounded">group</span>GM＋2人〜</span>
+        <span class="m"><span class="material-symbols-rounded">schedule</span>10〜20分</span>
+        <span class="m"><span class="material-symbols-rounded">how_to_vote</span>推理・投票ゲーム</span>
       </div></section>`;
   }
   if(s.type==='divider'){
@@ -389,14 +412,14 @@ if(!isPresenter){
   window.addEventListener('resize',fit); document.addEventListener('fullscreenchange',fit);
   function toggleFull(){ if(!document.fullscreenElement) document.documentElement.requestFullscreen?.(); else document.exitFullscreen?.(); }
   document.getElementById('btnFull').onclick=toggleFull;
-  function openPresenter(){ const url=new URL(location.href); url.searchParams.set('view','presenter'); url.hash=''; const w=window.open(url.toString(),'kkn_presenter','width=620,height=800'); if(!w) alert('発表者ノートのウィンドウがブロックされました。\nブラウザのポップアップを許可してから、もう一度お試しください。'); }
+  function openPresenter(){ const url=new URL(location.href); url.searchParams.set('view','presenter'); url.hash=''; const w=window.open(url.toString(),'nmc_presenter','width=620,height=800'); if(!w) alert('発表者ノートのウィンドウがブロックされました。\nブラウザのポップアップを許可してから、もう一度お試しください。'); }
   document.getElementById('btnPresenter').onclick=openPresenter;
   onMsg((m)=>{ if(m.t==='goto') goTo(m.i,false); else if(m.t==='hello') send({t:'idx',i:idx}); });
   fit(); render();
 }
 
 if(isPresenter){
-  document.title='発表者ノート — かくれナンバー';
+  document.title='発表者ノート — 名前変えゲーム';
   document.body.classList.add('presenter');
   document.getElementById('deck').style.display='none';
   document.getElementById('toolbar').style.display='none';
@@ -405,15 +428,15 @@ if(isPresenter){
   const $=(id)=>document.getElementById(id);
   const elCount=$('pvCount'), elTitle=$('pvTitle'), elLead=$('pvLead'), elNote=$('pvNote'), elNext=$('pvNextTitle'), elConn=$('pvConn');
   const btnCopy=$('pvCopy'), btnReset=$('pvReset'), btnPrev=$('pvPrev'), btnNext=$('pvNext');
-  let cur=0; const KEY=(i)=>'kkn_note_'+i;
+  let cur=0; const KEY=(i)=>'nmc_note_'+i;
   function label(s){
-    if(s.type==='title') return 'かくれナンバー（タイトル）';
+    if(s.type==='title') return '名前変えゲーム（タイトル）';
     if(s.type==='divider') return s.jp.replace(/[＼／]/g,'').trim()+'（区切り）';
     return `${s.section}${s.num?' '+s.num:''} ／ ${s.sectionEn}`;
   }
   function plain(html){ const d=document.createElement('div'); d.innerHTML=html||''; d.querySelectorAll('rt').forEach(r=>r.remove()); return (d.textContent||'').replace(/\s+/g,' ').trim(); }
   function titleOf(s){
-    if(s.type==='title') return 'かくれナンバー';
+    if(s.type==='title') return '名前変えゲーム';
     if(s.type==='divider') return s.jp;
     return plain(s.headline);
   }
