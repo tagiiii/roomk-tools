@@ -288,6 +288,52 @@ else
 fi
 
 # ─────────────────────────────────────────────────────
+# [PORTAL-2] data-scenes チェック
+#   ポータルの表示中カード全てに data-scenes があり、
+#   シーンキーが有効値のみかを検証（AGENTS.md「利用シーンタグ」）
+# ─────────────────────────────────────────────────────
+echo ""
+echo -e "${BOLD}[PORTAL-2] ポータルカード data-scenes チェック${NC}"
+
+PORTAL2_OUT=$(python3 - <<'PYEOF'
+import re
+
+with open('apps/index.html', encoding='utf-8') as f:
+    html = f.read()
+
+# コメントアウトされた非表示カードは対象外
+html = re.sub(r'<!--.*?-->', '', html, flags=re.S)
+
+VALID = {'kotoba', 'bodoge', 'hiroba', 'circle', 'sakusen'}
+
+for m in re.finditer(r'<a class="app-card"([^>]*)>', html):
+    attrs = m.group(1)
+    href = re.search(r'href="([^"]+)"', attrs)
+    name = href.group(1) if href else '(href 不明)'
+    ds = re.search(r'data-scenes="([^"]*)"', attrs)
+    if not ds:
+        print(f'{name}: data-scenes がありません（キー: kotoba/bodoge/hiroba/circle/sakusen）')
+        continue
+    scenes = ds.group(1).split()
+    if not scenes:
+        print(f'{name}: data-scenes が空です')
+        continue
+    bad = [s for s in scenes if s not in VALID]
+    if bad:
+        print(f'{name}: 不明なシーンキー {", ".join(bad)}（有効: kotoba/bodoge/hiroba/circle/sakusen）')
+PYEOF
+)
+
+if [ -n "$PORTAL2_OUT" ]; then
+  while IFS= read -r line; do
+    echo -e "  ${RED}[ERROR]${NC} $line"
+    ERRORS=$((ERRORS + 1))
+  done <<< "$PORTAL2_OUT"
+else
+  echo -e "  ${GREEN}OK${NC}"
+fi
+
+# ─────────────────────────────────────────────────────
 # 結果サマリ
 # ─────────────────────────────────────────────────────
 echo ""

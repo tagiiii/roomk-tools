@@ -56,6 +56,10 @@ roomk-tools/
 ポータルのカードは `data-scenes` 属性で利用シーンを持ち、上部のフィルタチップで
 絞り込める。シーンバッジはこの属性から自動描画されるので、カード HTML にバッジを
 手書きしない。1つのツールが複数シーンに属してよい（スペース区切り）。
+`data-scenes` の有無とキーの妥当性は lint（PORTAL-2）で検証される。
+
+選択中のシーンは URL ハッシュと同期する（例: `…/apps/#scene=bodoge`）。
+シーン別リンクとしてチャットに貼れば、そのシーンで絞り込んだ状態で開ける。
 
 ```html
 <a class="app-card" href="{app-name}/" data-scenes="hiroba sakusen">

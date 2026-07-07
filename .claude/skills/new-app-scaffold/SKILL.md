@@ -28,6 +28,7 @@ description: roomK ツール群に新しいアプリを追加するときの手�
 - `app-card__icon` の Material Symbols アイコン名
 - `app-card__name` / `app-card__desc`
 - `meta-badge` × 3（人数・所要時間・特記事項）
+- **`data-scenes` 属性（必須）**: 利用シーンをスペース区切りで指定（例: `data-scenes="hiroba sakusen"`）。キーは `kotoba` / `bodoge` / `hiroba` / `circle` / `sakusen` の5種（定義は AGENTS.md「利用シーンタグ」参照）。シーンバッジは自動描画されるのでカード HTML に手書きしない
 
 あわせて `apps/updates.json` の**先頭**に更新情報を1エントリ追記する（`type: "new"`、フォーマットは AGENTS.md「更新情報」参照）。ポータルの更新情報欄と NEW フラグはここから自動描画される。
 
@@ -49,7 +50,7 @@ description: roomK ツール群に新しいアプリを追加するときの手�
 ## 完了チェックリスト
 
 - [ ] apps/{name}/ 一式（パターン準拠）
-- [ ] apps/index.html にカード追加
+- [ ] apps/index.html にカード追加（data-scenes 必須）
 - [ ] apps/updates.json に更新情報を追記（type: "new"）
 - [ ] 共通「あそびかた／つかいかた」モーダル組み込み（shared/js/howto.js、AGENTS.md「howto.js」参照）
 - [ ] apps/{name}/AGENTS.md（逸脱の明文化を含む）

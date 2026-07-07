@@ -1559,18 +1559,36 @@
         card.querySelector('.app-card__body').appendChild(row);
       });
 
-      // フィルタチップで絞り込み
+      // フィルタチップで絞り込み。選択状態は URL ハッシュ（#scene=bodoge）と同期し、
+      // シーン別リンクを共有したりリロードしても選択が保てるようにする。
       const chips = document.querySelectorAll('.scene-filter__chip');
+
+      function applyScene(scene) {
+        if (scene !== 'all' && !SCENE_LABELS[scene]) scene = 'all';
+        chips.forEach((c) => c.setAttribute('aria-pressed', String(c.dataset.scene === scene)));
+        cards.forEach((card) => {
+          const scenes = (card.dataset.scenes || '').split(' ');
+          card.hidden = scene !== 'all' && !scenes.includes(scene);
+        });
+      }
+
+      function sceneFromHash() {
+        const m = location.hash.match(/^#scene=([a-z]+)$/);
+        return m ? m[1] : 'all';
+      }
+
       chips.forEach((chip) => {
         chip.addEventListener('click', () => {
-          chips.forEach((c) => c.setAttribute('aria-pressed', String(c === chip)));
           const scene = chip.dataset.scene;
-          cards.forEach((card) => {
-            const scenes = (card.dataset.scenes || '').split(' ');
-            card.hidden = scene !== 'all' && !scenes.includes(scene);
-          });
+          applyScene(scene);
+          history.replaceState(null, '', scene === 'all'
+            ? location.pathname + location.search
+            : '#scene=' + scene);
         });
       });
+
+      window.addEventListener('hashchange', () => applyScene(sceneFromHash()));
+      applyScene(sceneFromHash());
     })();
   </script>
 
