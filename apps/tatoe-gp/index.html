@@ -11,6 +11,12 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <script src="../shared/js/rtdb-utils.js"></script>
+  <script type="module">
+    // 共通ユーティリティを利用（REF-3: shuffle / escapeHtml の重複定義を解消）
+    import { shuffle, escapeHtml } from '../shared/js/utils.js';
+    window.shuffle = shuffle;
+    window.escapeHtml = escapeHtml;
+  </script>
   <link rel="stylesheet" href="../shared/css/design-system.css">
   <style>
     .screen { display: none; min-height: 100dvh; }
@@ -1000,24 +1006,6 @@
   }
 
   const generateRoomCode = RoomkRTDB.generateRoomCode;
-
-  function shuffle(array) {
-    const next = [...array];
-    for (let index = next.length - 1; index > 0; index -= 1) {
-      const randomIndex = Math.floor(Math.random() * (index + 1));
-      [next[index], next[randomIndex]] = [next[randomIndex], next[index]];
-    }
-    return next;
-  }
-
-  function escapeHtml(value) {
-    return String(value)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#39;');
-  }
 
   function validateNickname(value) {
     const trimmed = value.trim();

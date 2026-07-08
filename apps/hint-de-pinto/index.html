@@ -11,6 +11,11 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <script src="../shared/js/rtdb-utils.js"></script>
+  <script type="module">
+    // 共通ユーティリティを利用（REF-3: shuffle の重複定義を解消）
+    import { shuffle } from '../shared/js/utils.js';
+    window.shuffle = shuffle;
+  </script>
   <style>
     /* ── 画面管理 ── */
     .screen { display: none; min-height: 100dvh; }
@@ -549,15 +554,6 @@ function esc(s) {
 }
 
 const genCode = RoomkRTDB.generateRoomCode;
-
-function shuffle(arr) {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
 
 function normalize(str) {
   const smallMap = {
