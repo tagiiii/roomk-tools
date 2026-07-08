@@ -181,8 +181,8 @@
   <tr><td>5</td><td><a href="#c5">漢字のひみつ</a></td><td><code>kanji-himitsu</code></td><td>10 → 20問</td><td><span class="badge badge-p2">Phase 2</span></td></tr>
   <tr><td>6</td><td><a href="#c6">ことばの文化</a></td><td><code>kotoba-bunka</code></td><td>10 → 20問</td><td><span class="badge badge-p2">Phase 2</span></td></tr>
   <tr><td>7</td><td><a href="#c7">ことばの雑学王2</a></td><td><code>zatsugaku-king-2</code></td><td>10 → 20問</td><td><span class="badge badge-p2">Phase 2</span></td></tr>
-  <tr><td>—</td><td>難読7本</td><td><code>nandoku-*</code></td><td>据え置き判断</td><td><span class="badge badge-p3">Phase 3</span></td></tr>
-  <tr><td>—</td><td>新テーマ難問パック</td><td>—</td><td>新規20問</td><td><span class="badge badge-p3">Phase 4</span></td></tr>
+  <tr><td>—</td><td>難読7本</td><td><code>nandoku-*</code></td><td>据え置き確定</td><td><span class="badge badge-p3">Phase 3 済</span></td></tr>
+  <tr><td>8</td><td>くらしの推理クイズ（新規）</td><td><code>kurashi-suiri</code></td><td>新規20問</td><td><span class="badge badge-p3">Phase 4 済</span></td></tr>
 </table>
 </div>
 
@@ -546,21 +546,23 @@ apps/updates.json の先頭付近に quiz の更新を反映する。今日の�
   </div>
 </div>
 
-<h2>5. Phase 3・4（後続・運用しながら判断）</h2>
-<div class="card">
-  <strong>Phase 3：難読7本（nandoku-*）</strong>
+<h2>5. Phase 3・4</h2>
+<div class="decision">
+  <strong>Phase 3：難読7本は据え置きで確定（2026-07-08・codex 相談）</strong>
   <ul>
-    <li>個別パックを20問化するか、<code>難読まぜこぜ</code>（7本合計70問で母数十分）前提で個別は据え置くかを、Phase 1・2 の運用を見て判断する。急がない。</li>
-    <li>やる場合の手順は Phase 1 と同一（各 +10問／d1:+1・d2:+3・d3:+6、id は各プレフィックスの連番）。</li>
+    <li>個別の難読7パックは各10問のままとし、20問化しない。</li>
+    <li>理由：<code>難読まぜこぜ</code>（nandoku-shuffle）が7本合計70問・d3:28を持ち、まぜこぜ側では10問チャレンジが成立しているため。</li>
+    <li>難読地名・駅名は実在情報の確認コストが高く、70問追加すると読み・表記・地域バランスの誤り混入リスクが大きい。d3の「理由で考える」思想とも相性がやや悪い（知っているか勝負になりやすい）。</li>
+    <li>今後、特定地域パックへの強い運用ニーズが出た場合のみ、個別増強を再検討する。</li>
   </ul>
 </div>
-<div class="card">
-  <strong>Phase 4：新テーマ難問パック（new-app ではなく questions.js への新パック追加）</strong>
+<div class="decision">
+  <strong>Phase 4：新パック「くらしの推理クイズ」を追加・完了（2026-07-08）</strong>
   <ul>
-    <li>「もっと手ごたえがほしい」層への拡張。候補テーマ：<code>身近ななぜ？クイズ</code>／<code>ことばの使い分けクイズ</code>／<code>くらしの推理クイズ</code>。</li>
-    <li>配分は既存増強と同じ原則 <code>d1:3 / d2:7 / d3:10</code>（計20問）でブレさせない。</li>
-    <li>新規は最初から20問でもよいが、品質重視なら10問ずつ2回に分ける。</li>
-    <li>難問中心のパックにするなら、TOP の「手ごたえあり」セクションに出すため <code>apps/quiz/app.js</code> の <code>CHALLENGE_PACK_IDS</code> に id を追加する。</li>
+    <li>id <code>kurashi-suiri</code>／アイコン <code>manage_search</code>／20問（d1:3 / d2:7 / d3:10）を <code>questions.js</code> に追加。<code>app.js</code> の <code>CHALLENGE_PACK_IDS</code> に登録し、TOP の「手ごたえあり」セクションに表示。</li>
+    <li>方向性は「雑学」ではなく<strong>観察ゲーム</strong>。日常の場面（かげ・かわき方・風・温度差・光など）を手がかりに、知識ではなく筋道で答えを推理する。既存の理科雑学（雑学3択の追加分）と差別化。</li>
+    <li>歯止め：犯人当て・うそを見抜く・失敗の原因さがしにはしない。事故・ケガ・叱責につながる場面を避ける。問いは「いちばん考えやすいのは？」、解説は「手がかり→考え方→答え」。</li>
+    <li>今後さらに増やす場合の候補テーマ：<code>ことばの使い分けクイズ</code> など（配分は同原則 d1:3/d2:7/d3:10）。</li>
   </ul>
 </div>
 

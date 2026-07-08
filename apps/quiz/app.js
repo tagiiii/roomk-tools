@@ -11,6 +11,7 @@ const CHALLENGE_PACK_IDS = new Set([
   'kotowaza',
   'machigai-nihongo',
   'douongigo',
+  'kurashi-suiri',
 ]);
 
 function createShufflePack({ id, name, description, icon, packs }) {
