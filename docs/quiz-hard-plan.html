@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>クイズパック 難問増強 制作計画（D案） — roomK</title>
+<style>
+  :root {
+    --primary: #1C3F5E;
+    --accent: #2E7D8C;
+    --bg: #F5F2EC;
+    --surface: #FFFFFF;
+    --text: #1A1A1A;
+    --muted: #5A6270;
+    --border: #C4D2D8;
+    --success: #1F6E3C;
+    --warn: #9A6700;
+    --error: #B91C1C;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Hiragino Sans", "Noto Sans JP", "Yu Gothic", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.75;
+  }
+  .wrap { max-width: 920px; margin: 0 auto; padding: 40px 20px 100px; }
+  header h1 { color: var(--primary); font-size: 26px; margin: 0 0 4px; }
+  header .sub { color: var(--muted); font-size: 14px; margin-bottom: 8px; }
+  h2 {
+    color: var(--primary);
+    font-size: 20px;
+    border-left: 5px solid var(--accent);
+    padding-left: 12px;
+    margin: 48px 0 16px;
+  }
+  h3 { color: var(--primary); font-size: 17px; margin: 28px 0 8px; }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin: 16px 0;
+  }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; background: var(--surface); }
+  th, td { border: 1px solid var(--border); padding: 8px 10px; text-align: left; vertical-align: top; }
+  th { background: #E8EEF1; color: var(--primary); white-space: nowrap; }
+  .table-scroll { overflow-x: auto; }
+  .badge {
+    display: inline-block; font-size: 11.5px; font-weight: 700;
+    padding: 2px 10px; border-radius: 999px; white-space: nowrap;
+  }
+  .badge-p1 { background: #E3F0E8; color: var(--success); }
+  .badge-p2 { background: #FFF4DE; color: var(--warn); }
+  .badge-p3 { background: #EDE7F6; color: #5B3FA0; }
+  .badge-tech { background: #E8EEF1; color: var(--accent); }
+  ul { padding-left: 22px; }
+  li { margin: 4px 0; }
+  .note { font-size: 13px; color: var(--muted); }
+  .decision { border-left: 4px solid var(--success); background: #F3F8F4; padding: 12px 16px; border-radius: 0 8px 8px 0; margin: 12px 0; }
+  .caution { border-left: 4px solid var(--warn); background: #FDF8EE; padding: 12px 16px; border-radius: 0 8px 8px 0; margin: 12px 0; }
+
+  .content-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin: 24px 0;
+    overflow: hidden;
+  }
+  .content-block__head {
+    padding: 16px 24px 12px;
+    border-bottom: 1px solid var(--border);
+    background: #FAFCFC;
+  }
+  .content-block__head h3 { margin: 0 0 4px; }
+  .content-block__meta { font-size: 12.5px; color: var(--muted); }
+  .content-block__body { padding: 16px 24px 20px; }
+  .prompt-box { position: relative; margin-top: 12px; }
+  .prompt-box textarea {
+    width: 100%;
+    height: 340px;
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+    font-size: 12px;
+    line-height: 1.6;
+    padding: 14px;
+    padding-top: 44px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: #F8F9FA;
+    color: #333;
+    resize: vertical;
+  }
+  .copy-btn {
+    position: absolute; top: 8px; right: 8px;
+    background: var(--accent); color: #fff;
+    border: none; border-radius: 6px;
+    padding: 6px 16px; font-size: 13px; font-weight: 700;
+    cursor: pointer;
+  }
+  .copy-btn:hover { opacity: 0.85; }
+  .copy-btn.copied { background: var(--success); }
+  .toc { font-size: 14px; }
+  .toc a { color: var(--accent); text-decoration: none; }
+  .toc a:hover { text-decoration: underline; }
+  footer { margin-top: 60px; font-size: 12px; color: var(--muted); text-align: center; }
+  @media (max-width: 600px) {
+    .wrap { padding: 24px 12px 60px; }
+    .content-block__body, .content-block__head { padding-left: 14px; padding-right: 14px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>クイズパック 難問増強 制作計画（D案）</h1>
+  <div class="sub">apps/quiz/ ／ 現場の「問題が少ない・簡単すぎる」への根本対応 ／ 2026-07-08 作成</div>
+</header>
+
+<div class="card">
+  <strong>この計画書の使い方</strong>
+  <ul>
+    <li>上から順に1バッチ（＝1パックに10問追加）ずつ作ります。各パックの「実装プロンプト」をコピーして、Claude Code にそのまま貼り付ければ実装が始まります。</li>
+    <li>1バッチ作るごとに「実装 → 既存問題との重複＆事実監査（別視点） → <code>bash scripts/lint.sh</code> → メンター実機 → コミット」まで回してから次に進みます。</li>
+    <li>Phase 3・4 は Phase 1・2 の運用で見えたことを反映してから着手します。</li>
+  </ul>
+</div>
+
+<h2>0. なぜやるか（背景と決定事項）</h2>
+
+<div class="card">
+  <p>現場から「クイズの問題が少ない・簡単すぎる」という声が出ていた。<strong>2026-07-08、まず出し方（UI）を改善済み</strong>：問題数（5問／10問／ぜんぶ）× 手ごたえ（ふつう／チャレンジ）を選べるようにし、チャレンジは d3（むずかしめ）中心で出題する。</p>
+  <p>ただし1点だけ在庫の限界が残った。<strong>多くの10問パックは d3 が4問しかなく、10問チャレンジに必要な d3:7 を満たせない</strong>。そのため現状の実装では、10問パックで10問／ぜんぶを選ぶと手ごたえが自動で「ふつう」に固定される（配分を変えられないため）。この根本を埋めるのが D案＝難問コンテンツの増強である。</p>
+</div>
+
+<h3>設計原則（codex 相談で確定）</h3>
+<div class="decision">
+  <strong>主軸は「既存10問パックの20問化」。</strong>新しい難問パックを増やすより先に、よく使う既存パックの d3 在庫そのものを増やす。パックを分裂させず、TOP を複雑にしない。
+</div>
+<div class="card">
+  <strong>1パックあたりの目標在庫</strong>
+  <ul>
+    <li>現状の多くの10問パック： <code>d1:2 / d2:4 / d3:4</code>（計10問）</li>
+    <li>目標： <code>d1:3 / d2:7 / d3:10</code>（計20問）</li>
+    <li>追加する10問の内訳： <strong>d1:+1 / d2:+3 / d3:+6</strong></li>
+  </ul>
+  <p class="note">これで「5問ふつう／10問ふつう／5問チャレンジ／10問チャレンジ」がすべて成立する。d3 は7ぴったりではなく10問持たせ、1回目の10問チャレンジ成立に余裕を出す（20問中 d3:10 が「ずっと考えさせられる疲れ」を出さない上限感）。※2回連続の10問チャレンジを重複なしで完全成立させるには d3:14 必要だが、そこまでは狙わない。</p>
+</div>
+
+<h3>「d3（理由を話したくなる）」の良問の作り方</h3>
+<div class="card">
+  <p><strong>判定基準：答えを知らなくても、選択肢を見て理由を話せるなら d3。知らないと何もできないなら、難問ではなく「マニアック問題」なので不採用。</strong></p>
+  <ul>
+    <li>問いは「なぜ？」「どれがいちばん近い？」「どう考えると自然？」に寄せる。</li>
+    <li>選択肢は3つとも一応それっぽくする。ただし意地悪なひっかけにはしない。</li>
+    <li>正解後に「なるほど」と言える理由がある。</li>
+    <li>「知らないと無理」な固有名詞・年号・専門知識に依存させない。</li>
+    <li>間違いを責めず、「そう思いやすいけど、ここを見ると…」の形にする。</li>
+  </ul>
+</div>
+
+<h3>表現・非評価ルール（既存 AGENTS.md 準拠）</h3>
+<div class="card">
+  <ul>
+    <li>問題・解説は学校／成績／恋愛／暴力／ホラーを避ける。</li>
+    <li>絵文字は使わず Material Symbols を使う（データ側は問題文・解説のトーンの話）。</li>
+    <li>解説は先生っぽくしない。「覚えておこう」「正しくは」ではなく「ここを見るとわかりやすい」「そう考えると自然」。</li>
+    <li>スコアは出すが、体験は「面白かった問題」に寄せる（roomK の非評価思想）。</li>
+  </ul>
+</div>
+
+<h2>1. 全体ロードマップ</h2>
+<div class="table-scroll">
+<table>
+  <tr><th>#</th><th>パック</th><th>id</th><th>現状→目標</th><th>フェーズ</th></tr>
+  <tr><td>1</td><td><a href="#c1">雑学3択クイズ</a></td><td><code>zatsugaku-3choice</code></td><td>10 → 20問</td><td><span class="badge badge-p1">Phase 1</span></td></tr>
+  <tr><td>2</td><td><a href="#c2">連続2択クイズ</a></td><td><code>series-2choice</code></td><td>10 → 20問</td><td><span class="badge badge-p1">Phase 1</span></td></tr>
+  <tr><td>3</td><td><a href="#c3">ことばクイズ</a></td><td><code>kotoba-quiz</code></td><td>10 → 20問</td><td><span class="badge badge-p1">Phase 1</span></td></tr>
+  <tr><td>4</td><td><a href="#c4">漢字クイズ</a></td><td><code>kanji-quiz</code></td><td>10 → 20問</td><td><span class="badge badge-p1">Phase 1</span></td></tr>
+  <tr><td>5</td><td><a href="#c5">漢字のひみつ</a></td><td><code>kanji-himitsu</code></td><td>10 → 20問</td><td><span class="badge badge-p2">Phase 2</span></td></tr>
+  <tr><td>6</td><td><a href="#c6">ことばの文化</a></td><td><code>kotoba-bunka</code></td><td>10 → 20問</td><td><span class="badge badge-p2">Phase 2</span></td></tr>
+  <tr><td>7</td><td><a href="#c7">ことばの雑学王2</a></td><td><code>zatsugaku-king-2</code></td><td>10 → 20問</td><td><span class="badge badge-p2">Phase 2</span></td></tr>
+  <tr><td>—</td><td>難読7本</td><td><code>nandoku-*</code></td><td>据え置き判断</td><td><span class="badge badge-p3">Phase 3</span></td></tr>
+  <tr><td>—</td><td>新テーマ難問パック</td><td>—</td><td>新規20問</td><td><span class="badge badge-p3">Phase 4</span></td></tr>
+</table>
+</div>
+
+<h3>この順番の理由</h3>
+<div class="card">
+  <ul>
+    <li><strong>Phase 1（基本4パック）</strong>：いちばん使われる基本パックから。ここが20問化すれば「10問チャレンジ」がまず主力パックで成立する。</li>
+    <li><strong>Phase 2（ことば系3パック）</strong>：ことばであそぼ連携で使う3本。<code>ことばであそぼ総集編</code> は混合パックで重複が起きやすいため優先度を下げ、当面は増強しない。</li>
+    <li><strong>Phase 3（難読7本）</strong>：個別に増やすか、<code>難読まぜこぜ</code>（母数十分）前提で据え置くかを運用で判断。急がない。</li>
+    <li><strong>Phase 4（新テーマ）</strong>：主要パック増強後、「もっと手ごたえがほしい」層への拡張。例：<code>身近ななぜ？クイズ</code>／<code>ことばの使い分けクイズ</code>／<code>くらしの推理クイズ</code>。新規は10問ずつ2回に分けて品質を担保。</li>
+  </ul>
+  <p class="note">Phase 1・2 で7パックが20問化すると、d3 総在庫は現状 +42問（各パック d3:+6）。10問チャレンジが主要パックで成立し、体感の「少ない・簡単すぎる」はほぼ解消する見込み。</p>
+</div>
+
+<h2>2. 制作の進め方（1バッチ＝1パックに10問追加）</h2>
+<div class="card">
+  <ol>
+    <li>下の実装プロンプトをコピーして Claude Code に貼り付ける。</li>
+    <li>実装後、<strong>別視点で監査</strong>：(a) 既存問題と題材・正解・解説が重ならないか、(b) 事実系（雑学・漢字由来など）にもっともらしい誤情報が入っていないか。</li>
+    <li><code>bash scripts/lint.sh</code> を通す。</li>
+    <li><code>apps/updates.json</code> に quiz の更新を反映（同日の複数パックは1エントリにまとめる。プロンプト内に指示あり）。</li>
+    <li>メンター実機で数問出してみて、d3 が「相談すると考えが進む」になっているか確認。</li>
+    <li>コミット。次のバッチへ。</li>
+  </ol>
+</div>
+
+<h2>3. Phase 1（基本4パック）</h2>
+
+<!-- ============ 1 ============ -->
+<div class="content-block" id="c1">
+  <div class="content-block__head">
+    <h3>1. 雑学3択クイズ を20問化</h3>
+    <div class="content-block__meta">
+      <span class="badge badge-p1">Phase 1</span>
+      <span class="badge badge-tech">id: zatsugaku-3choice</span>
+      　+10問（d1:+1 / d2:+3 / d3:+6）
+    </div>
+  </div>
+  <div class="content-block__body">
+    <p>身のまわりの生き物・自然・食べもの中心の3択雑学。d3 は「なぜそうなる？」を選択肢で考えられる問いにする。</p>
+    <div class="prompt-box">
+      <button class="copy-btn" onclick="copyPrompt(this)">コピー</button>
+      <textarea readonly>apps/quiz/ のクイズパック「雑学3択クイズ」(id: zatsugaku-3choice) に問題を10問追加して、10問パックを20問パックにしてください。まず apps/quiz/AGENTS.md と apps/quiz/questions.js の該当パックを読んで、既存の作法・トーンに合わせること。
+
+# 目的
+このパックで「10問チャレンジ」(難易度3を7問要求) が成立するよう、難易度3の在庫を増やす。
+
+# 追加する10問の内訳（difficulty）
+- difficulty:1 を 1問（id は z11）
+- difficulty:2 を 3問（id は z12〜z14）
+- difficulty:3 を 6問（id は z15〜z20）
+最終的にパックは d1:3 / d2:7 / d3:10 の計20問になる。
+
+# データ形式（既存と同一）
+{ id, difficulty, question, choices（3択）, answerIndex, explanation } を questions パック末尾に追記。id は z11〜z20 で連番。
+
+# difficulty:3（理由を話したくなる）の作り方 ★最重要
+- 判定基準: 答えを知らなくても、選択肢を見て理由を話せるなら d3。知らないと何もできない「マニアック問題」は不採用。
+- 問いは「なぜ？」「どれがいちばん近い？」「どう考えると自然？」に寄せる。
+- 選択肢3つとも一応それっぽくする。ただし意地悪なひっかけにはしない。
+- 「知らないと無理」な固有名詞・年号・専門知識に依存させない。
+
+# トーン・禁止事項（AGENTS.md 準拠）
+- 題材は生き物・自然・食べもの・くらしの身近な雑学。
+- 学校/成績/恋愛/暴力/ホラーを避ける。
+- 解説は先生っぽくしない。「覚えておこう」「正しくは」ではなく「ここを見るとわかりやすい」「そう考えると自然」。間違いを責めない。
+- 解説は2〜3文で短く。
+
+# 重複回避
+既存の z01〜z10 と題材・正解・解説が重ならないこと（似たテーマでも問いの角度を変える）。
+
+# 更新情報（AGENTS.md 準拠）
+apps/updates.json の先頭付近に quiz の更新を反映する。今日の日付で app:"quiz"・type:"update" のエントリが既にあれば、その text にこのパック名を追記する。なければ1件だけ追加する（例: { "date": "YYYY-MM-DD", "app": "quiz", "type": "update", "text": "クイズパックの一部パックに問題を10問ずつ追加。手ごたえ『チャレンジ』がより成立するように" }）。同日の複数パックで更新エントリを増やしすぎないこと。
+
+# 完成条件
+- bash scripts/lint.sh が通る
+- 追加10問が上記ガイドラインに適合しているかセルフチェックした結果を報告
+- 事実系はもっともらしい誤りが無いか確認した旨を報告</textarea>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 2 ============ -->
+<div class="content-block" id="c2">
+  <div class="content-block__head">
+    <h3>2. 連続2択クイズ を20問化</h3>
+    <div class="content-block__meta">
+      <span class="badge badge-p1">Phase 1</span>
+      <span class="badge badge-tech">id: series-2choice</span>
+      　+10問（d1:+1 / d2:+3 / d3:+6）
+    </div>
+  </div>
+  <div class="content-block__body">
+    <p>「どっちがホント？」の2択形式（choices は2つ）。d3 は「どちらもありそう」に見せて、理由で片方に絞れる問いにする。</p>
+    <div class="prompt-box">
+      <button class="copy-btn" onclick="copyPrompt(this)">コピー</button>
+      <textarea readonly>apps/quiz/ のクイズパック「連続2択クイズ」(id: series-2choice) に問題を10問追加して、10問パックを20問パックにしてください。まず apps/quiz/AGENTS.md と apps/quiz/questions.js の該当パックを読んで、既存の作法・トーン・選択肢数に合わせること。
+
+# 重要な前提
+このパックは「2択」形式です。既存問題の choices が2つであることを必ず確認し、追加問題も choices を2つ（answerIndex は 0 または 1）にすること。3択にしないこと。
+
+# 目的
+このパックで「10問チャレンジ」(難易度3を7問要求) が成立するよう、難易度3の在庫を増やす。
+
+# 追加する10問の内訳（difficulty）
+- difficulty:1 を 1問（id は s11）
+- difficulty:2 を 3問（id は s12〜s14）
+- difficulty:3 を 6問（id は s15〜s20）
+最終的にパックは d1:3 / d2:7 / d3:10 の計20問になる。id は s11〜s20 で連番。
+
+# difficulty:3（理由を話したくなる）の作り方 ★最重要
+- 判定基準: 答えを知らなくても、2つの選択肢を見て理由を話せるなら d3。知らないと無理な「マニアック問題」は不採用。
+- 「どちらもありそう」に見せて、理由で片方に絞れる問いにする。意地悪なひっかけにはしない。
+- 「知らないと無理」な固有名詞・年号・専門知識に依存させない。
+
+# トーン・禁止事項（AGENTS.md 準拠）
+- 題材は生き物・自然・食べもの・くらしの身近な雑学。
+- 学校/成績/恋愛/暴力/ホラーを避ける。
+- 解説は先生っぽくしない。「ここを見るとわかりやすい」「そう考えると自然」。間違いを責めない。2〜3文で短く。
+
+# 重複回避
+既存の s01〜s10 と題材・正解・解説が重ならないこと。
+
+# 更新情報（AGENTS.md 準拠）
+apps/updates.json の先頭付近に quiz の更新を反映する。今日の日付で app:"quiz"・type:"update" のエントリが既にあれば、その text にこのパック名を追記する。なければ1件だけ追加する（例: { "date": "YYYY-MM-DD", "app": "quiz", "type": "update", "text": "クイズパックの一部パックに問題を10問ずつ追加。手ごたえ『チャレンジ』がより成立するように" }）。同日の複数パックで更新エントリを増やしすぎないこと。
+
+# 完成条件
+- bash scripts/lint.sh が通る
+- 追加10問が choices 2つ／上記ガイドラインに適合しているかセルフチェックした結果を報告
+- 事実系はもっともらしい誤りが無いか確認した旨を報告</textarea>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 3 ============ -->
+<div class="content-block" id="c3">
+  <div class="content-block__head">
+    <h3>3. ことばクイズ を20問化</h3>
+    <div class="content-block__meta">
+      <span class="badge badge-p1">Phase 1</span>
+      <span class="badge badge-tech">id: kotoba-quiz</span>
+      　+10問（d1:+1 / d2:+3 / d3:+6）
+    </div>
+  </div>
+  <div class="content-block__body">
+    <p>ことばの意味・由来・使い分けの3択。d3 は「文脈でどれが自然か」を考えられる問いにする。</p>
+    <div class="prompt-box">
+      <button class="copy-btn" onclick="copyPrompt(this)">コピー</button>
+      <textarea readonly>apps/quiz/ のクイズパック「ことばクイズ」(id: kotoba-quiz) に問題を10問追加して、10問パックを20問パックにしてください。まず apps/quiz/AGENTS.md と apps/quiz/questions.js の該当パックを読んで、既存の作法・トーンに合わせること。
+
+# 目的
+このパックで「10問チャレンジ」(難易度3を7問要求) が成立するよう、難易度3の在庫を増やす。
+
+# 追加する10問の内訳（difficulty）
+- difficulty:1 を 1問（id は k11）
+- difficulty:2 を 3問（id は k12〜k14）
+- difficulty:3 を 6問（id は k15〜k20）
+最終的にパックは d1:3 / d2:7 / d3:10 の計20問になる。id は k11〜k20 で連番（既存プレフィックスは k）。
+
+# difficulty:3（理由を話したくなる）の作り方 ★最重要
+- 判定基準: 答えを知らなくても、選択肢を見て理由を話せるなら d3。知らないと無理な「マニアック問題」は不採用。
+- 問いは「どれがいちばん近い？」「この場面ではどれが自然？」に寄せる。選択肢3つとも一応それっぽく。意地悪なひっかけにはしない。
+
+# トーン・禁止事項（AGENTS.md 準拠）
+- 題材はことばの意味・由来・使い分け。難読漢字クイズや慣用句クイズ（別パック）と題材が丸かぶりしないよう住み分ける。
+- 学校/成績/恋愛/暴力/ホラーを避ける。
+- 解説は先生っぽくしない。「ここを見るとわかりやすい」「そう考えると自然」。間違いを責めない。2〜3文で短く。
+
+# 重複回避
+既存の k01〜k10、および慣用句/類義語/同音異義語など他パックと、題材・正解・解説が重ならないこと。
+
+# 更新情報（AGENTS.md 準拠）
+apps/updates.json の先頭付近に quiz の更新を反映する。今日の日付で app:"quiz"・type:"update" のエントリが既にあれば、その text にこのパック名を追記する。なければ1件だけ追加する（例: { "date": "YYYY-MM-DD", "app": "quiz", "type": "update", "text": "クイズパックの一部パックに問題を10問ずつ追加。手ごたえ『チャレンジ』がより成立するように" }）。同日の複数パックで更新エントリを増やしすぎないこと。
+
+# 完成条件
+- bash scripts/lint.sh が通る
+- 追加10問が上記ガイドラインに適合しているかセルフチェックした結果を報告</textarea>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 4 ============ -->
+<div class="content-block" id="c4">
+  <div class="content-block__head">
+    <h3>4. 漢字クイズ を20問化</h3>
+    <div class="content-block__meta">
+      <span class="badge badge-p1">Phase 1</span>
+      <span class="badge badge-tech">id: kanji-quiz</span>
+      　+10問（d1:+1 / d2:+3 / d3:+6）
+    </div>
+  </div>
+  <div class="content-block__body">
+    <p>漢字の形・意味・成り立ちの3択。d3 は「成り立ちから意味を推理する」問いにする。読みの難しさで殴らない。</p>
+    <div class="prompt-box">
+      <button class="copy-btn" onclick="copyPrompt(this)">コピー</button>
+      <textarea readonly>apps/quiz/ のクイズパック「漢字クイズ」(id: kanji-quiz) に問題を10問追加して、10問パックを20問パックにしてください。まず apps/quiz/AGENTS.md と apps/quiz/questions.js の該当パックを読んで、既存の作法・トーンに合わせること。
+
+# 目的
+このパックで「10問チャレンジ」(難易度3を7問要求) が成立するよう、難易度3の在庫を増やす。
+
+# 追加する10問の内訳（difficulty）
+- difficulty:1 を 1問（id は kj11）
+- difficulty:2 を 3問（id は kj12〜kj14）
+- difficulty:3 を 6問（id は kj15〜kj20）
+最終的にパックは d1:3 / d2:7 / d3:10 の計20問になる。id は kj11〜kj20 で連番。
+
+# difficulty:3（理由を話したくなる）の作り方 ★最重要
+- 判定基準: 答えを知らなくても、選択肢を見て理由を話せるなら d3。「この漢字読める？」だけの難読は不採用（それは難読パックの担当）。
+- 問いは「成り立ち・部首から意味を推理する」「どの意味がいちばん近い？」に寄せる。選択肢3つとも一応それっぽく。
+- 難しい読みそのものを問うマニアック問題にしない。
+
+# トーン・禁止事項（AGENTS.md 準拠）
+- 題材は漢字の形・意味・成り立ち・部首。難読地名/駅名パックと題材が丸かぶりしないこと。「漢字のひみつ」パック(kanji-himitsu)とも重複しないよう角度を変える。
+- 学校/成績/恋愛/暴力/ホラーを避ける。
+- 解説は先生っぽくしない。「ここを見るとわかりやすい」「そう考えると自然」。間違いを責めない。2〜3文で短く。
+- 漢字の成り立ちは諸説あるものが多い。断定しすぎず「〜という説がある」程度にし、もっともらしい誤情報を避ける。
+
+# 重複回避
+既存の kj01〜kj10、および kanji-himitsu と、題材・正解・解説が重ならないこと。
+
+# 更新情報（AGENTS.md 準拠）
+apps/updates.json の先頭付近に quiz の更新を反映する。今日の日付で app:"quiz"・type:"update" のエントリが既にあれば、その text にこのパック名を追記する。なければ1件だけ追加する（例: { "date": "YYYY-MM-DD", "app": "quiz", "type": "update", "text": "クイズパックの一部パックに問題を10問ずつ追加。手ごたえ『チャレンジ』がより成立するように" }）。同日の複数パックで更新エントリを増やしすぎないこと。
+
+# 完成条件
+- bash scripts/lint.sh が通る
+- 追加10問が上記ガイドラインに適合しているか／成り立ちの事実確認をしたかをセルフチェックして報告</textarea>
+    </div>
+  </div>
+</div>
+
+<h2>4. Phase 2（ことば系3パック）</h2>
+<p class="note">Phase 1 の運用で d3 のトーンが固まってから着手。手順は Phase 1 と同一（+10問／d1:+1・d2:+3・d3:+6）。</p>
+
+<!-- ============ 5 ============ -->
+<div class="content-block" id="c5">
+  <div class="content-block__head">
+    <h3>5. 漢字のひみつ を20問化</h3>
+    <div class="content-block__meta">
+      <span class="badge badge-p2">Phase 2</span>
+      <span class="badge badge-tech">id: kanji-himitsu</span>
+      　+10問（d1:+1 / d2:+3 / d3:+6・id は khm11〜khm20）
+    </div>
+  </div>
+  <div class="content-block__body">
+    <p>成り立ち・部首・音訓・熟語から漢字の面白さを深掘りするパック。d3 は「なぜこの部首？」を推理させる。</p>
+    <div class="prompt-box">
+      <button class="copy-btn" onclick="copyPrompt(this)">コピー</button>
+      <textarea readonly>apps/quiz/ のクイズパック「漢字のひみつ」(id: kanji-himitsu) に問題を10問追加して、10問パックを20問パックにしてください。まず apps/quiz/AGENTS.md と apps/quiz/questions.js の該当パックを読んで、既存の作法・トーンに合わせること。
+
+# 目的
+「10問チャレンジ」(難易度3を7問要求) が成立するよう、難易度3の在庫を増やす。
+
+# 追加する10問の内訳（difficulty）
+- difficulty:1 を 1問（khm11）／ difficulty:2 を 3問（khm12〜khm14）／ difficulty:3 を 6問（khm15〜khm20）
+最終的にパックは d1:3 / d2:7 / d3:10 の計20問。id は khm11〜khm20 で連番。
+
+# difficulty:3 の作り方 ★最重要
+- 判定基準: 答えを知らなくても、選択肢を見て理由を話せるなら d3。マニアックな読みだけを問う問題は不採用。
+- 問いは「なぜこの部首がつく？」「成り立ちから意味を推理すると？」に寄せる。選択肢3つとも一応それっぽく。
+- 成り立ちは諸説あるものが多いので断定しすぎず「〜という説がある」程度にする。
+
+# トーン・禁止事項（AGENTS.md 準拠）
+- 学校/成績/恋愛/暴力/ホラーを避ける。解説は先生っぽくしない。2〜3文で短く。間違いを責めない。
+
+# 重複回避
+既存の khm01〜khm10、および漢字クイズ(kanji-quiz)と題材・正解・解説が重ならないこと。
+
+# 更新情報（AGENTS.md 準拠）
+apps/updates.json の先頭付近に quiz の更新を反映する。今日の日付で app:"quiz"・type:"update" のエントリが既にあれば、その text にこのパック名を追記する。なければ1件だけ追加する（例: { "date": "YYYY-MM-DD", "app": "quiz", "type": "update", "text": "クイズパックの一部パックに問題を10問ずつ追加。手ごたえ『チャレンジ』がより成立するように" }）。同日の複数パックで更新エントリを増やしすぎないこと。
+
+# 完成条件
+- bash scripts/lint.sh が通る／適合セルフチェックと成り立ちの事実確認を報告</textarea>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 6 ============ -->
+<div class="content-block" id="c6">
+  <div class="content-block__head">
+    <h3>6. ことばの文化 を20問化</h3>
+    <div class="content-block__meta">
+      <span class="badge badge-p2">Phase 2</span>
+      <span class="badge badge-tech">id: kotoba-bunka</span>
+      　+10問（d1:+1 / d2:+3 / d3:+6・id は kbn11〜kbn20）
+    </div>
+  </div>
+  <div class="content-block__body">
+    <p>慣用句・ことわざ・故事成語・敬語・方言など。d3 は「この場面ではどの言い回しが自然か」を考えさせる。</p>
+    <div class="prompt-box">
+      <button class="copy-btn" onclick="copyPrompt(this)">コピー</button>
+      <textarea readonly>apps/quiz/ のクイズパック「ことばの文化」(id: kotoba-bunka) に問題を10問追加して、10問パックを20問パックにしてください。まず apps/quiz/AGENTS.md と apps/quiz/questions.js の該当パックを読んで、既存の作法・トーンに合わせること。
+
+# 目的
+「10問チャレンジ」(難易度3を7問要求) が成立するよう、難易度3の在庫を増やす。
+
+# 追加する10問の内訳（difficulty）
+- difficulty:1 を 1問（kbn11）／ difficulty:2 を 3問（kbn12〜kbn14）／ difficulty:3 を 6問（kbn15〜kbn20）
+最終的にパックは d1:3 / d2:7 / d3:10 の計20問。id は kbn11〜kbn20 で連番。
+
+# difficulty:3 の作り方 ★最重要
+- 判定基準: 答えを知らなくても、選択肢を見て理由を話せるなら d3。
+- 問いは「この場面ではどの言い回しが自然？」「どういう意味に近い？」に寄せる。選択肢3つとも一応それっぽく。意地悪なひっかけにはしない。
+
+# トーン・禁止事項（AGENTS.md 準拠）
+- 学校/成績/恋愛/暴力/ホラーを避ける。解説は先生っぽくしない。2〜3文で短く。間違いを責めない。
+- 方言・敬語は地域差・立場差があるので断定しすぎない。
+- 敬語は「正しい敬語」「失礼」の評価方向に行かないこと。「場面による言い方のちがい」「やわらかく聞こえる言い方」に寄せる。
+
+# 重複回避
+既存の kbn01〜kbn10、および慣用句/ことわざ（難しめ）パックと題材・正解・解説が重ならないこと（角度を変える）。
+
+# 更新情報（AGENTS.md 準拠）
+apps/updates.json の先頭付近に quiz の更新を反映する。今日の日付で app:"quiz"・type:"update" のエントリが既にあれば、その text にこのパック名を追記する。なければ1件だけ追加する（例: { "date": "YYYY-MM-DD", "app": "quiz", "type": "update", "text": "クイズパックの一部パックに問題を10問ずつ追加。手ごたえ『チャレンジ』がより成立するように" }）。同日の複数パックで更新エントリを増やしすぎないこと。
+
+# 完成条件
+- bash scripts/lint.sh が通る／適合セルフチェックを報告</textarea>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 7 ============ -->
+<div class="content-block" id="c7">
+  <div class="content-block__head">
+    <h3>7. ことばの雑学王2 を20問化</h3>
+    <div class="content-block__meta">
+      <span class="badge badge-p2">Phase 2</span>
+      <span class="badge badge-tech">id: zatsugaku-king-2</span>
+      　+10問（d1:+1 / d2:+3 / d3:+6・id は zk211〜zk220）
+    </div>
+  </div>
+  <div class="content-block__body">
+    <p>言葉の由来・世界の言葉・日本語のふしぎ。d3 は「由来から意味を推理する」問いにする。</p>
+    <div class="prompt-box">
+      <button class="copy-btn" onclick="copyPrompt(this)">コピー</button>
+      <textarea readonly>apps/quiz/ のクイズパック「ことばの雑学王2」(id: zatsugaku-king-2) に問題を10問追加して、10問パックを20問パックにしてください。まず apps/quiz/AGENTS.md と apps/quiz/questions.js の該当パックを読んで、既存の作法・トーンに合わせること。
+
+# 目的
+「10問チャレンジ」(難易度3を7問要求) が成立するよう、難易度3の在庫を増やす。
+
+# 追加する10問の内訳（difficulty）
+- difficulty:1 を 1問（zk211）／ difficulty:2 を 3問（zk212〜zk214）／ difficulty:3 を 6問（zk215〜zk220）
+最終的にパックは d1:3 / d2:7 / d3:10 の計20問。id は zk211〜zk220 で連番（既存プレフィックスは zk2）。
+
+# difficulty:3 の作り方 ★最重要
+- 判定基準: 答えを知らなくても、選択肢を見て理由を話せるなら d3。知らないと無理なマニアック問題は不採用。
+- 問いは「由来から考えるとどれが近い？」「なぜそう呼ぶ？」に寄せる。選択肢3つとも一応それっぽく。
+
+# トーン・禁止事項（AGENTS.md 準拠）
+- 学校/成績/恋愛/暴力/ホラーを避ける。解説は先生っぽくしない。2〜3文で短く。間違いを責めない。
+- 由来・語源は俗説が多い。もっともらしい誤情報を避け、断定しすぎず「〜と言われる」にする。
+
+# 重複回避
+既存の zk201〜zk210、および「ことばの文化」「ことばクイズ」と題材・正解・解説が重ならないこと。
+
+# 更新情報（AGENTS.md 準拠）
+apps/updates.json の先頭付近に quiz の更新を反映する。今日の日付で app:"quiz"・type:"update" のエントリが既にあれば、その text にこのパック名を追記する。なければ1件だけ追加する（例: { "date": "YYYY-MM-DD", "app": "quiz", "type": "update", "text": "クイズパックの一部パックに問題を10問ずつ追加。手ごたえ『チャレンジ』がより成立するように" }）。同日の複数パックで更新エントリを増やしすぎないこと。
+
+# 完成条件
+- bash scripts/lint.sh が通る／適合セルフチェックと語源の事実確認を報告</textarea>
+    </div>
+  </div>
+</div>
+
+<h2>5. Phase 3・4（後続・運用しながら判断）</h2>
+<div class="card">
+  <strong>Phase 3：難読7本（nandoku-*）</strong>
+  <ul>
+    <li>個別パックを20問化するか、<code>難読まぜこぜ</code>（7本合計70問で母数十分）前提で個別は据え置くかを、Phase 1・2 の運用を見て判断する。急がない。</li>
+    <li>やる場合の手順は Phase 1 と同一（各 +10問／d1:+1・d2:+3・d3:+6、id は各プレフィックスの連番）。</li>
+  </ul>
+</div>
+<div class="card">
+  <strong>Phase 4：新テーマ難問パック（new-app ではなく questions.js への新パック追加）</strong>
+  <ul>
+    <li>「もっと手ごたえがほしい」層への拡張。候補テーマ：<code>身近ななぜ？クイズ</code>／<code>ことばの使い分けクイズ</code>／<code>くらしの推理クイズ</code>。</li>
+    <li>配分は既存増強と同じ原則 <code>d1:3 / d2:7 / d3:10</code>（計20問）でブレさせない。</li>
+    <li>新規は最初から20問でもよいが、品質重視なら10問ずつ2回に分ける。</li>
+    <li>難問中心のパックにするなら、TOP の「手ごたえあり」セクションに出すため <code>apps/quiz/app.js</code> の <code>CHALLENGE_PACK_IDS</code> に id を追加する。</li>
+  </ul>
+</div>
+
+<h2>6. リスクと歯止め（codex 相談）</h2>
+<div class="caution">
+  <ul>
+    <li><strong>難易度インフレ</strong>：20問中 d3:10 を上限感とする。増やしすぎると「ずっと考えさせられる疲れ」が出る。</li>
+    <li><strong>解説が説教臭くなる</strong>：「覚えておこう」「正しくは」を使わない。「ここを見るとわかりやすい」「そう考えると自然」。</li>
+    <li><strong>既存問題との重複</strong>：似た題材でも問いの角度・正解・解説が重なるなら避ける。各バッチで既存 id と突き合わせ監査する。</li>
+    <li><strong>事実系の誤情報</strong>：雑学・漢字由来・語源は、もっともらしい誤りが混ざりやすい。制作後に別視点で事実監査を入れる。</li>
+    <li><strong>マニアック化</strong>：「知らないと無理」は d3 ではない。<em>選択肢を見て理由を話せるか</em>を毎問チェックする。</li>
+  </ul>
+</div>
+
+<footer>roomK クイズパック 難問増強 制作計画（D案） ／ docs/quiz-hard-plan.html ／ 計画立案: Claude Opus 4.8 × codex 相談</footer>
+</div>
+
+<script>
+function copyPrompt(btn) {
+  var ta = btn.parentElement.querySelector('textarea');
+  var done = function () {
+    btn.textContent = 'コピーしました';
+    btn.classList.add('copied');
+    setTimeout(function () {
+      btn.textContent = 'コピー';
+      btn.classList.remove('copied');
+    }, 1800);
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(ta.value).then(done, function () { fallback(ta, done); });
+  } else {
+    fallback(ta, done);
+  }
+}
+function fallback(ta, done) {
+  ta.focus();
+  ta.select();
+  try { document.execCommand('copy'); done(); } catch (e) { /* noop */ }
+  window.getSelection().removeAllRanges();
+}
+</script>
+</body>
+</html>
