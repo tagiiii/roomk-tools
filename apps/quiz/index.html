@@ -24,7 +24,19 @@
           <p class="qz-top-panel__sub">ことばクイズや全部シャッフルでも遊べます</p>
         </div>
 
-        <div class="qz-pack-grid" id="packGrid" role="list"></div>
+        <div class="qz-pack-groups" id="packGrid"></div>
+
+        <div class="qz-options">
+          <div class="qz-option-row">
+            <span class="qz-option-row__label">問題数</span>
+            <div class="qz-segment" id="countSegment" role="group" aria-label="問題数をえらぶ"></div>
+          </div>
+          <div class="qz-option-row">
+            <span class="qz-option-row__label">手ごたえ</span>
+            <div class="qz-segment" id="modeSegment" role="group" aria-label="手ごたえをえらぶ"></div>
+          </div>
+          <p class="qz-option-preview" id="optionPreview" aria-live="polite"></p>
+        </div>
 
         <div class="qz-top-panel__actions">
           <button class="btn btn-primary btn-lg" id="btnStart" disabled>
@@ -73,6 +85,13 @@
             次の問題へ
           </button>
         </div>
+
+        <div class="qz-quiz-actions qz-quiz-actions--finish">
+          <button class="btn btn-ghost btn-sm" id="btnFinishEarly" hidden>
+            <span class="material-symbols-rounded">flag</span>
+            ここで結果を見る
+          </button>
+        </div>
       </div>
     </section>
 
@@ -103,18 +122,20 @@
   <script>
     RoomkHowto.init({
       title: 'あそびかた',
-      lead: 'すきなパックをえらんで、みんなでクイズに挑戦するツール。1回のクイズは5問。',
+      lead: 'すきなパックをえらんで、みんなでクイズに挑戦するツール。問題数と手ごたえをえらべます。',
       sections: [
         { heading: 'はじめかた', items: [
           'あそびたいパックをえらぶ',
+          '「問題数」（5問／10問／ぜんぶ）と「手ごたえ」（ふつう／チャレンジ）をえらぶ',
           '「スタート」を押す',
         ] },
         { heading: 'すすめかた', items: [
           '問題を読んで、答えだと思う選択肢を押す',
           '正解と解説をたしかめたら、「次の問題へ」を押す',
+          'とちゅうでやめたいときは「ここで結果を見る」を押す',
           '「問題をコピー」や「正解つきでコピー」を押すと、チャットに貼りつけられる',
         ] },
-        { heading: 'おわりかた', text: '5問おわると結果が出る。「もう一度あそぶ」か「TOPに戻る」をえらぶ。' },
+        { heading: 'おわりかた', text: 'ぜんぶ答えるか「ここで結果を見る」を押すと結果が出る。「もう一度あそぶ」か「TOPに戻る」をえらぶ。' },
       ],
     });
   </script>
