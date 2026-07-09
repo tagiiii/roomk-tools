@@ -101,6 +101,8 @@ const packGrid = document.getElementById('packGrid');
 const countSegment = document.getElementById('countSegment');
 const modeSegment = document.getElementById('modeSegment');
 const optionPreview = document.getElementById('optionPreview');
+const optionsPanel = document.getElementById('optionsPanel');
+const startHint = document.getElementById('startHint');
 const btnStart = document.getElementById('btnStart');
 const quizPackName = document.getElementById('quizPackName');
 const quizProgress = document.getElementById('quizProgress');
@@ -273,6 +275,8 @@ function renderSegmentButtons(container, options, selected, onSelect) {
 function updateOptionState() {
   const pack = getSelectedPack();
 
+  startHint.hidden = Boolean(pack);
+
   // 手ごたえセグメントの有効/無効
   const challengeUsable = pack ? challengeApplies(pack, state.countKey) : true;
   if (!challengeUsable && state.mode === 'challenge') {
@@ -356,6 +360,9 @@ function renderPackCards() {
       `;
 
       button.addEventListener('click', () => {
+        // 初めての選択のときだけ、問題数・手ごたえ・スタートまでスクロールして誘導する
+        const isFirstSelection = btnStart.disabled;
+
         // 別のパックに変えたら、鮮度管理をリセット
         if (state.selectedPackId !== pack.id) {
           state.usedIds = new Set();
@@ -364,6 +371,10 @@ function renderPackCards() {
         btnStart.disabled = false;
         renderPackCards();
         updateOptionState();
+
+        if (isFirstSelection) {
+          optionsPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
       });
 
       grid.appendChild(button);

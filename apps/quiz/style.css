@@ -271,7 +271,15 @@
 .qz-top-panel__actions {
   margin-top: 22px;
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.qz-start-hint {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-accent);
 }
 
 .qz-quiz-shell {
