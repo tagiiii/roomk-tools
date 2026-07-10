@@ -74,6 +74,8 @@
     if (existing) existing.remove();
     const el = document.createElement('div');
     el.id = 'roomk-toast';
+    el.setAttribute('role', 'status');
+    el.setAttribute('aria-live', 'polite');
     el.textContent = message;
     el.style.cssText = [
       'position:fixed', 'bottom:24px', 'left:50%', 'transform:translateX(-50%)',
