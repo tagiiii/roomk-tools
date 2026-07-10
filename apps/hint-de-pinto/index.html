@@ -207,17 +207,17 @@
   <div class="page">
     <div class="hdp-hero">
       <div class="hdp-hero__icon">
-        <span class="material-symbols-rounded">lightbulb</span>
+        <span class="material-symbols-rounded" aria-hidden="true">lightbulb</span>
       </div>
       <h1 class="hdp-hero__title">ヒントでピント</h1>
       <p class="hdp-hero__sub">ヒントを出してお題を当てよう！<br>でも被ったら消えちゃう！</p>
     </div>
     <button class="btn btn-primary btn-full btn-lg" onclick="showScreen('host-setup')">
-      <span class="material-symbols-rounded">add_circle</span>
+      <span class="material-symbols-rounded" aria-hidden="true">add_circle</span>
       ルームをつくる
     </button>
     <button class="btn btn-secondary btn-full btn-lg" onclick="showScreen('guest-join')">
-      <span class="material-symbols-rounded">login</span>
+      <span class="material-symbols-rounded" aria-hidden="true">login</span>
       ルームに参加する
     </button>
   </div>
@@ -233,7 +233,7 @@
       <div class="error-msg" id="host-error"></div>
     </div>
     <button class="btn btn-primary btn-full" onclick="hostCreate()">
-      <span class="material-symbols-rounded">meeting_room</span>
+      <span class="material-symbols-rounded" aria-hidden="true">meeting_room</span>
       ルームを作成
     </button>
     <button class="btn btn-ghost btn-full" onclick="showScreen('top')">もどる</button>
@@ -253,7 +253,7 @@
       <div class="error-msg" id="guest-error"></div>
     </div>
     <button class="btn btn-primary btn-full" onclick="guestJoin()">
-      <span class="material-symbols-rounded">login</span>
+      <span class="material-symbols-rounded" aria-hidden="true">login</span>
       参加する
     </button>
     <button class="btn btn-ghost btn-full" onclick="showScreen('top')">もどる</button>
@@ -276,7 +276,7 @@
     <div id="waiting-host-controls" style="display:none">
       <p id="waiting-min-msg" class="hdp-info-text">3人以上で開始できます</p>
       <button class="btn btn-primary btn-full btn-lg" id="btn-start-game" onclick="startGame()" disabled>
-        <span class="material-symbols-rounded">play_arrow</span>
+        <span class="material-symbols-rounded" aria-hidden="true">play_arrow</span>
         ゲームを始める
       </button>
     </div>
@@ -301,13 +301,13 @@
           <div class="error-msg" id="clue-error"></div>
         </div>
         <button class="btn btn-primary btn-full" onclick="submitHint()">
-          <span class="material-symbols-rounded">send</span>
+          <span class="material-symbols-rounded" aria-hidden="true">send</span>
           ヒントを送る
         </button>
       </div>
       <div id="clue-submitted-msg" style="display:none">
         <div class="alert alert-info" style="text-align:center">
-          <span class="material-symbols-rounded" style="vertical-align:middle;font-size:18px">check_circle</span>
+          <span class="material-symbols-rounded" aria-hidden="true" style="vertical-align:middle;font-size:18px">check_circle</span>
           ヒントを送りました！ 他のみんなを待っています
         </div>
       </div>
@@ -339,7 +339,7 @@
       <p class="hdp-page-sub">重複は自動で除外済み。手動で追加除外もできます。</p>
       <div id="review-hint-list"></div>
       <button class="btn btn-primary btn-full btn-lg" style="margin-top:16px" onclick="confirmHints()">
-        <span class="material-symbols-rounded">visibility</span>
+        <span class="material-symbols-rounded" aria-hidden="true">visibility</span>
         ヒントを見せる
       </button>
     </div>
@@ -367,7 +367,7 @@
         <div class="error-msg" id="answer-error"></div>
       </div>
       <button class="btn btn-primary btn-full btn-lg" onclick="submitAnswer()">
-        <span class="material-symbols-rounded">lightbulb</span>
+        <span class="material-symbols-rounded" aria-hidden="true">lightbulb</span>
         回答する
       </button>
       <button class="btn btn-ghost btn-full" onclick="passAnswer()">パスする</button>
@@ -398,8 +398,8 @@
         <p class="hdp-word-text" id="judge-answer" style="color:var(--color-accent)"></p>
       </div>
       <div class="hdp-judge-btns">
-        <button class="btn btn-primary" onclick="judgeAnswer(true)"><span class="material-symbols-rounded" style="vertical-align:middle;font-size:18px">check_circle</span> 正解</button>
-        <button class="btn btn-danger" onclick="judgeAnswer(false)"><span class="material-symbols-rounded" style="vertical-align:middle;font-size:18px">cancel</span> 不正解</button>
+        <button class="btn btn-primary" onclick="judgeAnswer(true)"><span class="material-symbols-rounded" aria-hidden="true" style="vertical-align:middle;font-size:18px">check_circle</span> 正解</button>
+        <button class="btn btn-danger" onclick="judgeAnswer(false)"><span class="material-symbols-rounded" aria-hidden="true" style="vertical-align:middle;font-size:18px">cancel</span> 不正解</button>
       </div>
     </div>
     <!-- その他 -->
@@ -421,7 +421,7 @@
     <p class="hdp-score-text" id="result-score"></p>
     <div id="result-host-controls" style="display:none">
       <button class="btn btn-primary btn-full btn-lg" id="btn-next-round" onclick="nextRound()">
-        <span class="material-symbols-rounded">arrow_forward</span>
+        <span class="material-symbols-rounded" aria-hidden="true">arrow_forward</span>
         次のラウンドへ
       </button>
       <button class="btn btn-secondary btn-full" onclick="endGame()">ゲーム終了</button>
@@ -433,14 +433,14 @@
 <div id="screen-final" class="screen">
   <div class="page">
     <div class="hdp-final-header">
-      <span class="material-symbols-rounded" style="font-size:48px;color:var(--color-accent)">emoji_events</span>
+      <span class="material-symbols-rounded" aria-hidden="true" style="font-size:48px;color:var(--color-accent)">emoji_events</span>
       <h2 class="hdp-page-title" style="margin-top:8px">ゲーム終了！</h2>
       <p class="hdp-final-score" id="final-score"></p>
     </div>
     <div id="final-history"></div>
     <div id="final-host-controls" style="margin-top:24px;display:none">
       <button class="btn btn-primary btn-full btn-lg" onclick="playAgain()">
-        <span class="material-symbols-rounded">replay</span>
+        <span class="material-symbols-rounded" aria-hidden="true">replay</span>
         もう一度遊ぶ
       </button>
     </div>
@@ -454,7 +454,7 @@
   <p class="overlay-title">再接続しています...</p>
 </div>
 <div class="overlay" id="host-off-overlay">
-  <span class="material-symbols-rounded" style="font-size:48px">signal_disconnected</span>
+  <span class="material-symbols-rounded" aria-hidden="true" style="font-size:48px">signal_disconnected</span>
   <p class="overlay-title">ホストが一時的に切断されました</p>
   <p class="overlay-sub">再接続を待っています</p>
   <button class="btn btn-ghost" onclick="leaveGame()">退出する</button>
@@ -1054,8 +1054,8 @@ function renderReviewCards() {
         <div class="hdp-hint-card__text ${isExcl && !isMissing ? 'strikethrough' : ''}">${text}</div>
         <div><span class="hdp-hint-card__author">${esc(nick)}</span>${badge}</div>
       </div>
-      <button class="hdp-hint-card__toggle" onclick="toggleHint('${encodedNick}')" ${isAuto ? 'disabled' : ''}>
-        <span class="material-symbols-rounded">${isExcl ? 'visibility_off' : 'visibility'}</span>
+      <button class="hdp-hint-card__toggle" onclick="toggleHint('${encodedNick}')" ${isAuto ? 'disabled' : ''} aria-label="ヒントの表示・除外を切り替え">
+        <span class="material-symbols-rounded" aria-hidden="true">${isExcl ? 'visibility_off' : 'visibility'}</span>
       </button>
     </div>`;
   }).join('');
@@ -1174,7 +1174,7 @@ function handleResult(room, players) {
   const display = document.getElementById('result-display');
   display.innerHTML = `
     <div class="hdp-result-icon ${correct ? 'correct' : 'incorrect'}">
-      <span class="material-symbols-rounded" style="font-size:56px">${correct ? 'check_circle' : 'cancel'}</span>
+      <span class="material-symbols-rounded" role="img" aria-label="${correct ? '正解' : '不正解'}" style="font-size:56px">${correct ? 'check_circle' : 'cancel'}</span>
     </div>
     <p class="hdp-result-answer">${passed ? 'パス' : esc(round.answer || '')}</p>
     <p class="hdp-result-word">お題: ${esc(round.secretWord || '')}</p>
@@ -1253,7 +1253,7 @@ function handleFinished(room) {
       <div class="hdp-history-word">${esc(h.secretWord || '—')}</div>
       <div class="hdp-history-detail">
         回答者: ${esc(guesser)} / 回答: ${h.passed ? 'パス' : esc(h.answer || '—')}
-        <span class="${cls}"><span class="material-symbols-rounded" style="font-size:16px;vertical-align:middle">${icon}</span></span>
+        <span class="${cls}"><span class="material-symbols-rounded" role="img" aria-label="${h.isCorrect ? '正解' : '不正解'}" style="font-size:16px;vertical-align:middle">${icon}</span></span>
       </div>
     </div>`;
   }).join('');
