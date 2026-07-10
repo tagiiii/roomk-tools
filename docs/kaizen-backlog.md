@@ -62,7 +62,7 @@
 ## Tier C: 調査・報告のみ
 
 - [ ] C-1. 難読地名・駅名 160 問の事実再検証（四半期で一巡: 月 20 問ずつ、市町村合併・駅名改称・由来を一次ソース 2 件で確認。結果は報告のみ。修正は人間が承認した別項目として扱い、判断待ちはループを止めない）
-- [ ] C-2. aria/role ゼロのアプリ（checkin, vote, word-wolf, codenames, minna-ranking, ito, value-card ほか）の改善候補リスト作成
+- [x] C-2. aria/role ゼロのアプリ（checkin, vote, word-wolf, codenames, minna-ranking, ito, value-card ほか）の改善候補リスト作成（2026-07-11 完了。報告書: `docs/reports/c2-aria-role-candidates.md`。ゼロは15アプリ、候補6系統を優先順・想定Tier付きで整理。修正は未実施）
 - [ ] C-3. muted テキスト×小フォントのコントラスト実測（WCAG AA）レポート
 - [ ] C-4. `content-audit.mjs` の類似ペアレポートから「同一アプリ内の言い換え重複」を抽出して報告（食べ物ジャンル偏重の入れ替え候補づけ）
 
@@ -74,4 +74,5 @@
 
 ## 提案欄（ループが見つけた改善候補を追記する場所。人間が Tier を付けて上に昇格）
 
-（なし）
+- 提案1（C-2調査より）: `rtdb-utils.js` の showToast に `role="status"` + `aria-live="polite"` を追加。1修正で全RTDBアプリの通知が支援技術に伝わる。※apps/shared 配下のため人間の変更許可が必要（想定 Tier B）
+- 提案2（C-2調査より）: 装飾アイコン（material-symbols 約440箇所）への `aria-hidden="true"` 一括付与＋アイコン単独ボタンへの `aria-label`。詳細は `docs/reports/c2-aria-role-candidates.md`（想定 Tier B、1アプリずつ）
