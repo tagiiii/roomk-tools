@@ -219,6 +219,40 @@
       display: none;
     }
 
+    .scene-empty {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--space-xs);
+      margin-bottom: var(--space-md);
+      padding: var(--space-xl) var(--space-md);
+      border: 1px dashed var(--color-border);
+      border-radius: var(--radius-card);
+      background-color: var(--color-surface);
+      color: var(--color-muted);
+      text-align: center;
+    }
+
+    .scene-empty[hidden] {
+      display: none;
+    }
+
+    .scene-empty > .material-symbols-rounded {
+      font-size: 40px;
+      color: var(--color-accent);
+    }
+
+    .scene-empty__title {
+      color: var(--color-primary);
+      font-size: var(--font-size-lg);
+      font-weight: 700;
+    }
+
+    .scene-empty__desc {
+      margin-bottom: var(--space-sm);
+      font-size: var(--font-size-sm);
+    }
+
     /* ── 更新情報（スタッフ向け） ── */
     .updates-panel {
       background-color: var(--color-surface);
@@ -369,6 +403,13 @@
         <button class="scene-filter__chip" type="button" data-scene="hiroba" aria-pressed="false">ひろば</button>
         <button class="scene-filter__chip" type="button" data-scene="circle" aria-pressed="false">サークルタイム</button>
         <button class="scene-filter__chip" type="button" data-scene="sakusen" aria-pressed="false">作戦会議</button>
+      </div>
+
+      <div class="scene-empty" id="scene-empty" role="status" aria-live="polite" hidden>
+        <span class="material-symbols-rounded" aria-hidden="true">search_off</span>
+        <p class="scene-empty__title">このシーンのツールはまだありません</p>
+        <p class="scene-empty__desc">「すべて」に戻すと、ほかのツールを見られます。</p>
+        <button class="btn btn-secondary btn-sm" type="button" id="scene-empty-reset">すべてのツールを見る</button>
       </div>
 
       <div class="apps-grid">
@@ -1566,14 +1607,19 @@
       // フィルタチップで絞り込み。選択状態は URL ハッシュ（#scene=bodoge）と同期し、
       // シーン別リンクを共有したりリロードしても選択が保てるようにする。
       const chips = document.querySelectorAll('.scene-filter__chip');
+      const emptyState = document.getElementById('scene-empty');
+      const emptyReset = document.getElementById('scene-empty-reset');
 
       function applyScene(scene) {
         if (scene !== 'all' && !SCENE_LABELS[scene]) scene = 'all';
         chips.forEach((c) => c.setAttribute('aria-pressed', String(c.dataset.scene === scene)));
+        let visibleCount = 0;
         cards.forEach((card) => {
           const scenes = (card.dataset.scenes || '').split(' ');
           card.hidden = scene !== 'all' && !scenes.includes(scene);
+          if (!card.hidden) visibleCount += 1;
         });
+        emptyState.hidden = visibleCount !== 0;
       }
 
       function sceneFromHash() {
@@ -1589,6 +1635,12 @@
             ? location.pathname + location.search
             : '#scene=' + scene);
         });
+      });
+
+      emptyReset.addEventListener('click', () => {
+        applyScene('all');
+        history.replaceState(null, '', location.pathname + location.search);
+        document.querySelector('.scene-filter__chip[data-scene="all"]').focus();
       });
 
       window.addEventListener('hashchange', () => applyScene(sceneFromHash()));
