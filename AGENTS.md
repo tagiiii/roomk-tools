@@ -319,13 +319,15 @@ design-system.css のカラー変数・スペーシング変数を積極的に�
 
 #### 現在のセキュリティルール（変更不要）
 
+正本は [database.rules.json](./database.rules.json)。読み書きとも**匿名認証が必須**。
+
 ```json
 {
   "rules": {
     "$app_rooms": {
       "$roomId": {
-        ".read": true,
-        ".write": true
+        ".read": "auth != null",
+        ".write": "auth != null"
       }
     }
   }
@@ -337,7 +339,7 @@ design-system.css のカラー変数・スペーシング変数を積極的に�
 
 ### その他のセキュリティ方針
 
-- 読み取りは原則公開（認証不要なツールのため）
+- 読み書きには匿名認証（`auth != null`）が必要。アプリ側は `signInAnonymously` の完了を **await してから** RTDB にアクセスする（rtdb-utils.js の `authReady` を使用）
 - ルームやセッションデータはゲーム・セッション終了後に削除する
 
 ### API キー
