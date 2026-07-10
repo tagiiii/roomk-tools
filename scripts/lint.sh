@@ -334,6 +334,134 @@ else
 fi
 
 # ─────────────────────────────────────────────────────
+# [CONTENT-1] 絵文字チェック
+#   絵文字は使わず Material Symbols を使う（AGENTS.md）。
+#   ピクトグラム絵文字はエラー、⭕❌等の記号絵文字は警告
+# ─────────────────────────────────────────────────────
+echo ""
+echo -e "${BOLD}[CONTENT-1] 絵文字チェック${NC} — 絵文字ではなく Material Symbols を使う"
+
+CONTENT1_OUT=$(python3 - <<'PYEOF'
+import glob, html, re
+
+ERROR_PAT = re.compile('[\U0001F000-\U0001FAFF️]')
+WARN_PAT = re.compile('[✅❌❤⭐⭕]')
+
+files = sorted(
+    glob.glob('apps/**/*.html', recursive=True)
+    + glob.glob('apps/**/*.js', recursive=True)
+    + glob.glob('apps/**/*.json', recursive=True)
+)
+for f in files:
+    with open(f, encoding='utf-8') as fh:
+        for i, line in enumerate(fh, 1):
+            decoded = html.unescape(line)
+            if ERROR_PAT.search(decoded):
+                print(f'ERROR\t{f}:{i}\t絵文字が含まれています')
+            elif WARN_PAT.search(decoded):
+                print(f'WARN\t{f}:{i}\t記号絵文字（⭕❌など）は Material Symbols への置換を推奨')
+PYEOF
+)
+
+CONTENT1_OK=true
+if [ -n "$CONTENT1_OUT" ]; then
+  while IFS=$'\t' read -r level loc msg; do
+    [ -n "$level" ] || continue
+    if [ "$level" = "ERROR" ]; then
+      echo -e "  ${RED}[ERROR]${NC} $loc — $msg"
+      ERRORS=$((ERRORS + 1))
+    else
+      echo -e "  ${YELLOW}[WARN]${NC} $loc — $msg"
+      WARNINGS=$((WARNINGS + 1))
+    fi
+    CONTENT1_OK=false
+  done <<< "$CONTENT1_OUT"
+fi
+$CONTENT1_OK && echo -e "  ${GREEN}OK${NC}"
+
+# ─────────────────────────────────────────────────────
+# [HOWTO-1] あそびかたモーダル (howto.js) チェック
+#   全アプリ必須（AGENTS.md）。checkin / vote は本体スタブのため除外
+# ─────────────────────────────────────────────────────
+echo ""
+echo -e "${BOLD}[HOWTO-1] あそびかたモーダル (howto.js) チェック${NC}"
+
+HOWTO1_OK=true
+HOWTO_EXEMPT=" apps/checkin/index.html apps/vote/index.html "
+for f in "${ALL_HTML_FILES[@]}"; do
+  [ -f "$f" ] || continue
+  case "$HOWTO_EXEMPT" in *" $f "*) continue ;; esac
+  if ! grep -q "howto.js" "$f"; then
+    echo -e "  ${YELLOW}[WARN]${NC} $f — howto.js（あそびかたモーダル）が組み込まれていません"
+    WARNINGS=$((WARNINGS + 1))
+    HOWTO1_OK=false
+  fi
+done
+$HOWTO1_OK && echo -e "  ${GREEN}OK${NC}"
+
+# ─────────────────────────────────────────────────────
+# [DEP-1] CDN バージョン固定チェック
+#   @latest は上流改竄がそのまま利用者に届くため禁止。
+#   バージョンを固定し、可能なら integrity (SRI) も付ける
+# ─────────────────────────────────────────────────────
+echo ""
+echo -e "${BOLD}[DEP-1] CDN バージョン固定チェック${NC} — @latest 禁止"
+
+DEP1_OK=true
+for f in apps/*/*.html; do
+  [ -f "$f" ] || continue
+  while IFS=: read -r line_num content; do
+    echo -e "  ${RED}[ERROR]${NC} $f:$line_num — CDN はバージョンを固定してください（@latest 禁止）"
+    ERRORS=$((ERRORS + 1))
+    DEP1_OK=false
+  done < <(grep -n '@latest' "$f")
+done
+$DEP1_OK && echo -e "  ${GREEN}OK${NC}"
+
+# ─────────────────────────────────────────────────────
+# [VIEWPORT-2] 非 RTDB アプリの maximum-scale チェック
+#   ズーム抑止は誤ズーム防止が必要な RTDB アプリのみ。
+#   それ以外への付与はピンチズームを封じるだけで a11y 上不利
+# ─────────────────────────────────────────────────────
+echo ""
+echo -e "${BOLD}[VIEWPORT-2] 非 RTDB アプリの maximum-scale チェック${NC}"
+
+VIEWPORT2_OK=true
+RTDB_LIST=" ${RTDB_HTML_FILES[*]} "
+for f in "${ALL_HTML_FILES[@]}"; do
+  [ -f "$f" ] || continue
+  case "$RTDB_LIST" in *" $f "*) continue ;; esac
+  if grep -qE '<meta[^>]+name=["'\'']viewport["'\''][^>]+maximum-scale=1' "$f"; then
+    line_num=$(grep -nE '<meta[^>]+name=["'\'']viewport["'\'']' "$f" | head -1 | cut -d: -f1)
+    echo -e "  ${YELLOW}[WARN]${NC} $f:$line_num — 非 RTDB アプリに maximum-scale=1 は不要です（ズーム抑止は RTDB アプリのみ）"
+    WARNINGS=$((WARNINGS + 1))
+    VIEWPORT2_OK=false
+  fi
+done
+$VIEWPORT2_OK && echo -e "  ${GREEN}OK${NC}"
+
+# ─────────────────────────────────────────────────────
+# [REF-5] タイマー解放バランスチェック
+#   RTDB アプリで setInterval の数が clearInterval より多い場合、
+#   leaveGame()/goToTop() での解放漏れの可能性（AGENTS.md）
+# ─────────────────────────────────────────────────────
+echo ""
+echo -e "${BOLD}[REF-5] タイマー解放バランスチェック${NC}"
+
+REF5_OK=true
+for f in "${RTDB_HTML_FILES[@]}"; do
+  [ -f "$f" ] || continue
+  si=$(grep -c 'setInterval(' "$f")
+  ci=$(grep -c 'clearInterval(' "$f")
+  if [ "$si" -gt "$ci" ]; then
+    echo -e "  ${YELLOW}[WARN]${NC} $f — setInterval ${si} 件に対し clearInterval ${ci} 件（解放漏れの可能性）"
+    WARNINGS=$((WARNINGS + 1))
+    REF5_OK=false
+  fi
+done
+$REF5_OK && echo -e "  ${GREEN}OK${NC}"
+
+# ─────────────────────────────────────────────────────
 # 結果サマリ
 # ─────────────────────────────────────────────────────
 echo ""
