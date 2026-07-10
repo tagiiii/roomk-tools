@@ -10,7 +10,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
-  <script src="../shared/js/rtdb-utils.js"></script>
+<script src="../shared/js/rtdb-utils.js?v=20260710"></script>
   <style>
     /* ── 画面管理 ── */
     .screen { display: none; min-height: 100dvh; }
@@ -459,22 +459,7 @@
 
 <script>
 // ── Firebase 初期化 ──
-const firebaseConfig = {
-  apiKey: "AIzaSyC0bqQdDJeTAWrqFYqjOT1NsVFiunPemIw",
-  authDomain: "roomk-tools.firebaseapp.com",
-  databaseURL: "https://roomk-tools-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "roomk-tools",
-  storageBucket: "roomk-tools.firebasestorage.app",
-  messagingSenderId: "592193782148",
-  appId: "1:592193782148:web:1529f47cebab7dcd109dd1",
-};
-firebase.initializeApp(firebaseConfig);
-const authReady = firebase.auth().signInAnonymously().catch((e) => {
-  console.error('[auth] anonymous sign-in failed', e);
-  throw e;
-});
-const db = firebase.database();
-RoomkRTDB.initServerTime(db);
+const { authReady, db } = RoomkRTDB.initFirebase(firebase);
 
 // ── トースト通知（alert の代替）──
 const showMsg = RoomkRTDB.showToast;
@@ -597,9 +582,7 @@ const WORD_PAIRS = [
 ];
 
 // ── ユーティリティ ──
-function esc(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-}
+const esc = RoomkRTDB.esc;
 
 // ── 定数・状態 ──
 const SESSION_KEY = 'wordwolf_session';

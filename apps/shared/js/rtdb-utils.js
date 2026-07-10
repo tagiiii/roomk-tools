@@ -1,6 +1,15 @@
 // 後方互換で追加のみ。破壊的変更をする場合は ?v= 付き読み込みに切り替えること
 (function () {
   const ROOM_CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  const FIREBASE_CONFIG = {
+    apiKey: 'AIzaSyC0bqQdDJeTAWrqFYqjOT1NsVFiunPemIw',
+    authDomain: 'roomk-tools.firebaseapp.com',
+    databaseURL: 'https://roomk-tools-default-rtdb.asia-southeast1.firebasedatabase.app',
+    projectId: 'roomk-tools',
+    storageBucket: 'roomk-tools.firebasestorage.app',
+    messagingSenderId: '592193782148',
+    appId: '1:592193782148:web:1529f47cebab7dcd109dd1',
+  };
   let serverTimeOffset = 0;
 
   function initServerTime(db) {
@@ -33,6 +42,33 @@
     ).join('');
   }
 
+  function esc(value) {
+    return String(value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function initFirebase(firebaseNamespace) {
+    if (!firebaseNamespace
+      || typeof firebaseNamespace.initializeApp !== 'function'
+      || typeof firebaseNamespace.auth !== 'function'
+      || typeof firebaseNamespace.database !== 'function') {
+      throw new Error('Firebase compat SDK（app / auth / database）を先に読み込んでください');
+    }
+
+    firebaseNamespace.initializeApp(FIREBASE_CONFIG);
+    const authReady = firebaseNamespace.auth().signInAnonymously().catch((error) => {
+      console.error('[auth] anonymous sign-in failed', error);
+      throw error;
+    });
+    const db = firebaseNamespace.database();
+    initServerTime(db);
+    return { authReady, db };
+  }
+
   function showToast(message, isError = true, durationMs = 3000) {
     const existing = document.getElementById('roomk-toast');
     if (existing) existing.remove();
@@ -57,6 +93,8 @@
     getHostDisconnectedAt,
     isRoomExpired,
     generateRoomCode,
+    esc,
+    initFirebase,
     showToast,
   });
 }());

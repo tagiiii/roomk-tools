@@ -150,6 +150,8 @@ Realtime Database 単一ファイルアプリ向けの共有ヘルパー。`wind
 | `getHostDisconnectedAt(room)` | `room.hostDisconnectedAt` を数値化し、有効なら timestamp、無効なら `null` |
 | `isRoomExpired(room, ttlMs = 2 * 60 * 1000)` | `hostConnected === false` かつ TTL 超過なら `true` |
 | `generateRoomCode(length = 6)` | 紛らわしい文字を除外した英数字ルームコードを生成 |
+| `esc(value)` | XSS対策のHTMLエスケープ（シングルクォートを含む） |
+| `initFirebase(firebase)` | Firebase compat SDKを共通設定で初期化し、`{ authReady, db }` を返す。サーバー時刻補正も開始 |
 | `showToast(message, isError = true, durationMs = 3000)` | CSS依存なしの固定表示トースト（DOM id: `roomk-toast`） |
 
 ### howto.js（非モジュール通常スクリプト）
@@ -191,7 +193,7 @@ import { db, auth } from '../shared/js/firebase-config.js';
 // auth: Auth インスタンス（匿名サインイン済み）
 ```
 
-Realtime Database を使うアプリ（iisen-show など）は単一ファイルで独自に初期化し、共通処理は `rtdb-utils.js` を利用する。
+Realtime Database を使う単一ファイルアプリは、Firebase compat SDK 読み込み後に `RoomkRTDB.initFirebase(firebase)` で初期化する。移行前のアプリは従来の個別初期化を維持し、動作確認しながら段階的に切り替える。
 
 ---
 
@@ -528,9 +530,11 @@ sessionStorage.removeItem('{app}_session');
 再接続ありの Realtime Database アプリでは、Firebase 初期化直後にサーバー時刻補正を開始し、時刻計算は `RoomkRTDB.now()` を使う。
 
 ```js
-RoomkRTDB.initServerTime(db);
+const { authReady, db } = RoomkRTDB.initFirebase(firebase); // サーバー時刻補正も開始する
 const getEstimatedServerNow = RoomkRTDB.now;
 ```
+
+個別初期化から未移行のアプリだけは、従来どおり `RoomkRTDB.initServerTime(db)` を明示的に呼ぶ。
 
 - TTL 判定は `Date.now()` のみで行わず、`RoomkRTDB.now()` / `RoomkRTDB.isRoomExpired()` でサーバー時刻寄りに補正する
 - `joinRoom()`、`tryReconnect()`、ルーム監視の各タイミングで期限切れルームを検知し、`remove()` を試みる
@@ -541,12 +545,8 @@ const getEstimatedServerNow = RoomkRTDB.now;
 ユーザー入力（ニックネーム・回答・名前など）を DOM に挿入する際は必ずエスケープする。
 
 ```js
-// Realtime Database 単一ファイルアプリ（utils.js を使わない場合）
-function esc(s) {
-  return String(s)
-    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-}
+// Realtime Database 単一ファイルアプリ
+const esc = RoomkRTDB.esc;
 
 // Firestore アプリ（utils.js を使う場合）
 import { escapeHtml } from '../shared/js/utils.js';

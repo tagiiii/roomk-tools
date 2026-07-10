@@ -69,6 +69,6 @@ iisen_rooms/{roomCode}/
 - 3人以上でないとゲーム開始不可
 - 問題は重複しないようにトラッキング（全問使用後はリセット）
 - ゲーム終了30秒後に Realtime Database のルームデータを自動削除
-- Firebase設定は `firebaseConfig` の `YOUR_*` プレースホルダーを差し替えること
+- Firebase compat SDK の初期化は `RoomkRTDB.initFirebase(firebase)` を使用する
   - **Realtime Database** を使用（Firestoreではない）
-  - `databaseURL` の設定が必須
+  - 匿名認証の完了は返り値の `authReady` を await してから読み書きする
