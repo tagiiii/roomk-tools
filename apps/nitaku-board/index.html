@@ -1084,6 +1084,11 @@
     cleanupOldDays();
     state.dayCheckInterval = setInterval(checkDayRollover, 60 * 1000);
   });
+
+  window.addEventListener('pagehide', () => {
+    clearInterval(state.dayCheckInterval);
+    state.dayCheckInterval = null;
+  });
 </script>
 <script src="../shared/js/howto.js"></script>
 <script>
