@@ -483,22 +483,7 @@
 
 <script>
 // ── Firebase 初期化 ──
-const firebaseConfig = {
-  apiKey: "AIzaSyC0bqQdDJeTAWrqFYqjOT1NsVFiunPemIw",
-  authDomain: "roomk-tools.firebaseapp.com",
-  databaseURL: "https://roomk-tools-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "roomk-tools",
-  storageBucket: "roomk-tools.firebasestorage.app",
-  messagingSenderId: "592193782148",
-  appId: "1:592193782148:web:1529f47cebab7dcd109dd1",
-};
-firebase.initializeApp(firebaseConfig);
-const authReady = firebase.auth().signInAnonymously().catch((e) => {
-  console.error('[auth] anonymous sign-in failed', e);
-  throw e;
-});
-const db = firebase.database();
-RoomkRTDB.initServerTime(db);
+const { authReady, db } = RoomkRTDB.initFirebase(firebase);
 
 const showMsg = RoomkRTDB.showToast;
 const genCode = RoomkRTDB.generateRoomCode;
