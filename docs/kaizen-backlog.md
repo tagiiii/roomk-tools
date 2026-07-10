@@ -48,6 +48,7 @@
   - [x] 試行: `word-wolf` / `iisen-show` の2アプリ（2026-07-10 完了、5a24fb1。AI確認: 匿名認証・ルーム作成・sessionStorage再接続・テストルーム削除・コンソールエラーなし）
   - [ ] 残りアプリへの横展開（インライン firebaseConfig 残存の実測は11本: ikutsu-ieru / hint-de-pinto / kakure-number / jinro / ito / koedake-theater / magire-eshi / nitaku-board / tatoe-gp / pittari-meter / uso-jisho）
     - [x] ito（2026-07-10 完了、6b066f7。AI確認: 匿名認証・ルーム作成のRTDB同期・リロード再接続・退出でルーム削除・コンソールエラーなし）
+    - [x] jinro（2026-07-11 完了、724083a。AI確認: 匿名認証・ルーム作成のRTDB同期・リロード再接続（ホスト復帰）・退出でルーム削除・コンソールエラーなし）
 
 ## Tier C: 調査・報告のみ
 
