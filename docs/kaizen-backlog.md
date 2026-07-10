@@ -44,12 +44,13 @@
 - [x] B-5. ポータル `apps/index.html` にフィルタ結果ゼロ時の空状態表示を追加（2026-07-10 完了、0ec818d。「すべてのツールを見る」導線つき。AI確認: 0件状態を擬似再現し、全件表示・URLハッシュ解除・フォーカス復帰・コンソールエラーなし）
 - [x] B-6. ブレークポイント統一: `apps/shared/css/design-system.css` のモバイル基準を AGENTS.md と同じ **600px** に統一（2026-07-10 完了、143d1b6。AI確認: 600pxでモバイル用、601pxで通常のフォント・ボタン余白へ切り替わり、表示崩れ・アプリ由来コンソールエラーなし）
 - [x] B-7. `esc()` の共有化: `rtdb-utils.js` に `RoomkRTDB.esc` を追加し、12 アプリの重複定義を共有エイリアスへ移行（2026-07-10 完了、5a24fb1。AI確認: 全12アプリでTOP起動、共有APIとエイリアスの5文字エスケープ一致、アプリ由来コンソールエラーなし）
-- [ ] B-8. Firebase 初期化ヘルパーの共有化: `rtdb-utils.js` に `RoomkRTDB.initFirebase(firebase)` を追加し、14アプリを段階移行する
+- [x] B-8. Firebase 初期化ヘルパーの共有化: `rtdb-utils.js` に `RoomkRTDB.initFirebase(firebase)` を追加し、段階移行する（2026-07-11 全アプリ移行完了。インライン firebaseConfig は全廃）
   - [x] 試行: `word-wolf` / `iisen-show` の2アプリ（2026-07-10 完了、5a24fb1。AI確認: 匿名認証・ルーム作成・sessionStorage再接続・テストルーム削除・コンソールエラーなし）
-  - [ ] 残りアプリへの横展開（インライン firebaseConfig 残存の実測は11本: ikutsu-ieru / hint-de-pinto / kakure-number / jinro / ito / koedake-theater / magire-eshi / nitaku-board / tatoe-gp / pittari-meter / uso-jisho）
+  - [x] 残りアプリへの横展開（インライン firebaseConfig 残存の実測は11本: ikutsu-ieru / hint-de-pinto / kakure-number / jinro / ito / koedake-theater / magire-eshi / nitaku-board / tatoe-gp / pittari-meter / uso-jisho。2026-07-11 全11本完了）
     - [x] ito（2026-07-10 完了、6b066f7。AI確認: 匿名認証・ルーム作成のRTDB同期・リロード再接続・退出でルーム削除・コンソールエラーなし）
     - [x] jinro（2026-07-11 完了、724083a。AI確認: 匿名認証・ルーム作成のRTDB同期・リロード再接続（ホスト復帰）・退出でルーム削除・コンソールエラーなし）
     - [x] hint-de-pinto（2026-07-11 完了、ec3d2a4。AI確認: 匿名認証・ルーム作成のRTDB同期・リロード再接続・退出でルーム削除・コンソールエラーなし）
+    - [x] nitaku-board（2026-07-11 完了、5d2f092。AI確認: 匿名認証await後の起動・当日キー解決・日付チェックタイマー起動・votes への書き込みと削除の同期・リロード後再起動・コンソールエラーなし。テストスタンプは即時削除済み。※auth失敗時の挙動が warn握りつぶし→throw に変わるが、起動時awaitのため実質同等）
     - [x] ikutsu-ieru（2026-07-11 完了、dca3e26。AI確認: 匿名認証・ルーム作成のRTDB同期・リロード再接続・退出でルーム削除・コンソールエラーなし）
     - [x] tatoe-gp（2026-07-11 完了、0d43c5f。AI確認: 匿名認証・ルーム作成のRTDB同期・リロード再接続・退出・コンソールエラーなし。※rtdb-utils.js を ?v= なしで読み込む唯一のアプリで、キャッシュ旧版に initFirebase が無く起動不能になる事象を実機確認 → ?v=20260710 を付与して解消。他アプリは全て ?v= 付与済みを横断確認。テストルームは手動削除済み）
     - [x] uso-jisho（2026-07-11 完了、ce6a351。AI確認: 匿名認証・ルーム作成のRTDB同期・リロード再接続（ホスト待機画面へ復帰）・退出・コンソールエラーなし。退出はローカル片付けのみのTTL掃除設計、テストルームは手動削除済み）
