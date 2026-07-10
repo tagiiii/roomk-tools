@@ -58,6 +58,11 @@
     - [x] magire-eshi（2026-07-11 完了、505fd4a。AI確認: 匿名認証・ルーム作成のRTDB同期・リロード再接続・退出でルーム削除・コンソールエラーなし）
     - [x] koedake-theater（2026-07-11 完了、015b1c6。AI確認: 匿名認証・ルーム作成のRTDB同期・リロード再接続・退出でルーム削除・コンソールエラーなし）
     - [x] kakure-number（2026-07-11 完了、753569e。AI確認: 匿名認証・ルーム作成のRTDB同期・リロード再接続（ホスト待機画面へ復帰）・退出・コンソールエラーなし。※このアプリの退出はローカル片付けのみでルームはTTL掃除に任せる既存設計。テストルームは手動削除済み）
+- [ ] B-9. `rtdb-utils.js` の showToast に `role="status"` + `aria-live="polite"` を追加（提案1昇格。後方互換の属性追加のみ。apps/shared 配下の変更は 2026-07-11 に人間が本項目の昇格をもって許可済み。反映時は動作確認としてトーストの表示と属性をブラウザで確認）
+- [ ] B-10. 装飾アイコン（material-symbols）への `aria-hidden="true"` 付与＋アイコン単独ボタンへの `aria-label`（提案2昇格。約440箇所。1アプリ×1コミットで段階的に、各アプリでブラウザ表示確認。詳細は `docs/reports/c2-aria-role-candidates.md`）
+- [ ] B-11. jinro の低コントラスト3箇所の修正（提案3昇格。`.night-waiting` / `.phase-badge.morning` / `.section-lbl` 役職色。色候補と実測値は `docs/reports/c3-contrast-report.md`。修正後に同レポートの手法で 4.5:1 以上を実測確認）
+- [ ] B-12. kotoba-asobo セッション u1s05 の w1=q1 完全一致の解消（提案4昇格・一部。編集ミスの疑い。意図した問題文を前後のセッション構成から特定して修正。子ども向け文言のため体験レビューは事後。詳細は `docs/reports/c4-duplicate-phrases.md`）
+- [ ] B-13. 難読地名クイズ2問の解説修正（提案5昇格。nd16 匝瑳市=由来の因果を市公式準拠に、nd18 東雲=「たなびく雲」→「夜明けの空」。修正案と出典は `docs/reports/c1-nandoku-verification-batch1.md` に用意済み。体験レビューは事後）
 
 ## Tier C: 調査・報告のみ
 
@@ -73,11 +78,8 @@
 - [x] D-1. **firestore.rules の是正**: 掲示板は運用停止中のため 2026-07-10 にアプリごと削除し、bb-* ルールも撤去。本番反映も同日完了（ルールデプロイ済み＋bb-users / bb-invite-codes / bb-config / bb-threads の4コレクション削除済み）
 - [ ] D-2. firestore.rules を CI デプロイ対象に追加。サービスアカウントに `serviceusage.services.get` 権限（roles/serviceusage.serviceUsageConsumer）を付与してから、`.github/workflows/firebase-rules.yml` のトリガー paths と `--only` に firestore を追加（過去に権限不足で手動運用にした経緯あり）
 - [ ] D-3. 新規コンテンツ（クイズ問題・お題・カード）の本体投入。ループは候補生成（別ファイル出力＋自己申告つき）まで
+- [ ] D-4. quiz の重複2件の入れ替え（提案4昇格・一部。「情けは人の為ならず」の2パック重複と雑学キング2の答え「中国語」×2。代わりの新問が必要＝新規コンテンツ投入のため D-3 と同じ扱い: ループは代替問題の候補生成（別ファイル出力）まで、本体投入は人間確認後。詳細は `docs/reports/c4-duplicate-phrases.md`）
 
 ## 提案欄（ループが見つけた改善候補を追記する場所。人間が Tier を付けて上に昇格）
 
-- 提案1（C-2調査より）: `rtdb-utils.js` の showToast に `role="status"` + `aria-live="polite"` を追加。1修正で全RTDBアプリの通知が支援技術に伝わる。※apps/shared 配下のため人間の変更許可が必要（想定 Tier B）
-- 提案2（C-2調査より）: 装飾アイコン（material-symbols 約440箇所）への `aria-hidden="true"` 一括付与＋アイコン単独ボタンへの `aria-label`。詳細は `docs/reports/c2-aria-role-candidates.md`（想定 Tier B、1アプリずつ）
-- 提案3（C-3調査より）: jinro の独自配色3箇所のコントラスト改善（`.night-waiting` 3.22:1 / `.phase-badge.morning` 3.19:1 / `.section-lbl` 役職色 4.42:1）。具体的な色候補は `docs/reports/c3-contrast-report.md`（想定 Tier B）
-- 提案4（C-4調査より）: quiz の重複2件（「情けは人の為ならず」2パック重複・雑学キング2の答え「中国語」×2）と kotoba-asobo u1s05 の w1=q1 完全一致の確認・入れ替え。詳細は `docs/reports/c4-duplicate-phrases.md`（コンテンツ変更のため想定 Tier B〜D、人間の文言確認前提）
-- 提案5（C-1調査より）: 難読地名クイズ2問の解説修正 — nd16 匝瑳市（由来の因果が逆: 氏名が地名由来。市公式準拠の文案あり）・nd18 東雲（「たなびく雲」→「夜明けの空」）。修正案と出典は `docs/reports/c1-nandoku-verification-batch1.md`（想定 Tier B、文言は人間確認前提）
+（なし — 提案1〜5は 2026-07-11 に B-9〜B-13・D-4 として昇格済み）
