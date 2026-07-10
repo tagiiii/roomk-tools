@@ -63,7 +63,7 @@
 
 - [ ] C-1. 難読地名・駅名 160 問の事実再検証（四半期で一巡: 月 20 問ずつ、市町村合併・駅名改称・由来を一次ソース 2 件で確認。結果は報告のみ。修正は人間が承認した別項目として扱い、判断待ちはループを止めない）
 - [x] C-2. aria/role ゼロのアプリ（checkin, vote, word-wolf, codenames, minna-ranking, ito, value-card ほか）の改善候補リスト作成（2026-07-11 完了。報告書: `docs/reports/c2-aria-role-candidates.md`。ゼロは15アプリ、候補6系統を優先順・想定Tier付きで整理。修正は未実施）
-- [ ] C-3. muted テキスト×小フォントのコントラスト実測（WCAG AA）レポート
+- [x] C-3. muted テキスト×小フォントのコントラスト実測（WCAG AA）レポート（2026-07-11 完了。報告書: `docs/reports/c3-contrast-report.md`。設計トークンの muted は 6.15:1/5.50:1 で合格、実測6ページ中不合格は jinro の独自配色3件のみ。修正は未実施）
 - [x] C-4. `content-audit.mjs` の類似ペアレポートから「同一アプリ内の言い換え重複」を抽出して報告（2026-07-11 完了。報告書: `docs/reports/c4-duplicate-phrases.md`。実質的な入れ替え候補は quiz 2件＋kotoba-asobo 1件（u1s05 の w1=q1 は編集ミスの可能性）。食べ物系は同一アプリ内16/83・アプリ間完全一致10/136。修正は未実施）
 
 ## Tier D: 人間専任（ループはスキップして別項目へ進む）
@@ -76,3 +76,5 @@
 
 - 提案1（C-2調査より）: `rtdb-utils.js` の showToast に `role="status"` + `aria-live="polite"` を追加。1修正で全RTDBアプリの通知が支援技術に伝わる。※apps/shared 配下のため人間の変更許可が必要（想定 Tier B）
 - 提案2（C-2調査より）: 装飾アイコン（material-symbols 約440箇所）への `aria-hidden="true"` 一括付与＋アイコン単独ボタンへの `aria-label`。詳細は `docs/reports/c2-aria-role-candidates.md`（想定 Tier B、1アプリずつ）
+- 提案3（C-3調査より）: jinro の独自配色3箇所のコントラスト改善（`.night-waiting` 3.22:1 / `.phase-badge.morning` 3.19:1 / `.section-lbl` 役職色 4.42:1）。具体的な色候補は `docs/reports/c3-contrast-report.md`（想定 Tier B）
+- 提案4（C-4調査より）: quiz の重複2件（「情けは人の為ならず」2パック重複・雑学キング2の答え「中国語」×2）と kotoba-asobo u1s05 の w1=q1 完全一致の確認・入れ替え。詳細は `docs/reports/c4-duplicate-phrases.md`（コンテンツ変更のため想定 Tier B〜D、人間の文言確認前提）
