@@ -33,7 +33,7 @@
 
 - [ ] B-1. howto.js（あそびかたモーダル）導入: `ito` / `jinro` / `jitsuwa-game` / `tsuyomi-card` / `value-card` の 5 本（lint [HOWTO-1] の WARN 対応。組み込みは機械的だが、モーダル内の文言は子ども向けのため人間承認必須）
 - [ ] B-2. `apps/hint-de-pinto/index.html:401` の ⭕❌ ボタンを Material Symbols（check_circle / cancel）に置換（lint [CONTENT-1] の WARN 対応）
-- [ ] B-3. `apps/bulletin-board/index.html` の `maximum-scale=1` を除去（非 RTDB アプリに不要なズーム抑止。lint [VIEWPORT-2] の WARN 対応）
+- [x] B-3. ~~`apps/bulletin-board/index.html` の `maximum-scale=1` を除去~~（2026-07-10 アプリごと削除により解消）
 - [ ] B-4. ポータル `apps/index.html` のシーンチップに `min-height: 44px`（現状実測約 34px でタップターゲット未満）
 - [ ] B-5. ポータル `apps/index.html` にフィルタ結果ゼロ時の空状態表示を追加
 - [ ] B-6. ブレークポイント統一: AGENTS.md「600px」と `apps/shared/css/design-system.css`（480px）の不一致解消。**どちらに揃えるかは人間が決める**（決定後の反映作業はループ可）
@@ -43,14 +43,14 @@
 ## Tier C: 調査・報告のみ
 
 - [ ] C-1. 難読地名・駅名 160 問の事実再検証（四半期で一巡: 月 20 問ずつ、市町村合併・駅名改称・由来を一次ソース 2 件で確認。結果は報告のみ、修正は人間承認後）
-- [ ] C-2. aria/role ゼロのアプリ（bulletin-board, checkin, vote, word-wolf, codenames, minna-ranking, ito, value-card ほか）の改善候補リスト作成
+- [ ] C-2. aria/role ゼロのアプリ（checkin, vote, word-wolf, codenames, minna-ranking, ito, value-card ほか）の改善候補リスト作成
 - [ ] C-3. muted テキスト×小フォントのコントラスト実測（WCAG AA）レポート
 - [ ] C-4. `content-audit.mjs` の類似ペアレポートから「同一アプリ内の言い換え重複」を抽出して報告（食べ物ジャンル偏重の入れ替え候補づけ）
 
 ## Tier D: 人間専任（ループ着手禁止）
 
-- [ ] D-1. **firestore.rules の是正**: 掲示板（bb-*）が `allow read, write: if true` の無認証全開放。匿名認証必須化・PIN 設計見直し・既存データの扱いを決めてから変更（稼働中の掲示板に直結）
-- [ ] D-2. firestore.rules を CI デプロイ対象に追加（`.github/workflows/firebase-rules.yml` のトリガーと `--only` に firestore を追加）。D-1 とセットで
+- [x] D-1. **firestore.rules の是正**: 掲示板は運用停止中のため 2026-07-10 にアプリごと削除し、bb-* ルールも撤去（リポジトリ側完了）。**本番反映は残作業**: ①`npx firebase-tools login` → `npx firebase-tools deploy --only firestore --project roomk-tools` でルールをデプロイ、② Firebase コンソールで bb-users / bb-invite-codes / bb-config / bb-threads コレクションを削除
+- [ ] D-2. firestore.rules を CI デプロイ対象に追加。サービスアカウントに `serviceusage.services.get` 権限（roles/serviceusage.serviceUsageConsumer）を付与してから、`.github/workflows/firebase-rules.yml` のトリガー paths と `--only` に firestore を追加（過去に権限不足で手動運用にした経緯あり）
 - [ ] D-3. 新規コンテンツ（クイズ問題・お題・カード）の本体投入。ループは候補生成（別ファイル出力＋自己申告つき）まで
 
 ## 提案欄（ループが見つけた改善候補を追記する場所。人間が Tier を付けて上に昇格）
