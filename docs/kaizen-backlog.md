@@ -46,7 +46,8 @@
 - [x] B-7. `esc()` の共有化: `rtdb-utils.js` に `RoomkRTDB.esc` を追加し、12 アプリの重複定義を共有エイリアスへ移行（2026-07-10 完了、5a24fb1。AI確認: 全12アプリでTOP起動、共有APIとエイリアスの5文字エスケープ一致、アプリ由来コンソールエラーなし）
 - [ ] B-8. Firebase 初期化ヘルパーの共有化: `rtdb-utils.js` に `RoomkRTDB.initFirebase(firebase)` を追加し、14アプリを段階移行する
   - [x] 試行: `word-wolf` / `iisen-show` の2アプリ（2026-07-10 完了、5a24fb1。AI確認: 匿名認証・ルーム作成・sessionStorage再接続・テストルーム削除・コンソールエラーなし）
-  - [ ] 残り12アプリへの横展開（試行結果の確認後に実施）
+  - [ ] 残りアプリへの横展開（インライン firebaseConfig 残存の実測は11本: ikutsu-ieru / hint-de-pinto / kakure-number / jinro / ito / koedake-theater / magire-eshi / nitaku-board / tatoe-gp / pittari-meter / uso-jisho）
+    - [x] ito（2026-07-10 完了、6b066f7。AI確認: 匿名認証・ルーム作成のRTDB同期・リロード再接続・退出でルーム削除・コンソールエラーなし）
 
 ## Tier C: 調査・報告のみ
 
