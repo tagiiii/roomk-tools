@@ -10,7 +10,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
-  <script src="../shared/js/rtdb-utils.js"></script>
+  <script src="../shared/js/rtdb-utils.js?v=20260710"></script>
   <script type="module">
     // 共通ユーティリティを利用（REF-3: shuffle / escapeHtml の重複定義を解消）
     import { shuffle, escapeHtml } from '../shared/js/utils.js';
@@ -687,23 +687,7 @@
 </div>
 
 <script>
-  const firebaseConfig = {
-    apiKey: "AIzaSyC0bqQdDJeTAWrqFYqjOT1NsVFiunPemIw",
-    authDomain: "roomk-tools.firebaseapp.com",
-    databaseURL: "https://roomk-tools-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId: "roomk-tools",
-    storageBucket: "roomk-tools.firebasestorage.app",
-    messagingSenderId: "592193782148",
-    appId: "1:592193782148:web:1529f47cebab7dcd109dd1",
-  };
-
-  firebase.initializeApp(firebaseConfig);
-  const authReady = firebase.auth().signInAnonymously().catch((error) => {
-    console.error('[auth] anonymous sign-in failed', error);
-    throw error;
-  });
-  const db = firebase.database();
-  RoomkRTDB.initServerTime(db);
+  const { authReady, db } = RoomkRTDB.initFirebase(firebase);
   const CHOICE_NUMBERS = ['①', '②', '③', '④', '⑤'];
 
   const THEMES = [
