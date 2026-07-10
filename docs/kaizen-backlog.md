@@ -25,7 +25,7 @@
 
 ## Tier A: 自律修正 OK
 
-- [ ] A-1. `apps/nitaku-board/index.html` の `dayCheckInterval`（setInterval）に `clearInterval` を追加（lint [REF-5] の WARN 対応。他 RTDB アプリの片付けパターンに合わせる）
+- [x] A-1. `apps/nitaku-board/index.html` の `dayCheckInterval`（setInterval）に `clearInterval` を追加（lint [REF-5] の WARN 対応。pagehide で解放。2026-07-10 完了、6749b7f）
 - [ ] A-2. 旧トップレベル `shared/` の削除（未参照の死にコード。削除前に `git grep '\.\./\.\./shared'` と `git grep 'shared/js/utils'` で参照ゼロを再確認）
 - [x] A-3. `apps/value-card/index.html` の `sortablejs@latest` を 1.15.7 に固定＋SRI 付与（2026-07-10 完了）
 
@@ -34,7 +34,7 @@
 - [ ] B-1. howto.js（あそびかたモーダル）導入: `ito` / `jinro` / `jitsuwa-game` / `tsuyomi-card` / `value-card` の 5 本（lint [HOWTO-1] の WARN 対応。組み込みは機械的だが、モーダル内の文言は子ども向けのため人間承認必須）
 - [ ] B-2. `apps/hint-de-pinto/index.html:401` の ⭕❌ ボタンを Material Symbols（check_circle / cancel）に置換（lint [CONTENT-1] の WARN 対応）
 - [x] B-3. ~~`apps/bulletin-board/index.html` の `maximum-scale=1` を除去~~（2026-07-10 アプリごと削除により解消）
-- [ ] B-4. ポータル `apps/index.html` のシーンチップに `min-height: 44px`（現状実測約 34px でタップターゲット未満）
+- [ ] B-4. ポータル `apps/index.html` のシーンチップに `min-height: 44px`（現状実測約 34px でタップターゲット未満）※2026-07-10 草案作成済み（作業ツリーに未コミットで保留、ブラウザ実測 44px・崩れなし確認済み。人間確認後にコミット）
 - [ ] B-5. ポータル `apps/index.html` にフィルタ結果ゼロ時の空状態表示を追加
 - [ ] B-6. ブレークポイント統一: AGENTS.md「600px」と `apps/shared/css/design-system.css`（480px）の不一致解消。**どちらに揃えるかは人間が決める**（決定後の反映作業はループ可）
 - [ ] B-7. `esc()` の共有化: `rtdb-utils.js` に `RoomkRTDB.esc` を**追加のみ**で用意（12 アプリの重複定義の巻き取りは 1 本ずつ実機確認しながら段階的に）※ apps/shared 配下のため着手時は人間同席
