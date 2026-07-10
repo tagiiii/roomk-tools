@@ -131,10 +131,10 @@ function renderHome() {
       ${state.error ? `<div class="alert alert-error mt-md">${esc(state.error)}</div>` : ""}
       <div class="cn-actions mt-lg">
         <button class="btn btn-primary btn-full" data-route="create">
-          <span class="material-symbols-rounded">add_circle</span>ルームを作る
+          <span class="material-symbols-rounded" aria-hidden="true">add_circle</span>ルームを作る
         </button>
         <button class="btn btn-secondary btn-full" data-route="join">
-          <span class="material-symbols-rounded">login</span>ルームに参加する
+          <span class="material-symbols-rounded" aria-hidden="true">login</span>ルームに参加する
         </button>
       </div>
     </section>
@@ -242,7 +242,7 @@ function renderLobby() {
           <h1 class="cn-room-code">${esc(state.roomId)}</h1>
         </div>
         <button class="btn btn-secondary btn-sm" id="copy-room-code" type="button">
-          <span class="material-symbols-rounded">content_copy</span>コピー
+          <span class="material-symbols-rounded" aria-hidden="true">content_copy</span>コピー
       </button>
       </div>
       <div class="cn-status-grid mt-lg">
@@ -551,7 +551,7 @@ function renderPlayerControls(player) {
 function renderStartConditions(players) {
   return getStartConditions(players).map((condition) => `
     <li class="${condition.ok ? "cn-condition-ok" : "cn-condition-ng"}">
-      <span class="material-symbols-rounded">${condition.ok ? "check_circle" : "radio_button_unchecked"}</span>
+      <span class="material-symbols-rounded" role="img" aria-label="${condition.ok ? "達成" : "未達成"}">${condition.ok ? "check_circle" : "radio_button_unchecked"}</span>
       ${esc(condition.label)}
     </li>
   `).join("");
