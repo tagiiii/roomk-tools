@@ -235,6 +235,80 @@ function collectEntries() {
     })));
   }
 
+  const docchiTopics = evalArrayFromSource(read('apps/docchi/app.js'), 'TOPICS', 'apps/docchi/app.js') || [];
+  docchiTopics.forEach((item, index) => rows.push(entry('docchi', item.cat, item.q, {
+    id: `docchi:${index}`,
+    question: item.q,
+    answer: `${item.a}/${item.b}`,
+  })));
+
+  const nitakuSource = extractScript(read('apps/nitaku-board/index.html'));
+  const nitakuTopics = evalArrayFromSource(nitakuSource, 'TOPICS', 'apps/nitaku-board/index.html') || [];
+  nitakuTopics.forEach((item, index) => rows.push(entry('nitaku-board', 'topic', `${item.t}（${item.a}／${item.b}）`, {
+    id: `nitaku-board:${index}`,
+    question: `${item.t}（${item.a}／${item.b}）`,
+    answer: `${item.a}/${item.b}`,
+  })));
+
+  const rankingTopics = evalArrayFromSource(read('apps/minna-ranking/app.js'), 'TOPICS', 'apps/minna-ranking/app.js') || [];
+  rankingTopics.forEach((item, index) => rows.push(entry('minna-ranking', 'topic', item.title, {
+    id: `minna-ranking:${index}`,
+    question: item.title,
+    answer: (item.items || []).join('/'),
+  })));
+
+  const talkTopics = evalArrayFromSource(read('apps/talk-card/app.js'), 'topics', 'apps/talk-card/app.js') || [];
+  talkTopics.forEach((text, index) => rows.push(entry('talk-card', 'topic', text, {
+    id: `talk-card:${index}`,
+  })));
+
+  const otonaTopics = evalArrayFromSource(read('apps/otona-talk/app.js'), 'topics', 'apps/otona-talk/app.js') || [];
+  otonaTopics.forEach((item, index) => rows.push(entry('otona-talk', item.c, item.t, {
+    id: `otona-talk:${index}`,
+  })));
+
+  const checkoutQuestions = evalArrayFromSource(read('apps/checkout-card/app.js'), 'QUESTIONS', 'apps/checkout-card/app.js') || [];
+  checkoutQuestions.forEach((text, index) => rows.push(entry('checkout-card', 'question', text, {
+    id: `checkout-card:${index}`,
+  })));
+
+  const tsuyomiCards = evalArrayFromSource(read('apps/tsuyomi-card/app.js'), 'CARD_TEXTS', 'apps/tsuyomi-card/app.js') || [];
+  tsuyomiCards.forEach((text, index) => rows.push(entry('tsuyomi-card', 'card', text, {
+    id: `tsuyomi-card:${index}`,
+  })));
+
+  const kimochiGroups = evalArrayFromSource(read('apps/kimochi-map/app.js'), 'GROUPS', 'apps/kimochi-map/app.js') || [];
+  for (const group of kimochiGroups) {
+    (group.words || []).forEach((word, index) => rows.push(entry('kimochi-map', group.key, word, {
+      id: `kimochi-map:${group.key}:${index}`,
+    })));
+  }
+
+  const bamenSource = read('apps/bamen-card/app.js');
+  const bamenHeroes = evalArrayFromSource(bamenSource, 'HEROES', 'apps/bamen-card/app.js') || [];
+  bamenHeroes.forEach((item, index) => rows.push(entry('bamen-card', 'hero', item.name, {
+    id: `bamen-card:hero:${index}`,
+  })));
+  const bamenEntries = evalArrayFromSource(bamenSource, 'ENTRY_CARDS', 'apps/bamen-card/app.js') || [];
+  bamenEntries.forEach((text, index) => rows.push(entry('bamen-card', 'entry', text, {
+    id: `bamen-card:entry:${index}`,
+  })));
+
+  const drawers = evalArrayFromSource(read('apps/mirai-hikidashi/app.js'), 'DRAWERS', 'apps/mirai-hikidashi/app.js') || [];
+  for (const drawer of drawers) {
+    rows.push(entry('mirai-hikidashi', 'drawer', drawer.name, {
+      id: `mirai-hikidashi:${drawer.id}`,
+      question: drawer.peek || drawer.name,
+      answer: drawer.name,
+    }));
+    (drawer.people || []).forEach((text, index) => rows.push(entry('mirai-hikidashi', `${drawer.id}:people`, text, {
+      id: `mirai-hikidashi:${drawer.id}:people:${index}`,
+    })));
+    (drawer.tries || []).forEach((text, index) => rows.push(entry('mirai-hikidashi', `${drawer.id}:tries`, text, {
+      id: `mirai-hikidashi:${drawer.id}:tries:${index}`,
+    })));
+  }
+
   rows.push(...collectKotobaAsobo());
   return rows.filter((row) => row.normText);
 }
