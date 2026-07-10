@@ -62,7 +62,7 @@
 - [ ] B-10. 装飾アイコン（material-symbols）への `aria-hidden="true"` 付与＋アイコン単独ボタンへの `aria-label`（提案2昇格。約440箇所。1アプリ×1コミットで段階的に、各アプリでブラウザ表示確認。詳細は `docs/reports/c2-aria-role-candidates.md`）
 - [ ] B-11. jinro の低コントラスト3箇所の修正（提案3昇格。`.night-waiting` / `.phase-badge.morning` / `.section-lbl` 役職色。色候補と実測値は `docs/reports/c3-contrast-report.md`。修正後に同レポートの手法で 4.5:1 以上を実測確認）
 - [ ] B-12. kotoba-asobo セッション u1s05 の w1=q1 完全一致の解消（提案4昇格・一部。編集ミスの疑い。意図した問題文を前後のセッション構成から特定して修正。子ども向け文言のため体験レビューは事後。詳細は `docs/reports/c4-duplicate-phrases.md`）
-- [ ] B-13. 難読地名クイズ2問の解説修正（提案5昇格。nd16 匝瑳市=由来の因果を市公式準拠に、nd18 東雲=「たなびく雲」→「夜明けの空」。修正案と出典は `docs/reports/c1-nandoku-verification-batch1.md` に用意済み。体験レビューは事後）
+- [x] B-13. 難読地名クイズ2問の解説修正（提案5昇格。nd16 匝瑳市=由来の因果を市公式準拠に、nd18 東雲=「たなびく雲」→「夜明けの空」。修正案と出典は `docs/reports/c1-nandoku-verification-batch1.md` に用意済み。2026-07-11 完了。AI確認: lint・content-audit ともにパス（新規重複なし）、ブラウザで questions.js が新解説文を配信・旧文言は消失・全24パックがパック選択画面に描画（＝構文エラーなし）・コンソールエラーなし。体験レビューは事後）
 
 ## Tier C: 調査・報告のみ
 
