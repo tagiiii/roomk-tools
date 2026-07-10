@@ -49,7 +49,7 @@
 
 ## Tier D: 人間専任（ループ着手禁止）
 
-- [x] D-1. **firestore.rules の是正**: 掲示板は運用停止中のため 2026-07-10 にアプリごと削除し、bb-* ルールも撤去（リポジトリ側完了）。**本番反映は残作業**: ①`npx firebase-tools login` → `npx firebase-tools deploy --only firestore --project roomk-tools` でルールをデプロイ、② Firebase コンソールで bb-users / bb-invite-codes / bb-config / bb-threads コレクションを削除
+- [x] D-1. **firestore.rules の是正**: 掲示板は運用停止中のため 2026-07-10 にアプリごと削除し、bb-* ルールも撤去。本番反映も同日完了（ルールデプロイ済み＋bb-users / bb-invite-codes / bb-config / bb-threads の4コレクション削除済み）
 - [ ] D-2. firestore.rules を CI デプロイ対象に追加。サービスアカウントに `serviceusage.services.get` 権限（roles/serviceusage.serviceUsageConsumer）を付与してから、`.github/workflows/firebase-rules.yml` のトリガー paths と `--only` に firestore を追加（過去に権限不足で手動運用にした経緯あり）
 - [ ] D-3. 新規コンテンツ（クイズ問題・お題・カード）の本体投入。ループは候補生成（別ファイル出力＋自己申告つき）まで
 
