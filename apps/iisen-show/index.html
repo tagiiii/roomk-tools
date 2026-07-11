@@ -221,18 +221,18 @@
   <div class="page">
     <div class="top-hero">
       <div class="top-icon-wrap">
-        <span class="material-symbols-rounded">my_location</span>
+        <span class="material-symbols-rounded" aria-hidden="true">my_location</span>
       </div>
       <h1 class="top-title">いいセンいきま<br>SHOW!</h1>
       <p class="top-sub">数字でいいセンをいこう！みんなで遊べるパーティーゲーム</p>
     </div>
     <div class="top-buttons">
       <button class="btn btn-primary btn-lg btn-full" onclick="goHostSetup()">
-        <span class="material-symbols-rounded">add_home</span>
+        <span class="material-symbols-rounded" aria-hidden="true">add_home</span>
         ルームを作る（ホスト）
       </button>
       <button class="btn btn-secondary btn-lg btn-full" onclick="goGuestJoin()">
-        <span class="material-symbols-rounded">login</span>
+        <span class="material-symbols-rounded" aria-hidden="true">login</span>
         ルームに参加する
       </button>
     </div>
@@ -266,7 +266,7 @@
 
       <div class="room-code-box" id="host-room-code-display">----</div>
       <button class="btn btn-ghost btn-full" id="host-copy-btn" onclick="hostCopyCode()">
-        <span class="material-symbols-rounded">content_copy</span>
+        <span class="material-symbols-rounded" aria-hidden="true">content_copy</span>
         コードをコピー
       </button>
 
@@ -277,7 +277,7 @@
       <div class="mt-lg">
         <button class="btn btn-primary btn-lg btn-full" id="btn-start-game"
                 disabled onclick="hostStartGame()">
-          <span class="material-symbols-rounded">sports_esports</span>
+          <span class="material-symbols-rounded" aria-hidden="true">sports_esports</span>
           ゲームを始める
         </button>
       </div>
@@ -374,7 +374,7 @@
     <!-- 送信済み -->
     <div id="answer-submitted-area" style="display:none">
       <div class="answer-submitted-msg">
-        <span class="material-symbols-rounded" style="font-size:48px;display:block;margin-bottom:8px;color:var(--color-success)">check_circle</span>
+        <span class="material-symbols-rounded" aria-hidden="true" style="font-size:48px;display:block;margin-bottom:8px;color:var(--color-success)">check_circle</span>
         送信済み
         <small>他の人の回答を待っています</small>
       </div>
@@ -423,7 +423,7 @@
   <div class="page">
     <div class="winner-block pop-in">
       <div style="font-size:72px;line-height:1;margin-bottom:8px">
-        <span class="material-symbols-rounded" style="font-size:72px;color:#F0A500">emoji_events</span>
+        <span class="material-symbols-rounded" aria-hidden="true" style="font-size:72px;color:#F0A500">emoji_events</span>
       </div>
       <div class="winner-label">優勝！</div>
       <div class="winner-name" id="final-winner-name"></div>
@@ -435,7 +435,7 @@
 
     <div class="mt-lg">
       <button class="btn btn-secondary btn-full btn-lg" onclick="goToTop()">
-        <span class="material-symbols-rounded">replay</span>
+        <span class="material-symbols-rounded" aria-hidden="true">replay</span>
         もう一度遊ぶ
       </button>
     </div>
@@ -773,7 +773,7 @@
   function copyToClipboard(text, btn) {
     const original = btn.innerHTML;
     navigator.clipboard.writeText(text).then(() => {
-      btn.innerHTML = '<span class="material-symbols-rounded">check</span> コピーしました！';
+      btn.innerHTML = '<span class="material-symbols-rounded" aria-hidden="true">check</span> コピーしました！';
       btn.classList.add('done');
       setTimeout(() => {
         btn.innerHTML = original;
@@ -1288,9 +1288,9 @@
       if (isOut)    cls += ' is-out';
 
       const badge = isMedian
-        ? '<span class="result-badge badge-median"><span class="material-symbols-rounded" style="font-size:14px">my_location</span> いいセン！</span>'
+        ? '<span class="result-badge badge-median"><span class="material-symbols-rounded" aria-hidden="true" style="font-size:14px">my_location</span> いいセン！</span>'
         : isOut
-          ? '<span class="result-badge badge-out"><span class="material-symbols-rounded" style="font-size:14px">close</span> アウト！</span>'
+          ? '<span class="result-badge badge-out"><span class="material-symbols-rounded" aria-hidden="true" style="font-size:14px">close</span> アウト！</span>'
           : '';
 
       const deltaVal = isMedian ? '+50pt' : isOut ? '-10pt' : '±0pt';
