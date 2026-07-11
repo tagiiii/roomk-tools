@@ -217,9 +217,9 @@ function showTopicScreen(topic) {
   $roundBadge.textContent = `ラウンド ${currentRound} / ${totalRounds}`;
 
   if (currentRound >= totalRounds) {
-    $nextBtn.innerHTML = '<span class="material-symbols-rounded">emoji_events</span> 結果発表へ';
+    $nextBtn.innerHTML = '<span class="material-symbols-rounded" aria-hidden="true">emoji_events</span> 結果発表へ';
   } else {
-    $nextBtn.innerHTML = '<span class="material-symbols-rounded">arrow_forward</span> 次のラウンドへ';
+    $nextBtn.innerHTML = '<span class="material-symbols-rounded" aria-hidden="true">arrow_forward</span> 次のラウンドへ';
   }
 
   showScreen('topic');
