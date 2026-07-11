@@ -193,16 +193,16 @@ function renderRank() {
       <span class="mr-item__text">${esc(item.text)}</span>
       <span class="mr-item__ctrl">
         <button type="button" class="mr-item__move" data-act="up" aria-label="${esc(item.text)}を上へ" ${i === 0 ? 'disabled' : ''}>
-          <span class="material-symbols-rounded">keyboard_arrow_up</span>
+          <span class="material-symbols-rounded" aria-hidden="true">keyboard_arrow_up</span>
         </button>
         <button type="button" class="mr-item__move" data-act="down" aria-label="${esc(item.text)}を下へ" ${i === state.items.length - 1 ? 'disabled' : ''}>
-          <span class="material-symbols-rounded">keyboard_arrow_down</span>
+          <span class="material-symbols-rounded" aria-hidden="true">keyboard_arrow_down</span>
         </button>
         <button type="button" class="mr-item__mini" data-act="tie" ${i === 0 ? 'disabled' : ''}>
-          <span class="material-symbols-rounded">${item.tied ? 'link_off' : 'link'}</span>${item.tied ? 'タイをやめる' : 'うえとタイ'}
+          <span class="material-symbols-rounded" aria-hidden="true">${item.tied ? 'link_off' : 'link'}</span>${item.tied ? 'タイをやめる' : 'うえとタイ'}
         </button>
         <button type="button" class="mr-item__mini" data-act="out">
-          <span class="material-symbols-rounded">arrow_downward</span>ランクがいへ
+          <span class="material-symbols-rounded" aria-hidden="true">arrow_downward</span>ランクがいへ
         </button>
       </span>
     `;
@@ -244,7 +244,7 @@ function renderRank() {
     li.innerHTML = `
       <span class="mr-out__text">${esc(item.text)}</span>
       <button type="button" class="mr-item__mini" data-act="back" aria-label="${esc(item.text)}をランキングにもどす">
-        <span class="material-symbols-rounded">arrow_upward</span>もどす
+        <span class="material-symbols-rounded" aria-hidden="true">arrow_upward</span>もどす
       </button>
     `;
     li.querySelector('button').addEventListener('click', () => {
