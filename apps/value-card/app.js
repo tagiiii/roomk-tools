@@ -165,10 +165,10 @@ function renderRanking() {
       <span class="vc-rank-item__keyword">${escapeHtml(card.keyword)}</span>
       <div class="vc-rank-item__arrows">
         <button aria-label="上へ移動" ${i === 0 ? 'disabled' : ''}>
-          <span class="material-symbols-rounded">keyboard_arrow_up</span>
+          <span class="material-symbols-rounded" aria-hidden="true">keyboard_arrow_up</span>
         </button>
         <button aria-label="下へ移動" ${i === hand.length - 1 ? 'disabled' : ''}>
-          <span class="material-symbols-rounded">keyboard_arrow_down</span>
+          <span class="material-symbols-rounded" aria-hidden="true">keyboard_arrow_down</span>
         </button>
       </div>
     `;
