@@ -212,17 +212,17 @@
   <div class="page">
     <div class="kdt-header">
       <div class="kdt-header__icon">
-        <span class="material-symbols-rounded">theater_comedy</span>
+        <span class="material-symbols-rounded" aria-hidden="true">theater_comedy</span>
       </div>
       <div class="kdt-header__title">こえだけシアター</div>
       <div class="kdt-header__sub">みじかいセリフをこえだけでえんじて、<br>どのシチュエーションかあててもらおう</div>
     </div>
     <div class="card">
       <button class="btn btn-primary btn-full" onclick="goTo('host-setup')">
-        <span class="material-symbols-rounded">add_circle</span>ルームを作る
+        <span class="material-symbols-rounded" aria-hidden="true">add_circle</span>ルームを作る
       </button>
       <button class="btn btn-secondary btn-full sep" onclick="goTo('guest-join')">
-        <span class="material-symbols-rounded">login</span>ルームに参加する
+        <span class="material-symbols-rounded" aria-hidden="true">login</span>ルームに参加する
       </button>
     </div>
   </div>
@@ -240,7 +240,7 @@
         <input class="form-input" id="host-nickname" type="text" maxlength="8" placeholder="例: たろう">
       </div>
       <button class="btn btn-primary btn-full mt-md" onclick="hostCreateRoom()">
-        <span class="material-symbols-rounded">add_home</span>ルームを作成する
+        <span class="material-symbols-rounded" aria-hidden="true">add_home</span>ルームを作成する
       </button>
       <button class="btn btn-ghost btn-full sep" onclick="goTo('top')">戻る</button>
     </div>
@@ -264,7 +264,7 @@
                style="text-transform:uppercase;letter-spacing:.2em;font-size:24px;text-align:center">
       </div>
       <button class="btn btn-primary btn-full mt-md" onclick="guestJoin()">
-        <span class="material-symbols-rounded">login</span>参加する
+        <span class="material-symbols-rounded" aria-hidden="true">login</span>参加する
       </button>
       <button class="btn btn-ghost btn-full sep" onclick="goTo('top')">戻る</button>
     </div>
@@ -294,12 +294,12 @@
 
     <div id="w-host-start" class="mt-md" style="display:none">
       <button class="btn btn-primary btn-full" id="btn-start" onclick="startGame()" disabled>
-        <span class="material-symbols-rounded">play_arrow</span>ゲームスタート
+        <span class="material-symbols-rounded" aria-hidden="true">play_arrow</span>ゲームスタート
       </button>
       <p class="kdt-note">ホストのほかに2人以上でスタートできます（8人まで）</p>
     </div>
     <button class="btn btn-ghost btn-full mt-md" onclick="leaveGame()">
-      <span class="material-symbols-rounded">logout</span>退出する
+      <span class="material-symbols-rounded" aria-hidden="true">logout</span>退出する
     </button>
   </div>
 </div>
@@ -323,7 +323,7 @@
 
     <!-- ゲスト向け -->
     <div id="cast-guest-area" class="card mt-md" style="display:none;text-align:center">
-      <span class="material-symbols-rounded" style="font-size:36px;color:var(--color-accent)">record_voice_over</span>
+      <span class="material-symbols-rounded" aria-hidden="true" style="font-size:36px;color:var(--color-accent)">record_voice_over</span>
       <p style="font-weight:700;margin-top:8px">えんじる人をえらんでいます</p>
       <p style="font-size:13px;color:var(--color-muted);margin-top:6px">やってみたい人は、こえかチャットでおしえてね</p>
     </div>
@@ -334,11 +334,11 @@
         <p class="kdt-section-lbl">えんじる人をえらぶ</p>
         <div id="cast-guest-btns"></div>
         <button class="btn btn-secondary btn-full sep" onclick="pickRandomActor()">
-          <span class="material-symbols-rounded">casino</span>ランダムにえらぶ
+          <span class="material-symbols-rounded" aria-hidden="true">casino</span>ランダムにえらぶ
         </button>
       </div>
       <button class="btn btn-primary btn-full mt-md" id="btn-cast-confirm" onclick="confirmActor()" disabled>
-        <span class="material-symbols-rounded">check_circle</span>きめた
+        <span class="material-symbols-rounded" aria-hidden="true">check_circle</span>きめた
       </button>
     </div>
   </div>
@@ -354,7 +354,7 @@
     <!-- 演者だけに見える -->
     <div id="act-secret" class="kdt-secret" style="display:none">
       <p class="kdt-secret__lbl">
-        <span class="material-symbols-rounded" style="font-size:18px">visibility_off</span>
+        <span class="material-symbols-rounded" aria-hidden="true" style="font-size:18px">visibility_off</span>
         きみのシチュエーションは
       </p>
       <p class="kdt-secret__situ" id="act-secret-situ"></p>
@@ -375,7 +375,7 @@
 
     <div id="act-host-area" class="mt-md" style="display:none">
       <button class="btn btn-primary btn-full" onclick="moveToVoting()">
-        <span class="material-symbols-rounded">how_to_vote</span>とうひょうへ
+        <span class="material-symbols-rounded" aria-hidden="true">how_to_vote</span>とうひょうへ
       </button>
       <button class="btn btn-ghost btn-full sep" onclick="reselectActor()">えんじる人をえらびなおす</button>
     </div>
@@ -398,13 +398,13 @@
     <div id="vote-actor-area" style="display:none">
       <div class="kdt-secret">
         <p class="kdt-secret__lbl">
-          <span class="material-symbols-rounded" style="font-size:18px">visibility_off</span>
+          <span class="material-symbols-rounded" aria-hidden="true" style="font-size:18px">visibility_off</span>
           きみのシチュエーションは
         </p>
         <p class="kdt-secret__situ" id="vote-actor-situ"></p>
       </div>
       <div class="card kdt-voted">
-        <span class="material-symbols-rounded">hourglass_top</span>
+        <span class="material-symbols-rounded" aria-hidden="true">hourglass_top</span>
         <p style="font-weight:700;margin-top:8px">みんなが とうひょう中</p>
         <p id="vote-actor-count" class="kdt-note"></p>
       </div>
@@ -417,12 +417,12 @@
       </p>
       <div id="vote-btns"></div>
       <button class="btn btn-primary btn-full sep" id="btn-vote-confirm" onclick="submitVote()" disabled>
-        <span class="material-symbols-rounded">check_circle</span>きめた
+        <span class="material-symbols-rounded" aria-hidden="true">check_circle</span>きめた
       </button>
     </div>
 
     <div id="vote-done-area" class="card kdt-voted" style="display:none">
-      <span class="material-symbols-rounded">check_circle</span>
+      <span class="material-symbols-rounded" aria-hidden="true">check_circle</span>
       <p style="font-weight:700;margin-top:8px">とうひょうしました</p>
       <p id="vote-done-count" class="kdt-note"></p>
     </div>
@@ -435,7 +435,7 @@
         <p id="vote-host-hint" class="kdt-note" style="text-align:left"></p>
       </div>
       <button class="btn btn-primary btn-full mt-md" onclick="openVotes()">
-        <span class="material-symbols-rounded">celebration</span>けっかを見る
+        <span class="material-symbols-rounded" aria-hidden="true">celebration</span>けっかを見る
       </button>
     </div>
   </div>
@@ -467,7 +467,7 @@
 
     <div id="rev-host-area" class="mt-md" style="display:none">
       <button class="btn btn-primary btn-full" onclick="nextRound()">
-        <span class="material-symbols-rounded">arrow_forward</span>つぎのラウンドへ
+        <span class="material-symbols-rounded" aria-hidden="true">arrow_forward</span>つぎのラウンドへ
       </button>
       <button class="btn btn-ghost btn-full sep" onclick="finishGame()">おわる</button>
     </div>
@@ -481,7 +481,7 @@
   <div class="page">
     <div class="kdt-header">
       <div class="kdt-header__icon">
-        <span class="material-symbols-rounded">celebration</span>
+        <span class="material-symbols-rounded" aria-hidden="true">celebration</span>
       </div>
       <div class="kdt-header__title">おしまい</div>
       <div class="kdt-header__sub">あそんでくれてありがとう</div>
@@ -493,7 +493,7 @@
     </div>
 
     <button class="btn btn-ghost btn-full mt-md" onclick="leaveGame()">
-      <span class="material-symbols-rounded">home</span>トップへ戻る
+      <span class="material-symbols-rounded" aria-hidden="true">home</span>トップへ戻る
     </button>
   </div>
 </div>
@@ -504,7 +504,7 @@
   <p class="kdt-overlay__title">再接続しています...</p>
 </div>
 <div class="kdt-overlay" id="host-off-overlay">
-  <span class="material-symbols-rounded" style="font-size:48px">signal_disconnected</span>
+  <span class="material-symbols-rounded" aria-hidden="true" style="font-size:48px">signal_disconnected</span>
   <p class="kdt-overlay__title">ホストが一時的に切断されました</p>
   <p class="kdt-overlay__sub">再接続を待っています</p>
   <button class="btn btn-ghost" style="margin-top:16px" onclick="leaveGame()">退出する</button>
@@ -1102,7 +1102,7 @@ function handleCasting(room, players) {
     const html = guestNames(players).map(nick => {
       const selected = nick === state.castSelection ? ' selected' : '';
       return `<button class="kdt-choice${selected}" data-nick="${esc(nick)}">
-        <span class="material-symbols-rounded" style="color:var(--color-accent)">mic</span>
+        <span class="material-symbols-rounded" aria-hidden="true" style="color:var(--color-accent)">mic</span>
         <span class="kdt-choice__text">${esc(nick)}</span>
       </button>`;
     }).join('');
@@ -1234,7 +1234,7 @@ function handleReveal(room, players) {
     const hit = correctNicks.has(nick);
     let pickHtml = '<span style="color:var(--color-muted);font-size:13px">とうひょうなし</span>';
     if (Number.isInteger(vote)) {
-      const mark = hit ? '<span class="material-symbols-rounded">check_circle</span>' : '';
+      const mark = hit ? '<span class="material-symbols-rounded" role="img" aria-label="正解">check_circle</span>' : '';
       pickHtml = `<span class="kdt-vote-row__pick">${NUMBERS[vote]} ${esc(card?.situations?.[vote] || '')}${mark}</span>`;
     }
     const meMark = nick === state.nickname ? '<span class="kdt-tag kdt-tag--me">あなた</span>' : '';
