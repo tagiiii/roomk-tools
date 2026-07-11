@@ -204,7 +204,7 @@
 <div id="screen-top" class="screen">
   <div class="page">
     <div class="mgr-header">
-      <div class="mgr-header__icon"><span class="material-symbols-rounded">brush</span></div>
+      <div class="mgr-header__icon"><span class="material-symbols-rounded" aria-hidden="true">brush</span></div>
       <div class="mgr-header__title">まぎれ絵師</div>
       <div class="mgr-header__sub">
         みんなで 1まいの絵を 1筆ずつかいて かんせいさせよう。<br>
@@ -213,10 +213,10 @@
     </div>
     <div class="card">
       <button class="btn btn-primary btn-full" onclick="goTo('host-setup')">
-        <span class="material-symbols-rounded">add_circle</span>ルームを作る
+        <span class="material-symbols-rounded" aria-hidden="true">add_circle</span>ルームを作る
       </button>
       <button class="btn btn-secondary btn-full mgr-sep" onclick="goTo('guest-join')">
-        <span class="material-symbols-rounded">login</span>ルームに参加する
+        <span class="material-symbols-rounded" aria-hidden="true">login</span>ルームに参加する
       </button>
     </div>
   </div>
@@ -233,7 +233,7 @@
       </div>
       <p style="font-size:13px;color:var(--color-muted);margin-bottom:12px">ルームを作った人は かかずに すすめる係になります</p>
       <button class="btn btn-primary btn-full" onclick="hostCreateRoom()">
-        <span class="material-symbols-rounded">add_home</span>ルームを作成する
+        <span class="material-symbols-rounded" aria-hidden="true">add_home</span>ルームを作成する
       </button>
       <button class="btn btn-ghost btn-full mgr-sep" onclick="goTo('top')">戻る</button>
     </div>
@@ -255,7 +255,7 @@
                style="text-transform:uppercase;letter-spacing:.2em;font-size:24px;text-align:center">
       </div>
       <button class="btn btn-primary btn-full mt-md" onclick="guestJoin()">
-        <span class="material-symbols-rounded">login</span>参加する
+        <span class="material-symbols-rounded" aria-hidden="true">login</span>参加する
       </button>
       <button class="btn btn-ghost btn-full mgr-sep" onclick="goTo('top')">戻る</button>
     </div>
@@ -283,12 +283,12 @@
 
     <div id="w-host-start" class="mt-md" style="display:none">
       <button class="btn btn-primary btn-full" id="btn-start" onclick="hostStartGame()" disabled>
-        <span class="material-symbols-rounded">play_arrow</span>ゲームをはじめる
+        <span class="material-symbols-rounded" aria-hidden="true">play_arrow</span>ゲームをはじめる
       </button>
       <p style="font-size:13px;color:var(--color-muted);text-align:center;margin-top:8px">ホストのほかに3人以上で はじめられます</p>
     </div>
     <button class="btn btn-ghost btn-full mt-md" onclick="leaveGame()">
-      <span class="material-symbols-rounded">logout</span>退出する
+      <span class="material-symbols-rounded" aria-hidden="true">logout</span>退出する
     </button>
   </div>
 </div>
@@ -301,12 +301,12 @@
     <!-- ゲスト用 -->
     <div id="rv-guest-area" style="display:none">
       <div class="mgr-role-card" id="rv-card" onclick="revealRoleCard()">
-        <span class="material-symbols-rounded" style="font-size:40px;opacity:.7">touch_app</span>
+        <span class="material-symbols-rounded" aria-hidden="true" style="font-size:40px;opacity:.7">touch_app</span>
         <p style="margin-top:8px;font-size:14px">タップして じぶんのカードを見る</p>
       </div>
       <div id="rv-confirm-area" style="display:none">
         <button class="btn btn-primary btn-full" id="btn-confirm" onclick="confirmRole()">
-          <span class="material-symbols-rounded">check_circle</span>かくにんした
+          <span class="material-symbols-rounded" aria-hidden="true">check_circle</span>かくにんした
         </button>
       </div>
     </div>
@@ -315,16 +315,16 @@
     <div id="rv-host-area" style="display:none">
       <p style="font-size:13px;color:var(--color-muted);margin-bottom:10px">画面共有中は とじたまま すすめられます。見るときだけタップ。</p>
       <details class="mgr-secret" id="rv-secret-topic">
-        <summary><span class="material-symbols-rounded">visibility</span>お題（タップで見る）</summary>
+        <summary><span class="material-symbols-rounded" aria-hidden="true">visibility</span>お題（タップで見る）</summary>
         <div class="mgr-secret__body" id="rv-topic-body"></div>
       </details>
       <details class="mgr-secret" id="rv-secret-fake">
-        <summary><span class="material-symbols-rounded">visibility</span>まぎれ絵師（タップで見る）</summary>
+        <summary><span class="material-symbols-rounded" aria-hidden="true">visibility</span>まぎれ絵師（タップで見る）</summary>
         <div class="mgr-secret__body" id="rv-fake-body"></div>
       </details>
       <div class="mt-md">
         <button class="btn btn-primary btn-full" id="btn-start-drawing" onclick="hostStartDrawing()" disabled>
-          <span class="material-symbols-rounded">brush</span>かきはじめる
+          <span class="material-symbols-rounded" aria-hidden="true">brush</span>かきはじめる
         </button>
         <p style="font-size:13px;color:var(--color-muted);text-align:center;margin-top:8px">全員が「かくにんした」を押すと はじめられます</p>
       </div>
@@ -356,10 +356,10 @@
       <p class="mgr-drawbar__hint" id="dr-hint"></p>
       <div class="mgr-drawbar__btns" id="dr-confirm-btns" style="display:none">
         <button class="btn btn-primary" id="btn-stroke-ok" onclick="confirmStroke()">
-          <span class="material-symbols-rounded">check</span>これでOK
+          <span class="material-symbols-rounded" aria-hidden="true">check</span>これでOK
         </button>
         <button class="btn btn-secondary" onclick="retryStroke()">
-          <span class="material-symbols-rounded">replay</span>かきなおす
+          <span class="material-symbols-rounded" aria-hidden="true">replay</span>かきなおす
         </button>
       </div>
     </div>
@@ -368,7 +368,7 @@
 
     <div id="dr-host-area" style="display:none">
       <details class="mgr-secret">
-        <summary><span class="material-symbols-rounded">visibility</span>お題とまぎれ絵師（タップで見る）</summary>
+        <summary><span class="material-symbols-rounded" aria-hidden="true">visibility</span>お題とまぎれ絵師（タップで見る）</summary>
         <div class="mgr-secret__body" id="dr-secret-body"></div>
       </details>
       <div id="dr-host-banner"></div>
@@ -393,12 +393,12 @@
 
     <div id="di-host-area" style="display:none">
       <details class="mgr-secret">
-        <summary><span class="material-symbols-rounded">visibility</span>お題とまぎれ絵師（タップで見る）</summary>
+        <summary><span class="material-symbols-rounded" aria-hidden="true">visibility</span>お題とまぎれ絵師（タップで見る）</summary>
         <div class="mgr-secret__body" id="di-secret-body"></div>
       </details>
       <div id="di-host-banner"></div>
       <button class="btn btn-primary btn-full mt-md" onclick="hostStartVoting()">
-        <span class="material-symbols-rounded">how_to_vote</span>とうひょうへ
+        <span class="material-symbols-rounded" aria-hidden="true">how_to_vote</span>とうひょうへ
       </button>
     </div>
   </div>
@@ -419,7 +419,7 @@
     <div id="vt-btns"></div>
 
     <div id="vt-voted-msg" class="card mgr-center" style="display:none">
-      <span class="material-symbols-rounded" style="font-size:40px;color:var(--color-success)">check_circle</span>
+      <span class="material-symbols-rounded" aria-hidden="true" style="font-size:40px;color:var(--color-success)">check_circle</span>
       <p style="font-weight:700;margin-top:8px">とうひょうしました</p>
     </div>
     <p id="vt-progress" style="font-size:13px;color:var(--color-muted);text-align:center;margin-top:8px"></p>
@@ -446,10 +446,10 @@
 
     <div id="rs-host-actions" class="mt-md" style="display:none">
       <button class="btn btn-primary btn-full" onclick="hostNextRound()">
-        <span class="material-symbols-rounded">replay</span>つぎのラウンドへ
+        <span class="material-symbols-rounded" aria-hidden="true">replay</span>つぎのラウンドへ
       </button>
       <button class="btn btn-ghost btn-full mgr-sep" onclick="hostFinish()">
-        <span class="material-symbols-rounded">flag</span>おわる
+        <span class="material-symbols-rounded" aria-hidden="true">flag</span>おわる
       </button>
     </div>
   </div>
@@ -459,12 +459,12 @@
 <div id="screen-done" class="screen">
   <div class="page mgr-center">
     <div class="mgr-header">
-      <div class="mgr-header__icon"><span class="material-symbols-rounded">celebration</span></div>
+      <div class="mgr-header__icon"><span class="material-symbols-rounded" aria-hidden="true">celebration</span></div>
       <div class="mgr-header__title">おしまい！</div>
       <div class="mgr-header__sub">あそんでくれて ありがとう</div>
     </div>
     <button class="btn btn-primary btn-full" onclick="leaveGame()">
-      <span class="material-symbols-rounded">home</span>トップへ戻る
+      <span class="material-symbols-rounded" aria-hidden="true">home</span>トップへ戻る
     </button>
   </div>
 </div>
@@ -475,7 +475,7 @@
   <p class="mgr-overlay__title">再接続しています...</p>
 </div>
 <div class="mgr-overlay" id="host-off-overlay">
-  <span class="material-symbols-rounded" style="font-size:48px">signal_disconnected</span>
+  <span class="material-symbols-rounded" aria-hidden="true" style="font-size:48px">signal_disconnected</span>
   <p class="mgr-overlay__title">ホストが一時的に切断されました</p>
   <p class="mgr-overlay__sub">再接続を待っています</p>
   <button class="btn btn-ghost" style="margin-top:16px" onclick="leaveGame()">退出する</button>
@@ -1198,12 +1198,12 @@ function topicChipHtml(game) {
   if (!game) return '';
   if (game.fakeArtist === state.nickname) {
     return `<span class="mgr-topic-chip mgr-topic-chip--fake">
-      <span class="material-symbols-rounded" style="font-size:18px">theater_comedy</span>
+      <span class="material-symbols-rounded" aria-hidden="true" style="font-size:18px">theater_comedy</span>
       まぎれ絵師（カテゴリ: ${esc(game.topicCategory)}）
     </span>`;
   }
   return `<span class="mgr-topic-chip">
-    <span class="material-symbols-rounded" style="font-size:18px">label</span>
+    <span class="material-symbols-rounded" aria-hidden="true" style="font-size:18px">label</span>
     お題「${esc(game.topicWord)}」
   </span>`;
 }
@@ -1242,7 +1242,7 @@ function handleReveal(room, players) {
     if (!isHost) {
       const card = document.getElementById('rv-card');
       card.classList.remove('mgr-role-card--open');
-      card.innerHTML = '<span class="material-symbols-rounded" style="font-size:40px;opacity:.7">touch_app</span>'
+      card.innerHTML = '<span class="material-symbols-rounded" aria-hidden="true" style="font-size:40px;opacity:.7">touch_app</span>'
         + '<p style="margin-top:8px;font-size:14px">タップして じぶんのカードを見る</p>';
       document.getElementById('rv-confirm-area').style.display = 'none';
       document.getElementById('btn-confirm').disabled = false;
@@ -1401,7 +1401,7 @@ function handleVoting(room, players) {
         const btn = document.createElement('button');
         btn.className = 'mgr-vote-btn';
         btn.innerHTML = `<span>${esc(nick)}</span>`
-          + '<span class="material-symbols-rounded" style="color:var(--color-muted)">arrow_forward_ios</span>';
+          + '<span class="material-symbols-rounded" aria-hidden="true" style="color:var(--color-muted)">arrow_forward_ios</span>';
         btn.onclick = () => {
           if (state.myVote) return;
           document.querySelectorAll('.mgr-vote-btn').forEach(b => b.classList.remove('selected'));
@@ -1503,7 +1503,7 @@ function handleResult(room, players) {
       <p style="font-size:24px;font-weight:700;color:var(--color-primary)">「${esc(g.topicWord || '')}」</p>
     </div>`);
   } else if (isHost) {
-    parts.push(`<details class="mgr-secret"><summary><span class="material-symbols-rounded">visibility</span>お題（タップで見る）</summary>
+    parts.push(`<details class="mgr-secret"><summary><span class="material-symbols-rounded" aria-hidden="true">visibility</span>お題（タップで見る）</summary>
       <div class="mgr-secret__body">「${esc(g.topicWord || '')}」（${esc(g.topicCategory || '')}）</div></details>`);
   } else if (!isFake) {
     parts.push(`<div class="card mgr-center" style="margin-bottom:12px">
