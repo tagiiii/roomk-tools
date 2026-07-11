@@ -29,6 +29,7 @@
 - [x] A-1. `apps/nitaku-board/index.html` の `dayCheckInterval`（setInterval）に `clearInterval` を追加（lint [REF-5] の WARN 対応。pagehide で解放。2026-07-10 完了、6749b7f）
 - [x] A-2. 旧トップレベル `shared/` の削除（参照ゼロ再確認済み: `../shared/` は全て apps/shared を指す相対参照、firebase.json 参照なし。2026-07-10 完了、a883cf1）
 - [x] A-3. `apps/value-card/index.html` の `sortablejs@latest` を 1.15.7 に固定＋SRI 付与（2026-07-10 完了）
+- [ ] A-4. **共有 `rtdb-utils.js` のキャッシュ版数一斉更新**（提案6昇格・2026-07-11 人間承認）。B-7/B-8/B-9 で共有ファイルに追記が重なったが各アプリは `?v=20260710` 固定読み込みのため、キャッシュ保持中の再訪ユーザーに最新版（showToast の aria 等）が届かない。全14アプリの `rtdb-utils.js?v=20260710` を `?v=20260711` へ機械置換（挙動不変・apps/shared 自体は不変で apps/*/index.html の query のみ変更）。対象: koedake-theater / name-change / magire-eshi / ito / jinro / kakure-number / uso-jisho / ikutsu-ieru / word-wolf / iisen-show / tatoe-gp / hint-de-pinto / pittari-meter / nitaku-board
 
 ## Tier B: AI動作確認後に反映可（人間の体験レビューは事後）
 
@@ -96,4 +97,4 @@
 
 ## 提案欄（ループが見つけた改善候補を追記する場所。人間が Tier を付けて上に昇格）
 
-- 提案6（2026-07-11 B-9作業中に発見）: 全アプリの `rtdb-utils.js?v=20260710` 固定バージョンを一斉に次版（例 `?v=20260711`）へ更新。B-7(esc)・B-8(initFirebase)・B-9(showToast aria) で共有ファイルに追記が重なったが ?v= が据え置きのため、キャッシュ保持中の再訪ユーザーには最新版が届かない。全アプリ横断（~15ファイルの index.html）×1関心事の Tier A 相当（挙動不変・機械的置換）。人間が Tier を確認して昇格を。
+- ~~提案6（2026-07-11 B-9作業中に発見）: 全アプリの `rtdb-utils.js?v=20260710` 固定バージョンを一斉に次版へ更新~~ → **2026-07-11 A-4 として昇格・完了**
