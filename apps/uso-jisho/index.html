@@ -460,18 +460,18 @@
   <div class="uj-page">
     <div class="uj-hero">
       <div class="uj-hero__icon">
-        <span class="material-symbols-rounded">menu_book</span>
+        <span class="material-symbols-rounded" aria-hidden="true">menu_book</span>
       </div>
       <h1 class="uj-hero__title">うそつき辞書</h1>
       <p class="uj-hero__sub">めずらしいことばに「それっぽい意味」をでっちあげて、<br>どれが本物かあてっこするゲーム</p>
     </div>
     <div class="uj-hero__buttons">
       <button class="btn btn-primary btn-lg btn-full" onclick="goHostSetup()">
-        <span class="material-symbols-rounded">add_home</span>
+        <span class="material-symbols-rounded" aria-hidden="true">add_home</span>
         ルームをつくる（ホスト）
       </button>
       <button class="btn btn-secondary btn-lg btn-full" onclick="goGuestJoin()">
-        <span class="material-symbols-rounded">login</span>
+        <span class="material-symbols-rounded" aria-hidden="true">login</span>
         ルームに参加する
       </button>
     </div>
@@ -498,7 +498,7 @@
 
       <div class="uj-room-code" id="host-room-code-display">----</div>
       <button class="btn btn-ghost btn-full" id="host-copy-btn" onclick="hostCopyCode()">
-        <span class="material-symbols-rounded">content_copy</span>
+        <span class="material-symbols-rounded" aria-hidden="true">content_copy</span>
         コードをコピー
       </button>
 
@@ -508,7 +508,7 @@
 
       <div class="mt-lg">
         <button class="btn btn-primary btn-lg btn-full" id="btn-start-game" disabled onclick="hostStartGame()">
-          <span class="material-symbols-rounded">sports_esports</span>
+          <span class="material-symbols-rounded" aria-hidden="true">sports_esports</span>
           はじめる
         </button>
       </div>
@@ -558,7 +558,7 @@
 
     <details class="uj-secret" id="host-secret" style="display:none">
       <summary>
-        <span class="material-symbols-rounded">visibility</span>
+        <span class="material-symbols-rounded" aria-hidden="true">visibility</span>
         本当の意味（タップで見る）
       </summary>
       <div class="uj-secret__body" id="host-secret-text"></div>
@@ -576,7 +576,7 @@
 
     <div id="writing-submitted-area" style="display:none">
       <div class="uj-submitted">
-        <span class="material-symbols-rounded" style="font-size:48px;display:block;margin-bottom:8px;color:var(--color-success)">check_circle</span>
+        <span class="material-symbols-rounded" aria-hidden="true" style="font-size:48px;display:block;margin-bottom:8px;color:var(--color-success)">check_circle</span>
         だしました
         <small>みんながかき終わるのを待っています</small>
       </div>
@@ -645,7 +645,7 @@
 <div class="screen" id="screen-done">
   <div class="uj-page">
     <div class="text-center" style="padding:40px 0 24px">
-      <span class="material-symbols-rounded" style="font-size:64px;color:var(--color-accent)">celebration</span>
+      <span class="material-symbols-rounded" aria-hidden="true" style="font-size:64px;color:var(--color-accent)">celebration</span>
       <h2 class="uj-page__title" style="margin-top:12px">おしまい！</h2>
       <p class="uj-page__sub">あそんでくれてありがとう</p>
     </div>
@@ -655,7 +655,7 @@
 
     <div class="mt-lg">
       <button class="btn btn-secondary btn-full btn-lg" onclick="goToTop()">
-        <span class="material-symbols-rounded">home</span>
+        <span class="material-symbols-rounded" aria-hidden="true">home</span>
         TOPにもどる
       </button>
     </div>
@@ -990,7 +990,7 @@
   function copyToClipboard(text, button) {
     const original = button.innerHTML;
     navigator.clipboard.writeText(text).then(() => {
-      button.innerHTML = '<span class="material-symbols-rounded">check</span> コピーしました！';
+      button.innerHTML = '<span class="material-symbols-rounded" aria-hidden="true">check</span> コピーしました！';
       setTimeout(() => {
         button.innerHTML = original;
       }, 2500);
@@ -1454,7 +1454,7 @@
       const icon = done ? 'check_circle' : 'edit';
       chips.innerHTML += [
         `<span class="uj-chip ${done ? 'is-done' : ''}">`,
-        `<span class="material-symbols-rounded">${icon}</span>`,
+        `<span class="material-symbols-rounded" role="img" aria-label="${done ? '記入ずみ' : '記入中'}">${icon}</span>`,
         esc(name),
         '</span>',
       ].join('');
