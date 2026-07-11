@@ -367,7 +367,7 @@
     <div class="page">
       <div class="ito-header">
         <div class="ito-header__icon">
-          <span class="material-symbols-rounded">filter_1</span>
+          <span class="material-symbols-rounded" aria-hidden="true">filter_1</span>
         </div>
         <div class="ito-header__title">ito クモノイト</div>
         <div class="ito-header__sub">数字をお題に例えて、小さい順に宣言しよう！</div>
@@ -375,18 +375,18 @@
 
       <div style="display:flex; flex-direction:column; gap:12px;">
         <button class="btn btn-primary btn-lg btn-full" onclick="showScreen('host-setup')">
-          <span class="material-symbols-rounded">add_circle</span>
+          <span class="material-symbols-rounded" aria-hidden="true">add_circle</span>
           ルームを作る（ホスト）
         </button>
         <button class="btn btn-secondary btn-lg btn-full" onclick="showScreen('guest-join')">
-          <span class="material-symbols-rounded">login</span>
+          <span class="material-symbols-rounded" aria-hidden="true">login</span>
           ルームに参加する
         </button>
       </div>
 
       <div class="card" style="margin-top: 32px; padding: 16px 20px;">
         <div style="font-size:13px; font-weight:700; color:var(--color-primary); margin-bottom:10px;">
-          <span class="material-symbols-rounded" style="font-size:16px; vertical-align:middle;">info</span>
+          <span class="material-symbols-rounded" aria-hidden="true" style="font-size:16px; vertical-align:middle;">info</span>
           遊び方
         </div>
         <ol style="font-size:13px; color:var(--color-muted); padding-left:18px; line-height:1.8;">
@@ -406,7 +406,7 @@
   <div id="screen-host-setup" class="screen">
     <div class="page">
       <button class="btn btn-ghost" style="margin-bottom:16px;" onclick="showScreen('top')">
-        <span class="material-symbols-rounded">arrow_back</span>
+        <span class="material-symbols-rounded" aria-hidden="true">arrow_back</span>
         もどる
       </button>
 
@@ -427,7 +427,7 @@
           style="width:100%; padding:12px 14px; border:1px solid var(--color-border); border-radius:10px; font-size:16px; font-family:var(--font-base); box-sizing:border-box;"
         >
         <button class="btn btn-primary btn-full" style="margin-top:16px;" onclick="createRoom()">
-          <span class="material-symbols-rounded">add_home</span>
+          <span class="material-symbols-rounded" aria-hidden="true">add_home</span>
           ルームを作成する
         </button>
       </div>
@@ -440,7 +440,7 @@
   <div id="screen-guest-join" class="screen">
     <div class="page">
       <button class="btn btn-ghost" style="margin-bottom:16px;" onclick="showScreen('top')">
-        <span class="material-symbols-rounded">arrow_back</span>
+        <span class="material-symbols-rounded" aria-hidden="true">arrow_back</span>
         もどる
       </button>
 
@@ -475,7 +475,7 @@
         >
 
         <button class="btn btn-primary btn-full" style="margin-top:16px;" onclick="joinRoom()">
-          <span class="material-symbols-rounded">login</span>
+          <span class="material-symbols-rounded" aria-hidden="true">login</span>
           参加する
         </button>
       </div>
@@ -496,14 +496,14 @@
         <div style="font-size:12px; color:var(--color-muted); font-weight:700; letter-spacing:0.05em; margin-bottom:4px;">ルームコード</div>
         <div class="ito-room-code" id="waiting-room-code">----</div>
         <button class="btn btn-ghost btn-sm" style="margin-top:12px;" onclick="copyRoomCode()">
-          <span class="material-symbols-rounded">content_copy</span>
+          <span class="material-symbols-rounded" aria-hidden="true">content_copy</span>
           コードをコピー
         </button>
       </div>
 
       <div class="card" style="padding:20px; margin-bottom:16px;">
         <div style="font-size:14px; font-weight:700; color:var(--color-primary); margin-bottom:12px; display:flex; align-items:center; gap:6px;">
-          <span class="material-symbols-rounded" style="font-size:18px;">group</span>
+          <span class="material-symbols-rounded" aria-hidden="true" style="font-size:18px;">group</span>
           参加者
         </div>
         <ul class="player-list" id="waiting-player-list"></ul>
@@ -514,12 +514,12 @@
       </div>
 
       <button id="btn-start-game" class="btn btn-primary btn-lg btn-full" onclick="startGame()" disabled>
-        <span class="material-symbols-rounded">play_circle</span>
+        <span class="material-symbols-rounded" aria-hidden="true">play_circle</span>
         ゲームスタート（2人以上）
       </button>
 
       <button id="btn-leave-waiting" class="btn btn-ghost btn-full" style="margin-top:12px;" onclick="leaveGame()">
-        <span class="material-symbols-rounded">logout</span>
+        <span class="material-symbols-rounded" aria-hidden="true">logout</span>
         退出する
       </button>
     </div>
@@ -539,7 +539,7 @@
         <div class="ito-flip-card" id="flip-card" onclick="flipCard()">
           <div class="ito-flip-card__inner">
             <div class="ito-flip-card__face ito-flip-card__face--back">
-              <span class="material-symbols-rounded">touch_app</span>
+              <span class="material-symbols-rounded" aria-hidden="true">touch_app</span>
               <p>タップして確認</p>
             </div>
             <div class="ito-flip-card__face ito-flip-card__face--front">
@@ -552,7 +552,7 @@
 
       <div id="ready-area" style="display:none; text-align:center; margin-bottom:24px;">
         <button id="btn-confirm-number" class="btn btn-primary btn-lg" onclick="confirmNumber()">
-          <span class="material-symbols-rounded">check_circle</span>
+          <span class="material-symbols-rounded" aria-hidden="true">check_circle</span>
           確認した！
         </button>
       </div>
@@ -569,14 +569,14 @@
         </div>
         <div class="ito-theme-picker" id="revealing-theme-options"></div>
         <button id="btn-copy-theme-options" class="btn btn-ghost btn-sm" style="margin-top:12px; display:none;" onclick="copyThemeOptions()">
-          <span class="material-symbols-rounded">content_copy</span>
+          <span class="material-symbols-rounded" aria-hidden="true">content_copy</span>
           お題候補をコピー
         </button>
       </div>
 
       <div id="btn-start-playing-wrap" style="display:none;">
         <button id="btn-start-playing" class="btn btn-primary btn-lg btn-full" onclick="startPlaying()">
-          <span class="material-symbols-rounded">forum</span>
+          <span class="material-symbols-rounded" aria-hidden="true">forum</span>
           発言フェーズへ
         </button>
       </div>
@@ -590,7 +590,7 @@
       </div>
 
       <button id="btn-leave-revealing" class="btn btn-ghost btn-full" style="margin-top:12px; display:none;" onclick="leaveGame()">
-        <span class="material-symbols-rounded">logout</span>
+        <span class="material-symbols-rounded" aria-hidden="true">logout</span>
         退出する
       </button>
     </div>
@@ -607,7 +607,7 @@
         <div class="ito-theme-banner__label">お題</div>
         <div class="ito-theme-banner__text" id="playing-theme"></div>
         <div class="ito-my-number-chip">
-          <span class="material-symbols-rounded" style="font-size:18px;">tag</span>
+          <span class="material-symbols-rounded" aria-hidden="true" style="font-size:18px;">tag</span>
           あなたの数字 <strong id="playing-my-number">？</strong>
         </div>
       </div>
@@ -616,7 +616,7 @@
       <div class="ito-timer-wrap">
         <div class="ito-timer" id="timer-display">--:--</div>
         <div class="ito-timer-expired" id="timer-expired-msg">
-          <span class="material-symbols-rounded" style="font-size:16px; vertical-align:middle;">alarm</span>
+          <span class="material-symbols-rounded" aria-hidden="true" style="font-size:16px; vertical-align:middle;">alarm</span>
           時間です！宣言しましょう
         </div>
       </div>
@@ -628,7 +628,7 @@
           <input type="number" id="timer-duration" value="3" min="1" max="30" step="1">
           <span style="font-size:13px; color:var(--color-muted);">分</span>
           <button class="btn btn-secondary" onclick="startTimerFromInput()">
-            <span class="material-symbols-rounded">timer</span>
+            <span class="material-symbols-rounded" aria-hidden="true">timer</span>
             開始
           </button>
         </div>
@@ -656,7 +656,7 @@
       <!-- 宣言ボタン -->
       <div id="btn-declare-wrap" style="text-align:center; margin-bottom:16px;">
         <button id="btn-declare" class="btn btn-primary btn-lg btn-full" onclick="pendingDeclare()" style="display:none;">
-          <span class="material-symbols-rounded">flag</span>
+          <span class="material-symbols-rounded" aria-hidden="true">flag</span>
           宣言する！
         </button>
         <div id="declare-confirm" style="display:none;">
@@ -664,7 +664,7 @@
           <div style="display:flex; gap:8px;">
             <button class="btn btn-ghost btn-full" onclick="cancelDeclare()">やめる</button>
             <button class="btn btn-primary btn-full" onclick="declare()">
-              <span class="material-symbols-rounded">flag</span>
+              <span class="material-symbols-rounded" aria-hidden="true">flag</span>
               宣言する
             </button>
           </div>
@@ -674,13 +674,13 @@
       <!-- 答え合わせボタン（ホストのみ） -->
       <div id="btn-finish-wrap">
         <button id="btn-finish-game" class="btn btn-secondary btn-full" onclick="finishGame()" style="display:none;">
-          <span class="material-symbols-rounded">check_circle</span>
+          <span class="material-symbols-rounded" aria-hidden="true">check_circle</span>
           答え合わせ！
         </button>
       </div>
 
       <button id="btn-leave-playing" class="btn btn-ghost btn-full" style="margin-top:12px; display:none;" onclick="leaveGame()">
-        <span class="material-symbols-rounded">logout</span>
+        <span class="material-symbols-rounded" aria-hidden="true">logout</span>
         退出する
       </button>
     </div>
@@ -709,7 +709,7 @@
 
       <!-- パーフェクトメッセージ -->
       <div class="ito-perfect-msg" id="result-perfect">
-        <span class="material-symbols-rounded" style="font-size:32px; display:block; margin-bottom:4px;">celebration</span>
+        <span class="material-symbols-rounded" aria-hidden="true" style="font-size:32px; display:block; margin-bottom:4px;">celebration</span>
         パーフェクト！全員正解！
       </div>
 
@@ -724,11 +724,11 @@
       <!-- アクション -->
       <div style="display:flex; flex-direction:column; gap:12px;">
         <button id="btn-play-again" class="btn btn-primary btn-full" onclick="startGame()" style="display:none;">
-          <span class="material-symbols-rounded">replay</span>
+          <span class="material-symbols-rounded" aria-hidden="true">replay</span>
           もう一度プレイ
         </button>
         <button class="btn btn-ghost btn-full" onclick="leaveGame()">
-          <span class="material-symbols-rounded">home</span>
+          <span class="material-symbols-rounded" aria-hidden="true">home</span>
           トップへもどる
         </button>
       </div>
@@ -739,7 +739,7 @@
   <!-- オーバーレイ                  -->
   <!-- ============================= -->
   <div class="overlay" id="host-off-overlay">
-    <span class="material-symbols-rounded">signal_disconnected</span>
+    <span class="material-symbols-rounded" aria-hidden="true">signal_disconnected</span>
     <p>ホストが切断されました</p>
     <button class="btn btn-ghost" onclick="leaveGame()">退出する</button>
   </div>
@@ -1650,7 +1650,7 @@
                     ${nick === state.nickname ? '<span class="player-tag me">あなた</span>' : ""}
                   </div>
                   <div class="ito-result-row__number">
-                    <span class="material-symbols-rounded" style="font-size:14px;vertical-align:middle;">tag</span>
+                    <span class="material-symbols-rounded" aria-hidden="true" style="font-size:14px;vertical-align:middle;">tag</span>
                     数字: <strong>${players[nick].number}</strong>
                   </div>
                 </div>
