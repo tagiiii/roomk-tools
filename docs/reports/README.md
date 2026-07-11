@@ -19,6 +19,7 @@
 - [c3-contrast-report.md](c3-contrast-report.md) — muted テキスト×小フォントの WCAG AA コントラスト実測（C-3、2026-07-11）
 - [c4-duplicate-phrases.md](c4-duplicate-phrases.md) — コンテンツ類似ペアからの同一アプリ内言い換え重複の抽出（C-4、2026-07-11）
 - [c5-rtdb-cleanup-matrix.md](c5-rtdb-cleanup-matrix.md) — RTDB 14アプリの掃除カバレッジ監査マトリクス（C-5、2026-07-12）
+- [c6-rules-validate-proposal.md](c6-rules-validate-proposal.md) — database.rules.json への .validate 追加案と Emulator テスト手順（C-6、2026-07-12）
 - [c7-external-resources-sri.md](c7-external-resources-sri.md) — 外部リソース棚卸しと SRI 必須 lint（DEP-2）の設計（C-7、2026-07-12）
 - [c8-modal-overlay-classification.md](c8-modal-overlay-classification.md) — モーダル/オーバーレイの分類と dialog 実装パターン案（C-8、2026-07-12）
 - [c9-auth-failure-paths.md](c9-auth-failure-paths.md) — 匿名認証失敗経路の棚卸しと統一案（C-9、2026-07-12）
