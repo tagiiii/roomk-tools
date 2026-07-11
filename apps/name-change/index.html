@@ -140,16 +140,16 @@
 <!-- ===== TOP ===== -->
 <div id="screen-top" class="screen">
   <div class="nc-header">
-    <div class="icon-wrap"><span class="material-symbols-rounded">manage_accounts</span></div>
+    <div class="icon-wrap"><span class="material-symbols-rounded" aria-hidden="true">manage_accounts</span></div>
     <h1>名前変えゲーム</h1>
     <p>変わった名前は誰のもの？</p>
   </div>
   <div class="card">
     <button class="btn btn-primary btn-lg" onclick="goHostSetup()">
-      <span class="material-symbols-rounded">add_home</span>ルームを作る（GM）
+      <span class="material-symbols-rounded" aria-hidden="true">add_home</span>ルームを作る（GM）
     </button>
     <button class="btn btn-secondary" onclick="goGuestJoin()">
-      <span class="material-symbols-rounded">login</span>ルームに参加する
+      <span class="material-symbols-rounded" aria-hidden="true">login</span>ルームに参加する
     </button>
   </div>
 </div>
@@ -166,10 +166,10 @@
       <input id="host-nickname" class="form-input" type="text" maxlength="8" placeholder="例：GM">
     </div>
     <button class="btn btn-primary" onclick="hostCreateRoom()">
-      <span class="material-symbols-rounded">add_circle</span>ルームを作成する
+      <span class="material-symbols-rounded" aria-hidden="true">add_circle</span>ルームを作成する
     </button>
     <button class="btn btn-ghost" onclick="showScreen('top')">
-      <span class="material-symbols-rounded">arrow_back</span>戻る
+      <span class="material-symbols-rounded" aria-hidden="true">arrow_back</span>戻る
     </button>
   </div>
 </div>
@@ -191,10 +191,10 @@
       <input id="guest-nickname" class="form-input" type="text" maxlength="12" placeholder="例：たろう">
     </div>
     <button class="btn btn-primary" onclick="guestJoin()">
-      <span class="material-symbols-rounded">login</span>参加する
+      <span class="material-symbols-rounded" aria-hidden="true">login</span>参加する
     </button>
     <button class="btn btn-ghost" onclick="showScreen('top')">
-      <span class="material-symbols-rounded">arrow_back</span>戻る
+      <span class="material-symbols-rounded" aria-hidden="true">arrow_back</span>戻る
     </button>
   </div>
 </div>
@@ -215,7 +215,7 @@
   </div>
   <div id="waiting-host-ctrl" style="display:none">
     <button class="btn btn-primary btn-lg" id="waiting-start-btn" onclick="hostStartNaming()" disabled>
-      <span class="material-symbols-rounded">play_arrow</span>ゲームを始める
+      <span class="material-symbols-rounded" aria-hidden="true">play_arrow</span>ゲームを始める
     </button>
     <p class="status-text" id="waiting-count-msg">2人以上で開始できます</p>
   </div>
@@ -234,7 +234,7 @@
     </div>
     <div class="card">
       <div class="choice-card" onclick="focusChangedName()">
-        <span class="material-symbols-rounded choice-icon">edit</span>
+        <span class="material-symbols-rounded choice-icon" aria-hidden="true">edit</span>
         <div>
           <div class="choice-label">名前を変えた</div>
           <div class="choice-desc">変更後の名前を入力して参加</div>
@@ -244,12 +244,12 @@
         <input id="changed-name-input" class="form-input" type="text" maxlength="16"
           placeholder="変更後の名前を入力" style="margin-bottom:8px;">
         <button class="btn btn-primary" onclick="submitChangedName()">
-          <span class="material-symbols-rounded">check</span>この名前で参加
+          <span class="material-symbols-rounded" aria-hidden="true">check</span>この名前で参加
         </button>
       </div>
       <hr class="divider">
       <div class="choice-card" onclick="submitAsVoter()" style="margin-bottom:0">
-        <span class="material-symbols-rounded choice-icon">how_to_vote</span>
+        <span class="material-symbols-rounded choice-icon" aria-hidden="true">how_to_vote</span>
         <div>
           <div class="choice-label">名前を変えていない</div>
           <div class="choice-desc">投票役として参加</div>
@@ -270,7 +270,7 @@
     </div>
     <div id="naming-host-ctrl" class="mt-md" style="display:none">
       <button class="btn btn-primary" onclick="hostStartVoting()">
-        <span class="material-symbols-rounded">how_to_vote</span>投票フェーズへ進む
+        <span class="material-symbols-rounded" aria-hidden="true">how_to_vote</span>投票フェーズへ進む
       </button>
       <p class="status-text" id="naming-host-status"></p>
     </div>
@@ -290,7 +290,7 @@
       <div id="naming-gm-list" class="player-list"></div>
     </div>
     <button class="btn btn-primary mt-md" onclick="hostStartVoting()">
-      <span class="material-symbols-rounded">how_to_vote</span>投票フェーズへ進む
+      <span class="material-symbols-rounded" aria-hidden="true">how_to_vote</span>投票フェーズへ進む
     </button>
     <p class="status-text" id="naming-gm-status"></p>
   </div>
@@ -305,12 +305,12 @@
       <p>それぞれの名前は誰のもの？</p>
     </div>
     <div class="alert alert-info">
-      <span class="material-symbols-rounded" style="font-size:1rem;vertical-align:middle;">info</span>
+      <span class="material-symbols-rounded" aria-hidden="true" style="font-size:1rem;vertical-align:middle;">info</span>
       同じ人を複数の名前に選ぶことはできません
     </div>
     <div id="voting-cards"></div>
     <button class="btn btn-primary btn-lg" id="voting-submit-btn" onclick="submitVotes()" disabled>
-      <span class="material-symbols-rounded">send</span>投票する
+      <span class="material-symbols-rounded" aria-hidden="true">send</span>投票する
     </button>
     <p id="voting-done-msg" class="status-text" style="display:none">
       投票しました！GMが結果を発表するまで待ってね<span class="dots"></span>
@@ -324,7 +324,7 @@
       <p>投票役が答えを考えています</p>
     </div>
     <div class="card" style="text-align:center;padding:32px 20px;">
-      <span class="material-symbols-rounded" style="font-size:48px;color:#7C3AED;">manage_accounts</span>
+      <span class="material-symbols-rounded" aria-hidden="true" style="font-size:48px;color:#7C3AED;">manage_accounts</span>
       <p style="font-weight:700;font-size:1.1rem;margin:12px 0 6px;">あなたが誰だかバレないように！</p>
       <p class="status-text" id="voting-changer-progress" style="margin:0"></p>
     </div>
@@ -340,7 +340,7 @@
       <p id="voting-gm-status" class="status-text" style="margin:0"></p>
     </div>
     <button class="btn btn-primary btn-lg" onclick="hostStartRevealing()">
-      <span class="material-symbols-rounded">celebration</span>結果発表へ進む
+      <span class="material-symbols-rounded" aria-hidden="true">celebration</span>結果発表へ進む
     </button>
   </div>
 </div>
@@ -358,13 +358,13 @@
 
   <!-- コピーボタン -->
   <button class="btn btn-secondary mt-md" id="result-copy-btn" onclick="copyResults()">
-    <span class="material-symbols-rounded">content_copy</span>結果をコピー（チャット用）
+    <span class="material-symbols-rounded" aria-hidden="true">content_copy</span>結果をコピー（チャット用）
   </button>
 
   <!-- GM操作 -->
   <div id="revealing-gm-ctrl" class="mt-md" style="display:none;">
     <button class="btn btn-primary btn-lg" onclick="hostFinish()">
-      <span class="material-symbols-rounded">check_circle</span>ゲーム終了
+      <span class="material-symbols-rounded" aria-hidden="true">check_circle</span>ゲーム終了
     </button>
   </div>
   <!-- 参加者 -->
@@ -375,11 +375,11 @@
 
 <!-- ===== DONE ===== -->
 <div id="screen-done" class="screen" style="text-align:center;">
-  <div class="done-circle"><span class="material-symbols-rounded">celebration</span></div>
+  <div class="done-circle"><span class="material-symbols-rounded" aria-hidden="true">celebration</span></div>
   <h2 style="font-size:1.4rem;font-weight:700;color:var(--color-primary);margin-bottom:8px;">ゲーム終了！</h2>
   <p style="color:var(--color-muted);margin-bottom:32px;">お疲れ様でした！</p>
   <button class="btn btn-primary" style="max-width:480px;margin:0 auto;" onclick="goToTop()">
-    <span class="material-symbols-rounded">home</span>TOPに戻る
+    <span class="material-symbols-rounded" aria-hidden="true">home</span>TOPに戻る
   </button>
 </div>
 
@@ -962,7 +962,7 @@ function renderRevealing(room, players) {
     row.className = 'result-item';
     row.innerHTML =
       `<span class="result-changed">${esc(p.changedName || '???')}</span>
-       <span class="result-arrow material-symbols-rounded">arrow_forward</span>
+       <span class="result-arrow material-symbols-rounded" aria-hidden="true">arrow_forward</span>
        <span class="result-original">${esc(nick)}</span>
        ${countText ? `<span class="result-count">${esc(countText)}</span>` : ''}`;
     list.appendChild(row);
