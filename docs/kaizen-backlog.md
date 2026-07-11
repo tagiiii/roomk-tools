@@ -29,7 +29,7 @@
 - [x] A-1. `apps/nitaku-board/index.html` の `dayCheckInterval`（setInterval）に `clearInterval` を追加（lint [REF-5] の WARN 対応。pagehide で解放。2026-07-10 完了、6749b7f）
 - [x] A-2. 旧トップレベル `shared/` の削除（参照ゼロ再確認済み: `../shared/` は全て apps/shared を指す相対参照、firebase.json 参照なし。2026-07-10 完了、a883cf1）
 - [x] A-3. `apps/value-card/index.html` の `sortablejs@latest` を 1.15.7 に固定＋SRI 付与（2026-07-10 完了）
-- [ ] A-4. **共有 `rtdb-utils.js` のキャッシュ版数一斉更新**（提案6昇格・2026-07-11 人間承認）。B-7/B-8/B-9 で共有ファイルに追記が重なったが各アプリは `?v=20260710` 固定読み込みのため、キャッシュ保持中の再訪ユーザーに最新版（showToast の aria 等）が届かない。全14アプリの `rtdb-utils.js?v=20260710` を `?v=20260711` へ機械置換（挙動不変・apps/shared 自体は不変で apps/*/index.html の query のみ変更）。対象: koedake-theater / name-change / magire-eshi / ito / jinro / kakure-number / uso-jisho / ikutsu-ieru / word-wolf / iisen-show / tatoe-gp / hint-de-pinto / pittari-meter / nitaku-board
+- [x] A-4. **共有 `rtdb-utils.js` のキャッシュ版数一斉更新**（提案6昇格・2026-07-11 人間承認）。B-7/B-8/B-9 で共有ファイルに追記が重なったが各アプリは `?v=20260710` 固定読み込みのため、キャッシュ保持中の再訪ユーザーに最新版（showToast の aria 等）が届かない。全14アプリの `rtdb-utils.js?v=20260710` を `?v=20260711` へ機械置換（挙動不変・apps/shared 自体は不変で apps/*/index.html の query のみ変更）。2026-07-11 完了、309dbe8。AI確認: ito で通常ロード経路の RoomkRTDB.showToast が role="status"/aria-live="polite" 付きトースト生成（B-9時のキャッシュ旧版=role:null を解消）、jinro でも ?v=20260711・RoomkRTDB 完備、lint パス・両アプリともコンソールエラーなし。対象: koedake-theater / name-change / magire-eshi / ito / jinro / kakure-number / uso-jisho / ikutsu-ieru / word-wolf / iisen-show / tatoe-gp / hint-de-pinto / pittari-meter / nitaku-board
 
 ## Tier B: AI動作確認後に反映可（人間の体験レビューは事後）
 
