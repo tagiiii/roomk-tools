@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ものがたりダイス（プロトタイプ） | roomK</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet" />
+  <style>
+    /* drafts/ は自己完結（apps/shared は参照しない）。配色は design-system.css の
+       トークン値を手写しで踏襲: bg #F5F2EC / surface #FFF / text #1A1A1A /
+       muted #5A6270 / primary #1C3F5E */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Zen Maru Gothic', sans-serif;
+      background: #F5F2EC;
+      color: #1A1A1A;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 24px 16px 48px;
+    }
+    .material-symbols-rounded {
+      font-family: 'Material Symbols Rounded';
+      font-weight: normal;
+      font-style: normal;
+      display: inline-block;
+      line-height: 1;
+      letter-spacing: normal;
+      text-transform: none;
+      white-space: nowrap;
+      word-wrap: normal;
+      direction: ltr;
+      -webkit-font-smoothing: antialiased;
+    }
+    header { text-align: center; margin-bottom: 8px; }
+    h1 { font-size: 22px; color: #1C3F5E; }
+    .draft-badge {
+      display: inline-block;
+      font-size: 11px;
+      color: #5A6270;
+      border: 1px solid #C4D2D8;
+      border-radius: 999px;
+      padding: 2px 10px;
+      margin-top: 6px;
+    }
+    .lead {
+      font-size: 13px;
+      color: #5A6270;
+      text-align: center;
+      margin: 12px 0 20px;
+      line-height: 1.7;
+      max-width: 480px;
+    }
+    .dice-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+      max-width: 640px;
+    }
+    .die {
+      background: #FFFFFF;
+      border-radius: 16px;
+      box-shadow: 0 2px 8px rgba(28, 63, 94, 0.10);
+      padding: 16px 12px 12px;
+      width: 168px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+    .die-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #5A6270;
+    }
+    .die-face {
+      width: 108px;
+      height: 108px;
+      border-radius: 14px;
+      background: #EFF4F6;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .die-face .material-symbols-rounded {
+      font-size: 44px;
+      color: #1C3F5E;
+    }
+    .die-word {
+      font-size: 14px;
+      font-weight: 700;
+      color: #1A1A1A;
+      text-align: center;
+      padding: 0 4px;
+    }
+    .die-face.empty .material-symbols-rounded { color: #C4D2D8; }
+    .die-face.empty .die-word { color: #5A6270; font-weight: 500; font-size: 12px; }
+    .btn {
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 700;
+      border: none;
+      border-radius: 999px;
+      cursor: pointer;
+      min-height: 44px;
+      padding: 10px 18px;
+    }
+    .btn-sub {
+      background: #EFF4F6;
+      color: #1C3F5E;
+      min-height: 40px;
+      font-size: 13px;
+      padding: 8px 16px;
+    }
+    .btn-main {
+      background: #1C3F5E;
+      color: #FFFFFF;
+      font-size: 16px;
+      padding: 12px 32px;
+      margin-top: 20px;
+    }
+    .btn:active { transform: scale(0.97); }
+    .sentence {
+      margin-top: 24px;
+      background: #FFFFFF;
+      border-radius: 16px;
+      box-shadow: 0 2px 8px rgba(28, 63, 94, 0.10);
+      padding: 16px 20px;
+      font-size: 16px;
+      font-weight: 700;
+      line-height: 1.8;
+      text-align: center;
+      max-width: 520px;
+      min-height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .sentence.placeholder { color: #5A6270; font-weight: 500; font-size: 13px; }
+    .note {
+      margin-top: 16px;
+      font-size: 12px;
+      color: #5A6270;
+      line-height: 1.8;
+      text-align: center;
+      max-width: 480px;
+    }
+    @keyframes shake {
+      0% { transform: rotate(0deg) scale(1); }
+      25% { transform: rotate(-6deg) scale(1.04); }
+      50% { transform: rotate(5deg) scale(1.06); }
+      75% { transform: rotate(-3deg) scale(1.03); }
+      100% { transform: rotate(0deg) scale(1); }
+    }
+    .die-face.rolling { animation: shake 0.35s ease-in-out; }
+    @media (prefers-reduced-motion: reduce) {
+      .die-face.rolling { animation: none; }
+      .btn:active { transform: none; }
+    }
+    @media (max-width: 600px) {
+      .dice-row { gap: 8px; }
+      .die { width: 148px; }
+      .die-face { width: 96px; height: 96px; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>ものがたりダイス</h1>
+    <span class="draft-badge">プロトタイプ（drafts・未公開）</span>
+  </header>
+
+  <p class="lead">
+    3つのダイスをふって、出たことばから すきなおはなしをつくってあそぶよ。<br />
+    ぜんぶ つかわなくても OK。すきなダイスだけ ふりなおしても OK。
+  </p>
+
+  <div class="dice-row">
+    <div class="die">
+      <span class="die-title">どこで</span>
+      <div class="die-face empty" id="face-where">
+        <span class="material-symbols-rounded" aria-hidden="true">casino</span>
+        <span class="die-word">まだふっていないよ</span>
+      </div>
+      <button type="button" class="btn btn-sub" data-roll="where">これだけふる</button>
+    </div>
+    <div class="die">
+      <span class="die-title">だれが</span>
+      <div class="die-face empty" id="face-who">
+        <span class="material-symbols-rounded" aria-hidden="true">casino</span>
+        <span class="die-word">まだふっていないよ</span>
+      </div>
+      <button type="button" class="btn btn-sub" data-roll="who">これだけふる</button>
+    </div>
+    <div class="die">
+      <span class="die-title">なにを</span>
+      <div class="die-face empty" id="face-what">
+        <span class="material-symbols-rounded" aria-hidden="true">casino</span>
+        <span class="die-word">まだふっていないよ</span>
+      </div>
+      <button type="button" class="btn btn-sub" data-roll="what">これだけふる</button>
+    </div>
+  </div>
+
+  <button type="button" class="btn btn-main" id="btn-roll-all">3つまとめてふる</button>
+
+  <p class="sentence placeholder" id="sentence" aria-live="polite">ダイスをふると、ここにおはなしのタネが出てくるよ</p>
+
+  <p class="note">
+    出たことばは きっかけ。そのとおりに話さなくても、とちゅうで変えても だいじょうぶ。<br />
+    「パス」して 見ているだけでも OK だよ。
+  </p>
+
+  <script>
+    'use strict';
+
+    // 語彙は drafts/monogatari-dice/safety-audit.md で全組み合わせを安全監査済み。
+    // 変更するときは監査表も同じコミットで更新する
+    const FACES = {
+      where: [
+        { word: 'うちゅうで', icon: 'rocket_launch', label: 'うちゅう' },
+        { word: 'もりのおくで', icon: 'forest', label: 'もりのおく' },
+        { word: 'うみのそこで', icon: 'waves', label: 'うみのそこ' },
+        { word: 'おかしのいえで', icon: 'cookie', label: 'おかしのいえ' },
+        { word: 'おしろで', icon: 'castle', label: 'おしろ' },
+        { word: 'つきのうらがわで', icon: 'dark_mode', label: 'つきのうらがわ' },
+        { word: 'ひみつきちで', icon: 'key', label: 'ひみつきち' },
+        { word: 'くものうえで', icon: 'cloud', label: 'くものうえ' },
+      ],
+      who: [
+        { word: 'ねこが', icon: 'pets', label: 'ねこ' },
+        { word: 'ロボットが', icon: 'smart_toy', label: 'ロボット' },
+        { word: 'にんじゃが', icon: 'sports_martial_arts', label: 'にんじゃ' },
+        { word: 'まほうつかいが', icon: 'auto_awesome', label: 'まほうつかい' },
+        { word: 'おうさまが', icon: 'workspace_premium', label: 'おうさま' },
+        { word: 'かいぞくが', icon: 'sailing', label: 'かいぞく' },
+        { word: 'きょじんが', icon: 'accessibility_new', label: 'きょじん' },
+        { word: 'ドラゴンが', icon: 'local_fire_department', label: 'ドラゴン' },
+      ],
+      what: [
+        { word: 'ダンスをする', icon: 'music_note', label: 'ダンス' },
+        { word: 'ケーキをつくる', icon: 'cake', label: 'ケーキづくり' },
+        { word: 'たからさがしをする', icon: 'search', label: 'たからさがし' },
+        { word: 'ひるねをする', icon: 'bedtime', label: 'ひるね' },
+        { word: 'かくれんぼをする', icon: 'visibility_off', label: 'かくれんぼ' },
+        { word: 'えをかく', icon: 'brush', label: 'おえかき' },
+        { word: 'パーティーをひらく', icon: 'celebration', label: 'パーティー' },
+        { word: 'うたをうたう', icon: 'mic', label: 'うた' },
+      ],
+    };
+
+    const DIE_NAMES = { where: 'どこで', who: 'だれが', what: 'なにを' };
+    const current = { where: null, who: null, what: null };
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+    function pick(kind) {
+      const faces = FACES[kind];
+      const prev = current[kind];
+      let next = faces[Math.floor(Math.random() * faces.length)];
+      // 同じ目の連続は1回だけ引き直す（かたよりを完全排除はしない・遊びなので）
+      if (prev && next.word === prev.word) {
+        next = faces[Math.floor(Math.random() * faces.length)];
+      }
+      return next;
+    }
+
+    function renderFace(kind) {
+      const face = document.getElementById('face-' + kind);
+      const entry = current[kind];
+      face.classList.remove('empty');
+      face.innerHTML = '';
+      const icon = document.createElement('span');
+      icon.className = 'material-symbols-rounded';
+      icon.setAttribute('aria-hidden', 'true');
+      icon.textContent = entry.icon;
+      const word = document.createElement('span');
+      word.className = 'die-word';
+      word.textContent = entry.label;
+      face.appendChild(icon);
+      face.appendChild(word);
+      face.setAttribute('role', 'img');
+      face.setAttribute('aria-label', DIE_NAMES[kind] + 'のダイス: ' + entry.label);
+      if (!prefersReducedMotion.matches) {
+        face.classList.remove('rolling');
+        void face.offsetWidth; // アニメ再スタート用リフロー
+        face.classList.add('rolling');
+      }
+    }
+
+    function renderSentence() {
+      const el = document.getElementById('sentence');
+      const parts = [current.where, current.who, current.what];
+      if (parts.every(function (p) { return p === null; })) return;
+      const text = parts.filter(Boolean).map(function (p) { return p.word; }).join(' ');
+      el.classList.remove('placeholder');
+      el.textContent = text;
+    }
+
+    function roll(kind) {
+      current[kind] = pick(kind);
+      renderFace(kind);
+      renderSentence();
+    }
+
+    document.querySelectorAll('[data-roll]').forEach(function (btn) {
+      btn.addEventListener('click', function () { roll(btn.dataset.roll); });
+    });
+    document.getElementById('btn-roll-all').addEventListener('click', function () {
+      roll('where');
+      roll('who');
+      roll('what');
+    });
+  </script>
+</body>
+</html>
