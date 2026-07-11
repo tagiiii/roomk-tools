@@ -67,7 +67,7 @@
 - [ ] A-5. `apps/value-card/index.html` の html2canvas 1.4.1（cdnjs 読み込み・12行目）に SRI `integrity` + `crossorigin="anonymous"` を付与（A-3 の対応漏れ。2026-07-11 クロスレビュー両承認で起票、経緯は `docs/reports/cross-review-2026-07-11.md`。条件: ハッシュは自己算出と cdnjs 掲載値の2経路で照合し、ページ表示だけでなく画像保存機能の動作までAI確認）
 - [ ] A-6. `docs/reports/README.md` 索引の新設＋レポート追加時の更新ルール明記（2026-07-11 クロスレビュー両承認で起票。条件: 索引は正本（backlog・各レポート）へのリンク集に徹し、状態や結論の写しを持たない=第二の正本にしない）
 - [ ] A-7. quiz 重複2件（D-4: 「情けは人の為ならず」2パック重複 / 雑学キング2 の答え「中国語」×2）の代替問題候補を `docs/content-candidates/` に生成（2026-07-11 クロスレビュー両承認で起票。条件: まず重複が実害か（パック間重複が意図的でないか）を再検証してから候補作成。各候補に独立した出典2件＋参照日、正答の一意性・年齢適合の自己検査、冒頭に「未承認・自動投入禁止」を明記。本体投入は D-4 のまま。**B+シャドー判定の記録対象**）
-- [ ] A-8. `scripts/draft-lint.sh` の新設（drafts/ プロトタイプ制度用の最小検査。2026-07-11 提案9承認に伴い起票。検査内容: `drafts/*/` を対象に ①innerHTML+${} の esc なし検出（lint.sh SEC-1 と同型） ②firebase SDK・fetch・XMLHttpRequest・WebSocket・外部スクリプト読み込みの検出（fonts.googleapis.com / fonts.gstatic.com のみ許可） ③絵文字検出。既存 lint.sh には手を入れず独立スクリプトとする。検証: 意図的な違反サンプルでの fixture 確認）
+- [x] A-8. `scripts/draft-lint.sh` の新設（drafts/ プロトタイプ制度用の最小検査。2026-07-11 提案9承認に伴い起票。検査内容: `drafts/*/` を対象に ①innerHTML+${} の esc なし検出（lint.sh SEC-1 と同型） ②firebase SDK・fetch・XMLHttpRequest・WebSocket・外部スクリプト読み込みの検出（fonts.googleapis.com / fonts.gstatic.com のみ許可） ③絵文字検出。既存 lint.sh には手を入れず独立スクリプトとする。検証: 意図的な違反サンプルでの fixture 確認。2026-07-12 完了、f249df6。AI確認: 違反 fixture で全10種の検出発火（XSS 1・fetch/XHR/WebSocket/sendBeacon/EventSource/Firebase/非許可URL×2 計8・絵文字1）、Google Fonts 3行は素通り、クリーン fixture で exit 0、記号絵文字⭕は WARN のみで exit 0、drafts/ 不在時は対象0件で exit 0、既存 lint.sh もパス継続。検査対象は html/js/css（同梱の監査表 .md は対象外）、EventSource/sendBeacon は制度趣旨（外部通信禁止）に基づき同枠で追加）
 
 ## Tier B: AI動作確認後に反映可（人間の体験レビューは事後）
 
