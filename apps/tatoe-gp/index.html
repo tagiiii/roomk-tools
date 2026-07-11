@@ -463,18 +463,18 @@
   <div class="tg-page">
     <div class="tg-top-hero">
       <div class="tg-top-icon-wrap">
-        <span class="material-symbols-rounded">emoji_objects</span>
+        <span class="material-symbols-rounded" aria-hidden="true">emoji_objects</span>
       </div>
       <h1 class="tg-top-title">たとえ<br>グランプリ</h1>
       <p class="tg-top-sub">お題をたとえで表現して、みんなでお気に入りを選ぶ大喜利ゲーム</p>
     </div>
     <div class="tg-top-buttons">
       <button class="btn btn-primary btn-lg btn-full" onclick="goHostSetup()">
-        <span class="material-symbols-rounded">add_home</span>
+        <span class="material-symbols-rounded" aria-hidden="true">add_home</span>
         ルームを作る（ホスト）
       </button>
       <button class="btn btn-secondary btn-lg btn-full" onclick="goGuestJoin()">
-        <span class="material-symbols-rounded">login</span>
+        <span class="material-symbols-rounded" aria-hidden="true">login</span>
         ルームに参加する
       </button>
     </div>
@@ -501,7 +501,7 @@
 
       <div class="tg-room-code-box" id="host-room-code-display">----</div>
       <button class="btn btn-ghost btn-full" id="host-copy-btn" onclick="hostCopyCode()">
-        <span class="material-symbols-rounded">content_copy</span>
+        <span class="material-symbols-rounded" aria-hidden="true">content_copy</span>
         コードをコピー
       </button>
 
@@ -511,7 +511,7 @@
 
       <div class="mt-lg">
         <button class="btn btn-primary btn-lg btn-full" id="btn-start-game" disabled onclick="hostStartGame()">
-          <span class="material-symbols-rounded">sports_esports</span>
+          <span class="material-symbols-rounded" aria-hidden="true">sports_esports</span>
           ゲームを始める
         </button>
       </div>
@@ -586,7 +586,7 @@
 
     <div id="answer-submitted-area" style="display:none">
       <div class="tg-answer-submitted">
-        <span class="material-symbols-rounded" style="font-size:48px;display:block;margin-bottom:8px;color:var(--color-success)">check_circle</span>
+        <span class="material-symbols-rounded" aria-hidden="true" style="font-size:48px;display:block;margin-bottom:8px;color:var(--color-success)">check_circle</span>
         送信済み
         <small>ほかの人の回答を待っています</small>
       </div>
@@ -611,7 +611,7 @@
 
     <div id="vote-submitted-area" style="display:none">
       <div class="tg-vote-submitted">
-        <span class="material-symbols-rounded" style="font-size:48px;display:block;margin-bottom:8px;color:var(--color-success)">how_to_vote</span>
+        <span class="material-symbols-rounded" aria-hidden="true" style="font-size:48px;display:block;margin-bottom:8px;color:var(--color-success)">how_to_vote</span>
         投票済み
         <small>ほかの人の投票を待っています</small>
       </div>
@@ -653,7 +653,7 @@
   <div class="tg-page">
     <div class="tg-winner-block pop-in">
       <div style="font-size:72px;line-height:1;margin-bottom:8px">
-        <span class="material-symbols-rounded" style="font-size:72px;color:#F0A500">emoji_events</span>
+        <span class="material-symbols-rounded" aria-hidden="true" style="font-size:72px;color:#F0A500">emoji_events</span>
       </div>
       <div class="tg-winner-label">優勝！</div>
       <div class="tg-winner-name" id="final-winner-name"></div>
@@ -665,7 +665,7 @@
 
     <div class="mt-lg">
       <button class="btn btn-secondary btn-full btn-lg" onclick="goToTop()">
-        <span class="material-symbols-rounded">replay</span>
+        <span class="material-symbols-rounded" aria-hidden="true">replay</span>
         もう一度遊ぶ
       </button>
     </div>
@@ -1014,7 +1014,7 @@
   function copyToClipboard(text, button) {
     const original = button.innerHTML;
     navigator.clipboard.writeText(text).then(() => {
-      button.innerHTML = '<span class="material-symbols-rounded">check</span> コピーしました！';
+      button.innerHTML = '<span class="material-symbols-rounded" aria-hidden="true">check</span> コピーしました！';
       button.classList.add('done');
       setTimeout(() => {
         button.innerHTML = original;
