@@ -995,12 +995,28 @@ function copyResults() {
   });
 }
 
+// 終了後の自動削除は「終了時点の ref と deleteAt」を固定して予約する。
+// 可変な state.roomRef を読むと、TOP復帰後に作った新ルームを誤削除しうる。
+// 削除は transaction で「まだ同じ終了状態か」を確認してから消す。
+// 削除失敗時は何もしない（onDisconnect + TTL の掃除経路が残る）
+function scheduleDoneCleanup(roomRef, deleteAt) {
+  const delay = Math.max(0, deleteAt - getEstimatedServerNow());
+  setTimeout(() => {
+    roomRef.transaction((room) => {
+      if (room && room.status === 'done' && room.deleteAt === deleteAt) return null;
+      return room;
+    }).catch(() => {});
+  }, delay);
+}
+
 async function hostFinish() {
-  await state.roomRef.transaction((room) => {
+  const doneRoomRef = state.roomRef;
+  const deleteAt = getEstimatedServerNow() + 30000;
+  const { committed } = await doneRoomRef.transaction((room) => {
     if (!room || room.status === 'done') return;
-    return { ...room, status: 'done' };
+    return { ...room, status: 'done', deleteAt };
   });
-  setTimeout(() => state.roomRef.remove(), 30000);
+  if (committed) scheduleDoneCleanup(doneRoomRef, deleteAt);
 }
 
 // ===== Reconnect =====
@@ -1029,6 +1045,10 @@ async function tryReconnect() {
         hostConnected: false,
         hostDisconnectedAt: firebase.database.ServerValue.TIMESTAMP,
       });
+      // 終了済みルームはリロードで JS タイマーが消えるため、残り時間で削除を再予約する
+      if (room.status === 'done' && room.deleteAt) {
+        scheduleDoneCleanup(state.roomRef, room.deleteAt);
+      }
     } else {
       state.roomRef.child(`players/${nickname}`).onDisconnect().remove();
     }
