@@ -486,6 +486,23 @@
 const { authReady, db } = RoomkRTDB.initFirebase(firebase);
 
 const showMsg = RoomkRTDB.showToast;
+// 認証待ちの狭いガード。authReady は一度 reject すると固定されるため
+// 再試行は案内せず、ページ再読み込みへ誘導する（B-20）
+let _authWaitBusy = false;
+async function waitAuthOrExplain() {
+  if (_authWaitBusy) return false;
+  _authWaitBusy = true;
+  try {
+    await authReady;
+    return true;
+  } catch {
+    showMsg('うまくつながらなかったよ。ページをよみこみなおしてね');
+    return false;
+  } finally {
+    _authWaitBusy = false;
+  }
+}
+
 const genCode = RoomkRTDB.generateRoomCode;
 const getEstimatedServerNow = RoomkRTDB.now;
 const getHostDisconnectedAt = RoomkRTDB.getHostDisconnectedAt;
@@ -620,7 +637,7 @@ function guestNames(players) {
 async function hostCreateRoom() {
   const nickname = document.getElementById('host-nickname').value.trim();
   if (!validNick(nickname)) return;
-  await authReady;
+  if (!await waitAuthOrExplain()) return;
 
   let roomCode = null;
   let roomRef = null;
@@ -657,7 +674,7 @@ async function guestJoin() {
   const roomCode = document.getElementById('guest-code').value.trim().toUpperCase();
   if (!validNick(nickname)) return;
   if (roomCode.length !== 6) { showMsg('ルームコードは6文字です'); return; }
-  await authReady;
+  if (!await waitAuthOrExplain()) return;
 
   const roomRef = db.ref(`${ROOMS_PATH}/${roomCode}`);
   const preSnap = await roomRef.get();
