@@ -401,21 +401,7 @@
 <script src="../shared/js/rtdb-utils.js?v=20260711"></script>
 <script>
 // ===== Firebase =====
-firebase.initializeApp({
-  apiKey:            "AIzaSyC0bqQdDJeTAWrqFYqjOT1NsVFiunPemIw",
-  authDomain:        "roomk-tools.firebaseapp.com",
-  projectId:         "roomk-tools",
-  storageBucket:     "roomk-tools.firebasestorage.app",
-  messagingSenderId: "1023647201537",
-  appId:             "1:1023647201537:web:3daa48e56f1ec37fc2add9",
-  databaseURL:       "https://roomk-tools-default-rtdb.asia-southeast1.firebasedatabase.app"
-});
-const authReady = firebase.auth().signInAnonymously().catch((e) => {
-  console.error('[auth] anonymous sign-in failed', e);
-  throw e;
-});
-const db = firebase.database();
-RoomkRTDB.initServerTime(db);
+const { authReady, db } = RoomkRTDB.initFirebase(firebase);
 
 // ===== State =====
 const state = {
