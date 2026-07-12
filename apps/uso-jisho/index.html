@@ -484,7 +484,7 @@
       <h2 class="uj-page__title">ルームをつくる</h2>
       <p class="uj-page__sub">ホストのニックネームを入力してください</p>
       <div class="form-group">
-        <label class="form-label">ニックネーム（1〜8文字）</label>
+        <label class="form-label" for="host-nickname">ニックネーム（1〜8文字）</label>
         <input class="form-input" id="host-nickname" type="text" maxlength="8" placeholder="例：たろう" autocomplete="off">
       </div>
       <div class="uj-error" id="host-nickname-error"></div>
@@ -522,11 +522,11 @@
     <p class="uj-page__sub">ニックネームとルームコードを入力してください</p>
 
     <div class="form-group">
-      <label class="form-label">ニックネーム（1〜8文字）</label>
+      <label class="form-label" for="guest-nickname">ニックネーム（1〜8文字）</label>
       <input class="form-input" id="guest-nickname" type="text" maxlength="8" placeholder="例：はなこ" autocomplete="off">
     </div>
     <div class="form-group">
-      <label class="form-label">ルームコード（6文字）</label>
+      <label class="form-label" for="guest-room-code">ルームコード（6文字）</label>
       <input class="form-input" id="guest-room-code" type="text" maxlength="6" placeholder="XXXXXX" autocomplete="off" oninput="this.value = this.value.toUpperCase()">
     </div>
     <div class="uj-error" id="guest-join-error"></div>
@@ -566,7 +566,7 @@
 
     <div id="writing-input-area" style="display:none">
       <div class="form-group">
-        <label class="form-label">それっぽい意味をでっちあげよう（1〜40文字）</label>
+        <label class="form-label" for="entry-input">それっぽい意味をでっちあげよう（1〜40文字）</label>
         <textarea class="form-input" id="entry-input" rows="3" maxlength="40" placeholder="例：雨の日にだけ見えるもようのこと。"></textarea>
         <div class="uj-char-count"><span id="entry-char-count">0</span> / 40</div>
       </div>
