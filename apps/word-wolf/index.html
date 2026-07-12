@@ -639,6 +639,23 @@ function validNick(v) {
   return true;
 }
 
+// 認証待ちの狭いガード。authReady は一度 reject すると固定されるため
+// 再試行は案内せず、ページ再読み込みへ誘導する（B-20）
+let _authWaitBusy = false;
+async function waitAuthOrExplain() {
+  if (_authWaitBusy) return false;
+  _authWaitBusy = true;
+  try {
+    await authReady;
+    return true;
+  } catch {
+    showMsg('うまくつながらなかったよ。ページをよみこみなおしてね');
+    return false;
+  } finally {
+    _authWaitBusy = false;
+  }
+}
+
 // ── ホストルーム作成 ──
 async function hostCreateRoom() {
   const nickname = document.getElementById('host-nickname').value.trim();
@@ -646,7 +663,7 @@ async function hostCreateRoom() {
   const discussionSecs = parseInt(document.getElementById('discussion-time').value);
   const wolfCount      = parseInt(document.getElementById('wolf-count').value);
 
-  await authReady;
+  if (!await waitAuthOrExplain()) return;
 
   let roomCode;
   let roomRef = null;
@@ -692,7 +709,7 @@ async function guestJoin() {
   if (!validNick(nickname)) return;
   if (roomCode.length !== 6) { showMsg('ルームコードは6文字です'); return; }
 
-  await authReady;
+  if (!await waitAuthOrExplain()) return;
 
   const roomRef = db.ref(`wordwolf_rooms/${roomCode}`);
   const preSnap = await roomRef.get();
