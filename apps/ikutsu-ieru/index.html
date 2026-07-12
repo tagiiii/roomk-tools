@@ -246,7 +246,7 @@
     <div class="card">
       <div class="error-msg" id="host-error"></div>
       <div class="form-group">
-        <label class="form-label">ニックネーム（8文字以内）</label>
+        <label class="form-label" for="host-nickname">ニックネーム（8文字以内）</label>
         <input class="form-input" id="host-nickname" type="text" maxlength="8" placeholder="例: たろう">
       </div>
       <button class="btn btn-primary btn-full mt-md" onclick="hostCreateRoom()">
@@ -266,11 +266,11 @@
     <div class="card">
       <div class="error-msg" id="guest-error"></div>
       <div class="form-group">
-        <label class="form-label">ニックネーム（8文字以内）</label>
+        <label class="form-label" for="guest-nickname">ニックネーム（8文字以内）</label>
         <input class="form-input" id="guest-nickname" type="text" maxlength="8" placeholder="例: はなこ">
       </div>
       <div class="form-group">
-        <label class="form-label">ルームコード（6桁）</label>
+        <label class="form-label" for="guest-code">ルームコード（6桁）</label>
         <input class="form-input" id="guest-code" type="text" maxlength="6" placeholder="ABCDEF"
                style="text-transform:uppercase;letter-spacing:.2em;font-size:24px;text-align:center">
       </div>
@@ -307,7 +307,7 @@
     <!-- ホスト用: お題設定 -->
     <div id="w-host-panel" style="display:none" class="mt-md">
       <div class="card">
-        <p class="section-lbl">お題</p>
+        <label class="section-lbl" for="w-theme-input" style="display:block">お題</label>
         <div class="form-group">
           <input class="form-input" id="w-theme-input" type="text" maxlength="40" placeholder="例: 最近ハマっていること">
           <div class="ii-theme-suggest">
@@ -317,7 +317,7 @@
           </div>
         </div>
         <div class="form-group">
-          <label class="form-label">制限時間</label>
+          <label class="form-label" for="w-duration">制限時間</label>
           <select class="form-select" id="w-duration">
             <option value="60">60秒</option>
             <option value="90" selected>90秒</option>
@@ -357,7 +357,7 @@
     </div>
 
     <div class="ii-input-row">
-      <input class="form-input" id="i-answer" type="text" maxlength="24" placeholder="おもいついた答え" autocomplete="off">
+      <input class="form-input" id="i-answer" type="text" maxlength="24" placeholder="おもいついた答え" aria-label="おもいついた答え" autocomplete="off">
       <button class="btn btn-primary" onclick="addAnswer()">
         <span class="material-symbols-rounded">add</span>
       </button>
