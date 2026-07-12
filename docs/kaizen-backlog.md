@@ -144,7 +144,10 @@
   - [x] jinro（2026-07-12 完了、d9aef36。静的4箇所 for 付与＋夜行動の動的 select 2種は aria-label。AI確認: el.labels 解決・横あふれなし・ID 重複なし）
   - [x] magire-eshi（2026-07-12 完了、b0beaf4。for 付与3箇所＋JSテンプレート内よそう入力は aria-label。AI確認: 同上）
   - [x] name-change（2026-07-12 完了、ad018ab。for 付与3箇所＋変更後の名前入力は aria-label。AI確認: 同上）
-  - [ ] 残り10アプリ（pittari-meter / tatoe-gp / uso-jisho / kotoba-asobo / kyapa-graph / mienai-ganbari / minna-ranking / challenge-tane / sakusen-kaigi / sukina-map）
+  - [x] pittari-meter（2026-07-12 完了、3bb0726。for 付与4箇所。AI確認: el.labels 解決・横あふれなし・ID 重複なし）
+  - [x] tatoe-gp（2026-07-12 完了、2b1ecd6。for 付与4箇所。AI確認: label[for] 全解決・ID 重複なし）
+  - [x] uso-jisho（2026-07-12 完了、e496d2b。for 付与4箇所。AI確認: 同上）
+  - [ ] 残り7アプリ（kotoba-asobo / kyapa-graph / mienai-ganbari / minna-ranking / challenge-tane / sakusen-kaigi / sukina-map。※後半3本の recordFile は非表示 file input の可能性＝着手時に個別判断）
 - [x] B-15. 新規アプリ第1弾プロトタイプ「ものがたりダイス」を `drafts/monogatari-dice/` に作成（2026-07-11 提案10承認。drafts/ プロトタイプ制度の条件に全面的に従う。A-8（draft-lint）完了が前提。設計: 「どこで/だれが/なにを」の3ダイスを Material Symbols アイコン＋文字ラベルで表示、ボタンで振る・振り直し・パス自由、入力ゼロ・オフライン・永続化ゼロ。条件（Codex 指摘反映）: お題語彙の組み合わせ全件をコンテンツガイドラインで安全監査した表を同ディレクトリに同梱、アイコンに代替テキスト、prefers-reduced-motion でアニメ停止。完了条件: draft-lint パス＋AIブラウザ動作確認。**apps/ への移植・ポータル掲載は別途 Tier D ゲート**。2026-07-12 完了、0a83add。AI確認: draft-lint パス（外部通信なし・XSSなし・絵文字なし）、各軸8語彙×3＝全512組み合わせの安全監査表を同梱（学校・暴力・恐怖・評価語彙を排除する基準6項目つき）、ローカルHTTPサーバでPC/モバイル両表示・まとめて振る/1個ずつ振り直しの動作・結果文の合成を実測、Material Symbols 全25アイコンのリガチャ解決を機械確認（未解決0件）、ダイスは role=img＋aria-label・装飾アイコン aria-hidden・結果文 aria-live=polite、reduced-motion は CSS/JS 両ゲートをコード確認、コンソールエラーなし。体験レビューと apps/ 移植判断（Tier D）は人間へ）
 
 ## Tier C: 調査・報告のみ
