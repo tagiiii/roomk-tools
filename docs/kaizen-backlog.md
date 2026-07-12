@@ -148,7 +148,8 @@
   - [x] tatoe-gp（2026-07-12 完了、6edd052。パイロットと同形。AI確認: 実RTDBで検証1=旧のみ削除・新無傷、検証3=FINISHEDリロード→再予約→期限どおり削除を実測、コンソールエラーなし・lint パス。テストルームは期限削除済み）
   - [x] kakure-number（2026-07-12 完了、12b5ad1。同形＋hostFinish を update→transaction 化（二重終了ガード）。AI確認: 実RTDBで検証1・検証3とも実測パス、コンソールエラーなし・lint パス。テストルームは期限削除済み）
   - [x] pittari-meter（2026-07-12 完了、01301ed。同形＋hostFinish を update→transaction 化。AI確認: 実RTDBで検証1・検証3とも実測パス、コンソールエラーなし・lint パス。テストルームは期限削除済み）
-  - [ ] 直列展開の残り: name-change → iisen-show（iisen-show は B-17 と統合。deleteAt スキーマは uso-jisho と同形）
+  - [x] name-change（2026-07-12 完了、b6936f0。同形。旧実装は null 参照例外になり得た唯一のアプリ。AI確認: 実RTDBで検証1・検証3とも実測パス、コンソールエラーなし・lint パス。テストルームは期限削除済み）
+  - [ ] 直列展開の残り: iisen-show（B-17 と統合して最終。deleteAt スキーマは uso-jisho と同形）
 - [ ] B-17. iisen-show のゲスト退出時 player 削除＋goToTop のタイマー解除対称化（P-6 決着・候補3昇格。条件: B-16 の iisen-show 対応と**直列化または統合**（同じライフサイクル部分を触るため並列コミット禁止）。listener・タイマー・onDisconnect の解除順序を固定）
 - [ ] B-18. word-wolf の `!snap.exists()` ホスト分岐の復帰処理（P-6 決着・候補4昇格。条件: ゲスト分岐の単純流用は禁止。正常な自己削除（30秒削除・自分の remove）と予期しない消滅を `expectedRoomRemoval` 等のフラグで識別し、後者のみ remote remove なしの専用ローカル片付けで TOP 復帰させる）
 - [ ] B-19. name-change を `RoomkRTDB.initFirebase` へ移行（P-7 決着・②昇格。B-8 共有化の漏れ残件。条件: firebaseConfig 全フィールド・SDK 読込順・authReady の reject 挙動・後続識別子の完全同等を確認し、既存 initializeApp と明示 initServerTime を同時除去。B-20 とは別コミット）
