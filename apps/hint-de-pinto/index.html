@@ -228,7 +228,7 @@
   <div class="page">
     <h2 class="hdp-page-title">ルームをつくる</h2>
     <div class="card">
-      <label class="form-label">ニックネーム</label>
+      <label class="form-label" for="host-nickname">ニックネーム</label>
       <input type="text" id="host-nickname" class="form-input" maxlength="8" placeholder="8文字以内">
       <div class="error-msg" id="host-error"></div>
     </div>
@@ -245,9 +245,9 @@
   <div class="page">
     <h2 class="hdp-page-title">ルームに参加する</h2>
     <div class="card">
-      <label class="form-label">ニックネーム</label>
+      <label class="form-label" for="guest-nickname">ニックネーム</label>
       <input type="text" id="guest-nickname" class="form-input" maxlength="8" placeholder="8文字以内">
-      <label class="form-label" style="margin-top:16px">ルームコード</label>
+      <label class="form-label" style="margin-top:16px" for="guest-code">ルームコード</label>
       <input type="text" id="guest-code" class="form-input hdp-code-input" maxlength="6" placeholder="6桁のコード"
              oninput="this.value=this.value.toUpperCase()">
       <div class="error-msg" id="guest-error"></div>
@@ -296,7 +296,7 @@
       </div>
       <div id="clue-input-area">
         <div class="card">
-          <label class="form-label">ヒントを1つ入力</label>
+          <label class="form-label" for="clue-hint-input">ヒントを1つ入力</label>
           <input type="text" id="clue-hint-input" class="form-input" maxlength="20" placeholder="1語で入力">
           <div class="error-msg" id="clue-error"></div>
         </div>
@@ -362,7 +362,7 @@
       <h2 class="hdp-page-title">ヒントを見て答えよう！</h2>
       <div class="hdp-hints-wrap" id="answer-hint-cards"></div>
       <div class="card">
-        <label class="form-label">答えを入力</label>
+        <label class="form-label" for="answer-input">答えを入力</label>
         <input type="text" id="answer-input" class="form-input" maxlength="20" placeholder="お題は何？">
         <div class="error-msg" id="answer-error"></div>
       </div>
