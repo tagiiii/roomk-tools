@@ -491,6 +491,23 @@ function showError(id, msg) {
   el.textContent = msg; el.classList.add('visible');
 }
 const showMsg = RoomkRTDB.showToast;
+// 認証待ちの狭いガード。authReady は一度 reject すると固定されるため
+// 再試行は案内せず、ページ再読み込みへ誘導する（B-20）
+let _authWaitBusy = false;
+async function waitAuthOrExplain() {
+  if (_authWaitBusy) return false;
+  _authWaitBusy = true;
+  try {
+    await authReady;
+    return true;
+  } catch {
+    showMsg('うまくつながらなかったよ。ページをよみこみなおしてね');
+    return false;
+  } finally {
+    _authWaitBusy = false;
+  }
+}
+
 
 // ── 画面管理 ──
 function showScreen(id) {
@@ -529,7 +546,7 @@ async function hostCreateRoom() {
   const nickErr = validNick(nickname);
   if (nickErr) { showError('host-error', nickErr); return; }
 
-  await authReady;
+  if (!await waitAuthOrExplain()) return;
 
   let roomCode = null; let roomRef = null;
   for (let i = 0; i < 5; i++) {
@@ -570,7 +587,7 @@ async function guestJoin() {
   if (nickErr) { showError('guest-error', nickErr); return; }
   if (roomCode.length !== 6) { showError('guest-error', 'ルームコードは6文字です'); return; }
 
-  await authReady;
+  if (!await waitAuthOrExplain()) return;
 
   const roomRef = db.ref(`ikutsu_rooms/${roomCode}`);
   const preSnap = await roomRef.get();
