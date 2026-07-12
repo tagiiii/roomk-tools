@@ -917,6 +917,8 @@ async function leaveGame() {
   clearSession();
   if (state.roomRef) {
     if (state.role === 'host') {
+      // 自分で消す正常削除と「予期しない消滅」をリスナー側で区別するためのフラグ
+      state.expectedRoomRemoval = true;
       await state.roomRef.remove();
     } else {
       await state.roomRef.child(`players/${state.nickname}`).remove();
@@ -927,7 +929,7 @@ async function leaveGame() {
     role: null, nickname: null, roomCode: null, roomRef: null,
     currentScreen: null, myWord: null, isWolf: false,
     myVote: null, wordRevealed: false, resultTriggered: false,
-    timerInterval: null, orphanTimer: null,
+    timerInterval: null, orphanTimer: null, expectedRoomRemoval: false,
   });
   showOverlay('host-off-overlay', false);
   showOverlay('reconnect-overlay', false);
@@ -940,6 +942,23 @@ function startRoomListener() {
     if (!snap.exists()) {
       if (state.role !== 'host') {
         clearSession(); showMsg('ホストがルームを終了しました', true); showScreen('top');
+      } else if (!state.expectedRoomRemoval) {
+        // 自分の leaveGame 以外でルームが消えた（他クライアントの期限切れ掃除など）。
+        // remote への書き込みはせず、ローカル片付けだけしてトップへ復帰する
+        clearInterval(state.timerInterval);
+        clearTimeout(state.orphanTimer);
+        clearSession();
+        if (state.roomRef) state.roomRef.off();
+        Object.assign(state, {
+          role: null, nickname: null, roomCode: null, roomRef: null,
+          currentScreen: null, myWord: null, isWolf: false,
+          myVote: null, wordRevealed: false, resultTriggered: false,
+          timerInterval: null, orphanTimer: null, expectedRoomRemoval: false,
+        });
+        showOverlay('host-off-overlay', false);
+        showOverlay('reconnect-overlay', false);
+        showMsg('ルームが見つからなくなったため、トップにもどったよ', true);
+        showScreen('top');
       }
       return;
     }
