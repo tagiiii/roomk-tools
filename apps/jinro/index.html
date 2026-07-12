@@ -781,6 +781,23 @@ const esc = RoomkRTDB.esc;
 const genCode = RoomkRTDB.generateRoomCode;
 
 const showMsg = RoomkRTDB.showToast;
+// 認証待ちの狭いガード。authReady は一度 reject すると固定されるため
+// 再試行は案内せず、ページ再読み込みへ誘導する（B-20）
+let _authWaitBusy = false;
+async function waitAuthOrExplain() {
+  if (_authWaitBusy) return false;
+  _authWaitBusy = true;
+  try {
+    await authReady;
+    return true;
+  } catch {
+    showMsg('うまくつながらなかったよ。ページをよみこみなおしてね');
+    return false;
+  } finally {
+    _authWaitBusy = false;
+  }
+}
+
 
 function dayLabel(n) {
   return `${n}日目`;
@@ -982,7 +999,7 @@ async function hostCreateRoom() {
   if (!validNick(nickname)) return;
   const discussionSecs = parseInt(document.getElementById('discussion-time').value);
 
-  await authReady;
+  if (!await waitAuthOrExplain()) return;
 
   let roomCode;
   let roomRef = null;
@@ -1045,7 +1062,7 @@ async function guestJoin() {
   if (!validNick(nickname)) return;
   if (roomCode.length !== 6) { showMsg('ルームコードは6文字です'); return; }
 
-  await authReady;
+  if (!await waitAuthOrExplain()) return;
 
   const roomRef = db.ref(`jinro_rooms/${roomCode}`);
   const preSnap = await roomRef.get();
