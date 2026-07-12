@@ -1002,6 +1002,23 @@
     return null;
   }
 
+  // 認証待ちの狭いガード。authReady は一度 reject すると固定されるため
+  // 再試行は案内せず、ページ再読み込みへ誘導する（B-20）
+  let _authWaitBusy = false;
+  async function waitAuthOrExplain(errorId) {
+    if (_authWaitBusy) return false;
+    _authWaitBusy = true;
+    try {
+      await authReady;
+      return true;
+    } catch {
+      showError(errorId, 'うまくつながらなかったよ。ページをよみこみなおしてね');
+      return false;
+    } finally {
+      _authWaitBusy = false;
+    }
+  }
+
   function showError(id, message) {
     const element = document.getElementById(id);
     if (!element) return;
@@ -1154,7 +1171,7 @@
     }
     hideError('host-nickname-error');
 
-    await authReady;
+    if (!await waitAuthOrExplain('host-nickname-error')) return;
 
     let roomCode = null;
     let roomRef = null;
@@ -1315,7 +1332,7 @@
     }
     hideError('guest-join-error');
 
-    await authReady;
+    if (!await waitAuthOrExplain('guest-join-error')) return;
 
     const roomRef = db.ref(`tatoegp_rooms/${roomCode}`);
     const snapshot = await roomRef.get();
