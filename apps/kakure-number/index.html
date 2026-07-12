@@ -300,7 +300,7 @@
       <h2 class="kkn-page__title">ルームを作る</h2>
       <p class="kkn-page__sub">ホストのニックネームを入力してください</p>
       <div class="form-group">
-        <label class="form-label">ニックネーム（1〜8文字）</label>
+        <label class="form-label" for="host-nickname">ニックネーム（1〜8文字）</label>
         <input class="form-input" id="host-nickname" type="text" maxlength="8"
                placeholder="例：たろう" autocomplete="off">
       </div>
@@ -345,12 +345,12 @@
     <p class="kkn-page__sub">ニックネームとルームコードを入力してください</p>
 
     <div class="form-group">
-      <label class="form-label">ニックネーム（1〜8文字）</label>
+      <label class="form-label" for="guest-nickname">ニックネーム（1〜8文字）</label>
       <input class="form-input" id="guest-nickname" type="text" maxlength="8"
              placeholder="例：はなこ" autocomplete="off">
     </div>
     <div class="form-group">
-      <label class="form-label">ルームコード（6文字）</label>
+      <label class="form-label" for="guest-room-code">ルームコード（6文字）</label>
       <input class="form-input kkn-input--code" id="guest-room-code" type="text"
              maxlength="6" placeholder="XXXXXX" autocomplete="off"
              oninput="this.value = this.value.toUpperCase()">
@@ -389,7 +389,7 @@
       <div class="kkn-number-grid" id="thinking-number-grid"></div>
 
       <div id="guess-input-area">
-        <div class="kkn-section-label">全員の合計（？もふくむ）のよそう</div>
+        <label class="kkn-section-label" for="guess-input" style="display:block">全員の合計（？もふくむ）のよそう</label>
         <div class="kkn-stepper">
           <button type="button" class="kkn-stepper__btn" aria-label="1へらす" onclick="stepGuess(-1)">
             <span class="material-symbols-rounded">remove</span>
