@@ -145,7 +145,8 @@
 
 - [ ] B-16. **終了後30秒削除タイマーの競合修正**（P-6 決着 2026-07-12・候補1昇格。対象6アプリ: iisen-show / name-change / pittari-meter / kakure-number / uso-jisho / tatoe-gp。受入条件（Codex 設計レビュー反映）: ①終了時点の旧 roomRef とラウンド世代を callback に固定（可変 state.roomRef を読まない＝30秒以内の新ルーム誤削除を防ぐ） ②同一ルーム再戦時は status を戻す前にタイマー解除＋世代無効化 ③ルーム全体の即時削除はホストの明示退出だけ・ゲストは自 player のみ ④DONE 画面リロード復帰を許すアプリは finishedAt/deleteAt 保存＋再接続時再予約 ⑤remove 失敗時の fallback（TTL 経路の温存）。**まず1アプリをパイロット**とし、検証5項目（終了直後TOP→新ルーム作成で旧のみ削除/30秒以内再戦が消えない/DONEリロード後も期限どおり削除/ゲスト退出で自分だけ消える/削除失敗後にTTL経路が残る）を通してから直列展開。1アプリ×1コミット）
   - [x] パイロット: uso-jisho（2026-07-12 完了、a197984。scheduleDoneCleanup（旧ref＋deleteAt固定・transaction で status=DONE かつ deleteAt 一致を確認して削除）＋tryReconnect 再予約。AI確認: 検証1=実RTDBで旧ルームのみ削除・新ルーム無傷を実測 / 検証2=同一ルーム再戦フローなし（tx照合で同コード再作成も保護）/ 検証3=DONEリロード→再予約→期限どおり削除を実測 / 検証4・5=コード確認（ゲスト退出・TTL経路とも不変）/ コンソールエラーなし・lint パス。テストルームは期限削除済み）
-  - [ ] 直列展開: tatoe-gp → kakure-number → pittari-meter → name-change → iisen-show（iisen-show は B-17 と統合。各アプリの deleteAt スキーマ追加は uso-jisho と同形）
+  - [x] tatoe-gp（2026-07-12 完了、6edd052。パイロットと同形。AI確認: 実RTDBで検証1=旧のみ削除・新無傷、検証3=FINISHEDリロード→再予約→期限どおり削除を実測、コンソールエラーなし・lint パス。テストルームは期限削除済み）
+  - [ ] 直列展開の残り: kakure-number → pittari-meter → name-change → iisen-show（iisen-show は B-17 と統合。deleteAt スキーマは uso-jisho と同形）
 - [ ] B-17. iisen-show のゲスト退出時 player 削除＋goToTop のタイマー解除対称化（P-6 決着・候補3昇格。条件: B-16 の iisen-show 対応と**直列化または統合**（同じライフサイクル部分を触るため並列コミット禁止）。listener・タイマー・onDisconnect の解除順序を固定）
 - [ ] B-18. word-wolf の `!snap.exists()` ホスト分岐の復帰処理（P-6 決着・候補4昇格。条件: ゲスト分岐の単純流用は禁止。正常な自己削除（30秒削除・自分の remove）と予期しない消滅を `expectedRoomRemoval` 等のフラグで識別し、後者のみ remote remove なしの専用ローカル片付けで TOP 復帰させる）
 - [ ] B-19. name-change を `RoomkRTDB.initFirebase` へ移行（P-7 決着・②昇格。B-8 共有化の漏れ残件。条件: firebaseConfig 全フィールド・SDK 読込順・authReady の reject 挙動・後続識別子の完全同等を確認し、既存 initializeApp と明示 initServerTime を同時除去。B-20 とは別コミット）
