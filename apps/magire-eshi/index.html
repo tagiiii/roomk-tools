@@ -228,7 +228,7 @@
     <h2>ルームを作る</h2>
     <div class="card">
       <div class="form-group">
-        <label class="form-label">ニックネーム（8文字以内）</label>
+        <label class="form-label" for="host-nickname">ニックネーム（8文字以内）</label>
         <input class="form-input" id="host-nickname" type="text" maxlength="8" placeholder="例: たろう">
       </div>
       <p style="font-size:13px;color:var(--color-muted);margin-bottom:12px">ルームを作った人は かかずに すすめる係になります</p>
@@ -246,11 +246,11 @@
     <h2>ルームに参加する</h2>
     <div class="card">
       <div class="form-group">
-        <label class="form-label">ニックネーム（8文字以内）</label>
+        <label class="form-label" for="guest-nickname">ニックネーム（8文字以内）</label>
         <input class="form-input" id="guest-nickname" type="text" maxlength="8" placeholder="例: はなこ">
       </div>
       <div class="form-group">
-        <label class="form-label">ルームコード（6桁）</label>
+        <label class="form-label" for="guest-code">ルームコード（6桁）</label>
         <input class="form-input" id="guest-code" type="text" maxlength="6" placeholder="ABCDEF"
                style="text-transform:uppercase;letter-spacing:.2em;font-size:24px;text-align:center">
       </div>
@@ -1519,7 +1519,7 @@ function handleResult(room, players) {
         parts.push(`<div class="card" style="margin-bottom:12px">
           <p style="font-weight:700;margin-bottom:8px">逆転のチャンス！ お題を あててみよう</p>
           <p style="font-size:13px;color:var(--color-muted);margin-bottom:8px">ヒント → カテゴリ: ${esc(g.topicCategory || '')}</p>
-          <input class="form-input" id="rs-guess-input" type="text" maxlength="20" placeholder="お題は これだ！">
+          <input class="form-input" id="rs-guess-input" type="text" maxlength="20" placeholder="お題は これだ！" aria-label="お題のよそうを入力">
           <button class="btn btn-primary btn-full mt-md" onclick="submitReversalGuess()">こたえる</button>
         </div>`);
       } else {
