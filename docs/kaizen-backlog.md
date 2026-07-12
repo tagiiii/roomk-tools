@@ -132,7 +132,7 @@
 - [x] B-12. kotoba-asobo セッション u1s05 の w1=q1 完全一致の解消（提案4昇格・一部。w1とq1は問題文だけ同一で語群・答え・解説は別物だった＝問題文のコピペ。ウォームアップw1は汎用文のまま残し、本編q1を「この4つのことばで、反対どうしのペアを組み合わせるなら?」に差分化（同セッションq4の『…組み合わせで、反対どうしになるペアはどれ?』に倣う）。2026-07-11 完了。AI確認: lint・content-audit パス（w1↔q1の類似ペア消失・汎用文の残存は1件のみ）、アプリの registerSession で正しくパース、KotobaAsoboRender.rubyText で新問題文が正しくルビ描画、コンソールエラーなし。子ども向け文言のため体験レビューは事後）
 - [x] B-13. 難読地名クイズ2問の解説修正（提案5昇格。nd16 匝瑳市=由来の因果を市公式準拠に、nd18 東雲=「たなびく雲」→「夜明けの空」。修正案と出典は `docs/reports/c1-nandoku-verification-batch1.md` に用意済み。2026-07-11 完了。AI確認: lint・content-audit ともにパス（新規重複なし）、ブラウザで questions.js が新解説文を配信・旧文言は消失・全24パックがパック選択画面に描画（＝構文エラーなし）・コンソールエラーなし。体験レビューは事後）
 
-- [ ] B-14. ニックネーム・ルームコード等の入力欄に `label for` / `input id` の紐付け（1アプリ×1コミット系列。2026-07-11 クロスレビュー両承認で起票、経緯は `docs/reports/cross-review-2026-07-11.md`。条件: 着手前に内包 label / `aria-labelledby` 込みで各アプリの実状を再実測してから対象を確定（「紐付け0アプリ」は grep 測定のため）。placeholder を label 扱いしない・原則可視ラベル・ID はページ内一意・600px 以下の表示確認込み）
+- [x] B-14. ニックネーム・ルームコード等の入力欄に `label for` / `input id` の紐付け（1アプリ×1コミット系列。2026-07-11 クロスレビュー両承認で起票、経緯は `docs/reports/cross-review-2026-07-11.md`。条件: 着手前に内包 label / `aria-labelledby` 込みで各アプリの実状を再実測してから対象を確定（「紐付け0アプリ」は grep 測定のため）。placeholder を label 扱いしない・原則可視ラベル・ID はページ内一意・600px 以下の表示確認込み。**2026-07-12 全20アプリ完了**。方針: 可視ラベル既存＝for 付与（大半）、見出しテキスト既存＝p/div→label 化（display:block 実測維持）、可視ラベル非設計（JSテンプレート・選択カード・隠し file input・placeholder 型）＝aria-label。全アプリで el.labels または aria-label の解決・横あふれなし・ID 一意・コンソールエラーなしを確認。個別コミットは下記サブ項目参照。体験レビューは事後）
   - 再実測（2026-07-12）: 未紐付けは20アプリ・約64箇所。多くは可視ラベル既存で for 欠落のみ。※challenge-tane / sakusen-kaigi / sukina-map の recordFile は非表示 file input の可能性＝着手時に個別判断、jinro の `${selectId}` は動的生成＝JS 側で対応
   - [x] word-wolf（2026-07-12 完了、a4a21f6。既存可視ラベル5箇所に for 付与のみ。AI確認: 全5箇所で el.labels 解決・ラベルクリックでフォーカス移動・375px 横あふれなし・コンソールエラーなし・見た目不変・ID 重複なし）
   - [x] hint-de-pinto（2026-07-12 完了、293ea36。for 付与5箇所。AI確認: 全箇所 el.labels 解決・横あふれなし・ID 重複なし）
@@ -147,7 +147,11 @@
   - [x] pittari-meter（2026-07-12 完了、3bb0726。for 付与4箇所。AI確認: el.labels 解決・横あふれなし・ID 重複なし）
   - [x] tatoe-gp（2026-07-12 完了、2b1ecd6。for 付与4箇所。AI確認: label[for] 全解決・ID 重複なし）
   - [x] uso-jisho（2026-07-12 完了、e496d2b。for 付与4箇所。AI確認: 同上）
-  - [ ] 残り7アプリ（kotoba-asobo / kyapa-graph / mienai-ganbari / minna-ranking / challenge-tane / sakusen-kaigi / sukina-map。※後半3本の recordFile は非表示 file input の可能性＝着手時に個別判断）
+  - [x] kotoba-asobo（2026-07-12 完了、a42640b。チャット用コピー textarea に aria-label）
+  - [x] kyapa-graph（2026-07-12 完了、a65d721。タグ追加入力に aria-label）
+  - [x] mienai-ganbari（2026-07-12 完了、28b923b。カスタム追加入力に aria-label）
+  - [x] minna-ranking（2026-07-12 完了、9b30dbf。アイテム追加入力に aria-label）
+  - [x] sukina-map / sakusen-kaigi / challenge-tane（2026-07-12 完了、e671909 / 64435ee / dc85e92。recordFile は「ボタンから開く隠し file input」パターンと確認のうえ aria-label「記録ファイル（JSON）を選ぶ」を付与）
 - [x] B-15. 新規アプリ第1弾プロトタイプ「ものがたりダイス」を `drafts/monogatari-dice/` に作成（2026-07-11 提案10承認。drafts/ プロトタイプ制度の条件に全面的に従う。A-8（draft-lint）完了が前提。設計: 「どこで/だれが/なにを」の3ダイスを Material Symbols アイコン＋文字ラベルで表示、ボタンで振る・振り直し・パス自由、入力ゼロ・オフライン・永続化ゼロ。条件（Codex 指摘反映）: お題語彙の組み合わせ全件をコンテンツガイドラインで安全監査した表を同ディレクトリに同梱、アイコンに代替テキスト、prefers-reduced-motion でアニメ停止。完了条件: draft-lint パス＋AIブラウザ動作確認。**apps/ への移植・ポータル掲載は別途 Tier D ゲート**。2026-07-12 完了、0a83add。AI確認: draft-lint パス（外部通信なし・XSSなし・絵文字なし）、各軸8語彙×3＝全512組み合わせの安全監査表を同梱（学校・暴力・恐怖・評価語彙を排除する基準6項目つき）、ローカルHTTPサーバでPC/モバイル両表示・まとめて振る/1個ずつ振り直しの動作・結果文の合成を実測、Material Symbols 全25アイコンのリガチャ解決を機械確認（未解決0件）、ダイスは role=img＋aria-label・装飾アイコン aria-hidden・結果文 aria-live=polite、reduced-motion は CSS/JS 両ゲートをコード確認、コンソールエラーなし。体験レビューと apps/ 移植判断（Tier D）は人間へ）
 
 ## Tier C: 調査・報告のみ
