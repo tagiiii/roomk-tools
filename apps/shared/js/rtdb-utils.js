@@ -69,6 +69,26 @@
     return { authReady, db };
   }
 
+  // teardown（明示退出・TOP 遷移・room 削除検知後）で、この接続が room 以下に予約した
+  // onDisconnect（host の update / guest の remove・set）をまとめて取り消す。
+  // これを怠ると、room が削除された後にこの接続が実切断した時、予約済みの書き込みが
+  // 削除済みパスへ発火し、{hostConnected:false, ...} だけの「ゴースト room」を部分再生成
+  // してしまう（players/status/deleteAt を持たないため、どのクライアント掃除経路も回収しない）。
+  //
+  // 重要:
+  // - cancel() は接続単位・サブツリー全体に効く。roomRef へ 1 回呼べば、同じ接続が
+  //   その配下（players/…）に予約した onDisconnect もまとめて取り消される。
+  // - room を remove() する経路では、必ず await して remove() の「前」に呼ぶこと
+  //   （順序が逆だと、remove 成功後 cancel 到達前の切断でゴーストが残る）。
+  // - 別接続（他のゲスト等）の予約はこの呼び出しでは取り消せない（接続単位のため）。
+  //   クロス接続のゴースト完全防止は validation rules 側のバックストップで別途対応する。
+  function cancelRoomOnDisconnect(ref) {
+    if (!ref) return Promise.resolve();
+    return ref.onDisconnect().cancel().catch((error) => {
+      console.warn('[rtdb] onDisconnect().cancel() failed', error);
+    });
+  }
+
   function showToast(message, isError = true, durationMs = 3000) {
     const existing = document.getElementById('roomk-toast');
     if (existing) existing.remove();
@@ -97,6 +117,7 @@
     generateRoomCode,
     esc,
     initFirebase,
+    cancelRoomOnDisconnect,
     showToast,
   });
 }());

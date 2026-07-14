@@ -10,7 +10,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
-  <script src="../shared/js/rtdb-utils.js?v=20260711"></script>
+  <script src="../shared/js/rtdb-utils.js?v=20260715"></script>
   <script type="module">
     // 共通ユーティリティを利用（REF-3: shuffle / escapeHtml の重複定義を解消）
     import { shuffle, escapeHtml } from '../shared/js/utils.js';
@@ -1864,6 +1864,8 @@
   function goToTop() {
     clearSession();
     if (state.roomRef) {
+      // 予約済み onDisconnect を取り消してから listener を外す（削除済み room の再生成を防ぐ）
+      RoomkRTDB.cancelRoomOnDisconnect(state.roomRef);
       state.roomRef.off();
       state.roomRef = null;
     }
