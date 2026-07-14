@@ -379,6 +379,12 @@
       </div>
       <p class="section-label" style="margin-top:16px">見えているヒント</p>
       <div class="hdp-hints-wrap" id="answer-others-hints"></div>
+
+      <!-- ホスト用：回答者が退出したときの救済 -->
+      <div id="answer-host-actions" style="display:none;margin-top:16px">
+        <button class="btn btn-ghost btn-full" id="btn-answer-skip-guesser" onclick="hostSkipAbsentGuesser()">この回答者をとばして次へ</button>
+        <p class="hdp-status-text" id="answer-host-hint" style="margin-top:8px"></p>
+      </div>
     </div>
   </div>
 </div>
@@ -1125,6 +1131,17 @@ function handleAnswer(room, players) {
       visible.map(([, h]) => `<span class="hdp-visible-hint">${esc(h.text)}</span>`).join('');
   }
 
+  // ホスト: 回答者が退出していたら「とばす」導線を出す（回答者不在での進行不能を防ぐ）
+  const answerHostActions = document.getElementById('answer-host-actions');
+  const guesserAbsent = !!guesser && !players[guesser];
+  const answerResolved = round.passed === true || (round.answer != null && round.answer !== '');
+  if (state.role === 'host' && !isGuesser && guesserAbsent && !answerResolved) {
+    answerHostActions.style.display = 'block';
+    document.getElementById('answer-host-hint').textContent = `${guesser} が見つかりません。とばして次へ進めます`;
+  } else {
+    answerHostActions.style.display = 'none';
+  }
+
   // ホスト: 回答検知
   if (state.role === 'host' && !answerHandled) {
     if (round.passed === true) {
@@ -1146,6 +1163,27 @@ async function submitAnswer() {
 
 async function passAnswer() {
   await state.roomRef.child('round').update({ answer: null, passed: true });
+}
+
+// ホスト救済: 回答者が answer フェーズで退出し進行不能になった場合に、
+// ホストがその回答者をパス扱いで次へ進める。ルーム全体 transaction で
+// フェーズ・回答者不在・未確定を再検証し、既存のパス経路(passed→handleAutoJudge)に乗せる。
+async function hostSkipAbsentGuesser() {
+  if (state.role !== 'host' || answerHandled) return;
+  try {
+    await state.roomRef.transaction(room => {
+      if (!room || room.status !== 'answer') return; // フェーズが変わっていたら中止
+      const round = room.round || {};
+      const players = room.players || {};
+      if (!round.guesser || players[round.guesser]) return; // 回答者が戻った → 中止
+      if (round.passed === true || (round.answer != null && round.answer !== '')) return; // 既に確定 → 中止
+      return { ...room, round: { ...round, answer: null, passed: true } };
+    });
+    // committed 時は 'value' リスナーが handleAnswer を呼び passed→handleAutoJudge→result に乗る。
+    // 中止時（回答者復帰・確定済み・フェーズ変化）は no-op（リスナーが UI を整合させる）。
+  } catch (error) {
+    console.error('[hint-de-pinto] hostSkipAbsentGuesser failed', error);
+  }
 }
 
 // ── judge ──
