@@ -1596,6 +1596,12 @@
       state.roomRef.off();
       state.roomRef = null;
     }
+    // leaveGame を経由しない直呼び経路（DONE の「TOPにもどる」・room削除リスナー）でも
+    // 切断カウントダウンとオーバーレイを確実に解放する（leaveGame と対称化）
+    clearInterval(_hostDisconnectTimer);
+    _hostDisconnectTimer = null;
+    _hostDisconnectDeadline = null;
+    document.getElementById('host-disconnect-overlay').style.display = 'none';
     Object.assign(state, {
       role: null, nickname: '', roomCode: '',
       players: {}, room: null,
