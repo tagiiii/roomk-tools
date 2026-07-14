@@ -24,3 +24,5 @@
 - [c8-modal-overlay-classification.md](c8-modal-overlay-classification.md) — モーダル/オーバーレイの分類と dialog 実装パターン案（C-8、2026-07-12）
 - [c9-auth-failure-paths.md](c9-auth-failure-paths.md) — 匿名認証失敗経路の棚卸しと統一案（C-9、2026-07-12）
 - [cross-review-2026-07-11.md](cross-review-2026-07-11.md) — バックログ候補のクロスレビュー（Claude系×Codex系）の経緯と合意記録（2026-07-11）
+- [audit-run-2026-07-13.md](audit-run-2026-07-13.md) — 監査プロンプト集（audit-prompts.md）の初回全観点実走と Codex 検証の起票候補（2026-07-13）
+- [audit-handoff-2026-07-14.md](audit-handoff-2026-07-14.md) — 監査イニシアチブの次セッション引き継ぎ（現状・判断待ち・保留中の Tier B・確立した方針）（2026-07-14）

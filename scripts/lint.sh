@@ -49,11 +49,19 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 # ─────────────────────────────────────────────────────
 # [SEC-1] XSS チェック
 #   innerHTML に テンプレートリテラル変数 (${...}) を使って
-#   いるのに esc() / escapeHtml() でラップしていない行を検出
+#   いるのに esc() / escapeHtml() でラップしていない箇所を検出。
+#   (1) 単一行  : 行 grep（従来どおり）
+#   (2) 複数行  : `.innerHTML =/+= \`...\`` テンプレートブロックを
+#                 python3 で構文的に解析し、各 ${...} 補間を検査する。
+#                 文字列リテラルを変数/プロパティに + 連結して未エスケープで
+#                 差し込む（例: ${'<b>' + name}）補間を ERROR とする。
+#                 esc()/escapeHtml()/RoomkRTDB.esc() 済み・数値・定数参照・
+#                 関数呼び出し・リテラルのみの補間は安全として通す。
 # ─────────────────────────────────────────────────────
 echo ""
 echo -e "${BOLD}[SEC-1] XSS チェック${NC} — innerHTML + \${} に esc() なし"
 
+# (1) 単一行チェック（従来の挙動を維持）
 for f in "${XSS_FILES[@]}"; do
   [ -f "$f" ] || continue
   while IFS=: read -r line_num content; do
@@ -65,6 +73,114 @@ for f in "${XSS_FILES[@]}"; do
     | grep -v 'esc(' \
     | grep -v 'escapeHtml(')
 done
+
+# (2) 複数行テンプレートブロックチェック
+SEC1_ML_OUT=$(python3 - <<'PYEOF'
+import glob, re, sys
+
+BT = chr(96)  # backtick char, built via chr() to keep it out of this heredoc
+
+FILES = sorted(glob.glob('apps/*/index.html') + glob.glob('apps/*/app.js'))
+
+INNER = re.compile(r'\.innerHTML\s*\+?=\s*' + BT)
+ESC_RE = re.compile(r'\besc[A-Za-z]*\(|escapeHtml\(')
+
+def parse_template(s, i):
+    """s[i] is the opening backtick. Return (close_index, [(start, expr), ...])."""
+    interps = []
+    j, n = i + 1, len(s)
+    while j < n:
+        c = s[j]
+        if c == '\\':
+            j += 2; continue
+        if c == BT:
+            return j, interps
+        if c == '$' and j + 1 < n and s[j+1] == '{':
+            start = j + 2
+            expr, j = parse_interp(s, start)
+            interps.append((start, expr)); continue
+        j += 1
+    return n, interps
+
+def parse_interp(s, i):
+    """s[i] = first char after '${'. Return (expr_text, index_after_'}')."""
+    depth, start, j, n = 1, i, i, len(s)
+    while j < n:
+        c = s[j]
+        if c == '\\':
+            j += 2; continue
+        if c in ('"', "'"):
+            q = c; j += 1
+            while j < n:
+                if s[j] == '\\': j += 2; continue
+                if s[j] == q: j += 1; break
+                j += 1
+            continue
+        if c == BT:
+            end, _ = parse_template(s, j); j = end + 1; continue
+        if c == '{':
+            depth += 1
+        elif c == '}':
+            depth -= 1
+            if depth == 0:
+                return s[start:j], j + 1
+        j += 1
+    return s[start:j], j
+
+def strip_literals(e):
+    out = []; j, n = 0, len(e)
+    while j < n:
+        c = e[j]
+        if c in ('"', "'", BT):
+            q = c; j += 1
+            while j < n:
+                if e[j] == '\\': j += 2; continue
+                if e[j] == q: j += 1; break
+                j += 1
+            out.append('""'); continue
+        out.append(c); j += 1
+    return ''.join(out)
+
+def is_unsafe(expr):
+    e = expr.strip()
+    if ESC_RE.search(e):
+        return False
+    st = strip_literals(e)
+    # 文字列リテラルを 変数/プロパティ/添字 に + 連結（未エスケープの HTML 組み立て）
+    return bool(
+        re.search(r'""\s*\+\s*[A-Za-z_$]', st)
+        or re.search(r'[A-Za-z_$][\w$.]*(?:\[[^\]]*\])?\s*\+\s*""', st)
+    )
+
+for f in FILES:
+    try:
+        with open(f, encoding='utf-8') as fh:
+            s = fh.read()
+    except OSError:
+        continue
+    for m in INNER.finditer(s):
+        bt = m.end() - 1
+        end, interps = parse_template(s, bt)
+        block = s[bt:end + 1]
+        if '\n' not in block:
+            continue  # 単一行テンプレートは (1) の行 grep が担当
+        for pos, expr in interps:
+            if is_unsafe(expr):
+                ln = s.count('\n', 0, pos) + 1
+                snippet = re.sub(r'\s+', ' ', expr.strip())[:100]
+                print(f'{f}:{ln}\t${{{snippet}}}')
+PYEOF
+)
+
+if [ -n "$SEC1_ML_OUT" ]; then
+  while IFS=$'\t' read -r loc snippet; do
+    [ -n "$loc" ] || continue
+    echo -e "  ${RED}[ERROR]${NC} $loc"
+    echo -e "         ${snippet}"
+    ERRORS=$((ERRORS + 1))
+  done <<< "$SEC1_ML_OUT"
+fi
+
 [ $ERRORS -eq 0 ] && echo -e "  ${GREEN}OK${NC}"
 
 # ─────────────────────────────────────────────────────

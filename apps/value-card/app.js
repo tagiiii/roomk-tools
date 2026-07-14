@@ -56,6 +56,8 @@ const btnFinishRanking = document.getElementById('btn-finish-ranking');
 const resultArea = document.getElementById('result-area');
 const btnSaveImage = document.getElementById('btn-save-image');
 const btnRestart = document.getElementById('btn-restart');
+const btnQuitGame = document.getElementById('btn-quit-game');
+const btnQuitRanking = document.getElementById('btn-quit-ranking');
 
 // ── 画面遷移 ──
 function showScreen(id) {
@@ -340,8 +342,17 @@ btnConfirm.addEventListener('click', showRanking);
 btnFinishRanking.addEventListener('click', showResult);
 btnSaveImage.addEventListener('click', saveImage);
 
-btnRestart.addEventListener('click', () => {
+// ── TOP へ戻る（中断・やり直し共通。sortable を後片付け） ──
+function goToTop() {
+  if (sortableInstance) {
+    sortableInstance.destroy();
+    sortableInstance = null;
+  }
   showScreen('top');
   howtoPanel.classList.remove('visible');
   btnHowto.textContent = 'あそびかた';
-});
+}
+
+btnRestart.addEventListener('click', goToTop);
+btnQuitGame.addEventListener('click', goToTop);
+btnQuitRanking.addEventListener('click', goToTop);
