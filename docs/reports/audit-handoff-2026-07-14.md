@@ -11,6 +11,7 @@
 - **PR [#4](https://github.com/tagiiii/roomk-tools/pull/4) マージ済**（merge `95d4d0a`）: 監査カタログ・実走レポート・A-9/A-10・P票①②起票・Tier C 3件・C1 value-card → main。
 - **PR [#5](https://github.com/tagiiii/roomk-tools/pull/5) マージ済**（B1 hint-de-pinto 進行不能の解消）: **⚠️ host/guest 実機 E2E は未実施のままオーナー判断でマージ** → **次の実機セッションで runtime 確認を推奨**（回答者切断→とばす→次ラウンド/終了・二重進行なし・復帰時誤作動なし。問題時は PR #5 の1コミット revert）。
 - 両者 main マージ済み → GitHub Pages へ自動デプロイ。両ブランチは削除済み。作業ツリーはクリーン。
+- **PR [#6](https://github.com/tagiiii/roomk-tools/pull/6) マージ済（B2 pittari-meter・2026-07-14）**: goToTop の切断タイマー/オーバーレイ片付け漏れを解消。stub 検証＋二重レビュー合格。**⚠️ B1 同様 host/guest 実機 E2E 未実施のままオーナー判断でマージ** → 次の実機セッションで runtime 確認必須（切断オーバーレイ表示中に room 削除→TOP 復帰で overlay 残留/カウントダウンリーク/幽霊 alert が無いこと。問題時は revert）。
 
 ---
 
@@ -49,13 +50,14 @@
 
 いずれも監査で洗い出し済み・Codex 較正済み。**Firebase 系は下記の「静的＋stub→Draft 保留」パターンで進める**。
 
-- **B2** pittari-meter: `goToTop()` が `_hostDisconnectTimer` と切断オーバーレイを片付けない（兄弟4本は片付け済み）。深刻度 中。修正は兄弟と同型の clear＋overlay 非表示。
+- ~~**B2** pittari-meter: `goToTop()` が `_hostDisconnectTimer` と切断オーバーレイを片付けない~~ → **実装・PR #6 マージ済（2026-07-14・`b7748a8`・⚠️実機 E2E 未実施のままオーナー判断マージ＝要 runtime 確認）**。goToTop 直呼び2経路（DONE「TOPにもどる」L555 / room削除リスナー L1380）で timer リーク＋overlay 残留。兄弟 uso-jisho/tatoe-gp/kakure-number の正準パターンで4行追加（iisen-show は overlay hide を欠く不完全版のため手本にせず）。stub 検証（setInterval spy で active timer=0 を直接実測・二重呼び冪等・幽霊 alert なし）＋二重レビュー（独立=無条件承認・Codex=条件付き承認→条件充足）。**host/guest 実機 E2E 後に main マージ**（B1 と同運用）。
 - **B3** codenames: `onSnapshot` の `onError` が生の英語メッセージを子ども画面に出しうる。低。固定の子ども向け文言へ（onError stub で検証可・本番書き込み不要）。
 - **B4** iisen-show: 切断カウントダウン初期値「60」が TTL 120秒と不整合。低。**Codex は「視認確認まで finding 化しない検証候補」**＝優先度低。
 - **B5** ikutsu-ieru: ルームコードのコピーボタン欠落（AGENTS.md:82 の自仕様違反）。低。
 - **A-11**: SEC-1 の裸変数 `${var}` 多行検出（dataflow 要・脆く低価値）。保留推奨。
 - **C1 の follow-up**: docchi の ask を「なぜ画面に出すか」AGENTS.md へ1文追記するか（人間の framing 判断）。
 - **B1 の follow-up**: hint-de-pinto の途中離脱を `nextRound` と同じ skip 提示へ統一（`saveToHistory` に `skipped` 永続化・別 issue）。
+- **B2 の follow-up（Codex 指摘・重要）**: pittari-meter に `onDisconnect().cancel()` がどこにも無く、`roomRef.off()` は予約済み `onDisconnect()` を解除しない → 後日の切断で削除済み room を部分再生成しうる。B2 の範囲外として別項目化。family 6アプリ横断で同じ穴の可能性大（要棚卸し）。
 
 ---
 
