@@ -6,11 +6,11 @@
 
 ---
 
-## TL;DR — 現在の状態
+## TL;DR — 現在の状態（2026-07-14 マージ完了・更新）
 
-- **PR [#4](https://github.com/tagiiii/roomk-tools/pull/4)**（ブランチ `tier-a-audit-tooling`・8コミット・OPEN）＝**マージ可**。監査カタログ・実走レポート・A-9/A-10・P票①②起票・Tier C 3件・C1 value-card。
-- **Draft PR [#5](https://github.com/tagiiii/roomk-tools/pull/5)**（ブランチ `fix-hint-de-pinto-answer-disconnect`・DRAFT）＝**runtime 実測後にマージ**。B1（hint-de-pinto 進行不能）。
-- 作業ツリーはクリーン。両ブランチは push 済み。**未マージ・main は無変更**。
+- **PR [#4](https://github.com/tagiiii/roomk-tools/pull/4) マージ済**（merge `95d4d0a`）: 監査カタログ・実走レポート・A-9/A-10・P票①②起票・Tier C 3件・C1 value-card → main。
+- **PR [#5](https://github.com/tagiiii/roomk-tools/pull/5) マージ済**（B1 hint-de-pinto 進行不能の解消）: **⚠️ host/guest 実機 E2E は未実施のままオーナー判断でマージ** → **次の実機セッションで runtime 確認を推奨**（回答者切断→とばす→次ラウンド/終了・二重進行なし・復帰時誤作動なし。問題時は PR #5 の1コミット revert）。
+- 両者 main マージ済み → GitHub Pages へ自動デプロイ。両ブランチは削除済み。作業ツリーはクリーン。
 
 ---
 
@@ -33,11 +33,11 @@
    - P-9: ポータル選択メタデータ9属性の確定（推奨案①・`axis` は含めず後日）
    - P-10: quiz 事実系の検証運用方針（推奨=高リスクのみ継続ローテ＋安定系は非検証明文化）
    - **P-8/P-9 が両方承認されると P7 横断監査＋ポータル実装(B) が解禁**（それまで停止ゲートで走らせない）。
-2. **PR #4 のマージ可否**（マージ＝`main` デプロイ→GitHub Pages）。子ども向け挙動変更は **C1 value-card の「きょうはここまで」だけ**。他は tooling/docs。
-3. **PR #5 の runtime 実測**（下記手順）→ 済んだら Draft 解除してマージ。
+2. ~~PR #4 のマージ~~ → **完了（2026-07-14 マージ・デプロイ済）**。
+3. **PR #5（B1）の runtime 実機確認**（下記手順）— **マージは済んでいるが実機 E2E は未実施**。次の実機セッションで必ず確認し、問題があれば PR #5 を revert。
 4. **Firebase 検証方針の承認 or 調整**（下記「確立した方針」参照）。
 
-### PR #5 の runtime 実測手順
+### PR #5（B1）の runtime 実機確認手順（マージ後の必須確認）
 1. ホスト＋ゲスト2人以上でルーム作成 → answer フェーズへ。
 2. 回答者役のゲストを切断（タブを閉じる／通信断）。
 3. ホスト画面に「この回答者をとばして次へ」が出る → 押す → 次ラウンド/終了へ。
