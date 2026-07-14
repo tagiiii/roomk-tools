@@ -10,7 +10,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
-<script src="../shared/js/rtdb-utils.js?v=20260711"></script>
+<script src="../shared/js/rtdb-utils.js?v=20260715"></script>
   <style>
     /* ── 画面管理 ── */
     .screen { display: none; min-height: 100dvh; }
@@ -933,6 +933,8 @@ async function leaveGame() {
   clearTimeout(state.orphanTimer);
   clearSession();
   if (state.roomRef) {
+    // remove の前に予約済み onDisconnect を取り消す（削除後の実切断でゴースト room が再生成されるのを防ぐ）
+    await RoomkRTDB.cancelRoomOnDisconnect(state.roomRef);
     if (state.role === 'host') {
       // 自分で消す正常削除と「予期しない消滅」をリスナー側で区別するためのフラグ
       state.expectedRoomRemoval = true;
@@ -965,7 +967,10 @@ function startRoomListener() {
         clearInterval(state.timerInterval);
         clearTimeout(state.orphanTimer);
         clearSession();
-        if (state.roomRef) state.roomRef.off();
+        if (state.roomRef) {
+          RoomkRTDB.cancelRoomOnDisconnect(state.roomRef);
+          state.roomRef.off();
+        }
         Object.assign(state, {
           role: null, nickname: null, roomCode: null, roomRef: null,
           currentScreen: null, myWord: null, isWolf: false,

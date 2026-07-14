@@ -10,7 +10,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
-<script src="../shared/js/rtdb-utils.js?v=20260711"></script>
+<script src="../shared/js/rtdb-utils.js?v=20260715"></script>
   <style>
     /* ── 画面管理 ── */
     .screen { display: none; min-height: 100dvh; }
@@ -1302,6 +1302,8 @@
       const nick = state.nickname;
 
       clearInterval(state.timerInterval);
+      // remove の前に予約済み onDisconnect を取り消す（削除後の実切断でゴースト room が再生成されるのを防ぐ）
+      if (roomRef) await RoomkRTDB.cancelRoomOnDisconnect(roomRef);
       if (roomRef) roomRef.off();
 
       try {
@@ -1327,6 +1329,7 @@
       state.roomRef.on("value", (snap) => {
         if (!snap.exists()) {
           if (state.role !== "host") {
+            if (state.roomRef) RoomkRTDB.cancelRoomOnDisconnect(state.roomRef);
             if (state.roomRef) state.roomRef.off();
             clearSession();
             showOverlay("host-off-overlay", false);

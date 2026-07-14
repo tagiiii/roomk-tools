@@ -10,7 +10,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
-<script src="../shared/js/rtdb-utils.js?v=20260711"></script>
+<script src="../shared/js/rtdb-utils.js?v=20260715"></script>
   <script type="module">
     // 共通ユーティリティを利用（REF-3: shuffle の重複定義を解消）
     import { shuffle } from '../shared/js/utils.js';
@@ -1523,6 +1523,7 @@ function copyCode() {
 function leaveCleanup() {
   clearTimeout(state.orphanTimer);
   clearTimeout(state.cleanupTimer);
+  if (state.roomRef) RoomkRTDB.cancelRoomOnDisconnect(state.roomRef);
   if (state.roomRef) state.roomRef.off();
   Object.assign(state, { role: null, nickname: null, roomCode: null, roomRef: null, orphanTimer: null, cleanupTimer: null });
   showOverlay('host-off-overlay', false);
@@ -1532,6 +1533,8 @@ function leaveCleanup() {
 async function leaveGame() {
   clearSession();
   if (state.roomRef) {
+    // remove の前に予約済み onDisconnect を取り消す（削除後の実切断でゴースト room が再生成されるのを防ぐ）
+    await RoomkRTDB.cancelRoomOnDisconnect(state.roomRef);
     if (state.role === 'host') {
       await state.roomRef.remove().catch(() => {});
     } else if (state.nickname) {

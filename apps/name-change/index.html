@@ -398,7 +398,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
-<script src="../shared/js/rtdb-utils.js?v=20260711"></script>
+<script src="../shared/js/rtdb-utils.js?v=20260715"></script>
 <script>
 // ===== Firebase =====
 const { authReady, db } = RoomkRTDB.initFirebase(firebase);
@@ -459,7 +459,11 @@ function isRoomExpired(room) {
 function goHostSetup() { showScreen('host-setup'); }
 function goGuestJoin()  { showScreen('guest-join'); }
 function goToTop() {
-  if (state.roomRef) state.roomRef.off();
+  if (state.roomRef) {
+    // 予約済み onDisconnect を取り消してから listener を外す（削除済み room の再生成を防ぐ）
+    RoomkRTDB.cancelRoomOnDisconnect(state.roomRef);
+    state.roomRef.off();
+  }
   clearSession();
   clearTimeout(state.orphanTimer);
   document.getElementById('host-gone-overlay').classList.remove('show');
