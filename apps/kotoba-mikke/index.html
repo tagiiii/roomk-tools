@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ことばみっけ | roomK</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet" />
+  <link rel="stylesheet" href="../shared/css/design-system.css" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="wrapper">
+
+    <!-- 画面1: TOP -->
+    <section class="kmk-screen kmk-screen--top active" id="screen-top">
+      <header class="kmk-hero">
+        <h1 class="kmk-hero__title">ことばみっけ</h1>
+        <p class="kmk-hero__sub">お題に合う ことばを みっけよう</p>
+      </header>
+      <div class="kmk-hero__action">
+        <button class="btn btn-primary btn-lg" id="btnStart">はじめる</button>
+      </div>
+    </section>
+
+    <!-- 画面2: お題 -->
+    <section class="kmk-screen" id="screen-odai">
+      <p class="kmk-odai__label">どんなのが あるかな?</p>
+
+      <div class="kmk-odai" aria-live="polite">
+        <p class="kmk-odai__line1">
+          「<span class="kmk-odai__initial" id="odaiInitial">あ</span>」からはじまる
+        </p>
+        <p class="kmk-odai__theme" id="odaiTheme">やさしい言葉</p>
+      </div>
+
+      <div class="kmk-copy">
+        <button class="btn btn-ghost btn-sm" id="btnCopy">
+          <span class="material-symbols-rounded" aria-hidden="true">content_copy</span>
+          お題をチャットにコピー
+        </button>
+      </div>
+
+      <div class="kmk-reroll">
+        <button class="btn btn-ghost" id="btnRerollInitial">はじめの文字を かえる</button>
+        <button class="btn btn-ghost" id="btnRerollTheme">おだいを かえる</button>
+        <button class="btn btn-primary" id="btnReroll">ぜんぶ かえる</button>
+      </div>
+
+      <div class="kmk-odai__foot">
+        <button class="btn btn-ghost" id="btnBackTop">TOPにもどる</button>
+      </div>
+    </section>
+
+  </div>
+
+  <script type="module" src="app.js"></script>
+  <script src="../shared/js/howto.js"></script>
+  <script>
+    RoomkHowto.init({
+      title: 'あそびかた',
+      lead: '「◯からはじまる、〇〇な言葉／もの」のお題に合うことばを、みんなでさがすあそび。',
+      sections: [
+        { heading: 'はじめかた', items: [
+          '「はじめる」を押す',
+          '出てきたお題を読む（むずかしかったら「はじめの文字を かえる」「おだいを かえる」で変えられる）',
+        ] },
+        { heading: 'すすめかた', items: [
+          'お題に合うことばを思いついたら、チャットで送る',
+          '「お題をチャットにコピー」を押すと、お題をチャットに貼りつけられる',
+          '「ぜんぶ かえる」で つぎのお題にすすむ',
+        ] },
+        { heading: 'おわりかた', text: '「TOPにもどる」で さいしょの画面にもどれる。' },
+      ],
+    });
+  </script>
+</body>
+</html>
