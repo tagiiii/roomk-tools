@@ -1,0 +1,134 @@
+/* ことばみっけ — アプリ固有スタイル */
+
+.wrapper {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 32px 20px 60px;
+  position: relative;
+}
+
+/* ── 画面切り替え ── */
+.kmk-screen {
+  display: none;
+}
+.kmk-screen.active {
+  display: block;
+  animation: kmkFade 0.25s ease-out;
+}
+@keyframes kmkFade {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── ヒーロー（TOP） ── */
+.kmk-hero {
+  text-align: center;
+  padding: 40px 16px 24px;
+}
+.kmk-hero__title {
+  font-size: clamp(32px, 7vw, 48px);
+  font-weight: 700;
+  color: var(--color-primary);
+  letter-spacing: 0.04em;
+  margin: 0;
+}
+.kmk-hero__sub {
+  margin-top: 12px;
+  font-size: var(--font-size-body);
+  color: var(--color-muted);
+}
+.kmk-hero__action {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+  margin-top: 24px;
+}
+.kmk-hero__action .btn {
+  min-width: 220px;
+}
+
+/* ── お題画面 ── */
+.kmk-odai__label {
+  text-align: center;
+  font-size: 13px;
+  color: var(--color-muted);
+  letter-spacing: 0.06em;
+  margin: 8px 0 14px;
+}
+.kmk-odai {
+  text-align: center;
+  background: var(--color-surface);
+  border: 2px dashed var(--color-accent);
+  border-radius: var(--radius-card);
+  padding: 30px 24px;
+  margin: 0 auto;
+  max-width: 520px;
+}
+.kmk-odai__line1 {
+  font-size: clamp(22px, 5vw, 30px);
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0;
+  line-height: 1.4;
+}
+.kmk-odai__initial {
+  color: var(--color-accent);
+  font-size: 1.5em;
+  font-feature-settings: "palt";
+}
+.kmk-odai__theme {
+  font-size: clamp(28px, 6.5vw, 40px);
+  font-weight: 700;
+  color: var(--color-primary);
+  margin: 12px 0 0;
+  line-height: 1.35;
+  word-break: break-word;
+}
+
+/* ── コピー導線 ── */
+.kmk-copy {
+  display: flex;
+  justify-content: center;
+  margin: 18px 0 8px;
+}
+.kmk-copy .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+}
+.kmk-copy .material-symbols-rounded {
+  font-size: 18px;
+}
+
+/* ── 引き直し（はじめの文字 / おだい / ぜんぶ）。3つとも同じ大きさに揃える ── */
+.kmk-reroll {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 12px 0 16px;
+}
+.kmk-reroll .btn {
+  flex: 0 0 210px;
+  width: 210px;
+  white-space: nowrap;
+}
+
+/* ── お題画面フッター ── */
+.kmk-odai__foot {
+  display: flex;
+  justify-content: center;
+  margin-top: 24px;
+}
+
+/* ── モバイル ── */
+@media (max-width: 600px) {
+  .wrapper { padding: 20px 14px 48px; }
+  .kmk-hero { padding: 28px 12px 16px; }
+  .kmk-odai { padding: 24px 16px; }
+  .kmk-reroll .btn { flex-basis: 100%; width: 100%; }
+}
