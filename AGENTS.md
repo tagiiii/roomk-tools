@@ -152,6 +152,7 @@ Realtime Database 単一ファイルアプリ向けの共有ヘルパー。`wind
 | `generateRoomCode(length = 6)` | 紛らわしい文字を除外した英数字ルームコードを生成 |
 | `esc(value)` | XSS対策のHTMLエスケープ（シングルクォートを含む） |
 | `initFirebase(firebase)` | Firebase compat SDKを共通設定で初期化し、`{ authReady, db }` を返す。サーバー時刻補正も開始 |
+| `cancelRoomOnDisconnect(ref)` | `ref` へ予約した `onDisconnect` を接続単位でまとめて取り消す。room を `remove()` する経路では必ず await して remove の前に呼ぶ（ゴースト room 防止） |
 | `showToast(message, isError = true, durationMs = 3000)` | CSS依存なしの固定表示トースト（DOM id: `roomk-toast`） |
 
 ### howto.js（非モジュール通常スクリプト）
