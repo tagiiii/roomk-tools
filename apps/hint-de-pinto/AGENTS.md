@@ -45,6 +45,76 @@ TOP（screen-top）
              全ラウンドの振り返り一覧 + 正解数サマリー
 ```
 
+## 観戦専用ビュー（みんなにみせる画面）
+
+ホストはヒント役・判定役でお題（secretWord）が画面に出るため、ホスト画面を画面共有できない。
+ホストが別ウィンドウで観戦ビュー（`#screen-spectator`）を開き、それを Metalife で共有する。
+観戦画面は回答者本人も見るため、**回答者が見てよい情報だけ** を表示する（回答者セーフ原則）。
+
+### 画面フロー
+```
+TOP
+ └── 「みんなにみせる画面をひらく」（btn-ghost）
+       → コード入力（screen-spectate-join）→「画面をひらく」
+       → 観戦画面（screen-spectator）: room.status に応じてサブビューを innerHTML 全置き換えで描画
+```
+
+### 入口（3つ）
+1. **URL パラメータ `?watch=CODE`**（最優先）: 起動時に検証（trim・大文字化・6桁・`generateRoomCode` の文字集合）して観戦入室。無効・不存在なら sessionStorage へフォールバック**せず**トースト + TOP。`?watch=`（空値）も同扱い。watch が無い場合のみ sessionStorage を見る
+2. **TOP 画面**: 「みんなにみせる画面をひらく」→ コード入力 → 入室成功後 `history.replaceState` で URL を `?watch=CODE` に更新（リロード復帰の安定化）
+3. **ホスト待機画面**: ホストコントロール内の「みんなにみせる画面をひらく」。クリックハンドラ内で同期的に `window.open(url, '_blank', 'noopener')`（ポップアップブロック回避・noopener 必須）
+
+### アーキテクチャ: 完全分岐
+- `state.role === 'spectator'`。ルーム購読コールバックの入口で `handleSpectator(room)` へ完全分岐し、
+  host/guest のコードパス（切断処理・status switch・各 handleX・自動進行）には一切入らない
+- 観戦者が絶対に入らない処理: onDisconnect 予約 / players への読み書き / 期限切れルームの remove() /
+  finished 30秒後の自動削除 / ホスト自動進行（autoTransitionToReview・answer 検知・host 復帰）/
+  leaveGame の roomRef.remove()・players remove 分岐
+
+### RTDB: 書き込みゼロ
+観戦者は RTDB に一切書き込まない。players/ にも spectators/ にも入れない。純粋な read-only リスナーのみ。
+匿名認証は必要（ルールが `auth != null`）なので `waitAuthOrExplain()` を通す。
+
+### フェーズ別表示（回答者セーフ原則）
+**secretWord を DOM に書くのは result / finished サブビューのみ。**
+document.title・トースト・aria-label にお題を入れない。ニックネーム・ヒント・回答の描画は必ず `esc()` を通す。
+未知の status は「じゅんびしています…」の安全な待機表示にフォールバック。
+
+| status | 表示 | 出さないもの |
+|--------|------|------------|
+| waiting | ルームコード大表示 + プレイヤー一覧 + 待機メッセージ | — |
+| clue-input | ラウンド情報 + スピナー + 提出カウンター「n / m 人が送信済み」 | お題・ヒント本文 |
+| clue-review | ラウンド情報 + 「ホストがヒントを確認しています」 | ヒント本文・件数内訳 |
+| answer | ラウンド情報 + 見えているヒント一覧 + 「（回答者名）さんが答えを考えています」 | お題・除外ヒント |
+| judge | 回答者の回答 + 「ホストが答えを確認しています」 | お題 |
+| result | お題・回答・正解/不正解 + 見えていたヒント一覧 + 正解数/ラウンド数 | 除外されたヒントと「誰のヒントが消えたか」（共有画面で個人が強調されるのを避ける） |
+| finished | 全ラウンド振り返り + スコアサマリー。「TOPにもどる」のみ | 操作ボタン |
+
+### セッション・復帰
+- 入室成功後に `hdp_session` へ `{ nickname: null, roomCode, role: 'spectator' }` を保存
+- **watch 入口では起動時に既存セッションを破棄**（`clearSession()`）: 無効な `?watch` だったとき、
+  次のリロードで別ルームの host/guest セッションが復活しないように
+- `tryReconnect()` の spectator 分岐: ルーム存在 + `isRoomExpired` チェックのみ（players 存在チェックはスキップ）。
+  期限切れでも remove() しない。復帰後も onDisconnect 予約はしない
+- 「TOPにもどる」（`spectatorLeave()`）: リスナー off() → セッション削除 → `history.replaceState` で
+  watch パラメータ除去 → ローカルタイマー解除 → TOP。ルームには一切触らない
+- 入室処理（`enterSpectator`）は `specJoinBusy` フラグで多重実行を防ぐ（連打による多重リスナー登録防止）
+
+### 切断・終了の扱い（観戦者版）
+- `room.hostConnected === false`: 観戦専用オーバーレイ `#spec-host-off-overlay`（退出ボタンは「TOPにもどる」動作）。
+  TTL（`ORPHAN_TTL_MS`）経過後は remove() **せず**「このルームは終了しました」表示に切り替え。
+  RTDB 更新が来なくてもローカルタイマー（`state.specTimer`）で TTL 到達を再判定する（leave 時に必ず clearTimeout）
+- finished 表示中はホスト切断オーバーレイ・TTL 切り替えの対象外（最終結果の共有画面を維持する）
+- ルーム snapshot が null（削除済み）: finished サブビューを表示済みならその画面を**そのまま維持**
+  （画面共有が突然空にならないように）。それ以外は「このルームは終了しました」表示
+- **終了状態（snapshot null・TTL 超過）では `stopSpectatorWatch()` で購読とタイマーを解除**し、表示だけ維持する。
+  リスナーを残すと、同じルームコードが将来再利用されたとき別ゲームを映してしまうため
+
+### 更新順序への依存（変更禁止）
+- `nextRound()` / `playAgain()` は単一 transaction で secretWord と status を同時更新している
+- `confirmHints()` は excludedHintIds 書き込み → `status:'answer'` の順
+- **この順序・原子性が観戦ビューの漏洩防止の前提**。これらの関数の更新順序を変えないこと
+
 ## ゲームルール
 
 ### 基本ルール
