@@ -22,6 +22,7 @@ import {
   startGame,
   submitHint,
   subscribeToRoom,
+  subscribeToRoomForSpectator,
   updatePlayerRole,
 } from "./service.js";
 import { wordSets } from "./words.js";
@@ -116,6 +117,7 @@ function render() {
   const route = getRoute();
   if (route === "create") return renderCreate();
   if (route === "join") return renderJoin();
+  if (route === "watch") return renderWatchJoin();
   if (route === "lobby") return renderLobby();
   if (route === "game") return renderGame();
   if (route === "finish") return renderFinish();
@@ -135,6 +137,9 @@ function renderHome() {
         </button>
         <button class="btn btn-secondary btn-full" data-route="join">
           <span class="material-symbols-rounded" aria-hidden="true">login</span>ルームに参加する
+        </button>
+        <button class="btn btn-ghost btn-full" data-route="watch">
+          <span class="material-symbols-rounded" aria-hidden="true">visibility</span>みんなにみせる画面
         </button>
       </div>
     </section>
@@ -202,6 +207,45 @@ function renderJoin() {
   `;
 }
 
+function renderWatchJoin() {
+  appEl.innerHTML = `
+    <section class="card cn-panel">
+      <h1 class="cn-title">みんなにみせる画面</h1>
+      <p class="text-muted">ゲームに参加していない人にも見せられる画面をひらきます。まだ開いていないカードの正解の色は映りません。</p>
+      <form id="watch-form" class="cn-form">
+        <label class="form-group">
+          <span class="form-label">ルームコード</span>
+          <input class="form-input cn-room-code-input" name="roomId" maxlength="6" autocomplete="off" placeholder="例: ABC234" required />
+        </label>
+        ${state.error ? `<div class="alert alert-error">${esc(state.error)}</div>` : ""}
+        <div class="cn-actions">
+          <button class="btn btn-primary btn-full" type="submit">画面をひらく</button>
+          <button class="btn btn-ghost btn-full" type="button" data-route="home">戻る</button>
+        </div>
+      </form>
+    </section>
+  `;
+}
+
+function handleWatchJoin(form) {
+  const formData = new FormData(form);
+  const code = normalizeRoomId(formData.get("roomId"));
+  if (!code) {
+    state.error = "ルームコードを入力してください";
+    renderWatchJoin();
+    return;
+  }
+  window.location.replace(buildSpectatorUrl(code));
+}
+
+function buildSpectatorUrl(code) {
+  const url = new URL(window.location.href);
+  url.search = "";
+  url.searchParams.set("watch", code);
+  url.hash = "";
+  return url.toString();
+}
+
 function renderLobby() {
   if (!state.roomId || !state.playerId) {
     if (!restoreSession()) {
@@ -266,8 +310,21 @@ function renderLobby() {
           ${state.loading ? "開始中..." : "ゲーム開始"}
         </button>
       ` : '<p class="text-muted mt-lg">ホストがゲームを開始するまで待ってください。</p>'}
+      ${renderSpectatorShareControls(currentPlayer)}
       <button class="btn btn-ghost btn-full mt-lg" id="leave-room" type="button">ホームへ戻る</button>
     </section>
+  `;
+}
+
+function renderSpectatorShareControls(currentPlayer) {
+  if (!currentPlayer?.isHost) return "";
+  return `
+    <div class="cn-actions mt-md">
+      <button class="btn btn-secondary btn-full" id="open-spectator" type="button">
+        <span class="material-symbols-rounded" aria-hidden="true">visibility</span>みんなにみせる画面をひらく
+      </button>
+      <button class="btn btn-ghost btn-full" id="copy-spectator-url" type="button">みせる画面のURLをコピー</button>
+    </div>
   `;
 }
 
@@ -590,6 +647,7 @@ function renderTurnBanner(room, currentPlayer) {
   `;
 }
 
+// 観戦ビュー（renderSpecGame）からも再利用される。カード単位の情報は出力せず集計値のみを保つこと
 function renderScoreBoard(room) {
   const scores = ["red", "blue"].map((team) => {
     const cards = (room.cards || []).filter((card) => card.role === team);
@@ -756,6 +814,7 @@ function renderHostGameControls(room, currentPlayer) {
           青勝ちで終了
         </button>
       </div>
+      ${renderSpectatorShareControls(currentPlayer)}
     </section>
   `;
 }
@@ -1140,7 +1199,7 @@ function closeNotification() {
   }
 }
 
-document.addEventListener("click", async (event) => {
+async function handlePlayerClick(event) {
   const routeButton = event.target.closest("[data-route]");
   if (routeButton) {
     state.error = "";
@@ -1151,6 +1210,19 @@ document.addEventListener("click", async (event) => {
   const copyButton = event.target.closest("#copy-room-code");
   if (copyButton) {
     await copyToClipboard(state.roomId, copyButton, { successText: "コピー済み" });
+    return;
+  }
+
+  if (event.target.closest("#open-spectator")) {
+    // ポップアップブロック回避のため、クリックハンドラ内で同期的に window.open する
+    window.open(buildSpectatorUrl(state.roomId), "_blank", "noopener,noreferrer");
+    return;
+  }
+
+  const copySpectatorButton = event.target.closest("#copy-spectator-url");
+  if (copySpectatorButton) {
+    const copied = await copyToClipboard(buildSpectatorUrl(state.roomId), copySpectatorButton, { successText: "コピー済み" });
+    if (copied) showToast("みせる画面のURLをコピーしました", "success");
     return;
   }
 
@@ -1235,36 +1307,351 @@ document.addEventListener("click", async (event) => {
   if (event.target.closest("#notification-close")) {
     closeNotification();
   }
-});
+}
 
-document.addEventListener("keydown", (event) => {
+function handlePlayerKeydown(event) {
   if (event.key === "Escape" && Number.isInteger(state.pendingCardIndex)) {
     closeCardConfirm();
   }
-});
+}
 
-document.addEventListener("submit", async (event) => {
+async function handlePlayerSubmit(event) {
   event.preventDefault();
   try {
     if (event.target.id === "create-form") await handleCreate(event.target);
     if (event.target.id === "join-form") await handleJoin(event.target);
+    if (event.target.id === "watch-form") handleWatchJoin(event.target);
     if (event.target.id === "hint-form") await handleHintSubmit(event.target);
   } catch (error) {
     state.error = error.message;
     render();
   }
-});
+}
 
-document.addEventListener("input", (event) => {
+function handlePlayerInput(event) {
   if (event.target.classList.contains("cn-room-code-input")) {
     event.target.value = normalizeRoomId(event.target.value);
   }
-});
+}
 
-window.addEventListener("hashchange", render);
+function initPlayerMode() {
+  document.addEventListener("click", handlePlayerClick);
+  document.addEventListener("keydown", handlePlayerKeydown);
+  document.addEventListener("submit", handlePlayerSubmit);
+  document.addEventListener("input", handlePlayerInput);
+  window.addEventListener("hashchange", render);
 
-if (getRoute() === "home" && restoreSession()) {
-  navigate("lobby");
+  if (getRoute() === "home" && restoreSession()) {
+    navigate("lobby");
+  } else {
+    render();
+  }
+}
+
+/* ════════════════════════════════════════════════
+   観戦（みんなにみせる画面）
+   - 探す役セーフ原則: 観戦DOMには探す役が見てよいものだけを出す。
+     未公開カードの role を DOM に出してよいのは renderSpecFinish のみ
+   - 完全分岐: プレイヤー用コード経路（restoreSession / ensureRoomSubscription /
+     プレイヤー用 render() ルーター / プレイヤー用イベントリスナー）には一切入らない
+   - 書き込みゼロ: subscribeToRoomForSpectator（onSnapshot のみ）で購読する。
+     失効ルームの削除もしない。sessionStorage も読まない・書かない
+   ════════════════════════════════════════════════ */
+
+// generateSessionId の文字集合（0/1/I/O を除外）と揃える
+const SPEC_CODE_PATTERN = /^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{6}$/;
+const SPEC_EXPIRY_CHECK_INTERVAL_MS = 60 * 1000;
+
+const specState = {
+  roomId: "",
+  room: null,        // 最後に受け取ったルーム（一度でも見えたかの判定にも使う）
+  unsubscribe: null,
+  expiryTimer: null,
+  phase: "",         // 最後に描画した観戦画面（'lobby' | 'game' | 'finish' | ...）
+};
+
+function initSpectatorMode(rawCode) {
+  // 観戦専用リスナー（コード入力画面へ戻るボタンのみ）。プレイヤー用リスナーは登録しない
+  document.addEventListener("click", (event) => {
+    if (event.target.closest("#spec-back-to-top")) {
+      stopSpectator();
+      // TOP(#home)へ戻すと initPlayerMode の restoreSession が走り、共有中の画面に
+      // プレイヤー画面（正解マップ）が復元されうるため、必ずコード入力画面（#watch）へ戻す
+      const url = new URL(window.location.href);
+      url.search = "";
+      url.hash = "watch";
+      window.location.replace(url);
+    }
+  });
+
+  const code = normalizeRoomId(rawCode);
+  if (!SPEC_CODE_PATTERN.test(code)) {
+    renderSpecError("ルームコードをたしかめてね");
+    return;
+  }
+
+  specState.roomId = code;
+  renderSpecLoading();
+  specState.expiryTimer = setInterval(() => {
+    if (specState.room && isRoomExpired(specState.room)) {
+      stopSpectator();
+      renderSpecEnded();
+    }
+  }, SPEC_EXPIRY_CHECK_INTERVAL_MS);
+  specState.unsubscribe = subscribeToRoomForSpectator(code, handleSpectatorSnapshot, () => {
+    stopSpectator();
+    renderSpecError("ルームをよみこめませんでした");
+  });
+}
+
+function stopSpectator() {
+  if (specState.unsubscribe) specState.unsubscribe();
+  specState.unsubscribe = null;
+  if (specState.expiryTimer) clearInterval(specState.expiryTimer);
+  specState.expiryTimer = null;
+}
+
+function handleSpectatorSnapshot({ exists, room, hasPendingWrites }) {
+  if (!exists) {
+    stopSpectator();
+    // 結果画面の表示中にルームが消えても、共有中の画面を突然閉じない
+    if (specState.phase === "finish") return;
+    if (specState.room) {
+      renderSpecEnded();
+    } else {
+      renderSpecError("ルームが見つかりません。ルームコードをたしかめてね");
+    }
+    return;
+  }
+
+  if (isRoomExpired(room)) {
+    // 失効: 表示を終えるだけで、削除は一切しない
+    stopSpectator();
+    renderSpecEnded();
+    return;
+  }
+
+  specState.room = room;
+  if (room.gamePhase === "lobby") return renderSpecLobby(room);
+  if (room.gamePhase === "in_progress") return renderSpecGame(room);
+  if (room.gamePhase === "finished") {
+    // 全公開は書き込み確定後のみ。ローカル未確定中は安全盤面のまま
+    // （includeMetadataChanges により確定後に再発火する）
+    if (hasPendingWrites) return renderSpecGame(room);
+    return renderSpecFinish(room);
+  }
+  renderSpecPending();
+}
+
+/* ── 観戦レンダラ（スナップショットごとに #app を丸ごと描き直す）── */
+
+function specHeaderHtml() {
+  return `
+    <div class="cn-spec-header">
+      <span class="material-symbols-rounded" aria-hidden="true">visibility</span>
+      <span>みんなにみせる画面</span>
+      ${specState.roomId ? `<span class="cn-spec-header__code">${esc(specState.roomId)}</span>` : ""}
+    </div>
+  `;
+}
+
+function specBackButtonHtml(label) {
+  return `<button class="btn btn-ghost btn-full mt-lg" id="spec-back-to-top" type="button">${esc(label)}</button>`;
+}
+
+function renderSpecLoading() {
+  specState.phase = "loading";
+  appEl.innerHTML = `
+    <section class="card cn-panel">
+      ${specHeaderHtml()}
+      <div class="cn-spec-wait">
+        <div class="spinner"></div>
+        <p class="cn-spec-wait__msg">ルームをよみこんでいます</p>
+      </div>
+    </section>
+  `;
+}
+
+function renderSpecPending() {
+  specState.phase = "pending";
+  appEl.innerHTML = `
+    <section class="card cn-panel">
+      ${specHeaderHtml()}
+      <div class="cn-spec-wait">
+        <div class="spinner"></div>
+        <p class="cn-spec-wait__msg">しんこうをまっています</p>
+      </div>
+    </section>
+  `;
+}
+
+function renderSpecEnded() {
+  specState.phase = "ended";
+  appEl.innerHTML = `
+    <section class="card cn-panel">
+      ${specHeaderHtml()}
+      <div class="cn-spec-wait">
+        <span class="material-symbols-rounded cn-spec-wait__icon" aria-hidden="true">info</span>
+        <p class="cn-spec-wait__msg">このルームはおわりました</p>
+      </div>
+      ${specBackButtonHtml("べつのルームをみる")}
+    </section>
+  `;
+}
+
+function renderSpecError(message) {
+  specState.phase = "error";
+  appEl.innerHTML = `
+    <section class="card cn-panel">
+      ${specHeaderHtml()}
+      <div class="cn-spec-wait">
+        <span class="material-symbols-rounded cn-spec-wait__icon" aria-hidden="true">error</span>
+        <p class="cn-spec-wait__msg">${esc(message)}</p>
+      </div>
+      ${specBackButtonHtml("ルームコードをいれなおす")}
+    </section>
+  `;
+}
+
+function renderSpecLobby(room) {
+  const players = Array.isArray(room.players) ? room.players : [];
+  const playerList = players.map((player) => `
+    <li class="cn-player">
+      <div class="cn-player-info">
+        <span>
+          ${esc(player.name)}
+          ${player.isHost ? '<span class="badge badge-primary">ホスト</span>' : ""}
+        </span>
+        <span class="text-muted">${esc(teamLabel(player.team))} / ${esc(roleLabel(player.role))}</span>
+      </div>
+    </li>
+  `).join("");
+
+  appEl.innerHTML = `
+    <section class="card cn-panel">
+      ${specHeaderHtml()}
+      <div class="cn-spec-wait">
+        <div class="spinner"></div>
+        <p class="cn-spec-wait__msg">ホストがはじめるのをまっています</p>
+      </div>
+      <div class="cn-spec-code-box">
+        <p class="text-muted">ルームコード</p>
+        <p class="cn-room-code">${esc(specState.roomId)}</p>
+      </div>
+      <h2 class="cn-section-title">参加者</h2>
+      <ul class="cn-player-list">${playerList}</ul>
+    </section>
+  `;
+  specState.phase = "lobby";
+}
+
+function specTurnBannerHtml(room) {
+  const phaseLabel = room.turnPhase === "waiting_hint" ? "ヒント待ち" : "カード選び";
+  const actionText = room.turnPhase === "waiting_hint"
+    ? "ヒント役がヒントを出します"
+    : `探す役がカードを選びます（残り${Number(room.remainingGuesses || 0)}）`;
+
+  return `
+    <div class="cn-turn-banner cn-turn-banner--${esc(room.turnTeam)}" aria-live="polite">
+      <div>
+        <span class="cn-turn-kicker">${esc(phaseLabel)}</span>
+        <strong>${esc(turnTitle(room))}</strong>
+        <span>${esc(actionText)}</span>
+      </div>
+    </div>
+  `;
+}
+
+function specHintHtml(room) {
+  // currentHint が null なら必ず空にする（前のヒントを残さない）
+  if (room.turnPhase === "guessing" && room.currentHint) {
+    return `
+      <div class="cn-current-hint">
+        <div>
+          <span class="text-muted">現在のヒント</span>
+          <strong>「${esc(room.currentHint.word)}」${Number(room.currentHint.count)}まい</strong>
+          <span class="badge badge-accent">残り${Number(room.remainingGuesses || 0)}</span>
+        </div>
+      </div>
+    `;
+  }
+  return `<div class="alert alert-info">ヒント役がヒントを考えています。</div>`;
+}
+
+// 観戦用の安全なカードデータへ落とす。未公開カードには role を含めない。
+// role を落とす最終境界なので、壊れたデータを公開扱いにしないよう revealed は === true で厳密判定する
+function toSpecCard(card) {
+  const word = card?.word ?? "";
+  return card?.revealed === true
+    ? { word, revealed: true, role: card.role }
+    : { word, revealed: false };
+}
+
+function specCardHtml(card) {
+  const roleClass = card.revealed === true
+    ? `cn-spec-card--${esc(card.role)} cn-spec-card--revealed`
+    : "cn-spec-card--hidden";
+  const marker = card.revealed === true
+    ? `<span class="cn-card-marker">${esc(cardRoleLabel(card.role))}</span>`
+    : "";
+  return `
+    <div class="cn-spec-card ${roleClass}">
+      ${marker}
+      <span class="cn-card-word">${esc(card.word)}</span>
+    </div>
+  `;
+}
+
+function renderSpecGame(room) {
+  const specCards = (Array.isArray(room.cards) ? room.cards : []).map(toSpecCard);
+  appEl.innerHTML = `
+    <section class="card cn-panel cn-game-panel">
+      ${specHeaderHtml()}
+      ${specTurnBannerHtml(room)}
+      ${renderScoreBoard(room)}
+      ${specHintHtml(room)}
+      <div class="cn-spec-board" aria-label="単語カード">
+        ${specCards.map(specCardHtml).join("")}
+      </div>
+    </section>
+  `;
+  specState.phase = "game";
+}
+
+// 観戦で未公開カードの role を DOM に出してよいのはこの関数のみ
+function renderSpecFinish(room) {
+  const result = resultSummary(room);
+  const boardHtml = (Array.isArray(room.cards) ? room.cards : []).map((card) => `
+    <div class="cn-spec-card cn-spec-card--${esc(card.role)} ${card.revealed === true ? "cn-spec-card--revealed" : ""}">
+      <span class="cn-card-marker">${esc(cardRoleLabel(card.role))}</span>
+      <span class="cn-card-word">${esc(card.word)}</span>
+    </div>
+  `).join("");
+
+  appEl.innerHTML = `
+    <section class="card cn-panel cn-game-panel">
+      ${specHeaderHtml()}
+      <div class="cn-result cn-result--${esc(room.winner || "neutral")}">
+        <p class="text-muted">結果</p>
+        <h1 class="cn-title">${esc(result.title)}</h1>
+        <p>${esc(result.detail)}</p>
+      </div>
+      <div class="cn-spec-board" aria-label="公開された単語カード">
+        ${boardHtml}
+      </div>
+    </section>
+  `;
+  specState.phase = "finish";
+}
+
+/* ════════════════════════════════════════════════
+   初期化
+   ?watch があった時点で観戦モード確定（値が不正でもプレイヤー画面へは戻さない）
+   ════════════════════════════════════════════════ */
+
+const initialParams = new URLSearchParams(window.location.search);
+if (initialParams.has("watch")) {
+  initSpectatorMode(initialParams.get("watch"));
 } else {
-  render();
+  initPlayerMode();
 }

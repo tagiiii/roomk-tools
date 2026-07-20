@@ -746,6 +746,26 @@ export function subscribeToRoom(roomId, callback, onError = console.error) {
 }
 
 /**
+ * 観戦用にルームを購読する（読み取り専用）。
+ * doc() + onSnapshot のみで構成し、書き込みAPIは一切呼ばない。
+ * includeMetadataChanges を有効にし、hasPendingWrites の確定後にも再発火させる。
+ * @param {string} roomId
+ * @param {(result: { exists: boolean, room: object | null, hasPendingWrites: boolean }) => void} callback
+ * @param {(error: Error) => void} onError
+ * @returns {() => void}
+ */
+export function subscribeToRoomForSpectator(roomId, callback, onError = console.error) {
+  const roomRef = doc(db, ROOMS_COLLECTION, normalizeRoomId(roomId));
+  return onSnapshot(roomRef, { includeMetadataChanges: true }, (snapshot) => {
+    callback({
+      exists: snapshot.exists(),
+      room: snapshot.exists() ? snapshot.data() : null,
+      hasPendingWrites: snapshot.metadata.hasPendingWrites,
+    });
+  }, onError);
+}
+
+/**
  * ルームIDを正規化する。
  * @param {string} roomId
  * @returns {string}

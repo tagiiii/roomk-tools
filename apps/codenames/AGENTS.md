@@ -76,6 +76,44 @@ codenames_rooms/{roomId}
 - 同一プレイヤーの重複参加不可（id 一致でブロック）
 - 最大8人
 
+## 観戦ビュー（みんなにみせる画面）
+
+ゲームマスターがヒント役を兼ねると、自分の画面を共有したとき正解マップ（`cards[].role`）が映ってしまう。
+参加していない人にも安全に進行を見せるための読み取り専用ビュー。
+
+### 3原則（変更・拡張時も必ず守る）
+
+1. **探す役セーフ原則**: 観戦DOMには「探す役（guesser）が見てよいもの」だけを出す。未公開カードの `role` は DOM のどこにも出さない（CSSクラス・data-* 属性・title・aria-label・HTMLコメント含め一切）
+2. **完全分岐**: 観戦者はプレイヤー用コード経路（`restoreSession` / `ensureRoomSubscription` / `joinRoom` / transaction / プレイヤー用 `render()` ルーター / プレイヤー用イベントリスナー）に一切入らない。`?watch` パラメータが存在した時点で観戦モード確定とし、`initPlayerMode()` を丸ごとスキップする（値が不正でもプレイヤー画面へフォールバックせず、観戦用エラー画面で止める）
+3. **書き込みゼロ**: Firestore への書き込み（setDoc / updateDoc / deleteDoc / runTransaction、失効ルーム削除含む）を一切しない。`subscribeToRoomForSpectator()`（`doc()` + `onSnapshot` のみ）で購読する。sessionStorage（`codenames_session`）も読まない・書かない（観戦のセッションはURLそのもの）。共通初期化（firebase-config.js）に伴う匿名認証は許容する
+
+### 入口3系統
+
+- **URL `?watch=CODE`** — 共有リンク。app.js 初期化の最初で判定する
+- **TOP「みんなにみせる画面」** — コード入力画面（hash ルート `#watch`）。送信時は同一ページ内でモード切替せず `location.replace` でフルリロード遷移する
+- **ホストのロビー・ゲーム画面「みんなにみせる画面をひらく」** — クリックハンドラ内で同期的に `window.open(url, '_blank', 'noopener,noreferrer')`。「みせる画面のURLをコピー」も併設。どちらもホストにのみ表示
+
+### フェーズ別表示（`gamePhase` で分岐、未知の値は default-deny で安全な待機画面）
+
+| 状態 | 表示 |
+|------|------|
+| `lobby` | 「ホストがはじめるのをまっています」＋ルームコード＋参加者一覧 |
+| `in_progress` | ターン帯／現在のヒント（`currentHint` が null なら必ず空。前のヒントを残さない）／両チームスコア／5×5盤面（全単語表示、`revealed === true` のカードのみ role の色） |
+| `finished` | 勝者・終了理由＋全カード公開の盤面。**全公開は `gamePhase === 'finished' && !metadata.hasPendingWrites` のときのみ**。hasPendingWrites 中は in_progress と同じ安全盤面で描く（`includeMetadataChanges: true` により確定後に再発火する） |
+| ドキュメント削除（exists=false） | finished 表示中なら購読解除して結果画面を維持。それ以外は購読解除して「このルームはおわりました」 |
+| 失効（`expiresAt` 超過） | 購読解除して「このルームはおわりました」。**削除はしない**。スナップショット時に加え1分間隔の setInterval でも判定（購読解除時に必ず clearInterval） |
+| 購読エラー | 「ルームをよみこめませんでした」（削除とは別文言） |
+
+再戦追従: finished → lobby → in_progress とドキュメントが変われば素直に追従する（スナップショットごとに #app を innerHTML 全置換するため、前ゲームの正解色は残らない）。
+
+### 保守ルール
+
+- **secret に相当する未公開カードの `role` を DOM に出してよいのは `renderSpecFinish` のみ**。他の観戦レンダラには `toSpecCard()` で role を落としたデータだけを渡す構造を維持する
+- 観戦盤面のカードは `<button>` ではなく非インタラクティブな div。イベントハンドラを付けない
+- 観戦用 CSS クラスは `.cn-spec-` 接頭辞で新設する（プレイヤー用 `.cn-card--{role}` の付与ロジックを共有しない）
+- 観戦の「もどる」ボタンは TOP（`#home`）へ戻さない。TOPへ戻すと `initPlayerMode` の `restoreSession` でプレイヤー画面（正解マップ）が共有中の画面に復元されうるため、必ずコード入力画面（`#watch`）へ戻す
+- `renderScoreBoard(room)` は観戦ビューからも再利用している。**カード単位の情報を出力しない（集計値のみ）契約を保つこと**。プレイヤー用に表示を拡張する場合は、観戦ビューへの流入がないかを必ず確認する
+
 ## 単語セット
 
 18カテゴリ × 各30語（移植元 [src/data/wordSets.ts](../../../codename_game/src/data/wordSets.ts) から移植 + Phase 4 / CX-5で4セット追加）:
