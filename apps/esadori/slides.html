@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>エサドリ — 説明スライド</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@48,500,1,0" rel="stylesheet" />
+<style>
+  :root{
+    --ink:#26323C; --ink-soft:#5A6270; --paper:#FAFAF7; --white:#FFFFFF;
+    --line:#E4E7E2; --muted:#9AA4A0;
+    --teal:#2E7D8C; --coral:#E0733C; --blue:#3C78D8;
+    --acc:var(--teal); --acc-tint:#E5EFF1;
+    --font:"Zen Kaku Gothic New", -apple-system, "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif;
+  }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  html,body{ height:100%; }
+  body{ font-family:var(--font); color:var(--ink); background:#E9ECEF; overflow:hidden; -webkit-font-smoothing:antialiased; }
+  .material-symbols-rounded{ font-family:"Material Symbols Rounded"; line-height:1; }
+  ruby rt{ font-size:.42em; font-weight:700; color:var(--acc); letter-spacing:0; transform:translateY(2px); }
+
+  /* accent themes（スライドごとに切替） */
+  .accent-teal { --acc:var(--teal); --acc-tint:#E5EFF1; }
+  .accent-coral{ --acc:var(--coral);--acc-tint:#FBEDE4; }
+  .accent-blue { --acc:var(--blue); --acc-tint:#E7EEFB; }
+
+  /* ===================== 発表（デッキ） ===================== */
+  #deck{ position:fixed; inset:0; }
+  #stage{
+    position:absolute; top:50%; left:50%; width:1280px; height:720px;
+    transform-origin:center center; background:var(--paper);
+    border-radius:18px; box-shadow:0 28px 70px rgba(0,0,0,.35); overflow:hidden;
+  }
+  .slide{
+    position:absolute; inset:0; display:flex; flex-direction:column;
+    padding:56px 72px 76px; opacity:0; visibility:hidden;
+    transition:opacity .3s ease, transform .3s ease; transform:translateY(10px);
+  }
+  .slide.active{ opacity:1; visibility:visible; transform:none; }
+
+  /* セクションヘッダー（日本語＋小さな英語キャプション） */
+  .sec{ display:flex; align-items:baseline; gap:14px; }
+  .sec__jp{ font-size:30px; font-weight:900; color:var(--ink); letter-spacing:.01em; }
+  .sec__en{ font-size:18px; font-weight:700; color:var(--acc); letter-spacing:.12em; }
+  .sec__num{ display:inline-flex; align-items:center; justify-content:center; min-width:30px; height:30px; padding:0 8px;
+    border-radius:8px; background:var(--acc); color:#fff; font-size:18px; font-weight:900; margin-right:2px; }
+
+  .headline{ font-size:46px; font-weight:900; color:var(--ink); line-height:1.32; margin-top:22px; letter-spacing:.005em; }
+  .headline .hl{ color:var(--acc); }
+  .headline .ul{ background:linear-gradient(transparent 62%, var(--acc-tint) 62%); padding:0 2px; }
+  .body{ margin-top:30px; flex:1; min-height:0; }
+
+  /* 箇条書き行 */
+  .rows{ display:flex; flex-direction:column; gap:16px; }
+  .row{ display:flex; gap:18px; align-items:flex-start; background:var(--white); border:1.5px solid var(--line); border-radius:16px; padding:20px 24px; }
+  .row__ic{ flex:none; width:48px; height:48px; border-radius:12px; background:var(--acc-tint); color:var(--acc); display:flex; align-items:center; justify-content:center; }
+  .row__ic .material-symbols-rounded{ font-size:28px; }
+  .row__t{ font-size:25px; font-weight:900; color:var(--ink); line-height:1.4; }
+  .row__d{ font-size:20px; color:var(--ink-soft); margin-top:3px; line-height:1.5; }
+
+  /* エサカード見本（エサドリ独自） */
+  .esd-card-row{ display:flex; gap:26px; align-items:center; }
+  .esd-card{ display:flex; flex-direction:column; align-items:center; justify-content:center; width:150px; height:176px; border-radius:24px; color:#fff; box-shadow:0 10px 24px rgba(0,0,0,.16); }
+  .esd-card__label{ font-size:15px; font-weight:700; opacity:.88; margin-bottom:8px; }
+  .esd-card__value{ font-size:60px; font-weight:900; line-height:1; font-feature-settings:"palt"; }
+  .esd-card--plus{ background:#0F6E63; }
+  .esd-card--minus{ background:#7A4A2E; }
+  .esd-note{ font-size:20px; color:var(--ink-soft); line-height:1.7; margin-top:20px; }
+
+  /* 一斉オープンの再現（エサドリ独自） */
+  .esd-reveal{ background:var(--ink); color:#fff; border-radius:20px; padding:24px 28px; max-width:640px; }
+  .esd-reveal__esa{ font-size:19px; font-weight:900; margin-bottom:16px; display:flex; align-items:center; gap:10px; }
+  .esd-reveal__esa .material-symbols-rounded{ color:#7FE0C8; }
+  .esd-play{ display:flex; align-items:center; gap:14px; background:rgba(255,255,255,.12); border-radius:12px; padding:10px 18px; }
+  .esd-play + .esd-play{ margin-top:8px; }
+  .esd-play__name{ flex:1; font-weight:700; font-size:19px; }
+  .esd-play__num{ font-size:26px; font-weight:900; }
+  .esd-play__mark{ font-size:13px; font-weight:700; opacity:.95; }
+  .esd-play.is-canceled{ opacity:.65; }
+  .esd-play.is-canceled .esd-play__num{ text-decoration:line-through; }
+  .esd-play.is-taker{ background:rgba(255,255,255,.32); box-shadow:0 0 0 2px #fff inset; }
+
+  /* Q&A */
+  .qa{ display:flex; flex-direction:column; gap:16px; }
+  .qa__item{ background:var(--white); border:1.5px solid var(--line); border-radius:16px; padding:18px 24px; }
+  .qa__q{ display:flex; gap:13px; align-items:flex-start; font-size:23px; font-weight:900; color:var(--ink); }
+  .qa__a{ display:flex; gap:13px; align-items:flex-start; font-size:21px; color:var(--ink-soft); margin-top:8px; line-height:1.5; }
+  .qa__badge{ flex:none; width:34px; height:34px; border-radius:9px; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:900; font-size:19px; }
+  .qa__badge.q{ background:var(--blue); } .qa__badge.a{ background:var(--coral); }
+
+  /* タイトルスライド */
+  .title-slide{ align-items:center; justify-content:center; text-align:center; padding-bottom:76px; }
+  .title-ic{ width:118px; height:118px; border-radius:32px; background:var(--teal); color:#fff; display:flex; align-items:center; justify-content:center; box-shadow:0 16px 34px rgba(46,125,140,.32); }
+  .title-ic .material-symbols-rounded{ font-size:72px; }
+  .title-jp{ font-size:74px; font-weight:900; color:var(--ink); margin-top:24px; letter-spacing:.04em; }
+  .title-en{ font-size:22px; font-weight:700; color:var(--teal); letter-spacing:.34em; margin-top:6px; text-transform:lowercase; }
+  .title-tag{ font-size:26px; font-weight:700; color:var(--ink-soft); margin-top:22px; }
+  .title-meta{ display:flex; gap:12px; margin-top:28px; }
+  .title-meta .m{ display:inline-flex; align-items:center; gap:7px; background:var(--white); border:1.5px solid var(--line); border-radius:999px; padding:9px 18px; font-size:18px; font-weight:700; color:var(--ink); }
+  .title-meta .material-symbols-rounded{ font-size:20px; color:var(--teal); }
+
+  /* セクション区切り（divider） */
+  .divider{ align-items:center; justify-content:center; text-align:center; padding-bottom:76px; background:var(--acc-tint); }
+  .divider .d-ic{ width:104px; height:104px; border-radius:50%; background:var(--acc); color:#fff; display:flex; align-items:center; justify-content:center; box-shadow:0 14px 30px rgba(0,0,0,.14); }
+  .divider .d-ic .material-symbols-rounded{ font-size:62px; }
+  .divider .d-jp{ font-size:72px; font-weight:900; color:var(--ink); margin-top:26px; letter-spacing:.03em; }
+  .divider .d-en{ font-size:21px; font-weight:700; color:var(--acc); letter-spacing:.28em; margin-top:8px; text-transform:lowercase; }
+  .divider .d-sub{ font-size:24px; font-weight:700; color:var(--ink-soft); margin-top:20px; }
+  /* 強調（ゲームスタート等） */
+  .divider.solid{ background:var(--acc); }
+  .divider.solid .d-ic{ background:rgba(255,255,255,.16); }
+  .divider.solid .d-jp,.divider.solid .d-sub{ color:#fff; }
+  .divider.solid .d-en{ color:rgba(255,255,255,.85); }
+
+  /* フッター */
+  .footer{ position:absolute; left:0; right:0; bottom:0; height:56px; display:flex; align-items:center; justify-content:space-between;
+    padding:0 30px; background:rgba(255,255,255,.7); border-top:1px solid var(--line); }
+  .brand{ display:flex; align-items:center; gap:9px; font-weight:900; color:var(--ink); font-size:19px; }
+  .brand .material-symbols-rounded{ color:var(--teal); font-size:24px; }
+  .dots{ display:flex; gap:7px; flex-wrap:wrap; max-width:620px; justify-content:center; }
+  .dot{ width:9px; height:9px; border-radius:50%; background:var(--line); transition:.2s; }
+  .dot.on{ background:var(--teal); transform:scale(1.3); }
+  .counter{ font-size:18px; font-weight:900; color:var(--muted); font-variant-numeric:tabular-nums; }
+  .divider .footer,.divider.solid .footer{ background:rgba(255,255,255,.55); }
+
+  /* ナビ矢印 */
+  .nav{ position:absolute; top:50%; transform:translateY(-50%); z-index:5; width:54px; height:54px; border-radius:50%; border:none; cursor:pointer;
+    background:rgba(38,50,60,.1); color:var(--ink); display:flex; align-items:center; justify-content:center; transition:.2s; opacity:0; }
+  #stage:hover .nav{ opacity:.5; } .nav:hover{ opacity:1 !important; background:rgba(38,50,60,.2); }
+  .nav .material-symbols-rounded{ font-size:32px; } .nav.prev{ left:16px; } .nav.next{ right:16px; }
+
+  /* ツールバー */
+  .toolbar{ position:fixed; top:14px; right:16px; z-index:50; display:flex; gap:8px; opacity:.16; transition:.2s; }
+  .toolbar:hover{ opacity:1; }
+  .tbtn{ display:inline-flex; align-items:center; gap:7px; cursor:pointer; background:rgba(255,255,255,.95); color:var(--ink); border:1px solid var(--line);
+    border-radius:999px; padding:9px 15px; font-family:var(--font); font-weight:700; font-size:14px; box-shadow:0 4px 12px rgba(0,0,0,.18); }
+  .tbtn:hover{ background:#fff; } .tbtn .material-symbols-rounded{ font-size:19px; color:var(--teal); }
+  .hint-help{ position:fixed; bottom:12px; left:16px; z-index:50; color:rgba(38,50,60,.45); font-size:13px; }
+  .hint-help kbd{ background:rgba(0,0,0,.12); border-radius:5px; padding:1px 7px; font-family:var(--font); }
+
+  /* ===================== 発表者ビュー ===================== */
+  body.presenter{ background:#EEF1F4; overflow:auto; }
+  #presenter{ max-width:680px; margin:0 auto; padding:18px 20px 40px; }
+  .pv-warn{ background:#FBEBEB; border:1px solid #EFC4C4; color:#B3463F; border-radius:12px; padding:12px 16px; font-size:14px; font-weight:700; display:flex; align-items:center; gap:10px; margin-bottom:16px; }
+  .pv-warn .material-symbols-rounded{ font-size:22px; }
+  .pv-count{ font-size:14px; font-weight:900; color:var(--muted); font-variant-numeric:tabular-nums; }
+  .pv-title{ font-size:26px; font-weight:900; color:var(--ink); line-height:1.3; margin-top:4px; }
+  .pv-lead{ font-size:15px; color:var(--teal); font-weight:700; margin-top:4px; letter-spacing:.04em; }
+  .pv-card{ background:#fff; border:1px solid var(--line); border-radius:16px; padding:18px; margin-top:18px; box-shadow:0 4px 14px rgba(0,0,0,.05); }
+  .pv-card h3{ font-size:14px; font-weight:900; color:var(--teal); display:flex; align-items:center; gap:8px; margin-bottom:12px; }
+  .pv-card h3 .material-symbols-rounded{ font-size:18px; }
+  #pvNote{ width:100%; min-height:175px; resize:vertical; border:1px solid var(--line); border-radius:12px; padding:14px 16px; font-family:var(--font); font-size:17px; line-height:1.7; color:var(--ink); background:#FBFCFD; }
+  #pvNote:focus{ outline:none; border-color:var(--teal); box-shadow:0 0 0 3px rgba(46,125,140,.15); }
+  .pv-actions{ display:flex; gap:10px; margin-top:14px; align-items:center; }
+  .pv-copy{ flex:1; cursor:pointer; border:none; border-radius:12px; padding:15px; font-family:var(--font); font-size:18px; font-weight:900; color:#fff; background:var(--teal); display:flex; align-items:center; justify-content:center; gap:10px; box-shadow:0 6px 16px rgba(46,125,140,.28); transition:.15s; }
+  .pv-copy:active{ transform:translateY(1px); } .pv-copy.done{ background:#235F6B; }
+  .pv-copy .material-symbols-rounded{ font-size:22px; }
+  .pv-reset{ cursor:pointer; border:1px solid var(--line); background:#fff; color:var(--muted); border-radius:12px; padding:15px 16px; font-family:var(--font); font-weight:700; font-size:14px; }
+  .pv-reset:hover{ background:#F5F7F9; }
+  .pv-nav{ display:flex; gap:10px; margin-top:18px; }
+  .pv-nav button{ flex:1; cursor:pointer; border:1px solid var(--line); background:#fff; color:var(--ink); border-radius:12px; padding:14px; font-family:var(--font); font-weight:900; font-size:16px; display:flex; align-items:center; justify-content:center; gap:8px; }
+  .pv-nav button:hover{ background:#F5F7F9; } .pv-nav button:disabled{ opacity:.4; cursor:default; }
+  .pv-nav .material-symbols-rounded{ font-size:20px; }
+  .pv-next{ margin-top:16px; font-size:14px; color:var(--muted); padding:0 4px; } .pv-next b{ color:var(--ink); }
+  .pv-conn{ margin-top:14px; font-size:12px; color:var(--muted); text-align:center; }
+</style>
+</head>
+<body>
+
+<div id="deck">
+  <div id="stage">
+    <button class="nav prev" id="navPrev" aria-label="前へ"><span class="material-symbols-rounded">chevron_left</span></button>
+    <button class="nav next" id="navNext" aria-label="次へ"><span class="material-symbols-rounded">chevron_right</span></button>
+    <div id="slides"></div>
+    <div class="footer">
+      <div class="brand"><span class="material-symbols-rounded">flutter_dash</span>エサドリ</div>
+      <div class="dots" id="dots"></div>
+      <div class="counter" id="counter">1 / 1</div>
+    </div>
+  </div>
+</div>
+
+<div class="toolbar" id="toolbar">
+  <button class="tbtn" id="btnPresenter"><span class="material-symbols-rounded">co_present</span>発表者ノート</button>
+  <button class="tbtn" id="btnFull"><span class="material-symbols-rounded">fullscreen</span>全画面</button>
+</div>
+<div class="hint-help">操作: <kbd>←</kbd> <kbd>→</kbd> めくる ・ <kbd>F</kbd> 全画面 ・ <kbd>P</kbd> 発表者ノート</div>
+
+<div id="presenter" style="display:none">
+  <div class="pv-warn"><span class="material-symbols-rounded">visibility_off</span>この画面は<strong>共有しないで</strong>ください（あなた専用のメモ）</div>
+  <div class="pv-count" id="pvCount">1 / 1</div>
+  <div class="pv-title" id="pvTitle"></div>
+  <div class="pv-lead" id="pvLead"></div>
+  <div class="pv-card">
+    <h3><span class="material-symbols-rounded">chat</span>Metalife チャット用メッセージ</h3>
+    <textarea id="pvNote" spellcheck="false"></textarea>
+    <div class="pv-actions">
+      <button class="pv-copy" id="pvCopy"><span class="material-symbols-rounded">content_copy</span>チャットにコピー</button>
+      <button class="pv-reset" id="pvReset">元に戻す</button>
+    </div>
+  </div>
+  <div class="pv-nav">
+    <button id="pvPrev"><span class="material-symbols-rounded">chevron_left</span>前のスライド</button>
+    <button id="pvNext">次のスライド<span class="material-symbols-rounded">chevron_right</span></button>
+  </div>
+  <div class="pv-next" id="pvNextTitle"></div>
+  <div class="pv-conn" id="pvConn">スライド画面と接続中…</div>
+</div>
+
+<script>
+const SLIDES = [
+  /* 1 */ { type:'divider', accent:'teal', icon:'waving_hand', jp:'チェックイン', en:'check-in',
+    sub:'今の気分を、ひとことどうぞ',
+    note:'まずはチェックインから！\n今の気分や、最近あったことを、ひとことチャットか声で教えてね\n（エサドリの説明は、このあとすぐ！）' },
+
+  /* 2 */ { type:'title', note:'今日のあそびは『エサドリ』。\n場に出たエサカードをねらって、手札1〜15から1まいを同時に出しあう数字カードゲームだよ。だれが何を出したかは、一斉に開くまでのお楽しみ！' },
+
+  /* 3 */ { type:'content', accent:'teal', section:'ゲームについて', sectionEn:'summary',
+    headline:'手札を<span class="hl">同時に</span>出して、<br>エサを 取りあうゲーム',
+    body:`<div class="rows">
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">restaurant</span></div><div><div class="row__t">場に出た エサカードを ねらう</div><div class="row__d">プラスの「ごちそう」と、マイナスの「くさったエサ」が 交ざって出てくるよ</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">visibility_off</span></div><div><div class="row__t">手札 1〜15から、1まいを こっそり えらぶ</div><div class="row__d">みんなに 見えないように、1まい えらんで「このカードをだす」で 確定するよ</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">bolt</span></div><div><div class="row__t">全員そろったら、一斉に こうかい！</div><div class="row__d">だれが 何を出したか、いっぺんに 分かるよ</div></div></div>
+    </div>`,
+    note:'エサドリは、場に出たエサカードを、みんなでねらいあうゲーム。\n手札1〜15の中から1まいを、みんな同時にこっそり出して、そろったら一斉にこうかいするよ。\n読みあいとかけひきが楽しいところ。ホストもプレイヤーとして一緒にあそぶよ。' },
+
+  /* 4 */ { type:'content', accent:'blue', section:'ゲーム説明', sectionEn:'explain', num:'1',
+    headline:'じぶんの カードと、<br>場に出る <span class="hl">エサカード</span>',
+    body:`<div class="esd-card-row">
+      <div class="esd-card esd-card--plus"><span class="esd-card__label">ごちそう</span><span class="esd-card__value">+7</span></div>
+      <div class="esd-card esd-card--minus"><span class="esd-card__label">くさったエサ</span><span class="esd-card__value">−3</span></div>
+    </div>
+    <div class="esd-note">エサカードは 全部で15まい（+1〜+10・−1〜−5）。毎ラウンド 1まい めくるよ。<br>じぶんの手札も 1〜15の15まい。1回のゲームで、1まいずつ ぜんぶ 使いきるよ。</div>`,
+    note:'カードは2しゅるい。\nエサカードは、プラスの「ごちそう」が+1から+10、マイナスの「くさったエサ」が−1から−5で、ぜんぶで15まい。毎ラウンド1まいずつめくるよ。\nじぶんの手札も1から15の15まい。1回のゲームで、1まいずつぜんぶ使いきるよ。' },
+
+  /* 5 */ { type:'content', accent:'coral', section:'ゲーム説明', sectionEn:'explain', num:'2',
+    headline:'ラウンドは<br>この じゅんばんで すすむ',
+    body:`<div class="rows">
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">casino</span></div><div><div class="row__t">① エサカードを 1まい めくる</div><div class="row__d">もちこしが あれば、横に ならべて 見せるよ</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">restaurant</span></div><div><div class="row__t">② 手札から1まいえらんで「このカードをだす」</div><div class="row__d">えらんだ人は、ほかの人から「えらんだ！」とだけ 見えるよ</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">visibility</span></div><div><div class="row__t">③ 全員そろったら、一斉に こうかい</div><div class="row__d">けっかを見たら、ホストが「つぎへ」で 次のラウンドへ</div></div></div>
+    </div>`,
+    note:'ラウンドは4つのステップ。\nまずエサカードを1まいめくって、次に手札から1まいえらんで「このカードをだす」で確定。\n全員そろったら一斉にこうかいして、けっかが出るよ。ホストが「つぎへ」を押すと次のラウンドに進むよ。' },
+
+  /* 6 */ { type:'content', accent:'teal', section:'ゲーム説明', sectionEn:'explain', num:'3',
+    headline:'エサは、<span class="hl">かぶった数字</span>を<br>のぞいて くらべる',
+    body:`<div class="esd-reveal">
+      <div class="esd-reveal__esa"><span class="material-symbols-rounded">restaurant</span>いまの エサ：+7（ごちそう）</div>
+      <div class="esd-play is-canceled"><span class="esd-play__name">たろうさん</span><span class="esd-play__num">15</span><span class="esd-play__mark">かぶり！</span></div>
+      <div class="esd-play is-canceled"><span class="esd-play__name">はなこさん</span><span class="esd-play__num">15</span><span class="esd-play__mark">かぶり！</span></div>
+      <div class="esd-play is-taker"><span class="esd-play__name">けんさん</span><span class="esd-play__num">9</span><span class="esd-play__mark">ゲット</span></div>
+    </div>
+    <div class="esd-note">15と15は かぶって むこう。のこった中で いちばん大きい9を出した けんさんが、+7を ゲット！</div>`,
+    note:'まず、同じ数字を出した人どうしは「かぶり」でむこうになるよ。\nそれをのぞいて、プラスのエサはいちばん大きい数字の人がゲット。マイナスのエサはいちばん小さい数字の人がひきとり。\nこの例だと、15と15がかぶって消えて、残った9がいちばん大きいから、9を出した人が+7をゲットするよ。' },
+
+  /* 7 */ { type:'content', accent:'blue', section:'ゲーム説明', sectionEn:'explain', num:'4',
+    headline:'みんな かぶったら、<br><span class="hl">もちこし</span>になる',
+    body:`<div class="rows">
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">inventory_2</span></div><div><div class="row__t">全員が かぶったら、だれのものにも ならない</div><div class="row__d">むこうになった エサは、次のラウンドに もちこされるよ</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">redo</span></div><div><div class="row__t">次に エサを 取った人が、もちこし分も まとめて もらう</div><div class="row__d">プラスでも マイナスでも、もちこしは 取った人のもの</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">warning</span></div><div><div class="row__t">さいごまで もちこしが 残ったら…</div><div class="row__d">そのエサは、だれのものにも ならないよ</div></div></div>
+    </div>`,
+    note:'全員がかぶって、だれも取れなかったときは、そのエサは「もちこし」になって、次のラウンドに持ち越されるよ。\n次にエサを取った人が、もちこし分もまとめてもらえる。プラスでもマイナスでも関係ないよ。\nもし最後まで持ち越しが残ったら、そのエサはだれのものにもならないんだ。' },
+
+  /* 8 */ { type:'content', accent:'coral', section:'ゲーム説明', sectionEn:'explain', num:'5',
+    headline:'つかった カードも、<br><ruby>公開<rt>こうかい</rt></ruby>されているよ',
+    body:`<div class="rows">
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">visibility</span></div><div><div class="row__t">つかった 手札は、みんなに 見えるよ</div><div class="row__d">グレーで のこるから、まだ 出ていない数字を 数えやすいよ</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">leaderboard</span></div><div><div class="row__t">とった エサと 合計点も、いつも 公開</div><div class="row__d">ゲームの とちゅうでも、みんなの点数が 見えるよ</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">lock</span></div><div><div class="row__t">ひみつなのは「いま えらんでいるカード」だけ</div><div class="row__d">こうかいするまで、ほかの人には 分からないよ</div></div></div>
+    </div>`,
+    note:'記憶が大変にならないように、くふうがあるよ。\nつかった手札は、みんなに公開されていてグレーで残るから、まだ出ていない数字を数えやすい。とったエサと合計点も、いつも公開されているよ。\nひみつなのは「いま選んでいるカードの中身」だけ。こうかいするまでは分からないよ。' },
+
+  /* 9 */ { type:'content', accent:'teal', section:'ゲーム説明', sectionEn:'explain', num:'6',
+    headline:'15ラウンドの<br><ruby>合計点<rt>ごうけいてん</rt></ruby>で きめるよ',
+    body:`<div class="rows">
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">emoji_events</span></div><div><div class="row__t">15ラウンド おわったら、とったエサの合計点で 勝負</div><div class="row__d">点数が いちばん 高い人が 1位！</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">trending_down</span></div><div><div class="row__t">合計点は マイナスに なることも あるよ</div><div class="row__d">そのまま 表示されるよ</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">groups</span></div><div><div class="row__t">同点なら、ぜんいん 1位！</div><div class="row__d">2位いかの じゅんいは 出ないよ</div></div></div>
+    </div>`,
+    note:'15ラウンドが終わったら、とったエサの合計点で勝負。いちばん高い人が1位だよ。\n合計点はマイナスになることもあって、そのまま表示されるよ。\n同点だったら全員1位。2位以下の順位は出さないから、安心してね。' },
+
+  /* 10 */ { type:'content', accent:'blue', section:'Q&A', sectionEn:'question & answer',
+    headline:'よくある<ruby>質問<rt>しつもん</rt></ruby>',
+    body:`<div class="qa">
+      <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>出したカードを、あとから 変えられる？</div><div class="qa__a"><span class="qa__badge a">A</span>確定したら できないよ。えらぶ前なら、選びなおし自由だよ。</div></div>
+      <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>とちゅうで抜けたい人が いたら？</div><div class="qa__a"><span class="qa__badge a">A</span>ホストが「とちゅうでおわる」で 仕切りなおせるよ（勝負なしになるよ）。</div></div>
+      <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>同点だったら？</div><div class="qa__a"><span class="qa__badge a">A</span>全員1位になるよ。じゅんいは つけないよ。</div></div>
+    </div>`,
+    note:'よくある質問だよ\nQ. 出したカードを、あとから変えられる？→ A. 確定したらできないよ。選ぶ前なら選びなおし自由。\nQ. とちゅうで抜けたい人がいたら？→ A. ホストが「とちゅうでおわる」で仕切りなおせるよ。勝負なしになるよ。\nQ. 同点だったら？→ A. 全員1位。順位はつけないよ。' },
+
+  /* 11 */ { type:'divider', accent:'blue', icon:'live_help', jp:'質問タイム', en:'any questions?',
+    sub:'気になることはある？',
+    note:'ここまでで、質問がある人はいるかな？\nマイクON か チャットで教えてね！' },
+
+  /* 12 */ { type:'divider', accent:'coral', icon:'how_to_reg', jp:'参加確認', en:"let's check",
+    sub:'チャットで教えてね',
+    note:'やってみたい人〜？\n「①参加」「②見学」「③その他」を、チャットで教えてね！ 見学は「みるだけ」の共有ボードからも見られるよ。' },
+
+  /* 13 */ { type:'divider', accent:'teal', solid:true, icon:'rocket_launch', jp:'＼ ゲームスタート ／', en:'game start',
+    sub:'ホストも いっしょに あそぶよ！',
+    note:'それでは、エサドリスタート！\nホストが「ルームをつくる」でコードを出して、みんなに伝えてね。2〜6人であそべるけど、3人以上がおすすめだよ。ホストもプレイヤーとして参加するよ。\n画面を共有するときは、TOPの「みるだけ」から共有ボードを開いて見せてね（自分の参加画面には選んでいるカードが映っちゃうので、共有はここじゃなくて共有ボードから）。\n読みあい、たのしんでね！' },
+
+  /* 14 */ { type:'divider', accent:'teal', solid:true, icon:'emoji_events', jp:'けっか', en:'result',
+    sub:'おつかれさま！',
+    note:'けっか発表！\n15ラウンドの合計点、いちばん高かったのは だれかな？ マイナスになっちゃった人も、ナイスな読みあいだったね。最後にひとことずつ、感想をどうぞ。' },
+];
+
+/* ===== ウィンドウ間同期 ===== */
+const channel = ('BroadcastChannel' in window) ? new BroadcastChannel('esadori_deck') : null;
+function send(msg){ if(channel) channel.postMessage(msg); try{ localStorage.setItem('esd_msg', JSON.stringify({...msg,_t:Date.now()})); }catch(e){} }
+function onMsg(h){ if(channel) channel.onmessage=(e)=>h(e.data); window.addEventListener('storage',(e)=>{ if(e.key==='esd_msg'&&e.newValue){ try{ h(JSON.parse(e.newValue)); }catch(err){} } }); }
+const isPresenter = new URLSearchParams(location.search).get('view')==='presenter';
+
+/* ===== レンダリング ===== */
+function slideHTML(s){
+  const acc = s.accent ? `accent-${s.accent}` : 'accent-teal';
+  if(s.type==='title'){
+    return `<section class="slide title-slide accent-teal">
+      <div class="title-ic"><span class="material-symbols-rounded">flutter_dash</span></div>
+      <div class="title-jp">エサドリ</div>
+      <div class="title-en">esadori</div>
+      <div class="title-tag">〜 エサをねらって、1〜15のカードで とりあえ 〜</div>
+      <div class="title-meta">
+        <span class="m"><span class="material-symbols-rounded">group</span>2〜6人</span>
+        <span class="m"><span class="material-symbols-rounded">schedule</span>15分ほど</span>
+        <span class="m"><span class="material-symbols-rounded">bolt</span>同時出し</span>
+      </div></section>`;
+  }
+  if(s.type==='divider'){
+    return `<section class="slide divider ${acc}${s.solid?' solid':''}">
+      <div class="d-ic"><span class="material-symbols-rounded">${s.icon}</span></div>
+      <div class="d-jp">${s.jp}</div>
+      <div class="d-en">${s.en}</div>
+      ${s.sub?`<div class="d-sub">${s.sub}</div>`:''}</section>`;
+  }
+  // content
+  return `<section class="slide ${acc}">
+    <div class="sec">${s.num?`<span class="sec__num">${s.num}</span>`:''}<span class="sec__jp">${s.section}</span><span class="sec__en">${s.sectionEn}</span></div>
+    <h1 class="headline">${s.headline}</h1>
+    <div class="body">${s.body||''}</div></section>`;
+}
+
+if(!isPresenter){
+  const slidesEl=document.getElementById('slides'), dotsEl=document.getElementById('dots'), counterEl=document.getElementById('counter');
+  let idx=0;
+  SLIDES.forEach((s)=>{ slidesEl.insertAdjacentHTML('beforeend', slideHTML(s)); const d=document.createElement('span'); d.className='dot'; dotsEl.appendChild(d); });
+  const slideEls=[...slidesEl.children], dotEls=[...dotsEl.children];
+  function render(){
+    slideEls.forEach((el,i)=>el.classList.toggle('active',i===idx));
+    dotEls.forEach((el,i)=>el.classList.toggle('on',i===idx));
+    counterEl.textContent=`${idx+1} / ${SLIDES.length}`;
+    document.getElementById('navPrev').style.visibility=idx===0?'hidden':'visible';
+    document.getElementById('navNext').style.visibility=idx===SLIDES.length-1?'hidden':'visible';
+  }
+  function goTo(n,b=true){ n=Math.max(0,Math.min(SLIDES.length-1,n)); if(n!==idx){ idx=n; render(); } if(b) send({t:'idx',i:idx}); }
+  const next=()=>goTo(idx+1), prev=()=>goTo(idx-1);
+  document.getElementById('navNext').onclick=next; document.getElementById('navPrev').onclick=prev;
+  document.addEventListener('keydown',(e)=>{
+    if(['ArrowRight','PageDown',' '].includes(e.key)){ e.preventDefault(); next(); }
+    else if(['ArrowLeft','PageUp'].includes(e.key)){ e.preventDefault(); prev(); }
+    else if(e.key==='Home'){ e.preventDefault(); goTo(0); }
+    else if(e.key==='End'){ e.preventDefault(); goTo(SLIDES.length-1); }
+    else if(e.key==='f'||e.key==='F'){ toggleFull(); }
+    else if(e.key==='p'||e.key==='P'){ openPresenter(); }
+  });
+  const stage=document.getElementById('stage');
+  function fit(){ const sc=Math.min(window.innerWidth/1280, window.innerHeight/720); stage.style.transform=`translate(-50%,-50%) scale(${sc})`; }
+  window.addEventListener('resize',fit); document.addEventListener('fullscreenchange',fit);
+  function toggleFull(){ if(!document.fullscreenElement) document.documentElement.requestFullscreen?.(); else document.exitFullscreen?.(); }
+  document.getElementById('btnFull').onclick=toggleFull;
+  function openPresenter(){ const url=new URL(location.href); url.searchParams.set('view','presenter'); url.hash=''; const w=window.open(url.toString(),'esd_presenter','width=620,height=800'); if(!w) alert('発表者ノートのウィンドウがブロックされました。\nブラウザのポップアップを許可してから、もう一度お試しください。'); }
+  document.getElementById('btnPresenter').onclick=openPresenter;
+  onMsg((m)=>{ if(m.t==='goto') goTo(m.i,false); else if(m.t==='hello') send({t:'idx',i:idx}); });
+  fit(); render();
+}
+
+if(isPresenter){
+  document.title='発表者ノート — エサドリ';
+  document.body.classList.add('presenter');
+  document.getElementById('deck').style.display='none';
+  document.getElementById('toolbar').style.display='none';
+  document.querySelector('.hint-help').style.display='none';
+  document.getElementById('presenter').style.display='block';
+  const $=(id)=>document.getElementById(id);
+  const elCount=$('pvCount'), elTitle=$('pvTitle'), elLead=$('pvLead'), elNote=$('pvNote'), elNext=$('pvNextTitle'), elConn=$('pvConn');
+  const btnCopy=$('pvCopy'), btnReset=$('pvReset'), btnPrev=$('pvPrev'), btnNext=$('pvNext');
+  let cur=0; const KEY=(i)=>'esd_note_'+i;
+  function label(s){
+    if(s.type==='title') return 'エサドリ（タイトル）';
+    if(s.type==='divider') return s.jp.replace(/[＼／]/g,'').trim()+'（区切り）';
+    return `${s.section}${s.num?' '+s.num:''} ／ ${s.sectionEn}`;
+  }
+  function plain(html){ const d=document.createElement('div'); d.innerHTML=html||''; d.querySelectorAll('rt').forEach(r=>r.remove()); return (d.textContent||'').replace(/\s+/g,' ').trim(); }
+  function titleOf(s){
+    if(s.type==='title') return 'エサドリ';
+    if(s.type==='divider') return s.jp;
+    return plain(s.headline);
+  }
+  function show(i){
+    cur=Math.max(0,Math.min(SLIDES.length-1,i));
+    const s=SLIDES[cur];
+    elCount.textContent=`${cur+1} / ${SLIDES.length}`;
+    elTitle.textContent=titleOf(s);
+    elLead.textContent=label(s);
+    const saved=localStorage.getItem(KEY(cur));
+    elNote.value=(saved!==null)?saved:s.note;
+    btnCopy.classList.remove('done');
+    btnCopy.innerHTML='<span class="material-symbols-rounded">content_copy</span>チャットにコピー';
+    elNext.innerHTML=cur<SLIDES.length-1?`次のスライド → <b>${titleOf(SLIDES[cur+1])}</b>`:'<b>最後のスライドです</b>';
+    btnPrev.disabled=cur===0; btnNext.disabled=cur===SLIDES.length-1;
+  }
+  elNote.addEventListener('input',()=>{ try{ localStorage.setItem(KEY(cur),elNote.value); }catch(e){} });
+  async function copyText(t){ try{ await navigator.clipboard.writeText(t); return true; }catch(e){ try{ const ta=document.createElement('textarea'); ta.value=t; ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta); ta.focus(); ta.select(); const ok=document.execCommand('copy'); ta.remove(); return ok; }catch(e2){ return false; } } }
+  btnCopy.onclick=async()=>{
+    const ok=await copyText(elNote.value);
+    if(!ok){ elNote.focus(); elNote.select(); }
+    btnCopy.innerHTML=ok?'<span class="material-symbols-rounded">check</span>コピーしました！':'<span class="material-symbols-rounded">keyboard_command_key</span>選択したのでコピーしてください';
+    btnCopy.classList.toggle('done',ok);
+    setTimeout(()=>{ btnCopy.classList.remove('done'); btnCopy.innerHTML='<span class="material-symbols-rounded">content_copy</span>チャットにコピー'; },2200);
+  };
+  btnReset.onclick=()=>{ localStorage.removeItem(KEY(cur)); elNote.value=SLIDES[cur].note; };
+  function goto(i){ show(i); send({t:'goto',i:cur}); }
+  btnPrev.onclick=()=>goto(cur-1); btnNext.onclick=()=>goto(cur+1);
+  document.addEventListener('keydown',(e)=>{ if(e.target===elNote) return; if(e.key==='ArrowRight'||e.key===' '){ e.preventDefault(); goto(cur+1); } else if(e.key==='ArrowLeft'){ e.preventDefault(); goto(cur-1); } });
+  onMsg((m)=>{ if(m.t==='idx'){ elConn.textContent='スライド画面と接続中'; show(m.i); } });
+  show(0); send({t:'hello'}); setTimeout(()=>send({t:'hello'}),400);
+}
+</script>
+</body>
+</html>
