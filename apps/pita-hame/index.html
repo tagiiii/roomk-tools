@@ -191,11 +191,16 @@
       touch-action: none;
       cursor: grab;
       z-index: 2;
+      /* 外接矩形の透明部分がクリックを奪わないよう、ヒットテストは実セル（.ph-cell）だけに限定 */
+      pointer-events: none;
     }
     .ph-piece.is-dragging { cursor: grabbing; z-index: 20; filter: drop-shadow(0 6px 10px rgba(0,0,0,0.28)); }
+    .ph-piece.is-dragging .ph-cell { cursor: grabbing; }
     .ph-piece.is-selected { z-index: 10; }
     .ph-cell {
       position: absolute;
+      pointer-events: auto;
+      cursor: grab;
       border-radius: 3px;
       /* 白い区切り線（内側の明るいリング）＋ 濃い輪郭（最外の暗いリング）で形でも判別可能に */
       box-shadow:
@@ -949,7 +954,7 @@
 
   const SUPPORTED_FORMAT_VERSION = 1;
 
-  const LIFT = 0.55; // ドラッグ中はセルの 0.55 個ぶん指より上に表示
+  const LIFT = 0.55; // ドラッグ中はセルの 0.55 個ぶん指より上に表示（指で隠れるタッチ/ペンのみ。マウスは 0）
   const CELL_MAX = 48;
   const CELL_MIN = 24;
   const TRAY_GAP = 26;
@@ -1236,6 +1241,10 @@
 
   function onPointerDown(e) {
     if (state.completed) return;
+    // 想定外の経路で後始末されず残ったドラッグがあれば自己修復する。
+    // stale 判定: 要素が DOM から消えている／同じ pointerId の down が再び来た
+    // （up の取りこぼし後の再タッチ。iOS は pointerId を再利用するため同一 id の down = 前回の drag は終わっている）
+    if (state.drag && (!state.drag.el.isConnected || e.pointerId === state.drag.pointerId)) cancelDrag();
     // 多点タッチ対策: ドラッグ中の追加タッチや非プライマリポインタは受け付けない
     if (state.drag || !e.isPrimary) return;
     const idx = Number(e.currentTarget.dataset.idx);
@@ -1249,27 +1258,37 @@
     const homeTop = parseFloat(pe.style.top);
     state.drag = {
       idx,
+      el: pe,
       pointerId: e.pointerId,
       grabDX: p.x - homeLeft,
       grabDY: p.y - homeTop,
+      // 持ち上げ表示は指で隠れるタッチ/ペンのみ。マウスはカーソルとぴったり重ねる
+      lift: e.pointerType === 'mouse' ? 0 : LIFT,
       snapshot: { location: pc.location, x: pc.x, y: pc.y },
       moved: false,
     };
     pe.classList.add('is-dragging');
-    pe.setPointerCapture(e.pointerId);
-    pe.addEventListener('pointermove', onPointerMove);
-    pe.addEventListener('pointerup', onPointerUp);
-    pe.addEventListener('pointercancel', onPointerCancel);
+    // ピース要素は layout() で作り直されることがあるため、move/up/cancel は document で受ける
+    // （要素に付けると、ドラッグ中の再レンダリングでリスナーごと消えて state.drag が残留する）
+    document.addEventListener('pointermove', onPointerMove);
+    document.addEventListener('pointerup', onPointerUp);
+    document.addEventListener('pointercancel', onPointerCancel);
+    // capture は追従の滑らかさ向上用。高速タップ等で例外になっても document リスナーで継続できる
+    try { pe.setPointerCapture(e.pointerId); } catch (_) {}
   }
 
   function onPointerMove(e) {
     if (!state.drag || e.pointerId !== state.drag.pointerId) return;
+    // ドラッグ中に外部要因で盤面が再構築されたら、ピースを元の位置へ戻して中断する
+    if (!state.drag.el.isConnected) { cancelDrag(); return; }
+    // capture 失敗＋ウインドウ外リリース等で mouse の up を取りこぼしたら、ここで検知して戻す
+    if (e.pointerType === 'mouse' && e.buttons === 0) { cancelDrag(); return; }
     const pc = state.pieces.find((p) => p.idx === state.drag.idx);
-    const pe = pieceEls.get(state.drag.idx);
+    const pe = state.drag.el;
     const p = stageLocal(e);
     const c = state.cell;
     const left = p.x - state.drag.grabDX;
-    const top = p.y - state.drag.grabDY - LIFT * c;
+    const top = p.y - state.drag.grabDY - state.drag.lift * c;
     pe.style.left = left + 'px';
     pe.style.top = top + 'px';
     state.drag.moved = true;
@@ -1295,13 +1314,13 @@
     if (!state.drag || pointerId !== state.drag.pointerId) return;
     const drag = state.drag;
     const pc = state.pieces.find((p) => p.idx === drag.idx);
-    const pe = pieceEls.get(drag.idx);
+    const pe = drag.el;
+    document.removeEventListener('pointermove', onPointerMove);
+    document.removeEventListener('pointerup', onPointerUp);
+    document.removeEventListener('pointercancel', onPointerCancel);
     if (pe) {
       pe.classList.remove('is-dragging');
       try { pe.releasePointerCapture(pointerId); } catch (_) {}
-      pe.removeEventListener('pointermove', onPointerMove);
-      pe.removeEventListener('pointerup', onPointerUp);
-      pe.removeEventListener('pointercancel', onPointerCancel);
     }
     clearPreview();
     state.drag = null;
@@ -1406,6 +1425,7 @@
   /* ---- もどす / ぜんぶもどす ---- */
   function returnSelected() {
     if (state.selectedIdx === null || state.completed) return;
+    cancelDrag();   // ドラッグ保持中に押されても操作不能に陥らないよう先に片付ける
     const pc = state.pieces.find((p) => p.idx === state.selectedIdx);
     pc.location = 'tray';
     layout();
@@ -1414,6 +1434,7 @@
   }
   function returnAll() {
     if (state.completed) return;
+    cancelDrag();   // ドラッグ保持中に押されても操作不能に陥らないよう先に片付ける
     for (const pc of state.pieces) pc.location = 'tray';
     layout();
     keepSelected();
@@ -1572,7 +1593,7 @@
   window.addEventListener('resize', () => {
     if (state.screen !== 'puzzle' || !state.puzzle) return;
     clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(() => { layout(); keepSelected(); }, 120);
+    resizeTimer = setTimeout(() => { cancelDrag(); layout(); keepSelected(); }, 120);
   });
 
   /* =========================================================================

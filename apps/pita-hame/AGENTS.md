@@ -25,6 +25,7 @@
 - 出題順はカタログの配列順（ID順＝易→難）。「つぎの問題」で次のIDへ。最後まで行ったら「ぜんぶあそんだよ！」で難易度選択へ戻る。**進捗の永続化はしない（ページ内メモリのみ／設計 §3）**。
 - 論理座標は常に整数グリッドで保持し、CSS 座標から状態を逆算しない（`state.pieces[].{x,y,orientIndex,location}` が正）。
 - パズル領域（`.ph-stage`）のみ `touch-action: none`。`prefers-reduced-motion` で完成演出（紙吹雪・シェイク・ウィッグル）を縮小。
+- ドラッグの move/up/cancel リスナーは**要素ではなく document に付ける**（layout() の renderPieces がピース要素を作り直すため、要素付けだとドラッグ中の再構築でリスナーごと消え `state.drag` が残留して操作不能になる）。`setPointerCapture` は滑らかさ向上用の補助で try/catch（高速タップで例外になりうる）。ヒットテストは `.ph-piece`（外接矩形）を `pointer-events:none` にして実セル `.ph-cell` のみ。持ち上げ表示（LIFT）はタッチ/ペンのみでマウスは 0。up の取りこぼしは、同一 pointerId の再 down（iOS の id 再利用）と mouse の `buttons===0` な move で検知して自己修復する。
 
 ### 盤面エンジンの共通化（フェーズ3 で導入）
 
