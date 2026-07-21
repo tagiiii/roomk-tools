@@ -104,7 +104,7 @@ Tier は「指摘」ではなく「提案アクション」に付ける。カー
 
 | 型 | 該当アプリ例 | 固有に問う観点 |
 |---|---|---|
-| RTDB 単一ファイル | iisen-show, word-wolf, jinro, ito, hint-de-pinto, tatoe-gp, magire-eshi, uso-jisho, pittari-meter, kakure-number, koedake-theater, ikutsu-ieru, nitaku-board, name-change | transaction 原子性・切断挙動・TTL/孤立ルーム掃除・再接続・リスナー/タイマー片付け・`maximum-scale=1` 必須（`rtdb-audit` スキルの領域） |
+| RTDB 単一ファイル | do-mannaka, word-wolf, jinro, tatoe-narabe, kaburazu-hint, tatoe-gp, magire-eshi, uso-jisho, pittari-meter, kakure-number, koedake-theater, ikutsu-ieru, nitaku-board, name-change | transaction 原子性・切断挙動・TTL/孤立ルーム掃除・再接続・リスナー/タイマー片付け・`maximum-scale=1` 必須（`rtdb-audit` スキルの領域） |
 | Firestore 分割 | checkin, vote | 終了後削除・無料枠。※両者は**本体スタブ**（howto 未組込は正常） |
 | オフライン | talk-card, docchi, 内省系の大半 | RTDB 固有観点は**問わない**。`maximum-scale=1` は付けたら WARN |
 
@@ -157,7 +157,7 @@ Tier は「指摘」ではなく「提案アクション」に付ける。カー
   3. **反復利用で枯渇するか**（＝単に絶対数が少ないだけでは起票しない。「1セッションで何件消費し、どの頻度で使うアプリか」を添えて、実際に枯渇が起きる場合のみ）。
   4. 禁止題材（学校/成績/登校/恋愛/暴力/ホラー/死）の混入がないか（`validate-kotoba-asobo.mjs` の BAD_WORDS は kotoba-asobo 専用なので他アプリは手動照合）。
   5. 事実系（雑学・故事・方言・由来）に出典と参照日が付いているか。
-  6. **均等・完結が設計意図のもの**（kimochi-map 12×6, codenames 30×18, docchi 17×5）に水増しを提案していないか（哲学ガード）。
+  6. **均等・完結が設計意図のもの**（kimochi-map 12×6, kotoba-tantei 30×18, docchi 17×5）に水増しを提案していないか（哲学ガード）。
 - **Tier 目安**: C（棚卸し・報告）。抽出追加は A/B、本体投入は **D-3（人間専任）**。
 
 ### P4. 機能品質・異常系・切断復帰のシナリオ監査
@@ -254,26 +254,26 @@ Tier は「指摘」ではなく「提案アクション」に付ける。カー
 
 | アプリ | 件数 | audit | / | アプリ | 件数 | audit |
 |---|---|---|---|---|---|---|
-| codenames | 540 | ✓ | | kotoba-relay | 70 | ✓ |
+| kotoba-tantei | 540 | ✓ | | kotoba-relay | 70 | ✓ |
 | quiz | 480 | ✓ | | magire-eshi | 60 | ✗ |
 | kotoba-asobo | 272 | ✓ | | ikutsu-ieru | 51 | ✗ |
 | kyoumi-sugoroku | 142 | ✗ | | kanji-sagashi | 50 | ✓ |
 | jitsuwa-game | 126 | ✗ | | pittari-meter | 50 | ✗ |
 | nitaku-board | 126 | ✓ | | uso-jisho | 50 | ✗ |
-| hint-de-pinto | 120 | ✓ | | minna-ranking | 45 | ✓ |
+| kaburazu-hint | 120 | ✓ | | minna-ranking | 45 | ✓ |
 | talk-card | 100 | ✓ | | machigai-sagashi | 45 | ✓ |
 | kotoba-shuffle | 100 | ✓ | | bamen-card | 42 | ✓ |
-| iisen-show | 100 | ✗ | | tsuyomi-card | 42 | ✓ |
+| do-mannaka | 100 | ✗ | | tsuyomi-card | 42 | ✓ |
 | ishin-denshin | 100 | ✗ | | kotoba-gacha | 30 | ✓ |
 | word-wolf | 100 | ✗ | | value-card | 30 | ✗ |
 | tatoe-gp | 90 | ✓ | | checkout-card | 24 | ✓ |
 | docchi | 85 | ✓ | | mirai-hikidashi | 22 | ✓ |
 | otona-talk | 78 | ✓ | | koedake-theater | 12 | ✗ |
-| kimochi-map | 72 | ✓ | | ito | 72 | ✗ |
+| kimochi-map | 72 | ✓ | | tatoe-narabe | 72 | ✗ |
 
 件数概念なし（ユーザー生成・ランダム・スタブ）: sukina-map, challenge-tane, kakure-number, jinro, checkin, vote, name-change, kyapa-graph, nurie-week, mienai-ganbari, sakusen-kaigi。
 
-**`slides.html` 保有13本**（P5-3 の判定基準）: codenames, hint-de-pinto, iisen-show, ito, jinro, kakure-number, koedake-theater, magire-eshi, name-change, pittari-meter, tatoe-gp, uso-jisho, word-wolf。
+**`slides.html` 保有13本**（P5-3 の判定基準）: do-mannaka, jinro, kaburazu-hint, kakure-number, koedake-theater, kotoba-tantei, magire-eshi, name-change, pittari-meter, tatoe-gp, tatoe-narabe, uso-jisho, word-wolf。
 
 ---
 

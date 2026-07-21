@@ -1,5 +1,5 @@
 // ことば探偵
-// 仕様: apps/codenames/AGENTS.md を参照
+// 仕様: apps/kotoba-tantei/AGENTS.md を参照
 // 移植元: https://github.com/tagiiii/codename_game （codename_game/src/）
 
 import { copyToClipboard, escapeHtml, showToast } from "../shared/js/utils.js";
@@ -28,7 +28,7 @@ import {
 import { wordSets } from "./words.js";
 
 const appEl = document.querySelector("#app");
-const SESSION_KEY = "codenames_session";
+const SESSION_KEY = "kotobatantei_session";
 
 const state = {
   roomId: "",
@@ -105,7 +105,7 @@ async function handleLeaveRoom() {
       await leaveRoom(roomId, playerId);
     }
   } catch (error) {
-    console.warn("[codenames] leaveRoom failed", error);
+    console.warn("[kotoba-tantei] leaveRoom failed", error);
   } finally {
     clearSession();
     showToast("ホームに戻りました", "info");
@@ -452,7 +452,7 @@ function ensureRoomSubscription() {
       const expiredRoomId = state.roomId;
       state.error = "このルームは期限切れです";
       void deleteExpiredRoom(expiredRoomId).catch((error) => {
-        console.warn("[codenames] deleteExpiredRoom failed", error);
+        console.warn("[kotoba-tantei] deleteExpiredRoom failed", error);
       });
       clearSession();
       navigate("home");

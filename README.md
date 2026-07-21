@@ -20,15 +20,15 @@
 | ことばリレー | `apps/kotoba-relay/` | オフライン | つなぎ言葉でリレーするワーク |
 | たとえグランプリ | `apps/tatoe-gp/` | Realtime Database | お題に対するたとえ回答を出し合う |
 | まちがいさがし | `apps/machigai-sagashi/` | オフライン | 文章や選択肢の違いを探す |
-| ヒントでピント | `apps/hint-de-pinto/` | Realtime Database | ヒントを出し合って答えを当てる |
-| ことば探偵 | `apps/codenames/` | Firestore | チームで単語カードを見つける |
+| かぶらずヒント | `apps/kaburazu-hint/` | Realtime Database | ヒントを出し合って答えを当てる |
+| ことば探偵 | `apps/kotoba-tantei/` | Firestore | チームで単語カードを見つける |
 | トークテーマカード | `apps/talk-card/` | オフライン | トークテーマカードを引く |
-| いいセンいきまSHOW! | `apps/iisen-show/` | Realtime Database | 数字回答で「いいセン」を狙う |
+| ドまんなか | `apps/do-mannaka/` | Realtime Database | 数字回答で「いいセン」を狙う |
 | ワードウルフ | `apps/word-wolf/` | Realtime Database | 少数派のワードを推理する |
 | 人狼ゲーム | `apps/jinro/` | Realtime Database | 画面共有向けの人狼進行 |
 | 名前変えゲーム | `apps/name-change/` | Realtime Database | 名前を変えて誰かを当てる |
 | え!? 実は○○なんですかゲーム | `apps/jitsuwa-game/` | オフライン | 実は話をきっかけにするトークゲーム |
-| ito クモノイト | `apps/ito/` | Realtime Database | 数字カードを言葉で表現して並べる |
+| たとえならべ | `apps/tatoe-narabe/` | Realtime Database | 数字カードを言葉で表現して並べる |
 | 以心伝心しないゲーム | `apps/ishin-denshin/` | オフライン | かぶらない回答を狙う |
 | 興味スゴロク | `apps/kyoumi-sugoroku/` | オフライン | サイコロと質問マスで話す |
 | バリューカード | `apps/value-card/` | オフライン | 大切にしたい価値観カードを選ぶ |

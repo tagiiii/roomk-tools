@@ -23,11 +23,10 @@ ALL_JS_FILES=(apps/*/app.js)
 
 # Realtime Database アプリ
 RTDB_HTML_FILES=(
-  "apps/hint-de-pinto/index.html"
-  "apps/iisen-show/index.html"
+  "apps/do-mannaka/index.html"
   "apps/ikutsu-ieru/index.html"
-  "apps/ito/index.html"
   "apps/jinro/index.html"
+  "apps/kaburazu-hint/index.html"
   "apps/kakure-number/index.html"
   "apps/koedake-theater/index.html"
   "apps/magire-eshi/index.html"
@@ -37,6 +36,7 @@ RTDB_HTML_FILES=(
   "apps/pita-hame/index.html"
   "apps/pittari-meter/index.html"
   "apps/tatoe-gp/index.html"
+  "apps/tatoe-narabe/index.html"
   "apps/uso-jisho/index.html"
   "apps/word-wolf/index.html"
 )
@@ -292,15 +292,15 @@ fi
 
 # ─────────────────────────────────────────────────────
 # [REF-2] Firebase パス命名規則チェック
-#   iisen-show が rooms/ ではなく iisen_rooms/ を使っているか
+#   do-mannaka が rooms/ ではなく domannaka_rooms/ を使っているか
 # ─────────────────────────────────────────────────────
 echo ""
 echo -e "${BOLD}[REF-2] Firebase パス命名規則チェック${NC}"
 
 REF2_OK=true
-if grep -qE '"rooms/' "apps/iisen-show/index.html" 2>/dev/null; then
-  line_num=$(grep -nE '"rooms/' "apps/iisen-show/index.html" | head -1 | cut -d: -f1)
-  echo -e "  ${YELLOW}[WARN]${NC} apps/iisen-show/index.html:$line_num — \"rooms/\" が使われています（iisen_rooms/ を使用）"
+if grep -qE '"rooms/' "apps/do-mannaka/index.html" 2>/dev/null; then
+  line_num=$(grep -nE '"rooms/' "apps/do-mannaka/index.html" | head -1 | cut -d: -f1)
+  echo -e "  ${YELLOW}[WARN]${NC} apps/do-mannaka/index.html:$line_num — \"rooms/\" が使われています（domannaka_rooms/ を使用）"
   WARNINGS=$((WARNINGS + 1))
   REF2_OK=false
 fi
@@ -505,7 +505,10 @@ echo ""
 echo -e "${BOLD}[HOWTO-1] あそびかたモーダル (howto.js) チェック${NC}"
 
 HOWTO1_OK=true
-HOWTO_EXEMPT=" apps/checkin/index.html apps/vote/index.html "
+# apps/ito, apps/iisen-show, apps/hint-de-pinto, apps/codenames は
+# 旧URLからの自動移動スタブ（location.replace のみ・howto.js 不要）。
+# apps/guide/index.html はスタッフ向け説明ページ自体のため howto.js 対象外。
+HOWTO_EXEMPT=" apps/checkin/index.html apps/vote/index.html apps/ito/index.html apps/iisen-show/index.html apps/hint-de-pinto/index.html apps/codenames/index.html apps/guide/index.html "
 for f in "${ALL_HTML_FILES[@]}"; do
   [ -f "$f" ] || continue
   case "$HOWTO_EXEMPT" in *" $f "*) continue ;; esac

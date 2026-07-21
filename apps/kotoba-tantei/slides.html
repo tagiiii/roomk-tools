@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ことば探偵 — 説明スライド</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@48,500,1,0" rel="stylesheet" />
+<style>
+  :root{
+    --ink:#434343; --ink-soft:#6B6B6B; --paper:#FAFAFA; --white:#FFFFFF;
+    --line:#E6E6E6; --muted:#9A9A9A;
+    --teal:#00A77F; --coral:#E06666; --blue:#3C78D8; --blue-soft:#6D9EEB;
+    --red:#E0574F; --neutral:#C2B69E; --trap:#3A3A3A;
+    --acc:var(--teal); --acc-tint:#E3F4EF;
+    --font:"Zen Kaku Gothic New", -apple-system, "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif;
+  }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  html,body{ height:100%; }
+  body{ font-family:var(--font); color:var(--ink); background:#E9ECEF; overflow:hidden; -webkit-font-smoothing:antialiased; }
+  .material-symbols-rounded{ font-family:"Material Symbols Rounded"; line-height:1; }
+  ruby rt{ font-size:.42em; font-weight:700; color:var(--acc); letter-spacing:0; transform:translateY(2px); }
+
+  /* accent themes（スライドごとに切替） */
+  .accent-teal { --acc:var(--teal); --acc-tint:#E2F4EF; }
+  .accent-coral{ --acc:var(--coral);--acc-tint:#FBEBEB; }
+  .accent-blue { --acc:var(--blue); --acc-tint:#E7EEFB; }
+
+  /* ===================== 発表（デッキ） ===================== */
+  #deck{ position:fixed; inset:0; }
+  #stage{
+    position:absolute; top:50%; left:50%; width:1280px; height:720px;
+    transform-origin:center center; background:var(--paper);
+    border-radius:18px; box-shadow:0 28px 70px rgba(0,0,0,.35); overflow:hidden;
+  }
+  .slide{
+    position:absolute; inset:0; display:flex; flex-direction:column;
+    padding:56px 72px 76px; opacity:0; visibility:hidden;
+    transition:opacity .3s ease, transform .3s ease; transform:translateY(10px);
+  }
+  .slide.active{ opacity:1; visibility:visible; transform:none; }
+
+  /* セクションヘッダー（日本語＋小さな英語キャプション） */
+  .sec{ display:flex; align-items:baseline; gap:14px; }
+  .sec__jp{ font-size:30px; font-weight:900; color:var(--ink); letter-spacing:.01em; }
+  .sec__en{ font-size:18px; font-weight:700; color:var(--acc); letter-spacing:.12em; }
+  .sec__num{ display:inline-flex; align-items:center; justify-content:center; min-width:30px; height:30px; padding:0 8px;
+    border-radius:8px; background:var(--acc); color:#fff; font-size:18px; font-weight:900; margin-right:2px; }
+
+  .headline{ font-size:46px; font-weight:900; color:var(--ink); line-height:1.32; margin-top:22px; letter-spacing:.005em; }
+  .headline .hl{ color:var(--acc); }
+  .headline .ul{ background:linear-gradient(transparent 62%, var(--acc-tint) 62%); padding:0 2px; }
+  .body{ margin-top:30px; flex:1; min-height:0; }
+
+  /* 役割カード／チーム */
+  .cols{ display:grid; grid-template-columns:1fr 1fr; gap:24px; height:100%; }
+  .panel{ background:var(--white); border:1.5px solid var(--line); border-radius:18px; padding:26px 28px; display:flex; flex-direction:column; gap:14px; }
+  .panel--red{ border-color:#F0CFCB; background:linear-gradient(180deg,#FDF1F0,#fff); }
+  .panel--blue{ border-color:#CBDAF4; background:linear-gradient(180deg,#EEF3FD,#fff); }
+  .team-head{ display:flex; align-items:center; gap:14px; }
+  .team-ic{ width:56px; height:56px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; }
+  .team-ic .material-symbols-rounded{ font-size:34px; }
+  .red-bg{ background:var(--red); } .blue-bg{ background:var(--blue); } .teal-bg{ background:var(--teal); } .coral-bg{ background:var(--coral); } .gray-bg{ background:var(--neutral); } .trap-bg{ background:var(--trap); }
+  .team-name{ font-size:28px; font-weight:900; color:var(--ink); }
+  .role-row{ display:flex; gap:12px; align-items:flex-start; }
+  .role-row .material-symbols-rounded{ font-size:26px; color:var(--acc); flex:none; margin-top:3px; }
+  .role-row b{ font-size:23px; font-weight:900; color:var(--ink); }
+  .role-row .d{ font-size:19px; color:var(--ink-soft); display:block; margin-top:2px; line-height:1.5; }
+
+  /* 箇条書き行 */
+  .rows{ display:flex; flex-direction:column; gap:16px; }
+  .row{ display:flex; gap:18px; align-items:flex-start; background:var(--white); border:1.5px solid var(--line); border-radius:16px; padding:20px 24px; }
+  .row__ic{ flex:none; width:48px; height:48px; border-radius:12px; background:var(--acc-tint); color:var(--acc); display:flex; align-items:center; justify-content:center; }
+  .row__ic .material-symbols-rounded{ font-size:28px; }
+  .row__t{ font-size:25px; font-weight:900; color:var(--ink); line-height:1.4; }
+  .row__d{ font-size:20px; color:var(--ink-soft); margin-top:3px; line-height:1.5; }
+
+  /* 5×5 盤面 */
+  .board-wrap{ display:flex; gap:34px; align-items:center; height:100%; }
+  .board{ display:grid; grid-template-columns:repeat(5,1fr); gap:9px; flex:none; }
+  .cell{ width:104px; height:62px; border-radius:9px; background:#FFFDF7; border:1.5px solid #E7E0CE;
+    display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:700; color:#5A5142;
+    box-shadow:0 1px 0 rgba(0,0,0,.04); }
+  .cell.blue{ background:#E7EEFB; border-color:#9FBCEF; color:var(--blue); }
+  .cell.red{ background:#FBE7E5; border-color:#EDA8A2; color:var(--red); }
+  .cell.neutral{ background:#F0EADD; border-color:#D8CBB0; color:#8A7B5C; }
+  .cell.trap{ background:#3A3A3A; border-color:#222; color:#fff; }
+  .cell.trap .material-symbols-rounded{ font-size:26px; }
+  .board-legend{ flex:1; display:flex; flex-direction:column; gap:14px; }
+  .leg{ display:flex; gap:13px; align-items:center; }
+  .leg__sw{ width:34px; height:34px; border-radius:8px; flex:none; border:1.5px solid rgba(0,0,0,.08); }
+  .leg__t{ font-size:21px; font-weight:700; color:var(--ink); }
+  .leg__t span{ font-size:17px; font-weight:500; color:var(--ink-soft); }
+
+  /* ヒント例カード */
+  .hint-demo{ display:flex; flex-direction:column; gap:22px; align-items:flex-start; }
+  .hint-card{ display:inline-flex; align-items:center; gap:0; border-radius:18px; overflow:hidden; box-shadow:0 8px 22px rgba(0,0,0,.1); }
+  .hint-card .word{ background:var(--white); border:2.5px solid var(--acc); border-right:none; padding:22px 40px; font-size:42px; font-weight:900; color:var(--ink); border-radius:18px 0 0 18px; }
+  .hint-card .num{ background:var(--acc); color:#fff; padding:22px 34px; font-size:42px; font-weight:900; min-width:96px; text-align:center; }
+  .hint-mean{ font-size:24px; color:var(--ink-soft); line-height:1.6; }
+  .hint-mean b{ color:var(--acc); font-weight:900; }
+
+  /* Q&A */
+  .qa{ display:flex; flex-direction:column; gap:16px; }
+  .qa__item{ background:var(--white); border:1.5px solid var(--line); border-radius:16px; padding:18px 24px; }
+  .qa__q{ display:flex; gap:13px; align-items:flex-start; font-size:23px; font-weight:900; color:var(--ink); }
+  .qa__a{ display:flex; gap:13px; align-items:flex-start; font-size:21px; color:var(--ink-soft); margin-top:8px; line-height:1.5; }
+  .qa__badge{ flex:none; width:34px; height:34px; border-radius:9px; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:900; font-size:19px; }
+  .qa__badge.q{ background:var(--blue); } .qa__badge.a{ background:var(--coral); }
+
+  /* タイトルスライド */
+  .title-slide{ align-items:center; justify-content:center; text-align:center; padding-bottom:76px; }
+  .title-ic{ width:118px; height:118px; border-radius:32px; background:var(--teal); color:#fff; display:flex; align-items:center; justify-content:center; box-shadow:0 16px 34px rgba(0,167,127,.32); }
+  .title-ic .material-symbols-rounded{ font-size:72px; }
+  .title-jp{ font-size:74px; font-weight:900; color:var(--ink); margin-top:24px; letter-spacing:.02em; }
+  .title-en{ font-size:22px; font-weight:700; color:var(--teal); letter-spacing:.34em; margin-top:6px; text-transform:lowercase; }
+  .title-tag{ font-size:26px; font-weight:700; color:var(--ink-soft); margin-top:22px; }
+  .title-meta{ display:flex; gap:12px; margin-top:26px; }
+  .title-meta .m{ display:inline-flex; align-items:center; gap:7px; background:var(--white); border:1.5px solid var(--line); border-radius:999px; padding:9px 18px; font-size:18px; font-weight:700; color:var(--ink); }
+  .title-meta .material-symbols-rounded{ font-size:20px; color:var(--teal); }
+
+  /* セクション区切り（divider） */
+  .divider{ align-items:center; justify-content:center; text-align:center; padding-bottom:76px; background:var(--acc-tint); }
+  .divider .d-ic{ width:104px; height:104px; border-radius:50%; background:var(--acc); color:#fff; display:flex; align-items:center; justify-content:center; box-shadow:0 14px 30px rgba(0,0,0,.14); }
+  .divider .d-ic .material-symbols-rounded{ font-size:62px; }
+  .divider .d-jp{ font-size:72px; font-weight:900; color:var(--ink); margin-top:26px; letter-spacing:.03em; }
+  .divider .d-en{ font-size:21px; font-weight:700; color:var(--acc); letter-spacing:.28em; margin-top:8px; text-transform:lowercase; }
+  .divider .d-sub{ font-size:24px; font-weight:700; color:var(--ink-soft); margin-top:20px; }
+  /* 強調（ゲームスタート等） */
+  .divider.solid{ background:var(--acc); }
+  .divider.solid .d-ic{ background:rgba(255,255,255,.16); }
+  .divider.solid .d-jp,.divider.solid .d-sub{ color:#fff; }
+  .divider.solid .d-en{ color:rgba(255,255,255,.85); }
+
+  /* フッター */
+  .footer{ position:absolute; left:0; right:0; bottom:0; height:56px; display:flex; align-items:center; justify-content:space-between;
+    padding:0 30px; background:rgba(255,255,255,.7); border-top:1px solid var(--line); }
+  .brand{ display:flex; align-items:center; gap:9px; font-weight:900; color:var(--ink); font-size:19px; }
+  .brand .material-symbols-rounded{ color:var(--teal); font-size:24px; }
+  .dots{ display:flex; gap:7px; flex-wrap:wrap; max-width:620px; justify-content:center; }
+  .dot{ width:9px; height:9px; border-radius:50%; background:var(--line); transition:.2s; }
+  .dot.on{ background:var(--teal); transform:scale(1.3); }
+  .counter{ font-size:18px; font-weight:900; color:var(--muted); font-variant-numeric:tabular-nums; }
+  .divider .footer,.divider.solid .footer{ background:rgba(255,255,255,.55); }
+
+  /* ナビ矢印 */
+  .nav{ position:absolute; top:50%; transform:translateY(-50%); z-index:5; width:54px; height:54px; border-radius:50%; border:none; cursor:pointer;
+    background:rgba(67,67,67,.1); color:var(--ink); display:flex; align-items:center; justify-content:center; transition:.2s; opacity:0; }
+  #stage:hover .nav{ opacity:.5; } .nav:hover{ opacity:1 !important; background:rgba(67,67,67,.2); }
+  .nav .material-symbols-rounded{ font-size:32px; } .nav.prev{ left:16px; } .nav.next{ right:16px; }
+
+  /* ツールバー */
+  .toolbar{ position:fixed; top:14px; right:16px; z-index:50; display:flex; gap:8px; opacity:.16; transition:.2s; }
+  .toolbar:hover{ opacity:1; }
+  .tbtn{ display:inline-flex; align-items:center; gap:7px; cursor:pointer; background:rgba(255,255,255,.95); color:var(--ink); border:1px solid var(--line);
+    border-radius:999px; padding:9px 15px; font-family:var(--font); font-weight:700; font-size:14px; box-shadow:0 4px 12px rgba(0,0,0,.18); }
+  .tbtn:hover{ background:#fff; } .tbtn .material-symbols-rounded{ font-size:19px; color:var(--teal); }
+  .hint-help{ position:fixed; bottom:12px; left:16px; z-index:50; color:rgba(255,255,255,.5); font-size:13px; }
+  .hint-help kbd{ background:rgba(0,0,0,.18); border-radius:5px; padding:1px 7px; font-family:var(--font); }
+
+  /* ===================== 発表者ビュー ===================== */
+  body.presenter{ background:#EEF1F4; overflow:auto; }
+  #presenter{ max-width:680px; margin:0 auto; padding:18px 20px 40px; }
+  .pv-warn{ background:#FBEBEB; border:1px solid #EFC4C4; color:#B3463F; border-radius:12px; padding:12px 16px; font-size:14px; font-weight:700; display:flex; align-items:center; gap:10px; margin-bottom:16px; }
+  .pv-warn .material-symbols-rounded{ font-size:22px; }
+  .pv-count{ font-size:14px; font-weight:900; color:var(--muted); font-variant-numeric:tabular-nums; }
+  .pv-title{ font-size:26px; font-weight:900; color:var(--ink); line-height:1.3; margin-top:4px; }
+  .pv-lead{ font-size:15px; color:var(--teal); font-weight:700; margin-top:4px; letter-spacing:.04em; }
+  .pv-card{ background:#fff; border:1px solid var(--line); border-radius:16px; padding:18px; margin-top:18px; box-shadow:0 4px 14px rgba(0,0,0,.05); }
+  .pv-card h3{ font-size:14px; font-weight:900; color:var(--teal); display:flex; align-items:center; gap:8px; margin-bottom:12px; }
+  .pv-card h3 .material-symbols-rounded{ font-size:18px; }
+  #pvNote{ width:100%; min-height:175px; resize:vertical; border:1px solid var(--line); border-radius:12px; padding:14px 16px; font-family:var(--font); font-size:17px; line-height:1.7; color:var(--ink); background:#FBFCFD; }
+  #pvNote:focus{ outline:none; border-color:var(--teal); box-shadow:0 0 0 3px rgba(0,167,127,.15); }
+  .pv-actions{ display:flex; gap:10px; margin-top:14px; align-items:center; }
+  .pv-copy{ flex:1; cursor:pointer; border:none; border-radius:12px; padding:15px; font-family:var(--font); font-size:18px; font-weight:900; color:#fff; background:var(--teal); display:flex; align-items:center; justify-content:center; gap:10px; box-shadow:0 6px 16px rgba(0,167,127,.28); transition:.15s; }
+  .pv-copy:active{ transform:translateY(1px); } .pv-copy.done{ background:#1F8F6E; }
+  .pv-copy .material-symbols-rounded{ font-size:22px; }
+  .pv-reset{ cursor:pointer; border:1px solid var(--line); background:#fff; color:var(--muted); border-radius:12px; padding:15px 16px; font-family:var(--font); font-weight:700; font-size:14px; }
+  .pv-reset:hover{ background:#F5F7F9; }
+  .pv-nav{ display:flex; gap:10px; margin-top:18px; }
+  .pv-nav button{ flex:1; cursor:pointer; border:1px solid var(--line); background:#fff; color:var(--ink); border-radius:12px; padding:14px; font-family:var(--font); font-weight:900; font-size:16px; display:flex; align-items:center; justify-content:center; gap:8px; }
+  .pv-nav button:hover{ background:#F5F7F9; } .pv-nav button:disabled{ opacity:.4; cursor:default; }
+  .pv-nav .material-symbols-rounded{ font-size:20px; }
+  .pv-next{ margin-top:16px; font-size:14px; color:var(--muted); padding:0 4px; } .pv-next b{ color:var(--ink); }
+  .pv-conn{ margin-top:14px; font-size:12px; color:var(--muted); text-align:center; }
+</style>
+</head>
+<body>
+
+<div id="deck">
+  <div id="stage">
+    <button class="nav prev" id="navPrev" aria-label="前へ"><span class="material-symbols-rounded">chevron_left</span></button>
+    <button class="nav next" id="navNext" aria-label="次へ"><span class="material-symbols-rounded">chevron_right</span></button>
+    <div id="slides"></div>
+    <div class="footer">
+      <div class="brand"><span class="material-symbols-rounded">search</span>ことば探偵</div>
+      <div class="dots" id="dots"></div>
+      <div class="counter" id="counter">1 / 1</div>
+    </div>
+  </div>
+</div>
+
+<div class="toolbar" id="toolbar">
+  <button class="tbtn" id="btnPresenter"><span class="material-symbols-rounded">co_present</span>発表者ノート</button>
+  <button class="tbtn" id="btnFull"><span class="material-symbols-rounded">fullscreen</span>全画面</button>
+</div>
+<div class="hint-help">操作: <kbd>←</kbd> <kbd>→</kbd> めくる ・ <kbd>F</kbd> 全画面 ・ <kbd>P</kbd> 発表者ノート</div>
+
+<div id="presenter" style="display:none">
+  <div class="pv-warn"><span class="material-symbols-rounded">visibility_off</span>この画面は<strong>共有しないで</strong>ください（あなた専用のメモ）</div>
+  <div class="pv-count" id="pvCount">1 / 1</div>
+  <div class="pv-title" id="pvTitle"></div>
+  <div class="pv-lead" id="pvLead"></div>
+  <div class="pv-card">
+    <h3><span class="material-symbols-rounded">chat</span>Metalife チャット用メッセージ</h3>
+    <textarea id="pvNote" spellcheck="false"></textarea>
+    <div class="pv-actions">
+      <button class="pv-copy" id="pvCopy"><span class="material-symbols-rounded">content_copy</span>チャットにコピー</button>
+      <button class="pv-reset" id="pvReset">元に戻す</button>
+    </div>
+  </div>
+  <div class="pv-nav">
+    <button id="pvPrev"><span class="material-symbols-rounded">chevron_left</span>前のスライド</button>
+    <button id="pvNext">次のスライド<span class="material-symbols-rounded">chevron_right</span></button>
+  </div>
+  <div class="pv-next" id="pvNextTitle"></div>
+  <div class="pv-conn" id="pvConn">スライド画面と接続中…</div>
+</div>
+
+<script>
+/* ===== 盤面ビルダー（5×5・ヒント役の見え方） ===== */
+function board(showColor){
+  const cells=[
+    ['りんご','blue'],['ねこ','red'],['でんしゃ','red'],['うみ','neutral'],['ほし','blue'],
+    ['パン','red'],['かさ','neutral'],['つき','blue'],['ロボット','neutral'],['にじ','blue'],
+    ['ゆき','neutral'],['やま','red'],['さかな','blue'],['ピアノ','neutral'],['くるま','blue'],
+    ['ケーキ','red'],['とり','neutral'],['はな','blue'],['ボール','red'],['ふね','neutral'],
+    ['きのこ','blue'],['かえる','red'],['おに','blue'],['たいこ','red'],['めいろ','trap'],
+  ];
+  return '<div class="board">'+cells.map(([w,r])=>{
+    const cls = showColor ? r : '';
+    const inner = (showColor && r==='trap') ? '<span class="material-symbols-rounded">skull</span>' : w;
+    return `<div class="cell ${cls}">${inner}</div>`;
+  }).join('')+'</div>';
+}
+
+const SLIDES = [
+  /* 1 */ { type:'divider', accent:'teal', icon:'waving_hand', jp:'チェックイン', en:'check-in',
+    sub:'今の気分を、ひとことどうぞ',
+    note:'まずはチェックインから！\n今の気分や、最近あったことを、ひとことチャットか声で教えてね\n（ことば探偵の説明は、このあとすぐ！）' },
+
+  /* 2 */ { type:'title', note:'今日のゲームは『ことば探偵』\nヒント役が出す“ひとつの言葉”をたよりに、チームで相談しながら、自分たちの味方カードを当てていく連想ゲームだよ！' },
+
+  /* 3 */ { type:'content', accent:'teal', section:'ゲームについて', sectionEn:'summary',
+    headline:'ヒントの<span class="hl">ことば</span>から、<br>味方のカードを当てる<ruby>連想<rt>れんそう</rt></ruby>ゲーム',
+    body:`<div class="rows">
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">groups</span></div><div><div class="row__t">赤チーム と 青チームで対戦</div><div class="row__d">2チームに分かれて、どちらが早く味方を見つけられるか競うよ</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">lightbulb</span></div><div><div class="row__t">手がかりは「ことば」だけ</div><div class="row__d">ヒント役のひとことから、どれが味方かを推理する</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">forum</span></div><div><div class="row__t">正解が1つに見えないから、相談が楽しい</div><div class="row__d">語彙力より「どう連想したかを言葉にする・相手の考えを聞く」あそび</div></div></div>
+    </div>`,
+    note:'『ことば探偵』は、赤チームと青チームに分かれてあそぶ連想ゲーム。\nヒント役の“ひとつの言葉”から、どのカードが味方かをチームで推理します。\n語彙力より、“どう連想したかを言葉にする・相手の考えを聞く”のが楽しいゲームだよ。' },
+
+  /* 4 */ { type:'content', accent:'teal', section:'ゲーム説明', sectionEn:'explain', num:'1',
+    headline:'2チームに分かれて、<ruby>役割<rt>やくわり</rt></ruby>は2つ',
+    body:`<div class="cols">
+      <div class="panel panel--red">
+        <div class="team-head"><div class="team-ic red-bg"><span class="material-symbols-rounded">flag</span></div><div class="team-name">赤チーム</div></div>
+        <div class="role-row"><span class="material-symbols-rounded">record_voice_over</span><div><b>ヒント役（1人）</b><span class="d">味方カードがどれか分かる。ヒントを出す人</span></div></div>
+        <div class="role-row"><span class="material-symbols-rounded">search</span><div><b>探す役（1人〜）</b><span class="d">ヒントから相談して、カードを選ぶ人</span></div></div>
+      </div>
+      <div class="panel panel--blue">
+        <div class="team-head"><div class="team-ic blue-bg"><span class="material-symbols-rounded">flag</span></div><div class="team-name">青チーム</div></div>
+        <div class="role-row"><span class="material-symbols-rounded">record_voice_over</span><div><b>ヒント役（1人）</b><span class="d">味方カードがどれか分かる。ヒントを出す人</span></div></div>
+        <div class="role-row"><span class="material-symbols-rounded">search</span><div><b>探す役（1人〜）</b><span class="d">ヒントから相談して、カードを選ぶ人</span></div></div>
+      </div>
+    </div>`,
+    note:'チームは赤と青の2つ。それぞれに役割が2つあります。\nヒント役（各チーム1人）… どのカードが味方かを知っていて、ヒントを出す人。\n探す役（各チーム1人以上）… ヒントをもとに相談して、カードを選ぶ人。' },
+
+  /* 5 */ { type:'content', accent:'blue', section:'ゲーム説明', sectionEn:'explain', num:'2',
+    headline:'25枚のことばカード。<br><span class="ul">色が分かるのはヒント役だけ</span>',
+    body:`<div class="board-wrap">${board(true)}
+      <div class="board-legend">
+        <div class="leg"><div class="leg__sw" style="background:#3C78D8"></div><div class="leg__t">味方カード <span>（自分の色）</span></div></div>
+        <div class="leg"><div class="leg__sw" style="background:#E0574F"></div><div class="leg__t">相手カード <span>（相手の色）</span></div></div>
+        <div class="leg"><div class="leg__sw" style="background:#C2B69E"></div><div class="leg__t">関係ないカード</div></div>
+        <div class="leg"><div class="leg__sw" style="background:#3A3A3A"></div><div class="leg__t">トラップ <span>（1枚だけ）</span></div></div>
+        <div class="hint-mean" style="margin-top:6px">探す役には、<b>ただのことば</b>に見えるよ</div>
+      </div>
+    </div>`,
+    note:'場には、ことばが書かれたカードが5×5＝25枚ならびます。\nどのカードが「味方／相手／関係ない／トラップ」かは、ヒント役だけが色で分かります。\n探す役には、ただのことばに見えるよ。' },
+
+  /* 6 */ { type:'content', accent:'coral', section:'ゲーム説明', sectionEn:'explain', num:'3',
+    headline:'ヒントは「<span class="hl">ことば1つ ＋ 数字</span>」',
+    body:`<div class="hint-demo">
+      <div class="hint-card"><div class="word">くだもの</div><div class="num">2</div></div>
+      <div class="hint-mean">＝「<b>くだもの</b>に関係する味方カードが <b>2枚</b> あるよ」という意味。<br>数字は、そのターンに探す役が選べる<b>最大のまい数</b>になります。</div>
+      <div class="hint-mean" style="font-size:20px;color:#9A8">※ 文や長い説明はNG。出せるのは「ことば1つ＋数字」だけ。</div>
+    </div>`,
+    note:'ヒント役が出せるのは『ことば1つ ＋ 数字』だけ。\n例：「くだもの・2」＝“くだものに関係する味方カードが2枚あるよ”という意味。\n数字は、そのターンに探す役が選べる最大のまい数になります。' },
+
+  /* 7 */ { type:'content', accent:'teal', section:'ゲーム説明', sectionEn:'explain', num:'4',
+    headline:'探す役は<ruby>相談<rt>そうだん</rt></ruby>して選ぶ。<br>当たれば続く、ちがえば<span class="hl">交代</span>',
+    body:`<div class="rows">
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">forum</span></div><div><div class="row__t">まずは相談</div><div class="row__d">「このヒントなら、どれが味方かな？」をチームで話し合う</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">check_circle</span></div><div><div class="row__t">味方カードなら大成功 → 続けてもう1枚</div><div class="row__d">ヒントの数字のぶんまで、続けて選べる</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">swap_horiz</span></div><div><div class="row__t">関係ない／相手のカードを選んだら交代</div><div class="row__d">そのターンは終わり。相手チームの番になる（自信がなければパスもOK）</div></div></div>
+    </div>`,
+    note:'探す役は、ヒントから「どれが味方かな？」をチームで相談して選びます。\n味方カードなら、続けてもう1枚えらべる（数字のぶんまで）。\n関係ないカードや相手のカードを選ぶと、そこで相手チームの番に交代。自信がなければパスもOK！' },
+
+  /* 8 */ { type:'content', accent:'coral', section:'ゲーム説明', sectionEn:'explain', num:'5',
+    headline:'カードは4種類。<br><span class="hl">トラップを選ぶと即まけ！</span>',
+    body:`<div class="rows">
+      <div class="row"><div class="row__ic teal-bg" style="color:#fff;background:#3C78D8"><span class="material-symbols-rounded">verified</span></div><div><div class="row__t">味方カード → 先に全部見つけたチームの勝ち！</div><div class="row__d">これが目標。チームの色のカードを集めよう</div></div></div>
+      <div class="row"><div class="row__ic" style="color:#fff;background:#C2B69E"><span class="material-symbols-rounded">do_not_disturb_on</span></div><div><div class="row__t">相手カード／関係ないカード → 番が交代</div><div class="row__d">相手の色を選ぶと、相手を助けてしまうことも</div></div></div>
+      <div class="row"><div class="row__ic" style="color:#fff;background:#3A3A3A"><span class="material-symbols-rounded">skull</span></div><div><div class="row__t">トラップカード → 選んだら、そのチームは即まけ</div><div class="row__d">25枚に1枚だけまぎれてる。ぜったいに当てないで！</div></div></div>
+    </div>`,
+    note:'カードは4種類。\n味方カード…全部先に見つけたチームが勝ち！\n関係ないカード／相手カード…選ぶと番が交代。\nトラップカード…これを選んだら、そのチームは即まけ。1枚だけまぎれてるよ、気をつけて！' },
+
+  /* 9 */ { type:'content', accent:'blue', section:'Q&A', sectionEn:'question & answer',
+    headline:'よくある<ruby>質問<rt>しつもん</rt></ruby>',
+    body:`<div class="qa">
+      <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>ヒントは、長く説明してもいい？</div><div class="qa__a"><span class="qa__badge a">A</span>ことば1つだけだよ。文や長い説明はNG！</div></div>
+      <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>カードに書いてある言葉を、そのまま言ってもいい？</div><div class="qa__a"><span class="qa__badge a">A</span>それはNG。ちがう言葉で連想してね。</div></div>
+      <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>自信がないときは？</div><div class="qa__a"><span class="qa__badge a">A</span>むりせずパス（やめる）してOK。相手チームの番になります。</div></div>
+    </div>`,
+    note:'よくある質問だよ\nQ. ヒントは長くてもいい？→ A. ことば1つだけ。文章はNG！\nQ. カードの言葉そのものを言っていい？→ A. それはNG。ちがう言葉で連想してね。\nQ. 自信がないとき→ A. むりせずパスもOK。相手チームの番になります。' },
+
+  /* 10 */ { type:'divider', accent:'blue', icon:'live_help', jp:'質問タイム', en:'any questions?',
+    sub:'気になることはある？',
+    note:'ここまでで、質問がある人はいるかな？\nマイクON か チャットで教えてね！' },
+
+  /* 11 */ { type:'divider', accent:'coral', icon:'how_to_reg', jp:'参加確認', en:"let's check",
+    sub:'チャットで教えてね',
+    note:'やってみたい人〜？\n「①参加」「②見学」「③その他」を、チャットで教えてね！' },
+
+  /* 12 */ { type:'divider', accent:'teal', solid:true, icon:'rocket_launch', jp:'＼ ゲームスタート ／', en:'game start',
+    sub:'まずはチーム分けから！',
+    note:'それでは、ことば探偵スタート！\nまずはチーム分けと役割決めから。わからなくなったら、いつでも聞いてね' },
+
+  /* 13 */ { type:'divider', accent:'teal', icon:'groups', jp:'チーム発表', en:'teams',
+    sub:'自分の色と役割をチェック',
+    note:'チームと役割を発表するよ。\n自分の色（赤／青）と、役割（ヒント役／探す役）をたしかめてね！' },
+
+  /* 14 */ { type:'divider', accent:'coral', icon:'record_voice_over', jp:'ヒントタイム', en:'hint',
+    sub:'ことば1つ＋数字',
+    note:'ヒント役さん、味方カードを見て『ことば1つ＋数字』のヒントを考えよう。\n決まったら、チャットで送ってね！' },
+
+  /* 15 */ { type:'divider', accent:'blue', icon:'forum', jp:'相談タイム', en:'discussion',
+    sub:'どれが味方かな？',
+    note:'探す役さんは、ヒントからどれが味方かをチームで相談！\n意見を出し合って、選ぶカードを決めよう。' },
+
+  /* 16 */ { type:'divider', accent:'teal', solid:true, icon:'emoji_events', jp:'けっか', en:'result',
+    sub:'おつかれさま！',
+    note:'けっか発表！\nどっちのチームが先に味方を全部見つけられたかな？ 最後にひとことずつ、ふりかえってみよう。' },
+];
+
+/* ===== ウィンドウ間同期 ===== */
+const channel = ('BroadcastChannel' in window) ? new BroadcastChannel('kotoba_tantei_deck') : null;
+function send(msg){ if(channel) channel.postMessage(msg); try{ localStorage.setItem('ktt_msg', JSON.stringify({...msg,_t:Date.now()})); }catch(e){} }
+function onMsg(h){ if(channel) channel.onmessage=(e)=>h(e.data); window.addEventListener('storage',(e)=>{ if(e.key==='ktt_msg'&&e.newValue){ try{ h(JSON.parse(e.newValue)); }catch(err){} } }); }
+const isPresenter = new URLSearchParams(location.search).get('view')==='presenter';
+
+/* ===== レンダリング ===== */
+function slideHTML(s){
+  const acc = s.accent ? `accent-${s.accent}` : 'accent-teal';
+  if(s.type==='title'){
+    return `<section class="slide title-slide accent-teal">
+      <div class="title-ic"><span class="material-symbols-rounded">search</span></div>
+      <div class="title-jp">ことば探偵</div>
+      <div class="title-en">kotoba tantei</div>
+      <div class="title-tag">〜 ヒントのことばから、味方のカードを見つけ出せ 〜</div>
+      <div class="title-meta">
+        <span class="m"><span class="material-symbols-rounded">group</span>4人〜</span>
+        <span class="m"><span class="material-symbols-rounded">schedule</span>15〜30分</span>
+        <span class="m"><span class="material-symbols-rounded">forum</span>連想・相談ゲーム</span>
+      </div></section>`;
+  }
+  if(s.type==='divider'){
+    return `<section class="slide divider ${acc}${s.solid?' solid':''}">
+      <div class="d-ic"><span class="material-symbols-rounded">${s.icon}</span></div>
+      <div class="d-jp">${s.jp}</div>
+      <div class="d-en">${s.en}</div>
+      ${s.sub?`<div class="d-sub">${s.sub}</div>`:''}</section>`;
+  }
+  // content
+  return `<section class="slide ${acc}">
+    <div class="sec">${s.num?`<span class="sec__num">${s.num}</span>`:''}<span class="sec__jp">${s.section}</span><span class="sec__en">${s.sectionEn}</span></div>
+    <h1 class="headline">${s.headline}</h1>
+    <div class="body">${s.body||''}</div></section>`;
+}
+
+if(!isPresenter){
+  const slidesEl=document.getElementById('slides'), dotsEl=document.getElementById('dots'), counterEl=document.getElementById('counter');
+  let idx=0;
+  SLIDES.forEach((s)=>{ slidesEl.insertAdjacentHTML('beforeend', slideHTML(s)); const d=document.createElement('span'); d.className='dot'; dotsEl.appendChild(d); });
+  const slideEls=[...slidesEl.children], dotEls=[...dotsEl.children];
+  function render(){
+    slideEls.forEach((el,i)=>el.classList.toggle('active',i===idx));
+    dotEls.forEach((el,i)=>el.classList.toggle('on',i===idx));
+    counterEl.textContent=`${idx+1} / ${SLIDES.length}`;
+    document.getElementById('navPrev').style.visibility=idx===0?'hidden':'visible';
+    document.getElementById('navNext').style.visibility=idx===SLIDES.length-1?'hidden':'visible';
+  }
+  function goTo(n,b=true){ n=Math.max(0,Math.min(SLIDES.length-1,n)); if(n!==idx){ idx=n; render(); } if(b) send({t:'idx',i:idx}); }
+  const next=()=>goTo(idx+1), prev=()=>goTo(idx-1);
+  document.getElementById('navNext').onclick=next; document.getElementById('navPrev').onclick=prev;
+  document.addEventListener('keydown',(e)=>{
+    if(['ArrowRight','PageDown',' '].includes(e.key)){ e.preventDefault(); next(); }
+    else if(['ArrowLeft','PageUp'].includes(e.key)){ e.preventDefault(); prev(); }
+    else if(e.key==='Home'){ e.preventDefault(); goTo(0); }
+    else if(e.key==='End'){ e.preventDefault(); goTo(SLIDES.length-1); }
+    else if(e.key==='f'||e.key==='F'){ toggleFull(); }
+    else if(e.key==='p'||e.key==='P'){ openPresenter(); }
+  });
+  const stage=document.getElementById('stage');
+  function fit(){ const sc=Math.min(window.innerWidth/1280, window.innerHeight/720); stage.style.transform=`translate(-50%,-50%) scale(${sc})`; }
+  window.addEventListener('resize',fit); document.addEventListener('fullscreenchange',fit);
+  function toggleFull(){ if(!document.fullscreenElement) document.documentElement.requestFullscreen?.(); else document.exitFullscreen?.(); }
+  document.getElementById('btnFull').onclick=toggleFull;
+  function openPresenter(){ const url=new URL(location.href); url.searchParams.set('view','presenter'); url.hash=''; const w=window.open(url.toString(),'ktt_presenter','width=620,height=800'); if(!w) alert('発表者ノートのウィンドウがブロックされました。\nブラウザのポップアップを許可してから、もう一度お試しください。'); }
+  document.getElementById('btnPresenter').onclick=openPresenter;
+  onMsg((m)=>{ if(m.t==='goto') goTo(m.i,false); else if(m.t==='hello') send({t:'idx',i:idx}); });
+  fit(); render();
+}
+
+if(isPresenter){
+  document.title='発表者ノート — ことば探偵';
+  document.body.classList.add('presenter');
+  document.getElementById('deck').style.display='none';
+  document.getElementById('toolbar').style.display='none';
+  document.querySelector('.hint-help').style.display='none';
+  document.getElementById('presenter').style.display='block';
+  const $=(id)=>document.getElementById(id);
+  const elCount=$('pvCount'), elTitle=$('pvTitle'), elLead=$('pvLead'), elNote=$('pvNote'), elNext=$('pvNextTitle'), elConn=$('pvConn');
+  const btnCopy=$('pvCopy'), btnReset=$('pvReset'), btnPrev=$('pvPrev'), btnNext=$('pvNext');
+  let cur=0; const KEY=(i)=>'ktt_note_'+i;
+  function label(s){
+    if(s.type==='title') return 'ことば探偵（タイトル）';
+    if(s.type==='divider') return s.jp.replace(/[＼／]/g,'').trim()+'（区切り）';
+    return `${s.section}${s.num?' '+s.num:''} ／ ${s.sectionEn}`;
+  }
+  function plain(html){ const d=document.createElement('div'); d.innerHTML=html||''; d.querySelectorAll('rt').forEach(r=>r.remove()); return (d.textContent||'').replace(/\s+/g,' ').trim(); }
+  function titleOf(s){
+    if(s.type==='title') return 'ことば探偵';
+    if(s.type==='divider') return s.jp;
+    return plain(s.headline);
+  }
+  function show(i){
+    cur=Math.max(0,Math.min(SLIDES.length-1,i));
+    const s=SLIDES[cur];
+    elCount.textContent=`${cur+1} / ${SLIDES.length}`;
+    elTitle.textContent=titleOf(s);
+    elLead.textContent=label(s);
+    const saved=localStorage.getItem(KEY(cur));
+    elNote.value=(saved!==null)?saved:s.note;
+    btnCopy.classList.remove('done');
+    btnCopy.innerHTML='<span class="material-symbols-rounded">content_copy</span>チャットにコピー';
+    elNext.innerHTML=cur<SLIDES.length-1?`次のスライド → <b>${titleOf(SLIDES[cur+1])}</b>`:'<b>最後のスライドです</b>';
+    btnPrev.disabled=cur===0; btnNext.disabled=cur===SLIDES.length-1;
+  }
+  elNote.addEventListener('input',()=>{ try{ localStorage.setItem(KEY(cur),elNote.value); }catch(e){} });
+  async function copyText(t){ try{ await navigator.clipboard.writeText(t); return true; }catch(e){ try{ const ta=document.createElement('textarea'); ta.value=t; ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta); ta.focus(); ta.select(); const ok=document.execCommand('copy'); ta.remove(); return ok; }catch(e2){ return false; } } }
+  btnCopy.onclick=async()=>{
+    const ok=await copyText(elNote.value);
+    if(!ok){ elNote.focus(); elNote.select(); }
+    btnCopy.innerHTML=ok?'<span class="material-symbols-rounded">check</span>コピーしました！':'<span class="material-symbols-rounded">keyboard_command_key</span>選択したのでコピーしてください';
+    btnCopy.classList.toggle('done',ok);
+    setTimeout(()=>{ btnCopy.classList.remove('done'); btnCopy.innerHTML='<span class="material-symbols-rounded">content_copy</span>チャットにコピー'; },2200);
+  };
+  btnReset.onclick=()=>{ localStorage.removeItem(KEY(cur)); elNote.value=SLIDES[cur].note; };
+  function goto(i){ show(i); send({t:'goto',i:cur}); }
+  btnPrev.onclick=()=>goto(cur-1); btnNext.onclick=()=>goto(cur+1);
+  document.addEventListener('keydown',(e)=>{ if(e.target===elNote) return; if(e.key==='ArrowRight'||e.key===' '){ e.preventDefault(); goto(cur+1); } else if(e.key==='ArrowLeft'){ e.preventDefault(); goto(cur-1); } });
+  onMsg((m)=>{ if(m.t==='idx'){ elConn.textContent='スライド画面と接続中 ✓'; show(m.i); } });
+  show(0); send({t:'hello'}); setTimeout(()=>send({t:'hello'}),400);
+}
+</script>
+</body>
+</html>

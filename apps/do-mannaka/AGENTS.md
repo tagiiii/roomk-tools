@@ -1,4 +1,4 @@
-# いいセンいきまSHOW! 仕様書
+# ドまんなか 仕様書
 
 ## 目的・使用シーン
 数字で「いいセン」を狙うリアルタイム対戦パーティーゲーム。
@@ -6,7 +6,7 @@
 
 ## ファイル構成
 ```
-apps/iisen-show/
+apps/do-mannaka/
 └── index.html   # 単一ファイルで完結（Firebase Realtime Database使用）
 ```
 
@@ -41,7 +41,7 @@ TOP
 
 ## Firebase データ構造（Realtime Database）
 ```
-iisen_rooms/{roomCode}/
+domannaka_rooms/{roomCode}/
   ├── host:             string        # ホストのニックネーム
   ├── hostConnected:    boolean       # ホスト接続状態
   ├── hostDisconnectedAt: number|null # ホスト切断時刻
@@ -60,7 +60,7 @@ iisen_rooms/{roomCode}/
 ## 離脱時の挙動
 - **ホスト離脱**: `onDisconnect().update()` で `hostConnected=false` と `hostDisconnectedAt=ServerValue.TIMESTAMP` を保存。ゲストにはオーバーレイを表示し、2分TTL（`ORPHAN_TTL_MS`）超過後に期限切れルームとして削除を試みる
 - **ゲスト離脱**: `onDisconnect().remove()` でそのプレイヤーデータのみ削除
-- ホスト再接続時は `hostConnected=true` / `hostDisconnectedAt=null` に戻し、`sessionStorage: iisen_session` から復帰する
+- ホスト再接続時は `hostConnected=true` / `hostDisconnectedAt=null` に戻し、`sessionStorage: domannaka_session` から復帰する
 - TTL 判定は `.info/serverTimeOffset` を使ったサーバー推定時刻で行う
 
 ## 特有のルール・制約
