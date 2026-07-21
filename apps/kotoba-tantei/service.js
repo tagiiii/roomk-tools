@@ -8,7 +8,7 @@ import {
 import { auth, authReady, db } from "../shared/js/firebase-config.js";
 import { generateSessionId, shuffle } from "../shared/js/utils.js";
 
-export const ROOMS_COLLECTION = "codenames_rooms";
+export const ROOMS_COLLECTION = "kotobatantei_rooms";
 const ROOM_LIFETIME_HOURS = 3;
 const MAX_PLAYERS = 8;
 

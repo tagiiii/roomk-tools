@@ -5,7 +5,7 @@ service cloud.firestore {
     // ルールに match がないパスはデフォルトで全拒否される。
 
     // ことば探偵 — ルームコード共有型ゲーム
-    match /codenames_rooms/{roomId} {
+    match /kotobatantei_rooms/{roomId} {
       allow read: if true;
       allow create, update, delete: if request.auth != null;
     }

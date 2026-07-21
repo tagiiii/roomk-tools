@@ -23,7 +23,7 @@ roomK では「語彙を使う」より **「連想を言葉にする／相手�
 ## Firestoreデータ構造
 
 ```
-codenames_rooms/{roomId}
+kotobatantei_rooms/{roomId}
   - createdAt: Timestamp
   - expiresAt: Timestamp        // 3時間の失効判定に使用
   - gamePhase: "lobby" | "in_progress" | "finished"
@@ -85,7 +85,7 @@ codenames_rooms/{roomId}
 
 1. **探す役セーフ原則**: 観戦DOMには「探す役（guesser）が見てよいもの」だけを出す。未公開カードの `role` は DOM のどこにも出さない（CSSクラス・data-* 属性・title・aria-label・HTMLコメント含め一切）
 2. **完全分岐**: 観戦者はプレイヤー用コード経路（`restoreSession` / `ensureRoomSubscription` / `joinRoom` / transaction / プレイヤー用 `render()` ルーター / プレイヤー用イベントリスナー）に一切入らない。`?watch` パラメータが存在した時点で観戦モード確定とし、`initPlayerMode()` を丸ごとスキップする（値が不正でもプレイヤー画面へフォールバックせず、観戦用エラー画面で止める）
-3. **書き込みゼロ**: Firestore への書き込み（setDoc / updateDoc / deleteDoc / runTransaction、失効ルーム削除含む）を一切しない。`subscribeToRoomForSpectator()`（`doc()` + `onSnapshot` のみ）で購読する。sessionStorage（`codenames_session`）も読まない・書かない（観戦のセッションはURLそのもの）。共通初期化（firebase-config.js）に伴う匿名認証は許容する
+3. **書き込みゼロ**: Firestore への書き込み（setDoc / updateDoc / deleteDoc / runTransaction、失効ルーム削除含む）を一切しない。`subscribeToRoomForSpectator()`（`doc()` + `onSnapshot` のみ）で購読する。sessionStorage（`kotobatantei_session`）も読まない・書かない（観戦のセッションはURLそのもの）。共通初期化（firebase-config.js）に伴う匿名認証は許容する
 
 ### 入口3系統
 
@@ -133,12 +133,12 @@ roomK 共通の「学校・勉強・テストを避ける／恋愛・暴力・�
 ## 命名規則
 
 - CSS接頭辞: `.cn-`（BEM: `.cn-block__element`）
-- Firestore コレクション: `codenames_rooms`
-- セッション保存キー: `codenames_session`
+- Firestore コレクション: `kotobatantei_rooms`
+- セッション保存キー: `kotobatantei_session`
 
 ## 移植状況
 
-- [x] 単語セット移植（`src/data/wordSets.ts` → `apps/codenames/words.js`）
+- [x] 単語セット移植（`src/data/wordSets.ts` → `apps/kotoba-tantei/words.js`）
 - [x] ルーム作成・参加フロー
 - [x] ロビー（チーム・役割選択 + 開始条件バリデーション）
 - [x] ゲーム画面（5×5 カードグリッド）

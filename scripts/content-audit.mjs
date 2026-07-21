@@ -216,11 +216,11 @@ function collectKotobaAsobo() {
 const COVERED_APPS = [
   // 既存（A2 以前から抽出済み）
   'quiz', 'kotoba-shuffle', 'kanji-sagashi', 'kotoba-gacha', 'kotoba-relay', 'tatoe-gp',
-  'machigai-sagashi', 'hint-de-pinto', 'codenames', 'docchi', 'nitaku-board', 'minna-ranking',
+  'machigai-sagashi', 'kaburazu-hint', 'kotoba-tantei', 'docchi', 'nitaku-board', 'minna-ranking',
   'talk-card', 'otona-talk', 'checkout-card', 'tsuyomi-card', 'kimochi-map', 'bamen-card',
   'mirai-hikidashi', 'kotoba-asobo',
   // A2 で追加した12アプリ
-  'jitsuwa-game', 'iisen-show', 'ishin-denshin', 'word-wolf', 'ito', 'magire-eshi',
+  'jitsuwa-game', 'do-mannaka', 'ishin-denshin', 'word-wolf', 'tatoe-narabe', 'magire-eshi',
   'ikutsu-ieru', 'pittari-meter', 'uso-jisho', 'value-card', 'koedake-theater', 'kyoumi-sugoroku',
 ];
 
@@ -232,7 +232,9 @@ const NO_CONTENT_APPS = [
 ];
 
 // apps/ 配下に存在するがアプリではないディレクトリ。
-const NON_APP_DIRS = ['shared'];
+// ito / iisen-show / hint-de-pinto / codenames は旧URLからの自動移動スタブ（コンテンツなし）。
+// guide はスタッフ向け「ゲームえらび早見表」ページ（お題集を持たない静的な案内ページ）。
+const NON_APP_DIRS = ['shared', 'ito', 'iisen-show', 'hint-de-pinto', 'codenames', 'guide'];
 
 // 意図的重複 allowlist（C-4 で決着済み）:
 //   異なるゲーム間で日常語彙（「カレー」「うさぎ」など）が重複するのは正当。
@@ -342,18 +344,18 @@ function collectEntries() {
     answer: q.answer,
   })));
 
-  const hintSource = extractScript(read('apps/hint-de-pinto/index.html'));
-  const hintWords = evalArrayFromSource(hintSource, 'WORDS', 'apps/hint-de-pinto/index.html') || [];
-  hintWords.forEach((text, index) => rows.push(entry('hint-de-pinto', 'word', text, {
-    id: `hint-de-pinto:${index}`,
+  const hintSource = extractScript(read('apps/kaburazu-hint/index.html'));
+  const hintWords = evalArrayFromSource(hintSource, 'WORDS', 'apps/kaburazu-hint/index.html') || [];
+  hintWords.forEach((text, index) => rows.push(entry('kaburazu-hint', 'word', text, {
+    id: `kaburazu-hint:${index}`,
     question: text,
     answer: text,
   })));
 
-  const codenames = evalModule('apps/codenames/words.js').wordSets || [];
-  for (const set of codenames) {
-    (set.words || []).forEach((text, index) => rows.push(entry('codenames', set.id, text, {
-      id: `codenames:${set.id}:${index}`,
+  const kotobaTanteiSets = evalModule('apps/kotoba-tantei/words.js').wordSets || [];
+  for (const set of kotobaTanteiSets) {
+    (set.words || []).forEach((text, index) => rows.push(entry('kotoba-tantei', set.id, text, {
+      id: `kotoba-tantei:${set.id}:${index}`,
       question: text,
       answer: text,
     })));
@@ -441,11 +443,11 @@ function collectEntries() {
     id: `jitsuwa-game:${index}`,
   })));
 
-  // iisen-show: HTML 内 const QUESTIONS = [ '文字列', ... ]
-  const iisenSource = extractScript(read('apps/iisen-show/index.html'));
-  const iisenQuestions = evalArrayFromSource(iisenSource, 'QUESTIONS', 'apps/iisen-show/index.html') || [];
-  iisenQuestions.forEach((text, index) => rows.push(entry('iisen-show', 'question', text, {
-    id: `iisen-show:${index}`,
+  // do-mannaka: HTML 内 const QUESTIONS = [ '文字列', ... ]
+  const domannakaSource = extractScript(read('apps/do-mannaka/index.html'));
+  const domannakaQuestions = evalArrayFromSource(domannakaSource, 'QUESTIONS', 'apps/do-mannaka/index.html') || [];
+  domannakaQuestions.forEach((text, index) => rows.push(entry('do-mannaka', 'question', text, {
+    id: `do-mannaka:${index}`,
   })));
 
   // ishin-denshin: const topics = [ '文字列', ... ]
@@ -462,11 +464,11 @@ function collectEntries() {
     rows.push(entry('word-wolf', 'word', pair.wolf, { id: `word-wolf:${index}:wolf`, variant: 'wolf', pairIndex: index }));
   });
 
-  // ito: HTML 内 const THEMES = [ '文字列', ... ]
-  const itoSource = extractScript(read('apps/ito/index.html'));
-  const itoThemes = evalArrayFromSource(itoSource, 'THEMES', 'apps/ito/index.html') || [];
-  itoThemes.forEach((text, index) => rows.push(entry('ito', 'theme', text, {
-    id: `ito:${index}`,
+  // tatoe-narabe: HTML 内 const THEMES = [ '文字列', ... ]
+  const tatoeNarabeSource = extractScript(read('apps/tatoe-narabe/index.html'));
+  const tatoeNarabeThemes = evalArrayFromSource(tatoeNarabeSource, 'THEMES', 'apps/tatoe-narabe/index.html') || [];
+  tatoeNarabeThemes.forEach((text, index) => rows.push(entry('tatoe-narabe', 'theme', text, {
+    id: `tatoe-narabe:${index}`,
   })));
 
   // magire-eshi: HTML 内 const TOPICS = [ { w: お題, c: カテゴリ }, ... ]
@@ -599,7 +601,7 @@ const detectedKnownCodenames = known.filter((word) => {
   const normalized = normalize(word);
   return exactMatches.some((group) =>
     group.key === normalized &&
-    group.items.filter((item) => item.tool === 'codenames').length >= 2
+    group.items.filter((item) => item.tool === 'kotoba-tantei').length >= 2
   );
 });
 

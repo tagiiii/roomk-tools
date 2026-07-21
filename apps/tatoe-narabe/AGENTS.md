@@ -1,4 +1,4 @@
-# ito クモノイト 仕様書
+# たとえならべ 仕様書
 
 ## 目的・使用シーン
 
@@ -14,7 +14,7 @@ roomK では「正解を当てる」よりも、感じ方の違いを言葉に�
 ## Realtime Database パス
 
 ```
-ito_rooms/{roomCode}/
+tatoenarabe_rooms/{roomCode}/
 ```
 
 ## 画面・status
@@ -36,7 +36,7 @@ waiting → revealing → playing → result
 - ニックネームは最大8文字、同ルーム内重複NG
 - ホストは `players/{nick}/isHost` で識別
 - ホスト切断は `hostConnected` / `hostDisconnectedAt` と TTL で扱う
-- 再接続は `sessionStorage: ito_session` を使う
+- 再接続は `sessionStorage: tatoenarabe_session` を使う
 - タイマーや TTL 判定は `.info/serverTimeOffset` で補正したサーバー推定時刻を使う
 
 ## 特有のルール

@@ -23,7 +23,7 @@ roomk-tools/
 │   │       ├── utils.js
 │   │       └── firebase-config.js
 │   ├── talk-card/               # トークテーマカード
-│   ├── iisen-show/              # いいセンいきまSHOW!
+│   ├── do-mannaka/              # ドまんなか
 │   ├── checkin/                 # チェックインアプリ
 │   ├── vote/                    # 投票・集計アプリ
 │   ├── word-wolf/               # ワードウルフ
@@ -38,7 +38,7 @@ roomk-tools/
 
 | パターン | 使用DB | ファイル構成 | 採用アプリ |
 |---------|--------|------------|----------|
-| **単一ファイル** | Realtime Database | `index.html` のみ（CSS・JS インライン、共有 `rtdb-utils.js` は参照可） | iisen-show, word-wolf, name-change |
+| **単一ファイル** | Realtime Database | `index.html` のみ（CSS・JS インライン、共有 `rtdb-utils.js` は参照可） | do-mannaka, word-wolf, name-change |
 | **分割ファイル** | Firestore | `index.html` + `app.js`（+ 必要なら `style.css`） | checkin, vote |
 | **オフライン** | なし | `index.html` + `app.js` | talk-card |
 
@@ -50,6 +50,13 @@ roomk-tools/
 4. アプリ固有の仕様を `apps/{app-name}/AGENTS.md` に記載
 5. `apps/updates.json` の先頭に更新情報を追記（下記「更新情報」参照）
 6. 共通の「あそびかた／つかいかた」モーダル（`shared/js/howto.js`、下記参照）を組み込む
+7. `apps/guide/` の早見表（スタッフ向け「ゲームえらび早見表」）に1行追加
+
+### アプリ名のつけかた
+
+- 表示名・フォルダ名（URL）とも、実在のゲーム・番組・商品の名称やそのもじりは使わず、オリジナルの名前をつける（権利面の配慮。既存名の使用可否を個別に判断しない）
+- 遊びの動きがそのまま伝わる、ひらがな・カタカナ中心の短い名前にする（例: ピタハメ、おしつけずかん、かぶらずヒント）
+- 着想元の市販ゲームがある場合は、名前ではなく `updates.json` の紹介文と `apps/guide/`（スタッフ向け早見表）で「『◯◯』から着想」と記述的に紹介する。「Web版」「オンライン版」「無料版」等の表現は使わない
 
 ### 利用シーンタグ（ポータルの絞り込み）
 
@@ -257,7 +264,7 @@ Realtime Database を使う単一ファイルアプリは、Firebase compat SDK 
 |--------|--------|-----|
 | talk-card | `.tc-` | `.tc-header__title` |
 | word-wolf | `.ww-` | `.ww-header__icon` |
-| iisen-show | `.is-` | `.is-score__label` |
+| do-mannaka | `.is-` | `.is-score__label` |
 | name-change | `.nc-` | `.nc-panel__btn` |
 | jitsuwa-game | `.jitsuwa-` | `.jitsuwa-hero__sub` |
 | （新アプリ） | 2〜4文字 + `-` | — |
@@ -302,7 +309,7 @@ design-system.css のカラー変数・スペーシング変数を積極的に�
 | サービス | 無料枠 | 主な用途 |
 |---------|--------|---------|
 | Firestore | 1GB / 50,000読 / 20,000書 per日 | checkin, vote |
-| Realtime Database | 1GB / 10GB転送 per月 | iisen-show, word-wolf, name-change |
+| Realtime Database | 1GB / 10GB転送 per月 | do-mannaka, word-wolf, name-change |
 | Auth（匿名） | 無制限 | ユーザー識別 |
 
 ### Realtime Database パス命名規則
@@ -315,7 +322,7 @@ design-system.css のカラー変数・スペーシング変数を積極的に�
 
 | アプリ | パス |
 |--------|------|
-| iisen-show | `iisen_rooms/{roomCode}/` |
+| do-mannaka | `domannaka_rooms/{roomCode}/` |
 | word-wolf | `wordwolf_rooms/{roomCode}/` |
 | name-change | `namechange_rooms/{roomCode}/` |
 | （新アプリ例） | `newapp_rooms/{roomCode}/` |
@@ -362,7 +369,7 @@ HTTP リファラー制限済み:
 
 | DB | 桁数 | 生成方法 | 採用アプリ |
 |----|------|---------|----------|
-| Realtime Database | **6桁**英数字 | `RoomkRTDB.generateRoomCode()`（必要に応じてローカル alias） | iisen-show, word-wolf, name-change, jinro, ito |
+| Realtime Database | **6桁**英数字 | `RoomkRTDB.generateRoomCode()`（必要に応じてローカル alias） | do-mannaka, word-wolf, name-change, jinro, tatoe-narabe |
 | Firestore | **6桁**英数字 | `generateSessionId()`（utils.js） | checkin, vote |
 
 除外文字（紛らわしいもの）: `0`, `O`, `I`, `1` など
@@ -560,7 +567,7 @@ import { escapeHtml } from '../shared/js/utils.js';
 | 人数 | 適用アプリ |
 |------|----------|
 | 2人以上 | name-change |
-| 3人以上 | iisen-show, word-wolf |
+| 3人以上 | do-mannaka, word-wolf |
 | 制限なし | talk-card, checkin, vote |
 
 ### 選択肢・カードの番号付け
@@ -580,7 +587,7 @@ const NUMBERS = ['①', '②', '③', '④', '⑤'];
 #### 適用する画面
 
 - クイズの選択肢（quiz, kyoumi-sugoroku など）
-- ホストが複数のお題から選ぶカード（iisen-show, tatoe-gp, jitsuwa-game, ishin-denshin など）
+- ホストが複数のお題から選ぶカード（do-mannaka, tatoe-gp, jitsuwa-game, ishin-denshin など）
 - 「自由に話す」など特殊扱いの選択肢には番号を付けない
 
 #### マークアップとスタイル

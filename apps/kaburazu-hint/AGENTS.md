@@ -1,4 +1,4 @@
-# ヒントでピント 仕様書
+# かぶらずヒント 仕様書
 
 ## 目的・使用シーン
 1人の回答者にお題を当ててもらうため、他の全員が1語ずつヒントを出す協力型ワードゲーム。
@@ -10,7 +10,7 @@
 
 ## ファイル構成
 ```
-apps/hint-de-pinto/
+apps/kaburazu-hint/
 ├── AGENTS.md    # この仕様書
 └── index.html   # 単一ファイルで完結（Firebase Realtime Database 使用）
 ```
@@ -91,7 +91,7 @@ document.title・トースト・aria-label にお題を入れない。ニック�
 | finished | 全ラウンド振り返り + スコアサマリー。「TOPにもどる」のみ | 操作ボタン |
 
 ### セッション・復帰
-- 入室成功後に `hdp_session` へ `{ nickname: null, roomCode, role: 'spectator' }` を保存
+- 入室成功後に `kaburazuhint_session` へ `{ nickname: null, roomCode, role: 'spectator' }` を保存
 - **watch 入口では起動時に既存セッションを破棄**（`clearSession()`）: 無効な `?watch` だったとき、
   次のリロードで別ルームの host/guest セッションが復活しないように
 - `tryReconnect()` の spectator 分岐: ルーム存在 + `isRoomExpired` チェックのみ（players 存在チェックはスキップ）。
@@ -175,7 +175,7 @@ waiting → clue-input → clue-review → answer → judge → result
 
 ## Firebase データ構造（Realtime Database）
 ```
-hintpinto_rooms/{roomCode}/
+kaburazuhint_rooms/{roomCode}/
   ├── host:                string          # ホストのニックネーム
   ├── hostConnected:       boolean         # 切断検知用
   ├── hostDisconnectedAt:  number | null   # 切断時のタイムスタンプ（ms）
@@ -249,7 +249,7 @@ roomRef.on('value', snap => {
 ### sessionStorage による再接続
 ```js
 // 保存（ルーム作成・参加時）
-sessionStorage.setItem('hdp_session', JSON.stringify({
+sessionStorage.setItem('kaburazuhint_session', JSON.stringify({
   roomCode: state.roomCode,
   nickname: state.nickname,
   isHost: state.role === 'host'
@@ -264,7 +264,7 @@ window.addEventListener('load', async () => {
 // ホストの場合は hostConnected を true に戻す
 
 // TOPに戻るときにクリア
-sessionStorage.removeItem('hdp_session');
+sessionStorage.removeItem('kaburazuhint_session');
 ```
 
 ### 離脱者のラウンドスキップ
@@ -297,13 +297,13 @@ sessionStorage.removeItem('hdp_session');
 ## UI / デザイン
 
 ### CSS 接頭辞
-`.hdp-`（hint-de-pinto の略）
+`.kbz-`（kaburazu-hint の略）
 
 ### 画面ごとの主要 UI
 
 #### screen-top
 - アイコン: `lightbulb` (Material Symbols)
-- タイトル: ヒントでピント
+- タイトル: かぶらずヒント
 - サブタイトル: 「ヒントを出してお題を当てよう！ でも被ったら消えちゃう！」
 - ボタン: ルームをつくる / ルームに参加する
 

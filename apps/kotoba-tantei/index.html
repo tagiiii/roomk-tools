@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ことば探偵 | roomK</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet" />
+  <link rel="stylesheet" href="../shared/css/design-system.css" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <header class="app-header">
+    <div class="container">
+      <div class="app-header__title">
+        <span class="material-symbols-rounded" aria-hidden="true" style="vertical-align:middle;font-size:22px;margin-right:6px">search</span>ことば探偵
+      </div>
+      <div class="app-header__subtitle">ヒントから言葉を見つける相談ゲーム</div>
+    </div>
+  </header>
+
+  <main class="container" style="padding-top: var(--space-lg); padding-bottom: var(--space-xl);">
+    <div id="app">
+      <div class="loading-overlay">
+        <div class="spinner"></div>
+        <p>読み込み中...</p>
+      </div>
+    </div>
+  </main>
+
+  <script type="module" src="app.js"></script>
+  <script src="../shared/js/howto.js"></script>
+  <script>
+    RoomkHowto.init({
+      title: 'あそびかた',
+      lead: 'ヒント役の出すヒントをたよりに、チームで相談しながら自分のチームのカードを見つけるゲーム。',
+      sections: [
+        { heading: 'はじめかた', items: [
+          'ホストが「ルームを作る」を押して、出てきたルームコードをみんなに伝える',
+          'ほかの人は「ルームに参加する」を押して、名前とコードを入れて「参加する」を押す',
+          'ホストが全員のチームと役割（ヒント役・探す役）を決めて「ゲーム開始」を押す',
+        ] },
+        { heading: 'すすめかた', items: [
+          'ヒント役は、自分のチームのカードにつながるヒントと枚数を入れて「ヒント送信」を押す',
+          '探す役は、ヒントに合いそうなカードをみんなで相談して選び、「開く」を押す',
+          'ちがうチームのカードや中立のカードを開くと、そこで相手の番になる。「ターンを終了（パス）」で番をわたすこともできる',
+          '自分のチームのカードを全部見つけたら勝ち。トラップカードを開くとその場で負け',
+        ] },
+        { heading: 'おわりかた', text: '結果画面でホストが「もう一度」を押すと同じメンバーで再戦できる。終わるときは「退出」を押す。' },
+        { heading: 'みんなにみせる画面', items: [
+          'TOPの「みんなにみせる画面」を押して、ルームコードを入れて「画面をひらく」を押す（ホストはロビーの「みんなにみせる画面をひらく」でもOK）',
+          'まだ開いていないカードの正解の色は映らない。画面共有するときはこの画面をうつすと、こたえを見せずにすすめられる',
+        ] },
+      ],
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>かぶらずヒント — 説明スライド</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@48,500,1,0" rel="stylesheet" />
+<style>
+  :root{
+    --navy:#1C3F5E; --teal:#2E7D8C; --cream:#F5F2EC; --surface:#FFFFFF;
+    --text:#1A1A1A; --muted:#5A6270; --border:#C4D2D8;
+    --success:#1F6E3C; --error:#B91C1C;
+    --amber1:#F59E0B; --amber2:#D97706;
+    --font: "Noto Sans JP", -apple-system, "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif;
+  }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  html,body{ height:100%; }
+  body{
+    font-family:var(--font); color:var(--text);
+    background:#0E2233;
+    overflow:hidden; -webkit-font-smoothing:antialiased;
+  }
+  .material-symbols-rounded{ font-family:"Material Symbols Rounded"; font-weight:normal; line-height:1; }
+
+  /* ===================== 発表（デッキ）画面 ===================== */
+  #deck{ position:fixed; inset:0; }
+  /* 16:9 固定ステージ。JSで画面に合わせて scale する */
+  #stage{
+    position:absolute; top:50%; left:50%;
+    width:1280px; height:720px;
+    transform-origin:center center;
+    background:
+      radial-gradient(1200px 700px at 85% -10%, #FDF3E0 0%, rgba(253,243,224,0) 55%),
+      linear-gradient(160deg, #FBF8F2 0%, #F2ECE0 100%);
+    border-radius:22px;
+    box-shadow:0 30px 80px rgba(0,0,0,0.45);
+    overflow:hidden;
+  }
+  .slide{
+    position:absolute; inset:0;
+    display:flex; flex-direction:column;
+    padding:64px 80px 86px;
+    opacity:0; visibility:hidden;
+    transition:opacity .35s ease, transform .35s ease;
+    transform:translateY(14px);
+  }
+  .slide.active{ opacity:1; visibility:visible; transform:none; }
+
+  .chip{
+    display:inline-flex; align-items:center; gap:8px; align-self:flex-start;
+    padding:9px 18px; border-radius:999px;
+    background:linear-gradient(135deg, var(--amber1), var(--amber2));
+    color:#fff; font-weight:700; font-size:21px; letter-spacing:.02em;
+    box-shadow:0 6px 16px rgba(217,119,6,.28);
+  }
+  .chip .material-symbols-rounded{ font-size:24px; }
+  .headline{
+    color:var(--navy); font-weight:900; font-size:60px; line-height:1.18;
+    margin-top:26px; letter-spacing:.01em; font-feature-settings:"palt";
+  }
+  .headline .hl{ color:var(--amber2); }
+  .lead{ color:var(--muted); font-size:28px; line-height:1.6; margin-top:18px; font-weight:500; }
+  .body{ margin-top:34px; flex:1; min-height:0; }
+
+  /* 箇条書き */
+  .points{ display:flex; flex-direction:column; gap:18px; }
+  .point{
+    display:flex; gap:18px; align-items:flex-start;
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:16px; padding:20px 24px; box-shadow:0 4px 14px rgba(28,63,94,.06);
+  }
+  .point__no{
+    flex:none; width:44px; height:44px; border-radius:50%;
+    background:#EEF3F8; color:var(--teal); font-weight:900; font-size:22px;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .point__no.amber{ background:#FDF0DC; color:var(--amber2); }
+  .point__t{ font-size:27px; font-weight:700; color:var(--navy); line-height:1.45; }
+  .point__d{ font-size:22px; color:var(--muted); margin-top:4px; line-height:1.5; }
+
+  /* 役割カード */
+  .roles{ display:grid; grid-template-columns:1fr 1fr; gap:26px; height:100%; }
+  .role{
+    background:var(--surface); border:2px solid var(--border); border-radius:20px;
+    padding:30px 30px; display:flex; flex-direction:column; gap:14px;
+    box-shadow:0 6px 18px rgba(28,63,94,.07);
+  }
+  .role.answerer{ border-color:#BBDDE8; background:linear-gradient(180deg,#F4FAFC,#fff); }
+  .role.hinter{ border-color:#F3D9A6; background:linear-gradient(180deg,#FFF9EF,#fff); }
+  .role__head{ display:flex; align-items:center; gap:14px; }
+  .role__ic{
+    width:60px; height:60px; border-radius:16px; display:flex; align-items:center; justify-content:center; color:#fff;
+  }
+  .role.answerer .role__ic{ background:linear-gradient(135deg,#2E7D8C,#1C3F5E); }
+  .role.hinter .role__ic{ background:linear-gradient(135deg,var(--amber1),var(--amber2)); }
+  .role__ic .material-symbols-rounded{ font-size:36px; }
+  .role__name{ font-size:30px; font-weight:900; color:var(--navy); }
+  .role__count{ font-size:20px; color:var(--muted); font-weight:700; }
+  .role__list{ list-style:none; display:flex; flex-direction:column; gap:12px; margin-top:4px; }
+  .role__list li{ font-size:23px; color:var(--text); line-height:1.45; display:flex; gap:12px; align-items:flex-start; }
+  .role__list .material-symbols-rounded{ font-size:26px; color:var(--teal); flex:none; margin-top:2px; }
+  .role.hinter .role__list .material-symbols-rounded{ color:var(--amber2); }
+
+  /* ヒントチップ（かぶり消し演出） */
+  .hintrow{ display:flex; flex-wrap:wrap; gap:18px; margin-top:8px; }
+  .hinttok{
+    position:relative; font-size:30px; font-weight:800; color:var(--navy);
+    background:var(--surface); border:2px solid var(--border); border-radius:16px;
+    padding:18px 28px; box-shadow:0 4px 12px rgba(28,63,94,.06);
+  }
+  .hinttok.keep{ border-color:var(--teal); background:#F1FAFB; }
+  .hinttok.gone{ color:var(--muted); border-color:#E7B4B4; background:#FCF1F1; text-decoration:line-through; opacity:.85; }
+  .hinttok .tag{
+    position:absolute; top:-14px; right:-10px; font-size:15px; font-weight:800; color:#fff;
+    padding:4px 10px; border-radius:999px;
+  }
+  .hinttok.gone .tag{ background:var(--error); }
+  .hinttok.keep .tag{ background:var(--teal); }
+  .hintnote{ font-size:23px; color:var(--muted); margin-top:26px; line-height:1.6; }
+  .hintnote b{ color:var(--amber2); }
+
+  /* お題プレビュー */
+  .stage-demo{ display:grid; grid-template-columns:1fr 1fr; gap:26px; height:100%; align-items:stretch; }
+  .demo-card{ background:var(--surface); border:1px solid var(--border); border-radius:18px; padding:26px 28px; display:flex; flex-direction:column; gap:12px; box-shadow:0 4px 14px rgba(28,63,94,.06); }
+  .demo-card .who{ font-size:21px; font-weight:700; color:var(--muted); display:flex; align-items:center; gap:10px; }
+  .demo-card .who .material-symbols-rounded{ font-size:24px; }
+  .odai-box{ flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; background:#EEF3F8; border-radius:14px; gap:8px; }
+  .odai-label{ font-size:18px; color:var(--muted); font-weight:700; }
+  .odai-text{ font-size:64px; font-weight:900; color:var(--navy); }
+  .secret-box{ flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; background:#1C3F5E; border-radius:14px; gap:12px; color:#fff; }
+  .secret-box .material-symbols-rounded{ font-size:54px; opacity:.9; }
+  .secret-box span{ font-size:22px; font-weight:700; opacity:.92; }
+
+  /* コツ */
+  .tips{ display:flex; flex-direction:column; gap:18px; }
+  .tip{ display:flex; gap:18px; align-items:flex-start; background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:20px 26px; box-shadow:0 4px 14px rgba(28,63,94,.06); }
+  .tip .material-symbols-rounded{ font-size:38px; flex:none; }
+  .tip.bad .material-symbols-rounded{ color:var(--error); }
+  .tip.good .material-symbols-rounded{ color:var(--success); }
+  .tip__t{ font-size:26px; font-weight:700; color:var(--navy); line-height:1.4; }
+  .tip__d{ font-size:21px; color:var(--muted); margin-top:4px; line-height:1.5; }
+
+  /* タイトル/締めスライドの中央寄せ */
+  .center{ align-items:center; justify-content:center; text-align:center; padding-bottom:86px; }
+  .center .chip{ align-self:center; }
+  .center .body{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; }
+  .bulb{
+    width:140px; height:140px; border-radius:36px; display:flex; align-items:center; justify-content:center;
+    background:linear-gradient(135deg,var(--amber1),var(--amber2)); color:#fff; margin-bottom:8px;
+    box-shadow:0 18px 40px rgba(217,119,6,.4);
+  }
+  .bulb .material-symbols-rounded{ font-size:84px; }
+  .center .headline{ font-size:66px; margin-top:30px; }
+  .center .lead{ font-size:29px; max-width:880px; }
+
+  /* フッター（ステージ内＝共有時に崩れない） */
+  .footer{
+    position:absolute; left:0; right:0; bottom:0; height:64px;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:0 36px; background:rgba(255,255,255,.55); border-top:1px solid rgba(196,210,216,.7);
+    backdrop-filter:blur(2px);
+  }
+  .brand{ display:flex; align-items:center; gap:10px; font-weight:800; color:var(--navy); font-size:20px; }
+  .brand .material-symbols-rounded{ color:var(--amber2); font-size:26px; }
+  .dots{ display:flex; gap:9px; }
+  .dot{ width:10px; height:10px; border-radius:50%; background:var(--border); transition:.25s; }
+  .dot.on{ background:var(--amber2); transform:scale(1.25); }
+  .counter{ font-size:19px; font-weight:800; color:var(--muted); font-variant-numeric:tabular-nums; }
+
+  /* ナビ矢印 */
+  .nav{
+    position:absolute; top:50%; transform:translateY(-50%); z-index:5;
+    width:58px; height:58px; border-radius:50%; border:none; cursor:pointer;
+    background:rgba(28,63,94,.12); color:var(--navy);
+    display:flex; align-items:center; justify-content:center; transition:.2s; opacity:.0;
+  }
+  #stage:hover .nav{ opacity:.55; }
+  .nav:hover{ opacity:1 !important; background:rgba(28,63,94,.22); }
+  .nav .material-symbols-rounded{ font-size:34px; }
+  .nav.prev{ left:18px; } .nav.next{ right:18px; }
+
+  /* 右上ツールバー（画面外＝共有しても気にならない最小限） */
+  .toolbar{
+    position:fixed; top:14px; right:16px; z-index:50; display:flex; gap:8px;
+    opacity:.16; transition:.2s;
+  }
+  .toolbar:hover{ opacity:1; }
+  .tbtn{
+    display:inline-flex; align-items:center; gap:7px; cursor:pointer;
+    background:rgba(255,255,255,.92); color:var(--navy); border:1px solid var(--border);
+    border-radius:999px; padding:9px 15px; font-family:var(--font); font-weight:700; font-size:14px;
+    box-shadow:0 4px 12px rgba(0,0,0,.18);
+  }
+  .tbtn:hover{ background:#fff; }
+  .tbtn .material-symbols-rounded{ font-size:19px; }
+  .hint-help{ position:fixed; bottom:12px; left:16px; z-index:50; color:rgba(255,255,255,.45); font-size:13px; }
+  .hint-help kbd{ background:rgba(255,255,255,.16); border-radius:5px; padding:1px 7px; font-family:var(--font); }
+
+  /* ===================== 発表者ビュー（別ウィンドウ） ===================== */
+  body.presenter{ background:#EEF1F4; overflow:auto; }
+  #presenter{ max-width:680px; margin:0 auto; padding:18px 20px 40px; }
+  .pv-warn{
+    background:#FDECEC; border:1px solid #F1B9B9; color:var(--error);
+    border-radius:12px; padding:12px 16px; font-size:14px; font-weight:700;
+    display:flex; align-items:center; gap:10px; margin-bottom:16px;
+  }
+  .pv-warn .material-symbols-rounded{ font-size:22px; }
+  .pv-top{ display:flex; align-items:baseline; justify-content:space-between; gap:12px; margin-bottom:6px; }
+  .pv-count{ font-size:14px; font-weight:800; color:var(--muted); font-variant-numeric:tabular-nums; }
+  .pv-title{ font-size:26px; font-weight:900; color:var(--navy); line-height:1.3; }
+  .pv-lead{ font-size:16px; color:var(--muted); margin-top:4px; line-height:1.5; }
+  .pv-card{ background:#fff; border:1px solid var(--border); border-radius:16px; padding:18px; margin-top:18px; box-shadow:0 4px 14px rgba(28,63,94,.06); }
+  .pv-card h3{ font-size:14px; font-weight:800; color:var(--teal); display:flex; align-items:center; gap:8px; margin-bottom:12px; }
+  .pv-card h3 .material-symbols-rounded{ font-size:18px; }
+  #pvNote{
+    width:100%; min-height:170px; resize:vertical; border:1px solid var(--border); border-radius:12px;
+    padding:14px 16px; font-family:var(--font); font-size:17px; line-height:1.7; color:var(--text);
+    background:#FBFCFD;
+  }
+  #pvNote:focus{ outline:none; border-color:var(--teal); box-shadow:0 0 0 3px rgba(46,125,140,.15); }
+  .pv-actions{ display:flex; gap:10px; margin-top:14px; align-items:center; }
+  .pv-copy{
+    flex:1; cursor:pointer; border:none; border-radius:12px; padding:15px; font-family:var(--font);
+    font-size:18px; font-weight:800; color:#fff; background:linear-gradient(135deg,var(--amber1),var(--amber2));
+    display:flex; align-items:center; justify-content:center; gap:10px; box-shadow:0 6px 16px rgba(217,119,6,.3);
+    transition:.15s;
+  }
+  .pv-copy:active{ transform:translateY(1px); }
+  .pv-copy.done{ background:linear-gradient(135deg,#2E9E5B,var(--success)); }
+  .pv-copy .material-symbols-rounded{ font-size:22px; }
+  .pv-reset{ cursor:pointer; border:1px solid var(--border); background:#fff; color:var(--muted); border-radius:12px; padding:15px 16px; font-family:var(--font); font-weight:700; font-size:14px; }
+  .pv-reset:hover{ background:#F5F7F9; }
+  .pv-nav{ display:flex; gap:10px; margin-top:18px; }
+  .pv-nav button{
+    flex:1; cursor:pointer; border:1px solid var(--border); background:#fff; color:var(--navy);
+    border-radius:12px; padding:14px; font-family:var(--font); font-weight:800; font-size:16px;
+    display:flex; align-items:center; justify-content:center; gap:8px;
+  }
+  .pv-nav button:hover{ background:#F5F7F9; }
+  .pv-nav button:disabled{ opacity:.4; cursor:default; }
+  .pv-nav .material-symbols-rounded{ font-size:20px; }
+  .pv-next{ margin-top:16px; font-size:14px; color:var(--muted); padding:0 4px; }
+  .pv-next b{ color:var(--navy); }
+  .pv-discon{ margin-top:14px; font-size:12px; color:var(--muted); text-align:center; }
+</style>
+</head>
+<body>
+
+<!-- ====================== 発表（デッキ） ====================== -->
+<div id="deck">
+  <div id="stage">
+    <button class="nav prev" id="navPrev" aria-label="前へ"><span class="material-symbols-rounded">chevron_left</span></button>
+    <button class="nav next" id="navNext" aria-label="次へ"><span class="material-symbols-rounded">chevron_right</span></button>
+    <div id="slides"></div>
+    <div class="footer">
+      <div class="brand"><span class="material-symbols-rounded">lightbulb</span>かぶらずヒント</div>
+      <div class="dots" id="dots"></div>
+      <div class="counter" id="counter">1 / 1</div>
+    </div>
+  </div>
+</div>
+
+<div class="toolbar" id="toolbar">
+  <button class="tbtn" id="btnPresenter"><span class="material-symbols-rounded">co_present</span>発表者ノート</button>
+  <button class="tbtn" id="btnFull"><span class="material-symbols-rounded">fullscreen</span>全画面</button>
+</div>
+<div class="hint-help">操作: <kbd>←</kbd> <kbd>→</kbd> めくる ・ <kbd>F</kbd> 全画面 ・ <kbd>P</kbd> 発表者ノート</div>
+
+<!-- ====================== 発表者ビュー ====================== -->
+<div id="presenter" style="display:none">
+  <div class="pv-warn"><span class="material-symbols-rounded">visibility_off</span>この画面は<strong>共有しないで</strong>ください（あなた専用のメモ）</div>
+  <div class="pv-top">
+    <div class="pv-count" id="pvCount">1 / 1</div>
+  </div>
+  <div class="pv-title" id="pvTitle"></div>
+  <div class="pv-lead" id="pvLead"></div>
+
+  <div class="pv-card">
+    <h3><span class="material-symbols-rounded">chat</span>Metalife チャット用メッセージ</h3>
+    <textarea id="pvNote" spellcheck="false"></textarea>
+    <div class="pv-actions">
+      <button class="pv-copy" id="pvCopy"><span class="material-symbols-rounded">content_copy</span>チャットにコピー</button>
+      <button class="pv-reset" id="pvReset">元に戻す</button>
+    </div>
+  </div>
+
+  <div class="pv-nav">
+    <button id="pvPrev"><span class="material-symbols-rounded">chevron_left</span>前のスライド</button>
+    <button id="pvNext">次のスライド<span class="material-symbols-rounded">chevron_right</span></button>
+  </div>
+  <div class="pv-next" id="pvNextTitle"></div>
+  <div class="pv-discon" id="pvConn">スライド画面と接続中…</div>
+</div>
+
+<script>
+/* ============================================================
+   スライド内容（本文HTML＋チャット用ノート）
+   ============================================================ */
+const SLIDES = [
+  {
+    label:'はじめに',
+    title:'みんなで協力！<br><span class="hl">ヒントを出してお題を当てよう</span>',
+    note:'これから「かぶらずヒント」をやります！\nひとりの“回答者”に、お題（ことば）を当ててもらう協力ゲームです。\nみんなはヒントを出す味方。でも…ヒントが他の人とかぶると消えちゃうのがポイント！',
+    cls:'center',
+    body:`
+      <div class="bulb"><span class="material-symbols-rounded">lightbulb</span></div>
+      <div class="lead">1人が当てる役（回答者）、ほかのみんなはヒントを出す味方。<br>でも、ヒントが<b style="color:var(--amber2)">かぶると消えちゃう</b>…！</div>`
+  },
+  {
+    label:'どんなゲーム？',
+    title:'1人の「回答者」に<br>お題を当ててもらおう',
+    note:'ゲームの目的はシンプル！\n・回答者は毎回ひとり\n・お題はひとつの“ことば”\n・みんなのヒントで、回答者に当ててもらう\n勝ち負けじゃなくて、チームでいくつ当てられるかに挑戦します',
+    body:`
+      <div class="points">
+        <div class="point"><div class="point__no">1</div><div><div class="point__t">回答者は毎回ひとり</div><div class="point__d">順番に交代していきます</div></div></div>
+        <div class="point"><div class="point__no">2</div><div><div class="point__t">お題は「ひとつの言葉」</div><div class="point__d">例：ねこ／カレー／にじ など</div></div></div>
+        <div class="point"><div class="point__no amber">3</div><div><div class="point__t">みんなのヒントで当ててもらう</div><div class="point__d">勝ち負けではなく、チームで何問当てられるかに挑戦！</div></div></div>
+      </div>`
+  },
+  {
+    label:'いちばん大事なルール',
+    title:'ヒントが「かぶる」と<br><span class="hl">消えちゃう！</span>',
+    note:'このゲームの一番のポイント\nヒントが他の人とかぶると、その言葉は消えてしまいます。\nだから、残るのは“自分だけが思いついた言葉”。\nみんなとちょっとちがう発想が、回答者を助けます！',
+    body:`
+      <div class="hintrow">
+        <div class="hinttok gone">ねこ<span class="tag">かぶり ✕</span></div>
+        <div class="hinttok gone">ねこ<span class="tag">かぶり ✕</span></div>
+        <div class="hinttok keep">にゃー<span class="tag">のこる</span></div>
+      </div>
+      <div class="hintnote">同じ言葉を2人が出すと、<b>どちらも消えます</b>。<br>残るのは“自分だけが思いついた言葉”。だから、みんなと少しずらすのがコツ。</div>`
+  },
+  {
+    label:'登場人物',
+    title:'役割は2つだけ',
+    note:'役割は2つだけ！\n①回答者（1人）… お題は見えません。最後に当てる人。\n②ヒントを出す人（残り全員）… お題が見えて、1語ヒントを出します。\n毎回、回答者は順番に交代していきます',
+    body:`
+      <div class="roles">
+        <div class="role answerer">
+          <div class="role__head"><div class="role__ic"><span class="material-symbols-rounded">person</span></div><div><div class="role__name">回答者</div><div class="role__count">毎回ひとり</div></div></div>
+          <ul class="role__list">
+            <li><span class="material-symbols-rounded">visibility_off</span>お題は見えない</li>
+            <li><span class="material-symbols-rounded">emoji_objects</span>残ったヒントを見て当てる</li>
+            <li><span class="material-symbols-rounded">autorenew</span>順番に交代する</li>
+          </ul>
+        </div>
+        <div class="role hinter">
+          <div class="role__head"><div class="role__ic"><span class="material-symbols-rounded">groups</span></div><div><div class="role__name">ヒントを出す人</div><div class="role__count">残り全員</div></div></div>
+          <ul class="role__list">
+            <li><span class="material-symbols-rounded">visibility</span>お題が見える</li>
+            <li><span class="material-symbols-rounded">edit</span>ヒントを「1語だけ」出す</li>
+            <li><span class="material-symbols-rounded">favorite</span>回答者を助ける味方</li>
+          </ul>
+        </div>
+      </div>`
+  },
+  {
+    label:'あそびかた ①',
+    title:'お題が出る<br><span class="hl">（回答者には見えない）</span>',
+    note:'【あそびかた①】お題が出ます。\nお題は、回答者“以外”のみんなにだけ表示されます。\n回答者の画面にはお題は出ません（ここがドキドキポイント！）。',
+    body:`
+      <div class="stage-demo">
+        <div class="demo-card">
+          <div class="who"><span class="material-symbols-rounded">groups</span>ヒントを出す人の画面</div>
+          <div class="odai-box"><div class="odai-label">お題</div><div class="odai-text">ねこ</div></div>
+        </div>
+        <div class="demo-card">
+          <div class="who"><span class="material-symbols-rounded">person</span>回答者の画面</div>
+          <div class="secret-box"><span class="material-symbols-rounded">lock</span><span>お題はナイショ</span></div>
+        </div>
+      </div>`
+  },
+  {
+    label:'あそびかた ②',
+    title:'ヒントを<br>「<span class="hl">1語だけ</span>」書く',
+    note:'【あそびかた②】ヒントを1語だけ書きます。\nお題を連想する“ことば”をひとつ。文章ではなく単語で！\n（例：ねこ → にゃー／ペット／ひげ／こたつ）\nお題そのものを書くのはナシですよ',
+    body:`
+      <div class="lead" style="margin-top:0">お題「ねこ」から思いつく言葉を、ひとつ。</div>
+      <div class="hintrow" style="margin-top:28px">
+        <div class="hinttok keep">にゃー</div>
+        <div class="hinttok keep">ペット</div>
+        <div class="hinttok keep">ひげ</div>
+        <div class="hinttok keep">こたつ</div>
+      </div>
+      <div class="hintnote"><b>単語でひとつだけ。</b>文章はNG、お題そのもの（=「ねこ」）もNG。</div>`
+  },
+  {
+    label:'あそびかた ③',
+    title:'かぶったヒントは<br><span class="hl">消える</span>',
+    note:'【あそびかた③】かぶったヒントは消えます。\n同じ言葉を2人以上が出すと、その言葉はぜんぶ消えます。\n「ネコ」と「ねこ」のような書き方のちがいも、同じ言葉あつかい。\n残ったヒントだけが、回答者にわたります。',
+    body:`
+      <div class="hintrow">
+        <div class="hinttok gone">ペット<span class="tag">2人 ✕</span></div>
+        <div class="hinttok gone">ペット<span class="tag">2人 ✕</span></div>
+        <div class="hinttok keep">にゃー<span class="tag">のこる</span></div>
+        <div class="hinttok keep">こたつ<span class="tag">のこる</span></div>
+      </div>
+      <div class="hintnote">「ネコ＝ねこ＝ﾈｺ」のような<b>書き方のちがいも同じあつかい</b>。<br>残ったヒントだけが回答者に見せられます。</div>`
+  },
+  {
+    label:'あそびかた ④',
+    title:'残ったヒントで<br><span class="hl">回答者が当てる</span>',
+    note:'【あそびかた④】回答者が当てます。\n残ったヒントを見て、お題を予想して答えます。\nわからないときは「パス」してもOK（その回はチームの不正解あつかい）。\n気軽にいきましょう〜',
+    body:`
+      <div class="points">
+        <div class="point"><div class="point__no amber"><span class="material-symbols-rounded" style="font-size:24px">visibility</span></div><div><div class="point__t">残ったヒントを見る</div><div class="point__d">例：「にゃー」「こたつ」…</div></div></div>
+        <div class="point"><div class="point__no amber"><span class="material-symbols-rounded" style="font-size:24px">lightbulb</span></div><div><div class="point__t">お題を予想して答える</div><div class="point__d">ひらめいたら回答！</div></div></div>
+        <div class="point"><div class="point__no"><span class="material-symbols-rounded" style="font-size:24px">skip_next</span></div><div><div class="point__t">わからなければ「パス」もOK</div><div class="point__d">パスはチームの不正解あつかい。気軽にどうぞ</div></div></div>
+      </div>`
+  },
+  {
+    label:'あそびかた ⑤',
+    title:'正解？ 不正解？<br><span class="hl">チームで記録</span>',
+    note:'【あそびかた⑤】結果を発表します。\n正解か不正解かをホストが判定して、チームの成績に記録。\n全員が1回ずつ回答者をやったら終了です。\n最後に「○問正解！」をみんなで見ましょう',
+    body:`
+      <div class="points">
+        <div class="point"><div class="point__no" style="background:#E6F2EA;color:var(--success)"><span class="material-symbols-rounded" style="font-size:26px">check</span></div><div><div class="point__t">正解／不正解を発表</div><div class="point__d">チームの成績として記録します</div></div></div>
+        <div class="point"><div class="point__no amber"><span class="material-symbols-rounded" style="font-size:24px">autorenew</span></div><div><div class="point__t">回答者を交代して次のラウンドへ</div><div class="point__d">全員が1回ずつ回答者をやったら終了</div></div></div>
+        <div class="point"><div class="point__no amber"><span class="material-symbols-rounded" style="font-size:24px">military_tech</span></div><div><div class="point__t">最後に「○問正解！」</div><div class="point__d">チームみんなのスコアをふりかえり</div></div></div>
+      </div>`
+  },
+  {
+    label:'うまくいくコツ',
+    title:'「<span class="hl">かぶらない、でも伝わる</span>」を狙う',
+    note:'うまくいくコツ\n・ありきたりすぎる言葉 → みんなとかぶって消えがち\n・マニアックすぎる言葉 → 回答者に伝わらない\nその“ちょうど真ん中”をねらうのがポイント。\n迷ったら、みんなと少しだけずらしてみよう！',
+    body:`
+      <div class="tips">
+        <div class="tip bad"><span class="material-symbols-rounded">group</span><div><div class="tip__t">ありきたりすぎると…かぶって消える</div><div class="tip__d">みんなが思いつく言葉は要注意</div></div></div>
+        <div class="tip bad"><span class="material-symbols-rounded">help</span><div><div class="tip__t">マニアックすぎると…伝わらない</div><div class="tip__d">回答者がピンとこないとヒントにならない</div></div></div>
+        <div class="tip good"><span class="material-symbols-rounded">target</span><div><div class="tip__t">「少しだけずらす」がちょうどいい</div><div class="tip__d">かぶらず、でも伝わるラインをねらおう</div></div></div>
+      </div>`
+  },
+  {
+    label:'はじめる前に',
+    title:'3人以上で、<br>コードを入れて参加',
+    note:'はじめる前のじゅんび\n・3人以上で遊べます\n・ホストが「ルームをつくる」→出てくるコードを共有\n・みんなはニックネーム＋コードを入れて参加\n・スマホでもPCでもOK！',
+    body:`
+      <div class="points">
+        <div class="point"><div class="point__no"><span class="material-symbols-rounded" style="font-size:24px">group</span></div><div><div class="point__t">3人以上で遊べます</div><div class="point__d">回答者1人＋ヒント2人以上でかぶりが生まれます</div></div></div>
+        <div class="point"><div class="point__no amber"><span class="material-symbols-rounded" style="font-size:24px">vpn_key</span></div><div><div class="point__t">ホストがルームを作り、コードを共有</div><div class="point__d">6文字のルームコードをチャットに貼ります</div></div></div>
+        <div class="point"><div class="point__no amber"><span class="material-symbols-rounded" style="font-size:24px">devices</span></div><div><div class="point__t">ニックネーム＋コードで参加</div><div class="point__d">スマホでもPCでもOK</div></div></div>
+      </div>`
+  },
+  {
+    label:'じゅんびOK',
+    title:'さあ、<span class="hl">やってみよう！</span>',
+    note:'それでは、やってみましょう！\nまずは1ラウンド、練習のつもりで気軽に。\nわからなくなったら、いつでもチャットや声で聞いてくださいね',
+    cls:'center',
+    body:`
+      <div class="bulb"><span class="material-symbols-rounded">rocket_launch</span></div>
+      <div class="lead">まずは1ラウンド、練習でやってみよう。<br>わからなくなったら、<b style="color:var(--amber2)">いつでも聞いてね</b>。</div>`
+  }
+];
+
+/* ============================================================
+   共通：ウィンドウ間の同期
+   ============================================================ */
+const CH_NAME = 'kaburazuhint_deck';
+const channel = ('BroadcastChannel' in window) ? new BroadcastChannel(CH_NAME) : null;
+function send(msg){
+  if(channel) channel.postMessage(msg);
+  try{ localStorage.setItem('kbz_msg', JSON.stringify({...msg, _t:Date.now()})); }catch(e){}
+}
+function onMsg(handler){
+  if(channel) channel.onmessage = (e)=>handler(e.data);
+  window.addEventListener('storage', (e)=>{
+    if(e.key==='kbz_msg' && e.newValue){ try{ handler(JSON.parse(e.newValue)); }catch(err){} }
+  });
+}
+
+const isPresenter = new URLSearchParams(location.search).get('view') === 'presenter';
+
+/* ============================================================
+   発表（デッキ）側
+   ============================================================ */
+if(!isPresenter){
+  document.title = 'かぶらずヒント — 説明スライド';
+  const slidesEl = document.getElementById('slides');
+  const dotsEl = document.getElementById('dots');
+  const counterEl = document.getElementById('counter');
+  let idx = 0;
+
+  SLIDES.forEach((s, i)=>{
+    const el = document.createElement('section');
+    el.className = 'slide' + (s.cls ? ' '+s.cls : '');
+    el.innerHTML = `<div class="chip">${escapeHtml(s.label)}</div>
+      <h1 class="headline">${s.title}</h1>
+      <div class="body">${s.body||''}</div>`;
+    slidesEl.appendChild(el);
+    const d = document.createElement('span'); d.className='dot'; dotsEl.appendChild(d);
+  });
+  const slideEls = [...slidesEl.children];
+  const dotEls = [...dotsEl.children];
+
+  function render(){
+    slideEls.forEach((el,i)=> el.classList.toggle('active', i===idx));
+    dotEls.forEach((el,i)=> el.classList.toggle('on', i===idx));
+    counterEl.textContent = `${idx+1} / ${SLIDES.length}`;
+    document.getElementById('navPrev').style.visibility = idx===0 ? 'hidden':'visible';
+    document.getElementById('navNext').style.visibility = idx===SLIDES.length-1 ? 'hidden':'visible';
+  }
+  function goTo(n, broadcast=true){
+    n = Math.max(0, Math.min(SLIDES.length-1, n));
+    if(n===idx){ if(broadcast) send({t:'idx', i:idx}); return; }
+    idx = n; render();
+    if(broadcast) send({t:'idx', i:idx});
+  }
+  const next = ()=>goTo(idx+1);
+  const prev = ()=>goTo(idx-1);
+
+  document.getElementById('navNext').onclick = next;
+  document.getElementById('navPrev').onclick = prev;
+
+  document.addEventListener('keydown', (e)=>{
+    if(e.key==='ArrowRight' || e.key==='PageDown' || e.key===' '){ e.preventDefault(); next(); }
+    else if(e.key==='ArrowLeft' || e.key==='PageUp'){ e.preventDefault(); prev(); }
+    else if(e.key==='Home'){ e.preventDefault(); goTo(0); }
+    else if(e.key==='End'){ e.preventDefault(); goTo(SLIDES.length-1); }
+    else if(e.key==='f' || e.key==='F'){ toggleFull(); }
+    else if(e.key==='p' || e.key==='P'){ openPresenter(); }
+  });
+
+  // ステージのスケーリング（16:9を画面にフィット）
+  const stage = document.getElementById('stage');
+  function fit(){
+    const pad = 0;
+    const sc = Math.min((window.innerWidth - pad)/1280, (window.innerHeight - pad)/720);
+    stage.style.transform = `translate(-50%,-50%) scale(${sc})`;
+  }
+  window.addEventListener('resize', fit);
+  document.addEventListener('fullscreenchange', fit);
+
+  function toggleFull(){
+    if(!document.fullscreenElement){ document.documentElement.requestFullscreen?.(); }
+    else { document.exitFullscreen?.(); }
+  }
+  document.getElementById('btnFull').onclick = toggleFull;
+
+  function openPresenter(){
+    const url = new URL(location.href); url.searchParams.set('view','presenter'); url.hash='';
+    const w = window.open(url.toString(), 'kbz_presenter', 'width=620,height=780');
+    if(!w){ alert('発表者ノートのウィンドウがブロックされました。\nブラウザのポップアップを許可してから、もう一度お試しください。'); return; }
+  }
+  document.getElementById('btnPresenter').onclick = openPresenter;
+
+  // 発表者ビューからの操作を受信
+  onMsg((m)=>{
+    if(m.t==='goto') goTo(m.i, false);
+    else if(m.t==='hello') send({t:'idx', i:idx});  // 現在地を返す
+  });
+
+  fit(); render();
+}
+
+/* ============================================================
+   発表者ビュー側
+   ============================================================ */
+if(isPresenter){
+  document.title = '発表者ノート — かぶらずヒント';
+  document.body.classList.add('presenter');
+  document.getElementById('deck').style.display = 'none';
+  document.getElementById('toolbar').style.display = 'none';
+  document.querySelector('.hint-help').style.display = 'none';
+  document.getElementById('presenter').style.display = 'block';
+
+  const elCount = document.getElementById('pvCount');
+  const elTitle = document.getElementById('pvTitle');
+  const elLead  = document.getElementById('pvLead');
+  const elNote  = document.getElementById('pvNote');
+  const elNext  = document.getElementById('pvNextTitle');
+  const elConn  = document.getElementById('pvConn');
+  const btnCopy = document.getElementById('pvCopy');
+  const btnReset= document.getElementById('pvReset');
+  const btnPrev = document.getElementById('pvPrev');
+  const btnNext = document.getElementById('pvNext');
+  let cur = 0;
+  const NOTE_KEY = (i)=>'kbz_note_'+i;
+
+  function plain(html){ const d=document.createElement('div'); d.innerHTML=html; return (d.textContent||'').replace(/\s+/g,' ').trim(); }
+
+  function show(i){
+    cur = Math.max(0, Math.min(SLIDES.length-1, i));
+    const s = SLIDES[cur];
+    elCount.textContent = `${cur+1} / ${SLIDES.length}`;
+    elTitle.textContent = plain(s.title);
+    elLead.textContent = `［${s.label}］`;
+    const saved = localStorage.getItem(NOTE_KEY(cur));
+    elNote.value = (saved!==null) ? saved : s.note;
+    btnCopy.classList.remove('done');
+    btnCopy.innerHTML = '<span class="material-symbols-rounded">content_copy</span>チャットにコピー';
+    elNext.innerHTML = cur < SLIDES.length-1 ? `次のスライド → <b>${escapeHtml(plain(SLIDES[cur+1].title))}</b>` : '<b>最後のスライドです</b>';
+    btnPrev.disabled = cur===0;
+    btnNext.disabled = cur===SLIDES.length-1;
+  }
+
+  // ノート編集を保存
+  elNote.addEventListener('input', ()=>{ try{ localStorage.setItem(NOTE_KEY(cur), elNote.value); }catch(e){} });
+
+  // コピー（クリップボードAPI → 失敗時はフォールバック）
+  async function copyText(t){
+    try{ await navigator.clipboard.writeText(t); return true; }
+    catch(e){
+      try{
+        const ta=document.createElement('textarea'); ta.value=t;
+        ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta);
+        ta.focus(); ta.select(); const ok=document.execCommand('copy'); ta.remove(); return ok;
+      }catch(e2){ return false; }
+    }
+  }
+  btnCopy.onclick = async ()=>{
+    const ok = await copyText(elNote.value);
+    if(!ok){ elNote.focus(); elNote.select(); }   // 失敗時は全選択して Cmd/Ctrl+C で拾えるように
+    btnCopy.innerHTML = ok
+      ? '<span class="material-symbols-rounded">check</span>コピーしました！'
+      : '<span class="material-symbols-rounded">keyboard_command_key</span>選択したのでコピーしてください';
+    btnCopy.classList.toggle('done', ok);
+    setTimeout(()=>{ btnCopy.classList.remove('done'); btnCopy.innerHTML='<span class="material-symbols-rounded">content_copy</span>チャットにコピー'; }, 2200);
+  };
+  btnReset.onclick = ()=>{ localStorage.removeItem(NOTE_KEY(cur)); elNote.value = SLIDES[cur].note; };
+
+  function goto(i){ show(i); send({t:'goto', i:cur}); }
+  btnPrev.onclick = ()=>goto(cur-1);
+  btnNext.onclick = ()=>goto(cur+1);
+  document.addEventListener('keydown',(e)=>{
+    if(e.target===elNote) return;
+    if(e.key==='ArrowRight'||e.key===' '){ e.preventDefault(); goto(cur+1); }
+    else if(e.key==='ArrowLeft'){ e.preventDefault(); goto(cur-1); }
+  });
+
+  // デッキ側の現在地を受信
+  onMsg((m)=>{ if(m.t==='idx'){ elConn.textContent='スライド画面と接続中 ✓'; show(m.i); } });
+
+  show(0);
+  send({t:'hello'});           // 開いた直後にデッキへ現在地を問い合わせ
+  setTimeout(()=>send({t:'hello'}), 400);
+}
+
+/* ============================================================ */
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+</script>
+</body>
+</html>
