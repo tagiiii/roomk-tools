@@ -1648,12 +1648,12 @@
       topListeners: [],
       roundRef: null,
       roundListeners: [],
+      roundGen: 0,          // 購読世代。旧世代コールバック無効化用
       countdownTimer: null,
       timebarTimer: null,
       endTimer: null,       // ホスト: endsAt+2秒での自動終了
       autoDeleteTimer: null,
       orphanTimer: null,
-      feedShown: {},        // フィード重複防止
       roundBrokenShown: false,
     };
 
@@ -1894,14 +1894,24 @@
 
     function subscribeRound(n) {
       stopRoundListeners();
+      const gen = net.roundGen;
       net.roundNo = n;
       net.roundRef = net.roomRef.child(`rounds/${n}`);
       const add = (path, cb) => {
         const r = net.roundRef.child(path);
-        const h = r.on('value', (s) => cb(s.val()));
+        const h = r.on('value', (s) => { if (gen !== net.roundGen) return; cb(s.val()); });
         net.roundListeners.push([r, h]);
       };
-      add('attemptId', (v) => { net.attemptId = v; sync(); });
+      add('attemptId', (v) => {
+        // やりなおし（restartRound）で attemptId が変わったら同一ラウンドを再購読する。
+        // 変更のないノード（puzzle 等）は再送されないため、手動クリアだけでは復元できない。
+        if (net.attemptId != null && v != null && v !== net.attemptId) {
+          stopRoundTimers();
+          subscribeRound(n);
+          return;
+        }
+        net.attemptId = v; sync();
+      });
       add('puzzle', (v) => { net.puzzle = v; sync(); });
       add('startAt', (v) => { net.startAt = v == null ? null : Number(v); sync(); });
       add('endsAt', (v) => { net.endsAt = v == null ? null : Number(v); scheduleHostEnd(); });
@@ -1911,9 +1921,17 @@
       add('finishes', (v) => { net.finishes = v || {}; onFinishes(); });
     }
     function stopRoundListeners() {
+      // 世代を進めて、off 後にキューへ残った旧コールバックを無効化する
+      net.roundGen++;
       for (const [r, h] of net.roundListeners) { try { r.off('value', h); } catch (_) {} }
       net.roundListeners = [];
       net.roundRef = null;
+      // 購読なし＝信用できる値なし。ラウンドキャッシュを必ずリセットする
+      //（分割購読では rounds=null の null イベントが届く前に off されるため、
+      //  リセットしないと前ゲームの finishes 等が残留しフィードを汚染する）
+      net.attemptId = null; net.puzzle = null; net.startAt = null; net.endsAt = null;
+      net.closedAt = null; net.participants = {}; net.finishes = {}; net.resultOrder = null;
+      net.loadedKey = null; net.myFinished = false;
     }
 
     // ═════════ 画面同期 ═════════
@@ -1994,14 +2012,18 @@
       state.mode = 'room';
       overlay('overlayRoundBroken', false);
       if (!net.puzzle || net.attemptId == null || net.startAt == null) {
-        // まだ現ラウンドのノードが届いていない
+        // まだ現ラウンドのノードが届いていない。旧盤面を見せないよう不透明カバーで隠す
+        //（到着後の新規マウントで updateCover が正規のカウントダウンに上書きする）
         if (state.screen !== 'puzzle') { applyPuzzleChrome(); showScreen('puzzle'); }
+        el('roomCover').hidden = false;
+        el('roomCoverCount').textContent = '';
+        renderFeed();
         return;
       }
       // formatVersion ガード
       if (Number(net.puzzle.formatVersion) !== SUPPORTED_FORMAT_VERSION) {
         showScreen('puzzle');
-        el('roomMsg').textContent = 'あたらしいバージョンがあるよ。さいどくみこみしてね';
+        setRoomMsg('あたらしいバージョンがあるよ。さいどくみこみしてね');
         el('roomCover').hidden = true;
         return;
       }
@@ -2010,12 +2032,11 @@
       if (fresh) {
         net.loadedKey = key;
         net.myFinished = false;
-        net.feedShown = {};
         state.mode = 'room';
         applyPuzzleChrome();
         showScreen('puzzle');
         el('puzzleId').textContent = `ラウンド ${net.currentRound} / ${net.settings ? net.settings.totalRounds : '?'}`;
-        el('roomMsg').textContent = '';
+        setRoomMsg('');
         el('roomFeed').innerHTML = '';
         // 同期的に mount する（requestAnimationFrame はバックグラウンドタブで止まり、
         // タブを切り替えていると盤面が出ないため）。showScreen で display:block になった直後の
@@ -2071,25 +2092,42 @@
       net.timebarTimer = setInterval(tick, 500);
     }
 
+    // roomMsg はフィード由来（kind='feed'）とそれ以外（バージョン警告等）を data 属性で区別し、
+    // フィード側の再描画が警告文を消さないようにする
+    function setRoomMsg(text, kind) {
+      const msg = el('roomMsg');
+      msg.textContent = text;
+      if (kind) msg.dataset.kind = kind; else delete msg.dataset.kind;
+    }
+
     function renderFeed() {
-      // finishes から「○○さん ピタハメ！」を控えめに（重複防止）
+      // finishes とのリコンサイル描画（追記専用は禁止: 前ゲームの stale 表示が残留するため）。
+      // 項目は data-nick で突合せ、finishes に無い項目は除去・重複は1件に正規化・新規だけ追加する
       const participants = net.participants || {};
       const finishes = net.finishes || {};
+      const feed = el('roomFeed');
+      const shown = new Set();
+      Array.from(feed.querySelectorAll('.ph-feed__item')).forEach((node) => {
+        const nick = node.dataset.nick;
+        if (nick == null || !Object.prototype.hasOwnProperty.call(finishes, nick) || shown.has(nick)) {
+          node.remove();
+          return;
+        }
+        shown.add(nick);
+      });
       Object.keys(finishes).forEach((nick) => {
-        if (net.feedShown[nick]) return;
-        net.feedShown[nick] = true;
+        if (shown.has(nick)) return;
         const item = document.createElement('div');
         item.className = 'ph-feed__item';
-        item.innerHTML = `${esc(nick)}さん ピタハメ！`;
-        el('roomFeed').appendChild(item);
+        item.dataset.nick = nick;
+        item.textContent = `${nick}さん ピタハメ！`;
+        feed.appendChild(item);
       });
       const total = Object.keys(participants).length;
       const done = Object.keys(finishes).filter((n) => participants[n]).length;
-      if (total > 0 && done >= total) {
-        el('roomMsg').textContent = 'ぜんいんピタハメ！';
-      } else if (net.myFinished) {
-        el('roomMsg').textContent = 'ピタハメ！ みんなを まってるよ。';
-      }
+      if (total > 0 && done >= total) setRoomMsg('ぜんいんピタハメ！', 'feed');
+      else if (net.myFinished) setRoomMsg('ピタハメ！ みんなを まってるよ。', 'feed');
+      else if (el('roomMsg').dataset.kind === 'feed') setRoomMsg('');
     }
 
     function onFinishes() {
@@ -2098,6 +2136,10 @@
 
     // ── 完成登録（ローカル完成 → ルーム全体 transaction）──
     async function onLocalComplete(completedAt) {
+      // 購読切替中の遅延完了（旧盤面での完成）や results 遷移後の完成（ドラッグ中に
+      // ラウンドが終わった等）を無視する。ラウンド進行中で、現ラウンドと盤面の対応が
+      // 取れているときだけ受け付ける
+      if (net.status !== 'round' || net.attemptId == null || net.loadedKey !== boardKey()) return;
       net.myFinished = true;
       saveBoard();
       renderFeed();
@@ -2123,15 +2165,24 @@
     }
 
     // ── ラウンド終了（ルーム全体 transaction）──
-    async function endRound(reason) {
+    async function endRound(reason, expectedRound, expectedAttempt) {
       if (net.role !== 'host' || !net.roomRef) return;
-      const roundNo = net.currentRound;
+      const roundNo = expectedRound != null ? expectedRound : net.currentRound;
+      const attemptId = expectedAttempt !== undefined ? expectedAttempt : net.attemptId;
       try {
         await roomTxn((room) => {
           if (!room || room.status !== 'round') return;
           if (Number(room.currentRound) !== roundNo) return;
           const round = room.rounds && room.rounds[roundNo];
           if (!round) return;
+          // やりなおし後に発火した旧タイマー等が新しい試行を閉じないよう、attempt を照合する
+          if (attemptId == null || round.attemptId !== attemptId) return;
+          if (reason === 'all_done') {
+            // UI キャッシュではなくサーバ値で「全員完成」を再検証する（空集合は不成立）
+            const fin = round.finishes || {};
+            const names = Object.keys(round.participants || {});
+            if (names.length === 0 || !names.every((n) => fin[n])) return;
+          }
           const order = computeResultOrder(round.finishes || {}, Number(round.startAt), Number(round.endsAt));
           round.closedAt = now();
           round.resultOrder = order;
@@ -2146,15 +2197,17 @@
     function scheduleHostEnd() {
       if (net.role !== 'host') return;
       if (net.endTimer) { clearTimeout(net.endTimer); net.endTimer = null; }
-      if (net.status !== 'round' || net.endsAt == null) return;
+      if (net.status !== 'round' || net.endsAt == null || net.attemptId == null) return;
+      const expectedRound = net.currentRound;
+      const expectedAttempt = net.attemptId;
       const delay = Math.max(0, net.endsAt + 2000 - now());
-      net.endTimer = setTimeout(() => { net.endTimer = null; endRound('timeup'); }, delay);
+      net.endTimer = setTimeout(() => { net.endTimer = null; endRound('timeup', expectedRound, expectedAttempt); }, delay);
     }
     function maybeHostEndOnAllDone() {
       if (net.role !== 'host' || net.status !== 'round') return;
       const total = Object.keys(net.participants || {}).length;
       const done = Object.keys(net.finishes || {}).filter((n) => net.participants[n]).length;
-      if (total > 0 && done >= total) endRound('all_done');
+      if (total > 0 && done >= total) endRound('all_done', net.currentRound, net.attemptId);
     }
 
     // ── ラウンド開始（ルーム全体 transaction）──
