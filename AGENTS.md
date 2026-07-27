@@ -17,20 +17,44 @@ roomk-tools/
 ├── apps/                        # GitHub Pages の配信ルート（./apps をデプロイ）
 │   ├── index.html               # ツール一覧ポータル
 │   ├── updates.json             # 更新情報の正本（ポータルが描画）
+│   ├── guide/                   # スタッフ向け「ゲームえらび早見表」
 │   ├── shared/                  # 全アプリ共通モジュール
 │   │   ├── css/design-system.css
 │   │   └── js/
-│   │       ├── utils.js
+│   │       ├── utils.js         # ESモジュール（Firestore/オフラインアプリ用）
+│   │       ├── rtdb-utils.js    # 通常スクリプト（RTDB 単一ファイルアプリ用）
+│   │       ├── howto.js         # 通常スクリプト（あそびかたモーダル・全アプリ）
 │   │       └── firebase-config.js
-│   ├── talk-card/               # トークテーマカード
-│   ├── do-mannaka/              # ドまんなか
-│   ├── checkin/                 # チェックインアプリ
-│   ├── vote/                    # 投票・集計アプリ
-│   ├── word-wolf/               # ワードウルフ
-│   └── name-change/             # 名前変えゲーム
-├── docs/                        # ドキュメント類
+│   └── {app-name}/ × 約50       # 各アプリ（一覧はポータル、選び方は apps/guide/）
+├── docs/                        # ドキュメント類（正本の地図は下記「ドキュメントの正本」）
+├── scripts/                     # lint / コンテンツ監査 / バリデータ
 └── shared/                      # ※旧配置（使用しない。apps/shared/ を使うこと）
 ```
+
+### 改名済みアプリ（リダイレクトスタブ）
+
+改名したアプリは、旧 URL を残すため旧フォルダに `<meta http-equiv="refresh">` のスタブだけを置いている。
+**スタブを実装だと思って編集しない。** 実装・`AGENTS.md`・`slides.html` はすべて新フォルダ側にある。
+
+| 旧フォルダ（スタブ） | 実装のある新フォルダ |
+|---|---|
+| `apps/codenames/` | `apps/kotoba-tantei/`（ことば探偵） |
+| `apps/hint-de-pinto/` | `apps/kaburazu-hint/`（かぶらずヒント） |
+| `apps/iisen-show/` | `apps/do-mannaka/`（ドまんなか） |
+| `apps/ito/` | `apps/tatoe-narabe/`（たとえならべ） |
+
+スタブは `scripts/lint.sh` の `HOWTO_EXEMPT` に登録済み（あそびかたモーダル不要）。
+
+### ドキュメントの正本
+
+| 文書 | 何の正本か |
+|---|---|
+| `AGENTS.md`（本ファイル） | 仕様・実装ルール。迷ったらまずここ |
+| `apps/{app}/AGENTS.md` | アプリ固有仕様と**共通規約からの意図的な逸脱** |
+| `docs/ai-roles.md` | AI の役割定義とガードレールの区分（モデル固有名を書く唯一の場所） |
+| `docs/kaizen-backlog.md` | 改善ループの運用ルール・Tier 区分・判断待ちキュー |
+| `docs/audit-prompts.md` | 監査プロンプトのカタログ（発見専用・観点別 P1〜P9） |
+| `.claude/skills/` | 手順の抜け漏れ防止チェックリスト（規約本文は転載しない） |
 
 ### アプリのファイル構成パターン
 
@@ -662,6 +686,23 @@ DevTools での確認は**性善説で許容**する（スタッフ監視下で�
 ---
 
 ## 開発・デプロイ
+
+### チェック（コード・コンテンツを触ったら必ず実行）
+
+```bash
+bash scripts/lint.sh
+```
+
+セキュリティ・規約違反・ポータル整合を機械チェックする。**エラー0・新規警告なしが基準**（現在は警告ゼロで通る状態を維持している）。
+RTDB アプリを新規追加したら `scripts/lint.sh` の `RTDB_HTML_FILES` 配列にも追加する。
+
+お題・問題などのコンテンツを触った場合は重複監査も実行する。
+
+```bash
+node scripts/content-audit.mjs
+```
+
+その他: `scripts/validate-kotoba-asobo.mjs`（kotoba-asobo のデータ検証）、`scripts/draft-lint.sh`（`drafts/` 配下のプロトタイプ用）。
 
 ### ローカル確認
 

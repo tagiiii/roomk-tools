@@ -57,7 +57,7 @@ KotobaAsobo.registerSession({
 - `reveal` 型（故事成語の物語など）は `steps: string[]` で段階テキストを持つ
 - 出典は参加者画面に表示しない。発表者ビューとデータにのみ保持
 
-## 3. バリデーション（Codexが `scripts/validate-kotoba-asobo.mjs` として実装）
+## 3. バリデーション（実装エージェントが `scripts/validate-kotoba-asobo.mjs` として実装）
 
 機械チェック項目:
 
@@ -72,7 +72,7 @@ KotobaAsobo.registerSession({
 9. blocks の estimatedMinutes 合計が 43〜47 分
 10. `{漢字|かんじ}` 記法の構文エラー、HTMLタグの混入（`<` を含むテキストはエラー）
 
-## 4. 問題作成の品質基準（Sonnet 5 作成・監査エージェント共通の判定基準）
+## 4. 問題作成の品質基準（作成・監査エージェント共通の判定基準）
 
 機械チェックできない基準。**作成エージェントの自己申告では完了とせず、別の監査エージェントが全件判定する。**
 

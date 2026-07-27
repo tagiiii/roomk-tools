@@ -12,7 +12,7 @@ roomK の国語ワークショップ「コトバであそぼ」を、1年間継�
 | 05 | [05-data-schema.md](05-data-schema.md) | 問題データスキーマとバリデーション仕様 |
 | 06 | [06-kison-game-kakuju.md](06-kison-game-kakuju.md) | 既存コミュニケーションゲーム拡充計画 |
 | 07 | [07-jisso-keikaku.md](07-jisso-keikaku.md) | 実装単位と優先順位（Phase 2〜5） |
-| 08 | [08-agent-tasks.md](08-agent-tasks.md) | Sonnet 5／Codex 向けタスク一覧と進め方 |
+| 08 | [08-agent-tasks.md](08-agent-tasks.md) | サブエージェント向けタスク一覧と進め方 |
 | 09 | [09-ronten.md](09-ronten.md) | 判断が必要な論点（承認待ち） |
 
 ## 学習指導要領の参照について

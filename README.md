@@ -5,34 +5,24 @@
 
 - デプロイ先: https://tagiiii.github.io/roomk-tools/
 - 配信ルート: `apps/`
-- 共通仕様: [AGENTS.md](./AGENTS.md)
+- 共通仕様: [AGENTS.md](./AGENTS.md)（実装ルールの正本）
+- AI エージェントの役割分担: [docs/ai-roles.md](./docs/ai-roles.md)
 
 ## アプリ一覧
 
-### 公開ポータル掲載中
+アプリは約50本あります。**一覧を README に手で持たず、次の3つを正本とします**（手書きの表は必ず古くなるため）。
 
-| アプリ | フォルダ | 同期方式 | 概要 |
-|--------|----------|----------|------|
-| クイズパック | `apps/quiz/` | オフライン | 雑学3択・連続2択などのクイズ進行 |
-| ことばシャッフル | `apps/kotoba-shuffle/` | オフライン | バラバラの文字を並べ替えることば遊び |
-| 漢字さがし | `apps/kanji-sagashi/` | オフライン | 似ている漢字の中からお題を探す観察ゲーム |
-| ことばガチャ | `apps/kotoba-gacha/` | オフライン | ガチャ形式でことばのお題を引く |
-| ことばリレー | `apps/kotoba-relay/` | オフライン | つなぎ言葉でリレーするワーク |
-| たとえグランプリ | `apps/tatoe-gp/` | Realtime Database | お題に対するたとえ回答を出し合う |
-| まちがいさがし | `apps/machigai-sagashi/` | オフライン | 文章や選択肢の違いを探す |
-| かぶらずヒント | `apps/kaburazu-hint/` | Realtime Database | ヒントを出し合って答えを当てる |
-| ことば探偵 | `apps/kotoba-tantei/` | Firestore | チームで単語カードを見つける |
-| トークテーマカード | `apps/talk-card/` | オフライン | トークテーマカードを引く |
-| ドまんなか | `apps/do-mannaka/` | Realtime Database | 数字回答で「いいセン」を狙う |
-| ワードウルフ | `apps/word-wolf/` | Realtime Database | 少数派のワードを推理する |
-| 人狼ゲーム | `apps/jinro/` | Realtime Database | 画面共有向けの人狼進行 |
-| 名前変えゲーム | `apps/name-change/` | Realtime Database | 名前を変えて誰かを当てる |
-| え!? 実は○○なんですかゲーム | `apps/jitsuwa-game/` | オフライン | 実は話をきっかけにするトークゲーム |
-| たとえならべ | `apps/tatoe-narabe/` | Realtime Database | 数字カードを言葉で表現して並べる |
-| 以心伝心しないゲーム | `apps/ishin-denshin/` | オフライン | かぶらない回答を狙う |
-| 興味スゴロク | `apps/kyoumi-sugoroku/` | オフライン | サイコロと質問マスで話す |
-| バリューカード | `apps/value-card/` | オフライン | 大切にしたい価値観カードを選ぶ |
-| いくつ言える？ | `apps/ikutsu-ieru/` | Realtime Database | お題に対して思いつく答えを出す |
+| 見たいもの | 見る場所 |
+|---|---|
+| 公開中のアプリ全部（利用シーンで絞り込み可） | [公開ポータル](https://tagiiii.github.io/roomk-tools/) / `apps/index.html` |
+| スタッフ向けの選び方（系統・人数・時間・近い遊び） | [ゲームえらび早見表](https://tagiiii.github.io/roomk-tools/guide/) / `apps/guide/index.html` |
+| 最近の追加・更新 | ポータル上部の「更新情報」 / `apps/updates.json` |
+
+アプリ個別の仕様は `apps/{app-name}/AGENTS.md` にあります。
+
+### 注意: 改名前のリダイレクトスタブ
+
+`apps/codenames/`（→ `kotoba-tantei`）、`apps/hint-de-pinto/`（→ `kaburazu-hint`）、`apps/iisen-show/`（→ `do-mannaka`）、`apps/ito/`（→ `tatoe-narabe`）は旧 URL を保つためのリダイレクトのみです。実装は新フォルダ側にあります。
 
 ### 非表示・開発中
 
@@ -45,7 +35,7 @@
 
 - フロントエンド: HTML / CSS / JavaScript（バニラ）
 - 共通UI: `apps/shared/css/design-system.css`
-- 共通JS: `apps/shared/js/utils.js`, `apps/shared/js/firebase-config.js`
+- 共通JS: `apps/shared/js/utils.js`（ESモジュール）, `apps/shared/js/rtdb-utils.js`（RTDB 単一ファイルアプリ用）, `apps/shared/js/howto.js`（あそびかたモーダル）, `apps/shared/js/firebase-config.js`
 - データベース: Firebase Realtime Database / Firestore
 - 認証: Firebase Anonymous Auth
 - ホスティング: GitHub Pages（`apps/` を公開）
@@ -66,7 +56,13 @@ python3 -m http.server 8080
 bash scripts/lint.sh
 ```
 
-主にXSS対策、design-system.cssの読み込み、Realtime Databaseアプリのviewport設定、Firebaseパス命名などを確認します。
+主にXSS対策、design-system.cssの読み込み、Realtime Databaseアプリのviewport設定、Firebaseパス命名、ポータルカードの `data-scenes`、あそびかたモーダルの組み込みなどを確認します。**エラー0・警告0で通る状態を維持しています。**
+
+コンテンツ（お題・問題文）を触った場合は重複監査も実行します。
+
+```bash
+node scripts/content-audit.mjs
+```
 
 ## デプロイ
 
@@ -79,10 +75,15 @@ Firebase設定やセキュリティルールは `firebase.json`, `database.rules
 roomk-tools/
 ├── apps/                    # GitHub Pages 公開ルート
 │   ├── index.html           # アプリ一覧ポータル
+│   ├── updates.json         # 更新情報の正本
+│   ├── guide/               # スタッフ向け「ゲームえらび早見表」
 │   ├── shared/              # 現行の共通モジュール
-│   └── {app-name}/          # 各アプリ
+│   └── {app-name}/          # 各アプリ（+ アプリ固有の AGENTS.md）
 ├── docs/                    # 補助資料
-├── scripts/                 # lint等の開発補助
+│   ├── ai-roles.md          # AI の役割定義とガードレールの区分
+│   ├── kaizen-backlog.md    # 改善ループの運用ルール・判断待ちキュー
+│   └── audit-prompts.md     # 監査プロンプトのカタログ
+├── scripts/                 # lint・コンテンツ監査等の開発補助
 ├── AGENTS.md                # プロジェクト共通仕様の正本
 └── CLAUDE.md                # AGENTS.md への案内
 ```
@@ -91,10 +92,14 @@ roomk-tools/
 
 ## 新しいアプリを追加するには
 
-1. `apps/{app-name}/` を作成
+1. `apps/{app-name}/` を作成（名前のつけかたは [AGENTS.md](./AGENTS.md)「アプリ名のつけかた」）
 2. 仕様に合う構成で `index.html` / `app.js` / `style.css` を作成
-3. `apps/{app-name}/AGENTS.md` にアプリ固有仕様を記載
-4. `apps/index.html` にポータルカードを追加
-5. `bash scripts/lint.sh` を実行
+3. `apps/shared/js/howto.js` の「あそびかた／つかいかた」モーダルを組み込む
+4. `apps/{app-name}/AGENTS.md` にアプリ固有仕様を記載（共通規約からの意図的な逸脱は必ず明記）
+5. `apps/index.html` にポータルカードを追加（`data-scenes` 必須）
+6. `apps/updates.json` の先頭に更新情報を追記
+7. `apps/guide/index.html` の早見表に1行追加
+8. `bash scripts/lint.sh` を実行（エラー0・警告0）
 
 詳細な実装ルール、Firebase方針、デザインシステム、コンテンツガイドラインは [AGENTS.md](./AGENTS.md) を参照してください。
+Claude Code では `new-app-scaffold` スキルが同じ手順をチェックリストとして持っています。
