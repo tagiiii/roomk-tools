@@ -51,9 +51,9 @@
 いずれも監査で洗い出し済み・Codex 較正済み。**Firebase 系は下記の「静的＋stub→Draft 保留」パターンで進める**。
 
 - ~~**B2** pittari-meter: `goToTop()` が `_hostDisconnectTimer` と切断オーバーレイを片付けない~~ → **実装・PR #6 マージ済（2026-07-14・`b7748a8`・⚠️実機 E2E 未実施のままオーナー判断マージ＝要 runtime 確認）**。goToTop 直呼び2経路（DONE「TOPにもどる」L555 / room削除リスナー L1380）で timer リーク＋overlay 残留。兄弟 uso-jisho/tatoe-gp/kakure-number の正準パターンで4行追加（iisen-show は overlay hide を欠く不完全版のため手本にせず）。stub 検証（setInterval spy で active timer=0 を直接実測・二重呼び冪等・幽霊 alert なし）＋二重レビュー（独立=無条件承認・Codex=条件付き承認→条件充足）。**host/guest 実機 E2E 後に main マージ**（B1 と同運用）。
-- **B3** codenames: `onSnapshot` の `onError` が生の英語メッセージを子ども画面に出しうる。低。固定の子ども向け文言へ（onError stub で検証可・本番書き込み不要）。
-- **B4** iisen-show: 切断カウントダウン初期値「60」が TTL 120秒と不整合。低。**Codex は「視認確認まで finding 化しない検証候補」**＝優先度低。
-- **B5** ikutsu-ieru: ルームコードのコピーボタン欠落（AGENTS.md:82 の自仕様違反）。低。
+- ~~**B3** codenames: `onSnapshot` の `onError` が生の英語メッセージを子ども画面に出しうる。低。固定の子ども向け文言へ（onError stub で検証可・本番書き込み不要）。~~ → **2026-07-27 完了（53a0f4f）**。改名後の apps/kotoba-tantei/app.js の subscribeToRoom onError が `error.message ||` で生英語を alert に出す形だったため、観戦ビューと同じ「ルームをよみこめませんでした」に固定・生エラーは console.error へ。AI確認: ローカルサーバでモジュール読込・TOP描画・コンソールエラーなし（表示経路は既存の esc 済み alert-error）。
+- ~~**B4** iisen-show: 切断カウントダウン初期値「60」が TTL 120秒と不整合。低。**Codex は「視認確認まで finding 化しない検証候補」**＝優先度低。~~ → **2026-07-27 完了（40067ff）**。改名後の apps/do-mannaka で兄弟4アプリ（120直書き）とも不整合を視認確認。Codex 注文どおり数値の直書きをやめ、オーバーレイ表示時・deadline 更新時に残り秒数を即時算出して埋める形に。AI確認: 表示直後に120・実時間ベースの減算（経過21秒で99を表示＝deadline 起算の証跡）・非表示でタイマー/deadline 解放を実測、コンソールエラーなし。
+- ~~**B5** ikutsu-ieru: ルームコードのコピーボタン欠落（AGENTS.md:82 の自仕様違反）。低。~~ → **2026-07-27 完了（c5a4700）**。kakure-number の正準パターンで待機画面のホスト用コードカードに追加（アイコン aria-hidden・ボタン可視テキストあり）。クリップボード不可環境では無反応にせずトースト「コピーできなかったよ。コードをそのまま伝えてね」を追加（B-20 の失敗時文言方針に準拠）。AI確認: 描画・実クリック・失敗経路トースト実測（検証環境が clipboard 拒否のため失敗経路を実測できた）・375px 幅・コンソールエラーなし。成功経路の「コピーしました！」復帰は兄弟アプリと同一実装。**付随発見**: kakure-number 等の既存コピーボタンは writeText 失敗時に無反応＝kaizen-backlog 提案欄に起票。
 - **A-11**: SEC-1 の裸変数 `${var}` 多行検出（dataflow 要・脆く低価値）。保留推奨。
 - **C1 の follow-up**: docchi の ask を「なぜ画面に出すか」AGENTS.md へ1文追記するか（人間の framing 判断）。
 - **B1 の follow-up**: hint-de-pinto の途中離脱を `nextRound` と同じ skip 提示へ統一（`saveToHistory` に `skipped` 永続化・別 issue）。
