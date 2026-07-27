@@ -478,7 +478,9 @@ function ensureRoomSubscription() {
     if (getRoute() === "game") renderGame();
     if (getRoute() === "finish") renderFinish();
   }, (error) => {
-    state.error = error.message || "ルームの読み込みに失敗しました";
+    // Firebase の生メッセージ（英語）を子ども画面に出さない
+    console.error("[kotoba-tantei] room subscription error", error);
+    state.error = "ルームをよみこめませんでした";
     renderLobby();
   });
 }
