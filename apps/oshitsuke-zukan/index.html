@@ -64,6 +64,7 @@
       font-size: 12px; font-weight: 700; margin: 2px 4px 2px 0;
     }
     .ozk-dex-chip.is-warn { box-shadow: 0 0 0 2px var(--color-error); }
+    .ozk-dex-alert { display: block; margin-top: 4px; font-size: 12px; color: var(--color-error); font-weight: 700; }
 
     /* ── 中央の宣言バナー ── */
     .ozk-banner {
@@ -688,6 +689,9 @@ function renderPlayerDex(elId, room, players) {
       const warn = count >= 3 ? ' is-warn' : '';
       return `<span class="ozk-dex-chip${warn}" style="background:${k.color}">${NUMBERS[i]} ${esc(k.name)}×${count}</span>`;
     }).join('');
+    const dexKindsCount = KINDS.filter((k) => (dex[k.id] || 0) > 0).length;
+    const dexAlert = dexKindsCount === KINDS.length - 1
+      ? '<span class="ozk-dex-alert">あと1しゅるいで ずかんが ぜんぶ うまっちゃう！</span>' : '';
     return `<li class="ozk-player-row">
       <div class="ozk-player-row__head">
         <span class="ozk-player-row__name">${esc(nick)}</span>${hostTag}${meTag}
@@ -695,6 +699,7 @@ function renderPlayerDex(elId, room, players) {
       </div>
       ${discTag}
       <div class="ozk-dex-row">${dexHtml || '<span class="text-muted text-sm">ずかん まだなし</span>'}</div>
+      ${dexAlert}
     </li>`;
   }).join('');
 }
@@ -776,6 +781,9 @@ function loseMessageHtml(result) {
   const loserName = esc(result.loser);
   if (result.reason === 'four') {
     return `<strong>${loserName}</strong>さんの ずかんが <strong>${esc(kindName(result.kind))}</strong>で いっぱいに なっちゃった！<br>こんかいは <strong>${loserName}さん</strong>の まけ！`;
+  }
+  if (result.reason === 'all') {
+    return `<strong>${loserName}</strong>さんの ずかんに <strong>8しゅるい ぜんぶ</strong> そろっちゃった！<br>こんかいは <strong>${loserName}さん</strong>の まけ！`;
   }
   return `<strong>${loserName}</strong>さんの 手札が 0まいに なっちゃった！<br>こんかいは <strong>${loserName}さん</strong>の まけ！`;
 }
@@ -1417,13 +1425,18 @@ async function submitJudge(guessTruth) {
     if (!taker) { abortReason = 'invalid'; return; }
 
     const nextCards = { ...cards, [turn.cardId]: { kind: actualKind, zone: 'taken', owner: taker } };
-    const takenSameKindCount = Object.values(nextCards).filter((c) => c.zone === 'taken' && c.owner === taker && c.kind === actualKind).length;
+    const takenByTaker = Object.values(nextCards).filter((c) => c.zone === 'taken' && c.owner === taker);
+    const takenSameKindCount = takenByTaker.filter((c) => c.kind === actualKind).length;
+    const takenKindsCount = new Set(takenByTaker.map((c) => c.kind)).size;
     const takerHandCount = Object.values(nextCards).filter((c) => c.zone === 'hand' && c.owner === taker).length;
 
     let result = null;
     let nextStatus = room.status;
     if (takenSameKindCount >= 4) {
       result = { loser: taker, reason: 'four', kind: actualKind };
+      nextStatus = 'result';
+    } else if (takenKindsCount >= KINDS.length) {
+      result = { loser: taker, reason: 'all' };
       nextStatus = 'result';
     } else if (takerHandCount === 0) {
       result = { loser: taker, reason: 'empty' };
@@ -1699,7 +1712,7 @@ tryReconnect().then((reconnected) => {
 <script>
   RoomkHowto.init({
     title: 'あそびかた',
-    lead: 'イヤ〜な生きもののカードを、宣言をつけて ほかの人へ おしつけあうゲームです。ひきとったカードは じぶんの「ずかん」に たまっていくよ。おなじ生きものが 4まい そろったら まけ！',
+    lead: 'イヤ〜な生きもののカードを、宣言をつけて ほかの人へ おしつけあうゲームです。ひきとったカードは じぶんの「ずかん」に たまっていくよ。おなじ生きものが 4まい そろうか、8しゅるい ぜんぶ そろったら まけ！',
     sections: [
       { heading: 'はじめかた', items: [
         'ホストが「ルームをつくる」からルームをつくる（ホストもプレイヤーとして遊ぶよ）',
@@ -1713,7 +1726,7 @@ tryReconnect().then((reconnected) => {
         '「ホント」「ウソ」があたったら出した人が、はずれたら自分がカードを引き取る',
         '引き取ったカードは自分の「ずかん」にたまる。次の番は引き取った人',
       ] },
-      { heading: 'おわりかた', text: 'おなじ生きものが4まいそろうか、手札が0まいになったら、そこでおしまい。ホストは「もういちど」か「トップへもどる」をえらべるよ。画面共有するときは「みるだけ」から入ると、自分の手札を映さずに進行できる。' },
+      { heading: 'おわりかた', text: 'おなじ生きものが4まいそろうか、8しゅるいぜんぶそろうか、手札が0まいになったら、そこでおしまい。ホストは「もういちど」か「トップへもどる」をえらべるよ。画面共有するときは「みるだけ」から入ると、自分の手札を映さずに進行できる。' },
     ],
   });
 </script>
