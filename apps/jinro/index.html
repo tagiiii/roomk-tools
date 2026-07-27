@@ -2088,7 +2088,7 @@ async function submitHunterTarget(target) {
   document.getElementById('hunter-choice-panel').style.display = 'none';
   document.getElementById('morning-hunter-panel').style.display = 'none';
   await state.roomRef.update({ hunterTarget: target });
-  // Codex の resolveHunter が Firebase を監視して処理
+  // 実際の処理はホスト側。ルーム監視が hunterTarget の書き込みを検知して resolveHunterKill() を呼ぶ
 }
 
 async function afterExecution() {
@@ -2305,7 +2305,7 @@ async function tryReconnect() {
 }
 
 // ══════════════════════════════════════════════════
-// ロジックスタブ（Codex が実装）
+// ゲームロジック（役職配置・夜の解決・処刑・勝敗判定）
 // ══════════════════════════════════════════════════
 
 function buildRoleAssignmentRoom(room, roleCounts) {
