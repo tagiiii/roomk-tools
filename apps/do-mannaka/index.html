@@ -453,7 +453,8 @@
   <div class="spinner"></div>
   <p class="overlay-title">ホストが一時的に接続を失いました</p>
   <p class="overlay-sub">再接続を待っています</p>
-  <div class="overlay-countdown" id="host-disconnect-countdown">60</div>
+  <!-- 残り秒数は表示時に deadline から算出して埋める（数値の直書きはしない） -->
+  <div class="overlay-countdown" id="host-disconnect-countdown"></div>
   <p class="overlay-sub">秒後に自動終了します</p>
   <button class="btn btn-ghost btn-full" style="max-width:280px;margin-top:20px"
           onclick="leaveGame()">退出する</button>
@@ -695,6 +696,12 @@
   let _hostDisconnectTimer = null;
   let _hostDisconnectDeadline = null;
 
+  function updateHostDisconnectCountdown() {
+    const remaining = Math.max(0, Math.ceil((_hostDisconnectDeadline - getEstimatedServerNow()) / 1000));
+    document.getElementById('host-disconnect-countdown').textContent = remaining;
+    return remaining;
+  }
+
   function showHostDisconnectOverlay(show, room = null) {
     const overlay = document.getElementById('host-disconnect-overlay');
     overlay.style.display = show ? 'flex' : 'none';
@@ -704,9 +711,9 @@
       _hostDisconnectDeadline = disconnectedAt == null
         ? getEstimatedServerNow() + ORPHAN_TTL_MS
         : disconnectedAt + ORPHAN_TTL_MS;
+      updateHostDisconnectCountdown();
       _hostDisconnectTimer = setInterval(() => {
-        const remaining = Math.max(0, Math.ceil((_hostDisconnectDeadline - getEstimatedServerNow()) / 1000));
-        document.getElementById('host-disconnect-countdown').textContent = remaining;
+        const remaining = updateHostDisconnectCountdown();
         if (remaining <= 0) {
           clearInterval(_hostDisconnectTimer);
           _hostDisconnectTimer = null;
@@ -720,6 +727,7 @@
       _hostDisconnectDeadline = disconnectedAt == null
         ? getEstimatedServerNow() + ORPHAN_TTL_MS
         : disconnectedAt + ORPHAN_TTL_MS;
+      updateHostDisconnectCountdown();
     } else if (!show && _hostDisconnectTimer) {
       clearInterval(_hostDisconnectTimer);
       _hostDisconnectTimer = null;
