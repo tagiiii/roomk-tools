@@ -1,8 +1,8 @@
-# roomK ツール群 — プロジェクト共通仕様
+# room-K ツール群 — プロジェクト共通仕様
 
 ## プロジェクト概要
 
-不登校の子どもや若者を対象としたオンラインメンタリングサービス「roomK」で使用するWebツール群。
+不登校の子どもや若者を対象としたオンラインメンタリングサービス「room-K」で使用するWebツール群。
 メンター（スタッフ）が Zoom / Meet などで画面共有しながら参加者と一緒に使う。
 
 **デプロイ先**: https://tagiiii.github.io/roomk-tools/
@@ -427,7 +427,7 @@ HTTP リファラー制限済み:
 ### viewport 設定（Realtime Database アプリ）
 
 Realtime Database アプリでは、ゲーム中の誤ズームで操作が崩れることを防ぐため `maximum-scale=1` を指定する。
-`maximum-scale=1` はアクセシビリティ上は推奨されない指定だが、roomK ツールでは画面共有中の安定した進行を優先する。
+`maximum-scale=1` はアクセシビリティ上は推奨されない指定だが、room-K ツールでは画面共有中の安定した進行を優先する。
 
 ```html
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
@@ -622,7 +622,7 @@ import { escapeHtml } from '../shared/js/utils.js';
 const NUMBERS = ['①', '②', '③', '④', '⑤'];
 ```
 
-- 半角数字 + ピリオド（`1.`）ではなく丸数字を使う（roomK 内で統一）
+- 半角数字 + ピリオド（`1.`）ではなく丸数字を使う（room-K 内で統一）
 - 配列の index から自動採番する（3択以外にも拡張できるよう）
 - 5つ以上の選択肢が必要な場合は配列を拡張する
 

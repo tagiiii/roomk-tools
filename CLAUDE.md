@@ -1,4 +1,4 @@
-# roomK ツール群 — Claude Code 向け案内
+# room-K ツール群 — Claude Code 向け案内
 
 このリポジトリの仕様・実装ルールの正本は [AGENTS.md](./AGENTS.md) です。
 **CLAUDE.md には独自仕様を置きません**（AGENTS.md との乖離を防ぐため）。このファイルは道案内だけです。

@@ -109,7 +109,7 @@ function send(msg) {
 
 ## 6. デザイン
 
-- 既存「roomKゲーム説明デッキ」規約を踏襲: フォント Zen Kaku Gothic New（見出し900）＋Noto Sans JP、文字 #434343／背景 #FAFAFA、アクセントはティール #00A77F・コーラル #E06666・ブルー #3C78D8 をユニットカラーとして割当て
+- 既存「room-Kゲーム説明デッキ」規約を踏襲: フォント Zen Kaku Gothic New（見出し900）＋Noto Sans JP、文字 #434343／背景 #FAFAFA、アクセントはティール #00A77F・コーラル #E06666・ブルー #3C78D8 をユニットカラーとして割当て
 - design-system.css を読み込み（lint CSS-1）、`:root` 再定義はしない（CSS-2）
 - CSSクラスは `.ka-` 接頭辞＋BEM
 - 600px以下: 投影用途が主だが、スライド一覧・発表者ビューは縦積みに崩れないよう対応

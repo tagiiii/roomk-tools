@@ -33,7 +33,7 @@
 - 変更禁止パス（`firestore.rules` / `database.rules.json` / `firebase.json` / `apps/shared/**` / `.github/**`）
 - 新規コンテンツの本体投入（Tier D-3）
 - `drafts/` から `apps/` への移植・公開
-- roomK 哲学ガード（`audit-prompts.md` §0.5）
+- room-K 哲学ガード（`audit-prompts.md` §0.5）
 
 **2系統のモデルが一致しても、権限由来の判断の根拠にはならない。** 一致は精度の話であって権限の話ではない。司令塔の承認も同じで、オーナー判断の代わりにはならない。
 
