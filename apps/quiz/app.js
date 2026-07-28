@@ -388,6 +388,7 @@ function startQuiz() {
   const pack = getSelectedPack();
   if (!pack) return;
 
+  window.RoomkStats?.count('pack-' + pack.id);
   state.deck = makeDeck();
   state.index = 0;
   state.score = 0;

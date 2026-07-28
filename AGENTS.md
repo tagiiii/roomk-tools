@@ -227,6 +227,24 @@ import { db, auth } from '../shared/js/firebase-config.js';
 
 Realtime Database を使う単一ファイルアプリは、Firebase compat SDK 読み込み後に `RoomkRTDB.initFirebase(firebase)` で初期化する。移行前のアプリは従来の個別初期化を維持し、動作確認しながら段階的に切り替える。
 
+### stats.js（非モジュール通常スクリプト）
+
+利用回数の匿名カウンタ。改善の判断材料として「どのアプリ・どのコンテンツがどれくらい使われたか」の**回数だけ**を記録する。
+**後方互換で追加のみ。破壊的変更をする場合は `?v=` を上げること。**
+
+```html
+<!-- 全アプリの index.html に入れる（howto.js の直前が定位置。ポータルのみ shared/js/stats.js） -->
+<script src="../shared/js/stats.js?v=1" defer></script>
+```
+
+- 読み込むだけで起動回数（項目 `open`）を1加算する。アプリ名は URL パスから自動判定
+- コンテンツ単位で数えたい箇所では `window.RoomkStats?.count('項目名')` を呼ぶ（例: quiz のパック選択 `pack-{id}`、kotoba-asobo のセッション開始 `session-{id}`）。**必ずオプショナルチェーンで呼ぶ**（スクリプトがブロックされてもアプリを壊さない）
+- 記録先は Realtime Database `stats/{アプリ名}/{YYYY-MM}/{項目}`。既存のセキュリティルール（ワイルドカード）で書けるためルール変更は不要
+- **記録するのは回数のみ。** UID・ニックネーム・自由入力の内容は絶対に記録しない。計測値やランキングを子ども向け画面に表示しない
+- localhost からは送信しない（動作確認したいときだけ `localStorage.setItem('roomk-stats-force', '1')`）
+- 集計の閲覧は Firebase コンソールの Realtime Database で `stats` ノードを開く
+- 新しいアプリを追加するときも必ず組み込む（リダイレクトスタブは除く）
+
 ---
 
 ## デザインシステム（`design-system.css`）

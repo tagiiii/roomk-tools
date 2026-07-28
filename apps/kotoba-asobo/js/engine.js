@@ -371,6 +371,8 @@
     }
     try {
       session = await loadSession(sessionId);
+      // 発表者ビューと投影ビューの二重計上を避けるため、投影側のみ数える
+      if (!isPresenter) window.RoomkStats?.count('session-' + sessionId);
       slides = R.buildSlides(session);
       document.title = (isPresenter ? '発表者ビュー - ' : '') + session.title + ' - コトバであそぼ';
       if (isPresenter) {
