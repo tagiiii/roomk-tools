@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>利用状況ダッシュボード | roomK</title>
+  <!-- 開発者専用の閲覧ページ。ポータル・更新情報・早見表には載せない（apps/stats-view/AGENTS.md 参照） -->
+  <meta name="robots" content="noindex" />
+  <!-- Google Fonts（Noto Sans JP）-->
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
+  <!-- Material Symbols Rounded -->
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet" />
+  <!-- 共通デザインシステム（M-1〜M-6）-->
+  <link rel="stylesheet" href="../shared/css/design-system.css" />
+  <!-- アプリ固有スタイル -->
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <div class="wrapper">
+
+    <!-- ヘッダー -->
+    <header class="sv-header">
+      <h1 class="sv-header__title">利用状況ダッシュボード</h1>
+      <p class="sv-header__sub">開発者向けの閲覧ページ。アプリごとの利用回数（匿名・回数のみ）を月単位で確認できます。</p>
+    </header>
+
+    <!-- ツールバー（月の切り替え・再読み込み）-->
+    <section class="sv-toolbar" id="toolbar" hidden>
+      <div class="sv-toolbar__field">
+        <label class="form-label" for="monthSelect">表示する月</label>
+        <select class="form-select sv-toolbar__select" id="monthSelect"></select>
+      </div>
+      <button class="btn btn-ghost btn-sm sv-toolbar__reload" type="button" id="btnReload">
+        <span class="material-symbols-rounded" aria-hidden="true">refresh</span>再読み込み
+      </button>
+    </section>
+
+    <!-- 選択月のサマリ -->
+    <p class="sv-summary" id="summary" hidden></p>
+
+    <!-- 読み込み中 -->
+    <div class="loading-overlay" id="loading" role="status">
+      <div class="spinner"></div>
+      <p class="text-muted">読み込み中…</p>
+    </div>
+
+    <!-- エラー -->
+    <div class="sv-error" id="error" role="alert" hidden>
+      <p class="alert alert-error" id="errorText"></p>
+      <button class="btn btn-secondary btn-sm" type="button" id="btnRetry">もう一度読み込む</button>
+    </div>
+
+    <!-- 空状態 -->
+    <div class="sv-empty" id="empty" hidden>
+      <span class="material-symbols-rounded" aria-hidden="true">search_off</span>
+      <p class="sv-empty__title" id="emptyTitle">まだデータがありません</p>
+      <p class="sv-empty__desc">計測は本番サイトでの利用分のみ記録されます（localhost からは送信されません）。</p>
+    </div>
+
+    <!-- 本体 -->
+    <div class="sv-table-wrap" id="tableWrap" hidden>
+      <table class="sv-table">
+        <thead>
+          <tr>
+            <th scope="col">アプリ</th>
+            <th scope="col" class="sv-table__num">起動</th>
+            <th scope="col" class="sv-table__bar">最大値との比</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+
+    <p class="sv-note" id="note" hidden>アプリ名を押すと、そのアプリの全項目（open・pack-* ・session-* など）を展開します。</p>
+
+  </div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,302 @@
+/* 利用状況ダッシュボード（開発者専用）アプリ固有スタイル
+   共通スタイル（M-1〜M-6）は design-system.css に定義済み
+   接頭辞: .sv- */
+
+/* ── hidden 属性の優先 ──
+   このページは状態切り替えを hidden 属性で行うが、display: flex を明示している
+   要素（.sv-toolbar / .sv-error / .loading-overlay）では UA スタイルの
+   display: none が負けて、読み込み中・エラー・空状態が同時に見えてしまう。
+   stats-view 専用 CSS なので影響範囲はこのページに閉じる。 */
+[hidden] {
+  display: none !important;
+}
+
+/* ── レイアウト ── */
+.wrapper {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 48px 40px 80px;
+}
+
+/* ── ヘッダー ── */
+.sv-header {
+  margin-bottom: var(--space-lg);
+}
+
+.sv-header__title {
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  color: var(--color-primary);
+  letter-spacing: 0.04em;
+}
+
+.sv-header__sub {
+  font-size: var(--font-size-sub);
+  color: var(--color-muted);
+  margin-top: 4px;
+}
+
+/* ── ツールバー ── */
+.sv-toolbar {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+  padding-bottom: var(--space-md);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.sv-toolbar__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.sv-toolbar__select {
+  min-width: 180px;
+}
+
+.sv-toolbar__reload {
+  flex-shrink: 0;
+}
+
+/* ── サマリ ── */
+.sv-summary {
+  font-size: var(--font-size-sub);
+  color: var(--color-muted);
+  margin-top: var(--space-md);
+}
+
+/* ── エラー ── */
+.sv-error {
+  margin-top: var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-md);
+}
+
+/* ── 空状態 ── */
+.sv-empty {
+  margin-top: var(--space-xl);
+  text-align: center;
+  color: var(--color-muted);
+}
+
+.sv-empty .material-symbols-rounded {
+  font-size: 40px;
+  color: var(--color-border);
+}
+
+.sv-empty__title {
+  font-size: var(--font-size-body);
+  font-weight: 700;
+  color: var(--color-primary);
+  margin-top: var(--space-sm);
+}
+
+.sv-empty__desc {
+  font-size: var(--font-size-sm);
+  margin-top: var(--space-xs);
+}
+
+/* ── テーブル ── */
+.sv-table-wrap {
+  margin-top: var(--space-md);
+  background: var(--color-surface);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-sm);
+  overflow-x: auto;
+}
+
+.sv-table {
+  width: 100%;
+  min-width: 420px;
+  border-collapse: collapse;
+  font-size: var(--font-size-sub);
+}
+
+.sv-table thead th {
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  color: var(--color-muted);
+  text-align: left;
+  padding: 12px var(--space-md);
+  border-bottom: 1px solid var(--color-border);
+  white-space: nowrap;
+}
+
+.sv-table__num {
+  text-align: right;
+  width: 5.5em;
+}
+
+.sv-table__bar {
+  width: 38%;
+}
+
+/* ── 行（アコーディオンのヘッダー）── */
+.sv-row {
+  cursor: pointer;
+  border-bottom: 1px solid #E7EDF0;
+  transition: background var(--transition-base);
+}
+
+.sv-row:hover {
+  background: #EEF3F8;
+}
+
+.sv-row.is-open {
+  background: #EEF3F8;
+}
+
+.sv-row > td {
+  padding: 6px var(--space-md);
+  vertical-align: middle;
+}
+
+.sv-row__namecell {
+  word-break: break-all;
+}
+
+.sv-row__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-family: inherit;
+  font-size: var(--font-size-sub);
+  font-weight: 500;
+  color: var(--color-primary);
+  background: none;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 6px 4px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.sv-row__toggle:focus-visible {
+  outline: 3px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.sv-row__chevron {
+  font-size: 20px;
+  color: var(--color-accent);
+  flex-shrink: 0;
+}
+
+.sv-row__count {
+  text-align: right;
+  font-weight: 700;
+  color: var(--color-primary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* ── 横棒（CSS のみ・グラフライブラリ不使用）── */
+.sv-bar {
+  height: 8px;
+  border-radius: var(--radius-full);
+  background: #E7EDF0;
+  overflow: hidden;
+}
+
+.sv-bar__fill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  background: var(--color-accent);
+}
+
+/* ── 内訳（展開部分）── */
+.sv-detail > td {
+  padding: 0 var(--space-md) var(--space-md);
+  background: #EEF3F8;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.sv-items {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-sm) 0 0;
+}
+
+.sv-items__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-md);
+  font-size: var(--font-size-sm);
+  color: var(--color-text);
+  padding: 3px 0;
+  border-bottom: 1px dotted var(--color-border);
+}
+
+.sv-items__key {
+  word-break: break-all;
+  color: var(--color-muted);
+}
+
+.sv-items__count {
+  font-weight: 700;
+  color: var(--color-primary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.sv-items__empty {
+  font-size: var(--font-size-sm);
+  color: var(--color-muted);
+  padding: var(--space-sm) 0;
+}
+
+/* ── 注記 ── */
+.sv-note {
+  font-size: var(--font-size-sm);
+  color: var(--color-muted);
+  margin-top: var(--space-sm);
+}
+
+/* ── レスポンシブ ── */
+@media (max-width: 600px) {
+  .wrapper {
+    padding: 28px 16px 60px;
+  }
+
+  .sv-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .sv-toolbar__select {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .sv-table {
+    min-width: 0;
+    font-size: var(--font-size-sm);
+  }
+
+  .sv-table thead th,
+  .sv-row > td {
+    padding-left: var(--space-sm);
+    padding-right: var(--space-sm);
+  }
+
+  .sv-table__num {
+    width: 4.5em;
+  }
+
+  .sv-table__bar {
+    width: 28%;
+  }
+
+  .sv-detail > td {
+    padding-left: var(--space-sm);
+    padding-right: var(--space-sm);
+  }
+}
