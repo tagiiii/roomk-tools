@@ -862,7 +862,9 @@
   const getHostDisconnectedAt = RoomkRTDB.getHostDisconnectedAt;
 
   function isRoomExpired(room) {
-    return RoomkRTDB.isRoomExpired(room, ORPHAN_TTL_MS);
+    // status を持たない room は、削除後に onDisconnect が発火して再生成された
+    // ゴースト（部分 room）。TTL を待たず期限切れ扱いにして掃除する
+    return RoomkRTDB.isRoomExpired(room, ORPHAN_TTL_MS) || (!!room && !room.status);
   }
 
   async function tryReconnect() {
@@ -1299,7 +1301,10 @@
   // 削除失敗時は何もしない（onDisconnect + 2分TTL の掃除経路が残る）
   function scheduleFinishedCleanup(roomRef, deleteAt) {
     const delay = Math.max(0, deleteAt - getEstimatedServerNow());
-    setTimeout(() => {
+    setTimeout(async () => {
+      // 削除の前に自接続の onDisconnect 予約を取り消す。予約が残ったままだと、
+      // 削除後にこのタブを閉じた時に update が発火してゴースト room を再生成する
+      await RoomkRTDB.cancelRoomOnDisconnect(roomRef);
       roomRef.transaction((room) => {
         if (room && room.status === STATUS.FINISHED && room.deleteAt === deleteAt) return null;
         return room;

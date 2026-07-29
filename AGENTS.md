@@ -539,7 +539,12 @@ db.ref(`{appname}_rooms/${code}/players/${nick}`).onDisconnect().remove();
 // ゲーム終了 → 30秒後に自動削除
 async function hostFinish() {
   await roomRef.update({ status: 'done' });
-  setTimeout(() => roomRef.remove(), 30000);
+  setTimeout(async () => {
+    // 削除の前に自接続の onDisconnect 予約を必ず取り消す。予約が残ったままだと、
+    // 削除後にタブを閉じた時に update が発火してゴースト room を再生成する
+    await RoomkRTDB.cancelRoomOnDisconnect(roomRef);
+    roomRef.remove();
+  }, 30000);
 }
 ```
 
@@ -554,7 +559,9 @@ Firestore アプリも同様にセッション終了後に削除する。
 const ORPHAN_TTL_MS = 2 * 60 * 1000; // 推奨: 2分（lint [REF-4] で検出）
 
 function isRoomExpired(room) {
-  return RoomkRTDB.isRoomExpired(room, ORPHAN_TTL_MS);
+  // status を持たない room は、削除後に onDisconnect が発火して再生成された
+  // ゴースト（部分 room）。TTL を待たず期限切れ扱いにして掃除する
+  return RoomkRTDB.isRoomExpired(room, ORPHAN_TTL_MS) || (!!room && !room.status);
 }
 ```
 

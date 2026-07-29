@@ -119,6 +119,7 @@ uso_rooms/{roomCode}/
 
 - 再接続: sessionStorage キー `usojisho_session`（nickname / roomCode / role / score）。ホスト復帰時は `hostConnected=true`・`hostDisconnectedAt=null` を戻す。ゲスト復帰時は `players/{nickname}` が消えていれば保存済みスコアで再登録する（提出・投票は `entries` / `votes` に残っているため復元不要）
 - サーバー時刻補正: `RoomkRTDB.initServerTime(db)` を初期化直後に開始し、TTL 判定は `RoomkRTDB.now()` / `RoomkRTDB.isRoomExpired()` を使用
+- ゴースト room 対策（2026-07-29）: 30秒後の自動削除では削除の**前**に `cancelRoomOnDisconnect()` で自接続の onDisconnect 予約を取り消す（予約が残ると削除後のタブクローズで `{hostConnected,...}` だけの部分 room が再生成される）。防御として `isRoomExpired()` は `status` を持たない room も期限切れ扱いにする
 - `done` 中はゲスト側のホスト切断オーバーレイ・期限切れ判定をスキップする（終了画面を見せたまま自然に閉じられるように）
 
 ## 得点ルール
