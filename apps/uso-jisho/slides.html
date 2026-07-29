@@ -103,6 +103,8 @@
   .lie-bubble .cap{ font-size:16px; font-weight:700; color:var(--acc); display:block; margin-bottom:2px; }
   .word-mean{ font-size:23px; color:var(--ink-soft); line-height:1.65; }
   .word-mean b{ color:var(--acc); font-weight:900; }
+  .blank{ display:inline-block; min-width:110px; border-bottom:3px solid var(--acc); color:var(--acc); font-weight:900; text-align:center; }
+  .fill{ color:var(--acc); font-weight:900; }
 
   /* 投票の選択肢一覧 */
   .choices{ display:flex; flex-direction:column; gap:14px; }
@@ -252,10 +254,10 @@ const SLIDES = [
     headline:'めずらしいことばに、<br><span class="hl">それっぽい意味</span>をでっちあげるゲーム',
     body:`<div class="rows">
       <div class="row"><div class="row__ic"><span class="material-symbols-rounded">menu_book</span></div><div><div class="row__t">へんてこな「本当にあることば」が出てくる</div><div class="row__d">聞いたことのない、めずらしい日本語がお題になるよ</div></div></div>
-      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">edit</span></div><div><div class="row__t">みんなで「それっぽい意味」をでっちあげる</div><div class="row__d">本当の意味を知らなくてOK。想像で自由に書こう</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">edit</span></div><div><div class="row__t">意味の文の「？？？」をでっちあげる</div><div class="row__d">文の形は決まってるから、？？？の中だけ自由に考えよう</div></div></div>
       <div class="row"><div class="row__ic"><span class="material-symbols-rounded">search</span></div><div><div class="row__t">本物と嘘をまぜて、どれが本物かあてっこ</div><div class="row__d">みんなの嘘にまぎれた「本当の意味」を投票でさがす</div></div></div>
     </div>`,
-    note:'『うそつき辞書』は、めずらしい日本語であそぶゲーム。\nお題のことばに、みんなが「それっぽい意味」をでっちあげます。\n本物の意味と嘘の意味をまぜて、どれが本物かをあてっこするよ。\n本当の意味を知らなくて大丈夫、むしろ知らないほうが楽しい！' },
+    note:'『うそつき辞書』は、めずらしい日本語であそぶゲーム。\nお題のことばの意味が「？？？な動物のこと。」みたいな穴あきの文で出てくるので、？？？に入ることばをでっちあげます。\n本物と嘘をまぜて、どれが本物かをあてっこするよ。\n本当の意味を知らなくて大丈夫、むしろ知らないほうが楽しい！' },
 
   /* 4 */ { type:'content', accent:'navy', section:'ゲーム説明', sectionEn:'explain', num:'1',
     headline:'主役はみんな。<span class="hl">ホストは進行だけ</span>',
@@ -267,44 +269,47 @@ const SLIDES = [
       </div>
       <div class="panel panel--teal">
         <div class="team-head"><div class="team-ic teal-bg"><span class="material-symbols-rounded">groups</span></div><div class="team-name">ゲスト（2〜8人）</div></div>
-        <div class="role-row"><span class="material-symbols-rounded">edit</span><div><b>嘘の意味を書く</b><span class="d">お題のことばに「それっぽい意味」をでっちあげる</span></div></div>
+        <div class="role-row"><span class="material-symbols-rounded">edit</span><div><b>嘘の意味を書く</b><span class="d">意味の文の？？？に「それっぽいことば」を入れる</span></div></div>
         <div class="role-row"><span class="material-symbols-rounded">how_to_vote</span><div><b>本物に投票する</b><span class="d">みんなの嘘にまざった本物の意味をさがす</span></div></div>
       </div>
     </div>`,
-    note:'役割はシンプル。\nホスト（わたし）は進行だけ。嘘を書いたり投票したりはしません。\nゲストのみんなが主役！嘘の意味を書いて、本物に投票します。2〜8人であそべるよ。' },
+    note:'役割はシンプル。\nホスト（わたし）は進行だけ。嘘を書いたり投票したりはしません。\nゲストのみんなが主役！意味の文の？？？をでっちあげて、本物に投票します。2〜8人であそべるよ。' },
 
   /* 5 */ { type:'content', accent:'coral', section:'ゲーム説明', sectionEn:'explain', num:'2',
     headline:'1ラウンドは、<span class="hl">3ステップ</span>',
     body:`<div class="steps">
-      <div class="step"><div class="step__num">①</div><div class="step__ic"><span class="material-symbols-rounded">edit</span></div><div class="step__t">かく</div><div class="step__d">お題のことばに<br>それっぽい意味を<br>でっちあげる</div></div>
+      <div class="step"><div class="step__num">①</div><div class="step__ic"><span class="material-symbols-rounded">edit</span></div><div class="step__t">かく</div><div class="step__d">意味の文の？？？に<br>それっぽいことばを<br>入れる</div></div>
       <div class="step-arrow"><span class="material-symbols-rounded">chevron_right</span></div>
       <div class="step"><div class="step__num">②</div><div class="step__ic"><span class="material-symbols-rounded">how_to_vote</span></div><div class="step__t">とうひょう</div><div class="step__d">本物だと思う<br>意味をひとつ<br>えらぶ</div></div>
       <div class="step-arrow"><span class="material-symbols-rounded">chevron_right</span></div>
       <div class="step"><div class="step__num">③</div><div class="step__ic"><span class="material-symbols-rounded">celebration</span></div><div class="step__t">けっか</div><div class="step__d">本物はどれか発表！<br>だれの嘘に<br>だまされたかな？</div></div>
     </div>`,
-    note:'1ラウンドの流れは3ステップ。\n①かく…お題のことばに「それっぽい意味」をでっちあげる\n②とうひょう…本物だと思う意味をえらぶ\n③けっか…本物はどれか発表！\nこれを新しいことばで何回かくりかえすよ。' },
+    note:'1ラウンドの流れは3ステップ。\n①かく…意味の文の？？？に入ることばをでっちあげる\n②とうひょう…本物だと思う意味をえらぶ\n③けっか…本物はどれか発表！\nこれを新しいことばで何回かくりかえすよ。' },
 
   /* 6 */ { type:'content', accent:'teal', section:'ゲーム説明', sectionEn:'explain', num:'3',
-    headline:'かく：それっぽい意味を、<span class="hl">40文字以内</span>で',
+    headline:'かく：文の<span class="hl">？？？だけ</span>、でっちあげる',
     body:`<div class="word-demo">
       <div class="word-line">
         <div class="word-card"><div class="kana">ふいご</div><div class="w">ふいご</div></div>
         <div class="word-arrow"><span class="material-symbols-rounded">arrow_right_alt</span></div>
-        <div class="lie-bubble"><span class="material-symbols-rounded">edit</span><div><span class="cap">でっちあげの例</span><div class="t">「ふとんをたたむときの、かけ声のこと。」</div></div></div>
+        <div class="lie-bubble"><span class="material-symbols-rounded">quiz</span><div><span class="cap">意味は、この形の文</span><div class="t">「<span class="blank">？？？</span>道具のこと。」</div></div></div>
       </div>
-      <div class="word-mean">こんなふうに、<b>短い一文</b>で「それっぽい意味」を書いて「だす」。<br>本当の意味を知らなくてOK。<b>音のひびき</b>から自由に想像しよう。</div>
+      <div class="word-line">
+        <div class="lie-bubble"><span class="material-symbols-rounded">edit</span><div><span class="cap">でっちあげの例</span><div class="t">「<span class="fill">ふとんをふくらませるための</span>道具のこと。」</div></div></div>
+      </div>
+      <div class="word-mean">？？？に入ることばを<b>30文字以内</b>で書いて「だす」。<br>文のおわりはみんな同じ。本当の意味を知らなくてOK、<b>音のひびき</b>から想像しよう。</div>
     </div>`,
-    note:'お題のことばが出たら、「それっぽい意味」を考えて書きます。\n嘘の意味は40文字以内の短い一文でOK。\nたとえば「ふいご」なら…「ふとんをたたむときの、かけ声のこと。」みたいな感じ。\n本当の意味を知らなくても、音のひびきから自由に想像してね！' },
+    note:'お題のことばと、意味の文の形が出てきます。\nたとえば「ふいご」なら「？？？道具のこと。」。この？？？に入ることばを30文字以内ででっちあげてね。\n例：「ふとんをふくらませるための」→「ふとんをふくらませるための道具のこと。」\n文のおわりはみんな同じになるから、中身だけで勝負！本当の意味を知らなくてもOK！' },
 
   /* 7 */ { type:'content', accent:'navy', section:'ゲーム説明', sectionEn:'explain', num:'4',
     headline:'とうひょう：<span class="ul">どれが本物？</span>',
     body:`<div class="choices">
-      <div class="choice"><div class="choice__n">①</div><div class="choice__t">ふとんをたたむときの、かけ声のこと。</div></div>
+      <div class="choice"><div class="choice__n">①</div><div class="choice__t">ふとんをふくらませるための道具のこと。</div></div>
       <div class="choice"><div class="choice__n">②</div><div class="choice__t">火を強くするために風を送る道具のこと。</div></div>
-      <div class="choice"><div class="choice__n">③</div><div class="choice__t">イカのあしの、つけねの部分のこと。</div></div>
+      <div class="choice"><div class="choice__n">③</div><div class="choice__t">イカのあしをのばすときに使う道具のこと。</div></div>
     </div>
-    <div class="choice-cap">みんなの嘘と本物をまぜて表示。<b>本物だと思うもの</b>に投票しよう。<br>※ 自分が書いた嘘には投票できないよ</div>`,
-    note:'みんなの嘘と本物の意味をまぜて、①②③…と並べて表示します。\n「これが本物だ！」と思うものに投票してね。\nひとつだけ注意：自分が書いた嘘には投票できないよ' },
+    <div class="choice-cap">みんなの嘘と本物をまぜて表示。文の形はみんなおなじだから、<b>中身だけ</b>で本物をさがそう。<br>※ 自分が書いた嘘には投票できないよ</div>`,
+    note:'みんなの嘘と本物の意味をまぜて、①②③…と並べて表示します。\n文の形はみんな同じだから、中身をくらべて「これが本物だ！」と思うものに投票してね。\nひとつだけ注意：自分が書いた嘘には投票できないよ' },
 
   /* 8 */ { type:'content', accent:'coral', section:'ゲーム説明', sectionEn:'explain', num:'5',
     headline:'あてても、だませても、<span class="hl">ポイント</span>',
@@ -337,8 +342,8 @@ const SLIDES = [
     note:'それでは、うそつき辞書スタート！\nチャットに送ったリンクを開いて、ニックネームとルームコードを入れて入ってね。\nわからなくなったら、いつでも聞いてね' },
 
   /* 13 */ { type:'divider', accent:'teal', icon:'edit', jp:'かくタイム', en:'writing',
-    sub:'それっぽい意味をでっちあげよう',
-    note:'かくタイム！\nお題のことばに「それっぽい意味」を書いて「だす」を押してね。\n本当っぽくなくても、笑えるやつでもOK！' },
+    sub:'？？？に入ることばをでっちあげよう',
+    note:'かくタイム！\n意味の文の？？？に入ることばを書いて「だす」を押してね。\n本当っぽくなくても、笑えるやつでもOK！' },
 
   /* 14 */ { type:'divider', accent:'navy', icon:'how_to_vote', jp:'とうひょうタイム', en:'voting',
     sub:'どれが本物かな？',

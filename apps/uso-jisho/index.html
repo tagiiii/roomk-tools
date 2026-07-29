@@ -209,6 +209,61 @@
       color: var(--color-text);
     }
 
+    .uj-template {
+      margin-bottom: 20px;
+      padding: 14px 18px;
+      border: 2px solid var(--color-border);
+      border-radius: 12px;
+      background: var(--color-surface);
+      text-align: center;
+    }
+    .uj-template__label {
+      margin-bottom: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--color-muted);
+      letter-spacing: 0.07em;
+    }
+    .uj-template__text {
+      font-size: 17px;
+      font-weight: 500;
+      line-height: 1.8;
+      color: var(--color-text);
+    }
+    .uj-blank {
+      display: inline-block;
+      min-width: 64px;
+      border-bottom: 2px solid var(--color-accent);
+      color: var(--color-accent);
+      font-weight: 700;
+      text-align: center;
+    }
+    .uj-preview {
+      margin-bottom: 12px;
+      padding: 12px 16px;
+      border-radius: 10px;
+      background: #EEF3F8;
+    }
+    .uj-preview__label {
+      margin-bottom: 4px;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--color-muted);
+      letter-spacing: 0.07em;
+    }
+    .uj-preview__text {
+      font-size: 15px;
+      line-height: 1.7;
+      color: var(--color-text);
+    }
+    .uj-fill {
+      color: var(--color-accent);
+      font-weight: 700;
+    }
+    .uj-choice__fill {
+      font-weight: 700;
+    }
+
     .uj-status-line {
       margin-bottom: 16px;
       text-align: center;
@@ -556,6 +611,11 @@
       <div class="uj-word-card__note">こんなことば、きいたことある？</div>
     </div>
 
+    <div class="uj-template">
+      <div class="uj-template__label">意味は、この形の文</div>
+      <div class="uj-template__text" id="writing-template"></div>
+    </div>
+
     <details class="uj-secret" id="host-secret" style="display:none">
       <summary>
         <span class="material-symbols-rounded" aria-hidden="true">visibility</span>
@@ -566,9 +626,13 @@
 
     <div id="writing-input-area" style="display:none">
       <div class="form-group">
-        <label class="form-label" for="entry-input">それっぽい意味をでっちあげよう（1〜40文字）</label>
-        <textarea class="form-input" id="entry-input" rows="3" maxlength="40" placeholder="例：雨の日にだけ見えるもようのこと。"></textarea>
-        <div class="uj-char-count"><span id="entry-char-count">0</span> / 40</div>
+        <label class="form-label" for="entry-input">？？？に入ることばを考えよう（1〜30文字）</label>
+        <textarea class="form-input" id="entry-input" rows="2" maxlength="30" placeholder="ここに入ることばをかく"></textarea>
+        <div class="uj-char-count"><span id="entry-char-count">0</span> / 30</div>
+      </div>
+      <div class="uj-preview">
+        <div class="uj-preview__label">できあがりの文</div>
+        <div class="uj-preview__text" id="entry-preview"></div>
       </div>
       <div class="uj-error" id="entry-error"></div>
       <button class="btn btn-primary btn-full btn-lg" onclick="submitEntry()">だす</button>
@@ -682,64 +746,66 @@
   const NUMBERS = ['①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨', '⑩'];
 
   // お題: 実在する日本語のめずらしいことば
-  // { word: 表示することば, kana: よみがな, meaning: 本当の意味（短い一文） }
+  // { word: 表示することば, kana: よみがな, pre: 穴の前（省略可）, fill: 穴に入る本当のことば, post: 穴の後 }
+  // 意味文は pre + 穴 + post で合成する。全員の答えが同じ文の形になり、文体や語尾で本物がバレない。
+  // post に含めるカテゴリ情報（「〜な動物のこと。」等）はお題ごとのさじ加減で調整する
   const WORDS = [
     // ようすのことば
-    { word: 'やおら', kana: 'やおら', meaning: 'ゆっくりと静かに動きはじめるようす。' },
-    { word: 'やにわに', kana: 'やにわに', meaning: 'その場でいきなり何かをするようす。' },
-    { word: 'たまさか', kana: 'たまさか', meaning: 'たまたま、まれにしか起こらないようす。' },
-    { word: 'あけすけ', kana: 'あけすけ', meaning: 'かくしごとをせず、なんでもそのまま言うようす。' },
-    { word: 'おざなり', kana: 'おざなり', meaning: 'その場かぎりの、いいかげんなやり方のこと。' },
-    { word: 'のべつまくなし', kana: 'のべつまくなし', meaning: '休みなくずっと続くようす。' },
-    { word: 'とどのつまり', kana: 'とどのつまり', meaning: 'いろいろあったすえの、けっきょくのところということ。' },
-    { word: 'おちゃのこさいさい', kana: 'おちゃのこさいさい', meaning: 'とてもかんたんにできること。' },
-    { word: 'べらぼう', kana: 'べらぼう', meaning: '程度がふつうではないほど大きいこと。' },
-    { word: 'がらんどう', kana: 'がらんどう', meaning: '中に何もなくて、広くがらんとしていること。' },
-    { word: 'たわわ', kana: 'たわわ', meaning: '実がたくさんついて、枝がしなっているようす。' },
-    { word: 'ちゃきちゃき', kana: 'ちゃきちゃき', meaning: '生まれも育ちもずっとその土地であること。' },
+    { word: 'やおら', kana: 'やおら', fill: 'ゆっくりと静かに動きはじめる', post: 'ようす。' },
+    { word: 'やにわに', kana: 'やにわに', fill: 'その場でいきなり何かをする', post: 'ようす。' },
+    { word: 'たまさか', kana: 'たまさか', fill: 'たまたま、まれにしか起こらない', post: 'ようす。' },
+    { word: 'あけすけ', kana: 'あけすけ', fill: 'かくしごとをせず、なんでもそのまま言う', post: 'ようす。' },
+    { word: 'おざなり', kana: 'おざなり', fill: 'その場かぎりの、いいかげんな', post: 'やり方のこと。' },
+    { word: 'のべつまくなし', kana: 'のべつまくなし', fill: '休みなくずっと続く', post: 'ようす。' },
+    { word: 'とどのつまり', kana: 'とどのつまり', fill: 'いろいろあったすえの、けっきょくのところ', post: 'ということ。' },
+    { word: 'おちゃのこさいさい', kana: 'おちゃのこさいさい', fill: 'とてもかんたんにできる', post: 'こと。' },
+    { word: 'べらぼう', kana: 'べらぼう', fill: '程度がふつうではないほど大きい', post: 'こと。' },
+    { word: 'がらんどう', kana: 'がらんどう', fill: '中に何もなくて、広くがらんとしている', post: 'こと。' },
+    { word: 'たわわ', kana: 'たわわ', fill: '実がたくさんついて、枝がしなっている', post: 'ようす。' },
+    { word: 'ちゃきちゃき', kana: 'ちゃきちゃき', fill: '生まれも育ちもずっとその土地である', post: 'こと。' },
     // 古い道具・もの
-    { word: 'ひしゃく', kana: 'ひしゃく', meaning: '水をすくうための、長い柄のついた道具のこと。' },
-    { word: 'たらい', kana: 'たらい', meaning: '水をためて洗いものをする、平たくて丸い入れ物のこと。' },
-    { word: 'ふいご', kana: 'ふいご', meaning: '火を強くするために風を送る道具のこと。' },
-    { word: 'おひつ', kana: 'おひつ', meaning: 'たきあがったごはんを入れておく木の入れ物のこと。' },
-    { word: 'せいろ', kana: 'せいろ', meaning: '湯気で食べ物をむすための木の道具のこと。' },
-    { word: 'つづら', kana: 'つづら', meaning: '着物などをしまっておく、ふたつきのかごのこと。' },
-    { word: 'こより', kana: 'こより', meaning: '紙を細くねじって、ひものようにしたもの。' },
-    { word: 'あんどん', kana: 'あんどん', meaning: '紙をはったわくの中に火をともす、昔の明かりのこと。' },
-    { word: 'おかもち', kana: 'おかもち', meaning: '出前の料理を運ぶための、取っ手のついた箱のこと。' },
-    { word: 'うだつ', kana: 'うだつ', meaning: '屋根の両はしに作られた、火事をふせぐための小さなかべのこと。' },
-    { word: 'びいどろ', kana: 'びいどろ', meaning: 'ガラスをさす昔のことば。' },
-    { word: 'しゃっぽ', kana: 'しゃっぽ', meaning: 'ぼうしをさす昔のことば。' },
+    { word: 'ひしゃく', kana: 'ひしゃく', fill: '水をすくうための、長い柄のついた', post: '道具のこと。' },
+    { word: 'たらい', kana: 'たらい', fill: '水をためて洗いものをする、平たくて丸い', post: '入れ物のこと。' },
+    { word: 'ふいご', kana: 'ふいご', fill: '火を強くするために風を送る', post: '道具のこと。' },
+    { word: 'おひつ', kana: 'おひつ', fill: 'たきあがったごはんを入れておく', post: '木の入れ物のこと。' },
+    { word: 'せいろ', kana: 'せいろ', fill: '湯気で食べ物をむすための', post: '木の道具のこと。' },
+    { word: 'つづら', kana: 'つづら', fill: '着物などをしまっておく、ふたつきの', post: 'かごのこと。' },
+    { word: 'こより', kana: 'こより', fill: '紙を細くねじって、ひものようにした', post: 'もの。' },
+    { word: 'あんどん', kana: 'あんどん', fill: '紙をはったわくの中に火をともす', post: '昔の明かりのこと。' },
+    { word: 'おかもち', kana: 'おかもち', fill: '出前の料理を運ぶための、取っ手のついた', post: '箱のこと。' },
+    { word: 'うだつ', kana: 'うだつ', fill: '屋根の両はしに作られた、火事をふせぐための', post: '小さなかべのこと。' },
+    { word: 'びいどろ', kana: 'びいどろ', fill: 'ガラス', post: 'をさす昔のことば。' },
+    { word: 'しゃっぽ', kana: 'しゃっぽ', fill: 'ぼうし', post: 'をさす昔のことば。' },
     // 動物
-    { word: 'バビルサ', kana: 'ばびるさ', meaning: 'きばが上にのびてくる、イノシシのなかまの動物のこと。' },
-    { word: 'ハダカデバネズミ', kana: 'はだかでばねずみ', meaning: '毛がほとんどなく、土の中でくらすネズミのなかまのこと。' },
-    { word: 'クズリ', kana: 'くずり', meaning: '体は小さいのに力がとても強い、イタチのなかまの動物のこと。' },
-    { word: 'ツチブタ', kana: 'つちぶた', meaning: '長い舌でアリをなめて食べる、アフリカの動物のこと。' },
-    { word: 'テングザル', kana: 'てんぐざる', meaning: '鼻が大きくたれさがった、サルのなかまのこと。' },
-    { word: 'オコジョ', kana: 'おこじょ', meaning: '冬になると毛が白くなる、小さなイタチのなかまのこと。' },
-    { word: 'キンカジュー', kana: 'きんかじゅー', meaning: '夜に木の上で果物を食べる、しっぽの長い動物のこと。' },
-    { word: 'ヤブイヌ', kana: 'やぶいぬ', meaning: '森にすんでいて泳ぎがうまい、足の短い犬のなかまのこと。' },
+    { word: 'バビルサ', kana: 'ばびるさ', fill: 'きばが上にのびてくる', post: '、イノシシのなかまの動物のこと。' },
+    { word: 'ハダカデバネズミ', kana: 'はだかでばねずみ', fill: '毛がほとんどなく、土の中でくらす', post: 'ネズミのなかまのこと。' },
+    { word: 'クズリ', kana: 'くずり', fill: '体は小さいのに力がとても強い', post: '、イタチのなかまの動物のこと。' },
+    { word: 'ツチブタ', kana: 'つちぶた', fill: '長い舌でアリをなめて食べる', post: '、アフリカの動物のこと。' },
+    { word: 'テングザル', kana: 'てんぐざる', fill: '鼻が大きくたれさがった', post: '、サルのなかまのこと。' },
+    { word: 'オコジョ', kana: 'おこじょ', fill: '冬になると毛が白くなる', post: '、小さなイタチのなかまのこと。' },
+    { word: 'キンカジュー', kana: 'きんかじゅー', fill: '夜に木の上で果物を食べる', post: '、しっぽの長い動物のこと。' },
+    { word: 'ヤブイヌ', kana: 'やぶいぬ', fill: '森にすんでいて泳ぎがうまい', post: '、足の短い犬のなかまのこと。' },
     // 食べ物
-    { word: 'ぬた', kana: 'ぬた', meaning: '野菜や魚介を酢みそであえた料理のこと。' },
-    { word: 'がんもどき', kana: 'がんもどき', meaning: 'くずした豆腐に野菜をまぜて揚げた食べ物のこと。' },
-    { word: 'ずんだ', kana: 'ずんだ', meaning: 'ゆでた枝豆をすりつぶして作るあんのこと。' },
-    { word: 'すいとん', kana: 'すいとん', meaning: '小麦粉のだんごが入った汁もののこと。' },
-    { word: 'ういろう', kana: 'ういろう', meaning: '米の粉と砂糖で作る、もちもちしたおかしのこと。' },
-    { word: 'おこし', kana: 'おこし', meaning: '米などを飴でかためた、ぱりぱりしたおかしのこと。' },
-    { word: 'いぶりがっこ', kana: 'いぶりがっこ', meaning: 'だいこんをけむりでいぶってから漬けた、秋田の漬物のこと。' },
-    { word: 'ごまめ', kana: 'ごまめ', meaning: '小さなイワシを干した食べ物のこと。' },
-    { word: 'へしこ', kana: 'へしこ', meaning: '魚をぬかに漬けこんだ、福井のあたりの食べ物のこと。' },
+    { word: 'ぬた', kana: 'ぬた', fill: '野菜や魚介を酢みそであえた', post: '料理のこと。' },
+    { word: 'がんもどき', kana: 'がんもどき', fill: 'くずした豆腐に野菜をまぜて揚げた', post: '食べ物のこと。' },
+    { word: 'ずんだ', kana: 'ずんだ', fill: 'ゆでた枝豆をすりつぶして作る', post: 'あんのこと。' },
+    { word: 'すいとん', kana: 'すいとん', fill: '小麦粉のだんごが入った', post: '汁もののこと。' },
+    { word: 'ういろう', kana: 'ういろう', fill: '米の粉と砂糖で作る、もちもちした', post: 'おかしのこと。' },
+    { word: 'おこし', kana: 'おこし', fill: '米などを飴でかためた、ぱりぱりした', post: 'おかしのこと。' },
+    { word: 'いぶりがっこ', kana: 'いぶりがっこ', fill: 'だいこんをけむりでいぶってから漬けた', post: '、秋田の漬物のこと。' },
+    { word: 'ごまめ', kana: 'ごまめ', fill: '小さなイワシを干した', post: '食べ物のこと。' },
+    { word: 'へしこ', kana: 'へしこ', fill: '魚をぬかに漬けこんだ', post: '、福井のあたりの食べ物のこと。' },
     // 方言
-    { word: 'めんこい', kana: 'めんこい', meaning: '「かわいい」という意味の、北のほうのことば。' },
-    { word: 'なまら', kana: 'なまら', meaning: '「とても」という意味の、北海道のことば。' },
-    { word: 'でら', kana: 'でら', meaning: '「すごく」という意味の、名古屋のあたりのことば。' },
-    { word: 'はんなり', kana: 'はんなり', meaning: '上品ではなやかなようすをあらわす、京都のことば。' },
-    { word: 'なんくるないさ', kana: 'なんくるないさ', meaning: '「なんとかなるよ」という意味の、沖縄のことば。' },
+    { word: 'めんこい', kana: 'めんこい', pre: '「', fill: 'かわいい', post: '」という意味の、北のほうのことば。' },
+    { word: 'なまら', kana: 'なまら', pre: '「', fill: 'とても', post: '」という意味の、北海道のことば。' },
+    { word: 'でら', kana: 'でら', pre: '「', fill: 'すごく', post: '」という意味の、名古屋のあたりのことば。' },
+    { word: 'はんなり', kana: 'はんなり', fill: '上品ではなやかなようすをあらわす', post: '、京都のことば。' },
+    { word: 'なんくるないさ', kana: 'なんくるないさ', pre: '「', fill: 'なんとかなるよ', post: '」という意味の、沖縄のことば。' },
     // からだ・くらし
-    { word: 'たなごころ', kana: 'たなごころ', meaning: '手のひらをさす古いことば。' },
-    { word: 'ぼんのくぼ', kana: 'ぼんのくぼ', meaning: '首のうしろの、まんなかのくぼんだところのこと。' },
-    { word: 'おとがい', kana: 'おとがい', meaning: 'あごをさす古いことば。' },
-    { word: 'ねこばば', kana: 'ねこばば', meaning: 'ひろったものをだまって自分のものにしてしまうこと。' },
+    { word: 'たなごころ', kana: 'たなごころ', fill: '手のひら', post: 'をさす古いことば。' },
+    { word: 'ぼんのくぼ', kana: 'ぼんのくぼ', fill: '首のうしろの、まんなかのくぼんだ', post: 'ところのこと。' },
+    { word: 'おとがい', kana: 'おとがい', fill: 'あご', post: 'をさす古いことば。' },
+    { word: 'ねこばば', kana: 'ねこばば', fill: 'ひろったものをだまって自分のものにしてしまう', post: 'こと。' },
   ];
 
   const STATUS = {
@@ -754,7 +820,7 @@
   const ORPHAN_TTL_MS = 2 * 60 * 1000;
   const MIN_GUESTS = 2;
   const MAX_GUESTS = 8;
-  const ENTRY_MAX_LEN = 40;
+  const ENTRY_MAX_LEN = 30;
   const POINT_CORRECT = 2;   // 本物を当てたら +2
   const POINT_FOOLED = 1;    // 自分のうそが1票あつめるごとに +1
 
@@ -769,6 +835,27 @@
   };
 
   const esc = RoomkRTDB.esc;
+
+  // ---------- 穴埋めの合成 ----------
+  // 意味文は pre + 穴 + post。答え（穴の中身）は entries / choices に穴の部分だけを保存し、
+  // 表示時に毎回合成する（全員の答えが同じ文の形になるのがこのゲームの核）
+
+  function composeMeaning(word, fillText) {
+    return `${word.pre || ''}${fillText}${word.post}`;
+  }
+
+  function composeMeaningHtml(word, fillText, fillClass) {
+    return `${esc(word.pre || '')}<span class="${fillClass}">${esc(fillText)}</span>${esc(word.post)}`;
+  }
+
+  function blankTemplateHtml(word) {
+    return `${esc(word.pre || '')}<span class="uj-blank">？？？</span>${esc(word.post)}`;
+  }
+
+  // 文末の「。」「、」は合成時に文が壊れるので取り除く（空白の連続も1つにまとめる）
+  function normalizeEntry(value) {
+    return value.replace(/\s+/g, ' ').trim().replace(/[\s。、]+$/, '');
+  }
 
   const shuffle = (array) => {
     const next = [...array];
@@ -1275,7 +1362,7 @@
         .map(([author, text]) => ({ text, author }));
       if (entryList.length === 0) return;
       const word = WORDS[room.wordIndex] || WORDS[0];
-      const choices = shuffle([...entryList, { text: word.meaning, author: null }]);
+      const choices = shuffle([...entryList, { text: word.fill, author: null }]);
       return {
         ...room,
         status: STATUS.VOTING,
@@ -1353,9 +1440,9 @@
 
   async function submitEntry() {
     const input = document.getElementById('entry-input');
-    const text = input.value.replace(/\s+/g, ' ').trim();
+    const text = normalizeEntry(input.value);
     if (!text) {
-      showError('entry-error', 'それっぽい意味を入力してください');
+      showError('entry-error', '？？？に入ることばを入力してください');
       return;
     }
     if (text.length > ENTRY_MAX_LEN) {
@@ -1461,6 +1548,7 @@
   function resetWritingUI() {
     document.getElementById('entry-input').value = '';
     document.getElementById('entry-char-count').textContent = '0';
+    document.getElementById('entry-preview').innerHTML = '';
     hideError('entry-error');
     document.getElementById('host-secret').removeAttribute('open');
   }
@@ -1476,6 +1564,7 @@
     document.getElementById('writing-round-num').textContent = room.round || 1;
     document.getElementById('writing-word').textContent = word.word;
     document.getElementById('writing-kana').textContent = word.kana;
+    document.getElementById('writing-template').innerHTML = blankTemplateHtml(word);
 
     const entries = room.entries || {};
     const guests = getGuestNames(room.players);
@@ -1502,7 +1591,7 @@
 
     if (state.role === 'host') {
       secret.style.display = 'block';
-      document.getElementById('host-secret-text').textContent = word.meaning;
+      document.getElementById('host-secret-text').innerHTML = composeMeaningHtml(word, word.fill, 'uj-fill');
       inputArea.style.display = 'none';
       submittedArea.style.display = 'none';
       hostActions.style.display = 'block';
@@ -1527,6 +1616,17 @@
     const mySubmitted = typeof entries[state.nickname] === 'string' && entries[state.nickname].trim() !== '';
     inputArea.style.display = mySubmitted ? 'none' : 'block';
     submittedArea.style.display = mySubmitted ? 'block' : 'none';
+    if (!mySubmitted) updateEntryPreview();
+  }
+
+  function updateEntryPreview() {
+    const room = state.lastRoom;
+    if (!room) return;
+    const word = WORDS[room.wordIndex] || WORDS[0];
+    const text = normalizeEntry(document.getElementById('entry-input').value);
+    document.getElementById('entry-preview').innerHTML = text
+      ? composeMeaningHtml(word, text, 'uj-fill')
+      : blankTemplateHtml(word);
   }
 
   function handleVoting(room) {
@@ -1562,9 +1662,9 @@
         `<span class="uj-choice__num">${NUMBERS[index] || `(${index + 1})`}</span>`,
         badges.join(''),
         '</div>',
-        `<div class="uj-choice__text">${esc(choice.text)}</div>`,
+        `<div class="uj-choice__text">${composeMeaningHtml(word, choice.text, 'uj-choice__fill')}</div>`,
       ].join('');
-      card.setAttribute('aria-label', `${index + 1}番の意味: ${choice.text}`);
+      card.setAttribute('aria-label', `${index + 1}番の意味: ${composeMeaning(word, choice.text)}`);
 
       if (state.role === 'guest' && !hasVoted) {
         const button = document.createElement('button');
@@ -1603,7 +1703,7 @@
     document.getElementById('reveal-round-num').textContent = room.round || 1;
     document.getElementById('reveal-word').textContent = word.word;
     document.getElementById('reveal-kana').textContent = word.kana;
-    document.getElementById('reveal-meaning').textContent = word.meaning;
+    document.getElementById('reveal-meaning').innerHTML = composeMeaningHtml(word, word.fill, 'uj-fill');
 
     const choices = room.choices || [];
     const votes = room.votes || {};
@@ -1645,7 +1745,7 @@
         `<span class="uj-choice__num">${NUMBERS[index] || `(${index + 1})`}</span>`,
         badge,
         '</div>',
-        `<div class="uj-choice__text">${esc(choice.text)}</div>`,
+        `<div class="uj-choice__text">${composeMeaningHtml(word, choice.text, 'uj-choice__fill')}</div>`,
         `<div class="uj-choice__meta">${metaParts.join(' ・ ')}</div>`,
       ].join('');
       list.appendChild(card);
@@ -1702,8 +1802,9 @@
   }
 
   document.getElementById('entry-input').addEventListener('input', (event) => {
-    const normalized = event.target.value.replace(/\s+/g, ' ').trim();
+    const normalized = normalizeEntry(event.target.value);
     document.getElementById('entry-char-count').textContent = String(normalized.length);
+    updateEntryPreview();
   });
 
   tryReconnect().then((reconnected) => {
@@ -1716,7 +1817,7 @@
 <script>
   RoomkHowto.init({
     title: 'あそびかた',
-    lead: 'めずらしいことばに「それっぽい意味」をでっちあげて、どれが本物かをあてっこするゲーム。',
+    lead: 'めずらしいことばの意味の「？？？」をでっちあげて、どれが本物かをあてっこするゲーム。',
     sections: [
       {
         heading: 'はじめかた',
@@ -1729,7 +1830,8 @@
       {
         heading: 'すすめかた',
         items: [
-          'めずらしいことばが出てくるので、それっぽい意味を考えて書いて「だす」を押す',
+          'めずらしいことばと「？？？な動物のこと。」のような意味の文の形が出てくる',
+          '？？？に入ることばをでっちあげて書いて「だす」を押す（文の形はみんなおなじになるよ）',
           '本物とみんなのうそがまざって出てくるので、本物だとおもうものに「とうひょうする」を押す',
           '本物を当てたら+2ポイント、自分のうそに1票入るごとに+1ポイント',
           'けっかを見たら、ホストが「つぎへ」を押すと次のことばであそべる',
