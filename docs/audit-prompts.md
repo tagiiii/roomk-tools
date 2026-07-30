@@ -93,12 +93,13 @@ Tier は「指摘」ではなく「提案アクション」に付ける。カー
 
 これらに反する「改善提案」は **finding にしない**。むしろ違反していれば起票する側。
 
-1. **内省回答・成長評価に、評価・比較・採点・数値化・証拠化・保存を「足す」提案をしない。** 内省系ツール（`kimochi-map` `mienai-ganbari` `nurie-week` `kyapa-graph` `tsuyomi-card` `sukina-map` `challenge-tane` `mirai-hikidashi` `bamen-card` ほか）の**永続化ゼロ・リロードで消える**は正しい仕様。「保存できないのは不便」は誤検出。
+1. **内省回答・成長評価に、評価・比較・採点・数値化・証拠化・保存を「足す」提案をしない。** 内省系ツール（`kimochi-map` `mienai-ganbari` `nurie-week` `kyapa-graph` `tsuyomi-card` `suki-type-check` `challenge-tane` `mirai-hikidashi` `bamen-card` ほか）の**永続化ゼロ・リロードで消える**は正しい仕様。「保存できないのは不便」は誤検出。
    - **この禁止は「内省の回答・成長の評価」に限る。** 娯楽ゲームの得点、RTDB のゲーム進行用の一時状態、再接続のための `sessionStorage` 保存は対象外（これらを消せという提案はしない）。
 2. **既知の意図的例外を切り分ける:**
    - `kyapa-graph` … 数値化・グラフ・学校語は**意図的な例外**（対象は「登校を頑張りすぎている子」専用、不登校の子には別ツール、と AGENTS.md に理由付きで明記）。哲学違反として起票しない。むしろ「対象宣言が明記された良い例」。
    - `value-card` … 順位付け・RESULT画面・html2canvas の PNG保存を持つ**設計世代の古い外れ値**。「一律に非評価か」を問うと value-card だけ NO になる。**バグではなく設計時期の差**として「意図的例外か未更新か」を切り分ける finding にする（勝手に機能削除を提案しない）。
    - `kimochi-map` … ネガティブ感情語を**意図的に収録**（上限は「つらい・しんどい」まで）。「ダーク語があるから NG」と単純判定しない。
+   - `suki-type-check` … タイプの断定・全軸のパーセント表示は**意図的な例外**（旧 `sukina-map` の「診断・タイプ分けをしない」を撤廃した経緯を AGENTS.md に明記）。数値が出ること自体を哲学違反として起票しない。残っているガードレールは「タイプ間に優劣をつけない・欠点を書かない」の2つで、**そちらの違反は起票する**。
    - ※ これは**恒久免責ではない**。「その特徴が存在するだけでは finding にしない」という意味であって、強制・保存・プライバシー侵害など**新たな実害**が観測されれば、意図的例外のアプリでも起票する。
 3. **メンター向けの心得・声かけのコツを子ども向け画面 / `howto.js` に出す提案をしない。** 心得は `AGENTS.md` にのみ書く（強い規約）。スタッフ向けの選び方情報も、子ども向け画面には出さない（置き場は §P7・§P8 の注記に従う）。
 
@@ -215,7 +216,7 @@ Tier は「指摘」ではなく「提案アクション」に付ける。カー
   1. **セッション条件**が読み取れるか — 所要時間の目安・想定人数・発話量（声/チャット/選ぶだけ）・自己開示の深さ。これらは観察可能で、固定ラベルにならない。
   2. アプリ自身が**利用場面・条件**を宣言しているか（例: `kyapa-graph` が想定場面を明示しているように）。見るのは**アプリ側に宣言があるか**であって、AI が個々の子どもへの割り当てを判断することではない。無くてもよいが、有れば選択の助けになる。
   3. 心理的負荷は**単一スコアにせず項目分解**して読めるか（自己開示の深さ・過去想起の要否・失敗が見える設計か 等）。現状これらは `docs/content-plan.html`（役割・負荷・「リスクと対策」）に散在。
-  4. 似た役割のアプリとの分担が特定できるか（例: sukina-map〈蓄積〉vs kyoumi-sugoroku〈会話のきっかけ〉）。
+  4. 似た役割のアプリとの分担が特定できるか（例: suki-type-check〈タイプ診断〉vs kyoumi-sugoroku〈会話のきっかけ〉）。
   5. 作戦会議の4軸（関係性/興味/自己理解/自己実現）について、**承認済みのマッピングがあればそれとの整合**を確認する（AI が新規に分類を推定しない。マッピング未確定なら『判定不能』）。
 - **一次情報のありか**: `docs/content-plan.html`（共通原則・役割・負荷・リスク）が実質的に唯一の準・選択ガイド。統合ガイドは**未着手が公式見解**（MEMORY `project_session_flows.md`）。よってこのプロンプトは「既存ガイドの検証」ではなく「**ガイドを新規に組み立てる素材集め**」。
 - **メタ情報の置き場**: 開発者・エージェント向けの記録は `AGENTS.md` でよい。ただし**スタッフが実際に見る選択ガイドは別**で、ポータル or スタッフ閲覧用の専用資料を正本にする（AGENTS.md をスタッフ導線にしない）。子ども向け画面には出さない。
@@ -276,11 +277,11 @@ Tier は「指摘」ではなく「提案アクション」に付ける。カー
 | otona-talk | 78 | ✓ | | koedake-theater | 12 | ✗ |
 | kimochi-map | 72 | ✓ | | tatoe-narabe | 72 | ✗ |
 
-件数概念なし（ユーザー生成・ランダム・スタブ）: sukina-map, challenge-tane, kakure-number, jinro, checkin, vote, name-change, kyapa-graph, nurie-week, mienai-ganbari, sakusen-kaigi。
+件数概念なし（ユーザー生成・ランダム・スタブ）: suki-type-check, challenge-tane, kakure-number, jinro, checkin, vote, name-change, kyapa-graph, nurie-week, mienai-ganbari, sakusen-kaigi。
 
 **`slides.html` 保有16本**（P5-3 の判定基準・2026-07-27 再カウント）: do-mannaka, esadori, jinro, kaburazu-hint, kakure-number, koedake-theater, kotoba-tantei, magire-eshi, name-change, oshitsuke-zukan, pita-hame, pittari-meter, tatoe-gp, tatoe-narabe, uso-jisho, word-wolf。
 
-**改名前のリダイレクトスタブは監査対象外**: `apps/codenames/`（→ kotoba-tantei）、`apps/hint-de-pinto/`（→ kaburazu-hint）、`apps/iisen-show/`（→ do-mannaka）、`apps/ito/`（→ tatoe-narabe）。`index.html` / `slides.html` とも `<meta http-equiv="refresh">` の16行スタブで、実装・ドキュメントは新フォルダ側にある。**旧名で finding を書かない**（過去のレポートは旧名のまま）。再カウントは次のコマンドで行う。
+**改名前のリダイレクトスタブは監査対象外**: `apps/codenames/`（→ kotoba-tantei）、`apps/hint-de-pinto/`（→ kaburazu-hint）、`apps/iisen-show/`（→ do-mannaka）、`apps/ito/`（→ tatoe-narabe）、`apps/sukina-map/`（→ suki-type-check・`index.html` のみ）。`index.html` / `slides.html` とも `<meta http-equiv="refresh">` の16行スタブで、実装・ドキュメントは新フォルダ側にある。**旧名で finding を書かない**（過去のレポートは旧名のまま）。再カウントは次のコマンドで行う。
 
 ```bash
 grep -L 'http-equiv="refresh"' apps/*/slides.html | sed 's|apps/||;s|/slides.html||'

@@ -42,6 +42,7 @@ roomk-tools/
 | `apps/hint-de-pinto/` | `apps/kaburazu-hint/`（かぶらずヒント） |
 | `apps/iisen-show/` | `apps/do-mannaka/`（ドまんなか） |
 | `apps/ito/` | `apps/tatoe-narabe/`（たとえならべ） |
+| `apps/sukina-map/` | `apps/suki-type-check/`（すきタイプチェック） |
 
 スタブは `scripts/lint.sh` の `HOWTO_EXEMPT` に登録済み（あそびかたモーダル不要）。
 

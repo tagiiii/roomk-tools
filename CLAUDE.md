@@ -23,5 +23,5 @@
 - **編集後は `bash scripts/lint.sh`**（Edit/Write の PostToolUse フックでも自動実行される）。エラー0・新規警告なしが基準
 - **絵文字は使わない。** アイコンは Material Symbols Rounded のみ
 - **メンター向けの心得・声かけのコツを子ども向け画面や `howto.js` に書かない。** 置き場は `AGENTS.md` だけ
-- 旧フォルダ（`apps/codenames/` `apps/hint-de-pinto/` `apps/iisen-show/` `apps/ito/`）はリダイレクトスタブ。実装は新フォルダ側にある
+- 旧フォルダ（`apps/codenames/` `apps/hint-de-pinto/` `apps/iisen-show/` `apps/ito/` `apps/sukina-map/`）はリダイレクトスタブ。実装は新フォルダ側にある
 - AI の役割分担・ガードレールの区分は [docs/ai-roles.md](./docs/ai-roles.md)。モデルの固有名を書くのはそのファイルだけ

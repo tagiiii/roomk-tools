@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>すきタイプチェック | room-K</title>
+  <!-- Google Fonts（Noto Sans JP）-->
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
+  <!-- Material Symbols Rounded -->
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet" />
+  <!-- 共通デザインシステム -->
+  <link rel="stylesheet" href="../shared/css/design-system.css" />
+  <!-- アプリ固有スタイル -->
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="stc-shell">
+    <header class="stc-header">
+      <div>
+        <h1 class="stc-header__title">すきタイプチェック</h1>
+        <p class="stc-header__sub">18この質問にこたえると、じぶんの「すき」のタイプがわかる</p>
+      </div>
+      <a class="stc-header__link" href="../">
+        <span class="material-symbols-rounded" aria-hidden="true">home</span>
+        ツール一覧
+      </a>
+    </header>
+
+    <main class="stc-main">
+      <section class="screen" id="screen-start" aria-labelledby="start-title"></section>
+      <section class="screen" id="screen-question" aria-labelledby="question-title"></section>
+      <section class="screen" id="screen-result" aria-labelledby="result-title"></section>
+    </main>
+  </div>
+
+  <script type="module" src="app.js"></script>
+  <script src="../shared/js/stats.js?v=1" defer></script>
+  <script src="../shared/js/howto.js"></script>
+  <script>
+    RoomkHowto.init({
+      title: 'つかいかた',
+      lead: '18この質問にこたえると、じぶんの「すき」のタイプが出てくる診断ツール。10分くらいでおわるよ。',
+      sections: [
+        { heading: 'はじめかた', items: [
+          '「はじめる」をおすと、1問ずつ質問が出てくる',
+        ] },
+        { heading: 'すすめかた', items: [
+          '「あてはまる」から「当てはまらない」まで、ちかいものを5つから えらぶ',
+          'まよったときは「どちらでもない」をえらんでOK',
+          '「ひとつ前にもどる」で、まえの質問をえらび直せる',
+        ] },
+        { heading: 'けっかの見かた', items: [
+          'タイプはひとつに決めつけるためのものじゃない。話のきっかけとして見てね',
+          '「結果をコピー」で、けっかをチャットに貼りつけられる',
+        ] },
+        { heading: 'おわりかた', text: 'このアプリは、こたえた内容をどこにも保存しません。ページを閉じると消えます。以前の「すきなことマップ」で保存したファイルは、このツールでは使いません。' },
+      ],
+    });
+  </script>
+</body>
+</html>

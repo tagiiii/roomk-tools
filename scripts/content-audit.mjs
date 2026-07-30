@@ -227,14 +227,14 @@ const COVERED_APPS = [
 // 数えられるコンテンツを持たないため重複検査の対象外にするアプリ（意図的除外）。
 // 例: 内省ツール・進行支援・スタブ本体など、比較対象になる「お題集」が存在しない。
 const NO_CONTENT_APPS = [
-  'sukina-map', 'challenge-tane', 'kakure-number', 'jinro', 'checkin', 'vote',
+  'suki-type-check', 'challenge-tane', 'kakure-number', 'jinro', 'checkin', 'vote',
   'name-change', 'kyapa-graph', 'nurie-week', 'mienai-ganbari', 'sakusen-kaigi',
 ];
 
 // apps/ 配下に存在するがアプリではないディレクトリ。
-// ito / iisen-show / hint-de-pinto / codenames は旧URLからの自動移動スタブ（コンテンツなし）。
+// ito / iisen-show / hint-de-pinto / codenames / sukina-map は旧URLからの自動移動スタブ（コンテンツなし）。
 // guide はスタッフ向け「ゲームえらび早見表」ページ（お題集を持たない静的な案内ページ）。
-const NON_APP_DIRS = ['shared', 'ito', 'iisen-show', 'hint-de-pinto', 'codenames', 'guide'];
+const NON_APP_DIRS = ['shared', 'ito', 'iisen-show', 'hint-de-pinto', 'codenames', 'sukina-map', 'guide'];
 
 // 意図的重複 allowlist（C-4 で決着済み）:
 //   異なるゲーム間で日常語彙（「カレー」「うさぎ」など）が重複するのは正当。
