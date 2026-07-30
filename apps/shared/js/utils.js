@@ -30,21 +30,31 @@ export function copyToClipboard(text, btn = null, options = {}) {
     resetDelay   = 2500,
   } = options;
 
-  // 連打防止: リセット待ち中は何もしない
-  if (btn && btn.dataset.copyBusy) return Promise.resolve(false);
-
-  const onSuccess = () => {
-    if (!btn) return;
-    const originalHTML  = btn.innerHTML;   // innerHTML で保存（アイコン span を含む）
-    const originalClass = btn.className;
+  // 連打防止: コピー開始からリセット完了までは何もしない
+  // （成功後に立てると writeText 完了前の再クリックで2処理が並行し、
+  //   2回目が「コピーしました！」表示を元の姿として保存→表示が戻らなくなるため開始時点で立てる）
+  if (btn) {
+    if (btn.dataset.copyBusy) return Promise.resolve(false);
     btn.dataset.copyBusy = '1';
-    btn.textContent = successText;
-    btn.classList.add(successClass);
-    setTimeout(() => {
-      btn.innerHTML   = originalHTML;      // innerHTML で復元
-      btn.className   = originalClass;
+  }
+
+  const finish = (ok) => {
+    if (!btn) return ok;
+    if (ok) {
+      const originalHTML  = btn.innerHTML;   // innerHTML で保存（アイコン span を含む）
+      const originalClass = btn.className;
+      btn.textContent = successText;
+      btn.classList.add(successClass);
+      setTimeout(() => {
+        btn.innerHTML   = originalHTML;      // innerHTML で復元
+        btn.className   = originalClass;
+        delete btn.dataset.copyBusy;
+      }, resetDelay);
+    } else {
+      // 失敗時はガードを即解除して再試行できるようにする
       delete btn.dataset.copyBusy;
-    }, resetDelay);
+    }
+    return ok;
   };
 
   // navigator.clipboard が未定義の環境ではフォールバックを直接実行
@@ -53,17 +63,14 @@ export function copyToClipboard(text, btn = null, options = {}) {
     && typeof navigator.clipboard.writeText === 'function';
 
   if (clipboardAvailable) {
-    return navigator.clipboard.writeText(text).then(() => {
-      onSuccess();
-      return true;
-    }).catch(() => {
-      return fallbackCopy(text, onSuccess);
-    });
+    return navigator.clipboard.writeText(text)
+      .then(() => finish(true))
+      .catch(() => fallbackCopy(text).then(finish));
   }
-  return fallbackCopy(text, onSuccess);
+  return fallbackCopy(text).then(finish);
 }
 
-function fallbackCopy(text, onSuccess) {
+function fallbackCopy(text) {
   const ta = document.createElement('textarea');
   ta.value = text;
   ta.style.cssText = 'position:fixed;opacity:0;pointer-events:none';
@@ -71,7 +78,6 @@ function fallbackCopy(text, onSuccess) {
   ta.select();
   const ok = document.execCommand('copy');
   document.body.removeChild(ta);
-  if (ok) onSuccess();
   return Promise.resolve(ok);
 }
 

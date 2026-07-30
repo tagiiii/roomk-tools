@@ -57,7 +57,11 @@
     '.howto-head strong { font-size: 17px; color: var(--color-primary); }',
     '.howto-close {',
     '  border: none; background: none; cursor: pointer;',
-    '  color: var(--color-muted); display: flex; padding: 4px;',
+    '  color: var(--color-muted);',
+    '  display: flex; align-items: center; justify-content: center;',
+    // タップターゲット 44px 確保。負マージンでヘッダーの見た目の高さ・アイコン位置は従来のまま
+    '  min-width: 44px; min-height: 44px; padding: 0;',
+    '  margin: -6px -6px -6px 0; flex-shrink: 0;',
     '}',
     '.howto-body {',
     '  padding: 16px 20px 32px; overflow-y: auto;',
@@ -133,12 +137,34 @@
     sheet.appendChild(buildBody(config));
     modal.appendChild(sheet);
 
+    // 背景の不活性化（docs/reports/c8-modal-overlay-classification.md のパターン4）。
+    // 自分が inert にした要素だけを記録し、元から inert の要素は閉じるときに巻き込まない
+    var inertSiblings = [];
+    function setBackgroundInert(on) {
+      if (!('inert' in HTMLElement.prototype)) return;
+      if (on) {
+        inertSiblings = [];
+        Array.prototype.forEach.call(document.body.children, function (node) {
+          if (node === modal || node.inert) return;
+          node.inert = true;
+          inertSiblings.push(node);
+        });
+      } else {
+        inertSiblings.forEach(function (node) { node.inert = false; });
+        inertSiblings = [];
+      }
+    }
+
     function open() {
+      // 二重 open で inertSiblings が空リストに上書きされるのを防ぐ
+      if (modal.classList.contains('show')) return;
       modal.classList.add('show');
+      setBackgroundInert(true);
       closeBtn.focus();
     }
     function close() {
       modal.classList.remove('show');
+      setBackgroundInert(false);
       fab.focus();
     }
 
