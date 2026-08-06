@@ -13,84 +13,89 @@
 
   <div class="wrapper">
 
-    <!-- TOP -->
+    <!-- TOP（すきタイプチェックと同じパネル1枚構成。説明はモーダル(つかいかた)に一本化） -->
     <div class="screen active" id="screen-top">
-      <header class="ty-header">
-        <h1 class="ty-header__title">つよみカード</h1>
-        <p class="ty-header__sub">「そういうところが あるかも」を いっしょに ながめるカード</p>
-      </header>
-
-      <div class="ty-top-actions">
-        <button class="btn btn-primary btn-lg" id="btn-start">はじめる</button>
-        <button class="btn btn-ghost" id="btn-howto-toggle">あそびかた</button>
-      </div>
-
-      <div class="ty-howto" id="howto-panel">
-        <ol class="ty-howto__list">
-          <li>まず、じぶんに「あるかも」と思うカードを えらぶ（なくても OK）</li>
-          <li>つぎに、メンターが「見えた あるかも」を えらぶ</li>
-          <li>さいごに、ふたりの カードを ならべて ながめる</li>
-        </ol>
-        <p class="ty-howto__note">ここに あるのは ぜんぶ「たまに 出る力」。まいかい 出せなくて だいじょうぶ。</p>
+      <div class="ty-panel">
+        <h1 class="ty-panel__title">つよみカード</h1>
+        <p class="ty-panel__lead">「こういうところ、ありそう？」の強みカードが1枚ずつ出てくる。「ある」「ない」「どちらでもない」で答えていくと、最後に「ある」と答えたカードが並ぶ。全部で20枚、5分くらい。</p>
+        <ul class="ty-note-list">
+          <li>正解はない。ぱっと思ったほうでOK</li>
+          <li>まよったときは「どちらでもない」でOK</li>
+          <li>とちゅうで「今日はここまで」にしてもOK</li>
+        </ul>
+        <div class="ty-panel__actions">
+          <button class="btn btn-primary btn-lg" id="btn-start">
+            <span class="material-symbols-rounded">play_arrow</span>
+            はじめる
+          </button>
+        </div>
+        <p class="ty-muted">答えた内容はどこにも保存されない。ページを閉じると消える。</p>
       </div>
     </div>
 
-    <!-- PICK（子ども・メンター共用） -->
-    <div class="screen" id="screen-pick">
+    <!-- CARD（1枚ずつ提示） -->
+    <div class="screen" id="screen-card">
       <header class="ty-header">
-        <h1 class="ty-header__title" id="pick-title"></h1>
-        <p class="ty-header__sub" id="pick-sub"></p>
+        <p class="ty-progress" id="card-progress" aria-hidden="true"></p>
+        <h1 class="ty-header__title ty-question">こういうところ、ありそう？</h1>
       </header>
 
-      <!-- 「えらばない」も正式なこたえ。カードと同格に置く -->
-      <div class="ty-noanswer" id="noanswer-row" role="group" aria-label="えらばないときのこたえ">
-        <button type="button" class="ty-noanswer__btn" data-key="wakaranai" aria-pressed="false">わからない</button>
-        <button type="button" class="ty-noanswer__btn" data-key="erabanai" aria-pressed="false">きょうは えらばない</button>
+      <div class="ty-stage">
+        <span class="material-symbols-rounded ty-stage__icon" id="card-icon" aria-hidden="true"></span>
+        <p class="ty-stage__text" id="card-text" tabindex="-1"></p>
       </div>
-      <p class="ty-noanswer-reply" id="noanswer-reply" aria-live="polite"></p>
 
-      <div class="ty-grid" id="card-grid"></div>
-
-      <div class="ty-actions">
-        <button class="btn btn-primary btn-lg btn-full" id="btn-pick-next"></button>
-        <button class="btn btn-ghost" id="btn-pick-back" hidden>まえに もどる</button>
-      </div>
-    </div>
-
-    <!-- SHOW（見せ合い） -->
-    <div class="screen" id="screen-show">
-      <header class="ty-header">
-        <h1 class="ty-header__title">ならべて ながめよう</h1>
-        <p class="ty-header__sub">ふたりの「あるかも」を ゆっくり ながめてみよう</p>
-      </header>
-
-      <section class="ty-show-group">
-        <h2 class="ty-show-group__title">
-          <span class="material-symbols-rounded" aria-hidden="true">face</span>
-          じぶんで えらんだ「あるかも」
-        </h2>
-        <div class="ty-show-cards" id="show-kid"></div>
-      </section>
-
-      <section class="ty-show-group">
-        <h2 class="ty-show-group__title">
-          <span class="material-symbols-rounded" aria-hidden="true">visibility</span>
-          メンターから 見えた「あるかも」
-        </h2>
-        <div class="ty-show-cards" id="show-mentor"></div>
-      </section>
-
-      <p class="ty-show-note">ここに あるのは ぜんぶ「たまに 出る力」。まいかい 出せなくて だいじょうぶ。</p>
-
-      <div class="ty-marker" id="show-marker"></div>
-
-      <div class="ty-actions">
-        <button class="btn btn-secondary" id="btn-save-json">
-          <span class="material-symbols-rounded">download</span>
-          えらんだカードを ほぞん（JSON）
+      <!-- 答えは3択同格（どちらでもない＝まよったとき・答えたくないときの受け皿） -->
+      <div class="ty-choice" role="group" aria-label="このカードへの答え">
+        <button type="button" class="ty-choice-btn" data-answer="aru" aria-pressed="false">
+          <span class="material-symbols-rounded" aria-hidden="true">radio_button_unchecked</span>
+          ある
         </button>
-        <button class="btn btn-ghost" id="btn-show-back">まえに もどる</button>
-        <button class="btn btn-ghost" id="btn-restart">さいしょから</button>
+        <button type="button" class="ty-choice-btn" data-answer="nai" aria-pressed="false">
+          <span class="material-symbols-rounded" aria-hidden="true">close</span>
+          ない
+        </button>
+        <button type="button" class="ty-choice-btn" data-answer="naka" aria-pressed="false">
+          <span class="material-symbols-rounded" aria-hidden="true">change_history</span>
+          どちらでもない
+        </button>
+      </div>
+
+      <div class="ty-subactions">
+        <button type="button" class="ty-quiet-btn" id="btn-back">
+          <span class="material-symbols-rounded" aria-hidden="true">undo</span>
+          ひとつ前にもどる
+        </button>
+        <button type="button" class="ty-quiet-btn" id="btn-finish">
+          <span class="material-symbols-rounded" aria-hidden="true">flag</span>
+          今日はここまで
+        </button>
+      </div>
+    </div>
+
+    <!-- SUMMARY（まとめ） -->
+    <div class="screen" id="screen-summary">
+      <header class="ty-header">
+        <h1 class="ty-header__title" id="summary-title" tabindex="-1"></h1>
+        <p class="ty-header__sub" id="summary-sub"></p>
+      </header>
+
+      <div class="ty-summary-cards" id="summary-cards"></div>
+
+      <!-- ボタンは「塗り→枠線→テキスト」の3段階（主アクションは1つだけ） -->
+      <div class="ty-actions">
+        <button class="btn btn-primary" id="btn-copy">
+          <span class="material-symbols-rounded">content_copy</span>
+          結果をコピー
+        </button>
+        <button class="btn btn-secondary" id="btn-resume" hidden>
+          <span class="material-symbols-rounded">play_arrow</span>
+          カードのつづきを見る
+        </button>
+        <button type="button" class="ty-quiet-btn" id="btn-restart">
+          <span class="material-symbols-rounded" aria-hidden="true">restart_alt</span>
+          最初にもどる
+        </button>
       </div>
     </div>
 
@@ -102,19 +107,19 @@
   <script>
     RoomkHowto.init({
       title: 'つかいかた',
-      lead: '「そういうところが あるかも」と思うカードを、じぶんとメンターがそれぞれ選んで見せ合うツール。えらばないのもOKだよ。',
+      lead: '自分に「ありそうなところ」を、カードに1枚ずつ答えながら見つけるツール。正解はない。',
       sections: [
         { heading: 'はじめかた', items: [
           '「はじめる」を押す',
-          'じぶんに「あるかも」と思うカードを3まいくらいまで選ぶ',
-          '決めにくいときは「わからない」や「きょうは えらばない」を選んでもOK',
+          'カードが1枚ずつ出てくる',
+          '「ある」「ない」「どちらでもない」で答える',
         ] },
         { heading: 'すすめかた', items: [
-          '「つぎへ（メンターのばん）」を押す',
-          'メンターから見えた「あるかも」を2まいまで選ぶ',
-          '「みせあいへ」を押して、ふたりのカードをならべてながめる',
+          'まよったときや答えたくないときは「どちらでもない」でOK',
+          'まちがえたら「ひとつ前にもどる」で答え直せる',
+          'とちゅうでも「今日はここまで」でまとめに進める',
         ] },
-        { heading: 'おわりかた', text: '残したいときは「えらんだカードを ほぞん（JSON）」を押そう。「さいしょから」で最初の画面にもどれるよ。' },
+        { heading: 'おわりかた', text: '最後に「ある」と答えたカードが並ぶ。チャットに残したいときは「結果をコピー」。「最初にもどる」で最初の画面にもどる。' },
       ],
     });
   </script>

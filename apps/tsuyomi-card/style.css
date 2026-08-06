@@ -3,7 +3,7 @@
 
 /* ── レイアウト ── */
 .wrapper {
-  max-width: 720px;
+  max-width: 640px;
   margin: 0 auto;
   padding: 48px 40px 80px;
 }
@@ -37,240 +37,284 @@
   line-height: 1.6;
 }
 
-/* ── TOP 画面 ── */
-.ty-top-actions {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 24px;
-}
-
-.ty-howto {
-  display: none;
+/* ── TOP 画面（パネル1枚構成。suki-type-check の start と同型） ── */
+.ty-panel {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-box);
-  padding: 24px 28px;
+  padding: 36px 32px;
+  margin-top: 24px;
+}
+
+.ty-panel__title {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  color: var(--color-primary);
+  letter-spacing: 0.04em;
+  text-align: center;
+  margin-bottom: 14px;
+}
+
+.ty-panel__lead {
+  font-size: var(--font-size-sub);
+  color: var(--color-text);
+  line-height: 1.8;
+  margin-bottom: 18px;
+}
+
+.ty-note-list {
+  list-style: none;
+  padding: 16px 20px;
+  margin: 0 0 24px;
+  background: var(--color-bg);
+  border-radius: var(--radius-card);
+}
+
+.ty-note-list li {
+  position: relative;
+  padding-left: 22px;
+  font-size: var(--font-size-sub);
+  color: var(--color-text);
+  line-height: 1.7;
+}
+
+.ty-note-list li + li {
   margin-top: 8px;
 }
 
-.ty-howto.visible {
-  display: block;
+.ty-note-list li::before {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 0.75em;
+  width: 7px;
+  height: 7px;
+  border-radius: var(--radius-full);
+  background: var(--color-accent);
 }
 
-.ty-howto__list {
-  list-style: none;
-  counter-reset: howto;
-  padding: 0;
-  margin: 0;
+.ty-panel__actions {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 18px;
 }
 
-.ty-howto__list li {
-  counter-increment: howto;
-  position: relative;
-  padding-left: 32px;
-  margin-bottom: 12px;
-  font-size: var(--font-size-sub);
-  color: var(--color-text);
+.ty-muted {
+  font-size: var(--font-size-sm);
+  color: var(--color-muted);
+  text-align: center;
   line-height: 1.6;
 }
 
-.ty-howto__list li::before {
-  content: counter(howto);
-  position: absolute;
-  left: 0;
-  top: 1px;
-  width: 22px;
-  height: 22px;
-  border-radius: var(--radius-full);
-  background: var(--color-accent);
-  color: #fff;
-  font-size: 12px;
+/* ── カード画面（1枚ずつ） ── */
+.ty-progress {
+  font-size: var(--font-size-sm);
+  color: var(--color-muted);
+  margin-bottom: 6px;
+  font-feature-settings: "palt";
+}
+
+.ty-question {
+  font-size: var(--font-size-lg);
+}
+
+.ty-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  min-height: 200px;
+  background: var(--color-surface);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-box);
+  padding: 32px 28px;
+  margin-bottom: 24px;
+}
+
+.ty-stage__icon {
+  font-size: 44px;
+  color: var(--color-accent);
+  animation: ty-card-in 0.25s ease-out;
+}
+
+.ty-stage__text {
+  font-size: clamp(1.4rem, 3.4vw, 1.8rem);
   font-weight: 700;
+  color: var(--color-text);
+  text-align: center;
+  line-height: 1.6;
+  animation: ty-card-in 0.25s ease-out;
+}
+
+.ty-stage__text:focus {
+  outline: none;
+}
+
+@keyframes ty-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ── 答えの3択（ある/ない/どちらでもない、同格ボタン） ── */
+.ty-choice {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 28px;
+}
+
+.ty-choice-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.ty-howto__note {
-  margin-top: 16px;
-  padding-top: 14px;
-  border-top: 1px solid var(--color-border);
-  font-size: var(--font-size-sm);
-  color: var(--color-muted);
-  line-height: 1.6;
-}
-
-/* ── 「えらばない」ボタン（カードと同格の正式なこたえ）── */
-.ty-noanswer {
-  display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-bottom: 8px;
-}
-
-.ty-noanswer__btn {
+  gap: 6px;
+  flex: 1;
+  max-width: 190px;
+  min-height: 56px;
+  padding: 12px 16px;
   background: var(--color-surface);
   border: 2px solid var(--color-border);
-  border-radius: var(--radius-full);
-  padding: 10px 20px;
+  border-radius: var(--radius-card);
   font-family: var(--font-base);
-  font-size: var(--font-size-sub);
+  font-size: var(--font-size-base);
+  font-weight: 700;
   color: var(--color-text);
   cursor: pointer;
-  transition: border-color var(--transition-base), box-shadow var(--transition-base);
+  transition: border-color var(--transition-base), box-shadow var(--transition-base),
+    background-color var(--transition-base), color var(--transition-base);
 }
 
-.ty-noanswer__btn:hover {
+.ty-choice-btn .material-symbols-rounded {
+  font-size: 22px;
+  color: var(--color-accent);
+}
+
+.ty-choice-btn:hover {
   box-shadow: var(--shadow-md);
 }
 
-.ty-noanswer__btn[aria-pressed="true"] {
-  border-color: var(--color-accent);
-  box-shadow: 0 0 0 3px rgba(46, 125, 140, 0.15);
+.ty-choice-btn:focus-visible {
+  outline: 3px solid var(--color-accent);
+  outline-offset: 2px;
 }
 
-/* ── えらばない選択を尊重する一言 ── */
-.ty-noanswer-reply {
-  min-height: 1.6em;
-  text-align: center;
+/* もどってきたカードで前の答えを示す（押し直せば上書き）。色相だけに頼らず反転で示す */
+.ty-choice-btn--active {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: #fff;
+}
+
+.ty-choice-btn--active .material-symbols-rounded {
+  color: #fff;
+}
+
+/* ── サブアクション（答えの3択より控えめなテキストボタン） ── */
+.ty-subactions {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 4px 20px;
+}
+
+.ty-quiet-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 44px;
+  padding: 10px 8px;
+  background: none;
+  border: none;
+  font-family: var(--font-base);
   font-size: var(--font-size-sm);
   color: var(--color-muted);
-  margin-bottom: 12px;
+  cursor: pointer;
+  transition: color var(--transition-base);
 }
 
-/* ── カードグリッド ── */
-.ty-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
+.ty-quiet-btn .material-symbols-rounded {
+  font-size: 18px;
+}
+
+.ty-quiet-btn:hover {
+  color: var(--color-text);
+  text-decoration: underline;
+}
+
+.ty-quiet-btn:focus-visible {
+  outline: 3px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: var(--radius-card);
+}
+
+.ty-quiet-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+  text-decoration: none;
+}
+
+/* ── まとめ画面 ── */
+.ty-summary-cards {
+  display: flex;
+  flex-direction: column;
   gap: 10px;
   margin-bottom: 28px;
 }
 
-.ty-card {
+.ty-summary-card {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
   background: var(--color-surface);
   border: 2px solid var(--color-border);
   border-radius: var(--radius-card);
-  padding: 12px 14px;
-  font-family: var(--font-base);
-  font-size: var(--font-size-sub);
+  padding: 16px 20px;
+  font-size: var(--font-size-base);
+  font-weight: 500;
   color: var(--color-text);
-  text-align: left;
-  line-height: 1.5;
-  cursor: pointer;
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  transition: border-color var(--transition-base), box-shadow var(--transition-base);
+  line-height: 1.6;
+  text-align: center;
 }
 
-.ty-card:hover {
-  box-shadow: var(--shadow-md);
-}
-
-/* 未選択カードのグレーアウトはしない（心理的安全設計） */
-.ty-card--selected {
-  border-color: var(--color-accent);
-  box-shadow: 0 0 0 3px rgba(46, 125, 140, 0.15);
-}
-
-.ty-card__num {
+.ty-summary-card__icon {
+  font-size: 22px;
   color: var(--color-accent);
-  font-weight: 700;
-  font-feature-settings: "palt";
   flex-shrink: 0;
 }
 
-.ty-card__text {
-  flex: 1;
-}
-
-.ty-card__check {
-  flex-shrink: 0;
-  font-size: 20px;
-  color: var(--color-accent);
-  visibility: hidden;
-}
-
-.ty-card--selected .ty-card__check {
-  visibility: visible;
-}
-
-/* ── アクション ── */
+/* ── アクション（塗り→枠線→テキストの3段階。幅を揃えた縦並び） ── */
 .ty-actions {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: stretch;
   gap: 12px;
+  max-width: 300px;
+  margin: 0 auto;
 }
 
-/* ── 見せ合い画面 ── */
-.ty-show-group {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-box);
-  padding: 20px 24px;
-  margin-bottom: 16px;
-}
-
-.ty-show-group__title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: var(--font-size-sub);
-  font-weight: 700;
-  color: var(--color-primary);
-  margin-bottom: 14px;
-}
-
-.ty-show-group__title .material-symbols-rounded {
-  font-size: 20px;
-  color: var(--color-accent);
-}
-
-.ty-show-cards {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.ty-show-card {
-  background: var(--color-bg);
-  border: 2px solid var(--color-border);
-  border-radius: var(--radius-card);
-  padding: 12px 16px;
-  font-size: var(--font-size-sub);
-  color: var(--color-text);
-  line-height: 1.5;
-}
-
-/* 「わからない」「えらばない」もカードと同じ見た目（同格のこたえ） */
-.ty-show-card--answer {
-  color: var(--color-muted);
-}
-
-.ty-show-note {
-  text-align: center;
-  font-size: var(--font-size-sm);
-  color: var(--color-muted);
-  line-height: 1.6;
-  margin: 20px 0 8px;
-}
-
-.ty-marker {
-  display: flex;
+.ty-actions .btn {
+  width: 100%;
   justify-content: center;
-  align-items: center;
-  gap: 6px;
-  font-size: var(--font-size-sm);
-  color: var(--color-muted);
-  margin-bottom: 20px;
 }
 
-.ty-marker .material-symbols-rounded {
-  font-size: 18px;
+.ty-actions .ty-quiet-btn {
+  align-self: center;
+}
+
+/* ── アニメーション抑制 ── */
+@media (prefers-reduced-motion: reduce) {
+  .ty-stage__icon,
+  .ty-stage__text {
+    animation: none;
+  }
 }
 
 /* ── レスポンシブ ── */
@@ -283,19 +327,27 @@
     font-size: var(--font-size-lg);
   }
 
-  .ty-grid {
-    grid-template-columns: 1fr;
+  .ty-stage {
+    min-height: 170px;
+    padding: 24px 18px;
   }
 
-  .ty-card {
-    padding: 12px 14px;
+  .ty-choice {
+    flex-direction: column;
+    align-items: stretch;
   }
 
-  .ty-howto {
-    padding: 20px 20px;
+  .ty-choice-btn {
+    max-width: none;
+    width: 100%;
   }
 
-  .ty-show-group {
-    padding: 16px 16px;
+  .ty-panel {
+    padding: 24px 20px;
+    margin-top: 8px;
+  }
+
+  .ty-panel__title {
+    font-size: var(--font-size-lg);
   }
 }
