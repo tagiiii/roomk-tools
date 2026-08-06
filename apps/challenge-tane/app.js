@@ -8,10 +8,10 @@ const MEMO_MAX = 60;
 
 // 4つの status は全部同格。ならび順に「良い→悪い」の意味を持たせない
 const STATUSES = [
-  { id: 'try', label: 'ためしてみたい', icon: 'rocket_launch', hint: 'うごかしてみたい気分の たね' },
-  { id: 'watch', label: 'ながめておく', icon: 'visibility', hint: 'いまは ながめていたい たね' },
-  { id: 'hold', label: 'ほりゅう', icon: 'pause_circle', hint: 'いったん ここに おいておく たね' },
-  { id: 'close', label: 'もういいかな', icon: 'inventory_2', hint: 'もういいかな、と思った たね。ここに あるままで だいじょうぶ' },
+  { id: 'try', label: '試してみたい', icon: 'rocket_launch', hint: '動かしてみたい気分のたね' },
+  { id: 'watch', label: 'ながめておく', icon: 'visibility', hint: 'いまはながめていたい気分のたね' },
+  { id: 'hold', label: '保留', icon: 'pause_circle', hint: 'いったんここに置いておくたね' },
+  { id: 'close', label: 'もういいかな', icon: 'inventory_2', hint: 'もういいかな、と思ったたね。ここにあるままで大丈夫' },
 ];
 
 const FILE_MARKERS = {
@@ -37,7 +37,7 @@ const FILE_MARKERS = {
   ],
 };
 
-const IMPORT_ERROR_GENERIC = 'このファイルは読み込めませんでした。チャレンジのたねで ほぞんしたファイルか、たしかめてください';
+const IMPORT_ERROR_GENERIC = 'このファイルは読み込めませんでした。チャレンジのたねで保存したファイルか、確かめてください';
 const IMPORT_ERROR_NEWER = 'このファイルは新しいバージョンでつくられています。アプリを更新してから開いてください';
 const IMPORT_ERROR_CONTENT = '記録の内容が正しくないため読み込めませんでした';
 
@@ -173,19 +173,19 @@ function renderStart() {
   document.querySelector('#screen-start').innerHTML = `
     <div class="ct-panel">
       <h2 class="ct-panel__title" id="start-title">チャレンジのたね</h2>
-      <p class="ct-panel__lead">「やってみたいかも」とおもったことを、ここでは「たね」とよぶよ。たねのまま ためておくところ。まだ 計画は立てないよ</p>
+      <p class="ct-panel__lead">「やってみたいかも」と思ったことを、ここでは「たね」と呼ぶよ。たねのままためておくところ。まだ計画は立てないよ</p>
       ${error}
       <div class="ct-choice-grid" role="group" aria-label="はじめ方">
         <button class="ct-choice" type="button" data-action="start-new">
           <span class="ct-choice__num">①</span>
-          <span class="ct-choice__text">はじめて つかう</span>
+          <span class="ct-choice__text">はじめて使う</span>
         </button>
         <label class="ct-choice ct-file-label" for="recordFile">
           <span class="ct-choice__num">②</span>
-          <span class="ct-choice__text">前回のファイルをひらく</span>
+          <span class="ct-choice__text">前回のファイルを開く</span>
         </label>
       </div>
-      <p class="ct-muted" style="margin-top: var(--space-md);">このアプリはデータをどこにも保存しません。おわるときにファイルをダウンロードして持ち帰ります</p>
+      <p class="ct-muted" style="margin-top: var(--space-md);">このアプリはデータをどこにも保存しません。終わるときにファイルをダウンロードして持ち帰ります</p>
     </div>
   `;
 }
@@ -195,20 +195,20 @@ function renderLoadConfirm() {
   const seeds = record?.seeds || [];
   document.querySelector('#screen-load-confirm').innerHTML = `
     <div class="ct-panel">
-      <h2 class="ct-panel__title" id="load-confirm-title">この記録でつづきをはじめる？</h2>
+      <h2 class="ct-panel__title" id="load-confirm-title">この記録で続きをはじめる？</h2>
       ${markerHtml(record)}
-      <p class="ct-muted" style="margin-top: var(--space-md);">さいごにほぞんした日：${esc(formatDate(record?.updatedAt))}</p>
+      <p class="ct-muted" style="margin-top: var(--space-md);">最後に保存した日：${esc(formatDate(record?.updatedAt))}</p>
       <ul class="ct-list">
         ${seeds.map(seed => `
           <li class="ct-list__item">
             <strong>${esc(seed.label)}</strong>
             ${statusPill(seed.status)}
           </li>
-        `).join('') || '<li class="ct-list__item">たねは まだありません</li>'}
+        `).join('') || '<li class="ct-list__item">たねはまだありません</li>'}
       </ul>
       <div class="ct-actions">
         <button class="btn btn-primary" type="button" data-action="accept-import">①この記録ではじめる</button>
-        <label class="btn btn-ghost" for="recordFile">②ちがうファイルをえらび直す</label>
+        <label class="btn btn-ghost" for="recordFile">②ちがうファイルを選び直す</label>
       </div>
     </div>
   `;
@@ -222,13 +222,13 @@ function renderHome() {
   document.querySelector('#screen-home').innerHTML = `
     <div class="ct-panel">
       <h2 class="ct-panel__title" id="home-title">たねポケット</h2>
-      <p class="ct-panel__lead">たねは いつでも べつのポケットに うごかせるよ。りゆうは いらないよ</p>
+      <p class="ct-panel__lead">たねはいつでも別のポケットに動かせるよ。理由はいらないよ</p>
       ${state.record ? markerHtml() : ''}
       <div class="ct-actions">
         ${full
-          ? '<p class="ct-muted">たねが いっぱいになったよ。どれかを けすと、あたらしいたねを ふやせるよ</p>'
+          ? '<p class="ct-muted">たねがいっぱいになったよ。どれかを消すと、新しいたねを増やせるよ</p>'
           : `<button class="btn btn-secondary" type="button" data-action="add-seed">
-              <span class="material-symbols-rounded" aria-hidden="true">add</span>あたらしいたねを ふやす
+              <span class="material-symbols-rounded" aria-hidden="true">add</span>新しいたねを増やす
             </button>`}
       </div>
       <div class="ct-pockets">
@@ -237,7 +237,7 @@ function renderHome() {
       <details class="ct-closed"${state.draft.closedOpen ? ' open' : ''}>
         <summary class="ct-closed__summary">
           <span class="material-symbols-rounded" aria-hidden="true">${esc(closeMeta.icon)}</span>
-          <span>${esc(closeMeta.label)} の たね</span>
+          <span>${esc(closeMeta.label)}のたね</span>
           <span class="material-symbols-rounded ct-closed__arrow" aria-hidden="true">expand_more</span>
         </summary>
         <p class="ct-pocket__hint">${esc(closeMeta.hint)}</p>
@@ -246,7 +246,7 @@ function renderHome() {
         </div>
       </details>
       <div class="ct-actions ct-actions--end">
-        <button class="btn btn-primary" type="button" data-action="go-save">きょうのぶんを ほぞんする</button>
+        <button class="btn btn-primary" type="button" data-action="go-save">今日のぶんを保存する</button>
       </div>
     </div>
   `;
@@ -269,7 +269,7 @@ function pocketHtml(meta) {
 }
 
 function emptyHtml() {
-  return '<div class="ct-empty">いまは からっぽ</div>';
+  return '<div class="ct-empty">いまはからっぽ</div>';
 }
 
 function seedCardHtml(seed) {
@@ -285,8 +285,8 @@ function seedCardHtml(seed) {
       ${seed.memo ? `<p class="ct-seed__memo">${esc(seed.memo)}</p>` : ''}
       <div class="ct-seed__moves">
         ${others.map(meta => `
-          <button class="ct-move" type="button" data-action="move-seed" data-value="${esc(seed.id)}" data-status="${esc(meta.id)}" aria-label="「${esc(seed.label)}」を「${esc(meta.label)}」へうごかす">
-            <span class="material-symbols-rounded" aria-hidden="true">${esc(meta.icon)}</span>${esc(meta.label)} へ
+          <button class="ct-move" type="button" data-action="move-seed" data-value="${esc(seed.id)}" data-status="${esc(meta.id)}" aria-label="「${esc(seed.label)}」を「${esc(meta.label)}」へ動かす">
+            <span class="material-symbols-rounded" aria-hidden="true">${esc(meta.icon)}</span>${esc(meta.label)}へ
           </button>
         `).join('')}
       </div>
@@ -298,12 +298,12 @@ function seedCardHtml(seed) {
 function sakusenHtml(seed) {
   const open = state.draft.sakusenOpenId === seed.id;
   const copiedText = state.draft.sakusenCopied
-    ? 'ことばを コピーしたよ。さくせん会議の「じぶんで決める」らんに はりつけて つかえるよ'
-    : 'コピーが うまくいかなかったみたい。下のことばを 手でえらんで コピーしてね';
+    ? 'ことばをコピーしたよ。さくせん会議の「じぶんで決める」欄にはりつけて使えるよ'
+    : 'コピーがうまくいかなかったみたい。下のことばを手で選んでコピーしてね';
   return `
     <div class="ct-sakusen">
       <button class="btn btn-secondary btn-sm" type="button" data-action="sakusen-consult" data-value="${esc(seed.id)}">
-        <span class="material-symbols-rounded" aria-hidden="true">content_copy</span>さくせん会議で そうだんする
+        <span class="material-symbols-rounded" aria-hidden="true">content_copy</span>さくせん会議で相談する
       </button>
       ${open ? `
         <div class="ct-sakusen__panel">
@@ -311,11 +311,11 @@ function sakusenHtml(seed) {
           <p class="ct-sakusen__text">${esc(seed.label)}</p>
           <div class="ct-sakusen__links">
             <a class="btn btn-ghost btn-sm" href="../sakusen-kaigi/" target="_blank" rel="noopener">
-              さくせん会議をひらく<span class="material-symbols-rounded" aria-hidden="true">open_in_new</span>
+              さくせん会議を開く<span class="material-symbols-rounded" aria-hidden="true">open_in_new</span>
             </a>
             <button class="btn btn-ghost btn-sm" type="button" data-action="sakusen-close">とじる</button>
           </div>
-          <p class="ct-muted">ひらく前に「きょうのぶんを ほぞんする」も わすれずに</p>
+          <p class="ct-muted">開く前に「今日のぶんを保存する」もわすれずに</p>
         </div>
       ` : ''}
     </div>
@@ -328,8 +328,8 @@ function renderEdit() {
   const canApply = trimText(draft.label, LABEL_MAX).length > 0 && STATUSES.some(meta => meta.id === draft.status);
   document.querySelector('#screen-edit').innerHTML = `
     <div class="ct-panel">
-      <h2 class="ct-panel__title" id="edit-title">${isNew ? 'あたらしいたね' : 'たねを なおす'}</h2>
-      <p class="ct-panel__lead">「ちょっとやってみたいかも」くらいで だいじょうぶ。ここでは まだ 決めないよ</p>
+      <h2 class="ct-panel__title" id="edit-title">${isNew ? '新しいたね' : 'たねをなおす'}</h2>
+      <p class="ct-panel__lead">「ちょっとやってみたいかも」くらいで大丈夫。ここではまだ決めないよ</p>
       <div class="ct-form">
         <label class="ct-field">
           <span class="ct-field__label">どんなこと？</span>
@@ -339,10 +339,10 @@ function renderEdit() {
           <span class="ct-field__label">メモ（なくてもOK）</span>
           <input class="ct-field__input" maxlength="60" value="${esc(draft.memo || '')}" data-input="seed-memo" />
         </label>
-        <p class="ct-muted">なまえ・学校名などは書かないでね</p>
+        <p class="ct-muted">名前・学校名などは書かないでね</p>
       </div>
       <div class="ct-field" style="margin-top: var(--space-lg);">
-        <div class="ct-field__label" id="edit-status-label">どのポケットに入れておく？（あとから いつでも うごかせるよ）</div>
+        <div class="ct-field__label" id="edit-status-label">どのポケットに入れておく？（あとからいつでも動かせるよ）</div>
         <div class="ct-choice-grid" role="radiogroup" aria-labelledby="edit-status-label">
           ${STATUSES.map((meta, index) => `
             <button class="ct-choice" type="button" role="radio" aria-checked="${draft.status === meta.id ? 'true' : 'false'}" data-action="edit-status" data-value="${esc(meta.id)}" aria-label="${index + 1}番: ${esc(meta.label)}">
@@ -367,15 +367,15 @@ function deleteHtml(confirming) {
   if (!confirming) {
     return `
       <div class="ct-delete">
-        <button class="btn btn-ghost" type="button" data-action="delete-ask">このたねを けす</button>
+        <button class="btn btn-ghost" type="button" data-action="delete-ask">このたねを消す</button>
       </div>
     `;
   }
   return `
     <div class="ct-delete ct-delete--confirm">
-      <p>けした たねは もどせないよ。けしてもいい？</p>
+      <p>消したたねはもどせないよ。消してもいい？</p>
       <div class="ct-actions">
-        <button class="btn btn-danger" type="button" data-action="delete-apply">けす</button>
+        <button class="btn btn-danger" type="button" data-action="delete-apply">消す</button>
         <button class="btn btn-ghost" type="button" data-action="delete-cancel">やめておく</button>
       </div>
     </div>
@@ -386,19 +386,19 @@ function renderSave(downloaded = false) {
   const filename = exportFilename();
   document.querySelector('#screen-save').innerHTML = `
     <div class="ct-panel">
-      <h2 class="ct-panel__title" id="save-title">きょうのたねを ほぞんしよう</h2>
+      <h2 class="ct-panel__title" id="save-title">今日のたねを保存しよう</h2>
       ${markerHtml()}
       <p class="ct-muted" style="margin-top: var(--space-md);">ファイル名：${esc(filename)}</p>
-      <div class="alert alert-info ct-alert">じゆうに書いたところに、なまえ・学校名などの個人じょうほうが入っていないか、たしかめてください</div>
+      <div class="alert alert-info ct-alert">自由に書いたところに、名前・学校名などの個人情報が入っていないか、確かめてください</div>
       <div class="ct-actions">
         <button class="btn btn-primary" type="button" data-action="download-record">記録ファイルをダウンロード</button>
         <button class="btn btn-ghost" type="button" data-action="back-home">← もどる</button>
       </div>
       ${downloaded ? `
-        <div class="alert alert-info ct-alert">ダウンロードしました。Googleドライブへの保存はメンターがおこないます</div>
+        <div class="alert alert-info ct-alert">ダウンロードしました。Googleドライブへの保存はメンターが行います</div>
         <div class="ct-actions">
           <button class="btn btn-secondary" type="button" data-action="back-home">ポケットにもどる</button>
-          <button class="btn btn-ghost" type="button" data-action="finish-session">これでおわる</button>
+          <button class="btn btn-ghost" type="button" data-action="finish-session">これで終わる</button>
         </div>
       ` : ''}
     </div>
@@ -428,10 +428,10 @@ function applySeed() {
       seed.memo = memo;
       seed.status = draft.status;
     }
-    showToast('たねを なおしたよ');
+    showToast('たねをなおしたよ');
   } else {
     if (state.record.seeds.length >= MAX_SEEDS) {
-      showToast('たねが いっぱいになったよ。どれかを けすと、あたらしいたねを ふやせるよ');
+      showToast('たねがいっぱいになったよ。どれかを消すと、新しいたねを増やせるよ');
       return;
     }
     state.record.seeds.push({
@@ -441,7 +441,7 @@ function applySeed() {
       status: draft.status,
       createdAt: nowIso(),
     });
-    showToast('たねを ふやしたよ');
+    showToast('たねを増やしたよ');
   }
   state.record.updatedAt = nowIso();
   setDirty(true);
@@ -460,7 +460,7 @@ function moveSeed(seedId, statusId) {
   state.record.updatedAt = nowIso();
   setDirty(true);
   renderHome();
-  showToast(`「${seed.label}」を「${statusMeta(statusId).label}」へ うごかしたよ`);
+  showToast(`「${seed.label}」を「${statusMeta(statusId).label}」へ動かしたよ`);
 }
 
 function deleteSeed() {
@@ -472,7 +472,7 @@ function deleteSeed() {
   state.draft = { closedOpen: state.draft.closedOpen };
   renderHome();
   showScreen('home');
-  showToast('たねを けしたよ');
+  showToast('たねを消したよ');
 }
 
 async function copyText(text) {

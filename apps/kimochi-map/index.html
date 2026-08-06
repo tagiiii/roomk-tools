@@ -20,15 +20,15 @@
     <!-- ヘッダー -->
     <header class="km-header">
       <h1 class="km-header__title">きもちのことばマップ</h1>
-      <p class="km-header__question">きょうの きもちに ちかい ことばは ある？</p>
-      <p class="km-header__sub">さいきんの きもちでも OK。いくつ えらんでも いいし、えらばなくても いいよ。</p>
+      <p class="km-header__question">今日の気持ちに近いことばはある？</p>
+      <p class="km-header__sub">最近の気持ちでもOK。いくつ選んでもいいし、選ばなくてもいいよ。</p>
     </header>
 
-    <!-- 「えらばない」も正式なこたえ。ことばチップと同格に置く -->
-    <div class="km-noanswer" id="noAnswerRow" role="group" aria-label="えらばないときのこたえ">
+    <!-- 「選ばない」も正式な答え。ことばチップと同格に置く -->
+    <div class="km-noanswer" id="noAnswerRow" role="group" aria-label="選ばないときの答え">
       <button type="button" class="km-noanswer__btn" data-key="wakaranai" aria-pressed="false">わからない</button>
       <button type="button" class="km-noanswer__btn" data-key="doredemo" aria-pressed="false">どれでもない</button>
-      <button type="button" class="km-noanswer__btn" data-key="erabanai" aria-pressed="false">きょうは えらばない</button>
+      <button type="button" class="km-noanswer__btn" data-key="erabanai" aria-pressed="false">今日は選ばない</button>
     </div>
 
     <!-- えらばない選択を尊重する一言 -->
@@ -36,10 +36,10 @@
 
     <!-- 選択パネル（ことばを選んだときだけ表示）-->
     <section class="km-panel" id="selectionPanel" hidden>
-      <p class="km-panel__hint">ちかくの ことばも ふんわり ひかってるよ。こっちのほうが ちかい？</p>
+      <p class="km-panel__hint">近くのことばもふんわり光ってるよ。こっちのほうが近い？</p>
       <div class="km-panel__rows" id="selectionRows"></div>
       <div class="km-panel__actions">
-        <button type="button" class="btn btn-ghost btn-sm" id="btnClear">けす</button>
+        <button type="button" class="btn btn-ghost btn-sm" id="btnClear">消す</button>
       </div>
     </section>
 
@@ -54,16 +54,16 @@
   <script>
     RoomkHowto.init({
       title: 'つかいかた',
-      lead: 'きょうの きもちに ちかい ことばを、マップから さがす ツール。ながめるだけでも OK。',
+      lead: '今日の気持ちに近いことばを、マップからさがすツール。ながめるだけでもOK。',
       sections: [
         { heading: 'すすめかた', items: [
-          'きもちに ちかい ことばを タップする（いくつ えらんでも OK）',
-          'ちかくの ことばが ふんわり ひかったら、そっちに かえても OK',
-          'ことばの 大きさを「ちいさめ」「ふつう」「おおきめ」から えらべる（えらばなくても OK）',
-          '「けす」をおすと、いつでも ぜんぶ けせる',
+          '気持ちに近いことばをタップする（いくつ選んでもOK）',
+          '近くのことばがふんわり光ったら、そっちに変えてもOK',
+          'ことばの大きさを「小さめ」「ふつう」「大きめ」から選べる（選ばなくてもOK）',
+          '「消す」を押すと、いつでも全部消せる',
         ] },
-        { heading: 'えらばなくてもOK', text: 'ぴったりの ことばが なければ、「わからない」「どれでもない」「きょうは えらばない」を おして OK。' },
-        { heading: 'おわりかた', text: 'そのまま とじて おしまい。えらんだ ことばは どこにも のこらない。' },
+        { heading: '選ばなくてもOK', text: 'ぴったりのことばがなければ、「わからない」「どれでもない」「今日は選ばない」を押してOK。' },
+        { heading: 'おわりかた', text: 'そのまま閉じておしまい。選んだことばはどこにも残らない。' },
       ],
     });
   </script>

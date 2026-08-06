@@ -216,7 +216,7 @@ function collectKotobaAsobo() {
 const COVERED_APPS = [
   // 既存（A2 以前から抽出済み）
   'quiz', 'kotoba-shuffle', 'kanji-sagashi', 'kotoba-gacha', 'kotoba-relay', 'tatoe-gp',
-  'machigai-sagashi', 'kaburazu-hint', 'kotoba-tantei', 'docchi', 'nitaku-board', 'minna-ranking',
+  'machigai-sagashi', 'kaburazu-hint', 'kotoba-tantei', 'docchi', 'minna-ranking',
   'talk-card', 'otona-talk', 'checkout-card', 'tsuyomi-card', 'kimochi-map', 'bamen-card',
   'mirai-hikidashi', 'kotoba-asobo',
   // A2 で追加した12アプリ
@@ -368,14 +368,6 @@ function collectEntries() {
     answer: `${item.a}/${item.b}`,
   })));
 
-  const nitakuSource = extractScript(read('apps/nitaku-board/index.html'));
-  const nitakuTopics = evalArrayFromSource(nitakuSource, 'TOPICS', 'apps/nitaku-board/index.html') || [];
-  nitakuTopics.forEach((item, index) => rows.push(entry('nitaku-board', 'topic', `${item.t}（${item.a}／${item.b}）`, {
-    id: `nitaku-board:${index}`,
-    question: `${item.t}（${item.a}／${item.b}）`,
-    answer: `${item.a}/${item.b}`,
-  })));
-
   const rankingTopics = evalArrayFromSource(read('apps/minna-ranking/app.js'), 'TOPICS', 'apps/minna-ranking/app.js') || [];
   rankingTopics.forEach((item, index) => rows.push(entry('minna-ranking', 'topic', item.title, {
     id: `minna-ranking:${index}`,
@@ -398,8 +390,9 @@ function collectEntries() {
     id: `checkout-card:${index}`,
   })));
 
-  const tsuyomiCards = evalArrayFromSource(read('apps/tsuyomi-card/app.js'), 'CARD_TEXTS', 'apps/tsuyomi-card/app.js') || [];
-  tsuyomiCards.forEach((text, index) => rows.push(entry('tsuyomi-card', 'card', text, {
+  // 2026-08-06 刷新で CARD_TEXTS（文字列配列）→ CARD_DEFS（{text, icon} 配列）に改名
+  const tsuyomiCards = evalArrayFromSource(read('apps/tsuyomi-card/app.js'), 'CARD_DEFS', 'apps/tsuyomi-card/app.js') || [];
+  tsuyomiCards.forEach((def, index) => rows.push(entry('tsuyomi-card', 'card', def.text, {
     id: `tsuyomi-card:${index}`,
   })));
 

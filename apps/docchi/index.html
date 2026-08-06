@@ -22,12 +22,12 @@
       <header class="dc-header">
         <span class="material-symbols-rounded dc-header__icon">alt_route</span>
         <h1 class="dc-header__title">どっちにする？</h1>
-        <p class="dc-header__sub">かるい2たくをえらんであそぼう。どっちをえらんでもOK！</p>
+        <p class="dc-header__sub">軽い2択を選んで遊ぼう。どっちを選んでもOK！</p>
       </header>
 
       <div class="dc-cat">
-        <p class="dc-cat__label">カテゴリをえらぶ</p>
-        <div class="dc-cat__list" id="catList" role="group" aria-label="カテゴリをえらぶ"></div>
+        <p class="dc-cat__label">カテゴリを選ぶ</p>
+        <div class="dc-cat__list" id="catList" role="group" aria-label="カテゴリを選ぶ"></div>
       </div>
 
       <div class="dc-start">
@@ -48,11 +48,11 @@
         <p class="dc-card__q" id="topicQ"></p>
         <div class="dc-vs" id="vsArea"></div>
         <div class="dc-alt" id="altArea"></div>
-        <p class="dc-card__note">りゆうは なくてもOK。パスもOK！</p>
+        <p class="dc-card__note">理由はなくてもOK。パスもOK！</p>
       </div>
 
       <div class="dc-next">
-        <button class="btn btn-primary btn-lg" id="btnNext">つぎへ</button>
+        <button class="btn btn-primary btn-lg" id="btnNext">次へ</button>
       </div>
 
       <p class="dc-ask" id="askHint"></p>
@@ -66,18 +66,18 @@
   <script>
     RoomkHowto.init({
       title: 'あそびかた',
-      lead: 'かるい2たくから すきなほうを えらんで あそぶツール。どっちを えらんでも OK！',
+      lead: '軽い2択から好きなほうを選んで遊ぶツール。どっちを選んでもOK！',
       sections: [
         { heading: 'はじめかた', items: [
-          'カテゴリをえらぶ（「すべて」のままでもOK）',
-          '「はじめる」をおす',
+          'カテゴリを選ぶ（「すべて」のままでもOK）',
+          '「はじめる」を押す',
         ] },
         { heading: 'すすめかた', items: [
-          'すきなほうを タップする。「その他」をえらんでもOK',
-          'えらびなおすのも 自由',
-          '「つぎへ」をおすと、つぎのおだいが出てくる',
+          '好きなほうをタップする。「その他」を選んでもOK',
+          '選び直すのも自由',
+          '「次へ」を押すと、次のお題が出てくる',
         ] },
-        { heading: 'おわりかた', text: 'すきなタイミングで おわってOK。「トップにもどる」でカテゴリをえらびなおせるよ。' },
+        { heading: 'おわりかた', text: '好きなタイミングで終わってOK。「トップにもどる」でカテゴリを選び直せるよ。' },
       ],
     });
   </script>

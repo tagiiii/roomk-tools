@@ -65,18 +65,18 @@ const GROUPS = [
 
 // 「えらばない」も正式なこたえ。押したときに返す一言（尊重の返事であって、なぐさめや分析ではない）
 const NO_ANSWER_MESSAGES = {
-  wakaranai: 'OK、「わからない」も だいじな こたえ。',
-  doredemo: 'OK、ぴったりの ことばが ない ことも あるよ。',
-  erabanai: 'OK、きょうは ながめるだけで だいじょうぶ。',
+  wakaranai: 'OK、「わからない」も大事な答え。',
+  doredemo: 'OK、ぴったりのことばがないこともあるよ。',
+  erabanai: 'OK、今日はながめるだけで大丈夫。',
 };
 
 // 選んだことばの前後何個までを「ちかくのことば」としてハイライトするか
 const NEAR_RANGE = 2;
 
 const SIZES = [
-  ['small', 'ちいさめ'],
+  ['small', '小さめ'],
   ['normal', 'ふつう'],
-  ['big', 'おおきめ'],
+  ['big', '大きめ'],
 ];
 
 // ─── 状態 ───
@@ -223,7 +223,7 @@ function renderPanel() {
     const sizes = document.createElement('div');
     sizes.className = 'km-row__sizes';
     sizes.setAttribute('role', 'group');
-    sizes.setAttribute('aria-label', `「${word}」の大きさ（えらばなくてもOK）`);
+    sizes.setAttribute('aria-label', `「${word}」の大きさ（選ばなくてもOK）`);
 
     SIZES.forEach(([key, label]) => {
       const btn = document.createElement('button');
@@ -240,7 +240,7 @@ function renderPanel() {
     const remove = document.createElement('button');
     remove.type = 'button';
     remove.className = 'km-row__remove';
-    remove.setAttribute('aria-label', `「${word}」を はずす`);
+    remove.setAttribute('aria-label', `「${word}」をはずす`);
     const icon = document.createElement('span');
     icon.className = 'material-symbols-rounded';
     icon.setAttribute('aria-hidden', 'true');

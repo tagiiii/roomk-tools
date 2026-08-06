@@ -11,110 +11,110 @@ const NUMBERS = ['①', '②', '③', '④'];
 const MODES = [
   {
     id: 'today',
-    label: 'きょうの小さなばめん',
+    label: '今日の小さなばめん',
     icon: 'wb_sunny',
-    desc: 'さいきんあった ちいさなばめんを、ひとつだけ話す',
-    decideTitle: 'ばめんを ひとつ おもいだす',
-    lead: 'さいきんあった ちいさなばめんを、ひとつ おもいだしてみよう。おおきな できごとじゃなくて いいよ。',
-    exampleTitle: 'たとえば、こんなくらいの ちいささで OK',
+    desc: '最近あった小さなばめんを、ひとつだけ話す',
+    decideTitle: 'ばめんをひとつ思い出す',
+    lead: '最近あった小さなばめんを、ひとつ思い出してみよう。大きなできごとじゃなくていいよ。',
+    exampleTitle: 'たとえば、こんなくらいの小ささでOK',
     examples: [
-      '朝おきたら、ねこが まどの外に すわっていた',
-      'コップのこおりが、カランと いい音をたてた',
-      'くつしたが かた方だけ 行方不明になった',
+      '朝起きたら、ねこが窓の外にすわっていた',
+      'コップの氷が、カランといい音をたてた',
+      'くつしたが片方だけ行方不明になった',
     ],
     hero: false,
   },
   {
     id: 'sakuhin',
-    label: 'すきな作品のばめん',
+    label: '好きな作品のばめん',
     icon: 'movie',
-    desc: 'ゲーム・アニメ・動画・本などの すきなばめんを しょうかいする',
-    decideTitle: 'すきな ばめんを ひとつ えらぶ',
-    lead: 'すきな作品の中の、すきなばめんを ひとつ えらんで しょうかいしてみよう。おもいだしながらで OK。',
+    desc: 'ゲーム・アニメ・動画・本などの好きなばめんを紹介する',
+    decideTitle: '好きなばめんをひとつ選ぶ',
+    lead: '好きな作品の中の、好きなばめんをひとつ選んで紹介してみよう。思い出しながらでOK。',
     exampleTitle: 'たとえば',
     examples: [
-      'ゲームの すきなステージや、すきな場所',
+      'ゲームの好きなステージや、好きな場所',
       'アニメや動画で、何回も見ちゃうところ',
-      '本やマンガの、すきな1ページ',
+      '本やマンガの、好きな1ページ',
     ],
     hero: false,
   },
   {
     id: 'souzou',
-    label: 'そうぞうの主人公のばめん',
+    label: '想像の主人公のばめん',
     icon: 'auto_awesome',
-    desc: 'カードの主人公の「ある日のばめん」を そうぞうして話す',
-    decideTitle: '主人公の ばめんを そうぞうする',
-    lead: 'カードの主人公には、どんな1日が あるんだろう。「ある日のばめん」を じゆうに そうぞうして話してみよう。せいかいは ないよ。',
+    desc: 'カードの主人公の「ある日のばめん」を想像して話す',
+    decideTitle: '主人公のばめんを想像する',
+    lead: 'カードの主人公には、どんな1日があるんだろう。「ある日のばめん」を自由に想像して話してみよう。正解はないよ。',
     hero: true,
-    heroNote: 'この主人公の、ある日のばめんを そうぞうしてみよう。べつの主人公に かえても OK。',
+    heroNote: 'この主人公の、ある日のばめんを想像してみよう。別の主人公に変えてもOK。',
   },
   {
     id: 'listen',
-    label: 'きょうは 話をきくだけでも OK',
+    label: '今日は話を聞くだけでもOK',
     icon: 'hearing',
-    desc: 'メンターが 主人公カードのばめんを話すよ。きき役になる回',
-    decideTitle: '話してもらう 主人公を きめる',
-    lead: 'きょうは、きく日。メンターが 主人公カードの「ある日のばめん」を話すよ。ゆっくり きいているだけで OK。',
+    desc: 'メンターが主人公カードのばめんを話すよ。聞き役になる回',
+    decideTitle: '話してもらう主人公を決める',
+    lead: '今日は、聞く日。メンターが主人公カードの「ある日のばめん」を話すよ。ゆっくり聞いているだけでOK。',
     hero: true,
-    heroNote: 'この主人公のばめんを、メンターが話すよ。主人公を えらんであげても OK。',
-    entryTitle: '入口カードで、メンターに きいてみる',
-    entryNote: 'メンターの話を ききながら、気になったら カードの といかけを そのまま メンターに きいてみよう。きいているだけでも OK。',
+    heroNote: 'この主人公のばめんを、メンターが話すよ。主人公を選んであげてもOK。',
+    entryTitle: '入口カードで、メンターに聞いてみる',
+    entryNote: 'メンターの話を聞きながら、気になったらカードのといかけをそのままメンターに聞いてみよう。聞いているだけでもOK。',
   },
 ];
 
 // 入口カードのステップ見出し・説明（listen 以外の共通文言）
-const ENTRY_TITLE_DEFAULT = '入口カードを ひいて、ばめんを 話す';
-const ENTRY_NOTE_DEFAULT = 'きめた ばめんについて、カードの といかけに こたえてみよう。ばめんが すこしずつ くわしく 見えてくるよ。ひいても、ひかなくても OK。';
+const ENTRY_TITLE_DEFAULT = '入口カードを引いて、ばめんを話す';
+const ENTRY_NOTE_DEFAULT = '決めたばめんについて、カードのといかけに答えてみよう。ばめんが少しずつくわしく見えてくるよ。引いても、引かなくてもOK。';
 
 // そうぞうの主人公カード（ユーモラスで安全な架空設定のみ）
 const HEROES = [
-  { icon: 'bakery_dining', name: '雲の上で パンやをやってる人' },
-  { icon: 'mail', name: '海のそこで ゆうびんをとどけている タコ' },
-  { icon: 'smart_toy', name: '星を ぴかぴかに みがく係の ロボット' },
-  { icon: 'ramen_dining', name: '森のおくで ラーメン屋をひらいた クマ' },
-  { icon: 'menu_book', name: '月で 本のかしだしをしている ウサギ' },
-  { icon: 'coffee', name: '雨の日だけ 店をあける カフェの店主の カエル' },
-  { icon: 'attractions', name: '世界一ちいさな遊園地を ひとりで動かしている人' },
-  { icon: 'science', name: 'かた方だけの くつしたを あつめている はかせ' },
-  { icon: 'palette', name: 'にじのふもとで 色をつくっている 職人' },
-  { icon: 'pets', name: 'ねこのことばを つうやくする人' },
-  { icon: 'directions_bus', name: '空とぶバスの 運転手' },
-  { icon: 'cookie', name: 'おかしの家 せんもんの 大工さん' },
-  { icon: 'local_shipping', name: '夢の中の わすれものを とどける 配達員' },
-  { icon: 'ac_unit', name: 'さばくの どまんなかで かき氷屋さんをやっている人' },
-  { icon: 'landscape', name: '山のてっぺんで 天気を 毎日スケッチしている人' },
-  { icon: 'sailing', name: 'たからさがしの船の りょうり係' },
-  { icon: 'weather_snowy', name: 'とけかけた雪だるまを なおしてまわる おいしゃさん' },
-  { icon: 'location_city', name: 'きょだいなカメの せなかの町に住む 町長' },
-  { icon: 'schedule', name: '大きな時計の中に住んでいる そうじ係の こびと' },
-  { icon: 'local_florist', name: '宇宙ステーションで 花をそだてている人' },
-  { icon: 'photo_camera', name: 'まぼろしの生きものを カメラでさがしている人' },
-  { icon: 'graphic_eq', name: '音を びんにつめて売っている お店の人' },
-  { icon: 'signpost', name: 'めいろの中で みちあんないをしている モグラ' },
-  { icon: 'festival', name: '一年中 夏まつりがつづく島の たこやき屋さん' },
+  { icon: 'bakery_dining', name: '雲の上でパン屋をやってる人' },
+  { icon: 'mail', name: '海の底で郵便をとどけているタコ' },
+  { icon: 'smart_toy', name: '星をぴかぴかにみがく係のロボット' },
+  { icon: 'ramen_dining', name: '森のおくでラーメン屋をひらいたクマ' },
+  { icon: 'menu_book', name: '月で本の貸し出しをしているウサギ' },
+  { icon: 'coffee', name: '雨の日だけ店をあけるカフェの店主のカエル' },
+  { icon: 'attractions', name: '世界一小さな遊園地をひとりで動かしている人' },
+  { icon: 'science', name: '片方だけのくつしたを集めている博士' },
+  { icon: 'palette', name: 'にじのふもとで色をつくっている職人' },
+  { icon: 'pets', name: 'ねこのことばを通訳する人' },
+  { icon: 'directions_bus', name: '空とぶバスの運転手' },
+  { icon: 'cookie', name: 'おかしの家専門の大工さん' },
+  { icon: 'local_shipping', name: '夢の中のわすれものをとどける配達員' },
+  { icon: 'ac_unit', name: 'さばくのどまんなかでかき氷屋さんをやっている人' },
+  { icon: 'landscape', name: '山のてっぺんで天気を毎日スケッチしている人' },
+  { icon: 'sailing', name: '宝さがしの船の料理係' },
+  { icon: 'weather_snowy', name: 'とけかけた雪だるまをなおしてまわるお医者さん' },
+  { icon: 'location_city', name: '巨大なカメの背中の町に住む町長' },
+  { icon: 'schedule', name: '大きな時計の中に住んでいるそうじ係のこびと' },
+  { icon: 'local_florist', name: '宇宙ステーションで花を育てている人' },
+  { icon: 'photo_camera', name: 'まぼろしの生きものをカメラでさがしている人' },
+  { icon: 'graphic_eq', name: '音をびんにつめて売っているお店の人' },
+  { icon: 'signpost', name: 'めいろの中で道案内をしているモグラ' },
+  { icon: 'festival', name: '一年中夏まつりがつづく島のたこやき屋さん' },
 ];
 
 // 話の入口カード（ばめんを描写するための軽い問い。「なんで？」系は入れない）
 const ENTRY_CARDS = [
-  'そのばめんは どこ？',
-  'そこに なにが 見える？',
-  '音は する？ どんな音？',
-  'そこは 明るい？ くらい？',
+  'そのばめんはどこ？',
+  'そこに何が見える？',
+  '音はする？ どんな音？',
+  'そこは明るい？ 暗い？',
   'あたたかい？ すずしい？',
-  'においは しそう？',
-  '時間は いつごろ？ 朝、ひる、夜？',
-  'いちばん ちかくに あるものは なに？',
-  'とおくのほうには なにが ありそう？',
-  'うごいているものは ある？',
-  'そのばめんで いちばん 目立つものは？',
+  'においはしそう？',
+  '時間はいつごろ？ 朝、昼、夜？',
+  'いちばん近くにあるものは何？',
+  '遠くのほうには何がありそう？',
+  '動いているものはある？',
+  'そのばめんでいちばん目立つものは？',
   'さわれるとしたら、どんな手ざわり？',
-  'そのばめんに 色をつけるなら、なに色っぽい？',
-  '一枚の絵にするなら、まんなかに なにをかく？',
+  'そのばめんに色をつけるなら、何色っぽい？',
+  '一枚の絵にするなら、まんなかに何をかく？',
   '音楽をつけるなら、どんな感じの曲？',
-  'そのばめんに タイトルをつけるなら？',
-  'その少しあと、なにが おこりそう？',
-  'そこには だれか いる？ 生きものでも OK',
+  'そのばめんにタイトルをつけるなら？',
+  'その少しあと、何がおこりそう？',
+  'そこにはだれかいる？ 生きものでもOK',
 ];
 
 const state = {
@@ -171,8 +171,8 @@ function showScreen(id) {
 function renderModeScreen() {
   document.querySelector('#screen-mode').innerHTML = `
     <div class="bm-panel">
-      <h2 class="bm-panel__title" id="mode-title">きょうは、どのばめんに する？</h2>
-      <p class="bm-panel__lead">『ばめん』は、写真1まいぶんの できごとの こと。どれを えらんでも OK。とちゅうで かえても いいよ。</p>
+      <h2 class="bm-panel__title" id="mode-title">今日は、どのばめんにする？</h2>
+      <p class="bm-panel__lead">『ばめん』は、写真1枚ぶんのできごとのこと。どれを選んでもOK。とちゅうで変えてもいいよ。</p>
       <div class="bm-mode-grid">
         ${MODES.map((mode, index) => `
           <button class="bm-mode" type="button" data-action="select-mode" data-value="${esc(mode.id)}"
@@ -208,7 +208,7 @@ function heroHtml(mode) {
     <p class="bm-muted">${esc(mode.heroNote)}</p>
     <div class="bm-actions bm-actions--tight">
       <button class="btn btn-secondary" type="button" data-action="redraw-hero">
-        <span class="material-symbols-rounded" aria-hidden="true">refresh</span>べつの主人公にする
+        <span class="material-symbols-rounded" aria-hidden="true">refresh</span>別の主人公にする
       </button>
     </div>
   `;
@@ -220,11 +220,11 @@ function entryHtml() {
       <div class="bm-entry__card">
         <span class="bm-entry__text">${esc(state.entryCard)}</span>
       </div>
-      <p class="bm-muted">こたえたくない ときは、パスして べつのカードへ。1まいだけで おわっても じゅうぶん。</p>
+      <p class="bm-muted">答えたくないときは、パスして別のカードへ。1枚だけで終わってもじゅうぶん。</p>
     ` : ''}
     <div class="bm-actions bm-actions--tight">
       <button class="btn btn-secondary" type="button" data-action="draw-entry">
-        <span class="material-symbols-rounded" aria-hidden="true">style</span>${state.entryCard ? 'べつの入口カードを引く' : '入口カードを引く'}
+        <span class="material-symbols-rounded" aria-hidden="true">style</span>${state.entryCard ? '別の入口カードを引く' : '入口カードを引く'}
       </button>
     </div>
   `;
@@ -257,7 +257,7 @@ function renderTalkScreen() {
         ${entryHtml()}
       </section>
       <div class="bm-actions">
-        <button class="btn btn-ghost" type="button" data-action="back-mode">← モードを えらびなおす</button>
+        <button class="btn btn-ghost" type="button" data-action="back-mode">← モードを選び直す</button>
       </div>
     </div>
   `;

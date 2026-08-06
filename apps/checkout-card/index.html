@@ -21,30 +21,30 @@
     <header class="ck-header">
       <span class="material-symbols-rounded ck-header__icon">waving_hand</span>
       <h1 class="ck-header__title">チェックアウトカード</h1>
-      <p class="ck-header__sub">きょうの さいごに、1まいだけ。</p>
+      <p class="ck-header__sub">今日の最後に、1枚だけ。</p>
     </header>
 
     <!-- カード＋アクション -->
     <main class="ck-main" id="mainArea">
       <div class="ck-card-area" aria-live="polite">
-        <div class="flip-card ck-card" id="flipCard" role="button" tabindex="0" aria-label="カードをひく">
+        <div class="flip-card ck-card" id="flipCard" role="button" tabindex="0" aria-label="カードを引く">
           <div class="flip-card-inner">
             <div class="flip-card-face back ck-card__back">
               <span class="material-symbols-rounded ck-card__back-icon">style</span>
-              <span class="ck-card__back-text">きょうの 1まい</span>
+              <span class="ck-card__back-text">今日の1枚</span>
             </div>
             <div class="flip-card-face front ck-card__front">
               <p class="ck-card__question" id="questionText"></p>
-              <p class="ck-card__note">わからない・ないしょ・パス もぜんぶ正解</p>
+              <p class="ck-card__note">わからない・ないしょ・パスも全部正解</p>
             </div>
           </div>
         </div>
       </div>
 
       <div class="ck-actions">
-        <button class="btn btn-primary btn-lg" id="btnDraw">カードをひく</button>
-        <button class="btn btn-secondary btn-lg" id="btnRedraw" hidden>べつのカードにする</button>
-        <button class="btn btn-ghost" id="btnPass">きょうはパス</button>
+        <button class="btn btn-primary btn-lg" id="btnDraw">カードを引く</button>
+        <button class="btn btn-secondary btn-lg" id="btnRedraw" hidden>別のカードにする</button>
+        <button class="btn btn-ghost" id="btnPass">今日はパス</button>
       </div>
     </main>
 
@@ -62,17 +62,17 @@
   <script>
     RoomkHowto.init({
       title: 'つかいかた',
-      lead: 'きょうの さいごに、カードを 1まいだけ ひく ツール。ひとことで こたえて おしまい。',
+      lead: '今日の最後に、カードを1枚だけ引くツール。ひとことで答えておしまい。',
       sections: [
         { heading: 'はじめかた', items: [
-          '「カードをひく」をおす（カードをタップしてもOK）',
+          '「カードを引く」を押す（カードをタップしてもOK）',
         ] },
         { heading: 'すすめかた', items: [
-          '出てきた といに、ひとことで こたえる',
-          'わからない・ないしょ・パスも ぜんぶ正解',
-          '「べつのカードにする」をおすと、いつでも ひきなおせる',
+          '出てきた問いに、ひとことで答える',
+          'わからない・ないしょ・パスも全部正解',
+          '「別のカードにする」を押すと、いつでも引き直せる',
         ] },
-        { heading: 'おわりかた', text: '1まい こたえたら おしまい。「きょうはパス」で おわるのも OK。' },
+        { heading: 'おわりかた', text: '1枚答えたらおしまい。「今日はパス」で終わるのもOK。' },
       ],
     });
   </script>
