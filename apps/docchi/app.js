@@ -3,10 +3,10 @@
 import { shuffle, escapeHtml as esc } from '../shared/js/utils.js';
 
 // ── 番号付け規約（AGENTS.md: 丸数字で統一）──
-const NUMBERS = ['①', '②', '③', '④'];
+const NUMBERS = ['①', '②', '③'];
 
-// ③④は「答えない自由」を守る正式な選択肢
-const EXTRA_CHOICES = ['どっちもいい', 'どっちでもない'];
+// ③は「2択にしばられない自由」を守る正式な選択肢
+const EXTRA_CHOICES = ['その他'];
 
 // ── カテゴリ ──
 const CATEGORIES = [

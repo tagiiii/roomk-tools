@@ -174,10 +174,10 @@
   flex: 1;
 }
 
-/* ③④（どっちもいい・どっちでもない）は少し控えめに */
+/* ③（その他）は少し控えめに */
 .dc-alt {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: 12px;
   margin-bottom: 20px;
 }
@@ -263,12 +263,6 @@
   .dc-choice {
     font-size: 20px;
     padding: 18px 16px;
-  }
-
-  /* ③④は折り返しを避けて縦積みに */
-  .dc-alt {
-    grid-template-columns: 1fr;
-    gap: 8px;
   }
 
   .dc-choice--alt {
