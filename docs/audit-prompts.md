@@ -109,7 +109,7 @@ Tier は「指摘」ではなく「提案アクション」に付ける。カー
 
 | 型 | 該当アプリ例 | 固有に問う観点 |
 |---|---|---|
-| RTDB 単一ファイル | do-mannaka, word-wolf, jinro, tatoe-narabe, kaburazu-hint, tatoe-gp, magire-eshi, uso-jisho, pittari-meter, kakure-number, koedake-theater, ikutsu-ieru, nitaku-board, name-change | transaction 原子性・切断挙動・TTL/孤立ルーム掃除・再接続・リスナー/タイマー片付け・`maximum-scale=1` 必須（`rtdb-audit` スキルの領域） |
+| RTDB 単一ファイル | do-mannaka, word-wolf, jinro, tatoe-narabe, kaburazu-hint, tatoe-gp, magire-eshi, uso-jisho, pittari-meter, kakure-number, koedake-theater, ikutsu-ieru, name-change | transaction 原子性・切断挙動・TTL/孤立ルーム掃除・再接続・リスナー/タイマー片付け・`maximum-scale=1` 必須（`rtdb-audit` スキルの領域） |
 | Firestore 分割 | checkin, vote | 終了後削除・無料枠。※両者は**本体スタブ**（howto 未組込は正常） |
 | オフライン | talk-card, docchi, 内省系の大半 | RTDB 固有観点は**問わない**。`maximum-scale=1` は付けたら WARN |
 
