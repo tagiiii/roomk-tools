@@ -217,8 +217,8 @@ const COVERED_APPS = [
   // 既存（A2 以前から抽出済み）
   'quiz', 'kotoba-shuffle', 'kanji-sagashi', 'kotoba-gacha', 'kotoba-relay', 'tatoe-gp',
   'machigai-sagashi', 'kaburazu-hint', 'kotoba-tantei', 'docchi', 'minna-ranking',
-  'talk-card', 'otona-talk', 'checkout-card', 'tsuyomi-card', 'kimochi-map', 'bamen-card',
-  'mirai-hikidashi', 'kotoba-asobo',
+  'talk-card', 'otona-talk', 'checkout-card', 'tsuyomi-card', 'kimochi-map',
+  'kotoba-asobo',
   // A2 で追加した12アプリ
   'jitsuwa-game', 'do-mannaka', 'ishin-denshin', 'word-wolf', 'tatoe-narabe', 'magire-eshi',
   'ikutsu-ieru', 'pittari-meter', 'uso-jisho', 'value-card', 'koedake-theater', 'kyoumi-sugoroku',
@@ -227,8 +227,8 @@ const COVERED_APPS = [
 // 数えられるコンテンツを持たないため重複検査の対象外にするアプリ（意図的除外）。
 // 例: 内省ツール・進行支援・スタブ本体など、比較対象になる「お題集」が存在しない。
 const NO_CONTENT_APPS = [
-  'suki-type-check', 'challenge-tane', 'kakure-number', 'jinro', 'checkin', 'vote',
-  'name-change', 'kyapa-graph', 'nurie-week', 'mienai-ganbari', 'sakusen-kaigi',
+  'suki-type-check', 'kakure-number', 'jinro', 'checkin', 'vote',
+  'name-change', 'kyapa-graph', 'nurie-week',
 ];
 
 // apps/ 配下に存在するがアプリではないディレクトリ。
@@ -403,30 +403,7 @@ function collectEntries() {
     })));
   }
 
-  const bamenSource = read('apps/bamen-card/app.js');
-  const bamenHeroes = evalArrayFromSource(bamenSource, 'HEROES', 'apps/bamen-card/app.js') || [];
-  bamenHeroes.forEach((item, index) => rows.push(entry('bamen-card', 'hero', item.name, {
-    id: `bamen-card:hero:${index}`,
-  })));
-  const bamenEntries = evalArrayFromSource(bamenSource, 'ENTRY_CARDS', 'apps/bamen-card/app.js') || [];
-  bamenEntries.forEach((text, index) => rows.push(entry('bamen-card', 'entry', text, {
-    id: `bamen-card:entry:${index}`,
-  })));
-
-  const drawers = evalArrayFromSource(read('apps/mirai-hikidashi/app.js'), 'DRAWERS', 'apps/mirai-hikidashi/app.js') || [];
-  for (const drawer of drawers) {
-    rows.push(entry('mirai-hikidashi', 'drawer', drawer.name, {
-      id: `mirai-hikidashi:${drawer.id}`,
-      question: drawer.peek || drawer.name,
-      answer: drawer.name,
-    }));
-    (drawer.people || []).forEach((text, index) => rows.push(entry('mirai-hikidashi', `${drawer.id}:people`, text, {
-      id: `mirai-hikidashi:${drawer.id}:people:${index}`,
-    })));
-    (drawer.tries || []).forEach((text, index) => rows.push(entry('mirai-hikidashi', `${drawer.id}:tries`, text, {
-      id: `mirai-hikidashi:${drawer.id}:tries:${index}`,
-    })));
-  }
+  // bamen-card / mirai-hikidashi の抽出は 2026-08-06 のアプリ削除（一旦公開終了）に伴い撤去
 
   // ── A2 追加: これまで抽出対象外だった12アプリ ──
 

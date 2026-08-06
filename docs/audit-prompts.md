@@ -93,7 +93,7 @@ Tier は「指摘」ではなく「提案アクション」に付ける。カー
 
 これらに反する「改善提案」は **finding にしない**。むしろ違反していれば起票する側。
 
-1. **内省回答・成長評価に、評価・比較・採点・数値化・証拠化・保存を「足す」提案をしない。** 内省系ツール（`kimochi-map` `mienai-ganbari` `nurie-week` `kyapa-graph` `tsuyomi-card` `suki-type-check` `challenge-tane` `mirai-hikidashi` `bamen-card` ほか）の**永続化ゼロ・リロードで消える**は正しい仕様。「保存できないのは不便」は誤検出。
+1. **内省回答・成長評価に、評価・比較・採点・数値化・証拠化・保存を「足す」提案をしない。** 内省系ツール（`kimochi-map` `nurie-week` `kyapa-graph` `tsuyomi-card` `suki-type-check` ほか。mienai-ganbari / challenge-tane / mirai-hikidashi / bamen-card / sakusen-kaigi は 2026-08-06 に一旦公開終了）の**永続化ゼロ・リロードで消える**は正しい仕様。「保存できないのは不便」は誤検出。
    - **この禁止は「内省の回答・成長の評価」に限る。** 娯楽ゲームの得点、RTDB のゲーム進行用の一時状態、再接続のための `sessionStorage` 保存は対象外（これらを消せという提案はしない）。
 2. **既知の意図的例外を切り分ける:**
    - `kyapa-graph` … 数値化・グラフ・学校語は**意図的な例外**（対象は「登校を頑張りすぎている子」専用、不登校の子には別ツール、と AGENTS.md に理由付きで明記）。哲学違反として起票しない。むしろ「対象宣言が明記された良い例」。
