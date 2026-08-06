@@ -25,6 +25,7 @@ description: room-K ツール群に新しいアプリを追加するときの手
 - `apps/{app-name}/index.html`（+ パターンに応じて app.js / style.css）
 - Realtime Database を使う場合は AGENTS.md の「Realtime Database 実装ルール」「切断時の挙動」「セッションデータの自動削除」「再接続」を全て実装する（`RoomkRTDB.initFirebase()`・transaction・onDisconnect・`cancelRoomOnDisconnect()`・ORPHAN_TTL_MS=2分・serverTimeOffset・sessionStorage 再接続・終了後削除・認証失敗ハンドリング）
 - 絵文字禁止・Material Symbols Rounded 使用、design-system.css のトークンを再利用
+- UI 設計は AGENTS.md「ボタン階層の定石」「トップ画面の定石」に従う（塗りつぶしの主ボタンは1画面に1つ・同格の枠線ボタンを3つ以上並べない・トップはパネル1枚構成であそびかたのインライン展開は置かない）
 - 比喩は導入で1回だけ説明し、ボタンなどの操作名は比喩を使わない素直な動詞にする
 - 利用回数カウンタ `<script src="../shared/js/stats.js?v=1" defer></script>` を howto.js の直前に入れる（AGENTS.md「stats.js」参照）。パック・お題などコンテンツ単位で数えたい箇所があれば `window.RoomkStats?.count('項目名')` を呼ぶ
 
@@ -87,6 +88,7 @@ description: room-K ツール群に新しいアプリを追加するときの手
 - [ ] apps/{name}/AGENTS.md（逸脱の明文化を含む）
 - [ ] lint.sh の RTDB_HTML_FILES（RTDB の場合）
 - [ ] lint エラー0・警告0
+- [ ] ボタン階層・トップ画面の定石に準拠（AGENTS.md「デザインシステム」章）
 - [ ] content-audit（コンテンツを持つ場合）
 - [ ] ブラウザ動作確認（PC / モバイル、RTDB は host/guest 実機）
 - [ ] コンテンツガイドライン適合（または例外の明文化）

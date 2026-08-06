@@ -154,6 +154,15 @@ a:hover {
 /* ─────────────────────────────────────────────
    M-6. ボタンコンポーネント
    ───────────────────────────────────────────── */
+
+/* hidden 属性を .btn 等の display 指定より必ず優先させる。
+   author スタイルの display は UA の [hidden] { display: none } に勝ってしまうため、
+   これがないと hidden を付けたボタンが表示されたままになる
+   （tsuyomi-card で実バグ化。各アプリが個別に持っていた同種ルールの共通化）。 */
+[hidden] {
+  display: none !important;
+}
+
 .btn {
   display: inline-flex;
   align-items: center;
