@@ -70,34 +70,117 @@ const NO_ANSWER_MESSAGES = {
   erabanai: 'OK、今日はながめるだけで大丈夫。',
 };
 
+const NO_ANSWER_LABELS = {
+  wakaranai: 'わからない',
+  doredemo: 'どれでもない',
+  erabanai: '今日は選ばない',
+};
+
 // 選んだことばの前後何個までを「ちかくのことば」としてハイライトするか
 const NEAR_RANGE = 2;
 
-const SIZES = [
-  ['small', '小さめ'],
-  ['normal', 'ふつう'],
-  ['big', '大きめ'],
+// 丸数字（チャット・口頭で番号回答するための表示。半角数字は使わない）
+const NUMBERS = [
+  '①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧',
+  '⑨', '⑩', '⑪', '⑫', '⑬', '⑭', '⑮',
 ];
+
+// 「わからない」等3ボタンの番号は、その画面の選択肢の続き番号にする
+// （系えらび: ①〜⑥の続きで⑦⑧⑨ / ことば: ①〜⑫の続きで⑬⑭⑮ / マップ: 他に番号がないので①②③）
+const NO_ANSWER_OFFSET = { groups: 6, words: 12, map: 0 };
 
 // ─── 状態 ───
 const state = {
-  selected: new Map(), // ことば → 大きさ('small'|'normal'|'big') / 未選択は null
+  selected: new Set(), // 選んだことば
   noAnswer: null,      // 'wakaranai' | 'doredemo' | 'erabanai' | null
+  view: 'groups',      // 'groups' | 'words' | 'map'
+  groupIdx: 0,         // view === 'words' のとき表示中のグループ
 };
 
-// ことば → { btn, groupIdx, wordIdx }
-const chipIndex = new Map();
+// ことば → { groupIdx, wordIdx }
+const wordIndex = new Map();
+GROUPS.forEach((group, gi) => {
+  group.words.forEach((word, wi) => wordIndex.set(word, { groupIdx: gi, wordIdx: wi }));
+});
 
+const groupView = document.getElementById('groupView');
+const groupGrid = document.getElementById('groupGrid');
+const wordView = document.getElementById('wordView');
+const wordViewName = document.getElementById('wordViewName');
+const wordViewChips = document.getElementById('wordViewChips');
+const mapView = document.getElementById('mapView');
 const mapArea = document.getElementById('mapArea');
 const noAnswerRow = document.getElementById('noAnswerRow');
 const gentleMsg = document.getElementById('gentleMsg');
 const panel = document.getElementById('selectionPanel');
-const panelRows = document.getElementById('selectionRows');
+const panelChips = document.getElementById('selectionChips');
+const panelHint = document.getElementById('selectionHint');
 const btnClear = document.getElementById('btnClear');
 
-// ─── マップ構築 ───
-function buildMap() {
+// ─── 画面の組み立て ───
+
+// 系えらび（6グループの大ボタン）
+function buildGroupGrid() {
   GROUPS.forEach((group, gi) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = `km-groupbtn km-group--${group.key}`;
+
+    const num = document.createElement('span');
+    num.className = 'km-groupbtn__num';
+    num.textContent = NUMBERS[gi];
+
+    const body = document.createElement('span');
+    body.className = 'km-groupbtn__body';
+
+    const name = document.createElement('span');
+    name.className = 'km-groupbtn__name';
+    name.textContent = group.name;
+
+    const preview = document.createElement('span');
+    preview.className = 'km-groupbtn__preview';
+    preview.textContent = `${group.words.slice(0, 3).join('・')} など`;
+
+    body.append(name, preview);
+    btn.append(num, body);
+    btn.setAttribute('aria-label', `${gi + 1}番: ${group.name}`);
+    btn.addEventListener('click', () => showWords(gi));
+    groupGrid.appendChild(btn);
+  });
+}
+
+// ことばえらび（選んだ系の12語を大きく・丸数字つきで）
+function buildWordView(gi) {
+  const group = GROUPS[gi];
+  wordView.className = `km-wordview km-group--${group.key}`;
+  wordViewName.textContent = group.name;
+  wordViewChips.textContent = '';
+
+  group.words.forEach((word, wi) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'km-wordbtn';
+    btn.dataset.word = word;
+    btn.setAttribute('aria-pressed', 'false');
+
+    const num = document.createElement('span');
+    num.className = 'km-wordbtn__num';
+    num.textContent = NUMBERS[wi];
+
+    const text = document.createElement('span');
+    text.className = 'km-wordbtn__text';
+    text.textContent = word;
+
+    btn.append(num, text);
+    btn.setAttribute('aria-label', `${wi + 1}番: ${word}`);
+    btn.addEventListener('click', () => toggleWord(word));
+    wordViewChips.appendChild(btn);
+  });
+}
+
+// マップ全体（眺めるだけモード。ここは番号なしのまま）
+function buildMap() {
+  GROUPS.forEach((group) => {
     const section = document.createElement('section');
     section.className = `km-group km-group--${group.key}`;
 
@@ -111,15 +194,15 @@ function buildMap() {
     const chips = document.createElement('div');
     chips.className = 'km-group__chips';
 
-    group.words.forEach((word, wi) => {
+    group.words.forEach((word) => {
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'km-chip';
+      btn.dataset.word = word;
       btn.textContent = word;
       btn.setAttribute('aria-pressed', 'false');
       btn.addEventListener('click', () => toggleWord(word));
       chips.appendChild(btn);
-      chipIndex.set(word, { btn, groupIdx: gi, wordIdx: wi });
     });
 
     section.append(heading, chips);
@@ -127,20 +210,33 @@ function buildMap() {
   });
 }
 
+// ─── 画面の切りかえ ───
+function showGroups() {
+  state.view = 'groups';
+  render();
+}
+
+function showWords(gi) {
+  state.view = 'words';
+  state.groupIdx = gi;
+  buildWordView(gi);
+  render();
+  wordViewName.focus();
+}
+
+function showMap() {
+  state.view = 'map';
+  render();
+}
+
 // ─── 操作 ───
 function toggleWord(word) {
   if (state.selected.has(word)) {
     state.selected.delete(word);
   } else {
-    state.selected.set(word, null);
+    state.selected.add(word);
     state.noAnswer = null; // ことばを選んだら「えらばない」状態は解除
   }
-  render();
-}
-
-function setSize(word, size) {
-  if (!state.selected.has(word)) return;
-  state.selected.set(word, size);
   render();
 }
 
@@ -163,8 +259,8 @@ function clearAll() {
 // ─── 描画 ───
 function nearWords() {
   const near = new Set();
-  state.selected.forEach((_, word) => {
-    const info = chipIndex.get(word);
+  state.selected.forEach((word) => {
+    const info = wordIndex.get(word);
     if (!info) return;
     const words = GROUPS[info.groupIdx].words;
     for (let d = -NEAR_RANGE; d <= NEAR_RANGE; d++) {
@@ -176,18 +272,25 @@ function nearWords() {
 }
 
 function render() {
-  const near = nearWords();
+  groupView.hidden = state.view !== 'groups';
+  wordView.hidden = state.view !== 'words';
+  mapView.hidden = state.view !== 'map';
 
-  chipIndex.forEach(({ btn }, word) => {
+  // ことばボタン（ことばえらび・マップ両方）の選択・ちかく表示
+  const near = nearWords();
+  document.querySelectorAll('[data-word]').forEach((btn) => {
+    const word = btn.dataset.word;
     const selected = state.selected.has(word);
     btn.classList.toggle('is-selected', selected);
     btn.classList.toggle('is-near', near.has(word));
-    btn.classList.toggle('km-chip--small', selected && state.selected.get(word) === 'small');
-    btn.classList.toggle('km-chip--big', selected && state.selected.get(word) === 'big');
     btn.setAttribute('aria-pressed', String(selected));
   });
 
-  noAnswerRow.querySelectorAll('.km-noanswer__btn').forEach((btn) => {
+  // 「わからない」等の番号は画面ごとの続き番号にふり直す
+  const offset = NO_ANSWER_OFFSET[state.view];
+  noAnswerRow.querySelectorAll('.km-noanswer__btn').forEach((btn, i) => {
+    btn.querySelector('.km-noanswer__num').textContent = NUMBERS[offset + i];
+    btn.setAttribute('aria-label', `${offset + i + 1}番: ${NO_ANSWER_LABELS[btn.dataset.key]}`);
     const active = state.noAnswer === btn.dataset.key;
     btn.classList.toggle('is-active', active);
     btn.setAttribute('aria-pressed', String(active));
@@ -205,51 +308,33 @@ function render() {
 }
 
 function renderPanel() {
-  panelRows.textContent = '';
+  panelChips.textContent = '';
   if (state.selected.size === 0) {
     panel.hidden = true;
     return;
   }
   panel.hidden = false;
+  // 「ちかくのことば」の破線はことばえらび・マップでしか見えないため、案内もそこだけ出す
+  panelHint.hidden = state.view === 'groups';
 
-  state.selected.forEach((size, word) => {
-    const row = document.createElement('div');
-    row.className = 'km-row';
+  state.selected.forEach((word) => {
+    const info = wordIndex.get(word);
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = `km-picked km-group--${GROUPS[info.groupIdx].key}`;
+    btn.setAttribute('aria-label', `「${word}」をはずす`);
 
-    const name = document.createElement('span');
-    name.className = 'km-row__word';
-    name.textContent = word;
+    const text = document.createElement('span');
+    text.textContent = word;
 
-    const sizes = document.createElement('div');
-    sizes.className = 'km-row__sizes';
-    sizes.setAttribute('role', 'group');
-    sizes.setAttribute('aria-label', `「${word}」の大きさ（選ばなくてもOK）`);
-
-    SIZES.forEach(([key, label]) => {
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'km-size';
-      btn.textContent = label;
-      const active = size === key;
-      btn.classList.toggle('is-active', active);
-      btn.setAttribute('aria-pressed', String(active));
-      btn.addEventListener('click', () => setSize(word, active ? null : key));
-      sizes.appendChild(btn);
-    });
-
-    const remove = document.createElement('button');
-    remove.type = 'button';
-    remove.className = 'km-row__remove';
-    remove.setAttribute('aria-label', `「${word}」をはずす`);
     const icon = document.createElement('span');
     icon.className = 'material-symbols-rounded';
     icon.setAttribute('aria-hidden', 'true');
     icon.textContent = 'close';
-    remove.appendChild(icon);
-    remove.addEventListener('click', () => toggleWord(word));
 
-    row.append(name, sizes, remove);
-    panelRows.appendChild(row);
+    btn.append(text, icon);
+    btn.addEventListener('click', () => toggleWord(word));
+    panelChips.appendChild(btn);
   });
 }
 
@@ -258,6 +343,10 @@ noAnswerRow.querySelectorAll('.km-noanswer__btn').forEach((btn) => {
   btn.addEventListener('click', () => toggleNoAnswer(btn.dataset.key));
 });
 btnClear.addEventListener('click', clearAll);
+document.getElementById('btnShowMap').addEventListener('click', showMap);
+document.getElementById('btnBackFromWords').addEventListener('click', showGroups);
+document.getElementById('btnBackFromMap').addEventListener('click', showGroups);
 
+buildGroupGrid();
 buildMap();
 render();

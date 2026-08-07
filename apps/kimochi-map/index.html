@@ -24,11 +24,11 @@
       <p class="km-header__sub">最近の気持ちでもOK。いくつ選んでもいいし、選ばなくてもいいよ。</p>
     </header>
 
-    <!-- 「選ばない」も正式な答え。ことばチップと同格に置く -->
+    <!-- 「選ばない」も正式な答え。ことば・系のボタンと同格に置く（番号は画面ごとにJSがふり直す）-->
     <div class="km-noanswer" id="noAnswerRow" role="group" aria-label="選ばないときの答え">
-      <button type="button" class="km-noanswer__btn" data-key="wakaranai" aria-pressed="false">わからない</button>
-      <button type="button" class="km-noanswer__btn" data-key="doredemo" aria-pressed="false">どれでもない</button>
-      <button type="button" class="km-noanswer__btn" data-key="erabanai" aria-pressed="false">今日は選ばない</button>
+      <button type="button" class="km-noanswer__btn" data-key="wakaranai" aria-pressed="false"><span class="km-noanswer__num">⑦</span>わからない</button>
+      <button type="button" class="km-noanswer__btn" data-key="doredemo" aria-pressed="false"><span class="km-noanswer__num">⑧</span>どれでもない</button>
+      <button type="button" class="km-noanswer__btn" data-key="erabanai" aria-pressed="false"><span class="km-noanswer__num">⑨</span>今日は選ばない</button>
     </div>
 
     <!-- えらばない選択を尊重する一言 -->
@@ -36,15 +36,41 @@
 
     <!-- 選択パネル（ことばを選んだときだけ表示）-->
     <section class="km-panel" id="selectionPanel" hidden>
-      <p class="km-panel__hint">近くのことばもふんわり光ってるよ。こっちのほうが近い？</p>
-      <div class="km-panel__rows" id="selectionRows"></div>
+      <p class="km-panel__label">選んだことば（押すとはずせる）</p>
+      <div class="km-panel__chips" id="selectionChips"></div>
+      <p class="km-panel__hint" id="selectionHint">近くのことばもふんわり光ってるよ。そっちのほうが近ければ変えてOK。</p>
       <div class="km-panel__actions">
         <button type="button" class="btn btn-ghost btn-sm" id="btnClear">消す</button>
       </div>
     </section>
 
-    <!-- ことばマップ -->
-    <main class="km-map" id="mapArea"></main>
+    <main>
+      <!-- 画面1: 系えらび -->
+      <section class="km-groupview" id="groupView">
+        <p class="km-viewguide">まずは近そうな系を選んでね。あとで変えてもOK。</p>
+        <div class="km-groupview__grid" id="groupGrid"></div>
+        <p class="km-viewnav">
+          <button type="button" class="km-quiet-btn" id="btnShowMap"><span class="material-symbols-rounded" aria-hidden="true">map</span>マップ全体を見る</button>
+        </p>
+      </section>
+
+      <!-- 画面2: えらんだ系のことば -->
+      <section class="km-wordview" id="wordView" hidden>
+        <div class="km-viewtop">
+          <button type="button" class="km-quiet-btn" id="btnBackFromWords"><span class="material-symbols-rounded" aria-hidden="true">arrow_back</span>ほかの系を見る</button>
+        </div>
+        <h2 class="km-wordview__name" id="wordViewName" tabindex="-1"></h2>
+        <div class="km-wordview__chips" id="wordViewChips"></div>
+      </section>
+
+      <!-- 画面3: マップ全体（ながめるだけモード）-->
+      <section class="km-mapview" id="mapView" hidden>
+        <div class="km-viewtop">
+          <button type="button" class="km-quiet-btn" id="btnBackFromMap"><span class="material-symbols-rounded" aria-hidden="true">arrow_back</span>系を選ぶにもどる</button>
+        </div>
+        <div class="km-map" id="mapArea"></div>
+      </section>
+    </main>
 
   </div>
 
@@ -54,15 +80,16 @@
   <script>
     RoomkHowto.init({
       title: 'つかいかた',
-      lead: '今日の気持ちに近いことばを、マップからさがすツール。ながめるだけでもOK。',
+      lead: '今日の気持ちに近いことばをさがすツール。ながめるだけでもOK。',
       sections: [
         { heading: 'すすめかた', items: [
-          '気持ちに近いことばをタップする（いくつ選んでもOK）',
+          'まず、気持ちに近そうな系を6つから選ぶ',
+          '出てきたことばから、近いものをタップする（いくつ選んでもOK）',
           '近くのことばがふんわり光ったら、そっちに変えてもOK',
-          'ことばの大きさを「小さめ」「ふつう」「大きめ」から選べる（選ばなくてもOK）',
+          'チャットで答えるときは、画面の①②③の番号だけでOK',
           '「消す」を押すと、いつでも全部消せる',
         ] },
-        { heading: '選ばなくてもOK', text: 'ぴったりのことばがなければ、「わからない」「どれでもない」「今日は選ばない」を押してOK。' },
+        { heading: '選ばなくてもOK', text: 'ぴったりのことばがなければ、「わからない」「どれでもない」「今日は選ばない」を押してOK。「マップ全体を見る」で、ぜんぶをながめるだけの使いかたもできる。' },
         { heading: 'おわりかた', text: 'そのまま閉じておしまい。選んだことばはどこにも残らない。' },
       ],
     });

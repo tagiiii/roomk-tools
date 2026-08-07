@@ -2,7 +2,10 @@
    共通スタイルは design-system.css に定義済み
 
    グループ色はすべて彩度・明度をそろえた穏やかな色にする。
-   ネガティブ系グループを暗い色・警告色にしない（グループに優劣をつけない）。 */
+   ネガティブ系グループを暗い色・警告色にしない（グループに優劣をつけない）。
+
+   画面共有で読める文字サイズを守る: 主要な選択肢（系ボタン・ことばボタン）は
+   18px 以上、補助テキストも 13px を下限にする。 */
 
 /* ── レイアウト ── */
 .wrapper {
@@ -38,7 +41,15 @@
   margin-top: 8px;
 }
 
-/* ── 「えらばない」ボタン（ことばと同格の正式なこたえ）── */
+/* ── グループ色（どれも同じトーンの穏やかな色。良し悪しの意味を持たせない）── */
+.km-group--niko  { --km-c: #5B9E63; --km-c-soft: #EAF3EB; }
+.km-group--poka  { --km-c: #B9884C; --km-c-soft: #F7EFE3; }
+.km-group--moya  { --km-c: #8B7FB8; --km-c-soft: #EFEDF7; }
+.km-group--zawa  { --km-c: #5D8CB0; --km-c-soft: #E8F0F6; }
+.km-group--gutta { --km-c: #A97F97; --km-c-soft: #F4ECF1; }
+.km-group--suki  { --km-c: #3F9CA8; --km-c-soft: #E6F2F4; }
+
+/* ── 「えらばない」ボタン（ことば・系と同格の正式なこたえ）── */
 .km-noanswer {
   display: flex;
   flex-wrap: wrap;
@@ -48,8 +59,11 @@
 }
 
 .km-noanswer__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   font-family: inherit;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 500;
   color: var(--color-text);
   background: var(--color-surface);
@@ -58,6 +72,13 @@
   padding: 9px 18px;
   cursor: pointer;
   transition: border-color var(--transition-base), background var(--transition-base);
+}
+
+.km-noanswer__num {
+  color: var(--color-accent);
+  font-weight: 700;
+  font-feature-settings: "palt";
+  flex-shrink: 0;
 }
 
 .km-noanswer__btn:hover {
@@ -84,95 +105,238 @@
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-box);
-  padding: 18px 22px;
+  padding: 16px 20px;
   margin-bottom: 24px;
   box-shadow: var(--shadow-sm);
+}
+
+.km-panel__label {
+  font-size: var(--font-size-sm);
+  color: var(--color-muted);
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.km-panel__chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+.km-picked {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: 2px solid var(--km-c);
+  border-radius: var(--radius-full);
+  padding: 6px 12px 6px 16px;
+  cursor: pointer;
+  transition: background var(--transition-base);
+}
+
+.km-picked:hover {
+  background: var(--km-c-soft);
+}
+
+.km-picked .material-symbols-rounded {
+  font-size: 18px;
+  color: var(--color-muted);
 }
 
 .km-panel__hint {
   font-size: var(--font-size-sm);
   color: var(--color-muted);
   text-align: center;
-  margin-bottom: 12px;
-}
-
-.km-panel__rows {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.km-row {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px 14px;
-}
-
-.km-row__word {
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--color-primary);
-  min-width: 8em;
-}
-
-.km-row__sizes {
-  display: flex;
-  gap: 6px;
-}
-
-.km-size {
-  font-family: inherit;
-  font-size: 12px;
-  color: var(--color-muted);
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-full);
-  padding: 4px 12px;
-  cursor: pointer;
-  transition: border-color var(--transition-base), background var(--transition-base);
-}
-
-.km-size:hover {
-  border-color: var(--color-accent);
-  color: var(--color-accent);
-}
-
-.km-size.is-active {
-  background: var(--color-accent);
-  border-color: var(--color-accent);
-  color: #fff;
-  font-weight: 700;
-}
-
-.km-row__remove {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: none;
-  border: none;
-  border-radius: var(--radius-full);
-  color: var(--color-muted);
-  cursor: pointer;
-  padding: 4px;
-  margin-left: auto;
-}
-
-.km-row__remove:hover {
-  color: var(--color-text);
-  background: rgba(0, 0, 0, 0.05);
-}
-
-.km-row__remove .material-symbols-rounded {
-  font-size: 18px;
+  margin-top: 12px;
 }
 
 .km-panel__actions {
   text-align: center;
-  margin-top: 12px;
+  margin-top: 10px;
 }
 
-/* ── ことばマップ ── */
+/* ── 画面共通: ナビゲーション（弱ボタン）── */
+.km-viewtop {
+  margin-bottom: 8px;
+}
+
+.km-viewnav {
+  text-align: center;
+  margin-top: 18px;
+}
+
+.km-quiet-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 44px;
+  padding: 10px 8px;
+  background: none;
+  border: none;
+  font-family: inherit;
+  font-size: var(--font-size-sm);
+  color: var(--color-muted);
+  cursor: pointer;
+}
+
+.km-quiet-btn .material-symbols-rounded {
+  font-size: 18px;
+}
+
+.km-quiet-btn:hover {
+  color: var(--color-text);
+  text-decoration: underline;
+}
+
+.km-quiet-btn:focus-visible {
+  outline: 3px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: var(--radius-full);
+}
+
+/* ── 画面1: 系えらび ── */
+.km-viewguide {
+  text-align: center;
+  font-size: var(--font-size-sub);
+  color: var(--color-muted);
+  margin-bottom: 16px;
+}
+
+.km-groupview__grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+}
+
+.km-groupbtn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+  font-family: inherit;
+  background: var(--km-c-soft);
+  border: 2px solid transparent;
+  border-radius: var(--radius-box);
+  padding: 18px 20px;
+  cursor: pointer;
+  transition: border-color var(--transition-base);
+}
+
+.km-groupbtn:hover {
+  border-color: var(--km-c);
+}
+
+.km-groupbtn__num {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--km-c);
+  font-feature-settings: "palt";
+  flex-shrink: 0;
+}
+
+.km-groupbtn__body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.km-groupbtn__name {
+  font-size: 21px;
+  font-weight: 700;
+  color: var(--km-c);
+}
+
+.km-groupbtn__preview {
+  font-size: 14px;
+  color: var(--color-muted);
+}
+
+/* ── 画面2: えらんだ系のことば ── */
+.km-wordview__name {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--km-c);
+  margin-bottom: 16px;
+}
+
+.km-wordview__name::before {
+  content: '';
+  width: 12px;
+  height: 12px;
+  border-radius: var(--radius-full);
+  background: var(--km-c);
+  flex-shrink: 0;
+}
+
+.km-wordview__name:focus-visible {
+  outline: 3px solid var(--color-accent);
+  outline-offset: 4px;
+  border-radius: var(--radius-full);
+}
+
+.km-wordview__chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+}
+
+.km-wordbtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: inherit;
+  background: var(--km-c-soft);
+  border: 2px solid transparent;
+  border-radius: var(--radius-full);
+  padding: 12px 20px;
+  cursor: pointer;
+  transition: border-color var(--transition-base), background var(--transition-base);
+}
+
+.km-wordbtn__num {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--km-c);
+  font-feature-settings: "palt";
+  flex-shrink: 0;
+}
+
+.km-wordbtn__text {
+  font-size: 20px;
+  color: var(--color-text);
+}
+
+.km-wordbtn:hover {
+  border-color: var(--km-c);
+}
+
+.km-wordbtn.is-selected {
+  background: var(--color-surface);
+  border-color: var(--km-c);
+  box-shadow: var(--shadow-sm);
+}
+
+.km-wordbtn.is-selected .km-wordbtn__text {
+  font-weight: 700;
+}
+
+/* 「ちかくのことば」のゆるいハイライト */
+.km-wordbtn.is-near {
+  border: 2px dashed var(--km-c);
+}
+
+/* ── 画面3: マップ全体（ながめるだけモード）── */
 .km-map {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -185,14 +349,6 @@
   border-radius: var(--radius-box);
   padding: 18px 20px;
 }
-
-/* グループ色（どれも同じトーンの穏やかな色。良し悪しの意味を持たせない） */
-.km-group--niko  { --km-c: #5B9E63; --km-c-soft: #EAF3EB; }
-.km-group--poka  { --km-c: #B9884C; --km-c-soft: #F7EFE3; }
-.km-group--moya  { --km-c: #8B7FB8; --km-c-soft: #EFEDF7; }
-.km-group--zawa  { --km-c: #5D8CB0; --km-c-soft: #E8F0F6; }
-.km-group--gutta { --km-c: #A97F97; --km-c-soft: #F4ECF1; }
-.km-group--suki  { --km-c: #3F9CA8; --km-c-soft: #E6F2F4; }
 
 .km-group__name {
   display: flex;
@@ -218,18 +374,16 @@
   gap: 8px;
 }
 
-/* ── ことばチップ ── */
 .km-chip {
   font-family: inherit;
-  font-size: 15px;
+  font-size: 16px;
   color: var(--color-text);
   background: var(--km-c-soft);
   border: 1.5px solid transparent;
   border-radius: var(--radius-full);
   padding: 7px 14px;
   cursor: pointer;
-  transition: border-color var(--transition-base), background var(--transition-base),
-              font-size var(--transition-base);
+  transition: border-color var(--transition-base), background var(--transition-base);
 }
 
 .km-chip:hover {
@@ -243,20 +397,8 @@
   box-shadow: var(--shadow-sm);
 }
 
-/* 「ちかくのことば」のゆるいハイライト */
 .km-chip.is-near {
   border: 1.5px dashed var(--km-c);
-}
-
-/* 大きさ（数値は使わず、見た目の大きさだけで表す） */
-.km-chip--small {
-  font-size: 12px;
-  padding: 5px 11px;
-}
-
-.km-chip--big {
-  font-size: 19px;
-  padding: 9px 18px;
 }
 
 /* ── レスポンシブ ── */
@@ -269,6 +411,19 @@
     font-size: 20px;
   }
 
+  .km-groupview__grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .km-groupbtn {
+    padding: 14px 16px;
+  }
+
+  .km-wordbtn__text {
+    font-size: 18px;
+  }
+
   .km-map {
     grid-template-columns: 1fr;
     gap: 12px;
@@ -276,9 +431,5 @@
 
   .km-group {
     padding: 14px 14px;
-  }
-
-  .km-row__word {
-    min-width: 100%;
   }
 }
