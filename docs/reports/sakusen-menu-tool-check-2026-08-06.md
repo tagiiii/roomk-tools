@@ -6,6 +6,11 @@
 
 観点: ①起動手数 ②丸数字番号でのチャット回答 ③1on1成立 ④15分適合 ⑤画面共有での見やすさ
 
+> **追記（2026-08-06 同日）**: 本監査の後、ユーザーが各アプリを確認して整理を実施。
+> **削除**: nitaku-board / bamen-card / challenge-tane / sakusen-kaigi / mirai-hikidashi / mienai-ganbari（使いづらさによる一旦削除）。
+> **刷新**: tsuyomi-card（1枚ずつ提示・「ある/ない/どちらでもない」3択へ全面刷新 → 42枚グリッドの指摘は解消）、docchi（③④を「その他」に統合 → 非同格の指摘は解消）。
+> 下表の判定はいずれも整理前の状態に基づく。**整理後も残る手直し候補**: talk-card 半角数字（app.js:149）／kimochi-map 語彙・3ボタンの番号なし／value-card 半角数字・13px・所要未記載／kyoumi-sugoroku 選択肢15px・1人時文言／suki-type-check 所要表記の矛盾／tsuyomi-card 新3択ボタンへの丸数字付与（軽微・任意）。
+
 ## 総合判定
 
 | アプリ | 判定 | 主な理由 |
