@@ -85,9 +85,10 @@ const NUMBERS = [
   '⑨', '⑩', '⑪', '⑫', '⑬', '⑭', '⑮',
 ];
 
-// 「わからない」等3ボタンの番号は、その画面の選択肢の続き番号にする
-// （系えらび: ①〜⑥の続きで⑦⑧⑨ / ことば: ①〜⑫の続きで⑬⑭⑮ / マップ: 他に番号がないので①②③）
-const NO_ANSWER_OFFSET = { groups: 6, words: 12, map: 0 };
+// 「わからない」等3ボタンは「答える場面」だけに置く（系えらびは入口なので出さない）。
+// 番号はその画面の選択肢の続き番号にする
+// （ことば: ①〜⑫の続きで⑬⑭⑮ / マップ: 他に番号がないので①②③）
+const NO_ANSWER_OFFSET = { words: 12, map: 0 };
 
 // ─── 状態 ───
 const state = {
@@ -110,8 +111,13 @@ const wordViewName = document.getElementById('wordViewName');
 const wordViewChips = document.getElementById('wordViewChips');
 const mapView = document.getElementById('mapView');
 const mapArea = document.getElementById('mapArea');
+const noAnswerArea = document.getElementById('noAnswerArea');
 const noAnswerRow = document.getElementById('noAnswerRow');
 const gentleMsg = document.getElementById('gentleMsg');
+const noAnswerSlots = {
+  words: document.getElementById('noAnswerSlotWords'),
+  map: document.getElementById('noAnswerSlotMap'),
+};
 const panel = document.getElementById('selectionPanel');
 const panelChips = document.getElementById('selectionChips');
 const panelHint = document.getElementById('selectionHint');
@@ -276,6 +282,14 @@ function render() {
   wordView.hidden = state.view !== 'words';
   mapView.hidden = state.view !== 'map';
 
+  // 「えらばない」ボタン一式は答える場面（ことばえらび・マップ）だけに出し、
+  // いまの画面のスロット（主選択肢の直後）へ移す
+  const slot = noAnswerSlots[state.view];
+  noAnswerArea.hidden = !slot;
+  if (slot && noAnswerArea.parentElement !== slot) {
+    slot.appendChild(noAnswerArea);
+  }
+
   // ことばボタン（ことばえらび・マップ両方）の選択・ちかく表示
   const near = nearWords();
   document.querySelectorAll('[data-word]').forEach((btn) => {
@@ -286,15 +300,17 @@ function render() {
     btn.setAttribute('aria-pressed', String(selected));
   });
 
-  // 「わからない」等の番号は画面ごとの続き番号にふり直す
+  // 「わからない」等の番号は画面ごとの続き番号にふり直す（非表示の画面ではそのまま）
   const offset = NO_ANSWER_OFFSET[state.view];
-  noAnswerRow.querySelectorAll('.km-noanswer__btn').forEach((btn, i) => {
-    btn.querySelector('.km-noanswer__num').textContent = NUMBERS[offset + i];
-    btn.setAttribute('aria-label', `${offset + i + 1}番: ${NO_ANSWER_LABELS[btn.dataset.key]}`);
-    const active = state.noAnswer === btn.dataset.key;
-    btn.classList.toggle('is-active', active);
-    btn.setAttribute('aria-pressed', String(active));
-  });
+  if (offset !== undefined) {
+    noAnswerRow.querySelectorAll('.km-noanswer__btn').forEach((btn, i) => {
+      btn.querySelector('.km-noanswer__num').textContent = NUMBERS[offset + i];
+      btn.setAttribute('aria-label', `${offset + i + 1}番: ${NO_ANSWER_LABELS[btn.dataset.key]}`);
+      const active = state.noAnswer === btn.dataset.key;
+      btn.classList.toggle('is-active', active);
+      btn.setAttribute('aria-pressed', String(active));
+    });
+  }
 
   if (state.noAnswer) {
     gentleMsg.textContent = NO_ANSWER_MESSAGES[state.noAnswer];

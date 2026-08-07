@@ -24,15 +24,18 @@
       <p class="km-header__sub">最近の気持ちでもOK。いくつ選んでもいいし、選ばなくてもいいよ。</p>
     </header>
 
-    <!-- 「選ばない」も正式な答え。ことば・系のボタンと同格に置く（番号は画面ごとにJSがふり直す）-->
-    <div class="km-noanswer" id="noAnswerRow" role="group" aria-label="選ばないときの答え">
-      <button type="button" class="km-noanswer__btn" data-key="wakaranai" aria-pressed="false"><span class="km-noanswer__num">⑦</span>わからない</button>
-      <button type="button" class="km-noanswer__btn" data-key="doredemo" aria-pressed="false"><span class="km-noanswer__num">⑧</span>どれでもない</button>
-      <button type="button" class="km-noanswer__btn" data-key="erabanai" aria-pressed="false"><span class="km-noanswer__num">⑨</span>今日は選ばない</button>
+    <!-- 「選ばない」も正式な答え。答える場面（ことばえらび・マップ）だけに、ことばと
+         同格の見た目で主選択肢の直後（続き番号が上から順に読める位置）に置く。
+         系えらびは入口なので出さない。JSが画面ごとのスロットへ移動する -->
+    <div id="noAnswerArea" hidden>
+      <div class="km-noanswer" id="noAnswerRow" role="group" aria-label="選ばないときの答え">
+        <button type="button" class="km-noanswer__btn" data-key="wakaranai" aria-pressed="false"><span class="km-noanswer__num">⑬</span>わからない</button>
+        <button type="button" class="km-noanswer__btn" data-key="doredemo" aria-pressed="false"><span class="km-noanswer__num">⑭</span>どれでもない</button>
+        <button type="button" class="km-noanswer__btn" data-key="erabanai" aria-pressed="false"><span class="km-noanswer__num">⑮</span>今日は選ばない</button>
+      </div>
+      <!-- えらばない選択を尊重する一言 -->
+      <p class="km-gentle" id="gentleMsg" aria-live="polite" hidden></p>
     </div>
-
-    <!-- えらばない選択を尊重する一言 -->
-    <p class="km-gentle" id="gentleMsg" aria-live="polite" hidden></p>
 
     <!-- 選択パネル（ことばを選んだときだけ表示）-->
     <section class="km-panel" id="selectionPanel" hidden>
@@ -45,7 +48,7 @@
     </section>
 
     <main>
-      <!-- 画面1: 系えらび -->
+      <!-- 画面1: 系えらび（入口であって答える画面ではないため、えらばないボタンは置かない） -->
       <section class="km-groupview" id="groupView">
         <p class="km-viewguide">まずは近そうな系を選んでね。あとで変えてもOK。</p>
         <div class="km-groupview__grid" id="groupGrid"></div>
@@ -54,27 +57,31 @@
         </p>
       </section>
 
-      <!-- 画面2: えらんだ系のことば -->
+      <!-- 画面2: えらんだ系のことば（えらばないボタンは①〜⑫の下） -->
       <section class="km-wordview" id="wordView" hidden>
         <div class="km-viewtop">
           <button type="button" class="km-quiet-btn" id="btnBackFromWords"><span class="material-symbols-rounded" aria-hidden="true">arrow_back</span>ほかの系を見る</button>
         </div>
         <h2 class="km-wordview__name" id="wordViewName" tabindex="-1"></h2>
         <div class="km-wordview__chips" id="wordViewChips"></div>
+        <div class="km-noanswer-slot" id="noAnswerSlotWords"></div>
       </section>
 
-      <!-- 画面3: マップ全体（ながめるだけモード）-->
+      <!-- 画面3: マップ全体（ながめるだけモード。72語の下だと見えなくなるため、ここだけ上置き）-->
       <section class="km-mapview" id="mapView" hidden>
         <div class="km-viewtop">
           <button type="button" class="km-quiet-btn" id="btnBackFromMap"><span class="material-symbols-rounded" aria-hidden="true">arrow_back</span>系を選ぶにもどる</button>
         </div>
+        <div class="km-noanswer-slot" id="noAnswerSlotMap"></div>
         <div class="km-map" id="mapArea"></div>
       </section>
     </main>
 
   </div>
 
-  <script type="module" src="app.js"></script>
+  <!-- 画面構成の変更でHTML側のスロットとJSが対で変わるため、?v= で同時更新する
+       （HTMLだけ先に更新されると旧JSがスロット参照で落ちる。v2: えらばないボタンの配置刷新） -->
+  <script type="module" src="app.js?v=2"></script>
   <script src="../shared/js/stats.js?v=1" defer></script>
   <script src="../shared/js/howto.js"></script>
   <script>

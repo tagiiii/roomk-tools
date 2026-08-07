@@ -49,7 +49,17 @@
 .km-group--gutta { --km-c: #A97F97; --km-c-soft: #F4ECF1; }
 .km-group--suki  { --km-c: #3F9CA8; --km-c-soft: #E6F2F4; }
 
-/* ── 「えらばない」ボタン（ことば・系と同格の正式なこたえ）── */
+/* ── 「えらばない」ボタン（ことば・系と同格の正式なこたえ）──
+   置き場所は各画面の主選択肢の直後（続き番号が上から順に読める位置）。
+   JSが #noAnswerArea をスロットへ移動する */
+.km-noanswer-slot:not(:empty) {
+  margin-top: 20px;
+}
+
+.km-mapview .km-noanswer-slot:not(:empty) {
+  margin-top: 0; /* マップ画面だけ上置きのため、上余白は .km-viewtop 側で足りる */
+}
+
 .km-noanswer {
   display: flex;
   flex-wrap: wrap;
