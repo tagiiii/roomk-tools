@@ -169,42 +169,6 @@ function entry(tool, category, text, extra = {}) {
   };
 }
 
-function collectKotobaAsobo() {
-  const dir = path.join(root, 'apps/kotoba-asobo/data/sessions');
-  if (!fs.existsSync(dir)) return [];
-  const sessions = [];
-  for (const file of fs.readdirSync(dir).filter((name) => name.endsWith('.js'))) {
-    const code = fs.readFileSync(path.join(dir, file), 'utf8');
-    const context = {
-      KotobaAsobo: {
-        registerSession(session) {
-          sessions.push(session);
-        },
-      },
-    };
-    vm.runInNewContext(code, context, { filename: file });
-  }
-  const rows = [];
-  for (const session of sessions) {
-    for (const q of session.questions || []) {
-      const answer = q.type === 'choice' && Array.isArray(q.choices) ? q.choices[q.answerIndex] : q.answer;
-      rows.push(entry('kotoba-asobo', q.type, q.question, {
-        id: q.id,
-        question: q.question,
-        answer: answer || q.question,
-      }));
-      for (const choice of q.choices || []) {
-        rows.push(entry('kotoba-asobo', `${q.type}:choice`, choice, {
-          id: `${q.id}:choice:${choice}`,
-          question: q.question,
-          answer: choice,
-        }));
-      }
-    }
-  }
-  return rows;
-}
-
 // ────────────────────────────────────────────────────────────
 // カバレッジ・マニフェスト
 // 「数えられるコンテンツ（お題・問題・カード）を持つのに collectEntries で
@@ -215,10 +179,9 @@ function collectKotobaAsobo() {
 // 重複検査でカバー済みのアプリ（collectEntries が entries を生成する）。
 const COVERED_APPS = [
   // 既存（A2 以前から抽出済み）
-  'quiz', 'kotoba-shuffle', 'kanji-sagashi', 'kotoba-gacha', 'kotoba-relay', 'tatoe-gp',
+  'quiz', 'kotoba-shuffle', 'kanji-sagashi', 'kotoba-relay', 'tatoe-gp',
   'machigai-sagashi', 'kaburazu-hint', 'kotoba-tantei', 'docchi', 'minna-ranking',
   'talk-card', 'otona-talk', 'checkout-card', 'tsuyomi-card', 'kimochi-map',
-  'kotoba-asobo',
   // A2 で追加した12アプリ
   'jitsuwa-game', 'do-mannaka', 'ishin-denshin', 'word-wolf', 'tatoe-narabe', 'magire-eshi',
   'ikutsu-ieru', 'pittari-meter', 'uso-jisho', 'value-card', 'koedake-theater', 'kyoumi-sugoroku',
@@ -305,15 +268,6 @@ function collectEntries() {
     question: item.target,
     answer: item.target,
   })));
-
-  const gacha = evalArrayFromSource(read('apps/kotoba-gacha/app.js'), 'QUESTIONS', 'apps/kotoba-gacha/app.js') || [];
-  gacha.forEach((item, index) => {
-    rows.push(entry('kotoba-gacha', 'template', item.template, {
-      id: `kotoba-gacha:${index}`,
-      question: item.template,
-      answer: (item.choices || []).map((choice) => choice.particle).join('/'),
-    }));
-  });
 
   const relaySource = read('apps/kotoba-relay/app.js');
   const starters = evalArrayFromSource(relaySource, 'starters', 'apps/kotoba-relay/app.js') || [];
@@ -510,7 +464,6 @@ function collectEntries() {
     });
   }
 
-  rows.push(...collectKotobaAsobo());
   return rows.filter((row) => row.normText);
 }
 

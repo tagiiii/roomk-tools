@@ -160,7 +160,7 @@ Tier は「指摘」ではなく「提案アクション」に付ける。カー
   1. 対象アプリが `content-audit.mjs` の `collectEntries()` に**載っているか**。未対応なら**まず「抽出追加」を1件の finding として起票**し、量・偏りの判断はその**再計測後**に行う（抽出未対応と量不足は**別 finding・別 Tier**。未対象アプリは末尾スナップショット参照）。
   2. パック内・カテゴリ内の**偏り**はないか（例: quiz は難読地名系が約1/3、難易度が d3 偏重）。
   3. **反復利用で枯渇するか**（＝単に絶対数が少ないだけでは起票しない。「1セッションで何件消費し、どの頻度で使うアプリか」を添えて、実際に枯渇が起きる場合のみ）。
-  4. 禁止題材（学校/成績/登校/恋愛/暴力/ホラー/死）の混入がないか（`validate-kotoba-asobo.mjs` の BAD_WORDS は kotoba-asobo 専用なので他アプリは手動照合）。
+  4. 禁止題材（学校/成績/登校/恋愛/暴力/ホラー/死）の混入がないか（機械チェックはないため手動照合）。
   5. 事実系（雑学・故事・方言・由来）に出典と参照日が付いているか。
   6. **均等・完結が設計意図のもの**（kimochi-map 12×6, kotoba-tantei 30×18, docchi 17×5）に水増しを提案していないか（哲学ガード）。
 - **Tier 目安**: C（棚卸し・報告）。抽出追加は A/B、本体投入は **D-3（人間専任）**。
@@ -264,7 +264,7 @@ Tier は「指摘」ではなく「提案アクション」に付ける。カー
 |---|---|---|---|---|---|---|
 | kotoba-tantei | 540 | ✓ | | kotoba-relay | 70 | ✓ |
 | quiz | 480 | ✓ | | magire-eshi | 60 | ✗ |
-| kotoba-asobo | 272 | ✓ | | ikutsu-ieru | 51 | ✗ |
+| kotoba-asobo（2026-08-07 公開終了） | 272 | ✓ | | ikutsu-ieru | 51 | ✗ |
 | kyoumi-sugoroku | 142 | ✗ | | kanji-sagashi | 50 | ✓ |
 | jitsuwa-game | 126 | ✗ | | pittari-meter | 50 | ✗ |
 | nitaku-board | 126 | ✓ | | uso-jisho | 50 | ✗ |
@@ -272,7 +272,7 @@ Tier は「指摘」ではなく「提案アクション」に付ける。カー
 | talk-card | 100 | ✓ | | machigai-sagashi | 45 | ✓ |
 | kotoba-shuffle | 100 | ✓ | | bamen-card | 42 | ✓ |
 | do-mannaka | 100 | ✗ | | tsuyomi-card | 42 | ✓ |
-| ishin-denshin | 100 | ✗ | | kotoba-gacha | 30 | ✓ |
+| ishin-denshin | 100 | ✗ | | kotoba-gacha（2026-08-07 公開終了） | 30 | ✓ |
 | word-wolf | 100 | ✗ | | value-card | 30 | ✗ |
 | tatoe-gp | 90 | ✓ | | checkout-card | 24 | ✓ |
 | docchi | 85 | ✓ | | mirai-hikidashi | 22 | ✓ |

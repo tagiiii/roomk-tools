@@ -239,7 +239,7 @@ Realtime Database を使う単一ファイルアプリは、Firebase compat SDK 
 ```
 
 - 読み込むだけで起動回数（項目 `open`）を1加算する。アプリ名は URL パスから自動判定
-- コンテンツ単位で数えたい箇所では `window.RoomkStats?.count('項目名')` を呼ぶ（例: quiz のパック選択 `pack-{id}`、kotoba-asobo のセッション開始 `session-{id}`）。**必ずオプショナルチェーンで呼ぶ**（スクリプトがブロックされてもアプリを壊さない）
+- コンテンツ単位で数えたい箇所では `window.RoomkStats?.count('項目名')` を呼ぶ（例: quiz のパック選択 `pack-{id}`）。**必ずオプショナルチェーンで呼ぶ**（スクリプトがブロックされてもアプリを壊さない）
 - 記録先は Realtime Database `stats/{アプリ名}/{YYYY-MM}/{項目}`。既存のセキュリティルール（ワイルドカード）で書けるためルール変更は不要
 - **記録するのは回数のみ。** UID・ニックネーム・自由入力の内容は絶対に記録しない。計測値やランキングを子ども向け画面に表示しない
 - localhost からは送信しない（動作確認したいときだけ `localStorage.setItem('roomk-stats-force', '1')`）
@@ -772,7 +772,7 @@ RTDB アプリを新規追加したら `scripts/lint.sh` の `RTDB_HTML_FILES` �
 node scripts/content-audit.mjs
 ```
 
-その他: `scripts/validate-kotoba-asobo.mjs`（kotoba-asobo のデータ検証）、`scripts/draft-lint.sh`（`drafts/` 配下のプロトタイプ用）。
+その他: `scripts/draft-lint.sh`（`drafts/` 配下のプロトタイプ用）。
 
 ### ローカル確認
 
