@@ -185,6 +185,8 @@ const COVERED_APPS = [
   // A2 で追加した12アプリ
   'jitsuwa-game', 'do-mannaka', 'ishin-denshin', 'word-wolf', 'tatoe-narabe', 'magire-eshi',
   'ikutsu-ieru', 'pittari-meter', 'uso-jisho', 'value-card', 'koedake-theater', 'kyoumi-sugoroku',
+  // コトバであそぼ！第2期（2026-08-09）で追加した2アプリ
+  'kotoba-pair', 'toomawashi',
 ];
 
 // 数えられるコンテンツを持たないため重複検査の対象外にするアプリ（意図的除外）。
@@ -462,6 +464,58 @@ function collectEntries() {
         answer: isObj && Array.isArray(item.choices) ? item.choices.join('/') : questionText,
       }));
     });
+  }
+
+  // kotoba-pair: packs.js（window.KotobaPairPacks）。ペアの a/b は variant で区別し、
+  //   同一ペア内の a×b 一致を「同一意味の重複」と誤判定しないよう pairIndex を添える。
+  //   構造検査（a/b/note の欠落・ペア数不足）はここで fail-fast にする。
+  const pairPacks = evalWindowArrayFromSource(read('apps/kotoba-pair/packs.js'), 'KotobaPairPacks', 'apps/kotoba-pair/packs.js') || [];
+  const pairProblems = [];
+  for (const pack of pairPacks) {
+    const pairs = pack.pairs || [];
+    if (pairs.length < 12) pairProblems.push(`${pack.id}: ペアが12組未満（${pairs.length}組。16まい盤面×2ボード分に足りない）`);
+    pairs.forEach((pair, index) => {
+      if (!pair.a || !pair.b) pairProblems.push(`${pack.id}[${index}]: a または b が空`);
+      if (!pair.note) pairProblems.push(`${pack.id}[${index}]（${pair.a ?? '?'}）: note（ひとことメモ）がない`);
+      rows.push(entry('kotoba-pair', pack.id, pair.a, {
+        id: `kotoba-pair:${pack.id}:${index}:a`, variant: 'a', pairIndex: index,
+      }));
+      rows.push(entry('kotoba-pair', pack.id, pair.b, {
+        id: `kotoba-pair:${pack.id}:${index}:b`, variant: 'b', pairIndex: index,
+      }));
+    });
+  }
+  if (pairProblems.length > 0) {
+    throw new Error(`kotoba-pair packs.js の構造エラー:\n  ${pairProblems.join('\n  ')}`);
+  }
+
+  // toomawashi: packs.js（window.ToomawashiPacks）。重複検査には answer だけを載せる
+  //   （ng / choices のダミー語は他のお題・他アプリと重なるのが設計上正当なため）。
+  //   構造検査（ng 先頭が answer・choices に answer・観点チップの統制語彙）は fail-fast。
+  const twPacks = evalWindowArrayFromSource(read('apps/toomawashi/packs.js'), 'ToomawashiPacks', 'apps/toomawashi/packs.js') || [];
+  const twProblems = [];
+  const TW_ASPECTS = new Set(['ばしょ', 'かたち', 'つかいかた', 'いつ・どこで', 'なかま']);
+  for (const pack of twPacks) {
+    (pack.items || []).forEach((item, index) => {
+      const ng = item.ng || [];
+      const choices = item.choices || [];
+      const label = `${pack.id}[${index}]（${item.answer ?? '?'}）`;
+      if (ng[0] !== item.answer) twProblems.push(`${label}: ng の先頭が answer 自身ではない`);
+      if (ng.length < 3 || ng.length > 5) twProblems.push(`${label}: ng が3〜5語ではない（${ng.length}語）`);
+      if (!choices.includes(item.answer)) twProblems.push(`${label}: choices に answer が含まれていない`);
+      if (choices.length !== 3 || new Set(choices.map(normalize)).size !== 3) {
+        twProblems.push(`${label}: choices が相異なる3件ではない`);
+      }
+      for (const aspect of item.aspects || []) {
+        if (!TW_ASPECTS.has(aspect)) twProblems.push(`${label}: 未知の観点チップ「${aspect}」`);
+      }
+      rows.push(entry('toomawashi', pack.id, item.answer, {
+        id: `toomawashi:${pack.id}:${index}`, variant: 'answer',
+      }));
+    });
+  }
+  if (twProblems.length > 0) {
+    throw new Error(`toomawashi packs.js の構造エラー:\n  ${twProblems.join('\n  ')}`);
   }
 
   return rows.filter((row) => row.normText);

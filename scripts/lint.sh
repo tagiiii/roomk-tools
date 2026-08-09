@@ -30,6 +30,7 @@ RTDB_HTML_FILES=(
   "apps/kaburazu-hint/index.html"
   "apps/kakure-number/index.html"
   "apps/koedake-theater/index.html"
+  "apps/kotoba-pair/index.html"
   "apps/magire-eshi/index.html"
   "apps/name-change/index.html"
   "apps/oshitsuke-zukan/index.html"
@@ -37,6 +38,7 @@ RTDB_HTML_FILES=(
   "apps/pittari-meter/index.html"
   "apps/tatoe-gp/index.html"
   "apps/tatoe-narabe/index.html"
+  "apps/toomawashi/index.html"
   "apps/uso-jisho/index.html"
   "apps/word-wolf/index.html"
 )
