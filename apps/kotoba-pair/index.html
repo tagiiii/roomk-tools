@@ -1,0 +1,1739 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+  <title>コトバペア | room-K</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
+  <link rel="stylesheet" href="../shared/css/design-system.css">
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+  <script src="../shared/js/rtdb-utils.js?v=20260715"></script>
+  <script src="packs.js"></script>
+  <script type="module">
+    // 共通ユーティリティを利用（REF-3: shuffle の重複定義を避ける）
+    import { shuffle } from '../shared/js/utils.js';
+    window.shuffle = shuffle;
+  </script>
+  <style>
+    /* ── 画面管理 ── */
+    .screen { display: none; min-height: 100dvh; }
+    .screen.active { display: flex; flex-direction: column; align-items: center; }
+    .page { width: 100%; max-width: 480px; padding: 40px 20px 84px; }
+    .page--wide { max-width: 720px; }
+
+    .card { margin-bottom: 16px; }
+    .btn + .btn { margin-top: 10px; }
+
+    /* ── エラー ── */
+    .error-msg {
+      font-size: 13px; color: var(--color-error);
+      padding: 10px 14px; background: #FEF2F2;
+      border-radius: 8px; border-left: 3px solid var(--color-error);
+      margin-top: 10px; display: none;
+    }
+    .error-msg.visible { display: block; }
+
+    /* ── 見出し ── */
+    .kp-hero { text-align: center; padding: 8px 0 20px; }
+    .kp-hero__icon {
+      width: 76px; height: 76px; border-radius: 50%;
+      background: linear-gradient(135deg, #2E7D8C, #1C3F5E);
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 14px;
+    }
+    .kp-hero__icon .material-symbols-rounded { font-size: 40px; color: #fff; }
+    .kp-hero__title { font-size: 28px; font-weight: 700; color: var(--color-primary); }
+    .kp-page-title { font-size: 22px; font-weight: 700; color: var(--color-primary); margin-bottom: 6px; }
+    .kp-page-sub { font-size: 14px; color: var(--color-muted); margin-bottom: 18px; }
+    .section-label {
+      font-size: 12px; font-weight: 700; color: var(--color-muted);
+      letter-spacing: 0.07em; margin-bottom: 10px;
+    }
+    .kp-lead { font-size: 15px; line-height: 1.8; margin-bottom: 14px; }
+    .kp-notes { list-style: none; margin: 0 0 14px; }
+    .kp-notes li {
+      display: flex; gap: 8px; align-items: flex-start;
+      font-size: 14px; color: var(--color-muted); line-height: 1.7; margin-bottom: 6px;
+    }
+    .kp-notes .material-symbols-rounded { font-size: 18px; color: var(--color-accent); flex-shrink: 0; margin-top: 3px; }
+    .kp-fineprint { font-size: 12px; color: var(--color-muted); line-height: 1.7; }
+
+    /* 弱ボタン（テキストリンク風・ナビゲーション用） */
+    .kp-quiet-btn {
+      display: block; margin: 16px auto 0; padding: 12px 16px; min-height: 44px;
+      background: none; border: none; cursor: pointer;
+      color: var(--color-muted); font-family: var(--font-base);
+      font-size: 14px; text-decoration: underline;
+    }
+    .kp-quiet-btn:hover { color: var(--color-primary); }
+
+    /* ── ルームコード ── */
+    .kp-room-code {
+      font-size: 48px; font-weight: 700; letter-spacing: 0.2em;
+      color: var(--color-primary); text-align: center;
+      padding: 16px; background: #EEF3F8; border-radius: 12px;
+      user-select: all; margin-bottom: 12px;
+    }
+    .kp-code-input {
+      font-size: 24px; font-weight: 700; text-align: center;
+      letter-spacing: 0.2em; text-transform: uppercase;
+    }
+
+    /* ── 参加者リスト ── */
+    .kp-player-list { list-style: none; }
+    .kp-player-item {
+      display: flex; align-items: center; gap: 6px;
+      padding: 10px 0; border-bottom: 1px solid var(--color-border); font-size: 15px;
+    }
+    .kp-player-item:last-child { border-bottom: none; }
+    .kp-tag {
+      font-size: 11px; font-weight: 700; padding: 2px 6px;
+      border-radius: 4px; background: var(--color-accent); color: #fff;
+    }
+    .kp-tag--me { background: var(--color-muted); }
+
+    /* ── パック選択（ホスト画面のみ）── */
+    .kp-pack {
+      display: flex; align-items: center; gap: 10px; width: 100%;
+      text-align: left; padding: 12px 14px; margin-bottom: 8px; min-height: 44px;
+      background: var(--color-surface); border: 2px solid var(--color-border);
+      border-radius: 12px; cursor: pointer; font-family: var(--font-base);
+      transition: border-color var(--transition-base), background var(--transition-base);
+    }
+    .kp-pack[aria-pressed="true"] { border-color: var(--color-accent); background: #EEF6F7; }
+    .kp-pack__num { color: var(--color-accent); font-weight: 700; font-feature-settings: "palt"; flex-shrink: 0; }
+    .kp-pack__body { flex: 1; }
+    .kp-pack__title { display: block; font-size: 17px; font-weight: 700; color: var(--color-primary); }
+    .kp-pack__meta { display: block; font-size: 12px; color: var(--color-muted); margin-top: 2px; }
+    .kp-pack__lv { flex-shrink: 0; }
+
+    /* ── 枚数選択（同格の選択肢なので見た目を揃える）── */
+    .kp-sizes { display: flex; gap: 10px; }
+    .kp-size {
+      flex: 1; min-height: 56px; padding: 10px;
+      background: var(--color-surface); border: 2px solid var(--color-border);
+      border-radius: 12px; cursor: pointer; font-family: var(--font-base);
+      font-size: 17px; font-weight: 700; color: var(--color-primary);
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+    }
+    .kp-size[aria-pressed="true"] { border-color: var(--color-accent); background: #EEF6F7; }
+    .kp-size:disabled { opacity: 0.4; cursor: not-allowed; }
+    .kp-size span { font-size: 12px; font-weight: 500; color: var(--color-muted); }
+
+    /* ── ゲーム: 上部 ── */
+    .kp-turnbar {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 12px 16px; border-radius: 12px; margin-bottom: 10px;
+      background: var(--color-surface); border: 2px solid var(--color-border);
+      font-size: 17px; font-weight: 700; color: var(--color-primary); text-align: center;
+    }
+    .kp-turnbar--mine { border-color: var(--color-accent); background: #EEF6F7; }
+    .kp-turnbar .material-symbols-rounded { font-size: 22px; color: var(--color-accent); flex-shrink: 0; }
+    .kp-meta {
+      display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 14px;
+      font-size: 13px; color: var(--color-muted); margin-bottom: 10px;
+    }
+    .kp-meta__item { white-space: nowrap; }
+    .kp-meta__item b { color: var(--color-primary); font-weight: 700; }
+
+    /* ── ゲーム: しらせ（つながった／ちがうみたい）── */
+    .kp-banner-area { min-height: 74px; margin-bottom: 10px; }
+    .kp-banner {
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px 14px; border-radius: 12px;
+      border: 2px solid var(--color-border); background: var(--color-surface);
+      animation: kp-pop 0.2s ease-out;
+    }
+    .kp-banner--match { border-color: var(--color-success); background: #ECFDF5; }
+    .kp-banner--miss { border-color: var(--color-border); background: #F7F5F1; }
+    .kp-banner--cross { border-color: var(--color-accent); background: #EEF6F7; }
+    .kp-banner .material-symbols-rounded { font-size: 28px; flex-shrink: 0; }
+    .kp-banner--match .material-symbols-rounded { color: var(--color-success); }
+    .kp-banner--miss .material-symbols-rounded { color: var(--color-muted); }
+    .kp-banner--cross .material-symbols-rounded { color: var(--color-accent); }
+    .kp-banner__title { font-size: 17px; font-weight: 700; color: var(--color-primary); }
+    .kp-banner__note { font-size: 14px; color: var(--color-muted); margin-top: 2px; }
+    @keyframes kp-pop { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: scale(1); } }
+
+    /* ── ゲーム: 盤面 ── */
+    .kp-board { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+    .kp-card {
+      position: relative; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 2px;
+      min-height: 76px; padding: 10px 6px;
+      background: var(--color-surface); border: 2px solid var(--color-border);
+      border-radius: 12px; cursor: pointer; font-family: var(--font-base);
+      transition: border-color var(--transition-base), background var(--transition-base), transform 0.1s;
+    }
+    .kp-card__num { font-size: 12px; font-weight: 700; color: var(--color-accent); font-feature-settings: "palt"; }
+    .kp-card__text {
+      font-size: 20px; font-weight: 700; color: var(--color-primary);
+      line-height: 1.3; text-align: center; word-break: auto-phrase; overflow-wrap: anywhere;
+    }
+    .kp-card__mark { position: absolute; top: 4px; right: 4px; font-size: 18px; color: var(--color-success); display: none; }
+    /* 手番でない人にもカードは同じ濃さで見せる（見て考える・番号で相談するため）。
+       操作できるかどうかは disabled と上部の手番帯で示す */
+    .kp-card:disabled { cursor: default; }
+    .kp-card:not(:disabled):hover { border-color: var(--color-accent); }
+    .kp-card:not(:disabled):active { transform: scale(0.97); }
+    .kp-card--selected {
+      border-color: var(--color-accent); background: #EEF6F7;
+      box-shadow: 0 0 0 3px rgba(46, 125, 140, 0.18); opacity: 1;
+    }
+    .kp-card--selected .kp-card__mark { display: block; color: var(--color-accent); }
+    .kp-card--matched {
+      border-color: var(--color-success); border-style: double; border-width: 4px;
+      background: #ECFDF5; opacity: 1; box-shadow: none;
+    }
+    .kp-card--matched .kp-card__text { color: var(--color-success); }
+    .kp-card--matched .kp-card__mark { display: block; color: var(--color-success); }
+    .kp-card--just { animation: kp-pop 0.25s ease-out; }
+
+    /* ── ゲーム: 下部 ── */
+    .kp-actions { margin-top: 16px; }
+    .kp-soudan {
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      font-size: 13px; color: var(--color-muted); margin-top: 12px;
+    }
+    .kp-soudan .material-symbols-rounded { font-size: 18px; }
+
+    /* ── ゲーム: ホスト操作帯 ── */
+    .kp-hostbar { margin-top: 18px; border-top: 1px solid var(--color-border); padding-top: 12px; }
+    .kp-hostbar__toggle {
+      display: flex; align-items: center; gap: 6px; width: 100%; min-height: 44px;
+      background: none; border: none; cursor: pointer; padding: 8px 4px;
+      font-family: var(--font-base); font-size: 13px; font-weight: 700; color: var(--color-muted);
+    }
+    .kp-hostbar__toggle .material-symbols-rounded { font-size: 18px; }
+    .kp-hostbar__chev { margin-left: auto; transition: transform var(--transition-base); }
+    .kp-hostbar__toggle[aria-expanded="true"] .kp-hostbar__chev { transform: rotate(180deg); }
+    .kp-hostbar__panel { padding-top: 4px; }
+    .kp-hostbar__hint { font-size: 12px; color: var(--color-muted); margin-top: 8px; line-height: 1.6; }
+
+    /* ── 結果 ── */
+    .kp-result-head { text-align: center; padding: 12px 0 20px; }
+    .kp-result-head .material-symbols-rounded { font-size: 48px; color: var(--color-accent); }
+    .kp-result-title { font-size: 22px; font-weight: 700; color: var(--color-primary); margin-top: 8px; line-height: 1.5; }
+    .kp-result-sub { font-size: 14px; color: var(--color-muted); margin-top: 6px; }
+    .kp-pair-list { list-style: none; }
+    .kp-pair-item { padding: 12px 0; border-bottom: 1px solid var(--color-border); }
+    .kp-pair-item:last-child { border-bottom: none; }
+    .kp-pair-words {
+      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+      font-size: 18px; font-weight: 700; color: var(--color-primary);
+    }
+    .kp-pair-words .material-symbols-rounded { font-size: 20px; color: var(--color-success); }
+    .kp-pair-note { font-size: 13px; color: var(--color-muted); margin-top: 2px; }
+    .kp-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+    .kp-chip {
+      min-height: 44px; padding: 10px 16px; border-radius: 999px;
+      background: var(--color-surface); border: 2px solid var(--color-border);
+      cursor: pointer; font-family: var(--font-base); font-size: 14px; font-weight: 700;
+      color: var(--color-primary);
+    }
+    .kp-chip[aria-pressed="true"] { border-color: var(--color-accent); background: #EEF6F7; }
+
+    /* ── 待機中ドット ── */
+    .kp-dots::after { content: ''; animation: kp-dots 1.5s infinite; }
+    @keyframes kp-dots { 0%,20%{content:''} 40%{content:'.'} 60%{content:'..'} 80%,100%{content:'...'} }
+
+    /* ── オーバーレイ ── */
+    .overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(28,63,94,0.88); z-index: 100;
+      flex-direction: column; align-items: center; justify-content: center;
+      gap: 16px; color: #fff; text-align: center; padding: 24px;
+    }
+    .overlay.show { display: flex; }
+    .overlay-title { font-size: 20px; font-weight: 700; }
+    .overlay-sub { font-size: 14px; opacity: 0.8; }
+    .overlay .spinner {
+      width: 32px; height: 32px;
+      border: 3px solid rgba(255,255,255,0.3); border-top-color: #fff;
+    }
+
+    /* ── レスポンシブ ── */
+    @media (max-width: 600px) {
+      .page { padding: 28px 16px 72px; }
+      .kp-room-code { font-size: 36px; }
+      .kp-board { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+      .kp-card { min-height: 72px; }
+    }
+
+    /* ── 動きを減らす設定 ── */
+    @media (prefers-reduced-motion: reduce) {
+      .kp-banner, .kp-card--just { animation: none; }
+      .kp-card, .kp-pack, .kp-size, .kp-hostbar__chev { transition: none; }
+      .kp-dots::after { animation: none; content: '...'; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════ screen-top ═══════════════ -->
+<div id="screen-top" class="screen">
+  <div class="page">
+    <div class="kp-hero">
+      <div class="kp-hero__icon">
+        <span class="material-symbols-rounded" aria-hidden="true">link</span>
+      </div>
+      <h1 class="kp-hero__title">コトバペア</h1>
+    </div>
+    <div class="card">
+      <p class="kp-lead">いみが つながる 2まいの ことばカードを、みんなで そうだんしながら そろえるゲーム。カードは ぜんぶ おもてむきで、じゅんばんに 2まいずつ えらんでいくよ。1ボードは 5〜10ぷんくらい。</p>
+      <ul class="kp-notes">
+        <li><span class="material-symbols-rounded" aria-hidden="true">forum</span>こえや チャットで そうだんしながら えらんで OK</li>
+        <li><span class="material-symbols-rounded" aria-hidden="true">groups</span>ひとりずつの てんすうは つけない。みんなの きろくだけ</li>
+        <li><span class="material-symbols-rounded" aria-hidden="true">schedule</span>じかん制限は なし。まよっても だいじょうぶ</li>
+      </ul>
+      <p class="kp-fineprint">えらんだ ないようは ゲームが おわると きえるよ。</p>
+    </div>
+    <button class="btn btn-primary btn-full btn-lg" onclick="goCreate()">
+      <span class="material-symbols-rounded" aria-hidden="true">add_circle</span>
+      ルームを つくる
+    </button>
+    <button class="btn btn-secondary btn-full btn-lg" onclick="goJoin()">
+      <span class="material-symbols-rounded" aria-hidden="true">login</span>
+      ルームに はいる
+    </button>
+  </div>
+</div>
+
+<!-- ═══════════════ screen-create（ホストのみ）═══════════════ -->
+<div id="screen-create" class="screen">
+  <div class="page">
+    <h2 class="kp-page-title">ルームを つくる</h2>
+    <p class="kp-page-sub">パックと まいすうを えらんで、ルームを つくります</p>
+
+    <div class="card">
+      <label class="form-label" for="create-nickname">ニックネーム</label>
+      <input type="text" id="create-nickname" class="form-input" maxlength="8" placeholder="ほんとうの名前じゃなくてOK">
+    </div>
+
+    <div class="card">
+      <p class="section-label">パック</p>
+      <div id="create-pack-list"></div>
+    </div>
+
+    <div class="card">
+      <p class="section-label">カードの まいすう</p>
+      <div class="kp-sizes" role="group" aria-label="カードの まいすう">
+        <button type="button" class="kp-size" id="size-12" aria-pressed="false" onclick="selectSize(12)">12まい<span>6くみ</span></button>
+        <button type="button" class="kp-size" id="size-16" aria-pressed="true" onclick="selectSize(16)">16まい<span>8くみ</span></button>
+      </div>
+    </div>
+
+    <div class="error-msg" id="create-error"></div>
+    <button class="btn btn-primary btn-full" id="btn-create" onclick="hostCreate()">
+      <span class="material-symbols-rounded" aria-hidden="true">meeting_room</span>
+      ルームを つくる
+    </button>
+    <button type="button" class="kp-quiet-btn" onclick="goTop()">もどる</button>
+  </div>
+</div>
+
+<!-- ═══════════════ screen-join ═══════════════ -->
+<div id="screen-join" class="screen">
+  <div class="page">
+    <h2 class="kp-page-title">ルームに はいる</h2>
+    <div class="card">
+      <label class="form-label" for="join-nickname">ニックネーム</label>
+      <input type="text" id="join-nickname" class="form-input" maxlength="8" placeholder="ほんとうの名前じゃなくてOK">
+      <label class="form-label" style="margin-top:16px" for="join-code">ルームコード</label>
+      <input type="text" id="join-code" class="form-input kp-code-input" maxlength="6" placeholder="6もじ"
+             oninput="this.value=this.value.toUpperCase()">
+      <div class="error-msg" id="join-error"></div>
+    </div>
+    <button class="btn btn-primary btn-full" onclick="guestJoin()">
+      <span class="material-symbols-rounded" aria-hidden="true">login</span>
+      はいる
+    </button>
+    <button type="button" class="kp-quiet-btn" onclick="goTop()">もどる</button>
+  </div>
+</div>
+
+<!-- ═══════════════ screen-waiting ═══════════════ -->
+<div id="screen-waiting" class="screen">
+  <div class="page">
+    <h2 class="kp-page-title">あつまるのを まってるよ</h2>
+    <div class="card" style="text-align:center">
+      <p style="font-size:12px;color:var(--color-muted);margin-bottom:4px">ルームコード</p>
+      <div class="kp-room-code" id="waiting-room-code"></div>
+      <button class="btn btn-secondary btn-full" id="btn-copy-code" onclick="copyInvite(this)">
+        <span class="material-symbols-rounded" aria-hidden="true">content_copy</span>
+        コードを コピー
+      </button>
+    </div>
+    <div class="card">
+      <p class="section-label">はいっている人</p>
+      <ul class="kp-player-list" id="waiting-player-list"></ul>
+    </div>
+    <div id="waiting-host-controls" hidden>
+      <p class="kp-page-sub" id="waiting-min-msg" style="text-align:center"></p>
+      <button class="btn btn-primary btn-full btn-lg" id="btn-start-game" onclick="startGame()" disabled>
+        <span class="material-symbols-rounded" aria-hidden="true">play_arrow</span>
+        ゲームを はじめる
+      </button>
+    </div>
+    <button type="button" class="kp-quiet-btn" onclick="leaveGame()">ぬける</button>
+  </div>
+</div>
+
+<!-- ═══════════════ screen-game ═══════════════ -->
+<div id="screen-game" class="screen">
+  <div class="page page--wide">
+    <div class="kp-turnbar" id="game-turnbar">
+      <span class="material-symbols-rounded" aria-hidden="true">person</span>
+      <span id="game-turn-text"></span>
+    </div>
+    <div class="kp-meta" id="game-meta"></div>
+    <div class="kp-banner-area" id="game-banner" role="status" aria-live="polite"></div>
+    <div class="kp-board" id="game-board"></div>
+
+    <div class="kp-actions">
+      <button class="btn btn-secondary btn-full" id="btn-pass" onclick="passTurn()" disabled>
+        <span class="material-symbols-rounded" aria-hidden="true">skip_next</span>
+        パスする
+      </button>
+    </div>
+    <p class="kp-soudan"><span class="material-symbols-rounded" aria-hidden="true">forum</span>そうだんOK</p>
+
+    <div class="kp-hostbar" id="game-host-bar" hidden>
+      <button type="button" class="kp-hostbar__toggle" id="btn-hostbar-toggle"
+              aria-expanded="false" aria-controls="game-host-panel" onclick="toggleHostBar()">
+        <span class="material-symbols-rounded" aria-hidden="true">tune</span>
+        ホストの そうさ
+        <span class="material-symbols-rounded kp-hostbar__chev" aria-hidden="true">expand_more</span>
+      </button>
+      <div class="kp-hostbar__panel" id="game-host-panel" hidden>
+        <button class="btn btn-secondary btn-full btn-sm" onclick="hostNextTurn()">
+          <span class="material-symbols-rounded" aria-hidden="true">skip_next</span>
+          つぎの人へ
+        </button>
+        <button class="btn btn-secondary btn-full btn-sm" onclick="hostRevealPair()">
+          <span class="material-symbols-rounded" aria-hidden="true">auto_fix_high</span>
+          1組そろえて見せる
+        </button>
+        <p class="kp-hostbar__hint">「1組そろえて見せる」は のこっているペアを1組そろえます（かいすうは ふえません）。</p>
+        <button type="button" class="kp-quiet-btn" onclick="hostFinish()">ここまでにする</button>
+      </div>
+    </div>
+
+    <button type="button" class="kp-quiet-btn" id="btn-game-leave" onclick="leaveGame()" hidden>ぬける</button>
+  </div>
+</div>
+
+<!-- ═══════════════ screen-result ═══════════════ -->
+<div id="screen-result" class="screen">
+  <div class="page">
+    <div class="kp-result-head">
+      <span class="material-symbols-rounded" aria-hidden="true">celebration</span>
+      <h2 class="kp-result-title" id="result-title"></h2>
+      <p class="kp-result-sub" id="result-sub"></p>
+    </div>
+    <div class="card">
+      <p class="section-label">そろえた ペア</p>
+      <ul class="kp-pair-list" id="result-pairs"></ul>
+    </div>
+    <div id="result-host-controls" hidden>
+      <button class="btn btn-primary btn-full btn-lg" onclick="hostPlayAgain()">
+        <span class="material-symbols-rounded" aria-hidden="true">replay</span>
+        もういちど あそぶ
+      </button>
+      <div class="card" style="margin-top:16px">
+        <p class="section-label">パックを かえて あそぶ</p>
+        <div class="kp-chips" id="result-pack-chips"></div>
+      </div>
+    </div>
+    <button type="button" class="kp-quiet-btn" onclick="leaveGame()">おわる</button>
+  </div>
+</div>
+
+<!-- ═══════════════ screen-pending（想定外 status のフォールバック）═══════════════ -->
+<div id="screen-pending" class="screen">
+  <div class="page">
+    <div class="card" style="text-align:center;padding:40px 20px">
+      <div class="spinner" style="width:40px;height:40px;margin:0 auto 20px"></div>
+      <p style="font-size:16px;font-weight:500;color:var(--color-primary)">じゅんびしています<span class="kp-dots"></span></p>
+    </div>
+    <button type="button" class="kp-quiet-btn" onclick="leaveGame()">ぬける</button>
+  </div>
+</div>
+
+<!-- ═══════════════ Overlays ═══════════════ -->
+<div class="overlay" id="reconnect-overlay">
+  <div class="spinner"></div>
+  <p class="overlay-title">つなぎなおしています<span class="kp-dots"></span></p>
+</div>
+<div class="overlay" id="host-off-overlay">
+  <span class="material-symbols-rounded" aria-hidden="true" style="font-size:48px">signal_disconnected</span>
+  <p class="overlay-title">ホストの もどりを まっています</p>
+  <p class="overlay-sub">すこし まっても もどらないときは ぬけてね</p>
+  <button class="btn btn-ghost" onclick="leaveGame()">ぬける</button>
+</div>
+
+<script>
+/* ════════════════════════════════════════════════
+   Firebase
+   ════════════════════════════════════════════════ */
+const { authReady, db } = RoomkRTDB.initFirebase(firebase);
+
+/* ════════════════════════════════════════════════
+   定数
+   ════════════════════════════════════════════════ */
+const DB_PREFIX = 'kotobapair_rooms';
+const SESSION_KEY = 'kotobapair_session';
+const ORPHAN_TTL_MS = 2 * 60 * 1000;
+const MIN_PLAYERS = 2;
+const MAX_PLAYERS = 9;
+const MODE = 'open';                 // MVP はオープンモード固定（クローズは将来拡張）
+const SELECTION_SHOW_MS = 2000;      // 2枚見せてから解除するまで（手番クライアント）
+const SELECTION_WATCHDOG_MS = 5000;  // 残置された selected をホストが回収するまで
+const TURN_FIX_DELAY_MS = 1200;      // 手番の人が居ないときに手番を送るまでの猶予
+const STATUS = { WAITING: 'waiting', PLAYING: 'playing', RESULT: 'result' };
+const NUMBERS = ['①','②','③','④','⑤','⑥','⑦','⑧','⑨','⑩','⑪','⑫','⑬','⑭','⑮','⑯'];
+const THEME_LABEL = { goi: '語彙', joshi: '助詞', bun: '文', setsumei: '説明', kimochi: '感情' };
+
+/* ════════════════════════════════════════════════
+   State
+   ════════════════════════════════════════════════ */
+const state = {
+  role: null,            // 'host' | 'guest'
+  nickname: null,
+  roomCode: null,
+  roomRef: null,
+  currentScreen: null,
+  room: null,            // 直近のスナップショット（ボタン操作時の世代ガードに使う）
+  orphanTimer: null,     // ホスト切断 TTL（ゲスト側）
+  clearTimer: null,      // 2枚見せたあとの解除（手番クライアント）
+  watchdogTimer: null,   // selected 残置の回収（ホスト）
+  watchdogKey: null,
+  turnFixTimer: null,    // 手番の人が居ないときの手番送り（ホスト）
+  boardKey: null,        // 描画済み盤面の世代キー
+  tapBusy: false,
+  createPackId: null,
+  createBoardSize: 16,
+};
+
+/* ════════════════════════════════════════════════
+   ユーティリティ
+   ════════════════════════════════════════════════ */
+const esc = RoomkRTDB.esc;
+const genCode = RoomkRTDB.generateRoomCode;
+const showMsg = RoomkRTDB.showToast;
+const getEstServerNow = RoomkRTDB.now;
+const getHostDisconnectedAt = RoomkRTDB.getHostDisconnectedAt;
+
+function isRoomExpired(room) {
+  // status を持たない room は、削除後に onDisconnect が発火して再生成された
+  // ゴースト（部分 room）。TTL を待たず期限切れ扱いにして掃除する
+  return RoomkRTDB.isRoomExpired(room, ORPHAN_TTL_MS) || (!!room && !room.status);
+}
+
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const el = document.getElementById('screen-' + name);
+  if (el) el.classList.add('active');
+  state.currentScreen = name;
+}
+
+function showOverlay(id, show) {
+  const el = document.getElementById(id);
+  if (el) el.classList.toggle('show', show);
+}
+
+function showError(id, msg) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = msg;
+  el.classList.add('visible');
+}
+
+function hideError(id) {
+  const el = document.getElementById(id);
+  if (el) el.classList.remove('visible');
+}
+
+function setHidden(id, hidden) {
+  const el = document.getElementById(id);
+  if (el) el.hidden = !!hidden;
+}
+
+// 認証待ちの狭いガード。authReady は一度 reject すると固定されるため
+// 再試行は案内せず、ページ再読み込みへ誘導する
+let _authWaitBusy = false;
+async function waitAuthOrExplain() {
+  if (_authWaitBusy) return false;
+  _authWaitBusy = true;
+  try {
+    await authReady;
+    return true;
+  } catch {
+    showMsg('うまく つながらなかったよ。ページを よみこみなおしてね');
+    return false;
+  } finally {
+    _authWaitBusy = false;
+  }
+}
+
+function validNick(v) {
+  if (!v) return 'ニックネームを 入れてね';
+  if (v.length > 8) return 'ニックネームは 8もじまでだよ';
+  if (/[.#$/\[\]]/.test(v)) return 'つかえない もじが はいっているよ';
+  return null;
+}
+
+/* ════════════════════════════════════════════════
+   パック
+   ════════════════════════════════════════════════ */
+function allPacks() {
+  const list = window.KotobaPairPacks;
+  if (!Array.isArray(list)) return [];
+  // 6ペア（12枚）に満たないパックはボードを作れないため除外する
+  return list.filter(p => p && p.id && Array.isArray(p.pairs) && p.pairs.length >= 6);
+}
+
+function getPack(id) {
+  return allPacks().find(p => p.id === id) || null;
+}
+
+function pairInfo(room, pairId) {
+  const pack = getPack(room && room.packId);
+  if (!pack) return null;
+  const idx = Number(String(pairId || '').replace(/^p/, ''));
+  if (!Number.isInteger(idx)) return null;
+  return pack.pairs[idx] || null;
+}
+
+function packAllowsCross(room) {
+  const pack = getPack(room && room.packId);
+  return !!(pack && pack.allowCross);
+}
+
+// 盤面生成。乱数を使うため transaction コールバックの外で呼ぶこと
+function buildBoard(pack, boardSize) {
+  const pairCount = Math.max(1, Math.min(Math.floor(boardSize / 2), pack.pairs.length));
+  const picked = window.shuffle(pack.pairs.map((_, i) => i)).slice(0, pairCount);
+  const cards = {};
+  const ids = [];
+  picked.forEach((pi, k) => {
+    const pair = pack.pairs[pi];
+    const idA = 'c' + String(k * 2 + 1).padStart(2, '0');
+    const idB = 'c' + String(k * 2 + 2).padStart(2, '0');
+    cards[idA] = { text: String(pair.a), pairId: 'p' + pi, state: 'open', side: 'a' };
+    cards[idB] = { text: String(pair.b), pairId: 'p' + pi, state: 'open', side: 'b' };
+    ids.push(idA, idB);
+  });
+  return { order: window.shuffle(ids), cards };
+}
+
+/* ════════════════════════════════════════════════
+   手番のヘルパー（すべて純関数。transaction 内から呼ぶ）
+   ════════════════════════════════════════════════ */
+function normTurnIndex(room) {
+  const order = (room && room.turnOrder) || [];
+  if (!order.length) return 0;
+  const raw = Number(room.turnIndex) || 0;
+  return ((raw % order.length) + order.length) % order.length;
+}
+
+function currentTurnNick(room) {
+  const order = (room && room.turnOrder) || [];
+  if (!order.length) return null;
+  return order[normTurnIndex(room)];
+}
+
+// 抜けた人（players に居ない人）を飛ばして次の手番を返す
+function nextTurnIndex(room) {
+  const order = (room && room.turnOrder) || [];
+  const players = (room && room.players) || {};
+  const n = order.length;
+  if (!n) return 0;
+  const cur = normTurnIndex(room);
+  for (let i = 1; i <= n; i++) {
+    const idx = (cur + i) % n;
+    if (players[order[idx]]) return idx;
+  }
+  return (cur + 1) % n;
+}
+
+/* ════════════════════════════════════════════════
+   Session Storage
+   ════════════════════════════════════════════════ */
+function saveSession() {
+  sessionStorage.setItem(SESSION_KEY, JSON.stringify({
+    nickname: state.nickname, roomCode: state.roomCode, role: state.role,
+  }));
+}
+function loadSession() { try { return JSON.parse(sessionStorage.getItem(SESSION_KEY)); } catch { return null; } }
+function clearSession() { sessionStorage.removeItem(SESSION_KEY); }
+
+/* ════════════════════════════════════════════════
+   TOP ナビゲーション
+   ════════════════════════════════════════════════ */
+function goTop() { showScreen('top'); }
+
+function goCreate() {
+  renderPackList();
+  showScreen('create');
+}
+
+function goJoin() {
+  hideError('join-error');
+  showScreen('join');
+}
+
+/* ── ルーム作成画面 ── */
+function renderPackList() {
+  const packs = allPacks();
+  const el = document.getElementById('create-pack-list');
+  if (!packs.length) {
+    el.innerHTML = '<p class="kp-fineprint">パックが よみこめませんでした。ページを よみこみなおしてね</p>';
+    document.getElementById('btn-create').disabled = true;
+    return;
+  }
+  document.getElementById('btn-create').disabled = false;
+  if (!getPack(state.createPackId)) state.createPackId = packs[0].id;
+
+  el.innerHTML = packs.map((p, i) => `
+    <button type="button" class="kp-pack" data-pack="${esc(p.id)}" aria-pressed="false"
+            onclick="selectPack('${esc(p.id)}')">
+      <span class="kp-pack__num" aria-hidden="true">${esc(NUMBERS[i] || i + 1)}</span>
+      <span class="kp-pack__body">
+        <span class="kp-pack__title">${esc(p.title)}</span>
+        <span class="kp-pack__meta">${esc(THEME_LABEL[p.theme] || p.theme || '')} ・ ${esc(p.pairs.length)}くみ</span>
+      </span>
+      <span class="badge badge-accent kp-pack__lv">Lv.${esc(p.level || 1)}</span>
+    </button>`).join('');
+
+  selectPack(state.createPackId);
+}
+
+function selectPack(id) {
+  const pack = getPack(id);
+  if (!pack) return;
+  state.createPackId = id;
+  document.querySelectorAll('#create-pack-list .kp-pack').forEach(btn => {
+    btn.setAttribute('aria-pressed', btn.dataset.pack === id ? 'true' : 'false');
+  });
+  // ペア数が足りないパックでは 16まい を選べない
+  const can16 = pack.pairs.length >= 8;
+  const btn16 = document.getElementById('size-16');
+  btn16.disabled = !can16;
+  const preferred = Number(pack.boardSize) === 12 ? 12 : 16;
+  selectSize(can16 ? (state.createBoardSize === 12 ? 12 : preferred) : 12);
+}
+
+function selectSize(size) {
+  const btn16 = document.getElementById('size-16');
+  const next = (size === 16 && btn16.disabled) ? 12 : size;
+  state.createBoardSize = next;
+  document.getElementById('size-12').setAttribute('aria-pressed', next === 12 ? 'true' : 'false');
+  btn16.setAttribute('aria-pressed', next === 16 ? 'true' : 'false');
+}
+
+/* ════════════════════════════════════════════════
+   ルーム作成（ホスト）
+   ════════════════════════════════════════════════ */
+async function hostCreate() {
+  const nick = document.getElementById('create-nickname').value.trim();
+  const err = validNick(nick);
+  if (err) { showError('create-error', err); return; }
+  const pack = getPack(state.createPackId);
+  if (!pack) { showError('create-error', 'パックを えらんでね'); return; }
+  hideError('create-error');
+
+  if (!await waitAuthOrExplain()) return;
+
+  // 乱数は transaction コールバックの外で確定させる
+  const board = buildBoard(pack, state.createBoardSize);
+  const totalPairs = board.order.length / 2;
+  const joinedAt = getEstServerNow();
+
+  let roomCode = null;
+  let roomRef = null;
+  for (let i = 0; i < 5; i++) {
+    const code = genCode();
+    const ref = db.ref(`${DB_PREFIX}/${code}`);
+    const { committed } = await ref.transaction(room => {
+      if (room) return;
+      return {
+        host: nick,
+        hostConnected: true,
+        hostDisconnectedAt: null,
+        status: STATUS.WAITING,
+        packId: pack.id,
+        mode: MODE,
+        boardSeq: 1,
+        board,
+        turnIndex: 0,
+        moves: 0,
+        matchedPairs: 0,
+        totalPairs,
+        players: { [nick]: { isHost: true, joinedAt } },
+      };
+    });
+    if (committed) { roomCode = code; roomRef = ref; break; }
+  }
+
+  if (!roomCode) { showMsg('ルームを つくれなかったよ。もう一度 ためしてね'); return; }
+
+  state.nickname = nick;
+  state.roomCode = roomCode;
+  state.role = 'host';
+  state.roomRef = roomRef;
+  state.boardKey = null;
+
+  roomRef.onDisconnect().update({
+    hostConnected: false,
+    hostDisconnectedAt: firebase.database.ServerValue.TIMESTAMP,
+  });
+
+  window.RoomkStats?.count('pack-' + pack.id);
+  saveSession();
+  startRoomListener();
+}
+
+/* ════════════════════════════════════════════════
+   参加（ゲスト・途中参加もここ）
+   ════════════════════════════════════════════════ */
+async function guestJoin() {
+  const nick = document.getElementById('join-nickname').value.trim();
+  const code = document.getElementById('join-code').value.trim().toUpperCase();
+  const err = validNick(nick);
+  if (err) { showError('join-error', err); return; }
+  if (code.length !== 6) { showError('join-error', 'ルームコードは 6もじだよ'); return; }
+  hideError('join-error');
+
+  if (!await waitAuthOrExplain()) return;
+
+  const roomRef = db.ref(`${DB_PREFIX}/${code}`);
+  let preSnap;
+  try {
+    preSnap = await roomRef.get();
+  } catch {
+    showError('join-error', 'うまく つながらなかったよ。もう一度 ためしてね');
+    return;
+  }
+  if (!preSnap.exists()) { showError('join-error', 'ルームが みつからないよ。コードを たしかめてね'); return; }
+  const preRoom = preSnap.val();
+  if (isRoomExpired(preRoom)) {
+    await removeExpiredRoom(roomRef, preRoom);
+    showError('join-error', 'このルームは おわったみたい');
+    return;
+  }
+
+  const joinedAt = getEstServerNow();
+  let reason = null;
+  // ローカルキャッシュ null 対策: 事前 get() したスナップショットを代用してサーバー照会を強制する
+  const { committed } = await roomRef.transaction(room => {
+    const cur = room || preRoom;
+    reason = null;
+    if (!cur) { reason = 'not_found'; return; }
+    if (isRoomExpired(cur)) { reason = 'expired'; return null; }
+    const status = cur.status;
+    if (status !== STATUS.WAITING && status !== STATUS.PLAYING && status !== STATUS.RESULT) {
+      reason = 'bad_status'; return;
+    }
+    const players = cur.players || {};
+    if (players[nick]) { reason = 'nick_taken'; return; }
+    if (Object.keys(players).length >= MAX_PLAYERS) { reason = 'full'; return; }
+    const next = { ...cur, players: { ...players, [nick]: { isHost: false, joinedAt } } };
+    if (status === STATUS.PLAYING) {
+      // 途中参加は turnOrder の末尾へ。次の周から手番が回る
+      const order = (cur.turnOrder || []).slice();
+      if (order.indexOf(nick) === -1) order.push(nick);
+      next.turnOrder = order;
+    }
+    return next;
+  });
+
+  if (reason || !committed) {
+    const msgs = {
+      not_found: 'ルームが みつからないよ。コードを たしかめてね',
+      expired: 'このルームは おわったみたい',
+      bad_status: 'このルームには いま はいれないみたい',
+      nick_taken: 'そのなまえは つかわれているよ。すこし かえてみてね',
+      full: 'このルームは いっぱいだよ',
+    };
+    showError('join-error', msgs[reason] || 'はいれなかったよ。もう一度 ためしてね');
+    return;
+  }
+
+  state.nickname = nick;
+  state.roomCode = code;
+  state.role = 'guest';
+  state.roomRef = roomRef;
+  state.boardKey = null;
+
+  roomRef.child(`players/${nick}`).onDisconnect().remove();
+
+  saveSession();
+  startRoomListener();
+}
+
+/* 期限切れルームの掃除。判定と削除を transaction で行い、
+   判定の間にホストが復帰した場合は生きているルームを消さない */
+async function removeExpiredRoom(ref, preRoom) {
+  try {
+    await ref.transaction(room => {
+      const cur = room || preRoom;
+      if (!cur) return;
+      return isRoomExpired(cur) ? null : undefined;
+    });
+  } catch (error) {
+    console.warn('[kotoba-pair] removeExpiredRoom failed', error);
+  }
+}
+
+/* ════════════════════════════════════════════════
+   ゲーム開始（ホスト）
+   ════════════════════════════════════════════════ */
+async function startGame() {
+  if (state.role !== 'host' || !state.roomRef) return;
+  const room0 = state.room;
+  if (!room0) return;
+  // 乱数（手番シャッフル）は transaction コールバックの外で確定させる
+  const seedOrder = window.shuffle(Object.keys(room0.players || {}));
+
+  let reason = null;
+  const { committed } = await state.roomRef.transaction(room => {
+    reason = null;
+    if (!room) { reason = 'not_found'; return; }
+    if (room.status !== STATUS.WAITING) { reason = 'bad_status'; return; }
+    if (room.host !== state.nickname) { reason = 'not_host'; return; }
+    const players = room.players || {};
+    const names = Object.keys(players);
+    if (names.length < MIN_PLAYERS) { reason = 'too_few'; return; }
+    if (!room.board || !room.board.order) { reason = 'no_board'; return; }
+
+    const order = seedOrder.filter(n => players[n]);
+    names.forEach(n => { if (order.indexOf(n) === -1) order.push(n); });
+    if (!order.length) { reason = 'too_few'; return; }
+
+    return {
+      ...room,
+      status: STATUS.PLAYING,
+      turnOrder: order,
+      turnIndex: 0,
+      selected: null,
+      moves: 0,
+      matchedPairs: 0,
+    };
+  });
+
+  if (!committed) {
+    showMsg(reason === 'too_few' ? '2人いじょうで はじめられるよ' : 'はじめられなかったよ。もう一度 ためしてね');
+  }
+}
+
+/* ════════════════════════════════════════════════
+   ルームリスナー
+   ════════════════════════════════════════════════ */
+function startRoomListener() {
+  state.roomRef.on('value', snap => {
+    if (!snap.exists()) {
+      clearSession();
+      showMsg('ルームが とじられたよ');
+      leaveCleanup();
+      showScreen('top');
+      return;
+    }
+    handleRoom(snap.val());
+  });
+}
+
+function handleRoom(room) {
+  state.room = room;
+  const players = room.players || {};
+
+  // ── 切断ハンドリング（ゲスト側）──
+  if (state.role === 'guest') {
+    const hostGone = room.hostConnected === false;
+    showOverlay('host-off-overlay', hostGone);
+    if (hostGone) {
+      if (isRoomExpired(room)) {
+        clearTimeout(state.orphanTimer);
+        state.orphanTimer = null;
+        removeExpiredRoom(state.roomRef, room);
+      } else if (!state.orphanTimer) {
+        const dt = getHostDisconnectedAt(room);
+        const delay = dt == null ? ORPHAN_TTL_MS : Math.max(0, dt + ORPHAN_TTL_MS - getEstServerNow());
+        state.orphanTimer = setTimeout(() => {
+          state.orphanTimer = null;
+          if (state.roomRef) removeExpiredRoom(state.roomRef, state.room);
+        }, delay);
+      }
+    } else {
+      clearTimeout(state.orphanTimer);
+      state.orphanTimer = null;
+    }
+  }
+
+  // ── ホスト復帰（自動再接続でリスナーが戻ったとき）──
+  if (state.role === 'host' && room.hostConnected === false) {
+    state.roomRef.update({ hostConnected: true, hostDisconnectedAt: null }).catch(() => {});
+    state.roomRef.onDisconnect().update({
+      hostConnected: false,
+      hostDisconnectedAt: firebase.database.ServerValue.TIMESTAMP,
+    });
+  }
+
+  switch (room.status) {
+    case STATUS.WAITING: renderWaiting(room, players); break;
+    case STATUS.PLAYING: renderPlaying(room, players); break;
+    case STATUS.RESULT:  renderResult(room); break;
+    default:
+      // 想定外の status は安全な待機画面にフォールバックする
+      stopHostTimers();
+      if (state.currentScreen !== 'pending') showScreen('pending');
+      break;
+  }
+}
+
+/* ════════════════════════════════════════════════
+   画面: waiting
+   ════════════════════════════════════════════════ */
+function renderWaiting(room, players) {
+  stopHostTimers();
+  if (state.currentScreen !== 'waiting') showScreen('waiting');
+  state.boardKey = null;
+
+  document.getElementById('waiting-room-code').textContent = state.roomCode || '';
+  renderPlayerList('waiting-player-list', players);
+
+  const isHost = state.role === 'host';
+  setHidden('waiting-host-controls', !isHost);
+  if (isHost) {
+    const count = Object.keys(players).length;
+    document.getElementById('btn-start-game').disabled = count < MIN_PLAYERS;
+    document.getElementById('waiting-min-msg').textContent =
+      count < MIN_PLAYERS ? `あと${MIN_PLAYERS - count}人で はじめられるよ` : `${count}人 はいっているよ`;
+  }
+}
+
+function renderPlayerList(id, players) {
+  const ul = document.getElementById(id);
+  if (!ul) return;
+  ul.innerHTML = Object.keys(players).map(nick => {
+    const p = players[nick] || {};
+    const hostTag = p.isHost ? '<span class="kp-tag">ホスト</span>' : '';
+    const meTag = nick === state.nickname ? '<span class="kp-tag kp-tag--me">あなた</span>' : '';
+    return `<li class="kp-player-item">${esc(nick)}${hostTag}${meTag}</li>`;
+  }).join('');
+}
+
+/* ════════════════════════════════════════════════
+   画面: playing（盤面）
+   ════════════════════════════════════════════════ */
+function renderPlaying(room, players) {
+  if (state.currentScreen !== 'game') showScreen('game');
+
+  const board = room.board || {};
+  const order = board.order || [];
+  const cards = board.cards || {};
+  const selected = room.selected || [];
+  const turnNick = currentTurnNick(room);
+  const myTurn = !!state.nickname && turnNick === state.nickname;
+
+  // 盤面 DOM は世代（boardSeq + 並び）が変わったときだけ作り直す
+  const boardKey = `${room.boardSeq}|${order.join('|')}`;
+  if (state.boardKey !== boardKey) {
+    buildBoardDom(order, cards);
+    state.boardKey = boardKey;
+  }
+
+  updateCards(order, cards, selected, myTurn);
+  updateTurnBar(room, players, turnNick, myTurn);
+  updateMeta(room);
+  updateBanner(room, cards, selected);
+
+  document.getElementById('btn-pass').disabled = !myTurn || selected.length >= 2;
+  setHidden('game-host-bar', state.role !== 'host');
+  setHidden('btn-game-leave', state.role === 'host');
+
+  runHostWatchdogs(room, players, turnNick);
+}
+
+function buildBoardDom(order, cards) {
+  const el = document.getElementById('game-board');
+  el.innerHTML = order.map((id, i) => {
+    const num = NUMBERS[i] || String(i + 1);
+    const text = (cards[id] && cards[id].text) || '';
+    return `<button type="button" class="kp-card" id="card-${esc(id)}" data-card="${esc(id)}"
+      aria-pressed="false" aria-label="${esc(num)}ばん ${esc(text)}" onclick="tapCard('${esc(id)}')">
+      <span class="kp-card__num" aria-hidden="true">${esc(num)}</span>
+      <span class="kp-card__text">${esc(text)}</span>
+      <span class="material-symbols-rounded kp-card__mark" aria-hidden="true">link</span>
+    </button>`;
+  }).join('');
+}
+
+function updateCards(order, cards, selected, myTurn) {
+  order.forEach(id => {
+    const el = document.getElementById('card-' + id);
+    if (!el) return;
+    const card = cards[id] || {};
+    const matched = card.state === 'matched';
+    const isSel = selected.indexOf(id) !== -1;
+    el.classList.toggle('kp-card--matched', matched);
+    el.classList.toggle('kp-card--selected', isSel && !matched);
+    el.classList.toggle('kp-card--just', isSel && matched);
+    el.setAttribute('aria-pressed', isSel ? 'true' : 'false');
+    // 1枚目だけ選んでいる間は、その1枚を押し直して えらびなおせる（おし間違いの救済）
+    const canUnselect = isSel && !matched && selected.length === 1;
+    el.disabled = matched || !myTurn || (isSel && !canUnselect) || selected.length >= 2;
+  });
+}
+
+function updateTurnBar(room, players, turnNick, myTurn) {
+  const bar = document.getElementById('game-turnbar');
+  const text = document.getElementById('game-turn-text');
+  bar.classList.toggle('kp-turnbar--mine', myTurn);
+  if (myTurn) {
+    text.textContent = 'あなたの ばん！ 2まい えらんでね';
+  } else if (turnNick && !players[turnNick]) {
+    text.textContent = 'つぎの人に かわるよ';
+  } else if (turnNick) {
+    text.textContent = `いまは ${turnNick}さんの ばん`;
+  } else {
+    text.textContent = 'じゅんばんを きめています';
+  }
+}
+
+function updateMeta(room) {
+  const pack = getPack(room.packId);
+  const items = [
+    pack ? `<span class="kp-meta__item">${esc(pack.title)}</span>` : '',
+    `<span class="kp-meta__item">そろった <b>${esc(room.matchedPairs || 0)} / ${esc(room.totalPairs || 0)}</b></span>`,
+    `<span class="kp-meta__item">ためした かいすう <b>${esc(room.moves || 0)}</b></span>`,
+  ];
+  document.getElementById('game-meta').innerHTML = items.join('');
+}
+
+function updateBanner(room, cards, selected) {
+  const el = document.getElementById('game-banner');
+  if (selected.length < 2) { el.innerHTML = ''; return; }
+  const a = cards[selected[0]];
+  const b = cards[selected[1]];
+  if (!a || !b) { el.innerHTML = ''; return; }
+
+  if (a.state === 'matched' && b.state === 'matched') {
+    const info = pairInfo(room, a.pairId);
+    const note = info && info.note ? `<p class="kp-banner__note">${esc(info.note)}</p>` : '';
+    el.innerHTML = `<div class="kp-banner kp-banner--match">
+      <span class="material-symbols-rounded" role="img" aria-label="そろった">link</span>
+      <div><p class="kp-banner__title">つながった！</p>${note}</div>
+    </div>`;
+    return;
+  }
+
+  // 交差バナーは「前半×後半」（side が異なる）の組だけ。前半どうし・後半どうしは
+  // 意味がつながらないので、通常の「ちがうみたい」で流す。side を持たない旧ボードは
+  // 従来どおり交差バナー（graceful degradation）。
+  const crossSides = !a.side || !b.side || a.side !== b.side;
+  if (packAllowsCross(room) && crossSides) {
+    el.innerHTML = `<div class="kp-banner kp-banner--cross">
+      <span class="material-symbols-rounded" role="img" aria-label="べつのくみあわせ">lightbulb</span>
+      <div><p class="kp-banner__title">それも つながるかも！</p>
+      <p class="kp-banner__note">でも きょうの こたえは べつの くみあわせ</p></div>
+    </div>`;
+    return;
+  }
+
+  el.innerHTML = `<div class="kp-banner kp-banner--miss">
+    <span class="material-symbols-rounded" role="img" aria-label="ちがうみたい">link_off</span>
+    <div><p class="kp-banner__title">うーん、ちがうみたい</p>
+    <p class="kp-banner__note">つぎの人の ばんだよ</p></div>
+  </div>`;
+}
+
+function toggleHostBar() {
+  const btn = document.getElementById('btn-hostbar-toggle');
+  const open = btn.getAttribute('aria-expanded') === 'true';
+  btn.setAttribute('aria-expanded', open ? 'false' : 'true');
+  document.getElementById('game-host-panel').hidden = open;
+}
+
+/* ════════════════════════════════════════════════
+   カード選択（2枚目の確定と判定は同一 transaction）
+   ════════════════════════════════════════════════ */
+async function tapCard(cardId) {
+  if (state.tapBusy || !state.roomRef) return;
+  const room0 = state.room;
+  if (!room0 || room0.status !== STATUS.PLAYING) return;
+  const seq = room0.boardSeq;
+
+  state.tapBusy = true;
+  let selAfter = null;
+  try {
+    const { committed } = await state.roomRef.transaction(room => {
+      selAfter = null;
+      if (!room || room.status !== STATUS.PLAYING) return;
+      if (room.boardSeq !== seq) return;                       // 世代ガード
+      if (currentTurnNick(room) !== state.nickname) return;    // 手番本人か
+      const cards = (room.board && room.board.cards) || {};
+      const card = cards[cardId];
+      if (!card || card.state === 'matched') return;           // 未成立カードか
+      const sel = room.selected || [];
+      if (sel.length >= 2) return;                             // すでに2枚選ばれていないか
+      if (sel.length === 1 && sel[0] === cardId) {
+        return { ...room, selected: null };                    // 1枚目の えらびなおし
+      }
+      if (sel.indexOf(cardId) !== -1) return;
+
+      if (sel.length === 0) {
+        return { ...room, selected: [cardId] };
+      }
+
+      const firstId = sel[0];
+      const first = cards[firstId];
+      if (!first || first.state === 'matched') return;
+
+      const moves = (Number(room.moves) || 0) + 1;
+      const nextIndex = nextTurnIndex(room);   // 成立してもしなくても手番は次へ
+      selAfter = [firstId, cardId];
+
+      if (first.pairId !== card.pairId) {
+        return { ...room, selected: selAfter, moves, turnIndex: nextIndex };
+      }
+
+      const matchedPairs = (Number(room.matchedPairs) || 0) + 1;
+      const total = Number(room.totalPairs) || 0;
+      const cleared = total > 0 && matchedPairs >= total;
+      const nextCards = {
+        ...cards,
+        [firstId]: { ...first, state: 'matched' },
+        [cardId]: { ...card, state: 'matched' },
+      };
+      if (cleared) selAfter = null;
+      return {
+        ...room,
+        board: { ...(room.board || {}), cards: nextCards },
+        selected: cleared ? null : [firstId, cardId],
+        moves,
+        matchedPairs,
+        turnIndex: nextIndex,
+        status: cleared ? STATUS.RESULT : STATUS.PLAYING,
+      };
+    });
+    if (committed && selAfter) scheduleSelectionClear(seq, selAfter);
+  } catch (error) {
+    console.error('[kotoba-pair] tapCard failed', error);
+  } finally {
+    state.tapBusy = false;
+  }
+}
+
+// 2枚を並べて見せてから解除する（手番クライアントが実行）
+function scheduleSelectionClear(seq, ids) {
+  clearTimeout(state.clearTimer);
+  const target = ids.slice();
+  state.clearTimer = setTimeout(() => {
+    state.clearTimer = null;
+    clearSelection(seq, target);
+  }, SELECTION_SHOW_MS);
+}
+
+async function clearSelection(seq, ids) {
+  if (!state.roomRef) return;
+  const key = ids.join('|');
+  try {
+    await state.roomRef.transaction(room => {
+      if (!room || room.status !== STATUS.PLAYING) return;
+      if (room.boardSeq !== seq) return;
+      const sel = room.selected || [];
+      if (sel.length < 2 || sel.join('|') !== key) return;   // すでに解除済み・別の選択
+      return { ...room, selected: null };
+    });
+  } catch (error) {
+    console.error('[kotoba-pair] clearSelection failed', error);
+  }
+}
+
+/* ホストの watchdog
+   ① selected が 5秒以上残置された（手番の人が切断した）→ 回収する
+   ② 手番の人が players から消えた → 手番を次へ送る */
+function runHostWatchdogs(room, players, turnNick) {
+  if (state.role !== 'host') { stopHostTimers(); return; }
+  const sel = room.selected || [];
+
+  const key = sel.length >= 2 ? `${room.boardSeq}|${sel.join('|')}` : null;
+  if (key) {
+    if (state.watchdogKey !== key) {
+      clearTimeout(state.watchdogTimer);
+      state.watchdogKey = key;
+      const seq = room.boardSeq;
+      const ids = sel.slice();
+      state.watchdogTimer = setTimeout(() => {
+        state.watchdogTimer = null;
+        state.watchdogKey = null;
+        clearSelection(seq, ids);
+      }, SELECTION_WATCHDOG_MS);
+    }
+  } else if (state.watchdogKey) {
+    clearTimeout(state.watchdogTimer);
+    state.watchdogTimer = null;
+    state.watchdogKey = null;
+  }
+
+  const turnAbsent = !!turnNick && !players[turnNick] && Object.keys(players).length > 0;
+  if (turnAbsent && sel.length < 2) {
+    if (!state.turnFixTimer) {
+      const seq = room.boardSeq;
+      state.turnFixTimer = setTimeout(() => {
+        state.turnFixTimer = null;
+        advanceTurnIfAbsent(seq);
+      }, TURN_FIX_DELAY_MS);
+    }
+  } else if (state.turnFixTimer) {
+    clearTimeout(state.turnFixTimer);
+    state.turnFixTimer = null;
+  }
+}
+
+function stopHostTimers() {
+  clearTimeout(state.watchdogTimer);
+  clearTimeout(state.turnFixTimer);
+  state.watchdogTimer = null;
+  state.watchdogKey = null;
+  state.turnFixTimer = null;
+}
+
+async function advanceTurnIfAbsent(seq) {
+  if (!state.roomRef || state.role !== 'host') return;
+  try {
+    await state.roomRef.transaction(room => {
+      if (!room || room.status !== STATUS.PLAYING) return;
+      if (room.boardSeq !== seq) return;
+      const players = room.players || {};
+      const cur = currentTurnNick(room);
+      if (!cur || players[cur]) return;              // 戻ってきた → 中止
+      if (!Object.keys(players).length) return;
+      const next = nextTurnIndex(room);
+      if (next === normTurnIndex(room)) return;      // 進めない → 何もしない
+      return { ...room, selected: null, turnIndex: next };
+    });
+  } catch (error) {
+    console.error('[kotoba-pair] advanceTurnIfAbsent failed', error);
+  }
+}
+
+/* ════════════════════════════════════════════════
+   パス（手番の人）
+   ════════════════════════════════════════════════ */
+async function passTurn() {
+  if (!state.roomRef) return;
+  const room0 = state.room;
+  if (!room0 || room0.status !== STATUS.PLAYING) return;
+  const seq = room0.boardSeq;
+  try {
+    await state.roomRef.transaction(room => {
+      if (!room || room.status !== STATUS.PLAYING) return;
+      if (room.boardSeq !== seq) return;
+      if (currentTurnNick(room) !== state.nickname) return;
+      const sel = room.selected || [];
+      if (sel.length >= 2) return;                   // 判定を見せている最中は不可
+      return { ...room, selected: null, turnIndex: nextTurnIndex(room) };
+    });
+  } catch (error) {
+    console.error('[kotoba-pair] passTurn failed', error);
+  }
+}
+
+/* ════════════════════════════════════════════════
+   ホスト操作帯
+   ════════════════════════════════════════════════ */
+async function hostNextTurn() {
+  if (state.role !== 'host' || !state.roomRef) return;
+  const room0 = state.room;
+  if (!room0 || room0.status !== STATUS.PLAYING) return;
+  const seq = room0.boardSeq;
+  try {
+    await state.roomRef.transaction(room => {
+      if (!room || room.status !== STATUS.PLAYING) return;
+      if (room.boardSeq !== seq) return;
+      if (room.host !== state.nickname) return;
+      return { ...room, selected: null, turnIndex: nextTurnIndex(room) };
+    });
+  } catch (error) {
+    console.error('[kotoba-pair] hostNextTurn failed', error);
+  }
+}
+
+// 詰まり救済。未成立のペアを1組そろえて見せる（かいすう=moves は増やさない・手番も動かさない）
+async function hostRevealPair() {
+  if (state.role !== 'host' || !state.roomRef) return;
+  const room0 = state.room;
+  if (!room0 || room0.status !== STATUS.PLAYING) return;
+  const seq = room0.boardSeq;
+
+  let revealed = null;
+  try {
+    const { committed } = await state.roomRef.transaction(room => {
+      revealed = null;
+      if (!room || room.status !== STATUS.PLAYING) return;
+      if (room.boardSeq !== seq) return;
+      if (room.host !== state.nickname) return;
+      const sel = room.selected || [];
+      if (sel.length >= 2) return;                   // 判定を見せている最中は不可
+      const cards = (room.board && room.board.cards) || {};
+      const order = (room.board && room.board.order) || Object.keys(cards);
+      const firstId = order.find(id => cards[id] && cards[id].state !== 'matched');
+      if (!firstId) return;
+      const pairId = cards[firstId].pairId;
+      const partnerId = order.find(id => id !== firstId && cards[id]
+        && cards[id].pairId === pairId && cards[id].state !== 'matched');
+      if (!partnerId) return;
+
+      const matchedPairs = (Number(room.matchedPairs) || 0) + 1;
+      const total = Number(room.totalPairs) || 0;
+      const cleared = total > 0 && matchedPairs >= total;
+      const nextCards = {
+        ...cards,
+        [firstId]: { ...cards[firstId], state: 'matched' },
+        [partnerId]: { ...cards[partnerId], state: 'matched' },
+      };
+      if (!cleared) revealed = [firstId, partnerId];
+      return {
+        ...room,
+        board: { ...(room.board || {}), cards: nextCards },
+        selected: cleared ? null : [firstId, partnerId],
+        matchedPairs,
+        status: cleared ? STATUS.RESULT : STATUS.PLAYING,
+      };
+    });
+    if (committed && revealed) scheduleSelectionClear(seq, revealed);
+  } catch (error) {
+    console.error('[kotoba-pair] hostRevealPair failed', error);
+  }
+}
+
+async function hostFinish() {
+  if (state.role !== 'host' || !state.roomRef) return;
+  try {
+    await state.roomRef.transaction(room => {
+      if (!room || room.status !== STATUS.PLAYING) return;
+      if (room.host !== state.nickname) return;
+      return { ...room, status: STATUS.RESULT, selected: null };
+    });
+  } catch (error) {
+    console.error('[kotoba-pair] hostFinish failed', error);
+  }
+}
+
+/* ════════════════════════════════════════════════
+   画面: result
+   ════════════════════════════════════════════════ */
+function renderResult(room) {
+  stopHostTimers();
+  clearTimeout(state.clearTimer);
+  state.clearTimer = null;
+  if (state.currentScreen !== 'result') showScreen('result');
+  state.boardKey = null;
+
+  const matched = Number(room.matchedPairs) || 0;
+  const total = Number(room.totalPairs) || 0;
+  const moves = Number(room.moves) || 0;
+  const cleared = total > 0 && matched >= total;
+
+  document.getElementById('result-title').textContent =
+    cleared ? `みんなで ${moves}回で ぜんぶ そろえた！` : `ここまでで ${matched}くみ そろえたよ`;
+  document.getElementById('result-sub').textContent =
+    cleared ? `${total}くみ ぜんぶ そろったよ` : `ためした かいすうは ${moves}回`;
+
+  renderResultPairs(room);
+
+  const isHost = state.role === 'host';
+  setHidden('result-host-controls', !isHost);
+  if (isHost) renderPackChips(room);
+}
+
+function collectMatchedPairs(room) {
+  const board = room.board || {};
+  const order = board.order || [];
+  const cards = board.cards || {};
+  const seen = [];
+  const groups = {};
+  order.forEach(id => {
+    const card = cards[id];
+    if (!card || card.state !== 'matched') return;
+    if (!groups[card.pairId]) { groups[card.pairId] = []; seen.push(card.pairId); }
+    groups[card.pairId].push(card.text);
+  });
+  return seen.map(pairId => {
+    const info = pairInfo(room, pairId);
+    const texts = groups[pairId] || [];
+    return {
+      a: info ? info.a : (texts[0] || ''),
+      b: info ? info.b : (texts[1] || ''),
+      note: info ? (info.note || '') : '',
+    };
+  });
+}
+
+function renderResultPairs(room) {
+  const pairs = collectMatchedPairs(room);
+  const el = document.getElementById('result-pairs');
+  if (!pairs.length) {
+    el.innerHTML = '<li class="kp-pair-item"><p class="kp-pair-note">まだ そろった ペアは ないよ</p></li>';
+    return;
+  }
+  el.innerHTML = pairs.map(p => `<li class="kp-pair-item">
+    <div class="kp-pair-words">
+      <span>${esc(p.a)}</span>
+      <span class="material-symbols-rounded" aria-hidden="true">link</span>
+      <span>${esc(p.b)}</span>
+    </div>
+    ${p.note ? `<p class="kp-pair-note">${esc(p.note)}</p>` : ''}
+  </li>`).join('');
+}
+
+function renderPackChips(room) {
+  const packs = allPacks();
+  const el = document.getElementById('result-pack-chips');
+  el.innerHTML = packs.map(p => `<button type="button" class="kp-chip" data-pack="${esc(p.id)}"
+    aria-pressed="${esc(p.id === room.packId ? 'true' : 'false')}"
+    onclick="hostPlayAgain('${esc(p.id)}')">${esc(p.title)}</button>`).join('');
+}
+
+/* もういちど（同じパック）／パック替え。boardSeq を進めて盤面を作り直す */
+async function hostPlayAgain(packId) {
+  if (state.role !== 'host' || !state.roomRef) return;
+  const room0 = state.room;
+  if (!room0) return;
+
+  const pack = getPack(packId || room0.packId) || allPacks()[0];
+  if (!pack) { showMsg('パックが みつからないよ'); return; }
+  const prevSize = ((room0.board && room0.board.order) || []).length || 16;
+  // 乱数は transaction コールバックの外で確定させる
+  const board = buildBoard(pack, prevSize);
+  const totalPairs = board.order.length / 2;
+  const seedOrder = window.shuffle(Object.keys(room0.players || {}));
+
+  let reason = null;
+  const { committed } = await state.roomRef.transaction(room => {
+    reason = null;
+    if (!room) { reason = 'not_found'; return; }
+    if (room.status !== STATUS.RESULT) { reason = 'bad_status'; return; }
+    if (room.host !== state.nickname) { reason = 'not_host'; return; }
+    const players = room.players || {};
+    const names = Object.keys(players);
+    if (names.length < MIN_PLAYERS) { reason = 'too_few'; return; }
+
+    const order = seedOrder.filter(n => players[n]);
+    names.forEach(n => { if (order.indexOf(n) === -1) order.push(n); });
+
+    return {
+      ...room,
+      status: STATUS.PLAYING,
+      packId: pack.id,
+      mode: MODE,
+      boardSeq: (Number(room.boardSeq) || 1) + 1,
+      board,
+      turnOrder: order,
+      turnIndex: 0,
+      selected: null,
+      moves: 0,
+      matchedPairs: 0,
+      totalPairs,
+    };
+  });
+
+  if (!committed) {
+    showMsg(reason === 'too_few' ? '2人いじょうで はじめられるよ' : 'はじめられなかったよ。もう一度 ためしてね');
+    return;
+  }
+  window.RoomkStats?.count('pack-' + pack.id);
+}
+
+/* ════════════════════════════════════════════════
+   コードのコピー（Metalife チャットに貼れる形）
+   ════════════════════════════════════════════════ */
+async function copyInvite(btn) {
+  const code = state.roomCode || '';
+  if (!code) { showMsg('ルームコードが ないよ'); return; }
+  const url = `${location.origin}${location.pathname}`;
+  const text = `コトバペアを あそぶよ\n${url}\nルームコード: ${code}`;
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(text);
+    } else {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.cssText = 'position:fixed;opacity:0;';
+      document.body.appendChild(ta);
+      ta.focus(); ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+    }
+    if (btn) {
+      btn.classList.add('done');
+      setTimeout(() => btn.classList.remove('done'), 2000);
+    }
+    showMsg('コピーしたよ', false);
+  } catch (error) {
+    console.error('[kotoba-pair] copyInvite failed', error);
+    showMsg('コピーできなかったよ。コードを 手で おしえてね');
+  }
+}
+
+/* ════════════════════════════════════════════════
+   退出・クリーンアップ
+   ════════════════════════════════════════════════ */
+function leaveCleanup() {
+  clearTimeout(state.orphanTimer);
+  clearTimeout(state.clearTimer);
+  clearTimeout(state.watchdogTimer);
+  clearTimeout(state.turnFixTimer);
+  if (state.roomRef) {
+    RoomkRTDB.cancelRoomOnDisconnect(state.roomRef);
+    state.roomRef.off();
+  }
+  Object.assign(state, {
+    role: null, nickname: null, roomCode: null, roomRef: null, room: null,
+    orphanTimer: null, clearTimer: null, watchdogTimer: null, watchdogKey: null,
+    turnFixTimer: null, boardKey: null, tapBusy: false,
+  });
+  showOverlay('host-off-overlay', false);
+  showOverlay('reconnect-overlay', false);
+}
+
+async function leaveGame() {
+  clearSession();
+  if (state.roomRef) {
+    // remove の前に予約済み onDisconnect を必ず取り消す（ゴースト room の再生成防止）
+    await RoomkRTDB.cancelRoomOnDisconnect(state.roomRef);
+    if (state.role === 'host') {
+      await state.roomRef.remove().catch(() => {});
+    } else if (state.nickname) {
+      await state.roomRef.child(`players/${state.nickname}`).remove().catch(() => {});
+    }
+  }
+  leaveCleanup();
+  showScreen('top');
+}
+
+/* ════════════════════════════════════════════════
+   再接続（リロード復帰）
+   ════════════════════════════════════════════════ */
+async function tryReconnect() {
+  const session = loadSession();
+  if (!session || !session.roomCode || !session.nickname) return false;
+  const { nickname, roomCode, role } = session;
+  showOverlay('reconnect-overlay', true);
+
+  try {
+    await authReady;
+    const ref = db.ref(`${DB_PREFIX}/${roomCode}`);
+    const snap = await ref.get();
+    if (!snap.exists()) { clearSession(); showOverlay('reconnect-overlay', false); return false; }
+
+    const room = snap.val();
+    if (isRoomExpired(room)) {
+      await removeExpiredRoom(ref, room);
+      clearSession(); showOverlay('reconnect-overlay', false); return false;
+    }
+    if (role === 'host' && room.host !== nickname) {
+      clearSession(); showOverlay('reconnect-overlay', false); return false;
+    }
+
+    const joinedAt = getEstServerNow();
+    // 復帰の書き戻しも transaction（削除済みルームを update で再生成しない）
+    const { committed } = await ref.transaction(cur => {
+      const r = cur || room;
+      if (!r) return;
+      if (isRoomExpired(r)) return null;
+      const players = r.players || {};
+      const mine = players[nickname];
+      if (role === 'host') {
+        if (r.host !== nickname) return;
+        return {
+          ...r,
+          hostConnected: true,
+          hostDisconnectedAt: null,
+          players: { ...players, [nickname]: mine || { isHost: true, joinedAt } },
+        };
+      }
+      if (mine && mine.isHost) return;   // ホストと同名 → 復帰させない
+      const next = { ...r, players: { ...players, [nickname]: mine || { isHost: false, joinedAt } } };
+      if (r.status === STATUS.PLAYING) {
+        const order = (r.turnOrder || []).slice();
+        if (order.indexOf(nickname) === -1) order.push(nickname);
+        next.turnOrder = order;
+      }
+      return next;
+    });
+    if (!committed) { clearSession(); showOverlay('reconnect-overlay', false); return false; }
+
+    state.nickname = nickname;
+    state.roomCode = roomCode;
+    state.role = role === 'host' ? 'host' : 'guest';
+    state.roomRef = ref;
+    state.boardKey = null;
+
+    if (state.role === 'host') {
+      ref.onDisconnect().update({
+        hostConnected: false,
+        hostDisconnectedAt: firebase.database.ServerValue.TIMESTAMP,
+      });
+    } else {
+      ref.child(`players/${nickname}`).onDisconnect().remove();
+    }
+
+    showOverlay('reconnect-overlay', false);
+    startRoomListener();
+    return true;
+  } catch (error) {
+    console.error('[kotoba-pair] tryReconnect failed', error);
+    clearSession(); showOverlay('reconnect-overlay', false); return false;
+  }
+}
+
+/* ════════════════════════════════════════════════
+   初期化
+   ════════════════════════════════════════════════ */
+(function init() {
+  tryReconnect().then(ok => { if (!ok) showScreen('top'); });
+}());
+</script>
+<script src="../shared/js/stats.js?v=1" defer></script>
+<script src="../shared/js/howto.js"></script>
+<script>
+  RoomkHowto.init({
+    title: 'あそびかた',
+    lead: 'いみが つながる 2まいの ことばカードを、みんなで そうだんしながら そろえるゲーム。カードは ぜんぶ おもてむきだよ。2人から あそべる。',
+    sections: [
+      {
+        heading: 'はじめかた',
+        items: [
+          'ホストが「ルームを つくる」を おして、コードを みんなに おしえる',
+          'ほかの人は「ルームに はいる」から なまえと コードを 入れて「はいる」',
+          '2人いじょうに なったら ホストが「ゲームを はじめる」を おす',
+        ],
+      },
+      {
+        heading: 'すすめかた',
+        items: [
+          'じゅんばんが きた人が、つながりそうな カードを 2まい えらぶ',
+          'つながったら そのまま のこって、つながる わけが 1行 出る',
+          'ちがったら 2まいを すこし 見せてから もどる。そろっても そろわなくても つぎの人の ばん',
+          'えらびたくない ときは「パスする」を おしてOK',
+        ],
+      },
+      {
+        heading: 'そうだんOK',
+        text: 'こえや チャットで そうだんしながら えらんで だいじょうぶ。「①と ⑤、つながるかも」のように 番号で いうと つたわりやすいよ。',
+      },
+      {
+        heading: 'おわりかた',
+        text: 'ぜんぶ そろうと けっかが 出るよ。ホストが「もういちど あそぶ」を おすと、あたらしい ならびで あそべる。',
+      },
+    ],
+  });
+</script>
+</body>
+</html>
