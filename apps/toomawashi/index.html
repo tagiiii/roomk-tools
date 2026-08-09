@@ -1,0 +1,1718 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+  <title>とおまわしクイズ | room-K</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
+  <link rel="stylesheet" href="../shared/css/design-system.css">
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+  <script src="../shared/js/rtdb-utils.js?v=20260715"></script>
+  <script src="packs.js"></script>
+  <style>
+    /* ── 画面管理 ── */
+    .screen { display: none; min-height: 100dvh; }
+    .screen.active { display: flex; flex-direction: column; align-items: center; }
+    .page { width: 100%; max-width: 520px; padding: 40px 20px 80px; }
+
+    /* ── 共通 ── */
+    .card { margin-bottom: 16px; }
+    .btn + .btn { margin-top: 10px; }
+    .section-label {
+      font-size: 12px; font-weight: 700; color: var(--color-muted);
+      letter-spacing: 0.07em; margin-bottom: 10px;
+    }
+    .error-msg {
+      font-size: 13px; color: var(--color-error);
+      padding: 10px 14px; background: #FEF2F2;
+      border-radius: 8px; border-left: 3px solid var(--color-error);
+      margin-top: 10px; display: none;
+    }
+    .error-msg.visible { display: block; }
+    .dots::after { content: ''; animation: dots 1.5s infinite; }
+    @keyframes dots { 0%,20%{content:''} 40%{content:'.'} 60%{content:'..'} 80%,100%{content:'...'} }
+
+    /* ── プレイヤーリスト ── */
+    .player-list { list-style: none; }
+    .player-item {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 0; border-bottom: 1px solid var(--color-border); font-size: 15px;
+    }
+    .player-item:last-child { border-bottom: none; }
+    .player-name { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .player-tag {
+      font-size: 11px; font-weight: 700; padding: 2px 6px;
+      border-radius: 4px; background: var(--color-accent); color: #fff;
+    }
+    .player-tag.me { background: var(--color-muted); }
+
+    /* ── オーバーレイ ── */
+    .overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(28,63,94,0.88); z-index: 100;
+      flex-direction: column; align-items: center; justify-content: center;
+      gap: 16px; color: #fff; text-align: center; padding: 24px;
+    }
+    .overlay.show { display: flex; }
+    .overlay-title { font-size: 20px; font-weight: 700; }
+    .overlay-sub { font-size: 14px; opacity: 0.85; }
+    .overlay .spinner {
+      width: 32px; height: 32px;
+      border: 3px solid rgba(255,255,255,0.3); border-top-color: #fff;
+    }
+
+    /* ── TOP ── */
+    .tw-hero { text-align: center; margin-bottom: 18px; }
+    .tw-hero__icon {
+      width: 76px; height: 76px; border-radius: 50%;
+      background: linear-gradient(135deg, #2E7D8C, #1C3F5E);
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 14px;
+    }
+    .tw-hero__icon .material-symbols-rounded { font-size: 42px; color: #fff; }
+    .tw-hero__title { font-size: 27px; font-weight: 700; color: var(--color-primary); }
+    .tw-lead { font-size: 15px; line-height: 1.8; margin-bottom: 14px; }
+    .tw-notes { list-style: none; margin: 0 0 20px; }
+    .tw-notes li {
+      display: flex; gap: 8px; align-items: flex-start;
+      font-size: 14px; color: var(--color-muted); line-height: 1.7;
+    }
+    .tw-notes li + li { margin-top: 6px; }
+    .tw-notes .material-symbols-rounded { font-size: 18px; color: var(--color-accent); margin-top: 3px; }
+
+    /* ── 見出し ── */
+    .tw-page-title { font-size: 22px; font-weight: 700; color: var(--color-primary); margin-bottom: 6px; }
+    .tw-page-sub { font-size: 14px; color: var(--color-muted); margin-bottom: 18px; line-height: 1.7; }
+
+    /* ── ルームコード ── */
+    .tw-room-code {
+      font-size: 46px; font-weight: 700; letter-spacing: 0.2em;
+      color: var(--color-primary); text-align: center;
+      padding: 14px; background: #EEF3F8; border-radius: 12px;
+      cursor: pointer; user-select: all; margin-bottom: 6px; min-height: 44px;
+    }
+    .tw-code-input {
+      font-size: 24px; font-weight: 700; text-align: center;
+      letter-spacing: 0.2em; text-transform: uppercase;
+    }
+
+    /* ── パック選択 ── */
+    .tw-pack {
+      display: flex; align-items: flex-start; gap: 10px; width: 100%;
+      text-align: left; padding: 14px 16px; margin-bottom: 10px;
+      background: var(--color-surface); border: 2px solid var(--color-border);
+      border-radius: 12px; cursor: pointer; min-height: 44px;
+      font-family: var(--font-base); color: var(--color-text);
+      transition: border-color var(--transition-base);
+    }
+    .tw-pack.is-selected { border-color: var(--color-accent); background: #F2F8F9; }
+    .tw-pack__num { color: var(--color-accent); font-weight: 700; font-feature-settings: "palt"; flex-shrink: 0; }
+    .tw-pack__body { flex: 1; }
+    .tw-pack__title { font-size: 17px; font-weight: 700; color: var(--color-primary); }
+    .tw-pack__meta { font-size: 12px; color: var(--color-muted); margin-top: 2px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .tw-pack__check { flex-shrink: 0; color: var(--color-accent); font-size: 0; }
+    .tw-pack__check .material-symbols-rounded { font-size: 22px; }
+
+    /* ── トグル ── */
+    .tw-toggle {
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 12px 14px; border: 2px solid var(--color-border);
+      border-radius: 12px; cursor: pointer; min-height: 44px;
+    }
+    .tw-toggle input { width: 20px; height: 20px; margin-top: 3px; flex-shrink: 0; accent-color: var(--color-accent); }
+    .tw-toggle__title { font-size: 15px; font-weight: 700; color: var(--color-primary); display: block; }
+    .tw-toggle__note { font-size: 12px; color: var(--color-muted); line-height: 1.6; display: block; }
+
+    /* ── ラウンド帯 ── */
+    .tw-round-bar { text-align: center; padding: 4px 0 16px; }
+    .tw-round-bar__count {
+      font-size: 12px; font-weight: 700; color: var(--color-muted);
+      letter-spacing: 0.06em; margin-bottom: 4px;
+    }
+    .tw-round-bar__who { font-size: 17px; font-weight: 700; color: var(--color-primary); }
+    .tw-aspect-now {
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      font-size: 15px; font-weight: 700; color: var(--color-accent);
+      background: #F2F8F9; border-radius: var(--radius-full);
+      padding: 8px 14px; margin-bottom: 16px;
+    }
+    .tw-aspect-now .material-symbols-rounded { font-size: 18px; }
+
+    /* ── お題（説明役）── */
+    .tw-topic { text-align: center; padding: 24px 16px; }
+    .tw-topic__label { font-size: 13px; color: var(--color-muted); font-weight: 700; margin-bottom: 6px; }
+    .tw-topic__text {
+      font-size: 44px; font-weight: 700; color: var(--color-primary);
+      line-height: 1.3; word-break: break-word;
+    }
+
+    /* ── 言っちゃダメことば ── */
+    .tw-ng {
+      border: 2px solid var(--color-error); background: #FEF2F2;
+      border-radius: 12px; padding: 14px 16px; margin-bottom: 16px;
+    }
+    .tw-ng__head {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 14px; font-weight: 700; color: var(--color-error); margin-bottom: 8px;
+    }
+    .tw-ng__head .material-symbols-rounded { font-size: 20px; }
+    .tw-ng__list { display: flex; flex-wrap: wrap; gap: 8px; list-style: none; }
+    .tw-ng__item {
+      background: var(--color-surface); border: 1px solid var(--color-error);
+      color: var(--color-error); border-radius: var(--radius-full);
+      padding: 6px 14px; font-size: 16px; font-weight: 700;
+    }
+
+    /* ── 観点チップ ── */
+    .tw-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+    .tw-chip {
+      min-height: 44px; padding: 10px 16px;
+      background: var(--color-surface); border: 2px solid var(--color-border);
+      border-radius: var(--radius-full); font-size: 15px; font-weight: 700;
+      font-family: var(--font-base); color: var(--color-primary); cursor: pointer;
+      display: inline-flex; align-items: center; gap: 6px;
+      transition: border-color var(--transition-base), background var(--transition-base);
+    }
+    .tw-chip .material-symbols-rounded { font-size: 18px; color: var(--color-accent); }
+    .tw-chip.is-active { border-color: var(--color-accent); background: #E7F1F3; }
+
+    /* ── こたえの候補 ── */
+    .tw-choice {
+      display: flex; align-items: center; gap: 10px; width: 100%;
+      text-align: left; min-height: 44px; padding: 14px 16px; margin-bottom: 10px;
+      background: var(--color-surface); border: 2px solid var(--color-border);
+      border-radius: 12px; cursor: pointer; font-family: var(--font-base); color: var(--color-text);
+      transition: border-color var(--transition-base), background var(--transition-base);
+    }
+    .tw-choice.is-mine { border-color: var(--color-accent); background: #F2F8F9; }
+    .tw-choice__num { color: var(--color-accent); font-weight: 700; font-feature-settings: "palt"; flex-shrink: 0; font-size: 18px; }
+    .tw-choice__text { flex: 1; font-size: 18px; font-weight: 700; color: var(--color-primary); }
+    .tw-choice__mark { flex-shrink: 0; color: var(--color-accent); font-size: 0; }
+    .tw-choice__mark .material-symbols-rounded { font-size: 22px; }
+
+    /* ── 自分の回答 ── */
+    .tw-mine {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 14px; color: var(--color-primary);
+      background: #F2F8F9; border-radius: 10px; padding: 10px 14px; margin-top: 12px;
+    }
+    .tw-mine .material-symbols-rounded { font-size: 20px; color: var(--color-accent); flex-shrink: 0; }
+    .tw-mine__text { font-weight: 700; word-break: break-word; }
+
+    /* ── みんなの回答 ── */
+    .tw-answer-item {
+      display: flex; align-items: baseline; gap: 8px;
+      padding: 10px 0; border-bottom: 1px solid var(--color-border);
+    }
+    .tw-answer-item:last-child { border-bottom: none; }
+    .tw-answer-item__nick { font-size: 12px; color: var(--color-muted); flex-shrink: 0; min-width: 4em; }
+    .tw-answer-item__text { font-size: 17px; font-weight: 700; color: var(--color-primary); word-break: break-word; }
+    .tw-empty { font-size: 14px; color: var(--color-muted); }
+    .tw-count {
+      text-align: center; font-size: 15px; font-weight: 700;
+      color: var(--color-accent); padding: 14px 0;
+    }
+
+    /* ── ホスト用 ── */
+    .tw-hostpeek {
+      display: flex; align-items: flex-start; gap: 8px;
+      font-size: 13px; color: var(--color-muted); line-height: 1.7;
+      background: #EEF3F8; border-radius: 10px; padding: 10px 14px; margin-bottom: 16px;
+    }
+    .tw-hostpeek .material-symbols-rounded { font-size: 18px; flex-shrink: 0; margin-top: 2px; }
+    .tw-hostpeek__topic { font-weight: 700; color: var(--color-primary); }
+    .tw-hostbar {
+      border-top: 2px solid var(--color-border); margin-top: 22px; padding-top: 16px;
+    }
+    .tw-hostbar__label {
+      font-size: 12px; font-weight: 700; color: var(--color-muted);
+      letter-spacing: 0.06em; margin-bottom: 10px;
+    }
+    .tw-note { font-size: 12px; color: var(--color-muted); text-align: center; margin-top: 8px; line-height: 1.7; }
+    .tw-alert { margin-bottom: 12px; }
+
+    /* ── 弱いボタン（ナビ系）── */
+    .tw-quiet-btn {
+      display: block; width: 100%; min-height: 44px;
+      background: none; border: none; cursor: pointer;
+      font-family: var(--font-base); font-size: 14px; color: var(--color-muted);
+      text-decoration: underline; margin-top: 12px;
+    }
+    .tw-quiet-btn:hover { color: var(--color-primary); }
+
+    /* ── そうだんOK ── */
+    .tw-soudan {
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      font-size: 12px; color: var(--color-muted); margin-top: 20px;
+    }
+    .tw-soudan .material-symbols-rounded { font-size: 16px; }
+
+    /* ── けっか ── */
+    .tw-final-head { text-align: center; padding: 26px 0 20px; }
+    .tw-final-head .material-symbols-rounded { font-size: 46px; color: var(--color-accent); }
+    .tw-final-score { font-size: 26px; font-weight: 700; color: var(--color-accent); margin-top: 8px; }
+    .tw-final-sub { font-size: 13px; color: var(--color-muted); margin-top: 4px; }
+    .tw-history-item {
+      padding: 12px 16px; margin-bottom: 10px;
+      background: var(--color-surface); border-radius: 12px; box-shadow: var(--shadow-sm);
+    }
+    .tw-history-item__no { font-size: 12px; font-weight: 700; color: var(--color-muted); }
+    .tw-history-item__topic { font-size: 19px; font-weight: 700; color: var(--color-primary); margin: 2px 0; }
+    .tw-history-item__detail {
+      display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+      font-size: 13px; color: var(--color-muted);
+    }
+    .tw-history-item__detail .material-symbols-rounded { font-size: 16px; }
+    .tw-result-clear { color: var(--color-success); font-weight: 700; display: inline-flex; align-items: center; gap: 4px; }
+    .tw-result-nope { color: var(--color-muted); font-weight: 700; display: inline-flex; align-items: center; gap: 4px; }
+
+    /* ── 待機カード ── */
+    .tw-wait { text-align: center; padding: 36px 20px; }
+    .tw-wait .spinner { width: 40px; height: 40px; margin: 0 auto 18px; }
+    .tw-wait__msg { font-size: 16px; font-weight: 500; color: var(--color-primary); }
+
+    /* ── レスポンシブ ── */
+    @media (max-width: 600px) {
+      .page { padding: 28px 16px 60px; }
+      .tw-room-code { font-size: 36px; }
+      .tw-topic__text { font-size: 34px; }
+      .tw-hero__title { font-size: 24px; }
+    }
+
+    /* ── モーション配慮 ── */
+    @media (prefers-reduced-motion: reduce) {
+      .dots::after { animation: none; content: '…'; }
+      .spinner { animation-duration: 2.4s; }
+      .tw-chip, .tw-choice, .tw-pack, .btn { transition: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════ screen-top ═══════════════ -->
+<div id="screen-top" class="screen">
+  <div class="page">
+    <div class="card">
+      <div class="tw-hero">
+        <div class="tw-hero__icon">
+          <span class="material-symbols-rounded" aria-hidden="true">record_voice_over</span>
+        </div>
+        <h1 class="tw-hero__title">とおまわしクイズ</h1>
+      </div>
+      <p class="tw-lead">
+        ひみつの おだいを、「言っちゃダメことば」を つかわずに せつめいして、
+        みんなに あててもらう ゲームです。せつめいは こえで OK。
+      </p>
+      <ul class="tw-notes">
+        <li><span class="material-symbols-rounded" aria-hidden="true">group</span><span>2〜10人。ひとり2〜3分くらいで、ぜんぶで15〜25分</span></li>
+        <li><span class="material-symbols-rounded" aria-hidden="true">forum</span><span>そうだんOK。こえでも チャットでも こたえられる</span></li>
+        <li><span class="material-symbols-rounded" aria-hidden="true">timer_off</span><span>じかんせいげんは なし。こたえなくても だいじょうぶ</span></li>
+      </ul>
+      <button class="btn btn-primary btn-full btn-lg" onclick="showScreen('create')">
+        <span class="material-symbols-rounded" aria-hidden="true">add_circle</span>
+        ルームをつくる
+      </button>
+      <button class="btn btn-secondary btn-full" onclick="showScreen('join')">
+        <span class="material-symbols-rounded" aria-hidden="true">login</span>
+        ルームに はいる
+      </button>
+      <p class="tw-note">こたえた ことばは ゲームが おわると きえます。</p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ screen-create ═══════════════ -->
+<div id="screen-create" class="screen">
+  <div class="page">
+    <h2 class="tw-page-title">ルームをつくる</h2>
+    <p class="tw-page-sub">おだいの セットを えらんで、ルームを つくります。</p>
+    <div class="card">
+      <label class="form-label" for="create-nickname">ニックネーム</label>
+      <input type="text" id="create-nickname" class="form-input" maxlength="8" placeholder="ほんとうの名前じゃなくてOK">
+    </div>
+    <div class="card">
+      <p class="section-label">おだいの セット</p>
+      <div id="create-pack-list"></div>
+    </div>
+    <div class="card">
+      <label class="tw-toggle" for="create-show-choices">
+        <input type="checkbox" id="create-show-choices" checked>
+        <span>
+          <span class="tw-toggle__title">こたえの候補を 見せる</span>
+          <span class="tw-toggle__note">聞き手の画面に ①②③ の こたえの候補が でます</span>
+        </span>
+      </label>
+      <div class="error-msg" id="create-error"></div>
+    </div>
+    <button class="btn btn-primary btn-full btn-lg" onclick="hostCreate()">
+      <span class="material-symbols-rounded" aria-hidden="true">meeting_room</span>
+      ルームをつくる
+    </button>
+    <button class="tw-quiet-btn" onclick="showScreen('top')">もどる</button>
+  </div>
+</div>
+
+<!-- ═══════════════ screen-join ═══════════════ -->
+<div id="screen-join" class="screen">
+  <div class="page">
+    <h2 class="tw-page-title">ルームに はいる</h2>
+    <div class="card">
+      <label class="form-label" for="join-nickname">ニックネーム</label>
+      <input type="text" id="join-nickname" class="form-input" maxlength="8" placeholder="ほんとうの名前じゃなくてOK">
+      <label class="form-label" style="margin-top:16px" for="join-code">ルームコード</label>
+      <input type="text" id="join-code" class="form-input tw-code-input" maxlength="6" placeholder="6けた"
+             oninput="this.value=this.value.toUpperCase()">
+      <div class="error-msg" id="join-error"></div>
+    </div>
+    <button class="btn btn-primary btn-full btn-lg" onclick="guestJoin()">
+      <span class="material-symbols-rounded" aria-hidden="true">login</span>
+      はいる
+    </button>
+    <button class="tw-quiet-btn" onclick="showScreen('top')">もどる</button>
+  </div>
+</div>
+
+<!-- ═══════════════ screen-waiting ═══════════════ -->
+<div id="screen-waiting" class="screen">
+  <div class="page">
+    <h2 class="tw-page-title">みんなを まっています</h2>
+    <div class="card" style="text-align:center">
+      <p style="font-size:12px;color:var(--color-muted);margin-bottom:4px">ルームコード</p>
+      <div class="tw-room-code" id="waiting-code" role="button" tabindex="0"
+           onclick="copyCode()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();copyCode();}"></div>
+      <p style="font-size:12px;color:var(--color-muted)">タップで コピー</p>
+    </div>
+    <div class="card">
+      <p class="section-label">さんかしている人</p>
+      <ul class="player-list" id="waiting-players"></ul>
+      <p class="tw-note" id="waiting-pack"></p>
+    </div>
+    <div id="waiting-host" hidden>
+      <p class="tw-note" id="waiting-min" style="margin-bottom:10px"></p>
+      <button class="btn btn-primary btn-full btn-lg" id="btn-start" onclick="startGame()" disabled>
+        <span class="material-symbols-rounded" aria-hidden="true">play_arrow</span>
+        はじめる
+      </button>
+      <button class="btn btn-secondary btn-full" onclick="copyInvite()">
+        <span class="material-symbols-rounded" aria-hidden="true">content_copy</span>
+        あんないを コピー
+      </button>
+    </div>
+    <button class="tw-quiet-btn" onclick="leaveGame()">でる</button>
+  </div>
+</div>
+
+<!-- ═══════════════ screen-round（せつめい中）═══════════════ -->
+<div id="screen-round" class="screen">
+  <div class="page">
+    <div class="tw-round-bar">
+      <div class="tw-round-bar__count" id="round-count"></div>
+      <div class="tw-round-bar__who" id="round-who"></div>
+    </div>
+    <div class="tw-aspect-now" id="round-aspect" role="status" aria-live="polite" hidden>
+      <span class="material-symbols-rounded" aria-hidden="true">label</span>
+      <span id="round-aspect-text"></span>
+    </div>
+
+    <!-- 説明役 -->
+    <div id="round-explainer" hidden>
+      <div class="card tw-topic">
+        <p class="tw-topic__label">あなたの おだい</p>
+        <p class="tw-topic__text" id="explain-topic"></p>
+      </div>
+      <div class="tw-ng">
+        <div class="tw-ng__head">
+          <span class="material-symbols-rounded" aria-hidden="true">block</span>
+          言っちゃダメことば
+        </div>
+        <ul class="tw-ng__list" id="explain-ng"></ul>
+      </div>
+      <div class="card">
+        <p class="section-label">いま なんの はなし？（おすと みんなに つたわる）</p>
+        <div class="tw-chips" id="explain-chips"></div>
+      </div>
+      <button class="btn btn-secondary btn-full" id="btn-change-item" onclick="changeItem()">
+        <span class="material-symbols-rounded" aria-hidden="true">autorenew</span>
+        おだいを かえる
+      </button>
+      <p class="tw-note" id="explain-change-note"></p>
+      <button class="tw-quiet-btn" onclick="passExplainer()">せつめいやくを パスする</button>
+    </div>
+
+    <!-- ホストの進行用のぞき見（説明役でないとき）-->
+    <div class="tw-hostpeek" id="round-hostpeek" hidden>
+      <span class="material-symbols-rounded" aria-hidden="true">visibility</span>
+      <span>
+        しんこうよう: おだいは「<span class="tw-hostpeek__topic" id="hostpeek-topic"></span>」<br>
+        <span id="hostpeek-ng"></span>
+      </span>
+    </div>
+
+    <!-- 聞き手 -->
+    <div id="round-listener" hidden>
+      <div class="card" id="listener-choices-card" hidden>
+        <p class="section-label">こたえの こうほ</p>
+        <div id="listener-choices"></div>
+      </div>
+      <div class="card">
+        <label class="form-label" for="listener-input">じぶんの ことばで こたえる</label>
+        <input type="text" id="listener-input" class="form-input" maxlength="20" placeholder="なにか わかったら かいてね">
+        <div class="error-msg" id="listener-error"></div>
+        <button class="btn btn-primary btn-full" style="margin-top:12px" onclick="submitTypedAnswer()">
+          <span class="material-symbols-rounded" aria-hidden="true">send</span>
+          こたえを おくる
+        </button>
+        <div class="tw-mine" id="listener-mine" hidden>
+          <span class="material-symbols-rounded" aria-hidden="true">check_circle</span>
+          <span>あなたの こたえ: <span class="tw-mine__text" id="listener-mine-text"></span><br>
+            <span style="font-size:12px;color:var(--color-muted)">なんども かきなおせるよ</span></span>
+        </div>
+        <p class="tw-note" id="listener-hint">こたえなくても だいじょうぶ。ぜんぶ こえで つたえてもOK。</p>
+      </div>
+    </div>
+
+    <!-- 回答の見え方 -->
+    <div class="card" id="round-answers-card" hidden>
+      <p class="section-label">みんなの こたえ</p>
+      <div id="round-answers"></div>
+    </div>
+    <p class="tw-count" id="round-answers-count" role="status" aria-live="polite" hidden></p>
+
+    <!-- ホスト操作帯 -->
+    <div class="tw-hostbar" id="round-hostbar" hidden>
+      <p class="tw-hostbar__label">しんこう（ホスト）</p>
+      <div class="alert alert-warning tw-alert" id="round-explainer-gone" hidden></div>
+      <button class="btn btn-primary btn-full btn-lg" onclick="revealNow()">
+        <span class="material-symbols-rounded" aria-hidden="true">campaign</span>
+        せいかい発表
+      </button>
+      <button class="btn btn-secondary btn-full" onclick="hostSkipItem()">
+        <span class="material-symbols-rounded" aria-hidden="true">skip_next</span>
+        おだいを スキップ
+      </button>
+      <button class="btn btn-secondary btn-full" onclick="passExplainer()">
+        <span class="material-symbols-rounded" aria-hidden="true">person_add</span>
+        せつめいやくを つぎの人に
+      </button>
+      <button class="tw-quiet-btn" onclick="hostFinish()">ここまでにする</button>
+    </div>
+
+    <p class="tw-soudan">
+      <span class="material-symbols-rounded" aria-hidden="true">forum</span>
+      そうだん OK
+    </p>
+  </div>
+</div>
+
+<!-- ═══════════════ screen-reveal（せいかい発表）═══════════════ -->
+<div id="screen-reveal" class="screen">
+  <div class="page">
+    <div class="tw-round-bar">
+      <div class="tw-round-bar__count" id="reveal-count"></div>
+      <div class="tw-round-bar__who" id="reveal-who"></div>
+    </div>
+    <div class="card tw-topic">
+      <p class="tw-topic__label">おだいは これでした</p>
+      <p class="tw-topic__text" id="reveal-topic"></p>
+    </div>
+    <div class="tw-ng">
+      <div class="tw-ng__head">
+        <span class="material-symbols-rounded" aria-hidden="true">block</span>
+        言っちゃダメことば
+      </div>
+      <ul class="tw-ng__list" id="reveal-ng"></ul>
+    </div>
+    <div class="card">
+      <p class="section-label">みんなの こたえ</p>
+      <div id="reveal-answers"></div>
+    </div>
+    <div class="alert alert-info tw-alert" id="reveal-skip-note" hidden>このおだいは スキップしたよ。</div>
+
+    <!-- ホスト: 判定 -->
+    <div id="reveal-judge" hidden>
+      <button class="btn btn-primary btn-full btn-lg" onclick="judgeRound(true)">
+        <span class="material-symbols-rounded" aria-hidden="true">check_circle</span>
+        つたわった！
+      </button>
+      <button class="btn btn-secondary btn-full" onclick="judgeRound(false)">
+        <span class="material-symbols-rounded" aria-hidden="true">arrow_forward</span>
+        つぎへ
+      </button>
+      <p class="tw-note">つたわらなくても だいじょうぶ。またこんど つたわるかも。</p>
+      <button class="tw-quiet-btn" onclick="hostFinish()">ここまでにする</button>
+    </div>
+
+    <!-- ホスト: 1しゅう おわり -->
+    <div id="reveal-lap" hidden>
+      <div class="alert alert-info tw-alert">みんなが 1かいずつ せつめいやくを やったよ。</div>
+      <button class="btn btn-primary btn-full btn-lg" onclick="nextLap()">
+        <span class="material-symbols-rounded" aria-hidden="true">replay</span>
+        もう1しゅう
+      </button>
+      <button class="btn btn-secondary btn-full" onclick="hostFinish()">
+        <span class="material-symbols-rounded" aria-hidden="true">flag</span>
+        おわる
+      </button>
+    </div>
+
+    <!-- ホスト以外 -->
+    <div id="reveal-wait" hidden>
+      <p class="tw-note">ホストが つぎに すすめるのを まっています<span class="dots"></span></p>
+    </div>
+
+    <p class="tw-soudan">
+      <span class="material-symbols-rounded" aria-hidden="true">forum</span>
+      そうだん OK
+    </p>
+  </div>
+</div>
+
+<!-- ═══════════════ screen-final ═══════════════ -->
+<div id="screen-final" class="screen">
+  <div class="page">
+    <div class="tw-final-head">
+      <span class="material-symbols-rounded" aria-hidden="true">workspace_premium</span>
+      <p class="tw-final-score" id="final-score"></p>
+      <p class="tw-final-sub" id="final-sub"></p>
+    </div>
+    <p class="section-label">きょうの ふりかえり</p>
+    <div id="final-history"></div>
+    <button class="btn btn-secondary btn-full" style="margin-top:16px" onclick="leaveGame()">
+      <span class="material-symbols-rounded" aria-hidden="true">home</span>
+      TOPにもどる
+    </button>
+  </div>
+</div>
+
+<!-- ═══════════════ screen-pending（想定外の status）═══════════════ -->
+<div id="screen-pending" class="screen">
+  <div class="page">
+    <div class="card tw-wait">
+      <div class="spinner"></div>
+      <p class="tw-wait__msg">じゅんびしています<span class="dots"></span></p>
+    </div>
+    <button class="tw-quiet-btn" onclick="leaveGame()">でる</button>
+  </div>
+</div>
+
+<!-- ═══════════════ Overlays ═══════════════ -->
+<div class="overlay" id="reconnect-overlay">
+  <div class="spinner"></div>
+  <p class="overlay-title">つなぎなおしています<span class="dots"></span></p>
+</div>
+<div class="overlay" id="host-off-overlay">
+  <span class="material-symbols-rounded" aria-hidden="true" style="font-size:48px">signal_disconnected</span>
+  <p class="overlay-title">ホストの もどりを まっています</p>
+  <p class="overlay-sub">すこし まっても もどらないときは、いちど でて はいりなおしてね</p>
+  <button class="btn btn-ghost" onclick="leaveGame()">でる</button>
+</div>
+
+<script>
+/* ════════════════════════════════════════════════
+   Firebase / 定数
+   ════════════════════════════════════════════════ */
+const { authReady, db } = RoomkRTDB.initFirebase(firebase);
+
+const PACKS = Array.isArray(window.ToomawashiPacks) ? window.ToomawashiPacks : [];
+const DB_PREFIX = 'toomawashi_rooms';
+const SESSION_KEY = 'toomawashi_session';
+const ORPHAN_TTL_MS = 2 * 60 * 1000;
+const MIN_PLAYERS = 2;
+const MAX_PLAYERS = 10;
+const ASPECTS = ['ばしょ', 'かたち', 'つかいかた', 'いつ・どこで', 'なかま'];
+const NUMBERS = ['①', '②', '③', '④', '⑤', '⑥'];
+const MAX_CHOICES = NUMBERS.length;
+
+/* ════════════════════════════════════════════════
+   State
+   ════════════════════════════════════════════════ */
+const state = {
+  role: null,          // 'host' | 'guest'
+  nickname: null,
+  roomCode: null,
+  roomRef: null,
+  currentScreen: null,
+  orphanTimer: null,   // ホスト切断 TTL のローカルタイマー（退出時に必ず clearTimeout）
+  packIndex: 0,        // ルーム作成画面で選択中のパック
+  roundKey: null,      // 描画中のラウンド識別子（変わったら入力欄をリセット）
+  roundNumber: null,   // 描画中のラウンド番号（連打・遅延クリックの世代ガード）
+  turnIndex: null,     // 描画中の turnIndex（同上）
+};
+
+/* ════════════════════════════════════════════════
+   ユーティリティ
+   ════════════════════════════════════════════════ */
+const esc = RoomkRTDB.esc;
+const genCode = RoomkRTDB.generateRoomCode;
+const showMsg = RoomkRTDB.showToast;
+const serverNow = RoomkRTDB.now;
+const getHostDisconnectedAt = RoomkRTDB.getHostDisconnectedAt;
+
+function isRoomExpired(room) {
+  // status を持たない room は、削除後に onDisconnect が発火して再生成されたゴースト
+  return RoomkRTDB.isRoomExpired(room, ORPHAN_TTL_MS) || (!!room && !room.status);
+}
+
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const el = document.getElementById('screen-' + name);
+  if (el) el.classList.add('active');
+  state.currentScreen = name;
+  if (name === 'create') renderPackList();
+}
+
+function showOverlay(id, show) {
+  const el = document.getElementById(id);
+  if (el) el.classList.toggle('show', show);
+}
+
+function showError(id, msg) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = msg;
+  el.classList.add('visible');
+}
+
+function hideError(id) {
+  const el = document.getElementById(id);
+  if (el) el.classList.remove('visible');
+}
+
+function setHidden(id, hidden) {
+  const el = document.getElementById(id);
+  if (el) el.hidden = !!hidden;
+}
+
+function setText(id, text) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = text == null ? '' : String(text);
+}
+
+function validNick(v) {
+  if (!v) return 'ニックネームを かいてね';
+  if (v.length > 8) return 'ニックネームは 8文字までだよ';
+  if (/[.#$/[\]]/.test(v)) return 'つかえない もじが はいっているよ';
+  return null;
+}
+
+// 認証待ちの狭いガード。authReady は一度 reject すると固定されるため再読み込みへ誘導する
+let authWaitBusy = false;
+async function waitAuthOrExplain() {
+  if (authWaitBusy) return false;
+  authWaitBusy = true;
+  try {
+    await authReady;
+    return true;
+  } catch {
+    showMsg('うまく つながらなかったよ。ページを よみこみなおしてね');
+    return false;
+  } finally {
+    authWaitBusy = false;
+  }
+}
+
+// utils.js の shuffle() とは用途が違う「0..n-1 の並べ替え」専用
+// （通常スクリプトのまま使いたいので module import はしない）
+function shuffledIndices(n) {
+  const arr = Array.from({ length: n }, (_, i) => i);
+  for (let i = arr.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+/* ════════════════════════════════════════════════
+   パック（静的データ）
+   ════════════════════════════════════════════════ */
+function getPack(packId) {
+  return PACKS.find(p => p && p.id === packId) || null;
+}
+
+function getItem(pack, itemIndex) {
+  if (!pack || !Array.isArray(pack.items)) return null;
+  const i = Number(itemIndex);
+  return Number.isInteger(i) ? (pack.items[i] || null) : null;
+}
+
+// roll は transaction コールバックの外で作った乱数（コールバックを純粋に保つ）
+function pickItem(pack, usedItems, roll) {
+  const total = Array.isArray(pack.items) ? pack.items.length : 0;
+  if (!total) return null;
+  let used = (Array.isArray(usedItems) ? usedItems : [])
+    .filter(i => Number.isInteger(i) && i >= 0 && i < total);
+  let pool = [];
+  for (let i = 0; i < total; i += 1) if (!used.includes(i)) pool.push(i);
+  if (!pool.length) { used = []; pool = Array.from({ length: total }, (_, i) => i); }
+  const index = pool[Math.min(pool.length - 1, Math.floor(roll * pool.length))];
+  return { index, usedItems: [...used, index] };
+}
+
+// perm も transaction の外で作る
+function buildRound(number, explainer, itemIndex, pack, perm) {
+  const item = getItem(pack, itemIndex);
+  const choices = Array.isArray(item && item.choices) ? item.choices : [];
+  const n = Math.min(choices.length, MAX_CHOICES);
+  return {
+    number,
+    explainer,
+    itemIndex,
+    aspect: null,
+    choiceOrder: perm.filter(i => i < n),
+    changed: false,
+    answers: null,
+    result: null,
+  };
+}
+
+function chipOrder(item) {
+  const pref = Array.isArray(item && item.aspects)
+    ? item.aspects.filter(a => ASPECTS.includes(a))
+    : [];
+  const uniq = [];
+  pref.forEach(a => { if (!uniq.includes(a)) uniq.push(a); });
+  return [...uniq, ...ASPECTS.filter(a => !uniq.includes(a))];
+}
+
+/* ════════════════════════════════════════════════
+   Session Storage
+   ════════════════════════════════════════════════ */
+function saveSession() {
+  sessionStorage.setItem(SESSION_KEY, JSON.stringify({
+    nickname: state.nickname, roomCode: state.roomCode, role: state.role,
+  }));
+}
+function loadSession() { try { return JSON.parse(sessionStorage.getItem(SESSION_KEY)); } catch { return null; } }
+function clearSession() { sessionStorage.removeItem(SESSION_KEY); }
+
+/* ════════════════════════════════════════════════
+   ルーム作成画面（パック選択）
+   ════════════════════════════════════════════════ */
+function renderPackList() {
+  const box = document.getElementById('create-pack-list');
+  if (!box) return;
+  if (!PACKS.length) {
+    box.innerHTML = '<p class="tw-empty">おだいの データが よみこめなかったよ。ページを よみこみなおしてね。</p>';
+    return;
+  }
+  if (state.packIndex >= PACKS.length) state.packIndex = 0;
+  const html = PACKS.map((pack, i) => {
+    const selected = i === state.packIndex;
+    const count = Array.isArray(pack.items) ? pack.items.length : 0;
+    const level = Number(pack.level) || 1;
+    const check = selected
+      ? '<span class="tw-pack__check"><span class="material-symbols-rounded" aria-hidden="true">check_circle</span></span>'
+      : '';
+    return '<button type="button" class="tw-pack' + (selected ? ' is-selected' : '') + '"'
+      + ' aria-pressed="' + (selected ? 'true' : 'false') + '"'
+      + ' onclick="selectPack(' + i + ')">'
+      + '<span class="tw-pack__num" aria-hidden="true">' + esc(NUMBERS[i] || (i + 1)) + '</span>'
+      + '<span class="tw-pack__body">'
+      + '<span class="tw-pack__title">' + esc(pack.title || pack.id || '') + '</span>'
+      + '<span class="tw-pack__meta"><span class="badge badge-accent">レベル' + esc(level) + '</span>'
+      + '<span>おだい ' + esc(count) + 'こ</span></span>'
+      + '</span>' + check + '</button>';
+  }).join('');
+  box.innerHTML = html;
+}
+
+function selectPack(index) {
+  state.packIndex = index;
+  renderPackList();
+}
+
+/* ════════════════════════════════════════════════
+   ルーム作成
+   ════════════════════════════════════════════════ */
+async function hostCreate() {
+  const nick = document.getElementById('create-nickname').value.trim();
+  const err = validNick(nick);
+  if (err) { showError('create-error', err); return; }
+  const pack = PACKS[state.packIndex];
+  if (!pack || !Array.isArray(pack.items) || !pack.items.length) {
+    showError('create-error', 'おだいの データが よみこめなかったよ。ページを よみこみなおしてね');
+    return;
+  }
+  hideError('create-error');
+  if (!await waitAuthOrExplain()) return;
+
+  const showChoices = document.getElementById('create-show-choices').checked;
+  const joinedAt = serverNow();
+
+  let roomCode = null;
+  let roomRef = null;
+  for (let i = 0; i < 5; i += 1) {
+    const code = genCode();
+    const ref = db.ref(`${DB_PREFIX}/${code}`);
+    const { committed } = await ref.transaction(room => {
+      if (room) return;
+      return {
+        host: nick,
+        hostConnected: true,
+        hostDisconnectedAt: null,
+        status: 'waiting',
+        packId: pack.id,
+        showChoices,
+        usedItems: [],
+        turnOrder: [nick],
+        turnIndex: 0,
+        score: { clear: 0, total: 0 },
+        players: { [nick]: { isHost: true, joinedAt } },
+      };
+    });
+    if (committed) { roomCode = code; roomRef = ref; break; }
+  }
+  if (!roomCode) { showMsg('ルームを つくれなかったよ。もういちど ためしてね'); return; }
+
+  state.nickname = nick;
+  state.roomCode = roomCode;
+  state.role = 'host';
+  state.roomRef = roomRef;
+
+  roomRef.onDisconnect().update({
+    hostConnected: false,
+    hostDisconnectedAt: firebase.database.ServerValue.TIMESTAMP,
+  });
+
+  window.RoomkStats?.count('pack-' + pack.id);
+  saveSession();
+  startRoomListener();
+}
+
+/* ════════════════════════════════════════════════
+   参加（ゲーム中も入室できる）
+   ════════════════════════════════════════════════ */
+async function guestJoin() {
+  const nick = document.getElementById('join-nickname').value.trim();
+  const code = document.getElementById('join-code').value.trim().toUpperCase();
+  const err = validNick(nick);
+  if (err) { showError('join-error', err); return; }
+  if (code.length !== 6) { showError('join-error', 'ルームコードは 6文字だよ'); return; }
+  hideError('join-error');
+  if (!await waitAuthOrExplain()) return;
+
+  const roomRef = db.ref(`${DB_PREFIX}/${code}`);
+  let preSnap;
+  try {
+    preSnap = await roomRef.get();
+  } catch {
+    showError('join-error', 'うまく つながらなかったよ。もういちど ためしてね');
+    return;
+  }
+  if (!preSnap.exists()) {
+    showError('join-error', 'ルームが みつからないよ。コードを たしかめてね');
+    return;
+  }
+  const preRoom = preSnap.val();
+  if (isRoomExpired(preRoom)) {
+    await roomRef.remove().catch(() => {});
+    showError('join-error', 'このルームは おわったみたい');
+    return;
+  }
+
+  const joinedAt = serverNow();
+  let abortReason = null;
+  // ローカルキャッシュ null 対策: リスナー未接続のため preRoom で代用してサーバー照会を強制する
+  const { committed } = await roomRef.transaction(room => {
+    const r = room || preRoom;
+    if (!r) { abortReason = 'not_found'; return; }
+    if (isRoomExpired(r)) { abortReason = 'expired'; return null; }
+    if (r.hostConnected === false) { abortReason = 'host_gone'; return; }
+    const players = r.players || {};
+    if (players[nick]) { abortReason = 'nick_taken'; return; }
+    if (Object.keys(players).length >= MAX_PLAYERS) { abortReason = 'full'; return; }
+    abortReason = null;
+    const next = { ...r, players: { ...players, [nick]: { isHost: false, joinedAt } } };
+    // ゲーム中の入室は turnOrder 末尾に追加（説明役の順番はそのぶん後ろに回る）
+    if (r.status !== 'waiting' && r.status !== 'finished') {
+      const turnOrder = Array.isArray(r.turnOrder) ? r.turnOrder : [];
+      if (!turnOrder.includes(nick)) next.turnOrder = [...turnOrder, nick];
+    }
+    return next;
+  });
+
+  if (!committed) {
+    const msgs = {
+      not_found: 'ルームが みつからないよ。コードを たしかめてね',
+      expired: 'このルームは おわったみたい',
+      host_gone: 'ホストが いま つながっていないみたい',
+      nick_taken: 'そのなまえは つかわれているよ。すこし かえてみてね',
+      full: 'このルームは いっぱいだよ',
+    };
+    showError('join-error', msgs[abortReason] || 'はいれなかったよ。もういちど ためしてね');
+    return;
+  }
+
+  state.nickname = nick;
+  state.roomCode = code;
+  state.role = 'guest';
+  state.roomRef = roomRef;
+
+  roomRef.child(`players/${nick}`).onDisconnect().remove();
+  saveSession();
+  startRoomListener();
+}
+
+/* ════════════════════════════════════════════════
+   ゲーム開始 / ラウンド進行
+   ════════════════════════════════════════════════ */
+function orderedPlayers(players, host) {
+  const entries = Object.entries(players || {});
+  entries.sort((a, b) => {
+    const ah = a[0] === host ? 0 : 1;
+    const bh = b[0] === host ? 0 : 1;
+    if (ah !== bh) return ah - bh;
+    const aj = Number(a[1] && a[1].joinedAt) || 0;
+    const bj = Number(b[1] && b[1].joinedAt) || 0;
+    if (aj !== bj) return aj - bj;
+    return a[0] < b[0] ? -1 : 1;
+  });
+  return entries.map(e => e[0]);
+}
+
+// turnIndex より後ろで、いま接続している人を探す（1しゅうの中だけを見る）
+function findNextIndex(turnOrder, players, from) {
+  for (let i = from + 1; i < turnOrder.length; i += 1) {
+    if (players[turnOrder[i]]) return i;
+  }
+  return -1;
+}
+
+async function startGame() {
+  if (state.role !== 'host') return;
+  const roll = Math.random();
+  const perm = shuffledIndices(MAX_CHOICES);
+  let abortReason = null;
+  const { committed } = await state.roomRef.transaction(room => {
+    if (!room) { abortReason = 'not_found'; return; }
+    if (room.status !== 'waiting') { abortReason = 'bad_status'; return; }
+    const names = orderedPlayers(room.players, room.host);
+    if (names.length < MIN_PLAYERS) { abortReason = 'too_few'; return; }
+    const pack = getPack(room.packId);
+    if (!pack) { abortReason = 'no_pack'; return; }
+    const picked = pickItem(pack, [], roll);
+    if (!picked) { abortReason = 'no_pack'; return; }
+    abortReason = null;
+    return {
+      ...room,
+      turnOrder: names,
+      turnIndex: 0,
+      usedItems: picked.usedItems,
+      history: null,
+      score: { clear: 0, total: 0 },
+      status: 'explain',
+      round: buildRound(1, names[0], picked.index, pack, perm),
+    };
+  });
+  if (committed) return;
+  if (abortReason === 'too_few') showMsg(`${MIN_PLAYERS}人いじょうで はじめられるよ`);
+  else if (abortReason === 'no_pack') showMsg('おだいの データが よみこめなかったよ');
+  else showMsg('はじめられなかったよ。もういちど ためしてね');
+}
+
+// 説明役だけが押せる観点チップ（onclick からは encodeURIComponent 済みの値が来る）
+function pickAspect(encoded) {
+  setAspect(decodeURIComponent(encoded));
+}
+
+async function setAspect(aspect) {
+  await state.roomRef.transaction(room => {
+    if (!room || room.status !== 'explain') return;
+    const round = room.round || {};
+    if (round.explainer !== state.nickname) return;
+    return { ...room, round: { ...round, aspect: round.aspect === aspect ? null : aspect } };
+  }).catch(() => {});
+}
+
+// おだいを かえる（1ラウンド1回まで・説明役のみ）
+async function changeItem() {
+  const roll = Math.random();
+  const perm = shuffledIndices(MAX_CHOICES);
+  let reason = null;
+  const { committed } = await state.roomRef.transaction(room => {
+    if (!room || room.status !== 'explain') { reason = 'bad'; return; }
+    const round = room.round || {};
+    if (round.explainer !== state.nickname) { reason = 'bad'; return; }
+    if (round.changed === true) { reason = 'used'; return; }
+    const pack = getPack(room.packId);
+    if (!pack) { reason = 'bad'; return; }
+    const picked = pickItem(pack, room.usedItems, roll);
+    if (!picked) { reason = 'bad'; return; }
+    reason = null;
+    const next = buildRound(round.number, round.explainer, picked.index, pack, perm);
+    next.changed = true;
+    return { ...room, usedItems: picked.usedItems, round: next };
+  }).catch(() => ({ committed: false }));
+  if (!committed && reason === 'used') showMsg('おだいを かえられるのは 1かいだけだよ');
+}
+
+// せつめいやくを パスする（本人）/ せつめいやくを つぎの人に（ホスト）
+// おだいも あたらしく引き直す（前の説明役は こたえを 見てしまっているため）
+async function passExplainer() {
+  const roll = Math.random();
+  const perm = shuffledIndices(MAX_CHOICES);
+  const expectTurnIndex = state.turnIndex;
+  let reason = null;
+  const { committed } = await state.roomRef.transaction(room => {
+    if (!room || room.status !== 'explain') { reason = 'bad'; return; }
+    const round = room.round || {};
+    if (state.role !== 'host' && round.explainer !== state.nickname) { reason = 'bad'; return; }
+    const turnOrder = Array.isArray(room.turnOrder) ? room.turnOrder : [];
+    const players = room.players || {};
+    const from = Number.isInteger(room.turnIndex) ? room.turnIndex : 0;
+    // 連打・遅延クリックが つぎの人まで飛ばしてしまうのを防ぐ世代ガード
+    if (expectTurnIndex != null && from !== expectTurnIndex) { reason = 'bad'; return; }
+    const nextIdx = findNextIndex(turnOrder, players, from);
+    if (nextIdx < 0) { reason = 'no_next'; return; }
+    const pack = getPack(room.packId);
+    if (!pack) { reason = 'bad'; return; }
+    const picked = pickItem(pack, room.usedItems, roll);
+    if (!picked) { reason = 'bad'; return; }
+    reason = null;
+    return {
+      ...room,
+      turnIndex: nextIdx,
+      usedItems: picked.usedItems,
+      round: buildRound(round.number, turnOrder[nextIdx], picked.index, pack, perm),
+    };
+  }).catch(() => ({ committed: false }));
+  if (!committed && reason === 'no_next') {
+    showMsg('つぎの せつめいやくが いないよ。「せいかい発表」か「ここまでにする」を つかってね');
+  }
+}
+
+// ホスト: せいかい発表（explain → reveal）
+async function revealNow() {
+  if (state.role !== 'host') return;
+  await state.roomRef.transaction(room => {
+    if (!room || room.status !== 'explain') return;
+    return { ...room, status: 'reveal', round: { ...(room.round || {}), result: null } };
+  }).catch(() => {});
+}
+
+// ホスト: おだいを スキップ（reveal を経ずに つぎのラウンドへ・score には数えない）
+async function hostSkipItem() {
+  await advanceRound('skip');
+}
+
+// ホスト: つたわった！/ つぎへ
+async function judgeRound(clear) {
+  await advanceRound(clear ? 'clear' : 'nope');
+}
+
+// history 記録 → score 更新 → つぎのラウンド（1しゅう終わりなら reveal に留まる）
+async function advanceRound(result) {
+  if (state.role !== 'host') return;
+  const roll = Math.random();
+  const perm = shuffledIndices(MAX_CHOICES);
+  const expectNumber = state.roundNumber;
+  await state.roomRef.transaction(room => {
+    if (!room) return;
+    const round = room.round || {};
+    // 二重押し・フェーズずれの防御
+    if (result === 'skip') {
+      if (room.status !== 'explain') return;
+    } else if (room.status !== 'reveal' || round.result != null) {
+      return;
+    }
+    // 押した時点のラウンドと一致しなければ中止（連打で2ラウンド飛ぶのを防ぐ）
+    if (expectNumber != null && Number(round.number) !== Number(expectNumber)) return;
+
+    const history = { ...(room.history || {}) };
+    history[round.number || 1] = {
+      itemIndex: Number.isInteger(round.itemIndex) ? round.itemIndex : null,
+      explainer: round.explainer || null,
+      answers: round.answers || null,
+      result,
+    };
+    const score = {
+      clear: Number(room.score && room.score.clear) || 0,
+      total: Number(room.score && room.score.total) || 0,
+    };
+    if (result === 'clear') { score.clear += 1; score.total += 1; }
+    else if (result === 'nope') { score.total += 1; }
+
+    const turnOrder = Array.isArray(room.turnOrder) ? room.turnOrder : [];
+    const players = room.players || {};
+    const from = Number.isInteger(room.turnIndex) ? room.turnIndex : 0;
+    const nextIdx = findNextIndex(turnOrder, players, from);
+    const pack = getPack(room.packId);
+    const picked = (nextIdx >= 0 && pack) ? pickItem(pack, room.usedItems, roll) : null;
+
+    // 1しゅう おわり（or お題が引けない）→ reveal に留まり、ホストが「もう1しゅう / おわる」を選ぶ
+    if (!picked) {
+      return { ...room, history, score, status: 'reveal', round: { ...round, result } };
+    }
+    return {
+      ...room,
+      history,
+      score,
+      turnIndex: nextIdx,
+      usedItems: picked.usedItems,
+      status: 'explain',
+      round: buildRound((Number(round.number) || 1) + 1, turnOrder[nextIdx], picked.index, pack, perm),
+    };
+  }).catch(() => {});
+}
+
+// ホスト: もう1しゅう（いま接続している人で turnOrder を組み直す）
+async function nextLap() {
+  if (state.role !== 'host') return;
+  const roll = Math.random();
+  const perm = shuffledIndices(MAX_CHOICES);
+  let reason = null;
+  const { committed } = await state.roomRef.transaction(room => {
+    if (!room || room.status !== 'reveal') { reason = 'bad'; return; }
+    const round = room.round || {};
+    if (round.result == null) { reason = 'bad'; return; }
+    const players = room.players || {};
+    const prev = Array.isArray(room.turnOrder) ? room.turnOrder : [];
+    const kept = prev.filter(n => players[n]);
+    const added = Object.keys(players).filter(n => !kept.includes(n));
+    const turnOrder = [...kept, ...added];
+    if (turnOrder.length < MIN_PLAYERS) { reason = 'too_few'; return; }
+    const pack = getPack(room.packId);
+    if (!pack) { reason = 'bad'; return; }
+    const picked = pickItem(pack, room.usedItems, roll);
+    if (!picked) { reason = 'bad'; return; }
+    reason = null;
+    return {
+      ...room,
+      turnOrder,
+      turnIndex: 0,
+      usedItems: picked.usedItems,
+      status: 'explain',
+      round: buildRound((Number(round.number) || 1) + 1, turnOrder[0], picked.index, pack, perm),
+    };
+  }).catch(() => ({ committed: false }));
+  if (!committed) {
+    showMsg(reason === 'too_few' ? `${MIN_PLAYERS}人いじょう いないと つづけられないよ` : 'つづけられなかったよ');
+  }
+}
+
+// ホスト: ここまでにする / おわる
+async function hostFinish() {
+  if (state.role !== 'host') return;
+  await state.roomRef.transaction(room => {
+    if (!room || room.status === 'finished') return;
+    return { ...room, status: 'finished' };
+  }).catch(() => {});
+}
+
+/* ════════════════════════════════════════════════
+   回答（自分のパスへの set。競合なし・何度でも上書き可）
+   ════════════════════════════════════════════════ */
+async function sendAnswer(text) {
+  const t = String(text == null ? '' : text).trim();
+  if (!t) { showError('listener-error', 'こたえを かいてね'); return; }
+  hideError('listener-error');
+  try {
+    await state.roomRef.child(`round/answers/${state.nickname}`).set({
+      text: t,
+      at: firebase.database.ServerValue.TIMESTAMP,
+    });
+  } catch {
+    showMsg('おくれなかったよ。もういちど ためしてね');
+  }
+}
+
+function submitTypedAnswer() {
+  const input = document.getElementById('listener-input');
+  sendAnswer(input.value);
+}
+
+function chooseAnswer(encoded) {
+  sendAnswer(decodeURIComponent(encoded));
+}
+
+/* ════════════════════════════════════════════════
+   ルームリスナー
+   ════════════════════════════════════════════════ */
+function startRoomListener() {
+  state.roomRef.on('value', snap => {
+    if (!snap.exists()) {
+      clearSession();
+      showMsg('ルームは おわったよ', false);
+      leaveCleanup();
+      showScreen('top');
+      return;
+    }
+    handleRoom(snap.val());
+  });
+}
+
+function handleRoom(room) {
+  const players = room.players || {};
+
+  // ゲスト: ホスト切断の検知と TTL 掃除
+  // finished 中は対象外（ふりかえりを読む時間を守るため。オーバーレイも自動削除も出さない）
+  if (state.role === 'guest' && room.status !== 'finished') {
+    const hostGone = room.hostConnected === false;
+    showOverlay('host-off-overlay', hostGone);
+    if (hostGone) {
+      if (isRoomExpired(room)) {
+        clearTimeout(state.orphanTimer);
+        state.orphanTimer = null;
+        if (state.roomRef) state.roomRef.remove().catch(() => {});
+      } else if (!state.orphanTimer) {
+        const dt = getHostDisconnectedAt(room);
+        const delay = dt == null ? ORPHAN_TTL_MS : Math.max(0, dt + ORPHAN_TTL_MS - serverNow());
+        state.orphanTimer = setTimeout(() => {
+          state.orphanTimer = null;
+          if (state.roomRef) state.roomRef.remove().catch(() => {});
+        }, delay);
+      }
+    } else {
+      clearTimeout(state.orphanTimer);
+      state.orphanTimer = null;
+    }
+  } else if (state.role === 'guest') {
+    showOverlay('host-off-overlay', false);
+    clearTimeout(state.orphanTimer);
+    state.orphanTimer = null;
+  }
+
+  // ホスト: 自動再接続で戻ったときの復帰
+  if (state.role === 'host' && room.hostConnected === false) {
+    state.roomRef.update({ hostConnected: true, hostDisconnectedAt: null }).catch(() => {});
+    state.roomRef.onDisconnect().update({
+      hostConnected: false,
+      hostDisconnectedAt: firebase.database.ServerValue.TIMESTAMP,
+    });
+  }
+
+  switch (room.status) {
+    case 'waiting':  handleWaiting(room, players);  break;
+    case 'explain':  handleExplain(room, players);  break;
+    case 'reveal':   handleReveal(room, players);   break;
+    case 'finished': handleFinished(room);          break;
+    default:
+      // 想定外の status は安全な待機画面へ（default-deny）
+      if (state.currentScreen !== 'pending') showScreen('pending');
+      break;
+  }
+}
+
+/* ════════════════════════════════════════════════
+   status ハンドラー
+   ════════════════════════════════════════════════ */
+function handleWaiting(room, players) {
+  if (state.currentScreen !== 'waiting') showScreen('waiting');
+  setText('waiting-code', state.roomCode || '');
+  renderPlayerList('waiting-players', players, room.host);
+
+  const pack = getPack(room.packId);
+  setText('waiting-pack', pack ? `きょうの おだい: ${pack.title || pack.id}` : '');
+
+  const isHost = state.role === 'host';
+  setHidden('waiting-host', !isHost);
+  if (!isHost) return;
+
+  const count = Object.keys(players).length;
+  const btn = document.getElementById('btn-start');
+  btn.disabled = count < MIN_PLAYERS;
+  setText('waiting-min', count < MIN_PLAYERS
+    ? `あと${MIN_PLAYERS - count}人で はじめられるよ`
+    : `${count}人 さんかちゅう`);
+}
+
+// ── explain ──
+// 秘密の出し分け: おだい・言っちゃダメことばを DOM に書くのは
+// 「説明役本人」と「ホスト」だけ。それ以外の画面には title / aria-label も含め一切出さない
+function handleExplain(room, players) {
+  if (state.currentScreen !== 'round') showScreen('round');
+
+  const round = room.round || {};
+  const pack = getPack(room.packId);
+  const item = getItem(pack, round.itemIndex);
+  const isExplainer = !!state.nickname && state.nickname === round.explainer;
+  const isHost = state.role === 'host';
+  const canSeeTopic = isExplainer || isHost;
+  const isListener = !isExplainer && !isHost;
+
+  // ラウンドが変わったら入力欄をリセット
+  const key = `${round.number}:${round.itemIndex}`;
+  if (state.roundKey !== key) {
+    state.roundKey = key;
+    const input = document.getElementById('listener-input');
+    if (input) input.value = '';
+    hideError('listener-error');
+  }
+
+  const turnOrder = Array.isArray(room.turnOrder) ? room.turnOrder : [];
+  const turnIndex = Number.isInteger(room.turnIndex) ? room.turnIndex : 0;
+  state.roundNumber = Number(round.number) || 1;
+  state.turnIndex = turnIndex;
+  setText('round-count', `おだい ${round.number || 1}こめ ・ ${Math.min(turnIndex + 1, turnOrder.length || 1)}人め / ${turnOrder.length || 1}人`);
+  setText('round-who', isExplainer ? 'あなたが せつめいする ばん' : `${round.explainer || ''}さんが せつめいちゅう`);
+
+  // 観点チップの共有表示（全員）
+  const aspect = typeof round.aspect === 'string' ? round.aspect : null;
+  setHidden('round-aspect', !aspect);
+  setText('round-aspect-text', aspect ? `いま「${aspect}」の はなし` : '');
+
+  // ── 説明役ビュー ──
+  setHidden('round-explainer', !isExplainer);
+  setText('explain-topic', isExplainer && item ? item.answer : '');
+  const ngBox = document.getElementById('explain-ng');
+  ngBox.innerHTML = (isExplainer && item) ? ngListHtml(item) : '';
+  const chipsBox = document.getElementById('explain-chips');
+  chipsBox.innerHTML = isExplainer ? chipsHtml(item, aspect) : '';
+  if (isExplainer) {
+    const used = round.changed === true;
+    document.getElementById('btn-change-item').disabled = used;
+    setText('explain-change-note', used
+      ? 'おだいを かえるのは 1かいだけ。もう つかったよ'
+      : 'しらない ことばだったら かえてOK。1かいだけ つかえるよ');
+  }
+
+  // ── ホストの進行用のぞき見（説明役でないとき）──
+  const showPeek = isHost && !isExplainer;
+  setHidden('round-hostpeek', !showPeek);
+  setText('hostpeek-topic', showPeek && item ? item.answer : '');
+  setText('hostpeek-ng', showPeek && item && Array.isArray(item.ng)
+    ? `言っちゃダメことば: ${item.ng.join(' / ')}`
+    : '');
+
+  // ── 聞き手ビュー ──
+  setHidden('round-listener', !isListener);
+  const myAnswer = (round.answers || {})[state.nickname];
+  if (isListener) {
+    const choices = Array.isArray(item && item.choices) ? item.choices : [];
+    const showChoices = room.showChoices !== false && choices.length > 0;
+    setHidden('listener-choices-card', !showChoices);
+    document.getElementById('listener-choices').innerHTML =
+      showChoices ? choicesHtml(choices, round.choiceOrder, myAnswer && myAnswer.text) : '';
+    setHidden('listener-mine', !(myAnswer && myAnswer.text));
+    setText('listener-mine-text', myAnswer && myAnswer.text ? myAnswer.text : '');
+  } else {
+    document.getElementById('listener-choices').innerHTML = '';
+    setHidden('listener-mine', true);
+    setText('listener-mine-text', '');
+  }
+
+  // ── 回答の見え方: 全文は説明役とホストだけ。ほかは人数だけ ──
+  const answers = answerEntries(round);
+  setHidden('round-answers-card', !canSeeTopic);
+  document.getElementById('round-answers').innerHTML = canSeeTopic ? answersHtml(answers) : '';
+  setHidden('round-answers-count', canSeeTopic);
+  setText('round-answers-count', canSeeTopic ? '' : `${answers.length}人が こたえた`);
+
+  // ── ホスト操作帯 ──
+  setHidden('round-hostbar', !isHost);
+  const goneEl = document.getElementById('round-explainer-gone');
+  const explainerGone = !!round.explainer && !players[round.explainer];
+  goneEl.hidden = !(isHost && explainerGone);
+  goneEl.textContent = (isHost && explainerGone)
+    ? `${round.explainer}さんの つうしんが きれているみたい。「せつめいやくを つぎの人に」か「おだいを スキップ」で すすめられるよ`
+    : '';
+}
+
+// ── reveal ──
+function handleReveal(room, players) {
+  if (state.currentScreen !== 'reveal') showScreen('reveal');
+
+  const round = room.round || {};
+  const pack = getPack(room.packId);
+  const item = getItem(pack, round.itemIndex);
+  const isHost = state.role === 'host';
+  const lapDone = round.result != null;
+  state.roundNumber = Number(round.number) || 1;
+  state.turnIndex = Number.isInteger(room.turnIndex) ? room.turnIndex : 0;
+
+  const turnOrder = Array.isArray(room.turnOrder) ? room.turnOrder : [];
+  setText('reveal-count', `おだい ${round.number || 1}こめ / ぜんぶで ${turnOrder.length || 1}人`);
+  setText('reveal-who', `せつめいやく: ${round.explainer || ''}さん`);
+  setText('reveal-topic', item ? item.answer : '—');
+  document.getElementById('reveal-ng').innerHTML = item ? ngListHtml(item) : '';
+  document.getElementById('reveal-answers').innerHTML = answersHtml(answerEntries(round));
+  setHidden('reveal-skip-note', round.result !== 'skip');
+
+  setHidden('reveal-judge', !(isHost && !lapDone));
+  setHidden('reveal-lap', !(isHost && lapDone));
+  setHidden('reveal-wait', isHost);
+}
+
+// ── finished ──
+// ふりかえりを見る時間を守るため、この画面では自動削除しない（意図的な例外）
+function handleFinished(room) {
+  if (state.currentScreen !== 'final') showScreen('final');
+
+  const clear = Number(room.score && room.score.clear) || 0;
+  const total = Number(room.score && room.score.total) || 0;
+  setText('final-score', `みんなで ${clear}こ つたわった！`);
+  setText('final-sub', `やった おだい ${total}こ`);
+
+  const pack = getPack(room.packId);
+  const list = historyEntries(room.history);
+  const box = document.getElementById('final-history');
+  if (!list.length) {
+    box.innerHTML = '<p class="tw-empty">まだ おだいを やっていないよ。</p>';
+    return;
+  }
+  const html = list.map(({ number, entry }) => {
+    const item = getItem(pack, entry.itemIndex);
+    const topic = item ? item.answer : '—';
+    let mark = '<span class="tw-result-nope"><span class="material-symbols-rounded" aria-hidden="true">skip_next</span>スキップ</span>';
+    if (entry.result === 'clear') {
+      mark = '<span class="tw-result-clear"><span class="material-symbols-rounded" aria-hidden="true">check_circle</span>つたわった</span>';
+    } else if (entry.result === 'nope') {
+      mark = '<span class="tw-result-nope"><span class="material-symbols-rounded" aria-hidden="true">schedule</span>またこんど</span>';
+    }
+    return '<div class="tw-history-item">'
+      + '<div class="tw-history-item__no">' + esc(number) + 'こめ</div>'
+      + '<div class="tw-history-item__topic">' + esc(topic) + '</div>'
+      + '<div class="tw-history-item__detail"><span>せつめいやく: ' + esc(entry.explainer || '—') + '</span>'
+      + mark + '</div></div>';
+  }).join('');
+  box.innerHTML = html;
+}
+
+/* ════════════════════════════════════════════════
+   描画ヘルパー
+   ════════════════════════════════════════════════ */
+function renderPlayerList(id, players, host) {
+  const ul = document.getElementById(id);
+  if (!ul) return;
+  const html = Object.keys(players || {}).map(nick => {
+    const hostTag = nick === host ? '<span class="player-tag">ホスト</span>' : '';
+    const meTag = nick === state.nickname ? '<span class="player-tag me">あなた</span>' : '';
+    return '<li class="player-item"><div class="player-name">' + esc(nick) + hostTag + meTag + '</div></li>';
+  }).join('');
+  ul.innerHTML = html;
+}
+
+function ngListHtml(item) {
+  const ng = Array.isArray(item && item.ng) ? item.ng : [];
+  return ng.map(w => '<li class="tw-ng__item">' + esc(w) + '</li>').join('');
+}
+
+function chipsHtml(item, activeAspect) {
+  return chipOrder(item).map(a => {
+    const active = a === activeAspect;
+    const icon = active
+      ? '<span class="material-symbols-rounded" aria-hidden="true">check</span>'
+      : '';
+    return '<button type="button" class="tw-chip' + (active ? ' is-active' : '') + '"'
+      + ' aria-pressed="' + (active ? 'true' : 'false') + '"'
+      + ' onclick="pickAspect(\'' + encodeURIComponent(a) + '\')">'
+      + icon + esc(a) + '</button>';
+  }).join('');
+}
+
+function choicesHtml(choices, choiceOrder, myText) {
+  const order = Array.isArray(choiceOrder) && choiceOrder.length
+    ? choiceOrder
+    : choices.map((_, i) => i);
+  const valid = order.filter(i => Number.isInteger(i) && i >= 0 && i < choices.length);
+  return valid.map((idx, pos) => {
+    const textValue = String(choices[idx]);
+    const mine = myText === textValue;
+    const mark = mine
+      ? '<span class="tw-choice__mark"><span class="material-symbols-rounded" aria-hidden="true">check_circle</span></span>'
+      : '';
+    return '<button type="button" class="tw-choice' + (mine ? ' is-mine' : '') + '"'
+      + ' aria-pressed="' + (mine ? 'true' : 'false') + '"'
+      + ' aria-label="' + esc((NUMBERS[pos] ? (pos + 1) + 'ばんの こたえ: ' : '') + textValue) + '"'
+      + ' onclick="chooseAnswer(\'' + encodeURIComponent(textValue) + '\')">'
+      + '<span class="tw-choice__num" aria-hidden="true">' + esc(NUMBERS[pos] || (pos + 1)) + '</span>'
+      + '<span class="tw-choice__text">' + esc(textValue) + '</span>' + mark + '</button>';
+  }).join('');
+}
+
+function answerEntries(round) {
+  const answers = (round && round.answers) || {};
+  return Object.entries(answers)
+    .filter(([, a]) => a && typeof a.text === 'string' && a.text !== '')
+    .sort((a, b) => (Number(a[1].at) || 0) - (Number(b[1].at) || 0));
+}
+
+function answersHtml(entries) {
+  if (!entries.length) return '<p class="tw-empty">まだ だれも こたえていないよ。</p>';
+  return entries.map(([nick, a]) =>
+    '<div class="tw-answer-item"><span class="tw-answer-item__nick">' + esc(nick) + '</span>'
+    + '<span class="tw-answer-item__text">' + esc(a.text) + '</span></div>').join('');
+}
+
+// history は RTDB の都合で配列にもオブジェクトにもなる。どちらでも順に並べる
+function historyEntries(history) {
+  if (!history) return [];
+  const out = [];
+  Object.keys(history).forEach(k => {
+    const n = Number(k);
+    const entry = history[k];
+    if (!entry || !Number.isFinite(n)) return;
+    out.push({ number: n, entry });
+  });
+  out.sort((a, b) => a.number - b.number);
+  return out;
+}
+
+/* ════════════════════════════════════════════════
+   コピー
+   ════════════════════════════════════════════════ */
+function copyCode() {
+  if (!state.roomCode) return;
+  navigator.clipboard.writeText(state.roomCode)
+    .then(() => showMsg('コピーしたよ', false))
+    .catch(() => showMsg('コピーできなかったよ。じぶんで うつしてね'));
+}
+
+function copyInvite() {
+  if (!state.roomCode) return;
+  const url = `${location.origin}${location.pathname}`;
+  const text = `とおまわしクイズ で あそぼう\n${url}\nルームコード: ${state.roomCode}`;
+  navigator.clipboard.writeText(text)
+    .then(() => showMsg('あんないを コピーしたよ', false))
+    .catch(() => showMsg('コピーできなかったよ。じぶんで うつしてね'));
+}
+
+/* ════════════════════════════════════════════════
+   退出・クリーンアップ
+   ════════════════════════════════════════════════ */
+function leaveCleanup() {
+  clearTimeout(state.orphanTimer);
+  if (state.roomRef) {
+    RoomkRTDB.cancelRoomOnDisconnect(state.roomRef);
+    state.roomRef.off();
+  }
+  Object.assign(state, {
+    role: null, nickname: null, roomCode: null, roomRef: null,
+    orphanTimer: null, roundKey: null, roundNumber: null, turnIndex: null,
+  });
+  showOverlay('host-off-overlay', false);
+  showOverlay('reconnect-overlay', false);
+}
+
+async function leaveGame() {
+  clearSession();
+  if (state.roomRef) {
+    // remove の前に予約済み onDisconnect を取り消す（ゴースト room の再生成防止）
+    await RoomkRTDB.cancelRoomOnDisconnect(state.roomRef);
+    if (state.role === 'host') {
+      await state.roomRef.remove().catch(() => {});
+    } else if (state.nickname) {
+      await state.roomRef.child(`players/${state.nickname}`).remove().catch(() => {});
+    }
+  }
+  leaveCleanup();
+  showScreen('top');
+}
+
+/* ════════════════════════════════════════════════
+   再接続（sessionStorage）
+   ════════════════════════════════════════════════ */
+async function tryReconnect() {
+  const session = loadSession();
+  if (!session || !session.roomCode || !session.nickname) return false;
+  const { nickname, roomCode, role } = session;
+  showOverlay('reconnect-overlay', true);
+
+  try {
+    await authReady;
+    const ref = db.ref(`${DB_PREFIX}/${roomCode}`);
+    const snap = await ref.get();
+    if (!snap.exists()) { clearSession(); showOverlay('reconnect-overlay', false); return false; }
+    const preRoom = snap.val();
+    if (isRoomExpired(preRoom)) {
+      await ref.remove().catch(() => {});
+      clearSession(); showOverlay('reconnect-overlay', false); return false;
+    }
+
+    const joinedAt = serverNow();
+    // ローカルキャッシュ null 対策で preRoom を代用。ホストは復帰、ゲストは自分の presence を戻す
+    const { committed } = await ref.transaction(room => {
+      const r = room || preRoom;
+      if (!r || !r.status) return;
+      if (isRoomExpired(r)) return null;
+      if (role === 'host') {
+        if (r.host !== nickname) return;
+        return { ...r, hostConnected: true, hostDisconnectedAt: null };
+      }
+      const players = r.players || {};
+      if (players[nickname]) return r;
+      if (Object.keys(players).length >= MAX_PLAYERS) return;
+      const next = { ...r, players: { ...players, [nickname]: { isHost: false, joinedAt } } };
+      if (r.status !== 'waiting' && r.status !== 'finished') {
+        const turnOrder = Array.isArray(r.turnOrder) ? r.turnOrder : [];
+        if (!turnOrder.includes(nickname)) next.turnOrder = [...turnOrder, nickname];
+      }
+      return next;
+    });
+    if (!committed) { clearSession(); showOverlay('reconnect-overlay', false); return false; }
+
+    state.nickname = nickname;
+    state.roomCode = roomCode;
+    state.role = role;
+    state.roomRef = ref;
+
+    if (role === 'host') {
+      ref.onDisconnect().update({
+        hostConnected: false,
+        hostDisconnectedAt: firebase.database.ServerValue.TIMESTAMP,
+      });
+    } else {
+      ref.child(`players/${nickname}`).onDisconnect().remove();
+    }
+
+    showOverlay('reconnect-overlay', false);
+    startRoomListener();
+    return true;
+  } catch {
+    clearSession();
+    showOverlay('reconnect-overlay', false);
+    return false;
+  }
+}
+
+/* ════════════════════════════════════════════════
+   初期化
+   ════════════════════════════════════════════════ */
+(function init() {
+  tryReconnect().then(ok => { if (!ok) showScreen('top'); });
+}());
+</script>
+<script src="../shared/js/stats.js?v=1" defer></script>
+<script src="../shared/js/howto.js"></script>
+<script>
+  RoomkHowto.init({
+    title: 'あそびかた',
+    lead: 'ひみつの おだいを、「言っちゃダメことば」を つかわずに せつめいして、みんなに あててもらう ゲーム。せつめいは こえで OK。2人からあそべる。',
+    sections: [
+      {
+        heading: 'はじめかた',
+        items: [
+          'ホストが「ルームをつくる」を おして、コードを みんなに つたえる',
+          'ほかの人は「ルームに はいる」から コードを 入れて「はいる」',
+          '2人いじょう そろったら、ホストが「はじめる」を おす',
+        ],
+      },
+      {
+        heading: 'せつめいやくの ばん',
+        items: [
+          '自分の画面にだけ おだいが 出る。「言っちゃダメことば」は つかわずに せつめいする',
+          '「ばしょ」「かたち」などを おすと、みんなの画面に「いま『ばしょ』の はなし」と 出る',
+          'しらない ことばだったら「おだいを かえる」（1かいだけ）',
+          'やめたいときは「せつめいやくを パスする」でOK',
+        ],
+      },
+      {
+        heading: 'きく人の ばん',
+        items: [
+          'こたえの こうほ ①②③ を おすと、それが 自分の こたえになる',
+          '自分の ことばで かいて「こたえを おくる」もOK。なんども かきなおせる',
+          'こたえなくても だいじょうぶ。こえや チャットで そうだんしてもOK',
+        ],
+      },
+      {
+        heading: 'おわりかた',
+        text: 'ホストが「せいかい発表」を おすと、おだいと みんなの こたえが 出る。みんなが 1かいずつ せつめいやくを やったら、「もう1しゅう」か「おわる」を ホストが えらぶ。さいごに ふりかえりが 見られる。',
+      },
+    ],
+  });
+</script>
+</body>
+</html>
