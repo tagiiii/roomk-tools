@@ -1,5 +1,5 @@
 /* =============================================
-   コトバの技クイズ（kotoba-waza）
+   コトバのテーマクイズ（kotoba-theme）
    接頭辞: .kw-（BEM）
    色・角丸・余白は design-system.css のトークンを使う
    ============================================= */
@@ -157,7 +157,7 @@
   flex-shrink: 0;
 }
 
-/* ── TOP：技のいちらんからえらぶ（副の入口・折りたたみ） ── */
+/* ── TOP：テーマのいちらんからえらぶ（副の入口・折りたたみ） ── */
 .kw-fold {
   margin-top: 24px;
   padding-top: 20px;
@@ -208,7 +208,7 @@
   color: var(--color-muted);
 }
 
-/* ── 技えらび ── */
+/* ── テーマえらび ── */
 .kw-groups {
   margin-top: 18px;
   display: flex;
@@ -279,7 +279,7 @@
   color: var(--color-muted);
 }
 
-/* ── ゲーム別の技えらび（逆引き画面） ── */
+/* ── ゲーム別のテーマえらび（逆引き画面） ── */
 .kw-gamehead {
   padding: 26px 28px;
   text-align: center;

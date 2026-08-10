@@ -186,7 +186,7 @@ const COVERED_APPS = [
   'jitsuwa-game', 'do-mannaka', 'ishin-denshin', 'word-wolf', 'tatoe-narabe', 'magire-eshi',
   'ikutsu-ieru', 'pittari-meter', 'uso-jisho', 'value-card', 'koedake-theater', 'kyoumi-sugoroku',
   // コトバであそぼ！第2期（2026-08-09〜10）で追加した3アプリ
-  'kotoba-pair', 'toomawashi', 'kotoba-waza',
+  'kotoba-pair', 'toomawashi', 'kotoba-theme',
 ];
 
 // 数えられるコンテンツを持たないため重複検査の対象外にするアプリ（意図的除外）。
@@ -199,7 +199,7 @@ const NO_CONTENT_APPS = [
 // apps/ 配下に存在するがアプリではないディレクトリ。
 // ito / iisen-show / hint-de-pinto / codenames / sukina-map は旧URLからの自動移動スタブ（コンテンツなし）。
 // guide はスタッフ向け「ゲームえらび早見表」ページ（お題集を持たない静的な案内ページ）。
-const NON_APP_DIRS = ['shared', 'ito', 'iisen-show', 'hint-de-pinto', 'codenames', 'sukina-map', 'guide'];
+const NON_APP_DIRS = ['shared', 'ito', 'iisen-show', 'hint-de-pinto', 'codenames', 'sukina-map', 'kotoba-waza', 'guide'];
 
 // 意図的重複 allowlist（C-4 で決着済み）:
 //   異なるゲーム間で日常語彙（「カレー」「うさぎ」など）が重複するのは正当。
@@ -511,10 +511,10 @@ function collectEntries() {
     throw new Error(`toomawashi packs.js の構造エラー:\n  ${twProblems.join('\n  ')}`);
   }
 
-  // kotoba-waza: waza.js（window.KotobaWaza = { groups, wazas }）。技クイズの問題文を
+  // kotoba-theme: waza.js（window.KotobaWaza = { groups, wazas }）。テーマクイズの問題文を
   //   重複検査に載せる（quiz と同型: question=問題文・answer=正解の選択肢テキスト）。
   //   catch・games の橋渡し文は検査対象外。構造検査（choices 3件・answerIndex 範囲）は fail-fast。
-  const wazaData = evalLiteral(read('apps/kotoba-waza/waza.js'), /window\.KotobaWaza\s*=\s*\{/m, '{', 'apps/kotoba-waza/waza.js') || {};
+  const wazaData = evalLiteral(read('apps/kotoba-theme/waza.js'), /window\.KotobaWaza\s*=\s*\{/m, '{', 'apps/kotoba-theme/waza.js') || {};
   const wazaProblems = [];
   for (const waza of wazaData.wazas || []) {
     (waza.questions || []).forEach((q, index) => {
@@ -523,15 +523,15 @@ function collectEntries() {
       if (!(Number.isInteger(q.answerIndex) && q.answerIndex >= 0 && q.answerIndex < (q.choices || []).length)) {
         wazaProblems.push(`${label}: answerIndex が範囲外`);
       }
-      rows.push(entry('kotoba-waza', waza.id, q.q, {
-        id: `kotoba-waza:${waza.id}:${index}`,
+      rows.push(entry('kotoba-theme', waza.id, q.q, {
+        id: `kotoba-theme:${waza.id}:${index}`,
         question: q.q,
         answer: (q.choices || [])[q.answerIndex] ?? '',
       }));
     });
   }
   if (wazaProblems.length > 0) {
-    throw new Error(`kotoba-waza waza.js の構造エラー:\n  ${wazaProblems.join('\n  ')}`);
+    throw new Error(`kotoba-theme waza.js の構造エラー:\n  ${wazaProblems.join('\n  ')}`);
   }
 
   return rows.filter((row) => row.normText);

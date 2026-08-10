@@ -24,7 +24,7 @@ const GAME_ORDER = [
 ];
 
 // 出題のカーブ。level 1（入口）1問 → level 2（少し迷う）2問 → level 3（核心）1問 の計4問。
-// 毎回この配分でランダムに引き直すので、同じ技を2回やっても中身が変わる
+// 毎回この配分でランダムに引き直すので、同じテーマを2回やっても中身が変わる
 const LEVELS = [1, 2, 3];
 const LEVEL_PLAN = [
   { level: 1, count: 1 },
@@ -34,7 +34,7 @@ const LEVEL_PLAN = [
 const QUIZ_SIZE = LEVEL_PLAN.reduce((sum, plan) => sum + plan.count, 0);
 
 const state = {
-  wazaId: null,    // 選択中の技
+  wazaId: null,    // 選択中のテーマ
   gameApp: null,   // ゲームから入ったときの入口（もどる先の判断に使う）
   questions: [],   // 今回の出題（毎回抽選しなおす。保存しない）
   index: 0,        // 何問目（0始まり）
@@ -108,8 +108,8 @@ function currentQuestion() {
 }
 
 /* ── ゲームからの逆引き索引 ── */
-// wazas[].games を走査して「ゲーム → そのゲームで使う技」を実行時に導出する。
-// ゲームと技の対応表を別に持たない（waza.js だけがデータの正本。二重管理をしない）
+// wazas[].games を走査して「ゲーム → そのゲームで使うテーマ」を実行時に導出する。
+// ゲームとテーマの対応表を別に持たない（waza.js だけがデータの正本。二重管理をしない）
 function buildGameIndex() {
   const byApp = new Map();
 
@@ -124,7 +124,7 @@ function buildGameIndex() {
         entry = { app: game.app, name: game.name || game.app, wazas: [] };
         byApp.set(game.app, entry);
       }
-      // hint は「その技をこのゲームでどう使うか」。同じ技でもゲームごとに文言がちがう
+      // hint は「そのテーマをこのゲームでどう使うか」。同じテーマでもゲームごとに文言がちがう
       entry.wazas.push({ waza, hint: game.hint ?? '' });
     });
   });
@@ -145,7 +145,7 @@ function getGame(app) {
 
 /* ── 出題の抽選 ── */
 // level ごとの箱から LEVEL_PLAN のとおりに引き、level 昇順（1→2→2→3）で並べて返す。
-// 後方互換: level が付いていない技・4問以下の技は、従来どおり配列順に最大4問。
+// 後方互換: level が付いていないテーマ・4問以下のテーマは、従来どおり配列順に最大4問。
 function selectQuestions(waza) {
   const all = getAllQuestions(waza);
   if (all.length <= QUIZ_SIZE || !all.every((q) => LEVELS.includes(q?.level))) {
@@ -190,7 +190,7 @@ function renderGamePicker() {
 
     const body = el('div', 'kw-gamecard__body');
     body.appendChild(el('span', 'kw-gamecard__name', game.name));
-    body.appendChild(el('span', 'kw-gamecard__count', `合う技 ${game.wazas.length}個`));
+    body.appendChild(el('span', 'kw-gamecard__count', `合うテーマ ${game.wazas.length}個`));
 
     card.appendChild(body);
     card.appendChild(icon('chevron_right'));
@@ -198,19 +198,19 @@ function renderGamePicker() {
     gamePicker.appendChild(card);
   });
 
-  // ゲームが1つも紐づいていないデータのときは、この入口ごと消して技のいちらんを開いておく
+  // ゲームが1つも紐づいていないデータのときは、この入口ごと消してテーマのいちらんを開いておく
   const empty = !gamePicker.childElementCount;
   gameEntry.hidden = empty;
   if (empty) wazaFold.open = true;
 }
 
-/* ── TOP：技のいちらんからえらぶ（副） ── */
+/* ── TOP：テーマのいちらんからえらぶ（副） ── */
 function renderWazaGroups() {
   wazaGroups.textContent = '';
 
   GROUPS.forEach((group) => {
     const wazas = WAZAS.filter((w) => w.group === group.id);
-    if (!wazas.length) return; // 技が1つもないグループは見出しごと出さない
+    if (!wazas.length) return; // テーマが1つもないグループは見出しごと出さない
 
     const section = el('section', 'kw-group');
     section.appendChild(el('h3', 'kw-group__title', group.name));
@@ -230,11 +230,11 @@ function renderWazaGroups() {
   });
 
   if (!wazaGroups.childElementCount) {
-    wazaGroups.appendChild(el('p', 'kw-empty', '技のデータがまだありません。'));
+    wazaGroups.appendChild(el('p', 'kw-empty', 'テーマのデータがまだありません。'));
   }
 }
 
-/* ── ゲーム別の技えらび（逆引き画面） ── */
+/* ── ゲーム別のテーマえらび（逆引き画面） ── */
 function showGame(app) {
   const game = getGame(app);
   if (!game) {
@@ -245,7 +245,7 @@ function showGame(app) {
   state.gameApp = app;
   gameName.textContent = game.name;
   gameLead.textContent =
-    `このゲームに合う技が${game.wazas.length}個あります。1つえらぶとクイズがはじまります。`;
+    `このゲームに合うテーマが${game.wazas.length}個あります。1つえらぶとクイズがはじまります。`;
 
   gameWazaList.textContent = '';
   game.wazas.forEach(({ waza, hint }) => {
@@ -435,8 +435,8 @@ function backToTop() {
   showScreen('top');
 }
 
-// クイズ中の「技えらびにもどる」は、入ってきた入口に戻す
-// （ゲームから入ったならそのゲームの技えらび、技のいちらんから入ったなら TOP）
+// クイズ中の「テーマえらびにもどる」は、入ってきた入口に戻す
+// （ゲームから入ったならそのゲームのテーマえらび、テーマのいちらんから入ったなら TOP）
 function backToPicker() {
   const game = state.gameApp ? getGame(state.gameApp) : null;
   resetQuiz();

@@ -1,158 +1,17 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>コトバの技クイズ | room-K</title>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
-  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet" />
+  <meta http-equiv="refresh" content="0; url=../kotoba-theme/" />
+  <title>コトバのテーマクイズ | room-K</title>
   <link rel="stylesheet" href="../shared/css/design-system.css" />
-  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <main class="kw-app">
-
-    <!-- ── TOP（えらびかたは2つ。主＝ゲームから／副＝技のいちらんから） ── -->
-    <section class="kw-screen" id="screen-top">
-      <header class="kw-hero">
-        <span class="material-symbols-rounded kw-hero__icon">tips_and_updates</span>
-        <h1 class="kw-hero__title">コトバの技クイズ</h1>
-        <p class="kw-hero__sub">きょうのゲームで使う「コトバの技」を、先にのぞいてみよう</p>
-      </header>
-
-      <section class="kw-panel card">
-        <p class="kw-panel__lead">きょうのゲームで使う「コトバの技」を、クイズで先に見てみよう。4問・5分くらい。</p>
-
-        <ul class="kw-panel__notes">
-          <li>正解の数は数えません。「そういう見方があるんだ」が1つ持って帰れれば十分。</li>
-          <li>答えはチャットに番号（①②③）でも、声でもOK。</li>
-        </ul>
-
-        <!-- 主の入口: ゲームからの逆引き -->
-        <div class="kw-entry" id="gameEntry">
-          <h2 class="kw-panel__title">きょうのゲームからえらぶ</h2>
-          <p class="kw-entry__lead">ゲームをえらぶと、そのゲームで使う技だけが並びます。</p>
-          <div class="kw-gamecards" id="gamePicker"></div>
-        </div>
-
-        <!-- 副の入口: 技のいちらん（従来のチップ） -->
-        <details class="kw-fold" id="wazaFold">
-          <summary class="kw-fold__summary">
-            <span class="material-symbols-rounded kw-fold__icon" aria-hidden="true">expand_more</span>
-            <span class="kw-fold__text">技のいちらんからえらぶ</span>
-          </summary>
-          <p class="kw-fold__lead">ゲームを決めていないときや、技の名前から探したいときはこちら。</p>
-          <div class="kw-groups" id="wazaGroups"></div>
-        </details>
-
-        <p class="kw-panel__foot">答えた内容はどこにも保存されません。</p>
-      </section>
-    </section>
-
-    <!-- ── ゲーム別の技えらび（逆引き） ── -->
-    <section class="kw-screen" id="screen-game" hidden>
-      <header class="kw-gamehead card">
-        <p class="kw-gamehead__label">きょうのゲーム</p>
-        <h2 class="kw-gamehead__name" id="gameName"></h2>
-        <p class="kw-gamehead__lead" id="gameLead"></p>
-      </header>
-
-      <div class="kw-wazacards" id="gameWazaList"></div>
-
-      <div class="kw-actions">
-        <button class="kw-quiet-btn kw-quiet-btn--back" id="btnGameBack" type="button">
-          <span class="material-symbols-rounded" aria-hidden="true">arrow_back</span>
-          <span class="kw-quiet-btn__text">ゲームえらびにもどる</span>
-        </button>
-      </div>
-    </section>
-
-    <!-- ── クイズ ── -->
-    <section class="kw-screen" id="screen-quiz" hidden>
-      <div class="kw-quiz">
-        <div class="kw-quiz__meta">
-          <span class="badge badge-primary" id="quizWazaName"></span>
-          <span class="kw-quiz__progress" id="quizProgress"></span>
-        </div>
-
-        <section class="kw-question card">
-          <p class="kw-question__text" id="questionText" aria-live="polite"></p>
-        </section>
-
-        <ul class="kw-choices" id="choicesArea" aria-label="選択肢"></ul>
-
-        <div class="kw-actions">
-          <button class="btn btn-ghost btn-sm" id="btnCopyQuestion" type="button">
-            <span class="material-symbols-rounded">content_copy</span>
-            問題をチャットにコピー
-          </button>
-        </div>
-
-        <section class="kw-answer card" id="answerCard" hidden aria-live="polite">
-          <p class="kw-answer__label">答え</p>
-          <p class="kw-answer__text" id="answerText"></p>
-          <p class="kw-answer__explanation" id="answerExplanation"></p>
-        </section>
-
-        <div class="kw-actions">
-          <button class="btn btn-primary btn-lg" id="btnReveal" type="button">
-            <span class="material-symbols-rounded">visibility</span>
-            答えを見る
-          </button>
-          <button class="btn btn-primary btn-lg" id="btnNext" type="button" hidden>
-            <span class="material-symbols-rounded">arrow_forward</span>
-            <span id="btnNextLabel">次へ</span>
-          </button>
-        </div>
-
-        <div class="kw-actions">
-          <button class="kw-quiet-btn" id="btnQuizBack" type="button">技えらびにもどる</button>
-        </div>
-      </div>
-    </section>
-
-    <!-- ── まとめ（橋渡し） ── -->
-    <section class="kw-screen" id="screen-summary" hidden>
-      <div class="kw-summary card">
-        <p class="kw-summary__label">きょうのコトバの技</p>
-        <h2 class="kw-summary__name" id="summaryName"></h2>
-        <p class="kw-summary__sub" id="summaryLabel"></p>
-        <p class="kw-summary__catch" id="summaryCatch"></p>
-      </div>
-
-      <section class="kw-games" id="gamesSection">
-        <h3 class="kw-games__title">きょうのゲームでつかってみよう</h3>
-        <div class="kw-games__list" id="gamesList"></div>
-      </section>
-
-      <div class="kw-actions">
-        <button class="kw-quiet-btn" id="btnBackTop" type="button">TOPにもどる</button>
-      </div>
-    </section>
-
-  </main>
-
-  <script src="waza.js"></script>
-  <script type="module" src="app.js"></script>
-  <script src="../shared/js/stats.js?v=1" defer></script>
-  <script src="../shared/js/howto.js"></script>
-  <script>
-    RoomkHowto.init({
-      title: 'つかいかた',
-      lead: 'きょうのゲームで使う「コトバの技」を、3択クイズで先にのぞくツール。4問だけ。',
-      sections: [
-        { heading: 'はじめかた', items: [
-          'きょうのゲームをえらぶと、そのゲームで使う技だけが並ぶ。その中から1つえらぶ',
-          '技の名前から探したいときは「技のいちらんからえらぶ」を開く',
-        ] },
-        { heading: 'すすめかた', items: [
-          '問題と①②③を読んで、答えだと思う番号をチャットに送る',
-          '「答えを見る」を押すと、答えと説明が出る',
-          '「次へ」でつぎの問題にすすむ',
-        ] },
-        { heading: 'おわりかた', text: '4問おわると、きょうの技のまとめが出る。そのままゲームへ進める。「TOPにもどる」でえらびなおせる。出す4問は毎回ランダムに選ばれるので、同じ技をもう一度やっても中身は変わる。' },
-      ],
-    });
-  </script>
+  <script>location.replace('../kotoba-theme/' + location.search + location.hash);</script>
+  <noscript>
+    <p>このページはあたらしい場所にひっこししました。自動でうつります。</p>
+    <p><a href="../kotoba-theme/">こちらをタップしてください</a></p>
+  </noscript>
 </body>
 </html>

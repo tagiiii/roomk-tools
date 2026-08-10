@@ -41,6 +41,7 @@ roomk-tools/
 | `apps/codenames/` | `apps/kotoba-tantei/`（ことば探偵） |
 | `apps/hint-de-pinto/` | `apps/kaburazu-hint/`（かぶらずヒント） |
 | `apps/iisen-show/` | `apps/do-mannaka/`（ドまんなか） |
+| `apps/kotoba-waza/` | `apps/kotoba-theme/`（コトバのテーマクイズ） |
 | `apps/ito/` | `apps/tatoe-narabe/`（たとえならべ） |
 | `apps/sukina-map/` | `apps/suki-type-check/`（すきタイプチェック） |
 
