@@ -20,7 +20,6 @@ const GAME_ORDER = [
   'kotoba-mikke',
   'kotoba-relay',
   'kotoba-shuffle',
-  'machigai-sagashi',
   'tatoe-gp',
   'minna-ranking',
   'quiz',

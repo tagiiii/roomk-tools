@@ -396,7 +396,6 @@ window.KotobaWaza = {
       ],
       games: [
         { app: 'kotoba-pair', name: 'コトバペア', hint: '「文のまえとうしろ」パックで、文の前半と後半のつながりを考えながらペアを探そう' },
-        { app: 'machigai-sagashi', name: 'まちがいさがし', hint: 'ことわざや名文を読みくらべて、だれが・何をの関係がおかしくなっていないかさがそう' },
       ],
     },
 
@@ -532,7 +531,6 @@ window.KotobaWaza = {
       ],
       games: [
         { app: 'kotoba-shuffle', name: 'ことばシャッフル', hint: 'バラバラの文字を、自然な順番に組み立てよう' },
-        { app: 'machigai-sagashi', name: 'まちがいさがし', hint: '名文を読みくらべて、ことばの並びが変わっていないかさがそう' },
       ],
     },
 

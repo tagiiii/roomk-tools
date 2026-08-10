@@ -180,7 +180,7 @@ function entry(tool, category, text, extra = {}) {
 const COVERED_APPS = [
   // 既存（A2 以前から抽出済み）
   'quiz', 'kotoba-shuffle', 'kanji-sagashi', 'kotoba-relay', 'tatoe-gp',
-  'machigai-sagashi', 'kaburazu-hint', 'kotoba-tantei', 'docchi', 'minna-ranking',
+  'kaburazu-hint', 'kotoba-tantei', 'docchi', 'minna-ranking',
   'talk-card', 'otona-talk', 'checkout-card', 'tsuyomi-card', 'kimochi-map',
   // A2 で追加した12アプリ
   'jitsuwa-game', 'do-mannaka', 'ishin-denshin', 'word-wolf', 'tatoe-narabe', 'magire-eshi',
@@ -291,13 +291,6 @@ function collectEntries() {
     id: `tatoe-gp:${index}`,
     question: text,
     answer: text,
-  })));
-
-  const machigai = evalModule('apps/machigai-sagashi/questions.js').QUESTIONS || [];
-  machigai.forEach((q, index) => rows.push(entry('machigai-sagashi', q.category, q.modified, {
-    id: `machigai-sagashi:${index}`,
-    question: q.modified,
-    answer: q.answer,
   })));
 
   const hintSource = extractScript(read('apps/kaburazu-hint/index.html'));
