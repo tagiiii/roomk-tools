@@ -19,10 +19,8 @@ const GAME_ORDER = [
   'kaburazu-hint',
   'kotoba-mikke',
   'kotoba-relay',
-  'kotoba-shuffle',
   'tatoe-gp',
   'minna-ranking',
-  'quiz',
 ];
 
 // 出題のカーブ。level 1（入口）1問 → level 2（少し迷う）2問 → level 3（核心）1問 の計4問。

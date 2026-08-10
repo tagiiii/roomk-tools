@@ -530,7 +530,7 @@ window.KotobaWaza = {
         },
       ],
       games: [
-        { app: 'kotoba-shuffle', name: 'ことばシャッフル', hint: 'バラバラの文字を、自然な順番に組み立てよう' },
+        { app: 'kotoba-pair', name: 'コトバペア', hint: '「文のまえとうしろ」パックで、自然につながる順番の組を探そう' },
       ],
     },
 
@@ -868,7 +868,6 @@ window.KotobaWaza = {
       ],
       games: [
         { app: 'minna-ranking', name: 'みんなでランキング', hint: '並べた順番の理由を、ひとこと言ってみよう' },
-        { app: 'quiz', name: 'クイズパック', hint: '答えを言う前に、理由も声に出してみよう' },
       ],
     },
 
@@ -1004,7 +1003,6 @@ window.KotobaWaza = {
       ],
       games: [
         { app: 'minna-ranking', name: 'みんなでランキング', hint: 'お題を並べて、自分たちの順番を作ってみよう' },
-        { app: 'kotoba-shuffle', name: 'ことばシャッフル', hint: 'バラバラの文字を、正しい順番につなげてみよう' },
       ],
     },
 
