@@ -174,6 +174,17 @@
       line-height: 1.3; text-align: center; word-break: auto-phrase; overflow-wrap: anywhere;
     }
     .kp-card__mark { position: absolute; top: 4px; right: 4px; font-size: 18px; color: var(--color-success); display: none; }
+
+    /* 裏向きの札。番号だけを大きく見せる（語のテキストは DOM に入れない）。
+       色は控えめにしつつ、枠と番号の濃さで「押せる」ことは分かるようにする */
+    .kp-card--closed { background: #F3F6FA; border-style: dashed; }
+    .kp-card--closed .kp-card__num { font-size: 24px; color: var(--color-muted); }
+    .kp-card--closed:not(:disabled) .kp-card__num { color: var(--color-accent); }
+
+    /* めくったときの軽いフリップ（design-system.css の flip-card は使わない） */
+    @keyframes kp-flip { from { transform: rotateY(-82deg); } to { transform: rotateY(0); } }
+    .kp-card--flip { animation: kp-flip 0.22s ease-out; }
+
     /* 手番でない人にもカードは同じ濃さで見せる（見て考える・番号で相談するため）。
        操作できるかどうかは disabled と上部の手番帯で示す */
     .kp-card:disabled { cursor: default; }
@@ -265,7 +276,7 @@
 
     /* ── 動きを減らす設定 ── */
     @media (prefers-reduced-motion: reduce) {
-      .kp-banner, .kp-card--just { animation: none; }
+      .kp-banner, .kp-card--just, .kp-card--flip { animation: none; }
       .kp-card, .kp-pack, .kp-size, .kp-hostbar__chev { transition: none; }
       .kp-dots::after { animation: none; content: '...'; }
     }
@@ -283,21 +294,21 @@
       <h1 class="kp-hero__title">コトバペア</h1>
     </div>
     <div class="card">
-      <p class="kp-lead">いみが つながる 2まいの ことばカードを、みんなで そうだんしながら そろえるゲーム。カードは ぜんぶ おもてむきで、じゅんばんに 2まいずつ えらんでいくよ。1ボードは 5〜10ぷんくらい。</p>
+      <p class="kp-lead">意味がつながる2枚のことばカードを、みんなで相談しながらそろえるゲーム。裏向きのカードを順番に2枚ずつめくって、つながる組を探すよ。1ボードは5〜10分くらい。</p>
       <ul class="kp-notes">
-        <li><span class="material-symbols-rounded" aria-hidden="true">forum</span>こえや チャットで そうだんしながら えらんで OK</li>
-        <li><span class="material-symbols-rounded" aria-hidden="true">groups</span>ひとりずつの てんすうは つけない。みんなの きろくだけ</li>
-        <li><span class="material-symbols-rounded" aria-hidden="true">schedule</span>じかん制限は なし。まよっても だいじょうぶ</li>
+        <li><span class="material-symbols-rounded" aria-hidden="true">forum</span>声やチャットで相談しながら選んでOK</li>
+        <li><span class="material-symbols-rounded" aria-hidden="true">groups</span>ひとりずつの点数はつけない。みんなの記録だけ</li>
+        <li><span class="material-symbols-rounded" aria-hidden="true">schedule</span>時間制限はなし。迷ってもだいじょうぶ</li>
       </ul>
-      <p class="kp-fineprint">えらんだ ないようは ゲームが おわると きえるよ。</p>
+      <p class="kp-fineprint">選んだ内容はゲームが終わると消えるよ。</p>
     </div>
     <button class="btn btn-primary btn-full btn-lg" onclick="goCreate()">
       <span class="material-symbols-rounded" aria-hidden="true">add_circle</span>
-      ルームを つくる
+      ルームをつくる
     </button>
     <button class="btn btn-secondary btn-full btn-lg" onclick="goJoin()">
       <span class="material-symbols-rounded" aria-hidden="true">login</span>
-      ルームに はいる
+      ルームにはいる
     </button>
   </div>
 </div>
@@ -305,12 +316,12 @@
 <!-- ═══════════════ screen-create（ホストのみ）═══════════════ -->
 <div id="screen-create" class="screen">
   <div class="page">
-    <h2 class="kp-page-title">ルームを つくる</h2>
-    <p class="kp-page-sub">パックと まいすうを えらんで、ルームを つくります</p>
+    <h2 class="kp-page-title">ルームをつくる</h2>
+    <p class="kp-page-sub">パックと見せかた、枚数を選んでルームをつくります</p>
 
     <div class="card">
       <label class="form-label" for="create-nickname">ニックネーム</label>
-      <input type="text" id="create-nickname" class="form-input" maxlength="8" placeholder="ほんとうの名前じゃなくてOK">
+      <input type="text" id="create-nickname" class="form-input" maxlength="8" placeholder="本当の名前じゃなくてOK">
     </div>
 
     <div class="card">
@@ -319,17 +330,25 @@
     </div>
 
     <div class="card">
-      <p class="section-label">カードの まいすう</p>
-      <div class="kp-sizes" role="group" aria-label="カードの まいすう">
-        <button type="button" class="kp-size" id="size-12" aria-pressed="false" onclick="selectSize(12)">12まい<span>6くみ</span></button>
-        <button type="button" class="kp-size" id="size-16" aria-pressed="true" onclick="selectSize(16)">16まい<span>8くみ</span></button>
+      <p class="section-label">カードの見せかた</p>
+      <div class="kp-sizes" role="group" aria-label="カードの見せかた">
+        <button type="button" class="kp-size" id="mode-closed" aria-pressed="true" onclick="selectMode('closed')">裏向き<span>めくって探す</span></button>
+        <button type="button" class="kp-size" id="mode-open" aria-pressed="false" onclick="selectMode('open')">表向き<span>ぜんぶ見える</span></button>
+      </div>
+    </div>
+
+    <div class="card">
+      <p class="section-label">カードの枚数</p>
+      <div class="kp-sizes" role="group" aria-label="カードの枚数">
+        <button type="button" class="kp-size" id="size-12" aria-pressed="false" onclick="selectSize(12)">12枚<span>6組</span></button>
+        <button type="button" class="kp-size" id="size-16" aria-pressed="true" onclick="selectSize(16)">16枚<span>8組</span></button>
       </div>
     </div>
 
     <div class="error-msg" id="create-error"></div>
     <button class="btn btn-primary btn-full" id="btn-create" onclick="hostCreate()">
       <span class="material-symbols-rounded" aria-hidden="true">meeting_room</span>
-      ルームを つくる
+      ルームをつくる
     </button>
     <button type="button" class="kp-quiet-btn" onclick="goTop()">もどる</button>
   </div>
@@ -338,12 +357,12 @@
 <!-- ═══════════════ screen-join ═══════════════ -->
 <div id="screen-join" class="screen">
   <div class="page">
-    <h2 class="kp-page-title">ルームに はいる</h2>
+    <h2 class="kp-page-title">ルームにはいる</h2>
     <div class="card">
       <label class="form-label" for="join-nickname">ニックネーム</label>
-      <input type="text" id="join-nickname" class="form-input" maxlength="8" placeholder="ほんとうの名前じゃなくてOK">
+      <input type="text" id="join-nickname" class="form-input" maxlength="8" placeholder="本当の名前じゃなくてOK">
       <label class="form-label" style="margin-top:16px" for="join-code">ルームコード</label>
-      <input type="text" id="join-code" class="form-input kp-code-input" maxlength="6" placeholder="6もじ"
+      <input type="text" id="join-code" class="form-input kp-code-input" maxlength="6" placeholder="6文字"
              oninput="this.value=this.value.toUpperCase()">
       <div class="error-msg" id="join-error"></div>
     </div>
@@ -358,13 +377,13 @@
 <!-- ═══════════════ screen-waiting ═══════════════ -->
 <div id="screen-waiting" class="screen">
   <div class="page">
-    <h2 class="kp-page-title">あつまるのを まってるよ</h2>
+    <h2 class="kp-page-title">集まるのを待ってるよ</h2>
     <div class="card" style="text-align:center">
       <p style="font-size:12px;color:var(--color-muted);margin-bottom:4px">ルームコード</p>
       <div class="kp-room-code" id="waiting-room-code"></div>
-      <button class="btn btn-secondary btn-full" id="btn-copy-code" onclick="copyInvite(this)">
+      <button class="btn btn-secondary btn-full" id="btn-copy-code" onclick="copyRoomCode(this)">
         <span class="material-symbols-rounded" aria-hidden="true">content_copy</span>
-        コードを コピー
+        コードをコピー
       </button>
     </div>
     <div class="card">
@@ -375,7 +394,7 @@
       <p class="kp-page-sub" id="waiting-min-msg" style="text-align:center"></p>
       <button class="btn btn-primary btn-full btn-lg" id="btn-start-game" onclick="startGame()" disabled>
         <span class="material-symbols-rounded" aria-hidden="true">play_arrow</span>
-        ゲームを はじめる
+        ゲームをはじめる
       </button>
     </div>
     <button type="button" class="kp-quiet-btn" onclick="leaveGame()">ぬける</button>
@@ -399,25 +418,25 @@
         パスする
       </button>
     </div>
-    <p class="kp-soudan"><span class="material-symbols-rounded" aria-hidden="true">forum</span>そうだんOK</p>
+    <p class="kp-soudan"><span class="material-symbols-rounded" aria-hidden="true">forum</span>相談OK</p>
 
     <div class="kp-hostbar" id="game-host-bar" hidden>
       <button type="button" class="kp-hostbar__toggle" id="btn-hostbar-toggle"
               aria-expanded="false" aria-controls="game-host-panel" onclick="toggleHostBar()">
         <span class="material-symbols-rounded" aria-hidden="true">tune</span>
-        ホストの そうさ
+        ホストの操作
         <span class="material-symbols-rounded kp-hostbar__chev" aria-hidden="true">expand_more</span>
       </button>
       <div class="kp-hostbar__panel" id="game-host-panel" hidden>
         <button class="btn btn-secondary btn-full btn-sm" onclick="hostNextTurn()">
           <span class="material-symbols-rounded" aria-hidden="true">skip_next</span>
-          つぎの人へ
+          次の人へ
         </button>
         <button class="btn btn-secondary btn-full btn-sm" onclick="hostRevealPair()">
           <span class="material-symbols-rounded" aria-hidden="true">auto_fix_high</span>
           1組そろえて見せる
         </button>
-        <p class="kp-hostbar__hint">「1組そろえて見せる」は のこっているペアを1組そろえます（かいすうは ふえません）。</p>
+        <p class="kp-hostbar__hint">「1組そろえて見せる」は残っているペアを1組そろえます（回数は増えません）。</p>
         <button type="button" class="kp-quiet-btn" onclick="hostFinish()">ここまでにする</button>
       </div>
     </div>
@@ -435,16 +454,16 @@
       <p class="kp-result-sub" id="result-sub"></p>
     </div>
     <div class="card">
-      <p class="section-label">そろえた ペア</p>
+      <p class="section-label">そろえたペア</p>
       <ul class="kp-pair-list" id="result-pairs"></ul>
     </div>
     <div id="result-host-controls" hidden>
       <button class="btn btn-primary btn-full btn-lg" onclick="hostPlayAgain()">
         <span class="material-symbols-rounded" aria-hidden="true">replay</span>
-        もういちど あそぶ
+        もういちど遊ぶ
       </button>
       <div class="card" style="margin-top:16px">
-        <p class="section-label">パックを かえて あそぶ</p>
+        <p class="section-label">パックを変えて遊ぶ</p>
         <div class="kp-chips" id="result-pack-chips"></div>
       </div>
     </div>
@@ -457,7 +476,7 @@
   <div class="page">
     <div class="card" style="text-align:center;padding:40px 20px">
       <div class="spinner" style="width:40px;height:40px;margin:0 auto 20px"></div>
-      <p style="font-size:16px;font-weight:500;color:var(--color-primary)">じゅんびしています<span class="kp-dots"></span></p>
+      <p style="font-size:16px;font-weight:500;color:var(--color-primary)">準備しています<span class="kp-dots"></span></p>
     </div>
     <button type="button" class="kp-quiet-btn" onclick="leaveGame()">ぬける</button>
   </div>
@@ -466,12 +485,12 @@
 <!-- ═══════════════ Overlays ═══════════════ -->
 <div class="overlay" id="reconnect-overlay">
   <div class="spinner"></div>
-  <p class="overlay-title">つなぎなおしています<span class="kp-dots"></span></p>
+  <p class="overlay-title">つなぎ直しています<span class="kp-dots"></span></p>
 </div>
 <div class="overlay" id="host-off-overlay">
   <span class="material-symbols-rounded" aria-hidden="true" style="font-size:48px">signal_disconnected</span>
-  <p class="overlay-title">ホストの もどりを まっています</p>
-  <p class="overlay-sub">すこし まっても もどらないときは ぬけてね</p>
+  <p class="overlay-title">ホストの戻りを待っています</p>
+  <p class="overlay-sub">少し待っても戻らないときはぬけてね</p>
   <button class="btn btn-ghost" onclick="leaveGame()">ぬける</button>
 </div>
 
@@ -489,7 +508,8 @@ const SESSION_KEY = 'kotobapair_session';
 const ORPHAN_TTL_MS = 2 * 60 * 1000;
 const MIN_PLAYERS = 2;
 const MAX_PLAYERS = 9;
-const MODE = 'open';                 // MVP はオープンモード固定（クローズは将来拡張）
+const MODE_CLOSED = 'closed';        // 裏向き（神経衰弱型）。既定
+const MODE_OPEN = 'open';            // 表向き（相談向けオプション）
 const SELECTION_SHOW_MS = 2000;      // 2枚見せてから解除するまで（手番クライアント）
 const SELECTION_WATCHDOG_MS = 5000;  // 残置された selected をホストが回収するまで
 const TURN_FIX_DELAY_MS = 1200;      // 手番の人が居ないときに手番を送るまでの猶予
@@ -514,8 +534,10 @@ const state = {
   turnFixTimer: null,    // 手番の人が居ないときの手番送り（ホスト）
   boardKey: null,        // 描画済み盤面の世代キー
   tapBusy: false,
+  copyBusy: false,       // コードのコピー（連打ガード）
   createPackId: null,
   createBoardSize: 16,
+  createMode: MODE_CLOSED,
 };
 
 /* ════════════════════════════════════════════════
@@ -572,7 +594,7 @@ async function waitAuthOrExplain() {
     await authReady;
     return true;
   } catch {
-    showMsg('うまく つながらなかったよ。ページを よみこみなおしてね');
+    showMsg('うまくつながらなかったよ。ページを読み込みなおしてね');
     return false;
   } finally {
     _authWaitBusy = false;
@@ -580,9 +602,9 @@ async function waitAuthOrExplain() {
 }
 
 function validNick(v) {
-  if (!v) return 'ニックネームを 入れてね';
-  if (v.length > 8) return 'ニックネームは 8もじまでだよ';
-  if (/[.#$/\[\]]/.test(v)) return 'つかえない もじが はいっているよ';
+  if (!v) return 'ニックネームを入れてね';
+  if (v.length > 8) return 'ニックネームは8文字までだよ';
+  if (/[.#$/\[\]]/.test(v)) return '使えない文字が入っているよ';
   return null;
 }
 
@@ -614,7 +636,9 @@ function packAllowsCross(room) {
 }
 
 // 盤面生成。乱数を使うため transaction コールバックの外で呼ぶこと
-function buildBoard(pack, boardSize) {
+// mode が 'closed'（裏向き）なら札の初期 state は 'closed'、'open'（表向き）なら 'open'
+function buildBoard(pack, boardSize, mode) {
+  const initial = normMode(mode) === MODE_CLOSED ? 'closed' : 'open';
   const pairCount = Math.max(1, Math.min(Math.floor(boardSize / 2), pack.pairs.length));
   const picked = window.shuffle(pack.pairs.map((_, i) => i)).slice(0, pairCount);
   const cards = {};
@@ -623,11 +647,39 @@ function buildBoard(pack, boardSize) {
     const pair = pack.pairs[pi];
     const idA = 'c' + String(k * 2 + 1).padStart(2, '0');
     const idB = 'c' + String(k * 2 + 2).padStart(2, '0');
-    cards[idA] = { text: String(pair.a), pairId: 'p' + pi, state: 'open', side: 'a' };
-    cards[idB] = { text: String(pair.b), pairId: 'p' + pi, state: 'open', side: 'b' };
+    cards[idA] = { text: String(pair.a), pairId: 'p' + pi, state: initial, side: 'a' };
+    cards[idB] = { text: String(pair.b), pairId: 'p' + pi, state: initial, side: 'b' };
     ids.push(idA, idB);
   });
   return { order: window.shuffle(ids), cards };
+}
+
+/* ════════════════════════════════════════════════
+   モード（裏向き / 表向き）
+   ════════════════════════════════════════════════ */
+// mode を持たない旧ルームは表向き扱い（既存ボードの state は 'open' のため）
+function normMode(mode) { return mode === MODE_CLOSED ? MODE_CLOSED : MODE_OPEN; }
+function isClosedMode(room) { return normMode(room && room.mode) === MODE_CLOSED; }
+
+/* transaction 内で使う純関数。selected を解除し、裏向きモードでは
+   まだ成立していない（state === 'open' の）札を裏に戻す。
+   'matched' の札は決して閉じない（不正遷移の拒否） */
+function withSelectionCleared(room) {
+  const next = { ...room, selected: null };
+  if (!isClosedMode(room)) return next;
+  const cards = (room.board && room.board.cards) || {};
+  const sel = room.selected || [];
+  const nextCards = { ...cards };
+  let changed = false;
+  sel.forEach(id => {
+    const card = cards[id];
+    if (card && card.state === 'open') {
+      nextCards[id] = { ...card, state: 'closed' };
+      changed = true;
+    }
+  });
+  if (changed) next.board = { ...(room.board || {}), cards: nextCards };
+  return next;
 }
 
 /* ════════════════════════════════════════════════
@@ -678,6 +730,7 @@ function goTop() { showScreen('top'); }
 
 function goCreate() {
   renderPackList();
+  selectMode(state.createMode);
   showScreen('create');
 }
 
@@ -691,7 +744,7 @@ function renderPackList() {
   const packs = allPacks();
   const el = document.getElementById('create-pack-list');
   if (!packs.length) {
-    el.innerHTML = '<p class="kp-fineprint">パックが よみこめませんでした。ページを よみこみなおしてね</p>';
+    el.innerHTML = '<p class="kp-fineprint">パックが読み込めませんでした。ページを読み込みなおしてね</p>';
     document.getElementById('btn-create').disabled = true;
     return;
   }
@@ -704,7 +757,7 @@ function renderPackList() {
       <span class="kp-pack__num" aria-hidden="true">${esc(NUMBERS[i] || i + 1)}</span>
       <span class="kp-pack__body">
         <span class="kp-pack__title">${esc(p.title)}</span>
-        <span class="kp-pack__meta">${esc(THEME_LABEL[p.theme] || p.theme || '')} ・ ${esc(p.pairs.length)}くみ</span>
+        <span class="kp-pack__meta">${esc(THEME_LABEL[p.theme] || p.theme || '')} ・ ${esc(p.pairs.length)}組</span>
       </span>
       <span class="badge badge-accent kp-pack__lv">Lv.${esc(p.level || 1)}</span>
     </button>`).join('');
@@ -719,7 +772,7 @@ function selectPack(id) {
   document.querySelectorAll('#create-pack-list .kp-pack').forEach(btn => {
     btn.setAttribute('aria-pressed', btn.dataset.pack === id ? 'true' : 'false');
   });
-  // ペア数が足りないパックでは 16まい を選べない
+  // ペア数が足りないパックでは 16枚 を選べない
   const can16 = pack.pairs.length >= 8;
   const btn16 = document.getElementById('size-16');
   btn16.disabled = !can16;
@@ -735,6 +788,13 @@ function selectSize(size) {
   btn16.setAttribute('aria-pressed', next === 16 ? 'true' : 'false');
 }
 
+function selectMode(mode) {
+  const next = normMode(mode);
+  state.createMode = next;
+  document.getElementById('mode-closed').setAttribute('aria-pressed', next === MODE_CLOSED ? 'true' : 'false');
+  document.getElementById('mode-open').setAttribute('aria-pressed', next === MODE_OPEN ? 'true' : 'false');
+}
+
 /* ════════════════════════════════════════════════
    ルーム作成（ホスト）
    ════════════════════════════════════════════════ */
@@ -743,13 +803,14 @@ async function hostCreate() {
   const err = validNick(nick);
   if (err) { showError('create-error', err); return; }
   const pack = getPack(state.createPackId);
-  if (!pack) { showError('create-error', 'パックを えらんでね'); return; }
+  if (!pack) { showError('create-error', 'パックを選んでね'); return; }
   hideError('create-error');
 
   if (!await waitAuthOrExplain()) return;
 
   // 乱数は transaction コールバックの外で確定させる
-  const board = buildBoard(pack, state.createBoardSize);
+  const mode = normMode(state.createMode);
+  const board = buildBoard(pack, state.createBoardSize, mode);
   const totalPairs = board.order.length / 2;
   const joinedAt = getEstServerNow();
 
@@ -766,7 +827,7 @@ async function hostCreate() {
         hostDisconnectedAt: null,
         status: STATUS.WAITING,
         packId: pack.id,
-        mode: MODE,
+        mode,
         boardSeq: 1,
         board,
         turnIndex: 0,
@@ -779,7 +840,7 @@ async function hostCreate() {
     if (committed) { roomCode = code; roomRef = ref; break; }
   }
 
-  if (!roomCode) { showMsg('ルームを つくれなかったよ。もう一度 ためしてね'); return; }
+  if (!roomCode) { showMsg('ルームをつくれなかったよ。もう一度ためしてね'); return; }
 
   state.nickname = nick;
   state.roomCode = roomCode;
@@ -805,7 +866,7 @@ async function guestJoin() {
   const code = document.getElementById('join-code').value.trim().toUpperCase();
   const err = validNick(nick);
   if (err) { showError('join-error', err); return; }
-  if (code.length !== 6) { showError('join-error', 'ルームコードは 6もじだよ'); return; }
+  if (code.length !== 6) { showError('join-error', 'ルームコードは6文字だよ'); return; }
   hideError('join-error');
 
   if (!await waitAuthOrExplain()) return;
@@ -815,14 +876,14 @@ async function guestJoin() {
   try {
     preSnap = await roomRef.get();
   } catch {
-    showError('join-error', 'うまく つながらなかったよ。もう一度 ためしてね');
+    showError('join-error', 'うまくつながらなかったよ。もう一度ためしてね');
     return;
   }
-  if (!preSnap.exists()) { showError('join-error', 'ルームが みつからないよ。コードを たしかめてね'); return; }
+  if (!preSnap.exists()) { showError('join-error', 'ルームが見つからないよ。コードを確かめてね'); return; }
   const preRoom = preSnap.val();
   if (isRoomExpired(preRoom)) {
     await removeExpiredRoom(roomRef, preRoom);
-    showError('join-error', 'このルームは おわったみたい');
+    showError('join-error', 'このルームは終わったみたい');
     return;
   }
 
@@ -853,13 +914,13 @@ async function guestJoin() {
 
   if (reason || !committed) {
     const msgs = {
-      not_found: 'ルームが みつからないよ。コードを たしかめてね',
-      expired: 'このルームは おわったみたい',
-      bad_status: 'このルームには いま はいれないみたい',
-      nick_taken: 'そのなまえは つかわれているよ。すこし かえてみてね',
-      full: 'このルームは いっぱいだよ',
+      not_found: 'ルームが見つからないよ。コードを確かめてね',
+      expired: 'このルームは終わったみたい',
+      bad_status: 'このルームには今はいれないみたい',
+      nick_taken: 'その名前は使われているよ。少し変えてみてね',
+      full: 'このルームはいっぱいだよ',
     };
-    showError('join-error', msgs[reason] || 'はいれなかったよ。もう一度 ためしてね');
+    showError('join-error', msgs[reason] || 'はいれなかったよ。もう一度ためしてね');
     return;
   }
 
@@ -926,7 +987,7 @@ async function startGame() {
   });
 
   if (!committed) {
-    showMsg(reason === 'too_few' ? '2人いじょうで はじめられるよ' : 'はじめられなかったよ。もう一度 ためしてね');
+    showMsg(reason === 'too_few' ? '2人以上ではじめられるよ' : 'はじめられなかったよ。もう一度ためしてね');
   }
 }
 
@@ -937,7 +998,7 @@ function startRoomListener() {
   state.roomRef.on('value', snap => {
     if (!snap.exists()) {
       clearSession();
-      showMsg('ルームが とじられたよ');
+      showMsg('ルームが閉じられたよ');
       leaveCleanup();
       showScreen('top');
       return;
@@ -1011,7 +1072,7 @@ function renderWaiting(room, players) {
     const count = Object.keys(players).length;
     document.getElementById('btn-start-game').disabled = count < MIN_PLAYERS;
     document.getElementById('waiting-min-msg').textContent =
-      count < MIN_PLAYERS ? `あと${MIN_PLAYERS - count}人で はじめられるよ` : `${count}人 はいっているよ`;
+      count < MIN_PLAYERS ? `あと${MIN_PLAYERS - count}人ではじめられるよ` : `${count}人はいっているよ`;
   }
 }
 
@@ -1038,16 +1099,17 @@ function renderPlaying(room, players) {
   const selected = room.selected || [];
   const turnNick = currentTurnNick(room);
   const myTurn = !!state.nickname && turnNick === state.nickname;
+  const closed = isClosedMode(room);
 
   // 盤面 DOM は世代（boardSeq + 並び）が変わったときだけ作り直す
   const boardKey = `${room.boardSeq}|${order.join('|')}`;
   if (state.boardKey !== boardKey) {
-    buildBoardDom(order, cards);
+    buildBoardDom(order);
     state.boardKey = boardKey;
   }
 
-  updateCards(order, cards, selected, myTurn);
-  updateTurnBar(room, players, turnNick, myTurn);
+  updateCards(order, cards, selected, myTurn, closed);
+  updateTurnBar(room, players, turnNick, myTurn, closed);
   updateMeta(room);
   updateBanner(room, cards, selected);
 
@@ -1058,49 +1120,63 @@ function renderPlaying(room, players) {
   runHostWatchdogs(room, players, turnNick);
 }
 
-function buildBoardDom(order, cards) {
+/* 盤面の骨組みだけを作る。語のテキストは updateCards がスナップショットから入れる
+   （裏向きの札の語は DOM に一切描画しない = 表示を消すだけの実装にしない） */
+function buildBoardDom(order) {
   const el = document.getElementById('game-board');
   el.innerHTML = order.map((id, i) => {
     const num = NUMBERS[i] || String(i + 1);
-    const text = (cards[id] && cards[id].text) || '';
     return `<button type="button" class="kp-card" id="card-${esc(id)}" data-card="${esc(id)}"
-      aria-pressed="false" aria-label="${esc(num)}ばん ${esc(text)}" onclick="tapCard('${esc(id)}')">
+      aria-pressed="false" aria-label="${esc(num)}番" onclick="tapCard('${esc(id)}')">
       <span class="kp-card__num" aria-hidden="true">${esc(num)}</span>
-      <span class="kp-card__text">${esc(text)}</span>
+      <span class="kp-card__text"></span>
       <span class="material-symbols-rounded kp-card__mark" aria-hidden="true">link</span>
     </button>`;
   }).join('');
 }
 
-function updateCards(order, cards, selected, myTurn) {
-  order.forEach(id => {
+function updateCards(order, cards, selected, myTurn, closed) {
+  order.forEach((id, i) => {
     const el = document.getElementById('card-' + id);
     if (!el) return;
     const card = cards[id] || {};
     const matched = card.state === 'matched';
+    // 裏向きモードで state:'closed' の札だけが「裏」。表向きモードには裏の札はない
+    const isClosed = closed && card.state === 'closed';
     const isSel = selected.indexOf(id) !== -1;
+
+    // 語のテキスト。裏の間は空文字（DOM に語が存在しない）
+    const wantText = isClosed ? '' : (card.text || '');
+    const textEl = el.querySelector('.kp-card__text');
+    if (textEl && textEl.textContent !== wantText) textEl.textContent = wantText;
+    const num = NUMBERS[i] || String(i + 1);
+    el.setAttribute('aria-label', isClosed ? `${num}番 裏向きのカード` : `${num}番 ${wantText}`);
+
+    el.classList.toggle('kp-card--closed', isClosed);
     el.classList.toggle('kp-card--matched', matched);
     el.classList.toggle('kp-card--selected', isSel && !matched);
     el.classList.toggle('kp-card--just', isSel && matched);
+    // めくった瞬間だけクラスが付き、アニメーションが1回走る（タイマー不要）
+    el.classList.toggle('kp-card--flip', closed && !matched && card.state === 'open');
     el.setAttribute('aria-pressed', isSel ? 'true' : 'false');
-    // 1枚目だけ選んでいる間は、その1枚を押し直して えらびなおせる（おし間違いの救済）
+    // 1枚目だけ選んでいる間は、その1枚を押し直して選び直せる（押し間違いの救済）
     const canUnselect = isSel && !matched && selected.length === 1;
     el.disabled = matched || !myTurn || (isSel && !canUnselect) || selected.length >= 2;
   });
 }
 
-function updateTurnBar(room, players, turnNick, myTurn) {
+function updateTurnBar(room, players, turnNick, myTurn, closed) {
   const bar = document.getElementById('game-turnbar');
   const text = document.getElementById('game-turn-text');
   bar.classList.toggle('kp-turnbar--mine', myTurn);
   if (myTurn) {
-    text.textContent = 'あなたの ばん！ 2まい えらんでね';
+    text.textContent = closed ? 'あなたの番！ 2枚めくってね' : 'あなたの番！ 2枚選んでね';
   } else if (turnNick && !players[turnNick]) {
-    text.textContent = 'つぎの人に かわるよ';
+    text.textContent = '次の人にかわるよ';
   } else if (turnNick) {
-    text.textContent = `いまは ${turnNick}さんの ばん`;
+    text.textContent = `いまは ${turnNick}さんの番`;
   } else {
-    text.textContent = 'じゅんばんを きめています';
+    text.textContent = '順番を決めています';
   }
 }
 
@@ -1109,7 +1185,7 @@ function updateMeta(room) {
   const items = [
     pack ? `<span class="kp-meta__item">${esc(pack.title)}</span>` : '',
     `<span class="kp-meta__item">そろった <b>${esc(room.matchedPairs || 0)} / ${esc(room.totalPairs || 0)}</b></span>`,
-    `<span class="kp-meta__item">ためした かいすう <b>${esc(room.moves || 0)}</b></span>`,
+    `<span class="kp-meta__item">ためした回数 <b>${esc(room.moves || 0)}</b></span>`,
   ];
   document.getElementById('game-meta').innerHTML = items.join('');
 }
@@ -1137,9 +1213,9 @@ function updateBanner(room, cards, selected) {
   const crossSides = !a.side || !b.side || a.side !== b.side;
   if (packAllowsCross(room) && crossSides) {
     el.innerHTML = `<div class="kp-banner kp-banner--cross">
-      <span class="material-symbols-rounded" role="img" aria-label="べつのくみあわせ">lightbulb</span>
-      <div><p class="kp-banner__title">それも つながるかも！</p>
-      <p class="kp-banner__note">でも きょうの こたえは べつの くみあわせ</p></div>
+      <span class="material-symbols-rounded" role="img" aria-label="別の組み合わせ">lightbulb</span>
+      <div><p class="kp-banner__title">それもつながるかも！</p>
+      <p class="kp-banner__note">でも今日のこたえは別の組み合わせ</p></div>
     </div>`;
     return;
   }
@@ -1147,7 +1223,7 @@ function updateBanner(room, cards, selected) {
   el.innerHTML = `<div class="kp-banner kp-banner--miss">
     <span class="material-symbols-rounded" role="img" aria-label="ちがうみたい">link_off</span>
     <div><p class="kp-banner__title">うーん、ちがうみたい</p>
-    <p class="kp-banner__note">つぎの人の ばんだよ</p></div>
+    <p class="kp-banner__note">次の人の番だよ</p></div>
   </div>`;
 }
 
@@ -1175,30 +1251,57 @@ async function tapCard(cardId) {
       if (!room || room.status !== STATUS.PLAYING) return;
       if (room.boardSeq !== seq) return;                       // 世代ガード
       if (currentTurnNick(room) !== state.nickname) return;    // 手番本人か
+      const closed = isClosedMode(room);
       const cards = (room.board && room.board.cards) || {};
       const card = cards[cardId];
       if (!card || card.state === 'matched') return;           // 未成立カードか
       const sel = room.selected || [];
       if (sel.length >= 2) return;                             // すでに2枚選ばれていないか
+
+      // 1枚目の選び直し。裏向きモードでは裏に戻す（matched は withSelectionCleared が触らない）
       if (sel.length === 1 && sel[0] === cardId) {
-        return { ...room, selected: null };                    // 1枚目の えらびなおし
+        if (closed && card.state !== 'open') return;           // 不正遷移の拒否
+        return withSelectionCleared(room);
       }
       if (sel.indexOf(cardId) !== -1) return;
 
+      // 触れてよいのは、裏向きモードなら裏の札・表向きモードなら表の札だけ
+      if (card.state !== (closed ? 'closed' : 'open')) return; // 不正遷移の拒否
+
       if (sel.length === 0) {
-        return { ...room, selected: [cardId] };
+        if (!closed) return { ...room, selected: [cardId] };
+        return {
+          ...room,
+          board: { ...(room.board || {}), cards: { ...cards, [cardId]: { ...card, state: 'open' } } },
+          selected: [cardId],
+        };
       }
 
       const firstId = sel[0];
       const first = cards[firstId];
       if (!first || first.state === 'matched') return;
+      if (closed && first.state !== 'open') return;            // 1枚目はめくれているはず
 
       const moves = (Number(room.moves) || 0) + 1;
-      const nextIndex = nextTurnIndex(room);   // 成立してもしなくても手番は次へ
+      const isMatch = first.pairId === card.pairId;
+      // 裏向きモードで そろえたときだけ手番を続ける（神経衰弱と同じ）。
+      // 表向きモードは成立してもしなくても必ず交代（1人が連取して独走しないため）
+      const keepTurn = closed && isMatch;
+      const nextIndex = keepTurn ? normTurnIndex(room) : nextTurnIndex(room);
       selAfter = [firstId, cardId];
 
-      if (first.pairId !== card.pairId) {
-        return { ...room, selected: selAfter, moves, turnIndex: nextIndex };
+      if (!isMatch) {
+        // 裏向きモードでは2枚目もめくって見せ、2秒後に clearSelection が両方を裏へ戻す
+        const missCards = closed
+          ? { ...cards, [cardId]: { ...card, state: 'open' } }
+          : cards;
+        return {
+          ...room,
+          board: { ...(room.board || {}), cards: missCards },
+          selected: selAfter,
+          moves,
+          turnIndex: nextIndex,
+        };
       }
 
       const matchedPairs = (Number(room.matchedPairs) || 0) + 1;
@@ -1238,6 +1341,8 @@ function scheduleSelectionClear(seq, ids) {
   }, SELECTION_SHOW_MS);
 }
 
+/* 選択の解除。裏向きモードでは そろわなかった2枚を裏に戻す
+   （手番クライアントの2秒タイマーと、ホストの watchdog の両方がここを通る） */
 async function clearSelection(seq, ids) {
   if (!state.roomRef) return;
   const key = ids.join('|');
@@ -1247,7 +1352,7 @@ async function clearSelection(seq, ids) {
       if (room.boardSeq !== seq) return;
       const sel = room.selected || [];
       if (sel.length < 2 || sel.join('|') !== key) return;   // すでに解除済み・別の選択
-      return { ...room, selected: null };
+      return withSelectionCleared(room);
     });
   } catch (error) {
     console.error('[kotoba-pair] clearSelection failed', error);
@@ -1315,7 +1420,7 @@ async function advanceTurnIfAbsent(seq) {
       if (!Object.keys(players).length) return;
       const next = nextTurnIndex(room);
       if (next === normTurnIndex(room)) return;      // 進めない → 何もしない
-      return { ...room, selected: null, turnIndex: next };
+      return { ...withSelectionCleared(room), turnIndex: next };
     });
   } catch (error) {
     console.error('[kotoba-pair] advanceTurnIfAbsent failed', error);
@@ -1337,7 +1442,8 @@ async function passTurn() {
       if (currentTurnNick(room) !== state.nickname) return;
       const sel = room.selected || [];
       if (sel.length >= 2) return;                   // 判定を見せている最中は不可
-      return { ...room, selected: null, turnIndex: nextTurnIndex(room) };
+      // 1枚めくった状態でパスした場合、その1枚は裏に戻る
+      return { ...withSelectionCleared(room), turnIndex: nextTurnIndex(room) };
     });
   } catch (error) {
     console.error('[kotoba-pair] passTurn failed', error);
@@ -1357,7 +1463,7 @@ async function hostNextTurn() {
       if (!room || room.status !== STATUS.PLAYING) return;
       if (room.boardSeq !== seq) return;
       if (room.host !== state.nickname) return;
-      return { ...room, selected: null, turnIndex: nextTurnIndex(room) };
+      return { ...withSelectionCleared(room), turnIndex: nextTurnIndex(room) };
     });
   } catch (error) {
     console.error('[kotoba-pair] hostNextTurn failed', error);
@@ -1380,8 +1486,10 @@ async function hostRevealPair() {
       if (room.host !== state.nickname) return;
       const sel = room.selected || [];
       if (sel.length >= 2) return;                   // 判定を見せている最中は不可
-      const cards = (room.board && room.board.cards) || {};
-      const order = (room.board && room.board.order) || Object.keys(cards);
+      // 途中でめくられている1枚はここで裏に戻してから選ぶ（開きっぱなしの札を残さない）
+      const base = withSelectionCleared(room);
+      const cards = (base.board && base.board.cards) || {};
+      const order = (base.board && base.board.order) || Object.keys(cards);
       const firstId = order.find(id => cards[id] && cards[id].state !== 'matched');
       if (!firstId) return;
       const pairId = cards[firstId].pairId;
@@ -1389,8 +1497,8 @@ async function hostRevealPair() {
         && cards[id].pairId === pairId && cards[id].state !== 'matched');
       if (!partnerId) return;
 
-      const matchedPairs = (Number(room.matchedPairs) || 0) + 1;
-      const total = Number(room.totalPairs) || 0;
+      const matchedPairs = (Number(base.matchedPairs) || 0) + 1;
+      const total = Number(base.totalPairs) || 0;
       const cleared = total > 0 && matchedPairs >= total;
       const nextCards = {
         ...cards,
@@ -1399,8 +1507,8 @@ async function hostRevealPair() {
       };
       if (!cleared) revealed = [firstId, partnerId];
       return {
-        ...room,
-        board: { ...(room.board || {}), cards: nextCards },
+        ...base,
+        board: { ...(base.board || {}), cards: nextCards },
         selected: cleared ? null : [firstId, partnerId],
         matchedPairs,
         status: cleared ? STATUS.RESULT : STATUS.PLAYING,
@@ -1418,7 +1526,7 @@ async function hostFinish() {
     await state.roomRef.transaction(room => {
       if (!room || room.status !== STATUS.PLAYING) return;
       if (room.host !== state.nickname) return;
-      return { ...room, status: STATUS.RESULT, selected: null };
+      return { ...withSelectionCleared(room), status: STATUS.RESULT };
     });
   } catch (error) {
     console.error('[kotoba-pair] hostFinish failed', error);
@@ -1441,9 +1549,9 @@ function renderResult(room) {
   const cleared = total > 0 && matched >= total;
 
   document.getElementById('result-title').textContent =
-    cleared ? `みんなで ${moves}回で ぜんぶ そろえた！` : `ここまでで ${matched}くみ そろえたよ`;
+    cleared ? `みんなで${moves}回でぜんぶそろえた！` : `ここまでで${matched}組そろえたよ`;
   document.getElementById('result-sub').textContent =
-    cleared ? `${total}くみ ぜんぶ そろったよ` : `ためした かいすうは ${moves}回`;
+    cleared ? `${total}組ぜんぶそろったよ` : `ためした回数は${moves}回`;
 
   renderResultPairs(room);
 
@@ -1479,7 +1587,7 @@ function renderResultPairs(room) {
   const pairs = collectMatchedPairs(room);
   const el = document.getElementById('result-pairs');
   if (!pairs.length) {
-    el.innerHTML = '<li class="kp-pair-item"><p class="kp-pair-note">まだ そろった ペアは ないよ</p></li>';
+    el.innerHTML = '<li class="kp-pair-item"><p class="kp-pair-note">まだそろったペアはないよ</p></li>';
     return;
   }
   el.innerHTML = pairs.map(p => `<li class="kp-pair-item">
@@ -1507,10 +1615,12 @@ async function hostPlayAgain(packId) {
   if (!room0) return;
 
   const pack = getPack(packId || room0.packId) || allPacks()[0];
-  if (!pack) { showMsg('パックが みつからないよ'); return; }
+  if (!pack) { showMsg('パックが見つからないよ'); return; }
   const prevSize = ((room0.board && room0.board.order) || []).length || 16;
+  // 見せかた（裏向き / 表向き）はルーム作成時の設定をそのまま引き継ぐ
+  const mode = normMode(room0.mode);
   // 乱数は transaction コールバックの外で確定させる
-  const board = buildBoard(pack, prevSize);
+  const board = buildBoard(pack, prevSize, mode);
   const totalPairs = board.order.length / 2;
   const seedOrder = window.shuffle(Object.keys(room0.players || {}));
 
@@ -1531,7 +1641,7 @@ async function hostPlayAgain(packId) {
       ...room,
       status: STATUS.PLAYING,
       packId: pack.id,
-      mode: MODE,
+      mode,
       boardSeq: (Number(room.boardSeq) || 1) + 1,
       board,
       turnOrder: order,
@@ -1544,26 +1654,26 @@ async function hostPlayAgain(packId) {
   });
 
   if (!committed) {
-    showMsg(reason === 'too_few' ? '2人いじょうで はじめられるよ' : 'はじめられなかったよ。もう一度 ためしてね');
+    showMsg(reason === 'too_few' ? '2人以上ではじめられるよ' : 'はじめられなかったよ。もう一度ためしてね');
     return;
   }
   window.RoomkStats?.count('pack-' + pack.id);
 }
 
 /* ════════════════════════════════════════════════
-   コードのコピー（Metalife チャットに貼れる形）
+   コードのコピー（コード単体。他アプリと同じ挙動）
    ════════════════════════════════════════════════ */
-async function copyInvite(btn) {
+async function copyRoomCode(btn) {
+  if (state.copyBusy) return;                     // 連打ガード
   const code = state.roomCode || '';
-  if (!code) { showMsg('ルームコードが ないよ'); return; }
-  const url = `${location.origin}${location.pathname}`;
-  const text = `コトバペアを あそぶよ\n${url}\nルームコード: ${code}`;
+  if (!code) { showMsg('ルームコードがないよ'); return; }
+  state.copyBusy = true;
   try {
     if (navigator.clipboard && navigator.clipboard.writeText) {
-      await navigator.clipboard.writeText(text);
+      await navigator.clipboard.writeText(code);
     } else {
       const ta = document.createElement('textarea');
-      ta.value = text;
+      ta.value = code;
       ta.style.cssText = 'position:fixed;opacity:0;';
       document.body.appendChild(ta);
       ta.focus(); ta.select();
@@ -1572,12 +1682,15 @@ async function copyInvite(btn) {
     }
     if (btn) {
       btn.classList.add('done');
-      setTimeout(() => btn.classList.remove('done'), 2000);
+      setTimeout(() => { btn.classList.remove('done'); state.copyBusy = false; }, 2000);
+    } else {
+      state.copyBusy = false;
     }
     showMsg('コピーしたよ', false);
   } catch (error) {
-    console.error('[kotoba-pair] copyInvite failed', error);
-    showMsg('コピーできなかったよ。コードを 手で おしえてね');
+    console.error('[kotoba-pair] copyRoomCode failed', error);
+    state.copyBusy = false;
+    showMsg('コピーできなかったよ。コードを手で教えてね');
   }
 }
 
@@ -1596,7 +1709,7 @@ function leaveCleanup() {
   Object.assign(state, {
     role: null, nickname: null, roomCode: null, roomRef: null, room: null,
     orphanTimer: null, clearTimer: null, watchdogTimer: null, watchdogKey: null,
-    turnFixTimer: null, boardKey: null, tapBusy: false,
+    turnFixTimer: null, boardKey: null, tapBusy: false, copyBusy: false,
   });
   showOverlay('host-off-overlay', false);
   showOverlay('reconnect-overlay', false);
@@ -1705,32 +1818,36 @@ async function tryReconnect() {
 <script>
   RoomkHowto.init({
     title: 'あそびかた',
-    lead: 'いみが つながる 2まいの ことばカードを、みんなで そうだんしながら そろえるゲーム。カードは ぜんぶ おもてむきだよ。2人から あそべる。',
+    lead: '意味がつながる2枚のことばカードを、みんなで相談しながらそろえるゲーム。裏向きのカードをめくって探すよ。2人から遊べる。',
     sections: [
       {
         heading: 'はじめかた',
         items: [
-          'ホストが「ルームを つくる」を おして、コードを みんなに おしえる',
-          'ほかの人は「ルームに はいる」から なまえと コードを 入れて「はいる」',
-          '2人いじょうに なったら ホストが「ゲームを はじめる」を おす',
+          'ホストが「ルームをつくる」を押して、コードをみんなに教える',
+          'ほかの人は「ルームにはいる」から名前とコードを入れて「はいる」',
+          '2人以上になったらホストが「ゲームをはじめる」を押す',
         ],
       },
       {
         heading: 'すすめかた',
         items: [
-          'じゅんばんが きた人が、つながりそうな カードを 2まい えらぶ',
-          'つながったら そのまま のこって、つながる わけが 1行 出る',
-          'ちがったら 2まいを すこし 見せてから もどる。そろっても そろわなくても つぎの人の ばん',
-          'えらびたくない ときは「パスする」を おしてOK',
+          '順番がきた人が、カードを1枚めくる。全員の画面で同じことばが見える',
+          'つながりそうなカードをもう1枚めくる。つながったら2枚とも残って、つながるわけが1行出る',
+          'そろったらもう一回めくれるよ。ちがったら2枚を少し見せてから裏にもどって、次の人の番',
+          'めくりたくないときは「パスする」を押してOK',
         ],
       },
       {
-        heading: 'そうだんOK',
-        text: 'こえや チャットで そうだんしながら えらんで だいじょうぶ。「①と ⑤、つながるかも」のように 番号で いうと つたわりやすいよ。',
+        heading: '相談OK',
+        text: '声やチャットで相談しながら選んでだいじょうぶ。「①と⑤、つながるかも」のように番号で言うと伝わりやすいよ。',
+      },
+      {
+        heading: 'ぜんぶ見えるやりかたもある',
+        text: 'ホストがルームをつくるときに「表向き」を選ぶと、はじめからカードのことばがぜんぶ見えるよ。おぼえるのが苦手でも、意味を考えるところだけで遊べる。',
       },
       {
         heading: 'おわりかた',
-        text: 'ぜんぶ そろうと けっかが 出るよ。ホストが「もういちど あそぶ」を おすと、あたらしい ならびで あそべる。',
+        text: 'ぜんぶそろうと結果が出るよ。ホストが「もういちど遊ぶ」を押すと、新しい並びで遊べる。',
       },
     ],
   });
