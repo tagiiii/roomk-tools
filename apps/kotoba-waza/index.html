@@ -12,7 +12,7 @@
 <body>
   <main class="kw-app">
 
-    <!-- ── TOP（技えらび） ── -->
+    <!-- ── TOP（えらびかたは2つ。主＝ゲームから／副＝技のいちらんから） ── -->
     <section class="kw-screen" id="screen-top">
       <header class="kw-hero">
         <span class="material-symbols-rounded kw-hero__icon">tips_and_updates</span>
@@ -28,11 +28,43 @@
           <li>答えはチャットに番号（①②③）でも、声でもOK。</li>
         </ul>
 
-        <h2 class="kw-panel__title">きょうの技をえらぶ</h2>
-        <div class="kw-groups" id="wazaGroups"></div>
+        <!-- 主の入口: ゲームからの逆引き -->
+        <div class="kw-entry" id="gameEntry">
+          <h2 class="kw-panel__title">きょうのゲームからえらぶ</h2>
+          <p class="kw-entry__lead">ゲームをえらぶと、そのゲームで使う技だけが並びます。</p>
+          <div class="kw-gamecards" id="gamePicker"></div>
+        </div>
+
+        <!-- 副の入口: 技のいちらん（従来のチップ） -->
+        <details class="kw-fold" id="wazaFold">
+          <summary class="kw-fold__summary">
+            <span class="material-symbols-rounded kw-fold__icon" aria-hidden="true">expand_more</span>
+            <span class="kw-fold__text">技のいちらんからえらぶ</span>
+          </summary>
+          <p class="kw-fold__lead">ゲームを決めていないときや、技の名前から探したいときはこちら。</p>
+          <div class="kw-groups" id="wazaGroups"></div>
+        </details>
 
         <p class="kw-panel__foot">答えた内容はどこにも保存されません。</p>
       </section>
+    </section>
+
+    <!-- ── ゲーム別の技えらび（逆引き） ── -->
+    <section class="kw-screen" id="screen-game" hidden>
+      <header class="kw-gamehead card">
+        <p class="kw-gamehead__label">きょうのゲーム</p>
+        <h2 class="kw-gamehead__name" id="gameName"></h2>
+        <p class="kw-gamehead__lead" id="gameLead"></p>
+      </header>
+
+      <div class="kw-wazacards" id="gameWazaList"></div>
+
+      <div class="kw-actions">
+        <button class="kw-quiet-btn kw-quiet-btn--back" id="btnGameBack" type="button">
+          <span class="material-symbols-rounded" aria-hidden="true">arrow_back</span>
+          <span class="kw-quiet-btn__text">ゲームえらびにもどる</span>
+        </button>
+      </div>
     </section>
 
     <!-- ── クイズ ── -->
@@ -110,14 +142,15 @@
       lead: 'きょうのゲームで使う「コトバの技」を、3択クイズで先にのぞくツール。4問だけ。',
       sections: [
         { heading: 'はじめかた', items: [
-          'きょうの技を1つえらぶ',
+          'きょうのゲームをえらぶと、そのゲームで使う技だけが並ぶ。その中から1つえらぶ',
+          '技の名前から探したいときは「技のいちらんからえらぶ」を開く',
         ] },
         { heading: 'すすめかた', items: [
           '問題と①②③を読んで、答えだと思う番号をチャットに送る',
           '「答えを見る」を押すと、答えと説明が出る',
           '「次へ」でつぎの問題にすすむ',
         ] },
-        { heading: 'おわりかた', text: '4問おわると、きょうの技のまとめが出る。そのままゲームへ進める。「TOPにもどる」で技えらびに戻れる。' },
+        { heading: 'おわりかた', text: '4問おわると、きょうの技のまとめが出る。そのままゲームへ進める。「TOPにもどる」でえらびなおせる。出す4問は毎回ランダムに選ばれるので、同じ技をもう一度やっても中身は変わる。' },
       ],
     });
   </script>
