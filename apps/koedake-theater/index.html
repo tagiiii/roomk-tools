@@ -215,7 +215,7 @@
         <span class="material-symbols-rounded" aria-hidden="true">theater_comedy</span>
       </div>
       <div class="kdt-header__title">こえだけシアター</div>
-      <div class="kdt-header__sub">みじかいセリフをこえだけでえんじて、<br>どのシチュエーションかあててもらおう</div>
+      <div class="kdt-header__sub">短いセリフを声だけで演じて、<br>どのシチュエーションか当ててもらおう</div>
     </div>
     <div class="card">
       <button class="btn btn-primary btn-full" onclick="goTo('host-setup')">
@@ -312,7 +312,7 @@
     <p class="kdt-round-lbl" id="cast-round-lbl"></p>
 
     <div class="kdt-serifu">
-      <p class="kdt-serifu__lbl">こんかいのセリフ</p>
+      <p class="kdt-serifu__lbl">今回のセリフ</p>
       <p class="kdt-serifu__text" id="cast-serifu"></p>
     </div>
 
@@ -324,17 +324,17 @@
     <!-- ゲスト向け -->
     <div id="cast-guest-area" class="card mt-md" style="display:none;text-align:center">
       <span class="material-symbols-rounded" aria-hidden="true" style="font-size:36px;color:var(--color-accent)">record_voice_over</span>
-      <p style="font-weight:700;margin-top:8px">えんじる人をえらんでいます</p>
-      <p style="font-size:13px;color:var(--color-muted);margin-top:6px">やってみたい人は、こえかチャットでおしえてね</p>
+      <p style="font-weight:700;margin-top:8px">演じる人を選んでいます</p>
+      <p style="font-size:13px;color:var(--color-muted);margin-top:6px">やってみたい人は、声かチャットで教えてね</p>
     </div>
 
     <!-- ホスト向け -->
     <div id="cast-host-area" class="mt-md" style="display:none">
       <div class="card">
-        <p class="kdt-section-lbl">えんじる人をえらぶ</p>
+        <p class="kdt-section-lbl">演じる人を選ぶ</p>
         <div id="cast-guest-btns"></div>
         <button class="btn btn-secondary btn-full sep" onclick="pickRandomActor()">
-          <span class="material-symbols-rounded" aria-hidden="true">casino</span>ランダムにえらぶ
+          <span class="material-symbols-rounded" aria-hidden="true">casino</span>ランダムに選ぶ
         </button>
       </div>
       <button class="btn btn-primary btn-full mt-md" id="btn-cast-confirm" onclick="confirmActor()" disabled>
@@ -358,7 +358,7 @@
         きみのシチュエーションは
       </p>
       <p class="kdt-secret__situ" id="act-secret-situ"></p>
-      <p class="kdt-secret__hint">このきもちでセリフを言ってみよう。なんかい言ってもOK</p>
+      <p class="kdt-secret__hint">この気持ちでセリフを言ってみよう。何回言ってもOK</p>
     </div>
 
     <div class="kdt-serifu">
@@ -375,9 +375,9 @@
 
     <div id="act-host-area" class="mt-md" style="display:none">
       <button class="btn btn-primary btn-full" onclick="moveToVoting()">
-        <span class="material-symbols-rounded" aria-hidden="true">how_to_vote</span>とうひょうへ
+        <span class="material-symbols-rounded" aria-hidden="true">how_to_vote</span>投票へ
       </button>
-      <button class="btn btn-ghost btn-full sep" onclick="reselectActor()">えんじる人をえらびなおす</button>
+      <button class="btn btn-ghost btn-full sep" onclick="reselectActor()">演じる人を選び直す</button>
     </div>
   </div>
 </div>
@@ -405,7 +405,7 @@
       </div>
       <div class="card kdt-voted">
         <span class="material-symbols-rounded" aria-hidden="true">hourglass_top</span>
-        <p style="font-weight:700;margin-top:8px">みんなが とうひょう中</p>
+        <p style="font-weight:700;margin-top:8px">みんなが投票中</p>
         <p id="vote-actor-count" class="kdt-note"></p>
       </div>
     </div>
@@ -413,7 +413,7 @@
     <!-- 投票するゲスト向け -->
     <div id="vote-guest-area" style="display:none">
       <p style="font-size:14px;color:var(--color-muted);margin-bottom:12px">
-        どのシチュエーションだったとおもう？
+        どのシチュエーションだったと思う？
       </p>
       <div id="vote-btns"></div>
       <button class="btn btn-primary btn-full sep" id="btn-vote-confirm" onclick="submitVote()" disabled>
@@ -423,19 +423,19 @@
 
     <div id="vote-done-area" class="card kdt-voted" style="display:none">
       <span class="material-symbols-rounded" aria-hidden="true">check_circle</span>
-      <p style="font-weight:700;margin-top:8px">とうひょうしました</p>
+      <p style="font-weight:700;margin-top:8px">投票しました</p>
       <p id="vote-done-count" class="kdt-note"></p>
     </div>
 
     <!-- ホスト向け -->
     <div id="vote-host-area" style="display:none">
       <div class="card">
-        <p class="kdt-section-lbl">とうひょう状況</p>
+        <p class="kdt-section-lbl">投票状況</p>
         <p id="vote-host-count" style="font-size:15px"></p>
         <p id="vote-host-hint" class="kdt-note" style="text-align:left"></p>
       </div>
       <button class="btn btn-primary btn-full mt-md" onclick="openVotes()">
-        <span class="material-symbols-rounded" aria-hidden="true">celebration</span>けっかを見る
+        <span class="material-symbols-rounded" aria-hidden="true">celebration</span>結果を見る
       </button>
     </div>
   </div>
@@ -449,13 +449,13 @@
     <p class="kdt-round-lbl" id="rev-round-lbl"></p>
 
     <div class="kdt-result-banner">
-      <p class="kdt-result-banner__lbl">せいかいのシチュエーション</p>
+      <p class="kdt-result-banner__lbl">正解のシチュエーション</p>
       <p class="kdt-result-banner__answer" id="rev-answer"></p>
       <p class="kdt-result-banner__actor" id="rev-actor"></p>
     </div>
 
     <div class="card">
-      <p class="kdt-section-lbl">みんなのとうひょう</p>
+      <p class="kdt-section-lbl">みんなの投票</p>
       <div id="rev-votes"></div>
       <p id="rev-summary" style="font-size:14px;margin-top:12px;text-align:center"></p>
     </div>
@@ -467,9 +467,9 @@
 
     <div id="rev-host-area" class="mt-md" style="display:none">
       <button class="btn btn-primary btn-full" onclick="nextRound()">
-        <span class="material-symbols-rounded" aria-hidden="true">arrow_forward</span>つぎのラウンドへ
+        <span class="material-symbols-rounded" aria-hidden="true">arrow_forward</span>次のラウンドへ
       </button>
-      <button class="btn btn-ghost btn-full sep" onclick="finishGame()">おわる</button>
+      <button class="btn btn-ghost btn-full sep" onclick="finishGame()">終わる</button>
     </div>
   </div>
 </div>
@@ -484,11 +484,11 @@
         <span class="material-symbols-rounded" aria-hidden="true">celebration</span>
       </div>
       <div class="kdt-header__title">おしまい</div>
-      <div class="kdt-header__sub">あそんでくれてありがとう</div>
+      <div class="kdt-header__sub">遊んでくれてありがとう</div>
     </div>
 
     <div class="card">
-      <p class="kdt-section-lbl">きょうのポイント</p>
+      <p class="kdt-section-lbl">今日のポイント</p>
       <div class="kdt-score" id="done-score"></div>
     </div>
 
@@ -525,7 +525,7 @@ async function waitAuthOrExplain() {
     await authReady;
     return true;
   } catch {
-    showMsg('うまくつながらなかったよ。ページをよみこみなおしてね');
+    showMsg('うまくつながらなかったよ。ページを読み込み直してね');
     return false;
   } finally {
     _authWaitBusy = false;
@@ -808,7 +808,7 @@ function selectCastCandidate(nick) {
 
 async function confirmActor() {
   const nick = state.castSelection;
-  if (!nick) { showMsg('えんじる人をえらんでください'); return; }
+  if (!nick) { showMsg('演じる人を選んでください'); return; }
   let abortReason = null;
   const { committed } = await state.roomRef.transaction((room) => {
     if (!room || room.status !== STATUS.CASTING) { abortReason = 'bad_status'; return; }
@@ -1055,7 +1055,7 @@ function renderPlayerList(id, players, actorNick) {
   if (!ul) return;
   const html = Object.entries(players).map(([nick, p]) => {
     const hostTag  = p.isHost ? '<span class="kdt-tag">ホスト</span>' : '';
-    const actorTag = nick === actorNick ? '<span class="kdt-tag kdt-tag--actor">えんじる人</span>' : '';
+    const actorTag = nick === actorNick ? '<span class="kdt-tag kdt-tag--actor">演じる人</span>' : '';
     const meTag    = nick === state.nickname ? '<span class="kdt-tag kdt-tag--me">あなた</span>' : '';
     return `<li class="kdt-player-list__item">
       <div class="kdt-player-list__name">${esc(nick)}${hostTag}${actorTag}${meTag}</div>
@@ -1163,7 +1163,7 @@ function handleActing(room, players) {
   if (isActor) {
     note.textContent = 'マイクをオンにして、セリフをどうぞ';
   } else {
-    note.textContent = `${round.actor || ''}さんのこえをきいて、どのシチュエーションかかんがえよう`;
+    note.textContent = `${round.actor || ''}さんの声を聞いて、どのシチュエーションか考えよう`;
   }
 
   document.getElementById('act-host-area').style.display = isHost ? 'block' : 'none';
@@ -1215,13 +1215,13 @@ function handleVoting(room, players) {
     (!isHost && !isActor && iVoted) ? 'block' : 'none';
   document.getElementById('vote-host-area').style.display = isHost ? 'block' : 'none';
 
-  const countText = `${votedCount} / ${totalVoters} 人がとうひょう済み`;
+  const countText = `${votedCount} / ${totalVoters} 人が投票済み`;
   document.getElementById('vote-actor-count').textContent = countText;
   document.getElementById('vote-done-count').textContent = countText;
   if (isHost) {
     document.getElementById('vote-host-count').textContent = countText;
     document.getElementById('vote-host-hint').textContent =
-      votedCount < totalVoters ? 'まだの人がいても、けっかを見ることができます' : '全員がとうひょうしました';
+      votedCount < totalVoters ? 'まだの人がいても、結果を見ることができます' : '全員が投票しました';
   }
 }
 
@@ -1239,7 +1239,7 @@ function handleReveal(room, players) {
   document.getElementById('rev-answer').textContent =
     `${NUMBERS[round.answerIndex] || ''} ${card?.situations?.[round.answerIndex] || ''}`;
   document.getElementById('rev-actor').textContent =
-    `えんじたのは ${round.actor || ''}さん`;
+    `演じたのは${round.actor || ''}さん`;
 
   // 投票の一覧（開票時のスナップショットを使用）
   const votes = round.votes || {};
@@ -1251,7 +1251,7 @@ function handleReveal(room, players) {
   const rowsHtml = [...voterSet].map(nick => {
     const vote = votes[nick];
     const hit = correctNicks.has(nick);
-    let pickHtml = '<span style="color:var(--color-muted);font-size:13px">とうひょうなし</span>';
+    let pickHtml = '<span style="color:var(--color-muted);font-size:13px">投票なし</span>';
     if (Number.isInteger(vote)) {
       const mark = hit ? '<span class="material-symbols-rounded" role="img" aria-label="正解">check_circle</span>' : '';
       pickHtml = `<span class="kdt-vote-row__pick">${NUMBERS[vote]} ${esc(card?.situations?.[vote] || '')}${mark}</span>`;
@@ -1265,7 +1265,7 @@ function handleReveal(room, players) {
   document.getElementById('rev-votes').innerHTML = rowsHtml;
 
   const correctCount = round.correctCount || 0;
-  const summaryHtml = `あてた人 <strong>${correctCount}人</strong>（あてた人に1pt、` +
+  const summaryHtml = `当てた人 <strong>${correctCount}人</strong>（当てた人に1pt、` +
     `${esc(round.actor || '')}さんに${correctCount}pt）`;
   document.getElementById('rev-summary').innerHTML = summaryHtml;
 
@@ -1346,7 +1346,7 @@ tryReconnect().then(ok => { if (!ok) showScreen('top'); });
 <script>
   RoomkHowto.init({
     title: 'あそびかた',
-    lead: 'みじかいセリフをこえだけでえんじて、どのシチュエーションかあててもらうゲーム。',
+    lead: '短いセリフを声だけで演じて、どのシチュエーションか当ててもらうゲーム。',
     sections: [
       { heading: 'はじめかた', items: [
         'ホストが「ルームを作る」からルームを作る',
@@ -1354,12 +1354,12 @@ tryReconnect().then(ok => { if (!ok) showScreen('top'); });
         'ほかの人は「ルームに参加する」からコードを入れて「参加する」を押す',
       ] },
       { heading: 'すすめかた', items: [
-        'えんじる人がきまると、その人にだけシチュエーションが見える',
-        'えんじる人はセリフをこえだけでえんじる。なんかい言ってもOK',
-        'ほかの人はどのシチュエーションだったかをえらんで「きめた」を押す',
-        'けっかが出ると、あてた人にもえんじた人にもポイントが入る',
+        '演じる人が決まると、その人にだけシチュエーションが見える',
+        '演じる人はセリフを声だけで演じる。何回言ってもOK',
+        'ほかの人はどのシチュエーションだったかを選んで「きめた」を押す',
+        '結果が出ると、当てた人にも演じた人にもポイントが入る',
       ] },
-      { heading: 'おわりかた', text: 'ホストが「つぎのラウンドへ」を押すとつぎのカード、「おわる」を押すとおしまい。' },
+      { heading: 'おわりかた', text: 'ホストが「次のラウンドへ」を押すと次のカード、「終わる」を押すとおしまい。' },
     ],
   });
 </script>

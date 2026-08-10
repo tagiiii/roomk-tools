@@ -12,7 +12,7 @@
 - 問題カタログは `index.html` 内の `PITAHAME_PUZZLES`（マーカー `PITAHAME_PUZZLES_START` / `_END` 区間）にインライン埋め込み。**正本は [`scripts/pitahame-catalog.json`](../../scripts/pitahame-catalog.json)**。再生成時はこの区間を差し替える（1問1行を維持）。
 - ピース定義・回転規約（`PIECE_DEFS` / `orientationsOf` / `rotateCW`）は [`scripts/pitahame-gen.mjs`](../../scripts/pitahame-gen.mjs) と**完全に同一のセマンティクス**で移植している。生成器を変更したらアプリ側も同期すること。
   - r = 時計回り 90°回転の回数（0-3）。回転式 `(x,y) -> (-y, x)` → 再正規化（minX=minY=0）。
-  - トレイ初期向きは `orientIndex=0`（= r=0）。「まわす」は `orientationsOf` と同じ重複除去済みの distinct 向きを循環する。
+  - トレイ初期向きは `orientIndex=0`（= r=0）。「回す」は `orientationsOf` と同じ重複除去済みの distinct 向きを循環する。
 
 ## 実装済み範囲（フェーズ2 ＋ フェーズ3）← 現在ここ
 
@@ -21,8 +21,8 @@
 ### フェーズ2（ソロエンジン）
 
 - 画面: TOP → 難易度選択（やさしい／むずかしい）→ パズル → 完成演出。
-- 操作: タップで選択（太枠）／Pointer Events でドラッグ配置（マウス・タッチ両対応、スナップ候補プレビュー）／「まわす」「もどす」「ぜんぶもどす」「こたえを見る」。
-- 出題順はカタログの配列順（ID順＝易→難）。「つぎの問題」で次のIDへ。最後まで行ったら「ぜんぶあそんだよ！」で難易度選択へ戻る。**進捗の永続化はしない（ページ内メモリのみ／設計 §3）**。
+- 操作: タップで選択（太枠）／Pointer Events でドラッグ配置（マウス・タッチ両対応、スナップ候補プレビュー）／「回す」「戻す」「全部戻す」「答えを見る」。
+- 出題順はカタログの配列順（ID順＝易→難）。「次の問題」で次のIDへ。最後まで行ったら「全部遊んだよ！」で難易度選択へ戻る。**進捗の永続化はしない（ページ内メモリのみ／設計 §3）**。
 - 論理座標は常に整数グリッドで保持し、CSS 座標から状態を逆算しない（`state.pieces[].{x,y,orientIndex,location}` が正）。
 - パズル領域（`.ph-stage`）のみ `touch-action: none`。`prefers-reduced-motion` で完成演出（紙吹雪・シェイク・ウィッグル）を縮小。
 - ドラッグの move/up/cancel リスナーは**要素ではなく document に付ける**（layout() の renderPieces がピース要素を作り直すため、要素付けだとドラッグ中の再構築でリスナーごと消え `state.drag` が残留して操作不能になる）。`setPointerCapture` は滑らかさ向上用の補助で try/catch（高速タップで例外になりうる）。ヒットテストは `.ph-piece`（外接矩形）を `pointer-events:none` にして実セル `.ph-cell` のみ。持ち上げ表示（LIFT）はタッチ/ペンのみでマウスは 0。up の取りこぼしは、同一 pointerId の再 down（iOS の id 再利用）と mouse の `buttons===0` な move で検知して自己修復する。
@@ -31,7 +31,7 @@
 
 - カタログエントリ（種類名参照）は `expandCatalogPuzzle()` で**自己完結パズルオブジェクト**（`{formatVersion,id,w,h,cells,pieces:[{type,cells,trayOrder,orient0}],sol}`）へ展開する。solo/room とも同形を `mountPuzzle()` に渡す（経路統一）。
 - ピース定義は種類名ではなく**各ピースの base cells から** `buildPieceDef()` で構築（`state.pieceDefs[idx]`）。種類名は色引き（`PIECE_COLORS`）だけに使う。RTDB から来た未知種類でも base cells だけで回転・判定できる。
-- 基準解の描画は `renderSolution(container, puzzle, {animate})` に共通化（solo「こたえを見る」/ results の答えアニメで共用）。
+- 基準解の描画は `renderSolution(container, puzzle, {animate})` に共通化（solo「答えを見る」/ results の答えアニメで共用）。
 
 ### フェーズ3（RTDB 対戦）
 
@@ -45,12 +45,12 @@ RTDB パス `pitahame_rooms/{roomCode}`。実装は末尾 `<script>` 内の **`N
 - **⚠️ バックグラウンドタブ対策**: 盤面 mount を `requestAnimationFrame` に載せると、タブが非表示のとき rAF が止まり盤面が出ない。room の mount は **同期実行**（`showScreen` 後 `clientWidth` は reflow 済みで取れる）＋保険で次フレーム再レイアウト。
 - **公平性・順位**: `computeResultOrder()`（設計 §9 厳守）。採用時刻＝`completedAt` が有限かつ `startAt≤completedAt≤endsAt` ならそれ、でなければ `receivedAt`。昇順ソート→同着はグループ先頭との差 1000ms 以内→密順位（①①②）。`completedAt=RoomkRTDB.now()`（完成判定直後）、`receivedAt=ServerValue.TIMESTAMP`。results は **`resultOrder` のみ**を描画（finishes を直接ソートしない）。
 - **カバー/カウントダウン**: `startAt`（= `now()+5000`）までは `.ph-cover` で盤面を隠し 5→1 をクライアント導出（独立 status にしない）。残り時間は数字なしのバー（`.ph-timebar`、`endsAt` までの割合）。
-- **ラウンド終了条件**: ①participants 全員完成（`maybeHostEndOnAllDone`）②`endsAt+2秒`でホストが自動終了（`scheduleHostEnd`、送信中の完成を拾う猶予）③ホストの「ラウンドをおわる」。
-- **切断・再接続**: ホスト `onDisconnect().update({hostConnected:false, hostDisconnectedAt:TS})`、ゲスト `players/{nick}` を `onDisconnect().remove()`。TTL 2分（`ORPHAN_TTL_MS`）。ゲストにホスト切断オーバーレイ。**ラウンド中のホスト復帰**は自動で finishes を消さず、ホストがオーバーレイ「このラウンドをやりなおす」を押したときだけ `restartRound`（attemptId 更新・finishes クリア・新 startAt で同一問題を再開）。
+- **ラウンド終了条件**: ①participants 全員完成（`maybeHostEndOnAllDone`）②`endsAt+2秒`でホストが自動終了（`scheduleHostEnd`、送信中の完成を拾う猶予）③ホストの「ラウンドを終わる」。
+- **切断・再接続**: ホスト `onDisconnect().update({hostConnected:false, hostDisconnectedAt:TS})`、ゲスト `players/{nick}` を `onDisconnect().remove()`。TTL 2分（`ORPHAN_TTL_MS`）。ゲストにホスト切断オーバーレイ。**ラウンド中のホスト復帰**は自動で finishes を消さず、ホストがオーバーレイ「このラウンドをやり直す」を押したときだけ `restartRound`（attemptId 更新・finishes クリア・新 startAt で同一問題を再開）。
 - **⚠️ ラウンド購読切替とキャッシュ残留**: `stopRoundListeners` は必ずラウンドキャッシュ（attemptId/puzzle/startAt/endsAt/closedAt/participants/finishes/resultOrder/loadedKey/myFinished）をリセットし、`roundGen` 世代ガードで off 後の旧コールバックを無効化する。分割購読では rounds 削除の null イベントが届く前に off されるため、リセットしないと前ゲームの finishes がフィードを汚染し以後更新されなくなる（実バグ 2026-07-22）。フィード描画は finishes との**リコンサイル方式**（`data-nick` 突合せ・追記専用禁止）。`restartRound` の attemptId 変更は**同一ラウンド再購読**で拾う（変更のないノードは再送されないため手動クリアでは復元不能）。`endRound` はタイマー/判定**作成時点**の roundNo+attemptId を transaction 内で照合し、`all_done` はサーバ値で全員完成を再検証する。
 - **sessionStorage**: 再接続キー `pitahame_session`（roomCode/nickname/role）。盤面復元キー `pitahame_board` は `roomCode|gameId|roundNo|attemptId|puzzleId` を全部含め、ひとつでも不一致なら破棄。results 表示・退出・やりなおし・もういちどで対象配置を消去。ゲストの新規参加は `waiting` のみ、round 中の復帰は participants 所属時のみ `players` へ復帰（別フロー）。
-- **自動削除**: `finished` 移行で `finishedAt` 保存 → 30秒後に status===finished かつ 同一 gameId なら remove。「もういちどあそぶ」は gameId を更新して waiting へ（設定保持・削除ガード）。「ルームをとじる」は即 remove。
-- **開始条件**: `isPlaying` な参加者が2人以上（満たなければボタン無効＋「あと○人」）。「わたしもあそぶ」OFF＝進行専任（`isPlaying:false`）。
+- **自動削除**: `finished` 移行で `finishedAt` 保存 → 30秒後に status===finished かつ 同一 gameId なら remove。「もう一度遊ぶ」は gameId を更新して waiting へ（設定保持・削除ガード）。「ルームを閉じる」は即 remove。
+- **開始条件**: `isPlaying` な参加者が2人以上（満たなければボタン無効＋「あと○人」）。「わたしも遊ぶ」OFF＝進行専任（`isPlaying:false`）。
 
 ### 検証用フック
 
@@ -62,7 +62,7 @@ howto.js 組み込み（`position:'left'`）・ポータルカード（`data-sce
 
 ### 既知の注意点（設計との差分・実機ゲートで確認）
 
-- **狭いスマホ幅（375px）でのみ**、howto の「？」FAB の角が「ぜんぶもどす」ボタンの左下と僅かに重なる。共有 howto.js（下部固定FAB）＋下部操作ボタンの構造上コンパクト画面では不可避で、他 RTDB アプリと同様。desktop / tablet(768px) は重なりゼロ。`'left'` は右列の「もどす」「こたえを見る」を完全に避けるための選択（`'right'` だと「こたえを見る」に重なる）
+- **狭いスマホ幅（375px）でのみ**、howto の「？」FAB の角が「全部戻す」ボタンの左下と僅かに重なる。共有 howto.js（下部固定FAB）＋下部操作ボタンの構造上コンパクト画面では不可避で、他 RTDB アプリと同様。desktop / tablet(768px) は重なりゼロ。`'left'` は右列の「戻す」「答えを見る」を完全に避けるための選択（`'right'` だと「答えを見る」に重なる）
 - **設計 §11 の時間切れメッセージ「ここまで！」は独立表示せず**、endsAt 到達で results（完成した順＋「こんな置きかたもあるよ」）へ直接遷移する簡略実装。禁止語違反はなし。表示要否はメンター実機で判断
 
 ## ピース色パレット（13色・決定値）

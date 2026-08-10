@@ -329,7 +329,7 @@
         </div>
         <div class="error-msg" id="w-error"></div>
         <button class="btn btn-primary btn-full mt-md" onclick="startRound()">
-          <span class="material-symbols-rounded">play_arrow</span>このお題ではじめる
+          <span class="material-symbols-rounded">play_arrow</span>このお題で始める
         </button>
       </div>
     </div>
@@ -346,13 +346,13 @@
 <div id="screen-input" class="screen">
   <div class="page">
     <div class="ii-theme">
-      <div class="ii-theme__label">おだい</div>
+      <div class="ii-theme__label">お題</div>
       <div class="ii-theme__text" id="i-theme">---</div>
     </div>
 
     <div class="ii-timer">
       <div class="ii-timer__val" id="i-timer">0:00</div>
-      <div class="ii-timer__lbl">のこり時間</div>
+      <div class="ii-timer__lbl">残り時間</div>
     </div>
 
     <div class="ii-count">
@@ -361,7 +361,7 @@
     </div>
 
     <div class="ii-input-row">
-      <input class="form-input" id="i-answer" type="text" maxlength="24" placeholder="おもいついた答え" aria-label="おもいついた答え" autocomplete="off">
+      <input class="form-input" id="i-answer" type="text" maxlength="24" placeholder="思いついた答え" aria-label="思いついた答え" autocomplete="off">
       <button class="btn btn-primary" onclick="addAnswer()">
         <span class="material-symbols-rounded">add</span>
       </button>
@@ -384,7 +384,7 @@
 <div id="screen-review" class="screen">
   <div class="page">
     <div class="ii-theme">
-      <div class="ii-theme__label">おだい</div>
+      <div class="ii-theme__label">お題</div>
       <div class="ii-theme__text" id="r-theme">---</div>
     </div>
 
@@ -516,7 +516,7 @@ async function waitAuthOrExplain() {
     await authReady;
     return true;
   } catch {
-    showMsg('うまくつながらなかったよ。ページをよみこみなおしてね');
+    showMsg('うまくつながらなかったよ。ページを読み込み直してね');
     return false;
   } finally {
     _authWaitBusy = false;
@@ -733,7 +733,7 @@ function renderMyAnswers() {
   document.getElementById('i-count').textContent = state.myAnswers.length;
   const list = document.getElementById('i-answer-list');
   if (state.myAnswers.length === 0) {
-    list.innerHTML = '<li class="ii-answer-empty">おもいついた答えを書いてみよう</li>';
+    list.innerHTML = '<li class="ii-answer-empty">思いついた答えを書いてみよう</li>';
     return;
   }
   list.innerHTML = state.myAnswers.map((a, i) => `
@@ -1128,21 +1128,21 @@ tryReconnect().then(ok => { if (!ok) showScreen('top'); });
 <script>
   RoomkHowto.init({
     title: 'あそびかた',
-    lead: 'お題に合う答えを、時間内にいくつ思いつけるかやってみて、おわったら みんなの答えをながめるゲーム。',
+    lead: 'お題に合う答えを、時間内にいくつ思いつけるかやってみて、終わったらみんなの答えを眺めるゲーム。',
     sections: [
       { heading: 'はじめかた', items: [
         'ホストが「ルームを作る」を押して、ルームコードをみんなに伝える',
         'ほかの人は「ルームに参加する」からコードを入れて「参加する」を押す',
-        'ホストがお題と制限時間を決めて「このお題ではじめる」を押す',
+        'ホストがお題と制限時間を決めて「このお題で始める」を押す',
       ] },
       { heading: 'すすめかた', items: [
         '時間内に、思いついた答えを書いて追加していく（Enterでも追加できるよ）',
         '時間になったら、みんなの答えがならぶ。同じ答えには色がつくよ',
-        'ホストが「次のお題」を押すと、つぎのラウンドがはじまる',
+        'ホストが「次のお題」を押すと、次のラウンドが始まる',
       ] },
       { heading: 'おわりかた', items: [
-        'ホストが「終了する」を押すと、ぜんぶのお題のふりかえりが見られる',
-        'さいごに「退出する」を押しておわり',
+        'ホストが「終了する」を押すと、全部のお題のふりかえりが見られる',
+        '最後に「退出する」を押しておわり',
       ] },
     ],
   });

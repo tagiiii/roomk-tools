@@ -473,7 +473,7 @@
         <button type="button" class="ph-menu-btn" id="btnCreate">
           <span class="material-symbols-rounded ph-menu-btn__icon" aria-hidden="true">add_home</span>
           <span class="ph-menu-btn__body">
-            <span class="ph-menu-btn__label">ルームをつくる</span>
+            <span class="ph-menu-btn__label">ルームを作る</span>
             <span class="ph-menu-btn__desc">みんなで同じ問題に挑戦する</span>
           </span>
         </button>
@@ -488,7 +488,7 @@
           <span class="material-symbols-rounded ph-menu-btn__icon" aria-hidden="true">extension</span>
           <span class="ph-menu-btn__body">
             <span class="ph-menu-btn__label">ひとりで練習</span>
-            <span class="ph-menu-btn__desc">じぶんのペースで1問ずつ挑戦する</span>
+            <span class="ph-menu-btn__desc">自分のペースで1問ずつ挑戦する</span>
           </span>
         </button>
       </div>
@@ -498,20 +498,20 @@
     <section class="ph-screen" id="screen-difficulty">
       <div class="ph-subhead">
         <button type="button" class="btn btn-ghost btn-sm" id="btnDiffBack">
-          <span class="material-symbols-rounded" aria-hidden="true">arrow_back</span>TOPにもどる
+          <span class="material-symbols-rounded" aria-hidden="true">arrow_back</span>TOPに戻る
         </button>
-        <h2 class="ph-subhead__title">なんいどをえらぶ</h2>
+        <h2 class="ph-subhead__title">難易度を選ぶ</h2>
       </div>
       <div class="ph-diff">
         <button type="button" class="ph-diff-btn" data-diff="easy">
           <span class="material-symbols-rounded ph-diff-btn__icon" aria-hidden="true">sentiment_satisfied</span>
           <span class="ph-diff-btn__label">やさしい</span>
-          <span class="ph-diff-btn__desc">ピース3こ</span>
+          <span class="ph-diff-btn__desc">ピース3個</span>
         </button>
         <button type="button" class="ph-diff-btn" data-diff="hard">
           <span class="material-symbols-rounded ph-diff-btn__icon" aria-hidden="true">local_fire_department</span>
           <span class="ph-diff-btn__label">むずかしい</span>
-          <span class="ph-diff-btn__desc">ピース4こ</span>
+          <span class="ph-diff-btn__desc">ピース4個</span>
         </button>
       </div>
       <p class="ph-diff__note" id="diffNote"></p>
@@ -521,7 +521,7 @@
     <section class="ph-screen" id="screen-puzzle">
       <div class="ph-topbar">
         <button type="button" class="btn btn-ghost btn-sm" id="btnPuzzleBack">
-          <span class="material-symbols-rounded" aria-hidden="true">arrow_back</span><span id="btnPuzzleBackLabel">TOPにもどる</span>
+          <span class="material-symbols-rounded" aria-hidden="true">arrow_back</span><span id="btnPuzzleBackLabel">TOPに戻る</span>
         </button>
         <!-- ソロ: 経過タイム -->
         <span class="ph-topbar__time" id="timeLabel" aria-live="off">
@@ -545,17 +545,17 @@
 
       <div class="ph-controls">
         <button type="button" class="btn btn-secondary" id="btnRotate" disabled>
-          <span class="material-symbols-rounded" aria-hidden="true">rotate_right</span>まわす
+          <span class="material-symbols-rounded" aria-hidden="true">rotate_right</span>回す
         </button>
         <button type="button" class="btn btn-secondary" id="btnReturn" disabled>
-          <span class="material-symbols-rounded" aria-hidden="true">undo</span>もどす
+          <span class="material-symbols-rounded" aria-hidden="true">undo</span>戻す
         </button>
         <button type="button" class="btn btn-ghost" id="btnReturnAll">
-          <span class="material-symbols-rounded" aria-hidden="true">restart_alt</span>ぜんぶもどす
+          <span class="material-symbols-rounded" aria-hidden="true">restart_alt</span>全部戻す
         </button>
         <!-- ソロのみ: 答えを見る（みんなでモードでは競争のため出さない。答えは results で表示）-->
         <button type="button" class="btn btn-ghost" id="btnShowAnswer">
-          <span class="material-symbols-rounded" aria-hidden="true">lightbulb</span>こたえを見る
+          <span class="material-symbols-rounded" aria-hidden="true">lightbulb</span>答えを見る
         </button>
       </div>
 
@@ -564,18 +564,18 @@
         <p class="ph-roommsg" id="roomMsg" aria-live="polite"></p>
         <div class="ph-feed" id="roomFeed" aria-live="polite"></div>
         <button type="button" class="btn btn-secondary btn-full" id="btnEndRound" hidden>
-          <span class="material-symbols-rounded" aria-hidden="true">flag</span>ラウンドをおわる
+          <span class="material-symbols-rounded" aria-hidden="true">flag</span>ラウンドを終わる
         </button>
       </div>
     </section>
 
-    <!-- ═══════════ ルームをつくる ═══════════ -->
+    <!-- ═══════════ ルームを作る ═══════════ -->
     <section class="ph-screen" id="screen-create">
       <div class="ph-subhead">
         <button type="button" class="btn btn-ghost btn-sm" id="btnCreateBack">
-          <span class="material-symbols-rounded" aria-hidden="true">arrow_back</span>TOPにもどる
+          <span class="material-symbols-rounded" aria-hidden="true">arrow_back</span>TOPに戻る
         </button>
-        <h2 class="ph-subhead__title">ルームをつくる</h2>
+        <h2 class="ph-subhead__title">ルームを作る</h2>
       </div>
       <div class="ph-form">
         <label class="ph-field">
@@ -583,7 +583,7 @@
           <input type="text" class="ph-input" id="createNick" maxlength="8" placeholder="8文字まで" autocomplete="off" />
         </label>
         <p class="ph-field__error" id="createError"></p>
-        <button type="button" class="btn btn-primary btn-full btn-lg" id="btnCreateGo">ルームをつくる</button>
+        <button type="button" class="btn btn-primary btn-full btn-lg" id="btnCreateGo">ルームを作る</button>
       </div>
     </section>
 
@@ -591,7 +591,7 @@
     <section class="ph-screen" id="screen-join">
       <div class="ph-subhead">
         <button type="button" class="btn btn-ghost btn-sm" id="btnJoinBack">
-          <span class="material-symbols-rounded" aria-hidden="true">arrow_back</span>TOPにもどる
+          <span class="material-symbols-rounded" aria-hidden="true">arrow_back</span>TOPに戻る
         </button>
         <h2 class="ph-subhead__title">ルームに入る</h2>
       </div>
@@ -623,21 +623,21 @@
       </div>
 
       <div class="ph-players">
-        <h3 class="ph-players__title">さんかしゃ</h3>
+        <h3 class="ph-players__title">参加者</h3>
         <ul class="ph-players__list" id="waitingPlayers"></ul>
       </div>
 
       <!-- ホスト設定 -->
       <div class="ph-settings" id="hostSettings" hidden>
         <div class="ph-setting">
-          <span class="ph-setting__label">なんいど</span>
+          <span class="ph-setting__label">難易度</span>
           <div class="ph-seg" id="setDifficulty">
             <button type="button" class="ph-seg__btn is-on" data-val="easy">やさしい</button>
             <button type="button" class="ph-seg__btn" data-val="hard">むずかしい</button>
           </div>
         </div>
         <div class="ph-setting">
-          <span class="ph-setting__label">ラウンドすう</span>
+          <span class="ph-setting__label">ラウンド数</span>
           <div class="ph-seg" id="setRounds">
             <button type="button" class="ph-seg__btn" data-val="1">1</button>
             <button type="button" class="ph-seg__btn is-on" data-val="3">3</button>
@@ -645,7 +645,7 @@
           </div>
         </div>
         <div class="ph-setting">
-          <span class="ph-setting__label">せいげんじかん</span>
+          <span class="ph-setting__label">制限時間</span>
           <div class="ph-seg" id="setTime">
             <button type="button" class="ph-seg__btn" data-val="120000">2分</button>
             <button type="button" class="ph-seg__btn is-on" data-val="180000">3分</button>
@@ -653,9 +653,9 @@
           </div>
         </div>
         <div class="ph-setting">
-          <span class="ph-setting__label">わたしもあそぶ</span>
+          <span class="ph-setting__label">わたしも遊ぶ</span>
           <div class="ph-seg" id="setPlaying">
-            <button type="button" class="ph-seg__btn is-on" data-val="on">あそぶ</button>
+            <button type="button" class="ph-seg__btn is-on" data-val="on">遊ぶ</button>
             <button type="button" class="ph-seg__btn" data-val="off">進行だけ</button>
           </div>
         </div>
@@ -665,8 +665,8 @@
 
       <div class="ph-waiting-actions">
         <button type="button" class="btn btn-primary btn-full btn-lg" id="btnStartRound" hidden>ゲームスタート</button>
-        <p class="ph-waiting-guestmsg" id="waitingGuestMsg" hidden>ホストが はじめるのを まってね。</p>
-        <button type="button" class="btn btn-ghost btn-full" id="btnLeaveWaiting">ルームからでる</button>
+        <p class="ph-waiting-guestmsg" id="waitingGuestMsg" hidden>ホストが始めるのを待ってね。</p>
+        <button type="button" class="btn btn-ghost btn-full" id="btnLeaveWaiting">ルームから出る</button>
       </div>
     </section>
 
@@ -684,7 +684,7 @@
 
       <div class="ph-waiting-actions">
         <button type="button" class="btn btn-primary btn-full btn-lg" id="btnNextRound" hidden></button>
-        <p class="ph-waiting-guestmsg" id="resultsGuestMsg" hidden>ホストが すすめるのを まってね。</p>
+        <p class="ph-waiting-guestmsg" id="resultsGuestMsg" hidden>ホストが進めるのを待ってね。</p>
       </div>
     </section>
 
@@ -696,9 +696,9 @@
       <div id="finishedRounds"></div>
 
       <div class="ph-waiting-actions">
-        <button type="button" class="btn btn-primary btn-full btn-lg" id="btnPlayAgain" hidden>もういちどあそぶ</button>
-        <button type="button" class="btn btn-ghost btn-full" id="btnCloseRoom" hidden>ルームをとじる</button>
-        <p class="ph-waiting-guestmsg" id="finishedGuestMsg" hidden>ホストが えらぶのを まってね。</p>
+        <button type="button" class="btn btn-primary btn-full btn-lg" id="btnPlayAgain" hidden>もう一度遊ぶ</button>
+        <button type="button" class="btn btn-ghost btn-full" id="btnCloseRoom" hidden>ルームを閉じる</button>
+        <p class="ph-waiting-guestmsg" id="finishedGuestMsg" hidden>ホストが選ぶのを待ってね。</p>
       </div>
     </section>
 
@@ -709,10 +709,10 @@
     <div class="ph-modal">
       <p class="ph-modal__title" id="doneTitle">ピタハメ！</p>
       <p class="ph-modal__time" id="doneTime"></p>
-      <p class="ph-modal__sub">かたを ぴったり うめられたね。</p>
+      <p class="ph-modal__sub">型をぴったり埋められたね。</p>
       <div class="ph-modal__actions">
-        <button type="button" class="btn btn-primary btn-full" id="btnNext">つぎの問題</button>
-        <button type="button" class="btn btn-ghost btn-full" id="btnDoneTop">TOPにもどる</button>
+        <button type="button" class="btn btn-primary btn-full" id="btnNext">次の問題</button>
+        <button type="button" class="btn btn-ghost btn-full" id="btnDoneTop">TOPに戻る</button>
       </div>
     </div>
   </div>
@@ -723,7 +723,7 @@
       <p class="ph-modal__title" id="ansTitle" style="font-size:var(--font-size-xl)">こんな置きかたもあるよ</p>
       <div class="ph-sol" id="solBoard"></div>
       <div class="ph-modal__actions">
-        <button type="button" class="btn btn-primary btn-full" id="btnCloseAnswer">とじる</button>
+        <button type="button" class="btn btn-primary btn-full" id="btnCloseAnswer">閉じる</button>
       </div>
     </div>
   </div>
@@ -734,10 +734,10 @@
   <!-- みんなで: ホスト切断オーバーレイ（ゲスト向け）-->
   <div class="ph-overlay" id="overlayHostOff" role="dialog" aria-modal="true" aria-labelledby="hostOffTitle">
     <div class="ph-modal">
-      <p class="ph-modal__title" id="hostOffTitle" style="font-size:var(--font-size-xl);color:var(--color-primary)">ホストと はなれちゃった</p>
-      <p class="ph-modal__sub">ホストの つうしんが きれています。<br />もどってくるのを まってね。</p>
+      <p class="ph-modal__title" id="hostOffTitle" style="font-size:var(--font-size-xl);color:var(--color-primary)">ホストとはなれちゃった</p>
+      <p class="ph-modal__sub">ホストの通信が切れています。<br />戻ってくるのを待ってね。</p>
       <div class="ph-modal__actions">
-        <button type="button" class="btn btn-ghost btn-full" id="btnHostOffLeave">ルームからでる</button>
+        <button type="button" class="btn btn-ghost btn-full" id="btnHostOffLeave">ルームから出る</button>
       </div>
     </div>
   </div>
@@ -745,11 +745,11 @@
   <!-- みんなで: ラウンド中断オーバーレイ（ホストが復帰したとき）-->
   <div class="ph-overlay" id="overlayRoundBroken" role="dialog" aria-modal="true" aria-labelledby="roundBrokenTitle">
     <div class="ph-modal">
-      <p class="ph-modal__title" id="roundBrokenTitle" style="font-size:var(--font-size-xl);color:var(--color-primary)">ラウンドが とまっていたよ</p>
-      <p class="ph-modal__sub">つうしんが きれているあいだ、ラウンドが とまっていました。どうする？</p>
+      <p class="ph-modal__title" id="roundBrokenTitle" style="font-size:var(--font-size-xl);color:var(--color-primary)">ラウンドが止まっていたよ</p>
+      <p class="ph-modal__sub">通信が切れているあいだ、ラウンドが止まっていました。どうする？</p>
       <div class="ph-modal__actions">
-        <button type="button" class="btn btn-primary btn-full" id="btnRestartRound">このラウンドをやりなおす</button>
-        <button type="button" class="btn btn-secondary btn-full" id="btnBrokenEndRound">ラウンドをおわる</button>
+        <button type="button" class="btn btn-primary btn-full" id="btnRestartRound">このラウンドをやり直す</button>
+        <button type="button" class="btn btn-secondary btn-full" id="btnBrokenEndRound">ラウンドを終わる</button>
       </div>
     </div>
   </div>
@@ -758,7 +758,7 @@
   <div class="ph-overlay" id="overlayReconnect" role="dialog" aria-modal="true">
     <div class="ph-modal" style="max-width:280px">
       <div class="spinner" style="width:44px;height:44px;border-width:4px;margin:0 auto 14px"></div>
-      <p class="ph-modal__sub">さいせつぞくちゅう…</p>
+      <p class="ph-modal__sub">再接続中…</p>
     </div>
   </div>
 
@@ -1523,7 +1523,7 @@
     } else {
       // 最後まで遊んだ → 難易度選択へ戻す
       stopTimer();
-      el('diffNote').textContent = 'ぜんぶあそんだよ！';
+      el('diffNote').textContent = '全部遊んだよ！';
       showScreen('difficulty');
     }
   }
@@ -1544,7 +1544,7 @@
     el('roomTimebar').hidden = !room;
     el('btnShowAnswer').style.display = room ? 'none' : '';   // 競争中は答えを出さない
     el('roomPlay').hidden = !room;
-    el('btnPuzzleBackLabel').textContent = room ? 'ルームからでる' : 'TOPにもどる';
+    el('btnPuzzleBackLabel').textContent = room ? 'ルームから出る' : 'TOPに戻る';
     if (!room) { el('roomCover').hidden = true; }
   }
 
@@ -1663,7 +1663,7 @@
     function validateNickname(nick) {
       if (!nick) return 'ニックネームを入れてね';
       if (nick.length > 8) return 'ニックネームは8文字までだよ';
-      if (/[.#$[\]/]/.test(nick)) return 'つかえない文字があるよ';
+      if (/[.#$[\]/]/.test(nick)) return '使えない文字があるよ';
       return '';
     }
     function overlay(id, show) { el(id).classList.toggle('is-open', !!show); }
@@ -1805,14 +1805,14 @@
           const { committed } = await r.transaction((room) => (room === null ? initial : undefined));
           if (committed) { code = c; ref = r; break; }
         }
-        if (!code) { el('createError').textContent = 'ルームをつくれなかったよ。もういちど。'; return; }
+        if (!code) { el('createError').textContent = 'ルームを作れなかったよ。もう一度。'; return; }
         await ref.onDisconnect().update({ hostConnected: false, hostDisconnectedAt: TS() });
         net.role = 'host'; net.nickname = nick; net.roomCode = code; net.roomRef = ref; net.gameId = gameId;
         saveSession();
         startListeners();
       } catch (e) {
         console.error(e);
-        el('createError').textContent = 'ルームをつくれなかったよ。';
+        el('createError').textContent = 'ルームを作れなかったよ。';
       }
     }
 
@@ -1829,7 +1829,7 @@
         const ref = db.ref(`${ROOM_PATH}/${code}`);
         const pre = await ref.get();
         if (!pre.exists()) { el('joinError').textContent = 'ルームが見つからないよ'; return; }
-        if (isRoomExpired(pre.val())) { await ref.remove().catch(() => {}); el('joinError').textContent = 'このルームは おわっているよ'; return; }
+        if (isRoomExpired(pre.val())) { await ref.remove().catch(() => {}); el('joinError').textContent = 'このルームは終わっているよ'; return; }
         let reason = null;
         // warmTxn: 実値 null（ルーム消滅）は mutator を呼ばず必ず中断される。
         // expired 時の return null（ルーム削除）は仕様として維持。
@@ -1843,14 +1843,14 @@
           return { ...room, players: { ...players, [nick]: { isHost: false, isPlaying: true, joinedAt: TS() } } };
         });
         if (!committed) {
-          const msg = { not_waiting: 'いまは入れないよ', host_gone: 'ホストが いないよ', nick_taken: 'そのニックネームは つかわれているよ', expired: 'このルームは おわっているよ' };
+          const msg = { not_waiting: 'いまは入れないよ', host_gone: 'ホストがいないよ', nick_taken: 'そのニックネームは使われているよ', expired: 'このルームは終わっているよ' };
           // reason=null の中断＝実値 null（get〜txn 間に消滅）
           el('joinError').textContent = msg[reason] || 'ルームが見つからないよ';
           return;
         }
         // expired の削除が committed=true になるため、参加成立（room が残っている）ことを確認してから進む
         if (reason === 'expired' || !snapshot || !snapshot.val()) {
-          el('joinError').textContent = 'このルームは おわっているよ';
+          el('joinError').textContent = 'このルームは終わっているよ';
           return;
         }
         await ref.child(`players/${nick}`).onDisconnect().remove();
@@ -1994,7 +1994,7 @@
         startBtn.disabled = !can;
         el('waitingNote').textContent = can
           ? ''
-          : `あそぶ人が あと ${Math.max(0, 2 - playingCount)} 人 ひつよう（ひとりは「ひとりで練習」へ）`;
+          : `遊ぶ人があと${Math.max(0, 2 - playingCount)}人必要（ひとりは「ひとりで練習」へ）`;
       }
     }
     function setSeg(groupId, val) {
@@ -2023,7 +2023,7 @@
       // formatVersion ガード
       if (Number(net.puzzle.formatVersion) !== SUPPORTED_FORMAT_VERSION) {
         showScreen('puzzle');
-        setRoomMsg('あたらしいバージョンがあるよ。さいどくみこみしてね');
+        setRoomMsg('新しいバージョンがあるよ。再読み込みしてね');
         el('roomCover').hidden = true;
         return;
       }
@@ -2125,8 +2125,8 @@
       });
       const total = Object.keys(participants).length;
       const done = Object.keys(finishes).filter((n) => participants[n]).length;
-      if (total > 0 && done >= total) setRoomMsg('ぜんいんピタハメ！', 'feed');
-      else if (net.myFinished) setRoomMsg('ピタハメ！ みんなを まってるよ。', 'feed');
+      if (total > 0 && done >= total) setRoomMsg('全員ピタハメ！', 'feed');
+      else if (net.myFinished) setRoomMsg('ピタハメ！ みんなを待ってるよ。', 'feed');
       else if (el('roomMsg').dataset.kind === 'feed') setRoomMsg('');
     }
 
@@ -2249,11 +2249,11 @@
           };
         });
         if (!committed) {
-          if (reason === 'too_few') RoomkRTDB.showToast('あそぶ人が2人 ひつようだよ');
-          else if (reason === 'bad_state') RoomkRTDB.showToast('いまは はじめられないよ');
+          if (reason === 'too_few') RoomkRTDB.showToast('遊ぶ人が2人必要だよ');
+          else if (reason === 'bad_state') RoomkRTDB.showToast('いまは始められないよ');
           return;
         }
-      } catch (e) { console.error(e); RoomkRTDB.showToast('はじめられなかったよ'); }
+      } catch (e) { console.error(e); RoomkRTDB.showToast('始められなかったよ'); }
     }
 
     // ── results ──
@@ -2272,7 +2272,7 @@
       const order = Array.isArray(net.resultOrder) ? net.resultOrder : [];
       const rankEl = el('resultsRank');
       if (order.length === 0) {
-        rankEl.innerHTML = '<li class="ph-rank__empty">だれも かんせいしなかったよ</li>';
+        rankEl.innerHTML = '<li class="ph-rank__empty">誰も完成しなかったよ</li>';
       } else {
         rankEl.innerHTML = order.map((o) => `
           <li class="ph-rank__item">
@@ -2287,7 +2287,7 @@
       const nextBtn = el('btnNextRound');
       nextBtn.hidden = !isHost;
       el('resultsGuestMsg').hidden = isHost;
-      if (isHost) nextBtn.textContent = isLast ? 'けっかを見る' : 'つぎのラウンドへ';
+      if (isHost) nextBtn.textContent = isLast ? '結果を見る' : '次のラウンドへ';
     }
 
     async function hostNext() {
@@ -2323,7 +2323,7 @@
       wrap.innerHTML = keys.map((n) => {
         const order = Array.isArray(rounds[n].resultOrder) ? rounds[n].resultOrder : [];
         const chips = order.length === 0
-          ? '<span class="ph-rank__empty">かんせいなし</span>'
+          ? '<span class="ph-rank__empty">完成なし</span>'
           : order.map((o) => `<span class="ph-review-chip"><span class="ph-review-chip__num">${NUM[o.rank - 1] || o.rank}</span>${esc(o.nick)}</span>`).join('');
         return `<div class="ph-review-round"><p class="ph-review-round__head">ラウンド ${n}</p><div class="ph-review-round__order">${chips}</div></div>`;
       }).join('');
@@ -2640,19 +2640,19 @@
   <script>
     RoomkHowto.init({
       title: 'あそびかた',
-      lead: 'カラフルなピースを回して動かして、グレーの型（かた）をぴったり埋めるパズル。ひとりでも、みんなでも あそべるよ。',
+      lead: 'カラフルなピースを回して動かして、グレーの型（かた）をぴったり埋めるパズル。ひとりでも、みんなでも遊べるよ。',
       sections: [
         { heading: 'はじめかた', items: [
-          'みんなで あそぶときは「ルームをつくる」、コードをもらったら「ルームに入る」をおす',
-          'ひとりで やるときは「ひとりで練習」をおして、「やさしい」か「むずかしい」をえらぶ',
+          'みんなで遊ぶときは「ルームを作る」、コードをもらったら「ルームに入る」を押す',
+          'ひとりでやるときは「ひとりで練習」を押して、「やさしい」か「むずかしい」を選ぶ',
         ] },
         { heading: 'すすめかた', items: [
-          'ピースをドラッグして、グレーの型（かた）の中においていく',
-          'むきを かえたいときは、ピースをえらんで「まわす」をおす',
-          'おきなおしたいときは「もどす」、ぜんぶやりなおすときは「ぜんぶもどす」をおす',
-          '型が ぴったり うまったら「ピタハメ！」でクリア',
+          'ピースをドラッグして、グレーの型（かた）の中に置いていく',
+          '向きを変えたいときは、ピースを選んで「回す」を押す',
+          '置き直したいときは「戻す」、全部やり直すときは「全部戻す」を押す',
+          '型がぴったり埋まったら「ピタハメ！」でクリア',
         ] },
-        { heading: 'こまったとき', text: 'ひとりで練習のときは「こたえを見る」で、おきかたの れいを見られるよ。' },
+        { heading: 'こまったとき', text: 'ひとりで練習のときは「答えを見る」で、置きかたのれいを見られるよ。' },
       ],
       position: 'left',
     });
