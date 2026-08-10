@@ -181,19 +181,19 @@
     <div class="esa-hero">
       <div class="esa-hero__icon-wrap"><span class="material-symbols-rounded">flutter_dash</span></div>
       <h1 class="esa-hero__title">エサドリ</h1>
-      <p class="esa-hero__sub">エサをねらう とりに なって、1〜15の カードで エサを とりあうよ。<br>おなじ かずを だした人どうしは むこう！</p>
+      <p class="esa-hero__sub">エサをねらう鳥になって、1〜15のカードでエサを取り合うよ。<br>同じ数を出した人同士は無効！</p>
     </div>
     <div class="esa-hero__buttons">
       <button class="btn btn-primary btn-lg btn-full" onclick="showScreen('host-setup')">
-        <span class="material-symbols-rounded">add_home</span>ルームをつくる
+        <span class="material-symbols-rounded">add_home</span>ルームを作る
       </button>
       <button class="btn btn-secondary btn-lg btn-full" onclick="showScreen('guest-join')">
-        <span class="material-symbols-rounded">login</span>はいる
+        <span class="material-symbols-rounded">login</span>入る
       </button>
       <button class="btn btn-ghost btn-lg btn-full" onclick="showScreen('board-join')">
-        <span class="material-symbols-rounded">visibility</span>みるだけ
+        <span class="material-symbols-rounded">visibility</span>見るだけ
       </button>
-      <p class="esa-hint">「みるだけ」は 画面を みんなに 見せるときや、見て たのしみたいときに。ニックネームは いらないよ。</p>
+      <p class="esa-hint">「見るだけ」は画面をみんなに見せるときや、見て楽しみたいときに。ニックネームはいらないよ。</p>
     </div>
   </div>
 </div>
@@ -201,48 +201,48 @@
 <!-- ════════════════════════════════════ HOST SETUP ════════════════════════════════════ -->
 <div class="screen" id="screen-host-setup">
   <div class="esa-page">
-    <h2 class="esa-page__title">ルームをつくる</h2>
-    <p class="esa-page__sub">あなたの ニックネームを いれてね。あなたも プレイヤーとして あそぶよ。</p>
+    <h2 class="esa-page__title">ルームを作る</h2>
+    <p class="esa-page__sub">あなたのニックネームを入れてね。あなたもプレイヤーとして遊ぶよ。</p>
     <div class="form-group">
-      <label class="form-label" for="top-host-nickname">ニックネーム（1〜8もじ）</label>
-      <input class="form-input" id="top-host-nickname" type="text" maxlength="8" placeholder="れい：たろう" autocomplete="off">
+      <label class="form-label" for="top-host-nickname">ニックネーム（1〜8文字）</label>
+      <input class="form-input" id="top-host-nickname" type="text" maxlength="8" placeholder="例：たろう" autocomplete="off">
     </div>
     <button class="btn btn-primary btn-full" onclick="hostCreateRoom()">
-      <span class="material-symbols-rounded">add_home</span>ルームをつくる
+      <span class="material-symbols-rounded">add_home</span>ルームを作る
     </button>
-    <button class="btn btn-ghost btn-full" onclick="showScreen('top')">← もどる</button>
+    <button class="btn btn-ghost btn-full" onclick="showScreen('top')">← 戻る</button>
   </div>
 </div>
 
 <!-- ════════════════════════════════════ GUEST JOIN ════════════════════════════════════ -->
 <div class="screen" id="screen-guest-join">
   <div class="esa-page">
-    <h2 class="esa-page__title">ルームに はいる</h2>
-    <p class="esa-page__sub">ニックネームと ルームコードを いれてね。</p>
+    <h2 class="esa-page__title">ルームに入る</h2>
+    <p class="esa-page__sub">ニックネームとルームコードを入れてね。</p>
     <div class="form-group">
-      <label class="form-label" for="top-guest-nickname">ニックネーム（1〜8もじ）</label>
-      <input class="form-input" id="top-guest-nickname" type="text" maxlength="8" placeholder="れい：はなこ" autocomplete="off">
+      <label class="form-label" for="top-guest-nickname">ニックネーム（1〜8文字）</label>
+      <input class="form-input" id="top-guest-nickname" type="text" maxlength="8" placeholder="例：はなこ" autocomplete="off">
     </div>
     <div class="form-group">
-      <label class="form-label" for="top-guest-code">ルームコード（6もじ）</label>
+      <label class="form-label" for="top-guest-code">ルームコード（6文字）</label>
       <input class="form-input" id="top-guest-code" type="text" maxlength="6" placeholder="XXXXXX" autocomplete="off"
              style="text-transform:uppercase;letter-spacing:.2em;font-size:22px;text-align:center"
              oninput="this.value=this.value.toUpperCase()">
     </div>
     <button class="btn btn-primary btn-full" onclick="guestJoin()">
-      <span class="material-symbols-rounded">login</span>はいる
+      <span class="material-symbols-rounded">login</span>入る
     </button>
-    <button class="btn btn-ghost btn-full" onclick="showScreen('top')">← もどる</button>
+    <button class="btn btn-ghost btn-full" onclick="showScreen('top')">← 戻る</button>
   </div>
 </div>
 
 <!-- ════════════════════════════════════ BOARD JOIN（みるだけ） ════════════════════════════════════ -->
 <div class="screen" id="screen-board-join">
   <div class="esa-page">
-    <h2 class="esa-page__title">みるだけで はいる</h2>
-    <p class="esa-page__sub">ルームコードだけで はいれるよ。ニックネームは いらないよ。画面を みんなに 見せるときは ここから 見てね。</p>
+    <h2 class="esa-page__title">見るだけで入る</h2>
+    <p class="esa-page__sub">ルームコードだけで入れるよ。ニックネームはいらないよ。画面をみんなに見せるときはここから見てね。</p>
     <div class="form-group">
-      <label class="form-label" for="top-board-code">ルームコード（6もじ）</label>
+      <label class="form-label" for="top-board-code">ルームコード（6文字）</label>
       <input class="form-input" id="top-board-code" type="text" maxlength="6" placeholder="XXXXXX" autocomplete="off"
              style="text-transform:uppercase;letter-spacing:.2em;font-size:22px;text-align:center"
              oninput="this.value=this.value.toUpperCase()">
@@ -250,7 +250,7 @@
     <button class="btn btn-primary btn-full" onclick="boardJoin()">
       <span class="material-symbols-rounded">visibility</span>見る
     </button>
-    <button class="btn btn-ghost btn-full" onclick="showScreen('top')">← もどる</button>
+    <button class="btn btn-ghost btn-full" onclick="showScreen('top')">← 戻る</button>
   </div>
 </div>
 
@@ -261,13 +261,13 @@
       <div class="card" style="text-align:center">
         <p class="esa-section-label">ルームコード</p>
         <p class="esa-room-code" id="lobby-room-code">----</p>
-        <p style="font-size:13px;color:var(--color-muted)">この コードを みんなに つたえてね</p>
+        <p style="font-size:13px;color:var(--color-muted)">このコードをみんなに伝えてね</p>
       </div>
     </div>
 
     <div class="card">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-        <strong style="font-size:16px">さんかしゃ</strong>
+        <strong style="font-size:16px">参加者</strong>
         <span id="lobby-count" style="font-size:13px;color:var(--color-muted)"></span>
       </div>
       <ul class="esa-player-list" id="lobby-list"></ul>
@@ -275,18 +275,18 @@
 
     <div id="lobby-host-actions" style="display:none" class="mt-md">
       <button class="btn btn-primary btn-full" id="btn-start" onclick="hostStartGame()" disabled>
-        <span class="material-symbols-rounded">play_arrow</span>はじめる
+        <span class="material-symbols-rounded">play_arrow</span>始める
       </button>
       <p class="esa-hint" id="lobby-hint"></p>
     </div>
 
     <div id="lobby-guest-wait" style="display:none" class="card mt-md text-center">
       <div class="spinner"></div>
-      <p style="margin-top:12px;font-weight:700;color:var(--color-primary)">ホストが はじめるのを まっているよ</p>
+      <p style="margin-top:12px;font-weight:700;color:var(--color-primary)">ホストが始めるのを待っているよ</p>
     </div>
 
     <button class="btn btn-ghost btn-full mt-md" onclick="leaveLobby()">
-      <span class="material-symbols-rounded">logout</span>たいしゅつする
+      <span class="material-symbols-rounded">logout</span>退出する
     </button>
   </div>
 </div>
@@ -299,11 +299,11 @@
     <div class="esa-phase mt-md" id="game-phase"></div>
 
     <div class="card mt-md" id="game-hand-wrap">
-      <p class="esa-section-label" id="game-hand-label">あなたの てふだ</p>
+      <p class="esa-section-label" id="game-hand-label">あなたの手札</p>
       <div class="esa-hand__grid" id="game-hand"></div>
       <div id="game-confirm-wrap" style="display:none">
         <button class="btn btn-primary btn-full mt-md" onclick="submitPick()">
-          <span class="material-symbols-rounded">restaurant</span>このカードをだす
+          <span class="material-symbols-rounded">restaurant</span>このカードを出す
         </button>
       </div>
     </div>
@@ -314,15 +314,15 @@
     </div>
 
     <div class="card">
-      <p class="esa-section-label">これまでの ラウンド</p>
+      <p class="esa-section-label">これまでのラウンド</p>
       <div class="esa-history" id="game-history"></div>
     </div>
 
     <button class="btn btn-danger btn-full mt-md" id="btn-abort" onclick="hostAbort()" style="display:none">
-      <span class="material-symbols-rounded">stop_circle</span>とちゅうでおわる
+      <span class="material-symbols-rounded">stop_circle</span>途中で終わる
     </button>
     <button class="btn btn-ghost btn-full mt-md" id="btn-guest-leave-game" onclick="guestGoToTop()" style="display:none">
-      <span class="material-symbols-rounded">logout</span>たいしゅつする
+      <span class="material-symbols-rounded">logout</span>退出する
     </button>
   </div>
 </div>
@@ -331,20 +331,20 @@
 <div class="screen" id="screen-result">
   <div class="esa-page">
     <div class="esa-aborted-banner" id="result-aborted-banner" style="display:none">
-      とちゅうで おわったよ。しょうぶは なし！
+      途中で終わったよ。勝負はなし！
     </div>
     <div id="result-main" style="display:none"></div>
 
     <div id="result-host-actions" style="display:none" class="mt-md">
       <button class="btn btn-primary btn-full" id="btn-rematch" onclick="hostRematch()">
-        <span class="material-symbols-rounded">replay</span>もういちど
+        <span class="material-symbols-rounded">replay</span>もう一度
       </button>
       <button class="btn btn-ghost btn-full" onclick="hostGoToTop()">
-        <span class="material-symbols-rounded">home</span>トップへもどる
+        <span class="material-symbols-rounded">home</span>トップへ戻る
       </button>
     </div>
     <button class="btn btn-ghost btn-full mt-md" id="btn-guest-leave" onclick="guestGoToTop()" style="display:none">
-      <span class="material-symbols-rounded">home</span>トップへもどる
+      <span class="material-symbols-rounded">home</span>トップへ戻る
     </button>
   </div>
 </div>
@@ -354,7 +354,7 @@
   <div class="esa-page">
     <div id="board-waiting" style="display:none" class="card text-center">
       <div class="spinner"></div>
-      <p style="margin-top:12px;font-weight:700;color:var(--color-primary)">はじまるのを まっているよ</p>
+      <p style="margin-top:12px;font-weight:700;color:var(--color-primary)">始まるのを待っているよ</p>
       <ul class="esa-player-list mt-md" id="board-waiting-list" style="text-align:left"></ul>
     </div>
 
@@ -369,13 +369,13 @@
       </div>
 
       <div class="card">
-        <p class="esa-section-label">これまでの ラウンド</p>
+        <p class="esa-section-label">これまでのラウンド</p>
         <div class="esa-history" id="board-history"></div>
       </div>
     </div>
 
     <button class="btn btn-ghost btn-full mt-md" onclick="spectatorGoToTop()">
-      <span class="material-symbols-rounded">home</span>トップへもどる
+      <span class="material-symbols-rounded">home</span>トップへ戻る
     </button>
   </div>
 </div>
@@ -383,17 +383,17 @@
 <!-- 再接続オーバーレイ -->
 <div class="esa-overlay" id="reconnect-overlay">
   <div class="spinner"></div>
-  <p class="esa-overlay__title">つなぎなおしているよ...</p>
+  <p class="esa-overlay__title">つなぎ直しているよ...</p>
 </div>
 
 <!-- ホスト切断オーバーレイ（ゲスト用） -->
 <div class="esa-overlay" id="host-disconnect-overlay">
   <span class="material-symbols-rounded" style="font-size:48px;color:var(--color-error)">signal_disconnected</span>
-  <p class="esa-overlay__title">ホストの つうしんが きれています</p>
-  <p class="esa-overlay__sub">もどってくるのを まっているよ</p>
+  <p class="esa-overlay__title">ホストの通信が切れています</p>
+  <p class="esa-overlay__sub">戻ってくるのを待っているよ</p>
   <div class="esa-overlay__countdown" id="host-disconnect-countdown">120</div>
-  <p class="esa-overlay__sub">びょうごに じどうで おわるよ</p>
-  <button class="btn btn-ghost btn-full" style="max-width:280px;margin-top:20px" onclick="guestGoToTop()">たいしゅつする</button>
+  <p class="esa-overlay__sub">秒後に自動で終わるよ</p>
+  <button class="btn btn-ghost btn-full" style="max-width:280px;margin-top:20px" onclick="guestGoToTop()">退出する</button>
 </div>
 
 <script>
@@ -472,9 +472,9 @@ function totalFor(taken, nick) {
 
 function validateNickname(value) {
   const t = (value || '').trim();
-  if (t.length === 0) return 'ニックネームを いれてね';
-  if (t.length > 8) return '8もじ いないで いれてね';
-  if (/[.#$\[\]\/]/.test(t)) return 'つかえない もじが はいっているよ';
+  if (t.length === 0) return 'ニックネームを入れてね';
+  if (t.length > 8) return '8文字以内で入れてね';
+  if (/[.#$\[\]\/]/.test(t)) return '使えない文字が入っているよ';
   return null;
 }
 
@@ -483,7 +483,7 @@ async function waitAuthOrExplain() {
   if (_authBusy) return false;
   _authBusy = true;
   try { await authReady; return true; }
-  catch { showMsg('うまく つながらなかったよ。ページを よみこみなおしてね'); return false; }
+  catch { showMsg('うまくつながらなかったよ。ページを読み込みなおしてね'); return false; }
   finally { _authBusy = false; }
 }
 
@@ -565,7 +565,7 @@ function showReconnectOverlay(show) {
 // ══════════════════════════════════════════════════
 function buildTakenChips(taken, nick) {
   const arr = (taken && taken[nick]) || [];
-  if (!arr.length) return '<span class="text-muted text-sm">エサ まだなし</span>';
+  if (!arr.length) return '<span class="text-muted text-sm">エサまだなし</span>';
   return arr.map((v) => '<span class="esa-taken-chip" style="background:' + esaColor(v) + '">' + esaLabel(v) + '</span>').join('');
 }
 
@@ -590,7 +590,7 @@ function buildFieldHtml(m) {
     const chips = carry.map((v) =>
       '<span class="esa-esa esa-esa--sm" style="background:' + esaColor(v) + '"><span class="esa-esa__value">' + esaLabel(v) + '</span></span>'
     ).join('');
-    carryHtml = '<div class="esa-field__carry"><span class="esa-field__carry-label">もちこし</span>' + chips + '</div>';
+    carryHtml = '<div class="esa-field__carry"><span class="esa-field__carry-label">持ち越し</span>' + chips + '</div>';
   }
   return '<div class="esa-field__round">ラウンド ' + (Number(m.round) || 0) + ' / ' + TOTAL_ROUNDS + '</div>'
     + '<div class="esa-field__main"><div class="esa-esa" style="background:' + esaColor(current) + '"><span class="esa-esa__value">' + esaLabel(current) + '</span></div></div>'
@@ -607,12 +607,12 @@ function buildRevealPanel(m) {
 
   let banner;
   if (rv.taker) {
-    const extra = (rv.cards && rv.cards.length > 1) ? '　もちこしも いっしょに！' : '';
+    const extra = (rv.cards && rv.cards.length > 1) ? '　持ち越しも一緒に！' : '';
     banner = current > 0
-      ? esaLabel(current) + ' は ' + rv.taker + 'さんが ゲット！' + extra
-      : esaLabel(current) + ' は ' + rv.taker + 'さんが ひきとり…' + extra;
+      ? esaLabel(current) + 'は' + rv.taker + 'さんがゲット！' + extra
+      : esaLabel(current) + 'は' + rv.taker + 'さんが引き取り…' + extra;
   } else {
-    banner = 'みんな かぶった！ つぎに もちこし';
+    banner = 'みんなかぶった！次に持ち越し';
   }
 
   const rows = membersInSeatOrder(m).filter((n) => plays[n] != null).map((n) => {
@@ -624,7 +624,7 @@ function buildRevealPanel(m) {
     else if (isTaker) cls += ' is-taker';
     let mark = '';
     if (isCanceled) mark = '<span class="esa-play__mark">かぶり！</span>';
-    else if (isTaker) mark = '<span class="esa-play__mark">' + (current > 0 ? 'ゲット' : 'ひきとり') + '</span>';
+    else if (isTaker) mark = '<span class="esa-play__mark">' + (current > 0 ? 'ゲット' : '引き取り') + '</span>';
     return '<div class="' + cls + '"><span class="esa-play__name">' + esc(n) + '</span><span class="esa-play__num">' + v + '</span>' + mark + '</div>';
   }).join('');
 
@@ -640,18 +640,18 @@ function buildMemberRow(room, nick) {
   const total = totalFor(m.taken, nick);
   const meTag = isMe ? '<span class="esa-tag esa-tag--me">あなた</span>' : '';
   const hostTag = isHost ? '<span class="esa-tag esa-tag--host">ホスト</span>' : '';
-  const disc = !connected ? '<p class="esa-player__disc">つうしんが きれています</p>' : '';
+  const disc = !connected ? '<p class="esa-player__disc">通信が切れています</p>' : '';
   let status = '';
   if (m.phase === 'picking') {
     const picked = m.picks && m.picks[nick] != null;
     status = picked
-      ? '<span class="esa-player__status is-done">えらんだ！</span>'
-      : '<span class="esa-player__status">かんがえちゅう…</span>';
+      ? '<span class="esa-player__status is-done">選んだ！</span>'
+      : '<span class="esa-player__status">考え中…</span>';
   }
   const taken = buildTakenChips(m.taken, nick);
   return '<li class="esa-player">'
     + '<div class="esa-player__head"><span class="esa-player__name">' + esc(nick) + '</span>' + hostTag + meTag
-    + '<span class="esa-player__score">' + total + 'てん</span></div>'
+    + '<span class="esa-player__score">' + total + '点</span></div>'
     + status + disc
     + '<div class="esa-player__taken">' + taken + '</div></li>';
 }
@@ -664,11 +664,11 @@ function renderMembers(elId, room) {
 function buildHistoryHtml(m) {
   const hist = m.history || {};
   const keys = Object.keys(hist).sort();
-  if (!keys.length) return '<p class="text-muted text-sm">まだ ないよ</p>';
+  if (!keys.length) return '<p class="text-muted text-sm">まだないよ</p>';
   return keys.map((k) => {
     const h = hist[k];
     const n = parseInt(k.slice(1), 10);
-    const to = h.taker ? esc(h.taker) + 'さん' : 'もちこし';
+    const to = h.taker ? esc(h.taker) + 'さん' : '持ち越し';
     return '<div class="esa-history__row">'
       + '<span class="esa-history__num">' + n + '</span>'
       + '<span class="esa-history__esa" style="color:' + esaColor(h.card) + '">' + esaLabel(h.card) + '</span>'
@@ -697,13 +697,13 @@ function handleLobby(room) {
     const hint = document.getElementById('lobby-hint');
     if (count < MIN_PLAYERS) {
       btn.disabled = true;
-      hint.textContent = 'あと ' + (MIN_PLAYERS - count) + '人 まってね';
+      hint.textContent = 'あと' + (MIN_PLAYERS - count) + '人待ってね';
     } else if (count > MAX_PLAYERS) {
       btn.disabled = true;
-      hint.textContent = '6人まで あそべるよ';
+      hint.textContent = '6人まで遊べるよ';
     } else {
       btn.disabled = false;
-      hint.textContent = count < 3 ? '3人いじょうが おすすめ！2人でも あそべるよ' : '';
+      hint.textContent = count < 3 ? '3人以上がおすすめ！2人でも遊べるよ' : '';
     }
   }
 }
@@ -746,17 +746,17 @@ function renderPhase(room) {
     if (myPick != null) {
       const pend = pendingMembers(room);
       const waitHtml = pend.length
-        ? '<p class="esa-phase__wait">' + esc(pend.join('、')) + 'さんを まってるよ</p>'
-        : '<p class="esa-phase__wait">みんな そろった！ けっかを だすよ…</p>';
-      const html = '<p class="esa-phase__mine">あなたが だしたカード：<strong>' + (Number(myPick) || 0) + '</strong></p>' + waitHtml;
+        ? '<p class="esa-phase__wait">' + esc(pend.join('、')) + 'さんを待ってるよ</p>'
+        : '<p class="esa-phase__wait">みんなそろった！結果を出すよ…</p>';
+      const html = '<p class="esa-phase__mine">あなたが出したカード：<strong>' + (Number(myPick) || 0) + '</strong></p>' + waitHtml;
       el.innerHTML = html;
     } else {
-      el.innerHTML = '<p class="esa-phase__prompt">エサをねらって、カードを 1まい えらんでね</p>';
+      el.innerHTML = '<p class="esa-phase__prompt">エサをねらって、カードを1枚選んでね</p>';
     }
   } else if (m.phase === 'reveal') {
     let html = '<div class="esa-reveal">' + buildRevealPanel(m) + '</div>';
     if (state.role === 'host' && room.status === 'playing') {
-      const label = m.round >= TOTAL_ROUNDS ? 'けっかを みる' : 'つぎへ';
+      const label = m.round >= TOTAL_ROUNDS ? '結果を見る' : '次へ';
       html += '<button class="btn btn-primary btn-full mt-md" onclick="submitAdvance()"><span class="material-symbols-rounded">arrow_forward</span>' + label + '</button>';
     }
     el.innerHTML = html;
@@ -793,7 +793,7 @@ function renderHand(room) {
     }
   }
   document.getElementById('game-hand').innerHTML = cells;
-  document.getElementById('game-hand-label').textContent = canPick ? 'てふだから 1まい えらんでね' : 'あなたの てふだ';
+  document.getElementById('game-hand-label').textContent = canPick ? '手札から1枚選んでね' : 'あなたの手札';
   document.getElementById('game-confirm-wrap').style.display = (canPick && state.pick.selected != null) ? 'block' : 'none';
 }
 
@@ -820,17 +820,17 @@ function buildResultMainHtml(room) {
   let leftover = '';
   if (carry.length) {
     const chips = carry.map((v) => '<span class="esa-taken-chip" style="background:' + esaColor(v) + '">' + esaLabel(v) + '</span>').join('');
-    leftover = '<div class="esa-leftover"><span class="material-symbols-rounded">info</span><span>のこったエサは だれのものにも ならなかったよ</span>' + chips + '</div>';
+    leftover = '<div class="esa-leftover"><span class="material-symbols-rounded">info</span><span>残ったエサはだれのものにもならなかったよ</span>' + chips + '</div>';
   }
   const rows = totals.map((t) => {
     const win = winners.indexOf(t.nick) >= 0 ? ' is-winner' : '';
     const meTag = t.nick === state.nickname ? '<span class="esa-tag esa-tag--me">あなた</span>' : '';
     const chips = buildTakenChips(room.match ? room.match.taken : null, t.nick);
     return '<li class="esa-result-row' + win + '"><div class="esa-result-row__head"><span class="esa-player__name">'
-      + esc(t.nick) + '</span>' + meTag + '<span class="esa-result-row__score">' + t.total + 'てん</span></div>'
+      + esc(t.nick) + '</span>' + meTag + '<span class="esa-result-row__score">' + t.total + '点</span></div>'
       + '<div class="esa-player__taken">' + chips + '</div></li>';
   }).join('');
-  return '<div class="esa-winner-banner"><span class="material-symbols-rounded">emoji_events</span><p>1位は ' + winnerText + '！</p></div>'
+  return '<div class="esa-winner-banner"><span class="material-symbols-rounded">emoji_events</span><p>1位は' + winnerText + '！</p></div>'
     + leftover + '<div class="card"><ul class="esa-result-list">' + rows + '</ul></div>';
 }
 
@@ -887,7 +887,7 @@ function renderBoard(room) {
       phaseEl.innerHTML = '<div class="esa-reveal">' + buildRevealPanel(m) + '</div>';
     } else {
       const pend = pendingMembers(room);
-      const txt = pend.length ? esc(pend.join('、')) + 'さんが かんがえちゅう…' : 'けっかを だすよ…';
+      const txt = pend.length ? esc(pend.join('、')) + 'さんが考え中…' : '結果を出すよ…';
       phaseEl.innerHTML = '<p class="esa-phase__wait">' + txt + '</p>';
     }
   } else {
@@ -902,7 +902,7 @@ function renderBoard(room) {
   if (status === 'result' || status === 'aborted') {
     resEl.style.display = 'block';
     resEl.innerHTML = status === 'aborted'
-      ? '<div class="esa-aborted-banner">とちゅうで おわったよ。しょうぶは なし！</div>'
+      ? '<div class="esa-aborted-banner">途中で終わったよ。勝負はなし！</div>'
       : buildResultMainHtml(room);
   } else {
     resEl.style.display = 'none';
@@ -948,7 +948,7 @@ async function hostCreateRoomInner() {
     const { committed } = await ref.transaction((room) => (room ? undefined : initialRoom));
     if (committed) { roomCode = code; roomRef = ref; break; }
   }
-  if (!roomRef) { showMsg('ルームを つくれなかったよ'); return; }
+  if (!roomRef) { showMsg('ルームを作れなかったよ'); return; }
 
   state.role = 'host';
   state.nickname = nickname;
@@ -969,15 +969,15 @@ async function guestJoinInner() {
   const roomCode = document.getElementById('top-guest-code').value.trim().toUpperCase();
   const err = validateNickname(nickname);
   if (err) { showMsg(err); return; }
-  if (roomCode.length !== 6) { showMsg('ルームコードは 6もじだよ'); return; }
+  if (roomCode.length !== 6) { showMsg('ルームコードは6文字だよ'); return; }
   if (!await waitAuthOrExplain()) return;
 
   const roomRef = db.ref(ROOMS_PATH + '/' + roomCode);
   const preSnap = await roomRef.get();
-  if (!preSnap.exists()) { showMsg('ルームが みつからないよ'); return; }
+  if (!preSnap.exists()) { showMsg('ルームが見つからないよ'); return; }
   const preRoom = preSnap.val();
-  if (!preRoom.status || !preRoom.host) { await removeBrokenRoom(roomRef); showMsg('その ルームは もう ないみたい'); return; }
-  if (isRoomExpired(preRoom)) { await removeRoomIfExpired(roomRef); showMsg('この ルームは おわっているよ'); return; }
+  if (!preRoom.status || !preRoom.host) { await removeBrokenRoom(roomRef); showMsg('そのルームはもうないみたい'); return; }
+  if (isRoomExpired(preRoom)) { await removeRoomIfExpired(roomRef); showMsg('このルームは終わっているよ'); return; }
 
   let reason = null;
   const { committed } = await roomRef.transaction((room) => {
@@ -998,17 +998,17 @@ async function guestJoinInner() {
 
   if (!committed) {
     const map = {
-      not_found: 'ルームが みつからないよ',
-      broken: 'その ルームは もう ないみたい',
-      host_gone: 'ホストが いないみたいだよ',
-      not_waiting: 'もう はじまっているよ',
-      nick_taken: 'その なまえは つかわれているよ',
-      full: 'この ルームは いっぱいだよ（6人まで）',
+      not_found: 'ルームが見つからないよ',
+      broken: 'そのルームはもうないみたい',
+      host_gone: 'ホストがいないみたいだよ',
+      not_waiting: 'もう始まっているよ',
+      nick_taken: 'その名前は使われているよ',
+      full: 'このルームはいっぱいだよ（6人まで）',
     };
-    showMsg(map[reason] || 'はいれなかったよ');
+    showMsg(map[reason] || '入れなかったよ');
     return;
   }
-  if (reason === 'expired') { showMsg('この ルームは おわっているよ'); return; }
+  if (reason === 'expired') { showMsg('このルームは終わっているよ'); return; }
 
   state.role = 'guest';
   state.nickname = nickname;
@@ -1026,15 +1026,15 @@ async function boardJoin() {
 }
 async function boardJoinInner() {
   const roomCode = document.getElementById('top-board-code').value.trim().toUpperCase();
-  if (roomCode.length !== 6) { showMsg('ルームコードは 6もじだよ'); return; }
+  if (roomCode.length !== 6) { showMsg('ルームコードは6文字だよ'); return; }
   if (!await waitAuthOrExplain()) return;
 
   const roomRef = db.ref(ROOMS_PATH + '/' + roomCode);
   const snap = await roomRef.get();
-  if (!snap.exists()) { showMsg('ルームが みつからないよ'); return; }
+  if (!snap.exists()) { showMsg('ルームが見つからないよ'); return; }
   const room = snap.val();
-  if (!room.status || !room.host) { await removeBrokenRoom(roomRef); showMsg('その ルームは もう ないみたい'); return; }
-  if (isRoomExpired(room)) { await removeRoomIfExpired(roomRef); showMsg('この ルームは おわっているよ'); return; }
+  if (!room.status || !room.host) { await removeBrokenRoom(roomRef); showMsg('そのルームはもうないみたい'); return; }
+  if (isRoomExpired(room)) { await removeRoomIfExpired(roomRef); showMsg('このルームは終わっているよ'); return; }
 
   state.role = 'spectator';
   state.nickname = null;
@@ -1079,7 +1079,7 @@ async function handleRoomGone() {
   const roomRef = state.roomRef;
   clearSession();
   if (roomRef) await RoomkRTDB.cancelRoomOnDisconnect(roomRef).catch(() => {});
-  resetLocalStateAndShowTop('ルームが とじられたよ');
+  resetLocalStateAndShowTop('ルームが閉じられたよ');
 }
 
 function handleRoom(room) {
@@ -1090,7 +1090,7 @@ function handleRoom(room) {
     const roomRef = state.roomRef;
     const nick = (state.role === 'host' || state.role === 'guest') ? state.nickname : null;
     clearSession();
-    resetLocalStateAndShowTop('この ルームは おわったよ');
+    resetLocalStateAndShowTop('このルームは終わったよ');
     cleanupExpiredRoomAndOwnPresence(roomRef, nick);
     return;
   }
@@ -1104,7 +1104,7 @@ function handleRoom(room) {
   if (state.role === 'guest') {
     // 「もういちど」でメンバーから外れた場合はトップへ戻す
     if (room.status !== 'waiting' && room.match && room.match.members && !room.match.members[state.nickname]) {
-      guestGoToTop('メンバーから はずれたよ。また あそぶときは はいりなおしてね');
+      guestGoToTop('メンバーからはずれたよ。また遊ぶときは入りなおしてね');
       return;
     }
     showHostDisconnectOverlay(room.hostConnected === false, room);
@@ -1124,7 +1124,7 @@ function handleRoom(room) {
 // ══════════════════════════════════════════════════
 async function submitPick() {
   const value = state.pick.selected;
-  if (value == null) { showMsg('カードを えらんでね'); return; }
+  if (value == null) { showMsg('カードを選んでね'); return; }
   const cap = captureMatchState();
 
   const { committed } = await state.roomRef.transaction((room) => {
@@ -1184,7 +1184,7 @@ async function submitPick() {
     };
   });
 
-  if (!committed) showMsg('だせなかったよ。もういちど えらんでね');
+  if (!committed) showMsg('出せなかったよ。もう一度選んでね');
 }
 
 async function submitAdvance() {
@@ -1202,7 +1202,7 @@ async function submitAdvance() {
       match: { ...m, round: m.round + 1, phase: 'picking', picks: null, reveal: null },
     };
   });
-  if (!committed) showMsg('すすめられなかったよ');
+  if (!committed) showMsg('進められなかったよ');
 }
 
 // ══════════════════════════════════════════════════
@@ -1229,19 +1229,19 @@ async function hostStartGame() {
     reason = null;
     return { ...room, status: 'playing', match: buildMatch(players, 1, deck) };
   });
-  if (!committed) showMsg(reason === 'count' ? '2〜6人で はじめられるよ' : 'はじめられなかったよ');
+  if (!committed) showMsg(reason === 'count' ? '2〜6人で始められるよ' : '始められなかったよ');
 }
 
 async function hostAbort() {
   if (state.role !== 'host' || !state.roomRef) return;
-  if (!confirm('とちゅうで おわるよ。しょうぶは なしに なるけど いい？')) return;
+  if (!confirm('途中で終わるよ。勝負はなしになるけどいい？')) return;
   const cap = captureMatchState();
   const { committed } = await state.roomRef.transaction((room) => {
     if (!room || room.status !== 'playing' || room.host !== state.nickname) return;
     if (!room.match || room.match.matchId !== cap.matchId) return;
     return { ...room, status: 'aborted' };
   });
-  if (!committed) showMsg('おわれなかったよ');
+  if (!committed) showMsg('終われなかったよ');
 }
 
 async function hostRematch() {
@@ -1263,7 +1263,7 @@ async function hostRematch() {
     return { ...room, status: 'playing', players: newPlayers, match };
   });
   if (!committed) {
-    showMsg(reason === 'count' ? 'つながっている人が 2人より すくないので、もういちどは できないよ' : 'もういちど できなかったよ');
+    showMsg(reason === 'count' ? 'つながっている人が2人より少ないので、もう一度はできないよ' : 'もう一度できなかったよ');
   }
 }
 
@@ -1287,7 +1287,7 @@ function showHostDisconnectOverlay(show, room) {
           const roomRef = state.roomRef;
           const nick = state.nickname;
           clearSession();
-          resetLocalStateAndShowTop('ホストが もどってこなかったので おわったよ');
+          resetLocalStateAndShowTop('ホストが戻ってこなかったので終わったよ');
           cleanupExpiredRoomAndOwnPresence(roomRef, nick);
         }
       }, 1000);
@@ -1475,9 +1475,9 @@ async function handleReconnected() {
   }
   if (!committed) {
     if (reason === 'norole') return;
-    let msg = 'ルームが とじられたよ';
-    if (reason === 'not_member') msg = 'メンバーから はずれたよ。また あそぶときは はいりなおしてね';
-    else if (reason === 'full') msg = 'へやが いっぱいで もどれなかったよ';
+    let msg = 'ルームが閉じられたよ';
+    if (reason === 'not_member') msg = 'メンバーからはずれたよ。また遊ぶときは入りなおしてね';
+    else if (reason === 'full') msg = '部屋がいっぱいで戻れなかったよ';
     await bailToTop(msg);
     return;
   }
@@ -1502,7 +1502,7 @@ async function tryReconnect() {
     if (isRoomExpired(room)) { await removeRoomIfExpired(roomRef); clearSession(); return false; }
     if (room.status !== 'waiting') {
       const members = (room.match && room.match.members) || {};
-      if (!members[nickname]) { clearSession(); showMsg('メンバーから はずれたよ', false); return false; }
+      if (!members[nickname]) { clearSession(); showMsg('メンバーからはずれたよ', false); return false; }
     }
 
     state.role = isHost ? 'host' : 'guest';
@@ -1514,7 +1514,7 @@ async function tryReconnect() {
     if (!committed) {
       Object.assign(state, { role: null, nickname: null, roomCode: null, roomRef: null });
       clearSession();
-      if (reason === 'not_member') showMsg('メンバーから はずれたよ', false);
+      if (reason === 'not_member') showMsg('メンバーからはずれたよ', false);
       return false;
     }
     saveSession(room.match ? room.match.matchId : null);
@@ -1542,21 +1542,21 @@ tryReconnect().then((reconnected) => {
 <script>
   RoomkHowto.init({
     title: 'あそびかた',
-    lead: 'エサをねらう とりに なって、1〜15の カードで エサを とりあうゲームです。おなじ かずを だした人どうしは むこう！ 15かい やって、あつめた エサの てんすうが いちばん たかい人が かち。',
+    lead: 'エサをねらう鳥になって、1〜15のカードでエサを取り合うゲームです。同じ数を出した人同士は無効！15回やって、集めたエサの点数がいちばん高い人が勝ち。',
     sections: [
       { heading: 'はじめかた', items: [
-        'ホストが「ルームをつくる」から ルームをつくる（ホストも プレイヤーとして あそぶよ）',
-        'ルームコードを みんなに つたえる',
-        'ほかの人は「はいる」から ニックネームと コードを いれて さんかする',
-        'ホストが「はじめる」を おすと スタート（2〜6人・3人いじょうが おすすめ）',
+        'ホストが「ルームを作る」からルームを作る（ホストもプレイヤーとして遊ぶよ）',
+        'ルームコードをみんなに伝える',
+        'ほかの人は「入る」からニックネームとコードを入れて参加する',
+        'ホストが「始める」を押すとスタート（2〜6人・3人以上がおすすめ）',
       ] },
       { heading: 'すすめかた', items: [
-        '場に でた エサを 見て、てふだ（1〜15）から 1まい えらんで「このカードをだす」',
-        'みんな だしたら いっせいに オープン。プラスは いちばん 大きい かず、マイナスは いちばん 小さい かずの人が エサを もらう',
-        'おなじ かずを だした人どうしは かぶって むこう。だれも のこらなかったら つぎに もちこし',
-        'ホストが「つぎへ」を おすと つぎの ラウンドへ',
+        '場に出たエサを見て、手札（1〜15）から1枚選んで「このカードを出す」',
+        'みんな出したらいっせいにオープン。プラスはいちばん大きい数、マイナスはいちばん小さい数の人がエサをもらう',
+        '同じ数を出した人同士はかぶって無効。だれも残らなかったら次に持ち越し',
+        'ホストが「次へ」を押すと次のラウンドへ',
       ] },
-      { heading: 'おわりかた', text: '15ラウンドで おしまい。あつめた エサの てんすうが いちばん たかい人が 1位。ホストは「もういちど」か「トップへもどる」を えらべるよ。画面を みんなに 見せるときは「みるだけ」から はいると、じぶんの てふだを うつさずに すすめられる。' },
+      { heading: 'おわりかた', text: '15ラウンドでおしまい。集めたエサの点数がいちばん高い人が1位。ホストは「もう一度」か「トップへ戻る」を選べるよ。画面をみんなに見せるときは「見るだけ」から入ると、自分の手札を映さずに進められる。' },
     ],
   });
 </script>

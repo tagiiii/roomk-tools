@@ -189,19 +189,19 @@
         <span class="material-symbols-rounded">auto_stories</span>
       </div>
       <h1 class="ozk-hero__title">おしつけずかん</h1>
-      <p class="ozk-hero__sub">イヤ〜な生きもののカードを、宣言つきで ほかの人へ おしつけあうゲーム。<br>「ホントかウソか」を見やぶれ！</p>
+      <p class="ozk-hero__sub">イヤ〜な生きもののカードを、宣言つきでほかの人へ押しつけ合うゲーム。<br>「ホントかウソか」を見やぶれ！</p>
     </div>
     <div class="ozk-hero__buttons">
       <button class="btn btn-primary btn-lg btn-full" onclick="showScreen('host-setup')">
-        <span class="material-symbols-rounded">add_home</span>ルームをつくる
+        <span class="material-symbols-rounded">add_home</span>ルームを作る
       </button>
       <button class="btn btn-secondary btn-lg btn-full" onclick="showScreen('guest-join')">
-        <span class="material-symbols-rounded">login</span>はいる
+        <span class="material-symbols-rounded">login</span>入る
       </button>
       <button class="btn btn-ghost btn-lg btn-full" onclick="showScreen('board-join')">
-        <span class="material-symbols-rounded">visibility</span>みるだけ
+        <span class="material-symbols-rounded">visibility</span>見るだけ
       </button>
-      <p class="ozk-hint">「みるだけ」は画面共有するときや、見て楽しみたいときに。ニックネームはいらないよ。</p>
+      <p class="ozk-hint">「見るだけ」は画面共有するときや、見て楽しみたいときに。ニックネームはいらないよ。</p>
     </div>
   </div>
 </div>
@@ -211,16 +211,16 @@
 ════════════════════════════════════ -->
 <div class="screen" id="screen-host-setup">
   <div class="ozk-page">
-    <h2 class="ozk-page__title">ルームをつくる</h2>
+    <h2 class="ozk-page__title">ルームを作る</h2>
     <p class="ozk-page__sub">あなたのニックネームを入れてね。あなたもプレイヤーとして遊ぶよ。</p>
     <div class="form-group">
       <label class="form-label" for="host-nickname">ニックネーム（1〜8文字）</label>
       <input class="form-input" id="host-nickname" type="text" maxlength="8" placeholder="例：たろう" autocomplete="off">
     </div>
     <button class="btn btn-primary btn-full" onclick="hostCreateRoom()">
-      <span class="material-symbols-rounded">add_home</span>ルームをつくる
+      <span class="material-symbols-rounded">add_home</span>ルームを作る
     </button>
-    <button class="btn btn-ghost btn-full" onclick="showScreen('top')">← もどる</button>
+    <button class="btn btn-ghost btn-full" onclick="showScreen('top')">← 戻る</button>
   </div>
 </div>
 
@@ -229,7 +229,7 @@
 ════════════════════════════════════ -->
 <div class="screen" id="screen-guest-join">
   <div class="ozk-page">
-    <h2 class="ozk-page__title">ルームに はいる</h2>
+    <h2 class="ozk-page__title">ルームに入る</h2>
     <p class="ozk-page__sub">ニックネームとルームコードを入れてね。</p>
     <div class="form-group">
       <label class="form-label" for="guest-nickname">ニックネーム（1〜8文字）</label>
@@ -242,9 +242,9 @@
              oninput="this.value=this.value.toUpperCase()">
     </div>
     <button class="btn btn-primary btn-full" onclick="guestJoin()">
-      <span class="material-symbols-rounded">login</span>はいる
+      <span class="material-symbols-rounded">login</span>入る
     </button>
-    <button class="btn btn-ghost btn-full" onclick="showScreen('top')">← もどる</button>
+    <button class="btn btn-ghost btn-full" onclick="showScreen('top')">← 戻る</button>
   </div>
 </div>
 
@@ -253,7 +253,7 @@
 ════════════════════════════════════ -->
 <div class="screen" id="screen-board-join">
   <div class="ozk-page">
-    <h2 class="ozk-page__title">みるだけで はいる</h2>
+    <h2 class="ozk-page__title">見るだけで入る</h2>
     <p class="ozk-page__sub">ルームコードだけで入れるよ。ニックネームはいらないよ。画面を共有するときはここから見てね。</p>
     <div class="form-group">
       <label class="form-label" for="board-room-code">ルームコード（6文字）</label>
@@ -264,7 +264,7 @@
     <button class="btn btn-primary btn-full" onclick="boardJoin()">
       <span class="material-symbols-rounded">visibility</span>見る
     </button>
-    <button class="btn btn-ghost btn-full" onclick="showScreen('top')">← もどる</button>
+    <button class="btn btn-ghost btn-full" onclick="showScreen('top')">← 戻る</button>
   </div>
 </div>
 
@@ -291,14 +291,14 @@
 
     <div id="lobby-host-panel-2" style="display:none" class="mt-md">
       <button class="btn btn-primary btn-full" id="btn-start-game" onclick="hostStartGame()" disabled>
-        <span class="material-symbols-rounded">play_arrow</span>はじめる
+        <span class="material-symbols-rounded">play_arrow</span>始める
       </button>
       <p class="ozk-hint" id="lobby-start-hint"></p>
     </div>
 
     <div id="lobby-guest-wait" style="display:none" class="card mt-md text-center">
       <div class="spinner"></div>
-      <p style="margin-top:12px;font-weight:700;color:var(--color-primary)">ホストが はじめるのを 待っています</p>
+      <p style="margin-top:12px;font-weight:700;color:var(--color-primary)">ホストが始めるのを待っています</p>
     </div>
 
     <button class="btn btn-ghost btn-full mt-md" onclick="leaveLobby()">
@@ -331,12 +331,12 @@
     </div>
 
     <div class="card">
-      <p class="ozk-section-label">すすみかたログ</p>
+      <p class="ozk-section-label">進み方ログ</p>
       <div class="ozk-log" id="game-log"></div>
     </div>
 
     <button class="btn btn-danger btn-full mt-md" id="btn-abort" onclick="hostAbort()" style="display:none">
-      <span class="material-symbols-rounded">stop_circle</span>とちゅうでおわる
+      <span class="material-symbols-rounded">stop_circle</span>途中で終わる
     </button>
     <button class="btn btn-ghost btn-full mt-md" id="btn-guest-leave-game" onclick="guestGoToTop()" style="display:none">
       <span class="material-symbols-rounded">logout</span>退出する
@@ -353,26 +353,26 @@
       <p id="result-lose-text"></p>
     </div>
     <div class="ozk-aborted-banner" id="result-banner-aborted" style="display:none">
-      とちゅうで おわったよ。まけは なし！
+      途中で終わったよ。負けはなし！
     </div>
 
     <div class="ozk-resolved-panel" id="result-resolved-panel" style="display:none"></div>
 
     <div class="card">
-      <p class="ozk-section-label">さいごの ずかん</p>
+      <p class="ozk-section-label">最後のずかん</p>
       <ul class="ozk-player-list" id="result-player-list" style="list-style:none"></ul>
     </div>
 
     <div id="result-host-actions" style="display:none" class="mt-md">
       <button class="btn btn-primary btn-full" id="btn-rematch" onclick="hostRematch()">
-        <span class="material-symbols-rounded">replay</span>もういちど
+        <span class="material-symbols-rounded">replay</span>もう一度
       </button>
       <button class="btn btn-ghost btn-full" onclick="hostGoToTop()">
-        <span class="material-symbols-rounded">home</span>トップへもどる
+        <span class="material-symbols-rounded">home</span>トップへ戻る
       </button>
     </div>
     <button class="btn btn-ghost btn-full mt-md" id="btn-guest-leave" onclick="guestGoToTop()" style="display:none">
-      <span class="material-symbols-rounded">home</span>トップへもどる
+      <span class="material-symbols-rounded">home</span>トップへ戻る
     </button>
   </div>
 </div>
@@ -384,7 +384,7 @@
   <div class="ozk-page">
     <div id="board-waiting" style="display:none" class="card text-center">
       <div class="spinner"></div>
-      <p style="margin-top:12px;font-weight:700;color:var(--color-primary)">はじまるのを 待っています</p>
+      <p style="margin-top:12px;font-weight:700;color:var(--color-primary)">始まるのを待っています</p>
       <ul class="ozk-player-list mt-md" id="board-waiting-list" style="list-style:none;text-align:left"></ul>
     </div>
 
@@ -399,13 +399,13 @@
       </div>
 
       <div class="card">
-        <p class="ozk-section-label">すすみかたログ</p>
+        <p class="ozk-section-label">進み方ログ</p>
         <div class="ozk-log" id="board-log"></div>
       </div>
     </div>
 
     <button class="btn btn-ghost btn-full mt-md" onclick="spectatorGoToTop()">
-      <span class="material-symbols-rounded">home</span>トップへもどる
+      <span class="material-symbols-rounded">home</span>トップへ戻る
     </button>
   </div>
 </div>
@@ -419,7 +419,7 @@
 <!-- ホスト切断オーバーレイ（ゲスト用） -->
 <div class="ozk-overlay" id="host-disconnect-overlay">
   <span class="material-symbols-rounded" style="font-size:48px;color:var(--color-error)">signal_disconnected</span>
-  <p class="ozk-overlay__title">ホストが 一時的に つうしんを うしないました</p>
+  <p class="ozk-overlay__title">ホストが一時的に通信を失いました</p>
   <p class="ozk-overlay__sub">再接続を待っています</p>
   <div class="ozk-overlay__countdown" id="host-disconnect-countdown">120</div>
   <p class="ozk-overlay__sub">秒後に自動終了します</p>
@@ -503,7 +503,7 @@ async function waitAuthOrExplain() {
     await authReady;
     return true;
   } catch {
-    showMsg('うまくつながらなかったよ。ページをよみこみなおしてね');
+    showMsg('うまくつながらなかったよ。ページを読み込みなおしてね');
     return false;
   } finally {
     _authWaitBusy = false;
@@ -650,12 +650,12 @@ function withLogEntry(match, entry) {
 
 function logEntryText(e) {
   switch (e.t) {
-    case 'start':   return 'ゲームが はじまりました';
-    case 'rematch': return 'つながっているメンバーで もういちど はじまりました';
-    case 'pass':    return `${e.from}さんが ${e.to}さんに カードをわたした『${kindName(e.claim)} です』`;
-    case 'peek':    return `${e.from}さんが カードを見た`;
-    case 'forward': return `${e.from}さんが ${e.to}さんに まわした『${kindName(e.claim)} です』`;
-    case 'judge':   return `${e.from}さんは『${e.guess ? 'ホント' : 'ウソ'}』をえらんだ → ${e.correct ? 'あたり！' : 'はずれ…'}`;
+    case 'start':   return 'ゲームが始まりました';
+    case 'rematch': return 'つながっているメンバーでもう一度始まりました';
+    case 'pass':    return `${e.from}さんが${e.to}さんにカードを渡した『${kindName(e.claim)}です』`;
+    case 'peek':    return `${e.from}さんがカードを見た`;
+    case 'forward': return `${e.from}さんが${e.to}さんに回した『${kindName(e.claim)}です』`;
+    case 'judge':   return `${e.from}さんは『${e.guess ? 'ホント' : 'ウソ'}』を選んだ → ${e.correct ? '当たり！' : '外れ…'}`;
     default:        return '';
   }
 }
@@ -666,7 +666,7 @@ function renderLog(elId, log) {
   const entries = Object.entries(log || {}).sort((a, b) => (a[0] < b[0] ? -1 : 1)).slice(-LOG_DISPLAY_LIMIT);
   el.innerHTML = entries.length
     ? entries.map(([id, e]) => `<div class="ozk-log__row">${esc(logEntryText(e))}</div>`).join('')
-    : '<p class="text-muted text-sm">まだ ログは ありません</p>';
+    : '<p class="text-muted text-sm">まだログはありません</p>';
 }
 
 // ══════════════════════════════════════════════════
@@ -680,7 +680,7 @@ function renderPlayerDex(elId, room, players) {
   el.innerHTML = sorted.map(([nick, p]) => {
     const meTag = nick === state.nickname ? '<span class="ozk-tag ozk-tag--me">あなた</span>' : '';
     const hostTag = p.isHost ? '<span class="ozk-tag ozk-tag--host">ホスト</span>' : '';
-    const discTag = p.connected === false ? '<span class="ozk-tag--disc">つうしんが きれています</span>' : '';
+    const discTag = p.connected === false ? '<span class="ozk-tag--disc">通信が切れています</span>' : '';
     const handCount = handCountForPlayer(cards, nick);
     const dex = dexGroupsForPlayer(cards, nick);
     const dexHtml = KINDS.map((k, i) => {
@@ -691,14 +691,14 @@ function renderPlayerDex(elId, room, players) {
     }).join('');
     const dexKindsCount = KINDS.filter((k) => (dex[k.id] || 0) > 0).length;
     const dexAlert = dexKindsCount === KINDS.length - 1
-      ? '<span class="ozk-dex-alert">あと1しゅるいで ずかんが ぜんぶ うまっちゃう！</span>' : '';
+      ? '<span class="ozk-dex-alert">あと1種類でずかんが全部埋まっちゃう！</span>' : '';
     return `<li class="ozk-player-row">
       <div class="ozk-player-row__head">
         <span class="ozk-player-row__name">${esc(nick)}</span>${hostTag}${meTag}
-        <span class="ozk-player-row__hand">手札 ${handCount}まい</span>
+        <span class="ozk-player-row__hand">手札${handCount}枚</span>
       </div>
       ${discTag}
-      <div class="ozk-dex-row">${dexHtml || '<span class="text-muted text-sm">ずかん まだなし</span>'}</div>
+      <div class="ozk-dex-row">${dexHtml || '<span class="text-muted text-sm">ずかんまだなし</span>'}</div>
       ${dexAlert}
     </li>`;
   }).join('');
@@ -735,9 +735,9 @@ function renderBanner(elId, room) {
   if (!turn) { el.innerHTML = ''; return; }
   if (!turn.cardId) {
     if (turn.actor === state.nickname) {
-      el.innerHTML = '<p class="ozk-banner__wait">あなたの ばんです。カードを えらんでね</p>';
+      el.innerHTML = '<p class="ozk-banner__wait">あなたの番です。カードを選んでね</p>';
     } else {
-      el.innerHTML = `<p class="ozk-banner__wait">${esc(turn.actor || '')}さんが カードを えらんでいます</p>`;
+      el.innerHTML = `<p class="ozk-banner__wait">${esc(turn.actor || '')}さんがカードを選んでいます</p>`;
     }
     return;
   }
@@ -747,7 +747,7 @@ function renderBanner(elId, room) {
       <span class="material-symbols-rounded">arrow_forward</span>
       <span>${esc(turn.actor || '')}さん</span>
     </div>
-    <p class="ozk-banner__claim">「これは ${esc(kindName(turn.claimKind))} です」</p>`;
+    <p class="ozk-banner__claim">「これは${esc(kindName(turn.claimKind))}です」</p>`;
 }
 
 function renderWaitNote(room) {
@@ -755,13 +755,13 @@ function renderWaitNote(room) {
   const turn = room.match?.turn;
   if (!turn || turn.actor === state.nickname) { el.style.display = 'none'; return; }
   const labels = {
-    choosing: 'カードを えらんでいます',
-    deciding: 'カードを 見るか きめています',
-    passing:  'カードを まわそうとしています',
-    resolved: 'けっかを 見ています',
+    choosing: 'カードを選んでいます',
+    deciding: 'カードを見るか決めています',
+    passing:  'カードを回そうとしています',
+    resolved: '結果を見ています',
   };
   el.style.display = 'block';
-  el.textContent = `いま ${turn.actor}さんが ${labels[turn.phase] || ''}`;
+  el.textContent = `今${turn.actor}さんが${labels[turn.phase] || ''}`;
 }
 
 function renderSeenReminder(room) {
@@ -780,12 +780,12 @@ function loseMessageHtml(result) {
   if (!result) return '';
   const loserName = esc(result.loser);
   if (result.reason === 'four') {
-    return `<strong>${loserName}</strong>さんの ずかんが <strong>${esc(kindName(result.kind))}</strong>で いっぱいに なっちゃった！<br>こんかいは <strong>${loserName}さん</strong>の まけ！`;
+    return `<strong>${loserName}</strong>さんのずかんが<strong>${esc(kindName(result.kind))}</strong>でいっぱいになっちゃった！<br>今回は<strong>${loserName}さん</strong>の負け！`;
   }
   if (result.reason === 'all') {
-    return `<strong>${loserName}</strong>さんの ずかんに <strong>8しゅるい ぜんぶ</strong> そろっちゃった！<br>こんかいは <strong>${loserName}さん</strong>の まけ！`;
+    return `<strong>${loserName}</strong>さんのずかんに<strong>8種類全部</strong>そろっちゃった！<br>今回は<strong>${loserName}さん</strong>の負け！`;
   }
-  return `<strong>${loserName}</strong>さんの 手札が 0まいに なっちゃった！<br>こんかいは <strong>${loserName}さん</strong>の まけ！`;
+  return `<strong>${loserName}</strong>さんの手札が0枚になっちゃった！<br>今回は<strong>${loserName}さん</strong>の負け！`;
 }
 
 function renderResolvedPanel(elId, room) {
@@ -796,9 +796,9 @@ function renderResolvedPanel(elId, room) {
   const r = turn.resolved;
   el.style.display = 'block';
   el.innerHTML = `
-    <p class="ozk-resolved__line">カードは <strong>${esc(kindName(r.cardKind))}</strong> でした！</p>
-    <p class="ozk-resolved__line">${esc(r.judge)}さんの『${r.guess ? 'ホント' : 'ウソ'}』は ${r.correct ? '<strong>あたり！</strong>' : '<strong>はずれ…</strong>'}</p>
-    <p class="ozk-resolved__line">カードは ${esc(r.takenBy)}さんの ずかんへ</p>`;
+    <p class="ozk-resolved__line">カードは<strong>${esc(kindName(r.cardKind))}</strong>でした！</p>
+    <p class="ozk-resolved__line">${esc(r.judge)}さんの『${r.guess ? 'ホント' : 'ウソ'}』は${r.correct ? '<strong>当たり！</strong>' : '<strong>外れ…</strong>'}</p>
+    <p class="ozk-resolved__line">カードは${esc(r.takenBy)}さんのずかんへ</p>`;
 }
 
 // ══════════════════════════════════════════════════
@@ -814,14 +814,14 @@ function buildKindTileButtons(counts, selected, fnName) {
       return `<div class="ozk-kind-tile${emptyClass}" style="background:${k.color}">
         <span class="ozk-kind-tile__num">${NUMBERS[i]}</span>
         <span class="ozk-kind-tile__name">${esc(k.name)}</span>
-        <span class="ozk-kind-tile__count">${count}まい</span>
+        <span class="ozk-kind-tile__count">${count}枚</span>
       </div>`;
     }
     const disabled = count === 0 ? 'disabled' : '';
     return `<button type="button" class="ozk-kind-tile${selClass}${emptyClass}" style="background:${k.color}" ${disabled} onclick="${fnName}('${k.id}')">
       <span class="ozk-kind-tile__num">${NUMBERS[i]}</span>
       <span class="ozk-kind-tile__name">${esc(k.name)}</span>
-      <span class="ozk-kind-tile__count">${count}まい</span>
+      <span class="ozk-kind-tile__count">${count}枚</span>
     </button>`;
   }).join('');
 }
@@ -836,7 +836,7 @@ function buildClaimButtons(selected, fnName) {
 }
 
 function buildTargetButtonsHtml(targets, selected, className) {
-  if (!targets.length) return '<p class="text-muted text-sm">えらべる相手がいません</p>';
+  if (!targets.length) return '<p class="text-muted text-sm">選べる相手がいません</p>';
   return targets.map((nick) => {
     const selClass = selected === nick ? ' is-selected' : '';
     return `<button type="button" class="ozk-target-btn${selClass} ${className}" data-nick="${esc(nick)}">${esc(nick)}さん</button>`;
@@ -855,16 +855,16 @@ function bindTargetButtons(className, handlerFn) {
 function buildChoosingUI(room, players) {
   const c = state.choosing;
   const targets = computeEligibleTargets(players, null, state.nickname);
-  const cardHint = c.cardKind ? '' : '<p class="ozk-hint">① 上の「あなたの手札」から おくるカードを タップしてね</p>';
+  const cardHint = c.cardKind ? '' : '<p class="ozk-hint">① 上の「あなたの手札」から送るカードをタップしてね</p>';
   return `
     <div class="card ozk-action-card">
       ${cardHint}
-      <p class="ozk-step-label">② 宣言を えらぶ</p>
+      <p class="ozk-step-label">② 宣言を選ぶ</p>
       <div class="ozk-claim-grid">${buildClaimButtons(c.claimKind, 'selectChooseClaim')}</div>
-      <p class="ozk-step-label">③ わたす相手を えらぶ</p>
+      <p class="ozk-step-label">③ 渡す相手を選ぶ</p>
       <div class="ozk-target-grid" id="choose-target-grid">${buildTargetButtonsHtml(targets, c.targetNick, 'ozk-target-btn--choose')}</div>
       <button class="btn btn-primary btn-full mt-md" onclick="submitChoose()" ${(!c.cardKind || !c.claimKind || !c.targetNick) ? 'disabled' : ''}>
-        <span class="material-symbols-rounded">send</span>わたす
+        <span class="material-symbols-rounded">send</span>渡す
       </button>
     </div>`;
 }
@@ -875,7 +875,7 @@ function buildDecidingUI(room, players) {
   const canPeek = computeEligibleTargets(players, seenAfter, state.nickname).length > 0;
   return `
     <div class="card ozk-action-card">
-      <p class="ozk-step-label">カードを うけとりました。ホントかウソかを あてる？</p>
+      <p class="ozk-step-label">カードを受け取りました。ホントかウソかを当てる？</p>
       <div class="ozk-decide-grid">
         <button class="btn btn-primary" onclick="submitJudge(true)">
           <span class="material-symbols-rounded">check_circle</span>ホント
@@ -887,7 +887,7 @@ function buildDecidingUI(room, players) {
       <button class="btn btn-ghost btn-full mt-md" onclick="submitPeek()" ${canPeek ? '' : 'disabled'}>
         <span class="material-symbols-rounded">visibility</span>こっそり見る
       </button>
-      ${canPeek ? '' : '<p class="ozk-hint">まわせる相手がいないので「こっそり見る」はえらべません</p>'}
+      ${canPeek ? '' : '<p class="ozk-hint">回せる相手がいないので「こっそり見る」は選べません</p>'}
     </div>`;
 }
 
@@ -897,12 +897,12 @@ function buildPassingUI(room, players) {
   const p = state.passing;
   return `
     <div class="card ozk-action-card">
-      <p class="ozk-step-label">① あたらしい宣言を えらぶ</p>
+      <p class="ozk-step-label">① 新しい宣言を選ぶ</p>
       <div class="ozk-claim-grid">${buildClaimButtons(p.claimKind, 'selectPassClaim')}</div>
-      <p class="ozk-step-label">② まわす相手を えらぶ</p>
+      <p class="ozk-step-label">② 回す相手を選ぶ</p>
       <div class="ozk-target-grid" id="pass-target-grid">${buildTargetButtonsHtml(targets, p.targetNick, 'ozk-target-btn--pass')}</div>
       <button class="btn btn-primary btn-full mt-md" onclick="submitForward()" ${(!p.claimKind || !p.targetNick) ? 'disabled' : ''}>
-        <span class="material-symbols-rounded">redo</span>まわす
+        <span class="material-symbols-rounded">redo</span>回す
       </button>
     </div>`;
 }
@@ -910,7 +910,7 @@ function buildPassingUI(room, players) {
 function buildResolvedActionUI() {
   return `<div class="card ozk-action-card">
     <button class="btn btn-primary btn-full" onclick="submitAdvance()">
-      <span class="material-symbols-rounded">arrow_forward</span>つぎへ
+      <span class="material-symbols-rounded">arrow_forward</span>次へ
     </button>
   </div>`;
 }
@@ -939,7 +939,7 @@ function renderMyHandSection(room) {
   const counts = myHandGroups(cards, state.nickname);
   const turn = room.match?.turn;
   const selectable = !!(turn && turn.phase === 'choosing' && turn.actor === state.nickname);
-  document.getElementById('game-hand-label').textContent = selectable ? '① あなたの手札（タップしておくるカードを選ぶ）' : 'あなたの手札';
+  document.getElementById('game-hand-label').textContent = selectable ? '① あなたの手札（タップして送るカードを選ぶ）' : 'あなたの手札';
   document.getElementById('game-my-hand').innerHTML = buildKindTileButtons(counts, selectable ? state.choosing.cardKind : null, selectable ? 'selectChooseKind' : null);
 }
 
@@ -1128,7 +1128,7 @@ function startRoomListener() {
     if (!snap.exists()) {
       if (state.role !== 'host' && state.roomRef) RoomkRTDB.cancelRoomOnDisconnect(state.roomRef);
       clearSession();
-      resetLocalStateAndShowTop('ルームがおわりました');
+      resetLocalStateAndShowTop('ルームが終わりました');
       return;
     }
     handleRoom(snap.val());
@@ -1141,7 +1141,7 @@ function handleRoom(room) {
   if (isRoomExpired(room)) {
     const roomRef = state.roomRef;
     clearSession();
-    resetLocalStateAndShowTop('このルームは おわりました');
+    resetLocalStateAndShowTop('このルームは終わりました');
     if (roomRef) RoomkRTDB.cancelRoomOnDisconnect(roomRef).then(() => removeRoomIfExpired(roomRef)).catch(() => {});
     return;
   }
@@ -1153,7 +1153,7 @@ function handleRoom(room) {
       const playerRef = state.roomRef.child(`players/${state.nickname}`);
       RoomkRTDB.cancelRoomOnDisconnect(playerRef).catch(() => {});
       clearSession();
-      resetLocalStateAndShowTop('メンバーから はずれたよ。また あそぶときは はいりなおしてね');
+      resetLocalStateAndShowTop('メンバーからはずれたよ。また遊ぶときは入りなおしてね');
       return;
     }
     const hostGone = room.hostConnected === false;
@@ -1204,10 +1204,10 @@ function handleWaitingScreen(room, players) {
     const hint = document.getElementById('lobby-start-hint');
     if (count < MIN_PLAYERS) {
       btn.disabled = true;
-      hint.textContent = `あと ${MIN_PLAYERS - count}人 まってね（3〜6人ではじめられます）`;
+      hint.textContent = `あと${MIN_PLAYERS - count}人待ってね（3〜6人で始められます）`;
     } else if (count > MAX_PLAYERS) {
       btn.disabled = true;
-      hint.textContent = `${MAX_PLAYERS}人まで あそべます`;
+      hint.textContent = `${MAX_PLAYERS}人まで遊べます`;
     } else {
       btn.disabled = false;
       hint.textContent = '';
@@ -1294,7 +1294,7 @@ function renderBoard(room, players) {
   if (room.status === 'result' || room.status === 'aborted') {
     resultEl.style.display = 'block';
     if (room.status === 'aborted') {
-      resultEl.innerHTML = '<p>とちゅうで おわりました。まけは なし！</p>';
+      resultEl.innerHTML = '<p>途中で終わりました。負けはなし！</p>';
       document.getElementById('board-resolved-panel').style.display = 'none';
     } else {
       resultEl.innerHTML = '<p>' + loseMessageHtml(room.match?.result) + '</p>';
@@ -1311,7 +1311,7 @@ function renderBoard(room, players) {
 // ══════════════════════════════════════════════════
 async function submitChoose() {
   const { cardKind, claimKind, targetNick } = state.choosing;
-  if (!cardKind || !claimKind || !targetNick) { showMsg('カード・宣言・相手をえらんでね'); return; }
+  if (!cardKind || !claimKind || !targetNick) { showMsg('カード・宣言・相手を選んでね'); return; }
 
   let abortReason = null;
   const { committed } = await state.roomRef.transaction((room) => {
@@ -1345,11 +1345,11 @@ async function submitChoose() {
     };
   });
 
-  if (!committed) { showMsg('わたせませんでした。もういちどえらんでね'); return; }
+  if (!committed) { showMsg('渡せませんでした。もう一度選んでね'); return; }
 }
 
 async function submitPeek() {
-  if (!confirm('カードを見ると、「ホント」「ウソ」はえらべなくなるよ。見てまわす？')) return;
+  if (!confirm('カードを見ると、「ホント」「ウソ」は選べなくなるよ。見て回す？')) return;
 
   let abortReason = null;
   const { committed } = await state.roomRef.transaction((room) => {
@@ -1373,14 +1373,14 @@ async function submitPeek() {
   });
 
   if (!committed) {
-    showMsg(abortReason === 'no_target' ? 'まわせる相手がいないよ' : '見られませんでした');
+    showMsg(abortReason === 'no_target' ? '回せる相手がいないよ' : '見られませんでした');
     return;
   }
 }
 
 async function submitForward() {
   const { claimKind, targetNick } = state.passing;
-  if (!claimKind || !targetNick) { showMsg('宣言と相手をえらんでね'); return; }
+  if (!claimKind || !targetNick) { showMsg('宣言と相手を選んでね'); return; }
 
   let abortReason = null;
   const { committed } = await state.roomRef.transaction((room) => {
@@ -1405,7 +1405,7 @@ async function submitForward() {
     };
   });
 
-  if (!committed) { showMsg('まわせませんでした'); return; }
+  if (!committed) { showMsg('回せませんでした'); return; }
 }
 
 async function submitJudge(guessTruth) {
@@ -1490,7 +1490,7 @@ async function submitAdvance() {
       },
     };
   });
-  if (!committed) showMsg('すすめられませんでした');
+  if (!committed) showMsg('進められませんでした');
 }
 
 // ══════════════════════════════════════════════════
@@ -1510,19 +1510,19 @@ async function hostStartGame() {
     return { ...room, status: 'playing', match };
   });
   if (!committed) {
-    showMsg(abortReason === 'count' ? '3〜6人ではじめられるよ' : 'はじめられませんでした');
+    showMsg(abortReason === 'count' ? '3〜6人で始められるよ' : '始められませんでした');
     return;
   }
 }
 
 async function hostAbort() {
   if (state.role !== 'host' || !state.roomRef) return;
-  if (!confirm('とちゅうで おわります。まけは なしになるよ。よろしいですか？')) return;
+  if (!confirm('途中で終わります。負けはなしになるよ。よろしいですか？')) return;
   const { committed } = await state.roomRef.transaction((room) => {
     if (!room || room.status !== 'playing') return;
     return { ...room, status: 'aborted' };
   });
-  if (!committed) showMsg('おわれませんでした');
+  if (!committed) showMsg('終われませんでした');
 }
 
 async function hostRematch() {
@@ -1543,7 +1543,7 @@ async function hostRematch() {
     return { ...room, status: 'playing', players: activePlayers, match };
   });
   if (!committed) {
-    showMsg(abortReason === 'count' ? 'つながっている人が3人より少ないので、もういちどは できないよ' : 'もういちどできませんでした');
+    showMsg(abortReason === 'count' ? 'つながっている人が3人より少ないので、もう一度はできないよ' : 'もう一度できませんでした');
     return;
   }
 }
@@ -1567,7 +1567,7 @@ function showHostDisconnectOverlay(show, room) {
           state.timerInterval = null;
           const roomRef = state.roomRef;
           clearSession();
-          resetLocalStateAndShowTop('ホストが もどってこなかったので おわりました');
+          resetLocalStateAndShowTop('ホストが戻ってこなかったので終わりました');
           // 自分の onDisconnect 予約を取り消してから消す（削除済みパスへの予約発火＝ゴースト room 防止）
           if (roomRef) RoomkRTDB.cancelRoomOnDisconnect(roomRef).then(() => removeRoomIfExpired(roomRef)).catch(() => {});
         }
@@ -1713,21 +1713,21 @@ tryReconnect().then((reconnected) => {
 <script>
   RoomkHowto.init({
     title: 'あそびかた',
-    lead: 'イヤ〜な生きもののカードを、宣言をつけて ほかの人へ おしつけあうゲームです。ひきとったカードは じぶんの「ずかん」に たまっていくよ。おなじ生きものが 4まい そろうか、8しゅるい ぜんぶ そろったら まけ！',
+    lead: 'イヤ〜な生きもののカードを、宣言をつけてほかの人へ押しつけ合うゲームです。引き取ったカードは自分の「ずかん」にたまっていくよ。同じ生きものが4枚そろうか、8種類全部そろったら負け！',
     sections: [
       { heading: 'はじめかた', items: [
-        'ホストが「ルームをつくる」からルームをつくる（ホストもプレイヤーとして遊ぶよ）',
+        'ホストが「ルームを作る」からルームを作る（ホストもプレイヤーとして遊ぶよ）',
         'ルームコードをみんなに伝える',
-        'ほかの人は「はいる」からニックネームとコードを入れて参加する',
-        'ホストが「はじめる」を押すとスタート（3〜6人）',
+        'ほかの人は「入る」からニックネームとコードを入れて参加する',
+        'ホストが「始める」を押すとスタート（3〜6人）',
       ] },
       { heading: 'すすめかた', items: [
-        '自分の番がきたら、手札から1まい・宣言（①〜⑧）・わたす相手をえらんで「わたす」',
-        'カードをうけとったら「ホント」「ウソ」をえらぶか、「こっそり見る」でこっそり中身を見てから別の人にまわす',
-        '「ホント」「ウソ」があたったら出した人が、はずれたら自分がカードを引き取る',
+        '自分の番が来たら、手札から1枚・宣言（①〜⑧）・渡す相手を選んで「渡す」',
+        'カードを受け取ったら「ホント」「ウソ」を選ぶか、「こっそり見る」でこっそり中身を見てから別の人に回す',
+        '「ホント」「ウソ」が当たったら出した人が、外れたら自分がカードを引き取る',
         '引き取ったカードは自分の「ずかん」にたまる。次の番は引き取った人',
       ] },
-      { heading: 'おわりかた', text: 'おなじ生きものが4まいそろうか、8しゅるいぜんぶそろうか、手札が0まいになったら、そこでおしまい。ホストは「もういちど」か「トップへもどる」をえらべるよ。画面共有するときは「みるだけ」から入ると、自分の手札を映さずに進行できる。' },
+      { heading: 'おわりかた', text: '同じ生きものが4枚そろうか、8種類全部そろうか、手札が0枚になったら、そこでおしまい。ホストは「もう一度」か「トップへ戻る」を選べるよ。画面共有するときは「見るだけ」から入ると、自分の手札を映さずに進行できる。' },
     ],
   });
 </script>
