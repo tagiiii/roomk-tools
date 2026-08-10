@@ -301,7 +301,7 @@
         <span class="material-symbols-rounded">speed</span>
       </div>
       <h1 class="ptm-hero__title">ピッタリメーター</h1>
-      <p class="ptm-hero__sub">ヒントを たよりに、みんなで メーターの位置を ぴったり合わせる 協力ゲーム</p>
+      <p class="ptm-hero__sub">ヒントを頼りに、みんなでメーターの位置をぴったり合わせる協力ゲーム</p>
     </div>
     <div class="ptm-hero__buttons">
       <button class="btn btn-primary btn-lg btn-full" onclick="goHostSetup()">
@@ -412,17 +412,17 @@
     <!-- 出題者用 -->
     <div id="hinting-speaker" style="display:none">
       <div class="card">
-        <div class="ptm-label">ターゲット（きみだけに見えているよ）</div>
+        <div class="ptm-label">ターゲット（君だけに見えているよ）</div>
         <div id="hinting-target-meter"></div>
       </div>
-      <p class="ptm-sub" style="margin-bottom:12px">この位置に ぴったりの ことばを 入力してね</p>
+      <p class="ptm-sub" style="margin-bottom:12px">この位置にぴったりの言葉を入力してね</p>
       <div class="form-group">
         <label class="form-label" for="hint-input">ヒント（1〜20文字）</label>
         <input class="form-input" id="hint-input" type="text" maxlength="20"
                placeholder="例：にくまん" autocomplete="off">
       </div>
       <div class="ptm-error" id="hint-error"></div>
-      <button class="btn btn-primary btn-lg btn-full" onclick="speakerSubmitHint()">ヒントをおくる</button>
+      <button class="btn btn-primary btn-lg btn-full" onclick="speakerSubmitHint()">ヒントを送る</button>
     </div>
 
     <!-- 出題者以外用 -->
@@ -436,7 +436,7 @@
 
     <!-- ホスト用: 出題者が切断したとき -->
     <div id="hinting-host-actions" style="display:none; margin-top:24px">
-      <button class="btn btn-secondary btn-full" onclick="hostChangeSpeaker()">出題者をかえる</button>
+      <button class="btn btn-secondary btn-full" onclick="hostChangeSpeaker()">出題者を変える</button>
       <p class="text-muted text-center" style="margin-top:8px; font-size:13px">出題者の接続が切れています。新しいものさしで別の人に交代できます</p>
     </div>
   </div>
@@ -458,7 +458,7 @@
     <!-- 回答するゲスト用 -->
     <div id="guessing-answer-area" style="display:none">
       <div id="guessing-slider-area">
-        <p class="ptm-sub" style="margin-bottom:8px">メーターを うごかして、「ここだ」と思う位置で きめてね</p>
+        <p class="ptm-sub" style="margin-bottom:8px">メーターを動かして、「ここだ」と思う位置で決めてね</p>
         <div class="ptm-slide">
           <div class="ptm-slide__bubble" id="guess-bubble">50</div>
           <input type="range" class="ptm-slide__input" id="guess-slider"
@@ -467,17 +467,17 @@
           <div class="ptm-meter__ticks" id="guess-ticks"></div>
         </div>
         <div class="mt-lg">
-          <button class="btn btn-primary btn-lg btn-full" onclick="guestDecide()">きめた</button>
+          <button class="btn btn-primary btn-lg btn-full" onclick="guestDecide()">決めた</button>
         </div>
       </div>
       <div id="guessing-decided-area" style="display:none">
         <div class="ptm-decided">
           <div class="ptm-decided__msg">
             <span class="material-symbols-rounded" style="font-size:28px; color:var(--color-success)">check_circle</span>
-            きめた！（<span id="decided-value">50</span>）
+            決めた！（<span id="decided-value">50</span>）
           </div>
-          <div class="ptm-decided__sub">みんなが きめるまで 待ってね</div>
-          <button class="btn btn-ghost" onclick="guestUndecide()">えらびなおす</button>
+          <div class="ptm-decided__sub">みんなが決めるまで待ってね</div>
+          <button class="btn btn-ghost" onclick="guestUndecide()">選び直す</button>
         </div>
       </div>
     </div>
@@ -485,20 +485,20 @@
     <!-- 出題者用 -->
     <div id="guessing-speaker-area" style="display:none">
       <div class="card">
-        <div class="ptm-label">ターゲット（きみだけに見えているよ）</div>
+        <div class="ptm-label">ターゲット（君だけに見えているよ）</div>
         <div id="guessing-target-meter"></div>
       </div>
-      <p class="text-muted text-center" style="font-size:14px">みんなが メーターを うごかしているよ</p>
+      <p class="text-muted text-center" style="font-size:14px">みんながメーターを動かしているよ</p>
     </div>
 
     <!-- ホスト用 -->
     <div id="guessing-host-area" style="display:none">
       <div class="ptm-thinking" style="padding:16px 12px">
-        <div class="ptm-thinking__text">みんなが メーターを うごかしているよ</div>
+        <div class="ptm-thinking__text">みんながメーターを動かしているよ</div>
       </div>
       <button class="btn btn-primary btn-lg btn-full" id="btn-reveal" disabled onclick="hostReveal()">
         <span class="material-symbols-rounded">campaign</span>
-        けっか発表
+        結果発表
       </button>
       <p class="text-muted text-center" id="reveal-hint" style="margin-top:8px; font-size:13px"></p>
     </div>
@@ -512,7 +512,7 @@
 ════════════════════════════════════ -->
 <div class="screen" id="screen-reveal">
   <div class="ptm-page">
-    <h2 class="ptm-title pop-in">けっか発表！</h2>
+    <h2 class="ptm-title pop-in">結果発表！</h2>
     <p class="ptm-sub" id="reveal-hint-label"></p>
 
     <div class="ptm-axis" id="reveal-axis"></div>
@@ -527,8 +527,8 @@
 
     <!-- ホストのみ -->
     <div id="reveal-host-actions" style="display:none; margin-top:16px">
-      <button class="btn btn-primary btn-full" onclick="hostNextRound()">つぎのラウンドへ →</button>
-      <button class="btn btn-ghost btn-full" onclick="hostFinish()">おわる</button>
+      <button class="btn btn-primary btn-full" onclick="hostNextRound()">次のラウンドへ →</button>
+      <button class="btn btn-ghost btn-full" onclick="hostFinish()">終わる</button>
     </div>
     <div id="reveal-guest-waiting" class="text-center text-muted mt-lg" style="display:none">
       ホストの操作を待っています…
@@ -543,18 +543,18 @@
   <div class="ptm-page">
     <div class="ptm-record pop-in">
       <span class="material-symbols-rounded" style="font-size:64px; color:#F0A500">celebration</span>
-      <div class="ptm-record__label" style="margin-top:12px">きょうのきろく</div>
+      <div class="ptm-record__label" style="margin-top:12px">今日の記録</div>
       <div class="ptm-record__score">チームで <span id="done-total-score">0</span>点！</div>
       <div class="ptm-record__sub" id="done-round-count"></div>
     </div>
 
-    <div class="ptm-label" style="margin-top:24px">あそんだメンバー</div>
+    <div class="ptm-label" style="margin-top:24px">遊んだメンバー</div>
     <div class="ptm-players" id="done-player-list"></div>
 
     <div class="mt-lg">
       <button class="btn btn-secondary btn-full btn-lg" onclick="goToTop()">
         <span class="material-symbols-rounded">home</span>
-        TOPにもどる
+        TOPに戻る
       </button>
     </div>
   </div>
@@ -731,7 +731,7 @@
       await authReady;
       return true;
     } catch {
-      showError(errorId, 'うまくつながらなかったよ。ページをよみこみなおしてね');
+      showError(errorId, 'うまくつながらなかったよ。ページを読み込み直してね');
       return false;
     } finally {
       _authWaitBusy = false;
@@ -1457,7 +1457,7 @@
       renderTargetMeter('hinting-target-meter', round.target);
     } else {
       document.getElementById('hinting-waiting-text').textContent =
-        `${round.speaker}さんが かんがえちゅう…`;
+        `${round.speaker}さんが考え中…`;
     }
 
     // ホスト: 出題者が切断していたら交代ボタンを出す
@@ -1516,18 +1516,18 @@
       .filter(([name, p]) => !p.isHost && name !== round.speaker);
     const decidedCount = answerers.filter(([, p]) => p.decided).length;
     document.getElementById('guessing-progress').textContent =
-      `きめた人 ${decidedCount}人 / ${answerers.length}人`;
+      `決めた人 ${decidedCount}人 / ${answerers.length}人`;
 
     if (state.role === 'host') {
       const btn = document.getElementById('btn-reveal');
       btn.disabled = decidedCount === 0;
       const hint = document.getElementById('reveal-hint');
       if (decidedCount === 0) {
-        hint.textContent = 'だれかが きめると 発表できます';
+        hint.textContent = '誰かが決めると発表できます';
       } else if (decidedCount < answerers.length) {
-        hint.textContent = 'きめた人だけで けっかを出せます';
+        hint.textContent = '決めた人だけで結果を出せます';
       } else {
-        hint.textContent = 'みんな きめました！';
+        hint.textContent = 'みんな決めました！';
       }
     }
   }
@@ -1551,7 +1551,7 @@
       const roundScore = Number(round.roundScore) || 0;
       document.getElementById('reveal-round-score').textContent = `チームで +${roundScore}点！`;
       document.getElementById('reveal-total-score').textContent =
-        `ごうけい ${room.teamScore || 0}点（${room.roundsDone || 0}ラウンド）`;
+        `合計${room.teamScore || 0}点（${room.roundsDone || 0}ラウンド）`;
     }
 
     document.getElementById('reveal-host-actions').style.display =
@@ -1567,7 +1567,7 @@
 
     document.getElementById('done-total-score').textContent = room.teamScore || 0;
     document.getElementById('done-round-count').textContent =
-      `${room.roundsDone || 0}ラウンド あそんだよ`;
+      `${room.roundsDone || 0}ラウンド遊んだよ`;
     renderPlayerList('done-player-list', room.players);
   }
 
@@ -1636,19 +1636,19 @@
 <script>
   RoomkHowto.init({
     title: 'あそびかた',
-    lead: 'ヒントを たよりに、みんなで メーターの位置を ぴったり合わせる 協力ゲーム。',
+    lead: 'ヒントを頼りに、みんなでメーターの位置をぴったり合わせる協力ゲーム。',
     sections: [
-      { heading: 'はじめかた', items: [
+      { heading: '始めかた', items: [
         'ホストが「ルームを作る（ホスト）」からルームを作る',
         '出てきたルームコードをみんなに伝える',
         'ほかの人は「ルームに参加する」からコードを入れて「参加する」を押す',
       ] },
-      { heading: 'すすめかた', items: [
-        '出題者になったら、ターゲットの位置に ぴったりのことばを入力して「ヒントをおくる」を押す',
-        'ほかの人はヒントを見て、メーターをうごかして「きめた」を押す（「えらびなおす」もできる）',
-        'けっか発表で、ターゲットとみんなのえらんだ位置が出て、チームに点が入る',
+      { heading: '進めかた', items: [
+        '出題者になったら、ターゲットの位置にぴったりの言葉を入力して「ヒントを送る」を押す',
+        'ほかの人はヒントを見て、メーターを動かして「決めた」を押す（「選び直す」もできる）',
+        '結果発表で、ターゲットとみんなの選んだ位置が出て、チームに点が入る',
       ] },
-      { heading: 'おわりかた', text: 'ラウンドをくりかえして、ホストが「おわる」を押すと「きょうのきろく」が出ておしまい。' },
+      { heading: '終わりかた', text: 'ラウンドをくりかえして、ホストが「終わる」を押すと「今日の記録」が出ておしまい。' },
     ],
   });
 </script>

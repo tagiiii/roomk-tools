@@ -207,8 +207,8 @@
       <div class="mgr-header__icon"><span class="material-symbols-rounded" aria-hidden="true">brush</span></div>
       <div class="mgr-header__title">まぎれ絵師</div>
       <div class="mgr-header__sub">
-        みんなで 1まいの絵を 1筆ずつかいて かんせいさせよう。<br>
-        でも ひとりだけ、お題を しらない「まぎれ絵師」が まぎれこんでいる！
+        みんなで1枚の絵を1筆ずつ描いて完成させよう。<br>
+        でもひとりだけ、お題を知らない「まぎれ絵師」がまぎれこんでいる！
       </div>
     </div>
     <div class="card">
@@ -231,7 +231,7 @@
         <label class="form-label" for="host-nickname">ニックネーム（8文字以内）</label>
         <input class="form-input" id="host-nickname" type="text" maxlength="8" placeholder="例: たろう">
       </div>
-      <p style="font-size:13px;color:var(--color-muted);margin-bottom:12px">ルームを作った人は かかずに すすめる係になります</p>
+      <p style="font-size:13px;color:var(--color-muted);margin-bottom:12px">ルームを作った人は描かずに進める係になります</p>
       <button class="btn btn-primary btn-full" onclick="hostCreateRoom()">
         <span class="material-symbols-rounded" aria-hidden="true">add_home</span>ルームを作成する
       </button>
@@ -283,9 +283,9 @@
 
     <div id="w-host-start" class="mt-md" style="display:none">
       <button class="btn btn-primary btn-full" id="btn-start" onclick="hostStartGame()" disabled>
-        <span class="material-symbols-rounded" aria-hidden="true">play_arrow</span>ゲームをはじめる
+        <span class="material-symbols-rounded" aria-hidden="true">play_arrow</span>ゲームを始める
       </button>
-      <p style="font-size:13px;color:var(--color-muted);text-align:center;margin-top:8px">ホストのほかに3人以上で はじめられます</p>
+      <p style="font-size:13px;color:var(--color-muted);text-align:center;margin-top:8px">ホストのほかに3人以上で始められます</p>
     </div>
     <button class="btn btn-ghost btn-full mt-md" onclick="leaveGame()">
       <span class="material-symbols-rounded" aria-hidden="true">logout</span>退出する
@@ -296,24 +296,24 @@
 <!-- ══════════════════ REVEAL ROLE ══════════════════ -->
 <div id="screen-reveal" class="screen">
   <div class="page">
-    <h2 class="mgr-center">じゅんびをしよう</h2>
+    <h2 class="mgr-center">準備をしよう</h2>
 
     <!-- ゲスト用 -->
     <div id="rv-guest-area" style="display:none">
       <div class="mgr-role-card" id="rv-card" onclick="revealRoleCard()">
         <span class="material-symbols-rounded" aria-hidden="true" style="font-size:40px;opacity:.7">touch_app</span>
-        <p style="margin-top:8px;font-size:14px">タップして じぶんのカードを見る</p>
+        <p style="margin-top:8px;font-size:14px">タップして自分のカードを見る</p>
       </div>
       <div id="rv-confirm-area" style="display:none">
         <button class="btn btn-primary btn-full" id="btn-confirm" onclick="confirmRole()">
-          <span class="material-symbols-rounded" aria-hidden="true">check_circle</span>かくにんした
+          <span class="material-symbols-rounded" aria-hidden="true">check_circle</span>確認した
         </button>
       </div>
     </div>
 
     <!-- ホスト用 -->
     <div id="rv-host-area" style="display:none">
-      <p style="font-size:13px;color:var(--color-muted);margin-bottom:10px">画面共有中は とじたまま すすめられます。見るときだけタップ。</p>
+      <p style="font-size:13px;color:var(--color-muted);margin-bottom:10px">画面共有中は閉じたまま進められます。見るときだけタップ。</p>
       <details class="mgr-secret" id="rv-secret-topic">
         <summary><span class="material-symbols-rounded" aria-hidden="true">visibility</span>お題（タップで見る）</summary>
         <div class="mgr-secret__body" id="rv-topic-body"></div>
@@ -324,16 +324,16 @@
       </details>
       <div class="mt-md">
         <button class="btn btn-primary btn-full" id="btn-start-drawing" onclick="hostStartDrawing()" disabled>
-          <span class="material-symbols-rounded" aria-hidden="true">brush</span>かきはじめる
+          <span class="material-symbols-rounded" aria-hidden="true">brush</span>描き始める
         </button>
-        <p style="font-size:13px;color:var(--color-muted);text-align:center;margin-top:8px">全員が「かくにんした」を押すと はじめられます</p>
+        <p style="font-size:13px;color:var(--color-muted);text-align:center;margin-top:8px">全員が「確認した」を押すと始められます</p>
       </div>
     </div>
 
     <div id="rv-host-banner"></div>
 
     <div class="card mt-md">
-      <p class="mgr-section-lbl">かくにん状況 <span id="rv-count"></span></p>
+      <p class="mgr-section-lbl">確認状況 <span id="rv-count"></span></p>
       <ul class="mgr-player-list" id="rv-player-list"></ul>
     </div>
   </div>
@@ -359,7 +359,7 @@
           <span class="material-symbols-rounded" aria-hidden="true">check</span>これでOK
         </button>
         <button class="btn btn-secondary" onclick="retryStroke()">
-          <span class="material-symbols-rounded" aria-hidden="true">replay</span>かきなおす
+          <span class="material-symbols-rounded" aria-hidden="true">replay</span>描き直す
         </button>
       </div>
     </div>
@@ -379,9 +379,9 @@
 <!-- ══════════════════ DISCUSSION ══════════════════ -->
 <div id="screen-discussion" class="screen">
   <div class="page">
-    <h2 class="mgr-center">そうだんタイム</h2>
+    <h2 class="mgr-center">相談タイム</h2>
     <p style="font-size:14px;color:var(--color-muted);text-align:center;margin-bottom:16px">
-      声でもチャットでもOK。「まぎれ絵師は だれか」を話し合おう
+      声でもチャットでもOK。「まぎれ絵師は誰か」を話し合おう
     </p>
 
     <div class="mgr-canvas-wrap">
@@ -398,7 +398,7 @@
       </details>
       <div id="di-host-banner"></div>
       <button class="btn btn-primary btn-full mt-md" onclick="hostStartVoting()">
-        <span class="material-symbols-rounded" aria-hidden="true">how_to_vote</span>とうひょうへ
+        <span class="material-symbols-rounded" aria-hidden="true">how_to_vote</span>投票へ
       </button>
     </div>
   </div>
@@ -407,9 +407,9 @@
 <!-- ══════════════════ VOTING ══════════════════ -->
 <div id="screen-voting" class="screen">
   <div class="page">
-    <h2>とうひょう</h2>
+    <h2>投票</h2>
     <p style="font-size:14px;color:var(--color-muted);margin-bottom:16px" id="vt-desc">
-      まぎれ絵師だと思う人に とうひょうしよう
+      まぎれ絵師だと思う人に投票しよう
     </p>
 
     <div class="mgr-canvas-wrap">
@@ -420,13 +420,13 @@
 
     <div id="vt-voted-msg" class="card mgr-center" style="display:none">
       <span class="material-symbols-rounded" aria-hidden="true" style="font-size:40px;color:var(--color-success)">check_circle</span>
-      <p style="font-weight:700;margin-top:8px">とうひょうしました</p>
+      <p style="font-weight:700;margin-top:8px">投票しました</p>
     </div>
     <p id="vt-progress" style="font-size:13px;color:var(--color-muted);text-align:center;margin-top:8px"></p>
 
     <div id="vt-host-area" style="display:none;margin-top:16px">
       <div id="vt-host-banner"></div>
-      <button class="btn btn-ghost btn-full" id="btn-close-vote" onclick="hostCloseVoting()">とうひょうを しめきって けっかへ</button>
+      <button class="btn btn-ghost btn-full" id="btn-close-vote" onclick="hostCloseVoting()">投票を締め切って結果へ</button>
       <p id="vt-host-hint" style="font-size:13px;color:var(--color-muted);text-align:center;margin-top:8px"></p>
     </div>
   </div>
@@ -446,10 +446,10 @@
 
     <div id="rs-host-actions" class="mt-md" style="display:none">
       <button class="btn btn-primary btn-full" onclick="hostNextRound()">
-        <span class="material-symbols-rounded" aria-hidden="true">replay</span>つぎのラウンドへ
+        <span class="material-symbols-rounded" aria-hidden="true">replay</span>次のラウンドへ
       </button>
       <button class="btn btn-ghost btn-full mgr-sep" onclick="hostFinish()">
-        <span class="material-symbols-rounded" aria-hidden="true">flag</span>おわる
+        <span class="material-symbols-rounded" aria-hidden="true">flag</span>終わる
       </button>
     </div>
   </div>
@@ -461,7 +461,7 @@
     <div class="mgr-header">
       <div class="mgr-header__icon"><span class="material-symbols-rounded" aria-hidden="true">celebration</span></div>
       <div class="mgr-header__title">おしまい！</div>
-      <div class="mgr-header__sub">あそんでくれて ありがとう</div>
+      <div class="mgr-header__sub">遊んでくれてありがとう</div>
     </div>
     <button class="btn btn-primary btn-full" onclick="leaveGame()">
       <span class="material-symbols-rounded" aria-hidden="true">home</span>トップへ戻る
@@ -496,7 +496,7 @@ async function waitAuthOrExplain() {
     await authReady;
     return true;
   } catch {
-    showMsg('うまくつながらなかったよ。ページをよみこみなおしてね');
+    showMsg('うまくつながらなかったよ。ページを読み込み直してね');
     return false;
   } finally {
     _authWaitBusy = false;
@@ -776,7 +776,7 @@ async function hostStartGame() {
     return { ...room, ...built, status: STATUS.REVEAL, round: 1 };
   });
   if (!committed && abortReason === 'too_few') {
-    showMsg(`ホストのほかに${MIN_GUESTS}人以上で はじめられます`);
+    showMsg(`ホストのほかに${MIN_GUESTS}人以上で始められます`);
   }
 }
 
@@ -791,7 +791,7 @@ async function hostNextRound() {
     return { ...room, ...built, status: STATUS.REVEAL, round: (room.round || 1) + 1 };
   });
   if (!committed && abortReason === 'too_few') {
-    showMsg(`ホストのほかに${MIN_GUESTS}人以上で つづけられます`);
+    showMsg(`ホストのほかに${MIN_GUESTS}人以上で続けられます`);
   }
 }
 
@@ -810,15 +810,15 @@ function renderRoleCard() {
   card.classList.add('mgr-role-card--open');
   if (g.fakeArtist === state.nickname) {
     card.innerHTML = [
-      '<p class="mgr-role-card__fake-title">きみは まぎれ絵師！</p>',
-      '<p class="mgr-role-card__note">お題を しらないまま、バレないように 1筆ずつ かこう</p>',
+      '<p class="mgr-role-card__fake-title">君はまぎれ絵師！</p>',
+      '<p class="mgr-role-card__note">お題を知らないまま、バレないように1筆ずつ描こう</p>',
       `<span class="mgr-role-card__hint">ヒント → カテゴリ: ${esc(g.topicCategory)}</span>`,
     ].join('');
   } else {
     card.innerHTML = [
       '<p class="mgr-role-card__label">あなたへのお題</p>',
       `<p class="mgr-role-card__word">${esc(g.topicWord)}</p>`,
-      `<p class="mgr-role-card__note">カテゴリ: ${esc(g.topicCategory)}／まぎれ絵師に バレないようにね</p>`,
+      `<p class="mgr-role-card__note">カテゴリ: ${esc(g.topicCategory)}／まぎれ絵師にバレないようにね</p>`,
     ].join('');
   }
 }
@@ -967,7 +967,7 @@ async function confirmStroke() {
     });
   } catch (error) {
     console.error('[magire-eshi] confirmStroke failed', error);
-    showMsg('送信に失敗しました。もう一度ためしてください');
+    showMsg('送信に失敗しました。もう一度試してください');
   } finally {
     state.pendingStroke = null;
     state.strokeSubmitting = false;
@@ -1061,7 +1061,7 @@ async function submitReversalGuess() {
   const input = document.getElementById('rs-guess-input');
   if (!input) return;
   const text = input.value.trim();
-  if (!text) { showMsg('お題だと思うことばを入力してください'); return; }
+  if (!text) { showMsg('お題だと思う言葉を入力してください'); return; }
   if (text.length > 20) { showMsg('20文字以内で入力してください'); return; }
   await state.roomRef.child('game/result/reversalGuess').set(text);
 }
@@ -1231,8 +1231,8 @@ function topicChipHtml(game) {
 function hostFakeGoneBannerHtml(game, players) {
   if (!game || !players || players[game.fakeArtist]) return '';
   return `<div class="mgr-host-banner">
-    まぎれ絵師が退出したため、このラウンドは つづけられません。
-    <button class="btn btn-secondary btn-sm mgr-sep" onclick="hostAbortRound()">このラウンドを おわる</button>
+    まぎれ絵師が退出したため、このラウンドは続けられません。
+    <button class="btn btn-secondary btn-sm mgr-sep" onclick="hostAbortRound()">このラウンドを終わる</button>
   </div>`;
 }
 
@@ -1263,7 +1263,7 @@ function handleReveal(room, players) {
       const card = document.getElementById('rv-card');
       card.classList.remove('mgr-role-card--open');
       card.innerHTML = '<span class="material-symbols-rounded" aria-hidden="true" style="font-size:40px;opacity:.7">touch_app</span>'
-        + '<p style="margin-top:8px;font-size:14px">タップして じぶんのカードを見る</p>';
+        + '<p style="margin-top:8px;font-size:14px">タップして自分のカードを見る</p>';
       document.getElementById('rv-confirm-area').style.display = 'none';
       document.getElementById('btn-confirm').disabled = false;
       // 再接続時: かくにん済みなら反映
@@ -1289,10 +1289,10 @@ function handleReveal(room, players) {
   const confirmedCount = guests.filter(n => players[n].confirmed).length;
   document.getElementById('rv-count').textContent = `${confirmedCount} / ${guests.length} 人`;
   renderPlayerList('rv-player-list', players, (nick, p) => {
-    if (p.isHost) return '<span style="font-size:13px;color:var(--color-muted)">すすめる係</span>';
+    if (p.isHost) return '<span style="font-size:13px;color:var(--color-muted)">進める係</span>';
     return p.confirmed
-      ? '<span class="mgr-tag mgr-tag--ok">かくにん済み</span>'
-      : '<span style="font-size:13px;color:var(--color-muted)">かくにん中</span>';
+      ? '<span class="mgr-tag mgr-tag--ok">確認済み</span>'
+      : '<span style="font-size:13px;color:var(--color-muted)">確認中</span>';
   });
   if (isHost) {
     const allConfirmed = guests.length >= MIN_GUESTS && guests.every(n => players[n].confirmed);
@@ -1316,23 +1316,23 @@ function updateDrawBar(room) {
   wrap.classList.remove('mgr-canvas--active');
 
   if (ti >= total) {
-    hint.textContent = 'かんせい！ まもなく そうだんタイム';
+    hint.textContent = '完成！まもなく相談タイム';
     return;
   }
   if (state.role === 'host') {
-    hint.textContent = `いま かくのは ${drawer || ''} さん`;
+    hint.textContent = `いま描くのは${drawer || ''}さん`;
     return;
   }
   if (!isMyTurn) {
-    hint.textContent = `${drawer || ''} さんが かいています`;
+    hint.textContent = `${drawer || ''}さんが描いています`;
     return;
   }
   if (state.pendingStroke) {
-    hint.textContent = 'この1筆で いい？';
+    hint.textContent = 'この1筆でいい？';
     confirmBtns.style.display = 'flex';
     return;
   }
-  hint.textContent = 'あなたのばん！ キャンバスに 1筆だけ かこう';
+  hint.textContent = 'あなたの番！キャンバスに1筆だけ描こう';
   wrap.classList.add('mgr-canvas--active');
 }
 
@@ -1351,7 +1351,7 @@ function handleDrawing(room, players) {
   }
 
   document.getElementById('dr-now').textContent =
-    ti < total ? `いま かくひと: ${order[ti % order.length] || ''}` : 'かんせい！';
+    ti < total ? `いま描く人: ${order[ti % order.length] || ''}` : '完成！';
   document.getElementById('dr-count').textContent = `${Math.min(ti + 1, total)} / ${total} 筆`;
   renderLegend('dr-legend', g, players);
   updateDrawBar(room);
@@ -1442,7 +1442,7 @@ function handleVoting(room, players) {
   renderCanvas('cv-vote', sortedStrokes(g), null);
 
   const voted = guests.filter(n => players[n].vote != null).length;
-  document.getElementById('vt-progress').textContent = `${voted} / ${guests.length} 人が とうひょう済み`;
+  document.getElementById('vt-progress').textContent = `${voted} / ${guests.length}人が投票済み`;
 
   const hostArea = document.getElementById('vt-host-area');
   hostArea.style.display = isHost ? 'block' : 'none';
@@ -1451,8 +1451,8 @@ function handleVoting(room, players) {
     const remaining = Math.max(0, guests.length - voted);
     document.getElementById('btn-close-vote').disabled = state.resultTriggered;
     document.getElementById('vt-host-hint').textContent = remaining > 0
-      ? `まだ ${remaining} 人が とうひょう中です（しめきると 票なしで すすみます）`
-      : '全員が とうひょう済みです';
+      ? `まだ${remaining}人が投票中です（締め切ると票なしで進みます）`
+      : '全員が投票済みです';
     if (guests.length > 0 && voted >= guests.length) {
       computeResult().catch((error) => {
         console.error('[magire-eshi] auto computeResult failed', error);
@@ -1481,21 +1481,21 @@ function handleResult(room, players) {
   let bannerTitle = '';
   let bannerSub = '';
   if (outcome === 'escaped') {
-    bannerTitle = 'まぎれ絵師の かち！';
-    bannerSub = 'とうひょうでは つかまらなかった（にげきり成功）';
+    bannerTitle = 'まぎれ絵師の勝ち！';
+    bannerSub = '投票では捕まらなかった（逃げ切り成功）';
   } else if (outcome === 'aborted') {
-    bannerTitle = 'このラウンドは ここまで';
-    bannerSub = 'まぎれ絵師が 退出しました';
+    bannerTitle = 'このラウンドはここまで';
+    bannerSub = 'まぎれ絵師が退出しました';
   } else if (outcome === 'caught') {
     if (judged === 'win') {
-      bannerTitle = 'まぎれ絵師の かち！';
-      bannerSub = 'つかまったけど お題を あてた（逆転成功）';
+      bannerTitle = 'まぎれ絵師の勝ち！';
+      bannerSub = '捕まったけどお題を当てた（逆転成功）';
     } else if (judged === 'lose') {
-      bannerTitle = 'みんなの かち！';
-      bannerSub = 'まぎれ絵師を つかまえて、お題も まもりきった';
+      bannerTitle = 'みんなの勝ち！';
+      bannerSub = 'まぎれ絵師を捕まえて、お題も守りきった';
     } else {
-      bannerTitle = 'まぎれ絵師 みつかる！？';
-      bannerSub = 'でも まだ 逆転のチャンスがある…';
+      bannerTitle = 'まぎれ絵師見つかる！？';
+      bannerSub = 'でもまだ逆転のチャンスがある…';
     }
   }
   const bannerEl = document.getElementById('rs-banner');
@@ -1537,28 +1537,28 @@ function handleResult(room, players) {
     if (!result.reversalGuess) {
       if (isFake) {
         parts.push(`<div class="card" style="margin-bottom:12px">
-          <p style="font-weight:700;margin-bottom:8px">逆転のチャンス！ お題を あててみよう</p>
+          <p style="font-weight:700;margin-bottom:8px">逆転のチャンス！お題を当ててみよう</p>
           <p style="font-size:13px;color:var(--color-muted);margin-bottom:8px">ヒント → カテゴリ: ${esc(g.topicCategory || '')}</p>
-          <input class="form-input" id="rs-guess-input" type="text" maxlength="20" placeholder="お題は これだ！" aria-label="お題のよそうを入力">
-          <button class="btn btn-primary btn-full mt-md" onclick="submitReversalGuess()">こたえる</button>
+          <input class="form-input" id="rs-guess-input" type="text" maxlength="20" placeholder="お題はこれだ！" aria-label="お題の予想を入力">
+          <button class="btn btn-primary btn-full mt-md" onclick="submitReversalGuess()">答える</button>
         </div>`);
       } else {
         parts.push(`<div class="card mgr-center" style="margin-bottom:12px">
-          <p style="font-size:14px;color:var(--color-muted)">${esc(g.fakeArtist || '')} さんが お題を あてようとしています…</p>
+          <p style="font-size:14px;color:var(--color-muted)">${esc(g.fakeArtist || '')}さんがお題を当てようとしています…</p>
         </div>`);
       }
     } else {
       parts.push(`<div class="mgr-guess-box">
-        <p class="mgr-guess-box__label">${esc(g.fakeArtist || '')} さんの こたえ</p>
+        <p class="mgr-guess-box__label">${esc(g.fakeArtist || '')}さんの答え</p>
         <p class="mgr-guess-box__text">「${esc(result.reversalGuess)}」</p>
       </div>`);
       if (isHost) {
         parts.push(`<div style="display:flex;gap:8px;margin-bottom:12px">
-          <button class="btn btn-primary btn-full" onclick="judgeReversal(true)">あたり</button>
-          <button class="btn btn-secondary btn-full" onclick="judgeReversal(false)">はずれ</button>
+          <button class="btn btn-primary btn-full" onclick="judgeReversal(true)">当たり</button>
+          <button class="btn btn-secondary btn-full" onclick="judgeReversal(false)">外れ</button>
         </div>`);
       } else {
-        parts.push('<p style="font-size:13px;color:var(--color-muted);text-align:center;margin-bottom:12px">ホストが 判定しています…</p>');
+        parts.push('<p style="font-size:13px;color:var(--color-muted);text-align:center;margin-bottom:12px">ホストが判定しています…</p>');
       }
     }
   }
@@ -1566,7 +1566,7 @@ function handleResult(room, players) {
   // 逆転当ての結果表示
   if (outcome === 'caught' && judged && result.reversalGuess) {
     parts.push(`<div class="mgr-guess-box">
-      <p class="mgr-guess-box__label">${esc(g.fakeArtist || '')} さんの こたえ</p>
+      <p class="mgr-guess-box__label">${esc(g.fakeArtist || '')}さんの答え</p>
       <p class="mgr-guess-box__text">「${esc(result.reversalGuess)}」</p>
     </div>`);
   }
@@ -1584,7 +1584,7 @@ function handleResult(room, players) {
         <span class="mgr-vote-row__num">${counts[nick] || 0}票</span>
       </div>`;
     }).join('');
-    parts.push(`<div class="card"><p class="mgr-section-lbl">とうひょうけっか</p>${rows}</div>`);
+    parts.push(`<div class="card"><p class="mgr-section-lbl">投票結果</p>${rows}</div>`);
   }
 
   const bodyEl = document.getElementById('rs-body');
@@ -1658,20 +1658,20 @@ tryReconnect().then(ok => { if (!ok) showScreen('top'); });
 <script>
   RoomkHowto.init({
     title: 'あそびかた',
-    lead: 'みんなで1まいの絵を1筆ずつかいて、かんせいさせるゲーム。でも1人だけ、お題をしらない「まぎれ絵師」がまぎれこんでいる！',
+    lead: 'みんなで1枚の絵を1筆ずつ描いて、完成させるゲーム。でも1人だけ、お題を知らない「まぎれ絵師」がまぎれこんでいる！',
     sections: [
-      { heading: 'はじめかた', items: [
+      { heading: '始めかた', items: [
         'ホストが「ルームを作る」からルームを作る',
         '出てきたルームコードをみんなに伝える',
         'ほかの人は「ルームに参加する」からコードを入れて「参加する」を押す',
       ] },
-      { heading: 'すすめかた', items: [
-        'じぶんのカードをタップして見て、「かくにんした」を押す',
-        'じゅんばんが来たら1筆だけかいて、「これでOK」を押す（「かきなおす」もできる）',
-        'そうだんタイムで、まぎれ絵師がだれかを声やチャットで話し合う',
-        'まぎれ絵師だと思う人にとうひょうする',
+      { heading: '進めかた', items: [
+        '自分のカードをタップして見て、「確認した」を押す',
+        '順番が来たら1筆だけ描いて、「これでOK」を押す（「描き直す」もできる）',
+        '相談タイムで、まぎれ絵師が誰かを声やチャットで話し合う',
+        'まぎれ絵師だと思う人に投票する',
       ] },
-      { heading: 'おわりかた', text: 'けっかのあと、ホストが「つぎのラウンドへ」か「おわる」をえらぶ。' },
+      { heading: '終わりかた', text: '結果のあと、ホストが「次のラウンドへ」か「終わる」を選ぶ。' },
     ],
   });
 </script>
