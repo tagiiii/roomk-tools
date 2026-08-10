@@ -419,7 +419,7 @@
       <p class="kkn-talk-hint">みんなが声できき合いながら考える時間です</p>
       <div class="kkn-status-count" id="host-submit-count"></div>
       <div class="kkn-submit-list" id="host-submit-list"></div>
-      <button class="btn btn-ghost btn-full" id="btn-close-round" onclick="hostCloseRound()">しめきる</button>
+      <button class="btn btn-ghost btn-full" id="btn-close-round" onclick="hostCloseRound()">締め切る</button>
       <p class="text-muted text-center text-sm" id="host-close-hint" style="margin-top:8px"></p>
     </div>
   </div>
@@ -430,11 +430,11 @@
 ════════════════════════════════════ -->
 <div class="screen" id="screen-reveal">
   <div class="kkn-page">
-    <h2 class="kkn-page__title pop-in">こたえあわせ</h2>
+    <h2 class="kkn-page__title pop-in">答え合わせ</h2>
     <p class="kkn-page__sub">ラウンド <span id="reveal-round-num">1</span></p>
 
     <div class="kkn-total-box">
-      <div class="kkn-total-box__label">ほんとうの合計</div>
+      <div class="kkn-total-box__label">本当の合計</div>
       <div class="kkn-total-box__value" id="reveal-total">0</div>
     </div>
 
@@ -1208,11 +1208,11 @@
     btn.disabled = submittedCount === 0 || state.revealTriggered;
     const hint = document.getElementById('host-close-hint');
     if (submittedCount === 0) {
-      hint.textContent = '予想が1件以上あるとしめきれます';
+      hint.textContent = '予想が1件以上あると締め切れます';
     } else if (presentUnsubmitted.length > 0) {
       hint.textContent = `まだの ${presentUnsubmitted.length} 人を待たずに進めます`;
     } else {
-      hint.textContent = '全員がきめると自動でこたえあわせに進みます';
+      hint.textContent = '全員がきめると自動で答え合わせに進みます';
     }
 
     // 全員提出済み → ホストのみ自動でこたえあわせへ
@@ -1392,7 +1392,7 @@
       { heading: 'すすめかた', items: [
         '数字がくばられたら、「わたしの数字、大きい？」みたいに声やチャットできき合う',
         '全員の合計（じぶんの？もふくむ）をよそうして「きめた」を押す',
-        'こたえあわせで、ほんとうの合計にいちばん近かった人にポイントが入る',
+        '答え合わせで、本当の合計にいちばん近かった人にポイントが入る',
       ] },
       { heading: 'おわりかた', text: 'ホストが「つぎへ」を押すとつぎのラウンド、「おわる」を押すとおしまい。' },
     ],

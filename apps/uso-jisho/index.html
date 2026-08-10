@@ -650,7 +650,7 @@
     <div class="uj-submit-chips" id="writing-chips"></div>
 
     <div id="writing-host-actions" style="display:none">
-      <button class="btn btn-primary btn-full btn-lg" id="btn-to-voting" disabled onclick="hostToVoting()">とうひょうにすすむ</button>
+      <button class="btn btn-primary btn-full btn-lg" id="btn-to-voting" disabled onclick="hostToVoting()">投票にすすむ</button>
       <button class="btn btn-ghost btn-full" id="btn-force-voting" style="display:none" onclick="hostToVoting()">先にすすむ</button>
       <p class="uj-host-hint" id="writing-host-hint"></p>
     </div>
@@ -659,7 +659,7 @@
 
 <div class="screen" id="screen-voting">
   <div class="uj-page">
-    <div class="uj-section-label">第 <span id="voting-round-num">1</span> ラウンド・とうひょう</div>
+    <div class="uj-section-label">第 <span id="voting-round-num">1</span> ラウンド・投票</div>
     <div class="uj-word-card">
       <div class="uj-word-card__kana" id="voting-kana"></div>
       <div class="uj-word-card__word" id="voting-word"></div>
@@ -670,7 +670,7 @@
     <div id="voting-list"></div>
 
     <div id="voting-host-actions" style="display:none">
-      <button class="btn btn-primary btn-full btn-lg" id="btn-to-reveal" disabled onclick="hostToReveal()">けっかをみる</button>
+      <button class="btn btn-primary btn-full btn-lg" id="btn-to-reveal" disabled onclick="hostToReveal()">結果をみる</button>
       <button class="btn btn-ghost btn-full" id="btn-force-reveal" style="display:none" onclick="hostToReveal()">先にすすむ</button>
       <p class="uj-host-hint" id="voting-host-hint"></p>
     </div>
@@ -679,7 +679,7 @@
 
 <div class="screen" id="screen-reveal">
   <div class="uj-page">
-    <div class="uj-section-label">第 <span id="reveal-round-num">1</span> ラウンド・けっか</div>
+    <div class="uj-section-label">第 <span id="reveal-round-num">1</span> ラウンド・結果</div>
 
     <div class="uj-reveal-answer pop-in">
       <div class="uj-reveal-answer__label">本物の意味はこれ</div>
@@ -1583,7 +1583,7 @@
       const icon = done ? 'check_circle' : 'edit';
       chips.innerHTML += [
         `<span class="uj-chip ${done ? 'is-done' : ''}">`,
-        `<span class="material-symbols-rounded" role="img" aria-label="${done ? '記入ずみ' : '記入中'}">${icon}</span>`,
+        `<span class="material-symbols-rounded" role="img" aria-label="${done ? '記入済み' : '記入中'}">${icon}</span>`,
         esc(name),
         '</span>',
       ].join('');
@@ -1609,7 +1609,7 @@
       if (allDone) {
         hint.textContent = '全員がかき終わりました';
       } else if (entryCount > 0) {
-        hint.textContent = 'まだの人は、このラウンドはとうひょうだけ参加します';
+        hint.textContent = 'まだの人は、このラウンドは投票だけ参加します';
       } else {
         hint.textContent = 'だれかが1つ以上だすとすすめます';
       }
@@ -1646,7 +1646,7 @@
     const votes = room.votes || {};
     const guests = getGuestNames(room.players);
     const votedCount = guests.filter((name) => votes[name] != null).length;
-    document.getElementById('voting-status').textContent = `${votedCount}人 / ${guests.length}人 がとうひょうずみ`;
+    document.getElementById('voting-status').textContent = `${votedCount}人 / ${guests.length}人 が投票済み`;
 
     const myVote = votes[state.nickname];
     const hasVoted = myVote != null;
@@ -1661,7 +1661,7 @@
 
       const badges = [];
       if (isMine) badges.push('<span class="uj-choice__badge">じぶんの</span>');
-      if (isMyVote) badges.push('<span class="uj-choice__badge uj-choice__badge--muted">とうひょうした</span>');
+      if (isMyVote) badges.push('<span class="uj-choice__badge uj-choice__badge--muted">投票した</span>');
       card.innerHTML = [
         '<div class="uj-choice__head">',
         `<span class="uj-choice__num">${NUMBERS[index] || `(${index + 1})`}</span>`,
@@ -1674,9 +1674,9 @@
       if (state.role === 'guest' && !hasVoted) {
         const button = document.createElement('button');
         button.className = 'btn btn-primary btn-full btn-sm';
-        button.textContent = 'とうひょうする';
+        button.textContent = '投票する';
         button.disabled = isMine;
-        if (isMine) button.textContent = 'じぶんのにはとうひょうできません';
+        if (isMine) button.textContent = 'じぶんのには投票できません';
         button.onclick = () => submitVote(index);
         card.appendChild(button);
       }
@@ -1692,9 +1692,9 @@
       forceBtn.style.display = allVoted ? 'none' : 'block';
       const hint = document.getElementById('voting-host-hint');
       if (allVoted) {
-        hint.textContent = '全員がとうひょうしました';
+        hint.textContent = '全員が投票しました';
       } else {
-        hint.textContent = 'まだの人はとうひょうなしですすみます';
+        hint.textContent = 'まだの人は投票なしですすみます';
       }
     } else {
       hostActions.style.display = 'none';
@@ -1730,19 +1730,19 @@
       card.className = `uj-choice${isReal ? ' is-real' : ''}`;
 
       const badge = isReal
-        ? '<span class="uj-choice__badge uj-choice__badge--real">ほんもの</span>'
+        ? '<span class="uj-choice__badge uj-choice__badge--real">本物</span>'
         : `<span class="uj-choice__badge">${esc(choice.author)}さんのうそ</span>`;
 
       const metaParts = [];
       if (voters.length > 0) {
-        metaParts.push(`とうひょう: ${voters.map((name) => esc(name)).join('、')}`);
+        metaParts.push(`投票: ${voters.map((name) => esc(name)).join('、')}`);
         if (isReal) {
           metaParts.push(`<span class="uj-choice__points">あてた人 +${POINT_CORRECT}ポイント</span>`);
         } else {
           metaParts.push(`<span class="uj-choice__points">${esc(choice.author)}さん +${voters.length * POINT_FOOLED}ポイント</span>`);
         }
       } else {
-        metaParts.push('とうひょうなし');
+        metaParts.push('投票なし');
       }
 
       card.innerHTML = [
@@ -1837,14 +1837,14 @@
         items: [
           'めずらしいことばと「？？？な動物のこと。」のような意味の文の形が出てくる',
           '？？？に入ることばをでっちあげて書いて「だす」を押す（文の形はみんなおなじになるよ）',
-          '本物とみんなのうそがまざって出てくるので、本物だとおもうものに「とうひょうする」を押す',
+          '本物とみんなのうそがまざって出てくるので、本物だとおもうものに「投票する」を押す',
           '本物を当てたら+2ポイント、自分のうそに1票入るごとに+1ポイント',
-          'けっかを見たら、ホストが「つぎへ」を押すと次のことばであそべる',
+          '結果を見たら、ホストが「つぎへ」を押すと次のことばであそべる',
         ],
       },
       {
         heading: 'おわりかた',
-        text: 'ホストがけっかの画面で「おわる」を押すと、みんなのポイントが出ておしまい。',
+        text: 'ホストが結果の画面で「おわる」を押すと、みんなのポイントが出ておしまい。',
       },
     ],
   });
