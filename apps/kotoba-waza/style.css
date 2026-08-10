@@ -1,0 +1,447 @@
+/* =============================================
+   コトバの技クイズ（kotoba-waza）
+   接頭辞: .kw-（BEM）
+   色・角丸・余白は design-system.css のトークンを使う
+   ============================================= */
+
+.kw-app {
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 40px 20px 72px;
+}
+
+.kw-screen {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* ── ヒーロー ── */
+.kw-hero {
+  text-align: center;
+}
+
+.kw-hero__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 88px;
+  height: 88px;
+  margin-bottom: 14px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #2e7d8c, #1c3f5e);
+  color: #fff;
+  font-size: 46px;
+  box-shadow: var(--shadow-md);
+}
+
+.kw-hero__title {
+  font-size: 34px;
+  line-height: 1.2;
+  color: var(--color-primary);
+}
+
+.kw-hero__sub {
+  margin-top: 8px;
+  font-size: 15px;
+  color: var(--color-muted);
+}
+
+/* ── TOP パネル（1枚構成） ── */
+.kw-panel {
+  padding: 28px;
+}
+
+.kw-panel__lead {
+  font-size: 16px;
+  line-height: 1.8;
+  color: var(--color-text);
+}
+
+.kw-panel__notes {
+  margin-top: 14px;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--color-muted);
+}
+
+.kw-panel__title {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--color-border);
+  font-size: 20px;
+  color: var(--color-primary);
+}
+
+.kw-panel__foot {
+  margin-top: 22px;
+  font-size: 13px;
+  color: var(--color-muted);
+  text-align: center;
+}
+
+/* ── 技えらび ── */
+.kw-groups {
+  margin-top: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.kw-group__title {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--color-accent);
+}
+
+.kw-group__chips {
+  margin-top: 10px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.kw-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  width: 100%;
+  padding: 14px 16px;
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-box);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: transform var(--transition-base), border-color var(--transition-base), box-shadow var(--transition-base);
+}
+
+.kw-chip:hover {
+  transform: translateY(-2px);
+  border-color: var(--color-accent);
+  box-shadow: var(--shadow-sm);
+}
+
+.kw-chip:active {
+  transform: scale(0.99);
+}
+
+.kw-chip:focus-visible {
+  outline: 3px solid var(--color-accent);
+  outline-offset: 3px;
+}
+
+.kw-chip__name {
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.4;
+  color: var(--color-primary);
+}
+
+.kw-chip__label {
+  font-size: 12px;
+  color: var(--color-muted);
+}
+
+.kw-empty {
+  font-size: 14px;
+  color: var(--color-muted);
+}
+
+/* ── クイズ ── */
+.kw-quiz {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.kw-quiz__meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.kw-quiz__progress {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.kw-question {
+  padding: 32px 28px;
+}
+
+.kw-question__text {
+  font-size: 28px;
+  line-height: 1.6;
+  font-weight: 700;
+  color: var(--color-primary);
+  text-align: center;
+}
+
+.kw-choices {
+  display: grid;
+  gap: 12px;
+  list-style: none;
+}
+
+.kw-choice {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 72px;
+  padding: 16px 20px;
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-box);
+  background: var(--color-surface);
+  font-size: 21px;
+  font-weight: 700;
+  line-height: 1.5;
+  transition: background var(--transition-base), border-color var(--transition-base), opacity var(--transition-base);
+}
+
+.kw-choice__num {
+  color: var(--color-accent);
+  font-feature-settings: "palt";
+  flex-shrink: 0;
+}
+
+.kw-choice__text {
+  flex: 1;
+}
+
+.kw-choice--correct {
+  background: #edf8f0;
+  border-color: var(--color-success);
+  color: #0e4f27;
+}
+
+.kw-choice--correct .kw-choice__num {
+  color: var(--color-success);
+}
+
+.kw-choice--dim {
+  opacity: 0.55;
+}
+
+/* ── 答え・解説 ── */
+.kw-answer {
+  border: 2px solid var(--color-accent);
+  padding: 20px 22px;
+}
+
+.kw-answer__label {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--color-accent);
+}
+
+.kw-answer__text {
+  margin-top: 8px;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.kw-answer__explanation {
+  margin-top: 10px;
+  font-size: 15px;
+  line-height: 1.8;
+  color: var(--color-muted);
+}
+
+/* ── アクション行 ── */
+.kw-actions {
+  display: flex;
+  justify-content: center;
+}
+
+/* 弱いボタン（ナビゲーション系）。AGENTS.md「ボタン階層の定石」の第3段階 */
+.kw-quiet-btn {
+  border: none;
+  background: none;
+  color: var(--color-muted);
+  font: inherit;
+  font-size: 14px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: color var(--transition-base);
+}
+
+.kw-quiet-btn:hover {
+  color: var(--color-primary);
+}
+
+.kw-quiet-btn:focus-visible {
+  outline: 3px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* ── まとめ（橋渡し） ── */
+.kw-summary {
+  text-align: center;
+  padding: 34px 28px;
+}
+
+.kw-summary__label {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--color-muted);
+}
+
+.kw-summary__name {
+  margin-top: 10px;
+  font-size: 32px;
+  line-height: 1.3;
+  color: var(--color-primary);
+}
+
+.kw-summary__sub {
+  margin-top: 6px;
+  font-size: 13px;
+  color: var(--color-muted);
+}
+
+.kw-summary__catch {
+  margin-top: 18px;
+  font-size: 21px;
+  font-weight: 700;
+  line-height: 1.7;
+  color: var(--color-accent);
+}
+
+.kw-games__title {
+  font-size: 17px;
+  color: var(--color-primary);
+  text-align: center;
+}
+
+.kw-games__list {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.kw-game {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 18px;
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-box);
+  background: var(--color-surface);
+  color: var(--color-text);
+  text-decoration: none;
+  transition: transform var(--transition-base), border-color var(--transition-base), box-shadow var(--transition-base);
+}
+
+.kw-game:hover {
+  transform: translateY(-2px);
+  border-color: var(--color-accent);
+  box-shadow: var(--shadow-sm);
+}
+
+.kw-game:focus-visible {
+  outline: 3px solid var(--color-accent);
+  outline-offset: 3px;
+}
+
+.kw-game__body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.kw-game__name {
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.kw-game__hint {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--color-muted);
+}
+
+.kw-game .material-symbols-rounded {
+  color: var(--color-accent);
+  font-size: 28px;
+  flex-shrink: 0;
+}
+
+/* ── モバイル ── */
+@media (max-width: 600px) {
+  .kw-app {
+    padding: 24px 14px 48px;
+  }
+
+  .kw-hero__icon {
+    width: 72px;
+    height: 72px;
+    font-size: 38px;
+  }
+
+  .kw-hero__title {
+    font-size: 27px;
+  }
+
+  .kw-panel {
+    padding: 20px 16px;
+  }
+
+  .kw-group__chips {
+    grid-template-columns: 1fr;
+  }
+
+  .kw-question {
+    padding: 24px 18px;
+  }
+
+  .kw-question__text {
+    font-size: 22px;
+  }
+
+  .kw-choice {
+    min-height: 64px;
+    font-size: 18px;
+    padding: 14px 16px;
+  }
+
+  .kw-answer__text {
+    font-size: 19px;
+  }
+
+  .kw-summary {
+    padding: 26px 18px;
+  }
+
+  .kw-summary__name {
+    font-size: 26px;
+  }
+
+  .kw-summary__catch {
+    font-size: 18px;
+  }
+
+  .kw-actions .btn {
+    width: 100%;
+  }
+}
