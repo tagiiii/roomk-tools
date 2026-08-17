@@ -124,6 +124,10 @@
       font-size: 34px; font-weight: 700; color: var(--color-primary); line-height: 1.2;
     }
     .kkn-number-card--me .kkn-number-card__value { color: var(--color-accent); }
+    /* 場の隠しカード（誰にも見えない1枚） */
+    .kkn-number-card--field { border-style: dashed; border-color: var(--color-muted); background: #F7F5F1; }
+    .kkn-number-card--field .kkn-number-card__name,
+    .kkn-number-card--field .kkn-number-card__value { color: var(--color-muted); }
 
     /* ── 予想ステッパー ── */
     .kkn-stepper { display: flex; align-items: stretch; gap: 10px; margin-bottom: 8px; }
@@ -194,6 +198,8 @@
     }
     .kkn-reveal-row--me { border-color: var(--color-accent); }
     .kkn-reveal-row--closest { border-color: #F0A500; background: #FFFBEB; }
+    .kkn-reveal-row--field { border-style: dashed; border-color: var(--color-muted); background: #F7F5F1; }
+    .kkn-reveal-row--field .kkn-reveal-row__name { color: var(--color-muted); }
     .kkn-reveal-row__number {
       font-size: 24px; font-weight: 700; color: var(--color-primary);
       min-width: 40px; text-align: center; flex-shrink: 0;
@@ -274,7 +280,7 @@
         <span class="material-symbols-rounded">visibility_off</span>
       </div>
       <h1 class="kkn-hero__title">かくれナンバー</h1>
-      <p class="kkn-hero__sub">じぶんの数字だけ見えない！<br>声できき合って、みんなの合計をよそうしよう</p>
+      <p class="kkn-hero__sub">自分の数字と隠しカードは見えない！<br>声できき合って、みんなの合計をよそうしよう</p>
     </div>
     <div class="kkn-hero__buttons">
       <button class="btn btn-primary btn-lg btn-full" onclick="goHostSetup()">
@@ -385,11 +391,12 @@
 
     <!-- ゲスト用 -->
     <div id="thinking-guest" style="display:none">
-      <p class="kkn-talk-hint">じぶんの数字だけ「？」。「わたしの数字、大きい？」みたいに声できき合って、全員の合計をよそうしよう</p>
+      <p class="kkn-talk-hint">「？」は2まい。自分の数字と、誰にも見えない隠しカード。<br>「わたしの数字、大きい？」みたいに声できき合って、合計をよそうしよう</p>
       <div class="kkn-number-grid" id="thinking-number-grid"></div>
+      <p class="kkn-range-note">隠しカードは誰にも見えません。1〜10のどれかで、合計にふくまれます</p>
 
       <div id="guess-input-area">
-        <label class="kkn-section-label" for="guess-input" style="display:block">全員の合計（？もふくむ）のよそう</label>
+        <label class="kkn-section-label" for="guess-input" style="display:block">合計のよそう（？の2まいもふくむ）</label>
         <div class="kkn-stepper">
           <button type="button" class="kkn-stepper__btn" aria-label="1へらす" onclick="stepGuess(-1)">
             <span class="material-symbols-rounded">remove</span>
@@ -931,7 +938,11 @@
         numbers[name] = v;
         total += v;
       }
+      // 場の隠しカード: 誰にも見えない1枚。合計にだけ含まれる（未知が2枚になり推理が締まる）
+      const fieldNumber = Math.floor(Math.random() * 10) + 1;
+      total += fieldNumber;
 
+      const cards = guests.length + 1; // 配られた数字 + 隠しカード
       abortReason = null;
       return {
         ...room,
@@ -939,9 +950,10 @@
         round: {
           number:      ((room.round && room.round.number) || 0) + 1,
           numbers:     numbers,
+          fieldNumber: fieldNumber,
           total:       total,
-          minSum:      guests.length * 1,
-          maxSum:      guests.length * 10,
+          minSum:      cards * 1,
+          maxSum:      cards * 10,
           guesses:     null,
           scoreDeltas: null,
         },
@@ -1149,7 +1161,8 @@
     if (round.number !== state.lastRoundNumber) {
       state.lastRoundNumber = round.number;
       state.revealTriggered = false;
-      _guessRange = { min: round.minSum || dealt.length, max: round.maxSum || dealt.length * 10 };
+      const cards = dealt.length + (round.fieldNumber ? 1 : 0);
+      _guessRange = { min: round.minSum || cards, max: round.maxSum || cards * 10 };
       const input = document.getElementById('guess-input');
       input.value = Math.round((_guessRange.min + _guessRange.max) / 2);
       input.min = _guessRange.min;
@@ -1164,7 +1177,7 @@
     if (state.role === 'guest') {
       document.getElementById('thinking-guest').style.display = 'block';
       document.getElementById('thinking-host').style.display  = 'none';
-      renderNumberGrid(numbers);
+      renderNumberGrid(numbers, round.fieldNumber != null);
 
       const mySubmitted = guesses[state.nickname] !== undefined;
       document.getElementById('guess-input-area').style.display     = mySubmitted ? 'none' : 'block';
@@ -1225,10 +1238,17 @@
     }
   }
 
-  // ゲスト用: 数字カードグリッド（自分の数字だけ「？」）
-  function renderNumberGrid(numbers) {
+  // ゲスト用: 数字カードグリッド（自分の数字と場の隠しカードが「？」）
+  function renderNumberGrid(numbers, hasField) {
     const grid = document.getElementById('thinking-number-grid');
     grid.innerHTML = '';
+    if (hasField) {
+      grid.innerHTML += `
+        <div class="kkn-number-card kkn-number-card--field">
+          <div class="kkn-number-card__name">隠しカード</div>
+          <div class="kkn-number-card__value">？</div>
+        </div>`;
+    }
     Object.entries(numbers).forEach(([name, value]) => {
       const isMe = name === state.nickname;
       const shown = isMe ? '？' : esc(String(value));
@@ -1255,6 +1275,14 @@
 
     const listEl = document.getElementById('reveal-list');
     listEl.innerHTML = '';
+    if (round.fieldNumber != null) {
+      listEl.innerHTML += `
+        <div class="kkn-reveal-row kkn-reveal-row--field">
+          <div class="kkn-reveal-row__number">${esc(String(round.fieldNumber))}</div>
+          <div class="kkn-reveal-row__name">隠しカード</div>
+          <div class="kkn-reveal-row__guess">誰にも見えなかった1まい</div>
+        </div>`;
+    }
     Object.keys(numbers).forEach((name) => {
       const isMe   = name === state.nickname;
       const gone   = !players[name];
@@ -1382,7 +1410,7 @@
 <script>
   RoomkHowto.init({
     title: 'あそびかた',
-    lead: 'じぶんの数字だけ「？」で見えない！声できき合って、全員の数字の合計をよそうするゲーム。',
+    lead: '自分の数字と場の「隠しカード」が見えない！声できき合って、全部の数字の合計をよそうするゲーム。',
     sections: [
       { heading: 'はじめかた', items: [
         'ホストが「ルームを作る（ホスト）」からルームを作る',
@@ -1390,8 +1418,9 @@
         'ほかの人は「ルームに参加する」からコードを入れて「参加する」を押す',
       ] },
       { heading: 'すすめかた', items: [
+        '1〜10の数字がひとりに1つ。それとは別に、誰にも見えない「隠しカード」が1まい場に出る',
         '数字がくばられたら、「わたしの数字、大きい？」みたいに声やチャットできき合う',
-        '全員の合計（じぶんの？もふくむ）をよそうして「きめた」を押す',
+        '合計（自分の？と隠しカードもふくむ）をよそうして「きめた」を押す',
         '答え合わせで、本当の合計にいちばん近かった人にポイントが入る',
       ] },
       { heading: 'おわりかた', text: 'ホストが「つぎへ」を押すとつぎのラウンド、「おわる」を押すとおしまい。' },

@@ -71,6 +71,9 @@
   .pcard--me{ border-color:var(--teal); background:var(--acc-tint); }
   .pcard--me .pcard__name{ color:var(--teal); }
   .pcard--me .pcard__num{ color:var(--teal); }
+  .pcard--field{ border-style:dashed; border-color:var(--muted); background:transparent; }
+  .pcard--field .pcard__name,
+  .pcard--field .pcard__num{ color:var(--muted); }
   .pc-legend{ flex:1; display:flex; flex-direction:column; gap:16px; }
   .pc-note{ font-size:23px; color:var(--ink-soft); line-height:1.65; }
   .pc-note b{ color:var(--acc); font-weight:900; }
@@ -219,14 +222,14 @@
 </div>
 
 <script>
-/* ===== プレイヤーカードビルダー（自分の数字だけ「？」の見え方） ===== */
+/* ===== プレイヤーカードビルダー（自分の数字と隠しカードが「？」の見え方） ===== */
 function pcards(){
   const players=[
     ['ソラ','7'],['ミント','2'],['ラムネ','9'],
-    ['ポポ','5'],['わたし','？',true],
+    ['ポポ','5'],['わたし','？','me'],['隠しカード','？','field'],
   ];
-  return '<div class="pcards">'+players.map(([name,num,me])=>
-    `<div class="pcard${me?' pcard--me':''}"><div class="pcard__name">${name}</div><div class="pcard__num">${num}</div></div>`
+  return '<div class="pcards">'+players.map(([name,num,kind])=>
+    `<div class="pcard${kind?' pcard--'+kind:''}"><div class="pcard__name">${name}</div><div class="pcard__num">${num}</div></div>`
   ).join('')+'</div>';
 }
 
@@ -235,36 +238,37 @@ const SLIDES = [
     sub:'今の気分を、ひとことどうぞ',
     note:'まずはチェックインから！\n今の気分や、最近あったことを、ひとことチャットか声で教えてね\n（かくれナンバーの説明は、このあとすぐ！）' },
 
-  /* 2 */ { type:'title', note:'今日のゲームは『かくれナンバー』\n自分の数字だけが見えない、ふしぎな推理ゲーム。みんなに聞いたりヒントを集めたりして、全員の数字の合計を予想するよ！' },
+  /* 2 */ { type:'title', note:'今日のゲームは『かくれナンバー』\n自分の数字が見えない、ふしぎな推理ゲーム。さらに誰にも見えない「隠しカード」が1枚。みんなに聞いたりヒントを集めたりして、全部の数字の合計を予想するよ！' },
 
   /* 3 */ { type:'content', accent:'teal', section:'ゲームについて', sectionEn:'summary',
-    headline:'<span class="hl">自分の数字だけ見えない</span>。<br>みんなの合計を予想する<ruby>推理<rt>すいり</rt></ruby>ゲーム',
+    headline:'<span class="hl">見えないのは2枚</span>。<br>みんなの合計を予想する<ruby>推理<rt>すいり</rt></ruby>ゲーム',
     body:`<div class="rows">
       <div class="row"><div class="row__ic"><span class="material-symbols-rounded">casino</span></div><div><div class="row__t">1〜10の数字が、ひとりに1つくばられる</div><div class="row__d">くばるのはアプリ。同じ数字の人がいることもあるよ</div></div></div>
-      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">visibility_off</span></div><div><div class="row__t">他の人の数字は見える。自分のだけ「？」</div><div class="row__d">自分にだけ見えない、がこのゲームのいちばんの面白さ</div></div></div>
-      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">record_voice_over</span></div><div><div class="row__t">声で探り合って、全員の合計を予想する</div><div class="row__d">ゲームの本体は声のやりとり。画面はそのお手伝い</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">visibility_off</span></div><div><div class="row__t">自分の数字は「？」。さらに「隠しカード」が1枚</div><div class="row__d">隠しカードは誰にも見えない1〜10。これも合計に入るよ</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">record_voice_over</span></div><div><div class="row__t">声で探り合って、全部の合計を予想する</div><div class="row__d">ゲームの本体は声のやりとり。画面はそのお手伝い</div></div></div>
     </div>`,
-    note:'『かくれナンバー』は、ひとりに1つ、1〜10の数字がくばられる推理ゲーム。\n他の人の数字は見えるのに、自分のだけ「？」で見えない！\n声で探り合いながら、全員の数字の合計（自分の？も入れて）を予想するよ。' },
+    note:'『かくれナンバー』は、ひとりに1つ、1〜10の数字がくばられる推理ゲーム。\n他の人の数字は見えるのに、自分のだけ「？」で見えない！\nそのうえ、誰にも見えない「隠しカード」が1枚あって、これも合計に入るよ。\n声で探り合いながら、全部の数字の合計（自分の？と隠しカードも入れて）を予想しよう。' },
 
   /* 4 */ { type:'content', accent:'blue', section:'ゲーム説明', sectionEn:'explain', num:'1',
-    headline:'画面の見方：<span class="ul">自分だけ「？」</span>',
+    headline:'画面の見方：<span class="ul">「？」は2枚</span>',
     body:`<div class="pc-wrap">${pcards()}
       <div class="pc-legend">
         <div class="pc-note">みんなの数字は<b>ふつうに見える</b>。</div>
-        <div class="pc-note">でも自分のところだけ「<b>？</b>」。<br>自分の数字は、まわりのみんなが知ってる。</div>
-        <div class="pc-note" style="font-size:20px;color:var(--muted)">※ この例だと、合計は「？」しだいで 24〜33 のどれか</div>
+        <div class="pc-note">でも自分のところは「<b>？</b>」。<br>自分の数字は、まわりのみんなが知ってる。</div>
+        <div class="pc-note"><b>隠しカード</b>は、みんな「？」。<br>これだけは誰にも分からない。</div>
+        <div class="pc-note" style="font-size:20px;color:var(--muted)">※ この例だと、合計は「？」しだいで 25〜43 のどれか</div>
       </div>
     </div>`,
-    note:'ゲームがはじまると、こんな画面になるよ。\n他の人のニックネームと数字はふつうに見えるけど、自分のところだけ「？」。\nつまり、自分の数字を知ってるのは自分以外の全員！ふしぎでしょ' },
+    note:'ゲームがはじまると、こんな画面になるよ。\n他の人のニックネームと数字はふつうに見えるけど、自分のところは「？」。\nつまり、自分の数字を知ってるのは自分以外の全員！ふしぎでしょ\nそして最後の「隠しカード」は、誰にも見えない1枚。これも合計に入るよ。' },
 
   /* 5 */ { type:'content', accent:'coral', section:'ゲーム説明', sectionEn:'explain', num:'2',
     headline:'1ラウンドの<ruby>流<rt>なが</rt></ruby>れは3ステップ',
     body:`<div class="rows">
       <div class="row"><div class="row__ic"><span class="material-symbols-rounded">forum</span></div><div><div class="row__t">① 声やチャットで探り合う</div><div class="row__d">「わたしの数字、大きい？」など、みんなに聞いてヒントを集める</div></div></div>
-      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">calculate</span></div><div><div class="row__t">② 合計を予想して「きめた」</div><div class="row__d">見えてる数字＋自分の「？」を想像して、合計の数字を入力</div></div></div>
-      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">celebration</span></div><div><div class="row__t">③ こたえあわせ</div><div class="row__d">全員の数字と本当の合計がオープン！ 自分の数字もやっと分かる</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">calculate</span></div><div><div class="row__t">② 合計を予想して「きめた」</div><div class="row__d">見えてる数字＋自分の「？」＋隠しカードを想像して、合計を入力</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">celebration</span></div><div><div class="row__t">③ こたえあわせ</div><div class="row__d">全員の数字と隠しカード、本当の合計がオープン！</div></div></div>
     </div>`,
-    note:'1ラウンドの流れは3ステップ。\n①声やチャットでヒントを集めて、②合計を予想して「きめた」ボタン、③全員そろったら、こたえあわせ！\n自分の数字が何だったかも、ここでやっと分かるよ。' },
+    note:'1ラウンドの流れは3ステップ。\n①声やチャットでヒントを集めて、②合計を予想して「きめた」ボタン、③全員そろったら、こたえあわせ！\n自分の数字と隠しカードが何だったかも、ここでやっと分かるよ。' },
 
   /* 6 */ { type:'content', accent:'teal', section:'ゲーム説明', sectionEn:'explain', num:'3',
     headline:'<ruby>探<rt>さぐ</rt></ruby>り<ruby>合<rt>あ</rt></ruby>いのコツ：<span class="hl">聞いていい</span>んです',
@@ -288,10 +292,10 @@ const SLIDES = [
     headline:'よくある<ruby>質問<rt>しつもん</rt></ruby>',
     body:`<div class="qa">
       <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>自分の数字のこと、聞いてもいいの？</div><div class="qa__a"><span class="qa__badge a">A</span>OK！それがこのゲーム。「大きい？」「偶数？」なんでも聞いてみよう。</div></div>
-      <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>聞かれたとき、ウソをついてもいい？</div><div class="qa__a"><span class="qa__badge a">A</span>「ウソあり」にするかは、はじめにみんなで決めるよ。どっちでも楽しい！</div></div>
+      <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>隠しカードは、誰か知ってるの？</div><div class="qa__a"><span class="qa__badge a">A</span>誰も知らないよ。ホストにも見えない。そこは運だと思って予想しよう。</div></div>
       <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>予想がはずれちゃったら？</div><div class="qa__a"><span class="qa__badge a">A</span>減点なし・脱落なし。次のラウンドで、また挑戦できるよ。</div></div>
     </div>`,
-    note:'よくある質問だよ\nQ. 自分の数字のこと、聞いていい？→ A. OK！それがこのゲーム。\nQ. ウソをついてもいい？→ A. 「ウソあり」にするかは、はじめにみんなで決めよう。\nQ. はずれたら？→ A. 減点なし・脱落なし。次のラウンドでまた挑戦！' },
+    note:'よくある質問だよ\nQ. 自分の数字のこと、聞いていい？→ A. OK！それがこのゲーム。\nQ. 隠しカードは誰か知ってる？→ A. 誰も知らない。ホストにも見えないよ。運の部分だと思ってね。\nQ. はずれたら？→ A. 減点なし・脱落なし。次のラウンドでまた挑戦！\n（ウソあり／なしは、さっきの探り合いのスライドで決めたとおりで進めるよ）' },
 
   /* 9 */ { type:'divider', accent:'blue', icon:'live_help', jp:'質問タイム', en:'any questions?',
     sub:'気になることはある？',
@@ -306,8 +310,8 @@ const SLIDES = [
     note:'それでは、かくれナンバー スタート！\nこのあとルームコードをチャットに送るので、ニックネームとコードを入れて入ってね。わからなくなったら、いつでも聞いてね' },
 
   /* 12 */ { type:'divider', accent:'teal', icon:'casino', jp:'数字がくばられたよ', en:'numbers dealt',
-    sub:'自分のが「？」なら、そのままでOK',
-    note:'数字がくばられたよ！\n自分のところが「？」になってたら、それで正解。こわれてないよ\nみんなの数字をよ〜く見ておこう。' },
+    sub:'「？」が2枚あればOK',
+    note:'数字がくばられたよ！\n自分のところと「隠しカード」が「？」になってたら、それで正解。こわれてないよ\nみんなの数字をよ〜く見ておこう。' },
 
   /* 13 */ { type:'divider', accent:'coral', icon:'record_voice_over', jp:'さぐりあいタイム', en:'talk time',
     sub:'聞いて、予想して、「きめた」！',
@@ -315,7 +319,7 @@ const SLIDES = [
 
   /* 14 */ { type:'divider', accent:'blue', icon:'celebration', jp:'こたえあわせ', en:'reveal',
     sub:'本当の合計は…？',
-    note:'全員そろったので、こたえあわせ！\n本当の合計と、みんなの予想が出るよ。自分の数字もチェックしてみてね' },
+    note:'全員そろったので、こたえあわせ！\n本当の合計と、みんなの予想が出るよ。自分の数字と隠しカードもチェックしてみてね' },
 
   /* 15 */ { type:'divider', accent:'teal', icon:'replay', jp:'つぎのラウンド', en:'next round',
     sub:'新しい数字でもう一回！',
@@ -340,7 +344,7 @@ function slideHTML(s){
       <div class="title-ic"><span class="material-symbols-rounded">visibility_off</span></div>
       <div class="title-jp">かくれナンバー</div>
       <div class="title-en">kakure number</div>
-      <div class="title-tag">〜 見えないのは、自分の数字だけ 〜</div>
+      <div class="title-tag">〜 見えないのは、自分の数字と隠しカード 〜</div>
       <div class="title-meta">
         <span class="m"><span class="material-symbols-rounded">group</span>ゲスト3〜8人（+ホスト）</span>
         <span class="m"><span class="material-symbols-rounded">schedule</span>20分くらい</span>
