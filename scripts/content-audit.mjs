@@ -181,7 +181,7 @@ const COVERED_APPS = [
   // 既存（A2 以前から抽出済み）
   'quiz', 'kotoba-shuffle', 'kanji-sagashi', 'kotoba-relay', 'tatoe-gp',
   'kaburazu-hint', 'kotoba-tantei', 'docchi', 'minna-ranking',
-  'talk-card', 'otona-talk', 'checkout-card', 'tsuyomi-card', 'kimochi-map',
+  'talk-card', 'otona-talk', 'tsuyomi-card', 'kimochi-map',
   // A2 で追加した12アプリ
   'jitsuwa-game', 'do-mannaka', 'ishin-denshin', 'word-wolf', 'tatoe-narabe', 'magire-eshi',
   'ikutsu-ieru', 'pittari-meter', 'uso-jisho', 'value-card', 'koedake-theater', 'kyoumi-sugoroku',
@@ -332,11 +332,6 @@ function collectEntries() {
   const otonaTopics = evalArrayFromSource(read('apps/otona-talk/app.js'), 'topics', 'apps/otona-talk/app.js') || [];
   otonaTopics.forEach((item, index) => rows.push(entry('otona-talk', item.c, item.t, {
     id: `otona-talk:${index}`,
-  })));
-
-  const checkoutQuestions = evalArrayFromSource(read('apps/checkout-card/app.js'), 'QUESTIONS', 'apps/checkout-card/app.js') || [];
-  checkoutQuestions.forEach((text, index) => rows.push(entry('checkout-card', 'question', text, {
-    id: `checkout-card:${index}`,
   })));
 
   // 2026-08-06 刷新で CARD_TEXTS（文字列配列）→ CARD_DEFS（{text, icon} 配列）に改名
