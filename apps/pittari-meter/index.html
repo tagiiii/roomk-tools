@@ -241,17 +241,34 @@
     }
     .ptm-decided__sub { font-size: 13px; color: var(--color-muted); margin-bottom: 16px; }
 
-    /* ── 得点演出 ── */
-    .ptm-score-pop { text-align: center; margin: 24px 0; }
-    .ptm-score-pop__round {
-      font-size: 34px; font-weight: 700; color: var(--color-accent); line-height: 1.2;
+    /* ── 個人得点ランキング ── */
+    .ptm-rank { display: flex; flex-direction: column; gap: 8px; }
+    .ptm-rank__row {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 14px; background: var(--color-surface);
+      border-radius: 10px; border: 2px solid var(--color-border); font-size: 15px;
     }
-    .ptm-score-pop__total { font-size: 15px; color: var(--color-muted); margin-top: 6px; }
+    .ptm-rank__row--top { border-color: #F0A500; background: #FFF9EC; }
+    .ptm-rank__row--me  { border-color: var(--color-accent); }
+    .ptm-rank__pos {
+      width: 40px; flex-shrink: 0;
+      font-weight: 700; color: var(--color-primary);
+    }
+    .ptm-rank__name {
+      flex: 1; min-width: 0; font-weight: 500;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .ptm-rank__delta { flex-shrink: 0; font-size: 13px; font-weight: 700; color: var(--color-accent); }
+    .ptm-rank__delta--muted { color: var(--color-muted); font-weight: 500; }
+    .ptm-rank__score {
+      flex-shrink: 0; width: 52px; text-align: right;
+      font-size: 17px; font-weight: 700; color: var(--color-primary);
+    }
 
     /* ── きょうのきろく ── */
     .ptm-record { text-align: center; padding: 24px 0 8px; }
     .ptm-record__label { font-size: 14px; font-weight: 700; color: var(--color-muted); }
-    .ptm-record__score { font-size: 52px; font-weight: 700; color: var(--color-primary); line-height: 1.2; }
+    .ptm-record__champ { font-size: 28px; font-weight: 700; color: var(--color-primary); line-height: 1.4; margin-top: 4px; }
     .ptm-record__sub   { font-size: 14px; color: var(--color-muted); margin-top: 6px; }
 
     /* ── オーバーレイ ── */
@@ -301,7 +318,7 @@
         <span class="material-symbols-rounded">speed</span>
       </div>
       <h1 class="ptm-hero__title">ピッタリメーター</h1>
-      <p class="ptm-hero__sub">ヒントを頼りに、みんなでメーターの位置をぴったり合わせる協力ゲーム</p>
+      <p class="ptm-hero__sub">ヒントを頼りに、メーターの位置をぴったり当てるゲーム。ターゲットに近いほど高得点！</p>
     </div>
     <div class="ptm-hero__buttons">
       <button class="btn btn-primary btn-lg btn-full" onclick="goHostSetup()">
@@ -520,10 +537,8 @@
       <div id="reveal-meter"></div>
     </div>
 
-    <div class="ptm-score-pop pop-in">
-      <div class="ptm-score-pop__round" id="reveal-round-score"></div>
-      <div class="ptm-score-pop__total" id="reveal-total-score"></div>
-    </div>
+    <div class="ptm-label" style="margin-top:20px" id="reveal-rank-label">ランキング</div>
+    <div class="ptm-rank pop-in" id="reveal-rank"></div>
 
     <!-- ホストのみ -->
     <div id="reveal-host-actions" style="display:none; margin-top:16px">
@@ -544,12 +559,12 @@
     <div class="ptm-record pop-in">
       <span class="material-symbols-rounded" style="font-size:64px; color:#F0A500">celebration</span>
       <div class="ptm-record__label" style="margin-top:12px">今日の記録</div>
-      <div class="ptm-record__score">チームで <span id="done-total-score">0</span>点！</div>
+      <div class="ptm-record__champ" id="done-champion"></div>
       <div class="ptm-record__sub" id="done-round-count"></div>
     </div>
 
-    <div class="ptm-label" style="margin-top:24px">遊んだメンバー</div>
-    <div class="ptm-players" id="done-player-list"></div>
+    <div class="ptm-label" style="margin-top:24px">最終ランキング</div>
+    <div class="ptm-rank" id="done-rank"></div>
 
     <div class="mt-lg">
       <button class="btn btn-secondary btn-full btn-lg" onclick="goToTop()">
@@ -920,7 +935,6 @@
         status:             ST.WAITING,
         hostConnected:      true,
         hostDisconnectedAt: null,
-        teamScore:          0,
         roundsDone:         0,
         usedAxes:           [],
         players: {
@@ -1076,13 +1090,16 @@
       for (const [name, p] of Object.entries(room.players)) {
         players[name] = { ...p, guess: null, decided: false };
       }
+      // 個人得点は room 直下に持つ（players はゲスト切断で消えるため）
+      const scores = {};
+      for (const name of turnOrder) scores[name] = 0;
       return {
         ...room,
         status:    ST.HINTING,
         players,
         turnOrder,
         turnIndex: 0,
-        teamScore: 0,
+        scores,
         roundsDone: 0,
         usedAxes:  [axisIndex],
         round: {
@@ -1092,7 +1109,7 @@
           speaker:   turnOrder[0],
           hint:      null,
           results:   null,
-          roundScore: null,
+          points:    null,
         },
       };
     });
@@ -1169,23 +1186,27 @@
     const room = snap.val();
     if (!room || room.status !== ST.GUESSING || !room.round) return;
 
+    // 得点は各回答者の個人成績。出題者はこのラウンドは加点なし（出題は順番に回るため公平）
     const target = Number(room.round.target);
     const results = {};
-    let roundScore = 0;
+    const points = {};
+    const scoreUpdates = {};
     for (const [name, p] of Object.entries(room.players || {})) {
       if (p.isHost || name === room.round.speaker) continue;
       if (!p.decided || p.guess === null || p.guess === undefined) continue;
       const guess = Number(p.guess);
       results[name] = guess;
-      roundScore += calcPoints(Math.abs(guess - target));
+      const pts = calcPoints(Math.abs(guess - target));
+      points[name] = pts;
+      scoreUpdates[`scores/${name}`] = ((room.scores || {})[name] || 0) + pts;
     }
     if (Object.keys(results).length === 0) return;
 
     await state.roomRef.update({
+      ...scoreUpdates,
       status: ST.REVEAL,
       'round/results': results,
-      'round/roundScore': roundScore,
-      teamScore: (room.teamScore || 0) + roundScore,
+      'round/points': points,
       roundsDone: (room.roundsDone || 0) + 1,
     });
   }
@@ -1229,7 +1250,7 @@
         speaker:   next.name,
         hint:      null,
         results:   null,
-        roundScore: null,
+        points:    null,
       },
     };
     for (const [name, p] of Object.entries(room.players || {})) {
@@ -1368,6 +1389,57 @@
     html += `<div class="ptm-axis__side ptm-axis__side--left">${esc(axis.left)}<br><span style="font-size:11px; font-weight:400; opacity:0.8">0のほう</span></div>`;
     html += `<div class="ptm-axis__arrow"><span class="material-symbols-rounded">sync_alt</span></div>`;
     html += `<div class="ptm-axis__side ptm-axis__side--right">${esc(axis.right)}<br><span style="font-size:11px; font-weight:400; opacity:0.8">100のほう</span></div>`;
+    el.innerHTML = html;
+  }
+
+  // ════════════════════════════════════
+  // 個人得点ランキング
+  // ════════════════════════════════════
+
+  // 得点の高い順。同点は同順位で次をとばす（1,1,3方式）
+  function rankedScores(room) {
+    const rows = Object.entries(room.scores || {})
+      .map(([name, score]) => ({ name, score: Number(score) || 0 }))
+      .sort((a, b) => b.score - a.score);
+    let prevScore = null;
+    let prevRank = 0;
+    rows.forEach((row, i) => {
+      row.rank = row.score === prevScore ? prevRank : i + 1;
+      prevScore = row.score;
+      prevRank = row.rank;
+    });
+    return rows;
+  }
+
+  // round を渡すとそのラウンドの増分（+◯ / 出題 / —）つきで描画する
+  function renderScoreboard(containerId, room, round) {
+    const el = document.getElementById(containerId);
+    if (!el) return;
+    let html = '';
+    for (const row of rankedScores(room)) {
+      const isMe = row.name === state.nickname;
+      const cls = 'ptm-rank__row'
+        + (row.rank === 1 ? ' ptm-rank__row--top' : '')
+        + (isMe ? ' ptm-rank__row--me' : '');
+      let delta = '';
+      if (round) {
+        const points = round.points || {};
+        if (row.name === round.speaker) {
+          delta = '<span class="ptm-rank__delta ptm-rank__delta--muted">出題</span>';
+        } else if (points[row.name] !== undefined) {
+          const pts = Number(points[row.name]) || 0;
+          delta = `<span class="ptm-rank__delta${pts === 0 ? ' ptm-rank__delta--muted' : ''}">+${pts}</span>`;
+        } else {
+          delta = '<span class="ptm-rank__delta ptm-rank__delta--muted">—</span>';
+        }
+      }
+      html += `<div class="${cls}">`;
+      html += `<span class="ptm-rank__pos">${row.rank}位</span>`;
+      html += `<span class="ptm-rank__name">${esc(row.name)}${isMe ? '（あなた）' : ''}</span>`;
+      html += delta;
+      html += `<span class="ptm-rank__score">${row.score}点</span>`;
+      html += `</div>`;
+    }
     el.innerHTML = html;
   }
 
@@ -1548,10 +1620,9 @@
         `${round.speaker}さんのヒント「${round.hint || ''}」`;
       renderRevealMeter('reveal-meter', round.target, round.results, state.nickname);
 
-      const roundScore = Number(round.roundScore) || 0;
-      document.getElementById('reveal-round-score').textContent = `チームで +${roundScore}点！`;
-      document.getElementById('reveal-total-score').textContent =
-        `合計${room.teamScore || 0}点（${room.roundsDone || 0}ラウンド）`;
+      document.getElementById('reveal-rank-label').textContent =
+        `ランキング（${room.roundsDone || 0}ラウンドまで）`;
+      renderScoreboard('reveal-rank', room, round);
     }
 
     document.getElementById('reveal-host-actions').style.display =
@@ -1565,10 +1636,19 @@
     if (state.currentScreen !== 'done') showScreen('done');
     showHostDisconnectOverlay(false);
 
-    document.getElementById('done-total-score').textContent = room.teamScore || 0;
+    const rows = rankedScores(room);
+    const champs = rows.filter(r => r.rank === 1).map(r => r.name);
+    const championEl = document.getElementById('done-champion');
+    if (rows.length > 1 && champs.length === rows.length) {
+      championEl.textContent = 'みんな同点！';
+    } else if (champs.length > 0) {
+      championEl.textContent = `1位は ${champs.join('・')}さん！`;
+    } else {
+      championEl.textContent = '';
+    }
     document.getElementById('done-round-count').textContent =
       `${room.roundsDone || 0}ラウンド遊んだよ`;
-    renderPlayerList('done-player-list', room.players);
+    renderScoreboard('done-rank', room, null);
   }
 
   // ════════════════════════════════════
@@ -1636,7 +1716,7 @@
 <script>
   RoomkHowto.init({
     title: 'あそびかた',
-    lead: 'ヒントを頼りに、みんなでメーターの位置をぴったり合わせる協力ゲーム。',
+    lead: 'ヒントを頼りに、メーターの位置をぴったり当てるゲーム。ターゲットに近いほど高得点。',
     sections: [
       { heading: '始めかた', items: [
         'ホストが「ルームを作る（ホスト）」からルームを作る',
@@ -1646,9 +1726,10 @@
       { heading: '進めかた', items: [
         '出題者になったら、ターゲットの位置にぴったりの言葉を入力して「ヒントを送る」を押す',
         'ほかの人はヒントを見て、メーターを動かして「決めた」を押す（「選び直す」もできる）',
-        '結果発表で、ターゲットとみんなの選んだ位置が出て、チームに点が入る',
+        '結果発表で、ターゲットに近かった人ほど点が入る（ずれ5以内 +3点 / 12以内 +2点 / 25以内 +1点）',
+        '出題者のラウンドは出題者に点は入らない。出題は順番に回ってくるよ',
       ] },
-      { heading: '終わりかた', text: 'ラウンドをくりかえして、ホストが「終わる」を押すと「今日の記録」が出ておしまい。' },
+      { heading: '終わりかた', text: 'ラウンドをくりかえして、ホストが「終わる」を押すと最終ランキングが出ておしまい。' },
     ],
   });
 </script>
