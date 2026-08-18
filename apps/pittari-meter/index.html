@@ -347,6 +347,13 @@
         <input class="form-input" id="host-nickname" type="text" maxlength="8"
                placeholder="例：たろう" autocomplete="off">
       </div>
+      <div class="form-group">
+        <label style="display:flex; align-items:center; gap:10px; font-size:15px; cursor:pointer">
+          <input type="checkbox" id="host-plays" style="width:20px; height:20px; accent-color:var(--color-accent); flex-shrink:0">
+          自分も回答者として遊ぶ
+        </label>
+        <p class="text-muted" style="font-size:12px; margin-top:6px">少人数で全員遊ぶときにチェック。進行に専念するときはそのままでOK</p>
+      </div>
       <div class="ptm-error" id="host-nickname-error"></div>
       <button class="btn btn-primary btn-full" onclick="hostCreateRoom()">ルームを作る</button>
       <button class="btn btn-ghost btn-full" onclick="showScreen('top')">← 戻る</button>
@@ -510,7 +517,7 @@
 
     <!-- ホスト用 -->
     <div id="guessing-host-area" style="display:none">
-      <div class="ptm-thinking" style="padding:16px 12px">
+      <div class="ptm-thinking" id="guessing-host-thinking" style="padding:16px 12px">
         <div class="ptm-thinking__text">みんながメーターを動かしているよ</div>
       </div>
       <button class="btn btn-primary btn-lg btn-full" id="btn-reveal" disabled onclick="hostReveal()">
@@ -783,11 +790,21 @@
     }
   }
 
-  // ゲスト（回答参加者）だけを取り出す
+  // ゲスト（コードで参加した人）だけを取り出す
   function guestNames(players) {
     return Object.entries(players || {})
       .filter(([, p]) => !p.isHost)
       .map(([name]) => name);
+  }
+
+  // 自分が回答・出題に参加するプレイヤーかどうか（hostPlays のときはホストも含む）
+  function isPlayingSelf(room) {
+    return state.role === 'guest' || (state.role === 'host' && !!room?.hostPlays);
+  }
+
+  // このプレイヤーが回答・出題に参加するかどうか（players エントリ基準）
+  function playsInGame(room, p) {
+    return !p.isHost || !!room?.hostPlays;
   }
 
   // 使っていない軸をランダムに1つ選ぶ（使い切ったらリセット）
@@ -927,6 +944,7 @@
 
     let roomCode;
     let roomRef = null;
+    const hostPlays = document.getElementById('host-plays').checked;
     for (let i = 0; i < 5; i++) {
       const code = generateRoomCode();
       const ref = db.ref(`pittari_rooms/${code}`);
@@ -935,6 +953,7 @@
         status:             ST.WAITING,
         hostConnected:      true,
         hostDisconnectedAt: null,
+        hostPlays,
         roundsDone:         0,
         usedAxes:           [],
         players: {
@@ -1084,7 +1103,9 @@
       }
       abortReason = null;
 
-      const turnOrder = shuffleList(guests);
+      // hostPlays のときはホストも出題ローテーションと得点に入れる
+      // （回答だけ参加だと出題番のぶんホストの得点機会が多くなり不公平なため）
+      const turnOrder = shuffleList(room.hostPlays ? [...guests, room.host] : guests);
       const axisIndex = pickAxisIndex(room.usedAxes);
       const players = {};
       for (const [name, p] of Object.entries(room.players)) {
@@ -1192,7 +1213,7 @@
     const points = {};
     const scoreUpdates = {};
     for (const [name, p] of Object.entries(room.players || {})) {
-      if (p.isHost || name === room.round.speaker) continue;
+      if (!playsInGame(room, p) || name === room.round.speaker) continue;
       if (!p.decided || p.guess === null || p.guess === undefined) continue;
       const guess = Number(p.guess);
       results[name] = guess;
@@ -1215,14 +1236,14 @@
   // ホスト: 次のラウンド / 出題者交代 / 終了
   // ════════════════════════════════════
 
-  // 次に出題者になれるゲストを turnOrder から探す
+  // 次に出題者になれるプレイヤーを turnOrder から探す
   function findNextSpeaker(room, fromIndex) {
     const order = room.turnOrder || [];
     if (order.length === 0) return null;
     for (let step = 0; step < order.length; step++) {
       const idx = (fromIndex + step) % order.length;
       const name = order[idx];
-      if (room.players && room.players[name] && !room.players[name].isHost) {
+      if (room.players && room.players[name] && playsInGame(room, room.players[name])) {
         return { name, index: idx };
       }
     }
@@ -1254,7 +1275,7 @@
       },
     };
     for (const [name, p] of Object.entries(room.players || {})) {
-      if (p.isHost) continue;
+      if (!playsInGame(room, p)) continue;
       updates[`players/${name}/guess`]   = null;
       updates[`players/${name}/decided`] = false;
     }
@@ -1521,7 +1542,7 @@
     document.getElementById('hinting-round-num').textContent = round.number || 1;
     renderAxis('hinting-axis', axis);
 
-    const isSpeaker = state.role === 'guest' && state.nickname === round.speaker;
+    const isSpeaker = isPlayingSelf(room) && state.nickname === round.speaker;
     document.getElementById('hinting-speaker').style.display = isSpeaker ? 'block' : 'none';
     document.getElementById('hinting-waiting').style.display = isSpeaker ? 'none' : 'block';
 
@@ -1559,12 +1580,15 @@
     document.getElementById('guessing-hint-by').textContent  = `${round.speaker}さんのヒント`;
     document.getElementById('guessing-hint-text').textContent = round.hint || '';
 
-    const isSpeaker  = state.role === 'guest' && state.nickname === round.speaker;
-    const isAnswerer = state.role === 'guest' && !isSpeaker;
+    const isSpeaker  = isPlayingSelf(room) && state.nickname === round.speaker;
+    const isAnswerer = isPlayingSelf(room) && !isSpeaker;
 
     document.getElementById('guessing-answer-area').style.display  = isAnswerer ? 'block' : 'none';
     document.getElementById('guessing-speaker-area').style.display = isSpeaker ? 'block' : 'none';
     document.getElementById('guessing-host-area').style.display    = state.role === 'host' ? 'block' : 'none';
+    // ホストが回答/出題も兼ねるときは、進行エリアの案内文をたたむ（本人のUIと二重になるため）
+    document.getElementById('guessing-host-thinking').style.display =
+      (state.role === 'host' && isPlayingSelf(room)) ? 'none' : 'block';
 
     // 回答者: 自分の decided 状態で入力/確定表示を切り替え
     if (isAnswerer) {
@@ -1585,7 +1609,7 @@
 
     // 進行状況
     const answerers = Object.entries(room.players || {})
-      .filter(([name, p]) => !p.isHost && name !== round.speaker);
+      .filter(([name, p]) => playsInGame(room, p) && name !== round.speaker);
     const decidedCount = answerers.filter(([, p]) => p.decided).length;
     document.getElementById('guessing-progress').textContent =
       `決めた人 ${decidedCount}人 / ${answerers.length}人`;
@@ -1696,6 +1720,7 @@
     });
 
     document.getElementById('host-nickname').value   = '';
+    document.getElementById('host-plays').checked    = false;
     document.getElementById('guest-nickname').value  = '';
     document.getElementById('guest-room-code').value = '';
     document.getElementById('host-step-nickname').style.display = 'block';
@@ -1720,6 +1745,7 @@
     sections: [
       { heading: '始めかた', items: [
         'ホストが「ルームを作る（ホスト）」からルームを作る',
+        'ホストも遊ぶときは「自分も回答者として遊ぶ」にチェックを入れる（入れないと進行専任になる）',
         '出てきたルームコードをみんなに伝える',
         'ほかの人は「ルームに参加する」からコードを入れて「参加する」を押す',
       ] },
