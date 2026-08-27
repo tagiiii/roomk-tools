@@ -164,6 +164,7 @@
       touch-action: none;
       user-select: none;
       -webkit-user-select: none;
+      -webkit-touch-callout: none; /* 長押しメニューがドラッグ操作を邪魔しないように */
     }
     .ph-board {
       position: absolute;
@@ -194,6 +195,10 @@
       /* 外接矩形の透明部分がクリックを奪わないよう、ヒットテストは実セル（.ph-cell）だけに限定 */
       pointer-events: none;
     }
+    /* 回したら置けなかったピース：まだ置かれていない「浮いた」状態（盤の上に乗っているだけ）。
+       浮き影で「設置済みではない」ことを見た目でも伝える。
+       is-dragging / is-selected より先に定義し、ドラッグ・選択時の見た目を上書きしない */
+    .ph-piece.is-loose { z-index: 6; filter: drop-shadow(0 5px 9px rgba(0, 0, 0, 0.3)); }
     .ph-piece.is-dragging { cursor: grabbing; z-index: 20; filter: drop-shadow(0 6px 10px rgba(0,0,0,0.28)); }
     .ph-piece.is-dragging .ph-cell { cursor: grabbing; }
     .ph-piece.is-selected { z-index: 10; }
@@ -237,6 +242,15 @@
     }
     .ph-controls .btn { width: 100%; }
     .ph-controls .material-symbols-rounded { font-size: 20px; vertical-align: -4px; margin-right: 4px; }
+
+    /* 回転ショートカットのヒント（操作ボタンの直下） */
+    .ph-hint {
+      text-align: center;
+      font-size: var(--font-size-sm);
+      color: var(--color-muted);
+      margin-top: 10px;
+    }
+    .ph-hint .material-symbols-rounded { font-size: 16px; vertical-align: -3px; margin-right: 2px; }
 
     /* ── オーバーレイ（完成・答え）── */
     .ph-overlay {
@@ -558,6 +572,8 @@
           <span class="material-symbols-rounded" aria-hidden="true">lightbulb</span>答えを見る
         </button>
       </div>
+      <!-- 回転ショートカットの常時ヒント（入力環境に合わせて load 時に文言を出し分け）-->
+      <p class="ph-hint" id="rotateHint"></p>
 
       <!-- みんなで: 完成フィード・自分の状態・ホスト操作 -->
       <div class="ph-room-play" id="roomPlay" hidden>
@@ -955,6 +971,8 @@
   const SUPPORTED_FORMAT_VERSION = 1;
 
   const LIFT = 0.55; // ドラッグ中はセルの 0.55 個ぶん指より上に表示（指で隠れるタッチ/ペンのみ。マウスは 0）
+  const SNAP_RADIUS = 0.85; // 吸い付き許容距離（セル単位・各軸独立）。最寄りマスへの丸め（実質0.5）だけでは判定が厳しい。
+                            // 1.0 未満必須: 隣マスにぴったり整列した無効位置から丸ごと1マス飛ぶスナップを防ぐ
   const CELL_MAX = 48;
   const CELL_MIN = 24;
   const TRAY_GAP = 26;
@@ -1078,19 +1096,18 @@
 
   /* ---- レイアウト（セルサイズ算出 → 盤面・トレイ配置）---- */
   // 指定セルサイズでの stage 中身の高さ（盤面＋すきま＋トレイ）を見積もる。
-  // トレイは正方スロットの行詰め。セルを縮めると行数も減りうる。
+  // トレイは全ピースぶんの正方スロットを常に確保するため、高さがピースの配置状況に
+  // 依存しない＝パズル中はセルサイズも stage 高さも変わらない（子ども実機FB対応）。
   function estimateStageHeight(cell, stageW) {
-    let cursorX = 0, rowY = 0, rowMaxH = 0, any = false;
+    let cursorX = 0, rowY = 0, rowMaxH = 0;
     for (const pc of state.pieces) {
-      if (pc.location === 'board') continue;
-      any = true;
       const slot = state.pieceDefs[pc.idx].maxDim * cell;
       if (cursorX > 0 && cursorX + slot > stageW) { cursorX = 0; rowY += rowMaxH + TRAY_PAD; rowMaxH = 0; }
       cursorX += slot + TRAY_PAD;
       rowMaxH = Math.max(rowMaxH, slot);
     }
     const boardBottom = state.boardOriginY + state.puzzle.h * cell;
-    return any ? boardBottom + TRAY_GAP + rowY + rowMaxH : boardBottom;
+    return boardBottom + TRAY_GAP + rowY + rowMaxH;
   }
   function computeCell(stageW) {
     // まず横幅で上限を決める
@@ -1113,71 +1130,73 @@
 
     renderBoard();
 
-    // トレイのピースを「正方スロット」に行詰めで配置しつつ、ピース要素を再構築。
+    // トレイのスロット（正方・行詰め）は全ピースぶんを常に確保し、盤面に置かれた
+    // ピースの席も空けたままにする。途中でトレイの詰め直しが起きないので、置いた
+    // 直後に「次に取ろうとしたピースが動く」ことがない（子ども実機FB対応）。
     // スロットは向きに依らない固定サイズ（maxDim）なので、トレイ内で回転しても
     // トレイ全体のレイアウト（＝下部の操作ボタン位置）が動かない。
     const trayTop = state.boardOriginY + state.puzzle.h * c + TRAY_GAP;
     let cursorX = 0, rowY = 0, rowMaxH = 0;
-    let anyTray = false;
     const homes = {}; // idx -> {left, top}
 
     for (const pc of state.pieces) {
       const o = orientOf(pc);
       const pw = o.w * c, ph = o.h * c;
-      if (pc.location === 'board') {
+      const slot = state.pieceDefs[pc.idx].maxDim * c;
+      if (cursorX > 0 && cursorX + slot > stageW) {
+        cursorX = 0; rowY += rowMaxH + TRAY_PAD; rowMaxH = 0;
+      }
+      if (pc.location !== 'tray') {
+        // board（設置済み）と loose（浮いている）はどちらも盤面グリッド座標で描く
         homes[pc.idx] = {
           left: state.boardOriginX + pc.x * c,
           top: state.boardOriginY + pc.y * c,
         };
       } else {
-        anyTray = true;
-        const slot = state.pieceDefs[pc.idx].maxDim * c;
-        if (cursorX > 0 && cursorX + slot > stageW) {
-          cursorX = 0; rowY += rowMaxH + TRAY_PAD; rowMaxH = 0;
-        }
         // スロット内で中央寄せ
         homes[pc.idx] = {
           left: TRAY_PAD + cursorX + (slot - pw) / 2,
           top: trayTop + rowY + (slot - ph) / 2,
         };
-        cursorX += slot + TRAY_PAD;
-        rowMaxH = Math.max(rowMaxH, slot);
       }
+      cursorX += slot + TRAY_PAD;
+      rowMaxH = Math.max(rowMaxH, slot);
     }
-    const trayHeight = rowY + rowMaxH;
-    stageEl.style.height = (anyTray
-      ? trayTop + trayHeight
-      : state.boardOriginY + state.puzzle.h * c) + 8 + 'px';
+    stageEl.style.height = trayTop + rowY + rowMaxH + 8 + 'px';
 
     renderPieces(homes);
   }
 
   /* ---- ピース要素の再構築 ---- */
+  // ピース要素の外形とセルを指定の向きで作り直す（初期構築とドラッグ中回転の共用）
+  function buildPieceCells(pe, o, c, color) {
+    pe.innerHTML = '';
+    pe.style.width = o.w * c + 'px';
+    pe.style.height = o.h * c + 'px';
+    for (const [cx, cy] of o.cells) {
+      const cell = document.createElement('div');
+      cell.className = 'ph-cell';
+      cell.style.left = cx * c + 'px';
+      cell.style.top = cy * c + 'px';
+      cell.style.width = c + 'px';
+      cell.style.height = c + 'px';
+      cell.style.background = color;
+      pe.appendChild(cell);
+    }
+  }
   function renderPieces(homes) {
     piecesEl.innerHTML = '';
     pieceEls.clear();
     const c = state.cell;
     for (const pc of state.pieces) {
-      const o = orientOf(pc);
       const pe = document.createElement('div');
       pe.className = 'ph-piece';
       if (pc.idx === state.selectedIdx) pe.classList.add('is-selected');
-      pe.style.width = o.w * c + 'px';
-      pe.style.height = o.h * c + 'px';
+      if (pc.location === 'loose') pe.classList.add('is-loose');
       pe.style.left = homes[pc.idx].left + 'px';
       pe.style.top = homes[pc.idx].top + 'px';
       pe.dataset.idx = pc.idx;
-      const color = PIECE_COLORS[pc.name] || '#888';
-      for (const [cx, cy] of o.cells) {
-        const cell = document.createElement('div');
-        cell.className = 'ph-cell';
-        cell.style.left = cx * c + 'px';
-        cell.style.top = cy * c + 'px';
-        cell.style.width = c + 'px';
-        cell.style.height = c + 'px';
-        cell.style.background = color;
-        pe.appendChild(cell);
-      }
+      buildPieceCells(pe, orientOf(pc), c, PIECE_COLORS[pc.name] || '#888');
       pe.addEventListener('pointerdown', onPointerDown);
       piecesEl.appendChild(pe);
       pieceEls.set(pc.idx, pe);
@@ -1245,7 +1264,7 @@
     // stale 判定: 要素が DOM から消えている／同じ pointerId の down が再び来た
     // （up の取りこぼし後の再タッチ。iOS は pointerId を再利用するため同一 id の down = 前回の drag は終わっている）
     if (state.drag && (!state.drag.el.isConnected || e.pointerId === state.drag.pointerId)) cancelDrag();
-    // 多点タッチ対策: ドラッグ中の追加タッチや非プライマリポインタは受け付けない
+    // ドラッグ中の追加タッチは掴み直しにしない（stage 側のリスナーが「回す」として拾う）
     if (state.drag || !e.isPrimary) return;
     const idx = Number(e.currentTarget.dataset.idx);
     const pc = state.pieces.find((p) => p.idx === idx);
@@ -1260,12 +1279,14 @@
       idx,
       el: pe,
       pointerId: e.pointerId,
+      pointerType: e.pointerType,   // contextmenu が右クリック由来か長押し由来かの判別に使う
       grabDX: p.x - homeLeft,
       grabDY: p.y - homeTop,
+      lastX: p.x,                   // ドラッグ中回転でプレビューを引き直すための最新位置
+      lastY: p.y,
       // 持ち上げ表示は指で隠れるタッチ/ペンのみ。マウスはカーソルとぴったり重ねる
       lift: e.pointerType === 'mouse' ? 0 : LIFT,
-      snapshot: { location: pc.location, x: pc.x, y: pc.y },
-      moved: false,
+      snapshot: { location: pc.location, x: pc.x, y: pc.y, orientIndex: pc.orientIndex },
     };
     pe.classList.add('is-dragging');
     // ピース要素は layout() で作り直されることがあるため、move/up/cancel は document で受ける
@@ -1283,27 +1304,51 @@
     if (!state.drag.el.isConnected) { cancelDrag(); return; }
     // capture 失敗＋ウインドウ外リリース等で mouse の up を取りこぼしたら、ここで検知して戻す
     if (e.pointerType === 'mouse' && e.buttons === 0) { cancelDrag(); return; }
-    const pc = state.pieces.find((p) => p.idx === state.drag.idx);
-    const pe = state.drag.el;
     const p = stageLocal(e);
+    updateDragAt(p.x, p.y);
+  }
+
+  // ドラッグ中ピースの表示位置・スナップ候補・プレビューを更新する（move と回転の共通処理）
+  function updateDragAt(px, py) {
+    const drag = state.drag;
+    const pc = state.pieces.find((p) => p.idx === drag.idx);
+    const pe = drag.el;
     const c = state.cell;
-    const left = p.x - state.drag.grabDX;
-    const top = p.y - state.drag.grabDY - state.drag.lift * c;
+    drag.lastX = px;
+    drag.lastY = py;
+    const left = px - drag.grabDX;
+    const top = py - drag.grabDY - drag.lift * c;
     pe.style.left = left + 'px';
     pe.style.top = top + 'px';
-    state.drag.moved = true;
 
-    // スナップ候補
+    // スナップ候補: 最寄りマスだけでなく周囲±1マスの有効配置も探し、実位置から
+    // SNAP_RADIUS 以内で最も近い場所へ吸い付ける（丸め1点だけでは「判定が厳しくて
+    // ハマらない」ため。実機FB 2026-08-27）。吸い付き先はプレビューで見せる
     const o = orientOf(pc);
-    const gx = Math.round((left - state.boardOriginX) / c);
-    const gy = Math.round((top - state.boardOriginY) / c);
-    const inBoard = gx >= 0 && gy >= 0 && gx + o.w <= state.puzzle.w && gy + o.h <= state.puzzle.h;
-    const valid = inBoard && isValidPlacement(o.cells, gx, gy, pc.idx);
-    state.drag.candidate = valid ? { x: gx, y: gy } : null;
+    const fx = (left - state.boardOriginX) / c;
+    const fy = (top - state.boardOriginY) / c;
+    const gx = Math.round(fx);
+    const gy = Math.round(fy);
+    let best = null;
+    for (let dx = -1; dx <= 1; dx++) {
+      for (let dy = -1; dy <= 1; dy++) {
+        const cx = gx + dx, cy = gy + dy;
+        if (cx < 0 || cy < 0 || cx + o.w > state.puzzle.w || cy + o.h > state.puzzle.h) continue;
+        // 許容は各軸独立（斜めずれでも軸ごとの寛容さを保つ）、採用順は近い順
+        if (Math.abs(cx - fx) > SNAP_RADIUS || Math.abs(cy - fy) > SNAP_RADIUS) continue;
+        const d = Math.hypot(cx - fx, cy - fy);
+        if (best && d >= best.d) continue;
+        if (isValidPlacement(o.cells, cx, cy, pc.idx)) best = { x: cx, y: cy, d };
+      }
+    }
+    drag.candidate = best ? { x: best.x, y: best.y } : null;
 
-    // 盤面と重なっていれば無効プレビュー（赤）も出す
+    // 盤面と重なっていれば無効プレビュー（赤）も出す。
+    // 重なり有無は endDrag の「枠外で離した→トレイへ戻す」判定にも使う
     const overBoard = gx + o.w > 0 && gx < state.puzzle.w && gy + o.h > 0 && gy < state.puzzle.h;
-    showPreview(o.cells, gx, gy, valid, overBoard);
+    drag.overBoard = overBoard;
+    if (best) showPreview(o.cells, best.x, best.y, true, true);
+    else showPreview(o.cells, gx, gy, false, overBoard);
   }
 
   // pointerup=配置確定 / pointercancel=OSジェスチャー等による中断 → 必ず元へ戻す
@@ -1329,11 +1374,18 @@
       pc.location = 'board';
       pc.x = drag.candidate.x;
       pc.y = drag.candidate.y;
+    } else if (commit && drag.overBoard === false) {
+      // 枠に全くかかっていない場所で指を離した＝「どかす」意図としてトレイの自席へ戻す（向きは保つ）。
+      // === false 必須: 移動なしのタップ（overBoard 未計算）で盤面のピースをトレイへ飛ばさない。
+      // pointercancel（commit=false）も対象外＝OSジェスチャー等の中断は下の snapshot 復帰へ
+      pc.location = 'tray';
     } else {
-      // 直前の有効位置（またはトレイ）へ戻す
+      // 直前の有効位置（またはトレイ）へ戻す。盤面へ戻すときはドラッグ中の回転も
+      // 巻き戻す（回転後の形が元の位置に置けるとは限らない）。トレイへ戻すなら向きは保つ
       pc.location = drag.snapshot.location;
       pc.x = drag.snapshot.x;
       pc.y = drag.snapshot.y;
+      if (pc.location === 'board') pc.orientIndex = drag.snapshot.orientIndex;
     }
     layout();
     keepSelected();
@@ -1378,8 +1430,32 @@
 
   /* ---- 回転 ---- */
   const KICKS = [[0, 0], [-1, 0], [1, 0], [0, -1], [0, 1], [-1, -1], [1, -1], [-1, 1], [1, 1]];
+
+  // ドラッグ中の回転（タッチ: もう1本の指でタップ / マウス: 右クリック）。
+  // 外接矩形の中心を固定して向きを変える（掴んだ点を軸にすると本体が指のまわりを
+  // 振り回されて「滑る」ため。中心固定なら何回回してもピースはその場に留まる）。
+  // 位置・スナップ候補・プレビューは最新のポインタ位置で引き直す。
+  function rotateDragging() {
+    const drag = state.drag;
+    if (!drag || state.completed) return;
+    if (!drag.el.isConnected) { cancelDrag(); return; }
+    const pc = state.pieces.find((p) => p.idx === drag.idx);
+    const orients = state.pieceDefs[pc.idx].orients;
+    const newIndex = (pc.orientIndex + 1) % orients.length;
+    if (newIndex === pc.orientIndex) { animate(pc.idx, 'is-wiggle'); return; } // O4 等：向きが変わらない
+    const oldO = orients[pc.orientIndex];
+    const newO = orients[newIndex];
+    const c = state.cell;
+    // left = pointer - grabDX なので、grab オフセットを外形差の半分だけずらすと中心が固定される
+    drag.grabDX += (newO.w - oldO.w) * c / 2;
+    drag.grabDY += (newO.h - oldO.h) * c / 2;
+    pc.orientIndex = newIndex;
+    buildPieceCells(drag.el, newO, c, PIECE_COLORS[pc.name] || '#888');
+    updateDragAt(drag.lastX, drag.lastY);
+  }
+
   function rotateSelected() {
-    // ドラッグ中の回転は禁止（回転前に計算済みの配置候補と食い違い、無効配置を確定しうる）
+    // ボタン経由の回転はドラッグ中には効かせない（ドラッグ中の回転は rotateDragging が担当）
     if (state.drag || state.selectedIdx === null || state.completed) return;
     const pc = state.pieces.find((p) => p.idx === state.selectedIdx);
     const orients = state.pieceDefs[pc.idx].orients;
@@ -1393,8 +1469,21 @@
       saveRoomBoard();
       return;
     }
-    // 盤面上：同位置→壁蹴りの順で置ける向きを探す
+    const oldO = orients[pc.orientIndex];
     const o = orients[newIndex];
+    if (pc.location === 'loose') {
+      // 浮いているピースは置ける/置けないの制約なしでその場回転（中心をなるべく保つ）
+      pc.orientIndex = newIndex;
+      pc.x += Math.round((oldO.w - o.w) / 2);
+      pc.y += Math.round((oldO.h - o.h) / 2);
+      clampLoose(pc, o);
+      layout();
+      keepSelected();
+      animate(pc.idx, 'is-wiggle');
+      saveRoomBoard();
+      return;
+    }
+    // 盤面上：同位置→壁蹴りの順で置ける向きを探す
     for (const [dx, dy] of KICKS) {
       if (isValidPlacement(o.cells, pc.x + dx, pc.y + dy, pc.idx)) {
         pc.orientIndex = newIndex;
@@ -1406,8 +1495,27 @@
         return;
       }
     }
-    // 置けない：回転を取り消してシェイクで伝える
-    animate(pc.idx, 'is-shake');
+    // その場に置けない：拒否で行き止まりにせず、新しい向きのまま「浮いた」状態でその場に残す。
+    // トレイへ飛ばすと掴み直しが遠く「回して隣にはめ直す」流れが切れる（実機FB 2026-08-27）
+    pc.orientIndex = newIndex;
+    pc.location = 'loose';
+    pc.x += Math.round((oldO.w - o.w) / 2);
+    pc.y += Math.round((oldO.h - o.h) / 2);
+    clampLoose(pc, o);
+    layout();
+    keepSelected();
+    animate(pc.idx, 'is-wiggle');
+    saveRoomBoard();
+  }
+
+  // 浮いたピースが stage の外へはみ出さないよう、グリッド座標のまま収める
+  function clampLoose(pc, o) {
+    const c = state.cell;
+    const stageW = stageEl.clientWidth || 320;
+    const minX = Math.ceil((0 - state.boardOriginX) / c);
+    const maxX = Math.floor((stageW - state.boardOriginX) / c) - o.w;
+    pc.x = Math.min(Math.max(pc.x, minX), Math.max(minX, maxX));
+    pc.y = Math.max(pc.y, Math.ceil(-state.boardOriginY / c));
   }
   function keepSelected() {
     const sel = pieceEls.get(state.selectedIdx);
@@ -1575,6 +1683,10 @@
   });
   el('btnPuzzleBack').addEventListener('click', puzzleBack);
   el('btnRotate').addEventListener('click', rotateSelected);
+  // 回転ショートカットのヒント: 主入力がタッチなら2本指タップ、そうでなければ右クリックを案内
+  el('rotateHint').innerHTML = window.matchMedia('(pointer: coarse)').matches
+    ? '<span class="material-symbols-rounded" aria-hidden="true">touch_app</span>ピースを持ったまま、もう1本の指でタップしても回せるよ'
+    : '<span class="material-symbols-rounded" aria-hidden="true">mouse</span>ピースの上で右クリックしても回せるよ';
   el('btnReturn').addEventListener('click', returnSelected);
   el('btnReturnAll').addEventListener('click', returnAll);
   el('btnShowAnswer').addEventListener('click', showAnswer);
@@ -1582,10 +1694,31 @@
   el('btnNext').addEventListener('click', nextPuzzle);
   el('btnDoneTop').addEventListener('click', goToTop);
 
-  // 盤面/トレイの空白タップで選択解除
+  // 盤面/トレイの空白タップで選択解除。ドラッグ中は、もう1本の指のタップを「回す」として扱う
   stageEl.addEventListener('pointerdown', (e) => {
     if (state.completed) return;
+    if (state.drag && e.pointerId !== state.drag.pointerId) {
+      e.preventDefault();
+      rotateDragging();
+      return;
+    }
     if (!e.target.closest('.ph-piece')) deselect();
+  });
+
+  // マウスの右クリックで「回す」。ドラッグ中はドラッグ中のピースを、通常時はカーソル下のピースを回す。
+  // タッチの長押し由来の contextmenu（Android 等）は、ドラッグ中の誤回転を避けるためメニュー抑止だけ行う
+  stageEl.addEventListener('contextmenu', (e) => {
+    if (state.completed) return;
+    if (state.drag) {
+      e.preventDefault();
+      if (state.drag.pointerType === 'mouse') rotateDragging();
+      return;
+    }
+    const pe = e.target.closest('.ph-piece');
+    if (!pe) return;
+    e.preventDefault();
+    selectPiece(Number(pe.dataset.idx));
+    rotateSelected();
   });
 
   // リサイズで再レイアウト
@@ -2649,7 +2782,8 @@
         { heading: 'すすめかた', items: [
           'ピースをドラッグして、グレーの型（かた）の中に置いていく',
           '向きを変えたいときは、ピースを選んで「回す」を押す',
-          '置き直したいときは「戻す」、全部やり直すときは「全部戻す」を押す',
+          'ドラッグしたまま回すこともできる（もう1本の指で画面をタップ。マウスなら右クリック）',
+          '置いたピースは、型の外に出して離すとトレイに戻る（「戻す」「全部戻す」でもOK）',
           '型がぴったり埋まったら「ピタハメ！」でクリア',
         ] },
         { heading: 'こまったとき', text: 'ひとりで練習のときは「答えを見る」で、置きかたのれいを見られるよ。' },
