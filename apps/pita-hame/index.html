@@ -123,6 +123,15 @@
     .ph-diff-btn__icon { font-size: 40px; color: var(--color-accent); }
     .ph-diff-btn__label { font-size: 20px; font-weight: 700; }
     .ph-diff-btn__desc { font-size: var(--font-size-sm); color: var(--color-muted); }
+    .ph-diff-order {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      margin-top: 22px;
+      flex-wrap: wrap;
+    }
+    .ph-diff-order__label { font-size: var(--font-size-sub); font-weight: 700; color: var(--color-primary); }
     .ph-diff__note {
       margin-top: 22px;
       text-align: center;
@@ -527,6 +536,13 @@
           <span class="ph-diff-btn__label">むずかしい</span>
           <span class="ph-diff-btn__desc">ピース4個</span>
         </button>
+      </div>
+      <div class="ph-diff-order">
+        <span class="ph-diff-order__label">問題の順番</span>
+        <div class="ph-seg" id="soloOrderSeg">
+          <button type="button" class="ph-seg__btn is-on" data-val="seq">やさしい順</button>
+          <button type="button" class="ph-seg__btn" data-val="random">ランダム</button>
+        </div>
       </div>
       <p class="ph-diff__note" id="diffNote"></p>
     </section>
@@ -953,6 +969,9 @@
     screen: 'top',
     mode: 'solo',         // 'solo' | 'room'
     difficulty: null,     // 'easy' | 'hard'
+    soloRandom: false,    // solo: ランダム出題を選んでいるか（ページ内メモリのみ）
+    soloOrder: null,      // solo: ランダム時のシャッフル済みカタログ index 配列（やさしい順は null）
+    soloPos: 0,           // solo: soloOrder / カタログ内の現在位置（進捗表示用）
     puzzleIndex: 0,
     puzzle: null,         // 自己完結パズルオブジェクト（solo は expandCatalogPuzzle で展開）
     pieceDefs: [],        // [{ type, orients, orientByR, maxDim }]（このパズル専用・base cells から構築）
@@ -1067,8 +1086,11 @@
     const entry = list[index];
     if (!entry) return false;
     state.puzzleIndex = index;
+    // 進捗表示（○ / ○）はカタログ位置ではなく出題順の位置。ランダム時は soloOrder 内の位置を引く
+    const pos = state.soloOrder ? state.soloOrder.indexOf(index) : index;
+    state.soloPos = pos >= 0 ? pos : 0;
     mountPuzzle(expandCatalogPuzzle(entry));
-    el('puzzleId').textContent = entry.id + '（' + (index + 1) + ' / ' + list.length + '）';
+    el('puzzleId').textContent = entry.id + '（' + (state.soloPos + 1) + ' / ' + list.length + '）';
     startTimer();
     return true;
   }
@@ -1626,8 +1648,11 @@
   function nextPuzzle() {
     el('overlayDone').classList.remove('is-open');
     const list = currentList();
-    if (state.puzzleIndex + 1 < list.length) {
-      loadPuzzle(state.puzzleIndex + 1);
+    const nextIndex = state.soloOrder
+      ? (state.soloPos + 1 < state.soloOrder.length ? state.soloOrder[state.soloPos + 1] : null)
+      : (state.puzzleIndex + 1 < list.length ? state.puzzleIndex + 1 : null);
+    if (nextIndex !== null) {
+      loadPuzzle(nextIndex);
     } else {
       // 最後まで遊んだ → 難易度選択へ戻す
       stopTimer();
@@ -1668,16 +1693,32 @@
     showScreen('difficulty');
   });
   el('btnDiffBack').addEventListener('click', () => showScreen('top'));
+  el('soloOrderSeg').querySelectorAll('.ph-seg__btn').forEach((b) => {
+    b.addEventListener('click', () => {
+      state.soloRandom = b.dataset.val === 'random';
+      el('soloOrderSeg').querySelectorAll('.ph-seg__btn').forEach((x) => x.classList.toggle('is-on', x === b));
+    });
+  });
+  // Fisher–Yates で [0..n-1] をシャッフル（ランダム出題でも全問を重複なく1周する）
+  function shuffledIndices(n) {
+    const a = Array.from({ length: n }, (_, i) => i);
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
   document.querySelectorAll('.ph-diff-btn').forEach((b) => {
     b.addEventListener('click', () => {
       state.mode = 'solo';
       state.difficulty = b.dataset.diff;
+      state.soloOrder = state.soloRandom ? shuffledIndices(currentList().length) : null;
       el('diffNote').textContent = '';
       applyPuzzleChrome();
       showScreen('puzzle');
       // 同期で読み込む（rAF はタブ非表示で止まり、直前のパズルが残ったままになる。
       // showScreen 直後の clientWidth は reflow 済みで取れる）。保険で次フレーム再レイアウト。
-      loadPuzzle(0);
+      loadPuzzle(state.soloOrder ? state.soloOrder[0] : 0);
       requestAnimationFrame(() => { if (state.screen === 'puzzle' && state.puzzle) { layout(); keepSelected(); } });
     });
   });
@@ -2777,7 +2818,7 @@
       sections: [
         { heading: 'はじめかた', items: [
           'みんなで遊ぶときは「ルームを作る」、コードをもらったら「ルームに入る」を押す',
-          'ひとりでやるときは「ひとりで練習」を押して、「やさしい」か「むずかしい」を選ぶ',
+          'ひとりでやるときは「ひとりで練習」を押して、「やさしい」か「むずかしい」を選ぶ（問題の順番は「やさしい順」と「ランダム」を選べる）',
         ] },
         { heading: 'すすめかた', items: [
           'ピースをドラッグして、グレーの型（かた）の中に置いていく',
