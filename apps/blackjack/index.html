@@ -1,0 +1,1613 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+  <title>ブラックジャック | room-K</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
+  <link rel="stylesheet" href="../shared/css/design-system.css">
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+  <script src="../shared/js/rtdb-utils.js?v=20260715"></script>
+  <style>
+    /* ── 画面管理（共通パターン） ── */
+    .screen { display: none; min-height: 100dvh; }
+    .screen.active { display: flex; flex-direction: column; align-items: center; }
+    .bj-page { width: 100%; max-width: 480px; padding: 40px 20px 88px; }
+    .card + .card { margin-top: 16px; }
+    .btn + .btn { margin-top: 10px; }
+
+    .bj-section-label {
+      font-size: 12px; font-weight: 700; color: var(--color-muted);
+      letter-spacing: 0.06em; margin-bottom: 10px;
+    }
+    .bj-page__title { font-size: 22px; font-weight: 700; color: var(--color-primary); margin-bottom: 6px; }
+    .bj-page__sub   { font-size: 14px; color: var(--color-muted); margin-bottom: 20px; line-height: 1.7; }
+
+    /* ── TOP ── */
+    .bj-hero { text-align: center; padding: 52px 0 28px; }
+    .bj-hero__icon-wrap {
+      display: flex; align-items: center; justify-content: center;
+      width: 72px; height: 72px; margin: 0 auto 20px;
+      background: var(--color-accent); border-radius: 20px;
+    }
+    .bj-hero__icon-wrap .material-symbols-rounded { font-size: 40px; color: #fff; }
+    .bj-hero__title { font-size: 28px; font-weight: 700; color: var(--color-primary); }
+    .bj-hero__sub   { font-size: 14px; color: var(--color-muted); margin-top: 10px; line-height: 1.8; }
+    .bj-hero__buttons { display: flex; flex-direction: column; gap: 12px; margin-top: 36px; }
+    .bj-hint { font-size: 13px; color: var(--color-muted); text-align: center; margin-top: 4px; line-height: 1.7; }
+
+    /* ── ルームコード ── */
+    .bj-room-code {
+      font-size: 44px; font-weight: 700; letter-spacing: 0.22em;
+      color: var(--color-primary); text-align: center;
+      padding: 16px; background: #EEF3F8; border-radius: 12px;
+      margin-bottom: 12px; user-select: all;
+    }
+
+    /* ── トランプカード ── */
+    .bj-cards { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+    .bj-card {
+      display: inline-flex; flex-direction: column; align-items: center; justify-content: center;
+      width: 54px; height: 74px; border-radius: 10px;
+      background: #fff; border: 1.5px solid var(--color-border);
+      box-shadow: var(--shadow-sm); font-weight: 800; line-height: 1;
+    }
+    .bj-card__rank { font-size: 21px; }
+    .bj-card__suit { font-size: 17px; margin-top: 4px; }
+    .bj-card--red   { color: #C2413B; }
+    .bj-card--black { color: #2B3440; }
+    .bj-card--back {
+      background: repeating-linear-gradient(135deg, var(--color-primary), var(--color-primary) 6px, #2A5378 6px, #2A5378 12px);
+      border-color: var(--color-primary); color: #fff;
+    }
+    .bj-card--back .bj-card__rank { font-size: 24px; }
+    .bj-total {
+      display: inline-flex; align-items: center; gap: 6px;
+      margin-top: 10px; padding: 4px 14px; border-radius: 999px;
+      background: #EEF3F8; font-weight: 700; color: var(--color-primary); font-size: 15px;
+    }
+    .bj-total--bust { background: #FBEAEA; color: var(--color-error); }
+    .bj-total--bj   { background: #EAF4F5; color: var(--color-accent); }
+
+    /* ── ディーラー ── */
+    .bj-dealer { text-align: center; }
+    .bj-dealer__round { font-size: 13px; font-weight: 700; color: var(--color-muted); letter-spacing: 0.08em; margin-bottom: 12px; }
+    .bj-dealer__label { font-size: 13px; font-weight: 700; color: var(--color-muted); margin-bottom: 8px; }
+    .bj-dealer__wait { font-size: 14px; color: var(--color-muted); font-weight: 600; padding: 10px 0; }
+
+    /* ── じぶんのエリア ── */
+    .bj-my { text-align: center; }
+    .bj-my__points { font-size: 14px; font-weight: 700; color: var(--color-primary); margin-bottom: 12px; }
+    .bj-my__points strong { font-size: 22px; color: var(--color-accent); }
+    .bj-my__prompt { font-weight: 700; color: var(--color-primary); background: #EAF4F5; border-radius: var(--radius-card); padding: 12px; margin-bottom: 14px; }
+    .bj-my__wait { color: var(--color-muted); font-weight: 600; margin-top: 12px; }
+    .bj-bet-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+    .bj-bet-btn {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      min-height: 64px; border-radius: 12px; border: 2px solid var(--color-border);
+      background: var(--color-surface); cursor: pointer; font-family: var(--font-base);
+    }
+    .bj-bet-btn__num { font-size: 24px; font-weight: 800; color: var(--color-primary); line-height: 1; }
+    .bj-bet-btn__unit { font-size: 11px; font-weight: 700; color: var(--color-muted); margin-top: 4px; }
+    .bj-bet-btn:not(:disabled):hover { border-color: var(--color-accent); background: #EAF4F5; }
+    .bj-bet-btn:disabled { opacity: 0.35; cursor: default; }
+    .bj-bet-mine { font-size: 15px; font-weight: 700; color: var(--color-primary); }
+    .bj-bet-mine strong { font-size: 22px; color: var(--color-accent); }
+    .bj-action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+    .bj-action-btn {
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      min-height: 54px; border-radius: 12px; border: 2px solid var(--color-accent);
+      background: var(--color-surface); color: var(--color-accent);
+      font-family: var(--font-base); font-size: 15px; font-weight: 700; cursor: pointer;
+    }
+    .bj-action-btn:hover { background: #EAF4F5; }
+    .bj-action-btn .material-symbols-rounded { font-size: 20px; }
+    .bj-state-badge {
+      display: inline-block; margin-top: 12px; padding: 4px 14px; border-radius: 999px;
+      font-size: 14px; font-weight: 700;
+    }
+    .bj-state-badge--bust  { background: #FBEAEA; color: var(--color-error); }
+    .bj-state-badge--stand { background: #EEF3F8; color: var(--color-primary); }
+    .bj-state-badge--bj    { background: #EAF4F5; color: var(--color-accent); }
+
+    /* ── ラウンド結果 ── */
+    .bj-outcome { border-radius: var(--radius-card); padding: 16px; text-align: center; margin-top: 14px; }
+    .bj-outcome--win  { background: #EAF7EE; border: 2px solid var(--color-success); }
+    .bj-outcome--lose { background: var(--color-bg); border: 2px solid var(--color-border); }
+    .bj-outcome--push { background: var(--color-bg); border: 2px solid var(--color-border); }
+    .bj-outcome--bj   { background: #EAF4F5; border: 2px solid var(--color-accent); }
+    .bj-outcome__main { font-size: 19px; font-weight: 800; color: var(--color-primary); }
+    .bj-outcome__sub  { font-size: 13px; font-weight: 600; color: var(--color-muted); margin-top: 6px; line-height: 1.6; }
+
+    /* ── プレイヤー一覧 ── */
+    .bj-player-list { list-style: none; }
+    .bj-player { padding: 10px 0; border-bottom: 1px solid var(--color-border); list-style: none; }
+    .bj-player:last-child { border-bottom: none; }
+    .bj-player--simple { display: flex; align-items: center; gap: 6px; }
+    .bj-player__head { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .bj-player__name { font-weight: 700; font-size: 15px; }
+    .bj-player__points { margin-left: auto; font-weight: 700; color: var(--color-accent); white-space: nowrap; }
+    .bj-player__status { font-size: 12px; font-weight: 700; color: var(--color-muted); display: inline-block; margin-top: 4px; }
+    .bj-player__status.is-done { color: var(--color-success); }
+    .bj-player__disc { font-size: 12px; color: var(--color-error); font-weight: 700; margin-top: 4px; }
+    .bj-player__hand { margin-top: 6px; display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+    .bj-mini {
+      display: inline-flex; align-items: center; justify-content: center;
+      min-width: 34px; height: 26px; padding: 0 6px; border-radius: 6px;
+      background: #fff; border: 1px solid var(--color-border);
+      font-size: 13px; font-weight: 700;
+    }
+    .bj-mini--red   { color: #C2413B; }
+    .bj-mini--black { color: #2B3440; }
+    .bj-mini-total { font-size: 12px; font-weight: 700; color: var(--color-primary); margin-left: 2px; }
+    .bj-mini-total.is-bust { color: var(--color-error); }
+    .bj-result-chip { font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 999px; }
+    .bj-result-chip--win  { background: #EAF7EE; color: var(--color-success); }
+    .bj-result-chip--lose { background: #EEF0F2; color: var(--color-muted); }
+    .bj-result-chip--push { background: #EEF0F2; color: var(--color-muted); }
+    .bj-result-chip--bj   { background: #EAF4F5; color: var(--color-accent); }
+    .bj-result-chip--charge { background: #FFF7ED; color: #92400E; }
+    .bj-tag { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; }
+    .bj-tag--me   { background: var(--color-muted); color: #fff; }
+    .bj-tag--host { background: var(--color-primary); color: #fff; }
+
+    /* ── 最終まとめ ── */
+    .bj-top-banner {
+      background: linear-gradient(135deg, #EAF7EE, #E3F2E9); border: 2px solid var(--color-success);
+      border-radius: var(--radius-card); padding: 24px 20px; text-align: center; margin-bottom: 16px;
+    }
+    .bj-top-banner .material-symbols-rounded { font-size: 44px; color: var(--color-success); }
+    .bj-top-banner p { font-size: 20px; font-weight: 700; color: var(--color-primary); margin-top: 6px; line-height: 1.5; }
+    .bj-final-list { list-style: none; }
+    .bj-final-row { padding: 10px 12px; border-radius: 12px; }
+    .bj-final-row + .bj-final-row { margin-top: 6px; }
+    .bj-final-row.is-top { background: #EAF7EE; box-shadow: 0 0 0 2px var(--color-success) inset; }
+    .bj-final-row__head { display: flex; align-items: center; gap: 8px; }
+    .bj-final-row__points { margin-left: auto; font-weight: 800; color: var(--color-accent); }
+
+    /* ── オーバーレイ ── */
+    .bj-overlay {
+      position: fixed; inset: 0; z-index: 200;
+      background: rgba(245,242,236,0.96); display: none;
+      flex-direction: column; align-items: center; justify-content: center;
+      text-align: center; padding: 32px;
+    }
+    .bj-overlay.show { display: flex; }
+    .bj-overlay__title { font-size: 18px; font-weight: 700; color: var(--color-primary); margin: 16px 0 8px; }
+    .bj-overlay__sub   { font-size: 14px; color: var(--color-muted); margin-bottom: 8px; }
+    .bj-overlay__countdown { font-size: 52px; font-weight: 700; color: var(--color-error); line-height: 1; margin: 12px 0 4px; }
+
+    @media (max-width: 600px) {
+      .bj-page { padding: 28px 16px 72px; }
+    }
+    @media (max-width: 360px) {
+      .bj-hero__title { font-size: 24px; }
+      .bj-room-code { font-size: 34px; }
+      .bj-card { width: 48px; height: 66px; }
+      .bj-card__rank { font-size: 18px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════ TOP ════════════════════════════════════ -->
+<div class="screen" id="screen-top">
+  <div class="bj-page">
+    <div class="bj-hero">
+      <div class="bj-hero__icon-wrap"><span class="material-symbols-rounded">style</span></div>
+      <h1 class="bj-hero__title">ブラックジャック</h1>
+      <p class="bj-hero__sub">カードを引いて、合計21ちょうどをめざそう。<br>21を超えたらバースト！<br>ポイントをかけてディーラーと勝負するよ。</p>
+    </div>
+    <div class="bj-hero__buttons">
+      <button class="btn btn-primary btn-lg btn-full" onclick="showScreen('host-setup')">
+        <span class="material-symbols-rounded">add_home</span>ルームを作る
+      </button>
+      <button class="btn btn-secondary btn-lg btn-full" onclick="showScreen('guest-join')">
+        <span class="material-symbols-rounded">login</span>入る
+      </button>
+      <p class="bj-hint">相手はディーラー（アプリ）だから、1人でも遊べるよ。</p>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════ HOST SETUP ════════════════════════════════════ -->
+<div class="screen" id="screen-host-setup">
+  <div class="bj-page">
+    <h2 class="bj-page__title">ルームを作る</h2>
+    <p class="bj-page__sub">あなたのニックネームを入れてね。あなたもプレイヤーとして遊ぶよ。</p>
+    <div class="form-group">
+      <label class="form-label" for="top-host-nickname">ニックネーム（1〜8文字）</label>
+      <input class="form-input" id="top-host-nickname" type="text" maxlength="8" placeholder="例：たろう" autocomplete="off">
+    </div>
+    <button class="btn btn-primary btn-full" onclick="hostCreateRoom()">
+      <span class="material-symbols-rounded">add_home</span>ルームを作る
+    </button>
+    <button class="btn btn-ghost btn-full" onclick="showScreen('top')">← 戻る</button>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════ GUEST JOIN ════════════════════════════════════ -->
+<div class="screen" id="screen-guest-join">
+  <div class="bj-page">
+    <h2 class="bj-page__title">ルームに入る</h2>
+    <p class="bj-page__sub">ニックネームとルームコードを入れてね。</p>
+    <div class="form-group">
+      <label class="form-label" for="top-guest-nickname">ニックネーム（1〜8文字）</label>
+      <input class="form-input" id="top-guest-nickname" type="text" maxlength="8" placeholder="例：はなこ" autocomplete="off">
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="top-guest-code">ルームコード（6文字）</label>
+      <input class="form-input" id="top-guest-code" type="text" maxlength="6" placeholder="XXXXXX" autocomplete="off"
+             style="text-transform:uppercase;letter-spacing:.2em;font-size:22px;text-align:center"
+             oninput="this.value=this.value.toUpperCase()">
+    </div>
+    <button class="btn btn-primary btn-full" onclick="guestJoin()">
+      <span class="material-symbols-rounded">login</span>入る
+    </button>
+    <button class="btn btn-ghost btn-full" onclick="showScreen('top')">← 戻る</button>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════ LOBBY ════════════════════════════════════ -->
+<div class="screen" id="screen-lobby">
+  <div class="bj-page">
+    <div id="lobby-host-panel" style="display:none">
+      <div class="card" style="text-align:center">
+        <p class="bj-section-label">ルームコード</p>
+        <p class="bj-room-code" id="lobby-room-code">----</p>
+        <p style="font-size:13px;color:var(--color-muted)">このコードをみんなに伝えてね</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <strong style="font-size:16px">参加者</strong>
+        <span id="lobby-count" style="font-size:13px;color:var(--color-muted)"></span>
+      </div>
+      <ul class="bj-player-list" id="lobby-list"></ul>
+    </div>
+
+    <div id="lobby-host-actions" style="display:none" class="mt-md">
+      <button class="btn btn-primary btn-full" id="btn-start" onclick="hostStartGame()" disabled>
+        <span class="material-symbols-rounded">play_arrow</span>始める
+      </button>
+      <p class="bj-hint" id="lobby-hint"></p>
+    </div>
+
+    <div id="lobby-guest-wait" style="display:none" class="card mt-md text-center">
+      <div class="spinner"></div>
+      <p style="margin-top:12px;font-weight:700;color:var(--color-primary)">ホストが始めるのを待っているよ</p>
+    </div>
+
+    <button class="btn btn-ghost btn-full mt-md" onclick="leaveLobby()">
+      <span class="material-symbols-rounded">logout</span>退出する
+    </button>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════ GAME ════════════════════════════════════ -->
+<div class="screen" id="screen-game">
+  <div class="bj-page">
+    <div class="card"><div class="bj-dealer" id="game-dealer"></div></div>
+
+    <div class="card mt-md"><div class="bj-my" id="game-my"></div></div>
+
+    <div class="card">
+      <p class="bj-section-label">みんな</p>
+      <ul class="bj-player-list" id="game-members"></ul>
+    </div>
+
+    <button class="btn btn-danger btn-full mt-md" id="btn-abort" onclick="hostFinish(true)" style="display:none">
+      <span class="material-symbols-rounded">stop_circle</span>途中で終わる
+    </button>
+    <button class="btn btn-ghost btn-full mt-md" id="btn-guest-leave-game" onclick="guestGoToTop()" style="display:none">
+      <span class="material-symbols-rounded">logout</span>退出する
+    </button>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════ RESULT ════════════════════════════════════ -->
+<div class="screen" id="screen-result">
+  <div class="bj-page">
+    <div id="result-main"></div>
+
+    <div id="result-host-actions" style="display:none" class="mt-md">
+      <button class="btn btn-primary btn-full" id="btn-rematch" onclick="hostRematch()">
+        <span class="material-symbols-rounded">replay</span>もう一度
+      </button>
+      <button class="btn btn-ghost btn-full" onclick="hostGoToTop()">
+        <span class="material-symbols-rounded">home</span>トップへ戻る
+      </button>
+    </div>
+    <button class="btn btn-ghost btn-full mt-md" id="btn-guest-leave" onclick="guestGoToTop()" style="display:none">
+      <span class="material-symbols-rounded">home</span>トップへ戻る
+    </button>
+  </div>
+</div>
+
+<!-- 再接続オーバーレイ -->
+<div class="bj-overlay" id="reconnect-overlay">
+  <div class="spinner"></div>
+  <p class="bj-overlay__title">つなぎ直しているよ...</p>
+</div>
+
+<!-- ホスト切断オーバーレイ（ゲスト用） -->
+<div class="bj-overlay" id="host-disconnect-overlay">
+  <span class="material-symbols-rounded" style="font-size:48px;color:var(--color-error)">signal_disconnected</span>
+  <p class="bj-overlay__title">ホストの通信が切れています</p>
+  <p class="bj-overlay__sub">戻ってくるのを待っているよ</p>
+  <div class="bj-overlay__countdown" id="host-disconnect-countdown">120</div>
+  <p class="bj-overlay__sub">秒後に自動で終わるよ</p>
+  <button class="btn btn-ghost btn-full" style="max-width:280px;margin-top:20px" onclick="guestGoToTop()">退出する</button>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════
+// Firebase 初期化
+// ══════════════════════════════════════════════════
+const { authReady, db } = RoomkRTDB.initFirebase(firebase);
+
+// ══════════════════════════════════════════════════
+// 定数
+// ══════════════════════════════════════════════════
+const ROOMS_PATH = 'blackjack_rooms';
+const SESSION_KEY = 'blackjack_session';
+const ORPHAN_TTL_MS = 2 * 60 * 1000;
+const MIN_PLAYERS = 1;
+const MAX_PLAYERS = 8;
+const START_POINTS = 20;
+const CHARGE_POINTS = 10;
+const BET_OPTIONS = [1, 2, 3, 5];
+const DEALER_STAND = 17;
+const DECK_COUNT = 2; // 52枚 × 2デッキ = 104枚。毎ラウンド配り直す
+
+const RANK_LABELS = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+const SUIT_CHARS = ['♠', '♥', '♦', '♣']; // ♠ ♥ ♦ ♣（素の記号。絵文字化する VS16 は付けない）
+const SUIT_RED = { 1: true, 2: true }; // ♥ ♦
+
+// ══════════════════════════════════════════════════
+// 状態管理
+// ══════════════════════════════════════════════════
+const state = {
+  role:          null,   // 'host' | 'guest'
+  nickname:      null,
+  roomCode:      null,
+  roomRef:       null,
+  currentScreen: null,
+  timerInterval: null,   // ホスト切断カウントダウン
+  hostDisconnectDeadline: null,
+  entryBusy:     false,  // ルーム作成・参加の連打防止
+  actionBusy:    false,  // かける・引く・ストップの連打防止
+  lastRoom:      null,
+  lastPhaseKey:  null,
+  epoch:         0,      // 退出のたびに増える世代。退出後に完了した復帰書き戻しを無効化する
+};
+
+// ══════════════════════════════════════════════════
+// ユーティリティ
+// ══════════════════════════════════════════════════
+const esc = RoomkRTDB.esc;
+const showMsg = RoomkRTDB.showToast;
+const getNow = RoomkRTDB.now;
+
+function isRoomExpired(room) {
+  return RoomkRTDB.isRoomExpired(room, ORPHAN_TTL_MS);
+}
+
+function shuffleArray(arr) {
+  const copy = [...arr];
+  for (let i = copy.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
+
+// 0〜103 のカードID。card % 52 で1デッキに畳み、rank = (%13)、suit = (÷13)
+function buildDeck() {
+  const cards = [];
+  for (let i = 0; i < 52 * DECK_COUNT; i += 1) cards.push(i);
+  return shuffleArray(cards);
+}
+function cardRank(c) { return (Number(c) % 52) % 13; }        // 0=A, 9=10, 10=J, 11=Q, 12=K
+function cardSuit(c) { return Math.floor((Number(c) % 52) / 13); }
+function cardPoint(c) { const r = cardRank(c); return r === 0 ? 1 : (r >= 9 ? 10 : r + 1); }
+
+// A は 1 でも 11 でも数えられる（21を超えない範囲で1枚だけ11に格上げ）
+function handValue(cards) {
+  let total = 0; let aces = 0;
+  (cards || []).forEach((c) => {
+    total += cardPoint(c);
+    if (cardRank(c) === 0) aces += 1;
+  });
+  if (aces > 0 && total + 10 <= 21) total += 10;
+  return total;
+}
+function isNatural(cards) { return !!cards && cards.length === 2 && handValue(cards) === 21; }
+
+function maxSeat(players) {
+  return Object.values(players || {}).reduce((mx, p) => Math.max(mx, p && p.seat != null ? p.seat : -1), -1);
+}
+
+function validateNickname(value) {
+  const t = (value || '').trim();
+  if (t.length === 0) return 'ニックネームを入れてね';
+  if (t.length > 8) return '8文字以内で入れてね';
+  if (/[.#$\[\]\/]/.test(t)) return '使えない文字が入っているよ';
+  return null;
+}
+
+let _authBusy = false;
+async function waitAuthOrExplain() {
+  if (_authBusy) return false;
+  _authBusy = true;
+  try { await authReady; return true; }
+  catch { showMsg('うまくつながらなかったよ。ページを読み込みなおしてね'); return false; }
+  finally { _authBusy = false; }
+}
+
+function membersInSeatOrder(m) {
+  const members = (m && m.members) || {};
+  return Object.entries(members)
+    .sort((a, b) => ((a[1] && a[1].seat) || 0) - ((b[1] && b[1].seat) || 0))
+    .map((e) => e[0]);
+}
+
+function captureMatchState() {
+  const m = (state.lastRoom && state.lastRoom.match) || {};
+  return { matchId: m.matchId, round: m.round, phase: m.phase };
+}
+
+// ══════════════════════════════════════════════════
+// ラウンド進行 — 純関数（乱数なし・入力を破壊的変更しない）
+// deck は round 開始時に transaction の外で生成済み。配り・ディーラーの引きは
+// deck[pos] からの順次消費なので、どの端末の transaction が実行しても同一結果。
+// ══════════════════════════════════════════════════
+function dealRound(match) {
+  const nicks = membersInSeatOrder(match);
+  const deck = match.deck || [];
+  let pos = Number(match.pos) || 0;
+  const hands = {};
+  nicks.forEach((n) => { hands[n] = [Number(deck[pos]), Number(deck[pos + 1])]; pos += 2; });
+  const dealer = [Number(deck[pos]), Number(deck[pos + 1])];
+  pos += 2;
+  const done = {};
+  nicks.forEach((n) => { if (isNatural(hands[n])) done[n] = 'bj'; }); // ピッタリ21は自動ストップ
+  return { hands, dealer, done, pos };
+}
+
+function settleRound(match) {
+  const nicks = Object.keys(match.members || {});
+  const deck = match.deck || [];
+  let pos = Number(match.pos) || 0;
+  const done = match.done || {};
+  const hands = match.hands || {};
+  const bets = match.bets || {};
+  const points = match.points || {};
+
+  let dealer = (match.dealer || []).map(Number);
+  // 全員バースト／ピッタリ21のときディーラーは引かない
+  const anyStand = nicks.some((n) => done[n] === 'stand');
+  if (anyStand) {
+    while (handValue(dealer) < DEALER_STAND && pos < deck.length) {
+      dealer = [...dealer, Number(deck[pos])];
+      pos += 1;
+    }
+  }
+  const dv = handValue(dealer);
+  const dealerNatural = dealer.length === 2 && dv === 21;
+
+  const outcome = {};
+  const newPoints = { ...points };
+  nicks.forEach((n) => {
+    const bet = Number(bets[n]) || 0;
+    const st = done[n];
+    let res; let delta;
+    if (st === 'bust') { res = 'lose'; delta = -bet; }
+    else if (st === 'bj') {
+      if (dealerNatural) { res = 'push'; delta = 0; }
+      else { res = 'bj'; delta = bet * 2; } // ピッタリ21は2倍
+    } else {
+      const hv = handValue(hands[n] || []);
+      if (dv > 21) { res = 'win'; delta = bet; }
+      else if (dealerNatural) { res = 'lose'; delta = -bet; }
+      else if (hv > dv) { res = 'win'; delta = bet; }
+      else if (hv < dv) { res = 'lose'; delta = -bet; }
+      else { res = 'push'; delta = 0; }
+    }
+    let p = (Number(newPoints[n]) || 0) + delta;
+    const o = { res, delta };
+    if (p <= 0) { p = CHARGE_POINTS; o.charged = true; } // 0になったら自動チャージ
+    newPoints[n] = p;
+    outcome[n] = o;
+  });
+
+  return { dealer, pos, outcome, points: newPoints };
+}
+
+// 条件がそろっていればフェーズを進める。
+// betting: 全員かけていれば配る（全員ピッタリ21なら続けて精算まで進む）
+// acting:  全員済みならディーラーが引いて精算する
+function advanceIfReady(match) {
+  const nicks = Object.keys(match.members || {});
+  if (!nicks.length) return match;
+  if (match.phase === 'betting') {
+    const bets = match.bets || {};
+    if (!nicks.every((n) => bets[n] != null)) return match;
+    const d = dealRound(match);
+    const patch = {
+      ...match,
+      hands: d.hands,
+      dealer: d.dealer,
+      done: Object.keys(d.done).length ? d.done : null,
+      pos: d.pos,
+      phase: 'acting',
+    };
+    return advanceIfReady(patch);
+  }
+  if (match.phase === 'acting') {
+    const done = match.done || {};
+    if (!nicks.every((n) => done[n] != null)) return match;
+    const s = settleRound(match);
+    return { ...match, dealer: s.dealer, pos: s.pos, outcome: s.outcome, points: s.points, phase: 'settled' };
+  }
+  return match;
+}
+
+// ══════════════════════════════════════════════════
+// セッション管理（再接続用）
+// ══════════════════════════════════════════════════
+function saveSession(matchId) {
+  sessionStorage.setItem(SESSION_KEY, JSON.stringify({
+    roomCode: state.roomCode,
+    nickname: state.nickname,
+    isHost:   state.role === 'host',
+    matchId:  matchId == null ? null : matchId,
+  }));
+}
+function loadSession() {
+  try { return JSON.parse(sessionStorage.getItem(SESSION_KEY)); } catch { return null; }
+}
+function clearSession() { sessionStorage.removeItem(SESSION_KEY); }
+function updateSessionMatchId(mid) {
+  const s = loadSession();
+  if (!s || s.matchId === mid) return;
+  s.matchId = mid;
+  sessionStorage.setItem(SESSION_KEY, JSON.stringify(s));
+}
+
+// ══════════════════════════════════════════════════
+// 画面管理
+// ══════════════════════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach((s) => s.classList.remove('active'));
+  document.getElementById('screen-' + id).classList.add('active');
+  state.currentScreen = id;
+}
+function showReconnectOverlay(show) {
+  document.getElementById('reconnect-overlay').classList.toggle('show', show);
+}
+
+// ══════════════════════════════════════════════════
+// 描画ヘルパー
+// ══════════════════════════════════════════════════
+function cardLabel(c) { return RANK_LABELS[cardRank(c)] + SUIT_CHARS[cardSuit(c)]; }
+
+function buildCardHtml(c, hidden) {
+  if (hidden) {
+    return '<span class="bj-card bj-card--back"><span class="bj-card__rank">?</span></span>';
+  }
+  const color = SUIT_RED[cardSuit(c)] ? 'bj-card--red' : 'bj-card--black';
+  return '<span class="bj-card ' + color + '">'
+    + '<span class="bj-card__rank">' + RANK_LABELS[cardRank(c)] + '</span>'
+    + '<span class="bj-card__suit">' + SUIT_CHARS[cardSuit(c)] + '</span></span>';
+}
+
+function buildCardsHtml(cards, hideFrom) {
+  return '<div class="bj-cards">'
+    + (cards || []).map((c, i) => buildCardHtml(c, hideFrom != null && i >= hideFrom)).join('')
+    + '</div>';
+}
+
+function buildMiniCards(cards) {
+  return (cards || []).map((c) => {
+    const color = SUIT_RED[cardSuit(c)] ? 'bj-mini--red' : 'bj-mini--black';
+    return '<span class="bj-mini ' + color + '">' + cardLabel(c) + '</span>';
+  }).join('');
+}
+
+function buildTotalBadge(cards, st) {
+  const v = handValue(cards);
+  if (st === 'bust' || v > 21) return '<span class="bj-total bj-total--bust">バースト（' + v + '）</span>';
+  if (st === 'bj') return '<span class="bj-total bj-total--bj">ピッタリ21！</span>';
+  return '<span class="bj-total">合計 ' + v + '</span>';
+}
+
+function deltaLabel(delta) {
+  const d = Number(delta) || 0;
+  if (d > 0) return '+' + d;
+  if (d < 0) return '−' + Math.abs(d);
+  return '±0';
+}
+
+function outcomeChip(o) {
+  if (!o) return '';
+  const map = { win: '勝ち', lose: '負け', push: '引き分け', bj: 'ピッタリ21' };
+  const cls = 'bj-result-chip bj-result-chip--' + o.res;
+  let html = '<span class="' + cls + '">' + (map[o.res] || '') + ' ' + deltaLabel(o.delta) + '</span>';
+  if (o.charged) html += ' <span class="bj-result-chip bj-result-chip--charge">チャージ +' + CHARGE_POINTS + '</span>';
+  return html;
+}
+
+function pendingBetters(m) {
+  const bets = m.bets || {};
+  return membersInSeatOrder(m).filter((n) => bets[n] == null);
+}
+function pendingActors(m) {
+  const done = m.done || {};
+  return membersInSeatOrder(m).filter((n) => done[n] == null);
+}
+
+// ══════════════════════════════════════════════════
+// ロビー
+// ══════════════════════════════════════════════════
+function handleLobby(room) {
+  showScreen('lobby');
+  const players = room.players || {};
+  const count = Object.keys(players).length;
+  const isHost = state.role === 'host';
+  document.getElementById('lobby-count').textContent = count + '人';
+  document.getElementById('lobby-host-panel').style.display = isHost ? 'block' : 'none';
+  document.getElementById('lobby-host-actions').style.display = isHost ? 'block' : 'none';
+  document.getElementById('lobby-guest-wait').style.display = isHost ? 'none' : 'block';
+  if (isHost) document.getElementById('lobby-room-code').textContent = state.roomCode;
+  renderLobbyList(players, room.host);
+
+  if (isHost) {
+    const btn = document.getElementById('btn-start');
+    const hint = document.getElementById('lobby-hint');
+    if (count > MAX_PLAYERS) {
+      btn.disabled = true;
+      hint.textContent = '8人まで遊べるよ';
+    } else {
+      btn.disabled = false;
+      hint.textContent = count === 1 ? '1人でも始められるよ。あとから来た人はラウンドの合間に入れるよ' : '';
+    }
+  }
+}
+
+function renderLobbyList(players, host) {
+  const entries = Object.entries(players).sort((a, b) => ((a[1] && a[1].seat) || 0) - ((b[1] && b[1].seat) || 0));
+  const html = entries.map(([nick]) => {
+    const hostTag = nick === host ? '<span class="bj-tag bj-tag--host">ホスト</span>' : '';
+    const meTag = nick === state.nickname ? '<span class="bj-tag bj-tag--me">あなた</span>' : '';
+    return '<li class="bj-player bj-player--simple"><span class="bj-player__name">' + esc(nick) + '</span>' + hostTag + meTag + '</li>';
+  }).join('');
+  document.getElementById('lobby-list').innerHTML = html;
+}
+
+// ══════════════════════════════════════════════════
+// ゲーム画面
+// ══════════════════════════════════════════════════
+function handleGame(room) {
+  showScreen('game');
+  const m = room.match;
+  const key = m ? (m.matchId + '|' + m.round + '|' + m.phase) : 'none';
+  if (key !== state.lastPhaseKey) state.lastPhaseKey = key;
+
+  renderDealer(room);
+  renderMyArea(room);
+  renderGameMembers(room);
+
+  const showAbort = state.role === 'host' && m && m.phase !== 'settled';
+  document.getElementById('btn-abort').style.display = showAbort ? 'block' : 'none';
+  document.getElementById('btn-guest-leave-game').style.display = state.role === 'guest' ? 'block' : 'none';
+}
+
+function renderDealer(room) {
+  const m = room.match;
+  const el = document.getElementById('game-dealer');
+  if (!m) { el.innerHTML = ''; return; }
+  let html = '<div class="bj-dealer__round">ラウンド ' + (Number(m.round) || 0) + '</div>'
+    + '<div class="bj-dealer__label">ディーラー</div>';
+  if (m.phase === 'betting') {
+    html += '<div class="bj-dealer__wait">みんながかけたらカードを配るよ</div>';
+  } else {
+    const dealer = m.dealer || [];
+    const hideFrom = m.phase === 'settled' ? null : 1; // 精算まで2枚目は伏せる
+    html += buildCardsHtml(dealer, hideFrom);
+    if (m.phase === 'settled') {
+      const dv = handValue(dealer);
+      html += dv > 21
+        ? '<span class="bj-total bj-total--bust">ディーラーはバースト（' + dv + '）</span>'
+        : '<span class="bj-total">ディーラーは ' + dv + '</span>';
+    }
+  }
+  el.innerHTML = html;
+}
+
+function renderMyArea(room) {
+  const el = document.getElementById('game-my');
+  const m = room.match;
+  const me = state.nickname;
+  if (!m || !m.members || !m.members[me]) {
+    el.innerHTML = '<p class="bj-my__wait">次のラウンドから参加するよ</p>';
+    return;
+  }
+  const points = (m.points && Number(m.points[me])) || 0;
+  const bets = m.bets || {};
+  const myBet = bets[me] != null ? Number(bets[me]) : null;
+  let html = '<p class="bj-my__points">あなたのポイント <strong>' + points + '</strong></p>';
+
+  if (m.phase === 'betting') {
+    if (myBet == null) {
+      html += '<p class="bj-my__prompt">何ポイントかける？</p><div class="bj-bet-grid">';
+      BET_OPTIONS.forEach((v) => {
+        const disabled = v > points ? ' disabled' : '';
+        html += '<button type="button" class="bj-bet-btn"' + disabled + ' onclick="submitBet(' + v + ')">'
+          + '<span class="bj-bet-btn__num">' + v + '</span><span class="bj-bet-btn__unit">ポイント</span></button>';
+      });
+      html += '</div>';
+    } else {
+      const pend = pendingBetters(m);
+      html += '<p class="bj-bet-mine"><strong>' + myBet + '</strong> ポイントかけたよ</p>';
+      html += pend.length
+        ? '<p class="bj-my__wait">' + esc(pend.join('、')) + 'さんを待ってるよ</p>'
+        : '<p class="bj-my__wait">カードを配るよ…</p>';
+    }
+    el.innerHTML = html;
+    return;
+  }
+
+  // acting / settled
+  const myHand = (m.hands && m.hands[me]) || [];
+  const done = m.done || {};
+  const myState = done[me] || null;
+  if (!myHand.length) {
+    // ラウンドの合間に参加した直後（手札なし）
+    html += '<p class="bj-my__wait">次のラウンドから参加するよ</p>';
+    el.innerHTML = html;
+    return;
+  }
+  html += buildCardsHtml(myHand, null);
+  html += '<div>' + buildTotalBadge(myHand, myState) + '</div>';
+  if (myBet != null) html += '<p class="bj-my__wait" style="margin-top:6px">かけたポイント: ' + myBet + '</p>';
+
+  if (m.phase === 'acting') {
+    if (myState == null) {
+      html += '<div class="bj-action-grid">'
+        + '<button type="button" class="bj-action-btn" onclick="submitHit()"><span class="material-symbols-rounded">add_card</span>カードを引く</button>'
+        + '<button type="button" class="bj-action-btn" onclick="submitStand()"><span class="material-symbols-rounded">back_hand</span>これでストップ</button>'
+        + '</div>';
+    } else {
+      if (myState === 'bust') html += '<div><span class="bj-state-badge bj-state-badge--bust">バーストしちゃった…</span></div>';
+      else if (myState === 'bj') html += '<div><span class="bj-state-badge bj-state-badge--bj">ピッタリ21！</span></div>';
+      else html += '<div><span class="bj-state-badge bj-state-badge--stand">ストップしたよ</span></div>';
+      const pend = pendingActors(m);
+      html += pend.length
+        ? '<p class="bj-my__wait">' + esc(pend.join('、')) + 'さんを待ってるよ</p>'
+        : '<p class="bj-my__wait">ディーラーの番だよ…</p>';
+    }
+  } else if (m.phase === 'settled') {
+    const o = (m.outcome && m.outcome[me]) || null;
+    if (o) {
+      const map = { win: '勝ち！', lose: '負け…', push: '引き分け', bj: 'ピッタリ21！' };
+      html += '<div class="bj-outcome bj-outcome--' + o.res + '">'
+        + '<p class="bj-outcome__main">' + (map[o.res] || '') + ' ' + deltaLabel(o.delta) + 'ポイント</p>';
+      if (o.charged) html += '<p class="bj-outcome__sub">ポイントが0になったから、' + CHARGE_POINTS + 'ポイントチャージしたよ</p>';
+      html += '</div>';
+    }
+    if (state.role === 'host') {
+      html += '<button class="btn btn-primary btn-full mt-md" onclick="hostNextRound()"><span class="material-symbols-rounded">arrow_forward</span>次のラウンド</button>'
+        + '<button class="btn btn-secondary btn-full" onclick="hostFinish(false)"><span class="material-symbols-rounded">flag</span>ここで終わる</button>';
+    } else {
+      html += '<p class="bj-my__wait">ホストが「次のラウンド」を押すのを待ってるよ</p>';
+    }
+  }
+  el.innerHTML = html;
+}
+
+function renderGameMembers(room) {
+  const m = room.match || {};
+  const players = room.players || {};
+  const html = membersInSeatOrder(m).map((nick) => {
+    const isMe = nick === state.nickname;
+    const isHost = room.host === nick;
+    const connected = !!players[nick];
+    const points = (m.points && Number(m.points[nick])) || 0;
+    const meTag = isMe ? '<span class="bj-tag bj-tag--me">あなた</span>' : '';
+    const hostTag = isHost ? '<span class="bj-tag bj-tag--host">ホスト</span>' : '';
+    const disc = !connected ? '<p class="bj-player__disc">通信が切れています</p>' : '';
+
+    let status = '';
+    let handHtml = '';
+    if (m.phase === 'betting') {
+      const betted = m.bets && m.bets[nick] != null;
+      status = betted
+        ? '<span class="bj-player__status is-done">かけた！</span>'
+        : '<span class="bj-player__status">考え中…</span>';
+    } else if (!((m.hands && m.hands[nick]) || []).length) {
+      // ラウンドの合間に参加した直後（手札なし）
+      status = '<span class="bj-player__status">次のラウンドから参加</span>';
+    } else {
+      const hand = (m.hands && m.hands[nick]) || [];
+      const st = (m.done && m.done[nick]) || null;
+      const v = handValue(hand);
+      let totalCls = 'bj-mini-total';
+      let totalText = '合計 ' + v;
+      if (st === 'bust') { totalCls += ' is-bust'; totalText = 'バースト（' + v + '）'; }
+      else if (st === 'bj') { totalText = 'ピッタリ21'; }
+      handHtml = '<div class="bj-player__hand">' + buildMiniCards(hand)
+        + '<span class="' + totalCls + '">' + totalText + '</span></div>';
+      if (m.phase === 'acting') {
+        status = st != null
+          ? '<span class="bj-player__status is-done">' + (st === 'bust' ? 'バースト' : 'ストップ') + '</span>'
+          : '<span class="bj-player__status">考え中…</span>';
+      } else if (m.phase === 'settled') {
+        const o = m.outcome && m.outcome[nick];
+        status = '<span class="bj-player__status">' + outcomeChip(o) + '</span>';
+      }
+    }
+    return '<li class="bj-player">'
+      + '<div class="bj-player__head"><span class="bj-player__name">' + esc(nick) + '</span>' + hostTag + meTag
+      + '<span class="bj-player__points">' + points + 'ポイント</span></div>'
+      + status + disc + handHtml + '</li>';
+  }).join('');
+  document.getElementById('game-members').innerHTML = html;
+}
+
+// ══════════════════════════════════════════════════
+// 最終まとめ画面
+// ══════════════════════════════════════════════════
+function handleResult(room) {
+  showScreen('result');
+  const m = room.match || {};
+  const nicks = membersInSeatOrder(m);
+  const points = m.points || {};
+  const mainEl = document.getElementById('result-main');
+
+  if (!nicks.length) {
+    mainEl.innerHTML = '<p class="bj-hint">結果がないよ</p>';
+  } else {
+    const totals = nicks.map((n) => ({ nick: n, points: Number(points[n]) || 0 }));
+    const max = totals.reduce((mx, t) => Math.max(mx, t.points), -Infinity);
+    const tops = totals.filter((t) => t.points === max).map((t) => t.nick);
+    const topText = tops.map((n) => esc(n)).join('さん、') + 'さん';
+    const rows = totals.map((t) => {
+      const isTop = tops.indexOf(t.nick) >= 0 ? ' is-top' : '';
+      const meTag = t.nick === state.nickname ? '<span class="bj-tag bj-tag--me">あなた</span>' : '';
+      return '<li class="bj-final-row' + isTop + '"><div class="bj-final-row__head"><span class="bj-player__name">'
+        + esc(t.nick) + '</span>' + meTag + '<span class="bj-final-row__points">' + t.points + 'ポイント</span></div></li>';
+    }).join('');
+    let html = '<div class="bj-top-banner"><span class="material-symbols-rounded">emoji_events</span><p>いちばん多かったのは' + topText + '！</p></div>'
+      + '<div class="card"><ul class="bj-final-list">' + rows + '</ul></div>';
+    const me = state.nickname;
+    if (me && !((m.members || {})[me])) {
+      html += '<p class="bj-hint mt-md">ホストが「もう一度」を押すと、あなたも参加できるよ</p>';
+    }
+    mainEl.innerHTML = html;
+  }
+
+  const isHost = state.role === 'host';
+  document.getElementById('result-host-actions').style.display = isHost ? 'block' : 'none';
+  document.getElementById('btn-guest-leave').style.display = isHost ? 'none' : 'block';
+}
+
+// ══════════════════════════════════════════════════
+// ルーム作成 / 参加
+// ══════════════════════════════════════════════════
+async function hostCreateRoom() {
+  if (state.entryBusy) return;
+  state.entryBusy = true;
+  try { await hostCreateRoomInner(); } finally { state.entryBusy = false; }
+}
+async function hostCreateRoomInner() {
+  const nickname = document.getElementById('top-host-nickname').value.trim();
+  const err = validateNickname(nickname);
+  if (err) { showMsg(err); return; }
+  if (!await waitAuthOrExplain()) return;
+
+  let roomCode = null; let roomRef = null;
+  for (let i = 0; i < 5; i += 1) {
+    const code = RoomkRTDB.generateRoomCode();
+    const ref = db.ref(ROOMS_PATH + '/' + code);
+    const initialRoom = {
+      host: nickname,
+      hostConnected: true,
+      hostDisconnectedAt: null,
+      status: 'waiting',
+      createdAt: firebase.database.ServerValue.TIMESTAMP,
+      players: { [nickname]: { isHost: true, seat: 0 } },
+    };
+    const { committed } = await ref.transaction((room) => (room ? undefined : initialRoom));
+    if (committed) { roomCode = code; roomRef = ref; break; }
+  }
+  if (!roomRef) { showMsg('ルームを作れなかったよ'); return; }
+
+  state.role = 'host';
+  state.nickname = nickname;
+  state.roomCode = roomCode;
+  state.roomRef = roomRef;
+  saveSession(null);
+  await armOnDisconnect();
+  startRoomListener();
+}
+
+async function guestJoin() {
+  if (state.entryBusy) return;
+  state.entryBusy = true;
+  try { await guestJoinInner(); } finally { state.entryBusy = false; }
+}
+async function guestJoinInner() {
+  const nickname = document.getElementById('top-guest-nickname').value.trim();
+  const roomCode = document.getElementById('top-guest-code').value.trim().toUpperCase();
+  const err = validateNickname(nickname);
+  if (err) { showMsg(err); return; }
+  if (roomCode.length !== 6) { showMsg('ルームコードは6文字だよ'); return; }
+  if (!await waitAuthOrExplain()) return;
+
+  const roomRef = db.ref(ROOMS_PATH + '/' + roomCode);
+  const preSnap = await roomRef.get();
+  if (!preSnap.exists()) { showMsg('ルームが見つからないよ'); return; }
+  const preRoom = preSnap.val();
+  if (!preRoom.status || !preRoom.host) { await removeBrokenRoom(roomRef); showMsg('そのルームはもうないみたい'); return; }
+  if (isRoomExpired(preRoom)) { await removeRoomIfExpired(roomRef); showMsg('このルームは終わっているよ'); return; }
+
+  let reason = null;
+  const { committed } = await roomRef.transaction((room) => {
+    // ローカルキャッシュ未取得（null）の初回実行では事前取得スナップショットで代用し、
+    // サーバー照会を強制する（oshitsuke-zukan と同じ確立パターン）
+    const cur = room || preRoom;
+    if (!cur) { reason = 'not_found'; return; }
+    if (!cur.status || !cur.host) { reason = 'broken'; return; }
+    if (isRoomExpired(cur)) { reason = 'expired'; return null; }
+    if (cur.hostConnected === false) { reason = 'host_gone'; return; }
+    const players = cur.players || {};
+    if (players[nickname]) { reason = 'nick_taken'; return; }
+    if (Object.keys(players).length >= MAX_PLAYERS) { reason = 'full'; return; }
+    const newPlayer = { isHost: false, seat: maxSeat(players) + 1 };
+
+    if (cur.status === 'waiting') {
+      reason = null;
+      return { ...cur, players: { ...players, [nickname]: newPlayer } };
+    }
+    // ゲーム中はラウンドの合間（settled）だけ途中参加できる
+    if (cur.status === 'playing') {
+      const m = cur.match;
+      if (!m || m.phase !== 'settled') { reason = 'in_round'; return; }
+      if (m.members && m.members[nickname]) { reason = 'nick_taken'; return; }
+      reason = null;
+      return {
+        ...cur,
+        players: { ...players, [nickname]: newPlayer },
+        match: {
+          ...m,
+          members: { ...(m.members || {}), [nickname]: { seat: maxSeat(m.members) + 1 } },
+          points: { ...(m.points || {}), [nickname]: START_POINTS },
+        },
+      };
+    }
+    // 最終まとめ画面。players にだけ入って「もう一度」を待つ
+    if (cur.status === 'result') {
+      reason = null;
+      return { ...cur, players: { ...players, [nickname]: newPlayer } };
+    }
+    reason = 'not_waiting';
+    return;
+  });
+
+  if (!committed) {
+    const map = {
+      not_found: 'ルームが見つからないよ',
+      broken: 'そのルームはもうないみたい',
+      host_gone: 'ホストがいないみたいだよ',
+      in_round: 'いまのラウンドが終わったら入れるよ。少し待ってもう一度押してね',
+      not_waiting: 'いまは入れないよ',
+      nick_taken: 'その名前は使われているよ',
+      full: 'このルームはいっぱいだよ（8人まで）',
+    };
+    showMsg(map[reason] || '入れなかったよ');
+    return;
+  }
+  if (reason === 'expired') { showMsg('このルームは終わっているよ'); return; }
+
+  state.role = 'guest';
+  state.nickname = nickname;
+  state.roomCode = roomCode;
+  state.roomRef = roomRef;
+  saveSession(null);
+  await armOnDisconnect();
+  startRoomListener();
+}
+
+// ══════════════════════════════════════════════════
+// onDisconnect 予約（presence = ノードの有無方式）
+// ══════════════════════════════════════════════════
+async function armOnDisconnect() {
+  const roomRef = state.roomRef;
+  const nick = state.nickname;
+  if (!roomRef || !nick) return;
+  if (state.role === 'host') {
+    const upd = {
+      hostConnected: false,
+      hostDisconnectedAt: firebase.database.ServerValue.TIMESTAMP,
+    };
+    upd['players/' + nick] = null; // presence ノードも同時に消す
+    await roomRef.onDisconnect().update(upd).catch(() => {});
+  } else if (state.role === 'guest') {
+    await roomRef.child('players/' + nick).onDisconnect().remove().catch(() => {});
+  }
+}
+
+// ══════════════════════════════════════════════════
+// Firebase リスナー・画面ふりわけ
+// ══════════════════════════════════════════════════
+function startRoomListener() {
+  state.roomRef.on('value', (snap) => {
+    if (!snap.exists()) { handleRoomGone(); return; }
+    handleRoom(snap.val());
+  });
+}
+
+// ルーム消滅（ホストが削除）: 予約を解除してからトップへ
+async function handleRoomGone() {
+  const roomRef = state.roomRef;
+  clearSession();
+  if (roomRef) await RoomkRTDB.cancelRoomOnDisconnect(roomRef).catch(() => {});
+  resetLocalStateAndShowTop('ルームが閉じられたよ');
+}
+
+function handleRoom(room) {
+  state.lastRoom = room;
+
+  // 期限切れ（ホスト切断＋TTL 超過）の検知
+  if (isRoomExpired(room)) {
+    const roomRef = state.roomRef;
+    const nick = state.nickname;
+    clearSession();
+    resetLocalStateAndShowTop('このルームは終わったよ');
+    cleanupExpiredRoomAndOwnPresence(roomRef, nick);
+    return;
+  }
+
+  if (room.match && room.match.matchId != null) updateSessionMatchId(room.match.matchId);
+
+  if (state.role === 'guest') {
+    // 「もう一度」でメンバーから外れた場合はトップへ戻す（players にも居ないときだけ）
+    const inPlayers = !!(room.players && room.players[state.nickname]);
+    const inMembers = !!(room.match && room.match.members && room.match.members[state.nickname]);
+    if (room.status === 'playing' && !inMembers && !inPlayers) {
+      guestGoToTop('メンバーからはずれたよ。また遊ぶときは入りなおしてね');
+      return;
+    }
+    showHostDisconnectOverlay(room.hostConnected === false, room);
+  }
+
+  switch (room.status) {
+    case 'waiting': handleLobby(room); break;
+    case 'playing': handleGame(room); break;
+    case 'result': handleResult(room); break;
+    default: break;
+  }
+}
+
+// ══════════════════════════════════════════════════
+// メンバー操作（かける・引く・ストップ）— すべてルームルートへの transaction
+// ══════════════════════════════════════════════════
+async function submitBet(value) {
+  if (state.actionBusy) return;
+  state.actionBusy = true;
+  try { await submitBetInner(Number(value)); } finally { state.actionBusy = false; }
+}
+async function submitBetInner(value) {
+  const cap = captureMatchState();
+  const { committed } = await state.roomRef.transaction((room) => {
+    if (!room || room.status !== 'playing') return;
+    const m = room.match;
+    if (!m || m.matchId !== cap.matchId || m.round !== cap.round || m.phase !== 'betting') return;
+    const members = m.members || {};
+    if (!members[state.nickname]) return;
+    const bets = m.bets || {};
+    if (bets[state.nickname] != null) return;
+    if (BET_OPTIONS.indexOf(value) < 0) return;
+    const points = m.points || {};
+    if ((Number(points[state.nickname]) || 0) < value) return;
+
+    const patch = { ...m, bets: { ...bets, [state.nickname]: value } };
+    return { ...room, match: advanceIfReady(patch) };
+  });
+  if (!committed) showMsg('かけられなかったよ。もう一度押してね');
+}
+
+async function submitHit() {
+  if (state.actionBusy) return;
+  state.actionBusy = true;
+  try { await submitHitInner(); } finally { state.actionBusy = false; }
+}
+async function submitHitInner() {
+  const cap = captureMatchState();
+  const { committed } = await state.roomRef.transaction((room) => {
+    if (!room || room.status !== 'playing') return;
+    const m = room.match;
+    if (!m || m.matchId !== cap.matchId || m.round !== cap.round || m.phase !== 'acting') return;
+    const members = m.members || {};
+    if (!members[state.nickname]) return;
+    const done = m.done || {};
+    if (done[state.nickname] != null) return;
+    const deck = m.deck || [];
+    let pos = Number(m.pos) || 0;
+    if (pos >= deck.length) return; // 山札切れ（実質起きない）
+    const hands = m.hands || {};
+    const myHand = [...(hands[state.nickname] || []), Number(deck[pos])];
+    pos += 1;
+
+    const newDone = { ...done };
+    const v = handValue(myHand);
+    if (v > 21) newDone[state.nickname] = 'bust';
+    else if (v === 21) newDone[state.nickname] = 'stand'; // 21になったら自動ストップ
+
+    const patch = {
+      ...m,
+      hands: { ...hands, [state.nickname]: myHand },
+      pos,
+      done: Object.keys(newDone).length ? newDone : null,
+    };
+    return { ...room, match: advanceIfReady(patch) };
+  });
+  if (!committed) showMsg('引けなかったよ');
+}
+
+async function submitStand() {
+  if (state.actionBusy) return;
+  state.actionBusy = true;
+  try { await submitStandInner(); } finally { state.actionBusy = false; }
+}
+async function submitStandInner() {
+  const cap = captureMatchState();
+  const { committed } = await state.roomRef.transaction((room) => {
+    if (!room || room.status !== 'playing') return;
+    const m = room.match;
+    if (!m || m.matchId !== cap.matchId || m.round !== cap.round || m.phase !== 'acting') return;
+    const members = m.members || {};
+    if (!members[state.nickname]) return;
+    const done = m.done || {};
+    if (done[state.nickname] != null) return;
+
+    const patch = { ...m, done: { ...done, [state.nickname]: 'stand' } };
+    return { ...room, match: advanceIfReady(patch) };
+  });
+  if (!committed) showMsg('ストップできなかったよ');
+}
+
+// ══════════════════════════════════════════════════
+// ホスト操作（開始・次のラウンド・終わる・もう一度）
+// ══════════════════════════════════════════════════
+function buildMatchMembers(playersObj) {
+  const entries = Object.entries(playersObj).sort((a, b) => ((a[1] && a[1].seat) || 0) - ((b[1] && b[1].seat) || 0));
+  const members = {}; const points = {};
+  entries.forEach(([nick], i) => { members[nick] = { seat: i }; points[nick] = START_POINTS; });
+  return { members, points };
+}
+
+async function hostStartGame() {
+  if (state.role !== 'host' || !state.roomRef) return;
+  const deck = buildDeck(); // 乱数は transaction の外で生成
+  let reason = null;
+  const { committed } = await state.roomRef.transaction((room) => {
+    if (!room || room.status !== 'waiting') { reason = 'invalid'; return; }
+    if (room.host !== state.nickname) { reason = 'invalid'; return; }
+    const players = room.players || {};
+    if (!players[state.nickname] || !players[state.nickname].isHost) { reason = 'invalid'; return; }
+    const count = Object.keys(players).length;
+    if (count < MIN_PLAYERS || count > MAX_PLAYERS) { reason = 'count'; return; }
+    reason = null;
+    const { members, points } = buildMatchMembers(players);
+    return {
+      ...room,
+      status: 'playing',
+      match: { matchId: 1, members, points, round: 1, phase: 'betting', deck, pos: 0 },
+    };
+  });
+  if (!committed) showMsg(reason === 'count' ? '1〜8人で始められるよ' : '始められなかったよ');
+}
+
+async function hostNextRound() {
+  if (state.role !== 'host' || !state.roomRef) return;
+  const deck = buildDeck(); // 乱数は transaction の外で生成
+  const cap = captureMatchState();
+  const { committed } = await state.roomRef.transaction((room) => {
+    if (!room || room.status !== 'playing' || room.host !== state.nickname) return;
+    const m = room.match;
+    if (!m || m.matchId !== cap.matchId || m.round !== cap.round || m.phase !== 'settled') return;
+    return {
+      ...room,
+      match: {
+        ...m,
+        round: m.round + 1,
+        phase: 'betting',
+        deck,
+        pos: 0,
+        bets: null,
+        hands: null,
+        dealer: null,
+        done: null,
+        outcome: null,
+      },
+    };
+  });
+  if (committed) window.RoomkStats?.count('round');
+  if (!committed) showMsg('進められなかったよ');
+}
+
+async function hostFinish(needConfirm) {
+  if (state.role !== 'host' || !state.roomRef) return;
+  if (needConfirm && !confirm('ここでゲームを終わるよ。いまのラウンドはなしになるけどいい？')) return;
+  const { committed } = await state.roomRef.transaction((room) => {
+    if (!room || room.status !== 'playing' || room.host !== state.nickname) return;
+    return { ...room, status: 'result' }; // match は残す（まとめは members/points から表示）
+  });
+  if (!committed) showMsg('終われなかったよ');
+}
+
+async function hostRematch() {
+  if (state.role !== 'host' || !state.roomRef) return;
+  const deck = buildDeck(); // 乱数は transaction の外で生成
+  const cap = captureMatchState();
+  let reason = null;
+  const { committed } = await state.roomRef.transaction((room) => {
+    if (!room || room.status !== 'result' || room.host !== state.nickname) { reason = 'invalid'; return; }
+    if (!room.match || room.match.matchId !== cap.matchId) { reason = 'invalid'; return; }
+    // players ノードのある（＝接続中の）人だけで仕切り直す
+    const active = Object.entries(room.players || {}).sort((a, b) => ((a[1] && a[1].seat) || 0) - ((b[1] && b[1].seat) || 0));
+    if (active.length < MIN_PLAYERS) { reason = 'count'; return; }
+    const newPlayers = {};
+    active.forEach(([nick], i) => { newPlayers[nick] = { isHost: nick === room.host, seat: i }; });
+    if (!newPlayers[room.host]) { reason = 'no_host'; return; }
+    reason = null;
+    const { members, points } = buildMatchMembers(newPlayers);
+    return {
+      ...room,
+      status: 'playing',
+      players: newPlayers,
+      match: { matchId: room.match.matchId + 1, members, points, round: 1, phase: 'betting', deck, pos: 0 },
+    };
+  });
+  if (!committed) showMsg(reason === 'count' ? 'つながっている人がいないので、もう一度はできないよ' : 'もう一度できなかったよ');
+}
+
+// ══════════════════════════════════════════════════
+// ホスト切断オーバーレイ（ゲスト用・カウントダウン）
+// ══════════════════════════════════════════════════
+function showHostDisconnectOverlay(show, room) {
+  const overlay = document.getElementById('host-disconnect-overlay');
+  overlay.classList.toggle('show', show);
+  if (show) {
+    const dAt = RoomkRTDB.getHostDisconnectedAt(room);
+    state.hostDisconnectDeadline = (dAt == null ? getNow() : dAt) + ORPHAN_TTL_MS;
+    if (!state.timerInterval) {
+      state.timerInterval = setInterval(() => {
+        const remaining = Math.max(0, Math.ceil((state.hostDisconnectDeadline - getNow()) / 1000));
+        const el = document.getElementById('host-disconnect-countdown');
+        if (el) el.textContent = remaining;
+        if (remaining <= 0) {
+          clearInterval(state.timerInterval);
+          state.timerInterval = null;
+          const roomRef = state.roomRef;
+          const nick = state.nickname;
+          clearSession();
+          resetLocalStateAndShowTop('ホストが戻ってこなかったので終わったよ');
+          cleanupExpiredRoomAndOwnPresence(roomRef, nick);
+        }
+      }, 1000);
+    }
+  } else if (state.timerInterval) {
+    clearInterval(state.timerInterval);
+    state.timerInterval = null;
+    state.hostDisconnectDeadline = null;
+  }
+}
+
+// ══════════════════════════════════════════════════
+// 期限切れ・壊れルームの削除（transaction）
+// ══════════════════════════════════════════════════
+async function removeRoomIfExpired(roomRef) {
+  try {
+    const preSnap = await roomRef.get();
+    if (!preSnap.exists()) return true; // すでに無い＝掃除不要
+    const preRoom = preSnap.val();
+    const { committed } = await roomRef.transaction((room) => {
+      const cur = room || preRoom; // ローカルキャッシュ null 対策（サーバー照会を強制）
+      if (cur == null) return;
+      return isRoomExpired(cur) ? null : undefined; // 生きていれば消さない
+    });
+    return committed;
+  } catch { return false; }
+}
+
+// 期限切れで自分が離脱する経路の共通処理。
+// 削除 transaction が abort した（＝ホストが復帰しルームが生きていた）場合は、
+// 退出済みの自分の presence ノードだけを消して残留を防ぐ。
+function cleanupExpiredRoomAndOwnPresence(roomRef, nick) {
+  if (!roomRef) return;
+  RoomkRTDB.cancelRoomOnDisconnect(roomRef)
+    .then(() => removeRoomIfExpired(roomRef))
+    .then((deleted) => {
+      if (!deleted && nick) return roomRef.child('players/' + nick).remove();
+    })
+    .catch(() => {});
+}
+async function removeBrokenRoom(roomRef) {
+  try {
+    const preSnap = await roomRef.get();
+    if (!preSnap.exists()) return;
+    const preRoom = preSnap.val();
+    await roomRef.transaction((room) => {
+      const cur = room || preRoom; // ローカルキャッシュ null 対策
+      if (cur == null) return;
+      if (!cur.status || !cur.host) return null;
+      return undefined;
+    });
+  } catch { /* noop */ }
+}
+
+// ══════════════════════════════════════════════════
+// 退出・トップへ戻る
+// ══════════════════════════════════════════════════
+function resetLocalStateAndShowTop(msg) {
+  if (state.timerInterval) { clearInterval(state.timerInterval); state.timerInterval = null; }
+  state.hostDisconnectDeadline = null;
+  document.getElementById('host-disconnect-overlay').classList.remove('show');
+  document.getElementById('reconnect-overlay').classList.remove('show');
+  if (state.roomRef) state.roomRef.off();
+  state.epoch += 1;
+  Object.assign(state, {
+    role: null, nickname: null, roomCode: null, roomRef: null,
+    lastRoom: null, lastPhaseKey: null,
+  });
+  ['top-host-nickname', 'top-guest-nickname', 'top-guest-code'].forEach((id) => {
+    const e = document.getElementById(id); if (e) e.value = '';
+  });
+  showScreen('top');
+  if (msg) showMsg(msg, false);
+}
+
+async function hostGoToTop() {
+  clearSession();
+  const roomRef = state.roomRef;
+  if (roomRef) {
+    roomRef.off();
+    await RoomkRTDB.cancelRoomOnDisconnect(roomRef);
+    await roomRef.remove().catch(() => {});
+  }
+  resetLocalStateAndShowTop();
+}
+
+// ゲストの退出は players と match の両方から自分を抜く。
+// 自分が最後の待ち人だったときは、抜けたことで配り・精算まで進める（進行を止めない）
+async function removeSelfFromRoom(roomRef, nick) {
+  const preSnap = await roomRef.get().catch(() => null);
+  const preRoom = preSnap && preSnap.exists() ? preSnap.val() : null;
+  await roomRef.transaction((room) => {
+    const cur = room || preRoom; // ローカルキャッシュ null 対策
+    if (!cur) return;
+    const players = { ...(cur.players || {}) };
+    delete players[nick];
+    let match = cur.match || null;
+    if (match && match.members && match.members[nick] && cur.status === 'playing') {
+      const members = { ...match.members };
+      delete members[nick];
+      if (!Object.keys(members).length) return null; // 誰も残らなければルームごと削除（通常はホストが残る）
+      const strip = (obj) => {
+        const o = { ...(obj || {}) };
+        delete o[nick];
+        return Object.keys(o).length ? o : null;
+      };
+      const points = { ...(match.points || {}) };
+      delete points[nick];
+      match = {
+        ...match,
+        members,
+        points,
+        bets: strip(match.bets),
+        hands: strip(match.hands),
+        done: strip(match.done),
+        outcome: strip(match.outcome),
+      };
+      if (match.phase === 'betting' || match.phase === 'acting') match = advanceIfReady(match);
+    }
+    return { ...cur, players, match };
+  });
+}
+
+async function guestGoToTop(msg) {
+  clearSession();
+  const roomRef = state.roomRef;
+  const nick = state.nickname;
+  if (roomRef) {
+    roomRef.off();
+    await RoomkRTDB.cancelRoomOnDisconnect(roomRef); // players/{nick} の remove 予約も取り消す
+    if (nick) await removeSelfFromRoom(roomRef, nick).catch(() => {});
+  }
+  resetLocalStateAndShowTop(msg);
+}
+
+function leaveLobby() {
+  if (state.role === 'host') hostGoToTop(); else guestGoToTop();
+}
+
+async function bailToTop(msg) {
+  const roomRef = state.roomRef;
+  clearSession();
+  if (roomRef) {
+    roomRef.off();
+    await RoomkRTDB.cancelRoomOnDisconnect(roomRef).catch(() => {});
+  }
+  resetLocalStateAndShowTop(msg);
+}
+
+// ══════════════════════════════════════════════════
+// 復帰の書き戻し（presence 再作成）— 単純 update ではなく transaction
+// ══════════════════════════════════════════════════
+async function writeBackPresence() {
+  const roomRef = state.roomRef;
+  const nick = state.nickname;
+  const isHost = state.role === 'host';
+  if (!roomRef || (state.role !== 'host' && state.role !== 'guest')) return { committed: false, reason: 'norole' };
+
+  // ローカルキャッシュ未取得（null）の初回実行に備えて事前取得（サーバー照会の強制用）
+  let preRoom = null;
+  try {
+    const preSnap = await roomRef.get();
+    preRoom = preSnap.exists() ? preSnap.val() : null;
+  } catch { /* transaction 側の判定に任せる */ }
+
+  let reason = null;
+  const { committed } = await roomRef.transaction((room) => {
+    const cur = room || preRoom;
+    if (!cur || !cur.status) { reason = 'gone'; return; }
+    if (isRoomExpired(cur)) { reason = 'expired'; return; }
+    if (isHost && cur.host !== nick) { reason = 'gone'; return; } // ホストを名乗る復帰は host 本人のみ
+
+    if (cur.status === 'waiting') {
+      const players = cur.players || {};
+      if (!players[nick] && Object.keys(players).length >= MAX_PLAYERS) { reason = 'full'; return; }
+      const seat = players[nick] ? players[nick].seat : (maxSeat(players) + 1);
+      reason = null;
+      const patch = { ...cur, players: { ...players, [nick]: { isHost, seat } } };
+      if (isHost) { patch.hostConnected = true; patch.hostDisconnectedAt = null; }
+      return patch;
+    }
+
+    // playing / result
+    const members = (cur.match && cur.match.members) || {};
+    if (!members[nick]) {
+      // 最終まとめ画面なら、メンバーでなくても players に戻って「もう一度」を待てる
+      if (cur.status !== 'result' || isHost) { reason = 'not_member'; return; }
+      const players = cur.players || {};
+      if (!players[nick] && Object.keys(players).length >= MAX_PLAYERS) { reason = 'full'; return; }
+      const seat = players[nick] ? players[nick].seat : (maxSeat(players) + 1);
+      reason = null;
+      return { ...cur, players: { ...players, [nick]: { isHost: false, seat } } };
+    }
+    reason = null;
+    const patch = { ...cur, players: { ...(cur.players || {}), [nick]: { isHost, seat: members[nick].seat } } };
+    if (isHost) { patch.hostConnected = true; patch.hostDisconnectedAt = null; }
+    return patch;
+  });
+
+  return { committed, reason };
+}
+
+// ══════════════════════════════════════════════════
+// .info/connected 追従（自動再接続で presence が消えたままになるのを防ぐ）
+// ══════════════════════════════════════════════════
+function startConnectionWatch() {
+  db.ref('.info/connected').on('value', (snap) => {
+    if (snap.val() === true) handleReconnected();
+  });
+}
+
+async function handleReconnected() {
+  if (!state.roomRef || (state.role !== 'host' && state.role !== 'guest')) return;
+  const epoch = state.epoch;
+  const roomRef = state.roomRef;
+  const nick = state.nickname;
+  const { committed, reason } = await writeBackPresence();
+  if (state.epoch !== epoch) {
+    // 書き戻し中に退出した → 復活させてしまった presence を消して終わり
+    if (committed && nick) roomRef.child('players/' + nick).remove().catch(() => {});
+    return;
+  }
+  if (!committed) {
+    if (reason === 'norole') return;
+    let msg = 'ルームが閉じられたよ';
+    if (reason === 'not_member') msg = 'メンバーからはずれたよ。また遊ぶときは入りなおしてね';
+    else if (reason === 'full') msg = '部屋がいっぱいで戻れなかったよ';
+    await bailToTop(msg);
+    return;
+  }
+  await armOnDisconnect(); // commit 成功後に予約を張り直す
+}
+
+// ══════════════════════════════════════════════════
+// 再接続（リロード復帰）
+// ══════════════════════════════════════════════════
+async function tryReconnect() {
+  const session = loadSession();
+  if (!session || !session.roomCode || !session.nickname) { clearSession(); return false; }
+  const { nickname, roomCode, isHost } = session;
+  showReconnectOverlay(true);
+  try {
+    await authReady;
+    const roomRef = db.ref(ROOMS_PATH + '/' + roomCode);
+    const snap = await roomRef.get();
+    if (!snap.exists()) { clearSession(); return false; }
+    const room = snap.val();
+    if (!room.status || !room.host) { await removeBrokenRoom(roomRef); clearSession(); return false; }
+    if (isRoomExpired(room)) { await removeRoomIfExpired(roomRef); clearSession(); return false; }
+    if (room.status === 'playing') {
+      const members = (room.match && room.match.members) || {};
+      if (!members[nickname]) { clearSession(); showMsg('メンバーからはずれたよ', false); return false; }
+    }
+
+    state.role = isHost ? 'host' : 'guest';
+    state.nickname = nickname;
+    state.roomCode = roomCode;
+    state.roomRef = roomRef;
+
+    const { committed, reason } = await writeBackPresence();
+    if (!committed) {
+      Object.assign(state, { role: null, nickname: null, roomCode: null, roomRef: null });
+      clearSession();
+      if (reason === 'not_member') showMsg('メンバーからはずれたよ', false);
+      return false;
+    }
+    saveSession(room.match ? room.match.matchId : null);
+    await armOnDisconnect();
+    startRoomListener();
+    return true;
+  } catch {
+    clearSession();
+    return false;
+  } finally {
+    showReconnectOverlay(false);
+  }
+}
+
+// ══════════════════════════════════════════════════
+// 初期化
+// ══════════════════════════════════════════════════
+startConnectionWatch();
+tryReconnect().then((reconnected) => {
+  if (!reconnected) showScreen('top');
+});
+</script>
+<script src="../shared/js/stats.js?v=1" defer></script>
+<script src="../shared/js/howto.js"></script>
+<script>
+  RoomkHowto.init({
+    title: 'あそびかた',
+    lead: 'カードを引いて、合計を21にできるだけ近づけるゲームです。21を超えたらバースト。ポイントをかけて、ディーラー（アプリ）との勝負に挑みます。',
+    sections: [
+      { heading: 'はじめかた', items: [
+        'ホストが「ルームを作る」からルームを作る（ホストもプレイヤーとして遊ぶよ）',
+        'ルームコードをみんなに伝える',
+        'ほかの人は「入る」からニックネームとコードを入れて参加する',
+        'ホストが「始める」を押すとスタート（1〜8人。あとから来た人はラウンドの合間に入れるよ）',
+      ] },
+      { heading: 'すすめかた', items: [
+        '最初はみんな20ポイント。ラウンドのはじめに、かけるポイント（1・2・3・5）を選ぶ',
+        'カードが2枚配られる。「カードを引く」で1枚追加、「これでストップ」でその合計で勝負',
+        'A（エース）は1でも11でも数えられる。J・Q・Kは10',
+        '21を超えたらバーストで負け。ディーラーは合計17以上になるまで引くよ',
+        'ディーラーより21に近ければ勝ち！かけたポイントがもらえる。最初の2枚でピッタリ21なら2倍',
+      ] },
+      { heading: 'おわりかた', text: '好きなだけラウンドを遊んで、ホストが「ここで終わる」を押すとポイントのまとめが出るよ。ポイントが0になっても10ポイントチャージされるから、最後まで遊べる。' },
+    ],
+  });
+</script>
+</body>
+</html>
