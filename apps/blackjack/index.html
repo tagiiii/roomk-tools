@@ -132,6 +132,7 @@
     .bj-player__points { margin-left: auto; font-weight: 700; color: var(--color-accent); white-space: nowrap; }
     .bj-player__status { font-size: 12px; font-weight: 700; color: var(--color-muted); display: inline-block; margin-top: 4px; }
     .bj-player__status.is-done { color: var(--color-success); }
+    .bj-player__status.is-bust { color: var(--color-error); }
     .bj-player__disc { font-size: 12px; color: var(--color-error); font-weight: 700; margin-top: 4px; }
     .bj-player__hand { margin-top: 6px; display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
     .bj-mini {
@@ -844,7 +845,9 @@ function renderGameMembers(room) {
         + '<span class="' + totalCls + '">' + totalText + '</span></div>';
       if (m.phase === 'acting') {
         status = st != null
-          ? '<span class="bj-player__status is-done">' + (st === 'bust' ? 'バースト' : 'ストップ') + '</span>'
+          ? (st === 'bust'
+              ? '<span class="bj-player__status is-bust">バースト</span>'
+              : '<span class="bj-player__status is-done">ストップ</span>')
           : '<span class="bj-player__status">考え中…</span>';
       } else if (m.phase === 'settled') {
         const o = m.outcome && m.outcome[nick];
