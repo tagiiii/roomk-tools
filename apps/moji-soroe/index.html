@@ -1,0 +1,1789 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+  <title>もじそろえゲーム | room-K</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
+  <link rel="stylesheet" href="../shared/css/design-system.css">
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+  <script src="../shared/js/rtdb-utils.js?v=20260715"></script>
+  <style>
+    /* ── 画面管理（共通パターン） ── */
+    .screen { display: none; min-height: 100dvh; }
+    .screen.active { display: flex; flex-direction: column; align-items: center; }
+    .ms-page { width: 100%; max-width: 520px; padding: 40px 20px 88px; }
+    .card + .card { margin-top: 16px; }
+    .btn + .btn { margin-top: 10px; }
+
+    .ms-section-label {
+      font-size: 12px; font-weight: 700; color: var(--color-muted);
+      letter-spacing: 0.06em; margin-bottom: 10px;
+    }
+    .ms-page__title { font-size: 22px; font-weight: 700; color: var(--color-primary); margin-bottom: 6px; }
+    .ms-page__sub   { font-size: 14px; color: var(--color-muted); margin-bottom: 20px; line-height: 1.7; }
+
+    /* ── TOP ── */
+    .ms-hero { text-align: center; padding: 52px 0 28px; }
+    .ms-hero__icon-wrap {
+      display: flex; align-items: center; justify-content: center;
+      width: 72px; height: 72px; margin: 0 auto 20px;
+      background: var(--color-accent); border-radius: 20px;
+    }
+    .ms-hero__icon-wrap .material-symbols-rounded { font-size: 40px; color: #fff; }
+    .ms-hero__title { font-size: 28px; font-weight: 700; color: var(--color-primary); }
+    .ms-hero__sub   { font-size: 14px; color: var(--color-muted); margin-top: 10px; line-height: 1.8; }
+    .ms-hero__buttons { display: flex; flex-direction: column; gap: 12px; margin-top: 36px; }
+    .ms-hint { font-size: 13px; color: var(--color-muted); text-align: center; margin-top: 4px; line-height: 1.7; }
+
+    /* ── ルームコード ── */
+    .ms-room-code {
+      font-size: 44px; font-weight: 700; letter-spacing: 0.22em;
+      color: var(--color-primary); text-align: center;
+      padding: 16px; background: #EEF3F8; border-radius: 12px;
+      margin-bottom: 12px; user-select: all;
+    }
+
+    /* ── 文字タイル ── */
+    .ms-hand { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+    .ms-tile {
+      position: relative;
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 50px; height: 64px; border-radius: 10px;
+      background: #fff; border: 2px solid var(--color-border);
+      box-shadow: var(--shadow-sm); font-family: var(--font-base);
+      font-size: 26px; font-weight: 700; color: var(--color-primary);
+      cursor: pointer; padding: 0; line-height: 1;
+      transition: transform .12s, border-color .12s, background .12s;
+    }
+    .ms-tile:hover { border-color: var(--color-accent); }
+    .ms-tile.is-selected { border-color: var(--color-accent); background: #EAF4F5; transform: translateY(-6px); }
+    .ms-tile.is-new::after {
+      content: 'new'; position: absolute; top: -8px; right: -6px;
+      font-size: 9px; font-weight: 700; color: #fff; background: var(--color-accent);
+      padding: 2px 5px; border-radius: 999px; letter-spacing: 0.04em;
+    }
+    .ms-tile { touch-action: none; user-select: none; -webkit-user-select: none; }
+    .ms-tile.is-dragging { opacity: 0.3; }
+    .ms-tile.is-drop { border-color: var(--color-accent); box-shadow: 0 0 0 3px #EAF4F5; }
+    .ms-ghost {
+      position: fixed; z-index: 300; pointer-events: none;
+      transform: translate(-50%, -50%) scale(1.08); box-shadow: 0 8px 20px rgba(0,0,0,0.18);
+    }
+    .ms-tile--small { width: 40px; height: 52px; font-size: 20px; cursor: default; }
+    .ms-tile--small:hover { border-color: var(--color-border); }
+    .ms-tile--group { border-color: var(--color-accent); }
+
+    /* ── 区切りつきの並び（2・3・3） ── */
+    .ms-split { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; align-items: center; margin-top: 10px; }
+    .ms-split__word {
+      display: inline-flex; gap: 4px; padding: 6px 8px; border-radius: 12px;
+      background: #EEF3F8; border: 1.5px dashed var(--color-border);
+    }
+    .ms-split__word.is-full { border-style: solid; border-color: var(--color-accent); background: #EAF4F5; }
+    .ms-split__len { font-size: 11px; font-weight: 700; color: var(--color-muted); align-self: center; margin-right: 2px; }
+    .ms-split__ch {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 30px; height: 36px; border-radius: 8px; background: #fff;
+      border: 1px solid var(--color-border); font-size: 18px; font-weight: 700; color: var(--color-primary);
+    }
+    .ms-split__ch.is-empty { color: var(--color-border); }
+
+    /* ── 手番エリア ── */
+    .ms-my { text-align: center; }
+    .ms-my__prompt { font-weight: 700; color: var(--color-primary); background: #EAF4F5; border-radius: var(--radius-card); padding: 12px; margin-bottom: 14px; line-height: 1.6; }
+    .ms-my__prompt--turn { background: #FFF4E5; color: #92400E; }
+    .ms-my__wait { color: var(--color-muted); font-weight: 600; margin-top: 12px; line-height: 1.6; }
+    .ms-my__tip { font-size: 12px; color: var(--color-muted); margin-top: 10px; line-height: 1.6; }
+    .ms-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 14px; }
+    .ms-confirm { margin-top: 14px; padding: 12px; border-radius: var(--radius-card); background: #FFF4E5; border: 2px solid #F0B36B; }
+    .ms-confirm__text { font-weight: 700; color: #92400E; font-size: 15px; line-height: 1.6; }
+    .ms-quiet-btn {
+      background: none; border: none; color: var(--color-muted); font-family: var(--font-base);
+      font-size: 13px; font-weight: 700; cursor: pointer; padding: 6px; text-decoration: underline;
+    }
+
+    /* ── ラウンド情報・捨て文字 ── */
+    .ms-board { text-align: center; }
+    .ms-board__round { font-size: 13px; font-weight: 700; color: var(--color-muted); letter-spacing: 0.08em; margin-bottom: 8px; }
+    .ms-board__turn { font-size: 16px; font-weight: 700; color: var(--color-primary); }
+    .ms-board__turn strong { color: var(--color-accent); }
+    .ms-board__stock { font-size: 12px; color: var(--color-muted); margin-top: 6px; }
+    .ms-discards { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; margin-top: 8px; }
+    .ms-discard {
+      display: inline-flex; align-items: center; justify-content: center;
+      min-width: 26px; height: 30px; padding: 0 5px; border-radius: 6px;
+      background: #F1F3F5; border: 1px solid var(--color-border);
+      font-size: 15px; font-weight: 700; color: var(--color-muted);
+    }
+    .ms-discard.is-latest { background: #fff; color: var(--color-primary); border-color: var(--color-accent); }
+    .ms-discards__empty { font-size: 13px; color: var(--color-muted); }
+
+    /* ── あがりチェック・ラウンド結果 ── */
+    .ms-claim { border-radius: var(--radius-card); padding: 16px; text-align: center; margin-top: 14px; background: #FFF4E5; border: 2px solid #F0B36B; }
+    .ms-claim__title { font-size: 18px; font-weight: 800; color: var(--color-primary); }
+    .ms-claim__sub { font-size: 13px; color: var(--color-muted); margin-top: 6px; line-height: 1.6; }
+    .ms-words { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 12px; }
+    .ms-word {
+      display: inline-flex; align-items: center; justify-content: center;
+      padding: 8px 14px; border-radius: 12px; background: #fff; border: 2px solid var(--color-accent);
+      font-size: 22px; font-weight: 800; color: var(--color-primary); letter-spacing: 0.08em;
+    }
+    .ms-outcome { border-radius: var(--radius-card); padding: 16px; text-align: center; margin-top: 14px; }
+    .ms-outcome--win  { background: #EAF7EE; border: 2px solid var(--color-success); }
+    .ms-outcome--draw { background: var(--color-bg); border: 2px solid var(--color-border); }
+    .ms-outcome__main { font-size: 19px; font-weight: 800; color: var(--color-primary); line-height: 1.5; }
+    .ms-outcome__sub  { font-size: 13px; font-weight: 600; color: var(--color-muted); margin-top: 6px; line-height: 1.6; }
+
+    /* ── プレイヤー一覧 ── */
+    .ms-player-list { list-style: none; }
+    .ms-player { padding: 10px 0; border-bottom: 1px solid var(--color-border); list-style: none; }
+    .ms-player:last-child { border-bottom: none; }
+    .ms-player--simple { display: flex; align-items: center; gap: 6px; }
+    .ms-player__head { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .ms-player__name { font-weight: 700; font-size: 15px; }
+    .ms-player__wins { margin-left: auto; font-size: 13px; font-weight: 700; color: var(--color-accent); white-space: nowrap; }
+    .ms-player__status { font-size: 12px; font-weight: 700; color: var(--color-muted); display: inline-block; margin-top: 4px; }
+    .ms-player__status.is-turn { color: #92400E; }
+    .ms-player__status.is-done { color: var(--color-success); }
+    .ms-player__disc { font-size: 12px; color: var(--color-error); font-weight: 700; margin-top: 4px; }
+    .ms-tag { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; }
+    .ms-tag--me   { background: var(--color-muted); color: #fff; }
+    .ms-tag--host { background: var(--color-primary); color: #fff; }
+    .ms-tag--turn { background: #F0B36B; color: #fff; }
+
+    /* ── 最終まとめ ── */
+    .ms-top-banner {
+      background: linear-gradient(135deg, #EAF7EE, #E3F2E9); border: 2px solid var(--color-success);
+      border-radius: var(--radius-card); padding: 24px 20px; text-align: center; margin-bottom: 16px;
+    }
+    .ms-top-banner .material-symbols-rounded { font-size: 44px; color: var(--color-success); }
+    .ms-top-banner p { font-size: 20px; font-weight: 700; color: var(--color-primary); margin-top: 6px; line-height: 1.5; }
+    .ms-final-list { list-style: none; }
+    .ms-final-row { padding: 10px 12px; border-radius: 12px; }
+    .ms-final-row + .ms-final-row { margin-top: 6px; }
+    .ms-final-row.is-top { background: #EAF7EE; box-shadow: 0 0 0 2px var(--color-success) inset; }
+    .ms-final-row__head { display: flex; align-items: center; gap: 8px; }
+    .ms-final-row__wins { margin-left: auto; font-weight: 800; color: var(--color-accent); }
+    .ms-history { list-style: none; margin-top: 8px; }
+    .ms-history li { font-size: 13px; color: var(--color-muted); padding: 4px 0; line-height: 1.6; }
+    .ms-history li strong { color: var(--color-primary); }
+
+    /* ── オーバーレイ ── */
+    .ms-overlay {
+      position: fixed; inset: 0; z-index: 200;
+      background: rgba(245,242,236,0.96); display: none;
+      flex-direction: column; align-items: center; justify-content: center;
+      text-align: center; padding: 32px;
+    }
+    .ms-overlay.show { display: flex; }
+    .ms-overlay__title { font-size: 18px; font-weight: 700; color: var(--color-primary); margin: 16px 0 8px; }
+    .ms-overlay__sub   { font-size: 14px; color: var(--color-muted); margin-bottom: 8px; }
+    .ms-overlay__countdown { font-size: 52px; font-weight: 700; color: var(--color-error); line-height: 1; margin: 12px 0 4px; }
+
+    @media (max-width: 600px) {
+      .ms-page { padding: 28px 16px 72px; }
+    }
+    @media (max-width: 360px) {
+      .ms-hero__title { font-size: 24px; }
+      .ms-room-code { font-size: 34px; }
+      .ms-tile { width: 42px; height: 56px; font-size: 22px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════ TOP ════════════════════════════════════ -->
+<div class="screen" id="screen-top">
+  <div class="ms-page">
+    <div class="ms-hero">
+      <div class="ms-hero__icon-wrap"><span class="material-symbols-rounded">font_download</span></div>
+      <h1 class="ms-hero__title">もじそろえゲーム</h1>
+      <p class="ms-hero__sub">ひらがなの文字タイルを引いて、捨てて、<br>手もとの8枚を「2文字・3文字・3文字」の<br>3つの言葉にそろえたら「あがり」！</p>
+    </div>
+    <div class="ms-hero__buttons">
+      <button class="btn btn-primary btn-lg btn-full" onclick="showScreen('host-setup')">
+        <span class="material-symbols-rounded">add_home</span>ルームを作る
+      </button>
+      <button class="btn btn-secondary btn-lg btn-full" onclick="showScreen('guest-join')">
+        <span class="material-symbols-rounded">login</span>入る
+      </button>
+      <p class="ms-hint">2〜5人で遊べるよ。順番に1枚引いて1枚捨てていくよ。</p>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════ HOST SETUP ════════════════════════════════════ -->
+<div class="screen" id="screen-host-setup">
+  <div class="ms-page">
+    <h2 class="ms-page__title">ルームを作る</h2>
+    <p class="ms-page__sub">あなたのニックネームを入れてね。あなたもプレイヤーとして遊ぶよ。</p>
+    <div class="form-group">
+      <label class="form-label" for="top-host-nickname">ニックネーム（1〜8文字）</label>
+      <input class="form-input" id="top-host-nickname" type="text" maxlength="8" placeholder="例：たろう" autocomplete="off">
+    </div>
+    <button class="btn btn-primary btn-full" onclick="hostCreateRoom()">
+      <span class="material-symbols-rounded">add_home</span>ルームを作る
+    </button>
+    <button class="btn btn-ghost btn-full" onclick="showScreen('top')">← 戻る</button>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════ GUEST JOIN ════════════════════════════════════ -->
+<div class="screen" id="screen-guest-join">
+  <div class="ms-page">
+    <h2 class="ms-page__title">ルームに入る</h2>
+    <p class="ms-page__sub">ニックネームとルームコードを入れてね。</p>
+    <div class="form-group">
+      <label class="form-label" for="top-guest-nickname">ニックネーム（1〜8文字）</label>
+      <input class="form-input" id="top-guest-nickname" type="text" maxlength="8" placeholder="例：はなこ" autocomplete="off">
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="top-guest-code">ルームコード（6文字）</label>
+      <input class="form-input" id="top-guest-code" type="text" maxlength="6" placeholder="XXXXXX" autocomplete="off"
+             style="text-transform:uppercase;letter-spacing:.2em;font-size:22px;text-align:center"
+             oninput="this.value=this.value.toUpperCase()">
+    </div>
+    <button class="btn btn-primary btn-full" onclick="guestJoin()">
+      <span class="material-symbols-rounded">login</span>入る
+    </button>
+    <button class="btn btn-ghost btn-full" onclick="showScreen('top')">← 戻る</button>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════ LOBBY ════════════════════════════════════ -->
+<div class="screen" id="screen-lobby">
+  <div class="ms-page">
+    <div id="lobby-host-panel" style="display:none">
+      <div class="card" style="text-align:center">
+        <p class="ms-section-label">ルームコード</p>
+        <p class="ms-room-code" id="lobby-room-code">----</p>
+        <p style="font-size:13px;color:var(--color-muted)">このコードをみんなに伝えてね</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <strong style="font-size:16px">参加者</strong>
+        <span id="lobby-count" style="font-size:13px;color:var(--color-muted)"></span>
+      </div>
+      <ul class="ms-player-list" id="lobby-list"></ul>
+    </div>
+
+    <div id="lobby-host-actions" style="display:none" class="mt-md">
+      <button class="btn btn-primary btn-full" id="btn-start" onclick="hostStartGame()" disabled>
+        <span class="material-symbols-rounded">play_arrow</span>始める
+      </button>
+      <p class="ms-hint" id="lobby-hint"></p>
+    </div>
+
+    <div id="lobby-guest-wait" style="display:none" class="card mt-md text-center">
+      <div class="spinner"></div>
+      <p style="margin-top:12px;font-weight:700;color:var(--color-primary)">ホストが始めるのを待っているよ</p>
+    </div>
+
+    <button class="btn btn-ghost btn-full mt-md" onclick="leaveLobby()">
+      <span class="material-symbols-rounded">logout</span>退出する
+    </button>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════ GAME ════════════════════════════════════ -->
+<div class="screen" id="screen-game">
+  <div class="ms-page">
+    <div class="card"><div class="ms-board" id="game-board"></div></div>
+
+    <div class="card mt-md"><div class="ms-my" id="game-my"></div></div>
+
+    <div class="card">
+      <p class="ms-section-label">みんな</p>
+      <ul class="ms-player-list" id="game-members"></ul>
+    </div>
+
+    <button class="btn btn-danger btn-full mt-md" id="btn-abort" onclick="hostFinish(true)" style="display:none">
+      <span class="material-symbols-rounded">stop_circle</span>途中で終わる
+    </button>
+    <button class="btn btn-ghost btn-full mt-md" id="btn-guest-leave-game" onclick="guestGoToTop()" style="display:none">
+      <span class="material-symbols-rounded">logout</span>退出する
+    </button>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════ RESULT ════════════════════════════════════ -->
+<div class="screen" id="screen-result">
+  <div class="ms-page">
+    <div id="result-main"></div>
+
+    <div id="result-host-actions" style="display:none" class="mt-md">
+      <button class="btn btn-primary btn-full" id="btn-rematch" onclick="hostRematch()">
+        <span class="material-symbols-rounded">replay</span>もう一度
+      </button>
+      <button class="btn btn-ghost btn-full" onclick="hostGoToTop()">
+        <span class="material-symbols-rounded">home</span>トップへ戻る
+      </button>
+    </div>
+    <button class="btn btn-ghost btn-full mt-md" id="btn-guest-leave" onclick="guestGoToTop()" style="display:none">
+      <span class="material-symbols-rounded">home</span>トップへ戻る
+    </button>
+  </div>
+</div>
+
+<!-- 再接続オーバーレイ -->
+<div class="ms-overlay" id="reconnect-overlay">
+  <div class="spinner"></div>
+  <p class="ms-overlay__title">つなぎ直しているよ...</p>
+</div>
+
+<!-- ホスト切断オーバーレイ（ゲスト用） -->
+<div class="ms-overlay" id="host-disconnect-overlay">
+  <span class="material-symbols-rounded" style="font-size:48px;color:var(--color-error)">signal_disconnected</span>
+  <p class="ms-overlay__title">ホストの通信が切れています</p>
+  <p class="ms-overlay__sub">戻ってくるのを待っているよ</p>
+  <div class="ms-overlay__countdown" id="host-disconnect-countdown">120</div>
+  <p class="ms-overlay__sub">秒後に自動で終わるよ</p>
+  <button class="btn btn-ghost btn-full" style="max-width:280px;margin-top:20px" onclick="guestGoToTop()">退出する</button>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════
+// Firebase 初期化
+// ══════════════════════════════════════════════════
+const { authReady, db } = RoomkRTDB.initFirebase(firebase);
+
+// ══════════════════════════════════════════════════
+// 定数
+// ══════════════════════════════════════════════════
+const ROOMS_PATH = 'mojisoroe_rooms';
+const SESSION_KEY = 'mojisoroe_session';
+const ORPHAN_TTL_MS = 2 * 60 * 1000;
+const MIN_PLAYERS = 2;
+const MAX_PLAYERS = 5;
+const HAND_SIZE = 7;                 // 配られる枚数。引いた1枚を足した8枚であがりを作る
+const WORD_LENS = [2, 3, 3];         // あがりの形（2文字・3文字・3文字）
+const PHASE = { TURN: 'turn', CHECK: 'check', SETTLED: 'settled' };
+const STEP = { DRAW: 'draw', DISCARD: 'discard' };
+
+// 文字タイル 120枚: 清音45音×2、濁音・半濁音25音×1、小さい文字・のばし棒5種×1
+const KANA_BASE  = 'あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわん';
+const KANA_DAKU  = 'がぎぐげござじずぜぞだぢづでどばびぶべぼぱぴぷぺぽ';
+const KANA_SMALL = 'ゃゅょっー';
+const TILE_CHARS = [...KANA_BASE, ...KANA_BASE, ...KANA_DAKU, ...KANA_SMALL];
+
+// ══════════════════════════════════════════════════
+// 状態管理
+// ══════════════════════════════════════════════════
+const state = {
+  role:          null,   // 'host' | 'guest'
+  nickname:      null,
+  roomCode:      null,
+  roomRef:       null,
+  currentScreen: null,
+  timerInterval: null,   // ホスト切断カウントダウン
+  hostDisconnectDeadline: null,
+  entryBusy:     false,  // ルーム作成・参加の連打防止
+  actionBusy:    false,  // 引く・捨てる・あがる の連打防止
+  lastRoom:      null,
+  lastTurnKey:   null,   // 手番が変わったら選択状態を捨てる
+  selectedIndex: null,   // 手札で選んでいるタイルの位置（ローカルのみ）
+  confirmDiscard: false, // 「◯を捨てる」を押した後の確認中（ローカルのみ）
+  epoch:         0,      // 退出のたびに増える世代。退出後に完了した復帰書き戻しを無効化する
+};
+
+// ══════════════════════════════════════════════════
+// ユーティリティ
+// ══════════════════════════════════════════════════
+const esc = RoomkRTDB.esc;
+const showMsg = RoomkRTDB.showToast;
+const getNow = RoomkRTDB.now;
+
+function isRoomExpired(room) {
+  return RoomkRTDB.isRoomExpired(room, ORPHAN_TTL_MS);
+}
+
+function shuffleArray(arr) {
+  const copy = [...arr];
+  for (let i = copy.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
+
+// 0〜119 のタイルID。TILE_CHARS[id] が文字
+function buildDeck() {
+  const tiles = [];
+  for (let i = 0; i < TILE_CHARS.length; i += 1) tiles.push(i);
+  return shuffleArray(tiles);
+}
+function tileChar(id) { return TILE_CHARS[Number(id)] || '?'; }
+function tilesToWord(ids) { return (ids || []).map(tileChar).join(''); }
+
+// 手札の並び順を 2・3・3 に区切る（8枚未満のときは埋まっていない枠が空になる）
+function splitHand(hand) {
+  const out = [];
+  let idx = 0;
+  WORD_LENS.forEach((len) => {
+    out.push((hand || []).slice(idx, idx + len));
+    idx += len;
+  });
+  return out;
+}
+function sameMultiset(a, b) {
+  if (!a || !b || a.length !== b.length) return false;
+  const sa = [...a].map(Number).sort((x, y) => x - y);
+  const sb = [...b].map(Number).sort((x, y) => x - y);
+  return sa.every((v, i) => v === sb[i]);
+}
+
+function maxSeat(players) {
+  return Object.values(players || {}).reduce((mx, p) => Math.max(mx, p && p.seat != null ? p.seat : -1), -1);
+}
+
+function validateNickname(value) {
+  const t = (value || '').trim();
+  if (t.length === 0) return 'ニックネームを入れてね';
+  if (t.length > 8) return '8文字以内で入れてね';
+  if (/[.#$\[\]\/]/.test(t)) return '使えない文字が入っているよ';
+  return null;
+}
+
+let _authBusy = false;
+async function waitAuthOrExplain() {
+  if (_authBusy) return false;
+  _authBusy = true;
+  try { await authReady; return true; }
+  catch { showMsg('うまくつながらなかったよ。ページを読み込みなおしてね'); return false; }
+  finally { _authBusy = false; }
+}
+
+function membersInSeatOrder(m) {
+  const members = (m && m.members) || {};
+  return Object.entries(members)
+    .sort((a, b) => ((a[1] && a[1].seat) || 0) - ((b[1] && b[1].seat) || 0))
+    .map((e) => e[0]);
+}
+
+function captureMatchState() {
+  const m = (state.lastRoom && state.lastRoom.match) || {};
+  return { matchId: m.matchId, round: m.round, phase: m.phase, turn: m.turn, step: m.step };
+}
+
+// ══════════════════════════════════════════════════
+// ラウンド進行 — 純関数（乱数なし・入力を破壊的変更しない）
+// deck はラウンド開始時に transaction の外で生成済み。配り・引きは deck[pos] からの
+// 順次消費なので、どの端末の transaction が実行しても同一結果になる。
+// ══════════════════════════════════════════════════
+
+// ラウンド開始: 全員に HAND_SIZE 枚ずつ配り、starter の「引く」から始める
+function dealRound(match, deck, starter) {
+  const nicks = membersInSeatOrder(match);
+  let pos = 0;
+  const hands = {};
+  nicks.forEach((n) => { hands[n] = deck.slice(pos, pos + HAND_SIZE).map(Number); pos += HAND_SIZE; });
+  return {
+    ...match,
+    phase: PHASE.TURN,
+    step: STEP.DRAW,
+    turn: starter,
+    deck,
+    pos,
+    hands,
+    discards: null,
+    drawnId: null,
+    claim: null,
+    winner: null,
+  };
+}
+
+// 席順で次のメンバー（メンバーが1人なら本人）
+function nextMember(match, nick) {
+  const nicks = membersInSeatOrder(match);
+  if (!nicks.length) return null;
+  const i = nicks.indexOf(nick);
+  if (i < 0) return nicks[0];
+  return nicks[(i + 1) % nicks.length];
+}
+
+function starterForRound(match, round) {
+  const nicks = membersInSeatOrder(match);
+  if (!nicks.length) return null;
+  return nicks[(Math.max(1, Number(round) || 1) - 1) % nicks.length];
+}
+
+// ══════════════════════════════════════════════════
+// セッション管理（再接続用）
+// ══════════════════════════════════════════════════
+function saveSession(matchId) {
+  sessionStorage.setItem(SESSION_KEY, JSON.stringify({
+    roomCode: state.roomCode,
+    nickname: state.nickname,
+    isHost:   state.role === 'host',
+    matchId:  matchId == null ? null : matchId,
+  }));
+}
+function loadSession() {
+  try { return JSON.parse(sessionStorage.getItem(SESSION_KEY)); } catch { return null; }
+}
+function clearSession() { sessionStorage.removeItem(SESSION_KEY); }
+function updateSessionMatchId(mid) {
+  const s = loadSession();
+  if (!s || s.matchId === mid) return;
+  s.matchId = mid;
+  sessionStorage.setItem(SESSION_KEY, JSON.stringify(s));
+}
+
+// ══════════════════════════════════════════════════
+// 画面管理
+// ══════════════════════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach((s) => s.classList.remove('active'));
+  document.getElementById('screen-' + id).classList.add('active');
+  state.currentScreen = id;
+}
+function showReconnectOverlay(show) {
+  document.getElementById('reconnect-overlay').classList.toggle('show', show);
+}
+
+// ══════════════════════════════════════════════════
+// 描画ヘルパー
+// ══════════════════════════════════════════════════
+function buildTileHtml(id, index, opts) {
+  const o = opts || {};
+  let cls = 'ms-tile';
+  if (o.selected) cls += ' is-selected';
+  if (o.isNew) cls += ' is-new';
+  const attrs = o.clickable
+    ? ' type="button" data-index="' + index + '" onclick="onTileTap(' + index + ')" aria-label="' + esc(tileChar(id)) + '"'
+    : ' type="button" disabled';
+  return '<button class="' + cls + '"' + attrs + '>' + esc(tileChar(id)) + '</button>';
+}
+
+function buildSplitHtml(hand) {
+  const groups = splitHand(hand);
+  let html = '<div class="ms-split">';
+  groups.forEach((g, gi) => {
+    const len = WORD_LENS[gi];
+    const full = g.length === len;
+    html += '<span class="ms-split__word' + (full ? ' is-full' : '') + '"><span class="ms-split__len">' + len + '文字</span>';
+    for (let i = 0; i < len; i += 1) {
+      const id = g[i];
+      html += id == null
+        ? '<span class="ms-split__ch is-empty">・</span>'
+        : '<span class="ms-split__ch">' + esc(tileChar(id)) + '</span>';
+    }
+    html += '</span>';
+  });
+  html += '</div>';
+  return html;
+}
+
+function buildWordsHtml(words) {
+  return '<div class="ms-words">' + (words || []).map((w) => '<span class="ms-word">' + esc(w) + '</span>').join('') + '</div>';
+}
+
+// ══════════════════════════════════════════════════
+// ロビー
+// ══════════════════════════════════════════════════
+function handleLobby(room) {
+  showScreen('lobby');
+  const players = room.players || {};
+  const count = Object.keys(players).length;
+  const isHost = state.role === 'host';
+  document.getElementById('lobby-count').textContent = count + '人';
+  document.getElementById('lobby-host-panel').style.display = isHost ? 'block' : 'none';
+  document.getElementById('lobby-host-actions').style.display = isHost ? 'block' : 'none';
+  document.getElementById('lobby-guest-wait').style.display = isHost ? 'none' : 'block';
+  if (isHost) document.getElementById('lobby-room-code').textContent = state.roomCode;
+  renderLobbyList(players, room.host);
+
+  if (isHost) {
+    const btn = document.getElementById('btn-start');
+    const hint = document.getElementById('lobby-hint');
+    if (count < MIN_PLAYERS) {
+      btn.disabled = true;
+      hint.textContent = 'あと' + (MIN_PLAYERS - count) + '人くると始められるよ（2〜5人）';
+    } else if (count > MAX_PLAYERS) {
+      btn.disabled = true;
+      hint.textContent = '5人まで遊べるよ';
+    } else {
+      btn.disabled = false;
+      hint.textContent = '';
+    }
+  }
+}
+
+function renderLobbyList(players, host) {
+  const entries = Object.entries(players).sort((a, b) => ((a[1] && a[1].seat) || 0) - ((b[1] && b[1].seat) || 0));
+  const html = entries.map(([nick]) => {
+    const hostTag = nick === host ? '<span class="ms-tag ms-tag--host">ホスト</span>' : '';
+    const meTag = nick === state.nickname ? '<span class="ms-tag ms-tag--me">あなた</span>' : '';
+    return '<li class="ms-player ms-player--simple"><span class="ms-player__name">' + esc(nick) + '</span>' + hostTag + meTag + '</li>';
+  }).join('');
+  document.getElementById('lobby-list').innerHTML = html;
+}
+
+// ══════════════════════════════════════════════════
+// ゲーム画面
+// ══════════════════════════════════════════════════
+function handleGame(room) {
+  showScreen('game');
+  const m = room.match;
+  // 手番・フェーズが変わったらタイルの選択を捨てる
+  const key = m ? (m.matchId + '|' + m.round + '|' + m.phase + '|' + m.turn + '|' + m.step) : 'none';
+  if (key !== state.lastTurnKey) { state.lastTurnKey = key; state.selectedIndex = null; state.confirmDiscard = false; }
+
+  renderBoard(room);
+  renderMyArea(room);
+  renderGameMembers(room);
+
+  const showAbort = state.role === 'host' && m && m.phase !== PHASE.SETTLED;
+  document.getElementById('btn-abort').style.display = showAbort ? 'block' : 'none';
+  document.getElementById('btn-guest-leave-game').style.display = state.role === 'guest' ? 'block' : 'none';
+}
+
+function renderBoard(room) {
+  const m = room.match;
+  const el = document.getElementById('game-board');
+  if (!m) { el.innerHTML = ''; return; }
+  const deck = m.deck || [];
+  const remaining = Math.max(0, deck.length - (Number(m.pos) || 0));
+  let html = '<div class="ms-board__round">ラウンド ' + (Number(m.round) || 0) + '</div>';
+
+  if (m.phase === PHASE.TURN) {
+    const isMe = m.turn === state.nickname;
+    html += isMe
+      ? '<div class="ms-board__turn"><strong>あなた</strong>の番だよ</div>'
+      : '<div class="ms-board__turn"><strong>' + esc(m.turn || '') + '</strong>さんの番だよ</div>';
+  } else if (m.phase === PHASE.CHECK) {
+    const c = m.claim || {};
+    html += '<div class="ms-board__turn"><strong>' + esc(c.nick || '') + '</strong>さんが「あがり」！</div>';
+  } else if (m.phase === PHASE.SETTLED) {
+    html += m.winner
+      ? '<div class="ms-board__turn"><strong>' + esc(m.winner.nick || '') + '</strong>さんのあがり！</div>'
+      : '<div class="ms-board__turn">山がなくなったよ</div>';
+  }
+  html += '<div class="ms-board__stock">山の残り ' + remaining + '枚</div>';
+
+  const discards = (m.discards || []).map(Number);
+  html += '<p class="ms-section-label" style="margin-top:14px">捨てられた文字</p>';
+  if (!discards.length) {
+    html += '<p class="ms-discards__empty">まだないよ</p>';
+  } else {
+    html += '<div class="ms-discards">' + discards.map((id, i) => {
+      const latest = i === discards.length - 1 ? ' is-latest' : '';
+      return '<span class="ms-discard' + latest + '">' + esc(tileChar(id)) + '</span>';
+    }).join('') + '</div>';
+  }
+  el.innerHTML = html;
+}
+
+function renderMyArea(room) {
+  if (drag.moved) { drag.renderPending = true; return; } // ドラッグ中は描画を保留（ドロップ後に描き直す）
+  const el = document.getElementById('game-my');
+  const m = room.match;
+  const me = state.nickname;
+  if (!m || !m.members || !m.members[me]) {
+    el.innerHTML = '<p class="ms-my__wait">次のラウンドから参加するよ</p>';
+    return;
+  }
+  const hand = ((m.hands && m.hands[me]) || []).map(Number);
+  const isMyTurn = m.phase === PHASE.TURN && m.turn === me;
+  const canTap = m.phase === PHASE.TURN; // 手番でなくても並べかえはできる
+  let html = '';
+
+  // ── 見出し（いま何をする番か）
+  if (m.phase === PHASE.TURN) {
+    if (isMyTurn && m.step === STEP.DRAW) {
+      html += '<p class="ms-my__prompt ms-my__prompt--turn">あなたの番！ 山から1枚引こう</p>';
+    } else if (isMyTurn && m.step === STEP.DISCARD) {
+      html += '<p class="ms-my__prompt ms-my__prompt--turn">いらない文字を1枚選んで捨てよう<br><span style="font-size:12px;font-weight:600">3つの言葉ができていたら「あがる」を押してね</span></p>';
+    } else {
+      html += '<p class="ms-my__prompt">' + esc(m.turn || '') + 'さんの番だよ。並べかえながら待とう</p>';
+    }
+  } else if (m.phase === PHASE.CHECK) {
+    const c = m.claim || {};
+    if (c.nick === me) {
+      html += '<p class="ms-my__prompt ms-my__prompt--turn">「あがり」を伝えたよ。みんなで言葉を確かめよう</p>';
+    } else {
+      html += '<p class="ms-my__prompt">' + esc(c.nick || '') + 'さんの言葉を、みんなで確かめよう</p>';
+    }
+  } else if (m.phase === PHASE.SETTLED) {
+    html += '<p class="ms-my__prompt">このラウンドは終わったよ</p>';
+  }
+
+  // ── 手札
+  html += '<p class="ms-section-label">あなたの手もと（' + hand.length + '枚）</p>';
+  html += '<div class="ms-hand">' + hand.map((id, i) => buildTileHtml(id, i, {
+    clickable: canTap,
+    selected: state.selectedIndex === i,
+    isNew: isMyTurn && m.step === STEP.DISCARD && m.drawnId != null && Number(m.drawnId) === id && hand.lastIndexOf(id) === i,
+  })).join('') + '</div>';
+  html += buildSplitHtml(hand);
+
+  // ── 操作
+  if (m.phase === PHASE.TURN) {
+    if (isMyTurn && m.step === STEP.DRAW) {
+      html += '<div class="ms-actions">'
+        + '<button class="btn btn-primary btn-full" onclick="submitDraw()"><span class="material-symbols-rounded">download</span>1枚引く</button>'
+        + '</div>';
+      html += '<p class="ms-my__tip">タイルは引っぱって好きな場所に動かせるよ（タップで選んで、動かしたい場所をタップしてもOK）</p>';
+    } else if (isMyTurn && m.step === STEP.DISCARD) {
+      const sel = state.selectedIndex;
+      const selOk = sel != null && sel >= 0 && sel < hand.length;
+      const complete = hand.length === WORD_LENS.reduce((a, b) => a + b, 0);
+      if (state.confirmDiscard && selOk) {
+        // 確認ステップ: ここで初めて手番が終わる
+        html += '<div class="ms-confirm"><p class="ms-confirm__text">「' + esc(tileChar(hand[sel])) + '」を捨てて、次の人に回す？</p></div>';
+        html += '<div class="ms-actions">'
+          + '<button class="btn btn-primary btn-full" onclick="submitDiscard()"><span class="material-symbols-rounded">delete_sweep</span>捨てて、次の人へ</button>'
+          + '<button class="ms-quiet-btn" onclick="cancelDiscard()">やめる（まだ考える）</button>'
+          + '</div>';
+      } else {
+        html += '<div class="ms-actions">'
+          + '<button class="btn btn-primary btn-full" onclick="askDiscard()"' + (selOk ? '' : ' disabled') + '>'
+          + '<span class="material-symbols-rounded">delete_sweep</span>'
+          + (selOk ? '「' + esc(tileChar(hand[sel])) + '」を捨てる' : '捨てる文字を選んでね')
+          + '</button>'
+          + '<button class="btn btn-secondary btn-full" onclick="submitClaim()"' + (complete ? '' : ' disabled') + '>'
+          + '<span class="material-symbols-rounded">celebration</span>あがる</button>'
+          + '</div>';
+        html += '<p class="ms-my__tip">捨てると次の人の番になるよ。タップで選んで「捨てる」。タイルは引っぱって並べかえられるよ</p>';
+      }
+    } else {
+      html += '<p class="ms-my__tip">タイルは引っぱって好きな場所に動かせるよ（タップで選んで、動かしたい場所をタップしてもOK）</p>';
+    }
+  } else if (m.phase === PHASE.CHECK) {
+    const c = m.claim || {};
+    html += '<div class="ms-claim"><p class="ms-claim__title">' + esc(c.nick || '') + 'さんの言葉</p>'
+      + buildWordsHtml(c.words)
+      + '<p class="ms-claim__sub">3つとも言葉になっているかな？ 意味や由来も聞いてみよう</p></div>';
+    if (state.role === 'host') {
+      html += '<div class="ms-actions">'
+        + '<button class="btn btn-primary btn-full" onclick="hostApproveClaim()"><span class="material-symbols-rounded">check_circle</span>OK！あがり</button>'
+        + '<button class="btn btn-secondary btn-full" onclick="hostRejectClaim()"><span class="material-symbols-rounded">undo</span>ちがうみたい（つづける）</button>'
+        + '</div>';
+    } else {
+      html += '<p class="ms-my__wait">ホストが「OK！あがり」を押すのを待ってるよ</p>';
+    }
+  } else if (m.phase === PHASE.SETTLED) {
+    if (m.winner) {
+      const isWinner = m.winner.nick === me;
+      html += '<div class="ms-outcome ms-outcome--win"><p class="ms-outcome__main">'
+        + (isWinner ? 'あがり！ やったね' : esc(m.winner.nick) + 'さんのあがり！')
+        + '</p>' + buildWordsHtml(m.winner.words) + '</div>';
+    } else {
+      html += '<div class="ms-outcome ms-outcome--draw"><p class="ms-outcome__main">山がなくなったよ</p>'
+        + '<p class="ms-outcome__sub">このラウンドは引き分け。次のラウンドで仕切り直そう</p></div>';
+    }
+    if (state.role === 'host') {
+      html += '<div class="ms-actions">'
+        + '<button class="btn btn-primary btn-full" onclick="hostNextRound()"><span class="material-symbols-rounded">arrow_forward</span>次のラウンド</button>'
+        + '<button class="btn btn-secondary btn-full" onclick="hostFinish(false)"><span class="material-symbols-rounded">flag</span>ここで終わる</button>'
+        + '</div>';
+    } else {
+      html += '<p class="ms-my__wait">ホストが「次のラウンド」を押すのを待ってるよ</p>';
+    }
+  }
+  el.innerHTML = html;
+}
+
+function renderGameMembers(room) {
+  const m = room.match || {};
+  const players = room.players || {};
+  const wins = m.wins || {};
+  const html = membersInSeatOrder(m).map((nick) => {
+    const isMe = nick === state.nickname;
+    const isHost = room.host === nick;
+    const connected = !!players[nick];
+    const meTag = isMe ? '<span class="ms-tag ms-tag--me">あなた</span>' : '';
+    const hostTag = isHost ? '<span class="ms-tag ms-tag--host">ホスト</span>' : '';
+    const disc = !connected ? '<p class="ms-player__disc">通信が切れています</p>' : '';
+    const handCount = ((m.hands && m.hands[nick]) || []).length;
+    const w = Number(wins[nick]) || 0;
+
+    let status = '';
+    if (m.phase === PHASE.TURN) {
+      if (m.turn === nick) {
+        status = '<span class="ms-player__status is-turn">' + (m.step === STEP.DRAW ? '引く番' : '捨てる番') + '</span>';
+      } else {
+        status = '<span class="ms-player__status">手もと ' + handCount + '枚</span>';
+      }
+    } else if (m.phase === PHASE.CHECK) {
+      status = m.claim && m.claim.nick === nick
+        ? '<span class="ms-player__status is-done">あがり宣言中</span>'
+        : '<span class="ms-player__status">手もと ' + handCount + '枚</span>';
+    } else if (m.phase === PHASE.SETTLED) {
+      status = m.winner && m.winner.nick === nick
+        ? '<span class="ms-player__status is-done">あがり！</span>'
+        : '<span class="ms-player__status">手もと ' + handCount + '枚</span>';
+    }
+    return '<li class="ms-player">'
+      + '<div class="ms-player__head"><span class="ms-player__name">' + esc(nick) + '</span>' + hostTag + meTag
+      + '<span class="ms-player__wins">あがり ' + w + '回</span></div>'
+      + status + disc + '</li>';
+  }).join('');
+  document.getElementById('game-members').innerHTML = html;
+}
+
+// ══════════════════════════════════════════════════
+// 最終まとめ画面
+// ══════════════════════════════════════════════════
+function handleResult(room) {
+  showScreen('result');
+  const m = room.match || {};
+  const nicks = membersInSeatOrder(m);
+  const wins = m.wins || {};
+  const history = m.history || [];
+  const mainEl = document.getElementById('result-main');
+
+  if (!nicks.length) {
+    mainEl.innerHTML = '<p class="ms-hint">結果がないよ</p>';
+  } else {
+    const totals = nicks.map((n) => ({ nick: n, wins: Number(wins[n]) || 0 }));
+    const max = totals.reduce((mx, t) => Math.max(mx, t.wins), 0);
+    const tops = max > 0 ? totals.filter((t) => t.wins === max).map((t) => t.nick) : [];
+    const rows = totals.map((t) => {
+      const isTop = tops.indexOf(t.nick) >= 0 ? ' is-top' : '';
+      const meTag = t.nick === state.nickname ? '<span class="ms-tag ms-tag--me">あなた</span>' : '';
+      return '<li class="ms-final-row' + isTop + '"><div class="ms-final-row__head"><span class="ms-player__name">'
+        + esc(t.nick) + '</span>' + meTag + '<span class="ms-final-row__wins">あがり ' + t.wins + '回</span></div></li>';
+    }).join('');
+    let html = '';
+    if (tops.length) {
+      const topText = tops.map((n) => esc(n)).join('さん、') + 'さん';
+      html += '<div class="ms-top-banner"><span class="material-symbols-rounded">emoji_events</span><p>いちばん多くあがったのは' + topText + '！</p></div>';
+    } else {
+      html += '<div class="ms-top-banner"><span class="material-symbols-rounded">font_download</span><p>おつかれさま！</p></div>';
+    }
+    html += '<div class="card"><ul class="ms-final-list">' + rows + '</ul></div>';
+    if (history.length) {
+      html += '<div class="card"><p class="ms-section-label">できた言葉</p><ul class="ms-history">'
+        + history.map((h) => '<li>ラウンド' + (Number(h.round) || 0) + ' <strong>' + esc(h.nick || '') + '</strong>さん: '
+          + esc((h.words || []).join('・')) + '</li>').join('')
+        + '</ul></div>';
+    }
+    const me = state.nickname;
+    if (me && !((m.members || {})[me])) {
+      html += '<p class="ms-hint mt-md">ホストが「もう一度」を押すと、あなたも参加できるよ</p>';
+    }
+    mainEl.innerHTML = html;
+  }
+
+  const isHost = state.role === 'host';
+  document.getElementById('result-host-actions').style.display = isHost ? 'block' : 'none';
+  document.getElementById('btn-guest-leave').style.display = isHost ? 'none' : 'block';
+}
+
+// ══════════════════════════════════════════════════
+// ルーム作成 / 参加
+// ══════════════════════════════════════════════════
+async function hostCreateRoom() {
+  if (state.entryBusy) return;
+  state.entryBusy = true;
+  try { await hostCreateRoomInner(); } finally { state.entryBusy = false; }
+}
+async function hostCreateRoomInner() {
+  const nickname = document.getElementById('top-host-nickname').value.trim();
+  const err = validateNickname(nickname);
+  if (err) { showMsg(err); return; }
+  if (!await waitAuthOrExplain()) return;
+
+  let roomCode = null; let roomRef = null;
+  for (let i = 0; i < 5; i += 1) {
+    const code = RoomkRTDB.generateRoomCode();
+    const ref = db.ref(ROOMS_PATH + '/' + code);
+    const initialRoom = {
+      host: nickname,
+      hostConnected: true,
+      hostDisconnectedAt: null,
+      status: 'waiting',
+      createdAt: firebase.database.ServerValue.TIMESTAMP,
+      players: { [nickname]: { isHost: true, seat: 0 } },
+    };
+    const { committed } = await ref.transaction((room) => (room ? undefined : initialRoom));
+    if (committed) { roomCode = code; roomRef = ref; break; }
+  }
+  if (!roomRef) { showMsg('ルームを作れなかったよ'); return; }
+
+  state.role = 'host';
+  state.nickname = nickname;
+  state.roomCode = roomCode;
+  state.roomRef = roomRef;
+  saveSession(null);
+  await armOnDisconnect();
+  startRoomListener();
+}
+
+async function guestJoin() {
+  if (state.entryBusy) return;
+  state.entryBusy = true;
+  try { await guestJoinInner(); } finally { state.entryBusy = false; }
+}
+async function guestJoinInner() {
+  const nickname = document.getElementById('top-guest-nickname').value.trim();
+  const roomCode = document.getElementById('top-guest-code').value.trim().toUpperCase();
+  const err = validateNickname(nickname);
+  if (err) { showMsg(err); return; }
+  if (roomCode.length !== 6) { showMsg('ルームコードは6文字だよ'); return; }
+  if (!await waitAuthOrExplain()) return;
+
+  const roomRef = db.ref(ROOMS_PATH + '/' + roomCode);
+  const preSnap = await roomRef.get();
+  if (!preSnap.exists()) { showMsg('ルームが見つからないよ'); return; }
+  const preRoom = preSnap.val();
+  if (!preRoom.status || !preRoom.host) { await removeBrokenRoom(roomRef); showMsg('そのルームはもうないみたい'); return; }
+  if (isRoomExpired(preRoom)) { await removeRoomIfExpired(roomRef); showMsg('このルームは終わっているよ'); return; }
+
+  let reason = null;
+  const { committed } = await roomRef.transaction((room) => {
+    // ローカルキャッシュ未取得（null）の初回実行では事前取得スナップショットで代用し、
+    // サーバー照会を強制する（oshitsuke-zukan と同じ確立パターン）
+    const cur = room || preRoom;
+    if (!cur) { reason = 'not_found'; return; }
+    if (!cur.status || !cur.host) { reason = 'broken'; return; }
+    if (isRoomExpired(cur)) { reason = 'expired'; return null; }
+    if (cur.hostConnected === false) { reason = 'host_gone'; return; }
+    const players = cur.players || {};
+    if (players[nickname]) { reason = 'nick_taken'; return; }
+    if (Object.keys(players).length >= MAX_PLAYERS) { reason = 'full'; return; }
+    const newPlayer = { isHost: false, seat: maxSeat(players) + 1 };
+
+    if (cur.status === 'waiting') {
+      reason = null;
+      return { ...cur, players: { ...players, [nickname]: newPlayer } };
+    }
+    // ゲーム中はラウンドの合間（settled）だけ途中参加できる
+    if (cur.status === 'playing') {
+      const m = cur.match;
+      if (!m || m.phase !== PHASE.SETTLED) { reason = 'in_round'; return; }
+      if (m.members && m.members[nickname]) { reason = 'nick_taken'; return; }
+      reason = null;
+      return {
+        ...cur,
+        players: { ...players, [nickname]: newPlayer },
+        match: {
+          ...m,
+          members: { ...(m.members || {}), [nickname]: { seat: maxSeat(m.members) + 1 } },
+          wins: { ...(m.wins || {}), [nickname]: 0 },
+        },
+      };
+    }
+    // 最終まとめ画面。players にだけ入って「もう一度」を待つ
+    if (cur.status === 'result') {
+      reason = null;
+      return { ...cur, players: { ...players, [nickname]: newPlayer } };
+    }
+    reason = 'not_waiting';
+    return;
+  });
+
+  if (!committed) {
+    const map = {
+      not_found: 'ルームが見つからないよ',
+      broken: 'そのルームはもうないみたい',
+      host_gone: 'ホストがいないみたいだよ',
+      in_round: 'いまのラウンドが終わったら入れるよ。少し待ってもう一度押してね',
+      not_waiting: 'いまは入れないよ',
+      nick_taken: 'その名前は使われているよ',
+      full: 'このルームはいっぱいだよ（5人まで）',
+    };
+    showMsg(map[reason] || '入れなかったよ');
+    return;
+  }
+  if (reason === 'expired') { showMsg('このルームは終わっているよ'); return; }
+
+  state.role = 'guest';
+  state.nickname = nickname;
+  state.roomCode = roomCode;
+  state.roomRef = roomRef;
+  saveSession(null);
+  await armOnDisconnect();
+  startRoomListener();
+}
+
+// ══════════════════════════════════════════════════
+// onDisconnect 予約（presence = ノードの有無方式）
+// ══════════════════════════════════════════════════
+async function armOnDisconnect() {
+  const roomRef = state.roomRef;
+  const nick = state.nickname;
+  if (!roomRef || !nick) return;
+  if (state.role === 'host') {
+    const upd = {
+      hostConnected: false,
+      hostDisconnectedAt: firebase.database.ServerValue.TIMESTAMP,
+    };
+    upd['players/' + nick] = null; // presence ノードも同時に消す
+    await roomRef.onDisconnect().update(upd).catch(() => {});
+  } else if (state.role === 'guest') {
+    await roomRef.child('players/' + nick).onDisconnect().remove().catch(() => {});
+  }
+}
+
+// ══════════════════════════════════════════════════
+// Firebase リスナー・画面ふりわけ
+// ══════════════════════════════════════════════════
+function startRoomListener() {
+  state.roomRef.on('value', (snap) => {
+    if (!snap.exists()) { handleRoomGone(); return; }
+    handleRoom(snap.val());
+  });
+}
+
+// ルーム消滅（ホストが削除）: 予約を解除してからトップへ
+async function handleRoomGone() {
+  const roomRef = state.roomRef;
+  clearSession();
+  if (roomRef) await RoomkRTDB.cancelRoomOnDisconnect(roomRef).catch(() => {});
+  resetLocalStateAndShowTop('ルームが閉じられたよ');
+}
+
+function handleRoom(room) {
+  state.lastRoom = room;
+
+  // 期限切れ（ホスト切断＋TTL 超過）の検知
+  if (isRoomExpired(room)) {
+    const roomRef = state.roomRef;
+    const nick = state.nickname;
+    clearSession();
+    resetLocalStateAndShowTop('このルームは終わったよ');
+    cleanupExpiredRoomAndOwnPresence(roomRef, nick);
+    return;
+  }
+
+  if (room.match && room.match.matchId != null) updateSessionMatchId(room.match.matchId);
+
+  if (state.role === 'guest') {
+    // 「もう一度」でメンバーから外れた場合はトップへ戻す（players にも居ないときだけ）
+    const inPlayers = !!(room.players && room.players[state.nickname]);
+    const inMembers = !!(room.match && room.match.members && room.match.members[state.nickname]);
+    if (room.status === 'playing' && !inMembers && !inPlayers) {
+      guestGoToTop('メンバーからはずれたよ。また遊ぶときは入りなおしてね');
+      return;
+    }
+    showHostDisconnectOverlay(room.hostConnected === false, room);
+  }
+
+  switch (room.status) {
+    case 'waiting': handleLobby(room); break;
+    case 'playing': handleGame(room); break;
+    case 'result': handleResult(room); break;
+    default: break;
+  }
+}
+
+// ══════════════════════════════════════════════════
+// タイル操作（ローカル選択 → 並べかえ）
+// ══════════════════════════════════════════════════
+function askDiscard() {
+  const m = state.lastRoom && state.lastRoom.match;
+  if (!m || m.phase !== PHASE.TURN || m.turn !== state.nickname || m.step !== STEP.DISCARD) return;
+  if (state.selectedIndex == null) { showMsg('捨てる文字を選んでね'); return; }
+  state.confirmDiscard = true;
+  renderMyArea(state.lastRoom);
+}
+function cancelDiscard() {
+  state.confirmDiscard = false;
+  renderMyArea(state.lastRoom);
+}
+
+function onTileTap(index) {
+  if (drag.suppressClick) { drag.suppressClick = false; return; } // ドラッグ直後の click は無視
+  const m = state.lastRoom && state.lastRoom.match;
+  if (!m || m.phase !== PHASE.TURN) return;
+  state.confirmDiscard = false; // タイルを触ったら確認はやり直し
+  const hand = ((m.hands && m.hands[state.nickname]) || []).map(Number);
+  if (index < 0 || index >= hand.length) return;
+  if (state.selectedIndex == null) {
+    state.selectedIndex = index;
+    renderMyArea(state.lastRoom);
+    return;
+  }
+  if (state.selectedIndex === index) {
+    state.selectedIndex = null;
+    renderMyArea(state.lastRoom);
+    return;
+  }
+  // 2回目のタップ → 選んでいたタイルをその位置へ移動
+  moveTileLocal(state.selectedIndex, index);
+}
+
+// from の位置のタイルを to の位置へ移動（間のタイルは詰める）
+function moveTile(hand, from, to) {
+  const next = [...hand];
+  const [t] = next.splice(from, 1);
+  next.splice(to, 0, t);
+  return next;
+}
+
+// ローカルの表示を先に更新してから RTDB に書く（体感を軽くする）
+function moveTileLocal(from, to) {
+  const m = state.lastRoom && state.lastRoom.match;
+  if (!m || m.phase !== PHASE.TURN) return;
+  const hand = ((m.hands && m.hands[state.nickname]) || []).map(Number);
+  if (from === to || from < 0 || to < 0 || from >= hand.length || to >= hand.length) {
+    state.selectedIndex = null;
+    renderMyArea(state.lastRoom);
+    return;
+  }
+  const next = moveTile(hand, from, to);
+  state.selectedIndex = null;
+  state.confirmDiscard = false;
+  m.hands = { ...(m.hands || {}), [state.nickname]: next };
+  renderMyArea(state.lastRoom);
+  submitReorder(hand, next);
+}
+
+// ══════════════════════════════════════════════════
+// ドラッグで並べかえ（Pointer Events。動かさずに離したときは click に任せる）
+// ══════════════════════════════════════════════════
+const drag = { from: null, el: null, ghost: null, moved: false, startX: 0, startY: 0, pointerId: null, dropIndex: null, suppressClick: false, renderPending: false };
+const DRAG_THRESHOLD = 8;
+
+function handTiles() {
+  return [...document.querySelectorAll('#game-my .ms-hand .ms-tile[data-index]')];
+}
+function dropIndexAt(x, y) {
+  const tiles = handTiles();
+  let best = null; let bestD = Infinity;
+  tiles.forEach((t) => {
+    const r = t.getBoundingClientRect();
+    const cx = r.left + r.width / 2; const cy = r.top + r.height / 2;
+    const d = (cx - x) * (cx - x) + (cy - y) * (cy - y);
+    if (d < bestD) { bestD = d; best = Number(t.dataset.index); }
+  });
+  return best;
+}
+function endDrag() {
+  if (drag.ghost) drag.ghost.remove();
+  if (drag.el) drag.el.classList.remove('is-dragging');
+  handTiles().forEach((t) => t.classList.remove('is-drop'));
+  const wasMoved = drag.moved;
+  Object.assign(drag, { from: null, el: null, ghost: null, moved: false, pointerId: null, dropIndex: null });
+  if (wasMoved && drag.renderPending && state.lastRoom) { drag.renderPending = false; renderMyArea(state.lastRoom); }
+}
+
+document.addEventListener('pointerdown', (e) => {
+  const t = e.target.closest && e.target.closest('#game-my .ms-hand .ms-tile[data-index]');
+  if (!t || t.disabled || e.button !== 0) return;
+  drag.from = Number(t.dataset.index);
+  drag.el = t;
+  drag.startX = e.clientX; drag.startY = e.clientY;
+  drag.moved = false;
+  drag.pointerId = e.pointerId;
+  try { t.setPointerCapture(e.pointerId); } catch { /* noop */ }
+});
+document.addEventListener('pointermove', (e) => {
+  if (drag.el == null || e.pointerId !== drag.pointerId) return;
+  const dx = e.clientX - drag.startX; const dy = e.clientY - drag.startY;
+  if (!drag.moved) {
+    if (dx * dx + dy * dy < DRAG_THRESHOLD * DRAG_THRESHOLD) return;
+    drag.moved = true;
+    const g = drag.el.cloneNode(true);
+    g.classList.add('ms-ghost');
+    g.classList.remove('is-selected', 'is-new');
+    g.style.width = drag.el.offsetWidth + 'px';
+    g.style.height = drag.el.offsetHeight + 'px';
+    document.body.appendChild(g);
+    drag.ghost = g;
+    drag.el.classList.add('is-dragging');
+  }
+  drag.ghost.style.left = e.clientX + 'px';
+  drag.ghost.style.top = e.clientY + 'px';
+  const idx = dropIndexAt(e.clientX, e.clientY);
+  if (idx !== drag.dropIndex) {
+    drag.dropIndex = idx;
+    handTiles().forEach((t) => t.classList.toggle('is-drop', Number(t.dataset.index) === idx && idx !== drag.from));
+  }
+});
+function onPointerEnd(e) {
+  if (drag.el == null || e.pointerId !== drag.pointerId) return;
+  if (!drag.moved) { endDrag(); return; } // タップ → click に任せる
+  const from = drag.from; const to = drag.dropIndex;
+  drag.suppressClick = true; // 直後に発火する click を無視
+  setTimeout(() => { drag.suppressClick = false; }, 300);
+  endDrag();
+  if (to != null && to !== from) moveTileLocal(from, to);
+}
+document.addEventListener('pointerup', onPointerEnd);
+document.addEventListener('pointercancel', onPointerEnd);
+
+// 並べかえは手番に関係なく行える。文字の組み合わせが変わっていないことだけ確かめる
+async function submitReorder(before, after) {
+  const cap = captureMatchState();
+  const nick = state.nickname;
+  await state.roomRef.transaction((room) => {
+    if (!room || room.status !== 'playing') return;
+    const m = room.match;
+    if (!m || m.matchId !== cap.matchId || m.round !== cap.round || m.phase !== PHASE.TURN) return;
+    const hands = m.hands || {};
+    const cur = (hands[nick] || []).map(Number);
+    if (!sameMultiset(cur, before) || !sameMultiset(cur, after)) return; // 途中で手札が変わっていたらやめる
+    return { ...room, match: { ...m, hands: { ...hands, [nick]: after } } };
+  }).catch(() => {});
+}
+
+// ══════════════════════════════════════════════════
+// 手番の操作（引く・捨てる・あがる）— すべてルームルートへの transaction
+// ══════════════════════════════════════════════════
+async function submitDraw() {
+  if (state.actionBusy) return;
+  state.actionBusy = true;
+  try { await submitDrawInner(); } finally { state.actionBusy = false; }
+}
+async function submitDrawInner() {
+  const cap = captureMatchState();
+  const nick = state.nickname;
+  const { committed } = await state.roomRef.transaction((room) => {
+    if (!room || room.status !== 'playing') return;
+    const m = room.match;
+    if (!m || m.matchId !== cap.matchId || m.round !== cap.round || m.phase !== PHASE.TURN) return;
+    if (m.turn !== nick || m.step !== STEP.DRAW) return;
+    const deck = m.deck || [];
+    const pos = Number(m.pos) || 0;
+    if (pos >= deck.length) {
+      // 山がなくなった → このラウンドは引き分け
+      return { ...room, match: { ...m, phase: PHASE.SETTLED, winner: null, drawnId: null, claim: null } };
+    }
+    const hands = m.hands || {};
+    const id = Number(deck[pos]);
+    const myHand = [...(hands[nick] || []).map(Number), id];
+    return {
+      ...room,
+      match: { ...m, hands: { ...hands, [nick]: myHand }, pos: pos + 1, step: STEP.DISCARD, drawnId: id },
+    };
+  });
+  if (!committed) showMsg('引けなかったよ');
+}
+
+async function submitDiscard() {
+  if (state.actionBusy) return;
+  state.actionBusy = true;
+  try { await submitDiscardInner(); } finally { state.actionBusy = false; }
+}
+async function submitDiscardInner() {
+  const cap = captureMatchState();
+  const nick = state.nickname;
+  const m0 = state.lastRoom && state.lastRoom.match;
+  const hand0 = ((m0 && m0.hands && m0.hands[nick]) || []).map(Number);
+  const sel = state.selectedIndex;
+  if (!state.confirmDiscard) { showMsg('捨てる文字を選んでね'); return; }
+  if (sel == null || sel < 0 || sel >= hand0.length) { showMsg('捨てる文字を選んでね'); return; }
+  const tileId = hand0[sel];
+
+  const { committed } = await state.roomRef.transaction((room) => {
+    if (!room || room.status !== 'playing') return;
+    const m = room.match;
+    if (!m || m.matchId !== cap.matchId || m.round !== cap.round || m.phase !== PHASE.TURN) return;
+    if (m.turn !== nick || m.step !== STEP.DISCARD) return;
+    const hands = m.hands || {};
+    const cur = (hands[nick] || []).map(Number);
+    const idx = cur.indexOf(tileId);
+    if (idx < 0) return;
+    const myHand = [...cur];
+    myHand.splice(idx, 1);
+    const discards = [...((m.discards || []).map(Number)), tileId];
+    return {
+      ...room,
+      match: {
+        ...m,
+        hands: { ...hands, [nick]: myHand },
+        discards,
+        turn: nextMember(m, nick),
+        step: STEP.DRAW,
+        drawnId: null,
+      },
+    };
+  });
+  state.selectedIndex = null;
+  state.confirmDiscard = false;
+  if (!committed) showMsg('捨てられなかったよ');
+}
+
+async function submitClaim() {
+  if (state.actionBusy) return;
+  state.actionBusy = true;
+  try { await submitClaimInner(); } finally { state.actionBusy = false; }
+}
+async function submitClaimInner() {
+  const cap = captureMatchState();
+  const nick = state.nickname;
+  const total = WORD_LENS.reduce((a, b) => a + b, 0);
+  const { committed } = await state.roomRef.transaction((room) => {
+    if (!room || room.status !== 'playing') return;
+    const m = room.match;
+    if (!m || m.matchId !== cap.matchId || m.round !== cap.round || m.phase !== PHASE.TURN) return;
+    if (m.turn !== nick || m.step !== STEP.DISCARD) return;
+    const hand = ((m.hands && m.hands[nick]) || []).map(Number);
+    if (hand.length !== total) return;
+    const words = splitHand(hand).map(tilesToWord);
+    return { ...room, match: { ...m, phase: PHASE.CHECK, claim: { nick, words, tiles: hand } } };
+  });
+  if (!committed) showMsg('あがれなかったよ。8枚そろっているか確かめてね');
+}
+
+// ══════════════════════════════════════════════════
+// ホスト操作（開始・あがり確認・次のラウンド・終わる・もう一度）
+// ══════════════════════════════════════════════════
+function buildMatchMembers(playersObj) {
+  const entries = Object.entries(playersObj).sort((a, b) => ((a[1] && a[1].seat) || 0) - ((b[1] && b[1].seat) || 0));
+  const members = {}; const wins = {};
+  entries.forEach(([nick], i) => { members[nick] = { seat: i }; wins[nick] = 0; });
+  return { members, wins };
+}
+
+async function hostStartGame() {
+  if (state.role !== 'host' || !state.roomRef) return;
+  const deck = buildDeck(); // 乱数は transaction の外で生成
+  let reason = null;
+  const { committed } = await state.roomRef.transaction((room) => {
+    if (!room || room.status !== 'waiting') { reason = 'invalid'; return; }
+    if (room.host !== state.nickname) { reason = 'invalid'; return; }
+    const players = room.players || {};
+    if (!players[state.nickname] || !players[state.nickname].isHost) { reason = 'invalid'; return; }
+    const count = Object.keys(players).length;
+    if (count < MIN_PLAYERS || count > MAX_PLAYERS) { reason = 'count'; return; }
+    reason = null;
+    const { members, wins } = buildMatchMembers(players);
+    const base = { matchId: 1, members, wins, round: 1, history: null };
+    return { ...room, status: 'playing', match: dealRound(base, deck, starterForRound(base, 1)) };
+  });
+  if (committed) window.RoomkStats?.count('round');
+  if (!committed) showMsg(reason === 'count' ? '2〜5人で始められるよ' : '始められなかったよ');
+}
+
+async function hostApproveClaim() {
+  if (state.role !== 'host' || !state.roomRef) return;
+  const cap = captureMatchState();
+  const { committed } = await state.roomRef.transaction((room) => {
+    if (!room || room.status !== 'playing' || room.host !== state.nickname) return;
+    const m = room.match;
+    if (!m || m.matchId !== cap.matchId || m.round !== cap.round || m.phase !== PHASE.CHECK) return;
+    const c = m.claim;
+    if (!c || !c.nick) return;
+    const wins = { ...(m.wins || {}) };
+    wins[c.nick] = (Number(wins[c.nick]) || 0) + 1;
+    const history = [...(m.history || []), { round: m.round, nick: c.nick, words: c.words || [] }];
+    return {
+      ...room,
+      match: { ...m, phase: PHASE.SETTLED, winner: { nick: c.nick, words: c.words || [] }, wins, history, claim: null },
+    };
+  });
+  if (!committed) showMsg('確定できなかったよ');
+}
+
+async function hostRejectClaim() {
+  if (state.role !== 'host' || !state.roomRef) return;
+  const cap = captureMatchState();
+  const { committed } = await state.roomRef.transaction((room) => {
+    if (!room || room.status !== 'playing' || room.host !== state.nickname) return;
+    const m = room.match;
+    if (!m || m.matchId !== cap.matchId || m.round !== cap.round || m.phase !== PHASE.CHECK) return;
+    const c = m.claim;
+    if (!c || !c.nick) return;
+    // 宣言した人の「捨てる」に戻す（その人がメンバーから抜けていたら次の人の「引く」へ）
+    const stillIn = !!(m.members && m.members[c.nick]);
+    return {
+      ...room,
+      match: {
+        ...m,
+        phase: PHASE.TURN,
+        turn: stillIn ? c.nick : nextMember(m, c.nick),
+        step: stillIn ? STEP.DISCARD : STEP.DRAW,
+        claim: null,
+      },
+    };
+  });
+  if (!committed) showMsg('戻せなかったよ');
+}
+
+async function hostNextRound() {
+  if (state.role !== 'host' || !state.roomRef) return;
+  const deck = buildDeck(); // 乱数は transaction の外で生成
+  const cap = captureMatchState();
+  let reason = null;
+  const { committed } = await state.roomRef.transaction((room) => {
+    if (!room || room.status !== 'playing' || room.host !== state.nickname) { reason = 'invalid'; return; }
+    const m = room.match;
+    if (!m || m.matchId !== cap.matchId || m.round !== cap.round || m.phase !== PHASE.SETTLED) { reason = 'invalid'; return; }
+    if (Object.keys(m.members || {}).length < MIN_PLAYERS) { reason = 'count'; return; }
+    reason = null;
+    const round = (Number(m.round) || 0) + 1;
+    const base = { ...m, round };
+    return { ...room, match: dealRound(base, deck, starterForRound(base, round)) };
+  });
+  if (committed) window.RoomkStats?.count('round');
+  if (!committed) showMsg(reason === 'count' ? '2人以上いないと次のラウンドは始められないよ' : '進められなかったよ');
+}
+
+async function hostFinish(needConfirm) {
+  if (state.role !== 'host' || !state.roomRef) return;
+  if (needConfirm && !confirm('ここでゲームを終わるよ。いまのラウンドはなしになるけどいい？')) return;
+  const { committed } = await state.roomRef.transaction((room) => {
+    if (!room || room.status !== 'playing' || room.host !== state.nickname) return;
+    return { ...room, status: 'result' }; // match は残す（まとめは members/wins/history から表示）
+  });
+  if (!committed) showMsg('終われなかったよ');
+}
+
+async function hostRematch() {
+  if (state.role !== 'host' || !state.roomRef) return;
+  const deck = buildDeck(); // 乱数は transaction の外で生成
+  const cap = captureMatchState();
+  let reason = null;
+  const { committed } = await state.roomRef.transaction((room) => {
+    if (!room || room.status !== 'result' || room.host !== state.nickname) { reason = 'invalid'; return; }
+    if (!room.match || room.match.matchId !== cap.matchId) { reason = 'invalid'; return; }
+    // players ノードのある（＝接続中の）人だけで仕切り直す
+    const active = Object.entries(room.players || {}).sort((a, b) => ((a[1] && a[1].seat) || 0) - ((b[1] && b[1].seat) || 0));
+    if (active.length < MIN_PLAYERS) { reason = 'count'; return; }
+    const newPlayers = {};
+    active.forEach(([nick], i) => { newPlayers[nick] = { isHost: nick === room.host, seat: i }; });
+    if (!newPlayers[room.host]) { reason = 'no_host'; return; }
+    reason = null;
+    const { members, wins } = buildMatchMembers(newPlayers);
+    const base = { matchId: room.match.matchId + 1, members, wins, round: 1, history: null };
+    return { ...room, status: 'playing', players: newPlayers, match: dealRound(base, deck, starterForRound(base, 1)) };
+  });
+  if (committed) window.RoomkStats?.count('round');
+  if (!committed) showMsg(reason === 'count' ? '2人以上つながっていないと、もう一度はできないよ' : 'もう一度できなかったよ');
+}
+
+// ══════════════════════════════════════════════════
+// ホスト切断オーバーレイ（ゲスト用・カウントダウン）
+// ══════════════════════════════════════════════════
+function showHostDisconnectOverlay(show, room) {
+  const overlay = document.getElementById('host-disconnect-overlay');
+  overlay.classList.toggle('show', show);
+  if (show) {
+    const dAt = RoomkRTDB.getHostDisconnectedAt(room);
+    state.hostDisconnectDeadline = (dAt == null ? getNow() : dAt) + ORPHAN_TTL_MS;
+    if (!state.timerInterval) {
+      state.timerInterval = setInterval(() => {
+        const remaining = Math.max(0, Math.ceil((state.hostDisconnectDeadline - getNow()) / 1000));
+        const el = document.getElementById('host-disconnect-countdown');
+        if (el) el.textContent = remaining;
+        if (remaining <= 0) {
+          clearInterval(state.timerInterval);
+          state.timerInterval = null;
+          const roomRef = state.roomRef;
+          const nick = state.nickname;
+          clearSession();
+          resetLocalStateAndShowTop('ホストが戻ってこなかったので終わったよ');
+          cleanupExpiredRoomAndOwnPresence(roomRef, nick);
+        }
+      }, 1000);
+    }
+  } else if (state.timerInterval) {
+    clearInterval(state.timerInterval);
+    state.timerInterval = null;
+    state.hostDisconnectDeadline = null;
+  }
+}
+
+// ══════════════════════════════════════════════════
+// 期限切れ・壊れルームの削除（transaction）
+// ══════════════════════════════════════════════════
+async function removeRoomIfExpired(roomRef) {
+  try {
+    const preSnap = await roomRef.get();
+    if (!preSnap.exists()) return true; // すでに無い＝掃除不要
+    const preRoom = preSnap.val();
+    const { committed } = await roomRef.transaction((room) => {
+      const cur = room || preRoom; // ローカルキャッシュ null 対策（サーバー照会を強制）
+      if (cur == null) return;
+      return isRoomExpired(cur) ? null : undefined; // 生きていれば消さない
+    });
+    return committed;
+  } catch { return false; }
+}
+
+// 期限切れで自分が離脱する経路の共通処理。
+// 削除 transaction が abort した（＝ホストが復帰しルームが生きていた）場合は、
+// 退出済みの自分の presence ノードだけを消して残留を防ぐ。
+function cleanupExpiredRoomAndOwnPresence(roomRef, nick) {
+  if (!roomRef) return;
+  RoomkRTDB.cancelRoomOnDisconnect(roomRef)
+    .then(() => removeRoomIfExpired(roomRef))
+    .then((deleted) => {
+      if (!deleted && nick) return roomRef.child('players/' + nick).remove();
+    })
+    .catch(() => {});
+}
+async function removeBrokenRoom(roomRef) {
+  try {
+    const preSnap = await roomRef.get();
+    if (!preSnap.exists()) return;
+    const preRoom = preSnap.val();
+    await roomRef.transaction((room) => {
+      const cur = room || preRoom; // ローカルキャッシュ null 対策
+      if (cur == null) return;
+      if (!cur.status || !cur.host) return null;
+      return undefined;
+    });
+  } catch { /* noop */ }
+}
+
+// ══════════════════════════════════════════════════
+// 退出・トップへ戻る
+// ══════════════════════════════════════════════════
+function resetLocalStateAndShowTop(msg) {
+  if (state.timerInterval) { clearInterval(state.timerInterval); state.timerInterval = null; }
+  state.hostDisconnectDeadline = null;
+  document.getElementById('host-disconnect-overlay').classList.remove('show');
+  document.getElementById('reconnect-overlay').classList.remove('show');
+  if (state.roomRef) state.roomRef.off();
+  state.epoch += 1;
+  Object.assign(state, {
+    role: null, nickname: null, roomCode: null, roomRef: null,
+    lastRoom: null, lastTurnKey: null, selectedIndex: null, confirmDiscard: false,
+  });
+  ['top-host-nickname', 'top-guest-nickname', 'top-guest-code'].forEach((id) => {
+    const e = document.getElementById(id); if (e) e.value = '';
+  });
+  showScreen('top');
+  if (msg) showMsg(msg, false);
+}
+
+async function hostGoToTop() {
+  clearSession();
+  const roomRef = state.roomRef;
+  if (roomRef) {
+    roomRef.off();
+    await RoomkRTDB.cancelRoomOnDisconnect(roomRef);
+    await roomRef.remove().catch(() => {});
+  }
+  resetLocalStateAndShowTop();
+}
+
+// ゲストの退出は players と match の両方から自分を抜く。
+// 自分の手番だったときは次の人に手番を渡す（進行を止めない）
+async function removeSelfFromRoom(roomRef, nick) {
+  const preSnap = await roomRef.get().catch(() => null);
+  const preRoom = preSnap && preSnap.exists() ? preSnap.val() : null;
+  await roomRef.transaction((room) => {
+    const cur = room || preRoom; // ローカルキャッシュ null 対策
+    if (!cur) return;
+    const players = { ...(cur.players || {}) };
+    delete players[nick];
+    let match = cur.match || null;
+    if (match && match.members && match.members[nick] && cur.status === 'playing') {
+      const members = { ...match.members };
+      delete members[nick];
+      if (!Object.keys(members).length) return null; // 誰も残らなければルームごと削除（通常はホストが残る）
+      const strip = (obj) => {
+        const o = { ...(obj || {}) };
+        delete o[nick];
+        return Object.keys(o).length ? o : null;
+      };
+      // 抜ける人の手もとは捨て札には戻さない（山にも戻さない）
+      const next = match.turn === nick ? nextMember(match, nick) : match.turn;
+      match = { ...match, members, wins: strip(match.wins), hands: strip(match.hands) };
+      if (match.phase === PHASE.TURN && match.turn === nick) {
+        match.turn = next;
+        match.step = STEP.DRAW;
+        match.drawnId = null;
+      } else if (match.phase === PHASE.CHECK && match.claim && match.claim.nick === nick) {
+        match.phase = PHASE.TURN;
+        match.turn = next;
+        match.step = STEP.DRAW;
+        match.drawnId = null;
+        match.claim = null;
+      }
+    }
+    return { ...cur, players, match };
+  });
+}
+
+async function guestGoToTop(msg) {
+  clearSession();
+  const roomRef = state.roomRef;
+  const nick = state.nickname;
+  if (roomRef) {
+    roomRef.off();
+    await RoomkRTDB.cancelRoomOnDisconnect(roomRef); // players/{nick} の remove 予約も取り消す
+    if (nick) await removeSelfFromRoom(roomRef, nick).catch(() => {});
+  }
+  resetLocalStateAndShowTop(msg);
+}
+
+function leaveLobby() {
+  if (state.role === 'host') hostGoToTop(); else guestGoToTop();
+}
+
+async function bailToTop(msg) {
+  const roomRef = state.roomRef;
+  clearSession();
+  if (roomRef) {
+    roomRef.off();
+    await RoomkRTDB.cancelRoomOnDisconnect(roomRef).catch(() => {});
+  }
+  resetLocalStateAndShowTop(msg);
+}
+
+// ══════════════════════════════════════════════════
+// 復帰の書き戻し（presence 再作成）— 単純 update ではなく transaction
+// ══════════════════════════════════════════════════
+async function writeBackPresence() {
+  const roomRef = state.roomRef;
+  const nick = state.nickname;
+  const isHost = state.role === 'host';
+  if (!roomRef || (state.role !== 'host' && state.role !== 'guest')) return { committed: false, reason: 'norole' };
+
+  // ローカルキャッシュ未取得（null）の初回実行に備えて事前取得（サーバー照会の強制用）
+  let preRoom = null;
+  try {
+    const preSnap = await roomRef.get();
+    preRoom = preSnap.exists() ? preSnap.val() : null;
+  } catch { /* transaction 側の判定に任せる */ }
+
+  let reason = null;
+  const { committed } = await roomRef.transaction((room) => {
+    const cur = room || preRoom;
+    if (!cur || !cur.status) { reason = 'gone'; return; }
+    if (isRoomExpired(cur)) { reason = 'expired'; return; }
+    if (isHost && cur.host !== nick) { reason = 'gone'; return; } // ホストを名乗る復帰は host 本人のみ
+
+    if (cur.status === 'waiting') {
+      const players = cur.players || {};
+      if (!players[nick] && Object.keys(players).length >= MAX_PLAYERS) { reason = 'full'; return; }
+      const seat = players[nick] ? players[nick].seat : (maxSeat(players) + 1);
+      reason = null;
+      const patch = { ...cur, players: { ...players, [nick]: { isHost, seat } } };
+      if (isHost) { patch.hostConnected = true; patch.hostDisconnectedAt = null; }
+      return patch;
+    }
+
+    // playing / result
+    const members = (cur.match && cur.match.members) || {};
+    if (!members[nick]) {
+      // 最終まとめ画面なら、メンバーでなくても players に戻って「もう一度」を待てる
+      if (cur.status !== 'result' || isHost) { reason = 'not_member'; return; }
+      const players = cur.players || {};
+      if (!players[nick] && Object.keys(players).length >= MAX_PLAYERS) { reason = 'full'; return; }
+      const seat = players[nick] ? players[nick].seat : (maxSeat(players) + 1);
+      reason = null;
+      return { ...cur, players: { ...players, [nick]: { isHost: false, seat } } };
+    }
+    reason = null;
+    const patch = { ...cur, players: { ...(cur.players || {}), [nick]: { isHost, seat: members[nick].seat } } };
+    if (isHost) { patch.hostConnected = true; patch.hostDisconnectedAt = null; }
+    return patch;
+  });
+
+  return { committed, reason };
+}
+
+// ══════════════════════════════════════════════════
+// .info/connected 追従（自動再接続で presence が消えたままになるのを防ぐ）
+// ══════════════════════════════════════════════════
+function startConnectionWatch() {
+  db.ref('.info/connected').on('value', (snap) => {
+    if (snap.val() === true) handleReconnected();
+  });
+}
+
+async function handleReconnected() {
+  if (!state.roomRef || (state.role !== 'host' && state.role !== 'guest')) return;
+  const epoch = state.epoch;
+  const roomRef = state.roomRef;
+  const nick = state.nickname;
+  const { committed, reason } = await writeBackPresence();
+  if (state.epoch !== epoch) {
+    // 書き戻し中に退出した → 復活させてしまった presence を消して終わり
+    if (committed && nick) roomRef.child('players/' + nick).remove().catch(() => {});
+    return;
+  }
+  if (!committed) {
+    if (reason === 'norole') return;
+    let msg = 'ルームが閉じられたよ';
+    if (reason === 'not_member') msg = 'メンバーからはずれたよ。また遊ぶときは入りなおしてね';
+    else if (reason === 'full') msg = '部屋がいっぱいで戻れなかったよ';
+    await bailToTop(msg);
+    return;
+  }
+  await armOnDisconnect(); // commit 成功後に予約を張り直す
+}
+
+// ══════════════════════════════════════════════════
+// 再接続（リロード復帰）
+// ══════════════════════════════════════════════════
+async function tryReconnect() {
+  const session = loadSession();
+  if (!session || !session.roomCode || !session.nickname) { clearSession(); return false; }
+  const { nickname, roomCode, isHost } = session;
+  showReconnectOverlay(true);
+  try {
+    await authReady;
+    const roomRef = db.ref(ROOMS_PATH + '/' + roomCode);
+    const snap = await roomRef.get();
+    if (!snap.exists()) { clearSession(); return false; }
+    const room = snap.val();
+    if (!room.status || !room.host) { await removeBrokenRoom(roomRef); clearSession(); return false; }
+    if (isRoomExpired(room)) { await removeRoomIfExpired(roomRef); clearSession(); return false; }
+    if (room.status === 'playing') {
+      const members = (room.match && room.match.members) || {};
+      if (!members[nickname]) { clearSession(); showMsg('メンバーからはずれたよ', false); return false; }
+    }
+
+    state.role = isHost ? 'host' : 'guest';
+    state.nickname = nickname;
+    state.roomCode = roomCode;
+    state.roomRef = roomRef;
+
+    const { committed, reason } = await writeBackPresence();
+    if (!committed) {
+      Object.assign(state, { role: null, nickname: null, roomCode: null, roomRef: null });
+      clearSession();
+      if (reason === 'not_member') showMsg('メンバーからはずれたよ', false);
+      return false;
+    }
+    saveSession(room.match ? room.match.matchId : null);
+    await armOnDisconnect();
+    startRoomListener();
+    return true;
+  } catch {
+    clearSession();
+    return false;
+  } finally {
+    showReconnectOverlay(false);
+  }
+}
+
+// ══════════════════════════════════════════════════
+// 初期化
+// ══════════════════════════════════════════════════
+startConnectionWatch();
+tryReconnect().then((reconnected) => {
+  if (!reconnected) showScreen('top');
+});
+</script>
+<script src="../shared/js/stats.js?v=1" defer></script>
+<script src="../shared/js/howto.js"></script>
+<script>
+  RoomkHowto.init({
+    title: 'あそびかた',
+    lead: 'ひらがなの文字タイルを1枚引いて1枚捨てる、を順番にくり返し、手もとの8枚を「2文字・3文字・3文字」の3つの言葉にそろえるゲームです。',
+    sections: [
+      { heading: 'はじめかた', items: [
+        'ホストが「ルームを作る」からルームを作る（ホストもプレイヤーとして遊ぶよ）',
+        'ルームコードをみんなに伝える',
+        'ほかの人は「入る」からニックネームとコードを入れて参加する',
+        'ホストが「始める」を押すとスタート（2〜5人）',
+      ] },
+      { heading: 'すすめかた', items: [
+        '最初はみんな7枚。自分の番になったら「1枚引く」で山から1枚もらう',
+        '8枚の中からいらない文字をタップして選び、「◯を捨てる」→「捨てて、次の人へ」を押す。ここで次の人の番になるよ',
+        'タイルは引っぱって好きな場所に動かせる（タップで選んで、動かしたい場所をタップしてもOK）。上の枠に「2文字・3文字・3文字」の並びが出るよ',
+        '8枚が3つの言葉になったら「あがる」を押す。みんなで言葉を確かめて、ホストが「OK！あがり」を押したらそのラウンドはあがり',
+        '山がなくなったら、そのラウンドは引き分け',
+      ] },
+      { heading: 'おわりかた', text: '好きなだけラウンドを遊んで、ホストが「ここで終わる」を押すと、できた言葉のまとめが出るよ。' },
+    ],
+  });
+</script>
+</body>
+</html>
