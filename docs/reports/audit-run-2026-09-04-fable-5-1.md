@@ -35,18 +35,18 @@
 finding_id:   P1-1
 dedupe_key:   app:kaburazu-hint:inline-onclick-encodeuricomponent-nick
 status:       新規
-scope:        app:kaburazu-hint（同型は app:toomawashi にもあるが現状は静的データのみ）
+scope:        app:kaburazu-hint（同型は app:toomawashi にもあるが現在は静的データのみで、単一引用符を含む値もないため現時点の実害なし）
 基づく:       観測（コード読解で決定的。ランタイム未実測）
-根拠:         apps/kaburazu-hint/index.html:1147（encodeURIComponent(nick)）、:1162（onclick="toggleHint('${encodedNick}')"）、:1169-1170（decodeURIComponent で復元）、:683-687（validNick は . # $ / [ ] のみ禁止＝ ' ( ) は通る）、:1157（同じカードに data-nick="${esc(nick)}" が既にある）、:1118（reviewHintsData は RTDB round.hints 由来＝他プレイヤー入力）
-              同型: apps/toomawashi/index.html:1500, :1519（値は packs.js の静的 choices/aspects。現在 ' ( ) を含む語なし）
+根拠:         apps/kaburazu-hint/index.html:1147（encodeURIComponent(nick)）、:1162（onclick="toggleHint('${encodedNick}')"）、:1169-1170（decodeURIComponent で復元）、:683-687（validNick は . # $ / [ ] のみ禁止＝単一引用符 ' を禁止していない）、:1157（同じカードに data-nick="${esc(nick)}" が既にある）、:1118（reviewHintsData は RTDB round.hints 由来＝他プレイヤー入力）
+              同型: apps/toomawashi/index.html:1500, :1519（値は packs.js の静的 choices/aspects。現在、単一引用符を含む語はない）
 機械チェック: lint 全パス（SEC-1 は innerHTML の HTML 文脈のみ検査。属性内 JS 文字列文脈は検査対象外＝ルールの穴）
-再現/観察:    ゲストが「ま'ち」（8文字以内・validNick 通過）で参加 → ヒント提出 → ホストのレビュー画面で当該カードの表示/除外トグルを押す。encodeURIComponent は ' ( ) ! * ~ を符号化しないため onclick が JS 構文エラー → 期待「除外が切り替わる」／実際「無反応」。8文字上限のため任意コード注入は実質困難で、実害は機能停止側
+再現/観察:    ゲストが「ま'ち」（8文字以内・validNick 通過）で参加 → ヒント提出 → ホストのレビュー画面で当該カードの表示/除外トグルを押す。encodeURIComponent は単一引用符 ' を符号化しないため、生成される onclick="toggleHint('%E3%81%BE'%E3%81%A1')" でインライン JavaScript の文字列が壊れ構文エラー → 期待「除外が切り替わる」／実際「無反応」。丸括弧だけの名前（例「a)b(」→ toggleHint('a)b(')）は有効な JavaScript で構文エラーにならないため再現ケースではない（2026-09-04 に node で確認）。8文字上限のため任意コード注入は実質困難で、実害は機能停止側
 利用者影響:   ホスト（スタッフ/子ども）が重複ヒントを除外できない。当該ゲストは自分の名前が原因と気づけない
 深刻度:       中
 確信度:       高
 変更リスク:   低（1アプリのイベント配線のみ・RTDB スキーマ不変）
 提案アクション: インライン onclick をやめ、koedake-theater（:1123 data-nick → :1131 btn.dataset.nick）と同じ「data-nick 属性＋イベント委譲」へ。カードには既に data-nick（:1157, esc 済み）があるので closest('.kbz-hint-card').dataset.nick を読むだけでよい。toomawashi:1500,1519 の同型は現状静的データのみで実害がないため B-23 には含めず、将来 choices/aspects を動的データ（ユーザー入力・RTDB 取得値）で扱うようになった時点の別候補として本報告に残す
-受入条件:     ①stub（reviewHintsData に「ま'ち」「a)b(」を合成）でトグルが動く ②既存ニックネームの挙動不変 ③lint 緑 ④任意: lint に「on* 属性内で encodeURIComponent(…) を使わない」検出を追加（Tier A）
+受入条件:     ①stub（reviewHintsData に「ま'ち」を合成）でトグルが動く。通常文字の名前（例「a)b(」「普通」）はイベント配線変更後も扱えることを確認する非回帰ケースとしてのみ使う ②既存ニックネームの挙動不変 ③lint 緑 ④任意: lint に「on* 属性内で encodeURIComponent(…) を使わない」検出を追加（Tier A）
 提案Tier:     B（本体修正）／A（lint 拡張）
 判断待ち:     不要
 ```
