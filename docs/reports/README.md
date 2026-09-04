@@ -14,6 +14,7 @@
 
 ## 一覧
 
+- [c10-emulator-results-2026-09-05.md](c10-emulator-results-2026-09-05.md) — ホスト再接続・ゲスト切断復帰・リロード・開始再戦の二度押しを隔離 Firebase で調べた記録（C-10、P2-1 / P2-2 / P4-1 / P4-4、2026-09-05）
 - [c1-nandoku-verification-batch1.md](c1-nandoku-verification-batch1.md) — 難読地名・駅名クイズの事実再検証 第1回・nandoku-chimei 20問（C-1、2026-07-11）
 - [c2-aria-role-candidates.md](c2-aria-role-candidates.md) — aria/role ゼロアプリの実測と改善候補リスト（C-2、2026-07-11）
 - [c3-contrast-report.md](c3-contrast-report.md) — muted テキスト×小フォントの WCAG AA コントラスト実測（C-3、2026-07-11）
