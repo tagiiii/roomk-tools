@@ -1093,6 +1093,11 @@
     }
     const alreadyInRoom = room.players && room.players[nickname];
 
+    // ホストと同じニックネームでは復帰させない（ホストのノードを消させないため）
+    if (alreadyInRoom && alreadyInRoom.isHost) {
+      showError('guest-join-error', 'そのニックネームはすでに使われています'); return;
+    }
+
     // ゲーム中に同じニックネームで再参加（再接続）
     if (room.status !== 'waiting' && alreadyInRoom) {
       state.nickname = nickname;
