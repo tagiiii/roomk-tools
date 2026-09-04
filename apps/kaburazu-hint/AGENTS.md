@@ -363,6 +363,14 @@ sessionStorage.removeItem('kaburazuhint_session');
 
 ### XSS 対策
 - ニックネーム・ヒント・回答を DOM に挿入する際は `esc()` でエスケープ
+- **inline handler へ動的文字列を埋め込まない**（2026-09-04 B-23）: screen-review のヒントカード切替は、
+  以前 `onclick="toggleHint('${encodeURIComponent(nick)}')"` でニックネームを JS 文字列へ埋め込んでいた。
+  `encodeURIComponent` は単一引用符 `'` を符号化せず、ニックネーム検証も `'` を禁止していないため、
+  「ま'ち」のような名前で属性内 JavaScript の文字列が壊れ、切替ボタンが無反応になっていた。
+  現在は `#review-hint-list` への委譲リスナー1本（初回描画時に1度だけ登録）で click を受け、
+  `esc()` 済みの `data-nick` 属性（`.kbz-hint-card`）から元のニックネームを読んで `toggleHint(nick)` へ渡す。
+  再描画のたびにリスナーは増えず、`disabled` の自動除外カードは click 自体が発火しない。
+  ユーザー由来の値は HTML 属性（`esc()`）か `dataset` 経由で扱い、`onclick` 等の属性内 JS には入れない。
 
 ### リスナーのクリーンアップ
 - 退出・TOP 画面遷移時に `roomRef.off()` を呼ぶ

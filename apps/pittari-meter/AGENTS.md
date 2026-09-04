@@ -125,7 +125,7 @@ pittari_rooms/{roomCode}/
 | 出題者切断（guessing 以降） | ヒントは提出済みのため、そのままラウンドを続行できる（対応不要） |
 
 - 再接続: sessionStorage `pittari_session` から復元。ゲストはプレイヤーデータが消えていれば `{ isHost:false, guess:null, decided:false }` で再追加（turnOrder は不変なので出題順は保たれる）
-- ゲーム中の同名再参加（別タブ・別端末）も再接続として扱う
+- ゲーム中の同名再参加（別タブ・別端末）も再接続として扱う。ただし**ゲストの名前だけ**で、ホストと同じ名前での入室は `waiting` 中と同じく「そのニックネームはすでに使われています」で拒否する（`hostPlays` が true でも同じ）
 - TTL 判定は `RoomkRTDB.now()` / `RoomkRTDB.isRoomExpired()` でサーバー時刻補正
 - 未決定のゲストがいてもホストは「結果発表」で進行できる（1人以上決定が条件）
 

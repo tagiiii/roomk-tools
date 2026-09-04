@@ -1141,10 +1141,26 @@ function initReviewScreen(round) {
   renderReviewCards();
 }
 
+// ヒントカードの切替はコンテナへの委譲リスナー1本で受ける（再描画のたびに登録しない）。
+// ニックネームは inline onclick の JS 文字列へ埋め込まず、esc 済みの data-nick 属性から読む。
+// （inline handler へ動的文字列を埋め込むと、単一引用符を含む名前で文字列が壊れる。B-23）
+let reviewListWired = false;
+function wireReviewList(container) {
+  if (reviewListWired) return;
+  reviewListWired = true;
+  container.addEventListener('click', (e) => {
+    const btn = e.target.closest('.kbz-hint-card__toggle');
+    if (!btn || btn.disabled || !container.contains(btn)) return;
+    const nick = btn.closest('.kbz-hint-card')?.dataset.nick;
+    if (nick == null) return;
+    toggleHint(nick);
+  });
+}
+
 function renderReviewCards() {
   const container = document.getElementById('review-hint-list');
+  wireReviewList(container);
   container.innerHTML = Object.entries(reviewHintsData).map(([nick, h]) => {
-    const encodedNick = encodeURIComponent(nick);
     const isExcl = reviewExcluded.has(nick);
     const isAuto = reviewAutoExcluded.has(nick);
     const isMissing = reviewMissingSet.has(nick);
@@ -1159,15 +1175,14 @@ function renderReviewCards() {
         <div class="kbz-hint-card__text ${isExcl && !isMissing ? 'strikethrough' : ''}">${text}</div>
         <div><span class="kbz-hint-card__author">${esc(nick)}</span>${badge}</div>
       </div>
-      <button class="kbz-hint-card__toggle" onclick="toggleHint('${encodedNick}')" ${isAuto ? 'disabled' : ''} aria-label="ヒントの表示・除外を切り替え">
+      <button type="button" class="kbz-hint-card__toggle" ${isAuto ? 'disabled' : ''} aria-label="ヒントの表示・除外を切り替え">
         <span class="material-symbols-rounded" aria-hidden="true">${isExcl ? 'visibility_off' : 'visibility'}</span>
       </button>
     </div>`;
   }).join('');
 }
 
-function toggleHint(encodedNick) {
-  const nick = decodeURIComponent(encodedNick);
+function toggleHint(nick) {
   if (reviewAutoExcluded.has(nick)) return;
   if (reviewExcluded.has(nick)) reviewExcluded.delete(nick);
   else reviewExcluded.add(nick);

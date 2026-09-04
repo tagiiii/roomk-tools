@@ -1106,6 +1106,20 @@ async function judgeReversal(win) {
   await state.roomRef.child('game/result/reversalJudge').set(win ? 'win' : 'lose');
 }
 
+// ホスト: まぎれ絵師が逆転当てに答えない（退出・入力なし）ときの救済。
+// judgeReversal(false) と同じ「逆転失敗」で確定する（新しい status や判定値は増やさない）。
+// 答えが同時に届いた場合に上書きしないよう、未回答・未判定のときだけ transaction で書く。
+async function hostSkipReversal() {
+  if (state.role !== 'host' || !state.roomRef) return;
+  const ok = confirm('まぎれ絵師の答えを待たずに、逆転失敗（みんなの勝ち）で確定します。よろしいですか？');
+  if (!ok) return;
+  await state.roomRef.child('game/result').transaction((result) => {
+    if (!result || result.outcome !== 'caught') return;
+    if (result.reversalGuess || result.reversalJudge) return;
+    return { ...result, reversalJudge: 'lose' };
+  });
+}
+
 // ── ホスト: 終了 ──
 async function hostFinish() {
   await state.roomRef.update({ status: STATUS.DONE });
@@ -1528,7 +1542,9 @@ function handleResult(room, players) {
       bannerSub = '捕まったけどお題を当てた（逆転成功）';
     } else if (judged === 'lose') {
       bannerTitle = 'みんなの勝ち！';
-      bannerSub = 'まぎれ絵師を捕まえて、お題も守りきった';
+      bannerSub = result.reversalGuess
+        ? 'まぎれ絵師を捕まえて、お題も守りきった'
+        : 'まぎれ絵師を捕まえた（逆転当ての答えはなし）';
     } else {
       bannerTitle = 'まぎれ絵師見つかる！？';
       bannerSub = 'でもまだ逆転のチャンスがある…';
@@ -1582,6 +1598,15 @@ function handleResult(room, players) {
         parts.push(`<div class="card mgr-center" style="margin-bottom:12px">
           <p style="font-size:14px;color:var(--color-muted)">${esc(g.fakeArtist || '')}さんがお題を当てようとしています…</p>
         </div>`);
+        // ホストだけ: 答えが来ない（退出・入力なし）ときの救済操作
+        if (isHost) {
+          parts.push(`<div class="card" style="margin-bottom:12px">
+            <p style="font-size:13px;color:var(--color-muted);margin-bottom:8px">${esc(g.fakeArtist || '')}さんが答えられないとき（退出した・入力がない）は、答えなしで進められます</p>
+            <button class="btn btn-secondary btn-full" onclick="hostSkipReversal()">
+              <span class="material-symbols-rounded" aria-hidden="true">skip_next</span>答えなしで進む（みんなの勝ち）
+            </button>
+          </div>`);
+        }
       }
     } else {
       parts.push(`<div class="mgr-guess-box">

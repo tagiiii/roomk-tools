@@ -958,6 +958,13 @@
         return false;
       }
 
+      // 保存済みセッションでも、ホスト名での復帰は拒否する（ホストのノードを消させないため）
+      if (role !== 'host' && (nickname === room.host || room.players?.[nickname]?.isHost)) {
+        clearSession();
+        showReconnectOverlay(false);
+        return false;
+      }
+
       state.nickname = nickname;
       state.roomCode = roomCode;
       state.role = role;
@@ -1259,6 +1266,13 @@
     }
 
     const alreadyInRoom = room.players && room.players[nickname];
+
+    // ホストと同じニックネームでは復帰させない（ホストのノードを消させないため）
+    if (nickname === room.host || (alreadyInRoom && alreadyInRoom.isHost)) {
+      showError('guest-join-error', 'そのニックネームはすでに使われています');
+      return;
+    }
+
     if (room.status !== STATUS.WAITING && alreadyInRoom) {
       state.nickname = nickname;
       state.roomCode = roomCode;
