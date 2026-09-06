@@ -60,7 +60,9 @@ domannaka_rooms/{roomCode}/
 ## 離脱時の挙動
 - **ホスト離脱**: `onDisconnect().update()` で `hostConnected=false` と `hostDisconnectedAt=ServerValue.TIMESTAMP` を保存。ゲストにはオーバーレイを表示し、2分TTL（`ORPHAN_TTL_MS`）超過後に期限切れルームとして削除を試みる
 - **ゲスト離脱**: `onDisconnect().remove()` でそのプレイヤーデータのみ削除
-- ホスト再接続時は `hostConnected=true` / `hostDisconnectedAt=null` に戻し、`sessionStorage: domannaka_session` から復帰する
+- ホストは `.info/connected` を監視し、ページを開いたままの通信回復でも `onDisconnect` を再登録してから `hostConnected=true` / `hostDisconnectedAt=null` に戻す（2026-09-06 B-25）。リロード時の `sessionStorage: domannaka_session` 復帰も同じ処理を使う
+- 復元はルーム全体の transaction で存在・ホスト名・既知の status・2分TTL・終了後の削除期限を検証し、削除済み／期限切れルームを作り直さない。`finished` は削除期限前のみ復元する
+- 退出・ルーム削除通知・終了後の自動削除では接続リスナーを解除し、進行中処理を無効化してから切断予約を取り消す。別接続との削除競合をクライアントだけで完全に防ぐものではなく、ホスト名や sessionStorage は認証境界ではない。ゲスト復帰方式は変更しない
 - TTL 判定は `.info/serverTimeOffset` を使ったサーバー推定時刻で行う
 
 ## 特有のルール・制約
