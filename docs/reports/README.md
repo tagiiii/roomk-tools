@@ -14,6 +14,13 @@
 
 ## 一覧
 
+- [p10-pr-preparation-2026-09-07.md](p10-pr-preparation-2026-09-07.md) — クイズ修正のコミット対応と監査・検証記録の参照関係を整理した記録（P-10、2026-09-07）
+- [p10-kbn08-fix-2026-09-07.md](p10-kbn08-fix-2026-09-07.md) — 推敲の故事の移動描写を修正し、差分・画面・コピー用文字列を検証した記録（P-10、kbn08、2026-09-07）
+- [p10-night-followup-2026-09-06.md](p10-night-followup-2026-09-06.md) — クイズ監査の出典不足を現行問題と追加資料で再照合した引継ぎ記録（P-10、2026-09-06）
+- [p10-second-fixes-2026-09-06.md](p10-second-fixes-2026-09-06.md) — クイズ監査の後続修正と設問・解説・画面を検証した記録（P-10、ru10／khm05／s03／do16／zk210、2026-09-06）
+- [p10-next-candidates-2026-09-06.md](p10-next-candidates-2026-09-06.md) — クイズ監査の残余候補を再照合し、次の修正範囲を検討した記録（P-10、2026-09-06）
+- [p10-priority-fixes-2026-09-06.md](p10-priority-fixes-2026-09-06.md) — クイズ監査の優先5件を修正し、設問・選択肢・解説を再確認した記録（P-10、ky03／s05／ma17／z04／khm03、2026-09-06）
+- [p10-quiz-factcheck-2026-09-06.md](p10-quiz-factcheck-2026-09-06.md) — 難読地名以外のクイズの問題・選択肢・正答・解説を出典と照合した記録（P-10／監査カタログC3、2026-09-06）
 - [c10-emulator-results-2026-09-05.md](c10-emulator-results-2026-09-05.md) — ホスト再接続・ゲスト切断復帰・リロード・開始再戦の二度押しを隔離 Firebase で調べた記録（C-10、P2-1 / P2-2 / P4-1 / P4-4、2026-09-05）
 - [c1-nandoku-verification-batch1.md](c1-nandoku-verification-batch1.md) — 難読地名・駅名クイズの事実再検証 第1回・nandoku-chimei 20問（C-1、2026-07-11）
 - [c2-aria-role-candidates.md](c2-aria-role-candidates.md) — aria/role ゼロアプリの実測と改善候補リスト（C-2、2026-07-11）

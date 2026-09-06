@@ -1,0 +1,1774 @@
+{
+  "date": "2026-09-06",
+  "scope": "kotoba-quiz / onomatope / kotoba-asobo-sokatsu 50問",
+  "sourceCommit": "3a8b174d07b0e5302aeaf406e75f16fd38d7966e",
+  "sourceSha256": "ce670d81eb9f2ddf5fd0544b216cdd07078887e93ef4c361768279bf971a4f75",
+  "status": "one_pass_recorded_with_open_claims",
+  "method": "設問全文を読了。各行の checkedClaims と remainingClaims で事実確認範囲を明示。出典のない主張は未確認。音の印象・個人の感情の唯一性は判定しない。 別コンテキストのクロスチェックで、k12の頻度未確認をpartialへ分離。ニュアンス差の注意は誤答件数とみなさない。",
+  "items": [
+    {
+      "pack": "kotoba-quiz",
+      "id": "k01",
+      "question": "「しーん」は、どんな様子を表す？",
+      "choices": [
+        "とても静か",
+        "すごくまぶしい",
+        "せかせか急ぐ"
+      ],
+      "answerIndex": 0,
+      "answer": "とても静か",
+      "explanation": "音がしない様子を音の言葉で表す、ちょっと不思議な言葉です。",
+      "status": "supported",
+      "checkedClaims": [
+        "しんと／しいんとは静寂を表す。設問の対立選択肢とは区別できる。"
+      ],
+      "remainingClaims": [],
+      "sources": [
+        {
+          "title": "小学館辞書（コトバンク）・しんと",
+          "url": "https://kotobank.jp/word/%E3%81%97%E3%82%93%E3%81%A8-538532",
+          "access": "検索抽出本文",
+          "accessed": "2026-09-06"
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "pack": "kotoba-quiz",
+      "id": "k02",
+      "question": "「ぽかぽか」に近いのはどれ？",
+      "choices": [
+        "あたたかくて気持ちいい",
+        "つめたくてひんやり",
+        "ごろごろと重い"
+      ],
+      "answerIndex": 0,
+      "answer": "あたたかくて気持ちいい",
+      "explanation": "日なたやおふろのようなやさしいあたたかさ。「ぽかぽか」の「ぽ」の音が丸い感じしませんか？",
+      "status": "supported",
+      "checkedClaims": [
+        "快い暖かさという正答・解説前半は辞書と一致。"
+      ],
+      "remainingClaims": [],
+      "sources": [
+        {
+          "title": "小学館辞書（コトバンク）・ぽかぽか",
+          "url": "https://kotobank.jp/word/%E3%81%BD%E3%81%8B%E3%81%BD%E3%81%8B-629296",
+          "access": "本文確認",
+          "accessed": "2026-09-06"
+        }
+      ],
+      "notes": "「ぽ」の音の丸さは感想を促す表現。正誤判定対象外。"
+    },
+    {
+      "pack": "kotoba-quiz",
+      "id": "k03",
+      "question": "「のんびり」の反対に近いのはどれ？",
+      "choices": [
+        "ゆったり",
+        "せかせか",
+        "ふわふわ"
+      ],
+      "answerIndex": 1,
+      "answer": "せかせか",
+      "explanation": "「ゆったり」は「のんびり」の仲間なので逆ではありません。引っかかった人いる？",
+      "status": "supported",
+      "checkedClaims": [
+        "ゆっくり・急がない「のんびり」と、落ち着かない「せかせか」の対立は妥当。"
+      ],
+      "remainingClaims": [],
+      "sources": [
+        {
+          "title": "国立国語研究所・のんびり",
+          "url": "https://www2.ninjal.ac.jp/Onomatope/50_on/nonbiri.html",
+          "access": "本文確認",
+          "accessed": "2026-09-06"
+        },
+        {
+          "title": "小学館辞書（コトバンク）・せかせか",
+          "url": "https://kotobank.jp/word/%E3%81%9B%E3%81%8B%E3%81%9B%E3%81%8B-546928",
+          "access": "本文確認",
+          "accessed": "2026-09-06"
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "pack": "kotoba-quiz",
+      "id": "k04",
+      "question": "「ぐっすりねむる」の「ぐっすり」に近い意味は？",
+      "choices": [
+        "深くねむっている",
+        "軽くうとうとしている",
+        "ねむいけどがまんしている"
+      ],
+      "answerIndex": 0,
+      "answer": "深くねむっている",
+      "explanation": "「ぐっすり」は深い眠り。「うとうと」が浅い眠り。音の印象もちがいますよね。",
+      "status": "supported",
+      "checkedClaims": [
+        "ぐっすりは深い眠り、うとうとは浅い眠りで、正答と対比は妥当。"
+      ],
+      "remainingClaims": [],
+      "sources": [
+        {
+          "title": "国立国語研究所・ぐっすり",
+          "url": "https://www2.ninjal.ac.jp/Onomatope/50_on/gussuri.html",
+          "access": "本文確認",
+          "accessed": "2026-09-06"
+        },
+        {
+          "title": "小学館辞書（コトバンク）・うとうと",
+          "url": "https://kotobank.jp/word/%E3%81%86%E3%81%A8%E3%81%86%E3%81%A8-441022",
+          "access": "検索抽出本文",
+          "accessed": "2026-09-06"
+        }
+      ],
+      "notes": "音の印象の違いは主観的な問いかけで検証対象外。"
+    },
+    {
+      "pack": "kotoba-quiz",
+      "id": "k05",
+      "question": "「ころころ」は、どんな動きに使いやすい？",
+      "choices": [
+        "転がるような動き",
+        "空をまっすぐ飛ぶ動き",
+        "水にしずむ動き"
+      ],
+      "answerIndex": 0,
+      "answer": "転がるような動き",
+      "explanation": "「ころころ」の丸い音が、転がる丸いものを思わせます。音と動きがつながっています。",
+      "status": "supported",
+      "checkedClaims": [
+        "小さく丸い物が転がる用法を確認。"
+      ],
+      "remainingClaims": [],
+      "sources": [
+        {
+          "title": "国立国語研究所・ころころ",
+          "url": "https://www2.ninjal.ac.jp/Onomatope/50_on/korokoro.html",
+          "access": "本文確認",
+          "accessed": "2026-09-06"
+        }
+      ],
+      "notes": "丸い音を感じるかは主観。因果関係が実証済みとはしない。"
+    },
+    {
+      "pack": "kotoba-quiz",
+      "id": "k06",
+      "question": "「すっきりした気分」に近いのはどっち？",
+      "choices": [
+        "もやもやが残る感じ",
+        "さっぱり軽くなった感じ"
+      ],
+      "answerIndex": 1,
+      "answer": "さっぱり軽くなった感じ",
+      "explanation": "「もやもや」と「すっきり」は正反対。気分を表す言葉はセットで覚えると面白いです。",
+      "status": "supported",
+      "checkedClaims": [
+        "気分が晴れる「すっきり」と、わだかまりの残る「もやもや」の対比を確認。"
+      ],
+      "remainingClaims": [],
+      "sources": [
+        {
+          "title": "国立国語研究所・すっきり",
+          "url": "https://www2.ninjal.ac.jp/Onomatope/50_on/sukkiri.html",
+          "access": "本文確認",
+          "accessed": "2026-09-06"
+        },
+        {
+          "title": "小学館辞書（コトバンク）・もやもや",
+          "url": "https://kotobank.jp/word/%E3%82%82%E3%82%84%E3%82%82%E3%82%84-646739",
+          "access": "本文確認",
+          "accessed": "2026-09-06"
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "pack": "kotoba-quiz",
+      "id": "k07",
+      "question": "「しとしと」と聞いて思いうかぶ雨はどれ？",
+      "choices": [
+        "細かく静かにふる雨",
+        "急にどっとふる強い雨",
+        "しばらくふり続ける長い雨"
+      ],
+      "answerIndex": 0,
+      "answer": "細かく静かにふる雨",
+      "explanation": "「しとしと」の音はおだやか。「ざあざあ」なら強い雨。音のひびきだけで天気がわかるのがすごいですね。",
+      "status": "supported",
+      "checkedClaims": [
+        "しとしとは静かな雨、ざあざあは強い雨という対比を確認。"
+      ],
+      "remainingClaims": [],
+      "sources": [
+        {
+          "title": "小学館辞書（コトバンク）・しとしと",
+          "url": "https://kotobank.jp/word/%E3%81%97%E3%81%A8%E3%81%97%E3%81%A8-522183",
+          "access": "検索抽出本文",
+          "accessed": "2026-09-06"
+        },
+        {
+          "title": "国立国語研究所・ざあざあ",
+          "url": "https://www2.ninjal.ac.jp/Onomatope/50_on/zaazaa.html",
+          "access": "本文確認",
+          "accessed": "2026-09-06"
+        }
+      ],
+      "notes": "「響きだけで天気がわかる」は修辞的表現で、客観的能力の実証とは扱わない。"
+    },
+    {
+      "pack": "kotoba-quiz",
+      "id": "k08",
+      "question": "「もやもやしている」を言いかえるなら？",
+      "choices": [
+        "気持ちがはっきりしない",
+        "何かをがまんしている",
+        "心配で気が重い"
+      ],
+      "answerIndex": 0,
+      "answer": "気持ちがはっきりしない",
+      "explanation": "「がまん」も近い感じがしますが、もやもやは「晴れない」「はっきりしない」が核です。",
+      "status": "supported",
+      "checkedClaims": [
+        "心のわだかまり・はっきりしない感じという語義を確認。"
+      ],
+      "remainingClaims": [],
+      "sources": [
+        {
+          "title": "小学館辞書（コトバンク）・もやもや",
+          "url": "https://kotobank.jp/word/%E3%82%82%E3%82%84%E3%82%82%E3%82%84-646739",
+          "access": "本文確認",
+          "accessed": "2026-09-06"
+        }
+      ],
+      "notes": "心配と併存することはあるが、語義としては正答が最も直接的。"
+    },
+    {
+      "pack": "kotoba-quiz",
+      "id": "k09",
+      "question": "「雨が上がって、空が_____してきた。」いちばん自然なのは？",
+      "choices": [
+        "からっと",
+        "すうっと",
+        "どろどろ"
+      ],
+      "answerIndex": 0,
+      "answer": "からっと",
+      "explanation": "「すうっと」も迷うけど、空が晴れる感じには「からっと」が合います。場面との相性で選ぶ問題です。",
+      "status": "supported",
+      "checkedClaims": [
+        "からっと晴れる用例を国語研教材で確認。"
+      ],
+      "remainingClaims": [],
+      "sources": [
+        {
+          "title": "国立国語研究所・すっきり",
+          "url": "https://www2.ninjal.ac.jp/Onomatope/50_on/sukkiri.html",
+          "access": "本文確認",
+          "accessed": "2026-09-06"
+        }
+      ],
+      "notes": "他の文脈まで不自然とする判断ではない。"
+    },
+    {
+      "pack": "kotoba-quiz",
+      "id": "k10",
+      "question": "「あの人の話し方はかたい」と言ったら、いちばん近い意味は？",
+      "choices": [
+        "まじめでかっちりしている",
+        "声が大きくてきびしい",
+        "話すのがとても速い"
+      ],
+      "answerIndex": 0,
+      "answer": "まじめでかっちりしている",
+      "explanation": "「かたい」は人に使うと性格や印象の話になります。同じ言葉でも使い方で意味が変わる例です。",
+      "status": "supported",
+      "checkedClaims": [
+        "まじめ／形式ばった意味の堅いを辞書の検索抽出で確認。声量・速度とは別の、表現の印象という解釈に合う。"
+      ],
+      "remainingClaims": [],
+      "sources": [
+        {
+          "title": "小学館和英辞典・堅い",
+          "url": "https://kotobank.jp/jeword/%E5%A0%85%E3%81%84",
+          "access": "検索抽出本文（open は取得エラー）",
+          "accessed": "2026-09-06"
+        }
+      ],
+      "notes": "話し方の印象の説明であり、話し手の性格を診断する設問ではない。"
+    },
+    {
+      "pack": "kotoba-quiz",
+      "id": "k11",
+      "question": "「にこにこ」は どんな顔？",
+      "choices": [
+        "えがお",
+        "なきがお",
+        "おこった顔"
+      ],
+      "answerIndex": 0,
+      "answer": "えがお",
+      "explanation": "うれしくて自然に出るえがおの様子です。",
+      "status": "supported",
+      "checkedClaims": [
+        "笑顔を表す語として確認。"
+      ],
+      "remainingClaims": [],
+      "sources": [
+        {
+          "title": "国立国語研究所・にこにこ",
+          "url": "https://www2.ninjal.ac.jp/Onomatope/50_on/nikoniko.html",
+          "access": "本文確認",
+          "accessed": "2026-09-06"
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "pack": "kotoba-quiz",
+      "id": "k12",
+      "question": "うさぎを数えるとき、昔から使われてきた変わった数え方は？",
+      "choices": [
+        "1羽（わ）、2羽",
+        "1頭、2頭",
+        "1本、2本"
+      ],
+      "answerIndex": 0,
+      "answer": "1羽（わ）、2羽",
+      "explanation": "うさぎは昔から「羽」で数える習わしがあります。今は「匹」で数えることも多いです。",
+      "status": "supported",
+      "checkedClaims": [
+        "羽は慣習的な数え方。現在の教科書で匹を用いることも確認。",
+        "小学館HugKumの辞書編集者の解説に、現代の動物園・ペットショップで匹を使う例が相当あることを確認。放送局の用語運用でも通常は匹、羽もあると記録。"
+      ],
+      "remainingClaims": [],
+      "sources": [
+        {
+          "title": "東京書籍・うさぎの助数詞",
+          "url": "https://faq.tokyo-shoseki.co.jp/fa/customer/web/knowledge8270.html",
+          "access": "本文確認",
+          "accessed": "2026-09-06"
+        },
+        {
+          "title": "小学館HugKum・神永曉 ウサギの数え方（2ページ）",
+          "url": "https://hugkum.sho.jp/238831/2",
+          "access": "本文確認",
+          "accessed": "2026-09-06",
+          "evidence": "現代の匹の使用と羽の慣習を説明。優先順位は執筆者の見解と明記。"
+        },
+        {
+          "title": "山口朝日放送・ウサギについて学ぶ",
+          "url": "https://www.yab.co.jp/2023/01/140697",
+          "access": "本文確認",
+          "accessed": "2026-09-06",
+          "evidence": "問題④に放送時の匹と羽の使い分けを記録。"
+        }
+      ],
+      "notes": "『匹で数えることも多い』を現代の使用例・辞書編集者の説明で支持。原文は『全国で匹が羽を上回る』という割合の断定ではないため、前回の相対頻度を必須とする判定を見直した。全国コーパスの定量調査をした意味ではない。頭も実在する数え方なので、羽以外は常に誤用という説明にはしない。",
+      "searchHistory": [
+        {
+          "query": "国語研究所／NHK／JapanKnowledge うさぎ 助数詞 匹 羽",
+          "result": "JapanKnowledgeの対象コラムは検索抽出にあるが本文404。別記事URLは検索と本文の題名が不一致のため根拠本文に採用せず。出版社のHugKum記事と放送局の原文に到達。"
+        }
+      ]
+    },
+    {
+      "pack": "kotoba-quiz",
+      "id": "k13",
+      "question": "細かくてきりのように静かにふる雨をさすことばは？",
+      "choices": [
+        "きりさめ",
+        "ゆうだち",
+        "おおあめ"
+      ],
+      "answerIndex": 0,
+      "answer": "きりさめ",
+      "explanation": "「霧雨（きりさめ）」は、きりのように細かい雨。「夕立」は夏の午後の強い雨で、別ものです。",
+      "status": "supported",
+      "checkedClaims": [
+        "霧雨は細かな雨滴による弱い雨、夕立の夏季用法を確認。国語研に夏の夕方の強い雨の説明あり。"
+      ],
+      "remainingClaims": [],
+      "sources": [
+        {
+          "title": "気象庁・降水",
+          "url": "https://www.jma.go.jp/jma/kishou/know/yougo_hp/kousui.html",
+          "access": "本文確認",
+          "accessed": "2026-09-06"
+        },
+        {
+          "title": "国立国語研究所・ざあざあ",
+          "url": "https://www2.ninjal.ac.jp/Onomatope/50_on/zaazaa.html",
+          "access": "本文確認",
+          "accessed": "2026-09-06"
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "pack": "kotoba-quiz",
+      "id": "k14",
+      "question": "雪が静かにふりつもる様子に合うことばは？",
+      "choices": [
+        "しんしん",
+        "ざあざあ",
+        "ごうごう"
+      ],
+      "answerIndex": 0,
+      "answer": "しんしん",
+      "explanation": "「しんしん」は静かに雪が降る様子。「ざあざあ」は雨、「ごうごう」は強い風や水の音に合います。",
+      "status": "supported",
+      "checkedClaims": [
+        "しんしんの静かな降雪用例、ざあざあの雨を確認。",
+        "ごうごうは潮騒などの響きや激しい風の音を表す用例がある。"
+      ],
+      "remainingClaims": [],
+      "sources": [
+        {
+          "title": "小学館プログレッシブ和英中辞典・しんしん",
+          "url": "https://kotobank.jp/jeword/%E3%81%97%E3%82%93%E3%81%97%E3%82%93%28%E3%81%A8%29",
+          "access": "検索抽出本文",
+          "accessed": "2026-09-06"
+        },
+        {
+          "title": "国立国語研究所・ざあざあ",
+          "url": "https://www2.ninjal.ac.jp/Onomatope/50_on/zaazaa.html",
+          "access": "本文確認",
+          "accessed": "2026-09-06"
+        },
+        {
+          "title": "小学館・精選版日本国語大辞典 ごうごう",
+          "url": "https://kotobank.jp/word/%E3%81%94%E3%81%86%E3%81%94%E3%81%86-260803",
+          "access": "検索抽出本文",
+          "accessed": "2026-09-06"
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "pack": "kotoba-quiz",
+      "id": "k15",
+      "question": "「ありがとう」は、もともとどんな意味の言葉から生まれた？",
+      "choices": [
+        "めったにない、めずらしい（有り難い）",
+        "神様への祈りの言葉",
+        "おじぎのしぐさ"
+      ],
+      "answerIndex": 0,
+      "answer": "めったにない、めずらしい（有り難い）",
+      "explanation": "「有り難し」＝めったにない、という意味から。めずらしくてありがたい、という気持ちにつながったと言われます。",
+      "status": "supported",
+      "checkedClaims": [
+        "有り難しの存在しがたい・稀という語義と、ありがとうへの語形・意味のつながりを辞書で確認。"
+      ],
+      "remainingClaims": [],
+      "sources": [
+        {
+          "title": "小学館辞書（コトバンク）・有難う",
+          "url": "https://kotobank.jp/word/%E6%9C%89%E9%9B%A3%E3%81%86-428222",
+          "access": "本文確認",
+          "accessed": "2026-09-06"
+        },
+        {
+          "title": "小学館辞書（コトバンク）・有難い",
+          "url": "https://kotobank.jp/word/%E6%9C%89%E9%9B%A3%E3%81%84-428214",
+          "access": "本文確認",
+          "accessed": "2026-09-06"
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "pack": "kotoba-quiz",
+      "id": "k16",
+      "question": "夕方をさす「たそがれ」。その語源に近いのはどれ？",
+      "choices": [
+        "「誰（た）そ、彼（かれ）は」と人の顔が見分けにくい時間から",
+        "太陽が谷にしずむ様子から",
+        "空が赤くもえる色から"
+      ],
+      "answerIndex": 0,
+      "answer": "「誰（た）そ、彼（かれ）は」と人の顔が見分けにくい時間から",
+      "explanation": "うす暗くて「あれは誰だろう」と顔が見えにくい時間、という意味からきたと言われます。",
+      "status": "supported",
+      "checkedClaims": [
+        "誰そ彼から夕暮れを指すようになったという辞書の説明と一致。"
+      ],
+      "remainingClaims": [],
+      "sources": [
+        {
+          "title": "漢字ペディア・黄昏",
+          "url": "https://www.kanjipedia.jp/kotoba/0002270700",
+          "access": "本文確認",
+          "accessed": "2026-09-06"
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "pack": "kotoba-quiz",
+      "id": "k17",
+      "question": "「さようなら」は、もともとどんな言葉？",
+      "choices": [
+        "「そうであるならば」というつなぎの言葉",
+        "「幸せでいてね」という願い",
+        "「また会おう」という約束"
+      ],
+      "answerIndex": 0,
+      "answer": "「そうであるならば」というつなぎの言葉",
+      "explanation": "「左様ならば（そういうことならば）」という言葉が、別れのあいさつとして残ったものです。",
+      "status": "supported",
+      "checkedClaims": [
+        "接続表現から別れの挨拶への変化を辞書語誌で確認。"
+      ],
+      "remainingClaims": [],
+      "sources": [
+        {
+          "title": "小学館辞書（コトバンク）・さようなら",
+          "url": "https://kotobank.jp/word/%E3%81%95%E3%82%88%E3%81%86%E3%81%AA%E3%82%89-2043504",
+          "access": "本文確認",
+          "accessed": "2026-09-06"
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "pack": "kotoba-quiz",
+      "id": "k18",
+      "question": "「約束を____」。約束をまもらないことを表すのに合うのは？",
+      "choices": [
+        "やぶる",
+        "こわす",
+        "おとす"
+      ],
+      "answerIndex": 0,
+      "answer": "やぶる",
+      "explanation": "紙を「やぶる」と同じ言葉ですが、約束にも使います。同じ言葉が場面でちがう意味になる面白さです。",
+      "status": "supported",
+      "checkedClaims": [
+        "紙等を裂く意味と、約束に背く意味の両方を確認。"
+      ],
+      "remainingClaims": [],
+      "sources": [
+        {
+          "title": "小学館辞書（コトバンク）・破る",
+          "url": "https://kotobank.jp/word/%E7%A0%B4%E3%82%8B-649009",
+          "access": "検索抽出本文",
+          "accessed": "2026-09-06"
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "pack": "kotoba-quiz",
+      "id": "k19",
+      "question": "「年が____」。一年が終わりに近づくことを表すのに合うのは？",
+      "choices": [
+        "くれる",
+        "おちる",
+        "きえる"
+      ],
+      "answerIndex": 0,
+      "answer": "くれる",
+      "explanation": "「暮れる」は、日がしずんで暗くなることにも、一年が終わりに近づくことにも使います。場面が変わっても「終わりに近づく」感じが残っています。",
+      "status": "supported",
+      "checkedClaims": [
+        "日没と年末の双方の用例を辞書で確認。"
+      ],
+      "remainingClaims": [],
+      "sources": [
+        {
+          "title": "小学館和仏辞典・暮れる",
+          "url": "https://kotobank.jp/jafrword/%E6%9A%AE%E3%82%8C%E3%82%8B",
+          "access": "検索抽出本文",
+          "accessed": "2026-09-06"
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "pack": "kotoba-quiz",
+      "id": "k20",
+      "question": "おはしは、2本で「1__」と数える。合うのは？",
+      "choices": [
+        "ぜん（膳）",
+        "そく",
+        "まい"
+      ],
+      "answerIndex": 0,
+      "answer": "ぜん（膳）",
+      "explanation": "2本でひと組なので「1膳」と数えます。「足（そく）」はくつ下やくつのように左右で組になるものに使います。",
+      "status": "supported",
+      "checkedClaims": [
+        "箸二本一対は膳、両足に履く一組は足と数えることを確認。"
+      ],
+      "remainingClaims": [],
+      "sources": [
+        {
+          "title": "小学館辞書・膳",
+          "url": "https://kotobank.jp/word/%25E8%2586%25B3-87960",
+          "access": "本文確認",
+          "accessed": "2026-09-06"
+        },
+        {
+          "title": "小学館辞書（コトバンク）・足",
+          "url": "https://kotobank.jp/word/%E8%B6%B3-25145",
+          "access": "本文確認",
+          "accessed": "2026-09-06"
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "pack": "onomatope",
+      "id": "on01",
+      "question": "「静かに、細かい雨が長く降りつづいている」様子に合うのは？",
+      "choices": [
+        "ざあざあ",
+        "しとしと",
+        "ぽつぽつ"
+      ],
+      "answerIndex": 1,
+      "answer": "しとしと",
+      "explanation": "「しとしと」は細く静かに降りつづく雨。「ざあざあ」は激しく強い雨、「ぽつぽつ」はまばらに落ちる降り始めを表す。",
+      "status": "supported",
+      "checkedClaims": [
+        "静かな雨／激しい雨／まばらな降り始めの対比を確認。"
+      ],
+      "remainingClaims": [],
+      "sources": [
+        {
+          "title": "小学館辞書（コトバンク）・しとしと",
+          "url": "https://kotobank.jp/word/%E3%81%97%E3%81%A8%E3%81%97%E3%81%A8-522183",
+          "access": "検索抽出本文",
+          "accessed": "2026-09-06"
+        },
+        {
+          "title": "国立国語研究所・ざあざあ",
+          "url": "https://www2.ninjal.ac.jp/Onomatope/50_on/zaazaa.html",
+          "access": "本文確認",
+          "accessed": "2026-09-06"
+        },
+        {
+          "title": "小学館辞書（コトバンク）・ぽつぽつ",
+          "url": "https://kotobank.jp/word/%E3%81%BD%E3%81%A4%E3%81%BD%E3%81%A4-630850",
+          "access": "本文確認",
+          "accessed": "2026-09-06"
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "pack": "onomatope",
+      "id": "on02",
+      "question": "「友達とおしゃべりで盛りあがって、大声で明るく笑った」。合うのは？",
+      "choices": [
+        "くすくす",
+        "にやにや",
+        "けらけら"
+      ],
+      "answerIndex": 2,
+      "answer": "けらけら",
+      "explanation": "「けらけら」は大声で屈託なく笑う音。「くすくす」は小さくこっそり、「にやにや」は含みのある笑い。",
+      "status": "caution",
+      "checkedClaims": [
+        "選択肢中けらけらが意図に最も近いが、辞書の中心は甲高い笑い声。屈託なさに限定されず嘲る用例もある。"
+      ],
+      "remainingClaims": [],
+      "sources": [
+        {
+          "title": "小学館辞書（コトバンク）・けらけら",
+          "url": "https://kotobank.jp/word/%E3%81%91%E3%82%89%E3%81%91%E3%82%89-491112",
+          "access": "本文確認",
+          "accessed": "2026-09-06"
+        },
+        {
+          "title": "国立国語研究所・くすくす",
+          "url": "https://www2.ninjal.ac.jp/Onomatope/50_on/kusukusu.html",
+          "access": "本文確認",
+          "accessed": "2026-09-06"
+        },
+        {
+          "title": "国立国語研究所・にやにや",
+          "url": "https://www2.ninjal.ac.jp/Onomatope/50_on/niyaniya.html",
+          "access": "本文確認",
+          "accessed": "2026-09-06"
+        }
+      ],
+      "notes": "明るい場面で使えないという指摘ではなく、解説の語義限定に注意。"
+    },
+    {
+      "pack": "onomatope",
+      "id": "on03",
+      "question": "「いそがず、一定のペースでのんびり歩いていった」。合うのは？",
+      "choices": [
+        "すたすた",
+        "てくてく",
+        "とぼとぼ"
+      ],
+      "answerIndex": 1,
+      "answer": "てくてく",
+      "explanation": "「てくてく」は軽く定調で歩く感じ。「すたすた」は急ぎ足、「とぼとぼ」は元気なく重い足取り。",
+      "status": "caution",
+      "checkedClaims": [
+        "てくてくは同じ調子でひたすら歩く。速足／元気のない足取りとの対比は確認。"
+      ],
+      "remainingClaims": [],
+      "sources": [
+        {
+          "title": "小学館辞書（コトバンク）・てくてく",
+          "url": "https://kotobank.jp/word/%E3%81%A6%E3%81%8F%E3%81%A6%E3%81%8F-575552",
+          "access": "検索抽出本文",
+          "accessed": "2026-09-06"
+        },
+        {
+          "title": "小学館辞書（コトバンク）・すたすた",
+          "url": "https://kotobank.jp/word/%E3%81%99%E3%81%9F%E3%81%99%E3%81%9F-542064",
+          "access": "本文確認",
+          "accessed": "2026-09-06"
+        },
+        {
+          "title": "小学館辞書（コトバンク）・とぼとぼ",
+          "url": "https://kotobank.jp/word/%E3%81%A8%E3%81%BC%E3%81%A8%E3%81%BC-584747",
+          "access": "本文確認",
+          "accessed": "2026-09-06"
+        }
+      ],
+      "notes": "のんびりした場面にも使えるが、『てくてく＝のんびり』が必須の語義であるかのような説明を避けたい。"
+    },
+    {
+      "pack": "onomatope",
+      "id": "on04",
+      "question": "「夜空の星が、こまかく明るくひかっている」。合うのは？",
+      "choices": [
+        "ぴかぴか",
+        "ちかちか",
+        "きらきら"
+      ],
+      "answerIndex": 2,
+      "answer": "きらきら",
+      "explanation": "「きらきら」は細かく美しくひかる様子。「ぴかぴか」はツヤがあって強い光、「ちかちか」は点滅して目が痛い感じ。",
+      "status": "caution",
+      "checkedClaims": [
+        "星にきらきらを使う用例、ぴかぴかの輝き、ちかちかの点滅・目への刺激を確認。"
+      ],
+      "remainingClaims": [],
+      "sources": [
+        {
+          "title": "国立国語研究所・きらきら",
+          "url": "https://www2.ninjal.ac.jp/Onomatope/50_on/kirakira.html",
+          "access": "本文確認",
+          "accessed": "2026-09-06"
+        },
+        {
+          "title": "国立国語研究所・ぴかぴか",
+          "url": "https://www2.ninjal.ac.jp/Onomatope/50_on/pikapika.html",
+          "access": "本文確認",
+          "accessed": "2026-09-06"
+        },
+        {
+          "title": "小学館辞書（コトバンク）・ちかちか",
+          "url": "https://kotobank.jp/word/%E3%81%A1%E3%81%8B%E3%81%A1%E3%81%8B-565292",
+          "access": "検索抽出本文",
+          "accessed": "2026-09-06"
+        }
+      ],
+      "notes": "ちかちかは光の点滅にも使うため、星というだけで他選択肢を誤りとする根拠は弱い。正答は典型例として妥当。"
+    },
+    {
+      "pack": "onomatope",
+      "id": "on05",
+      "question": "「空からまばらに大きな雨粒が落ちてきた。本降りはこれから、という感じ」。合うのは？",
+      "choices": [
+        "しとしと",
+        "ぽつぽつ",
+        "ぱらぱら"
+      ],
+      "answerIndex": 1,
+      "answer": "ぽつぽつ",
+      "explanation": "「ぽつぽつ」はまばらに落ちる降り始め。「しとしと」は細かく静か、「ぱらぱら」は軽く広く散る感じ。",
+      "status": "caution",
+      "checkedClaims": [
+        "ぽつぽつに降り始めの語義がある。一方ぱらぱらにもまばらな雨の語義がある。"
+      ],
+      "remainingClaims": [],
+      "sources": [
+        {
+          "title": "小学館辞書（コトバンク）・ぽつぽつ",
+          "url": "https://kotobank.jp/word/%E3%81%BD%E3%81%A4%E3%81%BD%E3%81%A4-630850",
+          "access": "本文確認",
+          "accessed": "2026-09-06"
+        },
+        {
+          "title": "小学館辞書（コトバンク）・ぱらぱら",
+          "url": "https://kotobank.jp/word/%E3%81%B1%E3%82%89%E3%81%B1%E3%82%89-605074",
+          "access": "本文確認",
+          "accessed": "2026-09-06"
+        },
+        {
+          "title": "小学館辞書（コトバンク）・しとしと",
+          "url": "https://kotobank.jp/word/%E3%81%97%E3%81%A8%E3%81%97%E3%81%A8-522183",
+          "access": "検索抽出本文",
+          "accessed": "2026-09-06"
+        }
+      ],
+      "notes": "大粒・降り始めという文脈は意図を示すが、他語の使用不可を意味しない。選択肢の排他性は強くない。"
+    },
+    {
+      "pack": "onomatope",
+      "id": "on06",
+      "question": "「楽しみにしていた予定が中止になって、帰り道をひとりで＿＿歩いた」。合うのは？",
+      "choices": [
+        "てくてく",
+        "とぼとぼ",
+        "すたすた"
+      ],
+      "answerIndex": 1,
+      "answer": "とぼとぼ",
+      "explanation": "「とぼとぼ」は元気なく重い足取り。「てくてく」はのんびり、「すたすた」は目的ある速足。",
+      "status": "caution",
+      "checkedClaims": [
+        "とぼとぼの元気のない足取りは正答と一致。"
+      ],
+      "remainingClaims": [],
+      "sources": [
+        {
+          "title": "小学館辞書（コトバンク）・とぼとぼ",
+          "url": "https://kotobank.jp/word/%E3%81%A8%E3%81%BC%E3%81%A8%E3%81%BC-584747",
+          "access": "本文確認",
+          "accessed": "2026-09-06"
+        },
+        {
+          "title": "小学館辞書（コトバンク）・てくてく",
+          "url": "https://kotobank.jp/word/%E3%81%A6%E3%81%8F%E3%81%A6%E3%81%8F-575552",
+          "access": "検索抽出本文",
+          "accessed": "2026-09-06"
+        },
+        {
+          "title": "小学館辞書（コトバンク）・すたすた",
+          "url": "https://kotobank.jp/word/%E3%81%99%E3%81%9F%E3%81%99%E3%81%9F-542064",
+          "access": "本文確認",
+          "accessed": "2026-09-06"
+        }
+      ],
+      "notes": "解説のてくてく＝のんびりは on03 と同じ限定の懸念。"
+    },
+    {
+      "pack": "onomatope",
+      "id": "on07",
+      "question": "「待ち合わせの場所で、友達がまだ来ないかと周りを＿＿見回した」。合うのは？",
+      "choices": [
+        "じろじろ",
+        "きょろきょろ",
+        "ちらちら"
+      ],
+      "answerIndex": 1,
+      "answer": "きょろきょろ",
+      "explanation": "「きょろきょろ」は落ち着かず周りを見回す様子。「じろじろ」は失礼な視線、「ちらちら」は何度も横目で見る。",
+      "status": "supported",
+      "checkedClaims": [
+        "周りを見回すきょろきょろ、遠慮のない注視のじろじろ、断続的な視線のちらちらを確認。"
+      ],
+      "remainingClaims": [],
+      "sources": [
+        {
+          "title": "小学館辞書・きょろきょろ",
+          "url": "https://kotobank.jp/word/%E3%81%8D%E3%82%88%E3%82%8D%E3%81%8D%E3%82%88%E3%82%8D-3209888",
+          "access": "本文確認",
+          "accessed": "2026-09-06"
+        },
+        {
+          "title": "国立国語研究所・じろじろ",
+          "url": "https://www2.ninjal.ac.jp/Onomatope/50_on/jirojiro.html",
+          "access": "本文確認",
+          "accessed": "2026-09-06"
+        },
+        {
+          "title": "小学館辞書（コトバンク）・ちらちら",
+          "url": "https://kotobank.jp/word/%E3%81%A1%E3%82%89%E3%81%A1%E3%82%89-569654",
+          "access": "本文確認",
+          "accessed": "2026-09-06"
+        }
+      ],
+      "notes": "横目は一例で必須条件ではない。待ち合わせで見回す設定なら正答は妥当。"
+    },
+    {
+      "pack": "onomatope",
+      "id": "on08",
+      "question": "「緊張して声が小さく、何を言っているかよく聞きとれない話し方」。合うのは？",
+      "choices": [
+        "ぺらぺら",
+        "ぼそぼそ",
+        "はきはき"
+      ],
+      "answerIndex": 1,
+      "answer": "ぼそぼそ",
+      "explanation": "「ぼそぼそ」は小さく不明瞭な話し方。「ぺらぺら」はよどみなく、「はきはき」ははっきり元気に。",
+      "status": "supported",
+      "checkedClaims": [
+        "低く小さい声のぼそぼそ、途切れず話すぺらぺら、明確なはきはきを確認。"
+      ],
+      "remainingClaims": [],
+      "sources": [
+        {
+          "title": "小学館辞書（コトバンク）・ぼそぼそ",
+          "url": "https://kotobank.jp/word/%E3%81%BC%E3%81%9D%E3%81%BC%E3%81%9D-630298",
+          "access": "検索抽出本文",
+          "accessed": "2026-09-06"
+        },
+        {
+          "title": "国立国語研究所・ぺらぺら",
+          "url": "https://www2.ninjal.ac.jp/Onomatope/50_on/perapera.html",
+          "access": "本文確認",
+          "accessed": "2026-09-06"
+        },
+        {
+          "title": "小学館辞書（コトバンク）・はきはき",
+          "url": "https://kotobank.jp/word/%E3%81%AF%E3%81%8D%E3%81%AF%E3%81%8D-599985",
+          "access": "本文確認",
+          "accessed": "2026-09-06"
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "pack": "onomatope",
+      "id": "on09",
+      "question": "「口元を軽く動かして、リズムよく食べた」。合うのは？",
+      "choices": [
+        "もぐもぐ",
+        "ぱくぱく",
+        "ちびちび"
+      ],
+      "answerIndex": 1,
+      "answer": "ぱくぱく",
+      "explanation": "「ぱくぱく」は軽快で小気味よく食べる。「もぐもぐ」は口を閉じてよく噛む、「ちびちび」は少しずつ。",
+      "status": "caution",
+      "checkedClaims": [
+        "ぱくぱくは大きな口の開閉・盛んな摂食、もぐもぐは口を大きく開かず噛む、ちびちびは少量ずつ。"
+      ],
+      "remainingClaims": [],
+      "sources": [
+        {
+          "title": "小学館辞書（コトバンク）・ぱくぱく",
+          "url": "https://kotobank.jp/word/%E3%81%B1%E3%81%8F%E3%81%B1%E3%81%8F-600437",
+          "access": "本文確認",
+          "accessed": "2026-09-06"
+        },
+        {
+          "title": "小学館辞書（コトバンク）・もぐもぐ",
+          "url": "https://kotobank.jp/word/%E3%82%82%E3%81%90%E3%82%82%E3%81%90-645412",
+          "access": "本文確認",
+          "accessed": "2026-09-06"
+        },
+        {
+          "title": "小学館辞書（コトバンク）・ちびちび",
+          "url": "https://kotobank.jp/word/%E3%81%A1%E3%81%B3%E3%81%A1%E3%81%B3-566329",
+          "access": "本文確認",
+          "accessed": "2026-09-06"
+        }
+      ],
+      "notes": "『口元を軽く』『リズムよく』だけでは食べる勢いや口の開き方が明確でない。『軽快で小気味よく』を定義にする根拠は不足。"
+    },
+    {
+      "pack": "onomatope",
+      "id": "on10",
+      "question": "「なんだかはっきりしない気持ちが、心にずっと残っている」。合うのは？",
+      "choices": [
+        "そわそわ",
+        "もやもや",
+        "うきうき"
+      ],
+      "answerIndex": 1,
+      "answer": "もやもや",
+      "explanation": "「もやもや」は整理できず晴れない感情。「そわそわ」は落ち着かず動きに出る、「うきうき」は明るく浮き立つ。",
+      "status": "supported",
+      "checkedClaims": [
+        "もやもやの晴れない感情、そわそわの落ち着かない気持ち・態度は確認。",
+        "うきうきの、心がはずみ晴れやかな現代語義を確認。"
+      ],
+      "remainingClaims": [],
+      "sources": [
+        {
+          "title": "小学館辞書（コトバンク）・もやもや",
+          "url": "https://kotobank.jp/word/%E3%82%82%E3%82%84%E3%82%82%E3%82%84-646739",
+          "access": "本文確認",
+          "accessed": "2026-09-06"
+        },
+        {
+          "title": "小学館辞書（コトバンク）・そわそわ",
+          "url": "https://kotobank.jp/word/%E3%81%9D%E3%82%8F%E3%81%9D%E3%82%8F-555736",
+          "access": "本文確認",
+          "accessed": "2026-09-06"
+        },
+        {
+          "title": "小学館・精選版日本国語大辞典 浮浮",
+          "url": "https://kotobank.jp/word/%E6%B5%AE%E6%B5%AE-375019",
+          "access": "本文確認",
+          "accessed": "2026-09-06"
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "pack": "onomatope",
+      "id": "on11",
+      "question": "「夕立で急に大量の雨が降りはじめ、傘がなければずぶぬれになる勢い」。合うのは？",
+      "choices": [
+        "ぱらぱら",
+        "ざあざあ",
+        "しとしと"
+      ],
+      "answerIndex": 1,
+      "answer": "ざあざあ",
+      "explanation": "「ざあざあ」は大量で激しい雨音。「ぱらぱら」は軽くまばら、「しとしと」は細く静か。",
+      "status": "supported",
+      "checkedClaims": [
+        "激しい夕立とざあざあの対応、ぱらぱら・しとしとの対比を確認。"
+      ],
+      "remainingClaims": [],
+      "sources": [
+        {
+          "title": "国立国語研究所・ざあざあ",
+          "url": "https://www2.ninjal.ac.jp/Onomatope/50_on/zaazaa.html",
+          "access": "本文確認",
+          "accessed": "2026-09-06"
+        },
+        {
+          "title": "小学館辞書（コトバンク）・ぱらぱら",
+          "url": "https://kotobank.jp/word/%E3%81%B1%E3%82%89%E3%81%B1%E3%82%89-605074",
+          "access": "本文確認",
+          "accessed": "2026-09-06"
+        },
+        {
+          "title": "小学館辞書（コトバンク）・しとしと",
+          "url": "https://kotobank.jp/word/%E3%81%97%E3%81%A8%E3%81%97%E3%81%A8-522183",
+          "access": "検索抽出本文",
+          "accessed": "2026-09-06"
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "pack": "onomatope",
+      "id": "on12",
+      "question": "「真夏の太陽が、強く刺すようにまぶしくひかっている」。合うのは？",
+      "choices": [
+        "きらきら",
+        "ぎらぎら",
+        "ちかちか"
+      ],
+      "answerIndex": 1,
+      "answer": "ぎらぎら",
+      "explanation": "「ぎらぎら」は強烈で刺すような光。「きらきら」は細かく美しい、「ちかちか」は点滅して目が痛い。",
+      "status": "supported",
+      "checkedClaims": [
+        "ぎらぎらの強烈な光、きらきらの輝き、ちかちかの刺激／点滅の対比を確認。"
+      ],
+      "remainingClaims": [],
+      "sources": [
+        {
+          "title": "小学館類語例解辞典・光り方の使い分け",
+          "url": "https://dictionary.goo.ne.jp/thsrs/13305/meaning/m0u/",
+          "access": "検索抽出本文（旧配信先・現行本文未確認）",
+          "accessed": "2026-09-06"
+        },
+        {
+          "title": "国立国語研究所・きらきら",
+          "url": "https://www2.ninjal.ac.jp/Onomatope/50_on/kirakira.html",
+          "access": "本文確認",
+          "accessed": "2026-09-06"
+        },
+        {
+          "title": "小学館辞書（コトバンク）・ちかちか",
+          "url": "https://kotobank.jp/word/%E3%81%A1%E3%81%8B%E3%81%A1%E3%81%8B-565292",
+          "access": "検索抽出本文",
+          "accessed": "2026-09-06"
+        }
+      ],
+      "notes": "光の印象の強弱を示す典型例。全員の感じ方を一意に判定するものではない。"
+    },
+    {
+      "pack": "onomatope",
+      "id": "on13",
+      "question": "「秘密を共有している感じで、ふたりは顔を見合わせて＿＿と笑った」。合うのは？",
+      "choices": [
+        "くすくす",
+        "にやにや",
+        "けらけら"
+      ],
+      "answerIndex": 1,
+      "answer": "にやにや",
+      "explanation": "「にやにや」は含みのある笑い。「くすくす」はこっそり小さく、「けらけら」は大声で屈託なく。この場面の「秘密の共有」ニュアンスには「にやにや」がはまる。",
+      "status": "caution",
+      "checkedClaims": [
+        "にやにやに秘密を含む笑いの用例がある。くすくすは小声の笑い、けらけらは甲高い笑い。"
+      ],
+      "remainingClaims": [],
+      "sources": [
+        {
+          "title": "国立国語研究所・にやにや",
+          "url": "https://www2.ninjal.ac.jp/Onomatope/50_on/niyaniya.html",
+          "access": "本文確認",
+          "accessed": "2026-09-06"
+        },
+        {
+          "title": "国立国語研究所・くすくす",
+          "url": "https://www2.ninjal.ac.jp/Onomatope/50_on/kusukusu.html",
+          "access": "本文確認",
+          "accessed": "2026-09-06"
+        },
+        {
+          "title": "小学館辞書（コトバンク）・けらけら",
+          "url": "https://kotobank.jp/word/%E3%81%91%E3%82%89%E3%81%91%E3%82%89-491112",
+          "access": "本文確認",
+          "accessed": "2026-09-06"
+        }
+      ],
+      "notes": "秘密を共有して小さくくすくす笑う場面も成立しうる。含みという出題意図は妥当だが、秘密の共有だけでは唯一性は確定しない。"
+    },
+    {
+      "pack": "onomatope",
+      "id": "on14",
+      "question": "「用事を思い出して、目的地までまっすぐ足早に歩いた」。合うのは？",
+      "choices": [
+        "すたこら",
+        "すたすた",
+        "てくてく"
+      ],
+      "answerIndex": 1,
+      "answer": "すたすた",
+      "explanation": "「すたすた」は目的をもって速く歩く。「すたこら」は逃げるように急ぐ（少し俗っぽい）、「てくてく」はのんびり。",
+      "status": "caution",
+      "checkedClaims": [
+        "すたすたは脇目もふらず足早。すたこらも急いで歩く語義があり、逃走に限らない。"
+      ],
+      "remainingClaims": [],
+      "sources": [
+        {
+          "title": "小学館辞書（コトバンク）・すたすた",
+          "url": "https://kotobank.jp/word/%E3%81%99%E3%81%9F%E3%81%99%E3%81%9F-542064",
+          "access": "本文確認",
+          "accessed": "2026-09-06"
+        },
+        {
+          "title": "小学館辞書（コトバンク）・すたこら",
+          "url": "https://kotobank.jp/word/%E3%81%99%E3%81%9F%E3%81%93%E3%82%89-542056",
+          "access": "本文確認",
+          "accessed": "2026-09-06"
+        },
+        {
+          "title": "小学館辞書（コトバンク）・てくてく",
+          "url": "https://kotobank.jp/word/%E3%81%A6%E3%81%8F%E3%81%A6%E3%81%8F-575552",
+          "access": "検索抽出本文",
+          "accessed": "2026-09-06"
+        }
+      ],
+      "notes": "解説のすたこら＝逃げる／てくてく＝のんびりの狭い定義で排除しない。"
+    },
+    {
+      "pack": "onomatope",
+      "id": "on15",
+      "question": "「子犬がにおいを追いかけて、短い足でかわいく歩いてきた」。合うのは？",
+      "choices": [
+        "よちよち",
+        "ちょこちょこ",
+        "とことこ"
+      ],
+      "answerIndex": 2,
+      "answer": "とことこ",
+      "explanation": "「とことこ」は小さな生き物が軽快に歩くイメージ。「よちよち」は不安定（赤ちゃんやひよこ）、「ちょこちょこ」は小刻みに動き回る繰り返し。",
+      "status": "caution",
+      "checkedClaims": [
+        "とことこは小股の速い歩行。ちょこちょこにも小股の速い歩行があり、よちよちは頼りない歩行。"
+      ],
+      "remainingClaims": [],
+      "sources": [
+        {
+          "title": "小学館辞書（コトバンク）・とことこ",
+          "url": "https://kotobank.jp/word/%E3%81%A8%E3%81%93%E3%81%A8%E3%81%93-583163",
+          "access": "本文確認",
+          "accessed": "2026-09-06"
+        },
+        {
+          "title": "小学館辞書・ちょこちょこ",
+          "url": "https://kotobank.jp/word/%E3%81%A1%E3%82%88%E3%81%93%E3%81%A1%E3%82%88%E3%81%93-3214050",
+          "access": "本文確認",
+          "accessed": "2026-09-06"
+        },
+        {
+          "title": "小学館辞書（コトバンク）・よちよち",
+          "url": "https://kotobank.jp/word/%E3%82%88%E3%81%A1%E3%82%88%E3%81%A1-654515",
+          "access": "本文確認",
+          "accessed": "2026-09-06"
+        }
+      ],
+      "notes": "子犬／かわいいという印象のみではとことこに一意に絞れない。小さな生き物専用という語義でもない。"
+    },
+    {
+      "pack": "onomatope",
+      "id": "on16",
+      "question": "「のどがかわいていたので、冷たい水を勢いよく一気に飲みほした」。合うのは？",
+      "choices": [
+        "こくこく",
+        "ごくごく",
+        "ちびちび"
+      ],
+      "answerIndex": 1,
+      "answer": "ごくごく",
+      "explanation": "「ごくごく」は大きく勢いよく飲む。「こくこく」は小さめのひと口を連続、「ちびちび」は少しずつ味わうように。",
+      "status": "caution",
+      "checkedClaims": [
+        "ごくごくは勢いよく飲む。こくこくにも液体を一気に飲む語義がある。ちびちびは少量ずつ。"
+      ],
+      "remainingClaims": [],
+      "sources": [
+        {
+          "title": "小学館辞書（コトバンク）・ごくごく",
+          "url": "https://kotobank.jp/word/%E3%81%94%E3%81%8F%E3%81%94%E3%81%8F-499173",
+          "access": "本文確認",
+          "accessed": "2026-09-06"
+        },
+        {
+          "title": "小学館辞書（コトバンク）・こくこく",
+          "url": "https://kotobank.jp/word/%E3%81%93%E3%81%8F%E3%81%93%E3%81%8F-499171",
+          "access": "本文確認",
+          "accessed": "2026-09-06"
+        },
+        {
+          "title": "小学館辞書（コトバンク）・ちびちび",
+          "url": "https://kotobank.jp/word/%E3%81%A1%E3%81%B3%E3%81%A1%E3%81%B3-566329",
+          "access": "本文確認",
+          "accessed": "2026-09-06"
+        }
+      ],
+      "notes": "『こくこく＝小さめのひと口』だけを理由に不正解にするのは根拠不足。ごくごくの正答の使用自体は妥当。"
+    },
+    {
+      "pack": "onomatope",
+      "id": "on17",
+      "question": "「夜道、向こうから来た車のライトが一瞬だけ鋭くひかった」。合うのは？",
+      "choices": [
+        "きらきら",
+        "きらり",
+        "ぴかぴか"
+      ],
+      "answerIndex": 1,
+      "answer": "きらり",
+      "explanation": "「きらり」は一瞬の鋭い輝き。「きらきら」は持続する細かな光、「ぴかぴか」は持続するツヤや強い光。",
+      "status": "supported",
+      "checkedClaims": [
+        "きらりの瞬間的な光と、きらきら／ぴかぴかの継続的な表現を確認。"
+      ],
+      "remainingClaims": [],
+      "sources": [
+        {
+          "title": "小学館辞書（コトバンク）・きらり",
+          "url": "https://kotobank.jp/word/%E3%81%8D%E3%82%89%E3%82%8A-681211",
+          "access": "検索抽出本文",
+          "accessed": "2026-09-06"
+        },
+        {
+          "title": "小学館類語例解辞典・光り方の使い分け",
+          "url": "https://dictionary.goo.ne.jp/thsrs/13305/meaning/m0u/",
+          "access": "検索抽出本文（旧配信先・現行本文未確認）",
+          "accessed": "2026-09-06"
+        },
+        {
+          "title": "国立国語研究所・きらきら",
+          "url": "https://www2.ninjal.ac.jp/Onomatope/50_on/kirakira.html",
+          "access": "本文確認",
+          "accessed": "2026-09-06"
+        },
+        {
+          "title": "国立国語研究所・ぴかぴか",
+          "url": "https://www2.ninjal.ac.jp/Onomatope/50_on/pikapika.html",
+          "access": "本文確認",
+          "accessed": "2026-09-06"
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "pack": "onomatope",
+      "id": "on18",
+      "question": "「みんなの前で話す順番が近づいてきて、落ち着かず手がせわしく動いた」。合うのは？",
+      "choices": [
+        "もじもじ",
+        "そわそわ",
+        "うろうろ"
+      ],
+      "answerIndex": 1,
+      "answer": "そわそわ",
+      "explanation": "「そわそわ」は内側の不安が動作に出る状態。「もじもじ」は恥ずかしさで動けない、「うろうろ」はあてもなく動き回る。",
+      "status": "supported",
+      "checkedClaims": [
+        "そわそわの落ち着かなさ、もじもじの遠慮・羞恥、うろうろの歩き回る例を確認。"
+      ],
+      "remainingClaims": [],
+      "sources": [
+        {
+          "title": "小学館辞書（コトバンク）・そわそわ",
+          "url": "https://kotobank.jp/word/%E3%81%9D%E3%82%8F%E3%81%9D%E3%82%8F-555736",
+          "access": "本文確認",
+          "accessed": "2026-09-06"
+        },
+        {
+          "title": "小学館辞書（コトバンク）・もじもじ",
+          "url": "https://kotobank.jp/word/%E3%82%82%E3%81%98%E3%82%82%E3%81%98-645548",
+          "access": "本文確認",
+          "accessed": "2026-09-06"
+        },
+        {
+          "title": "国立国語研究所・うろうろ",
+          "url": "https://www2.ninjal.ac.jp/Onomatope/50_on/urouro.html",
+          "access": "本文確認",
+          "accessed": "2026-09-06"
+        }
+      ],
+      "notes": "気持ちと行動は同時に起こりうるが、設問のせわしい手の動きに正答は適合。"
+    },
+    {
+      "pack": "onomatope",
+      "id": "on19",
+      "question": "「おなかがすいていたのか、行儀も忘れて勢いまかせに食べ進めた」。合うのは？",
+      "choices": [
+        "ぱくぱく",
+        "がつがつ",
+        "ぺろり"
+      ],
+      "answerIndex": 1,
+      "answer": "がつがつ",
+      "explanation": "「がつがつ」は欲張りで荒っぽい食べ方。「ぱくぱく」は軽快で明るい、「ぺろり」はあっという間に完食するニュアンス。",
+      "status": "caution",
+      "checkedClaims": [
+        "がつがつのむさぼる食べ方とぺろりの短時間で食べ尽くす意味は確認。"
+      ],
+      "remainingClaims": [],
+      "sources": [
+        {
+          "title": "小学館辞書（コトバンク）・がつがつ",
+          "url": "https://kotobank.jp/word/%E3%81%8C%E3%81%A4%E3%81%8C%E3%81%A4-464135",
+          "access": "本文確認",
+          "accessed": "2026-09-06"
+        },
+        {
+          "title": "小学館辞書（コトバンク）・ぺろり",
+          "url": "https://kotobank.jp/word/%E3%81%BA%E3%82%8D%E3%82%8A-626012",
+          "access": "本文確認",
+          "accessed": "2026-09-06"
+        },
+        {
+          "title": "小学館辞書（コトバンク）・ぱくぱく",
+          "url": "https://kotobank.jp/word/%E3%81%B1%E3%81%8F%E3%81%B1%E3%81%8F-600437",
+          "access": "本文確認",
+          "accessed": "2026-09-06"
+        }
+      ],
+      "notes": "ぱくぱくを明るい・軽快な食べ方だけに限定するのは on09 と同じ懸念。正答は荒い食べ方という文脈に適合。"
+    },
+    {
+      "pack": "onomatope",
+      "id": "on20",
+      "question": "「小雨になりかけた帰り道、ほんの一粒だけ頬に雨があたった」。合うのは？",
+      "choices": [
+        "しとしと",
+        "ぽつぽつ",
+        "ぽつり"
+      ],
+      "answerIndex": 2,
+      "answer": "ぽつり",
+      "explanation": "「ぽつり」は単発の一粒を表す。「ぽつぽつ」はまばらに連続、「しとしと」は細かく静か。「ぽつり」は心情の表現（ひとり寂しく）にも使う。",
+      "status": "supported",
+      "checkedClaims": [
+        "ぽつりの一滴・孤立、ぽつぽつの複数／断続、しとしとの静かな雨を確認。"
+      ],
+      "remainingClaims": [],
+      "sources": [
+        {
+          "title": "小学館辞書（コトバンク）・ぽつり",
+          "url": "https://kotobank.jp/word/%E3%81%BD%E3%81%A4%E3%82%8A-630863",
+          "access": "本文確認",
+          "accessed": "2026-09-06"
+        },
+        {
+          "title": "小学館辞書（コトバンク）・ぽつぽつ",
+          "url": "https://kotobank.jp/word/%E3%81%BD%E3%81%A4%E3%81%BD%E3%81%A4-630850",
+          "access": "本文確認",
+          "accessed": "2026-09-06"
+        },
+        {
+          "title": "小学館辞書（コトバンク）・しとしと",
+          "url": "https://kotobank.jp/word/%E3%81%97%E3%81%A8%E3%81%97%E3%81%A8-522183",
+          "access": "検索抽出本文",
+          "accessed": "2026-09-06"
+        }
+      ],
+      "notes": "孤独感は孤立用法からの解釈。全員がそう感じるという事実として判定しない。"
+    },
+    {
+      "pack": "kotoba-asobo-sokatsu",
+      "id": "sk01",
+      "question": "「うれしい」「たのしい」「あたたかい」は、どれも似た気持ちを表すことばだが、ニュアンスがちがう。「欲しかった物が手に入った瞬間の気持ち」にいちばん合うのはどれ？",
+      "choices": [
+        "うれしい",
+        "たのしい",
+        "あたたかい"
+      ],
+      "answerIndex": 0,
+      "answer": "うれしい",
+      "explanation": "「うれしい」は欲しいものが手に入ったときの喜びそのものを表す。「たのしい」は動きのある明るさ、「あたたかい」は人の情でじんわり感じる温度で、似ているようで使われる場面がちがう。",
+      "status": "caution",
+      "checkedClaims": [
+        "うれしいは希望がかなった満足、楽しいは満ち足りた愉快さ。正答Aは典型的用法として整合。",
+        "暖かい項の語義3（温かい）で、思いやり・いたわりの比喩義を本文確認。"
+      ],
+      "remainingClaims": [],
+      "sources": [
+        {
+          "title": "小学館デジタル大辞泉・嬉しい",
+          "url": "https://kotobank.jp/word/%E5%AC%89%E3%81%97%E3%81%84-442277",
+          "access": "本文確認",
+          "accessed": "2026-09-06"
+        },
+        {
+          "title": "小学館デジタル大辞泉・楽しい",
+          "url": "https://kotobank.jp/word/%E6%A5%BD%E3%81%97%E3%81%84-562105",
+          "access": "本文確認",
+          "accessed": "2026-09-06"
+        },
+        {
+          "title": "小学館デジタル大辞泉・暖かい",
+          "url": "https://kotobank.jp/word/%E6%9A%96%E3%81%8B%E3%81%84-425211",
+          "access": "本文確認",
+          "accessed": "2026-09-06",
+          "evidence": "デジタル大辞泉の語義3。"
+        }
+      ],
+      "notes": "個人の気持ちの唯一の正しさは判定しない。『たのしい＝動きのある』は辞書的な必須条件ではなく、解説を意味の排他的定義と扱わない。"
+    },
+    {
+      "pack": "kotoba-asobo-sokatsu",
+      "id": "sk02",
+      "question": "「妹が、公園でボールを追いかけた。」という文で、「だれが」にあたる部分（主語）はどれ？",
+      "choices": [
+        "妹が",
+        "公園で",
+        "ボールを"
+      ],
+      "answerIndex": 0,
+      "answer": "妹が",
+      "explanation": "「追いかけた」のがだれかと考えると「妹が」になる。「公園で」は場所を、「ボールを」は追いかけた対象を説明することばで、主語ではない。",
+      "status": "supported",
+      "checkedClaims": [
+        "学校文法の主語はだれが／何がにあたるという教材の定義を確認。設問へ適用すると妹が＝動作主、公園で＝場所、ボールを＝対象。"
+      ],
+      "remainingClaims": [],
+      "sources": [
+        {
+          "title": "ベネッセ進研ゼミ・主語の見つけ方",
+          "url": "https://sho.benesse.co.jp/qat/j/24.html",
+          "access": "本文確認",
+          "accessed": "2026-09-06"
+        }
+      ],
+      "notes": "定義の典拠確認＋当該例文への論理適用。"
+    },
+    {
+      "pack": "kotoba-asobo-sokatsu",
+      "id": "sk03",
+      "question": "「テーブルの上にノートとえんぴつがある。このノートに絵をかいていい？」の「この」が指しているのはどれ？",
+      "choices": [
+        "テーブル",
+        "ノート",
+        "えんぴつ"
+      ],
+      "answerIndex": 1,
+      "answer": "ノート",
+      "explanation": "「この」の直後に「ノート」と続いているので、指しているのは「ノート」。指示語は多くの場合、直後にある名詞を直接指す。",
+      "status": "caution",
+      "checkedClaims": [
+        "このノートがノートを示す正答は妥当。ただし指示語全般への『直後の名詞』の一般化には注意。"
+      ],
+      "remainingClaims": [
+        "『多くの場合』という頻度の根拠は未取得"
+      ],
+      "sources": [
+        {
+          "title": "東京外国語大学・このN／そのN／あのN",
+          "url": "https://www.coelang.tufs.ac.jp/mt/ja/gmod/contents/explanation/013.html",
+          "access": "本文確認",
+          "accessed": "2026-09-06"
+        },
+        {
+          "title": "国立国語研究所・これ／それ／あれ",
+          "url": "https://kotoba.ninjal.ac.jp/qa/yokuaru/qa-62/",
+          "access": "本文確認",
+          "accessed": "2026-09-06"
+        },
+        {
+          "title": "小学館デジタル大辞泉／精選版日本国語大辞典・指示詞",
+          "url": "https://kotobank.jp/word/%E6%8C%87%E7%A4%BA%E8%A9%9E-73222",
+          "access": "本文確認",
+          "accessed": "2026-09-06",
+          "evidence": "指示詞は連体詞だけでなく代名詞・副詞も含む。文脈指示は先行するテキストの要素を指すと説明。"
+        }
+      ],
+      "notes": "この＋名詞の構文と、これ／それによる前の発話への照応は別。解説をこの設問に限定する案を検討。",
+      "searchHistory": [
+        {
+          "query": "国語研究所 指示詞 この それ 直後 名詞 文脈／辞書 指示詞",
+          "result": "連体修飾と文脈指示の区別は追加本文で確認。指示語全体のうち直後名詞を指す割合を示す集計は取得できず。"
+        }
+      ]
+    },
+    {
+      "pack": "kotoba-asobo-sokatsu",
+      "id": "sk04",
+      "question": "「登山」は「山に登る」というように、下の漢字が上の漢字（動作）の対象になっている熟語。同じ組み立てのタイプはどれ？",
+      "choices": [
+        "乗車（車に乗る）",
+        "高山（高い山）",
+        "森林（森と林）"
+      ],
+      "answerIndex": 0,
+      "answer": "乗車（車に乗る）",
+      "explanation": "「乗車」は「車に乗る」で、下の漢字が上の動作の対象になるタイプ。「高山」は上が下を説明するタイプ、「森林」は似た意味を重ねるタイプで、それぞれ組み立てがちがう。",
+      "status": "supported",
+      "checkedClaims": [
+        "問題文に与えられた言い換えを直接照合。登山／乗車は下の字に助詞を補って上の動作へつながる。高山は修飾、森林は類義語の並列。"
+      ],
+      "remainingClaims": [],
+      "sources": [],
+      "notes": "与えられた構成の内部整合性を確認する問題。歴史的な語源を外部資料で証明した扱いではない。"
+    },
+    {
+      "pack": "kotoba-asobo-sokatsu",
+      "id": "sk05",
+      "question": "「耳が痛い」という慣用句の意味として正しいのはどれ？",
+      "choices": [
+        "大きな音で耳が痛くなること",
+        "自分の弱点を指摘されて聞くのがつらいこと",
+        "うれしくて耳まで赤くなること"
+      ],
+      "answerIndex": 1,
+      "answer": "自分の弱点を指摘されて聞くのがつらいこと",
+      "explanation": "「耳が痛い」は自分の失敗や弱点を指摘されて、聞くのがつらいという意味。相手の言うことが正しいほど、聞いていて痛く感じるところから来ている。",
+      "status": "partial",
+      "checkedClaims": [
+        "慣用句として、自分の弱点を指摘され聞きづらいという語義は辞書と一致。"
+      ],
+      "remainingClaims": [
+        "『正しいほど痛く感じるところから来ている』という成立経緯の出典は未確認。語義の比喩的説明と歴史的語源を区別する。"
+      ],
+      "sources": [
+        {
+          "title": "小学館デジタル大辞泉／精選版日本国語大辞典・耳が痛い",
+          "url": "https://kotobank.jp/word/%E8%80%B3%E3%81%8C%E7%97%9B%E3%81%84-639610",
+          "access": "本文確認",
+          "accessed": "2026-09-06"
+        }
+      ],
+      "notes": "正答・語義は支持のまま。解説後半を意味の説明として読むことは可能だが、歴史的成立を確認したとは報告しない。公開辞書・刊行主体の資料を追加探索後も部分確認を維持。",
+      "searchHistory": [
+        {
+          "query": "国語研究所／小学館／JapanKnowledge 耳が痛い 由来 語源 比喩",
+          "result": "辞書の語義と初出用例は確認できるが、原文後半の『正しいほど痛く感じるところから』という成立経緯は確認できず。一般解説サイトの由来断定は根拠として採用しない。"
+        }
+      ]
+    },
+    {
+      "pack": "kotoba-asobo-sokatsu",
+      "id": "sk06",
+      "question": "「猿も木から落ちる」ということわざの意味に近いのはどれ？",
+      "choices": [
+        "得意なことでも、時には失敗することがある",
+        "猿は木登りが下手だということ",
+        "得意なことは絶対に失敗しないということ"
+      ],
+      "answerIndex": 0,
+      "answer": "得意なことでも、時には失敗することがある",
+      "explanation": "木登りが得意な猿でも落ちることがあるように、その道にすぐれた人でも油断すれば失敗する、という教え。得意なことほど油断しやすい、という戒めとして使われる。",
+      "status": "supported",
+      "checkedClaims": [
+        "熟達者でも失敗があるという正答と猿の木登りにたとえる解説前半は一致。",
+        "中井（1997）のことわざ解釈の論文pp.177・180で、猿の比喩を油断した熟達者の失敗へ読む過程を確認。戒めとしての読みを支持する。"
+      ],
+      "remainingClaims": [],
+      "sources": [
+        {
+          "title": "日本漢字能力検定協会・猿も木から落ちる",
+          "url": "https://www.kanjipedia.jp/kotoba/0000468700",
+          "access": "本文確認",
+          "accessed": "2026-09-06"
+        },
+        {
+          "title": "中井孝幸（1997）『生活世界の学』としてのことわざとその教育実践",
+          "url": "https://www.i-repository.net/contents/osakacu/kiyo/DB00010362.pdf",
+          "access": "本文確認",
+          "accessed": "2026-09-06",
+          "evidence": "大阪市立大学生活科学部紀要45。PDFの3・6ページに、油断した人が得意なことに失敗するという解釈を分析。"
+        }
+      ],
+      "notes": "原文は『という戒めとして使われる』という用法説明であり、熟達度と失敗率の実験結果を主張していない。前回は心理的頻度の測定を求めすぎていた。辞書の中心義＋論文の解釈例を根拠に支持へ変更。すべての失敗原因が油断という一般法則には拡張しない。"
+    },
+    {
+      "pack": "kotoba-asobo-sokatsu",
+      "id": "sk07",
+      "question": "「聞く」の部首は、見た目で目立つ「門」ではなく「耳」だった。この「見た目のパーツ（音）＋正式な部首（意味）」という組み立てで考えると、「{語|かた}る」の意味を担当しているのはどの部分だと{予想|よそう}できる？",
+      "choices": [
+        "言（ごんべん）",
+        "五",
+        "口"
+      ],
+      "answerIndex": 0,
+      "answer": "言（ごんべん）",
+      "explanation": "「語る」は「言（意味：ことばを発する）」＋「吾（音：ゴ）」の組み合わせで、部首は「言（ごんべん）」。「聞く」が「耳（意味）＋門（音）」だったのと同じしくみで、意味のパーツと部首が一致する形声文字の代表例。",
+      "status": "supported",
+      "checkedClaims": [
+        "語＝言と音符吾、聞＝耳と音符門という形声の成り立ちを漢字辞典で照合。"
+      ],
+      "remainingClaims": [],
+      "sources": [
+        {
+          "title": "角川新字源改訂新版（漢字ペディア）・語",
+          "url": "https://www.kanjipedia.jp/kanji/0002110200",
+          "access": "本文確認",
+          "accessed": "2026-09-06"
+        },
+        {
+          "title": "角川新字源改訂新版（漢字ペディア）・聞",
+          "url": "https://www.kanjipedia.jp/kanji/0006190200/",
+          "access": "本文確認",
+          "accessed": "2026-09-06"
+        }
+      ],
+      "notes": "この二字の構成を確認。すべての部首が意味を必ず担当するという一般則には拡張しない。"
+    },
+    {
+      "pack": "kotoba-asobo-sokatsu",
+      "id": "sk08",
+      "question": "「絶対に安全だと言っていた人が、次の瞬間『でも危ないかもしれない』と言った」。このような、つじつまの合わない状況を表すのに使える故事成語はどれ？",
+      "choices": [
+        "矛盾",
+        "蛇足",
+        "完璧"
+      ],
+      "answerIndex": 0,
+      "answer": "矛盾",
+      "explanation": "「矛盾」は、どんなものでも防げる盾とどんなものでも突き通せる矛を同時に自慢して答えに困った商人の話が由来で、つじつまの合わない発言や状況全般に使える。「蛇足」は余計な付け足し、「完璧」は欠けたところがないことで、それぞれ意味がちがう。",
+      "status": "supported",
+      "checkedClaims": [
+        "矛盾の意味と韓非子の商人の故事、蛇足＝不要な付け足し、完璧＝欠点不足なしを照合。"
+      ],
+      "remainingClaims": [],
+      "sources": [
+        {
+          "title": "日本漢字能力検定協会・矛盾",
+          "url": "https://www.kanjipedia.jp/kotoba/0006634900",
+          "access": "本文確認",
+          "accessed": "2026-09-06"
+        },
+        {
+          "title": "小学館辞書・蛇足",
+          "url": "https://kotobank.jp/word/%E8%9B%87%E8%B6%B3-560630",
+          "access": "本文確認",
+          "accessed": "2026-09-06"
+        },
+        {
+          "title": "日本漢字能力検定協会・完璧",
+          "url": "https://www.kanjipedia.jp/kotoba/0001028600",
+          "access": "本文確認",
+          "accessed": "2026-09-06"
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "pack": "kotoba-asobo-sokatsu",
+      "id": "sk09",
+      "question": "『枕草子』は「春は、あけぼの」の後、季節ごとに「夏は夜」「秋は夕暮れ」「冬はつとめて（早朝）」と続く。この4つのうち、「春」と同じように「1日の中でも{薄暗|うすぐら}い、明暗の{境目|さかいめ}の時間帯」を選んでいるのはどれ？",
+      "choices": [
+        "冬はつとめて（早朝）",
+        "夏は夜",
+        "すべて昼の明るい時間帯を選んでいる"
+      ],
+      "answerIndex": 0,
+      "answer": "冬はつとめて（早朝）",
+      "explanation": "「あけぼの」も「つとめて」も、どちらも夜と昼の境目にあたる薄明るい時間帯を指す。清少納言は四季それぞれについて、まったく同じ「昼の盛り」を選ぶのではなく、季節ごとに違った時間帯・違った魅力を選んで並べている。",
+      "status": "supported",
+      "checkedClaims": [
+        "つとめて＝早朝・夜明けがた、曙＝夜明けの語義を確認。冬の候補はこの意味で妥当。",
+        "研究者開発の文語文教材の引用本文で、春・夏・秋・冬の冒頭と冬の早朝の語釈を照合。既確認の辞書語義と合わせ、示された候補の中で冬という正答を支持。"
+      ],
+      "remainingClaims": [],
+      "sources": [
+        {
+          "title": "小学館辞書・つとめて",
+          "url": "https://kotobank.jp/word/%E3%81%A4%E3%81%A8%E3%82%81%E3%81%A6-572050",
+          "access": "本文確認",
+          "accessed": "2026-09-06"
+        },
+        {
+          "title": "角川新字源改訂新版（漢字ペディア）・曙",
+          "url": "https://www.kanjipedia.jp/kanji/0003306200",
+          "access": "検索抽出本文",
+          "accessed": "2026-09-06"
+        },
+        {
+          "title": "BUNGO-bun GO!・枕草子 春はあけぼの",
+          "url": "https://bungobungo.jp/text/hakbn/",
+          "access": "本文確認",
+          "accessed": "2026-09-06",
+          "evidence": "四季の本文と語釈を確認。"
+        },
+        {
+          "title": "BUNGO-bun GO!・開発者と研究助成の記録",
+          "url": "https://bungobungo.jp/about.html",
+          "access": "本文確認",
+          "accessed": "2026-09-06",
+          "evidence": "佐藤勢紀子・虫明美喜らの文語文教材開発であることを確認。"
+        }
+      ],
+      "notes": "枕草子の異本すべてを校訂した意味ではなく、専門家の教材に掲載された原文と語義を照合。つとめては早朝を指し、天文学的な薄明の時刻に限定しない。選択肢にない秋も明暗の境目を扱うが、それを春・冬以外にはないと断定する設問ではない。"
+    },
+    {
+      "pack": "kotoba-asobo-sokatsu",
+      "id": "sk10",
+      "question": "目上の人に「ご存じですか」とたずねるとき、この「ご存じ」はどんなことばの言い換え？",
+      "choices": [
+        "「知っている」の尊敬語",
+        "「知っている」の謙譲語",
+        "「知っている」の方言"
+      ],
+      "answerIndex": 0,
+      "answer": "「知っている」の尊敬語",
+      "explanation": "「ご存じ」は「知っている」の尊敬語で、相手の行動を高めて言う特別なことば。「です・ます」で語尾をていねいにするだけでなく、ことばそのものを置きかえる敬語の方法もある。",
+      "status": "supported",
+      "checkedClaims": [
+        "ご存じが知っていることを敬って言う名詞であることを照合。問いの尊敬／謙譲／方言の区別では尊敬に合う。"
+      ],
+      "remainingClaims": [],
+      "sources": [
+        {
+          "title": "小学館デジタル大辞泉／精選版日本国語大辞典・御存じ",
+          "url": "https://kotobank.jp/word/%E5%BE%A1%E5%AD%98%E3%81%98-502033",
+          "access": "本文確認",
+          "accessed": "2026-09-06"
+        }
+      ],
+      "notes": "品詞を『動詞の活用形』と断定してはいない。"
+    }
+  ],
+  "followUp": {
+    "date": "2026-09-06",
+    "scope": "前回の明示的な残余6行を追加照合。k12/sk06/sk09を根拠補完と原文解釈訂正でsupportedへ。sk01の残余語義を本文確認。sk05とsk03の不足は残す。",
+    "baselineCounts": {
+      "supported": 33,
+      "caution": 13,
+      "partial": 4
+    }
+  }
+}

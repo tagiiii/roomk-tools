@@ -1,0 +1,1943 @@
+{
+  "date": "2026-09-06",
+  "scope": "指定5パック100問、一巡の調査記録。アプリ未変更。未確認・部分確認を含み、全問合格を意味しない。",
+  "methodology": {
+    "supported": "指定正答と解説の中心内容を出典で支持。辞書の全語義や全時代の用法を網羅する保証ではない。",
+    "caution": "中心義は確認できるが限定条件・多義性・唯一正答性・周辺主張の未確認がある。",
+    "incorrect": "解説の具体的主張または誤答排除と出典の矛盾を確認。正答そのものが誤りとは限らない。",
+    "unverified": "必要な語義・比較の出典照合が不足。誤りとは断定しない。",
+    "access": "page は本文抽出を閲読。search_snippet は検索結果の抽出のみ。PDF page もテキスト抽出であり全ページ画像確認を意味しない。",
+    "sources": "辞書出版社・公的資料を優先。Kotobank は辞書転載の二次資料として辞書名を付記。架空場面の自然さは実証済みの唯一正答と混同しない。"
+  },
+  "items": [
+    {
+      "pack": "kanyouku",
+      "id": "ky01",
+      "status": "caution",
+      "answerCheck": "指定正答の中心語義を確認。",
+      "explanationCheck": "対比を含め中心説明に矛盾なし。混同しやすさの頻度は定量検証対象外。",
+      "note": "語義確認。架空の例文自体の実在性は判定しない。 混同頻度の事実主張は未裏付けのため完全支持とはしない。",
+      "sources": [
+        {
+          "title": "日本大百科全書（ニッポニカ）「おもな慣用句」（Kotobank転載・二次）",
+          "url": "https://kotobank.jp/word/おもな慣用句-1616872",
+          "evidence": "寡黙",
+          "access": "page"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。",
+      "remainingClaims": [
+        "口が重いと口が悪い・軽いは混ざりやすい代表例という一般的な混同頻度。"
+      ]
+    },
+    {
+      "pack": "kanyouku",
+      "id": "ky02",
+      "status": "caution",
+      "answerCheck": "正答語義は確認。",
+      "explanationCheck": "2026-09-06に日清オイリオ本文で量り売りと雑談の由来説を確認。ただし同資料は量の計算そのものより油を注ぎ切る待ち時間を説明している。",
+      "note": "商い中の雑談という既確認の由来を補完。語源紹介資料は得たが、歴史的な唯一の起源を確定する一次史料ではない。",
+      "sources": [
+        {
+          "title": "日本大百科全書（ニッポニカ）「おもな慣用句」（Kotobank転載・二次）",
+          "url": "https://kotobank.jp/word/おもな慣用句-1616872",
+          "evidence": "該当見出しの語義",
+          "access": "page"
+        },
+        {
+          "title": "日清オイリオ『油に関するQ&A：私たち、油を売っています』（業界企業による語源紹介・二次）",
+          "url": "https://www.nisshin-oillio.com/oil/qa/qa14.html",
+          "evidence": "量り売りで粘る油が切れるまで雑談したという由来説を紹介。",
+          "access": "page"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。",
+      "remainingClaims": [
+        "『量をはかるあいだ』という語源説明の厳密な範囲（確認資料は油を移し切る待ち時間）。"
+      ]
+    },
+    {
+      "pack": "kanyouku",
+      "id": "ky03",
+      "status": "incorrect",
+      "answerCheck": "堅いも文脈に合うが、長いも金を出し渋る意味の実在慣用句。",
+      "explanationCheck": "原文の『ながいはこの文脈では使わない』という排除が不正確。長いにも金を出し渋る意味がある。",
+      "note": "同一掲載ページの2辞書で一致。独立した2サイト照合ではない。初回本文取得はタイムアウトしたが、再取得で両辞書の本文確認に成功。",
+      "sources": [
+        {
+          "title": "大辞泉・日本国語大辞典『財布の紐が長い』（Kotobank転載・二次）",
+          "url": "https://kotobank.jp/word/財布の紐が長い-508386",
+          "evidence": "金を出し渋る意味。両辞書本文を確認。",
+          "access": "page"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。"
+    },
+    {
+      "pack": "kanyouku",
+      "id": "ky04",
+      "status": "caution",
+      "answerCheck": "忙しいという正答を確認。",
+      "explanationCheck": "「猫から眠そうと間違われやすい」の一般的傾向は根拠未確認。",
+      "note": "修正は未実施。",
+      "sources": [
+        {
+          "title": "日本大百科全書（ニッポニカ）「おもな慣用句」（Kotobank転載・二次）",
+          "url": "https://kotobank.jp/word/おもな慣用句-1616872",
+          "evidence": "該当見出しの語義",
+          "access": "page"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。",
+      "remainingClaims": [
+        "猫の連想から眠そうと間違われやすいという一般的傾向。"
+      ]
+    },
+    {
+      "pack": "kanyouku",
+      "id": "ky05",
+      "status": "supported",
+      "answerCheck": "大辞泉・日本国語大辞典の期待して待ち望む語義から、Bの心待ちが該当。",
+      "explanationCheck": "期待・待望が中心で、不安の強調ではないという解説を支持。不安との併存を否定する設問ではない。",
+      "note": "2026-09-06追加本文確認。前回の『怖いものへの用法排除』という疑義は原文より強い読みのため撤回。",
+      "sources": [
+        {
+          "title": "デジタル大辞泉・精選版日本国語大辞典『首を長くする』（Kotobank転載・二次）",
+          "url": "https://kotobank.jp/word/首を長くする-484726",
+          "evidence": "期待して待ち望む意味を両辞書本文で確認。",
+          "access": "page"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。",
+      "remainingClaims": []
+    },
+    {
+      "pack": "kanyouku",
+      "id": "ky06",
+      "status": "supported",
+      "answerCheck": "指定正答の中心語義を確認。",
+      "explanationCheck": "既確認の慣用義と、字面からの別解との対比を支持。",
+      "note": "2026-09-06原文再読。原文に混同頻度の主張はなく、前回の汎用注記による指摘を撤回。新たな頻度資料を得たという意味ではない。",
+      "sources": [
+        {
+          "title": "日本大百科全書（ニッポニカ）「おもな慣用句」（Kotobank転載・二次）",
+          "url": "https://kotobank.jp/word/おもな慣用句-1616872",
+          "evidence": "交友",
+          "access": "page"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。",
+      "remainingClaims": []
+    },
+    {
+      "pack": "kanyouku",
+      "id": "ky07",
+      "status": "caution",
+      "answerCheck": "行動しないという中心語義は確認。",
+      "explanationCheck": "「やる気はある」は語義が必ず含む条件ではない。",
+      "note": "修正は未実施。",
+      "sources": [
+        {
+          "title": "日本大百科全書（ニッポニカ）「おもな慣用句」（Kotobank転載・二次）",
+          "url": "https://kotobank.jp/word/おもな慣用句-1616872",
+          "evidence": "該当見出しの語義",
+          "access": "page"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。"
+    },
+    {
+      "pack": "kanyouku",
+      "id": "ky08",
+      "status": "supported",
+      "answerCheck": "指定正答の中心語義を確認。",
+      "explanationCheck": "既確認の慣用義と、字面からの別解との対比を支持。",
+      "note": "2026-09-06原文再読。原文に混同頻度の主張はなく、前回の汎用注記による指摘を撤回。新たな頻度資料を得たという意味ではない。",
+      "sources": [
+        {
+          "title": "日本大百科全書（ニッポニカ）「おもな慣用句」（Kotobank転載・二次）",
+          "url": "https://kotobank.jp/word/おもな慣用句-1616872",
+          "evidence": "情報",
+          "access": "page"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。",
+      "remainingClaims": []
+    },
+    {
+      "pack": "kanyouku",
+      "id": "ky09",
+      "status": "caution",
+      "answerCheck": "配慮の語義は確認。",
+      "explanationCheck": "気転も語義に含まれるため「頭の回転」と完全に切り離す説明は強すぎる。",
+      "note": "修正は未実施。",
+      "sources": [
+        {
+          "title": "日本大百科全書（ニッポニカ）「おもな慣用句」（Kotobank転載・二次）",
+          "url": "https://kotobank.jp/word/おもな慣用句-1616872",
+          "evidence": "該当見出しの語義",
+          "access": "page"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。"
+    },
+    {
+      "pack": "kanyouku",
+      "id": "ky10",
+      "status": "supported",
+      "answerCheck": "手配等が行き届かない意味のBを集英社本文で確認。対応できないという指定はBを支持するが、忙しく手が空かない状況との重なりはある。",
+      "explanationCheck": "手が回ると空くの対比に加え、国語研IPALの充分という語義と慣用『手が足りる』を本文確認。対応できないという指定のもとでBを選ぶ解説を支持。",
+      "note": "2026-09-06追加照合で3選択肢の中心義を補完。同じ多忙な状況で手が空かないとも言えることは否定しない。",
+      "sources": [
+        {
+          "title": "集英社imidas『手が回る〔手を回す〕』",
+          "url": "https://imidas.jp/idiom/detail/X-05-X-19-2-0017.html",
+          "evidence": "世話・手配が行き届く意味、多忙で手が回らない用例。",
+          "access": "page"
+        },
+        {
+          "title": "デジタル大辞泉・精選版日本国語大辞典『手が空く』（Kotobank転載・二次）",
+          "url": "https://kotobank.jp/word/手が空く-573105",
+          "evidence": "仕事の切れ目等で暇になる意味。",
+          "access": "page"
+        },
+        {
+          "title": "国立国語研究所IPAL基本動詞辞書『たりる』",
+          "url": "https://www2.ninjal.ac.jp/dictionaries/IPALBV/pdf_dir/たりる.pdf",
+          "evidence": "第1義で充分の意味、同欄の慣用に手が足りるを明示。",
+          "access": "page"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。",
+      "remainingClaims": []
+    },
+    {
+      "pack": "kanyouku",
+      "id": "ky11",
+      "status": "supported",
+      "answerCheck": "訪問頻度低下を確認。",
+      "explanationCheck": "距離でなく訪問間隔の話と整合。",
+      "note": "修正せず報告のみ。比較表現の自然さは編集判断であり客観的な語義と分けた。",
+      "sources": [
+        {
+          "title": "集英社imidas「足が遠のく」",
+          "url": "https://imidas.jp/idiom/detail/X-05-X-01-3-0009.html",
+          "evidence": "訪問機会減少",
+          "access": "search_snippet"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。"
+    },
+    {
+      "pack": "kanyouku",
+      "id": "ky12",
+      "status": "caution",
+      "answerCheck": "得意になり軽率になる語義は確認。",
+      "explanationCheck": "順調に進む肯定的用法も辞書にあり、行きすぎを常に含むとの一般化に注意。",
+      "note": "修正は未実施。",
+      "sources": [
+        {
+          "title": "集英社imidas ルーツでなるほど慣用句辞典「調子に乗る」",
+          "url": "https://imidas.jp/idiom/detail/X-05-X-17-8-0008.html",
+          "evidence": "肯定用法も併記",
+          "access": "search_snippet"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。"
+    },
+    {
+      "pack": "kanyouku",
+      "id": "ky13",
+      "status": "caution",
+      "answerCheck": "人との相性を表す用例として正答は適切。",
+      "explanationCheck": "「少し落ち着いた言い方」は主観的印象で正誤判定しない。",
+      "note": "修正は未実施。",
+      "sources": [
+        {
+          "title": "日本大百科全書（ニッポニカ）「おもな慣用句」（Kotobank転載・二次）",
+          "url": "https://kotobank.jp/word/おもな慣用句-1616872",
+          "evidence": "該当見出しの語義",
+          "access": "page"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。"
+    },
+    {
+      "pack": "kanyouku",
+      "id": "ky14",
+      "status": "supported",
+      "answerCheck": "指定正答の中心語義を確認。",
+      "explanationCheck": "既確認の慣用義と、字面からの別解との対比を支持。",
+      "note": "2026-09-06原文再読。原文に混同頻度の主張はなく、前回の汎用注記による指摘を撤回。新たな頻度資料を得たという意味ではない。",
+      "sources": [
+        {
+          "title": "日本大百科全書（ニッポニカ）「おもな慣用句」（Kotobank転載・二次）",
+          "url": "https://kotobank.jp/word/おもな慣用句-1616872",
+          "evidence": "強情",
+          "access": "page"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。",
+      "remainingClaims": []
+    },
+    {
+      "pack": "kanyouku",
+      "id": "ky15",
+      "status": "caution",
+      "answerCheck": "覚悟を決めるBの語義を確認。",
+      "explanationCheck": "C「いつも腹をくくっている」も場面ごとに覚悟している意味は可能。常時には使えないという排除に根拠不足。",
+      "note": "修正せず報告のみ。比較表現の自然さは編集判断であり客観的な語義と分けた。",
+      "sources": [
+        {
+          "title": "小学館デジタル大辞泉「腹を括る」（Kotobank転載・二次）",
+          "url": "https://kotobank.jp/word/腹を括る-604822",
+          "evidence": "覚悟",
+          "access": "search_snippet"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。"
+    },
+    {
+      "pack": "kanyouku",
+      "id": "ky16",
+      "status": "caution",
+      "answerCheck": "指定正答の中心語義を確認。",
+      "explanationCheck": "技能を高める中心義を支持。ただし手を動かす練習も技能向上の手段になり得るため、異なるという説明の強さは編集判断。",
+      "note": "2026-09-06原文再読。原文にない混同頻度の指摘は撤回。残る注意は語の意味と具体的な練習手段を対立させる説明。",
+      "sources": [
+        {
+          "title": "日本大百科全書（ニッポニカ）「おもな慣用句」（Kotobank転載・二次）",
+          "url": "https://kotobank.jp/word/おもな慣用句-1616872",
+          "evidence": "技能向上",
+          "access": "page"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。",
+      "remainingClaims": []
+    },
+    {
+      "pack": "kanyouku",
+      "id": "ky17",
+      "status": "caution",
+      "answerCheck": "状況から距離を置いて考える比喩用法はCollins本文で確認しBの意図を支持。A/Cの自然さを一律判定する根拠ではない。",
+      "explanationCheck": "漢字ペディアは退くを後方に下がる意味とし一歩退く用例、引くを退く等の一般的表記として説明。物理的動作ではないとの記述は慣用的意味に限定した説明と明示したい。",
+      "note": "2026-09-06追加照合で比喩・文字どおりの双方を補完。文の自然さは主観と区別。",
+      "sources": [
+        {
+          "title": "HarperCollins 和英辞書『一歩引く』",
+          "url": "https://www.collinsdictionary.com/jp/dictionary/japanese-english/一歩引く",
+          "evidence": "当事者から距離を置いて考える比喩用法。",
+          "access": "page"
+        },
+        {
+          "title": "日本漢字能力検定協会 漢字ペディア『同訓異義：ひく』",
+          "url": "https://www.kanjipedia.jp/sakuin/doukunigi/items/0005891200",
+          "evidence": "引くの一般的表記、退くの後退の意味と一歩退く用例。",
+          "access": "page"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。",
+      "remainingClaims": [
+        "控えめな立場を取る・相手を立てるという細かな語義の直接の辞書定義は未取得。"
+      ]
+    },
+    {
+      "pack": "kanyouku",
+      "id": "ky18",
+      "status": "caution",
+      "answerCheck": "対応に困る語義を確認。",
+      "explanationCheck": "誤読されやすさの一般的頻度は未確認。",
+      "note": "修正は未実施。",
+      "sources": [
+        {
+          "title": "日本大百科全書（ニッポニカ）「おもな慣用句」（Kotobank転載・二次）",
+          "url": "https://kotobank.jp/word/おもな慣用句-1616872",
+          "evidence": "該当見出しの語義",
+          "access": "page"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。",
+      "remainingClaims": [
+        "熱いもの・丁寧な世話という解釈に引っ張られやすいという一般的傾向。"
+      ]
+    },
+    {
+      "pack": "kanyouku",
+      "id": "ky19",
+      "status": "supported",
+      "answerCheck": "指定正答の中心語義を確認。",
+      "explanationCheck": "既確認の慣用義と、字面からの別解との対比を支持。",
+      "note": "2026-09-06原文再読。原文に混同頻度の主張はなく、前回の汎用注記による指摘を撤回。新たな頻度資料を得たという意味ではない。",
+      "sources": [
+        {
+          "title": "日本大百科全書（ニッポニカ）「おもな慣用句」（Kotobank転載・二次）",
+          "url": "https://kotobank.jp/word/おもな慣用句-1616872",
+          "evidence": "味方",
+          "access": "page"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。",
+      "remainingClaims": []
+    },
+    {
+      "pack": "kanyouku",
+      "id": "ky20",
+      "status": "caution",
+      "answerCheck": "指定正答の中心語義を確認。",
+      "explanationCheck": "対比を含め中心説明に矛盾なし。混同しやすさの頻度は定量検証対象外。",
+      "note": "語義確認。架空の例文自体の実在性は判定しない。 混同頻度の事実主張は未裏付けのため完全支持とはしない。",
+      "sources": [
+        {
+          "title": "日本大百科全書（ニッポニカ）「おもな慣用句」（Kotobank転載・二次）",
+          "url": "https://kotobank.jp/word/おもな慣用句-1616872",
+          "evidence": "秘密保持",
+          "access": "page"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。",
+      "remainingClaims": [
+        "口がかたいと口が重いは混同されやすい代表例という一般的な頻度。"
+      ]
+    },
+    {
+      "pack": "kotowaza",
+      "id": "kt01",
+      "status": "supported",
+      "answerCheck": "正答の中心語義を確認。",
+      "explanationCheck": "中心説明は整合。教訓の現実的必然性を科学的事実としては主張しない。",
+      "note": "修正せず報告のみ。比較表現の自然さは編集判断であり客観的な語義と分けた。",
+      "sources": [
+        {
+          "title": "小学館デジタル大辞泉「猿も木から落ちる」（Kotobank転載・二次）",
+          "url": "https://kotobank.jp/word/猿も木から落ちる-512429",
+          "evidence": "中心語義",
+          "access": "search_snippet"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。"
+    },
+    {
+      "pack": "kotowaza",
+      "id": "kt02",
+      "status": "supported",
+      "answerCheck": "正答の中心語義を確認。",
+      "explanationCheck": "中心説明は整合。教訓の現実的必然性を科学的事実としては主張しない。",
+      "note": "修正せず報告のみ。比較表現の自然さは編集判断であり客観的な語義と分けた。",
+      "sources": [
+        {
+          "title": "小学館デジタル大辞泉「塵も積もれば山となる」（Kotobank転載・二次）",
+          "url": "https://kotobank.jp/word/塵も積もれば山となる-569680",
+          "evidence": "中心語義",
+          "access": "search_snippet"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。"
+    },
+    {
+      "pack": "kotowaza",
+      "id": "kt03",
+      "status": "supported",
+      "answerCheck": "正答の中心語義を確認。",
+      "explanationCheck": "中心説明は整合。例文は架空の適用例として確認。",
+      "note": "修正せず報告のみ。比較表現の自然さは編集判断であり客観的な語義と分けた。",
+      "sources": [
+        {
+          "title": "日本漢字能力検定協会 漢字ペディア「一石二鳥」",
+          "url": "https://www.kanjipedia.jp/kotoba/0000233400",
+          "evidence": "見出しの語義",
+          "access": "search_snippet"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。"
+    },
+    {
+      "pack": "kotowaza",
+      "id": "kt04",
+      "status": "supported",
+      "answerCheck": "正答の中心語義を確認。",
+      "explanationCheck": "中心説明は整合。教訓の現実的必然性を科学的事実としては主張しない。",
+      "note": "修正せず報告のみ。比較表現の自然さは編集判断であり客観的な語義と分けた。",
+      "sources": [
+        {
+          "title": "小学館デジタル大辞泉「継続は力なり」（Kotobank転載・二次）",
+          "url": "https://kotobank.jp/word/継続は力なり-2876580",
+          "evidence": "中心語義",
+          "access": "search_snippet"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。"
+    },
+    {
+      "pack": "kotowaza",
+      "id": "kt05",
+      "status": "caution",
+      "answerCheck": "Aは適切だがCも類義と辞書が明記。",
+      "explanationCheck": "唯一の正答とする強さは文脈判断。",
+      "note": "修正せず報告のみ。比較表現の自然さは編集判断であり客観的な語義と分けた。",
+      "sources": [
+        {
+          "title": "日本漢字能力検定協会 漢字ペディア「善は急げ」",
+          "url": "https://www.kanjipedia.jp/kotoba/0004143500",
+          "evidence": "見出しの語義",
+          "access": "search_snippet"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。"
+    },
+    {
+      "pack": "kotowaza",
+      "id": "kt06",
+      "status": "caution",
+      "answerCheck": "二つとも中途半端な状況に二兎のことわざは適合。",
+      "explanationCheck": "二兎・虎穴・石の上の中心義は各該当語を扱う本台帳の出典で確認。『逆に』は挑戦への姿勢の対比と読めるが、厳密な反対語という意味にはしない。",
+      "note": "2026-09-06原文再読。『逆に』と『観点がずれる』を厳密な対義関係の主張と強く読んだ前回注記を修正。残るのは説明の編集上の注意。",
+      "sources": [
+        {
+          "title": "精選版日本国語大辞典『二兎を追う者は一兎を得ず』（Kotobank転載・二次）",
+          "url": "https://kotobank.jp/word/二兎を追う者は一兎を得ず-2071181",
+          "evidence": "同時追求の失敗を表す。",
+          "access": "search_snippet"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。",
+      "remainingClaims": []
+    },
+    {
+      "pack": "kotowaza",
+      "id": "kt07",
+      "status": "caution",
+      "answerCheck": "忍耐に焦点ならAだがCの積み重ねも適用可能。",
+      "explanationCheck": "継続と即時着手は観点が異なるだけで「逆の立場」との断定は強すぎる。",
+      "note": "修正せず報告のみ。比較表現の自然さは編集判断であり客観的な語義と分けた。",
+      "sources": [
+        {
+          "title": "日本漢字能力検定協会 漢字ペディア「石の上にも三年」",
+          "url": "https://www.kanjipedia.jp/kotoba/0003949800",
+          "evidence": "見出しの語義",
+          "access": "search_snippet"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。"
+    },
+    {
+      "pack": "kotowaza",
+      "id": "kt08",
+      "status": "caution",
+      "answerCheck": "不用意な発言が招く災いを確認。",
+      "explanationCheck": "物は言いようを「逆の立場」とするのは同時に成立し得る教訓を排他的に扱う。",
+      "note": "修正せず報告のみ。比較表現の自然さは編集判断であり客観的な語義と分けた。",
+      "sources": [
+        {
+          "title": "日本漢字能力検定協会 漢字ペディア「口は禍いの門」",
+          "url": "https://www.kanjipedia.jp/kotoba/0002119300",
+          "evidence": "見出しの語義",
+          "access": "search_snippet"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。"
+    },
+    {
+      "pack": "kotowaza",
+      "id": "kt09",
+      "status": "supported",
+      "answerCheck": "正答の中心語義を確認。",
+      "explanationCheck": "中心説明は整合。例文は架空の適用例として確認。",
+      "note": "修正せず報告のみ。比較表現の自然さは編集判断であり客観的な語義と分けた。",
+      "sources": [
+        {
+          "title": "日本漢字能力検定協会 漢字ペディア「転ばぬ先の杖」",
+          "url": "https://www.kanjipedia.jp/kotoba/0005065800",
+          "evidence": "見出しの語義",
+          "access": "search_snippet"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。"
+    },
+    {
+      "pack": "kotowaza",
+      "id": "kt10",
+      "status": "supported",
+      "answerCheck": "統率が割れる状況に船頭のことわざは適合。",
+      "explanationCheck": "指示する人の多さと方向の不統一という説明を辞書が支持。",
+      "note": "出典は指定語の語義を検証。架空例文は語義との整合を判断。",
+      "sources": [
+        {
+          "title": "精選版日本国語大辞典『船頭多くて船山に上る』（Kotobank転載・二次）",
+          "url": "https://kotobank.jp/word/船頭多くて船山に上る-2056023",
+          "evidence": "指図の不統一。",
+          "access": "page"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。"
+    },
+    {
+      "pack": "kotowaza",
+      "id": "kt11",
+      "status": "caution",
+      "answerCheck": "指定語の服装で見栄えが変わる意味はある。",
+      "explanationCheck": "辞書は低く見る含みと他人へ使う注意を示す。友達への中立的なほめ言葉に見せる説明は不足。",
+      "note": "修正せず報告のみ。比較表現の自然さは編集判断であり客観的な語義と分けた。",
+      "sources": [
+        {
+          "title": "小学館ことわざを知る辞典「馬子にも衣装」（Kotobank転載・二次）",
+          "url": "https://kotobank.jp/word/馬子にも衣装-633937",
+          "evidence": "用法注意",
+          "access": "search_snippet"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。"
+    },
+    {
+      "pack": "kotowaza",
+      "id": "kt12",
+      "status": "caution",
+      "answerCheck": "好きが上達を促す語義を確認。",
+      "explanationCheck": "毎日続けた例なので継続は力なりも合う。唯一解の強さは編集判断。",
+      "note": "修正せず報告のみ。比較表現の自然さは編集判断であり客観的な語義と分けた。",
+      "sources": [
+        {
+          "title": "日本漢字能力検定協会 漢字ペディア「好きこそ物の上手なれ」",
+          "url": "https://www.kanjipedia.jp/kotoba/0002167900",
+          "evidence": "見出しの語義",
+          "access": "search_snippet"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。"
+    },
+    {
+      "pack": "kotowaza",
+      "id": "kt13",
+      "status": "caution",
+      "answerCheck": "安全策を選ぶ教訓は整合。",
+      "explanationCheck": "転ばぬ先の杖との区別は観点であり絶対的排除ではない。",
+      "note": "修正せず報告のみ。比較表現の自然さは編集判断であり客観的な語義と分けた。",
+      "sources": [
+        {
+          "title": "日本漢字能力検定協会 漢字ペディア「急がば回れ」",
+          "url": "https://www.kanjipedia.jp/kotoba/0001390300",
+          "evidence": "見出しの語義",
+          "access": "search_snippet"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。"
+    },
+    {
+      "pack": "kotowaza",
+      "id": "kt14",
+      "status": "caution",
+      "answerCheck": "危険と大きな成果の語義を確認。",
+      "explanationCheck": "2026-09-06追加辞書本文では成功不明でも思い切って行う意味。勢いまかせを無計画と解し、計画した挑戦を排除する根拠にはならない。二兎との『逆』も同一観点の対義と断定せず、教訓の焦点の違いとして扱いたい。",
+      "note": "中心語義は資料補完済み。勢いの強さ・計画との相性・教訓の対立は文脈解釈と編集判断であり、歴史的事実の未確認とは分離。",
+      "sources": [
+        {
+          "title": "日本漢字能力検定協会 漢字ペディア「虎穴に入らずんば虎子を得ず」",
+          "url": "https://www.kanjipedia.jp/kotoba/0002040200",
+          "evidence": "見出しの語義",
+          "access": "search_snippet"
+        },
+        {
+          "title": "デジタル大辞泉・ことわざを知る辞典『当たって砕けろ』（Kotobank転載・二次）",
+          "url": "https://kotobank.jp/word/当たつて砕けろ-3206564",
+          "evidence": "成功が不明でも思い切って行う意味。事態の好転への期待も解説。",
+          "access": "page"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。",
+      "remainingClaims": []
+    },
+    {
+      "pack": "kotowaza",
+      "id": "kt15",
+      "status": "caution",
+      "answerCheck": "今申し込む行為には適切。",
+      "explanationCheck": "善は急げも類義。継続とは逆の立場とまではいえない。",
+      "note": "修正せず報告のみ。比較表現の自然さは編集判断であり客観的な語義と分けた。",
+      "sources": [
+        {
+          "title": "日本漢字能力検定協会 漢字ペディア「思い立ったが吉日」",
+          "url": "https://www.kanjipedia.jp/kotoba/0002766600",
+          "evidence": "見出しの語義",
+          "access": "search_snippet"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。"
+    },
+    {
+      "pack": "kotowaza",
+      "id": "kt16",
+      "status": "caution",
+      "answerCheck": "Aの中心語義を確認。",
+      "explanationCheck": "口は災いの元は不用意な発言への戒めであり、発言そのものを全面的に戒める「逆の立場」とする説明は強すぎる。",
+      "note": "修正せず報告のみ。比較表現の自然さは編集判断であり客観的な語義と分けた。",
+      "sources": [
+        {
+          "title": "小学館Domani「物は言いよう」大辞泉引用",
+          "url": "https://domani.shogakukan.co.jp/1148894",
+          "evidence": "伝え方で印象が変化",
+          "access": "search_snippet"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。"
+    },
+    {
+      "pack": "kotowaza",
+      "id": "kt17",
+      "status": "supported",
+      "answerCheck": "実行したら心配ほど難しくなかったという正答に整合。",
+      "explanationCheck": "事前準備の他選択肢とは焦点が異なるという説明に矛盾なし。",
+      "note": "出典は指定語の語義を検証。架空例文は語義との整合を判断。",
+      "sources": [
+        {
+          "title": "ことわざを知る辞典『案ずるより産むが易い』（Kotobank転載・二次）",
+          "url": "https://kotobank.jp/word/案ずるより産むが易い-2236037",
+          "evidence": "心配と実行の難度の差。",
+          "access": "search_snippet"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。"
+    },
+    {
+      "pack": "kotowaza",
+      "id": "kt18",
+      "status": "supported",
+      "answerCheck": "相談して知恵を出す正答と整合。",
+      "explanationCheck": "人数と知恵という基本説明を支持。",
+      "note": "出典は指定語の語義を検証。架空例文は語義との整合を判断。",
+      "sources": [
+        {
+          "title": "デジタル大辞泉『三人寄れば文殊の知恵』（Kotobank転載・二次）",
+          "url": "https://kotobank.jp/word/三人寄れば文殊の知恵-514501",
+          "evidence": "集団で相談する知恵。",
+          "access": "search_snippet"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。"
+    },
+    {
+      "pack": "kotowaza",
+      "id": "kt19",
+      "status": "caution",
+      "answerCheck": "外見だけでは分からないという正答は語義と整合。",
+      "explanationCheck": "人は見かけ・馬子にも衣装・井の中の蛙の中心義は各該当項の出典で確認。『逆の立場』は外見の評価に関する編集上の対比であり、ことわざが互いに論理的に否定し合うとまではいえない。",
+      "note": "2026-09-06再読。見た目と実像のギャップという指定正答の意図は理解できる。残る相性・対比の強さは編集判断として扱う。",
+      "sources": [
+        {
+          "title": "デジタル大辞泉『人は見かけによらぬもの』（Kotobank転載・二次）",
+          "url": "https://kotobank.jp/word/人は見かけによらぬもの-611196",
+          "evidence": "外見と内実の差。",
+          "access": "search_snippet"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。",
+      "remainingClaims": []
+    },
+    {
+      "pack": "kotowaza",
+      "id": "kt20",
+      "status": "supported",
+      "answerCheck": "聞くより直接見ることの確実さを表す正答に整合。",
+      "explanationCheck": "中心説明と架空例文に矛盾なし。",
+      "note": "出典は指定語の語義を検証。架空例文は語義との整合を判断。",
+      "sources": [
+        {
+          "title": "デジタル大辞泉『百聞は一見に如かず』（Kotobank転載・二次）",
+          "url": "https://kotobank.jp/word/百聞は一見に如かず-612782",
+          "evidence": "見聞の比較を表すことわざ。",
+          "access": "search_snippet"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。"
+    },
+    {
+      "pack": "machigai-nihongo",
+      "id": "ma01",
+      "status": "supported",
+      "answerCheck": "本来の中心語義は指定正答と一致。",
+      "explanationCheck": "相手と自分への善い報い、他選択肢の混同説明も辞書に記載。",
+      "note": "調査値は掲載調査年に限定し、現在全体への一般化はしない。",
+      "sources": [
+        {
+          "title": "デジタル大辞泉『情けは人の為ならず』（Kotobank転載・二次）",
+          "url": "https://kotobank.jp/word/情けは人の為ならず-588620",
+          "evidence": "語義と調査結果。",
+          "access": "search_snippet"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。"
+    },
+    {
+      "pack": "machigai-nihongo",
+      "id": "ma02",
+      "status": "caution",
+      "answerCheck": "不義理で行きにくい意味は大辞泉の中心義に一致。",
+      "explanationCheck": "文化庁国語課監修記事で大辞林4と明鏡3を比較。後者は高級・高難度で入りにくい転用義も収録するため、辞書名を特定せず辞書的にはCと一般化しない方がよい。",
+      "note": "2026-09-06に辞書間比較を補完。本来義Cや新用法普及の説明を否定せず、辞書の書き方にいちばん近いという基準の曖昧さに注意。記事の調査値は令和元年度に限定。",
+      "sources": [
+        {
+          "title": "デジタル大辞泉『敷居が高い』（Kotobank転載・二次）",
+          "url": "https://kotobank.jp/word/敷居が高い-517593",
+          "evidence": "不義理による入りにくさ。",
+          "access": "page"
+        },
+        {
+          "title": "ぎょうせい・文化庁国語課監修『「敷居が高い店」ってどんな店？』",
+          "url": "https://shop.gyosei.jp/library/archives/magazine/0000011826",
+          "evidence": "大辞林4と明鏡3を比較し、明鏡の転用義と令和元年度世論調査を掲載。",
+          "access": "page"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。",
+      "remainingClaims": []
+    },
+    {
+      "pack": "machigai-nihongo",
+      "id": "ma03",
+      "status": "supported",
+      "answerCheck": "好機という正答を文化庁解説が支持。",
+      "explanationCheck": "終わりに限らず始める場合も使える説明と整合。",
+      "note": "調査値は掲載調査年に限定し、現在全体への一般化はしない。",
+      "sources": [
+        {
+          "title": "文化庁『潮時が来たら終わりなのか』",
+          "url": "https://www.bunka.go.jp/prmagazine/rensai/kotoba/kotoba_003.html",
+          "evidence": "好機の語義。",
+          "access": "search_snippet"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。"
+    },
+    {
+      "pack": "machigai-nihongo",
+      "id": "ma04",
+      "status": "caution",
+      "answerCheck": "晩秋～初冬という正答は支持。",
+      "explanationCheck": "旧暦10月を新暦11月ごろとする説明は概略。文化庁は11月～12月上旬としている。",
+      "note": "調査値は掲載調査年に限定し、現在全体への一般化はしない。",
+      "sources": [
+        {
+          "title": "文化庁『小春日和はいつ頃の天気か』",
+          "url": "https://www.bunka.go.jp/prmagazine/rensai/kotoba/kotoba_013.html",
+          "evidence": "季節と旧暦名。",
+          "access": "search_snippet"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。"
+    },
+    {
+      "pack": "machigai-nihongo",
+      "id": "ma05",
+      "status": "caution",
+      "answerCheck": "遠慮不要という中心語義は支持。",
+      "explanationCheck": "中心語義と逆の理解の存在は既存調査で確認。ただし『字面から』という誤解の心理的原因までは意味選択の調査から直接は分からない。",
+      "note": "2026-09-06原文再読。原文は増加とは述べておらず、前回の増減未確認という指摘を撤回。調査年を付すか一般論を弱める編集判断は残る。",
+      "sources": [
+        {
+          "title": "文化庁 平成14年度国語に関する世論調査",
+          "url": "https://www.bunka.go.jp/tokei_hakusho_shuppan/tokeichosa/kokugo_yoronchosa/h14/index.html",
+          "evidence": "気が置けないの意味理解調査。",
+          "access": "search_snippet"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。",
+      "remainingClaims": [
+        "字面が原因で油断できないと誤解されるという心理的因果（意味選択の調査のみでは直接確認できない）。"
+      ]
+    },
+    {
+      "pack": "machigai-nihongo",
+      "id": "ma06",
+      "status": "caution",
+      "answerCheck": "本来の意味は指定正答に一致。",
+      "explanationCheck": "大辞泉は期待に浮かれる第2義も掲載。『辞書の書き方』を単一視せず本来の意味を問うべき。",
+      "note": "調査値は掲載調査年に限定し、現在全体への一般化はしない。",
+      "sources": [
+        {
+          "title": "デジタル大辞泉『浮足立つ』（Kotobank転載・二次）",
+          "url": "https://kotobank.jp/word/浮足立つ-439121",
+          "evidence": "第1/2義と令和元年調査。",
+          "access": "search_snippet"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。"
+    },
+    {
+      "pack": "machigai-nihongo",
+      "id": "ma07",
+      "status": "caution",
+      "answerCheck": "大声を伴う泣き方として漢字ペディアに一致。",
+      "explanationCheck": "中心語義は支持。追加の文化庁調査は大声／激しく泣くの理解を尋ねており、選択肢Aの静かに涙を多く流す用法の増加を直接確認するものではない。",
+      "note": "2026-09-06追加検索。該当表は検索抽出で確認、開いたPDFのテキスト抽出では表を本文確認できず、pageにはしない。",
+      "sources": [
+        {
+          "title": "漢字ペディア『号泣』",
+          "url": "https://www.kanjipedia.jp/kotoba/0002340500",
+          "evidence": "声を伴う泣き方。",
+          "access": "page"
+        },
+        {
+          "title": "文化庁 令和4年度国語に関する世論調査 問15(5)",
+          "url": "https://www.bunka.go.jp/koho_hodo_oshirase/hodohappyo/pdf/93945901_03.pdf",
+          "evidence": "検索抽出では大声／激しく泣くの意味選択と過去値を掲載。静かに涙を多く流す用法そのものを問う調査ではなく、調査方法変更の注意もある。",
+          "access": "search_snippet"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。",
+      "remainingClaims": [
+        "静かに多くの涙を流す用法が現代で増えているという経年傾向。"
+      ]
+    },
+    {
+      "pack": "machigai-nihongo",
+      "id": "ma08",
+      "status": "caution",
+      "answerCheck": "Aは大辞泉の本来義に一致。ただし辞書の書き方一般として他の用法を一律不正解にするには条件不足。",
+      "explanationCheck": "大辞泉は降っているらしい意味も掲載し現に降る用法にも言及。解説は現代用法を認めており全面否定ではない。本来義と現在の収録義を区別する必要。",
+      "note": "語義そのものの明白な誤りではなく、辞書未特定と単一正答性の注意。",
+      "sources": [
+        {
+          "title": "デジタル大辞泉『雨模様』（Kotobank転載・二次）",
+          "url": "https://kotobank.jp/word/雨模様-427194",
+          "evidence": "第1義と第2義・補説。",
+          "access": "page"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。"
+    },
+    {
+      "pack": "machigai-nihongo",
+      "id": "ma09",
+      "status": "caution",
+      "answerCheck": "失意・呆然という中心語義は支持。",
+      "explanationCheck": "平成30年度の意味理解で腹を立てる側が過半数であることを本文確認。原文は多いと述べており増えているとは述べていないため、前回の経年増加への疑義を撤回。",
+      "note": "2026-09-06本文補完。調査年の明示、意味理解の回答と実際の使用頻度の区別に注意。",
+      "sources": [
+        {
+          "title": "文化庁 平成15年度国語に関する世論調査",
+          "url": "https://www.bunka.go.jp/tokei_hakusho_shuppan/tokeichosa/kokugo_yoronchosa/h15/",
+          "evidence": "憮然の意味理解調査。",
+          "access": "search_snippet"
+        },
+        {
+          "title": "文化庁 平成30年度国語に関する世論調査・結果概要 問17(1)",
+          "url": "https://www.bunka.go.jp/koho_hodo_oshirase/hodohappyo/__icsFiles/afieldfile/2019/10/24/a1422163_02_1.pdf",
+          "evidence": "印刷ページ12で腹を立てる理解56.7%、失望してぼんやり28.1%。本来義理解は過去調査より増加。",
+          "access": "page"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。",
+      "remainingClaims": [
+        "意味理解の割合ではなく実際の現代の使用頻度が多いという主張（今回資料は意味理解の調査）。"
+      ]
+    },
+    {
+      "pack": "machigai-nihongo",
+      "id": "ma10",
+      "status": "caution",
+      "answerCheck": "感動に関する語義は支持。",
+      "explanationCheck": "琴の比喩は整合。誤用が増えているという経年主張は未確認。",
+      "note": "調査値は掲載調査年に限定し、現在全体への一般化はしない。",
+      "sources": [
+        {
+          "title": "文部科学省 言葉クイズ『琴線に触れる』",
+          "url": "https://www.mext.go.jp/kids/learn/quiz/word/mext_0017.html",
+          "evidence": "感動の心情を説明。",
+          "access": "search_snippet"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。",
+      "remainingClaims": [
+        "怒りに触れる意味の誤用が現代で増えているという経年傾向。"
+      ]
+    },
+    {
+      "pack": "machigai-nihongo",
+      "id": "ma11",
+      "status": "caution",
+      "answerCheck": "伝統的言い伝えの意味として正答を支持。",
+      "explanationCheck": "育てやすさは科学的事実でなく昔の価値観・言い伝え。『昔の知恵』は現在への推奨に読めない表現を検討。誤解頻度未確認。",
+      "note": "調査値は掲載調査年に限定し、現在全体への一般化はしない。",
+      "sources": [
+        {
+          "title": "大辞泉・日本国語大辞典『一姫二太郎』（Kotobank転載・二次）",
+          "url": "https://kotobank.jp/word/一姫二太郎-433162",
+          "evidence": "言い伝えと別用法。",
+          "access": "search_snippet"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。",
+      "remainingClaims": [
+        "女1人・男2人と勘違いされることがよくあるという一般的な頻度。"
+      ]
+    },
+    {
+      "pack": "machigai-nihongo",
+      "id": "ma12",
+      "status": "supported",
+      "answerCheck": "ゆっくりという正答を文科省クイズが支持。",
+      "explanationCheck": "中心説明・調査に誤理解が一定数いる点を支持。",
+      "note": "調査値は掲載調査年に限定し、現在全体への一般化はしない。",
+      "sources": [
+        {
+          "title": "文部科学省 言葉クイズ『やおら』",
+          "url": "https://www.mext.go.jp/kids/learn/quiz/word/mext_0019.html",
+          "evidence": "意味と調査割合。",
+          "access": "search_snippet"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。"
+    },
+    {
+      "pack": "machigai-nihongo",
+      "id": "ma13",
+      "status": "caution",
+      "answerCheck": "本人に比べ役が軽いという正答は公的調査で支持。",
+      "explanationCheck": "『誤用派多数』は比較多数と過半数を区別し年を明記。令和6年は逆の理解48.9%、本来義45.1%。",
+      "note": "出典は指定語の語義を検証。架空例文は語義との整合を判断。",
+      "sources": [
+        {
+          "title": "文化庁 令和6年度国語に関する世論調査 詳細",
+          "url": "https://www.bunka.go.jp/tokei_hakusho_shuppan/tokeichosa/kokugo_yoronchosa/pdf/94274201_03.pdf",
+          "evidence": "役不足の語義と割合。",
+          "access": "search_snippet"
+        },
+        {
+          "title": "国立国語研究所 ことば研究館 役不足",
+          "url": "https://kotoba.ninjal.ac.jp/qa/yokuaru/qa-185/",
+          "evidence": "過去調査と実使用の考察。",
+          "access": "search_snippet"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。"
+    },
+    {
+      "pack": "machigai-nihongo",
+      "id": "ma14",
+      "status": "caution",
+      "answerCheck": "結論に近づくという従来義は支持。",
+      "explanationCheck": "行き詰まる用法の扱いは辞書で異なる。一般的な辞書問題とするより本来の意味に限定。",
+      "note": "調査値は掲載調査年に限定し、現在全体への一般化はしない。",
+      "sources": [
+        {
+          "title": "小学館kufura 国語講師解説『煮詰まる』",
+          "url": "https://kufura.jp/work/business-manner/347370",
+          "evidence": "従来義・比喩・意味変化。",
+          "access": "search_snippet"
+        },
+        {
+          "title": "国立国語研究所リポジトリ『煮詰まるの使用実態と意味変化の過程』",
+          "url": "https://repository.ninjal.ac.jp/record/3668/files/jinbun_20_33.pdf",
+          "evidence": "辞書記述と多義化研究。",
+          "access": "search_snippet"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。"
+    },
+    {
+      "pack": "machigai-nihongo",
+      "id": "ma15",
+      "status": "caution",
+      "answerCheck": "一時しのぎという本来義を支持。",
+      "explanationCheck": "字義由来も大辞泉と一致。多数という調査説明は平成15年で支持するが調査年を明記すべき。",
+      "note": "調査値は掲載調査年に限定し、現在全体への一般化はしない。",
+      "sources": [
+        {
+          "title": "デジタル大辞泉『姑息』（Kotobank転載・二次）",
+          "url": "https://kotobank.jp/word/姑息-501976",
+          "evidence": "字義由来と意味。",
+          "access": "search_snippet"
+        },
+        {
+          "title": "文化庁 平成15年度国語世論調査",
+          "url": "https://www.bunka.go.jp/tokei_hakusho_shuppan/tokeichosa/kokugo_yoronchosa/h15/",
+          "evidence": "姑息の意味理解調査。",
+          "access": "search_snippet"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。"
+    },
+    {
+      "pack": "machigai-nihongo",
+      "id": "ma16",
+      "status": "supported",
+      "answerCheck": "前人未到という正答と一致。",
+      "explanationCheck": "天荒の説明と異なる解釈の多さを大辞泉が支持。詳細故事は省略されているが矛盾ではない。",
+      "note": "調査値は掲載調査年に限定し、現在全体への一般化はしない。",
+      "sources": [
+        {
+          "title": "デジタル大辞泉『破天荒』（Kotobank転載・二次）",
+          "url": "https://kotobank.jp/word/破天荒-603153",
+          "evidence": "語義・故事・調査結果。",
+          "access": "search_snippet"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。"
+    },
+    {
+      "pack": "machigai-nihongo",
+      "id": "ma17",
+      "status": "incorrect",
+      "answerCheck": "Aの中心語義は文化庁解説と一致。ただしB/Cでも実際に吹き出す状況なら使用可能で、文面だけで排除しきれない。",
+      "explanationCheck": "『笑いを失う』という漢字説明は文化庁が明確に否定。小学館公式も不用意に外へ出る意味と説明。",
+      "note": "語源説明を優先修正。正答と語源を分離。",
+      "sources": [
+        {
+          "title": "文化庁『ことば食堂へようこそ！失笑する』台本",
+          "url": "https://www.bunka.go.jp/seisaku/kokugo_nihongo/kokugo_shisaku/kotoba_shokudo/pdf/kotoba_18.pdf",
+          "evidence": "p4：失の字義を説明。",
+          "access": "page"
+        },
+        {
+          "title": "小学館 ことばのまど 第27回",
+          "url": "https://kotobanomado.jp/column/6720/",
+          "evidence": "失笑の漢字解釈と類似語を解説。",
+          "access": "page"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。"
+    },
+    {
+      "pack": "machigai-nihongo",
+      "id": "ma18",
+      "status": "caution",
+      "answerCheck": "当然という正答を文科省クイズが支持。",
+      "explanationCheck": "漢文訓読の由来とべしとの呼応は文化審議会議事録検索抽出で確認。『多い』は定量の年指定が必要。",
+      "note": "調査値は掲載調査年に限定し、現在全体への一般化はしない。",
+      "sources": [
+        {
+          "title": "文部科学省 言葉クイズ『すべからく』",
+          "url": "https://www.mext.go.jp/kids/learn/quiz/word/mext_0016.html",
+          "evidence": "意味と使用調査。",
+          "access": "page"
+        },
+        {
+          "title": "文化審議会国語分科会言語資源小委員会議事録",
+          "url": "https://www.bunka.go.jp/seisaku/bunkashingikai/kokugo/gengo/gengo_02/pdf/94123901_01.pdf",
+          "evidence": "訓読と用法の変化を議論。",
+          "access": "search_snippet"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。",
+      "remainingClaims": [
+        "漢文訓読由来・べしとの呼応は検索抽出にとどまり、原典本文の照合未完了。",
+        "現代で全員の意味で『使われる』ことが多いという実使用頻度（意味理解の調査とは区別）。"
+      ]
+    },
+    {
+      "pack": "machigai-nihongo",
+      "id": "ma19",
+      "status": "caution",
+      "answerCheck": "Aは正しい。Cも流れに従う文脈なので排除根拠が弱い。",
+      "explanationCheck": "勢いを増して進む語義は確認。単一正解性を別途編集判断。",
+      "note": "修正は未実施。",
+      "sources": [
+        {
+          "title": "日本大百科全書（ニッポニカ）「おもな慣用句」（Kotobank転載・二次）",
+          "url": "https://kotobank.jp/word/おもな慣用句-1616872",
+          "evidence": "該当見出しの語義",
+          "access": "page"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。"
+    },
+    {
+      "pack": "machigai-nihongo",
+      "id": "ma20",
+      "status": "caution",
+      "answerCheck": "本質を捉えるという本来義を支持。",
+      "explanationCheck": "ほめる意味と比喩の説明は文化庁に整合。ただし現代で増えているという経年比較は未確認。",
+      "note": "調査値は掲載調査年に限定し、現在全体への一般化はしない。",
+      "sources": [
+        {
+          "title": "文化庁『うがった見方は良くないのか』",
+          "url": "https://www.bunka.go.jp/prmagazine/rensai/kotoba/kotoba_002.html",
+          "evidence": "語義と平成23年度調査。",
+          "access": "page"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。",
+      "remainingClaims": [
+        "疑い深いという用法が現代で増えているという経年傾向。"
+      ]
+    },
+    {
+      "pack": "ruigigo",
+      "id": "ru01",
+      "status": "caution",
+      "answerCheck": "楽しいは整合するが他の心情を一律排除できない。",
+      "explanationCheck": "楽しいを動的なわいわいする場面に限定する根拠なし。静的な満足も辞書義に入る。",
+      "note": "自然さ・強度の好みは客観的正誤と区別。唯一正答性の追加根拠は不足。",
+      "sources": [
+        {
+          "title": "デジタル大辞泉『楽しい』（Kotobank転載・二次）",
+          "url": "https://kotobank.jp/word/楽しい-562105",
+          "evidence": "満足・愉快の語義。",
+          "access": "page"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。"
+    },
+    {
+      "pack": "ruigigo",
+      "id": "ru02",
+      "status": "caution",
+      "answerCheck": "見るは標準的に映像鑑賞に使える。",
+      "explanationCheck": "他の語の大げささの評価は語感の判断であり厳密な正誤基準ではない。",
+      "note": "自然さ・強度の好みは客観的正誤と区別。唯一正答性の追加根拠は不足。",
+      "sources": [
+        {
+          "title": "デジタル大辞泉『見る』（Kotobank転載・二次）",
+          "url": "https://kotobank.jp/word/見る-640426",
+          "evidence": "視覚・鑑賞を含む広い語義。",
+          "access": "page"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。"
+    },
+    {
+      "pack": "ruigigo",
+      "id": "ru03",
+      "status": "caution",
+      "answerCheck": "指定正答は驚きを表し得るが、はっとも突然の音への驚きを表せる。",
+      "explanationCheck": "気付きは『はっと』の実在語義なので説明自体を誤りとは断定しない。ただし驚きの語義もあり、この説明だけでは他選択肢を排除できない。『どきっとはやや重い』は主観的な相性評価であり、独立した事実誤りではない。",
+      "note": "語義の紹介と唯一正答性を分離して注意扱い。反応の自然さの優劣を客観的正誤として断定しない。",
+      "sources": [
+        {
+          "title": "デジタル大辞泉『はっと』（Kotobank転載・二次）",
+          "url": "https://kotobank.jp/word/はつと-3216237",
+          "evidence": "第1義は不意の出来事への驚き。",
+          "access": "page"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。"
+    },
+    {
+      "pack": "ruigigo",
+      "id": "ru04",
+      "status": "caution",
+      "answerCheck": "言うは自然だが、思ったことをそのまま伝えたも構造上排除できない。",
+      "explanationCheck": "『そのまま』と伝達意図は両立するため、伝えるが合わないと断定する根拠不足。",
+      "note": "自然さ・強度の好みは客観的正誤と区別。唯一正答性の追加根拠は不足。",
+      "sources": [
+        {
+          "title": "デジタル大辞泉『伝える』（Kotobank転載・二次）",
+          "url": "https://kotobank.jp/word/伝える-571710",
+          "evidence": "知らせる語義。",
+          "access": "page"
+        },
+        {
+          "title": "大辞泉・日本国語大辞典『漏らす』（Kotobank転載・二次）",
+          "url": "https://kotobank.jp/word/漏らす-646796",
+          "evidence": "秘密の伝達と心情表出の語義。",
+          "access": "page"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。"
+    },
+    {
+      "pack": "ruigigo",
+      "id": "ru05",
+      "status": "caution",
+      "answerCheck": "嬉しいの適合は妥当と考えられるが単独正答の裏付けは不足。",
+      "explanationCheck": "楽しいを動きのある明るさだけに限定する説明は広い辞書義と不整合。",
+      "note": "自然さ・強度の好みは客観的正誤と区別。唯一正答性の追加根拠は不足。",
+      "sources": [
+        {
+          "title": "デジタル大辞泉『楽しい』（Kotobank転載・二次）",
+          "url": "https://kotobank.jp/word/楽しい-562105",
+          "evidence": "満足・愉快の語義。",
+          "access": "page"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。"
+    },
+    {
+      "pack": "ruigigo",
+      "id": "ru06",
+      "status": "caution",
+      "answerCheck": "眺めるは文脈に合う。",
+      "explanationCheck": "見るも眺める意味を含むため、ぼんやり見ていたを誤答にする根拠不足。",
+      "note": "自然さ・強度の好みは客観的正誤と区別。唯一正答性の追加根拠は不足。",
+      "sources": [
+        {
+          "title": "デジタル大辞泉『見る』（Kotobank転載・二次）",
+          "url": "https://kotobank.jp/word/見る-640426",
+          "evidence": "視覚・鑑賞を含む広い語義。",
+          "access": "page"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。"
+    },
+    {
+      "pack": "ruigigo",
+      "id": "ru07",
+      "status": "caution",
+      "answerCheck": "はっとは気付く意味があり支持。",
+      "explanationCheck": "驚きを表す別語を重すぎるとして排除するのは語感の判断。",
+      "note": "自然さ・強度の好みは客観的正誤と区別。唯一正答性の追加根拠は不足。",
+      "sources": [
+        {
+          "title": "デジタル大辞泉『はっと』（Kotobank転載・二次）",
+          "url": "https://kotobank.jp/word/はつと-3216237",
+          "evidence": "驚きと気付きの複数義。",
+          "access": "page"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。"
+    },
+    {
+      "pack": "ruigigo",
+      "id": "ru08",
+      "status": "caution",
+      "answerCheck": "伝えるの正答は語義と整合。",
+      "explanationCheck": "汎用的な言うは連絡から排除できない。『ちゃんと』が伝達の条件を補える。",
+      "note": "自然さ・強度の好みは客観的正誤と区別。唯一正答性の追加根拠は不足。",
+      "sources": [
+        {
+          "title": "デジタル大辞泉『伝える』（Kotobank転載・二次）",
+          "url": "https://kotobank.jp/word/伝える-571710",
+          "evidence": "知らせる語義。",
+          "access": "page"
+        },
+        {
+          "title": "大辞泉・日本国語大辞典『漏らす』（Kotobank転載・二次）",
+          "url": "https://kotobank.jp/word/漏らす-646796",
+          "evidence": "秘密の伝達と心情表出の語義。",
+          "access": "page"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。"
+    },
+    {
+      "pack": "ruigigo",
+      "id": "ru09",
+      "status": "caution",
+      "answerCheck": "悩むは選択が定まらず心を痛める場合に合う。",
+      "explanationCheck": "設問は苦しみを明示していない。考えるの強度が届かないという一般化の根拠不足。",
+      "note": "自然さ・強度の好みは客観的正誤と区別。唯一正答性の追加根拠は不足。",
+      "sources": [
+        {
+          "title": "デジタル大辞泉『悩む』（Kotobank転載・二次）",
+          "url": "https://kotobank.jp/word/悩む-589921",
+          "evidence": "選択・苦悩の語義。",
+          "access": "page"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。"
+    },
+    {
+      "pack": "ruigigo",
+      "id": "ru10",
+      "status": "incorrect",
+      "answerCheck": "Bの耳にするは適切だが、Cの聞きつけるを積極的探索だから不適切とする消去根拠は成立しない。",
+      "explanationCheck": "大辞泉には偶然・人づてに知る意味と噂の用例があり、小学館和伊中辞典も偶然に知る語義を掲載。積極的に探すニュアンスを理由に知らないうちにと合わないとする説明は語義を誤って限定している。",
+      "note": "2026-09-06新規辞書本文2点で実在語義を確認。B/Cの語感の好みを誤りとしたのではなく、消去根拠の語義制限が誤り。",
+      "sources": [
+        {
+          "title": "日本大百科全書『おもな慣用句』（Kotobank転載・二次）",
+          "url": "https://kotobank.jp/word/おもな慣用句-1616872",
+          "evidence": "耳にするは聞く意味。",
+          "access": "page"
+        },
+        {
+          "title": "デジタル大辞泉・精選版日本国語大辞典『聞付ける』（Kotobank転載・二次）",
+          "url": "https://kotobank.jp/word/聞付ける-472717",
+          "evidence": "大辞泉第2義は偶然・伝聞による認知。日国も噂などを聞いて知る意味を収録。",
+          "access": "page"
+        },
+        {
+          "title": "小学館和伊中辞典第2版『聞きつける』（Kotobank転載・二次）",
+          "url": "https://kotobank.jp/jaitword/聞きつける",
+          "evidence": "偶然に知る語義を本文確認。",
+          "access": "page"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。",
+      "remainingClaims": [
+        "耳にするが偶然性を含むという説明の直接的な語義資料は未取得（聞くの意味は既確認）。"
+      ]
+    },
+    {
+      "pack": "ruigigo",
+      "id": "ru11",
+      "status": "caution",
+      "answerCheck": "出会ったは自然だが会ったも公的用例上可能。",
+      "explanationCheck": "文化審議会の会う例に偶然の遭遇がある。予定の有無だけでは排除できない。",
+      "note": "自然さ・強度の好みは客観的正誤と区別。唯一正答性の追加根拠は不足。",
+      "sources": [
+        {
+          "title": "文化審議会『異字同訓の漢字の使い分け例』",
+          "url": "https://www.bunka.go.jp/seisaku/bunkashingikai/kokugo/hokoku/pdf/ijidokun_140221.pdf",
+          "evidence": "項目001：会うの偶然遭遇用例。",
+          "access": "page"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。"
+    },
+    {
+      "pack": "ruigigo",
+      "id": "ru12",
+      "status": "caution",
+      "answerCheck": "味わうは味を楽しむ意味で正答に合う。",
+      "explanationCheck": "食べる・いただくも時間をかけて行える。語の固有ニュアンスと文全体の適合を区別。",
+      "note": "自然さ・強度の好みは客観的正誤と区別。唯一正答性の追加根拠は不足。",
+      "sources": [
+        {
+          "title": "デジタル大辞泉『味わう』（Kotobank転載・二次）",
+          "url": "https://kotobank.jp/word/味わう-424750",
+          "evidence": "飲食の楽しみの語義。",
+          "access": "search_snippet"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。"
+    },
+    {
+      "pack": "ruigigo",
+      "id": "ru13",
+      "status": "caution",
+      "answerCheck": "温かいは意図に合うと思われるが心情の唯一正答性未証明。",
+      "explanationCheck": "楽しいは動的な楽しみに限定されない。嬉しさと静かな余韻も排他的とは限らない。",
+      "note": "自然さ・強度の好みは客観的正誤と区別。唯一正答性の追加根拠は不足。",
+      "sources": [
+        {
+          "title": "デジタル大辞泉『楽しい』（Kotobank転載・二次）",
+          "url": "https://kotobank.jp/word/楽しい-562105",
+          "evidence": "満足・愉快の語義。",
+          "access": "page"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。"
+    },
+    {
+      "pack": "ruigigo",
+      "id": "ru14",
+      "status": "caution",
+      "answerCheck": "見つめるは適切だが、見る・眺めるを不適切とする根拠は不足。",
+      "explanationCheck": "眺めるを広い景色に限定する説明に注意。漢字ペディアには見つめる意味もある。",
+      "note": "使い分けの傾向と文法上の不可を区別。",
+      "sources": [
+        {
+          "title": "漢字ペディア『眺める』",
+          "url": "https://www.kanjipedia.jp/kotoba/0004800700",
+          "evidence": "第2義は見つめる。",
+          "access": "page"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。"
+    },
+    {
+      "pack": "ruigigo",
+      "id": "ru15",
+      "status": "caution",
+      "answerCheck": "どきっとは文脈に合うと考えられる。",
+      "explanationCheck": "はっとにも驚きがあり、単なる気付きだけとする排除は不十分。",
+      "note": "自然さ・強度の好みは客観的正誤と区別。唯一正答性の追加根拠は不足。",
+      "sources": [
+        {
+          "title": "デジタル大辞泉『はっと』（Kotobank転載・二次）",
+          "url": "https://kotobank.jp/word/はつと-3216237",
+          "evidence": "驚きと気付きの複数義。",
+          "access": "page"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。"
+    },
+    {
+      "pack": "ruigigo",
+      "id": "ru16",
+      "status": "caution",
+      "answerCheck": "漏らすは秘密の外部伝達に合うと考えられる。",
+      "explanationCheck": "伝えるの意図が後悔と両立しないという説明の根拠なし。意図的に話して後悔する状況もある。 漏らすは意図的・ひそかな伝達も含み、偶発に限定されない。",
+      "note": "自然さ・強度の好みは客観的正誤と区別。唯一正答性の追加根拠は不足。",
+      "sources": [
+        {
+          "title": "デジタル大辞泉『伝える』（Kotobank転載・二次）",
+          "url": "https://kotobank.jp/word/伝える-571710",
+          "evidence": "知らせる語義。",
+          "access": "page"
+        },
+        {
+          "title": "大辞泉・日本国語大辞典『漏らす』（Kotobank転載・二次）",
+          "url": "https://kotobank.jp/word/漏らす-646796",
+          "evidence": "秘密の伝達と心情表出の語義。",
+          "access": "page"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。"
+    },
+    {
+      "pack": "ruigigo",
+      "id": "ru17",
+      "status": "caution",
+      "answerCheck": "随分は予想との差を含み得る。",
+      "explanationCheck": "辞書は非常に・かなりと近い語義も持つ。とても・かなりも文中で不可能とは示されていない。",
+      "note": "自然さ・強度の好みは客観的正誤と区別。唯一正答性の追加根拠は不足。",
+      "sources": [
+        {
+          "title": "デジタル大辞泉『随分』（Kotobank転載・二次）",
+          "url": "https://kotobank.jp/word/随分-540158",
+          "evidence": "程度と予想外の含意。",
+          "access": "search_snippet"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。"
+    },
+    {
+      "pack": "ruigigo",
+      "id": "ru18",
+      "status": "caution",
+      "answerCheck": "参るの困る・弱る意味を辞書本文で確認。困る／参るの交換可能例を研究資料でも確認し、Bを唯一正答とする根拠にはならない。",
+      "explanationCheck": "困り果てるの非常に困る意味を本文確認。文語寄りという使用域の裏付けは不足。すっかりとの相性や困ったを軽いとする比較は主観的な語感を含む。",
+      "note": "2026-09-06に辞書本文2項目と研究資料を追加。意味の重なりを確認したためcautionだが、語感の未確認が解消したわけではない。主観的な自然さを正誤と断定しない。",
+      "sources": [
+        {
+          "title": "デジタル大辞泉『参る』（Kotobank転載・二次）",
+          "url": "https://kotobank.jp/word/参る-633122",
+          "evidence": "閉口する・弱る・困る意味を本文確認。",
+          "access": "page"
+        },
+        {
+          "title": "デジタル大辞泉『困り果てる』（Kotobank転載・二次）",
+          "url": "https://kotobank.jp/word/困り果てる-504503",
+          "evidence": "どうしてよいか分からないほど困る意味。",
+          "access": "page"
+        },
+        {
+          "title": "水上由美『動詞の類義語が相互に入れ替え可能な例文集』",
+          "url": "https://jhlee.sakura.ne.jp/JEV/paper/mizukami.pdf",
+          "evidence": "印刷ページ105の困る／参るに交換可能例。研究者による例文分析であり本問の相性の証明ではない。",
+          "access": "page"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。",
+      "remainingClaims": [
+        "困り果てたは文語寄りという使用域の主張。",
+        "参るを口語的な強調とする使用域の主張（語義の弱る・困るは確認済み）。"
+      ]
+    },
+    {
+      "pack": "ruigigo",
+      "id": "ru19",
+      "status": "caution",
+      "answerCheck": "迷うの選択が定まらない語義は漢字ペディアで確認。",
+      "explanationCheck": "考えるを何日も決まらない状況では不可とする根拠不足。",
+      "note": "語感の優先と唯一正答性は区別。",
+      "sources": [
+        {
+          "title": "漢字ペディア『迷う』",
+          "url": "https://www.kanjipedia.jp/kotoba/0006685800",
+          "evidence": "決断に関する語義。",
+          "access": "page"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。"
+    },
+    {
+      "pack": "ruigigo",
+      "id": "ru20",
+      "status": "caution",
+      "answerCheck": "苦笑は困惑を含む笑いとして整合。",
+      "explanationCheck": "失敗を面白く振り返ることもあり、設問が困惑・気まずさを指定しないまま他の笑いを排除する根拠不足。",
+      "note": "自然さ・強度の好みは客観的正誤と区別。唯一正答性の追加根拠は不足。",
+      "sources": [
+        {
+          "title": "小学館 ことばのまど 第27回",
+          "url": "https://kotobanomado.jp/column/6720/",
+          "evidence": "失笑と苦笑の対比。",
+          "access": "page"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。"
+    },
+    {
+      "pack": "douongigo",
+      "id": "do01",
+      "status": "supported",
+      "answerCheck": "薬の作用は効く。",
+      "explanationCheck": "効く・利く・聞くの基本対比は公的用例と整合。",
+      "note": "文化審議会の異字同訓用例に基づく。字源そのものの検証ではない。",
+      "sources": [
+        {
+          "title": "文化審議会国語分科会『異字同訓の漢字の使い分け例』2014",
+          "url": "https://www.bunka.go.jp/seisaku/bunkashingikai/kokugo/hokoku/pdf/ijidokun_140221.pdf",
+          "evidence": "項目051/052",
+          "access": "page"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。"
+    },
+    {
+      "pack": "douongigo",
+      "id": "do02",
+      "status": "caution",
+      "answerCheck": "建設が完了する建つは正答として支持。",
+      "explanationCheck": "立つは建物に使えないとは一律にできない。設問の完成という焦点なら建つを優先するという説明が適切。",
+      "note": "出典は指定語の語義を検証。架空例文は語義との整合を判断。",
+      "sources": [
+        {
+          "title": "文化審議会国語分科会資料2",
+          "url": "https://www.bunka.go.jp/seisaku/bunkashingikai/kokugo/kokugo/kokugo_54/pdf/shiryo_2.pdf",
+          "evidence": "建つ・建てるの用例。",
+          "access": "search_snippet"
+        },
+        {
+          "title": "毎日新聞校閲 立つにも建つにも根拠あり",
+          "url": "https://salon.mainichi-kotoba.jp/archives/203572",
+          "evidence": "自社表記と明鏡第3版の書き分け。",
+          "access": "search_snippet"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。"
+    },
+    {
+      "pack": "douongigo",
+      "id": "do03",
+      "status": "supported",
+      "answerCheck": "鏡の反射は映る。",
+      "explanationCheck": "写る・映るの使い分けに加え、2026-09-06大辞泉本文で移るの位置・状態が変化する語義を補完。鏡の反射との対比を支持。",
+      "note": "漢字の語源ではなく現代の語義・標準的書き分けを確認。",
+      "sources": [
+        {
+          "title": "文化審議会国語分科会『異字同訓の漢字の使い分け例』2014",
+          "url": "https://www.bunka.go.jp/seisaku/bunkashingikai/kokugo/hokoku/pdf/ijidokun_140221.pdf",
+          "evidence": "項目025",
+          "access": "page"
+        },
+        {
+          "title": "デジタル大辞泉『移る』（Kotobank転載・二次）",
+          "url": "https://kotobank.jp/word/移る-440930",
+          "evidence": "第1義は位置、第2義は性質や状態などの変化。",
+          "access": "page"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。",
+      "remainingClaims": []
+    },
+    {
+      "pack": "douongigo",
+      "id": "do04",
+      "status": "supported",
+      "answerCheck": "到達は着く。",
+      "explanationCheck": "付く・就くの対比は公的用例と整合。",
+      "note": "文化審議会の異字同訓用例に基づく。字源そのものの検証ではない。",
+      "sources": [
+        {
+          "title": "文化審議会国語分科会『異字同訓の漢字の使い分け例』2014",
+          "url": "https://www.bunka.go.jp/seisaku/bunkashingikai/kokugo/hokoku/pdf/ijidokun_140221.pdf",
+          "evidence": "項目082",
+          "access": "page"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。"
+    },
+    {
+      "pack": "douongigo",
+      "id": "do05",
+      "status": "supported",
+      "answerCheck": "事故との遭遇には遭う。",
+      "explanationCheck": "会う・合うとの基本対比は公的用例と整合。",
+      "note": "文化審議会の異字同訓用例に基づく。字源そのものの検証ではない。",
+      "sources": [
+        {
+          "title": "文化審議会国語分科会『異字同訓の漢字の使い分け例』2014",
+          "url": "https://www.bunka.go.jp/seisaku/bunkashingikai/kokugo/hokoku/pdf/ijidokun_140221.pdf",
+          "evidence": "項目001",
+          "access": "page"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。"
+    },
+    {
+      "pack": "douongigo",
+      "id": "do06",
+      "status": "supported",
+      "answerCheck": "町への移動は移る。",
+      "explanationCheck": "写る・映る・移るの基本対比を漢字ペディアの同訓異義項目で確認。",
+      "note": "出典は指定語の語義を検証。架空例文は語義との整合を判断。",
+      "sources": [
+        {
+          "title": "漢字ペディア 同訓異義『うつす・うつる』",
+          "url": "https://www.kanjipedia.jp/sakuin/doukunigi/items/0000349400",
+          "evidence": "別の場所への移動と映像表記。",
+          "access": "search_snippet"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。"
+    },
+    {
+      "pack": "douongigo",
+      "id": "do07",
+      "status": "supported",
+      "answerCheck": "感情を動作で示す表すが適切。",
+      "explanationCheck": "現す・著すの対比は公的用例と整合。",
+      "note": "文化審議会の異字同訓用例に基づく。字源そのものの検証ではない。",
+      "sources": [
+        {
+          "title": "文化審議会国語分科会『異字同訓の漢字の使い分け例』2014",
+          "url": "https://www.bunka.go.jp/seisaku/bunkashingikai/kokugo/hokoku/pdf/ijidokun_140221.pdf",
+          "evidence": "項目015",
+          "access": "page"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。"
+    },
+    {
+      "pack": "douongigo",
+      "id": "do08",
+      "status": "caution",
+      "answerCheck": "橋には架けるが公的標準用例。",
+      "explanationCheck": "懸けるは橋に合わないという制限の直接の根拠は未確保。公的用例の懸(架)け橋だけで動詞の全用法を判断することもできない。",
+      "note": "2026-09-06残余整理。掛けるの一般表記を原文が明示禁止しているとは断定しない。表記規範の指定という編集判断と、懸けるの用法制限の未確認を区別。",
+      "remainingClaims": [
+        "懸けるは橋に合わないという用法制限の直接的根拠（公的用例の懸(架)け橋との関係は未解決）。"
+      ],
+      "sources": [
+        {
+          "title": "文化審議会国語分科会『異字同訓の漢字の使い分け例』2014",
+          "url": "https://www.bunka.go.jp/seisaku/bunkashingikai/kokugo/hokoku/pdf/ijidokun_140221.pdf",
+          "evidence": "項目043",
+          "access": "page"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。"
+    },
+    {
+      "pack": "douongigo",
+      "id": "do09",
+      "status": "caution",
+      "answerCheck": "登るは標準的な正答として公的用例に一致。上るにも広い上方移動の用法があるため、標準的な使い分けを問う条件を明示するとよい。",
+      "explanationCheck": "末尾の『山には合わない』は直前の昇るだけを説明すると自然に読める。原文が上るを絶対不可と断定しているとは言い切れないため、明白な誤りという判定を撤回。",
+      "note": "文化審議会の異字同訓用例に基づく。表記選択の条件と係り受けに関する注意であり、語義の明白な誤りとは扱わない。",
+      "sources": [
+        {
+          "title": "文化審議会国語分科会『異字同訓の漢字の使い分け例』2014",
+          "url": "https://www.bunka.go.jp/seisaku/bunkashingikai/kokugo/hokoku/pdf/ijidokun_140221.pdf",
+          "evidence": "項目102",
+          "access": "page"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。"
+    },
+    {
+      "pack": "douongigo",
+      "id": "do10",
+      "status": "supported",
+      "answerCheck": "傘には差す。",
+      "explanationCheck": "指す・刺すの対比は公的用例と整合。",
+      "note": "文化審議会の異字同訓用例に基づく。字源そのものの検証ではない。",
+      "sources": [
+        {
+          "title": "文化審議会国語分科会『異字同訓の漢字の使い分け例』2014",
+          "url": "https://www.bunka.go.jp/seisaku/bunkashingikai/kokugo/hokoku/pdf/ijidokun_140221.pdf",
+          "evidence": "項目062",
+          "access": "page"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。"
+    },
+    {
+      "pack": "douongigo",
+      "id": "do11",
+      "status": "supported",
+      "answerCheck": "会社勤務には勤める。",
+      "explanationCheck": "努める・務めるの基本対比は公的用例と整合。",
+      "note": "文化審議会の異字同訓用例に基づく。字源そのものの検証ではない。",
+      "sources": [
+        {
+          "title": "文化審議会国語分科会『異字同訓の漢字の使い分け例』2014",
+          "url": "https://www.bunka.go.jp/seisaku/bunkashingikai/kokugo/hokoku/pdf/ijidokun_140221.pdf",
+          "evidence": "項目086",
+          "access": "page"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。"
+    },
+    {
+      "pack": "douongigo",
+      "id": "do12",
+      "status": "caution",
+      "answerCheck": "挙がるの中心語義は支持。",
+      "explanationCheck": "意見・候補などの挙がるという標準的書き分けは既確認。原文には上がるを意見に絶対使えないとの直接の断定はない。",
+      "note": "2026-09-06原文再読。残るのは一般表記と意味を明確にする書き分けをどう採点条件にするかという編集上の注意。",
+      "sources": [
+        {
+          "title": "文化審議会国語分科会『異字同訓の漢字の使い分け例』2014",
+          "url": "https://www.bunka.go.jp/seisaku/bunkashingikai/kokugo/hokoku/pdf/ijidokun_140221.pdf",
+          "evidence": "項目003",
+          "access": "page"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。",
+      "remainingClaims": []
+    },
+    {
+      "pack": "douongigo",
+      "id": "do13",
+      "status": "caution",
+      "answerCheck": "時間に計るは公的用例と一致。",
+      "explanationCheck": "2026-09-06に産総研の専門資料本文で時間を測る実例を確認。時間は必ず計る、対象だけで字が決まるという説明を普遍的な表記規則とはできない。",
+      "note": "計るを標準の書き分けとして選ぶ意図は支持。実使用例と国語の規範を同一視せず、採用する表記基準を明示する編集上の注意。",
+      "sources": [
+        {
+          "title": "文化審議会国語分科会『異字同訓の漢字の使い分け例』2014",
+          "url": "https://www.bunka.go.jp/seisaku/bunkashingikai/kokugo/hokoku/pdf/ijidokun_140221.pdf",
+          "evidence": "項目104",
+          "access": "page"
+        },
+        {
+          "title": "小林拓実『光格子時計の研究開発状況と応用に関する調査研究』産総研計量標準報告9(4),2018",
+          "url": "https://unit.aist.go.jp/nmij/public/report/bulletin/Vol9/4/V9N4P471.pdf",
+          "evidence": "印刷ページ471の導入で時間を測る表記を使用。計量標準専門家の実例であり、国語の規範を定めた資料ではない。",
+          "access": "page"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。",
+      "remainingClaims": []
+    },
+    {
+      "pack": "douongigo",
+      "id": "do14",
+      "status": "supported",
+      "answerCheck": "職には就く。",
+      "explanationCheck": "着く・付くとの基本対比は公的用例と整合。",
+      "note": "文化審議会の異字同訓用例に基づく。字源そのものの検証ではない。",
+      "sources": [
+        {
+          "title": "文化審議会国語分科会『異字同訓の漢字の使い分け例』2014",
+          "url": "https://www.bunka.go.jp/seisaku/bunkashingikai/kokugo/hokoku/pdf/ijidokun_140221.pdf",
+          "evidence": "項目082",
+          "access": "page"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。"
+    },
+    {
+      "pack": "douongigo",
+      "id": "do15",
+      "status": "caution",
+      "answerCheck": "診るは医療の専門的表記として適切。",
+      "explanationCheck": "末尾の『医療行為には合わない』は直前の観るだけを説明すると読めるため、見るを不可と断定しているという判定を撤回。ただし大辞泉の見るには診断の語義もあり、専門的表記を選ぶ問題であると明示する余地はある。",
+      "note": "専門的な書き分けは支持。一般語の語義と専門表記の区別、および係り受けに関する注意として記録。",
+      "sources": [
+        {
+          "title": "文化審議会国語分科会『異字同訓の漢字の使い分け例』2014",
+          "url": "https://www.bunka.go.jp/seisaku/bunkashingikai/kokugo/hokoku/pdf/ijidokun_140221.pdf",
+          "evidence": "項目121",
+          "access": "page"
+        },
+        {
+          "title": "デジタル大辞泉『見る』（Kotobank転載・二次）",
+          "url": "https://kotobank.jp/word/見る-640426",
+          "evidence": "第7義に診断の用法。",
+          "access": "page"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。"
+    },
+    {
+      "pack": "douongigo",
+      "id": "do16",
+      "status": "incorrect",
+      "answerCheck": "勝利には収める。",
+      "explanationCheck": "怒りを手中に入れるという説明は不適切。怒りを収めるの沈静と成果を獲得する意味を混同している。",
+      "note": "文化審議会の異字同訓用例に基づく。字源そのものの検証ではない。",
+      "sources": [
+        {
+          "title": "文化審議会国語分科会『異字同訓の漢字の使い分け例』2014",
+          "url": "https://www.bunka.go.jp/seisaku/bunkashingikai/kokugo/hokoku/pdf/ijidokun_140221.pdf",
+          "evidence": "項目033",
+          "access": "page"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。"
+    },
+    {
+      "pack": "douongigo",
+      "id": "do17",
+      "status": "caution",
+      "answerCheck": "採用の採るは適切。",
+      "explanationCheck": "2026-09-06本文で採るの採用義を補完。末尾の方法の選択に合わないという説明は直前の撮るに掛かると自然に読め、原文が取るを明示的に禁止しているとは断定しない。",
+      "note": "前回の取る排除という強い読みを撤回。専門的書き分けを問うことの明示は編集判断。取るの全用法の禁止規則を証明することは本問の要求ではない。",
+      "sources": [
+        {
+          "title": "文化審議会国語分科会『異字同訓の漢字の使い分け例』2014",
+          "url": "https://www.bunka.go.jp/seisaku/bunkashingikai/kokugo/hokoku/pdf/ijidokun_140221.pdf",
+          "evidence": "項目092",
+          "access": "page"
+        },
+        {
+          "title": "日本漢字能力検定協会 漢字ペディア『同訓異義：とる』",
+          "url": "https://www.kanjipedia.jp/sakuin/doukunigi/items/0005351000",
+          "evidence": "取るは広く用いる表記、採るは採用で案の例、撮るは撮影の意味を本文確認。",
+          "access": "page"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。",
+      "remainingClaims": []
+    },
+    {
+      "pack": "douongigo",
+      "id": "do18",
+      "status": "supported",
+      "answerCheck": "機転には利く。",
+      "explanationCheck": "文化審議会の機転の表記に加え、小学館辞典でブレーキが利かないの用例を本文確認。本問の機転＝利くという中心対比を支持。",
+      "note": "2026-09-06に未確認だったブレーキの利く表記を補完。ブレーキに効くという表記を禁止する設問ではなく、その排他性は主張しない。",
+      "sources": [
+        {
+          "title": "文化審議会国語分科会『異字同訓の漢字の使い分け例』2014",
+          "url": "https://www.bunka.go.jp/seisaku/bunkashingikai/kokugo/hokoku/pdf/ijidokun_140221.pdf",
+          "evidence": "項目052",
+          "access": "page"
+        },
+        {
+          "title": "小学館プログレッシブ和英中辞典第4版『利く』（Kotobank転載・二次）",
+          "url": "https://kotobank.jp/jeword/利く",
+          "evidence": "十分な働きをする意味に機転とブレーキの用例。",
+          "access": "page"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。",
+      "remainingClaims": []
+    },
+    {
+      "pack": "douongigo",
+      "id": "do19",
+      "status": "supported",
+      "answerCheck": "家業の継承には継ぐ。",
+      "explanationCheck": "次ぐ・接ぐの対比は公的用例と整合。",
+      "note": "文化審議会の異字同訓用例に基づく。字源そのものの検証ではない。",
+      "sources": [
+        {
+          "title": "文化審議会国語分科会『異字同訓の漢字の使い分け例』2014",
+          "url": "https://www.bunka.go.jp/seisaku/bunkashingikai/kokugo/hokoku/pdf/ijidokun_140221.pdf",
+          "evidence": "項目083",
+          "access": "page"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。"
+    },
+    {
+      "pack": "douongigo",
+      "id": "do20",
+      "status": "supported",
+      "answerCheck": "時間を振り向けるには割く。",
+      "explanationCheck": "割く・裂くの既確認の対比に加え、2026-09-06大辞泉・日国本文で咲くの開花義を補完。",
+      "note": "本問は時間の配分を問うもので、開花の語義と明確に異なる。",
+      "sources": [
+        {
+          "title": "文化審議会国語分科会『異字同訓の漢字の使い分け例』2014",
+          "url": "https://www.bunka.go.jp/seisaku/bunkashingikai/kokugo/hokoku/pdf/ijidokun_140221.pdf",
+          "evidence": "項目060",
+          "access": "page"
+        },
+        {
+          "title": "デジタル大辞泉・精選版日本国語大辞典『咲く』（Kotobank転載・二次）",
+          "url": "https://kotobank.jp/word/咲く-509508",
+          "evidence": "花のつぼみが開く意味を本文確認。",
+          "access": "page"
+        }
+      ],
+      "verificationScope": "問題文・選択肢・正答・解説を閲読。sources.evidence は確認できた範囲の要約であり、出典にない自然さの評価は判定者の推論。",
+      "remainingClaims": []
+    }
+  ]
+}

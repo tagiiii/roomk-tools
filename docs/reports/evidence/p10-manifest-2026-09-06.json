@@ -1,0 +1,1401 @@
+{
+  "date": "2026-09-06",
+  "sourcePath": "apps/quiz/questions.js",
+  "sourceCommit": "3a8b174d07b0e5302aeaf406e75f16fd38d7966e",
+  "sourceSha256": "ce670d81eb9f2ddf5fd0544b216cdd07078887e93ef4c361768279bf971a4f75",
+  "excluded": "nandoku-* 8 packs / 160 questions",
+  "packs": [
+    {
+      "id": "zatsugaku-3choice",
+      "name": "雑学3択クイズ",
+      "questions": [
+        {
+          "id": "z01",
+          "sourceLine": 16
+        },
+        {
+          "id": "z02",
+          "sourceLine": 23
+        },
+        {
+          "id": "z03",
+          "sourceLine": 31
+        },
+        {
+          "id": "z04",
+          "sourceLine": 38
+        },
+        {
+          "id": "z05",
+          "sourceLine": 45
+        },
+        {
+          "id": "z06",
+          "sourceLine": 52
+        },
+        {
+          "id": "z07",
+          "sourceLine": 60
+        },
+        {
+          "id": "z08",
+          "sourceLine": 67
+        },
+        {
+          "id": "z09",
+          "sourceLine": 74
+        },
+        {
+          "id": "z10",
+          "sourceLine": 81
+        },
+        {
+          "id": "z11",
+          "sourceLine": 89
+        },
+        {
+          "id": "z12",
+          "sourceLine": 96
+        },
+        {
+          "id": "z13",
+          "sourceLine": 103
+        },
+        {
+          "id": "z14",
+          "sourceLine": 110
+        },
+        {
+          "id": "z15",
+          "sourceLine": 117
+        },
+        {
+          "id": "z16",
+          "sourceLine": 124
+        },
+        {
+          "id": "z17",
+          "sourceLine": 131
+        },
+        {
+          "id": "z18",
+          "sourceLine": 138
+        },
+        {
+          "id": "z19",
+          "sourceLine": 145
+        },
+        {
+          "id": "z20",
+          "sourceLine": 152
+        }
+      ],
+      "evidenceFile": "p10-science-2026-09-06.json"
+    },
+    {
+      "id": "tofuken-zatsugaku",
+      "name": "へぇが増える 都道府県クイズ",
+      "questions": [
+        {
+          "id": "tf01",
+          "sourceLine": 168
+        },
+        {
+          "id": "tf02",
+          "sourceLine": 175
+        },
+        {
+          "id": "tf03",
+          "sourceLine": 182
+        },
+        {
+          "id": "tf04",
+          "sourceLine": 189
+        },
+        {
+          "id": "tf05",
+          "sourceLine": 196
+        },
+        {
+          "id": "tf06",
+          "sourceLine": 203
+        },
+        {
+          "id": "tf07",
+          "sourceLine": 212
+        },
+        {
+          "id": "tf08",
+          "sourceLine": 219
+        },
+        {
+          "id": "tf09",
+          "sourceLine": 226
+        },
+        {
+          "id": "tf10",
+          "sourceLine": 233
+        },
+        {
+          "id": "tf11",
+          "sourceLine": 240
+        },
+        {
+          "id": "tf12",
+          "sourceLine": 247
+        },
+        {
+          "id": "tf13",
+          "sourceLine": 254
+        },
+        {
+          "id": "tf14",
+          "sourceLine": 261
+        },
+        {
+          "id": "tf15",
+          "sourceLine": 268
+        },
+        {
+          "id": "tf16",
+          "sourceLine": 275
+        },
+        {
+          "id": "tf17",
+          "sourceLine": 282
+        },
+        {
+          "id": "tf18",
+          "sourceLine": 289
+        },
+        {
+          "id": "tf19",
+          "sourceLine": 298
+        },
+        {
+          "id": "tf20",
+          "sourceLine": 305
+        },
+        {
+          "id": "tf21",
+          "sourceLine": 312
+        },
+        {
+          "id": "tf22",
+          "sourceLine": 319
+        },
+        {
+          "id": "tf23",
+          "sourceLine": 326
+        },
+        {
+          "id": "tf24",
+          "sourceLine": 333
+        },
+        {
+          "id": "tf25",
+          "sourceLine": 340
+        },
+        {
+          "id": "tf26",
+          "sourceLine": 347
+        },
+        {
+          "id": "tf27",
+          "sourceLine": 354
+        },
+        {
+          "id": "tf28",
+          "sourceLine": 361
+        },
+        {
+          "id": "tf29",
+          "sourceLine": 368
+        },
+        {
+          "id": "tf30",
+          "sourceLine": 375
+        }
+      ],
+      "evidenceFile": "p10-science-2026-09-06.json"
+    },
+    {
+      "id": "series-2choice",
+      "name": "連続2択クイズ",
+      "questions": [
+        {
+          "id": "s01",
+          "sourceLine": 391
+        },
+        {
+          "id": "s02",
+          "sourceLine": 398
+        },
+        {
+          "id": "s03",
+          "sourceLine": 406
+        },
+        {
+          "id": "s04",
+          "sourceLine": 413
+        },
+        {
+          "id": "s05",
+          "sourceLine": 420
+        },
+        {
+          "id": "s06",
+          "sourceLine": 427
+        },
+        {
+          "id": "s07",
+          "sourceLine": 435
+        },
+        {
+          "id": "s08",
+          "sourceLine": 442
+        },
+        {
+          "id": "s09",
+          "sourceLine": 449
+        },
+        {
+          "id": "s10",
+          "sourceLine": 456
+        },
+        {
+          "id": "s11",
+          "sourceLine": 464
+        },
+        {
+          "id": "s12",
+          "sourceLine": 471
+        },
+        {
+          "id": "s13",
+          "sourceLine": 478
+        },
+        {
+          "id": "s14",
+          "sourceLine": 485
+        },
+        {
+          "id": "s15",
+          "sourceLine": 492
+        },
+        {
+          "id": "s16",
+          "sourceLine": 499
+        },
+        {
+          "id": "s17",
+          "sourceLine": 506
+        },
+        {
+          "id": "s18",
+          "sourceLine": 513
+        },
+        {
+          "id": "s19",
+          "sourceLine": 520
+        },
+        {
+          "id": "s20",
+          "sourceLine": 527
+        }
+      ],
+      "evidenceFile": "p10-science-2026-09-06.json"
+    },
+    {
+      "id": "kotoba-quiz",
+      "name": "ことばクイズ",
+      "questions": [
+        {
+          "id": "k01",
+          "sourceLine": 543
+        },
+        {
+          "id": "k02",
+          "sourceLine": 550
+        },
+        {
+          "id": "k03",
+          "sourceLine": 558
+        },
+        {
+          "id": "k04",
+          "sourceLine": 565
+        },
+        {
+          "id": "k05",
+          "sourceLine": 572
+        },
+        {
+          "id": "k06",
+          "sourceLine": 579
+        },
+        {
+          "id": "k07",
+          "sourceLine": 587
+        },
+        {
+          "id": "k08",
+          "sourceLine": 594
+        },
+        {
+          "id": "k09",
+          "sourceLine": 601
+        },
+        {
+          "id": "k10",
+          "sourceLine": 608
+        },
+        {
+          "id": "k11",
+          "sourceLine": 616
+        },
+        {
+          "id": "k12",
+          "sourceLine": 623
+        },
+        {
+          "id": "k13",
+          "sourceLine": 630
+        },
+        {
+          "id": "k14",
+          "sourceLine": 637
+        },
+        {
+          "id": "k15",
+          "sourceLine": 644
+        },
+        {
+          "id": "k16",
+          "sourceLine": 651
+        },
+        {
+          "id": "k17",
+          "sourceLine": 658
+        },
+        {
+          "id": "k18",
+          "sourceLine": 665
+        },
+        {
+          "id": "k19",
+          "sourceLine": 672
+        },
+        {
+          "id": "k20",
+          "sourceLine": 679
+        }
+      ],
+      "evidenceFile": "p10-language-2026-09-06.json"
+    },
+    {
+      "id": "kanji-quiz",
+      "name": "漢字クイズ",
+      "questions": [
+        {
+          "id": "kj01",
+          "sourceLine": 695
+        },
+        {
+          "id": "kj02",
+          "sourceLine": 702
+        },
+        {
+          "id": "kj03",
+          "sourceLine": 710
+        },
+        {
+          "id": "kj04",
+          "sourceLine": 717
+        },
+        {
+          "id": "kj05",
+          "sourceLine": 724
+        },
+        {
+          "id": "kj06",
+          "sourceLine": 731
+        },
+        {
+          "id": "kj07",
+          "sourceLine": 739
+        },
+        {
+          "id": "kj08",
+          "sourceLine": 746
+        },
+        {
+          "id": "kj09",
+          "sourceLine": 753
+        },
+        {
+          "id": "kj10",
+          "sourceLine": 760
+        },
+        {
+          "id": "kj11",
+          "sourceLine": 768
+        },
+        {
+          "id": "kj12",
+          "sourceLine": 775
+        },
+        {
+          "id": "kj13",
+          "sourceLine": 782
+        },
+        {
+          "id": "kj14",
+          "sourceLine": 789
+        },
+        {
+          "id": "kj15",
+          "sourceLine": 796
+        },
+        {
+          "id": "kj16",
+          "sourceLine": 803
+        },
+        {
+          "id": "kj17",
+          "sourceLine": 810
+        },
+        {
+          "id": "kj18",
+          "sourceLine": 817
+        },
+        {
+          "id": "kj19",
+          "sourceLine": 824
+        },
+        {
+          "id": "kj20",
+          "sourceLine": 831
+        }
+      ],
+      "evidenceFile": "p10-culture-2026-09-06.json"
+    },
+    {
+      "id": "kanyouku",
+      "name": "慣用句クイズ（難しめ）",
+      "questions": [
+        {
+          "id": "ky01",
+          "sourceLine": 2078
+        },
+        {
+          "id": "ky02",
+          "sourceLine": 2085
+        },
+        {
+          "id": "ky03",
+          "sourceLine": 2092
+        },
+        {
+          "id": "ky04",
+          "sourceLine": 2099
+        },
+        {
+          "id": "ky05",
+          "sourceLine": 2108
+        },
+        {
+          "id": "ky06",
+          "sourceLine": 2115
+        },
+        {
+          "id": "ky07",
+          "sourceLine": 2122
+        },
+        {
+          "id": "ky08",
+          "sourceLine": 2129
+        },
+        {
+          "id": "ky09",
+          "sourceLine": 2136
+        },
+        {
+          "id": "ky10",
+          "sourceLine": 2143
+        },
+        {
+          "id": "ky11",
+          "sourceLine": 2150
+        },
+        {
+          "id": "ky12",
+          "sourceLine": 2157
+        },
+        {
+          "id": "ky13",
+          "sourceLine": 2166
+        },
+        {
+          "id": "ky14",
+          "sourceLine": 2173
+        },
+        {
+          "id": "ky15",
+          "sourceLine": 2180
+        },
+        {
+          "id": "ky16",
+          "sourceLine": 2187
+        },
+        {
+          "id": "ky17",
+          "sourceLine": 2194
+        },
+        {
+          "id": "ky18",
+          "sourceLine": 2201
+        },
+        {
+          "id": "ky19",
+          "sourceLine": 2208
+        },
+        {
+          "id": "ky20",
+          "sourceLine": 2215
+        }
+      ],
+      "evidenceFile": "p10-dictionary-2026-09-06.json"
+    },
+    {
+      "id": "onomatope",
+      "name": "オノマトペクイズ（難しめ）",
+      "questions": [
+        {
+          "id": "on01",
+          "sourceLine": 2231
+        },
+        {
+          "id": "on02",
+          "sourceLine": 2238
+        },
+        {
+          "id": "on03",
+          "sourceLine": 2245
+        },
+        {
+          "id": "on04",
+          "sourceLine": 2252
+        },
+        {
+          "id": "on05",
+          "sourceLine": 2261
+        },
+        {
+          "id": "on06",
+          "sourceLine": 2268
+        },
+        {
+          "id": "on07",
+          "sourceLine": 2275
+        },
+        {
+          "id": "on08",
+          "sourceLine": 2282
+        },
+        {
+          "id": "on09",
+          "sourceLine": 2289
+        },
+        {
+          "id": "on10",
+          "sourceLine": 2296
+        },
+        {
+          "id": "on11",
+          "sourceLine": 2303
+        },
+        {
+          "id": "on12",
+          "sourceLine": 2310
+        },
+        {
+          "id": "on13",
+          "sourceLine": 2319
+        },
+        {
+          "id": "on14",
+          "sourceLine": 2326
+        },
+        {
+          "id": "on15",
+          "sourceLine": 2333
+        },
+        {
+          "id": "on16",
+          "sourceLine": 2340
+        },
+        {
+          "id": "on17",
+          "sourceLine": 2347
+        },
+        {
+          "id": "on18",
+          "sourceLine": 2354
+        },
+        {
+          "id": "on19",
+          "sourceLine": 2361
+        },
+        {
+          "id": "on20",
+          "sourceLine": 2368
+        }
+      ],
+      "evidenceFile": "p10-language-2026-09-06.json"
+    },
+    {
+      "id": "ruigigo",
+      "name": "類義語クイズ（難しめ）",
+      "questions": [
+        {
+          "id": "ru01",
+          "sourceLine": 2384
+        },
+        {
+          "id": "ru02",
+          "sourceLine": 2391
+        },
+        {
+          "id": "ru03",
+          "sourceLine": 2398
+        },
+        {
+          "id": "ru04",
+          "sourceLine": 2405
+        },
+        {
+          "id": "ru05",
+          "sourceLine": 2414
+        },
+        {
+          "id": "ru06",
+          "sourceLine": 2421
+        },
+        {
+          "id": "ru07",
+          "sourceLine": 2428
+        },
+        {
+          "id": "ru08",
+          "sourceLine": 2435
+        },
+        {
+          "id": "ru09",
+          "sourceLine": 2442
+        },
+        {
+          "id": "ru10",
+          "sourceLine": 2449
+        },
+        {
+          "id": "ru11",
+          "sourceLine": 2456
+        },
+        {
+          "id": "ru12",
+          "sourceLine": 2463
+        },
+        {
+          "id": "ru13",
+          "sourceLine": 2472
+        },
+        {
+          "id": "ru14",
+          "sourceLine": 2479
+        },
+        {
+          "id": "ru15",
+          "sourceLine": 2486
+        },
+        {
+          "id": "ru16",
+          "sourceLine": 2493
+        },
+        {
+          "id": "ru17",
+          "sourceLine": 2500
+        },
+        {
+          "id": "ru18",
+          "sourceLine": 2507
+        },
+        {
+          "id": "ru19",
+          "sourceLine": 2514
+        },
+        {
+          "id": "ru20",
+          "sourceLine": 2521
+        }
+      ],
+      "evidenceFile": "p10-dictionary-2026-09-06.json"
+    },
+    {
+      "id": "kotowaza",
+      "name": "ことわざクイズ（難しめ）",
+      "questions": [
+        {
+          "id": "kt01",
+          "sourceLine": 2537
+        },
+        {
+          "id": "kt02",
+          "sourceLine": 2544
+        },
+        {
+          "id": "kt03",
+          "sourceLine": 2551
+        },
+        {
+          "id": "kt04",
+          "sourceLine": 2558
+        },
+        {
+          "id": "kt05",
+          "sourceLine": 2567
+        },
+        {
+          "id": "kt06",
+          "sourceLine": 2574
+        },
+        {
+          "id": "kt07",
+          "sourceLine": 2581
+        },
+        {
+          "id": "kt08",
+          "sourceLine": 2588
+        },
+        {
+          "id": "kt09",
+          "sourceLine": 2595
+        },
+        {
+          "id": "kt10",
+          "sourceLine": 2602
+        },
+        {
+          "id": "kt11",
+          "sourceLine": 2609
+        },
+        {
+          "id": "kt12",
+          "sourceLine": 2616
+        },
+        {
+          "id": "kt13",
+          "sourceLine": 2625
+        },
+        {
+          "id": "kt14",
+          "sourceLine": 2632
+        },
+        {
+          "id": "kt15",
+          "sourceLine": 2639
+        },
+        {
+          "id": "kt16",
+          "sourceLine": 2646
+        },
+        {
+          "id": "kt17",
+          "sourceLine": 2653
+        },
+        {
+          "id": "kt18",
+          "sourceLine": 2660
+        },
+        {
+          "id": "kt19",
+          "sourceLine": 2667
+        },
+        {
+          "id": "kt20",
+          "sourceLine": 2674
+        }
+      ],
+      "evidenceFile": "p10-dictionary-2026-09-06.json"
+    },
+    {
+      "id": "machigai-nihongo",
+      "name": "間違えやすい日本語クイズ（難しめ）",
+      "questions": [
+        {
+          "id": "ma01",
+          "sourceLine": 2690
+        },
+        {
+          "id": "ma02",
+          "sourceLine": 2697
+        },
+        {
+          "id": "ma03",
+          "sourceLine": 2704
+        },
+        {
+          "id": "ma04",
+          "sourceLine": 2711
+        },
+        {
+          "id": "ma05",
+          "sourceLine": 2720
+        },
+        {
+          "id": "ma06",
+          "sourceLine": 2727
+        },
+        {
+          "id": "ma07",
+          "sourceLine": 2734
+        },
+        {
+          "id": "ma08",
+          "sourceLine": 2741
+        },
+        {
+          "id": "ma09",
+          "sourceLine": 2748
+        },
+        {
+          "id": "ma10",
+          "sourceLine": 2755
+        },
+        {
+          "id": "ma11",
+          "sourceLine": 2762
+        },
+        {
+          "id": "ma12",
+          "sourceLine": 2769
+        },
+        {
+          "id": "ma13",
+          "sourceLine": 2778
+        },
+        {
+          "id": "ma14",
+          "sourceLine": 2785
+        },
+        {
+          "id": "ma15",
+          "sourceLine": 2792
+        },
+        {
+          "id": "ma16",
+          "sourceLine": 2799
+        },
+        {
+          "id": "ma17",
+          "sourceLine": 2806
+        },
+        {
+          "id": "ma18",
+          "sourceLine": 2813
+        },
+        {
+          "id": "ma19",
+          "sourceLine": 2820
+        },
+        {
+          "id": "ma20",
+          "sourceLine": 2827
+        }
+      ],
+      "evidenceFile": "p10-dictionary-2026-09-06.json"
+    },
+    {
+      "id": "douongigo",
+      "name": "同音異義語クイズ（難しめ）",
+      "questions": [
+        {
+          "id": "do01",
+          "sourceLine": 2843
+        },
+        {
+          "id": "do02",
+          "sourceLine": 2850
+        },
+        {
+          "id": "do03",
+          "sourceLine": 2857
+        },
+        {
+          "id": "do04",
+          "sourceLine": 2864
+        },
+        {
+          "id": "do05",
+          "sourceLine": 2873
+        },
+        {
+          "id": "do06",
+          "sourceLine": 2880
+        },
+        {
+          "id": "do07",
+          "sourceLine": 2887
+        },
+        {
+          "id": "do08",
+          "sourceLine": 2894
+        },
+        {
+          "id": "do09",
+          "sourceLine": 2901
+        },
+        {
+          "id": "do10",
+          "sourceLine": 2908
+        },
+        {
+          "id": "do11",
+          "sourceLine": 2915
+        },
+        {
+          "id": "do12",
+          "sourceLine": 2922
+        },
+        {
+          "id": "do13",
+          "sourceLine": 2931
+        },
+        {
+          "id": "do14",
+          "sourceLine": 2938
+        },
+        {
+          "id": "do15",
+          "sourceLine": 2945
+        },
+        {
+          "id": "do16",
+          "sourceLine": 2952
+        },
+        {
+          "id": "do17",
+          "sourceLine": 2959
+        },
+        {
+          "id": "do18",
+          "sourceLine": 2966
+        },
+        {
+          "id": "do19",
+          "sourceLine": 2973
+        },
+        {
+          "id": "do20",
+          "sourceLine": 2980
+        }
+      ],
+      "evidenceFile": "p10-dictionary-2026-09-06.json"
+    },
+    {
+      "id": "kanji-himitsu",
+      "name": "漢字のひみつ",
+      "questions": [
+        {
+          "id": "khm01",
+          "sourceLine": 3000
+        },
+        {
+          "id": "khm02",
+          "sourceLine": 3007
+        },
+        {
+          "id": "khm03",
+          "sourceLine": 3016
+        },
+        {
+          "id": "khm04",
+          "sourceLine": 3023
+        },
+        {
+          "id": "khm05",
+          "sourceLine": 3030
+        },
+        {
+          "id": "khm06",
+          "sourceLine": 3037
+        },
+        {
+          "id": "khm07",
+          "sourceLine": 3046
+        },
+        {
+          "id": "khm08",
+          "sourceLine": 3053
+        },
+        {
+          "id": "khm09",
+          "sourceLine": 3060
+        },
+        {
+          "id": "khm10",
+          "sourceLine": 3067
+        },
+        {
+          "id": "khm11",
+          "sourceLine": 3076
+        },
+        {
+          "id": "khm12",
+          "sourceLine": 3083
+        },
+        {
+          "id": "khm13",
+          "sourceLine": 3090
+        },
+        {
+          "id": "khm14",
+          "sourceLine": 3097
+        },
+        {
+          "id": "khm15",
+          "sourceLine": 3104
+        },
+        {
+          "id": "khm16",
+          "sourceLine": 3111
+        },
+        {
+          "id": "khm17",
+          "sourceLine": 3118
+        },
+        {
+          "id": "khm18",
+          "sourceLine": 3125
+        },
+        {
+          "id": "khm19",
+          "sourceLine": 3132
+        },
+        {
+          "id": "khm20",
+          "sourceLine": 3139
+        }
+      ],
+      "evidenceFile": "p10-culture-2026-09-06.json"
+    },
+    {
+      "id": "kotoba-bunka",
+      "name": "ことばの文化",
+      "questions": [
+        {
+          "id": "kbn01",
+          "sourceLine": 3159
+        },
+        {
+          "id": "kbn02",
+          "sourceLine": 3166
+        },
+        {
+          "id": "kbn03",
+          "sourceLine": 3175
+        },
+        {
+          "id": "kbn04",
+          "sourceLine": 3182
+        },
+        {
+          "id": "kbn05",
+          "sourceLine": 3189
+        },
+        {
+          "id": "kbn06",
+          "sourceLine": 3196
+        },
+        {
+          "id": "kbn07",
+          "sourceLine": 3205
+        },
+        {
+          "id": "kbn08",
+          "sourceLine": 3212
+        },
+        {
+          "id": "kbn09",
+          "sourceLine": 3219
+        },
+        {
+          "id": "kbn10",
+          "sourceLine": 3226
+        },
+        {
+          "id": "kbn11",
+          "sourceLine": 3235
+        },
+        {
+          "id": "kbn12",
+          "sourceLine": 3242
+        },
+        {
+          "id": "kbn13",
+          "sourceLine": 3249
+        },
+        {
+          "id": "kbn14",
+          "sourceLine": 3256
+        },
+        {
+          "id": "kbn15",
+          "sourceLine": 3263
+        },
+        {
+          "id": "kbn16",
+          "sourceLine": 3270
+        },
+        {
+          "id": "kbn17",
+          "sourceLine": 3277
+        },
+        {
+          "id": "kbn18",
+          "sourceLine": 3284
+        },
+        {
+          "id": "kbn19",
+          "sourceLine": 3291
+        },
+        {
+          "id": "kbn20",
+          "sourceLine": 3298
+        }
+      ],
+      "evidenceFile": "p10-culture-2026-09-06.json"
+    },
+    {
+      "id": "zatsugaku-king-2",
+      "name": "ことばの雑学王2",
+      "questions": [
+        {
+          "id": "zk201",
+          "sourceLine": 3318
+        },
+        {
+          "id": "zk202",
+          "sourceLine": 3325
+        },
+        {
+          "id": "zk203",
+          "sourceLine": 3334
+        },
+        {
+          "id": "zk204",
+          "sourceLine": 3341
+        },
+        {
+          "id": "zk205",
+          "sourceLine": 3348
+        },
+        {
+          "id": "zk206",
+          "sourceLine": 3355
+        },
+        {
+          "id": "zk207",
+          "sourceLine": 3364
+        },
+        {
+          "id": "zk208",
+          "sourceLine": 3371
+        },
+        {
+          "id": "zk209",
+          "sourceLine": 3378
+        },
+        {
+          "id": "zk210",
+          "sourceLine": 3385
+        },
+        {
+          "id": "zk211",
+          "sourceLine": 3394
+        },
+        {
+          "id": "zk212",
+          "sourceLine": 3401
+        },
+        {
+          "id": "zk213",
+          "sourceLine": 3408
+        },
+        {
+          "id": "zk214",
+          "sourceLine": 3415
+        },
+        {
+          "id": "zk215",
+          "sourceLine": 3422
+        },
+        {
+          "id": "zk216",
+          "sourceLine": 3429
+        },
+        {
+          "id": "zk217",
+          "sourceLine": 3436
+        },
+        {
+          "id": "zk218",
+          "sourceLine": 3443
+        },
+        {
+          "id": "zk219",
+          "sourceLine": 3450
+        },
+        {
+          "id": "zk220",
+          "sourceLine": 3457
+        }
+      ],
+      "evidenceFile": "p10-culture-2026-09-06.json"
+    },
+    {
+      "id": "kotoba-asobo-sokatsu",
+      "name": "ことばであそぼ総集編",
+      "questions": [
+        {
+          "id": "sk01",
+          "sourceLine": 3477
+        },
+        {
+          "id": "sk02",
+          "sourceLine": 3484
+        },
+        {
+          "id": "sk03",
+          "sourceLine": 3493
+        },
+        {
+          "id": "sk04",
+          "sourceLine": 3500
+        },
+        {
+          "id": "sk05",
+          "sourceLine": 3507
+        },
+        {
+          "id": "sk06",
+          "sourceLine": 3514
+        },
+        {
+          "id": "sk07",
+          "sourceLine": 3523
+        },
+        {
+          "id": "sk08",
+          "sourceLine": 3530
+        },
+        {
+          "id": "sk09",
+          "sourceLine": 3537
+        },
+        {
+          "id": "sk10",
+          "sourceLine": 3544
+        }
+      ],
+      "evidenceFile": "p10-language-2026-09-06.json"
+    },
+    {
+      "id": "kurashi-suiri",
+      "name": "くらしの推理クイズ",
+      "questions": [
+        {
+          "id": "ks01",
+          "sourceLine": 3565
+        },
+        {
+          "id": "ks02",
+          "sourceLine": 3572
+        },
+        {
+          "id": "ks03",
+          "sourceLine": 3579
+        },
+        {
+          "id": "ks04",
+          "sourceLine": 3588
+        },
+        {
+          "id": "ks05",
+          "sourceLine": 3595
+        },
+        {
+          "id": "ks06",
+          "sourceLine": 3602
+        },
+        {
+          "id": "ks07",
+          "sourceLine": 3609
+        },
+        {
+          "id": "ks08",
+          "sourceLine": 3616
+        },
+        {
+          "id": "ks09",
+          "sourceLine": 3623
+        },
+        {
+          "id": "ks10",
+          "sourceLine": 3630
+        },
+        {
+          "id": "ks11",
+          "sourceLine": 3639
+        },
+        {
+          "id": "ks12",
+          "sourceLine": 3646
+        },
+        {
+          "id": "ks13",
+          "sourceLine": 3653
+        },
+        {
+          "id": "ks14",
+          "sourceLine": 3660
+        },
+        {
+          "id": "ks15",
+          "sourceLine": 3667
+        },
+        {
+          "id": "ks16",
+          "sourceLine": 3674
+        },
+        {
+          "id": "ks17",
+          "sourceLine": 3681
+        },
+        {
+          "id": "ks18",
+          "sourceLine": 3688
+        },
+        {
+          "id": "ks19",
+          "sourceLine": 3695
+        },
+        {
+          "id": "ks20",
+          "sourceLine": 3702
+        }
+      ],
+      "evidenceFile": "p10-science-2026-09-06.json"
+    }
+  ]
+}

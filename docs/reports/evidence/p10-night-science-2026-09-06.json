@@ -1,0 +1,476 @@
+{
+  "date": "2026-09-06",
+  "sourceSha256": "058162a845442933af2e95caf7442dda5b5a3f4b3d66821a1107db57472b19ae",
+  "scope": "P-10 旧科学台帳で remainingClaims が非空の9件への追加照合。outcome は旧不足主張に対する結果であり、問題全体の再分類・全主張の保証ではない。旧台帳・問題データは無変更。",
+  "items": [
+    {
+      "pack": "zatsugaku-3choice",
+      "id": "z07",
+      "currentQuestion": {
+        "question": "砂漠にくらすキツネは耳が大きいことが多い。いちばんの理由は？",
+        "choices": [
+          "遠くの音をよく聞くため",
+          "体の熱をにがすため",
+          "砂がはいらないようにするため"
+        ],
+        "answerIndex": 1,
+        "explanation": "大きな耳は放熱器の役割をしています。「音のため」と思いやすいですが、暑さ対策が主な理由です。"
+      },
+      "previousRemainingClaims": [
+        "フェネックの大耳について、聴覚より放熱が進化上の主因であるという機能間の順位。"
+      ],
+      "outcome": "unresolved",
+      "checkedClaims": [
+        "Smithsonian の飼育解説本文は大耳の放熱と砂中の獲物を聞く機能を両方記載している。"
+      ],
+      "remainingClaims": [
+        "聴覚と放熱を比較して『いちばん』『暑さ対策が主』と順位付けする根拠。"
+      ],
+      "sources": [
+        {
+          "title": "Smithsonian National Zoo: Fennec fox",
+          "url": "https://nationalzoo.si.edu/animals/fennec-fox",
+          "access": "page",
+          "evidence": "Physical Description と Food/Eating Habits の本文で放熱と獲物を聞く機能を確認。優劣や進化上の主因は記載なし。",
+          "accessed": "2026-09-06"
+        }
+      ],
+      "searches": [
+        {
+          "query": "site.nationalzoo.si.edu fennec fox ears heat hearing",
+          "result": "公式飼育解説を発見し本文取得。両機能あり。"
+        },
+        {
+          "query": "\"フェネック\" \"放熱\" \"聴覚\" 動物園",
+          "result": "追加探索で機能の順位を確定できる機関資料は得られず。"
+        }
+      ],
+      "notes": "原文は『音のためではない』とは断定していない。旧 explanationCheck のこの言い換えは強すぎるため撤回する。ただし原文に実在する『主な理由』の根拠不足は残る。大耳が聴覚にも役立つだけでは放熱が主でないことの証明にはならない。",
+      "recommendedAction": "未解決として保持。後日修正を提案するなら順位付けをやめ、大耳の複数の働きの一つを問う形を検討。今回問題データは変更しない。"
+    },
+    {
+      "pack": "zatsugaku-3choice",
+      "id": "z08",
+      "currentQuestion": {
+        "question": "「鳥は飛ぶために体が軽い」と考えると、骨はどうなっていそう？",
+        "choices": [
+          "かたくて重い骨で支える",
+          "中が空洞で軽い骨が多い",
+          "やわらかくて曲がりやすい"
+        ],
+        "answerIndex": 1,
+        "explanation": "重い骨では飛べないし、やわらかいと支えられない。軽くてかたい空洞の骨がちょうどいいんです。"
+      },
+      "previousRemainingClaims": [
+        "重い骨では飛べないという解説の一般断定（飛行可否を決める骨重量条件）。",
+        "鳥骨格の相対質量・骨密度に関する反証研究は検索抽出であり論文の関連本文取得が未完了。"
+      ],
+      "outcome": "unresolved",
+      "checkedClaims": [
+        "Dumont 2010 の原著書誌と DOI 10.1098/rspb.2010.0117 を再特定。検索抽出の要旨では骨の密度と軽さ・強度の最適化を区別している。"
+      ],
+      "remainingClaims": [
+        "『重い骨では飛べない』という原文の一般断定を検証するための比較対象・重量条件。",
+        "鳥骨格の相対質量・骨密度に関する Dumont 2010 原著の関連本文は今回も取得できなかった。検索抽出は本文検証に格上げしない。"
+      ],
+      "sources": [
+        {
+          "title": "Dumont 2010: Bone density and the lightweight skeletons of birds（PubMed）",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/20236981/",
+          "access": "search_snippet",
+          "evidence": "検索抽出には要旨と一部の図説明があるが、open は0行の空ページ。骨密度が高いという記述は検索抽出のみで確認。",
+          "accessed": "2026-09-06"
+        },
+        {
+          "title": "Dumont 2010 PMC full text",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC2880151/",
+          "access": "failed",
+          "evidence": "本文は reCAPTCHA 画面で取得不可。",
+          "accessed": "2026-09-06"
+        },
+        {
+          "title": "Dumont 2010 publisher",
+          "url": "https://royalsocietypublishing.org/doi/10.1098/rspb.2010.0117",
+          "access": "failed",
+          "evidence": "403。",
+          "accessed": "2026-09-06"
+        },
+        {
+          "title": "Dumont 2010 author-hosted PDF",
+          "url": "https://www.bio.umass.edu/biology/dumont/Dumont_2010_Bone_density_and_bird_skeletons_ProcRoySocB.pdf",
+          "access": "failed",
+          "evidence": "PDFスキルを読んで取得を試みたがタイムアウト。本文・図の視覚確認は未実施。",
+          "accessed": "2026-09-06"
+        }
+      ],
+      "searches": [
+        {
+          "query": "Dumont 2010 bone density bird skeletons abstract 20236981",
+          "result": "原著の PubMed・PMC・著者PDF・出版社経路を確認したが直接本文取得には至らず。"
+        }
+      ],
+      "notes": "『骨組織の密度が高い』と『骨全体が重い』は別。検索抽出の高密度所見だけで原文の飛行可否を反証しない。原文は哺乳類との相対骨格質量を明記しておらず、その比較を勝手に追加して誤りと断定しない。",
+      "recommendedAction": "未解決。将来は『重い骨では飛べない』を削り、骨の空洞と丈夫さに絞った説明を検討できるが、新規承認なしで変更しない。"
+    },
+    {
+      "pack": "series-2choice",
+      "id": "s06",
+      "currentQuestion": {
+        "question": "ひまわりは夜もずっと太陽を追いかけている？ それとも 夜はあまり動かない？",
+        "choices": [
+          "夜もずっと追いかけている",
+          "夜はあまり動かない"
+        ],
+        "answerIndex": 1,
+        "explanation": "若いひまわりは昼に太陽の方を向きますが、夜は動きがゆっくりになります。"
+      },
+      "previousRemainingClaims": [
+        "若いヒマワリの夜間の動きが昼より遅いという速度比較。"
+      ],
+      "outcome": "unresolved",
+      "checkedClaims": [
+        "UC Davis の研究紹介本文で、生長中のヒマワリが昼は東から西、夜は東へ向き直ることを確認した。",
+        "成熟して花が開く時期には生長が遅くなり、東向きに落ち着くという段階差も記載されている。"
+      ],
+      "remainingClaims": [
+        "若いヒマワリの夜間の動きが昼間より遅いという速度比較。"
+      ],
+      "sources": [
+        {
+          "title": "UC Davis: Sunflowers Move by the Clock",
+          "url": "https://www.ucdavis.edu/news/sunflowers-move-clock",
+          "access": "page",
+          "evidence": "2016年研究紹介。East to west, and back と Clocks and two growth mechanisms の本文を確認。夜の東向き再配向は記載されるが、昼夜速度の比較値はない。",
+          "accessed": "2026-09-06"
+        }
+      ],
+      "searches": [
+        {
+          "query": "site.ucdavis.edu sunflowers move clock night east",
+          "result": "研究機関本人の解説本文を取得。夜間再配向を確認。"
+        }
+      ],
+      "notes": "夜の向き直りを省く現二択には説明上の懸念が残るが、『夜はあまり動かない』を『夜は全く動かない』に置き換えて反証しない。夜間再配向の存在だけで『昼より遅い』まで否定できない。",
+      "recommendedAction": "未解決の速度比較と二択の説明不足を保持。後日候補化するなら若い個体の『夜は東へ向き直る』を問う形で設問・解説を一緒に検討。正答の単純反転はしない。"
+    },
+    {
+      "pack": "series-2choice",
+      "id": "s08",
+      "currentQuestion": {
+        "question": "ホッキョクグマの毛を1本だけ見ると、白い？ それとも 透明に近い？",
+        "choices": [
+          "白い",
+          "透明に近い"
+        ],
+        "answerIndex": 1,
+        "explanation": "毛は透明な管のようになっていて、光が反射してまとまると白く見えます。"
+      },
+      "previousRemainingClaims": [
+        "全ての毛（下毛も含む）が透明な管状だと読める解説の適用範囲。"
+      ],
+      "outcome": "unresolved",
+      "checkedClaims": [
+        "Polar Bears International の研究者署名記事本文で、上毛と下毛の二層、色素がなく透明で光を散乱・反射する説明を確認した。",
+        "同記事は両毛種をおおむね空洞の芯と記載しており、透明という正答と白く見える仕組みを支持する。"
+      ],
+      "remainingClaims": [
+        "下毛を含めた管状構造の範囲。研究者記事と米議会図書館の検索抽出で記述差があり、後者の本文取得も未完了。"
+      ],
+      "sources": [
+        {
+          "title": "Polar Bears International: What Does Polar Bear Fur Feel Like?",
+          "url": "https://polarbearsinternational.org/news-media/articles/what-does-polar-bear-fur-feel-like/",
+          "access": "page",
+          "evidence": "Thea Bechshoft 署名の2019年記事本文。両毛種は無色・透明で芯がおおむね空洞と説明し、光の散乱・反射で白く見えるとする。",
+          "accessed": "2026-09-06"
+        },
+        {
+          "title": "Library of Congress: Is a polar bear’s fur transparent?",
+          "url": "https://www.loc.gov/everyday-mysteries/categories/zoology/item/is-a-polar-bears-fur-transparent/",
+          "access": "failed",
+          "evidence": "403で本文未取得。",
+          "accessed": "2026-09-06"
+        },
+        {
+          "title": "Library of Congress: Browse All Questions",
+          "url": "https://www.loc.gov/everyday-mysteries/browse-all-questions/?st=list",
+          "access": "search_snippet",
+          "evidence": "検索抽出では下毛は中空ではないが無色と記載。open は403。本文確認済みとはしない。",
+          "accessed": "2026-09-06"
+        }
+      ],
+      "searches": [
+        {
+          "query": "site.loc.gov polar bear fur guard underfur hollow",
+          "result": "研究者記事・米議会図書館資料候補を再確認。"
+        },
+        {
+          "query": "site.loc.gov \"fur\" \"not hollow\"",
+          "result": "一覧ページ検索抽出で下毛に関する異なる記載を確認。本文は取得不可。"
+        }
+      ],
+      "notes": "原文は『全ての毛が例外なく中空』と明示しておらず、『管のよう』という比喩。旧監査が下毛を含む全毛の断定に拡張した点には留保する。資料差が解けていないことを誤りの証明にしない。",
+      "recommendedAction": "正答は維持。構造の範囲は未解決として保持し、必要なら後日『透明な毛が光を散らす』までに絞る案を検討。"
+    },
+    {
+      "pack": "series-2choice",
+      "id": "s09",
+      "currentQuestion": {
+        "question": "富士山の頂上でお湯をわかすと、100℃でふっとうする？ それとも もっと低い温度？",
+        "choices": [
+          "100℃でふっとうする",
+          "もっと低い温度でふっとうする"
+        ],
+        "answerIndex": 1,
+        "explanation": "高い場所は気圧が低いので、約87℃でわきます。山でカップ麺がうまく作れない理由です。"
+      },
+      "previousRemainingClaims": [
+        "通常のカップ麺が、富士山頂の沸騰水を用いた場合にうまく調理できないという製品・時間条件付きの一般性。"
+      ],
+      "outcome": "unresolved",
+      "checkedClaims": [
+        "静岡県公式本文で富士山頂の低い気圧と約87℃での沸騰を再確認した。",
+        "JALUX の商品本文で機内食用特製麺が80〜85℃でも戻りやすく、ポットのお湯で3分調理できると確認した。"
+      ],
+      "remainingClaims": [
+        "通常のカップ麺を富士山頂の沸騰水で作った場合の仕上がりについて、製品・待ち時間・保温条件を特定したメーカー資料。"
+      ],
+      "sources": [
+        {
+          "title": "静岡県: なるほど！？富士山",
+          "url": "https://www.pref.shizuoka.jp/kankosports/kanko/mtfuji/1002778/1019409.html",
+          "access": "page",
+          "evidence": "冒頭の山頂の沸騰点の節に約87℃と低い気圧を記載。",
+          "accessed": "2026-09-06"
+        },
+        {
+          "title": "JALUX JAL PLAZA: らーめんですかい",
+          "url": "https://jalplaza-airport.jalux.com/product/detail/45032943/",
+          "access": "page",
+          "evidence": "『麺が違う』本文で80〜85度で戻りやすい特製麺と3分調理を確認。",
+          "accessed": "2026-09-06"
+        }
+      ],
+      "searches": [
+        {
+          "query": "site.nissin.com 富士山 カップヌードル 沸騰 低温",
+          "result": "条件付きの一般品比較を示すメーカー本文は発見できず。"
+        },
+        {
+          "query": "site.nissin.com \"カップヌードル\" \"水\" \"30分\"",
+          "result": "目的のメーカー比較資料は発見できず。"
+        },
+        {
+          "query": "\"らーめんですかい\" \"80\"",
+          "result": "低温対応商品ページ本文を取得し確認。"
+        }
+      ],
+      "notes": "原文の『山でカップ麺がうまく作れない理由』を、全製品・全標高・全待ち時間で絶対に作れないという断定へ強めない。低温用製品の存在だけで通常品の仕上がりを反証したことにはならない。",
+      "recommendedAction": "主問の正答は維持。解説後半の一般化の条件は未解決。追加承認なしで削除・変更しない。"
+    },
+    {
+      "pack": "kurashi-suiri",
+      "id": "ks07",
+      "currentQuestion": {
+        "question": "ゆかにぬれた足あとが点々とつき、げんかんのほうへ向かってだんだんうすくなっている。この人はどっちへ動いた？",
+        "choices": [
+          "げんかんのほうへ",
+          "おくの部屋へ",
+          "動いていない"
+        ],
+        "answerIndex": 0,
+        "explanation": "ぬれた足あとは、進むほどかわいてうすくなります。うすくなっていく先が、進んだ方向と考えられます。"
+      },
+      "previousRemainingClaims": [
+        "歩行に伴って足底から床へ移る水量が減り、足跡が順に薄くなるという物理的経過の外部資料。"
+      ],
+      "outcome": "audit_scope_corrected",
+      "checkedClaims": [
+        "現問題は足跡が玄関方向にだんだん薄くなるという観察を与え、解説の結論は『と考えられます』という推理表現である。",
+        "apps/quiz/AGENTS.md は kurashi-suiri を観察ゲーム型と規定している。一般的な推理の手がかりを、あらゆる床・経過時間で方向を保証する法科学的測定と同一視しない。"
+      ],
+      "remainingClaims": [],
+      "sources": [],
+      "searches": [
+        {
+          "query": "wet footprints successive lighter water transfer walking science",
+          "result": "砂の足跡等の異なる現象が中心。対象の床面水転写を直接検証する機関資料は得られず。"
+        },
+        {
+          "query": "\"wet footprints\" \"fainter\" science",
+          "result": "日記・創作等で一次実験資料ではないため根拠に採用しない。"
+        }
+      ],
+      "notes": "今回の解消は外部実験で足跡の方向推定を保証したという意味ではない。旧『物理経過の外部資料がなければ未確認』という要求を、条件付きの日常推理という原文の射程に戻した。水分量が減るという想定の下で玄関を選ぶ推理は内部的に整合。床材・経過時間等で例外はあり、排他的な証明ではない。解説の『かわいて』は足裏の水分減少か残った足跡の乾燥か曖昧になり得るが、今回根拠本文付きの矛盾は確認していない。",
+      "recommendedAction": "旧出典不足を監査範囲訂正として整理。正答反転・追加修正は提案しない。将来体験を調整する場合だけ『どちらへ動いたと考えられる？』等の推理表現を検討。"
+    },
+    {
+      "pack": "kurashi-suiri",
+      "id": "ks08",
+      "currentQuestion": {
+        "question": "同じ水を、浅い皿と深いコップに入れた。早くぬるくなりやすいのは？",
+        "choices": [
+          "浅い皿",
+          "深いコップ",
+          "どちらも同じ"
+        ],
+        "answerIndex": 0,
+        "explanation": "手がかりは「空気にふれる広さ」。浅い皿は水が広がって空気にふれる面が大きいので、温度が変わりやすくなります。"
+      },
+      "previousRemainingClaims": [
+        "初期水温・水量・容器材質等をそろえたとき、接触面積の大きい浅皿の水が深いコップより早くぬるくなるという熱移動比較の本文資料。"
+      ],
+      "outcome": "unresolved",
+      "checkedClaims": [
+        "OpenStax の熱伝導解説本文は面積・温度差・材質・厚さが熱移動に関係すると説明している。これは『面積が手がかり』という一般的着想の関連根拠になる。",
+        "ただし浅皿と深いコップの水面の対流・蒸発まで含む比較実験とは異なるため、そのまま設問の正答の直接証拠にしない。"
+      ],
+      "remainingClaims": [
+        "『同じ水』が水量・初期温度・容器材質・置き場所等をどこまで同条件とする想定なのか。冷たい水が室温へ近づく比較の適用条件を説明できる直接資料。"
+      ],
+      "sources": [
+        {
+          "title": "OpenStax College Physics 2e: 14.5 Conduction",
+          "url": "https://openstax.org/books/college-physics-2e/pages/14-5-conduction",
+          "access": "page",
+          "evidence": "熱伝導速度に面積・温度差・材質・厚さが影響する本文と式を確認。ただし水面の対流比較ではない。",
+          "accessed": "2026-09-06"
+        },
+        {
+          "title": "Colorado State University: Heat Transfer",
+          "url": "https://www.engr.colostate.edu/CBE101/topics/heat_transfer.html",
+          "access": "search_snippet",
+          "evidence": "検索抽出に対流と Newton の冷却則の見出しあり。open は403で本文取得不可。",
+          "accessed": "2026-09-06"
+        }
+      ],
+      "searches": [
+        {
+          "query": "site.acs.org water surface area warming temperature container experiment",
+          "result": "熱移動・蒸発の教材は得たが、要求比較の直接資料は特定できず。"
+        },
+        {
+          "query": "site.openstax.org Newton cooling surface area convection rate",
+          "result": "関連する熱伝導教材を本文確認。対流の大学教材は本文取得不可。"
+        }
+      ],
+      "notes": "『早くぬるくなりやすい』『温度が変わりやすい』は傾向表現であり、全容器・全条件の普遍則として反証しない。特定の浅皿とコップの実験報告を必須とする旧要求は厳しすぎるが、今回得た伝導の式だけでは空気との熱移動比較の根拠不足を解消したとはしない。",
+      "recommendedAction": "未解決を条件明確化に絞って保持。誤りとしては起票しない。実装・新規実験は行わない。"
+    },
+    {
+      "pack": "kurashi-suiri",
+      "id": "ks12",
+      "currentQuestion": {
+        "question": "夏の昼、二つの部屋のどちらがすずしいかを考える。いちばんの手がかりはどれ？",
+        "choices": [
+          "風（空気）が通りぬけるかどうか",
+          "部屋の広さ",
+          "かべの色"
+        ],
+        "answerIndex": 0,
+        "explanation": "すずしさの大きな手がかりは風。空気が通りぬける部屋のほうがすずしくなりやすいです。"
+      },
+      "previousRemainingClaims": [
+        "通風により室内の温度そのものが低下する条件と、人体の体感冷却との区別を裏付ける関連本文。"
+      ],
+      "outcome": "audit_scope_corrected",
+      "checkedClaims": [
+        "気象庁の用語本文では『涼しい』は体温が奪われる感じであり、暑寒の感じには湿度や風も関与し、気温と混同しないと説明される。",
+        "米エネルギー省本文でも送風による蒸発等で人が涼しく感じることと、冷気を作ることを区別している。",
+        "現問題は『室温が下がる』とは書いておらず、解説は風を大きな手がかりとする『すずしくなりやすい』という傾向表現である。"
+      ],
+      "remainingClaims": [],
+      "sources": [
+        {
+          "title": "気象庁: 気温、湿度",
+          "url": "https://www.jma.go.jp/jma/kishou/know/yougo_hp/kion.html",
+          "access": "page",
+          "evidence": "暑寒は湿度・風が加わった主観的なもの、涼しいは体温が奪われる感じとする本文を確認。",
+          "accessed": "2026-09-06"
+        },
+        {
+          "title": "US Department of Energy: Energy-Saving Hacks To Beat the Summer Heat",
+          "url": "https://www.energy.gov/indianenergy/articles/energy-saving-hacks-beat-summer-heat",
+          "access": "page",
+          "evidence": "Maximize Appliance Efficiency の本文でファンは冷気を作らず、皮膚の水分蒸発等により涼しく感じると説明。",
+          "accessed": "2026-09-06"
+        },
+        {
+          "title": "US Department of Energy: Home Cooling",
+          "url": "https://www.energy.gov/home-cooling",
+          "access": "page",
+          "evidence": "断熱・遮光・通風等の組合せと、高温多湿な環境では換気による冷却が有効でないという条件を確認。",
+          "accessed": "2026-09-06"
+        }
+      ],
+      "searches": [
+        {
+          "query": "site.energy.gov fans cool people not rooms ventilation outdoor temperature",
+          "result": "体感と気温の区別を説明するDOE本文を取得。"
+        },
+        {
+          "query": "site.jma.go.jp 洗濯物 曇り 湿度 晴れ",
+          "result": "気象庁の気温・湿度の用語集を発見し『涼しい』の定義を本文確認。"
+        }
+      ],
+      "notes": "旧不足の『通風で室内温度そのものが下がる条件』は原文にない主張を加えていたため、現在の設問の必須検証項目から外す。三つの提示選択肢から手がかりを選ぶ日常推理であり、全建物・全気象条件にわたる因果要因の順位を立証したわけではない。極端な条件等を含め常に通風が最重要とは保証しない。",
+      "recommendedAction": "旧不足を監査範囲訂正として整理。『室温低下の断定が誤り』としての起票はしない。体験判断を伴う追加修正は行わない。"
+    },
+    {
+      "pack": "kurashi-suiri",
+      "id": "ks13",
+      "currentQuestion": {
+        "question": "くもりの日は、せんたく物が晴れの日よりかわきにくい。晴れの日とくらべて足りないものは？",
+        "choices": [
+          "日光と、かわいた空気",
+          "風の音",
+          "洗ざいの量"
+        ],
+        "answerIndex": 0,
+        "explanation": "かわく手がかりは日光とかわいた空気。くもりの日はどちらも少ないので、かわきにくくなります。"
+      },
+      "previousRemainingClaims": [
+        "晴れと曇りの違いから、その日の空気の乾燥度も低いとする解説の気象条件。"
+      ],
+      "outcome": "unresolved",
+      "checkedClaims": [
+        "気象庁の推計気象分布は雲の観測で晴れ・曇りを判定すると説明する。",
+        "気象庁の湿度の定義とUSGS本文で、日射と湿度は区別され、乾いた空気が蒸発を促すことを確認した。"
+      ],
+      "remainingClaims": [
+        "設問が想定する晴れの日と曇りの日の比較で、地上の空気の乾燥度も低いと判断する条件。雲量の違いだけから当該湿度関係を決める根拠は未確認。"
+      ],
+      "sources": [
+        {
+          "title": "気象庁: 推計気象分布",
+          "url": "https://www.jma.go.jp/jma/kishou/know/suikei_kishou/kaisetsu.html",
+          "access": "page",
+          "evidence": "『天気』の節で衛星の雲観測から晴れ・曇りを判定すると説明。",
+          "accessed": "2026-09-06"
+        },
+        {
+          "title": "気象庁: 気温、湿度",
+          "url": "https://www.jma.go.jp/jma/kishou/know/yougo_hp/kion.html",
+          "access": "page",
+          "evidence": "湿度はその気温での飽和水蒸気量に対する比であり、乾いた空気は湿度が低い空気と説明。",
+          "accessed": "2026-09-06"
+        },
+        {
+          "title": "USGS: Evapotranspiration and the Water Cycle",
+          "url": "https://www.usgs.gov/water-science-school/science/evapotranspiration-and-water-cycle",
+          "access": "page",
+          "evidence": "What affects transpiration? で日射・湿度・温度・風を別要因として説明し、乾いた空気へは蒸発しやすいと記載。洗濯物の晴曇比較そのものの実験ではない。",
+          "accessed": "2026-09-06"
+        }
+      ],
+      "searches": [
+        {
+          "query": "site.jma.go.jp 洗濯物 曇り 湿度 晴れ",
+          "result": "晴曇判定・湿度の機関解説を発見し本文取得。ただし設問の乾燥度比較を直接保証する資料ではない。"
+        }
+      ],
+      "notes": "曇りの日でも洗濯物が乾く例があるというだけで、原文の一般的な傾向を否定しない。一方解説『どちらも少ない』の二要因を同時に決める条件は本文根拠が不足。日光・乾いた空気が乾燥に関係する正答の核と、晴曇による湿度の推定を分離して残す。",
+      "recommendedAction": "未解決として保持。後日修正するなら日射不足と湿度条件を分ける最小案を検討できるが、今回承認・問題編集はしない。"
+    }
+  ]
+}
