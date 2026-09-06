@@ -1,0 +1,427 @@
+{
+  "date": "2026-09-07",
+  "sourceCommit": "96f3cf7d99fd9c19d09ba9d893b913752543dcbe",
+  "sourceSha256": "7aab68b61b8ebdba4bddc724acd6423ec016f9c2108f15541fbc325d4b826c2b",
+  "scope": "先行 p10-night-culture-2026-09-06.json の未解消9問に対する追加照合。outcomeはpriorRemainingClaimsだけの追跡結果で、問題全体や初回320問台帳の再分類・保証ではない。公開資料の本文、公開抄録・抜粋、検索抜粋、取得失敗を区別。アプリ・既存台帳・Git履歴は変更しない。資料の取得日はdateに統一。",
+  "items": [
+    {
+      "id": "kj09",
+      "pack": "kanji-quiz",
+      "currentQuestion": {
+        "question": "「休・林・森」の3つに、すべて入っている漢字は？",
+        "choices": [
+          "木",
+          "日",
+          "人"
+        ],
+        "answerIndex": 0,
+        "explanation": "ぜんぶに「木」が入っているね。むかしの暮らしが木とすごく近かった、とも言われるよ。気づけたら、いい発見。"
+      },
+      "priorRemainingClaims": [
+        "木を含む字が多いことと『昔の暮らしが木とすごく近かった』という生活史の結び付き（時代・地域が不明）。"
+      ],
+      "outcome": "audit_scope_corrected",
+      "verifiedClaims": [
+        "現行の休・林・森には木の字形が含まれる。",
+        "林野庁の公開本文は、古くから人が木材を多用途に利用してきたことを説明し、日本の建築例と生活用材を挙げる。昔の暮らしと木の近さという一般的余談を支持する。"
+      ],
+      "remainingClaims": [],
+      "sources": [
+        {
+          "title": "木材を供給するはたらき",
+          "publisher": "林野庁 関東森林管理局 磐城森林管理署",
+          "url": "https://www.rinya.maff.go.jp/kanto/iwaki/knowledge/mokuzaimotto.html",
+          "access": "page",
+          "claimSupported": "昔から木材を生活のさまざまな用途に用いたという説明。",
+          "limitations": "漢字成立の因果関係を研究した資料ではない。主に日本の例であり、全時代・全地域の強さを数量的に比較しない。"
+        }
+      ],
+      "searches": [
+        {
+          "query": "\"漢字\" \"木\" \"暮らし\" 林野庁",
+          "result": "現代の木材利用紹介が中心で、漢字成立の具体資料なし。"
+        },
+        {
+          "query": "\"昔\" \"暮らし\" \"木\" site.rinya.maff.go.jp/j/kids",
+          "result": "関東森林管理局の昔からの木材利用を述べるHTML本文に到達。"
+        }
+      ],
+      "notes": "前回は木を含む字が多いことから生活史が導けるという因果的結び付けを検証要求に加えていた。現行文に『そのため木の部品を使って字を作った』という断定はなく、字形発見に添えた一般的余談と読む。因果の実証・特定の漢字成立期全体の調査を要求する部分を監査側で取り下げる。新出典は余談の一般的背景だけを補う。"
+    },
+    {
+      "id": "kj19",
+      "pack": "kanji-quiz",
+      "currentQuestion": {
+        "question": "「守」という字は「うかんむり（屋根・家）」の中に「寸（手）」がある。どんな様子を表している？",
+        "choices": [
+          "家の中で手を出してまもる",
+          "外を走っていく",
+          "火をけす"
+        ],
+        "answerIndex": 0,
+        "explanation": "家の中で手を使って大切なものを守る様子から、「まもる」の意味になったと説明されることがあります。"
+      },
+      "priorRemainingClaims": [
+        "家の中で手を出して大切なものを守る姿から『守』が成立した、という具体的な字源説の掲載根拠。"
+      ],
+      "outcome": "unresolved",
+      "verifiedClaims": [
+        "漢字ペディアの角川新字源由来本文は、宀と寸（右手）の会意で家内の事をつかさどる意から守る意へつながると説明する。"
+      ],
+      "remainingClaims": [
+        "家の中で手を使って大切なものを守る様子を具体的な字源説として掲載した辞書・編集主体の資料に未到達。"
+      ],
+      "sources": [
+        {
+          "title": "守・なりたち",
+          "publisher": "日本漢字能力検定協会／出典 KADOKAWA 角川新字源 改訂新版",
+          "url": "https://www.kanjipedia.jp/kanji/0003048600",
+          "access": "page",
+          "claimSupported": "宀＋寸（右手）の構成と家の中で事をつかさどる説明。",
+          "limitations": "大切な物を手で守るという具体像の直接的記載ではない。別の説明が存在しないという反証でもない。"
+        }
+      ],
+      "searches": [
+        {
+          "query": "\"守\" \"家\" \"手\" 漢字 成り立ち 学研",
+          "result": "名付け・漢字解説サイトの類似説明はあるが、対応する学研等の辞書本文に未到達。"
+        },
+        {
+          "query": "\"守\" \"成り立ち\" site.benesse.jp",
+          "result": "特定の字源説を裏付ける編集主体の本文を得られず。漢字ペディアの既知説明を再確認。"
+        }
+      ],
+      "notes": "原文の『説明されることがあります』を唯一の字源の断言へ強めない。資料不足であり誤り認定・自動修正はしない。"
+    },
+    {
+      "id": "khm10",
+      "pack": "kanji-himitsu",
+      "currentQuestion": {
+        "question": "「バカ（馬鹿）」という漢字表記について、有力とされる説はどれ？",
+        "choices": [
+          "「愚か」を意味するサンスクリット語（梵語）の音を漢字に当てはめた",
+          "馬と鹿を見分けられない人を笑うことばとして生まれた",
+          "中国の「馬鹿村」という地名からきている"
+        ],
+        "answerIndex": 0,
+        "explanation": "「馬鹿」は、サンスクリット語で「愚か」を意味する語の音を、僧侶が「莫迦」と漢字で音写し、のちに「馬鹿」の字が当てられたとする説が有力（諸説あり、確定はしていない）。「馬」と「鹿」の意味そのものとは関係のない当て字と考えられている。"
+      },
+      "priorRemainingClaims": [
+        "『有力』が一般的な語源研究上の比較評価を指す場合の学術的根拠。今回確認したのは寺院法話による評価で、学界の支持程度ではない。"
+      ],
+      "outcome": "supported_scope",
+      "verifiedClaims": [
+        "千葉県立東部図書館のレファレンス回答本文は、山口佳紀編『暮らしのことば新語源辞典』（講談社、2008）p.688を挙げ、梵語の音写から転じた説を有力と評価する記載と当て字の説明を報告する。",
+        "同回答は小学館2009年の語源辞典の僧侶による隠語の説明も報告し、他説を併記している。前回の寺院法話だけという制約を解消した。"
+      ],
+      "remainingClaims": [],
+      "sources": [
+        {
+          "title": "『馬鹿』という言葉の語源が知りたい。漢字は当て字なのか。",
+          "publisher": "千葉県立東部図書館／国立国会図書館レファレンス協同データベース",
+          "url": "https://crd.ndl.go.jp/reference/entry/index.php?id=1000233054&page=ref_view",
+          "access": "page",
+          "claimSupported": "2017年作成・2018年更新の回答。講談社2008 p.688の有力という評価を、書名・編者・頁付きで報告。",
+          "limitations": "図書館が調べた辞典記載を確認したのであって、当該紙面の原画像や学界支持率の独立調査を取得したわけではない。複数の字源説が存在し、歴史上の成立が確定したとは扱わない。"
+        }
+      ],
+      "searches": [
+        {
+          "query": "site.ninjal.ac.jp 馬鹿 梵語 有力",
+          "result": "直接資料なし。"
+        },
+        {
+          "query": "\"馬鹿\" \"有力\" 語源 辞典",
+          "result": "県立図書館の回答を発見し本文確認。辞典の評価と異説を並べて示す。"
+        }
+      ],
+      "notes": "判定対象は現行の『有力とされる説』『諸説あり、確定はしていない』の留保に対応する評価根拠。一般学界の一致や唯一の確定語源を新たに要件化しない。初回台帳の分類や説の歴史的実証へは拡張しない。"
+    },
+    {
+      "id": "kbn07",
+      "pack": "kotoba-bunka",
+      "currentQuestion": {
+        "question": "朝の挨拶「おはよう」は、もともと歌舞伎の楽屋で使われていたことばが広まったという説がある。それはどんな場面で使われていたことば？",
+        "choices": [
+          "朝早くから来てくれた人をねぎらうことば",
+          "舞台に出る直前に気合いを入れることば",
+          "公演が無事に終わったことを喜ぶことば"
+        ],
+        "answerIndex": 0,
+        "explanation": "歌舞伎では、主役級の役者が朝早く楽屋入りすると、まわりの人が「お早くからご苦労さまです」とねぎらったことから、それが省略されて「おはようございます」になったという説がある。江戸時代の芝居小屋から広まり、朝以外でも使われる元気な挨拶として定着した。"
+      },
+      "priorRemainingClaims": [
+        "歌舞伎楽屋の主役級役者へのねぎらいを発祥とすること。",
+        "お早くからご苦労さまですの省略から成立し江戸の芝居小屋から一般へ広まった経路。"
+      ],
+      "outcome": "unresolved",
+      "verifiedClaims": [
+        "公立学校の公開朝会資料の検索抜粋には、歌舞伎から始まったとされるという説の紹介がある。本文取得は403で失敗したため、主役へのねぎらい・省略文言・伝播経路は確認できない。"
+      ],
+      "remainingClaims": [
+        "主役級の役者への特定のねぎらい文が省略されたという説明の信頼できる刊行主体の本文。",
+        "江戸時代の芝居小屋から広まったという伝播経路の根拠。"
+      ],
+      "sources": [
+        {
+          "title": "R07 児童朝会の話 No.11 お早う『ございます』（2025-09-08）",
+          "publisher": "板橋区立学校公開資料（ita.ed.jp）",
+          "url": "https://www.ita.ed.jp/1310271/download/document/17316632?tm=20250912090707",
+          "access": "search_snippet",
+          "claimSupported": "歌舞伎起源説を紹介する資料が検索されることのみ。",
+          "limitations": "openは403 Forbidden。本文・該当学校の刊行情報の完全確認なし。語源専門研究ではなく、説の掲載例を歴史的事実の実証にしない。"
+        }
+      ],
+      "searches": [
+        {
+          "query": "\"おはよう\" \"歌舞伎\" 語源 NHK",
+          "result": "NHKによる対応本文は得られず。"
+        },
+        {
+          "query": "\"おはよう\" \"歌舞伎\" \"ご苦労\" 出版",
+          "result": "個人ブログや当事者の現代挨拶説明が中心。伝播経路の一次根拠なし。"
+        },
+        {
+          "query": "\"おはよう\" \"歌舞伎\" site.crd.ndl.go.jp",
+          "result": "公立学校資料の検索抜粋が現れたが本文403。語源調査の該当レファレンスに未到達。"
+        }
+      ],
+      "notes": "説の紹介例と歴史的伝播は別。過去に確認した日国の浄瑠璃用例や現代用法を歌舞伎発祥の証拠に読み替えない。取得制限を迂回していない。"
+    },
+    {
+      "id": "zk201",
+      "pack": "zatsugaku-king-2",
+      "currentQuestion": {
+        "question": "日本語には「きらきら」「もふもふ」のような音でイメージを表すことば（オノマトペ）がとても多い。この種類のことばで、世界の言語の中でも日本語より多いとされている言語はどれ？",
+        "choices": [
+          "韓国語",
+          "英語",
+          "フランス語"
+        ],
+        "answerIndex": 0,
+        "explanation": "日本語のオノマトペは4500語以上とされ、世界の中でも豊富な言語の一つ。ただし韓国語はさらに多く8000語ほどあるとされ、日本語だけの特徴というわけではない。"
+      },
+      "priorRemainingClaims": [
+        "2018年記事の約8000語の集計対象辞書・派生形の数え方は記事本文に見当たらず。比較の採録範囲・算定原典は未取得。"
+      ],
+      "outcome": "unresolved",
+      "verifiedClaims": [
+        "ASIALEX 2019公開論文集の Dessiar・Wahyuningsih・Nam『The Treatment of Korean Onomatopoeia-Mimesis in Korean–Indonesian Dictionaries』本文の印刷頁4脚注2に、辞書のオノマトペ等の見出し数8,283とPark 2012 p.4への参照がある。",
+        "同論文の調査対象自体は202語で、参考文献にPark, Hye-Won and Bae, Sungbong (2012), Korean Onomatopoeic-Mimetic Words, Ulsan University Pressを記載する。8,283を今回の研究で再計測したと扱わない。"
+      ],
+      "remainingClaims": [
+        "8,283の原集計の対象辞書、派生形・異形・分類の採録範囲と日本語4500との比較可能性。Park 2012 p.4原本は未取得。"
+      ],
+      "sources": [
+        {
+          "title": "ASIALEX 2019 Proceedings: The Treatment of Korean Onomatopoeia-Mimesis in Korean–Indonesian Dictionaries",
+          "publisher": "ASIALEX／著者 Achmad Rio Dessiar, Sri Wahyuningsih, Kilim Nam（Kyungpook National University）",
+          "url": "https://www.asialex.org/pdf/Asialex-Proceedings-2019.pdf",
+          "access": "page",
+          "claimSupported": "公開PDF本文・脚注の8,283と引用原典、研究対象202語を確認。",
+          "limitations": "web取得はサイズ超過。公開URLをcurlからpdftotextへパイプして本文取得、ファイル保存なし。画像によるレイアウト検証は未実施。Park/Bae原本の集計方法は未確認。"
+        }
+      ],
+      "searches": [
+        {
+          "query": "Korean onomatopoeia 8000 dictionary Japanese 4500 count",
+          "result": "ASIALEX論文集の8,283脚注とPark 2012出典を発見。PDF本文抽出で確認。"
+        }
+      ],
+      "notes": "前回の国際交流基金2018年記事にある日韓概数比較を補う手掛かり。原文は確定総数とは断言しないが、比較対象の定義不足は残す。PDFスキルを読み、文字抽出確認に限定した取得範囲を明記。数字の異なりだけで矛盾としない。"
+    },
+    {
+      "id": "zk203",
+      "pack": "zatsugaku-king-2",
+      "currentQuestion": {
+        "question": "虹の色の数は、日本では「7色」と考えられることが多い。では、アメリカでは何色と考えられることが多い？",
+        "choices": [
+          "6色",
+          "9色",
+          "12色"
+        ],
+        "answerIndex": 0,
+        "explanation": "アメリカなど欧米では虹を「6色」と見ることが多いとされる。虹は本来、境界のない色の連続体で、それを何色に区切るかは物理的な決まりではなく、文化や言語ごとの慣習による。"
+      },
+      "priorRemainingClaims": [
+        "米国全体・欧米全体で6色という回答が多いことを示す代表性ある調査、または対象集団を明示した資料。"
+      ],
+      "outcome": "unresolved",
+      "verifiedClaims": [
+        "日高杏子『Categorizing the Rainbow』（2024）の出版社公開抄録は文化によって虹の区分が異なることを説明する。米国6色の多数派調査は公開範囲にない。"
+      ],
+      "remainingClaims": [
+        "米国全体・欧米全体で6色という回答が多いことを示す代表性ある調査または対象集団の明示された資料。"
+      ],
+      "sources": [
+        {
+          "title": "Categorizing the Rainbow, The Art of Color Categorization, pp.15–33",
+          "publisher": "Palgrave Macmillan／Springer Nature、Kyoko Hidaka",
+          "url": "https://link.springer.com/chapter/10.1007/978-3-031-47690-7_2",
+          "access": "abstract",
+          "claimSupported": "自然の連続色に対する文化別の分類が主題であること。",
+          "limitations": "抄録と注のみ公開。本文購読制限あり。虹の分類の多様性は多数派割合の証拠ではなく、虹旗の6色の説明は自然の虹についての米国回答調査でない。"
+        }
+      ],
+      "searches": [
+        {
+          "query": "rainbow six seven colours American survey colors majority",
+          "result": "色の好み調査や掲示板が中心。虹の色数の国別多数派を測った資料に未到達。"
+        },
+        {
+          "query": "\"The Art of Color Categorization\" \"rainbow\" Springer",
+          "result": "出版社ページの抄録と注を確認。多数派の根拠は得られず。"
+        }
+      ],
+      "notes": "先行の米国教材の6色例・7色例を多数派へ拡大しない。今回は新しい反証を認定しない。"
+    },
+    {
+      "id": "zk204",
+      "pack": "zatsugaku-king-2",
+      "currentQuestion": {
+        "question": "ドイツ語は、いくつかの単語をどんどんつなげて、とても長い1つの単語を作れる言語として知られている。このような単語のでき方を何という？",
+        "choices": [
+          "複合語（合成語）",
+          "当て字",
+          "オノマトペ"
+        ],
+        "answerIndex": 0,
+        "explanation": "ドイツ語は単語と単語をつなげて新しい単語（複合語）を作りやすい言語で、80文字近い単語がギネスブックに載ったこともある。日本語の「消しゴム」「歯ブラシ」のように、2つの単語を組み合わせてできることば自体は日本語にもよくある。"
+      },
+      "priorRemainingClaims": [
+        "約80文字のドイツ語複合語がギネスに掲載された具体的な語・版・頁。"
+      ],
+      "outcome": "unresolved",
+      "verifiedClaims": [
+        "Guinnessの現在の最長語ページは取得できたが、過去のドイツ語約80文字の掲載についての版・頁を確認する資料は得られなかった。"
+      ],
+      "remainingClaims": [
+        "約80文字のドイツ語複合語が過去のギネス本に掲載された具体的な版・頁の本文確認。"
+      ],
+      "sources": [
+        {
+          "title": "Longest word",
+          "publisher": "Guinness World Records",
+          "url": "https://www.guinnessworldrecords.com/world-records/longest-word",
+          "access": "page",
+          "claimSupported": "現行公式ページの取得のみ。",
+          "limitations": "ドイツ語の過去掲載に関する証拠を得ていない。現在の記録と過去の掲載は別。"
+        }
+      ],
+      "searches": [
+        {
+          "query": "Donaudampfschiffahrtselektrizitätenhauptbetriebswerkbauunterbeamtengesellschaft Guinness 1972 publisher",
+          "result": "百科転載の1992〜1995年版記載等はあるが原本頁に未到達。"
+        },
+        {
+          "query": "\"Donaudampfschiff\" \"Guinness\" site.goethe.de",
+          "result": "Goetheの該当資料なし。"
+        },
+        {
+          "query": "\"Donaudampfschiff\" \"Guinness\" site.duden.de",
+          "result": "Duden原典の対応本文なし。"
+        }
+      ],
+      "notes": "転載の反復を独立した掲載証拠に数えない。語の現行最多認定や実在する団体名という主張を原文に付け加えない。正答『複合語』とは別の余談の残余。"
+    },
+    {
+      "id": "zk207",
+      "pack": "zatsugaku-king-2",
+      "currentQuestion": {
+        "question": "アフリカのジンバブエで話されるショナ語や、リベリアのバッサ語では、虹の色の数はどう捉えられているとされる？",
+        "choices": [
+          "3色や2色など、日本よりずっと少ない数で捉えられている",
+          "日本と同じ7色で捉えられている",
+          "色そのものを数えるという発想がない"
+        ],
+        "answerIndex": 0,
+        "explanation": "ショナ語では虹を3色、バッサ語では2色と捉えるとされる。同じ光の帯を見ていても、その連続した色をいくつに区切るかは言語や文化によって異なり、「正しい色の数」があるわけではない。"
+      },
+      "priorRemainingClaims": [
+        "ショナ語・バッサ語の話者について、虹を3色・2色と数えるという説の虹に直接対応した原資料。色相名の分類の資料だけでは虹の数え方まで確認したことにしない。"
+      ],
+      "outcome": "unresolved",
+      "verifiedClaims": [
+        "Hidaka 2024出版社の公開注13はGleasonの説明が虹の分類を言語相対論の例に用いたと記す。注14にGleason 1955のShona and Bassa p.7、注15に鈴木1990 pp.65–66への参照があり、虹を対象にする文献の手掛かりを追加できた。",
+        "McNeill『Colour and colour terminology』の出版社公開抜粋は、Gleason 1955 p.5によりバッサ語の暖色・寒色側2区分を説明する。"
+      ],
+      "remainingClaims": [
+        "虹についてショナ3・バッサ2と具体的に対応させる記述の、Gleason原本または出版社が公開する本文・図の取得。今回のHidaka公開注だけでは具体的な両数値まで照合できない。"
+      ],
+      "sources": [
+        {
+          "title": "Categorizing the Rainbow（公開抄録・注13–15）",
+          "publisher": "Palgrave Macmillan／Springer Nature、Kyoko Hidaka",
+          "url": "https://link.springer.com/chapter/10.1007/978-3-031-47690-7_2",
+          "access": "abstract",
+          "claimSupported": "Gleasonによる虹の分類への言及と原本頁の参照。",
+          "limitations": "章本文は購読制限。公開抄録・注だけではショナ3／バッサ2の具体対応を取得できない。非公式転載の本文で制限を迂回しない。"
+        },
+        {
+          "title": "Colour and colour terminology（公開Extract）",
+          "publisher": "Cambridge University Press／N. B. McNeill",
+          "url": "https://www.cambridge.org/core/journals/journal-of-linguistics/article/abs/colour-and-colour-terminology/767A3C74AF5BB1FF4AFE64555CEBC126",
+          "access": "abstract",
+          "claimSupported": "Gleasonに基づくバッサの色名分類が2区分という記述。",
+          "limitations": "取得したのは公開抜粋。基本色名の分類と虹の回答数を同一視しない。"
+        }
+      ],
+      "searches": [
+        {
+          "query": "Shona Bassa rainbow Gleason spectrum three two colours 1961",
+          "result": "Gleasonに言及する論考とHidaka書籍を発見。"
+        },
+        {
+          "query": "\"The Art of Color Categorization\" \"rainbow\" Springer",
+          "result": "正規出版社の抄録・注まで取得。具体的図表本文は未取得。"
+        }
+      ],
+      "notes": "前回より原文へ近い参照先を得たが、全現代話者の知覚の断言として扱わない。『とされる』という説の掲載確認が目標で、人口代表性の実験を追加要件にはしていない。"
+    },
+    {
+      "id": "zk211",
+      "pack": "zatsugaku-king-2",
+      "currentQuestion": {
+        "question": "世界でいちばん多くの人が「母語（生まれて最初におぼえることば）」として使っていることばは？",
+        "choices": [
+          "中国語",
+          "英語",
+          "日本語"
+        ],
+        "answerIndex": 0,
+        "explanation": "母語として話す人がいちばん多いのは中国語（とくにマンダリン系）とされます。英語は「話せる人」を合わせると多いですが、母語としては中国語が最多です。"
+      },
+      "priorRemainingClaims": [
+        "一般現在形の設問に対する2026年の母語話者最多順位と、中国語全体／マンダリンの集計分類。"
+      ],
+      "outcome": "unresolved",
+      "verifiedClaims": [
+        "2026 Ethnologue 200の公式商品説明本文で29版データであること、ISO639-3言語コード、Mandarin Chineseの言語名、母語話者L1と全話者数を別フィールドで扱うことを確認した。"
+      ],
+      "remainingClaims": [
+        "2026年の母語話者最多順位を示す一次データ本文と、中国語マクロ言語／官話の集計範囲の確認。商品説明には順位表がない。"
+      ],
+      "sources": [
+        {
+          "title": "2026 Ethnologue 200（29th Edition Data）",
+          "publisher": "SIL／Ethnologue Store",
+          "url": "https://shop.ethnologue.com/products/2026-ethnologue-200",
+          "access": "page",
+          "claimSupported": "2026年版がL1とAll Usersを区別しISO639-3単位で提供するという商品のデータ構造。",
+          "limitations": "数値・順位表は有料CSV。購入・ログイン・データ取得なし。商品説明のMandarin例だけでは最多順位もマクロ言語の全収録範囲も証明しない。"
+        }
+      ],
+      "searches": [
+        {
+          "query": "\"Mandarin Chinese\" \"native\" \"2026\" site.ethnologue.com",
+          "result": "公式2026商品説明に到達。二次転載には数値があるが今回の順位確定に使わない。"
+        },
+        {
+          "query": "site.ethnologue.com \"largest\" \"first language\" \"Mandarin\"",
+          "result": "現在の公開順位本文は得られず、商品説明と過去年の教材等が中心。"
+        }
+      ],
+      "notes": "過去時点の最大順位を現在に無断延長しない一方、取得失敗を順位変動の証拠ともみなさない。母語／総話者と中国語／官話の区別を維持する。"
+    }
+  ]
+}

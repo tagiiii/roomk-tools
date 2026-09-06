@@ -1,0 +1,208 @@
+{
+  "result": "PASS",
+  "date": "2026-09-07",
+  "baselineCommit": "96f3cf7d99fd9c19d09ba9d893b913752543dcbe",
+  "beforeSha256": "7aab68b61b8ebdba4bddc724acd6423ec016f9c2108f15541fbc325d4b826c2b",
+  "afterSha256": "18d6abfe00f2348a1c182342c11992ec4a77d4d8a3fb40376724d84dc2fe5dc1",
+  "packs": 24,
+  "questions": 480,
+  "changed": [
+    "do08"
+  ],
+  "changedFields": [
+    "choices",
+    "explanation",
+    "question"
+  ],
+  "unchangedQuestions": 479,
+  "position": {
+    "packIndex": 18,
+    "questionIndex": 7
+  },
+  "fixedMetadata": "ID, difficulty, answerIndex, choice count, question order and all pack metadata",
+  "before": {
+    "id": "do08",
+    "difficulty": 2,
+    "question": "「大きな川に、新しい橋を＿＿工事が続いている」。□に入る字として合うのは？",
+    "choices": [
+      "掛ける",
+      "架ける",
+      "懸ける"
+    ],
+    "answerIndex": 1,
+    "explanation": "橋や電線などを渡して設置するのは「架ける」で、「架橋」の「架」。「掛ける」は物をひっかける一般動作、「懸ける」は賞金や命をかけるときに使う意味で、橋には合わない。"
+  },
+  "after": {
+    "id": "do08",
+    "difficulty": 2,
+    "question": "橋をかけることを表す熟語「かきょう」。漢字で書くと？",
+    "choices": [
+      "掛橋",
+      "架橋",
+      "懸橋"
+    ],
+    "answerIndex": 1,
+    "explanation": "「かきょう」は「架橋」と書き、橋をかけることや、その橋を表す。「架」は、かけ渡すという意味の漢字。"
+  },
+  "unchangedOriginalLedgers": 8,
+  "frozenPriorFiles": {
+    "p10-followup2-culture-2026-09-07.json": "4ac55dc83a540702b31158a7e13305e814b728a478397254a68100a8b56ebf9a",
+    "p10-followup2-dictionary-2026-09-07.json": "c395a9381b89b8f7145009840cbfbd0b0f048d5029cf1416de414dc5a9cdb901",
+    "p10-followup2-language-2026-09-07.json": "e49145d65b9944b9fd6f6dd47c216b31f0beb52bc3f518ebb9cbf437d182e4cb",
+    "p10-followup2-science-2026-09-07.json": "cc7c81ebfa38003095d04de0e02619f9364599ec384bb5fecef0f7c15ede3744",
+    "p10-followup2-verify-2026-09-07.mjs": "c5ed67e4cea83c827181851acf6cd747b009b8a78f6fcf127cdb84504eb78be2"
+  },
+  "priorFollowupRows": 26,
+  "unchangedPriorRows": 25,
+  "changedPriorRows": [
+    "do08"
+  ],
+  "priorUnresolvedCount": 22,
+  "retiredByApprovedRewrite": [
+    "do08"
+  ],
+  "remainingCount": 21,
+  "remainingIDs": [
+    "kbn07",
+    "kj19",
+    "ks08",
+    "ks13",
+    "ky01",
+    "ky04",
+    "ky18",
+    "ky20",
+    "ma07",
+    "ru18",
+    "s06",
+    "s08",
+    "sk03",
+    "sk05",
+    "z07",
+    "z08",
+    "zk201",
+    "zk203",
+    "zk204",
+    "zk207",
+    "zk211"
+  ],
+  "retirementMeaning": "Old do08 exclusion claim is removed from the rewritten question, not proven true. Other 21 old residuals are inherited, not reclassified.",
+  "clipboardTextCheck": "PASS: actual app functions with clipboard sink stubbed; OS clipboard transfer not tested",
+  "clipboardTexts": [
+    "【問題】\n橋をかけることを表す熟語「かきょう」。漢字で書くと？\n① 掛橋\n② 架橋\n③ 懸橋",
+    "【問題】\n橋をかけることを表す熟語「かきょう」。漢字で書くと？\n① 掛橋\n② 架橋\n③ 懸橋\n\n【正解】\n② 架橋\n\n【解説】\n「かきょう」は「架橋」と書き、橋をかけることや、その橋を表す。「架」は、かけ渡すという意味の漢字。"
+  ],
+  "limitation": "Snapshot/data and generated text checks only; does not prove source truth, browser layout, all-question correctness or completion of P-10/C3.",
+  "scope": "オーナー承認はdo08だけを単一正答に最小修正する作業の範囲であり、最終の熟語問題の文面は実装者が選定した。実装・検証・記録を行い、旧『懸けるは橋には合わない』の正しさを証明したのではなく、その断定を現行問題から撤回して熟語『かきょう』を問う問題へ限定した。旧台帳は履歴として保持。残る21問は誤り21件でも全バックログの未完了数でもない。",
+  "sources": [
+    {
+      "title": "架橋（カキョウ）",
+      "publisher": "日本漢字能力検定協会・漢字ペディア",
+      "url": "https://www.kanjipedia.jp/kotoba/0000667100",
+      "access": "page",
+      "accessed": "2026-09-07",
+      "claimSupported": "熟語の読みと表記、橋をかけること／その橋という語義を本文確認。",
+      "limitations": "動詞の掛ける・懸けるの全面的な可否を証明する資料ではない。"
+    },
+    {
+      "title": "架",
+      "publisher": "日本漢字能力検定協会・漢字ペディア",
+      "url": "https://www.kanjipedia.jp/kanji/0000666600",
+      "access": "page",
+      "accessed": "2026-09-07",
+      "claimSupported": "かけわたすという意味と架橋の用例を本文確認。",
+      "limitations": "漢字の意味を対象とする。旧設問の動詞表記の排他性へ拡張しない。"
+    },
+    {
+      "title": "架橋",
+      "publisher": "小学館デジタル大辞泉・精選版日本国語大辞典（コトバンク掲載）",
+      "url": "https://kotobank.jp/word/架橋-459928",
+      "access": "page",
+      "accessed": "2026-09-07",
+      "claimSupported": "読み『かきょう』、橋を設けることと橋そのものの意味を両辞書本文で確認。",
+      "limitations": "高分子分野の別義もあるが、今回の設問は橋をかける意味を明示している。"
+    }
+  ],
+  "independentReview": {
+    "status": "approved",
+    "reviewer": "実装者とは別コンテキストの文化担当",
+    "reportedBy": "主担当",
+    "limitation": "同系統の別コンテキストによる確認。全出典を異系統モデルが独立再取得した二重監査ではない。"
+  },
+  "browser": {
+    "status": "PASS_with_scope_limits",
+    "reportedBy": "主担当の通常UI実測結果を記録担当が受領",
+    "url": "http://127.0.0.1:8767/quiz/",
+    "source": "実リポジトリのappsを配信。stats.jsの応答のみ無処理化し、CSP connect-src self。問題データ・採点処理は実装のまま。",
+    "desktopWidth": 1280,
+    "scrollWidth": 1280,
+    "horizontalOverflow": false,
+    "correctAnswer": {
+      "choice": 2,
+      "feedback": "せいかい！",
+      "selectedClass": "correct"
+    },
+    "wrongAnswers": [
+      {
+        "choice": 1,
+        "feedback": "おしい！",
+        "selectedClass": "wrong",
+        "correctChoice": 2
+      },
+      {
+        "choice": 3,
+        "feedback": "おしい！",
+        "selectedClass": "wrong",
+        "correctChoice": 2
+      }
+    ],
+    "allThreeChoicesDisabledAfterAnswer": true,
+    "answerAndExplanationMatch": true,
+    "fullSession": {
+      "questions": 20,
+      "score": "7 / 20",
+      "note": "他の問題は任意回答。全問の出典・意味を再監査した結果ではない。"
+    },
+    "replay": true,
+    "earlyFinish": {
+      "tested": true,
+      "score": "1 / 7"
+    },
+    "screenshot": "PC fullPage画像で問題・選択肢・解説・次へ・途中終了の配置崩れなしと主担当が確認。",
+    "consoleWarningsAndErrors": [],
+    "mobile375": "not tested",
+    "backToTop": "not tested",
+    "iphone": false,
+    "osClipboardTransfer": false,
+    "productionFirebase": false
+  },
+  "mechanical": {
+    "snapshot": "PASS: 記録担当と主担当が実行",
+    "clipboardGeneratedText": "PASS: 実関数、コピー先のみスタブ",
+    "lint": "PASS: 主担当報告、16項目",
+    "contentAudit": {
+      "status": "PASS",
+      "reportedBy": "主担当",
+      "knownCoverageWarnings": 7,
+      "intraExact": 0,
+      "crossVariant": 2,
+      "structural": 12,
+      "similar": 268
+    },
+    "diffCheck": "PASS: git diff --check、今回新規3成果物のJSON解析・行末空白・末尾改行・ローカルリンクと21残余IDを記録担当が確認"
+  },
+  "publication": {
+    "committed": false,
+    "pushed": false,
+    "pullRequestCreated": false,
+    "deployed": false,
+    "productionFirebase": false
+  },
+  "cleanup": {
+    "reportedBy": "主担当",
+    "browserTab": "closed; tabs empty",
+    "serverSession": "57276 stopped with Ctrl-C",
+    "temporaryFiles": "自作server.mjsと空の /tmp/roomk-do08-check.1oxbWd のみ除去",
+    "listener8767": "none confirmed with lsof",
+    "preserved": "問題・証拠・既存の未コミット差分を保持"
+  }
+}
