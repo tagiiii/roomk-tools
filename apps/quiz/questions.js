@@ -407,7 +407,7 @@ export const QUIZ_PACKS = [
         question: 'くもの巣は全部ねばねば？ それとも ねばねばしない糸もある？',
         choices: ['全部ねばねば', 'ねばねばしない糸もある'],
         answerIndex: 1,
-        explanation: 'くも自身が歩くところはねばねばしません。じゃないと自分がくっついちゃいますよね。'
+        explanation: '丸い網を作るくもの巣には、虫を捕まえるねばねばした糸と、巣を支えるねばねばしない糸があります。'
       },
       {
         id: 's04', difficulty: 2,
