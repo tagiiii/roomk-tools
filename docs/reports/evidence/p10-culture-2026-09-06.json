@@ -1,0 +1,1562 @@
+[
+  {
+    "pack": "kanji-quiz",
+    "id": "kj01",
+    "status": "supported",
+    "answerCheck": "人と木で正解。",
+    "explanationCheck": "木陰で休む会意を辞書本文で確認。",
+    "note": "感想への問いは正誤判定対象外。",
+    "sources": [
+      {
+        "title": "漢字ペディア「休」",
+        "url": "https://www.kanjipedia.jp/kanji/0001375100/",
+        "evidence": "人＋木、木陰で休む。",
+        "access": "page"
+      }
+    ]
+  },
+  {
+    "pack": "kanji-quiz",
+    "id": "kj02",
+    "status": "supported",
+    "answerCheck": "字形の内部論理検証で木3個。",
+    "explanationCheck": "林は木2個。見た目の感想は対象外。",
+    "note": "成り立ちの主張ではなく部品数。",
+    "sources": []
+  },
+  {
+    "pack": "kanji-quiz",
+    "id": "kj03",
+    "status": "supported",
+    "answerCheck": "現行字形で百の上の一を除けば白。",
+    "explanationCheck": "同じ字形操作を説明している。",
+    "note": "内部論理検証。",
+    "sources": []
+  },
+  {
+    "pack": "kanji-quiz",
+    "id": "kj04",
+    "status": "supported",
+    "answerCheck": "さんずいは水部の変形。",
+    "explanationCheck": "池・泳・流はいずれも水に関係。",
+    "note": "部首索引の分類と語義が整合。",
+    "sources": [
+      {
+        "title": "漢字ペディア 水部索引",
+        "url": "https://www.kanjipedia.jp/sakuin/bushu/detail/4/85",
+        "evidence": "さんずいを水部として収録。",
+        "access": "search_snippet"
+      }
+    ]
+  },
+  {
+    "pack": "kanji-quiz",
+    "id": "kj05",
+    "status": "supported",
+    "answerCheck": "現行字形は日＋月。",
+    "explanationCheck": "角川新字源は明と朙を区別し、明は日＋月の会意とする。",
+    "note": "字源説は唯一の定説と拡張しない。",
+    "sources": [
+      {
+        "title": "漢字ペディア「明」",
+        "url": "https://www.kanjipedia.jp/kanji/0006677500",
+        "evidence": "日＋月の明、窓＋月の朙の二体。",
+        "access": "page"
+      }
+    ]
+  },
+  {
+    "pack": "kanji-quiz",
+    "id": "kj06",
+    "status": "caution",
+    "answerCheck": "大の右上に点を置けば犬。",
+    "explanationCheck": "『しっぽをつけた形』を大にしっぽを付けた字源と読むと誤解。辞書は犬全体を象った象形。",
+    "note": "形遊びと字源を区別する注記候補。",
+    "sources": [
+      {
+        "title": "漢字ペディア「犬」",
+        "url": "https://www.kanjipedia.jp/kanji/0001892600/",
+        "evidence": "尾を上げてほえる犬の象形。",
+        "access": "page"
+      }
+    ],
+    "remainingClaims": []
+  },
+  {
+    "pack": "kanji-quiz",
+    "id": "kj07",
+    "status": "supported",
+    "answerCheck": "月は象形、休・明は会意。",
+    "explanationCheck": "三日月の形を象ったという字通の説明に整合。",
+    "note": "字源分類は辞書説として支持。",
+    "sources": [
+      {
+        "title": "字通「月」（コトバンク）",
+        "url": "https://kotobank.jp/word/月-99088",
+        "evidence": "三日月の形を象った象形。",
+        "access": "search_snippet"
+      },
+      {
+        "title": "漢字ペディア「明」",
+        "url": "https://www.kanjipedia.jp/kanji/0006677500",
+        "evidence": "日＋月の会意。",
+        "access": "page"
+      }
+    ]
+  },
+  {
+    "pack": "kanji-quiz",
+    "id": "kj08",
+    "status": "supported",
+    "answerCheck": "草と花に艹が含まれる。",
+    "explanationCheck": "花は艸を意符に持つ。林・石との分類対比は妥当。",
+    "note": "字形を内部検証。",
+    "sources": [
+      {
+        "title": "漢字ペディア「花」",
+        "url": "https://www.kanjipedia.jp/kanji/0000645600",
+        "evidence": "艸を意味部品にした形声。",
+        "access": "search_snippet"
+      }
+    ]
+  },
+  {
+    "pack": "kanji-quiz",
+    "id": "kj09",
+    "status": "caution",
+    "answerCheck": "休・林・森すべて木を含む。",
+    "explanationCheck": "『昔の暮らしが木とすごく近かった』は時代地域が不明な一般化で、字形だけから歴史的生活を裏付けられない。",
+    "note": "答えは内部検証済み。余談は根拠未確認。",
+    "sources": [],
+    "remainingClaims": [
+      "木を含む字が多いことと『昔の暮らしが木とすごく近かった』という生活史の結び付き（時代・地域が不明）。"
+    ]
+  },
+  {
+    "pack": "kanji-quiz",
+    "id": "kj10",
+    "status": "supported",
+    "answerCheck": "上の位置対義は下。",
+    "explanationCheck": "中・外という対比も整合。",
+    "note": "語義・選択肢の内部論理検証。",
+    "sources": []
+  },
+  {
+    "pack": "kanji-quiz",
+    "id": "kj11",
+    "status": "supported",
+    "answerCheck": "山のみねの形。",
+    "explanationCheck": "そびえる山岳の象形と辞書整合。",
+    "note": "検索抽出でなりたちを確認。",
+    "sources": [
+      {
+        "title": "漢字ペディア「山」",
+        "url": "https://www.kanjipedia.jp/kanji/0002633600",
+        "evidence": "山岳のそびえる形。",
+        "access": "search_snippet"
+      }
+    ]
+  },
+  {
+    "pack": "kanji-quiz",
+    "id": "kj12",
+    "status": "caution",
+    "answerCheck": "水が流れるようすは支持。",
+    "explanationCheck": "三本すべてを水の線とする説明は注意。角川新字源は両岸の間を水が流れる形とする。",
+    "note": "水3本という断定を避ける候補。",
+    "sources": [
+      {
+        "title": "漢字ペディア「川」",
+        "url": "https://www.kanjipedia.jp/kanji/0004033800/",
+        "evidence": "両岸とその間の流水を表す象形。",
+        "access": "search_snippet"
+      }
+    ],
+    "remainingClaims": []
+  },
+  {
+    "pack": "kanji-quiz",
+    "id": "kj13",
+    "status": "supported",
+    "answerCheck": "日は太陽・昼・一日の時間単位を表す。",
+    "explanationCheck": "時・晴・昼の字形と語義により太陽や時間という共通性を確認。",
+    "note": "字形と現代語義の問題として支持。各字の字源を断定してはいない。",
+    "sources": [
+      {
+        "title": "漢字ペディア 日",
+        "url": "https://www.kanjipedia.jp/kanji/0005435400",
+        "evidence": "太陽、昼間、一日という語義。",
+        "access": "search_snippet"
+      }
+    ]
+  },
+  {
+    "pack": "kanji-quiz",
+    "id": "kj14",
+    "status": "supported",
+    "answerCheck": "田＋力の字形。",
+    "explanationCheck": "田と力の会意、および田の耕作に任じる人という由来を角川新字源本文で確認。力の古形は農具のすきと説明される。",
+    "note": "2026-09-06追加照合。字源説として支持し、男女の現代の役割・能力の一般化ではない。",
+    "sources": [
+      {
+        "title": "学研キッズネット 会意",
+        "url": "https://kids.gakken.co.jp/jiten/dictionary02100010/",
+        "evidence": "田＋力＝男、鳥＋口＝鳴。",
+        "access": "search_snippet"
+      },
+      {
+        "title": "漢字ペディア 男（角川新字源 改訂新版）",
+        "url": "https://www.kanjipedia.jp/kanji/0004638500",
+        "evidence": "なりたち本文：田と農具のすきを示す力の会意で、耕作に任じる人を表す。",
+        "access": "page"
+      }
+    ],
+    "remainingClaims": []
+  },
+  {
+    "pack": "kanji-quiz",
+    "id": "kj15",
+    "status": "supported",
+    "answerCheck": "言偏は言葉や伝達と関係する。",
+    "explanationCheck": "話・語・記の字形と現代語義に整合。言の発話の意味、語の意符言を確認。",
+    "note": "全言偏字の由来の一般化ではなく提示3例を確認。",
+    "sources": [
+      {
+        "title": "漢字ペディア 言",
+        "url": "https://www.kanjipedia.jp/kanji/0001990500",
+        "evidence": "口から言葉を発する意味。",
+        "access": "search_snippet"
+      },
+      {
+        "title": "漢字ペディア 語",
+        "url": "https://www.kanjipedia.jp/kanji/0002110200",
+        "evidence": "言と音符吾、互いにことばを交わす。",
+        "access": "search_snippet"
+      }
+    ]
+  },
+  {
+    "pack": "kanji-quiz",
+    "id": "kj16",
+    "status": "supported",
+    "answerCheck": "心は気持ちの動きや働きにかかわる。",
+    "explanationCheck": "漢検公式記事で思・想・悲を含む同部首字を明示。",
+    "note": "同じ3例を直接資料照合。",
+    "sources": [
+      {
+        "title": "漢字カフェ こころはどこにある",
+        "url": "https://www.kanjicafe.jp/detail/11132.html",
+        "evidence": "心は気持ちに関係し、同部首字に思・想・悲を列挙。",
+        "access": "search_snippet"
+      }
+    ]
+  },
+  {
+    "pack": "kanji-quiz",
+    "id": "kj17",
+    "status": "supported",
+    "answerCheck": "口＋鳥で鳴くという会意説明。",
+    "explanationCheck": "学研の会意例と整合。",
+    "note": "辞書説明の範囲。",
+    "sources": [
+      {
+        "title": "学研キッズネット 会意",
+        "url": "https://kids.gakken.co.jp/jiten/dictionary02100010/",
+        "evidence": "鳥＋口＝鳴。",
+        "access": "search_snippet"
+      }
+    ]
+  },
+  {
+    "pack": "kanji-quiz",
+    "id": "kj18",
+    "status": "supported",
+    "answerCheck": "根もとを示す線。",
+    "explanationCheck": "指事によってもとの意味を表す。",
+    "note": "検索抽出の字源と整合。",
+    "sources": [
+      {
+        "title": "漢字ペディア「本」",
+        "url": "https://www.kanjipedia.jp/kanji/0006505700",
+        "evidence": "木の根元を一線で指示。",
+        "access": "search_snippet"
+      }
+    ]
+  },
+  {
+    "pack": "kanji-quiz",
+    "id": "kj19",
+    "status": "caution",
+    "answerCheck": "宀＋寸という組合せは支持。",
+    "explanationCheck": "辞書の『家で事をつかさどる』と『手を出して大切な物を守る姿』は同一ではない。",
+    "note": "正解候補の由来の具体化は出典追加か簡素化候補。",
+    "sources": [
+      {
+        "title": "漢字ペディア「守」",
+        "url": "https://www.kanjipedia.jp/kanji/0003048600",
+        "evidence": "家の中で事をつかさどる→守る。",
+        "access": "search_snippet"
+      }
+    ],
+    "remainingClaims": [
+      "家の中で手を出して大切なものを守る姿から『守』が成立した、という具体的な字源説の掲載根拠。"
+    ]
+  },
+  {
+    "pack": "kanji-quiz",
+    "id": "kj20",
+    "status": "supported",
+    "answerCheck": "山の大きな石。",
+    "explanationCheck": "会意・巖の俗字という辞書説明と整合。",
+    "note": "省略した解説は問題なし。",
+    "sources": [
+      {
+        "title": "漢字ペディア「岩」",
+        "url": "https://www.kanjipedia.jp/kanji/0001155100",
+        "evidence": "山＋石の会意で山の大きな石。",
+        "access": "search_snippet"
+      }
+    ]
+  },
+  {
+    "pack": "kanji-himitsu",
+    "id": "khm01",
+    "status": "supported",
+    "answerCheck": "3字とも木を含む。",
+    "explanationCheck": "木1本・林2本・森3本を字形で確認。",
+    "note": "内部論理検証。",
+    "sources": []
+  },
+  {
+    "pack": "kanji-himitsu",
+    "id": "khm02",
+    "status": "supported",
+    "answerCheck": "漢字ではなく繰り返し記号。",
+    "explanationCheck": "同の字点の辞書記述を図書館の調査回答で確認。",
+    "note": "固有の音をもたないという補足も記号の用法と整合。",
+    "sources": [
+      {
+        "title": "国会図書館レファレンス協同DB 踊り字",
+        "url": "https://crd.ndl.go.jp/reference/entry/index.php?id=1000294266&page=ref_view",
+        "evidence": "同じ字を繰り返す符号との辞書確認。",
+        "access": "search_snippet"
+      }
+    ]
+  },
+  {
+    "pack": "kanji-himitsu",
+    "id": "khm03",
+    "status": "incorrect",
+    "answerCheck": "各字を力・土・巾・日部に置く点と、草と無関係という選択肢理由を分ける必要がある。",
+    "explanationCheck": "共通部品『莫』は草むら＋日で、艹がたまたま似た形という説明は誤り。",
+    "note": "部首と構成部品・字源の混同。修正候補として報告のみ。",
+    "sources": [
+      {
+        "title": "漢字ペディア「莫」",
+        "url": "https://www.kanjipedia.jp/kanji/0006323700/",
+        "evidence": "草むらと日、日暮れの会意。",
+        "access": "page"
+      },
+      {
+        "title": "漢字ペディア「募」",
+        "url": "https://www.kanjipedia.jp/kanji/0006325800/",
+        "evidence": "力と音符莫からなる形声。",
+        "access": "search_snippet"
+      }
+    ]
+  },
+  {
+    "pack": "kanji-himitsu",
+    "id": "khm04",
+    "status": "supported",
+    "answerCheck": "鬱は29画で常用漢字最多と漢検公式記事本文に明記。",
+    "explanationCheck": "漢字ペディアの画数・草木が茂る語義と、漢検公式記事の常用漢字最多という明示を照合。",
+    "note": "2026-09-06追加照合。独自の全数集計ではなく漢検による明示を採用。全漢字最多とはしていない。",
+    "sources": [
+      {
+        "title": "漢字ペディア 鬱",
+        "url": "https://www.kanjipedia.jp/kanji/0000342400",
+        "evidence": "常用漢字、29画、草木がむらがり茂る。",
+        "access": "page"
+      },
+      {
+        "title": "漢字カフェ 64画の漢字とは！？（2023-03-20）",
+        "url": "https://www.kanjicafe.jp/detail/10469.html",
+        "evidence": "本文で常用漢字の最多画数は鬱の29画と明記。",
+        "access": "page"
+      }
+    ],
+    "remainingClaims": []
+  },
+  {
+    "pack": "kanji-himitsu",
+    "id": "khm05",
+    "status": "incorrect",
+    "answerCheck": "当て字という総称自体は広義には支持できる。",
+    "explanationCheck": "煙草は各字の音を借りた例ではなく熟字訓型。音・語感だけ、意味を無視とする一律の定義に例が合わない。",
+    "note": "珈琲・倶楽部の音写と煙草の熟字訓型を混同。khm06と合わせて定義整理が必要。",
+    "sources": [
+      {
+        "title": "世界大百科事典・日本大百科全書 当て字",
+        "url": "https://kotobank.jp/word/当て字-425727",
+        "evidence": "煙草は熟字訓型、珈琲は音借用、広義では両者を含める。",
+        "access": "page"
+      }
+    ]
+  },
+  {
+    "pack": "kanji-himitsu",
+    "id": "khm06",
+    "status": "caution",
+    "answerCheck": "広義の当て字には熟字訓も含める用法があり、ただちに誤りとはいえない。",
+    "explanationCheck": "時計・大和は熟語全体に読みを当てる説明が適切。khm05の『意味を無視して音だけ』という狭義の定義とは連続しない。",
+    "note": "当て字の広義・狭義を区別する必要。",
+    "sources": [
+      {
+        "title": "三省堂 ことばのコラム",
+        "url": "https://dictionary.sanseido-publ.co.jp/column/zakkan09",
+        "evidence": "熟字訓は熟語全体への読み。",
+        "access": "search_snippet"
+      },
+      {
+        "title": "三省堂 常用漢字表付表",
+        "url": "https://dictionary.sanseido-publ.co.jp/topic/joyo2010/other.html",
+        "evidence": "大和等を付表に掲載。",
+        "access": "search_snippet"
+      },
+      {
+        "title": "世界大百科事典 当て字",
+        "url": "https://kotobank.jp/word/当て字-425727",
+        "evidence": "狭義の音借用と熟字訓を含む広義がある。",
+        "access": "page"
+      }
+    ],
+    "remainingClaims": []
+  },
+  {
+    "pack": "kanji-himitsu",
+    "id": "khm07",
+    "status": "supported",
+    "answerCheck": "孫子に由来する呉越の同舟・嵐・協力。",
+    "explanationCheck": "故事と本来の意味に整合。",
+    "note": "実際に起きた史実とは扱わない。",
+    "sources": [
+      {
+        "title": "漢字ペディア 呉越同舟",
+        "url": "https://www.kanjipedia.jp/kotoba/0002092700",
+        "evidence": "孫子の故事と協力の意味。",
+        "access": "search_snippet"
+      }
+    ]
+  },
+  {
+    "pack": "kanji-himitsu",
+    "id": "khm08",
+    "status": "caution",
+    "answerCheck": "慣用的な全体・程度の意味はあるが、実数に由来する選択肢2を一律に否定できない。",
+    "explanationCheck": "四苦八苦は4種＋追加4種の具体的分類。五臓六腑も具体的臓腑名に由来。",
+    "note": "慣用の比喩と由来の数を分けて問う候補。",
+    "sources": [
+      {
+        "title": "漢字ペディア 四苦八苦",
+        "url": "https://www.kanjipedia.jp/kotoba/0002717200",
+        "evidence": "四苦と八苦の具体的内訳。",
+        "access": "search_snippet"
+      },
+      {
+        "title": "日本大百科全書 五臓六腑",
+        "url": "https://kotobank.jp/word/五臓六腑-65007",
+        "evidence": "中国伝統医学上の臓腑分類。",
+        "access": "search_snippet"
+      }
+    ],
+    "remainingClaims": []
+  },
+  {
+    "pack": "kanji-himitsu",
+    "id": "khm09",
+    "status": "caution",
+    "answerCheck": "聞の耳が意味部品、門が音符という例は支持。",
+    "explanationCheck": "部首が必ず意味側につく一般則のような説明は強すぎる。",
+    "note": "この例と一般論を区別する。",
+    "sources": [
+      {
+        "title": "漢字ペディア「聞」",
+        "url": "https://www.kanjipedia.jp/kanji/0006190200",
+        "evidence": "耳＋音符門の形声。",
+        "access": "search_snippet"
+      }
+    ],
+    "remainingClaims": [
+      "部首が一般に意味側につく、と読める選択肢の適用範囲。確認資料は『聞』の形声構造の例まで。"
+    ]
+  },
+  {
+    "pack": "kanji-himitsu",
+    "id": "khm10",
+    "status": "caution",
+    "answerCheck": "梵語由来説の存在は辞書で確認。",
+    "explanationCheck": "『莫迦に音写、その後馬鹿』という一本道の年代順と『有力』の度合いは確認不足。",
+    "note": "既存文に諸説ありとの留保はある。",
+    "sources": [
+      {
+        "title": "精選版日本国語大辞典 馬鹿",
+        "url": "https://kotobank.jp/word/馬鹿-599727",
+        "evidence": "moha または mahallaka の転という説、馬鹿は当て字。",
+        "access": "search_snippet"
+      },
+      {
+        "title": "日本大百科全書 ばか",
+        "url": "https://kotobank.jp/word/ばか-356888",
+        "evidence": "語源諸説ありとする。",
+        "access": "search_snippet"
+      }
+    ],
+    "remainingClaims": [
+      "僧侶の『莫迦』音写から後に『馬鹿』へ移った年代順と経路を述べる説の具体的根拠。",
+      "その語源説が『有力』と評価される根拠。"
+    ]
+  },
+  {
+    "pack": "kanji-himitsu",
+    "id": "khm11",
+    "status": "supported",
+    "answerCheck": "そらは訓、クウは音。",
+    "explanationCheck": "漢字ペディアの区分と学研の音訓定義に一致。",
+    "note": "問題・解説両方を支持。",
+    "sources": [
+      {
+        "title": "漢字ペディア 空",
+        "url": "https://www.kanjipedia.jp/kanji/0001680900",
+        "evidence": "クウを音、そらを訓として表示。",
+        "access": "search_snippet"
+      },
+      {
+        "title": "学研 音",
+        "url": "https://kids.gakken.co.jp/jiten/dictionary01500606/",
+        "evidence": "中国語発音を元にした読み。",
+        "access": "search_snippet"
+      },
+      {
+        "title": "学研 訓",
+        "url": "https://kids.gakken.co.jp/jiten/dictionary02300405/",
+        "evidence": "漢字の意味に対応する和語による読み。",
+        "access": "search_snippet"
+      }
+    ]
+  },
+  {
+    "pack": "kanji-himitsu",
+    "id": "khm12",
+    "status": "supported",
+    "answerCheck": "峠は国字。",
+    "explanationCheck": "峠の国字・山の境目の語義に加え、村の中国字源、町の形声字源と中国『説文解字』収載を確認。町の日本固有の用法と字の起源は別。",
+    "note": "2026-09-06追加照合で未確認だった対抗選択肢『町』を補完。",
+    "sources": [
+      {
+        "title": "漢字ペディア 峠",
+        "url": "https://www.kanjipedia.jp/kanji/0005290100",
+        "evidence": "山と上下、国字。",
+        "access": "search_snippet"
+      },
+      {
+        "title": "日本大百科全書 峠",
+        "url": "https://kotobank.jp/word/峠-103424",
+        "evidence": "日本で作られた漢字で山の上り下りの境。",
+        "access": "search_snippet"
+      },
+      {
+        "title": "漢字ペディア 村",
+        "url": "https://www.kanjipedia.jp/kanji/0004380300",
+        "evidence": "中国の本字と村の形声字としての由来を説明。",
+        "access": "search_snippet"
+      },
+      {
+        "title": "漢字ペディア 町",
+        "url": "https://www.kanjipedia.jp/kanji/0004781400/",
+        "evidence": "田＋音符丁の形声であぜ道を示す。",
+        "access": "page"
+      },
+      {
+        "title": "平凡社 字通 町",
+        "url": "https://kotobank.jp/word/町-568014",
+        "evidence": "字形節が説文十三下を引き、中国の古字書の用義と日本のまちの用法を区別。",
+        "access": "page"
+      }
+    ],
+    "remainingClaims": []
+  },
+  {
+    "pack": "kanji-himitsu",
+    "id": "khm13",
+    "status": "supported",
+    "answerCheck": "左は偏。",
+    "explanationCheck": "右は旁、上は冠、下は脚の位置呼称と一致。",
+    "note": "部首と字の部分の呼称を混同する追加説明はない。",
+    "sources": [
+      {
+        "title": "国立国会図書館 レファレンス協同DB 偏旁",
+        "url": "https://crd.ndl.go.jp/reference/detail?page=ref_view&id=1000335608",
+        "evidence": "辞書を根拠に偏・旁・冠・脚等の位置分類を説明。",
+        "access": "search_snippet"
+      }
+    ]
+  },
+  {
+    "pack": "kanji-himitsu",
+    "id": "khm14",
+    "status": "supported",
+    "answerCheck": "遠近のみ対義。",
+    "explanationCheck": "読書は動作＋対象、年月は時間を表す類義の併置として内部構造を確認。",
+    "note": "語義・構造の論理検証。外部出典による教材分類の直接照合はしていない。",
+    "sources": []
+  },
+  {
+    "pack": "kanji-himitsu",
+    "id": "khm15",
+    "status": "supported",
+    "answerCheck": "時代や地域で異なる音が伝わった。",
+    "explanationCheck": "呉音・漢音等の系統の区別と一致。",
+    "note": "出典の検索抽出で音読みの伝来分類を確認。",
+    "sources": [
+      {
+        "title": "学研 なぜ音読みと訓読みがあるか",
+        "url": "https://kids.gakken.co.jp/box/nazenani/pdf/19_kotoba/X1200097.pdf",
+        "evidence": "地域と時代で異なる中国字音が伝来したため複数系統がある。",
+        "access": "search_snippet"
+      },
+      {
+        "title": "学研 音",
+        "url": "https://kids.gakken.co.jp/jiten/dictionary01500606/",
+        "evidence": "行をギョウ・コウ・アンとする各系統を直接列挙。",
+        "access": "search_snippet"
+      }
+    ]
+  },
+  {
+    "pack": "kanji-himitsu",
+    "id": "khm16",
+    "status": "caution",
+    "answerCheck": "同形3つの集積という現代の字形観察は妥当。",
+    "explanationCheck": "品が口（品物）三つで多数の物を示す字源を本文確認。晶は多くの星の輝きの象形であり、現代の同形部品3つという観察と歴史的な会意分類は区別が必要。",
+    "note": "2026-09-06追加照合で品の字源を補完。残るのは字形観察を同一の字源分類と読み違えないための編集上の注意で、原文は晶を会意とは明言していない。",
+    "sources": [
+      {
+        "title": "漢字ペディア 晶",
+        "url": "https://www.kanjipedia.jp/kanji/0003409600",
+        "evidence": "多くの星が光り輝くさまの象形。",
+        "access": "search_snippet"
+      },
+      {
+        "title": "漢字ペディア 品",
+        "url": "https://www.kanjipedia.jp/kanji/0005973600",
+        "evidence": "口を品物の形として三つ並べ多くの物を示す会意。",
+        "access": "page"
+      }
+    ],
+    "remainingClaims": []
+  },
+  {
+    "pack": "kanji-himitsu",
+    "id": "khm17",
+    "status": "supported",
+    "answerCheck": "改変防止のための大字。",
+    "explanationCheck": "大修館漢字文化資料館が商取引で書換えを防ぐ複雑な字と説明。",
+    "note": "書類に関する法的義務まで主張しておらず慣行の説明として確認。",
+    "sources": [
+      {
+        "title": "大修館 漢字文化資料館 Q0125",
+        "url": "https://kanjibunka.com/kanji-faq/old-faq/q0125/",
+        "evidence": "壱弐参等の大字は金額の改変を防ぐため。",
+        "access": "search_snippet"
+      }
+    ]
+  },
+  {
+    "pack": "kanji-himitsu",
+    "id": "khm18",
+    "status": "supported",
+    "answerCheck": "登る／洗うという動作＋山／顔という対象。",
+    "explanationCheck": "登山、洗顔の内部意味構造は解説どおり。",
+    "note": "内部言語構造の検証。歴史起源の主張なし。",
+    "sources": []
+  },
+  {
+    "pack": "kanji-himitsu",
+    "id": "khm19",
+    "status": "supported",
+    "answerCheck": "太陽・月・5惑星。",
+    "explanationCheck": "七曜と日月火水木金土の対応が一致。",
+    "note": "公式暦資料で照合。",
+    "sources": [
+      {
+        "title": "国立天文台 暦Wiki 曜日の名前",
+        "url": "https://eco.mtk.nao.ac.jp/koyomi/wiki/CDD7C1C72F1BDB5B4D6A4C8A4CFA1A92FCDCBC6FCA4CECCBEC1B0.html",
+        "evidence": "太陽月および火水木金土星との曜日対応。",
+        "access": "search_snippet"
+      }
+    ]
+  },
+  {
+    "pack": "kanji-himitsu",
+    "id": "khm20",
+    "status": "supported",
+    "answerCheck": "一石二鳥が英語のことわざに由来する説明を確認。",
+    "explanationCheck": "一石二鳥の英語ことわざ訳と現代の二利益の意味、一挙両得が晋書束晳伝に由来することを辞書本文で確認。",
+    "note": "2026-09-06追加照合で中国由来の残余主張を補完。",
+    "sources": [
+      {
+        "title": "海外子女教育振興財団 機関誌2023年1月",
+        "url": "https://www.joes.or.jp/cms/joes/pdf/publish/kikanshi2/202301osgt.pdf",
+        "evidence": "一石二鳥は英語のことわざを由来とする。",
+        "access": "search_snippet"
+      },
+      {
+        "title": "小学館 デジタル大辞泉 一挙両得",
+        "url": "https://kotobank.jp/word/一挙両得-434036",
+        "evidence": "晋書束晳伝を出典として二つの利益という意味を記載。",
+        "access": "page"
+      },
+      {
+        "title": "小学館辞書 一石二鳥",
+        "url": "https://kotobank.jp/word/一石二鳥-434310",
+        "evidence": "英語ことわざの訳と二つの成果という意味を明示。",
+        "access": "page"
+      }
+    ],
+    "remainingClaims": []
+  },
+  {
+    "pack": "kotoba-bunka",
+    "id": "kbn01",
+    "status": "supported",
+    "answerCheck": "意外な話を信じられず聞き違いと思う。",
+    "explanationCheck": "小学館二辞書の意味に一致。『自分の耳が信じられない』は語義の言い換えで特定歴史を主張しない。",
+    "note": "起源の具体的史料は提示されないが、字義説明として扱った。",
+    "sources": [
+      {
+        "title": "小学館辞書 耳を疑う",
+        "url": "https://kotobank.jp/word/耳を疑う-639638",
+        "evidence": "思いがけない話を聞き違いと思うという定義。",
+        "access": "search_snippet"
+      }
+    ]
+  },
+  {
+    "pack": "kotoba-bunka",
+    "id": "kbn02",
+    "status": "supported",
+    "answerCheck": "辛抱すれば報われるということわざの意味。",
+    "explanationCheck": "冷たい石も三年座れば暖まるという比喩は辞書に明示。",
+    "note": "ことわざの意味の支持であり、現実に我慢が必ず報われるという助言を検証したものではない。",
+    "sources": [
+      {
+        "title": "小学館辞書 石の上にも三年",
+        "url": "https://kotobank.jp/word/石の上にも三年-431901",
+        "evidence": "冷たい石が温まる比喩と辛抱の意味。",
+        "access": "search_snippet"
+      }
+    ]
+  },
+  {
+    "pack": "kotoba-bunka",
+    "id": "kbn03",
+    "status": "supported",
+    "answerCheck": "自分にも返ってくる意味。",
+    "explanationCheck": "文化庁令和4年度調査では本来46.2%、逆意味47.7%。半数近くという表現と整合。",
+    "note": "調査年を添えると再検証しやすい。",
+    "sources": [
+      {
+        "title": "文化庁 令和4年度国語に関する世論調査",
+        "url": "https://www.bunka.go.jp/tokei_hakusho_shuppan/tokeichosa/kokugo_yoronchosa/pdf/93945901_01.pdf",
+        "evidence": "情けは人の為ならずの意味別回答比率。",
+        "access": "search_snippet"
+      }
+    ]
+  },
+  {
+    "pack": "kotoba-bunka",
+    "id": "kbn04",
+    "status": "caution",
+    "answerCheck": "天が崩れる心配は『列子』の故事と一致。",
+    "explanationCheck": "天地崩落を恐れ寝食を忘れる筋は確認。慰める人が『友人』であるとの限定は出典未確認。",
+    "note": "主要結論支持、人物関係の細部を保留。",
+    "sources": [
+      {
+        "title": "漢字ペディア 杞憂",
+        "url": "https://www.kanjipedia.jp/kotoba/0001199200",
+        "evidence": "杞の人が天地崩落を憂えた列子の話。",
+        "access": "search_snippet"
+      }
+    ],
+    "remainingClaims": [
+      "杞の人を慰める人物が友人であるという関係の限定。"
+    ]
+  },
+  {
+    "pack": "kotoba-bunka",
+    "id": "kbn05",
+    "status": "caution",
+    "answerCheck": "名古屋のえらい＝疲れた。",
+    "explanationCheck": "名古屋市資料で疲れたとの対応を検索抽出確認。つらい・だるいという補足も含めた関連本文は未照合。",
+    "note": "2026-09-06追加検索で愛知県資料にも尾張・三河の疲れた用法が見つかる。原文にない東海全域の使用率を要求せず、残余を未照合の本文・語義の範囲へ訂正。",
+    "sources": [
+      {
+        "title": "名古屋市 方言対応資料",
+        "url": "https://www.city.nagoya.jp/kankobunkakoryu/cmsfiles/contents/0000047/47499/tebiki_20-34.pdf",
+        "evidence": "体がえらい＝体が疲れた。",
+        "access": "search_snippet"
+      },
+      {
+        "title": "愛知県 やさしい日本語関連資料",
+        "url": "https://www.pref.aichi.jp/uploaded/attachment/319547.pdf",
+        "evidence": "尾張・三河の『（体が）えらい』を疲れたへ言い換える例。",
+        "access": "search_snippet"
+      }
+    ],
+    "remainingClaims": [
+      "東海地方で『つらい・だるい』にも使う説明の関連本文。名古屋・尾張・三河の『疲れた』は公式資料の検索抽出で確認。"
+    ]
+  },
+  {
+    "pack": "kotoba-bunka",
+    "id": "kbn06",
+    "status": "supported",
+    "answerCheck": "伺うは謙譲語I、いらっしゃるは尊敬語。",
+    "explanationCheck": "自分が行く場合の言い換えとして不適切という解説を支持。",
+    "note": "誰が行くかという設問の文脈は解説で補われる。",
+    "sources": [
+      {
+        "title": "文化庁 敬語の指針 第2章",
+        "url": "https://www.bunka.go.jp/seisaku/kokugo_nihongo/kokugo_shisaku/keigo/chapter2/detail.html",
+        "evidence": "尊敬語と謙譲語Iの定義と例。",
+        "access": "search_snippet"
+      }
+    ]
+  },
+  {
+    "pack": "kotoba-bunka",
+    "id": "kbn07",
+    "status": "unverified",
+    "answerCheck": "『早く出てきた相手への挨拶』という意味は日本国語大辞典で確認。主役級歌舞伎役者を周囲がねぎらったという発祥の具体的場面は未確認。",
+    "explanationCheck": "日本国語大辞典は『おはやく』の変化とし1699年浄瑠璃の用例を示す。大辞泉もウ音便とする。江戸の芝居小屋からの普及経路・『お早くからご苦労さま』省略説を裏付ける史料までは得られない。",
+    "note": "2026-09-06追加検索：国語研／松竹／辞書の『おはよう 歌舞伎 由来』を照合。国語研の午後挨拶研究は現代の用法と普及仮説であり、歌舞伎語源の根拠ではない。学校便り等で説の反復は見つかるが原典がなく未確認維持。用例が浄瑠璃にあることを楽屋発祥の証明にしない。",
+    "sources": [
+      {
+        "title": "精選版 日本国語大辞典 御早",
+        "url": "https://kotobank.jp/word/御早-2017445",
+        "evidence": "早く出てきた相手への挨拶、1699年浄瑠璃の初出例と1836年朝の挨拶例を掲載。",
+        "access": "page"
+      },
+      {
+        "title": "デジタル大辞泉 御早う",
+        "url": "https://kotobank.jp/word/御早う-453948",
+        "evidence": "おはやくのウ音便、朝の挨拶語。",
+        "access": "page"
+      },
+      {
+        "title": "国語研 なぜ「おはよう」は午後になっても使われるのですか",
+        "url": "https://kotoba.ninjal.ac.jp/qa/yokuaru/qa-107/",
+        "evidence": "初出2005年。午後に親しい相手へ使う調査例と、適した表現の不足を埋めるという仮説を説明。歌舞伎起源は述べない。",
+        "access": "page"
+      }
+    ],
+    "remainingClaims": [
+      "歌舞伎楽屋の主役級役者へのねぎらいを発祥とすること。",
+      "お早くからご苦労さまですの省略から成立し江戸の芝居小屋から一般へ広まった経路。"
+    ]
+  },
+  {
+    "pack": "kotoba-bunka",
+    "id": "kbn08",
+    "status": "incorrect",
+    "answerCheck": "推す／敲くという正答は支持。",
+    "explanationCheck": "『道を歩き』は辞書に引用される原文の騎驢、および字通の驢に騎りと不一致。",
+    "note": "正答ではなく解説の移動方法の誤り。歩き→ろばに乗ってとするか移動手段を省く対象。",
+    "sources": [
+      {
+        "title": "精選版日本国語大辞典・字通 推敲",
+        "url": "https://kotobank.jp/word/推敲-539689",
+        "evidence": "前者は苕渓漁隠叢話の騎驢を引用、後者は唐詩紀事の驢に騎りを引用。",
+        "access": "search_snippet"
+      },
+      {
+        "title": "漢字ペディア 推敲",
+        "url": "https://www.kanjipedia.jp/kotoba/0003751300",
+        "evidence": "推と敲を迷い韓愈に相談した中心筋。",
+        "access": "search_snippet"
+      }
+    ]
+  },
+  {
+    "pack": "kotoba-bunka",
+    "id": "kbn09",
+    "status": "supported",
+    "answerCheck": "抹茶をそれらしくする語源説と一致。",
+    "explanationCheck": "集英社辞典はこの語源を『という』として紹介。設問も伝承扱いで断定していない。",
+    "note": "伝えられる説として支持し、史実実証とは区別。",
+    "sources": [
+      {
+        "title": "集英社 imidas お茶を濁す",
+        "url": "https://imidas.jp/idiom/detail/X-05-X-05-4-0008.html",
+        "evidence": "作法を知らない者が抹茶を緑色にして繕ったという由来。",
+        "access": "search_snippet"
+      }
+    ]
+  },
+  {
+    "pack": "kotoba-bunka",
+    "id": "kbn10",
+    "status": "incorrect",
+    "answerCheck": "勢いに乗るという正答の意味は支持。",
+    "explanationCheck": "問題文の『流れに掉さす』は棹を掉とした誤字。解説の棹と不一致。",
+    "note": "正答値を変える問題でなく問題文の漢字訂正対象。",
+    "sources": [
+      {
+        "title": "国立国語研究所 流れに棹さす",
+        "url": "https://kotoba.ninjal.ac.jp/qa/yokuaru/qa-130/",
+        "evidence": "表記は棹、流れの勢いに乗る意味。",
+        "access": "page"
+      }
+    ]
+  },
+  {
+    "pack": "kotoba-bunka",
+    "id": "kbn11",
+    "status": "supported",
+    "answerCheck": "あきっぽく長続きしない意味。",
+    "explanationCheck": "辞書語義と一致。",
+    "note": "三日を厳密な日数としていない。",
+    "sources": [
+      {
+        "title": "漢字ペディア 三日坊主",
+        "url": "https://www.kanjipedia.jp/kotoba/0002632800",
+        "evidence": "飽きっぽく長続きしない。",
+        "access": "search_snippet"
+      }
+    ]
+  },
+  {
+    "pack": "kotoba-bunka",
+    "id": "kbn12",
+    "status": "supported",
+    "answerCheck": "矛と盾の相反する売り文句。",
+    "explanationCheck": "商人が問いに答えられず、論理不一致の意味となる韓非子の故事に一致。",
+    "note": "対抗選択肢も故事と不一致。",
+    "sources": [
+      {
+        "title": "漢字ペディア 矛盾",
+        "url": "https://www.kanjipedia.jp/kotoba/0006634900",
+        "evidence": "楚の商人の矛と盾、韓非子の故事と語義。",
+        "access": "search_snippet"
+      }
+    ]
+  },
+  {
+    "pack": "kotoba-bunka",
+    "id": "kbn13",
+    "status": "supported",
+    "answerCheck": "ほかす＝捨てるを小学館辞書本文で確認。",
+    "explanationCheck": "大阪府知事会見の『ほかさん』を大阪弁と明示し『捨てない』と説明する実例を本文確認。関西での用法と例文を支持。",
+    "note": "2026-09-06追加照合。原文は関西での用法を例示しており、地域全体の使用率や全国比較は要求していないため、以前の頻度調査要求を撤回。",
+    "sources": [
+      {
+        "title": "小学館辞書 放す",
+        "url": "https://kotobank.jp/word/放す-603524",
+        "evidence": "ほかすの読みで放り捨てる・打ち捨てるの定義。",
+        "access": "page"
+      },
+      {
+        "title": "大阪府 令和3年9月22日知事会見",
+        "url": "https://www.pref.osaka.lg.jp/o070050/koho/kaiken2/20210922.html",
+        "evidence": "『ほかさん』を大阪弁と明示し、捨てないという意味で使用・説明。",
+        "access": "page"
+      }
+    ],
+    "remainingClaims": []
+  },
+  {
+    "pack": "kotoba-bunka",
+    "id": "kbn14",
+    "status": "supported",
+    "answerCheck": "頭上に掲げる動作に由来。",
+    "explanationCheck": "もらう・食べるの謙譲表現への説明を確認。",
+    "note": "食事挨拶の成立年代は主張していない。",
+    "sources": [
+      {
+        "title": "国立国会図書館 レファレンス協同DB 食事挨拶語源",
+        "url": "https://crd.ndl.go.jp/reference/entry/reference/show?asc=desc&dtltbs=1&fi=2_8&id=1000032437&ldtl=1&mcmd=25&page=ref_view&st=update&tcd=2110046&tcd_lk=1&tt=2110046&tt_lk=1",
+        "evidence": "食物等を頭上に掲げる動作といただく、馳走の奔走の語源を資料で説明。",
+        "access": "search_snippet"
+      }
+    ]
+  },
+  {
+    "pack": "kotoba-bunka",
+    "id": "kbn15",
+    "status": "supported",
+    "answerCheck": "蛇に足を描き加えた。",
+    "explanationCheck": "戦国策の余計な加筆で酒を失う筋と現代の語義を小学館・平凡社で確認。",
+    "note": "飲酒の教訓そのものの是非は対象外、歴史叙述のみ照合。",
+    "sources": [
+      {
+        "title": "日本大百科全書・字通 蛇足",
+        "url": "https://kotobank.jp/word/蛇足-560630",
+        "evidence": "蛇の絵に足を加えて失格する故事。",
+        "access": "search_snippet"
+      }
+    ]
+  },
+  {
+    "pack": "kotoba-bunka",
+    "id": "kbn16",
+    "status": "caution",
+    "answerCheck": "争い中に漁師が両方を得たという筋・意味は支持。",
+    "explanationCheck": "貝をハマグリとする訳とドブガイとする訳がある。漢字ペディアはドブガイ（蚌）。",
+    "note": "生物種を一意確定する語ではないため誤り断定せず、貝への一般化が安全。",
+    "sources": [
+      {
+        "title": "漢字ペディア 漁夫の利",
+        "url": "https://www.kanjipedia.jp/kotoba/0001471800",
+        "evidence": "シギとドブガイ、漁師が両方を捕らえる戦国策の故事。",
+        "access": "search_snippet"
+      }
+    ],
+    "remainingClaims": []
+  },
+  {
+    "pack": "kotoba-bunka",
+    "id": "kbn17",
+    "status": "supported",
+    "answerCheck": "禍福は容易に予測できないという意味を辞書で確認。",
+    "explanationCheck": "大辞泉本文で逃げた馬が胡の駿馬を連れ帰り、その後の落馬・兵役免除へ続く筋を確認。",
+    "note": "2026-09-06追加照合。以前未確認だった良馬を連れ帰る細部を補完。",
+    "sources": [
+      {
+        "title": "漢字文化研究所 塞翁が馬に関する解説",
+        "url": "https://www.kanjicafe.jp/detail/14455.html",
+        "evidence": "淮南子の馬が逃げ幸不幸が転ずる故事。",
+        "access": "search_snippet"
+      },
+      {
+        "title": "小学館 デジタル大辞泉 塞翁が馬",
+        "url": "https://kotobank.jp/word/塞翁が馬-507194",
+        "evidence": "淮南子人間訓由来、逃げた馬が数か月後に駿馬を伴って帰る補説。",
+        "access": "page"
+      }
+    ],
+    "remainingClaims": []
+  },
+  {
+    "pack": "kotoba-bunka",
+    "id": "kbn18",
+    "status": "supported",
+    "answerCheck": "食べる・飲むの尊敬語。",
+    "explanationCheck": "文化庁敬語解説と一致。",
+    "note": "『お酒を召し上がる』の例も確認。",
+    "sources": [
+      {
+        "title": "文化庁 敬語の指針",
+        "url": "https://www.bunka.go.jp/seisaku/kokugo_nihongo/kokugo_shisaku/keigo/chapter2/detail.html",
+        "evidence": "召し上がるは尊敬語。",
+        "access": "search_snippet"
+      },
+      {
+        "title": "文化庁 敬語の指針 索引",
+        "url": "https://www.bunka.go.jp/seisaku/kokugo_nihongo/kokugo_shisaku/keigo/search/index.html",
+        "evidence": "お酒を召し上がる用例。",
+        "access": "search_snippet"
+      }
+    ]
+  },
+  {
+    "pack": "kotoba-bunka",
+    "id": "kbn19",
+    "status": "supported",
+    "answerCheck": "古きを学んで新しい知見を得る。",
+    "explanationCheck": "論語の温故知新の原文と解釈に整合。",
+    "note": "倫理的教訓への賛否は評価対象外。",
+    "sources": [
+      {
+        "title": "渋沢栄一記念財団 実験論語処世談",
+        "url": "https://eiichi.shibusawa.or.jp/features/jikkenrongo/JR005007.html",
+        "evidence": "温故知新を古い知識から新たな知を得ると解説。",
+        "access": "search_snippet"
+      }
+    ]
+  },
+  {
+    "pack": "kotoba-bunka",
+    "id": "kbn20",
+    "status": "supported",
+    "answerCheck": "馳走＝走り回る。",
+    "explanationCheck": "もてなしの準備への意味展開を確認。",
+    "note": "いただきますと同一レファレンスの別語源を照合。",
+    "sources": [
+      {
+        "title": "国立国会図書館 レファレンス協同DB 食事挨拶語源",
+        "url": "https://crd.ndl.go.jp/reference/entry/reference/show?asc=desc&dtltbs=1&fi=2_8&id=1000032437&ldtl=1&mcmd=25&page=ref_view&st=update&tcd=2110046&tcd_lk=1&tt=2110046&tt_lk=1",
+        "evidence": "もてなしの食材等を集める奔走が馳走の意味となる。",
+        "access": "search_snippet"
+      }
+    ]
+  },
+  {
+    "pack": "zatsugaku-king-2",
+    "id": "zk201",
+    "status": "caution",
+    "answerCheck": "韓国語のオノマトペが日本語より多いという比較を国際交流基金資料で確認。",
+    "explanationCheck": "日本語約5000韓国語約8000という概数資料あり。4500以上の数値は辞書収録数に依存し、言語全体の確定総数ではない。",
+    "note": "辞書ごとに採録範囲・派生形の数え方が異なる。比較の出典と集計定義を明示すべき。",
+    "sources": [
+      {
+        "title": "国際交流基金 ソウル文化センター2018資料",
+        "url": "https://www.jpf.or.kr/index/data/file/publish/3555240129_KYkaXyqB_kachi_1805.pdf",
+        "evidence": "日本語約5000、韓国語約8000の比較。",
+        "access": "search_snippet"
+      },
+      {
+        "title": "明治大学リポジトリ オノマトペ論考",
+        "url": "https://meiji.repo.nii.ac.jp/record/15040/files/segawa_2022_kyouyou.pdf",
+        "evidence": "小野編オノマトペ辞典の4500語規模に言及。",
+        "access": "search_snippet"
+      },
+      {
+        "title": "山口大学 Academi-Q No.21（2025年9月）",
+        "url": "https://www.yamaguchi-u.ac.jp/info/academi-q/index.html",
+        "evidence": "日本語オノマトペ辞典の収録数約4500語を紹介。言語全体の確定総数とはしない。",
+        "access": "page"
+      }
+    ],
+    "remainingClaims": [
+      "韓国語約8000語と日韓比較の出典本文・収録範囲（検索抽出はあるが該当本文照合未了）。"
+    ]
+  },
+  {
+    "pack": "zatsugaku-king-2",
+    "id": "zk202",
+    "status": "supported",
+    "answerCheck": "複数文字種を併用する日本語の特徴は支持。",
+    "explanationCheck": "国語研は漢字・平仮名・片仮名とローマ字の併用の珍しさを説明。各文字の主な役割も限定表現で妥当。",
+    "note": "世界唯一とはしていない。ローマ字・数字も使う点は補足可能。",
+    "sources": [
+      {
+        "title": "国立国語研究所 日本語の文字",
+        "url": "https://kotoba.ninjal.ac.jp/qa/yokuaru/qa-155/",
+        "evidence": "複数の文字体系を混ぜて使う点は世界的に珍しい。",
+        "access": "search_snippet"
+      }
+    ]
+  },
+  {
+    "pack": "zatsugaku-king-2",
+    "id": "zk203",
+    "status": "caution",
+    "answerCheck": "アメリカでは6色が多数という代表性を示す一次調査未確認。",
+    "explanationCheck": "NASA掲載教材は一般に7色と明記。米国を一律6色とする設問は裏付け不足。連続スペクトルという後半は支持。",
+    "note": "NASAの7色例だけで米国多数派を逆断定しない。6色／9色／12色から一意に正答を選ばせる設計は要修正検討。",
+    "sources": [
+      {
+        "title": "NASA掲載 The Many Colors of Sunlight lesson plan",
+        "url": "https://pwg.gsfc.nasa.gov/stargaze/Lsun4spe.htm",
+        "evidence": "人々は一般に虹を7色に分けると説明し7色を列挙。アーカイブ資料。",
+        "access": "page"
+      },
+      {
+        "title": "NASA Visible Light",
+        "url": "https://science.nasa.gov/ems/09_visiblelight/",
+        "evidence": "可視域と波長による色の分離。",
+        "access": "search_snippet"
+      }
+    ],
+    "remainingClaims": [
+      "アメリカの虹の数え方で6色が多いという、代表性のある調査・対象集団の根拠。"
+    ]
+  },
+  {
+    "pack": "zatsugaku-king-2",
+    "id": "zk204",
+    "status": "caution",
+    "answerCheck": "単語結合で作るものを複合語と呼ぶ点は内部構造として支持。",
+    "explanationCheck": "ドイツ語の『80文字近い語がギネス掲載』という具体的実績の原資料未確認。",
+    "note": "日本語の消しゴム・歯ブラシの構造は妥当。ギネス現行最長語頁はサンスクリット語であり、過去ドイツ語記録の反証にはならない。",
+    "sources": [
+      {
+        "title": "Guinness World Records Longest word",
+        "url": "https://www.guinnessworldrecords.com/world-records/longest-word",
+        "evidence": "現行頁はサンスクリット語の記録。ドイツ語約80文字の過去掲載を証明しない。",
+        "access": "search_snippet"
+      }
+    ],
+    "remainingClaims": [
+      "約80文字のドイツ語複合語がギネスに掲載された具体的な語・版・頁。"
+    ]
+  },
+  {
+    "pack": "zatsugaku-king-2",
+    "id": "zk205",
+    "status": "supported",
+    "answerCheck": "英語を含む複数言語が青と緑を別の基本色彩語で表すことをWALS本文で確認。",
+    "explanationCheck": "WALS 134Aは青と緑にそれぞれ基本色彩語がある言語を30件掲載。沖縄県警の青信号解説も緑色を青と呼ぶ慣用に言及。",
+    "note": "2026-09-06追加照合。『数多く』は数十言語の実例で支持するが、標本を世界全体の多数派率とはしない。色名分類と知覚能力を区別。",
+    "sources": [
+      {
+        "title": "N.B. McNeill Colour and colour terminology",
+        "url": "https://www.cambridge.org/core/journals/journal-of-linguistics/article/abs/colour-and-colour-terminology/767A3C74AF5BB1FF4AFE64555CEBC126",
+        "evidence": "英語の基本色彩語にblueとgreenを含め、言語間の色分類を論じる。",
+        "access": "search_snippet"
+      },
+      {
+        "title": "WALS Online Green and Blue（Paul Kay・Luisa Maffi）",
+        "url": "https://wals.info/chapter/134",
+        "evidence": "134Aの青・緑を別々に符号化する分類に30言語。英語をその例として説明。",
+        "access": "page"
+      },
+      {
+        "title": "沖縄県警察 信号機なんでもQ&A",
+        "url": "https://www.police.pref.okinawa.jp/docs/2015030700279/",
+        "evidence": "緑色の信号を青と呼ぶ慣用、日本語の青葉・青物との関係を説明。",
+        "access": "search_snippet"
+      }
+    ],
+    "remainingClaims": []
+  },
+  {
+    "pack": "zatsugaku-king-2",
+    "id": "zk206",
+    "status": "supported",
+    "answerCheck": "しっくりこない違和感を表す。",
+    "explanationCheck": "仙台市図書館の方言資料で目の異物や窮屈な衣服等のいずいと翻訳しにくさを確認。",
+    "note": "靴の小石は同じ身体的違和感の例示で独立史実でない。",
+    "sources": [
+      {
+        "title": "仙台市図書館 方言資料",
+        "url": "https://lib-www.smt.city.sendai.jp/wysiwyg/file/download/1/586",
+        "evidence": "いずい／えずいの感覚・共通語への対応の難しさを解説。",
+        "access": "search_snippet"
+      }
+    ]
+  },
+  {
+    "pack": "zatsugaku-king-2",
+    "id": "zk207",
+    "status": "unverified",
+    "answerCheck": "ショナ3、バッサ2を現在の虹の捉え方として確認できる一次資料未到達。",
+    "explanationCheck": "Gleasonのスペクトル区分がショナ3・バッサ2であったことをSampson本人の研究論考本文でも確認。これは色相のみの一次元模型と批判的に説明され、現在の話者への虹の数え方調査ではない。",
+    "note": "2026-09-06追加検索：Shona Bassa Gleason colourを研究者公開論考で追跡。3/2という色名分類の参照元は補完できたが、Gleason原著および現代話者への虹の実測は未取得。古い色名分類を現在の知覚・虹の数え方へ移し替えない。",
+    "sources": [
+      {
+        "title": "N.B. McNeill Colour and colour terminology",
+        "url": "https://www.cambridge.org/core/journals/journal-of-linguistics/article/abs/colour-and-colour-terminology/767A3C74AF5BB1FF4AFE64555CEBC126",
+        "evidence": "バッサ語の2分類は掲載されるが、虹を2色と数える実測資料とは確認できない。",
+        "access": "search_snippet"
+      },
+      {
+        "title": "Geoffrey Sampson, Gladstone as linguist（著者公開版）",
+        "url": "https://www.grsampson.net/AGal.html",
+        "evidence": "Gleasonのショナ3・バッサ2の色名区分と、その一次元モデルの限界を説明。",
+        "access": "page"
+      }
+    ],
+    "remainingClaims": [
+      "ショナ語・バッサ語話者が虹を各3色・2色と捉える主張（時点・集団・虹を数える方法）。"
+    ]
+  },
+  {
+    "pack": "zatsugaku-king-2",
+    "id": "zk208",
+    "status": "supported",
+    "answerCheck": "山口大学の2025年9月情報誌で、日本語学の難波えみ講師が動詞のバリエーションを補う説明を一つの答えとして示す。原文の説の存在を支持。",
+    "explanationCheck": "英語の複数の泣く動詞と日本語の副詞＋泣くを対比し、少ない動詞を補うという説明を大学取材本文で確認。原文も『とされ』『と考えられている』と留保している。",
+    "note": "2026-09-06追加照合。総動詞数や歴史的因果を取材記事が実証するわけではないが、原文は確定原因とは主張していない。仮説の実証までを未確認主張として要求せず、説の存在を本文確認した判定。秋田喜美の別仮説も資料の限界として併記。",
+    "sources": [
+      {
+        "title": "国語研文献DB 小倉慶郎2016論考",
+        "url": "https://bibdb.ninjal.ac.jp/bunken/ja/article/100000185824",
+        "evidence": "日本語オノマトペが多い理由は動詞が少ないからか、という章題を確認。結論未確認。",
+        "access": "search_snippet"
+      },
+      {
+        "title": "山口大学 Academi-Q No.21（2025年9月）",
+        "url": "https://www.yamaguchi-u.ac.jp/info/academi-q/index.html",
+        "evidence": "『日本語に多いのはなぜ？』節：動詞の少なさを補う仮説と、英語の泣く動詞・日本語の副詞＋泣くの比較。",
+        "access": "page"
+      },
+      {
+        "title": "電通報 秋田喜美への取材（英語表示本文）",
+        "url": "https://dentsu-ho.com/en/articles/8949",
+        "evidence": "副詞型と英語plodの対比、副詞の際立ちと新造可能性を仮説として説明。",
+        "access": "page"
+      }
+    ],
+    "remainingClaims": []
+  },
+  {
+    "pack": "zatsugaku-king-2",
+    "id": "zk209",
+    "status": "unverified",
+    "answerCheck": "法句経と有り難しを結ぶ説が東漸寺公式法話に存在することは確認。歴史的語源として語が法句経から成立した連鎖は未確認。",
+    "explanationCheck": "日本国語大辞典本文でありがたくのウ音便、感謝の1423年頃の用例を確認。東漸寺は生命の貴重さを説く句を由来と紹介するが、語の成立・普及年代の史料は示さない。",
+    "note": "2026-09-06追加検索：ありがとう 語源 法句経を辞書・国語研・仏教団体資料で照合。法話の思想的説明の存在と言語史の実証は区別し、未確認を維持。",
+    "sources": [
+      {
+        "title": "小学館辞書 有難",
+        "url": "https://kotobank.jp/word/有難-428213",
+        "evidence": "ありがたしの語幹として稀有の意味を記載。法句経起源はこの参照範囲で確認できない。",
+        "access": "page"
+      },
+      {
+        "title": "東漸寺 「ありがとう」と「おかげさま」",
+        "url": "https://tozenji.sakura.ne.jp/about/oreinokotoba/",
+        "evidence": "生命の得難さを説く句を由来とする法話。説の存在の根拠であり歴史言語学的実証ではない。",
+        "access": "page"
+      }
+    ],
+    "remainingClaims": [
+      "有り難し・ありがとうの成立が特定の法句経の句に由来する歴史的因果関係。"
+    ]
+  },
+  {
+    "pack": "zatsugaku-king-2",
+    "id": "zk210",
+    "status": "incorrect",
+    "answerCheck": "日本の携帯電話文化という正答は支持。",
+    "explanationCheck": "1999年が始まりという説明は1997年DP-211SWの絵文字先行例に反する。",
+    "note": "Emojipediaが当時のマニュアル復元・メーカー発売資料を根拠に1999起源説を訂正。普及の節目として1999を説明するなら別。",
+    "sources": [
+      {
+        "title": "Emojipedia Correcting the Record on the First Emoji Set",
+        "url": "https://blog.emojipedia.org/correcting-the-record-on-the-first-emoji-set/",
+        "evidence": "1997年の90絵文字を当時マニュアルから復元し1999起源説を訂正。",
+        "access": "page"
+      },
+      {
+        "title": "Pioneer 1990–1999事業年表",
+        "url": "https://jpn.pioneer/ja/corp/info/history/chronology/archive/1990/",
+        "evidence": "DP-211SWが1997年11月発売されたことをメーカー自身が記録。絵文字数はこの年表だけでは確認できない。",
+        "access": "search_snippet"
+      },
+      {
+        "title": "MoMA Shigetaka Kurita Emoji",
+        "url": "https://www.moma.org/collection/works/196070?sov_referrer=theme",
+        "evidence": "NTTドコモの176絵文字の公開が1999年であることを確認。",
+        "access": "search_snippet"
+      }
+    ]
+  },
+  {
+    "pack": "zatsugaku-king-2",
+    "id": "zk211",
+    "status": "caution",
+    "answerCheck": "Guinness公式公開記録はEthnologue2019に基づき中国語の第一言語話者を世界最多とし、マンダリン内訳も記載。過去時点での正答の裏付けを取得。",
+    "explanationCheck": "2019年に中国語13億1100万、うちマンダリン9億1800万、英語3億7900万との記載を本文確認。母語と全話者の区別に整合するが最新順位の本文は未取得。",
+    "note": "2026-09-06追加照合。刊行主体Guinnessの公開本文で過去の裏付けを得て注意へ。Ethnologue2026は有料商品説明のみ、公開insights頁は取得エラー。購入・壁迂回なし。中国語諸変種全体とマンダリン単独を区別し、2019の値を2026に流用しない。",
+    "sources": [
+      {
+        "title": "Ethnologue 2025 Ethnologue200",
+        "url": "https://shop.ethnologue.com/products/2025-ethnologue-200",
+        "evidence": "L1と全話者の列を持つデータの説明。順位自体は示されない。",
+        "access": "search_snippet"
+      },
+      {
+        "title": "Guinness World Records Most spoken language（2019記録）",
+        "url": "https://www.guinnessworldrecords.com/world-records/81621-most-spoken-language-top-10-table",
+        "evidence": "Ethnologue2019由来の第一言語話者を中国語全体・マンダリン等の内訳・スペイン語・英語に分け掲載。",
+        "access": "page"
+      }
+    ],
+    "remainingClaims": [
+      "一般現在形の設問に対する2026年の母語話者最多順位と、中国語全体／マンダリンの集計分類。"
+    ]
+  },
+  {
+    "pack": "zatsugaku-king-2",
+    "id": "zk212",
+    "status": "supported",
+    "answerCheck": "パンのポルトガル語由来とpãoの原綴りを在ポルトガル日本大使館本文で確認。",
+    "explanationCheck": "日本パン工業会の歴史本文でポルトガル船漂着後にキリスト教とともにパンが広まった経緯を確認。パン・ボタン等の借用語、カステラの伝来も資料に整合。",
+    "note": "2026-09-06追加照合。原文は船名や特定の最初の船の積荷までは断定しておらず、一般的な伝来説明の範囲で支持。",
+    "sources": [
+      {
+        "title": "東海農政局 食文化会報",
+        "url": "https://www.maff.go.jp/tokai/keiei/shokuhin/bunka/attach/pdf/kaihou-24.pdf",
+        "evidence": "日本語になったポルトガル語としてパン・ボタン・カステラを列挙。",
+        "access": "search_snippet"
+      },
+      {
+        "title": "在ポルトガル日本国大使館 歴史的な関係",
+        "url": "https://www.pt.emb-japan.go.jp/itpr_ja/00_000774.html",
+        "evidence": "2013年記事。ポルトガル人との交流によるパン(pão)・ボタン等の借用語と食文化の伝来。",
+        "access": "page"
+      },
+      {
+        "title": "日本パン工業会 パンの明治百年史",
+        "url": "https://www.panstory.jp/100nenshi/100nenshi.html",
+        "evidence": "九州地方のパン史でポルトガル船漂着後、キリスト教とともにパンが普及したと説明。",
+        "access": "page"
+      }
+    ],
+    "remainingClaims": []
+  },
+  {
+    "pack": "zatsugaku-king-2",
+    "id": "zk213",
+    "status": "supported",
+    "answerCheck": "いち・に・さんを漢語数詞、ひと・ふた等を和語数詞とする記述を図書館の資料紹介本文で確認。",
+    "explanationCheck": "飯田朝子『数え方でみがく日本語』18–21頁の内容を茨城県立図書館が具体的に引用・紹介し、音訓の一般論に個別数詞の資料を補完。",
+    "note": "2026-09-06追加照合。原本全冊の閲覧ではなく、図書館が掲載する該当頁の引用・調査回答による確認。",
+    "sources": [
+      {
+        "title": "国立国会図書館 音読みの伝来調査",
+        "url": "https://crd.ndl.go.jp/reference/entry/reference/show?asc=desc&dtltbs=1&fi=6_0+8_21&id=1000379684&ldtl=1&mcmd=25&ndc1=8&ndc_lk=1&page=ref_view&st=update",
+        "evidence": "音読みの中国からの伝来と系統についての参考資料。",
+        "access": "search_snippet"
+      },
+      {
+        "title": "茨城県立図書館 レファレンス事例（数詞・助数詞）",
+        "url": "https://crd.ndl.go.jp/reference/entry/index.php?id=1000233527&page=ref_view",
+        "evidence": "飯田朝子著書18–21頁を示し、ひと・ふたを和語、いち・に・さんを漢語として区別。",
+        "access": "page"
+      }
+    ],
+    "remainingClaims": []
+  },
+  {
+    "pack": "zatsugaku-king-2",
+    "id": "zk214",
+    "status": "supported",
+    "answerCheck": "アラビア文字は基本的に右から左。",
+    "explanationCheck": "英語・スペイン語のラテン文字は左から右。W3Cの文字方向説明と一致。",
+    "note": "数字や埋め込み外国語は左から右となる例外はあるが、文字の基本方向の問題として妥当。",
+    "sources": [
+      {
+        "title": "W3C Authoring HTML: Handling Right-to-left Scripts",
+        "url": "https://www.w3.org/International/docs/bp-html-bidi/Overview",
+        "evidence": "アラビア文字は主としてRTL、ラテン文字・数字はLTR。",
+        "access": "search_snippet"
+      }
+    ]
+  },
+  {
+    "pack": "zatsugaku-king-2",
+    "id": "zk215",
+    "status": "supported",
+    "answerCheck": "MOTTAINAI活動主体が、3Rと資源への敬意を一言で表すことを世界共通語として紹介する理由に掲げている。",
+    "explanationCheck": "キャンペーン公式本文で3Rを一言で表せること、資源への敬意、マータイ氏による海外普及の提唱を確認。『紹介されることがある』という限定的な原文に整合。",
+    "note": "2026-09-06追加照合。紹介主体の説明として支持。短さが普及を決めた唯一の実証的原因という主張や、価値観への賛否の正誤判定にはしない。",
+    "sources": [
+      {
+        "title": "環境省 こども環境白書2007",
+        "url": "https://www.env.go.jp/policy/hakusyo/kodomo/h19/pdf/14step3-2.pdf",
+        "evidence": "3Rを一言で表すとしてマータイ氏が世界へ発信。",
+        "access": "search_snippet"
+      },
+      {
+        "title": "環境省 3Rまなびあいブック",
+        "url": "https://www.env.go.jp/recycle/yoki/b_2_book/pdf/kodomo/00_3r_manabiaibook_kodomo.pdf",
+        "evidence": "MOTTAINAI普及と自然や物を尊重する概念。",
+        "access": "search_snippet"
+      },
+      {
+        "title": "MOTTAINAIキャンペーン MOTTAINAIについて",
+        "url": "https://www.mottainai.info/jp/about/",
+        "evidence": "3Rと資源への敬意を一言で表す語として、世界共通語化を提唱した経緯。",
+        "access": "page"
+      }
+    ],
+    "remainingClaims": []
+  },
+  {
+    "pack": "zatsugaku-king-2",
+    "id": "zk216",
+    "status": "caution",
+    "answerCheck": "文の後半を省略した挨拶という一般的説明は研究論文と整合。",
+    "explanationCheck": "特定の後半が『ご機嫌いかが』に限られる根拠はない。解説は『のように』と限定を避けるが、選択肢の天気の続きも省略構造として排除しにくい。",
+    "note": "由来の複数例が正答／誤答にまたがる曖昧さ。",
+    "sources": [
+      {
+        "title": "北海道大学 肖潔 日本語交感発話慣用表現",
+        "url": "https://eprints.lib.hokudai.ac.jp/dspace/bitstream/2115/90700/3/kokugokokubunkenkyu_159_49-64_rev.pdf",
+        "evidence": "こんにちは・こんばんは等で後半述部が省略し慣用化する説明。",
+        "access": "search_snippet"
+      }
+    ],
+    "remainingClaims": []
+  },
+  {
+    "pack": "zatsugaku-king-2",
+    "id": "zk217",
+    "status": "supported",
+    "answerCheck": "tycoonは日本語taikunから。",
+    "explanationCheck": "将軍の対外称号から英語へ伝わり大物・実業家の意味となったことを辞書で確認。",
+    "note": "将軍は指示対象であり語の借用元表記は大君。",
+    "sources": [
+      {
+        "title": "Merriam-Webster tycoon",
+        "url": "https://www.merriam-webster.com/dictionary/tycoon",
+        "evidence": "語源Japanese taikun、古義shogun、現義実業界の有力者。",
+        "access": "search_snippet"
+      },
+      {
+        "title": "American Heritage tycoon",
+        "url": "https://ahdictionary.com/word/search.html?q=tycoon",
+        "evidence": "日本当局が対外関係で用いた将軍の称号との背景を記載。",
+        "access": "search_snippet"
+      }
+    ]
+  },
+  {
+    "pack": "zatsugaku-king-2",
+    "id": "zk218",
+    "status": "supported",
+    "answerCheck": "元は酒の肴。",
+    "explanationCheck": "酒菜の意から魚への意味限定、魚肉を多く肴としたことによるという辞書解説を学術論文の引用で確認。",
+    "note": "二次引用ではあるが出典は明鏡国語辞典p629と特定。",
+    "sources": [
+      {
+        "title": "日本学刊26号 王崗2023論考",
+        "url": "https://www.japanese-edu.org.hk/jp/publish/gakkan/pdf/hkgk02601.pdf",
+        "evidence": "明鏡国語辞典の『酒菜』の意と魚肉を多く酒の肴とした由来を引用。",
+        "access": "search_snippet"
+      }
+    ]
+  },
+  {
+    "pack": "zatsugaku-king-2",
+    "id": "zk219",
+    "status": "supported",
+    "answerCheck": "消滅危機言語という呼称。",
+    "explanationCheck": "話者と継承の減少に対して保存・継承が必要という文化庁資料と整合。",
+    "note": "方言も消滅危機に含まれるため、選択肢『方言』が常に無関係と教えない配慮は有用。",
+    "sources": [
+      {
+        "title": "文化庁 消滅の危機にある言語・方言",
+        "url": "https://www.bunka.go.jp/seisaku/kokugo_nihongo/kokugo_shisaku/kikigengo/index.html",
+        "evidence": "ユネスコの危機言語と国内の言語・方言の保存継承を説明。",
+        "access": "search_snippet"
+      }
+    ]
+  },
+  {
+    "pack": "zatsugaku-king-2",
+    "id": "zk220",
+    "status": "supported",
+    "answerCheck": "国・地域で異なるため世界共通ではない。",
+    "explanationCheck": "国語研は地域差・文化差を説明し、WFD資料は文法を持つ言語として扱う。",
+    "note": "手話全体を単一言語と誤読しないよう『それぞれの言語』の表現がより明確。",
+    "sources": [
+      {
+        "title": "国立国語研究所 手話って世界共通ですか",
+        "url": "https://kotoba.ninjal.ac.jp/qa/yokuaru/qa-43/",
+        "evidence": "手話の地域文化差と非普遍性。",
+        "access": "search_snippet"
+      },
+      {
+        "title": "WFD Working Together",
+        "url": "https://wfdeaf.org/wp-content/uploads/2016/10/Working-Together-PDF-manual.pdf",
+        "evidence": "手話の言語としての文法と開発協力での扱い。",
+        "access": "search_snippet"
+      }
+    ]
+  }
+]

@@ -1,0 +1,946 @@
+{
+  "date": "2026-09-06",
+  "scope": "Owner-approved second five quiz corrections only; no commit or publication",
+  "baseCommit": "3a8b174d07b0e5302aeaf406e75f16fd38d7966e",
+  "beforeSha256": "79462941efcdde0e0de986162dc5d13d0dd53c1e796324e4e329cc95010e36e8",
+  "afterSha256": "058162a845442933af2e95caf7442dda5b5a3f4b3d66821a1107db57472b19ae",
+  "packs": 24,
+  "questions": 480,
+  "unchanged": 475,
+  "changes": [
+    {
+      "pack": "series-2choice",
+      "id": "s03",
+      "before": {
+        "id": "s03",
+        "difficulty": 2,
+        "question": "くもの巣は全部ねばねば？ それとも ねばねばしない糸もある？",
+        "choices": [
+          "全部ねばねば",
+          "ねばねばしない糸もある"
+        ],
+        "answerIndex": 1,
+        "explanation": "くも自身が歩くところはねばねばしません。じゃないと自分がくっついちゃいますよね。"
+      },
+      "after": {
+        "id": "s03",
+        "difficulty": 2,
+        "question": "くもの巣は全部ねばねば？ それとも ねばねばしない糸もある？",
+        "choices": [
+          "全部ねばねば",
+          "ねばねばしない糸もある"
+        ],
+        "answerIndex": 1,
+        "explanation": "丸い網を作るくもの巣には、虫を捕まえるねばねばした糸と、巣を支えるねばねばしない糸があります。"
+      }
+    },
+    {
+      "pack": "ruigigo",
+      "id": "ru10",
+      "before": {
+        "id": "ru10",
+        "difficulty": 2,
+        "question": "「知らないうちに、知り合いのうわさを＿＿、心配になった」。合うのは？",
+        "choices": [
+          "聞いて",
+          "耳にして",
+          "聞きつけて"
+        ],
+        "answerIndex": 1,
+        "explanation": "「耳にする」は偶然耳に入ってくる感じ。「聞く」は汎用で意図の有無が出ず、「聞きつける」は積極的に情報を探すニュアンスで、「知らないうちに」と合わない。"
+      },
+      "after": {
+        "id": "ru10",
+        "difficulty": 2,
+        "question": "「うわさを耳にする」の「耳にする」に近い意味は？",
+        "choices": [
+          "うわさを人に話す",
+          "うわさを聞く",
+          "うわさを忘れる"
+        ],
+        "answerIndex": 1,
+        "explanation": "「耳にする」は「聞く」という意味の慣用句。「聞きつける」にも、偶然聞いたり、人づてに聞いたりして知る意味がある。"
+      }
+    },
+    {
+      "pack": "douongigo",
+      "id": "do16",
+      "before": {
+        "id": "do16",
+        "difficulty": 3,
+        "question": "「苦しい練習の末、大会で大きな勝利を＿＿」。□に入る字として合うのは？",
+        "choices": [
+          "収めた",
+          "治めた",
+          "納めた"
+        ],
+        "answerIndex": 0,
+        "explanation": "成果・結果・怒りなどを手中に入れるのは「収める」で、「回収」の「収」。「治める」は国や組織を統治する意味、「納める」は税金や品物を納入する意味で、「勝利」には合わない。"
+      },
+      "after": {
+        "id": "do16",
+        "difficulty": 3,
+        "question": "「苦しい練習の末、大会で大きな勝利を＿＿」。□に入る字として合うのは？",
+        "choices": [
+          "収めた",
+          "治めた",
+          "納めた"
+        ],
+        "answerIndex": 0,
+        "explanation": "勝利や成功など、よい結果を得るときは「収める」を使う。「治める」は国や組織を統治する意味、「納める」は税金や品物を納入する意味で、「勝利」には合わない。"
+      }
+    },
+    {
+      "pack": "kanji-himitsu",
+      "id": "khm05",
+      "before": {
+        "id": "khm05",
+        "difficulty": 2,
+        "question": "「珈琲」「煙草」「倶楽部」のように、漢字の意味とは関係なく、音や雰囲気だけを漢字に当てはめた表記のことを何という？",
+        "choices": [
+          "当て字",
+          "会意文字",
+          "形声文字"
+        ],
+        "answerIndex": 0,
+        "explanation": "「当て字」は漢字の意味を無視して、音や語感だけを漢字に当てはめたもの。「珈琲（コーヒー）」「倶楽部（クラブ）」のように、外来語を漢字で表すときによく使われた方法。"
+      },
+      "after": {
+        "id": "khm05",
+        "difficulty": 2,
+        "question": "「珈琲」「倶楽部」のように、ことばの音に漢字を当てた表記を何という？",
+        "choices": [
+          "当て字",
+          "会意文字",
+          "形声文字"
+        ],
+        "answerIndex": 0,
+        "explanation": "ここでの「当て字」は、漢字の音や訓を借りてことばを表す使い方。「珈琲（コーヒー）」「倶楽部（クラブ）」などが例。熟字訓を含めて、広い意味で「当て字」と呼ぶ場合もある。"
+      }
+    },
+    {
+      "pack": "zatsugaku-king-2",
+      "id": "zk210",
+      "before": {
+        "id": "zk210",
+        "difficulty": 3,
+        "question": "今では世界中のスマホで使われている「絵文字（emoji）」は、もともとどこで生まれたことばであり文化とされる？",
+        "choices": [
+          "日本の携帯電話サービス",
+          "アメリカのSNS会社",
+          "中国のチャットアプリ"
+        ],
+        "answerIndex": 0,
+        "explanation": "「絵文字」は1999年に日本の携帯電話サービスのために作られたのが始まりとされる。その後「emoji」という名前のまま世界中に広まり、英語の辞書にもそのまま登録されるようになった、日本語がほぼそのまま世界共通語になっためずらしい例。"
+      },
+      "after": {
+        "id": "zk210",
+        "difficulty": 3,
+        "question": "今では世界中のスマホで使われている「絵文字（emoji）」が、携帯電話で使う文化として広まった出発点はどこ？",
+        "choices": [
+          "日本の携帯電話サービス",
+          "アメリカのSNS会社",
+          "中国のチャットアプリ"
+        ],
+        "answerIndex": 0,
+        "explanation": "絵文字は日本の携帯電話で使われて広まりました。1999年にはNTTドコモが176種類の絵文字を公開しています。「emoji」という英語の名前も、日本語の「絵文字」から来ています。"
+      }
+    }
+  ],
+  "checks": {
+    "structure": "24 packs / 480 questions; only selected 5 differ from beforeSha256; other 475 unchanged including prior 5 corrections; IDs/difficulty/order/choice counts/answer indices and pack metadata unchanged",
+    "lint": "PASS 16 checks",
+    "contentAudit": "PASS exit 0; same 7 coverage warnings; no within-app exact duplicates",
+    "diffCheck": "PASS"
+  },
+  "review": {
+    "result": "approved",
+    "scope": "same-family independent context; no additional change requests",
+    "sourceSha256": "058162a845442933af2e95caf7442dda5b5a3f4b3d66821a1107db57472b19ae"
+  },
+  "browser": {
+    "method": "Actual app UI via local server, stats.js response replaced with inert comment in server memory; no original app logic or data stubbing; DOM-driven clicks through all-question mode. No Firebase/iPhone.",
+    "checks": [
+      {
+        "id": "s03",
+        "choices": [
+          "①全部ねばねば",
+          "②ねばねばしない糸もある"
+        ],
+        "question": "くもの巣は全部ねばねば？ それとも ねばねばしない糸もある？",
+        "answer": "正解: ② ねばねばしない糸もある",
+        "disabled": true,
+        "explanation": "丸い網を作るくもの巣には、虫を捕まえるねばねばした糸と、巣を支えるねばねばしない糸があります。",
+        "progress": "Q6 / 20",
+        "result": "せいかい！",
+        "layouts": [
+          {
+            "buttons": [
+              {
+                "bottom": 347.5,
+                "height": 86,
+                "left": 260,
+                "right": 1020,
+                "top": 261.5,
+                "width": 760,
+                "x": 260,
+                "y": 261.5
+              },
+              {
+                "bottom": 447.5,
+                "height": 86,
+                "left": 260,
+                "right": 1020,
+                "top": 361.5,
+                "width": 760,
+                "x": 260,
+                "y": 361.5
+              }
+            ],
+            "documentWidth": 1280,
+            "explanation": {
+              "bottom": 650.856689453125,
+              "height": 25.5738525390625,
+              "left": 282.9685974121094,
+              "right": 997.0313415527344,
+              "top": 625.2828369140625,
+              "width": 714.062744140625,
+              "x": 282.9685974121094,
+              "y": 625.2828369140625
+            },
+            "question": {
+              "bottom": 211.5,
+              "height": 96,
+              "left": 288,
+              "right": 992,
+              "top": 115.5,
+              "width": 704,
+              "x": 288,
+              "y": 115.5
+            },
+            "viewport": 1280
+          },
+          {
+            "buttons": [
+              {
+                "bottom": 320.671875,
+                "height": 72,
+                "left": 14,
+                "right": 361,
+                "top": 248.671875,
+                "width": 347,
+                "x": 14,
+                "y": 248.671875
+              },
+              {
+                "bottom": 406.671875,
+                "height": 72,
+                "left": 14,
+                "right": 361,
+                "top": 334.671875,
+                "width": 347,
+                "x": 14,
+                "y": 334.671875
+              }
+            ],
+            "documentWidth": 375,
+            "explanation": {
+              "bottom": 663.6216430664062,
+              "height": 76.609130859375,
+              "left": 37.78668594360352,
+              "right": 337.213321685791,
+              "top": 587.0125122070312,
+              "width": 299.4266357421875,
+              "x": 37.78668594360352,
+              "y": 587.0125122070312
+            },
+            "question": {
+              "bottom": 206.671875,
+              "height": 115.171875,
+              "left": 32,
+              "right": 343,
+              "top": 91.5,
+              "width": 311,
+              "x": 32,
+              "y": 91.5
+            },
+            "viewport": 375
+          }
+        ]
+      },
+      {
+        "id": "ru10",
+        "choices": [
+          "①うわさを人に話す",
+          "②うわさを聞く",
+          "③うわさを忘れる"
+        ],
+        "question": "「うわさを耳にする」の「耳にする」に近い意味は？",
+        "answer": "正解: ② うわさを聞く",
+        "disabled": true,
+        "explanation": "「耳にする」は「聞く」という意味の慣用句。「聞きつける」にも、偶然聞いたり、人づてに聞いたりして知る意味がある。",
+        "progress": "Q8 / 20",
+        "result": "せいかい！",
+        "layouts": [
+          {
+            "buttons": [
+              {
+                "bottom": 347.5,
+                "height": 86,
+                "left": 260,
+                "right": 1020,
+                "top": 261.5,
+                "width": 760,
+                "x": 260,
+                "y": 261.5
+              },
+              {
+                "bottom": 447.5,
+                "height": 86,
+                "left": 260,
+                "right": 1020,
+                "top": 361.5,
+                "width": 760,
+                "x": 260,
+                "y": 361.5
+              },
+              {
+                "bottom": 547.5,
+                "height": 86,
+                "left": 260,
+                "right": 1020,
+                "top": 461.5,
+                "width": 760,
+                "x": 260,
+                "y": 461.5
+              }
+            ],
+            "documentWidth": 1280,
+            "explanation": {
+              "bottom": 776.3271484375,
+              "height": 51.0462646484375,
+              "left": 283.6773376464844,
+              "right": 996.3226013183594,
+              "top": 725.2808837890625,
+              "width": 712.645263671875,
+              "x": 283.6773376464844,
+              "y": 725.2808837890625
+            },
+            "question": {
+              "bottom": 211.5,
+              "height": 96,
+              "left": 288,
+              "right": 992,
+              "top": 115.5,
+              "width": 704,
+              "x": 288,
+              "y": 115.5
+            },
+            "viewport": 1280
+          },
+          {
+            "buttons": [
+              {
+                "bottom": 320.671875,
+                "height": 72,
+                "left": 14,
+                "right": 361,
+                "top": 248.671875,
+                "width": 347,
+                "x": 14,
+                "y": 248.671875
+              },
+              {
+                "bottom": 406.671875,
+                "height": 72,
+                "left": 14,
+                "right": 361,
+                "top": 334.671875,
+                "width": 347,
+                "x": 14,
+                "y": 334.671875
+              },
+              {
+                "bottom": 492.671875,
+                "height": 72,
+                "left": 14,
+                "right": 361,
+                "top": 420.671875,
+                "width": 347,
+                "x": 14,
+                "y": 420.671875
+              }
+            ],
+            "documentWidth": 375,
+            "explanation": {
+              "bottom": 749.60009765625,
+              "height": 76.5693359375,
+              "left": 37.86449432373047,
+              "right": 337.13549041748047,
+              "top": 673.03076171875,
+              "width": 299.27099609375,
+              "x": 37.86449432373047,
+              "y": 673.03076171875
+            },
+            "question": {
+              "bottom": 206.671875,
+              "height": 115.171875,
+              "left": 32,
+              "right": 343,
+              "top": 91.5,
+              "width": 311,
+              "x": 32,
+              "y": 91.5
+            },
+            "viewport": 375
+          }
+        ]
+      },
+      {
+        "id": "do16",
+        "choices": [
+          "①収めた",
+          "②治めた",
+          "③納めた"
+        ],
+        "question": "「苦しい練習の末、大会で大きな勝利を＿＿」。□に入る字として合うのは？",
+        "answer": "正解: ① 収めた",
+        "disabled": true,
+        "explanation": "勝利や成功など、よい結果を得るときは「収める」を使う。「治める」は国や組織を統治する意味、「納める」は税金や品物を納入する意味で、「勝利」には合わない。",
+        "progress": "Q13 / 20",
+        "result": "せいかい！",
+        "layouts": [
+          {
+            "buttons": [
+              {
+                "bottom": 347.5,
+                "height": 86,
+                "left": 260,
+                "right": 1020,
+                "top": 261.5,
+                "width": 760,
+                "x": 260,
+                "y": 261.5
+              },
+              {
+                "bottom": 447.5,
+                "height": 86,
+                "left": 260,
+                "right": 1020,
+                "top": 361.5,
+                "width": 760,
+                "x": 260,
+                "y": 361.5
+              },
+              {
+                "bottom": 547.5,
+                "height": 86,
+                "left": 260,
+                "right": 1020,
+                "top": 461.5,
+                "width": 760,
+                "x": 260,
+                "y": 461.5
+              }
+            ],
+            "documentWidth": 1280,
+            "explanation": {
+              "bottom": 776.3106079101562,
+              "height": 51.02093505859375,
+              "left": 283.85394287109375,
+              "right": 996.1461181640624,
+              "top": 725.2896728515625,
+              "width": 712.2921752929688,
+              "x": 283.85394287109375,
+              "y": 725.2896728515625
+            },
+            "question": {
+              "bottom": 211.5,
+              "height": 96,
+              "left": 288,
+              "right": 992,
+              "top": 115.5,
+              "width": 704,
+              "x": 288,
+              "y": 115.5
+            },
+            "viewport": 1280
+          },
+          {
+            "buttons": [
+              {
+                "bottom": 320.671875,
+                "height": 72,
+                "left": 14,
+                "right": 361,
+                "top": 248.671875,
+                "width": 347,
+                "x": 14,
+                "y": 248.671875
+              },
+              {
+                "bottom": 406.671875,
+                "height": 72,
+                "left": 14,
+                "right": 361,
+                "top": 334.671875,
+                "width": 347,
+                "x": 14,
+                "y": 334.671875
+              },
+              {
+                "bottom": 492.671875,
+                "height": 72,
+                "left": 14,
+                "right": 361,
+                "top": 420.671875,
+                "width": 347,
+                "x": 14,
+                "y": 420.671875
+              }
+            ],
+            "documentWidth": 375,
+            "explanation": {
+              "bottom": 775.0847778320312,
+              "height": 102.0418701171875,
+              "left": 37.93865203857422,
+              "right": 337.0613327026367,
+              "top": 673.0429077148438,
+              "width": 299.1226806640625,
+              "x": 37.93865203857422,
+              "y": 673.0429077148438
+            },
+            "question": {
+              "bottom": 206.671875,
+              "height": 115.171875,
+              "left": 32,
+              "right": 343,
+              "top": 91.5,
+              "width": 311,
+              "x": 32,
+              "y": 91.5
+            },
+            "viewport": 375
+          }
+        ]
+      },
+      {
+        "id": "khm05",
+        "choices": [
+          "①当て字",
+          "②会意文字",
+          "③形声文字"
+        ],
+        "question": "「珈琲」「倶楽部」のように、ことばの音に漢字を当てた表記を何という？",
+        "answer": "正解: ① 当て字",
+        "disabled": true,
+        "explanation": "ここでの「当て字」は、漢字の音や訓を借りてことばを表す使い方。「珈琲（コーヒー）」「倶楽部（クラブ）」などが例。熟字訓を含めて、広い意味で「当て字」と呼ぶ場合もある。",
+        "progress": "Q10 / 20",
+        "result": "せいかい！",
+        "layouts": [
+          {
+            "buttons": [
+              {
+                "bottom": 347.5,
+                "height": 86,
+                "left": 260,
+                "right": 1020,
+                "top": 261.5,
+                "width": 760,
+                "x": 260,
+                "y": 261.5
+              },
+              {
+                "bottom": 447.5,
+                "height": 86,
+                "left": 260,
+                "right": 1020,
+                "top": 361.5,
+                "width": 760,
+                "x": 260,
+                "y": 361.5
+              },
+              {
+                "bottom": 547.5,
+                "height": 86,
+                "left": 260,
+                "right": 1020,
+                "top": 461.5,
+                "width": 760,
+                "x": 260,
+                "y": 461.5
+              }
+            ],
+            "documentWidth": 1280,
+            "explanation": {
+              "bottom": 776.3018798828125,
+              "height": 51.0076904296875,
+              "left": 283.94635009765625,
+              "right": 996.0536499023438,
+              "top": 725.294189453125,
+              "width": 712.1072998046875,
+              "x": 283.94635009765625,
+              "y": 725.294189453125
+            },
+            "question": {
+              "bottom": 211.5,
+              "height": 96,
+              "left": 288,
+              "right": 992,
+              "top": 115.5,
+              "width": 704,
+              "x": 288,
+              "y": 115.5
+            },
+            "viewport": 1280
+          },
+          {
+            "buttons": [
+              {
+                "bottom": 320.671875,
+                "height": 72,
+                "left": 14,
+                "right": 361,
+                "top": 248.671875,
+                "width": 347,
+                "x": 14,
+                "y": 248.671875
+              },
+              {
+                "bottom": 406.671875,
+                "height": 72,
+                "left": 14,
+                "right": 361,
+                "top": 334.671875,
+                "width": 347,
+                "x": 14,
+                "y": 334.671875
+              },
+              {
+                "bottom": 492.671875,
+                "height": 72,
+                "left": 14,
+                "right": 361,
+                "top": 420.671875,
+                "width": 347,
+                "x": 14,
+                "y": 420.671875
+              }
+            ],
+            "documentWidth": 375,
+            "explanation": {
+              "bottom": 800.5625,
+              "height": 127.5,
+              "left": 38,
+              "right": 337,
+              "top": 673.0625,
+              "width": 299,
+              "x": 38,
+              "y": 673.0625
+            },
+            "question": {
+              "bottom": 206.671875,
+              "height": 115.171875,
+              "left": 32,
+              "right": 343,
+              "top": 91.5,
+              "width": 311,
+              "x": 32,
+              "y": 91.5
+            },
+            "viewport": 375
+          }
+        ]
+      },
+      {
+        "id": "zk210",
+        "choices": [
+          "①日本の携帯電話サービス",
+          "②アメリカのSNS会社",
+          "③中国のチャットアプリ"
+        ],
+        "question": "今では世界中のスマホで使われている「絵文字（emoji）」が、携帯電話で使う文化として広まった出発点はどこ？",
+        "answer": "正解: ① 日本の携帯電話サービス",
+        "disabled": true,
+        "explanation": "絵文字は日本の携帯電話で使われて広まりました。1999年にはNTTドコモが176種類の絵文字を公開しています。「emoji」という英語の名前も、日本語の「絵文字」から来ています。",
+        "progress": "Q20 / 20",
+        "result": "せいかい！",
+        "layouts": [
+          {
+            "buttons": [
+              {
+                "bottom": 395.5,
+                "height": 86,
+                "left": 260,
+                "right": 1020,
+                "top": 309.5,
+                "width": 760,
+                "x": 260,
+                "y": 309.5
+              },
+              {
+                "bottom": 495.5,
+                "height": 86,
+                "left": 260,
+                "right": 1020,
+                "top": 409.5,
+                "width": 760,
+                "x": 260,
+                "y": 409.5
+              },
+              {
+                "bottom": 595.5,
+                "height": 86,
+                "left": 260,
+                "right": 1020,
+                "top": 509.5,
+                "width": 760,
+                "x": 260,
+                "y": 509.5
+              }
+            ],
+            "documentWidth": 1280,
+            "explanation": {
+              "bottom": 824.31201171875,
+              "height": 51.02313232421875,
+              "left": 283.8385314941406,
+              "right": 996.1615295410156,
+              "top": 773.2888793945312,
+              "width": 712.322998046875,
+              "x": 283.8385314941406,
+              "y": 773.2888793945312
+            },
+            "question": {
+              "bottom": 259.5,
+              "height": 144,
+              "left": 288,
+              "right": 992,
+              "top": 115.5,
+              "width": 704,
+              "x": 288,
+              "y": 115.5
+            },
+            "viewport": 1280
+          },
+          {
+            "buttons": [
+              {
+                "bottom": 397.453125,
+                "height": 72,
+                "left": 14,
+                "right": 361,
+                "top": 325.453125,
+                "width": 347,
+                "x": 14,
+                "y": 325.453125
+              },
+              {
+                "bottom": 483.453125,
+                "height": 72,
+                "left": 14,
+                "right": 361,
+                "top": 411.453125,
+                "width": 347,
+                "x": 14,
+                "y": 411.453125
+              },
+              {
+                "bottom": 569.453125,
+                "height": 72,
+                "left": 14,
+                "right": 361,
+                "top": 497.453125,
+                "width": 347,
+                "x": 14,
+                "y": 497.453125
+              }
+            ],
+            "documentWidth": 375,
+            "explanation": {
+              "bottom": 877.3526611328125,
+              "height": 127.5169677734375,
+              "left": 37.980133056640625,
+              "right": 337.0198974609375,
+              "top": 749.835693359375,
+              "width": 299.0397644042969,
+              "x": 37.980133056640625,
+              "y": 749.835693359375
+            },
+            "question": {
+              "bottom": 283.453125,
+              "height": 191.953125,
+              "left": 32,
+              "right": 343,
+              "top": 91.5,
+              "width": 311,
+              "x": 32,
+              "y": 91.5
+            },
+            "viewport": 375
+          }
+        ]
+      },
+      {
+        "id": "s03",
+        "choices": [
+          "①全部ねばねば",
+          "②ねばねばしない糸もある"
+        ],
+        "question": "くもの巣は全部ねばねば？ それとも ねばねばしない糸もある？",
+        "answer": "正解: ② ねばねばしない糸もある",
+        "disabled": true,
+        "explanation": "丸い網を作るくもの巣には、虫を捕まえるねばねばした糸と、巣を支えるねばねばしない糸があります。",
+        "progress": "Q9 / 20",
+        "result": "せいかい！",
+        "layouts": [
+          {
+            "buttons": [
+              {
+                "bottom": 347.5,
+                "height": 86,
+                "left": 260,
+                "right": 1020,
+                "top": 261.5,
+                "width": 760,
+                "x": 260,
+                "y": 261.5
+              },
+              {
+                "bottom": 447.5,
+                "height": 86,
+                "left": 260,
+                "right": 1020,
+                "top": 361.5,
+                "width": 760,
+                "x": 260,
+                "y": 361.5
+              }
+            ],
+            "documentWidth": 1280,
+            "explanation": {
+              "bottom": 650.8367309570312,
+              "height": 25.5491943359375,
+              "left": 283.3128356933594,
+              "right": 996.6871032714844,
+              "top": 625.2875366210938,
+              "width": 713.374267578125,
+              "x": 283.3128356933594,
+              "y": 625.2875366210938
+            },
+            "question": {
+              "bottom": 211.5,
+              "height": 96,
+              "left": 288,
+              "right": 992,
+              "top": 115.5,
+              "width": 704,
+              "x": 288,
+              "y": 115.5
+            },
+            "viewport": 1280
+          },
+          {
+            "buttons": [
+              {
+                "bottom": 320.671875,
+                "height": 72,
+                "left": 14,
+                "right": 361,
+                "top": 248.671875,
+                "width": 347,
+                "x": 14,
+                "y": 248.671875
+              },
+              {
+                "bottom": 406.671875,
+                "height": 72,
+                "left": 14,
+                "right": 361,
+                "top": 334.671875,
+                "width": 347,
+                "x": 14,
+                "y": 334.671875
+              }
+            ],
+            "documentWidth": 375,
+            "explanation": {
+              "bottom": 663.5795288085938,
+              "height": 76.53143310546875,
+              "left": 37.93858337402344,
+              "right": 337.06138610839844,
+              "top": 587.048095703125,
+              "width": 299.122802734375,
+              "x": 37.93858337402344,
+              "y": 587.048095703125
+            },
+            "question": {
+              "bottom": 206.671875,
+              "height": 115.171875,
+              "left": 32,
+              "right": 343,
+              "top": 91.5,
+              "width": 311,
+              "x": 32,
+              "y": 91.5
+            },
+            "viewport": 375
+          }
+        ]
+      }
+    ],
+    "flow": {
+      "wrong": {
+        "id": "ru11",
+        "answer": "正解: ② 出会った",
+        "result": "おしい！"
+      },
+      "fullEnd": "- main:\n  - generic: celebration\n  - paragraph: クイズ終了\n  - heading \"類義語クイズ（難しめ）\" [level=2]\n  - paragraph: 19 / 20\n  - paragraph: いい調子。気になった問題があれば、話のたねにしてみよう。\n  - button \"replay もう一度あそぶ\":\n    - generic: replay\n    - text: もう一度あそぶ\n  - button \"home TOPに戻る\":\n    - generic: home\n    - text: TOPに戻る\n- button \"あそびかた\":\n  - generic: help",
+      "allCorrectEnd": "- main:\n  - generic: celebration\n  - paragraph: クイズ終了\n  - heading \"ことばの雑学王2\" [level=2]\n  - paragraph: 20 / 20\n  - paragraph: いい調子。気になった問題があれば、話のたねにしてみよう。\n  - button \"replay もう一度あそぶ\":\n    - generic: replay\n    - text: もう一度あそぶ\n  - button \"home TOPに戻る\":\n    - generic: home\n    - text: TOPに戻る\n- button \"あそびかた\":\n  - generic: help"
+    },
+    "consoleErrors": [],
+    "screenshotNotes": "サイズ変更直後・fullPageのキャプチャに描画異常があったため判定に使わず、安定後の通常キャプチャで5問の375px表示とs03の1280px表示、zk210の末尾までのスクロールを確認。"
+  },
+  "copy": {
+    "method": "実app.jsのコピー関数を抽出し、copyToClipboardのみスタブ化したNode VM検証。OSクリップボードの実動作は含まない。",
+    "results": [
+      {
+        "id": "s03",
+        "questionCopy": true,
+        "answerAndExplanationCopy": true
+      },
+      {
+        "id": "ru10",
+        "questionCopy": true,
+        "answerAndExplanationCopy": true
+      },
+      {
+        "id": "do16",
+        "questionCopy": true,
+        "answerAndExplanationCopy": true
+      },
+      {
+        "id": "khm05",
+        "questionCopy": true,
+        "answerAndExplanationCopy": true
+      },
+      {
+        "id": "zk210",
+        "questionCopy": true,
+        "answerAndExplanationCopy": true
+      }
+    ]
+  },
+  "cleanup": {
+    "serverPid": 89726,
+    "serverStopped": true,
+    "port8765Listening": false,
+    "tabsClosed": true,
+    "viewportReset": true,
+    "temporaryFilesCreated": false
+  },
+  "limitations": [
+    "Browser copy functions verified in Node VM with clipboard sink stub; actual clipboard transfer not tested.",
+    "Screenshot rendering immediately after resize/fullPage was unreliable; used settled normal screenshots and DOM geometry, not anomalous captures.",
+    "Not full factual verification of all quiz questions; kbn08 unapproved and kbn10 typo claim withdrawn."
+  ]
+}

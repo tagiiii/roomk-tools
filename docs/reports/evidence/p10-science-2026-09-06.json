@@ -1,0 +1,1526 @@
+{
+  "date": "2026-09-06",
+  "scope": "P-10 調査報告のみ・担当4パック90問",
+  "state": "one_pass_recorded_with_unverified",
+  "method": "対象90問の問題・全選択肢・正答・解説を読取。一次資料・公式ページを優先し、本文確認と検索抽出を区別。supported は設問中の主要な事実の支持、完全証明を意味しない。未照合部分は unverified と個別欄に残す。推理の反例・前提確認は内部論理検証として明記。",
+  "results": [
+    {
+      "pack": "zatsugaku-3choice",
+      "id": "z01",
+      "status": "supported",
+      "answerCheck": "飛べないペンギンが平たく硬い翼で水中を進むことを確認。",
+      "explanationCheck": "本文の主要な機構と整合。会話用の感想は正誤判定対象外。",
+      "note": "飛べないペンギンが平たく硬い翼で水中を進むことを確認。",
+      "sources": [
+        {
+          "title": "San Diego Zoo Picture a Penguin",
+          "url": "https://adminblogs.sandiegozoo.org/zoonooz/picture-a-penguin/",
+          "evidence": "飛べないペンギンが平たく硬い翼で水中を進むことを確認。",
+          "access": "page"
+        }
+      ]
+    },
+    {
+      "pack": "zatsugaku-3choice",
+      "id": "z02",
+      "status": "supported",
+      "answerCheck": "月は地球、地球は太陽を公転することを確認。",
+      "explanationCheck": "本文の主要な機構と整合。会話用の感想は正誤判定対象外。",
+      "note": "月は地球、地球は太陽を公転することを確認。",
+      "sources": [
+        {
+          "title": "NASA What is an orbit",
+          "url": "https://www.nasa.gov/solar-system/what-is-an-orbit-grades-k-4/",
+          "evidence": "月は地球、地球は太陽を公転することを確認。",
+          "access": "page"
+        }
+      ]
+    },
+    {
+      "pack": "zatsugaku-3choice",
+      "id": "z03",
+      "status": "supported",
+      "answerCheck": "表面の粒は各々果実で内部に種があることを確認。『多くの人が思う』は調査なしの会話表現。",
+      "explanationCheck": "本文の主要な機構と整合。会話用の感想は正誤判定対象外。",
+      "note": "表面の粒は各々果実で内部に種があることを確認。『多くの人が思う』は調査なしの会話表現。",
+      "sources": [
+        {
+          "title": "農林水産省 いちご豆知識",
+          "url": "https://www.maff.go.jp/j/pr/aff/1912/spe1_02.html",
+          "evidence": "表面の粒は各々果実で内部に種があることを確認。『多くの人が思う』は調査なしの会話表現。",
+          "access": "page"
+        }
+      ]
+    },
+    {
+      "pack": "zatsugaku-3choice",
+      "id": "z04",
+      "status": "incorrect",
+      "answerCheck": "正答『かたい幹がない』は大型草本という分類と整合。",
+      "explanationCheck": "誤り：幹状部分は茎の重なりではなく葉の基部（葉鞘）の重なり。",
+      "note": "バナナは草に『近い』ではなく草本。",
+      "sources": [
+        {
+          "title": "Kew Cavendish banana",
+          "url": "https://www.kew.org/plants/cavendish-banana",
+          "evidence": "giant herb / pseudostem / layers of leaf-bases",
+          "access": "search_snippet"
+        },
+        {
+          "title": "UF/IFAS Banana Growing in the Florida Home Landscape",
+          "url": "https://ask.ifas.ufl.edu/publication/MG040",
+          "evidence": "草本植物であり、幹状の偽茎は重なった葉鞘からなる。主担当紹介後に担当も本文確認。",
+          "access": "page"
+        }
+      ]
+    },
+    {
+      "pack": "zatsugaku-3choice",
+      "id": "z05",
+      "status": "supported",
+      "answerCheck": "こぶに蓄えるのは水でなく脂肪。",
+      "explanationCheck": "本文の主要な機構と整合。会話用の感想は正誤判定対象外。",
+      "note": "こぶに蓄えるのは水でなく脂肪。",
+      "sources": [
+        {
+          "title": "San Diego Zoo Camel",
+          "url": "https://zoo.sandiegozoo.org/animals/camel",
+          "evidence": "こぶに蓄えるのは水でなく脂肪。",
+          "access": "page"
+        }
+      ]
+    },
+    {
+      "pack": "zatsugaku-3choice",
+      "id": "z06",
+      "status": "caution",
+      "answerCheck": "低い利用可能水分が長期保存を支えるという選択肢を大学Extension本文で確認。",
+      "explanationCheck": "水分が乏しく菌が増えにくい説明を支持。ただし高糖濃度も低水分活性に寄与するので『あまいから理由はちがう』を糖自体は無関係と教えない。",
+      "note": "選択肢Bは『甘くて虫が近づけない』という別の誤った機構。解説の省略は読み方次第で、糖の役割を補う編集上の注意として記録。純粋な蜂蜜が低水分で保存される条件の話であり無菌性や乳児への安全性を意味しない。",
+      "sources": [
+        {
+          "title": "Oregon State University Extension：Infusing honey safely",
+          "url": "https://extension.oregonstate.edu/catalog/em-9885-infusing-honey-safely",
+          "evidence": "高糖濃度と低い利用可能水分が長期保存を支え、加水すると微生物が増え得ると説明。",
+          "access": "page"
+        }
+      ],
+      "remainingClaims": []
+    },
+    {
+      "pack": "zatsugaku-3choice",
+      "id": "z07",
+      "status": "caution",
+      "answerCheck": "放熱と聴覚の両機能が公式飼育解説にある。",
+      "explanationCheck": "『暑さ対策が主』『音のためではない』という順位は確認できない。",
+      "note": "選択肢の聴覚を誤答にする『いちばん』は要再検討。",
+      "sources": [
+        {
+          "title": "Smithsonian Fennec fox",
+          "url": "https://nationalzoo.si.edu/animals/fennec-fox",
+          "evidence": "大耳を放熱と砂中の獲物を聴くために使う",
+          "access": "page"
+        }
+      ],
+      "remainingClaims": [
+        "フェネックの大耳について、聴覚より放熱が進化上の主因であるという機能間の順位。"
+      ]
+    },
+    {
+      "pack": "zatsugaku-3choice",
+      "id": "z08",
+      "status": "caution",
+      "answerCheck": "中空骨があることは支持。",
+      "explanationCheck": "『重い骨では飛べない』と骨格全体の軽さへの単純化は要注意。",
+      "note": "研究は同体重で鳥の骨格が特に軽いとは限らず骨組織は高密度と報告。 追加探索でPubMed PMID20236981・PMC2880151を特定したが、関連本文の取得を試みると空ページ／reCAPTCHAとなったため検索抽出扱いを維持。",
+      "sources": [
+        {
+          "title": "Dumont 2010 Bone density and bird skeletons",
+          "url": "https://www.bio.umass.edu/biology/dumont/Dumont_2010_Bone_density_and_bird_skeletons_ProcRoySocB.pdf",
+          "evidence": "bird skeletons are not lightweight relative to total body or soft tissue mass",
+          "access": "search_snippet"
+        }
+      ],
+      "remainingClaims": [
+        "重い骨では飛べないという解説の一般断定（飛行可否を決める骨重量条件）。",
+        "鳥骨格の相対質量・骨密度に関する反証研究は検索抽出であり論文の関連本文取得が未完了。"
+      ]
+    },
+    {
+      "pack": "zatsugaku-3choice",
+      "id": "z09",
+      "status": "not_applicable",
+      "answerCheck": "寒冷適応が重要という趣旨だが、能力の優先順位は種・環境次第で単一の客観正答を定義しにくい。",
+      "explanationCheck": "保温が必要という趣旨と『まず／優先順位』の価値判断を区別すべき。",
+      "note": "主観的な重要度順位は正誤認定対象外。種ごとの生理学的適応は別途の事実照合が必要。",
+      "sources": []
+    },
+    {
+      "pack": "zatsugaku-3choice",
+      "id": "z10",
+      "status": "supported",
+      "answerCheck": "複数の深海魚で大きな眼は低照度適応と説明。すべての深海魚とは記載していない。",
+      "explanationCheck": "本文の主要な機構と整合。会話用の感想は正誤判定対象外。",
+      "note": "複数の深海魚で大きな眼は低照度適応と説明。すべての深海魚とは記載していない。",
+      "sources": [
+        {
+          "title": "NOAA Twilight zone",
+          "url": "https://www.fisheries.noaa.gov/science-blog/critters-twilight-zone",
+          "evidence": "複数の深海魚で大きな眼は低照度適応と説明。すべての深海魚とは記載していない。",
+          "access": "page"
+        }
+      ]
+    },
+    {
+      "pack": "zatsugaku-3choice",
+      "id": "z11",
+      "status": "supported",
+      "answerCheck": "西という概方位を天文台本文で確認。",
+      "explanationCheck": "東から昇り西へ沈むとの説明が一致。",
+      "note": "真東・真西という精密方位や極域の白夜は出題していない。通常の日本の日常場面での概方位を支持。",
+      "sources": [
+        {
+          "title": "国立天文台 暦Wiki 日の出入りの季節変化",
+          "url": "https://eco.mtk.nao.ac.jp/koyomi/wiki/C6FCA4CEBDD0C6FEA4EAA4C8C6EEC3E62FC6FCA4CEBDD0C6FEA4EAA4CEB5A8C0E1CAD1B2BD.html",
+          "evidence": "毎日東から昇り南中して西へ沈む、時々刻々の太陽高度が変化する。",
+          "access": "page"
+        }
+      ]
+    },
+    {
+      "pack": "zatsugaku-3choice",
+      "id": "z12",
+      "status": "supported",
+      "answerCheck": "冷たいコップ表面に空気中の水蒸気が凝結する例が明示。",
+      "explanationCheck": "本文の主要な機構と整合。会話用の感想は正誤判定対象外。",
+      "note": "冷たいコップ表面に空気中の水蒸気が凝結する例が明示。",
+      "sources": [
+        {
+          "title": "USGS Condensation",
+          "url": "https://www.usgs.gov/water-science-school/science/condensation-and-water-cycle",
+          "evidence": "冷たいコップ表面に空気中の水蒸気が凝結する例が明示。",
+          "access": "page"
+        }
+      ]
+    },
+    {
+      "pack": "zatsugaku-3choice",
+      "id": "z13",
+      "status": "supported",
+      "answerCheck": "酵母の発酵が炭酸ガスを生み生地を膨らませる。",
+      "explanationCheck": "本文の主要な機構と整合。会話用の感想は正誤判定対象外。",
+      "note": "酵母の発酵が炭酸ガスを生み生地を膨らませる。",
+      "sources": [
+        {
+          "title": "農林水産省 イースト",
+          "url": "https://www.maff.go.jp/j/heya/kodomo_sodan/0009/01.html",
+          "evidence": "酵母の発酵が炭酸ガスを生み生地を膨らませる。",
+          "access": "page"
+        }
+      ]
+    },
+    {
+      "pack": "zatsugaku-3choice",
+      "id": "z14",
+      "status": "supported",
+      "answerCheck": "親水・親油部分を持つ界面活性剤が油を水になじませ洗い流す。",
+      "explanationCheck": "本文の主要な機構と整合。会話用の感想は正誤判定対象外。",
+      "note": "親水・親油部分を持つ界面活性剤が油を水になじませ洗い流す。",
+      "sources": [
+        {
+          "title": "花王 界面活性剤",
+          "url": "https://www.kao.com/jp/qa/detail/16751/",
+          "evidence": "親水・親油部分を持つ界面活性剤が油を水になじませ洗い流す。",
+          "access": "page"
+        }
+      ]
+    },
+    {
+      "pack": "zatsugaku-3choice",
+      "id": "z15",
+      "status": "supported",
+      "answerCheck": "空気分子が短波長の青い光を強く散乱する入門説明と一致。紫との比較までは出題していない。",
+      "explanationCheck": "本文の主要な機構と整合。会話用の感想は正誤判定対象外。",
+      "note": "空気分子が短波長の青い光を強く散乱する入門説明と一致。紫との比較までは出題していない。",
+      "sources": [
+        {
+          "title": "NASA Why sky blue",
+          "url": "https://spaceplace.nasa.gov/blue-sky/en/",
+          "evidence": "空気分子が短波長の青い光を強く散乱する入門説明と一致。紫との比較までは出題していない。",
+          "access": "page"
+        }
+      ]
+    },
+    {
+      "pack": "zatsugaku-3choice",
+      "id": "z16",
+      "status": "supported",
+      "answerCheck": "金属の良い熱伝導性により手から熱が速く逃げるという正答を支持。",
+      "explanationCheck": "同じ室温へ十分な時間を置いた材料でも冷感が異なる実験と整合。",
+      "note": "博物館実験は板状の材料だが、同室温の金属／木のスプーンという比較の熱移動機構を支持する。",
+      "sources": [
+        {
+          "title": "Exploratorium Cold Metal",
+          "url": "https://www.exploratorium.edu/snacks/cold-metal",
+          "evidence": "室温の材料同士でも熱を運び去る速度が違い、熱伝導の良い金属は冷たく感じる。",
+          "access": "page"
+        }
+      ]
+    },
+    {
+      "pack": "zatsugaku-3choice",
+      "id": "z17",
+      "status": "supported",
+      "answerCheck": "光が音より速いため雷鳴が遅れることを気象機関本文で確認。",
+      "explanationCheck": "遠い雷ほど時間差が増すとの本文と一致。",
+      "note": "局所での光・雷鳴の伝播説明を支持。",
+      "sources": [
+        {
+          "title": "NWS Flagstaff Lightning",
+          "url": "https://www.weather.gov/fgz/Lightning",
+          "evidence": "光は音より速く、雷から遠いほど光を見てから雷鳴までの時間差が大きい。",
+          "access": "page"
+        }
+      ]
+    },
+    {
+      "pack": "zatsugaku-3choice",
+      "id": "z18",
+      "status": "supported",
+      "answerCheck": "大学で公開される熱流体教材の強制対流の機構から、表面付近の空気の移動で冷却が促進される正答を支持。",
+      "explanationCheck": "同教材本文の温冷流体の接触による熱伝達促進と、USGS本文の蒸発による冷却を組み合わせて支持。",
+      "note": "スープ表面への吹送に一般的な対流・蒸発の機構を適用する推論。CMUの直接スープ説明は検索抽出できたがPDF取得失敗のため主根拠にしない。",
+      "sources": [
+        {
+          "title": "University of Pamplona公開教材：Natural Convection / Fundamentals of Thermal-Fluid Sciences",
+          "url": "https://www.unipamplona.edu.co/unipamplona/portalIG/home_135/recursos/general/21082018/thir_unit_termoii.pdf",
+          "evidence": "PDF4–5ページは流体移動が熱交換を速め、送風が食品冷却を促進すると説明。",
+          "access": "page"
+        },
+        {
+          "title": "USGS Evaporation and the Water Cycle",
+          "url": "https://www.usgs.gov/water-science-school/science/evaporation-and-water-cycle",
+          "evidence": "蒸発は周囲から熱を奪い冷却を起こす。",
+          "access": "page"
+        }
+      ],
+      "remainingClaims": []
+    },
+    {
+      "pack": "zatsugaku-3choice",
+      "id": "z19",
+      "status": "supported",
+      "answerCheck": "氷の体積増・液体より低い密度・浮くことを確認。",
+      "explanationCheck": "本文の主要な機構と整合。会話用の感想は正誤判定対象外。",
+      "note": "氷の体積増・液体より低い密度・浮くことを確認。",
+      "sources": [
+        {
+          "title": "USGS Water density",
+          "url": "https://www.usgs.gov/water-science-school/science/water-density",
+          "evidence": "氷の体積増・液体より低い密度・浮くことを確認。",
+          "access": "page"
+        }
+      ]
+    },
+    {
+      "pack": "zatsugaku-3choice",
+      "id": "z20",
+      "status": "caution",
+      "answerCheck": "上昇空気の膨張冷却は確認。空気がその場で薄いだけで冷却し続けるとの読み方は避けたい。",
+      "explanationCheck": "本文の主要な機構と整合。会話用の感想は正誤判定対象外。",
+      "note": "上昇空気の膨張冷却は確認。空気がその場で薄いだけで冷却し続けるとの読み方は避けたい。",
+      "sources": [
+        {
+          "title": "新潟地方気象台",
+          "url": "https://www.data.jma.go.jp/niigata/menu/bousai/met_character.html",
+          "evidence": "上昇空気の膨張冷却は確認。空気がその場で薄いだけで冷却し続けるとの読み方は避けたい。",
+          "access": "page"
+        }
+      ],
+      "remainingClaims": []
+    },
+    {
+      "pack": "tofuken-zatsugaku",
+      "id": "tf01",
+      "status": "supported",
+      "answerCheck": "枝豆が主要材料と公式レシピ本文で確認。",
+      "explanationCheck": "枝豆をゆでてすり潰す・緑のあん・餅や団子に合わせる記述を確認。",
+      "note": "由来の諸説は設問に含まれず、必要な調理事実は整合。",
+      "sources": [
+        {
+          "title": "農林水産省 ずんだ餅 宮城県",
+          "url": "https://www.maff.go.jp/j/keikaku/syokubunka/k_ryouri/search_menu/menu/zunda_mochi_miyagi.html",
+          "evidence": "枝豆をゆですり潰してあんを作り、宮城の餅や串団子に用いる。",
+          "access": "page"
+        }
+      ]
+    },
+    {
+      "pack": "tofuken-zatsugaku",
+      "id": "tf02",
+      "status": "supported",
+      "answerCheck": "正答は公式資料の本文と一致。ほかの選択肢への訂正根拠なし。",
+      "explanationCheck": "主要な事実主張は本文と整合。感想・会話への誘いは正誤判定対象外。",
+      "note": "小麦の太麺と野菜・かぼちゃを味噌で煮る山梨の料理",
+      "sources": [
+        {
+          "title": "農林水産省 ほうとう",
+          "url": "https://www.maff.go.jp/j/keikaku/syokubunka/traditional-foods/menu/hoto.html",
+          "evidence": "小麦の太麺と野菜・かぼちゃを味噌で煮る山梨の料理",
+          "access": "page"
+        }
+      ]
+    },
+    {
+      "pack": "tofuken-zatsugaku",
+      "id": "tf03",
+      "status": "supported",
+      "answerCheck": "岡山県の県鳥キジは全国知事会の県シンボル本文で確認。",
+      "explanationCheck": "同本文が桃太郎伝説との関連を明示。『岡山らしさを感じやすい』は感想として正誤判定しない。",
+      "note": "県民の鳥と伝説の結び付きの事実を確認。お供という物語役割は資料の『桃太郎伝説にも登場』に沿うが本文の逐語記述ではない。",
+      "sources": [
+        {
+          "title": "全国知事会：岡山県のシンボル",
+          "url": "https://www.nga.gr.jp/pref_info/symbol/okayama.html",
+          "evidence": "県民の鳥はキジ、桃太郎伝説にも登場すると説明。",
+          "access": "page"
+        }
+      ],
+      "remainingClaims": []
+    },
+    {
+      "pack": "tofuken-zatsugaku",
+      "id": "tf04",
+      "status": "supported",
+      "answerCheck": "県公式の県魚ハタハタ、農水省本文の『鰰（ハタハタ）』で読みを確認。",
+      "explanationCheck": "冬の到来を告げる魚で、しょっつる鍋に使う説明を確認。",
+      "note": "前回の検索抽出のみという制約を本文照合で解消。",
+      "sources": [
+        {
+          "title": "秋田県：県魚ハタハタ",
+          "url": "https://www.pref.akita.lg.jp/pages/genre/48221",
+          "evidence": "秋田の県魚ハタハタと明記。",
+          "access": "page"
+        },
+        {
+          "title": "農林水産省：東北地方 秋田県",
+          "url": "https://www.maff.go.jp/j/keikaku/syokubunka/k_ryouri/area_stories/akita.html",
+          "evidence": "鰰の読み、冬の食文化、しょっつる鍋との関係を説明。",
+          "access": "page"
+        }
+      ],
+      "remainingClaims": []
+    },
+    {
+      "pack": "tofuken-zatsugaku",
+      "id": "tf05",
+      "status": "supported",
+      "answerCheck": "香川県のうどん県PRを確認済み。",
+      "explanationCheck": "香川県公式の歴史ページで古くは讃岐ノ国と確認。",
+      "note": "県公式の自己記述を照合。旧国境と現県境の精密測量までは対象としていない。",
+      "sources": [
+        {
+          "title": "香川県公式ホームページ",
+          "url": "https://www.pref.kagawa.lg.jp/",
+          "evidence": "うどん県・讃岐うどんのPRを確認。旧国名の範囲は本文未確認",
+          "access": "page"
+        },
+        {
+          "title": "香川県 あゆみ",
+          "url": "https://www.pref.kagawa.lg.jp/mob/overview/mukashi.html",
+          "evidence": "香川県は古く讃岐ノ国と呼ばれた。",
+          "access": "page"
+        }
+      ]
+    },
+    {
+      "pack": "tofuken-zatsugaku",
+      "id": "tf06",
+      "status": "supported",
+      "answerCheck": "正答は公式資料の本文と一致。ほかの選択肢への訂正根拠なし。",
+      "explanationCheck": "主要な事実主張は本文と整合。感想・会話への誘いは正誤判定対象外。",
+      "note": "熊本方言由来は説として紹介される",
+      "sources": [
+        {
+          "title": "農林水産省 いきなり団子",
+          "url": "https://www.maff.go.jp/j/syokuiku/kodomo_navi/cuisine/cuisine7_4.html",
+          "evidence": "熊本方言由来は説として紹介される",
+          "access": "page"
+        }
+      ]
+    },
+    {
+      "pack": "tofuken-zatsugaku",
+      "id": "tf07",
+      "status": "supported",
+      "answerCheck": "正答は公式資料の本文と一致。ほかの選択肢への訂正根拠なし。",
+      "explanationCheck": "主要な事実主張は本文と整合。感想・会話への誘いは正誤判定対象外。",
+      "note": "月島・小さいヘラ・鉄板の調理を確認",
+      "sources": [
+        {
+          "title": "農林水産省 もんじゃ焼き",
+          "url": "https://www.maff.go.jp/j/syokuiku/kodomo_navi/cuisine/cuisine2_6.html",
+          "evidence": "月島・小さいヘラ・鉄板の調理を確認",
+          "access": "page"
+        }
+      ]
+    },
+    {
+      "pack": "tofuken-zatsugaku",
+      "id": "tf08",
+      "status": "supported",
+      "answerCheck": "群馬県の収穫量首位・大産地を確認。",
+      "explanationCheck": "いもを原料とする加工食品との説明を公式本文で確認。",
+      "note": "産地と加工という設問中の事実を支持。",
+      "sources": [
+        {
+          "title": "群馬県 こんにゃく",
+          "url": "https://www.pref.gunma.jp/page/15530.html",
+          "evidence": "収穫量全国1位、9割以上",
+          "access": "page"
+        },
+        {
+          "title": "群馬県 GUNMA JAPAN こんにゃく",
+          "url": "https://www.g-quality.pref.gunma.jp/jp/ippin/konjac/",
+          "evidence": "こんにゃくいもを原料に加工し、水分と凝固工程で製品化する。",
+          "access": "page"
+        }
+      ]
+    },
+    {
+      "pack": "tofuken-zatsugaku",
+      "id": "tf09",
+      "status": "supported",
+      "answerCheck": "正答は公式資料の本文と一致。ほかの選択肢への訂正根拠なし。",
+      "explanationCheck": "主要な事実主張は本文と整合。感想・会話への誘いは正誤判定対象外。",
+      "note": "千葉産地の生落花生を茹でる食文化",
+      "sources": [
+        {
+          "title": "農林水産省 ゆで落花生",
+          "url": "https://www.maff.go.jp/j/keikaku/syokubunka/k_ryouri/search_menu/menu/yude_rakkasei_chiba.html",
+          "evidence": "千葉産地の生落花生を茹でる食文化",
+          "access": "page"
+        }
+      ]
+    },
+    {
+      "pack": "tofuken-zatsugaku",
+      "id": "tf10",
+      "status": "supported",
+      "answerCheck": "正答は公式資料の本文と一致。ほかの選択肢への訂正根拠なし。",
+      "explanationCheck": "主要な事実主張は本文と整合。感想・会話への誘いは正誤判定対象外。",
+      "note": "南高梅は果肉が厚く柔らかく梅干しにも用いる",
+      "sources": [
+        {
+          "title": "和歌山県 梅",
+          "url": "https://www.pref.wakayama.lg.jp/prefg/071700/kokunai/brandshien/R2/d00204327.html",
+          "evidence": "南高梅は果肉が厚く柔らかく梅干しにも用いる",
+          "access": "page"
+        }
+      ]
+    },
+    {
+      "pack": "tofuken-zatsugaku",
+      "id": "tf11",
+      "status": "supported",
+      "answerCheck": "正答は公式資料の本文と一致。ほかの選択肢への訂正根拠なし。",
+      "explanationCheck": "主要な事実主張は本文と整合。感想・会話への誘いは正誤判定対象外。",
+      "note": "盛岡と奥州が産地",
+      "sources": [
+        {
+          "title": "岩手県 南部鉄器",
+          "url": "https://www.pref.iwate.jp/kensei/profile/1000655/1021500.html",
+          "evidence": "盛岡と奥州が産地",
+          "access": "page"
+        }
+      ]
+    },
+    {
+      "pack": "tofuken-zatsugaku",
+      "id": "tf12",
+      "status": "supported",
+      "answerCheck": "正答は公式資料の本文と一致。ほかの選択肢への訂正根拠なし。",
+      "explanationCheck": "主要な事実主張は本文と整合。感想・会話への誘いは正誤判定対象外。",
+      "note": "輪島塗と九谷焼を掲載",
+      "sources": [
+        {
+          "title": "石川県 伝統的工芸品",
+          "url": "https://www.pref.ishikawa.lg.jp/kensei/koho/kids/kodomo/dentou/main.html",
+          "evidence": "輪島塗と九谷焼を掲載",
+          "access": "page"
+        }
+      ]
+    },
+    {
+      "pack": "tofuken-zatsugaku",
+      "id": "tf13",
+      "status": "supported",
+      "answerCheck": "正答は公式資料の本文と一致。ほかの選択肢への訂正根拠なし。",
+      "explanationCheck": "主要な事実主張は本文と整合。感想・会話への誘いは正誤判定対象外。",
+      "note": "下関で幸福の福を招く『ふく』",
+      "sources": [
+        {
+          "title": "下関ふく食解禁130年記念公式サイト",
+          "url": "https://fugunohonba.jp/",
+          "evidence": "下関で幸福の福を招く『ふく』",
+          "access": "page"
+        }
+      ]
+    },
+    {
+      "pack": "tofuken-zatsugaku",
+      "id": "tf14",
+      "status": "supported",
+      "answerCheck": "正答は公式資料の本文と一致。ほかの選択肢への訂正根拠なし。",
+      "explanationCheck": "主要な事実主張は本文と整合。感想・会話への誘いは正誤判定対象外。",
+      "note": "県魚タカサゴ（方言グルクン）・食用",
+      "sources": [
+        {
+          "title": "沖縄県 シンボル",
+          "url": "https://www.pref.okinawa.jp/kensei/kengaiyo/1014098.html",
+          "evidence": "県魚タカサゴ（方言グルクン）・食用",
+          "access": "page"
+        }
+      ]
+    },
+    {
+      "pack": "tofuken-zatsugaku",
+      "id": "tf15",
+      "status": "supported",
+      "answerCheck": "国土交通省本文で海に面していない8県を確認。",
+      "explanationCheck": "栃木・群馬・埼玉・山梨・長野・岐阜・滋賀・奈良の全県列挙が一致。",
+      "note": "『中央部に多い』はこれらの分布を見た地理的説明で、個別の数値主張ではない。",
+      "sources": [
+        {
+          "title": "国土交通省：道路管理者による海抜表示の現状について（2013年4月1日）",
+          "url": "https://www.mlit.go.jp/report/press/road01_hh_000343.html",
+          "evidence": "海に面していない8県と、その県名全てを明記。",
+          "access": "page"
+        }
+      ],
+      "remainingClaims": []
+    },
+    {
+      "pack": "tofuken-zatsugaku",
+      "id": "tf16",
+      "status": "supported",
+      "answerCheck": "沖縄県の有識者会議公式議事録本文で、他県と県境を接しないのは沖縄県と北海道だけと述べる箇所を確認。",
+      "explanationCheck": "北海道には新幹線があることと、陸地で県境を接することを区別した文脈であり、設問の陸地の県境という条件に整合。",
+      "note": "地理専用資料ではなく県公式会議録の地理条件説明を根拠にした。『この2道県だけ』という排他的記述により他選択肢の組合せも除外できる。統計局全国図も取得したが詳細な地図の目視検証は行っていない。",
+      "sources": [
+        {
+          "title": "沖縄県：第2回有識者会議議事録（概要版）",
+          "url": "https://www.pref.okinawa.jp/_res/projects/default_project/_page_/001/031/398/dai2kaiyuusikisya.pdf",
+          "evidence": "3ページ高山委員発言が他県と県境を接していないのは沖縄県と北海道だけと説明。",
+          "access": "page"
+        }
+      ],
+      "remainingClaims": []
+    },
+    {
+      "pack": "tofuken-zatsugaku",
+      "id": "tf17",
+      "status": "supported",
+      "answerCheck": "長野県が8県と接することを県公式観光情報本文で確認。",
+      "explanationCheck": "新潟・群馬・埼玉・山梨・静岡・愛知・岐阜・富山の全8県の列挙と本州のほぼ中央の位置を確認。",
+      "note": "他候補ではなく長野県という選択を支持。",
+      "sources": [
+        {
+          "title": "Go NAGANO：長野県の位置と地形",
+          "url": "https://www.go-nagano.net/tradition-and-culture/id22763",
+          "evidence": "隣接8県を東西南北に列挙し、日本一の隣接県数と説明。",
+          "access": "page"
+        }
+      ],
+      "remainingClaims": []
+    },
+    {
+      "pack": "tofuken-zatsugaku",
+      "id": "tf18",
+      "status": "supported",
+      "answerCheck": "正答は公式資料の本文と一致。ほかの選択肢への訂正根拠なし。",
+      "explanationCheck": "主要な事実主張は本文と整合。感想・会話への誘いは正誤判定対象外。",
+      "note": "全国トップのりんご生産・津軽地方の栽培",
+      "sources": [
+        {
+          "title": "青森県 農林水産業",
+          "url": "https://www.pref.aomori.lg.jp/kids/05_agriculture.html",
+          "evidence": "全国トップのりんご生産・津軽地方の栽培",
+          "access": "page"
+        }
+      ]
+    },
+    {
+      "pack": "tofuken-zatsugaku",
+      "id": "tf19",
+      "status": "supported",
+      "answerCheck": "正答は公式資料の本文と一致。ほかの選択肢への訂正根拠なし。",
+      "explanationCheck": "主要な事実主張は本文と整合。感想・会話への誘いは正誤判定対象外。",
+      "note": "黄色タグの雄ズワイガニ",
+      "sources": [
+        {
+          "title": "越前町 越前がにの特徴",
+          "url": "https://www.town-echizen.jp/echizengani/about/feature.php",
+          "evidence": "黄色タグの雄ズワイガニ",
+          "access": "page"
+        }
+      ]
+    },
+    {
+      "pack": "tofuken-zatsugaku",
+      "id": "tf20",
+      "status": "supported",
+      "answerCheck": "正答は公式資料の本文と一致。ほかの選択肢への訂正根拠なし。",
+      "explanationCheck": "主要な事実主張は本文と整合。感想・会話への誘いは正誤判定対象外。",
+      "note": "北岳3193m、日本第二位",
+      "sources": [
+        {
+          "title": "山梨県 南アルプス山系",
+          "url": "https://www.pref.yamanashi.jp/kankou-sgn/pitchmap/02_minami-alps.html",
+          "evidence": "北岳3193m、日本第二位",
+          "access": "page"
+        }
+      ]
+    },
+    {
+      "pack": "tofuken-zatsugaku",
+      "id": "tf21",
+      "status": "supported",
+      "answerCheck": "京都市公式本文で鱧（はも）の読みを確認。",
+      "explanationCheck": "小骨が多い・骨切り・京都の夏の料理という説明と整合。",
+      "note": "既存の農水省料理資料に京都市の漢字と読みの明示を追補。",
+      "sources": [
+        {
+          "title": "農林水産省 はもの焼き物",
+          "url": "https://www.maff.go.jp/j/keikaku/syokubunka/k_ryouri/search_menu/menu/hamonoyakimono_kyoto.html",
+          "evidence": "京都のハモ料理に骨切り",
+          "access": "page"
+        },
+        {
+          "title": "京都市 わくわくドキドキ京都検定 問15",
+          "url": "https://wakutobi.city.kyoto.lg.jp/kentei/answer/hatten25/a15_3.html",
+          "evidence": "鱧（はも）と明記。小骨が多く骨切りを使う京都の夏の魚。",
+          "access": "page"
+        }
+      ]
+    },
+    {
+      "pack": "tofuken-zatsugaku",
+      "id": "tf22",
+      "status": "supported",
+      "answerCheck": "正答は公式資料の本文と一致。ほかの選択肢への訂正根拠なし。",
+      "explanationCheck": "主要な事実主張は本文と整合。感想・会話への誘いは正誤判定対象外。",
+      "note": "大分で鶏肉を天ぷら衣で揚げる",
+      "sources": [
+        {
+          "title": "農林水産省 とり天",
+          "url": "https://www.maff.go.jp/j/keikaku/syokubunka/k_ryouri/search_menu/menu/toriten_oita.html",
+          "evidence": "大分で鶏肉を天ぷら衣で揚げる",
+          "access": "page"
+        }
+      ]
+    },
+    {
+      "pack": "tofuken-zatsugaku",
+      "id": "tf23",
+      "status": "supported",
+      "answerCheck": "正答は公式資料の本文と一致。ほかの選択肢への訂正根拠なし。",
+      "explanationCheck": "主要な事実主張は本文と整合。感想・会話への誘いは正誤判定対象外。",
+      "note": "伊万里・有田焼と唐津焼",
+      "sources": [
+        {
+          "title": "佐賀県 伝統工芸",
+          "url": "https://www.pref.saga.lg.jp/kiji00325394/index.html",
+          "evidence": "伊万里・有田焼と唐津焼",
+          "access": "page"
+        }
+      ]
+    },
+    {
+      "pack": "tofuken-zatsugaku",
+      "id": "tf24",
+      "status": "supported",
+      "answerCheck": "岐阜県美濃市の和紙であることを市の美濃和紙の里会館本文で確認。",
+      "explanationCheck": "美濃市周辺での生産の歴史と薄く強く美しいという特徴を確認。",
+      "note": "本美濃紙だけを対象とした前回資料から、美濃紙全体を扱う公式本文を追加。",
+      "sources": [
+        {
+          "title": "美濃市：美濃和紙の歴史",
+          "url": "https://www.city.mino.gifu.jp/minogami/docs/2411.html",
+          "evidence": "美濃市周辺の産地の歴史、伝統技法による薄く強く美しい美濃紙を説明。",
+          "access": "page"
+        }
+      ],
+      "remainingClaims": []
+    },
+    {
+      "pack": "tofuken-zatsugaku",
+      "id": "tf25",
+      "status": "supported",
+      "answerCheck": "新潟県長岡市・小千谷市の錦鯉の成立と養殖を農水省本文で確認。",
+      "explanationCheck": "豪雪地帯の棚田と棚池、雪解け水利用、食用鯉から錦鯉への改良を確認。",
+      "note": "池や田んぼの文化との関係について前回不足した根拠を補完。",
+      "sources": [
+        {
+          "title": "農林水産省：雪の恵みを活かした稲作・養鯉システム",
+          "url": "https://www.maff.go.jp/j/pr/aff/2404/heritage06.html",
+          "evidence": "両市の豪雪地帯で棚田と棚池を利用し、食用鯉から改良して錦鯉が成立した経緯を説明。",
+          "access": "page"
+        }
+      ],
+      "remainingClaims": []
+    },
+    {
+      "pack": "tofuken-zatsugaku",
+      "id": "tf26",
+      "status": "supported",
+      "answerCheck": "正答は公式資料の本文と一致。ほかの選択肢への訂正根拠なし。",
+      "explanationCheck": "主要な事実主張は本文と整合。感想・会話への誘いは正誤判定対象外。",
+      "note": "奈良・サバ・柿の葉・酢飯の押し寿司",
+      "sources": [
+        {
+          "title": "農林水産省 柿の葉ずし",
+          "url": "https://www.maff.go.jp/j/keikaku/syokubunka/traditional-foods/menu/kakinohazusi.html",
+          "evidence": "奈良・サバ・柿の葉・酢飯の押し寿司",
+          "access": "page"
+        }
+      ]
+    },
+    {
+      "pack": "tofuken-zatsugaku",
+      "id": "tf27",
+      "status": "supported",
+      "answerCheck": "正答は公式資料の本文と一致。ほかの選択肢への訂正根拠なし。",
+      "explanationCheck": "主要な事実主張は本文と整合。感想・会話への誘いは正誤判定対象外。",
+      "note": "富山・笹の葉・駅弁",
+      "sources": [
+        {
+          "title": "農林水産省 ます寿司",
+          "url": "https://www.maff.go.jp/j/syokuiku/kodomo_navi/cuisine/cuisine3_2.html",
+          "evidence": "富山・笹の葉・駅弁",
+          "access": "page"
+        }
+      ]
+    },
+    {
+      "pack": "tofuken-zatsugaku",
+      "id": "tf28",
+      "status": "supported",
+      "answerCheck": "正答は公式資料の本文と一致。ほかの選択肢への訂正根拠なし。",
+      "explanationCheck": "主要な事実主張は本文と整合。感想・会話への誘いは正誤判定対象外。",
+      "note": "すだちの爽やかな酸味と香り",
+      "sources": [
+        {
+          "title": "徳島県 四大ブランド食材",
+          "url": "https://www.pref.tokushima.lg.jp/japanese/specialty/Introduction/food/",
+          "evidence": "すだちの爽やかな酸味と香り",
+          "access": "page"
+        }
+      ]
+    },
+    {
+      "pack": "tofuken-zatsugaku",
+      "id": "tf29",
+      "status": "supported",
+      "answerCheck": "宮崎県公式本文で宮崎市における日向夏の発見を確認。",
+      "explanationCheck": "白皮（アルベド）のやさしい甘味と果肉の酸味を確認。",
+      "note": "県ページ新着欄『日向夏部会の知事表敬（2025.12.18）』を本文確認。宮崎大学の研究者解説でも原産地・白皮の甘味・食べ方を独立照合。",
+      "sources": [
+        {
+          "title": "宮崎県：みやざきブランドの部屋（日向夏部会2025.12.18）",
+          "url": "https://hinatamafin.pref.miyazaki.lg.jp/soshiki/nogyoryutubrandka/2979.html",
+          "evidence": "約200年前に宮崎市で発見され、白皮にも甘味があると説明。",
+          "access": "page"
+        },
+        {
+          "title": "宮崎大学農学部：日向夏の未来を奪う研究？",
+          "url": "https://www.miyazaki-u.ac.jp/agr/books/cat1633/post-34.html",
+          "evidence": "果樹研究者本人が宮崎県原産で白皮に甘味があり果肉と一緒に食べると説明。",
+          "access": "page"
+        }
+      ],
+      "remainingClaims": []
+    },
+    {
+      "pack": "tofuken-zatsugaku",
+      "id": "tf30",
+      "status": "supported",
+      "answerCheck": "正答は公式資料の本文と一致。ほかの選択肢への訂正根拠なし。",
+      "explanationCheck": "主要な事実主張は本文と整合。感想・会話への誘いは正誤判定対象外。",
+      "note": "高知・表面炙り・薬味",
+      "sources": [
+        {
+          "title": "農林水産省 カツオのたたき",
+          "url": "https://www.maff.go.jp/j/keikaku/syokubunka/traditional-foods/menu/katuonotataki.html",
+          "evidence": "高知・表面炙り・薬味",
+          "access": "page"
+        }
+      ]
+    },
+    {
+      "pack": "series-2choice",
+      "id": "s01",
+      "status": "supported",
+      "answerCheck": "哺乳類・肺呼吸・授乳を明示。",
+      "explanationCheck": "本文の主要な機構と整合。会話用の感想は正誤判定対象外。",
+      "note": "哺乳類・肺呼吸・授乳を明示。",
+      "sources": [
+        {
+          "title": "NOAA Dolphins",
+          "url": "https://oceanservice.noaa.gov/facts/dolphin.html",
+          "evidence": "哺乳類・肺呼吸・授乳を明示。",
+          "access": "page"
+        }
+      ]
+    },
+    {
+      "pack": "series-2choice",
+      "id": "s02",
+      "status": "supported",
+      "answerCheck": "雄の育児嚢内で卵から育ち出産することを確認。生後の継続育児の意味ではない。",
+      "explanationCheck": "本文の主要な機構と整合。会話用の感想は正誤判定対象外。",
+      "note": "雄の育児嚢内で卵から育ち出産することを確認。生後の継続育児の意味ではない。",
+      "sources": [
+        {
+          "title": "NOAA Seahorse",
+          "url": "https://oceanservice.noaa.gov/facts/seahorse.html",
+          "evidence": "雄の育児嚢内で卵から育ち出産することを確認。生後の継続育児の意味ではない。",
+          "access": "page"
+        }
+      ]
+    },
+    {
+      "pack": "series-2choice",
+      "id": "s03",
+      "status": "incorrect",
+      "answerCheck": "乾いた支持糸はある。ただしクモは粘着糸を横切っても付着しない仕組みを持つ。",
+      "explanationCheck": "『自分が歩くところは粘らない、そうでなければ付く』は不正確。粘着糸上でも付着を防げる。",
+      "note": "乾いた支持糸はある。ただしクモは粘着糸を横切っても付着しない仕組みを持つ。",
+      "sources": [
+        {
+          "title": "Australian Museum Spider facts",
+          "url": "https://australian.museum/learn/animals/spiders/spider-facts/",
+          "evidence": "乾いた支持糸はある。ただしクモは粘着糸を横切っても付着しない仕組みを持つ。",
+          "access": "page"
+        }
+      ]
+    },
+    {
+      "pack": "series-2choice",
+      "id": "s04",
+      "status": "supported",
+      "answerCheck": "気分・温度・光などによる変色とコミュニケーション機能を確認。",
+      "explanationCheck": "本文の主要な機構と整合。会話用の感想は正誤判定対象外。",
+      "note": "気分・温度・光などによる変色とコミュニケーション機能を確認。",
+      "sources": [
+        {
+          "title": "San Diego Zoo Chameleon",
+          "url": "https://animals.sandiegozoo.org/animals/chameleon",
+          "evidence": "気分・温度・光などによる変色とコミュニケーション機能を確認。",
+          "access": "page"
+        }
+      ]
+    },
+    {
+      "pack": "series-2choice",
+      "id": "s05",
+      "status": "incorrect",
+      "answerCheck": "サメ一般の二択として開眼のみを正答に固定するのは、閉眼睡眠する種の例と両立しない。",
+      "explanationCheck": "原文に『常に』はない。『まぶたがない種類が多い』という割合は未確認。特定種で閉眼睡眠が確認されているため、サメ一般への設問の広げ方と理由付けを要修正。",
+      "note": "Kelly et al. 2022 は draughtsboard shark の研究で、昼夜を通じ睡眠中は閉眼が多く、夜の睡眠では約38%が開眼。種の条件を付けず『閉じる／開けたまま』を単一正答にしない。全サメの割合はこの研究から推定しない。",
+      "sources": [
+        {
+          "title": "Kelly et al. 2022 Energy conservation characterizes sleep in sharks",
+          "url": "https://leskulab.org/wp-content/uploads/2022/03/kelly-et-al-2022.pdf",
+          "evidence": "draughtsboard sharkで開眼・閉眼両方の睡眠を観察。主担当紹介後に担当も本文p.4–5確認。",
+          "access": "page"
+        }
+      ]
+    },
+    {
+      "pack": "series-2choice",
+      "id": "s06",
+      "status": "caution",
+      "answerCheck": "二択のどちらも夜間の東向き再配向を適切に表現していない。単純な正答反転は推奨しない。",
+      "explanationCheck": "若いヒマワリが夜に西から東へ戻る動きを省略している。『昼よりゆっくり』という速度比較自体をこの資料が否定しているわけではない。",
+      "note": "夜間再配向の省略による誤解リスク。昼夜の速度差は未確認として残す。",
+      "sources": [
+        {
+          "title": "UC Davis Sunflowers Move by the Clock",
+          "url": "https://www.ucdavis.edu/news/sunflowers-move-clock",
+          "evidence": "昼は東から西、夜は東へ戻る。成熟後は日中の動きが止まり東向きになる",
+          "access": "page"
+        }
+      ],
+      "remainingClaims": [
+        "若いヒマワリの夜間の動きが昼より遅いという速度比較。"
+      ]
+    },
+    {
+      "pack": "series-2choice",
+      "id": "s07",
+      "status": "supported",
+      "answerCheck": "頸椎7個、人と同じ、各骨が長いことを確認。",
+      "explanationCheck": "本文の主要な機構と整合。会話用の感想は正誤判定対象外。",
+      "note": "頸椎7個、人と同じ、各骨が長いことを確認。",
+      "sources": [
+        {
+          "title": "San Diego Zoo Giraffe",
+          "url": "https://animals.sandiegozoo.org/animals/giraffe",
+          "evidence": "頸椎7個、人と同じ、各骨が長いことを確認。",
+          "access": "page"
+        }
+      ]
+    },
+    {
+      "pack": "series-2choice",
+      "id": "s08",
+      "status": "unverified",
+      "answerCheck": "透明な中空毛は支持。光反射による白色知覚の機構はこの本文だけでは未確認。",
+      "explanationCheck": "Polar Bears Internationalの研究者解説本文は透明な毛による可視光の散乱・反射を説明し、白く見える機構を支持。ただし中空性の適用範囲は同本文が両毛種、米議会図書館の検索抽出がガードヘアのみとして一致しない。",
+      "note": "白色知覚の機構の不足は解消。下毛まで管状かは資料差があり、透明という正答の支持と、毛構造の一般化の未確認を分ける。",
+      "sources": [
+        {
+          "title": "San Diego Zoo Polar Bear",
+          "url": "https://animals.sandiegozoo.org/animals/polar-bear?qt-animals_page_content_tabs=1",
+          "evidence": "透明な中空毛は支持。光反射による白色知覚の機構はこの本文だけでは未確認。",
+          "access": "page"
+        },
+        {
+          "title": "Polar Bears International：What Does Polar Bear Fur Feel Like?",
+          "url": "https://polarbearsinternational.org/news-media/articles/what-does-polar-bear-fur-feel-like/",
+          "evidence": "研究者本人の解説で透明な毛の散乱・反射により白く見えると説明。両毛種をおおむね中空としている。",
+          "access": "page"
+        },
+        {
+          "title": "Library of Congress：Is a polar bear's fur transparent?",
+          "url": "https://www.loc.gov/everyday-mysteries/categories/zoology/item/is-a-polar-bears-fur-transparent/",
+          "evidence": "検索抽出ではガードヘアは中空、下毛は中空でないとしている。openでは本文取得不可。",
+          "access": "search_snippet"
+        }
+      ],
+      "remainingClaims": [
+        "全ての毛（下毛も含む）が透明な管状だと読める解説の適用範囲。"
+      ]
+    },
+    {
+      "pack": "series-2choice",
+      "id": "s09",
+      "status": "unverified",
+      "answerCheck": "静岡県公式本文で富士山頂の約87℃・低気圧を確認。",
+      "explanationCheck": "富士山頂約87℃は支持。JALUXの自社商品本文で80～85℃でも戻りやすい特製麺の存在を確認したため、カップ麺全般が山でうまく作れないとは言い切れない。一般のカップ麺が山の温度条件でどう仕上がるかのメーカー試験本文は未確保。",
+      "note": "日清公式で富士山・低温調理を検索し、低温用に設計されたJALUXの共同開発品の資料まで確認。低温対応製品の存在は一般品が全て失敗する根拠にならない。標高・製品・待ち時間の条件をそろえた解説後半の確認が残る。",
+      "sources": [
+        {
+          "title": "静岡県 なるほど！？富士山",
+          "url": "https://www.pref.shizuoka.jp/kankosports/kanko/mtfuji/1002778/1019409.html",
+          "evidence": "山頂気圧は平地の約3分の2で水は約87℃で沸騰。",
+          "access": "page"
+        },
+        {
+          "title": "JALUX JAL PLAZA：らーめんですかい",
+          "url": "https://jalplaza-airport.jalux.com/product/detail/45032943/",
+          "evidence": "80～85℃でも戻りやすい機内食用特製麺を使用し、ポットの湯で3分調理すると説明。",
+          "access": "page"
+        }
+      ],
+      "remainingClaims": [
+        "通常のカップ麺が、富士山頂の沸騰水を用いた場合にうまく調理できないという製品・時間条件付きの一般性。"
+      ]
+    },
+    {
+      "pack": "series-2choice",
+      "id": "s10",
+      "status": "supported",
+      "answerCheck": "小さな葉で水分損失を抑える適応を確認。全砂漠植物に限定していない。",
+      "explanationCheck": "本文の主要な機構と整合。会話用の感想は正誤判定対象外。",
+      "note": "小さな葉で水分損失を抑える適応を確認。全砂漠植物に限定していない。",
+      "sources": [
+        {
+          "title": "NPS Desert water",
+          "url": "https://www.nps.gov/articles/save-water-live-like-a-desert-native.htm",
+          "evidence": "小さな葉で水分損失を抑える適応を確認。全砂漠植物に限定していない。",
+          "access": "page"
+        }
+      ]
+    },
+    {
+      "pack": "series-2choice",
+      "id": "s11",
+      "status": "supported",
+      "answerCheck": "日本の夏至が最長昼、冬至が最短昼。",
+      "explanationCheck": "本文の主要な機構と整合。会話用の感想は正誤判定対象外。",
+      "note": "日本の夏至が最長昼、冬至が最短昼。",
+      "sources": [
+        {
+          "title": "国立天文台 夏至",
+          "url": "https://www.nao.ac.jp/faq/a0104.html",
+          "evidence": "日本の夏至が最長昼、冬至が最短昼。",
+          "access": "page"
+        }
+      ]
+    },
+    {
+      "pack": "series-2choice",
+      "id": "s12",
+      "status": "supported",
+      "answerCheck": "真空では音を伝える物質がないため伝わらない。",
+      "explanationCheck": "空気などの物質の振動という説明と整合。",
+      "note": "空気を満たした宇宙船内や固体内まで音が伝わらないとの意味ではない。",
+      "sources": [
+        {
+          "title": "NASA Cosmicopia Sound in Space",
+          "url": "https://cosmicopia.gsfc.nasa.gov/qa_sp_ev.html",
+          "evidence": "音は物質中の圧力波で、真空には伝える物質がない。",
+          "access": "page"
+        }
+      ]
+    },
+    {
+      "pack": "series-2choice",
+      "id": "s13",
+      "status": "supported",
+      "answerCheck": "樹木が大気中CO2を取り込み炭素として蓄えて成長することを林野庁本文で確認。",
+      "explanationCheck": "光・CO2・水から糖を作る光合成を農水省掲載の栽培講義資料本文で確認。",
+      "note": "木での炭素蓄積と植物一般の光合成機構の2資料を組み合わせて支持。土の栄養が不要との意味ではない。",
+      "sources": [
+        {
+          "title": "林野庁 森林は二酸化炭素を吸収",
+          "url": "https://www.rinya.maff.go.jp/j/sin_riyou/ondanka/con_2.html",
+          "evidence": "樹木は光合成で大気中CO2を吸収し、炭素として蓄えることで成長。",
+          "access": "page"
+        },
+        {
+          "title": "農林水産省掲載 農業者講義資料",
+          "url": "https://www.maff.go.jp/tokai/keiei/shien/be_farmer/attach/pdf/lecture-16.pdf",
+          "evidence": "p.15–17: 光を用いCO2と水から糖を合成し、植物体の成長につながる。",
+          "access": "page"
+        }
+      ]
+    },
+    {
+      "pack": "series-2choice",
+      "id": "s14",
+      "status": "supported",
+      "answerCheck": "加熱で新たなたんぱく質結合ができる。冷水に入れてもゆで卵のまま扱う手順と整合。",
+      "explanationCheck": "本文の主要な機構と整合。会話用の感想は正誤判定対象外。",
+      "note": "加熱で新たなたんぱく質結合ができる。冷水に入れてもゆで卵のまま扱う手順と整合。",
+      "sources": [
+        {
+          "title": "Exploratorium Deviled Eggs",
+          "url": "https://annex.exploratorium.edu/cooking/eggs/deviled-pop.html",
+          "evidence": "加熱で新たなたんぱく質結合ができる。冷水に入れてもゆで卵のまま扱う手順と整合。",
+          "access": "page"
+        }
+      ]
+    },
+    {
+      "pack": "series-2choice",
+      "id": "s15",
+      "status": "supported",
+      "answerCheck": "通常の星のまたたきは地球大気の乱れによる。",
+      "explanationCheck": "大気による光路の変動という説明と整合。",
+      "note": "変光星そのものの明るさの変動ではなく通常の短時間のまたたきの話。",
+      "sources": [
+        {
+          "title": "NASA StarChild Why do stars twinkle?",
+          "url": "https://starchild.gsfc.nasa.gov/docs/StarChild/questions/question26.html",
+          "evidence": "大気の動きが恒星光を曲げ、地上ではまたたいて見える。",
+          "access": "page"
+        }
+      ]
+    },
+    {
+      "pack": "series-2choice",
+      "id": "s16",
+      "status": "supported",
+      "answerCheck": "昼にも星は存在し発光する。",
+      "explanationCheck": "日中は散乱した太陽光が星の光を目立たなくするとのNASA教材と整合。",
+      "note": "通常の肉眼での星の観察の説明。",
+      "sources": [
+        {
+          "title": "NASA/Noggin Activity Guide: Hidden Stars",
+          "url": "https://spaceplace.nasa.gov/resources/homepage/Lift-Off-to-the-International-Space-Station-with-Noggin.pdf",
+          "evidence": "PDF p.6: 日中も星は発光するが太陽光の散乱がその光を上回る。",
+          "access": "page"
+        }
+      ]
+    },
+    {
+      "pack": "series-2choice",
+      "id": "s17",
+      "status": "caution",
+      "answerCheck": "空気抵抗を無視すれば質量に関係なく同じ加速度。実環境での『ほぼ』には形状の前提がある。",
+      "explanationCheck": "本文の主要な機構と整合。会話用の感想は正誤判定対象外。",
+      "note": "空気抵抗を無視すれば質量に関係なく同じ加速度。実環境での『ほぼ』には形状の前提がある。",
+      "sources": [
+        {
+          "title": "NASA Apollo15",
+          "url": "https://science.nasa.gov/resource/the-apollo-15-hammer-feather-drop/",
+          "evidence": "空気抵抗を無視すれば質量に関係なく同じ加速度。実環境での『ほぼ』には形状の前提がある。",
+          "access": "page"
+        }
+      ],
+      "remainingClaims": []
+    },
+    {
+      "pack": "series-2choice",
+      "id": "s18",
+      "status": "supported",
+      "answerCheck": "水中ストローが曲がって見えるのは光の屈折。",
+      "explanationCheck": "本文の主要な機構と整合。会話用の感想は正誤判定対象外。",
+      "note": "水中ストローが曲がって見えるのは光の屈折。",
+      "sources": [
+        {
+          "title": "AMNH Refraction",
+          "url": "https://www.amnh.org/explore/ology/physics/see-the-light2/refraction",
+          "evidence": "水中ストローが曲がって見えるのは光の屈折。",
+          "access": "page"
+        }
+      ]
+    },
+    {
+      "pack": "series-2choice",
+      "id": "s19",
+      "status": "supported",
+      "answerCheck": "東京大学の専門家解説本文で骨伝導と気導の両経路が自己音声に混ざることを確認。",
+      "explanationCheck": "通常の録音再生は気導成分のみとなり普段の自己音声と異なる、という説明を支持。",
+      "note": "一般的な空気中の音をマイクで録音・通常再生する条件への説明。骨伝導マイク等の特殊装置まで含む断定ではない。",
+      "sources": [
+        {
+          "title": "東京大学：Why do recordings of one's own voice sound so strange?",
+          "url": "https://www.u-tokyo.ac.jp/focus/en/features/z1304_00237.html",
+          "evidence": "自己音声は気導と骨伝導の混合、通常の録音は気導のみと説明。",
+          "access": "page"
+        }
+      ],
+      "remainingClaims": []
+    },
+    {
+      "pack": "series-2choice",
+      "id": "s20",
+      "status": "supported",
+      "answerCheck": "氷によって舌表面の水分が凍り付着する機構を学会本文で確認。",
+      "explanationCheck": "無理に引かず温めて解放する方向性は公的医療サイトの凍結付着対処と整合。",
+      "note": "医療資料の直接対象は冷たい金属への付着で、氷そのものは学会資料で補完。『温める』は温かい水や息のことで熱湯を支持しない。外れない・損傷がある場合の受診等を省略した短い説明であり、実際の応急処置を網羅するものではない。",
+      "sources": [
+        {
+          "title": "日本化学会近畿支部 質問コーナー Q210",
+          "url": "https://kinki.chemistry.or.jp/pre/a-210.html",
+          "evidence": "舌表面の水が氷で冷えて凍るため付着する。",
+          "access": "page"
+        },
+        {
+          "title": "MyHealth Alberta Frozen or Stuck Tongue or Other Body Part",
+          "url": "https://myhealth.alberta.ca/Health/Pages/conditions.aspx?hwid=abs1697",
+          "evidence": "凍結付着時は引っ張らず温かい水や息を使い、解放できなければ救援、損傷時は医療相談。",
+          "access": "page"
+        }
+      ]
+    },
+    {
+      "pack": "kurashi-suiri",
+      "id": "ks01",
+      "status": "supported",
+      "answerCheck": "Harvard公開天文教育教材で朝夕の影が長く正午近くに短いというパターンを確認。",
+      "explanationCheck": "太陽高度が高いほど影が短い、という関係を本文で確認。",
+      "note": "日本の日常的な日照条件を想定。厳密な時計の12時と南中時刻は違い、極地や人工光の影は別条件。比較する選択肢の範囲で朝夕を支持。",
+      "sources": [
+        {
+          "title": "Harvard-Smithsonian Center for Astrophysics：This is a Stickup!",
+          "url": "https://hea-www.harvard.edu/ECT/Stick/stick.html",
+          "evidence": "太陽高度と影長の関係、朝から正午へ短く、その後長くなる観察教材。",
+          "access": "page"
+        }
+      ],
+      "remainingClaims": []
+    },
+    {
+      "pack": "kurashi-suiri",
+      "id": "ks02",
+      "status": "caution",
+      "answerCheck": "雨が最も自然な候補だが、今も降っていることは確定できない。",
+      "explanationCheck": "雨でぬれたという説明は自然。ただし帰路に雨がやんだ場合にも傘はぬれたまま。",
+      "note": "内部論理検証。『外は今』を断定するには時点の手がかり不足。外部資料ではなく反例による条件確認。",
+      "sources": [],
+      "remainingClaims": []
+    },
+    {
+      "pack": "kurashi-suiri",
+      "id": "ks03",
+      "status": "supported",
+      "answerCheck": "水分の蒸発による減量として整合。",
+      "explanationCheck": "液体の水が水蒸気となり空気中へ移る機構と整合。",
+      "note": "布・色が失われない通常の洗濯物の乾燥を前提とした推論。",
+      "sources": [
+        {
+          "title": "USGS Evaporation and the Water Cycle",
+          "url": "https://www.usgs.gov/water-science-school/science/evaporation-and-water-cycle",
+          "evidence": "蒸発は液体水から水蒸気への変化。",
+          "access": "page"
+        }
+      ]
+    },
+    {
+      "pack": "kurashi-suiri",
+      "id": "ks04",
+      "status": "supported",
+      "answerCheck": "日なたで乾燥が進むという選択を学会の理科教育解説本文の一般機構から支持。",
+      "explanationCheck": "日光により水が暖められ日なたと日陰で蒸発速度が変わる記述を確認。設問の広場・ベンチへの適用はこの機構を使った推論。",
+      "note": "土質・初期水分・風等が同程度という通常条件での推理。湿りの観察だけで唯一の原因と証明はできないが、解説は『考えられる』と適切に推測している。場所そのものの実測資料を確認したわけではない。",
+      "sources": [
+        {
+          "title": "日本熱測定学会：熱・エネルギーに関する、小・中学校教育の現状（2005）",
+          "url": "https://www.jstage.jst.go.jp/article/jscta1974/32/1/32_1_2/_pdf/-char/ja",
+          "evidence": "印刷4ページ4.4節が日なたと日陰の蒸発速度差を太陽による水の加熱で説明。",
+          "access": "page"
+        }
+      ],
+      "remainingClaims": []
+    },
+    {
+      "pack": "kurashi-suiri",
+      "id": "ks05",
+      "status": "supported",
+      "answerCheck": "大学附属Sam Noble Museumが日なたと日陰の氷の融解時間を比較する実験を示し、太陽熱で融解が速まる説明を支持。",
+      "explanationCheck": "Questacon本文は太陽放射が氷に熱を伝えると明記。『日なたがあたたかい』は物体が受け取る熱の説明として支持。",
+      "note": "日なたの空気温度自体が必ず高いという主張へ拡張しない。同じ氷という条件と観察結果が与えられている設問の推理。",
+      "sources": [
+        {
+          "title": "Sam Noble Museum：Fun in the Sun",
+          "url": "https://samnoblemuseum.ou.edu/wp-content/uploads/2021/03/sis_the_sun.pdf",
+          "evidence": "3ページに日なた／日陰の氷の比較実験と太陽熱による融解の説明。",
+          "access": "page"
+        },
+        {
+          "title": "Questacon：Keep Your Cool",
+          "url": "https://www.questacon.edu.au/learn-and-play/activities/keep-your-cool",
+          "evidence": "太陽放射が氷へ熱エネルギーを伝える機構を説明。",
+          "access": "page"
+        }
+      ],
+      "remainingClaims": []
+    },
+    {
+      "pack": "kurashi-suiri",
+      "id": "ks06",
+      "status": "not_applicable",
+      "answerCheck": "選択肢中では空気の流れという推理が妥当。",
+      "explanationCheck": "『と考えられます』と推測として表現され、必然の証明とはしていない。",
+      "note": "観察から原因候補を選ぶ内部論理問題。実験による物理確認は今回未実施。",
+      "sources": []
+    },
+    {
+      "pack": "kurashi-suiri",
+      "id": "ks07",
+      "status": "caution",
+      "answerCheck": "足底の水が歩行ごとに減り同条件の床へ残る前提なら玄関方向。",
+      "explanationCheck": "進行方向の推理として妥当だが、床の乾き方や時間差でも濃淡は変わる。",
+      "note": "内部論理検証。解説は推測表現だが設問は方向を断定する。条件付きの推理として扱う。",
+      "sources": [],
+      "remainingClaims": [
+        "歩行に伴って足底から床へ移る水量が減り、足跡が順に薄くなるという物理的経過の外部資料。"
+      ]
+    },
+    {
+      "pack": "kurashi-suiri",
+      "id": "ks08",
+      "status": "caution",
+      "answerCheck": "浅い皿を選ぶには同量・同材質・同環境など比較条件が必要。",
+      "explanationCheck": "空気との接触面積だけでは容器経由の熱移動や水量を決められず、温まりやすさの一般断定はできない。",
+      "note": "条件不足の内部検討。定量的な熱移動の外部裏付けは未確認。",
+      "sources": [],
+      "remainingClaims": [
+        "初期水温・水量・容器材質等をそろえたとき、接触面積の大きい浅皿の水が深いコップより早くぬるくなるという熱移動比較の本文資料。"
+      ]
+    },
+    {
+      "pack": "kurashi-suiri",
+      "id": "ks09",
+      "status": "supported",
+      "answerCheck": "Harvardの嗅覚研究紹介本文でにおい分子が気流に運ばれることを確認。",
+      "explanationCheck": "空気流によりにおいが運ばれ、分子群が分布して吸気で鼻へ到達するという機構を確認。",
+      "note": "台所から隣室への具体的実験ではなく、気流によるにおい分子運搬を生活場面へ適用する推論。分子拡散も存在するが光や音がにおいを運ぶという他選択肢は支持されない。",
+      "sources": [
+        {
+          "title": "Harvard MCB：Sniffing Out Distance: How the Brain Tracks Odor Dynamics",
+          "url": "https://www.mcb.harvard.edu/department/news/sniffing-out-distance-how-the-brain-tracks-odor-dynamics/",
+          "evidence": "におい分子が不規則な空気流で運搬されることを嗅覚研究の背景として説明。",
+          "access": "page"
+        }
+      ],
+      "remainingClaims": []
+    },
+    {
+      "pack": "kurashi-suiri",
+      "id": "ks10",
+      "status": "supported",
+      "answerCheck": "太陽の見かけの方角が時刻で変化するという正答を支持。",
+      "explanationCheck": "東から南中を経て西へという日周運動が日差しの入る方向の変化を説明する。",
+      "note": "天文台の機構を窓の観察へ適用した推論。窓自体を動かしていない通常条件。",
+      "sources": [
+        {
+          "title": "国立天文台 暦Wiki 日の出入りの季節変化",
+          "url": "https://eco.mtk.nao.ac.jp/koyomi/wiki/C6FCA4CEBDD0C6FEA4EAA4C8C6EEC3E62FC6FCA4CEBDD0C6FEA4EAA4CEB5A8C0E1CAD1B2BD.html",
+          "evidence": "毎日東から昇り南中して西へ沈む、時々刻々の太陽高度が変化する。",
+          "access": "page"
+        }
+      ]
+    },
+    {
+      "pack": "kurashi-suiri",
+      "id": "ks11",
+      "status": "supported",
+      "answerCheck": "日なたで乾燥が進むという選択を学会の理科教育解説本文の一般機構から支持。",
+      "explanationCheck": "日光により水が暖められ日なたと日陰で蒸発速度が変わる記述を確認。設問の広場・ベンチへの適用はこの機構を使った推論。",
+      "note": "土質・初期水分・風等が同程度という通常条件での推理。湿りの観察だけで唯一の原因と証明はできないが、解説は『考えられる』と適切に推測している。場所そのものの実測資料を確認したわけではない。",
+      "sources": [
+        {
+          "title": "日本熱測定学会：熱・エネルギーに関する、小・中学校教育の現状（2005）",
+          "url": "https://www.jstage.jst.go.jp/article/jscta1974/32/1/32_1_2/_pdf/-char/ja",
+          "evidence": "印刷4ページ4.4節が日なたと日陰の蒸発速度差を太陽による水の加熱で説明。",
+          "access": "page"
+        }
+      ],
+      "remainingClaims": []
+    },
+    {
+      "pack": "kurashi-suiri",
+      "id": "ks12",
+      "status": "caution",
+      "answerCheck": "通風は体感の要因だが、条件なしに最重要と順位付けする根拠は未確認。",
+      "explanationCheck": "室温が下がることと、人が涼しく感じることは同じではない。外気温・日射等の条件が必要。",
+      "note": "設問は『いちばん』を正解固定。体感の推理として条件を足す候補。",
+      "sources": [],
+      "remainingClaims": [
+        "通風により室内の温度そのものが低下する条件と、人体の体感冷却との区別を裏付ける関連本文。"
+      ]
+    },
+    {
+      "pack": "kurashi-suiri",
+      "id": "ks13",
+      "status": "caution",
+      "answerCheck": "日光・乾いた空気が乾燥に関与する点は支持。",
+      "explanationCheck": "曇りだから常に空気の乾燥度も低い、との断定は資料から支持されない。",
+      "note": "湿度・温度・風は別々の要因。晴れ／曇りだけで全条件は固定できない。",
+      "sources": [
+        {
+          "title": "USGS Evapotranspiration and the Water Cycle",
+          "url": "https://www.usgs.gov/water-science-school/science/evapotranspiration-and-water-cycle",
+          "evidence": "乾いた空気ほど水が蒸発しやすく、温度・日射・風も影響する。",
+          "access": "page"
+        }
+      ],
+      "remainingClaims": [
+        "晴れと曇りの違いから、その日の空気の乾燥度も低いとする解説の気象条件。"
+      ]
+    },
+    {
+      "pack": "kurashi-suiri",
+      "id": "ks14",
+      "status": "supported",
+      "answerCheck": "紙上の鉛筆の粒が消しゴム側へ移ることを化学メーカー本文で確認。",
+      "explanationCheck": "黒鉛の付着した消しゴム表面が削られ消しくずになる説明が一致。",
+      "note": "化学メーカー自身の材料解説。本文の別の可塑剤説明までは設問に含まれず評価対象外。",
+      "sources": [
+        {
+          "title": "三井化学 MOLp なぜ消しゴムで字を消せるの？",
+          "url": "https://jp.mitsuichemicals.com/jp/molp/article/detail_20210930/index.htm",
+          "evidence": "紙上の黒鉛粒が消しゴム表面へ付着し、その表面が削れて消しくずになる。",
+          "access": "page"
+        }
+      ]
+    },
+    {
+      "pack": "kurashi-suiri",
+      "id": "ks15",
+      "status": "supported",
+      "answerCheck": "大阪大学の研究プログラム本文で、暗い部屋への日光で塵が光る現象を確認。",
+      "explanationCheck": "塵などの微粒子が光を散乱することを直接説明し、光が当たって見えるという解説を支持。",
+      "note": "塵が光の中で生成するのではなく、照明で散乱光が見えるという選択肢比較に整合。",
+      "sources": [
+        {
+          "title": "大阪大学SEEDS：チンダル現象を利用して微粒子のサイズを測る",
+          "url": "https://seeds.osaka-u.ac.jp/jk/2021/05/3-107.html",
+          "evidence": "暗い部屋に日光が入ると塵が光る現象と微粒子による光散乱を説明。",
+          "access": "page"
+        }
+      ],
+      "remainingClaims": []
+    },
+    {
+      "pack": "kurashi-suiri",
+      "id": "ks16",
+      "status": "supported",
+      "answerCheck": "米国化学会の実験資料は風船をフリースやセーターでこすり髪に近づける手順を示す。静電気による引力という正答を支持。",
+      "explanationCheck": "資料は表面への電荷蓄積を静電気として説明。こすった後の吸引を帯電に結び付ける説明と整合。",
+      "note": "PDFの47–48ページ（0始まり46–47）本文確認。素材・湿度による起こりやすさの差はあるが、設問は引き寄せた観察が与えられている。",
+      "sources": [
+        {
+          "title": "American Chemical Society：Chemistry for Scouts, Static Electricity",
+          "url": "https://www.acs.org/content/dam/acsorg/funding/grants/acscommunity/COG%20outputs/chemistry_for_scouts.pdf",
+          "evidence": "表面電荷蓄積の説明と、衣服でこすった風船を髪に近づける実験手順。",
+          "access": "page"
+        }
+      ],
+      "remainingClaims": []
+    },
+    {
+      "pack": "kurashi-suiri",
+      "id": "ks17",
+      "status": "not_applicable",
+      "answerCheck": "設問の前提『太陽と反対』と『太陽が右』から左と演繹できる。",
+      "explanationCheck": "前提と正答に矛盾なし。",
+      "note": "左右の対応を確認する内部論理問題として検証。",
+      "sources": []
+    },
+    {
+      "pack": "kurashi-suiri",
+      "id": "ks18",
+      "status": "supported",
+      "answerCheck": "温水は密度が下がり上昇する対流の実験。",
+      "explanationCheck": "本文の主要な機構と整合。会話用の感想は正誤判定対象外。",
+      "note": "温水は密度が下がり上昇する対流の実験。",
+      "sources": [
+        {
+          "title": "Exploratorium Convection",
+          "url": "https://annex.exploratorium.edu/xref/exhibits/convection_currents.html",
+          "evidence": "温水は密度が下がり上昇する対流の実験。",
+          "access": "page"
+        }
+      ]
+    },
+    {
+      "pack": "kurashi-suiri",
+      "id": "ks19",
+      "status": "supported",
+      "answerCheck": "雪氷を融かし路面利用を助ける目的で整合。",
+      "explanationCheck": "道路管理者が塩を使い融点を下げて氷を融かすと説明。",
+      "note": "温度・濃度の条件があるが設問は散布の目的を問うもので整合。",
+      "sources": [
+        {
+          "title": "国土交通省 弘前国道維持出張所 凍結抑制剤の基礎知識",
+          "url": "https://www.thr.mlit.go.jp/aomori/syutu/hirokoku/yukimiti/touketu_yokuseizai/touket_yokuseizai.html",
+          "evidence": "塩類の水溶液が氷結温度を下げ氷を融かす。",
+          "access": "page"
+        }
+      ]
+    },
+    {
+      "pack": "kurashi-suiri",
+      "id": "ks20",
+      "status": "supported",
+      "answerCheck": "暗順応として整合。",
+      "explanationCheck": "暗所で感度が上がる網膜の働きと整合。",
+      "note": "解説もわずかな光と明記しており、完全な無光でも見えるとはしていない。",
+      "sources": [
+        {
+          "title": "NEI Scientists shine light on how eyes adapt to the dark",
+          "url": "https://www.nei.nih.gov/research-and-training/research-news/scientists-shine-light-how-eyes-adapt-dark",
+          "evidence": "網膜は明暗に応じて感度を変え、桿体は薄暗い環境で機能する。",
+          "access": "page"
+        }
+      ]
+    }
+  ]
+}

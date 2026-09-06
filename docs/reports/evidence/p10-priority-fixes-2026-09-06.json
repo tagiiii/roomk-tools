@@ -1,0 +1,802 @@
+{
+  "date": "2026-09-06",
+  "scope": "P-10 オーナー承認済み優先5問の修正",
+  "baseCommit": "3a8b174d07b0e5302aeaf406e75f16fd38d7966e",
+  "beforeSha256": "ce670d81eb9f2ddf5fd0544b216cdd07078887e93ef4c361768279bf971a4f75",
+  "afterSha256": "79462941efcdde0e0de986162dc5d13d0dd53c1e796324e4e329cc95010e36e8",
+  "structure": {
+    "packs": 24,
+    "questions": 480,
+    "changedIds": [
+      "z04",
+      "s05",
+      "ky03",
+      "ma17",
+      "khm03"
+    ],
+    "unchangedQuestions": 475,
+    "idsDifficultyOrderChoiceCountsAnswerIndices": "unchanged"
+  },
+  "changes": [
+    {
+      "pack": "zatsugaku-3choice",
+      "id": "z04",
+      "before": {
+        "id": "z04",
+        "difficulty": 2,
+        "question": "バナナが「木」ではなく草のなかまに近いと言われる理由は？",
+        "choices": [
+          "かたい幹がないから",
+          "実がやわらかいから",
+          "1年で枯れるから"
+        ],
+        "answerIndex": 0,
+        "explanation": "見た目は木ですが、茎が重なって幹のように見えているだけです。"
+      },
+      "after": {
+        "id": "z04",
+        "difficulty": 2,
+        "question": "バナナが木ではなく草のなかまに分類される理由は？",
+        "choices": [
+          "木のような幹ではなく、葉の根元が重なっているから",
+          "実がやわらかいから",
+          "1年で枯れるから"
+        ],
+        "answerIndex": 0,
+        "explanation": "幹のように見える部分は、葉の根元の「葉鞘」が重なった「仮茎」です。それとは別に地下にも茎があり、バナナに茎がないわけではありません。"
+      }
+    },
+    {
+      "pack": "series-2choice",
+      "id": "s05",
+      "before": {
+        "id": "s05",
+        "difficulty": 2,
+        "question": "サメはねむるとき目をとじる？ それとも あけたまま？",
+        "choices": [
+          "目をとじる",
+          "目をあけたまま"
+        ],
+        "answerIndex": 1,
+        "explanation": "まぶたがない種類が多いので、目を開けたまま休みます。寝顔がわからない生き物です。"
+      },
+      "after": {
+        "id": "s05",
+        "difficulty": 2,
+        "question": "サメの一種を調べた研究では、眠っているときの目はどうだった？",
+        "choices": [
+          "目を閉じているときだけが確認された",
+          "目を閉じているときも、開けているときも確認された"
+        ],
+        "answerIndex": 1,
+        "explanation": "2022年に発表された研究では、学名 Cephaloscyllium isabellum というサメ7匹を調べ、眠っていても目を閉じるときと開けるときの両方が確認されました。すべてのサメに同じ眠り方が当てはまるとは限りません。"
+      }
+    },
+    {
+      "pack": "kanyouku",
+      "id": "ky03",
+      "before": {
+        "id": "ky03",
+        "difficulty": 1,
+        "question": "「あの子はさいふのひもが＿＿」。お金を簡単にはつかわないという意味になるのは？",
+        "choices": [
+          "ゆるい",
+          "かたい",
+          "ながい"
+        ],
+        "answerIndex": 1,
+        "explanation": "「さいふのひもがかたい」は節約家のたとえ。「ゆるい」は逆に使いすぎのこと、「ながい」はこの文脈では使わない。"
+      },
+      "after": {
+        "id": "ky03",
+        "difficulty": 1,
+        "question": "「さいふのひもがかたい」とは、どういう意味？",
+        "choices": [
+          "お金を気前よく使う",
+          "お金を簡単には使わない",
+          "お金を借りて使う"
+        ],
+        "answerIndex": 1,
+        "explanation": "「さいふのひもがかたい」は、お金を簡単には使わず、むだづかいをしないこと。「さいふのひもがながい」にも、お金を出ししぶる意味があります。"
+      }
+    },
+    {
+      "pack": "machigai-nihongo",
+      "id": "ma17",
+      "before": {
+        "id": "ma17",
+        "difficulty": 3,
+        "question": "次のうち、「失笑」を辞書の意味で自然に使えているのはどれ？",
+        "choices": [
+          "おかしくて、こらえきれず思わず失笑した",
+          "ふざけすぎたおしゃべりにあきれて、みんな失笑した",
+          "大失敗を見て、もう言葉にもならず失笑した"
+        ],
+        "answerIndex": 0,
+        "explanation": "「失笑」は「笑いを失う（こらえきれず思わずこぼす）」の意味で、辞書的には「思わず吹き出す」こと。Bの「あきれて」・Cの「言葉にもならず」のニュアンスで使われることも増えているが、辞書の基本はA。"
+      },
+      "after": {
+        "id": "ma17",
+        "difficulty": 3,
+        "question": "「失笑する」の辞書の基本的な意味はどれ？",
+        "choices": [
+          "こらえきれず、思わず吹き出して笑う",
+          "あきれて、まったく笑いが出ない",
+          "相手に合わせて、わざと笑ったふりをする"
+        ],
+        "answerIndex": 0,
+        "explanation": "「失笑」は、笑いをこらえきれず思わず吹き出すこと。「失」はここでは「失う」ではなく、抑えきれずに外へ出してしまう意味です。"
+      }
+    },
+    {
+      "pack": "kanji-himitsu",
+      "id": "khm03",
+      "before": {
+        "id": "khm03",
+        "difficulty": 2,
+        "question": "「募」「墓」「幕」「暮」は、見た目には全部「くさかんむり」がついているように見える。でも実は、この4つの漢字の部首はバラバラである。これはなぜ？",
+        "choices": [
+          "「艹」の形をしていても「艸（くさ）」とは関係のない部品も多いから",
+          "昔の人が部首を決めまちがえたから",
+          "くさかんむりは4種類あるから"
+        ],
+        "answerIndex": 0,
+        "explanation": "「募」の部首は「力」、「墓」は「土」、「幕」は「巾」、「暮」は「日」。上の部分がたまたま「艹」に似た形になっているだけで、植物の「艸（くさ）」とは由来が違う漢字も多い。"
+      },
+      "after": {
+        "id": "khm03",
+        "difficulty": 2,
+        "question": "「募」「墓」「幕」「暮」は共通の「莫」を含みますが、部首は異なります。このことから分かる、部品と部首の関係は？",
+        "choices": [
+          "共通の部品があっても、辞書で分類するときの部首は異なることがある",
+          "字のいちばん上の形が必ず部首になる",
+          "音読みが似ていれば必ず同じ部首になる"
+        ],
+        "answerIndex": 0,
+        "explanation": "部首は「募」が「力」、「墓」が「土」、「幕」が「巾」、「暮」が「日」。共通の「莫」は、草むらに日が沈む形からできたと説明される字で、「募」では音を表す部品です。共通部品の由来と、辞書での部首分類は分けて考えます。"
+      }
+    }
+  ],
+  "review": {
+    "type": "同系統・実装担当とは別コンテキストの読み取り専用レビュー",
+    "result": "承認・追加修正要求なし",
+    "sourceSha256": "79462941efcdde0e0de986162dc5d13d0dd53c1e796324e4e329cc95010e36e8"
+  },
+  "browser": {
+    "environment": "ローカル127.0.0.1のみ。原本のアプリを配信し、stats.js応答だけサーバー側で空スタブ化。connect-src none。iPhone操作なし。",
+    "checks": [
+      {
+        "id": "z04",
+        "question": "バナナが木ではなく草のなかまに分類される理由は？",
+        "answer": "木のような幹ではなく、葉の根元が重なっているから",
+        "explanation": "幹のように見える部分は、葉の根元の「葉鞘」が重なった「仮茎」です。それとは別に地下にも茎があり、バナナに茎がないわけではありません。",
+        "result": "せいかい！",
+        "layouts": [
+          {
+            "buttons": [
+              {
+                "bottom": 347.5,
+                "height": 86,
+                "left": 260,
+                "right": 1020,
+                "top": 261.5,
+                "width": 760,
+                "x": 260,
+                "y": 261.5
+              },
+              {
+                "bottom": 447.5,
+                "height": 86,
+                "left": 260,
+                "right": 1020,
+                "top": 361.5,
+                "width": 760,
+                "x": 260,
+                "y": 361.5
+              },
+              {
+                "bottom": 547.5,
+                "height": 86,
+                "left": 260,
+                "right": 1020,
+                "top": 461.5,
+                "width": 760,
+                "x": 260,
+                "y": 461.5
+              }
+            ],
+            "documentWidth": 1280,
+            "explanation": {
+              "bottom": 776.296875,
+              "height": 51,
+              "left": 284,
+              "right": 996,
+              "top": 725.296875,
+              "width": 712,
+              "x": 284,
+              "y": 725.296875
+            },
+            "question": {
+              "bottom": 211.5,
+              "height": 96,
+              "left": 288,
+              "right": 992,
+              "top": 115.5,
+              "width": 704,
+              "x": 288,
+              "y": 115.5
+            },
+            "viewport": 1280
+          },
+          {
+            "buttons": [
+              {
+                "bottom": 303.28125,
+                "height": 93,
+                "left": 14,
+                "right": 361,
+                "top": 210.28125,
+                "width": 347,
+                "x": 14,
+                "y": 210.28125
+              },
+              {
+                "bottom": 389.28125,
+                "height": 72,
+                "left": 14,
+                "right": 361,
+                "top": 317.28125,
+                "width": 347,
+                "x": 14,
+                "y": 317.28125
+              },
+              {
+                "bottom": 475.28125,
+                "height": 72,
+                "left": 14,
+                "right": 361,
+                "top": 403.28125,
+                "width": 347,
+                "x": 14,
+                "y": 403.28125
+              }
+            ],
+            "documentWidth": 375,
+            "explanation": {
+              "bottom": 788.265625,
+              "height": 102,
+              "left": 38,
+              "right": 337,
+              "top": 686.265625,
+              "width": 299,
+              "x": 38,
+              "y": 686.265625
+            },
+            "question": {
+              "bottom": 168.28125,
+              "height": 76.78125,
+              "left": 32,
+              "right": 343,
+              "top": 91.5,
+              "width": 311,
+              "x": 32,
+              "y": 91.5
+            },
+            "viewport": 375
+          }
+        ],
+        "clipboard": ""
+      },
+      {
+        "id": "s05",
+        "question": "サメの一種を調べた研究では、眠っているときの目はどうだった？",
+        "answer": "目を閉じているときも、開けているときも確認された",
+        "explanation": "2022年に発表された研究では、学名 Cephaloscyllium isabellum というサメ7匹を調べ、眠っていても目を閉じるときと開けるときの両方が確認されました。すべてのサメに同じ眠り方が当てはまるとは限りません。",
+        "result": "せいかい！",
+        "layouts": [
+          {
+            "buttons": [
+              {
+                "bottom": 347.5,
+                "height": 86,
+                "left": 260,
+                "right": 1020,
+                "top": 261.5,
+                "width": 760,
+                "x": 260,
+                "y": 261.5
+              },
+              {
+                "bottom": 447.5,
+                "height": 86,
+                "left": 260,
+                "right": 1020,
+                "top": 361.5,
+                "width": 760,
+                "x": 260,
+                "y": 361.5
+              }
+            ],
+            "documentWidth": 1280,
+            "explanation": {
+              "bottom": 701.8189697265625,
+              "height": 76.53656005859375,
+              "left": 283.8299560546875,
+              "right": 996.1700439453124,
+              "top": 625.2824096679688,
+              "width": 712.340087890625,
+              "x": 283.8299560546875,
+              "y": 625.2824096679688
+            },
+            "question": {
+              "bottom": 211.5,
+              "height": 96,
+              "left": 288,
+              "right": 992,
+              "top": 115.5,
+              "width": 704,
+              "x": 288,
+              "y": 115.5
+            },
+            "viewport": 1280
+          },
+          {
+            "buttons": [
+              {
+                "bottom": 341.671875,
+                "height": 93,
+                "left": 14,
+                "right": 361,
+                "top": 248.671875,
+                "width": 347,
+                "x": 14,
+                "y": 248.671875
+              },
+              {
+                "bottom": 448.671875,
+                "height": 93,
+                "left": 14,
+                "right": 361,
+                "top": 355.671875,
+                "width": 347,
+                "x": 14,
+                "y": 355.671875
+              }
+            ],
+            "documentWidth": 375,
+            "explanation": {
+              "bottom": 812.66650390625,
+              "height": 153.0164794921875,
+              "left": 37.983856201171875,
+              "right": 337.0161437988281,
+              "top": 659.6500244140625,
+              "width": 299.03228759765625,
+              "x": 37.983856201171875,
+              "y": 659.6500244140625
+            },
+            "question": {
+              "bottom": 206.671875,
+              "height": 115.171875,
+              "left": 32,
+              "right": 343,
+              "top": 91.5,
+              "width": 311,
+              "x": 32,
+              "y": 91.5
+            },
+            "viewport": 375
+          }
+        ]
+      },
+      {
+        "id": "ky03",
+        "question": "「さいふのひもがかたい」とは、どういう意味？",
+        "answer": "お金を簡単には使わない",
+        "explanation": "「さいふのひもがかたい」は、お金を簡単には使わず、むだづかいをしないこと。「さいふのひもがながい」にも、お金を出ししぶる意味があります。",
+        "result": "せいかい！",
+        "layouts": [
+          {
+            "buttons": [
+              {
+                "bottom": 299.5,
+                "height": 86,
+                "left": 260,
+                "right": 1020,
+                "top": 213.5,
+                "width": 760,
+                "x": 260,
+                "y": 213.5
+              },
+              {
+                "bottom": 399.5,
+                "height": 86,
+                "left": 260,
+                "right": 1020,
+                "top": 313.5,
+                "width": 760,
+                "x": 260,
+                "y": 313.5
+              },
+              {
+                "bottom": 499.5,
+                "height": 86,
+                "left": 260,
+                "right": 1020,
+                "top": 413.5,
+                "width": 760,
+                "x": 260,
+                "y": 413.5
+              }
+            ],
+            "documentWidth": 1280,
+            "explanation": {
+              "bottom": 728.3206787109375,
+              "height": 51.036376953125,
+              "left": 283.74627685546875,
+              "right": 996.253662109375,
+              "top": 677.2843017578125,
+              "width": 712.5073852539062,
+              "x": 283.74627685546875,
+              "y": 677.2843017578125
+            },
+            "question": {
+              "bottom": 163.5,
+              "height": 48,
+              "left": 288,
+              "right": 992,
+              "top": 115.5,
+              "width": 704,
+              "x": 288,
+              "y": 115.5
+            },
+            "viewport": 1280
+          },
+          {
+            "buttons": [
+              {
+                "bottom": 282.28125,
+                "height": 72,
+                "left": 14,
+                "right": 361,
+                "top": 210.28125,
+                "width": 347,
+                "x": 14,
+                "y": 210.28125
+              },
+              {
+                "bottom": 368.28125,
+                "height": 72,
+                "left": 14,
+                "right": 361,
+                "top": 296.28125,
+                "width": 347,
+                "x": 14,
+                "y": 296.28125
+              },
+              {
+                "bottom": 454.28125,
+                "height": 72,
+                "left": 14,
+                "right": 361,
+                "top": 382.28125,
+                "width": 347,
+                "x": 14,
+                "y": 382.28125
+              }
+            ],
+            "documentWidth": 375,
+            "explanation": {
+              "bottom": 736.6941528320312,
+              "height": 102.0418701171875,
+              "left": 37.93865203857422,
+              "right": 337.0613327026367,
+              "top": 634.6522827148438,
+              "width": 299.1226806640625,
+              "x": 37.93865203857422,
+              "y": 634.6522827148438
+            },
+            "question": {
+              "bottom": 168.28125,
+              "height": 76.78125,
+              "left": 32,
+              "right": 343,
+              "top": 91.5,
+              "width": 311,
+              "x": 32,
+              "y": 91.5
+            },
+            "viewport": 375
+          }
+        ]
+      },
+      {
+        "id": "ma17",
+        "question": "「失笑する」の辞書の基本的な意味はどれ？",
+        "answer": "こらえきれず、思わず吹き出して笑う",
+        "explanation": "「失笑」は、笑いをこらえきれず思わず吹き出すこと。「失」はここでは「失う」ではなく、抑えきれずに外へ出してしまう意味です。",
+        "result": "せいかい！",
+        "layouts": [
+          {
+            "buttons": [
+              {
+                "bottom": 299.5,
+                "height": 86,
+                "left": 260,
+                "right": 1020,
+                "top": 213.5,
+                "width": 760,
+                "x": 260,
+                "y": 213.5
+              },
+              {
+                "bottom": 399.5,
+                "height": 86,
+                "left": 260,
+                "right": 1020,
+                "top": 313.5,
+                "width": 760,
+                "x": 260,
+                "y": 313.5
+              },
+              {
+                "bottom": 499.5,
+                "height": 86,
+                "left": 260,
+                "right": 1020,
+                "top": 413.5,
+                "width": 760,
+                "x": 260,
+                "y": 413.5
+              }
+            ],
+            "documentWidth": 1280,
+            "explanation": {
+              "bottom": 728.3106689453125,
+              "height": 51.02105712890625,
+              "left": 283.85308837890625,
+              "right": 996.14697265625,
+              "top": 677.2896118164062,
+              "width": 712.2938842773438,
+              "x": 283.85308837890625,
+              "y": 677.2896118164062
+            },
+            "question": {
+              "bottom": 163.5,
+              "height": 48,
+              "left": 288,
+              "right": 992,
+              "top": 115.5,
+              "width": 704,
+              "x": 288,
+              "y": 115.5
+            },
+            "viewport": 1280
+          },
+          {
+            "buttons": [
+              {
+                "bottom": 303.28125,
+                "height": 93,
+                "left": 14,
+                "right": 361,
+                "top": 210.28125,
+                "width": 347,
+                "x": 14,
+                "y": 210.28125
+              },
+              {
+                "bottom": 410.28125,
+                "height": 93,
+                "left": 14,
+                "right": 361,
+                "top": 317.28125,
+                "width": 347,
+                "x": 14,
+                "y": 317.28125
+              },
+              {
+                "bottom": 517.28125,
+                "height": 93,
+                "left": 14,
+                "right": 361,
+                "top": 424.28125,
+                "width": 347,
+                "x": 14,
+                "y": 424.28125
+              }
+            ],
+            "documentWidth": 375,
+            "explanation": {
+              "bottom": 830.265625,
+              "height": 102,
+              "left": 38,
+              "right": 337,
+              "top": 728.265625,
+              "width": 299,
+              "x": 38,
+              "y": 728.265625
+            },
+            "question": {
+              "bottom": 168.28125,
+              "height": 76.78125,
+              "left": 32,
+              "right": 343,
+              "top": 91.5,
+              "width": 311,
+              "x": 32,
+              "y": 91.5
+            },
+            "viewport": 375
+          }
+        ]
+      },
+      {
+        "id": "khm03",
+        "question": "「募」「墓」「幕」「暮」は共通の「莫」を含みますが、部首は異なります。このことから分かる、部品と部首の関係は？",
+        "answer": "共通の部品があっても、辞書で分類するときの部首は異なることがある",
+        "explanation": "部首は「募」が「力」、「墓」が「土」、「幕」が「巾」、「暮」が「日」。共通の「莫」は、草むらに日が沈む形からできたと説明される字で、「募」では音を表す部品です。共通部品の由来と、辞書での部首分類は分けて考えます。",
+        "result": "せいかい！",
+        "layouts": [
+          {
+            "buttons": [
+              {
+                "bottom": 418.5,
+                "height": 109,
+                "left": 260,
+                "right": 1020,
+                "top": 309.5,
+                "width": 760,
+                "x": 260,
+                "y": 309.5
+              },
+              {
+                "bottom": 518.5,
+                "height": 86,
+                "left": 260,
+                "right": 1020,
+                "top": 432.5,
+                "width": 760,
+                "x": 260,
+                "y": 432.5
+              },
+              {
+                "bottom": 618.5,
+                "height": 86,
+                "left": 260,
+                "right": 1020,
+                "top": 532.5,
+                "width": 760,
+                "x": 260,
+                "y": 532.5
+              }
+            ],
+            "documentWidth": 1280,
+            "explanation": {
+              "bottom": 906.8035888671876,
+              "height": 76.50811767578125,
+              "left": 283.9620666503906,
+              "right": 996.0379943847656,
+              "top": 830.2954711914062,
+              "width": 712.075927734375,
+              "x": 283.9620666503906,
+              "y": 830.2954711914062
+            },
+            "question": {
+              "bottom": 259.5,
+              "height": 144,
+              "left": 288,
+              "right": 992,
+              "top": 115.5,
+              "width": 704,
+              "x": 288,
+              "y": 115.5
+            },
+            "viewport": 1280
+          },
+          {
+            "buttons": [
+              {
+                "bottom": 446.953125,
+                "height": 121.5,
+                "left": 14,
+                "right": 361,
+                "top": 325.453125,
+                "width": 347,
+                "x": 14,
+                "y": 325.453125
+              },
+              {
+                "bottom": 553.953125,
+                "height": 93,
+                "left": 14,
+                "right": 361,
+                "top": 460.953125,
+                "width": 347,
+                "x": 14,
+                "y": 460.953125
+              },
+              {
+                "bottom": 660.953125,
+                "height": 93,
+                "left": 14,
+                "right": 361,
+                "top": 567.953125,
+                "width": 347,
+                "x": 14,
+                "y": 567.953125
+              }
+            ],
+            "documentWidth": 375,
+            "explanation": {
+              "bottom": 1055.53125,
+              "height": 153,
+              "left": 37.99994659423828,
+              "right": 337.0000686645508,
+              "top": 902.53125,
+              "width": 299.0001220703125,
+              "x": 37.99994659423828,
+              "y": 902.53125
+            },
+            "question": {
+              "bottom": 283.453125,
+              "height": 191.953125,
+              "left": 32,
+              "right": 343,
+              "top": 91.5,
+              "width": 311,
+              "x": 32,
+              "y": 91.5
+            },
+            "viewport": 375
+          }
+        ]
+      }
+    ],
+    "wrongCheck": {
+      "id": "khm13",
+      "result": "おしい！",
+      "correctAnswer": "正解: ① へん"
+    },
+    "endSnapshot": "- main:\n  - generic: celebration\n  - paragraph: クイズ終了\n  - heading \"漢字のひみつ\" [level=2]\n  - paragraph: 7 / 8\n  - paragraph: いい調子。気になった問題があれば、話のたねにしてみよう。\n  - button \"replay もう一度あそぶ\":\n    - generic: replay\n    - text: もう一度あそぶ\n  - button \"home TOPに戻る\":\n    - generic: home\n    - text: TOPに戻る\n- button \"あそびかた\":\n  - generic: help",
+    "consoleErrors": [],
+    "clipboardLimitation": "z04の正解つきコピーを押した後、ブラウザのclipboard.readTextは空文字。実クリップボード転送は合格扱いにせず未確認。原因は今回特定せず。",
+    "screenshots": "PCトップ、375pxのサメ設問と漢字設問・結果を画面内スクリーンショットで確認。全ページキャプチャは表示再現に不整合があり判定根拠に採用せず。"
+  },
+  "copyContent": {
+    "method": "実app.jsのコピー関数を抽出し、copyToClipboardのみスタブ化したNode VM検証。OSクリップボードの実動作は含まない。",
+    "results": [
+      {
+        "id": "z04",
+        "questionCopy": true,
+        "answerAndExplanationCopy": true
+      },
+      {
+        "id": "s05",
+        "questionCopy": true,
+        "answerAndExplanationCopy": true
+      },
+      {
+        "id": "ky03",
+        "questionCopy": true,
+        "answerAndExplanationCopy": true
+      },
+      {
+        "id": "ma17",
+        "questionCopy": true,
+        "answerAndExplanationCopy": true
+      },
+      {
+        "id": "khm03",
+        "questionCopy": true,
+        "answerAndExplanationCopy": true
+      }
+    ]
+  },
+  "publication": {
+    "commit": false,
+    "push": false,
+    "pr": false,
+    "deploy": false,
+    "productionFirebase": false
+  }
+}
