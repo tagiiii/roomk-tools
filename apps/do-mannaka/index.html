@@ -694,6 +694,77 @@
     return RoomkRTDB.isRoomExpired(room, ORPHAN_TTL_MS) || (!!room && !room.status);
   }
 
+  // 接続ごとに onDisconnect は消費されるため、同じページでの通信回復でも再登録する。
+  // 予約・復元・取消を直列化し、退出や接続世代の変化を await の前後で確認する。
+  let _hostPresence = null;
+  let _hostPresenceWork = Promise.resolve();
+
+  function canRestoreHostPresence(room, nickname) {
+    return !!room && room.host === nickname && !isRoomExpired(room)
+      && ['waiting', 'selecting', 'answering', 'result', 'finished'].includes(room.status)
+      && (room.status !== 'finished'
+        || (typeof room.deleteAt === 'number' && room.deleteAt > getEstimatedServerNow()));
+  }
+
+  function stopHostPresence(roomRef = null) {
+    const presence = _hostPresence;
+    if (!presence || (roomRef && presence.roomRef !== roomRef)) return _hostPresenceWork;
+    _hostPresence = null;
+    presence.connectionRef.off('value', presence.listener);
+    // 進行中の予約が完了した後で取り消す。次のルームの登録もこの後に並ぶ。
+    _hostPresenceWork = _hostPresenceWork.then(() => RoomkRTDB.cancelRoomOnDisconnect(presence.roomRef));
+    return _hostPresenceWork;
+  }
+
+  function startHostPresence() {
+    stopHostPresence();
+    if (state.role !== 'host' || !state.roomRef) return;
+    const presence = {
+      roomRef: state.roomRef, nickname: state.nickname,
+      connectionRef: db.ref('.info/connected'), connected: false, generation: 0,
+    };
+    _hostPresence = presence;
+    presence.listener = snapshot => {
+      presence.connected = snapshot.val() === true;
+      const generation = ++presence.generation;
+      if (!presence.connected) return;
+      const isCurrent = () => _hostPresence === presence && presence.connected
+        && presence.generation === generation && state.role === 'host'
+        && state.roomRef === presence.roomRef && state.nickname === presence.nickname;
+      _hostPresenceWork = _hostPresenceWork.then(async () => {
+        if (!isCurrent()) return;
+        const snapshot = await presence.roomRef.get();
+        if (!isCurrent()) return;
+        if (!canRestoreHostPresence(snapshot.val(), presence.nickname)) {
+          leaveGame('ルームが終了したため再接続できませんでした');
+          return;
+        }
+        // online を書くより先にサーバーの切断予約受付を確認する。
+        await presence.roomRef.onDisconnect().update({
+          hostConnected: false,
+          hostDisconnectedAt: firebase.database.ServerValue.TIMESTAMP,
+        });
+        if (!isCurrent()) {
+          await RoomkRTDB.cancelRoomOnDisconnect(presence.roomRef);
+          return;
+        }
+        const { committed } = await presence.roomRef.transaction(room => {
+          // get 後に削除・終了したルームも再生成しない。再試行時にも期限を確認する。
+          if (!isCurrent() || !canRestoreHostPresence(room, presence.nickname)) return;
+          return { ...room, hostConnected: true, hostDisconnectedAt: null };
+        }, undefined, false);
+        if (!committed) {
+          await RoomkRTDB.cancelRoomOnDisconnect(presence.roomRef);
+          if (isCurrent()) leaveGame('ルームが終了したため再接続できませんでした');
+        }
+      }).catch(async () => {
+        await RoomkRTDB.cancelRoomOnDisconnect(presence.roomRef);
+        if (isCurrent()) RoomkRTDB.showToast('再接続に失敗しました。ページを読み直してください');
+      });
+    };
+    presence.connectionRef.on('value', presence.listener);
+  }
+
   // ════════════════════════════════════
   // 再接続処理
   // ════════════════════════════════════
@@ -722,6 +793,11 @@
         showReconnectOverlay(false);
         return false;
       }
+      if (role === 'host' && !canRestoreHostPresence(room, nickname)) {
+        clearSession();
+        showReconnectOverlay(false);
+        return false;
+      }
 
       state.nickname = nickname;
       state.roomCode = roomCode;
@@ -729,11 +805,7 @@
       state.roomRef  = db.ref(`domannaka_rooms/${roomCode}`);
 
       if (role === 'host') {
-        await state.roomRef.update({ hostConnected: true, hostDisconnectedAt: null });
-        state.roomRef.onDisconnect().update({
-          hostConnected: false,
-          hostDisconnectedAt: firebase.database.ServerValue.TIMESTAMP,
-        });
+        startHostPresence();
         // 終了済みルームはリロードで JS タイマーが消えるため、残り時間で削除を再予約する
         if (room.status === 'finished' && room.deleteAt) {
           scheduleFinishedCleanup(state.roomRef, room.deleteAt);
@@ -751,6 +823,7 @@
       startRoomListener();
       return true;
     } catch {
+      stopHostPresence();
       clearSession();
       showReconnectOverlay(false);
       return false;
@@ -937,11 +1010,7 @@
     state.roomCode = roomCode;
     state.roomRef  = roomRef;
 
-    // ホスト切断時は切断時刻を残す。次回アクセス時に期限切れルームを掃除できる。
-    state.roomRef.onDisconnect().update({
-      hostConnected: false,
-      hostDisconnectedAt: firebase.database.ServerValue.TIMESTAMP,
-    });
+    startHostPresence();
     saveSession();
 
     document.getElementById('host-step-nickname').style.display = 'none';
@@ -1034,6 +1103,7 @@
   function scheduleFinishedCleanup(roomRef, deleteAt) {
     const delay = Math.max(0, deleteAt - getEstimatedServerNow());
     setTimeout(async () => {
+      await stopHostPresence(roomRef);
       // 削除の前に自接続の onDisconnect 予約を取り消す。予約が残ったままだと、
       // 削除後にこのタブを閉じた時に update が発火してゴースト room を再生成する
       await RoomkRTDB.cancelRoomOnDisconnect(roomRef);
@@ -1220,10 +1290,15 @@
   // Firebase リスナー
   // ════════════════════════════════════
   function startRoomListener() {
-    state.roomRef.on('value', snapshot => {
+    const roomRef = state.roomRef;
+    roomRef.on('value', snapshot => {
+      if (state.roomRef !== roomRef) return;
       const room = snapshot.val();
 
       if (!room) {
+        stopHostPresence(roomRef);
+        roomRef.off();
+        clearSession();
         if (state.currentScreen !== 'final') {
           clearSession();
           alert('ホストが退出したためゲームが終了しました');
@@ -1507,6 +1582,7 @@
   // TOP に戻る（状態リセット）
   // ════════════════════════════════════
   function goToTop() {
+    stopHostPresence();
     // leaveGame を経由しない遷移でもカウントダウンを確実に解放する（対称化）
     clearInterval(_hostDisconnectTimer);
     _hostDisconnectTimer = null;
