@@ -1,0 +1,356 @@
+{
+  "date": "2026-09-07",
+  "sourceCommit": "6afcb707378e4bcc3121b778d1102e51e36b9f5d",
+  "sourceSha256": "18d6abfe00f2348a1c182342c11992ec4a77d4d8a3fb40376724d84dc2fe5dc1",
+  "scope": "P-10 followup3 科学6問の前回残余主張への追加照合。各問1〜2探索波で新規一次・専門機関資料を探し、取得できた本文の範囲のみ採用。全6件 unresolved は誤り6件という意味ではなく、全480問やバックログ全体の未完了数でもない。提案はすべて未承認・未実装であり、問題・選択肢・正答・解説と既存証拠は変更しない。",
+  "items": [
+    {
+      "id": "z07",
+      "pack": "zatsugaku-3choice",
+      "currentQuestion": {
+        "question": "砂漠にくらすキツネは耳が大きいことが多い。いちばんの理由は？",
+        "choices": [
+          "遠くの音をよく聞くため",
+          "体の熱をにがすため",
+          "砂がはいらないようにするため"
+        ],
+        "answerIndex": 1,
+        "explanation": "大きな耳は放熱器の役割をしています。「音のため」と思いやすいですが、暑さ対策が主な理由です。"
+      },
+      "priorRemainingClaims": [
+        "聴覚と放熱を比較して『いちばん』『暑さ対策が主』と順位付けする根拠。"
+      ],
+      "outcome": "unresolved",
+      "verifiedClaims": [
+        "Smithsonian の本文はフェネックの耳について、砂中の獲物の音を聞く働きと体熱を逃がす働きの両方を説明している。放熱という機能は確認できるが、機能の優先順位は示していない。"
+      ],
+      "remainingClaims": [
+        "聴覚と放熱を比較して『いちばん』『暑さ対策が主』と順位付けする根拠。"
+      ],
+      "sources": [
+        {
+          "title": "How Does a Fennec Fox Survive in the Desert? And Other Questions, Answered",
+          "publisher": "Smithsonian’s National Zoo & Conservation Biology Institute",
+          "url": "https://nationalzoo.si.edu/animals/news/how-does-fennec-fox-survive-desert-and-other-questions-answered",
+          "access": "page",
+          "claimSupported": "2018-04-12 の公式解説本文の耳に関する節で聴覚と放熱の二機能を確認。",
+          "limitations": "フェネックについての解説であり、砂漠のキツネ全般の比較実験でも、二機能の寄与の順位付けでもない。"
+        },
+        {
+          "title": "Thermoregulation and metabolism in a small desert carnivore: the Fennec fox (Fennecus zerda) (Mammalia)",
+          "publisher": "Zoological Society of London / Wiley",
+          "url": "https://zslpublications.onlinelibrary.wiley.com/doi/abs/10.1111/j.1469-7998.1982.tb02076.x",
+          "access": "search_snippet",
+          "claimSupported": "検索で1982年の体温調節・代謝研究候補を確認した。今回の主張の支持根拠には採用しない。",
+          "limitations": "ページ見出しは応答したが論旨本文の追加取得はタイムアウト。検索抜粋は聴覚と放熱の順位を示さない。"
+        },
+        {
+          "title": "Thermoregulation and metabolism in a small desert carnivore: the Fennec fox",
+          "publisher": "University of Nairobi repository",
+          "url": "https://erepository.uonbi.ac.ke/items/ae676ab3-f731-4696-a231-ed962ebdd1ab",
+          "access": "failed",
+          "claimSupported": "著者所属機関リポジトリの候補。本文根拠には採用しない。",
+          "limitations": "取得は Internal Error。アクセス制限の回避や反復取得は行わない。"
+        }
+      ],
+      "searches": [
+        {
+          "query": "fennec pinna heat dissipation hearing thermoregulation experiment ears desert fox\"},{\"bad\":\"no",
+          "result": "入力末尾に不要文字が混入した検索。Smithsonian と1982年論文の候補が返り、採用は別途取得できた Smithsonian 本文だけに限定した。"
+        }
+      ],
+      "notes": "放熱が主でないとも、音が主であるとも断定しない。①の聴覚も実在する機能なので、解説の『主』だけを消しても設問の『いちばん』による一意採点の根拠は回復しない。",
+      "proposedAction": {
+        "kind": "wording_proposal",
+        "text": "未承認・未実装の解説案：『大きな耳は、小さな音を聞くことにも、体の熱を逃がすことにも役立ちます。』採点を維持するなら、設問もフェネックを対象に『暑さへの対応として役立つ耳の働きは？』等に限定する案を別途承認・確認する。",
+        "reason": "裏付け済みの二機能だけを述べ、順位を作らない。解説のみでは現設問と①②の関係が残る。"
+      }
+    },
+    {
+      "id": "z08",
+      "pack": "zatsugaku-3choice",
+      "currentQuestion": {
+        "question": "「鳥は飛ぶために体が軽い」と考えると、骨はどうなっていそう？",
+        "choices": [
+          "かたくて重い骨で支える",
+          "中が空洞で軽い骨が多い",
+          "やわらかくて曲がりやすい"
+        ],
+        "answerIndex": 1,
+        "explanation": "重い骨では飛べないし、やわらかいと支えられない。軽くてかたい空洞の骨がちょうどいいんです。"
+      },
+      "priorRemainingClaims": [
+        "『重い骨では飛べない』の比較対象・重量条件が示されていないため、その一般断定まで支持できるかは未解消。"
+      ],
+      "outcome": "unresolved",
+      "verifiedClaims": [],
+      "remainingClaims": [
+        "『重い骨では飛べない』の比較対象・重量条件が示されていないため、その一般断定まで支持できるかは未解消。"
+      ],
+      "sources": [
+        {
+          "title": "Reinforcements in avian wing bones: Experiments, analysis, and modeling",
+          "publisher": "Elsevier / University of California San Diego 著者公開版",
+          "url": "https://maeresearch.ucsd.edu/~vlubarda/research/pdfpapers/JMBBM-2017b.pdf",
+          "access": "search_snippet",
+          "claimSupported": "2017年の翼骨補強構造の実験論文候補。検索に要旨相当の内容が出たが今回の支持判定には使用しない。",
+          "limitations": "本文 open は 502。PDF skill を読み page 0 の screenshot を試したがPDFとして解決できず画像取得不能。全文・図は未読であり、抜粋を論文本文確認済みへ格上げしない。"
+        },
+        {
+          "title": "Reinforcements in avian wing bones: Experiments, analysis, and modeling",
+          "publisher": "Elsevier",
+          "url": "https://www.sciencedirect.com/science/article/pii/S1751616117303065",
+          "access": "failed",
+          "claimSupported": "出版社の同論文候補。追加支持なし。",
+          "limitations": "本文取得 Internal Error。出版社制限の回避なし。"
+        },
+        {
+          "title": "Postcranial skeletal pneumaticity in non-aquatic neoavians: Insights from accipitrimorphae",
+          "publisher": "PubMed Central 掲載研究論文",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9644947/",
+          "access": "failed",
+          "claimSupported": "非水生鳥の含気骨に関する新しい探索候補。追加支持なし。",
+          "limitations": "取得先が確認画面で止まり、本文を取得していない。確認画面を迂回しない。"
+        }
+      ],
+      "searches": [
+        {
+          "query": "flying diving birds dense bones non pneumatic skeleton hummingbird swift bone pneumaticity museum",
+          "result": "翼骨実験、猛禽類の含気骨、ハチドリ骨格の候補を発見。試した出版社・PMC本文は取得できなかった。"
+        },
+        {
+          "query": "\"Reinforcements in avian wing bones\" site:ucsd.edu",
+          "result": "著者の大学公開PDFと研究業績一覧を発見。公開PDFも本文・該当画像を取得できず検索候補として保存した。"
+        }
+      ],
+      "notes": "新規資料本文に基づく追加支持は0。前回に取得済みの骨格質量の比較結果を今回の新規成果として再計上しない。『重い』の比較対象がない原文を『どんな空洞のない骨でも飛べない』へ強めて反証することもしない。",
+      "proposedAction": {
+        "kind": "wording_proposal",
+        "text": "未承認・未実装の最小案：解説の『重い骨では飛べないし、』という一般断定を削除する。代替解説候補は『鳥には、内部に空気の入る空間をもつ骨があります。骨のつくりは、体を支える強さにも関わります。』。投入前に既取得資料でこの限定文と②『多い』の適用範囲を確認する。",
+        "reason": "比較条件のない飛行不可能の断定を避ける。今回新規本文が取れていないため、代案も出典確認済みの完成稿としては扱わない。"
+      }
+    },
+    {
+      "id": "s06",
+      "pack": "series-2choice",
+      "currentQuestion": {
+        "question": "ひまわりは夜もずっと太陽を追いかけている？ それとも 夜はあまり動かない？",
+        "choices": [
+          "夜もずっと追いかけている",
+          "夜はあまり動かない"
+        ],
+        "answerIndex": 1,
+        "explanation": "若いひまわりは昼に太陽の方を向きますが、夜は動きがゆっくりになります。"
+      },
+      "priorRemainingClaims": [
+        "若いヒマワリの夜間の動きが昼間より遅いという速度比較。"
+      ],
+      "outcome": "unresolved",
+      "verifiedClaims": [
+        "Harmer Lab の研究紹介本文は、若いヒマワリが日中には東から西へ、夜間には翌朝に備えて西から東へ向きを変えることを説明する。昼は茎の東側、夜は西側の相対的な伸長が大きいという説明も確認できる。"
+      ],
+      "remainingClaims": [
+        "若いヒマワリの夜間の動きが昼間より遅いという速度比較。"
+      ],
+      "sources": [
+        {
+          "title": "Research — Sunflower heliotropism",
+          "publisher": "University of California Davis, Harmer Lab",
+          "url": "https://harmerlab.ucdavis.edu/research",
+          "access": "page",
+          "claimSupported": "研究当事者の本文に、夜間東向き復帰と左右非対称の成長が記載されている。",
+          "limitations": "東側対西側の成長速度の説明は、昼間対夜間の花首の角速度比較ではない。本文記述から『夜は遅い』とも『夜は必ず速い』とも結論しない。"
+        },
+        {
+          "title": "Challenging current interpretation of sunflower movements",
+          "publisher": "Oxford University Press / Journal of Experimental Botany",
+          "url": "https://academic.oup.com/jxb/article/70/21/6049/5554344",
+          "access": "search_snippet",
+          "claimSupported": "2019年の論文候補。検索抜粋に日長と夜間復帰時間に関する記述があった。",
+          "limitations": "ページ見出しの応答後、本文取得がリダイレクトエラーで失敗。本文未取得なので反証にも速度比較の支持にも使わない。"
+        },
+        {
+          "title": "Circadian regulation of sunflower heliotropism, floral orientation, and pollinator visits",
+          "publisher": "Science / PubMed",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/27493185/",
+          "access": "failed",
+          "claimSupported": "2016年の原論文書誌候補。今回の新規支持は研究室本文のみによる。",
+          "limitations": "open 応答は本文0行で要旨本文を取得していない。"
+        }
+      ],
+      "searches": [
+        {
+          "query": "Atamian 2016 sunflower east reorientation night shorter nights movement rate",
+          "result": "2016年原論文、2019年論考の候補。取得できた検索抜粋だけで速度の結論は出さない。"
+        },
+        {
+          "query": "site.ucdavis.edu sunflower night east 2016 circadian",
+          "result": "研究当事者 Harmer Lab の研究紹介を新しい本文経路として取得。夜間復帰は支持、昼夜速度比較は不足。"
+        }
+      ],
+      "notes": "原文は『夜は全く動かない』ではないので、夜間の動きの存在だけを明確反証とはしない。一方、東向き復帰を消した現在の二択は説明改訂時に整合を再確認する必要がある。",
+      "proposedAction": {
+        "kind": "wording_proposal",
+        "text": "未承認・未実装の解説案：『若いひまわりは昼に太陽を追い、夜には翌朝に向けて東向きへ戻ります。』この案を採る場合は、設問・選択肢も夜の復帰方向を問う形などへ最小限揃える承認が必要。現選択肢『夜はあまり動かない』をそのまま正答として完成扱いにしない。",
+        "reason": "研究当事者の本文で確認できる動きに限定し、未確認の昼夜速度の大小を削る。"
+      }
+    },
+    {
+      "id": "s08",
+      "pack": "series-2choice",
+      "currentQuestion": {
+        "question": "ホッキョクグマの毛を1本だけ見ると、白い？ それとも 透明に近い？",
+        "choices": [
+          "白い",
+          "透明に近い"
+        ],
+        "answerIndex": 1,
+        "explanation": "毛は透明な管のようになっていて、光が反射してまとまると白く見えます。"
+      },
+      "priorRemainingClaims": [
+        "下毛を含めた管状構造の適用範囲。今回取得した大会要旨は毛種別の全断面構造を示さず、先行資料間の記述差を解消するには足りない。"
+      ],
+      "outcome": "unresolved",
+      "verifiedClaims": [
+        "San Diego Zoo の飼育担当者による記事本文は、外側の長い保護毛（guard hairs）を透明で中空と説明している。動物紹介本文には保護毛と密な下毛の二層構造が記されている。"
+      ],
+      "remainingClaims": [
+        "下毛を含めた管状構造の適用範囲。今回取得できた飼育機関の記事も下毛を含む全毛種の断面比較は示さず、先行資料間の記述差を解消していない。"
+      ],
+      "sources": [
+        {
+          "title": "Punk Rock Polar Bears?",
+          "publisher": "San Diego Zoo Wildlife Alliance / Matthew Price（飼育担当者）",
+          "url": "https://sandiegozoowildlifealliance.org/story-hub/2015/08/28/punk-rock-polar-bears",
+          "access": "page",
+          "claimSupported": "2015-08-28 記事本文は、透明・中空という説明の対象を outer guard hairs と明示する。",
+          "limitations": "下毛の断面構造には言及しない。下毛が中実であることの新規反証資料ではない。"
+        },
+        {
+          "title": "Polar Bear",
+          "publisher": "San Diego Zoo Wildlife Alliance",
+          "url": "https://animals.sandiegozoo.org/animals/polar-bear?qt-animals_page_content_tabs=1",
+          "access": "page",
+          "claimSupported": "ABOUT 本文で長い保護毛と下毛を区別し、続く一般解説で透明な中空の毛と記述する。",
+          "limitations": "一般向け説明の代名詞の範囲だけでは全毛種の構造を判定できない。飼育担当記事の保護毛限定と併読し、下毛へ拡張しない。"
+        },
+        {
+          "title": "Zoologicheskii Zhurnal 98(10), Chernova 論文候補",
+          "publisher": "Russian Academy of Sciences 関連 Science Journals",
+          "url": "https://sciencejournals.ru/view-article/?a=Zool1910006Chernova&j=zool&n=10&v=98&y=2019",
+          "access": "search_snippet",
+          "claimSupported": "検索にホッキョクグマの毛と顕微鏡観察に関する候補が出た。支持判定に不使用。",
+          "limitations": "見出しの応答のみで、本文を取り出す追加 open はタイムアウト。検索に混在する他種の下毛の記載をホッキョクグマへ流用しない。"
+        }
+      ],
+      "searches": [
+        {
+          "query": "\"polar bear\" \"hair\" \"underfur\" \"cross section\" microscopy porous medulla",
+          "result": "顕微鏡論文候補を発見したが本文を取得できなかった。前回取得失敗の資料の反復探索は行わない。"
+        },
+        {
+          "query": "site.animals.sandiegozoo.org polar bear hair transparent hollow undercoat",
+          "result": "動物園の一般解説と飼育担当者記事を取得。保護毛に限定すれば透明・中空は確認。LOC の既知記述も検索に再出現したが新規本文取得扱いにしない。"
+        }
+      ],
+      "notes": "『毛1本』を『全毛種の全断面が完全な管』に強めて誤り認定しない。ただし現解説は毛種を限定しないため旧残余は継続。論文の確認不足を誤りと数えない。",
+      "proposedAction": {
+        "kind": "wording_proposal",
+        "text": "未承認・未実装の解説最小案：『外側の長い毛は、透明な管のようなつくりです。』と対象を限定する。設問も『外側の長い毛を1本だけ見ると』に揃え、白く見える仕組みの文は先行取得済み光学資料との整合を確認してから残す。",
+        "reason": "新たに本文で裏付けできた毛種へ限定する案。下毛の構造を未確認のまま断定せず、設問と解説の対象も一致させる。"
+      }
+    },
+    {
+      "id": "ks08",
+      "pack": "kurashi-suiri",
+      "currentQuestion": {
+        "question": "同じ水を、浅い皿と深いコップに入れた。早くぬるくなりやすいのは？",
+        "choices": [
+          "浅い皿",
+          "深いコップ",
+          "どちらも同じ"
+        ],
+        "answerIndex": 0,
+        "explanation": "手がかりは「空気にふれる広さ」。浅い皿は水が広がって空気にふれる面が大きいので、温度が変わりやすくなります。"
+      },
+      "priorRemainingClaims": [
+        "冷たい同じ水が室温へ近づくという想定で、浅皿と深いコップの比較に必要な条件をどこまで同じと読むか。取得した教材は固体表面と流体のモデルであり、この二つの容器の水全体の温度変化の直接比較ではない。"
+      ],
+      "outcome": "unresolved",
+      "verifiedClaims": [
+        "TU Delft と NVON の実験教材は、蒸発のためコップの水が周囲の空気より低い温度になる場合を説明する。皿上方の紙への凝縮熱と紙の蒸発冷却を観察する実験も記述されており、空気との熱のやり取り以外に相変化の影響があることを確認した。"
+      ],
+      "remainingClaims": [
+        "冷たい同じ水が室温へ近づくという想定で、浅皿と深いコップの比較に必要な初期温度・水量・容器・湿度等の条件。新規教材はこの二つの容器の水の昇温速度を直接比較せず、面積だけでの順位を裏付けない。"
+      ],
+      "sources": [
+        {
+          "title": "18.8. Condensation heat in infrared",
+          "publisher": "Delft University of Technology / NVON, Show the Physics",
+          "url": "https://interactivetextbooks.tudelft.nl/showthephysics/demos/demo63/demo63.html",
+          "access": "page",
+          "claimSupported": "本文の導入はコップの水の蒸発冷却を説明し、実験手順と解説は水面上の紙の凝縮による加熱、取り出した紙の蒸発による冷却を扱う。",
+          "limitations": "浅皿対深いコップの水温変化そのものの比較実験ではない。紙の温度測定値を容器の水の温度比較へ転用しない。"
+        }
+      ],
+      "searches": [
+        {
+          "query": "water heating room temperature shallow dish cup surface area evaporation experiment physics education",
+          "result": "大学実験教材を新規取得。表面積と蒸発の教材、熱い飲み物の冷却研究も候補に出たが、元問の冷水の昇温を直接比較した結果にはしない。"
+        }
+      ],
+      "notes": "『同じ水』に量や温度を同じと読む余地があることは認め、原文を無条件の全状況保証に強めない。もっとも蒸発と容器からの熱流も関わるため、今回の資料だけでは現条件で浅皿を一意に選ぶ根拠が足りない。",
+      "proposedAction": {
+        "kind": "wording_proposal",
+        "text": "未承認・未実装の解説候補：『水の温度の変わり方には、空気に触れる広さのほか、容器や周囲の温度、水の蒸発も関わります。』現正答を維持する完成案ではない。浅皿を一意にする条件の根拠が取れない場合、設問を空気に触れる面の広さ自体を問う形へ変える案を別途承認・確認する。",
+        "reason": "解説に注意書きを加えるだけで比較の結論が実証されたことにはならない。追加実験は行わず、単一正答を保つ出題範囲を人間判断へ戻す。"
+      }
+    },
+    {
+      "id": "ks13",
+      "pack": "kurashi-suiri",
+      "currentQuestion": {
+        "question": "くもりの日は、せんたく物が晴れの日よりかわきにくい。晴れの日とくらべて足りないものは？",
+        "choices": [
+          "日光と、かわいた空気",
+          "風の音",
+          "洗ざいの量"
+        ],
+        "answerIndex": 0,
+        "explanation": "かわく手がかりは日光とかわいた空気。くもりの日はどちらも少ないので、かわきにくくなります。"
+      },
+      "priorRemainingClaims": [
+        "設問が想定する晴れの日と曇りの日の比較で、地上の空気の乾燥度も低いと判断する条件。今回の資料も雲量の違いだけで当該湿度関係が成立する根拠にはならない。"
+      ],
+      "outcome": "unresolved",
+      "verifiedClaims": [
+        "日本気象株式会社の開発実験記事の導入本文は、乾燥に温湿度、日射、風がそれぞれ関わると説明する。実験方法では同じ場所・同じ衣類を一定重量まで濡らし、1時間ごとに重量を測る手順が記載されている。"
+      ],
+      "remainingClaims": [
+        "設問が想定する晴れの日と曇りの日の比較で、地上の空気の乾燥度も低いと判断する条件。新規実験記事の取得範囲でも雲量だけから当該湿度関係は導けない。"
+      ],
+      "sources": [
+        {
+          "title": "洗濯予報で用いる乾燥ポテンシャルの開発実験",
+          "publisher": "日本気象株式会社 / K. Enohara",
+          "url": "https://ods.n-kishou.co.jp/tech/blog/detail/2409",
+          "access": "page",
+          "claimSupported": "2020-03-13 の開発実験記事。導入と実験方法の本文（取得行64〜95付近）で温湿度・日射・風の役割と衣類の重量測定手順を確認。",
+          "limitations": "後半の取得はタイムアウトしたため、検索抜粋に出る回帰結果や決定係数は本文確認済みとして採用しない。前半も晴天対曇天の湿度を一律に順位付けしない。"
+        }
+      ],
+      "searches": [
+        {
+          "query": "曇り 洗濯物 湿度 日射 乾燥 研究 気象 大学",
+          "result": "気象会社自身の乾燥予報開発実験記事を新規取得。導入・実験方法は確認、後半結果は取得不足。晴れと曇りの地上湿度を結びつける条件までは得られなかった。"
+        }
+      ],
+      "notes": "晴れた日より日差しが弱いことと、空気がより湿っていることを分けて扱う。曇天の方が常に乾燥しているという逆の主張もしていない。日本気象協会の記事ではなく日本気象株式会社の記事である。",
+      "proposedAction": {
+        "kind": "wording_proposal",
+        "text": "未承認・未実装の解説案：『日差しは洗濯物を温め、水分が蒸発するのを助けます。湿度や風も乾きやすさに関係します。』この案を採る場合は、選択肢①の『かわいた空気』を外して日光を問う形にするか、比較する日の湿度条件を設問に明示する案の承認も必要。",
+        "reason": "曇りという条件だけから乾いた空気の不足を断定しない。解説だけを変更して現選択肢①全体の裏付け完了とはしない。"
+      }
+    }
+  ]
+}
