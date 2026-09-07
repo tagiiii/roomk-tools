@@ -14,6 +14,9 @@
 
 ## 一覧
 
+- [p10-science-three-pr-preparation-2026-09-07.md](p10-science-three-pr-preparation-2026-09-07.md) — 科学クイズのコミット分割と監査記録のPR本文を整理した記録（P-10、z07／s06／s08、2026-09-07）
+- [p10-science-three-fix-2026-09-07.md](p10-science-three-fix-2026-09-07.md) — 科学クイズの承認修正と差分・表示・コピー文字列の検証を記録（P-10、z07／s06／s08、2026-09-07）
+- [p10-science-three-proposal-2026-09-07.md](p10-science-three-proposal-2026-09-07.md) — 科学クイズの設問・選択肢・解説の整合と修正案を整理した記録（P-10、z07／s06／s08、2026-09-07）
 - [p10-explanations-pr-preparation-2026-09-07.md](p10-explanations-pr-preparation-2026-09-07.md) — クイズ解説のコミット分割と追加照合記録のPR本文を整理した記録（P-10、2026-09-07）
 - [p10-zk204-fix-2026-09-07.md](p10-zk204-fix-2026-09-07.md) — ドイツ語複合語の解説から刊行余談を除き、差分とコピー文字列を検証した記録（P-10、zk204、2026-09-07）
 - [p10-six-explanations-fix-2026-09-07.md](p10-six-explanations-fix-2026-09-07.md) — 承認済みのクイズ解説限定案と差分・表示・コピー文字列の検証を記録（P-10、2026-09-07）
