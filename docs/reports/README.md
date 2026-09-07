@@ -14,6 +14,9 @@
 
 ## 一覧
 
+- [p10-science-remaining-three-pr-preparation-2026-09-07.md](p10-science-remaining-three-pr-preparation-2026-09-07.md) — 科学クイズのコミット分割と監査記録のPR本文を整理した記録（P-10、z08／ks08／ks13、2026-09-07）
+- [p10-science-remaining-three-fix-2026-09-07.md](p10-science-remaining-three-fix-2026-09-07.md) — 科学クイズの承認修正と差分・表示・採点の検証を記録（P-10、z08／ks08／ks13、2026-09-07）
+- [p10-science-remaining-three-proposal-2026-09-07.md](p10-science-remaining-three-proposal-2026-09-07.md) — 科学クイズの残余主張と修正案を整理した記録（P-10、z08／ks08／ks13、2026-09-07）
 - [p10-science-three-pr-preparation-2026-09-07.md](p10-science-three-pr-preparation-2026-09-07.md) — 科学クイズのコミット分割と監査記録のPR本文を整理した記録（P-10、z07／s06／s08、2026-09-07）
 - [p10-science-three-fix-2026-09-07.md](p10-science-three-fix-2026-09-07.md) — 科学クイズの承認修正と差分・表示・コピー文字列の検証を記録（P-10、z07／s06／s08、2026-09-07）
 - [p10-science-three-proposal-2026-09-07.md](p10-science-three-proposal-2026-09-07.md) — 科学クイズの設問・選択肢・解説の整合と修正案を整理した記録（P-10、z07／s06／s08、2026-09-07）
