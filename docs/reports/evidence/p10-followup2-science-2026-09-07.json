@@ -1,0 +1,369 @@
+{
+  "date": "2026-09-07",
+  "sourceCommit": "96f3cf7d99fd9c19d09ba9d893b913752543dcbe",
+  "sourceSha256": "7aab68b61b8ebdba4bddc724acd6423ec016f9c2108f15541fbc325d4b826c2b",
+  "scope": "2026-09-06夜間追加照合の科学7問に残る主張のみを対象とした第2回追加照合。現行 questions.js の原文を保持し、旧残余主張への新規検索・本文取得を2026-09-07 JSTに実施。全問の再分類・実装修正ではない。検索抽出、要旨、取得本文、取得失敗を分離し、確認できないことを誤りとしない。PDF候補は取得失敗のため図版未確認で、HTML本文または要旨で得た範囲のみを判定に利用。新しい探索経路が実質的な追加根拠を生まなくなった段階で打ち切った。",
+  "items": [
+    {
+      "id": "z07",
+      "pack": "zatsugaku-3choice",
+      "currentQuestion": {
+        "question": "砂漠にくらすキツネは耳が大きいことが多い。いちばんの理由は？",
+        "choices": [
+          "遠くの音をよく聞くため",
+          "体の熱をにがすため",
+          "砂がはいらないようにするため"
+        ],
+        "answerIndex": 1,
+        "explanation": "大きな耳は放熱器の役割をしています。「音のため」と思いやすいですが、暑さ対策が主な理由です。"
+      },
+      "priorRemainingClaims": [
+        "聴覚と放熱を比較して『いちばん』『暑さ対策が主』と順位付けする根拠。"
+      ],
+      "outcome": "unresolved",
+      "verifiedClaims": [
+        "大学の種解説本文は、フェネックの大きな耳の放熱機能と、砂中の獲物を探す聴覚機能の両方を述べている。"
+      ],
+      "remainingClaims": [
+        "聴覚と放熱を比較して『いちばん』『暑さ対策が主』と順位付けする根拠。"
+      ],
+      "sources": [
+        {
+          "title": "Vulpes zerda — Fennec fox",
+          "publisher": "University of Michigan, Animal Diversity Web",
+          "url": "https://animaldiversity.org/accounts/Vulpes_zerda/",
+          "access": "page",
+          "claimSupported": "Physical Description の本文で、耳の熱放散と獲物探索に関わる聴覚の両機能を確認した。",
+          "limitations": "2004年の種解説であり、両機能の寄与率を比較した実験ではない。機能の存在から優先順位は導かない。"
+        }
+      ],
+      "searches": [
+        {
+          "query": "\"fennec\" ears \"primarily\" heat hearing study",
+          "result": "大学の種解説とIUCNのCanid Action Plan候補が得られた。大学本文を取得したが順位付けの根拠はなかった。"
+        }
+      ],
+      "notes": "本文にない『聴覚には使わない』という主張は追加していない。確認できない順位付けを誤りとは認定しない。探索は関連する新規資料一巡で終了。"
+    },
+    {
+      "id": "z08",
+      "pack": "zatsugaku-3choice",
+      "currentQuestion": {
+        "question": "「鳥は飛ぶために体が軽い」と考えると、骨はどうなっていそう？",
+        "choices": [
+          "かたくて重い骨で支える",
+          "中が空洞で軽い骨が多い",
+          "やわらかくて曲がりやすい"
+        ],
+        "answerIndex": 1,
+        "explanation": "重い骨では飛べないし、やわらかいと支えられない。軽くてかたい空洞の骨がちょうどいいんです。"
+      },
+      "priorRemainingClaims": [
+        "『重い骨では飛べない』という原文の一般断定を検証するための比較対象・重量条件。",
+        "鳥骨格の相対質量・骨密度に関する Dumont 2010 原著の関連本文は今回も取得できなかった。検索抽出は本文検証に格上げしない。"
+      ],
+      "outcome": "unresolved",
+      "verifiedClaims": [
+        "2025年の鳥類骨格含気化レビューは、新規分析で、体重に対する骨格質量について含気性の鳥類が非含気性の鳥類より軽いとは示されないと報告する。",
+        "同論文は含気化の程度に種間差があることと、体重に対する比較と体積に対する比較を区別している。骨内の空隙の存在と骨格全体の相対質量は別の主張として扱える。"
+      ],
+      "remainingClaims": [
+        "『重い骨では飛べない』の比較対象・重量条件が示されていないため、その一般断定まで支持できるかは未解消。"
+      ],
+      "sources": [
+        {
+          "title": "When the lung invades: a review of avian postcranial skeletal pneumaticity",
+          "publisher": "Royal Society, Philosophical Transactions B / PMC全文収録",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12077225/",
+          "access": "page",
+          "claimSupported": "2025年論文のAbstract、Introduction、Figure 1説明文を本文として取得。含気性・非含気性鳥類の骨格質量と体重のスケーリングに関する新規分析の結果を確認した。",
+          "limitations": "初回の本文取得後、同URLへのfindはreCAPTCHAになった。初回に取得できた本文範囲のみ根拠とする。体重比で同等という結果は、原文にない『同じ大きさの哺乳類より必ず軽い』の反証をクイズへ転用するためのものではない。"
+        },
+        {
+          "title": "Bone density and the lightweight skeletons of birds",
+          "publisher": "Royal Society, Proceedings B / PMC収録",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC2880151/",
+          "access": "search_snippet",
+          "claimSupported": "今回の検索でも2010年原著の骨密度・相対骨格質量の説明が抽出された。",
+          "limitations": "前回の本文取得失敗を繰り返さず、今回は検索抽出のみ。2010年論文を本文検証済みとは扱わない。新規2025年本文を別の資料として記録した。"
+        }
+      ],
+      "searches": [
+        {
+          "query": "\"Bone density and the lightweight skeletons of birds\" Dumont full text university",
+          "result": "2010年原著の検索抽出に加え2025年レビューが得られ、後者のAbstract・Introduction・Figure 1説明を取得できた。"
+        }
+      ],
+      "notes": "密度・骨単体の質量・骨格全体の質量・体重比を混同しない。原文の選択肢にある空洞と軽さの関係を、哺乳類との骨格比較という未記載の断定へ強めて反証しない。新しい資料で比較の論点は具体化したが finding ではない。2010年原著の未取得自体をクイズの誤りや独立した修正必須事項にはしない。"
+    },
+    {
+      "id": "s06",
+      "pack": "series-2choice",
+      "currentQuestion": {
+        "question": "ひまわりは夜もずっと太陽を追いかけている？ それとも 夜はあまり動かない？",
+        "choices": [
+          "夜もずっと追いかけている",
+          "夜はあまり動かない"
+        ],
+        "answerIndex": 1,
+        "explanation": "若いひまわりは昼に太陽の方を向きますが、夜は動きがゆっくりになります。"
+      },
+      "priorRemainingClaims": [
+        "若いヒマワリの夜間の動きが昼間より遅いという速度比較。"
+      ],
+      "outcome": "unresolved",
+      "verifiedClaims": [
+        "2023年PLOS Biology原著の本文は、若いヒマワリが昼に東から西へ追日し、夜に西から東へ戻る運動を記載している。",
+        "Figure 4Aの説明では茎の角度を複数日にわたり測定している。夜の再配向を調べる一次研究が確認できた。"
+      ],
+      "remainingClaims": [
+        "若いヒマワリの夜間の動きが昼間より遅いという速度比較。"
+      ],
+      "sources": [
+        {
+          "title": "Multiple light signaling pathways control solar tracking in sunflowers",
+          "publisher": "PLOS Biology",
+          "url": "https://journals.plos.org/plosbiology/article?id=10.1371/journal.pbio.3002344",
+          "access": "page",
+          "claimSupported": "本文の昼夜の再配向の説明とFigure 4Aの茎角度測定の説明を確認した。",
+          "limitations": "論文は主に光シグナル経路の研究。今回読んだ本文範囲には昼夜の平均速度の大小を直接比較する結論を確認できず、speed のfindにも一致はなかった。発現遺伝子数や夜間に戻る事実を運動速度と読み替えない。"
+        }
+      ],
+      "searches": [
+        {
+          "query": "\"sunflower\" \"night\" \"faster\" circadian reorientation",
+          "result": "2023年PLOS原著を取得。本文の夜間運動と角度測定を確認し、speed を検索したが直接の昼夜速度比較は得られなかった。"
+        }
+      ],
+      "notes": "『夜はあまり動かない／動きがゆっくり』を『夜は一切動かない』に強めて反証しない。夜に東へ戻る事実だけでは原文の速度比較が誤りと確定しない。図の印象だけから速度比を推定せず未解消のままとした。"
+    },
+    {
+      "id": "s08",
+      "pack": "series-2choice",
+      "currentQuestion": {
+        "question": "ホッキョクグマの毛を1本だけ見ると、白い？ それとも 透明に近い？",
+        "choices": [
+          "白い",
+          "透明に近い"
+        ],
+        "answerIndex": 1,
+        "explanation": "毛は透明な管のようになっていて、光が反射してまとまると白く見えます。"
+      },
+      "priorRemainingClaims": [
+        "下毛を含めた管状構造の範囲。研究者記事と米議会図書館の検索抽出で記述差があり、後者の本文取得も未完了。"
+      ],
+      "outcome": "unresolved",
+      "verifiedClaims": [
+        "APS 2026年大会の研究発表要旨は、調べたホッキョクグマ毛の空隙を含む芯と空気のポケットを記載している。構造に関する新しい研究資料候補は得られた。"
+      ],
+      "remainingClaims": [
+        "下毛を含めた管状構造の適用範囲。今回取得した大会要旨は毛種別の全断面構造を示さず、先行資料間の記述差を解消するには足りない。"
+      ],
+      "sources": [
+        {
+          "title": "Impact of Polar Bear Hair Microstructure and Young’s Modulus on Thermal Properties: A Luminescence Investigation",
+          "publisher": "American Physical Society, Global Physics Summit 2026",
+          "url": "https://meetings-archive.aps.org/smt/2026/mar-n00-04/27/",
+          "access": "abstract",
+          "claimSupported": "Memphis大学研究者による大会要旨本文を取得。空隙を含む芯の説明と、別の文でawn-down hairの力学測定を記載している。",
+          "limitations": "大会要旨のみで、研究全文や下毛・上毛を分けた顕微鏡図は未取得。力学試験対象の毛種が全構造記述と一対一に対応するとは断定しない。UV下の発光は通常光で透明／白く見えることの代わりの根拠にしない。"
+        },
+        {
+          "title": "Microstructure study of fractured polar bear hair for toughening, strengthening, stiffening designs via energy dissipation and crack deflection mechanisms in materials",
+          "publisher": "Royal Society of Chemistry, Molecular Systems Design & Engineering",
+          "url": "https://pubs.rsc.org/en/content/articlelanding/2021/me/d1me00066g",
+          "access": "search_snippet",
+          "claimSupported": "2021年研究の検索抽出は繊維束・管・膜・多孔質の髄・表皮層という複合構造を述べる。",
+          "limitations": "出版社ページのopenはInternal Error。本文取得済みではなく、毛種別範囲の確定には使用しない。"
+        },
+        {
+          "title": "PB336A-27.tex — polar bear chapter candidate",
+          "publisher": "U.S. Fish and Wildlife Service公開資料添付 / Regulations.gov",
+          "url": "https://downloads.regulations.gov/FWS-R7-ES-2021-0037-0015/attachment_14.pdf",
+          "access": "failed",
+          "claimSupported": "検索ではguard hairsのhollow medullaに言及する候補だった。",
+          "limitations": "PDF openは403。タイトル・著者の本文確認もできておらず、研究本文の根拠として採用しない。"
+        },
+        {
+          "title": "Exploring the Role of Skin Pigmentation in the Thermal Regulation of Polar Bears and Its Implications in the Development of Biomimetic Outdoor Apparel",
+          "publisher": "MDPI",
+          "url": "https://www.mdpi.com/2673-7248/4/4/29",
+          "access": "failed",
+          "claimSupported": "検索で下毛と上毛の長さを分けて測定した研究候補が得られた。",
+          "limitations": "openはInternal Error。毛の長さの記述は管状構造の範囲を証明しない。"
+        }
+      ],
+      "searches": [
+        {
+          "query": "\"polar bear\" \"underfur\" \"medulla\" study",
+          "result": "公的添付PDFなどを候補取得。PDF本文は403で取得できなかった。"
+        },
+        {
+          "query": "site:polarbearsinternational.org \"underfur\" \"hollow\"",
+          "result": "追加取得できる関連本文は得られなかった。"
+        },
+        {
+          "query": "polar bear underfur hollow medulla Iversen 1955 hair structure study",
+          "result": "2021年RSC研究・2026年APS要旨などを候補取得。APS要旨のみ本文取得できた。LOCの旧候補や原著未取得を再試行し続けず打ち切った。"
+        }
+      ],
+      "notes": "原文は『全ての下毛を含む全断面が完全な空洞』とは書いていない。その未記載の全称命題の反証を作らない。一方、今回の限定的な要旨では先行資料間の範囲差までは確定できないため未解消。検索に出た博物館資料のhollowを否定する抜粋も、本文確認なしでは finding にしない。"
+    },
+    {
+      "id": "s09",
+      "pack": "series-2choice",
+      "currentQuestion": {
+        "question": "富士山の頂上でお湯をわかすと、100℃でふっとうする？ それとも もっと低い温度？",
+        "choices": [
+          "100℃でふっとうする",
+          "もっと低い温度でふっとうする"
+        ],
+        "answerIndex": 1,
+        "explanation": "高い場所は気圧が低いので、約87℃でわきます。山でカップ麺がうまく作れない理由です。"
+      },
+      "priorRemainingClaims": [
+        "通常のカップ麺を富士山頂の沸騰水で作った場合の仕上がりについて、製品・待ち時間・保温条件を特定したメーカー資料。"
+      ],
+      "outcome": "audit_scope_corrected",
+      "verifiedClaims": [
+        "国立極地研究所サイトの2018年南極観測隊便り本文は、富士山より高標高の低気圧環境で沸点が80℃台半ばとなり、カップ麺の一部は芯が残る一方、美味しく食べられるものもあるという現地経験を報告する。",
+        "低い沸点でカップ麺がうまく戻らない場合がある、という日常的な因果説明の裏付けが得られた。全製品・全調理条件で失敗するとの保証ではない。",
+        "旧監査の『製品・待ち時間・保温条件を特定したメーカー資料が必須』という要求は、原文にない製品試験仕様を足していたため撤回する。"
+      ],
+      "remainingClaims": [],
+      "sources": [
+        {
+          "title": "袋麺ブーム到来 — 南極観測隊便り 2017/2018（2018-01-02）",
+          "publisher": "国立極地研究所サイト / Dome Fuji Ice Core Consortium、第59次南極地域観測隊 内陸調査隊",
+          "url": "https://polaris.nipr.ac.jp/icc/htdocs/index.php?key=jorg40kai-351",
+          "access": "page",
+          "claimSupported": "医療隊員宮岡による現地報告本文で、低い沸点の影響とカップ麺の仕上がりの違いを直接記載している。",
+          "limitations": "南極内陸の現地体験であり、富士山頂でのメーカー統制試験ではない。製品名・待ち時間・保温条件も不明で、全銘柄の失敗保証や具体的な調理手順の推奨には使えない。"
+        },
+        {
+          "title": "科学の甲子園ジュニア2021 筆記第3問 解答例と解説（検索候補）",
+          "publisher": "科学技術振興機構 JST",
+          "url": "https://koushien.jst.go.jp/koushien-Jr/pastexam/2021/files/2021_hikki_3.pdf",
+          "access": "failed",
+          "claimSupported": "検索抽出では低気圧での沸騰温度と麺の硬さに関係する教材候補を得た。",
+          "limitations": "PDF openはInternal Error、上位年次ページも取得できなかった。PDF本文・図版は取得できておらず、今回の判定根拠は別のNIPR本文である。"
+        }
+      ],
+      "searches": [
+        {
+          "query": "カップ麺 富士山 山頂 温度 site:ac.jp OR site:go.jp OR site:nissin.com OR site:maruchan.co.jp",
+          "result": "JSTの教材PDF候補を得たが本文取得は失敗。"
+        },
+        {
+          "query": "site:jst.go.jp \"2021\" \"カップ\" \"麺\" 科学 甲子園",
+          "result": "直接の追加本文は得られず、失敗したPDFの無限再試行はしなかった。"
+        },
+        {
+          "query": "カップ麺 高地 沸点 低い site:nissin.com",
+          "result": "今回の検索でメーカーの直接本文は得られなかった。"
+        },
+        {
+          "query": "富士山 カップラーメン 沸点 site:ac.jp",
+          "result": "国立極地研究所サイトの現地報告を発見し本文取得。沸点低下とカップ麺の調理への影響を確認した。"
+        }
+      ],
+      "notes": "outcome は旧残余主張の監査要求を適正化したもの。富士山で全てのカップ麺が必ず失敗すると原文を強めていない。今回、設問全体を新規に全条件で実証したという意味ではなく、既に確認されている沸点の選択肢と別に残されていた調理上の因果説明の不足を扱う。低温でも食べられる製品があるという出典の限界・例外も保持する。"
+    },
+    {
+      "id": "ks08",
+      "pack": "kurashi-suiri",
+      "currentQuestion": {
+        "question": "同じ水を、浅い皿と深いコップに入れた。早くぬるくなりやすいのは？",
+        "choices": [
+          "浅い皿",
+          "深いコップ",
+          "どちらも同じ"
+        ],
+        "answerIndex": 0,
+        "explanation": "手がかりは「空気にふれる広さ」。浅い皿は水が広がって空気にふれる面が大きいので、温度が変わりやすくなります。"
+      },
+      "priorRemainingClaims": [
+        "『同じ水』が水量・初期温度・容器材質・置き場所等をどこまで同条件とする想定なのか。冷たい水が室温へ近づく比較の適用条件を説明できる直接資料。"
+      ],
+      "outcome": "unresolved",
+      "verifiedClaims": [
+        "MIT教材本文の熱伝達式は、対流熱伝達量が面積・熱伝達係数・温度差に関係することを示す。面積が温度変化を考える手がかりになる、という説明には条件付きの理論的根拠がある。",
+        "同教材は熱伝達係数が流れや表面の条件等に依存すると説明しており、面積だけを無条件の唯一要因にはしていない。"
+      ],
+      "remainingClaims": [
+        "冷たい同じ水が室温へ近づくという想定で、浅皿と深いコップの比較に必要な条件をどこまで同じと読むか。取得した教材は固体表面と流体のモデルであり、この二つの容器の水全体の温度変化の直接比較ではない。"
+      ],
+      "sources": [
+        {
+          "title": "17. Convective Heat Transfer",
+          "publisher": "MIT, Thermodynamics and Propulsion",
+          "url": "https://web.mit.edu/16.unified/OldFiles/www/FALL/thermodynamics/notes/node121.html",
+          "access": "page",
+          "claimSupported": "本文と式17.2の代替テキストを取得。熱流束と面積、熱伝達係数、温度差の関係および係数の条件依存を確認した。",
+          "limitations": "固体表面と流体の対流モデルである。水の蒸発や容器を通じた熱移動を含む浅皿・コップの温度変化を実測した資料ではない。同じ係数・同じ熱容量などの仮定を黙ってクイズへ追加しない。"
+        },
+        {
+          "title": "2.005 Coursenotes, Chapter 6 p.4, Convection",
+          "publisher": "MIT公開講義ノート候補",
+          "url": "https://web.mit.edu/snively/www/2_005%20Coursenotes-1.pdf",
+          "access": "failed",
+          "claimSupported": "検索抽出では面積・温度差と対流熱伝達係数の式が得られた。",
+          "limitations": "PDF openはInternal Error。式の本文確認は別のMIT HTML教材で行い、このPDFを取得済みとは扱わない。"
+        }
+      ],
+      "searches": [
+        {
+          "query": "\"convection\" \"heat transfer\" \"area\" site:mit.edu Newton",
+          "result": "MIT講義PDFを候補取得したがopen失敗。"
+        },
+        {
+          "query": "site.web.mit.edu heat convection surface area Newton law",
+          "result": "MITの別HTML教材が得られ本文取得。表面積に関するモデルと適用条件を確認した。"
+        }
+      ],
+      "notes": "原文は『早くぬるくなりやすい』という傾向の推理であり、全ての材質・容器・天候で必ず同順位との保証は要求しない。冷水の昇温を『熱い水が冷める』へ読み替えない。面積という手がかりの理論的支持は得たが、現行の短い設問から比較条件を一意に決める問題は残る。"
+    },
+    {
+      "id": "ks13",
+      "pack": "kurashi-suiri",
+      "currentQuestion": {
+        "question": "くもりの日は、せんたく物が晴れの日よりかわきにくい。晴れの日とくらべて足りないものは？",
+        "choices": [
+          "日光と、かわいた空気",
+          "風の音",
+          "洗ざいの量"
+        ],
+        "answerIndex": 0,
+        "explanation": "かわく手がかりは日光とかわいた空気。くもりの日はどちらも少ないので、かわきにくくなります。"
+      },
+      "priorRemainingClaims": [
+        "設問が想定する晴れの日と曇りの日の比較で、地上の空気の乾燥度も低いと判断する条件。雲量の違いだけから当該湿度関係を決める根拠は未確認。"
+      ],
+      "outcome": "unresolved",
+      "verifiedClaims": [
+        "気象庁のFAQ本文は、湿度が同じ地点でも屋内外や草地・池・風向などの周囲の条件で変わることを説明する。",
+        "晴れ・曇りという雲の状態だけから、比較対象日の地上湿度まで一定の順に定まるとは、この資料からはいえない。"
+      ],
+      "remainingClaims": [
+        "設問が想定する晴れの日と曇りの日の比較で、地上の空気の乾燥度も低いと判断する条件。今回の資料も雲量の違いだけで当該湿度関係が成立する根拠にはならない。"
+      ],
+      "sources": [
+        {
+          "title": "湿度・気圧・日照時間について",
+          "publisher": "気象庁",
+          "url": "https://www.jma.go.jp/jma/kishou/know/faq/faq5.html",
+          "access": "page",
+          "claimSupported": "『湿度の予報をしないのはなぜですか』の本文で、湿度の局所差と周囲条件への依存を確認した。",
+          "limitations": "洗濯物を晴天日と曇天日で比較した実験や両条件の湿度分布の資料ではない。湿度に別要因があることだけで、晴れの日が乾燥しやすいという日常的な傾向を否定しない。"
+        }
+      ],
+      "searches": [
+        {
+          "query": "洗濯物 曇り 湿度 日光 site:kao.com OR site:lion.co.jp OR site:jma.go.jp",
+          "result": "気象庁の湿度FAQを発見し該当本文を取得。乾燥条件の局所性を確認したが、現行設問の湿度比較を直接裏付ける資料ではなかった。"
+        }
+      ],
+      "notes": "日光と乾いた空気が乾燥に役立つという既確認部分を撤回するものではない。雲の内部の湿度を地上の洗濯物付近の湿度と同一視しない。未記載の『全ての曇天は晴天より高湿度』を作って反証せず、比較条件の不足として残す。"
+    }
+  ]
+}
