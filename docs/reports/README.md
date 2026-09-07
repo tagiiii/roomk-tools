@@ -14,6 +14,7 @@
 
 ## 一覧
 
+- [c1-north-origin-followup-2026-09-08.md](c1-north-origin-followup-2026-09-08.md) — 大鰐・撫牛子・生保内の由来説を追加資料と照合した調査（C-1、nn06／nn10／nn16、2026-09-08）
 - [a11-c1-p15-pr-preparation-2026-09-08.md](a11-c1-p15-pr-preparation-2026-09-08.md) — 検査追加・地名調査・承認修正のコミット分割とPR本文を整理した記録（A-11、C-1、P-15、2026-09-08）
 - [p15-nn06-fix-2026-09-08.md](p15-nn06-fix-2026-09-08.md) — 大鰐の設問限定修正と差分・表示・採点の検証を記録（P-15、nn06、2026-09-08）
 - [c1-nandoku-verification-batch2-2026-09-08.md](c1-nandoku-verification-batch2-2026-09-08.md) — 北海道・東北の地名と駅名の読み・帰属・由来を一次資料と照合した調査（C-1、2026-09-08）
