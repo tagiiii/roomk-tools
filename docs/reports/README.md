@@ -14,6 +14,9 @@
 
 ## 一覧
 
+- [p10-remaining-four-pr-preparation-2026-09-07.md](p10-remaining-four-pr-preparation-2026-09-07.md) — クイズのコミット分割と監査証跡のPR本文を整理した記録（P-10、ru18／zk201／zk203／zk211、2026-09-07）
+- [p10-remaining-four-fix-2026-09-07.md](p10-remaining-four-fix-2026-09-07.md) — クイズの承認修正と差分・表示・採点の検証を記録（P-10、ru18／zk201／zk203／zk211、2026-09-07）
+- [p10-remaining-four-proposal-2026-09-07.md](p10-remaining-four-proposal-2026-09-07.md) — 残るクイズの修正全文案と出典の支持範囲を整理した記録（P-10、ru18／zk201／zk203／zk211、2026-09-07）
 - [p10-culture-two-pr-preparation-2026-09-07.md](p10-culture-two-pr-preparation-2026-09-07.md) — 文化クイズのコミット分割と監査記録のPR本文を整理した記録（P-10、kj19／kbn07、2026-09-07）
 - [p10-culture-two-fix-2026-09-07.md](p10-culture-two-fix-2026-09-07.md) — 文化クイズの承認修正と差分・表示・採点の検証を記録（P-10、kj19／kbn07、2026-09-07）
 - [p10-culture-two-proposal-2026-09-07.md](p10-culture-two-proposal-2026-09-07.md) — 文化クイズの残余主張と修正案を整理した記録（P-10、kj19／kbn07、2026-09-07）
