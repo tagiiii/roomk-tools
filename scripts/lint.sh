@@ -187,6 +187,35 @@ if [ -n "$SEC1_ML_OUT" ]; then
   done <<< "$SEC1_ML_OUT"
 fi
 
+# (3) A-11: limited straight-line dataflow for bare references. Pre-existing
+# unknown coverage is explicit INFO, not safe or a new warning-policy exception.
+# Legacy (1)/(2) stay unchanged; raw evidence/scanner failure are ERROR.
+SEC1_DF_STATUS=0
+SEC1_DF_OUT=$(python3 scripts/sec1-dataflow.py "${XSS_FILES[@]}" 2>&1) || SEC1_DF_STATUS=$?
+if [ "$SEC1_DF_STATUS" -gt 1 ]; then
+  echo -e "  ${RED}[ERROR]${NC} A-11 scanner failed (exit $SEC1_DF_STATUS)"
+  echo "$SEC1_DF_OUT"
+  ERRORS=$((ERRORS + 1))
+else
+  SEC1_DF_ERRORS=0
+  while IFS=$'\t' read -r level detail snippet; do
+    case "$level" in
+      ERROR)
+        echo -e "  ${RED}[ERROR]${NC} $detail $snippet"
+        ERRORS=$((ERRORS + 1))
+        SEC1_DF_ERRORS=$((SEC1_DF_ERRORS + 1)) ;;
+      WARN)
+        echo -e "  ${YELLOW}[WARN]${NC} $detail"
+        WARNINGS=$((WARNINGS + 1)) ;;
+      INFO) echo "  $detail" ;;
+    esac
+  done <<< "$SEC1_DF_OUT"
+  if [ "$SEC1_DF_STATUS" -eq 1 ] && [ "$SEC1_DF_ERRORS" -eq 0 ]; then
+    echo -e "  ${RED}[ERROR]${NC} A-11 scanner returned failure without diagnostics"
+    ERRORS=$((ERRORS + 1))
+  fi
+fi
+
 [ $ERRORS -eq 0 ] && echo -e "  ${GREEN}OK${NC}"
 
 # ─────────────────────────────────────────────────────
