@@ -2202,7 +2202,7 @@ export const QUIZ_PACKS = [
         question: '「弟の世話には手を焼いた」に一番近いのは？',
         choices: ['手をケガするほど大変だった', 'うまく対応できず苦労した', 'とてもていねいに世話した'],
         answerIndex: 1,
-        explanation: '「手を焼く」は、手に負えずに苦労すること。熱いものを扱うイメージや「丁寧にした」に引っ張られやすい。'
+        explanation: '「手を焼く」は、手に負えずに苦労すること。'
       },
       {
         id: 'ky19', difficulty: 3,
