@@ -14,6 +14,10 @@
 
 ## 一覧
 
+- [a11-c1-p15-pr-preparation-2026-09-08.md](a11-c1-p15-pr-preparation-2026-09-08.md) — 検査追加・地名調査・承認修正のコミット分割とPR本文を整理した記録（A-11、C-1、P-15、2026-09-08）
+- [p15-nn06-fix-2026-09-08.md](p15-nn06-fix-2026-09-08.md) — 大鰐の設問限定修正と差分・表示・採点の検証を記録（P-15、nn06、2026-09-08）
+- [c1-nandoku-verification-batch2-2026-09-08.md](c1-nandoku-verification-batch2-2026-09-08.md) — 北海道・東北の地名と駅名の読み・帰属・由来を一次資料と照合した調査（C-1、2026-09-08）
+- [a11-sec1-dataflow-2026-09-08.md](a11-sec1-dataflow-2026-09-08.md) — SEC-1の裸変数データフロー検査と回帰条件を整理した記録（A-11、2026-09-08）
 - [p10-remaining-four-pr-preparation-2026-09-07.md](p10-remaining-four-pr-preparation-2026-09-07.md) — クイズのコミット分割と監査証跡のPR本文を整理した記録（P-10、ru18／zk201／zk203／zk211、2026-09-07）
 - [p10-remaining-four-fix-2026-09-07.md](p10-remaining-four-fix-2026-09-07.md) — クイズの承認修正と差分・表示・採点の検証を記録（P-10、ru18／zk201／zk203／zk211、2026-09-07）
 - [p10-remaining-four-proposal-2026-09-07.md](p10-remaining-four-proposal-2026-09-07.md) — 残るクイズの修正全文案と出典の支持範囲を整理した記録（P-10、ru18／zk201／zk203／zk211、2026-09-07）

@@ -1036,7 +1036,7 @@ export const QUIZ_PACKS = [
       },
       {
         id: 'nn06', difficulty: 2,
-        question: '青森県の町名・JR駅名「大鰐」は、何と読む？',
+        question: '青森県の町名「大鰐」は、何と読む？',
         choices: ['たいがく', 'おおわに', 'おおがく'],
         answerIndex: 1,
         explanation: '正解は「おおわに」。古い言葉で「鰐」が大きな魚を指したという説や、大きな仏像にちなむという説などがあります。'
