@@ -440,10 +440,10 @@ export const QUIZ_PACKS = [
       },
       {
         id: 's08', difficulty: 3,
-        question: 'ホッキョクグマの毛を1本だけ見ると、白い？ それとも 透明に近い？',
+        question: 'ホッキョクグマの外側の長い毛そのものは、白い色がついている？ それとも透明に近い？',
         choices: ['白い', '透明に近い'],
         answerIndex: 1,
-        explanation: '毛は透明な管のようになっていて、光が反射してまとまると白く見えます。'
+        explanation: 'ホッキョクグマの外側の長い毛は、透明で中が空洞になっています。'
       },
       {
         id: 's09', difficulty: 3,
