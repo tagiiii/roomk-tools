@@ -14,6 +14,7 @@
 
 ## 一覧
 
+- [b28-ikutsu-ieru-reconnect-2026-09-08.md](b28-ikutsu-ieru-reconnect-2026-09-08.md) — いくつ言える？の回答保持・history確定と切断復帰の隔離検証（P-11、B-28、2026-09-08）
 - [b27-tatoe-narabe-reconnect-2026-09-08.md](b27-tatoe-narabe-reconnect-2026-09-08.md) — たとえならべのゲスト保持・宣言順・再戦と切断復帰の隔離検証（P-11、B-27、2026-09-08）
 - [b26-word-wolf-reconnect-2026-09-08.md](b26-word-wolf-reconnect-2026-09-08.md) — ワードウルフのゲスト保持・再接続と切断予約の隔離検証（P-11、B-26、2026-09-08）
 - [p11-guest-reconnect-plan-2026-09-08.md](p11-guest-reconnect-plan-2026-09-08.md) — ゲスト復帰の承認と接続情報を分ける初回導入・検証計画（P-11、B-26、2026-09-08）
