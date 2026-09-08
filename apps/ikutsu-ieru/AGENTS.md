@@ -23,7 +23,7 @@
 - Realtime Database + 単一ファイル(`index.html` にインライン)
 - ※お題データのみ `themes.js` に分離(保守性のため)
 - 共通デザインシステム(`apps/shared/css/design-system.css`)を使用
-- Firebase SDK v8 (compat 版、単一ファイルアプリ共通)
+- Firebase SDK 10.14.1 (compat 版、単一ファイルアプリ共通)
 
 ### Realtime Database パス
 
@@ -41,6 +41,8 @@ ikutsu_rooms/{roomCode}/
     isHost: boolean
     joinedAt: number
     answers: string[]                // 現ラウンドの回答配列
+    presenceVersion: 1              // 新版ゲストの接続保持方式
+    connections/{connectionId}: true // 切断予約はこの子の remove のみ
   history/{round}/
     theme: string
     answers: { [nick]: string[] }    // review 固定用スナップショット
@@ -124,9 +126,9 @@ screen-finished
 | 画面遷移 | `.screen` / `.active` パターン + `showScreen(id)` |
 | ホスト識別 | `players/{nick}/isHost` |
 | ホスト切断 | `hostConnected`/`hostDisconnectedAt` + `onDisconnect().update(...)` + orphan TTL 2分 + overlay |
-| ゲスト切断 | `onDisconnect().remove()` |
+| ゲスト切断 | 接続 ID のみ `onDisconnect().remove()`。参加者・回答を保持(B-28/P-11 の個別例外) |
 | リスナークリーンアップ | 退出時に `roomRef.off()` + `clearInterval` |
-| セッション自動削除 | `finished` 遷移から30秒後に `roomRef.remove()` |
+| セッション自動削除 | ホストが `finished` 画面に入って30秒後、予約取消後に room transaction で削除 |
 | 再接続 | `sessionStorage: ikutsu_session` |
 | XSS対策 | `esc()` を使って `innerHTML` へ |
 | 最小参加人数 | 制限なし(1人からでも成立) |
@@ -183,11 +185,11 @@ window.IKUTSU_THEMES = [
 - ホストが開始時に `endAt`(サーバー時刻基準)を書き込む
 - 各端末は `RoomkRTDB.now()` で補正した `endAt - RoomkRTDB.now()` で残り時間を計算
 - Firebase リスナーから同じ `endAt` が流れるたびにカウントダウンを再起動しない(値が変わったときのみ再初期化)
-- 0 になった瞬間にゲストは自動で `review` 表示に切り替わる(`status` 変更待ち)
+- 0 になってもゲストはホストの `status: review` を待つ。既存コードの回答受付境界は `status: input` であり、端末時刻だけによる追加のハード締切は設けない(旧記述「ゲストは自動で review 表示」は実装と不一致だったため訂正)
 - `status` 更新は**ホストのみ**が行う(ゲストが勝手に進めない)
 
 ### 競合回避(transaction)
-- ゲスト参加: `status === 'waiting'` でのみ成立(`input`/`review`/`finished` の途中参加は弾く)。期限切れルームはトランザクション側で `null` を返して確実に削除
+- ゲスト参加: `status === 'waiting'` でのみ成立(`input`/`review`/`finished` の途中参加は弾く)。期限切れは現在値を再検査した削除 transaction を試みる。参加 transaction 完了まで一時 value リスナーを保持し、古い取得値で room を補完しない
 - ラウンド開始(`startRound`): ルーム全体の `transaction()` で `status`/`theme`/`round`/`endAt`/`players.answers=[]` を一括更新。開始直前の参加者が消えない
 - 確定(`moveToReview`): `input → review` も `transaction()` 化。終了直前に書き込まれた回答が `history` から落ちるのを防ぐ
 
@@ -207,7 +209,7 @@ window.IKUTSU_THEMES = [
 - 再参加経路は sessionStorage から
 
 ### データ削除
-- `status === 'finished'` になってから 30秒後に `roomRef.remove()`
+- ホストが `finished` 画面に入って30秒後に、捕捉した参照・ラウンド・`finished` を再確認し、予約を取り消して room transaction で削除。ホストのリロードで30秒が再設定される従来挙動は維持(絶対時刻 `finishedAt` は追加しない)
 - 1ラウンドごとのデータは最終振り返りで使うため、ラウンド途中削除はしない
 
 ---
@@ -258,10 +260,24 @@ window.IKUTSU_THEMES = [
 
 ### 9. finished 後の自動削除
 - **手順**: ホストが review で「終了する」→ `screen-finished` 表示 → 30 秒放置
-- **期待**: 30 秒後にホスト端末から `roomRef.remove()` が走り、ゲスト端末はトップに戻る。Firebase Console で `ikutsu_rooms/{code}` が消えている
+- **期待**: 30 秒後にホスト端末の削除 transaction が確定し、全端末がトップに戻る。対象の `ikutsu_rooms/{code}` が消えている
 - **NG**: 30 秒経ってもデータが残る / ホストがタブを閉じていると削除されない(ホスト復帰まで残るのは仕様だが、1 日以上残り続けるなら別途調査)
 
 ### 10. トップへ戻る / 退出後の再入室
 - **手順**: 各端末で「退出する」→ トップへ戻る → 同じニックネームで再入室
 - **期待**: ホストが退出した場合はルームが消え、ゲストの再入室は「ルームが見つかりません」。ゲストのみ退出なら、別ニックネームや新規コードで普通に再入室できる。`sessionStorage` が確実にクリアされ、次の画面遷移に古い情報が残らない
 - **NG**: 退出後もリロードで勝手に再接続する / ゲスト退出後にホスト画面の参加者リストに残り続ける / 再入室時に「ニックネーム使用中」エラーが不当に出る
+
+## ゲストの保持復帰（2026-09-08 B-28 / P-11）
+
+- 共通の「ゲスト切断＝参加者 remove」からの個別例外。全フェーズで回答・参加者を残し、同じタブの sessionStorage から復帰する。別端末の本人確認・認証境界にはしない。保存した role、ルームコード、ニックネーム、最新 room のホスト名と player 役割を検証してから state を復元する。
+- 新版ゲストは `presenceVersion: 1` と接続 ID を持つ。`.info/connected` が true になるたび、ID の remove 予約を受付後に既存 room/player を検査する room transaction で接続を登録する。古い接続の削除は新 ID を消さず、切断・退出・別ルーム移動の世代違いは遅延処理を破棄する。
+- 待機中は切断者を「再接続待ち」と表示し、お題の開始を待つ。全在籍ゲストが接続済みなら開始でき、ホスト1人での開始も従来どおり。切断者の回答を除外したり自動退出させたりしない。
+- 回答追加・削除は room transaction。最新の `input`、既存 `round`、ルーム参照、操作所有 token、接続世代、ゲスト役割・TTL を検査する。追加は最新回答配列に末尾追加、削除は期待配列の完全一致時だけ指定添字を除く。同文重複を値で検索して別要素を消さない。
+- 送信中は追加・削除ボタンを無効化するが入力欄は残す。表示は value リスナーに同期し、失敗後に古い配列を rollback しない。終了後の操作所有 token が同じ場合だけボタンを戻し、送信中に書き始めた別の入力を消さない。
+- 既存の単調増加 `round` で次ラウンドへの遅延操作混入を防ぐため、別の `roundId` は追加しない。回答が先に確定すれば review の `history` に含まれ、review が先なら回答は中止する。重複・24文字・匿名表示・自分の個数だけ表示・時間設定・お題は変更しない。
+- 明示退出は自分の現在 player と回答を削除する。一時切断とは異なり、すでに `history` に確定した振り返りの回答は残る。切断オーバーレイにも退出経路を置く。オフライン退出は予約取消・通信の完了待ちになる場合がある。
+- TTL 2分と finished 30秒の削除は維持。監視中ゲストの TTL 削除(`expireGuestRoom`)と finished 削除(`deleteFinishedRoom`)は transaction の `applyLocally: false` により、楽観的な null の通知で state が先に片付いて再試行が中止することを防ぐ。参加・保存 session 復帰の前に行う `removeExpiredRoom` は初回確認用の一時購読だけを持つ通常の transaction であり、この指定はしない。room/player 不明時はリスナー・タイマー・予約・session を片付ける。ホストの自動接続復旧方式は拡張しない。
+- 旧ページが予約済みの参加者全体 remove は新ページから取り消せない。全員が新版を読み込んだ新しいルームから利用する。古い `presenceVersion` なしの guest は互換表示上は接続扱いであり、保持保証対象にはしない。
+- ニックネームの RTDB 禁止文字(`. # $ [ ] /`・制御文字)を入口と保存 session で拒否し、接続子パスを安全に組み立てる。単一引用符など有効な文字は維持し、DOM は既存 `esc()` を継続する。
+- 200行を超える差分は、接続予約・回答 transaction・世代無効化・復帰・退出・TTL・finished 削除を片側だけ導入するとデータ削除／再生成を招く不可分のライフサイクル変更のため。1アプリ・1関心事として独立レビューし、実SDK隔離検証と合成 VM を区別する。

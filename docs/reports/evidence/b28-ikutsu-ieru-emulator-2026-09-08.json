@@ -1,0 +1,448 @@
+{
+  "test": "B-28 ikutsu-ieru real SDK isolated Emulator",
+  "date": "2026-09-08",
+  "sourceSHA256": "208c4bfa56342c4682b881ccd61d967b70e62a34901b7b73bab6e7022ffee442",
+  "method": {
+    "sdk": "Firebase compat 10.14.1 (real, no SDK stub)",
+    "project": "demo-roomk-b28",
+    "auth": "127.0.0.1:9099",
+    "database": "127.0.0.1:9000",
+    "hosting": "127.0.0.1:5500",
+    "browser": "dedicated Playwright CLI b28 session, host and two separate guest contexts",
+    "offline": "context.setOffline(true/false), 10s after server-side connection absence in four phases; two cycles each",
+    "fixtures": "Current players answers changed after review; TTL125s/119s past timestamps; security stored quote/HTML payload bypasses UI24char limit intentionally",
+    "stats": "no-op; stats node null",
+    "guards": "Exact app URL/context page count/role/project/DB/Auth/CSP runtime guards; static production-config gate before launch"
+  },
+  "started": "2026-09-08T05:29:08.154Z",
+  "cases": [
+    {
+      "name": "initial host and two guest UI join",
+      "pass": true,
+      "room": {
+        "host": "host",
+        "hostConnected": true,
+        "players": {
+          "guestA": {
+            "connections": {
+              "-P0zUSSo-OX1NkRAqRUb": true
+            },
+            "isHost": false,
+            "joinedAt": 1788845348720,
+            "presenceVersion": 1
+          },
+          "guestB": {
+            "connections": {
+              "-P0zUSbA9MQcbURwnCTU": true
+            },
+            "isHost": false,
+            "joinedAt": 1788845349321,
+            "presenceVersion": 1
+          },
+          "host": {
+            "isHost": true,
+            "joinedAt": 1788845280079
+          }
+        },
+        "round": 0,
+        "status": "waiting"
+      }
+    },
+    {
+      "name": "waiting reload",
+      "pass": true,
+      "before": {
+        "isHost": false,
+        "joinedAt": 1788845348720,
+        "answers": []
+      },
+      "after": {
+        "isHost": false,
+        "joinedAt": 1788845348720,
+        "answers": []
+      }
+    },
+    {
+      "name": "waiting offline10s cycle1",
+      "pass": true,
+      "before": {
+        "isHost": false,
+        "joinedAt": 1788845348720,
+        "answers": []
+      },
+      "after": {
+        "isHost": false,
+        "joinedAt": 1788845348720,
+        "answers": []
+      }
+    },
+    {
+      "name": "waiting offline10s cycle2",
+      "pass": true,
+      "before": {
+        "isHost": false,
+        "joinedAt": 1788845348720,
+        "answers": []
+      },
+      "after": {
+        "isHost": false,
+        "joinedAt": 1788845348720,
+        "answers": []
+      }
+    },
+    {
+      "name": "answers append duplicate delete 24 accepted 25 rejected",
+      "pass": true,
+      "answers": [
+        "ねこ",
+        "ねこ",
+        "ああああああああああああああああああああああああ"
+      ]
+    },
+    {
+      "name": "input reload",
+      "pass": true,
+      "before": {
+        "isHost": false,
+        "joinedAt": 1788845348720,
+        "answers": [
+          "ねこ",
+          "ねこ",
+          "ああああああああああああああああああああああああ"
+        ]
+      },
+      "after": {
+        "isHost": false,
+        "joinedAt": 1788845348720,
+        "answers": [
+          "ねこ",
+          "ねこ",
+          "ああああああああああああああああああああああああ"
+        ]
+      }
+    },
+    {
+      "name": "input offline10s cycle1",
+      "pass": true,
+      "before": {
+        "isHost": false,
+        "joinedAt": 1788845348720,
+        "answers": [
+          "ねこ",
+          "ねこ",
+          "ああああああああああああああああああああああああ"
+        ]
+      },
+      "after": {
+        "isHost": false,
+        "joinedAt": 1788845348720,
+        "answers": [
+          "ねこ",
+          "ねこ",
+          "ああああああああああああああああああああああああ"
+        ]
+      }
+    },
+    {
+      "name": "input offline10s cycle2",
+      "pass": true,
+      "before": {
+        "isHost": false,
+        "joinedAt": 1788845348720,
+        "answers": [
+          "ねこ",
+          "ねこ",
+          "ああああああああああああああああああああああああ"
+        ]
+      },
+      "after": {
+        "isHost": false,
+        "joinedAt": 1788845348720,
+        "answers": [
+          "ねこ",
+          "ねこ",
+          "ああああああああああああああああああああああああ"
+        ]
+      }
+    },
+    {
+      "name": "review reload",
+      "pass": true,
+      "before": {
+        "isHost": false,
+        "joinedAt": 1788845348720,
+        "answers": [
+          "ねこ",
+          "ねこ",
+          "ああああああああああああああああああああああああ"
+        ]
+      },
+      "after": {
+        "isHost": false,
+        "joinedAt": 1788845348720,
+        "answers": [
+          "ねこ",
+          "ねこ",
+          "ああああああああああああああああああああああああ"
+        ]
+      }
+    },
+    {
+      "name": "review offline10s cycle1",
+      "pass": true,
+      "before": {
+        "isHost": false,
+        "joinedAt": 1788845348720,
+        "answers": [
+          "ねこ",
+          "ねこ",
+          "ああああああああああああああああああああああああ"
+        ]
+      },
+      "after": {
+        "isHost": false,
+        "joinedAt": 1788845348720,
+        "answers": [
+          "ねこ",
+          "ねこ",
+          "ああああああああああああああああああああああああ"
+        ]
+      }
+    },
+    {
+      "name": "review offline10s cycle2",
+      "pass": true,
+      "before": {
+        "isHost": false,
+        "joinedAt": 1788845348720,
+        "answers": [
+          "ねこ",
+          "ねこ",
+          "ああああああああああああああああああああああああ"
+        ]
+      },
+      "after": {
+        "isHost": false,
+        "joinedAt": 1788845348720,
+        "answers": [
+          "ねこ",
+          "ねこ",
+          "ああああああああああああああああああああああああ"
+        ]
+      }
+    },
+    {
+      "name": "fixed history anonymity local toggle duplicate and guest exit",
+      "pass": true,
+      "history": [
+        null,
+        {
+          "answers": {
+            "guestA": [
+              "ねこ",
+              "ねこ",
+              "ああああああああああああああああああああああああ"
+            ],
+            "guestB": [
+              "ねこ"
+            ]
+          },
+          "theme": "好きな音"
+        }
+      ]
+    },
+    {
+      "name": "next round answer reset and history preserved",
+      "pass": true
+    },
+    {
+      "name": "finished reload",
+      "pass": true,
+      "before": {
+        "isHost": false,
+        "joinedAt": 1788845348720,
+        "answers": []
+      },
+      "after": {
+        "isHost": false,
+        "joinedAt": 1788845348720,
+        "answers": []
+      }
+    },
+    {
+      "name": "finished offline10s cycle1",
+      "pass": true,
+      "before": {
+        "isHost": false,
+        "joinedAt": 1788845348720,
+        "answers": []
+      },
+      "after": {
+        "isHost": false,
+        "joinedAt": 1788845348720,
+        "answers": []
+      }
+    },
+    {
+      "name": "finished offline10s cycle2",
+      "pass": true,
+      "before": {
+        "isHost": false,
+        "joinedAt": 1788845348720,
+        "answers": []
+      },
+      "after": {
+        "isHost": false,
+        "joinedAt": 1788845348720,
+        "answers": []
+      }
+    },
+    {
+      "name": "finished real 30sec auto deletion plus no ghost",
+      "pass": true,
+      "elapsedMs": 30027
+    },
+    {
+      "name": "host alone starts",
+      "pass": true,
+      "room": {
+        "durationSec": 90,
+        "endAt": 1788845637094,
+        "host": "host",
+        "hostConnected": true,
+        "players": {
+          "host": {
+            "isHost": true,
+            "joinedAt": 1788845547052
+          }
+        },
+        "round": 1,
+        "status": "input",
+        "theme": "好きな色"
+      }
+    },
+    {
+      "name": "fresh UI join repeated",
+      "pass": true
+    },
+    {
+      "name": "missing player cleanup and reload",
+      "pass": true
+    },
+    {
+      "name": "invalid session",
+      "pass": true,
+      "session": {
+        "nickname": "host",
+        "role": "guest"
+      }
+    },
+    {
+      "name": "invalid session",
+      "pass": true,
+      "session": {
+        "nickname": "missing",
+        "role": "guest"
+      }
+    },
+    {
+      "name": "invalid session",
+      "pass": true,
+      "session": {
+        "nickname": "notHost",
+        "role": "host"
+      }
+    },
+    {
+      "name": "invalid session",
+      "pass": true,
+      "session": {
+        "nickname": "host",
+        "role": "unexpected"
+      }
+    },
+    {
+      "name": "host explicit exit",
+      "pass": true
+    },
+    {
+      "name": "TTL timestamp fixture",
+      "pass": true,
+      "pastMs": 125000,
+      "elapsedMs": 17
+    },
+    {
+      "name": "TTL timestamp fixture",
+      "pass": true,
+      "pastMs": 119000,
+      "elapsedMs": 1028
+    },
+    {
+      "name": "real DOM offline add/delete disabled and restored",
+      "pass": true,
+      "deleteButtons": 2
+    },
+    {
+      "name": "synthetic stored quote/HTML text input review finished escaped",
+      "pass": true,
+      "note": "REST fixture intentionally exceeds UI24 limit to test render defense"
+    },
+    {
+      "name": "external room deletion/reload",
+      "pass": true
+    }
+  ],
+  "result": {
+    "passed": 30,
+    "failed": 0
+  },
+  "network": {
+    "captureScope": "Observers attached during setup/waiting/input/review/finished/boundaries/security steps only. Initial host navigation/create and between-step gaps excluded. CSP enforced for all Hosting pages.",
+    "events": 537,
+    "originCounts": {
+      "http://127.0.0.1:5500": 84,
+      "https://fonts.googleapis.com": 28,
+      "https://www.gstatic.com": 42,
+      "https://fonts.gstatic.com": 240,
+      "ws://127.0.0.1:9000": 31,
+      "http://127.0.0.1:9099": 16,
+      "http://127.0.0.1:9000": 96
+    },
+    "unexpectedOrigins": [],
+    "productionDataConnectionObserved": false,
+    "publicLogSanitization": "Query strings/tokens/raw URLs omitted; origins/counts only"
+  },
+  "console": {
+    "pageErrors": [],
+    "expectedOfflineErrors": 56,
+    "unexpected": [],
+    "initialOutsideCapture": "Host favicon.ico404 before setup, expected missing favicon"
+  },
+  "visual": {
+    "widths": [
+      1280,
+      375
+    ],
+    "horizontalOverflow": false,
+    "parentViewed": [
+      "input-offline-guest375-2.png",
+      "review-guest375.png"
+    ],
+    "screenshots": "scratch output/playwright; no iPhone"
+  },
+  "limitations": [
+    "No production Firebase or iPhone/browser-engine device testing",
+    "No full2min TTL wall-clock wait; past timestamps fixture plus actual timer path",
+    "No SDK-stub or artificial transaction-delay claims; separate VM evidence owns races",
+    "Noncompetitive privacy is UI display only, not server authorization",
+    "Screenshots/storage synthetic only; pending/unsent typed draft retention is not claimed"
+  ],
+  "cleanup": {
+    "roomsBeforeBrowserClose": null,
+    "statsBeforeBrowserClose": null,
+    "browser": "b28 closed",
+    "emulatorCLI": 20910,
+    "emulatorJava": 20953,
+    "stopping": "SIGTERM to owned CLI; clean shutdown exit0. PIDs20910/20953 absent. Ports4000/4400/4500/5500/9000/9099 have no LISTEN. Scratch evidence preserved."
+  }
+}
