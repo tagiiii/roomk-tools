@@ -1,0 +1,1574 @@
+{
+  "sourceSHA": "3e1b3baac2dd66a204dcf95c676399f04b51dc824bdf50533ea8f189b2a7f65c",
+  "started": "2026-09-08T12:57:42.543Z",
+  "finished": "2026-09-08T13:12:33.067Z",
+  "caseCount": 56,
+  "allPassed": true,
+  "cases": [
+    {
+      "name": "Fresh host + two guests + spectator UI joins",
+      "pass": true,
+      "method": "real UI",
+      "quoteNickname": "ま'ち",
+      "note": "Quote nickname is valid within 8-character input limit; spectator native WebSocket observation delegates actual sends."
+    },
+    {
+      "name": "waiting guest reload",
+      "pass": true
+    },
+    {
+      "name": "waiting browser offline10sec cycle1",
+      "pass": true
+    },
+    {
+      "name": "waiting browser offline10sec cycle2",
+      "pass": true
+    },
+    {
+      "name": "UI round1: guestB guesses; hints/manual-review/judge/history",
+      "pass": true,
+      "method": "real UI, presence offline via context.setOffline; no phase fixture",
+      "guesser": "guestB"
+    },
+    {
+      "name": "UI round2: host guesses; hints/duplicate/pass/history",
+      "pass": true,
+      "method": "real UI, presence offline via context.setOffline; no phase fixture",
+      "guesser": "host"
+    },
+    {
+      "name": "UI round3: ま'ち guesses; hints/manual-review/judge/history",
+      "pass": true,
+      "method": "real UI, presence offline via context.setOffline; no phase fixture",
+      "guesser": "ま'ち"
+    },
+    {
+      "name": "Spectator reload, saved restore, empty/invalid/nonexistent watch precedence, explicit leave read-only",
+      "pass": true,
+      "traces": [
+        {
+          "sockets": [
+            "ws://127.0.0.1:9000/.ws"
+          ],
+          "actions": [
+            "s",
+            "auth",
+            "g",
+            "q"
+          ],
+          "unparsed": 0
+        },
+        {
+          "sockets": [
+            "ws://127.0.0.1:9000/.ws"
+          ],
+          "actions": [
+            "s",
+            "auth",
+            "g",
+            "q"
+          ],
+          "unparsed": 0
+        },
+        {
+          "sockets": [
+            "ws://127.0.0.1:9000/.ws"
+          ],
+          "actions": [
+            "s",
+            "auth"
+          ],
+          "unparsed": 0
+        },
+        {
+          "sockets": [
+            "ws://127.0.0.1:9000/.ws"
+          ],
+          "actions": [
+            "s",
+            "auth"
+          ],
+          "unparsed": 0
+        },
+        {
+          "sockets": [
+            "ws://127.0.0.1:9000/.ws"
+          ],
+          "actions": [
+            "s",
+            "auth",
+            "g"
+          ],
+          "unparsed": 0
+        },
+        {
+          "sockets": [
+            "ws://127.0.0.1:9000/.ws"
+          ],
+          "actions": [
+            "s",
+            "auth",
+            "g",
+            "q"
+          ],
+          "unparsed": 0
+        },
+        {
+          "sockets": [
+            "ws://127.0.0.1:9000/.ws"
+          ],
+          "actions": [
+            "s",
+            "auth",
+            "g",
+            "q",
+            "n"
+          ],
+          "unparsed": 0
+        }
+      ],
+      "method": "real URL navigation; synthetic pre-existing guest/spectator session values"
+    },
+    {
+      "name": "B23 valid quote nickname toggle/confirmed reload and long HTML hint fixture escaped",
+      "pass": true,
+      "method": "nickname valid UI-created; long >20char HTML hint injected via REST solely to test renderer, not valid UI hint input"
+    },
+    {
+      "name": "Forced close retains missingHintIds",
+      "pass": true,
+      "method": "synthetic partially submitted round + real host UI force close"
+    },
+    {
+      "name": "Missing gameId ongoing render but send refused",
+      "pass": true,
+      "method": "REST missing-ID fixture + direct public function invocation, not real UI send"
+    },
+    {
+      "name": "clue-input reload retains round/history/player/gameId",
+      "pass": true,
+      "method": "REST synthetic phase fixture, real SDK reload"
+    },
+    {
+      "name": "clue-input browser offline10sec cycle1 retains data",
+      "pass": true,
+      "method": "REST synthetic phase fixture then real browser context offline/online (not SDK goOffline)"
+    },
+    {
+      "name": "clue-input browser offline10sec cycle2 retains data",
+      "pass": true,
+      "method": "REST synthetic phase fixture then real browser context offline/online (not SDK goOffline)"
+    },
+    {
+      "name": "clue-input spectator DOM secrecy/read-only transport",
+      "pass": true,
+      "method": "real native WebSocket.send transparent observation; only action names, no payload",
+      "transport": {
+        "sockets": [
+          "ws://127.0.0.1:9000/.ws"
+        ],
+        "actions": [
+          "s",
+          "auth",
+          "g",
+          "q"
+        ],
+        "unparsed": 0
+      },
+      "visibleText": "\n    ラウンド 1 / 3\n    回答者: ま'ち\n  \n    \n    みんながヒントを考えています\n  1 / 2 人が送信済み"
+    },
+    {
+      "name": "clue-review reload retains round/history/player/gameId",
+      "pass": true,
+      "method": "REST synthetic phase fixture, real SDK reload"
+    },
+    {
+      "name": "clue-review browser offline10sec cycle1 retains data",
+      "pass": true,
+      "method": "REST synthetic phase fixture then real browser context offline/online (not SDK goOffline)"
+    },
+    {
+      "name": "clue-review browser offline10sec cycle2 retains data",
+      "pass": true,
+      "method": "REST synthetic phase fixture then real browser context offline/online (not SDK goOffline)"
+    },
+    {
+      "name": "clue-review spectator DOM secrecy/read-only transport",
+      "pass": true,
+      "method": "real native WebSocket.send transparent observation; only action names, no payload",
+      "transport": {
+        "sockets": [
+          "ws://127.0.0.1:9000/.ws"
+        ],
+        "actions": [
+          "s",
+          "auth",
+          "g",
+          "q"
+        ],
+        "unparsed": 0
+      },
+      "visibleText": "\n    ラウンド 1 / 3\n    回答者: ま'ち\n  \n    \n    ホストがヒントを確認しています\n  "
+    },
+    {
+      "name": "answer reload retains round/history/player/gameId",
+      "pass": true,
+      "method": "REST synthetic phase fixture, real SDK reload"
+    },
+    {
+      "name": "answer browser offline10sec cycle1 retains data",
+      "pass": true,
+      "method": "REST synthetic phase fixture then real browser context offline/online (not SDK goOffline)"
+    },
+    {
+      "name": "answer browser offline10sec cycle2 retains data",
+      "pass": true,
+      "method": "REST synthetic phase fixture then real browser context offline/online (not SDK goOffline)"
+    },
+    {
+      "name": "answer spectator DOM secrecy/read-only transport",
+      "pass": true,
+      "method": "real native WebSocket.send transparent observation; only action names, no payload",
+      "transport": {
+        "sockets": [
+          "ws://127.0.0.1:9000/.ws"
+        ],
+        "actions": [
+          "s",
+          "auth",
+          "g",
+          "q"
+        ],
+        "unparsed": 0
+      },
+      "visibleText": "\n    ラウンド 1 / 3\n    回答者: ま'ち\n  見えているヒント\n    ふわふわ\n    ま'ちさんが答えを考えています"
+    },
+    {
+      "name": "judge reload retains round/history/player/gameId",
+      "pass": true,
+      "method": "REST synthetic phase fixture, real SDK reload"
+    },
+    {
+      "name": "judge browser offline10sec cycle1 retains data",
+      "pass": true,
+      "method": "REST synthetic phase fixture then real browser context offline/online (not SDK goOffline)"
+    },
+    {
+      "name": "judge browser offline10sec cycle2 retains data",
+      "pass": true,
+      "method": "REST synthetic phase fixture then real browser context offline/online (not SDK goOffline)"
+    },
+    {
+      "name": "judge spectator DOM secrecy/read-only transport",
+      "pass": true,
+      "method": "real native WebSocket.send transparent observation; only action names, no payload",
+      "transport": {
+        "sockets": [
+          "ws://127.0.0.1:9000/.ws"
+        ],
+        "actions": [
+          "s",
+          "auth",
+          "g",
+          "q"
+        ],
+        "unparsed": 0
+      },
+      "visibleText": "\n    ラウンド 1 / 3\n    回答者: ま'ち\n  \n      回答\n      別の答え\n    \n    ホストが答えを確認しています"
+    },
+    {
+      "name": "result reload retains round/history/player/gameId",
+      "pass": true,
+      "method": "REST synthetic phase fixture, real SDK reload"
+    },
+    {
+      "name": "result browser offline10sec cycle1 retains data",
+      "pass": true,
+      "method": "REST synthetic phase fixture then real browser context offline/online (not SDK goOffline)"
+    },
+    {
+      "name": "result browser offline10sec cycle2 retains data",
+      "pass": true,
+      "method": "REST synthetic phase fixture then real browser context offline/online (not SDK goOffline)"
+    },
+    {
+      "name": "result spectator DOM secrecy/read-only transport",
+      "pass": true,
+      "method": "real native WebSocket.send transparent observation; only action names, no payload",
+      "transport": {
+        "sockets": [
+          "ws://127.0.0.1:9000/.ws"
+        ],
+        "actions": [
+          "s",
+          "auth",
+          "g",
+          "q"
+        ],
+        "unparsed": 0
+      },
+      "visibleText": "\n    ラウンド 1 / 3\n    回答者: ま'ち\n  \n      \n        check_circle\n      \n      別の答え\n      お題: ねこ\n    見えていたヒントふわふわ1 / 3 問正解"
+    },
+    {
+      "name": "finished reload retains round/history/player/gameId",
+      "pass": true,
+      "method": "REST synthetic phase fixture, real SDK reload"
+    },
+    {
+      "name": "finished browser offline10sec cycle1 retains data",
+      "pass": true,
+      "method": "REST synthetic phase fixture then real browser context offline/online (not SDK goOffline)",
+      "note": "Host reloaded before second cycle to restart existing30sec timer; separate actual timer test required"
+    },
+    {
+      "name": "finished browser offline10sec cycle2 retains data",
+      "pass": true,
+      "method": "REST synthetic phase fixture then real browser context offline/online (not SDK goOffline)",
+      "note": "Host reloaded before second cycle to restart existing30sec timer; separate actual timer test required"
+    },
+    {
+      "name": "finished spectator DOM secrecy/read-only transport",
+      "pass": true,
+      "method": "real native WebSocket.send transparent observation; only action names, no payload",
+      "transport": {
+        "sockets": [
+          "ws://127.0.0.1:9000/.ws"
+        ],
+        "actions": [
+          "s",
+          "auth",
+          "g",
+          "q"
+        ],
+        "unparsed": 0
+      },
+      "visibleText": "\n    \n      emoji_events\n      ゲーム終了！\n      1 / 3 問正解\n    \n    \n      ラウンド 1\n      ねこ\n      \n        回答者: ま'ち / 回答: 別の答え\n        check_circle\n      \n    \n        ラウンド 2\n        未実施\n        回答者: host\n      \n        ラウンド 3\n        未実施\n        回答者: ま'ち\n      \n  "
+    },
+    {
+      "name": "Explicit overlay exit removes only own player and keeps submitted hint; remaining unsubmitted guest prevents auto-close",
+      "pass": true,
+      "method": "synthetic partially submitted round then host browser disconnect and guest real UI exit"
+    },
+    {
+      "name": "Fresh host + two guests + spectator UI joins",
+      "pass": true,
+      "method": "real UI",
+      "quoteNickname": "ま'ち",
+      "note": "Quote nickname is valid within 8-character input limit; spectator native WebSocket observation delegates actual sends."
+    },
+    {
+      "name": "Replay connected gate, new gameId/reset/presence, old30sec timer cancelled, host reload disconnect reservation",
+      "pass": true,
+      "method": "real UI replay and browser offline/online; actual31sec since finished"
+    },
+    {
+      "name": "doneTimer actual30sec deletion + spectator final retention/unsubscribe",
+      "pass": true,
+      "elapsedMs": 30017,
+      "totalSinceFinishedMs": 30365,
+      "method": "synthetic result then endGame UI; actual30sec wait, doneTimer tests failed offline replay does not cancel timer; doneReload tests host reload resets timer per current contract"
+    },
+    {
+      "name": "Fresh host + two guests + spectator UI joins",
+      "pass": true,
+      "method": "real UI",
+      "quoteNickname": "ま'ち",
+      "note": "Quote nickname is valid within 8-character input limit; spectator native WebSocket observation delegates actual sends."
+    },
+    {
+      "name": "doneReload actual30sec deletion + spectator final retention/unsubscribe",
+      "pass": true,
+      "elapsedMs": 30019,
+      "totalSinceFinishedMs": 35404,
+      "method": "synthetic result then endGame UI; actual30sec wait, doneTimer tests failed offline replay does not cancel timer; doneReload tests host reload resets timer per current contract"
+    },
+    {
+      "name": "TTL125sec waiting removes expired room",
+      "pass": true,
+      "method": "past timestamp fixture, real SDK rejoin transaction; not real2minute elapsed"
+    },
+    {
+      "name": "TTL125sec clue-input removes expired room",
+      "pass": true,
+      "method": "past timestamp fixture, real SDK rejoin transaction; not real2minute elapsed"
+    },
+    {
+      "name": "TTL125sec clue-review removes expired room",
+      "pass": true,
+      "method": "past timestamp fixture, real SDK rejoin transaction; not real2minute elapsed"
+    },
+    {
+      "name": "TTL125sec answer removes expired room",
+      "pass": true,
+      "method": "past timestamp fixture, real SDK rejoin transaction; not real2minute elapsed"
+    },
+    {
+      "name": "TTL125sec judge removes expired room",
+      "pass": true,
+      "method": "past timestamp fixture, real SDK rejoin transaction; not real2minute elapsed"
+    },
+    {
+      "name": "TTL125sec result removes expired room",
+      "pass": true,
+      "method": "past timestamp fixture, real SDK rejoin transaction; not real2minute elapsed"
+    },
+    {
+      "name": "TTL125sec finished removes expired room",
+      "pass": true,
+      "method": "past timestamp fixture, real SDK rejoin transaction; not real2minute elapsed"
+    },
+    {
+      "name": "TTL119sec live timer expires after remaining second",
+      "pass": true,
+      "method": "timestamp119sec fixture, real remaining timer"
+    },
+    {
+      "name": "Spectator live TTL ends display without write and detaches before same-code reuse",
+      "pass": true,
+      "method": "118sec timestamp fixture + real remaining2sec local timer"
+    },
+    {
+      "name": "Spectator expired room is read-only",
+      "pass": true,
+      "transport": {
+        "sockets": [
+          "ws://127.0.0.1:9000/.ws"
+        ],
+        "actions": [
+          "s",
+          "auth",
+          "g"
+        ],
+        "unparsed": 0
+      },
+      "method": "timestamp fixture + real spectator URL entry"
+    },
+    {
+      "name": "Invalid/missing guest session {bad",
+      "pass": true,
+      "method": "synthetic session, real SDK reload",
+      "note": "Malformed JSON is ignored but existing loadSession leaves raw string; no clear requirement"
+    },
+    {
+      "name": "Invalid/missing guest session {\"nickname\":\"bad/key\",\"roomCode\":\"B3ATTL\",\"role\":\"guest\"}",
+      "pass": true,
+      "method": "synthetic session, real SDK reload"
+    },
+    {
+      "name": "Invalid/missing guest session {\"nickname\":\"host\",\"roomCode\":\"B3ATTL\",\"role\":\"guest\"}",
+      "pass": true,
+      "method": "synthetic session, real SDK reload"
+    },
+    {
+      "name": "Invalid/missing guest session {\"nickname\":\"ま'ち\",\"roomCode\":\"../x\",\"role\":\"guest\"}",
+      "pass": true,
+      "method": "synthetic session, real SDK reload"
+    },
+    {
+      "name": "Invalid/missing guest session {\"nickname\":\"missing\",\"roomCode\":\"B3ATTL\",\"role\":\"guest\"}",
+      "pass": true,
+      "method": "synthetic session, real SDK reload"
+    }
+  ],
+  "steps": [
+    {
+      "step": "fresh",
+      "status": "done",
+      "caseCount": 1,
+      "completedAt": "2026-09-08T12:57:50.976Z"
+    },
+    {
+      "step": "waiting",
+      "status": "done",
+      "caseCount": 4,
+      "completedAt": "2026-09-08T12:58:19.736Z"
+    },
+    {
+      "step": "uiRound",
+      "status": "done",
+      "caseCount": 7,
+      "completedAt": "2026-09-08T12:58:49.323Z"
+    },
+    {
+      "step": "spectatorBoundary",
+      "status": "done",
+      "caseCount": 8,
+      "completedAt": "2026-09-08T12:59:18.934Z"
+    },
+    {
+      "step": "regressions",
+      "status": "done",
+      "caseCount": 11,
+      "completedAt": "2026-09-08T12:59:37.134Z"
+    },
+    {
+      "step": "phase:clue-input",
+      "status": "done",
+      "caseCount": 15,
+      "completedAt": "2026-09-08T13:00:26.079Z"
+    },
+    {
+      "step": "phase:clue-review",
+      "status": "done",
+      "caseCount": 19,
+      "completedAt": "2026-09-08T13:01:17.075Z"
+    },
+    {
+      "step": "phase:answer",
+      "status": "done",
+      "caseCount": 23,
+      "completedAt": "2026-09-08T13:01:50.062Z"
+    },
+    {
+      "step": "phase:judge",
+      "status": "done",
+      "caseCount": 27,
+      "completedAt": "2026-09-08T13:02:28.743Z"
+    },
+    {
+      "step": "phase:result",
+      "status": "done",
+      "caseCount": 31,
+      "completedAt": "2026-09-08T13:02:56.585Z"
+    },
+    {
+      "step": "phase:finished",
+      "status": "done",
+      "caseCount": 35,
+      "completedAt": "2026-09-08T13:03:24.171Z"
+    },
+    {
+      "step": "explicitExit",
+      "status": "done",
+      "caseCount": 36,
+      "completedAt": "2026-09-08T13:03:49.487Z"
+    },
+    {
+      "step": "fresh",
+      "status": "done",
+      "caseCount": 37,
+      "completedAt": "2026-09-08T13:06:08.637Z"
+    },
+    {
+      "step": "replay",
+      "status": "done",
+      "caseCount": 38,
+      "completedAt": "2026-09-08T13:07:04.173Z"
+    },
+    {
+      "step": "doneTimer",
+      "status": "done",
+      "caseCount": 39,
+      "completedAt": "2026-09-08T13:07:45.205Z"
+    },
+    {
+      "step": "fresh",
+      "status": "done",
+      "caseCount": 40,
+      "completedAt": "2026-09-08T13:08:07.637Z"
+    },
+    {
+      "step": "doneReload",
+      "status": "done",
+      "caseCount": 41,
+      "completedAt": "2026-09-08T13:08:57.276Z"
+    },
+    {
+      "step": "invalidSessions",
+      "status": "done",
+      "caseCount": 56,
+      "completedAt": "2026-09-08T13:11:30.063Z"
+    },
+    {
+      "step": "ttlBoundary completed prefix",
+      "status": "passed-prefix",
+      "caseCount": 51,
+      "note": "First10 TTL/spectator boundary groups passed before malformed JSON expectation timeout; only remaining5 resumed as invalidSessions."
+    }
+  ],
+  "network": {
+    "eventCount": 1543,
+    "origins": {
+      "http://127.0.0.1:5500": 228,
+      "https://fonts.googleapis.com": 76,
+      "https://www.gstatic.com": 114,
+      "https://fonts.gstatic.com": 762,
+      "http://127.0.0.1:9099": 38,
+      "ws://127.0.0.1:9000": 79,
+      "http://127.0.0.1:9000": 246
+    }
+  },
+  "pageErrors": [],
+  "console": [
+    {
+      "step": "waiting",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "waiting",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "waiting",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "waiting",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "waiting",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "waiting",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "waiting",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "waiting",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "waiting",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "waiting",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "waiting",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "waiting",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "waiting",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "waiting",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "waiting",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "waiting",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "uiRound",
+      "role": "guestB",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "uiRound",
+      "role": "guestB",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "uiRound",
+      "role": "guestB",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "uiRound",
+      "role": "guestB",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "uiRound",
+      "role": "guestB",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "uiRound",
+      "role": "guestB",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "uiRound",
+      "role": "guestB",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "uiRound",
+      "role": "guestB",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "uiRound",
+      "role": "guestB",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "uiRound",
+      "role": "guestB",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "uiRound",
+      "role": "guestB",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "uiRound",
+      "role": "guestB",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "uiRound",
+      "role": "guestB",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "uiRound",
+      "role": "guestB",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "uiRound",
+      "role": "guestB",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "uiRound",
+      "role": "guestB",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "phase:clue-input",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "phase:clue-input",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "phase:clue-input",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "phase:clue-input",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "phase:clue-input",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "phase:clue-input",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "phase:clue-input",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "phase:clue-input",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "phase:clue-input",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "phase:clue-input",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "phase:clue-input",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "phase:clue-input",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "phase:clue-review",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "phase:clue-review",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "phase:clue-review",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "phase:clue-review",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "phase:clue-review",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "phase:clue-review",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "phase:clue-review",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "phase:clue-review",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "phase:clue-review",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "phase:clue-review",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "phase:clue-review",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "phase:clue-review",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "phase:clue-review",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "phase:clue-review",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "phase:answer",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "phase:answer",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "phase:answer",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "phase:answer",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "phase:answer",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "phase:answer",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "phase:answer",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "phase:answer",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "phase:answer",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "phase:answer",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "phase:answer",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "phase:answer",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "phase:answer",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "phase:answer",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "phase:answer",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "phase:judge",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "phase:judge",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "phase:judge",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "phase:judge",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "phase:judge",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "phase:judge",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "phase:judge",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "phase:judge",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "phase:judge",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "phase:judge",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "phase:judge",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "phase:judge",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "phase:judge",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "phase:judge",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "phase:result",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "phase:result",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "phase:result",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "phase:result",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "phase:result",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "phase:result",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "phase:result",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "phase:result",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "phase:result",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "phase:result",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "phase:result",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "phase:result",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "phase:finished",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "phase:finished",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "phase:finished",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "phase:finished",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "phase:finished",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "phase:finished",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "phase:finished",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "phase:finished",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "phase:finished",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "phase:finished",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "phase:finished",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "phase:finished",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "phase:finished",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "phase:finished",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "explicitExit",
+      "role": "host",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "replay",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "replay",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "replay",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "replay",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "replay",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "replay",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "replay",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "replay",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "replay",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "replay",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "replay",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "replay",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "replay",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "replay",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "replay",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "replay",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "replay",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "replay",
+      "role": "host",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "replay",
+      "role": "host",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "replay",
+      "role": "host",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "replay",
+      "role": "host",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "replay",
+      "role": "host",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "replay",
+      "role": "host",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "replay",
+      "role": "host",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "doneTimer",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "doneTimer",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "doneTimer",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "doneTimer",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "doneTimer",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "doneTimer",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "doneTimer",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "doneTimer",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "doneTimer",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    },
+    {
+      "step": "doneTimer",
+      "role": "guestA",
+      "type": "error",
+      "classification": "intentional browser offline"
+    }
+  ],
+  "running": null,
+  "cleanup": {
+    "rooms": null,
+    "stats": null,
+    "processesStopped": true,
+    "browser": "b31 closed",
+    "firebaseCLI": {
+      "pid": 76650,
+      "signal": "SIGTERM",
+      "exitCode": 0
+    },
+    "databaseJava": {
+      "pid": 76690,
+      "stoppedViaParent": true
+    },
+    "portsFree": [
+      4000,
+      4400,
+      4500,
+      5500,
+      9000,
+      9099
+    ],
+    "scratchPreserved": true,
+    "repoModifiedBySDKAgent": false
+  },
+  "task": "B31 kaburazu-hint guest reconnect",
+  "environment": {
+    "projectId": "demo-roomk-b31",
+    "firebaseSDK": "10.14.1 compat",
+    "firebaseCLI": "15.29.0",
+    "java": "Temurin 21.0.12.1+1",
+    "ports": {
+      "auth": 9099,
+      "database": 9000,
+      "hosting": 5500,
+      "ui": 4000,
+      "hub": 4400,
+      "logging": 4500
+    },
+    "stats": "no-op in scratch",
+    "gate": "PASS at setup and teardown; local data CSP; Emulator binding before auth/RTDB; local dependency existence",
+    "browser": "Dedicated b31 Playwright CLI browser, four independent contexts; no @playwright/test, no user browser"
+  },
+  "methods": [
+    "Real UI host plus two guests including valid nickname ま'ち plus read-only spectator; full three-round game without phase REST writes.",
+    "Seven phase guest reload plus two browser context.setOffline cycles of 10sec each. Six in-game phases use synthetic REST phase fixtures; waiting from real UI.",
+    "Generic phase comparisons exclude only connection keys and compare phase/gameId/round/history/player isHost/presenceVersion. Spec secrecy assertions restricted to #spec-content DOM; not DB read authorization.",
+    "Spectator transport observation subclasses native WebSocket and delegates send unchanged; saves protocol action names only, no auth payload. Forbidden p/m/o/om/oc actions absent in observed intervals. Longpoll payloads are not decoded by this observer.",
+    "Separate true30sec timer cases; TTL uses past timestamp125/119/118sec, not actual2minute elapsed. Finished continuity reloads host before second offline cycle to avoid competing30sec cleanup.",
+    "Review HTML payload >20characters is a REST renderer fixture, not accepted UI input; quote nickname stays inside8character UI limit.",
+    "Missing gameId send refusal tested via direct public submitHint invocation; forced close, manual exclusion and explicit overlay exit via actual UI.",
+    "Browser network/request/WebSocket and console/error listeners attach only within run-code steps; reset/setup gaps and REST fixture client requests excluded from browser-event tally."
+  ],
+  "limitations": [
+    "iPhone, OS clipboard, user browser and production Firebase never used.",
+    "Public evidence strips request/session/auth URL queries to origin counts. Internal scratch browser logs may contain only localdemo synthetic auth tokens.",
+    "Initial preliminary environment had missing utils.js404, corrected before first UI acceptance; favicon404 on initial open is outside final capture.",
+    "Preliminary source2a64 and93c57 excluded.2f96 copied but no acceptance executed.",
+    "Harness corrections: Firebase history array leading null excluded from itemcount; absent-guesser rescue uses hidden parent not disabled; replay button is enabled but transaction rejects offline guests; malformed JSON session is ignored at TOP but raw string remains by existing loadSession behavior.",
+    "First final replay attempt stopped on incorrect disabled expectation and recorded no passed replay case; new room used for corrected replay. Earlier30sec expiration after stopped attempt is not a timed acceptance case.",
+    "ttlBoundary completed first10 assertions then stopped at malformed JSON clear expectation; invalidSessions resumed only remaining5 with corrected expectation, no duplicate TTL counts. CaseCount56 counts assertion groups including repeated same-page fresh room regression joins.",
+    "HostTOP/newroom before old30sec deadline and artificially delayed cancellation/error interleavings are not separately proven by this SDK run; use independent VM evidence for those races."
+  ],
+  "preliminary": {
+    "source2a64": 4,
+    "source93c57": 12,
+    "source2f96": 0,
+    "includedInFinal": false
+  },
+  "visualReview": {
+    "parentViewed": [
+      "waiting-offline-guest375-2.png",
+      "ui-result-guest375.png",
+      "ui-result-host1280.png"
+    ],
+    "outcome": "Parent visually confirmed text/buttons within viewport, no new layout break",
+    "screenshotsDirectory": "output/playwright"
+  },
+  "consoleSummary": {
+    "intentional browser offline": 148
+  }
+}

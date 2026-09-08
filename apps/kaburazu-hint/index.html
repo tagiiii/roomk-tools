@@ -536,6 +536,11 @@
   <p class="overlay-sub">再接続を待っています</p>
   <button class="btn btn-ghost" onclick="spectatorLeave()">TOPにもどる</button>
 </div>
+<div class="overlay" id="guest-off-overlay">
+  <p class="overlay-title">接続を確認しています</p>
+  <p class="overlay-sub">送信済みの内容は残っています。接続が戻るまでお待ちください。未送信の入力は入れ直してください。</p>
+  <button class="btn btn-ghost" onclick="leaveGame()">退出する</button>
+</div>
 
 <script>
 /* ════════════════════════════════════════════════
@@ -594,21 +599,51 @@ const state = {
   cleanupTimer: null,
   specTimer: null,          // 観戦用 TTL ローカルタイマー（退出時に必ず clearTimeout）
   specFinishedShown: false, // finished サブビュー表示済みフラグ（room 削除後も画面を維持するため）
+  lastRoom: null, roundKey: null, operations: {}, expectedRoomRemoval: false,
+  expiryAction: null, orphanDeadline: null, legacyNotice: false,
 };
+let guestPresence = null;
+let guestPresenceWork = Promise.resolve();
+let hostLifecycleWork = Promise.resolve();
+const pendingGuestCleanup = new Set();
+function withHostLifecycle(task) {
+  const work = hostLifecycleWork.then(task);
+  hostLifecycleWork = work.catch(() => {});
+  return work;
+}
+async function cancelReservations(ref) {
+  // 共通helperは失敗をログ化してresolveするため、削除前は失敗を伝播するcancelを使う。
+  await ref.onDisconnect().cancel();
+}
+async function registerHostReservation(ref) {
+  await ref.onDisconnect().update({ hostConnected: false, hostDisconnectedAt: firebase.database.ServerValue.TIMESTAMP });
+}
+async function recoverHostReservation(ref, nickname) {
+  const room = (await ref.get()).val();
+  if (state.roomRef === ref && state.role === 'host' && state.nickname === nickname && !state.expectedRoomRemoval
+    && room?.host === nickname && room.players?.[nickname]?.isHost === true
+    && ROOM_PHASES.includes(room.status) && !isRoomExpired(room)) await registerHostReservation(ref);
+}
+async function activateHost(ref, update) {
+  await registerHostReservation(ref);
+  try {
+    const result = await joinTransaction(ref, update);
+    if (!result.committed) await cancelReservations(ref);
+    return result;
+  } catch (error) {
+    await cancelReservations(ref);
+    throw error;
+  }
+}
+const ROOM_PHASES = ['waiting', 'clue-input', 'clue-review', 'answer', 'judge', 'result', 'finished'];
 
-// 遷移ガード (ラウンドごとにリセット)
-let clueReviewTriggered = false;
-let answerHandled = false;
-let historySaved = false;
+// 手動除外の下書き（gameId・round境界でリセット）。送信中の所有者はstate.operationsに保持。
 let reviewExcluded = new Set();
 let reviewAutoExcluded = new Set();
 let reviewMissingSet = new Set();
 let reviewHintsData = {};
 
 function resetRoundFlags() {
-  clueReviewTriggered = false;
-  answerHandled = false;
-  historySaved = false;
   reviewExcluded = new Set();
   reviewAutoExcluded = new Set();
   reviewMissingSet = new Set();
@@ -681,6 +716,7 @@ function hideError(id) {
 }
 
 function validNick(v) {
+  if (typeof v !== 'string' || /[\u0000-\u001f\u007f]/.test(v)) return '使えない文字が含まれています';
   if (!v) { return 'ニックネームを入力してください'; }
   if (v.length > 8) { return '8文字以内で入力してください'; }
   if (/[.#$/\[\]]/.test(v)) { return '使えない記号が含まれています'; }
@@ -692,6 +728,148 @@ const getHostDisconnectedAt = RoomkRTDB.getHostDisconnectedAt;
 
 function isRoomExpired(room) {
   return RoomkRTDB.isRoomExpired(room, ORPHAN_TTL_MS);
+}
+function validGuestRoom(room, nick) {
+  return room?.players?.[nick]?.isHost === false && room.host !== nick
+    && ROOM_PHASES.includes(room.status) && !isRoomExpired(room);
+}
+function playerConnected(p) {
+  return p.isHost || p.presenceVersion !== 1 || Object.values(p.connections || {}).some(v => v === true);
+}
+function guestCanAct() {
+  return state.role === 'host' || (state.role === 'guest' && !!guestPresence?.ready && guestPresence.connected
+    && guestPresence.roomRef === state.roomRef && guestPresence.nickname === state.nickname);
+}
+function captureAction(phase) {
+  return { ref: state.roomRef, nickname: state.nickname, role: state.role, phase,
+    gameId: state.lastRoom?.gameId, number: state.lastRoom?.round?.number,
+    presence: guestPresence, generation: guestPresence?.generation };
+}
+function actionCurrent(a) {
+  return !!a.ref && state.roomRef === a.ref && state.nickname === a.nickname && state.role === a.role
+    && !state.expectedRoomRemoval;
+}
+function canApplyAction(a, room, allowLegacy = false) {
+  if (!actionCurrent(a) || !['host', 'guest'].includes(a.role) || !room || isRoomExpired(room)
+    || room.status !== a.phase || room.gameId !== a.gameId || room.round?.number !== a.number) return false;
+  if (!allowLegacy && (typeof a.gameId !== 'string' || !a.gameId)) return false;
+  return a.role === 'host' ? room.host === a.nickname && room.players?.[a.nickname]?.isHost === true
+    : guestCanAct() && validGuestRoom(room, a.nickname) && guestPresence === a.presence
+      && guestPresence.generation === a.generation;
+}
+async function runOperation(key, phase, update, allowLegacy = false) {
+  if (state.operations[key] || !['host', 'guest'].includes(state.role)) return false;
+  const a = captureAction(phase);
+  if (!canApplyAction(a, state.lastRoom, allowLegacy)) return false;
+  state.operations[key] = a; updateActionControls();
+  try {
+    const { committed } = await a.ref.transaction(room => {
+      if (state.operations[key] !== a || !canApplyAction(a, room, allowLegacy)) return;
+      return update(room, a);
+    }, undefined, false);
+    return committed;
+  } catch (error) { if (actionCurrent(a)) showMsg('送信できませんでした。接続を確認してください'); return false; }
+  finally {
+    if (state.operations[key] === a) { delete state.operations[key]; updateActionControls(); }
+  }
+}
+function updateActionControls() {
+  if (!['host', 'guest'].includes(state.role)) return;
+  const room = state.lastRoom;
+  const blocked = state.expectedRoomRemoval || !guestCanAct() || !room?.gameId;
+  document.querySelectorAll('#clue-input-area button').forEach(b => { b.disabled = blocked || !!state.operations.hint || !!room?.round?.hints?.[state.nickname]; });
+  document.querySelectorAll('#answer-guesser-view button').forEach(b => { b.disabled = blocked || !!state.operations.answer || !!room?.round?.passed || !!room?.round?.answer; });
+  document.querySelectorAll('#review-host-view button').forEach(b => {
+    b.disabled = blocked || !!state.operations.review || (b.classList.contains('kbz-hint-card__toggle')
+      && reviewAutoExcluded.has(b.closest('.kbz-hint-card')?.dataset.nick));
+  });
+  document.getElementById('btn-force-close-clue').disabled = blocked || !!state.operations.review
+    || !Object.keys(room?.round?.hints || {}).length;
+  document.querySelectorAll('#judge-host-view button').forEach(b => { b.disabled = blocked || !!state.operations.judge; });
+}
+function discardInputs() {
+  document.getElementById('clue-hint-input').value = '';
+  document.getElementById('answer-input').value = '';
+}
+function showGuestConnection() {
+  if (!guestCanAct() && state.role === 'guest') discardInputs();
+  showOverlay('guest-off-overlay', state.role === 'guest' && !!state.roomRef && !state.expectedRoomRemoval && !guestCanAct());
+  updateActionControls();
+}
+function stopGuestPresence() {
+  const p = guestPresence; guestPresence = null;
+  if (p) { p.generation++; p.connectionRef.off('value', p.listener); pendingGuestCleanup.add(p); }
+  const work = guestPresenceWork.then(clearPendingGuestReservations);
+  guestPresenceWork = work.catch(error => console.warn('[kaburazu-hint] presence cleanup failed', error));
+  return work;
+}
+async function clearPendingGuestReservations() {
+  for (const pending of pendingGuestCleanup) {
+    for (const ref of pending.refs) { await ref.onDisconnect().cancel(); await ref.remove(); }
+    pendingGuestCleanup.delete(pending);
+  }
+}
+function startGuestPresence() {
+  if (state.role !== 'guest' || !state.roomRef || state.expectedRoomRemoval) return;
+  stopGuestPresence().catch(() => {}); // 失敗した取消対象はpendingに残し、次の接続登録前に再確認する。
+  const p = { roomRef: state.roomRef, nickname: state.nickname, connectionRef: db.ref('.info/connected'),
+    generation: 0, ready: false, connected: false, refs: [] };
+  guestPresence = p;
+  p.listener = snap => {
+    p.connected = snap.val() === true; p.ready = false;
+    const generation = ++p.generation;
+    showGuestConnection();
+    if (!p.connected) return;
+    const current = () => guestPresence === p && p.connected && p.generation === generation
+      && state.roomRef === p.roomRef && state.nickname === p.nickname && state.role === 'guest' && !state.expectedRoomRemoval;
+    guestPresenceWork = guestPresenceWork.then(async () => {
+      await clearPendingGuestReservations();
+      if (!current()) return;
+      const ref = p.roomRef.child(`players/${p.nickname}/connections`).push(); p.refs.push(ref);
+      await ref.onDisconnect().remove();
+      const { committed } = await p.roomRef.transaction(room => {
+        if (!current() || !validGuestRoom(room, p.nickname)) return;
+        const player = room.players[p.nickname];
+        return { ...room, players: { ...room.players, [p.nickname]: { ...player, presenceVersion: 1,
+          connections: { ...player.connections, [ref.key]: true } } } };
+      });
+      if (!committed || !current()) { await ref.onDisconnect().cancel(); await ref.remove(); return; }
+      for (const old of p.refs.filter(item => item !== ref)) { await old.onDisconnect().cancel(); await old.remove(); }
+      p.refs = [ref];
+      if (current()) { p.ready = true; showGuestConnection(); }
+    }).catch(error => { if (current()) { p.ready = false; showGuestConnection(); } console.warn('[kaburazu-hint] reconnect failed', error); });
+  };
+  p.connectionRef.on('value', p.listener);
+}
+async function joinTransaction(ref, update) {
+  let listener;
+  try {
+    await new Promise((resolve, reject) => { listener = () => resolve(); ref.on('value', listener, reject); });
+    return await ref.transaction(update, undefined, false);
+  } finally { ref.off('value', listener); }
+}
+async function removeExpiredRoom(ref) {
+  await withHostLifecycle(async () => {
+    await cancelReservations(ref);
+    await joinTransaction(ref, room => room && (isRoomExpired(room) || !room.status) ? null : undefined);
+  });
+}
+async function expireGuestRoom(ref) {
+  if (state.role !== 'guest' || state.roomRef !== ref || state.expectedRoomRemoval || state.expiryAction) return;
+  const owner = {}; state.expiryAction = owner;
+  try {
+    await stopGuestPresence();
+    if (state.roomRef !== ref || state.expectedRoomRemoval) return;
+    await ref.transaction(room => {
+      if (state.roomRef === ref && !state.expectedRoomRemoval && room && isRoomExpired(room)) return null;
+    }, undefined, false);
+  } catch (error) { console.warn('[kaburazu-hint] expiry failed', error); }
+  finally {
+    if (state.expiryAction === owner) {
+      state.expiryAction = null;
+      if (state.roomRef === ref && !state.expectedRoomRemoval) startGuestPresence();
+    }
+  }
 }
 
 function pickWord(usedWords) {
@@ -754,8 +932,8 @@ async function hostCreate() {
       if (room) return;
       return {
         host: nick,
-        hostConnected: true,
-        hostDisconnectedAt: null,
+        hostConnected: false,
+        hostDisconnectedAt: getEstServerNow(),
         status: 'waiting',
         players: { [nick]: { isHost: true } },
       };
@@ -770,10 +948,19 @@ async function hostCreate() {
   state.role = 'host';
   state.roomRef = roomRef;
 
-  roomRef.onDisconnect().update({
-    hostConnected: false,
-    hostDisconnectedAt: firebase.database.ServerValue.TIMESTAMP,
-  });
+  try {
+    const result = await withHostLifecycle(() => activateHost(roomRef, room => {
+      if (state.roomRef !== roomRef || state.expectedRoomRemoval || room?.host !== nick
+        || room.players?.[nick]?.isHost !== true || isRoomExpired(room)) return;
+      return { ...room, hostConnected: true, hostDisconnectedAt: null };
+    }));
+    if (!result.committed) throw new Error('Host activation aborted');
+  } catch (error) {
+    if (state.roomRef === roomRef) { clearSession(); leaveCleanup(); showScreen('top'); }
+    showMsg('ルーム作成に失敗しました。接続を確認してもう一度お試しください');
+    return;
+  }
+  if (state.roomRef !== roomRef || state.expectedRoomRemoval) return;
 
   saveSession();
   startRoomListener();
@@ -787,7 +974,7 @@ async function guestJoin() {
   const code = document.getElementById('guest-code').value.trim().toUpperCase();
   const err = validNick(nick);
   if (err) { showError('guest-error', err); return; }
-  if (code.length !== 6) { showError('guest-error', 'ルームコードは6文字です'); return; }
+  if (!SPEC_CODE_RE.test(code)) { showError('guest-error', 'ルームコードは6文字の英数字です'); return; }
   hideError('guest-error');
 
   if (!await waitAuthOrExplain()) return;
@@ -796,23 +983,22 @@ async function guestJoin() {
   const preSnap = await roomRef.get();
   if (!preSnap.exists()) { showError('guest-error', 'ルームが見つかりません'); return; }
   const preRoom = preSnap.val();
-  if (isRoomExpired(preRoom)) {
-    await roomRef.remove().catch(() => {});
+  if (isRoomExpired(preRoom) || !preRoom.status) {
+    await removeExpiredRoom(roomRef).catch(() => {});
     showError('guest-error', 'このルームは期限切れです');
     return;
   }
 
   let abortReason = null;
-  const { committed } = await roomRef.transaction(room => {
-    const r = room || preRoom;
+  const { committed } = await joinTransaction(roomRef, r => {
     if (!r) { abortReason = 'not_found'; return; }
-    if (isRoomExpired(r)) { abortReason = 'expired'; return null; }
+    if (isRoomExpired(r)) { abortReason = 'expired'; return; }
     if (r.hostConnected === false) { abortReason = 'host_gone'; return; }
     if (r.status !== 'waiting') { abortReason = 'not_waiting'; return; }
     const players = r.players || {};
-    if (players[nick]) { abortReason = 'nick_taken'; return; }
+    if (r.host === nick || players[nick]) { abortReason = 'nick_taken'; return; }
     abortReason = null;
-    return { ...r, players: { ...players, [nick]: { isHost: false } } };
+    return { ...r, players: { ...players, [nick]: { isHost: false, presenceVersion: 1 } } };
   });
 
   if (!committed) {
@@ -832,29 +1018,32 @@ async function guestJoin() {
   state.role = 'guest';
   state.roomRef = roomRef;
 
-  roomRef.child(`players/${nick}`).onDisconnect().remove();
-
   saveSession();
   startRoomListener();
+  startGuestPresence();
 }
 
 /* ════════════════════════════════════════════════
    ゲーム開始
    ════════════════════════════════════════════════ */
 async function startGame() {
+  if (state.role !== 'host' || !state.roomRef) return;
+  const gameId = state.roomRef.push().key;
   let abortReason = null;
-  const { committed } = await state.roomRef.transaction(room => {
+  const committed = await runOperation('start', 'waiting', room => {
     if (!room) { abortReason = 'not_found'; return; }
     if (room.status !== 'waiting') { abortReason = 'bad_status'; return; }
 
     const players = Object.keys(room.players || {});
     if (players.length < 3) { abortReason = 'too_few'; return; }
+    if (Object.values(room.players).some(p => !playerConnected(p))) { abortReason = 'offline'; return; }
 
     const turnOrder = shuffle(players);
     const { word, index } = pickWord([]);
     abortReason = null;
     return {
       ...room,
+      gameId,
       turnOrder,
       usedWords: [index],
       history: null,
@@ -872,7 +1061,7 @@ async function startGame() {
         isCorrect: null,
       },
     };
-  });
+  }, true);
 
   if (!committed && abortReason === 'too_few') {
     showMsg('3人以上必要です');
@@ -884,24 +1073,23 @@ async function startGame() {
     return;
   }
 
-  resetRoundFlags();
 }
 
 /* ════════════════════════════════════════════════
    ルームリスナー
    ════════════════════════════════════════════════ */
 function startRoomListener() {
-  state.roomRef.on('value', snap => {
+  const ref = state.roomRef;
+  ref.on('value', snap => {
+    if (state.roomRef !== ref) return;
     // 観戦者は host/guest のコードパス（切断処理・status switch・自動進行）に一切入らない
     if (state.role === 'spectator') {
       handleSpectator(snap.exists() ? snap.val() : null);
       return;
     }
     if (!snap.exists()) {
-      clearSession();
       showMsg('ルームが終了しました');
-      leaveCleanup();
-      showScreen('top');
+      void cleanupMissingRoom(ref);
       return;
     }
     handleRoom(snap.val());
@@ -910,8 +1098,22 @@ function startRoomListener() {
 
 function handleRoom(room) {
   if (state.role === 'spectator') return; // 防御: 観戦は handleSpectator のみで処理する
+  if (state.expectedRoomRemoval) return;
 
   const players = room.players || {};
+  const me = players[state.nickname];
+  if (!me || (state.role === 'host' ? room.host !== state.nickname || me.isHost !== true
+    : state.role !== 'guest' || room.host === state.nickname || me.isHost !== false)) {
+    void cleanupMissingRoom(state.roomRef); return;
+  }
+  state.lastRoom = room;
+  const roundKey = JSON.stringify([room.gameId || null, room.round?.number || null]);
+  if (state.roundKey !== roundKey) {
+    state.roundKey = roundKey; state.operations = {}; resetRoundFlags(); discardInputs();
+  }
+  if (!room.gameId && !['waiting', 'finished'].includes(room.status) && !state.legacyNotice) {
+    state.legacyNotice = true; showMsg('このルームでは復帰対応の操作ができません。全員がページを読み込み直して新しいルームで遊んでください');
+  }
 
   // 切断ハンドリング
   if (state.role === 'guest') {
@@ -921,13 +1123,15 @@ function handleRoom(room) {
       if (isRoomExpired(room)) {
         clearTimeout(state.orphanTimer);
         state.orphanTimer = null;
-        state.roomRef.remove().catch(() => {});
+        void expireGuestRoom(state.roomRef);
+        return;
       } else if (!state.orphanTimer) {
         const dt = getHostDisconnectedAt(room);
         const delay = dt == null ? ORPHAN_TTL_MS : Math.max(0, dt + ORPHAN_TTL_MS - getEstServerNow());
+        const ref = state.roomRef;
         state.orphanTimer = setTimeout(() => {
           state.orphanTimer = null;
-          if (state.roomRef) state.roomRef.remove().catch(() => {});
+          void expireGuestRoom(ref);
         }, delay);
       }
     } else {
@@ -938,11 +1142,7 @@ function handleRoom(room) {
 
   // 再接続時のホスト復帰
   if (state.role === 'host' && room.hostConnected === false) {
-    state.roomRef.update({ hostConnected: true, hostDisconnectedAt: null });
-    state.roomRef.onDisconnect().update({
-      hostConnected: false,
-      hostDisconnectedAt: firebase.database.ServerValue.TIMESTAMP,
-    });
+    void restoreHostConnection(captureAction(room.status));
   }
 
   switch (room.status) {
@@ -954,6 +1154,22 @@ function handleRoom(room) {
     case 'result':     handleResult(room, players);     break;
     case 'finished':   handleFinished(room);            break;
   }
+  updateActionControls();
+}
+async function restoreHostConnection(a) {
+  if (a.role !== 'host') return;
+  if (state.operations.hostReconnect) return;
+  state.operations.hostReconnect = a;
+  try {
+    await withHostLifecycle(async () => {
+    if (!actionCurrent(a)) return;
+    await activateHost(a.ref, room => {
+      if (state.operations.hostReconnect !== a || !canApplyAction(a, room, true)) return;
+      return { ...room, hostConnected: true, hostDisconnectedAt: null };
+    });
+    });
+  } catch (error) { console.warn('[kaburazu-hint] host reconnect failed', error); }
+  finally { if (state.operations.hostReconnect === a) delete state.operations.hostReconnect; }
 }
 
 /* ════════════════════════════════════════════════
@@ -972,9 +1188,9 @@ function handleWaiting(room, players) {
     hostCtrl.style.display = '';
     const count = Object.keys(players).length;
     const btn = document.getElementById('btn-start-game');
-    btn.disabled = count < 3;
+    btn.disabled = count < 3 || Object.values(players).some(p => !playerConnected(p));
     document.getElementById('waiting-min-msg').textContent =
-      count < 3 ? `あと${3 - count}人で開始できます` : `${count}人参加中`;
+      count < 3 ? `あと${3 - count}人で開始できます` : Object.values(players).some(p => !playerConnected(p)) ? '再接続を待っています' : `${count}人参加中`;
   } else {
     hostCtrl.style.display = 'none';
   }
@@ -984,7 +1200,6 @@ function handleWaiting(room, players) {
 function handleClueInput(room, players) {
   if (state.currentScreen !== 'clue') {
     showScreen('clue');
-    resetRoundFlags();
   }
 
   const round = room.round || {};
@@ -1007,7 +1222,7 @@ function handleClueInput(room, players) {
 
   // 進捗
   const hintGivers = Object.keys(players).filter(n => n !== guesser);
-  const submitted = Object.keys(round.hints || {}).length;
+  const submitted = hintGivers.filter(n => round.hints?.[n]).length;
   document.getElementById('clue-progress').textContent = `${submitted} / ${hintGivers.length} 人が送信済み`;
 
   // ホスト用：締切ボタン
@@ -1016,9 +1231,9 @@ function handleClueInput(room, players) {
     clueHostActions.style.display = 'block';
     const remaining = Math.max(0, hintGivers.length - submitted);
     const btn = document.getElementById('btn-force-close-clue');
-    btn.disabled = submitted === 0 || clueReviewTriggered;
+    btn.disabled = Object.keys(round.hints || {}).length === 0 || !!state.operations.review || !room.gameId;
     const hint = document.getElementById('clue-host-hint');
-    if (submitted === 0) {
+    if (Object.keys(round.hints || {}).length === 0) {
       hint.textContent = 'ヒントが1件以上ないと進められません';
     } else if (remaining > 0) {
       hint.textContent = `未提出の ${remaining} 人は未提出として進めます`;
@@ -1030,67 +1245,58 @@ function handleClueInput(room, players) {
   }
 
   // ホスト: 全員提出 → clue-review へ
-  if (state.role === 'host' && !clueReviewTriggered && submitted >= hintGivers.length && hintGivers.length > 0) {
-    clueReviewTriggered = true;
-    autoTransitionToReview(room, players);
+  if (state.role === 'host' && room.gameId && !state.operations.review && submitted === hintGivers.length && hintGivers.length > 0) {
+    void autoTransitionToReview(room, players);
   }
 }
 
+function reviewSnapshot(room) {
+  const hints = room.round.hints || {}, counts = {};
+  Object.values(hints).forEach(h => { counts[h.normalized] = (counts[h.normalized] || 0) + 1; });
+  const excluded = Object.keys(hints).filter(n => counts[hints[n].normalized] > 1);
+  const missing = Object.keys(room.players || {}).filter(n => n !== room.round.guesser && !hints[n]);
+  return { excludedHintIds: excluded.length ? excluded : null, missingHintIds: missing.length ? missing : null };
+}
+function reviewBasis(room) {
+  return JSON.stringify([room.round.hints || {}, Object.keys(room.players || {}).sort()]);
+}
 async function autoTransitionToReview(room, players, opts = {}) {
-  const round = room.round;
-  const hints = round.hints || {};
-  const guesser = round.guesser;
-  const hintGivers = Object.keys(players || {}).filter(n => n !== guesser);
-
-  // 未提出者の検出（ホスト締切時のみ発生しうる）
-  const missing = hintGivers.filter(n => !hints[n]);
-
-  // 重複検出（提出済みヒントのみで判定）
-  const normCounts = {};
-  Object.values(hints).forEach(h => {
-    normCounts[h.normalized] = (normCounts[h.normalized] || 0) + 1;
-  });
-  const excluded = [];
-  Object.entries(hints).forEach(([nick, h]) => {
-    if (normCounts[h.normalized] > 1) excluded.push(nick);
-  });
-
-  const roundUpdates = {
-    excludedHintIds: excluded.length ? excluded : null,
-    missingHintIds: missing.length ? missing : null,
-  };
-
-  // ホスト = 回答者の場合は review をスキップして直接 answer へ
-  // （review を通すとホスト=回答者にヒントが見えてしまい情報漏洩になる。
-  //  また review 画面は guesser を除外する設計なので、guesser=ホスト時に開くと
-  //  確定ボタンを押せる人がいなくなり進行が詰まる）
-  // 未提出者は round.hints に存在しないため answer 画面で自然に表示されない
-  if (state.nickname === guesser) {
-    await state.roomRef.child('round').update(roundUpdates);
-    await state.roomRef.update({ status: 'answer' });
-  } else {
-    await state.roomRef.child('round').update(roundUpdates);
-    await state.roomRef.update({ status: 'clue-review' });
+  if (state.role !== 'host' || state.operations.review) return false;
+  const a = captureAction('clue-input');
+  if (!canApplyAction(a, state.lastRoom)) return false;
+  state.operations.review = a; updateActionControls();
+  let retryChangedBasis = false;
+  try {
+    // 除外を先に確定。2段階間でヒント・在籍者が変われば公開せずやり直す。
+    const first = await a.ref.transaction(current => {
+      if (state.operations.review !== a || !canApplyAction(a, current)) return;
+      const givers = Object.keys(current.players).filter(n => n !== current.round.guesser);
+      const hints = current.round.hints || {};
+      if (!givers.length || !Object.keys(hints).length || (!opts.force && !givers.every(n => hints[n]))) return;
+      return { ...current, round: { ...current.round, ...reviewSnapshot(current) } };
+    }, undefined, false);
+    if (!first.committed) return false;
+    const prepared = first.snapshot.val(), basis = reviewBasis(prepared);
+    const excluded = JSON.stringify(prepared.round.excludedHintIds || []);
+    const second = await a.ref.transaction(current => {
+      if (state.operations.review !== a || !canApplyAction(a, current)) return;
+      if (reviewBasis(current) !== basis || JSON.stringify(current.round.excludedHintIds || []) !== excluded) {
+        retryChangedBasis = true; return;
+      }
+      return { ...current, status: current.round.guesser === a.nickname ? 'answer' : 'clue-review' };
+    }, undefined, false);
+    return second.committed;
+  } catch (error) { if (actionCurrent(a)) showMsg('確認へ進めませんでした。もう一度お試しください'); return false; }
+  finally {
+    if (state.operations.review === a) {
+      delete state.operations.review; updateActionControls();
+      if (retryChangedBasis && canApplyAction(a, state.lastRoom)) void autoTransitionToReview(state.lastRoom, state.lastRoom.players, opts);
+    }
   }
 }
-
 async function hostCloseClueInput() {
-  if (state.role !== 'host' || clueReviewTriggered) return;
-  try {
-    const snap = await state.roomRef.get();
-    const room = snap.val();
-    if (!room || room.status !== 'clue-input') return;
-    const players = room.players || {};
-    const round = room.round || {};
-    const hintGivers = Object.keys(players).filter(n => n !== round.guesser);
-    const submitted = Object.keys(round.hints || {}).length;
-    if (hintGivers.length === 0 || submitted === 0) return;
-    clueReviewTriggered = true;
-    await autoTransitionToReview(room, players);
-  } catch (error) {
-    console.error('[kaburazu-hint] hostCloseClueInput failed', error);
-    clueReviewTriggered = false;
-  }
+  if (state.role !== 'host' || !state.lastRoom) return;
+  await autoTransitionToReview(state.lastRoom, state.lastRoom.players, { force: true });
 }
 
 // ── clue-review ──
@@ -1136,7 +1342,7 @@ function initReviewScreen(round) {
   });
   // 未提出も自動除外扱い（トグル不可）
   reviewMissingSet.forEach(nick => reviewAutoExcluded.add(nick));
-  reviewExcluded = new Set(reviewAutoExcluded);
+  reviewExcluded = new Set([...reviewAutoExcluded, ...(round.excludedHintIds || [])]);
 
   renderReviewCards();
 }
@@ -1183,6 +1389,8 @@ function renderReviewCards() {
 }
 
 function toggleHint(nick) {
+  if (state.role !== 'host' || state.operations.review || !canApplyAction(captureAction('clue-review'), state.lastRoom)
+    || state.nickname === state.lastRoom.round.guesser) return;
   if (reviewAutoExcluded.has(nick)) return;
   if (reviewExcluded.has(nick)) reviewExcluded.delete(nick);
   else reviewExcluded.add(nick);
@@ -1197,9 +1405,25 @@ function toggleHint(nick) {
 }
 
 async function confirmHints() {
+  if (state.role !== 'host' || state.operations.review) return;
+  const a = captureAction('clue-review');
+  if (!canApplyAction(a, state.lastRoom) || state.lastRoom.round.guesser === a.nickname) return;
   const excluded = [...new Set([...reviewAutoExcluded, ...reviewExcluded])];
-  await state.roomRef.child('round').update({ excludedHintIds: excluded.length ? excluded : null });
-  await state.roomRef.update({ status: 'answer' });
+  state.operations.review = a; updateActionControls();
+  try {
+    const first = await a.ref.transaction(room => {
+      if (state.operations.review !== a || !canApplyAction(a, room) || room.round.guesser === a.nickname) return;
+      return { ...room, round: { ...room.round, excludedHintIds: excluded.length ? excluded : null } };
+    }, undefined, false);
+    if (!first.committed) return;
+    const basis = reviewBasis(first.snapshot.val());
+    await a.ref.transaction(room => {
+      if (state.operations.review !== a || !canApplyAction(a, room) || reviewBasis(room) !== basis
+        || JSON.stringify(room.round.excludedHintIds || []) !== JSON.stringify(excluded)) return;
+      return { ...room, status: 'answer' };
+    }, undefined, false);
+  } catch (error) { if (actionCurrent(a)) showMsg('ヒントを確定できませんでした。もう一度お試しください'); }
+  finally { if (state.operations.review === a) { delete state.operations.review; updateActionControls(); } }
 }
 
 // ── answer ──
@@ -1240,13 +1464,11 @@ function handleAnswer(room, players) {
   }
 
   // ホスト: 回答検知
-  if (state.role === 'host' && !answerHandled) {
+  if (state.role === 'host' && room.gameId && !state.operations.judge && !state.operations.answerPhase) {
     if (round.passed === true) {
-      answerHandled = true;
-      handleAutoJudge(room, false);
+      void handleAutoJudge(room, false);
     } else if (round.answer != null && round.answer !== '') {
-      answerHandled = true;
-      state.roomRef.update({ status: 'judge' });
+      void runOperation('answerPhase', 'answer', current => current.round.answer && !current.round.passed ? { ...current, status: 'judge' } : undefined);
     }
   }
 }
@@ -1254,21 +1476,28 @@ function handleAnswer(room, players) {
 async function submitAnswer() {
   const answer = document.getElementById('answer-input').value.trim();
   if (!answer) { showError('answer-error', '答えを入力してください'); return; }
+  if (answer.length > 20) { showError('answer-error', '20文字以内で入力してください'); return; }
   hideError('answer-error');
-  await state.roomRef.child('round').update({ answer: answer, passed: false });
+  await submitGuess(answer, false);
 }
 
 async function passAnswer() {
-  await state.roomRef.child('round').update({ answer: null, passed: true });
+  await submitGuess(null, true);
+}
+async function submitGuess(answer, passed) {
+  await runOperation('answer', 'answer', (room, a) => {
+    if (room.round.guesser !== a.nickname || room.round.passed || room.round.answer || room.round.isCorrect != null) return;
+    return { ...room, round: { ...room.round, answer, passed } };
+  });
 }
 
 // ホスト救済: 回答者が answer フェーズで退出し進行不能になった場合に、
 // ホストがその回答者をパス扱いで次へ進める。ルーム全体 transaction で
 // フェーズ・回答者不在・未確定を再検証し、既存のパス経路(passed→handleAutoJudge)に乗せる。
 async function hostSkipAbsentGuesser() {
-  if (state.role !== 'host' || answerHandled) return;
+  if (state.role !== 'host') return;
   try {
-    await state.roomRef.transaction(room => {
+    await runOperation('skip', 'answer', room => {
       if (!room || room.status !== 'answer') return; // フェーズが変わっていたら中止
       const round = room.round || {};
       const players = room.players || {};
@@ -1301,16 +1530,22 @@ function handleJudge(room, players) {
 }
 
 async function judgeAnswer(correct) {
-  await state.roomRef.child('round').update({ isCorrect: correct });
-  const snap = await state.roomRef.get();
-  if (snap.exists()) await saveToHistory(snap.val());
-  await state.roomRef.update({ status: 'result' });
+  if (state.role !== 'host' || typeof correct !== 'boolean') return;
+  await finishJudgement('judge', correct);
 }
 
 async function handleAutoJudge(room, correct) {
-  await state.roomRef.child('round').update({ isCorrect: correct });
-  await saveToHistory({ ...room, round: { ...room.round, isCorrect: correct } });
-  await state.roomRef.update({ status: 'result' });
+  if (state.role !== 'host') return;
+  await finishJudgement('answer', false);
+}
+async function finishJudgement(phase, correct) {
+  if (state.role !== 'host') return;
+  await runOperation('judge', phase, room => {
+    if (room.round.isCorrect != null || room.history?.[room.round.number]) return;
+    if (phase === 'answer' ? !room.round.passed : !room.round.answer || room.round.passed) return;
+    const round = { ...room.round, isCorrect: correct };
+    return { ...room, round, status: 'result', history: { ...room.history, [round.number]: historyEntry(round) } };
+  });
 }
 
 // ── result ──
@@ -1416,18 +1651,36 @@ function handleFinished(room) {
 
   // 30秒後に自動削除 (ホストのみ)
   if (state.role === 'host' && !state.cleanupTimer) {
+    const a = captureAction('finished');
     state.cleanupTimer = setTimeout(() => {
       state.cleanupTimer = null;
-      if (state.roomRef) state.roomRef.remove().catch(() => {});
+      void deleteFinishedRoom(a);
     }, 30000);
   }
+}
+async function deleteFinishedRoom(a) {
+  if (a.role !== 'host' || !canApplyAction(a, state.lastRoom, true)) return;
+  try {
+    await withHostLifecycle(async () => {
+      if (!canApplyAction(a, state.lastRoom, true)) return;
+      await cancelReservations(a.ref);
+      try {
+        const { committed } = await a.ref.transaction(room => canApplyAction(a, room, true) ? null : undefined, undefined, false);
+        if (!committed) await recoverHostReservation(a.ref, a.nickname);
+      } catch (error) {
+        await recoverHostReservation(a.ref, a.nickname);
+        throw error;
+      }
+    });
+  } catch (error) { console.warn('[kaburazu-hint] finished cleanup failed', error); }
 }
 
 /* ════════════════════════════════════════════════
    ラウンド管理
    ════════════════════════════════════════════════ */
 async function nextRound() {
-  const { committed } = await state.roomRef.transaction(room => {
+  if (state.role !== 'host') return;
+  const committed = await runOperation('next', 'result', room => {
     if (!room || room.status !== 'result') return;
 
     const turnOrder = room.turnOrder || [];
@@ -1482,29 +1735,34 @@ async function nextRound() {
     return;
   }
 
-  resetRoundFlags();
 }
 
 async function endGame() {
-  await state.roomRef.update({ status: 'finished' });
+  if (state.role !== 'host') return;
+  await runOperation('end', 'result', room => ({ ...room, status: 'finished' }));
 }
 
 async function playAgain() {
-  if (state.role !== 'host') return;
-  clearTimeout(state.cleanupTimer);
-  state.cleanupTimer = null;
+  if (state.role !== 'host' || !state.roomRef) return;
+  const gameId = state.roomRef.push().key;
+  const oldTimer = state.cleanupTimer;
+  const a = captureAction('finished');
   let abortReason = null;
-  const { committed } = await state.roomRef.transaction(room => {
+  const committed = await withHostLifecycle(async () => {
+    if (!canApplyAction(a, state.lastRoom, true)) return false;
+    return runOperation('replay', 'finished', room => {
     if (!room) { abortReason = 'not_found'; return; }
 
     const players = Object.keys(room.players || {});
     if (players.length < 3) { abortReason = 'too_few'; return; }
+    if (Object.values(room.players).some(p => !playerConnected(p))) { abortReason = 'offline'; return; }
 
     const turnOrder = shuffle(players);
     const { word, index } = pickWord([]);
     abortReason = null;
     return {
       ...room,
+      gameId,
       hostConnected: true,
       hostDisconnectedAt: null,
       turnOrder,
@@ -1524,6 +1782,7 @@ async function playAgain() {
         isCorrect: null,
       },
     };
+    }, true);
   });
 
   if (!committed && abortReason === 'too_few') {
@@ -1535,7 +1794,8 @@ async function playAgain() {
     return;
   }
 
-  resetRoundFlags();
+  clearTimeout(oldTimer);
+  if (state.cleanupTimer === oldTimer) state.cleanupTimer = null;
 }
 
 /* ════════════════════════════════════════════════
@@ -1546,22 +1806,20 @@ async function submitHint() {
   const text = input.value.trim();
   if (!text) { showError('clue-error', 'ヒントを入力してください'); return; }
   if (!normalize(text)) { showError('clue-error', '有効な文字を含むヒントを入力してください'); return; }
+  if (text.length > 20) { showError('clue-error', '20文字以内で入力してください'); return; }
   hideError('clue-error');
 
-  await state.roomRef.child(`round/hints/${state.nickname}`).set({
-    text: text,
-    normalized: normalize(text),
+  const hint = { text, normalized: normalize(text) };
+  await runOperation('hint', 'clue-input', (room, a) => {
+    if (room.round.guesser === a.nickname || room.round.hints?.[a.nickname]) return;
+    return { ...room, round: { ...room.round, hints: { ...room.round.hints, [a.nickname]: hint } } };
   });
 }
 
 /* ════════════════════════════════════════════════
    履歴保存
    ════════════════════════════════════════════════ */
-async function saveToHistory(room) {
-  if (historySaved) return;
-  historySaved = true;
-
-  const round = room.round || {};
+function historyEntry(round) {
   const hints = round.hints || {};
   const excluded = new Set(round.excludedHintIds || []);
 
@@ -1574,7 +1832,7 @@ async function saveToHistory(room) {
     if (!excluded.has(nick)) visibleHints[nick] = h.text;
   });
 
-  await state.roomRef.child(`history/${round.number}`).set({
+  return {
     guesser: round.guesser,
     secretWord: round.secretWord,
     hints: rawHints,
@@ -1583,7 +1841,7 @@ async function saveToHistory(room) {
     answer: round.answer || null,
     passed: round.passed || false,
     isCorrect: round.isCorrect || false,
-  });
+  };
 }
 
 /* ════════════════════════════════════════════════
@@ -1594,7 +1852,7 @@ function renderPlayerList(id, players) {
   if (!ul) return;
   ul.innerHTML = Object.entries(players).map(([nick, p]) => {
     const meTag = nick === state.nickname ? '<span class="player-tag me">あなた</span>' : '';
-    const hostTag = p.isHost ? '<span class="player-tag">ホスト</span>' : '';
+    const hostTag = p.isHost ? '<span class="player-tag">ホスト</span>' : !playerConnected(p) ? '<span class="player-tag">再接続待ち</span>' : '';
     return `<li class="player-item">
       <div class="player-name">${esc(nick)}${hostTag}${meTag}</div>
     </li>`;
@@ -1620,28 +1878,52 @@ function copyCode() {
 function leaveCleanup() {
   clearTimeout(state.orphanTimer);
   clearTimeout(state.cleanupTimer);
-  if (state.roomRef) RoomkRTDB.cancelRoomOnDisconnect(state.roomRef);
   if (state.roomRef) state.roomRef.off();
-  Object.assign(state, { role: null, nickname: null, roomCode: null, roomRef: null, orphanTimer: null, cleanupTimer: null });
+  Object.assign(state, { role: null, nickname: null, roomCode: null, roomRef: null, orphanTimer: null, cleanupTimer: null,
+    lastRoom: null, roundKey: null, operations: {}, expectedRoomRemoval: false, expiryAction: null, legacyNotice: false });
+  resetRoundFlags(); discardInputs();
   showOverlay('host-off-overlay', false);
   showOverlay('reconnect-overlay', false);
+  showOverlay('guest-off-overlay', false);
+}
+async function cleanupMissingRoom(ref) {
+  if (!ref || state.roomRef !== ref || state.role === 'spectator' || state.expectedRoomRemoval) return;
+  state.expectedRoomRemoval = true;
+  const work = stopGuestPresence();
+  clearSession(); leaveCleanup(); showScreen('top');
+  try { await work; await withHostLifecycle(() => cancelReservations(ref)); }
+  catch (error) { console.warn('[kaburazu-hint] cleanup failed', error); }
 }
 
 async function leaveGame() {
   // 防御: 観戦者が誤ってこの経路に入っても roomRef.remove() / players remove に到達させない
   if (state.role === 'spectator') { spectatorLeave(); return; }
-  clearSession();
-  if (state.roomRef) {
+  if (state.expectedRoomRemoval) return;
+  const ref = state.roomRef, role = state.role, nickname = state.nickname;
+  state.expectedRoomRemoval = true; showGuestConnection();
+  try {
+    await stopGuestPresence();
+    if (ref) {
     // remove の前に予約済み onDisconnect を取り消す（削除後の実切断でゴースト room が再生成されるのを防ぐ）
-    await RoomkRTDB.cancelRoomOnDisconnect(state.roomRef);
-    if (state.role === 'host') {
-      await state.roomRef.remove().catch(() => {});
-    } else if (state.nickname) {
-      await state.roomRef.child(`players/${state.nickname}`).remove().catch(() => {});
+    await withHostLifecycle(async () => {
+    await cancelReservations(ref);
+    if (role === 'host') {
+      try { await ref.remove(); }
+      catch (error) {
+        if (state.roomRef === ref) state.expectedRoomRemoval = false;
+        await recoverHostReservation(ref, nickname);
+        throw error;
+      }
+    } else if (role === 'guest' && nickname) {
+      await ref.child(`players/${nickname}`).remove();
     }
+    });
+    }
+    if (state.roomRef === ref) { clearSession(); leaveCleanup(); showScreen('top'); }
+  } catch (error) {
+    if (state.roomRef === ref) { state.expectedRoomRemoval = false; if (role === 'guest') startGuestPresence(); }
+    showMsg('退出できませんでした。接続を確認してもう一度お試しください');
   }
-  leaveCleanup();
-  showScreen('top');
 }
 
 /* ════════════════════════════════════════════════
@@ -1652,6 +1934,8 @@ async function tryReconnect() {
   if (!session) return false;
 
   const { nickname, roomCode, role } = session;
+  if (!['host', 'guest', 'spectator'].includes(role) || typeof roomCode !== 'string' || !SPEC_CODE_RE.test(roomCode)
+    || (role !== 'spectator' && validNick(nickname))) { clearSession(); return false; }
   showOverlay('reconnect-overlay', true);
 
   try {
@@ -1659,33 +1943,34 @@ async function tryReconnect() {
     const snap = await db.ref(`${DB_PREFIX}/${roomCode}`).get();
     if (!snap.exists()) { clearSession(); showOverlay('reconnect-overlay', false); return false; }
 
-    const room = snap.val();
+    let room = snap.val();
     if (isRoomExpired(room)) {
       // 観戦者は書き込みゼロ（期限切れルームの remove() もしない）
       if (role !== 'spectator') {
-        await db.ref(`${DB_PREFIX}/${roomCode}`).remove().catch(() => {});
+        await removeExpiredRoom(db.ref(`${DB_PREFIX}/${roomCode}`)).catch(() => {});
       }
       clearSession(); showOverlay('reconnect-overlay', false); return false;
     }
 
-    if (role === 'guest' && !room.players?.[nickname]) {
+    if (role !== 'spectator' && (!ROOM_PHASES.includes(room.status) || (role === 'host'
+      ? room.host !== nickname || room.players?.[nickname]?.isHost !== true : !validGuestRoom(room, nickname)))) {
       clearSession(); showOverlay('reconnect-overlay', false); return false;
     }
 
+    const ref = db.ref(`${DB_PREFIX}/${roomCode}`);
+    if (role === 'host') {
+      const { committed, snapshot } = await withHostLifecycle(() => activateHost(ref, current => {
+        if (!current || isRoomExpired(current) || !ROOM_PHASES.includes(current.status)
+          || current.host !== nickname || current.players?.[nickname]?.isHost !== true) return;
+        return { ...current, hostConnected: true, hostDisconnectedAt: null };
+      }));
+      if (!committed) { clearSession(); showOverlay('reconnect-overlay', false); return false; }
+      room = snapshot.val();
+    }
     state.nickname = role === 'spectator' ? null : nickname;
     state.roomCode = roomCode;
     state.role = role;
-    state.roomRef = db.ref(`${DB_PREFIX}/${roomCode}`);
-
-    if (role === 'host') {
-      await state.roomRef.update({ hostConnected: true, hostDisconnectedAt: null });
-      state.roomRef.onDisconnect().update({
-        hostConnected: false,
-        hostDisconnectedAt: firebase.database.ServerValue.TIMESTAMP,
-      });
-    } else if (role === 'guest') {
-      state.roomRef.child(`players/${nickname}`).onDisconnect().remove();
-    }
+    state.roomRef = ref;
     // spectator: onDisconnect 予約なし（純 read-only）
 
     if (role === 'spectator') {
@@ -1696,6 +1981,7 @@ async function tryReconnect() {
 
     showOverlay('reconnect-overlay', false);
     startRoomListener();
+    if (role === 'guest') startGuestPresence();
     return true;
   } catch {
     clearSession(); showOverlay('reconnect-overlay', false); return false;
@@ -1937,7 +2223,7 @@ function renderSpecClueInput(room) {
   const players = room.players || {};
   const round = room.round || {};
   const hintGivers = Object.keys(players).filter(n => n !== round.guesser);
-  const submitted = Object.keys(round.hints || {}).length;
+  const submitted = hintGivers.filter(n => round.hints?.[n]).length;
   setSpecContent(
     specRoundInfoHtml(round) +
     specWaitCardHtml('みんながヒントを考えています') +
