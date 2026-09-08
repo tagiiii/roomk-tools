@@ -1,0 +1,299 @@
+{
+  "date": "2026-09-08",
+  "baseline": "8714c57927a01e50d5b1130d865ad796484b9ada",
+  "command": "python3 scripts/sec1-dataflow.py --json",
+  "files": 71,
+  "errors": 0,
+  "unknown": 48,
+  "checkedBareReferences": 48,
+  "findings": [
+    {
+      "file": "apps/do-mannaka/index.html",
+      "line": 1506,
+      "reference": "cls",
+      "state": "unknown"
+    },
+    {
+      "file": "apps/do-mannaka/index.html",
+      "line": 1507,
+      "reference": "answer",
+      "state": "unknown"
+    },
+    {
+      "file": "apps/do-mannaka/index.html",
+      "line": 1508,
+      "reference": "meTag",
+      "state": "unknown"
+    },
+    {
+      "file": "apps/do-mannaka/index.html",
+      "line": 1509,
+      "reference": "badge",
+      "state": "unknown"
+    },
+    {
+      "file": "apps/do-mannaka/index.html",
+      "line": 1510,
+      "reference": "deltaCls",
+      "state": "unknown"
+    },
+    {
+      "file": "apps/do-mannaka/index.html",
+      "line": 1510,
+      "reference": "deltaVal",
+      "state": "unknown"
+    },
+    {
+      "file": "apps/do-mannaka/index.html",
+      "line": 1526,
+      "reference": "score",
+      "state": "unknown"
+    },
+    {
+      "file": "apps/do-mannaka/index.html",
+      "line": 1558,
+      "reference": "score",
+      "state": "unknown"
+    },
+    {
+      "file": "apps/jinro/index.html",
+      "line": 1487,
+      "reference": "wolfList",
+      "state": "unknown"
+    },
+    {
+      "file": "apps/jinro/index.html",
+      "line": 1511,
+      "reference": "resultHtml",
+      "state": "unknown"
+    },
+    {
+      "file": "apps/jinro/index.html",
+      "line": 1516,
+      "reference": "resultHtml",
+      "state": "unknown"
+    },
+    {
+      "file": "apps/jinro/index.html",
+      "line": 1970,
+      "reference": "names",
+      "state": "unknown"
+    },
+    {
+      "file": "apps/kakure-number/index.html",
+      "line": 1227,
+      "reference": "stateHtml",
+      "state": "unknown"
+    },
+    {
+      "file": "apps/kakure-number/index.html",
+      "line": 1270,
+      "reference": "shown",
+      "state": "unknown"
+    },
+    {
+      "file": "apps/kakure-number/index.html",
+      "line": 1323,
+      "reference": "cls",
+      "state": "unknown"
+    },
+    {
+      "file": "apps/kakure-number/index.html",
+      "line": 1325,
+      "reference": "meTag",
+      "state": "unknown"
+    },
+    {
+      "file": "apps/kakure-number/index.html",
+      "line": 1325,
+      "reference": "leftTag",
+      "state": "unknown"
+    },
+    {
+      "file": "apps/kakure-number/index.html",
+      "line": 1326,
+      "reference": "guessHtml",
+      "state": "unknown"
+    },
+    {
+      "file": "apps/kakure-number/index.html",
+      "line": 1327,
+      "reference": "badge",
+      "state": "unknown"
+    },
+    {
+      "file": "apps/kotoba-pair/index.html",
+      "line": 1205,
+      "reference": "note",
+      "state": "unknown"
+    },
+    {
+      "file": "apps/kotoba-shuffle/app.js",
+      "line": 70,
+      "reference": "lv.icon",
+      "state": "unknown"
+    },
+    {
+      "file": "apps/kotoba-shuffle/app.js",
+      "line": 71,
+      "reference": "lv.label",
+      "state": "unknown"
+    },
+    {
+      "file": "apps/kotoba-shuffle/app.js",
+      "line": 72,
+      "reference": "lv.desc",
+      "state": "unknown"
+    },
+    {
+      "file": "apps/kotoba-shuffle/app.js",
+      "line": 72,
+      "reference": "count",
+      "state": "unknown"
+    },
+    {
+      "file": "apps/kotoba-tantei/app.js",
+      "line": 164,
+      "reference": "wordOptions",
+      "state": "unknown"
+    },
+    {
+      "file": "apps/kotoba-tantei/app.js",
+      "line": 300,
+      "reference": "players.length",
+      "state": "unknown"
+    },
+    {
+      "file": "apps/kotoba-tantei/app.js",
+      "line": 306,
+      "reference": "playerList",
+      "state": "unknown"
+    },
+    {
+      "file": "apps/kotoba-tantei/app.js",
+      "line": 1544,
+      "reference": "playerList",
+      "state": "unknown"
+    },
+    {
+      "file": "apps/kotoba-tantei/app.js",
+      "line": 1642,
+      "reference": "boardHtml",
+      "state": "unknown"
+    },
+    {
+      "file": "apps/kyoumi-sugoroku/app.js",
+      "line": 222,
+      "reference": "key",
+      "state": "unknown"
+    },
+    {
+      "file": "apps/kyoumi-sugoroku/app.js",
+      "line": 224,
+      "reference": "t.icon",
+      "state": "unknown"
+    },
+    {
+      "file": "apps/kyoumi-sugoroku/app.js",
+      "line": 225,
+      "reference": "t.label",
+      "state": "unknown"
+    },
+    {
+      "file": "apps/kyoumi-sugoroku/app.js",
+      "line": 305,
+      "reference": "pawns",
+      "state": "unknown"
+    },
+    {
+      "file": "apps/name-change/index.html",
+      "line": 749,
+      "reference": "badge",
+      "state": "unknown"
+    },
+    {
+      "file": "apps/quiz/app.js",
+      "line": 355,
+      "reference": "pack.icon",
+      "state": "unknown"
+    },
+    {
+      "file": "apps/quiz/app.js",
+      "line": 356,
+      "reference": "countLabel",
+      "state": "unknown"
+    },
+    {
+      "file": "apps/quiz/app.js",
+      "line": 358,
+      "reference": "tag",
+      "state": "unknown"
+    },
+    {
+      "file": "apps/suki-type-check/app.js",
+      "line": 272,
+      "reference": "optionsHtml",
+      "state": "unknown"
+    },
+    {
+      "file": "apps/suki-type-check/app.js",
+      "line": 327,
+      "reference": "iconsHtml",
+      "state": "unknown"
+    },
+    {
+      "file": "apps/suki-type-check/app.js",
+      "line": 331,
+      "reference": "examplesHtml",
+      "state": "unknown"
+    },
+    {
+      "file": "apps/suki-type-check/app.js",
+      "line": 332,
+      "reference": "noteHtml",
+      "state": "unknown"
+    },
+    {
+      "file": "apps/suki-type-check/app.js",
+      "line": 335,
+      "reference": "barsHtml",
+      "state": "unknown"
+    },
+    {
+      "file": "apps/suki-type-check/app.js",
+      "line": 336,
+      "reference": "secondHtml",
+      "state": "unknown"
+    },
+    {
+      "file": "apps/talk-card/app.js",
+      "line": 153,
+      "reference": "topic",
+      "state": "unknown"
+    },
+    {
+      "file": "apps/tatoe-gp/index.html",
+      "line": 1160,
+      "reference": "score",
+      "state": "unknown"
+    },
+    {
+      "file": "apps/tatoe-gp/index.html",
+      "line": 1843,
+      "reference": "votes",
+      "state": "unknown"
+    },
+    {
+      "file": "apps/tatoe-gp/index.html",
+      "line": 1877,
+      "reference": "score",
+      "state": "unknown"
+    },
+    {
+      "file": "apps/value-card/app.js",
+      "line": 304,
+      "reference": "cardsHtml",
+      "state": "unknown"
+    }
+  ]
+}

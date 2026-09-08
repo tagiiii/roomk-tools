@@ -1,0 +1,275 @@
+{
+  "date": "2026-09-08",
+  "sourceCommit": "8714c57927a01e50d5b1130d865ad796484b9ada",
+  "result": "PASS",
+  "sources": [
+    {
+      "file": "apps/do-mannaka/index.html",
+      "sha256": "2443e1185326cabd6edf8ae052b160ac407fa989000d7cd43bf0a9c3099b54ea"
+    },
+    {
+      "file": "apps/tatoe-gp/index.html",
+      "sha256": "4cbe5785eafff639f4762743fc4fc4b407002eec811444d34e86fd911bc2812a"
+    },
+    {
+      "file": "apps/shared/js/utils.js",
+      "sha256": "533e791fd06c37839989a1461bb0322d11c94fc1d1ef853a03c68fb12c25c370"
+    }
+  ],
+  "extractions": [
+    {
+      "file": "apps/do-mannaka/index.html",
+      "function": "handleResult",
+      "firstLine": 1464,
+      "lastLine": 1534,
+      "sha256": "097a37eb26bf86c5655fb85d211e8d886de1fec21738c757e1756058cb26d986"
+    },
+    {
+      "file": "apps/do-mannaka/index.html",
+      "function": "handleFinished",
+      "firstLine": 1537,
+      "lastLine": 1561,
+      "sha256": "68d2d7b2c765453f90c1617e5a2c1ee62ea924219cf458f6177a3286f5f695a5"
+    },
+    {
+      "file": "apps/tatoe-gp/index.html",
+      "function": "renderScoreList",
+      "firstLine": 1146,
+      "lastLine": 1164,
+      "sha256": "43b6aec9c804c807829e9009f149c40c0f6f6c949261c02d0b9237ec100c9e1f"
+    },
+    {
+      "file": "apps/tatoe-gp/index.html",
+      "function": "handleFinished",
+      "firstLine": 1856,
+      "lastLine": 1881,
+      "sha256": "2c0db06ea4d47df44fdc7f65e5cfe1061f3c373d4d33cad1d6353447397650af"
+    }
+  ],
+  "checks": {
+    "sinks": 4,
+    "scoreCasesPerSink": 5,
+    "emptyCases": 4,
+    "escapedNameCases": 4,
+    "totalCases": 28
+  },
+  "results": [
+    {
+      "location": "apps/do-mannaka/index.html:1526:score",
+      "case": "number-12",
+      "scoreHtml": "12pt",
+      "rawMarkerReached": false,
+      "winnerText": ""
+    },
+    {
+      "location": "apps/do-mannaka/index.html:1526:score",
+      "case": "string-12",
+      "scoreHtml": "12pt",
+      "rawMarkerReached": false,
+      "winnerText": ""
+    },
+    {
+      "location": "apps/do-mannaka/index.html:1526:score",
+      "case": "null",
+      "scoreHtml": "0pt",
+      "rawMarkerReached": false,
+      "winnerText": ""
+    },
+    {
+      "location": "apps/do-mannaka/index.html:1526:score",
+      "case": "zero",
+      "scoreHtml": "0pt",
+      "rawMarkerReached": false,
+      "winnerText": ""
+    },
+    {
+      "location": "apps/do-mannaka/index.html:1526:score",
+      "case": "harmless-html",
+      "scoreHtml": "<b data-a11-score-probe=\"1\">probe</b>pt",
+      "rawMarkerReached": true,
+      "winnerText": ""
+    },
+    {
+      "location": "apps/do-mannaka/index.html:1526:score",
+      "case": "empty-players",
+      "html": "",
+      "winnerText": ""
+    },
+    {
+      "location": "apps/do-mannaka/index.html:1526:score",
+      "case": "html-name",
+      "rawNameReached": false,
+      "escapedNameReached": true,
+      "winnerNameText": ""
+    },
+    {
+      "location": "apps/do-mannaka/index.html:1558:score",
+      "case": "number-12",
+      "scoreHtml": "12pt",
+      "rawMarkerReached": false,
+      "winnerText": "12pt"
+    },
+    {
+      "location": "apps/do-mannaka/index.html:1558:score",
+      "case": "string-12",
+      "scoreHtml": "12pt",
+      "rawMarkerReached": false,
+      "winnerText": "12pt"
+    },
+    {
+      "location": "apps/do-mannaka/index.html:1558:score",
+      "case": "null",
+      "scoreHtml": "0pt",
+      "rawMarkerReached": false,
+      "winnerText": "0pt"
+    },
+    {
+      "location": "apps/do-mannaka/index.html:1558:score",
+      "case": "zero",
+      "scoreHtml": "0pt",
+      "rawMarkerReached": false,
+      "winnerText": "0pt"
+    },
+    {
+      "location": "apps/do-mannaka/index.html:1558:score",
+      "case": "harmless-html",
+      "scoreHtml": "<b data-a11-score-probe=\"1\">probe</b>pt",
+      "rawMarkerReached": true,
+      "winnerText": "<b data-a11-score-probe=\"1\">probe</b>pt"
+    },
+    {
+      "location": "apps/do-mannaka/index.html:1558:score",
+      "case": "empty-players",
+      "html": "",
+      "winnerText": ""
+    },
+    {
+      "location": "apps/do-mannaka/index.html:1558:score",
+      "case": "html-name",
+      "rawNameReached": false,
+      "escapedNameReached": true,
+      "winnerNameText": "<b data-a11-name-probe=\"1\">name</b>"
+    },
+    {
+      "location": "apps/tatoe-gp/index.html:1160:score",
+      "case": "number-12",
+      "scoreHtml": "12pt",
+      "rawMarkerReached": false,
+      "winnerText": ""
+    },
+    {
+      "location": "apps/tatoe-gp/index.html:1160:score",
+      "case": "string-12",
+      "scoreHtml": "12pt",
+      "rawMarkerReached": false,
+      "winnerText": ""
+    },
+    {
+      "location": "apps/tatoe-gp/index.html:1160:score",
+      "case": "null",
+      "scoreHtml": "0pt",
+      "rawMarkerReached": false,
+      "winnerText": ""
+    },
+    {
+      "location": "apps/tatoe-gp/index.html:1160:score",
+      "case": "zero",
+      "scoreHtml": "0pt",
+      "rawMarkerReached": false,
+      "winnerText": ""
+    },
+    {
+      "location": "apps/tatoe-gp/index.html:1160:score",
+      "case": "harmless-html",
+      "scoreHtml": "<b data-a11-score-probe=\"1\">probe</b>pt",
+      "rawMarkerReached": true,
+      "winnerText": ""
+    },
+    {
+      "location": "apps/tatoe-gp/index.html:1160:score",
+      "case": "empty-players",
+      "html": "",
+      "winnerText": ""
+    },
+    {
+      "location": "apps/tatoe-gp/index.html:1160:score",
+      "case": "html-name",
+      "rawNameReached": false,
+      "escapedNameReached": true,
+      "winnerNameText": ""
+    },
+    {
+      "location": "apps/tatoe-gp/index.html:1877:score",
+      "case": "number-12",
+      "scoreHtml": "12pt",
+      "rawMarkerReached": false,
+      "winnerText": "12pt"
+    },
+    {
+      "location": "apps/tatoe-gp/index.html:1877:score",
+      "case": "string-12",
+      "scoreHtml": "12pt",
+      "rawMarkerReached": false,
+      "winnerText": "12pt"
+    },
+    {
+      "location": "apps/tatoe-gp/index.html:1877:score",
+      "case": "null",
+      "scoreHtml": "0pt",
+      "rawMarkerReached": false,
+      "winnerText": "0pt"
+    },
+    {
+      "location": "apps/tatoe-gp/index.html:1877:score",
+      "case": "zero",
+      "scoreHtml": "0pt",
+      "rawMarkerReached": false,
+      "winnerText": "0pt"
+    },
+    {
+      "location": "apps/tatoe-gp/index.html:1877:score",
+      "case": "harmless-html",
+      "scoreHtml": "<b data-a11-score-probe=\"1\">probe</b>pt",
+      "rawMarkerReached": true,
+      "winnerText": "<b data-a11-score-probe=\"1\">probe</b>pt"
+    },
+    {
+      "location": "apps/tatoe-gp/index.html:1877:score",
+      "case": "empty-players",
+      "html": "",
+      "winnerText": ""
+    },
+    {
+      "location": "apps/tatoe-gp/index.html:1877:score",
+      "case": "html-name",
+      "rawNameReached": false,
+      "escapedNameReached": true,
+      "winnerNameText": "<b data-a11-name-probe=\"1\">name</b>"
+    }
+  ],
+  "captures": [
+    {
+      "location": "apps/do-mannaka/index.html:1526:score",
+      "innerHTML": "\n          <div class=\"score-item is-me\">\n            <div class=\"score-rank\">1位</div>\n            <div class=\"score-name\">fixed-player（あなた）</div>\n            <div class=\"score-pts\"><b data-a11-score-probe=\"1\">probe</b>pt</div>\n          </div>"
+    },
+    {
+      "location": "apps/do-mannaka/index.html:1558:score",
+      "innerHTML": "\n        <div class=\"score-item is-me\">\n          <div class=\"score-rank\">1位</div>\n          <div class=\"score-name\">fixed-player（あなた）</div>\n          <div class=\"score-pts\"><b data-a11-score-probe=\"1\">probe</b>pt</div>\n        </div>"
+    },
+    {
+      "location": "apps/tatoe-gp/index.html:1160:score",
+      "innerHTML": "\n          <div class=\"tg-score-item is-me\">\n            <div class=\"tg-score-rank\">1位</div>\n            <div class=\"tg-score-name\">fixed-player（あなた）</div>\n            <div class=\"tg-score-pts\"><b data-a11-score-probe=\"1\">probe</b>pt</div>\n          </div>\n        "
+    },
+    {
+      "location": "apps/tatoe-gp/index.html:1877:score",
+      "innerHTML": "\n        <div class=\"tg-score-item is-me\">\n          <div class=\"tg-score-rank\">1位</div>\n          <div class=\"tg-score-name\">fixed-player（あなた）</div>\n          <div class=\"tg-score-pts\"><b data-a11-score-probe=\"1\">probe</b>pt</div>\n        </div>\n      "
+    }
+  ],
+  "limitations": [
+    "Document is a property-capture stub, not an HTML parser or browser; no DOM-element creation is proven here.",
+    "Raw harmless marker reaches four score innerHTML strings. This is not a production exploitability or write-permission assessment.",
+    "Final winner score/name uses textContent; its raw-looking string is a separate text assignment, not HTML evidence.",
+    "Only fixed local functions and inputs run. No SDK, network, Firebase, saved-session operation or dangerous payload is used.",
+    "Fresh empty-player cases are checked; prior-screen state and lifecycle behavior are outside this isolated test."
+  ]
+}
