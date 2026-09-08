@@ -180,9 +180,12 @@ kaburazuhint_rooms/{roomCode}/
   ├── hostConnected:       boolean         # 切断検知用
   ├── hostDisconnectedAt:  number | null   # 切断時のタイムスタンプ（ms）
   ├── status:              string          # 上記 status 参照
+  ├── gameId:              string          # 開始・再戦で確定する試合ID（B-31）
   ├── players/
   │    └── {nickname}/
-  │         └── isHost:  boolean
+  │         ├── isHost:  boolean
+  │         ├── presenceVersion: 1          # 保持型guestのみ
+  │         └── connections/{接続ID}: true  # 当該IDだけremove予約
   ├── turnOrder:           string[]        # ゲーム開始時に確定した回答順（シャッフル済み）
   ├── round/
   │    ├── number:         number          # 現在のラウンド（1始まり）
@@ -214,8 +217,8 @@ kaburazuhint_rooms/{roomCode}/
 ### データ操作の注意点
 - **ルーム作成・参加**: `transaction()` で競合を防ぐ
 - **ゲーム開始**: `transaction()` で `turnOrder` を確定し、`status` を `clue-input` に遷移
-- **ヒント提出**: 各プレイヤーが `round/hints/{nickname}` に `set()` するだけ（競合なし）
-- **重複判定・除外確定**: ホスト端末で全ヒントを読み取り → 正規化で重複検出 → `excludedHintIds` を `update()` で書き込む。ホストは画面上でさらに手動トグルして追加除外も可能
+- **ヒント提出**: 最新の試合・ラウンド・役割・未提出状態をroom transactionで検査して`round.hints`へ追加する。ヒント役のホストも提出できる
+- **重複判定・除外確定**: 最新ヒントの正規化済み値で重複を検出し、room transactionで除外を確定した後、別のtransactionでstatusを進める。ホストは画面上でさらに手動トグルして追加除外も可能。既存の「除外先・公開後」の2段階は維持する
 - **ヒント締切（ホスト救済）**: 1人でも提出しない参加者がいても進行を止めないよう、ホストは `screen-clue` の「ヒントを締め切って確認へ」ボタンで強制的に `clue-review` に遷移できる。未提出者は `missingHintIds` に記録され、review 画面ではホストにのみ「未提出」バッジ付きで表示される（ゲスト側には可視化しない）。提出が1件以上あることが条件
 - **回答者に secretWord を見せない**: UI レベルで制御（回答者の画面にはヒントのみ表示）
 - **参加制限**: `transaction()` 内で `status === 'waiting'` を確認し、ゲーム中は参加を拒否
@@ -226,13 +229,15 @@ kaburazuhint_rooms/{roomCode}/
 | 役割 | 挙動 |
 |------|------|
 | ホスト切断 | `hostConnected` を `false`、`hostDisconnectedAt` を `ServerValue.TIMESTAMP` にセット。ゲストはオーバーレイ表示 |
-| ゲスト切断 | `onDisconnect().remove()` でそのプレイヤーデータのみ削除 |
+| ゲスト切断 | 接続IDのみremoveし、player・提出済みround／historyを保持（B-31／P-11承認済み例外） |
 
 ### ホスト切断のセットアップ
 ```js
 // ルーム作成時に onDisconnect フックを設定
-roomRef.child('hostConnected').onDisconnect().set(false);
-roomRef.child('hostDisconnectedAt').onDisconnect().set(firebase.database.ServerValue.TIMESTAMP);
+roomRef.onDisconnect().update({
+  hostConnected: false,
+  hostDisconnectedAt: firebase.database.ServerValue.TIMESTAMP,
+});
 ```
 
 ### ゲスト側のオーバーレイ
@@ -252,7 +257,7 @@ roomRef.on('value', snap => {
 sessionStorage.setItem('kaburazuhint_session', JSON.stringify({
   roomCode: state.roomCode,
   nickname: state.nickname,
-  isHost: state.role === 'host'
+  role: state.role
 }));
 
 // 復元（window.load 時）
@@ -260,7 +265,7 @@ window.addEventListener('load', async () => {
   if (!await tryReconnect()) showScreen('top');
 });
 
-// tryReconnect(): ルームが存在し、自分のプレイヤーデータがあれば復帰
+// tryReconnect(): 保存形式・役割と最新roomのhost／player.isHostを確認して復帰
 // ホストの場合は hostConnected を true に戻す
 
 // TOPに戻るときにクリア
@@ -270,6 +275,7 @@ sessionStorage.removeItem('kaburazuhint_session');
 ### 離脱者のラウンドスキップ
 - `turnOrder` は固定のため、離脱者のターンが来た場合はそのラウンドをスキップする
 - ラウンド開始時に `players/` 内に guesser が存在するか確認 → 不在なら次のラウンドへ自動進行
+- 一時切断はplayerを保持するので不在扱いにしない。ここでの離脱は明示退出・欠損を指す
 
 ## お題リスト
 
@@ -375,3 +381,23 @@ sessionStorage.removeItem('kaburazuhint_session');
 ### リスナーのクリーンアップ
 - 退出・TOP 画面遷移時に `roomRef.off()` を呼ぶ
 - `clearInterval()` でタイマーも停止
+
+## ゲスト保持・復帰（2026-09-08 B-31／P-11）
+
+- 全7フェーズでguest本体を保持する。`.info/connected`の復帰ごとに新しい接続IDを作り、remove予約受付後に最新roomの存在・既存guest・役割・phase・2分TTLを検査して登録する。予約／登録／取消を直列化し、旧IDのremoveが新IDを消さない。消えたroom／playerを古いsnapshotや子setで作り直さない。初回joinはtransaction終了まで一時value購読を保持する。
+- 同じタブの既存`kaburazuhint_session`による復帰が対象。別端末・別タブの本人確認は追加しない。保存roleはhost／guest／spectatorの列挙値、コード・名前を検査し、host／guestは最新roomのhost／player.isHostを照合してからstateを変える。これらは認証境界ではない。
+- `gameId`はstartGame／playAgainの呼出時に1回生成し、試合確定transactionに含める。nextRoundでは同IDを保持し、既存round.numberが増える。ref・nickname・role・gameId・round番号・期待phase・接続世代・操作所有者を捕捉する。同番号・同回答者・同お題になった別試合への遅い送信も拒否する。旧finallyで新しい操作を解除しない。
+- ID欠損waitingは通常どおり開始し、finishedからの再戦でも新IDを生成する。進行中のID欠損roomは表示・観戦・退出・TTL掃除を維持するがゲーム操作は止め、新版の新規roomを案内する。途中でIDを補完しない。
+- ヒントはclue-inputの現在のヒント役・未提出、回答／パスはanswerの現在の回答者・未確定だけをroom transactionで確定する。ホストも両役になる。入力上限20・normalize・WORDS120語は不変。未送信の入力は保存保証外で、guest切断・試合／round境界で消去する。提出済み表示はDBを正とする。
+- 自動全員提出は現在在籍するヒント役全員の提出を検査する。参加者／観戦のカウンターも在籍者の提出数とし、退出済みの人のhint件数で他の未提出者を飛ばさない。退出者のhintそのもの・重複計算対象・可視ヒント・確定historyは削除しない。手動締切は退出者を含む既存hintが1件以上あれば利用できる。
+- 自動review準備も、除外／未提出を確定→最新ヒント・在籍者・除外の整合を検査→clue-reviewまたはanswer、の2段階。間で内容が変われば先に公開せず準備をやり直す。ホスト＝回答者のreview省略を維持する。confirmHintsも除外確定後に別transactionでanswerへ進める。nextRound／playAgainのお題とstatusの単一transactionも維持し、「更新順序への依存」の禁止を緩めない。
+- 手動除外draftは無関係なpresence更新で初期化しない。試合／round境界でリセットし、初期値はDB確定除外＋自動重複／未提出除外にする。第1段階成功後のreloadでも確定除外を戻さない。B-23の委譲リスナー1本・esc済みdata-nick・disabled自動除外は維持する。
+- 回答／パスは先着1回。ホストの通常判定・パス自動不正解は判定・history・resultを同じroom transactionで確定し、確定historyを復帰だけで上書きしない。既存の不在回答者救済は本当にplayerが欠損した場合だけ有効にする。新しい自動パス・通常途中画面の常設個別退出ボタンは追加しない。
+- waiting開始とfinished再戦は3人以上かつ在籍guest全員の接続を待つ。明示guest退出は予約取消後に自playerのみ削除し、ホスト退出はroomを削除する。通信回復待ちでは取消・退出完了も待機し得る。内部room／player欠損cleanupは明示退出と分離する。
+- finished削除は従来の「ホストのfinished表示から30秒」を維持し、ホストreload時も再び30秒。ref・gameId・round・finishedを捕捉し、予約取消後に非楽観transactionで一致を確認して削除する。再戦失敗では元timerを取り消さず、成功後だけ取り消す。保存deleteAt方式・新しい復旧保証は導入しない。TTLは全フェーズ2分、期限処理も捕捉refと最新状態を検査する。
+- ホストの終了削除・再戦・切断予約登録／取消・明示退出を同じローカル待ち行列で処理する。終了取消待ちに再戦だけが先に確定して新試合の予約を失うこと、遅い予約受付が退出後に残ることを防ぐ。終了削除abort／取消後の削除例外では、最新取得値のhost所有・存在・TTLと退出意図を確認してこの接続の予約を再登録する。明示host退出の削除失敗も退出意図を戻して同じ回復を行う。回復自体の通信失敗まで自動復旧できる保証は追加しない。
+- ホスト作成は空roomを先に`hostConnected:false`と切断時刻付きで確保し、予約受付後の最新room transactionで接続済みを確定する。作成失敗時はTOPへ戻し、残存roomは期限掃除対象となる。保存復帰・画面上のhost復旧も予約受付を接続済み確定より先に行い、予約拒否時にfalseをtrueへ変えない。確定abort／例外では登録した予約を取消し、存在しないroomへの遅い予約を残さない。
+- 共通`cancelRoomOnDisconnect`は取消失敗をログ化してresolveするため、B-31の削除前にはアプリ内で直接`onDisconnect().cancel()`をawaitして失敗を伝播し、取消失敗時は削除を止める。共有ファイルは変更しない。guestの取消失敗も退出へ成功扱いで渡さず、未回収対象を保持して次の接続登録前に再確認する。取消待ちは通信回復まで続く場合がある。
+- spectatorはこれらのpresence・操作・TTL削除・終了削除・host復帰に入らない。URLwatch優先・finished後nullでDOM保持と購読停止・回答者セーフ表示を維持する。観戦の変更は提出カウンターの在籍者計算だけで、gameIdを要求しない。
+- 旧版接続のplayer全体remove予約は新版の別接続から取消できない。公開後は全員が新版を読み込んだ新規roomで利用する。
+- 差分200行超は、presence・保存復帰・送信競合・2段階公開・履歴確定・TTL／終了・UIを片側だけ変更できない1アプリの保持復帰ライフサイクルによる。共有JS・rules・設定・他アプリは変更しない。
