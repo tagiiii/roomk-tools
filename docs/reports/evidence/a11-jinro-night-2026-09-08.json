@@ -1,0 +1,210 @@
+{
+  "date": "2026-09-08",
+  "sourceCommit": "0e12145510f2fa6eb2e7066d14dd6cf35bd5b270",
+  "result": "PASS",
+  "sources": [
+    {
+      "file": "apps/jinro/index.html",
+      "sha256": "0c4b0515a94f86e20c5a3a6be645c3900deff1c2fbf64fed4d98af6ec93dd1c5"
+    },
+    {
+      "file": "apps/shared/js/rtdb-utils.js",
+      "sha256": "77d414a84d39deb52e1c8544e26465d4b822041621dbd985cad804e36d3b1d12"
+    }
+  ],
+  "extractions": [
+    {
+      "file": "apps/jinro/index.html",
+      "firstLine": 1432,
+      "lastLine": 1528,
+      "sha256": "076ec4d6863fa39d3b98104aba4b7c76b8a458a213545d22fdecbde0d74de64c"
+    },
+    {
+      "file": "apps/shared/js/rtdb-utils.js",
+      "firstLine": 45,
+      "lastLine": 52,
+      "sha256": "43852aeecad01ea27ee77f9b6b7d25b08dbe46a42dc1b33557c9c225762b0a7f"
+    }
+  ],
+  "checks": {
+    "cases": 19,
+    "negativeControls": 3
+  },
+  "results": [
+    {
+      "case": "wolf-zero",
+      "result": "PASS",
+      "html": "<div class=\"night-panel\">\n        <p style=\"font-size:14px;color:#cbd5e1;margin-bottom:10px\">ほかに人狼はいません</p>\n        <p style=\"font-size:13px;color:#94a3b8;line-height:1.7\">初日の夜は誰もおそいません。<br>仲間を覚えて、静かに待ちましょう。</p>\n      </div>",
+      "writes": 2,
+      "wait": "block",
+      "subtitle": "初日の夜はおそいません"
+    },
+    {
+      "case": "wolf-one",
+      "result": "PASS",
+      "html": "<div class=\"night-panel\">\n        <p style=\"font-size:14px;color:#cbd5e1;margin-bottom:10px\">仲間：仲間</p>\n        <p style=\"font-size:13px;color:#94a3b8;line-height:1.7\">初日の夜は誰もおそいません。<br>仲間を覚えて、静かに待ちましょう。</p>\n      </div>",
+      "writes": 2,
+      "wait": "block",
+      "subtitle": "初日の夜はおそいません"
+    },
+    {
+      "case": "wolf-multiple",
+      "result": "PASS",
+      "html": "<div class=\"night-panel\">\n        <p style=\"font-size:14px;color:#cbd5e1;margin-bottom:10px\">仲間：甲、乙</p>\n        <p style=\"font-size:13px;color:#94a3b8;line-height:1.7\">初日の夜は誰もおそいません。<br>仲間を覚えて、静かに待ちましょう。</p>\n      </div>",
+      "writes": 2,
+      "wait": "block",
+      "subtitle": "初日の夜はおそいません"
+    },
+    {
+      "case": "wolf-html-quotes",
+      "result": "PASS",
+      "html": "<div class=\"night-panel\">\n        <p style=\"font-size:14px;color:#cbd5e1;margin-bottom:10px\">仲間：&lt;b data-a11-night=&quot;1&quot;&gt;名&#39;&amp;&lt;/b&gt;</p>\n        <p style=\"font-size:13px;color:#94a3b8;line-height:1.7\">初日の夜は誰もおそいません。<br>仲間を覚えて、静かに待ちましょう。</p>\n      </div>",
+      "writes": 2,
+      "wait": "block",
+      "subtitle": "初日の夜はおそいません"
+    },
+    {
+      "case": "wolf-multiple-html",
+      "result": "PASS",
+      "html": "<div class=\"night-panel\">\n        <p style=\"font-size:14px;color:#cbd5e1;margin-bottom:10px\">仲間：甲、&lt;b data-a11-night=&quot;1&quot;&gt;名&#39;&amp;&lt;/b&gt;</p>\n        <p style=\"font-size:13px;color:#94a3b8;line-height:1.7\">初日の夜は誰もおそいません。<br>仲間を覚えて、静かに待ちましょう。</p>\n      </div>",
+      "writes": 2,
+      "wait": "block",
+      "subtitle": "初日の夜はおそいません"
+    },
+    {
+      "case": "medium-first-false",
+      "result": "PASS",
+      "html": "",
+      "writes": 1,
+      "wait": "block",
+      "subtitle": "今夜は行動がありません"
+    },
+    {
+      "case": "medium-none-false",
+      "result": "PASS",
+      "html": "<div class=\"night-panel\">\n          <h3>霊視結果</h3>\n          <p style=\"font-size:15px;color:#e2e8f0;margin-bottom:14px\">昨日はまだ誰も追放されていません</p>\n          <button class=\"btn-night-action\" id=\"btn-medium-done\" onclick=\"markMediumDone()\">\n            <span class=\"material-symbols-rounded\">check_circle</span>確認した\n          </button>\n        </div>",
+      "writes": 2,
+      "wait": "none",
+      "subtitle": ""
+    },
+    {
+      "case": "medium-wolf-false",
+      "result": "PASS",
+      "html": "<div class=\"night-panel\">\n          <h3>霊視結果</h3>\n          <p style=\"font-size:15px;color:#e2e8f0;margin-bottom:14px\">昨日追放された <strong>&lt;b data-a11-night=&quot;1&quot;&gt;名&#39;&amp;&lt;/b&gt;</strong>は<br><strong style=\"font-size:20px\">人狼だった</strong></p>\n          <button class=\"btn-night-action\" id=\"btn-medium-done\" onclick=\"markMediumDone()\">\n            <span class=\"material-symbols-rounded\">check_circle</span>確認した\n          </button>\n        </div>",
+      "writes": 2,
+      "wait": "none",
+      "subtitle": ""
+    },
+    {
+      "case": "medium-not_wolf-false",
+      "result": "PASS",
+      "html": "<div class=\"night-panel\">\n          <h3>霊視結果</h3>\n          <p style=\"font-size:15px;color:#e2e8f0;margin-bottom:14px\">昨日追放された <strong>&lt;b data-a11-night=&quot;1&quot;&gt;名&#39;&amp;&lt;/b&gt;</strong>は<br><strong style=\"font-size:20px\">人狼ではなかった</strong></p>\n          <button class=\"btn-night-action\" id=\"btn-medium-done\" onclick=\"markMediumDone()\">\n            <span class=\"material-symbols-rounded\">check_circle</span>確認した\n          </button>\n        </div>",
+      "writes": 2,
+      "wait": "none",
+      "subtitle": ""
+    },
+    {
+      "case": "medium-<b>unexpected</b>-false",
+      "result": "PASS",
+      "html": "<div class=\"night-panel\">\n          <h3>霊視結果</h3>\n          <p style=\"font-size:15px;color:#e2e8f0;margin-bottom:14px\">昨日追放された <strong>&lt;b data-a11-night=&quot;1&quot;&gt;名&#39;&amp;&lt;/b&gt;</strong>は<br><strong style=\"font-size:20px\">人狼ではなかった</strong></p>\n          <button class=\"btn-night-action\" id=\"btn-medium-done\" onclick=\"markMediumDone()\">\n            <span class=\"material-symbols-rounded\">check_circle</span>確認した\n          </button>\n        </div>",
+      "writes": 2,
+      "wait": "none",
+      "subtitle": ""
+    },
+    {
+      "case": "medium-empty-name-false",
+      "result": "PASS",
+      "html": "<div class=\"night-panel\">\n          <h3>霊視結果</h3>\n          <p style=\"font-size:15px;color:#e2e8f0;margin-bottom:14px\">昨日追放された <strong>?</strong>は<br><strong style=\"font-size:20px\">人狼だった</strong></p>\n          <button class=\"btn-night-action\" id=\"btn-medium-done\" onclick=\"markMediumDone()\">\n            <span class=\"material-symbols-rounded\">check_circle</span>確認した\n          </button>\n        </div>",
+      "writes": 2,
+      "wait": "none",
+      "subtitle": ""
+    },
+    {
+      "case": "medium-first-true",
+      "result": "PASS",
+      "html": "",
+      "writes": 1,
+      "wait": "block",
+      "subtitle": "今夜は行動がありません"
+    },
+    {
+      "case": "medium-none-true",
+      "result": "PASS",
+      "html": "<div class=\"night-panel\"><h3>霊視結果</h3>\n          <p style=\"font-size:15px;color:#e2e8f0\">昨日はまだ誰も追放されていません</p></div>",
+      "writes": 2,
+      "wait": "block",
+      "subtitle": ""
+    },
+    {
+      "case": "medium-wolf-true",
+      "result": "PASS",
+      "html": "<div class=\"night-panel\"><h3>霊視結果</h3>\n          <p style=\"font-size:15px;color:#e2e8f0\">昨日追放された <strong>&lt;b data-a11-night=&quot;1&quot;&gt;名&#39;&amp;&lt;/b&gt;</strong>は<br><strong style=\"font-size:20px\">人狼だった</strong></p></div>",
+      "writes": 2,
+      "wait": "block",
+      "subtitle": ""
+    },
+    {
+      "case": "medium-not_wolf-true",
+      "result": "PASS",
+      "html": "<div class=\"night-panel\"><h3>霊視結果</h3>\n          <p style=\"font-size:15px;color:#e2e8f0\">昨日追放された <strong>&lt;b data-a11-night=&quot;1&quot;&gt;名&#39;&amp;&lt;/b&gt;</strong>は<br><strong style=\"font-size:20px\">人狼ではなかった</strong></p></div>",
+      "writes": 2,
+      "wait": "block",
+      "subtitle": ""
+    },
+    {
+      "case": "medium-<b>unexpected</b>-true",
+      "result": "PASS",
+      "html": "<div class=\"night-panel\"><h3>霊視結果</h3>\n          <p style=\"font-size:15px;color:#e2e8f0\">昨日追放された <strong>&lt;b data-a11-night=&quot;1&quot;&gt;名&#39;&amp;&lt;/b&gt;</strong>は<br><strong style=\"font-size:20px\">人狼ではなかった</strong></p></div>",
+      "writes": 2,
+      "wait": "block",
+      "subtitle": ""
+    },
+    {
+      "case": "medium-empty-name-true",
+      "result": "PASS",
+      "html": "<div class=\"night-panel\"><h3>霊視結果</h3>\n          <p style=\"font-size:15px;color:#e2e8f0\">昨日追放された <strong>?</strong>は<br><strong style=\"font-size:20px\">人狼だった</strong></p></div>",
+      "writes": 2,
+      "wait": "block",
+      "subtitle": ""
+    },
+    {
+      "case": "missing-me",
+      "result": "PASS",
+      "html": "",
+      "writes": 1,
+      "wait": "initial",
+      "subtitle": ""
+    },
+    {
+      "case": "dead-player",
+      "result": "PASS",
+      "html": "",
+      "writes": 1,
+      "wait": "block",
+      "subtitle": ""
+    }
+  ],
+  "negativeControls": [
+    {
+      "case": "wolf-html-quotes",
+      "change": "state.wolfPartners.map(esc) -> state.wolfPartners.map(value => value)",
+      "samePredicateRejected": true
+    },
+    {
+      "case": "medium-wolf-false",
+      "change": "esc(room.lastExecuted || '?') -> (room.lastExecuted || '?')",
+      "samePredicateRejected": true
+    },
+    {
+      "case": "medium-wolf-true",
+      "change": "esc(room.lastExecuted || '?') -> (room.lastExecuted || '?')",
+      "samePredicateRejected": true
+    }
+  ],
+  "limitations": [
+    "Actual setupNightActionUI and shared esc only; room listener and upstream role setup are not executed.",
+    "JSON synthetic inputs and property capture only; no HTML parsing, script execution, browser, SDK, network, Firebase or iPhone.",
+    "Other roles and later wolf nights are outside scope; no gameplay, production permissions or full XSS safety claim.",
+    "App and scanner unchanged; static unknown count is not reduced."
+  ]
+}
