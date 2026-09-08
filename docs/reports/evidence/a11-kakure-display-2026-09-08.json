@@ -1,0 +1,1292 @@
+{
+  "date": "2026-09-08",
+  "sourceCommit": "e7d04d3c049186267b803cad55c60d83edafab01",
+  "result": "PASS",
+  "sources": [
+    {
+      "file": "apps/kakure-number/index.html",
+      "sha256": "62bd802b79e03bfbab08013b42a649d8f7cf968cd1702b0e9fb2c220e477155b"
+    },
+    {
+      "file": "apps/shared/js/rtdb-utils.js",
+      "sha256": "77d414a84d39deb52e1c8544e26465d4b822041621dbd985cad804e36d3b1d12"
+    }
+  ],
+  "extractions": [
+    {
+      "file": "apps/kakure-number/index.html",
+      "firstLine": 1254,
+      "lastLine": 1273,
+      "sha256": "279ccd882e169ceb86a31c391af176ab72acc0454df7daac13695ec879b4b6df"
+    },
+    {
+      "file": "apps/kakure-number/index.html",
+      "firstLine": 1276,
+      "lastLine": 1337,
+      "sha256": "58552978283a72e9959a1162326e81693d7133215a236eaf43224453c1856b88"
+    },
+    {
+      "file": "apps/kakure-number/index.html",
+      "firstLine": 1340,
+      "lastLine": 1351,
+      "sha256": "4ef1365896e5a1dcd158d81c9620cac527b34b27e6fced1f27d0b5fe243f687b"
+    },
+    {
+      "file": "apps/shared/js/rtdb-utils.js",
+      "firstLine": 45,
+      "lastLine": 52,
+      "sha256": "43852aeecad01ea27ee77f9b6b7d25b08dbe46a42dc1b33557c9c225762b0a7f"
+    },
+    {
+      "file": "apps/kakure-number/index.html",
+      "firstLine": 1163,
+      "lastLine": 1251,
+      "sha256": "1795982cb35e327491925567accf214c748db40c0647bfff6877c85afd13b61e"
+    }
+  ],
+  "checks": {
+    "cases": 21,
+    "negativeControls": 5
+  },
+  "results": [
+    {
+      "case": "grid-self-hidden",
+      "result": "PASS",
+      "html": "\n        <div class=\"kkn-number-card kkn-number-card--me\">\n          <div class=\"kkn-number-card__name\">self（あなた）</div>\n          <div class=\"kkn-number-card__value\">？</div>\n        </div>",
+      "scoreHtml": "before",
+      "roundText": "",
+      "totalText": "",
+      "host": "initial",
+      "guest": "initial",
+      "screens": [],
+      "writes": [
+        {
+          "id": "thinking-number-grid",
+          "property": "innerHTML",
+          "value": ""
+        },
+        {
+          "id": "thinking-number-grid",
+          "property": "innerHTML",
+          "value": "\n        <div class=\"kkn-number-card kkn-number-card--me\">\n          <div class=\"kkn-number-card__name\">self（あなた）</div>\n          <div class=\"kkn-number-card__value\">？</div>\n        </div>"
+        }
+      ]
+    },
+    {
+      "case": "grid-other-number",
+      "result": "PASS",
+      "html": "\n        <div class=\"kkn-number-card \">\n          <div class=\"kkn-number-card__name\">other</div>\n          <div class=\"kkn-number-card__value\">7</div>\n        </div>",
+      "scoreHtml": "before",
+      "roundText": "",
+      "totalText": "",
+      "host": "initial",
+      "guest": "initial",
+      "screens": [],
+      "writes": [
+        {
+          "id": "thinking-number-grid",
+          "property": "innerHTML",
+          "value": ""
+        },
+        {
+          "id": "thinking-number-grid",
+          "property": "innerHTML",
+          "value": "\n        <div class=\"kkn-number-card \">\n          <div class=\"kkn-number-card__name\">other</div>\n          <div class=\"kkn-number-card__value\">7</div>\n        </div>"
+        }
+      ]
+    },
+    {
+      "case": "grid-other-html",
+      "result": "PASS",
+      "html": "\n        <div class=\"kkn-number-card kkn-number-card--field\">\n          <div class=\"kkn-number-card__name\">隠しカード</div>\n          <div class=\"kkn-number-card__value\">？</div>\n        </div>\n        <div class=\"kkn-number-card \">\n          <div class=\"kkn-number-card__name\">other</div>\n          <div class=\"kkn-number-card__value\">&lt;b data-a11-kakure=&quot;1&quot;&gt;名&#39;&amp;&lt;/b&gt;</div>\n        </div>",
+      "scoreHtml": "before",
+      "roundText": "",
+      "totalText": "",
+      "host": "initial",
+      "guest": "initial",
+      "screens": [],
+      "writes": [
+        {
+          "id": "thinking-number-grid",
+          "property": "innerHTML",
+          "value": ""
+        },
+        {
+          "id": "thinking-number-grid",
+          "property": "innerHTML",
+          "value": "\n        <div class=\"kkn-number-card kkn-number-card--field\">\n          <div class=\"kkn-number-card__name\">隠しカード</div>\n          <div class=\"kkn-number-card__value\">？</div>\n        </div>"
+        },
+        {
+          "id": "thinking-number-grid",
+          "property": "innerHTML",
+          "value": "\n        <div class=\"kkn-number-card kkn-number-card--field\">\n          <div class=\"kkn-number-card__name\">隠しカード</div>\n          <div class=\"kkn-number-card__value\">？</div>\n        </div>\n        <div class=\"kkn-number-card \">\n          <div class=\"kkn-number-card__name\">other</div>\n          <div class=\"kkn-number-card__value\">&lt;b data-a11-kakure=&quot;1&quot;&gt;名&#39;&amp;&lt;/b&gt;</div>\n        </div>"
+        }
+      ]
+    },
+    {
+      "case": "grid-name-html",
+      "result": "PASS",
+      "html": "\n        <div class=\"kkn-number-card \">\n          <div class=\"kkn-number-card__name\">&lt;b data-a11-kakure=&quot;1&quot;&gt;名&#39;&amp;&lt;/b&gt;</div>\n          <div class=\"kkn-number-card__value\">5</div>\n        </div>",
+      "scoreHtml": "before",
+      "roundText": "",
+      "totalText": "",
+      "host": "initial",
+      "guest": "initial",
+      "screens": [],
+      "writes": [
+        {
+          "id": "thinking-number-grid",
+          "property": "innerHTML",
+          "value": ""
+        },
+        {
+          "id": "thinking-number-grid",
+          "property": "innerHTML",
+          "value": "\n        <div class=\"kkn-number-card \">\n          <div class=\"kkn-number-card__name\">&lt;b data-a11-kakure=&quot;1&quot;&gt;名&#39;&amp;&lt;/b&gt;</div>\n          <div class=\"kkn-number-card__value\">5</div>\n        </div>"
+        }
+      ]
+    },
+    {
+      "case": "grid-empty-field",
+      "result": "PASS",
+      "html": "\n        <div class=\"kkn-number-card kkn-number-card--field\">\n          <div class=\"kkn-number-card__name\">隠しカード</div>\n          <div class=\"kkn-number-card__value\">？</div>\n        </div>",
+      "scoreHtml": "before",
+      "roundText": "",
+      "totalText": "",
+      "host": "initial",
+      "guest": "initial",
+      "screens": [],
+      "writes": [
+        {
+          "id": "thinking-number-grid",
+          "property": "innerHTML",
+          "value": ""
+        },
+        {
+          "id": "thinking-number-grid",
+          "property": "innerHTML",
+          "value": "\n        <div class=\"kkn-number-card kkn-number-card--field\">\n          <div class=\"kkn-number-card__name\">隠しカード</div>\n          <div class=\"kkn-number-card__value\">？</div>\n        </div>"
+        }
+      ]
+    },
+    {
+      "case": "grid-empty",
+      "result": "PASS",
+      "html": "",
+      "scoreHtml": "before",
+      "roundText": "",
+      "totalText": "",
+      "host": "initial",
+      "guest": "initial",
+      "screens": [],
+      "writes": [
+        {
+          "id": "thinking-number-grid",
+          "property": "innerHTML",
+          "value": ""
+        }
+      ]
+    },
+    {
+      "case": "reveal-empty",
+      "result": "PASS",
+      "html": "",
+      "scoreHtml": "",
+      "roundText": "1",
+      "totalText": "-",
+      "host": "none",
+      "guest": "block",
+      "screens": [
+        "reveal"
+      ],
+      "writes": [
+        {
+          "id": "reveal-round-num",
+          "property": "textContent",
+          "value": "1"
+        },
+        {
+          "id": "reveal-total",
+          "property": "textContent",
+          "value": "-"
+        },
+        {
+          "id": "reveal-list",
+          "property": "innerHTML",
+          "value": ""
+        },
+        {
+          "id": "reveal-score-chips",
+          "property": "innerHTML",
+          "value": ""
+        }
+      ]
+    },
+    {
+      "case": "reveal-field-html",
+      "result": "PASS",
+      "html": "\n        <div class=\"kkn-reveal-row kkn-reveal-row--field\">\n          <div class=\"kkn-reveal-row__number\">&lt;b data-a11-kakure=&quot;1&quot;&gt;名&#39;&amp;&lt;/b&gt;</div>\n          <div class=\"kkn-reveal-row__name\">隠しカード</div>\n          <div class=\"kkn-reveal-row__guess\">誰にも見えなかった1まい</div>\n        </div>",
+      "scoreHtml": "",
+      "roundText": "1",
+      "totalText": "-",
+      "host": "none",
+      "guest": "block",
+      "screens": [
+        "reveal"
+      ],
+      "writes": [
+        {
+          "id": "reveal-round-num",
+          "property": "textContent",
+          "value": "1"
+        },
+        {
+          "id": "reveal-total",
+          "property": "textContent",
+          "value": "-"
+        },
+        {
+          "id": "reveal-list",
+          "property": "innerHTML",
+          "value": ""
+        },
+        {
+          "id": "reveal-list",
+          "property": "innerHTML",
+          "value": "\n        <div class=\"kkn-reveal-row kkn-reveal-row--field\">\n          <div class=\"kkn-reveal-row__number\">&lt;b data-a11-kakure=&quot;1&quot;&gt;名&#39;&amp;&lt;/b&gt;</div>\n          <div class=\"kkn-reveal-row__name\">隠しカード</div>\n          <div class=\"kkn-reveal-row__guess\">誰にも見えなかった1まい</div>\n        </div>"
+        },
+        {
+          "id": "reveal-score-chips",
+          "property": "innerHTML",
+          "value": ""
+        }
+      ]
+    },
+    {
+      "case": "reveal-field-zero",
+      "result": "PASS",
+      "html": "\n        <div class=\"kkn-reveal-row kkn-reveal-row--field\">\n          <div class=\"kkn-reveal-row__number\">0</div>\n          <div class=\"kkn-reveal-row__name\">隠しカード</div>\n          <div class=\"kkn-reveal-row__guess\">誰にも見えなかった1まい</div>\n        </div>",
+      "scoreHtml": "",
+      "roundText": "1",
+      "totalText": "-",
+      "host": "none",
+      "guest": "block",
+      "screens": [
+        "reveal"
+      ],
+      "writes": [
+        {
+          "id": "reveal-round-num",
+          "property": "textContent",
+          "value": "1"
+        },
+        {
+          "id": "reveal-total",
+          "property": "textContent",
+          "value": "-"
+        },
+        {
+          "id": "reveal-list",
+          "property": "innerHTML",
+          "value": ""
+        },
+        {
+          "id": "reveal-list",
+          "property": "innerHTML",
+          "value": "\n        <div class=\"kkn-reveal-row kkn-reveal-row--field\">\n          <div class=\"kkn-reveal-row__number\">0</div>\n          <div class=\"kkn-reveal-row__name\">隠しカード</div>\n          <div class=\"kkn-reveal-row__guess\">誰にも見えなかった1まい</div>\n        </div>"
+        },
+        {
+          "id": "reveal-score-chips",
+          "property": "innerHTML",
+          "value": ""
+        }
+      ]
+    },
+    {
+      "case": "reveal-field-null",
+      "result": "PASS",
+      "html": "",
+      "scoreHtml": "",
+      "roundText": "1",
+      "totalText": "-",
+      "host": "none",
+      "guest": "block",
+      "screens": [
+        "reveal"
+      ],
+      "writes": [
+        {
+          "id": "reveal-round-num",
+          "property": "textContent",
+          "value": "1"
+        },
+        {
+          "id": "reveal-total",
+          "property": "textContent",
+          "value": "-"
+        },
+        {
+          "id": "reveal-list",
+          "property": "innerHTML",
+          "value": ""
+        },
+        {
+          "id": "reveal-score-chips",
+          "property": "innerHTML",
+          "value": ""
+        }
+      ]
+    },
+    {
+      "case": "reveal-missing-guess",
+      "result": "PASS",
+      "html": "\n        <div class=\"kkn-reveal-row kkn-reveal-row--me\">\n          <div class=\"kkn-reveal-row__number\">5</div>\n          <div class=\"kkn-reveal-row__name\">self<span style=\"font-size:11px;color:var(--color-accent)\">（あなた）</span></div>\n          <div class=\"kkn-reveal-row__guess\">よそうなし</div>\n          \n        </div>",
+      "scoreHtml": "\n          <span class=\"kkn-score-chip kkn-score-chip--me\">self 2pt</span>",
+      "roundText": "1",
+      "totalText": "-",
+      "host": "none",
+      "guest": "block",
+      "screens": [
+        "reveal"
+      ],
+      "writes": [
+        {
+          "id": "reveal-round-num",
+          "property": "textContent",
+          "value": "1"
+        },
+        {
+          "id": "reveal-total",
+          "property": "textContent",
+          "value": "-"
+        },
+        {
+          "id": "reveal-list",
+          "property": "innerHTML",
+          "value": ""
+        },
+        {
+          "id": "reveal-list",
+          "property": "innerHTML",
+          "value": "\n        <div class=\"kkn-reveal-row kkn-reveal-row--me\">\n          <div class=\"kkn-reveal-row__number\">5</div>\n          <div class=\"kkn-reveal-row__name\">self<span style=\"font-size:11px;color:var(--color-accent)\">（あなた）</span></div>\n          <div class=\"kkn-reveal-row__guess\">よそうなし</div>\n          \n        </div>"
+        },
+        {
+          "id": "reveal-score-chips",
+          "property": "innerHTML",
+          "value": ""
+        },
+        {
+          "id": "reveal-score-chips",
+          "property": "innerHTML",
+          "value": "\n          <span class=\"kkn-score-chip kkn-score-chip--me\">self 2pt</span>"
+        }
+      ]
+    },
+    {
+      "case": "reveal-zero-guess",
+      "result": "PASS",
+      "html": "\n        <div class=\"kkn-reveal-row\">\n          <div class=\"kkn-reveal-row__number\">5</div>\n          <div class=\"kkn-reveal-row__name\">other</div>\n          <div class=\"kkn-reveal-row__guess\">よそう <strong>0</strong></div>\n          \n        </div>",
+      "scoreHtml": "\n          <span class=\"kkn-score-chip \">other 0pt</span>",
+      "roundText": "1",
+      "totalText": "-",
+      "host": "none",
+      "guest": "block",
+      "screens": [
+        "reveal"
+      ],
+      "writes": [
+        {
+          "id": "reveal-round-num",
+          "property": "textContent",
+          "value": "1"
+        },
+        {
+          "id": "reveal-total",
+          "property": "textContent",
+          "value": "-"
+        },
+        {
+          "id": "reveal-list",
+          "property": "innerHTML",
+          "value": ""
+        },
+        {
+          "id": "reveal-list",
+          "property": "innerHTML",
+          "value": "\n        <div class=\"kkn-reveal-row\">\n          <div class=\"kkn-reveal-row__number\">5</div>\n          <div class=\"kkn-reveal-row__name\">other</div>\n          <div class=\"kkn-reveal-row__guess\">よそう <strong>0</strong></div>\n          \n        </div>"
+        },
+        {
+          "id": "reveal-score-chips",
+          "property": "innerHTML",
+          "value": ""
+        },
+        {
+          "id": "reveal-score-chips",
+          "property": "innerHTML",
+          "value": "\n          <span class=\"kkn-score-chip \">other 0pt</span>"
+        }
+      ]
+    },
+    {
+      "case": "reveal-null-guess",
+      "result": "PASS",
+      "html": "\n        <div class=\"kkn-reveal-row\">\n          <div class=\"kkn-reveal-row__number\">5</div>\n          <div class=\"kkn-reveal-row__name\">other</div>\n          <div class=\"kkn-reveal-row__guess\">よそう <strong>null</strong></div>\n          \n        </div>",
+      "scoreHtml": "\n          <span class=\"kkn-score-chip \">other 0pt</span>",
+      "roundText": "1",
+      "totalText": "-",
+      "host": "none",
+      "guest": "block",
+      "screens": [
+        "reveal"
+      ],
+      "writes": [
+        {
+          "id": "reveal-round-num",
+          "property": "textContent",
+          "value": "1"
+        },
+        {
+          "id": "reveal-total",
+          "property": "textContent",
+          "value": "-"
+        },
+        {
+          "id": "reveal-list",
+          "property": "innerHTML",
+          "value": ""
+        },
+        {
+          "id": "reveal-list",
+          "property": "innerHTML",
+          "value": "\n        <div class=\"kkn-reveal-row\">\n          <div class=\"kkn-reveal-row__number\">5</div>\n          <div class=\"kkn-reveal-row__name\">other</div>\n          <div class=\"kkn-reveal-row__guess\">よそう <strong>null</strong></div>\n          \n        </div>"
+        },
+        {
+          "id": "reveal-score-chips",
+          "property": "innerHTML",
+          "value": ""
+        },
+        {
+          "id": "reveal-score-chips",
+          "property": "innerHTML",
+          "value": "\n          <span class=\"kkn-score-chip \">other 0pt</span>"
+        }
+      ]
+    },
+    {
+      "case": "reveal-html-guess",
+      "result": "PASS",
+      "html": "\n        <div class=\"kkn-reveal-row\">\n          <div class=\"kkn-reveal-row__number\">5</div>\n          <div class=\"kkn-reveal-row__name\">other</div>\n          <div class=\"kkn-reveal-row__guess\">よそう <strong>&lt;b data-a11-kakure=&quot;1&quot;&gt;名&#39;&amp;&lt;/b&gt;</strong></div>\n          \n        </div>",
+      "scoreHtml": "\n          <span class=\"kkn-score-chip \">other 0pt</span>",
+      "roundText": "1",
+      "totalText": "-",
+      "host": "none",
+      "guest": "block",
+      "screens": [
+        "reveal"
+      ],
+      "writes": [
+        {
+          "id": "reveal-round-num",
+          "property": "textContent",
+          "value": "1"
+        },
+        {
+          "id": "reveal-total",
+          "property": "textContent",
+          "value": "-"
+        },
+        {
+          "id": "reveal-list",
+          "property": "innerHTML",
+          "value": ""
+        },
+        {
+          "id": "reveal-list",
+          "property": "innerHTML",
+          "value": "\n        <div class=\"kkn-reveal-row\">\n          <div class=\"kkn-reveal-row__number\">5</div>\n          <div class=\"kkn-reveal-row__name\">other</div>\n          <div class=\"kkn-reveal-row__guess\">よそう <strong>&lt;b data-a11-kakure=&quot;1&quot;&gt;名&#39;&amp;&lt;/b&gt;</strong></div>\n          \n        </div>"
+        },
+        {
+          "id": "reveal-score-chips",
+          "property": "innerHTML",
+          "value": ""
+        },
+        {
+          "id": "reveal-score-chips",
+          "property": "innerHTML",
+          "value": "\n          <span class=\"kkn-score-chip \">other 0pt</span>"
+        }
+      ]
+    },
+    {
+      "case": "reveal-number-name-html",
+      "result": "PASS",
+      "html": "\n        <div class=\"kkn-reveal-row\">\n          <div class=\"kkn-reveal-row__number\">&lt;b data-a11-kakure=&quot;1&quot;&gt;名&#39;&amp;&lt;/b&gt;</div>\n          <div class=\"kkn-reveal-row__name\">&lt;b data-a11-kakure=&quot;1&quot;&gt;名&#39;&amp;&lt;/b&gt;</div>\n          <div class=\"kkn-reveal-row__guess\">よそうなし</div>\n          \n        </div>",
+      "scoreHtml": "\n          <span class=\"kkn-score-chip \">&lt;b data-a11-kakure=&quot;1&quot;&gt;名&#39;&amp;&lt;/b&gt; 0pt</span>",
+      "roundText": "1",
+      "totalText": "-",
+      "host": "none",
+      "guest": "block",
+      "screens": [
+        "reveal"
+      ],
+      "writes": [
+        {
+          "id": "reveal-round-num",
+          "property": "textContent",
+          "value": "1"
+        },
+        {
+          "id": "reveal-total",
+          "property": "textContent",
+          "value": "-"
+        },
+        {
+          "id": "reveal-list",
+          "property": "innerHTML",
+          "value": ""
+        },
+        {
+          "id": "reveal-list",
+          "property": "innerHTML",
+          "value": "\n        <div class=\"kkn-reveal-row\">\n          <div class=\"kkn-reveal-row__number\">&lt;b data-a11-kakure=&quot;1&quot;&gt;名&#39;&amp;&lt;/b&gt;</div>\n          <div class=\"kkn-reveal-row__name\">&lt;b data-a11-kakure=&quot;1&quot;&gt;名&#39;&amp;&lt;/b&gt;</div>\n          <div class=\"kkn-reveal-row__guess\">よそうなし</div>\n          \n        </div>"
+        },
+        {
+          "id": "reveal-score-chips",
+          "property": "innerHTML",
+          "value": ""
+        },
+        {
+          "id": "reveal-score-chips",
+          "property": "innerHTML",
+          "value": "\n          <span class=\"kkn-score-chip \">&lt;b data-a11-kakure=&quot;1&quot;&gt;名&#39;&amp;&lt;/b&gt; 0pt</span>"
+        }
+      ]
+    },
+    {
+      "case": "reveal-left",
+      "result": "PASS",
+      "html": "\n        <div class=\"kkn-reveal-row\">\n          <div class=\"kkn-reveal-row__number\">5</div>\n          <div class=\"kkn-reveal-row__name\">other<span class=\"kkn-reveal-row__left\">（退出）</span></div>\n          <div class=\"kkn-reveal-row__guess\">よそうなし</div>\n          \n        </div>",
+      "scoreHtml": "",
+      "roundText": "1",
+      "totalText": "-",
+      "host": "none",
+      "guest": "block",
+      "screens": [
+        "reveal"
+      ],
+      "writes": [
+        {
+          "id": "reveal-round-num",
+          "property": "textContent",
+          "value": "1"
+        },
+        {
+          "id": "reveal-total",
+          "property": "textContent",
+          "value": "-"
+        },
+        {
+          "id": "reveal-list",
+          "property": "innerHTML",
+          "value": ""
+        },
+        {
+          "id": "reveal-list",
+          "property": "innerHTML",
+          "value": "\n        <div class=\"kkn-reveal-row\">\n          <div class=\"kkn-reveal-row__number\">5</div>\n          <div class=\"kkn-reveal-row__name\">other<span class=\"kkn-reveal-row__left\">（退出）</span></div>\n          <div class=\"kkn-reveal-row__guess\">よそうなし</div>\n          \n        </div>"
+        },
+        {
+          "id": "reveal-score-chips",
+          "property": "innerHTML",
+          "value": ""
+        }
+      ]
+    },
+    {
+      "case": "reveal-delta-zero",
+      "result": "PASS",
+      "html": "\n        <div class=\"kkn-reveal-row\">\n          <div class=\"kkn-reveal-row__number\">5</div>\n          <div class=\"kkn-reveal-row__name\">other</div>\n          <div class=\"kkn-reveal-row__guess\">よそうなし</div>\n          \n        </div>",
+      "scoreHtml": "\n          <span class=\"kkn-score-chip \">other 0pt</span>",
+      "roundText": "1",
+      "totalText": "-",
+      "host": "none",
+      "guest": "block",
+      "screens": [
+        "reveal"
+      ],
+      "writes": [
+        {
+          "id": "reveal-round-num",
+          "property": "textContent",
+          "value": "1"
+        },
+        {
+          "id": "reveal-total",
+          "property": "textContent",
+          "value": "-"
+        },
+        {
+          "id": "reveal-list",
+          "property": "innerHTML",
+          "value": ""
+        },
+        {
+          "id": "reveal-list",
+          "property": "innerHTML",
+          "value": "\n        <div class=\"kkn-reveal-row\">\n          <div class=\"kkn-reveal-row__number\">5</div>\n          <div class=\"kkn-reveal-row__name\">other</div>\n          <div class=\"kkn-reveal-row__guess\">よそうなし</div>\n          \n        </div>"
+        },
+        {
+          "id": "reveal-score-chips",
+          "property": "innerHTML",
+          "value": ""
+        },
+        {
+          "id": "reveal-score-chips",
+          "property": "innerHTML",
+          "value": "\n          <span class=\"kkn-score-chip \">other 0pt</span>"
+        }
+      ]
+    },
+    {
+      "case": "reveal-delta-two",
+      "result": "PASS",
+      "html": "\n        <div class=\"kkn-reveal-row kkn-reveal-row--closest\">\n          <div class=\"kkn-reveal-row__number\">5</div>\n          <div class=\"kkn-reveal-row__name\">other</div>\n          <div class=\"kkn-reveal-row__guess\">よそうなし</div>\n          <span class=\"kkn-reveal-badge kkn-reveal-badge--closest\">いちばん近い +2</span>\n        </div>",
+      "scoreHtml": "\n          <span class=\"kkn-score-chip \">other 0pt</span>",
+      "roundText": "1",
+      "totalText": "-",
+      "host": "none",
+      "guest": "block",
+      "screens": [
+        "reveal"
+      ],
+      "writes": [
+        {
+          "id": "reveal-round-num",
+          "property": "textContent",
+          "value": "1"
+        },
+        {
+          "id": "reveal-total",
+          "property": "textContent",
+          "value": "-"
+        },
+        {
+          "id": "reveal-list",
+          "property": "innerHTML",
+          "value": ""
+        },
+        {
+          "id": "reveal-list",
+          "property": "innerHTML",
+          "value": "\n        <div class=\"kkn-reveal-row kkn-reveal-row--closest\">\n          <div class=\"kkn-reveal-row__number\">5</div>\n          <div class=\"kkn-reveal-row__name\">other</div>\n          <div class=\"kkn-reveal-row__guess\">よそうなし</div>\n          <span class=\"kkn-reveal-badge kkn-reveal-badge--closest\">いちばん近い +2</span>\n        </div>"
+        },
+        {
+          "id": "reveal-score-chips",
+          "property": "innerHTML",
+          "value": ""
+        },
+        {
+          "id": "reveal-score-chips",
+          "property": "innerHTML",
+          "value": "\n          <span class=\"kkn-score-chip \">other 0pt</span>"
+        }
+      ]
+    },
+    {
+      "case": "reveal-delta-three",
+      "result": "PASS",
+      "html": "\n        <div class=\"kkn-reveal-row kkn-reveal-row--closest\">\n          <div class=\"kkn-reveal-row__number\">5</div>\n          <div class=\"kkn-reveal-row__name\">other</div>\n          <div class=\"kkn-reveal-row__guess\">よそうなし</div>\n          <span class=\"kkn-reveal-badge kkn-reveal-badge--exact\">ぴったり +3</span>\n        </div>",
+      "scoreHtml": "\n          <span class=\"kkn-score-chip \">other 0pt</span>",
+      "roundText": "1",
+      "totalText": "-",
+      "host": "block",
+      "guest": "none",
+      "screens": [
+        "reveal"
+      ],
+      "writes": [
+        {
+          "id": "reveal-round-num",
+          "property": "textContent",
+          "value": "1"
+        },
+        {
+          "id": "reveal-total",
+          "property": "textContent",
+          "value": "-"
+        },
+        {
+          "id": "reveal-list",
+          "property": "innerHTML",
+          "value": ""
+        },
+        {
+          "id": "reveal-list",
+          "property": "innerHTML",
+          "value": "\n        <div class=\"kkn-reveal-row kkn-reveal-row--closest\">\n          <div class=\"kkn-reveal-row__number\">5</div>\n          <div class=\"kkn-reveal-row__name\">other</div>\n          <div class=\"kkn-reveal-row__guess\">よそうなし</div>\n          <span class=\"kkn-reveal-badge kkn-reveal-badge--exact\">ぴったり +3</span>\n        </div>"
+        },
+        {
+          "id": "reveal-score-chips",
+          "property": "innerHTML",
+          "value": ""
+        },
+        {
+          "id": "reveal-score-chips",
+          "property": "innerHTML",
+          "value": "\n          <span class=\"kkn-score-chip \">other 0pt</span>"
+        }
+      ]
+    },
+    {
+      "case": "reveal-delta-html",
+      "result": "PASS",
+      "html": "\n        <div class=\"kkn-reveal-row\">\n          <div class=\"kkn-reveal-row__number\">5</div>\n          <div class=\"kkn-reveal-row__name\">other</div>\n          <div class=\"kkn-reveal-row__guess\">よそうなし</div>\n          \n        </div>",
+      "scoreHtml": "\n          <span class=\"kkn-score-chip \">other 0pt</span>",
+      "roundText": "1",
+      "totalText": "-",
+      "host": "none",
+      "guest": "block",
+      "screens": [
+        "reveal"
+      ],
+      "writes": [
+        {
+          "id": "reveal-round-num",
+          "property": "textContent",
+          "value": "1"
+        },
+        {
+          "id": "reveal-total",
+          "property": "textContent",
+          "value": "-"
+        },
+        {
+          "id": "reveal-list",
+          "property": "innerHTML",
+          "value": ""
+        },
+        {
+          "id": "reveal-list",
+          "property": "innerHTML",
+          "value": "\n        <div class=\"kkn-reveal-row\">\n          <div class=\"kkn-reveal-row__number\">5</div>\n          <div class=\"kkn-reveal-row__name\">other</div>\n          <div class=\"kkn-reveal-row__guess\">よそうなし</div>\n          \n        </div>"
+        },
+        {
+          "id": "reveal-score-chips",
+          "property": "innerHTML",
+          "value": ""
+        },
+        {
+          "id": "reveal-score-chips",
+          "property": "innerHTML",
+          "value": "\n          <span class=\"kkn-score-chip \">other 0pt</span>"
+        }
+      ]
+    },
+    {
+      "case": "reveal-text-only-and-scores",
+      "result": "PASS",
+      "html": "",
+      "scoreHtml": "\n          <span class=\"kkn-score-chip kkn-score-chip--me\">self 2pt</span>\n          <span class=\"kkn-score-chip \">other 0pt</span>",
+      "roundText": "<b data-a11-kakure=\"1\">名'&</b>",
+      "totalText": "<b data-a11-kakure=\"1\">名'&</b>",
+      "host": "block",
+      "guest": "none",
+      "screens": [],
+      "writes": [
+        {
+          "id": "reveal-round-num",
+          "property": "textContent",
+          "value": "<b data-a11-kakure=\"1\">名'&</b>"
+        },
+        {
+          "id": "reveal-total",
+          "property": "textContent",
+          "value": "<b data-a11-kakure=\"1\">名'&</b>"
+        },
+        {
+          "id": "reveal-list",
+          "property": "innerHTML",
+          "value": ""
+        },
+        {
+          "id": "reveal-score-chips",
+          "property": "innerHTML",
+          "value": ""
+        },
+        {
+          "id": "reveal-score-chips",
+          "property": "innerHTML",
+          "value": "\n          <span class=\"kkn-score-chip kkn-score-chip--me\">self 2pt</span>"
+        },
+        {
+          "id": "reveal-score-chips",
+          "property": "innerHTML",
+          "value": "\n          <span class=\"kkn-score-chip kkn-score-chip--me\">self 2pt</span>\n          <span class=\"kkn-score-chip \">other 0pt</span>"
+        }
+      ]
+    }
+  ],
+  "negativeControls": [
+    {
+      "case": "grid-other-html",
+      "change": "isMe ? '？' : esc(String(value)) -> isMe ? '？' : String(value)",
+      "samePredicateRejected": true
+    },
+    {
+      "case": "reveal-html-guess",
+      "change": "esc(String(guess)) -> String(guess)",
+      "samePredicateRejected": true
+    },
+    {
+      "case": "reveal-field-html",
+      "change": "esc(String(round.fieldNumber)) -> String(round.fieldNumber)",
+      "samePredicateRejected": true
+    },
+    {
+      "case": "reveal-number-name-html",
+      "change": "esc(String(numbers[name])) -> String(numbers[name])",
+      "samePredicateRejected": true
+    },
+    {
+      "case": "grid-name-html",
+      "change": "${esc(name)}${isMe -> ${name}${isMe",
+      "samePredicateRejected": true
+    }
+  ],
+  "hostChecks": {
+    "cases": 10,
+    "negativeControls": 1
+  },
+  "hostResults": [
+    {
+      "case": "host-done",
+      "result": "PASS",
+      "html": "\n        <div class=\"kkn-submit-item kkn-submit-item--done\">\n          <span class=\"kkn-submit-item__name\">other</span>\n          <span class=\"kkn-submit-item__state\"><span class=\"material-symbols-rounded\" style=\"font-size:16px\">check_circle</span>きめた</span>\n        </div>",
+      "count": "1 人 / 1 人がきめた",
+      "hint": "全員がきめると自動で答え合わせに進みます",
+      "disabled": false,
+      "host": "block",
+      "guest": "none",
+      "triggers": 1,
+      "revealTriggered": true,
+      "writes": [
+        {
+          "id": "thinking-round-num",
+          "property": "textContent",
+          "value": "1"
+        },
+        {
+          "id": "host-submit-count",
+          "property": "textContent",
+          "value": "1 人 / 1 人がきめた"
+        },
+        {
+          "id": "host-submit-list",
+          "property": "innerHTML",
+          "value": ""
+        },
+        {
+          "id": "host-submit-list",
+          "property": "innerHTML",
+          "value": "\n        <div class=\"kkn-submit-item kkn-submit-item--done\">\n          <span class=\"kkn-submit-item__name\">other</span>\n          <span class=\"kkn-submit-item__state\"><span class=\"material-symbols-rounded\" style=\"font-size:16px\">check_circle</span>きめた</span>\n        </div>"
+        },
+        {
+          "id": "host-close-hint",
+          "property": "textContent",
+          "value": "全員がきめると自動で答え合わせに進みます"
+        }
+      ]
+    },
+    {
+      "case": "host-undone",
+      "result": "PASS",
+      "html": "\n        <div class=\"kkn-submit-item \">\n          <span class=\"kkn-submit-item__name\">other</span>\n          <span class=\"kkn-submit-item__state\">考え中…</span>\n        </div>",
+      "count": "0 人 / 1 人がきめた",
+      "hint": "予想が1件以上あると締め切れます",
+      "disabled": true,
+      "host": "block",
+      "guest": "none",
+      "triggers": 0,
+      "revealTriggered": false,
+      "writes": [
+        {
+          "id": "thinking-round-num",
+          "property": "textContent",
+          "value": "1"
+        },
+        {
+          "id": "host-submit-count",
+          "property": "textContent",
+          "value": "0 人 / 1 人がきめた"
+        },
+        {
+          "id": "host-submit-list",
+          "property": "innerHTML",
+          "value": ""
+        },
+        {
+          "id": "host-submit-list",
+          "property": "innerHTML",
+          "value": "\n        <div class=\"kkn-submit-item \">\n          <span class=\"kkn-submit-item__name\">other</span>\n          <span class=\"kkn-submit-item__state\">考え中…</span>\n        </div>"
+        },
+        {
+          "id": "host-close-hint",
+          "property": "textContent",
+          "value": "予想が1件以上あると締め切れます"
+        }
+      ]
+    },
+    {
+      "case": "host-gone",
+      "result": "PASS",
+      "html": "\n        <div class=\"kkn-submit-item \">\n          <span class=\"kkn-submit-item__name\">other</span>\n          <span class=\"kkn-submit-item__state\">退出中</span>\n        </div>",
+      "count": "0 人 / 1 人がきめた",
+      "hint": "予想が1件以上あると締め切れます",
+      "disabled": true,
+      "host": "block",
+      "guest": "none",
+      "triggers": 0,
+      "revealTriggered": false,
+      "writes": [
+        {
+          "id": "thinking-round-num",
+          "property": "textContent",
+          "value": "1"
+        },
+        {
+          "id": "host-submit-count",
+          "property": "textContent",
+          "value": "0 人 / 1 人がきめた"
+        },
+        {
+          "id": "host-submit-list",
+          "property": "innerHTML",
+          "value": ""
+        },
+        {
+          "id": "host-submit-list",
+          "property": "innerHTML",
+          "value": "\n        <div class=\"kkn-submit-item \">\n          <span class=\"kkn-submit-item__name\">other</span>\n          <span class=\"kkn-submit-item__state\">退出中</span>\n        </div>"
+        },
+        {
+          "id": "host-close-hint",
+          "property": "textContent",
+          "value": "予想が1件以上あると締め切れます"
+        }
+      ]
+    },
+    {
+      "case": "host-gone-done-priority",
+      "result": "PASS",
+      "html": "\n        <div class=\"kkn-submit-item kkn-submit-item--done\">\n          <span class=\"kkn-submit-item__name\">other</span>\n          <span class=\"kkn-submit-item__state\"><span class=\"material-symbols-rounded\" style=\"font-size:16px\">check_circle</span>きめた</span>\n        </div>",
+      "count": "1 人 / 1 人がきめた",
+      "hint": "全員がきめると自動で答え合わせに進みます",
+      "disabled": false,
+      "host": "block",
+      "guest": "none",
+      "triggers": 1,
+      "revealTriggered": true,
+      "writes": [
+        {
+          "id": "thinking-round-num",
+          "property": "textContent",
+          "value": "1"
+        },
+        {
+          "id": "host-submit-count",
+          "property": "textContent",
+          "value": "1 人 / 1 人がきめた"
+        },
+        {
+          "id": "host-submit-list",
+          "property": "innerHTML",
+          "value": ""
+        },
+        {
+          "id": "host-submit-list",
+          "property": "innerHTML",
+          "value": "\n        <div class=\"kkn-submit-item kkn-submit-item--done\">\n          <span class=\"kkn-submit-item__name\">other</span>\n          <span class=\"kkn-submit-item__state\"><span class=\"material-symbols-rounded\" style=\"font-size:16px\">check_circle</span>きめた</span>\n        </div>"
+        },
+        {
+          "id": "host-close-hint",
+          "property": "textContent",
+          "value": "全員がきめると自動で答え合わせに進みます"
+        }
+      ]
+    },
+    {
+      "case": "host-html-name-hidden-values",
+      "result": "PASS",
+      "html": "\n        <div class=\"kkn-submit-item kkn-submit-item--done\">\n          <span class=\"kkn-submit-item__name\">&lt;b data-a11-kakure=&quot;1&quot;&gt;名&#39;&amp;&lt;/b&gt;</span>\n          <span class=\"kkn-submit-item__state\"><span class=\"material-symbols-rounded\" style=\"font-size:16px\">check_circle</span>きめた</span>\n        </div>",
+      "count": "1 人 / 1 人がきめた",
+      "hint": "全員がきめると自動で答え合わせに進みます",
+      "disabled": false,
+      "host": "block",
+      "guest": "none",
+      "triggers": 1,
+      "revealTriggered": true,
+      "writes": [
+        {
+          "id": "thinking-round-num",
+          "property": "textContent",
+          "value": "1"
+        },
+        {
+          "id": "host-submit-count",
+          "property": "textContent",
+          "value": "1 人 / 1 人がきめた"
+        },
+        {
+          "id": "host-submit-list",
+          "property": "innerHTML",
+          "value": ""
+        },
+        {
+          "id": "host-submit-list",
+          "property": "innerHTML",
+          "value": "\n        <div class=\"kkn-submit-item kkn-submit-item--done\">\n          <span class=\"kkn-submit-item__name\">&lt;b data-a11-kakure=&quot;1&quot;&gt;名&#39;&amp;&lt;/b&gt;</span>\n          <span class=\"kkn-submit-item__state\"><span class=\"material-symbols-rounded\" style=\"font-size:16px\">check_circle</span>きめた</span>\n        </div>"
+        },
+        {
+          "id": "host-close-hint",
+          "property": "textContent",
+          "value": "全員がきめると自動で答え合わせに進みます"
+        }
+      ]
+    },
+    {
+      "case": "host-empty",
+      "result": "PASS",
+      "html": "",
+      "count": "0 人 / 0 人がきめた",
+      "hint": "予想が1件以上あると締め切れます",
+      "disabled": true,
+      "host": "block",
+      "guest": "none",
+      "triggers": 0,
+      "revealTriggered": false,
+      "writes": [
+        {
+          "id": "thinking-round-num",
+          "property": "textContent",
+          "value": "1"
+        },
+        {
+          "id": "host-submit-count",
+          "property": "textContent",
+          "value": "0 人 / 0 人がきめた"
+        },
+        {
+          "id": "host-submit-list",
+          "property": "innerHTML",
+          "value": ""
+        },
+        {
+          "id": "host-close-hint",
+          "property": "textContent",
+          "value": "予想が1件以上あると締め切れます"
+        }
+      ]
+    },
+    {
+      "case": "host-null-guess",
+      "result": "PASS",
+      "html": "\n        <div class=\"kkn-submit-item kkn-submit-item--done\">\n          <span class=\"kkn-submit-item__name\">other</span>\n          <span class=\"kkn-submit-item__state\"><span class=\"material-symbols-rounded\" style=\"font-size:16px\">check_circle</span>きめた</span>\n        </div>",
+      "count": "1 人 / 1 人がきめた",
+      "hint": "全員がきめると自動で答え合わせに進みます",
+      "disabled": false,
+      "host": "block",
+      "guest": "none",
+      "triggers": 1,
+      "revealTriggered": true,
+      "writes": [
+        {
+          "id": "thinking-round-num",
+          "property": "textContent",
+          "value": "1"
+        },
+        {
+          "id": "host-submit-count",
+          "property": "textContent",
+          "value": "1 人 / 1 人がきめた"
+        },
+        {
+          "id": "host-submit-list",
+          "property": "innerHTML",
+          "value": ""
+        },
+        {
+          "id": "host-submit-list",
+          "property": "innerHTML",
+          "value": "\n        <div class=\"kkn-submit-item kkn-submit-item--done\">\n          <span class=\"kkn-submit-item__name\">other</span>\n          <span class=\"kkn-submit-item__state\"><span class=\"material-symbols-rounded\" style=\"font-size:16px\">check_circle</span>きめた</span>\n        </div>"
+        },
+        {
+          "id": "host-close-hint",
+          "property": "textContent",
+          "value": "全員がきめると自動で答え合わせに進みます"
+        }
+      ]
+    },
+    {
+      "case": "host-partial-close",
+      "result": "PASS",
+      "html": "\n        <div class=\"kkn-submit-item kkn-submit-item--done\">\n          <span class=\"kkn-submit-item__name\">other</span>\n          <span class=\"kkn-submit-item__state\"><span class=\"material-symbols-rounded\" style=\"font-size:16px\">check_circle</span>きめた</span>\n        </div>\n        <div class=\"kkn-submit-item \">\n          <span class=\"kkn-submit-item__name\">second</span>\n          <span class=\"kkn-submit-item__state\">考え中…</span>\n        </div>",
+      "count": "1 人 / 2 人がきめた",
+      "hint": "まだの 1 人を待たずに進めます",
+      "disabled": false,
+      "host": "block",
+      "guest": "none",
+      "triggers": 0,
+      "revealTriggered": false,
+      "writes": [
+        {
+          "id": "thinking-round-num",
+          "property": "textContent",
+          "value": "1"
+        },
+        {
+          "id": "host-submit-count",
+          "property": "textContent",
+          "value": "1 人 / 2 人がきめた"
+        },
+        {
+          "id": "host-submit-list",
+          "property": "innerHTML",
+          "value": ""
+        },
+        {
+          "id": "host-submit-list",
+          "property": "innerHTML",
+          "value": "\n        <div class=\"kkn-submit-item kkn-submit-item--done\">\n          <span class=\"kkn-submit-item__name\">other</span>\n          <span class=\"kkn-submit-item__state\"><span class=\"material-symbols-rounded\" style=\"font-size:16px\">check_circle</span>きめた</span>\n        </div>"
+        },
+        {
+          "id": "host-submit-list",
+          "property": "innerHTML",
+          "value": "\n        <div class=\"kkn-submit-item kkn-submit-item--done\">\n          <span class=\"kkn-submit-item__name\">other</span>\n          <span class=\"kkn-submit-item__state\"><span class=\"material-symbols-rounded\" style=\"font-size:16px\">check_circle</span>きめた</span>\n        </div>\n        <div class=\"kkn-submit-item \">\n          <span class=\"kkn-submit-item__name\">second</span>\n          <span class=\"kkn-submit-item__state\">考え中…</span>\n        </div>"
+        },
+        {
+          "id": "host-close-hint",
+          "property": "textContent",
+          "value": "まだの 1 人を待たずに進めます"
+        }
+      ]
+    },
+    {
+      "case": "host-already-triggered",
+      "result": "PASS",
+      "html": "\n        <div class=\"kkn-submit-item kkn-submit-item--done\">\n          <span class=\"kkn-submit-item__name\">other</span>\n          <span class=\"kkn-submit-item__state\"><span class=\"material-symbols-rounded\" style=\"font-size:16px\">check_circle</span>きめた</span>\n        </div>",
+      "count": "1 人 / 1 人がきめた",
+      "hint": "全員がきめると自動で答え合わせに進みます",
+      "disabled": true,
+      "host": "block",
+      "guest": "none",
+      "triggers": 0,
+      "revealTriggered": true,
+      "writes": [
+        {
+          "id": "thinking-round-num",
+          "property": "textContent",
+          "value": "1"
+        },
+        {
+          "id": "host-submit-count",
+          "property": "textContent",
+          "value": "1 人 / 1 人がきめた"
+        },
+        {
+          "id": "host-submit-list",
+          "property": "innerHTML",
+          "value": ""
+        },
+        {
+          "id": "host-submit-list",
+          "property": "innerHTML",
+          "value": "\n        <div class=\"kkn-submit-item kkn-submit-item--done\">\n          <span class=\"kkn-submit-item__name\">other</span>\n          <span class=\"kkn-submit-item__state\"><span class=\"material-symbols-rounded\" style=\"font-size:16px\">check_circle</span>きめた</span>\n        </div>"
+        },
+        {
+          "id": "host-close-hint",
+          "property": "textContent",
+          "value": "全員がきめると自動で答え合わせに進みます"
+        }
+      ]
+    },
+    {
+      "case": "host-repeat-auto-boundary",
+      "result": "PASS",
+      "html": "\n        <div class=\"kkn-submit-item kkn-submit-item--done\">\n          <span class=\"kkn-submit-item__name\">other</span>\n          <span class=\"kkn-submit-item__state\"><span class=\"material-symbols-rounded\" style=\"font-size:16px\">check_circle</span>きめた</span>\n        </div>",
+      "count": "1 人 / 1 人がきめた",
+      "hint": "全員がきめると自動で答え合わせに進みます",
+      "disabled": true,
+      "host": "block",
+      "guest": "none",
+      "triggers": 1,
+      "revealTriggered": true,
+      "writes": [
+        {
+          "id": "thinking-round-num",
+          "property": "textContent",
+          "value": "1"
+        },
+        {
+          "id": "host-submit-count",
+          "property": "textContent",
+          "value": "1 人 / 1 人がきめた"
+        },
+        {
+          "id": "host-submit-list",
+          "property": "innerHTML",
+          "value": ""
+        },
+        {
+          "id": "host-submit-list",
+          "property": "innerHTML",
+          "value": "\n        <div class=\"kkn-submit-item kkn-submit-item--done\">\n          <span class=\"kkn-submit-item__name\">other</span>\n          <span class=\"kkn-submit-item__state\"><span class=\"material-symbols-rounded\" style=\"font-size:16px\">check_circle</span>きめた</span>\n        </div>"
+        },
+        {
+          "id": "host-close-hint",
+          "property": "textContent",
+          "value": "全員がきめると自動で答え合わせに進みます"
+        },
+        {
+          "id": "thinking-round-num",
+          "property": "textContent",
+          "value": "1"
+        },
+        {
+          "id": "host-submit-count",
+          "property": "textContent",
+          "value": "1 人 / 1 人がきめた"
+        },
+        {
+          "id": "host-submit-list",
+          "property": "innerHTML",
+          "value": ""
+        },
+        {
+          "id": "host-submit-list",
+          "property": "innerHTML",
+          "value": "\n        <div class=\"kkn-submit-item kkn-submit-item--done\">\n          <span class=\"kkn-submit-item__name\">other</span>\n          <span class=\"kkn-submit-item__state\"><span class=\"material-symbols-rounded\" style=\"font-size:16px\">check_circle</span>きめた</span>\n        </div>"
+        },
+        {
+          "id": "host-close-hint",
+          "property": "textContent",
+          "value": "全員がきめると自動で答え合わせに進みます"
+        }
+      ]
+    }
+  ],
+  "hostNegativeControls": [
+    {
+      "case": "host-html-name-hidden-values",
+      "change": "${esc(name)} -> ${name}",
+      "samePredicateRejected": true
+    }
+  ],
+  "limitations": [
+    "Actual renderNumberGrid, handleReveal, renderScoreChips, host branch of handleThinking and shared esc; listener, guest caller, new-round reset and showScreen internals are not executed.",
+    "Host inputs fix currentScreen thinking and lastRoundNumber equal to round number; triggerReveal is a counted resolved-Promise stub, not real gameplay or DB logic.",
+    "Synthetic JSON records and scalar values only, DOM property capture; no HTML parsing or browser script execution.",
+    "No SDK, network, Firebase, iPhone, user data, event handlers or gameplay transitions.",
+    "Malformed object/proxy values and real DB write permissions are outside scope; UI hiding is not access control.",
+    "App and scanner unchanged; static unknown count is not reduced."
+  ]
+}
