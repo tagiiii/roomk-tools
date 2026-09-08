@@ -1,0 +1,40 @@
+{
+  "method": "Node VM with synthetic transaction and onDisconnect sequencing; not SDK or browser evidence",
+  "limitations": [
+    "No actual Firebase transaction retry protocol; old reservation modeled by direct old-path remove"
+  ],
+  "source": "apps/tatoe-narabe/index.html",
+  "sourceSha256": "414066be519483f32cf74b81fc30724d2936278f84dcfe77f22a093b868fc061",
+  "passed": 29,
+  "cases": [
+    "two reconnects preserve number ready and declaration",
+    "reservation acknowledgement after disconnect does not write alive",
+    "alive waiting during exit cannot resurrect removed member",
+    "late old connection removal retains new connection",
+    "delayed action rejects same-number next round in revealing",
+    "delayed action rejects same-number next round in playing",
+    "delayed action rejects changed connection generation in revealing",
+    "delayed action rejects changed connection generation in playing",
+    "missing member cannot acquire ready or declaration partial fields",
+    "declaration timestamp stays fixed during synthetic callback retries",
+    "waiting start waits for guests then retains presence and replaces round id",
+    "result start waits for guests then retains presence and replaces round id",
+    "force playing retains unready guests and expired timer does not block declaration",
+    "legacy missing round id accepts only legacy round and rejects new id",
+    "room null detaches host to TOP and calls cancel helper with old ref",
+    "expiry suppresses local optimistic null before synthetic retry",
+    "invalid guest host-name session is rejected before state changes",
+    "confirm pending redraw restores retry UI after abort",
+    "confirm pending redraw restores retry UI after reject",
+    "old confirm finally cannot clear a replacement action token",
+    "latest transaction rejects changed guest expired",
+    "latest transaction rejects changed guest role",
+    "temporary host disconnect before TTL does not newly block valid guest action",
+    "host start get delay stops safely after exit",
+    "host start get delay stops safely after replacement",
+    "join listener remains until commit then removes only its callback",
+    "join listener remains until abort then removes only its callback",
+    "join value error and transaction reject release temporary listener",
+    "old delayed presence cannot alter replacement room while new presence starts"
+  ]
+}
