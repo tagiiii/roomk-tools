@@ -1,0 +1,1249 @@
+{
+  "test": "B30 name-change real SDK isolated Emulator",
+  "date": "2026-09-08",
+  "sourceSHA256": "5bddcfd7c1f527298dedb768a3076c6b20f3349ad410cf78eb2739eb52524cb9",
+  "started": "2026-09-08T10:27:03.591Z",
+  "method": {
+    "sdk": "Firebase compat10.14.1 real SDK; Auth/Database/Hosting Emulator only",
+    "project": "demo-roomk-b30",
+    "runtime": "Java21, firebase-tools15.29.0, RTDB Emulator4.11.2",
+    "browser": "Playwright CLI dedicated b30, four independent contexts: GM host,2 changers,1 voter; PC1280 and guest375",
+    "dataSafety": "Auth9099/RTDB9000/Hosting5500 all127.0.0.1. CSP connect-src loopback-only, stats no-op. Static production-config gate before exact-SHA app copy launch. Runtime URL/project/Auth/DB/context-role/CSP guards.",
+    "uiFlow": "Final-source fresh UI GM creation/three joins, changer/voter submissions, one-to-one voting, result list/copy button and finish. No external metaverse operations.",
+    "disconnect": "Five phases each2 browser context.setOffline cycles,10s after server-side connections absence; no SDK stub or artificial transaction delay.",
+    "clipboard": "Dedicated host navigator.clipboard.writeText replaced with string capture, UI copy button clicked and content asserted. No OS clipboard read/write; actual clipboard transport unverified.",
+    "done": "Main UI room with guest reload and2 offline cycles then real30s deletion; separate synthetic revealing fixtures test hostFinish UI and host reload at5s / TOP-newroom with original deleteAt. Constants not shortened.",
+    "ttl": "Synthetic past hostDisconnectedAt timestamps test2min vs30min. Actual2min/30min wall-clock waits not performed. Phase changes/host restoration simulated via local REST only."
+  },
+  "result": {
+    "passed": 41,
+    "failed": 0
+  },
+  "steps": [
+    {
+      "step": "fresh",
+      "status": "done",
+      "caseCount": 1,
+      "completedAt": "2026-09-08T10:27:03.990Z"
+    },
+    {
+      "step": "waiting",
+      "status": "done",
+      "caseCount": 4,
+      "completedAt": "2026-09-08T10:27:32.696Z"
+    },
+    {
+      "step": "naming",
+      "status": "done",
+      "caseCount": 9,
+      "completedAt": "2026-09-08T10:28:00.032Z"
+    },
+    {
+      "step": "voting",
+      "status": "done",
+      "caseCount": 12,
+      "completedAt": "2026-09-08T10:28:28.004Z"
+    },
+    {
+      "step": "revealing",
+      "status": "done",
+      "caseCount": 16,
+      "completedAt": "2026-09-08T10:28:55.909Z"
+    },
+    {
+      "step": "done",
+      "status": "done",
+      "caseCount": 20,
+      "completedAt": "2026-09-08T10:29:33.736Z"
+    },
+    {
+      "step": "doneReload",
+      "status": "done",
+      "caseCount": 21,
+      "completedAt": "2026-09-08T10:30:12.021Z"
+    },
+    {
+      "step": "doneNewRoom",
+      "status": "done",
+      "caseCount": 22,
+      "completedAt": "2026-09-08T10:30:57.999Z"
+    },
+    {
+      "step": "ttl",
+      "status": "done",
+      "caseCount": 32,
+      "completedAt": "2026-09-08T10:31:13.237Z"
+    },
+    {
+      "step": "boundaries",
+      "status": "done",
+      "caseCount": 41,
+      "completedAt": "2026-09-08T10:32:41.164Z"
+    }
+  ],
+  "cases": [
+    {
+      "name": "final source fresh GM plus3 participant UI join",
+      "pass": true,
+      "room": {
+        "host": "host",
+        "hostConnected": true,
+        "players": {
+          "guestA": {
+            "connections": {
+              "-P1-YdUFvv78ZAd_cx2o": true
+            },
+            "isHost": false,
+            "presenceVersion": 1,
+            "ready": false
+          },
+          "guestB": {
+            "connections": {
+              "-P1-YdVrcu78TolUzUCF": true
+            },
+            "isHost": false,
+            "presenceVersion": 1,
+            "ready": false
+          },
+          "guestC": {
+            "connections": {
+              "-P1-YdXSxgL9xv3p2QxX": true
+            },
+            "isHost": false,
+            "presenceVersion": 1,
+            "ready": false
+          },
+          "host": {
+            "gameRole": "host",
+            "isHost": true,
+            "ready": true
+          }
+        },
+        "revealAnswer": false,
+        "revealIndex": 0,
+        "status": "waiting"
+      }
+    },
+    {
+      "name": "waiting reload",
+      "pass": true,
+      "before": {
+        "isHost": false,
+        "gameRole": null,
+        "changedName": null,
+        "ready": false,
+        "votes": null
+      },
+      "after": {
+        "isHost": false,
+        "gameRole": null,
+        "changedName": null,
+        "ready": false,
+        "votes": null
+      }
+    },
+    {
+      "name": "waiting browser10sec offline cycle1",
+      "pass": true,
+      "before": {
+        "status": "waiting",
+        "deleteAt": null,
+        "revealOrder": null,
+        "players": {
+          "guestA": {
+            "isHost": false,
+            "gameRole": null,
+            "changedName": null,
+            "ready": false,
+            "votes": null
+          },
+          "guestB": {
+            "isHost": false,
+            "gameRole": null,
+            "changedName": null,
+            "ready": false,
+            "votes": null
+          },
+          "guestC": {
+            "isHost": false,
+            "gameRole": null,
+            "changedName": null,
+            "ready": false,
+            "votes": null
+          },
+          "host": {
+            "isHost": true,
+            "gameRole": "host",
+            "changedName": null,
+            "ready": true,
+            "votes": null
+          }
+        }
+      },
+      "after": {
+        "status": "waiting",
+        "deleteAt": null,
+        "revealOrder": null,
+        "players": {
+          "guestA": {
+            "isHost": false,
+            "gameRole": null,
+            "changedName": null,
+            "ready": false,
+            "votes": null
+          },
+          "guestB": {
+            "isHost": false,
+            "gameRole": null,
+            "changedName": null,
+            "ready": false,
+            "votes": null
+          },
+          "guestC": {
+            "isHost": false,
+            "gameRole": null,
+            "changedName": null,
+            "ready": false,
+            "votes": null
+          },
+          "host": {
+            "isHost": true,
+            "gameRole": "host",
+            "changedName": null,
+            "ready": true,
+            "votes": null
+          }
+        }
+      }
+    },
+    {
+      "name": "waiting browser10sec offline cycle2",
+      "pass": true,
+      "before": {
+        "status": "waiting",
+        "deleteAt": null,
+        "revealOrder": null,
+        "players": {
+          "guestA": {
+            "isHost": false,
+            "gameRole": null,
+            "changedName": null,
+            "ready": false,
+            "votes": null
+          },
+          "guestB": {
+            "isHost": false,
+            "gameRole": null,
+            "changedName": null,
+            "ready": false,
+            "votes": null
+          },
+          "guestC": {
+            "isHost": false,
+            "gameRole": null,
+            "changedName": null,
+            "ready": false,
+            "votes": null
+          },
+          "host": {
+            "isHost": true,
+            "gameRole": "host",
+            "changedName": null,
+            "ready": true,
+            "votes": null
+          }
+        }
+      },
+      "after": {
+        "status": "waiting",
+        "deleteAt": null,
+        "revealOrder": null,
+        "players": {
+          "guestA": {
+            "isHost": false,
+            "gameRole": null,
+            "changedName": null,
+            "ready": false,
+            "votes": null
+          },
+          "guestB": {
+            "isHost": false,
+            "gameRole": null,
+            "changedName": null,
+            "ready": false,
+            "votes": null
+          },
+          "guestC": {
+            "isHost": false,
+            "gameRole": null,
+            "changedName": null,
+            "ready": false,
+            "votes": null
+          },
+          "host": {
+            "isHost": true,
+            "gameRole": "host",
+            "changedName": null,
+            "ready": true,
+            "votes": null
+          }
+        }
+      }
+    },
+    {
+      "name": "naming reload",
+      "pass": true,
+      "before": {
+        "isHost": false,
+        "gameRole": null,
+        "changedName": null,
+        "ready": false,
+        "votes": null
+      },
+      "after": {
+        "isHost": false,
+        "gameRole": null,
+        "changedName": null,
+        "ready": false,
+        "votes": null
+      }
+    },
+    {
+      "name": "naming reload",
+      "pass": true,
+      "before": {
+        "isHost": false,
+        "gameRole": "changer",
+        "changedName": "ま'ち",
+        "ready": true,
+        "votes": null
+      },
+      "after": {
+        "isHost": false,
+        "gameRole": "changer",
+        "changedName": "ま'ち",
+        "ready": true,
+        "votes": null
+      }
+    },
+    {
+      "name": "naming browser10sec offline cycle1",
+      "pass": true,
+      "before": {
+        "status": "naming",
+        "deleteAt": null,
+        "revealOrder": null,
+        "players": {
+          "guestA": {
+            "isHost": false,
+            "gameRole": "changer",
+            "changedName": "ま'ち",
+            "ready": true,
+            "votes": null
+          },
+          "guestB": {
+            "isHost": false,
+            "gameRole": "changer",
+            "changedName": "<b>ねこ</b>",
+            "ready": true,
+            "votes": null
+          },
+          "guestC": {
+            "isHost": false,
+            "gameRole": null,
+            "changedName": null,
+            "ready": false,
+            "votes": null
+          },
+          "host": {
+            "isHost": true,
+            "gameRole": "host",
+            "changedName": null,
+            "ready": true,
+            "votes": null
+          }
+        }
+      },
+      "after": {
+        "status": "naming",
+        "deleteAt": null,
+        "revealOrder": null,
+        "players": {
+          "guestA": {
+            "isHost": false,
+            "gameRole": "changer",
+            "changedName": "ま'ち",
+            "ready": true,
+            "votes": null
+          },
+          "guestB": {
+            "isHost": false,
+            "gameRole": "changer",
+            "changedName": "<b>ねこ</b>",
+            "ready": true,
+            "votes": null
+          },
+          "guestC": {
+            "isHost": false,
+            "gameRole": null,
+            "changedName": null,
+            "ready": false,
+            "votes": null
+          },
+          "host": {
+            "isHost": true,
+            "gameRole": "host",
+            "changedName": null,
+            "ready": true,
+            "votes": null
+          }
+        }
+      }
+    },
+    {
+      "name": "naming browser10sec offline cycle2",
+      "pass": true,
+      "before": {
+        "status": "naming",
+        "deleteAt": null,
+        "revealOrder": null,
+        "players": {
+          "guestA": {
+            "isHost": false,
+            "gameRole": "changer",
+            "changedName": "ま'ち",
+            "ready": true,
+            "votes": null
+          },
+          "guestB": {
+            "isHost": false,
+            "gameRole": "changer",
+            "changedName": "<b>ねこ</b>",
+            "ready": true,
+            "votes": null
+          },
+          "guestC": {
+            "isHost": false,
+            "gameRole": null,
+            "changedName": null,
+            "ready": false,
+            "votes": null
+          },
+          "host": {
+            "isHost": true,
+            "gameRole": "host",
+            "changedName": null,
+            "ready": true,
+            "votes": null
+          }
+        }
+      },
+      "after": {
+        "status": "naming",
+        "deleteAt": null,
+        "revealOrder": null,
+        "players": {
+          "guestA": {
+            "isHost": false,
+            "gameRole": "changer",
+            "changedName": "ま'ち",
+            "ready": true,
+            "votes": null
+          },
+          "guestB": {
+            "isHost": false,
+            "gameRole": "changer",
+            "changedName": "<b>ねこ</b>",
+            "ready": true,
+            "votes": null
+          },
+          "guestC": {
+            "isHost": false,
+            "gameRole": null,
+            "changedName": null,
+            "ready": false,
+            "votes": null
+          },
+          "host": {
+            "isHost": true,
+            "gameRole": "host",
+            "changedName": null,
+            "ready": true,
+            "votes": null
+          }
+        }
+      }
+    },
+    {
+      "name": "UI2 changers and1 voter roles preserved",
+      "pass": true,
+      "room": {
+        "host": "host",
+        "hostConnected": true,
+        "players": {
+          "guestA": {
+            "changedName": "ま'ち",
+            "connections": {
+              "-P1-YrB_n7ZUPY7uWdTF": true
+            },
+            "gameRole": "changer",
+            "isHost": false,
+            "presenceVersion": 1,
+            "ready": true
+          },
+          "guestB": {
+            "changedName": "<b>ねこ</b>",
+            "connections": {
+              "-P1-YdVrcu78TolUzUCF": true
+            },
+            "gameRole": "changer",
+            "isHost": false,
+            "presenceVersion": 1,
+            "ready": true
+          },
+          "guestC": {
+            "connections": {
+              "-P1-YdXSxgL9xv3p2QxX": true
+            },
+            "gameRole": "voter",
+            "isHost": false,
+            "presenceVersion": 1,
+            "ready": true
+          },
+          "host": {
+            "gameRole": "host",
+            "isHost": true,
+            "ready": true
+          }
+        },
+        "revealAnswer": false,
+        "revealIndex": 0,
+        "status": "voting"
+      }
+    },
+    {
+      "name": "voting browser10sec offline cycle1",
+      "pass": true,
+      "before": {
+        "status": "voting",
+        "deleteAt": null,
+        "revealOrder": null,
+        "players": {
+          "guestA": {
+            "isHost": false,
+            "gameRole": "changer",
+            "changedName": "ま'ち",
+            "ready": true,
+            "votes": null
+          },
+          "guestB": {
+            "isHost": false,
+            "gameRole": "changer",
+            "changedName": "<b>ねこ</b>",
+            "ready": true,
+            "votes": null
+          },
+          "guestC": {
+            "isHost": false,
+            "gameRole": "voter",
+            "changedName": null,
+            "ready": true,
+            "votes": null
+          },
+          "host": {
+            "isHost": true,
+            "gameRole": "host",
+            "changedName": null,
+            "ready": true,
+            "votes": null
+          }
+        }
+      },
+      "after": {
+        "status": "voting",
+        "deleteAt": null,
+        "revealOrder": null,
+        "players": {
+          "guestA": {
+            "isHost": false,
+            "gameRole": "changer",
+            "changedName": "ま'ち",
+            "ready": true,
+            "votes": null
+          },
+          "guestB": {
+            "isHost": false,
+            "gameRole": "changer",
+            "changedName": "<b>ねこ</b>",
+            "ready": true,
+            "votes": null
+          },
+          "guestC": {
+            "isHost": false,
+            "gameRole": "voter",
+            "changedName": null,
+            "ready": true,
+            "votes": null
+          },
+          "host": {
+            "isHost": true,
+            "gameRole": "host",
+            "changedName": null,
+            "ready": true,
+            "votes": null
+          }
+        }
+      }
+    },
+    {
+      "name": "voting browser10sec offline cycle2",
+      "pass": true,
+      "before": {
+        "status": "voting",
+        "deleteAt": null,
+        "revealOrder": null,
+        "players": {
+          "guestA": {
+            "isHost": false,
+            "gameRole": "changer",
+            "changedName": "ま'ち",
+            "ready": true,
+            "votes": null
+          },
+          "guestB": {
+            "isHost": false,
+            "gameRole": "changer",
+            "changedName": "<b>ねこ</b>",
+            "ready": true,
+            "votes": null
+          },
+          "guestC": {
+            "isHost": false,
+            "gameRole": "voter",
+            "changedName": null,
+            "ready": true,
+            "votes": {
+              "guestA": "guestA",
+              "guestB": "guestB"
+            }
+          },
+          "host": {
+            "isHost": true,
+            "gameRole": "host",
+            "changedName": null,
+            "ready": true,
+            "votes": null
+          }
+        }
+      },
+      "after": {
+        "status": "voting",
+        "deleteAt": null,
+        "revealOrder": null,
+        "players": {
+          "guestA": {
+            "isHost": false,
+            "gameRole": "changer",
+            "changedName": "ま'ち",
+            "ready": true,
+            "votes": null
+          },
+          "guestB": {
+            "isHost": false,
+            "gameRole": "changer",
+            "changedName": "<b>ねこ</b>",
+            "ready": true,
+            "votes": null
+          },
+          "guestC": {
+            "isHost": false,
+            "gameRole": "voter",
+            "changedName": null,
+            "ready": true,
+            "votes": {
+              "guestA": "guestA",
+              "guestB": "guestB"
+            }
+          },
+          "host": {
+            "isHost": true,
+            "gameRole": "host",
+            "changedName": null,
+            "ready": true,
+            "votes": null
+          }
+        }
+      }
+    },
+    {
+      "name": "UI one-to-one vote draft sameconnection retained disconnect discarded savedvotes restored",
+      "pass": true,
+      "votes": {
+        "guestA": "guestA",
+        "guestB": "guestB"
+      }
+    },
+    {
+      "name": "revealing reload",
+      "pass": true,
+      "before": {
+        "isHost": false,
+        "gameRole": "changer",
+        "changedName": "ま'ち",
+        "ready": true,
+        "votes": null
+      },
+      "after": {
+        "isHost": false,
+        "gameRole": "changer",
+        "changedName": "ま'ち",
+        "ready": true,
+        "votes": null
+      }
+    },
+    {
+      "name": "revealing browser10sec offline cycle1",
+      "pass": true,
+      "before": {
+        "status": "revealing",
+        "deleteAt": null,
+        "revealOrder": [
+          "guestA",
+          "guestB"
+        ],
+        "players": {
+          "guestA": {
+            "isHost": false,
+            "gameRole": "changer",
+            "changedName": "ま'ち",
+            "ready": true,
+            "votes": null
+          },
+          "guestB": {
+            "isHost": false,
+            "gameRole": "changer",
+            "changedName": "<b>ねこ</b>",
+            "ready": true,
+            "votes": null
+          },
+          "guestC": {
+            "isHost": false,
+            "gameRole": "voter",
+            "changedName": null,
+            "ready": true,
+            "votes": {
+              "guestA": "guestA",
+              "guestB": "guestB"
+            }
+          },
+          "host": {
+            "isHost": true,
+            "gameRole": "host",
+            "changedName": null,
+            "ready": true,
+            "votes": null
+          }
+        }
+      },
+      "after": {
+        "status": "revealing",
+        "deleteAt": null,
+        "revealOrder": [
+          "guestA",
+          "guestB"
+        ],
+        "players": {
+          "guestA": {
+            "isHost": false,
+            "gameRole": "changer",
+            "changedName": "ま'ち",
+            "ready": true,
+            "votes": null
+          },
+          "guestB": {
+            "isHost": false,
+            "gameRole": "changer",
+            "changedName": "<b>ねこ</b>",
+            "ready": true,
+            "votes": null
+          },
+          "guestC": {
+            "isHost": false,
+            "gameRole": "voter",
+            "changedName": null,
+            "ready": true,
+            "votes": {
+              "guestA": "guestA",
+              "guestB": "guestB"
+            }
+          },
+          "host": {
+            "isHost": true,
+            "gameRole": "host",
+            "changedName": null,
+            "ready": true,
+            "votes": null
+          }
+        }
+      }
+    },
+    {
+      "name": "revealing browser10sec offline cycle2",
+      "pass": true,
+      "before": {
+        "status": "revealing",
+        "deleteAt": null,
+        "revealOrder": [
+          "guestA",
+          "guestB"
+        ],
+        "players": {
+          "guestA": {
+            "isHost": false,
+            "gameRole": "changer",
+            "changedName": "ま'ち",
+            "ready": true,
+            "votes": null
+          },
+          "guestB": {
+            "isHost": false,
+            "gameRole": "changer",
+            "changedName": "<b>ねこ</b>",
+            "ready": true,
+            "votes": null
+          },
+          "guestC": {
+            "isHost": false,
+            "gameRole": "voter",
+            "changedName": null,
+            "ready": true,
+            "votes": {
+              "guestA": "guestA",
+              "guestB": "guestB"
+            }
+          },
+          "host": {
+            "isHost": true,
+            "gameRole": "host",
+            "changedName": null,
+            "ready": true,
+            "votes": null
+          }
+        }
+      },
+      "after": {
+        "status": "revealing",
+        "deleteAt": null,
+        "revealOrder": [
+          "guestA",
+          "guestB"
+        ],
+        "players": {
+          "guestA": {
+            "isHost": false,
+            "gameRole": "changer",
+            "changedName": "ま'ち",
+            "ready": true,
+            "votes": null
+          },
+          "guestB": {
+            "isHost": false,
+            "gameRole": "changer",
+            "changedName": "<b>ねこ</b>",
+            "ready": true,
+            "votes": null
+          },
+          "guestC": {
+            "isHost": false,
+            "gameRole": "voter",
+            "changedName": null,
+            "ready": true,
+            "votes": {
+              "guestA": "guestA",
+              "guestB": "guestB"
+            }
+          },
+          "host": {
+            "isHost": true,
+            "gameRole": "host",
+            "changedName": null,
+            "ready": true,
+            "votes": null
+          }
+        }
+      }
+    },
+    {
+      "name": "UI results escaped and copy string capture only",
+      "pass": true,
+      "copy": "【名前変えゲーム 結果】\n・ま'ち → guestA（1人中1人正解）\n・<b>ねこ</b> → guestB（1人中1人正解）",
+      "note": "OS clipboard not touched or verified"
+    },
+    {
+      "name": "done reload",
+      "pass": true,
+      "before": {
+        "isHost": false,
+        "gameRole": "changer",
+        "changedName": "ま'ち",
+        "ready": true,
+        "votes": null
+      },
+      "after": {
+        "isHost": false,
+        "gameRole": "changer",
+        "changedName": "ま'ち",
+        "ready": true,
+        "votes": null
+      }
+    },
+    {
+      "name": "done browser10sec offline cycle1",
+      "pass": true,
+      "before": {
+        "status": "done",
+        "deleteAt": 1788863373706,
+        "revealOrder": [
+          "guestA",
+          "guestB"
+        ],
+        "players": {
+          "guestA": {
+            "isHost": false,
+            "gameRole": "changer",
+            "changedName": "ま'ち",
+            "ready": true,
+            "votes": null
+          },
+          "guestB": {
+            "isHost": false,
+            "gameRole": "changer",
+            "changedName": "<b>ねこ</b>",
+            "ready": true,
+            "votes": null
+          },
+          "guestC": {
+            "isHost": false,
+            "gameRole": "voter",
+            "changedName": null,
+            "ready": true,
+            "votes": {
+              "guestA": "guestA",
+              "guestB": "guestB"
+            }
+          },
+          "host": {
+            "isHost": true,
+            "gameRole": "host",
+            "changedName": null,
+            "ready": true,
+            "votes": null
+          }
+        }
+      },
+      "after": {
+        "status": "done",
+        "deleteAt": 1788863373706,
+        "revealOrder": [
+          "guestA",
+          "guestB"
+        ],
+        "players": {
+          "guestA": {
+            "isHost": false,
+            "gameRole": "changer",
+            "changedName": "ま'ち",
+            "ready": true,
+            "votes": null
+          },
+          "guestB": {
+            "isHost": false,
+            "gameRole": "changer",
+            "changedName": "<b>ねこ</b>",
+            "ready": true,
+            "votes": null
+          },
+          "guestC": {
+            "isHost": false,
+            "gameRole": "voter",
+            "changedName": null,
+            "ready": true,
+            "votes": {
+              "guestA": "guestA",
+              "guestB": "guestB"
+            }
+          },
+          "host": {
+            "isHost": true,
+            "gameRole": "host",
+            "changedName": null,
+            "ready": true,
+            "votes": null
+          }
+        }
+      }
+    },
+    {
+      "name": "done browser10sec offline cycle2",
+      "pass": true,
+      "before": {
+        "status": "done",
+        "deleteAt": 1788863373706,
+        "revealOrder": [
+          "guestA",
+          "guestB"
+        ],
+        "players": {
+          "guestA": {
+            "isHost": false,
+            "gameRole": "changer",
+            "changedName": "ま'ち",
+            "ready": true,
+            "votes": null
+          },
+          "guestB": {
+            "isHost": false,
+            "gameRole": "changer",
+            "changedName": "<b>ねこ</b>",
+            "ready": true,
+            "votes": null
+          },
+          "guestC": {
+            "isHost": false,
+            "gameRole": "voter",
+            "changedName": null,
+            "ready": true,
+            "votes": {
+              "guestA": "guestA",
+              "guestB": "guestB"
+            }
+          },
+          "host": {
+            "isHost": true,
+            "gameRole": "host",
+            "changedName": null,
+            "ready": true,
+            "votes": null
+          }
+        }
+      },
+      "after": {
+        "status": "done",
+        "deleteAt": 1788863373706,
+        "revealOrder": [
+          "guestA",
+          "guestB"
+        ],
+        "players": {
+          "guestA": {
+            "isHost": false,
+            "gameRole": "changer",
+            "changedName": "ま'ち",
+            "ready": true,
+            "votes": null
+          },
+          "guestB": {
+            "isHost": false,
+            "gameRole": "changer",
+            "changedName": "<b>ねこ</b>",
+            "ready": true,
+            "votes": null
+          },
+          "guestC": {
+            "isHost": false,
+            "gameRole": "voter",
+            "changedName": null,
+            "ready": true,
+            "votes": {
+              "guestA": "guestA",
+              "guestB": "guestB"
+            }
+          },
+          "host": {
+            "isHost": true,
+            "gameRole": "host",
+            "changedName": null,
+            "ready": true,
+            "votes": null
+          }
+        }
+      }
+    },
+    {
+      "name": "done actual30sec deletion",
+      "pass": true,
+      "elapsedMs": 30040,
+      "deleteAt": 1788863373706
+    },
+    {
+      "name": "doneReload original30sec deadline",
+      "pass": true,
+      "deleteAt": 1788863411988,
+      "elapsedMs": 30016,
+      "note": "Separate synthetic revealing fixture; hostFinish UI actual30sec timer"
+    },
+    {
+      "name": "doneNewRoom original30sec deadline",
+      "pass": true,
+      "deleteAt": 1788863457966,
+      "elapsedMs": 30013,
+      "note": "Separate synthetic revealing fixture; hostFinish UI actual30sec timer"
+    },
+    {
+      "name": "TTL naming 125sec old retained on new join and savedrole DB restoration",
+      "pass": true
+    },
+    {
+      "name": "TTL voting 125sec old retained on new join and savedrole DB restoration",
+      "pass": true
+    },
+    {
+      "name": "TTL revealing 125sec old retained on new join and savedrole DB restoration",
+      "pass": true
+    },
+    {
+      "name": "TTL waiting boundary fixture",
+      "pass": true,
+      "pastMs": 119000,
+      "elapsedMs": 1102
+    },
+    {
+      "name": "TTL naming boundary fixture",
+      "pass": true,
+      "pastMs": 1799000,
+      "elapsedMs": 1119
+    },
+    {
+      "name": "TTL voting boundary fixture",
+      "pass": true,
+      "pastMs": 1801000,
+      "elapsedMs": 146
+    },
+    {
+      "name": "TTL revealing boundary fixture",
+      "pass": true,
+      "pastMs": 1801000,
+      "elapsedMs": 136
+    },
+    {
+      "name": "TTL done boundary fixture",
+      "pass": true,
+      "pastMs": 121000,
+      "elapsedMs": 136
+    },
+    {
+      "name": "TTL phase change extends then shortens absolute deadline",
+      "pass": true
+    },
+    {
+      "name": "TTL synthetic host restoration cancels old deadline",
+      "pass": true
+    },
+    {
+      "name": "candidate explicit exit discards unsubmitted draft and redraws",
+      "pass": true
+    },
+    {
+      "name": "submitted votes retained after candidate exit and storedHTML text safe",
+      "pass": true,
+      "votes": {
+        "guestC": "guestC"
+      }
+    },
+    {
+      "name": "missing player cleanup and reload",
+      "pass": true
+    },
+    {
+      "name": "invalid session/RTDB key",
+      "pass": true,
+      "saved": "{bad"
+    },
+    {
+      "name": "invalid session/RTDB key",
+      "pass": true,
+      "saved": "{\"roomCode\":\"B3ASEC\",\"nickname\":\"host\",\"isHost\":false}"
+    },
+    {
+      "name": "invalid session/RTDB key",
+      "pass": true,
+      "saved": "{\"roomCode\":\"B3ASEC\",\"nickname\":\"missing\",\"isHost\":false}"
+    },
+    {
+      "name": "invalid session/RTDB key",
+      "pass": true,
+      "saved": "{\"roomCode\":\"B3ASEC\",\"nickname\":\"host\",\"isHost\":\"true\"}"
+    },
+    {
+      "name": "invalid session/RTDB key",
+      "pass": true,
+      "saved": "{\"roomCode\":\"B3ASEC\",\"nickname\":\"notHost\",\"isHost\":true}"
+    },
+    {
+      "name": "invalid session/RTDB key",
+      "pass": true,
+      "saved": "{\"roomCode\":\"B3ASEC\",\"nickname\":\"bad/name\",\"isHost\":false}"
+    }
+  ],
+  "network": {
+    "scope": "Final sequential steps only. Fresh step excludes pre-new-room reload/cleanup after resetting collection; between-step gaps and reference runs excluded. CSP applies all Hosting pages.",
+    "observedEvents": 816,
+    "origins": {
+      "ws://127.0.0.1:9000": 41,
+      "http://127.0.0.1:5500": 105,
+      "https://fonts.googleapis.com": 42,
+      "https://www.gstatic.com": 63,
+      "https://fonts.gstatic.com": 423,
+      "http://127.0.0.1:9099": 20,
+      "http://127.0.0.1:9000": 122
+    },
+    "unexpectedOrigins": [],
+    "productionDataTrafficObserved": false,
+    "publicSanitization": "Only origin counts; no raw URL query strings/auth/session tokens."
+  },
+  "console": {
+    "scope": "Same step-scoped listeners",
+    "pageErrors": [],
+    "expectedOfflineErrors": 74,
+    "unexpectedErrorsOrWarnings": [],
+    "initialOutsideFinalCapture": "One favicon.ico404 at localhost before setup; known missing icon."
+  },
+  "visual": {
+    "widths": [
+      1280,
+      375
+    ],
+    "horizontalOverflow": false,
+    "screenshots": "Scratch output/playwright; parent read-only visual review separate",
+    "noIPhone": true
+  },
+  "referenceRunsExcluded": [
+    {
+      "source": "c307d3956877ff0da9ec3884752ba316785c54c1bc80edf842f9d7a644f8df07",
+      "note": "Initial9cases reference only; superseded reconnect done-snapshot fix."
+    },
+    {
+      "source": "a077b97078b5d599394b24207282926c9ba528b52407aceff595055af2714d33",
+      "note": "20cases passed then real UI second-create disabled failure. DOM/screenshot preserved in scratch. Fixed by5bdd; final full rerun and UI repeat create/join pass."
+    }
+  ],
+  "harnessAdjustments": [
+    "Earlier overlapping naming/voting CLI calls overwrote result aggregation. That run excluded; page-running lock and sequential step done/caseCount records added, final fresh full rerun performed.",
+    "Invalid-session check initially matched default TOP before async tryReconnect finished. Wait now requires TOP + cleared session + null roomRef. Partial boundary cases/logs removed and whole boundary step rerun once; no duplicates."
+  ],
+  "limits": [
+    "VM artificial races/transaction retries are separate evidence, not claimed here.",
+    "Guest identities/gameRole are UI/session convenience, not authentication boundary.",
+    "Normal game/browser contexts only; no production, iPhone, external metaverse or real OS clipboard test.",
+    "Unsubmitted drafts are not persisted guarantees; sameconnection/changedroster/disconnect behavior tested as stated."
+  ],
+  "cleanup": {
+    "roomsBeforeClosing": null,
+    "statsBeforeClosing": null,
+    "runningStep": null,
+    "browser": "b30 closed",
+    "emulatorCLI": 54017,
+    "emulatorJava": 54060,
+    "status": "Owned CLI SIGTERM -> clean shutdown exit0; bothPIDs absent; no LISTEN on4000/4400/4500/5500/9000/9099. Scratch/reference evidence preserved."
+  }
+}
