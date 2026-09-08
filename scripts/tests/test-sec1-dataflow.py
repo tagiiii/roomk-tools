@@ -20,6 +20,16 @@ assert memo_pair[0]['code'].count('escapeHtml(memo)') == 1
 assert memo_pair[0]['code'].replace('escapeHtml(memo)', 'memo', 1) == memo_pair[1]['code']
 assert all(c['states'] == ['unknown'] for c in memo_pair)
 
+# A reduced application-shaped pair: unsupported condition/callback provenance
+# must remain visible, without claiming the escaped case has been certified.
+conditional_pair = [next(c for c in CASES if c['name'] == name) for name in (
+    'kakure shown conditional escaped representative',
+    'kakure shown conditional escape missing representative',
+)]
+assert conditional_pair[0]['code'].count('esc(String(value))') == 1
+assert conditional_pair[0]['code'].replace('esc(String(value))', 'String(value)', 1) == conditional_pair[1]['code']
+assert all(c['states'] == ['unknown'] for c in conditional_pair)
+
 
 def run(args, cwd=ROOT):
     return subprocess.run(args, cwd=cwd, capture_output=True, text=True, check=False)
@@ -45,6 +55,9 @@ with tempfile.TemporaryDirectory(prefix='roomk-a11-fixtures-') as directory:
         if case in memo_pair:
             assert len(data['findings']) == 1, case['name']
             assert data['findings'][0]['reference'] == 'cardsHtml', case['name']
+        if case in conditional_pair:
+            assert len(data['findings']) == 1, case['name']
+            assert data['findings'][0]['reference'] == 'shown', case['name']
         if 'lines' in case:
             assert [r['line'] for r in data['findings']] == case['lines']
     # Missing files are failures, not an empty/successful scan.
