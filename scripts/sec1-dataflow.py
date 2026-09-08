@@ -193,6 +193,19 @@ def evaluate(tokens, env, shadowed, source):
                 if depth == 0 and index != len(tokens) - 1:
                     return 'unknown'
         return 'safe'
+    # Only a complete no-argument suffix on an already known source/reference.
+    # trim removes whitespace, not HTML. Do not extend safe/html certification.
+    if [t[1] for t in tokens[-4:]] == ['.', 'trim', '(', ')']:
+        receiver = tokens[:-4]
+        receiver_text = spelling(receiver)
+        # Restrict receivers to bare aliases or the existing simple DOM/storage
+        # source calls. No concat, conditional, nested call or transform chain.
+        simple = BARE.fullmatch(receiver_text) or re.fullmatch(
+            r'(?:document\.(?:getElementById|querySelector)\([^()]*\)\.(?:value|textContent|innerHTML)'
+            r'|(?:localStorage|sessionStorage)\.getItem\([^()]*\))', receiver_text)
+        if simple and 'trim' not in shadowed and evaluate(receiver, env, shadowed, source) == 'raw':
+            return 'raw'
+        return 'unknown'
     if 'document' not in shadowed and re.fullmatch(r'document\.(?:getElementById|querySelector)\([^()]*\)', text):
         return 'dom'
     if 'document' not in shadowed and re.fullmatch(r'document\.(?:getElementById|querySelector)\([^()]*\)\.(?:value|textContent|innerHTML)', text):
@@ -230,6 +243,17 @@ def scan_js(source, filename, offset=0):
     # Any helper declaration/assignment/parameter spelling makes it untrusted
     # throughout this script. Deliberately over-conservative rather than scope guessing.
     shadowed = set()
+    # Explicit method/prototype replacement makes trim untrusted script-wide.
+    # This deliberately also rejects unrelated trim declarations/string keys;
+    # dynamic computed mutation and changes in other scripts are not resolved.
+    for i, t in enumerate(tokens):
+        if t[1] in ('prototype', '__proto__', 'setPrototypeOf', 'defineProperty', 'defineProperties'):
+            shadowed.add('trim')
+        if t[0] == 'string' and t[1][1:-1] == 'trim':
+            shadowed.add('trim')
+        if t[1] == 'trim' and not (i > 0 and tokens[i - 1][1] == '.'
+                                   and [x[1] for x in tokens[i + 1:i + 3]] == ['(', ')']):
+            shadowed.add('trim')
     for i, t in enumerate(tokens):
         if t[1] in ('esc', 'escapeHtml', 'RoomkRTDB') or t[1] in SOURCES:
             prev = tokens[i - 1][1] if i else ''
