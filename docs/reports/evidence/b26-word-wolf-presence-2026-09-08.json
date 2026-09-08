@@ -1,0 +1,28 @@
+{
+  "method": "Node VM with in-memory transaction / onDisconnect sequencing controls; not Firebase SDK or browser evidence",
+  "limitations": [
+    "No SDK transaction retry protocol simulation; late old removal invokes the old connection path directly"
+  ],
+  "source": "apps/word-wolf/index.html",
+  "sourceSha256": "c34d228db37689d6270a983d9d2975e6949f42b41eda687b707b3681bf707d80",
+  "passed": 17,
+  "cases": [
+    "initial / second reconnect preserves full guest and replaces connection IDs",
+    "disconnect during reservation prevents alive registration",
+    "leave while alive transaction is queued removes original guest and cancels presence",
+    "deleted room is not recreated by delayed alive transaction",
+    "deleted guest is not recreated by ready / vote",
+    "deleted guest is not recreated by delayed alive transaction",
+    "retired presence cannot alter replacement room state",
+    "late old connection removal cannot remove the new connection or player",
+    "ready / vote rejection restores retry controls",
+    "missing guest listener retires local session without recreating member",
+    "waiting disconnected guests block game start without role filtering",
+    "expiry abort concurrent exit cannot rearm presence",
+    "expiry disables optimistic local events and retains state for synthetic retry",
+    "host-named guest session rejected before state changes",
+    "join cache listener stays until commit and releases only itself",
+    "join cache listener stays until abort and releases only itself",
+    "join cache listener releases on value permission error and transaction rejection"
+  ]
+}
