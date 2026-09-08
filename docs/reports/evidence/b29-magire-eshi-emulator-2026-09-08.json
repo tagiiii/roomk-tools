@@ -1,0 +1,4854 @@
+{
+  "test": "B-29 magire-eshi real SDK isolated Emulator",
+  "date": "2026-09-08",
+  "sourceSHA256": "3532d1b03ae67d198f02bb07161dcd3c0a294f29c00dae46f9d946538e431e3c",
+  "method": {
+    "project": "demo-roomk-b29",
+    "sdk": "10.14.1 compat",
+    "ports": {
+      "auth": 9099,
+      "database": 9000,
+      "hosting": 5500
+    },
+    "browser": "dedicated Playwright CLI b29, host and3 isolated guest contexts",
+    "steps": "fresh uiRound waiting reveal_role drawing discussion voting result extra replaySkip done boundaries",
+    "fixtures": "REST synthetic phase/boundary data; uiRound progresses through actual UI; done actual30sec"
+  },
+  "cases": [
+    {
+      "name": "final source fresh room and3 guests UI join",
+      "pass": true,
+      "room": {
+        "host": "host",
+        "hostConnected": true,
+        "players": {
+          "guestA": {
+            "confirmed": false,
+            "connections": {
+              "-P0zdxHskaOb-sPnYpmR": true
+            },
+            "isHost": false,
+            "presenceVersion": 1
+          },
+          "guestB": {
+            "confirmed": false,
+            "connections": {
+              "-P0zdxJY1eId3A_E7FLv": true
+            },
+            "isHost": false,
+            "presenceVersion": 1
+          },
+          "guestC": {
+            "confirmed": false,
+            "connections": {
+              "-P0zdxL5kXHxKWkew8oM": true
+            },
+            "isHost": false,
+            "presenceVersion": 1
+          },
+          "host": {
+            "confirmed": false,
+            "isHost": true
+          }
+        },
+        "round": 0,
+        "status": "waiting"
+      }
+    },
+    {
+      "name": "real UI role reveal and6 pointer strokes naturally reach discussion",
+      "pass": true,
+      "game": {
+        "colors": {
+          "guestA": "#2E7D8C",
+          "guestB": "#E4572E",
+          "guestC": "#6B3FA0"
+        },
+        "drawOrder": [
+          "guestB",
+          "guestA",
+          "guestC"
+        ],
+        "fakeArtist": "guestA",
+        "strokes": {
+          "-P0zdzY-aiwG_E2QrxUF": {
+            "by": "guestB",
+            "color": "#E4572E",
+            "points": [
+              [
+                120,
+                90
+              ],
+              [
+                154,
+                93
+              ],
+              [
+                188,
+                96
+              ],
+              [
+                221,
+                98
+              ],
+              [
+                255,
+                101
+              ],
+              [
+                289,
+                104
+              ],
+              [
+                322,
+                107
+              ],
+              [
+                356,
+                110
+              ],
+              [
+                390,
+                113
+              ]
+            ]
+          },
+          "-P0zdzaWLlobOi7ONwnZ": {
+            "by": "guestA",
+            "color": "#2E7D8C",
+            "points": [
+              [
+                120,
+                126
+              ],
+              [
+                154,
+                129
+              ],
+              [
+                188,
+                132
+              ],
+              [
+                221,
+                134
+              ],
+              [
+                255,
+                137
+              ],
+              [
+                289,
+                140
+              ],
+              [
+                322,
+                143
+              ],
+              [
+                356,
+                146
+              ],
+              [
+                390,
+                149
+              ]
+            ]
+          },
+          "-P0zdzeU2BluokmmpuPS": {
+            "by": "guestC",
+            "color": "#6B3FA0",
+            "points": [
+              [
+                120,
+                162
+              ],
+              [
+                154,
+                165
+              ],
+              [
+                188,
+                168
+              ],
+              [
+                221,
+                170
+              ],
+              [
+                255,
+                173
+              ],
+              [
+                289,
+                176
+              ],
+              [
+                322,
+                179
+              ],
+              [
+                356,
+                182
+              ],
+              [
+                390,
+                185
+              ]
+            ]
+          },
+          "-P0zdzhr2p9AQ45Rf7Hy": {
+            "by": "guestB",
+            "color": "#E4572E",
+            "points": [
+              [
+                120,
+                198
+              ],
+              [
+                154,
+                201
+              ],
+              [
+                188,
+                204
+              ],
+              [
+                221,
+                206
+              ],
+              [
+                255,
+                209
+              ],
+              [
+                289,
+                212
+              ],
+              [
+                322,
+                215
+              ],
+              [
+                356,
+                218
+              ],
+              [
+                390,
+                221
+              ]
+            ]
+          },
+          "-P0zdzlDOmUWqP2gBzwm": {
+            "by": "guestA",
+            "color": "#2E7D8C",
+            "points": [
+              [
+                120,
+                234
+              ],
+              [
+                154,
+                237
+              ],
+              [
+                188,
+                240
+              ],
+              [
+                221,
+                242
+              ],
+              [
+                255,
+                245
+              ],
+              [
+                289,
+                248
+              ],
+              [
+                322,
+                251
+              ],
+              [
+                356,
+                254
+              ],
+              [
+                390,
+                256
+              ]
+            ]
+          },
+          "-P0zdzovmSCeKwXdj0K_": {
+            "by": "guestC",
+            "color": "#6B3FA0",
+            "points": [
+              [
+                120,
+                270
+              ],
+              [
+                154,
+                273
+              ],
+              [
+                188,
+                276
+              ],
+              [
+                221,
+                278
+              ],
+              [
+                255,
+                281
+              ],
+              [
+                289,
+                284
+              ],
+              [
+                322,
+                287
+              ],
+              [
+                356,
+                290
+              ],
+              [
+                390,
+                292
+              ]
+            ]
+          }
+        },
+        "topicCategory": "どうぐ",
+        "topicWord": "かなづち",
+        "turnIndex": 6
+      }
+    },
+    {
+      "name": "real UI votes caught reversal answer and host judge",
+      "pass": true,
+      "result": {
+        "outcome": "caught",
+        "reversalGuess": "かなづち",
+        "reversalJudge": "win",
+        "voteCounts": {
+          "guestA": 2,
+          "guestB": 1
+        }
+      }
+    },
+    {
+      "name": "waiting reload",
+      "pass": true,
+      "before": {
+        "isHost": false,
+        "confirmed": true,
+        "vote": "guestB"
+      },
+      "after": {
+        "isHost": false,
+        "confirmed": true,
+        "vote": "guestB"
+      }
+    },
+    {
+      "name": "fixture waiting browser10s disconnect cycle1",
+      "pass": true,
+      "stable": {
+        "players": {
+          "guestA": {
+            "isHost": false,
+            "confirmed": true,
+            "vote": "guestB"
+          },
+          "guestB": {
+            "isHost": false,
+            "confirmed": true,
+            "vote": null
+          },
+          "guestC": {
+            "isHost": false,
+            "confirmed": true,
+            "vote": null
+          },
+          "host": {
+            "isHost": true,
+            "confirmed": false,
+            "vote": null
+          }
+        },
+        "game": {
+          "colors": {
+            "guestA": "#2E7D8C",
+            "guestB": "#E4572E",
+            "guestC": "#6B3FA0"
+          },
+          "drawOrder": [
+            "guestB",
+            "guestA",
+            "guestC"
+          ],
+          "fakeArtist": "guestA",
+          "result": {
+            "outcome": "caught",
+            "reversalGuess": "保存済み",
+            "reversalJudge": "lose"
+          },
+          "strokes": {
+            "-P0zdzY-aiwG_E2QrxUF": {
+              "by": "guestB",
+              "color": "#E4572E",
+              "points": [
+                [
+                  120,
+                  90
+                ],
+                [
+                  154,
+                  93
+                ],
+                [
+                  188,
+                  96
+                ],
+                [
+                  221,
+                  98
+                ],
+                [
+                  255,
+                  101
+                ],
+                [
+                  289,
+                  104
+                ],
+                [
+                  322,
+                  107
+                ],
+                [
+                  356,
+                  110
+                ],
+                [
+                  390,
+                  113
+                ]
+              ]
+            },
+            "-P0zdzaWLlobOi7ONwnZ": {
+              "by": "guestA",
+              "color": "#2E7D8C",
+              "points": [
+                [
+                  120,
+                  126
+                ],
+                [
+                  154,
+                  129
+                ],
+                [
+                  188,
+                  132
+                ],
+                [
+                  221,
+                  134
+                ],
+                [
+                  255,
+                  137
+                ],
+                [
+                  289,
+                  140
+                ],
+                [
+                  322,
+                  143
+                ],
+                [
+                  356,
+                  146
+                ],
+                [
+                  390,
+                  149
+                ]
+              ]
+            },
+            "-P0zdzeU2BluokmmpuPS": {
+              "by": "guestC",
+              "color": "#6B3FA0",
+              "points": [
+                [
+                  120,
+                  162
+                ],
+                [
+                  154,
+                  165
+                ],
+                [
+                  188,
+                  168
+                ],
+                [
+                  221,
+                  170
+                ],
+                [
+                  255,
+                  173
+                ],
+                [
+                  289,
+                  176
+                ],
+                [
+                  322,
+                  179
+                ],
+                [
+                  356,
+                  182
+                ],
+                [
+                  390,
+                  185
+                ]
+              ]
+            },
+            "-P0zdzhr2p9AQ45Rf7Hy": {
+              "by": "guestB",
+              "color": "#E4572E",
+              "points": [
+                [
+                  120,
+                  198
+                ],
+                [
+                  154,
+                  201
+                ],
+                [
+                  188,
+                  204
+                ],
+                [
+                  221,
+                  206
+                ],
+                [
+                  255,
+                  209
+                ],
+                [
+                  289,
+                  212
+                ],
+                [
+                  322,
+                  215
+                ],
+                [
+                  356,
+                  218
+                ],
+                [
+                  390,
+                  221
+                ]
+              ]
+            },
+            "-P0zdzlDOmUWqP2gBzwm": {
+              "by": "guestA",
+              "color": "#2E7D8C",
+              "points": [
+                [
+                  120,
+                  234
+                ],
+                [
+                  154,
+                  237
+                ],
+                [
+                  188,
+                  240
+                ],
+                [
+                  221,
+                  242
+                ],
+                [
+                  255,
+                  245
+                ],
+                [
+                  289,
+                  248
+                ],
+                [
+                  322,
+                  251
+                ],
+                [
+                  356,
+                  254
+                ],
+                [
+                  390,
+                  256
+                ]
+              ]
+            },
+            "-P0zdzovmSCeKwXdj0K_": {
+              "by": "guestC",
+              "color": "#6B3FA0",
+              "points": [
+                [
+                  120,
+                  270
+                ],
+                [
+                  154,
+                  273
+                ],
+                [
+                  188,
+                  276
+                ],
+                [
+                  221,
+                  278
+                ],
+                [
+                  255,
+                  281
+                ],
+                [
+                  289,
+                  284
+                ],
+                [
+                  322,
+                  287
+                ],
+                [
+                  356,
+                  290
+                ],
+                [
+                  390,
+                  292
+                ]
+              ]
+            }
+          },
+          "topicCategory": "どうぐ",
+          "topicWord": "かなづち",
+          "turnIndex": 6
+        },
+        "round": 1,
+        "status": "waiting"
+      }
+    },
+    {
+      "name": "fixture waiting browser10s disconnect cycle2",
+      "pass": true,
+      "stable": {
+        "players": {
+          "guestA": {
+            "isHost": false,
+            "confirmed": true,
+            "vote": "guestB"
+          },
+          "guestB": {
+            "isHost": false,
+            "confirmed": true,
+            "vote": null
+          },
+          "guestC": {
+            "isHost": false,
+            "confirmed": true,
+            "vote": null
+          },
+          "host": {
+            "isHost": true,
+            "confirmed": false,
+            "vote": null
+          }
+        },
+        "game": {
+          "colors": {
+            "guestA": "#2E7D8C",
+            "guestB": "#E4572E",
+            "guestC": "#6B3FA0"
+          },
+          "drawOrder": [
+            "guestB",
+            "guestA",
+            "guestC"
+          ],
+          "fakeArtist": "guestA",
+          "result": {
+            "outcome": "caught",
+            "reversalGuess": "保存済み",
+            "reversalJudge": "lose"
+          },
+          "strokes": {
+            "-P0zdzY-aiwG_E2QrxUF": {
+              "by": "guestB",
+              "color": "#E4572E",
+              "points": [
+                [
+                  120,
+                  90
+                ],
+                [
+                  154,
+                  93
+                ],
+                [
+                  188,
+                  96
+                ],
+                [
+                  221,
+                  98
+                ],
+                [
+                  255,
+                  101
+                ],
+                [
+                  289,
+                  104
+                ],
+                [
+                  322,
+                  107
+                ],
+                [
+                  356,
+                  110
+                ],
+                [
+                  390,
+                  113
+                ]
+              ]
+            },
+            "-P0zdzaWLlobOi7ONwnZ": {
+              "by": "guestA",
+              "color": "#2E7D8C",
+              "points": [
+                [
+                  120,
+                  126
+                ],
+                [
+                  154,
+                  129
+                ],
+                [
+                  188,
+                  132
+                ],
+                [
+                  221,
+                  134
+                ],
+                [
+                  255,
+                  137
+                ],
+                [
+                  289,
+                  140
+                ],
+                [
+                  322,
+                  143
+                ],
+                [
+                  356,
+                  146
+                ],
+                [
+                  390,
+                  149
+                ]
+              ]
+            },
+            "-P0zdzeU2BluokmmpuPS": {
+              "by": "guestC",
+              "color": "#6B3FA0",
+              "points": [
+                [
+                  120,
+                  162
+                ],
+                [
+                  154,
+                  165
+                ],
+                [
+                  188,
+                  168
+                ],
+                [
+                  221,
+                  170
+                ],
+                [
+                  255,
+                  173
+                ],
+                [
+                  289,
+                  176
+                ],
+                [
+                  322,
+                  179
+                ],
+                [
+                  356,
+                  182
+                ],
+                [
+                  390,
+                  185
+                ]
+              ]
+            },
+            "-P0zdzhr2p9AQ45Rf7Hy": {
+              "by": "guestB",
+              "color": "#E4572E",
+              "points": [
+                [
+                  120,
+                  198
+                ],
+                [
+                  154,
+                  201
+                ],
+                [
+                  188,
+                  204
+                ],
+                [
+                  221,
+                  206
+                ],
+                [
+                  255,
+                  209
+                ],
+                [
+                  289,
+                  212
+                ],
+                [
+                  322,
+                  215
+                ],
+                [
+                  356,
+                  218
+                ],
+                [
+                  390,
+                  221
+                ]
+              ]
+            },
+            "-P0zdzlDOmUWqP2gBzwm": {
+              "by": "guestA",
+              "color": "#2E7D8C",
+              "points": [
+                [
+                  120,
+                  234
+                ],
+                [
+                  154,
+                  237
+                ],
+                [
+                  188,
+                  240
+                ],
+                [
+                  221,
+                  242
+                ],
+                [
+                  255,
+                  245
+                ],
+                [
+                  289,
+                  248
+                ],
+                [
+                  322,
+                  251
+                ],
+                [
+                  356,
+                  254
+                ],
+                [
+                  390,
+                  256
+                ]
+              ]
+            },
+            "-P0zdzovmSCeKwXdj0K_": {
+              "by": "guestC",
+              "color": "#6B3FA0",
+              "points": [
+                [
+                  120,
+                  270
+                ],
+                [
+                  154,
+                  273
+                ],
+                [
+                  188,
+                  276
+                ],
+                [
+                  221,
+                  278
+                ],
+                [
+                  255,
+                  281
+                ],
+                [
+                  289,
+                  284
+                ],
+                [
+                  322,
+                  287
+                ],
+                [
+                  356,
+                  290
+                ],
+                [
+                  390,
+                  292
+                ]
+              ]
+            }
+          },
+          "topicCategory": "どうぐ",
+          "topicWord": "かなづち",
+          "turnIndex": 6
+        },
+        "round": 1,
+        "status": "waiting"
+      }
+    },
+    {
+      "name": "reveal reload",
+      "pass": true,
+      "before": {
+        "isHost": false,
+        "confirmed": true,
+        "vote": "guestB"
+      },
+      "after": {
+        "isHost": false,
+        "confirmed": true,
+        "vote": "guestB"
+      }
+    },
+    {
+      "name": "fixture reveal_role all3 reload and normal/fake topic privacy",
+      "pass": true,
+      "fakeArtist": "guestA"
+    },
+    {
+      "name": "fixture reveal_role browser10s disconnect cycle1",
+      "pass": true,
+      "stable": {
+        "players": {
+          "guestA": {
+            "isHost": false,
+            "confirmed": true,
+            "vote": "guestB"
+          },
+          "guestB": {
+            "isHost": false,
+            "confirmed": true,
+            "vote": null
+          },
+          "guestC": {
+            "isHost": false,
+            "confirmed": true,
+            "vote": null
+          },
+          "host": {
+            "isHost": true,
+            "confirmed": false,
+            "vote": null
+          }
+        },
+        "game": {
+          "colors": {
+            "guestA": "#2E7D8C",
+            "guestB": "#E4572E",
+            "guestC": "#6B3FA0"
+          },
+          "drawOrder": [
+            "guestB",
+            "guestA",
+            "guestC"
+          ],
+          "fakeArtist": "guestA",
+          "result": {
+            "outcome": "caught",
+            "reversalGuess": "保存済み",
+            "reversalJudge": "lose"
+          },
+          "strokes": {
+            "-P0zdzY-aiwG_E2QrxUF": {
+              "by": "guestB",
+              "color": "#E4572E",
+              "points": [
+                [
+                  120,
+                  90
+                ],
+                [
+                  154,
+                  93
+                ],
+                [
+                  188,
+                  96
+                ],
+                [
+                  221,
+                  98
+                ],
+                [
+                  255,
+                  101
+                ],
+                [
+                  289,
+                  104
+                ],
+                [
+                  322,
+                  107
+                ],
+                [
+                  356,
+                  110
+                ],
+                [
+                  390,
+                  113
+                ]
+              ]
+            },
+            "-P0zdzaWLlobOi7ONwnZ": {
+              "by": "guestA",
+              "color": "#2E7D8C",
+              "points": [
+                [
+                  120,
+                  126
+                ],
+                [
+                  154,
+                  129
+                ],
+                [
+                  188,
+                  132
+                ],
+                [
+                  221,
+                  134
+                ],
+                [
+                  255,
+                  137
+                ],
+                [
+                  289,
+                  140
+                ],
+                [
+                  322,
+                  143
+                ],
+                [
+                  356,
+                  146
+                ],
+                [
+                  390,
+                  149
+                ]
+              ]
+            },
+            "-P0zdzeU2BluokmmpuPS": {
+              "by": "guestC",
+              "color": "#6B3FA0",
+              "points": [
+                [
+                  120,
+                  162
+                ],
+                [
+                  154,
+                  165
+                ],
+                [
+                  188,
+                  168
+                ],
+                [
+                  221,
+                  170
+                ],
+                [
+                  255,
+                  173
+                ],
+                [
+                  289,
+                  176
+                ],
+                [
+                  322,
+                  179
+                ],
+                [
+                  356,
+                  182
+                ],
+                [
+                  390,
+                  185
+                ]
+              ]
+            },
+            "-P0zdzhr2p9AQ45Rf7Hy": {
+              "by": "guestB",
+              "color": "#E4572E",
+              "points": [
+                [
+                  120,
+                  198
+                ],
+                [
+                  154,
+                  201
+                ],
+                [
+                  188,
+                  204
+                ],
+                [
+                  221,
+                  206
+                ],
+                [
+                  255,
+                  209
+                ],
+                [
+                  289,
+                  212
+                ],
+                [
+                  322,
+                  215
+                ],
+                [
+                  356,
+                  218
+                ],
+                [
+                  390,
+                  221
+                ]
+              ]
+            },
+            "-P0zdzlDOmUWqP2gBzwm": {
+              "by": "guestA",
+              "color": "#2E7D8C",
+              "points": [
+                [
+                  120,
+                  234
+                ],
+                [
+                  154,
+                  237
+                ],
+                [
+                  188,
+                  240
+                ],
+                [
+                  221,
+                  242
+                ],
+                [
+                  255,
+                  245
+                ],
+                [
+                  289,
+                  248
+                ],
+                [
+                  322,
+                  251
+                ],
+                [
+                  356,
+                  254
+                ],
+                [
+                  390,
+                  256
+                ]
+              ]
+            },
+            "-P0zdzovmSCeKwXdj0K_": {
+              "by": "guestC",
+              "color": "#6B3FA0",
+              "points": [
+                [
+                  120,
+                  270
+                ],
+                [
+                  154,
+                  273
+                ],
+                [
+                  188,
+                  276
+                ],
+                [
+                  221,
+                  278
+                ],
+                [
+                  255,
+                  281
+                ],
+                [
+                  289,
+                  284
+                ],
+                [
+                  322,
+                  287
+                ],
+                [
+                  356,
+                  290
+                ],
+                [
+                  390,
+                  292
+                ]
+              ]
+            }
+          },
+          "topicCategory": "どうぐ",
+          "topicWord": "かなづち",
+          "turnIndex": 6
+        },
+        "round": 1,
+        "status": "reveal_role"
+      }
+    },
+    {
+      "name": "fixture reveal_role browser10s disconnect cycle2",
+      "pass": true,
+      "stable": {
+        "players": {
+          "guestA": {
+            "isHost": false,
+            "confirmed": true,
+            "vote": "guestB"
+          },
+          "guestB": {
+            "isHost": false,
+            "confirmed": true,
+            "vote": null
+          },
+          "guestC": {
+            "isHost": false,
+            "confirmed": true,
+            "vote": null
+          },
+          "host": {
+            "isHost": true,
+            "confirmed": false,
+            "vote": null
+          }
+        },
+        "game": {
+          "colors": {
+            "guestA": "#2E7D8C",
+            "guestB": "#E4572E",
+            "guestC": "#6B3FA0"
+          },
+          "drawOrder": [
+            "guestB",
+            "guestA",
+            "guestC"
+          ],
+          "fakeArtist": "guestA",
+          "result": {
+            "outcome": "caught",
+            "reversalGuess": "保存済み",
+            "reversalJudge": "lose"
+          },
+          "strokes": {
+            "-P0zdzY-aiwG_E2QrxUF": {
+              "by": "guestB",
+              "color": "#E4572E",
+              "points": [
+                [
+                  120,
+                  90
+                ],
+                [
+                  154,
+                  93
+                ],
+                [
+                  188,
+                  96
+                ],
+                [
+                  221,
+                  98
+                ],
+                [
+                  255,
+                  101
+                ],
+                [
+                  289,
+                  104
+                ],
+                [
+                  322,
+                  107
+                ],
+                [
+                  356,
+                  110
+                ],
+                [
+                  390,
+                  113
+                ]
+              ]
+            },
+            "-P0zdzaWLlobOi7ONwnZ": {
+              "by": "guestA",
+              "color": "#2E7D8C",
+              "points": [
+                [
+                  120,
+                  126
+                ],
+                [
+                  154,
+                  129
+                ],
+                [
+                  188,
+                  132
+                ],
+                [
+                  221,
+                  134
+                ],
+                [
+                  255,
+                  137
+                ],
+                [
+                  289,
+                  140
+                ],
+                [
+                  322,
+                  143
+                ],
+                [
+                  356,
+                  146
+                ],
+                [
+                  390,
+                  149
+                ]
+              ]
+            },
+            "-P0zdzeU2BluokmmpuPS": {
+              "by": "guestC",
+              "color": "#6B3FA0",
+              "points": [
+                [
+                  120,
+                  162
+                ],
+                [
+                  154,
+                  165
+                ],
+                [
+                  188,
+                  168
+                ],
+                [
+                  221,
+                  170
+                ],
+                [
+                  255,
+                  173
+                ],
+                [
+                  289,
+                  176
+                ],
+                [
+                  322,
+                  179
+                ],
+                [
+                  356,
+                  182
+                ],
+                [
+                  390,
+                  185
+                ]
+              ]
+            },
+            "-P0zdzhr2p9AQ45Rf7Hy": {
+              "by": "guestB",
+              "color": "#E4572E",
+              "points": [
+                [
+                  120,
+                  198
+                ],
+                [
+                  154,
+                  201
+                ],
+                [
+                  188,
+                  204
+                ],
+                [
+                  221,
+                  206
+                ],
+                [
+                  255,
+                  209
+                ],
+                [
+                  289,
+                  212
+                ],
+                [
+                  322,
+                  215
+                ],
+                [
+                  356,
+                  218
+                ],
+                [
+                  390,
+                  221
+                ]
+              ]
+            },
+            "-P0zdzlDOmUWqP2gBzwm": {
+              "by": "guestA",
+              "color": "#2E7D8C",
+              "points": [
+                [
+                  120,
+                  234
+                ],
+                [
+                  154,
+                  237
+                ],
+                [
+                  188,
+                  240
+                ],
+                [
+                  221,
+                  242
+                ],
+                [
+                  255,
+                  245
+                ],
+                [
+                  289,
+                  248
+                ],
+                [
+                  322,
+                  251
+                ],
+                [
+                  356,
+                  254
+                ],
+                [
+                  390,
+                  256
+                ]
+              ]
+            },
+            "-P0zdzovmSCeKwXdj0K_": {
+              "by": "guestC",
+              "color": "#6B3FA0",
+              "points": [
+                [
+                  120,
+                  270
+                ],
+                [
+                  154,
+                  273
+                ],
+                [
+                  188,
+                  276
+                ],
+                [
+                  221,
+                  278
+                ],
+                [
+                  255,
+                  281
+                ],
+                [
+                  289,
+                  284
+                ],
+                [
+                  322,
+                  287
+                ],
+                [
+                  356,
+                  290
+                ],
+                [
+                  390,
+                  292
+                ]
+              ]
+            }
+          },
+          "topicCategory": "どうぐ",
+          "topicWord": "かなづち",
+          "turnIndex": 6
+        },
+        "round": 1,
+        "status": "reveal_role"
+      }
+    },
+    {
+      "name": "drawing reload",
+      "pass": true,
+      "before": {
+        "isHost": false,
+        "confirmed": true,
+        "vote": "guestB"
+      },
+      "after": {
+        "isHost": false,
+        "confirmed": true,
+        "vote": "guestB"
+      }
+    },
+    {
+      "name": "fixture drawing all3 reload and normal/fake topic privacy",
+      "pass": true,
+      "fakeArtist": "guestA"
+    },
+    {
+      "name": "fixture drawing browser10s disconnect cycle1",
+      "pass": true,
+      "stable": {
+        "players": {
+          "guestA": {
+            "isHost": false,
+            "confirmed": true,
+            "vote": "guestB"
+          },
+          "guestB": {
+            "isHost": false,
+            "confirmed": true,
+            "vote": null
+          },
+          "guestC": {
+            "isHost": false,
+            "confirmed": true,
+            "vote": null
+          },
+          "host": {
+            "isHost": true,
+            "confirmed": false,
+            "vote": null
+          }
+        },
+        "game": {
+          "colors": {
+            "guestA": "#2E7D8C",
+            "guestB": "#E4572E",
+            "guestC": "#6B3FA0"
+          },
+          "drawOrder": [
+            "guestB",
+            "guestA",
+            "guestC"
+          ],
+          "fakeArtist": "guestA",
+          "result": {
+            "outcome": "caught",
+            "reversalGuess": "保存済み",
+            "reversalJudge": "lose"
+          },
+          "strokes": {
+            "-P0zdzY-aiwG_E2QrxUF": {
+              "by": "guestB",
+              "color": "#E4572E",
+              "points": [
+                [
+                  120,
+                  90
+                ],
+                [
+                  154,
+                  93
+                ],
+                [
+                  188,
+                  96
+                ],
+                [
+                  221,
+                  98
+                ],
+                [
+                  255,
+                  101
+                ],
+                [
+                  289,
+                  104
+                ],
+                [
+                  322,
+                  107
+                ],
+                [
+                  356,
+                  110
+                ],
+                [
+                  390,
+                  113
+                ]
+              ]
+            },
+            "-P0zdzaWLlobOi7ONwnZ": {
+              "by": "guestA",
+              "color": "#2E7D8C",
+              "points": [
+                [
+                  120,
+                  126
+                ],
+                [
+                  154,
+                  129
+                ],
+                [
+                  188,
+                  132
+                ],
+                [
+                  221,
+                  134
+                ],
+                [
+                  255,
+                  137
+                ],
+                [
+                  289,
+                  140
+                ],
+                [
+                  322,
+                  143
+                ],
+                [
+                  356,
+                  146
+                ],
+                [
+                  390,
+                  149
+                ]
+              ]
+            },
+            "-P0zdzeU2BluokmmpuPS": {
+              "by": "guestC",
+              "color": "#6B3FA0",
+              "points": [
+                [
+                  120,
+                  162
+                ],
+                [
+                  154,
+                  165
+                ],
+                [
+                  188,
+                  168
+                ],
+                [
+                  221,
+                  170
+                ],
+                [
+                  255,
+                  173
+                ],
+                [
+                  289,
+                  176
+                ],
+                [
+                  322,
+                  179
+                ],
+                [
+                  356,
+                  182
+                ],
+                [
+                  390,
+                  185
+                ]
+              ]
+            },
+            "-P0zdzhr2p9AQ45Rf7Hy": {
+              "by": "guestB",
+              "color": "#E4572E",
+              "points": [
+                [
+                  120,
+                  198
+                ],
+                [
+                  154,
+                  201
+                ],
+                [
+                  188,
+                  204
+                ],
+                [
+                  221,
+                  206
+                ],
+                [
+                  255,
+                  209
+                ],
+                [
+                  289,
+                  212
+                ],
+                [
+                  322,
+                  215
+                ],
+                [
+                  356,
+                  218
+                ],
+                [
+                  390,
+                  221
+                ]
+              ]
+            },
+            "-P0zdzlDOmUWqP2gBzwm": {
+              "by": "guestA",
+              "color": "#2E7D8C",
+              "points": [
+                [
+                  120,
+                  234
+                ],
+                [
+                  154,
+                  237
+                ],
+                [
+                  188,
+                  240
+                ],
+                [
+                  221,
+                  242
+                ],
+                [
+                  255,
+                  245
+                ],
+                [
+                  289,
+                  248
+                ],
+                [
+                  322,
+                  251
+                ],
+                [
+                  356,
+                  254
+                ],
+                [
+                  390,
+                  256
+                ]
+              ]
+            },
+            "-P0zdzovmSCeKwXdj0K_": {
+              "by": "guestC",
+              "color": "#6B3FA0",
+              "points": [
+                [
+                  120,
+                  270
+                ],
+                [
+                  154,
+                  273
+                ],
+                [
+                  188,
+                  276
+                ],
+                [
+                  221,
+                  278
+                ],
+                [
+                  255,
+                  281
+                ],
+                [
+                  289,
+                  284
+                ],
+                [
+                  322,
+                  287
+                ],
+                [
+                  356,
+                  290
+                ],
+                [
+                  390,
+                  292
+                ]
+              ]
+            }
+          },
+          "topicCategory": "どうぐ",
+          "topicWord": "かなづち",
+          "turnIndex": 0
+        },
+        "round": 1,
+        "status": "drawing"
+      }
+    },
+    {
+      "name": "fixture drawing browser10s disconnect cycle2",
+      "pass": true,
+      "stable": {
+        "players": {
+          "guestA": {
+            "isHost": false,
+            "confirmed": true,
+            "vote": "guestB"
+          },
+          "guestB": {
+            "isHost": false,
+            "confirmed": true,
+            "vote": null
+          },
+          "guestC": {
+            "isHost": false,
+            "confirmed": true,
+            "vote": null
+          },
+          "host": {
+            "isHost": true,
+            "confirmed": false,
+            "vote": null
+          }
+        },
+        "game": {
+          "colors": {
+            "guestA": "#2E7D8C",
+            "guestB": "#E4572E",
+            "guestC": "#6B3FA0"
+          },
+          "drawOrder": [
+            "guestB",
+            "guestA",
+            "guestC"
+          ],
+          "fakeArtist": "guestA",
+          "result": {
+            "outcome": "caught",
+            "reversalGuess": "保存済み",
+            "reversalJudge": "lose"
+          },
+          "strokes": {
+            "-P0zdzY-aiwG_E2QrxUF": {
+              "by": "guestB",
+              "color": "#E4572E",
+              "points": [
+                [
+                  120,
+                  90
+                ],
+                [
+                  154,
+                  93
+                ],
+                [
+                  188,
+                  96
+                ],
+                [
+                  221,
+                  98
+                ],
+                [
+                  255,
+                  101
+                ],
+                [
+                  289,
+                  104
+                ],
+                [
+                  322,
+                  107
+                ],
+                [
+                  356,
+                  110
+                ],
+                [
+                  390,
+                  113
+                ]
+              ]
+            },
+            "-P0zdzaWLlobOi7ONwnZ": {
+              "by": "guestA",
+              "color": "#2E7D8C",
+              "points": [
+                [
+                  120,
+                  126
+                ],
+                [
+                  154,
+                  129
+                ],
+                [
+                  188,
+                  132
+                ],
+                [
+                  221,
+                  134
+                ],
+                [
+                  255,
+                  137
+                ],
+                [
+                  289,
+                  140
+                ],
+                [
+                  322,
+                  143
+                ],
+                [
+                  356,
+                  146
+                ],
+                [
+                  390,
+                  149
+                ]
+              ]
+            },
+            "-P0zdzeU2BluokmmpuPS": {
+              "by": "guestC",
+              "color": "#6B3FA0",
+              "points": [
+                [
+                  120,
+                  162
+                ],
+                [
+                  154,
+                  165
+                ],
+                [
+                  188,
+                  168
+                ],
+                [
+                  221,
+                  170
+                ],
+                [
+                  255,
+                  173
+                ],
+                [
+                  289,
+                  176
+                ],
+                [
+                  322,
+                  179
+                ],
+                [
+                  356,
+                  182
+                ],
+                [
+                  390,
+                  185
+                ]
+              ]
+            },
+            "-P0zdzhr2p9AQ45Rf7Hy": {
+              "by": "guestB",
+              "color": "#E4572E",
+              "points": [
+                [
+                  120,
+                  198
+                ],
+                [
+                  154,
+                  201
+                ],
+                [
+                  188,
+                  204
+                ],
+                [
+                  221,
+                  206
+                ],
+                [
+                  255,
+                  209
+                ],
+                [
+                  289,
+                  212
+                ],
+                [
+                  322,
+                  215
+                ],
+                [
+                  356,
+                  218
+                ],
+                [
+                  390,
+                  221
+                ]
+              ]
+            },
+            "-P0zdzlDOmUWqP2gBzwm": {
+              "by": "guestA",
+              "color": "#2E7D8C",
+              "points": [
+                [
+                  120,
+                  234
+                ],
+                [
+                  154,
+                  237
+                ],
+                [
+                  188,
+                  240
+                ],
+                [
+                  221,
+                  242
+                ],
+                [
+                  255,
+                  245
+                ],
+                [
+                  289,
+                  248
+                ],
+                [
+                  322,
+                  251
+                ],
+                [
+                  356,
+                  254
+                ],
+                [
+                  390,
+                  256
+                ]
+              ]
+            },
+            "-P0zdzovmSCeKwXdj0K_": {
+              "by": "guestC",
+              "color": "#6B3FA0",
+              "points": [
+                [
+                  120,
+                  270
+                ],
+                [
+                  154,
+                  273
+                ],
+                [
+                  188,
+                  276
+                ],
+                [
+                  221,
+                  278
+                ],
+                [
+                  255,
+                  281
+                ],
+                [
+                  289,
+                  284
+                ],
+                [
+                  322,
+                  287
+                ],
+                [
+                  356,
+                  290
+                ],
+                [
+                  390,
+                  292
+                ]
+              ]
+            }
+          },
+          "topicCategory": "どうぐ",
+          "topicWord": "かなづち",
+          "turnIndex": 0
+        },
+        "round": 1,
+        "status": "drawing"
+      }
+    },
+    {
+      "name": "discussion reload",
+      "pass": true,
+      "before": {
+        "isHost": false,
+        "confirmed": true,
+        "vote": "guestB"
+      },
+      "after": {
+        "isHost": false,
+        "confirmed": true,
+        "vote": "guestB"
+      }
+    },
+    {
+      "name": "fixture discussion all3 reload and normal/fake topic privacy",
+      "pass": true,
+      "fakeArtist": "guestA"
+    },
+    {
+      "name": "fixture discussion browser10s disconnect cycle1",
+      "pass": true,
+      "stable": {
+        "players": {
+          "guestA": {
+            "isHost": false,
+            "confirmed": true,
+            "vote": "guestB"
+          },
+          "guestB": {
+            "isHost": false,
+            "confirmed": true,
+            "vote": null
+          },
+          "guestC": {
+            "isHost": false,
+            "confirmed": true,
+            "vote": null
+          },
+          "host": {
+            "isHost": true,
+            "confirmed": false,
+            "vote": null
+          }
+        },
+        "game": {
+          "colors": {
+            "guestA": "#2E7D8C",
+            "guestB": "#E4572E",
+            "guestC": "#6B3FA0"
+          },
+          "drawOrder": [
+            "guestB",
+            "guestA",
+            "guestC"
+          ],
+          "fakeArtist": "guestA",
+          "result": {
+            "outcome": "caught",
+            "reversalGuess": "保存済み",
+            "reversalJudge": "lose"
+          },
+          "strokes": {
+            "-P0zdzY-aiwG_E2QrxUF": {
+              "by": "guestB",
+              "color": "#E4572E",
+              "points": [
+                [
+                  120,
+                  90
+                ],
+                [
+                  154,
+                  93
+                ],
+                [
+                  188,
+                  96
+                ],
+                [
+                  221,
+                  98
+                ],
+                [
+                  255,
+                  101
+                ],
+                [
+                  289,
+                  104
+                ],
+                [
+                  322,
+                  107
+                ],
+                [
+                  356,
+                  110
+                ],
+                [
+                  390,
+                  113
+                ]
+              ]
+            },
+            "-P0zdzaWLlobOi7ONwnZ": {
+              "by": "guestA",
+              "color": "#2E7D8C",
+              "points": [
+                [
+                  120,
+                  126
+                ],
+                [
+                  154,
+                  129
+                ],
+                [
+                  188,
+                  132
+                ],
+                [
+                  221,
+                  134
+                ],
+                [
+                  255,
+                  137
+                ],
+                [
+                  289,
+                  140
+                ],
+                [
+                  322,
+                  143
+                ],
+                [
+                  356,
+                  146
+                ],
+                [
+                  390,
+                  149
+                ]
+              ]
+            },
+            "-P0zdzeU2BluokmmpuPS": {
+              "by": "guestC",
+              "color": "#6B3FA0",
+              "points": [
+                [
+                  120,
+                  162
+                ],
+                [
+                  154,
+                  165
+                ],
+                [
+                  188,
+                  168
+                ],
+                [
+                  221,
+                  170
+                ],
+                [
+                  255,
+                  173
+                ],
+                [
+                  289,
+                  176
+                ],
+                [
+                  322,
+                  179
+                ],
+                [
+                  356,
+                  182
+                ],
+                [
+                  390,
+                  185
+                ]
+              ]
+            },
+            "-P0zdzhr2p9AQ45Rf7Hy": {
+              "by": "guestB",
+              "color": "#E4572E",
+              "points": [
+                [
+                  120,
+                  198
+                ],
+                [
+                  154,
+                  201
+                ],
+                [
+                  188,
+                  204
+                ],
+                [
+                  221,
+                  206
+                ],
+                [
+                  255,
+                  209
+                ],
+                [
+                  289,
+                  212
+                ],
+                [
+                  322,
+                  215
+                ],
+                [
+                  356,
+                  218
+                ],
+                [
+                  390,
+                  221
+                ]
+              ]
+            },
+            "-P0zdzlDOmUWqP2gBzwm": {
+              "by": "guestA",
+              "color": "#2E7D8C",
+              "points": [
+                [
+                  120,
+                  234
+                ],
+                [
+                  154,
+                  237
+                ],
+                [
+                  188,
+                  240
+                ],
+                [
+                  221,
+                  242
+                ],
+                [
+                  255,
+                  245
+                ],
+                [
+                  289,
+                  248
+                ],
+                [
+                  322,
+                  251
+                ],
+                [
+                  356,
+                  254
+                ],
+                [
+                  390,
+                  256
+                ]
+              ]
+            },
+            "-P0zdzovmSCeKwXdj0K_": {
+              "by": "guestC",
+              "color": "#6B3FA0",
+              "points": [
+                [
+                  120,
+                  270
+                ],
+                [
+                  154,
+                  273
+                ],
+                [
+                  188,
+                  276
+                ],
+                [
+                  221,
+                  278
+                ],
+                [
+                  255,
+                  281
+                ],
+                [
+                  289,
+                  284
+                ],
+                [
+                  322,
+                  287
+                ],
+                [
+                  356,
+                  290
+                ],
+                [
+                  390,
+                  292
+                ]
+              ]
+            }
+          },
+          "topicCategory": "どうぐ",
+          "topicWord": "かなづち",
+          "turnIndex": 6
+        },
+        "round": 1,
+        "status": "discussion"
+      }
+    },
+    {
+      "name": "fixture discussion browser10s disconnect cycle2",
+      "pass": true,
+      "stable": {
+        "players": {
+          "guestA": {
+            "isHost": false,
+            "confirmed": true,
+            "vote": "guestB"
+          },
+          "guestB": {
+            "isHost": false,
+            "confirmed": true,
+            "vote": null
+          },
+          "guestC": {
+            "isHost": false,
+            "confirmed": true,
+            "vote": null
+          },
+          "host": {
+            "isHost": true,
+            "confirmed": false,
+            "vote": null
+          }
+        },
+        "game": {
+          "colors": {
+            "guestA": "#2E7D8C",
+            "guestB": "#E4572E",
+            "guestC": "#6B3FA0"
+          },
+          "drawOrder": [
+            "guestB",
+            "guestA",
+            "guestC"
+          ],
+          "fakeArtist": "guestA",
+          "result": {
+            "outcome": "caught",
+            "reversalGuess": "保存済み",
+            "reversalJudge": "lose"
+          },
+          "strokes": {
+            "-P0zdzY-aiwG_E2QrxUF": {
+              "by": "guestB",
+              "color": "#E4572E",
+              "points": [
+                [
+                  120,
+                  90
+                ],
+                [
+                  154,
+                  93
+                ],
+                [
+                  188,
+                  96
+                ],
+                [
+                  221,
+                  98
+                ],
+                [
+                  255,
+                  101
+                ],
+                [
+                  289,
+                  104
+                ],
+                [
+                  322,
+                  107
+                ],
+                [
+                  356,
+                  110
+                ],
+                [
+                  390,
+                  113
+                ]
+              ]
+            },
+            "-P0zdzaWLlobOi7ONwnZ": {
+              "by": "guestA",
+              "color": "#2E7D8C",
+              "points": [
+                [
+                  120,
+                  126
+                ],
+                [
+                  154,
+                  129
+                ],
+                [
+                  188,
+                  132
+                ],
+                [
+                  221,
+                  134
+                ],
+                [
+                  255,
+                  137
+                ],
+                [
+                  289,
+                  140
+                ],
+                [
+                  322,
+                  143
+                ],
+                [
+                  356,
+                  146
+                ],
+                [
+                  390,
+                  149
+                ]
+              ]
+            },
+            "-P0zdzeU2BluokmmpuPS": {
+              "by": "guestC",
+              "color": "#6B3FA0",
+              "points": [
+                [
+                  120,
+                  162
+                ],
+                [
+                  154,
+                  165
+                ],
+                [
+                  188,
+                  168
+                ],
+                [
+                  221,
+                  170
+                ],
+                [
+                  255,
+                  173
+                ],
+                [
+                  289,
+                  176
+                ],
+                [
+                  322,
+                  179
+                ],
+                [
+                  356,
+                  182
+                ],
+                [
+                  390,
+                  185
+                ]
+              ]
+            },
+            "-P0zdzhr2p9AQ45Rf7Hy": {
+              "by": "guestB",
+              "color": "#E4572E",
+              "points": [
+                [
+                  120,
+                  198
+                ],
+                [
+                  154,
+                  201
+                ],
+                [
+                  188,
+                  204
+                ],
+                [
+                  221,
+                  206
+                ],
+                [
+                  255,
+                  209
+                ],
+                [
+                  289,
+                  212
+                ],
+                [
+                  322,
+                  215
+                ],
+                [
+                  356,
+                  218
+                ],
+                [
+                  390,
+                  221
+                ]
+              ]
+            },
+            "-P0zdzlDOmUWqP2gBzwm": {
+              "by": "guestA",
+              "color": "#2E7D8C",
+              "points": [
+                [
+                  120,
+                  234
+                ],
+                [
+                  154,
+                  237
+                ],
+                [
+                  188,
+                  240
+                ],
+                [
+                  221,
+                  242
+                ],
+                [
+                  255,
+                  245
+                ],
+                [
+                  289,
+                  248
+                ],
+                [
+                  322,
+                  251
+                ],
+                [
+                  356,
+                  254
+                ],
+                [
+                  390,
+                  256
+                ]
+              ]
+            },
+            "-P0zdzovmSCeKwXdj0K_": {
+              "by": "guestC",
+              "color": "#6B3FA0",
+              "points": [
+                [
+                  120,
+                  270
+                ],
+                [
+                  154,
+                  273
+                ],
+                [
+                  188,
+                  276
+                ],
+                [
+                  221,
+                  278
+                ],
+                [
+                  255,
+                  281
+                ],
+                [
+                  289,
+                  284
+                ],
+                [
+                  322,
+                  287
+                ],
+                [
+                  356,
+                  290
+                ],
+                [
+                  390,
+                  292
+                ]
+              ]
+            }
+          },
+          "topicCategory": "どうぐ",
+          "topicWord": "かなづち",
+          "turnIndex": 6
+        },
+        "round": 1,
+        "status": "discussion"
+      }
+    },
+    {
+      "name": "voting reload",
+      "pass": true,
+      "before": {
+        "isHost": false,
+        "confirmed": true,
+        "vote": "guestB"
+      },
+      "after": {
+        "isHost": false,
+        "confirmed": true,
+        "vote": "guestB"
+      }
+    },
+    {
+      "name": "fixture voting browser10s disconnect cycle1",
+      "pass": true,
+      "stable": {
+        "players": {
+          "guestA": {
+            "isHost": false,
+            "confirmed": true,
+            "vote": "guestB"
+          },
+          "guestB": {
+            "isHost": false,
+            "confirmed": true,
+            "vote": null
+          },
+          "guestC": {
+            "isHost": false,
+            "confirmed": true,
+            "vote": null
+          },
+          "host": {
+            "isHost": true,
+            "confirmed": false,
+            "vote": null
+          }
+        },
+        "game": {
+          "colors": {
+            "guestA": "#2E7D8C",
+            "guestB": "#E4572E",
+            "guestC": "#6B3FA0"
+          },
+          "drawOrder": [
+            "guestB",
+            "guestA",
+            "guestC"
+          ],
+          "fakeArtist": "guestA",
+          "result": {
+            "outcome": "caught",
+            "reversalGuess": "保存済み",
+            "reversalJudge": "lose"
+          },
+          "strokes": {
+            "-P0zdzY-aiwG_E2QrxUF": {
+              "by": "guestB",
+              "color": "#E4572E",
+              "points": [
+                [
+                  120,
+                  90
+                ],
+                [
+                  154,
+                  93
+                ],
+                [
+                  188,
+                  96
+                ],
+                [
+                  221,
+                  98
+                ],
+                [
+                  255,
+                  101
+                ],
+                [
+                  289,
+                  104
+                ],
+                [
+                  322,
+                  107
+                ],
+                [
+                  356,
+                  110
+                ],
+                [
+                  390,
+                  113
+                ]
+              ]
+            },
+            "-P0zdzaWLlobOi7ONwnZ": {
+              "by": "guestA",
+              "color": "#2E7D8C",
+              "points": [
+                [
+                  120,
+                  126
+                ],
+                [
+                  154,
+                  129
+                ],
+                [
+                  188,
+                  132
+                ],
+                [
+                  221,
+                  134
+                ],
+                [
+                  255,
+                  137
+                ],
+                [
+                  289,
+                  140
+                ],
+                [
+                  322,
+                  143
+                ],
+                [
+                  356,
+                  146
+                ],
+                [
+                  390,
+                  149
+                ]
+              ]
+            },
+            "-P0zdzeU2BluokmmpuPS": {
+              "by": "guestC",
+              "color": "#6B3FA0",
+              "points": [
+                [
+                  120,
+                  162
+                ],
+                [
+                  154,
+                  165
+                ],
+                [
+                  188,
+                  168
+                ],
+                [
+                  221,
+                  170
+                ],
+                [
+                  255,
+                  173
+                ],
+                [
+                  289,
+                  176
+                ],
+                [
+                  322,
+                  179
+                ],
+                [
+                  356,
+                  182
+                ],
+                [
+                  390,
+                  185
+                ]
+              ]
+            },
+            "-P0zdzhr2p9AQ45Rf7Hy": {
+              "by": "guestB",
+              "color": "#E4572E",
+              "points": [
+                [
+                  120,
+                  198
+                ],
+                [
+                  154,
+                  201
+                ],
+                [
+                  188,
+                  204
+                ],
+                [
+                  221,
+                  206
+                ],
+                [
+                  255,
+                  209
+                ],
+                [
+                  289,
+                  212
+                ],
+                [
+                  322,
+                  215
+                ],
+                [
+                  356,
+                  218
+                ],
+                [
+                  390,
+                  221
+                ]
+              ]
+            },
+            "-P0zdzlDOmUWqP2gBzwm": {
+              "by": "guestA",
+              "color": "#2E7D8C",
+              "points": [
+                [
+                  120,
+                  234
+                ],
+                [
+                  154,
+                  237
+                ],
+                [
+                  188,
+                  240
+                ],
+                [
+                  221,
+                  242
+                ],
+                [
+                  255,
+                  245
+                ],
+                [
+                  289,
+                  248
+                ],
+                [
+                  322,
+                  251
+                ],
+                [
+                  356,
+                  254
+                ],
+                [
+                  390,
+                  256
+                ]
+              ]
+            },
+            "-P0zdzovmSCeKwXdj0K_": {
+              "by": "guestC",
+              "color": "#6B3FA0",
+              "points": [
+                [
+                  120,
+                  270
+                ],
+                [
+                  154,
+                  273
+                ],
+                [
+                  188,
+                  276
+                ],
+                [
+                  221,
+                  278
+                ],
+                [
+                  255,
+                  281
+                ],
+                [
+                  289,
+                  284
+                ],
+                [
+                  322,
+                  287
+                ],
+                [
+                  356,
+                  290
+                ],
+                [
+                  390,
+                  292
+                ]
+              ]
+            }
+          },
+          "topicCategory": "どうぐ",
+          "topicWord": "かなづち",
+          "turnIndex": 6
+        },
+        "round": 1,
+        "status": "voting"
+      }
+    },
+    {
+      "name": "fixture voting browser10s disconnect cycle2",
+      "pass": true,
+      "stable": {
+        "players": {
+          "guestA": {
+            "isHost": false,
+            "confirmed": true,
+            "vote": "guestB"
+          },
+          "guestB": {
+            "isHost": false,
+            "confirmed": true,
+            "vote": null
+          },
+          "guestC": {
+            "isHost": false,
+            "confirmed": true,
+            "vote": null
+          },
+          "host": {
+            "isHost": true,
+            "confirmed": false,
+            "vote": null
+          }
+        },
+        "game": {
+          "colors": {
+            "guestA": "#2E7D8C",
+            "guestB": "#E4572E",
+            "guestC": "#6B3FA0"
+          },
+          "drawOrder": [
+            "guestB",
+            "guestA",
+            "guestC"
+          ],
+          "fakeArtist": "guestA",
+          "result": {
+            "outcome": "caught",
+            "reversalGuess": "保存済み",
+            "reversalJudge": "lose"
+          },
+          "strokes": {
+            "-P0zdzY-aiwG_E2QrxUF": {
+              "by": "guestB",
+              "color": "#E4572E",
+              "points": [
+                [
+                  120,
+                  90
+                ],
+                [
+                  154,
+                  93
+                ],
+                [
+                  188,
+                  96
+                ],
+                [
+                  221,
+                  98
+                ],
+                [
+                  255,
+                  101
+                ],
+                [
+                  289,
+                  104
+                ],
+                [
+                  322,
+                  107
+                ],
+                [
+                  356,
+                  110
+                ],
+                [
+                  390,
+                  113
+                ]
+              ]
+            },
+            "-P0zdzaWLlobOi7ONwnZ": {
+              "by": "guestA",
+              "color": "#2E7D8C",
+              "points": [
+                [
+                  120,
+                  126
+                ],
+                [
+                  154,
+                  129
+                ],
+                [
+                  188,
+                  132
+                ],
+                [
+                  221,
+                  134
+                ],
+                [
+                  255,
+                  137
+                ],
+                [
+                  289,
+                  140
+                ],
+                [
+                  322,
+                  143
+                ],
+                [
+                  356,
+                  146
+                ],
+                [
+                  390,
+                  149
+                ]
+              ]
+            },
+            "-P0zdzeU2BluokmmpuPS": {
+              "by": "guestC",
+              "color": "#6B3FA0",
+              "points": [
+                [
+                  120,
+                  162
+                ],
+                [
+                  154,
+                  165
+                ],
+                [
+                  188,
+                  168
+                ],
+                [
+                  221,
+                  170
+                ],
+                [
+                  255,
+                  173
+                ],
+                [
+                  289,
+                  176
+                ],
+                [
+                  322,
+                  179
+                ],
+                [
+                  356,
+                  182
+                ],
+                [
+                  390,
+                  185
+                ]
+              ]
+            },
+            "-P0zdzhr2p9AQ45Rf7Hy": {
+              "by": "guestB",
+              "color": "#E4572E",
+              "points": [
+                [
+                  120,
+                  198
+                ],
+                [
+                  154,
+                  201
+                ],
+                [
+                  188,
+                  204
+                ],
+                [
+                  221,
+                  206
+                ],
+                [
+                  255,
+                  209
+                ],
+                [
+                  289,
+                  212
+                ],
+                [
+                  322,
+                  215
+                ],
+                [
+                  356,
+                  218
+                ],
+                [
+                  390,
+                  221
+                ]
+              ]
+            },
+            "-P0zdzlDOmUWqP2gBzwm": {
+              "by": "guestA",
+              "color": "#2E7D8C",
+              "points": [
+                [
+                  120,
+                  234
+                ],
+                [
+                  154,
+                  237
+                ],
+                [
+                  188,
+                  240
+                ],
+                [
+                  221,
+                  242
+                ],
+                [
+                  255,
+                  245
+                ],
+                [
+                  289,
+                  248
+                ],
+                [
+                  322,
+                  251
+                ],
+                [
+                  356,
+                  254
+                ],
+                [
+                  390,
+                  256
+                ]
+              ]
+            },
+            "-P0zdzovmSCeKwXdj0K_": {
+              "by": "guestC",
+              "color": "#6B3FA0",
+              "points": [
+                [
+                  120,
+                  270
+                ],
+                [
+                  154,
+                  273
+                ],
+                [
+                  188,
+                  276
+                ],
+                [
+                  221,
+                  278
+                ],
+                [
+                  255,
+                  281
+                ],
+                [
+                  289,
+                  284
+                ],
+                [
+                  322,
+                  287
+                ],
+                [
+                  356,
+                  290
+                ],
+                [
+                  390,
+                  292
+                ]
+              ]
+            }
+          },
+          "topicCategory": "どうぐ",
+          "topicWord": "かなづち",
+          "turnIndex": 6
+        },
+        "round": 1,
+        "status": "voting"
+      }
+    },
+    {
+      "name": "result reload",
+      "pass": true,
+      "before": {
+        "isHost": false,
+        "confirmed": true,
+        "vote": "guestB"
+      },
+      "after": {
+        "isHost": false,
+        "confirmed": true,
+        "vote": "guestB"
+      }
+    },
+    {
+      "name": "fixture result browser10s disconnect cycle1",
+      "pass": true,
+      "stable": {
+        "players": {
+          "guestA": {
+            "isHost": false,
+            "confirmed": true,
+            "vote": "guestB"
+          },
+          "guestB": {
+            "isHost": false,
+            "confirmed": true,
+            "vote": null
+          },
+          "guestC": {
+            "isHost": false,
+            "confirmed": true,
+            "vote": null
+          },
+          "host": {
+            "isHost": true,
+            "confirmed": false,
+            "vote": null
+          }
+        },
+        "game": {
+          "colors": {
+            "guestA": "#2E7D8C",
+            "guestB": "#E4572E",
+            "guestC": "#6B3FA0"
+          },
+          "drawOrder": [
+            "guestB",
+            "guestA",
+            "guestC"
+          ],
+          "fakeArtist": "guestA",
+          "result": {
+            "outcome": "caught",
+            "reversalGuess": "保存済み",
+            "reversalJudge": "lose"
+          },
+          "strokes": {
+            "-P0zdzY-aiwG_E2QrxUF": {
+              "by": "guestB",
+              "color": "#E4572E",
+              "points": [
+                [
+                  120,
+                  90
+                ],
+                [
+                  154,
+                  93
+                ],
+                [
+                  188,
+                  96
+                ],
+                [
+                  221,
+                  98
+                ],
+                [
+                  255,
+                  101
+                ],
+                [
+                  289,
+                  104
+                ],
+                [
+                  322,
+                  107
+                ],
+                [
+                  356,
+                  110
+                ],
+                [
+                  390,
+                  113
+                ]
+              ]
+            },
+            "-P0zdzaWLlobOi7ONwnZ": {
+              "by": "guestA",
+              "color": "#2E7D8C",
+              "points": [
+                [
+                  120,
+                  126
+                ],
+                [
+                  154,
+                  129
+                ],
+                [
+                  188,
+                  132
+                ],
+                [
+                  221,
+                  134
+                ],
+                [
+                  255,
+                  137
+                ],
+                [
+                  289,
+                  140
+                ],
+                [
+                  322,
+                  143
+                ],
+                [
+                  356,
+                  146
+                ],
+                [
+                  390,
+                  149
+                ]
+              ]
+            },
+            "-P0zdzeU2BluokmmpuPS": {
+              "by": "guestC",
+              "color": "#6B3FA0",
+              "points": [
+                [
+                  120,
+                  162
+                ],
+                [
+                  154,
+                  165
+                ],
+                [
+                  188,
+                  168
+                ],
+                [
+                  221,
+                  170
+                ],
+                [
+                  255,
+                  173
+                ],
+                [
+                  289,
+                  176
+                ],
+                [
+                  322,
+                  179
+                ],
+                [
+                  356,
+                  182
+                ],
+                [
+                  390,
+                  185
+                ]
+              ]
+            },
+            "-P0zdzhr2p9AQ45Rf7Hy": {
+              "by": "guestB",
+              "color": "#E4572E",
+              "points": [
+                [
+                  120,
+                  198
+                ],
+                [
+                  154,
+                  201
+                ],
+                [
+                  188,
+                  204
+                ],
+                [
+                  221,
+                  206
+                ],
+                [
+                  255,
+                  209
+                ],
+                [
+                  289,
+                  212
+                ],
+                [
+                  322,
+                  215
+                ],
+                [
+                  356,
+                  218
+                ],
+                [
+                  390,
+                  221
+                ]
+              ]
+            },
+            "-P0zdzlDOmUWqP2gBzwm": {
+              "by": "guestA",
+              "color": "#2E7D8C",
+              "points": [
+                [
+                  120,
+                  234
+                ],
+                [
+                  154,
+                  237
+                ],
+                [
+                  188,
+                  240
+                ],
+                [
+                  221,
+                  242
+                ],
+                [
+                  255,
+                  245
+                ],
+                [
+                  289,
+                  248
+                ],
+                [
+                  322,
+                  251
+                ],
+                [
+                  356,
+                  254
+                ],
+                [
+                  390,
+                  256
+                ]
+              ]
+            },
+            "-P0zdzovmSCeKwXdj0K_": {
+              "by": "guestC",
+              "color": "#6B3FA0",
+              "points": [
+                [
+                  120,
+                  270
+                ],
+                [
+                  154,
+                  273
+                ],
+                [
+                  188,
+                  276
+                ],
+                [
+                  221,
+                  278
+                ],
+                [
+                  255,
+                  281
+                ],
+                [
+                  289,
+                  284
+                ],
+                [
+                  322,
+                  287
+                ],
+                [
+                  356,
+                  290
+                ],
+                [
+                  390,
+                  292
+                ]
+              ]
+            }
+          },
+          "topicCategory": "どうぐ",
+          "topicWord": "かなづち",
+          "turnIndex": 6
+        },
+        "round": 1,
+        "status": "result"
+      }
+    },
+    {
+      "name": "fixture result browser10s disconnect cycle2",
+      "pass": true,
+      "stable": {
+        "players": {
+          "guestA": {
+            "isHost": false,
+            "confirmed": true,
+            "vote": "guestB"
+          },
+          "guestB": {
+            "isHost": false,
+            "confirmed": true,
+            "vote": null
+          },
+          "guestC": {
+            "isHost": false,
+            "confirmed": true,
+            "vote": null
+          },
+          "host": {
+            "isHost": true,
+            "confirmed": false,
+            "vote": null
+          }
+        },
+        "game": {
+          "colors": {
+            "guestA": "#2E7D8C",
+            "guestB": "#E4572E",
+            "guestC": "#6B3FA0"
+          },
+          "drawOrder": [
+            "guestB",
+            "guestA",
+            "guestC"
+          ],
+          "fakeArtist": "guestA",
+          "result": {
+            "outcome": "caught",
+            "reversalGuess": "保存済み",
+            "reversalJudge": "lose"
+          },
+          "strokes": {
+            "-P0zdzY-aiwG_E2QrxUF": {
+              "by": "guestB",
+              "color": "#E4572E",
+              "points": [
+                [
+                  120,
+                  90
+                ],
+                [
+                  154,
+                  93
+                ],
+                [
+                  188,
+                  96
+                ],
+                [
+                  221,
+                  98
+                ],
+                [
+                  255,
+                  101
+                ],
+                [
+                  289,
+                  104
+                ],
+                [
+                  322,
+                  107
+                ],
+                [
+                  356,
+                  110
+                ],
+                [
+                  390,
+                  113
+                ]
+              ]
+            },
+            "-P0zdzaWLlobOi7ONwnZ": {
+              "by": "guestA",
+              "color": "#2E7D8C",
+              "points": [
+                [
+                  120,
+                  126
+                ],
+                [
+                  154,
+                  129
+                ],
+                [
+                  188,
+                  132
+                ],
+                [
+                  221,
+                  134
+                ],
+                [
+                  255,
+                  137
+                ],
+                [
+                  289,
+                  140
+                ],
+                [
+                  322,
+                  143
+                ],
+                [
+                  356,
+                  146
+                ],
+                [
+                  390,
+                  149
+                ]
+              ]
+            },
+            "-P0zdzeU2BluokmmpuPS": {
+              "by": "guestC",
+              "color": "#6B3FA0",
+              "points": [
+                [
+                  120,
+                  162
+                ],
+                [
+                  154,
+                  165
+                ],
+                [
+                  188,
+                  168
+                ],
+                [
+                  221,
+                  170
+                ],
+                [
+                  255,
+                  173
+                ],
+                [
+                  289,
+                  176
+                ],
+                [
+                  322,
+                  179
+                ],
+                [
+                  356,
+                  182
+                ],
+                [
+                  390,
+                  185
+                ]
+              ]
+            },
+            "-P0zdzhr2p9AQ45Rf7Hy": {
+              "by": "guestB",
+              "color": "#E4572E",
+              "points": [
+                [
+                  120,
+                  198
+                ],
+                [
+                  154,
+                  201
+                ],
+                [
+                  188,
+                  204
+                ],
+                [
+                  221,
+                  206
+                ],
+                [
+                  255,
+                  209
+                ],
+                [
+                  289,
+                  212
+                ],
+                [
+                  322,
+                  215
+                ],
+                [
+                  356,
+                  218
+                ],
+                [
+                  390,
+                  221
+                ]
+              ]
+            },
+            "-P0zdzlDOmUWqP2gBzwm": {
+              "by": "guestA",
+              "color": "#2E7D8C",
+              "points": [
+                [
+                  120,
+                  234
+                ],
+                [
+                  154,
+                  237
+                ],
+                [
+                  188,
+                  240
+                ],
+                [
+                  221,
+                  242
+                ],
+                [
+                  255,
+                  245
+                ],
+                [
+                  289,
+                  248
+                ],
+                [
+                  322,
+                  251
+                ],
+                [
+                  356,
+                  254
+                ],
+                [
+                  390,
+                  256
+                ]
+              ]
+            },
+            "-P0zdzovmSCeKwXdj0K_": {
+              "by": "guestC",
+              "color": "#6B3FA0",
+              "points": [
+                [
+                  120,
+                  270
+                ],
+                [
+                  154,
+                  273
+                ],
+                [
+                  188,
+                  276
+                ],
+                [
+                  221,
+                  278
+                ],
+                [
+                  255,
+                  281
+                ],
+                [
+                  289,
+                  284
+                ],
+                [
+                  322,
+                  287
+                ],
+                [
+                  356,
+                  290
+                ],
+                [
+                  390,
+                  292
+                ]
+              ]
+            }
+          },
+          "topicCategory": "どうぐ",
+          "topicWord": "かなづち",
+          "turnIndex": 6
+        },
+        "round": 1,
+        "status": "result"
+      }
+    },
+    {
+      "name": "SDK UI answer first then direct host skip helper abort",
+      "pass": true
+    },
+    {
+      "name": "stored result fixture escaped",
+      "pass": true
+    },
+    {
+      "name": "stored result fixture aborted",
+      "pass": true
+    },
+    {
+      "name": "real pointer pending stroke discarded on offline; saved game unchanged",
+      "pass": true
+    },
+    {
+      "name": "UI next round resets game and retains presence",
+      "pass": true
+    },
+    {
+      "name": "caught fixture UI skip; direct answer helper returns with form absent",
+      "pass": true
+    },
+    {
+      "name": "done reload",
+      "pass": true,
+      "before": {
+        "isHost": false,
+        "confirmed": true,
+        "vote": "guestB"
+      },
+      "after": {
+        "isHost": false,
+        "confirmed": true,
+        "vote": "guestB"
+      }
+    },
+    {
+      "name": "fixture done browser10s disconnect cycle1",
+      "pass": true,
+      "stable": {
+        "players": {
+          "guestA": {
+            "isHost": false,
+            "confirmed": true,
+            "vote": "guestB"
+          },
+          "guestB": {
+            "isHost": false,
+            "confirmed": false,
+            "vote": null
+          },
+          "guestC": {
+            "isHost": false,
+            "confirmed": false,
+            "vote": null
+          },
+          "host": {
+            "isHost": true,
+            "confirmed": false,
+            "vote": null
+          }
+        },
+        "game": {
+          "colors": {
+            "guestA": "#2E7D8C",
+            "guestB": "#E4572E",
+            "guestC": "#6B3FA0"
+          },
+          "drawOrder": [
+            "guestB",
+            "guestA",
+            "guestC"
+          ],
+          "fakeArtist": "guestA",
+          "result": {
+            "outcome": "caught",
+            "reversalGuess": "保存済み",
+            "reversalJudge": "lose"
+          },
+          "strokes": {
+            "-P0zdzY-aiwG_E2QrxUF": {
+              "by": "guestB",
+              "color": "#E4572E",
+              "points": [
+                [
+                  120,
+                  90
+                ],
+                [
+                  154,
+                  93
+                ],
+                [
+                  188,
+                  96
+                ],
+                [
+                  221,
+                  98
+                ],
+                [
+                  255,
+                  101
+                ],
+                [
+                  289,
+                  104
+                ],
+                [
+                  322,
+                  107
+                ],
+                [
+                  356,
+                  110
+                ],
+                [
+                  390,
+                  113
+                ]
+              ]
+            },
+            "-P0zdzaWLlobOi7ONwnZ": {
+              "by": "guestA",
+              "color": "#2E7D8C",
+              "points": [
+                [
+                  120,
+                  126
+                ],
+                [
+                  154,
+                  129
+                ],
+                [
+                  188,
+                  132
+                ],
+                [
+                  221,
+                  134
+                ],
+                [
+                  255,
+                  137
+                ],
+                [
+                  289,
+                  140
+                ],
+                [
+                  322,
+                  143
+                ],
+                [
+                  356,
+                  146
+                ],
+                [
+                  390,
+                  149
+                ]
+              ]
+            },
+            "-P0zdzeU2BluokmmpuPS": {
+              "by": "guestC",
+              "color": "#6B3FA0",
+              "points": [
+                [
+                  120,
+                  162
+                ],
+                [
+                  154,
+                  165
+                ],
+                [
+                  188,
+                  168
+                ],
+                [
+                  221,
+                  170
+                ],
+                [
+                  255,
+                  173
+                ],
+                [
+                  289,
+                  176
+                ],
+                [
+                  322,
+                  179
+                ],
+                [
+                  356,
+                  182
+                ],
+                [
+                  390,
+                  185
+                ]
+              ]
+            },
+            "-P0zdzhr2p9AQ45Rf7Hy": {
+              "by": "guestB",
+              "color": "#E4572E",
+              "points": [
+                [
+                  120,
+                  198
+                ],
+                [
+                  154,
+                  201
+                ],
+                [
+                  188,
+                  204
+                ],
+                [
+                  221,
+                  206
+                ],
+                [
+                  255,
+                  209
+                ],
+                [
+                  289,
+                  212
+                ],
+                [
+                  322,
+                  215
+                ],
+                [
+                  356,
+                  218
+                ],
+                [
+                  390,
+                  221
+                ]
+              ]
+            },
+            "-P0zdzlDOmUWqP2gBzwm": {
+              "by": "guestA",
+              "color": "#2E7D8C",
+              "points": [
+                [
+                  120,
+                  234
+                ],
+                [
+                  154,
+                  237
+                ],
+                [
+                  188,
+                  240
+                ],
+                [
+                  221,
+                  242
+                ],
+                [
+                  255,
+                  245
+                ],
+                [
+                  289,
+                  248
+                ],
+                [
+                  322,
+                  251
+                ],
+                [
+                  356,
+                  254
+                ],
+                [
+                  390,
+                  256
+                ]
+              ]
+            },
+            "-P0zdzovmSCeKwXdj0K_": {
+              "by": "guestC",
+              "color": "#6B3FA0",
+              "points": [
+                [
+                  120,
+                  270
+                ],
+                [
+                  154,
+                  273
+                ],
+                [
+                  188,
+                  276
+                ],
+                [
+                  221,
+                  278
+                ],
+                [
+                  255,
+                  281
+                ],
+                [
+                  289,
+                  284
+                ],
+                [
+                  322,
+                  287
+                ],
+                [
+                  356,
+                  290
+                ],
+                [
+                  390,
+                  292
+                ]
+              ]
+            }
+          },
+          "topicCategory": "どうぐ",
+          "topicWord": "かなづち",
+          "turnIndex": 6
+        },
+        "round": 2,
+        "status": "done"
+      }
+    },
+    {
+      "name": "fixture done browser10s disconnect cycle2",
+      "pass": true,
+      "stable": {
+        "players": {
+          "guestA": {
+            "isHost": false,
+            "confirmed": true,
+            "vote": "guestB"
+          },
+          "guestB": {
+            "isHost": false,
+            "confirmed": false,
+            "vote": null
+          },
+          "guestC": {
+            "isHost": false,
+            "confirmed": false,
+            "vote": null
+          },
+          "host": {
+            "isHost": true,
+            "confirmed": false,
+            "vote": null
+          }
+        },
+        "game": {
+          "colors": {
+            "guestA": "#2E7D8C",
+            "guestB": "#E4572E",
+            "guestC": "#6B3FA0"
+          },
+          "drawOrder": [
+            "guestB",
+            "guestA",
+            "guestC"
+          ],
+          "fakeArtist": "guestA",
+          "result": {
+            "outcome": "caught",
+            "reversalGuess": "保存済み",
+            "reversalJudge": "lose"
+          },
+          "strokes": {
+            "-P0zdzY-aiwG_E2QrxUF": {
+              "by": "guestB",
+              "color": "#E4572E",
+              "points": [
+                [
+                  120,
+                  90
+                ],
+                [
+                  154,
+                  93
+                ],
+                [
+                  188,
+                  96
+                ],
+                [
+                  221,
+                  98
+                ],
+                [
+                  255,
+                  101
+                ],
+                [
+                  289,
+                  104
+                ],
+                [
+                  322,
+                  107
+                ],
+                [
+                  356,
+                  110
+                ],
+                [
+                  390,
+                  113
+                ]
+              ]
+            },
+            "-P0zdzaWLlobOi7ONwnZ": {
+              "by": "guestA",
+              "color": "#2E7D8C",
+              "points": [
+                [
+                  120,
+                  126
+                ],
+                [
+                  154,
+                  129
+                ],
+                [
+                  188,
+                  132
+                ],
+                [
+                  221,
+                  134
+                ],
+                [
+                  255,
+                  137
+                ],
+                [
+                  289,
+                  140
+                ],
+                [
+                  322,
+                  143
+                ],
+                [
+                  356,
+                  146
+                ],
+                [
+                  390,
+                  149
+                ]
+              ]
+            },
+            "-P0zdzeU2BluokmmpuPS": {
+              "by": "guestC",
+              "color": "#6B3FA0",
+              "points": [
+                [
+                  120,
+                  162
+                ],
+                [
+                  154,
+                  165
+                ],
+                [
+                  188,
+                  168
+                ],
+                [
+                  221,
+                  170
+                ],
+                [
+                  255,
+                  173
+                ],
+                [
+                  289,
+                  176
+                ],
+                [
+                  322,
+                  179
+                ],
+                [
+                  356,
+                  182
+                ],
+                [
+                  390,
+                  185
+                ]
+              ]
+            },
+            "-P0zdzhr2p9AQ45Rf7Hy": {
+              "by": "guestB",
+              "color": "#E4572E",
+              "points": [
+                [
+                  120,
+                  198
+                ],
+                [
+                  154,
+                  201
+                ],
+                [
+                  188,
+                  204
+                ],
+                [
+                  221,
+                  206
+                ],
+                [
+                  255,
+                  209
+                ],
+                [
+                  289,
+                  212
+                ],
+                [
+                  322,
+                  215
+                ],
+                [
+                  356,
+                  218
+                ],
+                [
+                  390,
+                  221
+                ]
+              ]
+            },
+            "-P0zdzlDOmUWqP2gBzwm": {
+              "by": "guestA",
+              "color": "#2E7D8C",
+              "points": [
+                [
+                  120,
+                  234
+                ],
+                [
+                  154,
+                  237
+                ],
+                [
+                  188,
+                  240
+                ],
+                [
+                  221,
+                  242
+                ],
+                [
+                  255,
+                  245
+                ],
+                [
+                  289,
+                  248
+                ],
+                [
+                  322,
+                  251
+                ],
+                [
+                  356,
+                  254
+                ],
+                [
+                  390,
+                  256
+                ]
+              ]
+            },
+            "-P0zdzovmSCeKwXdj0K_": {
+              "by": "guestC",
+              "color": "#6B3FA0",
+              "points": [
+                [
+                  120,
+                  270
+                ],
+                [
+                  154,
+                  273
+                ],
+                [
+                  188,
+                  276
+                ],
+                [
+                  221,
+                  278
+                ],
+                [
+                  255,
+                  281
+                ],
+                [
+                  289,
+                  284
+                ],
+                [
+                  322,
+                  287
+                ],
+                [
+                  356,
+                  290
+                ],
+                [
+                  390,
+                  292
+                ]
+              ]
+            }
+          },
+          "topicCategory": "どうぐ",
+          "topicWord": "かなづち",
+          "turnIndex": 6
+        },
+        "round": 2,
+        "status": "done"
+      }
+    },
+    {
+      "name": "done actual30sec deletion and reconnect/reload no ghost",
+      "pass": true,
+      "elapsedMs": 30037
+    },
+    {
+      "name": "fixture current player explicit exit skips turn but retains strokes",
+      "pass": true
+    },
+    {
+      "name": "fixture fake explicit exit host abort and minimum gate",
+      "pass": true
+    },
+    {
+      "name": "missing player cleanup/reload",
+      "pass": true
+    },
+    {
+      "name": "invalid session",
+      "pass": true,
+      "session": {
+        "nickname": "host",
+        "role": "guest"
+      }
+    },
+    {
+      "name": "invalid session",
+      "pass": true,
+      "session": {
+        "nickname": "missing",
+        "role": "guest"
+      }
+    },
+    {
+      "name": "invalid session",
+      "pass": true,
+      "session": {
+        "nickname": "notHost",
+        "role": "host"
+      }
+    },
+    {
+      "name": "invalid session",
+      "pass": true,
+      "session": {
+        "nickname": "host",
+        "role": "unexpected"
+      }
+    },
+    {
+      "name": "host exit cleanup",
+      "pass": true
+    },
+    {
+      "name": "TTL past timestamp fixture",
+      "pass": true,
+      "pastMs": 125000,
+      "elapsedMs": 16
+    },
+    {
+      "name": "TTL past timestamp fixture",
+      "pass": true,
+      "pastMs": 119000,
+      "elapsedMs": 1022
+    }
+  ],
+  "result": {
+    "passed": 44,
+    "failed": 0
+  },
+  "network": {
+    "events": 1014,
+    "origins": {
+      "http://127.0.0.1:5500": 110,
+      "https://fonts.googleapis.com": 44,
+      "https://www.gstatic.com": 66,
+      "https://fonts.gstatic.com": 545,
+      "http://127.0.0.1:9099": 22,
+      "ws://127.0.0.1:9000": 52,
+      "http://127.0.0.1:9000": 175
+    },
+    "scope": "Observed steps only; initial navigation and gaps excluded; query tokens removed"
+  },
+  "console": {
+    "expectedOffline": 102,
+    "unexpected": [],
+    "pageErrors": []
+  },
+  "limitations": [
+    "SDK skip then answer helper sees absent form; queued transaction race covered by VM only",
+    "Phase fixtures change status directly, distinct from uiRound natural progression",
+    "No iPhone or production Firebase test; privacy assertions concern role-card/topic-chip UI, not DB authorization",
+    "No full2min wall-clock TTL; past timestamp fixtures",
+    "Independent final review resumed and passed: VM47 rerun/JSON match, SDK44 saved evidence (one narrowed case-name correction), AGENTS/updates/report. SDK was not independently rerun."
+  ],
+  "cleanup": {
+    "rooms": null,
+    "stats": null,
+    "browser": "b29 closed",
+    "emulator": "Owned CLI34963 SIGTERM; Java35003 stopped; six loopback ports no LISTEN",
+    "scratch": "b29-sandbox.Ghdh62 preserved"
+  }
+}
