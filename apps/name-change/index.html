@@ -165,7 +165,7 @@
       <label class="form-label" for="host-nickname">ニックネーム（1〜8文字）</label>
       <input id="host-nickname" class="form-input" type="text" maxlength="8" placeholder="例：GM">
     </div>
-    <button class="btn btn-primary" onclick="hostCreateRoom()">
+    <button id="host-create-btn" class="btn btn-primary" onclick="hostCreateRoom()">
       <span class="material-symbols-rounded" aria-hidden="true">add_circle</span>ルームを作成する
     </button>
     <button class="btn btn-ghost" onclick="showScreen('top')">
@@ -190,7 +190,7 @@
       <label class="form-label" for="guest-nickname">元の名前（1〜12文字）</label>
       <input id="guest-nickname" class="form-input" type="text" maxlength="12" placeholder="例：たろう">
     </div>
-    <button class="btn btn-primary" onclick="guestJoin()">
+    <button id="guest-join-btn" class="btn btn-primary" onclick="guestJoin()">
       <span class="material-symbols-rounded" aria-hidden="true">login</span>参加する
     </button>
     <button class="btn btn-ghost" onclick="showScreen('top')">
@@ -393,6 +393,13 @@
 </div>
 
 <div id="toast"></div>
+<div class="overlay" id="guest-off-overlay">
+  <div class="overlay-box">
+    <h3>接続を確認しています</h3>
+    <p>参加情報と送信済みの内容は残っています。接続が戻るまでお待ちください。未送信の投票は選び直してください。</p>
+    <button class="btn btn-secondary" onclick="goToTop()">退出してTOPに戻る</button>
+  </div>
+</div>
 
 <!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
@@ -413,7 +420,13 @@ const state = {
   orphanTimer: null,
   myVotes: {},         // { changerNick: guessedNick }
   votingRendered: false,
+  lastRoom: null, expectedRoomRemoval: false, namingAction: null, voteAction: null,
+  votingRoster: '', votingSaved: '', orphanDeadline: null,
+  expiryAction: null,
 };
+let guestPresence = null;
+let guestPresenceWork = Promise.resolve();
+const scheduledDone = new WeakMap();
 const ORPHAN_TTL_MS = 2 * 60 * 1000;
 const ORPHAN_TTL_INGAME_MS = 30 * 60 * 1000;
 const SESSION_KEY = 'nc_session';
@@ -454,26 +467,172 @@ function isRoomExpiredWith(room, ttl) {
   return RoomkRTDB.isRoomExpired(room, ttl) || (!!room && !room.status);
 }
 function isRoomExpired(room) {
-  return isRoomExpiredWith(room, ORPHAN_TTL_MS);
+  return isRoomExpiredWith(room, ttlFor(room));
+}
+function ttlFor(room) { return isInGame(room) ? ORPHAN_TTL_INGAME_MS : ORPHAN_TTL_MS; }
+const ROOM_PHASES = ['waiting', 'naming', 'voting', 'revealing', 'done'];
+function validNick(nick, limit) {
+  return typeof nick === 'string' && nick.trim() === nick && nick.length > 0 && nick.length <= limit
+    && !/[.#$\[\]/\u0000-\u001f\u007f]/.test(nick);
+}
+function validGuestRoom(room, nickname) {
+  return room?.players?.[nickname]?.isHost === false && room.host !== nickname
+    && ROOM_PHASES.includes(room.status) && !isRoomExpired(room);
+}
+function playerConnected(player) {
+  return player.isHost || player.presenceVersion !== 1
+    || Object.values(player.connections || {}).some(value => value === true);
+}
+function guestCanAct() {
+  return state.isHost || !!(guestPresence?.ready && guestPresence.connected
+    && guestPresence.roomRef === state.roomRef && guestPresence.nickname === state.nickname);
+}
+function discardVoteDraft() {
+  state.myVotes = {}; state.votingRendered = false;
+}
+function showGuestConnection() {
+  if (!guestCanAct()) discardVoteDraft();
+  document.getElementById('guest-off-overlay').classList.toggle('show',
+    !!state.roomRef && !state.isHost && !state.expectedRoomRemoval && !guestCanAct());
+  if (state.lastRoom && !state.expectedRoomRemoval) handle(state.lastRoom);
+}
+function captureAction(phase) {
+  return { ref: state.roomRef, nickname: state.nickname, isHost: state.isHost, phase,
+    presence: guestPresence, generation: guestPresence?.generation };
+}
+function actionCurrent(action) {
+  return !!action.ref && state.roomRef === action.ref && state.nickname === action.nickname
+    && state.isHost === action.isHost && !state.expectedRoomRemoval;
+}
+function canApplyAction(action, room) {
+  return actionCurrent(action) && room?.status === action.phase && !isRoomExpired(room)
+    && (action.isHost ? room.host === action.nickname && room.players?.[action.nickname]?.isHost === true
+      : guestCanAct() && validGuestRoom(room, action.nickname)
+        && guestPresence === action.presence && guestPresence?.generation === action.generation);
+}
+function stopGuestPresence() {
+  const presence = guestPresence;
+  guestPresence = null;
+  if (!presence) return guestPresenceWork;
+  presence.generation++;
+  presence.connectionRef.off('value', presence.listener);
+  guestPresenceWork = guestPresenceWork.then(async () => {
+    for (const ref of presence.refs) {
+      await ref.onDisconnect().cancel(); await ref.remove();
+    }
+  }).catch(error => console.warn('[name-change] presence cleanup failed', error));
+  return guestPresenceWork;
+}
+function startGuestPresence() {
+  if (state.expectedRoomRemoval || state.isHost || !state.roomRef) return;
+  stopGuestPresence();
+  const presence = { roomRef: state.roomRef, nickname: state.nickname,
+    connectionRef: db.ref('.info/connected'), generation: 0, connected: false, ready: false, refs: [] };
+  guestPresence = presence;
+  presence.listener = snap => {
+    presence.connected = snap.val() === true;
+    presence.ready = false;
+    const generation = ++presence.generation;
+    showGuestConnection();
+    if (!presence.connected) return;
+    const current = () => guestPresence === presence && presence.connected && presence.generation === generation
+      && state.roomRef === presence.roomRef && state.nickname === presence.nickname
+      && !state.isHost && !state.expectedRoomRemoval;
+    guestPresenceWork = guestPresenceWork.then(async () => {
+      if (!current()) return;
+      const ref = presence.roomRef.child(`players/${presence.nickname}/connections`).push();
+      presence.refs.push(ref);
+      await ref.onDisconnect().remove();
+      const { committed } = await presence.roomRef.transaction(room => {
+        if (!current() || !validGuestRoom(room, presence.nickname)) return;
+        const player = room.players[presence.nickname];
+        return { ...room, players: { ...room.players, [presence.nickname]: {
+          ...player, presenceVersion: 1, connections: { ...player.connections, [ref.key]: true },
+        } } };
+      });
+      if (!committed || !current()) {
+        await ref.onDisconnect().cancel(); await ref.remove(); return;
+      }
+      for (const oldRef of presence.refs.filter(item => item !== ref)) {
+        await oldRef.onDisconnect().cancel(); await oldRef.remove();
+      }
+      presence.refs = [ref];
+      if (!current()) return;
+      presence.ready = true; showGuestConnection();
+    }).catch(error => {
+      if (current()) { presence.ready = false; showGuestConnection(); }
+      console.warn('[name-change] guest reconnect failed', error);
+    });
+  };
+  presence.connectionRef.on('value', presence.listener);
+}
+async function joinTransaction(ref, update, applyLocally = true) {
+  let listener;
+  try {
+    await new Promise((resolve, reject) => {
+      listener = () => resolve(); ref.on('value', listener, reject);
+    });
+    return await ref.transaction(update, undefined, applyLocally);
+  } finally { ref.off('value', listener); }
+}
+async function removeExpiredRoom(ref) {
+  await RoomkRTDB.cancelRoomOnDisconnect(ref);
+  await joinTransaction(ref, room => room && isRoomExpired(room) ? null : undefined, false);
+}
+async function expireGuestRoom(ref) {
+  if (!ref || state.roomRef !== ref || state.isHost || state.expectedRoomRemoval || state.expiryAction) return;
+  const owner = {}; state.expiryAction = owner;
+  await stopGuestPresence();
+  try {
+    if (state.roomRef !== ref || state.expectedRoomRemoval) return;
+    await ref.transaction(room => {
+      if (state.roomRef === ref && !state.expectedRoomRemoval && room && isRoomExpired(room)) return null;
+    }, undefined, false).catch(error => console.warn('[name-change] expiry cleanup failed', error));
+    if (state.roomRef === ref && !state.isHost && !state.expectedRoomRemoval) startGuestPresence();
+  } finally { if (state.expiryAction === owner) state.expiryAction = null; }
 }
 
 // ===== Navigation =====
 function goHostSetup() { showScreen('host-setup'); }
 function goGuestJoin()  { showScreen('guest-join'); }
-function goToTop() {
-  if (state.roomRef) {
-    // 予約済み onDisconnect を取り消してから listener を外す（削除済み room の再生成を防ぐ）
-    RoomkRTDB.cancelRoomOnDisconnect(state.roomRef);
-    state.roomRef.off();
-  }
+function resetRoomState() {
   clearSession();
+  ['host-create-btn', 'guest-join-btn'].forEach(id => { document.getElementById(id).disabled = false; });
   clearTimeout(state.orphanTimer);
   document.getElementById('host-gone-overlay').classList.remove('show');
+  document.getElementById('guest-off-overlay').classList.remove('show');
   Object.assign(state, {
     roomCode:null, nickname:null, isHost:false, gameRole:null, roomRef:null,
-    orphanTimer:null, myVotes:{}, votingRendered:false
+    orphanTimer:null, myVotes:{}, votingRendered:false, lastRoom:null, expectedRoomRemoval:false,
+    namingAction:null, voteAction:null, votingRoster:'', votingSaved:'', orphanDeadline:null, expiryAction:null
   });
   showScreen('top');
+}
+async function cleanupMissingRoom(ref) {
+  if (state.roomRef !== ref || state.expectedRoomRemoval) return;
+  state.expectedRoomRemoval = true;
+  ref.off();
+  const work = stopGuestPresence();
+  resetRoomState();
+  await work;
+  await RoomkRTDB.cancelRoomOnDisconnect(ref).catch(error => console.warn('[name-change] cleanup failed', error));
+}
+async function goToTop() {
+  const ref = state.roomRef, nickname = state.nickname, isHost = state.isHost;
+  if (!ref) { resetRoomState(); return; }
+  if (state.expectedRoomRemoval) return;
+  state.expectedRoomRemoval = true;
+  showGuestConnection();
+  try {
+    await stopGuestPresence();
+    await RoomkRTDB.cancelRoomOnDisconnect(ref);
+    if (!isHost) await ref.child(`players/${nickname}`).remove();
+    ref.off();
+    if (state.roomRef === ref) resetRoomState();
+    // GMのdone削除タイマーは旧ref/deleteAtを保持し、TOP後も継続する。
+  } catch (error) { toast('退出できませんでした。接続を確認してもう一度お試しください');
+    if (state.roomRef === ref) { state.expectedRoomRemoval = false; if (!isHost) startGuestPresence(); }
+  }
 }
 function focusChangedName() {
   document.getElementById('changed-name-input').focus();
@@ -484,6 +643,7 @@ async function hostCreateRoom() {
   const nick = document.getElementById('host-nickname').value.trim();
   if (!nick)         { toast('ニックネームを入力してください'); return; }
   if (nick.length > 8) { toast('8文字以内で入力してください'); return; }
+  if (!validNick(nick, 8)) { toast('ニックネームに使えない文字があります'); return; }
 
   const btn = (typeof event !== 'undefined' && event?.target?.closest('button')) || null;
   if (btn) btn.disabled = true;
@@ -532,9 +692,10 @@ async function hostCreateRoom() {
 async function guestJoin() {
   const code = document.getElementById('guest-code').value.trim().toUpperCase();
   const nick = document.getElementById('guest-nickname').value.trim();
-  if (!code || code.length !== 6) { toast('6文字のコードを入力してください'); return; }
+  if (!/^[A-Z0-9]{6}$/.test(code)) { toast('6文字の英数字コードを入力してください'); return; }
   if (!nick)          { toast('元の名前を入力してください'); return; }
   if (nick.length > 12) { toast('12文字以内で入力してください'); return; }
+  if (!validNick(nick, 12)) { toast('名前に使えない文字があります'); return; }
 
   const btn = (typeof event !== 'undefined' && event?.target?.closest('button')) || null;
   if (btn) btn.disabled = true;
@@ -545,38 +706,37 @@ async function guestJoin() {
     if (!snap.exists())                   { toast('ルームが見つかりません'); if(btn)btn.disabled=false; return; }
     const room = snap.val();
     if (isRoomExpired(room)) {
-      await roomRef.remove().catch(() => {});
+      await removeExpiredRoom(roomRef).catch(() => {});
       toast('このルームは期限切れのため終了しました'); if(btn)btn.disabled=false; return;
     }
     if (room.hostConnected === false)     { toast('GMが切断されています'); if(btn)btn.disabled=false; return; }
     if (room.status !== 'waiting')        { toast('すでにゲームが始まっています'); if(btn)btn.disabled=false; return; }
-    if (room.players?.[nick])             { toast('その名前はすでに使われています'); if(btn)btn.disabled=false; return; }
+    if (room.host === nick || room.players?.[nick]) { toast('その名前はすでに使われています'); if(btn)btn.disabled=false; return; }
 
     let abortReason = null;
-    const { committed, snapshot } = await roomRef.transaction((currentRoom) => {
-      const roomForJoin = currentRoom || room;
+    const { committed } = await joinTransaction(roomRef, (roomForJoin) => {
       if (!roomForJoin) { abortReason = 'not_found'; return; }
       if (isRoomExpired(roomForJoin)) {
         abortReason = 'expired';
-        return null;
+        return;
       }
       if (roomForJoin.hostConnected === false) { abortReason = 'host_gone'; return; }
       if (roomForJoin.status !== 'waiting') { abortReason = 'not_waiting'; return; }
       const players = roomForJoin.players || {};
-      if (players[nick]) { abortReason = 'nick_taken'; return; }
+      if (roomForJoin.host === nick || players[nick]) { abortReason = 'nick_taken'; return; }
       abortReason = null;
       return {
         ...roomForJoin,
         players: {
           ...players,
-          [nick]: { isHost: false, gameRole: null, changedName: null, votes: null, ready: false }
+          [nick]: { isHost: false, gameRole: null, changedName: null, votes: null, ready: false, presenceVersion: 1 }
         }
       };
     });
 
     if (!committed) {
       if (abortReason === 'not_found')   { toast('ルームが見つかりません'); if(btn)btn.disabled=false; return; }
-      if (abortReason === 'expired' && !snapshot?.val()) {
+      if (abortReason === 'expired') {
         toast('このルームは期限切れのため終了しました'); if(btn)btn.disabled=false; return;
       }
       if (abortReason === 'host_gone')   { toast('GMが切断されています'); if(btn)btn.disabled=false; return; }
@@ -585,47 +745,41 @@ async function guestJoin() {
       toast('参加に失敗しました'); if(btn)btn.disabled=false; return;
     }
 
-    roomRef.child(`players/${nick}`).onDisconnect().remove();
-
     state.roomCode = code; state.nickname = nick; state.isHost = false;
     state.roomRef = roomRef;
-    saveSession(); startListener();
+    saveSession(); startListener(); startGuestPresence();
 
     document.getElementById('waiting-code').textContent = code;
     document.getElementById('waiting-guest-msg').style.display = 'block';
-    showScreen('waiting');
   } catch(e) { toast('エラー: ' + e.message); if (btn) btn.disabled = false; }
 }
 
 // ===== Room Listener =====
 function startListener() {
-  state.roomRef.on('value', snap => {
-    if (!snap.exists()) {
-      if (!state.isHost) document.getElementById('host-gone-overlay').classList.add('show');
-      return;
-    }
+  const ref = state.roomRef;
+  ref.on('value', snap => {
+    if (state.roomRef !== ref || state.expectedRoomRemoval) return;
     const room = snap.val();
+    const me = room?.players?.[state.nickname];
+    if (!room || !me || (state.isHost ? room.host !== state.nickname || me.isHost !== true
+      : room.host === state.nickname || me.isHost !== false)) {
+      void cleanupMissingRoom(ref); return;
+    }
+    state.lastRoom = room;
+    if (state.gameRole !== (me.gameRole || null)) { state.gameRole = me.gameRole || null; saveSession(); }
+    if (state.isHost && room.status === 'done') scheduleDoneCleanup(ref, room.deleteAt);
     if (!state.isHost) {
       const hostGone = room.hostConnected === false;
-      const ttl = isInGame(room) ? ORPHAN_TTL_INGAME_MS : ORPHAN_TTL_MS;
-      const expired = isRoomExpiredWith(room, ttl);
       document.getElementById('host-gone-overlay').classList.toggle('show', hostGone);
-      if (hostGone) {
-        const disconnectedAt = getHostDisconnectedAt(room);
-        const delay = disconnectedAt == null ? ttl : Math.max(0, disconnectedAt + ttl - getEstimatedServerNow());
-        if (expired) {
-          clearTimeout(state.orphanTimer);
-          state.orphanTimer = null;
-          if (state.roomRef) state.roomRef.remove().catch(() => {});
-        } else if (!state.orphanTimer) {
-          state.orphanTimer = setTimeout(() => {
-            state.orphanTimer = null;
-            if (state.roomRef) state.roomRef.remove().catch(() => {});
-          }, delay);
-        }
-      } else {
-        clearTimeout(state.orphanTimer);
-        state.orphanTimer = null;
+      const disconnectedAt = getHostDisconnectedAt(room);
+      const deadline = hostGone && disconnectedAt != null ? disconnectedAt + ttlFor(room) : null;
+      if (state.orphanDeadline !== deadline || isRoomExpired(room)) {
+        clearTimeout(state.orphanTimer); state.orphanTimer = null; state.orphanDeadline = deadline;
+        if (isRoomExpired(room)) { void expireGuestRoom(ref); return; }
+        if (deadline != null) state.orphanTimer = setTimeout(() => {
+          state.orphanTimer = null; state.orphanDeadline = null;
+          void expireGuestRoom(ref);
+        }, Math.max(0, deadline - getEstimatedServerNow()));
       }
     }
     handle(room);
@@ -654,17 +808,18 @@ function renderWaiting(room, players) {
     const d = document.createElement('div'); d.className = 'player-item';
     d.innerHTML = `<div class="player-avatar">${esc(initial(nick))}</div>
       <span class="player-name">${esc(nick)}</span>
-      ${p.isHost ? '<span class="badge badge-gm">GM</span>' : ''}`;
+      ${p.isHost ? '<span class="badge badge-gm">GM</span>' : !playerConnected(p) ? '<span class="badge badge-pending">再接続待ち</span>' : ''}`;
     list.appendChild(d);
   });
   if (state.isHost) {
     document.getElementById('waiting-host-ctrl').style.display = 'block';
     document.getElementById('waiting-guest-msg').style.display = 'none';
-    const nonGM = Object.values(players).filter(p => !p.isHost).length;
+    const guests = Object.values(players).filter(p => !p.isHost);
+    const nonGM = guests.length;
     const btn = document.getElementById('waiting-start-btn');
-    btn.disabled = nonGM < 2;
+    btn.disabled = nonGM < 2 || guests.some(p => !playerConnected(p));
     document.getElementById('waiting-count-msg').textContent =
-      nonGM < 2 ? '2人以上で開始できます' : `${nonGM}人が参加中`;
+      nonGM < 2 ? '2人以上で開始できます' : guests.some(p => !playerConnected(p)) ? '再接続を待っています' : `${nonGM}人が参加中`;
   } else {
     document.getElementById('waiting-host-ctrl').style.display = 'none';
     document.getElementById('waiting-guest-msg').style.display = 'block';
@@ -672,14 +827,18 @@ function renderWaiting(room, players) {
 }
 
 async function hostStartNaming() {
+  if (!state.isHost || !state.roomRef) return;
+  const action = captureAction('waiting');
   let abortReason = null;
-  const { committed } = await state.roomRef.transaction((room) => {
+  const { committed } = await action.ref.transaction((room) => {
+    if (!canApplyAction(action, room)) return;
     if (!room) { abortReason = 'not_found'; return; }
     if (room.hostConnected === false) { abortReason = 'host_gone'; return; }
     if (room.status !== 'waiting') { abortReason = 'bad_status'; return; }
     const players = room.players || {};
     const nonGM = Object.values(players).filter(p => !p.isHost);
     if (nonGM.length < 2) { abortReason = 'too_few'; return; }
+    if (nonGM.some(p => !playerConnected(p))) { abortReason = 'offline'; return; }
     abortReason = null;
     return {
       ...room,
@@ -688,9 +847,10 @@ async function hostStartNaming() {
       revealAnswer: false,
       revealOrder: null,
     };
-  });
+  }, undefined, false).catch(() => ({ committed: false }));
   if (!committed) {
     if (abortReason === 'too_few') toast('2人以上で開始できます');
+    else if (abortReason === 'offline') toast('再接続を待ってから始めてください');
     else if (abortReason === 'bad_status') toast('すでにゲームが始まっています');
     else toast('開始に失敗しました');
   }
@@ -701,6 +861,9 @@ function renderNaming(room, players) {
   if (state.currentScreen !== 'naming') showScreen('naming');
   const me = players[state.nickname];
   if (!me) return;
+  document.querySelectorAll('#naming-choose button').forEach(btn => {
+    btn.disabled = state.expectedRoomRemoval || !guestCanAct() || !!state.namingAction || !!me.ready;
+  });
 
   if (state.isHost) {
     // GM view
@@ -755,22 +918,42 @@ async function submitChangedName() {
   const name = document.getElementById('changed-name-input').value.trim();
   if (!name)           { toast('変更後の名前を入力してください'); return; }
   if (name.length > 16) { toast('16文字以内で入力してください'); return; }
-  await db.ref(`namechange_rooms/${state.roomCode}/players/${state.nickname}`).update(
-    { gameRole: 'changer', changedName: name, ready: true }
-  );
-  state.gameRole = 'changer'; saveSession();
+  await submitNaming('changer', name);
 }
 
 async function submitAsVoter() {
-  await db.ref(`namechange_rooms/${state.roomCode}/players/${state.nickname}`).update(
-    { gameRole: 'voter', changedName: null, ready: true }
-  );
-  state.gameRole = 'voter'; saveSession();
+  await submitNaming('voter', null);
+}
+async function submitNaming(gameRole, changedName) {
+  if (!['changer', 'voter'].includes(gameRole)
+    || (gameRole === 'changer' && (typeof changedName !== 'string' || !changedName.trim() || changedName.length > 16))) return;
+  if (state.isHost || !guestCanAct() || state.namingAction) return;
+  const action = captureAction('naming');
+  if (!canApplyAction(action, state.lastRoom)) return;
+  state.namingAction = action; handle(state.lastRoom);
+  try {
+    const { committed } = await action.ref.transaction(room => {
+      if (state.namingAction !== action || !canApplyAction(action, room) || room.players[action.nickname].ready) return;
+      return { ...room, players: { ...room.players, [action.nickname]: {
+        ...room.players[action.nickname], gameRole, changedName, ready: true,
+      } } };
+    }, undefined, false);
+    if (!committed && actionCurrent(action)) toast('送信できませんでした。現在の表示を確認してください');
+  } catch (error) { if (actionCurrent(action)) toast('送信できませんでした。接続を確認してください'); }
+  finally {
+    if (state.namingAction === action) {
+      state.namingAction = null;
+      if (actionCurrent(action) && state.lastRoom) handle(state.lastRoom);
+    }
+  }
 }
 
 async function hostStartVoting() {
+  if (!state.isHost || !state.roomRef) return;
+  const action = captureAction('naming');
   let abortReason = null;
-  const { committed } = await state.roomRef.transaction((room) => {
+  const { committed } = await action.ref.transaction((room) => {
+    if (!canApplyAction(action, room)) return;
     if (!room) { abortReason = 'not_found'; return; }
     if (room.status !== 'naming') { abortReason = 'bad_status'; return; }
     const players = room.players || {};
@@ -788,7 +971,7 @@ async function hostStartVoting() {
     });
     abortReason = null;
     return { ...room, status: 'voting', players: nextPlayers };
-  });
+  }, undefined, false).catch(() => ({ committed: false }));
   if (!committed) {
     const messages = {
       bad_status: '今は投票フェーズへ進めません',
@@ -826,14 +1009,20 @@ function renderVoting(room, players) {
   } else if (me.gameRole === 'voter') {
     document.getElementById('voting-voter-section').style.display = 'block';
     const alreadyVoted = me.votes != null;
+    const roster = JSON.stringify(changers.map(([nick]) => nick).sort());
+    const saved = JSON.stringify(me.votes || null);
+    if (!state.votingRendered || state.votingRoster !== roster || state.votingSaved !== saved) {
+      renderVotingCards(changers, me.votes);
+      state.votingRendered = true; state.votingRoster = roster; state.votingSaved = saved;
+    }
     if (alreadyVoted) {
       document.getElementById('voting-submit-btn').style.display = 'none';
       document.getElementById('voting-done-msg').style.display   = 'block';
     } else {
       document.getElementById('voting-submit-btn').style.display = 'flex';
       document.getElementById('voting-done-msg').style.display   = 'none';
-      if (!state.votingRendered) { renderVotingCards(changers); state.votingRendered = true; }
     }
+    updateSubmitBtn();
 
   } else {
     // changer
@@ -843,10 +1032,10 @@ function renderVoting(room, players) {
   }
 }
 
-function renderVotingCards(changers) {
+function renderVotingCards(changers, savedVotes = null) {
   const container = document.getElementById('voting-cards');
   container.innerHTML = '';
-  state.myVotes = {};
+  state.myVotes = savedVotes ? { ...savedVotes } : {};
   // シャッフル表示
   const shuffled = [...changers].sort(() => Math.random() - 0.5);
   shuffled.forEach(([nick, p]) => {
@@ -862,6 +1051,7 @@ function renderVotingCards(changers) {
       const btn = document.createElement('button');
       btn.className = 'vote-opt'; btn.textContent = origNick;
       btn.dataset.original = origNick;
+      if (savedVotes?.[nick] === origNick) { btn.classList.add('selected'); card.classList.add('answered'); }
       btn.onclick = () => pickVote(card, nick, origNick, btn);
       opts.appendChild(btn);
     });
@@ -872,6 +1062,10 @@ function renderVotingCards(changers) {
 }
 
 function pickVote(card, changerNick, guessedNick, clickedBtn) {
+  const room = state.lastRoom;
+  if (state.isHost || state.voteAction || !canApplyAction(captureAction('voting'), room)
+    || room.players[state.nickname].gameRole !== 'voter' || room.players[state.nickname].votes != null
+    || clickedBtn.disabled || !card.isConnected) return;
   // 同カード内の前選択を解除
   const prev = card.querySelector('.vote-opt.selected');
   if (prev) {
@@ -892,22 +1086,57 @@ function pickVote(card, changerNick, guessedNick, clickedBtn) {
 }
 
 function updateSubmitBtn() {
-  const total = document.querySelectorAll('.vote-card').length;
-  document.getElementById('voting-submit-btn').disabled = Object.keys(state.myVotes).length < total;
+  const room = state.lastRoom, me = room?.players?.[state.nickname];
+  const blocked = state.isHost || !guestCanAct() || state.expectedRoomRemoval || !!state.voteAction
+    || room?.status !== 'voting' || me?.gameRole !== 'voter' || me?.votes != null;
+  document.querySelectorAll('.vote-card').forEach(card => {
+    card.querySelectorAll('.vote-opt').forEach(btn => {
+      btn.disabled = blocked || Object.entries(state.myVotes).some(([nick, guess]) =>
+        nick !== card.dataset.changer && guess === btn.dataset.original);
+    });
+  });
+  document.getElementById('voting-submit-btn').disabled = blocked || !validVotes(room, state.myVotes);
+}
+function validVotes(room, votes) {
+  const changers = Object.keys(room?.players || {}).filter(nick => room.players[nick].gameRole === 'changer');
+  const keys = Object.keys(votes);
+  return changers.length > 0 && keys.length === changers.length && changers.every(nick => keys.includes(nick))
+    && Object.values(votes).every(nick => changers.includes(nick))
+    && new Set(Object.values(votes)).size === changers.length;
 }
 
 async function submitVotes() {
-  if (Object.keys(state.myVotes).length < document.querySelectorAll('.vote-card').length) {
+  if (state.isHost || !guestCanAct() || state.voteAction) return;
+  const action = captureAction('voting'), votes = { ...state.myVotes };
+  if (!canApplyAction(action, state.lastRoom)) return;
+  if (!validVotes(state.lastRoom, votes)) {
     toast('全ての名前に答えてください'); return;
   }
-  await db.ref(`namechange_rooms/${state.roomCode}/players/${state.nickname}/votes`).set(state.myVotes);
-  toast('投票しました！');
+  state.voteAction = action; updateSubmitBtn();
+  try {
+    const { committed } = await action.ref.transaction(room => {
+      if (state.voteAction !== action || !canApplyAction(action, room) || !validVotes(room, votes)) return;
+      const me = room.players[action.nickname];
+      if (me.gameRole !== 'voter' || me.votes != null) return;
+      return { ...room, players: { ...room.players, [action.nickname]: { ...me, votes } } };
+    }, undefined, false);
+    if (actionCurrent(action)) toast(committed ? '投票しました！' : '投票できませんでした。現在の表示を確認してください');
+  } catch (error) { if (actionCurrent(action)) toast('投票できませんでした。接続を確認してください'); }
+  finally {
+    if (state.voteAction === action) {
+      state.voteAction = null;
+      if (actionCurrent(action) && state.lastRoom) handle(state.lastRoom);
+    }
+  }
 }
 
 // ===== Host: Start Revealing =====
 async function hostStartRevealing() {
+  if (!state.isHost || !state.roomRef) return;
+  const action = captureAction('voting');
   let abortReason = null;
-  const { committed } = await state.roomRef.transaction((room) => {
+  const { committed } = await action.ref.transaction((room) => {
+    if (!canApplyAction(action, room)) return;
     if (!room) { abortReason = 'not_found'; return; }
     if (room.status !== 'voting') { abortReason = 'bad_status'; return; }
     const players = room.players || {};
@@ -922,7 +1151,7 @@ async function hostStartRevealing() {
       status: 'revealing',
       revealOrder: changers.sort(() => Math.random() - 0.5),
     };
-  });
+  }, undefined, false).catch(() => ({ committed: false }));
   if (!committed) {
     const messages = {
       bad_status: '今は結果発表へ進めません',
@@ -990,27 +1219,33 @@ function copyResults() {
 // 終了後の自動削除は「終了時点の ref と deleteAt」を固定して予約する。
 // 可変な state.roomRef を読むと、TOP復帰後に作った新ルームを誤削除しうる。
 // 削除は transaction で「まだ同じ終了状態か」を確認してから消す。
-// 削除失敗時は何もしない（onDisconnect + TTL の掃除経路が残る）
+// 削除失敗時の回復は保証しない。GMのTOP復帰後は切断TTLも必ず成立するとは限らない。
 function scheduleDoneCleanup(roomRef, deleteAt) {
+  if (!Number.isFinite(deleteAt) || scheduledDone.get(roomRef) === deleteAt) return;
+  scheduledDone.set(roomRef, deleteAt);
   const delay = Math.max(0, deleteAt - getEstimatedServerNow());
   setTimeout(async () => {
     // 削除の前に自接続の onDisconnect 予約を取り消す。予約が残ったままだと、
     // 削除後にこのタブを閉じた時に update が発火してゴースト room を再生成する
-    await RoomkRTDB.cancelRoomOnDisconnect(roomRef);
-    roomRef.transaction((room) => {
-      if (room && room.status === 'done' && room.deleteAt === deleteAt) return null;
-      return room;
-    }).catch(() => {});
+    try {
+      await RoomkRTDB.cancelRoomOnDisconnect(roomRef);
+      // TOPで恒久listenerを外した後も最新cacheを保持する。古い取得値へfallbackしない。
+      await joinTransaction(roomRef, room => {
+        if (room && room.status === 'done' && room.deleteAt === deleteAt) return null;
+      }, false);
+    } catch (error) { console.warn('[name-change] done cleanup failed', error); }
   }, delay);
 }
 
 async function hostFinish() {
+  if (!state.isHost || !state.roomRef) return;
+  const action = captureAction('revealing');
   const doneRoomRef = state.roomRef;
   const deleteAt = getEstimatedServerNow() + 30000;
   const { committed } = await doneRoomRef.transaction((room) => {
-    if (!room || room.status === 'done') return;
+    if (!canApplyAction(action, room)) return;
     return { ...room, status: 'done', deleteAt };
-  });
+  }, undefined, false).catch(() => ({ committed: false }));
   if (committed) scheduleDoneCleanup(doneRoomRef, deleteAt);
 }
 
@@ -1018,37 +1253,44 @@ async function hostFinish() {
 async function tryReconnect() {
   const saved = sessionStorage.getItem(SESSION_KEY);
   if (!saved) return false;
-  const { roomCode, nickname, isHost, gameRole } = JSON.parse(saved);
-  if (!roomCode || !nickname) return false;
   try {
+    const { roomCode, nickname, isHost } = JSON.parse(saved);
+    if (typeof isHost !== 'boolean' || typeof roomCode !== 'string' || !/^[A-Z0-9]{6}$/.test(roomCode)
+      || !validNick(nickname, isHost ? 8 : 12)) { clearSession(); return false; }
     await authReady;
-    const snap = await db.ref(`namechange_rooms/${roomCode}`).get();
+    const ref = db.ref(`namechange_rooms/${roomCode}`);
+    const snap = await ref.get();
     if (!snap.exists()) { clearSession(); return false; }
-    const room = snap.val();
-    const ttl = isInGame(room) ? ORPHAN_TTL_INGAME_MS : ORPHAN_TTL_MS;
-    if (isRoomExpiredWith(room, ttl)) {
-      await db.ref(`namechange_rooms/${roomCode}`).remove().catch(() => {});
+    let room = snap.val();
+    if (isRoomExpired(room)) {
+      await removeExpiredRoom(ref).catch(() => {});
       clearSession(); return false;
     }
-    if (!room.players?.[nickname]) { clearSession(); return false; }
-    state.roomCode = roomCode; state.nickname = nickname;
-    state.isHost = isHost;    state.gameRole = gameRole;
-    state.roomRef = db.ref(`namechange_rooms/${roomCode}`);
+    let me = room.players?.[nickname];
+    if (!ROOM_PHASES.includes(room.status) || (isHost ? room.host !== nickname || me?.isHost !== true
+      : !validGuestRoom(room, nickname))) { clearSession(); return false; }
     if (isHost) {
-      await state.roomRef.update({ hostConnected: true, hostDisconnectedAt: null });
-      state.roomRef.onDisconnect().update({
-        hostConnected: false,
-        hostDisconnectedAt: firebase.database.ServerValue.TIMESTAMP,
-      });
+      // hostの従来復帰を維持するが、get後に消えたroomへ部分updateをしない。
+      const { committed, snapshot } = await joinTransaction(ref, current => {
+        if (!current || isRoomExpired(current) || current.host !== nickname || current.players?.[nickname]?.isHost !== true) return;
+        return { ...current, hostConnected: true, hostDisconnectedAt: null };
+      }, false);
+      if (!committed) { clearSession(); return false; }
+      room = snapshot.val(); me = room.players[nickname];
+      await ref.onDisconnect().update({ hostConnected: false, hostDisconnectedAt: firebase.database.ServerValue.TIMESTAMP });
+    }
+    state.roomCode = roomCode; state.nickname = nickname;
+    state.isHost = isHost; state.gameRole = me.gameRole || null;
+    state.roomRef = ref;
+    if (isHost) {
       // 終了済みルームはリロードで JS タイマーが消えるため、残り時間で削除を再予約する
       if (room.status === 'done' && room.deleteAt) {
         scheduleDoneCleanup(state.roomRef, room.deleteAt);
       }
-    } else {
-      state.roomRef.child(`players/${nickname}`).onDisconnect().remove();
     }
     document.getElementById('waiting-code').textContent = roomCode;
-    startListener(); toast('セッションに再接続しました');
+    saveSession(); startListener(); if (!isHost) startGuestPresence();
+    toast('セッションに再接続しました');
     return true;
   } catch(e) { clearSession(); return false; }
 }
