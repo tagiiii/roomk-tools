@@ -1,0 +1,256 @@
+{
+  "date": "2026-09-08",
+  "sourceCommit": "09086e20c5d8090085829a2e2a2d233c1e9ffd06",
+  "result": "PASS",
+  "sources": [
+    {
+      "file": "apps/kotoba-tantei/app.js",
+      "sha256": "b96fc56f8c3836b06a9ca6be6c58db65d812f9e870f9e45102b3f6924c0fcae9"
+    },
+    {
+      "file": "apps/kotoba-tantei/service.js",
+      "sha256": "096666319ffcdf707cf6027a0334f01c2ce63322f8cecb4fd3c6d5f06d5a6cf0"
+    },
+    {
+      "file": "apps/shared/js/utils.js",
+      "sha256": "533e791fd06c37839989a1461bb0322d11c94fc1d1ef853a03c68fb12c25c370"
+    }
+  ],
+  "extractions": [
+    {
+      "file": "apps/kotoba-tantei/app.js",
+      "header": "function renderLobby() {",
+      "firstLine": 249,
+      "lastLine": 317,
+      "sha256": "2aaf4f121bcfbf806dcece464b6c93dd35701bcf1467764eb9c4b504a2572639"
+    },
+    {
+      "file": "apps/kotoba-tantei/app.js",
+      "header": "function renderSpectatorShareControls(currentPlayer) {",
+      "firstLine": 319,
+      "lastLine": 329,
+      "sha256": "dc6c7fba158fd5d6f4ad6c5f48c3f65a431786a3dfebc53720c84ce08a68e2fe"
+    },
+    {
+      "file": "apps/kotoba-tantei/app.js",
+      "header": "function teamLabel(team) {",
+      "firstLine": 504,
+      "lastLine": 506,
+      "sha256": "3bcedd0eefa29b3a003cf1a20a4954e550901c3fba21618b0768038a810e2851"
+    },
+    {
+      "file": "apps/kotoba-tantei/app.js",
+      "header": "function roleLabel(role) {",
+      "firstLine": 508,
+      "lastLine": 510,
+      "sha256": "df74662c99c0bc44b8551f85bf1e416728c4914831b9fadf47e6e15b6d88434b"
+    },
+    {
+      "file": "apps/kotoba-tantei/app.js",
+      "header": "function renderLobbyPlayer(player, canEditAssignments) {",
+      "firstLine": 548,
+      "lastLine": 573,
+      "sha256": "3dc21ad69bc650affdadc2fa54c1ccdc9ca86e1072bf4d64686efe4e43847a0e"
+    },
+    {
+      "file": "apps/kotoba-tantei/app.js",
+      "header": "function renderPlayerControls(player) {",
+      "firstLine": 575,
+      "lastLine": 608,
+      "sha256": "4954f4a49d2842d6c95d3278209410a34a13e17cbe9251d317841ba2c9e3e703"
+    },
+    {
+      "file": "apps/kotoba-tantei/app.js",
+      "header": "function renderStartConditions(players) {",
+      "firstLine": 610,
+      "lastLine": 617,
+      "sha256": "3dfcf859ba382d70b4dd45928054bc48975fc2ac147169d9f0d2df5e399adb01"
+    },
+    {
+      "file": "apps/kotoba-tantei/app.js",
+      "header": "function canStart(players) {",
+      "firstLine": 619,
+      "lastLine": 621,
+      "sha256": "bec57d7d85c3efdaafba92b316c2266e17c4a8f63919f3371834d665d35d2041"
+    },
+    {
+      "file": "apps/kotoba-tantei/service.js",
+      "header": "export function getStartConditions(players) {",
+      "firstLine": 782,
+      "lastLine": 798,
+      "sha256": "ebcc22f76918df3aa87975da86d6710580d6a6c1229e6ea5926c604b142d9259"
+    },
+    {
+      "file": "apps/shared/js/utils.js",
+      "header": "export function escapeHtml(str) {",
+      "firstLine": 168,
+      "lastLine": 175,
+      "sha256": "1822ac169ef7a93ae68a1b6dda3e6cc5e192fc66cd62167cfdac5b287facf59d"
+    }
+  ],
+  "checks": {
+    "totalCases": 15,
+    "renderedCases": 7,
+    "preSinkErrors": 8,
+    "rawLengthMarkerCases": 0
+  },
+  "results": [
+    {
+      "case": "normal-host",
+      "writes": 1,
+      "count": "4",
+      "startEnabled": true,
+      "rawLengthMarkerReached": false,
+      "error": null
+    },
+    {
+      "case": "normal-guest",
+      "writes": 1,
+      "count": "4",
+      "startEnabled": false,
+      "rawLengthMarkerReached": false,
+      "error": null
+    },
+    {
+      "case": "one-host",
+      "writes": 1,
+      "count": "1",
+      "startEnabled": false,
+      "rawLengthMarkerReached": false,
+      "error": null
+    },
+    {
+      "case": "empty-array",
+      "writes": 1,
+      "count": "0",
+      "startEnabled": false,
+      "rawLengthMarkerReached": false,
+      "error": null
+    },
+    {
+      "case": "missing",
+      "writes": 1,
+      "count": "0",
+      "startEnabled": false,
+      "rawLengthMarkerReached": false,
+      "error": null
+    },
+    {
+      "case": "null",
+      "writes": 1,
+      "count": "0",
+      "startEnabled": false,
+      "rawLengthMarkerReached": false,
+      "error": null
+    },
+    {
+      "case": "html-length-object",
+      "writes": 0,
+      "count": null,
+      "startEnabled": false,
+      "rawLengthMarkerReached": false,
+      "error": {
+        "name": "TypeError",
+        "message": "state.room.players?.find is not a function"
+      }
+    },
+    {
+      "case": "string-length-object",
+      "writes": 0,
+      "count": null,
+      "startEnabled": false,
+      "rawLengthMarkerReached": false,
+      "error": {
+        "name": "TypeError",
+        "message": "state.room.players?.find is not a function"
+      }
+    },
+    {
+      "case": "number-length-object",
+      "writes": 0,
+      "count": null,
+      "startEnabled": false,
+      "rawLengthMarkerReached": false,
+      "error": {
+        "name": "TypeError",
+        "message": "state.room.players?.find is not a function"
+      }
+    },
+    {
+      "case": "string",
+      "writes": 0,
+      "count": null,
+      "startEnabled": false,
+      "rawLengthMarkerReached": false,
+      "error": {
+        "name": "TypeError",
+        "message": "state.room.players?.find is not a function"
+      }
+    },
+    {
+      "case": "number",
+      "writes": 0,
+      "count": null,
+      "startEnabled": false,
+      "rawLengthMarkerReached": false,
+      "error": {
+        "name": "TypeError",
+        "message": "state.room.players?.find is not a function"
+      }
+    },
+    {
+      "case": "zero",
+      "writes": 0,
+      "count": null,
+      "startEnabled": false,
+      "rawLengthMarkerReached": false,
+      "error": {
+        "name": "TypeError",
+        "message": "state.room.players?.find is not a function"
+      }
+    },
+    {
+      "case": "false",
+      "writes": 0,
+      "count": null,
+      "startEnabled": false,
+      "rawLengthMarkerReached": false,
+      "error": {
+        "name": "TypeError",
+        "message": "state.room.players?.find is not a function"
+      }
+    },
+    {
+      "case": "null-array-entry",
+      "writes": 0,
+      "count": null,
+      "startEnabled": false,
+      "rawLengthMarkerReached": false,
+      "error": {
+        "name": "TypeError",
+        "message": "Cannot read properties of null (reading 'id')"
+      }
+    },
+    {
+      "case": "html-name-array",
+      "writes": 1,
+      "count": "1",
+      "startEnabled": false,
+      "rawLengthMarkerReached": false,
+      "error": null
+    }
+  ],
+  "upstreamInspection": [
+    "service.js:741 subscribeToRoom forwards snapshot.data() without players normalization.",
+    "app.js:440 subscription callback assigns state.room, then clearInvalidPendingCard; pendingCardIndex null returns early.",
+    "For the ordinary lobby route, callback reaches renderLobby; players?.find at app.js:275 precedes canStart/filter, map and innerHTML.",
+    "getStartConditions uses real array filter/some; renderLobby uses real find/map. No fake methods make JSON maps reach the sink."
+  ],
+  "limitations": [
+    "Direct renderer only; subscription/navigation are boundary stubs. Upstream statements are static inspection, not integration execution.",
+    "No SDK, network, Firebase, saved-session operations, browser or iPhone use; document is a property-capture stub, not an HTML parser.",
+    "Tested malformed JSON shapes throw before assignment, not sanitize successfully. An existing screen remains unchanged in this stub.",
+    "Normal JSON array length is numeric. These tests do not prove all app HTML safe, production write permission, or resilience to arbitrary corrupted data.",
+    "No app or scanner changes; the static unknown count is not reduced by these evidence-only tests."
+  ]
+}

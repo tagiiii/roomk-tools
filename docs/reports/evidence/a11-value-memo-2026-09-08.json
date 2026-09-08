@@ -1,0 +1,195 @@
+{
+  "date": "2026-09-08",
+  "sourceCommit": "09086e20c5d8090085829a2e2a2d233c1e9ffd06",
+  "sources": [
+    {
+      "file": "apps/value-card/app.js",
+      "sha256": "f5aab7271482c23c94404487f0b04f5128e0e7565dda14cff521622729aa9e16"
+    },
+    {
+      "file": "apps/shared/js/utils.js",
+      "sha256": "533e791fd06c37839989a1461bb0322d11c94fc1d1ef853a03c68fb12c25c370"
+    }
+  ],
+  "extractions": [
+    {
+      "file": "apps/value-card/app.js",
+      "header": "function saveImage() {",
+      "firstLine": 243,
+      "lastLine": 329,
+      "sha256": "c9394915586791b480a2dc25a03dbb02e23126a00fd8195e67fd468261b8e6ac"
+    },
+    {
+      "file": "apps/shared/js/utils.js",
+      "header": "export function escapeHtml(str) {",
+      "firstLine": 168,
+      "lastLine": 175,
+      "sha256": "1822ac169ef7a93ae68a1b6dda3e6cc5e192fc66cd62167cfdac5b287facf59d"
+    }
+  ],
+  "summary": {
+    "cases": 12,
+    "passed": 12,
+    "negativeControlDetected": true
+  },
+  "results": [
+    {
+      "id": "ordinary",
+      "status": "PASS",
+      "memoHtml": [
+        "大切にしたい"
+      ],
+      "captureCalls": 1,
+      "canvasCalls": 1,
+      "mockClicks": 1,
+      "removed": 1,
+      "remainingMockContainers": 0,
+      "syncError": null
+    },
+    {
+      "id": "empty",
+      "status": "PASS",
+      "memoHtml": [],
+      "captureCalls": 1,
+      "canvasCalls": 1,
+      "mockClicks": 1,
+      "removed": 1,
+      "remainingMockContainers": 0,
+      "syncError": null
+    },
+    {
+      "id": "whitespace",
+      "status": "PASS",
+      "memoHtml": [],
+      "captureCalls": 1,
+      "canvasCalls": 1,
+      "mockClicks": 1,
+      "removed": 1,
+      "remainingMockContainers": 0,
+      "syncError": null
+    },
+    {
+      "id": "html-memo",
+      "status": "PASS",
+      "memoHtml": [
+        "&lt;b data-a11-memo-probe=&quot;1&quot;&gt;memo&lt;/b&gt;"
+      ],
+      "captureCalls": 1,
+      "canvasCalls": 1,
+      "mockClicks": 1,
+      "removed": 1,
+      "remainingMockContainers": 0,
+      "syncError": null
+    },
+    {
+      "id": "quotes-ampersands",
+      "status": "PASS",
+      "memoHtml": [
+        "&quot;&#39; &amp; &lt; &gt;"
+      ],
+      "captureCalls": 1,
+      "canvasCalls": 1,
+      "mockClicks": 1,
+      "removed": 1,
+      "remainingMockContainers": 0,
+      "syncError": null
+    },
+    {
+      "id": "newline",
+      "status": "PASS",
+      "memoHtml": [
+        "先頭\n末尾"
+      ],
+      "captureCalls": 1,
+      "canvasCalls": 1,
+      "mockClicks": 1,
+      "removed": 1,
+      "remainingMockContainers": 0,
+      "syncError": null
+    },
+    {
+      "id": "100-characters",
+      "status": "PASS",
+      "memoHtml": [
+        "ああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああ"
+      ],
+      "captureCalls": 1,
+      "canvasCalls": 1,
+      "mockClicks": 1,
+      "removed": 1,
+      "remainingMockContainers": 0,
+      "syncError": null
+    },
+    {
+      "id": "memo-order",
+      "status": "PASS",
+      "memoHtml": [
+        "メモ甲",
+        "メモ丙"
+      ],
+      "captureCalls": 1,
+      "canvasCalls": 1,
+      "mockClicks": 1,
+      "removed": 1,
+      "remainingMockContainers": 0,
+      "syncError": null
+    },
+    {
+      "id": "card-escaping",
+      "status": "PASS",
+      "memoHtml": [],
+      "captureCalls": 1,
+      "canvasCalls": 1,
+      "mockClicks": 1,
+      "removed": 1,
+      "remainingMockContainers": 0,
+      "syncError": null
+    },
+    {
+      "id": "capture-rejection",
+      "status": "PASS",
+      "memoHtml": [
+        "&lt;b data-a11-memo-probe=&quot;1&quot;&gt;memo&lt;/b&gt;"
+      ],
+      "captureCalls": 1,
+      "canvasCalls": 0,
+      "mockClicks": 0,
+      "removed": 1,
+      "remainingMockContainers": 0,
+      "syncError": null
+    },
+    {
+      "id": "canvas-error",
+      "status": "PASS",
+      "memoHtml": [
+        "&lt;b data-a11-memo-probe=&quot;1&quot;&gt;memo&lt;/b&gt;"
+      ],
+      "captureCalls": 1,
+      "canvasCalls": 1,
+      "mockClicks": 0,
+      "removed": 1,
+      "remainingMockContainers": 0,
+      "syncError": null
+    },
+    {
+      "id": "capture-sync-throw",
+      "status": "PASS",
+      "memoHtml": [
+        "&lt;b data-a11-memo-probe=&quot;1&quot;&gt;memo&lt;/b&gt;"
+      ],
+      "captureCalls": 1,
+      "canvasCalls": 0,
+      "mockClicks": 0,
+      "removed": 0,
+      "remainingMockContainers": 1,
+      "syncError": "fixed capture sync error"
+    }
+  ],
+  "limitations": [
+    "String-output assertions with mocked DOM; no browser parsing or screenshot.",
+    "html2canvas, canvas, timer and download are mocked; no image quality, actual download, SDK or network verification.",
+    "100-character input is tested; textarea maxlength enforcement and multiline visual layout are not tested.",
+    "Promise rejection/canvas error clean up silently; synchronous capture throw leaves a mock container. Real-library occurrence is not established.",
+    "Only this fixed saveImage path is checked; A-11 unknown count is unchanged."
+  ]
+}
