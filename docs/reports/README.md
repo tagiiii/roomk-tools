@@ -14,6 +14,7 @@
 
 ## 一覧
 
+- [b31-kaburazu-hint-reconnect-2026-09-08.md](b31-kaburazu-hint-reconnect-2026-09-08.md) — かぶらずヒントの提出保持・再戦世代・観戦分離と切断復帰の設計・隔離検証（P-11、B-31、2026-09-08）
 - [b30-name-change-reconnect-2026-09-08.md](b30-name-change-reconnect-2026-09-08.md) — 名前変えゲームの役割・投票保持、期限例外と終了削除の復帰設計・隔離検証（P-11、B-30、2026-09-08）
 - [b29-magire-eshi-reconnect-2026-09-08.md](b29-magire-eshi-reconnect-2026-09-08.md) — まぎれ絵師の役割・線・投票保持と切断復帰の隔離検証（P-11、B-29、2026-09-08）
 - [b28-ikutsu-ieru-reconnect-2026-09-08.md](b28-ikutsu-ieru-reconnect-2026-09-08.md) — いくつ言える？の回答保持・history確定と切断復帰の隔離検証（P-11、B-28、2026-09-08）
