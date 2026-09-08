@@ -1,0 +1,789 @@
+{
+  "date": "2026-09-08",
+  "source": {
+    "path": "apps/tatoe-narabe/index.html",
+    "sha256": "414066be519483f32cf74b81fc30724d2936278f84dcfe77f22a093b868fc061",
+    "scratchIdentical": true
+  },
+  "environment": {
+    "sdk": "Firebase compat 10.14.1 real SDK",
+    "firebaseTools": "15.29.0",
+    "databaseEmulator": "4.11.2",
+    "java": "Temurin21.0.12.1",
+    "browser": "153.0.8010.12",
+    "project": "demo-roomk-b27",
+    "auth": "http://127.0.0.1:9099",
+    "database": "http://127.0.0.1:9000",
+    "hosting": "http://127.0.0.1:5500/tatoe-narabe/",
+    "stats": "scratch no-op",
+    "data": "synthetic host/guestA/guestB/legacy only",
+    "productionAccess": false,
+    "iphone": false
+  },
+  "methods": {
+    "scope": "Final source 414066be after reloading all host/guest pages. Preliminary 11b6b139 initial join/waiting checks are listed separately, not counted as final acceptance. Two final-source fresh host room creations and guest UI initial joins are explicit cases in the TTL step.",
+    "offline": "Browser context.setOffline true, observe server connection child removal, hold10sec, setOffline false. Each waiting/revealing/playing/result phase has two cycles; no SDK goOffline was used.",
+    "retained": "Compare number/ready/declaredAt (null-normalized) and isHost before/after reload and browser disconnect; confirm old connection removal/new single connection ID. Full-phase progression uses normal UI.",
+    "rules": "Existing forceStartPlaying permits unready guest, timer expiry still permits declare, finish accepts undeclared guest. Result declaration order/numbers/score checked. Direct replay preserves connections, produces a new roundId and unique1..100 numbers, resets ready/declaredAt; same numeric values can recur randomly and are not treated as failure.",
+    "fixtures": "Past discussion deadline for post-expiry declaration; hostDisconnectedAt=now-125000 and now-119000 for immediate/timer TTL. These are timestamp fixtures, not full2min wall-clock waits. Supplemental revealing/playing fixture tests previously unready/undeclared offline actions and room deletion.",
+    "limits": "Artificial delayed transaction/registration, stale round callbacks and rejects are separate VM evidence. CLI event listeners cover steps, not gaps between steps or initial host navigation. SessionStorage/client guards are not an authentication boundary.",
+    "harnessCorrections": "Guest leave confirm was initially auto-dismissed, causing a wait timeout and subsequent TTL-step timeout; explicit accept was added, then boundary/TTL checks passed. A resultAudit syntax typo was corrected before that step executed. No application code was patched in scratch to mask failures.",
+    "reproducibility": "Companion .mjs prints guarded Playwright CLI steps. Runtime checks exact loopback app URL, Firebase demo project/Auth/DB, CSP, context count/single page/role markers. Guard positive real-browser and layout/URL/role/project negative mocks pass. Unexpected contexts are never closed automatically."
+  },
+  "network": {
+    "eventCount": 653,
+    "captureScope": "Per-step request and websocket events; gaps between CLI steps are not recorded. Raw653 events retained in scratch/output/playwright/raw-result.json.",
+    "perStep": {
+      "waiting": {
+        "events": 58,
+        "origins": [
+          "http://127.0.0.1:5500",
+          "https://fonts.googleapis.com",
+          "https://www.gstatic.com",
+          "https://fonts.gstatic.com",
+          "http://127.0.0.1:9099",
+          "ws://127.0.0.1:9000",
+          "http://127.0.0.1:9000"
+        ]
+      },
+      "revealing": {
+        "events": 99,
+        "origins": [
+          "https://fonts.gstatic.com",
+          "http://127.0.0.1:5500",
+          "https://fonts.googleapis.com",
+          "https://www.gstatic.com",
+          "http://127.0.0.1:9099",
+          "ws://127.0.0.1:9000",
+          "http://127.0.0.1:9000"
+        ]
+      },
+      "playing": {
+        "events": 62,
+        "origins": [
+          "http://127.0.0.1:5500",
+          "https://fonts.googleapis.com",
+          "https://www.gstatic.com",
+          "https://fonts.gstatic.com",
+          "http://127.0.0.1:9099",
+          "ws://127.0.0.1:9000",
+          "http://127.0.0.1:9000"
+        ]
+      },
+      "result": {
+        "events": 63,
+        "origins": [
+          "http://127.0.0.1:5500",
+          "https://fonts.googleapis.com",
+          "https://www.gstatic.com",
+          "https://fonts.gstatic.com",
+          "http://127.0.0.1:9099",
+          "ws://127.0.0.1:9000",
+          "http://127.0.0.1:9000"
+        ]
+      },
+      "boundaries": {
+        "events": 207,
+        "origins": [
+          "ws://127.0.0.1:9000",
+          "http://127.0.0.1:9000",
+          "http://127.0.0.1:5500",
+          "https://fonts.googleapis.com",
+          "https://www.gstatic.com",
+          "https://fonts.gstatic.com",
+          "http://127.0.0.1:9099"
+        ]
+      },
+      "ttl": {
+        "events": 78,
+        "origins": [
+          "ws://127.0.0.1:9000",
+          "http://127.0.0.1:9000",
+          "http://127.0.0.1:5500",
+          "https://fonts.googleapis.com",
+          "https://www.gstatic.com",
+          "https://fonts.gstatic.com",
+          "http://127.0.0.1:9099"
+        ]
+      },
+      "actionFixture": {
+        "events": 86,
+        "origins": [
+          "http://127.0.0.1:5500",
+          "https://fonts.googleapis.com",
+          "https://www.gstatic.com",
+          "https://fonts.gstatic.com",
+          "http://127.0.0.1:9099",
+          "ws://127.0.0.1:9000",
+          "http://127.0.0.1:9000"
+        ]
+      }
+    },
+    "unexpectedHostEvents": [],
+    "staticExternalHosts": [
+      "www.gstatic.com",
+      "fonts.googleapis.com",
+      "fonts.gstatic.com"
+    ],
+    "dataOrigins": [
+      "http://127.0.0.1:9099",
+      "ws://127.0.0.1:9000",
+      "http://127.0.0.1:9000"
+    ],
+    "protection": "Gate confirms no production config, Emulator bound before auth/data use, no-opstats. Hosting CSP limits data connections to loopback. Query/session tokens omitted from public network summary."
+  },
+  "console": {
+    "captureScope": "Per-step pageerror/console event listeners; final buffered pageErrors are supplementary and reset on reload. Not a zero-error claim for the entire wall-clock interval.",
+    "pageErrors": [],
+    "expectedOfflineConsoleErrorCount": 69,
+    "expectedOfflineByStep": {
+      "waiting": 13,
+      "revealing": 14,
+      "playing": 16,
+      "result": 16,
+      "boundaries": 2,
+      "ttl": 4,
+      "actionFixture": 4
+    },
+    "unexpectedWarningErrors": [],
+    "finalBuffers": [
+      {
+        "role": "host",
+        "errors": []
+      },
+      {
+        "role": "guestA",
+        "errors": []
+      },
+      {
+        "role": "guestB",
+        "errors": []
+      }
+    ],
+    "preliminaryNote": "Initial scratch host navigation had a favicon.ico404, outside final per-step capture."
+  },
+  "run": {
+    "started": "2026-09-08T04:51:20.136Z",
+    "room": "B27ACT",
+    "cases": [
+      {
+        "name": "waiting reload",
+        "pass": true,
+        "before": {
+          "isHost": false,
+          "number": 0,
+          "ready": false,
+          "declaredAt": null
+        },
+        "after": {
+          "isHost": false,
+          "number": 0,
+          "ready": false,
+          "declaredAt": null
+        }
+      },
+      {
+        "name": "waiting browser offline10s/online round1",
+        "pass": true,
+        "before": {
+          "isHost": false,
+          "number": 0,
+          "ready": false,
+          "declaredAt": null
+        },
+        "after": {
+          "isHost": false,
+          "number": 0,
+          "ready": false,
+          "declaredAt": null
+        },
+        "oldConnections": {
+          "-P0zLnqjzFv15lCxaZG1": true
+        },
+        "newConnections": {
+          "-P0zLqK60hIWcKlnVI7O": true
+        }
+      },
+      {
+        "name": "waiting browser offline10s/online round2",
+        "pass": true,
+        "before": {
+          "isHost": false,
+          "number": 0,
+          "ready": false,
+          "declaredAt": null
+        },
+        "after": {
+          "isHost": false,
+          "number": 0,
+          "ready": false,
+          "declaredAt": null
+        },
+        "oldConnections": {
+          "-P0zLqK60hIWcKlnVI7O": true
+        },
+        "newConnections": {
+          "-P0zLsnTMIdLZAnwQAFF": true
+        }
+      },
+      {
+        "name": "revealing reload",
+        "pass": true,
+        "before": {
+          "isHost": false,
+          "number": 89,
+          "ready": false,
+          "declaredAt": null
+        },
+        "after": {
+          "isHost": false,
+          "number": 89,
+          "ready": false,
+          "declaredAt": null
+        }
+      },
+      {
+        "name": "revealing reload",
+        "pass": true,
+        "before": {
+          "isHost": false,
+          "number": 89,
+          "ready": true,
+          "declaredAt": null
+        },
+        "after": {
+          "isHost": false,
+          "number": 89,
+          "ready": true,
+          "declaredAt": null
+        }
+      },
+      {
+        "name": "revealing browser offline10s/online round1",
+        "pass": true,
+        "before": {
+          "isHost": false,
+          "number": 89,
+          "ready": true,
+          "declaredAt": null
+        },
+        "after": {
+          "isHost": false,
+          "number": 89,
+          "ready": true,
+          "declaredAt": null
+        },
+        "oldConnections": {
+          "-P0zLzosmGiOMODmFTOg": true
+        },
+        "newConnections": {
+          "-P0zM1Hfnn1OY-8mmMfO": true
+        }
+      },
+      {
+        "name": "revealing browser offline10s/online round2",
+        "pass": true,
+        "before": {
+          "isHost": false,
+          "number": 89,
+          "ready": true,
+          "declaredAt": null
+        },
+        "after": {
+          "isHost": false,
+          "number": 89,
+          "ready": true,
+          "declaredAt": null
+        },
+        "oldConnections": {
+          "-P0zM1Hfnn1OY-8mmMfO": true
+        },
+        "newConnections": {
+          "-P0zM3kVffs8uojgVvDe": true
+        }
+      },
+      {
+        "name": "forceStartPlaying preserves unready guest",
+        "pass": true
+      },
+      {
+        "name": "playing reload",
+        "pass": true,
+        "before": {
+          "isHost": false,
+          "number": 89,
+          "ready": true,
+          "declaredAt": 1788843174761
+        },
+        "after": {
+          "isHost": false,
+          "number": 89,
+          "ready": true,
+          "declaredAt": 1788843174761
+        }
+      },
+      {
+        "name": "playing browser offline10s/online round1",
+        "pass": true,
+        "before": {
+          "isHost": false,
+          "number": 89,
+          "ready": true,
+          "declaredAt": 1788843174761
+        },
+        "after": {
+          "isHost": false,
+          "number": 89,
+          "ready": true,
+          "declaredAt": 1788843174761
+        },
+        "oldConnections": {
+          "-P0zM9iMfYuXeR2V8QF-": true
+        },
+        "newConnections": {
+          "-P0zMCBwGROSYfqqDa7m": true
+        }
+      },
+      {
+        "name": "playing browser offline10s/online round2",
+        "pass": true,
+        "before": {
+          "isHost": false,
+          "number": 89,
+          "ready": true,
+          "declaredAt": 1788843174761
+        },
+        "after": {
+          "isHost": false,
+          "number": 89,
+          "ready": true,
+          "declaredAt": 1788843174761
+        },
+        "oldConnections": {
+          "-P0zMCBwGROSYfqqDa7m": true
+        },
+        "newConnections": {
+          "-P0zMEfZX5at796_yOkW": true
+        }
+      },
+      {
+        "name": "declare after timer expiry retains existing behavior",
+        "pass": true,
+        "order": [
+          "guestA",
+          "host"
+        ],
+        "players": {
+          "guestA": {
+            "connections": {
+              "-P0zMEfZX5at796_yOkW": true
+            },
+            "declaredAt": 1788843174761,
+            "isHost": false,
+            "number": 89,
+            "presenceVersion": 1,
+            "ready": true
+          },
+          "guestB": {
+            "connections": {
+              "-P0zLnagPyvcssGJMl7m": true
+            },
+            "isHost": false,
+            "number": 21,
+            "presenceVersion": 1,
+            "ready": false
+          },
+          "host": {
+            "declaredAt": 1788843195224,
+            "isHost": true,
+            "number": 67,
+            "ready": false
+          }
+        }
+      },
+      {
+        "name": "finish with undeclared guest",
+        "pass": true,
+        "room": {
+          "discussionEndsAt": 1788843194149,
+          "host": "host",
+          "hostConnected": true,
+          "players": {
+            "guestA": {
+              "connections": {
+                "-P0zMEfZX5at796_yOkW": true
+              },
+              "declaredAt": 1788843174761,
+              "isHost": false,
+              "number": 89,
+              "presenceVersion": 1,
+              "ready": true
+            },
+            "guestB": {
+              "connections": {
+                "-P0zLnagPyvcssGJMl7m": true
+              },
+              "isHost": false,
+              "number": 21,
+              "presenceVersion": 1,
+              "ready": false
+            },
+            "host": {
+              "declaredAt": 1788843195224,
+              "isHost": true,
+              "number": 67,
+              "ready": false
+            }
+          },
+          "recentThemes": [
+            "大事にしたくなるもの"
+          ],
+          "roundId": "-P0zLzlsplu4xMy-o7x2",
+          "status": "result",
+          "theme": "大事にしたくなるもの",
+          "themeOptions": [
+            "大事にしたくなるもの",
+            "のんびりしたもの",
+            "のびのびしたもの"
+          ]
+        }
+      },
+      {
+        "name": "result reload",
+        "pass": true,
+        "before": {
+          "isHost": false,
+          "number": 89,
+          "ready": true,
+          "declaredAt": 1788843174761
+        },
+        "after": {
+          "isHost": false,
+          "number": 89,
+          "ready": true,
+          "declaredAt": 1788843174761
+        }
+      },
+      {
+        "name": "result browser offline10s/online round1",
+        "pass": true,
+        "before": {
+          "isHost": false,
+          "number": 89,
+          "ready": true,
+          "declaredAt": 1788843174761
+        },
+        "after": {
+          "isHost": false,
+          "number": 89,
+          "ready": true,
+          "declaredAt": 1788843174761
+        },
+        "oldConnections": {
+          "-P0zMItg3cBr4R28YvNi": true
+        },
+        "newConnections": {
+          "-P0zMLQW0BmwbE25jpQW": true
+        }
+      },
+      {
+        "name": "result browser offline10s/online round2",
+        "pass": true,
+        "before": {
+          "isHost": false,
+          "number": 89,
+          "ready": true,
+          "declaredAt": 1788843174761
+        },
+        "after": {
+          "isHost": false,
+          "number": 89,
+          "ready": true,
+          "declaredAt": 1788843174761
+        },
+        "oldConnections": {
+          "-P0zMLQW0BmwbE25jpQW": true
+        },
+        "newConnections": {
+          "-P0zMNtnsgxLV87OxR5K": true
+        }
+      },
+      {
+        "name": "result direct replay resets round and preserves presence",
+        "pass": true,
+        "before": {
+          "discussionEndsAt": 1788843194149,
+          "host": "host",
+          "hostConnected": true,
+          "players": {
+            "guestA": {
+              "connections": {
+                "-P0zMNtnsgxLV87OxR5K": true
+              },
+              "declaredAt": 1788843174761,
+              "isHost": false,
+              "number": 89,
+              "presenceVersion": 1,
+              "ready": true
+            },
+            "guestB": {
+              "connections": {
+                "-P0zLnagPyvcssGJMl7m": true
+              },
+              "isHost": false,
+              "number": 21,
+              "presenceVersion": 1,
+              "ready": false
+            },
+            "host": {
+              "declaredAt": 1788843195224,
+              "isHost": true,
+              "number": 67,
+              "ready": false
+            }
+          },
+          "recentThemes": [
+            "大事にしたくなるもの"
+          ],
+          "roundId": "-P0zLzlsplu4xMy-o7x2",
+          "status": "result",
+          "theme": "大事にしたくなるもの",
+          "themeOptions": [
+            "大事にしたくなるもの",
+            "のんびりしたもの",
+            "のびのびしたもの"
+          ]
+        },
+        "after": {
+          "host": "host",
+          "hostConnected": true,
+          "players": {
+            "guestA": {
+              "connections": {
+                "-P0zMNtnsgxLV87OxR5K": true
+              },
+              "isHost": false,
+              "number": 95,
+              "presenceVersion": 1,
+              "ready": false
+            },
+            "guestB": {
+              "connections": {
+                "-P0zLnagPyvcssGJMl7m": true
+              },
+              "isHost": false,
+              "number": 57,
+              "presenceVersion": 1,
+              "ready": false
+            },
+            "host": {
+              "isHost": true,
+              "number": 88,
+              "ready": false
+            }
+          },
+          "recentThemes": [
+            "大事にしたくなるもの"
+          ],
+          "roundId": "-P0zMNvhdtfnyY_Vk3y5",
+          "status": "revealing",
+          "theme": "",
+          "themeOptions": [
+            "テンションが上がるもの",
+            "いいにおいがしそうなもの",
+            "すっぱい食べもの"
+          ]
+        },
+        "rows": "1.\nguestA\nあなた\ntag 数字: 89\nおしい\n2.\nhost\ntag 数字: 67\nおしい"
+      },
+      {
+        "name": "result score and declaration-order number display",
+        "pass": true,
+        "declared": [
+          "guestA",
+          "host"
+        ],
+        "correct": [
+          "host",
+          "guestA"
+        ],
+        "score": "0/2",
+        "numbers": [
+          "89",
+          "67"
+        ],
+        "note": "Read retained result DOM immediately after replay; same DOM used in screenshot before replay"
+      },
+      {
+        "name": "normal allReady startPlaying after direct replay",
+        "pass": true
+      },
+      {
+        "name": "guest explicit exit/reconnect/reload",
+        "pass": true
+      },
+      {
+        "name": "missing player cleanup/direct action/reload no recreation",
+        "pass": true
+      },
+      {
+        "name": "saved session guard",
+        "pass": true,
+        "session": {
+          "nickname": "host",
+          "role": "guest"
+        }
+      },
+      {
+        "name": "saved session guard",
+        "pass": true,
+        "session": {
+          "nickname": "absent",
+          "role": "guest"
+        }
+      },
+      {
+        "name": "saved session guard",
+        "pass": true,
+        "session": {
+          "nickname": "notHost",
+          "role": "host"
+        }
+      },
+      {
+        "name": "saved session guard",
+        "pass": true,
+        "session": {
+          "nickname": "host",
+          "role": "unexpected"
+        }
+      },
+      {
+        "name": "host exit removes room",
+        "pass": true
+      },
+      {
+        "name": "final source new room and initial guest UI join",
+        "pass": true,
+        "room": {
+          "host": "host",
+          "hostConnected": true,
+          "players": {
+            "guestB": {
+              "connections": {
+                "-P0zNFrHOnyGK0bxpSS8": true
+              },
+              "isHost": false,
+              "number": 0,
+              "presenceVersion": 1,
+              "ready": false
+            },
+            "host": {
+              "isHost": true,
+              "number": 0,
+              "ready": false
+            }
+          },
+          "status": "waiting",
+          "theme": ""
+        }
+      },
+      {
+        "name": "TTL timestamp fixture and legacy compatibility",
+        "pass": true,
+        "pastMs": 125000,
+        "elapsedMs": 17,
+        "room": "3HVF2C"
+      },
+      {
+        "name": "final source new room and initial guest UI join",
+        "pass": true,
+        "room": {
+          "host": "host",
+          "hostConnected": true,
+          "players": {
+            "guestB": {
+              "connections": {
+                "-P0zNGAc-_ncme40prTE": true
+              },
+              "isHost": false,
+              "number": 0,
+              "presenceVersion": 1,
+              "ready": false
+            },
+            "host": {
+              "isHost": true,
+              "number": 0,
+              "ready": false
+            }
+          },
+          "status": "waiting",
+          "theme": ""
+        }
+      },
+      {
+        "name": "TTL timestamp fixture and legacy compatibility",
+        "pass": true,
+        "pastMs": 119000,
+        "elapsedMs": 1034,
+        "room": "GKG635"
+      },
+      {
+        "name": "synthetic revealing unready/undeclared offline action guard",
+        "pass": true,
+        "before": {
+          "isHost": false,
+          "number": 77,
+          "ready": false,
+          "declaredAt": null
+        }
+      },
+      {
+        "name": "synthetic playing unready/undeclared offline action guard",
+        "pass": true,
+        "before": {
+          "isHost": false,
+          "number": 77,
+          "ready": false,
+          "declaredAt": null
+        }
+      },
+      {
+        "name": "external whole-room deletion plus reconnect/reload",
+        "pass": true
+      }
+    ],
+    "preliminary": {
+      "source": "11b6b139",
+      "cases": [
+        "host and two guests UI join",
+        "waiting reload",
+        "waiting browser offline10s/online round1",
+        "waiting browser offline10s/online round2"
+      ]
+    }
+  },
+  "visual": {
+    "widths": [
+      1280,
+      375
+    ],
+    "overflow": "Assertions passed in captured waiting/revealing/playing/result screens.",
+    "reviewed": [
+      "waiting-offline-guest375-2.png (verifier)",
+      "revealing-offline-guest375-1.png (parent)",
+      "revealing-host1280-1.png (parent)",
+      "result-guest375.png (parent)",
+      "playing-host1280-2.png (parent)"
+    ],
+    "scratch": "b27-sandbox.ByFR36/output/playwright"
+  },
+  "cleanup": {
+    "roomsBeforeShutdown": null,
+    "statsBeforeShutdown": null,
+    "browser": "dedicated b27 closed",
+    "emulator": "owned CLI6655 SIGTERM clean shutdown exit0; Java6710 stopped",
+    "ports": "4000/4400/4500/5500/9000/9099 no LISTEN after stop",
+    "scope": "No production/iPhone/commit/push/deploy; oldB26 evidence unmodified"
+  }
+}
