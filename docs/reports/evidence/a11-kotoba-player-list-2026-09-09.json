@@ -1,0 +1,167 @@
+{
+  "schemaVersion": 1,
+  "scope": "kotoba-tantei normal and spectator playerList HTML generation only",
+  "sourcePath": "apps/kotoba-tantei/app.js",
+  "sourceSha256": "b96fc56f8c3836b06a9ca6be6c58db65d812f9e870f9e45102b3f6924c0fcae9",
+  "sharedPath": "apps/shared/js/utils.js",
+  "sharedSha256": "533e791fd06c37839989a1461bb0322d11c94fc1d1ef853a03c68fb12c25c370",
+  "extractedSha256": {
+    "lobby": "2aaf4f121bcfbf806dcece464b6c93dd35701bcf1467764eb9c4b504a2572639",
+    "labels": "94751bb82f7a0d832e147faa3e3d9553770633935b104afee0a65a5941e061f0",
+    "row": "3dc21ad69bc650affdadc2fa54c1ccdc9ca86e1072bf4d64686efe4e43847a0e",
+    "controls": "4954f4a49d2842d6c95d3278209410a34a13e17cbe9251d317841ba2c9e3e703",
+    "spectator": "5386c26aad269b203b125d0ac8f312443cbd0a59a88f2011fa86ace48d4f36a9",
+    "escape": "a027d05666cd4c73f062af57f68d0791422a5a51fdbd3195e6753089ee821a7a"
+  },
+  "caseCount": 34,
+  "results": [
+    {
+      "name": "list fixture 0 editable=false loading=false",
+      "pass": true
+    },
+    {
+      "name": "list fixture 1 editable=false loading=false",
+      "pass": true
+    },
+    {
+      "name": "list fixture 2 editable=false loading=false",
+      "pass": true
+    },
+    {
+      "name": "list fixture 3 editable=false loading=false",
+      "pass": true
+    },
+    {
+      "name": "list fixture 4 editable=false loading=false",
+      "pass": true
+    },
+    {
+      "name": "list fixture 5 editable=false loading=false",
+      "pass": true
+    },
+    {
+      "name": "list fixture 6 editable=false loading=false",
+      "pass": true
+    },
+    {
+      "name": "list fixture 0 editable=false loading=true",
+      "pass": true
+    },
+    {
+      "name": "list fixture 1 editable=false loading=true",
+      "pass": true
+    },
+    {
+      "name": "list fixture 2 editable=false loading=true",
+      "pass": true
+    },
+    {
+      "name": "list fixture 3 editable=false loading=true",
+      "pass": true
+    },
+    {
+      "name": "list fixture 4 editable=false loading=true",
+      "pass": true
+    },
+    {
+      "name": "list fixture 5 editable=false loading=true",
+      "pass": true
+    },
+    {
+      "name": "list fixture 6 editable=false loading=true",
+      "pass": true
+    },
+    {
+      "name": "list fixture 0 editable=true loading=false",
+      "pass": true
+    },
+    {
+      "name": "list fixture 1 editable=true loading=false",
+      "pass": true
+    },
+    {
+      "name": "list fixture 2 editable=true loading=false",
+      "pass": true
+    },
+    {
+      "name": "list fixture 3 editable=true loading=false",
+      "pass": true
+    },
+    {
+      "name": "list fixture 4 editable=true loading=false",
+      "pass": true
+    },
+    {
+      "name": "list fixture 5 editable=true loading=false",
+      "pass": true
+    },
+    {
+      "name": "list fixture 6 editable=true loading=false",
+      "pass": true
+    },
+    {
+      "name": "list fixture 0 editable=true loading=true",
+      "pass": true
+    },
+    {
+      "name": "list fixture 1 editable=true loading=true",
+      "pass": true
+    },
+    {
+      "name": "list fixture 2 editable=true loading=true",
+      "pass": true
+    },
+    {
+      "name": "list fixture 3 editable=true loading=true",
+      "pass": true
+    },
+    {
+      "name": "list fixture 4 editable=true loading=true",
+      "pass": true
+    },
+    {
+      "name": "list fixture 5 editable=true loading=true",
+      "pass": true
+    },
+    {
+      "name": "list fixture 6 editable=true loading=true",
+      "pass": true
+    },
+    {
+      "name": "mixed seven-player fixture array reaches both exact list sinks (not count validation)",
+      "pass": true
+    },
+    {
+      "name": "empty spectator array emits empty list",
+      "pass": true
+    },
+    {
+      "name": "partial escape removal rejected: normal-name",
+      "pass": true,
+      "detectedBy": "injected image tag absent"
+    },
+    {
+      "name": "partial escape removal rejected: spectator-name",
+      "pass": true,
+      "detectedBy": "encoded name retained in list text"
+    },
+    {
+      "name": "partial escape removal rejected: remove-id",
+      "pass": true,
+      "detectedBy": "injected image tag absent"
+    },
+    {
+      "name": "partial escape removal rejected: one-assignment-id",
+      "pass": true,
+      "detectedBy": "injected image tag absent"
+    }
+  ],
+  "limitations": [
+    "Node VM string generation with fixed plain-object fixtures; no browser HTML parser, DOM events, script execution or proof of browser non-execution.",
+    "No Firestore, Firebase SDK, network, production, browser or session integration executed. Subscription/navigation/start conditions/share/header are bounded stubs.",
+    "Labels and controls are real extracted code; arbitrary team/role map to existing fixed labels and options. Invalid type/schema acceptance is not assessed.",
+    "Raw list composition references are checked only for these sinks and fixtures, not all A-11 references. No unknown reference is reclassified safe.",
+    "Board HTML, game UI, authorization, handler behavior and participant count acceptance are outside this test; unlike prior lobby-length work, count interpolation is not the subject.",
+    "Mutation controls alter one escape call in memory only; actual app/shared files are unchanged."
+  ]
+}
