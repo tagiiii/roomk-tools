@@ -1,0 +1,603 @@
+{
+  "date": "2026-09-08",
+  "source": {
+    "path": "apps/word-wolf/index.html",
+    "sha256": "c34d228db37689d6270a983d9d2975e6949f42b41eda687b707b3681bf707d80",
+    "scratchCopyIdentical": true
+  },
+  "environment": {
+    "firebaseSDK": "10.14.1 compat (real SDK, not stubbed)",
+    "firebaseTools": "15.29.0",
+    "databaseEmulator": "4.11.2",
+    "java": "21",
+    "browser": "153.0.8010.12",
+    "project": "demo-roomk-b26",
+    "auth": "http://127.0.0.1:9099",
+    "database": "http://127.0.0.1:9000/",
+    "hosting": "http://127.0.0.1:5500/word-wolf/",
+    "stats": "scratch no-op",
+    "data": "synthetic host / guestA / guestB only",
+    "iphone": false,
+    "productionFirebase": false
+  },
+  "methods": {
+    "offline": "Playwright browser context.setOffline(true), observe server connections removal, wait 10000ms, setOffline(false); no SDK goOffline used.",
+    "flow": "Main game exercised through existing UI; reload and real SDK reconnect in waiting/revealing/discussing/voting/result. One supplemental discussing fixture was seeded through loopback Emulator REST to assert all retained fields explicitly.",
+    "ttl": "Keep 120000ms application TTL unchanged. Inject Date.now()-125000 for immediate expiry, and Date.now()-119000 for existing timer (~1039ms); not a full two-minute wall-clock wait.",
+    "races": "Artificial delayed registration/transaction/overlap cases are separate VM evidence, not established by these browser sequences.",
+    "reproduction": "Use accompanying .mjs via Playwright CLI; start isolated environment with static gate/CSP and a fresh dedicated session first. Guard rejects unexpected context layout, roles, page URLs, Firebase project/DB/Auth endpoints and data CSP. Guard positive check passed after the scenario run."
+  },
+  "network": {
+    "captureScope": "Guest initial navigation, anonymous auth and websocket establishment only; not a full-period recorder.",
+    "dataDestinations": [
+      "http://127.0.0.1:9099",
+      "ws://127.0.0.1:9000"
+    ],
+    "staticExternalHosts": [
+      "www.gstatic.com",
+      "fonts.googleapis.com",
+      "fonts.gstatic.com"
+    ],
+    "requests": [
+      "http://127.0.0.1:5500/word-wolf/",
+      "https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap",
+      "https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0",
+      "http://127.0.0.1:5500/shared/css/design-system.css",
+      "https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js",
+      "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js",
+      "https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js",
+      "http://127.0.0.1:5500/shared/js/rtdb-utils.js?v=20260715",
+      "http://127.0.0.1:5500/shared/js/stats.js?v=1",
+      "http://127.0.0.1:5500/shared/js/howto.js",
+      "https://fonts.gstatic.com/s/materialsymbolsrounded/v370/syl0-zNym6YjUruM-QrEh7-nyTnjDwKNJ_190FjpZIvDmUSVOK7BDJ_vb9vUSzq3wzLK-P0J-V_Zs-QtQth3-jOcbTCVpeRL2w5rwZu2rIelXxeJKJBiCa8.woff2",
+      "https://fonts.gstatic.com/s/notosansjp/v56/-F62fjtqLzI2JPCgQBnw7HFowwII2lcnk-AFfrgQrvWXpdFg3KXxAMsKMbdN.119.woff2",
+      "https://fonts.gstatic.com/s/notosansjp/v56/-F62fjtqLzI2JPCgQBnw7HFowwII2lcnk-AFfrgQrvWXpdFg3KXxAMsKMbdN.112.woff2",
+      "https://fonts.gstatic.com/s/notosansjp/v56/-F62fjtqLzI2JPCgQBnw7HFowwII2lcnk-AFfrgQrvWXpdFg3KXxAMsKMbdN.113.woff2",
+      "https://fonts.gstatic.com/s/notosansjp/v56/-F62fjtqLzI2JPCgQBnw7HFowwII2lcnk-AFfrgQrvWXpdFg3KXxAMsKMbdN.116.woff2",
+      "https://fonts.gstatic.com/s/notosansjp/v56/-F62fjtqLzI2JPCgQBnw7HFowwII2lcnk-AFfrgQrvWXpdFg3KXxAMsKMbdN.105.woff2",
+      "https://fonts.gstatic.com/s/notosansjp/v56/-F62fjtqLzI2JPCgQBnw7HFYwQgP-FVthw.woff2",
+      "https://fonts.gstatic.com/s/notosansjp/v56/-F62fjtqLzI2JPCgQBnw7HFowwII2lcnk-AFfrgQrvWXpdFg3KXxAMsKMbdN.115.woff2",
+      "ws://127.0.0.1:9000/.ws?v=5&p=1:0:web:demo&ns=demo-roomk-b26",
+      "http://127.0.0.1:9099/identitytoolkit.googleapis.com/v1/accounts:signUp?key=demo-api-key",
+      "http://127.0.0.1:9099/identitytoolkit.googleapis.com/v1/accounts:lookup?key=demo-api-key",
+      "https://fonts.gstatic.com/s/notosansjp/v56/-F62fjtqLzI2JPCgQBnw7HFowwII2lcnk-AFfrgQrvWXpdFg3KXxAMsKMbdN.117.woff2",
+      "https://fonts.gstatic.com/s/notosansjp/v56/-F62fjtqLzI2JPCgQBnw7HFowwII2lcnk-AFfrgQrvWXpdFg3KXxAMsKMbdN.109.woff2",
+      "https://fonts.gstatic.com/s/notosansjp/v56/-F62fjtqLzI2JPCgQBnw7HFowwII2lcnk-AFfrgQrvWXpdFg3KXxAMsKMbdN.107.woff2",
+      "https://fonts.gstatic.com/s/notosansjp/v56/-F62fjtqLzI2JPCgQBnw7HFowwII2lcnk-AFfrgQrvWXpdFg3KXxAMsKMbdN.84.woff2",
+      "https://fonts.gstatic.com/s/notosansjp/v56/-F62fjtqLzI2JPCgQBnw7HFowwII2lcnk-AFfrgQrvWXpdFg3KXxAMsKMbdN.111.woff2",
+      "https://fonts.gstatic.com/s/notosansjp/v56/-F62fjtqLzI2JPCgQBnw7HFowwII2lcnk-AFfrgQrvWXpdFg3KXxAMsKMbdN.100.woff2",
+      "https://fonts.gstatic.com/s/notosansjp/v56/-F62fjtqLzI2JPCgQBnw7HFowwII2lcnk-AFfrgQrvWXpdFg3KXxAMsKMbdN.108.woff2",
+      "https://fonts.gstatic.com/s/notosansjp/v56/-F62fjtqLzI2JPCgQBnw7HFowwII2lcnk-AFfrgQrvWXpdFg3KXxAMsKMbdN.110.woff2",
+      "https://fonts.gstatic.com/s/notosansjp/v56/-F62fjtqLzI2JPCgQBnw7HFowwII2lcnk-AFfrgQrvWXpdFg3KXxAMsKMbdN.96.woff2"
+    ],
+    "enforcement": "Hosting CSP connect-src permits only self and localhost/127.0.0.1 Auth/RTDB; static gate confirmed production config absent, emulator bindings before auth/RTDB use, no-op stats."
+  },
+  "console": {
+    "scope": "Pageerror capture during initial guest joining plus buffered pageErrors/consoleMessages at final collection. Reload resets buffers; zero here is not proof of zero console events over the full run.",
+    "initialGuestPageErrors": [],
+    "finalBuffers": [
+      {
+        "role": "host",
+        "pageErrors": [],
+        "warningErrors": []
+      },
+      {
+        "role": "guestA",
+        "pageErrors": [],
+        "warningErrors": []
+      },
+      {
+        "role": "guestB",
+        "pageErrors": [],
+        "warningErrors": []
+      }
+    ],
+    "earlierSetupNote": "Scratch favicon.ico404 was observed on the preliminary host page. Harness typo vote() was corrected to submitVote(); no production application function was changed for that harness correction."
+  },
+  "resolvedDuringVerification": [
+    {
+      "sourceSha256": "9ece7c8416ce60ab56a2ac86b9853802d16576a9543a767d51079b66751110b5",
+      "finding": "get() exists true followed by transaction initial null caused initial guestJoin abort",
+      "fix": "temporary value listener keeps cache populated through join transaction; no stale snapshot fallback"
+    },
+    {
+      "sourceSha256": "9b8bb991a3e3698d5e8001f0e15f5e8643287c9475f3ae1db4eb1a86253507db",
+      "finding": "expiry optimistic local null cleared guest state before server retry; room remained",
+      "fix": "expiry transaction uses applyLocally:false; immediate and timer expiry pass on final source"
+    }
+  ],
+  "run": {
+    "started": "2026-09-08T04:03:23.872Z",
+    "errors": [],
+    "cases": [
+      {
+        "name": "guestA join form",
+        "snapshot": "- heading \"ルームに参加する\" [level=2]\n- text: ニックネーム（8文字以内）\n- textbox \"ニックネーム（8文字以内）\":\n  - /placeholder: \"例: はなこ\"\n- text: ルームコード（6桁）\n- textbox \"ルームコード（6桁）\":\n  - /placeholder: ABCDEF\n- button \"参加する\"\n- button \"戻る\"\n- button \"あそびかた\""
+      },
+      {
+        "name": "guestA joined",
+        "state": {
+          "role": "guest",
+          "screen": "waiting",
+          "ready": true
+        },
+        "snapshot": "- strong: 参加者\n- text: 2人\n- list:\n  - listitem: guestA あなた\n  - listitem: host ホスト\n- button \"退出する\"\n- button \"あそびかた\""
+      },
+      {
+        "name": "guestB join form",
+        "snapshot": "- heading \"ルームに参加する\" [level=2]\n- text: ニックネーム（8文字以内）\n- textbox \"ニックネーム（8文字以内）\":\n  - /placeholder: \"例: はなこ\"\n- text: ルームコード（6桁）\n- textbox \"ルームコード（6桁）\":\n  - /placeholder: ABCDEF\n- button \"参加する\"\n- button \"戻る\"\n- button \"あそびかた\""
+      },
+      {
+        "name": "guestB joined",
+        "state": {
+          "role": "guest",
+          "screen": "waiting",
+          "ready": true
+        },
+        "snapshot": "- strong: 参加者\n- text: 3人\n- list:\n  - listitem: guestA\n  - listitem: guestB あなた\n  - listitem: host ホスト\n- button \"退出する\"\n- button \"あそびかた\""
+      },
+      {
+        "name": "waiting reload",
+        "pass": true
+      },
+      {
+        "name": "waiting browser offline10s/online round1",
+        "pass": true,
+        "offline": {
+          "isHost": false,
+          "isWolf": false,
+          "presenceVersion": 1,
+          "ready": false,
+          "word": ""
+        },
+        "after": {
+          "connections": {
+            "-P0zAwUUiKYIeil7w2qv": true
+          },
+          "isHost": false,
+          "isWolf": false,
+          "presenceVersion": 1,
+          "ready": false,
+          "word": ""
+        },
+        "marker": 1788840222834,
+        "hostStartDisabled": true
+      },
+      {
+        "name": "waiting browser offline10s/online round2",
+        "pass": true,
+        "offline": {
+          "isHost": false,
+          "isWolf": false,
+          "presenceVersion": 1,
+          "ready": false,
+          "word": ""
+        },
+        "after": {
+          "connections": {
+            "-P0zAyxdwosF9kBudj8O": true
+          },
+          "isHost": false,
+          "isWolf": false,
+          "presenceVersion": 1,
+          "ready": false,
+          "word": ""
+        },
+        "marker": 1788840222834,
+        "hostStartDisabled": true
+      },
+      {
+        "name": "revealing reload",
+        "pass": true,
+        "before": {
+          "isHost": false,
+          "isWolf": false,
+          "word": "マスク",
+          "ready": false,
+          "vote": null
+        },
+        "after": {
+          "isHost": false,
+          "isWolf": false,
+          "word": "マスク",
+          "ready": false,
+          "vote": null
+        }
+      },
+      {
+        "name": "revealing reload",
+        "pass": true,
+        "before": {
+          "isHost": false,
+          "isWolf": false,
+          "word": "マスク",
+          "ready": true,
+          "vote": null
+        },
+        "after": {
+          "isHost": false,
+          "isWolf": false,
+          "word": "マスク",
+          "ready": true,
+          "vote": null
+        }
+      },
+      {
+        "name": "revealing browser offline10s/online",
+        "pass": true,
+        "before": {
+          "isHost": false,
+          "isWolf": false,
+          "word": "マスク",
+          "ready": true,
+          "vote": null
+        },
+        "after": {
+          "isHost": false,
+          "isWolf": false,
+          "word": "マスク",
+          "ready": true,
+          "vote": null
+        }
+      },
+      {
+        "name": "discussing reload",
+        "pass": true,
+        "before": {
+          "isHost": false,
+          "isWolf": false,
+          "word": "マスク",
+          "ready": true,
+          "vote": null
+        },
+        "after": {
+          "isHost": false,
+          "isWolf": false,
+          "word": "マスク",
+          "ready": true,
+          "vote": null
+        }
+      },
+      {
+        "name": "discussing browser offline10s/online",
+        "pass": true,
+        "deadline": 1788840579121
+      },
+      {
+        "name": "voting reload",
+        "pass": true,
+        "before": {
+          "isHost": false,
+          "isWolf": false,
+          "word": "マスク",
+          "ready": true,
+          "vote": "guestB"
+        },
+        "after": {
+          "isHost": false,
+          "isWolf": false,
+          "word": "マスク",
+          "ready": true,
+          "vote": "guestB"
+        }
+      },
+      {
+        "name": "voting browser offline10s/online",
+        "pass": true,
+        "before": {
+          "isHost": false,
+          "isWolf": false,
+          "word": "マスク",
+          "ready": true,
+          "vote": "guestB"
+        },
+        "after": {
+          "isHost": false,
+          "isWolf": false,
+          "word": "マスク",
+          "ready": true,
+          "vote": "guestB"
+        }
+      },
+      {
+        "name": "host closes vote with disconnected unvoted guest",
+        "pass": true,
+        "result": {
+          "citizenWin": true,
+          "citizenWord": "マスク",
+          "discussionEndsAt": 1788840579121,
+          "discussionSecs": 300,
+          "host": "host",
+          "hostConnected": true,
+          "players": {
+            "guestA": {
+              "connections": {
+                "-P0zBBofuG3ZH7sbCnhM": true
+              },
+              "isHost": false,
+              "isWolf": false,
+              "presenceVersion": 1,
+              "ready": true,
+              "vote": "guestB",
+              "word": "マスク"
+            },
+            "guestB": {
+              "isHost": false,
+              "isWolf": true,
+              "presenceVersion": 1,
+              "ready": true,
+              "word": "手袋"
+            },
+            "host": {
+              "isHost": true,
+              "isWolf": false,
+              "ready": true,
+              "word": "マスク"
+            }
+          },
+          "status": "result",
+          "voteCounts": {
+            "guestB": 1
+          },
+          "wolfCount": 1,
+          "wolfWord": "手袋"
+        }
+      },
+      {
+        "name": "result reload",
+        "pass": true,
+        "before": {
+          "isHost": false,
+          "isWolf": false,
+          "word": "マスク",
+          "ready": true,
+          "vote": "guestB"
+        },
+        "after": {
+          "isHost": false,
+          "isWolf": false,
+          "word": "マスク",
+          "ready": true,
+          "vote": "guestB"
+        }
+      },
+      {
+        "name": "result browser offline10s/online",
+        "pass": true,
+        "before": {
+          "isHost": false,
+          "isWolf": false,
+          "word": "マスク",
+          "ready": true,
+          "vote": "guestB"
+        },
+        "after": {
+          "isHost": false,
+          "isWolf": false,
+          "word": "マスク",
+          "ready": true,
+          "vote": "guestB"
+        }
+      },
+      {
+        "name": "replay retains offline guest and waits for reconnect",
+        "pass": true,
+        "room": {
+          "citizenWord": "マスク",
+          "discussionEndsAt": 1788840579121,
+          "discussionSecs": 300,
+          "host": "host",
+          "hostConnected": true,
+          "players": {
+            "guestA": {
+              "connections": {
+                "-P0zBEJjWhSlqbhMikDg": true
+              },
+              "isHost": false,
+              "isWolf": false,
+              "presenceVersion": 1,
+              "ready": false,
+              "word": ""
+            },
+            "guestB": {
+              "connections": {
+                "-P0zBEMALBGzRu1_23sA": true
+              },
+              "isHost": false,
+              "isWolf": false,
+              "presenceVersion": 1,
+              "ready": false,
+              "word": ""
+            },
+            "host": {
+              "isHost": true,
+              "isWolf": false,
+              "ready": false,
+              "word": ""
+            }
+          },
+          "status": "waiting",
+          "wolfCount": 1,
+          "wolfWord": "手袋"
+        }
+      },
+      {
+        "name": "explicit guest exit + browser reconnect/reload",
+        "pass": true
+      },
+      {
+        "name": "external guest deletion + ready/vote attempts + reconnect/reload",
+        "pass": true
+      },
+      {
+        "name": "invalid saved session refused",
+        "pass": true,
+        "session": {
+          "nickname": "host",
+          "roomCode": "LAHUDX",
+          "role": "guest"
+        }
+      },
+      {
+        "name": "invalid saved session refused",
+        "pass": true,
+        "session": {
+          "nickname": "absent",
+          "roomCode": "LAHUDX",
+          "role": "guest"
+        }
+      },
+      {
+        "name": "invalid saved session refused",
+        "pass": true,
+        "session": {
+          "nickname": "notHost",
+          "roomCode": "LAHUDX",
+          "role": "host"
+        }
+      },
+      {
+        "name": "invalid saved session refused",
+        "pass": true,
+        "session": {
+          "nickname": "host",
+          "roomCode": "LAHUDX",
+          "role": "unexpected"
+        }
+      },
+      {
+        "name": "legacy player without presenceVersion treated connected",
+        "pass": true
+      },
+      {
+        "name": "TTL cleanup via injected past hostDisconnectedAt (not 2min wall wait)",
+        "pass": true
+      },
+      {
+        "name": "TTL timer via injected past119sec timestamp (not 2min wall wait)",
+        "pass": true,
+        "code": "L4M5UQ",
+        "elapsedMs": 1039
+      },
+      {
+        "name": "discussing synthetic phase fixture browser offline10s/online full field comparison",
+        "pass": true,
+        "before": {
+          "isHost": false,
+          "isWolf": true,
+          "word": "ケーキ",
+          "ready": true,
+          "vote": null
+        },
+        "after": {
+          "isHost": false,
+          "isWolf": true,
+          "word": "ケーキ",
+          "ready": true,
+          "vote": null
+        },
+        "deadline": 1788840713946
+      },
+      {
+        "name": "external whole-room deletion plus reconnect/reload",
+        "pass": true
+      }
+    ],
+    "room": "LAHUDX",
+    "initial": {
+      "discussionSecs": 300,
+      "host": "host",
+      "hostConnected": true,
+      "players": {
+        "guestA": {
+          "connections": {
+            "-P0zApaDEQYrwVe0fr5_": true
+          },
+          "isHost": false,
+          "isWolf": false,
+          "presenceVersion": 1,
+          "ready": false,
+          "word": ""
+        },
+        "guestB": {
+          "connections": {
+            "-P0zApk4CWHUJw40ts0G": true
+          },
+          "isHost": false,
+          "isWolf": false,
+          "presenceVersion": 1,
+          "ready": false,
+          "word": ""
+        },
+        "host": {
+          "isHost": true,
+          "isWolf": false,
+          "ready": false,
+          "word": ""
+        }
+      },
+      "status": "waiting",
+      "wolfCount": 1
+    },
+    "waiting": {
+      "discussionSecs": 300,
+      "host": "host",
+      "hostConnected": true,
+      "players": {
+        "guestA": {
+          "connections": {
+            "-P0zAyxdwosF9kBudj8O": true
+          },
+          "isHost": false,
+          "isWolf": false,
+          "presenceVersion": 1,
+          "ready": false,
+          "word": ""
+        },
+        "guestB": {
+          "connections": {
+            "-P0zApk4CWHUJw40ts0G": true
+          },
+          "isHost": false,
+          "isWolf": false,
+          "presenceVersion": 1,
+          "ready": false,
+          "word": ""
+        },
+        "host": {
+          "isHost": true,
+          "isWolf": false,
+          "ready": false,
+          "word": ""
+        }
+      },
+      "status": "waiting",
+      "wolfCount": 1
+    }
+  },
+  "visual": {
+    "viewports": [
+      1280,
+      375
+    ],
+    "checks": "No horizontal overflow in checked waiting/offline, voting and result screens; parent and test agent inspected saved images.",
+    "screenshots": [
+      "waiting-offline-host-2.png",
+      "waiting-offline-guest-2.png",
+      "voting-guest-375.png",
+      "result-host-1280.png",
+      "result-guest-375.png"
+    ],
+    "scratchDirectory": "b26-sandbox.H5Sv0z/output/playwright"
+  },
+  "cleanup": {
+    "beforeShutdown": {
+      "wordwolf_rooms": null,
+      "stats": null
+    },
+    "browser": "Dedicated b26 browser closed",
+    "emulator": "Owned Firebase CLI PID87041 received SIGTERM and completed clean shutdown (exit0), Java PID87074 stopped",
+    "ports": "4000/4400/4500/5500/9000/9099 have no LISTEN after shutdown",
+    "productionMutations": "none; no commit/push/merge/deploy performed by this verifier"
+  }
+}
