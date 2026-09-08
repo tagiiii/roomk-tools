@@ -292,6 +292,7 @@
         <span id="w-count" style="font-size:14px;color:var(--color-muted)"></span>
       </div>
       <ul class="player-list" id="w-player-list"></ul>
+      <p id="guest-wait-note" hidden style="font-size:13px;color:var(--color-muted);margin-top:12px">接続を待っています。戻らない場合はホストが退出してルームを作り直してください</p>
     </div>
 
     <div id="host-start-area" class="mt-md" style="display:none">
@@ -338,6 +339,10 @@
     <div class="card mt-md">
       <p class="section-lbl">準備状況</p>
       <ul class="player-list" id="r-player-list"></ul>
+      <div id="reveal-reconnect-note" hidden style="font-size:13px;color:var(--color-muted);margin-top:12px">
+        接続と準備を待っています。戻らない場合はルームを作り直してください。
+        <button class="btn btn-ghost btn-full" onclick="leaveGame()">退出する</button>
+      </div>
       <div id="host-discuss-btn" style="display:none;margin-top:12px">
         <button class="btn btn-full" style="background:#6B3FA0;color:#fff;border-color:#6B3FA0" onclick="startDiscussion()">
           <span class="material-symbols-rounded" aria-hidden="true">record_voice_over</span>討論スタート！
@@ -454,6 +459,12 @@
   <span class="material-symbols-rounded" aria-hidden="true" style="font-size:48px">signal_disconnected</span>
   <p class="overlay-title">ホストが一時的に切断されました</p>
   <p class="overlay-sub">再接続を待っています</p>
+  <button class="btn btn-ghost" style="margin-top:16px" onclick="leaveGame()">退出する</button>
+</div>
+<div class="overlay" id="guest-off-overlay">
+  <div class="spinner"></div>
+  <p class="overlay-title">接続を待っています</p>
+  <p class="overlay-sub">お題や投票はそのままです。このページでお待ちください</p>
   <button class="btn btn-ghost" style="margin-top:16px" onclick="leaveGame()">退出する</button>
 </div>
 
@@ -601,6 +612,90 @@ const state = {
 };
 
 // ── セッション管理 ──
+let guestPresence = null;
+let guestPresenceWork = Promise.resolve();
+const ROOM_PHASES = ['waiting', 'revealing', 'discussing', 'voting', 'result'];
+
+function validGuestRoom(room, nickname) {
+  const player = room?.players?.[nickname];
+  return !!player && player.isHost === false && room.host !== nickname
+    && ROOM_PHASES.includes(room.status) && !isRoomExpired(room);
+}
+function playerConnected(player) {
+  return player.isHost || player.presenceVersion !== 1
+    || Object.values(player.connections || {}).some(value => value === true);
+}
+function guestCanAct() {
+  return state.role === 'host' || !!(guestPresence?.ready && guestPresence.connected
+    && guestPresence.roomRef === state.roomRef && guestPresence.nickname === state.nickname);
+}
+function showGuestConnection() {
+  showOverlay('guest-off-overlay', state.role === 'guest' && !guestCanAct());
+}
+function stopGuestPresence() {
+  const presence = guestPresence;
+  guestPresence = null;
+  if (!presence) return guestPresenceWork;
+  presence.generation++;
+  presence.connectionRef.off('value', presence.listener);
+  guestPresenceWork = guestPresenceWork.then(async () => {
+    for (const ref of presence.refs) {
+      await ref.onDisconnect().cancel();
+      await ref.remove();
+    }
+  }).catch(error => console.warn('[word-wolf] presence cleanup failed', error));
+  return guestPresenceWork;
+}
+function startGuestPresence() {
+  if (state.expectedRoomRemoval || state.role !== 'guest' || !state.roomRef) return;
+  stopGuestPresence();
+  const presence = {
+    roomRef: state.roomRef, nickname: state.nickname, connectionRef: db.ref('.info/connected'),
+    generation: 0, connected: false, ready: false, refs: [],
+  };
+  guestPresence = presence;
+  presence.listener = snap => {
+    presence.connected = snap.val() === true;
+    presence.ready = false;
+    const generation = ++presence.generation;
+    showGuestConnection();
+    if (!presence.connected) return;
+    const current = () => guestPresence === presence && presence.connected
+      && presence.generation === generation && state.roomRef === presence.roomRef
+      && state.nickname === presence.nickname && state.role === 'guest' && !state.expectedRoomRemoval;
+    guestPresenceWork = guestPresenceWork.then(async () => {
+      if (!current()) return;
+      const ref = presence.roomRef.child(`players/${presence.nickname}/connections`).push();
+      presence.refs.push(ref);
+      await ref.onDisconnect().remove();
+      const { committed } = await presence.roomRef.transaction(room => {
+        if (!current() || !validGuestRoom(room, presence.nickname)) return;
+        const player = room.players[presence.nickname];
+        return { ...room, players: { ...room.players, [presence.nickname]: {
+          ...player, presenceVersion: 1, connections: { ...player.connections, [ref.key]: true },
+        } } };
+      });
+      if (!committed || !current()) {
+        await ref.onDisconnect().cancel();
+        await ref.remove();
+        return;
+      }
+      for (const oldRef of presence.refs.filter(item => item !== ref)) {
+        await oldRef.onDisconnect().cancel();
+        await oldRef.remove();
+      }
+      presence.refs = [ref];
+      if (!current()) return;
+      presence.ready = true;
+      showGuestConnection();
+    }).catch(error => {
+      if (current()) { presence.ready = false; showGuestConnection(); }
+      console.warn('[word-wolf] guest reconnect failed', error);
+    });
+  };
+  presence.connectionRef.on('value', presence.listener);
+}
+
 function saveSession() {
   sessionStorage.setItem(SESSION_KEY, JSON.stringify({
     nickname: state.nickname, roomCode: state.roomCode, role: state.role,
@@ -703,6 +798,21 @@ async function hostCreateRoom() {
 }
 
 // ── ゲスト参加 ──
+async function joinTransaction(ref, update) {
+  // get() alone does not keep a transaction cache. Keep a live subscription
+  // until the transaction ends; never substitute an older snapshot for null.
+  let listener;
+  try {
+    await new Promise((resolve, reject) => {
+      listener = () => resolve();
+      ref.on('value', listener, reject);
+    });
+    return await ref.transaction(update);
+  } finally {
+    ref.off('value', listener);
+  }
+}
+
 async function guestJoin() {
   const nickname = document.getElementById('guest-nickname').value.trim();
   const roomCode = document.getElementById('guest-code').value.trim().toUpperCase();
@@ -721,8 +831,8 @@ async function guestJoin() {
     return;
   }
   let abortReason = null;
-  const { committed, snapshot } = await roomRef.transaction((room) => {
-    const currentRoom = room || preRoom;
+  const { committed, snapshot } = await joinTransaction(roomRef, (room) => {
+    const currentRoom = room;
     if (!currentRoom) { abortReason = 'not_found'; return; }
     if (isRoomExpired(currentRoom)) {
       abortReason = 'expired';
@@ -737,7 +847,7 @@ async function guestJoin() {
       ...currentRoom,
       players: {
         ...players,
-        [nickname]: { isHost: false, isWolf: false, word: '', ready: false, vote: null },
+        [nickname]: { isHost: false, isWolf: false, word: '', ready: false, vote: null, presenceVersion: 1 },
       },
     };
   });
@@ -760,7 +870,7 @@ async function guestJoin() {
   state.discussionSecs = room.discussionSecs; state.wolfCount = room.wolfCount;
   state.roomRef = roomRef;
 
-  state.roomRef.child(`players/${nickname}`).onDisconnect().remove();
+  startGuestPresence();
   saveSession();
   startRoomListener();
 }
@@ -780,6 +890,10 @@ async function startGame() {
     }
     const players = room.players || {};
     const nicks = Object.keys(players);
+    if (!Object.values(players).every(playerConnected)) {
+      abortReason = 'disconnected';
+      return;
+    }
     if (nicks.length < 3) {
       abortReason = 'too_few';
       return;
@@ -812,6 +926,7 @@ async function startGame() {
   });
 
   if (!committed) {
+    if (abortReason === 'disconnected') showMsg('接続を待っています。戻らない場合は退出してルームを作り直してください');
     if (abortReason === 'too_few') showMsg('3人以上で始められます');
     return;
   }
@@ -828,8 +943,17 @@ function flipCard() {
 
 // ── 準備完了 ──
 async function markReady() {
+  if (!guestCanAct()) return;
+  const ref = state.roomRef, nickname = state.nickname;
   document.getElementById('btn-ready').disabled = true;
-  await state.roomRef.child(`players/${state.nickname}/ready`).set(true);
+  const { committed } = await ref.transaction(room => {
+    if (state.roomRef !== ref || !guestCanAct() || room?.status !== 'revealing' || !room.players?.[nickname]) return;
+    return { ...room, players: { ...room.players, [nickname]: { ...room.players[nickname], ready: true } } };
+  }).catch(error => {
+    console.warn('[word-wolf] ready failed', error);
+    return { committed: false };
+  });
+  if (!committed && state.roomRef === ref) document.getElementById('btn-ready').disabled = false;
 }
 
 // ── 討論スタート（ホスト）──
@@ -873,11 +997,24 @@ async function moveToVoting() {
 
 // ── 投票 ──
 async function submitVote(target) {
-  if (state.myVote) return;
+  if (state.myVote || !guestCanAct()) return;
+  const ref = state.roomRef, nickname = state.nickname;
   state.myVote = target;
   document.getElementById('vote-btns').style.display = 'none';
   document.getElementById('voted-msg').style.display = 'block';
-  await state.roomRef.child(`players/${state.nickname}/vote`).set(target);
+  const { committed } = await ref.transaction(room => {
+    if (state.roomRef !== ref || !guestCanAct() || room?.status !== 'voting'
+      || !room.players?.[nickname] || !room.players[target] || room.players[nickname].vote) return;
+    return { ...room, players: { ...room.players, [nickname]: { ...room.players[nickname], vote: target } } };
+  }).catch(error => {
+    console.warn('[word-wolf] vote failed', error);
+    return { committed: false };
+  });
+  if (!committed && state.roomRef === ref) {
+    state.myVote = null;
+    document.getElementById('vote-btns').style.display = 'block';
+    document.getElementById('voted-msg').style.display = 'none';
+  }
 }
 
 // ── 結果計算（ホストのみ）──
@@ -929,21 +1066,26 @@ async function playAgain() {
 
 // ── 退出 ──
 async function leaveGame() {
+  const roomRef = state.roomRef, role = state.role, nickname = state.nickname;
+  state.expectedRoomRemoval = true;
+  const stopped = stopGuestPresence();
   clearInterval(state.timerInterval);
   clearTimeout(state.orphanTimer);
   clearSession();
-  if (state.roomRef) {
+  if (roomRef) {
+    await stopped;
     // remove の前に予約済み onDisconnect を取り消す（削除後の実切断でゴースト room が再生成されるのを防ぐ）
-    await RoomkRTDB.cancelRoomOnDisconnect(state.roomRef);
-    if (state.role === 'host') {
+    await RoomkRTDB.cancelRoomOnDisconnect(roomRef);
+    if (role === 'host') {
       // 自分で消す正常削除と「予期しない消滅」をリスナー側で区別するためのフラグ
       state.expectedRoomRemoval = true;
-      await state.roomRef.remove();
+      await roomRef.remove();
     } else {
-      await state.roomRef.child(`players/${state.nickname}`).remove();
+      await roomRef.child(`players/${nickname}`).remove();
     }
-    state.roomRef.off();
+    roomRef.off();
   }
+  if (state.roomRef !== roomRef) return;
   Object.assign(state, {
     role: null, nickname: null, roomCode: null, roomRef: null,
     currentScreen: null, myWord: null, isWolf: false,
@@ -952,14 +1094,25 @@ async function leaveGame() {
   });
   showOverlay('host-off-overlay', false);
   showOverlay('reconnect-overlay', false);
+  showOverlay('guest-off-overlay', false);
   showScreen('top');
 }
 
 // ── Firebase リスナー ──
 function startRoomListener() {
-  state.roomRef.on('value', snap => {
+  const roomRef = state.roomRef;
+  roomRef.on('value', snap => {
+    if (state.roomRef !== roomRef) return;
     if (!snap.exists()) {
+      if (state.expectedRoomRemoval) return;
+      stopGuestPresence();
+      clearInterval(state.timerInterval);
+      clearTimeout(state.orphanTimer);
+      roomRef.off();
+      showOverlay('guest-off-overlay', false);
       if (state.role !== 'host') {
+        state.roomRef = null; state.role = null;
+        showOverlay('host-off-overlay', false);
         clearSession(); showMsg('ホストがルームを終了しました', true); showScreen('top');
       } else if (!state.expectedRoomRemoval) {
         // 自分の leaveGame 以外でルームが消えた（他クライアントの期限切れ掃除など）。
@@ -990,6 +1143,17 @@ function startRoomListener() {
 
 function handleRoom(room) {
   const players = room.players || {};
+  if (state.expectedRoomRemoval) return;
+  if (state.role === 'guest' && (!players[state.nickname] || players[state.nickname].isHost !== false
+    || room.host === state.nickname || !ROOM_PHASES.includes(room.status))) {
+    stopGuestPresence();
+    state.roomRef.off();
+    clearInterval(state.timerInterval); clearTimeout(state.orphanTimer); clearSession();
+    state.roomRef = null; state.role = null; state.nickname = null; state.roomCode = null;
+    showOverlay('guest-off-overlay', false); showOverlay('host-off-overlay', false);
+    showMsg('参加情報が見つからないため、トップにもどりました'); showScreen('top');
+    return;
+  }
   if (state.role === 'guest') {
     const hostGone = room.hostConnected === false;
     const expired = isRoomExpired(room);
@@ -1000,11 +1164,11 @@ function handleRoom(room) {
       if (expired) {
         clearTimeout(state.orphanTimer);
         state.orphanTimer = null;
-        if (state.roomRef) state.roomRef.remove().catch(() => {});
+        expireGuestRoom(state.roomRef);
       } else if (!state.orphanTimer) {
         state.orphanTimer = setTimeout(() => {
           state.orphanTimer = null;
-          if (state.roomRef) state.roomRef.remove().catch(() => {});
+          expireGuestRoom(state.roomRef);
         }, delay);
       }
     } else {
@@ -1019,6 +1183,18 @@ function handleRoom(room) {
     case 'voting':     handleVoting(room, players);     break;
     case 'result':     handleResult(room, players);     break;
   }
+}
+
+async function expireGuestRoom(ref) {
+  if (!ref || state.roomRef !== ref || state.role !== 'guest' || state.expectedRoomRemoval) return;
+  await stopGuestPresence();
+  if (state.roomRef !== ref || state.expectedRoomRemoval) return;
+  await ref.transaction(room => {
+    if (state.roomRef === ref && !state.expectedRoomRemoval && room && isRoomExpired(room)) return null;
+  // A speculative local null would retire state.roomRef before a server retry.
+  // Publish room disappearance only after the deletion is committed remotely.
+  }, undefined, false).catch(error => console.warn('[word-wolf] expiry cleanup failed', error));
+  if (state.roomRef === ref && state.role === 'guest' && !state.expectedRoomRemoval) startGuestPresence();
 }
 
 // ── 待機 ──
@@ -1040,12 +1216,13 @@ function handleWaiting(room, players) {
     const tLabel = { 180:'3分', 300:'5分', 420:'7分' }[room.discussionSecs] || '';
     document.getElementById('w-settings').textContent =
       `討論時間：${tLabel}　ウルフ：${room.wolfCount}人`;
-    document.getElementById('btn-start').disabled = count < 3;
+    document.getElementById('btn-start').disabled = count < 3 || !Object.values(players).every(playerConnected);
     state.discussionSecs = room.discussionSecs;
     state.wolfCount = room.wolfCount;
   }
   document.getElementById('w-count').textContent = `${count}人`;
   renderList('w-player-list', players, () => '');
+  document.getElementById('guest-wait-note').hidden = Object.values(players).every(playerConnected);
 }
 
 // ── お題確認 ──
@@ -1073,6 +1250,9 @@ function handleRevealing(room, players) {
   if (state.role === 'host') {
     const allReady = Object.values(players).every(p => p.ready);
     document.getElementById('host-discuss-btn').style.display = allReady ? 'block' : 'none';
+    document.getElementById('reveal-reconnect-note').hidden = allReady;
+  } else {
+    document.getElementById('reveal-reconnect-note').hidden = true;
   }
 }
 
@@ -1104,10 +1284,13 @@ function handleVoting(room, players) {
       btn.innerHTML = `<span>${esc(nick)}</span>
         <span class="material-symbols-rounded" aria-hidden="true" style="color:var(--color-muted)">arrow_forward_ios</span>`;
       btn.onclick = () => {
-        if (state.myVote) return;
+        if (state.myVote || !guestCanAct()) return;
+        const ref = state.roomRef;
         document.querySelectorAll('.vote-btn').forEach(b => b.classList.remove('selected'));
         btn.classList.add('selected');
-        setTimeout(() => submitVote(nick), 400);
+        setTimeout(() => {
+          if (state.roomRef === ref && state.currentScreen === 'voting') submitVote(nick);
+        }, 400);
       };
       wrap.appendChild(btn);
     });
@@ -1199,7 +1382,7 @@ function renderList(id, players, statusFn) {
   ul.innerHTML = Object.entries(players).map(([nick, p]) => {
     const meTag   = nick === state.nickname ? '<span class="player-tag me">あなた</span>' : '';
     const hostTag = p.isHost ? '<span class="player-tag">ホスト</span>' : '';
-    const status  = statusFn(p);
+    const status  = playerConnected(p) ? statusFn(p) : '<span class="player-tag">接続を待っています</span>';
     return `<li class="player-item">
       <div class="player-name">${esc(nick)}${hostTag}${meTag}</div>
       ${status}
@@ -1212,6 +1395,9 @@ async function tryReconnect() {
   const session = loadSession();
   if (!session) return false;
   const { nickname, roomCode, role } = session;
+  if (!nickname || !/^[A-Z2-9]{6}$/.test(roomCode) || !['host', 'guest'].includes(role)) {
+    clearSession(); return false;
+  }
   showOverlay('reconnect-overlay', true);
   try {
     await authReady;
@@ -1220,6 +1406,10 @@ async function tryReconnect() {
     const room = snap.val();
     if (isRoomExpired(room)) {
       await db.ref(`wordwolf_rooms/${roomCode}`).remove().catch(() => {});
+      clearSession(); showOverlay('reconnect-overlay', false); return false;
+    }
+    if (!ROOM_PHASES.includes(room.status) || (role === 'guest' && !validGuestRoom(room, nickname))
+      || (role === 'host' && (room.host !== nickname || room.players?.[nickname]?.isHost !== true))) {
       clearSession(); showOverlay('reconnect-overlay', false); return false;
     }
 
@@ -1245,7 +1435,7 @@ async function tryReconnect() {
       if (!room.players?.[nickname]) {
         clearSession(); showOverlay('reconnect-overlay', false); return false;
       }
-      state.roomRef.child(`players/${nickname}`).onDisconnect().remove();
+      startGuestPresence();
     }
 
     showOverlay('reconnect-overlay', false);
