@@ -10,6 +10,16 @@ ROOT = Path(__file__).resolve().parents[2]
 SCANNER = ROOT / 'scripts/sec1-dataflow.py'
 CASES = json.loads((Path(__file__).with_name('sec1-dataflow-fixtures.json')).read_text())
 
+# Freeze a representative gap, not a safety certification. Future analysis must
+# distinguish this pair without losing the sink or changing the input source.
+memo_pair = [next(c for c in CASES if c['name'] == name) for name in (
+    'value-card memo builder escaped (known analysis gap)',
+    'value-card memo builder raw negative (known analysis gap)',
+)]
+assert memo_pair[0]['code'].count('escapeHtml(memo)') == 1
+assert memo_pair[0]['code'].replace('escapeHtml(memo)', 'memo', 1) == memo_pair[1]['code']
+assert all(c['states'] == ['unknown'] for c in memo_pair)
+
 
 def run(args, cwd=ROOT):
     return subprocess.run(args, cwd=cwd, capture_output=True, text=True, check=False)
@@ -30,6 +40,11 @@ with tempfile.TemporaryDirectory(prefix='roomk-a11-fixtures-') as directory:
         assert states == case['states'], (case['name'], states, case['states'])
         assert result.returncode == (1 if 'raw' in states else 0), case['name']
         assert data['errors'] == states.count('raw'), case['name']
+        assert data['checkedBareReferences'] == len(states), case['name']
+        assert data['unknown'] == states.count('unknown'), case['name']
+        if case in memo_pair:
+            assert len(data['findings']) == 1, case['name']
+            assert data['findings'][0]['reference'] == 'cardsHtml', case['name']
         if 'lines' in case:
             assert [r['line'] for r in data['findings']] == case['lines']
     # Missing files are failures, not an empty/successful scan.
@@ -50,6 +65,7 @@ with tempfile.TemporaryDirectory(prefix='roomk-a11-fixtures-') as directory:
         ('legacy single escaped', 'el.innerHTML = `${esc(name)}`;', 0),
         ('legacy multiline concat', "el.innerHTML = `\n${'<b>' + name}\n`;", 1),
         ('new alias raw', "const raw = location.hash; el.innerHTML = `\n${raw}\n`;", 1),
+        ('trim alias raw', "const raw = location.hash.trim(); el.innerHTML = `\n${raw}\n`;", 1),
         ('unknown is visible INFO', 'el.innerHTML = `\n${unknown}\n`;', 0),
         ('scanner parser failure', 'el.innerHTML = `\n${unterminated', 1),
     ]
