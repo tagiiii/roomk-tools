@@ -1157,7 +1157,7 @@
           <div class="tg-score-item ${isMe ? 'is-me' : ''}">
             <div class="tg-score-rank">${index + 1}位</div>
             <div class="tg-score-name">${escapeHtml(name)}${isMe ? '（あなた）' : ''}</div>
-            <div class="tg-score-pts">${score}pt</div>
+            <div class="tg-score-pts">${escapeHtml(score)}pt</div>
           </div>
         `;
       });
@@ -1874,7 +1874,7 @@
         <div class="tg-score-item ${isMe ? 'is-me' : ''}">
           <div class="tg-score-rank">${index + 1}位</div>
           <div class="tg-score-name">${escapeHtml(name)}${isMe ? '（あなた）' : ''}</div>
-          <div class="tg-score-pts">${score}pt</div>
+          <div class="tg-score-pts">${escapeHtml(score)}pt</div>
         </div>
       `;
     });
