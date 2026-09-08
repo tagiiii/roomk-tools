@@ -159,10 +159,42 @@ def spelling(tokens):
     return ''.join(t[1] for t in tokens)
 
 
-def evaluate(tokens, env, shadowed, source):
+def literal_array(tokens, env, shadowed, source):
+    """Side-effect-free scalar elements only; this is not an array safety state."""
+    if len(tokens) < 3 or tokens[0][1] != '[' or tokens[-1][1] != ']':
+        return None
+    elements = tokens[1:-1]
+    if len(elements) % 2 != 1:
+        return None
+    states = []
+    for i, token in enumerate(elements):
+        if i % 2:
+            if token[1] != ',':
+                return None
+        elif token[0] in ('number', 'string') or (
+                token[0] == 'identifier' and token[1] in env
+                and env[token[1]] in ('raw', 'safe', 'html')):
+            states.append(evaluate([token], env, shadowed, source))
+        else:
+            return None
+    return states
+
+
+def evaluate(tokens, env, shadowed, source, arrays=None):
     if not tokens:
         return 'unknown'
     text = spelling(tokens)
+    # A known literal container and a fixed in-range index can retain raw only.
+    # Escaped/literal elements do not gain new safe/html certification here.
+    if (arrays is not None and len(tokens) == 4 and tokens[0][0] == 'identifier'
+            and tokens[1][1] == '[' and tokens[3][1] == ']'
+            and re.fullmatch(r'0|[1-9][0-9]*', tokens[2][1])):
+        elements = arrays.get(tokens[0][1])
+        if elements is not None and len(tokens[2][1]) <= len(str(len(elements))):
+            index = int(tokens[2][1])
+            if index < len(elements) and elements[index] == 'raw':
+                return 'raw'
+        return 'unknown'
     if len(tokens) == 1:
         kind, value, begin, _, parts = tokens[0]
         if kind == 'number':
@@ -262,7 +294,7 @@ def scan_js(source, filename, offset=0):
                 shadowed.update(HELPERS if t[1] == 'RoomkRTDB' else [t[1]])
                 if prev == '.' and i >= 2 and tokens[i - 2][1] == 'RoomkRTDB':
                     shadowed.add('RoomkRTDB.esc')
-    env, pending, findings = {}, [], []
+    env, arrays, pending, findings = {}, {}, [], []
 
     def statement(ts):
         if not ts:
@@ -285,25 +317,37 @@ def scan_js(source, filename, offset=0):
         assign = next((i for i in range(start, len(ts)) if ts[i][1] in ('=', '+=')), -1)
         key = spelling(ts[start:assign]) if assign >= 0 else ''
         if BARE.fullmatch(key) and assign + 1 < len(ts):
-            value = evaluate(ts[assign + 1:], env, shadowed, source)
+            rhs = ts[assign + 1:]
+            # Capture before conservative invalidation; recognition excludes calls.
+            elements = literal_array(rhs, env, shadowed, source) if '.' not in key and ts[assign][1] == '=' else None
+            value = evaluate(rhs, env, shadowed, source, arrays)
             if ts[assign][1] == '+=':
                 prior = env.get(key, 'unknown')
                 value = 'raw' if 'raw' in (prior, value) else 'unknown'
             # Unknown operations may mutate object aliases or invoke callbacks.
             if value == 'unknown' or any(t[1] in ('(', '=', '+=', '++', '--') for t in ts[assign + 1:]):
                 env.clear()
+                arrays.clear()
+            if '.' in key:
+                arrays.clear()
+            else:
+                arrays.pop(key, None)
             # Replacing obj invalidates previously tracked obj.field values.
             for old in list(env):
                 if old.startswith(key + '.'):
                     del env[old]
             env[key] = value
+            if elements is not None:
+                arrays[key] = elements
         else:
             env.clear()
+            arrays.clear()
 
     for token in tokens:
         if token[1] in ('{', '}'):
             # No facts flow across block/function/control boundaries.
             env.clear()
+            arrays.clear()
             pending = []
         elif token[1] == ';':
             statement(pending)
