@@ -10,7 +10,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
-<script src="../shared/js/rtdb-utils.js?v=20260715"></script>
+<script src="../shared/js/rtdb-utils.js?v=20260909"></script>
   <style>
     /* ── レイアウト基盤 ── */
     .screen { display: none; min-height: 100dvh; }
@@ -412,6 +412,10 @@
       <div class="card" style="text-align:center">
         <p class="section-lbl">ルームコード</p>
         <p class="room-code" id="w-room-code">----</p>
+        <button type="button" class="btn btn-ghost btn-full mt-sm" onclick="RoomkRTDB.copyRoomCode(state.roomCode, this)">
+          <span class="material-symbols-rounded" aria-hidden="true">content_copy</span>
+          コードをコピー
+        </button>
         <p style="font-size:13px;color:var(--color-muted);margin-top:6px">参加者に伝えてね</p>
       </div>
 
