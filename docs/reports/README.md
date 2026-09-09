@@ -14,6 +14,7 @@
 
 ## 一覧
 
+- [c1-north-okoppe-moseushi-2026-09-09.md](c1-north-okoppe-moseushi-2026-09-09.md) — 興部・妹背牛の由来資料とJR駅情報の追加照合（C-1、2026-09-09）
 - [a11-literal-conditional-2026-09-09.md](a11-literal-conditional-2026-09-09.md) — 固定リテラルだけを返す条件式の限定追跡と未対応構文の対照検証（A-11、2026-09-09）
 - [a11-property-invalidation-2026-09-09.md](a11-property-invalidation-2026-09-09.md) — 別名経由のプロパティ変更後に検査器の古い判定根拠が残る不具合と失効処理の検証（A-11、2026-09-09）
 - [a11-jinro-tiebreak-2026-09-09.md](a11-jinro-tiebreak-2026-09-09.md) — 人狼の同票候補名のエスケープと決選操作への候補引渡しを調べた隔離検証（A-11、2026-09-09）
