@@ -450,7 +450,18 @@
       <div class="error-msg" id="guest-error"></div>
 
       <div class="card" style="padding:20px;">
-        <label for="guest-code" style="display:block; font-size:13px; font-weight:700; margin-bottom:8px; color:var(--color-primary);">
+        <label for="guest-nick" style="display:block; font-size:13px; font-weight:700; margin-bottom:8px; color:var(--color-primary);">
+          ニックネーム（8文字以内）
+        </label>
+        <input
+          type="text"
+          id="guest-nick"
+          maxlength="8"
+          placeholder="例：あいこ"
+          style="width:100%; padding:12px 14px; border:1px solid var(--color-border); border-radius:10px; font-size:16px; font-family:var(--font-base); box-sizing:border-box;"
+        >
+
+        <label for="guest-code" style="display:block; font-size:13px; font-weight:700; margin-top:16px; margin-bottom:8px; color:var(--color-primary);">
           ルームコード（6文字）
         </label>
         <input
@@ -461,17 +472,6 @@
           autocapitalize="characters"
           style="width:100%; padding:12px 14px; border:1px solid var(--color-border); border-radius:10px; font-size:24px; font-weight:700; letter-spacing:0.2em; text-align:center; font-family:var(--font-base); box-sizing:border-box; text-transform:uppercase;"
           oninput="this.value=this.value.toUpperCase()"
-        >
-
-        <label for="guest-nick" style="display:block; font-size:13px; font-weight:700; margin-top:16px; margin-bottom:8px; color:var(--color-primary);">
-          ニックネーム（8文字以内）
-        </label>
-        <input
-          type="text"
-          id="guest-nick"
-          maxlength="8"
-          placeholder="例：あいこ"
-          style="width:100%; padding:12px 14px; border:1px solid var(--color-border); border-radius:10px; font-size:16px; font-family:var(--font-base); box-sizing:border-box;"
         >
 
         <button class="btn btn-primary btn-full" style="margin-top:16px;" onclick="joinRoom()">
@@ -2026,7 +2026,7 @@
         { heading: 'はじめかた', items: [
           'ホストが「ルームを作る」を押して、ニックネームを入れる',
           '画面に出たルームコードをみんなに伝える',
-          'ほかの人は「ルームに参加する」からコードとニックネームを入れる',
+          'ほかの人は「ルームに参加する」からニックネームとコードを入れる',
           '2人以上そろったら、ホストが「ゲームスタート」を押す',
         ] },
         { heading: 'すすめかた', items: [
