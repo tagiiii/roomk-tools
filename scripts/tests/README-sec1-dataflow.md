@@ -16,6 +16,7 @@ bash scripts/lint.sh
 - セミコロンで区切られた同じ直線ブロック内の単純代入・別名・プロパティ代入を追う。DOM取得直後のvalue／textContent／innerHTML、取得DOMのdataset、locationのhash／search、storageのgetItemという潜在的外部入力を裸補間まで追えれば `raw` / ERROR。
 - 既知のraw入力・裸参照に対する式全体の引数なし`.trim()`はrawを保持する（空白除去はHTMLエスケープではない）。未知のreceiver、連結・条件式・任意変換チェーン・引数付き・optional/computed呼出しは追加認定しない。trimによるsafe/html認定は行わない。同じscript内の明示的なtrim宣言／文字列キーやprototype置換の手掛かりがあれば保守的にこの追加追跡を無効化する。動的計算キー・別scriptの組込み改変まで保証しない。
 - 数値リテラル、固定文字列、明示的な `esc` / `escapeHtml` / `RoomkRTDB.esc` 全体呼出し、これらだけの限定テンプレート構築は局所的な根拠になる。変数名にsafe／escaped／HTMLがあるだけでは信用しない。ヘルパーは既存のエスケープ契約を前提とし、その関数の実装正当性を証明しない。
+- 両枝が固定文字列／数値だけの限定条件式は、有限の出力値の根拠を保持する。条件は単一識別子（true／false等を含む）または数値token、枝は同じ限定条件式のネストも可（深さ32まで）。全tokenの消費を要求し、raw／escaped別名・call・property条件・括弧・template・代入・末尾連結等は追加認定しない。文字列のバックスラッシュ／改行も復号未対応でunknown。真偽や入力相関は推論せず、片枝rawをrawへ合流しない。出力文脈は従来ガードのまま（[2026-09-09記録](../../docs/reports/a11-literal-conditional-2026-09-09.md)）。
 - ヘルパーや入力元グローバルの宣言・引数・再代入を検知したscriptでは、その名前を保守的に信用しない。`obj`置換は追跡済みの`obj.field`を失効させる。未知の呼出し・副作用候補は以前の根拠を破棄する。
 - ドットpropertyへの代入／`+=`は、別rootも同じobjectの別名かもしれないため、既存の全property根拠と配列要素の根拠を破棄する。RHSと`+=`の旧値を先に評価し、今回直接書いたtargetのみ登録する。コピー済みscalar値は保持する。computed書込は従来どおり全根拠を破棄する。新しいalias／getter／setter解析ではなく、独立object間でもunknownへ落とす保守的な修正である（[2026-09-09修正記録](../../docs/reports/a11-property-invalidation-2026-09-09.md)）。
 - 値がescaped／固定HTMLでも、属性、script／style等が一度現れた前置部、先行補間でHTML文脈が変わり得る位置は `unknown`。引用符内の `>` をタグ終端と誤認しない。前置部にバックスラッシュがある場合も、実行時のJS文字列復号は未対応として `unknown` にする。
