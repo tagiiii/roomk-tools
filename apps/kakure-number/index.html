@@ -858,18 +858,6 @@
       showError('guest-join-error', 'そのニックネームはすでに使われています'); return;
     }
 
-    // ゲーム中に同じニックネームで再入室（復帰扱い）
-    if (room.status !== ST.WAITING && alreadyInRoom) {
-      state.nickname = nickname;
-      state.roomCode = roomCode;
-      state.role     = 'guest';
-      state.roomRef  = roomRef;
-      state.roomRef.child(`players/${nickname}`).onDisconnect().remove();
-      saveSession();
-      startRoomListener();
-      return;
-    }
-
     if (room.status !== ST.WAITING) {
       showError('guest-join-error', 'このルームはすでにゲームが始まっています'); return;
     }
