@@ -180,10 +180,48 @@ def literal_array(tokens, env, shadowed, source):
     return states
 
 
+def literal_conditional(tokens):
+    """Finite literal leaves only; never merge raw aliases or execute conditions.
+
+    Deliberately exclude calls/properties/parentheses and JS string decoding.
+    Recursive branches follow the ternary grammar, not a regex split at ':'.
+    """
+    forbidden = {'await', 'yield', 'new', 'delete', 'typeof', 'void', 'return',
+                 'throw', 'function', 'class', 'this', 'super', 'import'}
+
+    def branch(index, depth):
+        if index >= len(tokens) or depth > 32:
+            return None
+        token = tokens[index]
+        if index + 1 < len(tokens) and tokens[index + 1][1] == '?':
+            if token[0] not in ('identifier', 'number') or token[1] in forbidden:
+                return None
+            left = branch(index + 2, depth + 1)
+            if left is None or left[1] >= len(tokens) or tokens[left[1]][1] != ':':
+                return None
+            right = branch(left[1] + 1, depth + 1)
+            if right is None:
+                return None
+            return ('html' if 'html' in (left[0], right[0]) else 'safe', right[1])
+        if token[0] == 'number':
+            return 'safe', index + 1
+        if token[0] == 'string' and not any(c in token[1] for c in ('\\', '\n', '\r')):
+            return ('html' if '<' in token[1] or '>' in token[1] else 'safe', index + 1)
+        return None
+
+    if len(tokens) < 5 or tokens[1][1] != '?':
+        return None
+    result = branch(0, 0)
+    return result[0] if result and result[1] == len(tokens) else None
+
+
 def evaluate(tokens, env, shadowed, source, arrays=None):
     if not tokens:
         return 'unknown'
     text = spelling(tokens)
+    conditional = literal_conditional(tokens)
+    if conditional is not None:
+        return conditional
     # A known literal container and a fixed in-range index can retain raw only.
     # Escaped/literal elements do not gain new safe/html certification here.
     if (arrays is not None and len(tokens) == 4 and tokens[0][0] == 'identifier'
