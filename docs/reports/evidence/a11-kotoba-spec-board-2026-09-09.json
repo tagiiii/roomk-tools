@@ -1,0 +1,176 @@
+{
+  "schemaVersion": 1,
+  "scope": "kotoba-tantei spectator boardHtml at renderSpecFinish and related projection/game/finished pending-write dispatch",
+  "sourcePath": "apps/kotoba-tantei/app.js",
+  "sourceSha256": "b96fc56f8c3836b06a9ca6be6c58db65d812f9e870f9e45102b3f6924c0fcae9",
+  "sharedPath": "apps/shared/js/utils.js",
+  "sharedSha256": "533e791fd06c37839989a1461bb0322d11c94fc1d1ef853a03c68fb12c25c370",
+  "extractedSha256": {
+    "escape": "a027d05666cd4c73f062af57f68d0791422a5a51fdbd3195e6753089ee821a7a",
+    "label": "54d216e795edab93c7161c02f27fa1a00d23f8ef1a40bd226b652b1c561a43c3",
+    "project": "7715f726c29ea3853e758c0e85aefa85b11a29c62d0cf6425f665321fd561500",
+    "card": "a6fa56abd1d8715a7682860616c28d04d012f3c646e6feb6d36d02bb133d0b30",
+    "game": "04542ed92531b6fad554f82d0b307a67a4506e316154d553ebe4f7eb046cce50",
+    "finish": "8ef3a6f9da764739834996467c1d4505801e66f3bddcf3fc3fb49cedc988e855",
+    "dispatch": "bf9b0825b28735898367015ab3043f51adc513c52afe0ab8547f21070a22fa8a"
+  },
+  "caseCount": 37,
+  "results": [
+    {
+      "name": "strict revealed projection and game concealment: false",
+      "pass": true
+    },
+    {
+      "name": "strict revealed projection and game concealment: undefined",
+      "pass": true
+    },
+    {
+      "name": "strict revealed projection and game concealment: null",
+      "pass": true
+    },
+    {
+      "name": "strict revealed projection and game concealment: 0",
+      "pass": true
+    },
+    {
+      "name": "strict revealed projection and game concealment: 1",
+      "pass": true
+    },
+    {
+      "name": "strict revealed projection and game concealment: \"true\"",
+      "pass": true
+    },
+    {
+      "name": "strict revealed projection and game concealment: \"false\"",
+      "pass": true
+    },
+    {
+      "name": "strict revealed projection and game concealment: {}",
+      "pass": true
+    },
+    {
+      "name": "strict revealed projection and game concealment: []",
+      "pass": true
+    },
+    {
+      "name": "null projection has empty word and no role",
+      "pass": true
+    },
+    {
+      "name": "revealed true retains role red",
+      "pass": true
+    },
+    {
+      "name": "revealed true retains role blue",
+      "pass": true
+    },
+    {
+      "name": "revealed true retains role neutral",
+      "pass": true
+    },
+    {
+      "name": "revealed true retains role assassin",
+      "pass": true
+    },
+    {
+      "name": "in_progress separate word encoding",
+      "pass": true
+    },
+    {
+      "name": "in_progress separate role encoding",
+      "pass": true
+    },
+    {
+      "name": "in_progress separate both encoding",
+      "pass": true
+    },
+    {
+      "name": "finished separate word encoding",
+      "pass": true
+    },
+    {
+      "name": "finished separate role encoding",
+      "pass": true
+    },
+    {
+      "name": "finished separate both encoding",
+      "pass": true
+    },
+    {
+      "name": "finished pending writes keeps unrevealed role hidden",
+      "pass": true
+    },
+    {
+      "name": "finished confirmed reveals formerly hidden role",
+      "pass": true
+    },
+    {
+      "name": "confirmed finish then pending finish redraw removes secret",
+      "pass": true
+    },
+    {
+      "name": "confirmed finish then new game redraw removes old secret",
+      "pass": true
+    },
+    {
+      "name": "same words with different unrevealed roles have identical board fragments",
+      "pass": true
+    },
+    {
+      "name": "in_progress quote-only role remains inside class attribute",
+      "pass": true
+    },
+    {
+      "name": "finished quote-only role remains inside class attribute",
+      "pass": true
+    },
+    {
+      "name": "in_progress empty array",
+      "pass": true
+    },
+    {
+      "name": "finished empty array",
+      "pass": true
+    },
+    {
+      "name": "unknown phase does not render board",
+      "pass": true
+    },
+    {
+      "name": "negative control detected: game word escape",
+      "pass": true
+    },
+    {
+      "name": "negative control detected: game role escape",
+      "pass": true
+    },
+    {
+      "name": "negative control detected: finish word escape",
+      "pass": true
+    },
+    {
+      "name": "negative control detected: finish role escape",
+      "pass": true
+    },
+    {
+      "name": "negative control detected: hidden projection role removal",
+      "pass": true
+    },
+    {
+      "name": "negative control detected: strict revealed comparison",
+      "pass": true
+    },
+    {
+      "name": "negative control detected: pending-write finish gate",
+      "pass": true
+    }
+  ],
+  "limitations": [
+    "Pure Node VM with plain-object fixtures and HTML-string assertions, not a browser parser, DOM, event or script-execution test.",
+    "Actual handleSpectatorSnapshot dispatch is extracted, but exists=true and expiry=false are fixtures. Metadata delivery and real subscription are not executed.",
+    "Header, turn banner, score board, hint and result summary are stubs. Other HTML sinks, game UI, expiry, deletion, session isolation and whole-application write-zero behavior are outside scope.",
+    "Projection-role-removal mutant is rejected by the object-contract assertion; revealed=false still has a separate renderer guard, so this mutant alone is not claimed to leak into HTML.",
+    "Unknown role strings are tested for quoted-attribute encoding, not enum validation or valid CSS semantics; spaces can still add class tokens after HTML escaping. Malformed card arrays/schema acceptance are not certified.",
+    "No network, Firebase SDK, browser or production operations. App/scanner/shared files unchanged. A-11 unknown references are not reclassified safe."
+  ]
+}
