@@ -112,6 +112,10 @@
     .ms-board__turn { font-size: 16px; font-weight: 700; color: var(--color-primary); }
     .ms-board__turn strong { color: var(--color-accent); }
     .ms-board__stock { font-size: 12px; color: var(--color-muted); margin-top: 6px; }
+    .ms-pick { display: flex; justify-content: center; gap: 12px; margin: 8px 0 12px; }
+    .ms-pick__tile { display: flex; align-items: center; gap: 6px; min-width: 64px; min-height: 56px; justify-content: center; background: var(--color-surface); border: 2px solid var(--color-border); border-radius: 12px; color: var(--color-text); font: inherit; font-size: 24px; cursor: pointer; }
+    .ms-pick__tile.is-selected { border-color: var(--color-accent); background: var(--color-bg); }
+    .ms-pick__num { font-size: 14px; color: var(--color-accent); }
     .ms-discards { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; margin-top: 8px; }
     .ms-discard {
       display: inline-flex; align-items: center; justify-content: center;
@@ -202,7 +206,7 @@
     <div class="ms-hero">
       <div class="ms-hero__icon-wrap"><span class="material-symbols-rounded">font_download</span></div>
       <h1 class="ms-hero__title">もじそろえゲーム</h1>
-      <p class="ms-hero__sub">ひらがなの文字タイルを引いて、捨てて、<br>手もとの8枚を「2文字・3文字・3文字」の<br>3つの言葉にそろえたら「あがり」！</p>
+      <p class="ms-hero__sub">ひらがなの文字タイルを取って、捨てて、<br>手もとの8枚を「2文字・3文字・3文字」の<br>3つの言葉にそろえたら「あがり」！</p>
     </div>
     <div class="ms-hero__buttons">
       <button class="btn btn-primary btn-lg btn-full" onclick="showScreen('host-setup')">
@@ -211,7 +215,7 @@
       <button class="btn btn-secondary btn-lg btn-full" onclick="showScreen('guest-join')">
         <span class="material-symbols-rounded">login</span>入る
       </button>
-      <p class="ms-hint">2〜5人で遊べるよ。順番に1枚引いて1枚捨てていくよ。</p>
+      <p class="ms-hint">2〜5人で遊べるよ。山か捨てられた文字から1枚取って、1枚捨てていくよ。</p>
     </div>
   </div>
 </div>
@@ -391,6 +395,7 @@ const state = {
   actionBusy:    false,  // 引く・捨てる・あがる の連打防止
   lastRoom:      null,
   lastTurnKey:   null,   // 手番が変わったら選択状態を捨てる
+  selectedDiscardId: null,
   selectedIndex: null,   // 手札で選んでいるタイルの位置（ローカルのみ）
   confirmDiscard: false, // 「◯を捨てる」を押した後の確認中（ローカルのみ）
   epoch:         0,      // 退出のたびに増える世代。退出後に完了した復帰書き戻しを無効化する
@@ -472,7 +477,7 @@ function membersInSeatOrder(m) {
 
 function captureMatchState() {
   const m = (state.lastRoom && state.lastRoom.match) || {};
-  return { matchId: m.matchId, round: m.round, phase: m.phase, turn: m.turn, step: m.step };
+  return { matchId: m.matchId, round: m.round, phase: m.phase, turn: m.turn, step: m.step, turnSerial: m.turnSerial };
 }
 
 // ══════════════════════════════════════════════════
@@ -495,6 +500,10 @@ function dealRound(match, deck, starter) {
     deck,
     pos,
     hands,
+    ruleVersion: 2,
+    turnsRemaining: deck.length - pos,
+    turnSerial: 0,
+    endReason: null,
     discards: null,
     drawnId: null,
     claim: null,
@@ -636,8 +645,8 @@ function handleGame(room) {
   showScreen('game');
   const m = room.match;
   // 手番・フェーズが変わったらタイルの選択を捨てる
-  const key = m ? (m.matchId + '|' + m.round + '|' + m.phase + '|' + m.turn + '|' + m.step) : 'none';
-  if (key !== state.lastTurnKey) { state.lastTurnKey = key; state.selectedIndex = null; state.confirmDiscard = false; }
+  const key = m ? (m.matchId + '|' + m.round + '|' + m.phase + '|' + m.turn + '|' + m.step + '|' + m.turnSerial) : 'none';
+  if (key !== state.lastTurnKey) { state.lastTurnKey = key; state.selectedDiscardId = null; state.selectedIndex = null; state.confirmDiscard = false; }
 
   renderBoard(room);
   renderMyArea(room);
@@ -667,10 +676,11 @@ function renderBoard(room) {
   } else if (m.phase === PHASE.SETTLED) {
     html += m.winner
       ? '<div class="ms-board__turn"><strong>' + esc(m.winner.nick || '') + '</strong>さんのあがり！</div>'
-      : '<div class="ms-board__turn">山がなくなったよ</div>';
+      : '<div class="ms-board__turn">' + drawOutcome(m) + '</div>';
   }
   html += '<div class="ms-board__stock">山の残り ' + remaining + '枚</div>';
 
+  if (m.ruleVersion === 2 && m.phase === PHASE.TURN) html += '<div class="ms-board__stock">' + (m.turnsRemaining === 0 ? 'これが最後の番だよ' : 'あと' + m.turnsRemaining + '回、文字を取れるよ') + '</div>';
   const discards = (m.discards || []).map(Number);
   html += '<p class="ms-section-label" style="margin-top:14px">捨てられた文字</p>';
   if (!discards.length) {
@@ -701,7 +711,7 @@ function renderMyArea(room) {
   // ── 見出し（いま何をする番か）
   if (m.phase === PHASE.TURN) {
     if (isMyTurn && m.step === STEP.DRAW) {
-      html += '<p class="ms-my__prompt ms-my__prompt--turn">あなたの番！ 山から1枚引こう</p>';
+      html += '<p class="ms-my__prompt ms-my__prompt--turn">あなたの番！ 文字を1枚取ろう</p>';
     } else if (isMyTurn && m.step === STEP.DISCARD) {
       html += '<p class="ms-my__prompt ms-my__prompt--turn">いらない文字を1枚選んで捨てよう<br><span style="font-size:12px;font-weight:600">3つの言葉ができていたら「あがる」を押してね</span></p>';
     } else {
@@ -731,8 +741,17 @@ function renderMyArea(room) {
   if (m.phase === PHASE.TURN) {
     if (isMyTurn && m.step === STEP.DRAW) {
       html += '<div class="ms-actions">'
-        + '<button class="btn btn-primary btn-full" onclick="submitDraw()"><span class="material-symbols-rounded">download</span>1枚引く</button>'
+        + '<button class="btn btn-primary btn-full" onclick="submitDraw()"><span class="material-symbols-rounded">download</span>山から1枚引く</button>'
         + '</div>';
+      if (m.ruleVersion === 2) {
+        const choices = availableDiscards(m);
+        const selected = choices.includes(state.selectedDiscardId) ? state.selectedDiscardId : null;
+        html += '<p class="ms-section-label">取れる文字（新しい順に3枚まで）</p><div class="ms-pick">';
+        html += choices.map((id, i) => '<button class="ms-pick__tile' + (selected === id ? ' is-selected' : '') + '" aria-pressed="' + (selected === id) + '" aria-label="' + (i + 1) + '番 ' + esc(tileChar(id)) + '" onclick="selectDiscard(' + id + ')"><span class="ms-pick__num">' + ['①','②','③'][i] + '</span><span>' + esc(tileChar(id)) + '</span></button>').join('');
+        html += '</div>';
+        if (!choices.length) html += '<p class="ms-my__tip">捨てられた文字はまだないよ。山から引こう</p>';
+        if (selected !== null) html += '<button class="btn btn-secondary btn-full" onclick="submitDraw(' + selected + ')">「' + esc(tileChar(selected)) + '」を取る</button>';
+      }
       html += '<p class="ms-my__tip">タイルは引っぱって好きな場所に動かせるよ（タップで選んで、動かしたい場所をタップしてもOK）</p>';
     } else if (isMyTurn && m.step === STEP.DISCARD) {
       const sel = state.selectedIndex;
@@ -779,7 +798,7 @@ function renderMyArea(room) {
         + (isWinner ? 'あがり！ やったね' : esc(m.winner.nick) + 'さんのあがり！')
         + '</p>' + buildWordsHtml(m.winner.words) + '</div>';
     } else {
-      html += '<div class="ms-outcome ms-outcome--draw"><p class="ms-outcome__main">山がなくなったよ</p>'
+      html += '<div class="ms-outcome ms-outcome--draw"><p class="ms-outcome__main">' + drawOutcome(m) + '</p>'
         + '<p class="ms-outcome__sub">このラウンドは引き分け。次のラウンドで仕切り直そう</p></div>';
     }
     if (state.role === 'host') {
@@ -1233,34 +1252,64 @@ async function submitReorder(before, after) {
 // ══════════════════════════════════════════════════
 // 手番の操作（引く・捨てる・あがる）— すべてルームルートへの transaction
 // ══════════════════════════════════════════════════
-async function submitDraw() {
+// 新ルールは新しいラウンドから適用。既存ラウンドは従来の山引きを維持する。
+function availableDiscards(m) {
+  return m.ruleVersion === 2 ? (m.discards || []).map(Number).slice(-3).reverse() : [];
+}
+function settleExhausted(m) {
+  if (m.ruleVersion !== 2 || m.phase !== PHASE.TURN || m.step !== STEP.DRAW) return m;
+  if (m.turnsRemaining > 0 && Number(m.pos) < (m.deck || []).length) return m;
+  return { ...m, phase: PHASE.SETTLED, winner: null, claim: null, drawnId: null,
+    endReason: Number(m.pos) >= (m.deck || []).length ? 'deck' : 'turns' };
+}
+function acquireTile(m, nick, tileId) {
+  const exhausted = settleExhausted(m);
+  if (exhausted !== m) return exhausted;
+  const deck = m.deck || [];
+  const pos = Number(m.pos) || 0;
+  const hands = m.hands || {};
+  const hand = (hands[nick] || []).map(Number);
+  if (hand.length !== HAND_SIZE) return null;
+  const discards = (m.discards || []).map(Number);
+  const fromDiscard = tileId !== null;
+  if (fromDiscard && !availableDiscards(m).includes(tileId)) return null;
+  if (!fromDiscard && pos >= deck.length) {
+    return { ...m, phase: PHASE.SETTLED, winner: null, claim: null, drawnId: null, endReason: 'deck' };
+  }
+  const id = fromDiscard ? tileId : Number(deck[pos]);
+  if (fromDiscard) discards.splice(discards.indexOf(id), 1);
+  return { ...m, hands: { ...hands, [nick]: [...hand, id] },
+    discards, pos: fromDiscard ? pos : pos + 1, step: STEP.DISCARD, drawnId: id,
+    ...(m.ruleVersion === 2 ? { turnsRemaining: m.turnsRemaining - 1, turnSerial: (m.turnSerial || 0) + 1 } : {}) };
+}
+function selectDiscard(id) {
+  const m = state.lastRoom && state.lastRoom.match;
+  if (state.actionBusy || !m || m.phase !== PHASE.TURN || m.turn !== state.nickname || m.step !== STEP.DRAW || !availableDiscards(m).includes(id)) return;
+  state.selectedDiscardId = id;
+  renderMyArea(state.lastRoom);
+}
+function drawOutcome(m) { return m.endReason === 'turns' ? '決めた回数が終わったよ' : '山がなくなったよ'; }
+
+async function submitDraw(tileId = null) {
   if (state.actionBusy) return;
   state.actionBusy = true;
-  try { await submitDrawInner(); } finally { state.actionBusy = false; }
+  try { await submitDrawInner(tileId); }
+  catch { showMsg('取れなかったよ。通信を確かめて、もう一度試してね'); }
+  finally { state.actionBusy = false; }
 }
-async function submitDrawInner() {
+async function submitDrawInner(tileId = null) {
   const cap = captureMatchState();
   const nick = state.nickname;
   const { committed } = await state.roomRef.transaction((room) => {
     if (!room || room.status !== 'playing') return;
     const m = room.match;
     if (!m || m.matchId !== cap.matchId || m.round !== cap.round || m.phase !== PHASE.TURN) return;
-    if (m.turn !== nick || m.step !== STEP.DRAW) return;
-    const deck = m.deck || [];
-    const pos = Number(m.pos) || 0;
-    if (pos >= deck.length) {
-      // 山がなくなった → このラウンドは引き分け
-      return { ...room, match: { ...m, phase: PHASE.SETTLED, winner: null, drawnId: null, claim: null } };
-    }
-    const hands = m.hands || {};
-    const id = Number(deck[pos]);
-    const myHand = [...(hands[nick] || []).map(Number), id];
-    return {
-      ...room,
-      match: { ...m, hands: { ...hands, [nick]: myHand }, pos: pos + 1, step: STEP.DISCARD, drawnId: id },
-    };
+    if (m.turn !== nick || m.step !== STEP.DRAW || m.turnSerial !== cap.turnSerial) return;
+    const next = acquireTile(m, nick, tileId);
+    if (!next) return;
+    return { ...room, match: next };
   });
-  if (!committed) showMsg('引けなかったよ');
+  if (!committed) showMsg('取れなかったよ。今の文字から選び直してね');
 }
 
 async function submitDiscard() {
@@ -1282,7 +1331,7 @@ async function submitDiscardInner() {
     if (!room || room.status !== 'playing') return;
     const m = room.match;
     if (!m || m.matchId !== cap.matchId || m.round !== cap.round || m.phase !== PHASE.TURN) return;
-    if (m.turn !== nick || m.step !== STEP.DISCARD) return;
+    if (m.turn !== nick || m.step !== STEP.DISCARD || m.turnSerial !== cap.turnSerial) return;
     const hands = m.hands || {};
     const cur = (hands[nick] || []).map(Number);
     const idx = cur.indexOf(tileId);
@@ -1292,14 +1341,14 @@ async function submitDiscardInner() {
     const discards = [...((m.discards || []).map(Number)), tileId];
     return {
       ...room,
-      match: {
+      match: settleExhausted({
         ...m,
         hands: { ...hands, [nick]: myHand },
         discards,
         turn: nextMember(m, nick),
         step: STEP.DRAW,
         drawnId: null,
-      },
+      }),
     };
   });
   state.selectedIndex = null;
@@ -1320,7 +1369,7 @@ async function submitClaimInner() {
     if (!room || room.status !== 'playing') return;
     const m = room.match;
     if (!m || m.matchId !== cap.matchId || m.round !== cap.round || m.phase !== PHASE.TURN) return;
-    if (m.turn !== nick || m.step !== STEP.DISCARD) return;
+    if (m.turn !== nick || m.step !== STEP.DISCARD || m.turnSerial !== cap.turnSerial) return;
     const hand = ((m.hands && m.hands[nick]) || []).map(Number);
     if (hand.length !== total) return;
     const words = splitHand(hand).map(tilesToWord);
@@ -1543,7 +1592,7 @@ function resetLocalStateAndShowTop(msg) {
   state.epoch += 1;
   Object.assign(state, {
     role: null, nickname: null, roomCode: null, roomRef: null,
-    lastRoom: null, lastTurnKey: null, selectedIndex: null, confirmDiscard: false,
+    lastRoom: null, lastTurnKey: null, selectedDiscardId: null, selectedIndex: null, confirmDiscard: false,
   });
   ['top-host-nickname', 'top-guest-nickname', 'top-guest-code'].forEach((id) => {
     const e = document.getElementById(id); if (e) e.value = '';
@@ -1598,6 +1647,7 @@ async function removeSelfFromRoom(roomRef, nick) {
         match.claim = null;
       }
     }
+    if (match) match = settleExhausted(match);
     return { ...cur, players, match };
   });
 }
@@ -1770,7 +1820,7 @@ tryReconnect().then((reconnected) => {
 <script>
   RoomkHowto.init({
     title: 'あそびかた',
-    lead: 'ひらがなの文字タイルを1枚引いて1枚捨てる、を順番にくり返し、手もとの8枚を「2文字・3文字・3文字」の3つの言葉にそろえるゲームです。',
+    lead: '山か捨てられた文字（新しい順に3枚まで）から1枚取って1枚捨てる、を順番にくり返し、手もとの8枚を「2文字・3文字・3文字」の3つの言葉にそろえるゲームです。',
     sections: [
       { heading: 'はじめかた', items: [
         'ホストが「ルームを作る」からルームを作る（ホストもプレイヤーとして遊ぶよ）',
@@ -1779,11 +1829,11 @@ tryReconnect().then((reconnected) => {
         'ホストが「始める」を押すとスタート（2〜5人）',
       ] },
       { heading: 'すすめかた', items: [
-        '最初はみんな7枚。自分の番になったら「1枚引く」で山から1枚もらう',
+        '最初はみんな7枚。自分の番は「山から1枚引く」か、「取れる文字」から選んで取得ボタンを押し、1枚もらう',
         '8枚の中からいらない文字をタップして選び、「◯を捨てる」→「捨てて、次の人へ」を押す。ここで次の人の番になるよ',
         'タイルは引っぱって好きな場所に動かせる（タップで選んで、動かしたい場所をタップしてもOK）。上の枠に「2文字・3文字・3文字」の並びが出るよ',
         '8枚が3つの言葉になったら「あがる」を押す。みんなで言葉を確かめて、ホストが「OK！あがり」を押したらそのラウンドはあがり',
-        '山がなくなったら、そのラウンドは引き分け',
+        '山がなくなるか、決めた回数が終わったら引き分け。最後の番も「あがる」を押せるよ',
       ] },
       { heading: 'おわりかた', text: '好きなだけラウンドを遊んで、ホストが「ここで終わる」を押すと、できた言葉のまとめが出るよ。' },
     ],
