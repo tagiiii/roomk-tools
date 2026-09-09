@@ -1372,17 +1372,6 @@
       return;
     }
 
-    if (room.status !== STATUS.WAITING && alreadyInRoom) {
-      state.nickname = nickname;
-      state.roomCode = roomCode;
-      state.role = 'guest';
-      state.roomRef = roomRef;
-      roomRef.child(`players/${nickname}`).onDisconnect().remove();
-      saveSession();
-      startRoomListener();
-      return;
-    }
-
     if (room.status !== STATUS.WAITING) {
       showError('guest-join-error', 'このルームはすでにゲームが始まっています');
       return;

@@ -112,6 +112,8 @@ uso_rooms/{roomCode}/
 
 ## 切断時の挙動
 
+- ゲーム中の名前だけによる再参加は拒否し、復帰は同じタブの保存済みsessionによる `tryReconnect()` のみとする（2026-09-09 P-12）。sessionStorageは認証境界ではなく、別端末の本人確認を追加したものではない。待機中の通常参加・ホスト名の参加拒否・既存の保存復帰処理は維持する。
+
 | 役割 | 挙動 |
 |------|------|
 | ホスト切断 | `hostConnected=false`＋`hostDisconnectedAt=ServerValue.TIMESTAMP`（`onDisconnect().update()`）。ゲストにはカウントダウン付きオーバーレイ表示。`ORPHAN_TTL_MS = 2分` 超過で期限切れ扱い→削除 |

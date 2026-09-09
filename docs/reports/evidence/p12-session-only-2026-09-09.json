@@ -1,0 +1,802 @@
+{
+  "baseline": "b50a9fe738fd2a03242dd62549396f478137adfd",
+  "sources": [
+    {
+      "file": "apps/kakure-number/index.html",
+      "oldSha256": "62bd802b79e03bfbab08013b42a649d8f7cf968cd1702b0e9fb2c220e477155b",
+      "currentSha256": "3613c1cafb4f6acc70d1837d1b976fe903ed21bfcecf98bab46ec9e44510024e"
+    },
+    {
+      "file": "apps/pittari-meter/index.html",
+      "oldSha256": "515b078dc63990c2a0fda6b053ff4f69a5e55e4ac548755d4576830d029dc040",
+      "currentSha256": "a6531e22c86883b5177b510d4fafb42e0b6f3c931131bbfb78da713b12e8d22f"
+    },
+    {
+      "file": "apps/do-mannaka/index.html",
+      "oldSha256": "0e0a8e517b29fda2efdbdc72b4f5f935da124d8d7c340547e547e7de75f5ac66",
+      "currentSha256": "2d547141f33d9328111d64fc69d0267fe97d8ff138ae9356c66061938373c655"
+    },
+    {
+      "file": "apps/tatoe-gp/index.html",
+      "oldSha256": "b06dcc8fdaab134db1172e5025af763f07fa2fd35036cfc500dfda6ba73f386a",
+      "currentSha256": "8c0a1d39f83a6222be14ebb926190c296fc69674e45d4a2a56bfc171758f9524"
+    },
+    {
+      "file": "apps/uso-jisho/index.html",
+      "oldSha256": "23fe1530fe1bd0339884e2d51f683747983b4d5ceb43bf4372c211ad6e431fc3",
+      "currentSha256": "4be33d86a778069d55dd5e5ea612dabf9ba622900367ac6282f6f369d531f179"
+    }
+  ],
+  "cases": 152,
+  "results": [
+    {
+      "app": "kakure-number",
+      "case": "existing-guest-in-game",
+      "pass": true
+    },
+    {
+      "app": "kakure-number",
+      "case": "unused-name-in-game",
+      "pass": true
+    },
+    {
+      "app": "kakure-number",
+      "case": "host-in-game",
+      "pass": true
+    },
+    {
+      "app": "kakure-number",
+      "case": "host-player-missing",
+      "pass": true
+    },
+    {
+      "app": "kakure-number",
+      "case": "waiting-duplicate",
+      "pass": true
+    },
+    {
+      "app": "kakure-number",
+      "case": "waiting-host",
+      "pass": true
+    },
+    {
+      "app": "kakure-number",
+      "case": "waiting-new-unchanged",
+      "pass": true
+    },
+    {
+      "app": "kakure-number",
+      "case": "saved-guest-missing-false",
+      "pass": true
+    },
+    {
+      "app": "kakure-number",
+      "case": "saved-guest-missing-true",
+      "pass": true
+    },
+    {
+      "app": "kakure-number",
+      "case": "saved-host-missing-false",
+      "pass": true
+    },
+    {
+      "app": "kakure-number",
+      "case": "saved-host-missing-true",
+      "pass": true
+    },
+    {
+      "app": "kakure-number",
+      "case": "reconnect-reject-{\"nickname\":\"host\"}",
+      "pass": true
+    },
+    {
+      "app": "kakure-number",
+      "case": "reconnect-reject-{\"nickname\":\"host\",\"missingHost\":true}",
+      "pass": true
+    },
+    {
+      "app": "kakure-number",
+      "case": "reconnect-reject-{\"noSession\":true}",
+      "pass": true
+    },
+    {
+      "app": "kakure-number",
+      "case": "reconnect-reject-{\"absent\":true}",
+      "pass": true
+    },
+    {
+      "app": "kakure-number",
+      "case": "baseline-name-only-accepted",
+      "pass": true
+    },
+    {
+      "app": "kakure-number",
+      "case": "phase-saved-guest-waiting-missing-false",
+      "pass": true
+    },
+    {
+      "app": "kakure-number",
+      "case": "phase-saved-guest-waiting-missing-true",
+      "pass": true
+    },
+    {
+      "app": "kakure-number",
+      "case": "phase-saved-guest-thinking-missing-false",
+      "pass": true
+    },
+    {
+      "app": "kakure-number",
+      "case": "phase-saved-guest-thinking-missing-true",
+      "pass": true
+    },
+    {
+      "app": "kakure-number",
+      "case": "phase-saved-guest-reveal-missing-false",
+      "pass": true
+    },
+    {
+      "app": "kakure-number",
+      "case": "phase-saved-guest-reveal-missing-true",
+      "pass": true
+    },
+    {
+      "app": "kakure-number",
+      "case": "phase-saved-guest-done-missing-false",
+      "pass": true
+    },
+    {
+      "app": "kakure-number",
+      "case": "phase-saved-guest-done-missing-true",
+      "pass": true
+    },
+    {
+      "app": "kakure-number",
+      "case": "finished-host-reschedules-existing-deadline",
+      "pass": true
+    },
+    {
+      "app": "kakure-number",
+      "case": "expired-stub-saved-guest",
+      "pass": true
+    },
+    {
+      "app": "kakure-number",
+      "case": "expired-stub-saved-host",
+      "pass": true
+    },
+    {
+      "app": "kakure-number",
+      "case": "expired-stub-join",
+      "pass": true
+    },
+    {
+      "app": "pittari-meter",
+      "case": "existing-guest-in-game",
+      "pass": true
+    },
+    {
+      "app": "pittari-meter",
+      "case": "unused-name-in-game",
+      "pass": true
+    },
+    {
+      "app": "pittari-meter",
+      "case": "host-in-game",
+      "pass": true
+    },
+    {
+      "app": "pittari-meter",
+      "case": "host-player-missing",
+      "pass": true
+    },
+    {
+      "app": "pittari-meter",
+      "case": "waiting-duplicate",
+      "pass": true
+    },
+    {
+      "app": "pittari-meter",
+      "case": "waiting-host",
+      "pass": true
+    },
+    {
+      "app": "pittari-meter",
+      "case": "hostPlays-true",
+      "pass": true
+    },
+    {
+      "app": "pittari-meter",
+      "case": "hostPlays-false",
+      "pass": true
+    },
+    {
+      "app": "pittari-meter",
+      "case": "waiting-new-unchanged",
+      "pass": true
+    },
+    {
+      "app": "pittari-meter",
+      "case": "saved-guest-missing-false",
+      "pass": true
+    },
+    {
+      "app": "pittari-meter",
+      "case": "saved-guest-missing-true",
+      "pass": true
+    },
+    {
+      "app": "pittari-meter",
+      "case": "saved-host-missing-false",
+      "pass": true
+    },
+    {
+      "app": "pittari-meter",
+      "case": "saved-host-missing-true",
+      "pass": true
+    },
+    {
+      "app": "pittari-meter",
+      "case": "reconnect-reject-{\"nickname\":\"host\"}",
+      "pass": true
+    },
+    {
+      "app": "pittari-meter",
+      "case": "reconnect-reject-{\"nickname\":\"host\",\"missingHost\":true}",
+      "pass": true
+    },
+    {
+      "app": "pittari-meter",
+      "case": "reconnect-reject-{\"noSession\":true}",
+      "pass": true
+    },
+    {
+      "app": "pittari-meter",
+      "case": "reconnect-reject-{\"absent\":true}",
+      "pass": true
+    },
+    {
+      "app": "pittari-meter",
+      "case": "baseline-name-only-accepted",
+      "pass": true
+    },
+    {
+      "app": "pittari-meter",
+      "case": "phase-saved-guest-waiting-missing-false",
+      "pass": true
+    },
+    {
+      "app": "pittari-meter",
+      "case": "phase-saved-guest-waiting-missing-true",
+      "pass": true
+    },
+    {
+      "app": "pittari-meter",
+      "case": "phase-saved-guest-hinting-missing-false",
+      "pass": true
+    },
+    {
+      "app": "pittari-meter",
+      "case": "phase-saved-guest-hinting-missing-true",
+      "pass": true
+    },
+    {
+      "app": "pittari-meter",
+      "case": "phase-saved-guest-guessing-missing-false",
+      "pass": true
+    },
+    {
+      "app": "pittari-meter",
+      "case": "phase-saved-guest-guessing-missing-true",
+      "pass": true
+    },
+    {
+      "app": "pittari-meter",
+      "case": "phase-saved-guest-reveal-missing-false",
+      "pass": true
+    },
+    {
+      "app": "pittari-meter",
+      "case": "phase-saved-guest-reveal-missing-true",
+      "pass": true
+    },
+    {
+      "app": "pittari-meter",
+      "case": "phase-saved-guest-done-missing-false",
+      "pass": true
+    },
+    {
+      "app": "pittari-meter",
+      "case": "phase-saved-guest-done-missing-true",
+      "pass": true
+    },
+    {
+      "app": "pittari-meter",
+      "case": "finished-host-reschedules-existing-deadline",
+      "pass": true
+    },
+    {
+      "app": "pittari-meter",
+      "case": "expired-stub-saved-guest",
+      "pass": true
+    },
+    {
+      "app": "pittari-meter",
+      "case": "expired-stub-saved-host",
+      "pass": true
+    },
+    {
+      "app": "pittari-meter",
+      "case": "expired-stub-join",
+      "pass": true
+    },
+    {
+      "app": "do-mannaka",
+      "case": "existing-guest-in-game",
+      "pass": true
+    },
+    {
+      "app": "do-mannaka",
+      "case": "unused-name-in-game",
+      "pass": true
+    },
+    {
+      "app": "do-mannaka",
+      "case": "host-in-game",
+      "pass": true
+    },
+    {
+      "app": "do-mannaka",
+      "case": "host-player-missing",
+      "pass": true
+    },
+    {
+      "app": "do-mannaka",
+      "case": "waiting-duplicate",
+      "pass": true
+    },
+    {
+      "app": "do-mannaka",
+      "case": "waiting-host",
+      "pass": true
+    },
+    {
+      "app": "do-mannaka",
+      "case": "waiting-new-unchanged",
+      "pass": true
+    },
+    {
+      "app": "do-mannaka",
+      "case": "saved-guest-missing-false",
+      "pass": true
+    },
+    {
+      "app": "do-mannaka",
+      "case": "saved-guest-missing-true",
+      "pass": true
+    },
+    {
+      "app": "do-mannaka",
+      "case": "saved-host-missing-false",
+      "pass": true
+    },
+    {
+      "app": "do-mannaka",
+      "case": "saved-host-missing-true",
+      "pass": true
+    },
+    {
+      "app": "do-mannaka",
+      "case": "reconnect-reject-{\"nickname\":\"host\"}",
+      "pass": true
+    },
+    {
+      "app": "do-mannaka",
+      "case": "reconnect-reject-{\"nickname\":\"host\",\"missingHost\":true}",
+      "pass": true
+    },
+    {
+      "app": "do-mannaka",
+      "case": "reconnect-reject-{\"noSession\":true}",
+      "pass": true
+    },
+    {
+      "app": "do-mannaka",
+      "case": "reconnect-reject-{\"absent\":true}",
+      "pass": true
+    },
+    {
+      "app": "do-mannaka",
+      "case": "baseline-name-only-accepted",
+      "pass": true
+    },
+    {
+      "app": "do-mannaka",
+      "case": "phase-saved-guest-waiting-missing-false",
+      "pass": true
+    },
+    {
+      "app": "do-mannaka",
+      "case": "phase-saved-guest-waiting-missing-true",
+      "pass": true
+    },
+    {
+      "app": "do-mannaka",
+      "case": "phase-saved-guest-selecting-missing-false",
+      "pass": true
+    },
+    {
+      "app": "do-mannaka",
+      "case": "phase-saved-guest-selecting-missing-true",
+      "pass": true
+    },
+    {
+      "app": "do-mannaka",
+      "case": "phase-saved-guest-answering-missing-false",
+      "pass": true
+    },
+    {
+      "app": "do-mannaka",
+      "case": "phase-saved-guest-answering-missing-true",
+      "pass": true
+    },
+    {
+      "app": "do-mannaka",
+      "case": "phase-saved-guest-result-missing-false",
+      "pass": true
+    },
+    {
+      "app": "do-mannaka",
+      "case": "phase-saved-guest-result-missing-true",
+      "pass": true
+    },
+    {
+      "app": "do-mannaka",
+      "case": "phase-saved-guest-finished-missing-false",
+      "pass": true
+    },
+    {
+      "app": "do-mannaka",
+      "case": "phase-saved-guest-finished-missing-true",
+      "pass": true
+    },
+    {
+      "app": "do-mannaka",
+      "case": "finished-host-reschedules-existing-deadline",
+      "pass": true
+    },
+    {
+      "app": "do-mannaka",
+      "case": "expired-stub-saved-guest",
+      "pass": true
+    },
+    {
+      "app": "do-mannaka",
+      "case": "expired-stub-saved-host",
+      "pass": true
+    },
+    {
+      "app": "do-mannaka",
+      "case": "expired-stub-join",
+      "pass": true
+    },
+    {
+      "app": "tatoe-gp",
+      "case": "existing-guest-in-game",
+      "pass": true
+    },
+    {
+      "app": "tatoe-gp",
+      "case": "unused-name-in-game",
+      "pass": true
+    },
+    {
+      "app": "tatoe-gp",
+      "case": "host-in-game",
+      "pass": true
+    },
+    {
+      "app": "tatoe-gp",
+      "case": "host-player-missing",
+      "pass": true
+    },
+    {
+      "app": "tatoe-gp",
+      "case": "waiting-duplicate",
+      "pass": true
+    },
+    {
+      "app": "tatoe-gp",
+      "case": "waiting-host",
+      "pass": true
+    },
+    {
+      "app": "tatoe-gp",
+      "case": "waiting-new-unchanged",
+      "pass": true
+    },
+    {
+      "app": "tatoe-gp",
+      "case": "saved-guest-missing-false",
+      "pass": true
+    },
+    {
+      "app": "tatoe-gp",
+      "case": "saved-guest-missing-true",
+      "pass": true
+    },
+    {
+      "app": "tatoe-gp",
+      "case": "saved-host-missing-false",
+      "pass": true
+    },
+    {
+      "app": "tatoe-gp",
+      "case": "saved-host-missing-true",
+      "pass": true
+    },
+    {
+      "app": "tatoe-gp",
+      "case": "reconnect-reject-{\"nickname\":\"host\"}",
+      "pass": true
+    },
+    {
+      "app": "tatoe-gp",
+      "case": "reconnect-reject-{\"nickname\":\"host\",\"missingHost\":true}",
+      "pass": true
+    },
+    {
+      "app": "tatoe-gp",
+      "case": "reconnect-reject-{\"noSession\":true}",
+      "pass": true
+    },
+    {
+      "app": "tatoe-gp",
+      "case": "reconnect-reject-{\"absent\":true}",
+      "pass": true
+    },
+    {
+      "app": "tatoe-gp",
+      "case": "baseline-name-only-accepted",
+      "pass": true
+    },
+    {
+      "app": "tatoe-gp",
+      "case": "phase-saved-guest-waiting-missing-false",
+      "pass": true
+    },
+    {
+      "app": "tatoe-gp",
+      "case": "phase-saved-guest-waiting-missing-true",
+      "pass": true
+    },
+    {
+      "app": "tatoe-gp",
+      "case": "phase-saved-guest-selecting-missing-false",
+      "pass": true
+    },
+    {
+      "app": "tatoe-gp",
+      "case": "phase-saved-guest-selecting-missing-true",
+      "pass": true
+    },
+    {
+      "app": "tatoe-gp",
+      "case": "phase-saved-guest-answering-missing-false",
+      "pass": true
+    },
+    {
+      "app": "tatoe-gp",
+      "case": "phase-saved-guest-answering-missing-true",
+      "pass": true
+    },
+    {
+      "app": "tatoe-gp",
+      "case": "phase-saved-guest-voting-missing-false",
+      "pass": true
+    },
+    {
+      "app": "tatoe-gp",
+      "case": "phase-saved-guest-voting-missing-true",
+      "pass": true
+    },
+    {
+      "app": "tatoe-gp",
+      "case": "phase-saved-guest-result-missing-false",
+      "pass": true
+    },
+    {
+      "app": "tatoe-gp",
+      "case": "phase-saved-guest-result-missing-true",
+      "pass": true
+    },
+    {
+      "app": "tatoe-gp",
+      "case": "phase-saved-guest-finished-missing-false",
+      "pass": true
+    },
+    {
+      "app": "tatoe-gp",
+      "case": "phase-saved-guest-finished-missing-true",
+      "pass": true
+    },
+    {
+      "app": "tatoe-gp",
+      "case": "finished-host-reschedules-existing-deadline",
+      "pass": true
+    },
+    {
+      "app": "tatoe-gp",
+      "case": "expired-stub-saved-guest",
+      "pass": true
+    },
+    {
+      "app": "tatoe-gp",
+      "case": "expired-stub-saved-host",
+      "pass": true
+    },
+    {
+      "app": "tatoe-gp",
+      "case": "expired-stub-join",
+      "pass": true
+    },
+    {
+      "app": "uso-jisho",
+      "case": "existing-guest-in-game",
+      "pass": true
+    },
+    {
+      "app": "uso-jisho",
+      "case": "unused-name-in-game",
+      "pass": true
+    },
+    {
+      "app": "uso-jisho",
+      "case": "host-in-game",
+      "pass": true
+    },
+    {
+      "app": "uso-jisho",
+      "case": "host-player-missing",
+      "pass": true
+    },
+    {
+      "app": "uso-jisho",
+      "case": "waiting-duplicate",
+      "pass": true
+    },
+    {
+      "app": "uso-jisho",
+      "case": "waiting-host",
+      "pass": true
+    },
+    {
+      "app": "uso-jisho",
+      "case": "waiting-new-unchanged",
+      "pass": true
+    },
+    {
+      "app": "uso-jisho",
+      "case": "saved-guest-missing-false",
+      "pass": true
+    },
+    {
+      "app": "uso-jisho",
+      "case": "saved-guest-missing-true",
+      "pass": true
+    },
+    {
+      "app": "uso-jisho",
+      "case": "saved-host-missing-false",
+      "pass": true
+    },
+    {
+      "app": "uso-jisho",
+      "case": "saved-host-missing-true",
+      "pass": true
+    },
+    {
+      "app": "uso-jisho",
+      "case": "reconnect-reject-{\"nickname\":\"host\"}",
+      "pass": true
+    },
+    {
+      "app": "uso-jisho",
+      "case": "reconnect-reject-{\"nickname\":\"host\",\"missingHost\":true}",
+      "pass": true
+    },
+    {
+      "app": "uso-jisho",
+      "case": "reconnect-reject-{\"noSession\":true}",
+      "pass": true
+    },
+    {
+      "app": "uso-jisho",
+      "case": "reconnect-reject-{\"absent\":true}",
+      "pass": true
+    },
+    {
+      "app": "uso-jisho",
+      "case": "baseline-name-only-accepted",
+      "pass": true
+    },
+    {
+      "app": "uso-jisho",
+      "case": "phase-saved-guest-waiting-missing-false",
+      "pass": true
+    },
+    {
+      "app": "uso-jisho",
+      "case": "phase-saved-guest-waiting-missing-true",
+      "pass": true
+    },
+    {
+      "app": "uso-jisho",
+      "case": "phase-saved-guest-writing-missing-false",
+      "pass": true
+    },
+    {
+      "app": "uso-jisho",
+      "case": "phase-saved-guest-writing-missing-true",
+      "pass": true
+    },
+    {
+      "app": "uso-jisho",
+      "case": "phase-saved-guest-voting-missing-false",
+      "pass": true
+    },
+    {
+      "app": "uso-jisho",
+      "case": "phase-saved-guest-voting-missing-true",
+      "pass": true
+    },
+    {
+      "app": "uso-jisho",
+      "case": "phase-saved-guest-reveal-missing-false",
+      "pass": true
+    },
+    {
+      "app": "uso-jisho",
+      "case": "phase-saved-guest-reveal-missing-true",
+      "pass": true
+    },
+    {
+      "app": "uso-jisho",
+      "case": "phase-saved-guest-done-missing-false",
+      "pass": true
+    },
+    {
+      "app": "uso-jisho",
+      "case": "phase-saved-guest-done-missing-true",
+      "pass": true
+    },
+    {
+      "app": "uso-jisho",
+      "case": "finished-host-reschedules-existing-deadline",
+      "pass": true
+    },
+    {
+      "app": "uso-jisho",
+      "case": "expired-stub-saved-guest",
+      "pass": true
+    },
+    {
+      "app": "uso-jisho",
+      "case": "expired-stub-saved-host",
+      "pass": true
+    },
+    {
+      "app": "uso-jisho",
+      "case": "expired-stub-join",
+      "pass": true
+    }
+  ],
+  "limitations": [
+    "Actual guestJoin/tryReconnect functions only. No browser DOM, SDK, network, onDisconnect execution or multi-client transaction races.",
+    "Validation/auth/expiry/session parsing/presence/listener helpers are stubs; their behavior is not certified. do-mannaka host presence is call-only.",
+    "Existing missing-player recreation is unchanged: do-mannaka loses answer, pittari resets guess/decided, tatoe uses saved answer/vote; full answer retention is not implemented.",
+    "No proof of same-tab identity: sessionStorage is not authentication; cloned or edited sessions are not prevented by this change.",
+    "tryReconnect source is byte-identical. Existing read/write recreation races and stale session risks are not fixed.",
+    "The 50-case phase matrix overlaps earlier guest checks; counts are assertions, not unique user journeys. Missing-player set is existing behavior even in finished phases.",
+    "Expiry is a forced boolean stub, not real TTL arithmetic. Cleanup rescheduling records helper arguments only; no timer, deletion deadline or host-presence implementation is exercised."
+  ]
+}
