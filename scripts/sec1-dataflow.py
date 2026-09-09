@@ -330,6 +330,13 @@ def scan_js(source, filename, offset=0):
                 arrays.clear()
             if '.' in key:
                 arrays.clear()
+                # Distinct roots may alias the same object. A declaration can
+                # invalidate facts before later property assignments recreate
+                # them, so dropping only key's descendants is insufficient.
+                # Keep scalar copies, but discard every older property fact.
+                for old in list(env):
+                    if '.' in old:
+                        del env[old]
             else:
                 arrays.pop(key, None)
             # Replacing obj invalidates previously tracked obj.field values.

@@ -114,5 +114,17 @@
 {"name":"conditional assignment branch","code":"const flag = location.search; let raw = location.hash; const picked = flag ? (raw = '') : raw; el.innerHTML = `\n${picked}\n`;","states":["unknown"]},
 {"name":"conditional escaped alias attribute not certified","code":"const escaped = escapeHtml(location.hash); const flag = location.search; const picked = flag ? escaped : ''; el.innerHTML = `\n<div data-value=\"${picked}\"></div>\n`;","states":["unknown"]},
 {"name":"kakure shown conditional escaped representative","code":"Object.entries(numbers).forEach(([name, value]) => { const isMe = name === state.nickname; const shown = isMe ? '？' : esc(String(value)); grid.innerHTML += `\n<div>${shown}</div>\n`; });","states":["unknown"]},
-{"name":"kakure shown conditional escape missing representative","code":"Object.entries(numbers).forEach(([name, value]) => { const isMe = name === state.nickname; const shown = isMe ? '？' : String(value); grid.innerHTML += `\n<div>${shown}</div>\n`; });","states":["unknown"]}
+{"name":"kakure shown conditional escape missing representative","code":"Object.entries(numbers).forEach(([name, value]) => { const isMe = name === state.nickname; const shown = isMe ? '？' : String(value); grid.innerHTML += `\n<div>${shown}</div>\n`; });","states":["unknown"]},
+{"name":"preexisting alias write invalidates reacquired safe property","code":"const obj = {}; const alias = obj; obj.name = \"ok\"; alias.name = location.hash; el.innerHTML = `\n${obj.name}\n`;","states":["unknown"]},
+{"name":"preexisting alias append invalidates reacquired safe property","code":"const obj = {}; const alias = obj; obj.name = \"ok\"; alias.name += location.hash; el.innerHTML = `\n${obj.name}\n`;","states":["unknown"]},
+{"name":"nested aliased write invalidates safe property","code":"const alias = obj.child; obj.child.name = \"ok\"; alias.name = location.hash; el.innerHTML = `\n${obj.child.name}\n`;","states":["unknown"]},
+{"name":"same root other property conservatively invalidates","code":"obj.name = \"ok\"; obj.other = \"fixed\"; el.innerHTML = `\n${obj.name}\n`;","states":["unknown"]},
+{"name":"distinct roots conservatively invalidate","code":"left.name = \"ok\"; right.name = \"fixed\"; el.innerHTML = `\n${left.name}\n`;","states":["unknown"]},
+{"name":"alias write invalidates prior html property","code":"const alias = obj; obj.name = \"<b>ok</b>\"; alias.name = location.hash; el.innerHTML = `\n${obj.name}\n`;","states":["unknown"]},
+{"name":"direct written raw property remains raw","code":"obj.name = \"ok\"; alias.name = location.hash; el.innerHTML = `\n${alias.name}\n`;","states":["raw"]},
+{"name":"same property raw append remains raw","code":"obj.name = \"ok\"; obj.name += location.hash; el.innerHTML = `\n${obj.name}\n`;","states":["raw"]},
+{"name":"copied scalar literal survives property mutation","code":"obj.name = \"ok\"; const saved = obj.name; obj.name = location.hash; el.innerHTML = `\n${saved}\n`;","states":["safe"]},
+{"name":"computed property write invalidates","code":"obj.name = \"ok\"; alias[\"name\"] = location.hash; el.innerHTML = `\n${obj.name}\n`;","states":["unknown"]},
+{"name":"property write invalidates tracked array element","code":"const raw=location.hash; const values=[raw]; obj.name=\"fixed\"; const picked=values[0]; el.innerHTML = `\n${picked}\n`;","states":["unknown"]},
+{"name":"alias overwrite raw fact becomes unknown not stale error","code":"const alias=obj; obj.name=location.hash; alias.name=\"fixed\"; el.innerHTML = `\n${obj.name}\n`;","states":["unknown"]}
 ]
