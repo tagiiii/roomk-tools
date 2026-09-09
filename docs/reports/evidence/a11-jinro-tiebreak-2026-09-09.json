@@ -1,0 +1,77 @@
+{
+  "schemaVersion": 1,
+  "scope": "jinro showTieBreak names HTML text sink and direct onclick wiring only",
+  "sourcePath": "apps/jinro/index.html",
+  "sourceSha256": "0c4b0515a94f86e20c5a3a6be645c3900deff1c2fbf64fed4d98af6ec93dd1c5",
+  "sharedPath": "apps/shared/js/rtdb-utils.js",
+  "sharedSha256": "77d414a84d39deb52e1c8544e26465d4b822041621dbd985cad804e36d3b1d12",
+  "extractedSha256": {
+    "showTieBreak": "7a47efea801e66aaeb508ea9c390cd5dbc2651c670d93bb082e29b48094f6773",
+    "esc": "a8dbf413b3feda4dc7c4ee41bf1359ed4bcf8a54ca161163ed90bf7c08024b2b"
+  },
+  "normalCount": 10,
+  "negativeCount": 3,
+  "caseCount": 13,
+  "results": [
+    {
+      "name": "candidate fixture 0",
+      "pass": true
+    },
+    {
+      "name": "candidate fixture 1",
+      "pass": true
+    },
+    {
+      "name": "candidate fixture 2",
+      "pass": true
+    },
+    {
+      "name": "candidate fixture 3",
+      "pass": true
+    },
+    {
+      "name": "candidate fixture 4",
+      "pass": true
+    },
+    {
+      "name": "candidate fixture 5",
+      "pass": true
+    },
+    {
+      "name": "candidate fixture 6",
+      "pass": true
+    },
+    {
+      "name": "candidate fixture 7",
+      "pass": true
+    },
+    {
+      "name": "repeated drawing replaces HTML and current onclick closure",
+      "pass": true
+    },
+    {
+      "name": "missing optional label does not block render or wiring",
+      "pass": true
+    },
+    {
+      "name": "negative control detected: all escape removed",
+      "pass": true
+    },
+    {
+      "name": "negative control detected: only second candidate escape removed",
+      "pass": true
+    },
+    {
+      "name": "negative control detected: escaped array passed to runoff",
+      "pass": true
+    }
+  ],
+  "limitations": [
+    "Minimal document objects do not parse innerHTML or create real buttons. IDs are lazily provisioned; onclick assignment and invocation are tested as JavaScript properties only.",
+    "String assertions are not browser DOM parsing, event lifecycle or proof of script non-execution. Repeated-render checks cover current property replacement, not detached DOM listeners.",
+    "startRunoff and skipExecution are call-recording stubs. Actual vote tally, role authorization, DB operations, timing and whole-game behavior are outside scope.",
+    "Fixed string candidate arrays, including empty, are renderer fixtures, not certification that upstream accepts these names or an empty tie.",
+    "Candidate closure retains the original array reference, not a copy; delayed caller-side array mutation resistance is not claimed.",
+    "No network, browser, SDK or production access. App/scanner/shared files unchanged; no A-11 unknown reference is classified safe."
+  ]
+}
