@@ -53,6 +53,7 @@ tatoegp_rooms/{roomCode}/
 
 ## 実装メモ
 
+- ゲーム中の名前だけによる再参加は拒否し、復帰は同じタブの保存済みsessionによる `tryReconnect()` のみとする（2026-09-09 P-12）。sessionStorageは認証境界ではなく、別端末の本人確認を追加したものではない。待機中の通常参加・ホスト名の参加拒否・既存の保存復帰処理は維持する。
 - ルーム作成と参加はルームルートへの `transaction()` を使う
 - ホスト切断時は `hostConnected=false` と `hostDisconnectedAt` を保存する
 - ゲストは `players/{nickname}` に `onDisconnect().remove()` を設定する
