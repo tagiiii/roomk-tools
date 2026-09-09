@@ -183,6 +183,7 @@ Realtime Database 単一ファイルアプリ向けの共有ヘルパー。`wind
 | `now()` | `Date.now() + offset` を返す（未初期化時は offset 0） |
 | `getHostDisconnectedAt(room)` | `room.hostDisconnectedAt` を数値化し、有効なら timestamp、無効なら `null` |
 | `isRoomExpired(room, ttlMs = 2 * 60 * 1000)` | `hostConnected === false` かつ TTL 超過なら `true` |
+| `copyRoomCode(code, button?)` | コード単体をコピーし、成功・失敗を通知。Clipboard API が使えない場合は代替コピーを試す |
 | `generateRoomCode(length = 6)` | 紛らわしい文字を除外した英数字ルームコードを生成 |
 | `esc(value)` | XSS対策のHTMLエスケープ（シングルクォートを含む） |
 | `initFirebase(firebase)` | Firebase compat SDKを共通設定で初期化し、`{ authReady, db }` を返す。サーバー時刻補正も開始 |

@@ -89,6 +89,43 @@
     });
   }
 
+  // クリックから直接呼ぶ。コード単体をコピーし、失敗時も通知する。
+  async function copyRoomCode(code, button) {
+    if (button?.dataset.copyBusy) return false;
+    if (typeof code !== 'string' || !/^[A-Z2-9]{6}$/.test(code)) {
+      showToast('ルームコードがありません');
+      return false;
+    }
+    if (button) button.dataset.copyBusy = '1';
+    let copied = false;
+    try {
+      try {
+        await navigator.clipboard.writeText(code);
+        copied = true;
+      } catch (_) {
+        const focused = document.activeElement;
+        const textarea = document.createElement('textarea');
+        textarea.value = code;
+        textarea.readOnly = true;
+        textarea.style.cssText = 'position:fixed;opacity:0;pointer-events:none';
+        try {
+          document.body.appendChild(textarea);
+          textarea.select();
+          copied = document.execCommand('copy');
+        } finally {
+          textarea.remove();
+          focused?.focus({ preventScroll: true });
+        }
+      }
+    } catch (_) {
+      copied = false;
+    } finally {
+      if (button) delete button.dataset.copyBusy;
+    }
+    showToast(copied ? 'コードをコピーしました' : 'コピーできませんでした。コードをそのまま伝えてね', !copied);
+    return copied;
+  }
+
   function showToast(message, isError = true, durationMs = 3000) {
     const existing = document.getElementById('roomk-toast');
     if (existing) existing.remove();
@@ -118,6 +155,7 @@
     esc,
     initFirebase,
     cancelRoomOnDisconnect,
+    copyRoomCode,
     showToast,
   });
 }());
