@@ -10,7 +10,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
-  <script src="../shared/js/rtdb-utils.js?v=20260715"></script>
+  <script src="../shared/js/rtdb-utils.js?v=20260910"></script>
   <script src="packs.js"></script>
   <style>
     /* ── 画面管理 ── */
@@ -317,7 +317,7 @@
       </button>
       <button class="btn btn-secondary btn-full" onclick="showScreen('join')">
         <span class="material-symbols-rounded" aria-hidden="true">login</span>
-        ルームに入る
+        ルームに参加する
       </button>
       <p class="tw-note">答えた言葉は、ゲームが終わると消えます。</p>
     </div>
@@ -358,18 +358,18 @@
 <!-- ═══════════════ screen-join ═══════════════ -->
 <div id="screen-join" class="screen">
   <div class="page">
-    <h2 class="tw-page-title">ルームに入る</h2>
+    <h2 class="tw-page-title">ルームに参加する</h2>
     <div class="card">
       <label class="form-label" for="join-nickname">ニックネーム</label>
       <input type="text" id="join-nickname" class="form-input" maxlength="8" placeholder="本当の名前じゃなくてOK">
-      <label class="form-label" style="margin-top:16px" for="join-code">ルームコード</label>
+      <label class="form-label" style="margin-top:16px" for="join-code">ルームコード（6文字）</label>
       <input type="text" id="join-code" class="form-input tw-code-input" maxlength="6" placeholder="6文字"
              oninput="this.value=this.value.toUpperCase()">
       <div class="error-msg" id="join-error"></div>
     </div>
     <button class="btn btn-primary btn-full btn-lg" onclick="guestJoin()">
       <span class="material-symbols-rounded" aria-hidden="true">login</span>
-      入る
+      参加する
     </button>
     <button class="tw-quiet-btn" onclick="showScreen('top')">戻る</button>
   </div>
@@ -382,8 +382,8 @@
     <div class="card" style="text-align:center">
       <p style="font-size:12px;color:var(--color-muted);margin-bottom:4px">ルームコード</p>
       <div class="tw-room-code" id="waiting-code" role="button" tabindex="0"
-           onclick="copyCode()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();copyCode();}"></div>
-      <button class="btn btn-ghost btn-full" onclick="copyCode()">
+           onclick="copyCode(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();copyCode();}"></div>
+      <button class="btn btn-ghost btn-full" onclick="copyCode(this)">
         <span class="material-symbols-rounded" aria-hidden="true">content_copy</span>
         コードをコピー
       </button>
@@ -400,7 +400,7 @@
         始める
       </button>
     </div>
-    <button class="tw-quiet-btn" onclick="leaveGame()">出る</button>
+    <button class="tw-quiet-btn" onclick="leaveGame()">退出する</button>
   </div>
 </div>
 
@@ -581,7 +581,7 @@
     <div id="final-history"></div>
     <button class="btn btn-secondary btn-full" style="margin-top:16px" onclick="leaveGame()">
       <span class="material-symbols-rounded" aria-hidden="true">home</span>
-      TOPに戻る
+      退出する
     </button>
   </div>
 </div>
@@ -593,7 +593,7 @@
       <div class="spinner"></div>
       <p class="tw-wait__msg">準備しています<span class="dots"></span></p>
     </div>
-    <button class="tw-quiet-btn" onclick="leaveGame()">出る</button>
+    <button class="tw-quiet-btn" onclick="leaveGame()">退出する</button>
   </div>
 </div>
 
@@ -606,7 +606,7 @@
   <span class="material-symbols-rounded" aria-hidden="true" style="font-size:48px">signal_disconnected</span>
   <p class="overlay-title">ホストの戻りを待っています</p>
   <p class="overlay-sub">少し待っても戻らないときは、一度出て入り直してね</p>
-  <button class="btn btn-ghost" onclick="leaveGame()">出る</button>
+  <button class="btn btn-ghost" onclick="leaveGame()">退出する</button>
 </div>
 
 <script>
@@ -1553,11 +1553,8 @@ function historyEntries(history) {
 /* ════════════════════════════════════════════════
    コピー（ルームコード単体。案内文コピーは持たない）
    ════════════════════════════════════════════════ */
-function copyCode() {
-  if (!state.roomCode) return;
-  navigator.clipboard.writeText(state.roomCode)
-    .then(() => showMsg('コピーしたよ', false))
-    .catch(() => showMsg('コピーできなかったよ。自分で写してね'));
+function copyCode(button) {
+  return RoomkRTDB.copyRoomCode(state.roomCode, button);
 }
 
 /* ════════════════════════════════════════════════
@@ -1676,7 +1673,7 @@ async function tryReconnect() {
         heading: '始めかた',
         items: [
           'ホストが「ルームを作る」を押して、コードをみんなに伝える',
-          'ほかの人は「ルームに入る」からコードを入れて「入る」',
+          'ほかの人は「ルームに参加する」からニックネームとルームコードを入れて「参加する」を押す',
           '2人以上そろったら、ホストが「始める」を押す',
         ],
       },

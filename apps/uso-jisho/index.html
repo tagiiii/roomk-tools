@@ -10,7 +10,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
-<script src="../shared/js/rtdb-utils.js?v=20260715"></script>
+<script src="../shared/js/rtdb-utils.js?v=20260910"></script>
   <link rel="stylesheet" href="../shared/css/design-system.css">
   <style>
     .screen { display: none; min-height: 100dvh; }
@@ -720,7 +720,7 @@
     <div class="mt-lg">
       <button class="btn btn-secondary btn-full btn-lg" onclick="goToTop()">
         <span class="material-symbols-rounded" aria-hidden="true">home</span>
-        TOPにもどる
+        トップへ戻る
       </button>
     </div>
   </div>
@@ -1105,13 +1105,7 @@
   }
 
   function copyToClipboard(text, button) {
-    const original = button.innerHTML;
-    navigator.clipboard.writeText(text).then(() => {
-      button.innerHTML = '<span class="material-symbols-rounded" aria-hidden="true">check</span> コピーしました！';
-      setTimeout(() => {
-        button.innerHTML = original;
-      }, 2500);
-    });
+    return RoomkRTDB.copyRoomCode(text, button);
   }
 
   function renderPlayerList(containerId, players) {

@@ -503,8 +503,8 @@
         <button type="button" class="ph-menu-btn" id="btnJoin">
           <span class="material-symbols-rounded ph-menu-btn__icon" aria-hidden="true">login</span>
           <span class="ph-menu-btn__body">
-            <span class="ph-menu-btn__label">ルームに入る</span>
-            <span class="ph-menu-btn__desc">コードを入れてルームに入る</span>
+            <span class="ph-menu-btn__label">ルームに参加する</span>
+            <span class="ph-menu-btn__desc">コードを入れてルームに参加する</span>
           </span>
         </button>
         <button type="button" class="ph-menu-btn" id="btnSolo">
@@ -521,7 +521,7 @@
     <section class="ph-screen" id="screen-difficulty">
       <div class="ph-subhead">
         <button type="button" class="btn btn-ghost btn-sm" id="btnDiffBack">
-          <span class="material-symbols-rounded" aria-hidden="true">arrow_back</span>TOPに戻る
+          <span class="material-symbols-rounded" aria-hidden="true">arrow_back</span>トップへ戻る
         </button>
         <h2 class="ph-subhead__title">難易度を選ぶ</h2>
       </div>
@@ -551,7 +551,7 @@
     <section class="ph-screen" id="screen-puzzle">
       <div class="ph-topbar">
         <button type="button" class="btn btn-ghost btn-sm" id="btnPuzzleBack">
-          <span class="material-symbols-rounded" aria-hidden="true">arrow_back</span><span id="btnPuzzleBackLabel">TOPに戻る</span>
+          <span class="material-symbols-rounded" aria-hidden="true">arrow_back</span><span id="btnPuzzleBackLabel">トップへ戻る</span>
         </button>
         <!-- ソロ: 経過タイム -->
         <span class="ph-topbar__time" id="timeLabel" aria-live="off">
@@ -605,7 +605,7 @@
     <section class="ph-screen" id="screen-create">
       <div class="ph-subhead">
         <button type="button" class="btn btn-ghost btn-sm" id="btnCreateBack">
-          <span class="material-symbols-rounded" aria-hidden="true">arrow_back</span>TOPに戻る
+          <span class="material-symbols-rounded" aria-hidden="true">arrow_back</span>トップへ戻る
         </button>
         <h2 class="ph-subhead__title">ルームを作る</h2>
       </div>
@@ -619,13 +619,13 @@
       </div>
     </section>
 
-    <!-- ═══════════ ルームに入る ═══════════ -->
+    <!-- ═══════════ ルームに参加する ═══════════ -->
     <section class="ph-screen" id="screen-join">
       <div class="ph-subhead">
         <button type="button" class="btn btn-ghost btn-sm" id="btnJoinBack">
-          <span class="material-symbols-rounded" aria-hidden="true">arrow_back</span>TOPに戻る
+          <span class="material-symbols-rounded" aria-hidden="true">arrow_back</span>トップへ戻る
         </button>
-        <h2 class="ph-subhead__title">ルームに入る</h2>
+        <h2 class="ph-subhead__title">ルームに参加する</h2>
       </div>
       <div class="ph-form">
         <label class="ph-field">
@@ -637,7 +637,7 @@
           <input type="text" class="ph-input ph-input--code" id="joinCode" maxlength="6" placeholder="ABCDEF" autocomplete="off" autocapitalize="characters" />
         </label>
         <p class="ph-field__error" id="joinError"></p>
-        <button type="button" class="btn btn-primary btn-full btn-lg" id="btnJoinGo">ルームに入る</button>
+        <button type="button" class="btn btn-primary btn-full btn-lg" id="btnJoinGo">参加する</button>
       </div>
     </section>
 
@@ -647,10 +647,10 @@
         <h2 class="ph-subhead__title">ルーム</h2>
       </div>
       <div class="ph-roomcode">
-        <span class="ph-roomcode__label">ルームコード</span>
+        <span class="ph-roomcode__label">ルームコード（6文字）</span>
         <span class="ph-roomcode__value" id="waitingCode"></span>
         <button type="button" class="btn btn-ghost btn-sm" id="btnCopyCode">
-          <span class="material-symbols-rounded" aria-hidden="true">content_copy</span>コピー
+          <span class="material-symbols-rounded" aria-hidden="true">content_copy</span>コードをコピー
         </button>
       </div>
 
@@ -698,7 +698,7 @@
       <div class="ph-waiting-actions">
         <button type="button" class="btn btn-primary btn-full btn-lg" id="btnStartRound" hidden>ゲームスタート</button>
         <p class="ph-waiting-guestmsg" id="waitingGuestMsg" hidden>ホストが始めるのを待ってね。</p>
-        <button type="button" class="btn btn-ghost btn-full" id="btnLeaveWaiting">ルームから出る</button>
+        <button type="button" class="btn btn-ghost btn-full" id="btnLeaveWaiting">退出する</button>
       </div>
     </section>
 
@@ -744,7 +744,7 @@
       <p class="ph-modal__sub">型をぴったり埋められたね。</p>
       <div class="ph-modal__actions">
         <button type="button" class="btn btn-primary btn-full" id="btnNext">次の問題</button>
-        <button type="button" class="btn btn-ghost btn-full" id="btnDoneTop">TOPに戻る</button>
+        <button type="button" class="btn btn-ghost btn-full" id="btnDoneTop">トップへ戻る</button>
       </div>
     </div>
   </div>
@@ -769,7 +769,7 @@
       <p class="ph-modal__title" id="hostOffTitle" style="font-size:var(--font-size-xl);color:var(--color-primary)">ホストとはなれちゃった</p>
       <p class="ph-modal__sub">ホストの通信が切れています。<br />戻ってくるのを待ってね。</p>
       <div class="ph-modal__actions">
-        <button type="button" class="btn btn-ghost btn-full" id="btnHostOffLeave">ルームから出る</button>
+        <button type="button" class="btn btn-ghost btn-full" id="btnHostOffLeave">退出する</button>
       </div>
     </div>
   </div>
@@ -798,7 +798,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
-  <script src="../shared/js/rtdb-utils.js?v=20260715"></script>
+  <script src="../shared/js/rtdb-utils.js?v=20260910"></script>
 
   <script>
   /* PITAHAME_PUZZLES_START（正本: scripts/pitahame-catalog.json。再生成時はこの区間を差し替える。1問1行を維持）*/
@@ -1677,7 +1677,7 @@
     el('roomTimebar').hidden = !room;
     el('btnShowAnswer').style.display = room ? 'none' : '';   // 競争中は答えを出さない
     el('roomPlay').hidden = !room;
-    el('btnPuzzleBackLabel').textContent = room ? 'ルームから出る' : 'TOPに戻る';
+    el('btnPuzzleBackLabel').textContent = room ? '退出する' : 'トップへ戻る';
     if (!room) { el('roomCover').hidden = true; }
   }
 
@@ -1995,9 +1995,9 @@
       el('joinError').textContent = '';
       const code = el('joinCode').value.trim().toUpperCase();
       const nick = el('joinNick').value.trim();
-      if (code.length !== 6) { el('joinError').textContent = 'ルームコードは6文字だよ'; return; }
       const err = validateNickname(nick);
       if (err) { el('joinError').textContent = err; return; }
+      if (code.length !== 6) { el('joinError').textContent = 'ルームコードは6文字だよ'; return; }
       try {
         await authReady;
         const ref = db.ref(`${ROOM_PATH}/${code}`);
@@ -2731,17 +2731,8 @@
       }
     }
 
-    async function copyCode() {
-      const code = net.roomCode || '';
-      if (!code) return;
-      try {
-        if (navigator.clipboard && navigator.clipboard.writeText) await navigator.clipboard.writeText(code);
-        else {
-          const ta = document.createElement('textarea'); ta.value = code; ta.style.cssText = 'position:fixed;opacity:0';
-          document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
-        }
-        RoomkRTDB.showToast('ルームコードをコピーしたよ', false);
-      } catch (_) { RoomkRTDB.showToast('コピーがうまくいかなかったよ'); }
+    function copyCode() {
+      return RoomkRTDB.copyRoomCode(net.roomCode, el('btnCopyCode'));
     }
 
     // ── 設定変更（ホスト・waiting のみ）──
@@ -2817,7 +2808,8 @@
       lead: 'カラフルなピースを回して動かして、グレーの型（かた）をぴったり埋めるパズル。ひとりでも、みんなでも遊べるよ。',
       sections: [
         { heading: 'はじめかた', items: [
-          'みんなで遊ぶときは「ルームを作る」、コードをもらったら「ルームに入る」を押す',
+          'みんなで遊ぶときは「ルームを作る」、コードをもらったら「ルームに参加する」を押す',
+          '参加する人はニックネームとルームコードを入れて「参加する」を押す',
           'ひとりでやるときは「ひとりで練習」を押して、「やさしい」か「むずかしい」を選ぶ（問題の順番は「やさしい順」と「ランダム」を選べる）',
         ] },
         { heading: 'すすめかた', items: [

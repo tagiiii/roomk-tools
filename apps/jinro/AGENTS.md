@@ -146,7 +146,7 @@ waiting → night（1日目夜・襲撃なし）→ morning → day → vote →
 - **決選投票の票集計** → `computeExecution()` は投票者集合と候補集合を分離。決選中は `runoffCandidates`（生存者に限定）のみを候補とし、候補外への票は無視。`handleVote()` の投票済み判定・自動進行も候補への票だけを数える（`hasValidVote`）。`castVote(target, voteRound)` は確定直前に `voteRound` 不一致／候補外なら破棄（決選開始直前の遅延書き込み対策）
 - **再接続時の再投票防止** → `handleVote()` は同ラウンドで既に有効票がある場合は投票UIを隠す
 - **護衛メモリ** → `handleWaiting()` で待機画面に入るたびに全クライアントが `clearGuardMemory()`（`playAgain` はGM端末のみ実行のため、2ゲーム目以降の連続護衛誤判定を防ぐ）
-- **結果画面ではルームを自動削除しない**（振り返り・再戦を妨げないため。以前は30秒で自動削除していたが、再戦導線と噛み合わず廃止）。クリーンアップは①「トップへ戻る」(`leaveGame()`) の即時 `remove()`、②ホスト切断時の `onDisconnect`→`hostConnected:false`＋ゲスト側2分TTL（`ORPHAN_TTL_MS`）、③次回アクセス時の `isRoomExpired()` 判定、に一本化
+- **結果画面ではルームを自動削除しない**（振り返り・再戦を妨げないため。以前は30秒で自動削除していたが、再戦導線と噛み合わず廃止）。クリーンアップは①「退出する」(`leaveGame()`) の即時 `remove()`、②ホスト切断時の `onDisconnect`→`hostConnected:false`＋ゲスト側2分TTL（`ORPHAN_TTL_MS`）、③次回アクセス時の `isRoomExpired()` 判定、に一本化
 - **ゲスト切断時はプレイヤーデータを削除しない** → 共通規約の `players/{nick}` `onDisconnect().remove()` ではなく、`players/{nick}/connected=false` を書く。役職・生死・投票状況・陣営バランスを保持する必要があるための意図的逸脱。再接続時は `connected=true` に戻し、夜行動や投票の進行判定では切断中プレイヤーを区別して、GMがスキップや強制集計を選べるようにする
 - **全員死亡** → `winner: 'draw'` 表示
 - **猫又処刑時に生存者1人** → 道連れ候補なしのフォールバック

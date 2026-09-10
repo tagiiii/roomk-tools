@@ -67,8 +67,7 @@ kotobapair_rooms/{roomCode}/
 - セキュリティルールの変更は不要（ワイルドカード `$app_rooms/$roomId`）
 - 待機画面の「コードをコピー」は**コード単体**（例: `39WJ6Y`）をコピーする。URL や案内文は付けない
   （do-mannaka 等の `copyToClipboard(state.roomCode)` と同じ挙動。2026-08-10 オーナー実機フィードバックで統一）。
-  `navigator.clipboard` が無い環境では textarea + `execCommand` にフォールバックし、失敗時は
-  「コピーできなかったよ。コードを手で教えてね」を出す（無反応にしない）
+  コピー処理は `RoomkRTDB.copyRoomCode()` を使い、成功・失敗を共通の通知で表示する。
 
 ## 画面・status 遷移
 

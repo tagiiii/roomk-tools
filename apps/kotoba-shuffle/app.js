@@ -287,7 +287,7 @@ function finishGame() {
   popIn(endScore);
 }
 
-/* ── TOPに戻る ── */
+/* ── トップへ戻る ── */
 function backToTop() {
   showScreen('top');
 }

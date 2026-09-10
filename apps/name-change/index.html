@@ -190,6 +190,7 @@
       <input id="guest-code" class="form-input" type="text" maxlength="6" placeholder="例：ABCDEF"
         style="text-transform:uppercase;letter-spacing:.15em;font-size:1.2rem;text-align:center;">
     </div>
+    <p id="join-form-error" class="alert alert-error" role="alert" hidden></p>
     <button id="guest-join-btn" class="btn btn-primary" onclick="guestJoin()">
       <span class="material-symbols-rounded" aria-hidden="true">login</span>参加する
     </button>
@@ -208,6 +209,7 @@
   <div class="room-code-box">
     <div class="rc-label">ルームコード</div>
     <div class="rc-code" id="waiting-code">----</div>
+    <button type="button" class="btn btn-ghost btn-full" onclick="RoomkRTDB.copyRoomCode(state.roomCode, this)"><span class="material-symbols-rounded" aria-hidden="true">content_copy</span>コードをコピー</button>
   </div>
   <div class="card">
     <div class="section-title">参加者</div>
@@ -379,7 +381,7 @@
   <h2 style="font-size:1.4rem;font-weight:700;color:var(--color-primary);margin-bottom:8px;">ゲーム終了！</h2>
   <p style="color:var(--color-muted);margin-bottom:32px;">お疲れ様でした！</p>
   <button class="btn btn-primary" style="max-width:480px;margin:0 auto;" onclick="goToTop()">
-    <span class="material-symbols-rounded" aria-hidden="true">home</span>TOPに戻る
+    <span class="material-symbols-rounded" aria-hidden="true">home</span>トップへ戻る
   </button>
 </div>
 
@@ -388,7 +390,7 @@
   <div class="overlay-box">
     <h3>GMが一時的に切断されました</h3>
     <p>再接続を待っています</p>
-    <button class="btn btn-primary" onclick="goToTop()">TOPに戻る</button>
+    <button class="btn btn-primary" onclick="goToTop()">トップへ戻る</button>
   </div>
 </div>
 
@@ -397,7 +399,7 @@
   <div class="overlay-box">
     <h3>接続を確認しています</h3>
     <p>参加情報と送信済みの内容は残っています。接続が戻るまでお待ちください。未送信の投票は選び直してください。</p>
-    <button class="btn btn-secondary" onclick="goToTop()">退出してTOPに戻る</button>
+    <button class="btn btn-secondary" onclick="goToTop()">退出してトップへ戻る</button>
   </div>
 </div>
 
@@ -405,7 +407,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
-<script src="../shared/js/rtdb-utils.js?v=20260715"></script>
+<script src="../shared/js/rtdb-utils.js?v=20260910"></script>
 <script>
 // ===== Firebase =====
 const { authReady, db } = RoomkRTDB.initFirebase(firebase);
@@ -690,12 +692,14 @@ async function hostCreateRoom() {
 
 // ===== Guest: Join =====
 async function guestJoin() {
+  const reportJoinError = message => RoomkRTDB.showFormError('join-form-error', message);
+  reportJoinError('');
   const code = document.getElementById('guest-code').value.trim().toUpperCase();
   const nick = document.getElementById('guest-nickname').value.trim();
-  if (!/^[A-Z0-9]{6}$/.test(code)) { toast('6文字の英数字コードを入力してください'); return; }
-  if (!nick)          { toast('元の名前を入力してください'); return; }
-  if (nick.length > 12) { toast('12文字以内で入力してください'); return; }
-  if (!validNick(nick, 12)) { toast('名前に使えない文字があります'); return; }
+  if (!nick)          { reportJoinError('元の名前を入力してください'); return; }
+  if (nick.length > 12) { reportJoinError('12文字以内で入力してください'); return; }
+  if (!validNick(nick, 12)) { reportJoinError('名前に使えない文字があります'); return; }
+  if (!/^[A-Z0-9]{6}$/.test(code)) { reportJoinError('6文字の英数字コードを入力してください'); return; }
 
   const btn = (typeof event !== 'undefined' && event?.target?.closest('button')) || null;
   if (btn) btn.disabled = true;
@@ -703,15 +707,15 @@ async function guestJoin() {
     await authReady;
     const roomRef = db.ref(`namechange_rooms/${code}`);
     const snap = await roomRef.get();
-    if (!snap.exists())                   { toast('ルームが見つかりません'); if(btn)btn.disabled=false; return; }
+    if (!snap.exists())                   { reportJoinError('ルームが見つかりません'); if(btn)btn.disabled=false; return; }
     const room = snap.val();
     if (isRoomExpired(room)) {
       await removeExpiredRoom(roomRef).catch(() => {});
-      toast('このルームは期限切れのため終了しました'); if(btn)btn.disabled=false; return;
+      reportJoinError('このルームは期限切れのため終了しました'); if(btn)btn.disabled=false; return;
     }
-    if (room.hostConnected === false)     { toast('GMが切断されています'); if(btn)btn.disabled=false; return; }
-    if (room.status !== 'waiting')        { toast('すでにゲームが始まっています'); if(btn)btn.disabled=false; return; }
-    if (room.host === nick || room.players?.[nick]) { toast('その名前はすでに使われています'); if(btn)btn.disabled=false; return; }
+    if (room.hostConnected === false)     { reportJoinError('GMが切断されています'); if(btn)btn.disabled=false; return; }
+    if (room.status !== 'waiting')        { reportJoinError('すでにゲームが始まっています'); if(btn)btn.disabled=false; return; }
+    if (room.host === nick || room.players?.[nick]) { reportJoinError('その名前はすでに使われています'); if(btn)btn.disabled=false; return; }
 
     let abortReason = null;
     const { committed } = await joinTransaction(roomRef, (roomForJoin) => {
@@ -735,14 +739,14 @@ async function guestJoin() {
     });
 
     if (!committed) {
-      if (abortReason === 'not_found')   { toast('ルームが見つかりません'); if(btn)btn.disabled=false; return; }
+      if (abortReason === 'not_found')   { reportJoinError('ルームが見つかりません'); if(btn)btn.disabled=false; return; }
       if (abortReason === 'expired') {
-        toast('このルームは期限切れのため終了しました'); if(btn)btn.disabled=false; return;
+        reportJoinError('このルームは期限切れのため終了しました'); if(btn)btn.disabled=false; return;
       }
-      if (abortReason === 'host_gone')   { toast('GMが切断されています'); if(btn)btn.disabled=false; return; }
-      if (abortReason === 'not_waiting') { toast('すでにゲームが始まっています'); if(btn)btn.disabled=false; return; }
-      if (abortReason === 'nick_taken')  { toast('その名前はすでに使われています'); if(btn)btn.disabled=false; return; }
-      toast('参加に失敗しました'); if(btn)btn.disabled=false; return;
+      if (abortReason === 'host_gone')   { reportJoinError('GMが切断されています'); if(btn)btn.disabled=false; return; }
+      if (abortReason === 'not_waiting') { reportJoinError('すでにゲームが始まっています'); if(btn)btn.disabled=false; return; }
+      if (abortReason === 'nick_taken')  { reportJoinError('その名前はすでに使われています'); if(btn)btn.disabled=false; return; }
+      reportJoinError('参加に失敗しました'); if(btn)btn.disabled=false; return;
     }
 
     state.roomCode = code; state.nickname = nick; state.isHost = false;
@@ -751,7 +755,7 @@ async function guestJoin() {
 
     document.getElementById('waiting-code').textContent = code;
     document.getElementById('waiting-guest-msg').style.display = 'block';
-  } catch(e) { toast('エラー: ' + e.message); if (btn) btn.disabled = false; }
+  } catch(e) { reportJoinError('エラー: ' + e.message); if (btn) btn.disabled = false; }
 }
 
 // ===== Room Listener =====

@@ -186,16 +186,16 @@ function renderJoin() {
   appEl.innerHTML = `
     <section class="card cn-panel">
       <h1 class="cn-title">ルームに参加する</h1>
-      <form id="join-form" class="cn-form">
+      <form id="join-form" class="cn-form" novalidate>
         <label class="form-group">
           <span class="form-label">あなたの名前</span>
           <input class="form-input" name="nickname" maxlength="8" autocomplete="nickname" placeholder="例: はなこ" required />
         </label>
         <label class="form-group">
-          <span class="form-label">ルームコード</span>
+          <span class="form-label">ルームコード（6文字）</span>
           <input class="form-input cn-room-code-input" name="roomId" maxlength="6" autocomplete="off" placeholder="例: ABC234" required />
         </label>
-        ${state.error ? `<div class="alert alert-error">${esc(state.error)}</div>` : ""}
+        <div id="join-form-error" class="alert alert-error" role="alert" ${state.error ? "" : "hidden"}>${esc(state.error)}</div>
         <div class="cn-actions">
           <button class="btn btn-primary btn-full" type="submit" ${state.loading ? "disabled" : ""}>
             ${state.loading ? "参加中..." : "参加する"}
@@ -214,7 +214,7 @@ function renderWatchJoin() {
       <p class="text-muted">ゲームに参加していない人にも見せられる画面をひらきます。まだ開いていないカードの正解の色は映りません。</p>
       <form id="watch-form" class="cn-form">
         <label class="form-group">
-          <span class="form-label">ルームコード</span>
+          <span class="form-label">ルームコード（6文字）</span>
           <input class="form-input cn-room-code-input" name="roomId" maxlength="6" autocomplete="off" placeholder="例: ABC234" required />
         </label>
         ${state.error ? `<div class="alert alert-error">${esc(state.error)}</div>` : ""}
@@ -286,7 +286,7 @@ function renderLobby() {
           <h1 class="cn-room-code">${esc(state.roomId)}</h1>
         </div>
         <button class="btn btn-secondary btn-sm" id="copy-room-code" type="button">
-          <span class="material-symbols-rounded" aria-hidden="true">content_copy</span>コピー
+          <span class="material-symbols-rounded" aria-hidden="true">content_copy</span>コードをコピー
       </button>
       </div>
       <div class="cn-status-grid mt-lg">
@@ -926,9 +926,20 @@ async function handleCreate(form) {
 
 async function handleJoin(form) {
   const formData = new FormData(form);
-  const nickname = validateNickname(formData.get("nickname"));
-  const roomId = normalizeRoomId(formData.get("roomId"));
-  if (!roomId) throw new Error("ルームコードを入力してください");
+  const errorEl = form.querySelector('#join-form-error');
+  errorEl.textContent = '';
+  errorEl.hidden = true;
+  let nickname, roomId;
+  try {
+    nickname = validateNickname(formData.get("nickname"));
+    roomId = normalizeRoomId(formData.get("roomId"));
+    if (!roomId) throw new Error("ルームコードを入力してください");
+    if (roomId.length !== 6) throw new Error("ルームコードは6文字です");
+  } catch (error) {
+    errorEl.textContent = error.message;
+    errorEl.hidden = false;
+    return;
+  }
 
   const playerId = generatePlayerId();
   state.loading = true;
@@ -1211,7 +1222,14 @@ async function handlePlayerClick(event) {
 
   const copyButton = event.target.closest("#copy-room-code");
   if (copyButton) {
-    await copyToClipboard(state.roomId, copyButton, { successText: "コピー済み" });
+    if (copyButton.dataset.copyBusy) return;
+    let copied = false;
+    try {
+      copied = await copyToClipboard(state.roomId, copyButton, { successText: "コードをコピーしました" });
+    } catch (_) {
+      delete copyButton.dataset.copyBusy;
+    }
+    showToast(copied ? "コードをコピーしました" : "コピーできませんでした。コードをそのまま伝えてね", copied ? "success" : "error");
     return;
   }
 

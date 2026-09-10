@@ -9,7 +9,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
-<script src="../shared/js/rtdb-utils.js?v=20260715"></script>
+<script src="../shared/js/rtdb-utils.js?v=20260910"></script>
   <link rel="stylesheet" href="../shared/css/design-system.css">
   <style>
     /* ── 画面管理 ── */
@@ -576,7 +576,7 @@
     <div class="mt-lg">
       <button class="btn btn-secondary btn-full btn-lg" onclick="goToTop()">
         <span class="material-symbols-rounded">home</span>
-        TOPに戻る
+        トップへ戻る
       </button>
     </div>
   </div>
@@ -773,12 +773,8 @@
     el.classList.remove('visible');
   }
 
-  function copyToClipboard(text, btn) {
-    const original = btn.innerHTML;
-    navigator.clipboard.writeText(text).then(() => {
-      btn.innerHTML = '<span class="material-symbols-rounded">check</span> コピーしました！';
-      setTimeout(() => { btn.innerHTML = original; }, 2500);
-    });
+  function copyToClipboard(text, button) {
+    return RoomkRTDB.copyRoomCode(text, button);
   }
 
   function showScreen(name) {
@@ -1707,7 +1703,7 @@
       state.roomRef.off();
       state.roomRef = null;
     }
-    // leaveGame を経由しない直呼び経路（DONE の「TOPにもどる」・room削除リスナー）でも
+    // leaveGame を経由しない直呼び経路（DONE の「トップへ戻る」・room削除リスナー）でも
     // 切断カウントダウンとオーバーレイを確実に解放する（leaveGame と対称化）
     clearInterval(_hostDisconnectTimer);
     _hostDisconnectTimer = null;
@@ -1747,7 +1743,7 @@
         'ホストが「ルームを作る（ホスト）」からルームを作る',
         'ホストも遊ぶときは「自分も回答者として遊ぶ」にチェックを入れる（入れないと進行専任になる）',
         '出てきたルームコードをみんなに伝える',
-        'ほかの人は「ルームに参加する」からコードを入れて「参加する」を押す',
+        'ほかの人は「ルームに参加する」からニックネームとルームコードを入れて「参加する」を押す',
       ] },
       { heading: '進めかた', items: [
         '出題者になったら、ターゲットの位置にぴったりの言葉を入力して「ヒントを送る」を押す',

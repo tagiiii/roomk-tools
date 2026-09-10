@@ -93,7 +93,7 @@ TOP（screen-top / 入口は2つ）
 まとめ（screen-summary / 橋渡し）
   テーマ名＋label＋catch を大きく表示
   「きょうのゲームでつかってみよう」= games のカード（ゲーム名＋つかいどころ1行／`../{app}/` へ同タブ遷移）
-  「TOPにもどる」（弱ボタン）
+  「トップへ戻る」（弱ボタン）
 ```
 
 - 画面切替は `showScreen('top'|'game'|'quiz'|'summary')`。`hidden` 属性の付け外しで行い、
@@ -104,7 +104,7 @@ TOP（screen-top / 入口は2つ）
   `localStorage` / `sessionStorage` は使わない（`questions` も画面を離れれば消える）
 - クイズ画面の「テーマえらびにもどる」は**入ってきた入口に戻す**。ゲームから入ったなら
   そのゲームのテーマえらび（`state.gameApp`）、テーマのいちらんから入ったなら TOP。
-  まとめ画面の「TOPにもどる」はラベルどおり常に TOP
+  まとめ画面の「トップへ戻る」はラベルどおり常に TOP
 
 ### ゲームからの逆引き（TOP の主の入口）
 

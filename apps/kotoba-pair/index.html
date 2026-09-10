@@ -10,7 +10,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
-  <script src="../shared/js/rtdb-utils.js?v=20260715"></script>
+  <script src="../shared/js/rtdb-utils.js?v=20260910"></script>
   <script src="packs.js"></script>
   <script type="module">
     // 共通ユーティリティを利用（REF-3: shuffle の重複定義を避ける）
@@ -308,7 +308,7 @@
     </button>
     <button class="btn btn-secondary btn-full btn-lg" onclick="goJoin()">
       <span class="material-symbols-rounded" aria-hidden="true">login</span>
-      ルームにはいる
+      ルームに参加する
     </button>
   </div>
 </div>
@@ -357,18 +357,18 @@
 <!-- ═══════════════ screen-join ═══════════════ -->
 <div id="screen-join" class="screen">
   <div class="page">
-    <h2 class="kp-page-title">ルームにはいる</h2>
+    <h2 class="kp-page-title">ルームに参加する</h2>
     <div class="card">
       <label class="form-label" for="join-nickname">ニックネーム</label>
       <input type="text" id="join-nickname" class="form-input" maxlength="8" placeholder="本当の名前じゃなくてOK">
-      <label class="form-label" style="margin-top:16px" for="join-code">ルームコード</label>
+      <label class="form-label" style="margin-top:16px" for="join-code">ルームコード（6文字）</label>
       <input type="text" id="join-code" class="form-input kp-code-input" maxlength="6" placeholder="6文字"
              oninput="this.value=this.value.toUpperCase()">
       <div class="error-msg" id="join-error"></div>
     </div>
     <button class="btn btn-primary btn-full" onclick="guestJoin()">
       <span class="material-symbols-rounded" aria-hidden="true">login</span>
-      はいる
+      参加する
     </button>
     <button type="button" class="kp-quiet-btn" onclick="goTop()">もどる</button>
   </div>
@@ -534,7 +534,6 @@ const state = {
   turnFixTimer: null,    // 手番の人が居ないときの手番送り（ホスト）
   boardKey: null,        // 描画済み盤面の世代キー
   tapBusy: false,
-  copyBusy: false,       // コードのコピー（連打ガード）
   createPackId: null,
   createBoardSize: 16,
   createMode: MODE_CLOSED,
@@ -1663,35 +1662,8 @@ async function hostPlayAgain(packId) {
 /* ════════════════════════════════════════════════
    コードのコピー（コード単体。他アプリと同じ挙動）
    ════════════════════════════════════════════════ */
-async function copyRoomCode(btn) {
-  if (state.copyBusy) return;                     // 連打ガード
-  const code = state.roomCode || '';
-  if (!code) { showMsg('ルームコードがないよ'); return; }
-  state.copyBusy = true;
-  try {
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      await navigator.clipboard.writeText(code);
-    } else {
-      const ta = document.createElement('textarea');
-      ta.value = code;
-      ta.style.cssText = 'position:fixed;opacity:0;';
-      document.body.appendChild(ta);
-      ta.focus(); ta.select();
-      document.execCommand('copy');
-      document.body.removeChild(ta);
-    }
-    if (btn) {
-      btn.classList.add('done');
-      setTimeout(() => { btn.classList.remove('done'); state.copyBusy = false; }, 2000);
-    } else {
-      state.copyBusy = false;
-    }
-    showMsg('コピーしたよ', false);
-  } catch (error) {
-    console.error('[kotoba-pair] copyRoomCode failed', error);
-    state.copyBusy = false;
-    showMsg('コピーできなかったよ。コードを手で教えてね');
-  }
+function copyRoomCode(btn) {
+  return RoomkRTDB.copyRoomCode(state.roomCode, btn);
 }
 
 /* ════════════════════════════════════════════════
@@ -1709,7 +1681,7 @@ function leaveCleanup() {
   Object.assign(state, {
     role: null, nickname: null, roomCode: null, roomRef: null, room: null,
     orphanTimer: null, clearTimer: null, watchdogTimer: null, watchdogKey: null,
-    turnFixTimer: null, boardKey: null, tapBusy: false, copyBusy: false,
+    turnFixTimer: null, boardKey: null, tapBusy: false,
   });
   showOverlay('host-off-overlay', false);
   showOverlay('reconnect-overlay', false);
@@ -1824,7 +1796,7 @@ async function tryReconnect() {
         heading: 'はじめかた',
         items: [
           'ホストが「ルームをつくる」を押して、コードをみんなに教える',
-          'ほかの人は「ルームにはいる」から名前とコードを入れて「はいる」',
+          'ほかの人は「ルームに参加する」からニックネームとルームコードを入れて「参加する」を押す',
           '2人以上になったらホストが「ゲームをはじめる」を押す',
         ],
       },
