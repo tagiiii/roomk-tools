@@ -10,7 +10,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
-  <script src="../shared/js/rtdb-utils.js?v=20260909"></script>
+  <script src="../shared/js/rtdb-utils.js?v=20260910"></script>
   <style>
     /* ── 画面管理（共通パターン） ── */
     .screen { display: none; min-height: 100dvh; }
@@ -207,7 +207,7 @@
         <span class="material-symbols-rounded">add_home</span>ルームを作る
       </button>
       <button class="btn btn-secondary btn-lg btn-full" onclick="showScreen('guest-join')">
-        <span class="material-symbols-rounded">login</span>入る
+        <span class="material-symbols-rounded">login</span>ルームに参加する
       </button>
       <p class="bj-hint">相手はディーラー（アプリ）だから、1人でも遊べるよ。</p>
     </div>
@@ -233,7 +233,7 @@
 <!-- ════════════════════════════════════ GUEST JOIN ════════════════════════════════════ -->
 <div class="screen" id="screen-guest-join">
   <div class="bj-page">
-    <h2 class="bj-page__title">ルームに入る</h2>
+    <h2 class="bj-page__title">ルームに参加する</h2>
     <p class="bj-page__sub">ニックネームとルームコードを入れてね。</p>
     <div class="form-group">
       <label class="form-label" for="top-guest-nickname">ニックネーム（1〜8文字）</label>
@@ -245,8 +245,9 @@
              style="text-transform:uppercase;letter-spacing:.2em;font-size:22px;text-align:center"
              oninput="this.value=this.value.toUpperCase()">
     </div>
+    <p id="join-form-error" class="alert alert-error" role="alert" hidden></p>
     <button class="btn btn-primary btn-full" onclick="guestJoin()">
-      <span class="material-symbols-rounded">login</span>入る
+      <span class="material-symbols-rounded">login</span>参加する
     </button>
     <button class="btn btn-ghost btn-full" onclick="showScreen('top')">← 戻る</button>
   </div>
@@ -328,7 +329,7 @@
       </button>
     </div>
     <button class="btn btn-ghost btn-full mt-md" id="btn-guest-leave" onclick="guestGoToTop()" style="display:none">
-      <span class="material-symbols-rounded">home</span>トップへ戻る
+      <span class="material-symbols-rounded">home</span>退出する
     </button>
   </div>
 </div>
@@ -949,19 +950,21 @@ async function guestJoin() {
   try { await guestJoinInner(); } finally { state.entryBusy = false; }
 }
 async function guestJoinInner() {
+  const reportJoinError = message => RoomkRTDB.showFormError('join-form-error', message);
+  reportJoinError('');
   const nickname = document.getElementById('top-guest-nickname').value.trim();
   const roomCode = document.getElementById('top-guest-code').value.trim().toUpperCase();
   const err = validateNickname(nickname);
-  if (err) { showMsg(err); return; }
-  if (roomCode.length !== 6) { showMsg('ルームコードは6文字だよ'); return; }
+  if (err) { reportJoinError(err); return; }
+  if (roomCode.length !== 6) { reportJoinError('ルームコードは6文字だよ'); return; }
   if (!await waitAuthOrExplain()) return;
 
   const roomRef = db.ref(ROOMS_PATH + '/' + roomCode);
   const preSnap = await roomRef.get();
-  if (!preSnap.exists()) { showMsg('ルームが見つからないよ'); return; }
+  if (!preSnap.exists()) { reportJoinError('ルームが見つからないよ'); return; }
   const preRoom = preSnap.val();
-  if (!preRoom.status || !preRoom.host) { await removeBrokenRoom(roomRef); showMsg('そのルームはもうないみたい'); return; }
-  if (isRoomExpired(preRoom)) { await removeRoomIfExpired(roomRef); showMsg('このルームは終わっているよ'); return; }
+  if (!preRoom.status || !preRoom.host) { await removeBrokenRoom(roomRef); reportJoinError('そのルームはもうないみたい'); return; }
+  if (isRoomExpired(preRoom)) { await removeRoomIfExpired(roomRef); reportJoinError('このルームは終わっているよ'); return; }
 
   let reason = null;
   const { committed } = await roomRef.transaction((room) => {
@@ -1016,10 +1019,10 @@ async function guestJoinInner() {
       nick_taken: 'その名前は使われているよ',
       full: 'このルームはいっぱいだよ（8人まで）',
     };
-    showMsg(map[reason] || '入れなかったよ');
+    reportJoinError(map[reason] || '入れなかったよ');
     return;
   }
-  if (reason === 'expired') { showMsg('このルームは終わっているよ'); return; }
+  if (reason === 'expired') { reportJoinError('このルームは終わっているよ'); return; }
 
   state.role = 'guest';
   state.nickname = nickname;
@@ -1602,7 +1605,7 @@ tryReconnect().then((reconnected) => {
       { heading: 'はじめかた', items: [
         'ホストが「ルームを作る」からルームを作る（ホストもプレイヤーとして遊ぶよ）',
         'ルームコードをみんなに伝える',
-        'ほかの人は「入る」からニックネームとコードを入れて参加する',
+        'ほかの人は「ルームに参加する」からニックネームとルームコードを入れて「参加する」を押す',
         'ホストが「始める」を押すとスタート（1〜8人。あとから来た人はラウンドの合間に入れるよ）',
       ] },
       { heading: 'すすめかた', items: [

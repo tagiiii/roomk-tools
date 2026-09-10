@@ -87,7 +87,7 @@ namechange_rooms/{roomCode}/
 - 初回joinはtransaction完了まで一時value購読を保持し、`get()`結果のfallbackを使わない。TTLは入室・保存復帰・接続・操作・掃除で通常2分／進行3フェーズ30分を共通利用する。旧guestJoinだけ2分だった掃除判定を訂正し、進行中の30分を短縮しない。host切断中のphase変更では絶対期限を再計算し、timer発火時にも最新状態を再検査する。
 - 名前・役割はnaming／未readyの既存guestに対して1回のroom transactionで確定する。票は送信時のmappingをコピーし、voting／未提出voter／最新changer全件のキー・候補・一対一対応を検査する。ref・nickname・isHost・phase・接続世代・操作所有tokenを捕捉し、古い送信やfinallyが新しい操作を上書きしない。単方向5フェーズで同ルーム再戦はないため、新roundIdは追加しない。
 - 未提出の投票下書きは同じ接続の無関係なvalue更新で消さず、切断または候補集合の変更で破棄・再描画する。リロードによる下書き復元は保証しない。提出済み票はDBから表示し選択を無効化する。名前変え役の明示退出で既存票を消したり再投票を要求したりしない。
-- guestの明示的な「TOPに戻る」は予約取消後に自playerを削除する。結果一覧は現在のplayersから描くため、退出者の行・票は対象から外れる。一時切断では外さない。通信断overlayにも退出ボタンを置くが、通常途中画面の常設退出やGMの途中終了を新設しない。取消が通信待ちなら退出完了も待機し得る。room／player消失時の内部cleanupは明示退出と分離し、GMもsession・監視・overlayを片付ける。
+- guestの明示的な「トップへ戻る」は予約取消後に自playerを削除する。結果一覧は現在のplayersから描くため、退出者の行・票は対象から外れる。一時切断では外さない。通信断overlayにも退出ボタンを置くが、通常途中画面の常設退出やGMの途中終了を新設しない。取消が通信待ちなら退出完了も待機し得る。room／player消失時の内部cleanupは明示退出と分離し、GMもsession・監視・overlayを片付ける。
 - 終了の`deleteAt`（確定時刻＋30秒）を維持し、GM復帰は最新transaction snapshotとlistenerから残り時間で予約する。同ref／同deleteAtの重複予約を抑止する。GMがTOPへ戻ったり新roomへ移ったりしても、旧ref／deleteAtを捕捉した削除timerは継続する（共通の退出時timer解放の固有例外）。削除前に予約取消、一時value購読、最新done／deleteAt一致を確認する。期限削除とphase・回答確定は`applyLocally:false`で未確定通知による自己失効を防ぐ。
 - 終了削除の失敗後の自動回復は保証しない。GMが予約を取り消してTOPへ戻った場合、hostDisconnectedAtが成立せずTTL掃除も必ず働くわけではない。新しい再試行機能・ホスト自動復旧・認証境界は追加していない。
 - 旧版が予約したplayer全体removeは新しい接続から取り消せない。公開後は**全員が新版を読み込んだ新規ルーム**で利用する。

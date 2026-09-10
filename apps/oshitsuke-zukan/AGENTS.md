@@ -216,7 +216,7 @@ oshitsuke_rooms/{roomCode}/
 - `result` / `aborted` 画面ではルームを**自動削除しない**（振り返り・「もう一度」のため。jinro 方式）。
 - クリーンアップは ①ホストの「トップへ戻る」で即時 `remove()`、②ホスト切断 onDisconnect + 2分 TTL、③次回アクセス時の `isRoomExpired()` 判定、の3経路に一本化する。
 - 期限切れルームの削除は、`remove()` 直前にもう一度取得して期限切れを再確認してから行う（判定と削除の間にホストが復帰した場合、生きているルームを消さないため）。削除経路では必ず `cancelRoomOnDisconnect()` を await してから `remove()` する。
-- ゲスト側の「トップへ戻る」は自分の退出のみ（waiting 中は players から削除、それ以外は connected: false のまま離脱）。
+- ゲスト側の「退出する」は自分の退出のみ（waiting 中は players から削除、それ以外は connected: false のまま離脱）。
 
 ## 共有ボード（screen-board）= 観戦モード
 

@@ -126,6 +126,14 @@
     return copied;
   }
 
+  // 入力エラーは再送信までフォーム内に残す。
+  function showFormError(id, message) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = message;
+    el.hidden = !message;
+  }
+
   function showToast(message, isError = true, durationMs = 3000) {
     const existing = document.getElementById('roomk-toast');
     if (existing) existing.remove();
@@ -139,7 +147,8 @@
       `background:${isError ? 'var(--color-error)' : 'var(--color-success)'}`,
       'color:#fff', 'padding:12px 24px', 'border-radius:8px',
       'font-size:14px', 'font-weight:500', 'z-index:9999',
-      'box-shadow:0 4px 16px rgba(0,0,0,0.25)', 'white-space:nowrap',
+      'box-shadow:0 4px 16px rgba(0,0,0,0.25)', 'white-space:normal',
+      'width:max-content', 'max-width:calc(100vw - 32px)', 'box-sizing:border-box',
       'pointer-events:none',
     ].join(';');
     document.body.appendChild(el);
@@ -156,6 +165,7 @@
     initFirebase,
     cancelRoomOnDisconnect,
     copyRoomCode,
+    showFormError,
     showToast,
   });
 }());

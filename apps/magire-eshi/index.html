@@ -10,7 +10,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
-<script src="../shared/js/rtdb-utils.js?v=20260909"></script>
+<script src="../shared/js/rtdb-utils.js?v=20260910"></script>
   <style>
     /* ── 画面管理 ── */
     .screen { display: none; min-height: 100dvh; }
@@ -250,10 +250,11 @@
         <input class="form-input" id="guest-nickname" type="text" maxlength="8" placeholder="例: はなこ">
       </div>
       <div class="form-group">
-        <label class="form-label" for="guest-code">ルームコード（6桁）</label>
+        <label class="form-label" for="guest-code">ルームコード（6文字）</label>
         <input class="form-input" id="guest-code" type="text" maxlength="6" placeholder="ABCDEF"
                style="text-transform:uppercase;letter-spacing:.2em;font-size:24px;text-align:center">
       </div>
+      <p id="join-form-error" class="alert alert-error" role="alert" hidden></p>
       <button class="btn btn-primary btn-full mt-md" onclick="guestJoin()">
         <span class="material-symbols-rounded" aria-hidden="true">login</span>参加する
       </button>
@@ -468,7 +469,7 @@
       <div class="mgr-header__sub">遊んでくれてありがとう</div>
     </div>
     <button class="btn btn-primary btn-full" onclick="leaveGame()">
-      <span class="material-symbols-rounded" aria-hidden="true">home</span>トップへ戻る
+      <span class="material-symbols-rounded" aria-hidden="true">home</span>退出する
     </button>
   </div>
 </div>
@@ -802,10 +803,10 @@ function showOverlay(id, show) {
 }
 
 // ── バリデーション ──
-function validNick(v) {
-  if (typeof v !== 'string' || /[.#$\[\]/\u0000-\u001f\u007f]/.test(v)) { showMsg('ニックネームに使えない文字があります'); return false; }
-  if (!v) { showMsg('ニックネームを入力してください'); return false; }
-  if (v.length > 8) { showMsg('ニックネームは8文字以内です'); return false; }
+function validNick(v, reportError = showMsg) {
+  if (typeof v !== 'string' || /[.#$\[\]/\u0000-\u001f\u007f]/.test(v)) { reportError('ニックネームに使えない文字があります'); return false; }
+  if (!v) { reportError('ニックネームを入力してください'); return false; }
+  if (v.length > 8) { reportError('ニックネームは8文字以内です'); return false; }
   return true;
 }
 
@@ -852,19 +853,21 @@ async function hostCreateRoom() {
 
 // ── ゲスト: 参加 ──
 async function guestJoin() {
+  const reportJoinError = message => RoomkRTDB.showFormError('join-form-error', message);
+  reportJoinError('');
   const nickname = document.getElementById('guest-nickname').value.trim();
   const roomCode = document.getElementById('guest-code').value.trim().toUpperCase();
-  if (!validNick(nickname)) return;
-  if (roomCode.length !== 6) { showMsg('ルームコードは6文字です'); return; }
+  if (!validNick(nickname, reportJoinError)) return;
+  if (roomCode.length !== 6) { reportJoinError('ルームコードは6文字です'); return; }
   if (!await waitAuthOrExplain()) return;
 
   const roomRef = db.ref(`${ROOMS_PATH}/${roomCode}`);
   const preSnap = await roomRef.get();
-  if (!preSnap.exists()) { showMsg('ルームが見つかりません'); return; }
+  if (!preSnap.exists()) { reportJoinError('ルームが見つかりません'); return; }
   const preRoom = preSnap.val();
   if (isRoomExpired(preRoom)) {
     await removeExpiredRoom(roomRef).catch(() => {});
-    showMsg('このルームは期限切れのため終了しました');
+    reportJoinError('このルームは期限切れのため終了しました');
     return;
   }
 
@@ -888,15 +891,15 @@ async function guestJoin() {
   });
 
   if (!committed) {
-    if (abortReason === 'not_found')   { showMsg('ルームが見つかりません'); return; }
-    if (abortReason === 'host_gone')   { showMsg('ホストが切断されています'); return; }
-    if (abortReason === 'not_waiting') { showMsg('このゲームはすでに始まっています'); return; }
-    if (abortReason === 'nick_taken')  { showMsg('そのニックネームはすでに使われています'); return; }
-    showMsg('参加に失敗しました');
+    if (abortReason === 'not_found')   { reportJoinError('ルームが見つかりません'); return; }
+    if (abortReason === 'host_gone')   { reportJoinError('ホストが切断されています'); return; }
+    if (abortReason === 'not_waiting') { reportJoinError('このゲームはすでに始まっています'); return; }
+    if (abortReason === 'nick_taken')  { reportJoinError('そのニックネームはすでに使われています'); return; }
+    reportJoinError('参加に失敗しました');
     return;
   }
   if (abortReason === 'expired' && !snapshot.val()) {
-    showMsg('このルームは期限切れのため終了しました');
+    reportJoinError('このルームは期限切れのため終了しました');
     return;
   }
 
@@ -1992,7 +1995,7 @@ tryReconnect().then(ok => { if (!ok) showScreen('top'); });
       { heading: '始めかた', items: [
         'ホストが「ルームを作る」からルームを作る',
         '出てきたルームコードをみんなに伝える',
-        'ほかの人は「ルームに参加する」からコードを入れて「参加する」を押す',
+        'ほかの人は「ルームに参加する」からニックネームとルームコードを入れて「参加する」を押す',
       ] },
       { heading: '進めかた', items: [
         '自分のカードをタップして見て、「確認した」を押す',

@@ -9,7 +9,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
-<script src="../shared/js/rtdb-utils.js?v=20260715"></script>
+<script src="../shared/js/rtdb-utils.js?v=20260910"></script>
   <link rel="stylesheet" href="../shared/css/design-system.css">
   <style>
     /* ── 画面管理（AGENTS.md 共通パターン） ── */
@@ -480,7 +480,7 @@
     <div class="mt-lg">
       <button class="btn btn-secondary btn-full btn-lg" onclick="goToTop()">
         <span class="material-symbols-rounded">home</span>
-        TOPにもどる
+        トップへ戻る
       </button>
     </div>
   </div>
@@ -618,12 +618,8 @@
     el.classList.remove('visible');
   }
 
-  function copyToClipboard(text, btn) {
-    const original = btn.innerHTML;
-    navigator.clipboard.writeText(text).then(() => {
-      btn.innerHTML = '<span class="material-symbols-rounded">check</span> コピーしました！';
-      setTimeout(() => { btn.innerHTML = original; }, 2500);
-    });
+  function copyToClipboard(text, button) {
+    return RoomkRTDB.copyRoomCode(text, button);
   }
 
   function guestNames(players) {
@@ -1415,7 +1411,7 @@
       { heading: 'はじめかた', items: [
         'ホストが「ルームを作る（ホスト）」からルームを作る',
         '出てきたルームコードをみんなに伝える',
-        'ほかの人は「ルームに参加する」からコードを入れて「参加する」を押す',
+        'ほかの人は「ルームに参加する」からニックネームとルームコードを入れて「参加する」を押す',
       ] },
       { heading: 'すすめかた', items: [
         '1〜10の数字がひとりに1つ。それとは別に、誰にも見えない「隠しカード」が1まい場に出る',

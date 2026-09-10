@@ -10,7 +10,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
-  <script src="../shared/js/rtdb-utils.js?v=20260715"></script>
+  <script src="../shared/js/rtdb-utils.js?v=20260910"></script>
   <script type="module">
     // 共通ユーティリティを利用（REF-3: shuffle / escapeHtml の重複定義を解消）
     import { shuffle, escapeHtml } from '../shared/js/utils.js';
@@ -1042,15 +1042,7 @@
   }
 
   function copyToClipboard(text, button) {
-    const original = button.innerHTML;
-    navigator.clipboard.writeText(text).then(() => {
-      button.innerHTML = '<span class="material-symbols-rounded" aria-hidden="true">check</span> コピーしました！';
-      button.classList.add('done');
-      setTimeout(() => {
-        button.innerHTML = original;
-        button.classList.remove('done');
-      }, 2500);
-    });
+    return RoomkRTDB.copyRoomCode(text, button);
   }
 
   function formatTheme(theme) {
@@ -1938,7 +1930,7 @@
         heading: 'はじめかた',
         items: [
           'ホストが「ルームを作る（ホスト）」を押して、コードをみんなに伝える',
-          'ほかの人は「ルームに参加する」からコードを入れて「参加する」',
+          'ほかの人は「ルームに参加する」からニックネームとルームコードを入れて「参加する」',
           '3人以上そろったら、ホストが「ゲームを始める」を押す',
         ],
       },

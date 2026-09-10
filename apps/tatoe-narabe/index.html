@@ -10,7 +10,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
-<script src="../shared/js/rtdb-utils.js?v=20260715"></script>
+<script src="../shared/js/rtdb-utils.js?v=20260910"></script>
   <style>
     /* ── 画面管理 ── */
     .screen { display: none; min-height: 100dvh; }
@@ -495,7 +495,7 @@
       <div class="card" style="padding:20px; text-align:center; margin-bottom:16px;">
         <div style="font-size:12px; color:var(--color-muted); font-weight:700; letter-spacing:0.05em; margin-bottom:4px;">ルームコード</div>
         <div class="ito-room-code" id="waiting-room-code">----</div>
-        <button class="btn btn-ghost btn-sm" style="margin-top:12px;" onclick="copyRoomCode()">
+        <button class="btn btn-ghost btn-sm" style="margin-top:12px;" onclick="copyRoomCode(this)">
           <span class="material-symbols-rounded" aria-hidden="true">content_copy</span>
           コードをコピー
         </button>
@@ -731,7 +731,7 @@
         </button>
         <button class="btn btn-ghost btn-full" onclick="leaveGame()">
           <span class="material-symbols-rounded" aria-hidden="true">home</span>
-          トップへもどる
+          退出する
         </button>
       </div>
     </div>
@@ -1184,10 +1184,10 @@
       const roomCode = codeInput ? codeInput.value.trim().toUpperCase() : "";
       const nick = nickInput ? nickInput.value.trim() : "";
 
-      if (!roomCode) { showError("guest-error", "ルームコードを入力してください"); return; }
-      if (roomCode.length !== 6) { showError("guest-error", "ルームコードは6文字です"); return; }
       const nickError = validateNickname(nick);
       if (nickError) { showError("guest-error", nickError); return; }
+      if (!roomCode) { showError("guest-error", "ルームコードを入力してください"); return; }
+      if (roomCode.length !== 6) { showError("guest-error", "ルームコードは6文字です"); return; }
 
       try {
         await authReady;
@@ -1952,26 +1952,8 @@
       state.numberRevealed = true;
     }
 
-    async function copyRoomCode() {
-      const code = state.roomCode || "";
-      if (!code) { showMsg("ルームコードがありません"); return; }
-      try {
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-          await navigator.clipboard.writeText(code);
-        } else {
-          const ta = document.createElement("textarea");
-          ta.value = code;
-          ta.style.cssText = "position:fixed;opacity:0;";
-          document.body.appendChild(ta);
-          ta.focus(); ta.select();
-          document.execCommand("copy");
-          document.body.removeChild(ta);
-        }
-        showMsg("ルームコードをコピーしました", false);
-      } catch (e) {
-        console.error(e);
-        showMsg("コピーできませんでした");
-      }
+    function copyRoomCode(button) {
+      return RoomkRTDB.copyRoomCode(state.roomCode, button);
     }
 
     async function copyThemeOptions() {
@@ -2026,7 +2008,7 @@
         { heading: 'はじめかた', items: [
           'ホストが「ルームを作る」を押して、ニックネームを入れる',
           '画面に出たルームコードをみんなに伝える',
-          'ほかの人は「ルームに参加する」からニックネームとコードを入れる',
+          'ほかの人は「ルームに参加する」からニックネームとルームコードを入れて「参加する」を押す',
           '2人以上そろったら、ホストが「ゲームスタート」を押す',
         ] },
         { heading: 'すすめかた', items: [
@@ -2036,7 +2018,7 @@
           '話し合いながら、数字が小さいと思った人から順番に「宣言する！」を押す',
           '全員が宣言したら、ホストが「答え合わせ！」を押す',
         ] },
-        { heading: 'おわりかた', text: '結果を見ながら、感じ方の違いをおしゃべりしよう。「もう一度プレイ」で再戦、「トップへもどる」でおしまい。' },
+        { heading: 'おわりかた', text: '結果を見ながら、感じ方の違いをおしゃべりしよう。「もう一度プレイ」で再戦、「退出する」でおしまい。' },
       ],
     });
   </script>

@@ -70,15 +70,21 @@ export function copyToClipboard(text, btn = null, options = {}) {
   return fallbackCopy(text).then(finish);
 }
 
-function fallbackCopy(text) {
+async function fallbackCopy(text) {
+  const focused = document.activeElement;
   const ta = document.createElement('textarea');
   ta.value = text;
   ta.style.cssText = 'position:fixed;opacity:0;pointer-events:none';
-  document.body.appendChild(ta);
-  ta.select();
-  const ok = document.execCommand('copy');
-  document.body.removeChild(ta);
-  return Promise.resolve(ok);
+  try {
+    document.body.appendChild(ta);
+    ta.select();
+    return document.execCommand('copy');
+  } catch (_) {
+    return false;
+  } finally {
+    ta.remove();
+    focused?.focus({ preventScroll: true });
+  }
 }
 
 /**

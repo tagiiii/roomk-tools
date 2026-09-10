@@ -88,7 +88,7 @@ document.title・トースト・aria-label にお題を入れない。ニック�
 | answer | ラウンド情報 + 見えているヒント一覧 + 「（回答者名）さんが答えを考えています」 | お題・除外ヒント |
 | judge | 回答者の回答 + 「ホストが答えを確認しています」 | お題 |
 | result | お題・回答・正解/不正解 + 見えていたヒント一覧 + 正解数/ラウンド数 | 除外されたヒントと「誰のヒントが消えたか」（共有画面で個人が強調されるのを避ける） |
-| finished | 全ラウンド振り返り + スコアサマリー。「TOPにもどる」のみ | 操作ボタン |
+| finished | 全ラウンド振り返り + スコアサマリー。「トップへ戻る」のみ | 操作ボタン |
 
 ### セッション・復帰
 - 入室成功後に `kaburazuhint_session` へ `{ nickname: null, roomCode, role: 'spectator' }` を保存
@@ -96,12 +96,12 @@ document.title・トースト・aria-label にお題を入れない。ニック�
   次のリロードで別ルームの host/guest セッションが復活しないように
 - `tryReconnect()` の spectator 分岐: ルーム存在 + `isRoomExpired` チェックのみ（players 存在チェックはスキップ）。
   期限切れでも remove() しない。復帰後も onDisconnect 予約はしない
-- 「TOPにもどる」（`spectatorLeave()`）: リスナー off() → セッション削除 → `history.replaceState` で
+- 「トップへ戻る」（`spectatorLeave()`）: リスナー off() → セッション削除 → `history.replaceState` で
   watch パラメータ除去 → ローカルタイマー解除 → TOP。ルームには一切触らない
 - 入室処理（`enterSpectator`）は `specJoinBusy` フラグで多重実行を防ぐ（連打による多重リスナー登録防止）
 
 ### 切断・終了の扱い（観戦者版）
-- `room.hostConnected === false`: 観戦専用オーバーレイ `#spec-host-off-overlay`（退出ボタンは「TOPにもどる」動作）。
+- `room.hostConnected === false`: 観戦専用オーバーレイ `#spec-host-off-overlay`（退出ボタンは「トップへ戻る」動作）。
   TTL（`ORPHAN_TTL_MS`）経過後は remove() **せず**「このルームは終了しました」表示に切り替え。
   RTDB 更新が来なくてもローカルタイマー（`state.specTimer`）で TTL 到達を再判定する（leave 時に必ず clearTimeout）
 - finished 表示中はホスト切断オーバーレイ・TTL 切り替えの対象外（最終結果の共有画面を維持する）
@@ -268,7 +268,7 @@ window.addEventListener('load', async () => {
 // tryReconnect(): 保存形式・役割と最新roomのhost／player.isHostを確認して復帰
 // ホストの場合は hostConnected を true に戻す
 
-// TOPに戻るときにクリア
+// トップへ戻るときにクリア
 sessionStorage.removeItem('kaburazuhint_session');
 ```
 
@@ -351,7 +351,7 @@ sessionStorage.removeItem('kaburazuhint_session');
 #### screen-final（最終結果）
 - 全ラウンドの振り返りテーブル（ラウンド番号、お題、回答者、回答、正解/不正解）
 - 最終スコア: ○問正解 / 全○問
-- 「もう一度遊ぶ」（同じメンバーで再開） / 「TOPに戻る」ボタン
+- 「もう一度遊ぶ」（同じメンバーで再開） / 「トップへ戻る」ボタン
 
 ## 実装上の注意
 

@@ -114,7 +114,7 @@ TOP（screen-top）
               status='aborted': 「途中で終わったよ。勝負はなし！」（合計点一覧は出さない）
               ホスト: 「もう一度」（result のみ。接続中メンバーで配り直し → screen-game）
                       「トップへ戻る」（ルーム削除）
-              ゲスト: 「トップへ戻る」（自分の退出のみ）
+              ゲスト: 「退出する」（自分の退出のみ）
 ```
 
 - `aborted` からの「もういちど」は**無し**（おしつけずかん先行事例に合わせ、中断はトップへ戻る一択）。
@@ -150,8 +150,8 @@ result →（もういちど）→ playing
 |--------|------|
 | `waiting` | ロビー。このフェーズのみ新規入室可。2〜6人 |
 | `playing` | ゲーム中。`match/phase` が picking / reveal を持つ |
-| `result` | 15ラウンド終了。合計点と1位を表示。ホストは「もういちど」「トップへもどる」 |
-| `aborted` | 途中終了。**勝敗なし**。ホストは「トップへもどる」のみ |
+| `result` | 15ラウンド終了。合計点と1位を表示。ホストは「もういちど」「トップへ戻る」 |
+| `aborted` | 途中終了。**勝敗なし**。ホストは「トップへ戻る」のみ |
 
 - `waiting → playing`（開始）、`result → playing`（もういちど）、`→ aborted` は**ホストのみ**。
 - `playing → result` は最終ラウンドの「つぎへ」transaction 内で行う（ホスト操作なので共通規約どおり）。
@@ -256,7 +256,7 @@ esadori_rooms/{roomCode}/
 | ゲスト | `players/{nick}` への `onDisconnect().remove()`（**全フェーズ共通**） |
 | 観戦者 | **予約なし・presence 書き込みなし**（読み取り専用） |
 
-- ゲストの予約は常に `remove()` のため、ルーム削除後に発火しても何も再生成しない。ホストの `update()` 予約が残るのは「ホスト接続中にルームが消える」場合だけだが、期限切れ削除は `hostConnected === false` が前提なのでこの競合は起きない（ホスト自身の「トップへもどる」は予約解除後に削除する）。
+- ゲストの予約は常に `remove()` のため、ルーム削除後に発火しても何も再生成しない。ホストの `update()` 予約が残るのは「ホスト接続中にルームが消える」場合だけだが、期限切れ削除は `hostConnected === false` が前提なのでこの競合は起きない（ホスト自身の「トップへ戻る」は予約解除後に削除する）。
 
 ### `.info/connected` による自動再接続への追従
 
@@ -283,12 +283,12 @@ Firebase はページをリロードしなくても一時切断から自動再�
 ## 終了とデータ削除
 
 - `result` / `aborted` 画面ではルームを**自動削除しない**（振り返り・「もういちど」のため。jinro 方式）。
-- クリーンアップ経路は3つ: ①ホストの「トップへもどる」で即時 `remove()` ②ホスト切断 onDisconnect + 2分 TTL ③次回アクセス時（`joinRoom` / `tryReconnect` / ルーム監視）の期限切れ判定。
-- **すべての退出・削除経路で、`remove()` や画面遷移の前に必ず `cancelRoomOnDisconnect()` を await する**（ホストの「トップへもどる」・ゲストの自己退出・期限切れ削除・ルーム消滅検知、の全経路）。
+- クリーンアップ経路は3つ: ①ホストの「トップへ戻る」で即時 `remove()` ②ホスト切断 onDisconnect + 2分 TTL ③次回アクセス時（`joinRoom` / `tryReconnect` / ルーム監視）の期限切れ判定。
+- **すべての退出・削除経路で、`remove()` や画面遷移の前に必ず `cancelRoomOnDisconnect()` を await する**（ホストの「トップへ戻る」・ゲストの自己退出・期限切れ削除・ルーム消滅検知、の全経路）。
 - **期限切れ削除は transaction で行う**: `roomRef.transaction(room => { if (room == null) return; return isRoomExpired(room) ? null : undefined })`。判定と削除の間にホストが復帰しても、生きているルームを消さない。**abort した（ルームが生きていた）場合は、退出済みの自分の presence ノード（`players/{nick}`）を削除して残留を防ぐ**（期限切れ検知＝自分は必ず離脱する文脈のため、予約の張り直しではなくノード削除で整合を取る）。
 - **ルーム消滅の検知**: ゲスト・観戦者はルーム値が `null` になったら（ホストが削除）、`cancelRoomOnDisconnect()` を await → sessionStorage を消す → 「ルームが閉じられたよ」でトップへ戻る。
 - **壊れルームの扱い**: `joinRoom` / `tryReconnect` で `status` や `host` の無いルーム（万一の残骸）を見つけたら期限切れと同様に transaction で削除を試み、参加者には「そのルームはもうないみたい」と表示する。
-- ゲスト側の「トップへもどる」は自分の退出のみ（`cancelRoomOnDisconnect()` → `players/{nick}` を `remove()` → sessionStorage 消去）。
+- ゲスト側の「退出する」は自分の退出のみ（`cancelRoomOnDisconnect()` → `players/{nick}` を `remove()` → sessionStorage 消去）。
 
 ## 共有ボード（screen-board）= 観戦モード
 

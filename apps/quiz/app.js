@@ -525,7 +525,7 @@ function finishQuiz() {
 }
 
 function backToTop() {
-  // TOPに戻るときは鮮度管理をリセット
+  // トップへ戻るときは鮮度管理をリセット
   state.usedIds = new Set();
   showScreen('top');
   updateOptionState();

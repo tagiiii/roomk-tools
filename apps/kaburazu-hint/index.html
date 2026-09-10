@@ -10,7 +10,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
-<script src="../shared/js/rtdb-utils.js?v=20260715"></script>
+<script src="../shared/js/rtdb-utils.js?v=20260910"></script>
   <script type="module">
     // 共通ユーティリティを利用（REF-3: shuffle の重複定義を解消）
     import { shuffle } from '../shared/js/utils.js';
@@ -276,8 +276,8 @@
     <div class="card">
       <label class="form-label" for="guest-nickname">ニックネーム</label>
       <input type="text" id="guest-nickname" class="form-input" maxlength="8" placeholder="8文字以内">
-      <label class="form-label" style="margin-top:16px" for="guest-code">ルームコード</label>
-      <input type="text" id="guest-code" class="form-input kbz-code-input" maxlength="6" placeholder="6桁のコード"
+      <label class="form-label" style="margin-top:16px" for="guest-code">ルームコード（6文字）</label>
+      <input type="text" id="guest-code" class="form-input kbz-code-input" maxlength="6" placeholder="6文字のコード"
              oninput="this.value=this.value.toUpperCase()">
       <div class="error-msg" id="guest-error"></div>
     </div>
@@ -295,8 +295,8 @@
     <h2 class="kbz-page-title">みんなにみせる画面</h2>
     <p class="kbz-page-sub">ルームコードを入れると、みんなで見られる画面がひらきます</p>
     <div class="card">
-      <label class="form-label" for="spectate-code">ルームコード</label>
-      <input type="text" id="spectate-code" class="form-input kbz-code-input" maxlength="6" placeholder="6桁のコード"
+      <label class="form-label" for="spectate-code">ルームコード（6文字）</label>
+      <input type="text" id="spectate-code" class="form-input kbz-code-input" maxlength="6" placeholder="6文字のコード"
              oninput="this.value=this.value.toUpperCase()">
       <div class="error-msg" id="spectate-error"></div>
     </div>
@@ -314,8 +314,8 @@
     <h2 class="kbz-page-title">ルーム待機中</h2>
     <div class="card" style="text-align:center">
       <p style="font-size:12px;color:var(--color-muted);margin-bottom:4px">ルームコード</p>
-      <div class="kbz-room-code" id="waiting-room-code" onclick="copyCode()"></div>
-      <p style="font-size:12px;color:var(--color-muted)">タップしてコピー</p>
+      <div class="kbz-room-code" id="waiting-room-code" role="button" tabindex="0" aria-label="コードをコピー" onclick="copyCode(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();copyCode(this);}"></div>
+      <button type="button" class="btn btn-ghost btn-full" onclick="copyCode(this)"><span class="material-symbols-rounded" aria-hidden="true">content_copy</span>コードをコピー</button>
     </div>
     <div class="card">
       <p class="section-label">参加者</p>
@@ -502,7 +502,7 @@
         もう一度遊ぶ
       </button>
     </div>
-    <button class="btn btn-ghost btn-full" style="margin-top:10px" onclick="leaveGame()">TOPに戻る</button>
+    <button class="btn btn-ghost btn-full" style="margin-top:10px" onclick="leaveGame()">退出する</button>
   </div>
 </div>
 
@@ -515,7 +515,7 @@
       <span class="kbz-spec__header-code" id="spec-header-code"></span>
     </div>
     <div id="spec-content"></div>
-    <button class="btn btn-ghost btn-full kbz-spec__leave" onclick="spectatorLeave()">TOPにもどる</button>
+    <button class="btn btn-ghost btn-full kbz-spec__leave" onclick="spectatorLeave()">トップへ戻る</button>
   </div>
 </div>
 
@@ -534,7 +534,7 @@
   <span class="material-symbols-rounded" aria-hidden="true" style="font-size:48px">signal_disconnected</span>
   <p class="overlay-title">ホストが一時的に切断されました</p>
   <p class="overlay-sub">再接続を待っています</p>
-  <button class="btn btn-ghost" onclick="spectatorLeave()">TOPにもどる</button>
+  <button class="btn btn-ghost" onclick="spectatorLeave()">トップへ戻る</button>
 </div>
 <div class="overlay" id="guest-off-overlay">
   <p class="overlay-title">接続を確認しています</p>
@@ -1868,8 +1868,8 @@ function renderRoundInfo(id, round) {
   `;
 }
 
-function copyCode() {
-  navigator.clipboard.writeText(state.roomCode).then(() => showMsg('コピーしました！', false)).catch(() => {});
+function copyCode(button) {
+  return RoomkRTDB.copyRoomCode(state.roomCode, button);
 }
 
 /* ════════════════════════════════════════════════
@@ -2358,7 +2358,7 @@ function renderSpecFinished(room) {
         heading: 'はじめかた',
         items: [
           'ホストが「ルームをつくる」を押して、コードをみんなに伝える',
-          'ほかの人は「ルームに参加する」からコードを入れて「参加する」',
+          'ほかの人は「ルームに参加する」からニックネームとルームコードを入れて「参加する」',
           '3人以上そろったら、ホストが「ゲームを始める」を押す',
         ],
       },
