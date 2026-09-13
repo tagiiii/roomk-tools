@@ -1,27 +1,10 @@
-# room-K ツール群 — Claude Code 向け案内
+# Claude Code 向け入口
 
-このリポジトリの仕様・実装ルールの正本は [AGENTS.md](./AGENTS.md) です。
-**CLAUDE.md には独自仕様を置きません**（AGENTS.md との乖離を防ぐため）。このファイルは道案内だけです。
+@AGENTS.md
 
-## 作業を始める前に
+共通の運用・権限・品質基準は上記に集約する。
+アプリを扱うときは対象の `apps/{app}/AGENTS.md` も読む。
+必要な実装資料とスキルは共通入口の条件に従って選び、既に読んだ同じ内容を再読しない。
 
-1. [AGENTS.md](./AGENTS.md) を読む。特に「ドキュメントの正本」「改名済みアプリ（リダイレクトスタブ）」「共通実装ルール」「コンテンツガイドライン」
-2. アプリを触るなら `apps/{app-name}/AGENTS.md` も読む（共通規約からの意図的な逸脱がここに書かれている）
-3. 該当するスキルがあれば使う（下記）
-
-## 使えるスキル
-
-| スキル | 使う場面 |
-|---|---|
-| `new-app-scaffold` | 新しいアプリを追加する |
-| `rtdb-audit` | Realtime Database アプリが規約に従っているか監査する |
-| `slides-generator` | 画面共有用の説明スライド（`slides.html`）を作る |
-| `/lint` | `scripts/lint.sh` を実行して結果を日本語で説明する |
-
-## 忘れやすいこと
-
-- **編集後は `bash scripts/lint.sh`**（Edit/Write の PostToolUse フックでも自動実行される）。エラー0・新規警告なしが基準
-- **絵文字は使わない。** アイコンは Material Symbols Rounded のみ
-- **メンター向けの心得・声かけのコツを子ども向け画面や `howto.js` に書かない。** 置き場は `AGENTS.md` だけ
-- 旧フォルダ（`apps/codenames/` `apps/hint-de-pinto/` `apps/iisen-show/` `apps/ito/` `apps/sukina-map/`）はリダイレクトスタブ。実装は新フォルダ側にある
-- AI の役割分担・ガードレールの区分は [docs/ai-roles.md](./docs/ai-roles.md)。モデルの固有名を書くのはそのファイルだけ
+`/lint` は `.claude/commands/lint.md`。全体lintの編集ごとのフックは置かず、修正単位の完了時に共通基準で検証する。
+このファイルに共通仕様・モデル表・承認条件を複製しない。
