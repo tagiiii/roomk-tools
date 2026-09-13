@@ -1,6 +1,6 @@
 ---
 name: slides-generator
-description: アプリの画面共有用説明スライド（apps/{name}/slides.html）を作成する。発表画面＋発表者ノート同期＋Metalife チャット用コピー機能を持つ単一ファイル。「説明スライドを作って」「slides.html を追加して」と言われたら使う。
+description: room-Kアプリの画面共有用slides.htmlを作成・更新する。既存テンプレートの発表者ノート同期とチャット用コピー機能を再利用する。
 ---
 
 # 説明スライド（slides.html）の作成

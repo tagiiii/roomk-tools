@@ -1,11 +1,13 @@
 ---
 name: rtdb-audit
-description: Realtime Database アプリの規約監査。scripts/lint.sh の機械チェックに加え、transaction・切断処理・onDisconnect の取消・TTL・終了後削除・再接続・リスナー片付けなど lint では検出できない規約を目視相当でチェックする。「規約監査して」「〜が規約に従っているか確認して」と言われたら使う。
+description: room-KのRealtime Database実装規約を監査する。対象アプリの同期・切断・再接続・削除処理を規約と照合するときに使う。
 ---
 
 # Realtime Database 規約監査
 
-規約の正本はルート `AGENTS.md`（「Realtime Database 実装ルール」「切断時の挙動」「セッションデータの自動削除」「再接続」）。**監査と修正は別フェーズ**: このスキルは所見の報告までを行い、修正は承認を得てから着手する。
+共通の権限はルート `AGENTS.md`。実装規約は `docs/development/rtdb.md`（transaction・切断・削除・再接続）、共有ヘルパーの契約は `docs/development/shared-modules.md` の該当APIを読む。
+監査のみなら所見まで。修正も承認済みなら対象・受入条件の範囲で続行し、同じ承認を取り直さない。新たな仕様判断・変更禁止パスは該当部分だけ保留する。
+静的監査で本番Firebaseへ書き込まない。動的検証は承認済みの隔離環境に限り、未検証なら明示する。
 
 対象アプリの一覧は `scripts/lint.sh` の `RTDB_HTML_FILES` 配列が正本（手で数えない）。
 `apps/codenames/` `apps/hint-de-pinto/` `apps/iisen-show/` `apps/ito/` は**改名前のリダイレクトスタブ**なので監査対象外（実装は `kotoba-tantei` / `kaburazu-hint` / `do-mannaka` / `tatoe-narabe`）。
@@ -36,16 +38,9 @@ bash scripts/lint.sh
 11. **XSS**: ユーザー入力を `innerHTML` に入れる箇所が全て `esc()` を通っているか（lint SEC-1 の補完として文脈を確認）
 12. **ドキュメント整合**: `apps/{name}/AGENTS.md` の記述が実装と一致しているか（旧仕様の残留に注意）
 
-### 既知の未修正（新規所見と混ぜない）
+### 既知の項目（現在のバックログと照合する）
 
-`docs/kaizen-backlog.md` B-21 の follow-up として起票済み。再発見しても「既知」と明記する。
-
-- DONE/orphan 掃除タイマーが同一接続で room 削除 → 残った `onDisconnect` でゴースト
-- `cancel` 失敗時に `remove` を止める strict 化
-- `await` 後の可変 `state.roomRef` 再入ガード
-- jinro の room-null listener の off/detach 不足
-- tatoe-narabe の `cancel → off → remove` を `cancel → remove → off` へ
-- クロス接続ゴースト（構造的完全修正は validation rules ＝ 変更禁止パス・人間専任）
+`docs/kaizen-backlog.md` のB-21と関連follow-up・判断待ちを対象アプリ名や不具合名で検索する。完了済み記録と新たな再発を区別し、スキルに過去の未修正一覧を複製しない。
 
 ## 出力形式
 
@@ -56,10 +51,10 @@ bash scripts/lint.sh
 OK 行は圧縮してよい。最後に違反サマリを深刻度順（データ残留・同期バグ > UX > 軽微）で列挙し、各違反に「コード修正すべきか、例外として AGENTS.md に明文化すべきか」の推奨を付ける。
 **根拠を `file:line` で示せない指摘は出さない。** 一般論のベストプラクティスは所見にしない。
 
-## フェーズ3: 修正(承認後のみ)
+## フェーズ3: 承認範囲の修正
 
 - 1違反 = 1修正単位で小さく進める
-- 挙動を変える修正（削除タイマー追加等）はゲーム体験に影響するため必ず事前に確認を取る
+- 挙動変更の内容・受入条件が未承認なら事前に確認する。承認済みならその範囲の修正・検証を続ける
 - `apps/shared/**` は**変更禁止パス**。共有ヘルパーに手を入れる案は実装せず、人間の個別承認へ回す
-- 修正ごとに `bash scripts/lint.sh` で検証
+- 一つの修正単位が揃った時点で `bash scripts/lint.sh` を実行。既に同じ対象状態の検査が合格していれば再利用可
 - host/guest 同期・切断復帰の修正は**実機 E2E（2ブラウザ）まで確認しないと完了扱いにしない**。未実施のままマージした場合はその旨を明記する

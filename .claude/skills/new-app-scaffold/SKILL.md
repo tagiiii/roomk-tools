@@ -1,15 +1,15 @@
 ---
 name: new-app-scaffold
-description: room-K ツール群に新しいアプリを追加するときの手順。apps/{name}/ の雛形作成・ポータル登録・あそびかたモーダル・早見表への掲載・AGENTS.md 執筆・lint 対応までを漏れなく行う。「新しいアプリを作りたい」「〜というツールを追加して」と言われたら使う。
+description: room-Kの本体アプリを新規追加し、必要な共通機能・ポータル・早見表・検証を揃える。構想やdraftsの試作だけの依頼には使わない。
 ---
 
 # 新規アプリ追加の手順
 
-仕様の正本はルート `AGENTS.md`。このスキルは手順の抜け漏れ防止用チェックリストであり、規約本文は転載しない（必ず AGENTS.md を読むこと）。
+共通の権限・品質基準はルート `AGENTS.md`。本体への追加が依頼範囲にある場合に使う。`drafts/` からの移植・新規コンテンツ本体投入は人間専任。未承認なら候補・差分案・必要な検証を先に揃え、その投入だけを保留する。既に対象の投入が明示承認されている場合は同じ承認を取り直さない。試作だけなら `docs/kaizen-backlog.md` のdrafts制度を参照する。
 
 ## 0. 事前確認（コードを書く前に）
 
-1. ルート `AGENTS.md` を全部読む（特に「新しいアプリを追加するとき」「アプリ名のつけかた」「共通実装ルール」「コンテンツガイドライン」）
+1. `docs/development/app-registration.md` を読む。UIは `docs/development/ui.md`、共通機能は `docs/development/shared-modules.md` の該当節を参照する。Firebase利用時は `docs/development/firebase.md`、セッションを扱う場合は `docs/development/rtdb.md` の共通規約と採用DBの該当節を読む。以下の旧「AGENTS.mdの節」参照はルートの対応表から辿る
 2. **アプリ名を決める**（AGENTS.md「アプリ名のつけかた」に従う）:
    - 実在のゲーム・番組・商品の名称やそのもじりは使わない。着想元は `updates.json` の紹介文と `apps/guide/` で「『◯◯』から着想」と記述的に紹介する
    - 遊びの動きが伝わる、ひらがな・カタカナ中心の短い名前（例: ピタハメ、おしつけずかん、かぶらずヒント）
@@ -17,7 +17,7 @@ description: room-K ツール群に新しいアプリを追加するときの手
 3. ファイル構成パターンを決める:
    - **単一ファイル**（index.html のみ・全インライン）: Realtime Database アプリ、または軽量オフラインツール。見本: `apps/kyapa-graph/`
    - **分割ファイル**（index.html + app.js + style.css）: Firestore アプリ・オフラインツール。見本: `apps/otona-talk/`
-4. コンテンツガイドライン適合を確認。意図的に逸脱する場合（内省ツール等）は AGENTS.md に「既存ガイドラインからの例外」節を書く前提で進める（先行事例: `apps/kyapa-graph/AGENTS.md`）
+4. コンテンツガイドライン適合を確認。新たに逸脱する場合（内省ツール等）は人間の支援方針判断を得る。承認された例外をアプリの AGENTS.md に理由とともに記録する（先行事例: `apps/kyapa-graph/AGENTS.md`）
 5. CSS 接頭辞（2〜4文字 + `-`、BEM）を決め、既存アプリと衝突しないことを確認
 
 ## 1. ファイル作成
