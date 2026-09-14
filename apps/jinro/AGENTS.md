@@ -101,6 +101,7 @@ waiting → night（1日目夜・襲撃なし）→ morning → day → vote →
 `computeExecution()` で最多票が複数いた場合、GM に2択を提示（`showTieBreak()`）。**GMによる直接指名は廃止**。
 - **決選投票**（`startRunoff()`）: `voteRound` を +1、`runoffCandidates` に同票者をセット、全員の `vote` をリセット。生存者全員が候補者の中から投票し直す（自分が候補なら自分以外）。`handleVote()` は `voteRound` の変化を検知してボタンを再描画。再び同票なら再度2択。
 - **スキップ**（`skipExecution()`）: 誰も追放せず `executionTarget: null` で execution 画面へ → 次の夜。霊媒結果はその日「追放なし」となる（`afterExecution()` で `mediumResult: null`）。
+- **初日（1日目）は同票でなくてもスキップ可**: `day === 1` の投票画面だけ GM パネル `#vote-skip-panel`（「今日は誰も追放しない」）を出し、`skipExecution()` を呼べる。初日は襲撃がなく手がかりが少ないため、投票結果を待たず GM の判断で追放なしにする用途。2日目以降は出さない（スキップは同票時のみ）。集計確定後（`state.resolveTriggered`）と同票パネル表示中は非表示にして、スキップ導線が二重に出ないようにしている。
 
 ## 画面一覧（screen-{name}）
 - `top` — ルーム作成/参加（「遊び方・役職」モーダルあり）
@@ -109,7 +110,7 @@ waiting → night（1日目夜・襲撃なし）→ morning → day → vote →
 - `night` — 夜フェーズ（役職ごとに異なるUI）
 - `morning` — 朝アナウンス
 - `day` — 昼討論（タイマー）
-- `vote` — 追放投票（同票時は決選投票/スキップ）
+- `vote` — 追放投票（1日目は GM がスキップ可。同票時は決選投票/スキップ）
 - `execution` — 追放後処理（ハンター道連れ選択／スキップ告知など）
 - `result` — 結果発表
 
