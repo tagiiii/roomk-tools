@@ -623,6 +623,15 @@
       <p id="vote-force-hint" style="font-size:13px;color:var(--color-muted);text-align:center;margin-top:8px"></p>
     </div>
 
+    <!-- GM 初日スキップ（1日目の投票のみ。同票でなくても誰も追放せずに次の夜へ進める。集計確定後・同票パネル表示中は非表示） -->
+    <div id="vote-skip-panel" class="card mt-md" style="display:none">
+      <p class="section-lbl">初日の投票（GM）</p>
+      <p style="font-size:13px;color:var(--color-muted);margin-bottom:12px">1日目は手がかりが少ないので、投票せずに誰も追放しないで次の夜へ進むこともできます</p>
+      <button class="btn btn-secondary btn-full" onclick="skipExecution()">
+        <span class="material-symbols-rounded">do_not_disturb_on</span>今日は誰も追放しない
+      </button>
+    </div>
+
     <!-- GM 同票処理パネル -->
     <div id="tiebreak-panel" class="card mt-md" style="display:none">
       <p class="section-lbl" id="tiebreak-label">同票です。どうしますか？（GM）</p>
@@ -1842,6 +1851,7 @@ function handleVote(room, players) {
       document.getElementById('voted-msg').style.display = 'none';
     }
     document.getElementById('tiebreak-panel').style.display = 'none';
+    document.getElementById('vote-skip-panel').style.display = 'none';
     showScreen('vote');
   }
   // 投票状況（切断者は「接続中」カウントから除外）
@@ -1876,6 +1886,12 @@ function handleVote(room, players) {
         hint.textContent = `${parts.join(' + ')}を除いて集計します`;
       }
     }
+    // GM 初日スキップボタン（1日目の投票のみ。同票でなくても選べる）。集計確定後と同票パネル表示中は隠す。
+    // 上の computeExecution() は最初の await まで同期実行なので、ここでは確定後の状態が見える
+    const skipPanel = document.getElementById('vote-skip-panel');
+    const tieShown = document.getElementById('tiebreak-panel').style.display !== 'none';
+    const isFirstDay = (room.day || 1) === 1;
+    if (skipPanel) skipPanel.style.display = (isFirstDay && !state.resolveTriggered && !tieShown && aliveList.length > 0) ? 'block' : 'none';
   }
 }
 
@@ -1968,6 +1984,7 @@ function showTieBreak(candidates) {
   const label = document.getElementById('tiebreak-label');
   const btns  = document.getElementById('tiebreak-btns');
   panel.style.display = 'block';
+  document.getElementById('vote-skip-panel').style.display = 'none';
   if (label) label.textContent = '同票です。どうしますか？（GM）';
   const names = candidates.map(esc).join('・');
   btns.innerHTML = `
