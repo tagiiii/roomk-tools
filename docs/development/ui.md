@@ -112,6 +112,9 @@ design-system.css のカラー変数・スペーシング変数を積極的に�
 
 ## アイコン
 
+ツール一覧のカードは、プレイ・操作画面のサムネイルを表示する。画像を読み込めない場合は既存のアイコンを表示する。
+撮影範囲・更新方法は [thumbnails.md](thumbnails.md) を参照。
+
 **絵文字は使用しない。** Google Material Symbols Rounded (FILL=1) を使用する。
 
 ```html

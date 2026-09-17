@@ -71,16 +71,29 @@
     }
 
     .app-card__icon {
+      position: relative;
       display: flex;
       align-items: center;
       justify-content: center;
-      height: 100px;
+      flex: none;
+      aspect-ratio: 16 / 10;
       background-color: #EEF3F8;
     }
 
     .app-card__icon .material-symbols-rounded {
       font-size: 52px;
       color: var(--color-primary);
+    }
+
+    .app-card__thumbnail {
+      position: absolute;
+      inset: 0;
+      display: block;
+      width: 100%;
+      height: 100%;
+      padding: 12px;
+      object-fit: contain;
+      background-color: var(--color-bg);
     }
 
     .app-card__body {
@@ -410,7 +423,7 @@
     <!-- ============================================= -->
     <section class="portal-section">
       <h2 class="section-title">ツール一覧</h2>
-      <p class="section-desc">利用シーンでしぼりこめます。複数のシーンで使えるツールには複数のバッジがつきます。</p>
+      <p class="section-desc">利用シーンでしぼりこめます。画像はプレイ・操作画面の一例です。複数のシーンで使えるツールには複数のバッジがつきます。</p>
 
       <div class="scene-filter" role="group" aria-label="利用シーンでしぼりこむ">
         <button class="scene-filter__chip" type="button" data-scene="all" aria-pressed="true">すべて</button>
@@ -433,7 +446,8 @@
         <!-- コトバのテーマクイズ -->
         <a class="app-card" href="kotoba-theme/" data-scenes="kotoba">
           <div class="app-card__icon">
-            <span class="material-symbols-rounded">tips_and_updates</span>
+            <span class="material-symbols-rounded" aria-hidden="true">tips_and_updates</span>
+            <img class="app-card__thumbnail" src="assets/thumbnails/kotoba-theme.png" alt="コトバのテーマを紹介する問題と3つの選択肢" width="744" height="390" loading="eager" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">コトバのテーマクイズ</div>
@@ -458,7 +472,8 @@
         <!-- クイズパック -->
         <a class="app-card" href="quiz/" data-scenes="kotoba circle hiroba">
           <div class="app-card__icon">
-            <span class="material-symbols-rounded">quiz</span>
+            <span class="material-symbols-rounded" aria-hidden="true">quiz</span>
+            <img class="app-card__thumbnail" src="assets/thumbnails/quiz.png" alt="雑学クイズの問題と3つの選択肢" width="784" height="488" loading="eager" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">クイズパック</div>
@@ -483,7 +498,8 @@
         <!-- ことばシャッフル -->
         <a class="app-card" href="kotoba-shuffle/" data-scenes="kotoba circle hiroba">
           <div class="app-card__icon">
-            <span class="material-symbols-rounded">shuffle</span>
+            <span class="material-symbols-rounded" aria-hidden="true">shuffle</span>
+            <img class="app-card__thumbnail" src="assets/thumbnails/kotoba-shuffle.png" alt="バラバラの文字と並べ替える回答欄" width="372" height="210" loading="eager" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">ことばシャッフル</div>
@@ -508,7 +524,8 @@
         <!-- 漢字さがし -->
         <a class="app-card" href="kanji-sagashi/" data-scenes="kotoba circle hiroba">
           <div class="app-card__icon">
-            <span class="material-symbols-rounded">search</span>
+            <span class="material-symbols-rounded" aria-hidden="true">search</span>
+            <img class="app-card__thumbnail" src="assets/thumbnails/kanji-sagashi.png" alt="似た漢字が並ぶ6×6の盤面" width="520" height="521" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">漢字さがし</div>
@@ -533,7 +550,8 @@
         <!-- ことばみっけ -->
         <a class="app-card" href="kotoba-mikke/" data-scenes="kotoba hiroba circle">
           <div class="app-card__icon">
-            <span class="material-symbols-rounded">search</span>
+            <span class="material-symbols-rounded" aria-hidden="true">search</span>
+            <img class="app-card__thumbnail" src="assets/thumbnails/kotoba-mikke.png" alt="頭文字とテーマを組み合わせたお題" width="544" height="217" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">ことばみっけ</div>
@@ -558,7 +576,8 @@
         <!-- ことばリレー -->
         <a class="app-card" href="kotoba-relay/" data-scenes="kotoba circle">
           <div class="app-card__icon">
-            <span class="material-symbols-rounded">forum</span>
+            <span class="material-symbols-rounded" aria-hidden="true">forum</span>
+            <img class="app-card__thumbnail" src="assets/thumbnails/kotoba-relay.png" alt="話の始まりとつなぎ言葉のカード" width="720" height="292" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">ことばリレー</div>
@@ -583,7 +602,8 @@
         <!-- たとえグランプリ -->
         <a class="app-card" href="tatoe-gp/" data-slides data-scenes="kotoba bodoge">
           <div class="app-card__icon">
-            <span class="material-symbols-rounded">emoji_objects</span>
+            <span class="material-symbols-rounded" aria-hidden="true">emoji_objects</span>
+            <img class="app-card__thumbnail" src="assets/thumbnails/tatoe-gp.png" alt="お題をたとえた回答を選ぶ投票画面" width="504" height="534" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">たとえグランプリ</div>
@@ -608,7 +628,8 @@
         <!-- かぶらずヒント -->
         <a class="app-card" href="kaburazu-hint/" data-slides data-scenes="kotoba bodoge">
           <div class="app-card__icon">
-            <span class="material-symbols-rounded">lightbulb</span>
+            <span class="material-symbols-rounded" aria-hidden="true">lightbulb</span>
+            <img class="app-card__thumbnail" src="assets/thumbnails/kaburazu-hint.png" alt="回答者に見せるヒントが並ぶ画面" width="464" height="269" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">かぶらずヒント</div>
@@ -633,7 +654,8 @@
         <!-- ことば探偵 -->
         <a class="app-card" href="kotoba-tantei/" data-slides data-scenes="kotoba bodoge">
           <div class="app-card__icon">
-            <span class="material-symbols-rounded">search</span>
+            <span class="material-symbols-rounded" aria-hidden="true">search</span>
+            <img class="app-card__thumbnail" src="assets/thumbnails/kotoba-tantei.png" alt="赤と青のカードがある5×5の言葉の盤面" width="712" height="446" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">ことば探偵</div>
@@ -658,7 +680,8 @@
         <!-- もじそろえゲーム -->
         <a class="app-card" href="moji-soroe/" data-scenes="kotoba bodoge">
           <div class="app-card__icon">
-            <span class="material-symbols-rounded">font_download</span>
+            <span class="material-symbols-rounded" aria-hidden="true">font_download</span>
+            <img class="app-card__thumbnail" src="assets/thumbnails/moji-soroe.png" alt="文字タイルの手札と2文字・3文字・3文字の組み合わせ" width="456" height="220" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">もじそろえゲーム</div>
@@ -683,7 +706,8 @@
         <!-- コトバペア -->
         <a class="app-card" href="kotoba-pair/" data-scenes="kotoba circle">
           <div class="app-card__icon">
-            <span class="material-symbols-rounded">link</span>
+            <span class="material-symbols-rounded" aria-hidden="true">link</span>
+            <img class="app-card__thumbnail" src="assets/thumbnails/kotoba-pair.png" alt="意味のつながるペアを探す言葉のカード" width="704" height="272" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">コトバペア</div>
@@ -708,7 +732,8 @@
         <!-- とおまわしクイズ -->
         <a class="app-card" href="toomawashi/" data-scenes="kotoba">
           <div class="app-card__icon">
-            <span class="material-symbols-rounded">record_voice_over</span>
+            <span class="material-symbols-rounded" aria-hidden="true">record_voice_over</span>
+            <img class="app-card__thumbnail" src="assets/thumbnails/toomawashi.png" alt="説明するお題と言っちゃダメことば" width="504" height="470" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">とおまわしクイズ</div>
@@ -733,7 +758,8 @@
         <!-- トークテーマカード -->
         <a class="app-card" href="talk-card/" data-scenes="circle hiroba sakusen">
           <div class="app-card__icon">
-            <span class="material-symbols-rounded">style</span>
+            <span class="material-symbols-rounded" aria-hidden="true">style</span>
+            <img class="app-card__thumbnail" src="assets/thumbnails/talk-card.png" alt="開いたトークテーマと3枚のカード" width="844" height="732" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">トークテーマカード</div>
@@ -758,7 +784,8 @@
         <!-- おとなトークカード -->
         <a class="app-card" href="otona-talk/" data-scenes="circle">
           <div class="app-card__icon">
-            <span class="material-symbols-rounded">record_voice_over</span>
+            <span class="material-symbols-rounded" aria-hidden="true">record_voice_over</span>
+            <img class="app-card__thumbnail" src="assets/thumbnails/otona-talk.png" alt="大人どうしで話すお題と3枚のカード" width="844" height="676" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">おとなトークカード</div>
@@ -783,7 +810,8 @@
         <!-- どっちにする？ -->
         <a class="app-card" href="docchi/" data-scenes="sakusen">
           <div class="app-card__icon">
-            <span class="material-symbols-rounded">alt_route</span>
+            <span class="material-symbols-rounded" aria-hidden="true">alt_route</span>
+            <img class="app-card__thumbnail" src="assets/thumbnails/docchi.png" alt="お題と2択、その他の選択肢" width="804" height="369" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">どっちにする？</div>
@@ -808,7 +836,8 @@
         <!-- すきタイプチェック -->
         <a class="app-card" href="suki-type-check/" data-scenes="sakusen">
           <div class="app-card__icon">
-            <span class="material-symbols-rounded">fact_check</span>
+            <span class="material-symbols-rounded" aria-hidden="true">fact_check</span>
+            <img class="app-card__thumbnail" src="assets/thumbnails/suki-type-check.png" alt="好きについての質問と5つの選択肢" width="736" height="653" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">すきタイプチェック</div>
@@ -833,7 +862,8 @@
         <!-- きもちのことばマップ -->
         <a class="app-card" href="kimochi-map/" data-scenes="sakusen">
           <div class="app-card__icon">
-            <span class="material-symbols-rounded">mood</span>
+            <span class="material-symbols-rounded" aria-hidden="true">mood</span>
+            <img class="app-card__thumbnail" src="assets/thumbnails/kimochi-map.png" alt="気持ちのことばを探す6つのグループ" width="844" height="334" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">きもちのことばマップ</div>
@@ -858,7 +888,8 @@
         <!-- つよみカード -->
         <a class="app-card" href="tsuyomi-card/" data-scenes="sakusen">
           <div class="app-card__icon">
-            <span class="material-symbols-rounded">flare</span>
+            <span class="material-symbols-rounded" aria-hidden="true">flare</span>
+            <img class="app-card__thumbnail" src="assets/thumbnails/tsuyomi-card.png" alt="つよみカードとある・ない・どちらでもないの選択肢" width="584" height="369" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">つよみカード</div>
@@ -885,7 +916,8 @@
         <!-- ドまんなか -->
         <a class="app-card" href="do-mannaka/" data-slides data-scenes="bodoge circle">
           <div class="app-card__icon">
-            <span class="material-symbols-rounded">sports_esports</span>
+            <span class="material-symbols-rounded" aria-hidden="true">sports_esports</span>
+            <img class="app-card__thumbnail" src="assets/thumbnails/do-mannaka.png" alt="数字の回答を小さい順に並べた答え合わせ" width="464" height="322" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">ドまんなか</div>
@@ -910,7 +942,8 @@
         <!-- ワードウルフ -->
         <a class="app-card" href="word-wolf/" data-slides data-scenes="bodoge circle">
           <div class="app-card__icon">
-            <span class="material-symbols-rounded">psychology</span>
+            <span class="material-symbols-rounded" aria-hidden="true">psychology</span>
+            <img class="app-card__thumbnail" src="assets/thumbnails/word-wolf.png" alt="自分のお題カードと参加者の準備状況" width="464" height="420" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">ワードウルフ</div>
@@ -935,7 +968,8 @@
         <!-- 人狼ゲーム -->
         <a class="app-card" href="jinro/" data-slides data-scenes="bodoge">
           <div class="app-card__icon">
-            <span class="material-symbols-rounded">groups</span>
+            <span class="material-symbols-rounded" aria-hidden="true">groups</span>
+            <img class="app-card__thumbnail" src="assets/thumbnails/jinro.png" alt="村人の役職カード" width="464" height="244" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">人狼ゲーム</div>
@@ -960,7 +994,8 @@
         <!-- 名前変えゲーム -->
         <a class="app-card" href="name-change/" data-slides data-scenes="bodoge circle">
           <div class="app-card__icon">
-            <span class="material-symbols-rounded">manage_accounts</span>
+            <span class="material-symbols-rounded" aria-hidden="true">manage_accounts</span>
+            <img class="app-card__thumbnail" src="assets/thumbnails/name-change.png" alt="変えた名前から元の名前を当てる選択肢" width="472" height="402" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">名前変えゲーム</div>
@@ -985,7 +1020,8 @@
         <!-- え!? 実は○○なんですかゲーム -->
         <a class="app-card" href="jitsuwa-game/" data-scenes="circle hiroba sakusen">
           <div class="app-card__icon">
-            <span class="material-symbols-rounded">search_insights</span>
+            <span class="material-symbols-rounded" aria-hidden="true">search_insights</span>
+            <img class="app-card__thumbnail" src="assets/thumbnails/jitsuwa-game.png" alt="開いたお題と3枚の質問カード" width="844" height="776" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">え!? 実は○○なんですかゲーム</div>
@@ -1010,7 +1046,8 @@
         <!-- たとえならべ -->
         <a class="app-card" href="tatoe-narabe/" data-slides data-scenes="kotoba bodoge circle sakusen">
           <div class="app-card__icon">
-            <span class="material-symbols-rounded">filter_1</span>
+            <span class="material-symbols-rounded" aria-hidden="true">filter_1</span>
+            <img class="app-card__thumbnail" src="assets/thumbnails/tatoe-narabe.png" alt="お題と自分の数字、宣言した順番" width="464" height="411" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">たとえならべ</div>
@@ -1035,7 +1072,8 @@
         <!-- 以心伝心しないゲーム -->
         <a class="app-card" href="ishin-denshin/" data-scenes="circle hiroba">
           <div class="app-card__icon">
-            <span class="material-symbols-rounded">lightbulb</span>
+            <span class="material-symbols-rounded" aria-hidden="true">lightbulb</span>
+            <img class="app-card__thumbnail" src="assets/thumbnails/ishin-denshin.png" alt="みんなとかぶらない回答を考えるお題" width="844" height="377" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">以心伝心しないゲーム</div>
@@ -1060,7 +1098,8 @@
         <!-- うそつき辞書 -->
         <a class="app-card" href="uso-jisho/" data-slides data-scenes="bodoge">
           <div class="app-card__icon">
-            <span class="material-symbols-rounded">auto_stories</span>
+            <span class="material-symbols-rounded" aria-hidden="true">auto_stories</span>
+            <img class="app-card__thumbnail" src="assets/thumbnails/uso-jisho.png" alt="言葉の本当の意味を当てる選択肢" width="504" height="560" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">うそつき辞書</div>
@@ -1085,7 +1124,8 @@
         <!-- まぎれ絵師 -->
         <a class="app-card" href="magire-eshi/" data-slides data-scenes="bodoge">
           <div class="app-card__icon">
-            <span class="material-symbols-rounded">brush</span>
+            <span class="material-symbols-rounded" aria-hidden="true">brush</span>
+            <img class="app-card__thumbnail" src="assets/thumbnails/magire-eshi.png" alt="みんなで少しずつ描いた絵の見本" width="544" height="459" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">まぎれ絵師</div>
@@ -1110,7 +1150,8 @@
         <!-- ピッタリメーター -->
         <a class="app-card" href="pittari-meter/" data-slides data-scenes="bodoge">
           <div class="app-card__icon">
-            <span class="material-symbols-rounded">tune</span>
+            <span class="material-symbols-rounded" aria-hidden="true">tune</span>
+            <img class="app-card__thumbnail" src="assets/thumbnails/pittari-meter.png" alt="ものさしの両端、ヒントと予想するスライダー" width="504" height="488" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">ピッタリメーター</div>
@@ -1135,7 +1176,8 @@
         <!-- かくれナンバー -->
         <a class="app-card" href="kakure-number/" data-slides data-scenes="bodoge">
           <div class="app-card__icon">
-            <span class="material-symbols-rounded">visibility_off</span>
+            <span class="material-symbols-rounded" aria-hidden="true">visibility_off</span>
+            <img class="app-card__thumbnail" src="assets/thumbnails/kakure-number.png" alt="自分と隠しカードの数字が見えない数字カード" width="464" height="220" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">かくれナンバー</div>
@@ -1160,7 +1202,8 @@
         <!-- こえだけシアター -->
         <a class="app-card" href="koedake-theater/" data-slides data-scenes="bodoge">
           <div class="app-card__icon">
-            <span class="material-symbols-rounded">theater_comedy</span>
+            <span class="material-symbols-rounded" aria-hidden="true">theater_comedy</span>
+            <img class="app-card__thumbnail" src="assets/thumbnails/koedake-theater.png" alt="声で演じるセリフとシチュエーションの選択肢" width="466" height="489" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">こえだけシアター</div>
@@ -1185,7 +1228,8 @@
         <!-- ピタハメ -->
         <a class="app-card" href="pita-hame/" data-slides data-scenes="bodoge hiroba">
           <div class="app-card__icon">
-            <span class="material-symbols-rounded">extension</span>
+            <span class="material-symbols-rounded" aria-hidden="true">extension</span>
+            <img class="app-card__thumbnail" src="assets/thumbnails/pita-hame.png" alt="グレーの型とカラフルなパズルピース" width="600" height="427" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">ピタハメ</div>
@@ -1210,7 +1254,8 @@
         <!-- おしつけずかん -->
         <a class="app-card" href="oshitsuke-zukan/" data-slides data-scenes="bodoge">
           <div class="app-card__icon">
-            <span class="material-symbols-rounded">auto_stories</span>
+            <span class="material-symbols-rounded" aria-hidden="true">auto_stories</span>
+            <img class="app-card__thumbnail" src="assets/thumbnails/oshitsuke-zukan.png" alt="生き物の種類が色分けされた手札" width="416" height="400" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">おしつけずかん</div>
@@ -1235,7 +1280,8 @@
         <!-- エサドリ -->
         <a class="app-card" href="esadori/" data-scenes="bodoge">
           <div class="app-card__icon">
-            <span class="material-symbols-rounded">flutter_dash</span>
+            <span class="material-symbols-rounded" aria-hidden="true">flutter_dash</span>
+            <img class="app-card__thumbnail" src="assets/thumbnails/esadori.png" alt="場のエサカードと1から15の手札" width="416" height="523" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">エサドリ</div>
@@ -1260,7 +1306,8 @@
         <!-- ブラックジャック -->
         <a class="app-card" href="blackjack/" data-slides data-scenes="bodoge hiroba">
           <div class="app-card__icon">
-            <span class="material-symbols-rounded">style</span>
+            <span class="material-symbols-rounded" aria-hidden="true">style</span>
+            <img class="app-card__thumbnail" src="assets/thumbnails/blackjack.png" alt="トランプの手札とカードを引く・ストップの選択肢" width="416" height="242" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">ブラックジャック</div>
@@ -1285,7 +1332,8 @@
         <!-- みんなでランキング -->
         <a class="app-card" href="minna-ranking/" data-scenes="hiroba sakusen">
           <div class="app-card__icon">
-            <span class="material-symbols-rounded">format_list_numbered</span>
+            <span class="material-symbols-rounded" aria-hidden="true">format_list_numbered</span>
+            <img class="app-card__thumbnail" src="assets/thumbnails/minna-ranking.png" alt="お題のアイテムを並べ替えるランキング" width="704" height="314" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">みんなでランキング</div>
@@ -1310,7 +1358,8 @@
         <!-- 興味スゴロク -->
         <a class="app-card" href="kyoumi-sugoroku/" data-scenes="hiroba sakusen">
           <div class="app-card__icon">
-            <span class="material-symbols-rounded">casino</span>
+            <span class="material-symbols-rounded" aria-hidden="true">casino</span>
+            <img class="app-card__thumbnail" src="assets/thumbnails/kyoumi-sugoroku.png" alt="スタートからゴールまでのスゴロク盤面" width="544" height="348" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">興味スゴロク</div>
@@ -1335,7 +1384,8 @@
         <!-- 塗り絵カレンダー -->
         <a class="app-card" href="nurie-week/" data-scenes="sakusen">
           <div class="app-card__icon">
-            <span class="material-symbols-rounded">calendar_view_week</span>
+            <span class="material-symbols-rounded" aria-hidden="true">calendar_view_week</span>
+            <img class="app-card__thumbnail" src="assets/thumbnails/nurie-week.png" alt="曜日と時間のマスを色で塗ったカレンダーの見本" width="860" height="608" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">塗り絵カレンダー</div>
@@ -1360,7 +1410,8 @@
         <!-- バリューカード -->
         <a class="app-card" href="value-card/" data-scenes="sakusen">
           <div class="app-card__icon">
-            <span class="material-symbols-rounded">favorite</span>
+            <span class="material-symbols-rounded" aria-hidden="true">favorite</span>
+            <img class="app-card__thumbnail" src="assets/thumbnails/value-card.png" alt="大事にしたいことが書かれたカード" width="584" height="309" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">バリューカード</div>
@@ -1385,7 +1436,8 @@
         <!-- いくつ言える？ -->
         <a class="app-card" href="ikutsu-ieru/" data-scenes="circle hiroba sakusen">
           <div class="app-card__icon">
-            <span class="material-symbols-rounded">format_list_numbered</span>
+            <span class="material-symbols-rounded" aria-hidden="true">format_list_numbered</span>
+            <img class="app-card__thumbnail" src="assets/thumbnails/ikutsu-ieru.png" alt="お題に思いついた答えを並べた見本" width="504" height="409" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">いくつ言える？</div>
@@ -1410,7 +1462,8 @@
         <!-- キャパグラフ -->
         <a class="app-card" href="kyapa-graph/" data-scenes="sakusen">
           <div class="app-card__icon">
-            <span class="material-symbols-rounded">monitoring</span>
+            <span class="material-symbols-rounded" aria-hidden="true">monitoring</span>
+            <img class="app-card__thumbnail" src="assets/thumbnails/kyapa-graph.png" alt="1週間の棒グラフとキャパラインの見本" width="840" height="340" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">キャパグラフ</div>
@@ -1617,6 +1670,13 @@
     })();
   </script>
 
+  <script>
+    // 画像が読み込めないときも、既存のアイコンとカードのリンクを使えるようにする。
+    document.querySelectorAll('.app-card__thumbnail').forEach((image) => {
+      image.addEventListener('error', () => { image.hidden = true; });
+      if (image.complete && image.naturalWidth === 0) image.hidden = true;
+    });
+  </script>
   <script src="shared/js/stats.js?v=1" defer></script>
 </body>
 </html>
