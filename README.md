@@ -25,6 +25,8 @@ Copyright (c) 2026 たぎ
 
 上記は要約です。再配布・公開・販売を検討する際は、[利用条件の全文](./LICENSE.md)を確認してください。
 
+外部ライブラリ・フォントの出典とライセンス原文は、[第三者クレジット](./apps/third-party-notices.html)にまとめています。Firebase SDK、SortableJS、html2canvas、Noto Sans JP、Zen Kaku Gothic New、Material Symbolsと、確認した配布物内の著作権表示を収録しています。再配布する場合はこのファイルも保持してください。更新時の照合用に、[取得元とSHA-256](./docs/third-party-sources.json)を記録しています。
+
 ## アプリ一覧
 
 アプリは約50本あります。**一覧を README に手で持たず、次の3つを正本とします**（手書きの表は必ず古くなるため）。

@@ -1,0 +1,67 @@
+{
+  "checkedOn": "2026-09-17",
+  "noticeFile": "apps/third-party-notices.html",
+  "hashEncoding": "SHA-256 of upstream response bytes before newline normalization",
+  "sources": [
+    {
+      "component": "Firebase JavaScript SDK 10.14.1",
+      "source": "https://raw.githubusercontent.com/firebase/firebase-js-sdk/firebase%4010.14.1/LICENSE",
+      "sha256": "065e45b5674f9bf76670496e5472611b3fbd87fbeaf99336725430a9909cb687"
+    },
+    {
+      "component": "SortableJS 1.15.7",
+      "source": "https://cdn.jsdelivr.net/npm/sortablejs@1.15.7/LICENSE",
+      "sha256": "e94dfc31e800d169257569db270457c9f028440c9ccae41e7eb78b2db18f1298"
+    },
+    {
+      "component": "html2canvas 1.4.1",
+      "source": "https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/LICENSE",
+      "sha256": "86200ce4e92d9a22c41c8647a55f7a5fddff304ff89b4d36ecc699ed8c123d2c"
+    },
+    {
+      "component": "Noto Sans JP",
+      "source": "https://raw.githubusercontent.com/google/fonts/92345ac0dbb28d27dbd32f3a782e84c55eaac214/ofl/notosansjp/OFL.txt",
+      "sha256": "1c05c68c34f9708415aada51f17e1b0092d2cea709bf4a94cd38114f9e73d7d9"
+    },
+    {
+      "component": "Zen Kaku Gothic New",
+      "source": "https://raw.githubusercontent.com/google/fonts/92345ac0dbb28d27dbd32f3a782e84c55eaac214/ofl/zenkakugothicnew/OFL.txt",
+      "sha256": "0fac78a235c98d640cb06332eb5362c211d86fa03c011df438c35005d22ad2c7"
+    },
+    {
+      "component": "Material Symbols",
+      "source": "https://raw.githubusercontent.com/google/material-design-icons/40a7a292a79d9394157e1ea24f83d52d5e17c556/LICENSE",
+      "sha256": "58d1e17ffe5109a7ae296caafcadfdbe6a7d176f0bc4ab01e12a689b0499d8bd"
+    },
+    {
+      "component": "css-line-break 2.1.0 (html2canvas内)",
+      "source": "https://cdn.jsdelivr.net/npm/css-line-break@2.1.0/LICENSE",
+      "sha256": "ce1ee0539f7fe1f7b75b76d121e674cb897c709c3e24ddba7f9a10fe2d0d88a5"
+    },
+    {
+      "component": "utrie 1.0.2 (html2canvas内)",
+      "source": "https://cdn.jsdelivr.net/npm/utrie@1.0.2/LICENSE",
+      "sha256": "8b00952cd8d0f5cbbefb13576778e1185dc963943151353d90c4e14a5a4caf40"
+    },
+    {
+      "component": "base64-arraybuffer 1.0.2 (html2canvas内)",
+      "source": "https://cdn.jsdelivr.net/npm/base64-arraybuffer@1.0.2/LICENSE",
+      "sha256": "f3eca6ff762533fa5a77caf954a143e48afa204668cf97dce758c45a9e006be3"
+    },
+    {
+      "component": "text-segmentation 1.0.3 (html2canvas内)",
+      "source": "https://cdn.jsdelivr.net/npm/text-segmentation@1.0.3/LICENSE",
+      "sha256": "8b00952cd8d0f5cbbefb13576778e1185dc963943151353d90c4e14a5a4caf40"
+    },
+    {
+      "component": "firebase-app.js bundled notices",
+      "source": "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js",
+      "sha256": "19f05d67deadb1a1fba077c18611c3c9b2fdd5b4ebbd0a5e391498925ebae23e"
+    },
+    {
+      "component": "html2canvas-dist.js bundled notices",
+      "source": "https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.js",
+      "sha256": "01c5b468ffa0427e535e3019165d2efd2489650ec9cf1379d6ab79fdbf75736b"
+    }
+  ]
+}

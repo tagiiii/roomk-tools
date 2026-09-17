@@ -541,9 +541,10 @@ HOWTO1_OK=true
 # apps/ito, apps/iisen-show, apps/hint-de-pinto, apps/codenames, apps/sukina-map は
 # 旧URLからの自動移動スタブ（location.replace のみ・howto.js 不要）。
 # apps/guide/index.html はスタッフ向け説明ページ自体のため howto.js 対象外。
+# apps/third-party-notices.html は第三者ライセンスの表示ページのため howto.js 対象外。
 # apps/stats-view/index.html は開発者専用の利用状況ダッシュボード
 # （ポータル未登録・URL 直打ち前提）のため howto.js 対象外。
-HOWTO_EXEMPT=" apps/ito/index.html apps/iisen-show/index.html apps/hint-de-pinto/index.html apps/codenames/index.html apps/sukina-map/index.html apps/kotoba-waza/index.html apps/guide/index.html apps/stats-view/index.html "
+HOWTO_EXEMPT=" apps/ito/index.html apps/iisen-show/index.html apps/hint-de-pinto/index.html apps/codenames/index.html apps/sukina-map/index.html apps/kotoba-waza/index.html apps/guide/index.html apps/stats-view/index.html apps/third-party-notices.html "
 for f in "${ALL_HTML_FILES[@]}"; do
   [ -f "$f" ] || continue
   case "$HOWTO_EXEMPT" in *" $f "*) continue ;; esac
