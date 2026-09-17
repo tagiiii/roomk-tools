@@ -110,7 +110,6 @@ Tier は「指摘」ではなく「提案アクション」に付ける。カー
 | 型 | 該当アプリ例 | 固有に問う観点 |
 |---|---|---|
 | RTDB 単一ファイル | do-mannaka, word-wolf, jinro, tatoe-narabe, kaburazu-hint, tatoe-gp, magire-eshi, uso-jisho, pittari-meter, kakure-number, koedake-theater, ikutsu-ieru, name-change | transaction 原子性・切断挙動・TTL/孤立ルーム掃除・再接続・リスナー/タイマー片付け・`maximum-scale=1` 必須（`rtdb-audit` スキルの領域） |
-| Firestore 分割 | checkin, vote | 終了後削除・無料枠。※両者は**本体スタブ**（howto 未組込は正常） |
 | オフライン | talk-card, docchi, 内省系の大半 | RTDB 固有観点は**問わない**。`maximum-scale=1` は付けたら WARN |
 
 ### 0.7 実行契機（毎日43アプリ全件監査をしない）
@@ -279,7 +278,7 @@ Tier は「指摘」ではなく「提案アクション」に付ける。カー
 | otona-talk | 78 | ✓ | | koedake-theater | 12 | ✗ |
 | kimochi-map | 72 | ✓ | | tatoe-narabe | 72 | ✗ |
 
-件数概念なし（ユーザー生成・ランダム・スタブ）: suki-type-check, challenge-tane, kakure-number, jinro, checkin, vote, name-change, kyapa-graph, nurie-week, mienai-ganbari, sakusen-kaigi。
+件数概念なし（ユーザー生成・ランダム・スタブ）: suki-type-check, challenge-tane, kakure-number, jinro, name-change, kyapa-graph, nurie-week, mienai-ganbari, sakusen-kaigi。
 
 **`slides.html` 保有16本**（P5-3 の判定基準・2026-07-27 再カウント）: do-mannaka, esadori, jinro, kaburazu-hint, kakure-number, koedake-theater, kotoba-tantei, magire-eshi, name-change, oshitsuke-zukan, pita-hame, pittari-meter, tatoe-gp, tatoe-narabe, uso-jisho, word-wolf。
 

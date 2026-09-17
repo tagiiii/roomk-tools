@@ -11,7 +11,7 @@
 | DB | 桁数 | 生成方法 | 採用アプリ |
 |----|------|---------|----------|
 | Realtime Database | **6桁**英数字 | `RoomkRTDB.generateRoomCode()`（必要に応じてローカル alias） | do-mannaka, word-wolf, name-change, jinro, tatoe-narabe |
-| Firestore | **6桁**英数字 | `generateSessionId()`（utils.js） | checkin, vote |
+| Firestore | **6桁**英数字 | `generateSessionId()`（utils.js） | 現在該当なし |
 
 除外文字（紛らわしいもの）: `0`, `O`, `I`, `1` など
 
@@ -222,4 +222,4 @@ const getEstimatedServerNow = RoomkRTDB.now;
 |------|----------|
 | 2人以上 | name-change |
 | 3人以上 | do-mannaka, word-wolf |
-| 制限なし | talk-card, checkin, vote |
+| 制限なし | talk-card |

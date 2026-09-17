@@ -532,7 +532,7 @@ $CONTENT1_OK && echo -e "  ${GREEN}OK${NC}"
 
 # ─────────────────────────────────────────────────────
 # [HOWTO-1] あそびかたモーダル (howto.js) チェック
-#   全アプリ必須（AGENTS.md）。checkin / vote は本体スタブのため除外
+#   全アプリ必須（AGENTS.md）。リダイレクト・案内ページ等は下記で除外
 # ─────────────────────────────────────────────────────
 echo ""
 echo -e "${BOLD}[HOWTO-1] あそびかたモーダル (howto.js) チェック${NC}"
@@ -543,7 +543,7 @@ HOWTO1_OK=true
 # apps/guide/index.html はスタッフ向け説明ページ自体のため howto.js 対象外。
 # apps/stats-view/index.html は開発者専用の利用状況ダッシュボード
 # （ポータル未登録・URL 直打ち前提）のため howto.js 対象外。
-HOWTO_EXEMPT=" apps/checkin/index.html apps/vote/index.html apps/ito/index.html apps/iisen-show/index.html apps/hint-de-pinto/index.html apps/codenames/index.html apps/sukina-map/index.html apps/kotoba-waza/index.html apps/guide/index.html apps/stats-view/index.html "
+HOWTO_EXEMPT=" apps/ito/index.html apps/iisen-show/index.html apps/hint-de-pinto/index.html apps/codenames/index.html apps/sukina-map/index.html apps/kotoba-waza/index.html apps/guide/index.html apps/stats-view/index.html "
 for f in "${ALL_HTML_FILES[@]}"; do
   [ -f "$f" ] || continue
   case "$HOWTO_EXEMPT" in *" $f "*) continue ;; esac

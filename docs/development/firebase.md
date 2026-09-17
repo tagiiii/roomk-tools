@@ -11,7 +11,7 @@
 
 | サービス | 無料枠 | 主な用途 |
 |---------|--------|---------|
-| Firestore | 1GB / 50,000読 / 20,000書 per日 | checkin, vote |
+| Firestore | 1GB / 50,000読 / 20,000書 per日 | 現在該当なし |
 | Realtime Database | 1GB / 10GB転送 per月 | do-mannaka, word-wolf, name-change |
 | Auth（匿名） | 無制限 | ユーザー識別 |
 

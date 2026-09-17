@@ -46,44 +46,9 @@ const firebaseConfig = {
 
 ## 6. Firestoreセキュリティルール
 
-Firebase Console「Firestore > ルール」に以下を設定する：
+チェックイン・投票集計の削除に伴い、両アプリ向けの旧ルール設定例は削除しました。
 
-```
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-
-    // チェックインルーム
-    match /checkin_rooms/{roomId} {
-      allow read: if true;
-      allow create: if request.auth != null;
-      allow update, delete: if request.auth != null;
-
-      match /entries/{entryId} {
-        allow read: if true;
-        allow create: if request.auth != null;
-        allow update, delete: if false;
-      }
-    }
-
-    // 投票セッション
-    match /vote_sessions/{sessionId} {
-      allow read: if true;
-      allow create: if request.auth != null;
-      allow update: if request.auth != null;
-      allow delete: if request.auth != null;
-
-      match /votes/{voteId} {
-        allow read: if true;
-        // 1ユーザー1票：ドキュメントIDをuidにすることで上書き制御
-        allow create, update: if request.auth != null
-                               && request.auth.uid == voteId;
-        allow delete: if false;
-      }
-    }
-  }
-}
-```
+Firestoreを使用するアプリを追加する場合は、[Firebase共通仕様](./development/firebase.md)を確認し、必要なルールをオーナーに相談してください。`firestore.rules` の変更・反映はオーナーの個別判断が必要です。
 
 ## 7. GitHub Pages での動作確認
 

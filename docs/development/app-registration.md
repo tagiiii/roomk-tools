@@ -9,7 +9,7 @@
 | パターン | 使用DB | ファイル構成 | 採用アプリ |
 |---------|--------|------------|----------|
 | **単一ファイル** | Realtime Database | `index.html` のみ（CSS・JS インライン、共有 `rtdb-utils.js` は参照可） | do-mannaka, word-wolf, name-change |
-| **分割ファイル** | Firestore | `index.html` + `app.js`（+ 必要なら `style.css`） | checkin, vote |
+| **分割ファイル** | Firestore | `index.html` + `app.js`（+ 必要なら `style.css`） | 現在該当なし |
 | **オフライン** | なし | `index.html` + `app.js` | talk-card |
 
 ### 新しいアプリを追加するとき
