@@ -198,14 +198,29 @@
 
     .tg-question-banner {
       margin-bottom: 20px;
-      padding: 24px;
-      border-radius: var(--radius-card);
-      background: var(--color-primary);
-      color: #fff;
+      padding: 32px 40px;
+      border: 2px solid var(--color-accent);
+      border-radius: var(--radius-box);
+      background: var(--color-surface);
       text-align: center;
-      font-size: 19px;
+    }
+    .tg-question-banner__label {
+      margin-bottom: 12px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--color-accent);
+      letter-spacing: 0.08em;
+    }
+    .tg-question-banner__text {
+      font-size: 26px;
       font-weight: 700;
-      line-height: 1.6;
+      color: var(--color-primary);
+      line-height: 1.4;
+      overflow-wrap: anywhere;
+    }
+    @media (max-width: 600px) {
+      .tg-question-banner { padding: 24px 20px; }
+      .tg-question-banner__text { font-size: 20px; }
     }
     .tg-answer-status,
     .tg-vote-status {
@@ -447,7 +462,7 @@
     @media (max-width: 360px) {
       .tg-top-title { font-size: 24px; }
       .tg-room-code-box { font-size: 36px; }
-      .tg-question-banner { font-size: 17px; }
+      .tg-question-banner__text { font-size: 18px; }
       .tg-result-item { flex-direction: column; }
       .tg-result-side {
         flex-direction: row;
@@ -571,7 +586,10 @@
 <div class="screen" id="screen-answering">
   <div class="tg-page">
     <div class="tg-section-label">第 <span id="round-num">1</span> ラウンド</div>
-    <div class="tg-question-banner" id="answer-theme-text"></div>
+    <div class="tg-question-banner">
+      <p class="tg-question-banner__label">お題</p>
+      <p class="tg-question-banner__text" id="answer-theme-text"></p>
+    </div>
     <div class="tg-answer-status" id="answer-status-text"></div>
 
     <div id="answer-input-area">
@@ -602,7 +620,10 @@
 <div class="screen" id="screen-voting">
   <div class="tg-page">
     <div class="tg-section-label">匿名投票</div>
-    <div class="tg-question-banner" id="vote-theme-text"></div>
+    <div class="tg-question-banner">
+      <p class="tg-question-banner__label">お題</p>
+      <p class="tg-question-banner__text" id="vote-theme-text"></p>
+    </div>
     <div class="tg-vote-status" id="vote-status-text"></div>
 
     <div id="vote-input-area">
