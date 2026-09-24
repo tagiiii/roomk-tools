@@ -2,6 +2,9 @@
 
 一覧の実装は `apps/index.html`、画像は `apps/assets/thumbnails/{app}.png`。
 2026-09-17に全40ツールへ追加。撮影元はコミット `b98a6d7` の各アプリ。
+2026-09-24にお題表示の統一（`eeb3055`）に合わせて ishin-denshin・ikutsu-ieru・kotoba-mikke・minna-ranking・tatoe-narabe・uso-jisho・tatoe-gp・toomawashi の8枚を撮り直した。
+do-mannaka は結果画面、kaburazu-hint は回答画面を写しており、今回変更したお題カードは写っていないため、画像を維持した。
+Firebase を止めるときは SDK の読み込みと認証・データ用のドメインだけを遮断する。`googleapis.com` 全体を遮断すると Google Fonts も止まり、アイコンが文字のまま写る。
 
 ## 表示と更新
 
