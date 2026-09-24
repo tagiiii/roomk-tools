@@ -154,19 +154,35 @@
   font-weight: 500;
   background: #EEF3F8;
   color: var(--color-primary);
-  margin-bottom: 32px;
+  margin-bottom: 20px;
 }
 
 .isd-topic__badge .material-symbols-rounded {
   font-size: 16px;
 }
 
+.isd-topic__box {
+  background: var(--color-surface);
+  border: 2px solid var(--color-accent);
+  border-radius: var(--radius-box);
+  padding: 32px 40px;
+  margin-bottom: 24px;
+}
+
+.isd-topic__label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-accent);
+  letter-spacing: 0.08em;
+  margin-bottom: 12px;
+}
+
 .isd-topic__question {
-  font-size: 48px;
+  font-size: 40px;
   font-weight: 700;
   color: var(--color-primary);
   line-height: 1.4;
-  margin-bottom: 24px;
+  overflow-wrap: anywhere;
 }
 
 .isd-topic__guide {
@@ -280,8 +296,12 @@
     font-size: 16px;
   }
 
+  .isd-topic__box {
+    padding: 24px 20px;
+  }
+
   .isd-topic__question {
-    font-size: 32px;
+    font-size: 28px;
   }
 
   .isd-topic__guide {

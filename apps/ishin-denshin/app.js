@@ -138,7 +138,7 @@ const $startBtn      = document.getElementById('btnStart');
 const $selectTitle   = document.getElementById('selectTitle');
 const $candidateGrid = document.getElementById('candidateGrid');
 const $topicText     = document.getElementById('topicText');
-const $roundBadge    = document.getElementById('roundBadge');
+const $roundBadge    = document.getElementById('roundBadgeText');
 const $nextBtn       = document.getElementById('btnNext');
 const $poolInfo      = document.getElementById('poolInfo');
 
