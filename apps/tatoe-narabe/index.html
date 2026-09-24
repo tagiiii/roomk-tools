@@ -110,24 +110,24 @@
 
     /* ── お題バナー ── */
     .ito-theme-banner {
-      background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
-      border-radius: 16px;
-      padding: 20px 24px;
+      background: var(--color-surface);
+      border: 2px solid var(--color-accent);
+      border-radius: var(--radius-box);
+      padding: 32px 40px;
       text-align: center;
-      color: #fff;
       margin-bottom: 24px;
     }
-    .ito-theme-banner__label { font-size: 12px; opacity: 0.8; margin-bottom: 4px; font-weight: 500; letter-spacing: 0.05em; }
-    .ito-theme-banner__text { font-size: 22px; font-weight: 700; }
+    .ito-theme-banner__label { font-size: 13px; font-weight: 500; color: var(--color-accent); letter-spacing: 0.08em; margin-bottom: 12px; }
+    .ito-theme-banner__text { font-size: 30px; font-weight: 700; color: var(--color-primary); line-height: 1.4; overflow-wrap: anywhere; }
     .ito-my-number-chip {
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      margin: 0 auto 16px;
-      padding: 10px 14px;
+      margin: 16px auto 0;
+      padding: 10px 16px;
       border-radius: 999px;
-      background: rgba(255, 255, 255, 0.2);
-      border: 1px solid rgba(255, 255, 255, 0.28);
+      background: var(--color-primary);
+      color: #fff;
       font-size: 14px;
       font-weight: 700;
     }
@@ -355,6 +355,8 @@
       .ito-header { padding: 32px 0 24px; }
       .ito-number { font-size: 64px; }
       .ito-timer { font-size: 40px; }
+      .ito-theme-banner { padding: 24px 20px; }
+      .ito-theme-banner__text { font-size: 24px; }
     }
   </style>
 </head>
