@@ -1,133 +1,140 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
   <title>みんなでランキング | room-K</title>
-  <!-- Google Fonts（Noto Sans JP）-->
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
-  <!-- Material Symbols Rounded -->
-  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet" />
-  <!-- 共通デザインシステム -->
-  <link rel="stylesheet" href="../shared/css/design-system.css" />
-  <!-- アプリ固有スタイル -->
-  <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
+  <link rel="stylesheet" href="../shared/css/design-system.css">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+  <script src="../shared/js/rtdb-utils.js?v=20260910"></script>
 </head>
 <body>
-
   <div class="wrapper">
-
-    <!-- ヘッダー -->
     <header class="mr-header">
       <h1 class="mr-header__title">みんなでランキング</h1>
-      <p class="mr-header__sub">すきな順に ならべてあそぼう。うちらのランキングができたらOK！</p>
+      <p class="mr-header__sub">自分のランキングを作って、みんなの1位を予想しよう</p>
     </header>
-
-    <!-- トップ: お題のえらび方 3択 -->
-    <section class="mr-screen active" id="screen-top">
-      <div class="mr-menu">
-        <button type="button" class="mr-menu__btn" id="btnGacha">
-          <span class="material-symbols-rounded mr-menu__icon" aria-hidden="true">casino</span>
-          <span class="mr-menu__label">お題ガチャ</span>
-          <span class="mr-menu__desc">ランダムにお題が出てくる</span>
-        </button>
-        <button type="button" class="mr-menu__btn" id="btnList">
-          <span class="material-symbols-rounded mr-menu__icon" aria-hidden="true">list_alt</span>
-          <span class="mr-menu__label">お題をえらぶ</span>
-          <span class="mr-menu__desc">一覧からすきなお題をえらぶ</span>
-        </button>
-        <button type="button" class="mr-menu__btn" id="btnCreate">
-          <span class="material-symbols-rounded mr-menu__icon" aria-hidden="true">edit</span>
-          <span class="mr-menu__label">じぶんたちでつくる</span>
-          <span class="mr-menu__desc">お題もアイテムも自由に入力</span>
-        </button>
-      </div>
-      <p class="mr-note">合意しなくてもOK。1人でならべてあそんでもOK！</p>
-    </section>
-
-    <!-- お題一覧 -->
-    <section class="mr-screen" id="screen-list">
-      <div class="mr-subhead">
-        <button type="button" class="btn btn-ghost btn-sm" id="btnListBack">
-          <span class="material-symbols-rounded" aria-hidden="true">arrow_back</span>もどる
-        </button>
-        <h2 class="mr-subhead__title">お題をえらぶ</h2>
-      </div>
-      <div class="mr-topic-list" id="topicList"></div>
-    </section>
-
-    <!-- じぶんたちでつくる -->
-    <section class="mr-screen" id="screen-create">
-      <div class="mr-subhead">
-        <button type="button" class="btn btn-ghost btn-sm" id="btnCreateBack">
-          <span class="material-symbols-rounded" aria-hidden="true">arrow_back</span>もどる
-        </button>
-        <h2 class="mr-subhead__title">じぶんたちでつくる</h2>
-      </div>
-      <div class="mr-form">
-        <label class="mr-form__label" for="createTopic">お題（30文字まで）</label>
-        <input type="text" class="mr-form__input" id="createTopic" maxlength="30" placeholder="例：うちらのすきな〇〇" />
-        <p class="mr-form__label">アイテム（15文字まで・2〜8個）</p>
-        <div class="mr-form__items" id="createItems"></div>
-        <button type="button" class="btn btn-primary btn-full" id="btnCreateStart">ならべはじめる</button>
-      </div>
-    </section>
-
-    <!-- ランキング -->
-    <section class="mr-screen" id="screen-rank">
-      <div class="mr-rank__head">
-        <div class="mr-rank__box">
-          <p class="mr-rank__label">お題</p>
-          <h2 class="mr-rank__topic" id="rankTopic"></h2>
+    <main>
+      <section class="mr-screen active" id="screen-top">
+        <div class="mr-panel">
+          <p class="mr-lead">同じお題で一人ずつランキングを作るよ。提出したら、ほかの人の1位を予想して、結果を見せ合おう。</p>
+          <p class="mr-note">好きな順に正解はないよ。ランキングの内容には点を付けないよ。</p>
+          <button type="button" class="btn btn-primary btn-full" id="btnGoCreate">ルームをつくる</button>
+          <button type="button" class="btn btn-secondary btn-full" id="btnGoJoin">ルームに参加する</button>
         </div>
-        <p class="mr-note">けっかは きょうの気分でOK。「うえとタイ」でうえのカードと同じ順位にできるよ。</p>
-      </div>
-
-      <ul class="mr-rank__list" id="rankList"></ul>
-
-      <div class="mr-add">
-        <input type="text" class="mr-form__input" id="addItemInput" maxlength="15" placeholder="アイテムをついか（15文字まで）" aria-label="アイテムをついか（15文字まで）" />
-        <button type="button" class="btn btn-secondary" id="btnAddItem">ついか</button>
-      </div>
-
-      <section class="mr-out">
-        <p class="mr-out__title">
-          <span class="material-symbols-rounded" aria-hidden="true">inventory_2</span>ランクがい
-        </p>
-        <p class="mr-out__empty" id="outEmpty">「ランクがいへ」でうつしたアイテムがここに入るよ</p>
-        <ul class="mr-out__list" id="outList"></ul>
       </section>
-
-      <div class="mr-actions">
-        <button type="button" class="btn btn-primary" id="btnCopy">
-          <span class="material-symbols-rounded" aria-hidden="true">content_copy</span>けっかをコピー
-        </button>
-        <button type="button" class="btn btn-secondary" id="btnNextTopic">
-          <span class="material-symbols-rounded" aria-hidden="true">refresh</span>つぎのお題へ
-        </button>
+      <section class="mr-screen" id="screen-create">
+        <div class="mr-subhead"><button type="button" class="btn btn-ghost btn-sm" id="btnCreateBack">トップへ戻る</button><h2 class="mr-subhead__title">ルームをつくる</h2></div>
+        <div class="mr-form">
+          <label class="mr-form__label" for="hostName">ホストの名前（8文字まで）</label>
+          <input class="mr-form__input" id="hostName" maxlength="8" autocomplete="nickname">
+          <p class="mr-form__error" id="createError" hidden></p>
+          <button type="button" class="btn btn-primary btn-full" id="btnCreateRoom">ルームをつくる</button>
+        </div>
+      </section>
+      <section class="mr-screen" id="screen-join">
+        <div class="mr-subhead"><button type="button" class="btn btn-ghost btn-sm" id="btnJoinBack">トップへ戻る</button><h2 class="mr-subhead__title">ルームに参加する</h2></div>
+        <div class="mr-form">
+          <label class="mr-form__label" for="guestName">名前（8文字まで）</label>
+          <input class="mr-form__input" id="guestName" maxlength="8" autocomplete="nickname">
+          <label class="mr-form__label" for="joinCode">ルームコード（6文字）</label>
+          <input class="mr-form__input mr-form__input--code" id="joinCode" maxlength="6" autocapitalize="characters" autocomplete="off" spellcheck="false">
+          <p class="mr-form__error" id="joinError" hidden></p>
+          <button type="button" class="btn btn-primary btn-full" id="btnJoinRoom">参加する</button>
+        </div>
+      </section>
+      <div class="mr-roombar" id="roomBar" hidden>
+        <span>ルーム <strong id="roomCodeLabel"></strong></span>
+        <button type="button" class="btn btn-ghost btn-sm" id="btnCopyCode">コードをコピー</button>
+        <button type="button" class="btn btn-ghost btn-sm" id="btnLeave">退出する</button>
       </div>
-    </section>
-
+      <section class="mr-screen" id="screen-waiting">
+        <div class="mr-phase"><h2 class="mr-phase__title">お題を選ぶ</h2><p class="mr-phase__sub" id="waitingLead"></p></div>
+        <div class="mr-panel"><h3 class="mr-panel__title">参加者</h3><ul class="mr-people" id="waitingPlayers"></ul></div>
+        <div id="hostTopicTools" hidden>
+          <div class="mr-menu">
+            <button type="button" class="btn btn-secondary" id="btnGacha">お題ガチャ</button>
+            <button type="button" class="btn btn-secondary" id="btnTopicList">お題を選ぶ</button>
+            <button type="button" class="btn btn-secondary" id="btnCustomTopic">自分たちで作る</button>
+          </div>
+          <div class="mr-panel" id="topicListPanel" hidden><h3 class="mr-panel__title">お題を選ぶ</h3><div class="mr-topic-list" id="topicList"></div></div>
+          <div class="mr-form" id="customTopicPanel" hidden>
+            <label class="mr-form__label" for="createTopic">お題（30文字まで）</label>
+            <input class="mr-form__input" id="createTopic" maxlength="30">
+            <p class="mr-form__label">アイテム（15文字まで・2〜8個）</p>
+            <div class="mr-form__items" id="createItems"></div>
+            <button type="button" class="btn btn-secondary btn-full" id="btnUseCustomTopic">このお題を使う</button>
+          </div>
+          <div class="mr-topic-preview"><p class="mr-topic-preview__label">選択中のお題</p><strong id="selectedTopic"></strong><p id="selectedItems"></p></div>
+          <button type="button" class="btn btn-primary btn-full" id="btnStartRound">ランキングを始める</button>
+          <p class="mr-note">参加者が2人以上になったら始められます。</p>
+        </div>
+      </section>
+      <section class="mr-screen" id="screen-ranking">
+        <div class="mr-phase"><h2 class="mr-phase__title">ランキングを作る</h2><p class="mr-phase__sub">目安は3分。時間を過ぎても自動では進まないよ。</p><p class="mr-phase__time" id="rankTime"></p></div>
+        <div class="mr-rank__box"><p class="mr-rank__label">お題</p><h3 class="mr-rank__topic" id="rankTopic"></h3></div>
+        <div id="guestRankEditor" hidden>
+          <p class="mr-note">上下のボタンで並べ替えてね。「上とタイ」で同じ順位にできるよ。</p>
+          <ul class="mr-rank__list" id="rankList"></ul>
+          <section class="mr-out"><p class="mr-out__title">ランク外</p><p class="mr-out__empty" id="outEmpty">「ランク外へ」で移したアイテムがここに入るよ</p><ul class="mr-out__list" id="outList"></ul></section>
+          <button type="button" class="btn btn-primary btn-full" id="btnSubmitRank">このランキングで提出</button>
+        </div>
+        <div class="mr-panel" id="guestRankSubmitted" hidden><p>提出しました。ほかの人が作り終えるまで待ってね。</p></div>
+        <div id="hostRankTools" hidden>
+          <div class="mr-panel"><h3 class="mr-panel__title">提出状況</h3><ul class="mr-people" id="rankProgress"></ul></div>
+          <button type="button" class="btn btn-primary btn-full" id="btnGoGuess">提出済みの人で予想へ進む</button>
+          <p class="mr-note">未提出の人は今回パス。作りかけの並びは公開されません。</p>
+        </div>
+      </section>
+      <section class="mr-screen" id="screen-guess">
+        <div class="mr-phase"><h2 class="mr-phase__title">1位を予想</h2><p class="mr-phase__topic" id="guessTopic"></p><p class="mr-phase__sub" id="guessLead"></p></div>
+        <div id="guestGuessTools" hidden><div class="mr-choice-list" id="guessChoices"></div><p class="mr-note" id="guessNote"></p></div>
+        <div class="mr-panel" id="guestGuessWait" hidden></div>
+        <div id="hostGuessTools" hidden>
+          <div class="mr-panel"><h3 class="mr-panel__title">予想の提出状況</h3><ul class="mr-people" id="guessProgress"></ul></div>
+          <button type="button" class="btn btn-primary btn-full" id="btnReveal">結果を公開</button>
+          <p class="mr-note">予想していない人はパスになります。</p>
+        </div>
+      </section>
+      <section class="mr-screen" id="screen-reveal">
+        <div class="mr-phase"><h2 class="mr-phase__title" id="revealTitle"></h2><p class="mr-phase__topic" id="revealTopic"></p><p class="mr-phase__sub">みんなの予想は当たったかな？</p></div>
+        <div class="mr-panel"><h3 class="mr-panel__title">ランキング</h3><ol class="mr-result-list" id="revealRanking"></ol><p id="revealOut"></p></div>
+        <div class="mr-panel"><h3 class="mr-panel__title">1位の予想</h3><ul class="mr-people" id="revealGuesses"></ul></div>
+        <div id="hostRevealTools" hidden><button type="button" class="btn btn-primary btn-full" id="btnNextReveal">次へ進む</button></div>
+      </section>
+      <section class="mr-screen" id="screen-done">
+        <div class="mr-phase"><h2 class="mr-phase__title">このお題はここまで</h2><p class="mr-phase__sub">ランキングの違いで面白かったところを話してみよう。</p></div>
+        <div class="mr-panel"><h3 class="mr-panel__title">1位予想のポイント</h3><ul class="mr-people" id="scoreList"></ul><p class="mr-note">ポイントは予想にだけ付きます。ランキングの内容に点は付きません。</p></div>
+        <button type="button" class="btn btn-primary btn-full" id="btnNextTopic" hidden>次のお題を選ぶ</button>
+      </section>
+    </main>
   </div>
-
+  <div class="mr-overlay" id="hostOffOverlay" hidden><div class="mr-overlay__panel"><h2>ホストの戻りを待っています</h2><p>しばらく待っても戻らないときは退出してね。</p><button type="button" class="btn btn-secondary" id="btnOverlayLeave">退出する</button></div></div>
   <script type="module" src="app.js"></script>
   <script src="../shared/js/stats.js?v=1" defer></script>
   <script src="../shared/js/howto.js"></script>
   <script>
     RoomkHowto.init({
       title: 'あそびかた',
-      lead: '正解のないお題を、すきな順にならべてあそぶツール。合意しなくてもOK、1人でならべてもOK！',
+      lead: '同じお題で一人ずつランキングを作り、ほかの人の1位を予想する遊び。',
       sections: [
         { heading: 'はじめかた', items: [
-          '「お題ガチャ」「お題をえらぶ」「じぶんたちでつくる」のどれかでお題を出す',
+          'ホストが「ルームをつくる」で名前を入れ、お題を選ぶ',
+          '参加者は「ルームに参加する」で名前、ルームコード（6文字）の順に入れ、「参加する」を押す',
+          'ホストが「ランキングを始める」を押す',
         ] },
         { heading: 'すすめかた', items: [
-          'カードをドラッグするか、上下の矢印ボタンでならべかえる',
-          '「うえとタイ」で、うえのカードと同じ順位にできる',
-          '「ランクがいへ」でカードをランクがいにうつせる（「もどす」でもどせる）',
-          '「けっかをコピー」で、ランキングをチャットに貼りつけられる',
+          '各自でカードを並べ替え、「このランキングで提出」を押す',
+          'ホストはいつでも「提出済みの人で予想へ進む」を押せる。未提出の人はパス',
+          'ほかの人の1位を予想してから、ホストが「結果を公開」を押す',
+          '予想が当たると1ポイント。ランキングの内容には点が付かない',
         ] },
-        { heading: 'おわりかた', text: '「つぎのお題へ」でいつでもつぎにすすめる。けっかは きょうの気分でOK！' },
+        { heading: 'おわりかた', text: 'ホストが次のお題へ進めるか、ルームを閉じて終わる。時間は目安で、自動では進まないよ。' },
       ],
     });
   </script>
