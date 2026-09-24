@@ -60,11 +60,18 @@
 .kmk-odai {
   text-align: center;
   background: var(--color-surface);
-  border: 2px dashed var(--color-accent);
-  border-radius: var(--radius-card);
-  padding: 30px 24px;
+  border: 2px solid var(--color-accent);
+  border-radius: var(--radius-box);
+  padding: 32px 40px;
   margin: 0 auto;
   max-width: 520px;
+}
+.kmk-odai__tag {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-accent);
+  letter-spacing: 0.08em;
+  margin: 0 0 12px;
 }
 .kmk-odai__line1 {
   font-size: clamp(22px, 5vw, 30px);
@@ -129,6 +136,6 @@
 @media (max-width: 600px) {
   .wrapper { padding: 20px 14px 48px; }
   .kmk-hero { padding: 28px 12px 16px; }
-  .kmk-odai { padding: 24px 16px; }
+  .kmk-odai { padding: 24px 20px; }
   .kmk-reroll .btn { flex-basis: 100%; width: 100%; }
 }
