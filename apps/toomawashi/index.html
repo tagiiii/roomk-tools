@@ -142,8 +142,11 @@
     .tw-aspect-now .material-symbols-rounded { font-size: 18px; }
 
     /* ── お題（説明役）── */
-    .tw-topic { text-align: center; padding: 24px 16px; }
-    .tw-topic__label { font-size: 13px; color: var(--color-muted); font-weight: 700; margin-bottom: 6px; }
+    .tw-topic {
+      text-align: center; padding: 32px 40px;
+      border: 2px solid var(--color-accent); border-radius: var(--radius-box); box-shadow: none;
+    }
+    .tw-topic__label { font-size: 13px; color: var(--color-accent); font-weight: 500; letter-spacing: 0.08em; margin-bottom: 12px; }
     .tw-topic__text {
       font-size: 44px; font-weight: 700; color: var(--color-primary);
       line-height: 1.3; word-break: break-word;
@@ -278,6 +281,7 @@
     @media (max-width: 600px) {
       .page { padding: 28px 16px 60px; }
       .tw-room-code { font-size: 36px; }
+      .tw-topic { padding: 24px 20px; }
       .tw-topic__text { font-size: 34px; }
       .tw-hero__title { font-size: 24px; }
     }
