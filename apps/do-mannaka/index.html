@@ -119,10 +119,17 @@
 
     /* ── 回答画面 ── */
     .question-banner {
-      background: var(--color-primary); color: #fff;
-      border-radius: var(--radius-card); padding: 24px;
-      text-align: center; font-size: 19px; font-weight: 700;
-      line-height: 1.5; margin-bottom: 20px;
+      background: var(--color-surface); border: 2px solid var(--color-accent);
+      border-radius: var(--radius-box); padding: 32px 40px;
+      text-align: center; margin-bottom: 20px;
+    }
+    .question-banner__label {
+      font-size: 13px; font-weight: 500; color: var(--color-accent);
+      letter-spacing: 0.08em; margin-bottom: 12px;
+    }
+    .question-banner__text {
+      font-size: 26px; font-weight: 700; color: var(--color-primary);
+      line-height: 1.4; overflow-wrap: anywhere;
     }
     .answer-status {
       text-align: center; font-size: 14px; color: var(--color-muted); margin-bottom: 16px;
@@ -205,6 +212,10 @@
     }
     .top-icon-wrap .material-symbols-rounded { font-size: 40px; color: #fff; }
 
+    @media (max-width: 600px) {
+      .question-banner { padding: 24px 20px; }
+      .question-banner__text { font-size: 20px; }
+    }
     @media (max-width: 360px) {
       .top-title { font-size: 24px; }
       .room-code-box { font-size: 36px; }
@@ -357,7 +368,10 @@
 <div class="screen" id="screen-answering">
   <div class="page">
     <div class="section-label">第 <span id="round-num">1</span> 問</div>
-    <div class="question-banner" id="answer-question-text"></div>
+    <div class="question-banner">
+      <p class="question-banner__label">お題</p>
+      <p class="question-banner__text" id="answer-question-text"></p>
+    </div>
     <div class="answer-status" id="answer-status-text"></div>
 
     <!-- 入力エリア -->
