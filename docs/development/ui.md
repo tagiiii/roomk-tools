@@ -63,6 +63,24 @@ tsuyomi-card で実証済みの型）。
 
 あそびかたのインライン展開パネルは置かず、説明は howto.js のモーダルに一本化する。
 
+### お題表示の定石（白カード＋ティール枠）
+
+参加者が画面共有で見る「お題」（トーク・ゲームのお題、秘密のことば、セリフなど）は、
+アプリをまたいで同じ見た目にする（2026-09-24 統一。talk-card の型を標準にした）。
+
+| 部位 | 指定 |
+|------|------|
+| 枠 | `background: var(--color-surface)`、`border: 2px solid var(--color-accent)`、`border-radius: var(--radius-box)`、`padding: 32px 40px`（600px以下 `24px 20px`）、中央寄せ、影なし |
+| ラベル | 枠の中の先頭。13px・500・`var(--color-accent)`・`letter-spacing: 0.08em`・下に12px |
+| 本文 | 700・`var(--color-primary)`・`line-height` 1.3〜1.5・`overflow-wrap: anywhere` |
+| 本文サイズ | 単語・短いお題は 36〜44px（600px以下 28〜34px）、文のお題は 26〜30px（600px以下 20〜24px） |
+
+- ラベルの文言は「お題」。自分だけに見えるお題は「あなたのお題」。アプリの内容に合わせた言い方（「今日のお題」「今回のセリフ」「スターター」など）は可
+- 「第N問」「ラウンドN/M」などの進行表示は枠の外（上）に置き、ラベルと兼ねない
+- 紺の塗りやグラデーションの帯、点線の枠、枠なしの大きな文字でお題を出さない
+- 遊んでいる途中の再確認用の小さな札（`primary` 塗りの丸い札。word-wolf・magire-eshi・jinro）はこの型の対象外
+- 問題文と選択肢を並べるクイズ・診断型（quiz・kotoba-theme・suki-type-check・tsuyomi-card・docchi）は「問題カード」として扱い、この型の対象外
+
 ### カードフリップ（M-4）
 
 ```html
