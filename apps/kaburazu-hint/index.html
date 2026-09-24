@@ -92,9 +92,12 @@
     }
 
     /* ── お題カード ── */
-    .kbz-word-card { text-align: center; padding: 28px 20px; }
-    .kbz-word-label { font-size: 13px; color: var(--color-muted); font-weight: 500; margin-bottom: 8px; }
-    .kbz-word-text { font-size: 36px; font-weight: 700; color: var(--color-primary); }
+    .kbz-word-card {
+      text-align: center; padding: 32px 40px;
+      border: 2px solid var(--color-accent); border-radius: var(--radius-box); box-shadow: none;
+    }
+    .kbz-word-label { font-size: 13px; color: var(--color-accent); font-weight: 500; letter-spacing: 0.08em; margin-bottom: 12px; }
+    .kbz-word-text { font-size: 38px; font-weight: 700; color: var(--color-primary); line-height: 1.4; overflow-wrap: anywhere; }
 
     /* ── ヒントカード（review / answer）── */
     .kbz-hint-card {
@@ -221,7 +224,8 @@
       .page { padding: 28px 16px 60px; }
       .kbz-hero { padding: 32px 0 24px; }
       .kbz-room-code { font-size: 36px; }
-      .kbz-word-text { font-size: 28px; }
+      .kbz-word-card { padding: 24px 20px; }
+      .kbz-word-text { font-size: 30px; }
     }
   </style>
 </head>
