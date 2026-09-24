@@ -55,20 +55,25 @@
 
     /* ── お題表示 ── */
     .ii-theme {
-      padding: 20px 16px;
-      background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
-      color: #fff;
-      border-radius: var(--radius-card);
+      padding: 32px 40px;
+      background: var(--color-surface);
+      border: 2px solid var(--color-accent);
+      border-radius: var(--radius-box);
       text-align: center;
       margin-bottom: 16px;
     }
     .ii-theme__label {
-      font-size: 12px; font-weight: 700;
-      letter-spacing: 0.1em; opacity: 0.85;
-      margin-bottom: 6px;
+      font-size: 13px; font-weight: 500; color: var(--color-accent);
+      letter-spacing: 0.08em;
+      margin-bottom: 12px;
     }
     .ii-theme__text {
-      font-size: 22px; font-weight: 700; line-height: 1.3;
+      font-size: 30px; font-weight: 700; color: var(--color-primary);
+      line-height: 1.4; overflow-wrap: anywhere;
+    }
+    @media (max-width: 600px) {
+      .ii-theme { padding: 24px 20px; }
+      .ii-theme__text { font-size: 24px; }
     }
 
     /* ── タイマー ── */
