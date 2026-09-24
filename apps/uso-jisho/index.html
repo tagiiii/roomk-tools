@@ -160,21 +160,29 @@
 
     .uj-word-card {
       margin-bottom: 20px;
-      padding: 28px 24px;
-      border-radius: var(--radius-card);
-      background: var(--color-primary);
-      color: #fff;
+      padding: 32px 40px;
+      border: 2px solid var(--color-accent);
+      border-radius: var(--radius-box);
+      background: var(--color-surface);
       text-align: center;
+    }
+    .uj-word-card__label {
+      margin-bottom: 12px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--color-accent);
+      letter-spacing: 0.08em;
     }
     .uj-word-card__kana {
       font-size: 14px;
-      opacity: 0.85;
+      color: var(--color-muted);
       letter-spacing: 0.15em;
-      margin-bottom: 6px;
+      margin-bottom: 4px;
     }
     .uj-word-card__word {
-      font-size: 34px;
+      font-size: 38px;
       font-weight: 700;
+      color: var(--color-primary);
       line-height: 1.4;
       word-break: keep-all;
       overflow-wrap: anywhere;
@@ -182,7 +190,7 @@
     .uj-word-card__note {
       margin-top: 10px;
       font-size: 13px;
-      opacity: 0.85;
+      color: var(--color-muted);
     }
 
     .uj-secret {
@@ -505,7 +513,8 @@
       .uj-page { padding: 28px 16px 60px; }
       .uj-hero__title { font-size: 26px; }
       .uj-room-code { font-size: 38px; }
-      .uj-word-card__word { font-size: 28px; }
+      .uj-word-card { padding: 24px 20px; }
+      .uj-word-card__word { font-size: 30px; }
     }
   </style>
 </head>
@@ -606,6 +615,7 @@
   <div class="uj-page">
     <div class="uj-section-label">第 <span id="writing-round-num">1</span> ラウンド</div>
     <div class="uj-word-card">
+      <div class="uj-word-card__label">お題</div>
       <div class="uj-word-card__kana" id="writing-kana"></div>
       <div class="uj-word-card__word" id="writing-word"></div>
       <div class="uj-word-card__note">こんなことば、きいたことある？</div>
@@ -661,6 +671,7 @@
   <div class="uj-page">
     <div class="uj-section-label">第 <span id="voting-round-num">1</span> ラウンド・投票</div>
     <div class="uj-word-card">
+      <div class="uj-word-card__label">お題</div>
       <div class="uj-word-card__kana" id="voting-kana"></div>
       <div class="uj-word-card__word" id="voting-word"></div>
       <div class="uj-word-card__note">どれが本物の意味だとおもう？</div>
