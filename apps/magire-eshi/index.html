@@ -102,6 +102,9 @@
     }
     .mgr-turn__now { font-size: 16px; font-weight: 700; color: var(--color-primary); }
     .mgr-turn__count { font-size: 13px; color: var(--color-muted); }
+    .mgr-draw-timer { font-size: 18px; font-weight: 700; color: var(--color-primary); margin-bottom: 12px; }
+    .mgr-draw-timer--ended { color: var(--color-muted); }
+    #btn-skip-turn { margin-bottom: 12px; }
     .mgr-legend { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
     .mgr-legend__chip {
       display: inline-flex; align-items: center; gap: 6px;
@@ -327,6 +330,17 @@
         <summary><span class="material-symbols-rounded" aria-hidden="true">visibility</span>まぎれ絵師（タップで見る）</summary>
         <div class="mgr-secret__body" id="rv-fake-body"></div>
       </details>
+      <div class="form-group mt-md">
+        <label class="form-label" for="rv-draw-minutes">描く時間（1人の手番ごと）</label>
+        <select class="form-select" id="rv-draw-minutes">
+          <option value="0">制限なし</option>
+          <option value="1">1分</option>
+          <option value="2">2分</option>
+          <option value="3">3分</option>
+          <option value="4">4分</option>
+          <option value="5">5分</option>
+        </select>
+      </div>
       <div class="mt-md">
         <button class="btn btn-primary btn-full" id="btn-start-drawing" onclick="hostStartDrawing()" disabled>
           <span class="material-symbols-rounded" aria-hidden="true">brush</span>描き始める
@@ -351,6 +365,7 @@
       <span class="mgr-turn__now" id="dr-now"></span>
       <span class="mgr-turn__count" id="dr-count"></span>
     </div>
+    <p class="mgr-draw-timer mgr-center" id="dr-timer" role="timer" aria-live="off" style="display:none"></p>
     <div class="mgr-legend" id="dr-legend"></div>
 
     <div class="mgr-canvas-wrap" id="dr-canvas-wrap">
@@ -372,6 +387,9 @@
     <div class="mgr-center" id="dr-topic-chip-area" style="margin-bottom:12px"></div>
 
     <div id="dr-host-area" style="display:none">
+      <button class="btn btn-secondary btn-full" id="btn-skip-turn" onclick="hostSkipTurn()">
+        <span class="material-symbols-rounded" aria-hidden="true">skip_next</span>この人の番をスキップ
+      </button>
       <details class="mgr-secret">
         <summary><span class="material-symbols-rounded" aria-hidden="true">visibility</span>お題とまぎれ絵師（タップで見る）</summary>
         <div class="mgr-secret__body" id="dr-secret-body"></div>
@@ -632,6 +650,9 @@ const state = {
   turnIndexAtDraw: null,
   strokeSubmitting: false,
   lastRenderKey: '',
+  drawingTimerInterval: null,
+  drawingAdvancePending: null,
+  skipSubmitting: null,
   // 進行
   myVote: null,
   roleRevealed: false,
@@ -793,6 +814,10 @@ async function expireGuestRoom(ref) {
 
 // ── 画面管理 ──
 function showScreen(id) {
+  if (id !== 'drawing') {
+    clearInterval(state.drawingTimerInterval);
+    state.drawingTimerInterval = null;
+  }
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById('screen-' + id).classList.add('active');
   state.currentScreen = id;
@@ -830,6 +855,7 @@ async function hostCreateRoom() {
       host: nickname, hostConnected: true, hostDisconnectedAt: null,
       status: STATUS.WAITING,
       round: 0,
+      drawMinutes: 0,
       players: {
         [nickname]: { isHost: true, confirmed: false, vote: null },
       },
@@ -945,6 +971,8 @@ function buildRoundGame(room) {
       drawOrder,
       colors,
       turnIndex: 0,
+      turnMinutes: null,
+      turnEndsAt: null,
       strokes: null,
       result: null,
     },
@@ -1051,12 +1079,57 @@ async function guestAction(key, phase, update, action = captureAction()) {
 async function hostStartDrawing() {
   if (state.role !== 'host') return;
   const action = captureAction();
+  const minutes = Number(document.getElementById('rv-draw-minutes').value);
+  if (!Number.isInteger(minutes) || minutes < 0 || minutes > 5) return;
   await action.ref.transaction((room) => {
     if (!canApplyAction(action, room, STATUS.REVEAL)) return;
     const guests = guestNames(room.players);
     if (guests.length < MIN_GUESTS || guests.some(nick => !room.players[nick].confirmed) || !room.players[room.game?.fakeArtist]) return;
-    return { ...room, status: STATUS.DRAWING };
-  });
+    return { ...room, status: STATUS.DRAWING, drawMinutes: minutes,
+      game: { ...room.game, turnMinutes: minutes || null,
+        turnEndsAt: minutes ? getEstimatedServerNow() + minutes * 60 * 1000 : null } };
+  }, undefined, false);
+}
+
+function turnExpired(game) {
+  return Number.isFinite(game?.turnEndsAt) && game.turnEndsAt > 0
+    && getEstimatedServerNow() >= game.turnEndsAt;
+}
+
+function advanceTurn(game) {
+  const minutes = game.turnMinutes || 0;
+  const nextIndex = (game.turnIndex || 0) + 1;
+  return { ...game, turnIndex: nextIndex,
+    turnEndsAt: minutes && nextIndex < (game.drawOrder || []).length * LAPS
+      ? getEstimatedServerNow() + minutes * 60 * 1000 : null };
+}
+
+async function hostSkipTurn() {
+  const room = state.lastRoom;
+  if (state.role !== 'host' || room?.status !== STATUS.DRAWING || state.skipSubmitting) return;
+  const game = room.game || {}, order = game.drawOrder || [];
+  const turn = game.turnIndex || 0;
+  if (!order.length || turn >= order.length * LAPS || turnExpired(game)) return;
+  const drawer = order[turn % order.length];
+  if (!window.confirm(`${drawer}さんの番をスキップしますか？`)) return;
+  const action = captureAction();
+  state.skipSubmitting = action;
+  document.getElementById('btn-skip-turn').disabled = true;
+  try {
+    const { committed } = await action.ref.transaction(r => {
+      if (!canApplyAction(action, r, STATUS.DRAWING) || !r.game || (r.game.turnIndex || 0) !== turn) return;
+      const currentOrder = r.game.drawOrder || [];
+      if (currentOrder[turn % currentOrder.length] !== drawer || turnExpired(r.game)) return;
+      return { ...r, game: advanceTurn(r.game) };
+    }, undefined, false);
+    if (!committed && actionCurrent(action)) showMsg('手番が更新されました。画面を確認してください');
+  } catch (error) {
+    if (actionCurrent(action)) showMsg('スキップできませんでした。もう一度試してください');
+    console.warn('[magire-eshi] hostSkipTurn failed', error);
+  } finally {
+    if (state.skipSubmitting === action) state.skipSubmitting = null;
+    if (actionCurrent(action) && state.lastRoom?.status === STATUS.DRAWING) handleDrawing(state.lastRoom, state.lastRoom.players || {});
+  }
 }
 
 // ── ホスト: そうだん → とうひょう ──
@@ -1113,7 +1186,7 @@ function canDrawNow() {
   const g = room.game;
   const order = g.drawOrder || [];
   const ti = g.turnIndex || 0;
-  if (ti >= order.length * LAPS) return false;
+  if (ti >= order.length * LAPS || turnExpired(g)) return false;
   return order[ti % order.length] === state.nickname;
 }
 
@@ -1160,7 +1233,8 @@ drawCanvas.addEventListener('pointermove', (e) => {
 function endPointerStroke() {
   if (!state.isPointerDrawing) return;
   if (!state.drawAction || !canApplyAction(state.drawAction, state.lastRoom, STATUS.DRAWING)
-    || (state.lastRoom.game.turnIndex || 0) !== state.drawAction.turn) { discardPendingStroke(); return; }
+    || (state.lastRoom.game.turnIndex || 0) !== state.drawAction.turn
+    || turnExpired(state.lastRoom.game)) { discardPendingStroke(); return; }
   state.isPointerDrawing = false;
   const room = state.lastRoom;
   const g = room && room.game;
@@ -1196,8 +1270,9 @@ async function confirmStroke() {
     const { committed } = await action.ref.transaction((room) => {
       if (state.strokeSubmitting !== action || !canApplyAction(action, room, STATUS.DRAWING)) return;
       const game = room.game, order = game?.drawOrder || [];
-      if ((game?.turnIndex || 0) !== idx || idx >= order.length * LAPS || order[idx % order.length] !== action.nickname) return;
-      return { ...room, game: { ...game, turnIndex: idx + 1, strokes: { ...game.strokes, [key]: stroke } } };
+      if ((game?.turnIndex || 0) !== idx || idx >= order.length * LAPS
+        || order[idx % order.length] !== action.nickname || turnExpired(game)) return;
+      return { ...room, game: { ...advanceTurn(game), strokes: { ...game.strokes, [key]: stroke } } };
     });
     if (!committed && actionCurrent(action)) showMsg('手番が更新されました。接続を確認してください');
   } catch (error) {
@@ -1359,6 +1434,7 @@ async function leaveGame() {
   discardPendingStroke();
   clearTimeout(state.orphanTimer);
   clearTimeout(state.doneTimer);
+  clearInterval(state.drawingTimerInterval);
   clearSession();
   await stopGuestPresence();
   if (ref) {
@@ -1379,11 +1455,13 @@ async function leaveGame() {
 function resetRoomState() {
   clearTimeout(state.orphanTimer);
   clearTimeout(state.doneTimer);
+  clearInterval(state.drawingTimerInterval);
   Object.assign(state, {
     role: null, nickname: null, roomCode: null, roomRef: null,
     currentScreen: null, round: 0, lastRoom: null,
     isPointerDrawing: false, currentPoints: [], pendingStroke: null,
     turnIndexAtDraw: null, strokeSubmitting: false, lastRenderKey: '',
+    drawingTimerInterval: null, drawingAdvancePending: null, skipSubmitting: null,
     myVote: null, roleRevealed: false, resultTriggered: false,
     orphanTimer: null, doneTimer: null,
     expectedRoomRemoval: false, confirmAction: null, voteAction: null, guessAction: null, drawAction: null,
@@ -1454,6 +1532,8 @@ function handleRoom(room) {
     state.currentPoints = [];
     state.isPointerDrawing = false;
     state.lastRenderKey = '';
+    state.drawingAdvancePending = null;
+    state.skipSubmitting = null;
     // ホスト用の折りたたみを全てとじ直す（画面共有対策）
     document.querySelectorAll('details.mgr-secret').forEach(d => d.removeAttribute('open'));
   }
@@ -1566,6 +1646,7 @@ function handleReveal(room, players) {
       }
     }
     showScreen('reveal');
+    if (isHost) document.getElementById('rv-draw-minutes').value = String(room.drawMinutes || 0);
   }
   if (state.roleRevealed && !isHost) renderRoleCard();
   if (!isHost) document.getElementById('btn-confirm').disabled = !!players[state.nickname]?.confirmed || !!state.confirmAction || !guestCanAct();
@@ -1610,6 +1691,10 @@ function updateDrawBar(room) {
     hint.textContent = '完成！まもなく相談タイム';
     return;
   }
+  if (turnExpired(g)) {
+    hint.textContent = '時間になりました。次の人へ進みます';
+    return;
+  }
   if (room.players?.[drawer] && !playerConnected(room.players[drawer])) {
     hint.textContent = `${drawer || ''}さんの再接続を待っています`;
     return;
@@ -1631,6 +1716,46 @@ function updateDrawBar(room) {
   wrap.classList.add('mgr-canvas--active');
 }
 
+function hostAutoAdvanceDrawing() {
+  const room = state.lastRoom, game = room?.game || {};
+  if (state.role !== 'host' || room?.status !== STATUS.DRAWING || state.drawingAdvancePending) return;
+  const total = (game.drawOrder || []).length * LAPS;
+  if (!total || ((game.turnIndex || 0) < total && !turnExpired(game))) return;
+  const expectedTurn = game.turnIndex || 0;
+  const action = captureAction();
+  state.drawingAdvancePending = action;
+  action.ref.transaction(r => {
+    if (!canApplyAction(action, r, STATUS.DRAWING) || !r.game) return;
+    const rg = r.game, turn = rg.turnIndex || 0;
+    const currentTotal = (rg.drawOrder || []).length * LAPS;
+    if (!currentTotal || turn !== expectedTurn) return;
+    if (turn >= currentTotal) return { ...r, status: STATUS.DISCUSSION };
+    if (!turnExpired(rg)) return;
+    const nextGame = advanceTurn(rg);
+    return { ...r, game: nextGame,
+      status: nextGame.turnIndex >= currentTotal ? STATUS.DISCUSSION : STATUS.DRAWING };
+  }, undefined, false).catch(error => console.warn('[magire-eshi] drawing advance failed', error))
+    .finally(() => {
+      if (state.drawingAdvancePending === action) state.drawingAdvancePending = null;
+    });
+}
+
+function tickDrawingTimer() {
+  const room = state.lastRoom;
+  if (room?.status !== STATUS.DRAWING) return;
+  const game = room.game || {};
+  const timer = document.getElementById('dr-timer');
+  const hasTimer = Number.isFinite(game.turnEndsAt) && game.turnEndsAt > 0;
+  timer.style.display = hasTimer ? 'block' : 'none';
+  if (hasTimer) {
+    const seconds = Math.max(0, Math.ceil((game.turnEndsAt - getEstimatedServerNow()) / 1000));
+    timer.textContent = `この人の残り時間 ${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
+    timer.classList.toggle('mgr-draw-timer--ended', seconds === 0);
+    if (seconds === 0 && state.drawAction) discardPendingStroke();
+  }
+  if (state.role === 'host') hostAutoAdvanceDrawing();
+}
+
 function handleDrawing(room, players) {
   const g = room.game || {};
   const order = g.drawOrder || [];
@@ -1644,12 +1769,21 @@ function handleDrawing(room, players) {
     showScreen('drawing');
     state.lastRenderKey = '';
   }
+  if (state.drawAction && (state.drawAction.turn !== ti || turnExpired(g))) discardPendingStroke();
+  if (g.turnMinutes && !state.drawingTimerInterval) {
+    state.drawingTimerInterval = setInterval(tickDrawingTimer, 250);
+  }
+  if (!g.turnMinutes && state.drawingTimerInterval) {
+    clearInterval(state.drawingTimerInterval);
+    state.drawingTimerInterval = null;
+  }
 
   document.getElementById('dr-now').textContent =
     ti < total ? `いま描く人: ${order[ti % order.length] || ''}` : '完成！';
-  document.getElementById('dr-count').textContent = `${Math.min(ti + 1, total)} / ${total} 筆`;
+  document.getElementById('dr-count').textContent = `${Math.min(ti + 1, total)} / ${total} 手番`;
   renderLegend('dr-legend', g, players);
   updateDrawBar(room);
+  tickDrawingTimer();
 
   // ストローク再描画（本数かラウンドが変わったときのみ）
   const strokes = sortedStrokes(g);
@@ -1663,26 +1797,19 @@ function handleDrawing(room, players) {
     document.getElementById('dr-secret-body').textContent =
       `お題「${g.topicWord || ''}」（${g.topicCategory || ''}）／まぎれ絵師: ${g.fakeArtist || ''}`;
     document.getElementById('dr-host-banner').innerHTML = hostFakeGoneBannerHtml(g, players);
+    document.getElementById('btn-skip-turn').disabled = ti >= total || turnExpired(g) || !!state.skipSubmitting;
 
-    const action = captureAction();
-    // 全員が描き終わったら そうだんタイムへ
-    if (ti >= total) {
-      action.ref.transaction((r) => {
-        if (!canApplyAction(action, r, STATUS.DRAWING)) return;
-        const rg = r.game || {};
-        if ((rg.turnIndex || 0) < (rg.drawOrder || []).length * LAPS) return;
-        return { ...r, status: STATUS.DISCUSSION };
-      });
-    } else {
+    if (ti < total) {
       // 手番のプレイヤーが退出していたらスキップ
       const drawer = order[ti % order.length];
       if (drawer && !players[drawer]) {
+        const action = captureAction();
         action.ref.transaction(r => {
           if (!canApplyAction(action, r, STATUS.DRAWING) || !r.game || (r.game.turnIndex || 0) !== ti) return;
           const currentDrawer = (r.game.drawOrder || [])[ti % (r.game.drawOrder || []).length];
-          if (currentDrawer !== drawer || r.players?.[drawer]) return;
-          return { ...r, game: { ...r.game, turnIndex: ti + 1 } };
-        });
+          if (currentDrawer !== drawer || r.players?.[drawer] || turnExpired(r.game)) return;
+          return { ...r, game: advanceTurn(r.game) };
+        }, undefined, false);
       }
     }
   }
@@ -1999,7 +2126,9 @@ tryReconnect().then(ok => { if (!ok) showScreen('top'); });
       ] },
       { heading: '進めかた', items: [
         '自分のカードをタップして見て、「確認した」を押す',
+        'ホストは描く時間を「制限なし」か1人の手番ごとに1〜5分から選んで、「描き始める」を押す',
         '順番が来たら1筆だけ描いて、「これでOK」を押す（「描き直す」もできる）',
+        '時間切れになると次の人に進む。ホストは「この人の番をスキップ」でも次に進められる',
         '相談タイムで、まぎれ絵師が誰かを声やチャットで話し合う',
         'まぎれ絵師だと思う人に投票する',
       ] },
