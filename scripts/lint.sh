@@ -533,6 +533,52 @@ fi
 $CONTENT1_OK && echo -e "  ${GREEN}OK${NC}"
 
 # ─────────────────────────────────────────────────────
+# [CONTENT-2] ふりがな記法チェック
+#   {漢字|かな} は第1期 kotoba-asobo（2026-08-07 公開終了）の表示側だけが
+#   <ruby> に変換していた記法。現行アプリは変換しないため、括弧と縦棒が
+#   そのまま画面に出る（2026-09-25 quiz sk07・sk09 で発覚）。表記方針は
+#   「ふりがなは付けない」（AGENTS.md 表記トーン）なので apps/ 配下では常にエラー。
+#   読みがかなだけの {…|かな} に限って拾い、JSDoc の型（{string | null}・
+#   {'a'|'b'}）やコードの ||・join('|')・${a}|${b} は拾わない。
+#   コメントも対象。記法を例に書くときは {|} と書く（kotoba-theme/waza.js と同じ）
+# ─────────────────────────────────────────────────────
+echo ""
+echo -e "${BOLD}[CONTENT-2] ふりがな記法チェック${NC} — {漢字|かな} を残さない（ふりがなは付けない）"
+
+CONTENT2_OUT=$(python3 - <<'PYEOF'
+import glob, html, re, unicodedata
+
+KANA = 'ぁ-ゖゝゞァ-ヺーヽヾ'  # ひらがな・カタカナ・長音符・踊り字
+RUBY_PAT = re.compile(r'\{[^{}|\n]+\|\s*[' + KANA + r']+\s*\}')
+
+files = sorted(
+    glob.glob('apps/**/*.html', recursive=True)
+    + glob.glob('apps/**/*.js', recursive=True)
+    + glob.glob('apps/**/*.json', recursive=True)
+)
+for f in files:
+    with open(f, encoding='utf-8') as fh:
+        for i, line in enumerate(fh, 1):
+            # 実体参照と全角の ｛｜｝ もそろえてから照合する
+            decoded = unicodedata.normalize('NFKC', html.unescape(line))
+            found = [re.sub(r'\s+', ' ', m.group(0)) for m in RUBY_PAT.finditer(decoded)]
+            if found:
+                print(f'{f}:{i}\t{" ".join(found)}')
+PYEOF
+)
+
+CONTENT2_OK=true
+if [ -n "$CONTENT2_OUT" ]; then
+  while IFS=$'\t' read -r loc found; do
+    [ -n "$loc" ] || continue
+    echo -e "  ${RED}[ERROR]${NC} $loc — ふりがな記法 ${found} が残っています（読みがなを外して通常表記にする）"
+    ERRORS=$((ERRORS + 1))
+    CONTENT2_OK=false
+  done <<< "$CONTENT2_OUT"
+fi
+$CONTENT2_OK && echo -e "  ${GREEN}OK${NC}"
+
+# ─────────────────────────────────────────────────────
 # [HOWTO-1] あそびかたモーダル (howto.js) チェック
 #   全アプリ必須（AGENTS.md）。リダイレクト・案内ページ等は下記で除外
 # ─────────────────────────────────────────────────────
