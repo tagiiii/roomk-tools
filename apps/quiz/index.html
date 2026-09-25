@@ -2,12 +2,16 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
   <title>クイズパック | room-K</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet" />
   <link rel="stylesheet" href="../shared/css/design-system.css" />
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css?v=20260925" />
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+  <script src="../shared/js/rtdb-utils.js?v=20260910"></script>
 </head>
 <body>
   <main class="qz-app">
@@ -18,24 +22,53 @@
         <p class="qz-hero__sub">雑学3択と連続2択を、ひとつの画面でサクサク進めよう</p>
       </header>
 
-      <section class="qz-top-panel card">
-        <div class="qz-top-panel__header">
-          <h2 class="qz-top-panel__title">パックをえらぶ</h2>
-          <p class="qz-top-panel__sub">ことばクイズや全部シャッフルでも遊べます</p>
+      <section class="qz-room-entry card" aria-labelledby="roomEntryTitle">
+        <div class="qz-room-entry__text">
+          <h2 class="qz-room-entry__title" id="roomEntryTitle">
+            <span class="material-symbols-rounded" aria-hidden="true">devices</span>
+            ルームであそぶ
+          </h2>
+          <p class="qz-room-entry__sub">ホストの画面を見ながら、自分の端末で答えるモード。正解すると点が入り、制限時間があるときは早く答えるほど点が高くなるよ。</p>
         </div>
+        <div class="qz-room-entry__actions">
+          <button class="btn btn-secondary" id="btnGoJoin">
+            <span class="material-symbols-rounded">login</span>
+            ルームに参加する
+          </button>
+          <button class="btn btn-secondary" id="btnGoCreate">
+            <span class="material-symbols-rounded">add_circle</span>
+            ルームを作る
+          </button>
+        </div>
+      </section>
 
-        <div class="qz-pack-groups" id="packGrid"></div>
+      <section class="qz-top-panel card">
+        <div id="packPickerHome">
+          <div class="qz-pack-picker" id="packPicker">
+            <div class="qz-top-panel__header">
+              <h2 class="qz-top-panel__title">パックをえらぶ</h2>
+              <p class="qz-top-panel__sub">ことばクイズや全部シャッフルでも遊べます</p>
+            </div>
 
-        <div class="qz-options" id="optionsPanel">
-          <div class="qz-option-row">
-            <span class="qz-option-row__label">問題数</span>
-            <div class="qz-segment" id="countSegment" role="group" aria-label="問題数をえらぶ"></div>
+            <div class="qz-pack-groups" id="packGrid"></div>
+
+            <div class="qz-options" id="optionsPanel">
+              <div class="qz-option-row">
+                <span class="qz-option-row__label">問題数</span>
+                <div class="qz-segment" id="countSegment" role="group" aria-label="問題数をえらぶ"></div>
+              </div>
+              <div class="qz-option-row">
+                <span class="qz-option-row__label">手ごたえ</span>
+                <div class="qz-segment" id="modeSegment" role="group" aria-label="手ごたえをえらぶ"></div>
+              </div>
+              <div class="qz-option-row" id="limitRow" hidden>
+                <span class="qz-option-row__label">制限時間</span>
+                <div class="qz-segment" id="limitSegment" role="group" aria-label="制限時間をえらぶ"></div>
+              </div>
+              <p class="qz-option-preview" id="optionPreview" aria-live="polite"></p>
+              <p class="qz-option-preview" id="limitPreview" hidden></p>
+            </div>
           </div>
-          <div class="qz-option-row">
-            <span class="qz-option-row__label">手ごたえ</span>
-            <div class="qz-segment" id="modeSegment" role="group" aria-label="手ごたえをえらぶ"></div>
-          </div>
-          <p class="qz-option-preview" id="optionPreview" aria-live="polite"></p>
         </div>
 
         <div class="qz-top-panel__actions">
@@ -116,28 +149,195 @@
         </div>
       </div>
     </section>
+
+    <!-- ルームであそぶ（各自の端末で答える） -->
+    <div class="qz-roombar" id="roomBar" hidden>
+      <span class="qz-roombar__code">ルーム <strong id="roomCodeLabel"></strong></span>
+      <button class="btn btn-ghost btn-sm" id="btnCopyCode">コードをコピー</button>
+      <button class="btn btn-ghost btn-sm" id="btnLeave">退出する</button>
+    </div>
+
+    <section class="qz-screen qz-screen--room" id="screen-create" hidden>
+      <div class="qz-form card">
+        <div class="qz-form__head">
+          <button class="btn btn-ghost btn-sm" id="btnCreateBack">トップへ戻る</button>
+          <h2 class="qz-form__title">ルームを作る</h2>
+        </div>
+        <p class="qz-form__lead">ホストは問題を出す係です。ホストは答えません。</p>
+        <label class="qz-form__label" for="hostName">ホストの名前（8文字まで）</label>
+        <input class="qz-form__input" id="hostName" maxlength="8" autocomplete="nickname" />
+        <p class="qz-form__error" id="createError" hidden></p>
+        <button class="btn btn-primary btn-full" id="btnCreateRoom">ルームを作る</button>
+      </div>
+    </section>
+
+    <section class="qz-screen qz-screen--room" id="screen-join" hidden>
+      <div class="qz-form card">
+        <div class="qz-form__head">
+          <button class="btn btn-ghost btn-sm" id="btnJoinBack">トップへ戻る</button>
+          <h2 class="qz-form__title">ルームに参加する</h2>
+        </div>
+        <label class="qz-form__label" for="guestName">名前（8文字まで）</label>
+        <input class="qz-form__input" id="guestName" maxlength="8" autocomplete="nickname" />
+        <label class="qz-form__label" for="joinCode">ルームコード（6文字）</label>
+        <input class="qz-form__input qz-form__input--code" id="joinCode" maxlength="6" autocapitalize="characters" autocomplete="off" spellcheck="false" />
+        <p class="qz-form__error" id="joinError" hidden></p>
+        <button class="btn btn-primary btn-full" id="btnJoinRoom">参加する</button>
+      </div>
+    </section>
+
+    <section class="qz-screen qz-screen--room" id="screen-lobby" hidden>
+      <div class="qz-room-shell">
+        <section class="qz-lobby-head card">
+          <p class="qz-lobby-head__label">ルームコード</p>
+          <p class="qz-lobby-head__code" id="lobbyCode"></p>
+          <p class="qz-lobby-head__lead" id="lobbyLead"></p>
+        </section>
+
+        <section class="qz-panel card">
+          <h2 class="qz-panel__title">参加者 <span class="qz-panel__count" id="lobbyCount"></span></h2>
+          <ul class="qz-people" id="lobbyPlayers"></ul>
+          <p class="qz-note" id="lobbyEmpty">まだ参加している人はいません</p>
+        </section>
+
+        <div class="qz-room-shell" id="hostLobbyTools" hidden>
+          <section class="qz-top-panel card" id="roomPackSlot"></section>
+          <div class="qz-room-actions">
+            <p class="qz-start-hint" id="roomStartHint" hidden></p>
+            <button class="btn btn-primary btn-lg" id="btnRoomStart" disabled>
+              <span class="material-symbols-rounded">play_arrow</span>
+              スタート
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="qz-screen qz-screen--room" id="screen-play" hidden>
+      <div class="qz-quiz-shell">
+        <div class="qz-quiz-meta">
+          <span class="badge badge-primary" id="playPackName"></span>
+          <span class="qz-progress" id="playProgress"></span>
+        </div>
+        <p class="qz-timer" id="playTimer">
+          <span class="material-symbols-rounded" aria-hidden="true">timer</span>
+          <span id="playTimerText"></span>
+        </p>
+        <section class="qz-question card">
+          <p class="qz-question__text" id="playQuestion"></p>
+        </section>
+        <section class="qz-choices" id="playChoices" aria-label="選択肢"></section>
+        <div class="qz-quiz-actions" id="hostCopyTools" hidden>
+          <button class="btn btn-ghost btn-sm" id="btnRoomCopyQuestion">
+            <span class="material-symbols-rounded">content_copy</span>
+            問題をコピー
+          </button>
+        </div>
+        <p class="qz-play-status" id="playStatus" aria-live="polite"></p>
+        <p class="qz-host-off" id="hostOffBanner" role="status" hidden>ホストの戻りを待っています。</p>
+        <div class="qz-quiz-actions" id="hostPlayTools" hidden>
+          <button class="btn btn-secondary" id="btnCloseAnswers">
+            <span class="material-symbols-rounded">lock_clock</span>
+            締め切って正解を見る
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section class="qz-screen qz-screen--room" id="screen-reveal" hidden>
+      <div class="qz-quiz-shell">
+        <div class="qz-quiz-meta">
+          <span class="badge badge-primary" id="revealPackName"></span>
+          <span class="qz-progress" id="revealProgress"></span>
+        </div>
+        <section class="qz-question qz-question--compact card">
+          <p class="qz-question__text" id="revealQuestion"></p>
+        </section>
+        <section class="qz-results" id="revealChoices" aria-label="みんなの答え"></section>
+        <section class="qz-feedback card" id="revealFeedback" aria-live="polite">
+          <div class="qz-feedback__result" id="revealResult" hidden></div>
+          <p class="qz-reveal-rank" id="revealRank" hidden></p>
+          <p class="qz-feedback__answer" id="revealAnswer"></p>
+          <p class="qz-feedback__explanation" id="revealExplanation"></p>
+          <div class="qz-feedback__actions" id="hostRevealCopy" hidden>
+            <button class="btn btn-ghost btn-sm" id="btnRoomCopyAnswer">
+              <span class="material-symbols-rounded">content_copy</span>
+              正解つきでコピー
+            </button>
+          </div>
+        </section>
+        <section class="qz-panel card" id="revealRankingPanel" hidden>
+          <h2 class="qz-panel__title">ランキング</h2>
+          <ol class="qz-rank-list" id="revealRanking"></ol>
+        </section>
+        <div class="qz-room-actions" id="hostRevealTools" hidden>
+          <button class="btn btn-primary btn-lg" id="btnNextQuestion"></button>
+          <button class="btn btn-ghost btn-sm" id="btnFinishGame">
+            <span class="material-symbols-rounded">flag</span>
+            ここで結果発表へ
+          </button>
+        </div>
+        <p class="qz-note qz-note--center" id="guestRevealWait" hidden>ホストが次へ進めるのを待ってね</p>
+      </div>
+    </section>
+
+    <section class="qz-screen qz-screen--room" id="screen-final" hidden>
+      <div class="qz-end card">
+        <span class="material-symbols-rounded qz-end__icon">emoji_events</span>
+        <p class="qz-end__label">結果発表</p>
+        <h2 class="qz-end__title" id="finalPackName"></h2>
+        <ol class="qz-podium" id="finalPodium"></ol>
+        <p class="qz-end__sub" id="finalEmpty" hidden>今回は点が入りませんでした。</p>
+        <div class="qz-final-me" id="finalMe" hidden>
+          <p class="qz-final-me__label">あなたの結果</p>
+          <p class="qz-final-me__rank" id="finalMeRank"></p>
+          <p class="qz-final-me__detail" id="finalMeDetail"></p>
+        </div>
+        <p class="qz-end__sub">おつかれさま！気になった問題があれば、話のたねにしてみよう。</p>
+        <div class="qz-end__actions" id="hostFinalTools" hidden>
+          <button class="btn btn-primary btn-lg" id="btnRoomReplay">
+            <span class="material-symbols-rounded">replay</span>
+            もう一度あそぶ
+          </button>
+          <button class="btn btn-secondary btn-lg" id="btnRoomRepick">
+            <span class="material-symbols-rounded">view_list</span>
+            パックをえらび直す
+          </button>
+        </div>
+        <p class="qz-note" id="guestFinalWait" hidden>ホストが次のゲームを準備しています。待っててね。</p>
+      </div>
+    </section>
   </main>
 
-  <script type="module" src="app.js"></script>
+  <div class="qz-overlay" id="hostOffOverlay" hidden>
+    <div class="qz-overlay__panel card" role="alertdialog" aria-labelledby="hostOffTitle" aria-describedby="hostOffText">
+      <h2 class="qz-overlay__title" id="hostOffTitle">ホストの戻りを待っています</h2>
+      <p class="qz-overlay__text" id="hostOffText">しばらく待っても戻らないときは退出してね。</p>
+      <button class="btn btn-secondary" id="btnOverlayLeave">退出する</button>
+    </div>
+  </div>
+
+  <script type="module" src="app.js?v=20260925"></script>
   <script src="../shared/js/stats.js?v=1" defer></script>
   <script src="../shared/js/howto.js"></script>
   <script>
     RoomkHowto.init({
       title: 'あそびかた',
-      lead: 'すきなパックをえらんで、みんなでクイズに挑戦するツール。問題数と手ごたえをえらべます。',
+      lead: 'すきなパックをえらんで、みんなでクイズに挑戦するツール。ひとつの画面で進めるか、ルームを作って各自の端末で答えるかをえらべます。',
       sections: [
-        { heading: 'はじめかた', items: [
-          'あそびたいパックをえらぶ',
-          '「問題数」（5問／10問／ぜんぶ）と「手ごたえ」（ふつう／チャレンジ）をえらぶ',
-          '「スタート」を押す',
-        ] },
-        { heading: 'すすめかた', items: [
-          '問題を読んで、答えだと思う選択肢を押す',
-          '正解と解説をたしかめたら、「次の問題へ」を押す',
+        { heading: 'ひとつの画面であそぶ', items: [
+          'パックと「問題数」「手ごたえ」をえらんで「スタート」を押す',
+          '答えを押して、正解と解説をたしかめたら「次の問題へ」を押す',
           'とちゅうでやめたいときは「ここで結果を見る」を押す',
           '「問題をコピー」や「正解つきでコピー」を押すと、チャットに貼りつけられる',
         ] },
-        { heading: 'おわりかた', text: 'ぜんぶ答えるか「ここで結果を見る」を押すと結果が出る。「もう一度あそぶ」か「トップへ戻る」をえらぶ。' },
+        { heading: 'ルームであそぶ', items: [
+          'ホストは「ルームを作る」を押して、パックと「問題数」「手ごたえ」「制限時間」をえらび、「スタート」を押す',
+          '答える人は「ルームに参加する」を押して、名前とルームコード（6文字）を入れて「参加する」を押す',
+          '問題が出たら、自分の画面で答えを押す。正解すると点が入り、制限時間があるときは早く答えるほど点が高い',
+          '1問ごとに正解とランキングが出る。最後に上位3人を発表する',
+        ] },
+        { heading: 'チャットで参加する', text: 'ルームに入っていなくても、ホストが「問題をコピー」「正解つきでコピー」でチャットに貼った問題に答えて、一緒に楽しめる（点数はつかない）。' },
       ],
     });
   </script>
