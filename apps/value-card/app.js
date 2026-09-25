@@ -311,6 +311,12 @@ function saveImage() {
   document.body.appendChild(container);
 
   setTimeout(() => {
+    // html2canvas は本体ページに置いた <img> で文字のベースラインを測る。共通CSSの img{display:block} のままだと
+    // 画像内の文字がすべて下にずれる（番号が丸の下端に落ちる）ので、書き出しの間だけインラインに戻す
+    const baselineFix = document.createElement('style');
+    baselineFix.textContent = 'img { display: inline; }';
+    document.head.appendChild(baselineFix);
+
     html2canvas(container, {
       scale: 2,
       backgroundColor: '#F5F2EC',
@@ -323,6 +329,7 @@ function saveImage() {
     }).catch(() => {
       // キャプチャ失敗時は何もしない
     }).finally(() => {
+      if (baselineFix.parentNode) baselineFix.parentNode.removeChild(baselineFix);
       if (container.parentNode) container.parentNode.removeChild(container);
     });
   }, 300);
