@@ -19,8 +19,9 @@
 3. `apps/index.html` のツール一覧にカードを追記（下記「利用シーンタグ」の `data-scenes` を必ず付ける）
 4. アプリ固有の仕様を `apps/{app-name}/AGENTS.md` に記載
 5. `apps/updates.json` の先頭に更新情報を追記（下記「更新情報」参照）
-6. 共通の「あそびかた／つかいかた」モーダル（`shared/js/howto.js`、下記参照）を組み込む
+6. 共通の「あそびかた／つかいかた」モーダル（`apps/shared/js/howto.js`、[shared-modules.md](shared-modules.md)「howto.js」参照）を組み込む
 7. `apps/guide/` の早見表（スタッフ向け「ゲームえらび早見表」）に1行追加
+8. `scripts/content-audit.mjs` の台帳に登録（コンテンツがなくても必須。下記「重複監査の台帳」参照）
 
 ### アプリ名のつけかた
 
@@ -69,5 +70,21 @@
 | `text` | 1行の説明。**スタッフ向けなので漢字表記でよい**（子ども向け文言ルールの対象外） |
 
 軽微な bugfix やリファクタリングは追記不要。スタッフに知らせたい変化（新アプリ・お題追加・見た目や遊び方が変わる改修）だけを書く。
+
+### 重複監査の台帳（`scripts/content-audit.mjs`）
+
+`apps/` 直下のディレクトリは、アプリかどうか・コンテンツの有無にかかわらず、次の台帳のどれか1つに登録する。新規アプリのほか、改名で残すリダイレクトスタブや、アプリでないページ・フォルダを足すときも同じ。削除・改名したときも台帳を合わせる。
+
+| 台帳 | 登録するもの |
+|------|------------|
+| `COVERED_APPS` | お題・問題・カードなど、数えられるテキストコンテンツを持つアプリ。`collectEntries()` に抽出も追加する |
+| `NO_CONTENT_APPS` | テキストのお題集を持たないアプリ（内省ツール、カードゲーム・パズルの部品だけのアプリなど） |
+| `NON_APP_DIRS` | アプリではないディレクトリ（`shared`、旧URLのリダイレクトスタブ、`guide`、`stats-view`、`assets` など） |
+
+完了条件は、`node scripts/content-audit.mjs` の stderr に `[coverage]` 警告が出ないこと。警告があっても終了コードは0なので、標準出力の JSON を捨てて stderr だけを見る。
+
+```bash
+node scripts/content-audit.mjs > /dev/null   # 何も表示されなければ合格
+```
 
 ---

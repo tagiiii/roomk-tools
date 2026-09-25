@@ -73,7 +73,7 @@ description: room-Kの本体アプリを新規追加し、必要な共通機能�
 
 1. Realtime Database アプリの場合、`scripts/lint.sh` の `RTDB_HTML_FILES` 配列に新アプリを追加
 2. `bash scripts/lint.sh` を実行し、**エラー0・警告0**を確認（現在は警告ゼロで通る状態を維持している）
-3. お題・問題などのコンテンツを持つアプリなら `node scripts/content-audit.mjs` も実行し、既存アプリとの重複がないことを確認。抽出対象になっていない場合は `collectEntries()` への追加も検討する
+3. 新アプリを `scripts/content-audit.mjs` の台帳に登録する（コンテンツがなくても必須）。台帳の選び方・`collectEntries()` への抽出・完了条件は `docs/development/app-registration.md`「重複監査の台帳」に従う。コンテンツを持つアプリは、既存アプリとの重複がないことも確認する
 4. ブラウザ動作確認: `cd apps && python3 -m http.server 8080` → `http://localhost:8080/{app-name}/`。PC とモバイル幅（600px 以下）、主要操作、コンソールエラーを確認
 5. RTDB アプリは host/guest の2ブラウザで同期・再接続・退出まで実機確認する（ここを飛ばしたら「未確認」と明記する）
 
@@ -89,6 +89,6 @@ description: room-Kの本体アプリを新規追加し、必要な共通機能�
 - [ ] lint.sh の RTDB_HTML_FILES（RTDB の場合）
 - [ ] lint エラー0・警告0
 - [ ] ボタン階層・トップ画面の定石に準拠（AGENTS.md「デザインシステム」章）
-- [ ] content-audit（コンテンツを持つ場合）
+- [ ] content-audit の台帳に登録し、stderr に `[coverage]` 警告なし（コンテンツを持つ場合は重複の確認も）
 - [ ] ブラウザ動作確認（PC / モバイル、RTDB は host/guest 実機）
 - [ ] コンテンツガイドライン適合（または例外の明文化）
