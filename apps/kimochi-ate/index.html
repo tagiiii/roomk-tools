@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+  <title>気持ち当てゲーム | room-K</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
+  <link rel="stylesheet" href="../shared/css/design-system.css">
+  <!-- index.html と app.js・style.css はセットで変わるので、変えたら ?v= をそろえて上げる -->
+  <link rel="stylesheet" href="style.css?v=1">
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+  <script src="../shared/js/rtdb-utils.js?v=20260910"></script>
+</head>
+<body>
+  <div class="wrapper">
+    <header class="ka-header">
+      <h1 class="ka-header__title">気持ち当てゲーム</h1>
+      <p class="ka-header__sub">同じ場面でも、気持ちは人それぞれ</p>
+      <p class="ka-watchbadge" id="watchBadge" hidden>みんなにみせる画面</p>
+    </header>
+    <main>
+      <section class="ka-screen active" id="screen-top">
+        <div class="ka-panel">
+          <p class="ka-lead">場面カードを見て、主役の気持ちがどの系かをみんなで予想するゲーム。主役は、系とぴったりのことばを先にこっそり選んでおくよ。</p>
+          <p class="ka-note">どんな気持ちでもOK。点数はつけないよ。</p>
+          <button type="button" class="btn btn-primary btn-full" id="btnGoCreate">ルームを作る</button>
+          <button type="button" class="btn btn-secondary btn-full" id="btnGoJoin">ルームに参加する</button>
+          <button type="button" class="btn btn-ghost btn-full" id="btnGoWatch">みんなにみせる画面をひらく</button>
+        </div>
+      </section>
+
+      <section class="ka-screen" id="screen-create">
+        <div class="ka-subhead"><button type="button" class="btn btn-ghost btn-sm" id="btnCreateBack">トップへ戻る</button><h2 class="ka-subhead__title">ルームを作る</h2></div>
+        <div class="ka-form">
+          <label class="ka-form__label" for="hostName">ホストの名前（8文字まで）</label>
+          <input class="ka-form__input" id="hostName" maxlength="8" autocomplete="nickname">
+          <label class="ka-check" for="hostPlays">
+            <input type="checkbox" id="hostPlays" checked>
+            <span>ホストも遊ぶ</span>
+          </label>
+          <p class="ka-form__hint">ホストも主役になったり、予想したりします。進行だけにするときは外してね。</p>
+          <p class="ka-form__error" id="createError" hidden></p>
+          <button type="button" class="btn btn-primary btn-full" id="btnCreateRoom">ルームを作る</button>
+        </div>
+      </section>
+
+      <section class="ka-screen" id="screen-join">
+        <div class="ka-subhead"><button type="button" class="btn btn-ghost btn-sm" id="btnJoinBack">トップへ戻る</button><h2 class="ka-subhead__title">ルームに参加する</h2></div>
+        <div class="ka-form">
+          <label class="ka-form__label" for="guestName">名前（8文字まで）</label>
+          <input class="ka-form__input" id="guestName" maxlength="8" autocomplete="nickname">
+          <label class="ka-form__label" for="joinCode">ルームコード（6文字）</label>
+          <input class="ka-form__input ka-form__input--code" id="joinCode" maxlength="6" autocapitalize="characters" autocomplete="off" spellcheck="false">
+          <p class="ka-form__error" id="joinError" hidden></p>
+          <button type="button" class="btn btn-primary btn-full" id="btnJoinRoom">参加する</button>
+        </div>
+      </section>
+
+      <section class="ka-screen" id="screen-watch-join">
+        <div class="ka-subhead"><button type="button" class="btn btn-ghost btn-sm" id="btnWatchBack">トップへ戻る</button><h2 class="ka-subhead__title">みんなにみせる画面をひらく</h2></div>
+        <div class="ka-form">
+          <p class="ka-form__hint ka-form__hint--lead">画面共有でみんなに見せるための画面です。ルームには入らず、見るだけです。</p>
+          <label class="ka-form__label" for="watchCode">ルームコード（6文字）</label>
+          <input class="ka-form__input ka-form__input--code" id="watchCode" maxlength="6" autocapitalize="characters" autocomplete="off" spellcheck="false">
+          <p class="ka-form__error" id="watchError" hidden></p>
+          <button type="button" class="btn btn-primary btn-full" id="btnWatchOpen">画面をひらく</button>
+        </div>
+      </section>
+
+      <div class="ka-roombar" id="roomBar" hidden>
+        <span>ルーム <strong id="roomCodeLabel"></strong></span>
+        <button type="button" class="btn btn-ghost btn-sm" id="btnCopyCode">コードをコピー</button>
+        <button type="button" class="btn btn-ghost btn-sm" id="btnOpenWatch" hidden>みんなにみせる画面</button>
+        <button type="button" class="btn btn-ghost btn-sm" id="btnLeave">退出する</button>
+      </div>
+
+      <section class="ka-screen" id="screen-waiting">
+        <div class="ka-phase"><h2 class="ka-phase__title">みんながそろうのを待っています</h2><p class="ka-phase__sub" id="waitingLead"></p></div>
+        <div class="ka-panel"><h3 class="ka-panel__title">参加者</h3><ul class="ka-people" id="waitingPlayers"></ul></div>
+        <div id="hostWaitingTools" hidden>
+          <button type="button" class="btn btn-primary btn-full" id="btnStartGame">はじめる</button>
+          <p class="ka-note" id="startNote"></p>
+        </div>
+      </section>
+
+      <section class="ka-screen" id="screen-casting">
+        <div class="ka-phase"><h2 class="ka-phase__title">主役を決める</h2><p class="ka-phase__sub" id="castingLead"></p></div>
+        <div class="ka-scene"><p class="ka-scene__label">場面</p><p class="ka-scene__text" id="castingScene"></p></div>
+        <div id="hostCastingTools" hidden>
+          <div class="ka-panel">
+            <h3 class="ka-panel__title">主役</h3>
+            <div class="ka-cast" id="castChoices" role="group" aria-label="主役をえらぶ"></div>
+            <p class="ka-note" id="castNote"></p>
+          </div>
+          <button type="button" class="btn btn-primary btn-full" id="btnConfirmStar">この人で始める</button>
+          <button type="button" class="btn btn-secondary btn-full ka-gap" id="btnRerollScene">別の場面にする</button>
+        </div>
+      </section>
+
+      <section class="ka-screen" id="screen-answering">
+        <div class="ka-phase"><h2 class="ka-phase__title" id="answeringTitle"></h2><p class="ka-phase__sub" id="answeringLead"></p></div>
+        <div class="ka-scene"><p class="ka-scene__label">場面</p><p class="ka-scene__text" id="answeringScene"></p></div>
+        <p class="ka-note ka-note--warn" id="starAwayNote" hidden></p>
+
+        <div id="starGroupPanel" hidden>
+          <p class="ka-question">この場面なら、どんな気持ちになりそう？</p>
+          <div class="ka-groups" id="starGroups" role="group" aria-label="気持ちの系"></div>
+          <div class="ka-alt"><button type="button" class="btn btn-secondary" id="btnPass">この場面はパス</button></div>
+        </div>
+
+        <div id="starWordPanel" hidden>
+          <h3 class="ka-wordhead" id="starWordHead" tabindex="-1"></h3>
+          <p class="ka-question">いちばん近いことばは？</p>
+          <div class="ka-words" id="starWords" role="group" aria-label="ことば"></div>
+          <div class="ka-alt"><button type="button" class="btn btn-secondary" id="btnGroupOnly">ことばは選ばない（系だけ）</button></div>
+          <button type="button" class="btn btn-primary btn-full" id="btnSubmitStar" disabled>きめた</button>
+          <div class="ka-alt"><button type="button" class="ka-quiet-btn" id="btnBackToGroups">ほかの系を見る</button></div>
+        </div>
+
+        <div id="guessPanel" hidden>
+          <p class="ka-question" id="guessQuestion"></p>
+          <div class="ka-groups" id="guessGroups" role="group" aria-label="気持ちの系"></div>
+          <button type="button" class="btn btn-primary btn-full" id="btnSubmitGuess" disabled>きめた</button>
+          <div class="ka-alt"><button type="button" class="btn btn-secondary" id="btnSkipGuess">今回は予想しない</button></div>
+        </div>
+
+        <div class="ka-panel ka-center" id="donePanel" hidden>
+          <p id="doneText"></p>
+          <button type="button" class="btn btn-secondary" id="btnWithdraw">えらびなおす</button>
+        </div>
+
+        <div class="ka-panel ka-center" id="infoPanel" hidden><p id="infoText"></p></div>
+
+        <div id="watchAnswerPanel" hidden>
+          <p class="ka-question" id="watchQuestion"></p>
+          <div class="ka-groups" id="watchGroups"></div>
+          <p class="ka-chatnote" id="watchChatNote"></p>
+          <div class="ka-panel"><h3 class="ka-panel__title">えらんだ人</h3><ul class="ka-people" id="watchProgress"></ul></div>
+        </div>
+
+        <div id="hostAnswerTools" hidden>
+          <div class="ka-panel"><h3 class="ka-panel__title">えらんだ人</h3><ul class="ka-people" id="answerProgress"></ul></div>
+          <button type="button" class="btn btn-primary btn-full" id="btnReveal">公開する</button>
+          <button type="button" class="btn btn-primary btn-full" id="btnChangeScene" hidden>場面をかえる</button>
+          <div class="ka-alt"><button type="button" class="ka-quiet-btn" id="btnRecast">主役をえらびなおす</button></div>
+        </div>
+      </section>
+
+      <section class="ka-screen" id="screen-reveal">
+        <div class="ka-phase"><h2 class="ka-phase__title" id="revealTitle"></h2></div>
+        <div class="ka-scene ka-scene--small"><p class="ka-scene__label">場面</p><p class="ka-scene__text" id="revealScene"></p></div>
+        <div class="ka-answer" id="revealAnswer">
+          <p class="ka-answer__word" id="revealWord"></p>
+          <p class="ka-answer__group"><span class="ka-answer__num" id="revealGroupNum"></span><span id="revealGroupName"></span></p>
+        </div>
+        <p class="ka-chatnote" id="revealChatNote" hidden>チャットで予想した人は、自分が送った番号と見くらべてね。</p>
+        <div class="ka-panel">
+          <h3 class="ka-panel__title">みんなの予想</h3>
+          <ul class="ka-guesses" id="revealGuesses"></ul>
+          <p class="ka-note" id="revealEmpty" hidden>今回は予想した人はいなかったよ。</p>
+        </div>
+        <div id="hostRevealTools" hidden><button type="button" class="btn btn-primary btn-full" id="btnNextScene">つぎの場面へ</button></div>
+        <p class="ka-note" id="revealWait" hidden>つぎの場面を待ってね。</p>
+      </section>
+
+      <section class="ka-screen" id="screen-watch-end">
+        <div class="ka-phase"><h2 class="ka-phase__title" id="watchEndTitle">このルームは終わりました</h2><p class="ka-phase__sub">遊んでくれてありがとう。</p></div>
+        <button type="button" class="btn btn-secondary btn-full" id="btnWatchEndTop">トップへ戻る</button>
+      </section>
+    </main>
+  </div>
+  <div class="ka-overlay" id="hostOffOverlay" hidden><div class="ka-overlay__panel"><h2>ホストの戻りを待っています</h2><p id="hostOffText">しばらく待っても戻らないときは退出してね。</p><button type="button" class="btn btn-secondary" id="btnOverlayLeave">退出する</button></div></div>
+  <script type="module" src="app.js?v=1"></script>
+  <script src="../shared/js/stats.js?v=1" defer></script>
+  <script src="../shared/js/howto.js"></script>
+  <script>
+    RoomkHowto.init({
+      title: 'あそびかた',
+      lead: '場面カードを見て、主役の気持ちがどの系かをみんなで予想する遊び。同じ場面でも、気持ちは人それぞれ。',
+      sections: [
+        { heading: 'はじめかた', items: [
+          'ホストが「ルームを作る」で名前を入れる',
+          '参加する人は「ルームに参加する」で名前、ルームコード（6文字）の順に入れ、「参加する」を押す',
+          'ホストが「はじめる」を押す',
+        ] },
+        { heading: 'すすめかた', items: [
+          'ホストが場面を出して、主役を決める。やってみたい人は、声かチャットで教えてね',
+          '主役は、系とことばをこっそり選んで「きめた」を押す',
+          'ほかの人は、主役の気持ちがどの系かを予想して「きめた」を押す',
+          'ホストが「公開する」を押すと、主役の気持ちとみんなの予想が出る',
+        ] },
+        { heading: 'ルームに入らない人は', items: [
+          'ホストが共有する「みんなにみせる画面」を見てね',
+          '主役が選び終わったら、主役の気持ちがどの系かを予想して、系の番号（①〜⑥）をチャットで送ってね',
+          '公開されたら、自分が送った番号と見くらべてね',
+        ] },
+        { heading: 'パスしてもいいよ', text: '主役は「この場面はパス」、予想する人は「今回は予想しない」を選べるよ。点数はつけないし、選んだことはつぎの場面に進むと消えるよ。' },
+      ],
+    });
+  </script>
+</body>
+</html>

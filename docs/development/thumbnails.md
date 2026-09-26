@@ -4,6 +4,7 @@
 2026-09-17に全40ツールへ追加。撮影元はコミット `b98a6d7` の各アプリ。
 2026-09-24にお題表示の統一（`eeb3055`）に合わせて ishin-denshin・ikutsu-ieru・kotoba-mikke・minna-ranking・tatoe-narabe・uso-jisho・tatoe-gp・toomawashi の8枚を撮り直した。
 do-mannaka は結果画面、kaburazu-hint は回答画面を写しており、今回変更したお題カードは写っていないため、画像を維持した。
+2026-09-25に kimochi-map を気持ち当てゲーム（kimochi-ate）へ作り変え、`kimochi-ate.png` を新しく撮った（旧 `kimochi-map.png` は削除）。撮影は隔離したエミュレーター上の架空のルーム（名前は撮影用の「みどり」「そら」「あお」、場面は既存データの1枚目）で、本番には接続していない。
 Firebase を止めるときは SDK の読み込みと認証・データ用のドメインだけを遮断する。`googleapis.com` 全体を遮断すると Google Fonts も止まり、アイコンが文字のまま写る。
 
 ## 表示と更新
@@ -51,7 +52,7 @@ Firebase SDKを撮影用の無通信スタブへ差し替え、データ・認�
 | `otona-talk` | 大人どうしで話すお題と3枚のカード |
 | `docchi` | お題と2択、その他の選択肢 |
 | `suki-type-check` | 好きについての質問と5つの選択肢 |
-| `kimochi-map` | 気持ちのことばを探す6つのグループ |
+| `kimochi-ate` | 場面カードと、主役の気持ちを予想する6つの系 |
 | `tsuyomi-card` | つよみカードとある・ない・どちらでもないの選択肢 |
 | `do-mannaka` | 数字の回答を小さい順に並べた答え合わせ |
 | `word-wolf` | 自分のお題カードと参加者の準備状況 |

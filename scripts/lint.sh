@@ -30,6 +30,7 @@ RTDB_HTML_FILES=(
   "apps/jinro/index.html"
   "apps/kaburazu-hint/index.html"
   "apps/kakure-number/index.html"
+  "apps/kimochi-ate/index.html"
   "apps/koedake-theater/index.html"
   "apps/kotoba-pair/index.html"
   "apps/magire-eshi/index.html"
@@ -586,13 +587,14 @@ echo ""
 echo -e "${BOLD}[HOWTO-1] あそびかたモーダル (howto.js) チェック${NC}"
 
 HOWTO1_OK=true
-# apps/ito, apps/iisen-show, apps/hint-de-pinto, apps/codenames, apps/sukina-map は
+# apps/ito, apps/iisen-show, apps/hint-de-pinto, apps/codenames, apps/sukina-map,
+# apps/kotoba-waza, apps/kimochi-map は
 # 旧URLからの自動移動スタブ（location.replace のみ・howto.js 不要）。
 # apps/guide/index.html はスタッフ向け説明ページ自体のため howto.js 対象外。
 # apps/third-party-notices.html は第三者ライセンスの表示ページのため howto.js 対象外。
 # apps/stats-view/index.html は開発者専用の利用状況ダッシュボード
 # （ポータル未登録・URL 直打ち前提）のため howto.js 対象外。
-HOWTO_EXEMPT=" apps/ito/index.html apps/iisen-show/index.html apps/hint-de-pinto/index.html apps/codenames/index.html apps/sukina-map/index.html apps/kotoba-waza/index.html apps/guide/index.html apps/stats-view/index.html apps/third-party-notices.html "
+HOWTO_EXEMPT=" apps/ito/index.html apps/iisen-show/index.html apps/hint-de-pinto/index.html apps/codenames/index.html apps/sukina-map/index.html apps/kotoba-waza/index.html apps/kimochi-map/index.html apps/guide/index.html apps/stats-view/index.html apps/third-party-notices.html "
 for f in "${ALL_HTML_FILES[@]}"; do
   [ -f "$f" ] || continue
   case "$HOWTO_EXEMPT" in *" $f "*) continue ;; esac

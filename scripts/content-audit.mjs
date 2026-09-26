@@ -181,7 +181,7 @@ const COVERED_APPS = [
   // 既存（A2 以前から抽出済み）
   'quiz', 'kotoba-shuffle', 'kanji-sagashi', 'kotoba-relay', 'tatoe-gp',
   'kaburazu-hint', 'kotoba-tantei', 'docchi', 'minna-ranking',
-  'talk-card', 'otona-talk', 'tsuyomi-card', 'kimochi-map',
+  'talk-card', 'otona-talk', 'tsuyomi-card', 'kimochi-ate',
   // A2 で追加した12アプリ
   'jitsuwa-game', 'do-mannaka', 'ishin-denshin', 'word-wolf', 'tatoe-narabe', 'magire-eshi',
   'ikutsu-ieru', 'pittari-meter', 'uso-jisho', 'value-card', 'koedake-theater', 'kyoumi-sugoroku',
@@ -197,9 +197,10 @@ const NO_CONTENT_APPS = [
 ];
 
 // apps/ 配下に存在するがアプリではないディレクトリ。
-// ito / iisen-show / hint-de-pinto / codenames / sukina-map は旧URLからの自動移動スタブ（コンテンツなし）。
+// ito / iisen-show / hint-de-pinto / codenames / sukina-map / kotoba-waza / kimochi-map は
+// 旧URLからの自動移動スタブ（コンテンツなし）。
 // guide はスタッフ向け「ゲームえらび早見表」ページ（お題集を持たない静的な案内ページ）。
-const NON_APP_DIRS = ['shared', 'ito', 'iisen-show', 'hint-de-pinto', 'codenames', 'sukina-map', 'kotoba-waza', 'guide'];
+const NON_APP_DIRS = ['shared', 'ito', 'iisen-show', 'hint-de-pinto', 'codenames', 'sukina-map', 'kotoba-waza', 'kimochi-map', 'guide'];
 
 // 意図的重複 allowlist（C-4 で決着済み）:
 //   異なるゲーム間で日常語彙（「カレー」「うさぎ」など）が重複するのは正当。
@@ -340,11 +341,39 @@ function collectEntries() {
     id: `tsuyomi-card:${index}`,
   })));
 
-  const kimochiGroups = evalArrayFromSource(read('apps/kimochi-map/app.js'), 'GROUPS', 'apps/kimochi-map/app.js') || [];
+  // kimochi-ate（2026-09-25 に kimochi-map から作り変え）: 6系×12語の GROUPS と場面カード SCENES。
+  //   ことばは系ごとの category、場面は category 'scene'。構造検査（6系×12語・語の重複なし・
+  //   代表語 sample はその系の words の中の4語・場面は空でない）はここで fail-fast にする。
+  const kimochiGroups = evalArrayFromSource(read('apps/kimochi-ate/app.js'), 'GROUPS', 'apps/kimochi-ate/app.js') || [];
+  const kimochiScenes = evalArrayFromSource(read('apps/kimochi-ate/app.js'), 'SCENES', 'apps/kimochi-ate/app.js') || [];
+  const kimochiProblems = [];
+  if (kimochiGroups.length !== 6) kimochiProblems.push(`GROUPS が6系でない（${kimochiGroups.length}系）`);
+  const kimochiWords = new Set();
   for (const group of kimochiGroups) {
-    (group.words || []).forEach((word, index) => rows.push(entry('kimochi-map', group.key, word, {
-      id: `kimochi-map:${group.key}:${index}`,
-    })));
+    const words = group.words || [];
+    if (words.length !== 12) kimochiProblems.push(`${group.key}: ことばが12語でない（${words.length}語）`);
+    const sample = group.sample || [];
+    if (sample.length !== 4) kimochiProblems.push(`${group.key}: 代表語 sample が4語でない（${sample.length}語）`);
+    sample.filter((word) => !words.includes(word)).forEach((word) => {
+      kimochiProblems.push(`${group.key}: 代表語「${word}」が words にない`);
+    });
+    words.forEach((word, index) => {
+      if (kimochiWords.has(word)) kimochiProblems.push(`${group.key}: ことば「${word}」がほかの系と重複`);
+      kimochiWords.add(word);
+      rows.push(entry('kimochi-ate', group.key, word, {
+        id: `kimochi-ate:${group.key}:${index}`, variant: 'word',
+      }));
+    });
+  }
+  if (kimochiScenes.length === 0) kimochiProblems.push('SCENES が空');
+  kimochiScenes.forEach((text, index) => {
+    if (typeof text !== 'string' || !text.trim()) kimochiProblems.push(`SCENES[${index}] が空`);
+    rows.push(entry('kimochi-ate', 'scene', text, {
+      id: `kimochi-ate:scene:${index}`, variant: 'scene',
+    }));
+  });
+  if (kimochiProblems.length > 0) {
+    throw new Error(`kimochi-ate app.js の構造エラー:\n  ${kimochiProblems.join('\n  ')}`);
   }
 
   // bamen-card / mirai-hikidashi の抽出は 2026-08-06 のアプリ削除（一旦公開終了）に伴い撤去

@@ -1,105 +1,17 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>きもちのことばマップ | room-K</title>
-  <!-- Google Fonts（Noto Sans JP）-->
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
-  <!-- Material Symbols Rounded（絵文字は使わない）-->
-  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet" />
-  <!-- 共通デザインシステム -->
+  <meta http-equiv="refresh" content="0; url=../kimochi-ate/" />
+  <title>気持ち当てゲーム | room-K</title>
   <link rel="stylesheet" href="../shared/css/design-system.css" />
-  <!-- アプリ固有スタイル -->
-  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-
-  <div class="wrapper">
-
-    <!-- ヘッダー -->
-    <header class="km-header">
-      <h1 class="km-header__title">きもちのことばマップ</h1>
-      <p class="km-header__question">今日の気持ちに近いことばはある？</p>
-      <p class="km-header__sub">最近の気持ちでもOK。いくつ選んでもいいし、選ばなくてもいいよ。</p>
-    </header>
-
-    <!-- 「選ばない」も正式な答え。答える場面（ことばえらび・マップ）だけに、ことばと
-         同格の見た目で主選択肢の直後（続き番号が上から順に読める位置）に置く。
-         系えらびは入口なので出さない。JSが画面ごとのスロットへ移動する -->
-    <div id="noAnswerArea" hidden>
-      <div class="km-noanswer" id="noAnswerRow" role="group" aria-label="選ばないときの答え">
-        <button type="button" class="km-noanswer__btn" data-key="wakaranai" aria-pressed="false"><span class="km-noanswer__num">⑬</span>わからない</button>
-        <button type="button" class="km-noanswer__btn" data-key="doredemo" aria-pressed="false"><span class="km-noanswer__num">⑭</span>どれでもない</button>
-        <button type="button" class="km-noanswer__btn" data-key="erabanai" aria-pressed="false"><span class="km-noanswer__num">⑮</span>今日は選ばない</button>
-      </div>
-      <!-- えらばない選択を尊重する一言 -->
-      <p class="km-gentle" id="gentleMsg" aria-live="polite" hidden></p>
-    </div>
-
-    <!-- 選択パネル（ことばを選んだときだけ表示）-->
-    <section class="km-panel" id="selectionPanel" hidden>
-      <p class="km-panel__label">選んだことば（押すとはずせる）</p>
-      <div class="km-panel__chips" id="selectionChips"></div>
-      <p class="km-panel__hint" id="selectionHint">近くのことばもふんわり光ってるよ。そっちのほうが近ければ変えてOK。</p>
-      <div class="km-panel__actions">
-        <button type="button" class="btn btn-ghost btn-sm" id="btnClear">消す</button>
-      </div>
-    </section>
-
-    <main>
-      <!-- 画面1: 系えらび（入口であって答える画面ではないため、えらばないボタンは置かない） -->
-      <section class="km-groupview" id="groupView">
-        <p class="km-viewguide">まずは近そうな系を選んでね。あとで変えてもOK。</p>
-        <div class="km-groupview__grid" id="groupGrid"></div>
-        <p class="km-viewnav">
-          <button type="button" class="km-quiet-btn" id="btnShowMap"><span class="material-symbols-rounded" aria-hidden="true">map</span>マップ全体を見る</button>
-        </p>
-      </section>
-
-      <!-- 画面2: えらんだ系のことば（えらばないボタンは①〜⑫の下） -->
-      <section class="km-wordview" id="wordView" hidden>
-        <div class="km-viewtop">
-          <button type="button" class="km-quiet-btn" id="btnBackFromWords"><span class="material-symbols-rounded" aria-hidden="true">arrow_back</span>ほかの系を見る</button>
-        </div>
-        <h2 class="km-wordview__name" id="wordViewName" tabindex="-1"></h2>
-        <div class="km-wordview__chips" id="wordViewChips"></div>
-        <div class="km-noanswer-slot" id="noAnswerSlotWords"></div>
-      </section>
-
-      <!-- 画面3: マップ全体（ながめるだけモード。72語の下だと見えなくなるため、ここだけ上置き）-->
-      <section class="km-mapview" id="mapView" hidden>
-        <div class="km-viewtop">
-          <button type="button" class="km-quiet-btn" id="btnBackFromMap"><span class="material-symbols-rounded" aria-hidden="true">arrow_back</span>系を選ぶにもどる</button>
-        </div>
-        <div class="km-noanswer-slot" id="noAnswerSlotMap"></div>
-        <div class="km-map" id="mapArea"></div>
-      </section>
-    </main>
-
-  </div>
-
-  <!-- 画面構成の変更でHTML側のスロットとJSが対で変わるため、?v= で同時更新する
-       （HTMLだけ先に更新されると旧JSがスロット参照で落ちる。v2: えらばないボタンの配置刷新） -->
-  <script type="module" src="app.js?v=2"></script>
-  <script src="../shared/js/stats.js?v=1" defer></script>
-  <script src="../shared/js/howto.js"></script>
-  <script>
-    RoomkHowto.init({
-      title: 'つかいかた',
-      lead: '今日の気持ちに近いことばをさがすツール。ながめるだけでもOK。',
-      sections: [
-        { heading: 'すすめかた', items: [
-          'まず、気持ちに近そうな系を6つから選ぶ',
-          '出てきたことばから、近いものをタップする（いくつ選んでもOK）',
-          '近くのことばがふんわり光ったら、そっちに変えてもOK',
-          'チャットで答えるときは、画面の①②③の番号だけでOK',
-          '「消す」を押すと、いつでも全部消せる',
-        ] },
-        { heading: '選ばなくてもOK', text: 'ぴったりのことばがなければ、「わからない」「どれでもない」「今日は選ばない」を押してOK。「マップ全体を見る」で、ぜんぶをながめるだけの使いかたもできる。' },
-        { heading: 'おわりかた', text: 'そのまま閉じておしまい。選んだことばはどこにも残らない。' },
-      ],
-    });
-  </script>
+  <script>location.replace('../kimochi-ate/' + location.search + location.hash);</script>
+  <noscript>
+    <p>このページはあたらしい場所にひっこししました。自動でうつります。</p>
+    <p><a href="../kimochi-ate/">こちらをタップしてください</a></p>
+  </noscript>
 </body>
 </html>

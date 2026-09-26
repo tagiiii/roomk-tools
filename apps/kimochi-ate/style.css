@@ -1,0 +1,685 @@
+/* 気持ち当てゲーム 固有スタイル（接頭辞: ka- / BEM）
+   共通スタイルは design-system.css に定義済み
+
+   系の色はどれも彩度・明度をそろえた穏やかな色にする（旧 きもちのことばマップ の色）。
+   ネガティブな系を暗い色・警告色にしない（系に優劣をつけない）。
+   枠と背景は系の色、文字と番号は同じ色相で濃くした --ka-c-text（背景に対して 4.5:1 以上）。
+   主な選択肢（系ボタン・ことばボタン）は 18px 以上にする。 */
+
+.wrapper {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 40px 20px 80px;
+}
+
+/* ── 系の色（良し悪しの意味を持たせない）── */
+.ka-group--niko  { --ka-c: #5B9E63; --ka-c-soft: #EAF3EB; --ka-c-text: #45774B; }
+.ka-group--poka  { --ka-c: #B9884C; --ka-c-soft: #F7EFE3; --ka-c-text: #8A6436; }
+.ka-group--moya  { --ka-c: #8B7FB8; --ka-c-soft: #EFEDF7; --ka-c-text: #6F60A7; }
+.ka-group--zawa  { --ka-c: #5D8CB0; --ka-c-soft: #E8F0F6; --ka-c-text: #466F8F; }
+.ka-group--gutta { --ka-c: #A97F97; --ka-c-soft: #F4ECF1; --ka-c-text: #8B5D77; }
+.ka-group--suki  { --ka-c: #3F9CA8; --ka-c-soft: #E6F2F4; --ka-c-text: #2F747D; }
+
+/* ── ヘッダー ── */
+.ka-header {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.ka-header__title {
+  color: var(--color-primary);
+  font-size: 1.7rem;
+  font-weight: 700;
+  margin: 0 0 8px;
+}
+
+.ka-header__sub {
+  color: var(--color-muted);
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+/* みんなにみせる画面の目印（共有するタブを見分けるため） */
+.ka-watchbadge {
+  display: inline-block;
+  color: #26697A;
+  background: #E6F2F4;
+  border-radius: var(--radius-full);
+  font-size: 13px;
+  font-weight: 700;
+  padding: 4px 12px;
+  margin: 10px 0 0;
+}
+
+/* ── 画面切り替え ── */
+.ka-screen { display: none; }
+.ka-screen.active { display: block; }
+
+/* ── 共通の部品 ── */
+.ka-panel {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  padding: 20px;
+  margin-bottom: 16px;
+}
+
+.ka-panel p {
+  margin: 0 0 12px;
+  line-height: 1.7;
+}
+
+.ka-panel p:last-child { margin-bottom: 0; }
+
+.ka-panel > .btn:first-of-type { margin-top: 22px; }
+.ka-panel > .btn + .btn { margin-top: 10px; }
+
+.ka-panel__title {
+  color: var(--color-primary);
+  font-size: 1rem;
+  margin: 0 0 12px;
+}
+
+.ka-center { text-align: center; }
+.ka-center > .btn:first-of-type { margin-top: 4px; }
+
+.ka-lead {
+  color: var(--color-text);
+  font-size: 1rem;
+  line-height: 1.8;
+}
+
+.ka-note {
+  color: var(--color-muted);
+  font-size: 0.85rem;
+  line-height: 1.6;
+  text-align: center;
+  margin: 16px 0 0;
+}
+
+.ka-note:empty { display: none; }
+
+.ka-note--warn {
+  color: var(--color-text);
+  background: #FFF7E6;
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin: 0 0 16px;
+}
+
+.ka-gap { margin-top: 10px; }
+
+.ka-tag {
+  display: inline-block;
+  color: #26697A; /* 淡いティールの上で 4.5:1 以上（B-11 と同じ） */
+  background: #E6F2F4;
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 4px 8px;
+  margin-left: 8px;
+  vertical-align: 2px;
+}
+
+.ka-alt {
+  display: flex;
+  justify-content: center;
+  margin: 14px 0 0;
+}
+
+.ka-quiet-btn {
+  min-height: 44px;
+  padding: 10px 8px;
+  background: none;
+  border: none;
+  font-family: inherit;
+  font-size: var(--font-size-sm);
+  color: var(--color-muted);
+  cursor: pointer;
+}
+
+.ka-quiet-btn:hover {
+  color: var(--color-text);
+  text-decoration: underline;
+}
+
+.ka-quiet-btn:focus-visible {
+  outline: 3px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: var(--radius-full);
+}
+
+/* ── サブヘッダー・フォーム ── */
+.ka-subhead {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.ka-subhead__title {
+  color: var(--color-primary);
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.ka-form {
+  background: var(--color-surface);
+  border-radius: 14px;
+  padding: 20px;
+}
+
+.ka-form__label {
+  display: block;
+  color: var(--color-primary);
+  font-size: 0.9rem;
+  font-weight: 700;
+  margin: 0 0 8px;
+}
+
+.ka-form__input + .ka-form__label { margin-top: 18px; }
+
+.ka-form__input {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1.5px solid var(--color-border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-family: inherit;
+  font-size: 1rem;
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.ka-form__input:focus {
+  outline: none;
+  border-color: var(--color-accent);
+}
+
+.ka-form__input--code {
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 1.3rem;
+}
+
+.ka-check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 18px;
+  color: var(--color-text);
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.ka-check input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--color-accent);
+  flex-shrink: 0;
+}
+
+.ka-form__hint {
+  color: var(--color-muted);
+  font-size: 13px;
+  line-height: 1.6;
+  margin: 6px 0 0;
+}
+
+.ka-form__hint--lead {
+  font-size: 14px;
+  margin: 0 0 16px;
+}
+
+.ka-form__error {
+  color: var(--color-error);
+  background: #FEF2F2;
+  border-left: 3px solid var(--color-error);
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin: 12px 0;
+}
+
+.ka-form > .btn { margin-top: 18px; }
+
+/* ── ルームバー ── */
+.ka-roombar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  color: var(--color-primary);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 8px 12px;
+  margin-bottom: 22px;
+}
+
+.ka-roombar strong {
+  font-size: 1.25rem;
+  letter-spacing: 0.13em;
+}
+
+.ka-roombar #btnLeave { margin-left: auto; }
+
+/* ── フェーズの見出し ── */
+.ka-phase {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.ka-phase__title {
+  color: var(--color-primary);
+  font-size: 1.5rem;
+  margin: 0 0 6px;
+}
+
+.ka-phase__sub {
+  color: var(--color-muted);
+  line-height: 1.7;
+  margin: 0;
+}
+
+/* ── 参加者の一覧 ── */
+.ka-people {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.ka-people__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.ka-people__item:last-child { border-bottom: none; }
+
+.ka-people__name { overflow-wrap: anywhere; }
+
+.ka-people__status {
+  color: var(--color-accent);
+  font-weight: 700;
+  font-size: 0.88rem;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* ── 場面カード（お題表示の定石: 白カード＋ティール枠）── */
+.ka-scene {
+  background: var(--color-surface);
+  border: 2px solid var(--color-accent);
+  border-radius: var(--radius-box);
+  padding: 32px 40px;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.ka-scene__label {
+  color: var(--color-accent);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  margin: 0 0 12px;
+}
+
+.ka-scene__text {
+  color: var(--color-primary);
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.45;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.ka-scene--small { padding: 20px 28px; }
+.ka-scene--small .ka-scene__text { font-size: 22px; }
+
+/* ── 主役えらび ── */
+.ka-cast {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.ka-castbtn {
+  min-height: 48px;
+  padding: 10px 18px;
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-full);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-family: inherit;
+  font-size: 17px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.ka-castbtn:hover { border-color: var(--color-accent); }
+
+.ka-castbtn__num {
+  color: #26697A;
+  font-feature-settings: "palt";
+  margin-right: 6px;
+}
+
+.ka-castbtn.is-selected {
+  border-color: var(--color-accent);
+  background: #E6F2F4;
+  color: var(--color-primary);
+  box-shadow: inset 0 0 0 1px var(--color-accent);
+}
+
+.ka-castbtn:focus-visible {
+  outline: 3px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* ── 問いかけ ── */
+.ka-question {
+  color: var(--color-primary);
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.5;
+  text-align: center;
+  margin: 0 0 14px;
+}
+
+/* ── 系ボタン ── */
+.ka-groups {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.ka-groupbtn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+  font-family: inherit;
+  background: var(--ka-c-soft);
+  border: 2px solid transparent;
+  border-radius: var(--radius-box);
+  padding: 16px 18px;
+  cursor: pointer;
+  transition: border-color var(--transition-base);
+}
+
+.ka-groupbtn:hover { border-color: var(--ka-c); }
+
+.ka-groupbtn.is-selected {
+  border-color: var(--ka-c);
+  box-shadow: inset 0 0 0 2px var(--ka-c);
+}
+
+.ka-groupbtn:focus-visible {
+  outline: 3px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* みんなにみせる画面の系の一覧（押せない。番号を見てチャットで送ってもらう） */
+.ka-groupbtn--static {
+  cursor: default;
+}
+
+.ka-groupbtn--static:hover { border-color: transparent; }
+
+.ka-groupbtn__num {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--ka-c-text);
+  font-feature-settings: "palt";
+  flex-shrink: 0;
+}
+
+.ka-groupbtn__body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ka-groupbtn__name {
+  font-size: 21px;
+  font-weight: 700;
+  color: var(--ka-c-text);
+}
+
+.ka-groupbtn__sample {
+  font-size: 14px;
+  color: var(--color-text);
+  line-height: 1.5;
+}
+
+.ka-nowrap { white-space: nowrap; }
+
+/* ── ことばえらび ── */
+.ka-wordhead {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--ka-c-text);
+  margin: 0 0 10px;
+}
+
+.ka-wordhead::before {
+  content: '';
+  width: 12px;
+  height: 12px;
+  border-radius: var(--radius-full);
+  background: var(--ka-c);
+  flex-shrink: 0;
+}
+
+.ka-wordhead:focus-visible {
+  outline: 3px solid var(--color-accent);
+  outline-offset: 4px;
+  border-radius: var(--radius-full);
+}
+
+.ka-words {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.ka-word {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 52px;
+  text-align: left;
+  font-family: inherit;
+  background: var(--color-surface);
+  border: 2px solid var(--ka-c-soft);
+  border-radius: 12px;
+  padding: 10px 12px;
+  cursor: pointer;
+}
+
+.ka-word:hover { border-color: var(--ka-c); }
+
+.ka-word.is-selected {
+  background: var(--ka-c-soft);
+  border-color: var(--ka-c);
+  box-shadow: inset 0 0 0 1px var(--ka-c);
+}
+
+.ka-word:focus-visible {
+  outline: 3px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.ka-word__num {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ka-c-text);
+  font-feature-settings: "palt";
+  flex-shrink: 0;
+}
+
+.ka-word__text {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-text);
+  white-space: nowrap; /* ことばの途中で折り返さない */
+}
+
+/* ── チャットで参加する人への案内（みんなにみせる画面） ── */
+.ka-chatnote {
+  color: var(--color-primary);
+  background: #E6F2F4;
+  border-left: 4px solid var(--color-accent);
+  border-radius: 10px;
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.6;
+  padding: 12px 16px;
+  margin: 0 0 16px;
+}
+
+/* ── 公開 ── */
+.ka-answer {
+  background: var(--ka-c-soft);
+  border: 2px solid var(--ka-c);
+  border-radius: var(--radius-box);
+  padding: 26px 20px;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.ka-answer__word {
+  color: var(--ka-c-text);
+  font-size: 40px;
+  font-weight: 700;
+  line-height: 1.3;
+  margin: 0 0 10px;
+  overflow-wrap: anywhere;
+}
+
+.ka-answer__group {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ka-c-text);
+  background: var(--color-surface);
+  border-radius: var(--radius-full);
+  font-size: 17px;
+  font-weight: 700;
+  padding: 6px 14px;
+  margin: 0;
+}
+
+/* 系だけを選んだときは、系の名前を大きく出すので下の札は出さない */
+.ka-answer--group-only .ka-answer__group { display: none; }
+.ka-answer--group-only .ka-answer__word { margin-bottom: 0; }
+
+.ka-answer__num { font-feature-settings: "palt"; }
+
+.ka-guesses {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.ka-guesses__item {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.ka-guesses__item:last-child { border-bottom: none; }
+
+.ka-guesses__name {
+  flex: 1 1 8em;
+  overflow-wrap: anywhere;
+}
+
+.ka-guesses__pick {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.ka-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--ka-c-text);
+  background: var(--ka-c-soft);
+  border: 1.5px solid var(--ka-c);
+  border-radius: var(--radius-full);
+  font-size: 15px;
+  font-weight: 700;
+  padding: 4px 12px;
+}
+
+.ka-chip__num { font-feature-settings: "palt"; }
+
+.ka-same {
+  color: var(--color-muted);
+  font-size: 13px;
+  font-weight: 700;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  padding: 3px 10px;
+}
+
+/* ── ホスト切断のオーバーレイ ── */
+.ka-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(18, 37, 54, 0.8);
+}
+
+.ka-overlay__panel {
+  background: var(--color-surface);
+  border-radius: 14px;
+  padding: 28px;
+  max-width: 420px;
+  text-align: center;
+}
+
+.ka-overlay__panel h2 {
+  color: var(--color-primary);
+  font-size: 1.3rem;
+}
+
+.ka-overlay__panel p { line-height: 1.7; }
+
+@media (max-width: 600px) {
+  .wrapper { padding: 28px 16px 64px; }
+  .ka-roombar #btnLeave { margin-left: 0; }
+  .ka-phase__title { font-size: 1.3rem; }
+  .ka-scene { padding: 24px 20px; }
+  .ka-scene__text { font-size: 22px; }
+  .ka-scene--small { padding: 18px 16px; }
+  .ka-scene--small .ka-scene__text { font-size: 20px; }
+  .ka-question { font-size: 18px; }
+  .ka-groups { grid-template-columns: 1fr; }
+  .ka-groupbtn { padding: 14px 16px; }
+  /* スマホはことばの長さに合わせて並べる（旧 きもちのことばマップ と同じ並べ方） */
+  .ka-words { display: flex; flex-wrap: wrap; justify-content: center; }
+  .ka-word { flex: 0 1 auto; }
+  .ka-answer__word { font-size: 32px; }
+}
