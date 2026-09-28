@@ -136,6 +136,15 @@
       border: 2px solid rgba(0, 0, 0, 0.12); padding: 0;
     }
     .oek-swatch[aria-pressed="true"] { box-shadow: 0 0 0 3px var(--color-surface), 0 0 0 5px var(--color-primary); }
+    /* 濃さ（薄い〜濃い）。選んでいる色を5段階で並べる */
+    .oek-tones { display: flex; align-items: center; gap: 10px; }
+    .oek-tones__label { flex-shrink: 0; font-size: 13px; font-weight: 700; color: var(--color-muted); }
+    .oek-tones__bar { display: flex; gap: 8px; flex: 1; }
+    .oek-tone {
+      flex: 1 1 0; min-width: 0; height: 44px; border-radius: 10px; cursor: pointer;
+      border: 2px solid rgba(0, 0, 0, 0.12); padding: 0;
+    }
+    .oek-tone[aria-pressed="true"] { box-shadow: 0 0 0 3px var(--color-surface), 0 0 0 5px var(--color-primary); }
     .oek-tools__row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
     .oek-tools__widths { display: flex; gap: 6px; }
     .oek-tool {
@@ -146,7 +155,7 @@
     }
     .oek-tool .material-symbols-rounded { font-size: 20px; }
     .oek-tool[aria-pressed="true"] { border-color: var(--color-accent); background: #EAF4F5; }
-    .oek-tool:disabled, .oek-swatch:disabled { opacity: 0.45; cursor: default; }
+    .oek-tool:disabled, .oek-swatch:disabled, .oek-tone:disabled { opacity: 0.45; cursor: default; }
     .oek-tool.is-armed { border-color: var(--color-error); background: #FEF2F2; color: var(--color-error); }
     .oek-width__dot { display: block; border-radius: 50%; background: var(--color-primary); }
     .oek-tools__spacer { flex: 1; }
@@ -228,6 +237,7 @@
     @media (max-width: 360px) {
       .oek-hero__title { font-size: 24px; }
       .oek-room-code { font-size: 34px; }
+      .oek-tones__bar { gap: 6px; }
     }
   </style>
 </head>
@@ -392,6 +402,11 @@
         </div>
         <div class="oek-tools">
           <div class="oek-tools__colors" role="group" aria-label="色" id="tool-colors"></div>
+          <div class="oek-tones">
+            <span class="oek-tones__label" aria-hidden="true">薄い</span>
+            <div class="oek-tones__bar" role="group" aria-label="濃さ" id="tool-tones"></div>
+            <span class="oek-tones__label" aria-hidden="true">濃い</span>
+          </div>
           <div class="oek-tools__row">
             <div class="oek-tools__widths" role="group" aria-label="太さ" id="tool-widths"></div>
             <button type="button" class="oek-tool" id="tool-eraser" aria-pressed="false" onclick="toggleEraser()">
@@ -529,20 +544,24 @@ const LEGACY_PACES = { slow: { text: 60, draw: 150 }, normal: { text: 40, draw: 
 // キャンバス（論理サイズ 800×600。表示は画面幅に合わせて縮小）
 const CANVAS_W = 800;
 const CANVAS_H = 600;
+// tones は濃さ（とても薄い・薄い・ふつう・濃い・とても濃い）ごとの色。真ん中のふつうが元の色。
+// 薄い側は白に寄せて彩度も少し下げ、濃い側は彩度を保ったまま暗くした（OKLCH の明るさで計算した値）
 const COLORS = [
-  { hex: '#1A1A1A', name: '黒' },
-  { hex: '#8A8F98', name: '灰色' },
-  { hex: '#8D5524', name: '茶色' },
-  { hex: '#E03131', name: '赤' },
-  { hex: '#F76707', name: 'オレンジ' },
-  { hex: '#FAB005', name: '黄色' },
-  { hex: '#2F9E44', name: '緑' },
-  { hex: '#74C0FC', name: '水色' },
-  { hex: '#1C7ED6', name: '青' },
-  { hex: '#7048E8', name: '紫' },
-  { hex: '#E64980', name: 'ピンク' },
-  { hex: '#F2C4A0', name: 'うすだいだい' },
+  { name: '黒',           tones: ['#9F9F9F', '#5A5A5A', '#1A1A1A', '#0F0F0F', '#070707'] },
+  { name: '灰色',         tones: ['#D0D3D9', '#AEB2B9', '#8A8F98', '#60656E', '#3D4249'] },
+  { name: '茶色',         tones: ['#DDB99F', '#B68864', '#8D5524', '#6A3700', '#452100'] },
+  { name: '赤',           tones: ['#FFB7AF', '#FB776D', '#E03131', '#A90012', '#700008'] },
+  { name: 'オレンジ',     tones: ['#FFCAB3', '#FF9C70', '#F76707', '#B24700', '#772D00'] },
+  { name: '黄色',         tones: ['#FFE2B7', '#FFCA74', '#FAB005', '#B47D00', '#785200'] },
+  { name: '緑',           tones: ['#A8E0AC', '#72C07A', '#2F9E44', '#007224', '#004B14'] },
+  { name: '水色',         tones: ['#CCE8FF', '#A2D5FF', '#74C0FC', '#3D8AC3', '#005B8F'] },
+  { name: '青',           tones: ['#A5D0FF', '#66A8EF', '#1C7ED6', '#00589E', '#003969'] },
+  { name: '紫',           tones: ['#C2BDFF', '#9785FF', '#7048E8', '#5216BF', '#350085'] },
+  { name: 'ピンク',       tones: ['#FFBDCD', '#FD82A6', '#E64980', '#B40958', '#790038'] },
+  { name: 'うすだいだい', tones: ['#FFE7D6', '#FAD6BA', '#F2C4A0', '#B58967', '#805836'] },
 ];
+const TONES = [-2, -1, 0, 1, 2];  // 線の濃さ（d）。負が薄い・正が濃い。ふつう（0）は保存しない
+const TONE_NAMES = ['とても薄い', '薄い', 'ふつう', '濃い', 'とても濃い'];
 const ERASER = -1;
 const PEN_WIDTHS = [5, 12, 28];
 const ERASER_WIDTHS = [16, 36, 72];
@@ -689,7 +708,7 @@ const state = {
   lastCtl: null,
   epoch: 0,
   play: newPlayState(),
-  tool: { color: 0, width: 1, eraser: false },
+  tool: { color: 0, width: 1, tone: 0, eraser: false },
   input: { path: null, data: undefined },          // 回ってきた材料（undefined = 読み込み中）
   showView: { path: null, data: undefined, version: 0, renderKey: null, upto: 0 },
   endView: { mid: null, art: undefined, selected: 0, renderKey: null },
@@ -956,15 +975,21 @@ function decodeStrokeMap(obj) {
       key: k,
       c: (c === ERASER || (Number.isInteger(c) && c >= 0 && c < COLORS.length)) ? c : 0,
       w: (w === 0 || w === 1 || w === 2) ? w : 1,
+      tone: TONES.includes(v.d) ? v.d : 0, // 濃さの無い線（濃さを足す前の線も）・数でない値・範囲外はふつう
       pts: decodePoints(v.p),
     };
   }).filter((s) => s.pts.length > 0);
 }
 
+function colorHex(c, tone) {
+  const tones = (COLORS[c] || COLORS[0]).tones;
+  const i = TONES.indexOf(tone);
+  return tones[i < 0 ? TONES.indexOf(0) : i];
+}
 function strokeStyle(s) {
   const isEraser = s.c === ERASER;
   return {
-    color: isEraser ? '#FFFFFF' : (COLORS[s.c] || COLORS[0]).hex,
+    color: isEraser ? '#FFFFFF' : colorHex(s.c, s.tone),
     width: (isEraser ? ERASER_WIDTHS : PEN_WIDTHS)[s.w] || PEN_WIDTHS[1],
   };
 }
@@ -1327,7 +1352,7 @@ function renderPlayControls() {
   const input = $('play-text');
   input.disabled = !canEdit;
   $('btn-omakase').disabled = !canEdit;
-  document.querySelectorAll('#work-draw .oek-tool, #work-draw .oek-swatch').forEach((b) => { b.disabled = !canEdit; });
+  document.querySelectorAll('#work-draw .oek-tool, #work-draw .oek-swatch, #work-draw .oek-tone').forEach((b) => { b.disabled = !canEdit; });
   $('draw-canvas-wrap').classList.toggle('is-disabled', !canEdit);
   $('draw-canvas-wrap').classList.toggle('oek-canvas-wrap--active', canEdit);
 
@@ -1495,7 +1520,10 @@ const drawCanvas = $('draw-canvas');
 
 function buildTools() {
   $('tool-colors').innerHTML = COLORS.map((c, i) =>
-    '<button type="button" class="oek-swatch" style="background:' + c.hex + '" aria-label="' + esc(c.name) + '" aria-pressed="false" onclick="selectColor(' + i + ')"></button>'
+    '<button type="button" class="oek-swatch" aria-pressed="false" onclick="selectColor(' + i + ')"></button>'
+  ).join('');
+  $('tool-tones').innerHTML = TONES.map((d, i) =>
+    '<button type="button" class="oek-tone" aria-label="' + esc(TONE_NAMES[i]) + '" aria-pressed="false" onclick="selectTone(' + d + ')"></button>'
   ).join('');
   $('tool-widths').innerHTML = WIDTH_NAMES.map((name, i) => {
     const dot = [6, 12, 20][i];
@@ -1505,15 +1533,32 @@ function buildTools() {
   renderToolState();
 }
 function renderToolState() {
+  const t = state.tool;
+  // 選んでいる色の丸だけ、選んでいる濃さで見せる（どの丸も押したときに描ける色で見せる）。
+  // 濃さの列は、選んでいる色の5段階
   document.querySelectorAll('#tool-colors .oek-swatch').forEach((b, i) => {
-    b.setAttribute('aria-pressed', String(!state.tool.eraser && state.tool.color === i));
+    const tone = i === t.color ? t.tone : 0;
+    b.style.background = colorHex(i, tone);
+    b.setAttribute('aria-label', (tone ? TONE_NAMES[TONES.indexOf(tone)] : '') + COLORS[i].name);
+    b.setAttribute('aria-pressed', String(!t.eraser && t.color === i));
+  });
+  document.querySelectorAll('#tool-tones .oek-tone').forEach((b, i) => {
+    b.style.background = colorHex(t.color, TONES[i]);
+    b.setAttribute('aria-pressed', String(!t.eraser && t.tone === TONES[i]));
   });
   document.querySelectorAll('#tool-widths .oek-tool').forEach((b, i) => {
-    b.setAttribute('aria-pressed', String(state.tool.width === i));
+    b.setAttribute('aria-pressed', String(t.width === i));
   });
-  $('tool-eraser').setAttribute('aria-pressed', String(state.tool.eraser));
+  $('tool-eraser').setAttribute('aria-pressed', String(t.eraser));
 }
-function selectColor(i) { state.tool.color = i; state.tool.eraser = false; renderToolState(); }
+// ほかの色を選ぶと濃さはふつうに戻る。同じ色を押し直したとき（消しゴムから戻るときなど）は濃さを保つ
+function selectColor(i) {
+  if (i !== state.tool.color) state.tool.tone = 0;
+  state.tool.color = i;
+  state.tool.eraser = false;
+  renderToolState();
+}
+function selectTone(d) { state.tool.tone = d; state.tool.eraser = false; renderToolState(); }
 function selectWidth(i) { state.tool.width = i; renderToolState(); }
 function toggleEraser() { state.tool.eraser = !state.tool.eraser; renderToolState(); }
 
@@ -1569,6 +1614,7 @@ drawCanvas.addEventListener('pointerdown', (e) => {
     pointerId: e.pointerId,
     c: state.tool.eraser ? ERASER : state.tool.color,
     w: state.tool.width,
+    tone: state.tool.eraser ? 0 : state.tool.tone,
     pts: [pt],
   };
   drawStroke(drawCanvas.getContext('2d'), { ...state.play.drawing, pts: [pt] });
@@ -1616,10 +1662,11 @@ function commitStroke(d, playState) {
   if (p.strokes.length >= MAX_STROKES) { warnDrawLimit(p); return; }
   const path = artPath(p.mid, p.chain, p.step) + '/s';
   const k = state.roomRef.child(path).push().key;
-  const stroke = { key: k, c: d.c, w: d.w, pts: d.pts.slice() };
+  const stroke = { key: k, c: d.c, w: d.w, tone: d.tone || 0, pts: d.pts.slice() };
   p.strokes.push(stroke);
   p.pointsUsed += stroke.pts.length;
   const data = { c: stroke.c, w: stroke.w, p: encodePoints(stroke.pts) };
+  if (stroke.tone) data.d = stroke.tone; // 濃さはふつう以外のときだけ保存する
   writeMine(p, (ref) => ref.child(path + '/' + k).set(data));
 }
 
