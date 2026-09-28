@@ -66,16 +66,8 @@
     }
     .oek-check input { width: 20px; height: 20px; accent-color: var(--color-accent); flex-shrink: 0; }
     .oek-field-label { font-size: 14px; font-weight: 700; color: var(--color-text); margin: 14px 0 8px; }
-    .oek-radio-group { display: flex; flex-direction: column; gap: 8px; }
-    .oek-radio {
-      display: flex; align-items: center; gap: 10px; padding: 10px 12px;
-      border: 2px solid var(--color-border); border-radius: 12px; cursor: pointer;
-      background: var(--color-surface);
-    }
-    .oek-radio input { width: 18px; height: 18px; accent-color: var(--color-accent); flex-shrink: 0; }
-    .oek-radio.is-checked { border-color: var(--color-accent); background: #EAF4F5; }
-    .oek-radio__label { font-weight: 700; }
-    .oek-radio__detail { display: block; font-size: 12px; font-weight: 500; color: var(--color-muted); margin-top: 2px; }
+    .oek-limits { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .oek-limit-label { display: block; font-size: 13px; font-weight: 700; color: var(--color-muted); margin-bottom: 4px; }
     .oek-setting-line { font-size: 14px; color: var(--color-muted); margin-top: 10px; }
 
     /* ── 参加者一覧 ── */
@@ -318,8 +310,18 @@
         <input type="checkbox" id="set-host-plays" onchange="onHostPlaysChange(this.checked)">
         <span>自分も描く側で参加する</span>
       </label>
-      <p class="oek-field-label" id="pace-label">制限時間</p>
-      <div class="oek-radio-group" role="radiogroup" aria-labelledby="pace-label" id="pace-group"></div>
+      <p class="oek-field-label">制限時間（1回ごと）</p>
+      <div class="oek-limits">
+        <div>
+          <label class="oek-limit-label" for="set-text-sec">書く時間</label>
+          <select class="form-select" id="set-text-sec" onchange="onLimitChange('textSec', this.value)"></select>
+        </div>
+        <div>
+          <label class="oek-limit-label" for="set-draw-sec">描く時間</label>
+          <select class="form-select" id="set-draw-sec" onchange="onLimitChange('drawSec', this.value)"></select>
+        </div>
+      </div>
+      <p class="oek-setting-line" id="lobby-limit-note" hidden>制限なしの回は、みんなが完了するまで待つよ</p>
     </div>
 
     <div class="card">
@@ -340,7 +342,7 @@
     <div id="lobby-guest-wait" class="card mt-md text-center" hidden>
       <div class="spinner"></div>
       <p style="margin-top:12px;font-weight:700;color:var(--color-primary)">ホストが始めるのを待っているよ</p>
-      <p class="oek-setting-line" id="lobby-pace-text"></p>
+      <p class="oek-setting-line" id="lobby-limit-text"></p>
     </div>
 
     <button type="button" class="oek-quiet-btn" id="btn-lobby-leave" onclick="leaveFromLobby()">退出する</button>
@@ -516,13 +518,13 @@ const TIMEOUT_GRACE_MS = 1500;    // 締め切りのあと、書きかけの保�
 const TIMEOUT_RETRY_MS = 2000;
 const TEXT_SAVE_DELAY_MS = 400;
 
-const PACES = {
-  slow:   { label: 'ゆっくり', detail: '書く1分・描く2分30秒', text: 60, draw: 150 },
-  normal: { label: 'ふつう',   detail: '書く40秒・描く1分30秒', text: 40, draw: 90 },
-  none:   { label: 'なし',     detail: 'みんなが完了するまで待つ', text: 0, draw: 0 },
-};
-const PACE_KEYS = ['slow', 'normal', 'none'];
-const DEFAULT_PACE = 'slow';
+// 制限時間（秒。0 は制限なし）。ロビーでホストが分単位で選び、始めるときに match に固定する
+const TEXT_LIMITS = [60, 120, 180, 0];            // 書く回: 1〜3分・制限なし
+const DRAW_LIMITS = [60, 120, 180, 240, 300, 0];  // 描く回: 1〜5分・制限なし
+const DEFAULT_TEXT_SEC = 60;
+const DEFAULT_DRAW_SEC = 180;
+// 分で選ぶ形にする前（ゆっくり・ふつう・なしの3択）に始めたゲームの時間
+const LEGACY_PACES = { slow: { text: 60, draw: 150 }, normal: { text: 40, draw: 90 }, none: { text: 0, draw: 0 } };
 
 // キャンバス（論理サイズ 800×600。表示は画面幅に合わせて縮小）
 const CANVAS_W = 800;
@@ -739,15 +741,32 @@ function chainFor(m, nick, step) {
   const n = order.length;
   return ((i - step) % n + n) % n;
 }
-function paceOf(key) { return PACES[key] || PACES[DEFAULT_PACE]; }
-function stepSeconds(pace, step) {
-  const p = paceOf(pace);
-  if (!p.text) return 0;
-  return stepType(step) === 'draw' ? p.draw : p.text;
+// ロビーの設定の制限時間（選べる値だけを使う。3択のころに作ったルームの「なし」は両方とも制限なし）
+function settingLimits(settings) {
+  const s = settings || {};
+  const noLimit = s.pace === 'none';
+  return {
+    text: TEXT_LIMITS.includes(s.textSec) ? s.textSec : (noLimit ? 0 : DEFAULT_TEXT_SEC),
+    draw: DRAW_LIMITS.includes(s.drawSec) ? s.drawSec : (noLimit ? 0 : DEFAULT_DRAW_SEC),
+  };
 }
-function deadlineFor(pace, step, now) {
-  const sec = stepSeconds(pace, step);
+// 始めたときに固定した制限時間（3択のころに始めたゲームは pace から読む）
+function matchLimits(m) {
+  if (m.textSec == null && m.drawSec == null && LEGACY_PACES[m.pace]) return LEGACY_PACES[m.pace];
+  return { text: Math.max(0, Number(m.textSec) || 0), draw: Math.max(0, Number(m.drawSec) || 0) };
+}
+function stepSeconds(limits, step) {
+  return stepType(step) === 'draw' ? limits.draw : limits.text;
+}
+function deadlineFor(limits, step, now) {
+  const sec = stepSeconds(limits, step);
   return sec ? now + sec * 1000 : null;
+}
+function limitText(sec) {
+  if (!sec) return '制限なし';
+  const min = Math.floor(sec / 60);
+  const rest = sec % 60;
+  return (min ? min + '分' : '') + (rest ? rest + '秒' : '');
 }
 function artPath(mid, chain, step) {
   return 'art/m' + mid + '/c' + chain + (step == null ? '' : '/s' + step);
@@ -1047,14 +1066,14 @@ function syncArtSubs(ctl) {
 // ══════════════════════════════════════════════════
 // ロビー
 // ══════════════════════════════════════════════════
-function buildPaceRadios() {
-  $('pace-group').innerHTML = PACE_KEYS.map((key) => {
-    const p = PACES[key];
-    return '<label class="oek-radio" data-pace="' + key + '">'
-      + '<input type="radio" name="pace" value="' + key + '" onchange="onPaceChange(this.value)">'
-      + '<span><span class="oek-radio__label">' + esc(p.label) + '</span>'
-      + '<span class="oek-radio__detail">' + esc(p.detail) + '</span></span></label>';
-  }).join('');
+function buildLimitSelects() {
+  const options = (list) => list.map((sec) => '<option value="' + sec + '">' + limitText(sec) + '</option>').join('');
+  $('set-text-sec').innerHTML = options(TEXT_LIMITS);
+  $('set-draw-sec').innerHTML = options(DRAW_LIMITS);
+}
+function limitSummary(limits) {
+  if (!limits.text && !limits.draw) return '制限時間はなし。みんなが完了するまで待つよ';
+  return '書く時間は' + limitText(limits.text) + '、描く時間は' + limitText(limits.draw) + 'だよ';
 }
 
 function renderLobby(ctl) {
@@ -1062,7 +1081,7 @@ function renderLobby(ctl) {
   const isHost = state.role === 'host';
   const players = ctl.players || {};
   const settings = ctl.settings || {};
-  const pace = PACES[settings.pace] ? settings.pace : DEFAULT_PACE;
+  const limits = settingLimits(settings);
   const hostPlays = !!settings.hostPlays;
 
   $('lobby-code-card').hidden = !isHost;
@@ -1074,13 +1093,12 @@ function renderLobby(ctl) {
   if (isHost) {
     $('lobby-room-code').textContent = state.roomCode;
     $('set-host-plays').checked = hostPlays;
-    document.querySelectorAll('#pace-group .oek-radio').forEach((label) => {
-      const checked = label.dataset.pace === pace;
-      label.classList.toggle('is-checked', checked);
-      label.querySelector('input').checked = checked;
+    [['set-text-sec', limits.text], ['set-draw-sec', limits.draw]].forEach(([id, sec]) => {
+      if ($(id).value !== String(sec)) $(id).value = String(sec);
     });
+    $('lobby-limit-note').hidden = !!(limits.text && limits.draw);
   } else {
-    $('lobby-pace-text').textContent = '制限時間：' + PACES[pace].label + '（' + PACES[pace].detail + '）';
+    $('lobby-limit-text').textContent = limitSummary(limits);
   }
 
   const entries = Object.entries(players).sort((a, b) => ((a[1] && a[1].seat) || 0) - ((b[1] && b[1].seat) || 0));
@@ -1123,7 +1141,10 @@ async function updateSetting(key, value) {
   if (state.lastCtl && state.lastCtl.status === 'waiting') renderLobby(state.lastCtl);
 }
 function onHostPlaysChange(checked) { updateSetting('hostPlays', !!checked); }
-function onPaceChange(value) { if (PACES[value]) updateSetting('pace', value); }
+function onLimitChange(key, value) {
+  const sec = Number(value);
+  if ((key === 'textSec' ? TEXT_LIMITS : DRAW_LIMITS).includes(sec)) updateSetting(key, sec);
+}
 
 // ══════════════════════════════════════════════════
 // あそぶ（play）
@@ -1356,7 +1377,7 @@ function updateTimerUI() {
     return;
   }
   bar.hidden = false;
-  const total = stepSeconds(m.pace, Number(m.step) || 0) * 1000;
+  const total = stepSeconds(matchLimits(m), Number(m.step) || 0) * 1000;
   const remain = Math.max(0, Number(m.deadline) - getNow());
   const sec = Math.ceil(remain / 1000);
   timer.textContent = sec > 0 ? '残り ' + formatSec(sec) : '時間になったよ';
@@ -1655,7 +1676,7 @@ function advancedMatch(m, now) {
   const n = orderOf(m).length;
   const next = (Number(m.step) || 0) + 1;
   if (next < n) {
-    return { ...m, step: next, done: null, deadline: deadlineFor(m.pace, next, now) };
+    return { ...m, step: next, done: null, deadline: deadlineFor(matchLimits(m), next, now) };
   }
   return { ...m, phase: 'show', steps: n, show: { chain: 0, upto: 1 }, done: null, deadline: null };
 }
@@ -2059,7 +2080,7 @@ async function hostStartGame() {
       const players = cur.players || {};
       if (!players[me] || !players[me].isHost) { reason = 'invalid'; return; }
       const settings = cur.settings || {};
-      const pace = PACES[settings.pace] ? settings.pace : DEFAULT_PACE;
+      const limits = settingLimits(settings);
       const members = guestNames(cur);
       if (settings.hostPlays) members.push(me);
       if (members.length < MIN_MEMBERS || members.length > MAX_MEMBERS) { reason = 'count'; return; }
@@ -2073,11 +2094,12 @@ async function hostStartGame() {
         match: {
           matchId,
           order: members,
-          pace,
+          textSec: limits.text,
+          drawSec: limits.draw,
           phase: 'play',
           step: 0,
           seed,
-          deadline: deadlineFor(pace, 0, getNow()),
+          deadline: deadlineFor(limits, 0, getNow()),
         },
       };
     });
@@ -2130,7 +2152,7 @@ async function hostCreateRoomInner() {
         status: 'waiting',
         createdAt: firebase.database.ServerValue.TIMESTAMP,
         lastMatchId: 0,
-        settings: { hostPlays: false, pace: DEFAULT_PACE },
+        settings: { hostPlays: false, textSec: DEFAULT_TEXT_SEC, drawSec: DEFAULT_DRAW_SEC },
         players: { [nickname]: { isHost: true, seat: 0, sid } },
       };
       const { committed } = await ref.child('ctl').transaction((cur) => (cur ? undefined : initialCtl));
@@ -2765,7 +2787,7 @@ $('play-text').addEventListener('input', () => {
 });
 $('play-text').addEventListener('blur', () => { if (state.play.key) flushText(); });
 
-buildPaceRadios();
+buildLimitSelects();
 buildTools();
 startConnectionWatch();
 tryReconnect().then((reconnected) => {

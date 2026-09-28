@@ -32,19 +32,20 @@
 - (c, k) で見せる材料は (c, k−1)。k が奇数なら文→絵、k が 2 以上の偶数なら絵→文。
 - 全員が各列をちょうど1回ずつ担当する。N が偶数なら列は絵で終わり、奇数なら文で終わる（原作どおり）。
 
-### 制限時間（`pace`）
+### 制限時間（`textSec` / `drawSec`）
 
-ロビーでホストが選ぶ。開始時に `match/pace` へ固定する。
+ロビーでホストが「書く時間」「描く時間」を分単位で選ぶ（1回ごとの時間）。開始時に `match/textSec`・`match/drawSec`（秒。0 は制限なし）へ固定する。
 
-| pace | 書く | 描く | 既定 |
-|---|---|---|---|
-| `slow`（ゆっくり） | 60秒 | 150秒 | ○（オーナー決定） |
-| `normal`（ふつう） | 40秒 | 90秒 | |
-| `none`（なし） | 制限なし | 制限なし | |
+| 種類 | 選べる時間 | 既定 |
+|---|---|---|
+| 書く時間（0回目・絵を文にする回） | 1分・2分・3分・制限なし | 1分 |
+| 描く時間（文を絵にする回） | 1分・2分・3分・4分・5分・制限なし | 3分 |
 
+- 2026-09-28、メンターの要望（「分数で選びたい」「時間が足りないことがある」）で、ゆっくり（書く60秒・描く150秒。既定）・ふつう（40秒・90秒）・なしの3択から変えた。選べる幅はまぎれ絵師の手番タイマー（1〜5分・制限なし）とそろえている。既定の描く時間3分は、旧既定の2分30秒を分単位に切り上げたもの。
 - 時間切れになったら、書きかけ・描きかけのまま次へ回る（原作どおり）。
 - 全員が「完了」したら、時間前でも次へ進む。
-- `none` では全員の「完了」を待つ。ホストは「しめきる」でいつでも次へ進められる（全 pace 共通）。
+- 制限なしの回は全員の「完了」を待つ。ホストは「しめきる」でいつでも次へ進められる（制限時間のある回も同じ）。
+- 3択のころに作ったルーム・始めたゲーム（`settings/pace`・`match/pace`）も読める（公開の切り替えをまたいで続くゲームのため）。始めたゲームは当時の時間のまま進む。ロビーの設定は `pace: 'none'` なら両方とも制限なし、それ以外は既定の時間として扱う。
 
 ### room-K 向けに足したもの（遊び味は変えない）
 
@@ -105,7 +106,7 @@ TOP（screen-top）
  ├── 「ルームを作る」 → ニックネーム（screen-host-setup） → ロビー
  └── 「ルームに参加する」 → ニックネーム＋ルームコード（screen-guest-join） → ロビー
 ロビー（screen-lobby / status: waiting）
-   ホスト: ルームコード＋「コードをコピー」、「自分も描く側で参加する」、制限時間、参加者、「始める」、「ルームを閉じる」
+   ホスト: ルームコード＋「コードをコピー」、「自分も描く側で参加する」、制限時間（書く時間・描く時間）、参加者、「始める」、「ルームを閉じる」
    ゲスト: 待機表示（制限時間の設定も見える）、「退出する」
         ↓「始める」（描く側 3〜8人）
 あそぶ（screen-play / phase: play）
@@ -140,7 +141,7 @@ match/phase: play ──（最後の回が終わる / ホスト「途中で終�
 
 | status / phase | 説明 |
 |---|---|
-| `waiting` | ロビー。このときだけ新規参加できる。設定（hostPlays・pace）を変えられる |
+| `waiting` | ロビー。このときだけ新規参加できる。設定（hostPlays・textSec・drawSec）を変えられる |
 | `playing` + `play` | N 回の書く・描く。`match/step` が今の回 |
 | `playing` + `show` | 見せあい。`match/show` がいまの列とめくった数 |
 | `playing` + `end` | おしまい。各自で見返す。ホストが次を選ぶ |
@@ -161,16 +162,17 @@ oekaki_rooms/{roomCode}/
   │    ├── status:             'waiting' | 'playing'
   │    ├── createdAt:          number          # ServerValue.TIMESTAMP
   │    ├── lastMatchId:        number          # 最後に始めたゲームの matchId（初期値 0）
-  │    ├── settings: { hostPlays: boolean, pace: 'slow' | 'normal' | 'none' }
+  │    ├── settings: { hostPlays: boolean, textSec: number, drawSec: number }   # 制限時間は秒（0 は制限なし）
   │    ├── players/{nick}: { isHost: boolean, seat: number, sid: string }   # presence（ノードの有無＝接続中）。sid はその画面（タブ）の識別子
   │    └── match/                              # 「始める」で作成、「もう一回あそぶ」で削除
   │         ├── matchId:  number               # ルーム内の世代（始めるたびに +1）
   │         ├── order:    [nick, ...]           # 描く側の並び（開始時にシャッフルして固定）
-  │         ├── pace:     'slow' | 'normal' | 'none'
+  │         ├── textSec:  number               # 書く回の制限時間（秒。0 は制限なし）。開始時に固定
+  │         ├── drawSec:  number               # 描く回の制限時間（秒。0 は制限なし）。開始時に固定
   │         ├── phase:    'play' | 'show' | 'end'
   │         ├── step:     number               # play 中の今の回（0〜N−1）
   │         ├── seed:     number               # おまかせのお題を配る順番（開始時に作る）
-  │         ├── deadline: number               # play 中の締め切り（サーバー時刻 ms）。pace none は absent
+  │         ├── deadline: number               # play 中の締め切り（サーバー時刻 ms）。制限なしの回は absent
   │         ├── done/{nick}: true              # 今の回で「完了」した人
   │         ├── steps:    number               # show / end で見せる回数（通常 N、途中で終わると step+1）
   │         └── show: { chain: number, upto: number }   # show 中の列と、めくった数（1〜steps）
@@ -228,10 +230,10 @@ oekaki_rooms/{roomCode}/
 | 作成 | ホスト | `ctl == null` → 初期 ctl。確定後に古い `art` を消す |
 | 参加 | ゲスト | `waiting`・未期限切れ・ホスト接続中・名前未使用・9人未満 → `players/{nick}`。`playing` 中は、`order` に居て今は接続していない名前だけ入りなおせる |
 | 設定変更 | ホスト | `waiting`・自分が host → `settings` |
-| 開始 | ホスト | `waiting`・自分が host・描く側 3〜8人 → `status: playing`・`match`（matchId+1・order・pace・phase play・step 0・deadline） |
+| 開始 | ホスト | `waiting`・自分が host・描く側 3〜8人 → `status: playing`・`match`（matchId+1・order・textSec・drawSec・phase play・step 0・deadline） |
 | 完了 | 描く側 | `playing`・phase play・matchId/step 一致・自分が order に居る → `done/{自分}`。全員そろったら同じ transaction で次の回へ |
 | なおす | 描く側 | 同上 → `done/{自分}` を消す |
-| 時間切れ | 描く側・進行役を含むホスト | phase play・matchId/step 一致＋pace が none でない＋`now ≥ deadline + 1.5秒` → 次の回へ |
+| 時間切れ | 描く側・進行役を含むホスト | phase play・matchId/step 一致＋締め切りがある（制限なしの回は `deadline` が無い）＋`now ≥ deadline + 1.5秒` → 次の回へ |
 | しめきる | ホスト | phase play・matchId/step 一致 → 次の回へ |
 | 途中で終わる | ホスト | phase play・matchId 一致（回が進んだ直後でも通す）→ `phase: show`・`steps: step+1`・`show: { chain: 0, upto: 1 }`・`done` と `deadline` を消す |
 | つぎへ | ホスト | phase show・matchId/chain/upto 一致 → upto+1 / 次の列 / `phase: end` |
@@ -240,7 +242,7 @@ oekaki_rooms/{roomCode}/
 | もう一回あそぶ | ホスト | phase end・matchId 一致 → `status: waiting`・`match: null`。確定後に終わったゲームの `art/m{id}` を消す |
 | 復帰の書き戻し | 各自 | 下記「接続・切断・再接続」 |
 
-- 次の回へ進む処理（共通）: `step + 1 < N` なら `step+1`・`done: null`・`deadline` を次の種類の時間で再計算（`RoomkRTDB.now()` 基準）。最後の回なら `phase: show`・`steps: N`・`show: { chain: 0, upto: 1 }`・`done` と `deadline` を消す。
+- 次の回へ進む処理（共通）: `step + 1 < N` なら `step+1`・`done: null`・`deadline` を次の種類の時間で再計算（`RoomkRTDB.now()` 基準。その種類が制限なしなら `deadline` なし）。最後の回なら `phase: show`・`steps: N`・`show: { chain: 0, upto: 1 }`・`done` と `deadline` を消す。
 - `matchId` はルームの `lastMatchId`（ctl 直下）から +1 して作る。「もう一回」で match を消しても世代が戻らないようにするため。
 - ローカルキャッシュ null 対策: リスナー未接続から呼ぶ transaction（参加・復帰の書き戻し・期限切れ/壊れルーム削除）は、**先に ctl へ `on('value')` を張ってキャッシュを温め、最初の値が届いてから transaction する**（`withWarmCache()`）。oshitsuke-zukan・esadori の `const cur = room || preRoom` は、事前取得と transaction の間にルームが消えると古い値でルームを復活させうる（null キャッシュと null のサーバー値のハッシュが一致して確定する）ため、このアプリでは使わない（Codex 設計レビュー 2026-09-28 の指摘）。
 
