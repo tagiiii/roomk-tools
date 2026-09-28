@@ -3,6 +3,10 @@ import { QUIZ_PACKS } from './questions.js';
 
 const NUMBERS = ['①', '②', '③', '④', '⑤'];
 
+// 問題を出す前に「3・2・1」と数える（ひとつの画面・ルームとも）
+const COUNTDOWN_SEC = 3;
+const COUNTDOWN_MS = COUNTDOWN_SEC * 1000;
+
 // 手ごたえのある（難しめ）パック。表示名ではなく id で判定する。
 const CHALLENGE_PACK_IDS = new Set([
   'kanyouku',
@@ -120,6 +124,7 @@ const state = {
   answered: false,
   answeredCount: 0,
   usedIds: new Set(),
+  localCountdownTimer: null,
 
   // ルームであそぶ
   role: null, // 'host' | 'guest'
@@ -130,6 +135,7 @@ const state = {
   currentScreen: 'top',
   limitSec: DEFAULT_LIMIT_SEC,
   timerInterval: null,
+  roomCountdownTimer: null,
   orphanTimer: null,
   closeTimer: null,
   closeTimerKey: null,
@@ -159,6 +165,11 @@ const startHint = document.getElementById('startHint');
 const btnStart = document.getElementById('btnStart');
 const quizPackName = document.getElementById('quizPackName');
 const quizProgress = document.getElementById('quizProgress');
+const quizCountdown = document.getElementById('quizCountdown');
+const quizCountdownLabel = document.getElementById('quizCountdownLabel');
+const quizCountdownNum = document.getElementById('quizCountdownNum');
+const quizBody = document.getElementById('quizBody');
+const quizAnnounce = document.getElementById('quizAnnounce');
 const questionText = document.getElementById('questionText');
 const choicesArea = document.getElementById('choicesArea');
 const feedbackCard = document.getElementById('feedbackCard');
@@ -203,6 +214,10 @@ const roomStartHint = $('roomStartHint');
 const btnRoomStart = $('btnRoomStart');
 const playPackName = $('playPackName');
 const playProgress = $('playProgress');
+const playCountdown = $('playCountdown');
+const playCountdownLabel = $('playCountdownLabel');
+const playCountdownNum = $('playCountdownNum');
+const playBody = $('playBody');
 const playTimer = $('playTimer');
 const playTimerText = $('playTimerText');
 const playQuestion = $('playQuestion');
@@ -529,6 +544,28 @@ function renderPackCards() {
   });
 }
 
+/* ── 問題の前の「3・2・1」（ひとつの画面・ルーム共通の部品） ── */
+// 数字の上の一言。最初と最後の問題だけ言い方を変える
+function countdownLabel(index, total) {
+  if (index > 0 && index === total - 1) return '最後の問題';
+  return index === 0 ? '最初の問題' : '次の問題';
+}
+
+// 問題が出るまでの残り時間（ミリ秒）から数字を出す。数字が変わるたびに弾ませる
+function showCount(node, left) {
+  const count = String(Math.min(COUNTDOWN_SEC, Math.max(1, Math.ceil(left / 1000))));
+  if (node.textContent === count) return;
+  node.textContent = count;
+  node.classList.remove('is-pop');
+  void node.offsetWidth; // アニメーションをかけ直す
+  node.classList.add('is-pop');
+}
+
+// 次に数字が変わる（または問題が出る）までの時間。変わった直後に描き直せるよう少し足す
+function untilNextCount(left) {
+  return (left % 1000 || 1000) + 20;
+}
+
 function startQuiz() {
   const pack = getSelectedPack();
   if (!pack) return;
@@ -541,8 +578,45 @@ function startQuiz() {
   state.answeredCount = 0;
 
   quizPackName.textContent = pack.name;
-  renderQuestion();
   showScreen('quiz');
+  countdownToQuestion();
+}
+
+// 「3・2・1」と数えてから問題を出す。数えている間は問題・選択肢・ボタンを伏せる
+function countdownToQuestion() {
+  stopLocalCountdown();
+  if (!state.deck[state.index]) {
+    renderQuestion();
+    return;
+  }
+  const openAt = Date.now() + COUNTDOWN_MS;
+  quizProgress.textContent = `Q${state.index + 1} / ${state.deck.length}`;
+  quizCountdownLabel.textContent = countdownLabel(state.index, state.deck.length);
+  quizCountdownNum.textContent = '';
+  quizAnnounce.textContent = '';
+  quizBody.hidden = true;
+  quizCountdown.hidden = false;
+
+  const tick = () => {
+    const left = openAt - Date.now();
+    if (left <= 0) {
+      state.localCountdownTimer = null;
+      quizCountdown.hidden = true;
+      quizBody.hidden = false;
+      renderQuestion();
+      return;
+    }
+    showCount(quizCountdownNum, left);
+    state.localCountdownTimer = setTimeout(tick, untilNextCount(left));
+  };
+  tick();
+}
+
+function stopLocalCountdown() {
+  clearTimeout(state.localCountdownTimer);
+  state.localCountdownTimer = null;
+  quizCountdown.hidden = true;
+  quizBody.hidden = false;
 }
 
 function renderQuestion() {
@@ -561,6 +635,8 @@ function renderQuestion() {
   quizPackName.textContent = pack.name;
   quizProgress.textContent = `Q${state.index + 1} / ${state.deck.length}`;
   questionText.textContent = current.question;
+  // 問題文は、カウントダウンの間も隠さない読み上げ用の欄で知らせる（問題の欄は伏せていたため）
+  quizAnnounce.textContent = current.question;
 
   feedbackCard.hidden = true;
   feedbackResult.textContent = '';
@@ -632,7 +708,7 @@ function answerQuestion(choiceIndex) {
 }
 
 function goNext() {
-  if (!state.answered) return;
+  if (!state.answered || state.localCountdownTimer) return;
 
   if (state.index >= state.deck.length - 1) {
     finishQuiz();
@@ -640,7 +716,7 @@ function goNext() {
   }
 
   state.index += 1;
-  renderQuestion();
+  countdownToQuestion();
 }
 
 function finishEarly() {
@@ -649,6 +725,7 @@ function finishEarly() {
 }
 
 function finishQuiz() {
+  stopLocalCountdown();
   const pack = getSelectedPack();
   // 分母は「答えた数」。中断しても未回答を不正解扱いにしない
   const total = state.answeredCount;
@@ -670,6 +747,7 @@ function finishQuiz() {
 }
 
 function backToTop() {
+  stopLocalCountdown();
   // トップへ戻るときは鮮度管理をリセット
   state.usedIds = new Set();
   showScreen('top');
@@ -831,6 +909,12 @@ function warmRoomCache(ref) {
 
 function answerKey(game) {
   return 'g' + game.id + 'q' + game.index;
+}
+
+// 問題が出るまでの残り時間。game.startedAt は「3・2・1」が終わって問題が出る時刻
+function countdownLeft(game) {
+  const startedAt = Number(game?.startedAt);
+  return Number.isFinite(startedAt) ? startedAt - RoomkRTDB.now() : 0;
 }
 
 function currentQuestion(data) {
@@ -1122,6 +1206,12 @@ function connectToRoom(role, nickname, code, ref) {
 }
 
 function tickRoom() {
+  // 問題が出る時刻を過ぎてもカウントダウンのままなら切り替える（タイマーが遅れたときの保険）
+  const data = state.room;
+  if (data?.status === ROOM_STATUS.QUESTION && state.renderedKey?.startsWith('count-')
+    && countdownLeft(data.game) <= 0) {
+    renderPlay(data);
+  }
   updateTimer();
   if (state.room && needsPresence(state.room)) ensurePresence();
 }
@@ -1244,6 +1334,7 @@ function cleanupRoom() {
   clearInterval(state.timerInterval);
   clearTimeout(state.orphanTimer);
   clearCloseTimer();
+  clearRoomCountdown();
   state.timerInterval = null;
   state.orphanTimer = null;
   if (state.roomRef && state.roomCallback) state.roomRef.off('value', state.roomCallback);
@@ -1329,7 +1420,10 @@ function handleRoom(data) {
   if (state.presenceDirty) ensurePresence(true);
   else if (needsPresence(data)) ensurePresence();
   updateHostOverlay(data);
-  if (data.status !== ROOM_STATUS.QUESTION) clearCloseTimer();
+  if (data.status !== ROOM_STATUS.QUESTION) {
+    clearCloseTimer();
+    clearRoomCountdown();
+  }
 
   switch (data.status) {
     case ROOM_STATUS.LOBBY: renderLobby(data); break;
@@ -1421,6 +1515,25 @@ function renderPlay(data) {
   const key = answerKey(game);
   playPackName.textContent = game.packName || 'クイズパック';
   playProgress.textContent = `Q${game.index + 1} / ${game.total}`;
+
+  // 問題が出る時刻までは「3・2・1」を出し、問題・選択肢・ホストの操作は伏せておく。
+  // 一度出した問題は、時刻の補正などで startedAt が先に見えてもカウントダウンに戻さない
+  const left = state.renderedKey === key ? 0 : countdownLeft(game);
+  playCountdown.hidden = left <= 0;
+  playBody.hidden = left > 0;
+  if (left > 0) {
+    if (state.renderedKey !== 'count-' + key) {
+      state.renderedKey = 'count-' + key;
+      playCountdownLabel.textContent = countdownLabel(game.index, Number(game.total) || 0);
+      playCountdownNum.textContent = '';
+    }
+    showCount(playCountdownNum, left);
+    // ホストの切断中の帯は、まだ答えられないので「押せる」とは言わない
+    hostOffBanner.textContent = 'ホストの戻りを待っています。';
+    scheduleRoomCountdown(left);
+    return;
+  }
+  clearRoomCountdown();
   hostPlayTools.hidden = !isHost;
   hostCopyTools.hidden = !isHost;
 
@@ -1449,6 +1562,20 @@ function renderPlay(data) {
     updateGuestChoices(data, game, answerOf(data, key, state.nickname));
   }
   updateTimer();
+}
+
+// 数字が変わる瞬間・問題が出る瞬間に合わせて描き直す（どの端末でも同じ時刻に問題が出るように）
+function scheduleRoomCountdown(left) {
+  clearTimeout(state.roomCountdownTimer);
+  state.roomCountdownTimer = setTimeout(() => {
+    state.roomCountdownTimer = null;
+    if (!state.leaving && state.room?.status === ROOM_STATUS.QUESTION) renderPlay(state.room);
+  }, untilNextCount(left));
+}
+
+function clearRoomCountdown() {
+  clearTimeout(state.roomCountdownTimer);
+  state.roomCountdownTimer = null;
 }
 
 function renderPlayChoices(question, key, isHost) {
@@ -1499,6 +1626,8 @@ async function submitAnswer(key, choice) {
   const member = data.scores?.[state.nickname];
   if (!member || joinedFrom(member) > game.index) return;
   if (answerOf(data, key, state.nickname)) return;
+  // この端末で問題が出る前（カウントダウン中）は送らない
+  if (state.renderedKey !== key && countdownLeft(game) > 0) return;
   const deadline = deadlineOf(game);
   if (deadline != null && RoomkRTDB.now() >= deadline) {
     renderPlay(data);
@@ -1908,7 +2037,8 @@ async function startRoomGame() {
         total: questions.length,
         questions,
         index: 0,
-        startedAt: serverTimestamp(),
+        // 問題が出る時刻。各端末はこの時刻まで「3・2・1」を出し、制限時間と早さの点もここから数える
+        startedAt: RoomkRTDB.now() + COUNTDOWN_MS,
       },
       // 出題と同時に、答える人ごとの受付枠を開く
       answers: {
@@ -1942,7 +2072,7 @@ async function nextQuestion() {
     if (data.status !== ROOM_STATUS.REVEAL || !game) return;
     if (game.id !== expected.id || game.index !== expected.index) return;
     if (game.index + 1 >= game.total) return { ...data, status: ROOM_STATUS.FINAL };
-    const nextGame = { ...game, index: game.index + 1, startedAt: serverTimestamp() };
+    const nextGame = { ...game, index: game.index + 1, startedAt: RoomkRTDB.now() + COUNTDOWN_MS };
     return {
       ...data,
       status: ROOM_STATUS.QUESTION,

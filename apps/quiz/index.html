@@ -7,7 +7,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet" />
   <link rel="stylesheet" href="../shared/css/design-system.css" />
-  <link rel="stylesheet" href="style.css?v=20260925" />
+  <link rel="stylesheet" href="style.css?v=20260928" />
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
@@ -81,50 +81,61 @@
       </section>
     </section>
 
-    <section class="qz-screen" id="screen-quiz" hidden>
+    <section class="qz-screen qz-screen--quiz" id="screen-quiz" hidden>
       <div class="qz-quiz-shell">
         <div class="qz-quiz-meta">
           <span class="badge badge-primary" id="quizPackName"></span>
           <span class="qz-progress" id="quizProgress">Q1 / 10</span>
         </div>
 
-        <section class="qz-question card">
-          <p class="qz-question__text" id="questionText" aria-live="polite"></p>
+        <!-- 問題の前の「3・2・1」 -->
+        <section class="qz-countdown card" id="quizCountdown" hidden>
+          <p class="qz-countdown__label" id="quizCountdownLabel"></p>
+          <p class="qz-countdown__num" id="quizCountdownNum"></p>
         </section>
 
-        <section class="qz-choices" id="choicesArea" aria-label="選択肢"></section>
+        <!-- 問題文の読み上げ用。問題の欄はカウントダウンの間は伏せるため、別に置く -->
+        <p class="qz-sr-only" id="quizAnnounce" aria-live="polite"></p>
 
-        <div class="qz-quiz-actions">
-          <button class="btn btn-ghost btn-sm" id="btnCopyQuestion">
-            <span class="material-symbols-rounded">content_copy</span>
-            問題をコピー
-          </button>
-        </div>
+        <div class="qz-quiz-body" id="quizBody">
+          <section class="qz-question card">
+            <p class="qz-question__text" id="questionText"></p>
+          </section>
 
-        <section class="qz-feedback card" id="feedbackCard" hidden aria-live="polite">
-          <div class="qz-feedback__result" id="feedbackResult"></div>
-          <p class="qz-feedback__answer" id="feedbackAnswer"></p>
-          <p class="qz-feedback__explanation" id="feedbackExplanation"></p>
-          <div class="qz-feedback__actions">
-            <button class="btn btn-ghost btn-sm" id="btnCopyAnswer">
+          <section class="qz-choices" id="choicesArea" aria-label="選択肢"></section>
+
+          <div class="qz-quiz-actions">
+            <button class="btn btn-ghost btn-sm" id="btnCopyQuestion">
               <span class="material-symbols-rounded">content_copy</span>
-              正解つきでコピー
+              問題をコピー
             </button>
           </div>
-        </section>
 
-        <div class="qz-quiz-actions">
-          <button class="btn btn-secondary btn-lg" id="btnNext" hidden>
-            <span class="material-symbols-rounded">arrow_forward</span>
-            次の問題へ
-          </button>
-        </div>
+          <section class="qz-feedback card" id="feedbackCard" hidden aria-live="polite">
+            <div class="qz-feedback__result" id="feedbackResult"></div>
+            <p class="qz-feedback__answer" id="feedbackAnswer"></p>
+            <p class="qz-feedback__explanation" id="feedbackExplanation"></p>
+            <div class="qz-feedback__actions">
+              <button class="btn btn-ghost btn-sm" id="btnCopyAnswer">
+                <span class="material-symbols-rounded">content_copy</span>
+                正解つきでコピー
+              </button>
+            </div>
+          </section>
 
-        <div class="qz-quiz-actions qz-quiz-actions--finish">
-          <button class="btn btn-ghost btn-sm" id="btnFinishEarly" hidden>
-            <span class="material-symbols-rounded">flag</span>
-            ここで結果を見る
-          </button>
+          <div class="qz-quiz-actions">
+            <button class="btn btn-secondary btn-lg" id="btnNext" hidden>
+              <span class="material-symbols-rounded">arrow_forward</span>
+              次の問題へ
+            </button>
+          </div>
+
+          <div class="qz-quiz-actions qz-quiz-actions--finish">
+            <button class="btn btn-ghost btn-sm" id="btnFinishEarly" hidden>
+              <span class="material-symbols-rounded">flag</span>
+              ここで結果を見る
+            </button>
+          </div>
         </div>
       </div>
     </section>
@@ -219,28 +230,35 @@
           <span class="badge badge-primary" id="playPackName"></span>
           <span class="qz-progress" id="playProgress"></span>
         </div>
-        <p class="qz-timer" id="playTimer">
-          <span class="material-symbols-rounded" aria-hidden="true">timer</span>
-          <span id="playTimerText"></span>
-        </p>
-        <section class="qz-question card">
-          <p class="qz-question__text" id="playQuestion"></p>
+        <!-- 問題の前の「3・2・1」。問題が出る時刻（game.startedAt）まで問題と選択肢を伏せる -->
+        <section class="qz-countdown card" id="playCountdown" hidden>
+          <p class="qz-countdown__label" id="playCountdownLabel"></p>
+          <p class="qz-countdown__num" id="playCountdownNum"></p>
         </section>
-        <section class="qz-choices" id="playChoices" aria-label="選択肢"></section>
-        <div class="qz-quiz-actions" id="hostCopyTools" hidden>
-          <button class="btn btn-ghost btn-sm" id="btnRoomCopyQuestion">
-            <span class="material-symbols-rounded">content_copy</span>
-            問題をコピー
-          </button>
+        <div class="qz-quiz-body" id="playBody">
+          <p class="qz-timer" id="playTimer">
+            <span class="material-symbols-rounded" aria-hidden="true">timer</span>
+            <span id="playTimerText"></span>
+          </p>
+          <section class="qz-question card">
+            <p class="qz-question__text" id="playQuestion"></p>
+          </section>
+          <section class="qz-choices" id="playChoices" aria-label="選択肢"></section>
+          <div class="qz-quiz-actions" id="hostCopyTools" hidden>
+            <button class="btn btn-ghost btn-sm" id="btnRoomCopyQuestion">
+              <span class="material-symbols-rounded">content_copy</span>
+              問題をコピー
+            </button>
+          </div>
+          <p class="qz-play-status" id="playStatus" aria-live="polite"></p>
+          <div class="qz-quiz-actions" id="hostPlayTools" hidden>
+            <button class="btn btn-secondary" id="btnCloseAnswers">
+              <span class="material-symbols-rounded">lock_clock</span>
+              締め切って正解を見る
+            </button>
+          </div>
         </div>
-        <p class="qz-play-status" id="playStatus" aria-live="polite"></p>
         <p class="qz-host-off" id="hostOffBanner" role="status" hidden>ホストの戻りを待っています。</p>
-        <div class="qz-quiz-actions" id="hostPlayTools" hidden>
-          <button class="btn btn-secondary" id="btnCloseAnswers">
-            <span class="material-symbols-rounded">lock_clock</span>
-            締め切って正解を見る
-          </button>
-        </div>
       </div>
     </section>
 
@@ -317,7 +335,7 @@
     </div>
   </div>
 
-  <script type="module" src="app.js?v=20260925"></script>
+  <script type="module" src="app.js?v=20260928"></script>
   <script src="../shared/js/stats.js?v=1" defer></script>
   <script src="../shared/js/howto.js"></script>
   <script>
