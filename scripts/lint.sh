@@ -24,7 +24,6 @@ ALL_JS_FILES=(apps/*/app.js)
 # Realtime Database アプリ
 RTDB_HTML_FILES=(
   "apps/blackjack/index.html"
-  "apps/career-sugoroku/index.html"
   "apps/do-mannaka/index.html"
   "apps/esadori/index.html"
   "apps/ikutsu-ieru/index.html"
@@ -50,9 +49,7 @@ RTDB_HTML_FILES=(
   "apps/word-wolf/index.html"
 )
 
-# 分割ファイルの RTDB アプリ（画面を app.js 以外に持つもの）は、その JS も XSS・esc の検査に含める
-SPLIT_JS_FILES=(apps/career-sugoroku/*.js)
-XSS_FILES=("${ALL_HTML_FILES[@]}" "${ALL_JS_FILES[@]}" "${SPLIT_JS_FILES[@]}")
+XSS_FILES=("${ALL_HTML_FILES[@]}" "${ALL_JS_FILES[@]}")
 CSS_FILES=("${ALL_HTML_FILES[@]}")
 
 echo ""
@@ -88,13 +85,12 @@ for f in "${XSS_FILES[@]}"; do
 done
 
 # (2) 複数行テンプレートブロックチェック
-SEC1_ML_OUT=$(SPLIT_JS="${SPLIT_JS_FILES[*]}" python3 - <<'PYEOF'
-import glob, os, re, sys
+SEC1_ML_OUT=$(python3 - <<'PYEOF'
+import glob, re, sys
 
 BT = chr(96)  # backtick char, built via chr() to keep it out of this heredoc
 
-FILES = sorted(glob.glob('apps/*/index.html') + glob.glob('apps/*/app.js')
-               + [f for f in os.environ.get('SPLIT_JS', '').split() if os.path.isfile(f)])
+FILES = sorted(glob.glob('apps/*/index.html') + glob.glob('apps/*/app.js'))
 
 INNER = re.compile(r'\.innerHTML\s*\+?=\s*' + BT)
 ESC_RE = re.compile(r'\besc[A-Za-z]*\(|escapeHtml\(')
@@ -379,7 +375,7 @@ echo ""
 echo -e "${BOLD}[REF-4] ホスト切断 TTL チェック${NC}"
 
 REF4_OK=true
-for f in "${RTDB_HTML_FILES[@]}" "${SPLIT_JS_FILES[@]}"; do
+for f in "${RTDB_HTML_FILES[@]}"; do
   [ -f "$f" ] || continue
   while IFS=: read -r line_num content; do
     # ORPHAN_TTL_INGAME_MS など派生定数は対象外
@@ -661,7 +657,7 @@ echo ""
 echo -e "${BOLD}[REF-5] タイマー解放バランスチェック${NC}"
 
 REF5_OK=true
-for f in "${RTDB_HTML_FILES[@]}" "${SPLIT_JS_FILES[@]}"; do
+for f in "${RTDB_HTML_FILES[@]}"; do
   [ -f "$f" ] || continue
   si=$(grep -c 'setInterval(' "$f")
   ci=$(grep -c 'clearInterval(' "$f")

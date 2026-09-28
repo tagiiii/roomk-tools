@@ -1,8 +1,10 @@
 # キャリアすごろく 試作の記録（2026-09-27〜28）
 
-`drafts/career-sugoroku/` で試作していたときの README・引き継ぎ・試遊の手順を、2026-09-28 の `apps/career-sugoroku/` への移植時にそのまま残した記録。文中のパス（`drafts/career-sugoroku/...`・`careerdraft_rooms`・「試作」の表記など）は当時のもの。現在の仕様は [apps/career-sugoroku/AGENTS.md](../../apps/career-sugoroku/AGENTS.md)、テストは `tests/career-sugoroku/`。
+`drafts/career-sugoroku/` で試作していたときの README・引き継ぎ・試遊の手順を、2026-09-28 の `apps/career-sugoroku/` への移植時にそのまま残した記録。文中のパス（`drafts/career-sugoroku/...`・`careerdraft_rooms`・「試作」の表記など）は当時のもの。移植後の仕様は `apps/career-sugoroku/AGENTS.md`、テストは `tests/career-sugoroku/` にあった。
 
 移植時の主な変更: DB のパスを `careersugoroku_rooms` に、本番の初期化を共通の `RoomkRTDB.initFirebase` に、ルームコード・onDisconnect の取り消し・コードのコピー・esc を共通の関数に。design-system.css・howto.js・stats.js を組み込み、試作用の「自動で進める」と「試作」の表示を外した。
+
+**公開停止（2026-09-28、同日）**: ゲーム性をもう少し考えるため、オーナーの指示でいったん公開を停止した。`apps/career-sugoroku/`・`tests/career-sugoroku/`・サムネイルと、ポータル・早見表・lint・content-audit への登録を外し、更新情報に公開終了のお知らせを載せた。実装・仕様・テストは git 履歴に残っている（本体は 7c55ad2 で追加、最後の公開版は e038b50）。仕様だけ読むなら `git show e038b50:apps/career-sugoroku/AGENTS.md`。そのまま戻すなら公開停止のコミットを `git revert` する。
 
 ---
 
