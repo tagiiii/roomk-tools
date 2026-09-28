@@ -187,6 +187,8 @@ const COVERED_APPS = [
   'ikutsu-ieru', 'pittari-meter', 'uso-jisho', 'value-card', 'koedake-theater', 'kyoumi-sugoroku',
   // コトバであそぼ！第2期（2026-08-09〜10）で追加した3アプリ
   'kotoba-pair', 'toomawashi', 'kotoba-theme',
+  // 2026-09-28 追加
+  'oekaki-dengon',
 ];
 
 // 数えられるコンテンツを持たないため重複検査の対象外にするアプリ（意図的除外）。
@@ -420,6 +422,13 @@ function collectEntries() {
   const magireTopics = evalArrayFromSource(magireSource, 'TOPICS', 'apps/magire-eshi/index.html') || [];
   magireTopics.forEach((item, index) => rows.push(entry('magire-eshi', item.c, item.w, {
     id: `magire-eshi:${index}`,
+  })));
+
+  // oekaki-dengon: HTML 内 const PROMPTS = [ '文字列', ... ]（「おまかせ」のお題）
+  const oekakiSource = extractScript(read('apps/oekaki-dengon/index.html'));
+  const oekakiPrompts = evalArrayFromSource(oekakiSource, 'PROMPTS', 'apps/oekaki-dengon/index.html') || [];
+  oekakiPrompts.forEach((text, index) => rows.push(entry('oekaki-dengon', 'prompt', text, {
+    id: `oekaki-dengon:${index}`,
   })));
 
   // ikutsu-ieru: themes.js の window.IKUTSU_THEMES = [ '文字列', ... ]

@@ -5,6 +5,7 @@
 2026-09-24にお題表示の統一（`eeb3055`）に合わせて ishin-denshin・ikutsu-ieru・kotoba-mikke・minna-ranking・tatoe-narabe・uso-jisho・tatoe-gp・toomawashi の8枚を撮り直した。
 do-mannaka は結果画面、kaburazu-hint は回答画面を写しており、今回変更したお題カードは写っていないため、画像を維持した。
 2026-09-25に kimochi-map を気持ち当てゲーム（kimochi-ate）へ作り変え、`kimochi-ate.png` を新しく撮った（旧 `kimochi-map.png` は削除）。撮影は隔離したエミュレーター上の架空のルーム（名前は撮影用の「みどり」「そら」「あお」、場面は既存データの1枚目）で、本番には接続していない。
+2026-09-28に oekaki-dengon を追加した。エミュレーター（本番に書き込まない検証環境）で架空の名前「そら」「みどり」「あお」の1ゲームを進め、見せあい画面のアルバムを撮影した。絵は撮影用に描いた見本。
 Firebase を止めるときは SDK の読み込みと認証・データ用のドメインだけを遮断する。`googleapis.com` 全体を遮断すると Google Fonts も止まり、アイコンが文字のまま写る。
 
 ## 表示と更新
@@ -76,3 +77,4 @@ Firebase SDKを撮影用の無通信スタブへ差し替え、データ・認�
 | `value-card` | 大事にしたいことが書かれたカード |
 | `ikutsu-ieru` | お題に思いついた答えを並べた見本 |
 | `kyapa-graph` | 1週間の棒グラフとキャパラインの見本 |
+| `oekaki-dengon` | 見せあいで順番に並ぶお題の文・描いた絵・絵を見て書いた文 |

@@ -1,0 +1,2798 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+  <title>お絵描き伝言ゲーム | room-K</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
+  <link rel="stylesheet" href="../shared/css/design-system.css">
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+  <script src="../shared/js/rtdb-utils.js?v=20260910"></script>
+  <style>
+    /* ── 画面管理（共通パターン） ── */
+    .screen { display: none; min-height: 100dvh; }
+    .screen.active { display: flex; flex-direction: column; align-items: center; }
+    .oek-page { width: 100%; max-width: 480px; padding: 40px 20px 96px; }
+    .oek-page--wide { max-width: 680px; }
+    .card + .card { margin-top: 16px; }
+    .btn + .btn { margin-top: 10px; }
+
+    .oek-section-label {
+      font-size: 12px; font-weight: 700; color: var(--color-muted);
+      letter-spacing: 0.06em; margin-bottom: 10px;
+    }
+    .oek-page__title { font-size: 22px; font-weight: 700; color: var(--color-primary); margin-bottom: 6px; }
+    .oek-page__sub   { font-size: 14px; color: var(--color-muted); margin-bottom: 20px; line-height: 1.7; }
+    .oek-hint { font-size: 13px; color: var(--color-muted); text-align: center; margin-top: 8px; line-height: 1.7; }
+
+    /* 弱いボタン（テキストリンク風） */
+    .oek-quiet-btn {
+      display: block; margin: 12px auto 0; padding: 8px 14px; min-height: 44px;
+      background: none; border: none; cursor: pointer;
+      font-family: var(--font-base); font-size: 14px; font-weight: 500; color: var(--color-muted);
+      text-decoration: underline; text-underline-offset: 3px;
+    }
+    .oek-quiet-btn:hover { color: var(--color-primary); }
+    .oek-quiet-btn:disabled { opacity: 0.5; cursor: default; }
+
+    /* ── TOP ── */
+    .oek-hero { text-align: center; padding: 52px 0 28px; }
+    .oek-hero__icon-wrap {
+      display: flex; align-items: center; justify-content: center;
+      width: 72px; height: 72px; margin: 0 auto 20px;
+      background: var(--color-accent); border-radius: 20px;
+    }
+    .oek-hero__icon-wrap .material-symbols-rounded { font-size: 40px; color: #fff; }
+    .oek-hero__title { font-size: 28px; font-weight: 700; color: var(--color-primary); }
+    .oek-hero__sub   { font-size: 14px; color: var(--color-muted); margin-top: 12px; line-height: 1.8; }
+    .oek-hero__buttons { display: flex; flex-direction: column; gap: 12px; margin-top: 36px; }
+    .oek-hero__buttons .btn + .btn { margin-top: 0; }
+
+    /* ── ルームコード ── */
+    .oek-room-code {
+      font-size: 44px; font-weight: 700; letter-spacing: 0.22em;
+      color: var(--color-primary); text-align: center;
+      padding: 16px; background: #EEF3F8; border-radius: 12px;
+      margin-bottom: 12px; user-select: all;
+    }
+
+    /* ── 設定（ロビー） ── */
+    .oek-check {
+      display: flex; align-items: center; gap: 10px; min-height: 44px;
+      font-weight: 600; cursor: pointer;
+    }
+    .oek-check input { width: 20px; height: 20px; accent-color: var(--color-accent); flex-shrink: 0; }
+    .oek-field-label { font-size: 14px; font-weight: 700; color: var(--color-text); margin: 14px 0 8px; }
+    .oek-radio-group { display: flex; flex-direction: column; gap: 8px; }
+    .oek-radio {
+      display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+      border: 2px solid var(--color-border); border-radius: 12px; cursor: pointer;
+      background: var(--color-surface);
+    }
+    .oek-radio input { width: 18px; height: 18px; accent-color: var(--color-accent); flex-shrink: 0; }
+    .oek-radio.is-checked { border-color: var(--color-accent); background: #EAF4F5; }
+    .oek-radio__label { font-weight: 700; }
+    .oek-radio__detail { display: block; font-size: 12px; font-weight: 500; color: var(--color-muted); margin-top: 2px; }
+    .oek-setting-line { font-size: 14px; color: var(--color-muted); margin-top: 10px; }
+
+    /* ── 参加者一覧 ── */
+    .oek-list { list-style: none; }
+    .oek-member {
+      display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+      padding: 10px 0; border-bottom: 1px solid var(--color-border);
+    }
+    .oek-member:last-child { border-bottom: none; }
+    .oek-member__name { font-weight: 700; font-size: 15px; }
+    .oek-member__state { margin-left: auto; display: inline-flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 700; color: var(--color-muted); }
+    .oek-member__state .material-symbols-rounded { font-size: 18px; }
+    .oek-member__state.is-done { color: var(--color-success); }
+    .oek-member__off { flex-basis: 100%; font-size: 12px; font-weight: 700; color: var(--color-error); }
+    .oek-tag { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; }
+    .oek-tag--me   { background: var(--color-muted); color: #fff; }
+    .oek-tag--host { background: var(--color-primary); color: #fff; }
+    .oek-tag--role { background: #EEF3F8; color: var(--color-primary); }
+    .oek-tag--auto { background: #EAF4F5; color: var(--color-accent); }
+
+    /* ── 回の表示・残り時間 ── */
+    .oek-stepbar {
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      font-size: 13px; font-weight: 700; color: var(--color-muted); letter-spacing: 0.04em;
+    }
+    .oek-timer { font-size: 15px; color: var(--color-primary); font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .oek-timer.is-warn { color: var(--color-error); }
+    .oek-timebar { height: 6px; background: #E3E9EC; border-radius: 999px; overflow: hidden; margin-top: 8px; }
+    .oek-timebar__fill { height: 100%; width: 100%; background: var(--color-accent); transition: width 0.25s linear; }
+    .oek-timebar.is-warn .oek-timebar__fill { background: var(--color-error); }
+    .oek-play-title { font-size: 22px; font-weight: 700; color: var(--color-primary); margin-top: 18px; }
+    .oek-play-sub { font-size: 14px; color: var(--color-muted); line-height: 1.7; margin: 6px 0 16px; }
+
+    /* ── お題表示の定石（白カード＋ティール枠） ── */
+    .oek-odai {
+      background: var(--color-surface); border: 2px solid var(--color-accent);
+      border-radius: var(--radius-box); padding: 32px 40px; text-align: center;
+    }
+    .oek-odai__label { font-size: 13px; font-weight: 500; color: var(--color-accent); letter-spacing: 0.08em; margin-bottom: 12px; }
+    .oek-odai__text { font-size: 28px; font-weight: 700; color: var(--color-primary); line-height: 1.4; overflow-wrap: anywhere; }
+    .oek-odai__text.is-empty { color: var(--color-muted); font-size: 20px; }
+    .oek-odai__note { font-size: 14px; color: var(--color-muted); margin-top: 10px; }
+    .oek-material { margin-bottom: 16px; }
+
+    /* ── キャンバス ── */
+    .oek-canvas-wrap {
+      background: #fff; border: 2px solid var(--color-border);
+      border-radius: 12px; overflow: hidden; position: relative;
+    }
+    .oek-canvas-wrap--active { border-color: var(--color-accent); }
+    .oek-canvas {
+      display: block; width: 100%; height: auto; aspect-ratio: 4 / 3; background: #fff;
+    }
+    .oek-canvas--draw { touch-action: none; cursor: crosshair; user-select: none; -webkit-user-select: none; }
+    .oek-canvas-wrap.is-disabled .oek-canvas--draw { cursor: default; }
+    .oek-canvas-note { font-size: 13px; color: var(--color-muted); text-align: center; margin-top: 6px; }
+
+    /* ── 描く道具 ── */
+    .oek-tools { margin-top: 12px; display: flex; flex-direction: column; gap: 10px; }
+    .oek-tools__colors {
+      display: grid; grid-template-columns: repeat(12, minmax(0, 40px));
+      justify-content: space-between; gap: 6px;
+    }
+    .oek-swatch {
+      aspect-ratio: 1; width: 100%; min-height: 26px; border-radius: 50%; cursor: pointer;
+      border: 2px solid rgba(0, 0, 0, 0.12); padding: 0;
+    }
+    .oek-swatch[aria-pressed="true"] { box-shadow: 0 0 0 3px var(--color-surface), 0 0 0 5px var(--color-primary); }
+    .oek-tools__row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .oek-tools__widths { display: flex; gap: 6px; }
+    .oek-tool {
+      display: inline-flex; align-items: center; justify-content: center; gap: 4px;
+      min-width: 44px; min-height: 44px; padding: 0 10px; border-radius: 12px; cursor: pointer;
+      border: 2px solid var(--color-border); background: var(--color-surface);
+      font-family: var(--font-base); font-size: 13px; font-weight: 700; color: var(--color-primary);
+    }
+    .oek-tool .material-symbols-rounded { font-size: 20px; }
+    .oek-tool[aria-pressed="true"] { border-color: var(--color-accent); background: #EAF4F5; }
+    .oek-tool:disabled, .oek-swatch:disabled { opacity: 0.45; cursor: default; }
+    .oek-tool.is-armed { border-color: var(--color-error); background: #FEF2F2; color: var(--color-error); }
+    .oek-width__dot { display: block; border-radius: 50%; background: var(--color-primary); }
+    .oek-tools__spacer { flex: 1; }
+
+    /* ── 入力（文） ── */
+    .oek-text-input { font-size: 20px; font-weight: 700; }
+    .oek-text-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 6px; }
+    .oek-count { font-size: 12px; color: var(--color-muted); font-variant-numeric: tabular-nums; }
+
+    /* ── 完了まわり ── */
+    .oek-actions { margin-top: 16px; }
+    .oek-done {
+      text-align: center; background: #EAF7EE; border: 2px solid var(--color-success);
+      border-radius: var(--radius-card); padding: 16px;
+    }
+    .oek-done__text { font-weight: 700; color: var(--color-success); margin-bottom: 12px; display: flex; align-items: center; justify-content: center; gap: 6px; }
+    .oek-progress { text-align: center; font-size: 14px; font-weight: 700; color: var(--color-muted); margin-top: 12px; }
+    .oek-timeup {
+      text-align: center; font-weight: 700; color: var(--color-primary);
+      background: #EEF3F8; border-radius: var(--radius-card); padding: 12px; margin-top: 12px;
+    }
+
+    /* ── 見せあい・アルバム ── */
+    .oek-album { list-style: none; display: flex; flex-direction: column; gap: 18px; margin-top: 16px; }
+    .oek-entry__head { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; font-size: 14px; color: var(--color-muted); }
+    .oek-entry__name { font-weight: 700; color: var(--color-primary); }
+    .oek-said {
+      background: var(--color-surface); border: 2px solid var(--color-border);
+      border-radius: var(--radius-box); padding: 18px 20px; text-align: center;
+      font-size: 24px; font-weight: 700; color: var(--color-primary); line-height: 1.4; overflow-wrap: anywhere;
+    }
+    .oek-said.is-empty, .oek-odai__text.is-missing { color: var(--color-muted); font-size: 18px; }
+    .oek-entry--new { animation: oek-pop 0.35s ease-out; }
+    @keyframes oek-pop { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+    .oek-show-actions { margin-top: 20px; }
+
+    /* ── おしまい（列えらび） ── */
+    .oek-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+    .oek-chip {
+      display: inline-flex; align-items: center; gap: 4px; min-height: 40px; padding: 0 14px;
+      border-radius: 999px; border: 2px solid var(--color-border); background: var(--color-surface);
+      font-family: var(--font-base); font-size: 14px; font-weight: 700; color: var(--color-primary); cursor: pointer;
+    }
+    .oek-chip__num { color: var(--color-accent); font-feature-settings: "palt"; }
+    .oek-chip[aria-pressed="true"] { border-color: var(--color-accent); background: #EAF4F5; }
+
+    /* ── オーバーレイ ── */
+    .oek-overlay {
+      position: fixed; inset: 0; z-index: 200;
+      background: rgba(245, 242, 236, 0.96); display: none;
+      flex-direction: column; align-items: center; justify-content: center;
+      text-align: center; padding: 32px;
+    }
+    .oek-overlay.show { display: flex; }
+    .oek-overlay__title { font-size: 18px; font-weight: 700; color: var(--color-primary); margin: 16px 0 8px; }
+    .oek-overlay__sub   { font-size: 14px; color: var(--color-muted); margin-bottom: 8px; }
+    .oek-overlay__countdown { font-size: 52px; font-weight: 700; color: var(--color-error); line-height: 1; margin: 12px 0 4px; }
+
+    .oek-banner {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 150;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 10px 16px; background: #FEF2F2; border-bottom: 2px solid var(--color-error);
+      color: #991B1B; font-size: 14px; font-weight: 700; text-align: center;
+    }
+    .oek-banner .material-symbols-rounded { font-size: 20px; }
+    .oek-has-banner .oek-page { padding-top: 92px; }
+
+    @media (max-width: 600px) {
+      .oek-page { padding: 28px 16px 88px; }
+      .oek-has-banner .oek-page { padding-top: 96px; }
+      .oek-odai { padding: 24px 20px; }
+      .oek-odai__text { font-size: 22px; }
+      .oek-said { font-size: 20px; padding: 14px 16px; }
+      .oek-tools__colors { grid-template-columns: repeat(6, minmax(0, 44px)); }
+      .oek-swatch { min-height: 32px; }
+      .oek-tool__text { display: none; }
+      .oek-tool.is-armed .oek-tool__text { display: inline; }
+    }
+    @media (max-width: 360px) {
+      .oek-hero__title { font-size: 24px; }
+      .oek-room-code { font-size: 34px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════ TOP ════════════════════════════════════ -->
+<div class="screen" id="screen-top">
+  <div class="oek-page">
+    <div class="oek-hero">
+      <div class="oek-hero__icon-wrap"><span class="material-symbols-rounded" aria-hidden="true">draw</span></div>
+      <h1 class="oek-hero__title">お絵描き伝言ゲーム</h1>
+      <p class="oek-hero__sub">書いた文を次の人が絵にして、その絵を次の人が文にして……。<br>順番に回していくと、最初のお題はどう変わるかな？</p>
+    </div>
+    <div class="oek-hero__buttons">
+      <button type="button" class="btn btn-primary btn-lg btn-full" onclick="openHostSetup()">
+        <span class="material-symbols-rounded" aria-hidden="true">add_home</span>ルームを作る
+      </button>
+      <button type="button" class="btn btn-secondary btn-lg btn-full" onclick="openGuestJoin()">
+        <span class="material-symbols-rounded" aria-hidden="true">login</span>ルームに参加する
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════ HOST SETUP ════════════════════════════════════ -->
+<div class="screen" id="screen-host-setup">
+  <div class="oek-page">
+    <h2 class="oek-page__title">ルームを作る</h2>
+    <p class="oek-page__sub">あなたのニックネームを入れてね。描く側に入るかどうかや制限時間は、このあと選べるよ。</p>
+    <div class="form-group">
+      <label class="form-label" for="top-host-nickname">ニックネーム（1〜8文字）</label>
+      <input class="form-input" id="top-host-nickname" type="text" maxlength="8" placeholder="例：たろう" autocomplete="off">
+    </div>
+    <p id="host-form-error" class="alert alert-error" role="alert" hidden></p>
+    <button type="button" class="btn btn-primary btn-full" id="btn-create" onclick="hostCreateRoom()">
+      <span class="material-symbols-rounded" aria-hidden="true">add_home</span><span class="oek-btn-label">ルームを作る</span>
+    </button>
+    <button type="button" class="oek-quiet-btn" onclick="showScreen('top')">トップへ戻る</button>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════ GUEST JOIN ════════════════════════════════════ -->
+<div class="screen" id="screen-guest-join">
+  <div class="oek-page">
+    <h2 class="oek-page__title">ルームに参加する</h2>
+    <p class="oek-page__sub">ニックネームとルームコードを入れてね。</p>
+    <div class="form-group">
+      <label class="form-label" for="top-guest-nickname">ニックネーム（1〜8文字）</label>
+      <input class="form-input" id="top-guest-nickname" type="text" maxlength="8" placeholder="例：はなこ" autocomplete="off">
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="top-guest-code">ルームコード（6文字）</label>
+      <input class="form-input" id="top-guest-code" type="text" maxlength="6" placeholder="XXXXXX" autocomplete="off"
+             style="text-transform:uppercase;letter-spacing:.2em;font-size:22px;text-align:center"
+             oninput="this.value=this.value.toUpperCase()">
+    </div>
+    <p id="join-form-error" class="alert alert-error" role="alert" hidden></p>
+    <button type="button" class="btn btn-primary btn-full" id="btn-join" onclick="guestJoin()">
+      <span class="material-symbols-rounded" aria-hidden="true">login</span><span class="oek-btn-label">参加する</span>
+    </button>
+    <button type="button" class="oek-quiet-btn" onclick="showScreen('top')">トップへ戻る</button>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════ LOBBY ════════════════════════════════════ -->
+<div class="screen" id="screen-lobby">
+  <div class="oek-page">
+    <div class="card" id="lobby-code-card" style="text-align:center" hidden>
+      <p class="oek-section-label">ルームコード</p>
+      <p class="oek-room-code" id="lobby-room-code">------</p>
+      <button type="button" class="btn btn-ghost btn-full" onclick="RoomkRTDB.copyRoomCode(state.roomCode, this)">
+        <span class="material-symbols-rounded" aria-hidden="true">content_copy</span>コードをコピー
+      </button>
+      <p class="oek-hint">このコードをみんなに伝えてね</p>
+    </div>
+
+    <div class="card" id="lobby-settings-host" hidden>
+      <p class="oek-section-label">設定</p>
+      <label class="oek-check">
+        <input type="checkbox" id="set-host-plays" onchange="onHostPlaysChange(this.checked)">
+        <span>自分も描く側で参加する</span>
+      </label>
+      <p class="oek-field-label" id="pace-label">制限時間</p>
+      <div class="oek-radio-group" role="radiogroup" aria-labelledby="pace-label" id="pace-group"></div>
+    </div>
+
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <strong style="font-size:16px">参加者</strong>
+        <span id="lobby-count" style="font-size:13px;color:var(--color-muted)"></span>
+      </div>
+      <ul class="oek-list" id="lobby-list"></ul>
+    </div>
+
+    <div id="lobby-host-actions" class="mt-md" hidden>
+      <button type="button" class="btn btn-primary btn-full" id="btn-start" onclick="hostStartGame()" disabled>
+        <span class="material-symbols-rounded" aria-hidden="true">play_arrow</span>始める
+      </button>
+      <p class="oek-hint" id="lobby-hint"></p>
+    </div>
+
+    <div id="lobby-guest-wait" class="card mt-md text-center" hidden>
+      <div class="spinner"></div>
+      <p style="margin-top:12px;font-weight:700;color:var(--color-primary)">ホストが始めるのを待っているよ</p>
+      <p class="oek-setting-line" id="lobby-pace-text"></p>
+    </div>
+
+    <button type="button" class="oek-quiet-btn" id="btn-lobby-leave" onclick="leaveFromLobby()">退出する</button>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════ PLAY ════════════════════════════════════ -->
+<div class="screen" id="screen-play">
+  <div class="oek-page oek-page--wide">
+    <div class="oek-stepbar">
+      <span id="play-count">1回目 / 全3回</span>
+      <span class="oek-timer" id="play-timer" aria-live="off"></span>
+    </div>
+    <div class="oek-timebar" id="play-timebar"><div class="oek-timebar__fill" id="play-timebar-fill"></div></div>
+    <h2 class="oek-play-title" id="play-title"></h2>
+    <p class="oek-play-sub" id="play-sub"></p>
+
+    <div id="play-member" hidden>
+      <div class="oek-material" id="material-text-wrap" hidden>
+        <div class="oek-odai">
+          <p class="oek-odai__label">お題</p>
+          <p class="oek-odai__text" id="material-text"></p>
+          <p class="oek-odai__note" id="material-text-note" hidden>好きなものを描いてね</p>
+        </div>
+      </div>
+      <div class="oek-material" id="material-canvas-wrap" hidden>
+        <div class="oek-canvas-wrap">
+          <canvas class="oek-canvas" id="material-canvas" width="800" height="600" role="img" aria-label="回ってきた絵"></canvas>
+        </div>
+        <p class="oek-canvas-note" id="material-canvas-note" hidden>白紙だったよ。思いついたことを書いてね</p>
+      </div>
+
+      <div id="work-text" hidden>
+        <label class="form-label" for="play-text" id="play-text-label">文</label>
+        <input class="form-input oek-text-input" id="play-text" type="text" maxlength="30" autocomplete="off">
+        <div class="oek-text-row">
+          <button type="button" class="oek-tool" id="btn-omakase" onclick="useOmakase()">
+            <span class="material-symbols-rounded" aria-hidden="true">casino</span>おまかせ
+          </button>
+          <span class="oek-count" id="play-text-count">0 / 30</span>
+        </div>
+      </div>
+
+      <div id="work-draw" hidden>
+        <div class="oek-canvas-wrap oek-canvas-wrap--active" id="draw-canvas-wrap">
+          <canvas class="oek-canvas oek-canvas--draw" id="draw-canvas" width="800" height="600" aria-label="絵を描くところ"></canvas>
+        </div>
+        <div class="oek-tools">
+          <div class="oek-tools__colors" role="group" aria-label="色" id="tool-colors"></div>
+          <div class="oek-tools__row">
+            <div class="oek-tools__widths" role="group" aria-label="太さ" id="tool-widths"></div>
+            <button type="button" class="oek-tool" id="tool-eraser" aria-pressed="false" onclick="toggleEraser()">
+              <span class="material-symbols-rounded" aria-hidden="true">ink_eraser</span><span class="oek-tool__text">消しゴム</span>
+            </button>
+            <span class="oek-tools__spacer"></span>
+            <button type="button" class="oek-tool" id="tool-undo" onclick="undoStroke()" aria-label="1つ戻す">
+              <span class="material-symbols-rounded" aria-hidden="true">undo</span><span class="oek-tool__text">1つ戻す</span>
+            </button>
+            <button type="button" class="oek-tool" id="tool-clear" onclick="clearDrawing()" aria-label="全部消す">
+              <span class="material-symbols-rounded" aria-hidden="true">delete</span><span class="oek-tool__text" id="tool-clear-text">全部消す</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="oek-actions">
+        <button type="button" class="btn btn-primary btn-full" id="btn-done" onclick="submitDone()">
+          <span class="material-symbols-rounded" aria-hidden="true">check</span>完了
+        </button>
+        <div class="oek-done" id="play-done-box" hidden>
+          <p class="oek-done__text"><span class="material-symbols-rounded" aria-hidden="true">check_circle</span>完了！ ほかの人を待っているよ</p>
+          <button type="button" class="btn btn-secondary btn-full" id="btn-undone" onclick="submitUndone()">
+            <span class="material-symbols-rounded" aria-hidden="true">edit</span>なおす
+          </button>
+        </div>
+        <p class="oek-timeup" id="play-timeup" hidden>時間になったよ。次に回すね</p>
+        <p class="oek-progress" id="play-progress"></p>
+      </div>
+    </div>
+
+    <div class="card mt-md" id="play-host" hidden>
+      <p class="oek-section-label">みんなの様子</p>
+      <ul class="oek-list" id="play-host-list"></ul>
+      <button type="button" class="btn btn-secondary btn-full mt-md" id="btn-close-step" onclick="hostCloseStep()">
+        <span class="material-symbols-rounded" aria-hidden="true">skip_next</span><span id="btn-close-step-label">しめきって次へ</span>
+      </button>
+      <button type="button" class="oek-quiet-btn" id="btn-finish-early" onclick="hostFinishEarly()">途中で終わる</button>
+    </div>
+
+    <button type="button" class="oek-quiet-btn" id="btn-play-leave" onclick="guestLeave()" hidden>退出する</button>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════ SHOW（見せあい） ════════════════════════════════════ -->
+<div class="screen" id="screen-show">
+  <div class="oek-page oek-page--wide">
+    <div class="oek-stepbar">
+      <span>見せあい</span>
+      <span id="show-count"></span>
+    </div>
+    <h2 class="oek-play-title" id="show-title"></h2>
+    <ol class="oek-album" id="show-album"></ol>
+    <div class="oek-show-actions" id="show-host" hidden>
+      <button type="button" class="btn btn-primary btn-full" id="btn-show-next" onclick="hostShowNext()">
+        <span class="material-symbols-rounded" aria-hidden="true">arrow_forward</span><span id="btn-show-next-label">つぎへ</span>
+      </button>
+      <button type="button" class="oek-quiet-btn" id="btn-show-all" onclick="hostShowAll()">この列をまとめて見せる</button>
+      <button type="button" class="oek-quiet-btn" id="btn-show-end" onclick="hostShowEnd()">見せあいを終える</button>
+    </div>
+    <p class="oek-hint" id="show-guest-hint" hidden>ホストが1つずつめくっていくよ</p>
+    <button type="button" class="oek-quiet-btn" id="btn-show-leave" onclick="guestLeave()" hidden>退出する</button>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════ END（おしまい） ════════════════════════════════════ -->
+<div class="screen" id="screen-end">
+  <div class="oek-page oek-page--wide">
+    <h2 class="oek-play-title" style="margin-top:0">おしまい！</h2>
+    <p class="oek-play-sub">列を選んで見返せるよ。</p>
+    <div class="oek-chips" id="end-chips" role="group" aria-label="見る列"></div>
+    <ol class="oek-album" id="end-album"></ol>
+    <div class="oek-show-actions" id="end-host" hidden>
+      <button type="button" class="btn btn-primary btn-full" id="btn-again" onclick="hostPlayAgain()">
+        <span class="material-symbols-rounded" aria-hidden="true">replay</span>もう一回あそぶ
+      </button>
+      <button type="button" class="oek-quiet-btn" onclick="hostCloseRoom()">ルームを閉じる</button>
+    </div>
+    <p class="oek-hint" id="end-guest-hint" hidden>ホストが次を決めるまで、自由に見返してね</p>
+    <button type="button" class="oek-quiet-btn" id="btn-end-leave" onclick="guestLeave()" hidden>退出する</button>
+  </div>
+</div>
+
+<!-- 再接続オーバーレイ -->
+<div class="oek-overlay" id="reconnect-overlay">
+  <div class="spinner"></div>
+  <p class="oek-overlay__title">つなぎ直しているよ...</p>
+  <button type="button" class="oek-quiet-btn" id="btn-reconnect-cancel" onclick="cancelReconnect()" hidden>トップへ戻る</button>
+</div>
+
+<!-- ホスト切断の帯（ゲスト用・遊んでいる途中は画面を覆わない） -->
+<div class="oek-banner" id="host-disconnect-banner" role="status" hidden>
+  <span class="material-symbols-rounded" aria-hidden="true">signal_disconnected</span>
+  <span>ホストの通信が切れています。あと<span id="host-disconnect-banner-sec">120</span>秒で終わるよ</span>
+</div>
+
+<!-- ホスト切断オーバーレイ（ゲスト用） -->
+<div class="oek-overlay" id="host-disconnect-overlay">
+  <span class="material-symbols-rounded" style="font-size:48px;color:var(--color-error)" aria-hidden="true">signal_disconnected</span>
+  <p class="oek-overlay__title">ホストの通信が切れています</p>
+  <p class="oek-overlay__sub">戻ってくるのを待っているよ</p>
+  <div class="oek-overlay__countdown" id="host-disconnect-countdown">120</div>
+  <p class="oek-overlay__sub">秒後に自動で終わるよ</p>
+  <button type="button" class="btn btn-ghost btn-full" style="max-width:280px;margin-top:20px" onclick="guestLeave('', true)">退出する</button>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════
+// Firebase 初期化
+// ══════════════════════════════════════════════════
+const { authReady, db } = RoomkRTDB.initFirebase(firebase);
+
+// ══════════════════════════════════════════════════
+// 定数
+// ══════════════════════════════════════════════════
+const ROOMS_PATH = 'oekaki_rooms';
+const SESSION_KEY = 'oekaki_session';
+const ORPHAN_TTL_MS = 2 * 60 * 1000;
+const MIN_MEMBERS = 3;
+const MAX_MEMBERS = 8;
+const MAX_PLAYERS = 9;            // ホスト + ゲスト8人（ロビーの上限）
+const TEXT_MAX = 30;
+const TIMEOUT_GRACE_MS = 1500;    // 締め切りのあと、書きかけの保存を待つ時間
+const TIMEOUT_RETRY_MS = 2000;
+const TEXT_SAVE_DELAY_MS = 400;
+
+const PACES = {
+  slow:   { label: 'ゆっくり', detail: '書く1分・描く2分30秒', text: 60, draw: 150 },
+  normal: { label: 'ふつう',   detail: '書く40秒・描く1分30秒', text: 40, draw: 90 },
+  none:   { label: 'なし',     detail: 'みんなが完了するまで待つ', text: 0, draw: 0 },
+};
+const PACE_KEYS = ['slow', 'normal', 'none'];
+const DEFAULT_PACE = 'slow';
+
+// キャンバス（論理サイズ 800×600。表示は画面幅に合わせて縮小）
+const CANVAS_W = 800;
+const CANVAS_H = 600;
+const COLORS = [
+  { hex: '#1A1A1A', name: '黒' },
+  { hex: '#8A8F98', name: '灰色' },
+  { hex: '#8D5524', name: '茶色' },
+  { hex: '#E03131', name: '赤' },
+  { hex: '#F76707', name: 'オレンジ' },
+  { hex: '#FAB005', name: '黄色' },
+  { hex: '#2F9E44', name: '緑' },
+  { hex: '#74C0FC', name: '水色' },
+  { hex: '#1C7ED6', name: '青' },
+  { hex: '#7048E8', name: '紫' },
+  { hex: '#E64980', name: 'ピンク' },
+  { hex: '#F2C4A0', name: 'うすだいだい' },
+];
+const ERASER = -1;
+const PEN_WIDTHS = [5, 12, 28];
+const ERASER_WIDTHS = [16, 36, 72];
+const WIDTH_NAMES = ['細い', 'ふつう', '太い'];
+const MIN_DIST2 = 9;              // 3px 未満の移動は間引く
+const MAX_POINTS = 400;           // 1本の点数の上限（超えたら線を区切る）
+const MAX_STROKES = 600;          // 1枚の線の本数の上限
+const MAX_TOTAL_POINTS = 30000;   // 1枚の点数の合計の上限（1枚およそ120KBまで）
+const MY_ROOMS_KEY = 'oekaki_my_rooms';   // この端末で作ったルームのコード（後片付け用）
+const MY_ROOMS_MAX = 20;
+const MY_ROOMS_ALIVE_KEY = 'oekaki_my_rooms_alive'; // ホストがルームにいる間の「使っている」印（後片付け用）
+const MY_ROOMS_STALE_MS = 12 * 60 * 60 * 1000; // 作ってから12時間を過ぎた自分のルームは、後片付けで消す
+const CONNECT_TIMEOUT_MS = 12000;   // 参加・復帰で、最初の値が届くのを待つ上限
+const ARM_TIMEOUT_MS = 5000;        // 切断予約の返事を待つ上限
+const RECONNECT_ESCAPE_MS = 8000;   // 復帰に時間がかかるとき「トップへ戻る」を出すまで
+const NUMBERS = ['①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧'];
+
+// おまかせのお題（8テーマ×10件。2026-09-28 オーナー承認。AGENTS.md「コンテンツガイドライン」準拠）
+// 回ってきた文は次の子が1人で読んで描く（メンターが読み上げると中身が伝わってしまう）ため、
+// 漢字は小学1〜4年で習う字にとどめ、それ以外はひらがなにしている
+const PROMPTS = [
+  // 動物
+  '空を飛ぶペンギン',
+  'かさをさして歩くカエル',
+  'マフラーをまいたキリン',
+  '王様のかんむりをかぶったネコ',
+  '大きなおにぎりを運ぶアリ',
+  'ソファでテレビを見るライオン',
+  'ハンモックでねむるコアラ',
+  'おふろに入るカピバラ',
+  '水玉もようのシマウマ',
+  'ピザをとどけるフクロウ',
+  // 食べ物
+  '雲までとどくパンケーキ',
+  'プリンのすべり台',
+  'かき氷の山でスキーをするクマ',
+  'ブロッコリーの森',
+  'ケーキの上でおどるいちご',
+  'キャンディの雨がふる町',
+  'トーストの上ですべるバター',
+  'ハンバーガーの形の家',
+  'ドーナツのタイヤの自転車',
+  'すいかの船で海をわたるカブトムシ',
+  // 乗り物
+  '海の中を進むバス',
+  '月に向かって走る電車',
+  '気球でお散歩するイヌ',
+  '羽のはえたタクシー',
+  'カメが引っぱる馬車',
+  '長ぐつの形をした車',
+  'そりに乗った雪だるま',
+  'ショベルカーでゼリーをすくう',
+  '家をまるごと運ぶトラック',
+  '花に水をやるヘリコプター',
+  // 空・天気・季節
+  '雲の上でねむるクジラ',
+  'サングラスをかけた太陽',
+  '雪でお城を作るシロクマ',
+  '雲でできたヒツジ',
+  '水たまりでジャンプするアヒル',
+  'こたつでみかんを食べるタヌキ',
+  '落ち葉にもぐるハリネズミ',
+  'さくらの花びらを集めるリス',
+  'かまくらから顔を出すキツネ',
+  'たんぽぽのわた毛で飛ぶアリ',
+  // 海・水辺
+  '海の底でお茶を飲むカメ',
+  'おなかの上でピアノをひくラッコ',
+  'ビーチでパラソルを広げるカニ',
+  '金魚ばちの中で泳ぐイルカ',
+  'サーフィンをするアザラシ',
+  '黒いすみで絵をかくイカ',
+  'コップにお引っこしするヤドカリ',
+  'うきわで海水浴をするマンボウ',
+  '灯台のてっぺんで歌うカモメ',
+  'タツノオトシゴのメリーゴーランド',
+  // 宇宙・ふしぎ
+  '月でおもちつきをするウサギ',
+  'ロケットのまどから手をふるヒヨコ',
+  'つりざおで星をつるネコ',
+  '土星の輪でスケートをするアルパカ',
+  '目玉焼きそっくりのユーフォー',
+  '流れ星に乗ったハムスター',
+  '落ちてきた星を拾うロボット',
+  'マシュマロを焼くドラゴン',
+  '火星でキャンプをするアライグマ',
+  '星からぶら下がったブランコ',
+  // 身の回りのもの
+  '口笛をふくやかん',
+  'イヌを乗せて走るそうじき',
+  '時計の中に住むネズミ',
+  'ぼうしから出てくるハト',
+  'カメラで写真をとるフラミンゴ',
+  'リモコンで動く植木ばち',
+  'かいだんを登るカタツムリ',
+  'バナナで電話をするオウム',
+  'スリッパをはいたタコ',
+  '電球の中のお花畑',
+  // 音楽・あそび
+  'たこあげをするタコ',
+  'けん玉をするパンダ',
+  'シャボン玉を追いかけるカンガルー',
+  '紙飛行機に乗ったテントウムシ',
+  'ラッパをふくゾウ',
+  'マイクを持ったひまわり',
+  'ギターをひくクマ',
+  'ダンスをするサボテン',
+  'すなばでトンネルを作るモグラ',
+  '竹馬に乗るペンギン',
+];
+
+// ══════════════════════════════════════════════════
+// 状態管理
+// ══════════════════════════════════════════════════
+function newPlayState() {
+  return {
+    key: null,            // `${matchId}:${step}`。回が変わったら作り直す
+    mid: null, step: -1, chain: -1, type: null,
+    strokes: [],          // 自分の線 { key, c, w, pts }
+    pointsUsed: 0,        // 自分の線の点数の合計
+    omakaseCount: 0,      // この回でおまかせを使った回数（配る順番の何番目か）
+    limitWarned: false,   // 描ける量の上限を知らせたか
+    text: '', savedText: '',
+    loaded: false,        // 下書きの復元が終わったか
+    locked: false,        // 締め切りを過ぎたか
+    writeChain: Promise.resolve(),
+    textTimer: null,
+    drawing: null,        // 描いている途中の1本
+  };
+}
+
+const state = {
+  role: null,             // 'host' | 'guest'
+  nickname: null,
+  roomCode: null,
+  roomRef: null,          // oekaki_rooms/{code}
+  ctlRef: null,           // oekaki_rooms/{code}/ctl
+  currentScreen: null,
+  timerInterval: null,    // ホスト切断カウントダウン
+  tickInterval: null,     // 回の残り時間
+  hostDisconnectDeadline: null,
+  entryBusy: false,
+  actionBusy: false,
+  lastCtl: null,
+  epoch: 0,
+  play: newPlayState(),
+  tool: { color: 0, width: 1, eraser: false },
+  input: { path: null, data: undefined },          // 回ってきた材料（undefined = 読み込み中）
+  showView: { path: null, data: undefined, version: 0, renderKey: null, upto: 0 },
+  endView: { mid: null, art: undefined, selected: 0, renderKey: null },
+  artSubs: {},
+  albumCache: { mid: null, chains: {} },         // 見せあいで読んだ列（おしまいで使い回す）
+  timeoutTry: { key: null, at: 0 },
+  timeoutJitter: Math.floor(Math.random() * 800),
+  connectedOnce: false,   // 一度つながった＝サーバー時刻の補正値が届いている
+  connected: false,       // いま RTDB につながっているか
+  reconnecting: false,    // 再読み込みからの復帰中
+  sid: null,              // この画面（タブ）の識別子。同じ名前で別の画面が入りなおしたら、古い画面を終える
+  lastReassertAt: 0,
+  reassertTimer: null,
+  aliveInterval: null,    // ホストの間、この端末で「ルームを使っている」印を更新する
+};
+function newSid() {
+  return Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
+}
+
+// ══════════════════════════════════════════════════
+// ユーティリティ
+// ══════════════════════════════════════════════════
+const esc = RoomkRTDB.esc;
+const showMsg = RoomkRTDB.showToast;
+const getNow = RoomkRTDB.now;
+const $ = (id) => document.getElementById(id);
+
+// status の無い ctl は、削除後に onDisconnect が発火して再生成されたゴースト。期限切れ扱いにする
+function isRoomExpired(ctl) {
+  return RoomkRTDB.isRoomExpired(ctl, ORPHAN_TTL_MS) || (!!ctl && !ctl.status);
+}
+
+function orderOf(m) {
+  const o = m && m.order;
+  if (Array.isArray(o)) return o.filter((n) => typeof n === 'string');
+  if (o && typeof o === 'object') {
+    return Object.keys(o).sort((a, b) => Number(a) - Number(b)).map((k) => o[k]).filter((n) => typeof n === 'string');
+  }
+  return [];
+}
+function stepType(step) {
+  if (step === 0) return 'prompt';
+  return step % 2 === 1 ? 'draw' : 'guess';
+}
+function chainFor(m, nick, step) {
+  const order = orderOf(m);
+  const i = order.indexOf(nick);
+  if (i < 0) return -1;
+  const n = order.length;
+  return ((i - step) % n + n) % n;
+}
+function paceOf(key) { return PACES[key] || PACES[DEFAULT_PACE]; }
+function stepSeconds(pace, step) {
+  const p = paceOf(pace);
+  if (!p.text) return 0;
+  return stepType(step) === 'draw' ? p.draw : p.text;
+}
+function deadlineFor(pace, step, now) {
+  const sec = stepSeconds(pace, step);
+  return sec ? now + sec * 1000 : null;
+}
+function artPath(mid, chain, step) {
+  return 'art/m' + mid + '/c' + chain + (step == null ? '' : '/s' + step);
+}
+function clampInt(v, lo, hi) {
+  const n = Math.floor(Number(v));
+  if (!Number.isFinite(n)) return lo;
+  return Math.max(lo, Math.min(hi, n));
+}
+function guestNames(ctl) {
+  const players = (ctl && ctl.players) || {};
+  return Object.keys(players).filter((n) => n !== ctl.host && !(players[n] && players[n].isHost));
+}
+function memberCountFor(ctl) {
+  const hostPlays = !!(ctl.settings && ctl.settings.hostPlays);
+  return guestNames(ctl).length + (hostPlays ? 1 : 0);
+}
+function maxSeat(players) {
+  return Object.values(players || {}).reduce((mx, p) => Math.max(mx, p && p.seat != null ? p.seat : -1), -1);
+}
+function formatSec(sec) {
+  const s = Math.max(0, sec);
+  return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+}
+// おまかせのお題は、ゲームごとの seed で並べかえた順に、列ごとにずらして配る
+// （全員がおまかせを使っても、同じゲームで列どうしのお題が重ならない。どの端末でも同じ結果になる）
+function seededPermutation(seed, len) {
+  let a = (Number(seed) >>> 0) || 1;
+  const rand = () => {
+    a = (a + 0x6D2B79F5) >>> 0;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+  const idx = Array.from({ length: len }, (_, i) => i);
+  for (let i = len - 1; i > 0; i -= 1) {
+    const j = Math.floor(rand() * (i + 1));
+    [idx[i], idx[j]] = [idx[j], idx[i]];
+  }
+  return idx;
+}
+let permCache = { seed: null, perm: null };
+function pickPrompt(m, chain, k) {
+  const len = PROMPTS.length;
+  if (!m || m.seed == null || chain < 0) return PROMPTS[Math.floor(Math.random() * len)];
+  if (permCache.seed !== m.seed) permCache = { seed: m.seed, perm: seededPermutation(m.seed, len) };
+  const n = Math.max(1, orderOf(m).length);
+  return PROMPTS[permCache.perm[(chain + k * n) % len]];
+}
+
+function validateNickname(value) {
+  const t = (value || '').trim();
+  if (t.length === 0) return 'ニックネームを入れてね';
+  if (t.length > 8) return '8文字以内で入れてね';
+  if (/[.#$\[\]\/]/.test(t)) return '使えない文字が入っているよ';
+  return null;
+}
+
+let authBusy = false;
+async function waitAuthOrExplain() {
+  if (authBusy) return false;
+  authBusy = true;
+  try { await authReady; return true; }
+  catch { showMsg('うまくつながらなかったよ。ページを読み込みなおしてね'); return false; }
+  finally { authBusy = false; }
+}
+
+// リスナーでキャッシュを温めてから fn を実行する。
+// transaction の初回実行が null キャッシュで abort してサーバー照会しない問題と、
+// 事前取得スナップショットで代用したときに削除済みルームを復活させてしまう問題を両方避ける。
+// firstValueTimeoutMs を渡すと、最初の値が届かないまま（つながらないまま）その時間が過ぎたら
+// { timeout: true } で失敗させる。最初の値が届く前なら fn（transaction）はまだ走っていないので、
+// あきらめても何も書き込まれていない
+function withWarmCache(ref, fn, firstValueTimeoutMs) {
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    let timer = null;
+    const listener = (snap) => {
+      if (settled) return;
+      settled = true;
+      if (timer) { clearTimeout(timer); timer = null; }
+      Promise.resolve().then(() => fn(snap)).then(
+        (v) => { ref.off('value', listener); resolve(v); },
+        (e) => { ref.off('value', listener); reject(e); },
+      );
+    };
+    ref.on('value', listener, (err) => {
+      if (settled) return;
+      settled = true;
+      if (timer) { clearTimeout(timer); timer = null; }
+      ref.off('value', listener);
+      reject(err);
+    });
+    if (firstValueTimeoutMs) {
+      timer = setTimeout(() => {
+        if (settled) return;
+        settled = true;
+        ref.off('value', listener);
+        reject({ timeout: true });
+      }, firstValueTimeoutMs);
+    }
+  });
+}
+// 待ちすぎないための上限。切断予約の登録は、送った直後に接続が切れると返事が来ないことがある
+// （SDK が送信済みの要求の返事を待つのをやめ、再接続のときに送り直さない）ため、待たずに先へ進む
+function settleWithin(promise, ms) {
+  let timer = null;
+  return Promise.race([
+    Promise.resolve(promise).catch(() => {}),
+    new Promise((resolve) => { timer = setTimeout(resolve, ms); }),
+  ]).then(() => { if (timer) clearTimeout(timer); });
+}
+
+// ══════════════════════════════════════════════════
+// セッション管理（再接続用）
+// ══════════════════════════════════════════════════
+function saveSession(matchId) {
+  sessionStorage.setItem(SESSION_KEY, JSON.stringify({
+    roomCode: state.roomCode,
+    nickname: state.nickname,
+    isHost: state.role === 'host',
+    sid: state.sid,
+    matchId: matchId == null ? null : matchId,
+  }));
+}
+function loadSession() {
+  try { return JSON.parse(sessionStorage.getItem(SESSION_KEY)); } catch { return null; }
+}
+function clearSession() { sessionStorage.removeItem(SESSION_KEY); }
+function updateSessionMatchId(mid) {
+  const s = loadSession();
+  if (!s || s.matchId === mid) return;
+  s.matchId = mid;
+  sessionStorage.setItem(SESSION_KEY, JSON.stringify(s));
+}
+
+// ══════════════════════════════════════════════════
+// 画面管理
+// ══════════════════════════════════════════════════
+function showScreen(id) {
+  if (state.currentScreen === id) return;
+  document.querySelectorAll('.screen').forEach((s) => s.classList.remove('active'));
+  $('screen-' + id).classList.add('active');
+  state.currentScreen = id;
+  window.scrollTo(0, 0);
+}
+function openHostSetup() {
+  RoomkRTDB.showFormError('host-form-error', '');
+  showScreen('host-setup');
+}
+function openGuestJoin() {
+  RoomkRTDB.showFormError('join-form-error', '');
+  showScreen('guest-join');
+}
+function showReconnectOverlay(show) {
+  $('reconnect-overlay').classList.toggle('show', show);
+}
+
+// ══════════════════════════════════════════════════
+// 線の保存形式（x・y を36進2桁ずつ連結）と描画
+// ══════════════════════════════════════════════════
+function enc2(n) {
+  const v = Math.max(0, Math.min(1295, Math.round(n)));
+  return v.toString(36).padStart(2, '0');
+}
+function encodePoints(pts) {
+  return pts.map((pt) => enc2(pt[0]) + enc2(pt[1])).join('');
+}
+function decodePoints(str) {
+  if (typeof str !== 'string') return [];
+  const out = [];
+  for (let i = 0; i + 4 <= str.length && out.length <= MAX_POINTS; i += 4) {
+    const x = parseInt(str.substr(i, 2), 36);
+    const y = parseInt(str.substr(i + 2, 2), 36);
+    if (Number.isFinite(x) && Number.isFinite(y)) out.push([Math.min(CANVAS_W, x), Math.min(CANVAS_H, y)]);
+  }
+  return out;
+}
+function decodeStrokeMap(obj) {
+  if (!obj || typeof obj !== 'object') return [];
+  return Object.keys(obj).sort().slice(0, MAX_STROKES).map((k) => {
+    const v = obj[k] || {};
+    const c = Number(v.c);
+    const w = Number(v.w);
+    return {
+      key: k,
+      c: (c === ERASER || (Number.isInteger(c) && c >= 0 && c < COLORS.length)) ? c : 0,
+      w: (w === 0 || w === 1 || w === 2) ? w : 1,
+      pts: decodePoints(v.p),
+    };
+  }).filter((s) => s.pts.length > 0);
+}
+
+function strokeStyle(s) {
+  const isEraser = s.c === ERASER;
+  return {
+    color: isEraser ? '#FFFFFF' : (COLORS[s.c] || COLORS[0]).hex,
+    width: (isEraser ? ERASER_WIDTHS : PEN_WIDTHS)[s.w] || PEN_WIDTHS[1],
+  };
+}
+function drawStroke(ctx, s) {
+  const pts = s.pts;
+  if (!pts || !pts.length) return;
+  const st = strokeStyle(s);
+  ctx.strokeStyle = st.color;
+  ctx.fillStyle = st.color;
+  ctx.lineWidth = st.width;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  if (pts.length === 1) {
+    ctx.beginPath();
+    ctx.arc(pts[0][0], pts[0][1], st.width / 2, 0, Math.PI * 2);
+    ctx.fill();
+    return;
+  }
+  ctx.beginPath();
+  ctx.moveTo(pts[0][0], pts[0][1]);
+  if (pts.length === 2) {
+    ctx.lineTo(pts[1][0], pts[1][1]);
+  } else {
+    // 点の中点を通る二次曲線でなめらかにつなぐ
+    for (let i = 1; i < pts.length - 1; i += 1) {
+      const mx = (pts[i][0] + pts[i + 1][0]) / 2;
+      const my = (pts[i][1] + pts[i + 1][1]) / 2;
+      ctx.quadraticCurveTo(pts[i][0], pts[i][1], mx, my);
+    }
+    const last = pts[pts.length - 1];
+    ctx.lineTo(last[0], last[1]);
+  }
+  ctx.stroke();
+}
+function paintStrokes(canvas, strokes) {
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+  strokes.forEach((s) => drawStroke(ctx, s));
+}
+
+// ══════════════════════════════════════════════════
+// art（書いた文・描いた絵）のリスナー管理
+// ══════════════════════════════════════════════════
+function subscribeArt(slot, path, cb) {
+  const cur = state.artSubs[slot];
+  if (cur && cur.path === path) return;
+  if (cur) cur.ref.off('value', cur.fn);
+  state.artSubs[slot] = null;
+  if (!path || !state.roomRef) return;
+  const ref = state.roomRef.child(path);
+  const fn = (snap) => {
+    const s = state.artSubs[slot];
+    if (!s || s.fn !== fn) return;
+    cb(snap.val());
+  };
+  state.artSubs[slot] = { path, ref, fn };
+  ref.on('value', fn, () => {});
+}
+function unsubscribeAllArt() {
+  Object.keys(state.artSubs).forEach((slot) => subscribeArt(slot, null));
+}
+
+function syncArtSubs(ctl) {
+  const m = ctl.status === 'playing' ? ctl.match : null;
+  let inputPath = null;
+  let albumPath = null;
+  if (m && m.phase === 'play') {
+    const step = Number(m.step) || 0;
+    const chain = chainFor(m, state.nickname, step);
+    if (chain >= 0 && step >= 1) inputPath = artPath(m.matchId, chain, step - 1);
+  } else if (m && m.phase === 'show' && m.show) {
+    const n = orderOf(m).length;
+    albumPath = artPath(m.matchId, clampInt(m.show.chain, 0, Math.max(0, n - 1)));
+  }
+  if (state.input.path !== inputPath) {
+    state.input = { path: inputPath, data: undefined };
+    subscribeArt('input', inputPath, (val) => {
+      if (state.input.path !== inputPath) return;
+      state.input.data = val;
+      renderMaterial();
+    });
+  }
+  if (state.showView.path !== albumPath) {
+    state.showView = { path: albumPath, data: undefined, version: 0, renderKey: null, upto: 0 };
+    const albumMid = m && m.matchId;
+    const albumChain = m && m.show ? clampInt(m.show.chain, 0, Math.max(0, orderOf(m).length - 1)) : -1;
+    subscribeArt('album', albumPath, (val) => {
+      if (state.showView.path !== albumPath) return;
+      if (state.albumCache.mid !== albumMid) state.albumCache = { mid: albumMid, chains: {} };
+      state.albumCache.chains[albumChain] = val || null;
+      state.showView.data = val;
+      state.showView.version += 1;
+      if (state.lastCtl && state.currentScreen === 'show') renderShow(state.lastCtl);
+    });
+  }
+}
+
+// ══════════════════════════════════════════════════
+// ロビー
+// ══════════════════════════════════════════════════
+function buildPaceRadios() {
+  $('pace-group').innerHTML = PACE_KEYS.map((key) => {
+    const p = PACES[key];
+    return '<label class="oek-radio" data-pace="' + key + '">'
+      + '<input type="radio" name="pace" value="' + key + '" onchange="onPaceChange(this.value)">'
+      + '<span><span class="oek-radio__label">' + esc(p.label) + '</span>'
+      + '<span class="oek-radio__detail">' + esc(p.detail) + '</span></span></label>';
+  }).join('');
+}
+
+function renderLobby(ctl) {
+  showScreen('lobby');
+  const isHost = state.role === 'host';
+  const players = ctl.players || {};
+  const settings = ctl.settings || {};
+  const pace = PACES[settings.pace] ? settings.pace : DEFAULT_PACE;
+  const hostPlays = !!settings.hostPlays;
+
+  $('lobby-code-card').hidden = !isHost;
+  $('lobby-settings-host').hidden = !isHost;
+  $('lobby-host-actions').hidden = !isHost;
+  $('lobby-guest-wait').hidden = isHost;
+  $('btn-lobby-leave').textContent = isHost ? 'ルームを閉じる' : '退出する';
+
+  if (isHost) {
+    $('lobby-room-code').textContent = state.roomCode;
+    $('set-host-plays').checked = hostPlays;
+    document.querySelectorAll('#pace-group .oek-radio').forEach((label) => {
+      const checked = label.dataset.pace === pace;
+      label.classList.toggle('is-checked', checked);
+      label.querySelector('input').checked = checked;
+    });
+  } else {
+    $('lobby-pace-text').textContent = '制限時間：' + PACES[pace].label + '（' + PACES[pace].detail + '）';
+  }
+
+  const entries = Object.entries(players).sort((a, b) => ((a[1] && a[1].seat) || 0) - ((b[1] && b[1].seat) || 0));
+  $('lobby-list').innerHTML = entries.map(([nick]) => {
+    const isHostRow = nick === ctl.host;
+    let tags = '';
+    if (isHostRow) tags += '<span class="oek-tag oek-tag--host">ホスト</span>';
+    if (isHostRow && !hostPlays) tags += '<span class="oek-tag oek-tag--role">進行役</span>';
+    if (nick === state.nickname) tags += '<span class="oek-tag oek-tag--me">あなた</span>';
+    return '<li class="oek-member"><span class="oek-member__name">' + esc(nick) + '</span>' + tags + '</li>';
+  }).join('');
+
+  const members = memberCountFor(ctl);
+  $('lobby-count').textContent = '描く人 ' + members + '人';
+
+  if (isHost) {
+    const btn = $('btn-start');
+    const hint = $('lobby-hint');
+    if (members < MIN_MEMBERS) {
+      btn.disabled = true;
+      hint.textContent = '描く人が' + MIN_MEMBERS + '人そろうと始められるよ（いま' + members + '人）';
+    } else if (members > MAX_MEMBERS) {
+      btn.disabled = true;
+      hint.textContent = '描く人は' + MAX_MEMBERS + '人までだよ（いま' + members + '人）';
+    } else {
+      btn.disabled = state.actionBusy;
+      hint.textContent = members + '人で' + members + '回まわすよ';
+    }
+  }
+}
+
+async function updateSetting(key, value) {
+  if (state.role !== 'host' || !state.ctlRef) return;
+  const me = state.nickname;
+  const { committed } = await state.ctlRef.transaction((cur) => {
+    if (!cur || cur.status !== 'waiting' || cur.host !== me) return;
+    return { ...cur, settings: { ...(cur.settings || {}), [key]: value } };
+  }).catch(() => ({ committed: false }));
+  if (!committed) showMsg('設定を変えられなかったよ');
+  if (state.lastCtl && state.lastCtl.status === 'waiting') renderLobby(state.lastCtl);
+}
+function onHostPlaysChange(checked) { updateSetting('hostPlays', !!checked); }
+function onPaceChange(value) { if (PACES[value]) updateSetting('pace', value); }
+
+// ══════════════════════════════════════════════════
+// あそぶ（play）
+// ══════════════════════════════════════════════════
+const PLAY_TEXT = {
+  prompt: { title: 'お題を書こう', sub: '描いてほしいものを、文で書いてね。思いつかないときは「おまかせ」を押してね。', label: 'お題', placeholder: '例：空を飛ぶペンギン' },
+  draw:   { title: 'この文を絵にしよう', sub: '文字は使わずに、絵だけで伝えてね。' },
+  guess:  { title: 'この絵を文にしよう', sub: '何の絵に見えるかな？ 見えたとおりに書いてね。', label: '何の絵かな？', placeholder: '例：雲の上のクジラ' },
+};
+const HOST_TITLE = {
+  prompt: 'みんながお題を書いているよ',
+  draw: 'みんなが絵を描いているよ',
+  guess: 'みんなが絵を見て書いているよ',
+};
+
+function currentPlayKey(m) { return m.matchId + ':' + (Number(m.step) || 0); }
+function isDoneMe(m) { return !!(m && m.done && m.done[state.nickname]); }
+function canEditNow() {
+  const ctl = state.lastCtl;
+  const m = ctl && ctl.match;
+  const p = state.play;
+  if (!ctl || ctl.status !== 'playing' || !m || m.phase !== 'play') return false;
+  if (!p.key || p.key !== currentPlayKey(m) || !p.loaded || p.locked) return false;
+  return !isDoneMe(m);
+}
+
+function renderPlay(ctl) {
+  showScreen('play');
+  const m = ctl.match;
+  const order = orderOf(m);
+  const n = order.length;
+  const step = Number(m.step) || 0;
+  const type = stepType(step);
+  const isMember = order.indexOf(state.nickname) >= 0;
+  const isHost = state.role === 'host';
+
+  if (isMember && state.play.key !== currentPlayKey(m)) setupPlayStep(m, step, type);
+
+  $('play-count').textContent = (step + 1) + '回目 / 全' + n + '回';
+  if (isMember) {
+    $('play-title').textContent = PLAY_TEXT[type].title;
+    $('play-sub').textContent = PLAY_TEXT[type].sub;
+  } else {
+    $('play-title').textContent = HOST_TITLE[type];
+    $('play-sub').textContent = m.deadline
+      ? '全員が完了するか、時間になったら次に進むよ。'
+      : '全員が完了したら次に進むよ。';
+  }
+
+  $('play-member').hidden = !isMember;
+  if (isMember) renderPlayControls();
+
+  $('play-host').hidden = !isHost;
+  if (isHost) renderHostPanel(ctl);
+  $('btn-play-leave').hidden = isHost;
+  updateTimerUI();
+}
+
+function setupPlayStep(m, step, type) {
+  finalizePrevStep(state.play, m);
+  resetPlayLocal();
+  disarmClear();
+  const chain = chainFor(m, state.nickname, step);
+  const key = currentPlayKey(m);
+  state.play = { ...newPlayState(), key, mid: m.matchId, step, chain, type };
+
+  $('work-text').hidden = type === 'draw';
+  $('work-draw').hidden = type !== 'draw';
+  $('btn-omakase').hidden = type !== 'prompt';
+  if (type !== 'draw') {
+    const input = $('play-text');
+    input.value = '';
+    input.placeholder = PLAY_TEXT[type].placeholder;
+    $('play-text-label').textContent = PLAY_TEXT[type].label;
+    updateCharCount();
+  } else {
+    paintStrokes($('draw-canvas'), []);
+  }
+  renderMaterial();
+
+  // 下書きの復元（再読み込み・再接続のとき）。取れなかったら少し待って3回までやり直す
+  loadDraft(key, artPath(m.matchId, chain, step), type, 1);
+}
+function loadDraft(key, path, type, attempt) {
+  if (!state.roomRef || state.play.key !== key) return;
+  state.roomRef.child(path).get().then((snap) => {
+    if (state.play.key !== key) return;
+    const v = snap.val() || {};
+    if (type === 'draw') {
+      state.play.strokes = decodeStrokeMap(v.s);
+      state.play.pointsUsed = state.play.strokes.reduce((sum, st) => sum + st.pts.length, 0);
+      redrawMyCanvas();
+    } else {
+      const t = typeof v.t === 'string' ? v.t.slice(0, TEXT_MAX) : '';
+      state.play.text = t;
+      state.play.savedText = t;
+      $('play-text').value = t;
+      updateCharCount();
+    }
+    state.play.loaded = true;
+    if (state.lastCtl && state.currentScreen === 'play') renderPlay(state.lastCtl);
+  }).catch(() => {
+    if (state.play.key !== key) return;
+    if (attempt < 3) { setTimeout(() => loadDraft(key, path, type, attempt + 1), 1000); return; }
+    // あきらめて新しく書き始める（0回目のおまかせはサーバーに文が無いときだけ入るので、前の文は上書きしない）
+    state.play.loaded = true;
+    if (state.lastCtl && state.currentScreen === 'play') renderPlay(state.lastCtl);
+  });
+}
+
+// 回が進んだとき、前の回の自分のエントリを仕上げる。書きかけの最後の入力を保存し、
+// 0回目が空欄のまま閉じたら（しめきり・制限時間なし）おまかせのお題を入れる。
+// 前の回のエントリの持ち主は自分だけなので、回が進んだあとに書いてもぶつからない
+function finalizePrevStep(prev, m) {
+  if (!prev || !prev.key) return;
+  if (!m || m.matchId !== prev.mid || !state.roomRef) return;
+  if (prev.textTimer) { clearTimeout(prev.textTimer); prev.textTimer = null; }
+  // 0回目が空欄なら、下書きの復元が終わっていなくても、サーバーに文が無いときだけおまかせを入れる
+  if (prev.type === 'prompt' && !prev.text.trim()) { fillPromptIfEmpty(prev, m); return; }
+  if (!prev.loaded) return;
+  if (prev.type === 'draw') {
+    if (prev.drawing) { commitStroke(prev.drawing, prev); prev.drawing = null; }
+    return;
+  }
+  const path = artPath(prev.mid, prev.chain, prev.step);
+  const t = prev.text.slice(0, TEXT_MAX);
+  if (t !== prev.savedText) {
+    prev.savedText = t;
+    writeMine(prev, (ref) => ref.child(path + '/t').set(t.trim() ? t : null));
+  }
+}
+
+function resetPlayLocal() {
+  const p = state.play;
+  if (p.textTimer) { clearTimeout(p.textTimer); p.textTimer = null; }
+  p.drawing = null;
+}
+
+function renderMaterial() {
+  const p = state.play;
+  const data = state.input.data;
+  const textWrap = $('material-text-wrap');
+  const canvasWrap = $('material-canvas-wrap');
+  if (!p.key || p.type === 'prompt') {
+    textWrap.hidden = true;
+    canvasWrap.hidden = true;
+    return;
+  }
+  if (p.type === 'draw') {
+    canvasWrap.hidden = true;
+    textWrap.hidden = false;
+    const el = $('material-text');
+    if (data === undefined) {
+      el.textContent = '読み込み中…';
+      el.classList.add('is-empty');
+      $('material-text-note').hidden = true;
+      return;
+    }
+    const t = data && typeof data.t === 'string' ? data.t.trim() : '';
+    el.textContent = t || '（お題が届かなかったよ）';
+    el.classList.toggle('is-empty', !t);
+    $('material-text-note').hidden = !!t;
+  } else {
+    textWrap.hidden = true;
+    canvasWrap.hidden = false;
+    const strokes = data ? decodeStrokeMap(data.s) : [];
+    paintStrokes($('material-canvas'), strokes);
+    $('material-canvas-note').hidden = data === undefined || strokes.length > 0;
+  }
+}
+
+function renderPlayControls() {
+  const ctl = state.lastCtl;
+  const m = ctl && ctl.match;
+  if (!m) return;
+  const p = state.play;
+  const done = isDoneMe(m);
+  const canEdit = canEditNow();
+
+  const input = $('play-text');
+  input.disabled = !canEdit;
+  $('btn-omakase').disabled = !canEdit;
+  document.querySelectorAll('#work-draw .oek-tool, #work-draw .oek-swatch').forEach((b) => { b.disabled = !canEdit; });
+  $('draw-canvas-wrap').classList.toggle('is-disabled', !canEdit);
+  $('draw-canvas-wrap').classList.toggle('oek-canvas-wrap--active', canEdit);
+
+  const doneBtn = $('btn-done');
+  doneBtn.hidden = done || p.locked; // 時間になったら「時間になったよ」の表示だけにする
+  doneBtn.disabled = !canEdit || state.actionBusy;
+  $('play-done-box').hidden = !done;
+  $('btn-undone').disabled = p.locked || state.actionBusy;
+  $('play-timeup').hidden = !p.locked;
+
+  const order = orderOf(m);
+  const doneCount = order.filter((nick) => m.done && m.done[nick]).length;
+  $('play-progress').textContent = '完了 ' + doneCount + ' / ' + order.length + '人';
+}
+
+function renderHostPanel(ctl) {
+  const m = ctl.match;
+  const order = orderOf(m);
+  const players = ctl.players || {};
+  const done = m.done || {};
+  const step = Number(m.step) || 0;
+  const verb = stepType(step) === 'draw' ? '描いてる…' : '書いてる…';
+  $('play-host-list').innerHTML = order.map((nick) => {
+    const isDone = !!done[nick];
+    const state_ = isDone
+      ? '<span class="oek-member__state is-done"><span class="material-symbols-rounded" aria-hidden="true">check_circle</span>完了</span>'
+      : '<span class="oek-member__state">' + verb + '</span>';
+    const me = nick === state.nickname ? '<span class="oek-tag oek-tag--me">あなた</span>' : '';
+    const off = players[nick] ? '' : '<span class="oek-member__off">通信が切れています</span>';
+    return '<li class="oek-member"><span class="oek-member__name">' + esc(nick) + '</span>' + me + state_ + off + '</li>';
+  }).join('');
+  $('btn-close-step-label').textContent = step >= order.length - 1 ? 'しめきって見せあいへ' : 'しめきって次へ';
+  $('btn-close-step').disabled = state.actionBusy;
+  $('btn-finish-early').disabled = state.actionBusy;
+}
+
+function updateTimerUI() {
+  const ctl = state.lastCtl;
+  const m = ctl && ctl.match;
+  if (!m || m.phase !== 'play') return;
+  const timer = $('play-timer');
+  const bar = $('play-timebar');
+  if (!m.deadline) {
+    timer.textContent = '制限時間なし';
+    timer.classList.remove('is-warn');
+    bar.hidden = true;
+    return;
+  }
+  bar.hidden = false;
+  const total = stepSeconds(m.pace, Number(m.step) || 0) * 1000;
+  const remain = Math.max(0, Number(m.deadline) - getNow());
+  const sec = Math.ceil(remain / 1000);
+  timer.textContent = sec > 0 ? '残り ' + formatSec(sec) : '時間になったよ';
+  const warn = sec <= 10;
+  timer.classList.toggle('is-warn', warn);
+  bar.classList.toggle('is-warn', warn);
+  $('play-timebar-fill').style.width = (total ? Math.max(0, Math.min(100, (remain / total) * 100)) : 0) + '%';
+}
+
+// ── 残り時間の見張り（250ms ごと） ──
+function syncTicker(ctl) {
+  const active = ctl.status === 'playing' && ctl.match && ctl.match.phase === 'play';
+  if (active && !state.tickInterval) {
+    state.tickInterval = setInterval(tick, 250);
+  } else if (!active && state.tickInterval) {
+    clearInterval(state.tickInterval);
+    state.tickInterval = null;
+  }
+}
+
+function tick() {
+  const ctl = state.lastCtl;
+  const m = ctl && ctl.match;
+  if (!ctl || ctl.status !== 'playing' || !m || m.phase !== 'play') return;
+  updateTimerUI();
+  if (!m.deadline) return;
+  const now = getNow();
+  const remain = Number(m.deadline) - now;
+  const key = currentPlayKey(m);
+  const isMember = orderOf(m).indexOf(state.nickname) >= 0;
+
+  // 締め切り: 入力を止め、書きかけを保存する（0回目が空欄ならおまかせを入れる）
+  if (remain <= 0 && isMember && state.play.key === key && state.play.loaded && !state.play.locked) {
+    state.play.locked = true;
+    if (state.play.type === 'prompt' && !state.play.text.trim()) autoFillPrompt();
+    else flushText();
+    renderPlayControls();
+  }
+
+  // 締め切り＋猶予: だれか1人の transaction が次の回へ進める
+  if (state.connectedOnce && remain <= -(TIMEOUT_GRACE_MS + state.timeoutJitter) && (isMember || state.role === 'host')) {
+    if (state.timeoutTry.key !== key || now >= state.timeoutTry.at) {
+      state.timeoutTry = { key, at: now + TIMEOUT_RETRY_MS };
+      tryTimeoutAdvance({ matchId: m.matchId, step: Number(m.step) || 0 });
+    }
+  }
+}
+
+// ── 文の入力 ──
+function updateCharCount() {
+  $('play-text-count').textContent = $('play-text').value.length + ' / ' + TEXT_MAX;
+}
+function scheduleTextSave() {
+  const p = state.play;
+  if (p.textTimer) return;
+  p.textTimer = setTimeout(() => { p.textTimer = null; flushText(); }, TEXT_SAVE_DELAY_MS);
+}
+function flushText() {
+  const p = state.play;
+  if (p.textTimer) { clearTimeout(p.textTimer); p.textTimer = null; }
+  if (!p.key || p.type === 'draw') return p.writeChain;
+  const t = p.text.slice(0, TEXT_MAX);
+  if (t === p.savedText) return p.writeChain;
+  p.savedText = t;
+  const path = artPath(p.mid, p.chain, p.step) + '/t';
+  return writeMine(p, (ref) => ref.child(path).set(t.trim() ? t : null));
+}
+function nextOmakase(p, m) {
+  let t = pickPrompt(m, p.chain, p.omakaseCount);
+  p.omakaseCount += 1;
+  if (t === p.text) { t = pickPrompt(m, p.chain, p.omakaseCount); p.omakaseCount += 1; }
+  return t;
+}
+// 0回目の空欄をおまかせで埋める。サーバーに文が入っていれば何もしない
+// （下書きの復元より先に閉じた・復元に失敗した場合も、子どもが書いた文を上書きしない）
+function fillPromptIfEmpty(p, m) {
+  const fill = nextOmakase(p, m);
+  const path = artPath(p.mid, p.chain, p.step);
+  writeMine(p, (ref) => ref.child(path).transaction((cur) => {
+    if (cur && typeof cur.t === 'string' && cur.t.trim()) return undefined;
+    return { ...(cur || {}), t: fill, auto: true };
+  }).then((res) => {
+    const v = res && res.snapshot ? res.snapshot.val() : null;
+    const t = v && typeof v.t === 'string' ? v.t.slice(0, TEXT_MAX) : '';
+    p.text = t;
+    p.savedText = t;
+    if (state.play === p && t) { $('play-text').value = t; updateCharCount(); }
+  }));
+}
+function autoFillPrompt() {
+  fillPromptIfEmpty(state.play, state.lastCtl && state.lastCtl.match);
+}
+function useOmakase() {
+  if (!canEditNow() || state.play.type !== 'prompt') return;
+  const t = nextOmakase(state.play, state.lastCtl && state.lastCtl.match);
+  state.play.text = t;
+  $('play-text').value = t;
+  updateCharCount();
+  flushText();
+}
+
+// 自分のエントリへの書き込み。呼んだ時点の回のパスへすぐ送る（RTDB は同じ接続の書き込みを
+// 送った順に反映する）。writeChain は「ここまでの書き込みがすべて終わった」を待つためのもの
+function writeMine(p, fn) {
+  const roomRef = state.roomRef;
+  if (!p || !p.key || !roomRef) return p ? p.writeChain : Promise.resolve();
+  let pr;
+  try { pr = Promise.resolve(fn(roomRef)); } catch { pr = Promise.resolve(); }
+  p.writeChain = Promise.all([p.writeChain, pr.catch(() => {})]).then(() => {});
+  return p.writeChain;
+}
+
+// ── 描く ──
+const drawCanvas = $('draw-canvas');
+
+function buildTools() {
+  $('tool-colors').innerHTML = COLORS.map((c, i) =>
+    '<button type="button" class="oek-swatch" style="background:' + c.hex + '" aria-label="' + esc(c.name) + '" aria-pressed="false" onclick="selectColor(' + i + ')"></button>'
+  ).join('');
+  $('tool-widths').innerHTML = WIDTH_NAMES.map((name, i) => {
+    const dot = [6, 12, 20][i];
+    return '<button type="button" class="oek-tool" aria-label="' + esc(name) + '" aria-pressed="false" onclick="selectWidth(' + i + ')">'
+      + '<span class="oek-width__dot" style="width:' + dot + 'px;height:' + dot + 'px"></span></button>';
+  }).join('');
+  renderToolState();
+}
+function renderToolState() {
+  document.querySelectorAll('#tool-colors .oek-swatch').forEach((b, i) => {
+    b.setAttribute('aria-pressed', String(!state.tool.eraser && state.tool.color === i));
+  });
+  document.querySelectorAll('#tool-widths .oek-tool').forEach((b, i) => {
+    b.setAttribute('aria-pressed', String(state.tool.width === i));
+  });
+  $('tool-eraser').setAttribute('aria-pressed', String(state.tool.eraser));
+}
+function selectColor(i) { state.tool.color = i; state.tool.eraser = false; renderToolState(); }
+function selectWidth(i) { state.tool.width = i; renderToolState(); }
+function toggleEraser() { state.tool.eraser = !state.tool.eraser; renderToolState(); }
+
+function redrawMyCanvas() {
+  paintStrokes(drawCanvas, state.play.strokes);
+  if (state.play.drawing) drawStroke(drawCanvas.getContext('2d'), state.play.drawing);
+}
+
+function warnDrawLimit(p) {
+  if (p.limitWarned) return;
+  p.limitWarned = true;
+  showMsg('これ以上は描けないよ。「1つ戻す」で消すと描けるよ');
+}
+function canStartStroke() {
+  const p = state.play;
+  if (p.type !== 'draw' || !canEditNow()) return false;
+  if (p.strokes.length >= MAX_STROKES || p.pointsUsed >= MAX_TOTAL_POINTS) {
+    showMsg('これ以上は描けないよ。「1つ戻す」で消すと描けるよ');
+    return false;
+  }
+  return true;
+}
+function toLogicalPoint(e) {
+  const rect = drawCanvas.getBoundingClientRect();
+  const x = (e.clientX - rect.left) * (CANVAS_W / rect.width);
+  const y = (e.clientY - rect.top) * (CANVAS_H / rect.height);
+  return [
+    Math.max(0, Math.min(CANVAS_W, Math.round(x))),
+    Math.max(0, Math.min(CANVAS_H, Math.round(y))),
+  ];
+}
+function drawSegment(d, from, to) {
+  const ctx = drawCanvas.getContext('2d');
+  const st = strokeStyle(d);
+  ctx.strokeStyle = st.color;
+  ctx.lineWidth = st.width;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.beginPath();
+  ctx.moveTo(from[0], from[1]);
+  ctx.lineTo(to[0], to[1]);
+  ctx.stroke();
+}
+
+drawCanvas.addEventListener('pointerdown', (e) => {
+  if (e.pointerType === 'mouse' && e.button !== 0) return;
+  if (state.play.drawing || !canStartStroke()) return;
+  e.preventDefault();
+  try { drawCanvas.setPointerCapture(e.pointerId); } catch { /* noop */ }
+  const pt = toLogicalPoint(e);
+  state.play.drawing = {
+    key: state.play.key,
+    pointerId: e.pointerId,
+    c: state.tool.eraser ? ERASER : state.tool.color,
+    w: state.tool.width,
+    pts: [pt],
+  };
+  drawStroke(drawCanvas.getContext('2d'), { ...state.play.drawing, pts: [pt] });
+});
+
+drawCanvas.addEventListener('pointermove', (e) => {
+  const d = state.play.drawing;
+  if (!d || d.pointerId !== e.pointerId) return;
+  e.preventDefault();
+  const events = typeof e.getCoalescedEvents === 'function' ? e.getCoalescedEvents() : [e];
+  (events.length ? events : [e]).forEach((ev) => {
+    const cur = state.play.drawing;
+    if (!cur) return;
+    const pt = toLogicalPoint(ev);
+    const last = cur.pts[cur.pts.length - 1];
+    const dx = pt[0] - last[0];
+    const dy = pt[1] - last[1];
+    if (dx * dx + dy * dy < MIN_DIST2) return;
+    if (state.play.pointsUsed + cur.pts.length >= MAX_TOTAL_POINTS) { warnDrawLimit(state.play); return; }
+    cur.pts.push(pt);
+    drawSegment(cur, last, pt);
+    if (cur.pts.length >= MAX_POINTS) {
+      // 長い線は区切って、続きを新しい線にする
+      commitStroke(cur);
+      state.play.drawing = { ...cur, pts: [pt] };
+    }
+  });
+});
+
+function endPointerStroke(e) {
+  const d = state.play.drawing;
+  if (!d || (e && d.pointerId !== e.pointerId)) return;
+  state.play.drawing = null;
+  commitStroke(d);
+  redrawMyCanvas();
+}
+drawCanvas.addEventListener('pointerup', (e) => { e.preventDefault(); endPointerStroke(e); });
+drawCanvas.addEventListener('pointercancel', (e) => endPointerStroke(e));
+drawCanvas.addEventListener('lostpointercapture', (e) => endPointerStroke(e));
+drawCanvas.addEventListener('contextmenu', (e) => e.preventDefault());
+
+function commitStroke(d, playState) {
+  const p = playState || state.play;
+  if (!d || d.key !== p.key || !state.roomRef || !d.pts.length) return;
+  if (p.strokes.length >= MAX_STROKES) { warnDrawLimit(p); return; }
+  const path = artPath(p.mid, p.chain, p.step) + '/s';
+  const k = state.roomRef.child(path).push().key;
+  const stroke = { key: k, c: d.c, w: d.w, pts: d.pts.slice() };
+  p.strokes.push(stroke);
+  p.pointsUsed += stroke.pts.length;
+  const data = { c: stroke.c, w: stroke.w, p: encodePoints(stroke.pts) };
+  writeMine(p, (ref) => ref.child(path + '/' + k).set(data));
+}
+
+function undoStroke() {
+  if (!canEditNow() || state.play.type !== 'draw') return;
+  const p = state.play;
+  const s = p.strokes.pop();
+  if (!s) return;
+  p.pointsUsed = Math.max(0, p.pointsUsed - s.pts.length);
+  p.limitWarned = false;
+  redrawMyCanvas();
+  const path = artPath(p.mid, p.chain, p.step) + '/s/' + s.key;
+  writeMine(p, (ref) => ref.child(path).remove());
+}
+
+// 「全部消す」は2回押しで確かめる。confirm() は画面を止めるので、その間に回が進むと、
+// 次の人に渡った絵を消してしまう（別エージェント監査の指摘）
+let clearArmTimer = null;
+function disarmClear() {
+  if (clearArmTimer) { clearTimeout(clearArmTimer); clearArmTimer = null; }
+  const btn = $('tool-clear');
+  delete btn.dataset.armed;
+  btn.classList.remove('is-armed');
+  btn.setAttribute('aria-label', '全部消す');
+  $('tool-clear-text').textContent = '全部消す';
+}
+function clearDrawing() {
+  if (!canEditNow() || state.play.type !== 'draw') return;
+  const p = state.play;
+  if (!p.strokes.length) return;
+  const btn = $('tool-clear');
+  if (btn.dataset.armed !== p.key) {
+    disarmClear();
+    btn.dataset.armed = p.key;
+    btn.classList.add('is-armed');
+    btn.setAttribute('aria-label', 'もう一度押すと全部消える');
+    $('tool-clear-text').textContent = 'もう一度押すと消える';
+    clearArmTimer = setTimeout(disarmClear, 3000);
+    return;
+  }
+  disarmClear();
+  p.strokes = [];
+  p.pointsUsed = 0;
+  redrawMyCanvas();
+  const path = artPath(p.mid, p.chain, p.step) + '/s';
+  writeMine(p, (ref) => ref.child(path).remove());
+}
+
+// ══════════════════════════════════════════════════
+// 回の進行（すべて ctl への transaction）
+// ══════════════════════════════════════════════════
+// 次の回へ進めた match を返す（最後の回なら見せあいへ）
+function advancedMatch(m, now) {
+  const n = orderOf(m).length;
+  const next = (Number(m.step) || 0) + 1;
+  if (next < n) {
+    return { ...m, step: next, done: null, deadline: deadlineFor(m.pace, next, now) };
+  }
+  return { ...m, phase: 'show', steps: n, show: { chain: 0, upto: 1 }, done: null, deadline: null };
+}
+function isSamePlayStep(cur, cap) {
+  const m = cur && cur.match;
+  return !!m && cur.status === 'playing' && m.phase === 'play'
+    && m.matchId === cap.matchId && (Number(m.step) || 0) === cap.step;
+}
+function capturePlayStep() {
+  const m = state.lastCtl && state.lastCtl.match;
+  return m ? { matchId: m.matchId, step: Number(m.step) || 0 } : { matchId: null, step: -1 };
+}
+function stillSameStep(cap) { return isSamePlayStep(state.lastCtl, cap); }
+
+async function submitDone() {
+  if (state.actionBusy || !canEditNow()) return;
+  const p = state.play;
+  if (p.type !== 'draw' && !p.text.trim()) {
+    showMsg(p.type === 'prompt' ? 'お題を書いてね（「おまかせ」も使えるよ）' : '見えたものを書いてね');
+    return;
+  }
+  const cap = capturePlayStep();
+  const me = state.nickname;
+  state.actionBusy = true;
+  renderPlayControls();
+  try {
+    await flushText();
+    await state.play.writeChain;
+    const { committed } = await state.ctlRef.transaction((cur) => {
+      if (!isSamePlayStep(cur, cap)) return;
+      const m = cur.match;
+      const order = orderOf(m);
+      if (order.indexOf(me) < 0) return;
+      const done = { ...(m.done || {}), [me]: true };
+      if (order.every((nick) => done[nick])) return { ...cur, match: advancedMatch(m, getNow()) };
+      return { ...cur, match: { ...m, done } };
+    });
+    if (!committed && stillSameStep(cap)) showMsg('うまく送れなかったよ。もう一度押してね');
+  } catch {
+    showMsg('うまく送れなかったよ。もう一度押してね');
+  } finally {
+    state.actionBusy = false;
+    rerenderCurrent();
+  }
+}
+
+async function submitUndone() {
+  if (state.actionBusy || state.play.locked) return;
+  const cap = capturePlayStep();
+  const me = state.nickname;
+  state.actionBusy = true;
+  renderPlayControls();
+  try {
+    await state.ctlRef.transaction((cur) => {
+      if (!isSamePlayStep(cur, cap)) return;
+      const m = cur.match;
+      if (!m.done || !m.done[me]) return;
+      return { ...cur, match: { ...m, done: { ...m.done, [me]: null } } };
+    });
+  } catch { /* noop */ } finally {
+    state.actionBusy = false;
+    rerenderCurrent();
+  }
+}
+
+async function tryTimeoutAdvance(cap) {
+  if (!state.ctlRef) return;
+  const me = state.nickname;
+  await state.ctlRef.transaction((cur) => {
+    if (!isSamePlayStep(cur, cap)) return;
+    const m = cur.match;
+    if (!m.deadline) return;
+    const isMember = orderOf(m).indexOf(me) >= 0;
+    if (!isMember && cur.host !== me) return;
+    const now = getNow();
+    if (now < Number(m.deadline) + TIMEOUT_GRACE_MS) return;
+    return { ...cur, match: advancedMatch(m, now) };
+  }, undefined, false).catch(() => {});
+}
+
+async function hostCloseStep() {
+  if (state.role !== 'host' || state.actionBusy) return;
+  const m = state.lastCtl && state.lastCtl.match;
+  if (!m) return;
+  const order = orderOf(m);
+  const waiting = order.filter((nick) => !(m.done && m.done[nick]));
+  // 確認の前に回を捕まえる（確認中に回が進んでいたら、進んだ回をさらに進めない）
+  const cap = capturePlayStep();
+  if (waiting.length && !confirm('まだ完了していない人がいるよ。いま書いてある分で次に回していい？')) return;
+  const me = state.nickname;
+  state.actionBusy = true;
+  renderHostPanel(state.lastCtl);
+  try {
+    const { committed } = await state.ctlRef.transaction((cur) => {
+      if (!isSamePlayStep(cur, cap) || cur.host !== me) return;
+      return { ...cur, match: advancedMatch(cur.match, getNow()) };
+    });
+    if (!committed && stillSameStep(cap)) showMsg('進められなかったよ');
+  } catch { showMsg('進められなかったよ'); } finally {
+    state.actionBusy = false;
+    rerenderCurrent();
+  }
+}
+
+async function hostFinishEarly() {
+  if (state.role !== 'host' || state.actionBusy) return;
+  const cap = capturePlayStep();
+  if (!confirm('ここまでの分で見せあいに進むよ。いい？')) return;
+  const me = state.nickname;
+  state.actionBusy = true;
+  try {
+    const { committed } = await state.ctlRef.transaction((cur) => {
+      const m = cur && cur.match;
+      if (!m || cur.status !== 'playing' || m.phase !== 'play' || m.matchId !== cap.matchId || cur.host !== me) return;
+      // 確認中に回が進んでいたら、始まったばかりの回（まだ空欄）は見せあいに入れない
+      const curStep = Number(m.step) || 0;
+      const steps = curStep === cap.step ? curStep + 1 : Math.max(1, curStep);
+      return {
+        ...cur,
+        match: { ...m, phase: 'show', steps, show: { chain: 0, upto: 1 }, done: null, deadline: null },
+      };
+    });
+    const now = state.lastCtl && state.lastCtl.match;
+    if (!committed && now && now.phase === 'play' && now.matchId === cap.matchId) showMsg('終われなかったよ');
+  } catch { showMsg('終われなかったよ'); } finally {
+    state.actionBusy = false;
+    rerenderCurrent();
+  }
+}
+
+// ══════════════════════════════════════════════════
+// 見せあい（show）・おしまい（end）
+// ══════════════════════════════════════════════════
+function stepsOf(m) {
+  const n = orderOf(m).length;
+  return clampInt(m.steps, 1, Math.max(1, n));
+}
+function showPos(m) {
+  const n = orderOf(m).length;
+  const sh = m.show || {};
+  return {
+    chain: clampInt(sh.chain, 0, Math.max(0, n - 1)),
+    upto: clampInt(sh.upto, 1, stepsOf(m)),
+  };
+}
+
+// 1列ぶんのアルバムを描く。data: undefined=読み込み中 / null=空
+function renderAlbum(listEl, m, chain, data, upto, newIndex) {
+  const order = orderOf(m);
+  const n = order.length;
+  listEl.innerHTML = '';
+  for (let k = 0; k < upto; k += 1) {
+    const author = order[(chain + k) % n] || '';
+    const type = stepType(k);
+    const entry = data ? data['s' + k] : null;
+    const li = document.createElement('li');
+    li.className = 'oek-entry' + (k === newIndex ? ' oek-entry--new' : '');
+
+    const head = document.createElement('div');
+    head.className = 'oek-entry__head';
+    const kind = type === 'draw' ? 'が描いた' : (k === 0 ? 'のお題' : 'が書いた');
+    head.innerHTML = '<span><span class="oek-entry__name">' + esc(author) + 'さん</span>' + kind + '</span>'
+      + (entry && entry.auto ? '<span class="oek-tag oek-tag--auto">おまかせ</span>' : '');
+    li.appendChild(head);
+
+    if (type === 'draw') {
+      const wrap = document.createElement('div');
+      wrap.className = 'oek-canvas-wrap';
+      const cv = document.createElement('canvas');
+      cv.className = 'oek-canvas';
+      cv.width = CANVAS_W;
+      cv.height = CANVAS_H;
+      cv.setAttribute('role', 'img');
+      cv.setAttribute('aria-label', author + 'さんが描いた絵');
+      const strokes = entry ? decodeStrokeMap(entry.s) : [];
+      paintStrokes(cv, strokes);
+      wrap.appendChild(cv);
+      li.appendChild(wrap);
+      if (data !== undefined && !strokes.length) {
+        const note = document.createElement('p');
+        note.className = 'oek-canvas-note';
+        note.textContent = '（白紙）';
+        li.appendChild(note);
+      }
+    } else {
+      const t = entry && typeof entry.t === 'string' ? entry.t.trim() : '';
+      const empty = data === undefined ? '読み込み中…' : '（何も書かれなかったよ）';
+      if (k === 0) {
+        const box = document.createElement('div');
+        box.className = 'oek-odai';
+        const label = document.createElement('p');
+        label.className = 'oek-odai__label';
+        label.textContent = 'お題';
+        const text = document.createElement('p');
+        text.className = 'oek-odai__text' + (t ? '' : ' is-missing');
+        text.textContent = t || empty;
+        box.appendChild(label);
+        box.appendChild(text);
+        li.appendChild(box);
+      } else {
+        const box = document.createElement('p');
+        box.className = 'oek-said' + (t ? '' : ' is-empty');
+        box.textContent = t || empty;
+        li.appendChild(box);
+      }
+    }
+    listEl.appendChild(li);
+  }
+}
+
+function renderShow(ctl) {
+  showScreen('show');
+  const m = ctl.match;
+  const order = orderOf(m);
+  const n = order.length;
+  const steps = stepsOf(m);
+  const pos = showPos(m);
+  const isHost = state.role === 'host';
+
+  $('show-count').textContent = (pos.chain + 1) + ' / ' + n + '列目';
+  $('show-title').textContent = NUMBERS[pos.chain] + ' ' + (order[pos.chain] || '') + 'さんのお題から';
+
+  const sv = state.showView;
+  const loaded = sv.data !== undefined;
+  const renderKey = sv.path + '|' + pos.upto + '|' + sv.version + '|' + (loaded ? 'D' : 'L');
+  if (sv.renderKey !== renderKey) {
+    // 列が変わった直後は先頭から。めくったときだけ新しいエントリへスクロールする
+    const firstRender = sv.renderKey === null;
+    const grew = !firstRender && pos.upto > sv.upto;
+    renderAlbum($('show-album'), m, pos.chain, sv.data, pos.upto, grew ? pos.upto - 1 : -1);
+    sv.renderKey = renderKey;
+    sv.upto = pos.upto;
+    if (firstRender) {
+      window.scrollTo(0, 0);
+    } else if (grew) {
+      const target = isHost ? $('btn-show-next') : $('show-album').lastElementChild;
+      if (target) target.scrollIntoView({ behavior: 'smooth', block: isHost ? 'end' : 'center' });
+    }
+  }
+
+  const isLastEntry = pos.upto >= steps;
+  const isLastChain = pos.chain >= n - 1;
+  $('show-host').hidden = !isHost;
+  $('show-guest-hint').hidden = isHost;
+  $('btn-show-leave').hidden = isHost;
+  if (isHost) {
+    $('btn-show-next-label').textContent = !isLastEntry ? 'つぎへ' : (!isLastChain ? 'つぎの人のお題へ' : 'おしまいにする');
+    $('btn-show-next').disabled = state.actionBusy;
+    $('btn-show-all').hidden = isLastEntry;
+    $('btn-show-end').hidden = isLastEntry && isLastChain;
+  }
+}
+
+function captureShow() {
+  const m = state.lastCtl && state.lastCtl.match;
+  if (!m) return null;
+  const pos = showPos(m);
+  return { matchId: m.matchId, chain: pos.chain, upto: pos.upto };
+}
+function isSameShow(cur, cap) {
+  const m = cur && cur.match;
+  if (!m || cur.status !== 'playing' || m.phase !== 'show' || m.matchId !== cap.matchId) return false;
+  const pos = showPos(m);
+  return pos.chain === cap.chain && pos.upto === cap.upto;
+}
+async function runShowTransaction(update, failMsg, capturedBefore) {
+  if (state.role !== 'host' || state.actionBusy || !state.ctlRef) return;
+  const cap = capturedBefore || captureShow();
+  if (!cap) return;
+  const me = state.nickname;
+  state.actionBusy = true;
+  try {
+    const { committed } = await state.ctlRef.transaction((cur) => {
+      if (!isSameShow(cur, cap) || cur.host !== me) return;
+      return { ...cur, match: update(cur.match) };
+    });
+    if (!committed && isSameShow(state.lastCtl, cap)) showMsg(failMsg);
+  } catch { showMsg(failMsg); } finally {
+    state.actionBusy = false;
+    rerenderCurrent();
+  }
+}
+function hostShowNext() {
+  runShowTransaction((m) => {
+    const n = orderOf(m).length;
+    const steps = stepsOf(m);
+    const pos = showPos(m);
+    if (pos.upto < steps) return { ...m, show: { chain: pos.chain, upto: pos.upto + 1 } };
+    if (pos.chain + 1 < n) return { ...m, show: { chain: pos.chain + 1, upto: 1 } };
+    return { ...m, phase: 'end', show: null };
+  }, 'めくれなかったよ');
+}
+function hostShowAll() {
+  runShowTransaction((m) => {
+    const pos = showPos(m);
+    return { ...m, show: { chain: pos.chain, upto: stepsOf(m) } };
+  }, 'めくれなかったよ');
+}
+function hostShowEnd() {
+  const cap = captureShow();
+  if (!cap || !confirm('見せあいを終えて、おしまいの画面に進むよ。いい？')) return;
+  runShowTransaction((m) => ({ ...m, phase: 'end', show: null }), '終われなかったよ', cap);
+}
+
+function renderEnd(ctl) {
+  showScreen('end');
+  const m = ctl.match;
+  const order = orderOf(m);
+  const isHost = state.role === 'host';
+  const ev = state.endView;
+  if (ev.mid !== m.matchId) {
+    state.endView = { mid: m.matchId, art: undefined, selected: 0, renderKey: null };
+    loadEndArt(m.matchId, order.length);
+  }
+  const view = state.endView;
+  const selected = clampInt(view.selected, 0, Math.max(0, order.length - 1));
+
+  $('end-chips').innerHTML = order.map((nick, i) =>
+    '<button type="button" class="oek-chip" aria-pressed="' + (i === selected) + '" onclick="selectEndChain(' + i + ')">'
+    + '<span class="oek-chip__num">' + NUMBERS[i] + '</span>' + esc(nick) + '</button>'
+  ).join('');
+
+  const renderKey = m.matchId + '|' + selected + '|' + (view.art === undefined ? 'L' : 'D');
+  if (view.renderKey !== renderKey) {
+    const data = view.art === undefined ? undefined : (view.art['c' + selected] || null);
+    renderAlbum($('end-album'), m, selected, data, stepsOf(m), -1);
+    view.renderKey = renderKey;
+  }
+
+  $('end-host').hidden = !isHost;
+  $('btn-again').disabled = state.actionBusy;
+  $('end-guest-hint').hidden = isHost;
+  $('btn-end-leave').hidden = isHost;
+}
+function loadEndArt(mid, n) {
+  if (!state.roomRef) return;
+  const roomRef = state.roomRef;
+  const cache = state.albumCache.mid === mid ? state.albumCache.chains : {};
+  const art = {};
+  const missing = [];
+  for (let c = 0; c < n; c += 1) {
+    if (cache[c] !== undefined) { if (cache[c]) art['c' + c] = cache[c]; }
+    else missing.push(c);
+  }
+  Promise.all(missing.map((c) => roomRef.child(artPath(mid, c)).get()
+    .then((snap) => { const v = snap.val(); if (v) art['c' + c] = v; })
+    .catch(() => {}))).then(() => {
+    if (state.endView.mid !== mid) return;
+    state.endView.art = art;
+    state.endView.renderKey = null;
+    if (state.lastCtl && state.currentScreen === 'end') renderEnd(state.lastCtl);
+  });
+}
+function selectEndChain(i) {
+  state.endView.selected = i;
+  if (state.lastCtl && state.currentScreen === 'end') renderEnd(state.lastCtl);
+}
+
+async function hostPlayAgain() {
+  if (state.role !== 'host' || state.actionBusy || !state.ctlRef) return;
+  const m = state.lastCtl && state.lastCtl.match;
+  if (!m) return;
+  const mid = m.matchId;
+  const me = state.nickname;
+  state.actionBusy = true;
+  try {
+    const { committed } = await state.ctlRef.transaction((cur) => {
+      if (!cur || cur.status !== 'playing' || cur.host !== me) return;
+      if (!cur.match || cur.match.matchId !== mid || cur.match.phase !== 'end') return;
+      return { ...cur, status: 'waiting', match: null };
+    });
+    if (committed) {
+      await state.roomRef.child('art/m' + mid).remove().catch(() => {});
+    } else {
+      showMsg('ロビーに戻れなかったよ');
+    }
+  } catch { showMsg('ロビーに戻れなかったよ'); } finally {
+    state.actionBusy = false;
+    rerenderCurrent();
+  }
+}
+
+// ══════════════════════════════════════════════════
+// ホスト: 開始
+// ══════════════════════════════════════════════════
+async function hostStartGame() {
+  if (state.role !== 'host' || !state.ctlRef || state.actionBusy) return;
+  const ctl = state.lastCtl;
+  if (!ctl) return;
+  // 並び順の乱数は transaction の外で作る（名前ごとの並べ替えキー）
+  const rank = {};
+  Object.keys(ctl.players || {}).forEach((nick) => { rank[nick] = Math.random(); });
+  const seed = Math.floor(Math.random() * 2147483646) + 1; // おまかせのお題を配る順番
+  const me = state.nickname;
+  let reason = null;
+  state.actionBusy = true;
+  renderLobby(ctl);
+  try {
+    const { committed } = await state.ctlRef.transaction((cur) => {
+      if (!cur || cur.status !== 'waiting' || cur.host !== me) { reason = 'invalid'; return; }
+      const players = cur.players || {};
+      if (!players[me] || !players[me].isHost) { reason = 'invalid'; return; }
+      const settings = cur.settings || {};
+      const pace = PACES[settings.pace] ? settings.pace : DEFAULT_PACE;
+      const members = guestNames(cur);
+      if (settings.hostPlays) members.push(me);
+      if (members.length < MIN_MEMBERS || members.length > MAX_MEMBERS) { reason = 'count'; return; }
+      members.sort((a, b) => ((rank[a] != null ? rank[a] : 0.5) - (rank[b] != null ? rank[b] : 0.5)) || (a < b ? -1 : 1));
+      const matchId = (Number(cur.lastMatchId) || 0) + 1;
+      reason = null;
+      return {
+        ...cur,
+        status: 'playing',
+        lastMatchId: matchId,
+        match: {
+          matchId,
+          order: members,
+          pace,
+          phase: 'play',
+          step: 0,
+          seed,
+          deadline: deadlineFor(pace, 0, getNow()),
+        },
+      };
+    });
+    if (!committed) {
+      showMsg(reason === 'count' ? '描く人が' + MIN_MEMBERS + '〜' + MAX_MEMBERS + '人で始められるよ' : '始められなかったよ');
+    }
+  } catch { showMsg('始められなかったよ'); } finally {
+    state.actionBusy = false;
+    rerenderCurrent();
+  }
+}
+
+// ══════════════════════════════════════════════════
+// ルーム作成 / 参加
+// ══════════════════════════════════════════════════
+// 作成・参加のあいだはボタンを押せなくし、つないでいることを見せる
+async function runEntry(buttonId, busyLabel, fn) {
+  if (state.entryBusy) return;
+  state.entryBusy = true;
+  const btn = $(buttonId);
+  const label = btn.querySelector('.oek-btn-label');
+  const original = label.textContent;
+  btn.disabled = true;
+  label.textContent = busyLabel;
+  try { await fn(); } finally {
+    state.entryBusy = false;
+    btn.disabled = false;
+    label.textContent = original;
+  }
+}
+function hostCreateRoom() { return runEntry('btn-create', 'つないでいるよ…', hostCreateRoomInner); }
+async function hostCreateRoomInner() {
+  const report = (msg) => RoomkRTDB.showFormError('host-form-error', msg);
+  report('');
+  const nickname = $('top-host-nickname').value.trim();
+  const err = validateNickname(nickname);
+  if (err) { report(err); return; }
+  if (!await waitAuthOrExplain()) return;
+
+  let roomCode = null;
+  let roomRef = null;
+  const sid = newSid();
+  try {
+    for (let i = 0; i < 5; i += 1) {
+      const code = RoomkRTDB.generateRoomCode();
+      const ref = db.ref(ROOMS_PATH + '/' + code);
+      const initialCtl = {
+        host: nickname,
+        hostConnected: true,
+        status: 'waiting',
+        createdAt: firebase.database.ServerValue.TIMESTAMP,
+        lastMatchId: 0,
+        settings: { hostPlays: false, pace: DEFAULT_PACE },
+        players: { [nickname]: { isHost: true, seat: 0, sid } },
+      };
+      const { committed } = await ref.child('ctl').transaction((cur) => (cur ? undefined : initialCtl));
+      if (committed) { roomCode = code; roomRef = ref; break; }
+    }
+  } catch { roomRef = null; }
+  if (!roomRef) { report('ルームを作れなかったよ。もう一度ためしてね'); return; }
+
+  state.role = 'host';
+  state.nickname = nickname;
+  state.roomCode = roomCode;
+  state.roomRef = roomRef;
+  state.ctlRef = roomRef.child('ctl');
+  state.sid = sid;
+  // 確定したらすぐ切断時の予約とコードの記録をする（この間にタブが落ちると、だれも消せないルームが残るため）
+  rememberMyRoom(roomCode);
+  saveSession(null);
+  startCtlListener();
+  await armOnDisconnect();
+  // 同じコードで昔のルームの絵が残っていたら消しておく（始めるまで新しい絵は書かれない）
+  roomRef.child('art').remove().catch(() => {});
+}
+
+function guestJoin() { return runEntry('btn-join', 'つないでいるよ…', guestJoinInner); }
+async function guestJoinInner() {
+  const report = (msg) => RoomkRTDB.showFormError('join-form-error', msg);
+  report('');
+  const nickname = $('top-guest-nickname').value.trim();
+  const roomCode = $('top-guest-code').value.trim().toUpperCase();
+  const err = validateNickname(nickname);
+  if (err) { report(err); return; }
+  if (roomCode.length !== 6) { report('ルームコードは6文字だよ'); return; }
+  if (!/^[A-Z2-9]{6}$/.test(roomCode)) { report('ルームコードを確かめてね'); return; }
+  if (!await waitAuthOrExplain()) return;
+
+  const roomRef = db.ref(ROOMS_PATH + '/' + roomCode);
+  const ctlRef = roomRef.child('ctl');
+  const sid = newSid();
+  let reason = null;
+  let committed = false;
+  try {
+    committed = await withWarmCache(ctlRef, async (snap) => {
+      const pre = snap.val();
+      if (!pre) { reason = 'not_found'; return false; }
+      if (!pre.status || !pre.host) { reason = 'broken'; return false; }
+      if (isRoomExpired(pre)) { reason = 'expired'; return false; }
+      const res = await ctlRef.transaction((cur) => {
+        if (!cur) { reason = 'not_found'; return; }
+        if (!cur.status || !cur.host) { reason = 'broken'; return; }
+        if (isRoomExpired(cur)) { reason = 'expired'; return; }
+        if (cur.hostConnected === false) { reason = 'host_gone'; return; }
+        const players = cur.players || {};
+        if (players[nickname] || cur.host === nickname) { reason = 'nick_taken'; return; }
+        if (cur.status === 'playing') {
+          // 遊んでいる途中は、描く側に入っていた人だけ同じニックネームで入りなおせる（タブを閉じてしまったとき用）
+          if (orderOf(cur.match).indexOf(nickname) < 0) { reason = 'not_waiting'; return; }
+          reason = null;
+          return { ...cur, players: { ...players, [nickname]: { isHost: false, seat: maxSeat(players) + 1, sid } } };
+        }
+        if (cur.status !== 'waiting') { reason = 'not_waiting'; return; }
+        if (Object.keys(players).length >= MAX_PLAYERS) { reason = 'full'; return; }
+        reason = null;
+        return { ...cur, players: { ...players, [nickname]: { isHost: false, seat: maxSeat(players) + 1, sid } } };
+      });
+      return res.committed;
+    }, CONNECT_TIMEOUT_MS);
+  } catch (e) { reason = e && e.timeout ? 'timeout' : 'error'; committed = false; }
+
+  if (!committed) {
+    if (reason === 'broken') removeBrokenRoom(roomRef);
+    if (reason === 'expired') removeRoomIfExpired(roomRef);
+    const map = {
+      not_found: 'ルームが見つからないよ',
+      broken: 'そのルームはもうないみたい',
+      expired: 'このルームは終わっているよ',
+      host_gone: 'ホストがいないみたいだよ',
+      not_waiting: 'もう始まっているよ。終わったら入れるよ',
+      nick_taken: 'その名前は使われているよ',
+      full: 'このルームはいっぱいだよ',
+      error: 'うまくつながらなかったよ。もう一度ためしてね',
+      timeout: 'つながらなかったよ。通信を確かめて、もう一度ためしてね',
+    };
+    report(map[reason] || '入れなかったよ');
+    return;
+  }
+
+  state.role = 'guest';
+  state.nickname = nickname;
+  state.roomCode = roomCode;
+  state.roomRef = roomRef;
+  state.ctlRef = ctlRef;
+  state.sid = sid;
+  saveSession(null);
+  startCtlListener();
+  await armOnDisconnect();
+}
+
+// ══════════════════════════════════════════════════
+// onDisconnect 予約（presence = ノードの有無方式）
+// ══════════════════════════════════════════════════
+async function armOnDisconnect() {
+  const ctlRef = state.ctlRef;
+  const nick = state.nickname;
+  if (!ctlRef || !nick) return;
+  if (state.role === 'host') {
+    const upd = {
+      hostConnected: false,
+      hostDisconnectedAt: firebase.database.ServerValue.TIMESTAMP,
+    };
+    upd['players/' + nick] = null;
+    await settleWithin(ctlRef.onDisconnect().update(upd), ARM_TIMEOUT_MS);
+  } else if (state.role === 'guest') {
+    await settleWithin(ctlRef.child('players/' + nick).onDisconnect().remove(), ARM_TIMEOUT_MS);
+  }
+}
+
+// ══════════════════════════════════════════════════
+// リスナー・画面ふりわけ
+// ══════════════════════════════════════════════════
+function startCtlListener() {
+  const ctlRef = state.ctlRef;
+  if (state.role === 'host') {
+    touchMyRoomAlive();
+    if (!state.aliveInterval) state.aliveInterval = setInterval(touchMyRoomAlive, 60 * 1000);
+  }
+  ctlRef.on('value', (snap) => {
+    if (state.ctlRef !== ctlRef) return;
+    if (!snap.exists()) { handleRoomGone(); return; }
+    handleCtl(snap.val());
+  });
+}
+
+async function handleRoomGone() {
+  const roomRef = state.roomRef;
+  clearSession();
+  // 予約の取り消しを先に送ってから画面を戻す（ルームはもう無いので、終わるのを待たない）
+  const cancelling = roomRef ? RoomkRTDB.cancelRoomOnDisconnect(roomRef).catch(() => {}) : null;
+  resetLocalStateAndShowTop('ルームが閉じられたよ');
+  if (cancelling) await cancelling;
+}
+
+// 操作の後片付け（actionBusy を戻したあと）に、いま表示している段階を描き直す。
+// transaction の確定でリスナーが先に画面を切り替えることがあるため、画面ごとに決め打ちしない
+function rerenderCurrent() {
+  const ctl = state.lastCtl;
+  if (!ctl || !state.ctlRef) return;
+  if (ctl.status === 'waiting') { renderLobby(ctl); return; }
+  const m = ctl.status === 'playing' ? ctl.match : null;
+  if (!m) return;
+  if (m.phase === 'play') renderPlay(ctl);
+  else if (m.phase === 'show') renderShow(ctl);
+  else if (m.phase === 'end') renderEnd(ctl);
+}
+
+function handleCtl(ctl) {
+  state.lastCtl = ctl;
+
+  if (isRoomExpired(ctl)) {
+    const roomRef = state.roomRef;
+    const nick = state.nickname;
+    clearSession();
+    resetLocalStateAndShowTop('このルームは終わったよ');
+    cleanupExpiredRoomAndOwnPresence(roomRef, nick);
+    return;
+  }
+
+  const m = ctl.status === 'playing' ? ctl.match : null;
+  if (m && m.matchId != null) updateSessionMatchId(m.matchId);
+  reassertPresenceIfLost(ctl);
+
+  if (state.role === 'guest') {
+    if (ctl.status === 'playing' && m && orderOf(m).indexOf(state.nickname) < 0) {
+      guestLeave('ゲームが始まっていたよ。終わったら入りなおしてね', true);
+      return;
+    }
+    showHostDisconnectOverlay(ctl.hostConnected === false, ctl);
+  }
+
+  if (ctl.status === 'waiting') {
+    if (state.play.key) { resetPlayLocal(); state.play = newPlayState(); }
+    state.endView = { mid: null, art: undefined, selected: 0, renderKey: null };
+  }
+
+  if (state.play.key && !(m && m.phase === 'play')) {
+    finalizePrevStep(state.play, m);
+    resetPlayLocal();
+    state.play = newPlayState();
+  }
+
+  syncArtSubs(ctl);
+  syncTicker(ctl);
+
+  if (ctl.status === 'waiting') { renderLobby(ctl); return; }
+  if (ctl.status === 'playing' && m) {
+    if (m.phase === 'play') renderPlay(ctl);
+    else if (m.phase === 'show') renderShow(ctl);
+    else if (m.phase === 'end') renderEnd(ctl);
+  }
+}
+
+// ══════════════════════════════════════════════════
+// ホスト切断オーバーレイ（ゲスト用・カウントダウン）
+// ══════════════════════════════════════════════════
+// 遊んでいる途中（play）は描く・書くを止めないよう、画面を覆わない帯で知らせる
+function showHostDisconnectOverlay(show, ctl) {
+  const inPlay = ctl.status === 'playing' && !!ctl.match && ctl.match.phase === 'play';
+  $('host-disconnect-overlay').classList.toggle('show', show && !inPlay);
+  $('host-disconnect-banner').hidden = !(show && inPlay);
+  document.body.classList.toggle('oek-has-banner', show && inPlay);
+  if (show) {
+    const dAt = RoomkRTDB.getHostDisconnectedAt(ctl);
+    state.hostDisconnectDeadline = (dAt == null ? getNow() : dAt) + ORPHAN_TTL_MS;
+    if (!state.timerInterval) {
+      state.timerInterval = setInterval(() => {
+        const remaining = Math.max(0, Math.ceil((state.hostDisconnectDeadline - getNow()) / 1000));
+        $('host-disconnect-countdown').textContent = remaining;
+        $('host-disconnect-banner-sec').textContent = remaining;
+        if (remaining <= 0) {
+          clearInterval(state.timerInterval);
+          state.timerInterval = null;
+          const roomRef = state.roomRef;
+          const nick = state.nickname;
+          clearSession();
+          resetLocalStateAndShowTop('ホストが戻ってこなかったので終わったよ');
+          cleanupExpiredRoomAndOwnPresence(roomRef, nick);
+        }
+      }, 1000);
+    }
+  } else if (state.timerInterval) {
+    clearInterval(state.timerInterval);
+    state.timerInterval = null;
+    state.hostDisconnectDeadline = null;
+  }
+}
+
+// ══════════════════════════════════════════════════
+// 期限切れ・壊れルームの削除
+// ══════════════════════════════════════════════════
+// ctl への transaction で「期限切れ」を確かめてから消す（生きていれば消さない）。
+// ctl を消せたら art も消す（ルートは消さない。同じコードの新しいルームは始めるまで絵を持たない）。
+// staleMs を渡すと、作ってからその時間を過ぎたルームも消す（作った端末の後片付け用。
+// 切断予約の前にタブが落ちて hostConnected:true のまま残ったルームも回収する）
+async function removeRoomIfExpired(roomRef, staleMs) {
+  if (!roomRef) return false;
+  const ctlRef = roomRef.child('ctl');
+  try {
+    const deleted = await withWarmCache(ctlRef, async (snap) => {
+      if (!snap.exists()) return true;
+      const res = await ctlRef.transaction((cur) => {
+        if (cur == null) return;
+        const created = Number(cur.createdAt);
+        const stale = !!staleMs && Number.isFinite(created) && getNow() - created > staleMs;
+        return (isRoomExpired(cur) || stale) ? null : undefined;
+      });
+      return res.committed;
+    });
+    // ctl が無い＝ルームは終わっている。残った絵を消す（新しいルームは始めるまで絵を持たない）
+    if (deleted) await roomRef.child('art').remove().catch(() => {});
+    return deleted;
+  } catch { return false; }
+}
+function cleanupExpiredRoomAndOwnPresence(roomRef, nick) {
+  if (!roomRef) return;
+  RoomkRTDB.cancelRoomOnDisconnect(roomRef)
+    .then(() => removeRoomIfExpired(roomRef))
+    .then((deleted) => {
+      if (!deleted && nick) return roomRef.child('ctl/players/' + nick).remove();
+      return undefined;
+    })
+    .catch(() => {});
+}
+async function removeBrokenRoom(roomRef) {
+  if (!roomRef) return;
+  const ctlRef = roomRef.child('ctl');
+  try {
+    const deleted = await withWarmCache(ctlRef, async (snap) => {
+      if (!snap.exists()) return false;
+      const res = await ctlRef.transaction((cur) => {
+        if (cur == null) return;
+        if (!cur.status || !cur.host) return null;
+        return undefined;
+      });
+      return res.committed;
+    });
+    if (deleted) await roomRef.child('art').remove().catch(() => {});
+  } catch { /* noop */ }
+}
+
+// ══════════════════════════════════════════════════
+// 退出・ルームを閉じる
+// ══════════════════════════════════════════════════
+function resetLocalStateAndShowTop(msg) {
+  if (state.timerInterval) { clearInterval(state.timerInterval); state.timerInterval = null; }
+  if (state.tickInterval) { clearInterval(state.tickInterval); state.tickInterval = null; }
+  if (state.aliveInterval) { clearInterval(state.aliveInterval); state.aliveInterval = null; }
+  if (state.reassertTimer) { clearTimeout(state.reassertTimer); state.reassertTimer = null; }
+  state.hostDisconnectDeadline = null;
+  resetPlayLocal();
+  unsubscribeAllArt();
+  $('host-disconnect-overlay').classList.remove('show');
+  $('host-disconnect-banner').hidden = true;
+  document.body.classList.remove('oek-has-banner');
+  $('reconnect-overlay').classList.remove('show');
+  if (state.ctlRef) state.ctlRef.off();
+  state.epoch += 1;
+  Object.assign(state, {
+    role: null, nickname: null, roomCode: null, roomRef: null, ctlRef: null,
+    lastCtl: null, actionBusy: false,
+    play: newPlayState(),
+    input: { path: null, data: undefined },
+    showView: { path: null, data: undefined, version: 0, renderKey: null, upto: 0 },
+    endView: { mid: null, art: undefined, selected: 0, renderKey: null },
+    albumCache: { mid: null, chains: {} },
+    timeoutTry: { key: null, at: 0 },
+  });
+  ['top-host-nickname', 'top-guest-nickname', 'top-guest-code'].forEach((id) => {
+    const e = $(id); if (e) e.value = '';
+  });
+  $('show-album').innerHTML = '';
+  $('end-album').innerHTML = '';
+  showScreen('top');
+  if (msg) showMsg(msg, false);
+}
+
+async function hostCloseRoom() {
+  if (state.role !== 'host') return;
+  if (!confirm('ルームを閉じると、みんなの画面もトップに戻るよ。いい？')) return;
+  clearSession();
+  const roomRef = state.roomRef;
+  if (state.ctlRef) state.ctlRef.off();
+  if (roomRef) {
+    // 取り消しを送ってから消す（返事が来ないときも5秒で先へ進む）。
+    // コードはすぐ忘れない（遅れて届いた書き込みで art が残っても、次に開いたときの後片付けで消える）
+    await settleWithin(RoomkRTDB.cancelRoomOnDisconnect(roomRef), ARM_TIMEOUT_MS);
+    roomRef.remove().catch(() => {});
+  }
+  resetLocalStateAndShowTop();
+}
+
+// ゲストの退出（自分だけ抜ける）。skipConfirm は画面側の確認が不要な経路
+async function guestLeave(msg, skipConfirm) {
+  if (state.role !== 'guest') return;
+  const inGame = state.lastCtl && state.lastCtl.status === 'playing'
+    && state.lastCtl.match && state.lastCtl.match.phase === 'play';
+  if (!skipConfirm && inGame && !confirm('ゲームの途中だよ。退出する？（同じニックネームで入りなおせるよ）')) return;
+  clearSession();
+  const roomRef = state.roomRef;
+  const ctlRef = state.ctlRef;
+  const nick = state.nickname;
+  if (ctlRef) ctlRef.off();
+  if (roomRef) {
+    await settleWithin(RoomkRTDB.cancelRoomOnDisconnect(roomRef), ARM_TIMEOUT_MS);
+    if (ctlRef && nick) ctlRef.child('players/' + nick).remove().catch(() => {});
+  }
+  resetLocalStateAndShowTop(msg || '');
+}
+
+function leaveFromLobby() {
+  if (state.role === 'host') hostCloseRoom();
+  else guestLeave();
+}
+
+async function bailToTop(msg) {
+  const roomRef = state.roomRef;
+  clearSession();
+  if (state.ctlRef) state.ctlRef.off();
+  if (roomRef) await settleWithin(RoomkRTDB.cancelRoomOnDisconnect(roomRef), ARM_TIMEOUT_MS);
+  resetLocalStateAndShowTop(msg);
+}
+
+// ══════════════════════════════════════════════════
+// 復帰の書き戻し（presence 再作成）— ctl への transaction
+// ══════════════════════════════════════════════════
+// リスナーでキャッシュを温めてから transaction する（再読み込み直後の null キャッシュで
+// 「ルームが無い」と誤判定しないため）。reason: gone / broken / expired / not_member / full / norole
+// resumeToken: 再読み込み前の画面の sid。同じ名前の presence がこの sid なら、自分の続きとして新しい sid で上書きする
+// （タブの複製でも、あとから開いた画面が引き継ぎ、古い画面は 'taken' で終わる）
+async function writeBackPresence(resumeToken) {
+  const ctlRef = state.ctlRef;
+  const nick = state.nickname;
+  const isHost = state.role === 'host';
+  const epoch = state.epoch;
+  const sid = state.sid;
+  if (!ctlRef || (state.role !== 'host' && state.role !== 'guest')) return { committed: false, reason: 'norole' };
+  return withWarmCache(ctlRef, async () => {
+    let reason = null;
+    let matchId = null;
+    const { committed } = await ctlRef.transaction((cur) => {
+      if (state.epoch !== epoch) { reason = 'cancelled'; return; } // 待っている間に「トップへ戻る」などでやめた
+      if (!cur) { reason = 'gone'; return; }
+      if (!cur.status || !cur.host) { reason = 'broken'; return; }
+      if (isRoomExpired(cur)) { reason = 'expired'; return; }
+      if (isHost && cur.host !== nick) { reason = 'gone'; return; }
+      if (!isHost && cur.host === nick) { reason = 'gone'; return; }
+      const players = cur.players || {};
+      const mine = players[nick];
+      if (mine && mine.sid && mine.sid !== sid && mine.sid !== resumeToken) { reason = 'taken'; return; }
+      if (cur.status === 'waiting') {
+        if (!players[nick] && Object.keys(players).length >= MAX_PLAYERS) { reason = 'full'; return; }
+      } else if (!isHost && orderOf(cur.match).indexOf(nick) < 0) {
+        // 進行役のホストは order に居なくても戻れる。ゲストは描く側のときだけ
+        reason = 'not_member'; return;
+      }
+      const seat = players[nick] && players[nick].seat != null ? players[nick].seat : (isHost ? 0 : maxSeat(players) + 1);
+      reason = null;
+      matchId = cur.match ? cur.match.matchId : null;
+      const patch = { ...cur, players: { ...players, [nick]: { isHost, seat, sid } } };
+      if (isHost) { patch.hostConnected = true; patch.hostDisconnectedAt = null; }
+      return patch;
+    });
+    return { committed, reason, matchId };
+  }, CONNECT_TIMEOUT_MS);
+}
+
+// ══════════════════════════════════════════════════
+// .info/connected 追従（自動再接続で presence が消えたままになるのを防ぐ）
+// ══════════════════════════════════════════════════
+function startConnectionWatch() {
+  db.ref('.info/connected').on('value', (snap) => {
+    state.connected = snap.val() === true;
+    if (!state.connected) return;
+    state.connectedOnce = true; // 接続時にサーバー時刻の補正値も届く
+    handleReconnected();
+  });
+}
+
+// やめた復帰などで書いてしまった presence を取り消す。同じ sid のものだけを消し、
+// ホストなら hostConnected:false にして 2分の TTL を始める（書いたままだとルームが消えなくなる）
+function undoPresence(ctlRef, nick, sid, isHost) {
+  if (!ctlRef || !nick || !sid) return;
+  ctlRef.transaction((cur) => {
+    if (cur === null) return null; // キャッシュが空でもサーバーに確かめさせる（無ければ何も起きない）
+    const mine = cur.players && cur.players[nick];
+    if (!mine || mine.sid !== sid) return undefined;
+    const next = { ...cur, players: { ...cur.players, [nick]: null } };
+    if (isHost && cur.host === nick) {
+      next.hostConnected = false;
+      next.hostDisconnectedAt = firebase.database.ServerValue.TIMESTAMP;
+    }
+    return next;
+  }).catch(() => {});
+}
+
+// つながっているのに自分の presence が消えている（古い接続の onDisconnect があとから発火した等）
+// ときは書き戻す。ホストの場合、放っておくと hostConnected:false のまま2分でルームが消えてしまう
+function reassertPresenceIfLost(ctl) {
+  if (!state.connected || state.reconnecting) return;
+  if (state.role !== 'host' && state.role !== 'guest') return;
+  const mine = ctl.players && ctl.players[state.nickname];
+  const lost = !mine || (state.role === 'host' && ctl.hostConnected === false);
+  const takenByOther = !!(mine && mine.sid && state.sid && mine.sid !== state.sid);
+  if (!lost && !takenByOther) return;
+  const wait = 3000 - (Date.now() - state.lastReassertAt);
+  if (wait > 0) {
+    // 間引いた分は捨てずに、あとで最新の状態でもう一度確かめる
+    if (!state.reassertTimer) {
+      state.reassertTimer = setTimeout(() => {
+        state.reassertTimer = null;
+        if (state.lastCtl) reassertPresenceIfLost(state.lastCtl);
+      }, wait);
+    }
+    return;
+  }
+  state.lastReassertAt = Date.now();
+  handleReconnected();
+}
+
+async function handleReconnected() {
+  // 再読み込みからの復帰中は tryReconnect が書き戻すので、二重に走らせない
+  if (state.reconnecting) return;
+  if (!state.ctlRef || (state.role !== 'host' && state.role !== 'guest')) return;
+  const epoch = state.epoch;
+  const ctlRef = state.ctlRef;
+  const nick = state.nickname;
+  let result;
+  try { result = await writeBackPresence(); } catch { return; }
+  if (state.epoch !== epoch) {
+    // 書き戻し中に退出した → 復活させてしまった presence を消して終わり
+    if (result.committed && nick) ctlRef.child('players/' + nick).remove().catch(() => {});
+    return;
+  }
+  if (!result.committed) {
+    if (result.reason === 'norole' || result.reason === 'cancelled') return;
+    let msg = 'ルームが閉じられたよ';
+    if (result.reason === 'not_member') msg = 'ゲームが始まっていたよ。終わったら入りなおしてね';
+    else if (result.reason === 'full') msg = 'ルームがいっぱいで戻れなかったよ';
+    else if (result.reason === 'expired') msg = 'このルームは終わったよ';
+    else if (result.reason === 'taken') msg = 'ほかの画面で同じ名前が入りなおしたので、この画面は終わるよ';
+    await bailToTop(msg);
+    return;
+  }
+  await armOnDisconnect();
+}
+
+// ══════════════════════════════════════════════════
+// 再接続（リロード復帰）
+// ══════════════════════════════════════════════════
+async function tryReconnect() {
+  const session = loadSession();
+  if (!session || !session.roomCode || !session.nickname) { clearSession(); return false; }
+  const { nickname, roomCode, isHost } = session;
+  if (!/^[A-Z2-9]{6}$/.test(roomCode) || validateNickname(nickname)) { clearSession(); return false; }
+  showReconnectOverlay(true);
+  state.reconnecting = true;
+  const epoch = state.epoch;
+  // なかなかつながらないときは「トップへ戻る」を出す
+  const escapeTimer = setTimeout(() => { $('btn-reconnect-cancel').hidden = false; }, RECONNECT_ESCAPE_MS);
+  const roomRef = db.ref(ROOMS_PATH + '/' + roomCode);
+  try {
+    await authReady;
+    if (state.epoch !== epoch) return false;
+    state.role = isHost ? 'host' : 'guest';
+    state.nickname = nickname;
+    state.roomCode = roomCode;
+    state.roomRef = roomRef;
+    state.ctlRef = roomRef.child('ctl');
+    const resumeToken = (typeof session.sid === 'string' && session.sid) ? session.sid : null;
+    state.sid = newSid();
+    const mySid = state.sid;
+
+    const res = await writeBackPresence(resumeToken);
+    if (state.epoch !== epoch) {
+      // 待っている間に「トップへ戻る」を押した。書けてしまっていたら取り消す
+      if (res.committed) undoPresence(roomRef.child('ctl'), nickname, mySid, isHost);
+      return false;
+    }
+    if (!res.committed) {
+      giveUpReconnect();
+      if (res.reason === 'broken') removeBrokenRoom(roomRef);
+      if (res.reason === 'expired') removeRoomIfExpired(roomRef);
+      if (res.reason === 'not_member') showMsg('ゲームが始まっていたよ。終わったら入りなおしてね', false);
+      if (res.reason === 'taken') showMsg('ほかの画面で同じ名前が入っているよ', false);
+      return false;
+    }
+    saveSession(res.matchId);
+    startCtlListener();
+    await armOnDisconnect();
+    return true;
+  } catch (e) {
+    if (state.epoch !== epoch) return false;
+    if (e && e.timeout) {
+      // つながらなかった。セッションは残すので、通信が戻ったら読み込みなおせば戻れる
+      state.epoch += 1;
+      Object.assign(state, { role: null, nickname: null, roomCode: null, roomRef: null, ctlRef: null });
+      showMsg('つながらなかったよ。通信が戻ったら、ページを読み込みなおしてね', false);
+      return false;
+    }
+    giveUpReconnect();
+    return false;
+  } finally {
+    clearTimeout(escapeTimer);
+    $('btn-reconnect-cancel').hidden = true;
+    state.reconnecting = false;
+    showReconnectOverlay(false);
+  }
+}
+// 復帰を待たずにトップへ戻る。あとから書き戻しが通っても自分の在室が残らないよう、
+// この画面の分（sid が同じもの）だけ消しておく
+function cancelReconnect() {
+  const ctlRef = state.ctlRef;
+  const nick = state.nickname;
+  const sid = state.sid;
+  const isHost = state.role === 'host';
+  clearSession();
+  state.reconnecting = false;
+  $('btn-reconnect-cancel').hidden = true;
+  resetLocalStateAndShowTop(); // 世代を進め、リスナー・タイマー・オーバーレイを片付ける（待ち中の書き戻しは世代で止まる）
+  undoPresence(ctlRef, nick, sid, isHost);
+}
+function giveUpReconnect() {
+  state.epoch += 1;
+  Object.assign(state, { role: null, nickname: null, roomCode: null, roomRef: null, ctlRef: null });
+  clearSession();
+}
+
+// ══════════════════════════════════════════════════
+// 自分が作ったルームの後片付け
+// ══════════════════════════════════════════════════
+// みんながタブを閉じて終わると、ルームはだれにも開かれず残ってしまう（絵のデータが大きい）。
+// ルームを作った端末がコードを覚えておき、次にこのページを開いたとき、期限切れのものを消す。
+function loadMyRooms() {
+  try {
+    const v = JSON.parse(localStorage.getItem(MY_ROOMS_KEY));
+    return Array.isArray(v) ? v.filter((c) => typeof c === 'string' && /^[A-Z2-9]{6}$/.test(c)) : [];
+  } catch { return []; }
+}
+function saveMyRooms(list) {
+  try { localStorage.setItem(MY_ROOMS_KEY, JSON.stringify(list.slice(-MY_ROOMS_MAX))); } catch { /* noop */ }
+}
+function rememberMyRoom(code) { saveMyRooms(loadMyRooms().filter((c) => c !== code).concat([code])); }
+function forgetMyRoom(code) {
+  saveMyRooms(loadMyRooms().filter((c) => c !== code));
+  const alive = loadAlive();
+  if (alive[code]) { delete alive[code]; saveAlive(alive); }
+}
+// ホストがルームにいる間、1分ごとに「使っている」印を更新する。同じブラウザのほかのタブが
+// 後片付けをしても、印が新しいルームは消さない（12時間を過ぎても使い続けている場合のため）
+function loadAlive() {
+  try { const v = JSON.parse(localStorage.getItem(MY_ROOMS_ALIVE_KEY)); return v && typeof v === 'object' ? v : {}; } catch { return {}; }
+}
+function saveAlive(obj) {
+  try { localStorage.setItem(MY_ROOMS_ALIVE_KEY, JSON.stringify(obj)); } catch { /* noop */ }
+}
+function touchMyRoomAlive() {
+  if (state.role !== 'host' || !state.roomCode) return;
+  const alive = loadAlive();
+  alive[state.roomCode] = Date.now();
+  saveAlive(alive);
+}
+async function sweepMyRooms() {
+  const list = loadMyRooms();
+  if (!list.length) return;
+  try { await authReady; } catch { return; }
+  for (const code of list) {
+    if (code === state.roomCode) continue;
+    const touched = Number(loadAlive()[code]) || 0;
+    const staleMs = Date.now() - touched < 3 * 60 * 1000 ? 0 : MY_ROOMS_STALE_MS; // 使用中の印が新しければ、12時間の条件は使わない
+    const gone = await removeRoomIfExpired(db.ref(ROOMS_PATH + '/' + code), staleMs);
+    if (gone) forgetMyRoom(code);
+  }
+}
+
+// ══════════════════════════════════════════════════
+// 初期化
+// ══════════════════════════════════════════════════
+$('play-text').addEventListener('input', () => {
+  if (!canEditNow()) return;
+  const input = $('play-text');
+  state.play.text = input.value.slice(0, TEXT_MAX);
+  updateCharCount();
+  scheduleTextSave();
+});
+$('play-text').addEventListener('blur', () => { if (state.play.key) flushText(); });
+
+buildPaceRadios();
+buildTools();
+startConnectionWatch();
+tryReconnect().then((reconnected) => {
+  if (!reconnected && !state.currentScreen) showScreen('top');
+  sweepMyRooms();
+});
+</script>
+<script src="../shared/js/stats.js?v=1" defer></script>
+<script src="../shared/js/howto.js"></script>
+<script>
+  RoomkHowto.init({
+    title: 'あそびかた',
+    lead: '書いた文を次の人が絵にして、その絵を次の人が文にして……と順番に回していく伝言ゲームです。最後にみんなで見せあって、最初のお題がどう変わったかを楽しもう。',
+    sections: [
+      { heading: 'はじめかた', items: [
+        'ホストが「ルームを作る」からルームを作る',
+        'ほかの人は「ルームに参加する」からニックネームとルームコードを入れて「参加する」を押す',
+        'ホストが「始める」を押すとスタート（描く人は3〜8人）',
+      ] },
+      { heading: 'すすめかた', items: [
+        '最初に、描いてほしいお題を文で書く。思いつかないときは「おまかせ」を押してね',
+        '次は、回ってきた文を絵にする。その次は、回ってきた絵を見て何の絵かを文で書く',
+        '書けたら「完了」。みんなが完了するか、時間になったら次の人に回るよ',
+      ] },
+      { heading: 'おわりかた', text: '全員に回ったら見せあい。ホストが「つぎへ」で1つずつめくっていくよ。点数や勝ち負けはないので、どう変わったかをみんなで楽しんでね。' },
+    ],
+  });
+</script>
+</body>
+</html>
