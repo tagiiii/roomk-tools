@@ -1233,6 +1233,19 @@
     flex: 1 1 auto;
   }
 
+  /* 参加者のルームバーを、375px幅で幅の広い文字のコード（WWWWWW など）でも1行に収める */
+  .qz-roombar {
+    gap: 6px;
+  }
+
+  .qz-roombar .btn {
+    padding: 6px 8px;
+  }
+
+  .qz-roombar__code strong {
+    letter-spacing: 0.04em;
+  }
+
   .qz-form {
     padding: 22px 16px;
   }
