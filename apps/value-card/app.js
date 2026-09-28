@@ -230,9 +230,6 @@ function renderResult() {
         <span class="vc-result-item__keyword">${escapeHtml(card.keyword)}</span>
       </div>
       <div class="vc-result-item__desc">${escapeHtml(card.description)}</div>
-      <div class="vc-result-item__memo">
-        <textarea placeholder="なんでこれが大事？" rows="2" maxlength="100"></textarea>
-      </div>
     `;
 
     resultArea.appendChild(el);
@@ -241,11 +238,6 @@ function renderResult() {
 
 // ── 画像保存 ──
 function saveImage() {
-  const memos = [];
-  resultArea.querySelectorAll('textarea').forEach(ta => {
-    memos.push(ta.value.trim());
-  });
-
   const container = document.createElement('div');
   container.style.cssText = `
     padding: 48px 40px;
@@ -260,7 +252,6 @@ function saveImage() {
 
   let cardsHtml = '';
   hand.forEach((card, i) => {
-    const memo = memos[i] || '';
     cardsHtml += `
       <div style="
         background: #fff;
@@ -284,14 +275,6 @@ function saveImage() {
         <div style="font-size:13px; color:#5A6270; margin-top:4px; margin-left:40px;">
           ${escapeHtml(card.description)}
         </div>
-        ${memo ? `
-          <div style="
-            margin-top:10px; margin-left:40px;
-            font-size:13px; color:#1A1A1A;
-            background:#F5F2EC; border-radius:8px;
-            padding:8px 12px; line-height:1.5;
-          ">${escapeHtml(memo)}</div>
-        ` : ''}
       </div>
     `;
   });

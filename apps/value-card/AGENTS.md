@@ -25,7 +25,7 @@
 ## 画面構成・フロー
 
 ```
-TOP → GAME（交換） → RANKING（並び替え） → RESULT（メモ+画像保存）
+TOP → GAME（交換） → RANKING（並び替え） → RESULT（画像保存）
                                                   ↓
                                                TOP に戻る
 ```
@@ -47,9 +47,8 @@ TOP → GAME（交換） → RANKING（並び替え） → RESULT（メモ+画�
 - 「順番を決定する」→ RESULT へ
 
 ### RESULT（screen-result）
-- 確定順位でカードを表示
-- 各カードの下に textarea（ひとことメモ、任意、最大100文字）
-- 「画像を保存する」→ html2canvas で PNG 書き出し（メモも含む）
+- 確定順位でカードを表示（入力欄は置かない）
+- 「画像を保存する」→ html2canvas で PNG 書き出し（順位・キーワード・説明のみ）
 - 「最初からやり直す」→ TOP へ
 
 ## カードデータ
@@ -70,7 +69,7 @@ TOP → GAME（交換） → RANKING（並び替え） → RESULT（メモ+画�
 | M-3 shuffle | カードプールのシャッフル |
 | M-5 popIn | （現状未使用、追加時に利用可能） |
 | M-6 ボタン | .btn-primary / .btn-secondary / .btn-ghost / .btn-lg / .btn-full |
-| escapeHtml | メモ・カード内容のXSS対策（画像生成時のDOM挿入含む） |
+| escapeHtml | カード内容のXSS対策（画像生成時のDOM挿入含む） |
 
 ## CSS命名規則
 
@@ -82,7 +81,7 @@ TOP → GAME（交換） → RANKING（並び替え） → RESULT（メモ+画�
 | `.vc-card` | ゲーム画面のカード |
 | `.vc-card--selected` | 選択中のカード |
 | `.vc-rank-item` | ランキング画面のカード行 |
-| `.vc-result-item` | 結果画面のカード+メモ |
+| `.vc-result-item` | 結果画面のカード |
 
 ## 特有のルール・制約
 
@@ -90,5 +89,6 @@ TOP → GAME（交換） → RANKING（並び替え） → RESULT（メモ+画�
 - 交換済みカードはプールに戻さない（毎回新しいカードに触れる体験）
 - 交換回数は5回固定
 - ランキングの主操作はタップ（上下ボタン）、ドラッグはデスクトップ補助
-- メモの画像書き出し時は escapeHtml で XSS 対策
+- 画像書き出し用 DOM に挿入するカード内容も escapeHtml で XSS 対策
+- 結果画面に理由や感想を書かせる入力欄を置かない。旧「ひとことメモ」（「なんでこれが大事？」）は尋問のようになり場が重くなるため、2026-09-25 にオーナー判断で廃止した
 - html2canvas のキャプチャ用 DOM は一時生成→完了後に削除
