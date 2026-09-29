@@ -1,0 +1,401 @@
+/* キャリアすごろく v2（試作）— スタイル
+   drafts/ は自己完結（apps/shared は参照しない）。色は design-system.css のトークンの値を手で写している。
+   接頭辞 cs-（career sugoroku）・BEM。 */
+
+:root {
+  --color-primary: #1C3F5E;
+  --color-accent: #2E7D8C;
+  --color-bg: #F5F2EC;
+  --color-surface: #FFFFFF;
+  --color-text: #1A1A1A;
+  --color-muted: #5A6270;
+  --color-border: #C4D2D8;
+  --color-success: #1F6E3C;
+  --color-error: #B91C1C;
+  --color-primary-soft: #E6EDF3;
+  --color-accent-soft: #E3F1F2;
+  --cs-radius: 16px;
+  --cs-shadow: 0 1px 2px rgba(28, 63, 94, .06), 0 8px 24px rgba(28, 63, 94, .10);
+  --font-base: 'Noto Sans JP', 'Hiragino Sans', sans-serif;
+  --font-display: 'Zen Maru Gothic', 'Noto Sans JP', sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+[hidden] { display: none !important; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  font-family: var(--font-base);
+  font-size: 16px;
+  line-height: 1.65;
+  color: var(--color-text);
+  background: var(--color-bg);
+  min-height: 100vh;
+}
+button, input { font: inherit; color: inherit; }
+button { cursor: pointer; background: none; border: 0; }
+button:disabled { cursor: default; }
+:focus-visible { outline: 3px solid var(--color-accent); outline-offset: 2px; }
+
+.material-symbols-rounded {
+  font-family: 'Material Symbols Rounded';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 22px;
+  line-height: 1;
+  display: inline-block;
+  letter-spacing: normal;
+  text-transform: none;
+  white-space: nowrap;
+  direction: ltr;
+  font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
+  font-variation-settings: 'FILL' 1, 'wght' 500, 'GRAD' 0, 'opsz' 24;
+  vertical-align: middle;
+}
+.cs-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* ── ボタン ─────────────────────────────── */
+.cs-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 48px; padding: 10px 22px;
+  border-radius: 12px; border: 2px solid transparent;
+  font-weight: 700; font-size: 16px; line-height: 1.3;
+  transition: background-color .15s, border-color .15s, transform .08s;
+}
+.cs-btn:active:not(:disabled) { transform: translateY(1px); }
+.cs-btn--primary { background: var(--color-primary); color: #fff; }
+.cs-btn--primary:hover:not(:disabled) { background: #163349; }
+.cs-btn--secondary { background: var(--color-surface); color: var(--color-primary); border-color: var(--color-primary); }
+.cs-btn--secondary:hover:not(:disabled) { background: var(--color-primary-soft); }
+.cs-btn--danger { background: var(--color-surface); color: var(--color-error); border-color: var(--color-error); }
+.cs-btn--lg { min-height: 56px; font-size: 18px; }
+.cs-btn--full { width: 100%; }
+.cs-btn:disabled { opacity: .45; }
+.cs-quiet {
+  color: var(--color-muted); font-size: 15px; text-decoration: underline; text-underline-offset: 3px;
+  padding: 8px 10px; min-height: 44px;
+}
+.cs-quiet:hover { color: var(--color-primary); }
+
+/* ── はじめの画面 ─────────────────────────── */
+.cs-setup { display: flex; justify-content: center; padding: 32px 16px 56px; }
+.cs-panel {
+  width: 100%; max-width: 640px;
+  background: var(--color-surface); border-radius: 20px; box-shadow: var(--cs-shadow);
+  padding: 32px 36px 28px;
+}
+.cs-panel__badge {
+  display: inline-block; font-size: 13px; font-weight: 700; color: var(--color-accent);
+  background: var(--color-accent-soft); border-radius: 999px; padding: 2px 12px;
+}
+.cs-panel__title { font-family: var(--font-display); font-size: 36px; color: var(--color-primary); line-height: 1.3; margin: 8px 0 12px; }
+.cs-panel__lead { font-size: 17px; }
+.cs-panel__notes { margin: 14px 0 22px 1.3em; color: var(--color-muted); font-size: 15px; }
+.cs-panel__notes li + li { margin-top: 4px; }
+.cs-panel__actions { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-top: 24px; }
+.cs-panel__foot { margin-top: 12px; text-align: center; font-size: 13px; color: var(--color-muted); }
+
+.cs-field { border: 0; margin-top: 18px; }
+.cs-field__label { font-weight: 700; color: var(--color-primary); margin-bottom: 8px; }
+.cs-seg { display: flex; gap: 8px; flex-wrap: wrap; }
+.cs-seg__btn {
+  min-width: 52px; min-height: 48px; border-radius: 12px; border: 2px solid var(--color-border);
+  background: var(--color-surface); font-weight: 700; font-size: 18px;
+}
+.cs-seg__btn[aria-pressed="true"] { border-color: var(--color-primary); background: var(--color-primary); color: #fff; }
+.cs-names { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 14px; margin-top: 14px; }
+.cs-name { display: flex; align-items: center; gap: 10px; }
+.cs-name__dot { flex-shrink: 0; }
+.cs-name__input {
+  width: 100%; min-height: 44px; padding: 8px 12px; border-radius: 10px;
+  border: 2px solid var(--color-border); background: var(--color-surface); font-size: 16px;
+}
+.cs-name__input:focus { border-color: var(--color-accent); outline: none; }
+.cs-radio { display: flex; flex-direction: column; gap: 6px; }
+.cs-radio__item { display: flex; align-items: center; gap: 10px; min-height: 40px; cursor: pointer; }
+.cs-radio__item input { width: 20px; height: 20px; accent-color: var(--color-primary); }
+
+/* 駒の丸（番号つき） */
+.cs-dot {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 28px; height: 28px; border-radius: 50%; color: #fff; font-weight: 700; font-size: 14px;
+  box-shadow: 0 0 0 2px #fff, 0 0 0 3px rgba(0, 0, 0, .12);
+}
+
+/* ── あそぶ画面 ─────────────────────────── */
+.cs-play { min-height: 100vh; display: flex; flex-direction: column; }
+.cs-bar {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 8px 18px; background: var(--color-surface); border-bottom: 1px solid #E4E0D6;
+}
+.cs-bar__title { font-family: var(--font-display); font-weight: 700; color: var(--color-primary); font-size: 18px; }
+.cs-bar__badge { font-family: var(--font-base); font-size: 12px; color: var(--color-accent); background: var(--color-accent-soft); border-radius: 999px; padding: 1px 8px; margin-left: 8px; vertical-align: 2px; }
+.cs-bar__nav { display: flex; gap: 4px; }
+.cs-bar__btn {
+  display: inline-flex; align-items: center; gap: 4px; min-height: 40px; padding: 6px 12px;
+  border-radius: 10px; color: var(--color-primary); font-size: 14px; font-weight: 500;
+}
+.cs-bar__btn:hover { background: var(--color-primary-soft); }
+.cs-bar__btn .material-symbols-rounded { font-size: 20px; }
+
+.cs-main { flex: 1; display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 16px; padding: 14px 16px 18px; align-items: start; }
+.cs-board { position: relative; background: var(--color-surface); border-radius: var(--cs-radius); box-shadow: var(--cs-shadow); padding: 8px; }
+.cs-board__scroll { overflow-x: auto; }
+.cs-board__svg { display: block; width: 100%; height: auto; min-width: 680px; }
+
+/* 盤面の中の文字・アイコン（SVG） */
+.cs-b-icon { font-family: 'Material Symbols Rounded'; font-feature-settings: 'liga'; font-variation-settings: 'FILL' 1, 'wght' 500, 'GRAD' 0, 'opsz' 24; }
+.cs-b-label { font-family: var(--font-base); }
+.cs-b-zone { font-family: var(--font-display); font-weight: 700; }
+.cs-piece { transition: transform .16s ease-out; }
+.cs-piece__ring { fill: none; stroke-width: 3; transform-box: fill-box; transform-origin: center; }
+@media (prefers-reduced-motion: no-preference) {
+  .cs-piece--now .cs-piece__ring { animation: cs-pulse 1.4s ease-in-out infinite; }
+}
+@keyframes cs-pulse { 0%, 100% { opacity: .9; transform: scale(1); } 50% { opacity: .25; transform: scale(1.35); } }
+.cs-play.cs-still .cs-piece { transition: none; }
+
+/* カード（盤面の上に重ねる） */
+.cs-card-layer {
+  position: absolute; inset: 0; border-radius: var(--cs-radius);
+  background: rgba(28, 63, 94, .18);
+  display: flex; align-items: center; justify-content: center; padding: 14px;
+}
+.cs-card {
+  width: 100%; max-width: 580px; max-height: 100%; overflow-y: auto;
+  background: var(--color-surface); border-radius: 18px; box-shadow: 0 10px 40px rgba(28, 63, 94, .28);
+  padding: 22px 26px 20px; border-top: 6px solid var(--color-accent);
+}
+/* 盤面を見ながら選ぶカード（サイコロ2つ）: 背景を暗くしすぎず、駒と反対側に寄せる */
+.cs-card-layer--top, .cs-card-layer--bottom { background: rgba(28, 63, 94, .05); }
+.cs-card-layer--top { align-items: flex-start; }
+.cs-card-layer--bottom { align-items: flex-end; }
+.cs-card--compact { max-width: 760px; padding: 14px 20px 14px; border-top-width: 5px; }
+.cs-card--compact .cs-card__title { font-size: 22px; margin: 2px 0 2px; }
+.cs-card--compact .cs-card__text { font-size: 15px; }
+.cs-choices.cs-choices--row { flex-direction: row; } /* .cs-choices（あとで定義）より強くする */
+.cs-choices--row .cs-choice { flex: 1; min-width: 0; }
+@media (prefers-reduced-motion: no-preference) {
+  .cs-card { animation: cs-pop .18s ease-out; }
+}
+@keyframes cs-pop { from { transform: translateY(8px) scale(.98); opacity: 0; } to { transform: none; opacity: 1; } }
+.cs-card__kicker { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 700; color: var(--color-accent); letter-spacing: .04em; }
+.cs-card__kicker .material-symbols-rounded { font-size: 20px; }
+.cs-card__title { font-family: var(--font-display); font-size: 26px; line-height: 1.35; color: var(--color-primary); margin: 4px 0 6px; overflow-wrap: anywhere; }
+.cs-card__text { font-size: 17px; }
+.cs-card__sub { font-size: 14px; color: var(--color-muted); margin-top: 4px; }
+.cs-card__lines { list-style: none; margin: 12px 0 4px; display: flex; flex-direction: column; gap: 8px; }
+.cs-line { display: flex; align-items: flex-start; gap: 10px; font-size: 17px; line-height: 1.5; }
+.cs-line > .material-symbols-rounded { color: var(--color-accent); margin-top: 1px; }
+.cs-line--good > .material-symbols-rounded { color: var(--color-success); }
+.cs-line--oops > .material-symbols-rounded { color: #9A5B00; }
+.cs-card__actions { display: flex; flex-direction: column; align-items: stretch; gap: 8px; margin-top: 16px; }
+.cs-card__hint { font-size: 14px; color: var(--color-muted); margin-top: 8px; }
+.cs-card__hint:empty { display: none; }
+/* カードの下に固定するボタン（中身が長くてスクロールしても見える） */
+.cs-card__foot {
+  position: sticky; bottom: -20px; z-index: 1;
+  margin: 12px -26px -20px; padding: 12px 26px 16px;
+  background: var(--color-surface); border-top: 1px solid #EEE9DF;
+}
+.cs-card__foot .cs-card__hint { margin-top: 4px; text-align: center; }
+
+/* 選択肢（番号つき） */
+.cs-choices { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+.cs-choice {
+  display: flex; align-items: center; gap: 12px; width: 100%; text-align: left;
+  min-height: 56px; padding: 10px 14px; border-radius: 12px;
+  border: 2px solid var(--color-border); background: var(--color-surface);
+}
+.cs-choice:hover:not(:disabled) { border-color: var(--color-accent); background: #F4FAFA; }
+.cs-choice__num { color: var(--color-accent); font-weight: 700; font-size: 20px; font-feature-settings: 'palt'; flex-shrink: 0; min-width: 1.2em; text-align: center; }
+.cs-choice__body { flex: 1; min-width: 0; }
+.cs-choice__name { display: block; font-weight: 700; font-size: 17px; line-height: 1.4; }
+.cs-choice__desc { display: block; font-size: 14px; color: var(--color-muted); line-height: 1.5; }
+.cs-choice__side { flex-shrink: 0; text-align: right; }
+.cs-choice--keep { border-style: dashed; }
+/* 適性を選ぶときの手がかり（★が上がる職業など） */
+.cs-choice__hint { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin-top: 4px; font-size: 13px; line-height: 1.5; color: var(--color-muted); }
+.cs-choice__jobs { display: inline-flex; align-items: flex-start; gap: 3px; }
+.cs-choice__jobs .material-symbols-rounded { font-size: 16px; margin-top: 1px; color: var(--color-accent); }
+.cs-tag { display: inline-flex; align-items: center; gap: 3px; border-radius: 999px; padding: 1px 8px 1px 5px; font-size: 12px; font-weight: 700; white-space: nowrap; }
+.cs-tag .material-symbols-rounded { font-size: 15px; }
+.cs-tag--job { background: var(--color-primary-soft); color: var(--color-primary); }
+
+/* ミニゲーム（3人以上はカードを広げて2列に並べ、6人でも1画面に収める） */
+.cs-card--wide { max-width: 820px; }
+.cs-card--wide .cs-mini__rows { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 10px; }
+@media (max-width: 760px) {
+  .cs-card--wide .cs-mini__rows { grid-template-columns: minmax(0, 1fr); }
+}
+.cs-mini__big { display: flex; align-items: center; justify-content: center; gap: 12px; margin: 8px 0 0; font-weight: 700; font-size: 18px; color: var(--color-primary); }
+.cs-mini__num {
+  display: inline-flex; align-items: center; justify-content: center; min-width: 56px; height: 56px; padding: 0 8px;
+  border-radius: 14px; border: 3px solid var(--color-primary); background: #fff;
+  font-family: var(--font-display); font-size: 40px; line-height: 1;
+}
+.cs-mini__rows { display: flex; flex-direction: column; gap: 4px; margin-top: 10px; }
+.cs-mini__row { display: flex; align-items: center; gap: 10px; padding: 3px 6px 3px 10px; border-radius: 12px; background: #FAF8F3; }
+.cs-mini__name { flex: 1; min-width: 0; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cs-mini__opts { display: flex; gap: 6px; flex-shrink: 0; }
+.cs-mini__opt {
+  display: inline-flex; align-items: center; justify-content: center; gap: 2px;
+  min-width: 56px; min-height: 40px; padding: 2px 10px; border-radius: 10px;
+  border: 2px solid var(--color-border); background: #fff; font-weight: 700; font-size: 15px;
+}
+.cs-mini__opt .material-symbols-rounded { font-size: 18px; }
+.cs-mini__opt[aria-pressed="true"] { border-color: var(--color-accent); background: var(--color-accent); color: #fff; }
+
+/* 適性のしるし */
+.cs-apt { display: inline-flex; align-items: center; gap: 4px; border-radius: 999px; padding: 2px 10px 2px 6px; font-size: 14px; font-weight: 700; white-space: nowrap; }
+.cs-apt .material-symbols-rounded { font-size: 18px; }
+.cs-apts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.cs-stars { color: #C98A00; font-size: 18px; letter-spacing: 1px; white-space: nowrap; }
+.cs-stars__off { color: #D9D3C4; }
+
+/* サイドの手番 */
+.cs-side { display: flex; flex-direction: column; gap: 12px; }
+.cs-turn { background: var(--color-surface); border-radius: var(--cs-radius); box-shadow: var(--cs-shadow); padding: 18px 18px 16px; }
+.cs-turn__who { display: flex; align-items: center; gap: 12px; }
+.cs-turn__name { font-family: var(--font-display); font-size: 24px; font-weight: 700; color: var(--color-primary); line-height: 1.3; overflow-wrap: anywhere; }
+.cs-turn__where { font-size: 14px; color: var(--color-muted); margin-top: 2px; }
+.cs-turn__dice { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 14px 0 12px; min-height: 64px; }
+.cs-die {
+  width: 64px; height: 64px; border-radius: 14px; border: 3px solid var(--color-primary);
+  display: flex; align-items: center; justify-content: center; font-size: 34px; font-weight: 700; color: var(--color-primary);
+  background: #fff;
+}
+.cs-die--idle { border-style: dashed; color: #B7C3CB; border-color: #B7C3CB; }
+.cs-die--chosen { background: var(--color-primary); color: #fff; }
+.cs-die--off { opacity: .35; }
+.cs-die--mini { width: 40px; height: 40px; border-radius: 10px; font-size: 22px; border-width: 2px; }
+.cs-die__plus { font-size: 15px; font-weight: 700; color: var(--color-success); }
+.cs-cheer { margin-top: 12px; padding-top: 12px; border-top: 1px dashed #E4E0D6; }
+.cs-cheer__label { font-size: 14px; color: var(--color-muted); margin-bottom: 6px; }
+.cs-cheer__btns { display: flex; flex-wrap: wrap; gap: 6px; }
+.cs-cheer__btn { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 4px 12px 4px 6px; border-radius: 999px; border: 2px solid var(--color-border); font-size: 14px; font-weight: 700; background: #fff; }
+.cs-cheer__btn[aria-pressed="true"] { border-color: var(--color-success); background: #E8F4EC; color: var(--color-success); }
+.cs-turn__wait { font-size: 15px; color: var(--color-muted); text-align: center; }
+
+.cs-side__head { font-size: 15px; color: var(--color-primary); padding: 0 4px; display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.cs-side__hint { font-size: 12px; font-weight: 400; color: var(--color-muted); }
+.cs-players { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+.cs-player {
+  display: flex; align-items: center; gap: 10px; width: 100%; text-align: left;
+  background: var(--color-surface); border-radius: 12px; padding: 8px 12px; min-height: 52px;
+  border: 2px solid transparent; box-shadow: 0 1px 2px rgba(28, 63, 94, .06);
+}
+.cs-player:hover { border-color: var(--color-border); }
+.cs-player--now { border-color: var(--color-primary); }
+.cs-player__name { flex: 1; min-width: 0; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cs-player__tag { display: inline-flex; align-items: center; gap: 2px; font-size: 13px; font-weight: 700; border-radius: 999px; padding: 1px 8px 1px 4px; white-space: nowrap; }
+.cs-player__tag .material-symbols-rounded { font-size: 16px; }
+.cs-player__tag--rest { background: #FFF1D6; color: #8A5A00; }
+.cs-player__tag--goal { background: #E8F4EC; color: var(--color-success); }
+.cs-player__more { color: #9AA6B0; font-size: 20px; }
+
+/* ── 重ねて開く画面（手帳・できごと・あそびかた・メニュー） ── */
+.cs-modal { position: fixed; inset: 0; z-index: 50; background: rgba(20, 30, 40, .45); display: flex; align-items: center; justify-content: center; padding: 16px; }
+.cs-modal__box { width: 100%; max-width: 620px; max-height: calc(100vh - 32px); display: flex; flex-direction: column; background: var(--color-surface); border-radius: 18px; box-shadow: var(--cs-shadow); }
+.cs-modal__head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 20px 10px; border-bottom: 1px solid #EEE9DF; }
+.cs-modal__title { font-family: var(--font-display); font-size: 22px; color: var(--color-primary); }
+.cs-modal__close { width: 44px; height: 44px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; color: var(--color-muted); }
+.cs-modal__close:hover { background: var(--color-primary-soft); }
+.cs-modal__body { padding: 16px 22px 22px; overflow-y: auto; }
+.cs-modal__body h3 { font-size: 16px; color: var(--color-primary); margin: 16px 0 6px; }
+.cs-modal__body h3:first-child { margin-top: 0; }
+.cs-modal__body p + p { margin-top: 6px; }
+.cs-modal__body ul { margin-left: 1.3em; }
+.cs-legend { list-style: none; margin: 0 !important; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 14px; }
+.cs-legend li { display: flex; align-items: center; gap: 8px; font-size: 15px; }
+.cs-legend svg { flex-shrink: 0; }
+
+.cs-note-row { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px dashed #EEE9DF; }
+.cs-note-row:last-child { border-bottom: 0; }
+.cs-note-row__name { flex: 1; font-weight: 700; }
+.cs-meter { display: inline-flex; gap: 4px; }
+.cs-meter i { width: 14px; height: 14px; border-radius: 50%; background: #E9E4D8; display: inline-block; }
+.cs-note-job { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 12px; background: var(--color-primary-soft); }
+.cs-note-job .material-symbols-rounded { font-size: 30px; color: var(--color-primary); }
+.cs-note-pts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.cs-note-pts div { background: #FAF8F3; border-radius: 12px; padding: 8px 10px; text-align: center; }
+.cs-note-pts b { display: block; font-size: 22px; color: var(--color-primary); }
+.cs-note-pts span { font-size: 13px; color: var(--color-muted); }
+
+/* しごと図鑑 */
+.cs-book__intro { display: flex; align-items: flex-start; gap: 8px; font-size: 14px; color: var(--color-muted); }
+.cs-book__intro .cs-dot { flex-shrink: 0; margin-top: 2px; }
+.cs-book__filter { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0 10px; }
+.cs-book__chip { display: inline-flex; align-items: center; gap: 3px; min-height: 36px; padding: 2px 12px 2px 8px; border-radius: 999px; border: 2px solid var(--color-border); background: #fff; font-size: 13px; font-weight: 700; }
+.cs-book__chip .material-symbols-rounded { font-size: 17px; }
+.cs-book__chip[aria-pressed="true"] { border-color: var(--color-primary); background: var(--color-primary); color: #fff; }
+.cs-book__list { list-style: none; margin: 0 !important; display: flex; flex-direction: column; gap: 6px; }
+.cs-book__item { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 12px; background: #FAF8F3; }
+.cs-book__item--now { background: var(--color-primary-soft); }
+.cs-book__icon { font-size: 28px; color: var(--color-primary); flex-shrink: 0; }
+.cs-book__body { flex: 1; min-width: 0; }
+.cs-book__name { display: flex; align-items: center; gap: 8px; font-weight: 700; }
+.cs-book__desc { font-size: 13px; color: var(--color-muted); }
+.cs-book__side { display: flex; flex-direction: column; align-items: flex-end; flex-shrink: 0; }
+.cs-book__sum { font-size: 12px; color: var(--color-muted); }
+
+.cs-log { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+.cs-log li { display: flex; align-items: flex-start; gap: 8px; font-size: 15px; }
+.cs-log .cs-dot { width: 22px; height: 22px; font-size: 12px; flex-shrink: 0; margin-top: 2px; }
+
+.cs-menu-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px dashed #EEE9DF; flex-wrap: wrap; }
+.cs-menu-row:last-child { border-bottom: 0; }
+.cs-toggle { display: inline-flex; border: 2px solid var(--color-border); border-radius: 12px; overflow: hidden; }
+.cs-toggle button { min-height: 40px; padding: 6px 14px; font-weight: 700; font-size: 14px; }
+.cs-toggle button[aria-pressed="true"] { background: var(--color-primary); color: #fff; }
+.cs-confirm { margin-top: 10px; padding: 12px 14px; border-radius: 12px; background: #FFF6F0; }
+.cs-confirm p { margin-bottom: 8px; }
+.cs-confirm__btns { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* ── 結果の画面 ─────────────────────────── */
+.cs-results { display: flex; justify-content: center; padding: 32px 16px 56px; }
+.cs-results__inner { width: 100%; max-width: 760px; }
+.cs-results__title { font-family: var(--font-display); font-size: 34px; color: var(--color-primary); text-align: center; }
+.cs-results__note { text-align: center; color: var(--color-muted); font-size: 14px; margin: 4px 0 18px; }
+.cs-rank { list-style: none; display: flex; flex-direction: column; gap: 12px; }
+.cs-rank__item { background: var(--color-surface); border-radius: var(--cs-radius); box-shadow: var(--cs-shadow); padding: 16px 20px; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 4px 16px; align-items: center; }
+.cs-rank__place { font-family: var(--font-display); font-size: 28px; font-weight: 700; color: var(--color-primary); min-width: 2.4em; text-align: center; }
+.cs-rank__item--top { border: 3px solid #E0B040; }
+.cs-rank__who { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.cs-rank__name { font-weight: 700; font-size: 20px; overflow-wrap: anywhere; }
+.cs-rank__total { text-align: right; }
+.cs-rank__total b { font-size: 32px; color: var(--color-primary); }
+.cs-rank__total span { font-size: 14px; color: var(--color-muted); margin-left: 2px; }
+.cs-rank__detail { grid-column: 2 / 4; display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 14px; color: var(--color-muted); }
+.cs-rank__job { grid-column: 2 / 4; display: flex; align-items: center; gap: 8px; font-weight: 700; }
+.cs-rank__job .material-symbols-rounded { color: var(--color-primary); }
+.cs-results__actions { display: flex; flex-direction: column; align-items: center; gap: 8px; margin-top: 24px; }
+
+/* ── せまい画面 ─────────────────────────── */
+@media (max-width: 900px) {
+  .cs-main { grid-template-columns: minmax(0, 1fr); }
+  .cs-side { order: 2; }
+}
+@media (max-width: 600px) {
+  .cs-panel { padding: 24px 18px 22px; }
+  .cs-panel__title { font-size: 30px; }
+  .cs-names { grid-template-columns: minmax(0, 1fr); }
+  .cs-bar { padding: 6px 10px; }
+  .cs-bar__btn span:not(.material-symbols-rounded) { display: none; }
+  .cs-bar__btn { padding: 6px 10px; min-width: 44px; min-height: 44px; justify-content: center; }
+  .cs-main { padding: 10px 8px 16px; gap: 10px; }
+  .cs-card-layer { position: fixed; inset: auto 0 0 0; background: none; padding: 8px; z-index: 40; }
+  .cs-card { max-height: 72vh; box-shadow: 0 -4px 30px rgba(28, 63, 94, .3); padding: 18px 16px 16px; }
+  .cs-card__foot { bottom: -16px; margin: 10px -16px -16px; padding: 10px 16px 12px; }
+  .cs-choices.cs-choices--row { flex-direction: column; }
+  .cs-card__title { font-size: 22px; }
+  .cs-legend { grid-template-columns: minmax(0, 1fr); }
+  .cs-mini__opt { min-width: 48px; padding: 4px 6px; }
+  .cs-note-pts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cs-rank__item { grid-template-columns: auto minmax(0, 1fr); }
+  .cs-rank__total { grid-column: 2; text-align: left; }
+  .cs-rank__detail, .cs-rank__job { grid-column: 1 / 3; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
