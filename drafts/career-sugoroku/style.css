@@ -253,6 +253,26 @@ button:disabled { cursor: default; }
 .cs-stars { color: #C98A00; font-size: 18px; letter-spacing: 1px; white-space: nowrap; }
 .cs-stars__off { color: #D9D3C4; }
 
+/* 職業の★: 合う適性3つを「＋」でつないだ式と、★ゲージ（★ ■■■ ★ ■■■ ★ ■■■ ★。マスは合う適性の色、光っている★の数がいまの★） */
+.cs-jobcalc { display: block; }
+.cs-apts--sum { align-items: center; gap: 4px; }
+.cs-plus { color: var(--color-muted); font-weight: 700; font-size: 15px; }
+.cs-gauge-row { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin-top: 6px; }
+.cs-gauge { display: inline-flex; align-items: center; gap: 3px; }
+.cs-gauge__grp { display: inline-flex; gap: 2px; }
+.cs-gauge__grp i { display: inline-block; width: 15px; height: 15px; border-radius: 4px; background: #F1EDE4; box-shadow: inset 0 0 0 1px #CFC7B6; }
+.cs-gauge__star { color: #D9D3C4; font-size: 20px; line-height: 1; }
+.cs-gauge__star--on { color: #C98A00; }
+.cs-gauge__note { font-size: 13px; font-weight: 700; color: var(--color-muted); white-space: nowrap; }
+.cs-choices--jobs .cs-choice__name, .cs-choices--jobs .cs-choice__desc { display: inline; margin-right: 10px; } /* 職業の名前と説明を1行に */
+.cs-pay { display: flex; flex-direction: column; align-items: flex-end; line-height: 1.2; }
+.cs-pay__label { font-size: 12px; color: var(--color-muted); white-space: nowrap; }
+.cs-pay__n { font-size: 24px; color: var(--color-primary); }
+.cs-line__block { display: block; }
+.cs-howto-ex { margin-top: 10px; padding: 12px 14px; border-radius: 12px; background: #FAF8F3; }
+.cs-howto-ex__title { font-size: 14px; font-weight: 700; }
+.cs-howto-ex__result { margin-top: 6px; font-size: 15px; font-weight: 700; color: var(--color-primary); }
+
 /* サイドの手番 */
 .cs-side { display: flex; flex-direction: column; gap: 12px; }
 .cs-turn { background: var(--color-surface); border-radius: var(--cs-radius); box-shadow: var(--cs-shadow); padding: 18px 18px 16px; }
@@ -316,7 +336,8 @@ button:disabled { cursor: default; }
 .cs-meter { display: inline-flex; gap: 4px; }
 .cs-meter i { width: 14px; height: 14px; border-radius: 50%; background: #E9E4D8; display: inline-block; }
 .cs-note-job { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 12px; background: var(--color-primary-soft); }
-.cs-note-job .material-symbols-rounded { font-size: 30px; color: var(--color-primary); }
+.cs-note-job > .material-symbols-rounded { font-size: 30px; color: var(--color-primary); }
+.cs-note-job__body { flex: 1; min-width: 0; }
 .cs-note-pts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
 .cs-note-pts div { background: #FAF8F3; border-radius: 12px; padding: 8px 10px; text-align: center; }
 .cs-note-pts b { display: block; font-size: 22px; color: var(--color-primary); }
@@ -337,7 +358,6 @@ button:disabled { cursor: default; }
 .cs-book__name { display: flex; align-items: center; gap: 8px; font-weight: 700; }
 .cs-book__desc { font-size: 13px; color: var(--color-muted); }
 .cs-book__side { display: flex; flex-direction: column; align-items: flex-end; flex-shrink: 0; }
-.cs-book__sum { font-size: 12px; color: var(--color-muted); }
 
 .cs-log { list-style: none; display: flex; flex-direction: column; gap: 6px; }
 .cs-log li { display: flex; align-items: flex-start; gap: 8px; font-size: 15px; }
@@ -396,6 +416,13 @@ button:disabled { cursor: default; }
   .cs-rank__item { grid-template-columns: auto minmax(0, 1fr); }
   .cs-rank__total { grid-column: 2; text-align: left; }
   .cs-rank__detail, .cs-rank__job { grid-column: 1 / 3; }
+  /* 職業の行: 「しごとマスで +N」を下に回して、式とゲージの幅を空ける */
+  .cs-choices--jobs .cs-choice, .cs-book__item { flex-wrap: wrap; }
+  .cs-choices--jobs .cs-choice__side, .cs-book__side { flex-basis: 100%; }
+  .cs-choices--jobs .cs-pay, .cs-book__side .cs-pay { flex-direction: row; align-items: baseline; justify-content: flex-end; gap: 6px; }
+  .cs-pay__n { font-size: 20px; }
+  .cs-apts--sum .cs-apt { font-size: 13px; padding: 1px 8px 1px 5px; }
+  .cs-apts--sum .cs-apt .material-symbols-rounded { font-size: 16px; }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }

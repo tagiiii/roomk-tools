@@ -164,6 +164,24 @@ test('しごとマスは通るたびに★の数だけ。同じマスは1回だ�
   assert.strictEqual(s.players[0].pts.pay, 3);
 });
 
+test('番の始めの全員の適性と職業を記録する（結果のカードで「★が上がった」を見せる）。しごとマスの記録に★', () => {
+  let s = game(2);
+  place(s, 0, 'a2');
+  const p = s.players[0];
+  p.job = 0; // イラストレーター（ものづくり・アイデア・気づく力）
+  p.apt = [1, 0, 1, 0, 0, 0]; // 合計2 → ★1
+  s = rollTo(s, 1); // a3（ものづくりの体験マス）
+  assert.deepStrictEqual(s.last.before[0], { apt: [1, 0, 1, 0, 0, 0], job: 0 });
+  assert.deepStrictEqual(s.last.before[1], { apt: [0, 0, 0, 0, 0, 0], job: null });
+  assert.strictEqual(E.stars(s.players[0].apt, 0), 2); // 合計3 → ★2
+  let t = game(1);
+  place(t, 0, 'stop22');
+  t.players[0].job = 0;
+  t.players[0].apt = [2, 2, 3, 0, 0, 0]; // ★3
+  t = rollTo(t, 2); // e1（しごとマス）を通る
+  assert.ok(t.last.msgs.some((m) => m.k === 'pay' && m.n === 3 && m.stars === 3));
+});
+
 test('★の段階（合計 0〜2=★1、3〜5=★2、6〜8=★3、9以上=★4）', () => {
   const j = 0;
   assert.strictEqual(E.stars([0, 0, 2, 0, 0, 0], j), 1);

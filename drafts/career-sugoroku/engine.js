@@ -72,7 +72,9 @@
   // moveFrom はイベントで動き始めた path の位置（画面はそこでイベントのカードを先に見せる）
   function newLast(s, extra) {
     s.seq = (s.seq || 0) + 1;
-    s.last = Object.assign({ id: s.seq, roll: null, cheer: 0, cheerBy: null, path: [], from: cur(s).node, card: null, moveFrom: null, msgs: [] }, extra || {});
+    // before: 番の始めの全員の適性と職業（結果のカードで「合う適性がふえて★が上がった」を見せるのに使う）
+    const before = s.players.map((p) => ({ apt: p.apt.slice(), job: p.job }));
+    s.last = Object.assign({ id: s.seq, roll: null, cheer: 0, cheerBy: null, path: [], from: cur(s).node, card: null, moveFrom: null, msgs: [], before }, extra || {});
   }
 
   // ── ゲームの開始 ─────────────────────────────────
@@ -163,10 +165,11 @@
       const nn = NODE[nextId];
       if (nn.type === 'pay' && p.job != null && !p.paid.includes(nextId)) {
         p.paid.push(nextId);
-        const g = D.STAR_PAY[stars(p.apt, p.job) - 1];
+        const st = stars(p.apt, p.job);
+        const g = D.STAR_PAY[st - 1];
         p.pts.pay += g;
         s.last.paidNow = (s.last.paidNow || []).concat(nextId);
-        msg(s, { k: 'pay', n: g, job: p.job });
+        msg(s, { k: 'pay', n: g, job: p.job, stars: st });
       }
       if (nn.type === 'goal') return { r: 'goal', remaining: 0 };
       if (nn.type === 'stop') return { r: 'stop', remaining: 0 };
