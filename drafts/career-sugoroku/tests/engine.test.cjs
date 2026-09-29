@@ -292,6 +292,83 @@ test('道の選び直し: しごとを選んで職業のカードまで進んで
   assert.strictEqual(s.last.msgs.filter((m) => m.k === 'route').length, 1);
 });
 
+test('道の選び直し: 「できごと」の記録は道を選ぶ前とまったく同じにもどる（記録が300件で古い順に消えていても）', () => {
+  const run = (fill) => {
+    let s = game(1);
+    place(s, 0, 'b4');
+    s = rollTo(s, 6); // 15さいの節目
+    if (fill) s.log = Array.from({ length: 300 }, (_, k) => ({ n: 0, p: 0, text: `むかしの記録 ${k + 1}` })); // 上限いっぱい
+    const before = JSON.parse(JSON.stringify(s.log));
+    s = act(s, { type: 'route', choice: 1 }); // しごと
+    s = act(s, { type: 'job', job: 12 }); // 料理人
+    assert.ok(s.log.some((x) => x.text.startsWith('料理人になった')));
+    s = act(s, { type: 'reroute' }); // 結果のカードから選び直す
+    assert.deepStrictEqual(s.log, before);
+    s = act(s, { type: 'route', choice: 0 }); // 学び（高校）
+    const texts = s.log.map((x) => x.text);
+    assert.ok(!texts.some((t) => t.includes('しごとの道へ') || t.startsWith('料理人になった') || t === '道を選び直す'));
+    assert.strictEqual(texts[texts.length - 1], '学びの道へ');
+    if (fill) {
+      assert.strictEqual(s.log.length, 300);
+      assert.strictEqual(texts[0], 'むかしの記録 2'); // 「学びの道へ」の1件ぶんだけ古い順に消える
+    } else assert.deepStrictEqual(s.log.slice(0, -1), before);
+  };
+  run(false);
+  run(true);
+});
+
+test('職業についた記録は★でなく、しごとマスのポイントで書く', () => {
+  let s = game(1);
+  place(s, 0, 'b4');
+  s.players[0].apt = [1, 1, 1, 0, 0, 0];
+  s = rollTo(s, 6);
+  s = act(s, { type: 'route', choice: 1 });
+  s = act(s, { type: 'job', job: 0 }); // イラストレーター（3つとも1 → しごとマスで +2）
+  const t = s.log.find((x) => x.text.startsWith('イラストレーターになった')).text;
+  assert.strictEqual(t, 'イラストレーターになった（しごとマスで +2）');
+});
+
+test('古い保存の形をそろえる: 目標の職業と記録の★を消す。元の状態は変えない', () => {
+  let s = game(2);
+  s = rollTo(s, 1);
+  const old = JSON.parse(JSON.stringify(s));
+  old.players[0].goal = 3;
+  old.players[1].goal = null;
+  old.log.push({ n: 1, p: 0, text: '目標の職業を写真家にした' }, { n: 1, p: 0, text: '料理人になった（★3）' }, { n: 1, p: 1, text: 'サイコロ 2' });
+  const before = JSON.stringify(old);
+  const m = E.migrate(old);
+  assert.strictEqual(JSON.stringify(old), before);
+  assert.ok(m.players.every((p) => !('goal' in p)));
+  const texts = m.log.map((x) => x.text);
+  assert.ok(!texts.some((t) => t.startsWith('目標の職業を')));
+  assert.ok(texts.includes(`料理人になった（しごとマスで +${D.STAR_PAY[2]}）`));
+  assert.ok(texts.includes('サイコロ 2'));
+  assert.strictEqual(m.step.kind, 'ack'); // a1（体験）に止まったあと
+  assert.ok(E.apply(m, { type: 'ack' }).ok); // そろえたあとも遊べる
+  // last.before がない（前の形の）状態でもそのまま使える
+  delete m.last.before;
+  assert.ok(E.migrate(m));
+  // 道を選んでいる途中で保存した古い形（routeUndo に記録の写しがない・その中の人に goal がある）
+  let r = game(1);
+  place(r, 0, 'b4');
+  r = rollTo(r, 6);
+  r = act(r, { type: 'route', choice: 1 });
+  r = act(r, { type: 'job', job: 12 });
+  const oldMid = JSON.parse(JSON.stringify(r));
+  delete oldMid.routeUndo.log;
+  oldMid.routeUndo.player.goal = 2;
+  oldMid.players[0].goal = 2;
+  const mm = E.migrate(oldMid);
+  assert.strictEqual(mm.routeUndo, null); // 選び直しはできない（記録をもどせないので）
+  assert.strictEqual(E.apply(mm, { type: 'reroute' }).ok, false);
+  assert.ok(!('goal' in mm.players[0]));
+  assert.ok(E.apply(mm, { type: 'ack' }).ok); // 道はそのままで先に進める
+  // いまの形の途中の保存は、そろえても選び直せる
+  const nowMid = E.migrate(r);
+  assert.ok(Array.isArray(nowMid.routeUndo.log));
+  assert.ok(E.apply(nowMid, { type: 'reroute' }).ok);
+});
+
 test('道の選び直し: 職業を選んだあとや学びの道を選んだあとの結果のカードでも、その番のうちならできる', () => {
   // 18さいで仕事がある人が学びの道 → 仕事がお休み → 選び直すと仕事がもどる
   let s = game(1);
@@ -891,6 +968,7 @@ test('ランダムな操作で最後まで遊べる（1〜6人・各80ゲーム�
       }
       assert.strictEqual(s.results.length, n);
       assert.ok(s.players.every((q) => q.rank >= 1 && q.rank <= n));
+      assert.ok(s.log.every((x) => !x.text.includes('★')), '記録に★が出ている'); // 画面には★を出さない
       // 23さい以降にいる人は必ず職業を持っている（ゴールした人を含む）
       s.players.forEach((q) => { if (E.NODE[q.node].stage === 'adult') assert.ok(q.job != null, 'おとななのに職業がない'); });
     }

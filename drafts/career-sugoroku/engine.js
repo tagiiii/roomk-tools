@@ -484,8 +484,8 @@
       const o = opts && Number.isInteger(a.choice) ? opts[a.choice] : null;
       if (!o) return '道を選んでください';
       const lane = D.LANES[o.lane];
-      // 選び直し（reroute）のために、選ぶ前のその人・記録・この先の予定を覚えておく
-      s.routeUndo = { node: s.step.node, player: clone(p), msgs: s.last.msgs.length, queue: clone(s.queue) };
+      // 選び直し（reroute）のために、選ぶ前のその人・記録・この先の予定と、「できごと」の記録の写しを覚えておく
+      s.routeUndo = { node: s.step.node, player: clone(p), msgs: s.last.msgs.length, queue: clone(s.queue), log: clone(s.log) };
       p.routeNext[s.step.node] = o.next;
       p.lanes[s.step.node === 'stop15' ? 'c' : 'd'] = o.lane;
       msg(s, { k: 'route', lane: o.lane });
@@ -511,7 +511,7 @@
         const changed = p.job != null && p.job !== j.id;
         p.job = j.id;
         msg(s, { k: 'job', job: j.id, changed, stars: stars(p.apt, j.id) });
-        log(s, p.id, `${j.name}になった（★${stars(p.apt, j.id)}）`);
+        log(s, p.id, `${j.name}になった（しごとマスで +${D.STAR_PAY[stars(p.apt, j.id) - 1]}）`);
       }
       next(s);
       return null;
@@ -620,7 +620,7 @@
       s.queue = u.queue;
       s.step = { kind: 'route', node: u.node };
       s.routeUndo = null;
-      log(s, cur(s).id, '道を選び直す');
+      s.log = u.log; // 取り消した道・職業の記録も消える（上限で古い順に消えた記録ももどる）
       return null;
     },
     ack(s) {
@@ -670,7 +670,26 @@
     return { ok: true, state: s };
   }
 
-  const api = { newGame, apply, previewMove, stars, nextStar, jobSum, jobOptions, coopTarget, total, NODE, DIST };
+  // 古い保存の形を今の形にそろえる（再読み込みの「つづきから」で使う）。
+  // 2026-09-29 に「目標の職業」をやめ、記録の★をやめた: goal を消し、目標の記録を消し、「○○になった（★2）」を「（しごとマスで +2）」にする。
+  // 道を選んでいる途中の古い形は、選び直しをできなくする
+  function migrate(state) {
+    const s = clone(state);
+    (s.players || []).forEach((p) => { if (p) delete p.goal; });
+    // 道を選んでいる途中で保存した古い形は、選ぶ前の記録にもどせないので、その番の選び直しはできないことにする
+    if (s.routeUndo && !Array.isArray(s.routeUndo.log)) s.routeUndo = null;
+    if (s.routeUndo && s.routeUndo.player) delete s.routeUndo.player.goal;
+    if (Array.isArray(s.log)) {
+      s.log = s.log
+        .filter((x) => !(x && typeof x.text === 'string' && x.text.startsWith('目標の職業を')))
+        .map((x) => (x && typeof x.text === 'string'
+          ? Object.assign({}, x, { text: x.text.replace(/（★([1-9])）$/, (m, st) => `（しごとマスで +${D.STAR_PAY[Number(st) - 1]}）`) })
+          : x));
+    }
+    return s;
+  }
+
+  const api = { newGame, apply, migrate, previewMove, stars, nextStar, jobSum, jobOptions, coopTarget, total, NODE, DIST };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.CS_ENGINE = api;
 })(typeof window !== 'undefined' ? window : globalThis);

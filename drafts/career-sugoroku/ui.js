@@ -6,6 +6,7 @@
   'use strict';
   const D = window.CS_DATA;
   const E = window.CS_ENGINE;
+  const T = window.CS_TEXT;
   const NODE = E.NODE;
   const NUM = '①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳㉑㉒㉓㉔'.split('');
   const STORE_KEY = 'careersugoroku_v2_draft';
@@ -94,37 +95,13 @@
   // 適性 a が今の職業に合うか（サイコロ2つのカードの止まる先に出す）
   const fitText = (p, a) => (p.job != null && jobOf(p.job).apts.includes(a) ? '今の職業に合う' : '');
 
-  // ゲームの目的（はじめの画面・あそびかたで同じ文を使う）。2026-09-29 オーナー「学びとしては適性から職業を選んでほしい」
-  // → 勝ち負けはポイントだけ。ポイントは、たまった適性に合う職業を選ぶほど多くなる（適性から職業を選ぶことが、そのまま勝ち方になる）
-  const GAME_AIM = 'いろいろな体験で「適性」をため、しごとの道に進むときに、たまった適性に合う職業を選ぼう。適性に合う職業ほど、しごとマスでもらえるポイントが多い。ゴールしたとき、ポイントがいちばん多い人の勝ち（1番にゴールするとボーナスもある）。';
+  // 画面の文（ゲームの目的・しごとマスのポイントの言い方）は text.js（Node でテストしている）
+  const { GAME_AIM, payOf, payNow, PAY_MAX, payRule, jobChoiceRule, nextPayText, jobAria } = T;
 
-  // ── しごとマスのポイントの見せ方 ───────────────────────
-  // しごとマスのポイントは、職業に合う適性3つのうち、いちばん少ない数で決まる（いまの値では「いちばん少ない数 +1、+4まで」）。
-  // エンジンの中では★（stars）と呼ぶが、画面には★を出さず、ポイントで直接言う
-  // （2026-09-29 オーナーの「★1の職業とは？」「誰が見てもわかりやすいか」→ 適性→★→ポイントの段階を1つ減らした）
-  const payOf = (st) => D.STAR_PAY[st - 1];
-  const payNow = (apt, jobId) => payOf(E.stars(apt, jobId));
-  const PAY_MAX = D.STAR_PAY[D.STAR_PAY.length - 1];
-  function payRule(long) {
-    const simple = D.STAR_LEVELS.every((v, i) => v === i + 1) && D.STAR_PAY.every((v, i) => v === i + 1);
-    const how = simple
-      ? `いちばん少ない数 +1（+${PAY_MAX}まで）`
-      : `いちばん少ない数で決まる（0なら +${D.STAR_PAY[0]}、${D.STAR_LEVELS.map((v, i) => `${v}以上で +${D.STAR_PAY[i + 1]}`).join('、')}）`;
-    return `しごとマスでもらえるポイントは、その職業に合う適性3つのうち、${how}${long ? '。ほかの適性が多くても、いちばん少ない適性で決まる' : ''}`;
-  }
-  // 職業のカードの説明
-  const jobChoiceRule = () => `たまった適性に合う職業ほど、しごとマスでもらえるポイントが多い。${payRule().replace('しごとマスでもらえるポイントは、', 'ポイントは、')}`;
-  // つぎにポイントが上がるには（例:「工夫する力を1にすると +2」「3つとも2にすると +3」）
-  function nextPayText(apt, jobId) {
-    const nx = E.nextStar(apt, jobId);
-    if (!nx) return `いちばん上（+${PAY_MAX}）`;
-    const who = nx.lack.length === 3 ? '3つとも' : `${nx.lack.map((x) => aptOf(x.a).name).join('と')}を`;
-    return `${who}${nx.level}にすると +${payOf(nx.to)}`;
-  }
   // 職業に合う適性3つ（ポイントを決めている、いちばん少ない適性にはふちをつける）と、つぎにポイントが上がるには
   function jobCalc(apt, jobId) {
     const nx = E.nextStar(apt, jobId);
-    const low = nx ? nx.lack.map((x) => x.a) : [];
+    const low = T.lowApts(apt, jobId); // いちばん上（+4）のときは空（上げる必要がないので、ふちを出さない）
     return h('span', { class: 'cs-jobcalc' },
       h('span', { class: 'cs-apts' }, jobOf(jobId).apts.map((a) => {
         const c = aptChip(a, ` ${apt[a]}`);
@@ -132,9 +109,6 @@
         return c;
       })),
       h('span', { class: 'cs-jobcalc__next' }, icon(nx ? 'arrow_upward' : 'check_circle'), nextPayText(apt, jobId)));
-  }
-  function jobAria(apt, jobId) {
-    return `しごとマスで +${payNow(apt, jobId)}。合う適性 ${jobOf(jobId).apts.map((a) => `${aptOf(a).name} ${apt[a]}`).join('、')}。${nextPayText(apt, jobId)}`;
   }
   // しごとマスで入るポイント（職業の行の右）。st はエンジンの★の段階
   function payBadge(st) {
@@ -234,6 +208,7 @@
       if (!raw) return null;
       const d = JSON.parse(raw);
       if (!d || !d.state || d.state.v !== 2 || !Array.isArray(d.state.players) || d.state.phase !== 'play') return null;
+      d.state = E.migrate(d.state);
       return d;
     } catch (e) { return null; }
   }
@@ -315,7 +290,7 @@
       iconAt('style', '#FFFFFF', 19);
     } else if (type === 'pay') {
       sv('circle', { cx: x, cy: y, r, fill: '#FFFFFF', stroke: '#2E7D8C', 'stroke-width': 3 }, g);
-      iconAt('star', '#C98A00', 22);
+      iconAt('work', '#9A6400', 20);
     } else if (type === 'grow') {
       sv('circle', { cx: x, cy: y, r, fill: '#E3F1F2', stroke: '#2E7D8C', 'stroke-width': 2 }, g);
       iconAt('trending_up', '#2E7D8C');
@@ -754,8 +729,8 @@
   function msgLine(m) {
     const line = (ic, cls, ...content) => h('li', { class: 'cs-line' + (cls ? ' cs-line--' + cls : '') }, icon(ic), h('span', {}, ...content));
     switch (m.k) {
-      case 'pay': return line('star', 'good', `しごとマス（${jobOf(m.job).name}）→ +${m.n}ポイント`);
-      case 'payExact': return line('stars', 'good', `しごとマスにぴったり！ もう1回 +${m.n}ポイント`);
+      case 'pay': return line('work', 'good', `しごとマス（${jobOf(m.job).name}）→ +${m.n}ポイント`);
+      case 'payExact': return line('celebration', 'good', `しごとマスにぴったり！ もう1回 +${m.n}ポイント`);
       case 'apt': {
         const pre = m.reason === 'study' ? '学びの道のボーナス: ' : (m.text ? m.text + ' ' : '');
         return line('add_circle', 'good', pre, aptChip(m.a, m.n > 0 ? ` +${m.n}` : '（もう上限）'));
@@ -830,7 +805,7 @@
     else if (stop) top = head('節目', 'signpost', `${stop.age}さいの節目`);
     else if (expMsg) top = head(n.type === 'choose' ? 'えらぶ体験マス' : '体験マス', n.type === 'choose' ? 'interests' : 'explore', expMsg.text);
     else if (n.type === 'friend') top = head('なかまマス', 'group', '一緒に体験');
-    else if (n.type === 'pay') top = head('しごとマス', 'star', 'しごとをがんばった');
+    else if (n.type === 'pay') top = head('しごとマス', 'work', 'しごとをがんばった');
     else if (n.type === 'grow') top = head('成長マス', 'trending_up', '仕事で成長');
     else if (n.type === 'change') top = head('転職チャンス', 'swap_horiz', '職業を見直した');
     else top = head('すごろく', 'casino', `${p.name}さんの番`);
