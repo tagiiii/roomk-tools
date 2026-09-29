@@ -268,13 +268,14 @@
   const MINI_REWARD = 1;
 
   // ── プレイヤーの駒 ───────────────────────────────
+  // ink は駒と丸の番号の色。どの色も番号とのコントラストが 4.5 以上になるようにした（きいろは濃い字）
   const PLAYER_COLORS = [
-    { name: 'あか', color: '#D1495B' },
-    { name: 'あお', color: '#2E6FD8' },
-    { name: 'みどり', color: '#2A9D5B' },
-    { name: 'きいろ', color: '#D99A1E' },
-    { name: 'むらさき', color: '#8E5BD1' },
-    { name: 'ピンク', color: '#D8589A' },
+    { name: 'あか', color: '#C73A4E', ink: '#FFFFFF' },
+    { name: 'あお', color: '#2E6FD8', ink: '#FFFFFF' },
+    { name: 'みどり', color: '#1F7F48', ink: '#FFFFFF' },
+    { name: 'きいろ', color: '#F2B632', ink: '#1A1A1A' },
+    { name: 'むらさき', color: '#8E5BD1', ink: '#FFFFFF' },
+    { name: 'ピンク', color: '#BF3F84', ink: '#FFFFFF' },
   ];
   const MAX_PLAYERS = 6;
 

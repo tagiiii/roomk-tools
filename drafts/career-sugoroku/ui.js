@@ -67,6 +67,7 @@
   let piecesLayer = null;
   let hiLayer = null; // 2つの目の止まる先の目印
   let modalOpener = null;
+  let gen = 0; // 表示の世代。ゲームを始める・再開する・終える・最初にもどるたびに増やし、古い present() を途中で止める
   let menuTimer = null;
   const setup = { count: 4, names: ['', '', '', '', '', ''] };
 
@@ -74,16 +75,17 @@
   const curP = () => S.players[S.cur];
   const L = () => (S ? S.settings.labels : 'school');
   const colorOf = (p) => D.PLAYER_COLORS[p.color].color;
+  const inkOf = (p) => D.PLAYER_COLORS[p.color].ink || '#FFFFFF';
   const aptOf = (a) => D.APTS[a];
   const jobOf = (j) => D.JOBS[j];
   const stageLabel = (stage) => D.STAGES[stage][L()];
   const laneLabel = (lane) => D.LANES[lane][L()];
 
   function dot(p, small) {
-    return h('span', { class: 'cs-dot', style: `background:${colorOf(p)}${small ? ';width:22px;height:22px;font-size:12px' : ''}`, 'aria-hidden': 'true', text: String(p.id + 1) });
+    return h('span', { class: 'cs-dot', style: `background:${colorOf(p)};color:${inkOf(p)}${small ? ';width:22px;height:22px;font-size:12px' : ''}`, 'aria-hidden': 'true', text: String(p.id + 1) });
   }
   function dotIdx(i) {
-    return h('span', { class: 'cs-dot cs-name__dot', style: `background:${D.PLAYER_COLORS[i].color}`, 'aria-hidden': 'true', text: String(i + 1) });
+    return h('span', { class: 'cs-dot cs-name__dot', style: `background:${D.PLAYER_COLORS[i].color};color:${D.PLAYER_COLORS[i].ink || '#FFFFFF'}`, 'aria-hidden': 'true', text: String(i + 1) });
   }
   function aptChip(a, suffix) {
     const t = aptOf(a);
@@ -145,10 +147,12 @@
   }
 
   function resetView() {
+    gen++;
     lastSeen = { id: S.last ? S.last.id : null, animated: S.last ? S.last.path.length : 0 };
     S.players.forEach((p) => { shown[p.id] = p.node; });
     cheerSel = null;
     showAllJobs = false;
+    miniPicks = {};
     busy = false;
   }
 
@@ -291,7 +295,7 @@
       g.style.transform = `translate(${pos.x}px, ${pos.y}px)`;
       if (now) sv('circle', { class: 'cs-piece__ring', cx: 0, cy: 0, r: 16, stroke: colorOf(p) }, g);
       sv('circle', { cx: 0, cy: 0, r: now ? 12.5 : 11, fill: colorOf(p), stroke: '#FFFFFF', 'stroke-width': 2.5 }, g);
-      svText(g, String(id + 1), { x: 0, y: 1, 'font-size': now ? 14 : 12, 'font-weight': 700, fill: '#FFFFFF', class: 'cs-b-label' });
+      svText(g, String(id + 1), { x: 0, y: 1, 'font-size': now ? 14 : 12, 'font-weight': 700, fill: inkOf(p), class: 'cs-b-label' });
     });
     const desc = S.players.map((p) => `${p.name}さん: ${where(p)}`).join('、');
     $('cs-svg').setAttribute('aria-label', `すごろくの盤面。${desc}`);
@@ -397,10 +401,11 @@
       sub ? h('p', { class: 'cs-card__sub' }, sub) : null,
     ];
   }
-  function choice(i, name, desc, side, onclick, extra) {
+  // aria: 読み上げに足す文（見た目では side や extra に出している★・今の数・手がかりなど）
+  function choice(i, name, desc, side, onclick, extra, aria) {
     return h('button', {
       class: 'cs-choice', type: 'button', 'data-num': i < 9 ? String(i + 1) : null,
-      'aria-label': `${i + 1}番: ${name}${desc ? '。' + desc : ''}`, onclick,
+      'aria-label': `${i + 1}番: ${name}${desc ? '。' + desc : ''}${aria ? '。' + aria : ''}`, onclick,
     }, h('span', { class: 'cs-choice__num', 'aria-hidden': 'true' }, NUM[i] || String(i + 1)),
     h('span', { class: 'cs-choice__body' }, h('span', { class: 'cs-choice__name' }, name), desc ? h('span', { class: 'cs-choice__desc' }, desc) : null, extra || null),
     side ? h('span', { class: 'cs-choice__side' }, side) : null);
@@ -452,14 +457,14 @@
         else if (card) top = head('イベント', 'style', card.text, 'どれか1つ +1', guide);
         else top = head('成長', 'trending_up', 'どれか1つ +1', guide);
         openCard([...top, lastLines(),
-          h('div', { class: 'cs-choices' }, st.opts.map((a, i) => choice(i, aptOf(a).name, aptOf(a).desc, meter(p.apt[a]), () => dispatch({ type: 'pick', a }), aptJobHint(p, a)))),
+          h('div', { class: 'cs-choices' }, st.opts.map((a, i) => choice(i, aptOf(a).name, aptOf(a).desc, meter(p.apt[a]), () => dispatch({ type: 'pick', a }), aptJobHint(p, a), aptJobHintText(p, a)))),
           h('div', { class: 'cs-card__actions' }, h('button', { class: 'cs-quiet', type: 'button', onclick: (ev) => openJobBook(p.id, ev.currentTarget) }, icon('menu_book'), 'しごと図鑑を見る（職業ごとの合う適性）')),
         ]);
         return;
       }
       case 'vote':
         openCard([...head('みんなで決めよう', 'how_to_vote', card ? card.text : 'みんなで決めよう', 'みんなで話して、多かったものを押してね。全員の適性が1つ増える'),
-          h('div', { class: 'cs-choices' }, st.opts.map((o, i) => choice(i, o.label, null, aptChip(o.a, ' +1'), () => dispatch({ type: 'vote', opt: i })))),
+          h('div', { class: 'cs-choices' }, st.opts.map((o, i) => choice(i, o.label, null, aptChip(o.a, ' +1'), () => dispatch({ type: 'vote', opt: i }), null, `全員 ${aptOf(o.a).name} +1`))),
         ]);
         return;
       case 'coop':
@@ -502,20 +507,31 @@
   }
   const jobNames = (list, n) => list.slice(0, n).map((x) => jobOf(x.id).name).join('・') + (list.length > n ? ` ほか${list.length - n}` : '');
 
-  // 適性を選ぶカードの各選択肢の下に出す手がかり
-  function aptJobHint(p, a) {
-    const wrap = h('span', { class: 'cs-choice__hint' });
+  // 適性を選ぶカードの各選択肢の下に出す手がかり（表示と読み上げで同じ文を使う）
+  function aptJobHintParts(p, a) {
+    const parts = {};
     if (p.job != null && jobOf(p.job).apts.includes(a)) {
       const from = E.stars(p.apt, p.job);
       const next = p.apt.slice();
       next[a] = Math.min(D.APT_CAP, next[a] + 1);
       const to = E.stars(next, p.job);
-      wrap.appendChild(h('span', { class: 'cs-tag cs-tag--job' }, icon('work'), `今の職業（${jobOf(p.job).name}）に合う${to > from ? `・★${from}→★${to}` : ''}`));
+      parts.job = `今の職業（${jobOf(p.job).name}）に合う${to > from ? `・★${from}→★${to}` : ''}`;
     }
     const up = jobsUpFor(p.apt, a).filter((x) => x.id !== p.job);
-    if (up.length) wrap.appendChild(h('span', { class: 'cs-choice__jobs' }, icon('trending_up'), `★が上がる職業: ${jobNames(up, 3)}`));
-    else wrap.appendChild(h('span', { class: 'cs-choice__jobs' }, icon('work_outline'), `合う職業: ${jobNames(jobsWith(p.apt, a).filter((x) => x.id !== p.job), 3)}`));
+    if (up.length) parts.jobs = { icon: 'trending_up', text: `★が上がる職業: ${jobNames(up, 3)}` };
+    else parts.jobs = { icon: 'work_outline', text: `合う職業: ${jobNames(jobsWith(p.apt, a).filter((x) => x.id !== p.job), 3)}` };
+    return parts;
+  }
+  function aptJobHint(p, a) {
+    const parts = aptJobHintParts(p, a);
+    const wrap = h('span', { class: 'cs-choice__hint' });
+    if (parts.job) wrap.appendChild(h('span', { class: 'cs-tag cs-tag--job' }, icon('work'), parts.job));
+    wrap.appendChild(h('span', { class: 'cs-choice__jobs' }, icon(parts.jobs.icon), parts.jobs.text));
     return wrap;
+  }
+  function aptJobHintText(p, a) {
+    const parts = aptJobHintParts(p, a);
+    return [`いまの数 ${p.apt[a]}`, parts.job, parts.jobs.text].filter(Boolean).join('。');
   }
 
   // 2つの目それぞれの止まる先を言葉にする
@@ -626,7 +642,7 @@
     if (p.prevJob != null && p.job == null) parts.push(h('p', { class: 'cs-card__sub' }, `前の仕事: ${jobOf(p.prevJob).name}（また選んでもいい）`));
     const choices = h('div', { class: 'cs-choices' });
     if (keeping) {
-      choices.appendChild(h('button', { class: 'cs-choice cs-choice--keep', type: 'button', 'data-primary': '1', onclick: () => dispatch({ type: 'job', job: 'keep' }) },
+      choices.appendChild(h('button', { class: 'cs-choice cs-choice--keep', type: 'button', 'data-primary': '1', 'aria-label': `今の仕事を続ける: ${jobOf(p.job).name}。★${E.stars(p.apt, p.job)}`, onclick: () => dispatch({ type: 'job', job: 'keep' }) },
         h('span', { class: 'cs-choice__num', 'aria-hidden': 'true' }, icon('check')),
         h('span', { class: 'cs-choice__body' }, h('span', { class: 'cs-choice__name' }, `今の仕事を続ける: ${jobOf(p.job).name}`)),
         h('span', { class: 'cs-choice__side' }, starsEl(E.stars(p.apt, p.job)))));
@@ -634,7 +650,8 @@
     list.forEach((o, i) => {
       const j = jobOf(o.id);
       const chips = h('span', { class: 'cs-apts' }, j.apts.map((a) => aptChip(a, ` ${p.apt[a]}`)));
-      choices.appendChild(choice(i, j.name, j.desc, h('span', {}, starsEl(o.stars)), () => dispatch({ type: 'job', job: o.id }), chips));
+      choices.appendChild(choice(i, j.name, j.desc, h('span', {}, starsEl(o.stars)), () => dispatch({ type: 'job', job: o.id }), chips,
+        `★${o.stars}。合う適性 ${j.apts.map((a) => `${aptOf(a).name} ${p.apt[a]}`).join('、')}`));
     });
     parts.push(choices);
     parts.push(h('div', { class: 'cs-card__actions' }, h('button', { class: 'cs-quiet', type: 'button', onclick: () => { showAllJobs = !showAllJobs; renderCard(); } }, showAllJobs ? '少なく表示する' : `ほかの職業も見る（全${opts.length}）`)));
@@ -665,7 +682,11 @@
       case 'again': return line('replay', 'good', 'もう1回サイコロをふれる');
       case 'friend': {
         const f = P(m.pid);
-        const out = [line('group', 'good', `${f.name}さんと一緒に: 2人とも `, aptChip(m.a, ' +1'))];
+        const me = curP();
+        let out;
+        if (m.n && m.n2) out = [line('group', 'good', `${f.name}さんと一緒に: 2人とも `, aptChip(m.a, ' +1'))];
+        else if (m.n || m.n2) out = [line('group', 'good', `${f.name}さんと一緒に: ${(m.n ? me : f).name}さん `, aptChip(m.a, ' +1'), `（${(m.n ? f : me).name}さんはもう上限）`)];
+        else out = [line('group', null, `${f.name}さんと一緒に体験（`, aptChip(m.a), 'は2人とももう上限）')];
         if (m.rescued) out.push(line('celebration', 'good', `${f.name}さんの休みがなくなった`));
         return out;
       }
@@ -680,10 +701,10 @@
         return line(j.icon, 'good', text + ' ', starsEl(m.stars));
       }
       case 'goal': return line('flag', 'good', `${m.rank}番目にゴール → +${m.n}ポイント`);
-      case 'vote': return line('how_to_vote', 'good', `みんなで「${m.label}」に決定: 全員 `, aptChip(m.a, ' +1'));
+      case 'vote': return line('how_to_vote', 'good', `みんなで「${m.label}」に決定: 全員 `, aptChip(m.a, ' +1'), m.capped && m.capped.length ? `（もう上限の ${m.capped.map((pid) => P(pid).name + 'さん').join('・')} はそのまま）` : '');
       case 'coop': return [
         line('casino', null, `サイコロ ${m.dice.join('・')} → 合計 ${m.total}（目標 ${m.target}）`),
-        m.ok ? line('celebration', 'good', `成功！ 全員 ${rewardText(m.reward)}`) : line('sentiment_satisfied', null, 'あと少し。またチャレンジしよう'),
+        m.ok ? line('celebration', 'good', `成功！ 全員 ${rewardText(m.reward)}${m.capped && m.capped.length ? `（もう上限の ${m.capped.map((pid) => P(pid).name + 'さん').join('・')} はそのまま）` : ''}`) : line('sentiment_satisfied', null, 'あと少し。またチャレンジしよう'),
       ];
       case 'mini': {
         const names = (ids) => ids.map((pid) => P(pid).name + 'さん').join('・');
@@ -789,6 +810,8 @@
   }
 
   async function present(prev, action) {
+    const my = gen;
+    const stale = () => my !== gen || !S; // 途中で最初にもどった・終えた・別のゲームを始めた
     busy = true;
     hideCard();
     const last = S.last;
@@ -800,6 +823,7 @@
       renderTurn(true);
       renderPlayers();
       await animateDice();
+      if (stale()) return;
       renderTurn();
       announce(last.dice ? `${P(mover).name}さん、サイコロ ${last.dice[0]} と ${last.dice[1]}` : `${P(mover).name}さん、サイコロ ${last.roll}${last.cheer ? '（応援で +1）' : ''}`);
     } else {
@@ -810,14 +834,17 @@
       for (let i = 0; i < fresh.length; i++) {
         const idx = lastSeen.animated + i;
         if (last.moveFrom != null && idx === last.moveFrom && last.card) await eventReveal();
+        if (stale()) return;
         await stepPiece(mover, fresh[i]);
+        if (stale()) return;
       }
       lastSeen.animated = path.length;
       await wait(120);
+      if (stale()) return;
     }
     S.players.forEach((p) => { shown[p.id] = p.node; });
     busy = false;
-    if (S.phase === 'results') { clearSaved(); renderResults(); show('results'); return; }
+    if (S.phase === 'results') { clearSaved(); showResults(); return; }
     renderAll();
     if (action.type === 'ack' && S.step.kind === 'roll') announce(`${curP().name}さんの番`);
     else if (S.step.kind !== 'roll') {
@@ -931,6 +958,16 @@
     return h('li', {}, svg, h('span', {}, label));
   }
 
+  // ゴールの順のボーナスの説明。最後まで同じ値が続くところは「○番目から」にまとめる（8・5・3・2・1・1 → …、5番目から +1）
+  function bonusText() {
+    const b = D.GOAL_BONUS;
+    let last = b.length - 1;
+    while (last > 0 && b[last - 1] === b[b.length - 1]) last--;
+    const parts = b.slice(0, last).map((v, i) => `${i + 1}番目 +${v}`);
+    parts.push(`${last + 1}番目${last < b.length - 1 ? 'から' : ''} +${b[last]}`);
+    return parts.join('、');
+  }
+
   function openHowto(opener) {
     const body = h('div', {},
       h('h3', {}, 'どんなゲーム？'),
@@ -952,7 +989,7 @@
       h('p', {}, '15さいと18さいの節目で、学びの道か、しごとの道を選ぶ。しごとの道に進むときに職業を選ぶ（22さいの節目で、まだ職業がない人も選ぶ）。学びの道から節目に着くと、好きな適性を増やせる。どちらの道も長さは同じ。'),
       h('h3', {}, '★とポイント'),
       h('p', {}, '★は、職業に合う3つの適性の合計で決まる（0〜2で★1、3〜5で★2、6〜8で★3、9以上で★4）。職業ごとの合う適性は、上の「しごと図鑑」で見られる。'),
-      h('p', {}, `ゴールした順にボーナス（1番目 +${D.GOAL_BONUS[0]}、2番目 +${D.GOAL_BONUS[1]}、3番目 +${D.GOAL_BONUS[2]}、4番目から +${D.GOAL_BONUS[3]}）。全員がゴールしたら、ポイントの合計が多い人から順位を発表。`),
+      h('p', {}, `ゴールした順にボーナス（${bonusText()}）。全員がゴールしたら、ポイントの合計が多い人から順位を発表。時間が来て途中で終えたときは、ゴールに近い順に続きの順位のボーナス（同じマスにいる人は同じ順位）。`),
       h('h3', {}, 'ミニゲーム'),
       h('p', {}, 'ミニゲームマスに止まると、全員でミニゲーム。「大きい？小さい？」（つぎのサイコロを予想）・「じゃんけん」（コンピューターと勝負）・「合計ピッタリ」（相談しないで1〜3を出し、合計を目標に合わせる）のどれかが出る。みんなが口・チャット・手で出したものを、メンターが1人ずつ押して入れる。当たり・勝ち・ピッタリで +1ポイント。'),
       h('h3', {}, '休み・応援'),
@@ -989,13 +1026,23 @@
       topBox.replaceChildren(h('div', { class: 'cs-confirm' },
         h('p', {}, '最初の画面にもどる？ いまのゲームは消える。'),
         h('div', { class: 'cs-confirm__btns' },
-          h('button', { class: 'cs-btn cs-btn--danger', type: 'button', onclick: () => { closeModal(); clearSaved(); S = null; renderSetup(); show('setup'); } }, 'もどる'),
+          h('button', { class: 'cs-btn cs-btn--danger', type: 'button', onclick: () => { closeModal(); goTop(); } }, 'もどる'),
           h('button', { class: 'cs-btn cs-btn--secondary', type: 'button', onclick: () => topBox.replaceChildren() }, 'やめる'))));
     } }, '最初の画面にもどる');
     body.appendChild(h('div', { class: 'cs-menu-row' }, h('span', {}, 'やり直す'), topBtn));
     body.appendChild(topBox);
     openModal('メニュー', body, opener);
     menuTimer = setInterval(() => { time.textContent = fmtTime(Date.now() - meta.startedAt); }, 1000);
+  }
+
+  function goTop() {
+    gen++;
+    busy = false;
+    miniPicks = {};
+    clearSaved();
+    S = null;
+    renderSetup();
+    show('setup');
   }
 
   function setLabels(v) {
@@ -1011,13 +1058,23 @@
   function endNow() {
     const r = E.apply(S, { type: 'end' });
     if (!r.ok) return;
+    gen++;
+    busy = false;
+    miniPicks = {};
     S = r.state;
     clearSaved();
-    renderResults();
-    show('results');
+    showResults();
   }
 
   // ── 結果 ─────────────────────────────────────
+  function showResults() {
+    renderResults();
+    show('results');
+    const top = S.results.filter((r) => r.place === 1).map((r) => P(r.pid).name + 'さん').join('・');
+    $('cs-results-title').focus();
+    announce(`結果発表。1位は${top}`);
+  }
+
   function renderResults() {
     const ol = $('cs-rank');
     ol.replaceChildren();
@@ -1034,7 +1091,7 @@
           h('span', {}, `しごと ${p.pts.pay}`),
           h('span', {}, `イベントなど ${p.pts.event}`),
           h('span', {}, `ミニゲーム ${p.pts.mini || 0}`),
-          h('span', {}, `ゴール ${p.pts.bonus}（${p.unfinished ? '途中で終了・' : ''}${p.rank}番目）`),
+          h('span', {}, p.unfinished ? `ゴール ${p.pts.bonus}（途中で終了・ゴールに近い順で${p.rank}位）` : `ゴール ${p.pts.bonus}（${p.rank}番目にゴール）`),
         ),
       ));
     });
@@ -1084,7 +1141,7 @@
   $('cs-modal-close').addEventListener('click', closeModal);
   $('cs-modal').addEventListener('click', (e) => { if (e.target === $('cs-modal')) closeModal(); });
   $('cs-again').addEventListener('click', () => startGame(meta.names && meta.names.length ? meta.names : S.players.map((p) => p.name), S.settings.labels, S.settings.dice));
-  $('cs-to-top').addEventListener('click', () => { clearSaved(); S = null; renderSetup(); show('setup'); });
+  $('cs-to-top').addEventListener('click', () => goTop());
 
   renderSetup();
   show('setup');

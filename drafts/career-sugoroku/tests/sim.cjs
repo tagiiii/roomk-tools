@@ -1,7 +1,9 @@
 /* キャリアすごろく v2 — つり合いのシミュレーション
    使い方: node drafts/career-sugoroku/tests/sim.cjs [ゲーム数]
    いろいろな人数・選び方で自動対戦し、道ごとの平均点・ゴール順と順位の関係・手番の数を出す。
-   ここで見るのは「どの道を選んでも同じくらい勝てるか」「ゴール順と職業の★の両方が効いているか」。 */
+   ここで見るのは「どの道を選んでも同じくらい勝てるか」「ゴール順と職業の★の両方が効いているか」。
+   1位の割合は、同点1位を人数で分けて数える（k人が同点なら 1/k 勝ずつ）。均等なら「1÷人数」になる。
+   ± は 95% のおおよその幅（同じゲームの中の人どうしは独立ではないので目安）。 */
 'use strict';
 const path = require('path');
 const E = require(path.join(__dirname, '..', 'engine.js'));
@@ -13,9 +15,10 @@ if (process.env.GB) D.GOAL_BONUS.splice(0, D.GOAL_BONUS.length, ...process.env.G
 if (process.env.STEPS) D.STAR_STEPS.splice(0, D.STAR_STEPS.length, ...process.env.STEPS.split(',').map(Number));
 if (process.env.SB) { const [a, b, c, d] = process.env.SB.split(',').map(Number); D.STUDY_BONUS.stop18 = { picks: a, pts: b }; D.STUDY_BONUS.stop22 = { picks: c, pts: d }; }
 if (process.env.PAY) D.STAR_PAY.splice(0, D.STAR_PAY.length, ...process.env.PAY.split(',').map(Number));
-// MIX=1: 奇数番の人は「適当に選ぶ人」（職業・適性・転職をランダム）にして、考えて選ぶ人との点の差を見る
+if (process.env.EXACT === '0') D.EXACT_PAY_BONUS = false; // しごとマスにぴったりのボーナスなし（入れる前と比べる）
+// MIX=1: ゲームごとにランダムに選んだ半数を「適当に選ぶ人」（職業・適性・転職・サイコロの目をランダム）にして、考えて選ぶ人との点の差を見る
 const MIX = !!process.env.MIX;
-// MIXDICE=1: 奇数番の人は職業・適性は考えて選ぶが、サイコロの目だけ適当に選ぶ（サイコロの選び方の効き目を見る）
+// MIXDICE=1: ゲームごとにランダムに選んだ半数は、職業・適性は考えて選ぶが、サイコロの目だけ適当に選ぶ（サイコロの選び方の効き目を見る）
 const MIXDICE = !!process.env.MIXDICE;
 const ONLY = process.env.N ? process.env.N.split(',').map(Number) : [1, 2, 3, 4, 5, 6];
 
@@ -114,7 +117,11 @@ function play(nPlayers, seed) {
   const rng = mulberry(seed * 7919 + 13);
   const names = Array.from({ length: nPlayers }, (_, i) => 'P' + i);
   let s = E.newGame({ names, seed, dice: process.env.DICE === '1' ? 1 : 2 });
-  const pol = names.map((_, i) => Object.assign(policy(rng), { naive: MIX && i % 2 === 1, naiveDice: MIXDICE && i % 2 === 1 }));
+  // 先に振る席が有利なので、「適当に選ぶ人」の席はゲームごとにランダムに半分選ぶ（いつも同じ席にしない）
+  const seats = names.map((_, i) => i);
+  for (let i = seats.length - 1; i > 0; i--) { const j = Math.floor(rng() * (i + 1)); [seats[i], seats[j]] = [seats[j], seats[i]]; }
+  const naiveSet = new Set(seats.slice(0, Math.floor(names.length / 2)));
+  const pol = names.map((_, i) => Object.assign(policy(rng), { naive: MIX && naiveSet.has(i), naiveDice: MIXDICE && naiveSet.has(i) }));
   let guard = 0;
   while (s.phase === 'play') {
     const a = decide(s, pol, rng);
@@ -128,6 +135,11 @@ function play(nPlayers, seed) {
 
 const pad = (v, n) => String(v).padStart(n);
 const avg = (xs) => xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : NaN;
+// 割合と 95% のおおよその幅（±）
+const pct = (win, n) => {
+  const p = n ? win / n : 0;
+  return `${(100 * p).toFixed(0)}%±${(196 * Math.sqrt(p * (1 - p) / Math.max(1, n))).toFixed(0)}`;
+};
 
 for (const n of ONLY) {
   const byRoute = {};
@@ -158,7 +170,9 @@ for (const n of ONLY) {
       byRoute[key].turns.push(p.turns);
       byRoute[key].n++;
       const row = s.results.find((r) => r.pid === p.id);
-      if (row.place === 1) byRoute[key].win++;
+      const tops = s.results.filter((r) => r.place === 1).length;
+      const share = row.place === 1 ? 1 / tops : 0; // 同点1位は人数で分ける
+      byRoute[key].win += share;
       turnsAll.push(p.turns);
       payAll.push(p.pts.pay);
       bonusAll.push(p.pts.bonus);
@@ -169,30 +183,30 @@ for (const n of ONLY) {
       const who = (pol[p.id].naive || pol[p.id].naiveDice) ? 'naive' : 'smart';
       byPolicy[who].push(total);
       byPolicy[who + 'N']++;
-      if (row.place === 1) byPolicy[who + 'Win']++;
+      byPolicy[who + 'Win'] += share;
       if (p.job != null) starsAt22.push(E.stars(p.apt, p.job));
     });
     if (n > 1) {
       firstGames++;
-      const first = s.players.find((p) => p.rank === 1);
+      const firsts = s.players.filter((p) => p.rank === 1);
       const top = s.results.filter((r) => r.place === 1).map((r) => r.pid);
-      if (top.includes(first.id)) firstWins++;
-      top.forEach((pid) => { const rk = s.players[pid].rank; winnerFinish[rk] = (winnerFinish[rk] || 0) + 1; });
+      firstWins += firsts.filter((f) => top.includes(f.id)).length / top.length; // 同点1位は人数で分ける
+      top.forEach((pid) => { const rk = s.players[pid].rank; winnerFinish[rk] = (winnerFinish[rk] || 0) + 1 / top.length; });
     }
   }
   console.log(`\n=== ${n}人 × ${GAMES}ゲーム ===`);
   console.log(`1人あたりの手番: 平均 ${avg(turnsAll).toFixed(1)}（最小 ${Math.min(...turnsAll)} / 最大 ${Math.max(...turnsAll)}）  1ゲームの手番の合計: 平均 ${avg(gameTurns).toFixed(1)}`);
   console.log(`点の内訳（平均）: しごと ${avg(payAll).toFixed(1)} / イベント ${avg(eventAll).toFixed(1)} / ミニゲーム ${avg(miniAll).toFixed(1)} / ゴール ${avg(bonusAll).toFixed(1)} / 合計 ${avg(totals).toFixed(1)}  最後の★（平均）${avg(starsAt22).toFixed(2)}  ミニゲームの回数（1ゲーム平均）${(miniGames / GAMES).toFixed(1)}`);
   if (n > 1) {
-    console.log(`1番にゴールした人が1位になる割合: ${(100 * firstWins / firstGames).toFixed(0)}%   1位の人のゴール順: ${Object.keys(winnerFinish).sort().map((k) => `${k}番目 ${(100 * winnerFinish[k] / Object.values(winnerFinish).reduce((a, b) => a + b, 0)).toFixed(0)}%`).join(' / ')}`);
+    console.log(`1番にゴールした人が1位になる割合: ${pct(firstWins, firstGames)}（均等なら ${(100 / n).toFixed(0)}%）   1位の人のゴール順: ${Object.keys(winnerFinish).sort().map((k) => `${k}番目 ${(100 * winnerFinish[k] / Object.values(winnerFinish).reduce((a, b) => a + b, 0)).toFixed(0)}%`).join(' / ')}`);
   }
-  console.log('道（15さい→18さい）  人数   平均点  しごとの点  手番   1位の割合');
+  console.log(`道（15さい→18さい）  人数   平均点  しごとの点  手番   1位の割合（均等なら ${(100 / n).toFixed(0)}%）`);
   Object.keys(byRoute).sort().forEach((k) => {
     const r = byRoute[k];
-    console.log(`  ${k}                ${pad(r.n, 6)}  ${pad(avg(r.tot).toFixed(1), 6)}  ${pad(avg(r.pay).toFixed(1), 8)}  ${pad(avg(r.turns).toFixed(1), 5)}  ${pad((100 * r.win / r.n).toFixed(0) + '%', 7)}`);
+    console.log(`  ${k}                ${pad(r.n, 6)}  ${pad(avg(r.tot).toFixed(1), 6)}  ${pad(avg(r.pay).toFixed(1), 8)}  ${pad(avg(r.turns).toFixed(1), 5)}  ${pad(pct(r.win, r.n), 8)}`);
   });
   const hist = [1, 2, 3, 4].map((k) => `★${k} ${(100 * starsAt22.filter((v) => v === k).length / starsAt22.length).toFixed(0)}%`).join(' / ');
   console.log(`最後の★の分布: ${hist}`);
-  if ((MIX || MIXDICE) && byPolicy.naive.length) console.log(`考えて選ぶ人 平均${avg(byPolicy.smart).toFixed(1)}点・1位${(100 * byPolicy.smartWin / byPolicy.smartN).toFixed(0)}% ／ 適当に選ぶ人 平均${avg(byPolicy.naive).toFixed(1)}点・1位${(100 * byPolicy.naiveWin / byPolicy.naiveN).toFixed(0)}%  差 ${(avg(byPolicy.smart) - avg(byPolicy.naive)).toFixed(1)}点`);
+  if ((MIX || MIXDICE) && byPolicy.naive.length) console.log(`考えて選ぶ人 平均${avg(byPolicy.smart).toFixed(1)}点・1位${pct(byPolicy.smartWin, byPolicy.smartN)} ／ 適当に選ぶ人 平均${avg(byPolicy.naive).toFixed(1)}点・1位${pct(byPolicy.naiveWin, byPolicy.naiveN)}  差 ${(avg(byPolicy.smart) - avg(byPolicy.naive)).toFixed(1)}点`);
   console.log(`寄り道を選ぶ人の平均点 ${avg(longShort.long).toFixed(1)} / 近道を選ぶ人 ${avg(longShort.short).toFixed(1)}`);
 }

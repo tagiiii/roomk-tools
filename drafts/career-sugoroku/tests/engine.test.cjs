@@ -387,6 +387,75 @@ test('進行役が終えると、まだの人はゴールに近い順に続き�
   assert.strictEqual(E.apply(s, { type: 'end' }).ok, false);
 });
 
+test('途中で終えたとき、ゴールまでのマス数が同じ人は同じ順位・同じボーナス', () => {
+  let s = game(3);
+  ['e4', 'e4', 'e4'].forEach((n, i) => place(s, i, n));
+  const all = act(s, { type: 'end' });
+  assert.deepStrictEqual(all.players.map((p) => p.rank), [1, 1, 1]);
+  assert.deepStrictEqual(all.players.map((p) => p.pts.bonus), [D.GOAL_BONUS[0], D.GOAL_BONUS[0], D.GOAL_BONUS[0]]);
+  let t = game(3);
+  place(t, 0, 'a1');
+  place(t, 1, 'e4');
+  place(t, 2, 'e4');
+  const r = act(t, { type: 'end' });
+  assert.deepStrictEqual(r.players.map((p) => p.rank), [3, 1, 1]); // 同じ2人は1位、次は3位
+  assert.deepStrictEqual(r.players.map((p) => p.pts.bonus), [D.GOAL_BONUS[2], D.GOAL_BONUS[0], D.GOAL_BONUS[0]]);
+  // もうゴールした人がいれば、その次の順位から
+  let u = game(3);
+  u.players[0].done = true;
+  u.players[0].rank = 1;
+  u.finished = 1;
+  place(u, 1, 'e4');
+  place(u, 2, 'e4');
+  const v = act(u, { type: 'end' });
+  assert.deepStrictEqual(v.players.map((p) => p.rank), [1, 2, 2]);
+});
+
+test('でたらめな値は例外にせず、拒否で返す', () => {
+  const bad = ['map', -1, 1.5, '1', null, {}, [], 99, 'keep'];
+  const make = (step) => { const s = game(3); s.step = step; return s; };
+  const cases = [
+    [{ kind: 'route', node: 'stop15' }, (v) => ({ type: 'route', choice: v })],
+    [{ kind: 'job', reason: 'adult', keep: false }, (v) => ({ type: 'job', job: v })],
+    [{ kind: 'friend', apt: 1 }, (v) => ({ type: 'friend', pid: v })],
+    [{ kind: 'vote', opts: [{ label: 'x', a: 1 }] }, (v) => ({ type: 'vote', opt: v })],
+    [{ kind: 'pick', opts: [0, 1, 2], reason: 'event' }, (v) => ({ type: 'pick', a: v })],
+    [{ kind: 'roll' }, (v) => ({ type: 'roll', cheer: v })],
+    [{ kind: 'mini', game: 'janken' }, (v) => ({ type: 'mini', picks: v })],
+    [{ kind: 'mini', game: 'sum', target: 5 }, (v) => ({ type: 'mini', picks: { 0: v, 1: 1, 2: 1 } })],
+  ];
+  cases.forEach(([step, mk]) => bad.forEach((v) => {
+    let r;
+    assert.doesNotThrow(() => { r = E.apply(make(step), mk(v)); }, `${step.kind} ${JSON.stringify(v)}`);
+    // 応援の null・じゃんけんの値なし（{}・null）は「応援なし」「今回は参加なし」として受け付けてよい
+    const okAllowed = (step.kind === 'roll' && v == null) || (step.kind === 'mini' && step.game === 'janken');
+    if (!okAllowed) assert.strictEqual(r.ok, false, `${step.kind} ${JSON.stringify(v)} を受け付けてしまった`);
+  }));
+});
+
+test('上限の人には増えなかったことを記録する（なかま・みんなで決める・みんなでサイコロ）', () => {
+  let s = game(2);
+  s.players[0].apt[1] = D.APT_CAP;
+  s.players[1].apt[1] = D.APT_CAP;
+  s.step = { kind: 'friend', apt: 1 };
+  s = act(s, { type: 'friend', pid: 1 });
+  const f = s.last.msgs.find((m) => m.k === 'friend');
+  assert.strictEqual(f.n, 0);
+  assert.strictEqual(f.n2, 0);
+  let v = game(3);
+  v.players[2].apt[4] = D.APT_CAP;
+  v.step = { kind: 'vote', opts: [{ label: 'x', a: 4 }] };
+  v = act(v, { type: 'vote', opt: 0 });
+  assert.deepStrictEqual(v.last.msgs.find((m) => m.k === 'vote').capped, [2]);
+  let c = game(2);
+  c.players[0].apt[4] = D.APT_CAP;
+  c.step = { kind: 'coop', reward: { t: 'apt', a: 4 }, target: 2 }; // 目標2なら必ず成功
+  c = act(c, { type: 'coop' });
+  const m = c.last.msgs.find((x) => x.k === 'coop');
+  assert.strictEqual(m.ok, true);
+  assert.deepStrictEqual(m.capped, [0]);
+});
+
 test('みんなでサイコロ: 目標以上なら全員にごほうび', () => {
   let s = game(2);
   s.step = { kind: 'coop', reward: { t: 'pts', n: 2 }, target: E.coopTarget(s) };

@@ -392,15 +392,22 @@
   }
 
   function finishGame(s) {
-    // まだゴールしていない人は、ゴールに近い順に続きの順位のボーナスを受け取る
-    const left = s.players.filter((p) => !p.done)
-      .sort((a, b) => (DIST[a.node] || 0) - (DIST[b.node] || 0) || a.id - b.id);
-    left.forEach((p) => {
-      s.finished++;
-      p.rank = s.finished;
-      p.pts.bonus += D.GOAL_BONUS[Math.min(p.rank, D.GOAL_BONUS.length) - 1];
-      p.unfinished = true;
-    });
+    // まだゴールしていない人は、ゴールに近い順に続きの順位のボーナスを受け取る。
+    // ゴールまでのマス数が同じ人は同じ順位・同じボーナス（参加した順で差をつけない）。次の順位はその人数だけとばす
+    const dist = (p) => (DIST[p.node] == null ? 0 : DIST[p.node]);
+    const left = s.players.filter((p) => !p.done).sort((a, b) => dist(a) - dist(b) || a.id - b.id);
+    for (let i = 0; i < left.length;) {
+      const group = left.filter((p) => dist(p) === dist(left[i]));
+      const rank = s.finished + 1;
+      const bonus = D.GOAL_BONUS[Math.min(rank, D.GOAL_BONUS.length) - 1];
+      group.forEach((p) => {
+        p.rank = rank;
+        p.pts.bonus += bonus;
+        p.unfinished = true;
+      });
+      s.finished += group.length;
+      i += group.length;
+    }
     const rows = s.players.map((p) => ({ pid: p.id, total: total(p) }))
       .sort((a, b) => b.total - a.total || a.pid - b.pid);
     rows.forEach((r, i) => { r.place = i > 0 && rows[i - 1].total === r.total ? rows[i - 1].place : i + 1; });
@@ -418,6 +425,7 @@
       const p = cur(s);
       let cheerBy = null;
       if (a.cheer != null) {
+        if (!Number.isInteger(a.cheer)) return 'その人は応援できません';
         const c = s.players[a.cheer];
         if (!c || !c.done || c.id === p.id) return 'その人は応援できません';
         cheerBy = c.id;
@@ -458,7 +466,7 @@
     route(s, a) {
       const p = cur(s);
       const opts = D.ROUTES[s.step.node];
-      const o = opts && opts[a.choice];
+      const o = opts && Number.isInteger(a.choice) ? opts[a.choice] : null;
       if (!o) return '道を選んでください';
       const lane = D.LANES[o.lane];
       p.routeNext[s.step.node] = o.next;
@@ -481,7 +489,7 @@
         msg(s, { k: 'job', job: p.job, keep: true, stars: stars(p.apt, p.job) });
         log(s, p.id, `${D.JOBS[p.job].name}を続ける`);
       } else {
-        const j = D.JOBS[a.job];
+        const j = Number.isInteger(a.job) ? D.JOBS[a.job] : null;
         if (!j) return '職業を選んでください';
         const changed = p.job != null && p.job !== j.id;
         p.job = j.id;
@@ -493,7 +501,7 @@
     },
     friend(s, a) {
       const p = cur(s);
-      const f = s.players[a.pid];
+      const f = Number.isInteger(a.pid) ? s.players[a.pid] : null;
       if (!f || f.id === p.id) return 'さそう人を選んでください';
       const apt = s.step.apt;
       const g1 = addApt(p, apt);
@@ -501,7 +509,8 @@
       const rescued = f.skip > 0 && !f.done;
       if (rescued) f.skip = 0;
       msg(s, { k: 'friend', pid: f.id, a: apt, n: g1, n2: g2, rescued });
-      log(s, p.id, `${f.name}さんをさそった（${aptName(apt)} 2人とも +1${rescued ? '・休みがなくなった' : ''}）`);
+      const gainText = g1 && g2 ? `${aptName(apt)} 2人とも +1` : (g1 || g2 ? `${aptName(apt)} ${(g1 ? p : f).name}さん +1（${(g1 ? f : p).name}さんはもう上限）` : `${aptName(apt)} は2人とももう上限`);
+      log(s, p.id, `${f.name}さんをさそった（${gainText}${rescued ? '・休みがなくなった' : ''}）`);
       next(s);
       return null;
     },
@@ -515,11 +524,12 @@
       return null;
     },
     vote(s, a) {
+      if (!Number.isInteger(a.opt)) return '選んでください';
       const o = s.step.opts[a.opt];
       if (!o) return '選んでください';
-      s.players.forEach((q) => addApt(q, o.a));
-      msg(s, { k: 'vote', label: o.label, a: o.a });
-      log(s, cur(s).id, `みんなで「${o.label}」に決定（全員 ${aptName(o.a)} +1）`);
+      const capped = s.players.filter((q) => addApt(q, o.a) === 0).map((q) => q.id);
+      msg(s, { k: 'vote', label: o.label, a: o.a, capped });
+      log(s, cur(s).id, `みんなで「${o.label}」に決定（全員 ${aptName(o.a)} +1${capped.length ? '・上限の人はそのまま' : ''}）`);
       next(s);
       return null;
     },
@@ -528,8 +538,9 @@
       const total = dice.reduce((x, y) => x + y, 0);
       const ok = total >= s.step.target;
       const r = s.step.reward;
-      if (ok) s.players.forEach((q) => { if (r.t === 'apt') addApt(q, r.a); else q.pts.event += r.n; });
-      msg(s, { k: 'coop', dice, total, target: s.step.target, ok, reward: r });
+      const capped = [];
+      if (ok) s.players.forEach((q) => { if (r.t === 'apt') { if (addApt(q, r.a) === 0) capped.push(q.id); } else q.pts.event += r.n; });
+      msg(s, { k: 'coop', dice, total, target: s.step.target, ok, reward: r, capped });
       log(s, cur(s).id, `みんなでサイコロ 合計${total}（目標${s.step.target}）${ok ? '成功' : 'あと少し'}`);
       next(s);
       return null;
@@ -538,7 +549,7 @@
     // 合計ピッタリは全員の数が要る。
     mini(s, a) {
       const st = s.step;
-      const picks = (a && a.picks) || {};
+      const picks = a && a.picks && typeof a.picks === 'object' ? a.picks : {};
       const valid = MINI_PICKS[st.game];
       const list = s.players.map((p) => ({ pid: p.id, v: picks[p.id] == null ? null : picks[p.id] }));
       if (list.some((x) => x.v != null && !valid.includes(x.v))) return '選び方がちがいます';
@@ -612,7 +623,12 @@
     const h = HANDLERS[action.type];
     const want = ACCEPTS[action.type];
     if (!h || !(Array.isArray(want) ? want.includes(s.step.kind) : want === s.step.kind)) return { ok: false, error: 'いまはその操作はできません' };
-    const err = h(s, action);
+    let err;
+    try {
+      err = h(s, action);
+    } catch (e) {
+      return { ok: false, error: '操作を受け付けられませんでした' }; // 想定外の値でも例外で止めない（通信対応に備える）
+    }
     if (err) return { ok: false, error: err };
     return { ok: true, state: s };
   }
