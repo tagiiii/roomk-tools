@@ -628,6 +628,16 @@
     refresh();
   }
 
+  // その番のうちなら、節目の道を選び直せる（職業を選ぶカード・道を選んだあとの結果のカード）
+  function canReroute() {
+    const st = S.step;
+    if (!S.routeUndo || !st) return false;
+    return st.kind === 'ack' || (st.kind === 'job' && (st.reason === 'work15' || st.reason === 'work18'));
+  }
+  function rerouteButton() {
+    return h('button', { class: 'cs-quiet', type: 'button', onclick: () => dispatch({ type: 'reroute' }) }, icon('undo'), 'もどって道を選び直す');
+  }
+
   function renderJobCard(st, p) {
     const keeping = st.keep && p.job != null;
     // 続けられる今の仕事は「続ける」だけに出して、番号つきの一覧からは外す
@@ -654,7 +664,9 @@
         `★${o.stars}。合う適性 ${j.apts.map((a) => `${aptOf(a).name} ${p.apt[a]}`).join('、')}`));
     });
     parts.push(choices);
-    parts.push(h('div', { class: 'cs-card__actions' }, h('button', { class: 'cs-quiet', type: 'button', onclick: () => { showAllJobs = !showAllJobs; renderCard(); } }, showAllJobs ? '少なく表示する' : `ほかの職業も見る（全${opts.length}）`)));
+    parts.push(h('div', { class: 'cs-card__actions' },
+      h('button', { class: 'cs-quiet', type: 'button', onclick: () => { showAllJobs = !showAllJobs; renderCard(); } }, showAllJobs ? '少なく表示する' : `ほかの職業も見る（全${opts.length}）`),
+      canReroute() ? rerouteButton() : null));
     openCard(parts);
   }
 
@@ -750,7 +762,9 @@
     // 体験マスの文は見出しに出したので、行には適性のしるしだけを出す
     const lines = S.last.msgs.filter((m) => m.k !== 'stop').map((m) => (m === expMsg ? Object.assign({}, m, { text: '' }) : m));
     const body = lines.length ? h('ul', { class: 'cs-card__lines' }, lines.map(msgLine)) : null;
-    openCard([top, body, primary(nextLabel(), () => dispatch({ type: 'ack' }), S.again && !p.done ? 'replay' : 'arrow_forward')]);
+    const actions = primary(nextLabel(), () => dispatch({ type: 'ack' }), S.again && !p.done ? 'replay' : 'arrow_forward');
+    if (canReroute()) actions.appendChild(rerouteButton());
+    openCard([top, body, actions]);
   }
 
   function nextLabel() {

@@ -117,6 +117,7 @@
     const p = cur(s);
     newLast(s);
     s.queue = [];
+    s.routeUndo = null;
     s.step = p.skip > 0 ? { kind: 'skip' } : { kind: 'roll' };
   }
 
@@ -469,6 +470,8 @@
       const o = opts && Number.isInteger(a.choice) ? opts[a.choice] : null;
       if (!o) return '道を選んでください';
       const lane = D.LANES[o.lane];
+      // 選び直し（reroute）のために、選ぶ前のその人・記録・この先の予定を覚えておく
+      s.routeUndo = { node: s.step.node, player: clone(p), msgs: s.last.msgs.length, queue: clone(s.queue) };
       p.routeNext[s.step.node] = o.next;
       p.lanes[s.step.node === 'stop15' ? 'c' : 'd'] = o.lane;
       msg(s, { k: 'route', lane: o.lane });
@@ -587,8 +590,22 @@
       next(s);
       return null;
     },
+    // その番のうちなら、節目の道を選び直せる（職業を選ぶ前でも、選んだあとの結果のカードでも）
+    reroute(s) {
+      const u = s.routeUndo;
+      if (!u) return '道を選び直せる場面ではありません';
+      if (s.step.kind === 'job' && s.step.reason !== 'work15' && s.step.reason !== 'work18') return '道を選び直せる場面ではありません';
+      s.players[s.cur] = u.player;
+      s.last.msgs = s.last.msgs.slice(0, u.msgs);
+      s.queue = u.queue;
+      s.step = { kind: 'route', node: u.node };
+      s.routeUndo = null;
+      log(s, cur(s).id, '道を選び直す');
+      return null;
+    },
     ack(s) {
       const p = cur(s);
+      s.routeUndo = null;
       if (s.step.kind === 'skip') {
         p.skip = 0;
         log(s, p.id, '1回休み（この番はお休み）');
@@ -605,7 +622,7 @@
       return null;
     },
   };
-  const ACCEPTS = { roll: 'roll', dice: 'dice', fork: 'fork', route: 'route', job: 'job', friend: 'friend', pick: 'pick', vote: 'vote', coop: 'coop', mini: 'mini', ack: ['ack', 'skip'] };
+  const ACCEPTS = { roll: 'roll', dice: 'dice', fork: 'fork', route: 'route', job: 'job', friend: 'friend', pick: 'pick', vote: 'vote', coop: 'coop', mini: 'mini', reroute: ['job', 'ack'], ack: ['ack', 'skip'] };
 
   function apply(state, action) {
     if (!state || !action || typeof action.type !== 'string') return { ok: false, error: '操作がありません' };

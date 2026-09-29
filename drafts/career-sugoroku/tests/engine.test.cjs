@@ -213,6 +213,76 @@ test('しごとの道から学びの道へ: 仕事はいったんお休み → 2
   assert.strictEqual(s.step.keep, false);
 });
 
+test('道の選び直し: しごとを選んで職業のカードまで進んでも、学びの道にもどせる', () => {
+  let s = game(1);
+  place(s, 0, 'b4');
+  s = rollTo(s, 6);
+  assert.strictEqual(s.step.kind, 'route');
+  s = act(s, { type: 'route', choice: 1 }); // しごと
+  assert.strictEqual(s.step.kind, 'job');
+  s = act(s, { type: 'reroute' });
+  assert.strictEqual(s.step.kind, 'route');
+  assert.strictEqual(s.players[0].lanes.c, undefined);
+  assert.strictEqual(s.players[0].routeNext.stop15, undefined);
+  assert.ok(!s.last.msgs.some((m) => m.k === 'route'));
+  s = act(s, { type: 'route', choice: 0 }); // 学び（高校）
+  assert.strictEqual(s.step.kind, 'ack');
+  assert.strictEqual(s.players[0].lanes.c, 'cs');
+  assert.strictEqual(s.last.msgs.filter((m) => m.k === 'route').length, 1);
+});
+
+test('道の選び直し: 職業を選んだあとや学びの道を選んだあとの結果のカードでも、その番のうちならできる', () => {
+  // 18さいで仕事がある人が学びの道 → 仕事がお休み → 選び直すと仕事がもどる
+  let s = game(1);
+  place(s, 0, 'cw5');
+  s.players[0].lanes.c = 'cw';
+  s.players[0].job = 3;
+  s = rollTo(s, 1);
+  s = act(s, { type: 'route', choice: 0 });
+  assert.strictEqual(s.players[0].job, null);
+  assert.strictEqual(s.step.kind, 'ack');
+  s = act(s, { type: 'reroute' });
+  assert.strictEqual(s.players[0].job, 3);
+  assert.strictEqual(s.players[0].prevJob, null);
+  assert.strictEqual(s.step.kind, 'route');
+  s = act(s, { type: 'route', choice: 1 });
+  assert.strictEqual(s.step.kind, 'job');
+  assert.strictEqual(s.step.keep, true);
+  // しごとを選んで職業まで決めたあとでも、結果のカードなら選び直せる
+  let t = game(1);
+  place(t, 0, 'b4');
+  t = rollTo(t, 6);
+  t = act(t, { type: 'route', choice: 1 });
+  t = act(t, { type: 'job', job: 12 });
+  assert.strictEqual(t.players[0].job, 12);
+  t = act(t, { type: 'reroute' });
+  assert.strictEqual(t.players[0].job, null);
+  assert.strictEqual(t.step.kind, 'route');
+});
+
+test('道の選び直しは、節目の番のうちだけ（ほかの場面・番が終わったあとはできない）', () => {
+  let s = game(2);
+  place(s, 0, 'a1');
+  s = rollTo(s, 2); // a3（体験）
+  assert.strictEqual(s.step.kind, 'ack');
+  assert.strictEqual(E.apply(s, { type: 'reroute' }).ok, false);
+  let t = game(2);
+  place(t, 0, 'b4');
+  t = rollTo(t, 6);
+  t = act(t, { type: 'route', choice: 0 });
+  t = act(t, { type: 'ack' }); // 番が終わる
+  assert.strictEqual(t.cur, 1);
+  assert.strictEqual(E.apply(t, { type: 'reroute' }).ok, false);
+  // 22さいの職業選びは道を選んでいないので、選び直しの対象にならない
+  let u = game(1);
+  place(u, 0, 'dw5');
+  u.players[0].lanes.d = 'dw';
+  u.players[0].job = 5;
+  u = rollTo(u, 2);
+  assert.strictEqual(u.step.kind, 'job');
+  assert.strictEqual(E.apply(u, { type: 'reroute' }).ok, false);
+});
+
 test('22さい: 仕事がある人は続けられる', () => {
   let s = game(1);
   place(s, 0, 'dw5');
@@ -748,6 +818,8 @@ test('ランダムな操作で最後まで遊べる（1〜6人・各80ゲーム�
           }
           default: throw new Error('unknown ' + st.kind);
         }
+        // ときどき節目の道を選び直す（職業のカード・結果のカードから）
+        if (s.routeUndo && (st.kind === 'ack' || (st.kind === 'job' && (st.reason === 'work15' || st.reason === 'work18'))) && pickN(3) === 0) a = { type: 'reroute' };
         if (pickN(400) === 0) a = { type: 'end' };
         s = act(s, a);
         s.players.forEach((q) => {
