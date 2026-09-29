@@ -1,6 +1,6 @@
 # キャリアすごろく v2 — 試作から本体への記録（2026-09-29）
 
-仕様の正本は `apps/career-sugoroku/AGENTS.md`。ここは、試作（`drafts/career-sugoroku/`）の段階の独立レビューと検証の記録、オーナーの試遊のフィードバックの流れを残す。前の版（v1）の記録は `docs/reports/career-sugoroku-2026-09-28.md`。
+仕様の正本は `apps/career-sugoroku/AGENTS.md`。ここは、試作（`drafts/career-sugoroku/`。2026-09-30 にオーナーの指示で削除、最後の状態は `a2b1978`）の段階の独立レビューと検証の記録、オーナーの試遊のフィードバックの流れを残す。前の版（v1）の記録は `docs/reports/career-sugoroku-2026-09-28.md`。
 
 ## オーナーの試遊のフィードバックと対応（2026-09-29、順番に）
 
