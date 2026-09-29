@@ -115,7 +115,7 @@
       const raw = String(names[i] == null ? '' : names[i]).trim().slice(0, 10);
       s.players.push({
         id: i, name: raw || D.PLAYER_COLORS[i].name, color: i,
-        node: 'start', trail: ['start'], apt: [0, 0, 0, 0, 0, 0], job: null, prevJob: null, goal: null,
+        node: 'start', trail: ['start'], apt: [0, 0, 0, 0, 0, 0], job: null, prevJob: null,
         pts: { pay: 0, event: 0, bonus: 0, mini: 0 }, skip: 0, done: false, rank: null, turns: 0,
         lanes: {}, routeNext: {}, paid: [],
       });
@@ -654,16 +654,6 @@
     }
     if (action.type === 'labels') {
       s.settings.labels = action.labels === 'age' ? 'age' : 'school';
-      return { ok: true, state: s };
-    }
-    // 目標の職業（決めなくてもいい。いつでも変えられる。ルールの計算には使わず、選ぶときの手がかりにだけ使う）
-    if (action.type === 'goal') {
-      if (s.phase !== 'play') return { ok: false, error: 'いまは操作できません' };
-      const q = Number.isInteger(action.pid) ? s.players[action.pid] : null;
-      if (!q) return { ok: false, error: 'その人はいません' };
-      if (action.job !== null && !(Number.isInteger(action.job) && D.JOBS[action.job])) return { ok: false, error: '職業を選んでください' };
-      q.goal = action.job;
-      log(s, q.id, action.job === null ? '目標の職業をやめた' : `目標の職業を${D.JOBS[action.job].name}にした`);
       return { ok: true, state: s };
     }
     if (s.phase !== 'play' || !s.step) return { ok: false, error: 'いまは操作できません' };

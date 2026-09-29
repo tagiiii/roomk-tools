@@ -203,25 +203,6 @@ test('えらぶ体験マス: 出てきた3つの適性から1つ選んで+1（�
   chooses.forEach((id) => assert.ok(!D.NODES.find((n) => n.id === id).lane)); // 道（レーン）の中ではない
 });
 
-test('目標の職業: いつでも決める・変える・やめる。ルールの計算は変えない', () => {
-  let s = game(2);
-  assert.strictEqual(s.players[0].goal, null);
-  s = act(s, { type: 'goal', pid: 1, job: 2 }); // 自分の番でなくても決められる
-  assert.strictEqual(s.players[1].goal, 2);
-  assert.strictEqual(s.step.kind, 'roll'); // 手番は進まない
-  s = rollTo(s, 1);
-  s = act(s, { type: 'goal', pid: 0, job: 5 }); // カードが出ている途中でも決められる
-  assert.strictEqual(s.players[0].goal, 5);
-  s = act(s, { type: 'goal', pid: 0, job: null });
-  assert.strictEqual(s.players[0].goal, null);
-  assert.strictEqual(E.apply(s, { type: 'goal', pid: 5, job: 1 }).ok, false);
-  assert.strictEqual(E.apply(s, { type: 'goal', pid: 0, job: 99 }).ok, false);
-  assert.strictEqual(E.apply(s, { type: 'goal', pid: 0, job: '1' }).ok, false);
-  assert.strictEqual(E.apply(s, { type: 'goal', pid: 0 }).ok, false);
-  const done = act(s, { type: 'end' });
-  assert.strictEqual(E.apply(done, { type: 'goal', pid: 0, job: 1 }).ok, false);
-});
-
 test('★は合う適性3つのうち、いちばん低いもので決まる（そろって1以上=★2、2以上=★3、3以上=★4）', () => {
   const j = 0; // イラストレーター（ものづくり・アイデア・気づく力）
   assert.strictEqual(E.stars([0, 0, 2, 0, 0, 0], j), 1);
