@@ -67,6 +67,7 @@
   let piecesLayer = null;
   let hiLayer = null; // 2つの目の止まる先の目印
   let modalOpener = null;
+  let goalDirty = false; // 目標の職業が変わった（重ねた画面を閉じたらカードを描き直す）
   let gen = 0; // 表示の世代。ゲームを始める・再開する・終える・最初にもどるたびに増やし、古い present() を途中で止める
   let menuTimer = null;
   const setup = { count: 4, names: ['', '', '', '', '', ''] };
@@ -94,52 +95,98 @@
   function starsEl(n) {
     return h('span', { class: 'cs-stars', role: 'img', 'aria-label': `★${n}` }, '★'.repeat(n), h('span', { class: 'cs-stars__off', 'aria-hidden': 'true' }, '★'.repeat(Math.max(0, 4 - n))));
   }
+  // ── 目標の職業 ─────────────────────────────────
+  // 目標の職業は決めなくてもいい。決めると、サイコロの目・分かれ道・適性を選ぶときに「目標に合う」が出る（ルールの計算には使わない）
+  const goalOf = (p) => (p.goal == null ? null : p.goal);
+  // 適性 a が、目標の職業・今の職業に合うか（「目標に合う」「今の職業に合う」「目標と今の職業に合う」）
+  function fitText(p, a) {
+    const g = goalOf(p);
+    const inGoal = g != null && jobOf(g).apts.includes(a);
+    const inJob = p.job != null && jobOf(p.job).apts.includes(a);
+    if (inGoal && inJob) return g === p.job ? '目標の職業に合う' : '目標と今の職業に合う';
+    if (inGoal) return '目標に合う';
+    if (inJob) return '今の職業に合う';
+    return '';
+  }
+  // 分かれ道の先（つぎの合流まで）で、目標に合うマスの数
+  function branchGoalCount(startId, p) {
+    const g = goalOf(p);
+    if (g == null) return 0;
+    const joins = {};
+    D.NODES.forEach((x) => x.next.forEach((m) => { joins[m] = (joins[m] || 0) + 1; }));
+    let n = 0;
+    let id = startId;
+    while (id && (joins[id] || 0) < 2) {
+      const nd = NODE[id];
+      if ((nd.type === 'exp' || nd.type === 'friend') && jobOf(g).apts.includes(nd.apt)) n++;
+      id = nd.next[0];
+    }
+    return n;
+  }
+  function setGoal(pid, job) {
+    const r = E.apply(S, { type: 'goal', pid, job });
+    if (!r.ok) return false;
+    S = r.state;
+    save();
+    goalDirty = true; // カードは重ねた画面を閉じたときに描き直す（開いている画面から焦点を奪わない）
+    renderTurn();
+    renderPlayers();
+    return true;
+  }
+  function goalButton(p, jobId, onDone) {
+    const on = goalOf(p) === jobId;
+    return h('button', {
+      class: 'cs-goal-btn' + (on ? ' cs-goal-btn--on' : ''), type: 'button', 'aria-pressed': String(on),
+      'aria-label': on ? `${jobOf(jobId).name}を目標にしている（押すとやめる）` : `${jobOf(jobId).name}を目標にする`,
+      onclick: () => { if (setGoal(p.id, on ? null : jobId) && onDone) onDone(); },
+    }, icon('flag'), on ? '目標' : '目標にする');
+  }
+
   // ── ★の見せ方 ─────────────────────────────────
-  // ★は「はじめは★1。合う適性3つの数を合わせて、STAR_STEPS（3・6・9）に届くたびに1つふえる」。
-  // ゲージは ★ ■■■ ★ ■■■ ★ ■■■ ★ の形。マスを合う適性の色でうめ、光っている★の数がいまの★になる
-  const STAR_MAX = D.STAR_STEPS.length + 1;
+  // ★は、職業に合う適性3つのうち、いちばん低いもので決まる（3つそろって STAR_LEVELS（1・2・3）以上なら ★2・★3・★4）。
+  // ゲージは ★ ■■■ ★ ■■■ ★ ■■■ ★ の形。1つめのまとまりは「3つとも1以上か」、2つめは「2以上か」…で、
+  // マスは合う適性の順・色。まとまりの3マスがそろうと、その右の★が光る（光っている★の数がいまの★）
+  const STAR_MAX = D.STAR_LEVELS.length + 1;
   const payOf = (st) => D.STAR_PAY[st - 1];
   function starRule(long) {
-    const st = D.STAR_STEPS;
-    const even = st.every((v, i) => v === st[0] * (i + 1));
-    return `合う適性3つの数を合わせて、${even ? `${st[0]}たまるごとに` : `${st.join('・')}になると`}★が1つふえる${long ? `（はじめは★1、いちばん上は★${STAR_MAX}）` : ''}`;
+    const steps = D.STAR_LEVELS.map((v, i) => `${v}以上で★${i + 2}`).join('、');
+    return long
+      ? `★は、合う適性3つのうち、いちばん低いもので決まる（3つそろって${steps}。ほかの適性が高くても、足りない適性があると★は上がらない）`
+      : `合う適性3つが、そろって${steps}`;
   }
   function payRule() {
     return D.STAR_PAY.every((v, i) => v === i + 1) ? '★の数だけ、しごとマスでポイントがもらえる' : `しごとマスでもらえるポイントは★1〜★${STAR_MAX}で ${D.STAR_PAY.join('・')}`;
   }
-  function nextStarText(sum) {
-    const i = D.STAR_STEPS.findIndex((v) => sum < v);
-    return i < 0 ? `★${STAR_MAX}（いちばん上）` : `あと${D.STAR_STEPS[i] - sum}で★${i + 2}`;
+  // つぎの★までに足りない適性（例:「★3まで: ものづくり あと1」）
+  function nextStarText(apt, jobId) {
+    const nx = E.nextStar(apt, jobId);
+    if (!nx) return `★${STAR_MAX}（いちばん上）`;
+    // 3つとも同じだけ足りないときは短く言う（「3つとも あと1」）
+    if (nx.lack.length === 3 && nx.lack.every((x) => x.n === nx.lack[0].n)) return `★${nx.to}まで: 3つとも あと${nx.lack[0].n}`;
+    return `★${nx.to}まで: ${nx.lack.map((x) => `${aptOf(x.a).name} あと${x.n}`).join('・')}`;
   }
   function gauge(apt, jobId) {
-    const sum = E.jobSum(apt, jobId);
-    const fills = [];
-    jobOf(jobId).apts.forEach((a) => { for (let k = 0; k < apt[a]; k++) fills.push(aptOf(a).color); });
+    const apts = jobOf(jobId).apts;
     const kids = [h('span', { class: 'cs-gauge__star cs-gauge__star--on' }, '★')];
-    let from = 0;
-    D.STAR_STEPS.forEach((to) => {
-      const cells = [];
-      for (let c = from; c < to; c++) cells.push(h('i', { style: fills[c] ? `background:${fills[c]};box-shadow:none` : null }));
-      kids.push(h('span', { class: 'cs-gauge__grp' }, cells), h('span', { class: 'cs-gauge__star' + (sum >= to ? ' cs-gauge__star--on' : '') }, '★'));
-      from = to;
+    D.STAR_LEVELS.forEach((lv) => {
+      const cells = apts.map((a) => {
+        const t = aptOf(a);
+        // うまっていないマスも、どの適性が足りないかわかるように、その適性の色のふちで出す
+        return h('i', { style: apt[a] >= lv ? `background:${t.color};box-shadow:none` : `background:${t.tint};box-shadow:inset 0 0 0 2px ${t.color}66` });
+      });
+      kids.push(h('span', { class: 'cs-gauge__grp' }, cells), h('span', { class: 'cs-gauge__star' + (apts.every((a) => apt[a] >= lv) ? ' cs-gauge__star--on' : '') }, '★'));
     });
     return h('span', { class: 'cs-gauge-row' },
       h('span', { class: 'cs-gauge', role: 'img', 'aria-label': `★${E.stars(apt, jobId)}` }, kids),
-      h('span', { class: 'cs-gauge__note' }, `合計 ${sum}・${nextStarText(sum)}`));
+      h('span', { class: 'cs-gauge__note' }, nextStarText(apt, jobId)));
   }
-  // 職業に合う適性3つを「＋」でつないだ式と、その下のゲージ（ゲージの色は式の順）
+  // 職業に合う適性3つ（ゲージのマスと同じ順）と、その下のゲージ
   function jobCalc(apt, jobId) {
-    const chips = [];
-    jobOf(jobId).apts.forEach((a, i) => {
-      if (i) chips.push(h('span', { class: 'cs-plus', 'aria-hidden': 'true' }, '＋'));
-      chips.push(aptChip(a, ` ${apt[a]}`));
-    });
-    return h('span', { class: 'cs-jobcalc' }, h('span', { class: 'cs-apts cs-apts--sum' }, chips), gauge(apt, jobId));
+    return h('span', { class: 'cs-jobcalc' }, h('span', { class: 'cs-apts' }, jobOf(jobId).apts.map((a) => aptChip(a, ` ${apt[a]}`))), gauge(apt, jobId));
   }
   function jobAria(apt, jobId) {
-    const sum = E.jobSum(apt, jobId);
     const st = E.stars(apt, jobId);
-    return `★${st}、しごとマスで +${payOf(st)}。合う適性 ${jobOf(jobId).apts.map((a) => `${aptOf(a).name} ${apt[a]}`).join('、')}。合計 ${sum}、${nextStarText(sum)}`;
+    return `★${st}、しごとマスで +${payOf(st)}。合う適性 ${jobOf(jobId).apts.map((a) => `${aptOf(a).name} ${apt[a]}`).join('、')}。${nextStarText(apt, jobId)}`;
   }
   // しごとマスで入るポイント（職業の行の右）
   function payBadge(st) {
@@ -154,7 +201,7 @@
     [me, ...S.players.filter((q) => q.id !== me.id)].forEach((q) => {
       const b = before[q.id];
       if (!b || q.job == null || b.job !== q.job) return;
-      if (E.jobSum(q.apt, q.job) <= E.jobSum(b.apt, q.job)) return;
+      if (!jobOf(q.job).apts.some((a) => q.apt[a] > b.apt[a])) return;
       const st = E.stars(q.apt, q.job);
       const up = st > E.stars(b.apt, q.job);
       const j = jobOf(q.job);
@@ -288,6 +335,7 @@
   function nodeTitle(n) {
     switch (n.type) {
       case 'exp': return `体験マス（${aptOf(n.apt).name}）`;
+      case 'choose': return 'えらぶ体験マス';
       case 'friend': return `なかまマス（${aptOf(n.apt).name}）`;
       case 'event': return 'イベントマス';
       case 'pay': return 'しごとマス';
@@ -308,6 +356,12 @@
       const t = aptOf(apt);
       sv('circle', { cx: x, cy: y, r, fill: t.tint, stroke: t.color, 'stroke-width': 3, 'stroke-dasharray': type === 'friend' ? '5 3' : null }, g);
       iconAt(type === 'friend' ? 'group' : t.icon, t.color);
+    } else if (type === 'choose') {
+      // 6つの適性の色の輪（出てきた3つから選べる）
+      sv('circle', { cx: x, cy: y, r, fill: '#FFFFFF' }, g);
+      const len = (2 * Math.PI * r) / 6;
+      D.APTS.forEach((t, i) => sv('circle', { cx: x, cy: y, r, fill: 'none', stroke: t.color, 'stroke-width': 4, 'stroke-dasharray': `${len} ${len * 5}`, 'stroke-dashoffset': String(-len * i), transform: `rotate(-90 ${x} ${y})` }, g));
+      iconAt('interests', '#1C3F5E', 19);
     } else if (type === 'event') {
       sv('circle', { cx: x, cy: y, r, fill: '#1C3F5E' }, g);
       iconAt('style', '#FFFFFF', 19);
@@ -390,9 +444,12 @@
     box.replaceChildren();
     if (!S || S.phase !== 'play') return;
     const p = curP();
+    const g = goalOf(p);
     box.appendChild(h('div', { class: 'cs-turn__who' }, dot(p), h('div', {},
       h('p', { class: 'cs-turn__name' }, `${p.name}さんの番`),
       h('p', { class: 'cs-turn__where' }, where(p)),
+      h('button', { class: 'cs-turn__goal', type: 'button', onclick: (ev) => openJobBook(p.id, ev.currentTarget) }, icon('flag'),
+        g != null ? `目標: ${jobOf(g).name}（★${E.stars(p.apt, g)}）` : '目標の職業を決める（決めなくてもOK）'),
     )));
     const dice = h('div', { class: 'cs-turn__dice', 'aria-hidden': 'true' });
     if (S.settings.dice === 2) {
@@ -501,14 +558,18 @@
         const n = NODE[st.node];
         const lens = n.next.map((m) => branchLength(m));
         openCard([...head('分かれ道', 'alt_route', 'どっちに進む？', `あと${st.remaining}マス進むよ`),
-          h('div', { class: 'cs-choices' }, n.fork.map((label, i) => choice(i, label, `${lens[i]}マス${n.forkNote && n.forkNote[i] ? '。' + n.forkNote[i] : ''}`, null, () => dispatch({ type: 'fork', choice: i })))),
+          h('div', { class: 'cs-choices' }, n.fork.map((label, i) => {
+            const k = goalOf(p) != null ? branchGoalCount(n.next[i], p) : null;
+            return choice(i, label, `${lens[i]}マス${n.forkNote && n.forkNote[i] ? '。' + n.forkNote[i] : ''}${k != null ? (k ? `。目標に合うマス ${k}つ` : '。目標に合うマスはない') : ''}`, null, () => dispatch({ type: 'fork', choice: i }));
+          })),
         ]);
         return;
       }
       case 'route': {
         const n = NODE[st.node];
         const range = st.node === 'stop15' ? '16〜18さい' : '19〜22さい';
-        openCard([...head(`${n.age}さいの節目`, 'signpost', 'どっちの道に進む？', 'みんなに相談してもいいよ。決めるのは本人'),
+        const g = goalOf(p);
+        openCard([...head(`${n.age}さいの節目`, 'signpost', 'どっちの道に進む？', 'みんなに相談してもいいよ。決めるのは本人', g != null ? `目標: ${jobOf(g).name}（いまは★${E.stars(p.apt, g)}。${nextStarText(p.apt, g)}）` : null),
           lastLines(),
           h('div', { class: 'cs-choices' }, D.ROUTES[st.node].map((o, i) => choice(i, `${laneLabel(o.lane)}（${range}）`, o.desc, null, () => dispatch({ type: 'route', choice: i })))),
         ]);
@@ -525,8 +586,9 @@
       }
       case 'pick': {
         let top;
-        const guide = '各適性の下に「★が上がる職業」を出しているよ。職業ごとの合う適性は「しごと図鑑」で見られる';
-        if (st.reason === 'study') top = head('学びの道のボーナス', 'school', st.of > 1 ? `好きな適性を選ぼう（${st.i + 1}つめ／${st.of}つ）` : '好きな適性を1つ選ぼう', guide);
+        const guide = goalOf(p) != null ? `目標: ${jobOf(goalOf(p)).name}（${jobOf(goalOf(p)).apts.map((a) => aptOf(a).name).join('・')}）` : '各適性の下に「★が上がる職業」を出しているよ。職業ごとの合う適性は「しごと図鑑」で見られる';
+        if (st.reason === 'choose') top = head('えらぶ体験マス', 'interests', 'やってみたいことを1つ選ぼう', 'どれか1つ +1（出てくる3つは毎回ちがう）', guide);
+        else if (st.reason === 'study') top = head('学びの道のボーナス', 'school', st.of > 1 ? `好きな適性を選ぼう（${st.i + 1}つめ／${st.of}つ）` : '好きな適性を1つ選ぼう', guide);
         else if (card) top = head('イベント', 'style', card.text, 'どれか1つ +1', guide);
         else top = head('成長', 'trending_up', 'どれか1つ +1', guide);
         openCard([...top, lastLines(),
@@ -583,13 +645,22 @@
   // 適性を選ぶカードの各選択肢の下に出す手がかり（表示と読み上げで同じ文を使う）
   function aptJobHintParts(p, a) {
     const parts = {};
+    const g = goalOf(p);
+    if (g != null && g !== p.job && jobOf(g).apts.includes(a)) {
+      const next = p.apt.slice();
+      next[a] = Math.min(D.APT_CAP, next[a] + 1);
+      const from = E.stars(p.apt, g);
+      const to = E.stars(next, g);
+      parts.goal = `目標（${jobOf(g).name}）に合う・${to > from ? `★${from}→★${to}` : nextStarText(p.apt, g)}`;
+    }
     if (p.job != null && jobOf(p.job).apts.includes(a)) {
       const from = E.stars(p.apt, p.job);
       const next = p.apt.slice();
       next[a] = Math.min(D.APT_CAP, next[a] + 1);
       const to = E.stars(next, p.job);
-      parts.job = `今の職業（${jobOf(p.job).name}）に合う${to > from ? `・★${from}→★${to}` : ''}`;
+      parts.job = `${g === p.job ? '目標で今の職業' : '今の職業'}（${jobOf(p.job).name}）に合う・${to > from ? `★${from}→★${to}` : nextStarText(p.apt, p.job)}`;
     }
+    if (g != null) return parts; // 目標があるときは「★が上がる職業」の一覧は出さない（情報を出しすぎない）
     const up = jobsUpFor(p.apt, a).filter((x) => x.id !== p.job);
     if (up.length) parts.jobs = { icon: 'trending_up', text: `★が上がる職業: ${jobNames(up, 3)}` };
     else parts.jobs = { icon: 'work_outline', text: `合う職業: ${jobNames(jobsWith(p.apt, a).filter((x) => x.id !== p.job), 3)}` };
@@ -598,13 +669,14 @@
   function aptJobHint(p, a) {
     const parts = aptJobHintParts(p, a);
     const wrap = h('span', { class: 'cs-choice__hint' });
+    if (parts.goal) wrap.appendChild(h('span', { class: 'cs-tag cs-tag--goal' }, icon('flag'), parts.goal));
     if (parts.job) wrap.appendChild(h('span', { class: 'cs-tag cs-tag--job' }, icon('work'), parts.job));
-    wrap.appendChild(h('span', { class: 'cs-choice__jobs' }, icon(parts.jobs.icon), parts.jobs.text));
+    if (parts.jobs) wrap.appendChild(h('span', { class: 'cs-choice__jobs' }, icon(parts.jobs.icon), parts.jobs.text));
     return wrap;
   }
   function aptJobHintText(p, a) {
     const parts = aptJobHintParts(p, a);
-    return [`いまの数 ${p.apt[a]}`, parts.job, parts.jobs.text].filter(Boolean).join('。');
+    return [`いまの数 ${p.apt[a]}`, parts.goal, parts.job, parts.jobs && parts.jobs.text].filter(Boolean).join('。');
   }
 
   // 2つの目それぞれの止まる先を言葉にする
@@ -617,8 +689,9 @@
     else if (pv.kind === 'fork') t = `分かれ道まで進んで、方向を選ぶ（あと${pv.left}マス）`;
     else {
       switch (n.type) {
-        case 'exp': t = `${aptOf(n.apt).name}の体験マス`; break;
-        case 'friend': t = `なかまマス（${aptOf(n.apt).name}）`; break;
+        case 'exp': t = `${aptOf(n.apt).name}の体験マス${fitText(p, n.apt) ? `（${fitText(p, n.apt)}）` : ''}`; break;
+        case 'choose': t = 'えらぶ体験マス（出てきた3つの適性から選べる）'; break;
+        case 'friend': t = `なかまマス（${aptOf(n.apt).name}${fitText(p, n.apt) ? `・${fitText(p, n.apt)}` : ''}）`; break;
         case 'event': t = 'イベントマス'; break;
         case 'pay': t = pv.exactPay ? `しごとマスにぴったり（2倍で +${payNow * 2}）` : 'しごとマス（もう通ったマス）'; break;
         case 'grow': t = '成長マス'; break;
@@ -714,7 +787,10 @@
   function renderJobCard(st, p) {
     const keeping = st.keep && p.job != null;
     // 続けられる今の仕事は「続ける」だけに出して、番号つきの一覧からは外す
-    const opts = E.jobOptions(p.apt).filter((o) => !(keeping && o.id === p.job));
+    const g = goalOf(p);
+    // 目標の職業は一覧の先頭に出す（★の多さに関係なく）
+    const opts = E.jobOptions(p.apt).filter((o) => !(keeping && o.id === p.job))
+      .sort((a, b) => (b.id === g) - (a.id === g));
     const kick = st.reason === 'change' ? '転職チャンス' : 'しごと選び';
     const title = st.reason === 'change' ? '職業を変える？（今のままでもいい）' : 'どの職業にする？';
     const list = showAllJobs ? opts : opts.slice(0, D.JOB_LIST_FIRST);
@@ -727,12 +803,13 @@
     if (keeping) {
       choices.appendChild(h('button', { class: 'cs-choice cs-choice--keep', type: 'button', 'data-primary': '1', 'aria-label': `今の仕事を続ける: ${jobOf(p.job).name}。${jobAria(p.apt, p.job)}`, onclick: () => dispatch({ type: 'job', job: 'keep' }) },
         h('span', { class: 'cs-choice__num', 'aria-hidden': 'true' }, icon('check')),
-        h('span', { class: 'cs-choice__body' }, h('span', { class: 'cs-choice__name' }, `今の仕事を続ける: ${jobOf(p.job).name}`), jobCalc(p.apt, p.job)),
+        h('span', { class: 'cs-choice__body' }, h('span', { class: 'cs-choice__name' }, `今の仕事を続ける: ${jobOf(p.job).name}`), p.job === g ? h('span', { class: 'cs-tag cs-tag--goal' }, icon('flag'), '目標') : null, jobCalc(p.apt, p.job)),
         h('span', { class: 'cs-choice__side' }, payBadge(E.stars(p.apt, p.job)))));
     }
     list.forEach((o, i) => {
       const j = jobOf(o.id);
-      choices.appendChild(choice(i, j.name, j.desc, payBadge(o.stars), () => dispatch({ type: 'job', job: o.id }), jobCalc(p.apt, o.id), jobAria(p.apt, o.id)));
+      const extra = o.id === g ? [h('span', { class: 'cs-tag cs-tag--goal' }, icon('flag'), '目標'), jobCalc(p.apt, o.id)] : jobCalc(p.apt, o.id);
+      choices.appendChild(choice(i, j.name, j.desc, payBadge(o.stars), () => dispatch({ type: 'job', job: o.id }), extra, `${o.id === g ? '目標の職業。' : ''}${jobAria(p.apt, o.id)}`));
     });
     parts.push(choices);
     parts.push(h('div', { class: 'cs-card__actions' },
@@ -817,14 +894,14 @@
     const n = NODE[p.node];
     const goal = S.last.msgs.find((m) => m.k === 'goal');
     const stop = S.last.msgs.find((m) => m.k === 'stop');
-    const expMsg = !card && n.type === 'exp' ? S.last.msgs.find((m) => m.k === 'apt' && m.text) : null;
+    const expMsg = !card && (n.type === 'exp' || n.type === 'choose') ? S.last.msgs.find((m) => m.k === 'apt' && m.text) : null;
     const mini = S.last.msgs.find((m) => m.k === 'mini');
     let top;
     if (goal) top = head('ゴール', 'flag', `${p.name}さん、ゴール！`, `${goal.rank}番目のゴール`);
     else if (mini) top = head('ミニゲーム', 'sports_esports', `${D.MINI_GAMES[mini.game].name}の結果`);
     else if (card) top = head('イベント', 'style', card.text);
     else if (stop) top = head('節目', 'signpost', `${stop.age}さいの節目`);
-    else if (expMsg) top = head('体験マス', 'explore', expMsg.text);
+    else if (expMsg) top = head(n.type === 'choose' ? 'えらぶ体験マス' : '体験マス', n.type === 'choose' ? 'interests' : 'explore', expMsg.text);
     else if (n.type === 'friend') top = head('なかまマス', 'group', '一緒に体験');
     else if (n.type === 'pay') top = head('しごとマス', 'star', 'しごとをがんばった');
     else if (n.type === 'grow') top = head('成長マス', 'trending_up', '仕事で成長');
@@ -953,6 +1030,7 @@
     $('cs-modal').hidden = true;
     ['cs-setup', 'cs-play', 'cs-results'].forEach((id) => { $(id).inert = false; });
     if (menuTimer) { clearInterval(menuTimer); menuTimer = null; }
+    if (goalDirty) { goalDirty = false; if (S && S.phase === 'play' && !busy) renderCard(); }
     if (modalOpener && document.contains(modalOpener)) modalOpener.focus();
     modalOpener = null;
   }
@@ -971,12 +1049,28 @@
     } else {
       body.appendChild(h('p', { style: 'color:#5A6270' }, p.prevJob != null ? `いまは学びの道（前の仕事: ${jobOf(p.prevJob).name}）` : 'まだ決めていない。体験で適性をためて、あとで選ぶ'));
     }
-    body.appendChild(h('button', { class: 'cs-quiet', type: 'button', onclick: () => { const o = modalOpener; closeModal(); openJobBook(p.id, o); } }, icon('menu_book'), 'しごと図鑑（職業ごとの合う適性と★）'));
+    body.appendChild(h('h3', {}, '目標の職業'));
+    const g = goalOf(p);
+    if (g != null) {
+      const gj = jobOf(g);
+      body.appendChild(h('div', { class: 'cs-note-job cs-note-job--goal' }, icon(gj.icon), h('div', { class: 'cs-note-job__body' },
+        h('p', {}, h('b', {}, gj.name)),
+        jobCalc(p.apt, g),
+      ), payBadge(E.stars(p.apt, g))));
+    } else {
+      body.appendChild(h('p', { style: 'color:#5A6270' }, 'まだ決めていない（決めなくてもいい）。しごと図鑑で「目標にする」を押すと、サイコロや適性を選ぶときに「目標に合う」が出る'));
+    }
+    body.appendChild(h('div', { class: 'cs-note-actions' },
+      h('button', { class: 'cs-quiet', type: 'button', onclick: () => { const o = modalOpener; closeModal(); openJobBook(p.id, o); } }, icon('menu_book'), g != null ? 'しごと図鑑（目標を変える）' : 'しごと図鑑（職業ごとの合う適性と★）'),
+      g != null ? h('button', { class: 'cs-quiet', type: 'button', onclick: () => { const o = modalOpener; setGoal(p.id, null); closeModal(); openNotebook(p.id, o); } }, icon('flag'), '目標をやめる') : null));
     body.appendChild(h('h3', {}, '適性'));
     // 今の職業に合う適性には、しるしをつける（どの適性を育てると★がふえるかを見せる）
     const fit = p.job != null ? jobOf(p.job).apts : [];
+    const gfit = g != null && g !== p.job ? jobOf(g).apts : [];
     D.APTS.forEach((a) => body.appendChild(h('div', { class: 'cs-note-row' }, aptChip(a.id),
-      h('span', { class: 'cs-note-row__name' }, fit.includes(a.id) ? h('span', { class: 'cs-tag cs-tag--job' }, icon('work'), `${jobOf(p.job).name}に合う`) : null),
+      h('span', { class: 'cs-note-row__name' },
+        fit.includes(a.id) ? h('span', { class: 'cs-tag cs-tag--job' }, icon('work'), `${jobOf(p.job).name}に合う`) : null,
+        gfit.includes(a.id) ? h('span', { class: 'cs-tag cs-tag--goal' }, icon('flag'), '目標に合う') : null),
       meter(p.apt[a.id]), h('b', { style: 'min-width:1.5em;text-align:right' }, String(p.apt[a.id])))));
     body.appendChild(h('h3', {}, 'ポイント'));
     body.appendChild(h('div', { class: 'cs-note-pts' },
@@ -996,18 +1090,21 @@
     const list = h('ul', { class: 'cs-book__list' });
     const chips = h('div', { class: 'cs-book__filter', role: 'group', 'aria-label': '適性でしぼる' });
     const renderList = () => {
-      const opts = E.jobOptions(p.apt).filter((o) => filter == null || jobOf(o.id).apts.includes(filter));
+      const p = P(pid); // 目標を変えると状態が入れ替わるので、描くたびに取り直す
+      const g = goalOf(p);
+      const opts = E.jobOptions(p.apt).filter((o) => filter == null || jobOf(o.id).apts.includes(filter))
+        .sort((a, b) => (b.id === g) - (a.id === g)); // 目標の職業を先頭に
       list.replaceChildren(...opts.map((o) => {
         const j = jobOf(o.id);
         const now = p.job === o.id;
-        return h('li', { class: 'cs-book__item' + (now ? ' cs-book__item--now' : '') },
+        return h('li', { class: 'cs-book__item' + (now ? ' cs-book__item--now' : '') + (o.id === g ? ' cs-book__item--goal' : '') },
           icon(j.icon, 'cs-book__icon'),
           h('div', { class: 'cs-book__body' },
             h('p', { class: 'cs-book__name' }, j.name, now ? h('span', { class: 'cs-tag cs-tag--job' }, '今の職業') : null),
             h('p', { class: 'cs-book__desc' }, j.desc),
             jobCalc(p.apt, o.id),
           ),
-          h('span', { class: 'cs-book__side' }, payBadge(o.stars)));
+          h('span', { class: 'cs-book__side' }, payBadge(o.stars), S.phase === 'play' ? goalButton(p, o.id, renderList) : null));
       }));
     };
     const setFilter = (v) => {
@@ -1020,6 +1117,7 @@
     renderList();
     const body = h('div', {},
       h('p', { class: 'cs-book__intro' }, dot(p, true), h('span', {}, `${p.name}さんのいまの適性で見た★。${starRule(true)}。${payRule()}。適性を押すと、その適性が合う職業だけになる。`)),
+      h('p', { class: 'cs-book__intro' }, icon('flag'), h('span', {}, 'なりたい職業があれば「目標にする」を押そう（決めなくてもいい・いつでも変えられる）。サイコロの目や適性を選ぶときに「目標に合う」が出る。ほしい適性がいつも出るとはかぎらない')),
       chips, list);
     openModal('しごと図鑑', body, opener);
   }
@@ -1057,16 +1155,18 @@
     return parts.join('、');
   }
 
-  // あそびかたの例（写真家: 気づく力 3・ものづくり 2・工夫する力 1）
+  // あそびかたの例（写真家: 気づく力 4・ものづくり 2・工夫する力 1 → いちばん低い工夫する力で★2）
   function howtoExample() {
     const jobId = 2;
-    const apt = [0, 3, 2, 0, 0, 1];
+    const apt = [0, 4, 2, 0, 0, 1];
     const j = jobOf(jobId);
     const st = E.stars(apt, jobId);
+    const low = j.apts.reduce((m, a) => (apt[a] < apt[m] ? a : m), j.apts[0]);
+    const nx = E.nextStar(apt, jobId);
     return h('div', { class: 'cs-howto-ex' },
       h('p', { class: 'cs-howto-ex__title' }, `例: ${j.name}（合う適性は ${j.apts.map((a) => aptOf(a).name).join('・')}）`),
       jobCalc(apt, jobId),
-      h('p', { class: 'cs-howto-ex__result' }, `→ ★${st}。しごとマスを通るたびに +${payOf(st)}ポイント`));
+      h('p', { class: 'cs-howto-ex__result' }, `→ いちばん低い${aptOf(low).name}が${apt[low]}なので★${st}（しごとマスで +${payOf(st)}）。${nx ? `${nx.lack.map((x) => `${aptOf(x.a).name}を${apt[x.a] + x.n}`).join('・')}にすると★${nx.to}` : ''}`));
   }
 
   function openHowto(opener) {
@@ -1078,6 +1178,7 @@
       h('h3', {}, 'マスの種類'),
       h('ul', { class: 'cs-legend' },
         legendItem('exp', 2, '体験マス: 止まると、その色の適性 +1'),
+        legendItem('choose', null, 'えらぶ体験マス: 出てきた3つの適性から1つ選んで +1'),
         legendItem('friend', 4, 'なかまマス: だれかをさそって、2人とも +1'),
         legendItem('event', null, 'イベント: カードをめくる'),
         legendItem('pay', null, 'しごとマス: 通ると★に応じたポイント（同じマスは1回）。ぴったり止まると2倍'),
@@ -1089,8 +1190,10 @@
       h('h3', {}, '道と職業'),
       h('p', {}, '15さいと18さいの節目で、学びの道か、しごとの道を選ぶ。しごとの道に進むときに職業を選ぶ（22さいの節目で、まだ職業がない人も選ぶ）。学びの道から節目に着くと、好きな適性を増やせる。どちらの道も長さは同じ。'),
       h('h3', {}, '適性・職業・★'),
-      h('p', {}, `体験マスなどで適性がたまる。職業ごとに、合う適性が3つある（上の「しごと図鑑」で見られる）。${starRule(true)}。${payRule()}。職業を選んだあとも、合う適性が育つと★がふえる。`),
+      h('p', {}, `体験マスなどで適性がたまる。職業ごとに、合う適性が3つある（上の「しごと図鑑」で見られる）。${starRule(true)}。${payRule()}。職業を選んだあとも、足りない適性が育つと★がふえる（成長マスは、今の職業に合う適性のうち、いちばん低いものを +1）。`),
       howtoExample(),
+      h('h3', {}, '目標の職業'),
+      h('p', {}, 'なりたい職業があれば、しごと図鑑で「目標にする」を押す（決めなくてもいい。いつでも変えられる）。サイコロ2つの目・分かれ道・適性を選ぶカードで、目標の職業に合うものに「目標に合う」が出るので、ねらって選べる。ただし、止まるマスや出てくる適性は運なので、思いどおりに集まるとはかぎらない。'),
       h('h3', {}, 'ポイント'),
       h('p', {}, `ゴールした順にボーナス（${bonusText()}）。全員がゴールしたら、ポイントの合計が多い人から順位を発表。時間が来て途中で終えたときは、ゴールに近い順に続きの順位のボーナス（同じマスにいる人は同じ順位）。`),
       h('h3', {}, 'ミニゲーム'),

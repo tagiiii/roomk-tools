@@ -18,7 +18,7 @@
   const APT_CAP = 5; // 1種類の上限
 
   // ── 職業（24種類）──────────────────────────────
-  // apts: その職業に合う適性3つ。★はこの3つの適性の合計で決まる（STAR_STEPS）。
+  // apts: その職業に合う適性3つ。★はこの3つのうち、いちばん低い適性で決まる（STAR_LEVELS）。
   const JOBS = [
     { id: 0, name: 'イラストレーター', desc: '絵でイメージや魅力を届ける', apts: [2, 0, 1], icon: 'brush' },
     { id: 1, name: 'ゲームプランナー', desc: 'ゲームの遊び方や仕組みを考える', apts: [0, 3, 5], icon: 'sports_esports' },
@@ -45,8 +45,10 @@
     { id: 22, name: '整備士', desc: '道具や機械の状態を見て使いやすく整える', apts: [5, 2, 1], icon: 'car_repair' },
     { id: 23, name: 'パン職人', desc: '材料や作り方を工夫してパンを作る', apts: [5, 2, 3], icon: 'bakery_dining' },
   ];
-  // ★の段階: 合う適性3つの合計がこの値以上なら ★2・★3・★4（どれにも届かなければ ★1）
-  const STAR_STEPS = [3, 6, 9];
+  // ★の段階: 合う適性3つが「そろって」この値以上なら ★2・★3・★4（どれにも届かなければ ★1）。
+  // ほかの適性がいくら高くても、足りない適性があれば★は上がらない。
+  // 2026-09-29 オーナーの試遊「1つの特性が1でも、ほかが5なら★が増えるのに違和感」で、合計（3・6・9）から変えた
+  const STAR_LEVELS = [1, 2, 3];
   const STAR_PAY = [1, 2, 3, 4]; // しごとマスで入るポイント（★1〜★4）
   // しごとマスにぴったり止まると、そのマスのポイントをもう1回（2倍）。サイコロ2つから選ぶ遊び方で「ねらう」理由になる
   const EXACT_PAY_BONUS = true;
@@ -89,7 +91,7 @@
   // ── 盤面 ───────────────────────────────────────
   // 座標は viewBox 1000×620。next が2つある普通のマスは分かれ道（近道／寄り道）。
   // 節目（stop15・stop18・stop22）は、サイコロの目が残っていても必ず止まる。
-  // type: start / exp（体験）/ event（イベント）/ friend（なかま）/ pay（しごと）/ grow（成長）/ change（転職チャンス）/ mini（ミニゲーム）/ stop / goal
+  // type: start / exp（体験）/ choose（えらぶ体験。出てきた3つの適性から1つ選ぶ）/ event（イベント）/ friend（なかま）/ pay（しごと）/ grow（成長）/ change（転職チャンス）/ mini（ミニゲーム）/ stop / goal
   const N = [];
   const add = (id, type, x, y, stage, extra) => N.push(Object.assign({ id, type, x, y, stage, next: [] }, extra || {}));
 
@@ -97,7 +99,9 @@
   add('start', 'start', 58, 84, 'child');
   add('a1', 'exp', 118, 84, 'child', { apt: 0 });
   add('a2', 'event', 174, 84, 'child');
-  add('a3', 'exp', 230, 84, 'child', { apt: 2 });
+  // a3・b4 は「えらぶ体験マス」（2026-09-29 オーナーの「目標の職業に合う適性を選べるように。運の要素は残して」）。
+  // どの道でも通る区間に置く。もとは3つあった「ものづくり」の体験マスを2つ変えて、色の数をそろえた
+  add('a3', 'choose', 230, 84, 'child');
   add('a4', 'friend', 286, 84, 'child', { apt: 4 });
   add('a5', 'mini', 342, 84, 'child');
   add('a6', 'exp', 398, 84, 'child', { apt: 1 });
@@ -113,7 +117,7 @@
   add('bl4', 'event', 734, 166, 'teen');
   add('bl5', 'exp', 786, 150, 'teen', { apt: 2 });
   add('b3', 'friend', 794, 84, 'teen', { apt: 5 });
-  add('b4', 'exp', 852, 84, 'teen', { apt: 2 });
+  add('b4', 'choose', 852, 84, 'teen');
   add('stop15', 'stop', 928, 170, 'teen', { age: 15 });
   // 16〜18さい（右から左へ。上が学びの道、下がしごとの道）
   const CX = [860, 800, 740, 680, 620];
@@ -280,7 +284,7 @@
   const MAX_PLAYERS = 6;
 
   const api = {
-    APTS, APT_CAP, JOBS, STAR_STEPS, STAR_PAY, EXACT_PAY_BONUS, JOB_LIST_FIRST, GOAL_BONUS, STUDY_BONUS,
+    APTS, APT_CAP, JOBS, STAR_LEVELS, STAR_PAY, EXACT_PAY_BONUS, JOB_LIST_FIRST, GOAL_BONUS, STUDY_BONUS,
     STAGES, LANES, ROUTES, NODES: N, ZONES, LANE_TAGS,
     EXP_TEXT, FRIEND_TEXT, GROW_TEXT, DECKS, MINI_GAMES, MINI_REWARD, PLAYER_COLORS, MAX_PLAYERS,
   };

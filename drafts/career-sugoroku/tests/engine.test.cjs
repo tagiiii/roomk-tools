@@ -152,7 +152,7 @@ test('しごとマスは通るたびに★の数だけ。同じマスは1回だ�
   place(s, 0, 'stop22');
   const p = s.players[0];
   p.job = 0; // イラストレーター（ものづくり・アイデア・気づく力）
-  p.apt = [2, 2, 3, 0, 0, 0]; // 合計7 → ★3
+  p.apt = [2, 2, 3, 0, 0, 0]; // いちばん低いのが2 → ★3
   assert.strictEqual(E.stars(p.apt, 0), 3);
   s = rollTo(s, 2); // e1（しごと）を通って e2 へ
   assert.strictEqual(s.players[0].pts.pay, 3);
@@ -166,14 +166,14 @@ test('しごとマスは通るたびに★の数だけ。同じマスは1回だ�
 
 test('番の始めの全員の適性と職業を記録する（結果のカードで「★が上がった」を見せる）。しごとマスの記録に★', () => {
   let s = game(2);
-  place(s, 0, 'a2');
+  place(s, 0, 'a5');
   const p = s.players[0];
   p.job = 0; // イラストレーター（ものづくり・アイデア・気づく力）
-  p.apt = [1, 0, 1, 0, 0, 0]; // 合計2 → ★1
-  s = rollTo(s, 1); // a3（ものづくりの体験マス）
+  p.apt = [1, 0, 1, 0, 0, 0]; // 気づく力が0 → ★1
+  s = rollTo(s, 1); // a6（気づく力の体験マス）
   assert.deepStrictEqual(s.last.before[0], { apt: [1, 0, 1, 0, 0, 0], job: 0 });
   assert.deepStrictEqual(s.last.before[1], { apt: [0, 0, 0, 0, 0, 0], job: null });
-  assert.strictEqual(E.stars(s.players[0].apt, 0), 2); // 合計3 → ★2
+  assert.strictEqual(E.stars(s.players[0].apt, 0), 2); // 3つとも1 → ★2
   let t = game(1);
   place(t, 0, 'stop22');
   t.players[0].job = 0;
@@ -182,15 +182,77 @@ test('番の始めの全員の適性と職業を記録する（結果のカー�
   assert.ok(t.last.msgs.some((m) => m.k === 'pay' && m.n === 3 && m.stars === 3));
 });
 
-test('★の段階（合計 0〜2=★1、3〜5=★2、6〜8=★3、9以上=★4）', () => {
-  const j = 0;
+test('えらぶ体験マス: 出てきた3つの適性から1つ選んで+1（体験の文つき）。どの道でも通る区間にある', () => {
+  let s = game(1);
+  place(s, 0, 'a2');
+  s = rollTo(s, 1); // a3（えらぶ体験マス）
+  assert.strictEqual(s.step.kind, 'pick');
+  assert.strictEqual(s.step.reason, 'choose');
+  assert.strictEqual(s.step.opts.length, 3);
+  assert.strictEqual(new Set(s.step.opts).size, 3);
+  assert.strictEqual(E.apply(s, { type: 'pick', a: [0, 1, 2, 3, 4, 5].find((a) => !s.step.opts.includes(a)) }).ok, false); // 出ていない適性は選べない
+  const a = s.step.opts[1];
+  s = act(s, { type: 'pick', a });
+  assert.strictEqual(s.players[0].apt[a], 1);
+  const m = s.last.msgs.find((x) => x.k === 'apt');
+  assert.strictEqual(m.reason, 'choose');
+  assert.ok(D.EXP_TEXT.kid[a].includes(m.text));
+  assert.strictEqual(s.step.kind, 'ack');
+  const chooses = D.NODES.filter((n) => n.type === 'choose').map((n) => n.id);
+  assert.deepStrictEqual(chooses, ['a3', 'b4']);
+  chooses.forEach((id) => assert.ok(!D.NODES.find((n) => n.id === id).lane)); // 道（レーン）の中ではない
+});
+
+test('目標の職業: いつでも決める・変える・やめる。ルールの計算は変えない', () => {
+  let s = game(2);
+  assert.strictEqual(s.players[0].goal, null);
+  s = act(s, { type: 'goal', pid: 1, job: 2 }); // 自分の番でなくても決められる
+  assert.strictEqual(s.players[1].goal, 2);
+  assert.strictEqual(s.step.kind, 'roll'); // 手番は進まない
+  s = rollTo(s, 1);
+  s = act(s, { type: 'goal', pid: 0, job: 5 }); // カードが出ている途中でも決められる
+  assert.strictEqual(s.players[0].goal, 5);
+  s = act(s, { type: 'goal', pid: 0, job: null });
+  assert.strictEqual(s.players[0].goal, null);
+  assert.strictEqual(E.apply(s, { type: 'goal', pid: 5, job: 1 }).ok, false);
+  assert.strictEqual(E.apply(s, { type: 'goal', pid: 0, job: 99 }).ok, false);
+  assert.strictEqual(E.apply(s, { type: 'goal', pid: 0, job: '1' }).ok, false);
+  assert.strictEqual(E.apply(s, { type: 'goal', pid: 0 }).ok, false);
+  const done = act(s, { type: 'end' });
+  assert.strictEqual(E.apply(done, { type: 'goal', pid: 0, job: 1 }).ok, false);
+});
+
+test('★は合う適性3つのうち、いちばん低いもので決まる（そろって1以上=★2、2以上=★3、3以上=★4）', () => {
+  const j = 0; // イラストレーター（ものづくり・アイデア・気づく力）
   assert.strictEqual(E.stars([0, 0, 2, 0, 0, 0], j), 1);
-  assert.strictEqual(E.stars([1, 0, 2, 0, 0, 0], j), 2);
+  assert.strictEqual(E.stars([1, 1, 1, 0, 0, 0], j), 2);
   assert.strictEqual(E.stars([2, 2, 2, 0, 0, 0], j), 3);
   assert.strictEqual(E.stars([3, 3, 3, 0, 0, 0], j), 4);
+  assert.strictEqual(E.stars([5, 5, 5, 0, 0, 0], j), 4);
+  // ほかが高くても、1つ低ければ★は上がらない（オーナーの試遊の指摘）
+  assert.strictEqual(E.stars([5, 1, 5, 0, 0, 0], j), 2);
+  assert.strictEqual(E.stars([5, 0, 5, 0, 0, 0], j), 1);
+  // 合う適性でないものは関係ない
+  assert.strictEqual(E.stars([1, 1, 1, 5, 5, 5], j), 2);
+});
+
+test('つぎの★までに足りない適性と、職業の並び順', () => {
+  const j = 0;
+  assert.deepStrictEqual(E.nextStar([5, 1, 2, 0, 0, 0], j), { to: 3, level: 2, lack: [{ a: 1, n: 1 }] });
+  assert.deepStrictEqual(E.nextStar([0, 0, 0, 0, 0, 0], j), { to: 2, level: 1, lack: [{ a: 2, n: 1 }, { a: 0, n: 1 }, { a: 1, n: 1 }] });
+  assert.strictEqual(E.nextStar([3, 3, 3, 0, 0, 0], j), null);
   const opts = E.jobOptions([5, 0, 0, 0, 0, 0]);
   assert.strictEqual(opts.length, D.JOBS.length);
-  for (let i = 1; i < opts.length; i++) assert.ok(opts[i - 1].stars >= opts[i].stars);
+  for (let i = 1; i < opts.length; i++) {
+    const a = opts[i - 1];
+    const b = opts[i];
+    assert.ok(a.stars > b.stars || (a.stars === b.stars && a.need <= b.need));
+  }
+  // ★が同じなら、つぎの★に近いほうが先（イラストレーターはものづくりあと1で★3、写真家は2つ足りない）
+  const o2 = E.jobOptions([2, 2, 1, 0, 0, 1]);
+  const at = (id) => o2.findIndex((o) => o.id === id);
+  assert.strictEqual(o2[at(0)].stars, o2[at(2)].stars);
+  assert.ok(at(0) < at(2));
 });
 
 test('学びの道から18さいの節目: 好きな適性+1と1ポイント → 道を選ぶ', () => {
@@ -280,8 +342,8 @@ test('道の選び直し: 職業を選んだあとや学びの道を選んだあ
 
 test('道の選び直しは、節目の番のうちだけ（ほかの場面・番が終わったあとはできない）', () => {
   let s = game(2);
-  place(s, 0, 'a1');
-  s = rollTo(s, 2); // a3（体験）
+  place(s, 0, 'a5');
+  s = rollTo(s, 1); // a6（体験）
   assert.strictEqual(s.step.kind, 'ack');
   assert.strictEqual(E.apply(s, { type: 'reroute' }).ok, false);
   let t = game(2);
@@ -408,8 +470,8 @@ test('1人のときのなかまマスは自分だけ+1', () => {
 test('1回休み: その人の番は「休み」だけで次の人へ', () => {
   let s = game(2);
   s.players[1].skip = 1;
-  place(s, 0, 'a1');
-  s = rollTo(s, 2); // a3（体験）
+  place(s, 0, 'a5');
+  s = rollTo(s, 1); // a6（体験）
   s = ackAll(s);
   assert.strictEqual(s.cur, 1);
   assert.strictEqual(s.step.kind, 'skip');
@@ -456,8 +518,8 @@ test('ゴールした人の番は飛ばす', () => {
   let s = game(3);
   s.players[1].done = true;
   s.players[1].rank = 1;
-  place(s, 0, 'a1');
-  s = rollTo(s, 2);
+  place(s, 0, 'a5');
+  s = rollTo(s, 1); // a6（体験）
   s = ackAll(s);
   assert.strictEqual(s.cur, 2);
 });

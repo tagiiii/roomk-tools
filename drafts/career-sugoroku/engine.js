@@ -40,15 +40,25 @@
   }
 
   // ── 職業と★ ─────────────────────────────────────
+  // ★は、職業に合う3つの適性のうち、いちばん低いもので決まる（3つそろって STAR_LEVELS 以上なら ★2・★3・★4）
   const jobSum = (apt, jobId) => D.JOBS[jobId].apts.reduce((a, k) => a + apt[k], 0);
   function stars(apt, jobId) {
-    const sum = jobSum(apt, jobId);
-    return 1 + D.STAR_STEPS.filter((v) => sum >= v).length;
+    const low = Math.min(...D.JOBS[jobId].apts.map((k) => apt[k]));
+    return 1 + D.STAR_LEVELS.filter((v) => low >= v).length;
   }
-  // ★の多い順（同じなら合計の多い順、その次は番号順）
+  // つぎの★までに足りない適性（lack: [{ a: 適性, n: あといくつ }]）。いちばん上なら null
+  function nextStar(apt, jobId) {
+    const st = stars(apt, jobId);
+    if (st > D.STAR_LEVELS.length) return null;
+    const lv = D.STAR_LEVELS[st - 1];
+    return { to: st + 1, level: lv, lack: D.JOBS[jobId].apts.filter((k) => apt[k] < lv).map((k) => ({ a: k, n: lv - apt[k] })) };
+  }
+  // ★の多い順（同じなら、つぎの★までに足りない数が少ない順、合計の多い順、番号順）
   function jobOptions(apt) {
-    return D.JOBS.map((j) => ({ id: j.id, stars: stars(apt, j.id), sum: jobSum(apt, j.id) }))
-      .sort((a, b) => b.stars - a.stars || b.sum - a.sum || a.id - b.id);
+    return D.JOBS.map((j) => {
+      const nx = nextStar(apt, j.id);
+      return { id: j.id, stars: stars(apt, j.id), sum: jobSum(apt, j.id), need: nx ? nx.lack.reduce((a, x) => a + x.n, 0) : 0 };
+    }).sort((a, b) => b.stars - a.stars || a.need - b.need || b.sum - a.sum || a.id - b.id);
   }
 
   // ── 小さな道具 ───────────────────────────────────
@@ -105,7 +115,7 @@
       const raw = String(names[i] == null ? '' : names[i]).trim().slice(0, 10);
       s.players.push({
         id: i, name: raw || D.PLAYER_COLORS[i].name, color: i,
-        node: 'start', trail: ['start'], apt: [0, 0, 0, 0, 0, 0], job: null, prevJob: null,
+        node: 'start', trail: ['start'], apt: [0, 0, 0, 0, 0, 0], job: null, prevJob: null, goal: null,
         pts: { pay: 0, event: 0, bonus: 0, mini: 0 }, skip: 0, done: false, rank: null, turns: 0,
         lanes: {}, routeNext: {}, paid: [],
       });
@@ -258,6 +268,7 @@
         s.step = { kind: 'job', reason: 'change', keep: p.job != null };
         break;
       case 'mini': startMini(s, p); break;
+      case 'choose': s.step = { kind: 'pick', opts: randomApts(s, 3), reason: 'choose' }; break;
       case 'pay':
         if (D.EXACT_PAY_BONUS && p.job != null && (s.last.paidNow || []).includes(n.id)) {
           const g = D.STAR_PAY[stars(p.apt, p.job) - 1];
@@ -524,8 +535,14 @@
       const p = cur(s);
       if (!s.step.opts.includes(a.a)) return '適性を選んでください';
       const g = addApt(p, a.a);
-      msg(s, { k: 'apt', a: a.a, n: g, reason: s.step.reason });
-      log(s, p.id, `${aptName(a.a)} +${g}`);
+      // えらぶ体験マスは、選んだ適性の体験の文を出す（体験マスと同じ文）
+      let text;
+      if (s.step.reason === 'choose') {
+        const texts = D.EXP_TEXT[deckOf(NODE[p.node]) === 'kid' ? 'kid' : 'youth'][a.a];
+        text = texts[Math.floor(rand(s) * texts.length)];
+      }
+      msg(s, { k: 'apt', a: a.a, n: g, reason: s.step.reason, text });
+      log(s, p.id, `${text ? text + '（' : ''}${aptName(a.a)} +${g}${text ? '）' : ''}`);
       next(s);
       return null;
     },
@@ -639,6 +656,16 @@
       s.settings.labels = action.labels === 'age' ? 'age' : 'school';
       return { ok: true, state: s };
     }
+    // 目標の職業（決めなくてもいい。いつでも変えられる。ルールの計算には使わず、選ぶときの手がかりにだけ使う）
+    if (action.type === 'goal') {
+      if (s.phase !== 'play') return { ok: false, error: 'いまは操作できません' };
+      const q = Number.isInteger(action.pid) ? s.players[action.pid] : null;
+      if (!q) return { ok: false, error: 'その人はいません' };
+      if (action.job !== null && !(Number.isInteger(action.job) && D.JOBS[action.job])) return { ok: false, error: '職業を選んでください' };
+      q.goal = action.job;
+      log(s, q.id, action.job === null ? '目標の職業をやめた' : `目標の職業を${D.JOBS[action.job].name}にした`);
+      return { ok: true, state: s };
+    }
     if (s.phase !== 'play' || !s.step) return { ok: false, error: 'いまは操作できません' };
     const h = HANDLERS[action.type];
     const want = ACCEPTS[action.type];
@@ -653,7 +680,7 @@
     return { ok: true, state: s };
   }
 
-  const api = { newGame, apply, previewMove, stars, jobSum, jobOptions, coopTarget, total, NODE, DIST };
+  const api = { newGame, apply, previewMove, stars, nextStar, jobSum, jobOptions, coopTarget, total, NODE, DIST };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.CS_ENGINE = api;
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -10,9 +10,9 @@ const E = require(path.join(__dirname, '..', 'engine.js'));
 const D = require(path.join(__dirname, '..', 'data.js'));
 
 const GAMES = Number(process.argv[2]) || 3000;
-// 試しに数値を変える: GB=6,4,2,1,0,0 STEPS=3,6,9 node tests/sim.cjs
+// 試しに数値を変える: GB=6,4,2,1,0,0 LEVELS=1,2,3 node tests/sim.cjs
 if (process.env.GB) D.GOAL_BONUS.splice(0, D.GOAL_BONUS.length, ...process.env.GB.split(',').map(Number));
-if (process.env.STEPS) D.STAR_STEPS.splice(0, D.STAR_STEPS.length, ...process.env.STEPS.split(',').map(Number));
+if (process.env.LEVELS) D.STAR_LEVELS.splice(0, D.STAR_LEVELS.length, ...process.env.LEVELS.split(',').map(Number));
 if (process.env.SB) { const [a, b, c, d] = process.env.SB.split(',').map(Number); D.STUDY_BONUS.stop18 = { picks: a, pts: b }; D.STUDY_BONUS.stop22 = { picks: c, pts: d }; }
 if (process.env.PAY) D.STAR_PAY.splice(0, D.STAR_PAY.length, ...process.env.PAY.split(',').map(Number));
 if (process.env.EXACT === '0') D.EXACT_PAY_BONUS = false; // しごとマスにぴったりのボーナスなし（入れる前と比べる）
@@ -65,6 +65,7 @@ function decide(s, pol, rng) {
         if (pv.kind === 'land') {
           if (pv.exactPay) v += D.STAR_PAY[E.stars(p.apt, p.job) - 1];
           else if (n.type === 'exp') v += aptValue(n.apt);
+          else if (n.type === 'choose') v += 1.2; // 3つから選べる
           else if (n.type === 'grow') v += p.job != null ? 1.7 : 0.3;
           else if (n.type === 'friend') v += aptValue(n.apt) + 0.2;
           else if (n.type === 'mini') v += 0.4;
@@ -90,13 +91,14 @@ function decide(s, pol, rng) {
     }
     case 'pick': {
       if (mine.naive) return { type: 'pick', a: st.opts[Math.floor(rng() * st.opts.length)] };
-      // 仕事があれば★につながる適性、なければ今いちばん多い適性（職業を狙う）
+      // 仕事があればその★につながる適性（いちばん低いものを上げる）、なければいちばん★に近い職業を狙う
+      const val = (ap, j) => E.stars(ap, j) * 100 + Math.min(...D.JOBS[j].apts.map((k) => ap[k])) * 10 + E.jobSum(ap, j);
       let best = st.opts[0];
       let bestScore = -1;
       st.opts.forEach((a) => {
         const probe = p.apt.slice();
         probe[a] = Math.min(D.APT_CAP, probe[a] + 1);
-        const score = p.job != null ? E.jobSum(probe, p.job) : E.jobOptions(probe)[0].sum;
+        const score = p.job != null ? val(probe, p.job) : Math.max(...D.JOBS.map((j) => val(probe, j.id)));
         if (score > bestScore) { bestScore = score; best = a; }
       });
       return { type: 'pick', a: best };
