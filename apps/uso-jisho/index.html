@@ -193,6 +193,26 @@
       color: var(--color-muted);
     }
 
+    /* 「意味を知ってる」（ゲスト）と「ことばを変える」（ホスト）の行 */
+    .uj-know {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 8px 12px;
+      margin: -8px 0 20px;
+      text-align: center;
+    }
+    .uj-know__text {
+      margin: 0;
+      font-size: 13px;
+      color: var(--color-muted);
+    }
+    .uj-know__text.is-alert {
+      color: var(--color-warning);
+      font-weight: 700;
+    }
+
     .uj-secret {
       margin-bottom: 20px;
       border: 2px dashed var(--color-border);
@@ -621,6 +641,12 @@
       <div class="uj-word-card__note">こんなことば、きいたことある？</div>
     </div>
 
+    <div class="uj-know">
+      <p class="uj-know__text" id="writing-know-text" hidden></p>
+      <button class="btn btn-secondary btn-sm" id="btn-know" type="button" hidden onclick="toggleKnow()">意味を知ってる</button>
+      <button class="btn btn-secondary btn-sm" id="btn-change-word" type="button" hidden onclick="hostChangeWord()">ことばを変える</button>
+    </div>
+
     <div class="uj-template">
       <div class="uj-template__label">意味は、この形の文</div>
       <div class="uj-template__text" id="writing-template"></div>
@@ -842,7 +868,8 @@
     roomRef: null,
     players: {},
     currentScreen: 'top',
-    renderedRound: 0,
+    renderedWritingKey: '',   // 表示中の writingKeyOf()。変わったら入力欄をリセット
+    changingWord: false,
   };
 
   const esc = RoomkRTDB.esc;
@@ -1352,9 +1379,12 @@
         round: 1,
         wordIndex,
         usedWords: [wordIndex],
+        wordRev: 0,
         entries: null,
+        entryKeys: null,
         choices: null,
         votes: null,
+        knows: null,
       };
     });
     if (!committed && abortReason === 'too_few') {
@@ -1366,10 +1396,7 @@
     if (state.role !== 'host') return;
     await state.roomRef.transaction((room) => {
       if (!room || room.status !== STATUS.WRITING) return;
-      const entries = room.entries || {};
-      const entryList = Object.entries(entries)
-        .filter(([, text]) => typeof text === 'string' && text.trim() !== '')
-        .map(([author, text]) => ({ text, author }));
+      const entryList = currentEntries(room).map(([author, text]) => ({ text, author }));
       if (entryList.length === 0) return;
       const word = WORDS[room.wordIndex] || WORDS[0];
       const choices = shuffle([...entryList, { text: word.fill, author: null }]);
@@ -1414,11 +1441,58 @@
         round: (room.round || 0) + 1,
         wordIndex,
         usedWords: used.length >= WORDS.length ? [wordIndex] : used,
+        wordRev: 0,
         entries: null,
+        entryKeys: null,
         choices: null,
         votes: null,
+        knows: null,
       };
     });
+  }
+
+  // 意味を知っている人がいたときなど、かく途中でお題だけを入れ替える（ラウンド数は変えない）。
+  // 出ていた答えと「知ってる」は前のお題のものなので消す。外したお題は usedWords に残るので、すぐには出ない
+  async function hostChangeWord() {
+    if (state.role !== 'host' || state.changingWord) return;
+    const room = state.lastRoom;
+    if (!room || room.status !== STATUS.WRITING) return;
+    const confirmMessage = 'ことばを変えると、もう出た答えは消えます。変えますか？';
+    const hasEntries = currentEntries(room).length > 0;
+    if (hasEntries && !window.confirm(confirmMessage)) return;
+    let confirmed = hasEntries;
+    state.changingWord = true;
+    document.getElementById('btn-change-word').disabled = true;
+    try {
+      // 確認なしで押したあとに答えが届いていたら、消す前に止めて確認し直す（2回目は確認済みなので止めない）
+      for (let attempt = 0; attempt < 2; attempt += 1) {
+        let needConfirm = false;
+        await state.roomRef.transaction((current) => {
+          needConfirm = false;
+          if (!current || current.status !== STATUS.WRITING) return;
+          if (!confirmed && currentEntries(current).length > 0) {
+            needConfirm = true;
+            return;
+          }
+          const wordIndex = pickWordIndex(current);
+          const used = [...new Set([...(current.usedWords || []), wordIndex])];
+          return {
+            ...current,
+            wordIndex,
+            usedWords: used.length >= WORDS.length ? [wordIndex] : used,
+            wordRev: (current.wordRev || 0) + 1,
+            entries: null,
+            entryKeys: null,
+            knows: null,
+          };
+        });
+        if (!needConfirm || !window.confirm(confirmMessage)) break;
+        confirmed = true;
+      }
+    } finally {
+      state.changingWord = false;
+      document.getElementById('btn-change-word').disabled = false;
+    }
   }
 
   // 終了後の自動削除は「終了時点の ref と deleteAt」を固定して予約する。
@@ -1463,7 +1537,26 @@
       return;
     }
     hideError('entry-error');
-    await state.roomRef.child(`entries/${state.nickname}`).set(text);
+    const room = state.lastRoom;
+    if (!room || room.status !== STATUS.WRITING) return;
+    await state.roomRef.update({
+      [`entries/${state.nickname}`]: text,
+      [`entryKeys/${state.nickname}`]: writingKeyOf(room),
+    });
+  }
+
+  // 「意味を知ってる」は knows/{nickname} に押したときの writingKeyOf() を入れる。
+  // お題が変わった直後に届いた古い書き込みは、キーがちがうので数えない
+  async function toggleKnow() {
+    const room = state.lastRoom;
+    if (state.role !== 'guest' || !room || room.status !== STATUS.WRITING) return;
+    const ref = state.roomRef.child(`knows/${state.nickname}`);
+    const key = writingKeyOf(room);
+    if ((room.knows || {})[state.nickname] === key) {
+      await ref.remove();
+    } else {
+      await ref.set(key);
+    }
   }
 
   async function submitVote(index) {
@@ -1566,12 +1659,63 @@
     document.getElementById('host-secret').removeAttribute('open');
   }
 
+  // 「ラウンド:お題番号:ことばを変えた回数」。変えた回数を入れるので、同じラウンドでお題が一巡して
+  // 同じことばに戻っても、前に出た答え・「知ってる」とは区別できる
+  function writingKeyOf(room) {
+    return `${room.round || 1}:${room.wordIndex}:${room.wordRev || 0}`;
+  }
+
+  // 今のお題への答えだけを [名前, 答え] で返す。entryKeys は答えと同時に書く writingKeyOf()。
+  // ホストがことばを変えたのと同時に出した答えは、変えたあとに届いても番号がちがうので数えない。
+  // entryKeys がない答え（公開前から開いていた古い画面が出したもの）は従来どおり今の答えとして扱う
+  function currentEntries(room) {
+    const keys = room.entryKeys || {};
+    const key = writingKeyOf(room);
+    return Object.entries(room.entries || {})
+      .filter(([name, text]) => typeof text === 'string' && text.trim() !== ''
+        && (keys[name] == null || keys[name] === key));
+  }
+
+  function getKnowers(room) {
+    const knows = room.knows || {};
+    const key = writingKeyOf(room);
+    return getGuestNames(room.players).filter((name) => knows[name] === key);
+  }
+
+  function renderKnowRow(room) {
+    const text = document.getElementById('writing-know-text');
+    const knowBtn = document.getElementById('btn-know');
+    const changeBtn = document.getElementById('btn-change-word');
+    const knowers = getKnowers(room);
+
+    if (state.role === 'host') {
+      knowBtn.hidden = true;
+      changeBtn.hidden = false;
+      text.hidden = knowers.length === 0;
+      text.classList.add('is-alert');
+      text.textContent = `意味を知ってる人：${knowers.join('、')}`;
+      return;
+    }
+
+    changeBtn.hidden = true;
+    knowBtn.hidden = false;
+    const iKnow = knowers.includes(state.nickname);
+    knowBtn.textContent = iKnow ? '取り消す' : '意味を知ってる';
+    text.classList.remove('is-alert');
+    text.hidden = !iKnow;
+    text.textContent = 'ホストに伝えました';
+  }
+
   function handleWriting(room) {
     if (state.currentScreen !== 'writing') showScreen('writing');
-    if (state.renderedRound !== room.round) {
-      state.renderedRound = room.round;
+    const writingKey = writingKeyOf(room);
+    if (state.renderedWritingKey !== writingKey) {
+      const sameRound = state.renderedWritingKey.split(':')[0] === String(room.round || 1);
+      if (sameRound && state.role === 'guest') RoomkRTDB.showToast('ことばが変わりました', false);
+      state.renderedWritingKey = writingKey;
       resetWritingUI();
     }
+    renderKnowRow(room);
 
     const word = WORDS[room.wordIndex] || WORDS[0];
     document.getElementById('writing-round-num').textContent = room.round || 1;
@@ -1579,15 +1723,15 @@
     document.getElementById('writing-kana').textContent = word.kana;
     document.getElementById('writing-template').innerHTML = blankTemplateHtml(word);
 
-    const entries = room.entries || {};
+    const entries = Object.fromEntries(currentEntries(room));
     const guests = getGuestNames(room.players);
-    const submittedCount = guests.filter((name) => typeof entries[name] === 'string' && entries[name].trim() !== '').length;
-    const entryCount = Object.values(entries).filter((text) => typeof text === 'string' && text.trim() !== '').length;
+    const submittedCount = guests.filter((name) => entries[name] != null).length;
+    const entryCount = Object.keys(entries).length;
 
     const chips = document.getElementById('writing-chips');
     chips.innerHTML = '';
     guests.forEach((name) => {
-      const done = typeof entries[name] === 'string' && entries[name].trim() !== '';
+      const done = entries[name] != null;
       const icon = done ? 'check_circle' : 'edit';
       chips.innerHTML += [
         `<span class="uj-chip ${done ? 'is-done' : ''}">`,
@@ -1626,7 +1770,7 @@
 
     secret.style.display = 'none';
     hostActions.style.display = 'none';
-    const mySubmitted = typeof entries[state.nickname] === 'string' && entries[state.nickname].trim() !== '';
+    const mySubmitted = entries[state.nickname] != null;
     inputArea.style.display = mySubmitted ? 'none' : 'block';
     submittedArea.style.display = mySubmitted ? 'block' : 'none';
     if (!mySubmitted) updateEntryPreview();
@@ -1798,7 +1942,8 @@
       players: {},
       lastRoom: null,
       currentScreen: 'top',
-      renderedRound: 0,
+      renderedWritingKey: '',
+      changingWord: false,
     });
 
     document.getElementById('host-nickname').value = '';
@@ -1845,6 +1990,7 @@
         items: [
           'めずらしいことばと「？？？な動物のこと。」のような意味の文の形が出てくる',
           '？？？に入ることばをでっちあげて書いて「だす」を押す（文の形はみんなおなじになるよ）',
+          '本当の意味を知っていたら「意味を知ってる」を押す。ホストが「ことばを変える」で別のことばにできる',
           '本物とみんなのうそがまざって出てくるので、本物だとおもうものに「投票する」を押す',
           '本物を当てたら+2ポイント、自分のうそに1票入るごとに+1ポイント',
           '結果を見たら、ホストが「つぎへ」を押すと次のことばであそべる',
