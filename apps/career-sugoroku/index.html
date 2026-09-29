@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+  <title>キャリアすごろく | room-K</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet" />
+  <link rel="stylesheet" href="../shared/css/design-system.css" />
+  <link rel="stylesheet" href="style.css?v=20260929a" />
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+  <script src="../shared/js/rtdb-utils.js?v=20260910"></script>
+</head>
+<body>
+  <!-- トップ -->
+  <main id="cs-top" class="cs-setup">
+    <section class="cs-panel" aria-labelledby="cs-title">
+      <h1 id="cs-title" class="cs-panel__title">キャリアすごろく</h1>
+      <p class="cs-panel__lead">子どものころから、おとなになるまでを、すごろくで進むゲーム。いろいろな体験で「適性」をため、しごとの道に進むときに、たまった適性に合う職業を選ぼう。適性に合う職業ほど、しごとマスでもらえるポイントが多い。ゴールしたとき、ポイントがいちばん多い人の勝ち（1番にゴールするとボーナスもある）。</p>
+      <ul class="cs-panel__notes">
+        <li>ひとりひとりの端末で遊ぶときは「ルームを作る」「ルームに参加する」。1台の画面をみんなで見て遊ぶときは「1台の画面であそぶ」。目安は4人で30分くらい</li>
+        <li>ポイントはゲームの中のもの。本当の向き・不向きとは関係ない</li>
+        <li>分かれ道や職業で迷ったら、みんなに相談してOK</li>
+      </ul>
+      <div class="cs-panel__actions">
+        <button id="cs-go-create" class="cs-btn cs-btn--primary cs-btn--full cs-btn--lg" type="button">
+          <span class="material-symbols-rounded" aria-hidden="true">add_home</span>ルームを作る
+        </button>
+        <button id="cs-go-join" class="cs-btn cs-btn--secondary cs-btn--full" type="button">
+          <span class="material-symbols-rounded" aria-hidden="true">login</span>ルームに参加する
+        </button>
+        <button id="cs-go-local" class="cs-btn cs-btn--secondary cs-btn--full" type="button">
+          <span class="material-symbols-rounded" aria-hidden="true">tv</span>1台の画面であそぶ
+        </button>
+        <button id="cs-howto-top" class="cs-quiet" type="button">あそびかた</button>
+      </div>
+    </section>
+  </main>
+
+  <!-- 1台の画面であそぶ -->
+  <main id="cs-setup" class="cs-setup" hidden>
+    <section class="cs-panel" aria-labelledby="cs-setup-title">
+      <div class="cs-subhead"><button class="cs-quiet cs-back" type="button" data-go-top>トップへ戻る</button></div>
+      <h2 id="cs-setup-title" class="cs-panel__title cs-panel__title--sub">1台の画面であそぶ</h2>
+      <p class="cs-panel__lead">1台の画面をみんなで見て遊ぶ。押すのは画面を動かす人（メンター）。</p>
+
+      <fieldset class="cs-field">
+        <legend class="cs-field__label">あそぶ人数</legend>
+        <div id="cs-count" class="cs-seg" role="group" aria-label="あそぶ人数"></div>
+      </fieldset>
+      <div id="cs-names" class="cs-names"></div>
+
+      <fieldset class="cs-field">
+        <legend class="cs-field__label">サイコロ</legend>
+        <div class="cs-radio">
+          <label class="cs-radio__item"><input type="radio" name="cs-dice" value="2" checked /> <span>2つ振って、進む目を選ぶ（作戦あり）</span></label>
+          <label class="cs-radio__item"><input type="radio" name="cs-dice" value="1" /> <span>1つだけ振る（運まかせ）</span></label>
+        </div>
+      </fieldset>
+
+      <fieldset class="cs-field">
+        <legend class="cs-field__label">ステージの表示</legend>
+        <div class="cs-radio">
+          <label class="cs-radio__item"><input type="radio" name="cs-labels" value="school" checked /> <span>学校名（小学生・中学生・高校…）</span></label>
+          <label class="cs-radio__item"><input type="radio" name="cs-labels" value="age" /> <span>年齢だけ（6〜12さい・13〜15さい…）</span></label>
+        </div>
+      </fieldset>
+
+      <div class="cs-panel__actions">
+        <button id="cs-resume" class="cs-btn cs-btn--secondary cs-btn--full" type="button" hidden>
+          <span class="material-symbols-rounded" aria-hidden="true">history</span>つづきから
+        </button>
+        <button id="cs-start" class="cs-btn cs-btn--primary cs-btn--full cs-btn--lg" type="button">
+          <span class="material-symbols-rounded" aria-hidden="true">play_arrow</span>はじめる
+        </button>
+      </div>
+      <p class="cs-panel__foot">遊んだ内容はこのタブの中だけに残り、タブを閉じると消えます。</p>
+    </section>
+  </main>
+
+  <!-- ルームを作る -->
+  <main id="cs-create" class="cs-setup" hidden>
+    <section class="cs-panel" aria-labelledby="cs-create-title">
+      <div class="cs-subhead"><button class="cs-quiet cs-back" type="button" data-go-top>トップへ戻る</button></div>
+      <h2 id="cs-create-title" class="cs-panel__title cs-panel__title--sub">ルームを作る</h2>
+      <label class="cs-form__label" for="cs-host-name">ホストの名前（8文字まで）</label>
+      <input id="cs-host-name" class="cs-form__input" type="text" maxlength="8" autocomplete="nickname" />
+      <label class="cs-check" for="cs-host-plays">
+        <input type="checkbox" id="cs-host-plays" />
+        <span>ホストも遊ぶ</span>
+      </label>
+      <p class="cs-form__hint">ホストは、端末のない人や、つながらなくなった人の代わりに押せる。ホストも遊ぶときはチェックを入れてね。</p>
+
+      <fieldset class="cs-field">
+        <legend class="cs-field__label">サイコロ</legend>
+        <div class="cs-radio">
+          <label class="cs-radio__item"><input type="radio" name="cs-room-dice" value="2" checked /> <span>2つ振って、進む目を選ぶ（作戦あり）</span></label>
+          <label class="cs-radio__item"><input type="radio" name="cs-room-dice" value="1" /> <span>1つだけ振る（運まかせ）</span></label>
+        </div>
+      </fieldset>
+      <fieldset class="cs-field">
+        <legend class="cs-field__label">ステージの表示</legend>
+        <div class="cs-radio">
+          <label class="cs-radio__item"><input type="radio" name="cs-room-labels" value="school" checked /> <span>学校名（小学生・中学生・高校…）</span></label>
+          <label class="cs-radio__item"><input type="radio" name="cs-room-labels" value="age" /> <span>年齢だけ（6〜12さい・13〜15さい…）</span></label>
+        </div>
+      </fieldset>
+      <p id="cs-create-error" class="cs-form__error" role="alert" hidden></p>
+      <div class="cs-panel__actions">
+        <button id="cs-create-room" class="cs-btn cs-btn--primary cs-btn--full cs-btn--lg" type="button">
+          <span class="material-symbols-rounded" aria-hidden="true">add_home</span>ルームを作る
+        </button>
+      </div>
+    </section>
+  </main>
+
+  <!-- ルームに参加する -->
+  <main id="cs-join" class="cs-setup" hidden>
+    <section class="cs-panel" aria-labelledby="cs-join-title">
+      <div class="cs-subhead"><button class="cs-quiet cs-back" type="button" data-go-top>トップへ戻る</button></div>
+      <h2 id="cs-join-title" class="cs-panel__title cs-panel__title--sub">ルームに参加する</h2>
+      <label class="cs-form__label" for="cs-join-name">名前（8文字まで）</label>
+      <input id="cs-join-name" class="cs-form__input" type="text" maxlength="8" autocomplete="nickname" />
+      <label class="cs-form__label" for="cs-join-code">ルームコード（6文字）</label>
+      <input id="cs-join-code" class="cs-form__input cs-form__input--code" type="text" maxlength="6" autocomplete="off" autocapitalize="characters" spellcheck="false" inputmode="latin" />
+      <p id="cs-join-error" class="cs-form__error" role="alert" hidden></p>
+      <div class="cs-panel__actions">
+        <button id="cs-join-room" class="cs-btn cs-btn--primary cs-btn--full cs-btn--lg" type="button">
+          <span class="material-symbols-rounded" aria-hidden="true">login</span>参加する
+        </button>
+      </div>
+    </section>
+  </main>
+
+  <!-- 待合室 -->
+  <main id="cs-lobby" class="cs-setup" hidden>
+    <section class="cs-panel" aria-labelledby="cs-lobby-title">
+      <h2 id="cs-lobby-title" class="cs-panel__title cs-panel__title--sub">待合室</h2>
+      <div class="cs-code">
+        <span class="cs-code__label">ルームコード</span>
+        <b id="cs-lobby-code" class="cs-code__value"></b>
+        <button id="cs-copy-code" class="cs-btn cs-btn--secondary cs-btn--sm" type="button"><span class="material-symbols-rounded" aria-hidden="true">content_copy</span>コードをコピー</button>
+      </div>
+      <p id="cs-lobby-host" class="cs-card__sub"></p>
+      <h3 class="cs-field__label">あそぶ人</h3>
+      <ul id="cs-seats" class="cs-seats"></ul>
+      <div id="cs-proxy-box" class="cs-proxy" hidden>
+        <label class="cs-form__label" for="cs-proxy-name">端末のない人を追加（8文字まで。その人の番はホストが押す）</label>
+        <div class="cs-proxy__row">
+          <input id="cs-proxy-name" class="cs-form__input" type="text" maxlength="8" autocomplete="off" />
+          <button id="cs-proxy-add" class="cs-btn cs-btn--secondary" type="button">追加</button>
+        </div>
+        <p id="cs-proxy-error" class="cs-form__error" role="alert" hidden></p>
+      </div>
+      <p id="cs-lobby-settings" class="cs-card__sub"></p>
+      <p id="cs-lobby-wait" class="cs-lobby__wait" hidden>ホストがはじめるのをまっています</p>
+      <div class="cs-panel__actions">
+        <button id="cs-room-start" class="cs-btn cs-btn--primary cs-btn--full cs-btn--lg" type="button" hidden>
+          <span class="material-symbols-rounded" aria-hidden="true">play_arrow</span>はじめる
+        </button>
+        <button id="cs-lobby-leave" class="cs-quiet" type="button">退出する</button>
+        <button id="cs-lobby-close" class="cs-quiet cs-quiet--danger" type="button" hidden>ルームを閉じる</button>
+      </div>
+    </section>
+  </main>
+
+  <!-- あそぶ画面 -->
+  <div id="cs-play" class="cs-play" hidden>
+    <header class="cs-bar">
+      <h1 id="cs-play-title" class="cs-bar__title" tabindex="-1">キャリアすごろく<span id="cs-bar-code" class="cs-bar__badge" hidden></span></h1>
+      <nav class="cs-bar__nav" aria-label="メニュー">
+        <button id="cs-open-book" class="cs-bar__btn" type="button" aria-label="しごと図鑑"><span class="material-symbols-rounded" aria-hidden="true">menu_book</span><span>しごと図鑑</span></button>
+        <button id="cs-open-log" class="cs-bar__btn" type="button" aria-label="できごと"><span class="material-symbols-rounded" aria-hidden="true">history</span><span>できごと</span></button>
+        <button id="cs-open-howto" class="cs-bar__btn" type="button" aria-label="あそびかた"><span class="material-symbols-rounded" aria-hidden="true">help</span><span>あそびかた</span></button>
+        <button id="cs-open-menu" class="cs-bar__btn" type="button" aria-label="メニュー"><span class="material-symbols-rounded" aria-hidden="true">menu</span><span>メニュー</span></button>
+      </nav>
+    </header>
+    <p id="cs-banner" class="cs-banner" role="status" hidden></p>
+    <div class="cs-main">
+      <section class="cs-board" aria-label="すごろくの盤面">
+        <div class="cs-board__scroll">
+          <svg id="cs-svg" class="cs-board__svg" viewBox="0 0 1000 620" role="img" aria-label="すごろくの盤面"></svg>
+        </div>
+        <div id="cs-card-layer" class="cs-card-layer" hidden>
+          <div id="cs-card" class="cs-card" role="dialog" aria-modal="false" aria-labelledby="cs-card-title"></div>
+        </div>
+      </section>
+      <aside class="cs-side" aria-label="手番とプレイヤー">
+        <div id="cs-turn" class="cs-turn"></div>
+        <h2 class="cs-side__head">プレイヤー<span class="cs-side__hint">名前を押すと手帳が開く</span></h2>
+        <ul id="cs-players" class="cs-players"></ul>
+      </aside>
+    </div>
+  </div>
+
+  <!-- 結果の画面 -->
+  <main id="cs-results" class="cs-results" hidden>
+    <section class="cs-results__inner" aria-labelledby="cs-results-title">
+      <h1 id="cs-results-title" class="cs-results__title" tabindex="-1">結果発表</h1>
+      <p class="cs-results__note">ポイントはゲームの中のもの。本当の向き・不向きとは関係ありません。</p>
+      <ol id="cs-rank" class="cs-rank"></ol>
+      <p id="cs-results-wait" class="cs-lobby__wait" hidden>ホストがもう一度はじめるのをまっています</p>
+      <div class="cs-results__actions">
+        <button id="cs-again" class="cs-btn cs-btn--primary cs-btn--lg" type="button"><span class="material-symbols-rounded" aria-hidden="true">replay</span>同じメンバーでもう一度</button>
+        <button id="cs-to-top" class="cs-quiet" type="button">トップへ戻る</button>
+      </div>
+    </section>
+  </main>
+
+  <!-- 手帳・できごと・あそびかた・メニュー（重ねて開く画面） -->
+  <div id="cs-modal" class="cs-modal" hidden>
+    <div class="cs-modal__box" role="dialog" aria-modal="true" aria-labelledby="cs-modal-title">
+      <div class="cs-modal__head">
+        <h2 id="cs-modal-title" class="cs-modal__title"></h2>
+        <button id="cs-modal-close" class="cs-modal__close" type="button" aria-label="閉じる"><span class="material-symbols-rounded" aria-hidden="true">close</span></button>
+      </div>
+      <div id="cs-modal-body" class="cs-modal__body"></div>
+    </div>
+  </div>
+
+  <!-- つないでいるあいだ -->
+  <div id="cs-overlay" class="cs-overlay" hidden>
+    <div class="cs-overlay__box" role="status" aria-live="polite">
+      <span class="material-symbols-rounded cs-overlay__icon" aria-hidden="true">wifi</span>
+      <p id="cs-overlay-text">つないでいます…</p>
+      <button id="cs-overlay-cancel" class="cs-quiet" type="button" hidden>トップへ戻る</button>
+    </div>
+  </div>
+
+  <div id="cs-live" class="cs-sr" aria-live="polite"></div>
+
+  <!-- ?v= は変更のたびに上げる（古いファイルが使われるのを防ぐ） -->
+  <script src="data.js?v=20260929a"></script>
+  <script src="engine.js?v=20260929a"></script>
+  <script src="text.js?v=20260929a"></script>
+  <script src="room.js?v=20260929a"></script>
+  <script src="net.js?v=20260929a"></script>
+  <script src="ui.js?v=20260929a"></script>
+  <script src="../shared/js/stats.js?v=1" defer></script>
+  <script src="../shared/js/howto.js"></script>
+  <script>
+    RoomkHowto.init({
+      title: 'あそびかた',
+      lead: 'すごろくで進みながら体験で「適性」をため、たまった適性に合う職業を選んでポイントを集めるゲームだよ。ポイントはゲームの中のもの。',
+      sections: [
+        { heading: 'はじめかた', items: [
+          'ホストが「ルームを作る」を押して、ルームコードを伝える',
+          'ほかの人は「ルームに参加する」を押し、名前 → ルームコードの順に入れて「参加する」',
+          '端末がない人は、ホストが待合室の「端末のない人を追加」に名前を入れて「追加」。その人の番はホストが押す',
+          '1台の画面をみんなで見て遊ぶときは「1台の画面であそぶ」',
+        ] },
+        { heading: 'すすめかた', items: [
+          '自分の番に「サイコロをふる」を押して進み、止まったマスのカードで選ぶ',
+          'ミニゲームは、自分の端末で自分の答えを押す',
+          'ゴールしたとき、ポイントがいちばん多い人の勝ち',
+        ] },
+        { heading: 'くわしく', text: 'マスの種類や、しごとマスのポイントの決まり方は、画面の上の「あそびかた」で見られるよ。' },
+      ],
+    });
+  </script>
+</body>
+</html>

@@ -189,6 +189,8 @@ const COVERED_APPS = [
   'kotoba-pair', 'toomawashi', 'kotoba-theme',
   // 2026-09-28 追加
   'oekaki-dengon',
+  // 2026-09-29 追加（v2。ルーム対応）
+  'career-sugoroku',
 ];
 
 // 数えられるコンテンツを持たないため重複検査の対象外にするアプリ（意図的除外）。
@@ -211,7 +213,10 @@ const NON_APP_DIRS = ['shared', 'ito', 'iisen-show', 'hint-de-pinto', 'codenames
 //   intraAppExactMatches として「要確認」に分類する（knownCodenamesDuplicates と同型の考え方）。
 //   下記は、同一アプリ内で重複していても意図的と確認済みの正規化テキストを明示する枠
 //   （現状は空。必要になったら normalize() 済み文字列を追加する）。
-const INTENTIONAL_INTRA_APP_DUPLICATES = [];
+const INTENTIONAL_INTRA_APP_DUPLICATES = [
+  // career-sugoroku: 10代（youth）とおとな（adult）のイベントの山札に同じ「チャンスが来た」（もう1回サイコロ）を置いている
+  'ちゃんすが来た',
+];
 
 // 統制語彙: 同一アプリ内で「同じ種類(variant)」の反復が設計どおりで、重複として
 // 要確認にしないもの。キーは `tool::variant`。
@@ -430,6 +435,26 @@ function collectEntries() {
   oekakiPrompts.forEach((text, index) => rows.push(entry('oekaki-dengon', 'prompt', text, {
     id: `oekaki-dengon:${index}`,
   })));
+
+  // career-sugoroku: data.js（ブラウザでは window.CS_DATA、Node では module.exports）。
+  //   職業の名前と説明・イベントカードの文・「みんなで決める」の選択肢・体験マスの文・成長マスの文を抽出する
+  const careerContext = { module: { exports: {} } };
+  vm.runInNewContext(read('apps/career-sugoroku/data.js'), careerContext, { filename: 'apps/career-sugoroku/data.js' });
+  const careerData = careerContext.module.exports || {};
+  (careerData.JOBS || []).forEach((job) => {
+    rows.push(entry('career-sugoroku', 'job', job.name, { id: `career-sugoroku:job:${job.id}`, variant: 'job' }));
+    rows.push(entry('career-sugoroku', 'job-desc', job.desc, { id: `career-sugoroku:job-desc:${job.id}`, variant: 'job-desc' }));
+  });
+  Object.entries(careerData.DECKS || {}).forEach(([deck, cards]) => (cards || []).forEach((card, i) => {
+    rows.push(entry('career-sugoroku', 'event', card.text, { id: `career-sugoroku:event:${deck}:${i}`, variant: 'event' }));
+    ((card.e && card.e.opts) || []).forEach((o, j) => rows.push(entry('career-sugoroku', 'vote-opt', o.label, {
+      id: `career-sugoroku:vote-opt:${deck}:${i}:${j}`, variant: 'vote-opt',
+    })));
+  }));
+  Object.entries(careerData.EXP_TEXT || {}).forEach(([group, byApt]) => (byApt || []).forEach((texts, a) => (texts || []).forEach((text, j) => {
+    rows.push(entry('career-sugoroku', 'exp', text, { id: `career-sugoroku:exp:${group}:${a}:${j}`, variant: 'exp' }));
+  })));
+  (careerData.GROW_TEXT || []).forEach((text, i) => rows.push(entry('career-sugoroku', 'grow', text, { id: `career-sugoroku:grow:${i}`, variant: 'grow' })));
 
   // ikutsu-ieru: themes.js の window.IKUTSU_THEMES = [ '文字列', ... ]
   const ikutsuThemes = evalWindowArrayFromSource(read('apps/ikutsu-ieru/themes.js'), 'IKUTSU_THEMES', 'apps/ikutsu-ieru/themes.js') || [];
