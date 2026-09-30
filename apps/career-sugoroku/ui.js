@@ -1405,7 +1405,13 @@
   // ── ルーム（各自の端末） ───────────────────────────────
   const formError = (id, msg) => window.RoomkRTDB.showFormError(id, msg);
   const radio = (name) => (document.querySelector(`input[name="${name}"]:checked`) || {}).value;
-  const normCode = (v) => String(v || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6);
+  // ルームコード: 日本語入力のまま打った全角の英数字は半角に、小文字は大文字にそろえて読む。
+  // 入力欄は打っている間に書き換えない（変換中に書き換えると文字が重なり、ローマ字が入らなくなる）
+  const normCode = (v) => String(v || '').normalize('NFKC').replace(/\s+/g, '').toUpperCase();
+  // ひらがななど半角にできない文字が残ったら、日本語入力の切り替え方を案内する
+  const roomCodeImeError = (code) => (/[^\x00-\x7F]/.test(code)
+    ? 'ルームコードはアルファベットと数字で入れてね。ひらがなになるときは、キーボードを英字に切り替えてね（「半角/全角」キー、Macは「英数」キー）'
+    : '');
   function overlay(text) {
     $('cs-overlay').hidden = !text;
     if (text) $('cs-overlay-text').textContent = text;
@@ -1494,8 +1500,9 @@
     }
     const code = normCode($('cs-join-code').value);
     $('cs-join-code').value = code;
-    if (!NET.validCode(code)) {
-      formError('cs-join-error', 'ルームコード（6文字）を入れてね');
+    const imeErr = roomCodeImeError(code);
+    if (imeErr || !NET.validCode(code)) {
+      formError('cs-join-error', imeErr || 'ルームコード（6文字）を入れてね');
       $('cs-join-code').focus();
       return;
     }
@@ -1847,7 +1854,6 @@
   $('cs-join-room').addEventListener('click', onJoin);
   ['cs-join-name', 'cs-join-code'].forEach((id) => $(id).addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); $('cs-join-room').click(); } }));
   $('cs-host-name').addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); $('cs-create-room').click(); } });
-  $('cs-join-code').addEventListener('input', (e) => { const v = normCode(e.target.value); if (v !== e.target.value) e.target.value = v; });
   $('cs-copy-code').addEventListener('click', (e) => window.RoomkRTDB.copyRoomCode(sess && sess.code, e.currentTarget));
   $('cs-proxy-add').addEventListener('click', onProxyAdd);
   $('cs-proxy-name').addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); $('cs-proxy-add').click(); } });

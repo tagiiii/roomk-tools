@@ -352,12 +352,29 @@ async function createRoom() {
   }
 }
 
+// ルームコード: 日本語入力のまま打った全角の英数字は半角に、小文字は大文字にそろえて読む。
+// 入力欄は打っている間に書き換えない（変換中に書き換えると文字が重なり、ローマ字が入らなくなる）
+function normalizeRoomCode(raw) {
+  return String(raw || '').normalize('NFKC').replace(/\s+/g, '').toUpperCase();
+}
+// ひらがななど半角にできない文字が残ったら、日本語入力の切り替え方を案内する
+function roomCodeImeError(code) {
+  return /[^\x00-\x7F]/.test(code)
+    ? 'ルームコードはアルファベットと数字で入れてね。ひらがなになるときは、キーボードを英字に切り替えてね（「半角/全角」キー、Macは「英数」キー）'
+    : '';
+}
+
 async function joinRoom() {
   if (state.busy) return;
   const nickname = $('guestName').value.trim();
-  const code = $('joinCode').value.trim().toUpperCase();
+  const code = normalizeRoomCode($('joinCode').value);
   const error = validNickname(nickname);
   if (error) { setError('joinError', error); return; }
+  const imeError = roomCodeImeError(code);
+  if (imeError) {
+    setError('joinError', imeError);
+    return;
+  }
   if (!/^[A-HJ-NP-Z2-9]{6}$/.test(code)) {
     setError('joinError', 'ルームコードは6文字で入れてね');
     return;

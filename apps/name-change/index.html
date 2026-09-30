@@ -187,7 +187,7 @@
     </div>
     <div class="form-group">
       <label class="form-label" for="guest-code">ルームコード（6文字）</label>
-      <input id="guest-code" class="form-input" type="text" maxlength="6" placeholder="例：ABCDEF"
+      <input id="guest-code" class="form-input" type="text" maxlength="6" autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="例：ABCDEF"
         style="text-transform:uppercase;letter-spacing:.15em;font-size:1.2rem;text-align:center;">
     </div>
     <p id="join-form-error" class="alert alert-error" role="alert" hidden></p>
@@ -690,15 +690,29 @@ async function hostCreateRoom() {
   } catch(e) { toast('エラー: ' + e.message); if (btn) btn.disabled = false; }
 }
 
+// ルームコード: 日本語入力のまま打った全角の英数字は半角に、小文字は大文字にそろえて読む。
+// 入力欄は打っている間に書き換えない（変換中に書き換えると文字が重なり、ローマ字が入らなくなる）
+function normalizeRoomCode(raw) {
+  return String(raw || '').normalize('NFKC').replace(/\s+/g, '').toUpperCase();
+}
+// ひらがななど半角にできない文字が残ったら、日本語入力の切り替え方を案内する
+function roomCodeImeError(code) {
+  return /[^\x00-\x7F]/.test(code)
+    ? 'ルームコードはアルファベットと数字で入力してください。ひらがなになるときは、キーボードを英字に切り替えてください（「半角/全角」キー、Macは「英数」キー）'
+    : '';
+}
+
 // ===== Guest: Join =====
 async function guestJoin() {
   const reportJoinError = message => RoomkRTDB.showFormError('join-form-error', message);
   reportJoinError('');
-  const code = document.getElementById('guest-code').value.trim().toUpperCase();
+  const code = normalizeRoomCode(document.getElementById('guest-code').value);
   const nick = document.getElementById('guest-nickname').value.trim();
   if (!nick)          { reportJoinError('元の名前を入力してください'); return; }
   if (nick.length > 12) { reportJoinError('12文字以内で入力してください'); return; }
   if (!validNick(nick, 12)) { reportJoinError('名前に使えない文字があります'); return; }
+  const imeErr = roomCodeImeError(code);
+  if (imeErr) { reportJoinError(imeErr); return; }
   if (!/^[A-Z0-9]{6}$/.test(code)) { reportJoinError('6文字の英数字コードを入力してください'); return; }
 
   const btn = (typeof event !== 'undefined' && event?.target?.closest('button')) || null;

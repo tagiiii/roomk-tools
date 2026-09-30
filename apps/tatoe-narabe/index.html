@@ -469,11 +469,10 @@
         <input
           type="text"
           id="guest-code"
-          maxlength="6"
+          maxlength="6" autocomplete="off" autocorrect="off" spellcheck="false"
           placeholder="例：AB3XYZ"
           autocapitalize="characters"
           style="width:100%; padding:12px 14px; border:1px solid var(--color-border); border-radius:10px; font-size:24px; font-weight:700; letter-spacing:0.2em; text-align:center; font-family:var(--font-base); box-sizing:border-box; text-transform:uppercase;"
-          oninput="this.value=this.value.toUpperCase()"
         >
 
         <button class="btn btn-primary btn-full" style="margin-top:16px;" onclick="joinRoom()">
@@ -1179,17 +1178,31 @@
       }
     }
 
+    // ルームコード: 日本語入力のまま打った全角の英数字は半角に、小文字は大文字にそろえて読む。
+    // 入力欄は打っている間に書き換えない（変換中に書き換えると文字が重なり、ローマ字が入らなくなる）
+    function normalizeRoomCode(raw) {
+      return String(raw || "").normalize("NFKC").replace(/\s+/g, "").toUpperCase();
+    }
+    // ひらがななど半角にできない文字が残ったら、日本語入力の切り替え方を案内する
+    function roomCodeImeError(code) {
+      return /[^\x00-\x7F]/.test(code)
+        ? "ルームコードはアルファベットと数字で入力してください。ひらがなになるときは、キーボードを英字に切り替えてください（「半角/全角」キー、Macは「英数」キー）"
+        : "";
+    }
+
     async function joinRoom() {
       hideError("guest-error");
       const codeInput = document.getElementById("guest-code");
       const nickInput = document.getElementById("guest-nick");
-      const roomCode = codeInput ? codeInput.value.trim().toUpperCase() : "";
+      const roomCode = codeInput ? normalizeRoomCode(codeInput.value) : "";
       const nick = nickInput ? nickInput.value.trim() : "";
 
       const nickError = validateNickname(nick);
       if (nickError) { showError("guest-error", nickError); return; }
       if (!roomCode) { showError("guest-error", "ルームコードを入力してください"); return; }
-      if (roomCode.length !== 6) { showError("guest-error", "ルームコードは6文字です"); return; }
+      const imeErr = roomCodeImeError(roomCode);
+      if (imeErr) { showError("guest-error", imeErr); return; }
+      if (!/^[A-Z0-9]{6}$/.test(roomCode)) { showError("guest-error", "ルームコードは6文字です"); return; }
 
       try {
         await authReady;

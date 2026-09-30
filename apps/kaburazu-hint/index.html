@@ -281,8 +281,7 @@
       <label class="form-label" for="guest-nickname">ニックネーム</label>
       <input type="text" id="guest-nickname" class="form-input" maxlength="8" placeholder="8文字以内">
       <label class="form-label" style="margin-top:16px" for="guest-code">ルームコード（6文字）</label>
-      <input type="text" id="guest-code" class="form-input kbz-code-input" maxlength="6" placeholder="6文字のコード"
-             oninput="this.value=this.value.toUpperCase()">
+      <input type="text" id="guest-code" class="form-input kbz-code-input" maxlength="6" autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="6文字のコード">
       <div class="error-msg" id="guest-error"></div>
     </div>
     <button class="btn btn-primary btn-full" onclick="guestJoin()">
@@ -300,8 +299,7 @@
     <p class="kbz-page-sub">ルームコードを入れると、みんなで見られる画面がひらきます</p>
     <div class="card">
       <label class="form-label" for="spectate-code">ルームコード（6文字）</label>
-      <input type="text" id="spectate-code" class="form-input kbz-code-input" maxlength="6" placeholder="6文字のコード"
-             oninput="this.value=this.value.toUpperCase()">
+      <input type="text" id="spectate-code" class="form-input kbz-code-input" maxlength="6" autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="6文字のコード">
       <div class="error-msg" id="spectate-error"></div>
     </div>
     <button class="btn btn-primary btn-full" onclick="spectateJoin()">
@@ -970,14 +968,28 @@ async function hostCreate() {
   startRoomListener();
 }
 
+// ルームコード: 日本語入力のまま打った全角の英数字は半角に、小文字は大文字にそろえて読む。
+// 入力欄は打っている間に書き換えない（変換中に書き換えると文字が重なり、ローマ字が入らなくなる）
+function normalizeRoomCode(raw) {
+  return String(raw || '').normalize('NFKC').replace(/\s+/g, '').toUpperCase();
+}
+// ひらがななど半角にできない文字が残ったら、日本語入力の切り替え方を案内する
+function roomCodeImeError(code) {
+  return /[^\x00-\x7F]/.test(code)
+    ? 'ルームコードはアルファベットと数字で入力してください。ひらがなになるときは、キーボードを英字に切り替えてください（「半角/全角」キー、Macは「英数」キー）'
+    : '';
+}
+
 /* ════════════════════════════════════════════════
    ゲスト参加
    ════════════════════════════════════════════════ */
 async function guestJoin() {
   const nick = document.getElementById('guest-nickname').value.trim();
-  const code = document.getElementById('guest-code').value.trim().toUpperCase();
+  const code = normalizeRoomCode(document.getElementById('guest-code').value);
   const err = validNick(nick);
   if (err) { showError('guest-error', err); return; }
+  const imeErr = roomCodeImeError(code);
+  if (imeErr) { showError('guest-error', imeErr); return; }
   if (!SPEC_CODE_RE.test(code)) { showError('guest-error', 'ルームコードは6文字の英数字です'); return; }
   hideError('guest-error');
 
@@ -2007,7 +2019,9 @@ function openSpectatorWindow() {
 
 // TOP → みんなにみせる画面（コード入力）から
 async function spectateJoin() {
-  const code = document.getElementById('spectate-code').value.trim().toUpperCase();
+  const code = normalizeRoomCode(document.getElementById('spectate-code').value);
+  const imeErr = roomCodeImeError(code);
+  if (imeErr) { showError('spectate-error', imeErr); return; }
   if (!SPEC_CODE_RE.test(code)) { showError('spectate-error', 'ルームコードは6文字です'); return; }
   hideError('spectate-error');
   await enterSpectator(code, msg => showError('spectate-error', msg));
@@ -2015,7 +2029,7 @@ async function spectateJoin() {
 
 // URL パラメータ ?watch=CODE から（最優先の入口。失敗時は sessionStorage にフォールバックしない）
 async function startSpectatorFromUrl(raw) {
-  const code = String(raw || '').trim().toUpperCase();
+  const code = normalizeRoomCode(raw);
   if (!SPEC_CODE_RE.test(code)) {
     history.replaceState(null, '', location.pathname);
     showMsg('ルームが見つかりませんでした');

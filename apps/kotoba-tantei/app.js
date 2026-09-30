@@ -193,7 +193,7 @@ function renderJoin() {
         </label>
         <label class="form-group">
           <span class="form-label">ルームコード（6文字）</span>
-          <input class="form-input cn-room-code-input" name="roomId" maxlength="6" autocomplete="off" placeholder="例: ABC234" required />
+          <input class="form-input cn-room-code-input" name="roomId" maxlength="6" autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false" style="text-transform:uppercase" placeholder="例: ABC234" required />
         </label>
         <div id="join-form-error" class="alert alert-error" role="alert" ${state.error ? "" : "hidden"}>${esc(state.error)}</div>
         <div class="cn-actions">
@@ -215,7 +215,7 @@ function renderWatchJoin() {
       <form id="watch-form" class="cn-form">
         <label class="form-group">
           <span class="form-label">ルームコード（6文字）</span>
-          <input class="form-input cn-room-code-input" name="roomId" maxlength="6" autocomplete="off" placeholder="例: ABC234" required />
+          <input class="form-input cn-room-code-input" name="roomId" maxlength="6" autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false" style="text-transform:uppercase" placeholder="例: ABC234" required />
         </label>
         ${state.error ? `<div class="alert alert-error">${esc(state.error)}</div>` : ""}
         <div class="cn-actions">
@@ -227,11 +227,26 @@ function renderWatchJoin() {
   `;
 }
 
+// ルームコード欄は打っている間に書き換えない（日本語入力の変換中に書き換えると文字が重なり、
+// ローマ字が入らなくなる）。全角→半角・大文字へのそろえは normalizeRoomId が送信時に行う。
+// ひらがななど半角にできない文字が残ったら、日本語入力の切り替え方を案内する
+function roomCodeImeError(code) {
+  return /[^\x00-\x7F]/.test(code)
+    ? "ルームコードはアルファベットと数字で入力してください。ひらがなになるときは、キーボードを英字に切り替えてください（「半角/全角」キー、Macは「英数」キー）"
+    : "";
+}
+
 function handleWatchJoin(form) {
   const formData = new FormData(form);
   const code = normalizeRoomId(formData.get("roomId"));
   if (!code) {
     state.error = "ルームコードを入力してください";
+    renderWatchJoin();
+    return;
+  }
+  const imeError = roomCodeImeError(code);
+  if (imeError || !/^[A-Z0-9]{6}$/.test(code)) {
+    state.error = imeError || "ルームコードは6文字です";
     renderWatchJoin();
     return;
   }
@@ -934,7 +949,9 @@ async function handleJoin(form) {
     nickname = validateNickname(formData.get("nickname"));
     roomId = normalizeRoomId(formData.get("roomId"));
     if (!roomId) throw new Error("ルームコードを入力してください");
-    if (roomId.length !== 6) throw new Error("ルームコードは6文字です");
+    const imeError = roomCodeImeError(roomId);
+    if (imeError) throw new Error(imeError);
+    if (!/^[A-Z0-9]{6}$/.test(roomId)) throw new Error("ルームコードは6文字です");
   } catch (error) {
     errorEl.textContent = error.message;
     errorEl.hidden = false;
@@ -1348,17 +1365,10 @@ async function handlePlayerSubmit(event) {
   }
 }
 
-function handlePlayerInput(event) {
-  if (event.target.classList.contains("cn-room-code-input")) {
-    event.target.value = normalizeRoomId(event.target.value);
-  }
-}
-
 function initPlayerMode() {
   document.addEventListener("click", handlePlayerClick);
   document.addEventListener("keydown", handlePlayerKeydown);
   document.addEventListener("submit", handlePlayerSubmit);
-  document.addEventListener("input", handlePlayerInput);
   window.addEventListener("hashchange", render);
 
   if (getRoute() === "home" && restoreSession()) {

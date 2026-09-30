@@ -767,11 +767,12 @@ export function subscribeToRoomForSpectator(roomId, callback, onError = console.
 
 /**
  * ルームIDを正規化する。
+ * 日本語入力のまま打った全角の英数字は半角に、小文字は大文字にそろえる。
  * @param {string} roomId
  * @returns {string}
  */
 export function normalizeRoomId(roomId) {
-  return String(roomId || "").trim().toUpperCase();
+  return String(roomId || "").normalize("NFKC").replace(/\s+/g, "").toUpperCase();
 }
 
 /**

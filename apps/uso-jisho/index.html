@@ -611,7 +611,7 @@
     </div>
     <div class="form-group">
       <label class="form-label" for="guest-room-code">ルームコード（6文字）</label>
-      <input class="form-input" id="guest-room-code" type="text" maxlength="6" placeholder="XXXXXX" autocomplete="off" oninput="this.value = this.value.toUpperCase()">
+      <input class="form-input" id="guest-room-code" type="text" maxlength="6" autocapitalize="characters" autocorrect="off" spellcheck="false" style="text-transform:uppercase" placeholder="XXXXXX" autocomplete="off">
     </div>
     <div class="uj-error" id="guest-join-error"></div>
     <button class="btn btn-primary btn-full" onclick="guestJoin()">参加する</button>
@@ -1313,16 +1313,33 @@
     copyToClipboard(state.roomCode, document.getElementById('host-copy-btn'));
   }
 
+  // ルームコード: 日本語入力のまま打った全角の英数字は半角に、小文字は大文字にそろえて読む。
+  // 入力欄は打っている間に書き換えない（変換中に書き換えると文字が重なり、ローマ字が入らなくなる）
+  function normalizeRoomCode(raw) {
+    return String(raw || '').normalize('NFKC').replace(/\s+/g, '').toUpperCase();
+  }
+  // ひらがななど半角にできない文字が残ったら、日本語入力の切り替え方を案内する
+  function roomCodeImeError(code) {
+    return /[^\x00-\x7F]/.test(code)
+      ? 'ルームコードはアルファベットと数字で入力してください。ひらがなになるときは、キーボードを英字に切り替えてください（「半角/全角」キー、Macは「英数」キー）'
+      : '';
+  }
+
   async function guestJoin() {
     const nickname = document.getElementById('guest-nickname').value.trim();
-    const roomCode = document.getElementById('guest-room-code').value.trim().toUpperCase();
+    const roomCode = normalizeRoomCode(document.getElementById('guest-room-code').value);
 
     const nicknameError = validateNickname(nickname);
     if (nicknameError) {
       showError('guest-join-error', nicknameError);
       return;
     }
-    if (roomCode.length !== 6) {
+    const imeError = roomCodeImeError(roomCode);
+    if (imeError) {
+      showError('guest-join-error', imeError);
+      return;
+    }
+    if (!/^[A-Z0-9]{6}$/.test(roomCode)) {
       showError('guest-join-error', 'ルームコードは6文字です');
       return;
     }

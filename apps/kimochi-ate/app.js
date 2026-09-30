@@ -596,13 +596,30 @@ async function createRoom() {
   }
 }
 
+// ルームコード: 日本語入力のまま打った全角の英数字は半角に、小文字は大文字にそろえて読む。
+// 入力欄は打っている間に書き換えない（変換中に書き換えると文字が重なり、ローマ字が入らなくなる）
+function normalizeRoomCode(raw) {
+  return String(raw || '').normalize('NFKC').replace(/\s+/g, '').toUpperCase();
+}
+// ひらがななど半角にできない文字が残ったら、日本語入力の切り替え方を案内する
+function roomCodeImeError(code) {
+  return /[^\x00-\x7F]/.test(code)
+    ? 'ルームコードはアルファベットと数字で入れてね。ひらがなになるときは、キーボードを英字に切り替えてね（「半角/全角」キー、Macは「英数」キー）'
+    : '';
+}
+
 async function joinRoom() {
   if (state.busy || state.roomRef) return;
   const nickname = $('guestName').value.trim();
-  const code = $('joinCode').value.trim().toUpperCase();
+  const code = normalizeRoomCode($('joinCode').value);
   const error = validNickname(nickname);
   if (error) {
     setError('joinError', error);
+    return;
+  }
+  const imeError = roomCodeImeError(code);
+  if (imeError) {
+    setError('joinError', imeError);
     return;
   }
   if (!ROOM_CODE_PATTERN.test(code)) {
@@ -1557,7 +1574,12 @@ $('btnGoWatch').addEventListener('click', () => {
 });
 $('btnWatchBack').addEventListener('click', () => showScreen('top'));
 function openWatchFromForm() {
-  const code = $('watchCode').value.trim().toUpperCase();
+  const code = normalizeRoomCode($('watchCode').value);
+  const imeError = roomCodeImeError(code);
+  if (imeError) {
+    setError('watchError', imeError);
+    return;
+  }
   if (!ROOM_CODE_PATTERN.test(code)) {
     setError('watchError', 'ルームコードは6文字で入れてね');
     return;
@@ -1608,7 +1630,7 @@ const watchParam = new URLSearchParams(location.search).get('watch');
 if (watchParam !== null) {
   // みんなにみせる画面の入口。このタブでホスト・参加者として戻らないよう、再接続の記録は先に消す
   clearSession();
-  const watchCode = watchParam.trim().toUpperCase();
+  const watchCode = normalizeRoomCode(watchParam);
   if (ROOM_CODE_PATTERN.test(watchCode)) {
     enterWatch(watchCode).then((ok) => {
       if (!ok) history.replaceState(null, '', location.pathname);
