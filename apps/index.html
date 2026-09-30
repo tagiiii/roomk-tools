@@ -224,6 +224,53 @@
       color: #fff;
     }
 
+    /* ── ツール検索・利用シーンの見出し ── */
+    .tool-filter__label {
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    .tool-search {
+      max-width: 480px;
+      margin-bottom: var(--space-md);
+    }
+
+    .tool-search__field {
+      position: relative;
+    }
+
+    .tool-search__icon {
+      position: absolute;
+      top: 50%;
+      left: 12px;
+      transform: translateY(-50%);
+      font-size: 22px;
+      color: var(--color-muted);
+      pointer-events: none;
+    }
+
+    .tool-search__input.form-input {
+      -webkit-appearance: none;
+      appearance: none;
+      padding-left: 44px;
+    }
+
+    .tool-list-heading__count {
+      margin-left: var(--space-sm);
+      font-weight: 500;
+    }
+
+    /* 結果の読み上げ専用（見た目は見出しの件数と0件の案内が担う）。hidden にしない */
+    .tool-count {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
+    }
+
     /* カード内の利用シーンバッジ（data-scenes から自動描画） */
     .app-card__scenes {
       display: flex;
@@ -274,6 +321,7 @@
       color: var(--color-primary);
       font-size: var(--font-size-lg);
       font-weight: 700;
+      overflow-wrap: anywhere;
     }
 
     .scene-empty__desc {
@@ -423,9 +471,18 @@
     <!-- ============================================= -->
     <section class="portal-section">
       <h2 class="section-title">ツール一覧</h2>
-      <p class="section-desc">利用シーンでしぼりこめます。画像はプレイ・操作画面の一例です。複数のシーンで使えるツールには複数のバッジがつきます。</p>
+      <p class="section-desc">画像はプレイ・操作画面の一例です。</p>
 
-      <div class="scene-filter" role="group" aria-label="利用シーンでしぼりこむ">
+      <div class="tool-search" role="search" aria-label="ツール一覧">
+        <label class="form-label tool-filter__label" for="tool-search">ツール検索</label>
+        <div class="tool-search__field">
+          <span class="material-symbols-rounded tool-search__icon" aria-hidden="true">search</span>
+          <input class="form-input tool-search__input" type="search" id="tool-search" placeholder="例: カード、1対1、オフライン" autocomplete="off" enterkeyhint="search" />
+        </div>
+      </div>
+
+      <p class="form-label tool-filter__label" id="scene-filter-label">利用シーン</p>
+      <div class="scene-filter" role="group" aria-labelledby="scene-filter-label">
         <button class="scene-filter__chip" type="button" data-scene="all" aria-pressed="true">すべて</button>
         <button class="scene-filter__chip" type="button" data-scene="kotoba" aria-pressed="false">コトバであそぼ！</button>
         <button class="scene-filter__chip" type="button" data-scene="bodoge" aria-pressed="false">ボドゲクラブ</button>
@@ -434,10 +491,13 @@
         <button class="scene-filter__chip" type="button" data-scene="sakusen" aria-pressed="false">作戦会議</button>
       </div>
 
-      <div class="scene-empty" id="scene-empty" role="status" aria-live="polite" hidden>
+      <h3 class="form-label tool-filter__label">ツール<span class="tool-list-heading__count" id="tool-list-count"></span></h3>
+      <p class="tool-count" id="tool-count" role="status" aria-live="polite"></p>
+
+      <div class="scene-empty" id="scene-empty" hidden>
         <span class="material-symbols-rounded" aria-hidden="true">search_off</span>
-        <p class="scene-empty__title">このシーンのツールはまだありません</p>
-        <p class="scene-empty__desc">「すべて」に戻すと、ほかのツールを見られます。</p>
+        <p class="scene-empty__title" id="scene-empty-title">このシーンのツールはまだありません</p>
+        <p class="scene-empty__desc" id="scene-empty-desc">「すべて」に戻すと、ほかのツールを見られます。</p>
         <button class="btn btn-secondary btn-sm" type="button" id="scene-empty-reset">すべてのツールを見る</button>
       </div>
 
@@ -1624,7 +1684,8 @@
   </script>
 
   <script>
-    // 利用シーンの絞り込みとバッジ描画: 各カードの data-scenes 属性が正本。
+    // 利用シーンの絞り込み・ことば検索・バッジ描画: 各カードの data-scenes 属性が正本。
+    // 検索の索引はカードの表示内容から作るので、カードを足すときに検索用の追記はいらない。
     (function () {
       const SCENE_LABELS = {
         kotoba: 'コトバ',
@@ -1634,11 +1695,13 @@
         sakusen: '作戦会議',
       };
 
-      const cards = document.querySelectorAll('.apps-grid .app-card');
+      const cards = Array.from(document.querySelectorAll('.apps-grid .app-card'));
+      const cardScenes = cards.map((card) =>
+        (card.dataset.scenes || '').split(' ').filter((s) => SCENE_LABELS[s]));
 
       // カード下部にシーンバッジを描画
-      cards.forEach((card) => {
-        const scenes = (card.dataset.scenes || '').split(' ').filter((s) => SCENE_LABELS[s]);
+      cards.forEach((card, i) => {
+        const scenes = cardScenes[i];
         if (scenes.length === 0) return;
         const row = document.createElement('div');
         row.className = 'app-card__scenes';
@@ -1651,22 +1714,53 @@
         card.querySelector('.app-card__body').appendChild(row);
       });
 
-      // フィルタチップで絞り込み。選択状態は URL ハッシュ（#scene=bodoge）と同期し、
-      // シーン別リンクを共有したりリロードしても選択が保てるようにする。
-      const chips = document.querySelectorAll('.scene-filter__chip');
-      const emptyState = document.getElementById('scene-empty');
-      const emptyReset = document.getElementById('scene-empty-reset');
+      // ひらがな・カタカナ、全角・半角、大文字・小文字の違いは区別しない
+      function normalize(text) {
+        return String(text).normalize('NFKC').toLowerCase()
+          .replace(/[\u30a1-\u30f6]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0x60));
+      }
 
-      function applyScene(scene) {
-        if (scene !== 'all' && !SCENE_LABELS[scene]) scene = 'all';
-        chips.forEach((c) => c.setAttribute('aria-pressed', String(c.dataset.scene === scene)));
-        let visibleCount = 0;
-        cards.forEach((card) => {
-          const scenes = (card.dataset.scenes || '').split(' ');
-          card.hidden = scene !== 'all' && !scenes.includes(scene);
-          if (!card.hidden) visibleCount += 1;
+      // 検索対象: 名前・説明・人数などのバッジ・動作環境・画像の説明・利用シーン名。
+      // アイコンは "group" などの英字で描画されるため、検索対象から外す。
+      const searchTexts = cards.map((card, i) => {
+        const parts = [];
+        card.querySelectorAll('.app-card__name, .app-card__desc, .meta-badge, .app-card__footer').forEach((el) => {
+          const copy = el.cloneNode(true);
+          copy.querySelectorAll('.material-symbols-rounded').forEach((icon) => icon.remove());
+          parts.push(copy.textContent);
         });
-        emptyState.hidden = visibleCount !== 0;
+        const thumbnail = card.querySelector('.app-card__thumbnail');
+        if (thumbnail) parts.push(thumbnail.alt);
+        cardScenes[i].forEach((s) => {
+          const chip = document.querySelector(`.scene-filter__chip[data-scene="${s}"]`);
+          parts.push(SCENE_LABELS[s], chip ? chip.textContent : '');
+        });
+        if (card.hasAttribute('data-slides')) parts.push('説明スライド');
+        return normalize(parts.join(' '));
+      });
+
+      // シーンの選択は URL ハッシュ（#scene=bodoge）と同期し、
+      // シーン別リンクを共有したりリロードしても選択が保てるようにする。検索語は URL に入れない。
+      const chips = document.querySelectorAll('.scene-filter__chip');
+      const searchInput = document.getElementById('tool-search');
+      const countText = document.getElementById('tool-count');
+      const listCount = document.getElementById('tool-list-count');
+      const emptyState = document.getElementById('scene-empty');
+      const emptyTitle = document.getElementById('scene-empty-title');
+      const emptyDesc = document.getElementById('scene-empty-desc');
+      const emptyButton = document.getElementById('scene-empty-reset');
+      let currentScene = 'all';
+      let emptyAction = 'all-scenes';
+
+      function setScene(scene) {
+        currentScene = scene === 'all' || SCENE_LABELS[scene] ? scene : 'all';
+        chips.forEach((c) => c.setAttribute('aria-pressed', String(c.dataset.scene === currentScene)));
+      }
+
+      function syncSceneHash() {
+        history.replaceState(null, '', currentScene === 'all'
+          ? location.pathname + location.search
+          : '#scene=' + currentScene);
       }
 
       function sceneFromHash() {
@@ -1674,24 +1768,92 @@
         return m ? m[1] : 'all';
       }
 
+      function applyFilters() {
+        const query = searchInput.value.trim();
+        const terms = normalize(query).split(/\s+/).filter(Boolean);
+        let visibleCount = 0;
+        let textMatchCount = 0;
+        cards.forEach((card, i) => {
+          const textMatch = terms.every((t) => searchTexts[i].includes(t));
+          const sceneMatch = currentScene === 'all' || cardScenes[i].includes(currentScene);
+          card.hidden = !(textMatch && sceneMatch);
+          if (textMatch) textMatchCount += 1;
+          if (!card.hidden) visibleCount += 1;
+        });
+
+        if (visibleCount === 0) {
+          if (terms.length === 0) {
+            emptyTitle.textContent = 'このシーンのツールはまだありません';
+            emptyDesc.textContent = '「すべて」に戻すと、ほかのツールを見られます。';
+            emptyButton.textContent = 'すべてのツールを見る';
+            emptyAction = 'all-scenes';
+          } else if (currentScene !== 'all' && textMatchCount > 0) {
+            emptyTitle.textContent = `このシーンには「${query}」に合うツールがありません`;
+            emptyDesc.textContent = `シーンを「すべて」にすると ${textMatchCount}件 見つかります。`;
+            emptyButton.textContent = 'すべてのシーンで探す';
+            emptyAction = 'all-scenes';
+          } else {
+            emptyTitle.textContent = `「${query}」に合うツールは見つかりませんでした`;
+            emptyDesc.textContent = 'ことばを短くするか、漢字にかえて探してみてください。';
+            emptyButton.textContent = '検索をクリア';
+            emptyAction = 'clear-search';
+          }
+        }
+        emptyState.hidden = visibleCount !== 0;
+
+        // 読み上げは常設の1か所だけ。同じ内容なら書き換えず、二重に読まれないようにする
+        const filtered = terms.length > 0 || currentScene !== 'all';
+        let message = '';
+        if (visibleCount === 0) message = emptyTitle.textContent + '。' + emptyDesc.textContent;
+        else if (filtered) message = visibleCount + '件のツール';
+        if (countText.textContent !== message) countText.textContent = message;
+        listCount.textContent = visibleCount + '件';
+      }
+
       chips.forEach((chip) => {
         chip.addEventListener('click', () => {
-          const scene = chip.dataset.scene;
-          applyScene(scene);
-          history.replaceState(null, '', scene === 'all'
-            ? location.pathname + location.search
-            : '#scene=' + scene);
+          setScene(chip.dataset.scene);
+          syncSceneHash();
+          applyFilters();
         });
       });
 
-      emptyReset.addEventListener('click', () => {
-        applyScene('all');
-        history.replaceState(null, '', location.pathname + location.search);
-        document.querySelector('.scene-filter__chip[data-scene="all"]').focus();
+      // 日本語入力の変換中は絞り込まず、確定してから反映する
+      searchInput.addEventListener('input', (e) => {
+        if (!e.isComposing) applyFilters();
+      });
+      searchInput.addEventListener('compositionend', applyFilters);
+      searchInput.addEventListener('keydown', (e) => {
+        if (e.isComposing || e.keyCode === 229) return;
+        if (e.key === 'Escape' && searchInput.value) {
+          e.preventDefault();
+          searchInput.value = '';
+          applyFilters();
+        } else if (e.key === 'Enter') {
+          // スマホではキーボードを閉じて結果を見やすくする
+          searchInput.blur();
+        }
       });
 
-      window.addEventListener('hashchange', () => applyScene(sceneFromHash()));
-      applyScene(sceneFromHash());
+      emptyButton.addEventListener('click', () => {
+        if (emptyAction === 'clear-search') {
+          searchInput.value = '';
+          applyFilters();
+          searchInput.focus();
+        } else {
+          setScene('all');
+          syncSceneHash();
+          applyFilters();
+          document.querySelector('.scene-filter__chip[data-scene="all"]').focus();
+        }
+      });
+
+      window.addEventListener('hashchange', () => {
+        setScene(sceneFromHash());
+        applyFilters();
+      });
+      setScene(sceneFromHash());
+      applyFilters();
     })();
   </script>
   <script>
