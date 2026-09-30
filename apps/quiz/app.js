@@ -2126,7 +2126,8 @@ async function backToLobby() {
 
 function submitOnEnter(input, handler) {
   input.addEventListener('keydown', (event) => {
-    if (event.key === 'Enter' && !event.isComposing) handler();
+    // 日本語入力の確定の Enter では送らない（Safari は確定の Enter を isComposing=false・keyCode 229 で届ける）
+    if (event.key === 'Enter' && !event.isComposing && event.keyCode !== 229) handler();
   });
 }
 

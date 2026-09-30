@@ -1852,11 +1852,12 @@
   document.querySelectorAll('[data-go-top]').forEach((b) => b.addEventListener('click', () => show('top')));
   $('cs-create-room').addEventListener('click', onCreate);
   $('cs-join-room').addEventListener('click', onJoin);
-  ['cs-join-name', 'cs-join-code'].forEach((id) => $(id).addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); $('cs-join-room').click(); } }));
-  $('cs-host-name').addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); $('cs-create-room').click(); } });
+  // 日本語入力の確定の Enter では送らない（Safari は確定の Enter を isComposing=false・keyCode 229 で届ける）
+  ['cs-join-name', 'cs-join-code'].forEach((id) => $(id).addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.isComposing && e.keyCode !== 229) { e.preventDefault(); $('cs-join-room').click(); } }));
+  $('cs-host-name').addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.isComposing && e.keyCode !== 229) { e.preventDefault(); $('cs-create-room').click(); } });
   $('cs-copy-code').addEventListener('click', (e) => window.RoomkRTDB.copyRoomCode(sess && sess.code, e.currentTarget));
   $('cs-proxy-add').addEventListener('click', onProxyAdd);
-  $('cs-proxy-name').addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); $('cs-proxy-add').click(); } });
+  $('cs-proxy-name').addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.isComposing && e.keyCode !== 229) { e.preventDefault(); $('cs-proxy-add').click(); } });
   $('cs-room-start').addEventListener('click', onRoomStart);
   $('cs-overlay-cancel').addEventListener('click', () => { cancelReconnect(); clearSession(); overlay(''); show('top'); });
   $('cs-lobby-leave').addEventListener('click', leaveRoomNow);

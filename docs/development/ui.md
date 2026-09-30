@@ -126,6 +126,13 @@ design-system.css のカラー変数・スペーシング変数を積極的に�
 }
 ```
 
+### 文字入力欄と日本語入力（IME）
+
+参加者は日本語入力をオンにしたまま打つことが多い（名前を入れた直後など）。
+
+- 打っている間（`input` イベント）に `value` を書き換えない。変換中に書き換えると文字が重なる。大文字にそろえる等は、表示なら CSS、値なら送信時に行う（ルームコード欄の具体例は [rtdb.md](rtdb.md)「参加・共有の共通UI」）
+- Enter で送信・追加する `keydown` は、`if (e.isComposing || e.keyCode === 229) return;`（または条件に `!e.isComposing && e.keyCode !== 229`）で変換の確定を除く。Safari は確定の Enter を `isComposing=false`・`keyCode 229` で届けるため、`isComposing` だけでは確定しただけで送信してしまう（2026-09-30）。`keyCode 229` の除外は MDN も勧める書き方。変換していなくても Enter を 229 で届ける環境では Enter が効かなくなるので、Enter は補助にとどめ、同じ操作を必ずボタンでもできるようにする
+
 ---
 
 ## アイコン
