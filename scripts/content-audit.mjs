@@ -191,6 +191,8 @@ const COVERED_APPS = [
   'oekaki-dengon',
   // 2026-09-29 追加（v2。ルーム対応）
   'career-sugoroku',
+  // 2026-09-30 台帳の登録漏れを追加
+  'kotoba-mikke',
 ];
 
 // 数えられるコンテンツを持たないため重複検査の対象外にするアプリ（意図的除外）。
@@ -198,13 +200,16 @@ const COVERED_APPS = [
 const NO_CONTENT_APPS = [
   'suki-type-check', 'kakure-number', 'jinro',
   'name-change', 'kyapa-graph', 'nurie-week',
+  // カードゲーム・パズルの部品だけ（トランプ・数字札・かなタイル・生き物8種・ピースと盤面）
+  'blackjack', 'esadori', 'moji-soroe', 'oshitsuke-zukan', 'pita-hame',
 ];
 
 // apps/ 配下に存在するがアプリではないディレクトリ。
 // ito / iisen-show / hint-de-pinto / codenames / sukina-map / kotoba-waza / kimochi-map は
 // 旧URLからの自動移動スタブ（コンテンツなし）。
 // guide はスタッフ向け「ゲームえらび早見表」ページ（お題集を持たない静的な案内ページ）。
-const NON_APP_DIRS = ['shared', 'ito', 'iisen-show', 'hint-de-pinto', 'codenames', 'sukina-map', 'kotoba-waza', 'kimochi-map', 'guide'];
+// stats-view は開発者専用の利用状況ダッシュボード、assets はポータルのサムネイル画像置き場。
+const NON_APP_DIRS = ['shared', 'ito', 'iisen-show', 'hint-de-pinto', 'codenames', 'sukina-map', 'kotoba-waza', 'kimochi-map', 'guide', 'stats-view', 'assets'];
 
 // 意図的重複 allowlist（C-4 で決着済み）:
 //   異なるゲーム間で日常語彙（「カレー」「うさぎ」など）が重複するのは正当。
@@ -434,6 +439,13 @@ function collectEntries() {
   const oekakiPrompts = evalArrayFromSource(oekakiSource, 'PROMPTS', 'apps/oekaki-dengon/index.html') || [];
   oekakiPrompts.forEach((text, index) => rows.push(entry('oekaki-dengon', 'prompt', text, {
     id: `oekaki-dengon:${index}`,
+  })));
+
+  // kotoba-mikke: app.js の const THEMES = [ '文字列', ... ]（「〜言葉」「〜もの」のお題）。
+  //   頭文字の INITIALS は抽選用の1文字なので検査対象外。
+  const mikkeThemes = evalArrayFromSource(read('apps/kotoba-mikke/app.js'), 'THEMES', 'apps/kotoba-mikke/app.js') || [];
+  mikkeThemes.forEach((text, index) => rows.push(entry('kotoba-mikke', 'theme', text, {
+    id: `kotoba-mikke:${index}`,
   })));
 
   // career-sugoroku: data.js（ブラウザでは window.CS_DATA、Node では module.exports）。
