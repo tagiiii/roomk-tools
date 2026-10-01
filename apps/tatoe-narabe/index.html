@@ -50,6 +50,14 @@
     }
     .player-tag.me { background: var(--color-accent); }
     .player-tag.ready-ok { background: var(--color-success); }
+    .player-tag.role { background: var(--color-muted); }
+
+    /* ── 待合室の設定（ホストのみ） ── */
+    .ito-check {
+      display: flex; align-items: center; gap: 10px; min-height: 44px;
+      font-size: 15px; font-weight: 500; cursor: pointer;
+    }
+    .ito-check input { width: 20px; height: 20px; accent-color: var(--color-accent); flex-shrink: 0; }
     .player-status { font-size: 13px; color: var(--color-muted); }
 
     /* ── ルームコード ── */
@@ -508,6 +516,13 @@
           参加者
         </div>
         <ul class="player-list" id="waiting-player-list"></ul>
+        <div id="waiting-host-settings" style="display:none; margin-top:12px; padding-top:8px; border-top:1px solid var(--color-border);">
+          <label class="ito-check">
+            <input type="checkbox" id="set-host-plays" checked onchange="onHostPlaysChange(this.checked)">
+            <span>自分もプレイヤーとして参加する</span>
+          </label>
+          <p style="font-size:12px; color:var(--color-muted); line-height:1.7;">外すと進行役になります。数字は配られず、お題選びと答え合わせを進めます</p>
+        </div>
         <p id="waiting-connection-note" hidden>参加者の接続を待っています。退出すると自分の数字・宣言を削除します</p>
         <div class="ito-waiting-msg" id="waiting-guest-msg" style="display:none;">
           <span class="spinner" style="display:inline-block; width:20px; height:20px; vertical-align:middle; margin-right:6px;"></span>
@@ -519,6 +534,7 @@
         <span class="material-symbols-rounded" aria-hidden="true">play_circle</span>
         ゲームスタート（2人以上）
       </button>
+      <p id="waiting-min-msg" style="display:none; font-size:13px; color:var(--color-muted); text-align:center; margin-top:8px;"></p>
 
       <button id="btn-leave-waiting" class="btn btn-ghost btn-full" style="margin-top:12px;" onclick="leaveGame()">
         <span class="material-symbols-rounded" aria-hidden="true">logout</span>
@@ -534,10 +550,15 @@
     <div class="page">
       <div class="ito-header" style="padding-bottom:16px;">
         <div class="ito-header__title">カードを確認しよう</div>
-        <div class="ito-header__sub">自分の数字をタップすると確認完了になります</div>
+        <div class="ito-header__sub" id="revealing-sub">自分の数字をタップすると確認完了になります</div>
       </div>
 
-      <div class="ito-flip-wrap">
+      <div class="card" id="revealing-host-note" style="display:none; padding:20px; margin-bottom:16px; text-align:center;">
+        <div style="font-size:15px; font-weight:700; color:var(--color-primary);">進行役なので、数字は配られません</div>
+        <div id="revealing-host-note-sub" style="font-size:13px; color:var(--color-muted); margin-top:6px;"></div>
+      </div>
+
+      <div class="ito-flip-wrap" id="flip-wrap">
         <div class="ito-flip-card" id="flip-card" onclick="flipCard()">
           <div class="ito-flip-card__inner">
             <div class="ito-flip-card__face ito-flip-card__face--back">
@@ -608,7 +629,7 @@
       <div class="ito-theme-banner">
         <div class="ito-theme-banner__label">お題</div>
         <div class="ito-theme-banner__text" id="playing-theme"></div>
-        <div class="ito-my-number-chip">
+        <div class="ito-my-number-chip" id="playing-my-number-chip">
           <span class="material-symbols-rounded" aria-hidden="true" style="font-size:18px;">tag</span>
           あなたの数字 <strong id="playing-my-number">？</strong>
         </div>
@@ -778,6 +799,7 @@
       currentStatus: null,
       currentDiscussionEndsAt: null,
       currentRoundId: null,
+      hostPlays: true,      // ホストもプレイヤーとして参加するか（room.settings.hostPlays）
       expectedRoomRemoval: false,
     };
 
@@ -936,6 +958,23 @@
       presence.connectionRef.on('value', presence.listener);
     }
 
+    // ── ホストの参加（待合室で選ぶ。2026-10-01） ──
+    // settings.hostPlays を持たない旧ルームは従来どおり「ホストも遊ぶ」
+    function hostPlaysOf(room) {
+      return room?.settings?.hostPlays !== false;
+    }
+    // 数字を配られ、確認・宣言・答え合わせの対象になる人か（進行だけのホストは除く）
+    function isPlayingPlayer(room, nick, player) {
+      if (!player) return false;
+      return hostPlaysOf(room) || !(player.isHost || nick === room?.host);
+    }
+    function playingEntries(room, players) {
+      return Object.entries(players || {}).filter(([nick, p]) => isPlayingPlayer(room, nick, p));
+    }
+    function iAmPlaying() {
+      return state.role === 'guest' || (state.role === 'host' && state.hostPlays);
+    }
+
     function capturePlayerAction() {
       return { ref: state.roomRef, nickname: state.nickname, role: state.role,
         roundId: state.currentRoundId, presence: guestPresence, generation: guestPresence?.generation };
@@ -944,6 +983,7 @@
       return state.roomRef === action.ref && state.nickname === action.nickname && state.role === action.role
         && !state.expectedRoomRemoval && guestCanAct() && room?.status === phase
         && (room.roundId ?? null) === action.roundId && !!room.players?.[action.nickname]
+        && isPlayingPlayer(room, action.nickname, room.players[action.nickname])
         && (action.role === 'host' || (validGuestRoom(room, action.nickname)
           && guestPresence === action.presence && guestPresence?.generation === action.generation));
     }
@@ -1010,6 +1050,7 @@
       state.currentStatus = null;
       state.currentDiscussionEndsAt = null;
       state.currentRoundId = null;
+      state.hostPlays = true;
       state.expectedRoomRemoval = false;
     }
 
@@ -1032,7 +1073,7 @@
       return Number.isFinite(endsAtNum) && getEstimatedServerNow() >= endsAtNum;
     }
 
-    function renderPlayerList(containerId, players, statusFn) {
+    function renderPlayerList(containerId, players, statusFn, room = null) {
       const container = document.getElementById(containerId);
       if (!container) return;
       container.innerHTML = Object.entries(players).map(([nick, p]) => `
@@ -1040,6 +1081,7 @@
           <div class="player-name">
             ${esc(nick)}
             ${p.isHost ? '<span class="player-tag">ホスト</span>' : ""}
+            ${p.isHost && room && !hostPlaysOf(room) ? '<span class="player-tag role">進行役</span>' : ""}
             ${nick === state.nickname ? '<span class="player-tag me">あなた</span>' : ""}
           </div>
           ${playerConnected(p) ? statusFn(nick, p) : '<span class="player-tag">接続を待っています</span>'}
@@ -1075,6 +1117,7 @@
       const me = players[state.nickname];
       const canDeclare = state.currentStatus === "playing"
         && guestCanAct()
+        && iAmPlaying()
         && !!me
         && me.declaredAt == null;
       // 確認UI表示中は宣言ボタンを出さない
@@ -1087,7 +1130,7 @@
     }
 
     function pendingDeclare() {
-      if (!guestCanAct()) return;
+      if (!guestCanAct() || !iAmPlaying()) return;
       const declareBtn = document.getElementById("btn-declare");
       const confirmEl = document.getElementById("declare-confirm");
       if (declareBtn) declareBtn.style.display = "none";
@@ -1129,6 +1172,7 @@
             status: "waiting",
             theme: "",
             discussionEndsAt: null,
+            settings: { hostPlays: true },
             players: { [nick]: { isHost: true, number: 0, ready: false, declaredAt: null } },
           };
           const { committed } = await ref.transaction((room) => {
@@ -1284,6 +1328,7 @@
       const roundId = ref.push().key;
       // トランザクションが中断した理由を外部で受け取るための変数
       let abortReason = null;
+      let hostPlays = true;
 
       try {
         // transaction() で読み取り〜書き込みをアトミックに行う。
@@ -1298,27 +1343,31 @@
           }
           const players = room.players || {};
           const nicknames = Object.keys(players);
+          // 数字を配るのは遊ぶ人だけ（ホストが進行だけならホストを除く）。人数も遊ぶ人で数える
+          hostPlays = hostPlaysOf(room);
+          const playing = playingEntries(room, players).map(([n]) => n);
           if (!Object.values(players).every(playerConnected)) {
             abortReason = "disconnected";
             return;
           }
-          if (nicknames.length < 2) {
+          if (playing.length < 2) {
             abortReason = "too_few";
             return; // undefined を返してトランザクション中止
           }
-          if (nicknames.length > 100) {
+          if (playing.length > 100) {
             abortReason = "too_many";
             return;
           }
           abortReason = null; // 成功パスではリセット
 
-          const assignedNumbers = pickUniqueNumbers(nicknames.length);
+          const assignedNumbers = pickUniqueNumbers(playing.length);
           const nextPlayers = {};
-          nicknames.forEach((n, index) => {
+          nicknames.forEach((n) => {
+            const index = playing.indexOf(n);
             nextPlayers[n] = {
               ...players[n],
               isHost: !!players[n].isHost,
-              number: assignedNumbers[index],
+              number: index >= 0 ? assignedNumbers[index] : 0,
               ready: false,
               declaredAt: null,
             };
@@ -1337,7 +1386,7 @@
 
         if (!committed) {
           if (abortReason === "disconnected") showMsg("参加者の接続を待っています");
-          if (abortReason === "too_few") showMsg("2人以上で始められます");
+          if (abortReason === "too_few") showMsg(hostPlays ? "2人以上で始められます" : "ホストのほかに2人以上で始められます");
           else if (abortReason === "too_many") showMsg("人数が多すぎます");
           else if (abortReason === "invalid_state") showMsg("ルームが終了しています。トップへ戻ってください");
           return;
@@ -1347,6 +1396,26 @@
         console.error(e);
         showMsg("ゲームを開始できませんでした");
       }
+    }
+
+    // 待合室の設定: ホストもプレイヤーとして参加するか。開始後（もう一度プレイを含む）は変えない
+    async function onHostPlaysChange(checked) {
+      if (state.role !== "host" || !state.roomRef) return;
+      const ref = state.roomRef;
+      const me = state.nickname;
+      let committed = false;
+      try {
+        ({ committed } = await ref.transaction((room) => {
+          if (!room || room.status !== "waiting" || room.host !== me) return;
+          return { ...room, settings: { ...(room.settings || {}), hostPlays: !!checked } };
+        }));
+      } catch (e) {
+        console.error(e);
+      }
+      if (state.roomRef !== ref) return;
+      if (!committed) showMsg("設定を変えられませんでした");
+      const box = document.getElementById("set-host-plays");
+      if (box) box.checked = state.hostPlays;
     }
 
     async function startTimer(secs) {
@@ -1393,7 +1462,9 @@
           }
           const players = room.players || {};
           if (!force) {
-            const allReady = Object.keys(players).length > 0 && Object.values(players).every((p) => !!p.ready);
+            // 確認の対象は遊ぶ人だけ（進行だけのホストは数えない）
+            const playing = playingEntries(room, players).map(([, p]) => p);
+            const allReady = playing.length > 0 && playing.every((p) => !!p.ready);
             if (!allReady) {
               abortReason = "not_ready";
               return;
@@ -1525,6 +1596,7 @@
         state.currentRoundId = room.roundId ?? null;
         state.currentStatus = room.status || null;
         state.currentDiscussionEndsAt = room.discussionEndsAt ?? null;
+        state.hostPlays = hostPlaysOf(room);
         if (state.role === "guest") {
           const hostGone = room.hostConnected === false;
           const expired = isRoomExpired(room);
@@ -1583,9 +1655,28 @@
       const codeEl = document.getElementById("waiting-room-code");
       if (codeEl) codeEl.textContent = state.roomCode || "";
 
-      renderPlayerList("waiting-player-list", players, () => '<div class="player-status">参加中</div>');
+      renderPlayerList("waiting-player-list", players, () => '<div class="player-status">参加中</div>', room);
 
-      const canStart = Object.keys(players).length >= 2 && Object.values(players).every(playerConnected);
+      // 最少人数は遊ぶ人だけで数える（進行だけのホストは数えない）
+      const hostPlays = hostPlaysOf(room);
+      const playingCount = playingEntries(room, players).length;
+      const canStart = playingCount >= 2 && Object.values(players).every(playerConnected);
+      const isHost = state.role === "host";
+      const settingsEl = document.getElementById("waiting-host-settings");
+      if (settingsEl) settingsEl.style.display = isHost ? "" : "none";
+      const hostPlaysBox = document.getElementById("set-host-plays");
+      if (hostPlaysBox && isHost) hostPlaysBox.checked = hostPlays;
+      const minMsg = document.getElementById("waiting-min-msg");
+      if (minMsg) {
+        let msg = "";
+        if (playingCount < 2) {
+          msg = hostPlays ? `あと${2 - playingCount}人で始められます` : `ホストのほかに、あと${2 - playingCount}人で始められます`;
+        } else if (!hostPlays) {
+          msg = `遊ぶ人は${playingCount}人です（ホストは進行役）`;
+        }
+        minMsg.textContent = msg;
+        minMsg.style.display = isHost && msg ? "" : "none";
+      }
       document.getElementById('waiting-connection-note').hidden = Object.values(players).every(playerConnected);
       const startBtn = document.getElementById("btn-start-game");
       if (startBtn) {
@@ -1604,13 +1695,32 @@
       const button = document.getElementById('btn-confirm-number');
       const me = getMyPlayer(state.currentPlayers);
       if (button) button.style.display = (state.currentStatus === 'revealing' && state.numberRevealed
-        && !state.confirmingNumber && guestCanAct() && me && !me.ready) ? '' : 'none';
+        && !state.confirmingNumber && guestCanAct() && iAmPlaying() && me && !me.ready) ? '' : 'none';
     }
 
     function handleRevealing(room, players) {
       showScreen("revealing");
 
       const myPlayer = getMyPlayer(players);
+      const playingPlayers = Object.fromEntries(playingEntries(room, players));
+      // 進行だけのホストには数字カードを出さず、進行の案内を出す
+      const facilitating = !iAmPlaying();
+      const flipWrap = document.getElementById("flip-wrap");
+      if (flipWrap) flipWrap.style.display = facilitating ? "none" : "";
+      const hostNote = document.getElementById("revealing-host-note");
+      if (hostNote) hostNote.style.display = facilitating ? "" : "none";
+      const hostNoteSub = document.getElementById("revealing-host-note-sub");
+      if (hostNoteSub) {
+        hostNoteSub.textContent = Object.keys(playingPlayers).length === 0
+          ? "遊ぶ人がいなくなりました。「退出する」でルームを閉じられます"
+          : "みんなの確認を待って、お題を選んでください";
+      }
+      const revealingSub = document.getElementById("revealing-sub");
+      if (revealingSub) {
+        revealingSub.textContent = facilitating
+          ? "みんなが自分の数字を確認しています"
+          : "自分の数字をタップすると確認完了になります";
+      }
 
       const numberEl = document.getElementById("my-number-display");
       if (numberEl) {
@@ -1620,7 +1730,7 @@
         numberEl.textContent = myNumber != null ? String(myNumber) : "？";
       }
 
-      renderPlayerList("revealing-player-list", players, (nick, p) => {
+      renderPlayerList("revealing-player-list", playingPlayers, (nick, p) => {
         return p.ready
           ? '<span class="player-tag ready-ok">確認した！</span>'
           : '<div class="player-status">確認中...</div>';
@@ -1630,7 +1740,7 @@
       if (flipCardEl) flipCardEl.classList.toggle("flipped", !!state.numberRevealed);
 
       const readyArea = document.getElementById("ready-area");
-      if (readyArea) readyArea.style.display = state.numberRevealed ? "block" : "none";
+      if (readyArea) readyArea.style.display = (state.numberRevealed && !facilitating) ? "block" : "none";
 
       updateConfirmNumberButton();
 
@@ -1666,7 +1776,7 @@
         copyThemesBtn.style.display = (state.role === "host" && state.themeOptions.length > 0) ? "" : "none";
       }
 
-      const playerList = Object.values(players);
+      const playerList = Object.values(playingPlayers);
       const totalPlayers = playerList.length;
       const readyCount = playerList.filter((p) => !!p.ready).length;
       const allReady = totalPlayers > 0 && readyCount === totalPlayers;
@@ -1697,6 +1807,8 @@
       const themeEl = document.getElementById("playing-theme");
       if (themeEl) themeEl.textContent = room.theme || "";
 
+      const myNumberChip = document.getElementById("playing-my-number-chip");
+      if (myNumberChip) myNumberChip.style.display = iAmPlaying() ? "" : "none";
       const myNumberEl = document.getElementById("playing-my-number");
       if (myNumberEl) {
         const myPlayer = getMyPlayer(players);
@@ -1708,12 +1820,13 @@
 
       updateTimer(room.discussionEndsAt);
 
-      // 宣言済み・未宣言に分けてソート
-      const declaredEntries = Object.entries(players)
+      // 宣言済み・未宣言に分けてソート（宣言の対象は遊ぶ人だけ）
+      const playing = playingEntries(room, players);
+      const declaredEntries = playing
         .filter(([, p]) => p.declaredAt != null)
         .sort(([, a], [, b]) => a.declaredAt - b.declaredAt);
 
-      const undeclaredEntries = Object.entries(players)
+      const undeclaredEntries = playing
         .filter(([, p]) => p.declaredAt == null);
 
       const declaredList = document.getElementById("declared-list");
@@ -1775,8 +1888,8 @@
       const themeEl = document.getElementById("result-theme");
       if (themeEl) themeEl.textContent = room.theme || "";
 
-      // 宣言順にソート
-      const declared = Object.entries(players)
+      // 宣言順にソート（結果の対象は遊ぶ人だけ）
+      const declared = playingEntries(room, players)
         .filter(([, p]) => p.declaredAt != null)
         .sort(([, a], [, b]) => a.declaredAt - b.declaredAt)
         .map(([nick]) => nick);
@@ -1858,7 +1971,7 @@
       document.getElementById('result-connection-note').hidden = Object.values(players).every(playerConnected);
       if (playAgainBtn) {
         playAgainBtn.style.display = state.role === "host" ? "" : "none";
-        playAgainBtn.disabled = Object.keys(players).length < 2 || !Object.values(players).every(playerConnected);
+        playAgainBtn.disabled = playingEntries(room, players).length < 2 || !Object.values(players).every(playerConnected);
       }
     }
 
@@ -1957,7 +2070,7 @@
     // ── UI アクション ─────────────────────
 
     function flipCard() {
-      if (state.numberRevealed) return;
+      if (state.numberRevealed || !iAmPlaying()) return;
       const flipCardEl = document.getElementById("flip-card");
       if (flipCardEl) flipCardEl.classList.add("flipped");
       const readyArea = document.getElementById("ready-area");
@@ -2024,7 +2137,8 @@
           'ホストが「ルームを作る」を押して、ニックネームを入れる',
           '画面に出たルームコードをみんなに伝える',
           'ほかの人は「ルームに参加する」からニックネームとルームコードを入れて「参加する」を押す',
-          '2人以上そろったら、ホストが「ゲームスタート」を押す',
+          'ホストが進行だけするときは、待合室の「自分もプレイヤーとして参加する」を外す（ホストには数字が配られない）',
+          '遊ぶ人が2人以上そろったら、ホストが「ゲームスタート」を押す',
         ] },
         { heading: 'すすめかた', items: [
           'カードをタップして自分の数字を見て、「確認した！」を押す。数字はほかの人には秘密',

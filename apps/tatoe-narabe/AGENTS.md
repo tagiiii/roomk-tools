@@ -15,6 +15,10 @@ room-K では「正解を当てる」よりも、感じ方の違いを言葉に�
 
 ```
 tatoenarabe_rooms/{roomCode}/
+  host, hostConnected, hostDisconnectedAt, status, roundId, theme, themeOptions,
+  recentThemes, discussionEndsAt
+  settings/hostPlays       # ホストもプレイヤーとして参加するか（作成時 true。キーなしの旧ルームも true 扱い）
+  players/{nick}/          # isHost, number, ready, declaredAt（guest は presenceVersion, connections も）
 ```
 
 ## 画面・status
@@ -35,6 +39,7 @@ waiting → revealing → playing → result
 - ルームコードは6桁英数字（紛らわしい文字を除外）
 - ニックネームは最大8文字、同ルーム内重複NG
 - ホストは `players/{nick}/isHost` で識別
+- ホストは進行だけのときも `players/{host}` に残る（`isHost: true`, `number: 0`）。再接続はこの行で照合する
 - ホスト切断は `hostConnected` / `hostDisconnectedAt` と TTL で扱う
 - 再接続は `sessionStorage: tatoenarabe_session` を使う
 - タイマーや TTL 判定は `.info/serverTimeOffset` で補正したサーバー推定時刻を使う
@@ -47,6 +52,15 @@ waiting → revealing → playing → result
 - お題は room-K 共通のコンテンツガイドラインに従い、比較が強すぎる表現や学校・恋愛・暴力・ホラーを避ける
 - `finishGame()` は `status: "result"` に進めるだけで、ルームを自動削除しない。result 画面からの再戦とリロード復帰を許可するため、root AGENTS.md の公認バリアント『ふりかえり画面滞在中は削除しない』（2026-08-10 追加）を採用
 - クリーンアップはホストの `leaveGame()` によるルーム削除、ゲストの `players/{nick}` 削除、ホスト切断時の2分TTL（`ORPHAN_TTL_MS`）に任せる
+
+## ホストの参加（2026-10-01 オーナー決定: 待合室でホストの参加を選べる（初期値は従来どおり））
+
+- 待合室のホストだけに「自分もプレイヤーとして参加する」チェックを出す（初期値オン＝従来どおりホストにも数字を配る）。保存先は `settings/hostPlays`。判定は `hostPlays !== false`（キーなしの旧ルームはホストも遊ぶ）
+- 変えられるのは `status: "waiting"` の間だけ（room transaction で status と host を照合）。result からの「もう一度プレイ」は待合室に戻らず、待合室の値を引き継ぐ
+- 遊ぶ人＝ホストが遊ぶなら全員、進行だけならホスト以外。数字の配布・確認状況（全員確認・未確認人数）・宣言の一覧・答え合わせの母数・最少2人／最大100人の判定は遊ぶ人だけで数える。開始ボタンの下に遊ぶ人数で「あと N 人で始められます」等を出す
+- 進行だけのホストは数字カード・「確認した！」・「あなたの数字」・宣言ボタンを出さず、お題選び・発言フェーズへ・タイマー・答え合わせ・もう一度プレイの既存ホスト操作と全体の様子だけを見る。確認・宣言の transaction も遊ぶ人だけを受け付ける
+- 待合室の参加者一覧で、進行だけのホストの行に「進行役」タグ（ホスト・ゲストとも見える）
+- 遊ぶ人が全員退出して進行だけのホストが残っても、ホスト側に自動書き込みはない（数字確認画面では「退出する」でルームを閉じるよう案内する）。従来のホストひとり残りと同じく、ゲストは waiting 以外では参加できない
 
 ## ゲスト保持の共通規約例外（2026-09-08 B-27 / P-11）
 
