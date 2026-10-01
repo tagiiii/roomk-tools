@@ -67,6 +67,15 @@
     .esa-tag { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; }
     .esa-tag--me   { background: var(--color-muted); color: #fff; }
     .esa-tag--host { background: var(--color-primary); color: #fff; }
+    .esa-tag--role { background: #EEF3F8; color: var(--color-primary); }
+
+    /* ── ロビーの設定（ホストのみ） ── */
+    .esa-lobby-setting { margin-top: 10px; padding-top: 6px; border-top: 1px solid var(--color-border); }
+    .esa-check {
+      display: flex; align-items: center; gap: 10px; min-height: 44px;
+      font-size: 14px; font-weight: 600; cursor: pointer;
+    }
+    .esa-check input { width: 20px; height: 20px; accent-color: var(--color-accent); flex-shrink: 0; }
 
     /* ── 場のエサ ── */
     .esa-field { text-align: center; }
@@ -202,7 +211,7 @@
 <div class="screen" id="screen-host-setup">
   <div class="esa-page">
     <h2 class="esa-page__title">ルームを作る</h2>
-    <p class="esa-page__sub">あなたのニックネームを入れてね。あなたもプレイヤーとして遊ぶよ。</p>
+    <p class="esa-page__sub">あなたのニックネームを入れてね。あなたもプレイヤーとして遊ぶよ（待合室で進行だけにも変えられるよ）。</p>
     <div class="form-group">
       <label class="form-label" for="top-host-nickname">ニックネーム（1〜8文字）</label>
       <input class="form-input" id="top-host-nickname" type="text" maxlength="8" placeholder="例：たろう" autocomplete="off">
@@ -274,6 +283,12 @@
         <span id="lobby-count" style="font-size:13px;color:var(--color-muted)"></span>
       </div>
       <ul class="esa-player-list" id="lobby-list"></ul>
+      <div class="esa-lobby-setting" id="lobby-host-settings" style="display:none">
+        <label class="esa-check">
+          <input type="checkbox" id="set-host-plays" onchange="onHostPlaysChange(this.checked)">
+          <span>自分もプレイヤーとして参加する</span>
+        </label>
+      </div>
     </div>
 
     <div id="lobby-host-actions" style="display:none" class="mt-md">
@@ -466,6 +481,20 @@ function esaColor(v) { return (Number(v) || 0) > 0 ? ESA_PLUS_COLOR : ESA_MINUS_
 
 function maxSeat(players) {
   return Object.values(players || {}).reduce((mx, p) => Math.max(mx, p && p.seat != null ? p.seat : -1), -1);
+}
+
+// ホストがプレイヤーとして遊ぶか。キーのない部屋（旧版が作った部屋）は従来どおり「遊ぶ」
+function hostPlaysOf(room) {
+  return !(room && room.settings && room.settings.hostPlays === false);
+}
+
+// 遊ぶ人（seat 順の [nick, player] 配列）。ホストが進行だけならホストを除く
+function playingEntries(players, room) {
+  const hostPlays = hostPlaysOf(room);
+  const host = room ? room.host : null;
+  return Object.entries(players || {})
+    .filter(([nick]) => hostPlays || nick !== host)
+    .sort((a, b) => ((a[1] && a[1].seat) || 0) - ((b[1] && b[1].seat) || 0));
 }
 
 function totalFor(taken, nick) {
@@ -686,24 +715,29 @@ function buildHistoryHtml(m) {
 function handleLobby(room) {
   showScreen('lobby');
   const players = room.players || {};
-  const count = Object.keys(players).length;
+  const hostPlays = hostPlaysOf(room);
+  const count = playingEntries(players, room).length; // 人数は遊ぶ人だけで数える
   const isHost = state.role === 'host';
-  document.getElementById('lobby-count').textContent = count + '人';
+  document.getElementById('lobby-count').textContent = '遊ぶ人 ' + count + '人';
   document.getElementById('lobby-host-panel').style.display = isHost ? 'block' : 'none';
+  document.getElementById('lobby-host-settings').style.display = isHost ? 'block' : 'none';
   document.getElementById('lobby-host-actions').style.display = isHost ? 'block' : 'none';
   document.getElementById('lobby-guest-wait').style.display = isHost ? 'none' : 'block';
-  if (isHost) document.getElementById('lobby-room-code').textContent = state.roomCode;
-  renderLobbyList(players, room.host);
+  if (isHost) {
+    document.getElementById('lobby-room-code').textContent = state.roomCode;
+    document.getElementById('set-host-plays').checked = hostPlays;
+  }
+  renderLobbyList('lobby-list', players, room.host, hostPlays, true);
 
   if (isHost) {
     const btn = document.getElementById('btn-start');
     const hint = document.getElementById('lobby-hint');
     if (count < MIN_PLAYERS) {
       btn.disabled = true;
-      hint.textContent = 'あと' + (MIN_PLAYERS - count) + '人待ってね';
+      hint.textContent = '遊ぶ人があと' + (MIN_PLAYERS - count) + '人必要だよ（2〜6人で遊べるよ）';
     } else if (count > MAX_PLAYERS) {
       btn.disabled = true;
-      hint.textContent = '6人まで遊べるよ';
+      hint.textContent = '遊ぶ人は6人までだよ（いま' + count + '人）';
     } else {
       btn.disabled = false;
       hint.textContent = count < 3 ? '3人以上がおすすめ！2人でも遊べるよ' : '';
@@ -711,14 +745,29 @@ function handleLobby(room) {
   }
 }
 
-function renderLobbyList(players, host) {
+// 待合室の参加者一覧（ロビー・共有ボード共通）。進行だけのホストには「進行役」タグを付ける
+function renderLobbyList(elId, players, host, hostPlays, showMe) {
   const entries = Object.entries(players).sort((a, b) => ((a[1] && a[1].seat) || 0) - ((b[1] && b[1].seat) || 0));
   const html = entries.map(([nick]) => {
-    const hostTag = nick === host ? '<span class="esa-tag esa-tag--host">ホスト</span>' : '';
-    const meTag = nick === state.nickname ? '<span class="esa-tag esa-tag--me">あなた</span>' : '';
-    return '<li class="esa-player esa-player--simple"><span class="esa-player__name">' + esc(nick) + '</span>' + hostTag + meTag + '</li>';
+    const isHostRow = nick === host;
+    const hostTag = isHostRow ? '<span class="esa-tag esa-tag--host">ホスト</span>' : '';
+    const roleTag = isHostRow && !hostPlays ? '<span class="esa-tag esa-tag--role">進行役</span>' : '';
+    const meTag = showMe && nick === state.nickname ? '<span class="esa-tag esa-tag--me">あなた</span>' : '';
+    return '<li class="esa-player esa-player--simple"><span class="esa-player__name">' + esc(nick) + '</span>' + hostTag + roleTag + meTag + '</li>';
   }).join('');
-  document.getElementById('lobby-list').innerHTML = html;
+  document.getElementById(elId).innerHTML = html;
+}
+
+// ホストの参加・不参加（待合室のあいだだけ変えられる）
+async function onHostPlaysChange(checked) {
+  if (state.role !== 'host' || !state.roomRef) return;
+  const me = state.nickname;
+  const { committed } = await state.roomRef.transaction((room) => {
+    if (!room || room.status !== 'waiting' || room.host !== me) return;
+    return { ...room, settings: { ...(room.settings || {}), hostPlays: !!checked } };
+  }).catch(() => ({ committed: false }));
+  if (!committed) showMsg('設定を変えられなかったよ');
+  if (state.lastRoom && state.lastRoom.status === 'waiting') handleLobby(state.lastRoom);
 }
 
 // ══════════════════════════════════════════════════
@@ -744,7 +793,14 @@ function renderPhase(room) {
   const el = document.getElementById('game-phase');
   const m = room.match;
   if (!m) { el.innerHTML = ''; return; }
-  if (m.phase === 'picking') {
+  const isMember = !!(m.members && m.members[state.nickname]);
+  if (m.phase === 'picking' && !isMember) {
+    // 進行だけのホスト: カードは出さず、だれを待っているかだけ見る（中身は出さない）
+    const pend = pendingMembers(room);
+    const txt = pend.length ? esc(pend.join('、')) + 'さんが考え中…' : 'みんなそろった！結果を出すよ…';
+    el.innerHTML = '<p class="esa-phase__prompt">あなたは進行役。みんなが選ぶのを待っているよ</p>'
+      + '<p class="esa-phase__wait mt-sm">' + txt + '</p>';
+  } else if (m.phase === 'picking') {
     const myPick = m.picks && m.picks[state.nickname] != null ? m.picks[state.nickname] : null;
     if (myPick != null) {
       const pend = pendingMembers(room);
@@ -874,7 +930,7 @@ function renderBoard(room) {
   if (status === 'waiting') {
     document.getElementById('board-waiting').style.display = 'block';
     document.getElementById('board-playing').style.display = 'none';
-    renderBoardWaitingList(room.players || {}, room.host);
+    renderLobbyList('board-waiting-list', room.players || {}, room.host, hostPlaysOf(room), false);
     return;
   }
   document.getElementById('board-waiting').style.display = 'none';
@@ -913,15 +969,6 @@ function renderBoard(room) {
   }
 }
 
-function renderBoardWaitingList(players, host) {
-  const entries = Object.entries(players).sort((a, b) => ((a[1] && a[1].seat) || 0) - ((b[1] && b[1].seat) || 0));
-  const html = entries.map(([nick]) => {
-    const hostTag = nick === host ? '<span class="esa-tag esa-tag--host">ホスト</span>' : '';
-    return '<li class="esa-player esa-player--simple"><span class="esa-player__name">' + esc(nick) + '</span>' + hostTag + '</li>';
-  }).join('');
-  document.getElementById('board-waiting-list').innerHTML = html;
-}
-
 // ══════════════════════════════════════════════════
 // ルーム作成 / 参加 / みるだけ
 // ══════════════════════════════════════════════════
@@ -947,6 +994,7 @@ async function hostCreateRoomInner() {
       status: 'waiting',
       createdAt: firebase.database.ServerValue.TIMESTAMP,
       players: { [nickname]: { isHost: true, seat: 0 } },
+      settings: { hostPlays: true }, // 初期値は従来どおり「ホストも遊ぶ」
     };
     const { committed } = await ref.transaction((room) => (room ? undefined : initialRoom));
     if (committed) { roomCode = code; roomRef = ref; break; }
@@ -1011,7 +1059,7 @@ async function guestJoinInner() {
     if (cur.status !== 'waiting') { reason = 'not_waiting'; return; }
     const players = cur.players || {};
     if (players[nickname]) { reason = 'nick_taken'; return; }
-    if (Object.keys(players).length >= MAX_PLAYERS) { reason = 'full'; return; }
+    if (playingEntries(players, cur).length >= MAX_PLAYERS) { reason = 'full'; return; } // 遊ぶ人で数える
     reason = null;
     return { ...cur, players: { ...players, [nickname]: { isHost: false, seat: maxSeat(players) + 1 } } };
   });
@@ -1230,6 +1278,7 @@ async function submitAdvance() {
 // ══════════════════════════════════════════════════
 // ホスト操作（開始・中断・もういちど）
 // ══════════════════════════════════════════════════
+// playersObj は遊ぶ人だけ（進行だけのホストは含めない）
 function buildMatch(playersObj, matchId, deck) {
   const entries = Object.entries(playersObj).sort((a, b) => ((a[1] && a[1].seat) || 0) - ((b[1] && b[1].seat) || 0));
   const members = {};
@@ -1246,12 +1295,12 @@ async function hostStartGame() {
     if (room.host !== state.nickname) { reason = 'invalid'; return; }
     const players = room.players || {};
     if (!players[state.nickname] || !players[state.nickname].isHost) { reason = 'invalid'; return; }
-    const count = Object.keys(players).length;
-    if (count < MIN_PLAYERS || count > MAX_PLAYERS) { reason = 'count'; return; }
+    const playing = playingEntries(players, room); // 人数は遊ぶ人だけで数える
+    if (playing.length < MIN_PLAYERS || playing.length > MAX_PLAYERS) { reason = 'count'; return; }
     reason = null;
-    return { ...room, status: 'playing', match: buildMatch(players, 1, deck) };
+    return { ...room, status: 'playing', match: buildMatch(Object.fromEntries(playing), 1, deck) };
   });
-  if (!committed) showMsg(reason === 'count' ? '2〜6人で始められるよ' : '始められなかったよ');
+  if (!committed) showMsg(reason === 'count' ? '遊ぶ人が2〜6人で始められるよ' : '始められなかったよ');
 }
 
 async function hostAbort() {
@@ -1275,17 +1324,19 @@ async function hostRematch() {
     if (!room || room.status !== 'result' || room.host !== state.nickname) { reason = 'invalid'; return; }
     if (!room.match || room.match.matchId !== cap.matchId) { reason = 'invalid'; return; }
     // players ノードのある（＝接続中の）人だけで配り直す
+    // ホストの参加・不参加は待合室で決めたまま引き継ぐ（人数は遊ぶ人だけで数える）
     const active = Object.entries(room.players || {}).sort((a, b) => ((a[1] && a[1].seat) || 0) - ((b[1] && b[1].seat) || 0));
-    if (active.length < MIN_PLAYERS) { reason = 'count'; return; }
     const newPlayers = {};
     active.forEach(([nick], i) => { newPlayers[nick] = { isHost: nick === room.host, seat: i }; });
+    const playing = playingEntries(newPlayers, room);
+    if (playing.length < MIN_PLAYERS) { reason = 'count'; return; }
     if (!newPlayers[room.host]) { reason = 'no_host'; return; }
     reason = null;
-    const match = buildMatch(newPlayers, room.match.matchId + 1, deck);
+    const match = buildMatch(Object.fromEntries(playing), room.match.matchId + 1, deck);
     return { ...room, status: 'playing', players: newPlayers, match };
   });
   if (!committed) {
-    showMsg(reason === 'count' ? 'つながっている人が2人より少ないので、もう一度はできないよ' : 'もう一度できなかったよ');
+    showMsg(reason === 'count' ? 'つながっている遊ぶ人が2人より少ないので、もう一度はできないよ' : 'もう一度できなかったよ');
   }
 }
 
@@ -1455,7 +1506,8 @@ async function writeBackPresence() {
 
     if (cur.status === 'waiting') {
       const players = cur.players || {};
-      if (!players[nick] && Object.keys(players).length >= MAX_PLAYERS) { reason = 'full'; return; }
+      // ホスト本人は人数で弾かない。ゲストは遊ぶ人で数える
+      if (!isHost && !players[nick] && playingEntries(players, cur).length >= MAX_PLAYERS) { reason = 'full'; return; }
       const seat = players[nick] ? players[nick].seat : (maxSeat(players) + 1);
       reason = null;
       const patch = { ...cur, players: { ...players, [nick]: { isHost, seat } } };
@@ -1464,10 +1516,12 @@ async function writeBackPresence() {
     }
 
     // playing / result / aborted
+    // 進行だけのホストは members に居ないが、ホストとして戻れる（host 本人であることは上で確認済み）
     const members = (cur.match && cur.match.members) || {};
-    if (!members[nick]) { reason = 'not_member'; return; }
+    if (!members[nick] && !isHost) { reason = 'not_member'; return; }
     reason = null;
-    const patch = { ...cur, players: { ...(cur.players || {}), [nick]: { isHost, seat: members[nick].seat } } };
+    const seat = members[nick] ? members[nick].seat : 0;
+    const patch = { ...cur, players: { ...(cur.players || {}), [nick]: { isHost, seat } } };
     if (isHost) { patch.hostConnected = true; patch.hostDisconnectedAt = null; }
     return patch;
   });
@@ -1524,7 +1578,8 @@ async function tryReconnect() {
     if (isRoomExpired(room)) { await removeRoomIfExpired(roomRef); clearSession(); return false; }
     if (room.status !== 'waiting') {
       const members = (room.match && room.match.members) || {};
-      if (!members[nickname]) { clearSession(); showMsg('メンバーからはずれたよ', false); return false; }
+      const isProgressHost = isHost && room.host === nickname; // 進行だけのホストは members に居ない
+      if (!members[nickname] && !isProgressHost) { clearSession(); showMsg('メンバーからはずれたよ', false); return false; }
     }
 
     state.role = isHost ? 'host' : 'guest';
@@ -1567,10 +1622,10 @@ tryReconnect().then((reconnected) => {
     lead: 'エサをねらう鳥になって、1〜15のカードでエサを取り合うゲームです。同じ数を出した人同士は無効！15回やって、集めたエサの点数がいちばん高い人が勝ち。',
     sections: [
       { heading: 'はじめかた', items: [
-        'ホストが「ルームを作る」からルームを作る（ホストもプレイヤーとして遊ぶよ）',
+        'ホストが「ルームを作る」からルームを作る（ホストもプレイヤーとして遊ぶよ。進行だけにしたいときは、待合室で「自分もプレイヤーとして参加する」のチェックを外してね）',
         'ルームコードをみんなに伝える',
         'ほかの人は「ルームに参加する」からニックネームとルームコードを入れて「参加する」を押す',
-        'ホストが「始める」を押すとスタート（2〜6人・3人以上がおすすめ）',
+        'ホストが「始める」を押すとスタート（遊ぶ人が2〜6人・3人以上がおすすめ）',
       ] },
       { heading: 'すすめかた', items: [
         'エサはプラス（+1〜+10）とマイナス（−1〜−5）の全15枚。毎ラウンド1枚めくられる',
