@@ -11,20 +11,24 @@ import {
   forceEndTurn,
   generatePlayerId,
   getStartConditions,
+  hostPlaysOf,
+  isPlayingPlayer,
   isRoomExpired,
   joinRoom,
   leaveRoom,
   normalizeRoomId,
+  playingPlayers,
   removePlayerFromRoom,
   restartGame,
   resetHint,
   revealCard,
+  setHostPlays,
   startGame,
   submitHint,
   subscribeToRoom,
   subscribeToRoomForSpectator,
   updatePlayerRole,
-} from "./service.js";
+} from "./service.js?v=20261001";
 import { wordSets } from "./words.js";
 
 const appEl = document.querySelector("#app");
@@ -289,9 +293,11 @@ function renderLobby() {
 
   const currentPlayer = state.room.players?.find((p) => p.id === state.playerId);
   const players = state.room.players || [];
-  const startable = canStart(players);
+  // 開始条件・人数は遊ぶ人だけで数える（進行だけのホストはどのチームにも入らない）
+  const playing = playingPlayers(state.room);
+  const startable = canStart(playing);
   const canEditAssignments = Boolean(currentPlayer?.isHost);
-  const playerList = players.map((player) => renderLobbyPlayer(player, canEditAssignments)).join("");
+  const playerList = players.map((player) => renderLobbyPlayer(state.room, player, canEditAssignments)).join("");
 
   appEl.innerHTML = `
     <section class="card cn-panel">
@@ -308,15 +314,16 @@ function renderLobby() {
         <div class="cn-status">
           <span class="text-muted">あなた</span>
           <strong>${esc(currentPlayer?.name || "不明")}</strong>
-          <span class="text-muted">${esc(teamLabel(currentPlayer?.team))} / ${esc(roleLabel(currentPlayer?.role))}</span>
+          <span class="text-muted">${esc(assignmentLabel(state.room, currentPlayer))}</span>
         </div>
         <div class="cn-status">
-          <span class="text-muted">参加人数</span>
-          <strong>${players.length} / 8</strong>
+          <span class="text-muted">遊ぶ人数</span>
+          <strong>${playing.length} / 8</strong>
         </div>
       </div>
+      ${renderHostSettings(state.room, currentPlayer)}
       <h2 class="cn-section-title">開始条件</h2>
-      <ul class="cn-condition-list">${renderStartConditions(players)}</ul>
+      <ul class="cn-condition-list">${renderStartConditions(playing)}</ul>
       <h2 class="cn-section-title">参加者</h2>
       <ul class="cn-player-list">${playerList}</ul>
       ${state.error ? `<div class="alert alert-error mt-md">${esc(state.error)}</div>` : ""}
@@ -328,6 +335,20 @@ function renderLobby() {
       ${renderSpectatorShareControls(currentPlayer)}
       <button class="btn btn-ghost btn-full mt-lg" id="leave-room" type="button">ホームへ戻る</button>
     </section>
+  `;
+}
+
+// 待合室のホスト専用の設定欄（ホストの参加）。初期値は参加、キーなしの旧ルームも参加扱い
+function renderHostSettings(room, currentPlayer) {
+  if (!currentPlayer?.isHost) return "";
+  const hostPlays = hostPlaysOf(room);
+  return `
+    <h2 class="cn-section-title">設定</h2>
+    <label class="cn-check">
+      <input type="checkbox" id="set-host-plays" ${hostPlays ? "checked" : ""} ${state.loading ? "disabled" : ""} />
+      <span>自分もプレイヤーとして参加する</span>
+    </label>
+    <p class="text-muted cn-check-note">外すと進行役になります。チームに入らず、まだ開いていないカードの正解の色も見えません。</p>
   `;
 }
 
@@ -364,8 +385,8 @@ function renderGame() {
     return;
   }
 
-  const currentPlayer = state.room.players?.find((p) => p.id === state.playerId);
-  if (!currentPlayer) {
+  const roomPlayer = state.room.players?.find((p) => p.id === state.playerId);
+  if (!roomPlayer) {
     appEl.innerHTML = `
       <section class="card cn-panel">
         <h1 class="cn-title">参加者が見つかりません</h1>
@@ -374,6 +395,8 @@ function renderGame() {
     `;
     return;
   }
+  // 進行だけのホストは team / role を持たない視点で描く（未公開カードの正解の色を出さない）
+  const currentPlayer = viewerOf(state.room, roomPlayer);
 
   appEl.innerHTML = `
     <section class="card cn-panel cn-game-panel">
@@ -382,7 +405,7 @@ function renderGame() {
           <p class="text-muted">ルーム ${esc(state.roomId)}</p>
           <h1 class="cn-title">ことば探偵</h1>
         </div>
-        <div class="cn-role-chip">${esc(teamLabel(currentPlayer.team))} / ${esc(roleLabel(currentPlayer.role))}</div>
+        <div class="cn-role-chip">${esc(assignmentLabel(state.room, roomPlayer))}</div>
       </div>
       ${renderTurnBanner(state.room, currentPlayer)}
       ${renderScoreBoard(state.room)}
@@ -424,6 +447,8 @@ function renderFinish() {
   const currentPlayer = state.room.players?.find((p) => p.id === state.playerId);
   const winner = state.room.winner;
   const isWinner = currentPlayer?.team === winner;
+  // 進行だけのホストはどのチームにも入らないので、勝ち負けの一言を出さない
+  const showMyResult = isPlayingPlayer(state.room, currentPlayer);
   const result = resultSummary(state.room);
 
   appEl.innerHTML = `
@@ -432,7 +457,7 @@ function renderFinish() {
         <p class="text-muted">結果</p>
         <h1 class="cn-title">${esc(result.title)}</h1>
         <p>${esc(result.detail)}</p>
-        <p class="text-bold">${isWinner ? "あなたのチームの勝ち" : "あなたのチームの負け"}</p>
+        ${showMyResult ? `<p class="text-bold">${isWinner ? "あなたのチームの勝ち" : "あなたのチームの負け"}</p>` : ""}
       </div>
       ${state.error ? `<div class="alert alert-error">${esc(state.error)}</div>` : ""}
       <div class="cn-board" aria-label="公開された単語カード">
@@ -502,7 +527,7 @@ function ensureRoomSubscription() {
 
 function clearInvalidPendingCard() {
   if (!Number.isInteger(state.pendingCardIndex) || !state.room) return;
-  const currentPlayer = state.room.players?.find((p) => p.id === state.playerId);
+  const currentPlayer = currentViewer();
   const card = state.room.cards?.[state.pendingCardIndex];
   if (!currentPlayer || !canRevealCard(card, currentPlayer)) {
     state.pendingCardIndex = null;
@@ -522,6 +547,25 @@ function teamLabel(team) {
 
 function roleLabel(role) {
   return role === "spymaster" ? "ヒント役" : "探す役";
+}
+
+// 「赤チーム / 探す役」など。進行だけのホストは「進行役」
+function assignmentLabel(room, player) {
+  if (player && !isPlayingPlayer(room, player)) return "進行役";
+  return `${teamLabel(player?.team)} / ${roleLabel(player?.role)}`;
+}
+
+// 画面を描くときの視点。進行だけのホストは team / role を持たない
+// （保存された team / role は残っているが、カードの正解・操作の判定には使わない）
+function viewerOf(room, player) {
+  if (!player) return null;
+  if (isPlayingPlayer(room, player)) return player;
+  return { ...player, team: null, role: null };
+}
+
+function currentViewer() {
+  const player = state.room?.players?.find((p) => p.id === state.playerId);
+  return viewerOf(state.room, player);
 }
 
 function resultSummary(room) {
@@ -560,19 +604,30 @@ function inferFinishReason(room) {
   return revealedTrap ? "trap" : "all_found";
 }
 
-function renderLobbyPlayer(player, canEditAssignments) {
+// 参加者の名前とバッジ・割り当て（ロビー・参加者管理・観戦ロビーで共通）
+function playerInfoHtml(room, player) {
+  const playing = isPlayingPlayer(room, player);
   return `
-    <li class="cn-player">
       <div class="cn-player-info">
         <span>
           ${esc(player.name)}
           ${player.isHost ? '<span class="badge badge-primary">ホスト</span>' : ""}
+          ${playing ? "" : '<span class="badge badge-accent">進行役</span>'}
         </span>
-        <span class="text-muted">${esc(teamLabel(player.team))} / ${esc(roleLabel(player.role))}</span>
+        <span class="text-muted">${playing ? esc(assignmentLabel(room, player)) : "チームに入らず進行します"}</span>
       </div>
-      ${canEditAssignments ? `
+  `;
+}
+
+function renderLobbyPlayer(room, player, canEditAssignments) {
+  // 進行だけのホストはチームに入れない（チーム・役割のボタンを出さない）
+  const editable = isPlayingPlayer(room, player);
+  return `
+    <li class="cn-player">
+      ${playerInfoHtml(room, player)}
+      ${canEditAssignments && (editable || !player.isHost) ? `
         <div class="cn-player-actions">
-          ${renderPlayerControls(player)}
+          ${editable ? renderPlayerControls(player) : ""}
           ${player.isHost ? "" : `
             <button
               class="btn btn-danger btn-sm"
@@ -650,7 +705,10 @@ function renderTurnBanner(room, currentPlayer) {
   const actionText = room.turnPhase === "waiting_hint"
     ? "ヒント役がヒントを出します"
     : `探す役がカードを選びます（残り${Number(room.remainingGuesses || 0)}）`;
-  const myTurnText = isMyTeam ? "あなたのチームの番です" : "相手チームの番です";
+  // 進行だけのホスト（team なし）には「あなたのチーム」の一言を出さない
+  const myTurnText = !currentPlayer.team
+    ? ""
+    : (isMyTeam ? "あなたのチームの番です" : "相手チームの番です");
 
   return `
     <div class="cn-turn-banner cn-turn-banner--${esc(room.turnTeam)} ${shouldPulse ? "cn-turn-banner--pulse" : ""}" aria-live="polite">
@@ -659,7 +717,7 @@ function renderTurnBanner(room, currentPlayer) {
         <strong>${esc(turnTitle(room))}</strong>
         <span>${esc(actionText)}</span>
       </div>
-      <span class="cn-turn-side">${esc(myTurnText)}</span>
+      ${myTurnText ? `<span class="cn-turn-side">${esc(myTurnText)}</span>` : ""}
     </div>
   `;
 }
@@ -842,15 +900,9 @@ function renderHostPlayerManagement(room, currentPlayer) {
   const players = room.players || [];
   const playerItems = players.map((player) => `
     <li class="cn-player">
-      <div class="cn-player-info">
-        <span>
-          ${esc(player.name)}
-          ${player.isHost ? '<span class="badge badge-primary">ホスト</span>' : ""}
-        </span>
-        <span class="text-muted">${esc(teamLabel(player.team))} / ${esc(roleLabel(player.role))}</span>
-      </div>
+      ${playerInfoHtml(room, player)}
       <div class="cn-player-actions">
-        ${renderPlayerControls(player)}
+        ${isPlayingPlayer(room, player) ? renderPlayerControls(player) : ""}
         ${player.isHost ? "" : `
           <button
             class="btn btn-danger btn-sm"
@@ -1017,6 +1069,24 @@ async function handleRemovePlayer(targetPlayerId) {
   }
 }
 
+async function handleHostPlaysChange(checked) {
+  if (!state.roomId || !state.playerId || state.loading) return;
+  state.loading = true;
+  state.error = "";
+  renderLobby();
+
+  try {
+    await setHostPlays(state.roomId, state.playerId, checked);
+    // 値が変わらないときはスナップショットが来ないので、ここで戻す
+    state.loading = false;
+    renderLobby();
+  } catch (error) {
+    state.error = error.message || "設定を変えられませんでした";
+    state.loading = false;
+    renderLobby();
+  }
+}
+
 async function handleStartGame() {
   if (!state.roomId || !state.playerId || state.loading) return;
   state.loading = true;
@@ -1034,8 +1104,8 @@ async function handleStartGame() {
 
 async function handleHintSubmit(form) {
   if (!state.room || !state.playerId || state.submitting) return;
-  const currentPlayer = state.room.players?.find((p) => p.id === state.playerId);
-  if (!currentPlayer) return;
+  const currentPlayer = currentViewer();
+  if (!currentPlayer?.team) return;
 
   const formData = new FormData(form);
   const word = String(formData.get("hintWord") || "").trim();
@@ -1066,7 +1136,7 @@ async function handleHintSubmit(form) {
 
 async function handleRevealCard(cardIndex) {
   if (!state.room || state.submitting) return;
-  const currentPlayer = state.room.players?.find((p) => p.id === state.playerId);
+  const currentPlayer = currentViewer();
   const card = state.room.cards?.[cardIndex];
   if (!currentPlayer || !canRevealCard(card, currentPlayer)) return;
 
@@ -1089,7 +1159,7 @@ async function handleRevealCard(cardIndex) {
 
 function handleCardSelect(cardIndex) {
   if (!state.room || state.submitting) return;
-  const currentPlayer = state.room.players?.find((p) => p.id === state.playerId);
+  const currentPlayer = currentViewer();
   const card = state.room.cards?.[cardIndex];
   if (!currentPlayer || !canRevealCard(card, currentPlayer)) return;
 
@@ -1129,7 +1199,7 @@ async function handleResetHint() {
 
 async function handleEndTurn() {
   if (!state.room || state.submitting) return;
-  const currentPlayer = state.room.players?.find((p) => p.id === state.playerId);
+  const currentPlayer = currentViewer();
   if (!currentPlayer || currentPlayer.role !== "guesser" || currentPlayer.team !== state.room.turnTeam) return;
 
   state.submitting = true;
@@ -1346,6 +1416,12 @@ async function handlePlayerClick(event) {
   }
 }
 
+function handlePlayerChange(event) {
+  if (event.target.id === "set-host-plays") {
+    void handleHostPlaysChange(event.target.checked);
+  }
+}
+
 function handlePlayerKeydown(event) {
   if (event.key === "Escape" && Number.isInteger(state.pendingCardIndex)) {
     closeCardConfirm();
@@ -1368,6 +1444,7 @@ async function handlePlayerSubmit(event) {
 function initPlayerMode() {
   document.addEventListener("click", handlePlayerClick);
   document.addEventListener("keydown", handlePlayerKeydown);
+  document.addEventListener("change", handlePlayerChange);
   document.addEventListener("submit", handlePlayerSubmit);
   window.addEventListener("hashchange", render);
 
@@ -1547,13 +1624,7 @@ function renderSpecLobby(room) {
   const players = Array.isArray(room.players) ? room.players : [];
   const playerList = players.map((player) => `
     <li class="cn-player">
-      <div class="cn-player-info">
-        <span>
-          ${esc(player.name)}
-          ${player.isHost ? '<span class="badge badge-primary">ホスト</span>' : ""}
-        </span>
-        <span class="text-muted">${esc(teamLabel(player.team))} / ${esc(roleLabel(player.role))}</span>
-      </div>
+      ${playerInfoHtml(room, player)}
     </li>
   `).join("");
 

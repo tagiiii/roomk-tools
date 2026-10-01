@@ -32,6 +32,9 @@ const CARD_DISTRIBUTION = {
  * @property {Role} role
  * @property {boolean} isHost
  *
+ * @typedef {Object} RoomSettings
+ * @property {boolean=} hostPlays  ホストもチームに入って遊ぶか（キーなしは true 扱い）
+ *
  * @typedef {Object} Card
  * @property {number} index
  * @property {string} word
@@ -92,6 +95,37 @@ export function isRoomExpired(room, nowMs = Date.now()) {
 }
 
 /**
+ * ホストもチームに入って遊ぶか。settings.hostPlays を持たない旧ルームは従来どおり遊ぶ扱い。
+ * @param {object | null} room
+ * @returns {boolean}
+ */
+export function hostPlaysOf(room) {
+  return room?.settings?.hostPlays !== false;
+}
+
+/**
+ * チームに入って遊ぶ人か（進行だけのホストは false）。
+ * 進行だけのホストの Player.team / role は保存したまま残るが、どこでも数えず・使わない。
+ * @param {object | null} room
+ * @param {Player | null | undefined} player
+ * @returns {boolean}
+ */
+export function isPlayingPlayer(room, player) {
+  if (!player) return false;
+  return !(player.isHost && !hostPlaysOf(room));
+}
+
+/**
+ * チームに入って遊ぶ人の一覧（開始条件・人数・チーム分けはこれで数える）。
+ * @param {object | null} room
+ * @returns {Player[]}
+ */
+export function playingPlayers(room) {
+  const players = Array.isArray(room?.players) ? room.players : [];
+  return players.filter((p) => isPlayingPlayer(room, p));
+}
+
+/**
  * ルームを作成する。
  * @param {Omit<Player, "isHost">} hostPlayer
  * @param {string[]} words
@@ -117,6 +151,7 @@ export async function createRoom(hostPlayer, words, firstTeam) {
       cards: generateCards(words, firstTeam),
       wordSetWords: words,
       players: [{ ...hostPlayer, authUid: authUser.uid, isHost: true }],
+      settings: { hostPlays: true },
       firstTeam,
       winner: null,
       finishReason: null,
@@ -163,7 +198,8 @@ export async function joinRoom(roomId, player) {
     }
 
     const players = Array.isArray(room.players) ? room.players : [];
-    if (players.length >= MAX_PLAYERS) {
+    // 最大人数は遊ぶ人だけで数える（進行だけのホストは数えない）
+    if (playingPlayers(room).length >= MAX_PLAYERS) {
       throw new Error("ルームが満員です");
     }
     if (players.some((p) => p.id === player.id || p.name === player.name)) {
@@ -273,6 +309,9 @@ export async function updatePlayerRole(roomId, targetPlayerId, updates, actorPla
     if (!targetPlayer) {
       throw new Error("参加者が見つかりません");
     }
+    if (!isPlayingPlayer(room, targetPlayer)) {
+      throw new Error("進行役のホストはチームに入りません");
+    }
 
     const nextPlayer = {
       ...targetPlayer,
@@ -287,7 +326,7 @@ export async function updatePlayerRole(roomId, targetPlayerId, updates, actorPla
     }
 
     if (nextPlayer.role === "spymaster") {
-      const existingSpymaster = players.find((p) =>
+      const existingSpymaster = playingPlayers(room).find((p) =>
         p.id !== targetPlayerId && p.team === nextPlayer.team && p.role === "spymaster"
       );
       if (existingSpymaster) {
@@ -298,6 +337,59 @@ export async function updatePlayerRole(roomId, targetPlayerId, updates, actorPla
     transaction.update(roomRef, {
       players: players.map((p) => p.id === targetPlayerId ? nextPlayer : p),
     });
+  });
+}
+
+/**
+ * ホストもチームに入って遊ぶかを切り替える（待合室の間だけ・ホストだけ）。
+ * 遊ぶに戻すとき、ホストのチームにほかのヒント役がいればホストは探す役に戻す（ヒント役の重複を防ぐ）。
+ * @param {string} roomId
+ * @param {string} hostPlayerId
+ * @param {boolean} hostPlays
+ * @returns {Promise<void>}
+ */
+export async function setHostPlays(roomId, hostPlayerId, hostPlays) {
+  await ensureAuthenticated();
+
+  const roomRef = doc(db, ROOMS_COLLECTION, normalizeRoomId(roomId));
+
+  await runTransaction(db, async (transaction) => {
+    const snapshot = await transaction.get(roomRef);
+    if (!snapshot.exists()) {
+      throw new Error("ルームが見つかりません");
+    }
+
+    const room = snapshot.data();
+    if (room.gamePhase !== "lobby") {
+      throw new Error("ゲームが始まってからは変えられません");
+    }
+
+    const players = Array.isArray(room.players) ? room.players : [];
+    const hostPlayer = players.find((p) => p.id === hostPlayerId);
+    if (!hostPlayer?.isHost) {
+      throw new Error("ホストだけが変更できます");
+    }
+    assertActorMatchesSession(hostPlayer);
+
+    const next = Boolean(hostPlays);
+    if (next === hostPlaysOf(room)) return;
+
+    if (!next) {
+      transaction.update(roomRef, { "settings.hostPlays": false });
+      return;
+    }
+
+    const guests = players.filter((p) => !p.isHost);
+    if (guests.length >= MAX_PLAYERS) {
+      throw new Error(`遊ぶ人が${MAX_PLAYERS}人いるので、ホストは参加できません`);
+    }
+    const spymasterTaken = hostPlayer.role === "spymaster" &&
+      guests.some((p) => p.team === hostPlayer.team && p.role === "spymaster");
+    const updates = { "settings.hostPlays": true };
+    if (spymasterTaken) {
+      updates.players = players.map((p) => p.id === hostPlayerId ? { ...p, role: "guesser" } : p);
+    }
+    transaction.update(roomRef, updates);
   });
 }
 
@@ -374,7 +466,8 @@ export async function startGame(roomId, hostPlayerId) {
     }
     assertActorMatchesSession(hostPlayer);
 
-    const conditions = getStartConditions(players);
+    // 開始条件は遊ぶ人だけで数える（進行だけのホストはどのチームにも入らない）
+    const conditions = getStartConditions(playingPlayers(room));
     if (!conditions.every((condition) => condition.ok)) {
       throw new Error("開始条件を満たしていません");
     }
@@ -415,7 +508,7 @@ export async function submitHint(roomId, hint) {
 
     const players = Array.isArray(room.players) ? room.players : [];
     const player = players.find((p) => p.id === hint.byPlayerId);
-    if (!player || player.team !== hint.team || player.role !== "spymaster") {
+    if (!isPlayingPlayer(room, player) || player.team !== hint.team || player.role !== "spymaster") {
       throw new Error("ヒント役だけがヒントを送れます");
     }
     assertActorMatchesSession(player);
@@ -621,8 +714,8 @@ export async function resetHint(roomId, actorPlayerId) {
 
     const players = Array.isArray(room.players) ? room.players : [];
     const actorPlayer = players.find((p) => p.id === actorPlayerId);
-    const isCurrentSpymaster =
-      actorPlayer?.team === room.turnTeam && actorPlayer.role === "spymaster";
+    const isCurrentSpymaster = isPlayingPlayer(room, actorPlayer) &&
+      actorPlayer.team === room.turnTeam && actorPlayer.role === "spymaster";
     if (!actorPlayer?.isHost && !isCurrentSpymaster) {
       throw new Error("ホストまたは現在のヒント役だけが取り消せます");
     }
@@ -777,7 +870,7 @@ export function normalizeRoomId(roomId) {
 
 /**
  * 開始条件を返す。
- * @param {Player[]} players
+ * @param {Player[]} players  遊ぶ人だけ（playingPlayers(room)）を渡す
  * @returns {{ id: string, label: string, ok: boolean }[]}
  */
 export function getStartConditions(players) {
@@ -822,7 +915,7 @@ function assertActorMatchesSession(player) {
 function assertCurrentGuesser(room, actorPlayerId) {
   const players = Array.isArray(room.players) ? room.players : [];
   const actorPlayer = players.find((p) => p.id === actorPlayerId);
-  if (!actorPlayer || actorPlayer.team !== room.turnTeam || actorPlayer.role !== "guesser") {
+  if (!isPlayingPlayer(room, actorPlayer) || actorPlayer.team !== room.turnTeam || actorPlayer.role !== "guesser") {
     throw new Error("現在の探す役だけが操作できます");
   }
   assertActorMatchesSession(actorPlayer);
