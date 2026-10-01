@@ -1461,10 +1461,15 @@
             return;
           }
           const players = room.players || {};
+          // 確認の対象は遊ぶ人だけ（進行だけのホストは数えない）。
+          // 締め切り（force）でも、遊ぶ人が誰もいなければ進めない（最後の人の退出と同時に押した場合）
+          const playing = playingEntries(room, players).map(([, p]) => p);
+          if (playing.length === 0) {
+            abortReason = "no_players";
+            return;
+          }
           if (!force) {
-            // 確認の対象は遊ぶ人だけ（進行だけのホストは数えない）
-            const playing = playingEntries(room, players).map(([, p]) => p);
-            const allReady = playing.length > 0 && playing.every((p) => !!p.ready);
+            const allReady = playing.every((p) => !!p.ready);
             if (!allReady) {
               abortReason = "not_ready";
               return;
@@ -1484,7 +1489,8 @@
         });
 
         if (!committed) {
-          if (abortReason === "theme_missing") showMsg("お題を選んでください");
+          if (abortReason === "no_players") showMsg("遊ぶ人がいないため、発言フェーズへ進めません");
+          else if (abortReason === "theme_missing") showMsg("お題を選んでください");
           else if (abortReason === "not_ready") showMsg("全員の確認が終わってから進めます");
           return;
         }
