@@ -13,7 +13,7 @@ apps/name-change/
 ## 役割
 | 役割 | 説明 |
 |------|------|
-| GM | ルーム作成・フェーズ進行のみ。投票・名前変えには参加しない |
+| GM | ルーム作成・フェーズ進行。初期値は進行だけで、投票・名前変えには参加しない。待合室で「自分もプレイヤーとして参加する」を選ぶと、ゲストと同じく名前変え役か投票役を選んで遊ぶ（進行の操作は GM が持ったまま） |
 | 名前変え役 | Metalife で名前を変え、変更後の名前をアプリに入力。投票には参加しない |
 | 投票役 | 名前を変えていない参加者。変更後の名前が誰のものか投票する |
 
@@ -57,10 +57,12 @@ namechange_rooms/{roomCode}/
   ├── revealIndex:   number        # 旧フィールド。現在は初期値のみ保持
   ├── revealAnswer:  boolean       # 旧フィールド。現在は初期値のみ保持
   ├── deleteAt:      number        # done確定時の削除予定時刻
+  ├── settings/
+  │    └── hostPlays: boolean     # GM もプレイヤーとして遊ぶか（作成時 false。キーなし＝false＝従来どおり進行だけ。waiting 中だけ GM が変更）
   └── players/
        └── {nickname}/
             ├── isHost:      boolean
-            ├── gameRole:    string | null   # 'host' | 'changer' | 'voter' | null
+            ├── gameRole:    string | null   # 'host' | 'changer' | 'voter' | null（GM が遊ぶときは開始時に null へ戻し、ゲストと同じく選ぶ）
             ├── changedName: string | null   # 変更後の名前（changer のみ）
             ├── votes:       object | null   # { changerNick: guessedNick }（voter のみ）
             ├── ready:       boolean         # naming フェーズで選択済みか
@@ -73,11 +75,22 @@ namechange_rooms/{roomCode}/
 - 元の名前（ニックネーム）は1〜12文字・同ルーム内重複NG
 - GM のニックネームは1〜8文字
 - 変更後の名前は1〜16文字
-- GMを除く参加者2人以上（合計3人以上）でゲーム開始可
+- **遊ぶ人**（ゲスト全員＋GM が遊ぶ設定なら GM）が2人以上でゲーム開始可。進行だけなら GM のほかに2人以上（合計3人以上）、GM が遊ぶなら GM＋ゲスト1人から。投票フェーズへ進むには名前変え役・投票役が各1人以上要るため、2人が成り立つ最少
+- 遊ぶ人の判定は `isPlaying(room, player)`（ゲスト、または `settings.hostPlays === true` の GM）。入力済み人数・投票フェーズへの条件・開始時の再接続待ちはこの範囲で数える。投票役・名前変え役は `gameRole` で数えるので、遊ぶ GM も投票し、投票の選択肢（投票される側）にも入る
+- GM が遊ぶとき、GM の画面には**ほかの人がだれを名前変え役に選んだかを出さない**（入力状況は「入力済み／入力中」と件数だけ。投票は件数だけ）。GM 自身の参加方法の選択・入力済みの内容・投票欄は折りたたみ（`<details>`、タップで表示）の中に置き、フェーズに入るたび・送信が通るたびに閉じる。進行だけのときは従来どおり、GM 画面に名前変え／投票のバッジを出す
+- ゲストの「みんなの入力状況」は従来どおり役割のバッジを出す（GM が遊ぶときは GM の行も入る）
+- 設定は待合室だけで変えられる（`waiting` の room transaction）。このゲームは1ゲームで終わる単方向5フェーズで「もう一度」はない
 - GM 切断時は `onDisconnect().update()` で `hostConnected=false` と `hostDisconnectedAt=ServerValue.TIMESTAMP` を保存し、参加者側にオーバーレイを表示する
 - 孤立ルームの TTL は通常2分（`ORPHAN_TTL_MS`）。ただし `naming` / `voting` / `revealing` 中は、ゲーム進行中の一時切断を吸収するため30分（`ORPHAN_TTL_INGAME_MS`）に延長する
 - GM 再接続時は `hostConnected=true` / `hostDisconnectedAt=null` に戻し、`sessionStorage: nc_session` から復帰する
 - ゲーム終了30秒後にデータを自動削除
+
+## メンターの心得（画面には出さない）
+- GM が遊ぶときは、自分の選択（参加方法・投票）の折りたたみを開く前に画面共有を止める。閉じてから共有に戻る
+- 遊ぶ人が全員抜けて GM だけが残ったときは、自動の書き込みは起きない（進行条件を満たさないため次へ進めない）。トップへ戻って作り直す
+
+## 経緯
+- 2026-10-01 オーナー決定: 待合室でホストの参加を選べる（初期値は従来どおり進行だけ）。GM が遊ぶとき、ほかの人の選択は GM の画面に出さず、GM 自身の選択は折りたたみにする
 
 ## ゲスト保持・復帰（2026-09-08 B-30 / P-11）
 

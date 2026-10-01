@@ -130,6 +130,25 @@
     .overlay-box h3 { font-size: 1.1rem; margin-bottom: 8px; }
     .overlay-box p  { font-size: 0.9rem; color: var(--color-muted); margin-bottom: 20px; }
 
+    /* 待合室の設定（ホストだけ） */
+    .nc-check { display: flex; align-items: center; gap: 10px; font-size: 0.95rem; font-weight: 500; cursor: pointer; }
+    .nc-check input { width: 20px; height: 20px; accent-color: var(--color-accent); flex-shrink: 0; }
+    .nc-note { font-size: 0.8rem; color: var(--color-muted); margin-top: 8px; }
+
+    /* ホストが遊ぶときの自分の選択（画面共有対策の折りたたみ） */
+    .nc-secret { margin-bottom: 16px; border: 1px solid var(--color-border); border-radius: 10px; background: var(--color-surface); }
+    .nc-secret summary {
+      list-style: none; cursor: pointer; padding: 12px 14px;
+      font-size: 0.9rem; font-weight: 700; color: var(--color-primary);
+      display: flex; align-items: center; gap: 6px;
+    }
+    .nc-secret summary::-webkit-details-marker { display: none; }
+    .nc-secret summary .material-symbols-rounded { font-size: 18px; color: var(--color-muted); }
+    .nc-secret__body { padding: 0 14px 14px; }
+    .nc-secret__body .nc-header { display: none; }
+    .nc-secret__body .card { box-shadow: none; padding: 0; margin-bottom: 0; }
+    .nc-self-text { text-align: center; font-weight: 700; color: var(--color-accent); margin: 4px 0; }
+
     /* Toast */
     #toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #333; color: #fff; padding: 12px 20px; border-radius: 8px; font-size: 0.9rem; opacity: 0; transition: opacity .3s; pointer-events: none; z-index: 1000; white-space: nowrap; }
     #toast.show { opacity: 1; }
@@ -215,6 +234,14 @@
     <div class="section-title">参加者</div>
     <div id="waiting-player-list" class="player-list"></div>
   </div>
+  <div class="card" id="waiting-settings" style="display:none">
+    <div class="section-title">設定</div>
+    <label class="nc-check">
+      <input type="checkbox" id="set-host-plays" onchange="onHostPlaysChange(this.checked)">
+      <span>自分もプレイヤーとして参加する</span>
+    </label>
+    <p class="nc-note">チェックすると、GMも名前を変える側か投票する側を選んで遊びます</p>
+  </div>
   <div id="waiting-host-ctrl" style="display:none">
     <button class="btn btn-primary btn-lg" id="waiting-start-btn" onclick="hostStartNaming()" disabled>
       <span class="material-symbols-rounded" aria-hidden="true">play_arrow</span>ゲームを始める
@@ -287,6 +314,12 @@
       <h1>名前変えフェーズ</h1>
       <p>参加者が入力するのを待っています</p>
     </div>
+    <details class="nc-secret" id="naming-self" style="display:none">
+      <summary><span class="material-symbols-rounded" aria-hidden="true">visibility</span><span id="naming-self-summary">自分の参加方法（タップで見る）</span></summary>
+      <div class="nc-secret__body" id="naming-self-body">
+        <p class="nc-self-text" id="naming-self-text" style="display:none"></p>
+      </div>
+    </details>
     <div class="card">
       <div class="section-title">みんなの入力状況</div>
       <div id="naming-gm-list" class="player-list"></div>
@@ -315,7 +348,7 @@
       <span class="material-symbols-rounded" aria-hidden="true">send</span>投票する
     </button>
     <p id="voting-done-msg" class="status-text" style="display:none">
-      投票しました！GMが結果を発表するまで待ってね<span class="dots"></span>
+      <span id="voting-done-text">投票しました！GMが結果を発表するまで待ってね</span><span class="dots" id="voting-done-dots"></span>
     </p>
   </div>
 
@@ -338,6 +371,12 @@
       <h1>投票中</h1>
       <p>全員が投票したら進めてください</p>
     </div>
+    <details class="nc-secret" id="voting-self" style="display:none">
+      <summary><span class="material-symbols-rounded" aria-hidden="true">visibility</span><span id="voting-self-summary">自分の投票（タップで見る）</span></summary>
+      <div class="nc-secret__body" id="voting-self-body">
+        <p class="nc-self-text" id="voting-self-text" style="display:none">名前を変えた人は投票しません</p>
+      </div>
+    </details>
     <div class="card">
       <p id="voting-gm-status" class="status-text" style="margin:0"></p>
     </div>
@@ -424,7 +463,7 @@ const state = {
   votingRendered: false,
   lastRoom: null, expectedRoomRemoval: false, namingAction: null, voteAction: null,
   votingRoster: '', votingSaved: '', orphanDeadline: null,
-  expiryAction: null,
+  expiryAction: null, settingAction: null,
 };
 let guestPresence = null;
 let guestPresenceWork = Promise.resolve();
@@ -485,6 +524,15 @@ function playerConnected(player) {
   return player.isHost || player.presenceVersion !== 1
     || Object.values(player.connections || {}).some(value => value === true);
 }
+// settings.hostPlays を持たない部屋（旧版が作った部屋）は従来どおり「GMは進行だけ」
+function hostPlaysOf(room) { return room?.settings?.hostPlays === true; }
+function isPlaying(room, player) { return !!player && (!player.isHost || hostPlaysOf(room)); }
+function playingEntries(room) {
+  return Object.entries(room?.players || {}).filter(([, p]) => isPlaying(room, p));
+}
+// 自分が名前変え・投票をする側か（ゲストは常に、GMは遊ぶ設定のときだけ）
+function selfPlays(room = state.lastRoom) { return !state.isHost || hostPlaysOf(room); }
+const MIN_PLAYING = 2; // 名前変え役・投票役が各1人以上いないと進めないため
 function guestCanAct() {
   return state.isHost || !!(guestPresence?.ready && guestPresence.connected
     && guestPresence.roomRef === state.roomRef && guestPresence.nickname === state.nickname);
@@ -606,7 +654,7 @@ function resetRoomState() {
   Object.assign(state, {
     roomCode:null, nickname:null, isHost:false, gameRole:null, roomRef:null,
     orphanTimer:null, myVotes:{}, votingRendered:false, lastRoom:null, expectedRoomRemoval:false,
-    namingAction:null, voteAction:null, votingRoster:'', votingSaved:'', orphanDeadline:null, expiryAction:null
+    namingAction:null, voteAction:null, votingRoster:'', votingSaved:'', orphanDeadline:null, expiryAction:null, settingAction:null
   });
   showScreen('top');
 }
@@ -660,6 +708,7 @@ async function hostCreateRoom() {
         host: nick, status: 'waiting',
         hostConnected: true, hostDisconnectedAt: null,
         revealIndex: 0, revealAnswer: false, revealOrder: null,
+        settings: { hostPlays: false },
         players: { [nick]: { isHost: true, gameRole: 'host', changedName: null, votes: null, ready: true } }
       };
       const { committed } = await ref.transaction((room) => room ? undefined : initialRoom);
@@ -820,27 +869,57 @@ function renderWaiting(room, players) {
     document.getElementById('waiting-code').textContent = state.roomCode;
     showScreen('waiting');
   }
+  const hostPlays = hostPlaysOf(room);
   const list = document.getElementById('waiting-player-list');
   list.innerHTML = '';
   Object.entries(players).forEach(([nick, p]) => {
     const d = document.createElement('div'); d.className = 'player-item';
     d.innerHTML = `<div class="player-avatar">${esc(initial(nick))}</div>
       <span class="player-name">${esc(nick)}</span>
-      ${p.isHost ? '<span class="badge badge-gm">GM</span>' : !playerConnected(p) ? '<span class="badge badge-pending">再接続待ち</span>' : ''}`;
+      ${p.isHost ? '<span class="badge badge-gm">GM</span>' + (hostPlays ? '' : '<span class="badge badge-pending">進行役</span>')
+        : !playerConnected(p) ? '<span class="badge badge-pending">再接続待ち</span>' : ''}`;
     list.appendChild(d);
   });
+  document.getElementById('waiting-settings').style.display = state.isHost ? 'block' : 'none';
   if (state.isHost) {
+    const check = document.getElementById('set-host-plays');
+    check.checked = hostPlays;
+    check.disabled = !!state.settingAction;
     document.getElementById('waiting-host-ctrl').style.display = 'block';
     document.getElementById('waiting-guest-msg').style.display = 'none';
-    const guests = Object.values(players).filter(p => !p.isHost);
-    const nonGM = guests.length;
+    const playing = playingEntries(room).map(([, p]) => p);
+    const count = playing.length;
+    const offline = playing.some(p => !playerConnected(p));
     const btn = document.getElementById('waiting-start-btn');
-    btn.disabled = nonGM < 2 || guests.some(p => !playerConnected(p));
+    btn.disabled = count < MIN_PLAYING || offline;
     document.getElementById('waiting-count-msg').textContent =
-      nonGM < 2 ? '2人以上で開始できます' : guests.some(p => !playerConnected(p)) ? '再接続を待っています' : `${nonGM}人が参加中`;
+      count < MIN_PLAYING ? `${hostPlays ? 'GMをふくめて' : 'GMのほかに'}${MIN_PLAYING}人以上で開始できます（あと${MIN_PLAYING - count}人）`
+      : offline ? '再接続を待っています' : `遊ぶ人 ${count}人`;
   } else {
     document.getElementById('waiting-host-ctrl').style.display = 'none';
     document.getElementById('waiting-guest-msg').style.display = 'block';
+  }
+}
+
+// 待合室でだけ変えられる。開始後は room.settings.hostPlays を変えない
+async function onHostPlaysChange(checked) {
+  if (!state.isHost || !state.roomRef || state.settingAction) return;
+  const action = captureAction('waiting');
+  state.settingAction = action;
+  document.getElementById('set-host-plays').disabled = true;
+  try {
+    const { committed } = await action.ref.transaction(room => {
+      if (state.settingAction !== action || !canApplyAction(action, room)) return;
+      return { ...room, settings: { ...(room.settings || {}), hostPlays: !!checked } };
+    }, undefined, false);
+    if (!committed && actionCurrent(action)) toast('設定を変えられませんでした');
+  } catch (error) {
+    if (actionCurrent(action)) toast('設定を変えられませんでした。接続を確認してください');
+  } finally {
+    if (state.settingAction === action) {
+      state.settingAction = null;
+      if (actionCurrent(action) && state.lastRoom) handle(state.lastRoom);
+    }
   }
 }
 
@@ -854,12 +933,18 @@ async function hostStartNaming() {
     if (room.hostConnected === false) { abortReason = 'host_gone'; return; }
     if (room.status !== 'waiting') { abortReason = 'bad_status'; return; }
     const players = room.players || {};
-    const nonGM = Object.values(players).filter(p => !p.isHost);
-    if (nonGM.length < 2) { abortReason = 'too_few'; return; }
-    if (nonGM.some(p => !playerConnected(p))) { abortReason = 'offline'; return; }
+    const playing = playingEntries(room).map(([, p]) => p);
+    if (playing.length < MIN_PLAYING) { abortReason = 'too_few'; return; }
+    if (playing.some(p => !playerConnected(p))) { abortReason = 'offline'; return; }
     abortReason = null;
+    const host = players[action.nickname];
+    // GMが遊ぶときはゲストと同じく未選択から始める。進行だけのときは従来どおり gameRole:'host'
+    const hostRecord = hostPlaysOf(room)
+      ? { ...host, gameRole: null, changedName: null, votes: null, ready: false }
+      : { ...host, gameRole: 'host', changedName: null, votes: null, ready: true };
     return {
       ...room,
+      players: { ...players, [action.nickname]: hostRecord },
       status: 'naming',
       revealIndex: 0,
       revealAnswer: false,
@@ -867,7 +952,7 @@ async function hostStartNaming() {
     };
   }, undefined, false).catch(() => ({ committed: false }));
   if (!committed) {
-    if (abortReason === 'too_few') toast('2人以上で開始できます');
+    if (abortReason === 'too_few') toast(`遊ぶ人が${MIN_PLAYING}人以上で開始できます`);
     else if (abortReason === 'offline') toast('再接続を待ってから始めてください');
     else if (abortReason === 'bad_status') toast('すでにゲームが始まっています');
     else toast('開始に失敗しました');
@@ -875,24 +960,44 @@ async function hostStartNaming() {
 }
 
 // ===== Naming =====
+// GMが遊ぶときは、自分の選択の部品をGM画面の折りたたみの中へ移す（画面共有で見えないように）
+function placeInFold(id, inFold, foldBodyId, screenId) {
+  const el = document.getElementById(id);
+  const parent = document.getElementById(inFold ? foldBodyId : screenId);
+  if (el.parentElement !== parent) parent.prepend(el);
+}
+function closeSelfFolds() {
+  ['naming-self', 'voting-self'].forEach(id => { document.getElementById(id).open = false; });
+}
 function renderNaming(room, players) {
-  if (state.currentScreen !== 'naming') showScreen('naming');
+  if (state.currentScreen !== 'naming') { showScreen('naming'); closeSelfFolds(); }
   const me = players[state.nickname];
   if (!me) return;
+  const hostSelf = state.isHost && hostPlaysOf(room);
+  placeInFold('naming-choose', hostSelf, 'naming-self-body', 'screen-naming');
   document.querySelectorAll('#naming-choose button').forEach(btn => {
-    btn.disabled = state.expectedRoomRemoval || !guestCanAct() || !!state.namingAction || !!me.ready;
+    btn.disabled = state.expectedRoomRemoval || !guestCanAct() || !!state.namingAction || !!me.ready
+      || !isPlaying(room, me);
   });
+  const playing = playingEntries(room);
 
   if (state.isHost) {
-    // GM view
-    document.getElementById('naming-choose').style.display = 'none';
+    // GM view（GMが遊ぶときは、ほかの人が何を選んだかを出さず件数と入力済みかだけ）
+    document.getElementById('naming-choose').style.display = hostSelf && !me.ready ? 'block' : 'none';
     document.getElementById('naming-done').style.display   = 'none';
     document.getElementById('naming-gm-view').style.display = 'block';
-    const nonGM = Object.entries(players).filter(([,p]) => !p.isHost);
-    const readyCnt = nonGM.filter(([,p]) => p.ready).length;
+    document.getElementById('naming-self').style.display = hostSelf ? 'block' : 'none';
+    const selfText = document.getElementById('naming-self-text');
+    selfText.style.display = hostSelf && me.ready ? 'block' : 'none';
+    selfText.textContent = !hostSelf || !me.ready ? ''
+      : me.gameRole === 'changer' ? `「${me.changedName}」に名前を変えました` : '投票役として参加します';
+    document.getElementById('naming-self-summary').textContent =
+      hostSelf && me.ready ? '自分の参加方法：入力済み（タップで見る）' : '自分の参加方法（タップで見る）';
+    const readyCnt = playing.filter(([,p]) => p.ready).length;
     document.getElementById('naming-gm-status').textContent =
-      readyCnt === nonGM.length ? '全員が入力済みです！' : `${readyCnt} / ${nonGM.length} 人が入力済み`;
-    renderNamingList(nonGM, 'naming-gm-list');
+      playing.length === 0 ? '入力する人がいません'
+      : readyCnt === playing.length ? '全員が入力済みです！' : `${readyCnt} / ${playing.length} 人が入力済み`;
+    renderNamingList(playing, 'naming-gm-list', hostSelf);
 
   } else if (me.ready) {
     // 送信済み → 待機表示
@@ -905,8 +1010,7 @@ function renderNaming(room, players) {
       me.gameRole === 'changer'
         ? `「${me.changedName}」に名前を変えました`
         : '投票役として参加します';
-    const nonGM = Object.entries(players).filter(([,p]) => !p.isHost);
-    renderNamingList(nonGM, 'naming-progress-list');
+    renderNamingList(playing, 'naming-progress-list');
 
   } else {
     // 未選択 → 選択フォーム表示
@@ -916,16 +1020,16 @@ function renderNaming(room, players) {
   }
 }
 
-function renderNamingList(nonGMEntries, containerId) {
+// hideRoles: GMが遊ぶときのGM画面。だれが名前を変える側を選んだかを出さない
+function renderNamingList(entries, containerId, hideRoles = false) {
   const list = document.getElementById(containerId);
   list.innerHTML = '';
-  nonGMEntries.forEach(([nick, p]) => {
+  entries.forEach(([nick, p]) => {
     const d = document.createElement('div'); d.className = 'player-item';
-    const badge = p.ready
-      ? (p.gameRole === 'changer'
-          ? '<span class="badge badge-changer">名前変え</span>'
-          : '<span class="badge badge-voter">投票</span>')
-      : '<span class="badge badge-pending">入力中...</span>';
+    const badge = !p.ready ? '<span class="badge badge-pending">入力中...</span>'
+      : hideRoles ? '<span class="badge badge-gm">入力済み</span>'
+      : p.gameRole === 'changer' ? '<span class="badge badge-changer">名前変え</span>'
+      : '<span class="badge badge-voter">投票</span>';
     d.innerHTML = `<div class="player-avatar">${esc(initial(nick))}</div>
       <span class="player-name">${esc(nick)}</span>${badge}`;
     list.appendChild(d);
@@ -945,18 +1049,20 @@ async function submitAsVoter() {
 async function submitNaming(gameRole, changedName) {
   if (!['changer', 'voter'].includes(gameRole)
     || (gameRole === 'changer' && (typeof changedName !== 'string' || !changedName.trim() || changedName.length > 16))) return;
-  if (state.isHost || !guestCanAct() || state.namingAction) return;
+  if (!selfPlays() || !guestCanAct() || state.namingAction) return;
   const action = captureAction('naming');
   if (!canApplyAction(action, state.lastRoom)) return;
   state.namingAction = action; handle(state.lastRoom);
   try {
     const { committed } = await action.ref.transaction(room => {
-      if (state.namingAction !== action || !canApplyAction(action, room) || room.players[action.nickname].ready) return;
+      if (state.namingAction !== action || !canApplyAction(action, room)
+        || !isPlaying(room, room.players[action.nickname]) || room.players[action.nickname].ready) return;
       return { ...room, players: { ...room.players, [action.nickname]: {
         ...room.players[action.nickname], gameRole, changedName, ready: true,
       } } };
     }, undefined, false);
     if (!committed && actionCurrent(action)) toast('送信できませんでした。現在の表示を確認してください');
+    if (committed && action.isHost) document.getElementById('naming-self').open = false;
   } catch (error) { if (actionCurrent(action)) toast('送信できませんでした。接続を確認してください'); }
   finally {
     if (state.namingAction === action) {
@@ -976,10 +1082,10 @@ async function hostStartVoting() {
     if (room.status !== 'naming') { abortReason = 'bad_status'; return; }
     const players = room.players || {};
     const entries = Object.entries(players);
-    const nonGM = entries.filter(([, p]) => !p.isHost);
-    const changers = nonGM.filter(([, p]) => p.ready && p.gameRole === 'changer');
-    const voters = nonGM.filter(([, p]) => p.ready && p.gameRole === 'voter');
-    if (nonGM.some(([, p]) => !p.ready)) { abortReason = 'not_ready'; return; }
+    const playing = playingEntries(room);
+    const changers = playing.filter(([, p]) => p.ready && p.gameRole === 'changer');
+    const voters = playing.filter(([, p]) => p.ready && p.gameRole === 'voter');
+    if (playing.some(([, p]) => !p.ready)) { abortReason = 'not_ready'; return; }
     if (changers.length === 0) { abortReason = 'no_changer'; return; }
     if (voters.length === 0) { abortReason = 'no_voter'; return; }
 
@@ -1005,6 +1111,7 @@ async function hostStartVoting() {
 function renderVoting(room, players) {
   if (state.currentScreen !== 'voting') {
     showScreen('voting');
+    closeSelfFolds();
     state.votingRendered = false;
   }
   const me = players[state.nickname];
@@ -1016,6 +1123,15 @@ function renderVoting(room, players) {
 
   ['voting-voter-section','voting-changer-section','voting-gm-section']
     .forEach(id => document.getElementById(id).style.display = 'none');
+  // GMが遊ぶときは、自分の投票欄をGM画面の折りたたみの中に出す（summary の文言は役割で変えない）
+  const hostSelf = state.isHost && hostPlaysOf(room);
+  placeInFold('voting-voter-section', hostSelf, 'voting-self-body', 'screen-voting');
+  document.getElementById('voting-self').style.display = hostSelf ? 'block' : 'none';
+  document.getElementById('voting-self-text').style.display =
+    hostSelf && me.gameRole === 'changer' ? 'block' : 'none';
+  document.getElementById('voting-done-text').textContent =
+    state.isHost ? '投票しました！' : '投票しました！GMが結果を発表するまで待ってね';
+  document.getElementById('voting-done-dots').style.display = state.isHost ? 'none' : '';
 
   if (state.isHost) {
     document.getElementById('voting-gm-section').style.display = 'block';
@@ -1023,8 +1139,10 @@ function renderVoting(room, players) {
       voters.length === 0 ? '投票役がいません'
       : votedCnt === voters.length ? '全員が投票しました！'
       : `${votedCnt} / ${voters.length} 人が投票済み`;
-
-  } else if (me.gameRole === 'voter') {
+  }
+  // 進行だけのGM・名前変え役のGMには投票欄を出さない
+  if (state.isHost && !(hostSelf && me.gameRole === 'voter')) return;
+  if (me.gameRole === 'voter') {
     document.getElementById('voting-voter-section').style.display = 'block';
     const alreadyVoted = me.votes != null;
     const roster = JSON.stringify(changers.map(([nick]) => nick).sort());
@@ -1081,7 +1199,7 @@ function renderVotingCards(changers, savedVotes = null) {
 
 function pickVote(card, changerNick, guessedNick, clickedBtn) {
   const room = state.lastRoom;
-  if (state.isHost || state.voteAction || !canApplyAction(captureAction('voting'), room)
+  if (!selfPlays(room) || state.voteAction || !canApplyAction(captureAction('voting'), room)
     || room.players[state.nickname].gameRole !== 'voter' || room.players[state.nickname].votes != null
     || clickedBtn.disabled || !card.isConnected) return;
   // 同カード内の前選択を解除
@@ -1105,7 +1223,7 @@ function pickVote(card, changerNick, guessedNick, clickedBtn) {
 
 function updateSubmitBtn() {
   const room = state.lastRoom, me = room?.players?.[state.nickname];
-  const blocked = state.isHost || !guestCanAct() || state.expectedRoomRemoval || !!state.voteAction
+  const blocked = !selfPlays(room) || !guestCanAct() || state.expectedRoomRemoval || !!state.voteAction
     || room?.status !== 'voting' || me?.gameRole !== 'voter' || me?.votes != null;
   document.querySelectorAll('.vote-card').forEach(card => {
     card.querySelectorAll('.vote-opt').forEach(btn => {
@@ -1124,7 +1242,7 @@ function validVotes(room, votes) {
 }
 
 async function submitVotes() {
-  if (state.isHost || !guestCanAct() || state.voteAction) return;
+  if (!selfPlays() || !guestCanAct() || state.voteAction) return;
   const action = captureAction('voting'), votes = { ...state.myVotes };
   if (!canApplyAction(action, state.lastRoom)) return;
   if (!validVotes(state.lastRoom, votes)) {
@@ -1135,10 +1253,11 @@ async function submitVotes() {
     const { committed } = await action.ref.transaction(room => {
       if (state.voteAction !== action || !canApplyAction(action, room) || !validVotes(room, votes)) return;
       const me = room.players[action.nickname];
-      if (me.gameRole !== 'voter' || me.votes != null) return;
+      if (!isPlaying(room, me) || me.gameRole !== 'voter' || me.votes != null) return;
       return { ...room, players: { ...room.players, [action.nickname]: { ...me, votes } } };
     }, undefined, false);
     if (actionCurrent(action)) toast(committed ? '投票しました！' : '投票できませんでした。現在の表示を確認してください');
+    if (committed && action.isHost) document.getElementById('voting-self').open = false;
   } catch (error) { if (actionCurrent(action)) toast('投票できませんでした。接続を確認してください'); }
   finally {
     if (state.voteAction === action) {
@@ -1330,6 +1449,7 @@ window.addEventListener('load', async () => {
         items: [
           'GMが「ルームを作る（GM）」からルームを作り、ルームコードをみんなに伝える',
           '参加する人は「ルームに参加する」を押して、Metalifeでの元の名前とコードを入れて「参加する」を押す',
+          'GMはふだん進行役。待合室で「自分もプレイヤーとして参加する」にチェックすると、GMも名前を変える側か投票する側を選んで遊べる',
           'みんながそろったら、GMが「ゲームを始める」を押す',
         ],
       },
