@@ -94,6 +94,7 @@
     }
     .mgr-canvas { display: block; width: 100%; height: auto; touch-action: none; }
     .mgr-canvas--active { border-color: var(--color-accent); }
+    .mgr-canvas--view { touch-action: auto; }
 
     /* ── 手番・凡例 ── */
     .mgr-turn {
@@ -186,6 +187,26 @@
     }
     @keyframes mgr-spin { to { transform: rotate(360deg); } }
 
+    /* ── みんなにみせる画面 ── */
+    .mgr-spec__header {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 14px; margin-bottom: 16px;
+      background: var(--color-surface); border: 1px solid var(--color-border);
+      border-radius: 8px; font-size: 13px; color: var(--color-muted);
+    }
+    .mgr-spec__header .material-symbols-rounded { font-size: 18px; }
+    .mgr-spec__header-label { font-weight: 700; }
+    .mgr-spec__header-code {
+      margin-left: auto; font-weight: 700; letter-spacing: 0.12em;
+      color: var(--color-primary); font-size: 15px;
+    }
+    .mgr-spec__status {
+      text-align: center; font-size: 18px; font-weight: 500;
+      color: var(--color-primary); margin: 4px 0 14px;
+    }
+    .mgr-spec__progress { text-align: center; font-size: 15px; color: var(--color-muted); margin-bottom: 12px; }
+    .mgr-spec__category { text-align: center; font-size: 14px; color: var(--color-muted); margin-bottom: 12px; }
+
     /* ── Misc ── */
     .mgr-section-lbl {
       font-size: 13px; font-weight: 700; color: var(--color-muted);
@@ -220,6 +241,9 @@
       </button>
       <button class="btn btn-secondary btn-full mgr-sep" onclick="goTo('guest-join')">
         <span class="material-symbols-rounded" aria-hidden="true">login</span>ルームに参加する
+      </button>
+      <button class="btn btn-ghost btn-full mgr-sep" onclick="goTo('spectate-join')">
+        <span class="material-symbols-rounded" aria-hidden="true">cast</span>みんなにみせる画面をひらく
       </button>
     </div>
   </div>
@@ -266,6 +290,26 @@
   </div>
 </div>
 
+<!-- ══════════════════ SPECTATE JOIN（みんなにみせる画面のコード入力） ══════════════════ -->
+<div id="screen-spectate-join" class="screen">
+  <div class="page">
+    <h2>みんなにみせる画面</h2>
+    <p style="font-size:14px;color:var(--color-muted);margin-bottom:12px">ルームコードを入れると、みんなで見られる画面がひらきます</p>
+    <div class="card">
+      <div class="form-group">
+        <label class="form-label" for="spectate-code">ルームコード（6文字）</label>
+        <input class="form-input" id="spectate-code" type="text" maxlength="6" autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="ABCDEF"
+               style="text-transform:uppercase;letter-spacing:.2em;font-size:24px;text-align:center">
+      </div>
+      <p id="spectate-form-error" class="alert alert-error" role="alert" hidden></p>
+      <button class="btn btn-primary btn-full mt-md" onclick="spectateJoin()">
+        <span class="material-symbols-rounded" aria-hidden="true">cast</span>画面をひらく
+      </button>
+      <button class="btn btn-ghost btn-full mgr-sep" onclick="goTo('top')">戻る</button>
+    </div>
+  </div>
+</div>
+
 <!-- ══════════════════ WAITING ══════════════════ -->
 <div id="screen-waiting" class="screen">
   <div class="page">
@@ -294,6 +338,9 @@
         <span class="material-symbols-rounded" aria-hidden="true">play_arrow</span>ゲームを始める
       </button>
       <p style="font-size:13px;color:var(--color-muted);text-align:center;margin-top:8px">ホストのほかに3人以上で始められます</p>
+      <button type="button" class="btn btn-secondary btn-full mt-md" id="btn-open-watch-waiting" onclick="openSpectatorWindow()">
+        <span class="material-symbols-rounded" aria-hidden="true">cast</span>みんなにみせる画面をひらく
+      </button>
     </div>
     <button class="btn btn-ghost btn-full mt-md" onclick="leaveGame()">
       <span class="material-symbols-rounded" aria-hidden="true">logout</span>退出する
@@ -346,6 +393,9 @@
           <span class="material-symbols-rounded" aria-hidden="true">brush</span>描き始める
         </button>
         <p style="font-size:13px;color:var(--color-muted);text-align:center;margin-top:8px">全員が「確認した」を押すと始められます</p>
+        <button type="button" class="btn btn-ghost btn-full mgr-sep" onclick="openSpectatorWindow()">
+          <span class="material-symbols-rounded" aria-hidden="true">cast</span>みんなにみせる画面をひらく
+        </button>
       </div>
     </div>
 
@@ -395,6 +445,9 @@
         <div class="mgr-secret__body" id="dr-secret-body"></div>
       </details>
       <div id="dr-host-banner"></div>
+      <button type="button" class="btn btn-ghost btn-full mgr-sep" onclick="openSpectatorWindow()">
+        <span class="material-symbols-rounded" aria-hidden="true">cast</span>みんなにみせる画面をひらく
+      </button>
     </div>
   </div>
 </div>
@@ -422,6 +475,9 @@
       <div id="di-host-banner"></div>
       <button class="btn btn-primary btn-full mt-md" onclick="hostStartVoting()">
         <span class="material-symbols-rounded" aria-hidden="true">how_to_vote</span>投票へ
+      </button>
+      <button type="button" class="btn btn-ghost btn-full mgr-sep" onclick="openSpectatorWindow()">
+        <span class="material-symbols-rounded" aria-hidden="true">cast</span>みんなにみせる画面をひらく
       </button>
     </div>
   </div>
@@ -451,6 +507,9 @@
       <div id="vt-host-banner"></div>
       <button class="btn btn-ghost btn-full" id="btn-close-vote" onclick="hostCloseVoting()">投票を締め切って結果へ</button>
       <p id="vt-host-hint" style="font-size:13px;color:var(--color-muted);text-align:center;margin-top:8px"></p>
+      <button type="button" class="btn btn-ghost btn-full mgr-sep" onclick="openSpectatorWindow()">
+        <span class="material-symbols-rounded" aria-hidden="true">cast</span>みんなにみせる画面をひらく
+      </button>
     </div>
   </div>
 </div>
@@ -475,6 +534,11 @@
         <span class="material-symbols-rounded" aria-hidden="true">flag</span>終わる
       </button>
     </div>
+    <div id="rs-host-watch" style="display:none">
+      <button type="button" class="btn btn-ghost btn-full mgr-sep" onclick="openSpectatorWindow()">
+        <span class="material-symbols-rounded" aria-hidden="true">cast</span>みんなにみせる画面をひらく
+      </button>
+    </div>
   </div>
 </div>
 
@@ -489,6 +553,27 @@
     <button class="btn btn-primary btn-full" onclick="leaveGame()">
       <span class="material-symbols-rounded" aria-hidden="true">home</span>退出する
     </button>
+  </div>
+</div>
+
+<!-- ══════════════════ SPECTATOR（みんなにみせる画面） ══════════════════ -->
+<div id="screen-spectator" class="screen">
+  <div class="page">
+    <div class="mgr-spec__header">
+      <span class="material-symbols-rounded" aria-hidden="true">cast</span>
+      <span class="mgr-spec__header-label">みんなにみせる画面</span>
+      <span class="mgr-spec__header-code" id="spec-header-code"></span>
+    </div>
+    <div id="spec-top"></div>
+    <div id="spec-canvas-area" style="display:none">
+      <p class="mgr-draw-timer mgr-center" id="spec-timer" role="timer" aria-live="off" style="display:none"></p>
+      <div class="mgr-canvas-wrap">
+        <canvas class="mgr-canvas mgr-canvas--view" id="cv-spec" width="600" height="450"></canvas>
+      </div>
+      <div class="mgr-legend" id="spec-legend"></div>
+    </div>
+    <div id="spec-content"></div>
+    <button class="btn btn-ghost btn-full mt-md" onclick="spectatorLeave()">トップへ戻る</button>
   </div>
 </div>
 
@@ -507,6 +592,12 @@
   <p class="mgr-overlay__title">ホストが一時的に切断されました</p>
   <p class="mgr-overlay__sub">再接続を待っています</p>
   <button class="btn btn-ghost" style="margin-top:16px" onclick="leaveGame()">退出する</button>
+</div>
+<div class="mgr-overlay" id="spec-host-off-overlay">
+  <span class="material-symbols-rounded" aria-hidden="true" style="font-size:48px">signal_disconnected</span>
+  <p class="mgr-overlay__title">ホストが一時的に切断されました</p>
+  <p class="mgr-overlay__sub">再接続を待っています</p>
+  <button class="btn btn-ghost" style="margin-top:16px" onclick="spectatorLeave()">トップへ戻る</button>
 </div>
 
 <script>
@@ -543,6 +634,9 @@ const CANVAS_W = 600;
 const CANVAS_H = 450;
 const MIN_GUESTS = 3;
 const LAPS = 2; // 全員が2周かいたら終了
+const SPEC_CODE_RE = /^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{6}$/;
+const BASE_TITLE = document.title;
+const SPEC_TITLE = 'みんなにみせる画面 | ' + BASE_TITLE;
 
 const STATUS = {
   WAITING: 'waiting',
@@ -661,6 +755,8 @@ const state = {
   orphanTimer: null,
   doneTimer: null,
   expectedRoomRemoval: false, confirmAction: null, voteAction: null, guessAction: null, drawAction: null,
+  // みんなにみせる画面（role: 'spectator'。ルームには一切書き込まない）
+  specRoom: null, specTimer: null, specTickInterval: null, specDoneShown: false,
 };
 
 // ── セッション管理 ──
@@ -1442,6 +1538,7 @@ async function hostFinish() {
 
 // ── 退出 ──
 async function leaveGame() {
+  if (state.role === 'spectator') { spectatorLeave(); return; }
   const ref = state.roomRef, role = state.role, nickname = state.nickname;
   if (role === 'guest' && !window.confirm('退出すると参加情報を削除します。まぎれ絵師が退出したラウンドは不成立になります。退出しますか？')) return;
   state.expectedRoomRemoval = true;
@@ -1470,6 +1567,8 @@ function resetRoomState() {
   clearTimeout(state.orphanTimer);
   clearTimeout(state.doneTimer);
   clearInterval(state.drawingTimerInterval);
+  clearTimeout(state.specTimer);
+  clearInterval(state.specTickInterval);
   Object.assign(state, {
     role: null, nickname: null, roomCode: null, roomRef: null,
     currentScreen: null, round: 0, lastRoom: null,
@@ -1479,7 +1578,10 @@ function resetRoomState() {
     myVote: null, roleRevealed: false, resultTriggered: false,
     orphanTimer: null, doneTimer: null,
     expectedRoomRemoval: false, confirmAction: null, voteAction: null, guessAction: null, drawAction: null,
+    specRoom: null, specTimer: null, specTickInterval: null, specDoneShown: false,
   });
+  document.title = BASE_TITLE;
+  showOverlay('spec-host-off-overlay', false);
   showOverlay('host-off-overlay', false);
   showOverlay('reconnect-overlay', false);
   showOverlay('guest-off-overlay', false);
@@ -1490,7 +1592,10 @@ function resetRoomState() {
 function startRoomListener() {
   const ref = state.roomRef;
   ref.on('value', (snap) => {
-    if (state.roomRef !== ref || state.expectedRoomRemoval) return;
+    if (state.roomRef !== ref) return;
+    // みんなにみせる画面は host/guest の処理（切断・削除・自動進行・players の読み書き）に一切入らない
+    if (state.role === 'spectator') { handleSpectator(snap.val()); return; }
+    if (state.expectedRoomRemoval) return;
     const room = snap.val();
     if (!room || !ROOM_PHASES.includes(room.status) || (state.role === 'guest'
       && (!room.players?.[state.nickname] || room.players[state.nickname].isHost !== false || room.host === state.nickname))) {
@@ -1504,6 +1609,7 @@ function startRoomListener() {
 }
 
 function handleRoom(room) {
+  if (state.role === 'spectator') return; // 防御: みんなにみせる画面は handleSpectator だけで描く
   state.lastRoom = room;
   const players = room.players || {};
 
@@ -1580,13 +1686,13 @@ function renderPlayerList(id, players, statusFn) {
   }).join('');
 }
 
-function renderLegend(elId, game, players) {
+function renderLegend(elId, game, players, status = state.lastRoom?.status) {
   const el = document.getElementById(elId);
   if (!el || !game) return;
   const order = game.drawOrder || [];
   const ti = game.turnIndex || 0;
   const total = order.length * LAPS;
-  const nowDrawer = (state.lastRoom && state.lastRoom.status === STATUS.DRAWING && ti < total)
+  const nowDrawer = (status === STATUS.DRAWING && ti < total)
     ? order[ti % order.length] : null;
   el.innerHTML = order.map((nick) => {
     const color = (game.colors || {})[nick] || '#1A1A1A';
@@ -1907,6 +2013,72 @@ function handleVoting(room, players) {
   }
 }
 
+// ── けっかの共有部品（プレイヤーの画面と、みんなにみせる画面で使う） ──
+// 決着後（にげきり / 逆転判定済み / 中断）だけ、お題を全員に公開してよい
+function resultIsFinal(result) {
+  return result.outcome === 'escaped' || result.outcome === 'aborted' || !!result.reversalJudge;
+}
+function resultBannerHtml(result) {
+  const outcome = result.outcome, judged = result.reversalJudge;
+  let title = '', sub = '';
+  if (outcome === 'escaped') {
+    title = 'まぎれ絵師の勝ち！';
+    sub = '投票では捕まらなかった（逃げ切り成功）';
+  } else if (outcome === 'aborted') {
+    title = 'このラウンドはここまで';
+    sub = 'まぎれ絵師が退出しました';
+  } else if (outcome === 'caught') {
+    if (judged === 'win') {
+      title = 'まぎれ絵師の勝ち！';
+      sub = '捕まったけどお題を当てた（逆転成功）';
+    } else if (judged === 'lose') {
+      title = 'みんなの勝ち！';
+      sub = result.reversalGuess
+        ? 'まぎれ絵師を捕まえて、お題も守りきった'
+        : 'まぎれ絵師を捕まえた（逆転当ての答えはなし）';
+    } else {
+      title = 'まぎれ絵師見つかる！？';
+      sub = 'でもまだ逆転のチャンスがある…';
+    }
+  }
+  return `<div class="mgr-result-banner">
+    <p class="mgr-result-banner__title">${esc(title)}</p>
+    <p class="mgr-result-banner__sub">${esc(sub)}</p>
+  </div>`;
+}
+function resultFakeCardHtml(g) {
+  return `<div class="card mgr-center" style="margin-bottom:12px">
+    <p class="mgr-section-lbl">まぎれ絵師は…</p>
+    <p style="font-size:24px;font-weight:700;color:var(--color-primary)">${esc(g.fakeArtist || '')} <span class="mgr-tag mgr-tag--fake">まぎれ絵師</span></p>
+  </div>`;
+}
+function resultTopicCardHtml(g) {
+  return `<div class="card mgr-center" style="margin-bottom:12px">
+    <p class="mgr-section-lbl">お題</p>
+    <p style="font-size:24px;font-weight:700;color:var(--color-primary)">「${esc(g.topicWord || '')}」</p>
+  </div>`;
+}
+function resultGuessBoxHtml(g, result) {
+  return `<div class="mgr-guess-box">
+    <p class="mgr-guess-box__label">${esc(g.fakeArtist || '')}さんの答え</p>
+    <p class="mgr-guess-box__text">「${esc(result.reversalGuess)}」</p>
+  </div>`;
+}
+function resultVotesHtml(g, players, result) {
+  const counts = result.voteCounts || {};
+  if (result.outcome === 'aborted' || !Object.keys(players).length) return '';
+  const sorted = [...guestNames(players)].sort((a, b) => (counts[b] || 0) - (counts[a] || 0));
+  const rows = sorted.map((nick) => {
+    const fakeTag = nick === g.fakeArtist ? ' <span class="mgr-tag mgr-tag--fake">まぎれ絵師</span>' : '';
+    const meTag = nick === state.nickname ? ' <span class="mgr-tag mgr-tag--me">あなた</span>' : '';
+    return `<div class="mgr-vote-row">
+      <div class="mgr-player-item__name">${esc(nick)}${fakeTag}${meTag}</div>
+      <span class="mgr-vote-row__num">${counts[nick] || 0}票</span>
+    </div>`;
+  }).join('');
+  return `<div class="card"><p class="mgr-section-lbl">投票結果</p>${rows}</div>`;
+}
+
 // ── けっか ──
 function handleResult(room, players) {
   const g = room.game || {};
@@ -1920,55 +2092,23 @@ function handleResult(room, players) {
 
   const outcome = result.outcome;
   const judged = result.reversalJudge; // null | 'win' | 'lose'
-  const finalPhase = outcome === 'escaped' || outcome === 'aborted' || judged;
+  const finalPhase = resultIsFinal(result);
 
   // バナー
-  let bannerTitle = '';
-  let bannerSub = '';
-  if (outcome === 'escaped') {
-    bannerTitle = 'まぎれ絵師の勝ち！';
-    bannerSub = '投票では捕まらなかった（逃げ切り成功）';
-  } else if (outcome === 'aborted') {
-    bannerTitle = 'このラウンドはここまで';
-    bannerSub = 'まぎれ絵師が退出しました';
-  } else if (outcome === 'caught') {
-    if (judged === 'win') {
-      bannerTitle = 'まぎれ絵師の勝ち！';
-      bannerSub = '捕まったけどお題を当てた（逆転成功）';
-    } else if (judged === 'lose') {
-      bannerTitle = 'みんなの勝ち！';
-      bannerSub = result.reversalGuess
-        ? 'まぎれ絵師を捕まえて、お題も守りきった'
-        : 'まぎれ絵師を捕まえた（逆転当ての答えはなし）';
-    } else {
-      bannerTitle = 'まぎれ絵師見つかる！？';
-      bannerSub = 'でもまだ逆転のチャンスがある…';
-    }
-  }
-  const bannerEl = document.getElementById('rs-banner');
-  bannerEl.innerHTML = `<div class="mgr-result-banner">
-    <p class="mgr-result-banner__title">${esc(bannerTitle)}</p>
-    <p class="mgr-result-banner__sub">${esc(bannerSub)}</p>
-  </div>`;
+  document.getElementById('rs-banner').innerHTML = resultBannerHtml(result);
 
   // 本文
   const parts = [];
 
   // まぎれ絵師の正体（開票後は全員に公開）
-  parts.push(`<div class="card mgr-center" style="margin-bottom:12px">
-    <p class="mgr-section-lbl">まぎれ絵師は…</p>
-    <p style="font-size:24px;font-weight:700;color:var(--color-primary)">${esc(g.fakeArtist || '')} <span class="mgr-tag mgr-tag--fake">まぎれ絵師</span></p>
-  </div>`);
+  parts.push(resultFakeCardHtml(g));
 
   // お題の表示
   // - 決着後（にげきり / 逆転判定済み / 中断）: 全員に公開
   // - 逆転当ての最中: まぎれ絵師本人には見せない。
   //   ホスト画面は画面共有されうるので折りたたみ（タップで見る）にする
   if (finalPhase) {
-    parts.push(`<div class="card mgr-center" style="margin-bottom:12px">
-      <p class="mgr-section-lbl">お題</p>
-      <p style="font-size:24px;font-weight:700;color:var(--color-primary)">「${esc(g.topicWord || '')}」</p>
-    </div>`);
+    parts.push(resultTopicCardHtml(g));
   } else if (isHost) {
     parts.push(`<details class="mgr-secret"><summary><span class="material-symbols-rounded" aria-hidden="true">visibility</span>お題（タップで見る）</summary>
       <div class="mgr-secret__body">「${esc(g.topicWord || '')}」（${esc(g.topicCategory || '')}）</div></details>`);
@@ -2004,10 +2144,7 @@ function handleResult(room, players) {
         }
       }
     } else {
-      parts.push(`<div class="mgr-guess-box">
-        <p class="mgr-guess-box__label">${esc(g.fakeArtist || '')}さんの答え</p>
-        <p class="mgr-guess-box__text">「${esc(result.reversalGuess)}」</p>
-      </div>`);
+      parts.push(resultGuessBoxHtml(g, result));
       if (isHost) {
         parts.push(`<div style="display:flex;gap:8px;margin-bottom:12px">
           <button class="btn btn-primary btn-full" onclick="judgeReversal(true)">当たり</button>
@@ -2021,27 +2158,11 @@ function handleResult(room, players) {
 
   // 逆転当ての結果表示
   if (outcome === 'caught' && judged && result.reversalGuess) {
-    parts.push(`<div class="mgr-guess-box">
-      <p class="mgr-guess-box__label">${esc(g.fakeArtist || '')}さんの答え</p>
-      <p class="mgr-guess-box__text">「${esc(result.reversalGuess)}」</p>
-    </div>`);
+    parts.push(resultGuessBoxHtml(g, result));
   }
 
   // 投票結果
-  const counts = result.voteCounts || {};
-  if (outcome !== 'aborted' && Object.keys(players).length) {
-    const guests = guestNames(players);
-    const sorted = [...guests].sort((a, b) => (counts[b] || 0) - (counts[a] || 0));
-    const rows = sorted.map((nick) => {
-      const fakeTag = nick === g.fakeArtist ? ' <span class="mgr-tag mgr-tag--fake">まぎれ絵師</span>' : '';
-      const meTag = nick === state.nickname ? ' <span class="mgr-tag mgr-tag--me">あなた</span>' : '';
-      return `<div class="mgr-vote-row">
-        <div class="mgr-player-item__name">${esc(nick)}${fakeTag}${meTag}</div>
-        <span class="mgr-vote-row__num">${counts[nick] || 0}票</span>
-      </div>`;
-    }).join('');
-    parts.push(`<div class="card"><p class="mgr-section-lbl">投票結果</p>${rows}</div>`);
-  }
+  parts.push(resultVotesHtml(g, players, result));
 
   const bodyEl = document.getElementById('rs-body');
   // 入力中のテキストを消さないよう、内容が変わるときだけ書き換える
@@ -2052,6 +2173,7 @@ function handleResult(room, players) {
   }
 
   document.getElementById('rs-host-actions').style.display = (isHost && finalPhase) ? 'block' : 'none';
+  document.getElementById('rs-host-watch').style.display = isHost ? 'block' : 'none';
   document.getElementById('btn-next-round').disabled = guestNames(players).length < MIN_GUESTS
     || guestNames(players).some(nick => !playerConnected(players[nick]));
 }
@@ -2081,6 +2203,13 @@ async function tryReconnect() {
   const session = loadSession();
   if (!session) return false;
   const { nickname, roomCode, role } = session;
+  if (role === 'spectator') {
+    // みんなにみせる画面: ルームの存在と期限だけを見る（期限切れでも削除しない・予約もしない）
+    if (nickname != null || typeof roomCode !== 'string' || !SPEC_CODE_RE.test(roomCode)) { clearSession(); return false; }
+    const ok = await enterSpectator(roomCode, () => {});
+    if (!ok) clearSession();
+    return ok;
+  }
   if (typeof nickname !== 'string' || !nickname || nickname.length > 8 || /[.#$\[\]/\u0000-\u001f\u007f]/.test(nickname)
     || typeof roomCode !== 'string' || !/^[A-Z2-9]{6}$/.test(roomCode) || !['host','guest'].includes(role)) {
     clearSession(); return false;
@@ -2123,8 +2252,325 @@ async function tryReconnect() {
   }
 }
 
+
+// ══════════════════ みんなにみせる画面（画面共有用・見るだけ） ══════════════════
+// - ルームに一切書き込まない（players にも入らない・onDisconnect 予約なし・期限切れでも削除しない）
+// - 公開前の秘密（お題・まぎれ絵師がだれか）は DOM に書かない。お題は決着後だけ、まぎれ絵師は開票後だけ
+// - host/guest の handleRoom・自動進行・切断処理には入らない（startRoomListener の入口で分岐）
+
+// ホストの画面から: クリックの中で同期的にひらく（ポップアップブロック回避・noopener 必須）
+function openSpectatorWindow() {
+  if (state.role !== 'host' || !state.roomCode) return;
+  window.open(`${location.origin}${location.pathname}?watch=${state.roomCode}`, '_blank', 'noopener');
+}
+
+// TOP → コード入力から
+async function spectateJoin() {
+  const reportError = message => RoomkRTDB.showFormError('spectate-form-error', message);
+  reportError('');
+  const code = normalizeRoomCode(document.getElementById('spectate-code').value);
+  const imeErr = roomCodeImeError(code);
+  if (imeErr) { reportError(imeErr); return; }
+  if (!SPEC_CODE_RE.test(code)) { reportError('ルームコードは6文字です'); return; }
+  await enterSpectator(code, reportError);
+}
+
+// URL の ?watch=CODE から（最優先の入口。失敗しても sessionStorage には頼らない）
+async function startSpectatorFromUrl(raw) {
+  const code = normalizeRoomCode(raw);
+  const ok = SPEC_CODE_RE.test(code) && await enterSpectator(code, msg => showMsg(msg));
+  if (!ok) {
+    if (!SPEC_CODE_RE.test(code)) showMsg('ルームが見つかりませんでした');
+    history.replaceState(null, '', location.pathname);
+    showScreen('top');
+  }
+}
+
+let specJoinBusy = false; // 連打による多重購読の防止
+async function enterSpectator(code, showFail) {
+  if (specJoinBusy || state.roomRef) return false;
+  specJoinBusy = true;
+  try {
+    try { await authReady; } catch { showFail('うまくつながらなかったよ。ページを読み込み直してね'); return false; }
+    const ref = db.ref(`${ROOMS_PATH}/${code}`);
+    let snap;
+    try { snap = await ref.get(); } catch { showFail('うまくつながらなかったよ。もう一度ためしてね'); return false; }
+    if (!snap.exists()) { showFail('ルームが見つかりませんでした'); return false; }
+    if (isRoomExpired(snap.val())) { showFail('このルームは終了しました'); return false; }
+    if (state.roomRef) return false;
+    Object.assign(state, { role: 'spectator', nickname: null, roomCode: code, roomRef: ref,
+      expectedRoomRemoval: false, specRoom: null, specDoneShown: false });
+    saveSession(); // { nickname: null, roomCode, role: 'spectator' }
+    history.replaceState(null, '', `${location.pathname}?watch=${code}`);
+    document.title = SPEC_TITLE;
+    startRoomListener();
+    return true;
+  } finally {
+    specJoinBusy = false;
+  }
+}
+
+// 終了状態（ルーム削除・期限切れ）: 購読とタイマーだけ止め、表示は残す
+// （購読を残すと、同じルームコードが将来使われたとき別のゲームを映してしまう）
+function stopSpectatorWatch() {
+  clearTimeout(state.specTimer);
+  state.specTimer = null;
+  clearInterval(state.specTickInterval);
+  state.specTickInterval = null;
+  if (state.roomRef) { state.roomRef.off(); state.roomRef = null; }
+}
+
+// トップへ戻る: ルームには一切触らない
+function spectatorLeave() {
+  clearSession();
+  if (state.roomRef) state.roomRef.off();
+  if (new URLSearchParams(location.search).has('watch')) history.replaceState(null, '', location.pathname);
+  resetRoomState();
+}
+
+function setSpecHtml(id, html) {
+  const el = document.getElementById(id);
+  if (el.dataset.rendered === html) return;
+  el.dataset.rendered = html;
+  el.innerHTML = html;
+}
+
+function handleSpectator(room) {
+  if (state.currentScreen !== 'spectator') showScreen('spectator');
+  document.getElementById('spec-header-code').textContent = state.roomCode || '';
+
+  if (!room) {
+    // ルーム削除: おしまいを表示済みならそのまま残す（共有画面を急に空にしない）
+    stopSpectatorWatch();
+    showOverlay('spec-host-off-overlay', false);
+    if (!state.specDoneShown) renderSpecEnded();
+    return;
+  }
+  state.specRoom = room;
+  const isDone = room.status === STATUS.DONE;
+
+  // ホスト切断（おしまい表示中は最終画面を保つため対象外）。期限を過ぎても削除はしない
+  if (!isDone && room.hostConnected === false) {
+    if (isRoomExpired(room)) {
+      stopSpectatorWatch();
+      showOverlay('spec-host-off-overlay', false);
+      state.specDoneShown = false;
+      renderSpecEnded();
+      return;
+    }
+    showOverlay('spec-host-off-overlay', true);
+    if (!state.specTimer) {
+      const at = getHostDisconnectedAt(room);
+      const delay = at == null ? ORPHAN_TTL_MS : Math.max(0, at + ORPHAN_TTL_MS - getEstimatedServerNow());
+      const watchedRef = state.roomRef;
+      state.specTimer = setTimeout(() => {
+        state.specTimer = null;
+        if (state.roomRef !== watchedRef || state.role !== 'spectator') return;
+        stopSpectatorWatch();
+        showOverlay('spec-host-off-overlay', false);
+        state.specDoneShown = false;
+        renderSpecEnded();
+      }, delay);
+    }
+  } else {
+    showOverlay('spec-host-off-overlay', false);
+    clearTimeout(state.specTimer);
+    state.specTimer = null;
+  }
+
+  state.specDoneShown = false;
+  const players = room.players || {};
+  switch (room.status) {
+    case STATUS.WAITING:    renderSpecWaiting(room, players);    break;
+    case STATUS.REVEAL:     renderSpecReveal(room, players);     break;
+    case STATUS.DRAWING:    renderSpecDrawing(room, players);    break;
+    case STATUS.DISCUSSION: renderSpecDiscussion(room, players); break;
+    case STATUS.VOTING:     renderSpecVoting(room, players);     break;
+    case STATUS.RESULT:     renderSpecResult(room, players);     break;
+    case STATUS.DONE:       renderSpecDone(); state.specDoneShown = true; break;
+    default:                renderSpecMessage('準備しています…'); break; // 知らない status は安全な待機表示
+  }
+}
+
+// キャンバス（と凡例・残り時間）を出すかどうか。出さない画面ではタイマーも止める
+function showSpecCanvas(room, players) {
+  const area = document.getElementById('spec-canvas-area');
+  if (!room) {
+    area.style.display = 'none';
+    clearInterval(state.specTickInterval);
+    state.specTickInterval = null;
+    return;
+  }
+  area.style.display = 'block';
+  const g = room.game || {};
+  renderCanvas('cv-spec', sortedStrokes(g), null);
+  renderLegend('spec-legend', g, players, room.status);
+  const timed = room.status === STATUS.DRAWING && !!g.turnMinutes;
+  if (timed && !state.specTickInterval) state.specTickInterval = setInterval(specTick, 250);
+  if (!timed) { clearInterval(state.specTickInterval); state.specTickInterval = null; }
+  specTick();
+}
+
+function specTick() {
+  const room = state.specRoom;
+  const timer = document.getElementById('spec-timer');
+  const g = room?.game || {};
+  const hasTimer = room?.status === STATUS.DRAWING && Number.isFinite(g.turnEndsAt) && g.turnEndsAt > 0;
+  timer.style.display = hasTimer ? 'block' : 'none';
+  if (!hasTimer) return;
+  const seconds = Math.max(0, Math.ceil((g.turnEndsAt - getEstimatedServerNow()) / 1000));
+  timer.textContent = `この人の残り時間 ${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
+  timer.classList.toggle('mgr-draw-timer--ended', seconds === 0);
+}
+
+function specPlayerListHtml(players, statusFn) {
+  return '<ul class="mgr-player-list">' + Object.entries(players).map(([nick, p]) => {
+    const hostTag = p.isHost ? '<span class="mgr-tag">ホスト</span>' : '';
+    const connectionTag = playerConnected(p) ? '' : '<span class="mgr-tag">再接続待ち</span>';
+    return `<li class="mgr-player-item">
+      <div class="mgr-player-item__name">${esc(nick)}${hostTag}${connectionTag}</div>
+      ${statusFn ? statusFn(nick, p) : ''}
+    </li>`;
+  }).join('') + '</ul>';
+}
+// カテゴリはまぎれ絵師を含む遊ぶ人全員が知っている情報なので出してよい（お題そのものは出さない）
+function specCategoryHtml(g) {
+  return g.topicCategory ? `<p class="mgr-spec__category">カテゴリ: ${esc(g.topicCategory)}</p>` : '';
+}
+
+function renderSpecMessage(message) {
+  showSpecCanvas(null);
+  setSpecHtml('spec-top', `<div class="card mgr-center"><p class="mgr-spec__status" style="margin:12px 0">${esc(message)}</p></div>`);
+  setSpecHtml('spec-content', '');
+}
+
+function renderSpecEnded() {
+  renderSpecMessage('このルームは終了しました');
+}
+
+function renderSpecWaiting(room, players) {
+  showSpecCanvas(null);
+  setSpecHtml('spec-top', `<div class="card mgr-center">
+      <p class="mgr-section-lbl">ルームコード</p>
+      <p class="mgr-room-code">${esc(state.roomCode || '')}</p>
+    </div>
+    <p class="mgr-spec__status mt-md">みんなが集まるのを待っています</p>`);
+  setSpecHtml('spec-content', `<div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <strong style="font-size:16px">参加者</strong>
+        <span style="font-size:14px;color:var(--color-muted)">${Object.keys(players).length}人</span>
+      </div>
+      ${specPlayerListHtml(players, null)}
+    </div>`);
+}
+
+// 役わりは出さない（だれがまぎれ絵師か・お題は書かない）
+function renderSpecReveal(room, players) {
+  showSpecCanvas(null);
+  const guests = guestNames(players);
+  const confirmed = guests.filter(n => players[n].confirmed).length;
+  setSpecHtml('spec-top', `<h2 class="mgr-center">準備をしよう</h2>
+    <p class="mgr-spec__status">みんな自分の役わりカードを見ています</p>`);
+  setSpecHtml('spec-content', `<div class="card">
+      <p class="mgr-section-lbl">確認状況 ${confirmed} / ${guests.length} 人</p>
+      ${specPlayerListHtml(players, (nick, p) => {
+        if (p.isHost) return '<span style="font-size:13px;color:var(--color-muted)">進める係</span>';
+        return p.confirmed ? '<span class="mgr-tag mgr-tag--ok">確認済み</span>'
+          : '<span style="font-size:13px;color:var(--color-muted)">確認中</span>';
+      })}
+    </div>`);
+}
+
+function renderSpecDrawing(room, players) {
+  const g = room.game || {};
+  const order = g.drawOrder || [];
+  const ti = g.turnIndex || 0;
+  const total = order.length * LAPS;
+  const drawer = ti < total ? order[ti % order.length] : null;
+  let status;
+  if (!drawer) status = '完成！まもなく相談タイム';
+  else if (turnExpired(g)) status = '時間になりました。次の人へ進みます';
+  else if (players[drawer] && !playerConnected(players[drawer])) status = `${drawer}さんの再接続を待っています`;
+  else status = `${drawer}さんが描いています`;
+  setSpecHtml('spec-top', `<div class="mgr-turn">
+      <span class="mgr-turn__now">${drawer ? `いま描く人: ${esc(drawer)}` : '完成！'}</span>
+      <span class="mgr-turn__count">${Math.min(ti + 1, total)} / ${total} 手番</span>
+    </div>
+    <p class="mgr-spec__status">${esc(status)}</p>
+    ${specCategoryHtml(g)}`);
+  setSpecHtml('spec-content', '');
+  showSpecCanvas(room, players);
+}
+
+function renderSpecDiscussion(room, players) {
+  setSpecHtml('spec-top', `<h2 class="mgr-center">相談タイム</h2>
+    <p class="mgr-spec__status">声でもチャットでもOK。「まぎれ絵師は誰か」を話し合おう</p>
+    ${specCategoryHtml(room.game || {})}`);
+  setSpecHtml('spec-content', '');
+  showSpecCanvas(room, players);
+}
+
+// だれに投票したかは開票まで出さない（投票したかどうかだけ）
+function renderSpecVoting(room, players) {
+  const guests = guestNames(players);
+  const voted = guests.filter(n => players[n].vote != null).length;
+  setSpecHtml('spec-top', `<h2 class="mgr-center">投票</h2>
+    <p class="mgr-spec__status">まぎれ絵師だと思う人に投票しよう</p>
+    <p class="mgr-spec__progress">${voted} / ${guests.length}人が投票済み</p>`);
+  setSpecHtml('spec-content', `<div class="card">
+      ${specPlayerListHtml(Object.fromEntries(guests.map(n => [n, players[n]])), (nick, p) => (p.vote != null
+        ? '<span class="mgr-tag mgr-tag--ok">投票済み</span>'
+        : '<span style="font-size:13px;color:var(--color-muted)">投票中</span>'))}
+    </div>`);
+  showSpecCanvas(room, players);
+}
+
+// 逆転当てが決着するまでお題は出さない（まぎれ絵師本人も見ているため）
+function renderSpecResult(room, players) {
+  const g = room.game || {};
+  const result = g.result || {};
+  const parts = [resultFakeCardHtml(g)];
+  if (resultIsFinal(result)) parts.push(resultTopicCardHtml(g));
+  if (result.outcome === 'caught' && !result.reversalJudge) {
+    if (!result.reversalGuess) {
+      parts.push(`<div class="card mgr-center" style="margin-bottom:12px">
+        <p style="font-size:14px;color:var(--color-muted)">${esc(g.fakeArtist || '')}さんがお題を当てようとしています…</p>
+      </div>`);
+    } else {
+      parts.push(resultGuessBoxHtml(g, result));
+      parts.push('<p style="font-size:13px;color:var(--color-muted);text-align:center;margin-bottom:12px">ホストが判定しています…</p>');
+    }
+  } else if (result.outcome === 'caught' && result.reversalGuess) {
+    parts.push(resultGuessBoxHtml(g, result));
+  }
+  parts.push(resultVotesHtml(g, players, result));
+  setSpecHtml('spec-top', resultBannerHtml(result));
+  setSpecHtml('spec-content', parts.join(''));
+  showSpecCanvas(room, players);
+}
+
+function renderSpecDone() {
+  showSpecCanvas(null);
+  setSpecHtml('spec-top', `<div class="mgr-header">
+      <div class="mgr-header__icon"><span class="material-symbols-rounded" aria-hidden="true">celebration</span></div>
+      <div class="mgr-header__title">おしまい！</div>
+      <div class="mgr-header__sub">遊んでくれてありがとう</div>
+    </div>`);
+  setSpecHtml('spec-content', '');
+}
+
 // ── 初期化 ──
-tryReconnect().then(ok => { if (!ok) showScreen('top'); });
+// ?watch=CODE があれば、みんなにみせる画面を最優先でひらく（空の値も「明示された入口」として扱う）。
+// そのときは古い再接続の記録を消す（無効な watch のあと、次の再読み込みで別のルームに戻らないように）
+(function init() {
+  const params = new URLSearchParams(location.search);
+  if (params.has('watch')) {
+    clearSession();
+    startSpectatorFromUrl(params.get('watch'));
+  } else {
+    tryReconnect().then(ok => { if (!ok) showScreen('top'); });
+  }
+}());
 </script>
 <script src="../shared/js/stats.js?v=1" defer></script>
 <script src="../shared/js/howto.js"></script>
@@ -2147,6 +2593,10 @@ tryReconnect().then(ok => { if (!ok) showScreen('top'); });
         'まぎれ絵師だと思う人に投票する',
       ] },
       { heading: '終わりかた', text: '結果のあと、ホストが「次のラウンドへ」か「終わる」を選ぶ。' },
+      { heading: 'みんなにみせる画面', items: [
+        'TOPの「みんなにみせる画面をひらく」でルームコードを入れて「画面をひらく」を押す（ホストは画面の「みんなにみせる画面をひらく」からでもひらける）',
+        '絵や手番、投票の進みぐあいが見られる画面がひらく。お題やまぎれ絵師がだれかは出ないから、みんなで見てだいじょうぶ',
+      ] },
     ],
   });
 </script>
