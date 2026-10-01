@@ -89,6 +89,14 @@
       padding: 2px 8px; border-radius: 20px; margin-left: auto;
     }
 
+    /* ── 待合室の設定（ホストの参加） ── */
+    .dm-check {
+      display: flex; align-items: center; gap: 10px; min-height: 44px;
+      font-size: 15px; font-weight: 500; cursor: pointer;
+    }
+    .dm-check input { width: 20px; height: 20px; accent-color: var(--color-accent); flex-shrink: 0; }
+    .dm-hint { font-size: 14px; color: var(--color-muted); margin-top: 8px; text-align: center; }
+
     /* ── スピナー（サイズ override）── */
     .spinner {
       width: 48px; height: 48px; margin: 0 auto 20px;
@@ -287,8 +295,13 @@
       </button>
 
       <hr class="divider">
-      <div class="section-label">参加者（<span id="host-player-count">0</span>人 / 最低3人でスタート可）</div>
+      <div class="section-label">参加者（答える人 <span id="host-player-count">0</span>人 / 最低3人でスタート可）</div>
       <div class="player-list" id="host-player-list"></div>
+
+      <label class="dm-check mt-md">
+        <input type="checkbox" id="host-plays-check" checked onchange="onHostPlaysChange(this.checked)">
+        <span>自分もプレイヤーとして参加する</span>
+      </label>
 
       <div class="mt-lg">
         <button class="btn btn-primary btn-lg btn-full" id="btn-start-game"
@@ -296,6 +309,7 @@
           <span class="material-symbols-rounded" aria-hidden="true">sports_esports</span>
           ゲームを始める
         </button>
+        <p class="dm-hint" id="host-start-hint" hidden></p>
       </div>
     </div>
 
@@ -397,6 +411,9 @@
         <small>他の人の回答を待っています</small>
       </div>
     </div>
+
+    <!-- 進行だけのホスト：回答欄は出さない -->
+    <p class="answer-status" id="answer-host-only" hidden>みんなが答えを入れています。全員がそろうと結果発表になります</p>
 
     <!-- ホスト用：回答を締め切って結果へ -->
     <div id="answer-host-actions" style="display:none; margin-top:24px">
@@ -672,6 +689,8 @@
     roomRef:         null,
     currentScreen:   'top',
     resultTriggered: false,
+    hostPlays:       true,   // 最新 room の settings/hostPlays（キーなしは true）
+    hostPlaysBusy:   false,
   };
 
   // ════════════════════════════════════
@@ -679,6 +698,19 @@
   // ════════════════════════════════════
   const SESSION_KEY = 'domannaka_session';
   const ORPHAN_TTL_MS = 2 * 60 * 1000;
+  const MIN_PLAYERS = 3; // 答える人（遊ぶ人）だけで数える
+
+  // ホストもプレイヤーとして答えるか。キーがない部屋（旧版が作った部屋）は従来どおり「答える」
+  function hostPlays(room) { return room?.settings?.hostPlays !== false; }
+  // 答える人（回答数・採点・ランキングの対象）。進行だけのホストは含めない
+  function playingPlayers(players, plays, hostName) {
+    if (plays) return players || {};
+    return Object.fromEntries(Object.entries(players || {})
+      .filter(([name, p]) => !(p?.isHost || name === hostName)));
+  }
+  function roomPlayingPlayers(room) {
+    return playingPlayers(room?.players, hostPlays(room), room?.host);
+  }
   const CHOICE_NUMBERS = ['①', '②', '③', '④', '⑤'];
 
   function saveSession() {
@@ -1000,6 +1032,7 @@
         usedQuestions:   [],
         hostConnected:   true,
         hostDisconnectedAt: null,
+        settings:        { hostPlays: true },
         players: {
           [nickname]: { score: 0, isHost: true, answer: null },
         },
@@ -1046,8 +1079,7 @@
         abortReason = 'invalid_state';
         return;
       }
-      const players = room.players || {};
-      if (Object.keys(players).length < 3) {
+      if (Object.keys(roomPlayingPlayers(room)).length < MIN_PLAYERS) {
         abortReason = 'too_few';
         return;
       }
@@ -1062,10 +1094,38 @@
 
     if (!committed) {
       if (abortReason === 'too_few') {
-        alert('3人以上で始められます');
+        alert(`答える人が${MIN_PLAYERS}人以上で始められます`);
       } else {
         alert('ゲームを開始できませんでした。ルームの状態を確認してください');
       }
+    }
+  }
+
+  // ════════════════════════════════════
+  // ホスト: 自分もプレイヤーとして参加するか（待合室のあいだだけ変えられる）
+  // ════════════════════════════════════
+  async function onHostPlaysChange(checked) {
+    if (state.role !== 'host' || !state.roomRef || state.hostPlaysBusy) return;
+    const ref = state.roomRef, me = state.nickname;
+    const box = document.getElementById('host-plays-check');
+    state.hostPlaysBusy = true;
+    box.disabled = true;
+    let committed = false;
+    try {
+      ({ committed } = await ref.transaction(room => {
+        if (state.roomRef !== ref || state.role !== 'host') return;
+        if (!room || room.status !== 'waiting' || room.host !== me) return;
+        return { ...room, settings: { ...(room.settings || {}), hostPlays: !!checked } };
+      }));
+    } catch (error) {
+      console.warn('[do-mannaka] host plays update failed', error);
+    }
+    if (state.roomRef !== ref) return;
+    state.hostPlaysBusy = false;
+    box.disabled = false;
+    if (!committed) {
+      box.checked = state.hostPlays;
+      RoomkRTDB.showToast('設定を変えられませんでした');
     }
   }
 
@@ -1257,6 +1317,7 @@
   // 回答送信
   // ════════════════════════════════════
   async function submitAnswer() {
+    if (state.role === 'host' && !state.hostPlays) return; // 進行だけのホストは答えない
     const raw = document.getElementById('answer-input').value.trim();
     const num = Number(raw);
 
@@ -1340,6 +1401,7 @@
       state.currentQuestion = room.currentQuestion || '';
       state.round           = room.round || 0;
       state.usedQuestions   = room.usedQuestions || [];
+      state.hostPlays       = hostPlays(room);
 
       // ホスト切断チェック（ゲストのみ）
       if (state.role === 'guest') {
@@ -1356,18 +1418,20 @@
       }
 
       switch (room.status) {
-        case 'waiting':    handleWaiting(room.players);                              break;
+        // 回答・採点・ランキングは答える人だけ（進行だけのホストは含めない）
+        case 'waiting':    handleWaiting(room);                                      break;
         case 'selecting':  handleSelecting(room.pendingQuestions);                   break;
-        case 'answering':  handleAnswering(room.players, room.currentQuestion, room.round); break;
-        case 'result':     handleResult(room.players, room.currentQuestion);         break;
-        case 'finished':   handleFinished(room.players);                             break;
+        case 'answering':  handleAnswering(roomPlayingPlayers(room), room.currentQuestion, room.round); break;
+        case 'result':     handleResult(roomPlayingPlayers(room), room.currentQuestion); break;
+        case 'finished':   handleFinished(roomPlayingPlayers(room));                 break;
       }
     });
   }
 
   // ── waiting ──
-  function handleWaiting(players) {
-    const count = Object.keys(players || {}).length;
+  function handleWaiting(room) {
+    const players = room.players || {};
+    const count = Object.keys(roomPlayingPlayers(room)).length;
 
     if (state.role === 'host') {
       // 再接続時など、画面が表示されていなければ待機画面へ
@@ -1378,11 +1442,17 @@
         document.getElementById('host-room-code-display').textContent = state.roomCode;
       }
       document.getElementById('host-player-count').textContent = count;
-      renderPlayerList('host-player-list', players);
-      document.getElementById('btn-start-game').disabled = count < 3;
+      renderPlayerList('host-player-list', players, room);
+      const box = document.getElementById('host-plays-check');
+      if (!state.hostPlaysBusy) box.checked = state.hostPlays;
+      const enough = count >= MIN_PLAYERS;
+      document.getElementById('btn-start-game').disabled = !enough;
+      const hint = document.getElementById('host-start-hint');
+      hint.hidden = enough;
+      hint.textContent = enough ? '' : `答える人があと${MIN_PLAYERS - count}人必要です`;
     } else {
       if (state.currentScreen !== 'waiting') showScreen('waiting');
-      renderPlayerList('waiting-player-list', players);
+      renderPlayerList('waiting-player-list', players, room);
     }
   }
 
@@ -1423,6 +1493,13 @@
       document.getElementById('answer-input-area').style.display    = 'block';
       document.getElementById('answer-submitted-area').style.display = 'none';
       hideError('answer-error');
+    }
+    // 進行だけのホストには回答欄を出さず、お題・回答数・締め切りだけを出す
+    const facilitatorOnly = state.role === 'host' && !state.hostPlays;
+    document.getElementById('answer-host-only').hidden = !facilitatorOnly;
+    if (facilitatorOnly) {
+      document.getElementById('answer-input-area').style.display    = 'none';
+      document.getElementById('answer-submitted-area').style.display = 'none';
     }
 
     document.getElementById('round-num').textContent            = round || 1;
@@ -1472,7 +1549,8 @@
   async function hostCloseAnswering() {
     if (state.role !== 'host' || state.resultTriggered) return;
     const snap = await state.roomRef.child('players').get();
-    const players = snap.val() || {};
+    // 進行だけのホストは集計に入れない（開始後は hostPlays を変えないので最新値でよい）
+    const players = playingPlayers(snap.val(), state.hostPlays, state.nickname);
     const answered = Object.values(players)
       .filter(p => p.answer !== null && p.answer !== undefined).length;
     if (answered === 0) return;
@@ -1591,17 +1669,18 @@
   // ════════════════════════════════════
   // プレイヤーリスト描画
   // ════════════════════════════════════
-  function renderPlayerList(containerId, players) {
+  function renderPlayerList(containerId, players, room) {
     const el = document.getElementById(containerId);
     if (!el) return;
     el.innerHTML = '';
+    const hostLabel = hostPlays(room) ? 'ホスト' : 'ホスト・進行役';
     Object.entries(players || {}).forEach(([name, p]) => {
       const isMe = name === state.nickname;
       el.innerHTML += `
         <div class="player-item ${isMe ? 'me' : ''}">
           <div class="player-avatar">${escapeHtml(name.charAt(0).toUpperCase())}</div>
           <span class="player-name">${escapeHtml(name)}</span>
-          ${p.isHost ? '<span class="badge-host">ホスト</span>' : ''}
+          ${p.isHost ? `<span class="badge-host">${hostLabel}</span>` : ''}
         </div>`;
     });
   }
@@ -1626,6 +1705,7 @@
       role: null, nickname: '', roomCode: '',
       players: {}, currentQuestion: '', round: 0,
       usedQuestions: [], myAnswer: null, resultTriggered: false,
+      hostPlays: true, hostPlaysBusy: false,
     });
 
     // フォームリセット
@@ -1634,6 +1714,9 @@
     document.getElementById('guest-room-code').value  = '';
     document.getElementById('host-step-nickname').style.display = 'block';
     document.getElementById('host-step-room').style.display     = 'none';
+    const hostPlaysBox = document.getElementById('host-plays-check');
+    hostPlaysBox.checked = true;
+    hostPlaysBox.disabled = false;
 
     showScreen('top');
   }
@@ -1656,6 +1739,7 @@
         'ホストは「ルームを作る（ホスト）」を押して、ニックネームを入力する',
         '画面に出たルームコードをみんなに伝える',
         'ほかの人は「ルームに参加する」を押してニックネームとコードを入れ、3人以上そろったらホストが「ゲームを始める」を押す',
+        'ホストは進行だけにすることもできる（待合室の「自分もプレイヤーとして参加する」を外す）。そのときは、ホスト以外で3人以上いれば始められる',
       ] },
       { heading: 'すすめかた', items: [
         'ホストが3問の中から問題を1つ選ぶ',
