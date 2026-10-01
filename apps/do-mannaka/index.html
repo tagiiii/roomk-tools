@@ -1270,6 +1270,13 @@
   // ════════════════════════════════════
   // スコア計算
   // ════════════════════════════════════
+  // 小さい順にならべた回答から「いいセン」の数字を返す。
+  // 奇数人数は真ん中の1つ、偶数人数は真ん中の2つ（本当の真ん中から同じ距離なので両方）
+  function getMedianValues(sorted) {
+    const n = sorted.length;
+    return new Set([sorted[Math.floor((n - 1) / 2)].answer, sorted[Math.floor(n / 2)].answer]);
+  }
+
   function calcScoreDeltas(players) {
     const answers = Object.entries(players)
       .filter(([, p]) => p.answer !== null && p.answer !== undefined)
@@ -1279,14 +1286,13 @@
 
     const sorted = [...answers].sort((a, b) => a.answer - b.answer);
     const n = sorted.length;
-    // 偶数人数のときは下側の中央値
-    const medianValue = sorted[Math.floor((n - 1) / 2)].answer;
-    const minValue    = sorted[0].answer;
-    const maxValue    = sorted[n - 1].answer;
+    const medianValues = getMedianValues(sorted);
+    const minValue     = sorted[0].answer;
+    const maxValue     = sorted[n - 1].answer;
 
     const deltas = {};
     for (const { name, answer } of answers) {
-      if (answer === medianValue)                                  deltas[name] = 50;
+      if (medianValues.has(answer))                                deltas[name] = 50;
       else if (answer === minValue || answer === maxValue)          deltas[name] = -10;
       else                                                          deltas[name] = 0;
     }
@@ -1482,16 +1488,16 @@
     const n = answers.length;
     if (n === 0) return;
 
-    const medianValue = answers[Math.floor((n - 1) / 2)].answer;
-    const minValue    = answers[0].answer;
-    const maxValue    = answers[n - 1].answer;
+    const medianValues = getMedianValues(answers);
+    const minValue     = answers[0].answer;
+    const maxValue     = answers[n - 1].answer;
 
     const resultList = document.getElementById('result-list');
     resultList.innerHTML = '';
 
     answers.forEach(({ name, answer }) => {
       const isMe     = name === state.nickname;
-      const isMedian = answer === medianValue;
+      const isMedian = medianValues.has(answer);
       const isOut    = !isMedian && (answer === minValue || answer === maxValue);
 
       let cls   = 'result-item';
@@ -1639,7 +1645,7 @@
       { heading: 'すすめかた', items: [
         'ホストが3問の中から問題を1つ選ぶ',
         'みんなは答えの数字を入れて「回答を送信」を押す',
-        '全員が答えると結果発表。ちょうど真ん中の答えの人は+50pt、いちばん大きい・いちばん小さい答えの人は-10pt',
+        '全員が答えると結果発表。ちょうど真ん中の答えの人は+50pt（人数が偶数のときは真ん中の2人とも）、いちばん大きい・いちばん小さい答えの人は-10pt',
         'ホストが「次の問題へ →」を押すと、次の問題にすすむ',
       ] },
       { heading: 'おわりかた', text: 'ホストが「ゲームを終了する」を押すと、最終順位と優勝者が発表される。' },

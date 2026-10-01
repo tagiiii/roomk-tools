@@ -253,16 +253,16 @@ const SLIDES = [
   /* 5 */ { type:'content', accent:'gold', section:'ゲーム説明', sectionEn:'explain', num:'2',
     headline:'小さい順にならべて、<span class="hl">まんなか</span>が「いいセン」',
     body:demo(),
-    note:'けっか発表では、みんなの答えを小さい順にならべます。\nそのちょうどまんなかの人が「いいセン！」\nこの例だと、8・12・14・20・50 のまんなかで、14 と答えたミオさんがいいセン！\n同じ数字の人が2人いても、それがまんなかなら2人ともいいセン。人数が偶数のときは、まんなか2つのうち小さいほうだよ。' },
+    note:'けっか発表では、みんなの答えを小さい順にならべます。\nそのちょうどまんなかの人が「いいセン！」\nこの例だと、8・12・14・20・50 のまんなかで、14 と答えたミオさんがいいセン！\n同じ数字の人が2人いても、それがまんなかなら2人ともいいセン。人数が偶数のときは、まんなかが2人になるから、2人ともいいセン！' },
 
   /* 6 */ { type:'content', accent:'teal', section:'ゲーム説明', sectionEn:'explain', num:'3',
     headline:'いいセンは<span class="hl">+50pt</span>、両はしは -10pt',
     body:`<div class="rows">
-      <div class="row"><div class="row__ic" style="color:#fff;background:#D98E00"><span class="material-symbols-rounded">my_location</span></div><div><div class="row__t">いいセン（まんなか）→ +50pt</div><div class="row__d">同じ数字でまんなかなら、その全員が +50pt</div></div></div>
+      <div class="row"><div class="row__ic" style="color:#fff;background:#D98E00"><span class="material-symbols-rounded">my_location</span></div><div><div class="row__t">いいセン（まんなか）→ +50pt</div><div class="row__d">人数が偶数ならまんなかの2人とも、同じ数字ならその全員が +50pt</div></div></div>
       <div class="row"><div class="row__ic" style="color:#fff;background:#B3463F"><span class="material-symbols-rounded">close</span></div><div><div class="row__t">いちばん大きい・いちばん小さい → -10pt</div><div class="row__d">アウト！ でも -10 だけだから、すぐ取り返せる</div></div></div>
       <div class="row"><div class="row__ic"><span class="material-symbols-rounded">emoji_events</span></div><div><div class="row__t">何問かあそんで、合計点がいちばん高い人が優勝</div><div class="row__d">最後に順位表と表彰があるよ</div></div></div>
     </div>`,
-    note:'得点はシンプル！\nいいセン（まんなか）… +50pt。同じ数字でまんなかなら全員もらえる。\nいちばん大きい・いちばん小さい… -10pt。でもすぐ取り返せるよ。\nそれ以外は ±0。何問かあそんで、合計点がいちばん高い人が優勝です' },
+    note:'得点はシンプル！\nいいセン（まんなか）… +50pt。人数が偶数のときはまんなかの2人とも、同じ数字でまんなかなら全員もらえる。\nいちばん大きい・いちばん小さい… -10pt。でもすぐ取り返せるよ。\nそれ以外は ±0。何問かあそんで、合計点がいちばん高い人が優勝です' },
 
   /* 7 */ { type:'content', accent:'navy', section:'ゲーム説明', sectionEn:'explain', num:'4',
     headline:'ルームコードで、<span class="hl">かんたん参加</span>',
