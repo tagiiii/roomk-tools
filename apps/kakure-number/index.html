@@ -257,6 +257,24 @@
     }
     .btn .material-symbols-rounded { font-size: 20px; }
 
+    /* ── みんなにみせる画面（画面共有用・数字は出さない） ── */
+    .kkn-spec__header {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 14px; margin-bottom: 16px;
+      background: var(--color-surface); border: 1px solid var(--color-border);
+      border-radius: 8px; font-size: 13px; color: var(--color-muted);
+    }
+    .kkn-spec__header .material-symbols-rounded { font-size: 18px; }
+    .kkn-spec__header-label { font-weight: 700; }
+    .kkn-spec__header-code {
+      margin-left: auto; font-weight: 700; letter-spacing: 0.12em;
+      color: var(--color-primary); font-size: 15px;
+    }
+    .kkn-room-code--static { cursor: default; user-select: text; }
+    .kkn-spec__wait { text-align: center; padding: 24px 0 8px; }
+    .kkn-spec__wait-msg { font-size: 18px; font-weight: 700; color: var(--color-primary); margin-bottom: 16px; }
+    .kkn-spec__leave { margin-top: 24px; }
+
     @media (max-width: 600px) {
       .kkn-page { padding: 28px 16px 60px; }
       .kkn-number-grid { grid-template-columns: repeat(2, 1fr); }
@@ -290,6 +308,10 @@
       <button class="btn btn-secondary btn-lg btn-full" onclick="goGuestJoin()">
         <span class="material-symbols-rounded">login</span>
         ルームに参加する
+      </button>
+      <button class="btn btn-ghost btn-full" onclick="goSpectateJoin()">
+        <span class="material-symbols-rounded">cast</span>
+        みんなにみせる画面をひらく
       </button>
     </div>
   </div>
@@ -336,6 +358,10 @@
           <span class="material-symbols-rounded">playing_cards</span>
           はじめる
         </button>
+        <button class="btn btn-secondary btn-full" onclick="openSpectatorWindow()">
+          <span class="material-symbols-rounded">cast</span>
+          みんなにみせる画面をひらく
+        </button>
       </div>
     </div>
 
@@ -362,6 +388,28 @@
     </div>
     <div class="kkn-error" id="guest-join-error"></div>
     <button class="btn btn-primary btn-full" onclick="guestJoin()">参加する</button>
+    <button class="btn btn-ghost btn-full" onclick="showScreen('top')">← 戻る</button>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════
+     SCREEN: SPECTATE JOIN（みんなにみせる画面のコード入力）
+════════════════════════════════════ -->
+<div class="screen" id="screen-spectate-join">
+  <div class="kkn-page">
+    <h2 class="kkn-page__title">みんなにみせる画面</h2>
+    <p class="kkn-page__sub">ルームコードを入れると、みんなで見られる画面がひらきます（数字は出ません）</p>
+
+    <div class="form-group">
+      <label class="form-label" for="spectate-code">ルームコード（6文字）</label>
+      <input class="form-input kkn-input--code" id="spectate-code" type="text"
+             maxlength="6" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="XXXXXX" autocomplete="off">
+    </div>
+    <div class="kkn-error" id="spectate-error"></div>
+    <button class="btn btn-primary btn-full" onclick="spectateJoin()">
+      <span class="material-symbols-rounded">cast</span>
+      画面をひらく
+    </button>
     <button class="btn btn-ghost btn-full" onclick="showScreen('top')">← 戻る</button>
   </div>
 </div>
@@ -427,6 +475,10 @@
       <div class="kkn-submit-list" id="host-submit-list"></div>
       <button class="btn btn-ghost btn-full" id="btn-close-round" onclick="hostCloseRound()">締め切る</button>
       <p class="text-muted text-center text-sm" id="host-close-hint" style="margin-top:8px"></p>
+      <button class="btn btn-ghost btn-full" style="margin-top:16px" onclick="openSpectatorWindow()">
+        <span class="material-symbols-rounded">cast</span>
+        みんなにみせる画面をひらく
+      </button>
     </div>
   </div>
 </div>
@@ -454,6 +506,10 @@
     <div id="reveal-host-actions" style="display:none; margin-top:8px">
       <button class="btn btn-primary btn-full" onclick="hostStartRound()">つぎへ</button>
       <button class="btn btn-ghost btn-full" onclick="hostFinish()">おわる</button>
+      <button class="btn btn-ghost btn-full" onclick="openSpectatorWindow()">
+        <span class="material-symbols-rounded">cast</span>
+        みんなにみせる画面をひらく
+      </button>
     </div>
     <!-- ゲストのみ -->
     <div id="reveal-guest-waiting" class="text-center text-muted mt-lg" style="display:none">
@@ -485,6 +541,22 @@
   </div>
 </div>
 
+<!-- ════════════════════════════════════
+     SCREEN: SPECTATOR（みんなにみせる画面）
+     数字（各自の数字・隠しカード）は答え合わせまで DOM に書かない
+════════════════════════════════════ -->
+<div class="screen" id="screen-spectator">
+  <div class="kkn-page">
+    <div class="kkn-spec__header">
+      <span class="material-symbols-rounded">cast</span>
+      <span class="kkn-spec__header-label">みんなにみせる画面</span>
+      <span class="kkn-spec__header-code" id="spec-header-code"></span>
+    </div>
+    <div id="spec-content"></div>
+    <button class="btn btn-ghost btn-full kkn-spec__leave" onclick="spectatorLeave()">トップへ戻る</button>
+  </div>
+</div>
+
 <!-- 再接続中オーバーレイ -->
 <div class="kkn-overlay" id="reconnect-overlay">
   <div class="spinner"></div>
@@ -502,6 +574,15 @@
           onclick="leaveGame()">退出する</button>
 </div>
 
+<!-- ホスト切断オーバーレイ（みんなにみせる画面用。ルームには触らない） -->
+<div class="kkn-overlay" id="spec-host-off-overlay">
+  <div class="spinner"></div>
+  <p class="kkn-overlay__title">ホストが一時的に接続を失いました</p>
+  <p class="kkn-overlay__sub">再接続を待っています</p>
+  <button class="btn btn-ghost btn-full" style="max-width:280px;margin-top:20px"
+          onclick="spectatorLeave()">トップへ戻る</button>
+</div>
+
 <script>
   // ════════════════════════════════════
   // Firebase 設定
@@ -516,6 +597,7 @@
   const ORPHAN_TTL_MS = 2 * 60 * 1000;
   const MIN_GUESTS = 3;
   const MAX_GUESTS = 8;
+  const SPEC_CODE_RE = /^[A-Z0-9]{6}$/;
   const ST = {
     WAITING:  'waiting',
     THINKING: 'thinking',
@@ -527,7 +609,7 @@
   // 状態管理
   // ════════════════════════════════════
   const state = {
-    role:            null,   // 'host' | 'guest'
+    role:            null,   // 'host' | 'guest' | 'spectator'（みんなにみせる画面）
     nickname:        '',
     roomCode:        '',
     roomRef:         null,
@@ -536,6 +618,8 @@
     lastRoundNumber: 0,      // thinking 画面のUIリセット判定用
     revealTriggered: false,  // 二重集計防止（ホスト）
     timerInterval:   null,
+    specTimer:       null,   // みんなにみせる画面: ホスト切断の TTL 再判定
+    specDoneShown:   false,  // みんなにみせる画面: おしまいを表示済み（ルーム削除後も残す）
   };
 
   // ════════════════════════════════════
@@ -578,6 +662,7 @@
   // ユーティリティ
   // ════════════════════════════════════
   const esc = RoomkRTDB.esc;
+  const showToast = RoomkRTDB.showToast;
 
   function validateNickname(value) {
     const t = value.trim();
@@ -647,6 +732,7 @@
     if (!session) return false;
 
     const { nickname, roomCode, role, score } = session;
+    if (role === 'spectator') return reconnectSpectator(roomCode);
     showReconnectOverlay(true);
 
     try {
@@ -757,6 +843,10 @@
   // ════════════════════════════════════
   function goHostSetup() { showScreen('host-setup'); }
   function goGuestJoin()  { showScreen('guest-join'); }
+  function goSpectateJoin() {
+    hideError('spectate-error');
+    showScreen('spectate-join');
+  }
 
   // ════════════════════════════════════
   // ホスト: ルーム作成
@@ -1094,8 +1184,16 @@
   // Firebase リスナー
   // ════════════════════════════════════
   function startRoomListener() {
-    state.roomRef.on('value', snapshot => {
+    const ref = state.roomRef;
+    ref.on('value', snapshot => {
+      if (state.roomRef !== ref) return;
       const room = snapshot.val();
+
+      // みんなにみせる画面は host/guest の処理（切断・自動進行・削除・players）に一切入らない
+      if (state.role === 'spectator') {
+        handleSpectator(room);
+        return;
+      }
 
       if (!room) {
         if (state.currentScreen !== 'done') {
@@ -1208,22 +1306,7 @@
     document.getElementById('host-submit-count').textContent =
       `${submittedCount} 人 / ${dealt.length} 人がきめた`;
 
-    const listEl = document.getElementById('host-submit-list');
-    listEl.innerHTML = '';
-    dealt.forEach((name) => {
-      const done = guesses[name] !== undefined;
-      const gone = !players[name];
-      const stateHtml = done
-        ? '<span class="kkn-submit-item__state"><span class="material-symbols-rounded" style="font-size:16px">check_circle</span>きめた</span>'
-        : gone
-          ? '<span class="kkn-submit-item__state">退出中</span>'
-          : '<span class="kkn-submit-item__state">考え中…</span>';
-      listEl.innerHTML += `
-        <div class="kkn-submit-item ${done ? 'kkn-submit-item--done' : ''}">
-          <span class="kkn-submit-item__name">${esc(name)}</span>
-          ${stateHtml}
-        </div>`;
-    });
+    document.getElementById('host-submit-list').innerHTML = submitListHtml(dealt, guesses, players);
 
     const presentUnsubmitted = dealt.filter(name => players[name] && guesses[name] === undefined);
     const btn = document.getElementById('btn-close-round');
@@ -1245,6 +1328,24 @@
         state.revealTriggered = false;
       });
     }
+  }
+
+  // 提出状況の一覧（ホストの進行欄・みんなにみせる画面で共用）。名前と「きめた/考え中」だけで、数字・予想は書かない
+  function submitListHtml(dealt, guesses, players) {
+    return dealt.map((name) => {
+      const done = guesses[name] !== undefined;
+      const gone = !players[name];
+      const stateHtml = done
+        ? '<span class="kkn-submit-item__state"><span class="material-symbols-rounded" style="font-size:16px">check_circle</span>きめた</span>'
+        : gone
+          ? '<span class="kkn-submit-item__state">退出中</span>'
+          : '<span class="kkn-submit-item__state">考え中…</span>';
+      return `
+        <div class="kkn-submit-item ${done ? 'kkn-submit-item--done' : ''}">
+          <span class="kkn-submit-item__name">${esc(name)}</span>
+          ${stateHtml}
+        </div>`;
+    }).join('');
   }
 
   // ゲスト用: 数字カードグリッド（自分の数字と場の隠しカードが「？」）
@@ -1275,17 +1376,28 @@
 
     const round   = room.round || {};
     const players = room.players || {};
-    const numbers = round.numbers || {};
-    const guesses = round.guesses || {};
-    const deltas  = round.scoreDeltas || {};
-
     document.getElementById('reveal-round-num').textContent = round.number || 1;
     document.getElementById('reveal-total').textContent = round.total ?? '-';
 
-    const listEl = document.getElementById('reveal-list');
-    listEl.innerHTML = '';
+    document.getElementById('reveal-list').innerHTML = revealListHtml(round, players, state.nickname);
+
+    renderScoreChips('reveal-score-chips', players);
+
+    document.getElementById('reveal-host-actions').style.display =
+      state.role === 'host' ? 'block' : 'none';
+    document.getElementById('reveal-guest-waiting').style.display =
+      state.role === 'guest' ? 'block' : 'none';
+  }
+
+  // 答え合わせの一覧（全員に公開される段階の表示。ゲスト・ホスト・みんなにみせる画面で共用）
+  //   me: 自分のニックネーム（みんなにみせる画面は null）
+  function revealListHtml(round, players, me) {
+    const numbers = round.numbers || {};
+    const guesses = round.guesses || {};
+    const deltas  = round.scoreDeltas || {};
+    let html = '';
     if (round.fieldNumber != null) {
-      listEl.innerHTML += `
+      html += `
         <div class="kkn-reveal-row kkn-reveal-row--field">
           <div class="kkn-reveal-row__number">${esc(String(round.fieldNumber))}</div>
           <div class="kkn-reveal-row__name">隠しカード</div>
@@ -1293,7 +1405,7 @@
         </div>`;
     }
     Object.keys(numbers).forEach((name) => {
-      const isMe   = name === state.nickname;
+      const isMe   = me != null && name === me;
       const gone   = !players[name];
       const guess  = guesses[name];
       const delta  = deltas[name] || 0;
@@ -1316,7 +1428,7 @@
       const leftTag = gone ? '<span class="kkn-reveal-row__left">（退出）</span>' : '';
       const meTag = isMe ? '<span style="font-size:11px;color:var(--color-accent)">（あなた）</span>' : '';
 
-      listEl.innerHTML += `
+      html += `
         <div class="${cls}">
           <div class="kkn-reveal-row__number">${esc(String(numbers[name]))}</div>
           <div class="kkn-reveal-row__name">${esc(name)}${meTag}${leftTag}</div>
@@ -1324,27 +1436,25 @@
           ${badge}
         </div>`;
     });
-
-    renderScoreChips('reveal-score-chips', players);
-
-    document.getElementById('reveal-host-actions').style.display =
-      state.role === 'host' ? 'block' : 'none';
-    document.getElementById('reveal-guest-waiting').style.display =
-      state.role === 'guest' ? 'block' : 'none';
+    return html;
   }
 
   // 累計ポイント（控えめ表示・順位づけしない。参加順ではなく名前順で固定）
+  //   me: 自分のニックネーム（みんなにみせる画面は null）
+  function scoreChipsHtml(players, me) {
+    return Object.entries(players || {})
+      .filter(([, p]) => p && !p.isHost)
+      .map(([name, p]) => {
+        const isMe = me != null && name === me;
+        return `
+          <span class="kkn-score-chip ${isMe ? 'kkn-score-chip--me' : ''}">${esc(name)} ${Number(p.score) || 0}pt</span>`;
+      }).join('');
+  }
+
   function renderScoreChips(containerId, players) {
     const el = document.getElementById(containerId);
     if (!el) return;
-    el.innerHTML = '';
-    Object.entries(players || {})
-      .filter(([, p]) => p && !p.isHost)
-      .forEach(([name, p]) => {
-        const isMe = name === state.nickname;
-        el.innerHTML += `
-          <span class="kkn-score-chip ${isMe ? 'kkn-score-chip--me' : ''}">${esc(name)} ${Number(p.score) || 0}pt</span>`;
-      });
+    el.innerHTML = scoreChipsHtml(players, state.nickname);
   }
 
   // ── done ──
@@ -1356,25 +1466,31 @@
   // ════════════════════════════════════
   // プレイヤーリスト描画
   // ════════════════════════════════════
-  function renderPlayerList(containerId, players) {
-    const el = document.getElementById(containerId);
-    if (!el) return;
-    el.innerHTML = '';
-    Object.entries(players || {}).forEach(([name, p]) => {
-      const isMe = name === state.nickname;
-      el.innerHTML += `
+  //   me: 自分のニックネーム（みんなにみせる画面は null）
+  function playerListHtml(players, me) {
+    return Object.entries(players || {}).map(([name, p]) => {
+      const isMe = me != null && name === me;
+      return `
         <div class="kkn-player ${isMe ? 'kkn-player--me' : ''}">
           <div class="kkn-player__avatar">${esc(name.charAt(0).toUpperCase())}</div>
           <span class="kkn-player__name">${esc(name)}${isMe ? '（あなた）' : ''}</span>
-          ${p.isHost ? '<span class="kkn-player__badge-host">ホスト</span>' : ''}
+          ${p && p.isHost ? '<span class="kkn-player__badge-host">ホスト</span>' : ''}
         </div>`;
-    });
+    }).join('');
+  }
+
+  function renderPlayerList(containerId, players) {
+    const el = document.getElementById(containerId);
+    if (!el) return;
+    el.innerHTML = playerListHtml(players, state.nickname);
   }
 
   // ════════════════════════════════════
   // TOP に戻る（状態リセット）
   // ════════════════════════════════════
   function goToTop() {
+    // 防御: みんなにみせる画面はルームに触らない専用の経路で戻る
+    if (state.role === 'spectator') { spectatorLeave(); return; }
     clearSession();
     if (state.roomRef) {
       // 予約済み onDisconnect を取り消してから listener を外す（削除済み room の再生成を防ぐ）
@@ -1408,11 +1524,265 @@
   }
 
   // ════════════════════════════════════
-  // 初期化（セッションがあれば自動再接続）
+  // みんなにみせる画面（画面共有用）
+  //   - RTDB への書き込みゼロ（players に入らない・onDisconnect 予約なし・remove しない）
+  //   - 数字（各自の数字・隠しカード・本当の合計）を DOM に書くのは答え合わせ（reveal）だけ
   // ════════════════════════════════════
-  tryReconnect().then(reconnected => {
-    if (!reconnected) showScreen('top');
-  });
+
+  // ホストの画面から: クリックの中で同期的に開く（ポップアップブロック回避）・noopener 必須
+  function openSpectatorWindow() {
+    if (!state.roomCode) return;
+    const url = `${location.origin}${location.pathname}?watch=${state.roomCode}`;
+    window.open(url, '_blank', 'noopener');
+  }
+
+  // TOP → コード入力から
+  async function spectateJoin() {
+    const code = normalizeRoomCode(document.getElementById('spectate-code').value);
+    const imeErr = roomCodeImeError(code);
+    if (imeErr) { showError('spectate-error', imeErr); return; }
+    if (!SPEC_CODE_RE.test(code)) { showError('spectate-error', 'ルームコードは6文字です'); return; }
+    hideError('spectate-error');
+    await enterSpectator(code, msg => showError('spectate-error', msg));
+  }
+
+  // URL の ?watch=CODE から（最優先の入口。失敗しても sessionStorage には頼らない）
+  async function startSpectatorFromUrl(raw) {
+    const code = normalizeRoomCode(raw);
+    if (!SPEC_CODE_RE.test(code)) {
+      history.replaceState(null, '', location.pathname);
+      showToast('ルームが見つかりませんでした');
+      showScreen('top');
+      return;
+    }
+    const ok = await enterSpectator(code, msg => showToast(msg));
+    if (!ok) {
+      history.replaceState(null, '', location.pathname);
+      showScreen('top');
+    }
+  }
+
+  // 入室（読み取りだけ）。成功で true、失敗は showFail(msg) を呼んで false
+  let specJoinBusy = false; // 連打で購読が重ならないように
+  async function enterSpectator(code, showFail) {
+    if (specJoinBusy) return false;
+    specJoinBusy = true;
+    try {
+      try { await authReady; }
+      catch { showFail('うまくつながらなかったよ。ページをよみこみなおしてね'); return false; }
+      let snap;
+      try { snap = await db.ref(`${ROOMS_PATH}/${code}`).get(); }
+      catch { showFail('うまくつながらなかったよ。もう一度ためしてね'); return false; }
+      if (!snap.exists()) { showFail('ルームが見つかりませんでした'); return false; }
+      if (isRoomExpired(snap.val())) { showFail('このルームは終了しました'); return false; }
+      beginSpectator(code);
+      return true;
+    } finally {
+      specJoinBusy = false;
+    }
+  }
+
+  // 保存済みセッションからの復帰（期限切れでも remove しない）
+  async function reconnectSpectator(roomCode) {
+    if (typeof roomCode !== 'string' || !SPEC_CODE_RE.test(roomCode)) { clearSession(); return false; }
+    showReconnectOverlay(true);
+    try {
+      await authReady;
+      const snap = await db.ref(`${ROOMS_PATH}/${roomCode}`).get();
+      if (!snap.exists() || isRoomExpired(snap.val())) { clearSession(); return false; }
+      beginSpectator(roomCode);
+      return true;
+    } catch {
+      clearSession();
+      return false;
+    } finally {
+      showReconnectOverlay(false);
+    }
+  }
+
+  function beginSpectator(code) {
+    Object.assign(state, {
+      role: 'spectator', nickname: '', roomCode: code,
+      roomRef: db.ref(`${ROOMS_PATH}/${code}`), specDoneShown: false,
+    });
+    saveSession(); // { nickname: '', roomCode, role: 'spectator' }
+    history.replaceState(null, '', `${location.pathname}?watch=${code}`);
+    startRoomListener();
+  }
+
+  // 終了状態（ルーム削除・TTL 超過）: 購読とタイマーだけ止めて、表示は残す
+  // （購読を残すと、同じコードが将来使われたときに別のゲームを映してしまう）
+  function stopSpectatorWatch() {
+    clearTimeout(state.specTimer);
+    state.specTimer = null;
+    if (state.roomRef) {
+      state.roomRef.off();
+      state.roomRef = null;
+    }
+  }
+
+  function showSpecHostOff(show) {
+    document.getElementById('spec-host-off-overlay').style.display = show ? 'flex' : 'none';
+  }
+
+  // 「トップへ戻る」: ルームには一切触らない
+  function spectatorLeave() {
+    clearSession();
+    clearTimeout(state.specTimer);
+    if (state.roomRef) state.roomRef.off();
+    Object.assign(state, {
+      role: null, nickname: '', roomCode: '', roomRef: null,
+      specTimer: null, specDoneShown: false,
+    });
+    showSpecHostOff(false);
+    document.getElementById('spectate-code').value = '';
+    if (new URLSearchParams(location.search).has('watch')) {
+      history.replaceState(null, '', location.pathname);
+    }
+    showScreen('top');
+  }
+
+  function handleSpectator(room) {
+    if (state.currentScreen !== 'spectator') showScreen('spectator');
+    document.getElementById('spec-header-code').textContent = state.roomCode || '';
+
+    if (!room) {
+      // ルーム削除済み: おしまいを表示済みならその画面を残す（共有画面を突然空にしない）
+      stopSpectatorWatch();
+      showSpecHostOff(false);
+      if (!state.specDoneShown) renderSpecEnded();
+      return;
+    }
+
+    const isDone = room.status === ST.DONE;
+    // ホスト切断（おしまい表示中は最終結果を残すため対象外）
+    if (!isDone && room.hostConnected === false) {
+      if (isRoomExpired(room)) {
+        stopSpectatorWatch();
+        showSpecHostOff(false);
+        state.specDoneShown = false;
+        renderSpecEnded();
+        return;
+      }
+      showSpecHostOff(true);
+      if (!state.specTimer) {
+        // 更新が来なくても TTL 到達を判定し直す
+        const dt = getHostDisconnectedAt(room);
+        const delay = dt == null ? ORPHAN_TTL_MS : Math.max(0, dt + ORPHAN_TTL_MS - getEstimatedServerNow());
+        const watchedRef = state.roomRef;
+        state.specTimer = setTimeout(() => {
+          state.specTimer = null;
+          if (state.roomRef !== watchedRef) return;
+          stopSpectatorWatch();
+          showSpecHostOff(false);
+          state.specDoneShown = false;
+          renderSpecEnded();
+        }, delay);
+      }
+    } else {
+      showSpecHostOff(false);
+      clearTimeout(state.specTimer);
+      state.specTimer = null;
+    }
+
+    state.specDoneShown = false;
+    switch (room.status) {
+      case ST.WAITING:  renderSpecWaiting(room);  break;
+      case ST.THINKING: renderSpecThinking(room); break;
+      case ST.REVEAL:   renderSpecReveal(room);   break;
+      case ST.DONE:     renderSpecDone(room); state.specDoneShown = true; break;
+      default:          renderSpecPending();      break; // 未知の status は安全な待機表示
+    }
+  }
+
+  function setSpecContent(html) {
+    document.getElementById('spec-content').innerHTML = html;
+  }
+
+  function renderSpecWaiting(room) {
+    const players = room.players || {};
+    setSpecContent(`
+      <div class="kkn-room-code kkn-room-code--static">${esc(state.roomCode)}</div>
+      <div class="kkn-spec__wait">
+        <div class="spinner"></div>
+        <p class="kkn-spec__wait-msg">はじまるのを待っています</p>
+      </div>
+      <div class="kkn-section-label">参加者（ゲスト ${guestNames(players).length}人）</div>
+      <div class="kkn-player-list">${playerListHtml(players, null)}</div>`);
+  }
+
+  // 予想タイム: 提出状況だけ。数字（round/numbers の値・fieldNumber・total）は読まない
+  function renderSpecThinking(room) {
+    const round   = room.round || {};
+    const dealt   = Object.keys(round.numbers || {});
+    const guesses = round.guesses || {};
+    const submitted = dealt.filter(name => guesses[name] !== undefined).length;
+    setSpecContent(`
+      <div class="kkn-round-banner">ラウンド ${esc(String(round.number || 1))}</div>
+      <p class="kkn-talk-hint">「？」は2まい。自分の数字と、誰にも見えない隠しカード。<br>声できき合って、合計をよそうしよう</p>
+      <div class="kkn-status-count">${submitted} 人 / ${dealt.length} 人がきめた</div>
+      <div class="kkn-submit-list">${submitListHtml(dealt, guesses, room.players || {})}</div>`);
+  }
+
+  function renderSpecReveal(room) {
+    const round   = room.round || {};
+    const players = room.players || {};
+    setSpecContent(`
+      <h2 class="kkn-page__title">答え合わせ</h2>
+      <p class="kkn-page__sub">ラウンド ${esc(String(round.number || 1))}</p>
+      <div class="kkn-total-box">
+        <div class="kkn-total-box__label">本当の合計</div>
+        <div class="kkn-total-box__value">${esc(String(round.total ?? '-'))}</div>
+      </div>
+      <div class="kkn-section-label">みんなの数字とよそう</div>
+      <div class="kkn-reveal-list">${revealListHtml(round, players, null)}</div>
+      <div class="kkn-section-label">これまでのポイント</div>
+      <div class="kkn-score-chips">${scoreChipsHtml(players, null)}</div>`);
+  }
+
+  function renderSpecDone(room) {
+    setSpecContent(`
+      <div class="kkn-done-hero">
+        <span class="material-symbols-rounded">celebration</span>
+        <div class="kkn-done-hero__title">おしまい！</div>
+        <p class="kkn-page__sub" style="margin-top:8px">あそんでくれてありがとう</p>
+      </div>
+      <div class="kkn-section-label">きょうのポイント</div>
+      <div class="kkn-score-chips">${scoreChipsHtml(room.players, null)}</div>`);
+  }
+
+  function renderSpecEnded() {
+    setSpecContent(`
+      <div class="kkn-spec__wait">
+        <p class="kkn-spec__wait-msg">このルームは終了しました</p>
+      </div>`);
+  }
+
+  function renderSpecPending() {
+    setSpecContent(`
+      <div class="kkn-spec__wait">
+        <div class="spinner"></div>
+        <p class="kkn-spec__wait-msg">準備しています…</p>
+      </div>`);
+  }
+
+  // ════════════════════════════════════
+  // 初期化
+  //   ?watch=CODE があればみんなにみせる画面を最優先（空の値も無効な入口として同じ扱い）。
+  //   watch がないときだけ保存済みセッションから再接続する
+  // ════════════════════════════════════
+  (function init() {
+    const params = new URLSearchParams(location.search);
+    if (params.has('watch')) {
+      // 無効な watch だったときに、次のリロードで古い host/guest のセッションが復活しないように
+      clearSession();
+      startSpectatorFromUrl(params.get('watch'));
+      return;
+    }
+    tryReconnect().then(reconnected => {
+      if (!reconnected) showScreen('top');
+    });
+  }());
 </script>
 <script src="../shared/js/stats.js?v=1" defer></script>
 <script src="../shared/js/howto.js"></script>
@@ -1433,6 +1803,10 @@
         '答え合わせで、本当の合計にいちばん近かった人にポイントが入る',
       ] },
       { heading: 'おわりかた', text: 'ホストが「つぎへ」を押すとつぎのラウンド、「おわる」を押すとおしまい。' },
+      { heading: 'みんなにみせる画面', items: [
+        'TOPの「みんなにみせる画面をひらく」でルームコードを入れて「画面をひらく」を押す（ホストは待合室のボタンからもひらける）',
+        'だれが「きめた」かと、答え合わせの結果が見られる。数字は答え合わせまで出ないから、みんなでいっしょに見てだいじょうぶ',
+      ] },
     ],
   });
 </script>
