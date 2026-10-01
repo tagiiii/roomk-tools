@@ -147,6 +147,34 @@
       color: #fff;
       font-size: 11px;
     }
+    .uj-player__host-badge + .uj-player__host-badge { margin-left: 0; }
+    .uj-player__host-badge--role {
+      background: #EEF3F8;
+      color: var(--color-primary);
+    }
+
+    /* 待合室の設定（ホストだけ） */
+    .uj-check {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-height: 44px;
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    .uj-check input {
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
+      accent-color: var(--color-accent);
+    }
+    .uj-check__note {
+      margin-top: 2px;
+      color: var(--color-muted);
+      font-size: 13px;
+      line-height: 1.6;
+    }
 
     .spinner {
       width: 48px;
@@ -640,18 +668,28 @@
       </button>
 
       <hr class="divider">
-      <div class="uj-section-label">参加者（<span id="host-guest-count">0</span>人 / 2〜8人であそべます）</div>
+      <div class="uj-section-label" id="host-player-count">参加者</div>
       <div class="uj-player-list" id="host-player-list"></div>
 
+      <div class="card mt-lg">
+        <div class="uj-section-label">設定</div>
+        <label class="uj-check">
+          <input type="checkbox" id="set-host-plays" onchange="onHostPlaysChange(this.checked)">
+          <span>自分もプレイヤーとして参加する</span>
+        </label>
+        <p class="uj-check__note">チェックすると、ほかの人と同じようにうそを書いて投票します（本当の意味は出ません）</p>
+      </div>
+
       <div class="mt-lg">
-        <button class="btn btn-primary btn-lg btn-full" id="btn-start-game" disabled onclick="hostStartGame()">
-          <span class="material-symbols-rounded" aria-hidden="true">sports_esports</span>
-          はじめる
-        </button>
         <button class="btn btn-secondary btn-full" id="btn-open-spectator" onclick="openSpectatorWindow()">
           <span class="material-symbols-rounded" aria-hidden="true">cast</span>
           みんなにみせる画面をひらく
         </button>
+        <button class="btn btn-primary btn-lg btn-full" id="btn-start-game" disabled onclick="hostStartGame()">
+          <span class="material-symbols-rounded" aria-hidden="true">sports_esports</span>
+          はじめる
+        </button>
+        <p class="uj-host-hint" id="host-start-hint"></p>
       </div>
     </div>
   </div>
@@ -1012,8 +1050,9 @@
 
   const SESSION_KEY = 'usojisho_session';
   const ORPHAN_TTL_MS = 2 * 60 * 1000;
-  const MIN_GUESTS = 2;
-  const MAX_GUESTS = 8;
+  // 遊ぶ人（うそを書く・投票する・得点の対象）の人数。進行だけのホストは数えない
+  const MIN_PLAYERS = 2;
+  const MAX_PLAYERS = 8;
   const ENTRY_MAX_LEN = 30;
   const POINT_CORRECT = 2;   // 本物を当てたら +2
   const POINT_FOOLED = 1;    // 自分のうそが1票あつめるごとに +1
@@ -1105,6 +1144,22 @@
     return Object.entries(players || {})
       .filter(([, player]) => !player.isHost)
       .map(([name]) => name);
+  }
+
+  // ホストもプレイヤーとして遊ぶか（待合室で選ぶ。2026-10-01）。
+  // 初期値は進行だけ。キーがない部屋（旧版が作った部屋）も従来どおり進行だけとして扱う
+  function hostPlaysOf(room) {
+    return !!(room && room.settings && room.settings.hostPlays === true);
+  }
+
+  // 遊ぶ人（うそを書く・投票する・得点の対象）。ホストが進行だけならゲストだけ
+  function playingNames(room) {
+    const players = (room && room.players) || {};
+    return hostPlaysOf(room) ? Object.keys(players) : getGuestNames(players);
+  }
+
+  function isPlaying(room, name) {
+    return !!name && playingNames(room).includes(name);
   }
 
   function calcDeltas(choices, votes) {
@@ -1308,10 +1363,12 @@
 
   // 参加者・ポイント・答え合わせの一覧は、参加者の画面とみんなにみせる画面で同じ HTML を使う
   // （みんなにみせる画面は nickname が空なので「あなた」の印はつかない）
-  function playerRowsHtml(players) {
+  function playerRowsHtml(players, room) {
+    const hostPlays = hostPlaysOf(room);
     return Object.entries(players || {}).map(([name, player]) => {
       const isMe = !!state.nickname && name === state.nickname;
-      const hostBadge = player.isHost ? '<span class="uj-player__host-badge">ホスト</span>' : '';
+      const roleBadge = player.isHost && !hostPlays ? '<span class="uj-player__host-badge uj-player__host-badge--role">進行役</span>' : '';
+      const hostBadge = player.isHost ? `<span class="uj-player__host-badge">ホスト</span>${roleBadge}` : '';
       return [
         `<div class="uj-player ${isMe ? 'is-me' : ''}">`,
         `<div class="uj-player__avatar">${esc(name.charAt(0).toUpperCase())}</div>`,
@@ -1322,14 +1379,16 @@
     }).join('');
   }
 
-  function renderPlayerList(containerId, players) {
+  function renderPlayerList(containerId, room) {
     const element = document.getElementById(containerId);
     if (!element) return;
-    element.innerHTML = playerRowsHtml(players);
+    element.innerHTML = playerRowsHtml(room.players || {}, room);
   }
 
-  function scoreRowsHtml(players, deltas = null) {
-    return getGuestNames(players)
+  // ポイントは遊ぶ人だけ（進行だけのホストは出さない）
+  function scoreRowsHtml(room, deltas = null) {
+    const players = room.players || {};
+    return playingNames(room)
       .sort((left, right) => left.localeCompare(right, 'ja'))
       .map((name) => {
         const isMe = !!state.nickname && name === state.nickname;
@@ -1346,10 +1405,10 @@
       }).join('');
   }
 
-  function renderScoreList(containerId, players, deltas = null) {
+  function renderScoreList(containerId, room, deltas = null) {
     const element = document.getElementById(containerId);
     if (!element) return;
-    element.innerHTML = scoreRowsHtml(players, deltas);
+    element.innerHTML = scoreRowsHtml(room, deltas);
   }
 
   function submitChipsHtml(names, entries) {
@@ -1404,6 +1463,7 @@
         round: 0,
         wordIndex: 0,
         usedWords: [],
+        settings: { hostPlays: false },
         entries: null,
         choices: null,
         votes: null,
@@ -1524,8 +1584,8 @@
       if (nextRoom.status !== STATUS.WAITING) { abortReason = 'not_waiting'; return; }
       const players = nextRoom.players || {};
       if (players[nickname]) { abortReason = 'nick_taken'; return; }
-      const guestCount = Object.values(players).filter((player) => !player.isHost).length;
-      if (guestCount >= MAX_GUESTS) { abortReason = 'full'; return; }
+      // 満員は遊ぶ人だけで数える（ホストが進行だけならゲスト8人まで）
+      if (playingNames(nextRoom).length >= MAX_PLAYERS) { abortReason = 'full'; return; }
       abortReason = null;
       return {
         ...nextRoom,
@@ -1543,7 +1603,7 @@
         host_gone: 'ホストが切断されています',
         not_waiting: 'このルームはすでにゲームが始まっています',
         nick_taken: 'そのニックネームはすでに使われています',
-        full: `このルームは満員です（ゲストは${MAX_GUESTS}人まで）`,
+        full: `このルームは満員です（遊ぶ人は${MAX_PLAYERS}人まで）`,
       };
       if (abortReason === 'expired') roomRef.remove().catch(() => {});
       showError('guest-join-error', messages[abortReason] || '参加に失敗しました');
@@ -1569,9 +1629,10 @@
     const { committed } = await state.roomRef.transaction((room) => {
       if (!room) { abortReason = 'not_found'; return; }
       if (room.status !== STATUS.WAITING) { abortReason = 'bad_status'; return; }
-      const guestCount = Object.values(room.players || {}).filter((player) => !player.isHost).length;
-      if (guestCount < MIN_GUESTS) { abortReason = 'too_few'; return; }
-      if (guestCount > MAX_GUESTS) { abortReason = 'too_many'; return; }
+      // 最少・最大人数は遊ぶ人だけで数える
+      const count = playingNames(room).length;
+      if (count < MIN_PLAYERS) { abortReason = 'too_few'; return; }
+      if (count > MAX_PLAYERS) { abortReason = 'too_many'; return; }
       abortReason = null;
       const wordIndex = pickWordIndex(room);
       return {
@@ -1589,8 +1650,26 @@
       };
     });
     if (!committed && abortReason === 'too_few') {
-      showError('host-nickname-error', `ゲストが${MIN_GUESTS}人以上で始められます`);
+      RoomkRTDB.showToast(`遊ぶ人が${MIN_PLAYERS}人以上で始められます`);
     }
+    if (!committed && abortReason === 'too_many') {
+      RoomkRTDB.showToast(`遊ぶ人は${MAX_PLAYERS}人までです`);
+    }
+  }
+
+  // 待合室の設定: ホストもプレイヤーとして参加するか。待合室のあいだだけ変えられる（開始後は変えない）
+  async function onHostPlaysChange(checked) {
+    if (state.role !== 'host' || !state.roomRef) return;
+    const me = state.nickname;
+    const { committed } = await state.roomRef.transaction((room) => {
+      if (!room || room.status !== STATUS.WAITING || room.host !== me) return;
+      return { ...room, settings: { ...(room.settings || {}), hostPlays: !!checked } };
+    }).catch((error) => {
+      console.error('[uso-jisho] onHostPlaysChange failed', error);
+      return { committed: false };
+    });
+    if (!committed) RoomkRTDB.showToast('設定を変えられませんでした');
+    if (state.lastRoom && state.lastRoom.status === STATUS.WAITING) handleWaiting(state.lastRoom);
   }
 
   async function hostToVoting() {
@@ -1739,7 +1818,7 @@
     }
     hideError('entry-error');
     const room = state.lastRoom;
-    if (!room || room.status !== STATUS.WRITING) return;
+    if (!room || room.status !== STATUS.WRITING || !isPlaying(room, state.nickname)) return;
     await state.roomRef.update({
       [`entries/${state.nickname}`]: text,
       [`entryKeys/${state.nickname}`]: writingKeyOf(room),
@@ -1750,7 +1829,7 @@
   // お題が変わった直後に届いた古い書き込みは、キーがちがうので数えない
   async function toggleKnow() {
     const room = state.lastRoom;
-    if (state.role !== 'guest' || !room || room.status !== STATUS.WRITING) return;
+    if (!room || room.status !== STATUS.WRITING || !isPlaying(room, state.nickname)) return;
     const ref = state.roomRef.child(`knows/${state.nickname}`);
     const key = writingKeyOf(room);
     if ((room.knows || {})[state.nickname] === key) {
@@ -1762,7 +1841,7 @@
 
   async function submitVote(index) {
     const room = state.lastRoom;
-    if (!room || room.status !== STATUS.VOTING) return;
+    if (!room || room.status !== STATUS.VOTING || !isPlaying(room, state.nickname)) return;
     const choices = room.choices || [];
     const choice = choices[index];
     if (!choice) return;
@@ -1838,8 +1917,9 @@
   // ---------- 各フェーズの描画 ----------
 
   function handleWaiting(room) {
-    const players = room.players || {};
-    const guestCount = getGuestNames(players).length;
+    // 最少・最大人数は遊ぶ人だけで数える（進行だけのホストは数えない）
+    const hostPlays = hostPlaysOf(room);
+    const count = playingNames(room).length;
 
     if (state.role === 'host') {
       if (state.currentScreen !== 'host-setup') {
@@ -1848,14 +1928,20 @@
         document.getElementById('host-step-room').style.display = 'block';
         document.getElementById('host-room-code-display').textContent = state.roomCode;
       }
-      document.getElementById('host-guest-count').textContent = guestCount;
-      renderPlayerList('host-player-list', players);
-      document.getElementById('btn-start-game').disabled = guestCount < MIN_GUESTS || guestCount > MAX_GUESTS;
+      document.getElementById('host-player-count').textContent =
+        `参加者（遊ぶ人 ${count}人 / ${MIN_PLAYERS}〜${MAX_PLAYERS}人であそべます）`;
+      document.getElementById('set-host-plays').checked = hostPlays;
+      renderPlayerList('host-player-list', room);
+      document.getElementById('btn-start-game').disabled = count < MIN_PLAYERS || count > MAX_PLAYERS;
+      let hint = hostPlays ? '' : 'ホストは進行役です';
+      if (count < MIN_PLAYERS) hint = `あと${MIN_PLAYERS - count}人必要です`;
+      else if (count > MAX_PLAYERS) hint = `遊ぶ人は${MAX_PLAYERS}人までです（いま${count}人）`;
+      document.getElementById('host-start-hint').textContent = hint;
       return;
     }
 
     if (state.currentScreen !== 'waiting') showScreen('waiting');
-    renderPlayerList('waiting-player-list', players);
+    renderPlayerList('waiting-player-list', room);
   }
 
   function resetWritingUI() {
@@ -1878,15 +1964,17 @@
   function currentEntries(room) {
     const keys = room.entryKeys || {};
     const key = writingKeyOf(room);
+    const hostPlays = hostPlaysOf(room);
     return Object.entries(room.entries || {})
       .filter(([name, text]) => typeof text === 'string' && text.trim() !== ''
-        && (keys[name] == null || keys[name] === key));
+        && (keys[name] == null || keys[name] === key)
+        && (hostPlays || name !== room.host));
   }
 
   function getKnowers(room) {
     const knows = room.knows || {};
     const key = writingKeyOf(room);
-    return getGuestNames(room.players).filter((name) => knows[name] === key);
+    return playingNames(room).filter((name) => knows[name] === key);
   }
 
   function renderKnowRow(room) {
@@ -1896,7 +1984,10 @@
     const knowers = getKnowers(room);
 
     if (state.role === 'host') {
-      knowBtn.hidden = true;
+      // ホストが遊ぶときは「意味を知ってる」も出す（ゲストと同じ）。「ことばを変える」は従来どおり
+      const hostPlays = hostPlaysOf(room);
+      knowBtn.hidden = !hostPlays;
+      knowBtn.textContent = knowers.includes(state.nickname) ? '取り消す' : '意味を知ってる';
       changeBtn.hidden = false;
       text.hidden = knowers.length === 0;
       text.classList.add('is-alert');
@@ -1931,25 +2022,36 @@
     document.getElementById('writing-template').innerHTML = blankTemplateHtml(word);
 
     const entries = Object.fromEntries(currentEntries(room));
-    const guests = getGuestNames(room.players);
-    const submittedCount = guests.filter((name) => entries[name] != null).length;
+    const names = playingNames(room);
+    const submittedCount = names.filter((name) => entries[name] != null).length;
     const entryCount = Object.keys(entries).length;
 
-    document.getElementById('writing-chips').innerHTML = submitChipsHtml(guests, entries);
+    document.getElementById('writing-chips').innerHTML = submitChipsHtml(names, entries);
 
     const secret = document.getElementById('host-secret');
     const hostActions = document.getElementById('writing-host-actions');
     const inputArea = document.getElementById('writing-input-area');
     const submittedArea = document.getElementById('writing-submitted-area');
 
+    const mySubmitted = entries[state.nickname] != null;
     if (state.role === 'host') {
-      secret.style.display = 'block';
-      document.getElementById('host-secret-text').innerHTML = composeMeaningHtml(word, word.fill, 'uj-fill');
-      inputArea.style.display = 'none';
-      submittedArea.style.display = 'none';
+      if (hostPlaysOf(room)) {
+        // ホストも遊ぶときは本当の意味を一切出さない（DOM にも書かない）。答えの入力はゲストと同じ
+        secret.style.display = 'none';
+        secret.removeAttribute('open');
+        document.getElementById('host-secret-text').innerHTML = '';
+        inputArea.style.display = mySubmitted ? 'none' : 'block';
+        submittedArea.style.display = mySubmitted ? 'block' : 'none';
+        if (!mySubmitted) updateEntryPreview();
+      } else {
+        secret.style.display = 'block';
+        document.getElementById('host-secret-text').innerHTML = composeMeaningHtml(word, word.fill, 'uj-fill');
+        inputArea.style.display = 'none';
+        submittedArea.style.display = 'none';
+      }
       hostActions.style.display = 'block';
 
-      const allDone = guests.length > 0 && submittedCount === guests.length;
+      const allDone = names.length > 0 && submittedCount === names.length;
       document.getElementById('btn-to-voting').disabled = !allDone;
       const forceBtn = document.getElementById('btn-force-voting');
       forceBtn.style.display = (!allDone && entryCount > 0) ? 'block' : 'none';
@@ -1966,7 +2068,6 @@
 
     secret.style.display = 'none';
     hostActions.style.display = 'none';
-    const mySubmitted = entries[state.nickname] != null;
     inputArea.style.display = mySubmitted ? 'none' : 'block';
     submittedArea.style.display = mySubmitted ? 'block' : 'none';
     if (!mySubmitted) updateEntryPreview();
@@ -1992,9 +2093,10 @@
 
     const choices = room.choices || [];
     const votes = room.votes || {};
-    const guests = getGuestNames(room.players);
-    const votedCount = guests.filter((name) => votes[name] != null).length;
-    document.getElementById('voting-status').textContent = `${votedCount}人 / ${guests.length}人 が投票済み`;
+    const names = playingNames(room);
+    const votedCount = names.filter((name) => votes[name] != null).length;
+    document.getElementById('voting-status').textContent = `${votedCount}人 / ${names.length}人 が投票済み`;
+    const canVote = isPlaying(room, state.nickname);
 
     const myVote = votes[state.nickname];
     const hasVoted = myVote != null;
@@ -2019,7 +2121,7 @@
       ].join('');
       card.setAttribute('aria-label', `${index + 1}番の意味: ${composeMeaning(word, choice.text)}`);
 
-      if (state.role === 'guest' && !hasVoted) {
+      if (canVote && !hasVoted) {
         const button = document.createElement('button');
         button.className = 'btn btn-primary btn-full btn-sm';
         button.textContent = '投票する';
@@ -2034,7 +2136,7 @@
     const hostActions = document.getElementById('voting-host-actions');
     if (state.role === 'host') {
       hostActions.style.display = 'block';
-      const allVoted = guests.length > 0 && votedCount === guests.length;
+      const allVoted = names.length > 0 && votedCount === names.length;
       document.getElementById('btn-to-reveal').disabled = !allVoted;
       const forceBtn = document.getElementById('btn-force-reveal');
       forceBtn.style.display = allVoted ? 'none' : 'block';
@@ -2063,7 +2165,7 @@
     const deltas = calcDeltas(choices, votes);
     document.getElementById('reveal-list').innerHTML = revealCardsHtml(word, choices, votes);
 
-    renderScoreList('reveal-score-list', room.players, deltas);
+    renderScoreList('reveal-score-list', room, deltas);
 
     document.getElementById('reveal-host-actions').style.display = state.role === 'host' ? 'block' : 'none';
     document.getElementById('reveal-guest-waiting').style.display = state.role === 'guest' ? 'block' : 'none';
@@ -2113,7 +2215,7 @@
 
   function handleDone(room) {
     if (state.currentScreen !== 'done') showScreen('done');
-    renderScoreList('done-score-list', room.players);
+    renderScoreList('done-score-list', room);
   }
 
   // ---------- 退出 ----------
@@ -2414,8 +2516,8 @@
     setSpecContent([
       '<div class="uj-section-label" style="text-align:center">ルームコード</div>',
       `<div class="uj-room-code uj-room-code--static">${esc(state.roomCode)}</div>`,
-      `<div class="uj-section-label" style="margin-top:24px">参加者（ゲスト ${getGuestNames(players).length}人）</div>`,
-      `<div class="uj-player-list">${playerRowsHtml(players)}</div>`,
+      `<div class="uj-section-label" style="margin-top:24px">参加者（遊ぶ人 ${playingNames(room).length}人）</div>`,
+      `<div class="uj-player-list">${playerRowsHtml(players, room)}</div>`,
       '<p class="uj-spec__status">みんなが集まるのを待っています</p>',
     ].join(''));
   }
@@ -2424,7 +2526,7 @@
   function renderSpecWriting(room) {
     const word = WORDS[room.wordIndex] || WORDS[0];
     const entries = Object.fromEntries(currentEntries(room));
-    const names = getGuestNames(room.players);
+    const names = playingNames(room);
     const submittedCount = names.filter((name) => entries[name] != null).length;
     const knowers = getKnowers(room);
     setSpecContent([
@@ -2447,7 +2549,7 @@
   function renderSpecVoting(room) {
     const word = WORDS[room.wordIndex] || WORDS[0];
     const votes = room.votes || {};
-    const names = getGuestNames(room.players);
+    const names = playingNames(room);
     const votedCount = names.filter((name) => votes[name] != null).length;
     const cards = (room.choices || []).map((choice, index) => [
       '<div class="uj-choice">',
@@ -2481,7 +2583,7 @@
       revealCardsHtml(word, choices, votes),
       '<hr class="divider">',
       '<div class="uj-section-label">いまのポイント</div>',
-      scoreRowsHtml(room.players || {}, calcDeltas(choices, votes)),
+      scoreRowsHtml(room, calcDeltas(choices, votes)),
     ].join(''));
   }
 
@@ -2493,7 +2595,7 @@
       '<p class="uj-page__sub">あそんでくれてありがとう</p>',
       '</div>',
       '<div class="uj-section-label">みんなのポイント</div>',
-      scoreRowsHtml(room.players || {}),
+      scoreRowsHtml(room),
     ].join(''));
   }
 
@@ -2525,7 +2627,7 @@
         items: [
           'ホストが「ルームをつくる（ホスト）」を押して、出てきたルームコードをみんなに伝える',
           'ほかの人は「ルームに参加する」からニックネームとコードを入れて「参加する」を押す',
-          'ゲストが2〜8人そろったら、ホストが「はじめる」を押す',
+          '遊ぶ人が2〜8人そろったら、ホストが「はじめる」を押す（ホストは「自分もプレイヤーとして参加する」にチェックすると、いっしょに遊べる）',
         ],
       },
       {
