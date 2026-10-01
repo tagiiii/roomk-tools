@@ -418,6 +418,7 @@
     <!-- ホスト用：回答を締め切って結果へ -->
     <div id="answer-host-actions" style="display:none; margin-top:24px">
       <button class="btn btn-ghost btn-full" id="btn-force-close-answer" onclick="hostCloseAnswering()">回答を締め切って結果へ</button>
+      <button class="btn btn-ghost btn-full" id="btn-end-no-players" style="display:none" onclick="hostEndGame()">ゲームを終了する</button>
       <p class="text-muted text-center" id="answer-host-hint" style="margin-top:8px"></p>
     </div>
   </div>
@@ -457,7 +458,7 @@
 ════════════════════════════════════ -->
 <div class="screen" id="screen-final">
   <div class="page">
-    <div class="winner-block pop-in">
+    <div class="winner-block pop-in" id="final-winner-block">
       <div style="font-size:72px;line-height:1;margin-bottom:8px">
         <span class="material-symbols-rounded" aria-hidden="true" style="font-size:72px;color:#F0A500">emoji_events</span>
       </div>
@@ -1519,7 +1520,11 @@
       const btn = document.getElementById('btn-force-close-answer');
       btn.disabled = answered === 0 || state.resultTriggered;
       const hint = document.getElementById('answer-host-hint');
-      if (answered === 0) {
+      // 答える人が全員抜けた（進行役だけが残った）ときは終了だけできるようにする
+      document.getElementById('btn-end-no-players').style.display = total === 0 ? 'block' : 'none';
+      if (total === 0) {
+        hint.textContent = '答える人がいなくなりました';
+      } else if (answered === 0) {
         hint.textContent = '回答が1件以上ないと結果に進めません';
       } else if (remaining > 0) {
         hint.textContent = `未回答の ${remaining} 人は集計から除外して進めます`;
@@ -1647,7 +1652,12 @@
       .map(([name, p]) => ({ name, score: p.score || 0 }))
       .sort((a, b) => b.score - a.score);
 
-    if (sorted.length === 0) return;
+    // 答える人が全員抜けたあとに終了したときは、優勝の欄を出さない
+    document.getElementById('final-winner-block').style.display = sorted.length ? 'block' : 'none';
+    if (sorted.length === 0) {
+      document.getElementById('final-ranking').innerHTML = '<p class="text-muted text-center">遊んだ人はいませんでした</p>';
+      return;
+    }
 
     const winner = sorted[0];
     document.getElementById('final-winner-name').textContent  = winner.name;
