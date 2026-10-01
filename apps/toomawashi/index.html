@@ -48,6 +48,7 @@
       border-radius: 4px; background: var(--color-accent); color: #fff;
     }
     .player-tag.me { background: var(--color-muted); }
+    .player-tag.role { background: #EEF3F8; color: var(--color-primary); }
 
     /* ── オーバーレイ ── */
     .overlay {
@@ -397,6 +398,16 @@
       <p class="tw-note" id="waiting-pack"></p>
     </div>
     <div id="waiting-host" hidden>
+      <div class="card">
+        <p class="section-label">設定</p>
+        <label class="tw-toggle" for="set-host-plays">
+          <input type="checkbox" id="set-host-plays" checked onchange="onHostPlaysChange(this)">
+          <span>
+            <span class="tw-toggle__title">自分も説明役の順番に入る</span>
+            <span class="tw-toggle__note">外すと進行役になって、説明役は回ってこないよ。正解発表と判定はこれまでどおりホストがするよ</span>
+          </span>
+        </label>
+      </div>
       <p class="tw-note" id="waiting-min" style="margin-bottom:10px"></p>
       <button class="btn btn-primary btn-full btn-lg" id="btn-start" onclick="startGame()" disabled>
         <span class="material-symbols-rounded" aria-hidden="true">play_arrow</span>
@@ -728,6 +739,25 @@ function shuffledIndices(n) {
 }
 
 /* ════════════════════════════════════════════════
+   ホストの参加（待合室で選ぶ。2026-10-01）
+   ════════════════════════════════════════════════ */
+// settings.hostPlays を持たない旧ルームは従来どおり「ホストも説明役の順番に入る」
+function hostPlaysOf(room) {
+  return !(room && room.settings && room.settings.hostPlays === false);
+}
+
+// 遊ぶ人（説明役の順番に入る人）。ホストが進行だけならホストを除く
+function playingNames(room, players) {
+  const all = Object.keys(players || {});
+  if (hostPlaysOf(room)) return all;
+  return all.filter(n => n !== (room && room.host));
+}
+
+function tooFewMsg(hostPlays) {
+  return hostPlays ? `${MIN_PLAYERS}人以上で始められるよ` : `ホストのほかに${MIN_PLAYERS}人以上で始められるよ`;
+}
+
+/* ════════════════════════════════════════════════
    パック（静的データ）
    ════════════════════════════════════════════════ */
 function getPack(packId) {
@@ -862,6 +892,7 @@ async function hostCreate() {
         turnOrder: [nick],
         turnIndex: 0,
         score: { clear: 0, total: 0 },
+        settings: { hostPlays: true },
         players: { [nick]: { isHost: true, joinedAt } },
       };
     });
@@ -938,11 +969,12 @@ async function guestJoin() {
     if (isRoomExpired(r)) { abortReason = 'expired'; return null; }
     if (r.hostConnected === false) { abortReason = 'host_gone'; return; }
     const players = r.players || {};
-    if (players[nick]) { abortReason = 'nick_taken'; return; }
-    if (Object.keys(players).length >= MAX_PLAYERS) { abortReason = 'full'; return; }
+    if (players[nick] || nick === r.host) { abortReason = 'nick_taken'; return; }
+    // 最大人数は遊ぶ人だけで数える（進行だけのホストは数えない）
+    if (playingNames(r, players).length >= MAX_PLAYERS) { abortReason = 'full'; return; }
     abortReason = null;
     const next = { ...r, players: { ...players, [nick]: { isHost: false, joinedAt } } };
-    // ゲーム中の入室は turnOrder 末尾に追加（説明役の順番はそのぶん後ろに回る）
+    // ゲーム中の入室は turnOrder 末尾に追加（説明役の順番はそのぶん後ろに回る。ホストはここで足さない）
     if (r.status !== 'waiting' && r.status !== 'finished') {
       const turnOrder = Array.isArray(r.turnOrder) ? r.turnOrder : [];
       if (!turnOrder.includes(nick)) next.turnOrder = [...turnOrder, nick];
@@ -1002,10 +1034,15 @@ async function startGame() {
   const roll = Math.random();
   const perm = shuffledIndices(MAX_CHOICES);
   let abortReason = null;
+  let hostPlays = true;
   const { committed } = await state.roomRef.transaction(room => {
     if (!room) { abortReason = 'not_found'; return; }
     if (room.status !== 'waiting') { abortReason = 'bad_status'; return; }
-    const names = orderedPlayers(room.players, room.host);
+    hostPlays = hostPlaysOf(room);
+    // 説明役の順番に入るのは遊ぶ人だけ。ホストが入るなら先頭（初回の説明役）、
+    // 入らないなら参加順で最初のゲストから。最少人数も遊ぶ人で数える
+    const playing = playingNames(room, room.players);
+    const names = orderedPlayers(room.players, room.host).filter(n => playing.includes(n));
     if (names.length < MIN_PLAYERS) { abortReason = 'too_few'; return; }
     const pack = getPack(room.packId);
     if (!pack) { abortReason = 'no_pack'; return; }
@@ -1024,9 +1061,31 @@ async function startGame() {
     };
   });
   if (committed) return;
-  if (abortReason === 'too_few') showMsg(`${MIN_PLAYERS}人以上で始められるよ`);
+  if (abortReason === 'too_few') showMsg(tooFewMsg(hostPlays));
   else if (abortReason === 'no_pack') showMsg('お題のデータが読み込めなかったよ');
   else showMsg('始められなかったよ。もう一度ためしてね');
+}
+
+// 待合室の設定: ホストも説明役の順番に入るか。開始後は変えない（もう1周も待合室の値を引き継ぐ）
+async function onHostPlaysChange(input) {
+  if (state.role !== 'host' || !state.roomRef) return;
+  const checked = !!input.checked;
+  const me = state.nickname;
+  input.disabled = true;
+  let committed = false;
+  try {
+    ({ committed } = await state.roomRef.transaction(room => {
+      if (!room || room.status !== 'waiting' || room.host !== me) return;
+      return { ...room, settings: { ...(room.settings || {}), hostPlays: checked } };
+    }));
+  } catch (error) {
+    console.error('[toomawashi] onHostPlaysChange failed', error);
+  }
+  input.disabled = false;
+  if (!committed) {
+    input.checked = !checked;
+    showMsg('設定を変えられなかったよ');
+  }
 }
 
 // 説明役だけが押せる観点チップ（onclick からは encodeURIComponent 済みの値が来る）
@@ -1180,14 +1239,18 @@ async function nextLap() {
   const roll = Math.random();
   const perm = shuffledIndices(MAX_CHOICES);
   let reason = null;
+  let hostPlays = true;
   const { committed } = await state.roomRef.transaction(room => {
     if (!room || room.status !== 'reveal') { reason = 'bad'; return; }
     const round = room.round || {};
     if (round.result == null) { reason = 'bad'; return; }
     const players = room.players || {};
+    hostPlays = hostPlaysOf(room);
+    // 待合室で選んだホストの参加をそのまま引き継ぐ。遊ぶ人だけで組み直して数える
+    const playing = playingNames(room, players);
     const prev = Array.isArray(room.turnOrder) ? room.turnOrder : [];
-    const kept = prev.filter(n => players[n]);
-    const added = Object.keys(players).filter(n => !kept.includes(n));
+    const kept = prev.filter(n => playing.includes(n));
+    const added = playing.filter(n => !kept.includes(n));
     const turnOrder = [...kept, ...added];
     if (turnOrder.length < MIN_PLAYERS) { reason = 'too_few'; return; }
     const pack = getPack(room.packId);
@@ -1205,7 +1268,9 @@ async function nextLap() {
     };
   }).catch(() => ({ committed: false }));
   if (!committed) {
-    showMsg(reason === 'too_few' ? `${MIN_PLAYERS}人以上いないと続けられないよ` : '続けられなかったよ');
+    showMsg(reason === 'too_few'
+      ? (hostPlays ? `${MIN_PLAYERS}人以上いないと続けられないよ` : `ホストのほかに${MIN_PLAYERS}人以上いないと続けられないよ`)
+      : '続けられなかったよ');
   }
 }
 
@@ -1318,7 +1383,7 @@ function handleRoom(room) {
 function handleWaiting(room, players) {
   if (state.currentScreen !== 'waiting') showScreen('waiting');
   setText('waiting-code', state.roomCode || '');
-  renderPlayerList('waiting-players', players, room.host);
+  renderPlayerList('waiting-players', players, room.host, hostPlaysOf(room));
 
   const pack = getPack(room.packId);
   setText('waiting-pack', pack ? `今日のお題: ${pack.title || pack.id}` : '');
@@ -1327,12 +1392,16 @@ function handleWaiting(room, players) {
   setHidden('waiting-host', !isHost);
   if (!isHost) return;
 
-  const count = Object.keys(players).length;
+  const hostPlays = hostPlaysOf(room);
+  const box = document.getElementById('set-host-plays');
+  if (box && !box.disabled) box.checked = hostPlays;
+  // 最少人数は遊ぶ人（説明役の順番に入る人）だけで数える
+  const count = playingNames(room, players).length;
   const btn = document.getElementById('btn-start');
   btn.disabled = count < MIN_PLAYERS;
   setText('waiting-min', count < MIN_PLAYERS
     ? `あと${MIN_PLAYERS - count}人で始められるよ`
-    : `${count}人 参加中`);
+    : (hostPlays ? `${count}人 参加中` : `遊ぶ人は${count}人（ホストは進行役）`));
 }
 
 // ── explain ──
@@ -1490,11 +1559,12 @@ function handleFinished(room) {
 /* ════════════════════════════════════════════════
    描画ヘルパー
    ════════════════════════════════════════════════ */
-function renderPlayerList(id, players, host) {
+function renderPlayerList(id, players, host, hostPlays) {
   const ul = document.getElementById(id);
   if (!ul) return;
   const html = Object.keys(players || {}).map(nick => {
-    const hostTag = nick === host ? '<span class="player-tag">ホスト</span>' : '';
+    const roleTag = nick === host && hostPlays === false ? '<span class="player-tag role">進行役</span>' : '';
+    const hostTag = (nick === host ? '<span class="player-tag">ホスト</span>' : '') + roleTag;
     const meTag = nick === state.nickname ? '<span class="player-tag me">あなた</span>' : '';
     return '<li class="player-item"><div class="player-name">' + esc(nick) + hostTag + meTag + '</div></li>';
   }).join('');
@@ -1638,7 +1708,8 @@ async function tryReconnect() {
       }
       const players = r.players || {};
       if (players[nickname]) return r;
-      if (Object.keys(players).length >= MAX_PLAYERS) return;
+      if (nickname === r.host) return;   // ホストと同名 → ゲストとしては復帰させない
+      if (playingNames(r, players).length >= MAX_PLAYERS) return;
       const next = { ...r, players: { ...players, [nickname]: { isHost: false, joinedAt } } };
       if (r.status !== 'waiting' && r.status !== 'finished') {
         const turnOrder = Array.isArray(r.turnOrder) ? r.turnOrder : [];
@@ -1692,6 +1763,7 @@ async function tryReconnect() {
           'ホストが「ルームを作る」を押して、コードをみんなに伝える',
           'ほかの人は「ルームに参加する」からニックネームとルームコードを入れて「参加する」を押す',
           '2人以上そろったら、ホストが「始める」を押す',
+          'ホストは「自分も説明役の順番に入る」を外すと進行役になって、説明役は回ってこない（そのときはホストのほかに2人以上で遊べる）',
         ],
       },
       {
