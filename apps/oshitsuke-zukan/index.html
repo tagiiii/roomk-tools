@@ -56,6 +56,7 @@
     .ozk-tag { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; }
     .ozk-tag--me   { background: var(--color-muted); color: #fff; }
     .ozk-tag--host { background: var(--color-primary); color: #fff; }
+    .ozk-tag--role { background: #EEF3F8; color: var(--color-primary); }
     .ozk-tag--disc { display: block; margin-top: 4px; font-size: 12px; color: var(--color-error); font-weight: 700; }
     .ozk-dex-row { margin-top: 6px; }
     .ozk-dex-chip {
@@ -65,6 +66,13 @@
     }
     .ozk-dex-chip.is-warn { box-shadow: 0 0 0 2px var(--color-error); }
     .ozk-dex-alert { display: block; margin-top: 4px; font-size: 12px; color: var(--color-error); font-weight: 700; }
+
+    /* ── 待合室の設定（ホストだけ） ── */
+    .ozk-check {
+      display: flex; align-items: center; gap: 10px; min-height: 44px;
+      font-weight: 600; cursor: pointer;
+    }
+    .ozk-check input { width: 20px; height: 20px; accent-color: var(--color-accent); flex-shrink: 0; }
 
     /* ── 中央の宣言バナー ── */
     .ozk-banner {
@@ -212,7 +220,7 @@
 <div class="screen" id="screen-host-setup">
   <div class="ozk-page">
     <h2 class="ozk-page__title">ルームを作る</h2>
-    <p class="ozk-page__sub">あなたのニックネームを入れてね。あなたもプレイヤーとして遊ぶよ。</p>
+    <p class="ozk-page__sub">あなたのニックネームを入れてね。自分も遊ぶか、進行だけするかは待合室で選べるよ。</p>
     <div class="form-group">
       <label class="form-label" for="host-nickname">ニックネーム（1〜8文字）</label>
       <input class="form-input" id="host-nickname" type="text" maxlength="8" placeholder="例：たろう" autocomplete="off">
@@ -272,7 +280,7 @@
 ════════════════════════════════════ -->
 <div class="screen" id="screen-lobby">
   <div class="ozk-page">
-    <div id="lobby-host-panel" style="display:none">
+    <div id="lobby-host-panel" class="mb-md" style="display:none">
       <div class="card" style="text-align:center">
         <p class="ozk-section-label">ルームコード</p>
         <p class="ozk-room-code" id="lobby-room-code">----</p>
@@ -281,6 +289,13 @@
           コードをコピー
         </button>
         <p style="font-size:13px;color:var(--color-muted)">このコードを参加者に伝えてね</p>
+      </div>
+      <div class="card">
+        <p class="ozk-section-label">設定</p>
+        <label class="ozk-check">
+          <input type="checkbox" id="set-host-plays" onchange="onHostPlaysChange(this.checked)">
+          <span>自分もプレイヤーとして参加する</span>
+        </label>
       </div>
     </div>
 
@@ -321,7 +336,7 @@
 
     <div class="ozk-resolved-panel" id="game-resolved-panel" style="display:none"></div>
 
-    <div class="card">
+    <div class="card" id="game-hand-card">
       <p class="ozk-section-label" id="game-hand-label">あなたの手札</p>
       <div class="ozk-kind-grid" id="game-my-hand"></div>
     </div>
@@ -539,6 +554,20 @@ function isConnected(p) {
   return !!p && p.connected !== false;
 }
 
+// ホストもプレイヤーとして遊ぶか。キーがない部屋（旧版が作った部屋）は従来どおり遊ぶ
+function hostPlaysOf(room) {
+  return !(room && room.settings && room.settings.hostPlays === false);
+}
+// 遊ぶ人（進行だけのホストを除く）。配る・手番・渡す相手・人数の判定はすべてこれで数える。
+// ホストは players に残したまま（部屋の持ち主・再接続の判定はこれまでどおり）
+function gamePlayersOf(room, playersObj) {
+  const src = playersObj || (room && room.players) || {};
+  if (hostPlaysOf(room)) return src;
+  const out = {};
+  Object.keys(src).forEach((nick) => { if (nick !== room.host) out[nick] = src[nick]; });
+  return out;
+}
+
 function computeEligibleTargets(players, seenBy, selfNick) {
   const seen = seenBy || {};
   return Object.keys(players || {}).filter((nick) =>
@@ -679,8 +708,20 @@ function renderPlayerDex(elId, room, players) {
   const el = document.getElementById(elId);
   if (!el) return;
   const cards = room.match?.cards || {};
-  const sorted = Object.entries(players || {}).sort((a, b) => (a[1].seat ?? 0) - (b[1].seat ?? 0));
-  el.innerHTML = sorted.map(([nick, p]) => {
+  const sorted = Object.entries(gamePlayersOf(room, players)).sort((a, b) => (a[1].seat ?? 0) - (b[1].seat ?? 0));
+  // 進行だけのホストは「進行役」として先頭に1行だけ出す（手札・ずかんはなし）
+  let hostRow = '';
+  if (!hostPlaysOf(room) && room.host && (players || {})[room.host]) {
+    const meTag = room.host === state.nickname ? '<span class="ozk-tag ozk-tag--me">あなた</span>' : '';
+    const discTag = room.hostConnected === false ? '<span class="ozk-tag--disc">通信が切れています</span>' : '';
+    hostRow = `<li class="ozk-player-row">
+      <div class="ozk-player-row__head">
+        <span class="ozk-player-row__name">${esc(room.host)}</span><span class="ozk-tag ozk-tag--host">ホスト</span><span class="ozk-tag ozk-tag--role">進行役</span>${meTag}
+      </div>
+      ${discTag}
+    </li>`;
+  }
+  el.innerHTML = hostRow + sorted.map(([nick, p]) => {
     const meTag = nick === state.nickname ? '<span class="ozk-tag ozk-tag--me">あなた</span>' : '';
     const hostTag = p.isHost ? '<span class="ozk-tag ozk-tag--host">ホスト</span>' : '';
     const discTag = p.connected === false ? '<span class="ozk-tag--disc">通信が切れています</span>' : '';
@@ -707,23 +748,27 @@ function renderPlayerDex(elId, room, players) {
   }).join('');
 }
 
-function renderLobbyPlayerList(players) {
+function roleTagHtml(room, nick) {
+  return (!hostPlaysOf(room) && nick === room.host) ? '<span class="ozk-tag ozk-tag--role">進行役</span>' : '';
+}
+
+function renderLobbyPlayerList(room, players) {
   const sorted = Object.entries(players || {}).sort((a, b) => (a[1].seat ?? 0) - (b[1].seat ?? 0));
   document.getElementById('lobby-player-list').innerHTML = sorted.map(([nick, p]) => {
     const meTag = nick === state.nickname ? '<span class="ozk-tag ozk-tag--me">あなた</span>' : '';
     const hostTag = p.isHost ? '<span class="ozk-tag ozk-tag--host">ホスト</span>' : '';
     return `<li class="ozk-player-row ozk-player-row--simple">
-      <span class="ozk-player-row__name">${esc(nick)}</span>${hostTag}${meTag}
+      <span class="ozk-player-row__name">${esc(nick)}</span>${hostTag}${roleTagHtml(room, nick)}${meTag}
     </li>`;
   }).join('');
 }
 
-function renderBoardWaitingList(players) {
+function renderBoardWaitingList(room, players) {
   const sorted = Object.entries(players || {}).sort((a, b) => (a[1].seat ?? 0) - (b[1].seat ?? 0));
   document.getElementById('board-waiting-list').innerHTML = sorted.map(([nick, p]) => {
     const hostTag = p.isHost ? '<span class="ozk-tag ozk-tag--host">ホスト</span>' : '';
     return `<li class="ozk-player-row ozk-player-row--simple">
-      <span class="ozk-player-row__name">${esc(nick)}</span>${hostTag}
+      <span class="ozk-player-row__name">${esc(nick)}</span>${hostTag}${roleTagHtml(room, nick)}
     </li>`;
   }).join('');
 }
@@ -918,8 +963,9 @@ function buildResolvedActionUI() {
   </div>`;
 }
 
-function renderActionArea(room, players) {
+function renderActionArea(room, allPlayers) {
   const area = document.getElementById('game-action-area');
+  const players = gamePlayersOf(room, allPlayers); // 渡す・回す相手に進行だけのホストを入れない
   const turn = room.match?.turn;
   if (!turn || turn.actor !== state.nickname) { area.innerHTML = ''; return; }
   if (turn.phase === 'choosing') {
@@ -938,6 +984,11 @@ function renderActionArea(room, players) {
 }
 
 function renderMyHandSection(room) {
+  // 進行だけのホストは手札がないので、手札の欄ごと出さない
+  const handCard = document.getElementById('game-hand-card');
+  const plays = !!gamePlayersOf(room)[state.nickname];
+  handCard.style.display = plays ? '' : 'none';
+  if (!plays) return;
   const cards = room.match?.cards || {};
   const counts = myHandGroups(cards, state.nickname);
   const turn = room.match?.turn;
@@ -993,6 +1044,7 @@ async function hostCreateRoomInner() {
       players: {
         [nickname]: { isHost: true, seat: 0, connected: true, disconnectedAt: null },
       },
+      settings: { hostPlays: true }, // 待合室でホストだけが変える（開始後は変えない）
       match: null,
     };
     const { committed } = await ref.transaction((room) => (room ? undefined : initialRoom));
@@ -1066,7 +1118,7 @@ async function guestJoinInner() {
     if (currentRoom.status !== 'waiting') { abortReason = 'not_waiting'; return; }
     const players = currentRoom.players || {};
     if (players[nickname]) { abortReason = 'nick_taken'; return; }
-    if (Object.keys(players).length >= MAX_PLAYERS) { abortReason = 'full'; return; }
+    if (Object.keys(gamePlayersOf(currentRoom, players)).length >= MAX_PLAYERS) { abortReason = 'full'; return; } // 進行だけのホストは数えない
     // 途中退出で歯抜けになっても重複しないよう、既存 seat の最大値+1 を採番する
     const maxSeat = Object.values(players).reduce((m, p) => Math.max(m, p.seat ?? 0), -1);
     abortReason = null;
@@ -1212,28 +1264,45 @@ async function maybeUpgradeGuestDisconnectHandler(status) {
 // ══════════════════════════════════════════════════
 function handleWaitingScreen(room, players) {
   showScreen('lobby');
-  const count = Object.keys(players).length;
-  document.getElementById('lobby-count').textContent = `${count}人`;
+  const hostPlays = hostPlaysOf(room);
+  const count = Object.keys(gamePlayersOf(room, players)).length; // 遊ぶ人だけで数える
+  document.getElementById('lobby-count').textContent = hostPlays ? `${count}人` : `遊ぶ人 ${count}人`;
   document.getElementById('lobby-host-panel').style.display = state.role === 'host' ? 'block' : 'none';
   document.getElementById('lobby-host-panel-2').style.display = state.role === 'host' ? 'block' : 'none';
   document.getElementById('lobby-guest-wait').style.display = state.role === 'guest' ? 'block' : 'none';
-  if (state.role === 'host') document.getElementById('lobby-room-code').textContent = state.roomCode;
-  renderLobbyPlayerList(players);
+  if (state.role === 'host') {
+    document.getElementById('lobby-room-code').textContent = state.roomCode;
+    document.getElementById('set-host-plays').checked = hostPlays;
+  }
+  renderLobbyPlayerList(room, players);
 
   if (state.role === 'host') {
     const btn = document.getElementById('btn-start-game');
     const hint = document.getElementById('lobby-start-hint');
     if (count < MIN_PLAYERS) {
       btn.disabled = true;
-      hint.textContent = `あと${MIN_PLAYERS - count}人待ってね（3〜6人で始められます）`;
+      hint.textContent = `あと${MIN_PLAYERS - count}人待ってね（遊ぶ人3〜6人で始められます）`;
     } else if (count > MAX_PLAYERS) {
       btn.disabled = true;
-      hint.textContent = `${MAX_PLAYERS}人まで遊べます`;
+      hint.textContent = `遊ぶ人は${MAX_PLAYERS}人までです（いま${count}人）`;
     } else {
       btn.disabled = false;
       hint.textContent = '';
     }
   }
+}
+
+// ホストが待合室で「自分もプレイヤーとして参加する」を切り替える（開始後は変えない。
+// 「もう一度」は待合室の値を引き継ぐ）
+async function onHostPlaysChange(checked) {
+  if (state.role !== 'host' || !state.roomRef) return;
+  const me = state.nickname;
+  const { committed } = await state.roomRef.transaction((room) => {
+    if (!room || room.status !== 'waiting' || room.host !== me) return;
+    return { ...room, settings: { ...(room.settings || {}), hostPlays: !!checked } };
+  }).catch(() => ({ committed: false }));
+  if (!committed) showMsg('設定を変えられませんでした');
+  if (state.lastRoom && state.lastRoom.status === 'waiting') handleWaitingScreen(state.lastRoom, state.lastRoom.players || {});
 }
 
 // ══════════════════════════════════════════════════
@@ -1301,7 +1370,7 @@ function renderBoard(room, players) {
   if (room.status === 'waiting') {
     document.getElementById('board-waiting').style.display = 'block';
     document.getElementById('board-playing').style.display = 'none';
-    renderBoardWaitingList(players);
+    renderBoardWaitingList(room, players);
     return;
   }
   document.getElementById('board-waiting').style.display = 'none';
@@ -1340,7 +1409,7 @@ async function submitChoose() {
     const turn = room.match?.turn;
     if (!turn || turn.phase !== 'choosing' || turn.actor !== state.nickname) { abortReason = 'invalid'; return; }
     if (!KINDS.some((k) => k.id === claimKind)) { abortReason = 'invalid'; return; }
-    const players = room.players || {};
+    const players = gamePlayersOf(room); // 進行だけのホストには渡せない
     const target = players[targetNick];
     if (!target || targetNick === state.nickname || target.connected === false) { abortReason = 'bad_target'; return; }
     const cards = room.match.cards || {};
@@ -1379,7 +1448,7 @@ async function submitPeek() {
     if (!turn || turn.phase !== 'deciding' || turn.actor !== state.nickname || !turn.cardId) { abortReason = 'invalid'; return; }
     const card = (room.match.cards || {})[turn.cardId];
     if (!card || card.zone !== 'inFlight') { abortReason = 'invalid'; return; }
-    const players = room.players || {};
+    const players = gamePlayersOf(room);
     const nextSeenBy = { ...(turn.seenBy || {}), [state.nickname]: true };
     if (computeEligibleTargets(players, nextSeenBy, state.nickname).length === 0) { abortReason = 'no_target'; return; }
     abortReason = null;
@@ -1411,7 +1480,7 @@ async function submitForward() {
     if (!KINDS.some((k) => k.id === claimKind)) { abortReason = 'invalid'; return; }
     const card = (room.match.cards || {})[turn.cardId];
     if (!card || card.zone !== 'inFlight') { abortReason = 'invalid'; return; }
-    const players = room.players || {};
+    const players = gamePlayersOf(room); // 進行だけのホストには回せない
     const target = players[targetNick];
     const seenBy = turn.seenBy || {};
     if (!target || targetNick === state.nickname || target.connected === false || seenBy[targetNick]) { abortReason = 'bad_target'; return; }
@@ -1522,7 +1591,7 @@ async function hostStartGame() {
   let abortReason = null;
   const { committed } = await state.roomRef.transaction((room) => {
     if (!room || room.status !== 'waiting') { abortReason = 'invalid'; return; }
-    const players = room.players || {};
+    const players = gamePlayersOf(room); // 進行だけのホストには配らない
     const count = Object.keys(players).length;
     if (count < MIN_PLAYERS || count > MAX_PLAYERS) { abortReason = 'count'; return; }
     abortReason = null;
@@ -1531,7 +1600,7 @@ async function hostStartGame() {
     return { ...room, status: 'playing', match };
   });
   if (!committed) {
-    showMsg(abortReason === 'count' ? '3〜6人で始められるよ' : '始められませんでした');
+    showMsg(abortReason === 'count' ? '遊ぶ人が3〜6人で始められるよ' : '始められませんでした');
     return;
   }
 }
@@ -1551,20 +1620,22 @@ async function hostRematch() {
   let abortReason = null;
   const { committed } = await state.roomRef.transaction((room) => {
     if (!room || room.status !== 'result') { abortReason = 'invalid'; return; }
-    // 切断中（退出済み）の人にカードを配ると進行が詰まるため、接続中の人だけで配り直す
+    // 切断中（退出済み）の人にカードを配ると進行が詰まるため、接続中の人だけで配り直す。
+    // ホストは（進行だけでも）部屋の持ち主なので players に残す。遊ぶかどうかは待合室の値を引き継ぐ
     const activeEntries = Object.entries(room.players || {})
-      .filter(([, p]) => p.connected !== false)
+      .filter(([nick, p]) => p.connected !== false || nick === room.host)
       .sort((a, b) => (a[1].seat ?? 0) - (b[1].seat ?? 0));
-    if (activeEntries.length < MIN_PLAYERS) { abortReason = 'count'; return; }
     const activePlayers = {};
     activeEntries.forEach(([nick, p], i) => { activePlayers[nick] = { ...p, seat: i }; });
+    const dealTo = gamePlayersOf(room, activePlayers);
+    if (Object.keys(dealTo).length < MIN_PLAYERS) { abortReason = 'count'; return; } // 遊ぶ人だけで数える
     abortReason = null;
-    const match = buildDealtMatch(activePlayers, (room.match?.round || 0) + 1);
+    const match = buildDealtMatch(dealTo, (room.match?.round || 0) + 1);
     match.log = withLogEntry(null, { t: 'rematch' });
     return { ...room, status: 'playing', players: activePlayers, match };
   });
   if (!committed) {
-    showMsg(abortReason === 'count' ? 'つながっている人が3人より少ないので、もう一度はできないよ' : 'もう一度できませんでした');
+    showMsg(abortReason === 'count' ? '遊ぶ人でつながっている人が3人より少ないので、もう一度はできないよ' : 'もう一度できませんでした');
     return;
   }
 }
@@ -1737,10 +1808,10 @@ tryReconnect().then((reconnected) => {
     lead: 'イヤ〜な生きもののカードを、宣言をつけてほかの人へ押しつけ合うゲームです。引き取ったカードは自分の「ずかん」にたまっていくよ。同じ生きものが4枚そろうか、8種類全部そろったら負け！',
     sections: [
       { heading: 'はじめかた', items: [
-        'ホストが「ルームを作る」からルームを作る（ホストもプレイヤーとして遊ぶよ）',
+        'ホストが「ルームを作る」からルームを作る（ホストも遊ぶか、進行だけするかは待合室で選べるよ）',
         'ルームコードをみんなに伝える',
         'ほかの人は「ルームに参加する」からニックネームとルームコードを入れて「参加する」を押す',
-        'ホストが「始める」を押すとスタート（3〜6人）',
+        'ホストが「始める」を押すとスタート（遊ぶ人3〜6人）',
       ] },
       { heading: 'すすめかた', items: [
         '自分の番が来たら、手札から1枚・宣言（①〜⑧）・渡す相手を選んで「渡す」',
