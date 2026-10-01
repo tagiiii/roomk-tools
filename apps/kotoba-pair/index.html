@@ -94,6 +94,14 @@
       border-radius: 4px; background: var(--color-accent); color: #fff;
     }
     .kp-tag--me { background: var(--color-muted); }
+    .kp-tag--role { background: #EEF3F8; color: var(--color-primary); }
+
+    /* ── 待合室の設定（ホストのみ）── */
+    .kp-check {
+      display: flex; align-items: center; gap: 10px; min-height: 44px;
+      font-size: 15px; font-weight: 500; cursor: pointer;
+    }
+    .kp-check input { width: 20px; height: 20px; accent-color: var(--color-accent); flex-shrink: 0; }
 
     /* ── パック選択（ホスト画面のみ）── */
     .kp-pack {
@@ -390,6 +398,14 @@
       <ul class="kp-player-list" id="waiting-player-list"></ul>
     </div>
     <div id="waiting-host-controls" hidden>
+      <div class="card">
+        <p class="section-label">設定</p>
+        <label class="kp-check">
+          <input type="checkbox" id="set-host-plays" checked onchange="onHostPlaysChange(this.checked)">
+          <span>自分もプレイヤーとして参加する</span>
+        </label>
+        <p class="kp-fineprint">外すと進行役になるよ。順番は回ってこないけど、盤面は見えるよ</p>
+      </div>
       <p class="kp-page-sub" id="waiting-min-msg" style="text-align:center"></p>
       <button class="btn btn-primary btn-full btn-lg" id="btn-start-game" onclick="startGame()" disabled>
         <span class="material-symbols-rounded" aria-hidden="true">play_arrow</span>
@@ -411,7 +427,7 @@
     <div class="kp-banner-area" id="game-banner" role="status" aria-live="polite"></div>
     <div class="kp-board" id="game-board"></div>
 
-    <div class="kp-actions">
+    <div class="kp-actions" id="game-player-actions">
       <button class="btn btn-secondary btn-full" id="btn-pass" onclick="passTurn()" disabled>
         <span class="material-symbols-rounded" aria-hidden="true">skip_next</span>
         パスする
@@ -710,6 +726,28 @@ function nextTurnIndex(room) {
   return (cur + 1) % n;
 }
 
+// 手番の人のうち、いまルームに居る人がいるか（全員抜けたら手番を送り続けない）
+function anyTurnPlayerPresent(room) {
+  const order = (room && room.turnOrder) || [];
+  const players = (room && room.players) || {};
+  return order.some(n => !!players[n]);
+}
+
+/* ════════════════════════════════════════════════
+   ホストの参加（待合室で選ぶ。2026-10-01）
+   ════════════════════════════════════════════════ */
+// settings.hostPlays を持たない旧ルームは従来どおり「ホストも遊ぶ」
+function hostPlaysOf(room) {
+  return !(room && room.settings && room.settings.hostPlays === false);
+}
+
+// 遊ぶ人（手番に入る人）のニックネーム。ホストが進行だけならホストを除く
+function playingNames(room, players) {
+  const all = Object.keys(players || {});
+  if (hostPlaysOf(room)) return all;
+  return all.filter(n => n !== (room && room.host));
+}
+
 /* ════════════════════════════════════════════════
    Session Storage
    ════════════════════════════════════════════════ */
@@ -832,6 +870,7 @@ async function hostCreate() {
         moves: 0,
         matchedPairs: 0,
         totalPairs,
+        settings: { hostPlays: true },
         players: { [nick]: { isHost: true, joinedAt } },
       };
     });
@@ -912,11 +951,12 @@ async function guestJoin() {
       reason = 'bad_status'; return;
     }
     const players = cur.players || {};
-    if (players[nick]) { reason = 'nick_taken'; return; }
-    if (Object.keys(players).length >= MAX_PLAYERS) { reason = 'full'; return; }
+    if (players[nick] || nick === cur.host) { reason = 'nick_taken'; return; }
+    // 最大人数は遊ぶ人だけで数える（進行だけのホストは数えない）
+    if (playingNames(cur, players).length >= MAX_PLAYERS) { reason = 'full'; return; }
     const next = { ...cur, players: { ...players, [nick]: { isHost: false, joinedAt } } };
     if (status === STATUS.PLAYING) {
-      // 途中参加は turnOrder の末尾へ。次の周から手番が回る
+      // 途中参加は turnOrder の末尾へ。次の周から手番が回る（ホストはここで足さない）
       const order = (cur.turnOrder || []).slice();
       if (order.indexOf(nick) === -1) order.push(nick);
       next.turnOrder = order;
@@ -971,6 +1011,7 @@ async function startGame() {
   if (!room0) return;
   // 乱数（手番シャッフル）は transaction コールバックの外で確定させる
   const seedOrder = window.shuffle(Object.keys(room0.players || {}));
+  let hostPlays = true;
 
   let reason = null;
   const { committed } = await state.roomRef.transaction(room => {
@@ -979,11 +1020,13 @@ async function startGame() {
     if (room.status !== STATUS.WAITING) { reason = 'bad_status'; return; }
     if (room.host !== state.nickname) { reason = 'not_host'; return; }
     const players = room.players || {};
-    const names = Object.keys(players);
+    hostPlays = hostPlaysOf(room);
+    // 手番に入るのは遊ぶ人だけ（ホストが進行だけならホストを除く）。最少人数も遊ぶ人で数える
+    const names = playingNames(room, players);
     if (names.length < MIN_PLAYERS) { reason = 'too_few'; return; }
     if (!room.board || !room.board.order) { reason = 'no_board'; return; }
 
-    const order = seedOrder.filter(n => players[n]);
+    const order = seedOrder.filter(n => names.indexOf(n) !== -1);
     names.forEach(n => { if (order.indexOf(n) === -1) order.push(n); });
     if (!order.length) { reason = 'too_few'; return; }
 
@@ -999,8 +1042,29 @@ async function startGame() {
   });
 
   if (!committed) {
-    showMsg(reason === 'too_few' ? '2人以上ではじめられるよ' : 'はじめられなかったよ。もう一度ためしてね');
+    showMsg(reason === 'too_few' ? tooFewMsg(hostPlays) : 'はじめられなかったよ。もう一度ためしてね');
   }
+}
+
+function tooFewMsg(hostPlays) {
+  return hostPlays ? '2人以上ではじめられるよ' : 'ホストのほかに2人以上ではじめられるよ';
+}
+
+/* 待合室の設定: ホストもプレイヤーとして参加するか。開始後は変えない */
+async function onHostPlaysChange(checked) {
+  if (state.role !== 'host' || !state.roomRef) return;
+  const me = state.nickname;
+  let committed = false;
+  try {
+    ({ committed } = await state.roomRef.transaction(room => {
+      if (!room || room.status !== STATUS.WAITING || room.host !== me) return;
+      return { ...room, settings: { ...(room.settings || {}), hostPlays: !!checked } };
+    }));
+  } catch (error) {
+    console.error('[kotoba-pair] onHostPlaysChange failed', error);
+  }
+  if (!committed) showMsg('設定を変えられなかったよ');
+  if (state.room && state.room.status === STATUS.WAITING) renderWaiting(state.room, state.room.players || {});
 }
 
 /* ════════════════════════════════════════════════
@@ -1076,24 +1140,30 @@ function renderWaiting(room, players) {
   state.boardKey = null;
 
   document.getElementById('waiting-room-code').textContent = state.roomCode || '';
-  renderPlayerList('waiting-player-list', players);
+  renderPlayerList('waiting-player-list', players, room);
 
   const isHost = state.role === 'host';
   setHidden('waiting-host-controls', !isHost);
   if (isHost) {
-    const count = Object.keys(players).length;
+    const hostPlays = hostPlaysOf(room);
+    document.getElementById('set-host-plays').checked = hostPlays;
+    // 最少人数は遊ぶ人だけで数える
+    const count = playingNames(room, players).length;
     document.getElementById('btn-start-game').disabled = count < MIN_PLAYERS;
     document.getElementById('waiting-min-msg').textContent =
-      count < MIN_PLAYERS ? `あと${MIN_PLAYERS - count}人ではじめられるよ` : `${count}人はいっているよ`;
+      count < MIN_PLAYERS ? `あと${MIN_PLAYERS - count}人ではじめられるよ`
+        : (hostPlays ? `${count}人はいっているよ` : `遊ぶ人は${count}人だよ`);
   }
 }
 
-function renderPlayerList(id, players) {
+function renderPlayerList(id, players, room) {
   const ul = document.getElementById(id);
   if (!ul) return;
+  const hostPlays = hostPlaysOf(room);
   ul.innerHTML = Object.keys(players).map(nick => {
     const p = players[nick] || {};
-    const hostTag = p.isHost ? '<span class="kp-tag">ホスト</span>' : '';
+    const roleTag = p.isHost && !hostPlays ? '<span class="kp-tag kp-tag--role">進行役</span>' : '';
+    const hostTag = (p.isHost ? '<span class="kp-tag">ホスト</span>' : '') + roleTag;
     const meTag = nick === state.nickname ? '<span class="kp-tag kp-tag--me">あなた</span>' : '';
     return `<li class="kp-player-item">${esc(nick)}${hostTag}${meTag}</li>`;
   }).join('');
@@ -1126,6 +1196,9 @@ function renderPlaying(room, players) {
   updateBanner(room, cards, selected);
 
   document.getElementById('btn-pass').disabled = !myTurn || selected.length >= 2;
+  // 進行だけのホスト（手番に入っていない人）には自分の番の操作を出さない
+  const inTurnOrder = (room.turnOrder || []).indexOf(state.nickname) !== -1;
+  setHidden('game-player-actions', !inTurnOrder);
   setHidden('game-host-bar', state.role !== 'host');
   setHidden('btn-game-leave', state.role === 'host');
 
@@ -1183,6 +1256,8 @@ function updateTurnBar(room, players, turnNick, myTurn, closed) {
   bar.classList.toggle('kp-turnbar--mine', myTurn);
   if (myTurn) {
     text.textContent = closed ? 'あなたの番！ 2枚めくってね' : 'あなたの番！ 2枚選んでね';
+  } else if (turnNick && !anyTurnPlayerPresent(room)) {
+    text.textContent = '遊ぶ人が戻るのを待っています';
   } else if (turnNick && !players[turnNick]) {
     text.textContent = '次の人にかわるよ';
   } else if (turnNick) {
@@ -1397,7 +1472,8 @@ function runHostWatchdogs(room, players, turnNick) {
     state.watchdogKey = null;
   }
 
-  const turnAbsent = !!turnNick && !players[turnNick] && Object.keys(players).length > 0;
+  // 手番の人が全員いないとき（進行だけのホストしか残っていない）は送り続けない
+  const turnAbsent = !!turnNick && !players[turnNick] && anyTurnPlayerPresent(room);
   if (turnAbsent && sel.length < 2) {
     if (!state.turnFixTimer) {
       const seq = room.boardSeq;
@@ -1429,7 +1505,7 @@ async function advanceTurnIfAbsent(seq) {
       const players = room.players || {};
       const cur = currentTurnNick(room);
       if (!cur || players[cur]) return;              // 戻ってきた → 中止
-      if (!Object.keys(players).length) return;
+      if (!anyTurnPlayerPresent(room)) return;       // 手番の人が誰も居ない → 送らない
       const next = nextTurnIndex(room);
       if (next === normTurnIndex(room)) return;      // 進めない → 何もしない
       return { ...withSelectionCleared(room), turnIndex: next };
@@ -1635,6 +1711,7 @@ async function hostPlayAgain(packId) {
   const board = buildBoard(pack, prevSize, mode);
   const totalPairs = board.order.length / 2;
   const seedOrder = window.shuffle(Object.keys(room0.players || {}));
+  let hostPlays = true;
 
   let reason = null;
   const { committed } = await state.roomRef.transaction(room => {
@@ -1643,10 +1720,12 @@ async function hostPlayAgain(packId) {
     if (room.status !== STATUS.RESULT) { reason = 'bad_status'; return; }
     if (room.host !== state.nickname) { reason = 'not_host'; return; }
     const players = room.players || {};
-    const names = Object.keys(players);
+    hostPlays = hostPlaysOf(room);
+    // 待合室で選んだホストの参加をそのまま引き継ぐ。遊ぶ人だけで数える
+    const names = playingNames(room, players);
     if (names.length < MIN_PLAYERS) { reason = 'too_few'; return; }
 
-    const order = seedOrder.filter(n => players[n]);
+    const order = seedOrder.filter(n => names.indexOf(n) !== -1);
     names.forEach(n => { if (order.indexOf(n) === -1) order.push(n); });
 
     return {
@@ -1666,7 +1745,7 @@ async function hostPlayAgain(packId) {
   });
 
   if (!committed) {
-    showMsg(reason === 'too_few' ? '2人以上ではじめられるよ' : 'はじめられなかったよ。もう一度ためしてね');
+    showMsg(reason === 'too_few' ? tooFewMsg(hostPlays) : 'はじめられなかったよ。もう一度ためしてね');
     return;
   }
   window.RoomkStats?.count('pack-' + pack.id);
@@ -1756,7 +1835,7 @@ async function tryReconnect() {
           players: { ...players, [nickname]: mine || { isHost: true, joinedAt } },
         };
       }
-      if (mine && mine.isHost) return;   // ホストと同名 → 復帰させない
+      if ((mine && mine.isHost) || nickname === r.host) return;   // ホストと同名 → 復帰させない
       const next = { ...r, players: { ...players, [nickname]: mine || { isHost: false, joinedAt } } };
       if (r.status === STATUS.PLAYING) {
         const order = (r.turnOrder || []).slice();
@@ -1811,6 +1890,7 @@ async function tryReconnect() {
           'ホストが「ルームをつくる」を押して、コードをみんなに教える',
           'ほかの人は「ルームに参加する」からニックネームとルームコードを入れて「参加する」を押す',
           '2人以上になったらホストが「ゲームをはじめる」を押す',
+          'ホストは「自分もプレイヤーとして参加する」を外すと進行役になって、順番は回ってこない（そのときはホストのほかに2人以上で遊べる）',
         ],
       },
       {
