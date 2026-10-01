@@ -130,3 +130,49 @@ test('2〜5人の配りで取得回数を初期化し、前ラウンドの終了
     assert.equal(remaining.endReason,null); assert.equal(remaining.turnSerial,0);
   }
 });
+
+function lobby(c, settings, guests) {
+  const players = ['a:{isHost:true,seat:0}', ...guests.map((g, i) => `${g}:{isHost:false,seat:${i + 1}}`)].join(',');
+  c.run(`room={status:'waiting',host:'a',players:{${players}}${settings ? `,settings:${settings}` : ''}};
+    Object.assign(state,{nickname:'a',role:'host',roomRef:ref,lastRoom:structuredClone(room)})`);
+}
+
+test('進行だけのホストは members に入らず、遊ぶ人だけで人数を数える（キーなしは従来どおり遊ぶ）', async () => {
+  const c=setup();
+  lobby(c, '', ['b']); await c.run('hostStartGame()');
+  assert.deepEqual(Object.keys(c.read().match.members).sort(), ['a','b']);
+  lobby(c, '{hostPlays:false}', ['b']); await c.run('hostStartGame()');
+  assert.equal(c.read().status, 'waiting');
+  lobby(c, '{hostPlays:false}', ['b','c']); await c.run('hostStartGame()');
+  const m=c.read().match;
+  assert.deepEqual(Object.keys(m.members).sort(), ['b','c']);
+  assert.equal(m.hands.a, undefined); assert.equal(m.turn, 'b'); assert.equal(m.turnsRemaining, 120-14);
+  lobby(c, '{hostPlays:false}', ['b','c','d','e','f']); await c.run('hostStartGame()');
+  assert.equal(Object.keys(c.read().match.members).length, 5);
+  lobby(c, '{hostPlays:true}', ['b','c','d','e','f']); await c.run('hostStartGame()');
+  assert.equal(c.read().status, 'waiting');
+});
+
+test('進行だけのホストは再接続でホストとして戻れ、もう一度でも遊ぶ人に入らない', async () => {
+  const c=setup();
+  c.run('RoomkRTDB.isRoomExpired = () => false');
+  c.run(`room={status:'playing',host:'a',hostConnected:false,hostDisconnectedAt:1,settings:{hostPlays:false},players:{b:{seat:1},c:{seat:2}},
+    match:dealRound({matchId:1,round:1,members:{b:{seat:0},c:{seat:1}},wins:{b:0,c:0}},Array.from({length:120},(_,i)=>i),'b')};
+    Object.assign(state,{nickname:'a',role:'host',roomRef:ref,lastRoom:structuredClone(room)})`);
+  const r = await c.run('writeBackPresence()');
+  assert.equal(r.committed, true);
+  assert.equal(c.read().hostConnected, true); assert.equal(c.read().players.a.isHost, true);
+  c.run("room.status='result'; state.lastRoom=structuredClone(room)");
+  await c.run('hostRematch()');
+  assert.equal(c.read().status,'playing'); assert.equal(c.read().match.matchId,2);
+  assert.deepEqual(Object.keys(c.read().match.members).sort(), ['b','c']);
+});
+
+test('進行だけのホストの部屋で最後の遊ぶ人が抜けても、ルームは消さずまとめへ', async () => {
+  const c=setup();
+  c.run(`room={status:'playing',host:'a',settings:{hostPlays:false},players:{a:{isHost:true,seat:0},b:{seat:1}},
+    match:dealRound({matchId:1,round:1,members:{b:{seat:0}},wins:{b:0}},Array.from({length:120},(_,i)=>i),'b')}`);
+  await c.run("removeSelfFromRoom(ref,'b')");
+  const r=c.read();
+  assert.equal(r.status,'result'); assert.deepEqual(Object.keys(r.players),['a']);
+});
