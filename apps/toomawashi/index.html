@@ -753,6 +753,9 @@ function playingNames(room, players) {
   return all.filter(n => n !== (room && room.host));
 }
 
+const TOO_MANY_MSG = `遊ぶ人は${MAX_PLAYERS}人までだよ`;
+const HOST_JOIN_FULL_MSG = `遊ぶ人が${MAX_PLAYERS}人いるので、ホストは説明役の順番に入れないよ`;
+
 function tooFewMsg(hostPlays) {
   return hostPlays ? `${MIN_PLAYERS}人以上で始められるよ` : `ホストのほかに${MIN_PLAYERS}人以上で始められるよ`;
 }
@@ -1044,6 +1047,7 @@ async function startGame() {
     const playing = playingNames(room, room.players);
     const names = orderedPlayers(room.players, room.host).filter(n => playing.includes(n));
     if (names.length < MIN_PLAYERS) { abortReason = 'too_few'; return; }
+    if (names.length > MAX_PLAYERS) { abortReason = 'too_many'; return; }
     const pack = getPack(room.packId);
     if (!pack) { abortReason = 'no_pack'; return; }
     const picked = pickItem(pack, [], roll);
@@ -1062,6 +1066,7 @@ async function startGame() {
   });
   if (committed) return;
   if (abortReason === 'too_few') showMsg(tooFewMsg(hostPlays));
+  else if (abortReason === 'too_many') showMsg(TOO_MANY_MSG);
   else if (abortReason === 'no_pack') showMsg('お題のデータが読み込めなかったよ');
   else showMsg('始められなかったよ。もう一度ためしてね');
 }
@@ -1073,10 +1078,15 @@ async function onHostPlaysChange(input) {
   const me = state.nickname;
   input.disabled = true;
   let committed = false;
+  let reason = null;
   try {
     ({ committed } = await state.roomRef.transaction(room => {
+      reason = null;
       if (!room || room.status !== 'waiting' || room.host !== me) return;
-      return { ...room, settings: { ...(room.settings || {}), hostPlays: checked } };
+      const next = { ...room, settings: { ...(room.settings || {}), hostPlays: checked } };
+      // ホストが順番に入ると遊ぶ人が上限を超えるなら変えない（最大人数は遊ぶ人で数える）
+      if (checked && playingNames(next, next.players).length > MAX_PLAYERS) { reason = 'too_many'; return; }
+      return next;
     }));
   } catch (error) {
     console.error('[toomawashi] onHostPlaysChange failed', error);
@@ -1084,7 +1094,7 @@ async function onHostPlaysChange(input) {
   input.disabled = false;
   if (!committed) {
     input.checked = !checked;
-    showMsg('設定を変えられなかったよ');
+    showMsg(reason === 'too_many' ? HOST_JOIN_FULL_MSG : '設定を変えられなかったよ');
   }
 }
 
@@ -1253,6 +1263,7 @@ async function nextLap() {
     const added = playing.filter(n => !kept.includes(n));
     const turnOrder = [...kept, ...added];
     if (turnOrder.length < MIN_PLAYERS) { reason = 'too_few'; return; }
+    if (turnOrder.length > MAX_PLAYERS) { reason = 'too_many'; return; }
     const pack = getPack(room.packId);
     if (!pack) { reason = 'bad'; return; }
     const picked = pickItem(pack, room.usedItems, roll);
@@ -1268,9 +1279,11 @@ async function nextLap() {
     };
   }).catch(() => ({ committed: false }));
   if (!committed) {
-    showMsg(reason === 'too_few'
-      ? (hostPlays ? `${MIN_PLAYERS}人以上いないと続けられないよ` : `ホストのほかに${MIN_PLAYERS}人以上いないと続けられないよ`)
-      : '続けられなかったよ');
+    if (reason === 'too_few') {
+      showMsg(hostPlays ? `${MIN_PLAYERS}人以上いないと続けられないよ` : `ホストのほかに${MIN_PLAYERS}人以上いないと続けられないよ`);
+    } else {
+      showMsg(reason === 'too_many' ? TOO_MANY_MSG : '続けられなかったよ');
+    }
   }
 }
 
@@ -1398,9 +1411,10 @@ function handleWaiting(room, players) {
   // 最少人数は遊ぶ人（説明役の順番に入る人）だけで数える
   const count = playingNames(room, players).length;
   const btn = document.getElementById('btn-start');
-  btn.disabled = count < MIN_PLAYERS;
+  btn.disabled = count < MIN_PLAYERS || count > MAX_PLAYERS;
   setText('waiting-min', count < MIN_PLAYERS
     ? `あと${MIN_PLAYERS - count}人で始められるよ`
+    : count > MAX_PLAYERS ? TOO_MANY_MSG
     : (hostPlays ? `${count}人 参加中` : `遊ぶ人は${count}人（ホストは進行役）`));
 }
 
