@@ -7,7 +7,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet" />
   <link rel="stylesheet" href="../shared/css/design-system.css" />
-  <link rel="stylesheet" href="style.css?v=20260928b" />
+  <link rel="stylesheet" href="style.css?v=20261001a" />
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
@@ -40,6 +40,10 @@
             ルームを作る
           </button>
         </div>
+        <button class="btn btn-ghost btn-sm qz-room-entry__watch" id="btnGoWatch">
+          <span class="material-symbols-rounded" aria-hidden="true">cast</span>
+          みんなにみせる画面をひらく
+        </button>
       </section>
 
       <section class="qz-top-panel card">
@@ -203,6 +207,12 @@
           <p class="qz-lobby-head__label">ルームコード</p>
           <p class="qz-lobby-head__code" id="lobbyCode"></p>
           <p class="qz-lobby-head__lead" id="lobbyLead"></p>
+          <div class="qz-lobby-head__watch" id="hostWatchTools" hidden>
+            <button class="btn btn-ghost btn-sm" id="btnOpenWatch">
+              <span class="material-symbols-rounded" aria-hidden="true">cast</span>
+              みんなにみせる画面をひらく
+            </button>
+          </div>
         </section>
 
         <section class="qz-panel card">
@@ -294,6 +304,10 @@
             <span class="material-symbols-rounded">flag</span>
             ここで結果発表へ
           </button>
+          <button class="btn btn-ghost btn-sm" id="btnOpenWatchReveal">
+            <span class="material-symbols-rounded" aria-hidden="true">cast</span>
+            みんなにみせる画面をひらく
+          </button>
         </div>
         <p class="qz-note qz-note--center" id="guestRevealWait" hidden>ホストが次へ進めるのを待ってね</p>
       </div>
@@ -325,6 +339,117 @@
         <p class="qz-note" id="guestFinalWait" hidden>ホストが次のゲームを準備しています。待っててね。</p>
       </div>
     </section>
+
+    <!-- みんなにみせる画面（画面共有用。ルームを読むだけで、書き込まない） -->
+    <section class="qz-screen qz-screen--room" id="screen-watchjoin" hidden>
+      <div class="qz-form card">
+        <div class="qz-form__head">
+          <button class="btn btn-ghost btn-sm" id="btnWatchJoinBack">トップへ戻る</button>
+          <h2 class="qz-form__title">みんなにみせる画面</h2>
+        </div>
+        <p class="qz-form__lead">ルームコードを入れると、みんなで見る画面がひらきます。問題・残り時間・正解発表・ランキングが出ます。</p>
+        <label class="qz-form__label" for="watchCode">ルームコード（6文字）</label>
+        <input class="qz-form__input qz-form__input--code" id="watchCode" maxlength="6" autocorrect="off" autocapitalize="characters" autocomplete="off" spellcheck="false" />
+        <p class="qz-form__error" id="watchError" hidden></p>
+        <button class="btn btn-primary btn-full" id="btnWatchOpen">
+          <span class="material-symbols-rounded" aria-hidden="true">cast</span>
+          画面をひらく
+        </button>
+      </div>
+    </section>
+
+    <section class="qz-screen qz-screen--room" id="screen-watch" hidden>
+      <div class="qz-quiz-shell">
+        <div class="qz-watch-head">
+          <span class="material-symbols-rounded" aria-hidden="true">cast</span>
+          <span class="qz-watch-head__label">みんなにみせる画面</span>
+          <span class="qz-watch-head__code" id="watchHeadCode"></span>
+        </div>
+
+        <div class="qz-watch-view" id="watchLobby" hidden>
+          <section class="qz-lobby-head card">
+            <p class="qz-lobby-head__label">ルームコード</p>
+            <p class="qz-lobby-head__code" id="watchLobbyCode"></p>
+            <p class="qz-lobby-head__lead">参加する人は「ルームに参加する」を押して、このコードを入れてね。</p>
+          </section>
+          <section class="qz-panel card">
+            <h2 class="qz-panel__title">参加者 <span class="qz-panel__count" id="watchLobbyCount"></span></h2>
+            <ul class="qz-people" id="watchLobbyPlayers"></ul>
+            <p class="qz-note" id="watchLobbyEmpty">まだ参加している人はいません</p>
+          </section>
+        </div>
+
+        <div class="qz-watch-view" id="watchPlay" hidden>
+          <div class="qz-quiz-meta">
+            <span class="badge badge-primary" id="watchPlayPack"></span>
+            <span class="qz-progress" id="watchPlayProgress"></span>
+          </div>
+          <section class="qz-countdown card" id="watchCountdown" hidden>
+            <p class="qz-countdown__label" id="watchCountdownLabel"></p>
+            <p class="qz-countdown__num" id="watchCountdownNum"></p>
+          </section>
+          <div class="qz-quiz-body" id="watchPlayBody">
+            <p class="qz-timer" id="watchTimer">
+              <span class="material-symbols-rounded" aria-hidden="true">timer</span>
+              <span id="watchTimerText"></span>
+            </p>
+            <section class="qz-question card">
+              <p class="qz-question__text" id="watchQuestion"></p>
+            </section>
+            <section class="qz-choices" id="watchChoices" aria-label="選択肢"></section>
+            <p class="qz-play-status" id="watchStatus"></p>
+          </div>
+        </div>
+
+        <div class="qz-watch-view" id="watchReveal" hidden>
+          <div class="qz-quiz-meta">
+            <span class="badge badge-primary" id="watchRevealPack"></span>
+            <span class="qz-progress" id="watchRevealProgress"></span>
+          </div>
+          <section class="qz-question qz-question--compact card">
+            <p class="qz-question__text" id="watchRevealQuestion"></p>
+          </section>
+          <section class="qz-results" id="watchRevealChoices" aria-label="みんなの答え"></section>
+          <section class="qz-feedback card" id="watchRevealFeedback">
+            <p class="qz-feedback__answer" id="watchRevealAnswer"></p>
+            <p class="qz-feedback__explanation" id="watchRevealExplanation"></p>
+          </section>
+          <section class="qz-panel card">
+            <h2 class="qz-panel__title">ランキング</h2>
+            <ol class="qz-rank-list" id="watchRanking"></ol>
+          </section>
+        </div>
+
+        <div class="qz-watch-view" id="watchFinal" hidden>
+          <div class="qz-end card">
+            <span class="material-symbols-rounded qz-end__icon">emoji_events</span>
+            <p class="qz-end__label">結果発表</p>
+            <h2 class="qz-end__title" id="watchFinalPack"></h2>
+            <ol class="qz-podium" id="watchPodium"></ol>
+            <p class="qz-end__sub" id="watchFinalEmpty" hidden>今回は点が入りませんでした。</p>
+            <p class="qz-end__sub">おつかれさま！気になった問題があれば、話のたねにしてみよう。</p>
+          </div>
+        </div>
+
+        <div class="qz-watch-view" id="watchEnded" hidden>
+          <div class="qz-end card">
+            <span class="material-symbols-rounded qz-end__icon">door_front</span>
+            <p class="qz-end__label">みんなにみせる画面</p>
+            <h2 class="qz-end__title">このルームは終わりました</h2>
+            <p class="qz-end__sub">また遊ぶときは、ホストの画面から新しく開いてね。</p>
+          </div>
+        </div>
+
+        <div class="qz-watch-view" id="watchPending" hidden>
+          <p class="qz-note qz-note--center">準備しています…</p>
+        </div>
+
+        <p class="qz-host-off" id="watchHostOff" role="status" hidden>ホストの戻りを待っています。</p>
+        <div class="qz-quiz-actions">
+          <button class="btn btn-ghost btn-sm" id="btnWatchLeave">トップへ戻る</button>
+        </div>
+      </div>
+    </section>
   </main>
 
   <div class="qz-overlay" id="hostOffOverlay" hidden>
@@ -335,7 +460,7 @@
     </div>
   </div>
 
-  <script type="module" src="app.js?v=20260930b"></script>
+  <script type="module" src="app.js?v=20261001a"></script>
   <script src="../shared/js/stats.js?v=1" defer></script>
   <script src="../shared/js/howto.js"></script>
   <script>
@@ -355,6 +480,7 @@
           '問題が出たら、自分の画面で答えを押す。正解すると点が入り、制限時間があるときは早く答えるほど点が高い',
           '1問ごとに正解とランキングが出る。最後に上位3人を発表する',
         ] },
+        { heading: 'みんなにみせる画面', text: '画面共有用の画面。ホストの待合室の「みんなにみせる画面をひらく」か、トップの「みんなにみせる画面をひらく」でルームコードを入れるとひらく。問題・残り時間・答えた人数・正解発表・ランキングを、ルームに参加しないで映せる。' },
         { heading: 'チャットで参加する', text: 'ルームに入っていなくても、ホストが「問題をコピー」「正解つきでコピー」でチャットに貼った問題に答えて、一緒に楽しめる（点数はつかない）。' },
       ],
     });

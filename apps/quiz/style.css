@@ -1190,6 +1190,41 @@
   text-align: center;
 }
 
+/* ── みんなにみせる画面（画面共有用） ── */
+.qz-room-entry__watch {
+  flex: 1 1 100%;
+}
+
+.qz-lobby-head__watch {
+  margin-top: 12px;
+}
+
+.qz-watch-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-muted);
+}
+
+.qz-watch-head .material-symbols-rounded {
+  font-size: 20px;
+  color: var(--color-accent);
+}
+
+.qz-watch-head__code {
+  margin-left: auto;
+  letter-spacing: 0.08em;
+  color: var(--color-primary);
+}
+
+.qz-watch-view {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
 .qz-overlay {
   position: fixed;
   inset: 0;

@@ -127,7 +127,7 @@ const state = {
   localCountdownTimer: null,
 
   // ルームであそぶ
-  role: null, // 'host' | 'guest'
+  role: null, // 'host' | 'guest' | 'spectator'（みんなにみせる画面）
   nickname: null,
   roomCode: null,
   roomRef: null,
@@ -255,14 +255,26 @@ const btnRoomReplay = $('btnRoomReplay');
 const guestFinalWait = $('guestFinalWait');
 const hostOffOverlay = $('hostOffOverlay');
 const hostOffBanner = $('hostOffBanner');
+const hostWatchTools = $('hostWatchTools');
+// みんなにみせる画面
+const btnGoWatch = $('btnGoWatch');
+// 公開直後に古い index.html（キャッシュ）と新しい app.js が組み合わさっても動くよう、
+// みんなにみせる画面の部品がないときは、その入口を出さない（従来どおり）
+const WATCH_UI = Boolean($('screen-watch') && btnGoWatch);
+const btnWatchOpen = $('btnWatchOpen');
+const watchCodeInput = $('watchCode');
+const watchHeadCode = $('watchHeadCode');
+const watchHostOff = $('watchHostOff');
+const WATCH_VIEWS = ['lobby', 'play', 'reveal', 'final', 'ended', 'pending'];
+const watchViews = Object.fromEntries(WATCH_VIEWS.map((name) => [name, $('watch' + name[0].toUpperCase() + name.slice(1))]));
 
-const SCREEN_IDS = ['top', 'quiz', 'end', 'create', 'join', 'lobby', 'play', 'reveal', 'final'];
+const SCREEN_IDS = ['top', 'quiz', 'end', 'create', 'join', 'lobby', 'play', 'reveal', 'final', 'watchjoin', 'watch'];
 const screens = Object.fromEntries(SCREEN_IDS.map((id) => [id, $('screen-' + id)]));
 
 function showScreen(id) {
   const changed = state.currentScreen !== id;
   SCREEN_IDS.forEach((name) => {
-    screens[name].hidden = name !== id;
+    if (screens[name]) screens[name].hidden = name !== id;
   });
   state.currentScreen = id;
   roomBar.hidden = !state.roomRef;
@@ -1287,6 +1299,7 @@ async function tryReconnect() {
   state.busy = true;
   btnGoCreate.disabled = true;
   btnGoJoin.disabled = true;
+  if (WATCH_UI) btnGoWatch.disabled = true;
   let release = null;
   try {
     if (!await waitAuth()) return false;
@@ -1317,7 +1330,7 @@ async function tryReconnect() {
     } else {
       return false;
     }
-    if (state.roomRef) return false;
+    if (state.roomRef || state.role) return false;
     connectToRoom(saved.role, saved.nickname, saved.roomCode, ref);
     return true;
   } catch (error) {
@@ -1328,6 +1341,7 @@ async function tryReconnect() {
     state.busy = false;
     btnGoCreate.disabled = false;
     btnGoJoin.disabled = false;
+    if (WATCH_UI) btnGoWatch.disabled = false;
   }
 }
 
@@ -1495,6 +1509,7 @@ function renderLobby(data) {
   renderPeople(lobbyPlayers, names);
   lobbyEmpty.hidden = names.length > 0;
   hostLobbyTools.hidden = !isHost;
+  if (hostWatchTools) hostWatchTools.hidden = !isHost;
   if (isHost) {
     placePicker(true);
     updateRoomStartState();
@@ -1804,8 +1819,8 @@ async function closeQuestion(gameId, index, reason) {
   }
 }
 
-function renderResultChoices(question, result, myPick) {
-  revealChoices.replaceChildren();
+function renderResultChoices(container, question, result, myPick) {
+  container.replaceChildren();
   const answered = Number(result.answered) || 0;
   question.choices.forEach((choice, index) => {
     const count = Number(result.counts?.[index]) || 0;
@@ -1830,8 +1845,18 @@ function renderResultChoices(question, result, myPick) {
     const foot = el('div', 'qz-result__foot');
     foot.append(bar, el('span', 'qz-result__count', `${count}人`));
     row.append(head, foot);
-    revealChoices.append(row);
+    container.append(row);
   });
+}
+
+// 正解発表のランキング。0点の人は順位に並べない（同点の0点がたくさん並ぶのを避ける）
+function rankingEntries(ranked) {
+  return ranked.filter((entry) => entry.points > 0 && entry.rank <= RANKING_SIZE);
+}
+
+// 結果発表の表彰は点が入った人だけ（0点の同順位は並べない）
+function podiumEntries(ranked) {
+  return ranked.filter((entry) => entry.points > 0 && entry.rank <= PODIUM_RANK);
 }
 
 function renderRanking(list, entries, gains) {
@@ -1868,7 +1893,7 @@ function renderReveal(data) {
   revealPackName.textContent = game.packName || 'クイズパック';
   revealProgress.textContent = `Q${game.index + 1} / ${game.total}`;
   revealQuestion.textContent = question.question;
-  renderResultChoices(question, result, myPick);
+  renderResultChoices(revealChoices, question, result, myPick);
   revealAnswer.textContent = `正解: ${NUMBERS[question.answerIndex]} ${question.choices[question.answerIndex]}`;
   revealExplanation.textContent = question.explanation || '';
 
@@ -1876,8 +1901,7 @@ function renderReveal(data) {
     revealResult.hidden = true;
     revealRank.hidden = true;
     revealRankingPanel.hidden = false;
-    // 0点の人は順位に並べない（同点の0点がたくさん並ぶのを避ける）
-    renderRanking(revealRanking, ranked.filter((entry) => entry.points > 0 && entry.rank <= RANKING_SIZE), result.gains);
+    renderRanking(revealRanking, rankingEntries(ranked), result.gains);
   } else {
     revealRankingPanel.hidden = true;
     const member = data.scores?.[state.nickname];
@@ -1926,8 +1950,8 @@ function renderReveal(data) {
   }
 }
 
-function renderPodium(entries) {
-  finalPodium.replaceChildren();
+function renderPodium(container, entries) {
+  container.replaceChildren();
   entries.forEach((entry) => {
     const item = el('li', 'qz-podium__item' + (entry.rank === 1 ? ' qz-podium__item--top' : ''));
     const rank = el('span', 'qz-podium__rank');
@@ -1938,7 +1962,7 @@ function renderPodium(entries) {
     }
     rank.append(document.createTextNode(`${entry.rank}位`));
     item.append(rank, el('span', 'qz-podium__name', entry.name), el('span', 'qz-podium__points', formatPoints(entry.points)));
-    finalPodium.append(item);
+    container.append(item);
   });
 }
 
@@ -1947,11 +1971,10 @@ function renderFinal(data) {
   const isHost = state.role === 'host';
   const game = data.game;
   const ranked = rankedScores(data);
-  // 表彰は点が入った人だけ（0点の同順位は並べない）
-  const podium = ranked.filter((entry) => entry.points > 0 && entry.rank <= PODIUM_RANK);
+  const podium = podiumEntries(ranked);
   const hasPoints = podium.length > 0;
   finalPackName.textContent = game?.packName || 'クイズパック';
-  renderPodium(podium);
+  renderPodium(finalPodium, podium);
   finalPodium.hidden = !hasPoints;
   finalEmpty.hidden = hasPoints;
 
@@ -2124,6 +2147,324 @@ async function backToLobby() {
   }, '進められませんでした。もう一度ためしてね');
 }
 
+/* ── みんなにみせる画面（画面共有用。ルームを読むだけ） ──
+   ルームには一切書き込まない（players に入らない・切断時の予約をしない・期限切れの掃除もしない）。
+   host / guest の処理（handleRoom・自動の締め切り・在室の確認）には入らず、handleWatch だけで描く。
+   正解（どれが正解か・解説）は正解発表（reveal）になるまで画面に書かない */
+const watch = {
+  code: null,
+  ref: null,
+  callback: null,
+  room: null,
+  tickTimer: null,
+  countTimer: null,
+  ttlTimer: null,
+  renderedKey: null,
+  view: null,
+  busy: false,
+};
+
+// ホストの画面から開く。クリックの中で同期的に開く（ポップアップのブロックを避ける）
+function openWatchWindow() {
+  if (state.role !== 'host' || !state.roomCode) return;
+  window.open(`${location.origin}${location.pathname}?watch=${state.roomCode}`, '_blank', 'noopener');
+}
+
+function openWatchForm() {
+  ensureFirebase(); // 先に匿名ログインを始めておく
+  setError('watchError', '');
+  showScreen('watchjoin');
+}
+
+async function watchJoin() {
+  const code = normalizeRoomCode(watchCodeInput.value);
+  const imeError = roomCodeImeError(code);
+  if (imeError) {
+    setError('watchError', imeError);
+    return;
+  }
+  if (!ROOM_CODE_PATTERN.test(code)) {
+    setError('watchError', 'ルームコードは6文字で入れてね');
+    return;
+  }
+  setError('watchError', '');
+  await enterWatch(code, (message) => setError('watchError', message));
+}
+
+// URL の ?watch=CODE から（最優先の入口。開けないときは再読み込み用の記録に頼らず、トップに戻す）
+async function startWatchFromUrl(raw) {
+  const code = normalizeRoomCode(raw);
+  const valid = ROOM_CODE_PATTERN.test(code);
+  const ok = valid && await enterWatch(code, (message) => toast(message));
+  if (!ok) {
+    if (!valid) toast('ルームが見つからないよ。コードを確かめてね');
+    history.replaceState(null, '', location.pathname);
+    showScreen('top');
+  }
+}
+
+async function enterWatch(code, fail) {
+  if (watch.busy || state.roomRef || state.role) return false;
+  watch.busy = true;
+  btnWatchOpen.disabled = true;
+  try {
+    if (!await waitAuth()) return false;
+    const ref = db().ref(DB_PREFIX + '/' + code);
+    const data = (await ref.once('value')).val();
+    if (!data) {
+      fail('ルームが見つからないよ。コードを確かめてね');
+      return false;
+    }
+    if (isExpired(data)) {
+      fail('このルームは終わったみたい');
+      return false;
+    }
+    if (state.roomRef || state.role) return false;
+    state.role = 'spectator';
+    watch.code = code;
+    watch.ref = ref;
+    watch.renderedKey = null;
+    watch.view = null;
+    watchHeadCode.textContent = code;
+    // 再読み込みで同じ画面に戻れるよう、URL を ?watch=CODE にそろえる
+    history.replaceState(null, '', `${location.pathname}?watch=${code}`);
+    showScreen('watch');
+    watch.callback = (snap) => {
+      if (watch.ref === ref) handleWatch(snap.val());
+    };
+    ref.on('value', watch.callback, (error) => {
+      console.warn('[quiz] watch listener failed', error);
+      toast('ルームの読み込みに失敗しました');
+    });
+    watch.tickTimer = setInterval(tickWatch, 250);
+    return true;
+  } catch (error) {
+    console.warn('[quiz] watch open failed', error);
+    fail('接続できませんでした。もう一度ためしてね');
+    return false;
+  } finally {
+    watch.busy = false;
+    btnWatchOpen.disabled = false;
+  }
+}
+
+// 購読とタイマーを止める。画面はそのまま残す（同じコードが後で別のルームに使われても映さないように）
+function stopWatch() {
+  clearInterval(watch.tickTimer);
+  clearTimeout(watch.countTimer);
+  clearTimeout(watch.ttlTimer);
+  watch.tickTimer = null;
+  watch.countTimer = null;
+  watch.ttlTimer = null;
+  if (watch.ref && watch.callback) watch.ref.off('value', watch.callback);
+  watch.ref = null;
+  watch.callback = null;
+}
+
+// 「トップへ戻る」。ルームには触らない
+function leaveWatch() {
+  stopWatch();
+  watch.code = null;
+  watch.room = null;
+  watch.renderedKey = null;
+  watch.view = null;
+  state.role = null;
+  watchHostOff.hidden = true;
+  if (new URLSearchParams(location.search).has('watch')) history.replaceState(null, '', location.pathname);
+  showScreen('top');
+}
+
+// ルームが閉じられた・期限が切れた。結果発表を映していたら、その画面を残す
+function endWatch() {
+  stopWatch();
+  watchHostOff.hidden = true;
+  if (watch.view === 'final') return;
+  clearWatchReveal();
+  showWatchView('ended');
+}
+
+function showWatchView(name) {
+  watch.view = name;
+  WATCH_VIEWS.forEach((view) => {
+    watchViews[view].hidden = view !== name;
+  });
+}
+
+function handleWatch(data) {
+  if (state.role !== 'spectator') return;
+  // 削除済み、または削除後に作り直された部分的なルーム（status なし）
+  if (!data || !data.status) {
+    endWatch();
+    return;
+  }
+  // 結果発表を映している間は、ホストが離れても結果を出したままにする
+  const hostGone = data.hostConnected === false && data.status !== ROOM_STATUS.FINAL;
+  if (hostGone && isExpired(data)) {
+    endWatch();
+    return;
+  }
+  watchHostOff.hidden = !hostGone;
+  if (hostGone) {
+    if (!watch.ttlTimer) {
+      const at = RoomkRTDB.getHostDisconnectedAt(data);
+      const delay = at == null ? ORPHAN_TTL_MS : Math.max(0, at + ORPHAN_TTL_MS - RoomkRTDB.now());
+      const ref = watch.ref;
+      watch.ttlTimer = setTimeout(() => {
+        watch.ttlTimer = null;
+        if (watch.ref === ref) endWatch();
+      }, delay);
+    }
+  } else {
+    clearTimeout(watch.ttlTimer);
+    watch.ttlTimer = null;
+  }
+  watch.room = data;
+  if (data.status !== ROOM_STATUS.QUESTION) {
+    clearTimeout(watch.countTimer);
+    watch.countTimer = null;
+  }
+  switch (data.status) {
+    case ROOM_STATUS.LOBBY: renderWatchLobby(data); break;
+    case ROOM_STATUS.QUESTION: renderWatchPlay(data); break;
+    case ROOM_STATUS.REVEAL: renderWatchReveal(data); break;
+    case ROOM_STATUS.FINAL: renderWatchFinal(data); break;
+    default: showWatchView('pending');
+  }
+}
+
+function renderWatchLobby(data) {
+  clearWatchReveal();
+  showWatchView('lobby');
+  watch.renderedKey = null;
+  const names = guestNames(data);
+  $('watchLobbyCode').textContent = watch.code;
+  $('watchLobbyCount').textContent = `${names.length}人`;
+  $('watchLobbyPlayers').replaceChildren(...names.map((name) => el('li', 'qz-people__item', name)));
+  $('watchLobbyEmpty').hidden = names.length > 0;
+}
+
+// 前の問題の正解発表を、次の問題・待機の間に残さない
+function clearWatchReveal() {
+  ['watchRevealQuestion', 'watchRevealAnswer', 'watchRevealExplanation'].forEach((id) => {
+    $(id).textContent = '';
+  });
+  $('watchRevealChoices').replaceChildren();
+  $('watchRanking').replaceChildren();
+}
+
+function renderWatchPlay(data) {
+  const game = data.game;
+  const question = currentQuestion(data);
+  if (!game || !question) {
+    showWatchView('pending');
+    return;
+  }
+  showWatchView('play');
+  const key = answerKey(game);
+  $('watchPlayPack').textContent = game.packName || 'クイズパック';
+  $('watchPlayProgress').textContent = `Q${game.index + 1} / ${game.total}`;
+  // 問題が出る時刻（game.startedAt）までは「3・2・1」。一度出した問題はカウントダウンに戻さない
+  const left = watch.renderedKey === key ? 0 : countdownLeft(game);
+  $('watchCountdown').hidden = left <= 0;
+  $('watchPlayBody').hidden = left > 0;
+  if (left > 0) {
+    if (watch.renderedKey !== 'count-' + key) {
+      watch.renderedKey = 'count-' + key;
+      $('watchCountdownLabel').textContent = countdownLabel(game.index, Number(game.total) || 0);
+      $('watchCountdownNum').textContent = '';
+      $('watchQuestion').textContent = '';
+      $('watchChoices').replaceChildren();
+      $('watchStatus').textContent = '';
+      clearWatchReveal();
+    }
+    showCount($('watchCountdownNum'), left);
+    clearTimeout(watch.countTimer);
+    watch.countTimer = setTimeout(() => {
+      watch.countTimer = null;
+      if (watch.room?.status === ROOM_STATUS.QUESTION) renderWatchPlay(watch.room);
+    }, untilNextCount(left));
+    return;
+  }
+  if (watch.renderedKey !== key) {
+    watch.renderedKey = key;
+    clearWatchReveal();
+    $('watchQuestion').textContent = question.question;
+    $('watchChoices').replaceChildren(...question.choices.map((choice, index) => {
+      const node = el('div', 'qz-choice qz-choice--static');
+      node.append(el('span', 'qz-choice__num', NUMBERS[index]), el('span', 'qz-choice__text', choice));
+      return node;
+    }));
+    popIn($('watchQuestion').parentElement);
+  }
+  const expected = answerableGuests(data, game);
+  const done = expected.filter((name) => answerOf(data, key, name)).length;
+  $('watchStatus').textContent = `回答 ${done} / ${expected.length}人`;
+  updateWatchTimer();
+}
+
+function updateWatchTimer() {
+  const data = watch.room;
+  if (!data || data.status !== ROOM_STATUS.QUESTION || !data.game) return;
+  if (watch.renderedKey !== answerKey(data.game)) return;
+  const deadline = deadlineOf(data.game);
+  const timer = $('watchTimer');
+  const timerText = $('watchTimerText');
+  if (deadline == null) {
+    timerText.textContent = '時間制限なし';
+    timer.classList.remove('is-urgent');
+    return;
+  }
+  const left = deadline - RoomkRTDB.now();
+  timerText.textContent = left > 0 ? `のこり ${Math.ceil(left / 1000)}秒` : '時間切れ';
+  timer.classList.toggle('is-urgent', left > 0 && left <= 5000);
+}
+
+function tickWatch() {
+  const data = watch.room;
+  // 問題が出る時刻を過ぎてもカウントダウンのままなら切り替える（タイマーが遅れたときの保険）
+  if (data?.status === ROOM_STATUS.QUESTION && watch.renderedKey?.startsWith('count-') && countdownLeft(data.game) <= 0) {
+    renderWatchPlay(data);
+  }
+  updateWatchTimer();
+}
+
+function renderWatchReveal(data) {
+  const game = data.game;
+  const question = currentQuestion(data);
+  if (!game || !question) {
+    showWatchView('pending');
+    return;
+  }
+  showWatchView('reveal');
+  const key = answerKey(game);
+  const result = data.results?.[key] || {};
+  $('watchRevealPack').textContent = game.packName || 'クイズパック';
+  $('watchRevealProgress').textContent = `Q${game.index + 1} / ${game.total}`;
+  $('watchRevealQuestion').textContent = question.question;
+  renderResultChoices($('watchRevealChoices'), question, result, null);
+  $('watchRevealAnswer').textContent = `正解: ${NUMBERS[question.answerIndex]} ${question.choices[question.answerIndex]}`;
+  $('watchRevealExplanation').textContent = question.explanation || '';
+  renderRanking($('watchRanking'), rankingEntries(rankedScores(data)), result.gains);
+  if (watch.renderedKey !== 'reveal-' + key) {
+    watch.renderedKey = 'reveal-' + key;
+    popIn($('watchRevealFeedback'));
+  }
+}
+
+function renderWatchFinal(data) {
+  showWatchView('final');
+  const podium = podiumEntries(rankedScores(data));
+  $('watchFinalPack').textContent = data.game?.packName || 'クイズパック';
+  renderPodium($('watchPodium'), podium);
+  $('watchPodium').hidden = podium.length === 0;
+  $('watchFinalEmpty').hidden = podium.length > 0;
+  const key = 'final-' + (data.game?.id ?? '');
+  if (watch.renderedKey !== key) {
+    watch.renderedKey = key;
+    popIn(podium.length ? $('watchPodium') : $('watchFinalEmpty'));
+  }
+}
+
 function submitOnEnter(input, handler) {
   input.addEventListener('keydown', (event) => {
     // 日本語入力の確定の Enter では送らない（Safari は確定の Enter を isComposing=false・keyCode 229 で届ける）
@@ -2165,14 +2506,29 @@ btnNextQuestion.addEventListener('click', nextQuestion);
 btnFinishGame.addEventListener('click', finishGame);
 btnRoomReplay.addEventListener('click', startRoomGame);
 $('btnRoomRepick').addEventListener('click', backToLobby);
+if (WATCH_UI) {
+  $('btnOpenWatch').addEventListener('click', openWatchWindow);
+  $('btnOpenWatchReveal').addEventListener('click', openWatchWindow);
+  btnGoWatch.addEventListener('click', openWatchForm);
+  $('btnWatchJoinBack').addEventListener('click', () => showScreen('top'));
+  btnWatchOpen.addEventListener('click', watchJoin);
+  submitOnEnter(watchCodeInput, watchJoin);
+  $('btnWatchLeave').addEventListener('click', leaveWatch);
+}
 
 renderSegments();
 renderPackCards();
 updateOptionState();
 showScreen('top');
 
-// ルームにいる途中で再読み込みしたときは、同じルームに戻る
-if (readSession()) {
+// ?watch=CODE はみんなにみせる画面を開く（最優先）。開けなくても、再読み込み用の記録には頼らない
+const watchParams = new URLSearchParams(location.search);
+if (WATCH_UI && watchParams.has('watch')) {
+  // 別のルームのホスト・参加者として戻らないよう、このタブの記録は消しておく
+  clearSession();
+  startWatchFromUrl(watchParams.get('watch'));
+} else if (readSession()) {
+  // ルームにいる途中で再読み込みしたときは、同じルームに戻る
   tryReconnect().then((reconnected) => {
     if (!reconnected && !state.roomRef) clearSession();
   });
