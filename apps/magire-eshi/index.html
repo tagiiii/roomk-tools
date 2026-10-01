@@ -1600,7 +1600,9 @@ async function judgeReversal(win) {
   await action.ref.transaction(room => {
     if (!canApplyAction(action, room, STATUS.RESULT)) return;
     const result = room.game?.result;
-    if (result?.outcome !== 'caught' || !result.reversalGuess || result.reversalJudge || reversalChoicesOf(result)) return;
+    // 選択式でも判定できるようにする: 旧版の画面のまぎれ絵師が自由入力で答えると、選択肢があるのに判定が空のまま残るため
+    // （選択式で答えた場合は答えと判定を同じ transaction で確定済みなので、ここには来ない）
+    if (result?.outcome !== 'caught' || !result.reversalGuess || result.reversalJudge) return;
     return { ...room, game: { ...room.game, result: { ...result, reversalJudge: win ? 'win' : 'lose' } } };
   });
 }
