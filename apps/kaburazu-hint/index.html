@@ -396,6 +396,7 @@
     <!-- ホスト用：ヒント入力を締め切って確認画面へ -->
     <div id="clue-host-actions" style="display:none;margin-top:16px">
       <button class="btn btn-ghost btn-full" id="btn-force-close-clue" onclick="hostCloseClueInput()">ヒントを締め切って確認へ</button>
+      <button class="btn btn-ghost btn-full" id="btn-end-no-players" style="display:none" onclick="hostEndNoPlayers()">ゲームを終了する</button>
       <p class="kbz-status-text" id="clue-host-hint" style="margin-top:8px"></p>
     </div>
   </div>
@@ -803,6 +804,7 @@ function updateActionControls() {
     b.disabled = blocked || !!state.operations.review || (b.classList.contains('kbz-hint-card__toggle')
       && reviewAutoExcluded.has(b.closest('.kbz-hint-card')?.dataset.nick));
   });
+  document.getElementById('btn-end-no-players').disabled = blocked || !!state.operations.end;
   document.getElementById('btn-force-close-clue').disabled = blocked || !!state.operations.review
     || !Object.keys(room?.round?.hints || {}).length;
   document.querySelectorAll('#judge-host-view button').forEach(b => { b.disabled = blocked || !!state.operations.judge; });
@@ -1306,13 +1308,18 @@ function handleClueInput(room, players) {
 
   // ホスト用：締切ボタン
   const clueHostActions = document.getElementById('clue-host-actions');
-  if (state.role === 'host' && (hintGivers.length > 0 || Object.keys(round.hints || {}).length > 0)) {
+  // 進行だけのホストで、ヒント役が0人・ヒントも0件（遊ぶ人が抜けた）なら終了だけできるようにする
+  const noPlayersLeft = noHintersLeft(room);
+  document.getElementById('btn-end-no-players').style.display = noPlayersLeft ? 'block' : 'none';
+  if (state.role === 'host' && (hintGivers.length > 0 || Object.keys(round.hints || {}).length > 0 || noPlayersLeft)) {
     clueHostActions.style.display = 'block';
     const remaining = Math.max(0, hintGivers.length - submitted);
     const btn = document.getElementById('btn-force-close-clue');
     btn.disabled = Object.keys(round.hints || {}).length === 0 || !!state.operations.review || !room.gameId;
     const hint = document.getElementById('clue-host-hint');
-    if (Object.keys(round.hints || {}).length === 0) {
+    if (noPlayersLeft) {
+      hint.textContent = round.guesser && players[round.guesser] ? 'ヒントを出す人がいなくなりました' : '遊ぶ人がいなくなりました';
+    } else if (Object.keys(round.hints || {}).length === 0) {
       hint.textContent = 'ヒントが1件以上ないと進められません';
     } else if (remaining > 0) {
       hint.textContent = `未提出の ${remaining} 人は未提出として進めます`;
@@ -1820,6 +1827,17 @@ async function nextRound() {
 async function endGame() {
   if (state.role !== 'host') return;
   await runOperation('end', 'result', room => ({ ...room, status: 'finished' }));
+}
+
+// 進行だけのホストで、ヒントの段階にヒント役が0人・ヒント0件になったか（遊ぶ人が抜けて進められない）
+function noHintersLeft(room) {
+  return state.role === 'host' && !hostPlaysOf(room) && room?.status === 'clue-input'
+    && hintGiversOf(room).length === 0 && Object.keys(room.round?.hints || {}).length === 0;
+}
+// その場合の終了。書き込みは結果画面の「ゲーム終了」（endGame）と同じ status: 'finished' だけ
+async function hostEndNoPlayers() {
+  if (state.role !== 'host') return;
+  await runOperation('end', 'clue-input', room => noHintersLeft(room) ? { ...room, status: 'finished' } : undefined);
 }
 
 async function playAgain() {
