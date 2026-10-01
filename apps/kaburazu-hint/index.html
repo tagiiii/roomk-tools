@@ -78,6 +78,15 @@
       border-radius: 4px; background: var(--color-accent); color: #fff;
     }
     .player-tag.me { background: var(--color-muted); }
+    .player-tag.role { background: #EEF3F8; color: var(--color-primary); }
+
+    /* ── 待合室の設定（ホストのみ）── */
+    .kbz-check {
+      display: flex; align-items: center; gap: 10px; min-height: 44px;
+      font-size: 15px; font-weight: 500; color: var(--color-primary); cursor: pointer;
+    }
+    .kbz-check input { width: 20px; height: 20px; accent-color: var(--color-accent); flex-shrink: 0; }
+    .kbz-fineprint { font-size: 12px; color: var(--color-muted); line-height: 1.6; margin-top: 4px; }
 
     /* ── ラウンド情報 ── */
     .kbz-round-info {
@@ -324,6 +333,14 @@
       <ul class="player-list" id="waiting-player-list"></ul>
     </div>
     <div id="waiting-host-controls" style="display:none">
+      <div class="card">
+        <p class="section-label">設定</p>
+        <label class="kbz-check">
+          <input type="checkbox" id="set-host-plays" checked onchange="onHostPlaysChange(this.checked)">
+          <span>自分もプレイヤーとして参加する</span>
+        </label>
+        <p class="kbz-fineprint">外すと進行役になります。回答者やヒントを出す番は回ってきません（判定・進行はこれまでどおり）</p>
+      </div>
       <p id="waiting-min-msg" class="kbz-info-text">3人以上で開始できます</p>
       <button class="btn btn-primary btn-full btn-lg" id="btn-start-game" onclick="startGame()" disabled>
         <span class="material-symbols-rounded" aria-hidden="true">play_arrow</span>
@@ -359,6 +376,7 @@
           ヒントを送る
         </button>
       </div>
+      <p class="kbz-info-text" id="clue-host-note" style="display:none">あなたは進行役です。みんなのヒントがそろうのを待ちましょう</p>
       <div id="clue-submitted-msg" style="display:none">
         <div class="alert alert-info" style="text-align:center">
           <span class="material-symbols-rounded" aria-hidden="true" style="vertical-align:middle;font-size:18px">check_circle</span>
@@ -874,6 +892,23 @@ async function expireGuestRoom(ref) {
   }
 }
 
+/* ── ホストの参加（待合室で選ぶ。2026-10-01）──
+   settings.hostPlays を持たない旧ルームは従来どおり「ホストも遊ぶ」。
+   進行だけのホストは players に残る（復帰・判定・進行のため）が、回答者の順番とヒント役から外れる */
+function hostPlaysOf(room) {
+  return !(room && room.settings && room.settings.hostPlays === false);
+}
+// 遊ぶ人（回答者・ヒント役になる人）。ホストが進行だけならホストを除く
+function playingNames(room) {
+  const names = Object.keys((room && room.players) || {});
+  return hostPlaysOf(room) ? names : names.filter(n => n !== room.host);
+}
+// いまのラウンドのヒント役（在籍している遊ぶ人のうち回答者以外）
+function hintGiversOf(room) {
+  const guesser = room && room.round && room.round.guesser;
+  return playingNames(room).filter(n => n !== guesser);
+}
+
 function pickWord(usedWords) {
   const used = usedWords || [];
   if (used.length >= WORDS.length) used.length = 0;
@@ -937,6 +972,7 @@ async function hostCreate() {
         hostConnected: false,
         hostDisconnectedAt: getEstServerNow(),
         status: 'waiting',
+        settings: { hostPlays: true },
         players: { [nick]: { isHost: true } },
       };
     });
@@ -1046,11 +1082,14 @@ async function startGame() {
   if (state.role !== 'host' || !state.roomRef) return;
   const gameId = state.roomRef.push().key;
   let abortReason = null;
+  let hostPlays = hostPlaysOf(state.lastRoom);
   const committed = await runOperation('start', 'waiting', room => {
     if (!room) { abortReason = 'not_found'; return; }
     if (room.status !== 'waiting') { abortReason = 'bad_status'; return; }
 
-    const players = Object.keys(room.players || {});
+    // 回答者の順番に入るのは遊ぶ人だけ。最少人数も遊ぶ人で数える
+    hostPlays = hostPlaysOf(room);
+    const players = playingNames(room);
     if (players.length < 3) { abortReason = 'too_few'; return; }
     if (Object.values(room.players).some(p => !playerConnected(p))) { abortReason = 'offline'; return; }
 
@@ -1080,7 +1119,7 @@ async function startGame() {
   }, true);
 
   if (!committed && abortReason === 'too_few') {
-    showMsg('3人以上必要です');
+    showMsg(tooFewMsg(hostPlays));
     return;
   }
 
@@ -1089,6 +1128,21 @@ async function startGame() {
     return;
   }
 
+}
+
+function tooFewMsg(hostPlays) {
+  return hostPlays ? '3人以上必要です' : 'ホストのほかに3人以上必要です';
+}
+
+// 待合室の設定: ホストもプレイヤーとして参加するか。開始後（もう一度を含む）は変えない
+async function onHostPlaysChange(checked) {
+  if (state.role !== 'host' || !state.roomRef) return;
+  const committed = await runOperation('hostPlays', 'waiting', room => {
+    if (room.status !== 'waiting') return;
+    return { ...room, settings: { ...(room.settings || {}), hostPlays: !!checked } };
+  }, true);
+  if (!committed) showMsg('設定を変えられませんでした');
+  if (state.lastRoom && state.lastRoom.status === 'waiting') handleWaiting(state.lastRoom, state.lastRoom.players || {});
 }
 
 /* ════════════════════════════════════════════════
@@ -1197,16 +1251,22 @@ function handleWaiting(room, players) {
   if (state.currentScreen !== 'waiting') showScreen('waiting');
 
   document.getElementById('waiting-room-code').textContent = state.roomCode;
-  renderPlayerList('waiting-player-list', players);
+  renderPlayerList('waiting-player-list', players, room);
 
   const hostCtrl = document.getElementById('waiting-host-controls');
   if (state.role === 'host') {
     hostCtrl.style.display = '';
-    const count = Object.keys(players).length;
+    const hostPlays = hostPlaysOf(room);
+    const checkbox = document.getElementById('set-host-plays');
+    checkbox.checked = hostPlays;
+    checkbox.disabled = !!state.operations.hostPlays;
+    // 最少人数は遊ぶ人だけで数える（進行だけのホストは数えない）
+    const count = playingNames(room).length;
     const btn = document.getElementById('btn-start-game');
     btn.disabled = count < 3 || Object.values(players).some(p => !playerConnected(p));
     document.getElementById('waiting-min-msg').textContent =
-      count < 3 ? `あと${3 - count}人で開始できます` : Object.values(players).some(p => !playerConnected(p)) ? '再接続を待っています' : `${count}人参加中`;
+      count < 3 ? `あと${3 - count}人で開始できます` : Object.values(players).some(p => !playerConnected(p)) ? '再接続を待っています'
+        : hostPlays ? `${count}人参加中` : `遊ぶ人は${count}人（ホストは進行役）`;
   } else {
     hostCtrl.style.display = 'none';
   }
@@ -1228,22 +1288,25 @@ function handleClueInput(room, players) {
   document.getElementById('clue-giver-view').style.display = isGuesser ? 'none' : '';
   document.getElementById('clue-guesser-view').style.display = isGuesser ? '' : 'none';
 
+  // 進行だけのホストはヒント役に入らない（お題は判定のために見える。入力欄は出さない）
+  const moderatorOnly = state.role === 'host' && !hostPlaysOf(room);
+  document.getElementById('clue-host-note').style.display = moderatorOnly ? '' : 'none';
   if (!isGuesser) {
     document.getElementById('clue-secret-word').textContent = round.secretWord || '';
     // 自分が送信済みか
     const myHint = round.hints?.[state.nickname];
-    document.getElementById('clue-input-area').style.display = myHint ? 'none' : '';
-    document.getElementById('clue-submitted-msg').style.display = myHint ? '' : 'none';
+    document.getElementById('clue-input-area').style.display = myHint || moderatorOnly ? 'none' : '';
+    document.getElementById('clue-submitted-msg').style.display = myHint && !moderatorOnly ? '' : 'none';
   }
 
-  // 進捗
-  const hintGivers = Object.keys(players).filter(n => n !== guesser);
+  // 進捗（ヒント役は在籍している遊ぶ人のうち回答者以外）
+  const hintGivers = hintGiversOf(room);
   const submitted = hintGivers.filter(n => round.hints?.[n]).length;
   document.getElementById('clue-progress').textContent = `${submitted} / ${hintGivers.length} 人が送信済み`;
 
   // ホスト用：締切ボタン
   const clueHostActions = document.getElementById('clue-host-actions');
-  if (state.role === 'host' && hintGivers.length > 0) {
+  if (state.role === 'host' && (hintGivers.length > 0 || Object.keys(round.hints || {}).length > 0)) {
     clueHostActions.style.display = 'block';
     const remaining = Math.max(0, hintGivers.length - submitted);
     const btn = document.getElementById('btn-force-close-clue');
@@ -1270,7 +1333,7 @@ function reviewSnapshot(room) {
   const hints = room.round.hints || {}, counts = {};
   Object.values(hints).forEach(h => { counts[h.normalized] = (counts[h.normalized] || 0) + 1; });
   const excluded = Object.keys(hints).filter(n => counts[hints[n].normalized] > 1);
-  const missing = Object.keys(room.players || {}).filter(n => n !== room.round.guesser && !hints[n]);
+  const missing = hintGiversOf(room).filter(n => !hints[n]);
   return { excludedHintIds: excluded.length ? excluded : null, missingHintIds: missing.length ? missing : null };
 }
 function reviewBasis(room) {
@@ -1286,9 +1349,10 @@ async function autoTransitionToReview(room, players, opts = {}) {
     // 除外を先に確定。2段階間でヒント・在籍者が変われば公開せずやり直す。
     const first = await a.ref.transaction(current => {
       if (state.operations.review !== a || !canApplyAction(a, current)) return;
-      const givers = Object.keys(current.players).filter(n => n !== current.round.guesser);
+      const givers = hintGiversOf(current);
       const hints = current.round.hints || {};
-      if (!givers.length || !Object.keys(hints).length || (!opts.force && !givers.every(n => hints[n]))) return;
+      // 手動締切は退出者を含む既存ヒントが1件以上あれば進められる（ヒント役が全員抜けた場合も）
+      if (!Object.keys(hints).length || (!opts.force && (!givers.length || !givers.every(n => hints[n])))) return;
       return { ...current, round: { ...current.round, ...reviewSnapshot(current) } };
     }, undefined, false);
     if (!first.committed) return false;
@@ -1764,12 +1828,15 @@ async function playAgain() {
   const oldTimer = state.cleanupTimer;
   const a = captureAction('finished');
   let abortReason = null;
+  let hostPlays = hostPlaysOf(state.lastRoom);
   const committed = await withHostLifecycle(async () => {
     if (!canApplyAction(a, state.lastRoom, true)) return false;
     return runOperation('replay', 'finished', room => {
     if (!room) { abortReason = 'not_found'; return; }
 
-    const players = Object.keys(room.players || {});
+    // 待合室で選んだホストの参加をそのまま引き継ぐ。遊ぶ人だけで数える
+    hostPlays = hostPlaysOf(room);
+    const players = playingNames(room);
     if (players.length < 3) { abortReason = 'too_few'; return; }
     if (Object.values(room.players).some(p => !playerConnected(p))) { abortReason = 'offline'; return; }
 
@@ -1802,7 +1869,7 @@ async function playAgain() {
   });
 
   if (!committed && abortReason === 'too_few') {
-    showMsg('3人以上必要です');
+    showMsg(tooFewMsg(hostPlays));
     return;
   }
   if (!committed) {
@@ -1827,7 +1894,8 @@ async function submitHint() {
 
   const hint = { text, normalized: normalize(text) };
   await runOperation('hint', 'clue-input', (room, a) => {
-    if (room.round.guesser === a.nickname || room.round.hints?.[a.nickname]) return;
+    if (room.round.guesser === a.nickname || room.round.hints?.[a.nickname]
+      || !hintGiversOf(room).includes(a.nickname)) return; // 進行だけのホストは出さない
     return { ...room, round: { ...room.round, hints: { ...room.round.hints, [a.nickname]: hint } } };
   });
 }
@@ -1863,12 +1931,13 @@ function historyEntry(round) {
 /* ════════════════════════════════════════════════
    UI ヘルパー
    ════════════════════════════════════════════════ */
-function renderPlayerList(id, players) {
+function renderPlayerList(id, players, room) {
   const ul = document.getElementById(id);
   if (!ul) return;
+  const roleTag = hostPlaysOf(room) ? '' : '<span class="player-tag role">進行役</span>';
   ul.innerHTML = Object.entries(players).map(([nick, p]) => {
     const meTag = nick === state.nickname ? '<span class="player-tag me">あなた</span>' : '';
-    const hostTag = p.isHost ? '<span class="player-tag">ホスト</span>' : !playerConnected(p) ? '<span class="player-tag">再接続待ち</span>' : '';
+    const hostTag = p.isHost ? '<span class="player-tag">ホスト</span>' + roleTag : !playerConnected(p) ? '<span class="player-tag">再接続待ち</span>' : '';
     return `<li class="player-item">
       <div class="player-name">${esc(nick)}${hostTag}${meTag}</div>
     </li>`;
@@ -2219,8 +2288,9 @@ function renderSpecEnded() {
 
 function renderSpecWaiting(room) {
   const players = room.players || {};
+  const roleTag = hostPlaysOf(room) ? '' : '<span class="player-tag role">進行役</span>';
   const list = Object.entries(players).map(([nick, p]) => {
-    const hostTag = p.isHost ? '<span class="player-tag">ホスト</span>' : '';
+    const hostTag = p.isHost ? '<span class="player-tag">ホスト</span>' + roleTag : '';
     return `<li class="player-item"><div class="player-name">${esc(nick)}${hostTag}</div></li>`;
   }).join('');
   setSpecContent(`
@@ -2238,9 +2308,8 @@ function renderSpecWaiting(room) {
 
 // お題・ヒント本文は絶対に出さない
 function renderSpecClueInput(room) {
-  const players = room.players || {};
   const round = room.round || {};
-  const hintGivers = Object.keys(players).filter(n => n !== round.guesser);
+  const hintGivers = hintGiversOf(room);
   const submitted = hintGivers.filter(n => round.hints?.[n]).length;
   setSpecContent(
     specRoundInfoHtml(round) +
@@ -2378,6 +2447,7 @@ function renderSpecFinished(room) {
           'ホストが「ルームをつくる」を押して、コードをみんなに伝える',
           'ほかの人は「ルームに参加する」からニックネームとルームコードを入れて「参加する」',
           '3人以上そろったら、ホストが「ゲームを始める」を押す',
+          'ホストは「自分もプレイヤーとして参加する」を外すと進行役になる。回答者やヒントを出す番は回ってこない（そのときはホストのほかに3人以上で遊べる）',
         ],
       },
       {
