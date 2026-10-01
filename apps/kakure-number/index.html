@@ -85,6 +85,14 @@
       padding: 2px 8px; border-radius: 20px; margin-left: auto;
     }
 
+    /* ── 待合室の設定（ホストの参加） ── */
+    .kkn-check {
+      display: flex; align-items: center; gap: 10px; min-height: 44px;
+      font-size: 15px; font-weight: 500; cursor: pointer;
+    }
+    .kkn-check input { width: 20px; height: 20px; accent-color: var(--color-accent); flex-shrink: 0; }
+    .kkn-start-hint { font-size: 14px; color: var(--color-muted); margin-top: 8px; text-align: center; }
+
     /* ── スピナー（サイズ override）── */
     .spinner {
       width: 48px; height: 48px; margin: 0 auto 20px;
@@ -349,8 +357,13 @@
       </button>
 
       <hr class="divider">
-      <div class="kkn-section-label">参加者（ゲスト <span id="host-guest-count">0</span>人 / 3〜8人で遊べます）</div>
+      <div class="kkn-section-label">参加者（遊ぶ人 <span id="host-guest-count">0</span>人 / 3〜8人で遊べます）</div>
       <div class="kkn-player-list" id="host-player-list"></div>
+
+      <label class="kkn-check mt-md">
+        <input type="checkbox" id="set-host-plays" onchange="onHostPlaysChange(this.checked)">
+        <span>自分もプレイヤーとして参加する</span>
+      </label>
 
       <div class="mt-lg">
         <button class="btn btn-primary btn-lg btn-full" id="btn-start-game"
@@ -358,6 +371,7 @@
           <span class="material-symbols-rounded">playing_cards</span>
           はじめる
         </button>
+        <p class="kkn-start-hint" id="host-start-hint" hidden></p>
         <button class="btn btn-secondary btn-full" onclick="openSpectatorWindow()">
           <span class="material-symbols-rounded">cast</span>
           みんなにみせる画面をひらく
@@ -468,9 +482,9 @@
       </div>
     </div>
 
-    <!-- ホスト用（数字は表示しない） -->
+    <!-- ホスト用の進行欄（数字は表示しない。ホストも遊ぶときは上のゲスト用と並べて出す） -->
     <div id="thinking-host" style="display:none">
-      <p class="kkn-talk-hint">みんなが声できき合いながら考える時間です</p>
+      <p class="kkn-talk-hint" id="host-talk-hint">みんなが声できき合いながら考える時間です</p>
       <div class="kkn-status-count" id="host-submit-count"></div>
       <div class="kkn-submit-list" id="host-submit-list"></div>
       <button class="btn btn-ghost btn-full" id="btn-close-round" onclick="hostCloseRound()">締め切る</button>
@@ -595,8 +609,8 @@
   const ROOMS_PATH = 'kakure_rooms';
   const SESSION_KEY = 'kakure_session';
   const ORPHAN_TTL_MS = 2 * 60 * 1000;
-  const MIN_GUESTS = 3;
-  const MAX_GUESTS = 8;
+  const MIN_PLAYERS = 3; // 遊ぶ人（数字を配られる人）だけで数える
+  const MAX_PLAYERS = 8;
   const SPEC_CODE_RE = /^[A-Z0-9]{6}$/;
   const ST = {
     WAITING:  'waiting',
@@ -620,6 +634,8 @@
     timerInterval:   null,
     specTimer:       null,   // みんなにみせる画面: ホスト切断の TTL 再判定
     specDoneShown:   false,  // みんなにみせる画面: おしまいを表示済み（ルーム削除後も残す）
+    hostPlays:       false,  // 最新 room の settings/hostPlays（キーなしは false＝進行だけ）
+    hostPlaysBusy:   false,
   };
 
   // ════════════════════════════════════
@@ -709,6 +725,16 @@
   function guestNames(players) {
     return Object.entries(players || {})
       .filter(([, p]) => p && !p.isHost)
+      .map(([name]) => name);
+  }
+
+  // ホストもプレイヤーとして遊ぶか。キーがない部屋（旧版が作った部屋）は従来どおり「進行だけ」
+  function hostPlays(room) { return room?.settings?.hostPlays === true; }
+  // 遊ぶ人（数字を配る・人数の判定・得点の対象）。進行だけのホストは含めない
+  function playingNames(room) {
+    const plays = hostPlays(room);
+    return Object.entries(room?.players || {})
+      .filter(([, p]) => p && (!p.isHost || plays))
       .map(([name]) => name);
   }
 
@@ -870,6 +896,7 @@
         status:             ST.WAITING,
         hostConnected:      true,
         hostDisconnectedAt: null,
+        settings:           { hostPlays: false },
         players: {
           [nickname]: { isHost: true, score: 0 },
         },
@@ -976,8 +1003,8 @@
       if (roomForJoin.status !== ST.WAITING) { abortReason = 'not_waiting'; return; }
       const players = roomForJoin.players || {};
       if (players[nickname]) { abortReason = 'nick_taken'; return; }
-      const guestCount = Object.values(players).filter(p => p && !p.isHost).length;
-      if (guestCount >= MAX_GUESTS) { abortReason = 'full'; return; }
+      // 上限は遊ぶ人で数える（ホストが遊ぶときはホストも1人）
+      if (playingNames(roomForJoin).length >= MAX_PLAYERS) { abortReason = 'full'; return; }
       abortReason = null;
       return {
         ...roomForJoin,
@@ -996,7 +1023,7 @@
       if (abortReason === 'host_gone')   { showError('guest-join-error', 'ホストが切断されています'); return; }
       if (abortReason === 'not_waiting') { showError('guest-join-error', 'このルームはすでにゲームが始まっています'); return; }
       if (abortReason === 'nick_taken')  { showError('guest-join-error', 'そのニックネームはすでに使われています'); return; }
-      if (abortReason === 'full')        { showError('guest-join-error', 'このルームは満員です（ゲストは8人まで）'); return; }
+      if (abortReason === 'full')        { showError('guest-join-error', `このルームは満員です（遊べるのは${MAX_PLAYERS}人まで）`); return; }
       showError('guest-join-error', '参加に失敗しました'); return;
     }
 
@@ -1027,12 +1054,14 @@
         abortReason = 'invalid_state';
         return;
       }
-      const guests = guestNames(room.players);
-      if (guests.length < MIN_GUESTS) { abortReason = 'too_few'; return; }
+      // 数字を配るのは遊ぶ人だけ（ホストが遊ぶときはホストにも配る）
+      const dealTo = playingNames(room);
+      if (dealTo.length < MIN_PLAYERS) { abortReason = 'too_few'; return; }
+      if (dealTo.length > MAX_PLAYERS) { abortReason = 'too_many'; return; }
 
       const numbers = {};
       let total = 0;
-      for (const name of guests) {
+      for (const name of dealTo) {
         const v = Math.floor(Math.random() * 10) + 1; // 1〜10（重複あり）
         numbers[name] = v;
         total += v;
@@ -1041,7 +1070,7 @@
       const fieldNumber = Math.floor(Math.random() * 10) + 1;
       total += fieldNumber;
 
-      const cards = guests.length + 1; // 配られた数字 + 隠しカード
+      const cards = dealTo.length + 1; // 配られた数字 + 隠しカード
       abortReason = null;
       return {
         ...room,
@@ -1061,7 +1090,9 @@
 
     if (!committed) {
       if (abortReason === 'too_few') {
-        alert('ゲストが3人以上そろうと始められます');
+        alert(`遊ぶ人が${MIN_PLAYERS}人以上そろうと始められます`);
+      } else if (abortReason === 'too_many') {
+        alert(`遊べるのは${MAX_PLAYERS}人までです`);
       } else {
         alert('始められませんでした。ルームの状態を確認してください');
       }
@@ -1069,7 +1100,41 @@
   }
 
   // ════════════════════════════════════
-  // ゲスト: 予想の入力・送信
+  // ホスト: 自分もプレイヤーとして参加するか（待合室のあいだだけ変えられる）
+  // ════════════════════════════════════
+  async function onHostPlaysChange(checked) {
+    if (state.role !== 'host' || !state.roomRef || state.hostPlaysBusy) return;
+    const ref = state.roomRef, me = state.nickname;
+    const box = document.getElementById('set-host-plays');
+    state.hostPlaysBusy = true;
+    box.disabled = true;
+    let committed = false;
+    let abortReason = null;
+    try {
+      ({ committed } = await ref.transaction(room => {
+        abortReason = null;
+        if (state.roomRef !== ref || state.role !== 'host') return;
+        if (!room || room.status !== ST.WAITING || room.host !== me) return;
+        // ゲストがすでに上限なら、ホストは遊ぶ側に入れない
+        if (checked && guestNames(room.players).length >= MAX_PLAYERS) { abortReason = 'full'; return; }
+        return { ...room, settings: { ...(room.settings || {}), hostPlays: !!checked } };
+      }));
+    } catch (error) {
+      console.warn('[kakure-number] host plays update failed', error);
+    }
+    if (state.roomRef !== ref) return;
+    state.hostPlaysBusy = false;
+    box.disabled = false;
+    if (!committed) {
+      box.checked = state.hostPlays;
+      showToast(abortReason === 'full'
+        ? `遊べるのは${MAX_PLAYERS}人までです。ゲストが${MAX_PLAYERS}人いるので参加できません`
+        : '設定を変えられませんでした');
+    }
+  }
+
+  // ════════════════════════════════════
+  // 予想の入力・送信（ゲスト、または遊ぶホスト）
   // ════════════════════════════════════
   let _guessRange = { min: 0, max: 0 };
 
@@ -1084,6 +1149,7 @@
   }
 
   async function submitGuess() {
+    if (state.role === 'host' && !state.hostPlays) return; // 進行だけのホストは予想しない
     const raw = document.getElementById('guess-input').value.trim();
     const num = Number(raw);
 
@@ -1103,11 +1169,12 @@
   // ════════════════════════════════════
   // 得点計算
   //   いちばん近い人 +2（同着は全員 +2）、ぴったりはさらに +1
-  //   退出済み（players にいない）ゲストの予想は集計から除外
+  //   退出済み（players にいない）人と、数字を配られていない人の予想は集計から除外
   // ════════════════════════════════════
   function calcDeltas(round, players) {
+    const numbers = (round && round.numbers) || {};
     const entries = Object.entries((round && round.guesses) || {})
-      .filter(([name]) => players && players[name])
+      .filter(([name]) => players && players[name] && numbers[name] !== undefined)
       .map(([name, g]) => ({ name, diff: Math.abs(Number(g) - round.total) }));
 
     if (entries.length === 0) return {};
@@ -1209,6 +1276,7 @@
       if (myScore !== undefined) updateSessionScore(myScore);
 
       state.players = room.players || {};
+      state.hostPlays = hostPlays(room);
 
       // ホスト切断チェック（ゲストのみ）
       if (state.role === 'guest') {
@@ -1236,7 +1304,7 @@
   // ── waiting ──
   function handleWaiting(room) {
     const players = room.players || {};
-    const guestCount = guestNames(players).length;
+    const count = playingNames(room).length; // 遊ぶ人だけで数える
 
     if (state.role === 'host') {
       if (state.currentScreen !== 'host-setup') {
@@ -1245,12 +1313,20 @@
         document.getElementById('host-step-room').style.display     = 'block';
         document.getElementById('host-room-code-display').textContent = state.roomCode;
       }
-      document.getElementById('host-guest-count').textContent = guestCount;
-      renderPlayerList('host-player-list', players);
-      document.getElementById('btn-start-game').disabled = guestCount < MIN_GUESTS;
+      document.getElementById('host-guest-count').textContent = count;
+      renderPlayerList('host-player-list', room);
+      const box = document.getElementById('set-host-plays');
+      if (!state.hostPlaysBusy) box.checked = state.hostPlays;
+      const ok = count >= MIN_PLAYERS && count <= MAX_PLAYERS;
+      document.getElementById('btn-start-game').disabled = !ok;
+      const hint = document.getElementById('host-start-hint');
+      hint.hidden = ok;
+      hint.textContent = ok ? ''
+        : count < MIN_PLAYERS ? `遊ぶ人があと${MIN_PLAYERS - count}人必要です`
+        : `遊べるのは${MAX_PLAYERS}人までです`;
     } else {
       if (state.currentScreen !== 'waiting') showScreen('waiting');
-      renderPlayerList('waiting-player-list', players);
+      renderPlayerList('waiting-player-list', room);
     }
   }
 
@@ -1281,9 +1357,13 @@
 
     const submittedCount = dealt.filter(name => guesses[name] !== undefined).length;
 
-    if (state.role === 'guest') {
-      document.getElementById('thinking-guest').style.display = 'block';
-      document.getElementById('thinking-host').style.display  = 'none';
+    // 自分に数字が配られているか（ゲスト、または遊ぶホスト）。遊ぶ画面は自分の数字と隠しカードが「？」
+    const isHost = state.role === 'host';
+    const iPlay  = state.role === 'guest' || dealt.includes(state.nickname);
+    document.getElementById('thinking-guest').style.display = iPlay ? 'block' : 'none';
+    document.getElementById('thinking-host').style.display  = isHost ? 'block' : 'none';
+
+    if (iPlay) {
       renderNumberGrid(numbers, round.fieldNumber != null);
 
       const mySubmitted = guesses[state.nickname] !== undefined;
@@ -1296,12 +1376,12 @@
         document.getElementById('guess-waiting-count').textContent =
           `${submittedCount} 人 / ${dealt.length} 人がきめた`;
       }
-      return;
     }
+    if (!isHost) return;
 
-    // ホスト: 提出状況のみ表示（数字・合計は一切表示しない）
-    document.getElementById('thinking-guest').style.display = 'none';
-    document.getElementById('thinking-host').style.display  = 'block';
+    // ホストの進行欄: 提出状況のみ表示（数字・合計・予想の値は一切表示しない）
+    document.getElementById('host-talk-hint').hidden = iPlay;
+    document.getElementById('thinking-host').style.marginTop = iPlay ? '28px' : '';
 
     document.getElementById('host-submit-count').textContent =
       `${submittedCount} 人 / ${dealt.length} 人がきめた`;
@@ -1381,7 +1461,7 @@
 
     document.getElementById('reveal-list').innerHTML = revealListHtml(round, players, state.nickname);
 
-    renderScoreChips('reveal-score-chips', players);
+    renderScoreChips('reveal-score-chips', room);
 
     document.getElementById('reveal-host-actions').style.display =
       state.role === 'host' ? 'block' : 'none';
@@ -1439,11 +1519,12 @@
     return html;
   }
 
-  // 累計ポイント（控えめ表示・順位づけしない。参加順ではなく名前順で固定）
+  // 累計ポイント（控えめ表示・順位づけしない。参加順ではなく名前順で固定）。遊ぶ人だけ
   //   me: 自分のニックネーム（みんなにみせる画面は null）
-  function scoreChipsHtml(players, me) {
-    return Object.entries(players || {})
-      .filter(([, p]) => p && !p.isHost)
+  function scoreChipsHtml(room, me) {
+    const players = room?.players || {};
+    return playingNames(room)
+      .map((name) => [name, players[name]])
       .map(([name, p]) => {
         const isMe = me != null && name === me;
         return `
@@ -1451,38 +1532,39 @@
       }).join('');
   }
 
-  function renderScoreChips(containerId, players) {
+  function renderScoreChips(containerId, room) {
     const el = document.getElementById(containerId);
     if (!el) return;
-    el.innerHTML = scoreChipsHtml(players, state.nickname);
+    el.innerHTML = scoreChipsHtml(room, state.nickname);
   }
 
   // ── done ──
   function handleDone(room) {
     if (state.currentScreen !== 'done') showScreen('done');
-    renderScoreChips('done-score-chips', room.players);
+    renderScoreChips('done-score-chips', room);
   }
 
   // ════════════════════════════════════
   // プレイヤーリスト描画
   // ════════════════════════════════════
-  //   me: 自分のニックネーム（みんなにみせる画面は null）
-  function playerListHtml(players, me) {
-    return Object.entries(players || {}).map(([name, p]) => {
+  //   me: 自分のニックネーム（みんなにみせる画面は null）。進行だけのホストは「ホスト・進行役」
+  function playerListHtml(room, me) {
+    const hostLabel = hostPlays(room) ? 'ホスト' : 'ホスト・進行役';
+    return Object.entries(room?.players || {}).map(([name, p]) => {
       const isMe = me != null && name === me;
       return `
         <div class="kkn-player ${isMe ? 'kkn-player--me' : ''}">
           <div class="kkn-player__avatar">${esc(name.charAt(0).toUpperCase())}</div>
           <span class="kkn-player__name">${esc(name)}${isMe ? '（あなた）' : ''}</span>
-          ${p && p.isHost ? '<span class="kkn-player__badge-host">ホスト</span>' : ''}
+          ${p && p.isHost ? `<span class="kkn-player__badge-host">${hostLabel}</span>` : ''}
         </div>`;
     }).join('');
   }
 
-  function renderPlayerList(containerId, players) {
+  function renderPlayerList(containerId, room) {
     const el = document.getElementById(containerId);
     if (!el) return;
-    el.innerHTML = playerListHtml(players, state.nickname);
+    el.innerHTML = playerListHtml(room, state.nickname);
   }
 
   // ════════════════════════════════════
@@ -1511,6 +1593,7 @@
     Object.assign(state, {
       role: null, nickname: '', roomCode: '',
       players: {}, lastRoundNumber: 0, revealTriggered: false,
+      hostPlays: false, hostPlaysBusy: false,
     });
 
     // フォームリセット
@@ -1519,6 +1602,9 @@
     document.getElementById('guest-room-code').value  = '';
     document.getElementById('host-step-nickname').style.display = 'block';
     document.getElementById('host-step-room').style.display     = 'none';
+    const hostPlaysBox = document.getElementById('set-host-plays');
+    hostPlaysBox.checked = false;
+    hostPlaysBox.disabled = false;
 
     showScreen('top');
   }
@@ -1700,15 +1786,14 @@
   }
 
   function renderSpecWaiting(room) {
-    const players = room.players || {};
     setSpecContent(`
       <div class="kkn-room-code kkn-room-code--static">${esc(state.roomCode)}</div>
       <div class="kkn-spec__wait">
         <div class="spinner"></div>
         <p class="kkn-spec__wait-msg">はじまるのを待っています</p>
       </div>
-      <div class="kkn-section-label">参加者（ゲスト ${guestNames(players).length}人）</div>
-      <div class="kkn-player-list">${playerListHtml(players, null)}</div>`);
+      <div class="kkn-section-label">参加者（遊ぶ人 ${playingNames(room).length}人）</div>
+      <div class="kkn-player-list">${playerListHtml(room, null)}</div>`);
   }
 
   // 予想タイム: 提出状況だけ。数字（round/numbers の値・fieldNumber・total）は読まない
@@ -1737,7 +1822,7 @@
       <div class="kkn-section-label">みんなの数字とよそう</div>
       <div class="kkn-reveal-list">${revealListHtml(round, players, null)}</div>
       <div class="kkn-section-label">これまでのポイント</div>
-      <div class="kkn-score-chips">${scoreChipsHtml(players, null)}</div>`);
+      <div class="kkn-score-chips">${scoreChipsHtml(room, null)}</div>`);
   }
 
   function renderSpecDone(room) {
@@ -1748,7 +1833,7 @@
         <p class="kkn-page__sub" style="margin-top:8px">あそんでくれてありがとう</p>
       </div>
       <div class="kkn-section-label">きょうのポイント</div>
-      <div class="kkn-score-chips">${scoreChipsHtml(room.players, null)}</div>`);
+      <div class="kkn-score-chips">${scoreChipsHtml(room, null)}</div>`);
   }
 
   function renderSpecEnded() {
@@ -1795,6 +1880,7 @@
         'ホストが「ルームを作る（ホスト）」からルームを作る',
         '出てきたルームコードをみんなに伝える',
         'ほかの人は「ルームに参加する」からニックネームとルームコードを入れて「参加する」を押す',
+        'ホストは待合室の「自分もプレイヤーとして参加する」にチェックを入れると、いっしょに数字を配られて遊べる（入れないときは進行だけ）。遊ぶ人が3〜8人で始められる',
       ] },
       { heading: 'すすめかた', items: [
         '1〜10の数字がひとりに1つ。それとは別に、誰にも見えない「隠しカード」が1まい場に出る',
