@@ -211,6 +211,60 @@
       }
     }
 
+    /* ── 人数・使える時間 ── */
+    .tool-size {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 220px));
+      gap: var(--space-md);
+      margin-top: var(--space-md);
+    }
+
+    @media (max-width: 600px) {
+      .tool-size {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: var(--space-sm);
+      }
+    }
+
+    .tool-size__field {
+      position: relative;
+    }
+
+    .tool-size__select.form-select {
+      -webkit-appearance: none;
+      appearance: none;
+      min-height: 44px;
+      padding-right: 40px;
+      border-radius: var(--radius-full);
+      border-color: transparent;
+      background-color: var(--color-bg);
+      cursor: pointer;
+    }
+
+    .tool-size__select.form-select:focus {
+      border-color: var(--color-accent);
+    }
+
+    /* 指定しているときは、シーンの選択中チップと同じ色にする */
+    .tool-size__select.is-set {
+      background-color: var(--color-primary);
+      color: #fff;
+      font-weight: 700;
+    }
+
+    .tool-size__select.is-set + .tool-size__arrow {
+      color: #fff;
+    }
+
+    .tool-size__arrow {
+      position: absolute;
+      top: 50%;
+      right: 12px;
+      transform: translateY(-50%);
+      color: var(--color-muted);
+      pointer-events: none;
+    }
+
     /* ── 利用シーン絞り込み ── */
     .scene-filter {
       display: flex;
@@ -637,6 +691,43 @@
         <button class="scene-filter__chip" type="button" data-scene="hiroba" aria-pressed="false">ひろば</button>
         <button class="scene-filter__chip" type="button" data-scene="circle" aria-pressed="false">サークルタイム</button>
         <button class="scene-filter__chip" type="button" data-scene="sakusen" aria-pressed="false">作戦会議</button>
+      </div>
+
+      <div class="tool-size">
+        <div class="tool-size__item">
+          <label class="form-label tool-filter__label" for="filter-people">人数</label>
+          <div class="tool-size__field">
+            <select class="form-select tool-size__select" id="filter-people">
+            <option value="">指定なし</option>
+            <option value="1">1人</option>
+            <option value="2">2人</option>
+            <option value="3">3人</option>
+            <option value="4">4人</option>
+            <option value="5">5人</option>
+            <option value="6">6人</option>
+            <option value="7">7人</option>
+            <option value="8">8人</option>
+            <option value="9">9人</option>
+            <option value="10">10人</option>
+            <option value="11">11人以上</option>
+            </select>
+            <span class="material-symbols-rounded tool-size__arrow" aria-hidden="true">expand_more</span>
+          </div>
+        </div>
+        <div class="tool-size__item">
+          <label class="form-label tool-filter__label" for="filter-time">使える時間</label>
+          <div class="tool-size__field">
+            <select class="form-select tool-size__select" id="filter-time">
+            <option value="">指定なし</option>
+            <option value="5">5分</option>
+            <option value="10">10分</option>
+            <option value="15">15分</option>
+            <option value="20">20分</option>
+            <option value="30">30分</option>
+            </select>
+            <span class="material-symbols-rounded tool-size__arrow" aria-hidden="true">expand_more</span>
+          </div>
+        </div>
       </div>
       </div>
 
@@ -1928,6 +2019,56 @@
         return m ? m[1] : 'all';
       }
 
+      // 人数・時間はカードの表示（人数・時間のバッジ）から読み取る。
+      // 読み取れないカードは、その条件では隠さない。
+      function badgeText(card, iconName) {
+        const badge = Array.from(card.querySelectorAll('.meta-badge')).find((b) => {
+          const icon = b.querySelector('.material-symbols-rounded');
+          return icon && icon.textContent.trim() === iconName;
+        });
+        if (!badge) return '';
+        const copy = badge.cloneNode(true);
+        copy.querySelectorAll('.material-symbols-rounded').forEach((icon) => icon.remove());
+        return normalize(copy.textContent).replace(/\s+/g, '').replace(/[〜～]/g, '~');
+      }
+
+      // 例: 人数制限なし／3人〜／2〜9人／ホスト＋2〜4人（ホストも1人に数える）／1対1向け
+      function parsePeople(card) {
+        let text = badgeText(card, 'group');
+        if (!text) {
+          return Array.from(card.querySelectorAll('.meta-badge')).some((b) => normalize(b.textContent).includes('1対1向け'))
+            ? { min: 1, max: 2 } : null;
+        }
+        if (text.startsWith('人数制限なし')) return { min: 1, max: Infinity };
+        const host = text.startsWith('ほすと+') ? 1 : 0; // normalize でカタカナはひらがなになる
+        text = text.replace(/^ほすと\+/, '');
+        let m = text.match(/^(\d+)~(\d+)人/);
+        if (m) return { min: Number(m[1]) + host, max: Number(m[2]) + host };
+        m = text.match(/^(\d+)人~/);
+        if (m) return { min: Number(m[1]) + host, max: Infinity };
+        return null;
+      }
+
+      // 例: 5〜15分／30分前後／15分ほど／1ラウンド2〜3分 → いちばん短い時間
+      function parseMinutes(card) {
+        const m = badgeText(card, 'schedule').match(/(\d+)(?:~\d+)?分/);
+        return m ? Number(m[1]) : null;
+      }
+
+      const cardPeople = cards.map(parsePeople);
+      const cardMinutes = cards.map(parseMinutes);
+      const peopleSelect = document.getElementById('filter-people');
+      const timeSelect = document.getElementById('filter-time');
+
+      function sizeMatch(i) {
+        const people = Number(peopleSelect.value);
+        const minutes = Number(timeSelect.value);
+        const range = cardPeople[i];
+        if (people && range && (people < range.min || people > range.max)) return false;
+        if (minutes && cardMinutes[i] !== null && cardMinutes[i] > minutes) return false;
+        return true;
+      }
+
       // 言い換え: どれで探しても同じものが出るようにする（正規化したあとの表記で書く）
       const SYNONYMS = [
         ['1対1', '1on1', 'ワンオンワン', 'マンツーマン', '個別', '面談'],
@@ -1941,18 +2082,32 @@
       function applyFilters() {
         const query = searchInput.value.trim();
         const terms = normalize(query).split(/\s+/).filter(Boolean).map(expandTerm);
+        const sizeSet = Boolean(peopleSelect.value || timeSelect.value);
         let visibleCount = 0;
         let textMatchCount = 0;
+        let withoutSizeCount = 0;
         cards.forEach((card, i) => {
           const textMatch = terms.every((alts) => alts.some((t) => searchTexts[i].includes(t)));
           const sceneMatch = currentScene === 'all' || cardScenes[i].includes(currentScene);
-          card.hidden = !(textMatch && sceneMatch);
+          card.hidden = !(textMatch && sceneMatch && sizeMatch(i));
           if (textMatch) textMatchCount += 1;
+          if (textMatch && sceneMatch) withoutSizeCount += 1;
           if (!card.hidden) visibleCount += 1;
         });
+        [peopleSelect, timeSelect].forEach((select) => select.classList.toggle('is-set', Boolean(select.value)));
 
         if (visibleCount === 0) {
-          if (terms.length === 0) {
+          if (terms.length > 0 && textMatchCount === 0) {
+            emptyTitle.textContent = `「${query}」に合うツールは見つかりませんでした`;
+            emptyDesc.textContent = 'ことばを短くするか、漢字にかえて探してみてください。';
+            emptyButton.textContent = '検索をクリア';
+            emptyAction = 'clear-search';
+          } else if (sizeSet && withoutSizeCount > 0) {
+            emptyTitle.textContent = 'この人数・時間に合うツールがありません';
+            emptyDesc.textContent = `人数・時間の指定をはずすと ${withoutSizeCount}件 見つかります。`;
+            emptyButton.textContent = '人数・時間の指定をはずす';
+            emptyAction = 'clear-size';
+          } else if (terms.length === 0) {
             emptyTitle.textContent = 'このシーンのツールはまだありません';
             emptyDesc.textContent = '「すべて」に戻すと、ほかのツールを見られます。';
             emptyButton.textContent = 'すべてのツールを見る';
@@ -1973,7 +2128,7 @@
         emptyHints.hidden = !(visibleCount === 0 && emptyAction === 'clear-search');
 
         // 読み上げは常設の1か所だけ。同じ内容なら書き換えず、二重に読まれないようにする
-        const filtered = terms.length > 0 || currentScene !== 'all';
+        const filtered = terms.length > 0 || currentScene !== 'all' || sizeSet;
         let message = '';
         if (visibleCount === 0) message = emptyTitle.textContent + '。' + emptyDesc.textContent;
         else if (filtered) message = visibleCount + '件のツール';
@@ -2184,8 +2339,15 @@
         }
       });
 
+      [peopleSelect, timeSelect].forEach((select) => select.addEventListener('change', applyFilters));
+
       emptyButton.addEventListener('click', () => {
-        if (emptyAction === 'clear-search') {
+        if (emptyAction === 'clear-size') {
+          peopleSelect.value = '';
+          timeSelect.value = '';
+          applyFilters();
+          peopleSelect.focus();
+        } else if (emptyAction === 'clear-search') {
           searchInput.value = '';
           applyFilters();
           searchInput.focus();
