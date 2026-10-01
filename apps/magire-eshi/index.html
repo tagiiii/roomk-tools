@@ -47,7 +47,7 @@
       font-size: 11px; font-weight: 700; padding: 2px 6px;
       border-radius: 4px; background: var(--color-accent); color: #fff;
     }
-    .mgr-tag--me { background: var(--color-muted); }
+    .mgr-tag--me, .mgr-tag--role { background: var(--color-muted); }
     .mgr-tag--ok { background: var(--color-success); }
     .mgr-tag--fake { background: var(--color-primary); }
 
@@ -187,6 +187,14 @@
     }
     @keyframes mgr-spin { to { transform: rotate(360deg); } }
 
+    /* ── 待合室の設定 ── */
+    .mgr-check {
+      display: flex; align-items: center; gap: 10px; min-height: 44px;
+      font-size: 15px; font-weight: 500; color: var(--color-primary); cursor: pointer;
+    }
+    .mgr-check input { width: 20px; height: 20px; accent-color: var(--color-accent); flex-shrink: 0; }
+    .mgr-fineprint { font-size: 12px; color: var(--color-muted); line-height: 1.6; margin-top: 4px; }
+
     /* ── みんなにみせる画面 ── */
     .mgr-spec__header {
       display: flex; align-items: center; gap: 8px;
@@ -258,7 +266,7 @@
         <label class="form-label" for="host-nickname">ニックネーム（8文字以内）</label>
         <input class="form-input" id="host-nickname" type="text" maxlength="8" placeholder="例: たろう">
       </div>
-      <p style="font-size:13px;color:var(--color-muted);margin-bottom:12px">ルームを作った人は描かずに進める係になります</p>
+      <p style="font-size:13px;color:var(--color-muted);margin-bottom:12px">ルームを作った人は進める係になります（待合室で、自分も描いて遊ぶかを選べます）</p>
       <button class="btn btn-primary btn-full" onclick="hostCreateRoom()">
         <span class="material-symbols-rounded" aria-hidden="true">add_home</span>ルームを作成する
       </button>
@@ -334,10 +342,21 @@
     </div>
 
     <div id="w-host-start" class="mt-md" style="display:none">
+      <div class="card mb-md">
+        <p class="mgr-section-lbl">設定</p>
+        <label class="mgr-check">
+          <input type="checkbox" id="set-host-plays" onchange="onHostPlaysChange(this.checked)">
+          <span>自分もプレイヤーとして参加する</span>
+        </label>
+        <p class="mgr-fineprint">チェックすると、ホストも役わりカードを受け取って描き、投票します（まぎれ絵師になることもあります）</p>
+        <button type="button" class="btn btn-secondary btn-full mt-md" id="btn-open-watch-hostplays" style="display:none" onclick="openSpectatorWindow()">
+          <span class="material-symbols-rounded" aria-hidden="true">cast</span>みんなにみせる画面をひらく
+        </button>
+      </div>
       <button class="btn btn-primary btn-full" id="btn-start" onclick="hostStartGame()" disabled>
         <span class="material-symbols-rounded" aria-hidden="true">play_arrow</span>ゲームを始める
       </button>
-      <p style="font-size:13px;color:var(--color-muted);text-align:center;margin-top:8px">ホストのほかに3人以上で始められます</p>
+      <p id="w-start-note" style="font-size:13px;color:var(--color-muted);text-align:center;margin-top:8px">ホストのほかに3人以上で始められます</p>
       <button type="button" class="btn btn-secondary btn-full mt-md" id="btn-open-watch-waiting" onclick="openSpectatorWindow()">
         <span class="material-symbols-rounded" aria-hidden="true">cast</span>みんなにみせる画面をひらく
       </button>
@@ -368,6 +387,7 @@
 
     <!-- ホスト用 -->
     <div id="rv-host-area" style="display:none">
+      <div id="rv-host-secrets">
       <p style="font-size:13px;color:var(--color-muted);margin-bottom:10px">画面共有中は閉じたまま進められます。見るときだけタップ。</p>
       <details class="mgr-secret" id="rv-secret-topic">
         <summary><span class="material-symbols-rounded" aria-hidden="true">visibility</span>お題（タップで見る）</summary>
@@ -377,6 +397,7 @@
         <summary><span class="material-symbols-rounded" aria-hidden="true">visibility</span>まぎれ絵師（タップで見る）</summary>
         <div class="mgr-secret__body" id="rv-fake-body"></div>
       </details>
+      </div>
       <div class="form-group mt-md">
         <label class="form-label" for="rv-draw-minutes">描く時間（1人の手番ごと）</label>
         <select class="form-select" id="rv-draw-minutes">
@@ -440,7 +461,7 @@
       <button class="btn btn-secondary btn-full" id="btn-skip-turn" onclick="hostSkipTurn()">
         <span class="material-symbols-rounded" aria-hidden="true">skip_next</span>この人の番をスキップ
       </button>
-      <details class="mgr-secret">
+      <details class="mgr-secret" id="dr-host-secret">
         <summary><span class="material-symbols-rounded" aria-hidden="true">visibility</span>お題とまぎれ絵師（タップで見る）</summary>
         <div class="mgr-secret__body" id="dr-secret-body"></div>
       </details>
@@ -468,7 +489,7 @@
     <div class="mgr-center" id="di-topic-chip-area" style="margin-bottom:16px"></div>
 
     <div id="di-host-area" style="display:none">
-      <details class="mgr-secret">
+      <details class="mgr-secret" id="di-host-secret">
         <summary><span class="material-symbols-rounded" aria-hidden="true">visibility</span>お題とまぎれ絵師（タップで見る）</summary>
         <div class="mgr-secret__body" id="di-secret-body"></div>
       </details>
@@ -632,7 +653,7 @@ const ORPHAN_TTL_MS = 2 * 60 * 1000;
 const ROOMS_PATH = 'magire_rooms';
 const CANVAS_W = 600;
 const CANVAS_H = 450;
-const MIN_GUESTS = 3;
+const MIN_PLAYERS = 3; // 遊ぶ人だけで数える（ホストが進行だけならゲスト3人）
 const LAPS = 2; // 全員が2周かいたら終了
 const SPEC_CODE_RE = /^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{6}$/;
 const BASE_TITLE = document.title;
@@ -649,6 +670,10 @@ const STATUS = {
 };
 
 const PALETTE = ['#E4572E', '#2E7D8C', '#6B3FA0', '#1F6E3C', '#D81B60', '#E8A200', '#3B6FD4', '#7A5230'];
+// ホストも遊ぶときの上限（描く色がかぶらない人数）。進行だけのときは従来どおり上限のチェックをしない
+const MAX_PLAYERS = PALETTE.length;
+// ホストも遊ぶときの逆転当ての選択肢の数（同じカテゴリから。各カテゴリ30件なので常に足りる）
+const REVERSAL_CHOICES = 6;
 
 // ── お題データ（180個・カテゴリ付き） ──
 const TOPICS = [
@@ -800,9 +825,10 @@ function updateGuestControls() {
   const me = state.lastRoom?.players?.[state.nickname];
   document.getElementById('btn-confirm').disabled = blocked || !!state.confirmAction || !!me?.confirmed;
   document.getElementById('btn-stroke-ok').disabled = blocked || !!state.strokeSubmitting;
-  document.querySelectorAll('.mgr-vote-btn').forEach(btn => { btn.disabled = blocked || !!state.voteAction || !!me?.vote; });
+  document.querySelectorAll('#vt-btns .mgr-vote-btn').forEach(btn => { btn.disabled = blocked || !!state.voteAction || !!me?.vote; });
   const guess = document.getElementById('btn-guess');
   if (guess) guess.disabled = blocked || !!state.guessAction;
+  document.querySelectorAll('.mgr-choice-btn').forEach(btn => { btn.disabled = blocked || !!state.guessAction; });
 }
 function discardPendingStroke() {
   state.isPointerDrawing = false; state.currentPoints = []; state.pendingStroke = null;
@@ -935,6 +961,33 @@ function validNick(v, reportError = showMsg) {
 function guestNames(players) {
   return Object.keys(players || {}).filter(n => !players[n].isHost);
 }
+// ホストもプレイヤーとして遊ぶか（待合室で選ぶ。2026-10-01）。
+// 初期値は進行だけ。キーがない部屋（旧版が作った部屋）も従来どおり進行だけとして扱う
+function hostPlaysOf(room) {
+  return !!(room && room.settings && room.settings.hostPlays === true);
+}
+// 遊ぶ人（役わり・手番・投票・集計の対象）。ホストが進行だけならゲストだけ
+function playingNames(room) {
+  const players = (room && room.players) || {};
+  return hostPlaysOf(room) ? Object.keys(players) : guestNames(players);
+}
+function isPlaying(room, nick) {
+  return !!nick && !!room?.players?.[nick] && playingNames(room).includes(nick);
+}
+// 開始・次ラウンドの人数の可否（遊ぶ人だけで数える）
+function playerCountIssue(room) {
+  const count = playingNames(room).length;
+  if (count < MIN_PLAYERS) return 'too_few';
+  if (hostPlaysOf(room) && count > MAX_PLAYERS) return 'too_many';
+  return null;
+}
+function startRuleText(hostPlays) {
+  return hostPlays ? `${MIN_PLAYERS}人以上で始められます（${MAX_PLAYERS}人まで）` : `ホストのほかに${MIN_PLAYERS}人以上で始められます`;
+}
+function countIssueMsg(issue, hostPlays, verb) {
+  if (issue === 'too_many') return `遊ぶ人は${MAX_PLAYERS}人までです`;
+  return hostPlays ? `${MIN_PLAYERS}人以上で${verb}` : `ホストのほかに${MIN_PLAYERS}人以上で${verb}`;
+}
 
 // ── ホスト: ルーム作成 ──
 async function hostCreateRoom() {
@@ -952,6 +1005,7 @@ async function hostCreateRoom() {
       status: STATUS.WAITING,
       round: 0,
       drawMinutes: 0,
+      settings: { hostPlays: false },
       players: {
         [nickname]: { isHost: true, confirmed: false, vote: null },
       },
@@ -1051,8 +1105,8 @@ async function guestJoin() {
 // ── ラウンドの初期データを作る（transaction 内で使用） ──
 function buildRoundGame(room) {
   const players = room.players || {};
-  const guests = guestNames(players);
-  if (guests.length < MIN_GUESTS) return null;
+  const guests = playingNames(room); // ホストも遊ぶならホストも描く・まぎれ絵師になりうる
+  if (playerCountIssue(room)) return null;
 
   const used = Array.isArray(room.usedTopics) ? room.usedTopics : [];
   let available = TOPICS.map((_, i) => i).filter(i => !used.includes(i));
@@ -1093,17 +1147,20 @@ function buildRoundGame(room) {
 async function hostStartGame() {
   if (state.role !== 'host') return;
   const action = captureAction();
-  let abortReason = null;
+  let abortReason = null, hostPlays = hostPlaysOf(state.lastRoom);
   const { committed } = await action.ref.transaction((room) => {
     if (!canApplyAction(action, room, STATUS.WAITING)) { abortReason = 'invalid_state'; return; }
     if (guestNames(room.players).some(nick => !playerConnected(room.players[nick]))) { abortReason = 'disconnected'; return; }
+    hostPlays = hostPlaysOf(room);
+    const issue = playerCountIssue(room);
+    if (issue) { abortReason = issue; return; }
     const built = buildRoundGame(room);
     if (!built) { abortReason = 'too_few'; return; }
     abortReason = null;
     return { ...room, ...built, status: STATUS.REVEAL, round: 1 };
   }, undefined, false);
-  if (!committed && abortReason === 'too_few') {
-    showMsg(`ホストのほかに${MIN_GUESTS}人以上で始められます`);
+  if (!committed && (abortReason === 'too_few' || abortReason === 'too_many')) {
+    showMsg(countIssueMsg(abortReason, hostPlays, '始められます'));
   }
   if (!committed && abortReason === 'disconnected') showMsg('参加者の再接続を待っています');
 }
@@ -1112,19 +1169,37 @@ async function hostStartGame() {
 async function hostNextRound() {
   if (state.role !== 'host') return;
   const action = captureAction();
-  let abortReason = null;
+  let abortReason = null, hostPlays = hostPlaysOf(state.lastRoom);
   const { committed } = await action.ref.transaction((room) => {
     if (!canApplyAction(action, room, STATUS.RESULT)) { abortReason = 'invalid_state'; return; }
     if (guestNames(room.players).some(nick => !playerConnected(room.players[nick]))) { abortReason = 'disconnected'; return; }
+    hostPlays = hostPlaysOf(room);
+    const issue = playerCountIssue(room);
+    if (issue) { abortReason = issue; return; }
     const built = buildRoundGame(room);
     if (!built) { abortReason = 'too_few'; return; }
     abortReason = null;
     return { ...room, ...built, status: STATUS.REVEAL, round: (room.round || 1) + 1 };
   }, undefined, false);
-  if (!committed && abortReason === 'too_few') {
-    showMsg(`ホストのほかに${MIN_GUESTS}人以上で続けられます`);
+  if (!committed && (abortReason === 'too_few' || abortReason === 'too_many')) {
+    showMsg(countIssueMsg(abortReason, hostPlays, '続けられます'));
   }
   if (!committed && abortReason === 'disconnected') showMsg('参加者の再接続を待っています');
+}
+
+// ── 待合室の設定: ホストもプレイヤーとして参加するか（開始後は変えない） ──
+async function onHostPlaysChange(checked) {
+  if (state.role !== 'host' || !state.roomRef) return;
+  const action = captureAction();
+  const { committed } = await action.ref.transaction(room => {
+    if (!canApplyAction(action, room, STATUS.WAITING)) return;
+    return { ...room, settings: { ...(room.settings || {}), hostPlays: !!checked } };
+  }).catch(error => {
+    console.error('[magire-eshi] onHostPlaysChange failed', error);
+    return { committed: false };
+  });
+  if (!committed && actionCurrent(action)) showMsg('設定を変えられませんでした');
+  if (actionCurrent(action) && state.lastRoom?.status === STATUS.WAITING) handleWaiting(state.lastRoom, state.lastRoom.players || {});
 }
 
 // ── 役わりカード ──
@@ -1156,15 +1231,15 @@ function renderRoleCard() {
 }
 
 async function confirmRole() {
-  await guestAction('confirmAction', STATUS.REVEAL, (room, action) => {
+  await playerAction('confirmAction', STATUS.REVEAL, (room, action) => {
     const player = room.players[action.nickname];
-    if (player.confirmed) return;
+    if (player.confirmed || !isPlaying(room, action.nickname)) return;
     return { ...room, players: { ...room.players, [action.nickname]: { ...player, confirmed: true } } };
   });
 }
 
-async function guestAction(key, phase, update, action = captureAction()) {
-  if (state.role !== 'guest' || state[key] || !actionCurrent(action) || !guestCanAct()) return;
+async function playerAction(key, phase, update, action = captureAction()) {
+  if (!isPlaying(state.lastRoom, state.nickname) || state[key] || !actionCurrent(action) || !guestCanAct()) return;
   state[key] = action;
   updateGuestControls();
   try {
@@ -1193,8 +1268,8 @@ async function hostStartDrawing() {
   if (!Number.isInteger(minutes) || minutes < 0 || minutes > 5) return;
   await action.ref.transaction((room) => {
     if (!canApplyAction(action, room, STATUS.REVEAL)) return;
-    const guests = guestNames(room.players);
-    if (guests.length < MIN_GUESTS || guests.some(nick => !room.players[nick].confirmed) || !room.players[room.game?.fakeArtist]) return;
+    const guests = playingNames(room);
+    if (guests.length < MIN_PLAYERS || guests.some(nick => !room.players[nick].confirmed) || !room.players[room.game?.fakeArtist]) return;
     return { ...room, status: STATUS.DRAWING, drawMinutes: minutes,
       game: { ...room.game, turnMinutes: minutes || null,
         turnEndsAt: minutes ? getEstimatedServerNow() + minutes * 60 * 1000 : null } };
@@ -1291,7 +1366,7 @@ function canDrawNow() {
   if (!guestCanAct() || state.expectedRoomRemoval) return false;
   const room = state.lastRoom;
   if (!room || room.status !== STATUS.DRAWING || !room.game) return false;
-  if (state.role === 'host') return false;
+  if (!isPlaying(room, state.nickname)) return false;
   if (state.pendingStroke || state.strokeSubmitting) return false;
   const g = room.game;
   const order = g.drawOrder || [];
@@ -1410,9 +1485,9 @@ function retryStroke() {
 
 // ── 投票 ──
 async function submitVote(target, action = captureAction()) {
-  await guestAction('voteAction', STATUS.VOTING, (room, captured) => {
+  await playerAction('voteAction', STATUS.VOTING, (room, captured) => {
     const player = room.players[captured.nickname];
-    if (player.vote || target === captured.nickname || !room.players[target] || room.players[target].isHost) return;
+    if (player.vote || target === captured.nickname || !isPlaying(room, captured.nickname) || !isPlaying(room, target)) return;
     return { ...room, players: { ...room.players, [captured.nickname]: { ...player, vote: target } } };
   }, action);
 }
@@ -1428,7 +1503,7 @@ async function computeResult() {
     const players = room.players || {};
     const fake = room.game.fakeArtist;
     const counts = {};
-    guestNames(players).forEach((nick) => {
+    playingNames(room).forEach((nick) => {
       const v = players[nick].vote;
       if (v) counts[v] = (counts[v] || 0) + 1;
     });
@@ -1443,20 +1518,24 @@ async function computeResult() {
       const caught = maxV > 0 && tops.length === 1 && tops[0] === fake;
       outcome = caught ? 'caught' : 'escaped';
     }
-    return {
-      ...room,
-      status: STATUS.RESULT,
-      game: {
-        ...room.game,
-        result: { outcome, voteCounts: counts, reversalGuess: null, reversalJudge: null },
-      },
-    };
+    const result = { outcome, voteCounts: counts, reversalGuess: null, reversalJudge: null };
+    // ホストも遊ぶときは判定する人がいないので、逆転当ては同じカテゴリからの選択式（自動で正誤）
+    if (outcome === 'caught' && hostPlaysOf(room)) result.reversalChoices = buildReversalChoices(room.game);
+    return { ...room, status: STATUS.RESULT, game: { ...room.game, result } };
   });
   if (!committed && state.resultTriggered === action) state.resultTriggered = false;
   } catch (error) {
     if (state.resultTriggered === action) state.resultTriggered = false;
     throw error;
   }
+}
+
+function buildReversalChoices(game) {
+  const others = shuffleArr(TOPICS.filter(t => t.c === game.topicCategory && t.w !== game.topicWord).map(t => t.w));
+  return shuffleArr([game.topicWord, ...others.slice(0, REVERSAL_CHOICES - 1)]);
+}
+function reversalChoicesOf(result) {
+  return Array.isArray(result?.reversalChoices) && result.reversalChoices.length ? result.reversalChoices : null;
 }
 
 async function hostCloseVoting() {
@@ -1494,10 +1573,24 @@ async function submitReversalGuess() {
   const text = input.value.trim();
   if (!text) { showMsg('お題だと思う言葉を入力してください'); return; }
   if (text.length > 20) { showMsg('20文字以内で入力してください'); return; }
-  await guestAction('guessAction', STATUS.RESULT, (room, action) => {
+  await playerAction('guessAction', STATUS.RESULT, (room, action) => {
+    const game = room.game, result = game?.result;
+    if (game?.fakeArtist !== action.nickname || result?.outcome !== 'caught' || result.reversalGuess || result.reversalJudge
+      || reversalChoicesOf(result)) return;
+    return { ...room, game: { ...game, result: { ...result, reversalGuess: text } } };
+  });
+}
+
+// 選択式: 選んだ言葉とお題を同じ transaction で照らし合わせて、答えと判定をいっしょに確定する
+async function submitReversalChoice(index) {
+  const word = reversalChoicesOf(state.lastRoom?.game?.result)?.[index];
+  if (typeof word !== 'string') return;
+  await playerAction('guessAction', STATUS.RESULT, (room, action) => {
     const game = room.game, result = game?.result;
     if (game?.fakeArtist !== action.nickname || result?.outcome !== 'caught' || result.reversalGuess || result.reversalJudge) return;
-    return { ...room, game: { ...game, result: { ...result, reversalGuess: text } } };
+    if (!reversalChoicesOf(result)?.includes(word)) return;
+    return { ...room, game: { ...game, result: { ...result, reversalGuess: word,
+      reversalJudge: word === game.topicWord ? 'win' : 'lose' } } };
   });
 }
 
@@ -1507,7 +1600,7 @@ async function judgeReversal(win) {
   await action.ref.transaction(room => {
     if (!canApplyAction(action, room, STATUS.RESULT)) return;
     const result = room.game?.result;
-    if (result?.outcome !== 'caught' || !result.reversalGuess || result.reversalJudge) return;
+    if (result?.outcome !== 'caught' || !result.reversalGuess || result.reversalJudge || reversalChoicesOf(result)) return;
     return { ...room, game: { ...room.game, result: { ...result, reversalJudge: win ? 'win' : 'lose' } } };
   });
 }
@@ -1671,12 +1764,13 @@ function handleRoom(room) {
 }
 
 // ── 共通描画パーツ ──
-function renderPlayerList(id, players, statusFn) {
+function renderPlayerList(id, players, statusFn, showRole = false) {
   const ul = document.getElementById(id);
   if (!ul) return;
+  const moderator = showRole && !hostPlaysOf(state.lastRoom);
   ul.innerHTML = Object.entries(players).map(([nick, p]) => {
     const meTag = nick === state.nickname ? '<span class="mgr-tag mgr-tag--me">あなた</span>' : '';
-    const hostTag = p.isHost ? '<span class="mgr-tag">ホスト</span>' : '';
+    const hostTag = p.isHost ? '<span class="mgr-tag">ホスト</span>' + (moderator ? '<span class="mgr-tag mgr-tag--role">進行役</span>' : '') : '';
     const connectionTag = playerConnected(p) ? '' : '<span class="mgr-tag">再接続待ち</span>';
     const status = statusFn ? statusFn(nick, p) : '';
     return `<li class="mgr-player-item">
@@ -1731,25 +1825,38 @@ function handleWaiting(room, players) {
   if (state.currentScreen !== 'waiting') showScreen('waiting');
   const isHost = state.role === 'host';
   const guests = guestNames(players);
+  const hostPlays = hostPlaysOf(room);
+  const count = playingNames(room).length; // 遊ぶ人だけで数える
 
   document.getElementById('w-host-panel').style.display = isHost ? 'block' : 'none';
   document.getElementById('w-host-start').style.display = isHost ? 'block' : 'none';
   if (isHost) {
     document.getElementById('w-room-code').textContent = state.roomCode;
-    document.getElementById('btn-start').disabled = guests.length < MIN_GUESTS || guests.some(nick => !playerConnected(players[nick]));
+    document.getElementById('set-host-plays').checked = hostPlays;
+    // 遊ぶときはホストのタブを共有しないので、みんなにみせる画面の入口を設定のすぐ下に出す
+    document.getElementById('btn-open-watch-hostplays').style.display = hostPlays ? 'flex' : 'none';
+    document.getElementById('btn-open-watch-waiting').style.display = hostPlays ? 'none' : 'flex';
+    const issue = playerCountIssue(room);
+    document.getElementById('btn-start').disabled = !!issue || guests.some(nick => !playerConnected(players[nick]));
+    let note = startRuleText(hostPlays);
+    if (issue === 'too_few') note += `。あと${MIN_PLAYERS - count}人必要です`;
+    else if (issue === 'too_many') note = `遊ぶ人は${MAX_PLAYERS}人までです（いま${count}人）`;
+    document.getElementById('w-start-note').textContent = note;
   }
-  document.getElementById('w-count').textContent = `${Object.keys(players).length}人`;
-  renderPlayerList('w-player-list', players, null);
+  document.getElementById('w-count').textContent = hostPlays ? `${count}人` : `遊ぶ人 ${count}人`;
+  renderPlayerList('w-player-list', players, null, true);
 }
 
 // ── お題くばり ──
 function handleReveal(room, players) {
   const isHost = state.role === 'host';
+  const plays = isPlaying(room, state.nickname);
+  const showSecrets = isHost && !hostPlaysOf(room); // 進行だけのホストにだけ、お題とまぎれ絵師を折りたたみで出す
   const g = room.game || {};
   if (state.currentScreen !== 'reveal') {
-    document.getElementById('rv-guest-area').style.display = isHost ? 'none' : 'block';
+    document.getElementById('rv-guest-area').style.display = plays ? 'block' : 'none';
     document.getElementById('rv-host-area').style.display = isHost ? 'block' : 'none';
-    if (!isHost) {
+    if (plays) {
       const card = document.getElementById('rv-card');
       card.classList.remove('mgr-role-card--open');
       card.innerHTML = '<span class="material-symbols-rounded" aria-hidden="true" style="font-size:40px;opacity:.7">touch_app</span>'
@@ -1768,26 +1875,27 @@ function handleReveal(room, players) {
     showScreen('reveal');
     if (isHost) document.getElementById('rv-draw-minutes').value = String(room.drawMinutes || 0);
   }
-  if (state.roleRevealed && !isHost) renderRoleCard();
-  if (!isHost) document.getElementById('btn-confirm').disabled = !!players[state.nickname]?.confirmed || !!state.confirmAction || !guestCanAct();
+  if (state.roleRevealed && plays) renderRoleCard();
+  if (plays) document.getElementById('btn-confirm').disabled = !!players[state.nickname]?.confirmed || !!state.confirmAction || !guestCanAct();
 
   if (isHost) {
-    document.getElementById('rv-topic-body').textContent = `${g.topicWord || ''}（${g.topicCategory || ''}）`;
-    document.getElementById('rv-fake-body').textContent = g.fakeArtist || '';
+    document.getElementById('rv-host-secrets').style.display = showSecrets ? 'block' : 'none';
+    document.getElementById('rv-topic-body').textContent = showSecrets ? `${g.topicWord || ''}（${g.topicCategory || ''}）` : '';
+    document.getElementById('rv-fake-body').textContent = showSecrets ? g.fakeArtist || '' : '';
     document.getElementById('rv-host-banner').innerHTML = hostFakeGoneBannerHtml(g, players);
   }
 
-  const guests = guestNames(players);
+  const guests = playingNames(room);
   const confirmedCount = guests.filter(n => players[n].confirmed).length;
   document.getElementById('rv-count').textContent = `${confirmedCount} / ${guests.length} 人`;
   renderPlayerList('rv-player-list', players, (nick, p) => {
-    if (p.isHost) return '<span style="font-size:13px;color:var(--color-muted)">進める係</span>';
+    if (!guests.includes(nick)) return '<span style="font-size:13px;color:var(--color-muted)">進める係</span>';
     return p.confirmed
       ? '<span class="mgr-tag mgr-tag--ok">確認済み</span>'
       : '<span style="font-size:13px;color:var(--color-muted)">確認中</span>';
   });
   if (isHost) {
-    const allConfirmed = guests.length >= MIN_GUESTS && guests.every(n => players[n].confirmed);
+    const allConfirmed = guests.length >= MIN_PLAYERS && guests.every(n => players[n].confirmed);
     document.getElementById('btn-start-drawing').disabled = !allConfirmed || !players[g.fakeArtist];
   }
 }
@@ -1802,7 +1910,8 @@ function updateDrawBar(room) {
   const confirmBtns = document.getElementById('dr-confirm-btns');
   const wrap = document.getElementById('dr-canvas-wrap');
   const drawer = ti < total ? order[ti % order.length] : null;
-  const isMyTurn = drawer === state.nickname && state.role !== 'host';
+  const plays = isPlaying(room, state.nickname);
+  const isMyTurn = drawer === state.nickname && plays;
 
   confirmBtns.style.display = 'none';
   wrap.classList.remove('mgr-canvas--active');
@@ -1819,7 +1928,7 @@ function updateDrawBar(room) {
     hint.textContent = `${drawer || ''}さんの再接続を待っています`;
     return;
   }
-  if (state.role === 'host') {
+  if (!plays) {
     hint.textContent = `いま描くのは${drawer || ''}さん`;
     return;
   }
@@ -1882,10 +1991,12 @@ function handleDrawing(room, players) {
   const ti = g.turnIndex || 0;
   const total = order.length * LAPS;
   const isHost = state.role === 'host';
+  const showSecrets = isHost && !hostPlaysOf(room);
 
   if (state.currentScreen !== 'drawing') {
     document.getElementById('dr-host-area').style.display = isHost ? 'block' : 'none';
-    document.getElementById('dr-topic-chip-area').innerHTML = isHost ? '' : topicChipHtml(g);
+    document.getElementById('dr-host-secret').style.display = showSecrets ? 'block' : 'none';
+    document.getElementById('dr-topic-chip-area').innerHTML = isPlaying(room, state.nickname) ? topicChipHtml(g) : '';
     showScreen('drawing');
     state.lastRenderKey = '';
   }
@@ -1914,8 +2025,8 @@ function handleDrawing(room, players) {
   }
 
   if (isHost) {
-    document.getElementById('dr-secret-body').textContent =
-      `お題「${g.topicWord || ''}」（${g.topicCategory || ''}）／まぎれ絵師: ${g.fakeArtist || ''}`;
+    document.getElementById('dr-secret-body').textContent = showSecrets
+      ? `お題「${g.topicWord || ''}」（${g.topicCategory || ''}）／まぎれ絵師: ${g.fakeArtist || ''}` : '';
     document.getElementById('dr-host-banner').innerHTML = hostFakeGoneBannerHtml(g, players);
     document.getElementById('btn-skip-turn').disabled = ti >= total || turnExpired(g) || !!state.skipSubmitting;
 
@@ -1939,16 +2050,18 @@ function handleDrawing(room, players) {
 function handleDiscussion(room, players) {
   const g = room.game || {};
   const isHost = state.role === 'host';
+  const showSecrets = isHost && !hostPlaysOf(room);
   if (state.currentScreen !== 'discussion') {
     document.getElementById('di-host-area').style.display = isHost ? 'block' : 'none';
-    document.getElementById('di-topic-chip-area').innerHTML = isHost ? '' : topicChipHtml(g);
+    document.getElementById('di-host-secret').style.display = showSecrets ? 'block' : 'none';
+    document.getElementById('di-topic-chip-area').innerHTML = isPlaying(room, state.nickname) ? topicChipHtml(g) : '';
     showScreen('discussion');
   }
   renderCanvas('cv-disc', sortedStrokes(g), null);
   renderLegend('di-legend', g, players);
   if (isHost) {
-    document.getElementById('di-secret-body').textContent =
-      `お題「${g.topicWord || ''}」（${g.topicCategory || ''}）／まぎれ絵師: ${g.fakeArtist || ''}`;
+    document.getElementById('di-secret-body').textContent = showSecrets
+      ? `お題「${g.topicWord || ''}」（${g.topicCategory || ''}）／まぎれ絵師: ${g.fakeArtist || ''}` : '';
     document.getElementById('di-host-banner').innerHTML = hostFakeGoneBannerHtml(g, players);
   }
 }
@@ -1957,13 +2070,14 @@ function handleDiscussion(room, players) {
 function handleVoting(room, players) {
   const g = room.game || {};
   const isHost = state.role === 'host';
-  const guests = guestNames(players);
+  const guests = playingNames(room); // 投票する人・される人（ホストも遊ぶならホストも）
+  const plays = guests.includes(state.nickname);
 
   if (state.currentScreen !== 'voting') {
-    document.getElementById('vt-desc').style.display = isHost ? 'none' : 'block';
+    document.getElementById('vt-desc').style.display = plays ? 'block' : 'none';
     const wrap = document.getElementById('vt-btns');
     wrap.innerHTML = '';
-    if (!isHost) {
+    if (plays) {
       guests.forEach((nick) => {
         if (nick === state.nickname) return;
         const btn = document.createElement('button');
@@ -1983,14 +2097,14 @@ function handleVoting(room, players) {
     // 再接続時: すでに投票済みなら反映
     const me = players[state.nickname];
     if (me && me.vote) state.myVote = me.vote;
-    wrap.style.display = state.myVote || isHost ? 'none' : 'block';
+    wrap.style.display = state.myVote || !plays ? 'none' : 'block';
     document.getElementById('vt-voted-msg').style.display = state.myVote ? 'block' : 'none';
     showScreen('voting');
   }
 
   renderCanvas('cv-vote', sortedStrokes(g), null);
   state.myVote = players[state.nickname]?.vote || null;
-  document.getElementById('vt-btns').style.display = state.myVote || isHost ? 'none' : 'block';
+  document.getElementById('vt-btns').style.display = state.myVote || !plays ? 'none' : 'block';
   document.getElementById('vt-voted-msg').style.display = state.myVote ? 'block' : 'none';
 
   const voted = guests.filter(n => players[n].vote != null).length;
@@ -2064,10 +2178,10 @@ function resultGuessBoxHtml(g, result) {
     <p class="mgr-guess-box__text">「${esc(result.reversalGuess)}」</p>
   </div>`;
 }
-function resultVotesHtml(g, players, result) {
+function resultVotesHtml(g, room, result) {
   const counts = result.voteCounts || {};
-  if (result.outcome === 'aborted' || !Object.keys(players).length) return '';
-  const sorted = [...guestNames(players)].sort((a, b) => (counts[b] || 0) - (counts[a] || 0));
+  if (result.outcome === 'aborted' || !Object.keys(room.players || {}).length) return '';
+  const sorted = [...playingNames(room)].sort((a, b) => (counts[b] || 0) - (counts[a] || 0));
   const rows = sorted.map((nick) => {
     const fakeTag = nick === g.fakeArtist ? ' <span class="mgr-tag mgr-tag--fake">まぎれ絵師</span>' : '';
     const meTag = nick === state.nickname ? ' <span class="mgr-tag mgr-tag--me">あなた</span>' : '';
@@ -2085,6 +2199,8 @@ function handleResult(room, players) {
   const result = g.result || {};
   const isHost = state.role === 'host';
   const isFake = g.fakeArtist === state.nickname;
+  const plays = isPlaying(room, state.nickname);
+  const choices = reversalChoicesOf(result);
 
   if (state.currentScreen !== 'result') showScreen('result');
   renderCanvas('cv-result', sortedStrokes(g), null);
@@ -2109,10 +2225,10 @@ function handleResult(room, players) {
   //   ホスト画面は画面共有されうるので折りたたみ（タップで見る）にする
   if (finalPhase) {
     parts.push(resultTopicCardHtml(g));
-  } else if (isHost) {
+  } else if (isHost && !plays) {
     parts.push(`<details class="mgr-secret"><summary><span class="material-symbols-rounded" aria-hidden="true">visibility</span>お題（タップで見る）</summary>
       <div class="mgr-secret__body">「${esc(g.topicWord || '')}」（${esc(g.topicCategory || '')}）</div></details>`);
-  } else if (!isFake) {
+  } else if (plays && !isFake) {
     parts.push(`<div class="card mgr-center" style="margin-bottom:12px">
       <p class="mgr-section-lbl">お題</p>
       <p style="font-size:24px;font-weight:700;color:var(--color-primary)">「${esc(g.topicWord || '')}」</p>
@@ -2122,7 +2238,15 @@ function handleResult(room, players) {
   // 逆転当てフェーズ
   if (outcome === 'caught' && !judged) {
     if (!result.reversalGuess) {
-      if (isFake) {
+      if (isFake && choices) {
+        parts.push(`<div class="card" style="margin-bottom:12px">
+          <p style="font-weight:700;margin-bottom:8px">逆転のチャンス！お題はどれかな？</p>
+          <p style="font-size:13px;color:var(--color-muted);margin-bottom:8px">ヒント → カテゴリ: ${esc(g.topicCategory || '')}</p>
+          ${choices.map((word, i) => `<button type="button" class="mgr-vote-btn mgr-choice-btn" onclick="submitReversalChoice(${i})">
+            <span>${esc(word)}</span><span class="material-symbols-rounded" aria-hidden="true" style="color:var(--color-muted)">arrow_forward_ios</span>
+          </button>`).join('')}
+        </div>`);
+      } else if (isFake) {
         parts.push(`<div class="card" style="margin-bottom:12px">
           <p style="font-weight:700;margin-bottom:8px">逆転のチャンス！お題を当ててみよう</p>
           <p style="font-size:13px;color:var(--color-muted);margin-bottom:8px">ヒント → カテゴリ: ${esc(g.topicCategory || '')}</p>
@@ -2162,7 +2286,7 @@ function handleResult(room, players) {
   }
 
   // 投票結果
-  parts.push(resultVotesHtml(g, players, result));
+  parts.push(resultVotesHtml(g, room, result));
 
   const bodyEl = document.getElementById('rs-body');
   // 入力中のテキストを消さないよう、内容が変わるときだけ書き換える
@@ -2174,7 +2298,7 @@ function handleResult(room, players) {
 
   document.getElementById('rs-host-actions').style.display = (isHost && finalPhase) ? 'block' : 'none';
   document.getElementById('rs-host-watch').style.display = isHost ? 'block' : 'none';
-  document.getElementById('btn-next-round').disabled = guestNames(players).length < MIN_GUESTS
+  document.getElementById('btn-next-round').disabled = !!playerCountIssue(room)
     || guestNames(players).some(nick => !playerConnected(players[nick]));
 }
 
@@ -2423,9 +2547,9 @@ function specTick() {
   timer.classList.toggle('mgr-draw-timer--ended', seconds === 0);
 }
 
-function specPlayerListHtml(players, statusFn) {
+function specPlayerListHtml(players, statusFn, moderator = false) {
   return '<ul class="mgr-player-list">' + Object.entries(players).map(([nick, p]) => {
-    const hostTag = p.isHost ? '<span class="mgr-tag">ホスト</span>' : '';
+    const hostTag = p.isHost ? '<span class="mgr-tag">ホスト</span>' + (moderator ? '<span class="mgr-tag mgr-tag--role">進行役</span>' : '') : '';
     const connectionTag = playerConnected(p) ? '' : '<span class="mgr-tag">再接続待ち</span>';
     return `<li class="mgr-player-item">
       <div class="mgr-player-item__name">${esc(nick)}${hostTag}${connectionTag}</div>
@@ -2460,21 +2584,21 @@ function renderSpecWaiting(room, players) {
         <strong style="font-size:16px">参加者</strong>
         <span style="font-size:14px;color:var(--color-muted)">${Object.keys(players).length}人</span>
       </div>
-      ${specPlayerListHtml(players, null)}
+      ${specPlayerListHtml(players, null, !hostPlaysOf(room))}
     </div>`);
 }
 
 // 役わりは出さない（だれがまぎれ絵師か・お題は書かない）
 function renderSpecReveal(room, players) {
   showSpecCanvas(null);
-  const guests = guestNames(players);
+  const guests = playingNames(room);
   const confirmed = guests.filter(n => players[n].confirmed).length;
   setSpecHtml('spec-top', `<h2 class="mgr-center">準備をしよう</h2>
     <p class="mgr-spec__status">みんな自分の役わりカードを見ています</p>`);
   setSpecHtml('spec-content', `<div class="card">
       <p class="mgr-section-lbl">確認状況 ${confirmed} / ${guests.length} 人</p>
       ${specPlayerListHtml(players, (nick, p) => {
-        if (p.isHost) return '<span style="font-size:13px;color:var(--color-muted)">進める係</span>';
+        if (!guests.includes(nick)) return '<span style="font-size:13px;color:var(--color-muted)">進める係</span>';
         return p.confirmed ? '<span class="mgr-tag mgr-tag--ok">確認済み</span>'
           : '<span style="font-size:13px;color:var(--color-muted)">確認中</span>';
       })}
@@ -2512,7 +2636,7 @@ function renderSpecDiscussion(room, players) {
 
 // だれに投票したかは開票まで出さない（投票したかどうかだけ）
 function renderSpecVoting(room, players) {
-  const guests = guestNames(players);
+  const guests = playingNames(room);
   const voted = guests.filter(n => players[n].vote != null).length;
   setSpecHtml('spec-top', `<h2 class="mgr-center">投票</h2>
     <p class="mgr-spec__status">まぎれ絵師だと思う人に投票しよう</p>
@@ -2533,6 +2657,7 @@ function renderSpecResult(room, players) {
   if (resultIsFinal(result)) parts.push(resultTopicCardHtml(g));
   if (result.outcome === 'caught' && !result.reversalJudge) {
     if (!result.reversalGuess) {
+      // 選択式でも選択肢は出さない（お題が含まれるため）
       parts.push(`<div class="card mgr-center" style="margin-bottom:12px">
         <p style="font-size:14px;color:var(--color-muted)">${esc(g.fakeArtist || '')}さんがお題を当てようとしています…</p>
       </div>`);
@@ -2543,7 +2668,7 @@ function renderSpecResult(room, players) {
   } else if (result.outcome === 'caught' && result.reversalGuess) {
     parts.push(resultGuessBoxHtml(g, result));
   }
-  parts.push(resultVotesHtml(g, players, result));
+  parts.push(resultVotesHtml(g, room, result));
   setSpecHtml('spec-top', resultBannerHtml(result));
   setSpecHtml('spec-content', parts.join(''));
   showSpecCanvas(room, players);
@@ -2583,6 +2708,7 @@ function renderSpecDone() {
         'ホストが「ルームを作る」からルームを作る',
         '出てきたルームコードをみんなに伝える',
         'ほかの人は「ルームに参加する」からニックネームとルームコードを入れて「参加する」を押す',
+        'ホストははじめ進行役（描かない・投票しない）。待合室で「自分もプレイヤーとして参加する」にチェックすると、いっしょに描いて投票する（まぎれ絵師になることもある）',
       ] },
       { heading: '進めかた', items: [
         '自分のカードをタップして見て、「確認した」を押す',
@@ -2591,6 +2717,7 @@ function renderSpecDone() {
         '時間切れになると次の人に進む。ホストは「この人の番をスキップ」でも次に進められる',
         '相談タイムで、まぎれ絵師が誰かを声やチャットで話し合う',
         'まぎれ絵師だと思う人に投票する',
+        'まぎれ絵師が見つかったら、まぎれ絵師がお題を当てる逆転チャンス。答えはホストが判定する（ホストも遊ぶときは、6つの中から選ぶと自動で判定される）',
       ] },
       { heading: '終わりかた', text: '結果のあと、ホストが「次のラウンドへ」か「終わる」を選ぶ。' },
       { heading: 'みんなにみせる画面', items: [
