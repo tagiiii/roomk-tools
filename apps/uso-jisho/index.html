@@ -510,6 +510,55 @@
       line-height: 1;
     }
 
+    /* ---------- みんなにみせる画面（画面共有用） ---------- */
+    .uj-spec__header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 16px;
+      padding: 8px 14px;
+      border: 1px solid var(--color-border);
+      border-radius: 8px;
+      background: var(--color-surface);
+      color: var(--color-muted);
+      font-size: 13px;
+    }
+    .uj-spec__header .material-symbols-rounded { font-size: 18px; }
+    .uj-spec__header-label { font-weight: 700; }
+    .uj-spec__header-code {
+      margin-left: auto;
+      color: var(--color-primary);
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+    }
+    .uj-spec__wait {
+      padding: 40px 20px;
+      text-align: center;
+    }
+    .uj-spec__wait-msg {
+      color: var(--color-primary);
+      font-size: 20px;
+      font-weight: 500;
+    }
+    .uj-spec__status {
+      margin-top: 16px;
+      text-align: center;
+      color: var(--color-primary);
+      font-size: 18px;
+      font-weight: 500;
+    }
+    .uj-spec__know {
+      margin: -8px 0 20px;
+      text-align: center;
+    }
+    .uj-room-code--static {
+      cursor: default;
+      user-select: text;
+    }
+    .uj-spec-open { margin-top: 16px; }
+    .uj-spec__leave { margin-top: 24px; }
+
     .material-symbols-rounded {
       font-family: 'Material Symbols Rounded';
       font-weight: normal;
@@ -558,6 +607,10 @@
         <span class="material-symbols-rounded" aria-hidden="true">login</span>
         ルームに参加する
       </button>
+      <button class="btn btn-ghost btn-full" onclick="goSpectateJoin()">
+        <span class="material-symbols-rounded" aria-hidden="true">cast</span>
+        みんなにみせる画面をひらく
+      </button>
     </div>
   </div>
 </div>
@@ -595,6 +648,10 @@
           <span class="material-symbols-rounded" aria-hidden="true">sports_esports</span>
           はじめる
         </button>
+        <button class="btn btn-secondary btn-full" id="btn-open-spectator" onclick="openSpectatorWindow()">
+          <span class="material-symbols-rounded" aria-hidden="true">cast</span>
+          みんなにみせる画面をひらく
+        </button>
       </div>
     </div>
   </div>
@@ -615,6 +672,24 @@
     </div>
     <div class="uj-error" id="guest-join-error"></div>
     <button class="btn btn-primary btn-full" onclick="guestJoin()">参加する</button>
+    <button class="btn btn-ghost btn-full" onclick="showScreen('top')">← もどる</button>
+  </div>
+</div>
+
+<div class="screen" id="screen-spectate-join">
+  <div class="uj-page">
+    <h2 class="uj-page__title">みんなにみせる画面</h2>
+    <p class="uj-page__sub">ルームコードを入れると、みんなで見られる画面がひらきます</p>
+
+    <div class="form-group">
+      <label class="form-label" for="spectate-code">ルームコード（6文字）</label>
+      <input class="form-input" id="spectate-code" type="text" maxlength="6" autocapitalize="characters" autocorrect="off" spellcheck="false" style="text-transform:uppercase" placeholder="XXXXXX" autocomplete="off">
+    </div>
+    <div class="uj-error" id="spectate-error"></div>
+    <button class="btn btn-primary btn-full" onclick="spectateJoin()">
+      <span class="material-symbols-rounded" aria-hidden="true">cast</span>
+      画面をひらく
+    </button>
     <button class="btn btn-ghost btn-full" onclick="showScreen('top')">← もどる</button>
   </div>
 </div>
@@ -689,6 +764,10 @@
       <button class="btn btn-primary btn-full btn-lg" id="btn-to-voting" disabled onclick="hostToVoting()">投票にすすむ</button>
       <button class="btn btn-ghost btn-full" id="btn-force-voting" style="display:none" onclick="hostToVoting()">先にすすむ</button>
       <p class="uj-host-hint" id="writing-host-hint"></p>
+      <button class="btn btn-ghost btn-full uj-spec-open" onclick="openSpectatorWindow()">
+        <span class="material-symbols-rounded" aria-hidden="true">cast</span>
+        みんなにみせる画面をひらく
+      </button>
     </div>
   </div>
 </div>
@@ -710,6 +789,10 @@
       <button class="btn btn-primary btn-full btn-lg" id="btn-to-reveal" disabled onclick="hostToReveal()">結果をみる</button>
       <button class="btn btn-ghost btn-full" id="btn-force-reveal" style="display:none" onclick="hostToReveal()">先にすすむ</button>
       <p class="uj-host-hint" id="voting-host-hint"></p>
+      <button class="btn btn-ghost btn-full uj-spec-open" onclick="openSpectatorWindow()">
+        <span class="material-symbols-rounded" aria-hidden="true">cast</span>
+        みんなにみせる画面をひらく
+      </button>
     </div>
   </div>
 </div>
@@ -736,6 +819,10 @@
     <div id="reveal-host-actions" style="display:none; margin-top:24px">
       <button class="btn btn-primary btn-full" onclick="hostNextRound()">つぎへ</button>
       <button class="btn btn-ghost btn-full" onclick="hostFinish()">おわる</button>
+      <button class="btn btn-ghost btn-full uj-spec-open" onclick="openSpectatorWindow()">
+        <span class="material-symbols-rounded" aria-hidden="true">cast</span>
+        みんなにみせる画面をひらく
+      </button>
     </div>
     <div id="reveal-guest-waiting" class="text-center text-muted mt-lg" style="display:none">
       ホストの操作を待っています…
@@ -763,6 +850,18 @@
   </div>
 </div>
 
+<div class="screen" id="screen-spectator">
+  <div class="uj-page">
+    <div class="uj-spec__header">
+      <span class="material-symbols-rounded" aria-hidden="true">cast</span>
+      <span class="uj-spec__header-label">みんなにみせる画面</span>
+      <span class="uj-spec__header-code" id="spec-header-code"></span>
+    </div>
+    <div id="spec-content"></div>
+    <button class="btn btn-ghost btn-full uj-spec__leave" onclick="spectatorLeave()">トップへ戻る</button>
+  </div>
+</div>
+
 <div class="uj-overlay" id="reconnect-overlay">
   <div class="spinner"></div>
   <p class="uj-overlay__title">再接続しています...</p>
@@ -775,6 +874,13 @@
   <div class="uj-overlay__countdown" id="host-disconnect-countdown">120</div>
   <p class="uj-overlay__sub">秒後に自動終了します</p>
   <button class="btn btn-ghost btn-full" style="max-width:280px;margin-top:20px" onclick="leaveGame()">退出する</button>
+</div>
+
+<div class="uj-overlay" id="spec-host-off-overlay">
+  <div class="spinner"></div>
+  <p class="uj-overlay__title">ホストが一時的に接続を失いました</p>
+  <p class="uj-overlay__sub">再接続を待っています</p>
+  <button class="btn btn-ghost btn-full" style="max-width:280px;margin-top:20px" onclick="spectatorLeave()">トップへ戻る</button>
 </div>
 
 <script>
@@ -921,6 +1027,8 @@
     currentScreen: 'top',
     renderedWritingKey: '',   // 表示中の writingKeyOf()。変わったら入力欄をリセット
     changingWord: false,
+    specTimer: null,          // みんなにみせる画面: ホスト切断の TTL を見るローカルタイマー（退出時に必ず clearTimeout）
+    specDoneShown: false,     // みんなにみせる画面: おしまいの画面を出したか（ルームが消えても表示を残す）
   };
 
   const esc = RoomkRTDB.esc;
@@ -1027,6 +1135,7 @@
     if (!session) return false;
 
     const { nickname, roomCode, role, score } = session;
+    if (role === 'spectator') return reconnectSpectator(roomCode);
     showReconnectOverlay(true);
 
     try {
@@ -1197,44 +1306,63 @@
     return RoomkRTDB.copyRoomCode(text, button);
   }
 
-  function renderPlayerList(containerId, players) {
-    const element = document.getElementById(containerId);
-    if (!element) return;
-    element.innerHTML = '';
-
-    Object.entries(players || {}).forEach(([name, player]) => {
-      const isMe = name === state.nickname;
+  // 参加者・ポイント・答え合わせの一覧は、参加者の画面とみんなにみせる画面で同じ HTML を使う
+  // （みんなにみせる画面は nickname が空なので「あなた」の印はつかない）
+  function playerRowsHtml(players) {
+    return Object.entries(players || {}).map(([name, player]) => {
+      const isMe = !!state.nickname && name === state.nickname;
       const hostBadge = player.isHost ? '<span class="uj-player__host-badge">ホスト</span>' : '';
-      element.innerHTML += [
+      return [
         `<div class="uj-player ${isMe ? 'is-me' : ''}">`,
         `<div class="uj-player__avatar">${esc(name.charAt(0).toUpperCase())}</div>`,
         `<span class="uj-player__name">${esc(name)}${isMe ? '（あなた）' : ''}</span>`,
         hostBadge,
         '</div>',
       ].join('');
-    });
+    }).join('');
   }
 
-  function renderScoreList(containerId, players, deltas = null) {
+  function renderPlayerList(containerId, players) {
     const element = document.getElementById(containerId);
     if (!element) return;
-    element.innerHTML = '';
+    element.innerHTML = playerRowsHtml(players);
+  }
 
-    getGuestNames(players)
+  function scoreRowsHtml(players, deltas = null) {
+    return getGuestNames(players)
       .sort((left, right) => left.localeCompare(right, 'ja'))
-      .forEach((name) => {
-        const isMe = name === state.nickname;
+      .map((name) => {
+        const isMe = !!state.nickname && name === state.nickname;
         const score = players[name]?.score || 0;
         const delta = deltas ? (deltas[name] || 0) : null;
         const deltaHtml = delta ? `<span class="uj-score__delta">+${delta}</span>` : '';
-        element.innerHTML += [
+        return [
           `<div class="uj-score ${isMe ? 'is-me' : ''}">`,
           `<span class="uj-score__name">${esc(name)}${isMe ? '（あなた）' : ''}</span>`,
           deltaHtml,
           `<span class="uj-score__pts">${score}ポイント</span>`,
           '</div>',
         ].join('');
-      });
+      }).join('');
+  }
+
+  function renderScoreList(containerId, players, deltas = null) {
+    const element = document.getElementById(containerId);
+    if (!element) return;
+    element.innerHTML = scoreRowsHtml(players, deltas);
+  }
+
+  function submitChipsHtml(names, entries) {
+    return names.map((name) => {
+      const done = entries[name] != null;
+      const icon = done ? 'check_circle' : 'edit';
+      return [
+        `<span class="uj-chip ${done ? 'is-done' : ''}">`,
+        `<span class="material-symbols-rounded" role="img" aria-label="${done ? '記入済み' : '記入中'}">${icon}</span>`,
+        esc(name),
+        '</span>',
+      ].join('');
+    }).join('');
   }
 
   // ---------- ルーム作成・参加 ----------
@@ -1245,6 +1373,11 @@
 
   function goGuestJoin() {
     showScreen('guest-join');
+  }
+
+  function goSpectateJoin() {
+    hideError('spectate-error');
+    showScreen('spectate-join');
   }
 
   async function hostCreateRoom() {
@@ -1644,6 +1777,12 @@
     state.roomRef.on('value', (snapshot) => {
       const room = snapshot.val();
 
+      // みんなにみせる画面は host/guest の処理（切断・期限切れ掃除・各フェーズの描画）に一切入らない
+      if (state.role === 'spectator') {
+        handleSpectator(room);
+        return;
+      }
+
       if (!room) {
         if (state.currentScreen !== 'done') {
           clearSession();
@@ -1796,18 +1935,7 @@
     const submittedCount = guests.filter((name) => entries[name] != null).length;
     const entryCount = Object.keys(entries).length;
 
-    const chips = document.getElementById('writing-chips');
-    chips.innerHTML = '';
-    guests.forEach((name) => {
-      const done = entries[name] != null;
-      const icon = done ? 'check_circle' : 'edit';
-      chips.innerHTML += [
-        `<span class="uj-chip ${done ? 'is-done' : ''}">`,
-        `<span class="material-symbols-rounded" role="img" aria-label="${done ? '記入済み' : '記入中'}">${icon}</span>`,
-        esc(name),
-        '</span>',
-      ].join('');
-    });
+    document.getElementById('writing-chips').innerHTML = submitChipsHtml(guests, entries);
 
     const secret = document.getElementById('host-secret');
     const hostActions = document.getElementById('writing-host-actions');
@@ -1933,21 +2061,26 @@
     const choices = room.choices || [];
     const votes = room.votes || {};
     const deltas = calcDeltas(choices, votes);
+    document.getElementById('reveal-list').innerHTML = revealCardsHtml(word, choices, votes);
 
+    renderScoreList('reveal-score-list', room.players, deltas);
+
+    document.getElementById('reveal-host-actions').style.display = state.role === 'host' ? 'block' : 'none';
+    document.getElementById('reveal-guest-waiting').style.display = state.role === 'guest' ? 'block' : 'none';
+  }
+
+  // 答え合わせ（本物・だれのうそか・だれが何に投票したか）。reveal でだけ使う
+  function revealCardsHtml(word, choices, votes) {
     const votersByChoice = {};
-    Object.entries(votes).forEach(([voter, index]) => {
+    Object.entries(votes || {}).forEach(([voter, index]) => {
       const key = Number(index);
       if (!votersByChoice[key]) votersByChoice[key] = [];
       votersByChoice[key].push(voter);
     });
 
-    const list = document.getElementById('reveal-list');
-    list.innerHTML = '';
-    choices.forEach((choice, index) => {
+    return (choices || []).map((choice, index) => {
       const isReal = choice.author == null;
       const voters = votersByChoice[index] || [];
-      const card = document.createElement('div');
-      card.className = `uj-choice${isReal ? ' is-real' : ''}`;
 
       const badge = isReal
         ? '<span class="uj-choice__badge uj-choice__badge--real">本物</span>'
@@ -1965,21 +2098,17 @@
         metaParts.push('投票なし');
       }
 
-      card.innerHTML = [
+      return [
+        `<div class="uj-choice${isReal ? ' is-real' : ''}">`,
         '<div class="uj-choice__head">',
         `<span class="uj-choice__num">${NUMBERS[index] || `(${index + 1})`}</span>`,
         badge,
         '</div>',
         `<div class="uj-choice__text">${composeMeaningHtml(word, choice.text, 'uj-choice__fill')}</div>`,
         `<div class="uj-choice__meta">${metaParts.join(' ・ ')}</div>`,
+        '</div>',
       ].join('');
-      list.appendChild(card);
-    });
-
-    renderScoreList('reveal-score-list', room.players, deltas);
-
-    document.getElementById('reveal-host-actions').style.display = state.role === 'host' ? 'block' : 'none';
-    document.getElementById('reveal-guest-waiting').style.display = state.role === 'guest' ? 'block' : 'none';
+    }).join('');
   }
 
   function handleDone(room) {
@@ -2003,6 +2132,9 @@
     hostDisconnectDeadline = null;
     document.getElementById('host-disconnect-overlay').style.display = 'none';
 
+    clearTimeout(state.specTimer);
+    document.getElementById('spec-host-off-overlay').style.display = 'none';
+
     Object.assign(state, {
       role: null,
       nickname: '',
@@ -2012,6 +2144,8 @@
       currentScreen: 'top',
       renderedWritingKey: '',
       changingWord: false,
+      specTimer: null,
+      specDoneShown: false,
     });
 
     document.getElementById('host-nickname').value = '';
@@ -2033,9 +2167,350 @@
     updateEntryPreview();
   });
 
-  tryReconnect().then((reconnected) => {
-    if (!reconnected) showScreen('top');
-  });
+  // ---------- みんなにみせる画面（画面共有用） ----------
+  // - ルームに一切書き込まない（players に入らない・onDisconnect を予約しない・期限切れや終了後の削除もしない）
+  // - 本当の意味（fill）と、だれのうそか（author）・だれが何に投票したかを DOM に書くのは reveal だけ。
+  //   writing ではことば・文の形・かき終わった人だけ、voting では選択肢（本物とうそのシャッフル）と投票した人数だけを出す
+  const SPEC_CODE_RE = /^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{6}$/;
+
+  // ホストの画面から: クリックの中で同期的にひらく（ポップアップブロック回避・noopener 必須）
+  function openSpectatorWindow() {
+    if (!state.roomCode) return;
+    const url = `${location.origin}${location.pathname}?watch=${state.roomCode}`;
+    window.open(url, '_blank', 'noopener');
+  }
+
+  // TOP →「みんなにみせる画面をひらく」→ コード入力から
+  async function spectateJoin() {
+    const code = normalizeRoomCode(document.getElementById('spectate-code').value);
+    const imeError = roomCodeImeError(code);
+    if (imeError) {
+      showError('spectate-error', imeError);
+      return;
+    }
+    if (!SPEC_CODE_RE.test(code)) {
+      showError('spectate-error', 'ルームコードは6文字です');
+      return;
+    }
+    hideError('spectate-error');
+    await enterSpectator(code, (message) => showError('spectate-error', message));
+  }
+
+  // URL の ?watch=CODE から（いちばん優先する入口。失敗しても sessionStorage にはたよらない）
+  async function startSpectatorFromUrl(raw) {
+    const code = normalizeRoomCode(raw);
+    if (!SPEC_CODE_RE.test(code)) {
+      history.replaceState(null, '', location.pathname);
+      RoomkRTDB.showToast('ルームが見つかりませんでした');
+      showScreen('top');
+      return;
+    }
+    const ok = await enterSpectator(code, (message) => RoomkRTDB.showToast(message));
+    if (!ok) {
+      history.replaceState(null, '', location.pathname);
+      showScreen('top');
+    }
+  }
+
+  let specJoinBusy = false; // 連打で購読が重ならないように
+  async function enterSpectator(code, showFail) {
+    if (specJoinBusy) return false;
+    specJoinBusy = true;
+    try {
+      try {
+        await authReady;
+      } catch {
+        showFail('うまくつながらなかったよ。ページをよみこみなおしてね');
+        return false;
+      }
+      const roomRef = db.ref(`uso_rooms/${code}`);
+      let snapshot;
+      try {
+        snapshot = await roomRef.get();
+      } catch {
+        showFail('うまくつながらなかったよ。もう一度ためしてね');
+        return false;
+      }
+      if (!snapshot.exists()) {
+        showFail('ルームが見つかりませんでした');
+        return false;
+      }
+      if (isRoomExpired(snapshot.val())) {
+        showFail('このルームは終了しました');
+        return false;
+      }
+
+      state.role = 'spectator';
+      state.nickname = '';
+      state.roomCode = code;
+      state.roomRef = roomRef;
+      state.specDoneShown = false;
+      saveSession(); // { nickname: '', roomCode, role: 'spectator' }
+      history.replaceState(null, '', `${location.pathname}?watch=${code}`);
+      startRoomListener();
+      return true;
+    } finally {
+      specJoinBusy = false;
+    }
+  }
+
+  // sessionStorage からの復帰（?watch が URL にないとき）。期限切れでも remove() しない
+  async function reconnectSpectator(roomCode) {
+    if (typeof roomCode !== 'string' || !SPEC_CODE_RE.test(roomCode)) {
+      clearSession();
+      return false;
+    }
+    try {
+      await authReady;
+      const roomRef = db.ref(`uso_rooms/${roomCode}`);
+      const snapshot = await roomRef.get();
+      if (!snapshot.exists() || isRoomExpired(snapshot.val())) {
+        clearSession();
+        return false;
+      }
+      state.role = 'spectator';
+      state.nickname = '';
+      state.roomCode = roomCode;
+      state.roomRef = roomRef;
+      state.specDoneShown = false;
+      history.replaceState(null, '', `${location.pathname}?watch=${roomCode}`);
+      startRoomListener();
+      return true;
+    } catch {
+      clearSession();
+      return false;
+    }
+  }
+
+  // 終わった状態（ルームが消えた・TTL を過ぎた）: 購読とタイマーだけ止めて、表示は残す
+  // （購読を残すと、同じルームコードがのちに使われたとき別のゲームを映してしまう）
+  function stopSpectatorWatch() {
+    clearTimeout(state.specTimer);
+    state.specTimer = null;
+    if (state.roomRef) {
+      state.roomRef.off();
+      state.roomRef = null;
+    }
+  }
+
+  // 「トップへ戻る」: ルームには触らない
+  function spectatorLeave() {
+    clearSession();
+    clearTimeout(state.specTimer);
+    if (state.roomRef) state.roomRef.off();
+    Object.assign(state, {
+      role: null,
+      nickname: '',
+      roomCode: '',
+      roomRef: null,
+      lastRoom: null,
+      specTimer: null,
+      specDoneShown: false,
+    });
+    showSpecHostOff(false);
+    if (new URLSearchParams(location.search).has('watch')) {
+      history.replaceState(null, '', location.pathname);
+    }
+    showScreen('top');
+  }
+
+  function showSpecHostOff(show) {
+    document.getElementById('spec-host-off-overlay').style.display = show ? 'flex' : 'none';
+  }
+
+  function handleSpectator(room) {
+    if (state.currentScreen !== 'spectator') showScreen('spectator');
+    document.getElementById('spec-header-code').textContent = state.roomCode || '';
+
+    if (!room) {
+      // ルームが消えた: おしまいの画面を出していたらそのまま残す（共有画面を急に空にしない）
+      stopSpectatorWatch();
+      showSpecHostOff(false);
+      if (!state.specDoneShown) renderSpecEnded();
+      return;
+    }
+
+    const isDone = room.status === STATUS.DONE;
+    if (!isDone && room.hostConnected === false) {
+      if (isRoomExpired(room)) {
+        stopSpectatorWatch();
+        showSpecHostOff(false);
+        renderSpecEnded();
+        return;
+      }
+      showSpecHostOff(true);
+      if (!state.specTimer) {
+        // ルームの更新が来なくても、TTL に届いたら終わりの表示にする
+        const disconnectedAt = getHostDisconnectedAt(room);
+        const delay = disconnectedAt == null
+          ? ORPHAN_TTL_MS
+          : Math.max(0, disconnectedAt + ORPHAN_TTL_MS - getEstimatedServerNow());
+        const watchedRef = state.roomRef;
+        state.specTimer = setTimeout(() => {
+          state.specTimer = null;
+          if (state.roomRef !== watchedRef || state.role !== 'spectator') return;
+          stopSpectatorWatch();
+          showSpecHostOff(false);
+          state.specDoneShown = false;
+          renderSpecEnded();
+        }, delay);
+      }
+    } else {
+      showSpecHostOff(false);
+      clearTimeout(state.specTimer);
+      state.specTimer = null;
+    }
+
+    state.specDoneShown = false;
+    switch (room.status) {
+      case STATUS.WAITING: renderSpecWaiting(room); break;
+      case STATUS.WRITING: renderSpecWriting(room); break;
+      case STATUS.VOTING: renderSpecVoting(room); break;
+      case STATUS.REVEAL: renderSpecReveal(room); break;
+      case STATUS.DONE: renderSpecDone(room); state.specDoneShown = true; break;
+      default: renderSpecPending(); break; // 知らない status は安全な待機表示
+    }
+  }
+
+  function setSpecContent(html) {
+    document.getElementById('spec-content').innerHTML = html;
+  }
+
+  function specRoundLabelHtml(room, suffix) {
+    return `<div class="uj-section-label">第 ${esc(room.round || 1)} ラウンド${suffix}</div>`;
+  }
+
+  function specWordCardHtml(word, note) {
+    return [
+      '<div class="uj-word-card">',
+      '<div class="uj-word-card__label">お題</div>',
+      `<div class="uj-word-card__kana">${esc(word.kana)}</div>`,
+      `<div class="uj-word-card__word">${esc(word.word)}</div>`,
+      `<div class="uj-word-card__note">${esc(note)}</div>`,
+      '</div>',
+    ].join('');
+  }
+
+  function specWaitHtml(message, spinner = true) {
+    return [
+      '<div class="uj-spec__wait">',
+      spinner ? '<div class="spinner"></div>' : '<span class="material-symbols-rounded" aria-hidden="true" style="font-size:48px;color:var(--color-muted)">info</span>',
+      `<p class="uj-spec__wait-msg">${esc(message)}</p>`,
+      '</div>',
+    ].join('');
+  }
+
+  function renderSpecPending() {
+    setSpecContent(specWaitHtml('準備しています…'));
+  }
+
+  function renderSpecEnded() {
+    if (state.currentScreen !== 'spectator') showScreen('spectator');
+    setSpecContent(specWaitHtml('このルームは終了しました', false));
+  }
+
+  function renderSpecWaiting(room) {
+    const players = room.players || {};
+    setSpecContent([
+      '<div class="uj-section-label" style="text-align:center">ルームコード</div>',
+      `<div class="uj-room-code uj-room-code--static">${esc(state.roomCode)}</div>`,
+      `<div class="uj-section-label" style="margin-top:24px">参加者（ゲスト ${getGuestNames(players).length}人）</div>`,
+      `<div class="uj-player-list">${playerRowsHtml(players)}</div>`,
+      '<p class="uj-spec__status">みんなが集まるのを待っています</p>',
+    ].join(''));
+  }
+
+  // 本当の意味・答えの中身は出さない（だれがかき終わったかだけ）
+  function renderSpecWriting(room) {
+    const word = WORDS[room.wordIndex] || WORDS[0];
+    const entries = Object.fromEntries(currentEntries(room));
+    const names = getGuestNames(room.players);
+    const submittedCount = names.filter((name) => entries[name] != null).length;
+    const knowers = getKnowers(room);
+    setSpecContent([
+      specRoundLabelHtml(room, ''),
+      specWordCardHtml(word, 'こんなことば、きいたことある？'),
+      knowers.length > 0
+        ? `<p class="uj-know__text is-alert uj-spec__know">意味を知ってる人：${knowers.map((name) => esc(name)).join('、')}</p>`
+        : '',
+      '<div class="uj-template">',
+      '<div class="uj-template__label">意味は、この形の文</div>',
+      `<div class="uj-template__text">${blankTemplateHtml(word)}</div>`,
+      '</div>',
+      `<p class="uj-status-line">${submittedCount}人 / ${names.length}人 がかき終わりました</p>`,
+      '<div class="uj-section-label">かき終わった人</div>',
+      `<div class="uj-submit-chips">${submitChipsHtml(names, entries)}</div>`,
+    ].join(''));
+  }
+
+  // 選択肢は本物とうそのシャッフルのまま。どれが本物か・だれのうそか・だれが何に投票したかは出さない
+  function renderSpecVoting(room) {
+    const word = WORDS[room.wordIndex] || WORDS[0];
+    const votes = room.votes || {};
+    const names = getGuestNames(room.players);
+    const votedCount = names.filter((name) => votes[name] != null).length;
+    const cards = (room.choices || []).map((choice, index) => [
+      '<div class="uj-choice">',
+      '<div class="uj-choice__head">',
+      `<span class="uj-choice__num">${NUMBERS[index] || `(${index + 1})`}</span>`,
+      '</div>',
+      `<div class="uj-choice__text">${composeMeaningHtml(word, choice.text, 'uj-choice__fill')}</div>`,
+      '</div>',
+    ].join('')).join('');
+    setSpecContent([
+      specRoundLabelHtml(room, '・投票'),
+      specWordCardHtml(word, 'どれが本物の意味だとおもう？'),
+      `<p class="uj-status-line">${votedCount}人 / ${names.length}人 が投票済み</p>`,
+      cards,
+    ].join(''));
+  }
+
+  function renderSpecReveal(room) {
+    const word = WORDS[room.wordIndex] || WORDS[0];
+    const choices = room.choices || [];
+    const votes = room.votes || {};
+    setSpecContent([
+      specRoundLabelHtml(room, '・結果'),
+      '<div class="uj-reveal-answer">',
+      '<div class="uj-reveal-answer__label">本物の意味はこれ</div>',
+      `<div class="uj-reveal-answer__kana">${esc(word.kana)}</div>`,
+      `<div class="uj-reveal-answer__word">${esc(word.word)}</div>`,
+      `<div class="uj-reveal-answer__meaning">${composeMeaningHtml(word, word.fill, 'uj-fill')}</div>`,
+      '</div>',
+      '<div class="uj-section-label">みんなの答え合わせ</div>',
+      revealCardsHtml(word, choices, votes),
+      '<hr class="divider">',
+      '<div class="uj-section-label">いまのポイント</div>',
+      scoreRowsHtml(room.players || {}, calcDeltas(choices, votes)),
+    ].join(''));
+  }
+
+  function renderSpecDone(room) {
+    setSpecContent([
+      '<div class="text-center" style="padding:24px 0">',
+      '<span class="material-symbols-rounded" aria-hidden="true" style="font-size:64px;color:var(--color-accent)">celebration</span>',
+      '<h2 class="uj-page__title" style="margin-top:12px">おしまい！</h2>',
+      '<p class="uj-page__sub">あそんでくれてありがとう</p>',
+      '</div>',
+      '<div class="uj-section-label">みんなのポイント</div>',
+      scoreRowsHtml(room.players || {}),
+    ].join(''));
+  }
+
+  // ?watch=CODE が URL にあれば、みんなにみせる画面をいちばん優先する（空の値も「無効な入口」として同じ扱い）。
+  // watch がないときだけ sessionStorage（tryReconnect）を見る
+  (function init() {
+    const params = new URLSearchParams(location.search);
+    if (params.has('watch')) {
+      // 無効な watch だったときに、次の読み込みで別ルームのホスト・ゲストのセッションが戻らないよう先に消す
+      clearSession();
+      startSpectatorFromUrl(params.get('watch'));
+      return;
+    }
+    tryReconnect().then((reconnected) => {
+      if (!reconnected) showScreen('top');
+    });
+  }());
 
 </script>
 <script src="../shared/js/stats.js?v=1" defer></script>
@@ -2067,6 +2542,13 @@
       {
         heading: 'おわりかた',
         text: 'ホストが結果の画面で「おわる」を押すと、みんなのポイントが出ておしまい。',
+      },
+      {
+        heading: 'みんなにみせる画面',
+        items: [
+          'TOPの「みんなにみせる画面をひらく」でルームコードを入れて「画面をひらく」を押す（ホストの画面のボタンからもひらける）',
+          'いまのようすが見られる画面がひらく。本当の意味とだれのうそかは結果まで出ないから、みんなでいっしょに見てだいじょうぶ',
+        ],
       },
     ],
   });
