@@ -87,7 +87,7 @@ domannaka_rooms/{roomCode}/
 - ニックネームは1〜8文字・同ルーム内重複NG
 - 答える人が3人以上でないとゲーム開始不可（進行だけのホストは数えない）
 - 問題は重複しないようにトラッキング（全問使用後はリセット）
-- ゲーム終了30秒後に Realtime Database のルームデータを自動削除
+- ゲーム終了30秒後に Realtime Database のルームデータを自動削除。削除の transaction は `applyLocally:false`（確定前の null をルーム監視に通知すると、監視の `roomRef.off()` が transaction 自身の購読まで外して削除が届かない）
 - Firebase compat SDK の初期化は `RoomkRTDB.initFirebase(firebase)` を使用する
   - **Realtime Database** を使用（Firestoreではない）
   - 匿名認証の完了は返り値の `authReady` を await してから読み書きする
@@ -95,3 +95,4 @@ domannaka_rooms/{roomCode}/
 ## 経緯
 - 2026-10-01 オーナー決定: 待合室でホストの参加を選べる（初期値は従来どおり「参加する」）。採点ルール（中央値・最大/最小の扱い）は変えず、回答・採点・ランキングの対象を答える人に絞るだけ
 - 2026-10-01: 回答中に答える人が0人になったら、進行だけのホストが回答画面から「ゲームを終了する」を押せるようにした（たとえグランプリにそろえる）
+- 2026-10-01: ホストが最終画面に残ったままだと終了30秒後の自動削除が届かずルームが残る不具合を修正（削除の transaction を `applyLocally:false` に。name-change と同じ方式）

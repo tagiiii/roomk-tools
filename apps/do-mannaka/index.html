@@ -1179,10 +1179,13 @@
       // 削除の前に自接続の onDisconnect 予約を取り消す。予約が残ったままだと、
       // 削除後にこのタブを閉じた時に update が発火してゴースト room を再生成する
       await RoomkRTDB.cancelRoomOnDisconnect(roomRef);
+      // applyLocally:false で、確定前の null をこの端末のルーム監視に通知しない。
+      // 通知すると監視の roomRef.off() が transaction 自身の購読まで外し、
+      // 空のキャッシュで再試行を繰り返してサーバー側が消えない（最終画面に残ったとき）
       roomRef.transaction((room) => {
         if (room && room.status === 'finished' && room.deleteAt === deleteAt) return null;
         return room;
-      }).catch(() => {});
+      }, undefined, false).catch(() => {});
     }, delay);
   }
 
