@@ -8,11 +8,13 @@
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet" />
   <link rel="stylesheet" href="shared/css/design-system.css" />
   <style>
+    /* 濃いネイビーの広い帯は目にきついという声があったため、淡い色の帯にする */
     .portal-hero {
-      background-color: var(--color-primary);
-      color: #fff;
+      background-color: #E4EEF0;
+      color: var(--color-primary);
       padding: var(--space-xl) var(--space-lg);
       text-align: center;
+      border-bottom: 1px solid var(--color-border);
     }
 
     .portal-hero__logo {
@@ -24,7 +26,7 @@
     .portal-hero__tagline {
       margin-top: var(--space-xs);
       font-size: var(--font-size-body);
-      opacity: 0.85;
+      color: var(--color-text);
     }
 
     .portal-hero__staff-link {
@@ -33,13 +35,13 @@
     }
 
     .portal-hero__staff-link a {
-      color: #fff;
-      opacity: 0.7;
+      color: var(--color-accent);
+      font-weight: 500;
       text-decoration: underline;
     }
 
     .portal-hero__staff-link a:hover {
-      opacity: 1;
+      color: var(--color-primary);
     }
 
     .portal-main {
@@ -246,14 +248,15 @@
     }
 
     /* 指定しているときは、シーンの選択中チップと同じ色にする */
-    .tool-size__select.is-set {
-      background-color: var(--color-primary);
-      color: #fff;
+    .tool-size__select.form-select.is-set {
+      border: 2px solid var(--color-accent);
+      background-color: #E4EEF0;
+      color: var(--color-primary);
       font-weight: 700;
     }
 
     .tool-size__select.is-set + .tool-size__arrow {
-      color: #fff;
+      color: var(--color-accent);
     }
 
     .tool-size__arrow {
@@ -286,10 +289,24 @@
       transition: background-color var(--transition-base), color var(--transition-base);
     }
 
+    /* 選択中は淡いティールの塗り＋濃い枠＋チェック（濃いネイビーの塗りは目にきついため使わない） */
     .scene-filter__chip[aria-pressed="true"] {
-      background-color: var(--color-primary);
-      border-color: var(--color-primary);
-      color: #fff;
+      padding: 5px 13px 5px 9px;
+      border: 2px solid var(--color-accent);
+      background-color: #E4EEF0;
+      color: var(--color-primary);
+      font-weight: 700;
+    }
+
+    .scene-filter__chip[aria-pressed="true"]::before {
+      content: "check";
+      display: inline-block;
+      margin-right: 2px;
+      font-family: "Material Symbols Rounded";
+      font-size: 18px;
+      font-weight: 400;
+      line-height: 1;
+      vertical-align: -4px;
     }
 
     /* ── ツール検索・利用シーンの見出し ── */
@@ -446,6 +463,55 @@
 
     .tool-hint > .material-symbols-rounded {
       font-size: 18px;
+    }
+
+    /* 絞り込みの結果。パネルの中に置き、入力したその場で件数の変化が見えるようにする */
+    .tool-result {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-xs) var(--space-sm);
+      margin-top: var(--space-md);
+      padding: 8px 8px 8px 14px;
+      border-radius: var(--radius-btn);
+      background-color: var(--color-bg);
+      color: var(--color-muted);
+      font-size: var(--font-size-sm);
+    }
+
+    .tool-result.is-filtered {
+      background-color: #E4EEF0;
+      color: var(--color-primary);
+    }
+
+    .tool-result.is-empty {
+      background-color: #FBEFE6;
+    }
+
+    .tool-result__text {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0 6px;
+      min-height: 32px;
+    }
+
+    .tool-result__text:focus {
+      outline: none;
+    }
+
+    .tool-result__text .material-symbols-rounded {
+      font-size: 20px;
+    }
+
+    .tool-result__num {
+      font-size: var(--font-size-lg);
+      font-weight: 700;
+    }
+
+    .tool-result__clear[hidden] {
+      display: none;
     }
 
     .tool-list-heading__count {
@@ -728,6 +794,11 @@
             <span class="material-symbols-rounded tool-size__arrow" aria-hidden="true">expand_more</span>
           </div>
         </div>
+      </div>
+
+      <div class="tool-result" id="tool-result">
+        <p class="tool-result__text" id="tool-result-text" tabindex="-1"></p>
+        <button class="btn btn-secondary btn-sm tool-result__clear" type="button" id="tool-result-clear" hidden>条件をクリア</button>
       </div>
       </div>
 
@@ -1991,6 +2062,9 @@
       const searchInput = document.getElementById('tool-search');
       const countText = document.getElementById('tool-count');
       const listCount = document.getElementById('tool-list-count');
+      const resultBox = document.getElementById('tool-result');
+      const resultText = document.getElementById('tool-result-text');
+      const resultClear = document.getElementById('tool-result-clear');
       const emptyState = document.getElementById('scene-empty');
       const emptyTitle = document.getElementById('scene-empty-title');
       const emptyDesc = document.getElementById('scene-empty-desc');
@@ -2133,7 +2207,33 @@
         if (visibleCount === 0) message = emptyTitle.textContent + '。' + emptyDesc.textContent;
         else if (filtered) message = visibleCount + '件のツール';
         if (countText.textContent !== message) countText.textContent = message;
-        listCount.textContent = visibleCount + '件';
+        listCount.textContent = filtered ? `${visibleCount}件（全${cards.length}件中）` : `${visibleCount}件`;
+        renderResult(filtered, visibleCount);
+      }
+
+      // パネル内の結果の行。絞り込み中は色を変え、全何件中の何件かと「条件をクリア」を出す
+      function renderResult(filtered, visibleCount) {
+        resultBox.classList.toggle('is-filtered', filtered);
+        resultBox.classList.toggle('is-empty', filtered && visibleCount === 0);
+        resultClear.hidden = !filtered;
+        const icon = document.createElement('span');
+        icon.className = 'material-symbols-rounded';
+        icon.setAttribute('aria-hidden', 'true');
+        const num = document.createElement('span');
+        num.className = 'tool-result__num';
+        num.textContent = visibleCount + '件';
+        if (filtered) {
+          if (visibleCount === 0) {
+            icon.textContent = 'search_off';
+            resultText.replaceChildren(icon, '条件に合うツールは', num);
+          } else {
+            icon.textContent = 'filter_alt';
+            resultText.replaceChildren(icon, `全${cards.length}件中`, num, 'にしぼりこみ中');
+          }
+        } else {
+          icon.textContent = 'apps';
+          resultText.replaceChildren(icon, 'すべてのツール', num, 'を表示中');
+        }
       }
 
       chips.forEach((chip) => {
@@ -2357,6 +2457,17 @@
           applyFilters();
           document.querySelector('.scene-filter__chip[data-scene="all"]').focus();
         }
+      });
+
+      resultClear.addEventListener('click', () => {
+        searchInput.value = '';
+        peopleSelect.value = '';
+        timeSelect.value = '';
+        setScene('all');
+        syncSceneHash();
+        applyFilters();
+        // ボタンは消えるので、結果の行へフォーカスを移す（スマホでキーボードを開かない）
+        resultText.focus();
       });
 
       window.addEventListener('hashchange', () => {
