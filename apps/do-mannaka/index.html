@@ -1540,35 +1540,51 @@
 
     // 全員回答済み → ホストのみスコア計算してresultへ
     if (answered > 0 && answered === total && state.role === 'host' && !state.resultTriggered) {
-      state.resultTriggered = true;
-      triggerResult(players);
+      startResult();
     }
   }
 
-  async function triggerResult(players) {
-    const deltas = calcScoreDeltas(players);
-    const updates = { status: 'result' };
-    for (const [name, delta] of Object.entries(deltas)) {
-      updates[`players/${name}/score`] = (players[name]?.score || 0) + delta;
+  // 採点して結果へ進む。ルーム全体の transaction で、その時点の players にいる答える人だけで
+  // 採点し、その人たちだけに書く。読み取ってから update すると、直前に退出した人のノードを
+  // score だけで作り直してしまう（ゴーストの参加者）。status が answering のときだけ確定するので、
+  // 二重に呼ばれても加点は1回だけ。結果へ進んだ（既に進んでいた）ら true を返す。
+  // ローカルの仮適用はしない（競合でやり直す前の古い結果が共有画面に一瞬出ないように）
+  async function triggerResult() {
+    const roomRef = state.roomRef;
+    for (let attempt = 1; ; attempt++) {
+      try {
+        const { committed, snapshot } = await roomRef.transaction((room) => {
+          if (!room || room.status !== 'answering') return;
+          const deltas = calcScoreDeltas(roomPlayingPlayers(room));
+          if (Object.keys(deltas).length === 0) return; // 回答が0件（答えた人が全員抜けた）
+          const players = { ...room.players };
+          for (const [name, delta] of Object.entries(deltas)) {
+            players[name] = { ...players[name], score: (players[name].score || 0) + delta };
+          }
+          return { ...room, status: 'result', players };
+        }, undefined, false);
+        return committed || snapshot.val()?.status === 'result';
+      } catch (error) {
+        // 同じ端末の配下への書き込み（'set'）・送信後の切断（'disconnect'）で中止されたらやり直す。
+        // 届いていた場合は status が result になっているので、やり直しは何も書かない
+        if (!['set', 'disconnect'].includes(error?.message) || attempt >= 3) throw error;
+      }
     }
-    await state.roomRef.update(updates);
+  }
+
+  async function startResult() {
+    state.resultTriggered = true;
+    try {
+      if (!await triggerResult()) state.resultTriggered = false;
+    } catch (error) {
+      console.error('[do-mannaka] triggerResult failed', error);
+      state.resultTriggered = false;
+    }
   }
 
   async function hostCloseAnswering() {
     if (state.role !== 'host' || state.resultTriggered) return;
-    const snap = await state.roomRef.child('players').get();
-    // 進行だけのホストは集計に入れない（開始後は hostPlays を変えないので最新値でよい）
-    const players = playingPlayers(snap.val(), state.hostPlays, state.nickname);
-    const answered = Object.values(players)
-      .filter(p => p.answer !== null && p.answer !== undefined).length;
-    if (answered === 0) return;
-    state.resultTriggered = true;
-    try {
-      await triggerResult(players);
-    } catch (error) {
-      console.error('[do-mannaka] hostCloseAnswering failed', error);
-      state.resultTriggered = false;
-    }
+    await startResult();
   }
 
   // ── result ──
