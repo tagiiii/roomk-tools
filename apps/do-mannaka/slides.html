@@ -253,7 +253,7 @@ const SLIDES = [
   /* 5 */ { type:'content', accent:'gold', section:'ゲーム説明', sectionEn:'explain', num:'2',
     headline:'小さい順にならべて、<span class="hl">まんなか</span>が「いいセン」',
     body:demo(),
-    note:'けっか発表では、みんなの答えを小さい順にならべます。\nそのちょうどまんなかの人が「いいセン！」\nこの例だと、8・12・14・20・50 のまんなかで、14 と答えたミオさんがいいセン！\n同じ数字の人が2人いても、それがまんなかなら2人ともいいセン。人数が偶数のときは、まんなかが2人になるから、2人ともいいセン！' },
+    note:'けっか発表では、みんなの答えを小さい順にならべます。\nそのちょうどまんなかの人が「いいセン！」\nこの例だと、8・12・14・20・50 のまんなかで、14 と答えたミオさんがいいセン！\n同じ数字の人が2人いても、それがまんなかなら2人ともいいセン。人数が偶数のときは、まんなかが2人になるから、2人ともいいセン！\nただし、いちばん大きい・小さい数字と同じ数字は、いいセンにならないよ。' },
 
   /* 6 */ { type:'content', accent:'teal', section:'ゲーム説明', sectionEn:'explain', num:'3',
     headline:'いいセンは<span class="hl">+50pt</span>、両はしは -10pt',
@@ -262,7 +262,7 @@ const SLIDES = [
       <div class="row"><div class="row__ic" style="color:#fff;background:#B3463F"><span class="material-symbols-rounded">close</span></div><div><div class="row__t">いちばん大きい・いちばん小さい → -10pt</div><div class="row__d">アウト！ でも -10 だけだから、すぐ取り返せる</div></div></div>
       <div class="row"><div class="row__ic"><span class="material-symbols-rounded">emoji_events</span></div><div><div class="row__t">何問かあそんで、合計点がいちばん高い人が優勝</div><div class="row__d">最後に順位表と表彰があるよ</div></div></div>
     </div>`,
-    note:'得点はシンプル！\nいいセン（まんなか）… +50pt。人数が偶数のときはまんなかの2人とも、同じ数字でまんなかなら全員もらえる。\nいちばん大きい・いちばん小さい… -10pt。でもすぐ取り返せるよ。\nそれ以外は ±0。何問かあそんで、合計点がいちばん高い人が優勝です' },
+    note:'得点はシンプル！\nいいセン（まんなか）… +50pt。人数が偶数のときはまんなかの2人とも、同じ数字でまんなかなら全員もらえる。\nまんなかの数字が、いちばん大きい・小さい数字と同じになったら、その問題は全員±0。\nいちばん大きい・いちばん小さい… -10pt。でもすぐ取り返せるよ。\nそれ以外は ±0。何問かあそんで、合計点がいちばん高い人が優勝です' },
 
   /* 7 */ { type:'content', accent:'navy', section:'ゲーム説明', sectionEn:'explain', num:'4',
     headline:'ルームコードで、<span class="hl">かんたん参加</span>',
@@ -277,10 +277,10 @@ const SLIDES = [
     headline:'よくある<ruby>質問<rt>しつもん</rt></ruby>',
     body:`<div class="qa">
       <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>答えがぜんぜんわからないお題だったら？</div><div class="qa__a"><span class="qa__badge a">A</span>だいじょうぶ、だれも正解を知らないお題ばかり。カンでOK！</div></div>
-      <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>同じ数字の人がいたら？</div><div class="qa__a"><span class="qa__badge a">A</span>その数字がまんなかなら、全員そろって +50pt！</div></div>
+      <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>同じ数字の人がいたら？</div><div class="qa__a"><span class="qa__badge a">A</span>まんなかなら全員 +50pt！ でも、いちばん大きい・小さい数字と同じなら、その問題は全員±0</div></div>
       <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>数字はどんな数でもいい？</div><div class="qa__a"><span class="qa__badge a">A</span>0以上の整数だけ。マイナスや小数はナシだよ。</div></div>
     </div>`,
-    note:'よくある質問だよ\nQ. 答えがわからないお題だったら？→ A. だれも正解を知らないお題ばかり。カンでOK！\nQ. 同じ数字の人がいたら？→ A. まんなかなら全員+50pt。\nQ. 数字はどんな数でも？→ A. 0以上の整数だけ（マイナス・小数はナシ）。' },
+    note:'よくある質問だよ\nQ. 答えがわからないお題だったら？→ A. だれも正解を知らないお題ばかり。カンでOK！\nQ. 同じ数字の人がいたら？→ A. まんなかなら全員+50pt。でも、いちばん大きい・小さい数字と同じなら、その問題は全員±0。\nQ. 数字はどんな数でも？→ A. 0以上の整数だけ（マイナス・小数はナシ）。' },
 
   /* 9 */ { type:'divider', accent:'navy', icon:'live_help', jp:'質問タイム', en:'any questions?',
     sub:'気になることはある？',

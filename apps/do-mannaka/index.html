@@ -162,6 +162,11 @@
     .delta-plus    { color: var(--color-success); }
     .delta-minus   { color: var(--color-error); }
     .delta-zero    { color: var(--color-muted); }
+    .result-no-median {
+      padding: 12px 16px; border-radius: 10px; margin-bottom: 10px;
+      border: 2px dashed var(--color-border); background: var(--color-surface);
+      font-size: 14px; line-height: 1.6; color: var(--color-text);
+    }
 
     /* ── スコアリスト ── */
     .score-item {
@@ -410,6 +415,7 @@
     <p id="result-question-label" class="text-muted" style="margin-bottom:16px"></p>
 
     <div class="section-label">みんなの回答</div>
+    <p class="result-no-median" id="result-no-median" hidden>真ん中の答えが、いちばん大きい・小さい答えと同じだったので、この問題はいいセンなし。全員 ±0pt です。</p>
     <div id="result-list"></div>
 
     <hr class="divider">
@@ -1271,10 +1277,15 @@
   // スコア計算
   // ════════════════════════════════════
   // 小さい順にならべた回答から「いいセン」の数字を返す。
-  // 奇数人数は真ん中の1つ、偶数人数は真ん中の2つ（本当の真ん中から同じ距離なので両方）
+  // 奇数人数は真ん中の1つ、偶数人数は真ん中の2つ（本当の真ん中から同じ距離なので両方）。
+  // ただし最大・最小と同じ数字はいいセンにしない（例: 1・2・3・3 は 2 だけ）。
+  // 候補が残らないときは空（例: 3・3・5、10・30）→ その問題は全員 ±0pt
   function getMedianValues(sorted) {
     const n = sorted.length;
-    return new Set([sorted[Math.floor((n - 1) / 2)].answer, sorted[Math.floor(n / 2)].answer]);
+    const minValue = sorted[0].answer;
+    const maxValue = sorted[n - 1].answer;
+    const middles = [...new Set([sorted[Math.floor((n - 1) / 2)].answer, sorted[Math.floor(n / 2)].answer])];
+    return new Set(middles.filter(v => v !== minValue && v !== maxValue));
   }
 
   function calcScoreDeltas(players) {
@@ -1292,7 +1303,8 @@
 
     const deltas = {};
     for (const { name, answer } of answers) {
-      if (medianValues.has(answer))                                deltas[name] = 50;
+      if (medianValues.size === 0)                                 deltas[name] = 0;
+      else if (medianValues.has(answer))                                deltas[name] = 50;
       else if (answer === minValue || answer === maxValue)          deltas[name] = -10;
       else                                                          deltas[name] = 0;
     }
@@ -1492,13 +1504,16 @@
     const minValue     = answers[0].answer;
     const maxValue     = answers[n - 1].answer;
 
+    const noMedian = medianValues.size === 0;
+    document.getElementById('result-no-median').hidden = !noMedian;
+
     const resultList = document.getElementById('result-list');
     resultList.innerHTML = '';
 
     answers.forEach(({ name, answer }) => {
       const isMe     = name === state.nickname;
       const isMedian = medianValues.has(answer);
-      const isOut    = !isMedian && (answer === minValue || answer === maxValue);
+      const isOut    = !noMedian && !isMedian && (answer === minValue || answer === maxValue);
 
       let cls   = 'result-item';
       if (isMe)     cls += ' is-me';
@@ -1645,7 +1660,7 @@
       { heading: 'すすめかた', items: [
         'ホストが3問の中から問題を1つ選ぶ',
         'みんなは答えの数字を入れて「回答を送信」を押す',
-        '全員が答えると結果発表。ちょうど真ん中の答えの人は+50pt（人数が偶数のときは真ん中の2人とも）、いちばん大きい・いちばん小さい答えの人は-10pt',
+        '全員が答えると結果発表。ちょうど真ん中の答えの人は+50pt（人数が偶数のときは真ん中の2人とも）、いちばん大きい・いちばん小さい答えの人は-10pt。真ん中の答えがいちばん大きい・小さい答えと同じときは、その問題は全員±0pt',
         'ホストが「次の問題へ →」を押すと、次の問題にすすむ',
       ] },
       { heading: 'おわりかた', text: 'ホストが「ゲームを終了する」を押すと、最終順位と優勝者が発表される。' },
