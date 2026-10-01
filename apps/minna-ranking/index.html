@@ -7,7 +7,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
   <link rel="stylesheet" href="../shared/css/design-system.css">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=20261001a">
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
@@ -55,7 +55,10 @@
       </div>
       <section class="mr-screen" id="screen-waiting">
         <div class="mr-phase"><h2 class="mr-phase__title">お題を選ぶ</h2><p class="mr-phase__sub" id="waitingLead"></p></div>
-        <div class="mr-panel"><h3 class="mr-panel__title">参加者</h3><ul class="mr-people" id="waitingPlayers"></ul></div>
+        <div class="mr-panel">
+          <h3 class="mr-panel__title">参加者</h3><ul class="mr-people" id="waitingPlayers"></ul>
+          <label class="mr-check" id="hostPlaysField" hidden><input type="checkbox" id="set-host-plays"><span>自分もランキングを作って参加する</span></label>
+        </div>
         <div id="hostTopicTools" hidden>
           <div class="mr-menu">
             <button type="button" class="btn btn-secondary" id="btnGacha">お題ガチャ</button>
@@ -72,19 +75,25 @@
           </div>
           <div class="mr-topic-preview"><p class="mr-topic-preview__label">選択中のお題</p><strong id="selectedTopic"></strong><p id="selectedItems"></p></div>
           <button type="button" class="btn btn-primary btn-full" id="btnStartRound">ランキングを始める</button>
-          <p class="mr-note">参加者が2人以上になったら始められます。</p>
+          <p class="mr-note" id="startNote">参加者が2人以上になったら始められます。</p>
         </div>
       </section>
       <section class="mr-screen" id="screen-ranking">
         <div class="mr-phase"><h2 class="mr-phase__title">ランキングを作る</h2><p class="mr-phase__sub">目安は3分。時間を過ぎても自動では進まないよ。</p><p class="mr-phase__time" id="rankTime"></p></div>
         <div class="mr-rank__box"><p class="mr-rank__label">お題</p><h3 class="mr-rank__topic" id="rankTopic"></h3></div>
+        <details class="mr-secret" id="hostRankSecret" hidden>
+          <summary><span class="material-symbols-rounded" aria-hidden="true">visibility</span><span id="hostRankSecretLabel">自分のランキング（タップで開く）</span></summary>
+          <div class="mr-secret__body" id="hostRankSecretBody"></div>
+        </details>
+        <div id="rankEditorHome">
         <div id="guestRankEditor" hidden>
           <p class="mr-note">上下のボタンで並べ替えてね。「上とタイ」で同じ順位にできるよ。</p>
           <ul class="mr-rank__list" id="rankList"></ul>
           <section class="mr-out"><p class="mr-out__title">ランク外</p><p class="mr-out__empty" id="outEmpty">「ランク外へ」で移したアイテムがここに入るよ</p><ul class="mr-out__list" id="outList"></ul></section>
           <button type="button" class="btn btn-primary btn-full" id="btnSubmitRank">このランキングで提出</button>
         </div>
-        <div class="mr-panel" id="guestRankSubmitted" hidden><p>提出しました。ほかの人が作り終えるまで待ってね。</p></div>
+        <div class="mr-panel" id="guestRankSubmitted" hidden><p id="rankSubmittedText">提出しました。ほかの人が作り終えるまで待ってね。</p></div>
+        </div>
         <div id="hostRankTools" hidden>
           <div class="mr-panel"><h3 class="mr-panel__title">提出状況</h3><ul class="mr-people" id="rankProgress"></ul></div>
           <button type="button" class="btn btn-primary btn-full" id="btnGoGuess">提出済みの人で予想へ進む</button>
@@ -115,7 +124,7 @@
     </main>
   </div>
   <div class="mr-overlay" id="hostOffOverlay" hidden><div class="mr-overlay__panel"><h2>ホストの戻りを待っています</h2><p>しばらく待っても戻らないときは退出してね。</p><button type="button" class="btn btn-secondary" id="btnOverlayLeave">退出する</button></div></div>
-  <script type="module" src="app.js"></script>
+  <script type="module" src="app.js?v=20261001a"></script>
   <script src="../shared/js/stats.js?v=1" defer></script>
   <script src="../shared/js/howto.js"></script>
   <script>
@@ -126,7 +135,8 @@
         { heading: 'はじめかた', items: [
           'ホストが「ルームをつくる」で名前を入れ、お題を選ぶ',
           '参加者は「ルームに参加する」で名前、ルームコード（6文字）の順に入れ、「参加する」を押す',
-          'ホストが「ランキングを始める」を押す',
+          'ホストは最初は進行役。待合室で「自分もランキングを作って参加する」にチェックすると、ホストもランキングと予想に参加する',
+          'ホストが「ランキングを始める」を押す（遊ぶ人が2人以上から）',
         ] },
         { heading: 'すすめかた', items: [
           '各自でカードを並べ替え、「このランキングで提出」を押す',

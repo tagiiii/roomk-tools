@@ -592,6 +592,59 @@
   text-align: right;
 }
 
+/* ── ホストの参加（待合室の設定） ── */
+.mr-check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--color-border);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.mr-check[hidden] { display: none; }
+
+.mr-check input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--color-accent);
+  flex-shrink: 0;
+}
+
+/* ── ホスト自身のランキングの折りたたみ（画面共有対策） ── */
+.mr-secret {
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  background: var(--color-surface);
+  margin-bottom: 16px;
+}
+
+.mr-secret summary {
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 10px 16px;
+  color: var(--color-primary);
+  font-weight: 700;
+}
+
+.mr-secret summary::-webkit-details-marker { display: none; }
+
+.mr-secret summary .material-symbols-rounded {
+  font-size: 20px;
+  color: var(--color-muted);
+}
+
+.mr-secret__body { padding: 0 16px 16px; }
+
+.mr-secret__body .mr-panel { margin-bottom: 0; }
+
 .mr-menu {
   display: flex;
   flex-wrap: wrap;

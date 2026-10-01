@@ -90,6 +90,13 @@ const state = {
   busy: false,
 };
 const $ = (id) => document.getElementById(id);
+// 公開直後に古い index.html（キャッシュ）と新しい app.js が組み合わさっても動くよう、
+// ホストの参加の画面部品がないときは従来どおり（ホストは進行だけ）として扱う
+const HOST_PLAYS_UI = !!$('hostRankSecret');
+
+function closeHostSecret() {
+  if (HOST_PLAYS_UI) $('hostRankSecret').open = false;
+}
 
 function showScreen(id) {
   document.querySelectorAll('.mr-screen').forEach((node) => node.classList.remove('active'));
@@ -120,6 +127,26 @@ function guestNames(room) {
     .filter(([, player]) => !player.isHost)
     .sort((a, b) => (a[1].joinedAt || 0) - (b[1].joinedAt || 0) || a[0].localeCompare(b[0], 'ja'))
     .map(([name]) => name);
+}
+
+// ホストもランキングと予想に参加するか。初期値は進行だけ（キーがない旧ルームも進行だけ）
+function hostPlaysOf(room) {
+  return room?.settings?.hostPlays === true;
+}
+
+// 遊ぶ人（ランキングを作り、予想する人）。進行だけのホストは含めない
+function playerNames(room) {
+  const playsHost = hostPlaysOf(room);
+  return Object.entries(room.players || {})
+    .filter(([, player]) => !player.isHost || playsHost)
+    .sort((a, b) => (a[1].joinedAt || 0) - (b[1].joinedAt || 0) || a[0].localeCompare(b[0], 'ja'))
+    .map(([name]) => name);
+}
+
+// 自分がこのルームで遊ぶ人か（ゲストは常に、ホストは参加を選んだときだけ）
+function iPlay(room) {
+  if (state.role === 'guest') return true;
+  return state.role === 'host' && HOST_PLAYS_UI && hostPlaysOf(room);
 }
 
 function isExpired(room) {
@@ -162,7 +189,7 @@ function loadSession() {
 }
 
 function saveDraft() {
-  if (state.role !== 'guest' || !state.roomCode || state.draftRound == null) return;
+  if (!state.role || !state.roomCode || state.draftRound == null) return;
   sessionStorage.setItem(DRAFT_KEY, JSON.stringify({
     roomCode: state.roomCode,
     round: state.draftRound,
@@ -211,6 +238,7 @@ function cleanupRoom() {
   sessionStorage.removeItem(DRAFT_KEY);
   $('hostOffOverlay').hidden = true;
   $('roomBar').hidden = true;
+  closeHostSecret();
 }
 
 function connectToRoom(role, nickname, code, ref) {
@@ -298,6 +326,8 @@ function handleRoom(room) {
     clearTimeout(state.orphanTimer);
     state.orphanTimer = null;
   }
+  // ホスト自身のランキングの折りたたみは、ランキングを作る段階を出たら閉じ直す（画面共有対策）
+  if (room.status !== STATUS.RANKING) closeHostSecret();
   switch (room.status) {
     case STATUS.WAITING: renderWaiting(room); break;
     case STATUS.RANKING: renderRanking(room); break;
@@ -332,6 +362,7 @@ async function createRoom() {
           hostConnected: true,
           hostDisconnectedAt: null,
           round: 0,
+          settings: { hostPlays: false },
           players: {
             [nickname]: { isHost: true, uid, joinedAt },
           },
@@ -599,13 +630,42 @@ function renderWaiting(room) {
   $('waitingLead').textContent = host
     ? 'お題を選んで、参加者がそろったら始めてね。'
     : 'ホストがお題を選んでいます。始まるまで待ってね。';
-  const names = guestNames(room);
-  renderNames('waitingPlayers', names, () => '参加中');
+  const playsHost = hostPlaysOf(room);
+  const hostName = room.host && room.players?.[room.host] ? [room.host] : [];
+  renderNames('waitingPlayers', hostName.concat(guestNames(room)),
+    (name) => name === room.host ? (playsHost ? 'ホスト・参加中' : '進行役') : '参加中');
+  if (HOST_PLAYS_UI) $('hostPlaysField').hidden = !host;
   if (host) {
+    if (HOST_PLAYS_UI) $('set-host-plays').checked = playsHost;
     if (!state.selectedTopic) selectTopic(TOPICS[0]);
     $('selectedTopic').textContent = state.selectedTopic.title;
     $('selectedItems').textContent = state.selectedTopic.items.join('、');
-    $('btnStartRound').disabled = names.length < 2;
+    // 最少人数は遊ぶ人だけで数える（予想は自分以外の1位なので、遊ぶ人が2人いれば成り立つ）
+    const count = playerNames(room).length;
+    const need = Math.max(0, 2 - count);
+    $('btnStartRound').disabled = need > 0;
+    if (HOST_PLAYS_UI) $('startNote').textContent = need > 0
+      ? 'あと' + need + '人で始められます。' + (playsHost ? '（自分を入れて2人から）' : '（ホストのほかに2人から）')
+      : '遊ぶ人は' + count + '人。ランキングを始められます。';
+  }
+}
+
+async function onHostPlaysChange(checked) {
+  if (state.role !== 'host' || !state.roomRef) return;
+  const input = $('set-host-plays');
+  input.disabled = true;
+  try {
+    const result = await state.roomRef.transaction((room) => {
+      if (!room || room.status !== STATUS.WAITING || room.hostUid !== firebase.auth().currentUser?.uid) return;
+      return { ...room, settings: { ...(room.settings || {}), hostPlays: !!checked } };
+    });
+    if (!result.committed) toast('今は変えられないよ');
+  } catch (error) {
+    console.warn('[minna-ranking] host plays setting failed', error);
+    toast('設定を変えられませんでした。もう一度ためしてね');
+  } finally {
+    input.disabled = false;
+    if (state.room) input.checked = hostPlaysOf(state.room);
   }
 }
 
@@ -617,12 +677,12 @@ async function startRound() {
   try {
     const result = await state.roomRef.transaction((room) => {
       if (!room || room.status !== STATUS.WAITING || room.hostUid !== firebase.auth().currentUser?.uid) return;
-      if (guestNames(room).length < 2) return;
+      if (playerNames(room).length < 2) return;
       return {
         ...room,
         status: STATUS.RANKING,
         round: (Number(room.round) || 0) + 1,
-        roundOrder: guestNames(room),
+        roundOrder: playerNames(room),
         topic: { title: topic.title, items: topic.items.slice() },
         phaseStartedAt: firebase.database.ServerValue.TIMESTAMP,
         submissions: null,
@@ -755,18 +815,40 @@ function renderRanking(room) {
   $('rankTopic').textContent = room.topic?.title || '';
   updateGuideTime();
   const host = state.role === 'host';
+  const plays = iPlay(room);
+  const submitted = !!room.submissions?.[state.nickname];
+  if (HOST_PLAYS_UI) {
+    // 遊ぶホストの並べ替えは折りたたみの中に置く（ホストの画面は共有されることが多いため）
+    placeRankEditor(host && plays);
+    $('hostRankSecret').hidden = !(host && plays);
+    $('hostRankSecretLabel').textContent = submitted
+      ? '自分のランキング（提出しました）'
+      : '自分のランキング（タップで開いて並べる）';
+    $('rankSubmittedText').textContent = host
+      ? '提出しました。みんなが作り終えたら予想へ進めてね。'
+      : '提出しました。ほかの人が作り終えるまで待ってね。';
+  }
   $('hostRankTools').hidden = !host;
-  $('guestRankEditor').hidden = host || !!room.submissions?.[state.nickname];
-  $('guestRankSubmitted').hidden = host || !room.submissions?.[state.nickname];
+  $('guestRankEditor').hidden = !plays || submitted;
+  $('guestRankSubmitted').hidden = !plays || !submitted;
   if (host) {
-    renderNames('rankProgress', guestNames(room), (name) => room.submissions?.[name] ? '提出済み' : '作成中');
+    renderNames('rankProgress', playerNames(room), (name) => room.submissions?.[name] ? '提出済み' : '作成中');
     $('btnGoGuess').textContent = Object.keys(room.submissions || {}).length
       ? '提出済みの人で予想へ進む'
       : 'このお題をスキップ';
-  } else if (!room.submissions?.[state.nickname]) {
+  }
+  if (plays && !submitted) {
     initDraft(room);
     renderRankEditor();
   }
+}
+
+// 並べ替え欄の置き場所: 遊ぶホストは折りたたみの中、ゲストは画面にそのまま
+function placeRankEditor(inSecret) {
+  const target = inSecret ? $('hostRankSecretBody') : $('rankEditorHome');
+  const editor = $('guestRankEditor');
+  if (editor.parentElement === target) return;
+  target.append(editor, $('guestRankSubmitted'));
 }
 
 function isValidSubmission(room, items, out) {
@@ -779,7 +861,8 @@ function isValidSubmission(room, items, out) {
 }
 
 async function submitRank() {
-  if (state.role !== 'guest' || state.busy || !state.roomRef) return;
+  if (!state.room || !iPlay(state.room) || state.busy || !state.roomRef) return;
+  const asHost = state.role === 'host';
   const round = state.room?.round;
   const items = state.items.map((item) => ({ text: item.text, tied: !!item.tied }));
   const out = state.out.slice();
@@ -787,6 +870,7 @@ async function submitRank() {
   try {
     const result = await state.roomRef.transaction((room) => {
       if (!room || room.status !== STATUS.RANKING || room.round !== round) return;
+      if (asHost && !hostPlaysOf(room)) return;
       if (!room.players?.[state.nickname] || room.submissions?.[state.nickname]) return;
       if (!isValidSubmission(room, items, out)) return;
       return {
@@ -798,6 +882,7 @@ async function submitRank() {
       };
     });
     if (!result.committed) toast('提出できませんでした。画面を確かめてね');
+    else if (asHost) closeHostSecret();
   } catch (error) {
     console.warn('[minna-ranking] submission failed', error);
     toast('提出できませんでした。もう一度ためしてね');
@@ -812,7 +897,7 @@ async function goGuess() {
   try {
     await state.roomRef.transaction((room) => {
       if (!room || room.status !== STATUS.RANKING || room.hostUid !== firebase.auth().currentUser?.uid) return;
-      const order = room.roundOrder || guestNames(room);
+      const order = room.roundOrder || playerNames(room);
       const targets = order.filter((name) => room.submissions?.[name]);
       return {
         ...room,
@@ -843,15 +928,16 @@ function renderGuess(room) {
     ? target + 'さんの1位はどれだと思う？'
     : 'ホストが進めるのを待ってね。';
   const host = state.role === 'host';
+  const plays = iPlay(room);
   const isTarget = state.nickname === target;
   const guessed = room.guesses?.[target]?.[state.nickname];
   $('hostGuessTools').hidden = !host;
-  $('guestGuessTools').hidden = host || isTarget || !!guessed || !target;
-  $('guestGuessWait').hidden = host || (!isTarget && !guessed);
-  if (!host) {
+  $('guestGuessTools').hidden = !plays || isTarget || !!guessed || !target;
+  $('guestGuessWait').hidden = !plays || (!isTarget && !guessed);
+  if (plays) {
     $('guestGuessWait').textContent = isTarget
-      ? 'みんながあなたの1位を予想しています。公開まで待ってね。'
-      : '予想を出しました。結果の公開を待ってね。';
+      ? (host ? 'みんながあなたの1位を予想しています。そろったら結果を公開してね。' : 'みんながあなたの1位を予想しています。公開まで待ってね。')
+      : (host ? '予想を出しました。そろったら結果を公開してね。' : '予想を出しました。結果の公開を待ってね。');
     if (!isTarget && !guessed && target) {
       const list = $('guessChoices');
       list.replaceChildren();
@@ -865,18 +951,21 @@ function renderGuess(room) {
       });
       $('guessNote').textContent = '予想は1つ選べるよ。';
     }
-  } else {
-    renderNames('guessProgress', guestNames(room).filter((name) => name !== target),
+  }
+  if (host) {
+    renderNames('guessProgress', playerNames(room).filter((name) => name !== target),
       (name) => room.guesses?.[target]?.[name] ? '予想済み' : '予想中');
   }
 }
 
 async function submitGuess(target, item) {
-  if (state.role !== 'guest' || state.busy || !state.roomRef) return;
+  if (!state.room || !iPlay(state.room) || state.busy || !state.roomRef) return;
+  const asHost = state.role === 'host';
   state.busy = true;
   try {
     const result = await state.roomRef.transaction((room) => {
       if (!room || room.status !== STATUS.GUESS || currentTarget(room) !== target) return;
+      if (asHost && !hostPlaysOf(room)) return;
       if (!room.players?.[state.nickname] || state.nickname === target) return;
       if (!room.topic?.items?.includes(item) || room.guesses?.[target]?.[state.nickname]) return;
       return {
@@ -949,7 +1038,7 @@ function renderReveal(room) {
   }
   $('revealOut').textContent = submission?.out?.length ? 'ランク外：' + submission.out.join('、') : '';
   const firsts = firstChoices(submission);
-  const names = (room.roundOrder || guestNames(room)).filter((name) =>
+  const names = (room.roundOrder || playerNames(room)).filter((name) =>
     name !== target && (room.players?.[name] || room.guesses?.[target]?.[name] || room.scores?.[name] != null));
   renderNames('revealGuesses', names, (name) => {
     const choice = room.guesses?.[target]?.[name];
@@ -987,7 +1076,7 @@ async function nextReveal() {
 
 function renderDone(room) {
   showScreen('done');
-  const names = (room.roundOrder || guestNames(room)).filter((name) =>
+  const names = (room.roundOrder || playerNames(room)).filter((name) =>
     room.players?.[name] || room.submissions?.[name] || room.scores?.[name] != null);
   if (!room.targets?.length) {
     $('scoreList').replaceChildren(makeElement('li', 'mr-people__item', '提出済みのランキングはありませんでした。'));
@@ -1049,6 +1138,7 @@ $('btnCustomTopic').addEventListener('click', () => {
 });
 $('btnUseCustomTopic').addEventListener('click', useCustomTopic);
 $('btnStartRound').addEventListener('click', startRound);
+if (HOST_PLAYS_UI) $('set-host-plays').addEventListener('change', (event) => onHostPlaysChange(event.currentTarget.checked));
 $('btnSubmitRank').addEventListener('click', submitRank);
 $('btnGoGuess').addEventListener('click', goGuess);
 $('btnReveal').addEventListener('click', reveal);
