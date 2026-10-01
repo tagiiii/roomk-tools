@@ -25,7 +25,7 @@ export const WORDS = [
 
   { difficulty: 3, word: 'かえる', hint: 'ケロケロ鳴く' },
   { difficulty: 3, word: 'さかな', hint: '水の中でくらす' },
-  { difficulty: 3, word: 'つくえ', hint: 'ものを置くところ' },
+  { difficulty: 3, word: 'こたつ', hint: '冬にあたたまる家具' },
   { difficulty: 3, word: 'まくら', hint: 'ねるときに使う' },
   { difficulty: 3, word: 'はさみ', hint: '紙を切る道具' },
 
