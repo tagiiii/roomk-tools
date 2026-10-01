@@ -42,7 +42,7 @@
 4. **人狼勝利**: 人狼数 ≥ 村人陣営の生存者数（第三陣営除く）
 5. **神様**: ゲーム終了時に生存していれば別途「神様も生存」と表示（横取りではなく並記）
 
-てるてる坊主の規定日数:
+てるてる坊主の規定日数（総参加人数＝遊ぶ人数。進行だけのGMは数えない）:
 - 総参加人数4人以下 → 1日目
 - 5〜6人 → 2日目
 - 7人以上 → 3日目
@@ -55,7 +55,7 @@ jinro_rooms/{roomCode}/
   hostConnected:    boolean
   status:           'waiting' | 'night' | 'morning' | 'day' | 'vote' | 'execution' | 'result'
   day:              number           // 1始まり
-  totalPlayers:     number           // ゲーム開始時の参加者数（てるてる判定用）
+  totalPlayers:     number           // ゲーム開始時の遊ぶ人数（てるてる判定用。進行だけのGMは数えない）
   discussionSecs:   number
   discussionEndsAt: number
   tieBreakTarget:   string | null    // （旧仕様の名残。GM直接指名は廃止）
@@ -63,8 +63,12 @@ jinro_rooms/{roomCode}/
   runoffCandidates: array | null     // 決選投票の対象（同票だったニックネーム配列）
 
   roles:            object           // 役職名→人数 { '村人': 2, '人狼': 1, ... }
+  settings/
+    hostPlays:      boolean          // GMもプレイヤーとして遊ぶか（作成時 true。キーなしの旧ルームも true 扱い）。
+                                     // 待合室（status 'waiting'）の transaction でだけ変える
 
-  players/{nickname}/
+  players/{nickname}/              // 進行だけのGMも players に残る（再接続・GM 表示のため）。
+                                     // そのGMは role/faction null・isAlive false・actionDone true で、生死・夜の行動・投票・勝敗の対象外
     isHost:         boolean
     role:           string
     isAlive:        boolean
@@ -87,6 +91,17 @@ jinro_rooms/{roomCode}/
   winner:           'village' | 'wolf' | 'teruteru' | 'fox' | 'draw' | null
   foxPlayer:        string | null
 ```
+
+## GMの参加（2026-10-01）
+
+- 待合室の GM パネルの「設定」に「自分もプレイヤーとして参加する」チェック（初期値: 参加＝従来どおり）。外すと進行役。開始後は変えない（もう一度で待合室に戻ったら変えられる。値は引き継ぐ）
+- 判定は `hostPlaysOf(room)`（`settings.hostPlays !== false`）と `isPlaying(room, nick)`。遊ぶ人は「GMが遊ぶなら全員、遊ばないならGM以外」
+- **最少4人・役職の合計・開始ボタン・案内文は遊ぶ人数で数える**（例: 「GMのほかに4人以上でスタートできます（あと1人）」「4 / 4人（GMは進行役）」）。`startGame()` の transaction でも遊ぶ人数で検証する
+- 役職を配るのは遊ぶ人だけ（`buildRoleAssignmentRoom`）。生存者・投票先・夜の対象・ハンター/猫又の道連れ先・勝敗・票の集計は `alivePlaying()` で遊ぶ人だけを数える
+- 進行だけのGMの画面: 役職カードを出さず「みんなが役職を確認しています」、夜は「進行役」と GM パネル（完了／待ちだけ。GM の行は出さない）、昼は「あなたは進行役です」、投票はボタンなしで「N / M人が投票済み」。**他人の役職は見せない**（結果画面の全員の役職は従来どおり全員に出る。GM の行は出さない）
+- 一覧（待合室・役職確認・昼）では GM の行に「進行役」タグ。生死・準備の状態は出さない
+- 遊ぶ人が全員抜けても自動の書き込みは起きない（役職確認は「夜フェーズへ」を出さない。夜は GM が「朝を迎える」を押すと全員退場扱いで引き分け）
+- 経緯: 2026-10-01 オーナー決定: 待合室でホストの参加を選べる（初期値は従来どおり）
 
 ## ゲームフロー
 

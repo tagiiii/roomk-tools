@@ -148,6 +148,15 @@
     .player-tag.wolf   { background: var(--color-error); }
     .player-tag.dead   { background: #aaa; }
     .player-tag.voted  { background: var(--color-success); }
+    .player-tag.facil  { background: #EEF3F8; color: var(--color-primary); }
+
+    /* ── 待合室の設定（GMのみ）── */
+    .jn-check {
+      display: flex; align-items: center; gap: 10px; min-height: 44px;
+      font-size: 15px; font-weight: 500; cursor: pointer;
+    }
+    .jn-check input { width: 20px; height: 20px; accent-color: var(--color-accent); flex-shrink: 0; }
+    .jn-note { font-size: 13px; color: var(--color-muted); }
 
     /* ── 夜フェーズ ── */
     .night-screen { background: #0f172a; }
@@ -421,6 +430,15 @@
       </div>
 
       <div class="card mt-md">
+        <p class="section-lbl">設定</p>
+        <label class="jn-check">
+          <input type="checkbox" id="set-host-plays" checked onchange="onHostPlaysChange(this.checked)">
+          <span>自分もプレイヤーとして参加する</span>
+        </label>
+        <p class="jn-note">外すと進行役になります。役職は配られず、夜の行動や投票もしません</p>
+      </div>
+
+      <div class="card mt-md">
         <p class="section-lbl">役職設定</p>
         <div class="role-config-grid" id="role-config-grid"></div>
         <p class="role-total" id="role-total">0 / 0人</p>
@@ -450,10 +468,18 @@
 <!-- ══ ROLE（役職確認）══════════════════════════════ -->
 <div id="screen-role" class="screen">
   <div class="page">
-    <h2 style="text-align:center">あなたの役職を確認しよう</h2>
-    <p style="font-size:14px;color:var(--color-muted);text-align:center;margin-bottom:20px">
-      カードをタップして役職を見る
-    </p>
+    <div id="role-player-head">
+      <h2 style="text-align:center">あなたの役職を確認しよう</h2>
+      <p style="font-size:14px;color:var(--color-muted);text-align:center;margin-bottom:20px">
+        カードをタップして役職を見る
+      </p>
+    </div>
+    <div id="role-host-head" hidden>
+      <h2 style="text-align:center">みんなが役職を確認しています</h2>
+      <p style="font-size:14px;color:var(--color-muted);text-align:center;margin-bottom:20px">
+        進行役には役職は配られません。全員の準備がそろったら「夜フェーズへ」を押してね
+      </p>
+    </div>
 
     <div class="role-flip-card" id="role-flip-card" onclick="flipRoleCard()">
       <div class="role-flip-inner">
@@ -608,6 +634,8 @@
     </p>
 
     <div id="vote-btns"></div>
+
+    <p id="vote-host-progress" class="card" hidden style="text-align:center;font-weight:700"></p>
 
     <div id="voted-msg" class="card" style="display:none;text-align:center">
       <span class="material-symbols-rounded" style="font-size:40px;color:var(--color-success)">check_circle</span>
@@ -785,6 +813,9 @@ const state = {
   resolveTriggered: false,
   hunterResolved: false,
   renderedVoteRound: 0,
+  // 待合室: 遊ぶ人数（進行だけのGMは数えない）と GM が遊ぶか
+  playingCount: 0,
+  hostPlays:    true,
 };
 
 // ══════════════════════════════════════════════════
@@ -859,6 +890,25 @@ const getHostDisconnectedAt = RoomkRTDB.getHostDisconnectedAt;
 
 function isRoomExpired(room) {
   return RoomkRTDB.isRoomExpired(room, ORPHAN_TTL_MS);
+}
+
+// ── GM の参加（待合室で選ぶ。2026-10-01）──
+// settings.hostPlays を持たない旧ルームは従来どおり「GMも遊ぶ」
+const MIN_PLAYERS = 4;
+function hostPlaysOf(room) {
+  return !(room && room.settings && room.settings.hostPlays === false);
+}
+// 役職・生死・夜の行動・投票・勝敗の対象になる人か（進行だけのGMは対象外）
+function isPlaying(room, nick) {
+  return hostPlaysOf(room) || nick !== room?.host;
+}
+// 遊ぶ人のニックネーム（GMが進行だけならGMを除く）
+function playingNames(room, players = room?.players) {
+  return Object.keys(players || {}).filter(nick => isPlaying(room, nick));
+}
+// 生きている遊ぶ人の [nick, player]。進行だけのGMは isAlive:false で持つが、ここでも明示的に除く
+function alivePlaying(room, players = room?.players) {
+  return Object.entries(players || {}).filter(([nick, p]) => p && p.isAlive && isPlaying(room, nick));
 }
 
 // ══════════════════════════════════════════════════
@@ -955,17 +1005,13 @@ function changeRoleCount(roleId, delta) {
 
 function updateRoleTotalUI(playerCount) {
   const total = Object.values(state.roleCounts).reduce((a, b) => a + b, 0);
-  const pc = playerCount ?? currentPlayerCount();
+  // 役職の合計は遊ぶ人数に合わせる（進行だけのGMは数えない）
+  const pc = playerCount ?? state.playingCount;
   const el = document.getElementById('role-total');
   if (!el) return;
-  el.textContent = `${total} / ${pc}人`;
+  el.textContent = state.hostPlays ? `${total} / ${pc}人` : `${total} / ${pc}人（GMは進行役）`;
   el.className = 'role-total ' + (total === pc && pc > 0 ? 'ok' : 'over');
   updateStartButton(pc, total);
-}
-
-function currentPlayerCount() {
-  // リストの li 数から取得
-  return document.getElementById('w-player-list')?.childElementCount ?? 0;
 }
 
 function updateStartButton(playerCount, total) {
@@ -978,11 +1024,15 @@ function updateStartButton(playerCount, total) {
   const vilCount = ROLES
     .filter(r => r.faction === 'village')
     .reduce((a, r) => a + (state.roleCounts[r.id] || 0), 0);
-  if (playerCount < 4) {
-    btn.disabled = true; hint.textContent = '4人以上でスタートできます'; return;
+  if (playerCount < MIN_PLAYERS) {
+    btn.disabled = true;
+    hint.textContent = `${tooFewMsg(state.hostPlays)}（あと${MIN_PLAYERS - playerCount}人）`;
+    return;
   }
   if (total !== playerCount) {
-    btn.disabled = true; hint.textContent = `役職の合計(${total})と参加者数(${playerCount})を合わせてください`; return;
+    btn.disabled = true;
+    hint.textContent = `役職の合計(${total})と${state.hostPlays ? '参加者数' : '遊ぶ人数'}(${playerCount})を合わせてください`;
+    return;
   }
   if (wolfCount === 0) {
     btn.disabled = true; hint.textContent = '人狼を1人以上設定してください'; return;
@@ -992,6 +1042,10 @@ function updateStartButton(playerCount, total) {
   }
   btn.disabled = false;
   hint.textContent = '';
+}
+
+function tooFewMsg(hostPlays) {
+  return hostPlays ? '4人以上でスタートできます' : 'GMのほかに4人以上でスタートできます';
 }
 
 async function syncRoleConfigToFirebase() {
@@ -1028,6 +1082,7 @@ async function hostCreateRoom() {
       day: 1,
       discussionSecs,
       roles: state.roleCounts,
+      settings: { hostPlays: true },
       players: {
         [nickname]: {
           isHost: true,
@@ -1065,6 +1120,8 @@ async function hostCreateRoom() {
     hostDisconnectedAt: firebase.database.ServerValue.TIMESTAMP,
   });
   saveSession();
+  state.hostPlays = true;
+  state.playingCount = 1;
   buildRoleConfigGrid();
   updateRoleTotalUI(1);
   startRoomListener();
@@ -1165,14 +1222,17 @@ async function guestJoin() {
 async function startGame() {
   const total  = Object.values(state.roleCounts).reduce((a, b) => a + b, 0);
   let abortReason = null;
+  let hostPlays = true;
 
   const { committed } = await state.roomRef.transaction((room) => {
     if (!room || room.status !== 'waiting') {
       abortReason = 'invalid_state';
       return;
     }
-    const playerCount = Object.keys(room.players || {}).length;
-    if (playerCount < 4) {
+    // 最少人数・役職の合計は遊ぶ人だけで数える（進行だけのGMは数えない）
+    hostPlays = hostPlaysOf(room);
+    const playerCount = playingNames(room).length;
+    if (playerCount < MIN_PLAYERS) {
       abortReason = 'too_few';
       return;
     }
@@ -1190,9 +1250,29 @@ async function startGame() {
   });
 
   if (!committed) {
-    if (abortReason === 'too_few') showMsg('4人以上でスタートできます');
-    if (abortReason === 'count_mismatch') showMsg('役職の合計と参加者数を合わせてください');
+    if (abortReason === 'too_few') showMsg(tooFewMsg(hostPlays));
+    if (abortReason === 'count_mismatch') showMsg(`役職の合計と${hostPlays ? '参加者数' : '遊ぶ人数'}を合わせてください`);
     return;
+  }
+}
+
+// ── 待合室の設定: GMもプレイヤーとして参加するか（開始後は変えない）──
+async function onHostPlaysChange(checked) {
+  if (!state.isHost || !state.roomRef) return;
+  const ref = state.roomRef, me = state.nickname;
+  let committed = false;
+  try {
+    ({ committed } = await ref.transaction(room => {
+      if (!room || room.status !== 'waiting' || room.host !== me) return;
+      return { ...room, settings: { ...(room.settings || {}), hostPlays: !!checked } };
+    }));
+  } catch (error) {
+    console.error('[jinro] onHostPlaysChange failed', error);
+  }
+  if (!committed && state.roomRef === ref) {
+    showMsg('設定を変えられませんでした');
+    const snap = await ref.get().catch(() => null);
+    if (state.roomRef === ref) document.getElementById('set-host-plays').checked = hostPlaysOf(snap?.val());
   }
 }
 
@@ -1282,8 +1362,14 @@ function handleWaiting(room, players) {
       if (el) el.textContent = state.roleCounts[r.id] || 0;
     });
   }
-  const count = Object.keys(players).length;
-  document.getElementById('w-count').textContent = `${count}人`;
+  const hostPlays = hostPlaysOf(room);
+  const total = Object.keys(players).length;
+  // 役職の合計・最少人数は遊ぶ人だけで数える（進行だけのGMは数えない）
+  const count = playingNames(room, players).length;
+  state.hostPlays = hostPlays;
+  state.playingCount = count;
+  if (state.isHost) document.getElementById('set-host-plays').checked = hostPlays;
+  document.getElementById('w-count').textContent = hostPlays ? `${total}人` : `${total}人（遊ぶ人 ${count}人）`;
   renderPlayerList('w-player-list', players, (p, nick) => {
     if (p.connected === false && state.isHost) {
       return `<span style="font-size:12px;color:var(--color-muted)">切断中</span>
@@ -1291,7 +1377,7 @@ function handleWaiting(room, players) {
     }
     if (p.connected === false) return '<span style="font-size:12px;color:var(--color-muted)">切断中</span>';
     return '';
-  });
+  }, null, room);
   updateRoleTotalUI(count);
 }
 
@@ -1309,6 +1395,11 @@ function handleRole(room, players) {
       state.lastGuarded = guardMemory?.target || null;
       state.lastGuardedDay = Number(guardMemory?.day) || 0;
     }
+    // 進行だけのGMには役職カードを出さない（だれの役職も見せない）
+    const iPlay = isPlaying(room, state.nickname);
+    document.getElementById('role-player-head').hidden = !iPlay;
+    document.getElementById('role-host-head').hidden = iPlay;
+    document.getElementById('role-flip-card').style.display = iPlay ? '' : 'none';
     // 役職表示のセットアップ
     const roleDef = ROLES.find(r => r.id === state.myRole);
     const front = document.getElementById('role-flip-front');
@@ -1332,9 +1423,11 @@ function handleRole(room, players) {
     p => p.actionDone
       ? '<span class="player-tag voted">準備OK</span>'
       : '<span style="font-size:12px;color:var(--color-muted)">確認中</span>'
-  );
+  , null, room);
   if (state.isHost) {
-    const allReady = Object.values(players).every(p => p.actionDone);
+    // 準備を待つのは遊ぶ人だけ。遊ぶ人がいなくなったら夜へ進めない
+    const playing = playingNames(room, players);
+    const allReady = playing.length > 0 && playing.every(nick => players[nick].actionDone);
     document.getElementById('role-host-start-night').style.display = allReady ? 'block' : 'none';
   }
 }
@@ -1344,6 +1437,7 @@ function setupRoleExtraInfo(room, players, me) {
   const extraLabel = document.getElementById('role-extra-label');
   const extraContent = document.getElementById('role-extra-content');
   extraArea.style.display = 'none';
+  if (!isPlaying(room, state.nickname)) return;
 
   if (state.myRole === '人狼') {
     const partners = Object.entries(players)
@@ -1386,6 +1480,7 @@ function setupRoleExtraInfo(room, players, me) {
     extraArea.style.display = 'block';
     extraLabel.textContent = '全員の役職';
     extraContent.innerHTML = Object.entries(players)
+      .filter(([n]) => isPlaying(room, n))
       .map(([n, p]) => `${esc(n)}：${esc(p.role || '?')}`)
       .join('　');
   }
@@ -1419,7 +1514,7 @@ async function startNight() {
   const firstNightNoAction = ['人狼', '騎士', '霊媒師'];
   Object.entries(players).forEach(([nick, p]) => {
     const roleDef = ROLES.find(r => r.id === p.role);
-    const noAction = !p.isAlive || !roleDef?.nightAction
+    const noAction = !p.isAlive || !roleDef?.nightAction || !isPlaying(room, nick)
       || (isFirstNight && firstNightNoAction.includes(p.role));
     update[`players/${nick}/actionDone`] = noAction;
     update[`players/${nick}/nightAction`] = null;
@@ -1443,7 +1538,8 @@ function handleNight(room, players) {
       state.lastGuardedDay = Number(guardMemory?.day) || 0;
     }
     document.getElementById('night-day-label').textContent = `${dayLabel(room.day)}の夜`;
-    document.getElementById('night-role-title').textContent = state.myRole || '';
+    document.getElementById('night-role-title').textContent =
+      isPlaying(room, state.nickname) ? (state.myRole || '') : '進行役';
     setupNightActionUI(room, players);
     showScreen('night');
   }
@@ -1451,8 +1547,9 @@ function handleNight(room, players) {
   // GM パネル更新
   if (state.isHost) {
     document.getElementById('gm-night-panel').style.display = 'block';
-    updateNightStatusList(players);
-    const allDone = Object.values(players).every(p => p.actionDone);
+    updateNightStatusList(room, players);
+    // 行動を待つのは遊ぶ人だけ（進行だけのGMは対象外）
+    const allDone = playingNames(room, players).every(nick => players[nick].actionDone);
     document.getElementById('btn-resolve-night').disabled = !allDone;
   }
   // 人狼の wolfVote 集計（全員の wolfVote が揃ったら GM が nightAction にセット）
@@ -1464,6 +1561,13 @@ function setupNightActionUI(room, players) {
   const waitPanel = document.getElementById('night-wait-panel');
   area.innerHTML = '';
 
+  // 進行だけのGM: 夜の行動はなし。GM パネル（完了／待ち）だけを見る
+  if (!isPlaying(room, state.nickname)) {
+    document.getElementById('night-role-sub').textContent = 'みんなの行動がそろったら「朝を迎える」を押してね';
+    waitPanel.style.display = 'none';
+    return;
+  }
+
   if (!state.isAlive) {
     waitPanel.style.display = 'block';
     document.getElementById('night-wait-panel').querySelector('.night-waiting').innerHTML =
@@ -1474,7 +1578,7 @@ function setupNightActionUI(room, players) {
   const me = players[state.nickname];
   if (!me) return;
 
-  const alivePlayers = Object.entries(players).filter(([, p]) => p.isAlive);
+  const alivePlayers = alivePlaying(room, players);
 
   if (state.myRole === '占い師') {
     document.getElementById('night-role-sub').textContent = '誰を占いますか？';
@@ -1590,10 +1694,11 @@ function buildWolfVotePanel(targets) {
   </div>`;
 }
 
-function updateNightStatusList(players) {
+function updateNightStatusList(room, players) {
   const ul = document.getElementById('night-action-status-list');
   if (!ul) return;
-  ul.innerHTML = Object.entries(players).map(([nick, p]) => {
+  // 進行だけのGMは行動の対象外なので一覧に出さない
+  ul.innerHTML = Object.entries(players).filter(([nick]) => isPlaying(room, nick)).map(([nick, p]) => {
     const meTag = nick === state.nickname ? '<span class="player-tag me">あなた</span>' : '';
     let tag;
     if (p.actionDone) {
@@ -1735,7 +1840,7 @@ function handleMorning(room, players) {
   const morningHunterPanel = document.getElementById('morning-hunter-panel');
   morningHunterPanel.style.display = (isHunterMe && !hunterTarget) ? 'block' : 'none';
   if (isHunterMe && !hunterTarget) {
-    const alive = Object.entries(players).filter(([n, p]) => p.isAlive && n !== state.nickname);
+    const alive = alivePlaying(room, players).filter(([n]) => n !== state.nickname);
     renderHunterChoiceButtons('morning-hunter-btns', alive);
   }
 
@@ -1788,7 +1893,9 @@ function handleDay(room, players) {
   if (state.currentScreen !== 'day') {
     clearInterval(state.timerInterval);
     document.getElementById('day-day-label').textContent = `${dayLabel(room.day)}の昼`;
-    document.getElementById('day-role-chip').textContent = `あなたの役職：${state.myRole || ''}`;
+    document.getElementById('day-role-chip').textContent = isPlaying(room, state.nickname)
+      ? `あなたの役職：${state.myRole || ''}`
+      : 'あなたは進行役です';
     document.getElementById('day-host-vote-btn').style.display = state.isHost ? 'block' : 'none';
     showScreen('day');
     startTimer(room.discussionEndsAt, async () => {
@@ -1797,7 +1904,8 @@ function handleDay(room, players) {
   }
   renderPlayerList('day-player-list', players,
     p => p.isAlive ? '' : '<span class="player-tag dead">退場</span>',
-    p => !p.isAlive
+    p => !p.isAlive,
+    room
   );
 }
 
@@ -1831,14 +1939,16 @@ function handleVote(room, players) {
   const round = room.voteRound || 1;
   const runoff = Array.isArray(room.runoffCandidates) ? room.runoffCandidates : null;
   // 初回入場時、または決選投票でラウンドが変わったときに投票ボタンを作り直す
+  const iPlay = isPlaying(room, state.nickname);
   if (state.currentScreen !== 'vote' || state.renderedVoteRound !== round) {
     state.myVote = null;
     state.renderedVoteRound = round;
-    const alive = Object.entries(players).filter(([, p]) => p.isAlive);
+    const alive = alivePlaying(room, players);
     const candidates = runoff ? alive.filter(([nick]) => runoff.includes(nick)) : alive;
     const wrap = document.getElementById('vote-btns');
     wrap.innerHTML = '';
-    candidates.forEach(([nick]) => {
+    // 進行だけのGMには投票ボタンを出さない
+    (iPlay ? candidates : []).forEach(([nick]) => {
       if (nick === state.nickname) return;
       const btn = document.createElement('button');
       btn.className = 'vote-btn';
@@ -1853,14 +1963,20 @@ function handleVote(room, players) {
       wrap.appendChild(btn);
     });
     document.getElementById('vote-title').textContent = runoff ? '決選投票' : '誰を追放しますか？';
-    document.getElementById('vote-sub').textContent = runoff
-      ? '同じ票だった人の中から、もう一度選びます'
-      : '人狼だと思う人に投票してください';
+    document.getElementById('vote-sub').textContent = !iPlay
+      ? (runoff ? '同じ票だった人の中から、みんながもう一度選んでいます。進行役は投票しません'
+                : 'みんなが投票しています。進行役は投票しません')
+      : runoff
+        ? '同じ票だった人の中から、もう一度選びます'
+        : '人狼だと思う人に投票してください';
     // このラウンドで既に投票済み（再接続など）なら投票UIを出さず投票済み表示にする。
     // ただし票が現在の候補に含まれる場合のみ（決選開始直前の遅延書き込みでロックされるのを防ぐ）
     const candidateNames = new Set(candidates.map(([nick]) => nick));
     const myExistingVote = players[state.nickname]?.vote;
-    if (myExistingVote && candidateNames.has(myExistingVote)) {
+    if (!iPlay) {
+      wrap.style.display = 'none';
+      document.getElementById('voted-msg').style.display = 'none';
+    } else if (myExistingVote && candidateNames.has(myExistingVote)) {
       state.myVote = myExistingVote;
       wrap.style.display = 'none';
       document.getElementById('voted-msg').style.display = 'block';
@@ -1877,10 +1993,13 @@ function handleVote(room, players) {
   // 決選投票中は候補への票だけを「投票済み」とみなす（候補外の遅延票で誤進行しないように）
   const runoffSet = runoff ? new Set(runoff) : null;
   const hasValidVote = (p) => p.vote != null && (!runoffSet || runoffSet.has(p.vote));
-  const aliveList = Object.entries(players).filter(([, p]) => p.isAlive);
+  const aliveList = alivePlaying(room, players);
   const connectedAlive = aliveList.filter(([, p]) => p.connected !== false);
   const voted = aliveList.filter(([, p]) => hasValidVote(p)).length;
   document.getElementById('vote-wait-label').textContent = `${voted} / ${aliveList.length}人が投票済み`;
+  const hostProgress = document.getElementById('vote-host-progress');
+  hostProgress.hidden = iPlay;
+  hostProgress.textContent = `${voted} / ${aliveList.length}人が投票済み`;
 
   // 切断者を除く全員投票済みで自動進行
   const connectedVoted = connectedAlive.filter(([, p]) => hasValidVote(p)).length;
@@ -1920,8 +2039,8 @@ async function forceVoteProceed() {
   const room = snap.val();
   if (!room) return;
   const players = room.players || {};
-  const eligibleVoters = Object.entries(players)
-    .filter(([, p]) => p.isAlive && p.connected !== false)
+  const eligibleVoters = alivePlaying(room, players)
+    .filter(([, p]) => p.connected !== false)
     .map(([nick]) => nick);
   if (eligibleVoters.length === 0) {
     showMsg('接続中の参加者がいません');
@@ -1937,6 +2056,7 @@ async function castVote(target, voteRound) {
   const room = snap.val();
   if (!room) return;
   if (voteRound != null && (room.voteRound || 1) !== voteRound) return;
+  if (!isPlaying(room, state.nickname) || !isPlaying(room, target)) return;
   const runoff = Array.isArray(room.runoffCandidates) ? room.runoffCandidates : null;
   if (runoff && !runoff.includes(target)) return;
   state.myVote = target;
@@ -1947,7 +2067,8 @@ async function castVote(target, voteRound) {
 
 async function computeExecution(room, players, options = {}) {
   if (!room || !players) return;
-  const aliveList = Object.entries(players).filter(([, p]) => p.isAlive);
+  // 投票する人・される人は遊ぶ人だけ（進行だけのGMは対象外）
+  const aliveList = alivePlaying(room, players);
   const eligibleVoters = options.eligibleVoters?.length
     ? new Set(options.eligibleVoters)
     : new Set(aliveList.map(([nick]) => nick));
@@ -2080,7 +2201,7 @@ function handleExecution(room, players) {
   const hunterPanel = document.getElementById('hunter-choice-panel');
   hunterPanel.style.display = (isHunterMe && !hunterTarget) ? 'block' : 'none';
   if (isHunterMe && !hunterTarget) {
-    const alive = Object.entries(players).filter(([n, p]) => p.isAlive && n !== state.nickname);
+    const alive = alivePlaying(room, players).filter(([n]) => n !== state.nickname);
     renderHunterChoiceButtons('hunter-btns', alive);
   }
 
@@ -2161,7 +2282,7 @@ async function afterExecution() {
     };
     Object.entries(players).forEach(([nick, p]) => {
       const roleDef = ROLES.find(r => r.id === p.role);
-      update[`players/${nick}/actionDone`] = !p.isAlive || !roleDef?.nightAction;
+      update[`players/${nick}/actionDone`] = !p.isAlive || !roleDef?.nightAction || !isPlaying(room, nick);
       update[`players/${nick}/nightAction`] = null;
       update[`players/${nick}/wolfVote`]    = null;
       update[`players/${nick}/vote`]        = null;
@@ -2192,7 +2313,10 @@ function handleResult(room, players) {
       kamiAlive ? '神様が生存しているため、神様も勝利です' : '';
 
     // 全員の役職リスト
-    const sorted = Object.entries(players).sort((a, b) => b[1].isAlive - a[1].isAlive);
+    // 進行だけのGMは役職がないので一覧に出さない
+    const sorted = Object.entries(players)
+      .filter(([nick]) => isPlaying(room, nick))
+      .sort((a, b) => b[1].isAlive - a[1].isAlive);
     document.getElementById('result-role-list').innerHTML = sorted.map(([nick, p]) => {
       const meTag   = nick === state.nickname ? '<span class="player-tag me">あなた</span>' : '';
       const hostTag = p.isHost ? '<span class="player-tag host">GM</span>' : '';
@@ -2242,16 +2366,19 @@ async function playAgain() {
 // ══════════════════════════════════════════════════
 // プレイヤーリスト描画
 // ══════════════════════════════════════════════════
-function renderPlayerList(id, players, statusFn, deadFn) {
+function renderPlayerList(id, players, statusFn, deadFn, room) {
   const ul = document.getElementById(id);
   if (!ul) return;
   ul.innerHTML = Object.entries(players).map(([nick, p]) => {
+    // 進行だけのGMは「進行役」と出し、生死・準備などの状態は出さない
+    const facil   = !!room && !isPlaying(room, nick);
     const meTag   = nick === state.nickname ? '<span class="player-tag me">あなた</span>' : '';
     const hostTag = p.isHost ? '<span class="player-tag host">GM</span>' : '';
-    const dead    = deadFn?.(p) ? ' dead' : '';
+    const facilTag = facil ? '<span class="player-tag facil">進行役</span>' : '';
+    const dead    = !facil && deadFn?.(p) ? ' dead' : '';
     return `<li class="player-item${dead}">
-      <div class="player-name">${esc(nick)}${hostTag}${meTag}</div>
-      ${statusFn?.(p, nick) || ''}
+      <div class="player-name">${esc(nick)}${hostTag}${facilTag}${meTag}</div>
+      ${facil ? '' : (statusFn?.(p, nick) || '')}
     </li>`;
   }).join('');
   ul.querySelectorAll('[data-kick-nick]').forEach(btn => {
@@ -2355,14 +2482,16 @@ function buildRoleAssignmentRoom(room, roleCounts) {
   if (!room) return null;
   const players = room.players || {};
   const nicks = Object.keys(players);
-  if (nicks.length === 0) return null;
+  // 役職を配るのは遊ぶ人だけ（進行だけのGMには配らない）
+  const playing = playingNames(room, players);
+  if (playing.length === 0) return null;
 
   const pool = [];
   Object.entries(roleCounts || {}).forEach(([roleId, countRaw]) => {
     const count = Number(countRaw) || 0;
     for (let i = 0; i < count; i += 1) pool.push(roleId);
   });
-  if (pool.length !== nicks.length) {
+  if (pool.length !== playing.length) {
     console.warn('buildRoleAssignmentRoom: player count and role count do not match');
     return null;
   }
@@ -2377,9 +2506,24 @@ function buildRoleAssignmentRoom(room, roleCounts) {
   };
 
   const shuffledRoles = shuffle(pool);
-  const shuffledNicks = shuffle(nicks);
+  const shuffledNicks = shuffle(playing);
   const nextPlayers = {};
   let foxName = null;
+  // 進行だけのGM: 役職・陣営なし。isAlive:false / actionDone:true で、
+  // 生死・夜の行動・投票・勝敗のどの集計にも入らないようにする（表示は「進行役」）
+  nicks.filter(nick => !playing.includes(nick)).forEach(nick => {
+    nextPlayers[nick] = {
+      ...players[nick],
+      role: null,
+      faction: null,
+      isAlive: false,
+      vote: null,
+      wolfVote: null,
+      nightAction: null,
+      actionDone: true,
+      lastGuardedDay: 0,
+    };
+  });
   shuffledNicks.forEach((nick, idx) => {
     const role = shuffledRoles[idx];
     const roleDef = ROLES.find(r => r.id === role);
@@ -2403,7 +2547,7 @@ function buildRoleAssignmentRoom(room, roleCounts) {
     roles: { ...(roleCounts || {}) },
     status: 'role',
     day: 1,
-    totalPlayers: nicks.length,
+    totalPlayers: playing.length,
     winner: null,
     executionTarget: null,
     lastExecuted: null,
@@ -2660,7 +2804,7 @@ async function resolveExecution(roomRef, room, target) {
 
   let winner = null;
   if (targetPlayer.role === 'てるてる坊主') {
-    const totalPlayers = room.totalPlayers || Object.keys(players).length;
+    const totalPlayers = room.totalPlayers || playingNames(room, players).length;
     const requiredDay = totalPlayers <= 4 ? 1 : (totalPlayers <= 6 ? 2 : 3);
     if ((room.day || 1) >= requiredDay) {
       winner = 'teruteru';
@@ -2668,8 +2812,8 @@ async function resolveExecution(roomRef, room, target) {
   }
 
   if (targetPlayer.role === '猫又') {
-    const candidates = Object.entries(players)
-      .filter(([nick, p]) => p.isAlive && nick !== target);
+    const candidates = alivePlaying(room, players)
+      .filter(([nick]) => nick !== target);
     if (candidates.length > 0) {
       const [victim] = candidates[Math.floor(Math.random() * candidates.length)];
       killPlayer(victim, 'cat-revenge');
@@ -2703,7 +2847,7 @@ async function resolveExecution(roomRef, room, target) {
 function checkVictory(room) {
   if (!room) return null;
   const players = room.players || {};
-  const alive = Object.values(players).filter(p => p && p.isAlive);
+  const alive = alivePlaying(room, players).map(([, p]) => p);
   if (alive.length === 0) return 'draw';
 
   const foxAlive = alive.some(p => p.role === '妖狐');
@@ -2735,7 +2879,8 @@ RoomkHowto.init({
       'GMが「ルームを作る（GM）」を押し、ニックネームと時間を決めて「ルームを作成する」を押す',
       '画面に出たルームコードをみんなに伝える',
       'ほかの人は「ルームに参加する」からコードとニックネームを入れる',
-      '4人以上揃ったら、GMが役職の人数を決めて「ゲームスタート」を押す',
+      'GMは自分も遊ぶか進行だけするかを選ぶ（最初は「自分もプレイヤーとして参加する」にチェック）',
+      '遊ぶ人が4人以上揃ったら、GMが役職の人数を遊ぶ人数に合わせて「ゲームスタート」を押す',
     ] },
     { heading: '進めかた', items: [
       'カードをタップして自分の役職を見たら、「確認した！」を押す',
