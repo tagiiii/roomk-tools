@@ -1661,14 +1661,23 @@
   async function onHostPlaysChange(checked) {
     if (state.role !== 'host' || !state.roomRef) return;
     const me = state.nickname;
+    let abortReason = null;
     const { committed } = await state.roomRef.transaction((room) => {
+      abortReason = null;
       if (!room || room.status !== STATUS.WAITING || room.host !== me) return;
+      // ゲストがすでに上限なら、ホストは遊ぶ側に入れない（遊ぶ人が上限をこえないように）
+      if (checked && getGuestNames(room.players).length >= MAX_PLAYERS) { abortReason = 'full'; return; }
       return { ...room, settings: { ...(room.settings || {}), hostPlays: !!checked } };
     }).catch((error) => {
       console.error('[uso-jisho] onHostPlaysChange failed', error);
       return { committed: false };
     });
-    if (!committed) RoomkRTDB.showToast('設定を変えられませんでした');
+    if (!committed) {
+      document.getElementById('set-host-plays').checked = hostPlaysOf(state.lastRoom);
+      RoomkRTDB.showToast(abortReason === 'full'
+        ? `遊べるのは${MAX_PLAYERS}人までです。ゲストが${MAX_PLAYERS}人いるので参加できません`
+        : '設定を変えられませんでした');
+    }
     if (state.lastRoom && state.lastRoom.status === STATUS.WAITING) handleWaiting(state.lastRoom);
   }
 
