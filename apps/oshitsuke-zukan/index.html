@@ -968,6 +968,13 @@ function renderActionArea(room, allPlayers) {
   const players = gamePlayersOf(room, allPlayers); // 渡す・回す相手に進行だけのホストを入れない
   const turn = room.match?.turn;
   if (!turn || turn.actor !== state.nickname) { area.innerHTML = ''; return; }
+  // 進行だけのホストに番が来ること（旧版のゲストが渡した場合）は想定外。操作は出さず案内だけ
+  if (!players[state.nickname]) {
+    area.innerHTML = `<div class="card ozk-action-card">
+      <p class="ozk-hint">進行役には番が回ってこないよ。止まったら「途中で終わる」で終われるよ</p>
+    </div>`;
+    return;
+  }
   if (turn.phase === 'choosing') {
     area.innerHTML = buildChoosingUI(room, players);
     bindTargetButtons('ozk-target-btn--choose', selectChooseTarget);
@@ -1407,7 +1414,7 @@ async function submitChoose() {
   const { committed } = await state.roomRef.transaction((room) => {
     if (!room || room.status !== 'playing') { abortReason = 'invalid'; return; }
     const turn = room.match?.turn;
-    if (!turn || turn.phase !== 'choosing' || turn.actor !== state.nickname) { abortReason = 'invalid'; return; }
+    if (!turn || turn.phase !== 'choosing' || turn.actor !== state.nickname || !gamePlayersOf(room)[state.nickname]) { abortReason = 'invalid'; return; }
     if (!KINDS.some((k) => k.id === claimKind)) { abortReason = 'invalid'; return; }
     const players = gamePlayersOf(room); // 進行だけのホストには渡せない
     const target = players[targetNick];
@@ -1445,7 +1452,7 @@ async function submitPeek() {
   const { committed } = await state.roomRef.transaction((room) => {
     if (!room || room.status !== 'playing') { abortReason = 'invalid'; return; }
     const turn = room.match?.turn;
-    if (!turn || turn.phase !== 'deciding' || turn.actor !== state.nickname || !turn.cardId) { abortReason = 'invalid'; return; }
+    if (!turn || turn.phase !== 'deciding' || turn.actor !== state.nickname || !turn.cardId || !gamePlayersOf(room)[state.nickname]) { abortReason = 'invalid'; return; }
     const card = (room.match.cards || {})[turn.cardId];
     if (!card || card.zone !== 'inFlight') { abortReason = 'invalid'; return; }
     const players = gamePlayersOf(room);
@@ -1476,7 +1483,7 @@ async function submitForward() {
   const { committed } = await state.roomRef.transaction((room) => {
     if (!room || room.status !== 'playing') { abortReason = 'invalid'; return; }
     const turn = room.match?.turn;
-    if (!turn || turn.phase !== 'passing' || turn.actor !== state.nickname || !turn.cardId) { abortReason = 'invalid'; return; }
+    if (!turn || turn.phase !== 'passing' || turn.actor !== state.nickname || !turn.cardId || !gamePlayersOf(room)[state.nickname]) { abortReason = 'invalid'; return; }
     if (!KINDS.some((k) => k.id === claimKind)) { abortReason = 'invalid'; return; }
     const card = (room.match.cards || {})[turn.cardId];
     if (!card || card.zone !== 'inFlight') { abortReason = 'invalid'; return; }
@@ -1504,7 +1511,7 @@ async function submitJudge(guessTruth) {
   const { committed } = await state.roomRef.transaction((room) => {
     if (!room || room.status !== 'playing') { abortReason = 'invalid'; return; }
     const turn = room.match?.turn;
-    if (!turn || turn.phase !== 'deciding' || turn.actor !== state.nickname || !turn.cardId) { abortReason = 'invalid'; return; }
+    if (!turn || turn.phase !== 'deciding' || turn.actor !== state.nickname || !turn.cardId || !gamePlayersOf(room)[state.nickname]) { abortReason = 'invalid'; return; }
     const cards = room.match.cards || {};
     const card = cards[turn.cardId];
     if (!card || card.zone !== 'inFlight') { abortReason = 'invalid'; return; }
@@ -1563,7 +1570,7 @@ async function submitAdvance() {
   const { committed } = await state.roomRef.transaction((room) => {
     if (!room || room.status !== 'playing') return;
     const turn = room.match?.turn;
-    if (!turn || turn.phase !== 'resolved' || turn.actor !== state.nickname) return;
+    if (!turn || turn.phase !== 'resolved' || turn.actor !== state.nickname || !gamePlayersOf(room)[state.nickname]) return;
     return {
       ...room,
       match: {
