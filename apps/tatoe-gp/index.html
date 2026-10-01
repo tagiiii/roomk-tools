@@ -153,6 +153,36 @@
       color: #fff;
       font-size: 11px;
     }
+    .tg-badge-role {
+      margin-left: 4px;
+      padding: 2px 8px;
+      border-radius: 20px;
+      background: var(--color-muted);
+      color: #fff;
+      font-size: 11px;
+    }
+
+    /* 待合室の設定（ホストのみ） */
+    .tg-check {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-height: 44px;
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    .tg-check input {
+      width: 20px;
+      height: 20px;
+      accent-color: var(--color-accent);
+      flex-shrink: 0;
+    }
+    .tg-fineprint {
+      color: var(--color-muted);
+      font-size: 13px;
+      line-height: 1.7;
+    }
 
     .spinner {
       width: 48px;
@@ -521,14 +551,23 @@
       </button>
 
       <hr class="divider">
-      <div class="tg-section-label">参加者（<span id="host-player-count">0</span>人 / 最低3人でスタート可）</div>
+      <div class="tg-section-label">参加者（遊ぶ人 <span id="host-player-count">0</span>人 / 最低3人でスタート可）</div>
       <div class="tg-player-list" id="host-player-list"></div>
+
+      <div class="form-group mt-md">
+        <label class="tg-check">
+          <input type="checkbox" id="host-plays" checked onchange="onHostPlaysChange(this.checked)">
+          <span>自分もプレイヤーとして参加する</span>
+        </label>
+        <p class="tg-fineprint">外すと進行役になります。お題選びや締め切りはできますが、回答・投票・得点には入りません</p>
+      </div>
 
       <div class="mt-lg">
         <button class="btn btn-primary btn-lg btn-full" id="btn-start-game" disabled onclick="hostStartGame()">
           <span class="material-symbols-rounded" aria-hidden="true">sports_esports</span>
           ゲームを始める
         </button>
+        <p class="text-muted text-center" id="host-start-hint" style="margin-top:8px"></p>
       </div>
     </div>
   </div>
@@ -610,9 +649,12 @@
       </div>
     </div>
 
+    <p class="text-muted text-center" id="answer-facilitator-note" style="display:none">進行役です。みんなの回答を待っています</p>
+
     <div id="answer-host-actions" style="display:none; margin-top:24px">
       <button class="btn btn-ghost btn-full" id="btn-force-close-answer" onclick="hostCloseAnswering()">回答を締め切って投票へ</button>
       <p class="text-muted text-center" id="answer-host-hint" style="margin-top:8px"></p>
+      <button class="btn btn-ghost btn-full" id="btn-end-no-players" style="display:none; margin-top:8px" onclick="hostEndGame()">ゲームを終了する</button>
     </div>
   </div>
 </div>
@@ -625,6 +667,7 @@
       <p class="tg-question-banner__text" id="vote-theme-text"></p>
     </div>
     <div class="tg-vote-status" id="vote-status-text"></div>
+    <p class="text-muted text-center" id="vote-facilitator-note" style="display:none">進行役です。みんなの投票を待っています</p>
 
     <div id="vote-input-area">
       <div class="tg-vote-list" id="vote-list"></div>
@@ -672,7 +715,7 @@
 
 <div class="screen" id="screen-final">
   <div class="tg-page">
-    <div class="tg-winner-block pop-in">
+    <div class="tg-winner-block pop-in" id="final-winner-block">
       <div style="font-size:72px;line-height:1;margin-bottom:8px">
         <span class="material-symbols-rounded" aria-hidden="true" style="font-size:72px;color:#F0A500">emoji_events</span>
       </div>
@@ -825,6 +868,24 @@
 
   const SESSION_KEY = 'tatoegp_session';
   const ORPHAN_TTL_MS = 2 * 60 * 1000;
+  const MIN_PLAYERS = 3; // 遊ぶ人（回答・投票・得点の対象）だけで数える
+
+  // ホストも回答・投票・得点の対象か。キーがない部屋（旧版が作った部屋）は従来どおり「遊ぶ」
+  function hostPlays(room) {
+    return room?.settings?.hostPlays !== false;
+  }
+
+  // 遊ぶ人だけの players。進行だけのホストは回答・投票・得点・結果に入れない
+  function playingPlayers(room) {
+    const players = room?.players || {};
+    if (hostPlays(room)) return players;
+    return Object.fromEntries(Object.entries(players)
+      .filter(([name, player]) => !(player?.isHost || name === room.host)));
+  }
+
+  function isFacilitator() {
+    return state.role === 'host' && !state.hostPlays;
+  }
 
   const state = {
     role: null,
@@ -841,6 +902,8 @@
     currentScreen: 'top',
     votingTriggered: false,
     resultTriggered: false,
+    hostPlays: true,      // 最新 room の settings/hostPlays（キーなしは true）
+    hostPlaysBusy: false,
   };
 
   function saveSession() {
@@ -1139,10 +1202,11 @@
     return { voteCounts, deltas, maxVotes, topNames, grandPrix };
   }
 
-  function renderPlayerList(containerId, players) {
+  function renderPlayerList(containerId, players, room) {
     const element = document.getElementById(containerId);
     if (!element) return;
     element.innerHTML = '';
+    const plays = hostPlays(room);
 
     Object.entries(players || {}).forEach(([name, player]) => {
       const isMe = name === state.nickname;
@@ -1151,6 +1215,7 @@
           <div class="tg-player-avatar">${escapeHtml(name.charAt(0).toUpperCase())}</div>
           <span class="tg-player-name">${escapeHtml(name)}</span>
           ${player.isHost ? '<span class="tg-badge-host">ホスト</span>' : ''}
+          ${player.isHost && !plays ? '<span class="tg-badge-role">進行役</span>' : ''}
         </div>
       `;
     });
@@ -1210,6 +1275,7 @@
         usedThemes: [],
         pendingThemes: null,
         answerOrder: [],
+        settings: { hostPlays: true },
         players: {
           [nickname]: { score: 0, isHost: true, answer: null, vote: null },
         },
@@ -1255,7 +1321,7 @@
       if (!room) { abortReason = 'not_found'; return; }
       if (room.hostConnected === false) { abortReason = 'host_gone'; return; }
       if (room.status !== STATUS.WAITING) { abortReason = 'bad_status'; return; }
-      if (Object.keys(room.players || {}).length < 3) { abortReason = 'too_few'; return; }
+      if (Object.keys(playingPlayers(room)).length < MIN_PLAYERS) { abortReason = 'too_few'; return; }
       abortReason = null;
       return {
         ...room,
@@ -1264,8 +1330,31 @@
       };
     });
     if (!committed && abortReason === 'too_few') {
-      showError('host-nickname-error', '3人以上で開始できます');
+      document.getElementById('host-start-hint').textContent = `遊ぶ人が${MIN_PLAYERS}人以上いると始められます`;
     }
+  }
+
+  // ホスト: 自分もプレイヤーとして参加するか（待合室のあいだだけ変えられる）
+  async function onHostPlaysChange(checked) {
+    if (state.role !== 'host' || !state.roomRef || state.hostPlaysBusy) return;
+    const ref = state.roomRef;
+    const me = state.nickname;
+    const box = document.getElementById('host-plays');
+    state.hostPlaysBusy = true;
+    box.disabled = true;
+    let committed = false;
+    try {
+      ({ committed } = await ref.transaction((room) => {
+        if (!room || room.status !== STATUS.WAITING || room.host !== me) return;
+        return { ...room, settings: { ...(room.settings || {}), hostPlays: !!checked } };
+      }));
+    } catch (error) {
+      console.warn('[tatoe-gp] hostPlays update failed', error);
+    }
+    if (state.roomRef !== ref) return;
+    state.hostPlaysBusy = false;
+    box.disabled = false;
+    if (!committed) box.checked = state.hostPlays;
   }
 
   async function hostPickTheme(themeText, themeIndex) {
@@ -1484,6 +1573,7 @@
   }
 
   async function submitAnswer() {
+    if (isFacilitator()) return;
     const input = document.getElementById('answer-input');
     const answer = normalizeAnswer(input.value);
     if (!answer) {
@@ -1505,6 +1595,7 @@
   }
 
   async function submitVote(targetName) {
+    if (isFacilitator()) return;
     if (!targetName || targetName === state.nickname) return;
     if (state.players?.[state.nickname]?.vote) return;
 
@@ -1520,7 +1611,7 @@
     const { committed } = await state.roomRef.transaction((room) => {
       if (!room || room.status !== STATUS.ANSWERING) return;
       const currentPlayers = room.players || players || {};
-      const answeredEntries = getAnsweredEntries(currentPlayers);
+      const answeredEntries = getAnsweredEntries(playingPlayers({ ...room, players: currentPlayers }));
       if (answeredEntries.length === 0) return;
       const answerOrder = shuffle(answeredEntries.map(({ name }) => name));
       const nextPlayers = {};
@@ -1541,7 +1632,7 @@
     const { committed } = await state.roomRef.transaction((room) => {
       if (!room || room.status !== STATUS.VOTING) return;
       const currentPlayers = room.players || players || {};
-      const { deltas } = calcRoundOutcome(currentPlayers);
+      const { deltas } = calcRoundOutcome(playingPlayers({ ...room, players: currentPlayers }));
       const nextPlayers = {};
       Object.entries(currentPlayers).forEach(([name, player]) => {
         nextPlayers[name] = {
@@ -1605,7 +1696,10 @@
         updateSessionRoundData(myPlayer?.answer ?? null, myPlayer?.vote ?? null);
       }
 
-      state.players = room.players || {};
+      state.hostPlays = hostPlays(room);
+      // 回答・投票・得点の対象（遊ぶ人）だけ。進行だけのホストは含めない
+      const playing = playingPlayers(room);
+      state.players = playing;
       state.currentTheme = room.currentTheme || '';
       state.round = room.round || 0;
       state.usedThemes = room.usedThemes || [];
@@ -1628,22 +1722,22 @@
 
       switch (room.status) {
         case STATUS.WAITING:
-          handleWaiting(room.players);
+          handleWaiting(room);
           break;
         case STATUS.SELECTING:
           handleSelecting(room.pendingThemes);
           break;
         case STATUS.ANSWERING:
-          handleAnswering(room.players, room.currentTheme, room.round);
+          handleAnswering(playing, room.currentTheme, room.round);
           break;
         case STATUS.VOTING:
-          handleVoting(room.players, room.currentTheme, room.answerOrder);
+          handleVoting(playing, room.currentTheme, room.answerOrder);
           break;
         case STATUS.RESULT:
-          handleResult(room.players, room.currentTheme, room.answerOrder);
+          handleResult(playing, room.currentTheme, room.answerOrder);
           break;
         case STATUS.FINISHED:
-          handleFinished(room.players);
+          handleFinished(playing);
           break;
         default:
           break;
@@ -1651,8 +1745,9 @@
     });
   }
 
-  function handleWaiting(players) {
-    const count = Object.keys(players || {}).length;
+  function handleWaiting(room) {
+    const players = room.players || {};
+    const count = Object.keys(playingPlayers(room)).length;
 
     if (state.role === 'host') {
       if (state.currentScreen !== 'host-setup') {
@@ -1662,13 +1757,17 @@
         document.getElementById('host-room-code-display').textContent = state.roomCode;
       }
       document.getElementById('host-player-count').textContent = count;
-      renderPlayerList('host-player-list', players);
-      document.getElementById('btn-start-game').disabled = count < 3;
+      renderPlayerList('host-player-list', players, room);
+      const box = document.getElementById('host-plays');
+      if (!state.hostPlaysBusy) box.checked = state.hostPlays;
+      const enough = count >= MIN_PLAYERS;
+      document.getElementById('btn-start-game').disabled = !enough;
+      document.getElementById('host-start-hint').textContent = enough ? '' : `遊ぶ人があと${MIN_PLAYERS - count}人必要です`;
       return;
     }
 
     if (state.currentScreen !== 'waiting') showScreen('waiting');
-    renderPlayerList('waiting-player-list', players);
+    renderPlayerList('waiting-player-list', players, room);
   }
 
   function handleSelecting(pendingThemes) {
@@ -1714,9 +1813,12 @@
     const answered = getAnsweredEntries(players).length;
     document.getElementById('answer-status-text').textContent = `${answered} 人 / ${total} 人が回答済み`;
 
-    const myAnswer = players?.[state.nickname]?.answer;
-    document.getElementById('answer-input-area').style.display = myAnswer ? 'none' : 'block';
-    document.getElementById('answer-submitted-area').style.display = myAnswer ? 'block' : 'none';
+    // 進行だけのホストには回答欄を出さず、回答状況と進行の操作だけを出す
+    const facilitator = isFacilitator();
+    const myAnswer = facilitator ? null : players?.[state.nickname]?.answer;
+    document.getElementById('answer-input-area').style.display = facilitator || myAnswer ? 'none' : 'block';
+    document.getElementById('answer-submitted-area').style.display = !facilitator && myAnswer ? 'block' : 'none';
+    document.getElementById('answer-facilitator-note').style.display = facilitator ? 'block' : 'none';
 
     const answerHostActions = document.getElementById('answer-host-actions');
     if (state.role === 'host') {
@@ -1725,7 +1827,11 @@
       const btn = document.getElementById('btn-force-close-answer');
       btn.disabled = answered === 0 || state.votingTriggered;
       const hint = document.getElementById('answer-host-hint');
-      if (answered === 0) {
+      // 遊ぶ人が全員抜けた（進行役だけが残った）ときは終了だけできるようにする
+      document.getElementById('btn-end-no-players').style.display = total === 0 ? 'block' : 'none';
+      if (total === 0) {
+        hint.textContent = '遊ぶ人がいなくなりました';
+      } else if (answered === 0) {
         hint.textContent = '回答が1件以上ないと投票に進めません';
       } else if (remaining > 0) {
         hint.textContent = `未回答の ${remaining} 人は回答なしとして進めます`;
@@ -1759,9 +1865,12 @@
     const voted = Object.values(players || {}).filter((player) => typeof player.vote === 'string' && player.vote).length;
     document.getElementById('vote-status-text').textContent = `${voted} 人 / ${total} 人が投票済み`;
 
-    const myVote = players?.[state.nickname]?.vote || null;
+    // 進行だけのホストには投票ボタンを出さず、回答の一覧（匿名）と進行の操作だけを出す
+    const facilitator = isFacilitator();
+    const myVote = facilitator ? null : (players?.[state.nickname]?.vote || null);
     document.getElementById('vote-input-area').style.display = myVote ? 'none' : 'block';
     document.getElementById('vote-submitted-area').style.display = myVote ? 'block' : 'none';
+    document.getElementById('vote-facilitator-note').style.display = facilitator ? 'block' : 'none';
 
     const orderedNames = getOrderedAnswerNames(players, answerOrder);
     const answersByName = Object.fromEntries(getAnsweredEntries(players).map((entry) => [entry.name, entry.answer]));
@@ -1779,8 +1888,13 @@
           ${isSelf ? '<span class="badge badge-accent">あなた</span>' : '<span class="badge">匿名</span>'}
         </div>
         <div class="tg-vote-answer">${escapeHtml(answersByName[name] || '')}</div>
-        <div class="tg-vote-note">${isSelf ? '自分の回答には投票できません' : 'いちばん好きな回答を1つ選んでください'}</div>
+        ${facilitator ? '' : `<div class="tg-vote-note">${isSelf ? '自分の回答には投票できません' : 'いちばん好きな回答を1つ選んでください'}</div>`}
       `;
+
+      if (facilitator) {
+        list.appendChild(card);
+        return;
+      }
 
       const button = document.createElement('button');
       button.className = 'btn btn-primary btn-full btn-sm';
@@ -1879,7 +1993,12 @@
       .map(([name, player]) => ({ name, score: player.score || 0 }))
       .sort((left, right) => right.score - left.score || left.name.localeCompare(right.name, 'ja'));
 
-    if (!sorted.length) return;
+    // 遊ぶ人が全員抜けたあとに終了したときは、優勝の欄を出さない
+    document.getElementById('final-winner-block').style.display = sorted.length ? 'block' : 'none';
+    if (!sorted.length) {
+      document.getElementById('final-ranking').innerHTML = '<p class="text-muted text-center">遊んだ人はいませんでした</p>';
+      return;
+    }
 
     const winner = sorted[0];
     document.getElementById('final-winner-name').textContent = winner.name;
@@ -1927,6 +2046,8 @@
       currentScreen: 'top',
       votingTriggered: false,
       resultTriggered: false,
+      hostPlays: true,
+      hostPlaysBusy: false,
     });
 
     document.getElementById('host-nickname').value = '';
@@ -1940,6 +2061,14 @@
     document.getElementById('answer-submitted-area').style.display = 'none';
     document.getElementById('vote-input-area').style.display = 'block';
     document.getElementById('vote-submitted-area').style.display = 'none';
+    document.getElementById('answer-facilitator-note').style.display = 'none';
+    document.getElementById('vote-facilitator-note').style.display = 'none';
+    document.getElementById('btn-end-no-players').style.display = 'none';
+    document.getElementById('final-winner-block').style.display = 'block';
+    document.getElementById('host-start-hint').textContent = '';
+    const hostPlaysBox = document.getElementById('host-plays');
+    hostPlaysBox.checked = true;
+    hostPlaysBox.disabled = false;
 
     hideError('host-nickname-error');
     hideError('guest-join-error');
@@ -1970,6 +2099,7 @@
           'ホストが「ルームを作る（ホスト）」を押して、コードをみんなに伝える',
           'ほかの人は「ルームに参加する」からニックネームとルームコードを入れて「参加する」',
           '3人以上そろったら、ホストが「ゲームを始める」を押す',
+          'ホストは「自分もプレイヤーとして参加する」を外すと進行役になって、回答・投票・得点には入らない（そのときはホストのほかに3人以上で遊べる）',
         ],
       },
       {
