@@ -196,12 +196,26 @@
       margin-top: var(--space-xl);
     }
 
+    /* ── 検索と利用シーンをまとめたパネル ── */
+    .tool-filter {
+      margin-bottom: var(--space-lg);
+      padding: var(--space-md) var(--space-lg) var(--space-lg);
+      border-radius: var(--radius-card);
+      background-color: var(--color-surface);
+      box-shadow: var(--shadow-sm);
+    }
+
+    @media (max-width: 600px) {
+      .tool-filter {
+        padding: var(--space-md);
+      }
+    }
+
     /* ── 利用シーン絞り込み ── */
     .scene-filter {
       display: flex;
       flex-wrap: wrap;
       gap: var(--space-xs);
-      margin-bottom: var(--space-md);
     }
 
     .scene-filter__chip {
@@ -231,7 +245,6 @@
     }
 
     .tool-search {
-      max-width: 480px;
       margin-bottom: var(--space-md);
     }
 
@@ -241,8 +254,8 @@
 
     .tool-search__icon {
       position: absolute;
-      top: 50%;
-      left: 12px;
+      top: 24px; /* 入力欄の高さの半分（候補が開いても動かない） */
+      left: 16px;
       transform: translateY(-50%);
       font-size: 22px;
       color: var(--color-muted);
@@ -252,7 +265,133 @@
     .tool-search__input.form-input {
       -webkit-appearance: none;
       appearance: none;
-      padding-left: 44px;
+      min-height: 48px;
+      padding-left: 48px;
+      border-radius: var(--radius-full);
+      background-color: var(--color-bg);
+      border-color: transparent;
+    }
+
+    .tool-search__input.form-input:focus {
+      background-color: var(--color-surface);
+      border-color: var(--color-accent);
+    }
+
+    /* 入力中に出す候補（ツール名）と、空欄のときの検索ヒント */
+    .tool-suggest {
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0;
+      right: 0;
+      z-index: 20;
+      padding: var(--space-xs);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-card);
+      background-color: var(--color-surface);
+      box-shadow: var(--shadow-md);
+    }
+
+    .tool-suggest[hidden],
+    .tool-suggest__list[hidden],
+    .tool-hints[hidden] {
+      display: none;
+    }
+
+    .tool-suggest__list {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .tool-suggest__option {
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+      min-height: 44px; /* タップターゲット最小サイズ（WCAG 2.5.5） */
+      padding: 6px 12px;
+      border-radius: var(--radius-btn);
+      cursor: pointer;
+    }
+
+    .tool-suggest__option:hover,
+    .tool-suggest__option[aria-selected="true"] {
+      background-color: rgba(46, 125, 140, 0.12);
+    }
+
+    .tool-suggest__option > .material-symbols-rounded {
+      flex-shrink: 0;
+      font-size: 22px;
+      color: var(--color-accent);
+    }
+
+    .tool-suggest__text {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .tool-suggest__name {
+      display: block;
+      color: var(--color-primary);
+      font-weight: 700;
+      overflow-wrap: anywhere;
+    }
+
+    .tool-suggest__sub {
+      display: block;
+      color: var(--color-muted);
+      font-size: var(--font-size-sm);
+      overflow-wrap: anywhere;
+    }
+
+    .tool-suggest__open {
+      font-size: 20px !important;
+      color: var(--color-muted) !important;
+    }
+
+    .tool-hints {
+      padding: var(--space-sm);
+    }
+
+    .tool-hints__label {
+      margin-bottom: var(--space-xs);
+      color: var(--color-muted);
+      font-size: var(--font-size-sm);
+    }
+
+    .tool-hints__list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-xs);
+    }
+
+    .scene-empty .tool-hints__list {
+      justify-content: center;
+    }
+
+    /* 押すとそのことばで検索する。シーンの絞り込みチップと見分けられるよう、枠なしの淡い塗りにする */
+    .tool-hint {
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      min-height: 40px;
+      padding: 4px 14px 4px 10px;
+      border: none;
+      border-radius: var(--radius-full);
+      background-color: rgba(46, 125, 140, 0.10);
+      color: var(--color-accent);
+      font-family: inherit;
+      font-size: var(--font-size-sm);
+      font-weight: 700;
+      cursor: pointer;
+      transition: background-color var(--transition-base);
+    }
+
+    .tool-hint:hover {
+      background-color: rgba(46, 125, 140, 0.18);
+    }
+
+    .tool-hint > .material-symbols-rounded {
+      font-size: 18px;
     }
 
     .tool-list-heading__count {
@@ -473,11 +612,20 @@
       <h2 class="section-title">ツール一覧</h2>
       <p class="section-desc">画像はプレイ・操作画面の一例です。</p>
 
+      <div class="tool-filter">
       <div class="tool-search" role="search" aria-label="ツール一覧">
         <label class="form-label tool-filter__label" for="tool-search">ツール検索</label>
-        <div class="tool-search__field">
+        <div class="tool-search__field" id="tool-search-field">
           <span class="material-symbols-rounded tool-search__icon" aria-hidden="true">search</span>
-          <input class="form-input tool-search__input" type="search" id="tool-search" placeholder="例: カード、1対1、オフライン" autocomplete="off" enterkeyhint="search" />
+          <input class="form-input tool-search__input" type="search" id="tool-search" placeholder="例: カード、1対1、オフライン" autocomplete="off" enterkeyhint="search"
+            role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="tool-suggest-list" />
+          <div class="tool-suggest" id="tool-suggest" hidden>
+            <div class="tool-hints" id="tool-hints-popup" role="group" aria-labelledby="tool-hints-popup-label" hidden>
+              <p class="tool-hints__label" id="tool-hints-popup-label">こんなことばで探せます</p>
+              <div class="tool-hints__list"></div>
+            </div>
+            <ul class="tool-suggest__list" id="tool-suggest-list" role="listbox" aria-label="ツールの候補（選ぶとそのツールを開きます）" hidden></ul>
+          </div>
         </div>
       </div>
 
@@ -490,6 +638,7 @@
         <button class="scene-filter__chip" type="button" data-scene="circle" aria-pressed="false">サークルタイム</button>
         <button class="scene-filter__chip" type="button" data-scene="sakusen" aria-pressed="false">作戦会議</button>
       </div>
+      </div>
 
       <h3 class="form-label tool-filter__label">ツール<span class="tool-list-heading__count" id="tool-list-count"></span></h3>
       <p class="tool-count" id="tool-count" role="status" aria-live="polite"></p>
@@ -498,13 +647,17 @@
         <span class="material-symbols-rounded" aria-hidden="true">search_off</span>
         <p class="scene-empty__title" id="scene-empty-title">このシーンのツールはまだありません</p>
         <p class="scene-empty__desc" id="scene-empty-desc">「すべて」に戻すと、ほかのツールを見られます。</p>
+        <div class="tool-hints" id="scene-empty-hints" role="group" aria-labelledby="scene-empty-hints-label" hidden>
+          <p class="tool-hints__label" id="scene-empty-hints-label">こんなことばでも探せます</p>
+          <div class="tool-hints__list"></div>
+        </div>
         <button class="btn btn-secondary btn-sm" type="button" id="scene-empty-reset">すべてのツールを見る</button>
       </div>
 
       <div class="apps-grid">
 
         <!-- コトバのテーマクイズ -->
-        <a class="app-card" href="kotoba-theme/" data-scenes="kotoba">
+        <a class="app-card" href="kotoba-theme/" data-scenes="kotoba" data-old-names="コトバの技クイズ">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">tips_and_updates</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/kotoba-theme.png" alt="コトバのテーマを紹介する問題と3つの選択肢" width="744" height="390" loading="eager" decoding="async" />
@@ -530,7 +683,7 @@
         </a>
 
         <!-- クイズパック -->
-        <a class="app-card" href="quiz/" data-scenes="kotoba circle hiroba">
+        <a class="app-card" href="quiz/" data-scenes="kotoba circle hiroba" data-keywords="1対1、早押し、雑学">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">quiz</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/quiz.png" alt="雑学クイズの問題と3つの選択肢" width="784" height="488" loading="eager" decoding="async" />
@@ -556,7 +709,7 @@
         </a>
 
         <!-- ことばシャッフル -->
-        <a class="app-card" href="kotoba-shuffle/" data-scenes="kotoba circle hiroba">
+        <a class="app-card" href="kotoba-shuffle/" data-scenes="kotoba circle hiroba" data-keywords="1対1、並べ替え、アナグラム">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">shuffle</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/kotoba-shuffle.png" alt="バラバラの文字と並べ替える回答欄" width="372" height="210" loading="eager" decoding="async" />
@@ -582,7 +735,7 @@
         </a>
 
         <!-- 漢字さがし -->
-        <a class="app-card" href="kanji-sagashi/" data-scenes="kotoba circle hiroba">
+        <a class="app-card" href="kanji-sagashi/" data-scenes="kotoba circle hiroba" data-yomi="かんじさがし" data-keywords="1対1、間違い探し、観察">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">search</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/kanji-sagashi.png" alt="似た漢字が並ぶ6×6の盤面" width="520" height="521" loading="lazy" decoding="async" />
@@ -608,7 +761,7 @@
         </a>
 
         <!-- ことばみっけ -->
-        <a class="app-card" href="kotoba-mikke/" data-scenes="kotoba hiroba circle">
+        <a class="app-card" href="kotoba-mikke/" data-scenes="kotoba hiroba circle" data-keywords="頭文字、チャット">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">search</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/kotoba-mikke.png" alt="頭文字とテーマを組み合わせたお題" width="544" height="255" loading="lazy" decoding="async" />
@@ -634,7 +787,7 @@
         </a>
 
         <!-- ことばリレー -->
-        <a class="app-card" href="kotoba-relay/" data-scenes="kotoba circle">
+        <a class="app-card" href="kotoba-relay/" data-scenes="kotoba circle" data-keywords="1対1、接続詞、トーク">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">forum</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/kotoba-relay.png" alt="話の始まりとつなぎ言葉のカード" width="720" height="292" loading="lazy" decoding="async" />
@@ -660,7 +813,7 @@
         </a>
 
         <!-- たとえグランプリ -->
-        <a class="app-card" href="tatoe-gp/" data-slides data-scenes="kotoba bodoge">
+        <a class="app-card" href="tatoe-gp/" data-slides data-scenes="kotoba bodoge" data-keywords="大喜利、投票">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">emoji_objects</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/tatoe-gp.png" alt="お題をたとえた回答を選ぶ投票画面" width="504" height="600" loading="lazy" decoding="async" />
@@ -686,7 +839,7 @@
         </a>
 
         <!-- かぶらずヒント -->
-        <a class="app-card" href="kaburazu-hint/" data-slides data-scenes="kotoba bodoge">
+        <a class="app-card" href="kaburazu-hint/" data-slides data-scenes="kotoba bodoge" data-old-names="ヒントでピント" data-keywords="協力、連想">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">lightbulb</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/kaburazu-hint.png" alt="回答者に見せるヒントが並ぶ画面" width="464" height="269" loading="lazy" decoding="async" />
@@ -712,7 +865,7 @@
         </a>
 
         <!-- ことば探偵 -->
-        <a class="app-card" href="kotoba-tantei/" data-slides data-scenes="kotoba bodoge">
+        <a class="app-card" href="kotoba-tantei/" data-slides data-scenes="kotoba bodoge" data-yomi="ことばたんてい" data-keywords="チーム戦、連想">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">search</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/kotoba-tantei.png" alt="赤と青のカードがある5×5の言葉の盤面" width="712" height="446" loading="lazy" decoding="async" />
@@ -738,7 +891,7 @@
         </a>
 
         <!-- もじそろえゲーム -->
-        <a class="app-card" href="moji-soroe/" data-scenes="kotoba bodoge">
+        <a class="app-card" href="moji-soroe/" data-scenes="kotoba bodoge" data-keywords="1対1、ひらがな、手番">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">font_download</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/moji-soroe.png" alt="文字タイルの手札と2文字・3文字・3文字の組み合わせ" width="456" height="220" loading="lazy" decoding="async" />
@@ -764,7 +917,7 @@
         </a>
 
         <!-- コトバペア -->
-        <a class="app-card" href="kotoba-pair/" data-scenes="kotoba circle">
+        <a class="app-card" href="kotoba-pair/" data-scenes="kotoba circle" data-keywords="1対1、神経衰弱、マッチング">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">link</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/kotoba-pair.png" alt="意味のつながるペアを探す言葉のカード" width="704" height="272" loading="lazy" decoding="async" />
@@ -790,7 +943,7 @@
         </a>
 
         <!-- とおまわしクイズ -->
-        <a class="app-card" href="toomawashi/" data-scenes="kotoba">
+        <a class="app-card" href="toomawashi/" data-scenes="kotoba" data-keywords="1対1、説明、NGワード">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">record_voice_over</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/toomawashi.png" alt="説明するお題と言っちゃダメことば" width="504" height="496" loading="lazy" decoding="async" />
@@ -816,7 +969,7 @@
         </a>
 
         <!-- トークテーマカード -->
-        <a class="app-card" href="talk-card/" data-scenes="circle hiroba sakusen">
+        <a class="app-card" href="talk-card/" data-scenes="circle hiroba sakusen" data-keywords="1対1、雑談、話題">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">style</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/talk-card.png" alt="開いたトークテーマと3枚のカード" width="844" height="732" loading="lazy" decoding="async" />
@@ -842,7 +995,7 @@
         </a>
 
         <!-- おとなトークカード -->
-        <a class="app-card" href="otona-talk/" data-scenes="circle">
+        <a class="app-card" href="otona-talk/" data-scenes="circle" data-keywords="雑談、キャリア">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">record_voice_over</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/otona-talk.png" alt="大人どうしで話すお題と3枚のカード" width="844" height="676" loading="lazy" decoding="async" />
@@ -868,7 +1021,7 @@
         </a>
 
         <!-- どっちにする？ -->
-        <a class="app-card" href="docchi/" data-scenes="sakusen">
+        <a class="app-card" href="docchi/" data-scenes="sakusen" data-keywords="1対1、2択">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">alt_route</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/docchi.png" alt="お題と2択、その他の選択肢" width="804" height="369" loading="lazy" decoding="async" />
@@ -894,7 +1047,7 @@
         </a>
 
         <!-- すきタイプチェック -->
-        <a class="app-card" href="suki-type-check/" data-scenes="sakusen">
+        <a class="app-card" href="suki-type-check/" data-scenes="sakusen" data-old-names="すきなことマップ" data-keywords="1対1、診断、好き">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">fact_check</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/suki-type-check.png" alt="好きについての質問と5つの選択肢" width="736" height="653" loading="lazy" decoding="async" />
@@ -920,7 +1073,7 @@
         </a>
 
         <!-- つよみカード -->
-        <a class="app-card" href="tsuyomi-card/" data-scenes="sakusen">
+        <a class="app-card" href="tsuyomi-card/" data-scenes="sakusen" data-keywords="1対1、強み、自己理解">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">flare</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/tsuyomi-card.png" alt="つよみカードとある・ない・どちらでもないの選択肢" width="584" height="369" loading="lazy" decoding="async" />
@@ -948,7 +1101,7 @@
 
 
         <!-- ドまんなか -->
-        <a class="app-card" href="do-mannaka/" data-slides data-scenes="bodoge circle">
+        <a class="app-card" href="do-mannaka/" data-slides data-scenes="bodoge circle" data-old-names="いいセンいきまSHOW!" data-keywords="数字、中央値">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">sports_esports</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/do-mannaka.png" alt="数字の回答を小さい順に並べた答え合わせ" width="464" height="322" loading="lazy" decoding="async" />
@@ -974,7 +1127,7 @@
         </a>
 
         <!-- ワードウルフ -->
-        <a class="app-card" href="word-wolf/" data-slides data-scenes="bodoge circle">
+        <a class="app-card" href="word-wolf/" data-slides data-scenes="bodoge circle" data-keywords="正体隠し、会話">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">psychology</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/word-wolf.png" alt="自分のお題カードと参加者の準備状況" width="464" height="420" loading="lazy" decoding="async" />
@@ -1000,7 +1153,7 @@
         </a>
 
         <!-- 人狼ゲーム -->
-        <a class="app-card" href="jinro/" data-slides data-scenes="bodoge">
+        <a class="app-card" href="jinro/" data-slides data-scenes="bodoge" data-yomi="じんろうげーむ" data-keywords="正体隠し、推理、役職">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">groups</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/jinro.png" alt="村人の役職カード" width="464" height="244" loading="lazy" decoding="async" />
@@ -1026,7 +1179,7 @@
         </a>
 
         <!-- 名前変えゲーム -->
-        <a class="app-card" href="name-change/" data-slides data-scenes="bodoge circle">
+        <a class="app-card" href="name-change/" data-slides data-scenes="bodoge circle" data-yomi="なまえかえげーむ" data-keywords="メタバース、推理">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">manage_accounts</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/name-change.png" alt="変えた名前から元の名前を当てる選択肢" width="472" height="402" loading="lazy" decoding="async" />
@@ -1052,7 +1205,7 @@
         </a>
 
         <!-- え!? 実は○○なんですかゲーム -->
-        <a class="app-card" href="jitsuwa-game/" data-scenes="circle hiroba sakusen">
+        <a class="app-card" href="jitsuwa-game/" data-scenes="circle hiroba sakusen" data-yomi="えじつはまるまるなんですかげーむ" data-keywords="1対1、推理、自己紹介">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">search_insights</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/jitsuwa-game.png" alt="開いたお題と3枚の質問カード" width="844" height="776" loading="lazy" decoding="async" />
@@ -1078,7 +1231,7 @@
         </a>
 
         <!-- たとえならべ -->
-        <a class="app-card" href="tatoe-narabe/" data-slides data-scenes="kotoba bodoge circle sakusen">
+        <a class="app-card" href="tatoe-narabe/" data-slides data-scenes="kotoba bodoge circle sakusen" data-old-names="ito クモノイト" data-keywords="1対1、数字、協力">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">filter_1</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/tatoe-narabe.png" alt="お題と自分の数字、宣言した順番" width="464" height="451" loading="lazy" decoding="async" />
@@ -1104,7 +1257,7 @@
         </a>
 
         <!-- 以心伝心しないゲーム -->
-        <a class="app-card" href="ishin-denshin/" data-scenes="circle hiroba">
+        <a class="app-card" href="ishin-denshin/" data-scenes="circle hiroba" data-yomi="いしんでんしんしないげーむ" data-keywords="かぶらない、回答">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">lightbulb</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/ishin-denshin.png" alt="みんなとかぶらない回答を考えるお題" width="844" height="455" loading="lazy" decoding="async" />
@@ -1130,7 +1283,7 @@
         </a>
 
         <!-- うそつき辞書 -->
-        <a class="app-card" href="uso-jisho/" data-slides data-scenes="bodoge">
+        <a class="app-card" href="uso-jisho/" data-slides data-scenes="bodoge" data-yomi="うそつきじしょ" data-keywords="ブラフ、意味当て">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">auto_stories</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/uso-jisho.png" alt="言葉の本当の意味を当てる選択肢" width="504" height="610" loading="lazy" decoding="async" />
@@ -1156,7 +1309,7 @@
         </a>
 
         <!-- まぎれ絵師 -->
-        <a class="app-card" href="magire-eshi/" data-slides data-scenes="bodoge">
+        <a class="app-card" href="magire-eshi/" data-slides data-scenes="bodoge" data-yomi="まぎれえし" data-keywords="お絵描き、正体隠し">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">brush</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/magire-eshi.png" alt="みんなで少しずつ描いた絵の見本" width="544" height="459" loading="lazy" decoding="async" />
@@ -1182,7 +1335,7 @@
         </a>
 
         <!-- お絵描き伝言ゲーム -->
-        <a class="app-card" href="oekaki-dengon/" data-slides data-scenes="bodoge">
+        <a class="app-card" href="oekaki-dengon/" data-slides data-scenes="bodoge" data-yomi="おえかきでんごんげーむ" data-keywords="伝言、お絵描き">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">draw</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/oekaki-dengon.png" alt="お題の文と、それを見て描いた絵、絵を見て書いた文が順番に並ぶ見せあいの画面" width="504" height="693" loading="lazy" decoding="async" />
@@ -1208,7 +1361,7 @@
         </a>
 
         <!-- ピッタリメーター -->
-        <a class="app-card" href="pittari-meter/" data-slides data-scenes="bodoge">
+        <a class="app-card" href="pittari-meter/" data-slides data-scenes="bodoge" data-keywords="感覚、得点">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">tune</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/pittari-meter.png" alt="ものさしの両端、ヒントと予想するスライダー" width="504" height="488" loading="lazy" decoding="async" />
@@ -1234,7 +1387,7 @@
         </a>
 
         <!-- かくれナンバー -->
-        <a class="app-card" href="kakure-number/" data-slides data-scenes="bodoge">
+        <a class="app-card" href="kakure-number/" data-slides data-scenes="bodoge" data-keywords="数字、推理">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">visibility_off</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/kakure-number.png" alt="自分と隠しカードの数字が見えない数字カード" width="464" height="220" loading="lazy" decoding="async" />
@@ -1260,7 +1413,7 @@
         </a>
 
         <!-- こえだけシアター -->
-        <a class="app-card" href="koedake-theater/" data-slides data-scenes="bodoge">
+        <a class="app-card" href="koedake-theater/" data-slides data-scenes="bodoge" data-keywords="演技、声">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">theater_comedy</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/koedake-theater.png" alt="声で演じるセリフとシチュエーションの選択肢" width="466" height="489" loading="lazy" decoding="async" />
@@ -1286,7 +1439,7 @@
         </a>
 
         <!-- 気持ち当てゲーム -->
-        <a class="app-card" href="kimochi-ate/" data-scenes="circle sakusen bodoge">
+        <a class="app-card" href="kimochi-ate/" data-scenes="circle sakusen bodoge" data-yomi="きもちあてげーむ" data-old-names="きもちのことばマップ" data-keywords="1対1、感情、気持ち">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">mood</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/kimochi-ate.png" alt="場面カードと、主役の気持ちを予想する6つの系" width="736" height="677" loading="lazy" decoding="async" />
@@ -1312,7 +1465,7 @@
         </a>
 
         <!-- ピタハメ -->
-        <a class="app-card" href="pita-hame/" data-slides data-scenes="bodoge hiroba">
+        <a class="app-card" href="pita-hame/" data-slides data-scenes="bodoge hiroba" data-keywords="1対1、パズル、スピード">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">extension</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/pita-hame.png" alt="グレーの型とカラフルなパズルピース" width="600" height="427" loading="lazy" decoding="async" />
@@ -1338,7 +1491,7 @@
         </a>
 
         <!-- おしつけずかん -->
-        <a class="app-card" href="oshitsuke-zukan/" data-slides data-scenes="bodoge">
+        <a class="app-card" href="oshitsuke-zukan/" data-slides data-scenes="bodoge" data-keywords="ブラフ、カード">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">auto_stories</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/oshitsuke-zukan.png" alt="生き物の種類が色分けされた手札" width="416" height="400" loading="lazy" decoding="async" />
@@ -1364,7 +1517,7 @@
         </a>
 
         <!-- エサドリ -->
-        <a class="app-card" href="esadori/" data-scenes="bodoge">
+        <a class="app-card" href="esadori/" data-scenes="bodoge" data-keywords="1対1、数字、同時出し">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">flutter_dash</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/esadori.png" alt="場のエサカードと1から15の手札" width="416" height="523" loading="lazy" decoding="async" />
@@ -1390,7 +1543,7 @@
         </a>
 
         <!-- ブラックジャック -->
-        <a class="app-card" href="blackjack/" data-slides data-scenes="bodoge hiroba">
+        <a class="app-card" href="blackjack/" data-slides data-scenes="bodoge hiroba" data-keywords="1対1、トランプ、21">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">style</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/blackjack.png" alt="トランプの手札とカードを引く・ストップの選択肢" width="416" height="242" loading="lazy" decoding="async" />
@@ -1416,7 +1569,7 @@
         </a>
 
         <!-- みんなでランキング -->
-        <a class="app-card" href="minna-ranking/" data-scenes="hiroba sakusen">
+        <a class="app-card" href="minna-ranking/" data-scenes="hiroba sakusen" data-keywords="順位、予想">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">format_list_numbered</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/minna-ranking.png" alt="お題のアイテムを並べ替えるランキング" width="704" height="394" loading="lazy" decoding="async" />
@@ -1442,7 +1595,7 @@
         </a>
 
         <!-- 興味スゴロク -->
-        <a class="app-card" href="kyoumi-sugoroku/" data-scenes="hiroba sakusen">
+        <a class="app-card" href="kyoumi-sugoroku/" data-scenes="hiroba sakusen" data-yomi="きょうみすごろく" data-keywords="1対1、すごろく、好き">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">casino</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/kyoumi-sugoroku.png" alt="スタートからゴールまでのスゴロク盤面" width="544" height="348" loading="lazy" decoding="async" />
@@ -1468,7 +1621,7 @@
         </a>
 
         <!-- 塗り絵カレンダー -->
-        <a class="app-card" href="nurie-week/" data-scenes="sakusen">
+        <a class="app-card" href="nurie-week/" data-scenes="sakusen" data-yomi="ぬりえかれんだー" data-keywords="1対1、1週間、ふりかえり">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">calendar_view_week</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/nurie-week.png" alt="曜日と時間のマスを色で塗ったカレンダーの見本" width="860" height="608" loading="lazy" decoding="async" />
@@ -1494,7 +1647,7 @@
         </a>
 
         <!-- バリューカード -->
-        <a class="app-card" href="value-card/" data-scenes="sakusen">
+        <a class="app-card" href="value-card/" data-scenes="sakusen" data-keywords="1対1、価値観、大事">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">favorite</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/value-card.png" alt="大事にしたいことが書かれたカード" width="584" height="309" loading="lazy" decoding="async" />
@@ -1520,7 +1673,7 @@
         </a>
 
         <!-- いくつ言える？ -->
-        <a class="app-card" href="ikutsu-ieru/" data-scenes="circle hiroba sakusen">
+        <a class="app-card" href="ikutsu-ieru/" data-scenes="circle hiroba sakusen" data-yomi="いくついえる" data-keywords="1対1、書き出し、お題">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">format_list_numbered</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/ikutsu-ieru.png" alt="お題に思いついた答えを並べた見本" width="504" height="482" loading="lazy" decoding="async" />
@@ -1546,7 +1699,7 @@
         </a>
 
         <!-- キャパグラフ -->
-        <a class="app-card" href="kyapa-graph/" data-scenes="sakusen">
+        <a class="app-card" href="kyapa-graph/" data-scenes="sakusen" data-keywords="1対1、頑張りすぎ、負荷">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">monitoring</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/kyapa-graph.png" alt="1週間の棒グラフとキャパラインの見本" width="840" height="340" loading="lazy" decoding="async" />
@@ -1572,7 +1725,7 @@
         </a>
 
         <!-- キャリアすごろく -->
-        <a class="app-card" href="career-sugoroku/" data-scenes="bodoge sakusen">
+        <a class="app-card" href="career-sugoroku/" data-scenes="bodoge sakusen" data-keywords="1対1、仕事、職業">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">signpost</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/career-sugoroku.png" alt="子どものころからおとなまでのステージに分かれたすごろく盤面と、3人の駒" width="712" height="448" loading="lazy" decoding="async" />
@@ -1736,6 +1889,8 @@
           parts.push(SCENE_LABELS[s], chip ? chip.textContent : '');
         });
         if (card.hasAttribute('data-slides')) parts.push('説明スライド');
+        // 画面に出ない補足（名前の読み・改名前の名前・ジャンルのことば）
+        parts.push(card.dataset.yomi || '', card.dataset.oldNames || '', card.dataset.keywords || '');
         return normalize(parts.join(' '));
       });
 
@@ -1749,6 +1904,11 @@
       const emptyTitle = document.getElementById('scene-empty-title');
       const emptyDesc = document.getElementById('scene-empty-desc');
       const emptyButton = document.getElementById('scene-empty-reset');
+      const emptyHints = document.getElementById('scene-empty-hints');
+      const searchField = document.getElementById('tool-search-field');
+      const suggestBox = document.getElementById('tool-suggest');
+      const suggestList = document.getElementById('tool-suggest-list');
+      const popupHints = document.getElementById('tool-hints-popup');
       let currentScene = 'all';
       let emptyAction = 'all-scenes';
 
@@ -1768,13 +1928,23 @@
         return m ? m[1] : 'all';
       }
 
+      // 言い換え: どれで探しても同じものが出るようにする（正規化したあとの表記で書く）
+      const SYNONYMS = [
+        ['1対1', '1on1', 'ワンオンワン', 'マンツーマン', '個別', '面談'],
+      ].map((group) => group.map(normalize));
+
+      function expandTerm(term) {
+        const group = SYNONYMS.find((g) => g.includes(term));
+        return group || [term];
+      }
+
       function applyFilters() {
         const query = searchInput.value.trim();
-        const terms = normalize(query).split(/\s+/).filter(Boolean);
+        const terms = normalize(query).split(/\s+/).filter(Boolean).map(expandTerm);
         let visibleCount = 0;
         let textMatchCount = 0;
         cards.forEach((card, i) => {
-          const textMatch = terms.every((t) => searchTexts[i].includes(t));
+          const textMatch = terms.every((alts) => alts.some((t) => searchTexts[i].includes(t)));
           const sceneMatch = currentScene === 'all' || cardScenes[i].includes(currentScene);
           card.hidden = !(textMatch && sceneMatch);
           if (textMatch) textMatchCount += 1;
@@ -1800,6 +1970,7 @@
           }
         }
         emptyState.hidden = visibleCount !== 0;
+        emptyHints.hidden = !(visibleCount === 0 && emptyAction === 'clear-search');
 
         // 読み上げは常設の1か所だけ。同じ内容なら書き換えず、二重に読まれないようにする
         const filtered = terms.length > 0 || currentScene !== 'all';
@@ -1818,18 +1989,196 @@
         });
       });
 
-      // 日本語入力の変換中は絞り込まず、確定してから反映する
+      // ── 検索のヒント（空欄のとき・0件のとき）──
+      // どれも data-keywords やカードの表示で複数のツールが出ることばにする
+      const HINT_WORDS = ['カード', 'お絵描き', '正体隠し', '数字', '協力', '1対1', 'オフライン'];
+
+      function searchFor(word) {
+        searchInput.value = word;
+        applyFilters();
+        closeSuggest();
+        // スマホではキーボードを閉じて結果を見やすくする
+        searchInput.blur();
+      }
+
+      [popupHints, emptyHints].forEach((group) => {
+        const list = group.querySelector('.tool-hints__list');
+        HINT_WORDS.forEach((word) => {
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.className = 'tool-hint';
+          const icon = document.createElement('span');
+          icon.className = 'material-symbols-rounded';
+          icon.setAttribute('aria-hidden', 'true');
+          icon.textContent = 'search';
+          button.append(icon, word);
+          button.addEventListener('click', () => searchFor(word));
+          list.appendChild(button);
+        });
+      });
+
+      // ── 予測ワード: 入力中のことばに合うツール名を出し、選ぶとそのツールを開く ──
+      // 日本語入力の変換中も読み（data-yomi）で候補を出す。改名前の名前でも出す。
+      const MAX_SUGGESTIONS = 5;
+      const suggestSources = cards.map((card) => {
+        const nameEl = card.querySelector('.app-card__name');
+        const iconEl = card.querySelector('.app-card__icon > .material-symbols-rounded');
+        const name = nameEl ? nameEl.textContent.trim() : '';
+        return {
+          card,
+          name,
+          icon: iconEl ? iconEl.textContent.trim() : 'apps',
+          keys: [normalize(name), normalize(card.dataset.yomi || '')].map((k) => k.replace(/\s+/g, '')),
+          oldNames: (card.dataset.oldNames || '').split('、').filter(Boolean),
+        };
+      });
+      let suggestions = [];
+      let activeIndex = -1;
+      let composing = false;
+
+      function findSuggestions(query) {
+        const q = query.replace(/\s+/g, '');
+        if (!q) return [];
+        const found = [];
+        suggestSources.forEach((src, order) => {
+          // 前方一致を先に、名前の途中に含むものを後に、改名前の名前は最後に並べる
+          let rank = -1;
+          let oldName = '';
+          if (src.keys.some((k) => k && k.startsWith(q))) rank = 0;
+          // 1文字だけのときは前方一致だけにして、候補が増えすぎないようにする
+          else if (q.length < 2) rank = -1;
+          else if (src.keys.some((k) => k && k.includes(q))) rank = 1;
+          else {
+            oldName = src.oldNames.find((n) => normalize(n).replace(/\s+/g, '').includes(q)) || '';
+            if (oldName) rank = 2;
+          }
+          if (rank >= 0) found.push({ src, rank, order, oldName });
+        });
+        found.sort((a, b) => a.rank - b.rank || a.order - b.order);
+        return found.slice(0, MAX_SUGGESTIONS);
+      }
+
+      function setActive(index) {
+        activeIndex = index;
+        Array.from(suggestList.children).forEach((li, i) => {
+          li.setAttribute('aria-selected', String(i === index));
+        });
+        if (index >= 0) {
+          const li = suggestList.children[index];
+          searchInput.setAttribute('aria-activedescendant', li.id);
+          li.scrollIntoView({ block: 'nearest' });
+        } else {
+          searchInput.removeAttribute('aria-activedescendant');
+        }
+      }
+
+      function openTool(item) {
+        location.href = item.src.card.getAttribute('href');
+      }
+
+      function closeSuggest() {
+        suggestBox.hidden = true;
+        suggestList.hidden = true;
+        popupHints.hidden = true;
+        suggestions = [];
+        setActive(-1);
+        searchInput.setAttribute('aria-expanded', 'false');
+      }
+
+      function updateSuggest() {
+        if (document.activeElement !== searchInput) {
+          closeSuggest();
+          return;
+        }
+        let raw = searchInput.value;
+        // ローマ字入力の変換中に残る英字（「たn」の n など）は候補探しに使わない
+        if (composing) raw = raw.replace(/[a-z]+$/i, '');
+        const query = normalize(raw).trim();
+
+        suggestions = query ? findSuggestions(query) : [];
+        suggestList.textContent = '';
+        suggestions.forEach((item, i) => {
+          const li = document.createElement('li');
+          li.className = 'tool-suggest__option';
+          li.id = 'tool-suggest-' + i;
+          li.setAttribute('role', 'option');
+          li.setAttribute('aria-selected', 'false');
+          const icon = document.createElement('span');
+          icon.className = 'material-symbols-rounded';
+          icon.setAttribute('aria-hidden', 'true');
+          icon.textContent = item.src.icon;
+          const text = document.createElement('span');
+          text.className = 'tool-suggest__text';
+          const name = document.createElement('span');
+          name.className = 'tool-suggest__name';
+          name.textContent = item.src.name;
+          text.appendChild(name);
+          if (item.oldName) {
+            const sub = document.createElement('span');
+            sub.className = 'tool-suggest__sub';
+            sub.textContent = '前の名前: ' + item.oldName;
+            text.appendChild(sub);
+          }
+          const open = document.createElement('span');
+          open.className = 'material-symbols-rounded tool-suggest__open';
+          open.setAttribute('aria-hidden', 'true');
+          open.textContent = 'arrow_forward';
+          li.append(icon, text, open);
+          li.addEventListener('click', () => openTool(item));
+          suggestList.appendChild(li);
+        });
+        setActive(-1);
+
+        const showHints = searchInput.value === '';
+        suggestList.hidden = suggestions.length === 0;
+        popupHints.hidden = !showHints;
+        suggestBox.hidden = suggestions.length === 0 && !showHints;
+        searchInput.setAttribute('aria-expanded', String(suggestions.length > 0));
+      }
+
+      // 候補やヒントを押してもフォーカスが入力欄から外れないようにする（押す前に閉じないため）
+      suggestBox.addEventListener('pointerdown', (e) => {
+        if (e.target.closest('.tool-suggest__option, .tool-hint')) e.preventDefault();
+      });
+      searchInput.addEventListener('focus', updateSuggest);
+      searchField.addEventListener('focusout', (e) => {
+        if (!searchField.contains(e.relatedTarget)) closeSuggest();
+      });
+      // 戻るボタンで戻ってきたとき、開いたままの候補を残さない
+      window.addEventListener('pageshow', closeSuggest);
+
+      // 日本語入力の変換中は絞り込まず、確定してから反映する（候補だけは変換中も出す）
+      searchInput.addEventListener('compositionstart', () => { composing = true; });
       searchInput.addEventListener('input', (e) => {
         if (!e.isComposing) applyFilters();
+        updateSuggest();
       });
-      searchInput.addEventListener('compositionend', applyFilters);
+      searchInput.addEventListener('compositionend', () => {
+        composing = false;
+        applyFilters();
+        updateSuggest();
+      });
       searchInput.addEventListener('keydown', (e) => {
         if (e.isComposing || e.keyCode === 229) return;
-        if (e.key === 'Escape' && searchInput.value) {
+        const listOpen = suggestions.length > 0 && !suggestBox.hidden;
+        if (listOpen && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) {
+          e.preventDefault();
+          const step = e.key === 'ArrowDown' ? 1 : -1;
+          const next = activeIndex + step;
+          setActive(next < -1 ? suggestions.length - 1 : next >= suggestions.length ? -1 : next);
+        } else if (e.key === 'Escape' && !suggestBox.hidden) {
+          e.preventDefault();
+          closeSuggest();
+        } else if (e.key === 'Escape' && searchInput.value) {
           e.preventDefault();
           searchInput.value = '';
           applyFilters();
         } else if (e.key === 'Enter') {
+          if (listOpen && activeIndex >= 0) {
+            e.preventDefault();
+            openTool(suggestions[activeIndex]);
+            return;
+          }
           // スマホではキーボードを閉じて結果を見やすくする
           searchInput.blur();
         }
