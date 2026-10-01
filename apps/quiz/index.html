@@ -7,7 +7,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet" />
   <link rel="stylesheet" href="../shared/css/design-system.css" />
-  <link rel="stylesheet" href="style.css?v=20261001a" />
+  <link rel="stylesheet" href="style.css?v=20261001b" />
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
@@ -178,7 +178,7 @@
           <button class="btn btn-ghost btn-sm" id="btnCreateBack">トップへ戻る</button>
           <h2 class="qz-form__title">ルームを作る</h2>
         </div>
-        <p class="qz-form__lead">ホストは問題を出す係です。ホストは答えません。</p>
+        <p class="qz-form__lead">ホストは問題を出す係です。待合室で、自分も答える側で参加するかをえらべます。</p>
         <label class="qz-form__label" for="hostName">ホストの名前（8文字まで）</label>
         <input class="qz-form__input" id="hostName" maxlength="8" autocomplete="nickname" />
         <p class="qz-form__error" id="createError" hidden></p>
@@ -219,6 +219,10 @@
           <h2 class="qz-panel__title">参加者 <span class="qz-panel__count" id="lobbyCount"></span></h2>
           <ul class="qz-people" id="lobbyPlayers"></ul>
           <p class="qz-note" id="lobbyEmpty">まだ参加している人はいません</p>
+          <label class="qz-check" id="hostPlaysField" hidden>
+            <input type="checkbox" id="set-host-plays" />
+            <span>自分も答える側で参加する</span>
+          </label>
         </section>
 
         <div class="qz-room-shell" id="hostLobbyTools" hidden>
@@ -261,6 +265,7 @@
             </button>
           </div>
           <p class="qz-play-status" id="playStatus" aria-live="polite"></p>
+          <p class="qz-play-status" id="playCount" hidden></p>
           <div class="qz-quiz-actions" id="hostPlayTools" hidden>
             <button class="btn btn-secondary" id="btnCloseAnswers">
               <span class="material-symbols-rounded">lock_clock</span>
@@ -460,7 +465,7 @@
     </div>
   </div>
 
-  <script type="module" src="app.js?v=20261001a"></script>
+  <script type="module" src="app.js?v=20261001b"></script>
   <script src="../shared/js/stats.js?v=1" defer></script>
   <script src="../shared/js/howto.js"></script>
   <script>
@@ -476,6 +481,7 @@
         ] },
         { heading: 'ルームであそぶ', items: [
           'ホストは「ルームを作る」を押して、パックと「問題数」「手ごたえ」「制限時間」をえらび、「スタート」を押す',
+          'ホストは最初は進行役（答えない）。待合室で「自分も答える側で参加する」にチェックすると、ホストも自分の画面で答えて、点数とランキングに入る',
           '答える人は「ルームに参加する」を押して、名前とルームコード（6文字）を入れて「参加する」を押す',
           '問題が出たら、自分の画面で答えを押す。正解すると点が入り、制限時間があるときは早く答えるほど点が高い',
           '1問ごとに正解とランキングが出る。最後に上位3人を発表する',

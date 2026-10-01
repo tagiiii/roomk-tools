@@ -261,6 +261,9 @@ const btnGoWatch = $('btnGoWatch');
 // 公開直後に古い index.html（キャッシュ）と新しい app.js が組み合わさっても動くよう、
 // みんなにみせる画面の部品がないときは、その入口を出さない（従来どおり）
 const WATCH_UI = Boolean($('screen-watch') && btnGoWatch);
+// ホストの参加の部品がないとき（古い index.html）は、従来どおりホストは進行だけ
+const hostPlaysInput = $('set-host-plays');
+const HOST_PLAYS_UI = Boolean(hostPlaysInput && $('hostPlaysField') && $('playCount'));
 const btnWatchOpen = $('btnWatchOpen');
 const watchCodeInput = $('watchCode');
 const watchHeadCode = $('watchHeadCode');
@@ -893,6 +896,22 @@ function guestNames(data) {
     .map(([name]) => name);
 }
 
+// ホストも答える側で参加するか。初期値は進行だけ（キーがない旧ルームも進行だけ）
+function hostPlaysOf(data) {
+  return HOST_PLAYS_UI && data?.settings?.hostPlays === true;
+}
+
+// 答える人（点数・ランキング・回答の数の対象）。ゲスト全員と、参加を選んだホスト
+function playerNames(data) {
+  const guests = guestNames(data);
+  return hostPlaysOf(data) && data.host && data.players?.[data.host] ? [data.host, ...guests] : guests;
+}
+
+// 自分が答える人か（ゲストは常に、ホストは参加を選んだときだけ）
+function iPlay(data) {
+  return state.role === 'guest' || (state.role === 'host' && hostPlaysOf(data));
+}
+
 function isExpired(data) {
   // status を持たない room は、削除後に onDisconnect が発火して再生成されたゴースト
   return RoomkRTDB.isRoomExpired(data, ORPHAN_TTL_MS) || (!!data && !data.status);
@@ -1086,6 +1105,7 @@ async function createRoom() {
           hostDisconnectedAt: null,
           createdAt: serverTimestamp(),
           gameSeq: 0,
+          settings: { hostPlays: false },
           players: {
             [nickname]: { isHost: true, uid, joinedAt },
           },
@@ -1488,28 +1508,50 @@ function updateHostOverlay(data) {
   }
 }
 
-function renderPeople(list, names) {
+// 待合室の一覧。ホストの行には、進行だけなら「進行役」、答える側なら「ホスト」と添える
+function renderPeople(list, data) {
   list.replaceChildren();
-  names.forEach((name) => {
+  if (HOST_PLAYS_UI && data.host && data.players?.[data.host]) {
+    const mine = state.role === 'host' && data.host === state.nickname;
+    const item = el('li', 'qz-people__item' + (mine && hostPlaysOf(data) ? ' is-me' : ''), data.host);
+    item.append(el('span', 'qz-people__tag', hostPlaysOf(data) ? 'ホスト' : '進行役'));
+    list.append(item);
+  }
+  guestNames(data).forEach((name) => {
     const mine = state.role === 'guest' && name === state.nickname;
     list.append(el('li', 'qz-people__item' + (mine ? ' is-me' : ''), name));
   });
 }
 
+function lobbyEmptyText(data) {
+  return hostPlaysOf(data) ? 'ほかに参加している人はまだいません' : 'まだ参加している人はいません';
+}
+
 function renderLobby(data) {
   showScreen('lobby');
   const isHost = state.role === 'host';
-  const names = guestNames(data);
+  const guests = guestNames(data);
+  const plays = hostPlaysOf(data);
   state.renderedKey = null;
   lobbyCode.textContent = state.roomCode;
   lobbyLead.textContent = isHost
     ? '参加する人は「ルームに参加する」を押して、このコードを入れてね。'
     : 'ホストが問題をえらんでいます。はじまるまで待ってね。';
-  lobbyCount.textContent = `${names.length}人`;
-  renderPeople(lobbyPlayers, names);
-  lobbyEmpty.hidden = names.length > 0;
+  lobbyCount.textContent = `${playerNames(data).length}人`;
+  renderPeople(lobbyPlayers, data);
+  lobbyEmpty.textContent = lobbyEmptyText(data);
+  lobbyEmpty.hidden = guests.length > 0;
   hostLobbyTools.hidden = !isHost;
   if (hostWatchTools) hostWatchTools.hidden = !isHost;
+  if (HOST_PLAYS_UI) {
+    $('hostPlaysField').hidden = !isHost;
+    if (isHost && !hostPlaysInput.disabled) hostPlaysInput.checked = plays;
+    // ホストが答えるときは、ホストの画面を共有しないので、みんなにみせる画面の入口を目立たせる
+    const watchButton = $('btnOpenWatch');
+    watchButton.classList.toggle('btn-secondary', plays);
+    watchButton.classList.toggle('btn-sm', !plays);
+    watchButton.classList.toggle('btn-ghost', !plays);
+  }
   if (isHost) {
     placePicker(true);
     updateRoomStartState();
@@ -1519,20 +1561,45 @@ function renderLobby(data) {
 function updateRoomStartState() {
   if (state.role !== 'host' || !state.room) return;
   const pack = getSelectedPack();
-  const guests = guestNames(state.room).length;
-  btnRoomStart.disabled = state.room.status !== ROOM_STATUS.LOBBY || !pack || guests === 0;
-  btnRoomReplay.disabled = state.room.status !== ROOM_STATUS.FINAL || !pack || guests === 0;
+  // 最少人数は答える人だけで数える（ホストが答えるなら、ホストひとりでも始められる）
+  const players = playerNames(state.room).length;
+  btnRoomStart.disabled = state.room.status !== ROOM_STATUS.LOBBY || !pack || players === 0;
+  btnRoomReplay.disabled = state.room.status !== ROOM_STATUS.FINAL || !pack || players === 0;
   roomStartHint.textContent = !pack
     ? 'パックをえらぶと、スタートを押せます'
-    : guests === 0
-      ? '参加者が1人以上になると、スタートを押せます'
+    : players === 0
+      ? '参加者が1人以上になると、スタートを押せます（ホストのほかに1人から）'
       : '';
   roomStartHint.hidden = !roomStartHint.textContent;
 }
 
-// 今の問題に答える人（接続中で、この問題から参加している人）
-function answerableGuests(data, game) {
-  return guestNames(data).filter((name) => {
+// ホストの参加の切り替え。待合室の間だけ、ホストだけが変えられる。次のゲーム・もう一度にも引き継ぐ
+async function onHostPlaysChange() {
+  if (state.role !== 'host' || !state.roomRef || !HOST_PLAYS_UI) return;
+  const checked = hostPlaysInput.checked;
+  const uid = currentUid();
+  hostPlaysInput.disabled = true;
+  try {
+    const result = await state.roomRef.transaction((data) => {
+      if (!data || data.status !== ROOM_STATUS.LOBBY || data.hostUid !== uid) return;
+      return { ...data, settings: { ...(data.settings || {}), hostPlays: checked } };
+    });
+    if (!result.committed) toast('今は変えられないよ');
+  } catch (error) {
+    console.warn('[quiz] host plays setting failed', error);
+    toast('設定を変えられませんでした。もう一度ためしてね');
+  } finally {
+    hostPlaysInput.disabled = false;
+    if (state.room) {
+      hostPlaysInput.checked = hostPlaysOf(state.room);
+      if (state.room.status === ROOM_STATUS.LOBBY) renderLobby(state.room);
+    }
+  }
+}
+
+// 今の問題に答える人（接続中で、この問題から参加している人。答える側のホストも含む）
+function answerablePlayers(data, game) {
+  return playerNames(data).filter((name) => {
     const member = data.scores?.[name];
     return member && joinedFrom(member) <= game.index;
   });
@@ -1566,23 +1633,29 @@ function renderPlay(data) {
     return;
   }
   clearRoomCountdown();
+  const plays = iPlay(data);
   hostPlayTools.hidden = !isHost;
   hostCopyTools.hidden = !isHost;
+  if (HOST_PLAYS_UI) $('playCount').hidden = !(isHost && plays);
 
   if (state.renderedKey !== key) {
     state.renderedKey = key;
     state.timeUpKey = null;
     playQuestion.textContent = question.question;
-    renderPlayChoices(question, key, isHost);
+    renderPlayChoices(question, key, plays);
     // 出題済みとして記録し、「もう一度あそぶ」で同じ問題を避ける
     if (isHost) state.usedIds.add(keyOf(question));
     popIn(playQuestion.parentElement);
   }
 
+  if (plays) updateMyChoices(data, game, answerOf(data, key, state.nickname));
   if (isHost) {
-    const expected = answerableGuests(data, game);
+    const expected = answerablePlayers(data, game);
     const done = expected.filter((name) => answerOf(data, key, name)).length;
-    playStatus.textContent = `回答 ${done} / ${expected.length}人`;
+    // 答える側のホストは、自分の答えの様子の下に回答の数を出す
+    const count = `回答 ${done} / ${expected.length}人`;
+    if (plays) $('playCount').textContent = count;
+    else playStatus.textContent = count;
     if (expected.length && done >= expected.length) {
       scheduleClose(game, ALL_ANSWERED_DELAY_MS, 'all');
     } else if (state.closeTimerKey === key && state.closeTimerReason === 'all') {
@@ -1590,8 +1663,6 @@ function renderPlay(data) {
       clearCloseTimer();
     }
     btnCloseAnswers.disabled = state.closeTimerKey === key && state.closeTimerReason === 'manual';
-  } else {
-    updateGuestChoices(data, game, answerOf(data, key, state.nickname));
   }
   updateTimer();
 }
@@ -1610,12 +1681,12 @@ function clearRoomCountdown() {
   state.roomCountdownTimer = null;
 }
 
-function renderPlayChoices(question, key, isHost) {
+function renderPlayChoices(question, key, interactive) {
   playChoices.replaceChildren();
   question.choices.forEach((choice, index) => {
-    // ホストの画面は画面共有用。押せない表示にする
-    const node = el(isHost ? 'div' : 'button', isHost ? 'qz-choice qz-choice--static' : 'qz-choice');
-    if (!isHost) {
+    // 進行だけのホストの画面は画面共有用。押せない表示にする
+    const node = el(interactive ? 'button' : 'div', interactive ? 'qz-choice' : 'qz-choice qz-choice--static');
+    if (interactive) {
       node.type = 'button';
       node.addEventListener('click', () => submitAnswer(key, index));
     }
@@ -1624,7 +1695,8 @@ function renderPlayChoices(question, key, isHost) {
   });
 }
 
-function updateGuestChoices(data, game, myAnswer) {
+// 答える人（ゲスト・答える側のホスト）の選択肢と、自分の答えの様子
+function updateMyChoices(data, game, myAnswer) {
   const member = data.scores?.[state.nickname];
   const deadline = deadlineOf(game);
   const timeUp = deadline != null && RoomkRTDB.now() >= deadline;
@@ -1653,8 +1725,8 @@ function updateGuestChoices(data, game, myAnswer) {
 async function submitAnswer(key, choice) {
   const data = state.room;
   const game = data?.game;
-  if (state.role !== 'guest' || !state.roomRef || state.answering) return;
-  if (!data || data.status !== ROOM_STATUS.QUESTION || !game || answerKey(game) !== key) return;
+  if (!state.roomRef || state.answering) return;
+  if (!data || !iPlay(data) || data.status !== ROOM_STATUS.QUESTION || !game || answerKey(game) !== key) return;
   const member = data.scores?.[state.nickname];
   if (!member || joinedFrom(member) > game.index) return;
   if (answerOf(data, key, state.nickname)) return;
@@ -1705,7 +1777,7 @@ function updateTimer() {
   const key = answerKey(game);
   if (left <= 0 && state.timeUpKey !== key) {
     state.timeUpKey = key;
-    if (state.role === 'guest') renderPlay(data);
+    if (iPlay(data)) renderPlay(data);
   }
   if (state.role === 'host' && left <= -ANSWER_GRACE_MS && Date.now() >= state.closeRetryAt) {
     closeQuestion(game.id, game.index, 'timeout');
@@ -1739,7 +1811,7 @@ function scheduleClose(game, delay, reason) {
 // 答えられる人が全員答えたか（締め切りの transaction の中でも確かめ直す）
 function allAnswered(data, game) {
   const key = answerKey(game);
-  const expected = answerableGuests(data, game);
+  const expected = answerablePlayers(data, game);
   return expected.length > 0 && expected.every((name) => answerOf(data, key, name));
 }
 
@@ -1884,10 +1956,11 @@ function renderReveal(data) {
   if (!game || !question) return;
   showScreen('reveal');
   const isHost = state.role === 'host';
+  const plays = iPlay(data);
   const key = answerKey(game);
   const result = data.results?.[key] || {};
   const pick = result.picks?.[state.nickname];
-  const myPick = !isHost && typeof pick === 'number' ? pick : null;
+  const myPick = plays && typeof pick === 'number' ? pick : null;
   const ranked = rankedScores(data);
 
   revealPackName.textContent = game.packName || 'クイズパック';
@@ -1897,13 +1970,12 @@ function renderReveal(data) {
   revealAnswer.textContent = `正解: ${NUMBERS[question.answerIndex]} ${question.choices[question.answerIndex]}`;
   revealExplanation.textContent = question.explanation || '';
 
-  if (isHost) {
+  revealRankingPanel.hidden = !isHost;
+  if (isHost) renderRanking(revealRanking, rankingEntries(ranked), result.gains);
+  if (!plays) {
     revealResult.hidden = true;
     revealRank.hidden = true;
-    revealRankingPanel.hidden = false;
-    renderRanking(revealRanking, rankingEntries(ranked), result.gains);
   } else {
-    revealRankingPanel.hidden = true;
     const member = data.scores?.[state.nickname];
     const gain = Number(result.gains?.[state.nickname]) || 0;
     // 押したのに集計に入らなかった（締め切りと同時・通信の遅れ）
@@ -1978,8 +2050,9 @@ function renderFinal(data) {
   finalPodium.hidden = !hasPoints;
   finalEmpty.hidden = hasPoints;
 
-  finalMe.hidden = isHost;
-  if (!isHost) {
+  const plays = iPlay(data);
+  finalMe.hidden = !plays;
+  if (plays) {
     const member = data.scores?.[state.nickname];
     const mine = ranked.find((entry) => entry.name === state.nickname);
     const played = Boolean(member && mine && game) && joinedFrom(member) <= game.index;
@@ -2062,8 +2135,9 @@ async function startRoomGame() {
   const setup = { packId: pack.id, countKey: state.countKey, mode: state.mode, limitSec };
   const committed = await hostTransaction((data) => {
     if (data.status !== ROOM_STATUS.LOBBY && data.status !== ROOM_STATUS.FINAL) return;
-    const guests = guestNames(data);
-    if (!guests.length) return;
+    // 答える人（ホストが参加を選んでいればホストも）。点数・受付枠はこの人たちに作る
+    const players = playerNames(data);
+    if (!players.length) return;
     const id = (Number(data.gameSeq) || 0) + 1;
     return {
       ...data,
@@ -2082,10 +2156,10 @@ async function startRoomGame() {
       },
       // 出題と同時に、答える人ごとの受付枠を開く
       answers: {
-        [answerKey({ id, index: 0 })]: openSlots(Object.fromEntries(guests.map((name) => [name, data.players[name]?.uid || null]))),
+        [answerKey({ id, index: 0 })]: openSlots(Object.fromEntries(players.map((name) => [name, data.players[name]?.uid || null]))),
       },
       results: null,
-      scores: Object.fromEntries(guests.map((name) => [
+      scores: Object.fromEntries(players.map((name) => [
         name,
         { points: 0, correct: 0, uid: data.players[name]?.uid || null, fromIndex: 0 },
       ])),
@@ -2336,11 +2410,11 @@ function renderWatchLobby(data) {
   clearWatchReveal();
   showWatchView('lobby');
   watch.renderedKey = null;
-  const names = guestNames(data);
   $('watchLobbyCode').textContent = watch.code;
-  $('watchLobbyCount').textContent = `${names.length}人`;
-  $('watchLobbyPlayers').replaceChildren(...names.map((name) => el('li', 'qz-people__item', name)));
-  $('watchLobbyEmpty').hidden = names.length > 0;
+  $('watchLobbyCount').textContent = `${playerNames(data).length}人`;
+  renderPeople($('watchLobbyPlayers'), data);
+  $('watchLobbyEmpty').textContent = lobbyEmptyText(data);
+  $('watchLobbyEmpty').hidden = guestNames(data).length > 0;
 }
 
 // 前の問題の正解発表を、次の問題・待機の間に残さない
@@ -2396,7 +2470,7 @@ function renderWatchPlay(data) {
     }));
     popIn($('watchQuestion').parentElement);
   }
-  const expected = answerableGuests(data, game);
+  const expected = answerablePlayers(data, game);
   const done = expected.filter((name) => answerOf(data, key, name)).length;
   $('watchStatus').textContent = `回答 ${done} / ${expected.length}人`;
   updateWatchTimer();
@@ -2493,6 +2567,7 @@ $('btnCopyCode').addEventListener('click', (event) => RoomkRTDB.copyRoomCode(sta
 btnLeave.addEventListener('click', leaveRoom);
 $('btnOverlayLeave').addEventListener('click', leaveRoom);
 btnRoomStart.addEventListener('click', startRoomGame);
+if (HOST_PLAYS_UI) hostPlaysInput.addEventListener('change', onHostPlaysChange);
 btnCloseAnswers.addEventListener('click', () => {
   const game = state.room?.game;
   if (state.role !== 'host' || state.room?.status !== ROOM_STATUS.QUESTION || !game) return;

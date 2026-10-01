@@ -1190,6 +1190,35 @@
   text-align: center;
 }
 
+/* ── ホストの参加（待合室の設定） ── */
+.qz-check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--color-border);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-primary);
+  cursor: pointer;
+}
+
+.qz-check input {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  accent-color: var(--color-accent);
+}
+
+.qz-people__tag {
+  margin-left: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-muted);
+}
+
 /* ── みんなにみせる画面（画面共有用） ── */
 .qz-room-entry__watch {
   flex: 1 1 100%;
