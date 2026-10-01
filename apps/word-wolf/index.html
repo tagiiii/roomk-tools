@@ -756,6 +756,11 @@ function isPlaying(room, nick) {
 function playingNames(room, players) {
   return Object.keys(players || {}).filter(nick => isPlaying(room, nick));
 }
+// 数える票: 遊ぶ人の票で、投票先も遊ぶ人（進行だけのホストへの票は数えない）。
+// 投票済み人数と結果の集計で同じ定義を使う
+function isCountedVote(room, nick, player) {
+  return !!player?.vote && isPlaying(room, nick) && isPlaying(room, player.vote);
+}
 function tooFewMsg(hostPlays) {
   return hostPlays ? '3人以上で始められます' : 'ホストのほかに3人以上で始められます';
 }
@@ -1050,7 +1055,8 @@ async function markReady() {
 async function startDiscussion() {
   const endsAt = getEstimatedServerNow() + state.discussionSecs * 1000;
   await state.roomRef.transaction((room) => {
-    if (!room || room.status !== 'revealing') return;
+    // 遊ぶ人が0人なら討論に進めない（最後の遊ぶ人の退出と同時に押された場合も）
+    if (!room || room.status !== 'revealing' || playingNames(room, room.players).length < 1) return;
     return { ...room, status: 'discussing', discussionEndsAt: endsAt };
   });
 }
@@ -1119,7 +1125,7 @@ async function computeResult(room, players) {
     const counts = {};
     // 票を数えるのは遊ぶ人の票・遊ぶ人への票だけ（進行だけのホストは対象外）
     Object.entries(currentPlayers).forEach(([nick, p]) => {
-      if (p.vote && isPlaying(currentRoom, nick) && isPlaying(currentRoom, p.vote)) {
+      if (isCountedVote(currentRoom, nick, p)) {
         counts[p.vote] = (counts[p.vote] || 0) + 1;
       }
     });
@@ -1425,7 +1431,8 @@ function handleVoting(room, players) {
     showScreen('voting');
   }
   // 投票済み人数を更新
-  const voted = playing.filter(nick => players[nick].vote != null).length;
+  // 投票済みは数える票だけ（旧版から進行役のホストに入った票では自動で結果に進まない）
+  const voted = playing.filter(nick => isCountedVote(room, nick, players[nick])).length;
   const total = playing.length;
   document.getElementById('vote-wait').textContent = `${voted} / ${total} 人が投票済み`;
   const hostProgress = document.getElementById('vote-host-progress');
