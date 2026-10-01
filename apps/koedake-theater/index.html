@@ -54,6 +54,14 @@
     }
     .kdt-tag--me { background: var(--color-muted); }
     .kdt-tag--actor { background: var(--color-primary); }
+    .kdt-tag--role { background: #EEF3F8; color: var(--color-primary); }
+
+    /* ── 待合室の設定（ホストだけ） ── */
+    .kdt-check {
+      display: flex; align-items: center; gap: 10px; min-height: 44px;
+      font-size: 15px; font-weight: 500; cursor: pointer;
+    }
+    .kdt-check input { width: 20px; height: 20px; accent-color: var(--color-accent); flex-shrink: 0; }
 
     /* ── ラウンド見出し ── */
     .kdt-round-lbl {
@@ -107,6 +115,22 @@
     }
     .kdt-secret__situ { font-size: 24px; font-weight: 700; line-height: 1.4; }
     .kdt-secret__hint { font-size: 13px; opacity: 0.85; margin-top: 10px; }
+
+    /* ── ホストが演じる番の場面（画面共有対策でふだんは折りたたむ） ── */
+    .kdt-fold {
+      margin-bottom: 16px; border: 1px solid var(--color-border);
+      border-radius: 12px; background: var(--color-surface);
+    }
+    .kdt-fold summary {
+      list-style: none; cursor: pointer; padding: 12px 14px; min-height: 44px;
+      font-size: 14px; font-weight: 700; color: var(--color-primary);
+      display: flex; align-items: center; gap: 6px;
+    }
+    .kdt-fold summary::-webkit-details-marker { display: none; }
+    .kdt-fold summary .material-symbols-rounded { font-size: 18px; color: var(--color-muted); }
+    .kdt-fold__body { padding: 0 14px 14px; }
+    .kdt-fold__situ { font-size: 20px; font-weight: 700; color: var(--color-primary); line-height: 1.4; }
+    .kdt-fold__hint { font-size: 13px; color: var(--color-muted); margin-top: 6px; }
 
     /* ── 選択ボタン（キャスト選び・投票） ── */
     .kdt-choice {
@@ -298,10 +322,18 @@
     </div>
 
     <div id="w-host-start" class="mt-md" style="display:none">
+      <div class="card mb-md">
+        <p class="kdt-section-lbl">設定</p>
+        <label class="kdt-check">
+          <input type="checkbox" id="set-host-plays" onchange="onHostPlaysChange(this.checked)">
+          <span>自分もプレイヤーとして参加する</span>
+        </label>
+        <p class="kdt-note" style="text-align:left;margin-top:2px">チェックすると、演じる人の候補にも当てる側にも入ります</p>
+      </div>
       <button class="btn btn-primary btn-full" id="btn-start" onclick="startGame()" disabled>
         <span class="material-symbols-rounded" aria-hidden="true">play_arrow</span>ゲームスタート
       </button>
-      <p class="kdt-note">ホストのほかに2人以上でスタートできます（8人まで）</p>
+      <p class="kdt-note" id="w-start-note">ホストのほかに2人以上でスタートできます（8人まで）</p>
     </div>
     <button class="btn btn-ghost btn-full mt-md" onclick="leaveGame()">
       <span class="material-symbols-rounded" aria-hidden="true">logout</span>退出する
@@ -366,6 +398,15 @@
       <p class="kdt-secret__hint">この気持ちでセリフを言ってみよう。何回言ってもOK</p>
     </div>
 
+    <!-- ホストが演じる人のとき（ホストの画面は共有されることが多いので折りたたむ） -->
+    <details id="act-host-secret" class="kdt-fold" style="display:none">
+      <summary><span class="material-symbols-rounded" aria-hidden="true">visibility</span>きみのシチュエーション（タップで見る）</summary>
+      <div class="kdt-fold__body">
+        <p class="kdt-fold__situ" id="act-host-secret-situ"></p>
+        <p class="kdt-fold__hint">この気持ちでセリフを言ってみよう。何回言ってもOK</p>
+      </div>
+    </details>
+
     <div class="kdt-serifu">
       <p class="kdt-serifu__lbl">セリフ</p>
       <p class="kdt-serifu__text" id="act-serifu"></p>
@@ -415,7 +456,15 @@
       </div>
     </div>
 
-    <!-- 投票するゲスト向け -->
+    <!-- ホストが演じる人のとき（折りたたみ） -->
+    <details id="vote-host-secret" class="kdt-fold" style="display:none">
+      <summary><span class="material-symbols-rounded" aria-hidden="true">visibility</span>きみのシチュエーション（タップで見る）</summary>
+      <div class="kdt-fold__body">
+        <p class="kdt-fold__situ" id="vote-host-secret-situ"></p>
+      </div>
+    </details>
+
+    <!-- 投票する人向け -->
     <div id="vote-guest-area" style="display:none">
       <p style="font-size:14px;color:var(--color-muted);margin-bottom:12px">
         どのシチュエーションだったと思う？
@@ -602,8 +651,9 @@ const STATUS = {
   DONE: 'done',
 };
 
-const MIN_GUESTS = 2;
-const MAX_GUESTS = 8;
+// 遊ぶ人（演じる人の候補・当てる側）の人数。進行だけのホストは数えない
+const MIN_PLAYERS = 2;
+const MAX_PLAYERS = 8;
 
 // ── ユーティリティ ──
 const esc = RoomkRTDB.esc;
@@ -620,6 +670,7 @@ const state = {
   orphanTimer: null,
   doneTimer: null,
   revealTriggered: false,
+  lastRoom: null,        // 最後に受け取ったルーム（設定の書き込み失敗時に描き直す）
 };
 
 // ── セッション管理 ──
@@ -667,6 +718,25 @@ function validNick(v, reportError = showMsg) {
 function guestNames(players) {
   return Object.keys(players || {}).filter(nick => !players[nick].isHost);
 }
+// ホストもプレイヤーとして遊ぶか（待合室で選ぶ。2026-10-01）。
+// 初期値は進行だけ。キーがない部屋（旧版が作った部屋）も従来どおり進行だけとして扱う
+function hostPlaysOf(room) {
+  return !!(room && room.settings && room.settings.hostPlays === true);
+}
+// 遊ぶ人（演じる人の候補・当てる側・得点の対象）。ホストが進行だけならゲストだけ
+function playingNames(room, players) {
+  return hostPlaysOf(room) ? Object.keys(players || {}) : guestNames(players);
+}
+function isPlaying(room, nick) {
+  const players = (room && room.players) || {};
+  return !!players[nick] && playingNames(room, players).includes(nick);
+}
+// 開始できる人数の案内（遊ぶ人だけで数える）
+function startRuleText(hostPlays) {
+  return hostPlays
+    ? `2人以上でスタートできます（${MAX_PLAYERS}人まで）`
+    : `ホストのほかに2人以上でスタートできます（${MAX_PLAYERS}人まで）`;
+}
 function currentCard(room) {
   const index = room?.round?.cardIndex;
   return Number.isInteger(index) ? CARDS[index] : null;
@@ -693,6 +763,7 @@ async function hostCreateRoom() {
     const initialRoom = {
       host: nickname, hostConnected: true, hostDisconnectedAt: null,
       status: STATUS.WAITING,
+      settings: { hostPlays: false },
       players: {
         [nickname]: { isHost: true, score: 0, vote: null },
       },
@@ -757,7 +828,8 @@ async function guestJoin() {
     if (currentRoom.status !== STATUS.WAITING) { abortReason = 'not_waiting'; return; }
     const players = currentRoom.players || {};
     if (players[nickname]) { abortReason = 'nick_taken'; return; }
-    if (guestNames(players).length >= MAX_GUESTS) { abortReason = 'full'; return; }
+    // 満員は遊ぶ人だけで数える（ホストが進行だけならゲスト8人まで）
+    if (playingNames(currentRoom, players).length >= MAX_PLAYERS) { abortReason = 'full'; return; }
     abortReason = null;
     return {
       ...currentRoom,
@@ -793,10 +865,15 @@ async function guestJoin() {
 // ── ゲームスタート（ホスト）──
 async function startGame() {
   let abortReason = null;
+  let hostPlays = false;
   const { committed } = await state.roomRef.transaction((room) => {
     if (!room || room.status !== STATUS.WAITING) { abortReason = 'bad_status'; return; }
     const players = room.players || {};
-    if (guestNames(players).length < MIN_GUESTS) { abortReason = 'too_few'; return; }
+    hostPlays = hostPlaysOf(room);
+    // 最少・最大人数は遊ぶ人だけで数える
+    const count = playingNames(room, players).length;
+    if (count < MIN_PLAYERS) { abortReason = 'too_few'; return; }
+    if (count > MAX_PLAYERS) { abortReason = 'too_many'; return; }
     const cardIndex = pickCardIndex(room.usedCards);
     abortReason = null;
     return {
@@ -807,7 +884,27 @@ async function startGame() {
     };
   });
   if (!committed && abortReason === 'too_few') {
-    showMsg('ホストのほかに2人以上で始められます');
+    showMsg(hostPlays ? '2人以上で始められます' : 'ホストのほかに2人以上で始められます');
+  }
+  if (!committed && abortReason === 'too_many') {
+    showMsg(`遊ぶ人は${MAX_PLAYERS}人までです`);
+  }
+}
+
+// ── 待合室の設定: ホストもプレイヤーとして参加するか（開始後は変えない）──
+async function onHostPlaysChange(checked) {
+  if (state.role !== 'host' || !state.roomRef) return;
+  const me = state.nickname;
+  const { committed } = await state.roomRef.transaction((room) => {
+    if (!room || room.status !== STATUS.WAITING || room.host !== me) return;
+    return { ...room, settings: { ...(room.settings || {}), hostPlays: !!checked } };
+  }).catch((error) => {
+    console.error('[koedake] onHostPlaysChange failed', error);
+    return { committed: false };
+  });
+  if (!committed) showMsg('設定を変えられませんでした');
+  if (state.lastRoom && state.lastRoom.status === STATUS.WAITING) {
+    handleWaiting(state.lastRoom, state.lastRoom.players || {});
   }
 }
 
@@ -834,7 +931,8 @@ async function confirmActor() {
   const { committed } = await state.roomRef.transaction((room) => {
     if (!room || room.status !== STATUS.CASTING) { abortReason = 'bad_status'; return; }
     const players = room.players || {};
-    if (!players[nick] || players[nick].isHost) { abortReason = 'gone'; return; }
+    // 演じる人は遊ぶ人から（進行だけのホストは選べない）
+    if (!isPlaying(room, nick)) { abortReason = 'gone'; return; }
     abortReason = null;
     return {
       ...room,
@@ -901,9 +999,10 @@ async function openVotes() {
     const votes = {};
     const correctNicks = [];
     const nextPlayers = {};
+    const playingSet = new Set(playingNames(room, players));
     Object.entries(players).forEach(([nick, player]) => {
       nextPlayers[nick] = { ...player };
-      const isVoter = !player.isHost && nick !== round.actor;
+      const isVoter = playingSet.has(nick) && nick !== round.actor;
       if (!isVoter) return;
       const vote = Number.isInteger(player.vote) ? player.vote : null;
       if (vote == null) return;
@@ -988,6 +1087,7 @@ async function leaveGame() {
     currentScreen: null,
     castSelection: null, voteSelection: null,
     orphanTimer: null, doneTimer: null, revealTriggered: false,
+    lastRoom: null,
   });
   showOverlay('host-off-overlay', false);
   showOverlay('reconnect-overlay', false);
@@ -1017,6 +1117,7 @@ function startRoomListener() {
 
 function handleRoom(room) {
   const players = room.players || {};
+  state.lastRoom = room;
 
   // 自分のスコア・投票をセッションに保存（再接続用）
   const me = players[state.nickname];
@@ -1071,11 +1172,13 @@ function situationListHtml(card, answerIndex) {
   }).join('');
 }
 
-function renderPlayerList(id, players, actorNick) {
+function renderPlayerList(id, players, actorNick, room) {
   const ul = document.getElementById(id);
   if (!ul) return;
+  const hostPlays = hostPlaysOf(room);
   const html = Object.entries(players).map(([nick, p]) => {
-    const hostTag  = p.isHost ? '<span class="kdt-tag">ホスト</span>' : '';
+    const roleTag  = p.isHost && !hostPlays ? '<span class="kdt-tag kdt-tag--role">進行役</span>' : '';
+    const hostTag  = (p.isHost ? '<span class="kdt-tag">ホスト</span>' : '') + roleTag;
     const actorTag = nick === actorNick ? '<span class="kdt-tag kdt-tag--actor">演じる人</span>' : '';
     const meTag    = nick === state.nickname ? '<span class="kdt-tag kdt-tag--me">あなた</span>' : '';
     return `<li class="kdt-player-list__item">
@@ -1085,11 +1188,13 @@ function renderPlayerList(id, players, actorNick) {
   ul.innerHTML = html;
 }
 
-function renderScoreChips(id, players) {
+function renderScoreChips(id, players, room) {
   const wrap = document.getElementById(id);
   if (!wrap) return;
+  // 遊ぶ人だけ（進行だけのホストは出さない）
+  const playing = new Set(playingNames(room, players));
   const html = Object.entries(players)
-    .filter(([, p]) => !p.isHost)
+    .filter(([nick]) => playing.has(nick))
     .map(([nick, p]) => {
       const meMark = nick === state.nickname ? '（あなた）' : '';
       return `<span class="kdt-score__chip">${esc(nick)}${meMark}
@@ -1109,12 +1214,20 @@ function handleWaiting(room, players) {
   const isHost = state.role === 'host';
   document.getElementById('w-host-panel').style.display = isHost ? 'block' : 'none';
   document.getElementById('w-host-start').style.display = isHost ? 'block' : 'none';
+  const hostPlays = hostPlaysOf(room);
+  const count = playingNames(room, players).length; // 遊ぶ人だけで数える
   if (isHost) {
     document.getElementById('w-room-code').textContent = state.roomCode;
-    document.getElementById('btn-start').disabled = guestNames(players).length < MIN_GUESTS;
+    document.getElementById('set-host-plays').checked = hostPlays;
+    document.getElementById('btn-start').disabled = count < MIN_PLAYERS || count > MAX_PLAYERS;
+    let note = startRuleText(hostPlays);
+    if (count < MIN_PLAYERS) note += `。あと${MIN_PLAYERS - count}人必要です`;
+    else if (count > MAX_PLAYERS) note = `遊ぶ人は${MAX_PLAYERS}人までです（いま${count}人）`;
+    document.getElementById('w-start-note').textContent = note;
   }
-  document.getElementById('w-count').textContent = `${Object.keys(players).length}人`;
-  renderPlayerList('w-player-list', players, null);
+  document.getElementById('w-count').textContent =
+    hostPlays ? `${count}人` : `遊ぶ人 ${count}人`;
+  renderPlayerList('w-player-list', players, null, room);
 }
 
 // ── えんじる人えらび ──
@@ -1138,12 +1251,14 @@ function handleCasting(room, players) {
 
   if (isHost) {
     // 選択中の候補が退出していたら解除
-    if (state.castSelection && !players[state.castSelection]) state.castSelection = null;
-    const html = guestNames(players).map(nick => {
+    if (state.castSelection && !isPlaying(room, state.castSelection)) state.castSelection = null;
+    // 候補は遊ぶ人（ホストも遊ぶならホスト自身も立候補できる）
+    const html = playingNames(room, players).map(nick => {
       const selected = nick === state.castSelection ? ' selected' : '';
+      const meTag = nick === state.nickname ? ' <span class="kdt-tag kdt-tag--me">あなた</span>' : '';
       return `<button class="kdt-choice${selected}" data-nick="${esc(nick)}">
         <span class="material-symbols-rounded" aria-hidden="true" style="color:var(--color-accent)">mic</span>
-        <span class="kdt-choice__text">${esc(nick)}</span>
+        <span class="kdt-choice__text">${esc(nick)}${meTag}</span>
       </button>`;
     }).join('');
     const wrap = document.getElementById('cast-guest-btns');
@@ -1164,6 +1279,8 @@ function handleActing(room, players) {
 
   if (state.currentScreen !== 'acting') {
     state.voteSelection = null;
+    // ホスト用の折りたたみはとじ直す（画面共有対策）
+    document.querySelectorAll('details.kdt-fold').forEach(d => d.removeAttribute('open'));
     showScreen('acting');
   }
 
@@ -1171,14 +1288,17 @@ function handleActing(room, players) {
   document.getElementById('act-serifu').textContent = `「${card?.serifu || ''}」`;
   document.getElementById('act-situations').innerHTML = situationListHtml(card, null);
 
+  // 演じる人だけに場面を出す。ホストが演じる人のときは、共有画面に映らないよう折りたたむ
   const secret = document.getElementById('act-secret');
-  if (isActor && Number.isInteger(round.answerIndex)) {
-    secret.style.display = 'block';
-    document.getElementById('act-secret-situ').textContent =
-      `${NUMBERS[round.answerIndex]} ${card?.situations?.[round.answerIndex] || ''}`;
-  } else {
-    secret.style.display = 'none';
-  }
+  const hostSecret = document.getElementById('act-host-secret');
+  const hasAnswer = isActor && Number.isInteger(round.answerIndex);
+  const secretText = hasAnswer
+    ? `${NUMBERS[round.answerIndex]} ${card?.situations?.[round.answerIndex] || ''}` : '';
+  secret.style.display = hasAnswer && !isHost ? 'block' : 'none';
+  hostSecret.style.display = hasAnswer && isHost ? 'block' : 'none';
+  document.getElementById('act-secret-situ').textContent = hasAnswer && !isHost ? secretText : '';
+  document.getElementById('act-host-secret-situ').textContent = hasAnswer && isHost ? secretText : '';
+  if (!(hasAnswer && isHost)) hostSecret.removeAttribute('open');
 
   const note = document.getElementById('act-watch-note');
   if (isActor) {
@@ -1197,14 +1317,18 @@ function handleVoting(room, players) {
   const isHost = state.role === 'host';
   const isActor = round.actor === state.nickname;
 
+  // 当てる側＝遊ぶ人のうち演じる人以外（ホストも遊ぶならホストも投票する）
+  const isVoter = isPlaying(room, state.nickname) && !isActor;
+
   if (state.currentScreen !== 'voting') {
     state.voteSelection = null;
+    document.querySelectorAll('details.kdt-fold').forEach(d => d.removeAttribute('open'));
     showScreen('voting');
 
     document.getElementById('vote-round-lbl').textContent = `ラウンド ${round.number || 1}`;
     document.getElementById('vote-serifu').textContent = `「${card?.serifu || ''}」`;
 
-    if (!isHost && !isActor) {
+    if (isVoter) {
       const html = (card?.situations || []).map((text, i) => `
         <button class="kdt-choice" data-index="${i}">
           <span class="kdt-choice__num">${NUMBERS[i]}</span>
@@ -1218,22 +1342,24 @@ function handleVoting(room, players) {
       document.getElementById('btn-vote-confirm').disabled = true;
     }
     if (isActor && Number.isInteger(round.answerIndex)) {
-      document.getElementById('vote-actor-situ').textContent =
-        `${NUMBERS[round.answerIndex]} ${card?.situations?.[round.answerIndex] || ''}`;
+      const text = `${NUMBERS[round.answerIndex]} ${card?.situations?.[round.answerIndex] || ''}`;
+      document.getElementById(isHost ? 'vote-host-secret-situ' : 'vote-actor-situ').textContent = text;
     }
   }
 
-  const voters = guestNames(players).filter(nick => nick !== round.actor);
+  const voters = playingNames(room, players).filter(nick => nick !== round.actor);
   const votedCount = voters.filter(nick => Number.isInteger(players[nick]?.vote)).length;
   const totalVoters = voters.length;
   const myVote = players[state.nickname]?.vote;
   const iVoted = Number.isInteger(myVote);
 
-  document.getElementById('vote-actor-area').style.display = isActor ? 'block' : 'none';
+  // ホストが演じる人のときは、場面を折りたたみで出し、待ち表示はホスト向けの投票状況にまとめる
+  document.getElementById('vote-actor-area').style.display = isActor && !isHost ? 'block' : 'none';
+  document.getElementById('vote-host-secret').style.display = isActor && isHost ? 'block' : 'none';
   document.getElementById('vote-guest-area').style.display =
-    (!isHost && !isActor && !iVoted) ? 'block' : 'none';
+    (isVoter && !iVoted) ? 'block' : 'none';
   document.getElementById('vote-done-area').style.display =
-    (!isHost && !isActor && iVoted) ? 'block' : 'none';
+    (isVoter && iVoted) ? 'block' : 'none';
   document.getElementById('vote-host-area').style.display = isHost ? 'block' : 'none';
 
   const countText = `${votedCount} / ${totalVoters} 人が投票済み`;
@@ -1267,7 +1393,7 @@ function handleReveal(room, players) {
   const correctNicks = new Set(round.correctNicks || []);
   const voterSet = new Set([
     ...Object.keys(votes),
-    ...guestNames(players).filter(nick => nick !== round.actor),
+    ...playingNames(room, players).filter(nick => nick !== round.actor),
   ]);
   const rowsHtml = [...voterSet].map(nick => {
     const vote = votes[nick];
@@ -1290,7 +1416,7 @@ function handleReveal(room, players) {
     `${esc(round.actor || '')}さんに${correctCount}pt）`;
   document.getElementById('rev-summary').innerHTML = summaryHtml;
 
-  renderScoreChips('rev-score', players);
+  renderScoreChips('rev-score', players, room);
 
   document.getElementById('rev-host-area').style.display =
     state.role === 'host' ? 'block' : 'none';
@@ -1307,7 +1433,7 @@ function handleDone(room, players) {
       }, 30000);
     }
   }
-  renderScoreChips('done-score', players);
+  renderScoreChips('done-score', players, room);
 }
 
 // ── 再接続 ──
@@ -1373,6 +1499,7 @@ tryReconnect().then(ok => { if (!ok) showScreen('top'); });
         'ホストが「ルームを作る」からルームを作る',
         '出てきたルームコードをみんなに伝える',
         'ほかの人は「ルームに参加する」からニックネームとルームコードを入れて「参加する」を押す',
+        'ホストははじめ進行役。待合室で「自分もプレイヤーとして参加する」にチェックすると、演じる人の候補にも当てる側にも入る',
       ] },
       { heading: 'すすめかた', items: [
         '演じる人が決まると、その人にだけシチュエーションが見える',
