@@ -126,7 +126,7 @@ waiting → night（1日目夜・襲撃なし）→ morning → day → vote →
 ## 夜フェーズ解決ロジック（ホストのみ実行）
 
 1. 行動不要な役職の `actionDone` を夜開始時に `true` に一括セット
-2. 人狼は `wolfVote` で投票 → 全人狼投票完了後にホストが最多票を `nightAction` に書き込む
+2. 人狼は `wolfVote` で投票 → 全人狼投票完了後にホストが最多票を `nightAction` に書き込む（`nightAction` と `actionDone` は1回の `update()` で書く。途中で GM が再読み込みして `nightAction` だけ残った場合も、次の監視で `actionDone` を補う）
 3. 全員 `actionDone: true` になったらホストが `resolveNight()` を実行
 
 解決順序:

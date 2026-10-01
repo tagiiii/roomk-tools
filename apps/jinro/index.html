@@ -1667,14 +1667,19 @@ async function checkWolfVoteComplete(room, players) {
   wolves.forEach(([, p]) => { counts[p.wolfVote] = (counts[p.wolfVote] || 0) + 1; });
   const maxV = Math.max(...Object.values(counts));
   const tops = Object.keys(counts).filter(k => counts[k] === maxV);
-  const target = tops[Math.floor(Math.random() * tops.length)];
-  // 全人狼に nightAction をセット（まだセットされていない場合）
+  // すでに決まった対象があればそれを使う（途中で GM が再読み込みしても対象を変えない）
+  const target = wolves.find(([, p]) => p.nightAction)?.[1].nightAction
+    || tops[Math.floor(Math.random() * tops.length)];
+  // 全人狼に nightAction と actionDone を1回の update でセットする。
+  // 2回に分けると、間で GM が再読み込みしたとき nightAction だけ残って夜が進まなくなる
+  const update = {};
   for (const [nick, p] of wolves) {
-    if (!p.nightAction) {
-      await state.roomRef.child(`players/${nick}/nightAction`).set(target);
-      await state.roomRef.child(`players/${nick}/actionDone`).set(true);
+    if (!p.nightAction || !p.actionDone) {
+      update[`players/${nick}/nightAction`] = p.nightAction || target;
+      update[`players/${nick}/actionDone`] = true;
     }
   }
+  if (Object.keys(update).length) await state.roomRef.update(update);
 }
 
 function renderHunterChoiceButtons(containerId, targets) {
