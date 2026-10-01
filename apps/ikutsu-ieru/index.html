@@ -52,6 +52,15 @@
       background: var(--color-accent); color: #fff;
     }
     .player-tag.me { background: var(--color-muted); }
+    .player-tag.role { background: var(--color-primary); }
+
+    /* ── 待合室の設定（ホストの参加） ── */
+    .ii-check {
+      display: flex; align-items: center; gap: 10px; min-height: 44px;
+      font-size: 15px; font-weight: 500; cursor: pointer;
+    }
+    .ii-check input { width: 20px; height: 20px; accent-color: var(--color-accent); flex-shrink: 0; }
+    .ii-hint { font-size: 14px; color: var(--color-muted); margin-top: 8px; text-align: center; }
 
     /* ── お題表示 ── */
     .ii-theme {
@@ -326,6 +335,12 @@
           </div>
         </div>
         <div class="form-group">
+          <label class="ii-check">
+            <input type="checkbox" id="w-host-plays" checked onchange="onHostPlaysChange(this.checked)">
+            <span>自分も答える側で参加する</span>
+          </label>
+        </div>
+        <div class="form-group">
           <label class="form-label" for="w-duration">制限時間</label>
           <select class="form-select" id="w-duration">
             <option value="60">60秒</option>
@@ -336,6 +351,7 @@
         <button id="w-start" class="btn btn-primary btn-full mt-md" onclick="startRound()">
           <span class="material-symbols-rounded">play_arrow</span>このお題で始める
         </button>
+        <p class="ii-hint" id="w-start-hint" hidden></p>
       </div>
     </div>
 
@@ -360,6 +376,7 @@
       <div class="ii-timer__lbl">残り時間</div>
     </div>
 
+    <div id="i-player-area">
     <div class="ii-count">
       <span class="ii-count__num" id="i-count">0</span>
       <span class="ii-count__unit">個</span>
@@ -374,6 +391,8 @@
     <div class="error-msg" id="i-error"></div>
 
     <ul class="ii-answer-list" id="i-answer-list"></ul>
+    </div>
+    <p id="i-host-only" class="ii-answer-empty" hidden>みんなが答えを書いているよ。時間になると、みんなの答えがならぶよ</p>
 
     <div id="i-host-panel" style="display:none" class="mt-md">
       <button class="btn btn-ghost btn-full" onclick="hostEndInput()">
@@ -393,7 +412,7 @@
       <div class="ii-theme__text" id="r-theme">---</div>
     </div>
 
-    <div class="ii-count">
+    <div class="ii-count" id="r-mycount-wrap">
       <span class="ii-count__num" id="r-mycount">0</span>
       <span class="ii-count__unit">個 答えられたよ</span>
     </div>
@@ -463,6 +482,16 @@ const SESSION_KEY = 'ikutsu_session';
 const ORPHAN_TTL_MS = 2 * 60 * 1000;
 const MAX_ANSWER_LEN = 24;
 const AUTO_DELETE_AFTER_FINISH_MS = 30_000;
+const MIN_ANSWERERS = 1; // 答える人（遊ぶ人）だけで数える
+
+// ホストも答える側か。キーがない部屋（旧版が作った部屋）は従来どおり「答える」
+function hostPlays(room) { return room?.settings?.hostPlays !== false; }
+// 答える人（スナップショット・結果の対象）。進行だけのホストは含めない
+function answererNames(room) {
+  const players = room?.players || {};
+  const plays = hostPlays(room);
+  return Object.keys(players).filter(nick => plays || !(players[nick]?.isHost || nick === room.host));
+}
 
 // ── 状態 ──
 const state = {
@@ -477,6 +506,8 @@ const state = {
   showNames: false,     // review 画面のホストローカル表示切替
   autoAdvanced: false,  // ホストのタイマー終了処理の二重防止
   expectedRoomRemoval: false, answerAction: null, currentStatus: null,
+  hostPlays: true,      // 最新 room の settings/hostPlays（キーなしは true）
+  hostPlaysBusy: false,
 };
 
 // ── セッション管理 ──
@@ -685,6 +716,7 @@ async function hostCreateRoom() {
       hostDisconnectedAt: null,
       status: 'waiting',
       round: 0,
+      settings: { hostPlays: true },
       players: {
         [nickname]: { isHost: true, joinedAt: firebase.database.ServerValue.TIMESTAMP, answers: [] },
       },
@@ -801,6 +833,7 @@ async function startRound() {
     if (room.status !== 'waiting') { abortReason = 'bad_status'; return; }
     const players = room.players || {};
     if (Object.values(players).some(player => !playerConnected(player))) { abortReason = 'disconnected'; return; }
+    if (answererNames(room).length < MIN_ANSWERERS) { abortReason = 'no_answerers'; return; }
     const resetPlayers = {};
     Object.keys(players).forEach(nick => {
       resetPlayers[nick] = { ...(players[nick] || {}), answers: [] };
@@ -817,7 +850,33 @@ async function startRound() {
     };
   });
   if (!committed) {
-    showError('w-error', abortReason === 'disconnected' ? '参加者の再接続を待っています' : abortReason === 'bad_status' ? 'すでにラウンドが進行しています' : '開始に失敗しました');
+    showError('w-error', abortReason === 'disconnected' ? '参加者の再接続を待っています'
+      : abortReason === 'no_answerers' ? '答える人が1人以上いると始められます'
+      : abortReason === 'bad_status' ? 'すでにラウンドが進行しています' : '開始に失敗しました');
+  }
+}
+
+// ── ホスト: 自分も答える側で参加するか（待合室のあいだだけ変えられる） ──
+async function onHostPlaysChange(checked) {
+  if (state.role !== 'host' || !state.roomRef || state.expectedRoomRemoval || state.hostPlaysBusy) return;
+  const ref = state.roomRef, me = state.nickname;
+  state.hostPlaysBusy = true;
+  document.getElementById('w-host-plays').disabled = true;
+  let committed = false;
+  try {
+    ({ committed } = await ref.transaction(room => {
+      if (state.roomRef !== ref || state.role !== 'host' || state.expectedRoomRemoval) return;
+      if (!room || room.status !== 'waiting' || room.host !== me) return;
+      return { ...room, settings: { ...(room.settings || {}), hostPlays: !!checked } };
+    }));
+  } catch (error) { console.warn('[ikutsu-ieru] host plays update failed', error); }
+  if (state.roomRef !== ref) return;
+  state.hostPlaysBusy = false;
+  const box = document.getElementById('w-host-plays');
+  box.disabled = false;
+  if (!committed) {
+    box.checked = state.hostPlays;
+    showMsg('設定を変えられませんでした');
   }
 }
 
@@ -833,10 +892,11 @@ function ownsAnswerAction(action) {
 function canApplyAnswerAction(action, room) {
   return ownsAnswerAction(action) && guestCanAct() && room?.status === 'input'
     && room.round === action.round && !!room.players?.[action.nickname]
-    && (action.role === 'host' || (validGuestRoom(room, action.nickname)
+    && (action.role === 'host' ? hostPlays(room) : (validGuestRoom(room, action.nickname)
       && guestPresence === action.presence && guestPresence?.generation === action.generation));
 }
 async function changeAnswers(value, index = null) {
+  if (state.role === 'host' && !state.hostPlays) return;
   if (state.currentScreen !== 'input' || state.answerAction || !guestCanAct()
     || !state.roomRef || state.expectedRoomRemoval) return;
   const action = captureAnswerAction();
@@ -947,7 +1007,8 @@ async function moveToReview() {
     const round = room.round || 1;
     const players = room.players || {};
     const snapshotAnswers = {};
-    Object.keys(players).forEach(nick => {
+    // 進行だけのホストはスナップショット（みんなの答え・ふりかえり）に入れない
+    answererNames(room).forEach(nick => {
       const ans = Array.isArray(players[nick]?.answers) ? players[nick].answers : [];
       snapshotAnswers[nick] = ans;
     });
@@ -1019,6 +1080,7 @@ function resetRoomState() {
     currentScreen: null, timerInterval: null, countdownEndAt: null, orphanTimer: null, finishDeleteTimer: null,
     myAnswers: [], round: 0, showNames: false, autoAdvanced: false,
     expectedRoomRemoval: false, answerAction: null, currentStatus: null,
+    hostPlays: true, hostPlaysBusy: false,
   });
   showOverlay('host-off-overlay', false);
   showOverlay('reconnect-overlay', false);
@@ -1050,6 +1112,7 @@ function handleRoom(room) {
   if (state.round !== (room.round || 0) || state.currentStatus !== room.status) state.answerAction = null;
   state.round = room.round || 0;
   state.currentStatus = room.status;
+  state.hostPlays = hostPlays(room);
 
   // ホスト切断オーバーレイ(ゲストのみ)
   if (state.role === 'guest') {
@@ -1095,12 +1158,19 @@ function handleWaiting(room, players) {
   const isHost = state.role === 'host';
   document.getElementById('w-host-code-card').style.display = isHost ? 'block' : 'none';
   document.getElementById('w-host-panel').style.display     = isHost ? 'block' : 'none';
+  const answerers = answererNames(room).length;
+  const enough = answerers >= MIN_ANSWERERS;
   if (isHost) {
     document.getElementById('w-room-code').textContent = state.roomCode;
+    const box = document.getElementById('w-host-plays');
+    if (!state.hostPlaysBusy) box.checked = state.hostPlays;
+    const hint = document.getElementById('w-start-hint');
+    hint.hidden = enough;
+    hint.textContent = enough ? '' : `答える人が${MIN_ANSWERERS}人以上いると始められるよ（いま${answerers}人）`;
   }
-  document.getElementById('w-count').textContent = `${Object.keys(players).length}人`;
-  renderPlayerList('w-player-list', players);
-  document.getElementById('w-start').disabled = Object.values(players).some(player => !playerConnected(player));
+  document.getElementById('w-count').textContent = `答える人 ${answerers}人`;
+  renderPlayerList('w-player-list', players, room);
+  document.getElementById('w-start').disabled = !enough || Object.values(players).some(player => !playerConnected(player));
 }
 
 // ── 入力 ──
@@ -1119,6 +1189,10 @@ function handleInput(room, players) {
     input.onkeydown = (e) => { if (e.key === 'Enter' && !e.isComposing && e.keyCode !== 229) { e.preventDefault(); addAnswer(); } };
   }
   document.getElementById('i-theme').textContent = room.theme || '';
+  // 進行だけのホストには回答欄・自分の個数を出さず、お題・残り時間・進行の操作だけを出す
+  const facilitatorOnly = state.role === 'host' && !state.hostPlays;
+  document.getElementById('i-player-area').hidden = facilitatorOnly;
+  document.getElementById('i-host-only').hidden = !facilitatorOnly;
   // 他タブ・他端末から自分の回答が書き換わったとき(通常は自分のみが書くので滅多にないが念のため同期)
   const me = players[state.nickname];
   const remote = Array.isArray(me?.answers) ? me.answers : [];
@@ -1147,6 +1221,7 @@ function handleReview(room, players) {
   document.getElementById('r-theme').textContent = theme;
   const mine = Array.isArray(answersByNick[state.nickname]) ? answersByNick[state.nickname] : [];
   document.getElementById('r-mycount').textContent = mine.length;
+  document.getElementById('r-mycount-wrap').hidden = state.role === 'host' && !state.hostPlays;
 
   const isHost = state.role === 'host';
   document.getElementById('r-host-panel').style.display = isHost ? 'block' : 'none';
@@ -1262,15 +1337,17 @@ async function deleteFinishedRoom(ref, round) {
 }
 
 // ── プレイヤーリスト描画 ──
-function renderPlayerList(id, players) {
+function renderPlayerList(id, players, room) {
   const ul = document.getElementById(id);
   if (!ul) return;
+  const plays = hostPlays(room);
   ul.innerHTML = Object.entries(players).map(([nick, p]) => {
     const hostTag = p?.isHost ? '<span class="player-tag">ホスト</span>' : '';
+    const roleTag = p?.isHost && !plays ? '<span class="player-tag role">進行役</span>' : '';
     const meTag = nick === state.nickname ? '<span class="player-tag me">あなた</span>' : '';
     const connectionTag = playerConnected(p) ? '' : '<span class="player-tag">再接続待ち</span>';
     return `<li class="player-item">
-      <div class="player-name">${esc(nick)}${hostTag}${meTag}${connectionTag}</div>
+      <div class="player-name">${esc(nick)}${hostTag}${roleTag}${meTag}${connectionTag}</div>
     </li>`;
   }).join('');
 }
@@ -1333,6 +1410,7 @@ tryReconnect().then(ok => { if (!ok) showScreen('top'); });
         'ホストが「ルームを作る」を押して、ルームコードをみんなに伝える',
         'ほかの人は「ルームに参加する」からニックネームとルームコードを入れて「参加する」を押す',
         'ホストがお題と制限時間を決めて「このお題で始める」を押す',
+        'ホストは進行だけにすることもできる（待合室の「自分も答える側で参加する」を外す）',
       ] },
       { heading: 'すすめかた', items: [
         '時間内に、思いついた答えを書いて追加していく（Enterでも追加できるよ）',
