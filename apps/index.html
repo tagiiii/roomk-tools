@@ -211,7 +211,7 @@
       }
     }
 
-    /* ── 人数・使える時間 ── */
+    /* ── 人数・目安時間 ── */
     .tool-size {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 220px));
@@ -489,10 +489,14 @@
 
     .tool-result__text {
       display: flex;
-      flex-wrap: wrap;
       align-items: center;
-      gap: 0 6px;
+      gap: 6px;
       min-height: 32px;
+    }
+
+    /* 文の中の件数は文字の下端（ベースライン）でそろえる。flex の子にすると中央ぞろえで下にずれて見える */
+    .tool-result__label {
+      line-height: 1.4;
     }
 
     .tool-result__text:focus {
@@ -504,8 +508,10 @@
     }
 
     .tool-result__num {
+      margin: 0 0.25em;
       font-size: var(--font-size-lg);
       font-weight: 700;
+      line-height: 1;
     }
 
     .tool-result__clear[hidden] {
@@ -779,7 +785,7 @@
           </div>
         </div>
         <div class="tool-size__item">
-          <label class="form-label tool-filter__label" for="filter-time">使える時間</label>
+          <label class="form-label tool-filter__label" for="filter-time">目安時間</label>
           <div class="tool-size__field">
             <select class="form-select tool-size__select" id="filter-time">
             <option value="">指定なし</option>
@@ -2220,18 +2226,21 @@
         const num = document.createElement('span');
         num.className = 'tool-result__num';
         num.textContent = visibleCount + '件';
+        const label = document.createElement('span');
+        label.className = 'tool-result__label';
         if (filtered) {
           if (visibleCount === 0) {
             icon.textContent = 'search_off';
-            resultText.replaceChildren(icon, '条件に合うツールは', num);
+            label.append('条件に合うツールは', num);
           } else {
             icon.textContent = 'filter_alt';
-            resultText.replaceChildren(icon, `全${cards.length}件中`, num, 'にしぼりこみ中');
+            label.append(`全${cards.length}件中`, num, 'にしぼりこみ中');
           }
         } else {
           icon.textContent = 'apps';
-          resultText.replaceChildren(icon, 'すべてのツール', num, 'を表示中');
+          label.append('すべてのツール', num, 'を表示中');
         }
+        resultText.replaceChildren(icon, label);
       }
 
       chips.forEach((chip) => {
