@@ -1,0 +1,755 @@
+/* スタンプあてゲーム 固有スタイル（接頭辞: sa- / BEM）
+   共通スタイルは design-system.css に定義済み。
+   部品の形（パネル・ルームバー・参加者の一覧・フォーム）は気持ち当てゲームにそろえている。
+   スタンプの4色（赤・青・黄・緑）は app.js の STAMPS で持つ。 */
+
+.wrapper {
+  max-width: 820px;
+  margin: 0 auto;
+  padding: 40px 20px 80px;
+}
+
+.sa-defs {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+
+/* ── ヘッダー ── */
+.sa-header {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.sa-header__title {
+  color: var(--color-primary);
+  font-size: 1.7rem;
+  font-weight: 700;
+  margin: 0 0 8px;
+}
+
+.sa-header__sub {
+  color: var(--color-muted);
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+/* みんなにみせる画面の目印（共有するタブを見分けるため） */
+.sa-watchbadge {
+  display: inline-block;
+  color: #26697A;
+  background: #E6F2F4;
+  border-radius: var(--radius-full);
+  font-size: 13px;
+  font-weight: 700;
+  padding: 4px 12px;
+  margin: 10px 0 0;
+}
+
+/* ── 画面切り替え ── */
+.sa-screen { display: none; }
+.sa-screen.active { display: block; }
+
+/* ── 共通の部品 ── */
+.sa-panel {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  padding: 20px;
+  margin-bottom: 16px;
+}
+
+.sa-panel p {
+  margin: 0 0 12px;
+  line-height: 1.7;
+}
+
+.sa-panel p:last-child { margin-bottom: 0; }
+
+.sa-panel > .btn:first-of-type { margin-top: 22px; }
+.sa-panel > .btn + .btn { margin-top: 10px; }
+
+.sa-panel__title {
+  color: var(--color-primary);
+  font-size: 1rem;
+  margin: 0 0 12px;
+}
+
+.sa-center { text-align: center; }
+.sa-center > .btn:first-of-type { margin-top: 4px; }
+
+.sa-lead {
+  color: var(--color-text);
+  font-size: 1rem;
+  line-height: 1.8;
+}
+
+.sa-note {
+  color: var(--color-muted);
+  font-size: 0.85rem;
+  line-height: 1.6;
+  text-align: center;
+  margin: 16px 0 0;
+}
+
+.sa-note:empty { display: none; }
+
+.sa-note--warn {
+  color: var(--color-text);
+  background: #FFF7E6;
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin: 0 0 16px;
+}
+
+.sa-tag {
+  display: inline-block;
+  color: #26697A; /* 淡いティールの上で 4.5:1 以上 */
+  background: #E6F2F4;
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 4px 8px;
+  margin-left: 8px;
+  vertical-align: 2px;
+}
+
+.sa-alt {
+  display: flex;
+  justify-content: center;
+  margin: 14px 0 0;
+}
+
+.sa-alt--top { margin: -8px 0 4px; }
+
+.sa-quiet-btn {
+  min-height: 44px;
+  padding: 10px 8px;
+  background: none;
+  border: none;
+  font-family: inherit;
+  font-size: var(--font-size-sm);
+  color: var(--color-muted);
+  cursor: pointer;
+}
+
+.sa-quiet-btn:hover {
+  color: var(--color-text);
+  text-decoration: underline;
+}
+
+.sa-quiet-btn:focus-visible {
+  outline: 3px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: var(--radius-full);
+}
+
+/* ── サブヘッダー・フォーム ── */
+.sa-subhead {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.sa-subhead__title {
+  color: var(--color-primary);
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.sa-form {
+  background: var(--color-surface);
+  border-radius: 14px;
+  padding: 20px;
+}
+
+.sa-form__label {
+  display: block;
+  color: var(--color-primary);
+  font-size: 0.9rem;
+  font-weight: 700;
+  margin: 0 0 8px;
+}
+
+.sa-form__input + .sa-form__label { margin-top: 18px; }
+
+.sa-form__input {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1.5px solid var(--color-border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-family: inherit;
+  font-size: 1rem;
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.sa-form__input:focus {
+  outline: none;
+  border-color: var(--color-accent);
+}
+
+.sa-form__input--code {
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 1.3rem;
+}
+
+.sa-check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--color-text);
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.sa-form__hint + .sa-check { margin-top: 16px; }
+
+.sa-check input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--color-accent);
+  flex-shrink: 0;
+}
+
+.sa-form__hint {
+  color: var(--color-muted);
+  font-size: 13px;
+  line-height: 1.6;
+  margin: 6px 0 0 30px;
+}
+
+.sa-form__hint--lead {
+  font-size: 14px;
+  margin: 0 0 16px;
+}
+
+.sa-form__error {
+  color: var(--color-error);
+  background: #FEF2F2;
+  border-left: 3px solid var(--color-error);
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin: 12px 0;
+}
+
+.sa-form > .btn { margin-top: 18px; }
+
+/* ── ルームバー ── */
+.sa-roombar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  color: var(--color-primary);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 8px 12px;
+  margin-bottom: 22px;
+}
+
+.sa-roombar strong {
+  font-size: 1.25rem;
+  letter-spacing: 0.13em;
+}
+
+.sa-roombar #btnLeave { margin-left: auto; }
+
+/* ── フェーズの見出し ── */
+.sa-round {
+  color: var(--color-accent);
+  font-size: 14px;
+  font-weight: 700;
+  text-align: center;
+  margin: 0 0 6px;
+}
+
+.sa-phase {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.sa-phase__title {
+  color: var(--color-primary);
+  font-size: 1.5rem;
+  margin: 0 0 6px;
+}
+
+.sa-phase__sub {
+  color: var(--color-muted);
+  line-height: 1.7;
+  margin: 0;
+}
+
+/* ── 参加者の一覧 ── */
+.sa-people {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.sa-people__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.sa-people__item:last-child { border-bottom: none; }
+
+.sa-people__name { overflow-wrap: anywhere; }
+
+.sa-people__status {
+  color: var(--color-accent);
+  font-weight: 700;
+  font-size: 0.88rem;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* ── お題（お題表示の定石: 白カード＋ティール枠）── */
+.sa-odai {
+  background: var(--color-surface);
+  border: 2px solid var(--color-accent);
+  border-radius: var(--radius-box);
+  padding: 24px 40px;
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.sa-odai__label {
+  color: var(--color-accent);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  margin: 0 0 12px;
+}
+
+.sa-odai__text {
+  color: var(--color-primary);
+  font-size: 40px;
+  font-weight: 700;
+  line-height: 1.3;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+/* ── スタンプを押す紙 ── */
+.sa-count {
+  color: var(--color-primary);
+  font-size: 18px;
+  font-weight: 700;
+  text-align: center;
+  margin: 0 0 10px;
+}
+
+.sa-count:empty { display: none; }
+
+.sa-easel {
+  background: #EDE8DE;
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 14px;
+}
+
+.sa-sheetbox {
+  display: flex;
+  justify-content: center;
+}
+
+.sa-sheet {
+  display: block;
+  background: #FFFFFF;
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(26, 26, 26, 0.18);
+}
+
+.sa-sheet__bg { fill: #FFFFFF; }
+
+.sa-sheet__ink { filter: url(#sa-ink); }
+
+.sa-stamp {
+  mix-blend-mode: multiply;
+  opacity: 0.93;
+}
+
+.sa-sheet--edit {
+  width: 100%;
+  max-width: 360px;
+  height: auto;
+  cursor: crosshair;
+  touch-action: manipulation;
+}
+
+.sa-sheet--edit.sa-sheet--wide { max-width: 480px; }
+.sa-sheet--edit.is-full { cursor: default; }
+
+.sa-ghost {
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+/* ── スタンプのえらび方 ── */
+.sa-palette {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.sa-pal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-height: 92px;
+  padding: 10px 6px;
+  font-family: inherit;
+  background: var(--color-surface);
+  border: 2px solid var(--color-border);
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.sa-pal:hover:not(:disabled) { border-color: var(--color-accent); }
+
+.sa-pal.is-selected {
+  border-color: var(--color-accent);
+  background: #E6F2F4;
+  box-shadow: inset 0 0 0 1px var(--color-accent);
+}
+
+.sa-pal:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.sa-pal:focus-visible {
+  outline: 3px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.sa-pal__icon {
+  width: 48px;
+  height: 48px;
+}
+
+.sa-pal__name {
+  color: var(--color-text);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.3;
+  text-align: center;
+}
+
+.sa-tools {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.sa-tools .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.sa-tools .material-symbols-rounded { font-size: 20px; }
+
+#painterPanel { margin-bottom: 18px; }
+#painterDone { margin-top: 0; }
+
+/* ── 絵の一覧（当てる・答え合わせ）── */
+.sa-pictures {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.sa-pictures--reveal { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+
+.sa-pic {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  text-align: left;
+  font-family: inherit;
+  background: var(--color-surface);
+  border: 2px solid var(--color-border);
+  border-radius: 12px;
+  padding: 10px;
+}
+
+button.sa-pic { cursor: pointer; }
+button.sa-pic:hover { border-color: var(--color-accent); }
+
+.sa-pic.is-selected {
+  border-color: var(--color-accent);
+  box-shadow: inset 0 0 0 2px var(--color-accent);
+}
+
+.sa-pic:focus-visible {
+  outline: 3px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.sa-pic__head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 24px;
+}
+
+.sa-pic__num {
+  color: var(--color-accent);
+  font-size: 22px;
+  font-weight: 700;
+  font-feature-settings: "palt";
+}
+
+.sa-pic__painter {
+  color: var(--color-text);
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.sa-pic__head .sa-tag { margin-left: 2px; }
+
+.sa-pic__frame {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1;
+  background: #EDE8DE;
+  border-radius: 8px;
+  padding: 8px;
+  box-sizing: border-box;
+}
+
+.sa-pic__frame .sa-sheet {
+  height: 100%;
+  width: auto;
+  max-width: 100%;
+}
+
+.sa-pic__frame .sa-sheet--wide {
+  width: 100%;
+  height: auto;
+}
+
+.sa-pic__answer {
+  color: var(--color-primary);
+  font-size: 18px;
+  font-weight: 700;
+  text-align: center;
+  min-height: 28px;
+  overflow-wrap: anywhere;
+}
+
+.sa-pic__answer.is-empty { color: var(--color-muted); }
+
+/* ── お題の一覧 ── */
+.sa-choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.sa-choice {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 8px 16px;
+  font-family: inherit;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-primary);
+  background: var(--color-surface);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-full);
+}
+
+button.sa-choice { cursor: pointer; }
+button.sa-choice:hover { border-color: var(--color-accent); }
+
+.sa-choice.is-placed {
+  background: #F1EEE7;
+  color: var(--color-muted);
+}
+
+.sa-choice.is-selected {
+  border-color: var(--color-accent);
+  background: #E6F2F4;
+  color: var(--color-primary);
+  box-shadow: inset 0 0 0 1px var(--color-accent);
+}
+
+.sa-choice:focus-visible {
+  outline: 3px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.sa-choice__where {
+  color: var(--color-accent);
+  font-feature-settings: "palt";
+}
+
+.sa-choice__where:empty { display: none; }
+
+/* ── 答え合わせ ── */
+.sa-result {
+  background: var(--color-surface);
+  border: 2px solid var(--color-accent);
+  border-radius: var(--radius-box);
+  padding: 22px 20px;
+  text-align: center;
+  margin-bottom: 18px;
+}
+
+.sa-result__main {
+  color: var(--color-primary);
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.4;
+  margin: 0 0 8px;
+}
+
+.sa-result__sub {
+  color: var(--color-muted);
+  font-size: 15px;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.sa-pic__truth {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 8px;
+}
+
+.sa-pic__truthlabel {
+  color: var(--color-accent);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+}
+
+.sa-pic__truthtext {
+  color: var(--color-primary);
+  font-size: 22px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.sa-pic__mark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-size: 15px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.sa-pic__mark .material-symbols-rounded { font-size: 20px; }
+
+.sa-pic--reveal.is-hit { border-color: var(--color-success); }
+.sa-pic--reveal.is-hit .sa-pic__mark { color: var(--color-success); }
+.sa-pic--reveal.is-miss .sa-pic__mark { color: var(--color-muted); }
+
+/* ── おしまい ── */
+.sa-rounds {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.sa-rounds__item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 14px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.sa-rounds__item:last-child { border-bottom: none; }
+
+.sa-rounds__label {
+  color: var(--color-primary);
+  font-weight: 700;
+}
+
+.sa-rounds__who {
+  color: var(--color-muted);
+  overflow-wrap: anywhere;
+}
+
+.sa-rounds__score {
+  color: var(--color-accent);
+  font-weight: 700;
+  margin-left: auto;
+}
+
+/* ── ホスト切断のオーバーレイ ── */
+.sa-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(18, 37, 54, 0.8);
+}
+
+.sa-overlay__panel {
+  background: var(--color-surface);
+  border-radius: 14px;
+  padding: 28px;
+  max-width: 420px;
+  text-align: center;
+}
+
+.sa-overlay__panel h2 {
+  color: var(--color-primary);
+  font-size: 1.3rem;
+}
+
+.sa-overlay__panel p { line-height: 1.7; }
+
+@media (max-width: 600px) {
+  .wrapper { padding: 28px 16px 64px; }
+  .sa-roombar #btnLeave { margin-left: 0; }
+  .sa-phase__title { font-size: 1.3rem; }
+  .sa-odai { padding: 20px 20px; }
+  .sa-odai__text { font-size: 32px; }
+  .sa-easel { padding: 10px; }
+  .sa-palette { gap: 6px; }
+  .sa-pal { min-height: 84px; padding: 8px 2px; }
+  .sa-pal__icon { width: 40px; height: 40px; }
+  .sa-pal__name { font-size: 12px; }
+  .sa-pictures { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .sa-pictures--reveal { grid-template-columns: repeat(2, 1fr); }
+  .sa-pic { padding: 8px; }
+  .sa-pic__answer { font-size: 16px; }
+  .sa-pic__truthtext { font-size: 18px; }
+  .sa-pic__mark { font-size: 13px; }
+  .sa-choice { font-size: 16px; padding: 8px 14px; }
+  .sa-result__main { font-size: 22px; }
+  .sa-rounds__score { margin-left: 0; }
+}

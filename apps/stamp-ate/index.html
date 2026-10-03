@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+  <title>スタンプあてゲーム | room-K</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
+  <link rel="stylesheet" href="../shared/css/design-system.css">
+  <!-- index.html と app.js・style.css はセットで変わるので、変えたら ?v= をそろえて上げる -->
+  <link rel="stylesheet" href="style.css?v=1">
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+  <script src="../shared/js/rtdb-utils.js?v=20260910"></script>
+</head>
+<body>
+  <!-- スタンプのインクのふち（すべての絵で共用する） -->
+  <svg class="sa-defs" width="0" height="0" aria-hidden="true" focusable="false">
+    <defs>
+      <filter id="sa-ink" x="-10%" y="-10%" width="120%" height="120%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="2" seed="7" result="noise"></feTurbulence>
+        <feDisplacementMap in="SourceGraphic" in2="noise" scale="7" xChannelSelector="R" yChannelSelector="G"></feDisplacementMap>
+      </filter>
+    </defs>
+  </svg>
+  <div class="wrapper">
+    <header class="sa-header">
+      <h1 class="sa-header__title">スタンプあてゲーム</h1>
+      <p class="sa-header__sub">4つの形のスタンプで、お題を伝えよう</p>
+      <p class="sa-watchbadge" id="watchBadge" hidden>みんなにみせる画面</p>
+    </header>
+    <main>
+      <section class="sa-screen active" id="screen-top">
+        <div class="sa-panel">
+          <p class="sa-lead">丸・四角・長方形・三角の4つのスタンプだけで、こっそり配られたお題を表すゲーム。当てる人が、どの絵がどのお題かを当てるよ。押せる回数は5回から始まって、1回ずつ減っていくよ。</p>
+          <p class="sa-note">みんなで力を合わせるゲーム。全部で5回、15〜20分くらい。</p>
+          <button type="button" class="btn btn-primary btn-full" id="btnGoCreate">ルームを作る</button>
+          <button type="button" class="btn btn-secondary btn-full" id="btnGoJoin">ルームに参加する</button>
+          <button type="button" class="btn btn-ghost btn-full" id="btnGoWatch">みんなにみせる画面をひらく</button>
+        </div>
+      </section>
+
+      <section class="sa-screen" id="screen-create">
+        <div class="sa-subhead"><button type="button" class="btn btn-ghost btn-sm" id="btnCreateBack">トップへ戻る</button><h2 class="sa-subhead__title">ルームを作る</h2></div>
+        <div class="sa-form">
+          <label class="sa-form__label" for="hostName">ホストの名前（8文字まで）</label>
+          <input class="sa-form__input" id="hostName" maxlength="8" autocomplete="nickname">
+          <p class="sa-form__error" id="createError" hidden></p>
+          <button type="button" class="btn btn-primary btn-full" id="btnCreateRoom">ルームを作る</button>
+        </div>
+      </section>
+
+      <section class="sa-screen" id="screen-join">
+        <div class="sa-subhead"><button type="button" class="btn btn-ghost btn-sm" id="btnJoinBack">トップへ戻る</button><h2 class="sa-subhead__title">ルームに参加する</h2></div>
+        <div class="sa-form">
+          <label class="sa-form__label" for="guestName">名前（8文字まで）</label>
+          <input class="sa-form__input" id="guestName" maxlength="8" autocomplete="nickname">
+          <label class="sa-form__label" for="joinCode">ルームコード（6文字）</label>
+          <input class="sa-form__input sa-form__input--code" id="joinCode" maxlength="6" autocorrect="off" autocapitalize="characters" autocomplete="off" spellcheck="false">
+          <p class="sa-form__error" id="joinError" hidden></p>
+          <button type="button" class="btn btn-primary btn-full" id="btnJoinRoom">参加する</button>
+        </div>
+      </section>
+
+      <section class="sa-screen" id="screen-watch-join">
+        <div class="sa-subhead"><button type="button" class="btn btn-ghost btn-sm" id="btnWatchBack">トップへ戻る</button><h2 class="sa-subhead__title">みんなにみせる画面をひらく</h2></div>
+        <div class="sa-form">
+          <p class="sa-form__hint sa-form__hint--lead">画面共有でみんなに見せるための画面です。ルームには入らず、見るだけです。</p>
+          <label class="sa-form__label" for="watchCode">ルームコード（6文字）</label>
+          <input class="sa-form__input sa-form__input--code" id="watchCode" maxlength="6" autocorrect="off" autocapitalize="characters" autocomplete="off" spellcheck="false">
+          <p class="sa-form__error" id="watchError" hidden></p>
+          <button type="button" class="btn btn-primary btn-full" id="btnWatchOpen">画面をひらく</button>
+        </div>
+      </section>
+
+      <div class="sa-roombar" id="roomBar" hidden>
+        <span>ルーム <strong id="roomCodeLabel"></strong></span>
+        <button type="button" class="btn btn-ghost btn-sm" id="btnCopyCode">コードをコピー</button>
+        <button type="button" class="btn btn-ghost btn-sm" id="btnOpenWatch" hidden>みんなにみせる画面</button>
+        <button type="button" class="btn btn-ghost btn-sm" id="btnLeave">退出する</button>
+      </div>
+
+      <section class="sa-screen" id="screen-waiting">
+        <div class="sa-phase"><h2 class="sa-phase__title">みんながそろうのを待っています</h2><p class="sa-phase__sub" id="waitingLead"></p></div>
+        <div class="sa-panel"><h3 class="sa-panel__title" id="waitingCount">参加者</h3><ul class="sa-people" id="waitingPlayers"></ul></div>
+        <div id="hostWaitingTools" hidden>
+          <div class="sa-panel">
+            <label class="sa-check" for="hostPlays">
+              <input type="checkbox" id="hostPlays">
+              <span>自分もプレイヤーとして参加する</span>
+            </label>
+            <p class="sa-form__hint">参加すると、ホストにもお題が配られます。そのときは「みんなにみせる画面」を共有してね。</p>
+            <label class="sa-check" for="extraTopics">
+              <input type="checkbox" id="extraTopics">
+              <span>よけいなお題を2つまぜる（むずかしくなる）</span>
+            </label>
+            <p class="sa-form__hint">当てる人が選ぶお題に、どの絵のものでもないお題が2つまざります。</p>
+          </div>
+          <button type="button" class="btn btn-primary btn-full" id="btnStartGame">はじめる</button>
+          <p class="sa-note" id="startNote"></p>
+        </div>
+      </section>
+
+      <section class="sa-screen" id="screen-stamping">
+        <p class="sa-round" id="stampRound"></p>
+        <div class="sa-phase"><h2 class="sa-phase__title" id="stampTitle"></h2><p class="sa-phase__sub" id="stampLead"></p></div>
+
+        <div id="painterPanel" hidden>
+          <div class="sa-odai"><p class="sa-odai__label">あなたのお題</p><p class="sa-odai__text" id="myTopic"></p></div>
+          <div class="sa-alt sa-alt--top" id="changeTopicRow"><button type="button" class="sa-quiet-btn" id="btnChangeTopic">ほかのお題にする</button></div>
+          <p class="sa-count" id="stampCount" aria-live="polite"></p>
+          <div class="sa-easel">
+            <div class="sa-sheetbox" id="sheetBox"></div>
+          </div>
+          <div class="sa-palette" id="stampPalette" role="group" aria-label="スタンプをえらぶ"></div>
+          <div class="sa-tools">
+            <button type="button" class="btn btn-secondary btn-sm" id="btnRotateStamp"><span class="material-symbols-rounded" aria-hidden="true">rotate_right</span>スタンプの向きを回す</button>
+            <button type="button" class="btn btn-secondary btn-sm" id="btnRotateSheet"><span class="material-symbols-rounded" aria-hidden="true">crop_rotate</span>紙を回す</button>
+            <button type="button" class="btn btn-secondary btn-sm" id="btnUndo"><span class="material-symbols-rounded" aria-hidden="true">undo</span>1つ戻す</button>
+          </div>
+          <button type="button" class="btn btn-primary btn-full" id="btnDone">完了</button>
+          <div class="sa-panel sa-center" id="painterDone" hidden>
+            <p>完了したよ。みんなを待っています。</p>
+            <button type="button" class="btn btn-secondary" id="btnUndone">なおす</button>
+          </div>
+        </div>
+
+        <div class="sa-panel" id="stampProgressPanel"><h3 class="sa-panel__title">スタンプを押す人</h3><ul class="sa-people" id="stampProgress"></ul></div>
+
+        <div id="hostStampTools" hidden>
+          <p class="sa-note sa-note--warn" id="stampAwayNote" hidden></p>
+          <button type="button" class="btn btn-secondary btn-full" id="btnCloseStamping">しめきる</button>
+        </div>
+      </section>
+
+      <section class="sa-screen" id="screen-guessing">
+        <p class="sa-round" id="guessRound"></p>
+        <div class="sa-phase"><h2 class="sa-phase__title" id="guessTitle"></h2><p class="sa-phase__sub" id="guessLead"></p></div>
+        <p class="sa-note sa-note--warn" id="captainAwayNote" hidden></p>
+        <div class="sa-pictures" id="guessPictures"></div>
+        <div class="sa-panel">
+          <h3 class="sa-panel__title" id="choicesTitle">お題</h3>
+          <div class="sa-choices" id="guessChoices"></div>
+        </div>
+        <button type="button" class="btn btn-primary btn-full" id="btnDecide" hidden>これで決める</button>
+      </section>
+
+      <section class="sa-screen" id="screen-reveal">
+        <p class="sa-round" id="revealRound"></p>
+        <div class="sa-phase"><h2 class="sa-phase__title">答え合わせ</h2></div>
+        <div class="sa-result" id="revealSummary">
+          <p class="sa-result__main" id="revealMain"></p>
+          <p class="sa-result__sub" id="revealMisses"></p>
+        </div>
+        <div class="sa-pictures sa-pictures--reveal" id="revealPictures"></div>
+        <p class="sa-note" id="revealResting" hidden></p>
+        <div id="hostRevealTools" hidden><button type="button" class="btn btn-primary btn-full" id="btnNextRound">つぎの回へ</button></div>
+        <p class="sa-note" id="revealWait" hidden>ホストが進めるまで待ってね。</p>
+      </section>
+
+      <section class="sa-screen" id="screen-end">
+        <div class="sa-phase"><h2 class="sa-phase__title" id="endTitle"></h2><p class="sa-phase__sub" id="endLead"></p></div>
+        <div class="sa-panel"><h3 class="sa-panel__title">それぞれの回</h3><ul class="sa-rounds" id="endRounds"></ul></div>
+        <div id="hostEndTools" hidden><button type="button" class="btn btn-primary btn-full" id="btnPlayAgain">もう一回あそぶ</button></div>
+        <p class="sa-note" id="endWait" hidden>ホストが次を決めるまで待ってね。</p>
+      </section>
+
+      <div class="sa-alt" id="hostQuitRow" hidden><button type="button" class="sa-quiet-btn" id="btnQuitGame">ゲームをやめて待合室へ戻る</button></div>
+
+      <section class="sa-screen" id="screen-watch-end">
+        <div class="sa-phase"><h2 class="sa-phase__title" id="watchEndTitle">このルームは終わりました</h2><p class="sa-phase__sub">遊んでくれてありがとう。</p></div>
+        <button type="button" class="btn btn-secondary btn-full" id="btnWatchEndTop">トップへ戻る</button>
+      </section>
+    </main>
+  </div>
+  <div class="sa-overlay" id="hostOffOverlay" hidden><div class="sa-overlay__panel"><h2>ホストの戻りを待っています</h2><p id="hostOffText">しばらく待っても戻らないときは退出してね。</p><button type="button" class="btn btn-secondary" id="btnOverlayLeave">退出する</button></div></div>
+  <script type="module" src="app.js?v=1"></script>
+  <script src="../shared/js/stats.js?v=1" defer></script>
+  <script src="../shared/js/howto.js"></script>
+  <script>
+    RoomkHowto.init({
+      title: 'あそびかた',
+      lead: '丸・四角・長方形・三角の4つのスタンプだけで、こっそり配られたお題を表す遊び。当てる人が、どの絵がどのお題かを当てるよ。みんなで力を合わせるゲーム。',
+      sections: [
+        { heading: 'はじめかた', items: [
+          'ホストが「ルームを作る」で名前を入れる',
+          '参加する人は「ルームに参加する」で名前、ルームコード（6文字）の順に入れ、「参加する」を押す',
+          'ホストが「はじめる」を押す（遊ぶ人は3〜9人）',
+        ] },
+        { heading: 'スタンプを押す', items: [
+          '1回ごとに、当てる人が1人決まる。ほかの人には、自分だけのお題が配られる',
+          'お題を、スタンプで紙に表す。紙をタップするとスタンプが押せるよ',
+          'スタンプの色は形ごとに決まっていて変えられない。「スタンプの向きを回す」「紙を回す」で向きを変えられるよ',
+          '押せる回数は1回目が5回。2回目は4回、3回目は3回……と減って、5回目は1回だけ',
+          '押せたら「完了」。まちがえたときは「1つ戻す」',
+        ] },
+        { heading: '当てる', items: [
+          '当てる人は、絵を選んでからお題を選ぶ。全部の絵に決めたら「これで決める」',
+          '当てる人が考えている間は、ヒントを言わないでね',
+          '答え合わせで、伝わった数と、ちがった数がわかるよ',
+        ] },
+        { heading: 'クリアのしかた', text: '5回が終わったときに、ちがった数の合計がチームの人数までならクリア。こえても、5回目まで遊べるよ。' },
+      ],
+    });
+  </script>
+</body>
+</html>

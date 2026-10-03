@@ -193,6 +193,8 @@ const COVERED_APPS = [
   'career-sugoroku',
   // 2026-09-30 台帳の登録漏れを追加
   'kotoba-mikke',
+  // 2026-10-03 追加
+  'stamp-ate',
 ];
 
 // 数えられるコンテンツを持たないため重複検査の対象外にするアプリ（意図的除外）。
@@ -447,6 +449,22 @@ function collectEntries() {
   mikkeThemes.forEach((text, index) => rows.push(entry('kotoba-mikke', 'theme', text, {
     id: `kotoba-mikke:${index}`,
   })));
+
+  // stamp-ate: app.js の const TOPICS = [ '文字列', ... ]（スタンプで表すお題）。
+  //   ルームでは番号で共有するので、空のお題と同じアプリ内の重複はここで fail-fast にする。
+  const stampTopics = evalArrayFromSource(read('apps/stamp-ate/app.js'), 'TOPICS', 'apps/stamp-ate/app.js') || [];
+  const stampSeen = new Set();
+  const stampProblems = [];
+  if (stampTopics.length === 0) stampProblems.push('TOPICS が空');
+  stampTopics.forEach((text, index) => {
+    if (typeof text !== 'string' || !text.trim()) stampProblems.push(`TOPICS[${index}] が空`);
+    if (stampSeen.has(text)) stampProblems.push(`TOPICS[${index}]「${text}」が重複`);
+    stampSeen.add(text);
+    rows.push(entry('stamp-ate', 'topic', text, { id: `stamp-ate:${index}` }));
+  });
+  if (stampProblems.length > 0) {
+    throw new Error(`stamp-ate app.js の構造エラー:\n  ${stampProblems.join('\n  ')}`);
+  }
 
   // career-sugoroku: data.js（ブラウザでは window.CS_DATA、Node では module.exports）。
   //   職業の名前と説明・イベントカードの文・「みんなで決める」の選択肢・体験マスの文・成長マスの文を抽出する

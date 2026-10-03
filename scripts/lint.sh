@@ -43,6 +43,7 @@ RTDB_HTML_FILES=(
   "apps/pita-hame/index.html"
   "apps/pittari-meter/index.html"
   "apps/quiz/index.html"
+  "apps/stamp-ate/index.html"
   "apps/tatoe-gp/index.html"
   "apps/tatoe-narabe/index.html"
   "apps/toomawashi/index.html"
