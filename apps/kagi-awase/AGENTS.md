@@ -7,7 +7,7 @@
 数字のカギを全部あけたら宝箱があいてクリアの協力推理ゲーム。
 
 - **core value**: 「小さい順に並んでいる」「見えている数字」から、仲間のカギの数字を一緒に推理する。全員が同じチームで、点数・順位はない。話さなくても、選んで押すだけで参加できる。
-- 対象: 小学校中学年〜中学生。ボドゲクラブ（`data-scenes="bodoge"`）。2人でも遊べる（検索キーワードに「1対1」）。
+- 対象: 小学校中学年〜中学生。ボドゲクラブ・作戦会議（`data-scenes="bodoge sakusen"`。作戦会議はオーナー決定 2026-10-03）。2人でも遊べる（検索キーワードに「1対1」）。
 - 遊ぶ人 **2〜5人**。ゲストは5人まで。ホストは既定で進行だけ。待合室の「自分もプレイヤーとして参加する」で遊ぶ人に入れる。
 - 所要時間 10〜25分（1〜8 でおよそ10〜15分、1〜12 でおよそ20〜25分）。
 
@@ -76,7 +76,7 @@ apps/kagi-awase/
 
 - `scripts/lint.sh` の `RTDB_HTML_FILES` に追加
 - `scripts/content-audit.mjs` の `NO_CONTENT_APPS` に追加（数字のカギだけで、お題集を持たない）
-- `apps/index.html` にカード（`data-slides`・`data-scenes="bodoge"`・`data-keywords="1対1、数字、推理、協力"`・サムネイル `assets/thumbnails/kagi-awase.png`）
+- `apps/index.html` にカード（`data-slides`・`data-scenes="bodoge sakusen"`・`data-keywords="1対1、数字、推理、協力"`・サムネイル `assets/thumbnails/kagi-awase.png`）
 - `apps/updates.json` 先頭に `type: "new"`
 - `apps/guide/index.html` の「数字・感覚あてっこ系」に1行
 
