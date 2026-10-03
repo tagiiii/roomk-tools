@@ -59,7 +59,8 @@ apps/kagi-awase/
 ├── AGENTS.md    # この仕様書
 ├── index.html   # 画面の骨組み・howto.js の設定
 ├── app.js       # 進行・描画（ES module）
-└── style.css    # 固有スタイル
+├── style.css    # 固有スタイル
+└── slides.html  # 画面共有用説明スライド（slides-generator で作成。スタンプあてゲームの slides.html を元に、カギの見本と内容だけ差し替え）
 ```
 
 - 構成はスタンプあてゲーム（`apps/stamp-ate/`）と同じ分割型。接続・切断・再接続・みんなにみせる画面の作りもスタンプあてゲームのものを使っている。index.html・app.js・style.css を変えたら `?v=` をそろえて上げる
@@ -75,7 +76,7 @@ apps/kagi-awase/
 
 - `scripts/lint.sh` の `RTDB_HTML_FILES` に追加
 - `scripts/content-audit.mjs` の `NO_CONTENT_APPS` に追加（数字のカギだけで、お題集を持たない）
-- `apps/index.html` にカード（`data-scenes="bodoge"`・`data-keywords="1対1、数字、推理、協力"`・サムネイル `assets/thumbnails/kagi-awase.png`）
+- `apps/index.html` にカード（`data-slides`・`data-scenes="bodoge"`・`data-keywords="1対1、数字、推理、協力"`・サムネイル `assets/thumbnails/kagi-awase.png`）
 - `apps/updates.json` 先頭に `type: "new"`
 - `apps/guide/index.html` の「数字・感覚あてっこ系」に1行
 
