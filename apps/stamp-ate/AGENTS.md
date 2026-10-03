@@ -48,7 +48,8 @@ apps/stamp-ate/
 ├── AGENTS.md    # この仕様書
 ├── index.html   # 画面の骨組み・howto.js の設定・スタンプのインクのふち（SVG フィルター）
 ├── app.js       # 進行・描画（ES module）。お題 TOPICS もここ
-└── style.css    # 固有スタイル
+├── style.css    # 固有スタイル
+└── slides.html  # 画面共有用説明スライド（slides-generator で作成。正本テンプレートは kotoba-tantei）
 ```
 
 - 構成は気持ち当てゲーム（`apps/kimochi-ate/`）と同じ分割型。index.html・app.js・style.css を変えたら `?v=` をそろえて上げる
@@ -66,7 +67,7 @@ apps/stamp-ate/
 
 - `scripts/lint.sh` の `RTDB_HTML_FILES` に追加
 - `scripts/content-audit.mjs` の `COVERED_APPS` と `collectEntries()` に `TOPICS` を追加（空・重複は fail-fast）
-- `apps/index.html` にカード（`data-scenes="bodoge circle"`・サムネイル `assets/thumbnails/stamp-ate.png`）
+- `apps/index.html` にカード（`data-slides`・`data-scenes="bodoge circle"`・サムネイル `assets/thumbnails/stamp-ate.png`）
 - `apps/updates.json` 先頭に `type: "new"`
 - `apps/guide/index.html` の「声・表現あてっこ系」に1行
 
