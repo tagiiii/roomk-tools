@@ -1,0 +1,667 @@
+/* カギあわせ 固有スタイル（接頭辞: kag- / BEM）
+   共通スタイルは design-system.css に定義済み。
+   部品の形（パネル・ルームバー・参加者の一覧・フォーム）はスタンプあてゲームにそろえている。 */
+
+.wrapper {
+  max-width: 820px;
+  margin: 0 auto;
+  padding: 40px 20px 80px;
+}
+
+/* ── ヘッダー ── */
+.kag-header {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.kag-header__title {
+  color: var(--color-primary);
+  font-size: 1.7rem;
+  font-weight: 700;
+  margin: 0 0 8px;
+}
+
+.kag-header__sub {
+  color: var(--color-muted);
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+/* みんなにみせる画面の目印（共有するタブを見分けるため） */
+.kag-watchbadge {
+  display: inline-block;
+  color: #26697A;
+  background: #E6F2F4;
+  border-radius: var(--radius-full);
+  font-size: 13px;
+  font-weight: 700;
+  padding: 4px 12px;
+  margin: 10px 0 0;
+}
+
+/* ── 画面切り替え ── */
+.kag-screen { display: none; }
+.kag-screen.active { display: block; }
+
+/* ── 共通の部品 ── */
+.kag-panel {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  padding: 20px;
+  margin-bottom: 16px;
+}
+
+.kag-panel p {
+  margin: 0 0 12px;
+  line-height: 1.7;
+}
+
+.kag-panel p:last-child { margin-bottom: 0; }
+
+.kag-panel > .btn:first-of-type { margin-top: 22px; }
+.kag-panel > .btn + .btn { margin-top: 10px; }
+
+.kag-panel__title {
+  color: var(--color-primary);
+  font-size: 1rem;
+  margin: 0 0 12px;
+}
+
+.kag-lead {
+  color: var(--color-text);
+  font-size: 1rem;
+  line-height: 1.8;
+}
+
+.kag-note {
+  color: var(--color-muted);
+  font-size: 0.85rem;
+  line-height: 1.6;
+  text-align: center;
+  margin: 16px 0 0;
+}
+
+.kag-note:empty { display: none; }
+
+.kag-note--warn {
+  color: var(--color-text);
+  background: #FFF7E6;
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin: 0 0 16px;
+  text-align: left;
+}
+
+.kag-tag {
+  display: inline-block;
+  color: #26697A; /* 淡いティールの上で 4.5:1 以上 */
+  background: #E6F2F4;
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 4px 8px;
+  margin-left: 8px;
+  vertical-align: 2px;
+}
+
+.kag-alt {
+  display: flex;
+  justify-content: center;
+  margin: 14px 0 0;
+}
+
+.kag-quiet-btn {
+  min-height: 44px;
+  padding: 10px 8px;
+  background: none;
+  border: none;
+  font-family: inherit;
+  font-size: var(--font-size-sm);
+  color: var(--color-muted);
+  cursor: pointer;
+}
+
+.kag-quiet-btn:hover {
+  color: var(--color-text);
+  text-decoration: underline;
+}
+
+.kag-quiet-btn:focus-visible {
+  outline: 3px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: var(--radius-full);
+}
+
+/* ── サブヘッダー・フォーム ── */
+.kag-subhead {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.kag-subhead__title {
+  color: var(--color-primary);
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.kag-form {
+  background: var(--color-surface);
+  border-radius: 14px;
+  padding: 20px;
+}
+
+.kag-form__label {
+  display: block;
+  color: var(--color-primary);
+  font-size: 0.9rem;
+  font-weight: 700;
+  margin: 0 0 8px;
+}
+
+.kag-form__input + .kag-form__label { margin-top: 18px; }
+
+.kag-form__input {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1.5px solid var(--color-border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-family: inherit;
+  font-size: 1rem;
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.kag-form__input:focus {
+  outline: none;
+  border-color: var(--color-accent);
+}
+
+.kag-form__input--code {
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 1.3rem;
+}
+
+.kag-check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--color-text);
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.kag-check input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--color-accent);
+  flex-shrink: 0;
+}
+
+.kag-form__hint {
+  color: var(--color-muted);
+  font-size: 13px;
+  line-height: 1.6;
+  margin: 6px 0 0 30px;
+}
+
+.kag-form__hint--lead {
+  font-size: 14px;
+  margin: 0 0 16px;
+}
+
+.kag-form__error {
+  color: var(--color-error);
+  background: #FEF2F2;
+  border-left: 3px solid var(--color-error);
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin: 12px 0;
+}
+
+.kag-form > .btn { margin-top: 18px; }
+
+/* 待合室の設定（カギの数字・ワナのカギ） */
+.kag-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  border: none;
+  border-top: 1px solid var(--color-border);
+  padding: 16px 0 0;
+  margin: 18px 0 0;
+}
+
+.kag-options__legend {
+  width: 100%;
+  float: left;
+  color: var(--color-primary);
+  font-size: 0.9rem;
+  font-weight: 700;
+  padding: 0;
+  margin: 0 0 8px;
+}
+
+.kag-radio {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  color: var(--color-text);
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.kag-radio input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--color-accent);
+  margin: 0;
+}
+
+/* ── ルームバー ── */
+.kag-roombar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  color: var(--color-primary);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 8px 12px;
+  margin-bottom: 22px;
+}
+
+.kag-roombar strong {
+  font-size: 1.25rem;
+  letter-spacing: 0.13em;
+}
+
+.kag-roombar #btnLeave { margin-left: auto; }
+
+/* ── フェーズの見出し ── */
+.kag-phase {
+  text-align: center;
+  margin-bottom: 18px;
+}
+
+.kag-phase__title {
+  color: var(--color-primary);
+  font-size: 1.5rem;
+  margin: 0 0 6px;
+}
+
+.kag-phase__sub {
+  color: var(--color-muted);
+  line-height: 1.7;
+  margin: 0;
+}
+
+/* ── 参加者の一覧 ── */
+.kag-people {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.kag-people__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.kag-people__item:last-child { border-bottom: none; }
+
+.kag-people__name { overflow-wrap: anywhere; }
+
+.kag-people__status {
+  color: var(--color-accent);
+  font-weight: 700;
+  font-size: 0.88rem;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* ── 警報ランプ・あいたカギ ── */
+.kag-status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  padding: 12px 16px;
+  margin-bottom: 14px;
+}
+
+.kag-lamps {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+}
+
+.kag-lamps__label {
+  color: var(--color-primary);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.kag-lamps__row {
+  display: inline-flex;
+  gap: 2px;
+}
+
+.kag-lamp {
+  font-size: 22px;
+  color: #B8C2C8;
+}
+
+.kag-lamp.is-lit { color: #D9541E; }
+
+.kag-lamps__text {
+  color: var(--color-text);
+  font-size: 14px;
+}
+
+.kag-progress {
+  color: var(--color-accent);
+  font-size: 14px;
+  font-weight: 700;
+  margin: 0;
+}
+
+/* ── さっきの手 ── */
+.kag-last {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  background: var(--color-surface);
+  border: 2px solid var(--color-border);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+  font-weight: 700;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.kag-last__icon { font-size: 22px; flex-shrink: 0; }
+.kag-last--hit, .kag-last--solo { border-color: var(--color-success); }
+.kag-last--hit .kag-last__icon, .kag-last--solo .kag-last__icon { color: var(--color-success); }
+.kag-last--miss { border-color: #E3B341; }
+.kag-last--miss .kag-last__icon { color: #9A6A00; }
+.kag-last--trap { border-color: #D9541E; }
+.kag-last--trap .kag-last__icon { color: #B5400F; }
+.kag-last--skip .kag-last__icon { color: var(--color-muted); }
+
+/* ── 盤面（全員のカギの列）── */
+.kag-board {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.kag-row {
+  background: var(--color-surface);
+  border: 2px solid var(--color-border);
+  border-radius: 14px;
+  padding: 10px 12px 12px;
+}
+
+.kag-row.is-turn {
+  border-color: var(--color-accent);
+  box-shadow: inset 0 0 0 1px var(--color-accent);
+}
+
+.kag-row__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.kag-row__name {
+  color: var(--color-primary);
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.kag-row__status {
+  color: var(--color-muted);
+  font-size: 13px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.kag-row__status.is-turn { color: var(--color-accent); }
+
+.kag-row__tiles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* カギ1本 */
+.kag-tile {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 0;
+  font-family: inherit;
+  background: none;
+  border: none;
+}
+
+button.kag-tile { cursor: pointer; }
+
+.kag-tile__face {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 56px;
+  box-sizing: border-box;
+  border: 2px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-surface);
+}
+
+.kag-tile__num {
+  color: var(--color-primary);
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1;
+  font-feature-settings: "palt";
+}
+
+.kag-tile__icon { font-size: 22px; }
+
+.kag-tile__trap {
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.kag-tile__mark {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  font-size: 13px;
+}
+
+.kag-tile__pos {
+  color: var(--color-muted);
+  font-size: 11px;
+  line-height: 1;
+}
+
+/* まだ見えない（仲間のカギ） */
+.kag-tile.is-hidden .kag-tile__face {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.kag-tile.is-hidden .kag-tile__icon { color: #B9CCDA; }
+
+/* 自分だけに見えている */
+.kag-tile.is-own .kag-tile__face { border-color: #9DB1BE; }
+
+/* 数字がみんなに見えている */
+.kag-tile.is-hint .kag-tile__face {
+  background: #FFF3C4;
+  border-color: #E3B341;
+}
+
+.kag-tile.is-hint .kag-tile__mark { color: #9A6A00; }
+
+/* あいた */
+.kag-tile.is-open .kag-tile__face {
+  background: #E3F1E8;
+  border-color: #9CCBAE;
+}
+
+.kag-tile.is-open .kag-tile__num { color: var(--color-success); }
+.kag-tile.is-open .kag-tile__mark { color: var(--color-success); }
+
+/* ワナ */
+.kag-tile.is-trap .kag-tile__face {
+  background: #FBE3DC;
+  border-color: #E8957A;
+  color: #B5400F;
+}
+
+/* 選べる・選んだ・いま動いた */
+button.kag-tile:hover .kag-tile__face { border-color: var(--color-accent); }
+
+.kag-tile.is-hidden.is-pickable:hover .kag-tile__face { border-color: #7FC3CF; }
+
+.kag-tile.is-picked .kag-tile__face {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px #8FD0DA;
+  transform: translateY(-4px);
+}
+
+.kag-tile.is-recent .kag-tile__face { box-shadow: 0 0 0 3px #F2C14E; }
+.kag-tile.is-picked.is-recent .kag-tile__face { box-shadow: 0 0 0 3px #8FD0DA; }
+
+button.kag-tile:focus-visible { outline: none; }
+
+button.kag-tile:focus-visible .kag-tile__face {
+  outline: 3px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* ── 操作 ── */
+.kag-actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  background: var(--color-bg);
+  padding: 10px 0 12px;
+  margin-bottom: 8px;
+}
+
+.kag-actions .btn + .btn { margin-top: 10px; }
+
+.kag-pick {
+  color: var(--color-primary);
+  font-weight: 700;
+  text-align: center;
+  line-height: 1.6;
+  margin: 0 0 10px;
+  overflow-wrap: anywhere;
+}
+
+/* 画面の幅が狭いと、右下の「？」ボタン（48px）が固定した操作の上に重なるので、右をあける */
+@media (max-width: 960px) {
+  .kag-actions { padding-right: 60px; }
+}
+
+#hostGameTools .btn { margin-top: 10px; }
+#hostEndTools { margin-top: 6px; }
+
+/* ── これまでの流れ ── */
+.kag-history__list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.kag-history__item {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--color-border);
+  font-size: 14px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.kag-history__item:last-child { border-bottom: none; }
+.kag-history__icon { font-size: 18px; flex-shrink: 0; color: var(--color-muted); }
+.kag-history__item--hit .kag-history__icon,
+.kag-history__item--solo .kag-history__icon { color: var(--color-success); }
+.kag-history__item--miss .kag-history__icon { color: #9A6A00; }
+.kag-history__item--trap .kag-history__icon { color: #B5400F; }
+
+/* ── ホスト切断のオーバーレイ ── */
+.kag-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(18, 37, 54, 0.8);
+}
+
+.kag-overlay__panel {
+  background: var(--color-surface);
+  border-radius: 14px;
+  padding: 28px;
+  max-width: 420px;
+  text-align: center;
+}
+
+.kag-overlay__panel h2 {
+  color: var(--color-primary);
+  font-size: 1.3rem;
+}
+
+.kag-overlay__panel p { line-height: 1.7; }
+
+@media (max-width: 600px) {
+  .wrapper { padding: 28px 16px 64px; }
+  .kag-roombar #btnLeave { margin-left: 0; }
+  .kag-phase__title { font-size: 1.3rem; }
+  .kag-status { padding: 10px 12px; }
+  .kag-row { padding: 8px 8px 10px; }
+  .kag-row__tiles { gap: 4px; }
+  .kag-tile__face { width: 36px; height: 48px; border-radius: 8px; }
+  .kag-tile__num { font-size: 19px; }
+  .kag-tile__icon { font-size: 19px; }
+  .kag-tile__mark { font-size: 11px; top: 1px; right: 1px; }
+  .kag-last { font-size: 14px; }
+}

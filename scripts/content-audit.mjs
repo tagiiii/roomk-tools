@@ -204,6 +204,8 @@ const NO_CONTENT_APPS = [
   'name-change', 'kyapa-graph', 'nurie-week',
   // カードゲーム・パズルの部品だけ（トランプ・数字札・かなタイル・生き物8種・ピースと盤面）
   'blackjack', 'esadori', 'moji-soroe', 'oshitsuke-zukan', 'pita-hame',
+  // 数字のカギ（1〜12）だけ
+  'kagi-awase',
 ];
 
 // apps/ 配下に存在するがアプリではないディレクトリ。
