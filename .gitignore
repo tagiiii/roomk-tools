@@ -16,3 +16,7 @@ node_modules/
 *service-account*.json
 *-credentials.json
 *-adminsdk-*.json
+
+# ツールが自動で作る検証用の記録（ブラウザ操作のログ・スクリーンショット）
+.playwright-cli/
+output/
