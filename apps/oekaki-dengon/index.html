@@ -128,13 +128,14 @@
     /* ── 描く道具 ── */
     .oek-tools { margin-top: 12px; display: flex; flex-direction: column; gap: 10px; }
     .oek-tools__colors {
-      display: grid; grid-template-columns: repeat(12, minmax(0, 40px));
+      display: grid; grid-template-columns: repeat(13, minmax(0, 40px));
       justify-content: space-between; gap: 6px;
     }
     .oek-swatch {
       aspect-ratio: 1; width: 100%; min-height: 26px; border-radius: 50%; cursor: pointer;
       border: 2px solid rgba(0, 0, 0, 0.12); padding: 0;
     }
+    .oek-swatch--light { border-color: rgba(0, 0, 0, 0.35); } /* 白は、ふちを濃くして見えるようにする */
     .oek-swatch[aria-pressed="true"] { box-shadow: 0 0 0 3px var(--color-surface), 0 0 0 5px var(--color-primary); }
     /* 濃さ（薄い〜濃い）。選んでいる色を5段階で並べる */
     .oek-tones { display: flex; align-items: center; gap: 10px; }
@@ -146,7 +147,7 @@
     }
     .oek-tone[aria-pressed="true"] { box-shadow: 0 0 0 3px var(--color-surface), 0 0 0 5px var(--color-primary); }
     .oek-tools__row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-    .oek-tools__widths { display: flex; gap: 6px; }
+    .oek-tools__modes, .oek-tools__widths { display: flex; gap: 6px; }
     .oek-tool {
       display: inline-flex; align-items: center; justify-content: center; gap: 4px;
       min-width: 44px; min-height: 44px; padding: 0 10px; border-radius: 12px; cursor: pointer;
@@ -229,7 +230,7 @@
       .oek-odai { padding: 24px 20px; }
       .oek-odai__text { font-size: 22px; }
       .oek-said { font-size: 20px; padding: 14px 16px; }
-      .oek-tools__colors { grid-template-columns: repeat(6, minmax(0, 44px)); }
+      .oek-tools__colors { grid-template-columns: repeat(7, minmax(0, 44px)); }
       .oek-swatch { min-height: 32px; }
       .oek-tool__text { display: none; }
       .oek-tool.is-armed .oek-tool__text { display: inline; }
@@ -407,10 +408,17 @@
             <span class="oek-tones__label" aria-hidden="true">濃い</span>
           </div>
           <div class="oek-tools__row">
-            <div class="oek-tools__widths" role="group" aria-label="太さ" id="tool-widths"></div>
-            <button type="button" class="oek-tool" id="tool-eraser" aria-pressed="false" onclick="toggleEraser()">
-              <span class="material-symbols-rounded" aria-hidden="true">ink_eraser</span><span class="oek-tool__text">消しゴム</span>
-            </button>
+            <div class="oek-tools__modes" role="group" aria-label="道具">
+              <button type="button" class="oek-tool" id="tool-pen" aria-label="ペン" aria-pressed="true" onclick="selectMode('pen')">
+                <span class="material-symbols-rounded" aria-hidden="true">ink_pen</span><span class="oek-tool__text">ペン</span>
+              </button>
+              <button type="button" class="oek-tool" id="tool-eraser" aria-label="消しゴム" aria-pressed="false" onclick="selectMode('eraser')">
+                <span class="material-symbols-rounded" aria-hidden="true">ink_eraser</span><span class="oek-tool__text">消しゴム</span>
+              </button>
+              <button type="button" class="oek-tool" id="tool-fill" aria-label="塗りつぶし" aria-pressed="false" onclick="selectMode('fill')">
+                <span class="material-symbols-rounded" aria-hidden="true">format_color_fill</span><span class="oek-tool__text">塗りつぶし</span>
+              </button>
+            </div>
             <span class="oek-tools__spacer"></span>
             <button type="button" class="oek-tool" id="tool-undo" onclick="undoStroke()" aria-label="1つ戻す">
               <span class="material-symbols-rounded" aria-hidden="true">undo</span><span class="oek-tool__text">1つ戻す</span>
@@ -418,6 +426,9 @@
             <button type="button" class="oek-tool" id="tool-clear" onclick="clearDrawing()" aria-label="全部消す">
               <span class="material-symbols-rounded" aria-hidden="true">delete</span><span class="oek-tool__text" id="tool-clear-text">全部消す</span>
             </button>
+          </div>
+          <div class="oek-tools__row">
+            <div class="oek-tools__widths" role="group" aria-label="太さ" id="tool-widths"></div>
           </div>
         </div>
       </div>
@@ -544,7 +555,8 @@ const LEGACY_PACES = { slow: { text: 60, draw: 150 }, normal: { text: 40, draw: 
 const CANVAS_W = 800;
 const CANVAS_H = 600;
 // tones は濃さ（とても薄い・薄い・ふつう・濃い・とても濃い）ごとの色。真ん中のふつうが元の色。
-// 薄い側は白に寄せて彩度も少し下げ、濃い側は彩度を保ったまま暗くした（OKLCH の明るさで計算した値）
+// 薄い側は白に寄せて彩度も少し下げ、濃い側は彩度を保ったまま暗くした（OKLCH の明るさで計算した値）。
+// 白は濃さを選べない（5段階とも同じ白）。色番号は線のデータに入るので、色は後ろに足す（並べかえない）
 const COLORS = [
   { name: '黒',           tones: ['#9F9F9F', '#5A5A5A', '#1A1A1A', '#0F0F0F', '#070707'] },
   { name: '灰色',         tones: ['#D0D3D9', '#AEB2B9', '#8A8F98', '#60656E', '#3D4249'] },
@@ -558,6 +570,7 @@ const COLORS = [
   { name: '紫',           tones: ['#C2BDFF', '#9785FF', '#7048E8', '#5216BF', '#350085'] },
   { name: 'ピンク',       tones: ['#FFBDCD', '#FD82A6', '#E64980', '#B40958', '#790038'] },
   { name: 'うすだいだい', tones: ['#FFE7D6', '#FAD6BA', '#F2C4A0', '#B58967', '#805836'] },
+  { name: '白',           tones: ['#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF'] },
 ];
 const TONES = [-2, -1, 0, 1, 2];  // 線の濃さ（d）。負が薄い・正が濃い。ふつう（0）は保存しない
 const TONE_NAMES = ['とても薄い', '薄い', 'ふつう', '濃い', 'とても濃い'];
@@ -569,6 +582,8 @@ const MIN_DIST2 = 9;              // 3px 未満の移動は間引く
 const MAX_POINTS = 400;           // 1本の点数の上限（超えたら線を区切る）
 const MAX_STROKES = 600;          // 1枚の線の本数の上限
 const MAX_TOTAL_POINTS = 30000;   // 1枚の点数の合計の上限（1枚およそ120KBまで）
+const MAX_FILLS = 80;             // 1枚の塗りつぶしの回数の上限（絵を出すたびに塗りなおすので、重くしない）
+const FILL_TOLERANCE = 24;        // 塗りつぶしで「押したところと同じ色」とみなす色の差（RGB それぞれ 0〜255）
 const MY_ROOMS_KEY = 'oekaki_my_rooms';   // この端末で作ったルームのコード（後片付け用）
 const MY_ROOMS_MAX = 20;
 const MY_ROOMS_ALIVE_KEY = 'oekaki_my_rooms_alive'; // ホストがルームにいる間の「使っている」印（後片付け用）
@@ -679,12 +694,15 @@ function newPlayState() {
   return {
     key: null,            // `${matchId}:${step}`。回が変わったら作り直す
     mid: null, step: -1, chain: -1, type: null,
-    strokes: [],          // 自分の線 { key, c, w, pts }
+    strokes: [],          // 自分の線と塗りつぶし { key, c, w, tone, fill, pts, n }。キーの順（見る側が描く順）に持つ
+    strokeSeq: 0,         // 描いた順の番号（n）。「1つ戻す」は、いちばん後に描いたものを消す
+    paint: { img: null, count: 0, key: null }, // 最後の塗りつぶしまでを描いたキャンバスの写し（描きなおしを軽くする）
     pointsUsed: 0,        // 自分の線の点数の合計
     omakaseCount: 0,      // この回でおまかせを使った回数（配る順番の何番目か）
     limitWarned: false,   // 描ける量の上限を知らせたか
     text: '', savedText: '',
     loaded: false,        // 下書きの復元が終わったか
+    draftLost: false,     // 絵の下書きを読めないまま描き始めた（サーバーに前の線が残っているかもしれない）
     locked: false,        // 締め切りを過ぎたか
     writeChain: Promise.resolve(),
     textTimer: null,
@@ -707,7 +725,7 @@ const state = {
   lastCtl: null,
   epoch: 0,
   play: newPlayState(),
-  tool: { color: 0, width: 1, tone: 0, eraser: false },
+  tool: { color: 0, width: 1, tone: 0, mode: 'pen' }, // mode: 'pen' | 'eraser' | 'fill'
   input: { path: null, data: undefined },          // 回ってきた材料（undefined = 読み込み中）
   showView: { path: null, data: undefined, version: 0, renderKey: null, upto: 0 },
   endView: { mid: null, art: undefined, selected: 0, renderKey: null },
@@ -752,12 +770,30 @@ function stepType(step) {
   if (step === 0) return 'prompt';
   return step % 2 === 1 ? 'draw' : 'guess';
 }
+// 全部で何回まわすか。奇数人数は人数と同じ回数。偶数人数は1回足して、絵を見て書く回で終われるようにする
+// （足した1回は、お題を書いた本人が1枚目の絵も描く）
+function roundsFor(n) { return n % 2 === 0 ? n + 1 : n; }
+// 始めたときに固定した回数（rounds を持たせる前に始めたゲームは、人数と同じ回数）
+function roundsOf(m) {
+  const n = orderOf(m).length;
+  return Number(m && m.rounds) === n + 1 ? n + 1 : n;
+}
+// 1回足したゲームでは、0回目（お題）と1回目（絵）を同じ人が担当し、2回目から次の人へ回す
+function passCount(m, step) {
+  return (step >= 1 && roundsOf(m) > orderOf(m).length) ? step - 1 : step;
+}
+function isOwnDrawStep(m, step) { return step === 1 && passCount(m, step) === 0; }
 function chainFor(m, nick, step) {
   const order = orderOf(m);
   const i = order.indexOf(nick);
   if (i < 0) return -1;
   const n = order.length;
-  return ((i - step) % n + n) % n;
+  return ((i - passCount(m, step)) % n + n) % n;
+}
+// 列 chain の step 回目を担当した人
+function authorOf(m, chain, step) {
+  const order = orderOf(m);
+  return order.length ? (order[(chain + passCount(m, step)) % order.length] || '') : '';
 }
 // ロビーの設定の制限時間（選べる値だけを使う。3択のころに作ったルームの「なし」は両方とも制限なし）
 function settingLimits(settings) {
@@ -966,6 +1002,7 @@ function decodePoints(str) {
 }
 function decodeStrokeMap(obj) {
   if (!obj || typeof obj !== 'object') return [];
+  let fills = 0; // 塗りつぶしは MAX_FILLS まで読む（それより多いデータで、描きなおしが重くならないように）
   return Object.keys(obj).sort().slice(0, MAX_STROKES).map((k) => {
     const v = obj[k] || {};
     const c = Number(v.c);
@@ -975,9 +1012,10 @@ function decodeStrokeMap(obj) {
       c: (c === ERASER || (Number.isInteger(c) && c >= 0 && c < COLORS.length)) ? c : 0,
       w: (w === 0 || w === 1 || w === 2) ? w : 1,
       tone: TONES.includes(v.d) ? v.d : 0, // 濃さの無い線（濃さを足す前の線も）・数でない値・範囲外はふつう
+      fill: v.f === 1,                     // 塗りつぶし（pts の1点目が押したところ）
       pts: decodePoints(v.p),
     };
-  }).filter((s) => s.pts.length > 0);
+  }).filter((s) => s.pts.length > 0 && (!s.fill || (fills += 1) <= MAX_FILLS));
 }
 
 function colorHex(c, tone) {
@@ -1023,11 +1061,130 @@ function drawStroke(ctx, s) {
   }
   ctx.stroke();
 }
-function paintStrokes(canvas, strokes) {
-  const ctx = canvas.getContext('2d');
-  ctx.fillStyle = '#FFFFFF';
-  ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
-  strokes.forEach((s) => drawStroke(ctx, s));
+// 塗りつぶしでピクセルを読むので、どのキャンバスも読み取り向きの設定で作る（最初の getContext で決まる）
+function ctx2d(canvas) {
+  return canvas.getContext('2d', { willReadFrequently: true });
+}
+function hexToRgb(hex) {
+  const n = parseInt(hex.slice(1), 16);
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+}
+// 塗りつぶし。押した点とつながっている、ほぼ同じ色のところ（差が FILL_TOLERANCE 以内）を塗る。
+// 線のふちは、線の色と下の色がまざったピクセルなので、下の色の分だけを塗る色に置きかえる（白いふちを残さない）。
+// 押したところがもう同じ色なら何もしないで false を返す
+function floodFill(img, px, py, hex) {
+  const W = img.width;
+  const H = img.height;
+  const d = img.data;
+  const x0 = Math.max(0, Math.min(W - 1, px));
+  const y0 = Math.max(0, Math.min(H - 1, py));
+  const [fr, fg, fb] = hexToRgb(hex);
+  const o0 = (y0 * W + x0) * 4;
+  const sr = d[o0];
+  const sg = d[o0 + 1];
+  const sb = d[o0 + 2];
+  if (sr === fr && sg === fg && sb === fb) return false;
+  const diff = (i) => {
+    const o = i * 4;
+    return Math.max(Math.abs(d[o] - sr), Math.abs(d[o + 1] - sg), Math.abs(d[o + 2] - sb));
+  };
+  // mask: 1 = 塗るところ、2 = ふちとして調べたところ
+  const mask = new Uint8Array(W * H);
+  const spans = [];   // 塗るところを、横につながった区間（左端・右端）で持つ
+  const stack = [y0 * W + x0];
+  while (stack.length) {
+    const idx = stack.pop();
+    if (mask[idx]) continue;
+    const y = (idx / W) | 0;
+    const row = y * W;
+    let l = idx;
+    let r = idx;
+    while (l > row && !mask[l - 1] && diff(l - 1) <= FILL_TOLERANCE) l -= 1;
+    while (r < row + W - 1 && !mask[r + 1] && diff(r + 1) <= FILL_TOLERANCE) r += 1;
+    for (let i = l; i <= r; i += 1) mask[i] = 1;
+    spans.push(l, r);
+    for (let dy = -W; dy <= W; dy += 2 * W) {
+      if ((dy < 0 && y === 0) || (dy > 0 && y === H - 1)) continue;
+      let open = false;
+      for (let i = l + dy; i <= r + dy; i += 1) {
+        if (!mask[i] && diff(i) <= FILL_TOLERANCE) {
+          if (!open) { stack.push(i); open = true; }
+        } else {
+          open = false;
+        }
+      }
+    }
+  }
+  // ふち: 塗るところの上下左右のとなり。まわり（3×3）でいちばん差の大きいピクセルを線そのものの色とみなし、
+  // 下の色がどれだけまざっているかを出して、その分だけ塗る色に寄せる
+  const edges = [];
+  const blend = (i) => {
+    if (mask[i]) return;
+    mask[i] = 2;
+    const own = diff(i);
+    const y = (i / W) | 0;
+    const x = i - y * W;
+    let far = own;
+    for (let yy = Math.max(0, y - 1); yy <= Math.min(H - 1, y + 1); yy += 1) {
+      for (let xx = Math.max(0, x - 1); xx <= Math.min(W - 1, x + 1); xx += 1) {
+        const j = yy * W + xx;
+        if (mask[j] !== 1) far = Math.max(far, diff(j));
+      }
+    }
+    if (far <= own) return;
+    const k = 1 - own / far;
+    const o = i * 4;
+    edges.push(o, d[o] + k * (fr - sr), d[o + 1] + k * (fg - sg), d[o + 2] + k * (fb - sb));
+  };
+  for (let n = 0; n < spans.length; n += 2) {
+    const l = spans[n];
+    const r = spans[n + 1];
+    const y = (l / W) | 0;
+    const row = y * W;
+    if (l > row) blend(l - 1);
+    if (r < row + W - 1) blend(r + 1);
+    if (y > 0) for (let i = l - W; i <= r - W; i += 1) blend(i);
+    if (y < H - 1) for (let i = l + W; i <= r + W; i += 1) blend(i);
+  }
+  for (let n = 0; n < spans.length; n += 2) {
+    for (let o = spans[n] * 4, end = spans[n + 1] * 4; o <= end; o += 4) {
+      d[o] = fr; d[o + 1] = fg; d[o + 2] = fb; d[o + 3] = 255;
+    }
+  }
+  for (let n = 0; n < edges.length; n += 4) {
+    const o = edges[n];
+    d[o] = edges[n + 1]; d[o + 1] = edges[n + 2]; d[o + 2] = edges[n + 3]; // Uint8ClampedArray が 0〜255 の整数に丸める
+  }
+  return true;
+}
+// 線と塗りつぶしを、描いた順に描く。cache（{ img, count, key }）を渡すと、最後の塗りつぶしまでを描いた写しを
+// 覚えておき、次からはその続きだけを描く（塗りつぶしは塗りなおしが重いので、自分のキャンバスで使う）
+function paintStrokes(canvas, strokes, cache) {
+  const ctx = ctx2d(canvas);
+  let from = 0;
+  const cached = cache && cache.img && cache.count > 0 && cache.count <= strokes.length
+    && strokes[cache.count - 1].key === cache.key;
+  if (cached) {
+    ctx.putImageData(cache.img, 0, 0);
+    from = cache.count;
+  } else {
+    if (cache) { cache.img = null; cache.count = 0; cache.key = null; }
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+  }
+  let img = null; // 続けて塗りつぶすあいだは、読み取ったピクセルを使い回す
+  for (let i = from; i < strokes.length; i += 1) {
+    const s = strokes[i];
+    if (!s.fill) {
+      if (img) { ctx.putImageData(img, 0, 0); img = null; }
+      drawStroke(ctx, s);
+      continue;
+    }
+    if (!img) img = ctx.getImageData(0, 0, CANVAS_W, CANVAS_H);
+    floodFill(img, s.pts[0][0], s.pts[0][1], strokeStyle(s).color);
+    if (cache) { cache.img = img; cache.count = i + 1; cache.key = s.key; }
+  }
+  if (img) ctx.putImageData(img, 0, 0);
 }
 
 // ══════════════════════════════════════════════════
@@ -1149,7 +1306,9 @@ function renderLobby(ctl) {
       hint.textContent = '描く人は' + MAX_MEMBERS + '人までだよ（いま' + members + '人）';
     } else {
       btn.disabled = state.actionBusy;
-      hint.textContent = members + '人で' + members + '回まわすよ';
+      hint.textContent = members % 2 === 0
+        ? members + '人で' + roundsFor(members) + '回まわすよ（偶数のときは、最初の絵は自分のお題を自分で描くよ）'
+        : members + '人で' + members + '回まわすよ';
     }
   }
 }
@@ -1176,6 +1335,7 @@ function onLimitChange(key, value) {
 const PLAY_TEXT = {
   prompt: { title: 'お題を書こう', sub: '描いてほしいものを、文で書いてね。思いつかないときは「おまかせ」を押してね。', label: 'お題', placeholder: '例：空を飛ぶペンギン' },
   draw:   { title: 'この文を絵にしよう', sub: '文字は使わずに、絵だけで伝えてね。' },
+  drawOwn: { title: '自分のお題を絵にしよう', sub: 'いま書いたお題を、自分で絵にしてね。文字は使わずに、絵だけで伝えてね。' },
   guess:  { title: 'この絵を文にしよう', sub: '何の絵に見えるかな？ 見えたとおりに書いてね。', label: '何の絵かな？', placeholder: '例：雲の上のクジラ' },
 };
 const HOST_TITLE = {
@@ -1199,7 +1359,6 @@ function renderPlay(ctl) {
   showScreen('play');
   const m = ctl.match;
   const order = orderOf(m);
-  const n = order.length;
   const step = Number(m.step) || 0;
   const type = stepType(step);
   const isMember = order.indexOf(state.nickname) >= 0;
@@ -1207,10 +1366,11 @@ function renderPlay(ctl) {
 
   if (isMember && state.play.key !== currentPlayKey(m)) setupPlayStep(m, step, type);
 
-  $('play-count').textContent = (step + 1) + '回目 / 全' + n + '回';
+  $('play-count').textContent = (step + 1) + '回目 / 全' + roundsOf(m) + '回';
   if (isMember) {
-    $('play-title').textContent = PLAY_TEXT[type].title;
-    $('play-sub').textContent = PLAY_TEXT[type].sub;
+    const playText = PLAY_TEXT[isOwnDrawStep(m, step) ? 'drawOwn' : type];
+    $('play-title').textContent = playText.title;
+    $('play-sub').textContent = playText.sub;
   } else {
     $('play-title').textContent = HOST_TITLE[type];
     $('play-sub').textContent = m.deadline
@@ -1246,6 +1406,9 @@ function setupPlayStep(m, step, type) {
     updateCharCount();
   } else {
     paintStrokes($('draw-canvas'), []);
+    // 描く回はペンから始める（塗りつぶしのまま始めると、最初のひと押しで紙ぜんぶを塗ってしまう）。色・濃さ・太さは持ち越す
+    state.tool.mode = 'pen';
+    renderToolState();
   }
   renderMaterial();
 
@@ -1259,6 +1422,8 @@ function loadDraft(key, path, type, attempt) {
     const v = snap.val() || {};
     if (type === 'draw') {
       state.play.strokes = decodeStrokeMap(v.s);
+      state.play.strokes.forEach((st, i) => { st.n = i; });
+      state.play.strokeSeq = state.play.strokes.length;
       state.play.pointsUsed = state.play.strokes.reduce((sum, st) => sum + st.pts.length, 0);
       redrawMyCanvas();
     } else {
@@ -1275,6 +1440,7 @@ function loadDraft(key, path, type, attempt) {
     if (attempt < 3) { setTimeout(() => loadDraft(key, path, type, attempt + 1), 1000); return; }
     // あきらめて新しく書き始める（0回目のおまかせはサーバーに文が無いときだけ入るので、前の文は上書きしない）
     state.play.loaded = true;
+    state.play.draftLost = type === 'draw';
     if (state.lastCtl && state.currentScreen === 'play') renderPlay(state.lastCtl);
   });
 }
@@ -1351,7 +1517,8 @@ function renderPlayControls() {
   const input = $('play-text');
   input.disabled = !canEdit;
   $('btn-omakase').disabled = !canEdit;
-  document.querySelectorAll('#work-draw .oek-tool, #work-draw .oek-swatch, #work-draw .oek-tone').forEach((b) => { b.disabled = !canEdit; });
+  document.querySelectorAll('#work-draw .oek-tool, #work-draw .oek-swatch').forEach((b) => { b.disabled = !canEdit; });
+  syncToneLock();
   $('draw-canvas-wrap').classList.toggle('is-disabled', !canEdit);
   $('draw-canvas-wrap').classList.toggle('oek-canvas-wrap--active', canEdit);
 
@@ -1383,7 +1550,7 @@ function renderHostPanel(ctl) {
     const off = players[nick] ? '' : '<span class="oek-member__off">通信が切れています</span>';
     return '<li class="oek-member"><span class="oek-member__name">' + esc(nick) + '</span>' + me + state_ + off + '</li>';
   }).join('');
-  $('btn-close-step-label').textContent = step >= order.length - 1 ? 'しめきって見せあいへ' : 'しめきって次へ';
+  $('btn-close-step-label').textContent = step >= roundsOf(m) - 1 ? 'しめきって見せあいへ' : 'しめきって次へ';
   $('btn-close-step').disabled = state.actionBusy;
   $('btn-finish-early').disabled = state.actionBusy;
 }
@@ -1519,7 +1686,8 @@ const drawCanvas = $('draw-canvas');
 
 function buildTools() {
   $('tool-colors').innerHTML = COLORS.map((c, i) =>
-    '<button type="button" class="oek-swatch" aria-pressed="false" onclick="selectColor(' + i + ')"></button>'
+    '<button type="button" class="oek-swatch' + (c.tones[2] === '#FFFFFF' ? ' oek-swatch--light' : '')
+      + '" aria-pressed="false" onclick="selectColor(' + i + ')"></button>'
   ).join('');
   $('tool-tones').innerHTML = TONES.map((d, i) =>
     '<button type="button" class="oek-tone" aria-label="' + esc(TONE_NAMES[i]) + '" aria-pressed="false" onclick="selectTone(' + d + ')"></button>'
@@ -1539,31 +1707,54 @@ function renderToolState() {
     const tone = i === t.color ? t.tone : 0;
     b.style.background = colorHex(i, tone);
     b.setAttribute('aria-label', (tone ? TONE_NAMES[TONES.indexOf(tone)] : '') + COLORS[i].name);
-    b.setAttribute('aria-pressed', String(!t.eraser && t.color === i));
+    b.setAttribute('aria-pressed', String(t.mode !== 'eraser' && t.color === i));
   });
+  const hasTones = colorHasTones(t.color);
   document.querySelectorAll('#tool-tones .oek-tone').forEach((b, i) => {
     b.style.background = colorHex(t.color, TONES[i]);
-    b.setAttribute('aria-pressed', String(!t.eraser && t.tone === TONES[i]));
+    b.setAttribute('aria-pressed', String(hasTones && t.mode !== 'eraser' && t.tone === TONES[i]));
   });
   document.querySelectorAll('#tool-widths .oek-tool').forEach((b, i) => {
     b.setAttribute('aria-pressed', String(t.width === i));
   });
-  $('tool-eraser').setAttribute('aria-pressed', String(t.eraser));
+  ['pen', 'eraser', 'fill'].forEach((mode) => {
+    $('tool-' + mode).setAttribute('aria-pressed', String(t.mode === mode));
+  });
+  syncToneLock();
 }
-// ほかの色を選ぶと濃さはふつうに戻る。同じ色を押し直したとき（消しゴムから戻るときなど）は濃さを保つ
+// 白のように濃さを選べない色（5段階とも同じ色）では、濃さの列を押せなくする
+function colorHasTones(i) {
+  const tones = COLORS[i].tones;
+  return tones.some((hex) => hex !== tones[0]);
+}
+function syncToneLock() {
+  const locked = !canEditNow() || !colorHasTones(state.tool.color);
+  document.querySelectorAll('#tool-tones .oek-tone').forEach((b) => { b.disabled = locked; });
+}
+// ほかの色を選ぶと濃さはふつうに戻る。同じ色を押し直したとき（消しゴムから戻るときなど）は濃さを保つ。
+// 色・濃さを押すと消しゴムからペンに戻る（塗りつぶしは、色を選びなおしても塗りつぶしのまま）
 function selectColor(i) {
   if (i !== state.tool.color) state.tool.tone = 0;
   state.tool.color = i;
-  state.tool.eraser = false;
+  if (state.tool.mode === 'eraser') state.tool.mode = 'pen';
   renderToolState();
 }
-function selectTone(d) { state.tool.tone = d; state.tool.eraser = false; renderToolState(); }
+function selectTone(d) {
+  if (!colorHasTones(state.tool.color)) return;
+  state.tool.tone = d;
+  if (state.tool.mode === 'eraser') state.tool.mode = 'pen';
+  renderToolState();
+}
 function selectWidth(i) { state.tool.width = i; renderToolState(); }
-function toggleEraser() { state.tool.eraser = !state.tool.eraser; renderToolState(); }
+// 道具（ペン・消しゴム・塗りつぶし）。選んでいる消しゴム・塗りつぶしをもう一度押すと、ペンに戻る
+function selectMode(mode) {
+  state.tool.mode = (mode !== 'pen' && state.tool.mode === mode) ? 'pen' : mode;
+  renderToolState();
+}
 
 function redrawMyCanvas() {
-  paintStrokes(drawCanvas, state.play.strokes);
-  if (state.play.drawing) drawStroke(drawCanvas.getContext('2d'), state.play.drawing);
+  paintStrokes(drawCanvas, state.play.strokes, state.play.paint);
+  if (state.play.drawing) drawStroke(ctx2d(drawCanvas), state.play.drawing);
 }
 
 function warnDrawLimit(p) {
@@ -1590,7 +1781,7 @@ function toLogicalPoint(e) {
   ];
 }
 function drawSegment(d, from, to) {
-  const ctx = drawCanvas.getContext('2d');
+  const ctx = ctx2d(drawCanvas);
   const st = strokeStyle(d);
   ctx.strokeStyle = st.color;
   ctx.lineWidth = st.width;
@@ -1608,15 +1799,17 @@ drawCanvas.addEventListener('pointerdown', (e) => {
   e.preventDefault();
   try { drawCanvas.setPointerCapture(e.pointerId); } catch { /* noop */ }
   const pt = toLogicalPoint(e);
+  if (state.tool.mode === 'fill') { fillAt(pt); return; }
+  const isEraser = state.tool.mode === 'eraser';
   state.play.drawing = {
     key: state.play.key,
     pointerId: e.pointerId,
-    c: state.tool.eraser ? ERASER : state.tool.color,
+    c: isEraser ? ERASER : state.tool.color,
     w: state.tool.width,
-    tone: state.tool.eraser ? 0 : state.tool.tone,
+    tone: isEraser ? 0 : state.tool.tone,
     pts: [pt],
   };
-  drawStroke(drawCanvas.getContext('2d'), { ...state.play.drawing, pts: [pt] });
+  drawStroke(ctx2d(drawCanvas), { ...state.play.drawing, pts: [pt] });
 });
 
 drawCanvas.addEventListener('pointermove', (e) => {
@@ -1661,19 +1854,56 @@ function commitStroke(d, playState) {
   if (p.strokes.length >= MAX_STROKES) { warnDrawLimit(p); return; }
   const path = artPath(p.mid, p.chain, p.step) + '/s';
   const k = state.roomRef.child(path).push().key;
-  const stroke = { key: k, c: d.c, w: d.w, tone: d.tone || 0, pts: d.pts.slice() };
+  const stroke = { key: k, c: d.c, w: d.w, tone: d.tone || 0, fill: !!d.fill, pts: d.pts.slice(), n: p.strokeSeq };
+  p.strokeSeq += 1;
+  // 見る側はキーの順に描く。端末の時計が戻るなどでキーが前後したら、手元もキーの順にそろえる
+  // （塗りつぶしは描く順で塗る範囲が変わるので、手元と見る側で同じ順にする）
+  const last = p.strokes[p.strokes.length - 1];
   p.strokes.push(stroke);
+  if (last && k < last.key) p.strokes.sort((a, b) => (a.key < b.key ? -1 : (a.key > b.key ? 1 : 0)));
   p.pointsUsed += stroke.pts.length;
-  const data = { c: stroke.c, w: stroke.w, p: encodePoints(stroke.pts) };
+  // 塗りつぶしは f: 1 と押した1点だけを保存する（太さは使わない）
+  const data = stroke.fill
+    ? { c: stroke.c, f: 1, p: encodePoints(stroke.pts) }
+    : { c: stroke.c, w: stroke.w, p: encodePoints(stroke.pts) };
   if (stroke.tone) data.d = stroke.tone; // 濃さはふつう以外のときだけ保存する
   writeMine(p, (ref) => ref.child(path + '/' + k).set(data));
+  return stroke;
+}
+
+// 塗りつぶし。いまのキャンバス（保存した線と塗りつぶしを描いたもの）の上で、押したところを塗る。
+// 絵を見る側は、保存した順に同じ塗りつぶしをやり直して同じ絵にする
+function fillAt(pt) {
+  const p = state.play;
+  // 下書きを読めなかったときは、手元のキャンバスが保存してある絵とちがうかもしれないので塗らない
+  // （見る側は保存してある線の上で同じ塗りつぶしをやり直すため、塗られる範囲が変わってしまう）
+  if (p.draftLost) {
+    showMsg('前に描いた分を読みこめなかったので、塗りつぶしは使えないよ。ページを読み込みなおしてね');
+    return;
+  }
+  if (p.strokes.filter((s) => s.fill).length >= MAX_FILLS) {
+    showMsg('塗りつぶしはここまでだよ。「1つ戻す」で消すと、また塗れるよ');
+    return;
+  }
+  const ctx = ctx2d(drawCanvas);
+  const img = ctx.getImageData(0, 0, CANVAS_W, CANVAS_H);
+  const d = { key: p.key, c: state.tool.color, w: 1, tone: state.tool.tone, fill: true, pts: [pt] };
+  if (!floodFill(img, pt[0], pt[1], strokeStyle(d).color)) return; // もう同じ色のところは、何も足さない
+  const stroke = commitStroke(d);
+  if (!stroke) return;
+  if (p.strokes[p.strokes.length - 1] !== stroke) { redrawMyCanvas(); return; } // キーが前後した: 見る側と同じ順で描きなおす
+  ctx.putImageData(img, 0, 0);
+  p.paint = { img, count: p.strokes.length, key: stroke.key };
 }
 
 function undoStroke() {
   if (!canEditNow() || state.play.type !== 'draw') return;
   const p = state.play;
-  const s = p.strokes.pop();
-  if (!s) return;
+  if (!p.strokes.length) return;
+  // いちばん後に描いたものを消す（ふつうは末尾。キーが前後して並べなおしたときは末尾とは限らない）
+  let idx = 0;
+  p.strokes.forEach((st, i) => { if (st.n >= p.strokes[idx].n) idx = i; });
+  const s = p.strokes.splice(idx, 1)[0];
   p.pointsUsed = Math.max(0, p.pointsUsed - s.pts.length);
   p.limitWarned = false;
   redrawMyCanvas();
@@ -1719,12 +1949,12 @@ function clearDrawing() {
 // ══════════════════════════════════════════════════
 // 次の回へ進めた match を返す（最後の回なら見せあいへ）
 function advancedMatch(m, now) {
-  const n = orderOf(m).length;
+  const total = roundsOf(m);
   const next = (Number(m.step) || 0) + 1;
-  if (next < n) {
+  if (next < total) {
     return { ...m, step: next, done: null, deadline: deadlineFor(matchLimits(m), next, now) };
   }
-  return { ...m, phase: 'show', steps: n, show: { chain: 0, upto: 1 }, done: null, deadline: null };
+  return { ...m, phase: 'show', steps: total, show: { chain: 0, upto: 1 }, done: null, deadline: null };
 }
 function isSamePlayStep(cur, cap) {
   const m = cur && cur.match;
@@ -1857,8 +2087,7 @@ async function hostFinishEarly() {
 // 見せあい（show）・おしまい（end）
 // ══════════════════════════════════════════════════
 function stepsOf(m) {
-  const n = orderOf(m).length;
-  return clampInt(m.steps, 1, Math.max(1, n));
+  return clampInt(m.steps, 1, Math.max(1, roundsOf(m)));
 }
 function showPos(m) {
   const n = orderOf(m).length;
@@ -1871,11 +2100,12 @@ function showPos(m) {
 
 // 1列ぶんのアルバムを描く。data: undefined=読み込み中 / null=空
 function renderAlbum(listEl, m, chain, data, upto, newIndex) {
-  const order = orderOf(m);
-  const n = order.length;
+  // めくるたびに全部を描きなおさないよう、同じ中身の絵はキャンバスごと使い回す（塗りつぶしは塗りなおしが重い）
+  const painted = {};
+  listEl.querySelectorAll('canvas[data-sig]').forEach((cv) => { painted[cv.dataset.sig] = cv; });
   listEl.innerHTML = '';
   for (let k = 0; k < upto; k += 1) {
-    const author = order[(chain + k) % n] || '';
+    const author = authorOf(m, chain, k);
     const type = stepType(k);
     const entry = data ? data['s' + k] : null;
     const li = document.createElement('li');
@@ -1891,14 +2121,22 @@ function renderAlbum(listEl, m, chain, data, upto, newIndex) {
     if (type === 'draw') {
       const wrap = document.createElement('div');
       wrap.className = 'oek-canvas-wrap';
-      const cv = document.createElement('canvas');
-      cv.className = 'oek-canvas';
-      cv.width = CANVAS_W;
-      cv.height = CANVAS_H;
-      cv.setAttribute('role', 'img');
-      cv.setAttribute('aria-label', author + 'さんが描いた絵');
       const strokes = entry ? decodeStrokeMap(entry.s) : [];
-      paintStrokes(cv, strokes);
+      const sig = [m.matchId, chain, k, strokes.length,
+        strokes.length ? strokes[0].key : '', strokes.length ? strokes[strokes.length - 1].key : ''].join('|');
+      let cv = painted[sig];
+      if (cv) {
+        delete painted[sig];
+      } else {
+        cv = document.createElement('canvas');
+        cv.className = 'oek-canvas';
+        cv.width = CANVAS_W;
+        cv.height = CANVAS_H;
+        cv.setAttribute('role', 'img');
+        cv.dataset.sig = sig;
+        paintStrokes(cv, strokes);
+      }
+      cv.setAttribute('aria-label', author + 'さんが描いた絵');
       wrap.appendChild(cv);
       li.appendChild(wrap);
       if (data !== undefined && !strokes.length) {
@@ -2140,6 +2378,7 @@ async function hostStartGame() {
         match: {
           matchId,
           order: members,
+          rounds: roundsFor(members.length),
           textSec: limits.text,
           drawSec: limits.draw,
           phase: 'play',
@@ -2871,6 +3110,7 @@ tryReconnect().then((reconnected) => {
         '最初に、描いてほしいお題を文で書く。思いつかないときは「おまかせ」を押してね',
         '次は、回ってきた文を絵にする。その次は、回ってきた絵を見て何の絵かを文で書く',
         '書けたら「完了」。みんなが完了するか、時間になったら次の人に回るよ',
+        '描く人が偶数のときは、最初の絵だけ、自分のお題を自分で描くよ（どの列も、絵を見て書く回で終われるように）',
       ] },
       { heading: 'おわりかた', text: '全員に回ったら見せあい。ホストが「つぎへ」で1つずつめくっていくよ。点数や勝ち負けはないので、どう変わったかをみんなで楽しんでね。' },
     ],
