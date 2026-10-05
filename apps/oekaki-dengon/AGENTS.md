@@ -100,7 +100,7 @@ apps/oekaki-dengon/
 ```
 
 - Firebase compat SDK **10.14.1**（app / auth / database）+ 匿名認証
-- `../shared/js/rtdb-utils.js?v=20260910`（`initFirebase` / `now` / `isRoomExpired` / `generateRoomCode` / `esc` / `cancelRoomOnDisconnect` / `copyRoomCode` / `showFormError` / `showToast`）
+- `../shared/js/rtdb-utils.js?v=20261005`（`initFirebase` / `now` / `isRoomExpired` / `generateRoomCode` / `esc` / `cancelRoomOnDisconnect` / `copyRoomCode` / `showFormError` / `showToast`）
 - `../shared/css/design-system.css` のトークン・`btn` クラスを再利用
 - CSS 接頭辞: **`oek-`**（BEM）。画面切替は `.screen` / `.active`
 - アイコン: Material Symbols Rounded（`draw` ほか）
@@ -154,7 +154,7 @@ TOP（screen-top）
 
 ### 参加用のリンク（`?room=CODE`。2026-10-05）
 
-- 参加用のリンク `?room=CODE` と「リンクをコピー」（`#btnCopyLink`。ルームバーはないので、ホストのロビーのルームコードの欄で「コードをコピー」の下）。共通仕様は `docs/development/rtdb.md`「参加用のリンク」。「コードをコピー」はコード単体のまま。コピーは kagi-awase と同じ `copyText`（このアプリに汎用の文字列コピーがないため）
+- 参加用のリンク `?room=CODE` と「リンクをコピー」（`#btnCopyLink`。ルームバーはないので、ホストのロビーのルームコードの欄で「コードをコピー」の下）。共通仕様は `docs/development/rtdb.md`「参加用のリンク」。「コードをコピー」はコード単体のまま。コピーは共通の `RoomkRTDB.copyRoomLink`
 - このアプリの入口は `<script>` 末尾の初期化（`?room=` → 保存した記録 `oekaki_session` の順。`?watch=` はない）。参加画面は `screen-guest-join`（`openJoinFromLink()`。コード欄 `#top-guest-code` に入れ、`#joinLinkHint` を出してニックネーム欄にフォーカス）。`?room=` は `startCtlListener()`（作成・参加・再接続の共通）で外す
 - 同じコードの記録があれば再接続を優先し、戻れなければ参加画面へ。ただし、つながらなかった（12秒）ときは従来どおり記録を残す（再読み込みで戻れるように。`?room=` も残る）。復帰中に「トップへ戻る」を押したときは参加画面で上書きしない
 - 参加画面のひとことと、あそびかたの文は、画面の言い方に合わせて「名前」ではなく「ニックネーム」

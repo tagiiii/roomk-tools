@@ -1833,49 +1833,14 @@ submitOnEnter($('joinCode'), joinRoom);
 $('btnCopyCode').addEventListener('click', (event) => RoomkRTDB.copyRoomCode(state.roomCode, event.currentTarget));
 
 // 参加用のリンク: このページのアドレスの末尾に ?room=ルームコード。チャットに貼ると、参加する人はリンクをひらいて名前を入れるだけで参加できる。
-// 「コードをコピー」はコード単体のまま（口頭や画面共有で伝える用）。共通の copyRoomCode はコード専用なので、文字列用のコピーを置く
-function roomLink(code) {
-  return location.origin + location.pathname + '?room=' + code;
-}
-
-async function copyText(value, button, okMessage, failMessage) {
-  if (button?.dataset.copyBusy) return false;
-  if (button) button.dataset.copyBusy = '1';
-  let copied = false;
-  try {
-    try {
-      await navigator.clipboard.writeText(value);
-      copied = true;
-    } catch {
-      const focused = document.activeElement;
-      const textarea = document.createElement('textarea');
-      textarea.value = value;
-      textarea.readOnly = true;
-      textarea.style.cssText = 'position:fixed;opacity:0;pointer-events:none';
-      try {
-        document.body.appendChild(textarea);
-        textarea.select();
-        copied = document.execCommand('copy');
-      } finally {
-        textarea.remove();
-        focused?.focus({ preventScroll: true });
-      }
-    }
-  } catch {
-    copied = false;
-  } finally {
-    if (button) delete button.dataset.copyBusy;
-  }
-  toast(copied ? okMessage : failMessage, !copied);
-  return copied;
-}
+// 「コードをコピー」はコード単体のまま（口頭や画面共有で伝える用）。コピーは共通の RoomkRTDB.copyRoomLink（rtdb-utils.js）
 
 $('btnCopyLink')?.addEventListener('click', (event) => {
   if (!state.roomCode || !ROOM_CODE_PATTERN.test(state.roomCode)) {
     toast('ルームコードがありません');
     return;
   }
-  copyText(roomLink(state.roomCode), event.currentTarget, '参加用のリンクをコピーしました', 'コピーできませんでした。コードをそのまま伝えてね');
+  RoomkRTDB.copyRoomLink(state.roomCode, event.currentTarget);
 });
 
 // 参加用のリンクでひらいたとき: コードを入れた状態で参加画面を開き、名前だけ入れてもらう（コード欄は直せるように残す）

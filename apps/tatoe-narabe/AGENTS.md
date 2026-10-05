@@ -56,7 +56,7 @@ waiting → revealing → playing → result
 ## 参加用のリンク（2026-10-05）
 
 - 参加用のリンク `?room=CODE` と「リンクをコピー」（`#btnCopyLink`）。共通仕様は docs/development/rtdb.md「参加用のリンク」。このアプリの入口は index.html 末尾の `window.addEventListener("load", …)`（`tryReconnect()` の前に `?room=` を見る）、参加画面は `#screen-guest-join`（ヒント `#joinLinkHint`、コード欄 `#guest-code`、名前欄 `#guest-nick`）。`?room=` は `startRoomListener()`（作成・参加・再接続の共通の通り道）でアドレスから外す
-- 「リンクをコピー」は待合室のルームコードのカードで「コードをコピー」の隣（ホスト・参加者とも見える。従来の「コードをコピー」と同じ）。コード単体のコピーは従来の `copyRoomCode(this)` のまま、リンクは文字列用の `copyText` で、知らせは「コードをコピー」と同じ共通のトースト（`RoomkRTDB.showToast`）に出す
+- 「リンクをコピー」は待合室のルームコードのカードで「コードをコピー」の隣（ホスト・参加者とも見える。従来の「コードをコピー」と同じ）。コード単体のコピーは従来の `copyRoomCode(this)` のまま、リンクは共通の `RoomkRTDB.copyRoomLink` で、知らせは「コードをコピー」と同じ共通のトーストに出す
 - リンクの検査は作られるコードの形 `/^[A-HJ-NP-Z2-9]{6}$/`（`ROOM_CODE_PATTERN`）。参加フォームの検査は変えていない。トップの「ルームに参加する」は `goGuestJoin()`（ヒントを隠す）を通す。画面の欄名に合わせ、ヒントとあそびかたは「名前」でなく「ニックネーム」
 
 ## ホストの参加（2026-10-01 オーナー決定: 待合室でホストの参加を選べる（初期値は従来どおり））

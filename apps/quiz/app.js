@@ -2548,27 +2548,9 @@ function renderWatchFinal(data) {
 /* ── ルームであそぶ：参加用のリンク（?room=コード） ──
    このページのアドレスの末尾に ?room=ルームコード。チャットに貼ると、参加する人はリンクをひらいて名前を入れるだけで参加できる。
    「コードをコピー」はコード単体のまま（口頭や画面共有で伝える用） */
-function roomLink(code) {
-  return location.origin + location.pathname + '?room=' + code;
-}
-
-// 共有の copyToClipboard はボタンの文字を「コピーしました！」に変え、失敗は知らせないので、
-// ボタンは渡さず（ルームバーの幅を変えない）、連打ガードと成功・失敗の通知をここで行う
+// コピーは共通の RoomkRTDB.copyRoomLink（rtdb-utils.js。連打ガードと成功・失敗の通知つき。ボタンの文字は変えない）
 function copyRoomLink(button) {
-  if (button.dataset.copyBusy) return;
-  if (!state.roomCode || !ROOM_CODE_PATTERN.test(state.roomCode)) {
-    toast('ルームコードがありません');
-    return;
-  }
-  button.dataset.copyBusy = '1';
-  copyToClipboard(roomLink(state.roomCode))
-    .catch(() => false)
-    .then((ok) => {
-      toast(ok ? '参加用のリンクをコピーしました' : 'コピーできませんでした。コードをそのまま伝えてね', !ok);
-    })
-    .finally(() => {
-      delete button.dataset.copyBusy;
-    });
+  RoomkRTDB.copyRoomLink(state.roomCode, button);
 }
 
 // 参加用のリンクでひらいたとき: コードを入れた状態で参加画面を開き、名前だけ入れてもらう（コード欄は直せるように残す）

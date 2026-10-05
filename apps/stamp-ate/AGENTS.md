@@ -54,7 +54,7 @@ apps/stamp-ate/
 
 - 構成は気持ち当てゲーム（`apps/kimochi-ate/`）と同じ分割型。index.html・app.js・style.css を変えたら `?v=` をそろえて上げる
 - Firebase compat SDK **10.14.1**（app / auth / database）+ 匿名認証
-- `../shared/js/rtdb-utils.js?v=20260910`（`initFirebase` / `now` / `isRoomExpired` / `getHostDisconnectedAt` / `generateRoomCode` / `cancelRoomOnDisconnect` / `copyRoomCode` / `showToast`）
+- `../shared/js/rtdb-utils.js?v=20261005`（`initFirebase` / `now` / `isRoomExpired` / `getHostDisconnectedAt` / `generateRoomCode` / `cancelRoomOnDisconnect` / `copyRoomCode` / `showToast`）
 - CSS 接頭辞: **`sa-`**（BEM）。画面切替は `.sa-screen` / `.active`
 - 描画はすべて DOM API（textContent・createElementNS）。innerHTML は使わない
 - 絵は SVG。紙は論理サイズ 600×800（縦長）。スタンプの形（紙の上の大きさ）: 丸 直径124、四角 120×120、長方形 230×56、三角 底辺152・高さ132。押した位置が形の中心
@@ -263,6 +263,6 @@ stampate_rooms/{roomCode}/
 | モジュール | 使用箇所 |
 |-----------|----------|
 | design-system.css | 色・角丸・余白のトークン、`.btn` 系のボタン |
-| rtdb-utils.js（`?v=20260910`） | `initFirebase`・`generateRoomCode`・`now`・`isRoomExpired`・`getHostDisconnectedAt`・`cancelRoomOnDisconnect`・`copyRoomCode`・`showToast` |
+| rtdb-utils.js（`?v=20261005`） | `initFirebase`・`generateRoomCode`・`now`・`isRoomExpired`・`getHostDisconnectedAt`・`cancelRoomOnDisconnect`・`copyRoomCode`・`copyRoomLink`・`showToast` |
 | stats.js（`?v=1`） | 起動回数（`open`）のみ |
 | howto.js | 「あそびかた」モーダル |

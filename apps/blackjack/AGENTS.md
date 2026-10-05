@@ -65,7 +65,7 @@ apps/blackjack/
 ```
 
 - Firebase compat SDK **10.14.1**（app / auth / database）+ 匿名認証
-- 共有ヘルパー `../shared/js/rtdb-utils.js?v=20260715`（`initFirebase` / `now` / `isRoomExpired` /
+- 共有ヘルパー `../shared/js/rtdb-utils.js?v=20261005`（`initFirebase` / `now` / `isRoomExpired` /
   `generateRoomCode` / `esc` / `cancelRoomOnDisconnect` / `showToast`）
 - CSS 接頭辞: **`bj-`**（BEM）。画面切替は共通パターンの `.screen` / `.active`
 - スート表示は素の文字 `♠ ♥ ♦ ♣`（**絵文字化する VS16 (U+FE0F) を付けない**。lint CONTENT-1 対策）

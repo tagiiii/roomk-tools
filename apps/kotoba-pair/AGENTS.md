@@ -27,7 +27,7 @@ apps/kotoba-pair/
 ```
 
 - Realtime Database + Firebase compat SDK **10.14.1**（app / auth / database）+ 匿名認証
-- 共有ヘルパー `../shared/js/rtdb-utils.js?v=20260715`（`initFirebase` / `now` / `isRoomExpired` / `getHostDisconnectedAt` / `generateRoomCode` / `esc` / `cancelRoomOnDisconnect` / `showToast`）
+- 共有ヘルパー `../shared/js/rtdb-utils.js?v=20261005`（`initFirebase` / `now` / `isRoomExpired` / `getHostDisconnectedAt` / `generateRoomCode` / `esc` / `cancelRoomOnDisconnect` / `showToast`）
 - `shuffle` は `../shared/js/utils.js` から `type="module"` で読み込み `window.shuffle` に載せる（REF-3 の重複定義回避。kaburazu-hint と同じ形）
 - `../shared/css/design-system.css` のトークン・`btn` / `card` / `badge` / `form-*` を再利用
 - CSS 接頭辞: **`kp-`**（BEM）。画面切替は共通パターンの `.screen` / `.active`

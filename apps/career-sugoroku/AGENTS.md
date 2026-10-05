@@ -17,7 +17,7 @@
 ## 技術スタック・ファイル
 
 - 分割ファイル: `index.html`（画面の骨組み）/ `style.css` / `data.js`（盤面・適性・職業・カード・数値）/ `engine.js`（ルール。`apply(state, action)` は入力を変えず、新しい状態か拒否を返す。乱数は `state.rng`）/ `text.js`（画面に出す文。DOM を使わない）/ `room.js`（ルームの決まり: 席・だれが押せるか・期限・しるし。Firebase も DOM も使わない）/ `net.js`（Realtime Database の読み書き）/ `ui.js`（画面）
-- Firebase compat 10.14.1（app / auth / database）、`../shared/js/rtdb-utils.js?v=20260910`（`RoomkRTDB`: initFirebase・now・initServerTime・generateRoomCode・cancelRoomOnDisconnect・copyRoomCode・showFormError・showToast）、`../shared/css/design-system.css`、`../shared/js/stats.js?v=1`（`start-local`・`start-room` を数える）、`../shared/js/howto.js`（右下の「？」。短い案内。詳しい説明は上のバーの「あそびかた」）
+- Firebase compat 10.14.1（app / auth / database）、`../shared/js/rtdb-utils.js?v=20261005`（`RoomkRTDB`: initFirebase・now・initServerTime・generateRoomCode・cancelRoomOnDisconnect・copyRoomCode・showFormError・showToast）、`../shared/css/design-system.css`、`../shared/js/stats.js?v=1`（`start-local`・`start-room` を数える）、`../shared/js/howto.js`（右下の「？」。短い案内。詳しい説明は上のバーの「あそびかた」）
 - ゲームの通信は、ルームを作る・参加する・再読み込みでルームにもどるときだけ準備する（`ensureNet`）。1台の画面ではゲーム用の Firebase を初期化せず、接続もしない（通信するのは共通の利用回数カウンタ `stats.js` だけ。別名のアプリで初期化するので衝突しない）
 - `?emu=1`（`&db=9100&auth=9199`）でローカルのエミュレーターだけに接続する（自動テスト用。本番には接続しない）
 - テストは公開しない `tests/career-sugoroku/`（使い方は同じフォルダの README）

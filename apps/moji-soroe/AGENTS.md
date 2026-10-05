@@ -65,7 +65,7 @@ apps/moji-soroe/
 ```
 
 - Firebase compat SDK **10.14.1**（app / auth / database）+ 匿名認証
-- 共有ヘルパー `../shared/js/rtdb-utils.js?v=20260715`（`initFirebase` / `now` / `isRoomExpired` /
+- 共有ヘルパー `../shared/js/rtdb-utils.js?v=20261005`（`initFirebase` / `now` / `isRoomExpired` /
   `generateRoomCode` / `esc` / `cancelRoomOnDisconnect` / `showToast`）
 - CSS 接頭辞: **`ms-`**（BEM）。画面切替は共通パターンの `.screen` / `.active`
 - viewport `maximum-scale=1`、`const state = {...}`、`showScreen()`、`esc()`（RTDB アプリ共通ルール）

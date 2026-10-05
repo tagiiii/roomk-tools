@@ -58,7 +58,10 @@ Realtime Database 単一ファイルアプリ向けの共有ヘルパー。`wind
 | `getHostDisconnectedAt(room)` | `room.hostDisconnectedAt` を数値化し、有効なら timestamp、無効なら `null` |
 | `isRoomExpired(room, ttlMs = 2 * 60 * 1000)` | `hostConnected === false` かつ TTL 超過なら `true` |
 | `showFormError(id, message)` | フォーム内のエラーを表示。空文字でクリア |
-| `copyRoomCode(code, button?)` | コード単体をコピーし、成功・失敗を通知。Clipboard API が使えない場合は代替コピーを試す |
+| `copyRoomCode(code, button?)` | コード単体をコピーし、成功・失敗を通知。Clipboard API が使えない場合は代替コピーを試す（内部は `copyText`） |
+| `copyText(value, button?, okMessage, failMessage)` | 任意の文字列をコピーし、成功・失敗をトーストで通知（連打ガード・代替コピーつき。2026-10-05 追加） |
+| `roomLink(code)` | 参加用のリンク `location.origin + location.pathname + '?room=' + code` を返す（2026-10-05 追加） |
+| `copyRoomLink(code, button?, link?)` | 参加用のリンクをコピーし、成功「参加用のリンクをコピーしました」／失敗を通知。`link` を渡すとそのアドレスをコピーする（独自パラメータを引き継ぐアプリ用）。仕様は [rtdb.md](rtdb.md)「参加用のリンク」（2026-10-05 追加） |
 | `generateRoomCode(length = 6)` | 紛らわしい文字を除外した英数字ルームコードを生成 |
 | `esc(value)` | XSS対策のHTMLエスケープ（シングルクォートを含む） |
 | `initFirebase(firebase)` | Firebase compat SDKを共通設定で初期化し、`{ authReady, db }` を返す。サーバー時刻補正も開始 |

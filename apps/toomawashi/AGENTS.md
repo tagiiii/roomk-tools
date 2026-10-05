@@ -35,7 +35,7 @@ apps/toomawashi/
 ```
 
 - Firebase compat SDK **10.14.1**（app / auth / database）+ 匿名認証
-- 共有ヘルパー `../shared/js/rtdb-utils.js?v=20260715`
+- 共有ヘルパー `../shared/js/rtdb-utils.js?v=20261005`
   （`initFirebase` / `now` / `getHostDisconnectedAt` / `isRoomExpired` / `generateRoomCode` /
   `esc` / `cancelRoomOnDisconnect` / `showToast`）
 - `../shared/css/design-system.css` のトークンと `.btn` を再利用

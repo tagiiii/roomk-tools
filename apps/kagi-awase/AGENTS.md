@@ -65,7 +65,7 @@ apps/kagi-awase/
 
 - 構成はスタンプあてゲーム（`apps/stamp-ate/`）と同じ分割型。接続・切断・再接続・みんなにみせる画面の作りもスタンプあてゲームのものを使っている。index.html・app.js・style.css を変えたら `?v=` をそろえて上げる
 - Firebase compat SDK **10.14.1**（app / auth / database）+ 匿名認証
-- `../shared/js/rtdb-utils.js?v=20260910`（`initFirebase` / `now` / `isRoomExpired` / `getHostDisconnectedAt` / `generateRoomCode` / `cancelRoomOnDisconnect` / `copyRoomCode` / `showToast`）
+- `../shared/js/rtdb-utils.js?v=20261005`（`initFirebase` / `now` / `isRoomExpired` / `getHostDisconnectedAt` / `generateRoomCode` / `cancelRoomOnDisconnect` / `copyRoomCode` / `showToast`）
 - CSS 接頭辞: **`kag-`**（BEM。`ka-` は気持ち当てゲーム、`kg-` はキャパグラフが使用）。画面切替は `.kag-screen` / `.active`
 - 描画はすべて DOM API（textContent）。innerHTML は使わない
 - RTDB パス: `kagiawase_rooms/{roomCode}`、sessionStorage キー: `kagiawase_session`（`{role, nickname, roomCode, uid, joinedAt}` だけ。カギの数字は入れない）
@@ -107,7 +107,7 @@ TOP（screen-top）
 
 チャットにルームコードを貼る代わりに、リンクを貼れば、参加する人はコードを打たずに入れる（日本語入力のまま打って文字が重なる・全角になる問題の回避。2026-09-30 の実機報告が動機）。URL からの入室を提案されたのを受け、まずこのアプリだけで試し、横展開は実機で使ってみてから決める（オーナー承認 2026-10-05）。
 
-- **「リンクをコピー」**（ルームバー）: `location.origin + location.pathname + '?room=' + code` をコピーする。**「コードをコピー」はコード単体のまま**（2026-08-10 の実機フィードバック。URL と案内文を組み立てない）。共通の `copyRoomCode` はコード専用なので、文字列用の `copyText` を app.js に置く（成功・失敗をトーストで通知、連打ガード）
+- **「リンクをコピー」**（ルームバー）: `location.origin + location.pathname + '?room=' + code` をコピーする。**「コードをコピー」はコード単体のまま**（2026-08-10 の実機フィードバック。URL と案内文を組み立てない）。コピーは共通の `RoomkRTDB.copyRoomLink`（先行導入時は app.js に `copyText` の写しを置いたが、2026-10-05 の横展開後に rtdb-utils.js へ集約）
 - **入口**: 起動時に `?watch=` → `?room=` → 保存した記録（sessionStorage）の順に見る。`?room=` は `normalizeRoomCode`（全角→半角・大文字化）してから `ROOM_CODE_PATTERN` で検査する
   - 正しい形なら、参加画面を開き、コード欄に入れ、ヒント「リンクからひらいたので、ルームコードは入っているよ…」を出し、名前欄にフォーカスする。コード欄は直せるように残す（古いリンクで新しいコードを口頭で聞いたとき用）
   - 形が正しくなければ、トースト「ルームコードが正しくないよ」を出して `?room=` をアドレスから外し、そのあとはリンクなしで開いたときと同じにする（保存した記録があれば同じルームへ戻り、なければトップ。独立レビュー 2026-10-05 の指摘で明文化）
@@ -238,7 +238,6 @@ kagiawase_rooms/{roomCode}/
 - **ホストの初期値は進行だけ**（`hostPlays: false`）。ホストも遊ぶと自分のカギがホストの画面に出るため（秘密が絡むゲームの横断決定 2026-10-01 と同じ）
 - **終了後の自動削除なし**（公認バリアント「ふりかえり画面滞在中は削除しない」）
 - **遊んでいる途中でも、そのゲームで遊んでいた名前は入りなおせる**（新しい名前は不可）
-- **ルームバーに「リンクをコピー」がある**（他のルーム型アプリは「コードをコピー」だけ）。参加用のリンク `?room=CODE` の先行導入のため。横展開するときは共通化（`apps/shared/**` はオーナー判断）を検討する
 
 ## 入れない機能
 
@@ -262,6 +261,6 @@ kagiawase_rooms/{roomCode}/
 | モジュール | 使用箇所 |
 |-----------|----------|
 | design-system.css | 色・角丸・余白のトークン、`.btn` 系のボタン |
-| rtdb-utils.js（`?v=20260910`） | `initFirebase`・`generateRoomCode`・`now`・`isRoomExpired`・`getHostDisconnectedAt`・`cancelRoomOnDisconnect`・`copyRoomCode`・`showToast` |
+| rtdb-utils.js（`?v=20261005`） | `initFirebase`・`generateRoomCode`・`now`・`isRoomExpired`・`getHostDisconnectedAt`・`cancelRoomOnDisconnect`・`copyRoomCode`・`copyRoomLink`・`showToast` |
 | stats.js（`?v=1`） | 起動回数（`open`）のみ |
 | howto.js | 「あそびかた」モーダル |

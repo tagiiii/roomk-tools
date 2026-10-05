@@ -1847,38 +1847,6 @@
     const rest = params.toString();
     history.replaceState(null, '', location.pathname + (rest ? '?' + rest : ''));
   }
-  // 共通の copyRoomCode はコード専用なので、文字列用のコピーを置く（clipboard API → execCommand('copy')、連打ガード）
-  async function copyText(value, button, okMessage, failMessage) {
-    if (button?.dataset.copyBusy) return false;
-    if (button) button.dataset.copyBusy = '1';
-    let copied = false;
-    try {
-      try {
-        await navigator.clipboard.writeText(value);
-        copied = true;
-      } catch {
-        const focused = document.activeElement;
-        const textarea = document.createElement('textarea');
-        textarea.value = value;
-        textarea.readOnly = true;
-        textarea.style.cssText = 'position:fixed;opacity:0;pointer-events:none';
-        try {
-          document.body.appendChild(textarea);
-          textarea.select();
-          copied = document.execCommand('copy');
-        } finally {
-          textarea.remove();
-          focused?.focus({ preventScroll: true });
-        }
-      }
-    } catch {
-      copied = false;
-    } finally {
-      if (button) delete button.dataset.copyBusy;
-    }
-    toast(copied ? okMessage : failMessage, !copied);
-    return copied;
-  }
   // 参加用のリンクでひらいたとき: コードを入れた状態で「ルームに参加する」（各自の端末）の画面を開き、名前だけ入れてもらう（コード欄は直せるように残す）
   function openJoinFromLink(code) {
     formError('cs-join-error', '');
@@ -1929,7 +1897,7 @@
   $('btnCopyLink')?.addEventListener('click', (e) => {
     const code = sess && sess.code;
     if (!code || !NET.validCode(code)) { toast('ルームコードがありません'); return; }
-    copyText(roomLink(code), e.currentTarget, '参加用のリンクをコピーしました', 'コピーできませんでした。コードをそのまま伝えてね');
+    window.RoomkRTDB.copyRoomLink(code, e.currentTarget, roomLink(code));
   });
   $('cs-proxy-add').addEventListener('click', onProxyAdd);
   $('cs-proxy-name').addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.isComposing && e.keyCode !== 229) { e.preventDefault(); $('cs-proxy-add').click(); } });

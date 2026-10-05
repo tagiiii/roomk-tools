@@ -89,23 +89,20 @@
     });
   }
 
-  // クリックから直接呼ぶ。コード単体をコピーし、失敗時も通知する。
-  async function copyRoomCode(code, button) {
+  // 文字列をコピーし、成功・失敗をトーストで通知する（クリックから直接呼ぶ。連打ガードつき）。
+  // Clipboard API が使えないときは textarea + execCommand('copy') で代替する。
+  async function copyText(value, button, okMessage, failMessage) {
     if (button?.dataset.copyBusy) return false;
-    if (typeof code !== 'string' || !/^[A-Z2-9]{6}$/.test(code)) {
-      showToast('ルームコードがありません');
-      return false;
-    }
     if (button) button.dataset.copyBusy = '1';
     let copied = false;
     try {
       try {
-        await navigator.clipboard.writeText(code);
+        await navigator.clipboard.writeText(value);
         copied = true;
       } catch (_) {
         const focused = document.activeElement;
         const textarea = document.createElement('textarea');
-        textarea.value = code;
+        textarea.value = value;
         textarea.readOnly = true;
         textarea.style.cssText = 'position:fixed;opacity:0;pointer-events:none';
         try {
@@ -122,8 +119,35 @@
     } finally {
       if (button) delete button.dataset.copyBusy;
     }
-    showToast(copied ? 'コードをコピーしました' : 'コピーできませんでした。コードをそのまま伝えてね', !copied);
+    showToast(copied ? okMessage : failMessage, !copied);
     return copied;
+  }
+
+  // クリックから直接呼ぶ。コード単体をコピーし、失敗時も通知する。
+  async function copyRoomCode(code, button) {
+    if (button?.dataset.copyBusy) return false;
+    if (typeof code !== 'string' || !/^[A-Z2-9]{6}$/.test(code)) {
+      showToast('ルームコードがありません');
+      return false;
+    }
+    return copyText(code, button, 'コードをコピーしました', 'コピーできませんでした。コードをそのまま伝えてね');
+  }
+
+  // 参加用のリンク: このページのアドレスの末尾に ?room=ルームコード（docs/development/rtdb.md「参加用のリンク」）。
+  function roomLink(code) {
+    return location.origin + location.pathname + '?room=' + code;
+  }
+
+  // クリックから直接呼ぶ。参加用のリンクをコピーし、失敗時も通知する。「コードをコピー」はコード単体のまま。
+  // link を渡すと、そのアドレスをコピーする（アプリが独自のパラメータを引き継ぐとき用）。
+  async function copyRoomLink(code, button, link) {
+    if (button?.dataset.copyBusy) return false;
+    if (typeof code !== 'string' || !/^[A-Z0-9]{6}$/.test(code)) {
+      showToast('ルームコードがありません');
+      return false;
+    }
+    const value = typeof link === 'string' && link ? link : roomLink(code);
+    return copyText(value, button, '参加用のリンクをコピーしました', 'コピーできませんでした。コードをそのまま伝えてね');
   }
 
   // 入力エラーは再送信までフォーム内に残す。
@@ -165,6 +189,9 @@
     initFirebase,
     cancelRoomOnDisconnect,
     copyRoomCode,
+    copyText,
+    roomLink,
+    copyRoomLink,
     showFormError,
     showToast,
   });

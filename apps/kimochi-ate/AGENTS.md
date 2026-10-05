@@ -184,6 +184,6 @@ waiting ─はじめる→ casting ─この人で始める→ answering ─公�
 | モジュール | 使用箇所 |
 |-----------|----------|
 | design-system.css | 色・角丸・余白のトークン、`.btn` 系のボタン |
-| rtdb-utils.js（`?v=20260910`） | `initFirebase`・`generateRoomCode`・`now`・`isRoomExpired`・`getHostDisconnectedAt`・`cancelRoomOnDisconnect`・`copyRoomCode`・`showToast` |
+| rtdb-utils.js（`?v=20261005`） | `initFirebase`・`generateRoomCode`・`now`・`isRoomExpired`・`getHostDisconnectedAt`・`cancelRoomOnDisconnect`・`copyRoomCode`・`copyRoomLink`・`showToast` |
 | stats.js（`?v=1`） | 起動回数（`open`）のみ |
 | howto.js | 「あそびかた」モーダル |

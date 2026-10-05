@@ -79,7 +79,7 @@ apps/esadori/
 ```
 
 - Firebase compat SDK **10.14.1**（app / auth / database）+ 匿名認証
-- 共有ヘルパー `../shared/js/rtdb-utils.js?v=20260715`（`initFirebase` / `now` / `isRoomExpired` / `generateRoomCode` / `esc` / `cancelRoomOnDisconnect` / `showToast`）
+- 共有ヘルパー `../shared/js/rtdb-utils.js?v=20261005`（`initFirebase` / `now` / `isRoomExpired` / `generateRoomCode` / `esc` / `cancelRoomOnDisconnect` / `showToast`）
 - `../shared/css/design-system.css` のトークン・`btn` クラスを再利用
 - CSS 接頭辞: **`esa-`**（BEM）。画面切替は共通パターンの `.screen` / `.active`
 - アイコンは Material Symbols Rounded（ポータルカードは鳥・食べ物系から実装時に選定。例: `flutter_dash` / `lunch_dining` 等、実在するアイコン名を確認して使う）
