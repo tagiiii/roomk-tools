@@ -1642,7 +1642,7 @@ $('btnGoCreate').addEventListener('click', () => {
 });
 $('btnGoJoin').addEventListener('click', () => {
   setError('joinError', '');
-  $('joinLinkHint').hidden = true;
+  if ($('joinLinkHint')) $('joinLinkHint').hidden = true;
   showScreen('join');
 });
 $('btnCreateBack').addEventListener('click', () => showScreen('top'));
@@ -1692,7 +1692,7 @@ async function copyText(value, button, okMessage, failMessage) {
   return copied;
 }
 
-$('btnCopyLink').addEventListener('click', (event) => {
+$('btnCopyLink')?.addEventListener('click', (event) => {
   if (!state.roomCode || !ROOM_CODE_PATTERN.test(state.roomCode)) {
     toast('ルームコードがありません');
     return;
@@ -1704,7 +1704,7 @@ $('btnCopyLink').addEventListener('click', (event) => {
 function openJoinFromLink(code) {
   setError('joinError', '');
   $('joinCode').value = code;
-  $('joinLinkHint').hidden = false;
+  if ($('joinLinkHint')) $('joinLinkHint').hidden = false;
   showScreen('join');
   $('guestName').focus({ preventScroll: true });
 }

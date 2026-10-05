@@ -126,6 +126,8 @@ button:disabled { cursor: default; }
 .cs-form__input:focus { border-color: var(--color-accent); outline: none; }
 .cs-form__input--code { letter-spacing: .2em; text-transform: uppercase; font-weight: 700; }
 .cs-form__hint { font-size: 14px; color: var(--color-muted); margin-top: 4px; }
+/* 参加用のリンクでひらいたときの案内（参加画面のフォームの先頭） */
+.cs-form__hint--lead { line-height: 1.6; margin: 0 0 12px; }
 .cs-form__error { margin-top: 12px; padding: 8px 12px; border-radius: 10px; background: #FDECEC; color: var(--color-error); font-weight: 700; }
 .cs-check { display: flex; align-items: center; gap: 10px; min-height: 44px; margin-top: 10px; cursor: pointer; font-weight: 700; }
 .cs-check input { width: 22px; height: 22px; accent-color: var(--color-primary); }

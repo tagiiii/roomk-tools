@@ -69,6 +69,7 @@ kotobapair_rooms/{roomCode}/
 - 待機画面の「コードをコピー」は**コード単体**（例: `39WJ6Y`）をコピーする。URL や案内文は付けない
   （do-mannaka 等の `copyToClipboard(state.roomCode)` と同じ挙動。2026-08-10 オーナー実機フィードバックで統一）。
   コピー処理は `RoomkRTDB.copyRoomCode()` を使い、成功・失敗を共通の通知で表示する。
+- 待機画面には「リンクをコピー」（`#btnCopyLink`）もある。参加用のリンク `?room=CODE` をコピーする（下記「参加用のリンク」）。
 
 ## 画面・status 遷移
 
@@ -279,6 +280,12 @@ transaction 内の検証（この順に全部）:
 - ホスト復帰時は `hostConnected: true` / `hostDisconnectedAt: null` に戻し、`onDisconnect` 予約を張り直す
 - リロード復帰は sessionStorage **`kotobapair_session`**（`roomCode` / `nickname` / `role`）。`tryReconnect()` が **transaction で** `players/{自分}` を書き戻す（削除済みルームを `update()` で再生成しないため）。`playing` 中の復帰では `turnOrder` に自分が居なければ末尾に足す
 - 通信の一時断は RTDB SDK の自動再接続に任せる。描画は毎スナップショットから冪等に作り直すため自己修復する
+
+## 参加用のリンク `?room=CODE`（2026-10-05）
+
+- 参加用のリンク `?room=CODE` と「リンクをコピー」（待機画面の「コードをコピー」の下）。共通仕様は docs/development/rtdb.md「参加用のリンク」。
+- このアプリの入口は `index.html` のインラインスクリプト末尾の `init()`（`?watch=` はない。`?room=` → 保存した記録 `tryReconnect` の順）。参加画面は `screen-join`（コード欄 `#join-code`、名前欄 `#join-nickname`、案内 `#joinLinkHint`）。`?room=` は `startRoomListener`（作成・参加・再接続の共通）で外す。
+- `?room=` の検査は「参加する」と同じ `/^[A-Z0-9]{6}$/`（`ROOM_CODE_PATTERN`）。トップの「ルームに参加する」（`goJoin()`）では案内を隠す。途中参加（`playing`・`result`）できるアプリなので、ゲーム中に貼ったリンクからも参加できる（参加の可否は既存の「参加する」の検査のまま）。
 
 ## 終了とデータ削除
 

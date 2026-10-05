@@ -60,6 +60,8 @@
     }
     .kp-notes .material-symbols-rounded { font-size: 18px; color: var(--color-accent); flex-shrink: 0; margin-top: 3px; }
     .kp-fineprint { font-size: 12px; color: var(--color-muted); line-height: 1.7; }
+    /* 参加用のリンクでひらいたときの案内（参加画面のフォームの先頭） */
+    .kp-fineprint--lead { font-size: 14px; line-height: 1.6; margin-bottom: 14px; }
 
     /* 弱ボタン（テキストリンク風・ナビゲーション用） */
     .kp-quiet-btn {
@@ -367,6 +369,7 @@
   <div class="page">
     <h2 class="kp-page-title">ルームに参加する</h2>
     <div class="card">
+      <p class="kp-fineprint kp-fineprint--lead" id="joinLinkHint" hidden>リンクからひらいたので、ルームコードは入っているよ。名前を入れて「参加する」を押してね。</p>
       <label class="form-label" for="join-nickname">ニックネーム</label>
       <input type="text" id="join-nickname" class="form-input" maxlength="8" placeholder="本当の名前じゃなくてOK">
       <label class="form-label" style="margin-top:16px" for="join-code">ルームコード（6文字）</label>
@@ -391,6 +394,10 @@
       <button class="btn btn-secondary btn-full" id="btn-copy-code" onclick="copyRoomCode(this)">
         <span class="material-symbols-rounded" aria-hidden="true">content_copy</span>
         コードをコピー
+      </button>
+      <button type="button" class="btn btn-secondary btn-full" id="btnCopyLink" onclick="copyRoomLink(this)">
+        <span class="material-symbols-rounded" aria-hidden="true">link</span>
+        リンクをコピー
       </button>
     </div>
     <div class="card">
@@ -772,7 +779,18 @@ function goCreate() {
 
 function goJoin() {
   hideError('join-error');
+  // トップの「ルームに参加する」から開いたときは、参加用のリンクの案内を隠す
+  document.getElementById('joinLinkHint').hidden = true;
   showScreen('join');
+}
+
+// 参加用のリンクでひらいたとき: コードを入れた状態で参加画面を開き、名前だけ入れてもらう（コード欄は直せるように残す）
+function openJoinFromLink(code) {
+  hideError('join-error');
+  document.getElementById('join-code').value = code;
+  document.getElementById('joinLinkHint').hidden = false;
+  showScreen('join');
+  document.getElementById('join-nickname').focus({ preventScroll: true });
 }
 
 /* ── ルーム作成画面 ── */
@@ -1071,6 +1089,9 @@ async function onHostPlaysChange(checked) {
    ルームリスナー
    ════════════════════════════════════════════════ */
 function startRoomListener() {
+  // 参加用のリンク（?room=コード）でひらいたときは、つないだあとにコードをアドレスから外す
+  //（再読み込みで古いコードの参加画面に戻らず、保存した記録から同じルームへ戻れるように）
+  if (new URLSearchParams(location.search).has('room')) history.replaceState(null, '', location.pathname);
   state.roomRef.on('value', snap => {
     if (!snap.exists()) {
       clearSession();
@@ -1758,6 +1779,51 @@ function copyRoomCode(btn) {
   return RoomkRTDB.copyRoomCode(state.roomCode, btn);
 }
 
+// 参加用のリンク: このページのアドレスの末尾に ?room=ルームコード。チャットに貼ると、参加する人はリンクをひらいて名前を入れるだけで参加できる。
+// 「コードをコピー」はコード単体のまま（口頭や画面共有で伝える用）。共通の copyRoomCode はコード専用なので、文字列用のコピーを置く
+const ROOM_CODE_PATTERN = /^[A-Z0-9]{6}$/; // 「参加する」の検査と同じ形
+function roomLink(code) {
+  return location.origin + location.pathname + '?room=' + code;
+}
+async function copyText(value, button, okMessage, failMessage) {
+  if (button?.dataset.copyBusy) return false;
+  if (button) button.dataset.copyBusy = '1';
+  let copied = false;
+  try {
+    try {
+      await navigator.clipboard.writeText(value);
+      copied = true;
+    } catch {
+      const focused = document.activeElement;
+      const textarea = document.createElement('textarea');
+      textarea.value = value;
+      textarea.readOnly = true;
+      textarea.style.cssText = 'position:fixed;opacity:0;pointer-events:none';
+      try {
+        document.body.appendChild(textarea);
+        textarea.select();
+        copied = document.execCommand('copy');
+      } finally {
+        textarea.remove();
+        focused?.focus({ preventScroll: true });
+      }
+    }
+  } catch {
+    copied = false;
+  } finally {
+    if (button) delete button.dataset.copyBusy;
+  }
+  showMsg(copied ? okMessage : failMessage, !copied);
+  return copied;
+}
+function copyRoomLink(btn) {
+  if (!state.roomCode || !ROOM_CODE_PATTERN.test(state.roomCode)) {
+    showMsg('ルームコードがありません');
+    return;
+  }
+  copyText(roomLink(state.roomCode), btn, '参加用のリンクをコピーしました', 'コピーできませんでした。コードをそのまま伝えてね');
+}
+
 /* ════════════════════════════════════════════════
    退出・クリーンアップ
    ════════════════════════════════════════════════ */
@@ -1873,8 +1939,38 @@ async function tryReconnect() {
 /* ════════════════════════════════════════════════
    初期化
    ════════════════════════════════════════════════ */
-(function init() {
+// 再読み込みなどで、保存した記録から同じルームへ戻る（戻れなければトップ）
+function resumeFromSession() {
   tryReconnect().then(ok => { if (!ok) showScreen('top'); });
+}
+
+(function init() {
+  const startParams = new URLSearchParams(location.search);
+  const roomParam = startParams.get('room');
+  if (roomParam !== null) {
+    // 参加用のリンク（?room=コード）の入口。コードを入れた状態で参加画面を開く。コードはつないだときにアドレスから外す（startRoomListener）
+    const linkCode = normalizeRoomCode(roomParam);
+    const saved = loadSession();
+    if (!ROOM_CODE_PATTERN.test(linkCode)) {
+      showMsg('ルームコードが正しくないよ');
+      history.replaceState(null, '', location.pathname);
+      resumeFromSession();
+    } else if (saved && saved.roomCode === linkCode) {
+      // 同じルームの記録が残っていれば、名前を入れなおさずに戻る。戻れなければ参加画面へ
+      tryReconnect().then((reconnected) => {
+        if (reconnected || state.roomRef) return;
+        clearSession();
+        openJoinFromLink(linkCode);
+      });
+    } else {
+      // 別のルームの記録が残っていても、ひらいたリンクのルームを優先する
+      if (saved) clearSession();
+      openJoinFromLink(linkCode);
+    }
+  } else {
+    // ルームにいる途中で再読み込みしたときは、同じルームに戻る
+    resumeFromSession();
+  }
 }());
 </script>
 <script src="../shared/js/stats.js?v=1" defer></script>
@@ -1887,8 +1983,8 @@ async function tryReconnect() {
       {
         heading: 'はじめかた',
         items: [
-          'ホストが「ルームをつくる」を押して、コードをみんなに教える',
-          'ほかの人は「ルームに参加する」からニックネームとルームコードを入れて「参加する」を押す',
+          'ホストが「ルームをつくる」を押して、コードをみんなに教える。ルームコードは「コードをコピー」、参加用のリンクは「リンクをコピー」でチャットに送れる',
+          'ほかの人は「ルームに参加する」からニックネームとルームコードを入れて「参加する」を押す。リンクからひらいたときは、ルームコードは入っているのでニックネームだけ入れる',
           '2人以上になったらホストが「ゲームをはじめる」を押す',
           'ホストは「自分もプレイヤーとして参加する」を外すと進行役になって、順番は回ってこない（そのときはホストのほかに2人以上で遊べる）',
         ],

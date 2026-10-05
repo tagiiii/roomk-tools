@@ -27,6 +27,7 @@
     .oek-page__title { font-size: 22px; font-weight: 700; color: var(--color-primary); margin-bottom: 6px; }
     .oek-page__sub   { font-size: 14px; color: var(--color-muted); margin-bottom: 20px; line-height: 1.7; }
     .oek-hint { font-size: 13px; color: var(--color-muted); text-align: center; margin-top: 8px; line-height: 1.7; }
+    .oek-hint--lead { font-size: 14px; text-align: left; margin: 0 0 16px; }
 
     /* 弱いボタン（テキストリンク風） */
     .oek-quiet-btn {
@@ -285,6 +286,7 @@
   <div class="oek-page">
     <h2 class="oek-page__title">ルームに参加する</h2>
     <p class="oek-page__sub">ニックネームとルームコードを入れてね。</p>
+    <p class="oek-hint oek-hint--lead" id="joinLinkHint" hidden>リンクからひらいたので、ルームコードは入っているよ。ニックネームを入れて「参加する」を押してね。</p>
     <div class="form-group">
       <label class="form-label" for="top-guest-nickname">ニックネーム（1〜8文字）</label>
       <input class="form-input" id="top-guest-nickname" type="text" maxlength="8" placeholder="例：はなこ" autocomplete="off">
@@ -310,6 +312,9 @@
       <p class="oek-room-code" id="lobby-room-code">------</p>
       <button type="button" class="btn btn-ghost btn-full" onclick="RoomkRTDB.copyRoomCode(state.roomCode, this)">
         <span class="material-symbols-rounded" aria-hidden="true">content_copy</span>コードをコピー
+      </button>
+      <button type="button" class="btn btn-ghost btn-full" id="btnCopyLink" onclick="copyRoomLink(this)">
+        <span class="material-symbols-rounded" aria-hidden="true">link</span>リンクをコピー
       </button>
       <p class="oek-hint">このコードをみんなに伝えてね</p>
     </div>
@@ -974,7 +979,63 @@ function openHostSetup() {
 }
 function openGuestJoin() {
   RoomkRTDB.showFormError('join-form-error', '');
+  $('joinLinkHint').hidden = true;
   showScreen('guest-join');
+}
+
+// ══════════════════════════════════════════════════
+// 参加用のリンク（?room=ルームコード）
+// ══════════════════════════════════════════════════
+// チャットに貼ると、参加する人はリンクをひらいてニックネームを入れるだけで参加できる。
+// 「コードをコピー」はコード単体のまま（口頭や画面共有で伝える用）。共通の copyRoomCode はコード専用なので、文字列用のコピーを置く
+function roomLink(code) {
+  return location.origin + location.pathname + '?room=' + code;
+}
+async function copyText(value, button, okMessage, failMessage) {
+  if (button?.dataset.copyBusy) return false;
+  if (button) button.dataset.copyBusy = '1';
+  let copied = false;
+  try {
+    try {
+      await navigator.clipboard.writeText(value);
+      copied = true;
+    } catch {
+      const focused = document.activeElement;
+      const textarea = document.createElement('textarea');
+      textarea.value = value;
+      textarea.readOnly = true;
+      textarea.style.cssText = 'position:fixed;opacity:0;pointer-events:none';
+      try {
+        document.body.appendChild(textarea);
+        textarea.select();
+        copied = document.execCommand('copy');
+      } finally {
+        textarea.remove();
+        focused?.focus({ preventScroll: true });
+      }
+    }
+  } catch {
+    copied = false;
+  } finally {
+    if (button) delete button.dataset.copyBusy;
+  }
+  showMsg(copied ? okMessage : failMessage, !copied);
+  return copied;
+}
+function copyRoomLink(button) {
+  if (!state.roomCode || !/^[A-Z2-9]{6}$/.test(state.roomCode)) {
+    showMsg('ルームコードがありません');
+    return;
+  }
+  copyText(roomLink(state.roomCode), button, '参加用のリンクをコピーしました', 'コピーできませんでした。コードをそのまま伝えてね');
+}
+// 参加用のリンクでひらいたとき: コードを入れた状態で参加画面を開き、ニックネームだけ入れてもらう（コード欄は直せるように残す）
+function openJoinFromLink(code) {
+  RoomkRTDB.showFormError('join-form-error', '');
+  $('top-guest-code').value = code;
+  $('joinLinkHint').hidden = false;
+  showScreen('guest-join');
+  $('top-guest-nickname').focus({ preventScroll: true });
 }
 function showReconnectOverlay(show) {
   $('reconnect-overlay').classList.toggle('show', show);
@@ -2573,6 +2634,9 @@ async function armOnDisconnect() {
 // ══════════════════════════════════════════════════
 function startCtlListener() {
   const ctlRef = state.ctlRef;
+  // 参加用のリンク（?room=コード）でひらいたときは、つないだあとにコードをアドレスから外す
+  //（再読み込みで古いコードの参加画面に戻らず、保存した記録から同じルームへ戻れるように）
+  if (new URLSearchParams(location.search).has('room')) history.replaceState(null, '', location.pathname);
   if (state.role === 'host') {
     touchMyRoomAlive();
     if (!state.aliveInterval) state.aliveInterval = setInterval(touchMyRoomAlive, 60 * 1000);
@@ -3089,10 +3153,40 @@ $('play-text').addEventListener('blur', () => { if (state.play.key) flushText();
 buildLimitSelects();
 buildTools();
 startConnectionWatch();
-tryReconnect().then((reconnected) => {
-  if (!reconnected && !state.currentScreen) showScreen('top');
-  sweepMyRooms();
-});
+// 再読み込みなどで、保存した記録から同じルームへ戻る（戻れなければトップ）
+function resumeFromSession() {
+  tryReconnect().then((reconnected) => {
+    if (!reconnected && !state.currentScreen) showScreen('top');
+    sweepMyRooms();
+  });
+}
+const startParams = new URLSearchParams(location.search);
+const roomParam = startParams.get('room');
+if (roomParam !== null) {
+  // 参加用のリンク（?room=コード）の入口。コードを入れた状態で参加画面を開く。コードはつないだときにアドレスから外す（startCtlListener）
+  const linkCode = normalizeRoomCode(roomParam);
+  const saved = loadSession();
+  if (!/^[A-Z2-9]{6}$/.test(linkCode)) {
+    showMsg('ルームコードが正しくないよ');
+    history.replaceState(null, '', location.pathname);
+    resumeFromSession();
+  } else if (saved && saved.roomCode === linkCode) {
+    // 同じルームの記録が残っていれば、ニックネームを入れなおさずに戻る。戻れなければ参加画面へ。
+    // 戻れなかったときの記録は tryReconnect が消す（つながらなかったときだけ、再読み込みで戻れるよう残す）。
+    // 復帰中に「トップへ戻る」を押していたら（画面がもう出ている）、上書きしない
+    tryReconnect().then((reconnected) => {
+      if (!reconnected && !state.roomRef && !state.currentScreen) openJoinFromLink(linkCode);
+      sweepMyRooms();
+    });
+  } else {
+    // 別のルームの記録が残っていても、ひらいたリンクのルームを優先する
+    if (saved) clearSession();
+    openJoinFromLink(linkCode);
+    sweepMyRooms();
+  }
+} else {
+  resumeFromSession();
+}
 </script>
 <script src="../shared/js/stats.js?v=1" defer></script>
 <script src="../shared/js/howto.js"></script>
@@ -3102,8 +3196,8 @@ tryReconnect().then((reconnected) => {
     lead: '書いた文を次の人が絵にして、その絵を次の人が文にして……と順番に回していく伝言ゲームです。最後にみんなで見せあって、最初のお題がどう変わったかを楽しもう。',
     sections: [
       { heading: 'はじめかた', items: [
-        'ホストが「ルームを作る」からルームを作る',
-        'ほかの人は「ルームに参加する」からニックネームとルームコードを入れて「参加する」を押す',
+        'ホストが「ルームを作る」からルームを作る。ルームコードは「コードをコピー」、参加用のリンクは「リンクをコピー」でチャットに送れる',
+        'ほかの人は「ルームに参加する」からニックネームとルームコードを入れて「参加する」を押す。リンクからひらいたときは、ルームコードは入っているのでニックネームだけ入れる',
         'ホストが「始める」を押すとスタート（描く人は3〜8人）',
       ] },
       { heading: 'すすめかた', items: [

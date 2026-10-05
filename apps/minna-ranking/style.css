@@ -513,6 +513,14 @@
 
 .mr-form > .btn { margin-top: 18px; }
 
+/* 参加用のリンク（?room=コード）でひらいたときの案内（参加画面のフォームの先頭） */
+.mr-form__hint {
+  color: var(--color-muted);
+  font-size: 0.875rem;
+  line-height: 1.6;
+  margin: 0 0 16px;
+}
+
 .mr-form__input--code {
   text-transform: uppercase;
   letter-spacing: 0.18em;

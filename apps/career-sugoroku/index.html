@@ -9,7 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet" />
   <link rel="stylesheet" href="../shared/css/design-system.css" />
-  <link rel="stylesheet" href="style.css?v=20260929a" />
+  <link rel="stylesheet" href="style.css?v=20261005" />
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
@@ -123,6 +123,7 @@
     <section class="cs-panel" aria-labelledby="cs-join-title">
       <div class="cs-subhead"><button class="cs-quiet cs-back" type="button" data-go-top>トップへ戻る</button></div>
       <h2 id="cs-join-title" class="cs-panel__title cs-panel__title--sub">ルームに参加する</h2>
+      <p class="cs-form__hint cs-form__hint--lead" id="joinLinkHint" hidden>リンクからひらいたので、ルームコードは入っているよ。名前を入れて「参加する」を押してね。</p>
       <label class="cs-form__label" for="cs-join-name">名前（8文字まで）</label>
       <input id="cs-join-name" class="cs-form__input" type="text" maxlength="8" autocomplete="nickname" />
       <label class="cs-form__label" for="cs-join-code">ルームコード（6文字）</label>
@@ -144,6 +145,7 @@
         <span class="cs-code__label">ルームコード</span>
         <b id="cs-lobby-code" class="cs-code__value"></b>
         <button id="cs-copy-code" class="cs-btn cs-btn--secondary cs-btn--sm" type="button"><span class="material-symbols-rounded" aria-hidden="true">content_copy</span>コードをコピー</button>
+        <button id="btnCopyLink" class="cs-btn cs-btn--secondary cs-btn--sm" type="button"><span class="material-symbols-rounded" aria-hidden="true">link</span>リンクをコピー</button>
       </div>
       <p id="cs-lobby-host" class="cs-card__sub"></p>
       <h3 class="cs-field__label">あそぶ人</h3>
@@ -239,7 +241,7 @@
   <script src="text.js?v=20260929a"></script>
   <script src="room.js?v=20260929a"></script>
   <script src="net.js?v=20260929a"></script>
-  <script src="ui.js?v=20260930b"></script>
+  <script src="ui.js?v=20261005"></script>
   <script src="../shared/js/stats.js?v=1" defer></script>
   <script src="../shared/js/howto.js"></script>
   <script>
@@ -248,8 +250,8 @@
       lead: 'すごろくで進みながら体験で「適性」をため、たまった適性に合う職業を選んでポイントを集めるゲームだよ。ポイントはゲームの中のもの。',
       sections: [
         { heading: 'はじめかた', items: [
-          'ホストが「ルームを作る」を押して、ルームコードを伝える',
-          'ほかの人は「ルームに参加する」を押し、名前 → ルームコードの順に入れて「参加する」',
+          'ホストが「ルームを作る」を押して、ルームコードを伝える。ルームコードは「コードをコピー」、参加用のリンクは「リンクをコピー」でチャットに送れる',
+          'ほかの人は「ルームに参加する」を押し、名前 → ルームコードの順に入れて「参加する」。リンクからひらいたときは、ルームコードは入っているので名前だけ入れる',
           '端末がない人は、ホストが待合室の「端末のない人を追加」に名前を入れて「追加」。その人の番はホストが押す',
           '1台の画面をみんなで見て遊ぶときは「1台の画面であそぶ」',
         ] },

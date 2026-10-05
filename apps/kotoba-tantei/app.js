@@ -46,6 +46,11 @@ const state = {
   error: "",
   lastTurnBannerKey: "",
   pendingCardIndex: null,
+  // 参加用のリンク（?room=コード）でひらいた参加画面のコード（空ならリンクからではない）
+  joinLinkCode: "",
+  focusJoinName: false,
+  // 参加用のリンクでひらき、同じルームの記録から戻ろうとしている間のコード（戻れなければ参加画面へ）
+  linkResumeCode: "",
 };
 
 const esc = escapeHtml;
@@ -56,6 +61,24 @@ function getRoute() {
 
 function navigate(route) {
   window.location.hash = route;
+}
+
+// すでにその画面のハッシュなら hashchange が起きないので、そのまま描く
+function showRoute(route) {
+  if (getRoute() === route) {
+    render();
+  } else {
+    navigate(route);
+  }
+}
+
+// 参加用のリンク（?room=コード）のコードをアドレスから外す。ハッシュ（画面）とほかのパラメータは残す
+function dropRoomParam() {
+  const params = new URLSearchParams(window.location.search);
+  if (!params.has("room")) return;
+  params.delete("room");
+  const search = params.toString();
+  history.replaceState(null, "", window.location.pathname + (search ? `?${search}` : "") + window.location.hash);
 }
 
 function saveSession() {
@@ -77,12 +100,23 @@ function restoreSession() {
   }
 }
 
+// 保存した記録を読むだけ（state には入れない）。参加用のリンクの入口で、同じルームの記録かを見る
+function readSavedSession() {
+  try {
+    const saved = JSON.parse(sessionStorage.getItem(SESSION_KEY) || "null");
+    return saved?.roomId && saved?.playerId ? saved : null;
+  } catch {
+    return null;
+  }
+}
+
 function clearSession() {
   sessionStorage.removeItem(SESSION_KEY);
   state.roomId = "";
   state.playerId = "";
   state.room = null;
   state.pendingCardIndex = null;
+  state.linkResumeCode = "";
   stopRoomSubscription();
 }
 
@@ -191,6 +225,7 @@ function renderJoin() {
     <section class="card cn-panel">
       <h1 class="cn-title">ルームに参加する</h1>
       <form id="join-form" class="cn-form" novalidate>
+        <p class="text-muted cn-join-link-hint" id="joinLinkHint" ${state.joinLinkCode ? "" : "hidden"}>リンクからひらいたので、ルームコードは入っているよ。名前を入れて「参加する」を押してね。</p>
         <label class="form-group">
           <span class="form-label">あなたの名前</span>
           <input class="form-input" name="nickname" maxlength="8" autocomplete="nickname" placeholder="例: はなこ" required />
@@ -209,6 +244,72 @@ function renderJoin() {
       </form>
     </section>
   `;
+  // 参加用のリンクからひらいたときは、コードを入れておく（innerHTML に連結せず value に入れる）。コード欄は直せる
+  if (state.joinLinkCode) {
+    const form = appEl.querySelector("#join-form");
+    form.elements.roomId.value = state.joinLinkCode;
+    if (state.focusJoinName) {
+      state.focusJoinName = false;
+      form.elements.nickname.focus({ preventScroll: true });
+    }
+  }
+}
+
+// 参加用のリンクでひらいたとき: コードを入れた状態で参加画面を開き、名前だけ入れてもらう
+function openJoinFromLink(code) {
+  state.error = "";
+  state.loading = false;
+  state.joinLinkCode = code;
+  state.focusJoinName = true;
+  showRoute("join");
+}
+
+// 参加用のリンクでひらき、同じルームの記録から戻ろうとして戻れなかったとき（ルームがない・期限切れ・
+// 自分が参加者にいない）: 記録を消して、コードを入れた参加画面へ
+function fallbackFromLinkResume() {
+  const code = state.linkResumeCode;
+  if (!code) return false;
+  state.linkResumeCode = "";
+  clearSession();
+  openJoinFromLink(code);
+  return true;
+}
+
+// 再読み込みなどで、保存した記録から同じルームへ戻る（従来の起動時の処理）
+function resumeFromSession() {
+  if (getRoute() === "home" && restoreSession()) {
+    navigate("lobby");
+  } else {
+    render();
+  }
+}
+
+// 参加用のリンク（?room=コード）の入口
+function startFromRoomLink(rawCode) {
+  const linkCode = normalizeRoomId(rawCode);
+  const saved = readSavedSession();
+  if (!SPEC_CODE_PATTERN.test(linkCode)) {
+    showToast("ルームコードが正しくないよ", "error");
+    dropRoomParam();
+    resumeFromSession();
+  } else if (saved && saved.roomId === linkCode) {
+    // 同じルームの記録が残っていれば、名前を入れなおさずに戻る。戻れなければ参加画面へ（ensureRoomSubscription）
+    state.linkResumeCode = linkCode;
+    restoreSession();
+    if (["lobby", "game", "finish"].includes(getRoute())) {
+      render();
+    } else {
+      navigate("lobby");
+    }
+  } else {
+    // 別のルームの記録が残っていても、ひらいたリンクのルームを優先する
+    if (saved) clearSession();
+    openJoinFromLink(linkCode);
+  }
+}
+
+function roomLink(code) {
+  return window.location.origin + window.location.pathname + "?room=" + code;
 }
 
 function renderWatchJoin() {
@@ -306,9 +407,14 @@ function renderLobby() {
           <p class="text-muted">ルームコード</p>
           <h1 class="cn-room-code">${esc(state.roomId)}</h1>
         </div>
-        <button class="btn btn-secondary btn-sm" id="copy-room-code" type="button">
-          <span class="material-symbols-rounded" aria-hidden="true">content_copy</span>コードをコピー
-      </button>
+        <div class="cn-lobby-header__actions">
+          <button class="btn btn-secondary btn-sm" id="copy-room-code" type="button">
+            <span class="material-symbols-rounded" aria-hidden="true">content_copy</span>コードをコピー
+          </button>
+          <button class="btn btn-secondary btn-sm" id="btnCopyLink" type="button">
+            <span class="material-symbols-rounded" aria-hidden="true">link</span>リンクをコピー
+          </button>
+        </div>
       </div>
       <div class="cn-status-grid mt-lg">
         <div class="cn-status">
@@ -483,6 +589,7 @@ function ensureRoomSubscription() {
     state.room = room;
     clearInvalidPendingCard();
     if (!room) {
+      if (fallbackFromLinkResume()) return;
       state.error = "ルームが見つかりません";
       clearSession();
       navigate("home");
@@ -494,10 +601,22 @@ function ensureRoomSubscription() {
       void deleteExpiredRoom(expiredRoomId).catch((error) => {
         console.warn("[kotoba-tantei] deleteExpiredRoom failed", error);
       });
+      if (fallbackFromLinkResume()) return;
       clearSession();
       navigate("home");
       return;
     }
+    if (state.linkResumeCode) {
+      if (!room.players?.some((p) => p.id === state.playerId)) {
+        fallbackFromLinkResume();
+        return;
+      }
+      state.linkResumeCode = "";
+    }
+    // ルームにつないだ（作成・参加・再接続）: 参加用のリンク（?room=コード）でひらいたときは、コードをアドレスから外す
+    //（再読み込みで古いコードの参加画面に戻らず、保存した記録から同じルームへ戻れるように）
+    dropRoomParam();
+    state.joinLinkCode = "";
     if (room.gamePhase === "in_progress" && getRoute() === "lobby") {
       navigate("game");
       return;
@@ -1011,6 +1130,8 @@ async function handleJoin(form) {
   }
 
   const playerId = generatePlayerId();
+  // 参加用のリンクからひらいた参加画面は、描き直してもコード欄に今のコードが残るようにする
+  if (state.joinLinkCode) state.joinLinkCode = roomId;
   state.loading = true;
   state.error = "";
   renderJoin();
@@ -1303,6 +1424,8 @@ async function handlePlayerClick(event) {
   const routeButton = event.target.closest("[data-route]");
   if (routeButton) {
     state.error = "";
+    // トップの「ルームに参加する」から開くときは、参加用のリンクのヒントとコードを出さない
+    if (routeButton.dataset.route === "join") state.joinLinkCode = "";
     navigate(routeButton.dataset.route);
     return;
   }
@@ -1317,6 +1440,24 @@ async function handlePlayerClick(event) {
       delete copyButton.dataset.copyBusy;
     }
     showToast(copied ? "コードをコピーしました" : "コピーできませんでした。コードをそのまま伝えてね", copied ? "success" : "error");
+    return;
+  }
+
+  // 参加用のリンク（?room=コード）をコピーする。「コードをコピー」はコード単体のまま
+  const copyLinkButton = event.target.closest("#btnCopyLink");
+  if (copyLinkButton) {
+    if (copyLinkButton.dataset.copyBusy) return;
+    if (!state.roomId || !SPEC_CODE_PATTERN.test(state.roomId)) {
+      showToast("ルームコードがありません", "error");
+      return;
+    }
+    let copied = false;
+    try {
+      copied = await copyToClipboard(roomLink(state.roomId), copyLinkButton, { successText: "リンクをコピーしました" });
+    } catch (_) {
+      delete copyLinkButton.dataset.copyBusy;
+    }
+    showToast(copied ? "参加用のリンクをコピーしました" : "コピーできませんでした。コードをそのまま伝えてね", copied ? "success" : "error");
     return;
   }
 
@@ -1448,11 +1589,14 @@ function initPlayerMode() {
   document.addEventListener("submit", handlePlayerSubmit);
   window.addEventListener("hashchange", render);
 
-  if (getRoute() === "home" && restoreSession()) {
-    navigate("lobby");
-  } else {
-    render();
+  // 参加用のリンク（?room=コード）でひらいたときは、コードを入れた参加画面を開く（?watch= は観戦モードで先に分かれる）
+  const roomParam = new URLSearchParams(window.location.search).get("room");
+  if (roomParam !== null) {
+    startFromRoomLink(roomParam);
+    return;
   }
+  // ルームにいる途中で再読み込みしたときは、同じルームに戻る
+  resumeFromSession();
 }
 
 /* ════════════════════════════════════════════════

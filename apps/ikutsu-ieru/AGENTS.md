@@ -60,6 +60,7 @@ ikutsu_rooms/{roomCode}/
 screen-top
   ├─(ルーム作成)→ screen-waiting [status: waiting]
   └─(参加)─────→ screen-waiting [status: waiting]
+参加用のリンク ?room=CODE → screen-guest-join(ルームコード入力済み・ニックネームだけ入れる) → screen-waiting
 
 screen-waiting
   └─(ホストがお題+時間を入力して開始)→ screen-input [status: input]
@@ -82,7 +83,7 @@ screen-finished
 - 参加時は6桁ルームコード入力
 
 ### screen-waiting
-- ルームコード表示(コピーボタン付き)
+- ルームコード表示(「コードをコピー」「リンクをコピー」付き。ホストだけに出る)
 - 参加者一覧(ホストバッジ・あなたバッジ。進行だけのホストには「進行役」バッジ)。人数は「答える人 N人」(遊ぶ人だけ数える)
 - **ホスト専用 UI**
   - お題の入力(自由記入) / またはお題リストから「ランダムに1つ」ボタン
@@ -285,6 +286,14 @@ window.IKUTSU_THEMES = [
 - 旧ページが予約済みの参加者全体 remove は新ページから取り消せない。全員が新版を読み込んだ新しいルームから利用する。古い `presenceVersion` なしの guest は互換表示上は接続扱いであり、保持保証対象にはしない。
 - ニックネームの RTDB 禁止文字(`. # $ [ ] /`・制御文字)を入口と保存 session で拒否し、接続子パスを安全に組み立てる。単一引用符など有効な文字は維持し、DOM は既存 `esc()` を継続する。
 - 200行を超える差分は、接続予約・回答 transaction・世代無効化・復帰・退出・TTL・finished 削除を片側だけ導入するとデータ削除／再生成を招く不可分のライフサイクル変更のため。1アプリ・1関心事として独立レビューし、実SDK隔離検証と合成 VM を区別する。
+
+## 参加用のリンク `?room=CODE`(2026-10-05)
+
+- 参加用のリンク `?room=CODE` と「リンクをコピー」(`#btnCopyLink`。ホストだけに出るルームコードのカードで「コードをコピー」の下)。共通仕様は docs/development/rtdb.md「参加用のリンク」。
+- このアプリの入口は `index.html` のインラインスクリプト末尾「初期化」(`?watch=` はない。`?room=` → 保存した記録 `tryReconnect` の順)。参加画面は `screen-guest-join`(コード欄 `#guest-code`、名前欄 `#guest-nickname`、案内 `#joinLinkHint`)。`?room=` は `startRoomListener`(作成・参加・再接続の共通)で外す。
+- `?room=` の検査は「参加する」と同じ `/^[A-Z0-9]{6}$/`(`ROOM_CODE_PATTERN`)。トップの「ルームに参加する」(`goTo('guest-join')`)では案内を隠す。
+- 同じコードの記録があるときの再接続の判定は、既存の起動処理と同じ `tryReconnect()` の戻り値だけで行う(`tryReconnect` はホストの書き戻しに失敗すると `state.roomRef` を残したまま false を返すため、kagi-awase の `|| state.roomRef` を使うと画面が出ないまま止まる)。
+- 「リンクをコピー」もホストだけに出る(このアプリのルームコードのカードはホストだけに出す作りのため)。
 
 ## ホストの参加(2026-10-01 オーナー決定: 待合室でホストの参加を選べる(初期値は従来どおり))
 

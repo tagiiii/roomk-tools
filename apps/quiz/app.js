@@ -204,6 +204,9 @@ const btnJoinRoom = $('btnJoinRoom');
 const hostNameInput = $('hostName');
 const guestNameInput = $('guestName');
 const joinCodeInput = $('joinCode');
+// 参加用のリンク（?room=コード）の部品。古い index.html（キャッシュ）と組み合わさったときは無いので、無ければ使わない
+const joinLinkHint = $('joinLinkHint');
+const btnCopyLink = $('btnCopyLink');
 const lobbyCode = $('lobbyCode');
 const lobbyLead = $('lobbyLead');
 const lobbyCount = $('lobbyCount');
@@ -1219,6 +1222,9 @@ function connectToRoom(role, nickname, code, ref) {
   roomCodeLabel.textContent = code;
   btnLeave.textContent = role === 'host' ? 'ルームを閉じる' : '退出する';
   writeSession();
+  // 参加用のリンク（?room=コード）でひらいたときは、つないだあとにコードをアドレスから外す
+  //（再読み込みで古いコードの参加画面に戻らず、保存した記録から同じルームへ戻れるように）
+  if (new URLSearchParams(location.search).has('room')) history.replaceState(null, '', location.pathname);
   if (role === 'host') placePicker(true);
 
   state.roomCallback = (snap) => {
@@ -2539,6 +2545,49 @@ function renderWatchFinal(data) {
   }
 }
 
+/* ── ルームであそぶ：参加用のリンク（?room=コード） ──
+   このページのアドレスの末尾に ?room=ルームコード。チャットに貼ると、参加する人はリンクをひらいて名前を入れるだけで参加できる。
+   「コードをコピー」はコード単体のまま（口頭や画面共有で伝える用） */
+function roomLink(code) {
+  return location.origin + location.pathname + '?room=' + code;
+}
+
+// 共有の copyToClipboard はボタンの文字を「コピーしました！」に変え、失敗は知らせないので、
+// ボタンは渡さず（ルームバーの幅を変えない）、連打ガードと成功・失敗の通知をここで行う
+function copyRoomLink(button) {
+  if (button.dataset.copyBusy) return;
+  if (!state.roomCode || !ROOM_CODE_PATTERN.test(state.roomCode)) {
+    toast('ルームコードがありません');
+    return;
+  }
+  button.dataset.copyBusy = '1';
+  copyToClipboard(roomLink(state.roomCode))
+    .catch(() => false)
+    .then((ok) => {
+      toast(ok ? '参加用のリンクをコピーしました' : 'コピーできませんでした。コードをそのまま伝えてね', !ok);
+    })
+    .finally(() => {
+      delete button.dataset.copyBusy;
+    });
+}
+
+// 参加用のリンクでひらいたとき: コードを入れた状態で参加画面を開き、名前だけ入れてもらう（コード欄は直せるように残す）
+function openJoinFromLink(code) {
+  setError('joinError', '');
+  joinCodeInput.value = code;
+  if (joinLinkHint) joinLinkHint.hidden = false;
+  openRoomForm('join'); // 先に匿名ログインを始めておく
+  guestNameInput.focus({ preventScroll: true });
+}
+
+// 再読み込みなどで、保存した記録から同じルームへ戻る
+function resumeFromSession() {
+  if (!readSession()) return;
+  tryReconnect().then((reconnected) => {
+    if (!reconnected && !state.roomRef) clearSession();
+  });
+}
+
 function submitOnEnter(input, handler) {
   input.addEventListener('keydown', (event) => {
     // 日本語入力の確定の Enter では送らない（Safari は確定の Enter を isComposing=false・keyCode 229 で届ける）
@@ -2555,7 +2604,10 @@ btnCopyQuestion.addEventListener('click', copyQuestion);
 btnCopyAnswer.addEventListener('click', copyAnswer);
 
 btnGoCreate.addEventListener('click', () => openRoomForm('create'));
-btnGoJoin.addEventListener('click', () => openRoomForm('join'));
+btnGoJoin.addEventListener('click', () => {
+  if (joinLinkHint) joinLinkHint.hidden = true;
+  openRoomForm('join');
+});
 $('btnCreateBack').addEventListener('click', () => showScreen('top'));
 $('btnJoinBack').addEventListener('click', () => showScreen('top'));
 btnCreateRoom.addEventListener('click', createRoom);
@@ -2564,6 +2616,7 @@ submitOnEnter(hostNameInput, createRoom);
 submitOnEnter(guestNameInput, joinRoom);
 submitOnEnter(joinCodeInput, joinRoom);
 $('btnCopyCode').addEventListener('click', (event) => RoomkRTDB.copyRoomCode(state.roomCode, event.currentTarget));
+if (btnCopyLink) btnCopyLink.addEventListener('click', () => copyRoomLink(btnCopyLink));
 btnLeave.addEventListener('click', leaveRoom);
 $('btnOverlayLeave').addEventListener('click', leaveRoom);
 btnRoomStart.addEventListener('click', startRoomGame);
@@ -2598,13 +2651,33 @@ showScreen('top');
 
 // ?watch=CODE はみんなにみせる画面を開く（最優先）。開けなくても、再読み込み用の記録には頼らない
 const watchParams = new URLSearchParams(location.search);
+const roomParam = watchParams.get('room');
 if (WATCH_UI && watchParams.has('watch')) {
   // 別のルームのホスト・参加者として戻らないよう、このタブの記録は消しておく
   clearSession();
   startWatchFromUrl(watchParams.get('watch'));
-} else if (readSession()) {
+} else if (roomParam !== null) {
+  // 参加用のリンク（?room=コード）の入口。「ルームであそぶ」の参加画面をコードを入れた状態で開く。
+  // コードはつないだときにアドレスから外す（connectToRoom）
+  const linkCode = normalizeRoomCode(roomParam);
+  const saved = readSession();
+  if (!ROOM_CODE_PATTERN.test(linkCode)) {
+    toast('ルームコードが正しくないよ');
+    history.replaceState(null, '', location.pathname);
+    resumeFromSession();
+  } else if (saved && saved.roomCode === linkCode) {
+    // 同じルームの記録が残っていれば、名前を入れなおさずに戻る。戻れなければ参加画面へ
+    tryReconnect().then((reconnected) => {
+      if (reconnected || state.roomRef) return;
+      clearSession();
+      openJoinFromLink(linkCode);
+    });
+  } else {
+    // 別のルームの記録が残っていても、ひらいたリンクのルームを優先する
+    if (saved) clearSession();
+    openJoinFromLink(linkCode);
+  }
+} else {
   // ルームにいる途中で再読み込みしたときは、同じルームに戻る
-  tryReconnect().then((reconnected) => {
-    if (!reconnected && !state.roomRef) clearSession();
-  });
+  resumeFromSession();
 }

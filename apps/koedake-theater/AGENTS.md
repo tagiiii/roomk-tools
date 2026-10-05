@@ -34,7 +34,8 @@ apps/koedake-theater/
 ```
 TOP（screen-top）
  ├── ホスト → ニックネーム入力 → ルーム作成・待機（screen-waiting）
- └── ゲスト → ニックネーム＋コード入力 → 待機（screen-waiting）
+ ├── ゲスト → ニックネーム＋コード入力 → 待機（screen-waiting）
+ └── 参加用のリンク `?room=CODE` → 参加画面（ルームコード入力済み・ニックネームだけ入れる） → 待機
                      ↓（ホストが「ゲームスタート」/ 遊ぶ人2〜8人）
            えんじる人えらび（screen-casting）
              全員: お題カード（セリフ1つ＋シチュエーション①〜⑥）を表示
@@ -60,6 +61,13 @@ TOP（screen-top）
            おしまい（screen-done）
              ポイント一覧を控えめに表示。30秒後にルーム自動削除
 ```
+
+### 参加用のリンク（`?room=CODE`。2026-10-05）
+
+- 待合室のホスト向けパネル（ルームコードの下）に「コードをコピー」と並べて「リンクをコピー」（`id="btnCopyLink"`）。ルームコードはホストにだけ出るので、このボタンもホストだけ。共通仕様は docs/development/rtdb.md「参加用のリンク」
+- このアプリの入口は `<script>` 末尾の「初期化」（`?room=` → 保存した記録 `koedake_session` の順。`?watch=` はない）。参加画面は `screen-guest-join`、ヒントは `joinLinkHint`。`?room=` は `startRoomListener`（作成・参加・再接続の共通の接続処理）で外す
+- 入力欄の名前が「ニックネーム」なので、ヒント・あそびかた・スライドのノートは「名前」でなく「ニックネームだけ入れる」と書く
+- 同じコードの記録が残っているときの再接続は `tryReconnect()` の戻り値だけで判定する（このアプリの `tryReconnect` は途中で `state.roomRef` を入れてから失敗を返すことがあるため。kagi-awase の `|| state.roomRef` は使わない。失敗したら記録を消して参加画面へ）
 
 ## status 遷移
 

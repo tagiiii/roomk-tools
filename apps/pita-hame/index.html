@@ -260,6 +260,8 @@
       margin-top: 10px;
     }
     .ph-hint .material-symbols-rounded { font-size: 16px; vertical-align: -3px; margin-right: 2px; }
+    /* 参加用のリンクでひらいたときの案内（参加画面のフォームの先頭） */
+    .ph-hint--lead { text-align: left; line-height: 1.6; margin: 0; }
 
     /* ── オーバーレイ（完成・答え）── */
     .ph-overlay {
@@ -628,6 +630,7 @@
         <h2 class="ph-subhead__title">ルームに参加する</h2>
       </div>
       <div class="ph-form">
+        <p class="ph-hint ph-hint--lead" id="joinLinkHint" hidden>リンクからひらいたので、ルームコードは入っているよ。名前を入れて「参加する」を押してね。</p>
         <label class="ph-field">
           <span class="ph-field__label">ニックネーム</span>
           <input type="text" class="ph-input" id="joinNick" maxlength="8" placeholder="8文字まで" autocomplete="off" />
@@ -651,6 +654,9 @@
         <span class="ph-roomcode__value" id="waitingCode"></span>
         <button type="button" class="btn btn-ghost btn-sm" id="btnCopyCode">
           <span class="material-symbols-rounded" aria-hidden="true">content_copy</span>コードをコピー
+        </button>
+        <button type="button" class="btn btn-ghost btn-sm" id="btnCopyLink">
+          <span class="material-symbols-rounded" aria-hidden="true">link</span>リンクをコピー
         </button>
       </div>
 
@@ -2053,6 +2059,9 @@
 
     // ═════════ リスナー（分割購読）═════════
     function startListeners() {
+      // 参加用のリンク（?room=コード）でひらいたときは、つないだあとにコードをアドレスから外す
+      //（再読み込みで古いコードの参加画面に戻らず、保存した記録から同じルームへ戻れるように）
+      if (new URLSearchParams(location.search).has('room')) history.replaceState(null, '', location.pathname);
       stopListeners();
       const ref = net.roomRef;
       const add = (path, cb) => {
@@ -2749,6 +2758,51 @@
       return RoomkRTDB.copyRoomCode(net.roomCode, el('btnCopyCode'));
     }
 
+    // 参加用のリンク: このページのアドレスの末尾に ?room=ルームコード。チャットに貼ると、参加する人はリンクをひらいて名前を入れるだけで参加できる。
+    // 「コードをコピー」はコード単体のまま（口頭や画面共有で伝える用）。共通の copyRoomCode はコード専用なので、文字列用のコピーを置く
+    const ROOM_CODE_PATTERN = /^[A-Z0-9]{6}$/; // 「参加する」の検査と同じ形
+    function roomLink(code) {
+      return location.origin + location.pathname + '?room=' + code;
+    }
+    async function copyText(value, button, okMessage, failMessage) {
+      if (button?.dataset.copyBusy) return false;
+      if (button) button.dataset.copyBusy = '1';
+      let copied = false;
+      try {
+        try {
+          await navigator.clipboard.writeText(value);
+          copied = true;
+        } catch {
+          const focused = document.activeElement;
+          const textarea = document.createElement('textarea');
+          textarea.value = value;
+          textarea.readOnly = true;
+          textarea.style.cssText = 'position:fixed;opacity:0;pointer-events:none';
+          try {
+            document.body.appendChild(textarea);
+            textarea.select();
+            copied = document.execCommand('copy');
+          } finally {
+            textarea.remove();
+            focused?.focus({ preventScroll: true });
+          }
+        }
+      } catch {
+        copied = false;
+      } finally {
+        if (button) delete button.dataset.copyBusy;
+      }
+      RoomkRTDB.showToast(copied ? okMessage : failMessage, !copied);
+      return copied;
+    }
+    function copyLink() {
+      if (!net.roomCode || !ROOM_CODE_PATTERN.test(net.roomCode)) {
+        RoomkRTDB.showToast('ルームコードがありません');
+        return;
+      }
+      copyText(roomLink(net.roomCode), el('btnCopyLink'), '参加用のリンクをコピーしました', 'コピーできませんでした。コードをそのまま伝えてね');
+    }
+
     // ── 設定変更（ホスト・waiting のみ）──
     async function updateSetting(field, value) {
       if (net.role !== 'host' || !net.roomRef || net.status !== 'waiting') return;
@@ -2765,18 +2819,21 @@
       createRoom, joinRoom, startRound, endRound, hostNext, playAgain, closeRoom,
       restartRound, leaveRoom, tryReconnect, onLocalComplete, copyCode, updateSetting,
       getSeg, showRoundBrokenIfHost, saveBoard,
+      copyLink, normalizeRoomCode, ROOM_CODE_PATTERN, loadSession, clearSession,
       _net: net,
     };
   }());
 
   /* ---- みんなでモードのイベント配線 ---- */
   el('btnCreate').addEventListener('click', () => { el('createError').textContent = ''; el('createNick').value = ''; showScreen('create'); });
-  el('btnJoin').addEventListener('click', () => { el('joinError').textContent = ''; el('joinCode').value = ''; el('joinNick').value = ''; showScreen('join'); });
+  // トップの「ルームに参加する」では、参加用のリンクの案内を隠す
+  el('btnJoin').addEventListener('click', () => { el('joinError').textContent = ''; el('joinCode').value = ''; el('joinNick').value = ''; el('joinLinkHint').hidden = true; showScreen('join'); });
   el('btnCreateBack').addEventListener('click', () => showScreen('top'));
   el('btnJoinBack').addEventListener('click', () => showScreen('top'));
   el('btnCreateGo').addEventListener('click', Net.createRoom);
   el('btnJoinGo').addEventListener('click', Net.joinRoom);
   el('btnCopyCode').addEventListener('click', Net.copyCode);
+  el('btnCopyLink').addEventListener('click', Net.copyLink);
   el('btnStartRound').addEventListener('click', Net.startRound);
   el('btnLeaveWaiting').addEventListener('click', Net.leaveRoom);
   el('btnEndRound').addEventListener('click', () => Net.endRound('host'));
@@ -2803,10 +2860,47 @@
     });
   });
 
-  // 起動時: セッションがあれば再接続、なければ TOP
-  window.addEventListener('load', async () => {
+  // 参加用のリンクでひらいたとき: コードを入れた状態で参加画面を開き、名前だけ入れてもらう（コード欄は直せるように残す）
+  function openJoinFromLink(code) {
+    el('joinError').textContent = '';
+    el('joinCode').value = code;
+    el('joinLinkHint').hidden = false;
+    showScreen('join');
+    el('joinNick').focus({ preventScroll: true });
+  }
+  // 再読み込みなどで、保存した記録から同じルームへ戻る（戻れなければ TOP）
+  async function resumeFromSession() {
     const ok = await Net.tryReconnect();
     if (!ok) showScreen('top');
+  }
+
+  // 起動時: 参加用のリンク（?room=コード）→ セッションがあれば再接続 → なければ TOP
+  window.addEventListener('load', async () => {
+    const roomParam = new URLSearchParams(location.search).get('room');
+    if (roomParam === null) {
+      // ルームにいる途中で再読み込みしたときは、同じルームに戻る
+      await resumeFromSession();
+      return;
+    }
+    // 参加用のリンクの入口。みんなでモードの参加画面をコードを入れた状態で開く。コードはつないだときにアドレスから外す（startListeners）
+    const linkCode = Net.normalizeRoomCode(roomParam);
+    const saved = Net.loadSession();
+    if (!Net.ROOM_CODE_PATTERN.test(linkCode)) {
+      RoomkRTDB.showToast('ルームコードが正しくないよ');
+      history.replaceState(null, '', location.pathname);
+      await resumeFromSession();
+    } else if (saved && saved.roomCode === linkCode) {
+      // 同じルームの記録が残っていれば、名前を入れなおさずに戻る。戻れなければ参加画面へ
+      //（tryReconnect は失敗の途中で net.roomRef を残すことがあるので、判定は既存と同じ戻り値だけで行う）
+      const reconnected = await Net.tryReconnect();
+      if (reconnected) return;
+      Net.clearSession();
+      openJoinFromLink(linkCode);
+    } else {
+      // 別のルームの記録が残っていても、ひらいたリンクのルームを優先する
+      if (saved) Net.clearSession();
+      openJoinFromLink(linkCode);
+    }
   });
 
   // 内部関数を検証用に公開（ドラッグ自動操作が不安定な場合のフォールバック）
@@ -2822,8 +2916,8 @@
       lead: 'カラフルなピースを回して動かして、グレーの型（かた）をぴったり埋めるパズル。ひとりでも、みんなでも遊べるよ。',
       sections: [
         { heading: 'はじめかた', items: [
-          'みんなで遊ぶときは「ルームを作る」、コードをもらったら「ルームに参加する」を押す',
-          '参加する人はニックネームとルームコードを入れて「参加する」を押す',
+          'みんなで遊ぶときは「ルームを作る」、コードをもらったら「ルームに参加する」を押す。ルームを作った人は、ルームコードを「コードをコピー」、参加用のリンクを「リンクをコピー」でチャットに送れる',
+          '参加する人はニックネームとルームコードを入れて「参加する」を押す。リンクからひらいたときは、ルームコードは入っているのでニックネームだけ入れる',
           'ひとりでやるときは「ひとりで練習」を押して、「やさしい」か「むずかしい」を選ぶ（問題の順番は「やさしい順」と「ランダム」を選べる）',
         ] },
         { heading: 'すすめかた', items: [

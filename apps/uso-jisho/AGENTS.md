@@ -62,13 +62,19 @@ TOP（screen-top）
              累計ポイント表示 → 30秒後にルーム自動削除
 ```
 
+### 参加用のリンク（`?room=CODE`。2026-10-05）
+
+- 参加用のリンク `?room=CODE` と「リンクをコピー」（2026-10-05）。共通仕様は docs/development/rtdb.md「参加用のリンク」。このアプリの入口は末尾の `init()`（`?watch=` → `?room=` → sessionStorage の順）、参加画面は `screen-guest-join`（`openJoinFromLink` がコード欄 `#guest-room-code` に入れ、`#joinLinkHint` を出す）。`?room=` はつないだとき `startRoomListener()` の先頭で外す（みんなにみせる画面では触らない）
+- 「リンクをコピー」（`#btnCopyLink`）はホストの待機（`host-step-room`）の「コードをコピー」の下だけ（ゲストの待合室にはもともとコピーのボタンがない）。`copyToClipboard` は共通の `copyRoomCode`（コード専用）なので、文字列用の `copyText` を別に置いている
+- 固有: リンクのコードは `SPEC_CODE_RE`（ルームコードの文字集合）で検査する（参加フォームの `/^[A-Z0-9]{6}$/` より狭い）。みんなにみせる画面の記録（`role: 'spectator'`）が同じコードで残っていても再接続を優先しない（記録を消して参加画面へ）。参加画面の欄名に合わせ、ヒント・あそびかたは「名前」でなく「ニックネーム」
+
 ## みんなにみせる画面（画面共有用・2026-10-01 追加）
 
 ホストの画面には本当の意味（折りたたみ）が出るため、画面共有には別タブの「みんなにみせる画面」（`#screen-spectator`）を使える。
 参加者本人も見る画面なので、**全員が見てよい情報だけ**を出す。正本は `apps/kaburazu-hint/AGENTS.md` の「観戦専用ビュー（みんなにみせる画面）」で、入口・完全分岐・書き込みゼロ・終了時の扱いはそれと同じ。
 
 ### 入口（3つ）
-1. **URL `?watch=CODE`**（最優先）: 起動時に `normalizeRoomCode()` → 6文字・ルームコードの文字集合（`SPEC_CODE_RE`）で検査。無効・不存在・期限切れはトースト＋TOP で、sessionStorage にはたよらない（watch 入口では先に `clearSession()`）。`?watch=`（空）も同じ扱い
+1. **URL `?watch=CODE`**（最優先）: 起動時に `normalizeRoomCode()` → 6文字・ルームコードの文字集合（`SPEC_CODE_RE`）で検査。無効・不存在・期限切れはトースト＋TOP で、sessionStorage にはたよらない（watch 入口では先に `clearSession()`）。`?watch=`（空）も同じ扱い。watch がないときだけ参加用のリンク `?room=`・sessionStorage を見る
 2. **TOP**: 「みんなにみせる画面をひらく」→ ルームコード（6文字）→「画面をひらく」。入れたら `history.replaceState` で URL を `?watch=CODE` にそろえる（リロードで戻れる）
 3. **ホストの画面**: 待合室と、ゲーム中のホスト操作欄（writing / voting / reveal）の「みんなにみせる画面をひらく」。クリックの中で同期的に `window.open(url, '_blank', 'noopener')`
 

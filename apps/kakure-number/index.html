@@ -355,6 +355,10 @@
         <span class="material-symbols-rounded">content_copy</span>
         コードをコピー
       </button>
+      <button type="button" class="btn btn-ghost btn-full" id="btnCopyLink" onclick="hostCopyLink(this)">
+        <span class="material-symbols-rounded" aria-hidden="true">link</span>
+        リンクをコピー
+      </button>
 
       <hr class="divider">
       <div class="kkn-section-label">参加者（遊ぶ人 <span id="host-guest-count">0</span>人 / 3〜8人で遊べます）</div>
@@ -389,6 +393,7 @@
   <div class="kkn-page">
     <h2 class="kkn-page__title">ルームに参加する</h2>
     <p class="kkn-page__sub">ニックネームとルームコードを入力してください</p>
+    <p class="kkn-page__sub" id="joinLinkHint" hidden>リンクからひらいたので、ルームコードは入っているよ。ニックネームを入れて「参加する」を押してね。</p>
 
     <div class="form-group">
       <label class="form-label" for="guest-nickname">ニックネーム（1〜8文字）</label>
@@ -868,7 +873,10 @@
   // TOP ナビゲーション
   // ════════════════════════════════════
   function goHostSetup() { showScreen('host-setup'); }
-  function goGuestJoin()  { showScreen('guest-join'); }
+  function goGuestJoin()  {
+    document.getElementById('joinLinkHint').hidden = true;
+    showScreen('guest-join');
+  }
   function goSpectateJoin() {
     hideError('spectate-error');
     showScreen('spectate-join');
@@ -934,6 +942,68 @@
 
   function hostCopyCode() {
     copyToClipboard(state.roomCode, document.getElementById('host-copy-btn'));
+  }
+
+  // 参加用のリンク: このページのアドレスの末尾に ?room=ルームコード。チャットに貼ると、参加する人はリンクをひらいてニックネームを入れるだけで参加できる。
+  // 「コードをコピー」はコード単体のまま（口頭や画面共有で伝える用）。copyToClipboard は共通の copyRoomCode（コード専用）なので、文字列用のコピーを置く
+  function roomLink(code) {
+    return location.origin + location.pathname + '?room=' + code;
+  }
+
+  async function copyText(value, button, okMessage, failMessage) {
+    if (button?.dataset.copyBusy) return false;
+    if (button) button.dataset.copyBusy = '1';
+    let copied = false;
+    try {
+      try {
+        await navigator.clipboard.writeText(value);
+        copied = true;
+      } catch {
+        const focused = document.activeElement;
+        const textarea = document.createElement('textarea');
+        textarea.value = value;
+        textarea.readOnly = true;
+        textarea.style.cssText = 'position:fixed;opacity:0;pointer-events:none';
+        try {
+          document.body.appendChild(textarea);
+          textarea.select();
+          copied = document.execCommand('copy');
+        } finally {
+          textarea.remove();
+          focused?.focus({ preventScroll: true });
+        }
+      }
+    } catch {
+      copied = false;
+    } finally {
+      if (button) delete button.dataset.copyBusy;
+    }
+    showToast(copied ? okMessage : failMessage, !copied);
+    return copied;
+  }
+
+  function hostCopyLink(button) {
+    if (!state.roomCode || !SPEC_CODE_RE.test(state.roomCode)) {
+      showToast('ルームコードがありません');
+      return;
+    }
+    copyText(roomLink(state.roomCode), button, '参加用のリンクをコピーしました', 'コピーできませんでした。コードをそのまま伝えてね');
+  }
+
+  // 参加用のリンクでひらいたとき: コードを入れた状態で参加画面を開き、ニックネームだけ入れてもらう（コード欄は直せるように残す）
+  function openJoinFromLink(code) {
+    hideError('guest-join-error');
+    document.getElementById('guest-room-code').value = code;
+    document.getElementById('joinLinkHint').hidden = false;
+    showScreen('guest-join');
+    document.getElementById('guest-nickname').focus({ preventScroll: true });
+  }
+
+  // 再読み込みなどで、保存した記録から同じルームへ戻る（戻れなければトップ）
+  function resumeFromSession() {
+    tryReconnect().then(reconnected => {
+      if (!reconnected) showScreen('top');
+    });
   }
 
   // ルームコード: 日本語入力のまま打った全角の英数字は半角に、小文字は大文字にそろえて読む。
@@ -1252,6 +1322,9 @@
   // ════════════════════════════════════
   function startRoomListener() {
     const ref = state.roomRef;
+    // 参加用のリンク（?room=コード）でひらいたときは、つないだあとにコードをアドレスから外す
+    //（再読み込みで古いコードの参加画面に戻らず、保存した記録から同じルームへ戻れるように）。?watch= は消さない
+    if (state.role !== 'spectator' && new URLSearchParams(location.search).has('room')) history.replaceState(null, '', location.pathname);
     ref.on('value', snapshot => {
       if (state.roomRef !== ref) return;
       const room = snapshot.val();
@@ -1854,19 +1927,40 @@
   // ════════════════════════════════════
   // 初期化
   //   ?watch=CODE があればみんなにみせる画面を最優先（空の値も無効な入口として同じ扱い）。
-  //   watch がないときだけ保存済みセッションから再接続する
+  //   次に参加用のリンク ?room=CODE。どちらもないときだけ保存済みセッションから再接続する
   // ════════════════════════════════════
   (function init() {
     const params = new URLSearchParams(location.search);
+    const roomParam = params.get('room');
     if (params.has('watch')) {
       // 無効な watch だったときに、次のリロードで古い host/guest のセッションが復活しないように
       clearSession();
       startSpectatorFromUrl(params.get('watch'));
       return;
     }
-    tryReconnect().then(reconnected => {
-      if (!reconnected) showScreen('top');
-    });
+    if (roomParam !== null) {
+      // 参加用のリンク（?room=コード）の入口。コードを入れた状態で参加画面を開く。コードはつないだときにアドレスから外す（startRoomListener）
+      const linkCode = normalizeRoomCode(roomParam);
+      const saved = loadSession();
+      if (!SPEC_CODE_RE.test(linkCode)) {
+        showToast('ルームコードが正しくないよ');
+        history.replaceState(null, '', location.pathname);
+        resumeFromSession();
+      } else if (saved && saved.roomCode === linkCode && saved.role !== 'spectator') {
+        // 同じルームの記録（ホスト・参加者）が残っていれば、入れなおさずに戻る。戻れなければ参加画面へ
+        tryReconnect().then(reconnected => {
+          if (reconnected) return;
+          clearSession();
+          openJoinFromLink(linkCode);
+        });
+      } else {
+        // 別のルームの記録や、みんなにみせる画面の記録が残っていても、ひらいたリンクのルームに参加する
+        if (saved) clearSession();
+        openJoinFromLink(linkCode);
+      }
+      return;
+    }
+    resumeFromSession();
   }());
 </script>
 <script src="../shared/js/stats.js?v=1" defer></script>
@@ -1878,8 +1972,8 @@
     sections: [
       { heading: 'はじめかた', items: [
         'ホストが「ルームを作る（ホスト）」からルームを作る',
-        '出てきたルームコードをみんなに伝える',
-        'ほかの人は「ルームに参加する」からニックネームとルームコードを入れて「参加する」を押す',
+        '出てきたルームコードをみんなに伝える。ルームコードは「コードをコピー」、参加用のリンクは「リンクをコピー」でチャットに送れる',
+        'ほかの人は「ルームに参加する」からニックネームとルームコードを入れて「参加する」を押す。リンクからひらいたときは、ルームコードは入っているのでニックネームだけ入れる',
         'ホストは待合室の「自分もプレイヤーとして参加する」にチェックを入れると、いっしょに数字を配られて遊べる（入れないときは進行だけ）。遊ぶ人が3〜8人で始められる',
       ] },
       { heading: 'すすめかた', items: [

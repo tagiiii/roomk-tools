@@ -32,6 +32,19 @@
   gap: var(--space-md);
 }
 
+/* 「コードをコピー」「リンクをコピー」を並べる */
+.cn-lobby-header__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-sm);
+}
+
+/* 参加用のリンクからひらいたときの参加画面のひとこと */
+.cn-join-link-hint {
+  line-height: 1.6;
+}
+
 .cn-room-code {
   font-size: var(--font-size-2xl);
   letter-spacing: 0.08em;
@@ -720,6 +733,10 @@
   .cn-player {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .cn-lobby-header__actions .btn {
+    flex: 1 1 auto;
   }
 
   .cn-status-grid,

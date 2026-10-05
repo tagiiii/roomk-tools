@@ -1541,6 +1541,10 @@
     pendingGame = null;
     closeModal();
     saveSession();
+    // 参加用のリンク（?room=コード）でひらいたときは、つないだらコードをアドレスから外す
+    //（再読み込みで古いコードの参加画面に戻らず、保存した記録から同じ席へ戻れるように）
+    linkAfterReconnect = null;
+    dropRoomParam();
     overlay('つないでいます…');
     NET.setArmed(sess);
     NET.watch(sess.code, onRoom, onGone);
@@ -1775,10 +1779,15 @@
   let reconnectUntil = 0;
   const RECONNECT_MS = 5000;
   const RECONNECT_LIMIT_MS = 2 * 60 * 1000; // 約2分
+  // 参加用のリンク（?room=コード）でひらき、同じルームの記録が残っていたときのコード。
+  // もどれないと分かったら（ルームがない・期限切れ・席がない）、記録を消してこのコードで参加画面を開く。
+  // 通信の失敗であきらめたとき・「トップへ戻る」を押したときは使わない（席にもどるための記録は既存どおり）
+  let linkAfterReconnect = null;
   function cancelReconnect() {
     reconnectGen += 1;
     if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null; }
     reconnectUntil = 0;
+    linkAfterReconnect = null;
     $('cs-overlay-cancel').hidden = true;
   }
   async function tryReconnect() {
@@ -1809,14 +1818,74 @@
       reconnectTimer = setTimeout(tryReconnect, RECONNECT_MS);
       return;
     }
+    const link = linkAfterReconnect;
     cancelReconnect();
     overlay('');
-    if (!r) { clearSession(); toast('ルームが見つかりませんでした'); return; }
-    if (NET.isExpired(r)) { clearSession(); NET.removeIfExpired(s.code); toast('このルームはもう終わっています'); return; }
+    if (!r) { clearSession(); toast('ルームが見つかりませんでした'); if (link) openJoinFromLink(link); return; }
+    if (NET.isExpired(r)) { clearSession(); NET.removeIfExpired(s.code); toast('このルームはもう終わっています'); if (link) openJoinFromLink(link); return; }
     const ok = s.role === 'host' ? RM.isHost(r, s.dev) : RM.seatList(r).some((x) => x.dev === s.dev);
-    if (!ok) { clearSession(); toast('このルームから外れています'); return; }
+    if (!ok) { clearSession(); toast('このルームから外れています'); if (link) openJoinFromLink(link); return; }
     sess = s;
     await enterRoom();
+  }
+
+  // ── 参加用のリンク（?room=コード） ─────────────────────────
+  // チャットに貼ると、参加する人はリンクをひらいて名前を入れるだけで参加できる。「コードをコピー」はコード単体のまま。
+  // net.js は読み込んだときのアドレスの ?emu=1・db・auth を見ている（自動テスト用のエミュレーター）。
+  // ?room= を外すときは room だけを消し、リンクにも emu=1 のときだけその指定を引き継ぐ（テストから本番につながらないように）
+  function roomLink(code) {
+    const cur = new URLSearchParams(location.search);
+    const params = new URLSearchParams();
+    if (cur.get('emu') === '1') ['emu', 'db', 'auth'].forEach((k) => { if (cur.has(k)) params.set(k, cur.get(k)); });
+    params.set('room', code);
+    return location.origin + location.pathname + '?' + params.toString();
+  }
+  function dropRoomParam() {
+    const params = new URLSearchParams(location.search);
+    if (!params.has('room')) return;
+    params.delete('room');
+    const rest = params.toString();
+    history.replaceState(null, '', location.pathname + (rest ? '?' + rest : ''));
+  }
+  // 共通の copyRoomCode はコード専用なので、文字列用のコピーを置く（clipboard API → execCommand('copy')、連打ガード）
+  async function copyText(value, button, okMessage, failMessage) {
+    if (button?.dataset.copyBusy) return false;
+    if (button) button.dataset.copyBusy = '1';
+    let copied = false;
+    try {
+      try {
+        await navigator.clipboard.writeText(value);
+        copied = true;
+      } catch {
+        const focused = document.activeElement;
+        const textarea = document.createElement('textarea');
+        textarea.value = value;
+        textarea.readOnly = true;
+        textarea.style.cssText = 'position:fixed;opacity:0;pointer-events:none';
+        try {
+          document.body.appendChild(textarea);
+          textarea.select();
+          copied = document.execCommand('copy');
+        } finally {
+          textarea.remove();
+          focused?.focus({ preventScroll: true });
+        }
+      }
+    } catch {
+      copied = false;
+    } finally {
+      if (button) delete button.dataset.copyBusy;
+    }
+    toast(copied ? okMessage : failMessage, !copied);
+    return copied;
+  }
+  // 参加用のリンクでひらいたとき: コードを入れた状態で「ルームに参加する」（各自の端末）の画面を開き、名前だけ入れてもらう（コード欄は直せるように残す）
+  function openJoinFromLink(code) {
+    formError('cs-join-error', '');
+    $('cs-join-code').value = code;
+    if ($('joinLinkHint')) $('joinLinkHint').hidden = false;
+    show('join');
+    $('cs-join-name').focus({ preventScroll: true });
   }
 
   // ── キーボード（進行役が数字キーで選べる） ─────────────────
@@ -1848,7 +1917,8 @@
   // ── はじめる ─────────────────────────────────
   $('cs-go-local').addEventListener('click', () => { renderSetup(); show('setup'); });
   $('cs-go-create').addEventListener('click', () => { formError('cs-create-error', ''); show('create'); $('cs-host-name').focus(); });
-  $('cs-go-join').addEventListener('click', () => { formError('cs-join-error', ''); show('join'); $('cs-join-name').focus(); });
+  // トップの「ルームに参加する」では、参加用のリンクの案内を隠す
+  $('cs-go-join').addEventListener('click', () => { formError('cs-join-error', ''); if ($('joinLinkHint')) $('joinLinkHint').hidden = true; show('join'); $('cs-join-name').focus(); });
   document.querySelectorAll('[data-go-top]').forEach((b) => b.addEventListener('click', () => show('top')));
   $('cs-create-room').addEventListener('click', onCreate);
   $('cs-join-room').addEventListener('click', onJoin);
@@ -1856,6 +1926,11 @@
   ['cs-join-name', 'cs-join-code'].forEach((id) => $(id).addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.isComposing && e.keyCode !== 229) { e.preventDefault(); $('cs-join-room').click(); } }));
   $('cs-host-name').addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.isComposing && e.keyCode !== 229) { e.preventDefault(); $('cs-create-room').click(); } });
   $('cs-copy-code').addEventListener('click', (e) => window.RoomkRTDB.copyRoomCode(sess && sess.code, e.currentTarget));
+  $('btnCopyLink')?.addEventListener('click', (e) => {
+    const code = sess && sess.code;
+    if (!code || !NET.validCode(code)) { toast('ルームコードがありません'); return; }
+    copyText(roomLink(code), e.currentTarget, '参加用のリンクをコピーしました', 'コピーできませんでした。コードをそのまま伝えてね');
+  });
   $('cs-proxy-add').addEventListener('click', onProxyAdd);
   $('cs-proxy-name').addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.isComposing && e.keyCode !== 229) { e.preventDefault(); $('cs-proxy-add').click(); } });
   $('cs-room-start').addEventListener('click', onRoomStart);
@@ -1910,5 +1985,26 @@
 
   renderSetup();
   show('top');
-  tryReconnect();
+  const roomParam = new URLSearchParams(location.search).get('room');
+  if (roomParam === null) {
+    // ルームにいる途中で再読み込みしたときは、同じ席にもどる
+    tryReconnect();
+  } else {
+    // 参加用のリンクの入口。各自の端末で参加する画面を、コードを入れた状態で開く。コードはつないだときにアドレスから外す（enterRoom）
+    const linkCode = normCode(roomParam);
+    const saved = loadSession();
+    if (!NET.validCode(linkCode)) {
+      toast('ルームコードが正しくないよ');
+      dropRoomParam();
+      tryReconnect();
+    } else if (saved && saved.code === linkCode) {
+      // 同じルームの記録が残っていれば、名前を入れなおさずに同じ席へもどる。もどれないと分かったら参加画面へ（tryReconnect）
+      linkAfterReconnect = linkCode;
+      tryReconnect();
+    } else {
+      // 別のルームの記録が残っていても、ひらいたリンクのルームを優先する
+      if (saved) clearSession();
+      openJoinFromLink(linkCode);
+    }
+  }
 })();

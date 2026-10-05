@@ -194,6 +194,7 @@
     }
     .mgr-check input { width: 20px; height: 20px; accent-color: var(--color-accent); flex-shrink: 0; }
     .mgr-fineprint { font-size: 12px; color: var(--color-muted); line-height: 1.6; margin-top: 4px; }
+    .mgr-form-hint { font-size: 14px; color: var(--color-muted); line-height: 1.6; margin-bottom: 12px; }
 
     /* ── みんなにみせる画面 ── */
     .mgr-spec__header {
@@ -247,7 +248,7 @@
       <button class="btn btn-primary btn-full" onclick="goTo('host-setup')">
         <span class="material-symbols-rounded" aria-hidden="true">add_circle</span>ルームを作る
       </button>
-      <button class="btn btn-secondary btn-full mgr-sep" onclick="goTo('guest-join')">
+      <button class="btn btn-secondary btn-full mgr-sep" onclick="openGuestJoin()">
         <span class="material-symbols-rounded" aria-hidden="true">login</span>ルームに参加する
       </button>
       <button class="btn btn-ghost btn-full mgr-sep" onclick="goTo('spectate-join')">
@@ -280,6 +281,7 @@
   <div class="page">
     <h2>ルームに参加する</h2>
     <div class="card">
+      <p class="mgr-form-hint" id="joinLinkHint" hidden>リンクからひらいたので、ルームコードは入っているよ。ニックネームを入れて「参加する」を押してね。</p>
       <div class="form-group">
         <label class="form-label" for="guest-nickname">ニックネーム（8文字以内）</label>
         <input class="form-input" id="guest-nickname" type="text" maxlength="8" placeholder="例: はなこ">
@@ -328,6 +330,10 @@
         <button type="button" class="btn btn-ghost btn-full mt-sm" onclick="RoomkRTDB.copyRoomCode(state.roomCode, this)">
           <span class="material-symbols-rounded" aria-hidden="true">content_copy</span>
           コードをコピー
+        </button>
+        <button type="button" class="btn btn-ghost btn-full mt-sm" id="btnCopyLink" onclick="copyLink(this)">
+          <span class="material-symbols-rounded" aria-hidden="true">link</span>
+          リンクをコピー
         </button>
         <p style="font-size:14px;color:var(--color-muted);margin-top:6px">参加者に伝えてね</p>
       </div>
@@ -945,6 +951,19 @@ function showScreen(id) {
   state.currentScreen = id;
 }
 function goTo(id) { showScreen(id); }
+// トップの「ルームに参加する」から: リンク用のヒントは出さない
+function openGuestJoin() {
+  document.getElementById('joinLinkHint').hidden = true;
+  showScreen('guest-join');
+}
+// 参加用のリンクでひらいたとき: コードを入れた状態で参加画面を開き、ニックネームだけ入れてもらう（コード欄は直せるように残す）
+function openJoinFromLink(code) {
+  RoomkRTDB.showFormError('join-form-error', '');
+  document.getElementById('guest-code').value = code;
+  document.getElementById('joinLinkHint').hidden = false;
+  showScreen('guest-join');
+  document.getElementById('guest-nickname').focus({ preventScroll: true });
+}
 function showOverlay(id, show) {
   document.getElementById(id).classList.toggle('show', show);
 }
@@ -1025,6 +1044,52 @@ async function hostCreateRoom() {
   });
   saveSession();
   startRoomListener();
+}
+
+// 参加用のリンク: このページのアドレスの末尾に ?room=ルームコード。チャットに貼ると、参加する人はリンクをひらいてニックネームを入れるだけで参加できる。
+// 「コードをコピー」はコード単体のまま（口頭や画面共有で伝える用）。共通の copyRoomCode はコード専用なので、文字列用のコピーを置く
+function roomLink(code) {
+  return location.origin + location.pathname + '?room=' + code;
+}
+
+async function copyText(value, button, okMessage, failMessage) {
+  if (button?.dataset.copyBusy) return false;
+  if (button) button.dataset.copyBusy = '1';
+  let copied = false;
+  try {
+    try {
+      await navigator.clipboard.writeText(value);
+      copied = true;
+    } catch {
+      const focused = document.activeElement;
+      const textarea = document.createElement('textarea');
+      textarea.value = value;
+      textarea.readOnly = true;
+      textarea.style.cssText = 'position:fixed;opacity:0;pointer-events:none';
+      try {
+        document.body.appendChild(textarea);
+        textarea.select();
+        copied = document.execCommand('copy');
+      } finally {
+        textarea.remove();
+        focused?.focus({ preventScroll: true });
+      }
+    }
+  } catch {
+    copied = false;
+  } finally {
+    if (button) delete button.dataset.copyBusy;
+  }
+  showMsg(copied ? okMessage : failMessage, !copied);
+  return copied;
+}
+
+function copyLink(button) {
+  if (!state.roomCode || !SPEC_CODE_RE.test(state.roomCode)) {
+    showMsg('ルームコードがありません');
+    return;
+  }
+  copyText(roomLink(state.roomCode), button, '参加用のリンクをコピーしました', 'コピーできませんでした。コードをそのまま伝えてね');
 }
 
 // ルームコード: 日本語入力のまま打った全角の英数字は半角に、小文字は大文字にそろえて読む。
@@ -1686,6 +1751,9 @@ function resetRoomState() {
 // ── Firebase リスナー ──
 function startRoomListener() {
   const ref = state.roomRef;
+  // 参加用のリンク（?room=コード）でひらいたときは、つないだあとにコードをアドレスから外す
+  //（再読み込みで古いコードの参加画面に戻らず、保存した記録から同じルームへ戻れるように）。?watch= は消さない
+  if (state.role !== 'spectator' && new URLSearchParams(location.search).has('room')) history.replaceState(null, '', location.pathname);
   ref.on('value', (snap) => {
     if (state.roomRef !== ref) return;
     // みんなにみせる画面は host/guest の処理（切断・削除・自動進行・players の読み書き）に一切入らない
@@ -2689,13 +2757,38 @@ function renderSpecDone() {
 // ── 初期化 ──
 // ?watch=CODE があれば、みんなにみせる画面を最優先でひらく（空の値も「明示された入口」として扱う）。
 // そのときは古い再接続の記録を消す（無効な watch のあと、次の再読み込みで別のルームに戻らないように）
+// 次に参加用のリンク ?room=CODE。どちらもないときだけ保存した記録から再接続する
+function resumeFromSession() {
+  tryReconnect().then(ok => { if (!ok) showScreen('top'); });
+}
 (function init() {
   const params = new URLSearchParams(location.search);
+  const roomParam = params.get('room');
   if (params.has('watch')) {
     clearSession();
     startSpectatorFromUrl(params.get('watch'));
+  } else if (roomParam !== null) {
+    // 参加用のリンク（?room=コード）の入口。コードを入れた状態で参加画面を開く。コードはつないだときにアドレスから外す（startRoomListener）
+    const linkCode = normalizeRoomCode(roomParam);
+    const saved = loadSession();
+    if (!SPEC_CODE_RE.test(linkCode)) {
+      showMsg('ルームコードが正しくないよ');
+      history.replaceState(null, '', location.pathname);
+      resumeFromSession();
+    } else if (saved && saved.roomCode === linkCode && saved.role !== 'spectator') {
+      // 同じルームの記録（ホスト・参加者）が残っていれば、入れなおさずに戻る。戻れなければ参加画面へ
+      tryReconnect().then(ok => {
+        if (ok || state.roomRef) return;
+        clearSession();
+        openJoinFromLink(linkCode);
+      });
+    } else {
+      // 別のルームの記録や、みんなにみせる画面の記録が残っていても、ひらいたリンクのルームに参加する
+      if (saved) clearSession();
+      openJoinFromLink(linkCode);
+    }
   } else {
-    tryReconnect().then(ok => { if (!ok) showScreen('top'); });
+    resumeFromSession();
   }
 }());
 </script>
@@ -2708,8 +2801,8 @@ function renderSpecDone() {
     sections: [
       { heading: '始めかた', items: [
         'ホストが「ルームを作る」からルームを作る',
-        '出てきたルームコードをみんなに伝える',
-        'ほかの人は「ルームに参加する」からニックネームとルームコードを入れて「参加する」を押す',
+        '出てきたルームコードをみんなに伝える。ルームコードは「コードをコピー」、参加用のリンクは「リンクをコピー」でチャットに送れる',
+        'ほかの人は「ルームに参加する」からニックネームとルームコードを入れて「参加する」を押す。リンクからひらいたときは、ルームコードは入っているのでニックネームだけ入れる',
         'ホストははじめ進行役（描かない・投票しない）。待合室で「自分もプレイヤーとして参加する」にチェックすると、いっしょに描いて投票する（まぎれ絵師になることもある）',
       ] },
       { heading: '進めかた', items: [

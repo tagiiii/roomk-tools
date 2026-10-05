@@ -131,6 +131,14 @@ waiting → night（1日目夜・襲撃なし）→ morning → day → vote →
 
 すべての画面に **「遊び方・役職」モーダル**（右下の `?` FAB ＝ `#rules-fab` + `openRules()`）を常設。ゲームの流れ・勝敗・役職一覧（`ROLES` から動的生成）を表示。
 
+## 参加用のリンク（`?room=CODE`。2026-10-05）
+
+- 待合室の GM パネル（ルームコードの下）に「コードをコピー」と並べて「リンクをコピー」（`id="btnCopyLink"`）。ルームコードは GM にだけ出るので、このボタンも GM だけ。共通仕様は docs/development/rtdb.md「参加用のリンク」
+- このアプリの入口は `<script>` 末尾の「初期化」（`?room=` → 保存した記録 `jinro_session` の順。`?watch=` はない）。参加画面は `screen-guest-join`（ヒントは `joinLinkHint`）。`?room=` は `startRoomListener`（作成・参加・再接続の共通の接続処理）で外す
+- sessionStorage には再接続用の記録（`jinro_session`）のほかに騎士の護衛メモリ（`jinro_session_guard_{コード}_{名前}`）がある。リンクの入口が扱うのは再接続用の記録だけで、消すときは既存の `clearSession()`（記録と、その記録のルームの護衛メモリだけを消す）を使う
+- 入力欄の名前が「ニックネーム」なので、ヒント・あそびかた・スライドのノートは「名前」でなく「ニックネームだけ入れる」と書く
+- 同じコードの記録が残っているときの再接続は `tryReconnect()` の戻り値だけで判定する（このアプリの `tryReconnect` は途中で `state.roomRef` を入れてから失敗を返すことがあるため。kagi-awase の `|| state.roomRef` は使わない。失敗したら記録を消して参加画面へ）
+
 ## 言葉づかいの方針
 
 不登校の子ども向けのため、刺激の強い語をやわらげている（標準寄りで最小限）。

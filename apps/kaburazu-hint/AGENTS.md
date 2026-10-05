@@ -45,6 +45,12 @@ TOP（screen-top）
              全ラウンドの振り返り一覧 + 正解数サマリー
 ```
 
+## 参加用のリンク（`?room=CODE`。2026-10-05）
+
+- 参加用のリンク `?room=CODE` と「リンクをコピー」（2026-10-05）。共通仕様は docs/development/rtdb.md「参加用のリンク」。このアプリの入口は末尾の `init()`（`?watch=` → `?room=` → sessionStorage の順）、参加画面は `screen-guest-join`（`openJoinFromLink` がコード欄 `#guest-code` に入れ、`#joinLinkHint` を出す）。`?room=` はつないだとき `startRoomListener()` の先頭で外す（観戦では触らない）
+- 「リンクをコピー」（`#btnCopyLink`）は待機画面のルームコードの下、「コードをコピー」の下に並べる（このアプリにはルームバーがない）
+- 固有: 観戦の記録（`role: 'spectator'`）が同じコードで残っていても再接続を優先しない（記録を消して参加画面へ）。参加画面の欄名に合わせ、ヒント・あそびかたは「名前」でなく「ニックネーム」
+
 ## 観戦専用ビュー（みんなにみせる画面）
 
 ホストはヒント役・判定役でお題（secretWord）が画面に出るため、ホスト画面を画面共有できない。
@@ -60,7 +66,7 @@ TOP
 ```
 
 ### 入口（3つ）
-1. **URL パラメータ `?watch=CODE`**（最優先）: 起動時に検証（trim・大文字化・6桁・`generateRoomCode` の文字集合）して観戦入室。無効・不存在なら sessionStorage へフォールバック**せず**トースト + TOP。`?watch=`（空値）も同扱い。watch が無い場合のみ sessionStorage を見る
+1. **URL パラメータ `?watch=CODE`**（最優先）: 起動時に検証（trim・大文字化・6桁・`generateRoomCode` の文字集合）して観戦入室。無効・不存在なら sessionStorage へフォールバック**せず**トースト + TOP。`?watch=`（空値）も同扱い。watch が無い場合のみ参加用のリンク `?room=`・sessionStorage を見る
 2. **TOP 画面**: 「みんなにみせる画面をひらく」→ コード入力 → 入室成功後 `history.replaceState` で URL を `?watch=CODE` に更新（リロード復帰の安定化）
 3. **ホスト待機画面**: ホストコントロール内の「みんなにみせる画面をひらく」。クリックハンドラ内で同期的に `window.open(url, '_blank', 'noopener')`（ポップアップブロック回避・noopener 必須）
 
@@ -331,7 +337,7 @@ sessionStorage.removeItem('kaburazuhint_session');
 - ボタン: ルームをつくる / ルームに参加する
 
 #### screen-waiting
-- ルームコード表示（大きく・コピー可）
+- ルームコード表示（大きく・コピー可）・「コードをコピー」・「リンクをコピー」
 - プレイヤーリスト
 - 「3人以上で開始できます」の注記（遊ぶ人で数える）
 - 設定欄「自分もプレイヤーとして参加する」（ホストのみ・初期値オン）

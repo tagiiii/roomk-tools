@@ -56,6 +56,8 @@ RTDB パス `pitahame_rooms/{roomCode}`。実装は末尾 `<script>` 内の **`N
 - **sessionStorage**: 再接続キー `pitahame_session`（roomCode/nickname/role）。盤面復元キー `pitahame_board` は `roomCode|gameId|roundNo|attemptId|puzzleId` を全部含め、ひとつでも不一致なら破棄。results 表示・退出・やりなおし・もういちどで対象配置を消去。ゲストの新規参加は `waiting` のみ、round 中の復帰は participants 所属時のみ `players` へ復帰（別フロー）。
 - **自動削除**: `finished` 移行で `finishedAt` 保存 → 30秒後に status===finished かつ 同一 gameId なら remove。「もう一度遊ぶ」は gameId を更新して waiting へ（設定保持・削除ガード）。「ルームを閉じる」は即 remove。
 - **開始条件**: `isPlaying` な参加者が2人以上（満たなければボタン無効＋「あと○人」）。「わたしも遊ぶ」OFF＝進行専任（`isPlaying:false`）。
+- **参加用のリンク `?room=CODE`（2026-10-05）**: 待機画面のルームコード欄に「コードをコピー」と並べて「リンクをコピー」（`#btnCopyLink`、`Net.copyLink`）。共通仕様は docs/development/rtdb.md「参加用のリンク」。このアプリの入口は末尾 `<script>` の `window.addEventListener('load', …)`（`?watch=` はない。`?room=` → 保存した記録 `Net.tryReconnect` の順）。参加画面は `screen-join`（コード欄 `#joinCode`、名前欄 `#joinNick`、案内 `#joinLinkHint`）で、ソロ（「ひとりで練習」）を経由せず、みんなでモードの参加フォームへ直接つなぐ。`?room=` は `startListeners`（作成・参加・再接続の共通）で外す。検査は「参加する」と同じ `/^[A-Z0-9]{6}$/`。
+  - 同じコードの記録があるときの再接続の判定は、既存の起動処理と同じ `tryReconnect()` の戻り値だけで行う（`tryReconnect` は失敗の途中で `net.roomRef` を残すことがあるため、kagi-awase の `|| state.roomRef` は使わない）。盤面復元キー `pitahame_board` は再接続用ではないので触らない
 
 ### 検証用フック
 

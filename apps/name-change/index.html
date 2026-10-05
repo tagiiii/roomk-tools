@@ -134,6 +134,7 @@
     .nc-check { display: flex; align-items: center; gap: 10px; font-size: 0.95rem; font-weight: 500; cursor: pointer; }
     .nc-check input { width: 20px; height: 20px; accent-color: var(--color-accent); flex-shrink: 0; }
     .nc-note { font-size: 0.8rem; color: var(--color-muted); margin-top: 8px; }
+    .nc-note--lead { font-size: 0.875rem; line-height: 1.6; margin: 0 0 16px; }
 
     /* ホストが遊ぶときの自分の選択（画面共有対策の折りたたみ） */
     .nc-secret { margin-bottom: 16px; border: 1px solid var(--color-border); border-radius: 10px; background: var(--color-surface); }
@@ -200,6 +201,7 @@
     <p>Metalifeでの元の名前を入力してください</p>
   </div>
   <div class="card">
+    <p class="nc-note nc-note--lead" id="joinLinkHint" hidden>リンクからひらいたので、ルームコードは入っているよ。元の名前を入れて「参加する」を押してね。</p>
     <div class="form-group">
       <label class="form-label" for="guest-nickname">元の名前（1〜12文字）</label>
       <input id="guest-nickname" class="form-input" type="text" maxlength="12" placeholder="例：たろう">
@@ -229,6 +231,7 @@
     <div class="rc-label">ルームコード</div>
     <div class="rc-code" id="waiting-code">----</div>
     <button type="button" class="btn btn-ghost btn-full" onclick="RoomkRTDB.copyRoomCode(state.roomCode, this)"><span class="material-symbols-rounded" aria-hidden="true">content_copy</span>コードをコピー</button>
+    <button type="button" class="btn btn-ghost btn-full" id="btnCopyLink" onclick="copyJoinLink(this)"><span class="material-symbols-rounded" aria-hidden="true">link</span>リンクをコピー</button>
   </div>
   <div class="card">
     <div class="section-title">参加者</div>
@@ -494,6 +497,9 @@ function saveSession() {
   }));
 }
 function clearSession() { sessionStorage.removeItem(SESSION_KEY); }
+function loadSession() {
+  try { return JSON.parse(sessionStorage.getItem(SESSION_KEY)); } catch { return null; }
+}
 
 const getEstimatedServerNow = RoomkRTDB.now;
 const getHostDisconnectedAt = RoomkRTDB.getHostDisconnectedAt;
@@ -644,7 +650,10 @@ async function expireGuestRoom(ref) {
 
 // ===== Navigation =====
 function goHostSetup() { showScreen('host-setup'); }
-function goGuestJoin()  { showScreen('guest-join'); }
+function goGuestJoin()  {
+  document.getElementById('joinLinkHint').hidden = true;
+  showScreen('guest-join');
+}
 function resetRoomState() {
   clearSession();
   ['host-create-btn', 'guest-join-btn'].forEach(id => { document.getElementById(id).disabled = false; });
@@ -751,6 +760,63 @@ function roomCodeImeError(code) {
     : '';
 }
 
+// ===== 参加用のリンク =====
+// このページのアドレスの末尾に ?room=ルームコード。チャットに貼ると、参加する人はリンクをひらいて元の名前を入れるだけで参加できる。
+// 「コードをコピー」はコード単体のまま（口頭や画面共有で伝える用）。共通の copyRoomCode はコード専用なので、文字列用のコピーを置く
+const ROOM_CODE_PATTERN = /^[A-HJ-NP-Z2-9]{6}$/; // RoomkRTDB.generateRoomCode が作る形
+function roomLink(code) {
+  return location.origin + location.pathname + '?room=' + code;
+}
+
+async function copyText(value, button, okMessage, failMessage) {
+  if (button?.dataset.copyBusy) return false;
+  if (button) button.dataset.copyBusy = '1';
+  let copied = false;
+  try {
+    try {
+      await navigator.clipboard.writeText(value);
+      copied = true;
+    } catch {
+      const focused = document.activeElement;
+      const textarea = document.createElement('textarea');
+      textarea.value = value;
+      textarea.readOnly = true;
+      textarea.style.cssText = 'position:fixed;opacity:0;pointer-events:none';
+      try {
+        document.body.appendChild(textarea);
+        textarea.select();
+        copied = document.execCommand('copy');
+      } finally {
+        textarea.remove();
+        focused?.focus({ preventScroll: true });
+      }
+    }
+  } catch {
+    copied = false;
+  } finally {
+    if (button) delete button.dataset.copyBusy;
+  }
+  toast(copied ? okMessage : failMessage);
+  return copied;
+}
+
+function copyJoinLink(button) {
+  if (!state.roomCode || !ROOM_CODE_PATTERN.test(state.roomCode)) {
+    toast('ルームコードがありません');
+    return;
+  }
+  copyText(roomLink(state.roomCode), button, '参加用のリンクをコピーしました', 'コピーできませんでした。コードをそのまま伝えてね');
+}
+
+// 参加用のリンクでひらいたとき: コードを入れた状態で参加画面を開き、元の名前だけ入れてもらう（コード欄は直せるように残す）
+function openJoinFromLink(code) {
+  RoomkRTDB.showFormError('join-form-error', '');
+  document.getElementById('guest-code').value = code;
+  document.getElementById('joinLinkHint').hidden = false;
+  showScreen('guest-join');
+  document.getElementById('guest-nickname').focus({ preventScroll: true });
+}
+
 // ===== Guest: Join =====
 async function guestJoin() {
   const reportJoinError = message => RoomkRTDB.showFormError('join-form-error', message);
@@ -824,6 +890,9 @@ async function guestJoin() {
 // ===== Room Listener =====
 function startListener() {
   const ref = state.roomRef;
+  // 参加用のリンク（?room=コード）でひらいたときは、つないだあとにコードをアドレスから外す
+  //（再読み込みで古いコードの参加画面に戻らず、保存した記録から同じルームへ戻れるように）
+  if (new URLSearchParams(location.search).has('room')) history.replaceState(null, '', location.pathname);
   ref.on('value', snap => {
     if (state.roomRef !== ref || state.expectedRoomRemoval) return;
     const room = snap.val();
@@ -1433,8 +1502,37 @@ async function tryReconnect() {
 }
 
 // ===== Init =====
-window.addEventListener('load', async () => {
+// 再読み込みなどで、保存した記録から同じルームへ戻る（戻れなければトップ）
+async function resumeFromSession() {
   if (!await tryReconnect()) showScreen('top');
+}
+
+window.addEventListener('load', async () => {
+  const startParams = new URLSearchParams(location.search);
+  const roomParam = startParams.get('room');
+  if (roomParam !== null) {
+    // 参加用のリンク（?room=コード）の入口。コードを入れた状態で参加画面を開く。コードはつないだときにアドレスから外す（startListener）
+    const linkCode = normalizeRoomCode(roomParam);
+    const saved = loadSession();
+    if (!ROOM_CODE_PATTERN.test(linkCode)) {
+      toast('ルームコードが正しくないよ');
+      history.replaceState(null, '', location.pathname);
+      await resumeFromSession();
+    } else if (saved && saved.roomCode === linkCode) {
+      // 同じルームの記録が残っていれば、名前を入れなおさずに戻る。戻れなければ参加画面へ
+      const reconnected = await tryReconnect();
+      if (reconnected || state.roomRef) return;
+      clearSession();
+      openJoinFromLink(linkCode);
+    } else {
+      // 別のルームの記録が残っていても、ひらいたリンクのルームを優先する
+      if (saved) clearSession();
+      openJoinFromLink(linkCode);
+    }
+  } else {
+    // ルームにいる途中で再読み込みしたときは、同じルームに戻る
+    await resumeFromSession();
+  }
 });
 </script>
 <script src="../shared/js/stats.js?v=1" defer></script>
@@ -1447,8 +1545,8 @@ window.addEventListener('load', async () => {
       {
         heading: 'はじめかた',
         items: [
-          'GMが「ルームを作る（GM）」からルームを作り、ルームコードをみんなに伝える',
-          '参加する人は「ルームに参加する」を押して、Metalifeでの元の名前とコードを入れて「参加する」を押す',
+          'GMが「ルームを作る（GM）」からルームを作り、ルームコードをみんなに伝える。ルームコードは「コードをコピー」、参加用のリンクは「リンクをコピー」でチャットに送れる',
+          '参加する人は「ルームに参加する」を押して、Metalifeでの元の名前とコードを入れて「参加する」を押す。リンクからひらいたときは、ルームコードは入っているので元の名前だけ入れる',
           'GMはふだん進行役。待合室で「自分もプレイヤーとして参加する」にチェックすると、GMも名前を変える側か投票する側を選んで遊べる',
           'みんながそろったら、GMが「ゲームを始める」を押す',
         ],

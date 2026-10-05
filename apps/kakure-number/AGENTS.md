@@ -57,6 +57,9 @@ TOP（screen-top）
 - 画面共有用の「みんなにみせる画面」は下の節を参照（数字は答え合わせまで出さない）。
 - 予想入力はタブレット向けの大きめステッパー（−／＋ボタン 64px + 数値直接入力、`inputmode="numeric"`）。
 - 予想値は理論上の合計範囲 **(人数+1)×1 〜 (人数+1)×10**（+1 は隠しカードの分）でバリデーション（範囲は配った時点の人数で固定し `round/minSum` `round/maxSum` に保存）。
+- 参加用のリンク `?room=CODE` と「リンクをコピー」（2026-10-05）。共通仕様は docs/development/rtdb.md「参加用のリンク」。このアプリの入口は末尾の `init()`（`?watch=` → `?room=` → sessionStorage の順）、参加画面は `screen-guest-join`（`openJoinFromLink` がコード欄 `#guest-room-code` に入れ、`#joinLinkHint` を出す）。`?room=` はつないだとき `startRoomListener()` の先頭で外す（みんなにみせる画面では触らない）
+  - 「リンクをコピー」（`#btnCopyLink`）はホストの待機（`host-step-room`）の「コードをコピー」の下だけ（ゲストの待合室にはもともとコピーのボタンがない）。`copyToClipboard` は共通の `copyRoomCode`（コード専用）なので、文字列用の `copyText` を別に置いている
+  - 固有: みんなにみせる画面の記録（`role: 'spectator'`）が同じコードで残っていても再接続を優先しない（記録を消して参加画面へ）。参加画面の欄名に合わせ、ヒント・あそびかたは「名前」でなく「ニックネーム」
 - 参加フォームからの入室は `waiting` 中のみ。ゲーム開始後の名前だけによる再入室は拒否し、復帰は同じタブの保存済みsessionによる `tryReconnect()` のみとする（2026-09-09 P-12）。sessionStorageは認証境界ではなく、別端末の本人確認を追加したものではない。ホスト名の参加拒否は維持する。
 
 ## みんなにみせる画面（画面共有用）
@@ -65,7 +68,7 @@ TOP（screen-top）
 見ている全員（遊ぶ本人も）が見てよい情報だけを出す。正本は `apps/kaburazu-hint/AGENTS.md` の同名の節で、作りをそろえている。
 
 ### 入口（3つ）
-1. **URL `?watch=CODE`**（最優先）: 起動時に既存の sessionStorage を破棄してから検証（NFKC・大文字化・`/^[A-Z0-9]{6}$/`）。無効・ルームなし・期限切れはトースト＋TOP（sessionStorage へフォールバックしない）。`?watch=`（空）も同じ扱い
+1. **URL `?watch=CODE`**（最優先）: 起動時に既存の sessionStorage を破棄してから検証（NFKC・大文字化・`/^[A-Z0-9]{6}$/`）。無効・ルームなし・期限切れはトースト＋TOP（sessionStorage へフォールバックしない）。`?watch=`（空）も同じ扱い。`?watch=` がないときだけ参加用のリンク `?room=`・sessionStorage を見る
 2. **TOP**: 「みんなにみせる画面をひらく」→ コード入力 →「画面をひらく」。成功したら `history.replaceState` で URL を `?watch=CODE` にそろえる（リロードで戻れる）
 3. **ホストの画面**: 待合室・予想タイムの進行欄・答え合わせの操作欄にある「みんなにみせる画面をひらく」。クリックの中で同期的に `window.open(url, '_blank', 'noopener')`
 
