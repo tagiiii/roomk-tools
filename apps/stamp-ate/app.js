@@ -53,6 +53,14 @@ const STAMPS = [
 const SHEET_W = 600;
 const SHEET_H = 800;
 const ROTATE_STEPS = 8; // スタンプの向きは45度ずつ
+// スタンプの大きさ。待合室で「スタンプの大きさを変えられるようにする」をオンにしたゲームだけ選べる。
+// ルームには番号（z）で置く。ふつうは z を書かない
+const SIZES = [
+  { name: '小さい', scale: 0.6 },
+  { name: 'ふつう', scale: 1 },
+  { name: '大きい', scale: 1.5 },
+];
+const DEFAULT_SIZE = 1;
 const ROUNDS = 5;
 const MIN_PLAYERS = 3;
 const MAX_PLAYERS = 9;
@@ -99,7 +107,11 @@ const state = {
   // 端末の中だけで持つ状態。進行（status・ゲーム・回）が変わったら当てる側の選び途中だけ消す
   uiKey: null,
   stampKind: 0,
-  stampRot: 0,
+  stampRot: 0, // 画面で見た向き（下の見本と同じ）。紙に置くときは紙の向きの分を引く（paperRot）
+  stampSize: DEFAULT_SIZE,
+  sizesOn: false,
+  sheetO: 0,
+  ghostAt: null,
   pickSlot: null,
   sheetKey: null,
 };
@@ -237,12 +249,19 @@ function topicText(index) {
   return isTopicIndex(index) ? TOPICS[index] : '';
 }
 
-function validStamp(stamp) {
+// sizes: 大きさを変えられるゲームか。変えられないゲームでは、大きさ（z）のあるスタンプは読み飛ばす
+function validStamp(stamp, sizes) {
   return !!stamp
     && Number.isInteger(stamp.k) && stamp.k >= 0 && stamp.k < STAMPS.length
     && Number.isInteger(stamp.x) && stamp.x >= 0 && stamp.x <= SHEET_W
     && Number.isInteger(stamp.y) && stamp.y >= 0 && stamp.y <= SHEET_H
-    && Number.isInteger(stamp.r) && stamp.r >= 0 && stamp.r < ROTATE_STEPS;
+    && Number.isInteger(stamp.r) && stamp.r >= 0 && stamp.r < ROTATE_STEPS
+    && (stamp.z === undefined || (sizes && Number.isInteger(stamp.z) && stamp.z >= 0 && stamp.z < SIZES.length));
+}
+
+// 画面で見た向き（下の見本の向き）を、紙の向き o の紙の上での向きにする。紙は90度＝2つ分ずつ回る
+function paperRot(screenRot, o) {
+  return (((screenRot - o * 2) % ROTATE_STEPS) + ROTATE_STEPS) % ROTATE_STEPS;
 }
 
 // 絵（紙の向き・押したスタンプ・完了）。壊れた値は読み飛ばす
@@ -250,7 +269,8 @@ function sheetOf(game, name) {
   const raw = game?.sheets?.[name] || {};
   const limit = stampLimit(game?.round);
   const o = Number.isInteger(raw.o) && raw.o >= 0 && raw.o < 4 ? raw.o : 0;
-  return { o, s: asList(raw.s).filter(validStamp).slice(0, limit), done: raw.done === true };
+  const sizes = game?.sizes === true;
+  return { o, s: asList(raw.s).filter((stamp) => validStamp(stamp, sizes)).slice(0, limit), done: raw.done === true };
 }
 
 // ゲームの名前の持ち主（匿名ID）。ゲームの間は、その名前を同じ人だけが使える
@@ -435,7 +455,7 @@ function clearSession() {
 
 /* ── ルームへの出入り ── */
 function resetBoxes() {
-  ['guessPictures', 'guessChoices', 'revealPictures', 'endRounds', 'stampPalette', 'sheetBox'].forEach((id) => {
+  ['guessPictures', 'guessChoices', 'revealPictures', 'endRounds', 'stampPalette', 'sizePicker', 'sheetBox'].forEach((id) => {
     const box = $(id);
     box.replaceChildren();
     delete box.dataset.key;
@@ -631,6 +651,7 @@ async function createRoom() {
           hostUid: uid,
           hostPlays: false,
           extraTopics: false,
+          stampSizes: false,
           hostConnected: true,
           hostDisconnectedAt: null,
           createdAt: serverTimestamp(),
@@ -865,10 +886,17 @@ function stampShape(kind) {
   }
 }
 
+// 位置・向き・大きさ。大きさ（z）がないスタンプは「ふつう」
+function stampTransform(stamp) {
+  const scale = (SIZES[stamp.z] || SIZES[DEFAULT_SIZE]).scale;
+  return 'translate(' + stamp.x + ' ' + stamp.y + ') rotate(' + stamp.r * (360 / ROTATE_STEPS) + ')'
+    + (scale === 1 ? '' : ' scale(' + scale + ')');
+}
+
 function stampNode(stamp, extraClass) {
   const group = svgElement('g', {
     class: 'sa-stamp' + (extraClass ? ' ' + extraClass : ''),
-    transform: 'translate(' + stamp.x + ' ' + stamp.y + ') rotate(' + stamp.r * (360 / ROTATE_STEPS) + ')',
+    transform: stampTransform(stamp),
   });
   group.append(stampShape(stamp.k));
   return group;
@@ -1002,6 +1030,7 @@ function renderWaiting(room) {
   if (!host) return;
   $('hostPlays').checked = !!room.hostPlays;
   $('extraTopics').checked = !!room.extraTopics;
+  $('stampSizes').checked = !!room.stampSizes;
   const count = players.length;
   const ok = count >= MIN_PLAYERS && count <= MAX_PLAYERS;
   $('btnStartGame').disabled = !ok;
@@ -1070,7 +1099,9 @@ function renderPainter(room, game) {
   $('stampCount').textContent = sheet.done
     ? ''
     : (left > 0 ? 'あと ' + left + '回 押せるよ' : 'もう押せないよ。よければ「完了」を押してね');
+  state.sizesOn = game.sizes === true;
   renderPalette();
+  renderSizes();
   renderEditableSheet(sheet, game, left > 0 && !sheet.done);
   $('btnUndo').disabled = sheet.done || !sheet.s.length;
   $('btnRotateSheet').disabled = sheet.done;
@@ -1078,10 +1109,15 @@ function renderPainter(room, game) {
   $('btnDone').hidden = sheet.done;
   $('btnDone').disabled = !sheet.s.length;
   $('painterDone').hidden = !sheet.done;
-  document.querySelectorAll('#stampPalette .sa-pal').forEach((button) => { button.disabled = sheet.done; });
+  document.querySelectorAll('#stampPalette .sa-pal, #sizePicker .sa-size').forEach((button) => { button.disabled = sheet.done; });
 }
 
-// スタンプの選び方（4つの形）。一度作ったら作り直さず、選択と向きの表示だけ変える
+// いま押すスタンプの大きさ。大きさを変えられないゲームでは、いつも「ふつう」
+function currentSize() {
+  return state.sizesOn ? state.stampSize : DEFAULT_SIZE;
+}
+
+// スタンプの選び方（4つの形）。一度作ったら作り直さず、選択と向き・大きさの表示だけ変える
 function renderPalette() {
   const box = $('stampPalette');
   if (box.dataset.key !== 'palette') {
@@ -1096,7 +1132,7 @@ function renderPalette() {
       button.addEventListener('click', () => {
         state.stampKind = index;
         renderPalette();
-        updateGhostShape();
+        updateGhost();
       });
       box.append(button);
     });
@@ -1108,16 +1144,49 @@ function renderPalette() {
     button.classList.toggle('is-selected', on);
     button.setAttribute('aria-pressed', on ? 'true' : 'false');
     const icon = button.querySelector('.sa-pal__icon');
-    icon.replaceChildren(stampNode({ k: index, x: 0, y: 0, r: state.stampRot }));
+    // 大きさを選べるときは、いちばん大きいスタンプが入る枠にして、大きさのちがいも見本に出す
+    icon.setAttribute('viewBox', state.sizesOn ? '-180 -180 360 360' : '-130 -130 260 260');
+    icon.replaceChildren(stampNode({ k: index, x: 0, y: 0, r: state.stampRot, z: currentSize() }));
+  });
+  box.classList.toggle('sa-palette--sizes', state.sizesOn);
+}
+
+// スタンプの大きさの選び方（大きさを変えられるゲームだけ出す）
+function renderSizes() {
+  const box = $('sizePicker');
+  box.hidden = !state.sizesOn;
+  if (!state.sizesOn) return;
+  if (box.dataset.key !== 'sizes') {
+    box.replaceChildren(makeElement('span', 'sa-sizes__label', '大きさ'));
+    SIZES.forEach((size, index) => {
+      const button = makeElement('button', 'sa-size', size.name);
+      button.type = 'button';
+      button.dataset.index = String(index);
+      button.addEventListener('click', () => {
+        state.stampSize = index;
+        renderPalette();
+        renderSizes();
+        updateGhost();
+      });
+      box.append(button);
+    });
+    box.dataset.key = 'sizes';
+  }
+  box.querySelectorAll('.sa-size').forEach((button) => {
+    const on = Number(button.dataset.index) === state.stampSize;
+    button.classList.toggle('is-selected', on);
+    button.setAttribute('aria-pressed', on ? 'true' : 'false');
   });
 }
 
 // 自分の紙。タップした位置にスタンプを押す。マウスのときは押す前に薄く形を見せる
 function renderEditableSheet(sheet, game, canStamp) {
   const box = $('sheetBox');
-  const key = [game.id, game.round, sheet.o, sheet.s.map((s) => [s.k, s.x, s.y, s.r].join(',')).join(';'), canStamp].join('|');
+  const key = [game.id, game.round, sheet.o, sheet.s.map((s) => [s.k, s.x, s.y, s.r, s.z].join(',')).join(';'), canStamp].join('|');
   if (state.sheetKey === key) return;
   state.sheetKey = key;
+  state.sheetO = sheet.o;
+  state.ghostAt = null;
   const { svg, inner, ink } = buildSheet(sheet, 'あなたの絵（スタンプ ' + sheet.s.length + '個）');
   svg.classList.add('sa-sheet--edit');
   svg.classList.toggle('is-full', !canStamp);
@@ -1135,31 +1204,39 @@ function renderEditableSheet(sheet, game, canStamp) {
   if (canStamp) {
     svg.addEventListener('click', (event) => {
       const point = toSheet(event);
-      if (point) placeStamp(point);
+      if (point) placeStamp(point, sheet.o);
     });
     svg.addEventListener('pointermove', (event) => {
       if (event.pointerType !== 'mouse') return;
       const point = toSheet(event);
       if (!point) return;
-      ghost.setAttribute('transform', 'translate(' + point.x + ' ' + point.y + ') rotate(' + state.stampRot * (360 / ROTATE_STEPS) + ')');
-      ghost.setAttribute('visibility', 'visible');
+      state.ghostAt = point;
+      updateGhost();
     });
-    svg.addEventListener('pointerleave', () => ghost.setAttribute('visibility', 'hidden'));
+    svg.addEventListener('pointerleave', () => {
+      state.ghostAt = null;
+      updateGhost();
+    });
   }
   box.replaceChildren(svg);
   ghost.dataset.role = 'ghost';
   ink.dataset.role = 'ink';
-  updateGhostShape();
+  updateGhost();
 }
 
-function updateGhostShape() {
+// 押す位置の目安（薄い形）。形・向き・大きさは、下の見本と同じに見えるようにする
+function updateGhost() {
   const ghost = document.querySelector('#sheetBox .sa-ghost');
   if (!ghost) return;
   ghost.replaceChildren(stampShape(state.stampKind));
-  const transform = ghost.getAttribute('transform');
-  if (transform) {
-    ghost.setAttribute('transform', transform.replace(/rotate\([^)]*\)/, 'rotate(' + state.stampRot * (360 / ROTATE_STEPS) + ')'));
+  if (!state.ghostAt) {
+    ghost.setAttribute('visibility', 'hidden');
+    return;
   }
+  ghost.setAttribute('transform', stampTransform({
+    x: state.ghostAt.x, y: state.ghostAt.y, r: paperRot(state.stampRot, state.sheetO), z: currentSize(),
+  }));
+  ghost.setAttribute('visibility', 'visible');
 }
 
 /* ── 当てる回 ── */
@@ -1524,12 +1601,16 @@ async function editSheet(mutate, failMessage) {
   }
 }
 
-function placeStamp(point) {
+// o は、押したときに見えていた紙の向き。下の見本と同じ向きに見えるように、紙の上での向きにして置く
+function placeStamp(point, o) {
   const kind = state.stampKind;
-  const rot = state.stampRot;
+  const rot = paperRot(state.stampRot, o);
+  const size = currentSize();
   editSheet((sheet, room, game) => {
     if (sheet.done || sheet.s.length >= stampLimit(game.round)) return null;
-    return { ...sheet, s: sheet.s.concat({ k: kind, x: point.x, y: point.y, r: rot }) };
+    const stamp = { k: kind, x: point.x, y: point.y, r: rot };
+    if (game.sizes === true && size !== DEFAULT_SIZE) stamp.z = size;
+    return { ...sheet, s: sheet.s.concat(stamp) };
   }, 'スタンプを押せませんでした。もう一度ためしてね');
 }
 
@@ -1746,6 +1827,7 @@ async function startGame() {
       uids: Object.fromEntries(order.map((name) => [name, room.players[name].uid])),
       joined: Object.fromEntries(order.map((name) => [name, Number(room.players[name].joinedAt) || 0])),
       extra: !!room.extraTopics,
+      sizes: !!room.stampSizes,
       misses: 0,
       history: null,
     };
@@ -1891,6 +1973,7 @@ $('btnOverlayLeave').addEventListener('click', leaveRoom);
 
 $('hostPlays').addEventListener('change', (event) => setOption('hostPlays', event.currentTarget.checked));
 $('extraTopics').addEventListener('change', (event) => setOption('extraTopics', event.currentTarget.checked));
+$('stampSizes').addEventListener('change', (event) => setOption('stampSizes', event.currentTarget.checked));
 $('btnStartGame').addEventListener('click', startGame);
 $('btnCloseStamping').addEventListener('click', closeStamping);
 $('btnNextRound').addEventListener('click', nextRound);
@@ -1900,7 +1983,7 @@ $('btnQuitGame').addEventListener('click', quitGame);
 $('btnRotateStamp').addEventListener('click', () => {
   state.stampRot = (state.stampRot + 1) % ROTATE_STEPS;
   renderPalette();
-  updateGhostShape();
+  updateGhost();
 });
 $('btnRotateSheet').addEventListener('click', rotateSheet);
 $('btnUndo').addEventListener('click', undoStamp);
