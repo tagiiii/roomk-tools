@@ -94,6 +94,12 @@
   .example .cap{ font-size:24px; font-weight:900; color:var(--ink); }
   .example .cap span{ font-size:17px; font-weight:700; color:var(--acc); margin-right:8px; }
   .example .cnt{ font-size:18px; color:var(--ink-soft); }
+  .sizes{ display:flex; gap:34px; align-items:center; justify-content:center; height:100%; }
+  .size-set{ display:flex; flex-direction:column; align-items:center; gap:22px; }
+  .size-row{ display:flex; gap:14px; }
+  .size-card{ background:var(--white); border:1.5px solid var(--line); border-radius:18px; padding:16px 12px 14px; display:flex; flex-direction:column; align-items:center; gap:8px; }
+  .size-card svg{ width:120px; height:120px; }
+  .size-card b{ font-size:22px; font-weight:900; color:var(--ink); }
   /* 押せる回数 */
   .counts{ display:flex; flex-direction:column; gap:13px; }
   .count-row{ display:flex; align-items:center; gap:22px; background:var(--white); border:1.5px solid var(--line); border-radius:14px; padding:12px 24px; }
@@ -271,14 +277,22 @@ function shape(k){
   if(k===2) return `<rect x="-115" y="-28" width="230" height="56" fill="${c}"/>`;
   return `<polygon points="0,-84 76,48 -76,48" fill="${c}"/>`;
 }
-function stamp(k,x,y,r){ return `<g transform="translate(${x} ${y}) rotate(${(r||0)*45})">${shape(k)}</g>`; }
+const SIZE_SCALES=[0.6,1,1.5]; // 小さい・ふつう・大きい（アプリの SIZES と同じ）
+function stamp(k,x,y,r,z){
+  const sc=SIZE_SCALES[z==null?1:z];
+  return `<g transform="translate(${x} ${y}) rotate(${(r||0)*45})${sc===1?'':` scale(${sc})`}">${shape(k)}</g>`;
+}
 function sheet(stamps){
   return `<svg class="sheet" viewBox="0 0 600 800"><rect width="600" height="800" fill="#fff"/><g class="ink">${stamps.map((s)=>stamp(...s)).join('')}</g></svg>`;
 }
 function icon(k,r){ return `<svg viewBox="-130 -130 260 260"><g class="ink"><g>${stamp(k,0,0,r)}</g></g></svg>`; }
+function sizeIcon(k,z){ return `<svg viewBox="-110 -110 220 220"><g class="ink"><g>${stamp(k,0,0,0,z)}</g></g></svg>`; }
 const HOUSE=[[1,300,500],[3,300,392],[0,470,170]];
 const TREE=[[3,300,230],[3,300,330],[3,300,430],[2,300,600,2]];
 const SUN=[[0,300,400],[2,300,205,2],[2,300,595,2],[2,105,400],[2,495,400]];
+// 大きさを変えた絵（[形, x, y, 向き, 大きさ]）
+const TREE_SIZES=[[3,300,225,0,0],[3,300,315,0,1],[3,300,445,0,2],[2,300,580,2,0],[0,300,150,0,0]];
+const SUN_SIZES=[[0,300,400,0,2],[2,300,222,2,0],[2,300,578,2,0],[2,122,400,0,0],[2,478,400,0,0]];
 const SNOW=[[0,300,300],[0,300,470]];
 const BOAT=[[3,300,330],[2,300,470]];
 function pips(n){ return Array.from({length:5},(_,i)=>`<span class="pip${i<n?'':' off'}"></span>`).join(''); }
@@ -328,7 +342,7 @@ const SLIDES = [
       <span class="chip"><span class="material-symbols-rounded">crop_rotate</span>紙の向きも回せる</span>
       <span class="chip"><span class="material-symbols-rounded">block</span>色は変えられない</span>
     </div>`,
-    note:'使えるスタンプは4つ。赤い丸、青い四角、黄色い長方形、緑の三角。\n色は形ごとに決まっていて、変えられないよ。\nそのかわり、スタンプの向きと、紙の向きは回せます。\nホストが待合室で「スタンプの大きさを変えられるようにする」をオンにしたときは、大きさも「小さい・ふつう・大きい」から選べるよ。' },
+    note:'使えるスタンプは4つ。赤い丸、青い四角、黄色い長方形、緑の三角。\n色は形ごとに決まっていて、変えられないよ。\nそのかわり、スタンプの向きと、紙の向きは回せます。' },
 
   /* 6 */ { type:'content', accent:'teal', section:'ゲーム説明', sectionEn:'explain', num:'3',
     headline:'たとえば、こんなふうに',
@@ -339,7 +353,23 @@ const SLIDES = [
     </div>`,
     note:'たとえば、こんなふうに表せるよ。\n四角と三角で「家」、三角を重ねて「クリスマスツリー」、丸のまわりに長方形で「太陽」。\n正しい描き方はないから、自由に工夫してね。' },
 
-  /* 7 */ { type:'content', accent:'coral', section:'ゲーム説明', sectionEn:'explain', num:'4',
+  /* 7 */ { type:'content', accent:'blue', section:'ゲーム説明', sectionEn:'explain', num:'4',
+    headline:'設定をオンにすると、<span class="hl">大きさも選べる</span>',
+    body:`<div class="sizes">
+      <div class="size-set">
+        <div class="size-row">
+          <div class="size-card">${sizeIcon(0,0)}<b>小さい</b></div>
+          <div class="size-card">${sizeIcon(0,1)}<b>ふつう</b></div>
+          <div class="size-card">${sizeIcon(0,2)}<b>大きい</b></div>
+        </div>
+        <span class="chip"><span class="material-symbols-rounded">toggle_on</span>ホストが待合室でオンにしたときだけ</span>
+      </div>
+      <div class="example"><div class="frame">${sheet(TREE_SIZES)}</div><div class="cap"><span>お題</span>クリスマスツリー</div></div>
+      <div class="example"><div class="frame">${sheet(SUN_SIZES)}</div><div class="cap"><span>お題</span>太陽</div></div>
+    </div>`,
+    note:'ホストが待合室で「スタンプの大きさを変えられるようにする」をオンにしたときは、スタンプの大きさも選べるよ。大きさは「小さい・ふつう・大きい」の3つ。\nたとえば、大きさのちがう三角を重ねて「クリスマスツリー」、大きい丸のまわりに小さい長方形で「太陽」。\n大きさを変えても、押せる回数は同じです。' },
+
+  /* 8 */ { type:'content', accent:'coral', section:'ゲーム説明', sectionEn:'explain', num:'5',
     headline:'押せる回数は、<span class="hl">1回ずつへっていく</span>',
     body:`<div class="counts">
       <div class="count-row"><span class="r">1回目</span><span class="pips">${pips(5)}</span><span class="n">5回まで</span></div>
@@ -350,7 +380,7 @@ const SLIDES = [
     </div>`,
     note:'押せる回数は、1回目が5回まで。\nそこから、2回目は4回、3回目は3回、4回目は2回……と1回ずつへって、\n最後の5回目は、たった1回だけ！ それまでの回で生まれた表し方をヒントにしてね。' },
 
-  /* 8 */ { type:'content', accent:'blue', section:'ゲーム説明', sectionEn:'explain', num:'5',
+  /* 9 */ { type:'content', accent:'blue', section:'ゲーム説明', sectionEn:'explain', num:'6',
     headline:'当てる人は、<br>どの絵が<span class="hl">どのお題</span>かを当てる',
     body:`<div class="guess">
       <div class="guess-pics">
@@ -365,7 +395,7 @@ const SLIDES = [
     </div>`,
     note:'みんなが押し終わったら、当てる人の番。\n絵には①②…と番号がついていて、当てる人は、絵を選んでからお題を選びます。全部の絵に決めたら「これで決める」。\n当てる人が考えている間は、押した人はヒントを言わないでね。' },
 
-  /* 9 */ { type:'content', accent:'teal', section:'ゲーム説明', sectionEn:'explain', num:'6',
+  /* 10 */ { type:'content', accent:'teal', section:'ゲーム説明', sectionEn:'explain', num:'7',
     headline:'5回でクリアをめざそう',
     body:`<div class="clear-box">
       <div class="big">5回が終わったとき、<br>ちがった数の合計が<span class="hl">チームの人数まで</span>ならクリア！</div>
@@ -373,7 +403,7 @@ const SLIDES = [
     </div>`,
     note:'答え合わせで、伝わった数と、ちがった数がわかるよ。\n5回が終わったときに、ちがった数の合計がチームの人数までならクリア！\nたとえば4人で遊ぶなら、4つまでならクリア。こえても、5回目まで遊べるよ。' },
 
-  /* 10 */ { type:'content', accent:'coral', section:'画面の使い方', sectionEn:'how to play',
+  /* 11 */ { type:'content', accent:'coral', section:'画面の使い方', sectionEn:'how to play',
     headline:'押す人の画面',
     body:`<div class="rows">
       <div class="row"><div class="row__ic"><span class="material-symbols-rounded">touch_app</span></div><div><div class="row__t">スタンプを選んで、紙をタップ</div><div class="row__d">タップしたところにスタンプが押せる</div></div></div>
@@ -382,7 +412,7 @@ const SLIDES = [
     </div>`,
     note:'押す人の画面の使い方だよ。\nスタンプを選んで、紙をタップすると押せます。押しまちがえたら「1つ戻す」。\n「スタンプの向きを回す」「紙を回す」で向きも変えられるよ。スタンプは、下の見本と同じ向きで押せます。\nできたら「完了」。みんながそろうまでは「なおす」で戻れます。' },
 
-  /* 11 */ { type:'content', accent:'blue', section:'Q&A', sectionEn:'question & answer',
+  /* 12 */ { type:'content', accent:'blue', section:'Q&A', sectionEn:'question & answer',
     headline:'よくある質問',
     body:`<div class="qa">
       <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>知らないお題や、むずかしいお題が出たら？</div><div class="qa__a"><span class="qa__badge a">A</span>まだ1つも押していなければ、「ほかのお題にする」で変えられるよ。</div></div>
@@ -391,7 +421,7 @@ const SLIDES = [
     </div>`,
     note:'よくある質問だよ\nQ. 知らないお題やむずかしいお題が出たら？→ A. まだ1つも押していなければ「ほかのお題にする」で変えられるよ。\nQ. 回数を全部使わないといけない？→ A. 1回以上押せば「完了」していいよ。\nQ. 伝わらなかったら？→ A. だいじょうぶ。答え合わせで、どう表したかを話すのも楽しみのひとつ。' },
 
-  /* 12 */ { type:'content', accent:'teal', section:'参加のしかた', sectionEn:'join',
+  /* 13 */ { type:'content', accent:'teal', section:'参加のしかた', sectionEn:'join',
     headline:'ルームに参加しよう',
     body:`<div class="steps">
       <div class="step"><span class="sn">1</span><b>「ルームに参加する」を押す</b><span>トップの画面にあるよ</span></div>
@@ -401,27 +431,27 @@ const SLIDES = [
     </div>`,
     note:'参加のしかただよ。\n「ルームに参加する」を押して、名前、ルームコード（6文字）の順に入れて、「参加する」を押してね。\nルームコードは、このあとチャットで送ります。リンクで送ったときは、リンクをひらくとルームコードが入っているので、名前だけ入れてね。' },
 
-  /* 13 */ { type:'divider', accent:'blue', icon:'live_help', jp:'質問タイム', en:'any questions?',
+  /* 14 */ { type:'divider', accent:'blue', icon:'live_help', jp:'質問タイム', en:'any questions?',
     sub:'気になることはある？',
     note:'ここまでで、質問がある人はいるかな？\nマイクON か チャットで教えてね！' },
 
-  /* 14 */ { type:'divider', accent:'coral', icon:'how_to_reg', jp:'参加確認', en:"let's check",
+  /* 15 */ { type:'divider', accent:'coral', icon:'how_to_reg', jp:'参加確認', en:"let's check",
     sub:'チャットで教えてね',
     note:'やってみたい人〜？\n「①参加」「②見学」「③その他」を、チャットで教えてね！' },
 
-  /* 15 */ { type:'divider', accent:'teal', solid:true, icon:'rocket_launch', jp:'＼ ゲームスタート ／', en:'game start',
+  /* 16 */ { type:'divider', accent:'teal', solid:true, icon:'rocket_launch', jp:'＼ ゲームスタート ／', en:'game start',
     sub:'ルームに参加してね',
     note:'それでは、スタンプあてゲームスタート！\nチャットのルームコードかリンクで、ルームに参加してね。わからなくなったら、いつでも聞いてね' },
 
-  /* 16 */ { type:'divider', accent:'coral', icon:'approval', jp:'スタンプタイム', en:'stamp',
+  /* 17 */ { type:'divider', accent:'coral', icon:'approval', jp:'スタンプタイム', en:'stamp',
     sub:'お題をスタンプで表そう',
     note:'押す人は、自分のお題をスタンプで表そう。\nできたら「完了」を押してね。当てる人は、みんながそろうまで待っててね！' },
 
-  /* 17 */ { type:'divider', accent:'blue', icon:'image_search', jp:'当てるタイム', en:'guess',
+  /* 18 */ { type:'divider', accent:'blue', icon:'image_search', jp:'当てるタイム', en:'guess',
     sub:'どの絵が、どのお題？',
     note:'当てる人の番！ どの絵が、どのお題かな？\n押した人は、ヒントを言わずに見守ってね。' },
 
-  /* 18 */ { type:'divider', accent:'teal', solid:true, icon:'emoji_events', jp:'けっか', en:'result',
+  /* 19 */ { type:'divider', accent:'teal', solid:true, icon:'emoji_events', jp:'けっか', en:'result',
     sub:'おつかれさま！',
     note:'けっか発表！\nクリアできたかな？ 最後に、いちばん伝わったと思う絵や、びっくりした表し方を、ひとことずつ教えてね。' },
 ];
