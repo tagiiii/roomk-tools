@@ -1,0 +1,1994 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+  <title>こっそりワード | room-K</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
+  <link rel="stylesheet" href="../shared/css/design-system.css">
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+  <script src="../shared/js/rtdb-utils.js?v=20261005"></script>
+  <style>
+    /* ── 画面管理 ── */
+    .screen { display: none; min-height: 100dvh; }
+    .screen.active { display: flex; flex-direction: column; align-items: center; }
+    .page { width: 100%; max-width: 480px; padding: 40px 20px 96px; }
+
+    /* ── ヘッダー ── */
+    .ksw-header { text-align: center; padding: 48px 0 32px; }
+    .ksw-header__icon {
+      width: 80px; height: 80px; border-radius: 50%;
+      background: var(--color-accent);
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 16px;
+    }
+    .ksw-header__icon .material-symbols-rounded { font-size: 44px; color: #fff; }
+    .ksw-header__title { font-size: 28px; font-weight: 700; color: var(--color-primary); }
+    .ksw-header__sub { font-size: 14px; color: var(--color-muted); margin-top: 6px; line-height: 1.7; }
+
+    h2 { font-size: 20px; font-weight: 700; margin-bottom: 16px; color: var(--color-primary); }
+    .ksw-lbl { font-size: 13px; font-weight: 700; color: var(--color-muted); letter-spacing: 0.06em; margin-bottom: 8px; }
+    .ksw-note { font-size: 13px; color: var(--color-muted); line-height: 1.7; }
+    .ksw-note--lead { font-size: 14px; margin: 0 0 16px; }
+    .ksw-hint { font-size: 14px; color: var(--color-muted); margin-top: 8px; line-height: 1.7; }
+    .ksw-progress { font-size: 14px; color: var(--color-muted); text-align: center; margin-bottom: 12px; }
+    .ksw-title { font-size: 24px; font-weight: 700; color: var(--color-primary); }
+    .ksw-sub { text-align: center; margin-top: 12px; line-height: 1.8; }
+    .sep { margin-top: 8px; }
+
+    /* ── ルームコード ── */
+    .room-code {
+      font-size: 48px; font-weight: 700; letter-spacing: 0.15em;
+      color: var(--color-primary); text-align: center;
+    }
+
+    /* ── 参加者 ── */
+    .player-list { list-style: none; }
+    .player-item {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 0; border-bottom: 1px solid var(--color-border); font-size: 15px;
+    }
+    .player-item:last-child { border-bottom: none; }
+    .player-name { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .player-tag {
+      font-size: 11px; font-weight: 700; padding: 2px 6px; border-radius: 4px;
+      background: var(--color-accent); color: #fff;
+    }
+    .player-tag.me { background: var(--color-muted); }
+    .player-tag.role { background: #EEF3F8; color: var(--color-primary); }
+
+    /* ── 待合室の設定（ホストのみ）── */
+    .ksw-check {
+      display: flex; align-items: center; gap: 10px; min-height: 44px;
+      font-size: 15px; font-weight: 500; cursor: pointer;
+    }
+    .ksw-check input { width: 20px; height: 20px; accent-color: var(--color-accent); flex-shrink: 0; }
+
+    /* ── 話し手をえらぶチップ ── */
+    .ksw-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+    .ksw-chip {
+      display: inline-flex; align-items: center; min-height: 44px; padding: 6px 16px;
+      border: 2px solid var(--color-border); border-radius: var(--radius-full);
+      background: var(--color-surface); color: var(--color-text);
+      font-family: var(--font-base); font-size: 15px; cursor: pointer;
+    }
+    .ksw-chip[aria-pressed="true"] { border-color: var(--color-accent); background: #E6F2F4; font-weight: 700; }
+    .ksw-chip:focus-visible { outline: 3px solid var(--color-accent); outline-offset: 2px; }
+
+    /* ── お題（白カード＋ティール枠）── */
+    .ksw-odai {
+      background: var(--color-surface); border: 2px solid var(--color-accent);
+      border-radius: var(--radius-box); padding: 32px 40px; text-align: center;
+    }
+    .ksw-odai__label { font-size: 13px; font-weight: 500; color: var(--color-accent); letter-spacing: 0.08em; margin-bottom: 12px; }
+    .ksw-odai__word { font-size: 40px; font-weight: 700; color: var(--color-primary); line-height: 1.3; overflow-wrap: anywhere; }
+
+    /* ── 折りたたみ（ホストの画面は共有されることが多いので、ひみつはたたんでおく）── */
+    .ksw-fold { border: 1px solid var(--color-border); border-radius: 12px; background: var(--color-surface); }
+    .ksw-fold summary {
+      list-style: none; cursor: pointer; padding: 12px 14px; min-height: 44px;
+      font-size: 14px; font-weight: 700; color: var(--color-primary);
+      display: flex; align-items: center; gap: 6px;
+    }
+    .ksw-fold summary::-webkit-details-marker { display: none; }
+    .ksw-fold summary .material-symbols-rounded { font-size: 18px; color: var(--color-muted); }
+    .ksw-fold__body { padding: 0 14px 14px; }
+    .ksw-fold__word { font-size: 32px; font-weight: 700; color: var(--color-primary); text-align: center; overflow-wrap: anywhere; }
+
+    .ksw-fold--plain { border: none; background: none; }
+    .ksw-fold--plain summary { display: none; }
+    .ksw-fold--plain .ksw-fold__body { padding: 0; }
+
+    /* ── お題えらび ── */
+    .ksw-options { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
+    .ksw-option {
+      min-height: 56px; padding: 10px 14px;
+      border: 2px solid var(--color-accent); border-radius: var(--radius-btn);
+      background: var(--color-surface); color: var(--color-primary);
+      font-family: var(--font-base); font-size: 20px; font-weight: 700; cursor: pointer; overflow-wrap: anywhere;
+    }
+    .ksw-option:hover { background: #E6F2F4; }
+    .ksw-option:focus-visible { outline: 3px solid var(--color-accent); outline-offset: 2px; }
+    .ksw-own { margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--color-border); }
+
+    /* ── のこり時間 ── */
+    .ksw-timer { text-align: center; font-size: 15px; color: var(--color-muted); margin-bottom: 12px; }
+    .ksw-timer strong { font-size: 28px; color: var(--color-primary); margin-left: 6px; font-variant-numeric: tabular-nums; }
+    .ksw-timer.is-over strong { font-size: 18px; color: var(--color-accent); }
+
+    /* ── 待ち ── */
+    .ksw-wait { text-align: center; line-height: 1.9; padding: 12px 0; }
+    .ksw-wait .material-symbols-rounded { font-size: 44px; color: var(--color-accent); display: block; margin: 0 auto 8px; }
+
+    /* ── 答え ── */
+    .ksw-input {
+      width: 100%; min-height: 52px; padding: 10px 14px; margin-top: 16px;
+      border: 2px solid var(--color-border); border-radius: var(--radius-btn);
+      font-family: var(--font-base); font-size: 20px; font-weight: 700;
+      color: var(--color-text); background: var(--color-surface);
+    }
+    .ksw-input:focus { outline: none; border-color: var(--color-accent); }
+    .ksw-names { display: flex; flex-wrap: wrap; gap: 8px; }
+    .ksw-name {
+      display: inline-flex; align-items: center; gap: 4px; padding: 6px 12px;
+      border-radius: var(--radius-full); border: 1px solid var(--color-border); font-size: 15px;
+    }
+    .ksw-name--done { border-color: var(--color-success); color: var(--color-success); }
+    .ksw-name .material-symbols-rounded { font-size: 18px; }
+    .ksw-result { text-align: center; font-size: 20px; font-weight: 700; color: var(--color-primary); margin-top: 20px; line-height: 1.6; }
+    .ksw-judge { display: flex; flex-direction: column; gap: 8px; }
+    .ksw-judge__row { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; font-size: 15px; }
+
+    /* ── みんなにみせる画面 ── */
+    .ksw-spec-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; font-size: 14px; color: var(--color-muted); }
+    .ksw-spec-head strong { color: var(--color-primary); letter-spacing: 0.1em; }
+    .ksw-spec-big { font-size: 24px; font-weight: 700; color: var(--color-primary); line-height: 1.6; }
+    .ksw-spec-notice { margin-top: 12px; }
+
+    .ksw-quiet {
+      display: block; margin: 16px auto 0; background: none; border: none; cursor: pointer;
+      font-family: var(--font-base); font-size: 14px; color: var(--color-muted);
+      text-decoration: underline; min-height: 44px;
+    }
+
+    /* ── オーバーレイ ── */
+    .overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(28,63,94,0.88); z-index: 100;
+      flex-direction: column; align-items: center; justify-content: center;
+      gap: 16px; color: #fff; text-align: center; padding: 24px;
+    }
+    .overlay.show { display: flex; }
+    .overlay-title { font-size: 20px; font-weight: 700; }
+    .overlay-sub { font-size: 14px; opacity: 0.8; }
+    .overlay .btn-ghost { color: #fff; border-color: rgba(255,255,255,0.6); }
+    .ksw-spinner {
+      width: 32px; height: 32px;
+      border: 3px solid rgba(255,255,255,0.3); border-top-color: #fff;
+      border-radius: 50%; animation: ksw-spin 0.7s linear infinite;
+    }
+    @keyframes ksw-spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 600px) {
+      .ksw-odai { padding: 24px 20px; }
+      .ksw-odai__word { font-size: 32px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══ TOP ══ -->
+<div id="screen-top" class="screen">
+  <div class="page">
+    <div class="ksw-header">
+      <div class="ksw-header__icon">
+        <span class="material-symbols-rounded" aria-hidden="true">hearing</span>
+      </div>
+      <div class="ksw-header__title">こっそりワード</div>
+      <div class="ksw-header__sub">2人の雑談にまぎれた「お題」の言葉を、聞いて見抜こう</div>
+    </div>
+    <div class="card">
+      <button class="btn btn-primary btn-full" onclick="goTo('host-setup')">
+        <span class="material-symbols-rounded" aria-hidden="true">add_circle</span>ルームを作る
+      </button>
+      <button class="btn btn-secondary btn-full sep" onclick="openJoinFromTop()">
+        <span class="material-symbols-rounded" aria-hidden="true">login</span>ルームに参加する
+      </button>
+    </div>
+    <button type="button" class="ksw-quiet" onclick="goTo('spectate-join')">みんなにみせる画面をひらく</button>
+  </div>
+</div>
+
+<!-- ══ みんなにみせる画面: コード入力 ══ -->
+<div id="screen-spectate-join" class="screen">
+  <div class="page">
+    <h2>みんなにみせる画面</h2>
+    <div class="card">
+      <p class="ksw-note ksw-note--lead">画面共有するための画面だよ。ルームに入っていない人も、これを見ながら声やチャットで当てられる。お題は発表まで出ない。</p>
+      <div class="form-group">
+        <label class="form-label" for="spectate-code">ルームコード（6文字）</label>
+        <input class="form-input" id="spectate-code" type="text" maxlength="6" autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="ABCDEF"
+               style="text-transform:uppercase;letter-spacing:.2em;font-size:24px;text-align:center">
+      </div>
+      <p id="spectate-form-error" class="alert alert-error" role="alert" hidden></p>
+      <button class="btn btn-primary btn-full mt-md" id="btn-spectate" onclick="spectateJoin()">
+        <span class="material-symbols-rounded" aria-hidden="true">present_to_all</span>画面をひらく
+      </button>
+      <button class="btn btn-ghost btn-full sep" onclick="goTo('top')">トップへ戻る</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ みんなにみせる画面（読み取りだけ。お題は発表まで入れない）══ -->
+<div id="screen-spectator" class="screen">
+  <div class="page">
+    <div class="ksw-spec-head">
+      <span>こっそりワード・みんなにみせる画面</span>
+      <span>ルームコード <strong id="s-code"></strong></span>
+    </div>
+    <p class="ksw-progress" id="s-progress"></p>
+
+    <div id="s-wait" class="card" hidden>
+      <div class="ksw-wait">
+        <span class="material-symbols-rounded" aria-hidden="true" id="s-wait-icon">hourglass_top</span>
+        <p class="ksw-spec-big" id="s-wait-title"></p>
+        <p id="s-wait-sub"></p>
+        <p id="s-wait-sub2"></p>
+        <p class="ksw-timer" id="s-timer" style="margin:12px 0 0" hidden>のこり<strong id="s-timer-val"></strong></p>
+      </div>
+    </div>
+
+    <div id="s-result" hidden>
+      <div class="ksw-odai">
+        <p class="ksw-odai__label">お題</p>
+        <p class="ksw-odai__word" id="s-topic"></p>
+      </div>
+      <p class="ksw-sub" id="s-speakers"></p>
+      <p class="ksw-result" id="s-line"></p>
+      <div id="s-hits-card" class="card mt-md" hidden>
+        <p class="ksw-lbl">見抜いた人</p>
+        <div class="ksw-names" id="s-hits"></div>
+      </div>
+    </div>
+
+    <p id="s-host-off" class="alert alert-warning ksw-spec-notice" role="status" hidden>ホストの接続が切れたよ。もどってくるのを待っているよ。</p>
+    <button type="button" class="ksw-quiet" onclick="spectatorLeave()">トップへ戻る</button>
+  </div>
+</div>
+
+<!-- ══ HOST SETUP ══ -->
+<div id="screen-host-setup" class="screen">
+  <div class="page">
+    <h2>ルームを作る</h2>
+    <div class="card">
+      <div class="form-group">
+        <label class="form-label" for="host-nickname">名前（8文字以内）</label>
+        <input class="form-input" id="host-nickname" type="text" maxlength="8" autocomplete="off" placeholder="例: そら">
+      </div>
+      <p id="host-form-error" class="alert alert-error" role="alert" hidden></p>
+      <button class="btn btn-primary btn-full mt-md" id="btn-create" onclick="hostCreateRoom()">
+        <span class="material-symbols-rounded" aria-hidden="true">add_home</span>ルームを作成する
+      </button>
+      <button class="btn btn-ghost btn-full sep" onclick="goTo('top')">トップへ戻る</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ GUEST JOIN ══ -->
+<div id="screen-guest-join" class="screen">
+  <div class="page">
+    <h2>ルームに参加する</h2>
+    <div class="card">
+      <p class="ksw-note ksw-note--lead" id="joinLinkHint" hidden>リンクからひらいたので、ルームコードは入っているよ。名前を入れて「参加する」を押してね。</p>
+      <div class="form-group">
+        <label class="form-label" for="guest-nickname">名前（8文字以内）</label>
+        <input class="form-input" id="guest-nickname" type="text" maxlength="8" autocomplete="off" placeholder="例: あお">
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="guest-code">ルームコード（6文字）</label>
+        <input class="form-input" id="guest-code" type="text" maxlength="6" autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="ABCDEF"
+               style="text-transform:uppercase;letter-spacing:.2em;font-size:24px;text-align:center">
+      </div>
+      <p id="join-form-error" class="alert alert-error" role="alert" hidden></p>
+      <button class="btn btn-primary btn-full mt-md" id="btn-join" onclick="guestJoin()">
+        <span class="material-symbols-rounded" aria-hidden="true">login</span>参加する
+      </button>
+      <button class="btn btn-ghost btn-full sep" onclick="goTo('top')">トップへ戻る</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ WAITING（待合室）══ -->
+<div id="screen-waiting" class="screen">
+  <div class="page">
+    <p class="ksw-progress" id="w-progress" hidden></p>
+
+    <!-- ホスト向けパネル -->
+    <div id="host-panel" hidden>
+      <div class="card" style="text-align:center">
+        <p class="ksw-lbl">ルームコード</p>
+        <p class="room-code" id="w-room-code">------</p>
+        <button type="button" class="btn btn-ghost btn-full mt-sm" onclick="RoomkRTDB.copyRoomCode(state.roomCode, this)">
+          <span class="material-symbols-rounded" aria-hidden="true">content_copy</span>コードをコピー
+        </button>
+        <button type="button" class="btn btn-ghost btn-full mt-sm" id="btnCopyLink" onclick="copyJoinLink(this)">
+          <span class="material-symbols-rounded" aria-hidden="true">link</span>リンクをコピー
+        </button>
+        <button type="button" class="ksw-quiet" id="btn-open-spectator" onclick="openSpectatorWindow()">みんなにみせる画面をひらく</button>
+      </div>
+      <div class="card">
+        <label class="ksw-check">
+          <input type="checkbox" id="set-host-plays" checked onchange="onHostPlaysChange(this.checked)">
+          <span>自分もプレイヤーとして参加する</span>
+        </label>
+        <p class="ksw-note">外すと進行役になるよ。話し手にも聞き手にもならない</p>
+        <div class="form-group" style="margin-top:16px;margin-bottom:0">
+          <label class="form-label" for="set-talk-secs">雑談の時間</label>
+          <select class="form-select" id="set-talk-secs" onchange="onTalkSecsChange(this.value)">
+            <option value="60">1分</option>
+            <option value="120">2分</option>
+            <option value="180">3分</option>
+            <option value="300">5分</option>
+            <option value="0">決めない</option>
+          </select>
+        </div>
+      </div>
+      <div class="card">
+        <p class="ksw-lbl">話し手を2人えらぶ</p>
+        <div class="ksw-chips" id="w-speaker-chips" role="group" aria-label="話し手"></div>
+        <p class="ksw-hint" id="w-speaker-hint"></p>
+      </div>
+    </div>
+
+    <div class="card mt-md">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <strong style="font-size:16px">参加者</strong>
+        <span id="w-count" class="ksw-note"></span>
+      </div>
+      <ul class="player-list" id="w-player-list"></ul>
+      <p id="w-guest-note" class="ksw-hint" hidden>ホストが話し手を決めているよ。少し待ってね。</p>
+    </div>
+
+    <div id="host-start-area" class="mt-md" hidden>
+      <button class="btn btn-primary btn-full" id="btn-deal" onclick="dealTopic()" disabled>
+        <span class="material-symbols-rounded" aria-hidden="true">play_arrow</span>お題をくばる
+      </button>
+      <button class="btn btn-secondary btn-full sep" id="btn-random" onclick="pickSpeakersRandomly()">
+        <span class="material-symbols-rounded" aria-hidden="true">shuffle</span>話し手をおまかせでえらぶ
+      </button>
+      <p id="w-start-hint" class="ksw-note" style="text-align:center;margin-top:8px"></p>
+    </div>
+    <button class="btn btn-ghost btn-full mt-md" onclick="leaveGame()">
+      <span class="material-symbols-rounded" aria-hidden="true">logout</span>退出する
+    </button>
+  </div>
+</div>
+
+<!-- ══ CHOOSING（お題えらび）══ -->
+<div id="screen-choosing" class="screen">
+  <div class="page">
+    <p class="ksw-progress" id="c-progress"></p>
+
+    <!-- 話し手: ホストのときは折りたたむ（ホストの画面は共有されることが多い） -->
+    <details class="ksw-fold" id="c-fold" hidden>
+      <summary><span class="material-symbols-rounded" aria-hidden="true">visibility</span>お題をえらぶ（タップでひらく）</summary>
+      <div class="ksw-fold__body">
+        <p class="ksw-title">お題を1つえらんでね</p>
+        <p class="ksw-hint" id="c-lead"></p>
+        <div class="ksw-options" id="c-options" role="group" aria-label="お題の候補"></div>
+        <div class="ksw-own">
+          <label class="form-label" for="c-own">自分で決める（12文字まで）</label>
+          <input class="ksw-input" id="c-own" type="text" maxlength="12" autocomplete="off" placeholder="話したい言葉を1つ書く" style="margin-top:4px">
+          <p id="c-own-error" class="alert alert-error mt-sm" role="alert" hidden></p>
+          <button class="btn btn-secondary btn-full mt-sm" id="btn-own" onclick="pickOwnTopic()">この言葉にする</button>
+        </div>
+      </div>
+    </details>
+
+    <!-- 聞き手・進行役 -->
+    <div id="c-wait" class="card" hidden>
+      <div class="ksw-wait">
+        <span class="material-symbols-rounded" aria-hidden="true">hourglass_top</span>
+        <p id="c-wait-text"></p>
+      </div>
+    </div>
+    <button type="button" class="ksw-quiet" id="c-back" onclick="backToWaiting()" hidden>話し手をえらび直す</button>
+  </div>
+</div>
+
+<!-- ══ TALKING（雑談タイム）══ -->
+<div id="screen-talking" class="screen">
+  <div class="page">
+    <p class="ksw-progress" id="t-progress"></p>
+    <p class="ksw-timer" id="t-timer" hidden>のこり<strong id="t-timer-val"></strong></p>
+
+    <!-- 話し手 -->
+    <div id="t-speaker" hidden>
+      <div class="ksw-odai" id="t-odai">
+        <p class="ksw-odai__label">あなたのお題</p>
+        <p class="ksw-odai__word" id="t-topic"></p>
+      </div>
+      <!-- ホストが話し手のとき（ホストの画面は共有されることが多いので折りたたむ） -->
+      <details class="ksw-fold" id="t-fold" hidden>
+        <summary><span class="material-symbols-rounded" aria-hidden="true">visibility</span>あなたのお題（タップで見る）</summary>
+        <div class="ksw-fold__body"><p class="ksw-fold__word" id="t-topic-host"></p></div>
+      </details>
+      <p class="ksw-sub" id="t-speaker-lead"></p>
+      <p class="ksw-hint" style="text-align:center">回数は数えなくてOK。2人が「3回以上言えた」と思ったら、どちらかが押してね。</p>
+      <button class="btn btn-primary btn-full mt-md" id="btn-end-talk" onclick="endTalk()">
+        <span class="material-symbols-rounded" aria-hidden="true">check_circle</span>話しおわった
+      </button>
+    </div>
+
+    <!-- 聞き手・進行役 -->
+    <div id="t-listener" class="card" hidden>
+      <div class="ksw-wait">
+        <span class="material-symbols-rounded" aria-hidden="true">hearing</span>
+        <p id="t-listener-text"></p>
+        <p id="t-listener-sub"></p>
+      </div>
+    </div>
+    <button type="button" class="ksw-quiet" id="t-force" onclick="endTalk()" hidden>雑談を終わりにして、答える時間にすすむ</button>
+  </div>
+</div>
+
+<!-- ══ ANSWERING（答える時間）══ -->
+<div id="screen-answering" class="screen">
+  <div class="page">
+    <p class="ksw-progress" id="a-progress"></p>
+
+    <div id="a-wait" class="card" hidden>
+      <div class="ksw-wait">
+        <span class="material-symbols-rounded" aria-hidden="true">hourglass_top</span>
+        <p id="a-wait-text"></p>
+      </div>
+    </div>
+
+    <div id="a-form" hidden>
+      <p class="ksw-title">お題はなんだった？</p>
+      <input class="ksw-input" id="a-input" type="text" maxlength="20" autocomplete="off" aria-label="お題だと思う言葉" placeholder="言葉を1つ書く">
+      <p class="ksw-hint" id="a-hint"></p>
+      <button class="btn btn-primary btn-full mt-md" id="btn-answer" onclick="submitAnswer()">これで答える</button>
+    </div>
+
+    <div id="a-answered-card" class="card mt-md" hidden>
+      <p class="ksw-lbl">答えた人</p>
+      <div class="ksw-names" id="a-answered"></div>
+    </div>
+
+    <div id="a-host-area" class="mt-md" hidden>
+      <button class="btn btn-primary btn-full" id="btn-reveal" onclick="revealTopic()">
+        <span class="material-symbols-rounded" aria-hidden="true">campaign</span>お題を発表する
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ RESULT（発表）══ -->
+<div id="screen-result" class="screen">
+  <div class="page">
+    <p class="ksw-progress" id="r-progress"></p>
+    <div class="ksw-odai">
+      <p class="ksw-odai__label">お題</p>
+      <p class="ksw-odai__word" id="r-topic"></p>
+    </div>
+    <p class="ksw-sub" id="r-speakers"></p>
+    <p class="ksw-result" id="r-line"></p>
+
+    <div id="r-hits-card" class="card mt-md" hidden>
+      <p class="ksw-lbl">見抜いた人</p>
+      <div class="ksw-names" id="r-hits"></div>
+    </div>
+    <p class="ksw-hint" id="r-mine" style="text-align:center" hidden></p>
+
+    <!-- ホストだけ: 書き方がちがうだけの答えを当たりにできる（共有画面に出さないよう折りたたむ） -->
+    <details class="ksw-fold mt-md" id="r-fold" hidden>
+      <summary><span class="material-symbols-rounded" aria-hidden="true">visibility</span>ほかの答え（タップで見る）</summary>
+      <div class="ksw-fold__body">
+        <div class="ksw-judge" id="r-others"></div>
+        <p class="ksw-note" style="margin-top:8px">漢字など、書き方がちがうだけの答えは「当たりにする」を押してね。</p>
+      </div>
+    </details>
+
+    <div id="r-host-area" class="mt-md" hidden>
+      <button class="btn btn-primary btn-full" id="btn-next" onclick="nextRound()">
+        <span class="material-symbols-rounded" aria-hidden="true">replay</span>つぎのお題へ
+      </button>
+    </div>
+    <p class="ksw-hint" id="r-guest-note" style="text-align:center" hidden>ホストがつぎの準備をするのを待ってね。</p>
+    <button class="btn btn-ghost btn-full mt-md" onclick="leaveGame()">
+      <span class="material-symbols-rounded" aria-hidden="true">logout</span>退出する
+    </button>
+  </div>
+</div>
+
+<!-- オーバーレイ -->
+<div class="overlay" id="reconnect-overlay">
+  <div class="ksw-spinner"></div>
+  <p class="overlay-title">もう一度つないでいるよ</p>
+</div>
+<div class="overlay" id="host-off-overlay">
+  <span class="material-symbols-rounded" aria-hidden="true" style="font-size:48px">signal_disconnected</span>
+  <p class="overlay-title">ホストの接続が切れたよ</p>
+  <p class="overlay-sub">もどってくるのを待っているよ</p>
+  <button class="btn btn-ghost" style="margin-top:16px" onclick="leaveGame()">退出する</button>
+</div>
+<div class="overlay" id="guest-off-overlay">
+  <div class="ksw-spinner"></div>
+  <p class="overlay-title">接続を待っているよ</p>
+  <p class="overlay-sub">答えはそのまま残っているよ。このページで待ってね</p>
+  <button class="btn btn-ghost" style="margin-top:16px" onclick="leaveGame()">退出する</button>
+</div>
+
+<script>
+// ── Firebase 初期化 ──
+const { authReady, db } = RoomkRTDB.initFirebase(firebase);
+const showMsg = RoomkRTDB.showToast;
+
+// ── お題（同じ仲間の言葉ごとにまとめてある。話し手には全体からランダムに3つを出す）──
+const TOPIC_GROUPS = [
+  { name: '食べもの', words: ['りんご', 'バナナ', 'みかん', 'いちご', 'カレー', 'ラーメン', 'おにぎり', 'パン', 'たまご', 'チーズ', 'ピザ', 'うどん'] },
+  { name: 'おやつ・飲みもの', words: ['アイス', 'チョコ', 'プリン', 'ドーナツ', 'クッキー', 'ポテト', 'ケーキ', 'ガム', 'お茶', '牛乳', 'ジュース', 'ココア'] },
+  { name: '生きもの', words: ['ねこ', '犬', 'うさぎ', 'ペンギン', 'カメ', 'ハムスター', 'イルカ', 'パンダ', 'ライオン', 'ゾウ', 'キリン', 'カエル'] },
+  { name: 'のりもの', words: ['電車', '自転車', 'バス', '飛行機', '船', '車', 'タクシー', '新幹線', 'ロケット', 'ヘリコプター', 'トラック', 'ボート'] },
+  { name: '場所', words: ['公園', '海', '山', '川', '水族館', '動物園', '温泉', 'コンビニ', '本屋', '映画館', '遊園地', '駅'] },
+  { name: '天気・空', words: ['雨', '雪', '風', 'かみなり', '虹', '雲', '太陽', '星', '月', '台風', '霧', '夕焼け'] },
+  { name: '季節・行事', words: ['夏', '冬', '春', '秋', '花火', 'お正月', '誕生日', 'クリスマス', 'お祭り', 'キャンプ', '花見', 'こたつ'] },
+  { name: '家のもの', words: ['時計', 'かさ', 'まくら', 'テレビ', 'れいぞうこ', 'ふとん', 'いす', 'ソファ', 'カーテン', 'かがみ', 'せんたくき', 'そうじき'] },
+  { name: '身につけるもの', words: ['ぼうし', 'くつ', 'かばん', 'めがね', 'くつした', 'マフラー', '手ぶくろ', 'リュック', 'セーター', 'パジャマ', 'サンダル', 'エプロン'] },
+  { name: 'あそび・しゅみ', words: ['ゲーム', 'マンガ', '音楽', '写真', '映画', 'お絵かき', '散歩', '料理', 'アニメ', '動画', 'パズル', '折り紙'] },
+  { name: 'からだを動かす', words: ['サッカー', '野球', '水泳', 'テニス', 'バスケ', 'ダンス', 'なわとび', 'スキー', '卓球', 'ボウリング', '釣り', 'ランニング'] },
+  { name: '自然', words: ['花', '森', 'ひまわり', 'さくら', 'たんぽぽ', 'どんぐり', '石', '砂', '貝がら', 'きのこ', 'サボテン', '落ち葉'] },
+];
+const TOPICS = TOPIC_GROUPS.reduce((list, group) => list.concat(group.words), []);
+
+// 当たりにする、別の書き方（ひらがな・カタカナのちがいは自動でそろえる）
+const ALIASES = {
+  'りんご': ['林檎'], 'みかん': ['蜜柑'], 'いちご': ['苺'], 'たまご': ['卵', '玉子'],
+  'ポテト': ['フライドポテト'], 'お茶': ['おちゃ', '茶'], '牛乳': ['ぎゅうにゅう', 'ミルク'],
+  'ねこ': ['猫'], '犬': ['いぬ'], 'うさぎ': ['兎'], 'カメ': ['亀'], 'ゾウ': ['象'], 'カエル': ['蛙'],
+  '電車': ['でんしゃ'], '自転車': ['じてんしゃ'], '飛行機': ['ひこうき'], '船': ['ふね', '舟'], '車': ['くるま', '自動車'], '新幹線': ['しんかんせん'],
+  '公園': ['こうえん'], '海': ['うみ'], '山': ['やま'], '川': ['かわ'], '水族館': ['すいぞくかん'], '動物園': ['どうぶつえん'],
+  '温泉': ['おんせん'], '本屋': ['ほんや', '本屋さん', '書店'], '映画館': ['えいがかん'], '遊園地': ['ゆうえんち'], '駅': ['えき'],
+  '雨': ['あめ'], '雪': ['ゆき'], '風': ['かぜ'], 'かみなり': ['雷'], '虹': ['にじ'], '雲': ['くも'], '太陽': ['たいよう'],
+  '星': ['ほし'], '月': ['つき'], '台風': ['たいふう'], '霧': ['きり'], '夕焼け': ['ゆうやけ', '夕やけ'],
+  '夏': ['なつ'], '冬': ['ふゆ'], '春': ['はる'], '秋': ['あき'], '花火': ['はなび'], 'お正月': ['おしょうがつ', '正月', 'しょうがつ'],
+  '誕生日': ['たんじょうび'], 'お祭り': ['おまつり', '祭り', 'まつり', '祭'], '花見': ['はなみ', 'お花見', 'おはなみ'],
+  '時計': ['とけい'], 'かさ': ['傘'], 'まくら': ['枕'], 'れいぞうこ': ['冷蔵庫'], 'ふとん': ['布団'], 'いす': ['椅子'],
+  'かがみ': ['鏡'], 'せんたくき': ['洗濯機', 'せんたっき'], 'そうじき': ['掃除機'],
+  'ぼうし': ['帽子'], 'くつ': ['靴'], 'かばん': ['鞄'], 'めがね': ['眼鏡'], 'くつした': ['靴下'], '手ぶくろ': ['てぶくろ', '手袋'],
+  'マンガ': ['漫画'], '音楽': ['おんがく'], '写真': ['しゃしん'], '映画': ['えいが'], 'お絵かき': ['おえかき', 'お絵描き', '絵'],
+  '散歩': ['さんぽ'], '料理': ['りょうり'], '動画': ['どうが'], '折り紙': ['おりがみ', '折紙'],
+  '野球': ['やきゅう'], '水泳': ['すいえい'], 'バスケ': ['バスケットボール'], 'なわとび': ['縄跳び', '縄とび', 'なわ跳び'],
+  '卓球': ['たっきゅう'], 'ボウリング': ['ボーリング'], '釣り': ['つり'],
+  '花': ['はな'], '森': ['もり'], 'さくら': ['桜'], '石': ['いし'], '砂': ['すな'], '貝がら': ['かいがら', '貝殻'], '落ち葉': ['おちば', '落葉'],
+};
+
+// ── 定数・状態 ──
+const ROOM_PATH = 'kossoriword_rooms';
+const SESSION_KEY = 'kossoriword_session';
+const ORPHAN_TTL_MS = 2 * 60 * 1000;
+const MIN_PLAYERS = 2;     // 話し手の2人。聞き手はルームの外（通話・みんなにみせる画面）にいてもよい
+const MAX_MEMBERS = 12;    // ルームに入れる人数（ホストをふくむ）
+const NEED_COUNT = 3;      // お題を言う回数（これ以上）
+const ANSWER_MAX = 20;
+const OWN_TOPIC_MAX = 12;   // 話し手が自分で決めるお題の長さ
+const OPTION_COUNT = 3;     // 話し手に出すお題の数
+const TALK_SECS = [60, 120, 180, 300, 0]; // 雑談の時間（秒）。0 は決めない
+const DEFAULT_TALK_SECS = 180;
+const ROOM_PHASES = ['waiting', 'choosing', 'talking', 'answering', 'result'];
+const ROOM_CODE_PATTERN = /^[A-HJ-NP-Z2-9]{6}$/; // RoomkRTDB.generateRoomCode が作る形
+
+const state = {
+  role: null, nickname: null, roomCode: null, roomRef: null,
+  currentScreen: null,
+  orphanTimer: null,
+  expectedRoomRemoval: false,
+  selected: [],       // ホストが待合室でえらんでいる話し手（この端末だけ。くばるときに確定する）
+  specTimer: null,    // みんなにみせる画面: ホスト切断の期限を見るタイマー
+  timerInterval: null, // 雑談ののこり時間の表示
+  timerEndsAt: null,
+  room: null,         // 最後に受け取ったルーム
+  busy: false,
+};
+
+const $ = id => document.getElementById(id);
+
+// ── セッション ──
+function saveSession() {
+  sessionStorage.setItem(SESSION_KEY, JSON.stringify({
+    nickname: state.nickname, roomCode: state.roomCode, role: state.role,
+  }));
+}
+function loadSession() {
+  try { return JSON.parse(sessionStorage.getItem(SESSION_KEY)); } catch { return null; }
+}
+function clearSession() { sessionStorage.removeItem(SESSION_KEY); }
+
+const getEstimatedServerNow = RoomkRTDB.now;
+const getHostDisconnectedAt = RoomkRTDB.getHostDisconnectedAt;
+function isRoomExpired(room) {
+  // status を持たない room は、削除後に onDisconnect が発火して再生成されたゴースト。TTL を待たず期限切れ扱いにする
+  return RoomkRTDB.isRoomExpired(room, ORPHAN_TTL_MS) || (!!room && !room.status);
+}
+
+// ── ゲストの接続（一時的な切断では、名前も答えも消さない）──
+// 接続ごとに players/{名前}/connections/{id} を置き、切断時はその1件だけを消す
+let guestPresence = null;
+let guestPresenceWork = Promise.resolve();
+
+function validGuestRoom(room, nickname) {
+  const player = room?.players?.[nickname];
+  return !!player && player.isHost === false && room.host !== nickname
+    && ROOM_PHASES.includes(room.status) && !isRoomExpired(room);
+}
+function playerConnected(player) {
+  return !!player && (player.isHost || player.presenceVersion !== 1
+    || Object.values(player.connections || {}).some(value => value === true));
+}
+function guestCanAct() {
+  return state.role === 'host' || !!(guestPresence?.ready && guestPresence.connected
+    && guestPresence.roomRef === state.roomRef && guestPresence.nickname === state.nickname);
+}
+function showGuestConnection() {
+  showOverlay('guest-off-overlay', state.role === 'guest' && !guestCanAct());
+}
+function stopGuestPresence() {
+  const presence = guestPresence;
+  guestPresence = null;
+  if (!presence) return guestPresenceWork;
+  presence.generation++;
+  presence.connectionRef.off('value', presence.listener);
+  guestPresenceWork = guestPresenceWork.then(async () => {
+    for (const ref of presence.refs) {
+      await ref.onDisconnect().cancel();
+      await ref.remove();
+    }
+  }).catch(error => console.warn('[kossori-word] presence cleanup failed', error));
+  return guestPresenceWork;
+}
+function startGuestPresence() {
+  if (state.expectedRoomRemoval || state.role !== 'guest' || !state.roomRef) return;
+  stopGuestPresence();
+  const presence = {
+    roomRef: state.roomRef, nickname: state.nickname, connectionRef: db.ref('.info/connected'),
+    generation: 0, connected: false, ready: false, refs: [],
+  };
+  guestPresence = presence;
+  presence.listener = snap => {
+    presence.connected = snap.val() === true;
+    presence.ready = false;
+    const generation = ++presence.generation;
+    showGuestConnection();
+    if (!presence.connected) return;
+    const current = () => guestPresence === presence && presence.connected
+      && presence.generation === generation && state.roomRef === presence.roomRef
+      && state.nickname === presence.nickname && state.role === 'guest' && !state.expectedRoomRemoval;
+    guestPresenceWork = guestPresenceWork.then(async () => {
+      if (!current()) return;
+      const ref = presence.roomRef.child(`players/${presence.nickname}/connections`).push();
+      presence.refs.push(ref);
+      await ref.onDisconnect().remove();
+      const { committed } = await presence.roomRef.transaction(room => {
+        if (!current() || !validGuestRoom(room, presence.nickname)) return;
+        const player = room.players[presence.nickname];
+        return { ...room, players: { ...room.players, [presence.nickname]: {
+          ...player, presenceVersion: 1, connections: { ...player.connections, [ref.key]: true },
+        } } };
+      });
+      if (!committed || !current()) {
+        await ref.onDisconnect().cancel();
+        await ref.remove();
+        return;
+      }
+      for (const oldRef of presence.refs.filter(item => item !== ref)) {
+        await oldRef.onDisconnect().cancel();
+        await oldRef.remove();
+      }
+      presence.refs = [ref];
+      if (!current()) return;
+      presence.ready = true;
+      showGuestConnection();
+    }).catch(error => {
+      if (current()) { presence.ready = false; showGuestConnection(); }
+      console.warn('[kossori-word] guest reconnect failed', error);
+    });
+  };
+  presence.connectionRef.on('value', presence.listener);
+}
+
+// ── ホストの接続（つなぐたびに、切断時の予約を張り直して「ホストがいる」状態にもどす）──
+// 通信が一時的に切れると、予約どおり hostConnected=false が書かれる。SDK が自動でつなぎ直したあとに
+// もどさないと、ゲストに切断の表示が残り、2分後にルームが期限切れとして消されてしまう
+let hostPresence = null;
+function stopHostPresence() {
+  const presence = hostPresence;
+  hostPresence = null;
+  if (presence) presence.connectionRef.off('value', presence.listener);
+}
+function startHostPresence() {
+  stopHostPresence();
+  if (state.role !== 'host' || !state.roomRef) return;
+  const ref = state.roomRef, me = state.nickname;
+  const presence = { connectionRef: db.ref('.info/connected') };
+  const current = () => hostPresence === presence && state.roomRef === ref && state.role === 'host' && !state.expectedRoomRemoval;
+  presence.listener = async snap => {
+    if (snap.val() !== true || !current()) return;
+    try {
+      await ref.onDisconnect().update({
+        hostConnected: false,
+        hostDisconnectedAt: firebase.database.ServerValue.TIMESTAMP,
+      });
+      if (!current()) return;
+      await ref.transaction(room => {
+        // ルームが消えていたら作り直さない。もう「いる」状態なら何もしない
+        if (!current() || !room || !room.status || room.host !== me) return;
+        if (room.hostConnected === true && room.hostDisconnectedAt == null) return;
+        return { ...room, hostConnected: true, hostDisconnectedAt: null };
+      });
+    } catch (error) {
+      console.warn('[kossori-word] host presence failed', error);
+    }
+  };
+  hostPresence = presence;
+  presence.connectionRef.on('value', presence.listener);
+}
+
+// ── だれが遊ぶ人か（ホストの参加は待合室でえらぶ）──
+function hostPlaysOf(room) {
+  return !(room && room.settings && room.settings.hostPlays === false);
+}
+// 話し手・聞き手になる人か（進行だけのホストは対象外）
+function isPlaying(room, nick) {
+  return hostPlaysOf(room) || nick !== room?.host;
+}
+function playingNames(room, players) {
+  return Object.keys(players || {}).filter(nick => isPlaying(room, nick));
+}
+function speakerNames(room) {
+  return Object.keys(room?.speakers || {});
+}
+// 聞き手: 遊ぶ人のうち話し手でない人。接続が切れたまま答えていない人は数えない
+function listenerNames(room, players) {
+  const speakers = speakerNames(room);
+  return playingNames(room, players).filter(nick => !speakers.includes(nick)
+    && (hasAnswer(players[nick]) || playerConnected(players[nick])));
+}
+function hasAnswer(player) {
+  return typeof player?.answer === 'string' && player.answer !== '';
+}
+function speakersLabel(room) {
+  return speakerNames(room).map(nick => nick + 'さん').join('と');
+}
+
+// ── 当たりの判定 ──
+// ひらがな・カタカナ、全角・半角、空白のちがいをそろえる
+function normalizeWord(text) {
+  return String(text || '').normalize('NFKC').replace(/\s+/g, '').toLowerCase()
+    .replace(/[ァ-ヶ]/g, c => String.fromCharCode(c.charCodeAt(0) - 0x60));
+}
+function isAutoHit(room, player) {
+  const answer = normalizeWord(player?.answer);
+  if (!answer || !room?.topic) return false;
+  return [room.topic].concat(ALIASES[room.topic] || []).some(word => normalizeWord(word) === answer);
+}
+function isHit(room, players, nick) {
+  return isAutoHit(room, players[nick]) || room?.manualHits?.[nick] === true;
+}
+
+// ── 画面管理 ──
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  $('screen-' + id).classList.add('active');
+  state.currentScreen = id;
+}
+function goTo(id) { showScreen(id); }
+function showOverlay(id, show) { $(id).classList.toggle('show', show); }
+
+// ── バリデーション ──
+function nickError(v) {
+  if (!v) return '名前を入れてね';
+  if (v.length > 8) return '名前は8文字までだよ';
+  if (/[.#$\[\]\/\u0000-\u001f\u007f]/.test(v)) return '名前に使えない文字が入っているよ（. # $ [ ] / は使えない）';
+  return '';
+}
+
+// 認証待ち。authReady は一度失敗すると固定されるため、再試行は案内せず読み込み直しへ誘導する
+let authWaitBusy = false;
+async function waitAuthOrExplain() {
+  if (authWaitBusy) return false;
+  authWaitBusy = true;
+  try {
+    await authReady;
+    return true;
+  } catch {
+    showMsg('うまくつながらなかったよ。ページを読み込み直してね');
+    return false;
+  } finally {
+    authWaitBusy = false;
+  }
+}
+
+// ── ルームを作る（ホスト）──
+async function hostCreateRoom() {
+  const report = message => RoomkRTDB.showFormError('host-form-error', message);
+  report('');
+  const nickname = $('host-nickname').value.trim();
+  const err = nickError(nickname);
+  if (err) { report(err); return; }
+  if (state.busy) return;
+  state.busy = true;
+  try {
+    if (!await waitAuthOrExplain()) return;
+    let roomCode = null, roomRef = null;
+    for (let i = 0; i < 5; i++) {
+      const code = RoomkRTDB.generateRoomCode();
+      const ref = db.ref(`${ROOM_PATH}/${code}`);
+      const initialRoom = {
+        host: nickname, hostConnected: true,
+        status: 'waiting', round: 0,
+        settings: { hostPlays: true, talkSecs: DEFAULT_TALK_SECS },
+        players: { [nickname]: { isHost: true } },
+      };
+      const { committed } = await ref.transaction(room => room ? undefined : initialRoom);
+      if (committed) { roomCode = code; roomRef = ref; break; }
+    }
+    if (!roomRef) { report('ルームを作れなかったよ。もう一度押してね'); return; }
+
+    state.nickname = nickname; state.roomCode = roomCode; state.role = 'host';
+    state.roomRef = roomRef; state.selected = [];
+    saveSession();
+    startRoomListener();
+    startHostPresence();
+  } catch (error) {
+    console.error('[kossori-word] create failed', error);
+    report('ルームを作れなかったよ。もう一度押してね');
+  } finally {
+    state.busy = false;
+  }
+}
+
+// ── 参加する（ゲスト）──
+async function joinTransaction(ref, update) {
+  // get() だけでは transaction のキャッシュが残らない。transaction が終わるまで購読を張っておく
+  let listener;
+  try {
+    await new Promise((resolve, reject) => {
+      listener = () => resolve();
+      ref.on('value', listener, reject);
+    });
+    return await ref.transaction(update);
+  } finally {
+    ref.off('value', listener);
+  }
+}
+
+// ルームコード: 日本語入力のまま打った全角の英数字は半角に、小文字は大文字にそろえて読む。
+// 入力欄は打っている間に書き換えない（変換中に書き換えると文字が重なり、ローマ字が入らなくなる）
+function normalizeRoomCode(raw) {
+  return String(raw || '').normalize('NFKC').replace(/\s+/g, '').toUpperCase();
+}
+function roomCodeImeError(code) {
+  return /[^\x00-\x7F]/.test(code)
+    ? 'ルームコードはアルファベットと数字で入れてね。ひらがなになるときは、キーボードを英字に切り替えてね（「半角/全角」キー、Macは「英数」キー）'
+    : '';
+}
+
+// 参加用のリンク: このページのアドレスの末尾に ?room=ルームコード（docs/development/rtdb.md「参加用のリンク」）
+function copyJoinLink(button) {
+  if (!state.roomCode || !ROOM_CODE_PATTERN.test(state.roomCode)) {
+    showMsg('ルームコードがありません');
+    return;
+  }
+  RoomkRTDB.copyRoomLink(state.roomCode, button);
+}
+function openJoinFromLink(code) {
+  RoomkRTDB.showFormError('join-form-error', '');
+  $('guest-code').value = code;
+  $('joinLinkHint').hidden = false;
+  showScreen('guest-join');
+  $('guest-nickname').focus({ preventScroll: true });
+}
+function openJoinFromTop() {
+  $('joinLinkHint').hidden = true;
+  goTo('guest-join');
+}
+
+async function guestJoin() {
+  const report = message => RoomkRTDB.showFormError('join-form-error', message);
+  report('');
+  const nickname = $('guest-nickname').value.trim();
+  const roomCode = normalizeRoomCode($('guest-code').value);
+  const err = nickError(nickname);
+  if (err) { report(err); return; }
+  const imeErr = roomCodeImeError(roomCode);
+  if (imeErr) { report(imeErr); return; }
+  if (!/^[A-Z0-9]{6}$/.test(roomCode)) { report('ルームコードは6文字だよ'); return; }
+  if (state.busy) return;
+  state.busy = true;
+  try {
+    if (!await waitAuthOrExplain()) return;
+
+    const roomRef = db.ref(`${ROOM_PATH}/${roomCode}`);
+    const preSnap = await roomRef.get();
+    if (!preSnap.exists()) { report('ルームが見つからないよ。コードをたしかめてね'); return; }
+    if (isRoomExpired(preSnap.val())) {
+      await roomRef.remove().catch(() => {});
+      report('このルームはもう終わっているよ');
+      return;
+    }
+    let abortReason = null;
+    const { committed, snapshot } = await joinTransaction(roomRef, room => {
+      if (!room) { abortReason = 'not_found'; return; }
+      if (isRoomExpired(room)) { abortReason = 'expired'; return null; }
+      if (room.hostConnected === false) { abortReason = 'host_gone'; return; }
+      if (room.status !== 'waiting') { abortReason = 'not_waiting'; return; }
+      const players = room.players || {};
+      if (players[nickname]) { abortReason = 'nick_taken'; return; }
+      if (Object.keys(players).length >= MAX_MEMBERS) { abortReason = 'full'; return; }
+      abortReason = null;
+      return { ...room, players: { ...players, [nickname]: { isHost: false, presenceVersion: 1 } } };
+    });
+
+    if (!committed) {
+      const messages = {
+        not_found: 'ルームが見つからないよ。コードをたしかめてね',
+        host_gone: 'ホストの接続が切れているよ。少し待ってから、もう一度押してね',
+        not_waiting: 'いまお題の途中だよ。発表が終わってから、もう一度「参加する」を押してね',
+        nick_taken: 'その名前はもう使われているよ。別の名前にしてね',
+        full: `このルームはいっぱいだよ（${MAX_MEMBERS}人まで）`,
+      };
+      report(messages[abortReason] || '参加できなかったよ。もう一度押してね');
+      return;
+    }
+    if (abortReason === 'expired' && !snapshot.val()) { report('このルームはもう終わっているよ'); return; }
+
+    state.nickname = nickname; state.roomCode = roomCode; state.role = 'guest';
+    state.roomRef = roomRef; state.selected = [];
+    startGuestPresence();
+    saveSession();
+    startRoomListener();
+  } catch (error) {
+    console.error('[kossori-word] join failed', error);
+    report('参加できなかったよ。もう一度押してね');
+  } finally {
+    state.busy = false;
+  }
+}
+
+// ── 待合室: ホストもプレイヤーとして参加するか（お題をくばったあとは変えない）──
+async function onHostPlaysChange(checked) {
+  if (state.role !== 'host' || !state.roomRef) return;
+  const ref = state.roomRef, me = state.nickname;
+  let committed = false;
+  try {
+    ({ committed } = await ref.transaction(room => {
+      if (!room || room.status !== 'waiting' || room.host !== me) return;
+      return { ...room, settings: { ...(room.settings || {}), hostPlays: !!checked } };
+    }));
+  } catch (error) {
+    console.error('[kossori-word] onHostPlaysChange failed', error);
+  }
+  if (!committed && state.roomRef === ref) {
+    showMsg('設定を変えられなかったよ');
+    $('set-host-plays').checked = hostPlaysOf(state.room);
+  }
+}
+
+// ── 待合室: 雑談の時間（ホスト。0 は決めない）──
+function talkSecsOf(room) {
+  const secs = Number(room?.settings?.talkSecs);
+  return TALK_SECS.includes(secs) ? secs : DEFAULT_TALK_SECS;
+}
+async function onTalkSecsChange(value) {
+  if (state.role !== 'host' || !state.roomRef) return;
+  const ref = state.roomRef, me = state.nickname;
+  const secs = Number(value);
+  let committed = false;
+  try {
+    if (TALK_SECS.includes(secs)) {
+      ({ committed } = await ref.transaction(room => {
+        if (!room || room.status !== 'waiting' || room.host !== me) return;
+        return { ...room, settings: { ...(room.settings || {}), talkSecs: secs } };
+      }));
+    }
+  } catch (error) {
+    console.error('[kossori-word] onTalkSecsChange failed', error);
+  }
+  if (!committed && state.roomRef === ref) {
+    showMsg('設定を変えられなかったよ');
+    $('set-talk-secs').value = String(talkSecsOf(state.room));
+  }
+}
+
+// ── 待合室: 話し手をえらぶ（ホスト）──
+// えらべるのは、遊ぶ人のうち接続している人
+function selectableNames(room, players) {
+  return playingNames(room, players).filter(nick => playerConnected(players[nick]));
+}
+function toggleSpeaker(nick) {
+  if (state.role !== 'host' || !state.room) return;
+  const at = state.selected.indexOf(nick);
+  let hint = '';
+  if (at !== -1) state.selected.splice(at, 1);
+  else if (state.selected.length < 2) state.selected.push(nick);
+  else hint = '話し手は2人まで。変えるときは、えらんだ人をもう一度押して外してね。';
+  handleRoom(state.room);
+  if (hint) $('w-speaker-hint').textContent = hint;
+}
+function pickSpeakersRandomly() {
+  const room = state.room;
+  if (state.role !== 'host' || !room) return;
+  const names = selectableNames(room, room.players || {});
+  if (names.length < 2) { showMsg('話し手になれる人が2人いないよ'); return; }
+  const mixed = list => list.map(value => ({ value, key: Math.random() })).sort((a, b) => a.key - b.key).map(item => item.value);
+  // まだ話し手になっていない人を先にえらぶ
+  const spoken = room.spoken || {};
+  const fresh = mixed(names.filter(nick => !spoken[nick]));
+  const rest = mixed(names.filter(nick => spoken[nick]));
+  state.selected = fresh.concat(rest).slice(0, 2);
+  handleRoom(room);
+}
+
+// ── お題をくばる（ホスト）──
+async function dealTopic() {
+  if (state.role !== 'host' || !state.roomRef || state.busy) return;
+  const ref = state.roomRef, me = state.nickname;
+  const picks = state.selected.slice();
+  if (picks.length !== 2) { showMsg('話し手を2人えらんでね'); return; }
+  state.busy = true;
+  let abortReason = null;
+  try {
+    const { committed } = await ref.transaction(room => {
+      if (!room || room.status !== 'waiting' || room.host !== me) { abortReason = 'invalid'; return; }
+      const players = room.players || {};
+      // 人数は、遊ぶ人のうち接続している人で数える（話し手の2人。聞き手はルームの外にいてもよい）
+      const active = selectableNames(room, players);
+      if (active.length < MIN_PLAYERS) { abortReason = 'too_few'; return; }
+      if (!picks.every(nick => active.includes(nick))) { abortReason = 'speaker_gone'; return; }
+      // まだ話していないお題から3つを候補にする。足りなくなったら最初から
+      let used = usedTopicIndexes(room);
+      let pool = TOPICS.map((_, i) => i).filter(i => !used.includes(i));
+      if (pool.length < OPTION_COUNT) { pool = TOPICS.map((_, i) => i); used = []; }
+      const options = [];
+      while (options.length < OPTION_COUNT) options.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]);
+      const nextPlayers = {};
+      Object.entries(players).forEach(([nick, player]) => { nextPlayers[nick] = { ...player, answer: null }; });
+      abortReason = null;
+      return {
+        ...room,
+        status: 'choosing',
+        round: (Number(room.round) || 0) + 1,
+        topic: null, talkEndsAt: null,
+        options,
+        used: used.length ? used : null,
+        speakers: { [picks[0]]: true, [picks[1]]: true },
+        manualHits: null,
+        players: nextPlayers,
+      };
+    });
+    if (!committed && state.roomRef === ref) {
+      if (abortReason === 'too_few') showMsg(tooFewMessage(hostPlaysOf(state.room)));
+      else if (abortReason === 'speaker_gone') showMsg('えらんだ人がいなくなったよ。話し手をえらび直してね');
+      else showMsg('お題をくばれなかったよ。もう一度押してね');
+    } else if (committed) {
+      window.RoomkStats?.count('round');
+    }
+  } catch (error) {
+    console.error('[kossori-word] deal failed', error);
+    if (state.roomRef === ref) showMsg('お題をくばれなかったよ。もう一度押してね');
+  } finally {
+    state.busy = false;
+  }
+}
+function usedTopicIndexes(room) {
+  return Array.isArray(room?.used) ? room.used.filter(i => Number.isInteger(i) && i >= 0 && i < TOPICS.length) : [];
+}
+function optionIndexes(room) {
+  return Array.isArray(room?.options) ? room.options.filter(i => Number.isInteger(i) && i >= 0 && i < TOPICS.length) : [];
+}
+
+// ── お題をえらぶ（話し手のどちらか。先にえらんだほうで決まる）──
+// index: 候補の番号（TOPICS の添字）。own: 自分で決めた言葉
+async function pickTopic(index, own) {
+  if (!state.roomRef || !guestCanAct() || state.busy) return false;
+  const ref = state.roomRef, me = state.nickname;
+  state.busy = true;
+  let committed = false;
+  try {
+    ({ committed } = await ref.transaction(room => {
+      if (state.roomRef !== ref || !room || room.status !== 'choosing') return;
+      if (!(room.speakers && room.speakers[me] && room.players?.[me])) return;
+      let topic, used = usedTopicIndexes(room);
+      if (own != null) {
+        topic = own;
+      } else {
+        if (!optionIndexes(room).includes(index)) return;
+        topic = TOPICS[index];
+        used = used.concat(index);
+      }
+      const secs = talkSecsOf(room);
+      return {
+        ...room,
+        status: 'talking', topic, options: null,
+        used: used.length ? used : null,
+        talkEndsAt: secs > 0 ? getEstimatedServerNow() + secs * 1000 : null,
+      };
+    }));
+  } catch (error) {
+    console.error('[kossori-word] pickTopic failed', error);
+  } finally {
+    state.busy = false;
+  }
+  if (!committed && state.roomRef === ref && state.currentScreen === 'choosing') showMsg('うまく送れなかったよ。もう一度押してね');
+  return committed;
+}
+function pickOwnTopic() {
+  const report = message => RoomkRTDB.showFormError('c-own-error', message);
+  const text = $('c-own').value.normalize('NFKC').replace(/[\u0000-\u001f\u007f]/g, '').trim();
+  if (!text) { report('言葉を1つ書いてから押してね'); return; }
+  if (text.length > OWN_TOPIC_MAX) { report(`${OWN_TOPIC_MAX}文字までにしてね`); return; }
+  report('');
+  pickTopic(null, text);
+}
+
+// ── 話し手をえらび直す（ホスト。お題えらびから待合室にもどる）──
+async function backToWaiting() {
+  if (state.role !== 'host' || !state.roomRef) return;
+  const ref = state.roomRef, me = state.nickname;
+  try {
+    await ref.transaction(room => {
+      if (!room || room.status !== 'choosing' || room.host !== me) return;
+      return {
+        ...room,
+        status: 'waiting', options: null, speakers: null, topic: null, talkEndsAt: null,
+        round: Math.max(0, (Number(room.round) || 1) - 1),
+      };
+    });
+  } catch (error) {
+    console.error('[kossori-word] backToWaiting failed', error);
+    if (state.roomRef === ref) showMsg('うまく送れなかったよ。もう一度押してね');
+  }
+}
+
+// ── 雑談ののこり時間 ──
+function stopTalkTimer() {
+  clearInterval(state.timerInterval);
+  state.timerInterval = null;
+  state.timerEndsAt = null;
+}
+// wrapId / valId: 表示する場所。onOver: 時間になったときに1回だけ呼ぶ
+function startTalkTimer(endsAt, wrapId, valId, onOver) {
+  if (state.timerInterval && state.timerEndsAt === endsAt) return;
+  stopTalkTimer();
+  state.timerEndsAt = endsAt;
+  let fired = false;
+  const tick = () => {
+    const left = Math.max(0, Math.ceil((endsAt - getEstimatedServerNow()) / 1000));
+    $(valId).textContent = left > 0 ? `${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}` : '時間だよ';
+    $(wrapId).classList.toggle('is-over', left <= 0);
+    if (left <= 0 && !fired) { fired = true; if (onOver) onOver(); }
+  };
+  tick();
+  state.timerInterval = setInterval(tick, 250);
+}
+// 時間になったら、ホストと話し手の端末が答える時間へ進める（同じ回の talkEndsAt のときだけ）
+async function endTalkByTimer(endsAt) {
+  const ref = state.roomRef, me = state.nickname;
+  if (!ref || state.role === 'spectator' || !guestCanAct()) return;
+  try {
+    await ref.transaction(room => {
+      if (state.roomRef !== ref || !room || room.status !== 'talking' || room.talkEndsAt !== endsAt) return;
+      if (room.host !== me && !(room.speakers && room.speakers[me] && room.players?.[me])) return;
+      return { ...room, status: 'answering' };
+    });
+  } catch (error) {
+    console.warn('[kossori-word] endTalkByTimer failed', error);
+  }
+}
+
+function tooFewMessage(hostPlays) {
+  return hostPlays ? '話し手になれる人が2人いると始められるよ' : 'ホストのほかに、話し手になれる人が2人いると始められるよ';
+}
+
+// ── 雑談を終える（話し手のどちらか、またはホスト）──
+async function endTalk() {
+  if (!state.roomRef || !guestCanAct()) return;
+  const ref = state.roomRef, me = state.nickname;
+  try {
+    await ref.transaction(room => {
+      if (state.roomRef !== ref || !room || room.status !== 'talking') return;
+      if (room.host !== me && !(room.speakers && room.speakers[me] && room.players?.[me])) return;
+      return { ...room, status: 'answering' };
+    });
+  } catch (error) {
+    console.error('[kossori-word] endTalk failed', error);
+    if (state.roomRef === ref) showMsg('うまく送れなかったよ。もう一度押してね');
+  }
+}
+
+// ── 答える（聞き手。発表までは書き直せる）──
+async function submitAnswer() {
+  if (!state.roomRef || !guestCanAct()) return;
+  const ref = state.roomRef, me = state.nickname;
+  const text = $('a-input').value.trim().slice(0, ANSWER_MAX);
+  if (!text) { $('a-hint').textContent = '言葉を1つ書いてから押してね。'; return; }
+  $('btn-answer').disabled = true;
+  let committed = false;
+  try {
+    ({ committed } = await ref.transaction(room => {
+      if (state.roomRef !== ref || !room || room.status !== 'answering' || !room.players?.[me]) return;
+      if (!isPlaying(room, me) || (room.speakers && room.speakers[me])) return;
+      return { ...room, players: { ...room.players, [me]: { ...room.players[me], answer: text } } };
+    }));
+  } catch (error) {
+    console.error('[kossori-word] answer failed', error);
+  }
+  if (state.roomRef !== ref) return;
+  $('btn-answer').disabled = false;
+  if (!committed && state.currentScreen === 'answering') showMsg('うまく送れなかったよ。もう一度押してね');
+}
+
+// ── お題を発表する（ホスト）──
+async function revealTopic() {
+  if (state.role !== 'host' || !state.roomRef) return;
+  const ref = state.roomRef, me = state.nickname;
+  try {
+    await ref.transaction(room => {
+      if (!room || room.status !== 'answering' || room.host !== me) return;
+      return { ...room, status: 'result' };
+    });
+  } catch (error) {
+    console.error('[kossori-word] reveal failed', error);
+    if (state.roomRef === ref) showMsg('うまく送れなかったよ。もう一度押してね');
+  }
+}
+
+// ── 書き方がちがうだけの答えを当たりにする／取り消す（ホスト）──
+async function toggleManualHit(nick) {
+  if (state.role !== 'host' || !state.roomRef) return;
+  const ref = state.roomRef, me = state.nickname;
+  try {
+    await ref.transaction(room => {
+      if (!room || room.status !== 'result' || room.host !== me || !room.players?.[nick]) return;
+      const hits = { ...(room.manualHits || {}) };
+      if (hits[nick]) delete hits[nick]; else hits[nick] = true;
+      return { ...room, manualHits: Object.keys(hits).length ? hits : null };
+    });
+  } catch (error) {
+    console.error('[kossori-word] toggleManualHit failed', error);
+    if (state.roomRef === ref) showMsg('うまく送れなかったよ。もう一度押してね');
+  }
+}
+
+// ── つぎのお題へ（ホスト。同じメンバーで待合室にもどる）──
+async function nextRound() {
+  if (state.role !== 'host' || !state.roomRef) return;
+  const ref = state.roomRef, me = state.nickname;
+  try {
+    await ref.transaction(room => {
+      if (!room || room.status !== 'result' || room.host !== me) return;
+      const players = room.players || {};
+      // 話し手になった人を覚えておく（おまかせで、まだの人を先にえらぶため）。全員が話したら最初から
+      let spoken = { ...(room.spoken || {}) };
+      speakerNames(room).forEach(nick => { spoken[nick] = true; });
+      Object.keys(spoken).forEach(nick => { if (!players[nick]) delete spoken[nick]; });
+      if (playingNames(room, players).every(nick => spoken[nick])) spoken = {};
+      const nextPlayers = {};
+      Object.entries(players).forEach(([nick, player]) => { nextPlayers[nick] = { ...player, answer: null }; });
+      return {
+        ...room,
+        status: 'waiting', topic: null, speakers: null, manualHits: null, options: null, talkEndsAt: null,
+        spoken: Object.keys(spoken).length ? spoken : null,
+        players: nextPlayers,
+      };
+    });
+  } catch (error) {
+    console.error('[kossori-word] nextRound failed', error);
+    if (state.roomRef === ref) showMsg('うまく送れなかったよ。もう一度押してね');
+  }
+}
+
+// ── 退出 ──
+function resetState() {
+  stopTalkTimer();
+  Object.assign(state, {
+    role: null, nickname: null, roomCode: null, roomRef: null,
+    currentScreen: null, orphanTimer: null, expectedRoomRemoval: false,
+    selected: [], room: null, busy: false, specTimer: null,
+    timerInterval: null, timerEndsAt: null,
+  });
+  ['host-off-overlay', 'reconnect-overlay', 'guest-off-overlay'].forEach(id => showOverlay(id, false));
+}
+async function leaveGame() {
+  const roomRef = state.roomRef, role = state.role, nickname = state.nickname;
+  state.expectedRoomRemoval = true;
+  const stopped = stopGuestPresence();
+  stopHostPresence();
+  stopTalkTimer();
+  clearTimeout(state.orphanTimer);
+  clearSession();
+  if (roomRef) {
+    try {
+      await stopped;
+      // remove の前に予約済み onDisconnect を取り消す（削除後の実切断でゴースト room が再生成されるのを防ぐ）
+      await RoomkRTDB.cancelRoomOnDisconnect(roomRef);
+      if (role === 'host') await roomRef.remove();
+      else await roomRef.child(`players/${nickname}`).remove();
+    } catch (error) {
+      console.warn('[kossori-word] leave failed', error);
+    }
+    roomRef.off();
+  }
+  if (state.roomRef !== roomRef) return;
+  resetState();
+  showScreen('top');
+}
+
+// ── ルームの監視 ──
+function startRoomListener() {
+  const roomRef = state.roomRef;
+  // 参加用のリンク（?room=コード）でひらいたときは、つないだあとにコードをアドレスから外す
+  //（?watch= は消さない）
+  if (new URLSearchParams(location.search).has('room')) history.replaceState(null, '', location.pathname);
+  roomRef.on('value', snap => {
+    if (state.roomRef !== roomRef) return;
+    // みんなにみせる画面は読み取りだけ。ホスト・ゲストの処理（切断の表示・期限切れの削除・予約）には入らない
+    if (state.role === 'spectator') { handleSpectator(snap.val()); return; }
+    if (!snap.exists()) {
+      if (state.expectedRoomRemoval) return;
+      // 片付けの間に、同じ通知やほかの処理が重ならないようにする
+      state.expectedRoomRemoval = true;
+      const wasHost = state.role === 'host';
+      const stopped = stopGuestPresence();
+      stopHostPresence();
+      clearTimeout(state.orphanTimer);
+      clearSession();
+      (async () => {
+        // 予約済みの onDisconnect を取り消し終えてから状態を捨てる
+        //（取り消しの前にこの端末が切断すると、消えたルームに hostConnected だけが書かれてゴースト room になる）
+        await stopped;
+        await RoomkRTDB.cancelRoomOnDisconnect(roomRef);
+        roomRef.off();
+        if (state.roomRef !== roomRef) return;
+        resetState();
+        showMsg(wasHost ? 'ルームが見つからなくなったので、トップにもどったよ' : 'ホストがルームを終わりにしたよ', wasHost);
+        showScreen('top');
+      })();
+      return;
+    }
+    handleRoom(snap.val());
+  });
+}
+
+function handleRoom(room) {
+  if (state.expectedRoomRemoval) return;
+  const players = room.players || {};
+  state.room = room;
+  if (state.role === 'guest' && (!players[state.nickname] || players[state.nickname].isHost !== false
+    || room.host === state.nickname || !ROOM_PHASES.includes(room.status))) {
+    stopGuestPresence();
+    state.roomRef.off();
+    clearTimeout(state.orphanTimer);
+    clearSession();
+    resetState();
+    showMsg('参加の記録が見つからないので、トップにもどったよ');
+    showScreen('top');
+    return;
+  }
+  if (state.role === 'guest') {
+    const hostGone = room.hostConnected === false;
+    showOverlay('host-off-overlay', hostGone);
+    if (hostGone) {
+      if (isRoomExpired(room)) {
+        clearTimeout(state.orphanTimer);
+        state.orphanTimer = null;
+        expireGuestRoom(state.roomRef);
+      } else if (!state.orphanTimer) {
+        const disconnectedAt = getHostDisconnectedAt(room);
+        const delay = disconnectedAt == null ? ORPHAN_TTL_MS : Math.max(0, disconnectedAt + ORPHAN_TTL_MS - getEstimatedServerNow());
+        const ref = state.roomRef;
+        state.orphanTimer = setTimeout(() => {
+          state.orphanTimer = null;
+          expireGuestRoom(ref);
+        }, delay);
+      }
+    } else {
+      clearTimeout(state.orphanTimer);
+      state.orphanTimer = null;
+    }
+  }
+  if (room.status !== 'talking') stopTalkTimer();
+  switch (room.status) {
+    case 'waiting':   handleWaiting(room, players);   break;
+    case 'choosing':  handleChoosing(room, players);  break;
+    case 'talking':   handleTalking(room, players);   break;
+    case 'answering': handleAnswering(room, players); break;
+    case 'result':    handleResult(room, players);    break;
+  }
+}
+
+async function expireGuestRoom(ref) {
+  if (!ref || state.roomRef !== ref || state.role !== 'guest' || state.expectedRoomRemoval) return;
+  await stopGuestPresence();
+  if (state.roomRef !== ref || state.expectedRoomRemoval) return;
+  // applyLocally: false。先にこの端末だけで消えたことにすると、監視が購読を外して transaction が進まなくなる
+  await ref.transaction(room => {
+    if (state.roomRef === ref && !state.expectedRoomRemoval && room && isRoomExpired(room)) return null;
+  }, undefined, false).catch(error => console.warn('[kossori-word] expiry cleanup failed', error));
+  if (state.roomRef === ref && state.role === 'guest' && !state.expectedRoomRemoval) startGuestPresence();
+}
+
+// ── 描画の道具 ──
+function setHidden(id, hidden) { $(id).hidden = hidden; }
+function nameChip(nick, done, suffix) {
+  const span = document.createElement('span');
+  span.className = 'ksw-name' + (done ? ' ksw-name--done' : '');
+  if (done) {
+    const icon = document.createElement('span');
+    icon.className = 'material-symbols-rounded';
+    icon.setAttribute('aria-hidden', 'true');
+    icon.textContent = 'check';
+    span.appendChild(icon);
+  }
+  span.appendChild(document.createTextNode(nick + (suffix || '')));
+  return span;
+}
+function renderPlayerList(id, room, players) {
+  const ul = $(id);
+  ul.textContent = '';
+  Object.entries(players).forEach(([nick, player]) => {
+    const li = document.createElement('li');
+    li.className = 'player-item';
+    const name = document.createElement('div');
+    name.className = 'player-name';
+    name.appendChild(document.createTextNode(nick));
+    const tag = (text, cls) => {
+      const el = document.createElement('span');
+      el.className = 'player-tag' + (cls ? ' ' + cls : '');
+      el.textContent = text;
+      name.appendChild(el);
+    };
+    if (player.isHost) tag('ホスト');
+    if (!isPlaying(room, nick)) tag('進行役', 'role');
+    if (nick === state.nickname) tag('あなた', 'me');
+    li.appendChild(name);
+    if (!playerConnected(player)) {
+      const wait = document.createElement('span');
+      wait.className = 'ksw-note';
+      wait.textContent = '接続を待っているよ';
+      li.appendChild(wait);
+    }
+    ul.appendChild(li);
+  });
+}
+function roundLabel(room, text) {
+  return `${Number(room.round) || 1}回目・${text}`;
+}
+
+// ── 待合室 ──
+function handleWaiting(room, players) {
+  if (state.currentScreen !== 'waiting') {
+    state.selected = [];
+    showScreen('waiting');
+  }
+  const isHost = state.role === 'host';
+  const hostPlays = hostPlaysOf(room);
+  const total = Object.keys(players).length;
+  const count = playingNames(room, players).length;
+  const round = Number(room.round) || 0;
+
+  setHidden('w-progress', round < 1);
+  $('w-progress').textContent = round >= 1 ? `${round + 1}回目の話し手を決めよう` : '';
+  setHidden('host-panel', !isHost);
+  setHidden('host-start-area', !isHost);
+  setHidden('w-guest-note', isHost);
+
+  if (isHost) {
+    const selectable = selectableNames(room, players);
+    state.selected = state.selected.filter(nick => selectable.includes(nick));
+    $('w-room-code').textContent = state.roomCode;
+    $('set-host-plays').checked = hostPlays;
+    if (document.activeElement !== $('set-talk-secs')) $('set-talk-secs').value = String(talkSecsOf(room));
+
+    const chips = $('w-speaker-chips');
+    chips.textContent = '';
+    selectable.forEach(nick => {
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'ksw-chip';
+      chip.setAttribute('aria-pressed', String(state.selected.includes(nick)));
+      chip.textContent = nick;
+      chip.addEventListener('click', () => toggleSpeaker(nick));
+      chips.appendChild(chip);
+    });
+    const left = 2 - state.selected.length;
+    $('w-speaker-hint').textContent = !selectable.length ? '遊ぶ人が入ってくるのを待ってね。'
+      : left > 0 ? `あと${left}人えらんでね。`
+      : state.selected.map(nick => nick + 'さん').join('と') + 'が話し手。';
+
+    // 始められる人数は、遊ぶ人のうち接続している人で数える（話し手の2人。聞き手はルームの外にいてもよい）
+    const enough = selectable.length >= MIN_PLAYERS;
+    $('btn-deal').disabled = !enough || state.selected.length !== 2;
+    $('btn-random').disabled = selectable.length < 2;
+    $('w-start-hint').textContent = enough
+      ? (hostPlays ? '' : `遊ぶ人は${count}人（ホストは進行役）`)
+      : `あと${MIN_PLAYERS - selectable.length}人で始められるよ${hostPlays ? '' : '（進行役のホストは数えない）'}`;
+  }
+  $('w-count').textContent = hostPlays ? `${total}人` : `${total}人（遊ぶ人 ${count}人）`;
+  renderPlayerList('w-player-list', room, players);
+}
+
+// ── お題えらび ──
+function handleChoosing(room, players) {
+  const me = state.nickname;
+  const speakers = speakerNames(room);
+  const iSpeak = speakers.includes(me);
+  const isHost = state.role === 'host';
+  if (state.currentScreen !== 'choosing') {
+    $('c-own').value = '';
+    RoomkRTDB.showFormError('c-own-error', '');
+    // ホストの画面は共有されることが多いので、ホストが話し手のときは候補をたたんでおく
+    $('c-fold').classList.toggle('ksw-fold--plain', !isHost);
+    $('c-fold').open = !isHost;
+    showScreen('choosing');
+  }
+  $('c-progress').textContent = roundLabel(room, 'お題えらび');
+  setHidden('c-fold', !iSpeak);
+  setHidden('c-wait', iSpeak);
+  setHidden('c-back', !isHost);
+
+  // 候補は話し手の画面にだけ入れる
+  const box = $('c-options');
+  const options = iSpeak ? optionIndexes(room) : [];
+  if (box.dataset.key !== options.join(',')) {
+    box.dataset.key = options.join(',');
+    box.textContent = '';
+    options.forEach(index => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'ksw-option';
+      button.textContent = TOPICS[index];
+      button.addEventListener('click', () => pickTopic(index, null));
+      box.appendChild(button);
+    });
+  }
+  if (iSpeak) {
+    const partner = speakers.filter(nick => nick !== me)[0];
+    $('c-lead').textContent = (partner ? `${partner}さんと話すお題だよ。2人のどちらかがえらべば決まる。` : '')
+      + '声に出して相談すると、聞き手に聞こえちゃうよ。';
+  } else {
+    $('c-wait-text').textContent = `${speakersLabel(room)}が、お題をえらんでいるよ。`;
+  }
+}
+
+// ── 雑談タイム ──
+function handleTalking(room, players) {
+  const me = state.nickname;
+  const speakers = speakerNames(room);
+  const iSpeak = speakers.includes(me);
+  const isHost = state.role === 'host';
+  if (state.currentScreen !== 'talking') {
+    $('t-fold').removeAttribute('open');
+    showScreen('talking');
+  }
+  $('t-progress').textContent = roundLabel(room, '雑談タイム');
+  // のこり時間（決めていないときは出さない）。時間になったら、ホストと話し手の端末が先へ進める
+  const endsAt = Number(room.talkEndsAt) || 0;
+  setHidden('t-timer', !endsAt);
+  if (endsAt) startTalkTimer(endsAt, 't-timer', 't-timer-val', () => { if (isHost || iSpeak) endTalkByTimer(room.talkEndsAt); });
+  else stopTalkTimer();
+  setHidden('t-speaker', !iSpeak);
+  setHidden('t-listener', iSpeak);
+  setHidden('t-force', !isHost || iSpeak);
+
+  // お題は話し手の画面にだけ入れる。ホストの画面は共有されることが多いので、ホストが話し手のときは折りたたむ
+  $('t-topic').textContent = iSpeak && !isHost ? (room.topic || '') : '';
+  $('t-topic-host').textContent = iSpeak && isHost ? (room.topic || '') : '';
+  setHidden('t-odai', isHost);
+  setHidden('t-fold', !isHost);
+  if (iSpeak) {
+    const partner = speakers.filter(nick => nick !== me)[0];
+    $('t-speaker-lead').textContent = (partner ? `${partner}さんと雑談しながら、` : '雑談しながら、')
+      + `2人あわせて${NEED_COUNT}回以上この言葉を言おう。聞き手に気づかれないように、自然にね。`;
+  } else {
+    const playing = isPlaying(room, me);
+    $('t-listener-text').textContent = playing
+      ? `${speakersLabel(room)}の話をよく聞いてね。`
+      : `${speakersLabel(room)}が雑談しているよ。`;
+    $('t-listener-sub').textContent = `雑談の中に、お題の言葉が${NEED_COUNT}回以上出てくるよ。`;
+  }
+}
+
+// ── 答える時間 ──
+function handleAnswering(room, players) {
+  const me = state.nickname;
+  const speakers = speakerNames(room);
+  const iSpeak = speakers.includes(me);
+  const isHost = state.role === 'host';
+  const iListen = isPlaying(room, me) && !iSpeak;
+  const mine = players[me];
+  if (state.currentScreen !== 'answering') {
+    // 再読み込みでもどったときは、答えた言葉を欄にもどす
+    $('a-input').value = hasAnswer(mine) ? mine.answer : '';
+    $('btn-answer').disabled = false;
+    showScreen('answering');
+  }
+  $('a-progress').textContent = roundLabel(room, '答える時間');
+  setHidden('a-form', !iListen);
+  setHidden('a-wait', iListen);
+  $('a-wait-text').textContent = iSpeak
+    ? '聞き手のみんなが答えているよ。お題はまだ言わないでね。'
+    : '聞き手のみんなが答えているよ。';
+  if (iListen) {
+    $('a-hint').textContent = hasAnswer(mine)
+      ? `「${mine.answer}」で答えたよ。発表までは書き直せる。`
+      : 'ひらがなでもカタカナでもOK。わからないときは、なんとなくでOK。';
+    // ホストが聞き手のときは「お題を発表する」を主ボタンにする（主ボタンは1画面に1つ）
+    $('btn-answer').className = 'btn btn-full mt-md ' + (isHost ? 'btn-secondary' : 'btn-primary');
+  }
+
+  // だれが答え終わったかは、ホストと話し手にだけ見せる（何と答えたかは見せない）
+  const showAnswered = isHost || iSpeak;
+  setHidden('a-answered-card', !showAnswered);
+  if (showAnswered) {
+    const box = $('a-answered');
+    box.textContent = '';
+    const listeners = listenerNames(room, players);
+    listeners.forEach(nick => {
+      const done = hasAnswer(players[nick]);
+      box.appendChild(nameChip(nick, done, done ? '' : '（まだ）'));
+    });
+    if (!listeners.length) box.appendChild(document.createTextNode('ルームの中に聞き手はいないよ。声やチャットで答えてもらおう。'));
+  }
+  setHidden('a-host-area', !isHost);
+}
+
+// ── 発表 ──
+// 数えるのは、ルームの中で答えた聞き手だけ。ルームの外（声やチャット）で当てた人は数えない
+function resultLine(listeners, hits) {
+  return !listeners.length ? '当たっていたかな？'
+    : !hits.length ? 'だれにも見抜かれなかった。話し手の2人、おみごと。'
+    : hits.length === listeners.length ? '聞き手の全員が見抜いた。おみごと。'
+    : `${listeners.length}人のうち${hits.length}人が見抜いた。`;
+}
+function handleResult(room, players) {
+  const me = state.nickname;
+  const isHost = state.role === 'host';
+  const speakers = speakerNames(room);
+  if (state.currentScreen !== 'result') {
+    $('r-fold').removeAttribute('open');
+    showScreen('result');
+  }
+  $('r-progress').textContent = roundLabel(room, '発表');
+  $('r-topic').textContent = room.topic || '';
+  $('r-speakers').textContent = speakers.length ? `話し手は、${speakersLabel(room)}。` : '';
+
+  const listeners = listenerNames(room, players);
+  const hits = listeners.filter(nick => isHit(room, players, nick));
+  $('r-line').textContent = resultLine(listeners, hits);
+
+  setHidden('r-hits-card', !hits.length);
+  const hitBox = $('r-hits');
+  hitBox.textContent = '';
+  hits.forEach(nick => hitBox.appendChild(nameChip(nick, true)));
+
+  const iListen = isPlaying(room, me) && !speakers.includes(me);
+  setHidden('r-mine', !iListen);
+  if (iListen) {
+    $('r-mine').textContent = hasAnswer(players[me]) ? `あなたの答えは「${players[me].answer}」。` : 'あなたは答えなかった。';
+  }
+
+  // 外れた答えはホストにだけ見せる（書き方がちがうだけの答えを当たりにするため）
+  const others = isHost ? listeners.filter(nick => hasAnswer(players[nick]) && !isAutoHit(room, players[nick])) : [];
+  setHidden('r-fold', !others.length);
+  const judge = $('r-others');
+  judge.textContent = '';
+  others.forEach(nick => {
+    const row = document.createElement('div');
+    row.className = 'ksw-judge__row';
+    const label = document.createElement('span');
+    label.textContent = `${nick}「${players[nick].answer}」`;
+    const manual = room.manualHits?.[nick] === true;
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'btn btn-secondary btn-sm';
+    button.textContent = manual ? '当たりを取り消す' : '当たりにする';
+    button.addEventListener('click', () => toggleManualHit(nick));
+    row.appendChild(label);
+    row.appendChild(button);
+    judge.appendChild(row);
+  });
+
+  setHidden('r-host-area', !isHost);
+  setHidden('r-guest-note', isHost);
+}
+
+// ════════════════════════════════════
+// みんなにみせる画面（画面共有用）
+//   - RTDB への書き込みゼロ（players に入らない・onDisconnect の予約なし・remove しない）
+//   - お題を DOM に入れるのは発表（result）だけ。答えた言葉は出さない
+//   - 記録（sessionStorage）は持たない。再読み込みはアドレスの ?watch=コード から入り直す
+// ════════════════════════════════════
+
+// ホストの画面から: クリックの中で同期的に開く（ポップアップブロック回避）・noopener 必須
+function openSpectatorWindow() {
+  if (!state.roomCode || !ROOM_CODE_PATTERN.test(state.roomCode)) return;
+  window.open(`${location.origin}${location.pathname}?watch=${state.roomCode}`, '_blank', 'noopener');
+}
+
+// TOP → コード入力から
+async function spectateJoin() {
+  const report = message => RoomkRTDB.showFormError('spectate-form-error', message);
+  report('');
+  const code = normalizeRoomCode($('spectate-code').value);
+  const imeErr = roomCodeImeError(code);
+  if (imeErr) { report(imeErr); return; }
+  if (!/^[A-Z0-9]{6}$/.test(code)) { report('ルームコードは6文字だよ'); return; }
+  await enterSpectator(code, report);
+}
+
+// アドレスの ?watch=コード から（最優先の入口。失敗しても保存した記録には頼らない）
+async function startSpectatorFromUrl(raw) {
+  const code = normalizeRoomCode(raw);
+  const fail = message => {
+    history.replaceState(null, '', location.pathname);
+    showMsg(message);
+    showScreen('top');
+  };
+  if (!ROOM_CODE_PATTERN.test(code)) { fail('ルームが見つからないよ'); return; }
+  showOverlay('reconnect-overlay', true);
+  let failure = '';
+  const ok = await enterSpectator(code, message => { failure = message; });
+  showOverlay('reconnect-overlay', false);
+  if (!ok) fail(failure || 'ルームが見つからないよ');
+}
+
+// 入室（読み取りだけ）。成功で true、失敗は showFail(message) を呼んで false
+let spectateBusy = false;
+async function enterSpectator(code, showFail) {
+  if (spectateBusy) return false;
+  spectateBusy = true;
+  try {
+    try { await authReady; }
+    catch { showFail('うまくつながらなかったよ。ページを読み込み直してね'); return false; }
+    let snap;
+    try { snap = await db.ref(`${ROOM_PATH}/${code}`).get(); }
+    catch { showFail('うまくつながらなかったよ。もう一度押してね'); return false; }
+    if (!snap.exists()) { showFail('ルームが見つからないよ。コードをたしかめてね'); return false; }
+    if (isRoomExpired(snap.val())) { showFail('このルームはもう終わっているよ'); return false; }
+    Object.assign(state, {
+      role: 'spectator', nickname: null, roomCode: code,
+      roomRef: db.ref(`${ROOM_PATH}/${code}`), selected: [], room: null,
+    });
+    history.replaceState(null, '', `${location.pathname}?watch=${code}`);
+    startRoomListener();
+    return true;
+  } finally {
+    spectateBusy = false;
+  }
+}
+
+// 終わり（ルーム削除・期限切れ）: 購読とタイマーだけ止めて、画面は残す
+//（購読を残すと、同じコードが将来使われたときに別のゲームを映してしまう）
+function stopSpectatorWatch() {
+  stopTalkTimer();
+  clearTimeout(state.specTimer);
+  state.specTimer = null;
+  if (state.roomRef) { state.roomRef.off(); state.roomRef = null; }
+}
+
+// 「トップへ戻る」: ルームには一切触らない
+function spectatorLeave() {
+  stopTalkTimer();
+  clearTimeout(state.specTimer);
+  if (state.roomRef) state.roomRef.off();
+  resetState();
+  $('spectate-code').value = '';
+  if (new URLSearchParams(location.search).has('watch')) history.replaceState(null, '', location.pathname);
+  showScreen('top');
+}
+
+function showSpectatorWait(icon, title, sub, sub2) {
+  setHidden('s-wait', false);
+  setHidden('s-result', true);
+  $('s-wait-icon').textContent = icon;
+  $('s-wait-title').textContent = title;
+  $('s-wait-sub').textContent = sub || '';
+  $('s-wait-sub2').textContent = sub2 || '';
+  // 発表の画面を出していないときは、お題を DOM に残さない
+  $('s-topic').textContent = '';
+}
+function showSpectatorEnded() {
+  stopSpectatorWatch();
+  setHidden('s-host-off', true);
+  setHidden('s-timer', true);
+  $('s-progress').textContent = '';
+  showSpectatorWait('door_open', 'このルームは終わったよ', '「トップへ戻る」を押してね。');
+}
+
+function handleSpectator(room) {
+  if (state.currentScreen !== 'spectator') showScreen('spectator');
+  $('s-code').textContent = state.roomCode || '';
+  if (!room || !ROOM_PHASES.includes(room.status)) { showSpectatorEnded(); return; }
+
+  // ホストの切断: 表示だけ。期限を過ぎたら「終わった」にする（ルームは消さない）
+  const hostGone = room.hostConnected === false;
+  if (hostGone && isRoomExpired(room)) { showSpectatorEnded(); return; }
+  setHidden('s-host-off', !hostGone);
+  if (hostGone) {
+    if (!state.specTimer) {
+      const disconnectedAt = getHostDisconnectedAt(room);
+      const delay = disconnectedAt == null ? ORPHAN_TTL_MS : Math.max(0, disconnectedAt + ORPHAN_TTL_MS - getEstimatedServerNow());
+      const watchedRef = state.roomRef;
+      state.specTimer = setTimeout(() => {
+        state.specTimer = null;
+        if (state.roomRef === watchedRef && state.role === 'spectator') showSpectatorEnded();
+      }, delay);
+    }
+  } else {
+    clearTimeout(state.specTimer);
+    state.specTimer = null;
+  }
+
+  const players = room.players || {};
+  const round = Number(room.round) || 0;
+  const endsAt = room.status === 'talking' ? Number(room.talkEndsAt) || 0 : 0;
+  setHidden('s-timer', !endsAt);
+  if (endsAt) startTalkTimer(endsAt, 's-timer', 's-timer-val', null);
+  else stopTalkTimer();
+  if (room.status === 'waiting') {
+    $('s-progress').textContent = round >= 1 ? `${round + 1}回目の準備` : '';
+    showSpectatorWait('hourglass_top', '話し手を決めているよ', '2人の雑談にまぎれた「お題」の言葉を見抜くゲームだよ。',
+      'ルームに入っていない人も、声やチャットで当てられる。');
+  } else if (room.status === 'choosing') {
+    $('s-progress').textContent = roundLabel(room, 'お題えらび');
+    showSpectatorWait('hourglass_top', `${speakersLabel(room)}が、お題をえらんでいるよ`, 'このあと2人が雑談を始めるよ。よく聞いてね。');
+  } else if (room.status === 'talking') {
+    $('s-progress').textContent = roundLabel(room, '雑談タイム');
+    showSpectatorWait('hearing', `${speakersLabel(room)}の話をよく聞いてね`, `雑談の中に、お題の言葉が${NEED_COUNT}回以上出てくるよ。`);
+  } else if (room.status === 'answering') {
+    const listeners = listenerNames(room, players);
+    const done = listeners.filter(nick => hasAnswer(players[nick])).length;
+    $('s-progress').textContent = roundLabel(room, '答える時間');
+    showSpectatorWait('edit', 'お題はなんだった？',
+      'ルームに入っている人は、自分の画面に書いて答えてね。入っていない人は、声やチャットで答えてね。',
+      listeners.length ? `ルームの聞き手 ${listeners.length}人のうち${done}人が答えたよ。` : '');
+  } else {
+    const listeners = listenerNames(room, players);
+    const hits = listeners.filter(nick => isHit(room, players, nick));
+    $('s-progress').textContent = roundLabel(room, '発表');
+    setHidden('s-wait', true);
+    setHidden('s-result', false);
+    $('s-topic').textContent = room.topic || '';
+    $('s-speakers').textContent = speakerNames(room).length ? `話し手は、${speakersLabel(room)}。` : '';
+    $('s-line').textContent = resultLine(listeners, hits);
+    setHidden('s-hits-card', !hits.length);
+    const box = $('s-hits');
+    box.textContent = '';
+    hits.forEach(nick => box.appendChild(nameChip(nick, true)));
+  }
+}
+
+// 答えの欄: 日本語入力の変換を確定する Enter では送らない
+$('a-input').addEventListener('keydown', event => {
+  if (event.key === 'Enter' && !event.isComposing && event.keyCode !== 229) submitAnswer();
+});
+$('c-own').addEventListener('keydown', event => {
+  if (event.key === 'Enter' && !event.isComposing && event.keyCode !== 229) pickOwnTopic();
+});
+
+// ── 再接続 ──
+async function tryReconnect() {
+  const session = loadSession();
+  if (!session) return false;
+  const { nickname, roomCode, role } = session;
+  if (!nickname || nickError(nickname) || !ROOM_CODE_PATTERN.test(roomCode) || !['host', 'guest'].includes(role)) {
+    clearSession(); return false;
+  }
+  showOverlay('reconnect-overlay', true);
+  try {
+    await authReady;
+    const ref = db.ref(`${ROOM_PATH}/${roomCode}`);
+    const snap = await ref.get();
+    if (!snap.exists()) { clearSession(); showOverlay('reconnect-overlay', false); return false; }
+    const room = snap.val();
+    if (isRoomExpired(room)) {
+      await ref.remove().catch(() => {});
+      clearSession(); showOverlay('reconnect-overlay', false); return false;
+    }
+    if (!ROOM_PHASES.includes(room.status) || (role === 'guest' && !validGuestRoom(room, nickname))
+      || (role === 'host' && (room.host !== nickname || room.players?.[nickname]?.isHost !== true))) {
+      clearSession(); showOverlay('reconnect-overlay', false); return false;
+    }
+
+    state.nickname = nickname; state.roomCode = roomCode; state.role = role;
+    state.roomRef = ref; state.selected = [];
+    if (role === 'guest') startGuestPresence();
+
+    showOverlay('reconnect-overlay', false);
+    startRoomListener();
+    // ホストは、つないだあとに「ホストがいる」状態にもどし、切断時の予約を張り直す
+    if (role === 'host') startHostPresence();
+    return true;
+  } catch (error) {
+    console.warn('[kossori-word] reconnect failed', error);
+    clearSession(); showOverlay('reconnect-overlay', false); return false;
+  }
+}
+
+// ── 初期化 ──
+// 再読み込みなどで、保存した記録から同じルームへ戻る（戻れなければトップ）
+function resumeFromSession() {
+  tryReconnect().then(ok => { if (!ok) showScreen('top'); });
+}
+
+// ?watch=コード があれば、みんなにみせる画面を最優先（空の値も無効な入口として同じ扱い）。
+// 次に参加用のリンク ?room=コード。どちらもないときだけ、保存した記録から再接続する
+const startParams = new URLSearchParams(location.search);
+const roomParam = startParams.get('room');
+if (startParams.has('watch')) {
+  // 無効な watch だったときに、次の再読み込みで古いホスト・ゲストの記録が復活しないようにする
+  clearSession();
+  startSpectatorFromUrl(startParams.get('watch'));
+} else if (roomParam !== null) {
+  // 参加用のリンク（?room=コード）の入口。コードを入れた状態で参加画面を開く。コードはつないだときにアドレスから外す（startRoomListener）
+  const linkCode = normalizeRoomCode(roomParam);
+  const saved = loadSession();
+  if (!ROOM_CODE_PATTERN.test(linkCode)) {
+    showMsg('ルームコードが正しくないよ');
+    history.replaceState(null, '', location.pathname);
+    resumeFromSession();
+  } else if (saved && saved.roomCode === linkCode) {
+    // 同じルームの記録が残っていれば、名前を入れなおさずに戻る。戻れなければ参加画面へ
+    tryReconnect().then(reconnected => {
+      if (reconnected) return;
+      clearSession();
+      openJoinFromLink(linkCode);
+    });
+  } else {
+    // 別のルームの記録が残っていても、ひらいたリンクのルームを優先する
+    if (saved) clearSession();
+    openJoinFromLink(linkCode);
+  }
+} else {
+  resumeFromSession();
+}
+</script>
+<script src="../shared/js/stats.js?v=1" defer></script>
+<script src="../shared/js/howto.js"></script>
+<script>
+  RoomkHowto.init({
+    title: 'あそびかた',
+    lead: '話し手の2人が、ふつうの雑談の中に「お題」の言葉を3回以上こっそりまぎれこませる。聞いていたみんなは、お題がどの言葉だったかを見抜くゲーム。',
+    sections: [
+      {
+        heading: 'はじめかた',
+        items: [
+          'ホストが「ルームを作る」を押して、名前を入れて「ルームを作成する」を押す',
+          'ルームコードは「コードをコピー」、参加用のリンクは「リンクをコピー」でチャットに送れる。画面共有するときは「みんなにみせる画面をひらく」でひらいた画面を見せる',
+          'ほかの人は「ルームに参加する」から名前とルームコードを入れて「参加する」を押す。リンクからひらいたときは、ルームコードは入っているので名前だけ入れる',
+        ],
+      },
+      {
+        heading: 'すすめかた',
+        items: [
+          'ホストが「雑談の時間」と話し手を2人えらぶ（「話し手をおまかせでえらぶ」でもOK）。えらんだら「お題をくばる」を押す',
+          '話し手のどちらかが、3つのお題から1つえらぶ。話したい言葉を自分で書いて「この言葉にする」でもOK',
+          '話し手の2人は、通話で雑談しながらお題の言葉を2人あわせて3回以上言う。言えたと思ったら「話しおわった」を押す。時間になったら自動で次へ進む',
+          '聞き手は、お題だと思う言葉を書いて「これで答える」を押す。ルームに入っていない人は、声やチャットで答えてOK',
+          'ホストが「お題を発表する」を押すと、お題と見抜いた人が出る',
+        ],
+      },
+      {
+        heading: 'おわりかた',
+        text: 'ホストが「つぎのお題へ」を押すと、同じメンバーで話し手を変えてもう1回遊べる。終わるときは「退出する」を押す。',
+      },
+    ],
+  });
+</script>
+</body>
+</html>

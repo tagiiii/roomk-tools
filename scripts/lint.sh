@@ -34,6 +34,7 @@ RTDB_HTML_FILES=(
   "apps/kakure-number/index.html"
   "apps/kimochi-ate/index.html"
   "apps/koedake-theater/index.html"
+  "apps/kossori-word/index.html"
   "apps/kotoba-pair/index.html"
   "apps/magire-eshi/index.html"
   "apps/moji-soroe/index.html"

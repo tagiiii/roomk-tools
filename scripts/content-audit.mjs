@@ -195,6 +195,8 @@ const COVERED_APPS = [
   'kotoba-mikke',
   // 2026-10-03 追加
   'stamp-ate',
+  // 2026-10-07 追加
+  'kossori-word',
 ];
 
 // 数えられるコンテンツを持たないため重複検査の対象外にするアプリ（意図的除外）。
@@ -414,6 +416,13 @@ function collectEntries() {
   ishinTopics.forEach((text, index) => rows.push(entry('ishin-denshin', 'topic', text, {
     id: `ishin-denshin:${index}`,
   })));
+
+  // kossori-word: HTML 内 const TOPIC_GROUPS = [ { name, words: [...] }, ... ]（お題の言葉）
+  const kswSource = extractScript(read('apps/kossori-word/index.html'));
+  const kswGroups = evalArrayFromSource(kswSource, 'TOPIC_GROUPS', 'apps/kossori-word/index.html') || [];
+  kswGroups.forEach((group) => (group.words || []).forEach((word, index) => {
+    rows.push(entry('kossori-word', group.name, word, { id: `kossori-word:${group.name}:${index}` }));
+  }));
 
   // word-wolf: HTML 内 const WORD_PAIRS = [ { citizen, wolf }, ... ]（ペア: 両要素を抽出）
   const wolfSource = extractScript(read('apps/word-wolf/index.html'));
