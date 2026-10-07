@@ -417,7 +417,10 @@
         <div class="ksw-fold__body"><p class="ksw-fold__word" id="t-topic-host"></p></div>
       </details>
       <p class="ksw-sub" id="t-speaker-lead"></p>
-      <p class="ksw-hint" style="text-align:center">回数は数えなくてOK。2人が「3回以上言えた」と思ったら、どちらかが押してね。</p>
+      <p class="ksw-hint" id="t-speaker-hint" style="text-align:center">回数は数えなくてOK。2人が「3回以上言えた」と思ったら、どちらかが押してね。</p>
+      <button class="btn btn-primary btn-full mt-md" id="btn-start-talk" onclick="startTalk()">
+        <span class="material-symbols-rounded" aria-hidden="true">play_arrow</span>雑談をはじめる
+      </button>
       <button class="btn btn-primary btn-full mt-md" id="btn-end-talk" onclick="endTalk()">
         <span class="material-symbols-rounded" aria-hidden="true">check_circle</span>話しおわった
       </button>
@@ -431,6 +434,7 @@
         <p id="t-listener-sub"></p>
       </div>
     </div>
+    <button type="button" class="ksw-quiet" id="t-host-start" onclick="startTalk()" hidden>雑談をはじめる（時間をスタートする）</button>
     <button type="button" class="ksw-quiet" id="t-force" onclick="endTalk()" hidden>雑談を終わりにして、答える時間にすすむ</button>
   </div>
 </div>
@@ -1062,7 +1066,7 @@ async function dealTopic() {
         ...room,
         status: 'choosing',
         round: (Number(room.round) || 0) + 1,
-        topic: null, talkEndsAt: null,
+        topic: null, talkStarted: null, talkEndsAt: null,
         options,
         used: used.length ? used : null,
         speakers: { [picks[0]]: true, [picks[1]]: true },
@@ -1110,12 +1114,12 @@ async function pickTopic(index, own) {
         topic = TOPICS[index];
         used = used.concat(index);
       }
-      const secs = talkSecsOf(room);
+      // お題が決まっても、時間はまだ動かさない（話し手が準備できてから「雑談をはじめる」でスタートする）
       return {
         ...room,
         status: 'talking', topic, options: null,
         used: used.length ? used : null,
-        talkEndsAt: secs > 0 ? getEstimatedServerNow() + secs * 1000 : null,
+        talkStarted: null, talkEndsAt: null,
       };
     }));
   } catch (error) {
@@ -1135,6 +1139,32 @@ function pickOwnTopic() {
   pickTopic(null, text);
 }
 
+// ── 雑談をはじめる（話し手のどちらか、またはホスト。ここで時間がスタートする）──
+// お題が決まってすぐに時間が動くと、話し手に準備の間がない（2026-10-07 実機の声）
+function talkStartedOf(room) {
+  // talkEndsAt だけがある部屋は、公開直後の版（お題を決めた時点で時間が動く）でお題を決めたもの
+  return room?.talkStarted === true || Number(room?.talkEndsAt) > 0;
+}
+async function startTalk() {
+  if (!state.roomRef || !guestCanAct()) return;
+  const ref = state.roomRef, me = state.nickname;
+  try {
+    await ref.transaction(room => {
+      if (state.roomRef !== ref || !room || room.status !== 'talking' || talkStartedOf(room)) return;
+      if (room.host !== me && !(room.speakers && room.speakers[me] && room.players?.[me])) return;
+      const secs = talkSecsOf(room);
+      return { ...room, talkStarted: true, talkEndsAt: secs > 0 ? getEstimatedServerNow() + secs * 1000 : null };
+    });
+  } catch (error) {
+    console.error('[kossori-word] startTalk failed', error);
+    if (state.roomRef === ref) showMsg('うまく送れなかったよ。もう一度押してね');
+  }
+}
+function talkSecsLabel(room) {
+  const secs = talkSecsOf(room);
+  return secs > 0 ? `${secs / 60}分` : '';
+}
+
 // ── 話し手をえらび直す（ホスト。お題えらびから待合室にもどる）──
 async function backToWaiting() {
   if (state.role !== 'host' || !state.roomRef) return;
@@ -1144,7 +1174,7 @@ async function backToWaiting() {
       if (!room || room.status !== 'choosing' || room.host !== me) return;
       return {
         ...room,
-        status: 'waiting', options: null, speakers: null, topic: null, talkEndsAt: null,
+        status: 'waiting', options: null, speakers: null, topic: null, talkStarted: null, talkEndsAt: null,
         round: Math.max(0, (Number(room.round) || 1) - 1),
       };
     });
@@ -1281,7 +1311,7 @@ async function nextRound() {
       Object.entries(players).forEach(([nick, player]) => { nextPlayers[nick] = { ...player, answer: null }; });
       return {
         ...room,
-        status: 'waiting', topic: null, speakers: null, manualHits: null, options: null, talkEndsAt: null,
+        status: 'waiting', topic: null, speakers: null, manualHits: null, options: null, talkStarted: null, talkEndsAt: null,
         spoken: Object.keys(spoken).length ? spoken : null,
         players: nextPlayers,
       };
@@ -1575,15 +1605,21 @@ function handleTalking(room, players) {
     $('t-fold').removeAttribute('open');
     showScreen('talking');
   }
-  $('t-progress').textContent = roundLabel(room, '雑談タイム');
+  // お題が決まってから「雑談をはじめる」が押されるまでは準備の時間（時間は動かない）
+  const started = talkStartedOf(room);
+  $('t-progress').textContent = roundLabel(room, started ? '雑談タイム' : 'じゅんび');
   // のこり時間（決めていないときは出さない）。時間になったら、ホストと話し手の端末が先へ進める
-  const endsAt = Number(room.talkEndsAt) || 0;
+  const endsAt = started ? Number(room.talkEndsAt) || 0 : 0;
   setHidden('t-timer', !endsAt);
   if (endsAt) startTalkTimer(endsAt, 't-timer', 't-timer-val', () => { if (isHost || iSpeak) endTalkByTimer(room.talkEndsAt); });
   else stopTalkTimer();
   setHidden('t-speaker', !iSpeak);
   setHidden('t-listener', iSpeak);
-  setHidden('t-force', !isHost || iSpeak);
+  setHidden('t-force', !isHost || iSpeak || !started);
+  setHidden('t-host-start', !isHost || iSpeak || started);
+  setHidden('btn-start-talk', started);
+  setHidden('btn-end-talk', !started);
+  setHidden('t-speaker-hint', !started);
 
   // お題は話し手の画面にだけ入れる。ホストの画面は共有されることが多いので、ホストが話し手のときは折りたたむ
   $('t-topic').textContent = iSpeak && !isHost ? (room.topic || '') : '';
@@ -1592,14 +1628,19 @@ function handleTalking(room, players) {
   setHidden('t-fold', !isHost);
   if (iSpeak) {
     const partner = speakers.filter(nick => nick !== me)[0];
-    $('t-speaker-lead').textContent = (partner ? `${partner}さんと雑談しながら、` : '雑談しながら、')
-      + `2人あわせて${NEED_COUNT}回以上この言葉を言おう。聞き手に気づかれないように、自然にね。`;
+    const limit = talkSecsLabel(room);
+    $('t-speaker-lead').textContent = started
+      ? (partner ? `${partner}さんと雑談しながら、` : '雑談しながら、')
+        + `2人あわせて${NEED_COUNT}回以上この言葉を言おう。聞き手に気づかれないように、自然にね。`
+      : (partner ? `${partner}さんと話すお題はこれ。` : 'お題はこれ。')
+        + `準備ができたら、どちらかが「雑談をはじめる」を押してね。`
+        + (limit ? `押すと、${limit}の時間がスタートするよ。` : '');
   } else {
     const playing = isPlaying(room, me);
-    $('t-listener-text').textContent = playing
-      ? `${speakersLabel(room)}の話をよく聞いてね。`
+    $('t-listener-text').textContent = !started ? `${speakersLabel(room)}が準備しているよ。`
+      : playing ? `${speakersLabel(room)}の話をよく聞いてね。`
       : `${speakersLabel(room)}が雑談しているよ。`;
-    $('t-listener-sub').textContent = `雑談の中に、お題の言葉が${NEED_COUNT}回以上出てくるよ。`;
+    $('t-listener-sub').textContent = started ? `雑談の中に、お題の言葉が${NEED_COUNT}回以上出てくるよ。` : 'もうすぐ雑談がはじまるよ。';
   }
 }
 
@@ -1836,7 +1877,8 @@ function handleSpectator(room) {
 
   const players = room.players || {};
   const round = Number(room.round) || 0;
-  const endsAt = room.status === 'talking' ? Number(room.talkEndsAt) || 0 : 0;
+  const started = talkStartedOf(room);
+  const endsAt = room.status === 'talking' && started ? Number(room.talkEndsAt) || 0 : 0;
   setHidden('s-timer', !endsAt);
   if (endsAt) startTalkTimer(endsAt, 's-timer', 's-timer-val', null);
   else stopTalkTimer();
@@ -1847,6 +1889,9 @@ function handleSpectator(room) {
   } else if (room.status === 'choosing') {
     $('s-progress').textContent = roundLabel(room, 'お題えらび');
     showSpectatorWait('hourglass_top', `${speakersLabel(room)}が、お題をえらんでいるよ`, 'このあと2人が雑談を始めるよ。よく聞いてね。');
+  } else if (room.status === 'talking' && !started) {
+    $('s-progress').textContent = roundLabel(room, 'じゅんび');
+    showSpectatorWait('hourglass_top', `${speakersLabel(room)}が準備しているよ`, 'もうすぐ雑談がはじまるよ。よく聞いてね。');
   } else if (room.status === 'talking') {
     $('s-progress').textContent = roundLabel(room, '雑談タイム');
     showSpectatorWait('hearing', `${speakersLabel(room)}の話をよく聞いてね`, `雑談の中に、お題の言葉が${NEED_COUNT}回以上出てくるよ。`);
@@ -1977,7 +2022,7 @@ if (startParams.has('watch')) {
         heading: 'すすめかた',
         items: [
           'ホストが「雑談の時間」と話し手を2人えらぶ（「話し手をおまかせでえらぶ」でもOK）。えらんだら「お題をくばる」を押す',
-          '話し手のどちらかが、3つのお題から1つえらぶ。話したい言葉を自分で書いて「この言葉にする」でもOK',
+          '話し手のどちらかが、3つのお題から1つえらぶ（話したい言葉を書いて「この言葉にする」でもOK）。準備ができたら「雑談をはじめる」を押すと、時間がスタートする',
           '話し手の2人は、通話で雑談しながらお題の言葉を2人あわせて3回以上言う。言えたと思ったら「話しおわった」を押す。時間になったら自動で次へ進む',
           '聞き手は、お題だと思う言葉を書いて「これで答える」を押す。ルームに入っていない人は、声やチャットで答えてOK',
           'ホストが「お題を発表する」を押すと、お題と見抜いた人が出る',
