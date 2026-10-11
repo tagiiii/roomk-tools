@@ -14,6 +14,7 @@
 
 ## 一覧
 
+- [p10-backlog-history-2026-10-12.md](p10-backlog-history-2026-10-12.md) — バックログの判断待ちから移した、クイズの事実確認の工程ごとの記録（P-10、2026-10-12）
 - [p12-session-only-rejoin-2026-09-09.md](p12-session-only-rejoin-2026-09-09.md) — 名前だけの再入室廃止と保存セッション復帰の非回帰・保証限界（P-12、B-32、2026-09-09）
 - [a11-manual-review-summary-2026-09-09.md](a11-manual-review-summary-2026-09-09.md) — 手動コードレビューの集約と限定検査器の保証範囲・再確認条件（A-11、P-17、2026-09-09）
 - [a11-manual-network-review-2026-09-09.md](a11-manual-network-review-2026-09-09.md) — 通信系アプリの表示参照の入力元・変換・出力文脈の直接追跡（A-11、2026-09-09）
