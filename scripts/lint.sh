@@ -56,6 +56,14 @@ RTDB_HTML_FILES=(
 # 分割ファイルの RTDB アプリ（画面を app.js 以外に持つもの）は、その JS も XSS・esc の検査に含める
 SPLIT_JS_FILES=(apps/career-sugoroku/*.js)
 XSS_FILES=("${ALL_HTML_FILES[@]}" "${ALL_JS_FILES[@]}" "${SPLIT_JS_FILES[@]}")
+
+# 本体を app.js に持つ RTDB アプリは、RTDB の処理がその app.js にある。
+# REF-4・REF-5 が index.html だけを見て素通りしないよう、RTDB_HTML_FILES のとなりの app.js を自動で拾う
+RTDB_APP_JS_FILES=()
+for f in "${RTDB_HTML_FILES[@]}"; do
+  [ -f "$(dirname "$f")/app.js" ] && RTDB_APP_JS_FILES+=("$(dirname "$f")/app.js")
+done
+RTDB_LOGIC_FILES=("${RTDB_HTML_FILES[@]}" "${RTDB_APP_JS_FILES[@]}" "${SPLIT_JS_FILES[@]}")
 CSS_FILES=("${ALL_HTML_FILES[@]}")
 
 echo ""
@@ -382,7 +390,7 @@ echo ""
 echo -e "${BOLD}[REF-4] ホスト切断 TTL チェック${NC}"
 
 REF4_OK=true
-for f in "${RTDB_HTML_FILES[@]}" "${SPLIT_JS_FILES[@]}"; do
+for f in "${RTDB_LOGIC_FILES[@]}"; do
   [ -f "$f" ] || continue
   while IFS=: read -r line_num content; do
     # ORPHAN_TTL_INGAME_MS など派生定数は対象外
@@ -664,7 +672,7 @@ echo ""
 echo -e "${BOLD}[REF-5] タイマー解放バランスチェック${NC}"
 
 REF5_OK=true
-for f in "${RTDB_HTML_FILES[@]}" "${SPLIT_JS_FILES[@]}"; do
+for f in "${RTDB_LOGIC_FILES[@]}"; do
   [ -f "$f" ] || continue
   si=$(grep -c 'setInterval(' "$f")
   ci=$(grep -c 'clearInterval(' "$f")
