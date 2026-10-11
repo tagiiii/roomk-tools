@@ -64,7 +64,7 @@ git ls-files '*.md' | grep -v '^docs/reports/' | xargs grep -nE "Opus|Sonnet|Hai
 次は**事実記録なので固有名のまま残す**（当時どのモデルで何をしたかの記録に価値がある）。上のコマンドがこれらを拾っても書き換えない。
 
 - `docs/reports/**`
-- `docs/kaizen-backlog.md` の完了済みエントリ・決着履歴・`<details>` 内の提案原文
+- `docs/kaizen-backlog-done.md`（完了済みエントリ）と、`docs/kaizen-backlog.md` の決着履歴・`<details>` 内の提案原文
 - `docs/kotoba-asobo/PROGRESS.md`（バッチごとの実績）
 - `apps/{app}/AGENTS.md` の設計経緯（「〜レビュー指摘による設計変更」など）
 - `docs/content-candidates/**`、`docs/pitahame-design-v1.md` などの完了済み設計・候補文書

@@ -94,6 +94,7 @@ roomk-tools/
 ├── docs/                    # 補助資料
 │   ├── ai-roles.md          # AI の役割定義とガードレールの区分
 │   ├── kaizen-backlog.md    # 改善ループの運用ルール・判断待ちキュー
+│   ├── kaizen-backlog-done.md # 改善ループで完了した項目の記録
 │   └── audit-prompts.md     # 監査プロンプトのカタログ
 ├── scripts/                 # lint・コンテンツ監査等の開発補助
 ├── AGENTS.md                # プロジェクト共通仕様の正本

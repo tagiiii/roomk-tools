@@ -40,7 +40,7 @@ bash scripts/lint.sh
 
 ### 既知の項目（現在のバックログと照合する）
 
-`docs/kaizen-backlog.md` のB-21と関連follow-up・判断待ちを対象アプリ名や不具合名で検索する。完了済み記録と新たな再発を区別し、スキルに過去の未修正一覧を複製しない。
+`docs/kaizen-backlog.md`（判断待ち・未完了）と `docs/kaizen-backlog-done.md`（B-21 と関連follow-upなどの完了記録）を対象アプリ名や不具合名で検索する。完了済み記録と新たな再発を区別し、スキルに過去の未修正一覧を複製しない。
 
 ## 出力形式
 

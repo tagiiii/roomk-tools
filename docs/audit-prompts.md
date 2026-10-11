@@ -39,7 +39,7 @@
 
 - **読み取り専用（発見のみ）。** バックログへ直接追記しない。返すのは「起票候補」だけ。反映（Tier A/B の修正・投入・P票起票）は別工程・別プロンプト・人間承認で行う。
 - **先に機械チェックを走らせる。** 対象に応じて `bash scripts/lint.sh` / `node scripts/content-audit.mjs` を実行し、**同一根因を二重起票しない**。ただし lint の偽陰性・ルールの穴（機械化できていない規約）は起票してよい（「機械チェックの拡張」という起票になる）。実行できなかった場合は skip 理由を出力に記す。
-- **既存資産と照合し、状態を分岐する（必須）。** `docs/kaizen-backlog.md` の Tier A/B/C/D と「判断待ち(P-番号)」、`docs/content-candidates/`、対象の `apps/{app}/AGENTS.md` を確認し、各 finding を次のいずれかに分類する:
+- **既存資産と照合し、状態を分岐する（必須）。** `docs/kaizen-backlog.md` の Tier A/B/C/D と「判断待ち(P-番号)」、完了済みを置く `docs/kaizen-backlog-done.md`、`docs/content-candidates/`、対象の `apps/{app}/AGENTS.md` を確認し、各 finding を次のいずれかに分類する:
   - `新規` … 既出でない
   - `既存票への追記` … 既存項目に新事実・別事例を足す
   - `再発` … 一度閉じた項目が再び観測された（＝起票する）
