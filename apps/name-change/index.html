@@ -1376,15 +1376,9 @@ function copyResults() {
     lines.push(`・${changed} → ${original}${count ? `（${count}）` : ''}`);
   });
   const text = lines.join('\n');
-  navigator.clipboard.writeText(text).then(() => {
-    toast('クリップボードにコピーしました！');
-  }).catch(() => {
-    const ta = document.createElement('textarea');
-    ta.value = text; document.body.appendChild(ta);
-    ta.select(); document.execCommand('copy');
-    document.body.removeChild(ta);
-    toast('コピーしました！');
-  });
+  // コピーできなかったときも「コピーしました」と出さないよう、成否を返す共通の RoomkRTDB.copyText（rtdb-utils.js）を使う
+  RoomkRTDB.copyText(text, document.getElementById('result-copy-btn'),
+    'クリップボードにコピーしました！', 'コピーできませんでした。もう一度お試しください');
 }
 
 // 終了後の自動削除は「終了時点の ref と deleteAt」を固定して予約する。
