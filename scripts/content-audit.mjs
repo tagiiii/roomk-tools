@@ -197,6 +197,8 @@ const COVERED_APPS = [
   'stamp-ate',
   // 2026-10-07 追加
   'kossori-word',
+  // 2026-10-12 追加
+  'suki-bingo',
 ];
 
 // 数えられるコンテンツを持たないため重複検査の対象外にするアプリ（意図的除外）。
@@ -416,6 +418,27 @@ function collectEntries() {
   ishinTopics.forEach((text, index) => rows.push(entry('ishin-denshin', 'topic', text, {
     id: `ishin-denshin:${index}`,
   })));
+
+  // suki-bingo: app.js の const THEMES = [ { id, name, items: [ { t }, ... ] }, ... ]（テーマと候補）。
+  //   ルームではテーマの id と候補の番号で共有するので、空の語・同じテーマ内の重複・16個でないテーマは fail-fast にする。
+  const bingoThemes = evalArrayFromSource(read('apps/suki-bingo/app.js'), 'THEMES', 'apps/suki-bingo/app.js') || [];
+  const bingoProblems = [];
+  if (bingoThemes.length === 0) bingoProblems.push('THEMES が空');
+  bingoThemes.forEach((theme) => {
+    const items = theme.items || [];
+    if (items.length !== 16) bingoProblems.push(`${theme.id} の候補が ${items.length} 個（16個にする）`);
+    const seen = new Set();
+    items.forEach((item, index) => {
+      const text = item?.t;
+      if (typeof text !== 'string' || !text.trim()) bingoProblems.push(`${theme.id}[${index}] が空`);
+      if (seen.has(text)) bingoProblems.push(`${theme.id}[${index}]「${text}」が重複`);
+      seen.add(text);
+      rows.push(entry('suki-bingo', theme.id, text, { id: `suki-bingo:${theme.id}:${index}` }));
+    });
+  });
+  if (bingoProblems.length > 0) {
+    throw new Error(`suki-bingo app.js の構造エラー:\n  ${bingoProblems.join('\n  ')}`);
+  }
 
   // kossori-word: HTML 内 const TOPIC_GROUPS = [ { name, words: [...] }, ... ]（お題の言葉）
   const kswSource = extractScript(read('apps/kossori-word/index.html'));
