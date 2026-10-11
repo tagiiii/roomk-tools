@@ -172,3 +172,4 @@
 ## Tier D
 
 - [x] D-1. **firestore.rules の是正**: 掲示板は運用停止中のため 2026-07-10 にアプリごと削除し、bb-* ルールも撤去。本番反映も同日完了（ルールデプロイ済み＋bb-users / bb-invite-codes / bb-config / bb-threads の4コレクション削除済み）
+- [x] ~~D-2. firestore.rules を CI デプロイ対象に追加。サービスアカウントに `serviceusage.services.get` 権限（roles/serviceusage.serviceUsageConsumer）を付与してから、`.github/workflows/firebase-rules.yml` のトリガー paths と `--only` に firestore を追加（過去に権限不足で手動運用にした経緯あり）~~ → **2026-10-12 P-1 却下により閉じる**（実施していない。firestore.rules は手動デプロイを続ける。必要になったら起票し直す）
