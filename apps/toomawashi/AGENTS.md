@@ -31,8 +31,11 @@
 apps/toomawashi/
 ├── AGENTS.md    # この仕様書
 ├── index.html   # 本体（CSS・JS インライン）
-└── packs.js     # お題パック（★ 単一ファイル規約からの意図的逸脱。下記参照）
+├── packs.js     # お題パック（★ 単一ファイル規約からの意図的逸脱。下記参照）
+└── slides.html  # 画面共有用の説明スライド
 ```
+
+- `slides.html` は画面共有用の説明スライド（全14枚。slides-generator で作成。エンジンは正本テンプレート kotoba-tantei と同じで、中身だけ差し替えた）。ボタン名・進め方・5つの観点のボタンを変えたら、スライドと発表者ノートの文も合わせる
 
 - Firebase compat SDK **10.14.1**（app / auth / database）+ 匿名認証
 - 共有ヘルパー `../shared/js/rtdb-utils.js?v=20261005`
