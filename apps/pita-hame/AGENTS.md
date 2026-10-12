@@ -59,6 +59,18 @@ RTDB パス `pitahame_rooms/{roomCode}`。実装は末尾 `<script>` 内の **`N
 - **参加用のリンク `?room=CODE`（2026-10-05）**: 待機画面のルームコード欄に「コードをコピー」と並べて「リンクをコピー」（`#btnCopyLink`、`Net.copyLink`）。共通仕様は docs/development/rtdb.md「参加用のリンク」。このアプリの入口は末尾 `<script>` の `window.addEventListener('load', …)`（`?watch=` はない。`?room=` → 保存した記録 `Net.tryReconnect` の順）。参加画面は `screen-join`（コード欄 `#joinCode`、名前欄 `#joinNick`、案内 `#joinLinkHint`）で、ソロ（「ひとりで練習」）を経由せず、みんなでモードの参加フォームへ直接つなぐ。`?room=` は `startListeners`（作成・参加・再接続の共通）で外す。検査は「参加する」と同じ `/^[A-Z0-9]{6}$/`。
   - 同じコードの記録があるときの再接続の判定は、既存の起動処理と同じ `tryReconnect()` の戻り値だけで行う（`tryReconnect` は失敗の途中で `net.roomRef` を残すことがあるため、kagi-awase の `|| state.roomRef` は使わない）。盤面復元キー `pitahame_board` は再接続用ではないので触らない
 
+### 利用回数（2026-10-12）
+
+共通の項目名（docs/development/shared-modules.md「ルーム型で共通に使う項目名」）で、回数だけを数える。みんなでモードの「1回」は、待合室から最後の結果までの1ゲーム（全ラウンド）。すべてホストの端末で、transaction の確定のあとに数える。
+
+| 項目 | 数えるとき |
+|---|---|
+| `room-create` | ルームができた |
+| `start`・`players-{N}` | 待合室から1ラウンド目を始めた（2ラウンド目以降は数えない）。N は遊ぶ人の人数 |
+| `finish` | 最後のラウンドのあと「結果を見る」で `finished` へ進んだ |
+| `again` | `finished` から「もう一度遊ぶ」 |
+| `solo-start` | ひとりで練習の難易度を選んだ（起動回数にソロの分が混ざるので、分けて見るため） |
+
 ### 検証用フック
 
 `window.__pitahame`（`state`/`isValidPlacement`/`isComplete`/`checkCompletion`/`loadPuzzle`/`mountPuzzle`/`layout`/`Net`）を公開。ドラッグ自動操作が不安定な E2E のフォールバック用（`Net._net` で共有状態キャッシュを確認できる）。

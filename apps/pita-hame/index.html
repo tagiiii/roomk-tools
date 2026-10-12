@@ -1718,6 +1718,7 @@
     b.addEventListener('click', () => {
       state.mode = 'solo';
       state.difficulty = b.dataset.diff;
+      window.RoomkStats?.count('solo-start');
       state.soloOrder = state.soloRandom ? shuffledIndices(currentList().length) : null;
       el('diffNote').textContent = '';
       applyPuzzleChrome();
@@ -1986,6 +1987,7 @@
           if (committed) { code = c; ref = r; break; }
         }
         if (!code) { el('createError').textContent = 'ルームを作れなかったよ。もう一度。'; return; }
+        window.RoomkStats?.count('room-create');
         await ref.onDisconnect().update({ hostConnected: false, hostDisconnectedAt: TS() });
         net.role = 'host'; net.nickname = nick; net.roomCode = code; net.roomRef = ref; net.gameId = gameId;
         saveSession();
@@ -2418,14 +2420,17 @@
       const puzzle = expandCatalogPuzzle(entry);
       const attemptId = 'a' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
       let reason = null;
+      let fromWaiting = false, playerCount = 0;
       try {
         // roomTxn（warmTxn）経由: 実値 null は中断。room の事前 .get() は pickPuzzle 用。
         const { committed } = await roomTxn((r) => {
           if (r.status !== 'waiting' && r.status !== 'results') { reason = 'bad_state'; return; }
+          fromWaiting = r.status === 'waiting';
           const players = r.players || {};
           const participants = {};
           Object.entries(players).forEach(([nick, p]) => { if (p.isPlaying !== false) participants[nick] = true; });
-          if (Object.keys(participants).length < 2) { reason = 'too_few'; return; }
+          playerCount = Object.keys(participants).length;
+          if (playerCount < 2) { reason = 'too_few'; return; }
           const nextRound = Number(r.currentRound || 0) + 1;
           const startAt = now() + COUNTDOWN_MS;
           const endsAt = startAt + Number(r.settings.roundTimeMs);
@@ -2449,6 +2454,11 @@
           if (reason === 'too_few') RoomkRTDB.showToast('遊ぶ人が2人必要だよ');
           else if (reason === 'bad_state') RoomkRTDB.showToast('いまは始められないよ');
           return;
+        }
+        // 利用回数（回数だけ。stats.js）: 待合室からの開始（1ラウンド目）と、そのときの遊ぶ人の人数
+        if (fromWaiting) {
+          window.RoomkStats?.count('start');
+          window.RoomkStats?.count('players-' + playerCount);
         }
       } catch (e) { console.error(e); RoomkRTDB.showToast('始められなかったよ'); }
     }
@@ -2491,12 +2501,13 @@
       if (net.role !== 'host' || !net.roomRef) return;
       const isLast = net.currentRound >= (net.settings ? net.settings.totalRounds : net.currentRound);
       if (isLast) {
-        await roomTxn((r) => {
+        const { committed } = await roomTxn((r) => {
           if (!r || r.status !== 'results') return;
           r.status = 'finished';
           r.finishedAt = now();
           return r;
         });
+        if (committed) window.RoomkStats?.count('finish');
       } else {
         await startRound();
       }
@@ -2555,9 +2566,11 @@
       const newGameId = 'g' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
       clearBoard();
       net.loadedKey = null;
+      let wasFinished = false;
       try {
-        await roomTxn((r) => {
+        const { committed } = await roomTxn((r) => {
           if (!r) return;
+          wasFinished = r.status === 'finished';
           r.status = 'waiting';
           r.gameId = newGameId;
           r.currentRound = 0;
@@ -2567,6 +2580,8 @@
           return r;
         });
         net.gameId = newGameId;
+        // 利用回数: 最後の結果から「もう一度」（二度押しの2回目は、もう待合室なので数えない）
+        if (committed && wasFinished) window.RoomkStats?.count('again');
       } catch (e) { console.error(e); }
     }
 
