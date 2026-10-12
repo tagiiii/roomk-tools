@@ -37,6 +37,7 @@ stats/{アプリ名}/{YYYY-MM}/{項目}   … 回数（数値）
 | `open` | アプリの起動回数（stats.js の読み込みで自動加算） |
 | `pack-{id}` | quiz のパック選択 |
 | `session-{id}` | kotoba-asobo のセッション開始 |
+| `room-create` / `start` / `players-{N}` / `finish` / `again` | ルーム型で共通に使う項目（正本: `docs/development/shared-modules.md`「ルーム型で共通に使う項目名」） |
 
 - アプリ名は `stats.js` の `detectAppName()` が URL パスから決める。ポータルは `portal`
 - 記録されているのは回数のみ。UID・ニックネーム・入力内容は存在しない
