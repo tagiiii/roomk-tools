@@ -613,6 +613,7 @@ async function createRoom() {
         };
       });
       if (result.committed) {
+        window.RoomkStats?.count('room-create');
         connectToRoom('host', nickname, code, ref, joinedAt);
         return;
       }
@@ -1403,9 +1404,11 @@ async function playerTransaction(update, failMessage) {
   state.busy = true;
   if (state.room) renderRoom(state.room);
   let moved = false;
+  let ended = false;
   try {
     const result = await state.roomRef.transaction((room) => {
       moved = false;
+      ended = false;
       if (!room || isExpired(room)) return;
       const current = gameOf(room);
       if (!current || current.id !== gameId || (Number(current.seq) || 0) !== seq || room.status !== status) {
@@ -1413,8 +1416,12 @@ async function playerTransaction(update, failMessage) {
         return;
       }
       if (!isGamePlayer(room, nickname, uid)) return;
-      return update(room, current, nickname);
+      const next = update(room, current, nickname);
+      ended = next?.status === STATUS.END;
+      return next;
     });
+    // 利用回数（回数だけ。stats.js）: この手でおしまいの画面まで進んだ（クリア・ワナ・警報のどれでも）
+    if (result.committed && ended) window.RoomkStats?.count('finish');
     if (!result.committed && !moved) toast(failMessage);
   } catch (error) {
     console.warn('[kagi-awase] player action failed', error);
@@ -1543,10 +1550,12 @@ async function setOption(key, value) {
 
 async function startGame() {
   const seed = randomSeed();
+  let playerCount = 0;
   const ok = await hostTransaction((room) => {
     if (room.status !== STATUS.WAITING) return;
     const names = playingNames(room);
     if (names.length < MIN_PLAYERS || names.length > MAX_PLAYERS) return;
+    playerCount = names.length;
     const rng = seededRandom(seed);
     const order = shuffled(names, rng);
     const id = (Number(room.lastGameId) || 0) + 1;
@@ -1574,6 +1583,11 @@ async function startGame() {
       },
     };
   }, 'はじめられませんでした。もう一度ためしてね');
+  // 利用回数（回数だけ。stats.js）: ゲームの始まりと、そのときの遊ぶ人の人数
+  if (ok) {
+    window.RoomkStats?.count('start');
+    window.RoomkStats?.count('players-' + playerCount);
+  }
   if (ok === false) toast('はじめられませんでした。参加している人を確かめてね');
 }
 
@@ -1614,6 +1628,7 @@ async function playAgain() {
     if (room.status !== STATUS.END || gameOf(room)?.id !== gameId) return;
     return { ...room, status: STATUS.WAITING, game: null };
   }, '戻れませんでした。もう一度ためしてね');
+  if (ok) window.RoomkStats?.count('again');
   if (ok === false) toast('戻れませんでした。画面を確かめてね');
 }
 

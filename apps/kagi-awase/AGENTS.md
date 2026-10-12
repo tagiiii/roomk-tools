@@ -70,7 +70,7 @@ apps/kagi-awase/
 - 描画はすべて DOM API（textContent）。innerHTML は使わない
 - RTDB パス: `kagiawase_rooms/{roomCode}`、sessionStorage キー: `kagiawase_session`（`{role, nickname, roomCode, uid, joinedAt}` だけ。カギの数字は入れない）
 - アイコン: Material Symbols Rounded（ポータルは `key`、まだ見えないカギ `key`、ワナ `notifications_active`、あいた `lock_open`、見えている `visibility`）
-- 利用回数は stats.js の `open` だけ
+- 利用回数は stats.js の `open` と、ルームの進み方の回数（下記「共通モジュールの使用箇所」の表）
 
 ### 横断更新
 
@@ -262,5 +262,5 @@ kagiawase_rooms/{roomCode}/
 |-----------|----------|
 | design-system.css | 色・角丸・余白のトークン、`.btn` 系のボタン |
 | rtdb-utils.js（`?v=20261005`） | `initFirebase`・`generateRoomCode`・`now`・`isRoomExpired`・`getHostDisconnectedAt`・`cancelRoomOnDisconnect`・`copyRoomCode`・`copyRoomLink`・`showToast` |
-| stats.js（`?v=1`） | 起動回数（`open`）のみ |
+| stats.js（`?v=1`） | 起動回数（`open`）と、共通の項目名（docs/development/shared-modules.md「ルーム型で共通に使う項目名」）。「1回」は待合室からおしまいの画面までの1ゲーム。transaction の確定のあとに、確定させた1台だけが数える: `room-create`（ルームができた。ホスト）・`start` と `players-{N}`（「はじめる」。N は遊ぶ人の人数。ホスト）・`finish`（おしまいの画面 `end` へ進んだ。クリア・ワナ・警報のどれでも。最後の手を打った番の人の端末で、ゲストのこともある）・`again`（「もう一回あそぶ」。ホスト）。「ゲームをやめる」「この番をとばす」「しめきる」は数えない（2026-10-12） |
 | howto.js | 「あそびかた」モーダル |
