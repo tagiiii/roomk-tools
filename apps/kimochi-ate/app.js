@@ -341,6 +341,20 @@ function warmRoomCache(ref) {
   });
 }
 
+// 送信したあとに通信が切れると、transaction は Error('disconnect') で中止される（サーバーに届いたかは分からない）。
+// ルームの作成と参加は、少しだけやり直す。update は、前の送信が届いていたら成功として扱うように書く
+// （届いていたのに失敗として戻ると、切断時の予約がないルーム・在室が残る）
+const TX_RETRY_MAX = 3;
+async function transactRetry(ref, update) {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      return await ref.transaction(update);
+    } catch (error) {
+      if (error?.message !== 'disconnect' || attempt >= TX_RETRY_MAX) throw error;
+    }
+  }
+}
+
 async function waitAuth() {
   try {
     await authReady;
@@ -568,8 +582,9 @@ async function createRoom() {
     for (let attempt = 0; attempt < 5; attempt++) {
       const code = RoomkRTDB.generateRoomCode();
       const ref = db.ref(DB_PREFIX + '/' + code);
-      const result = await ref.transaction((room) => {
-        if (room) return;
+      const result = await transactRetry(ref, (room) => {
+        // やり直しのとき、前の送信で自分が作ったルームが届いていたら、そのまま使う
+        if (room) return room.hostUid === uid && room.players?.[nickname]?.joinedAt === joinedAt ? room : undefined;
         return {
           status: STATUS.WAITING,
           host: nickname,
@@ -651,14 +666,23 @@ async function joinRoom() {
     const uid = currentUid();
     const joinedAt = RoomkRTDB.now();
     let reason = '';
+    let rejoinAt = null;
     // 途中参加もできる。参加順の最後に入り、次の判定から主役・予想に加わる
-    const result = await ref.transaction((room) => {
+    const result = await transactRetry(ref, (room) => {
       reason = '';
+      rejoinAt = null;
       if (!room) { reason = '見つからない'; return; }
       if (isExpired(room)) { reason = '終了'; return; }
-      if (nickname === room.host || room.players?.[nickname] || reservedByOther(room, nickname, uid)) {
+      // 自分の在室がもう入っている（前の送信が届いていた・タブが落ちた直後に入りなおした）ときは、そのまま参加とする
+      const own = room.players?.[nickname];
+      const mine = !!own && !own.isHost && own.uid === uid;
+      if (nickname === room.host || (own && !mine) || reservedByOther(room, nickname, uid)) {
         reason = '名前';
         return;
+      }
+      if (mine) {
+        rejoinAt = Number(own.joinedAt) || joinedAt;
+        return room;
       }
       if (guestNames(room).length >= MAX_GUESTS) { reason = '満員'; return; }
       const next = {
@@ -684,7 +708,7 @@ async function joinRoom() {
       setError('joinError', messages[reason] || '参加できませんでした。もう一度ためしてね');
       return;
     }
-    connectToRoom('guest', nickname, code, ref, joinedAt);
+    connectToRoom('guest', nickname, code, ref, rejoinAt || joinedAt);
   } catch (err) {
     console.warn('[kimochi-ate] join failed', err);
     setError('joinError', '接続できませんでした。もう一度ためしてね');
