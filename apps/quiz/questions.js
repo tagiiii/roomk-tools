@@ -1787,7 +1787,7 @@ export const QUIZ_PACKS = [
         question: '山口県のJR山陽新幹線の駅名「厚狭」は、何と読む？',
         choices: ['あつせ', 'あさ', 'こうきょう'],
         answerIndex: 1,
-        explanation: '正解は「あさ」。古代の「厚狭郡(あさのこおり)」に由来する地名です。'
+        explanation: '正解は「あさ」。古代から続く地名で、昔は「あつさ」と読んだことが古い書物からわかっています。'
       },
       {
         id: 'nc04', difficulty: 2,
