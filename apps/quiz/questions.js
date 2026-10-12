@@ -1888,7 +1888,7 @@ export const QUIZ_PACKS = [
         question: '山口県下関市のJR山陽本線「幡生駅」は、何と読む？',
         choices: ['はたぶ', 'ばんせい', 'はたお'],
         answerIndex: 0,
-        explanation: '正解は「はたぶ」。「生」を「ぶ」と読むのは全国でも珍しく、山陽本線と山陰本線が接続する分岐駅です。'
+        explanation: '正解は「はたぶ」。「生」を「ぶ」と読む駅名で、山陽本線と山陰本線が分かれる駅です。'
       },
       {
         id: 'nc18', difficulty: 3,
