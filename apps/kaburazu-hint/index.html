@@ -957,7 +957,15 @@ function clearSession() { sessionStorage.removeItem(SESSION_KEY); }
 /* ════════════════════════════════════════════════
    ルーム作成
    ════════════════════════════════════════════════ */
+// 作成が例外で終わったとき（送信後の切断・権限エラーなど）も無反応にしない
 async function hostCreate() {
+  try { await hostCreateInner(); }
+  catch (error) {
+    console.error('[kaburazu-hint] create failed', error);
+    showMsg('ルーム作成に失敗しました。接続を確認してもう一度お試しください');
+  }
+}
+async function hostCreateInner() {
   const nick = document.getElementById('host-nickname').value.trim();
   const err = validNick(nick);
   if (err) { showError('host-error', err); return; }
@@ -1023,7 +1031,15 @@ function roomCodeImeError(code) {
 /* ════════════════════════════════════════════════
    ゲスト参加
    ════════════════════════════════════════════════ */
+// 参加が例外で終わったとき（送信後の切断・権限エラーなど）も無反応にしない
 async function guestJoin() {
+  try { await guestJoinInner(); }
+  catch (error) {
+    console.error('[kaburazu-hint] join failed', error);
+    showError('guest-error', '参加に失敗しました。もう一度お試しください');
+  }
+}
+async function guestJoinInner() {
   const nick = document.getElementById('guest-nickname').value.trim();
   const code = normalizeRoomCode(document.getElementById('guest-code').value);
   const err = validNick(nick);
