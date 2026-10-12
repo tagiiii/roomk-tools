@@ -1306,7 +1306,7 @@ export const QUIZ_PACKS = [
       // ── d1: 入口（計3問。末尾の D案 追加分を含む） ──
       {
         id: 'nk01', difficulty: 1,
-        question: '京都の嵐電やJRの駅名「太秦」は、何と読む？',
+        question: '京都のJRの駅名「太秦」は、何と読む？',
         choices: ['おおはた', 'うずまさ', 'たいしん'],
         answerIndex: 1,
         explanation: '正解は「うずまさ」。古代の渡来人「秦氏」が朝廷から授かった称号にちなむ、といわれています。'
