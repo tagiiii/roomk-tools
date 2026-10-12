@@ -1020,9 +1020,13 @@
     if (!inRoom() || !RM.canAct(room, sess.dev, action)) return;
     sending = true;
     document.querySelectorAll('#cs-card button:not([data-free]), #cs-turn button').forEach((b) => { b.disabled = true; });
+    // 利用回数（回数だけ。stats.js）: この操作でゲーム中から結果へ進んだら数える（確定させた1台だけ。
+    // 送る前の状態はしるし（stamp）で transaction が確かめるので、結果の画面での操作は数えない）
+    const wasPlay = !!S && S.phase === 'play';
     let r;
     try { r = await NET.act(sess.code, sess.dev, action, RM.stamp(S)); } catch (e) { console.warn('[act]', e); r = { ok: false, reason: 'error' }; }
     sending = false;
+    if (r.ok && wasPlay && r.room && r.room.status === RM.STATUS.FINISHED) window.RoomkStats?.count('finish');
     if (!r.ok) {
       if (r.reason !== 'stale' && r.reason !== 'notYours') toast('送れませんでした。通信を確かめて、もう一度押してね');
       if (!busy && mode === 'room' && S) { renderTurn(); renderCard(); }
@@ -1473,6 +1477,7 @@
         formError('cs-create-error', 'ルームを作れませんでした。通信を確かめて、もう一度押してね');
         return;
       }
+      window.RoomkStats?.count('room-create');
       sess = { code: r.code, dev: r.dev, role: 'host', name };
       await enterRoom();
     } finally {
@@ -1692,6 +1697,8 @@
     starting = true;
     const btn = ev && ev.currentTarget ? ev.currentTarget : $('cs-room-start');
     btn.disabled = true;
+    // 利用回数: 結果の画面からの「同じメンバーでもう一度」か（待合室にはもどらないので、押す前の状態で分かる）
+    const fromResults = !!room && room.status === RM.STATUS.FINISHED;
     const r = await NET.startGame(sess.code, sess.dev).catch(() => ({ ok: false }));
     starting = false;
     btn.disabled = false;
@@ -1701,6 +1708,10 @@
       return;
     }
     window.RoomkStats?.count('start-room');
+    // 利用回数（回数だけ。stats.js）: ゲームの始まりと、そのときの遊ぶ人（席）の人数。結果からの開始は again も
+    if (fromResults) window.RoomkStats?.count('again');
+    window.RoomkStats?.count('start');
+    if (r.room && Array.isArray(r.room.order)) window.RoomkStats?.count('players-' + r.room.order.length);
   }
 
   // ホストの切断の残り時間（ほかの人の画面に出す）

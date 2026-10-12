@@ -18,7 +18,7 @@
 
 - 分割ファイル: `index.html`（画面の骨組み）/ `style.css` / `data.js`（盤面・適性・職業・カード・数値）/ `engine.js`（ルール。`apply(state, action)` は入力を変えず、新しい状態か拒否を返す。乱数は `state.rng`）/ `text.js`（画面に出す文。DOM を使わない）/ `room.js`（ルームの決まり: 席・だれが押せるか・期限・しるし。Firebase も DOM も使わない）/ `net.js`（Realtime Database の読み書き）/ `ui.js`（画面）
 - `slides.html` は画面共有用の説明スライド（全13枚。slides-generator で作成。エンジンは正本テンプレート kotoba-tantei と同じで、中身だけ差し替えた）。ボタン名・マスの種類・節目の年齢・しごとマスのポイントの決まり方・ゴールのボーナスを変えたら、スライドと発表者ノートの文も合わせる
-- Firebase compat 10.14.1（app / auth / database）、`../shared/js/rtdb-utils.js?v=20261005`（`RoomkRTDB`: initFirebase・now・initServerTime・generateRoomCode・cancelRoomOnDisconnect・copyRoomCode・showFormError・showToast）、`../shared/css/design-system.css`、`../shared/js/stats.js?v=1`（`start-local`・`start-room` を数える）、`../shared/js/howto.js`（右下の「？」。短い案内。詳しい説明は上のバーの「あそびかた」）
+- Firebase compat 10.14.1（app / auth / database）、`../shared/js/rtdb-utils.js?v=20261005`（`RoomkRTDB`: initFirebase・now・initServerTime・generateRoomCode・cancelRoomOnDisconnect・copyRoomCode・showFormError・showToast）、`../shared/css/design-system.css`、`../shared/js/stats.js?v=1`（`start-local`・`start-room` と、ルームの共通の項目を数える。下の「利用回数」）、`../shared/js/howto.js`（右下の「？」。短い案内。詳しい説明は上のバーの「あそびかた」）
 - ゲームの通信は、ルームを作る・参加する・再読み込みでルームにもどるときだけ準備する（`ensureNet`）。1台の画面ではゲーム用の Firebase を初期化せず、接続もしない（通信するのは共通の利用回数カウンタ `stats.js` だけ。別名のアプリで初期化するので衝突しない）
 - `?emu=1`（`&db=9100&auth=9199`）でローカルのエミュレーターだけに接続する（自動テスト用。本番には接続しない）
 - テストは公開しない `tests/career-sugoroku/`（使い方は同じフォルダの README）
@@ -81,6 +81,22 @@
 ## 終了とデータの削除
 
 公認バリアント「ふりかえり画面滞在中は削除しない」を採用する。結果の画面で自動削除はしない。削除は (1) ホストの「ルームを閉じる」 (2) ホストの切断の期限 (3) 次に見つけた端末の期限切れの掃除 の3経路。結果から「同じメンバーでもう一度」で続けて遊べるようにするため。
+
+## 利用回数（2026-10-12）
+
+共通の項目名（docs/development/shared-modules.md「ルーム型で共通に使う項目名」）で、回数だけを数える。ルームの「1回」は、始めてから結果までの1ゲーム。数える呼び出しは ui.js にあり、通信（net.js）の transaction が確定したあとに呼ぶ。
+
+| 項目 | 数えるとき | 数える端末 |
+|---|---|---|
+| `room-create` | ルームができた | ホスト |
+| `start`・`players-{N}` | ゲームが始まった（待合室の「はじめる」・結果の「同じメンバーでもう一度」）。N は席の数（端末のない人は含め、進行だけのホストは含めない） | ホスト |
+| `finish` | ゲーム中から結果（`finished`）へ進んだ（全員ゴール・ホストの「ここで終えて結果を見る」のどちらでも） | その操作を確定させた1台（全員ゴールは最後の番を押した端末。参加者のこともある） |
+| `again` | 結果から「同じメンバーでもう一度」（そのまま次のゲームが始まるので `start`・`players-{N}` も数える） | ホスト |
+
+- 前からある項目はそのまま残す: `start-room`（ルームのゲームが始まったとき。`start` と同じときに数える）・`start-local`（1台の画面で始めたとき）
+- `finish` は、送る前の状態がゲーム中（`phase: 'play'`）で、確定したルームが `finished` のときだけ数える。送る前の状態はしるし（`stamp`）で transaction が確かめるので、結果の画面での操作や、ほかの端末が先に結果へ進めたあとの操作は数えない
+- 「ルームを閉じる」・退出・途中の操作（サイコロ・ミニゲームなど）は数えない。再読み込みで席にもどる処理・ルームの購読の中では数えない
+- 1台の画面であそぶは `start-local` だけ（共通の項目は数えない）
 
 ## 共通規約からの意図的な逸脱
 
