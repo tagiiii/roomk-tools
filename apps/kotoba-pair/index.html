@@ -904,6 +904,7 @@ async function hostCreateInner() {
   }
 
   if (!roomCode) { showMsg('ルームをつくれなかったよ。もう一度ためしてね'); return; }
+  window.RoomkStats?.count('room-create');
 
   state.nickname = nick;
   state.roomCode = roomCode;
@@ -1046,6 +1047,7 @@ async function startGame() {
   // 乱数（手番シャッフル）は transaction コールバックの外で確定させる
   const seedOrder = window.shuffle(Object.keys(room0.players || {}));
   let hostPlays = true;
+  let playerCount = 0;
 
   let reason = null;
   const { committed } = await state.roomRef.transaction(room => {
@@ -1063,6 +1065,7 @@ async function startGame() {
     const order = seedOrder.filter(n => names.indexOf(n) !== -1);
     names.forEach(n => { if (order.indexOf(n) === -1) order.push(n); });
     if (!order.length) { reason = 'too_few'; return; }
+    playerCount = order.length;
 
     return {
       ...room,
@@ -1075,6 +1078,7 @@ async function startGame() {
     };
   });
 
+  if (committed) countBoardStart(playerCount);
   if (!committed) {
     showMsg(reason === 'too_few' ? tooFewMsg(hostPlays) : 'はじめられなかったよ。もう一度ためしてね');
   }
@@ -1082,6 +1086,11 @@ async function startGame() {
 
 function tooFewMsg(hostPlays) {
   return hostPlays ? '2人以上ではじめられるよ' : 'ホストのほかに2人以上ではじめられるよ';
+}
+// 利用回数（回数だけ。stats.js）: 1ボードの始まりと、そのときの遊ぶ人の人数
+function countBoardStart(playerCount) {
+  window.RoomkStats?.count('start');
+  window.RoomkStats?.count('players-' + playerCount);
 }
 
 /* 待合室の設定: ホストもプレイヤーとして参加するか。開始後は変えない */
@@ -1369,9 +1378,11 @@ async function tapCard(cardId) {
 
   state.tapBusy = true;
   let selAfter = null;
+  let clearedNow = false;
   try {
     const { committed } = await state.roomRef.transaction(room => {
       selAfter = null;
+      clearedNow = false;
       if (!room || room.status !== STATUS.PLAYING) return;
       if (room.boardSeq !== seq) return;                       // 世代ガード
       if (currentTurnNick(room) !== state.nickname) return;    // 手番本人か
@@ -1437,6 +1448,7 @@ async function tapCard(cardId) {
         [cardId]: { ...card, state: 'matched' },
       };
       if (cleared) selAfter = null;
+      clearedNow = cleared;
       return {
         ...room,
         board: { ...(room.board || {}), cards: nextCards },
@@ -1448,6 +1460,8 @@ async function tapCard(cardId) {
       };
     });
     if (committed && selAfter) scheduleSelectionClear(seq, selAfter);
+    // 利用回数: 最後のペアをそろえて結果へ進んだ（確定させた手番の人の端末が数える）
+    if (committed && clearedNow) window.RoomkStats?.count('finish');
   } catch (error) {
     console.error('[kotoba-pair] tapCard failed', error);
   } finally {
@@ -1603,9 +1617,11 @@ async function hostRevealPair() {
   const seq = room0.boardSeq;
 
   let revealed = null;
+  let clearedNow = false;
   try {
     const { committed } = await state.roomRef.transaction(room => {
       revealed = null;
+      clearedNow = false;
       if (!room || room.status !== STATUS.PLAYING) return;
       if (room.boardSeq !== seq) return;
       if (room.host !== state.nickname) return;
@@ -1631,6 +1647,7 @@ async function hostRevealPair() {
         [partnerId]: { ...cards[partnerId], state: 'matched' },
       };
       if (!cleared) revealed = [firstId, partnerId];
+      clearedNow = cleared;
       return {
         ...base,
         board: { ...(base.board || {}), cards: nextCards },
@@ -1640,6 +1657,8 @@ async function hostRevealPair() {
       };
     });
     if (committed && revealed) scheduleSelectionClear(seq, revealed);
+    // 利用回数: 最後の1組を見せて結果へ進んだ
+    if (committed && clearedNow) window.RoomkStats?.count('finish');
   } catch (error) {
     console.error('[kotoba-pair] hostRevealPair failed', error);
   }
@@ -1648,11 +1667,13 @@ async function hostRevealPair() {
 async function hostFinish() {
   if (state.role !== 'host' || !state.roomRef) return;
   try {
-    await state.roomRef.transaction(room => {
+    const { committed } = await state.roomRef.transaction(room => {
       if (!room || room.status !== STATUS.PLAYING) return;
       if (room.host !== state.nickname) return;
       return { ...withSelectionCleared(room), status: STATUS.RESULT };
     });
+    // 利用回数: 「ここまでにする」で結果へ進んだ
+    if (committed) window.RoomkStats?.count('finish');
   } catch (error) {
     console.error('[kotoba-pair] hostFinish failed', error);
   }
@@ -1749,6 +1770,7 @@ async function hostPlayAgain(packId) {
   const totalPairs = board.order.length / 2;
   const seedOrder = window.shuffle(Object.keys(room0.players || {}));
   let hostPlays = true;
+  let playerCount = 0;
 
   let reason = null;
   const { committed } = await state.roomRef.transaction(room => {
@@ -1764,6 +1786,7 @@ async function hostPlayAgain(packId) {
 
     const order = seedOrder.filter(n => names.indexOf(n) !== -1);
     names.forEach(n => { if (order.indexOf(n) === -1) order.push(n); });
+    playerCount = order.length;
 
     return {
       ...room,
@@ -1786,6 +1809,9 @@ async function hostPlayAgain(packId) {
     return;
   }
   window.RoomkStats?.count('pack-' + pack.id);
+  // 利用回数: 結果から続けてもう1ボード（もういちど遊ぶ・パックを変えて遊ぶ）
+  window.RoomkStats?.count('again');
+  countBoardStart(playerCount);
 }
 
 /* ════════════════════════════════════════════════
