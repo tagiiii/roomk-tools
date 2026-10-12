@@ -2,8 +2,9 @@
 // ルーム（Realtime Database）で進める。カードはそのゲームの間だけルームに置き、
 // つぎのゲームに進むときとルームを閉じたときに消える。順位・履歴は持たない。
 
-// テーマと候補（基準は AGENTS.md「テーマと候補の方針」）。
-// ルームではテーマの id と候補の番号だけを共有するので、id は変えない・候補の並べ替えや途中の削除はしない。
+// テーマと語（基準は AGENTS.md「テーマと候補の方針」）。1テーマ24語で、ゲームごとにその中から16個を候補に出す。
+// ルームではテーマの id と語の番号だけを共有するので、id は変えない・語の並べ替え・途中の削除・同じ位置の書きかえはしない
+// （足すのは末尾だけ。語を入れかえるときは、テーマの id を新しくする）。
 // t: 表示する語 / c: 色のテーマだけで使う見本の色
 const THEMES = [
   {
@@ -14,6 +15,8 @@ const THEMES = [
       { t: 'からあげ' }, { t: 'ピザ' }, { t: 'オムライス' }, { t: 'たこ焼き' },
       { t: 'うどん' }, { t: '焼きそば' }, { t: 'ぎょうざ' }, { t: 'おにぎり' },
       { t: 'パスタ' }, { t: '焼き肉' }, { t: 'フライドポテト' }, { t: 'グラタン' },
+      { t: 'サンドイッチ' }, { t: 'お好み焼き' }, { t: 'チャーハン' }, { t: 'とんかつ' },
+      { t: 'シチュー' }, { t: 'そば' }, { t: 'コロッケ' }, { t: '天ぷら' },
     ],
   },
   {
@@ -24,6 +27,8 @@ const THEMES = [
       { t: 'グミ' }, { t: 'ドーナツ' }, { t: 'ケーキ' }, { t: 'せんべい' },
       { t: 'クッキー' }, { t: 'わたあめ' }, { t: 'かき氷' }, { t: 'ゼリー' },
       { t: 'たい焼き' }, { t: 'パンケーキ' }, { t: 'ポップコーン' }, { t: 'だんご' },
+      { t: 'マシュマロ' }, { t: 'シュークリーム' }, { t: 'あめ' }, { t: '大福' },
+      { t: 'ヨーグルト' }, { t: 'クレープ' }, { t: 'カステラ' }, { t: 'ラムネ' },
     ],
   },
   {
@@ -34,6 +39,8 @@ const THEMES = [
       { t: 'パンダ' }, { t: 'ペンギン' }, { t: 'イルカ' }, { t: 'ライオン' },
       { t: 'キリン' }, { t: 'カワウソ' }, { t: 'フクロウ' }, { t: 'カメ' },
       { t: 'ゾウ' }, { t: 'リス' }, { t: '恐竜' }, { t: 'クラゲ' },
+      { t: 'コアラ' }, { t: 'カピバラ' }, { t: 'キツネ' }, { t: 'ウマ' },
+      { t: 'サメ' }, { t: 'インコ' }, { t: 'アザラシ' }, { t: 'レッサーパンダ' },
     ],
   },
   {
@@ -44,6 +51,8 @@ const THEMES = [
       { t: 'マンガを読む' }, { t: '工作' }, { t: 'おかし作り' }, { t: '散歩' },
       { t: '写真をとる' }, { t: 'カードゲーム' }, { t: 'パズル' }, { t: 'ダンス' },
       { t: '歌う' }, { t: '本を読む' }, { t: 'ブロック' }, { t: 'ごろごろする' },
+      { t: '料理' }, { t: 'おしゃべり' }, { t: 'サイクリング' }, { t: '釣り' },
+      { t: '楽器をひく' }, { t: 'ボードゲーム' }, { t: '映画を見る' }, { t: 'ぬり絵' },
     ],
   },
   {
@@ -54,6 +63,8 @@ const THEMES = [
       { t: '雪あそび' }, { t: 'キャンプ' }, { t: '水族館' }, { t: '動物園' },
       { t: '遊園地' }, { t: '温泉' }, { t: '公園' }, { t: '映画館' },
       { t: 'お花見' }, { t: '紅葉' }, { t: 'イルミネーション' }, { t: 'ピクニック' },
+      { t: '山' }, { t: '川あそび' }, { t: '博物館' }, { t: 'プラネタリウム' },
+      { t: '牧場' }, { t: '旅行' }, { t: '展望台' }, { t: '星空' },
     ],
   },
   {
@@ -64,6 +75,8 @@ const THEMES = [
       { t: 'オレンジ', c: '#F08A2C' }, { t: 'ピンク', c: '#F29BB8' }, { t: '紫', c: '#8A5BC2' }, { t: '水色', c: '#7CCBEA' },
       { t: '白', c: '#FFFFFF' }, { t: '黒', c: '#222222' }, { t: '茶色', c: '#8A5A3A' }, { t: '金色', c: '#C9A227' },
       { t: '銀色', c: '#B4BAC2' }, { t: '黄緑', c: '#A6CF3F' }, { t: '紺', c: '#1F3566' }, { t: 'ベージュ', c: '#E5D3B3' },
+      { t: 'グレー', c: '#8E949B' }, { t: 'クリーム色', c: '#F6E9B2' }, { t: 'ラベンダー', c: '#B9A5E0' }, { t: 'ワインレッド', c: '#8E2C3B' },
+      { t: '青緑', c: '#1E8C93' }, { t: 'サーモンピンク', c: '#F4A28C' }, { t: 'オリーブ色', c: '#7C8A3A' }, { t: 'ミント色', c: '#A8E0C8' },
     ],
   },
 ];
@@ -77,6 +90,7 @@ const MAX_GUESTS = 9;
 const MAX_CARDS = 10;
 const MIN_CARDS = 2;
 const CARD_CELLS = 9;
+// 1ゲームで候補に出す数（テーマの24語から、ゲームごとにえらぶ）
 const ITEM_COUNT = 16;
 const DRAW_OPTIONS = [8, 10, 12];
 const DEFAULT_DRAWS = 10;
@@ -230,8 +244,29 @@ function playingNames(room) {
   return memberNames(room).filter((name) => playsName(room, name));
 }
 
+// そのゲームで候補に出す語の番号（テーマの語から16個）。ルームには番号（items）だけを置く。
+// カード（cells）とひいた記録（drawn）は、この16個の中の位置（0〜15）で持つ
+function gameItems(room, theme) {
+  const list = toList(room?.items);
+  const valid = list.length === ITEM_COUNT && new Set(list).size === ITEM_COUNT
+    && list.every((index) => Number.isInteger(index) && index >= 0 && index < theme.items.length);
+  // items のないルーム（最初の版の画面が作ったもの）は、先頭の16個
+  return valid ? list : Array.from({ length: ITEM_COUNT }, (_, i) => i);
+}
+
+// そのゲームのテーマ。items はそのゲームの候補16個（位置の順）、key は描画の作り直しの判定に使う
+// （最初の版はテーマを theme に置いていた。そのルームも読めるようにする）
 function themeOf(room) {
-  return THEMES.find((theme) => theme.id === room?.theme) || null;
+  const id = room?.themeId ?? room?.theme;
+  const theme = THEMES.find((item) => item.id === id);
+  if (!theme) return null;
+  const picked = gameItems(room, theme);
+  return {
+    id: theme.id,
+    name: theme.name,
+    items: picked.map((index) => theme.items[index]),
+    key: theme.id + ':' + picked.join('.'),
+  };
 }
 
 function isItemIndex(value) {
@@ -851,7 +886,7 @@ function updateHostOverlay(room) {
 // 進行が変わったときだけ、端末の中の選び途中を消す。
 // ほかの人の操作で再描画されても、選び途中とフォーカスは残す
 function syncUiKey(room) {
-  const key = [room.status, room.round, room.theme || ''].join(':');
+  const key = [room.status, room.round, room.themeId || room.theme || '', toList(room.items).join('.')].join(':');
   if (key === state.uiKey) return;
   state.uiKey = key;
   state.focusNext = null;
@@ -1068,7 +1103,7 @@ function renderPicker(theme) {
   const full = chosen.length >= CARD_CELLS;
   $('pickCount').textContent = full ? '9個そろったよ' : 'あと' + (CARD_CELLS - chosen.length) + '個';
 
-  renderKeyed($('pickCands'), 'cands:' + theme.id, (box) => {
+  renderKeyed($('pickCands'), 'cands:' + theme.key, (box) => {
     theme.items.forEach((item, index) => {
       const button = makeElement('button', 'sb-cand');
       button.type = 'button';
@@ -1088,7 +1123,7 @@ function renderPicker(theme) {
     button.setAttribute('aria-disabled', full && !selected ? 'true' : 'false');
   });
 
-  renderKeyed($('pickPreview'), 'preview:' + theme.id + ':' + chosen.join(','), (box) => {
+  renderKeyed($('pickPreview'), 'preview:' + theme.key + ':' + chosen.join(','), (box) => {
     cardInto(box, theme, chosen, null, null);
   });
   $('btnSubmitCard').disabled = !full;
@@ -1131,7 +1166,7 @@ function renderPicking(room) {
         ? 'カードができたよ。みんながそろったら「ビンゴをはじめる」を押してね。'
         : 'カードができたよ。ホストが始めるまで待ってね。');
     $('btnRedoCard').hidden = mine.proxy;
-    renderKeyed($('pickMyCard'), 'mine:' + theme.id + ':' + mine.cells.join(','), (box) => {
+    renderKeyed($('pickMyCard'), 'mine:' + theme.key + ':' + mine.cells.join(','), (box) => {
       cardInto(box, theme, mine.cells, null, null);
     });
   }
@@ -1146,7 +1181,7 @@ function renderPicking(room) {
 
   $('watchCandsPanel').hidden = !spectator;
   if (spectator) {
-    renderKeyed($('watchCands'), 'watch:' + theme.id, (box) => {
+    renderKeyed($('watchCands'), 'watch:' + theme.key, (box) => {
       theme.items.forEach((item, index) => {
         const row = makeElement('div', 'sb-cand sb-cand--static');
         const body = makeElement('span', 'sb-cand__text');
@@ -1172,7 +1207,7 @@ function renderPicking(room) {
 
 function renderPickingPeople(room, theme, host) {
   const names = pickingNames(room);
-  const key = JSON.stringify([theme.id, host, names.map((name) => {
+  const key = JSON.stringify([theme.key, host, names.map((name) => {
     const card = cardOf(room, name);
     return [name, pickingLabel(room, name), card ? card.cells : null, !!card?.proxy, name === state.nickname];
   })]);
@@ -1336,14 +1371,19 @@ async function setHostPlays(value) {
 async function startPicking() {
   const themeId = state.themePick;
   const drawTotal = state.drawPick;
-  if (!THEMES.some((theme) => theme.id === themeId) || !DRAW_OPTIONS.includes(drawTotal)) return;
+  const theme = THEMES.find((item) => item.id === themeId);
+  if (!theme || !DRAW_OPTIONS.includes(drawTotal)) return;
+  // このゲームで候補に出す16個は、transaction の外で1回だけ決める（ならびはテーマの語の順のまま）
+  const items = shuffled(theme.items.map((_, index) => index)).slice(0, ITEM_COUNT).sort((a, b) => a - b);
   const ok = await hostTransaction((room) => {
     if (room.status !== STATUS.WAITING) return;
     return {
       ...room,
       status: STATUS.PICKING,
       round: (Number(room.round) || 0) + 1,
-      theme: themeId,
+      themeId,
+      items,
+      theme: null,
       drawTotal,
       cards: null,
       drawn: null,
@@ -1354,7 +1394,7 @@ async function startPicking() {
 }
 
 function toWaiting(room) {
-  return { ...room, status: STATUS.WAITING, theme: null, cards: null, drawn: null };
+  return { ...room, status: STATUS.WAITING, themeId: null, items: null, theme: null, cards: null, drawn: null };
 }
 
 async function backToWaiting() {
@@ -1617,7 +1657,7 @@ function renderPlaying(room) {
   $('playingProgress').textContent = visible.length + ' / ' + total + ' 回';
 
   if (!state.rolling) {
-    renderKeyed($('drawWord'), 'word:' + room.round + ':' + last, (word) => {
+    renderKeyed($('drawWord'), 'word:' + room.round + ':' + theme.key + ':' + last, (word) => {
       word.className = 'sb-draw__word' + (last === null ? ' is-empty' : '');
       if (last === null) word.textContent = host ? '「ひく」を押すと、はじまるよ' : 'ホストがひくと、ここに出るよ';
       else itemInto(word, theme, last);
@@ -1637,7 +1677,7 @@ function renderPlaying(room) {
   $('playingWait').hidden = host || spectator;
   $('playingWait').textContent = finished ? 'ホストが結果を出すまで待ってね。' : 'ホストがひくのを待ってね。';
 
-  renderKeyed($('drawHistory'), 'history:' + theme.id + ':' + visible.join(','), (list) => {
+  renderKeyed($('drawHistory'), 'history:' + theme.key + ':' + visible.join(','), (list) => {
     if (visible.length === 0) list.append(makeElement('li', 'sb-history__empty', 'まだないよ'));
     visible.forEach((index) => {
       const item = makeElement('li', 'sb-history__item');
@@ -1650,7 +1690,7 @@ function renderPlaying(room) {
   $('myCardBlock').hidden = !mine;
   if (mine) {
     const status = statusOf(mine.cells, drawnSet);
-    renderKeyed($('myCard'), 'my:' + theme.id + ':' + mine.cells.join(',') + ':' + visible.join(','), (box) => {
+    renderKeyed($('myCard'), 'my:' + theme.key + ':' + mine.cells.join(',') + ':' + visible.join(','), (box) => {
       cardInto(box, theme, mine.cells, status, last);
     });
     $('myStatus').textContent = status.lines > 0
@@ -1667,7 +1707,7 @@ function renderPlaying(room) {
   $('othersLabel').hidden = names.length === 0;
   $('playingPeople').hidden = expanded || names.length === 0;
   $('playingCards').hidden = !expanded;
-  const peopleKey = JSON.stringify([theme.id, expanded, finished, visible, names.map((name) => [name, cardOf(room, name).cells, cardOf(room, name).proxy])]);
+  const peopleKey = JSON.stringify([theme.key, expanded, finished, visible, names.map((name) => [name, cardOf(room, name).cells, cardOf(room, name).proxy])]);
   if (expanded) {
     renderKeyed($('playingCards'), peopleKey, (box) => {
       names.forEach((name) => box.append(resultCard(room, theme, name, drawnSet, finished, last)));
@@ -1727,7 +1767,7 @@ function renderResult(room) {
   const drawnSet = new Set(drawn);
   $('resultTheme').textContent = 'テーマ：' + theme.name;
 
-  const key = JSON.stringify([theme.id, drawn, state.nickname, names.map((name) => [name, cardOf(room, name).cells, cardOf(room, name).proxy])]);
+  const key = JSON.stringify([theme.key, drawn, state.nickname, names.map((name) => [name, cardOf(room, name).cells, cardOf(room, name).proxy])]);
   const rows = theme.items.map((_, index) => ({
     index,
     holders: names.filter((name) => cardOf(room, name).cells.includes(index)),
