@@ -1033,6 +1033,10 @@ async function hostCreateRoom() {
   state.entryBusy = true;
   try {
     await hostCreateRoomInner();
+  } catch (error) {
+    // 作成が例外で終わったとき（送信後の切断・権限エラーなど）も無反応にしない
+    console.error('[oshitsuke-zukan] create failed', error);
+    showMsg('ルーム作成に失敗しました。もう一度お試しください');
   } finally {
     state.entryBusy = false;
   }
@@ -1083,6 +1087,10 @@ async function guestJoin() {
   state.entryBusy = true;
   try {
     await guestJoinInner();
+  } catch (error) {
+    // 参加が例外で終わったとき（送信後の切断・権限エラーなど）も無反応にしない
+    console.error('[oshitsuke-zukan] join failed', error);
+    RoomkRTDB.showFormError('join-form-error', '参加に失敗しました。もう一度お試しください');
   } finally {
     state.entryBusy = false;
   }
