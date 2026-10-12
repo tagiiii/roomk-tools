@@ -718,6 +718,11 @@
   function roomPlayingPlayers(room) {
     return playingPlayers(room?.players, hostPlays(room), room?.host);
   }
+  // 利用回数（回数だけ。stats.js）: 1問の始まりと、そのときの答える人の人数
+  function countRoundStart(playerCount) {
+    window.RoomkStats?.count('start');
+    window.RoomkStats?.count('players-' + playerCount);
+  }
   const CHOICE_NUMBERS = ['①', '②', '③', '④', '⑤'];
 
   function saveSession() {
@@ -1066,6 +1071,7 @@
       showError('host-nickname-error', 'ルーム作成に失敗しました。もう一度お試しください');
       return;
     }
+    window.RoomkStats?.count('room-create');
 
     state.nickname = nickname;
     state.role = 'host';
@@ -1103,12 +1109,14 @@
   async function hostStartGame() {
     const picks = pickQuestions(state.usedQuestions);
     let abortReason = null;
+    let playerCount = 0;
     const { committed } = await state.roomRef.transaction((room) => {
       if (!room || room.status !== 'waiting') {
         abortReason = 'invalid_state';
         return;
       }
-      if (Object.keys(roomPlayingPlayers(room)).length < MIN_PLAYERS) {
+      playerCount = Object.keys(roomPlayingPlayers(room)).length;
+      if (playerCount < MIN_PLAYERS) {
         abortReason = 'too_few';
         return;
       }
@@ -1121,6 +1129,7 @@
       };
     });
 
+    if (committed) countRoundStart(playerCount);
     if (!committed) {
       if (abortReason === 'too_few') {
         alert(`答える人が${MIN_PLAYERS}人以上で始められます`);
@@ -1186,11 +1195,17 @@
   // ホスト: 次のラウンド
   // ════════════════════════════════════
   async function hostNextRound() {
+    // 利用回数は結果画面から進めたときだけ数える（二度押しの2回目は、もう問題選びに移っている）
+    const fromResult = state.currentScreen === 'result';
     const picks = pickQuestions(state.usedQuestions);
     await state.roomRef.update({
       status:           'selecting',
       pendingQuestions: picks,
     });
+    if (fromResult) {
+      window.RoomkStats?.count('again');
+      countRoundStart(Object.keys(playingPlayers(state.players, state.hostPlays, state.nickname)).length);
+    }
   }
 
   // ════════════════════════════════════
@@ -1604,6 +1619,7 @@
           }
           return { ...room, status: 'result', players };
         }, undefined, false);
+        if (committed) window.RoomkStats?.count('finish');
         return committed || snapshot.val()?.status === 'result';
       } catch (error) {
         // 同じ端末の配下への書き込み（'set'）・送信後の切断（'disconnect'）で中止されたらやり直す。
