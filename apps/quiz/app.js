@@ -831,6 +831,20 @@ function serverTimestamp() {
   return firebase.database.ServerValue.TIMESTAMP;
 }
 
+// 送信したあとに通信が切れると、transaction は Error('disconnect') で中止される（サーバーに届いたかは分からない）。
+// ルームの作成と参加は、少しだけやり直す。update は、前の送信が届いていたら成功として扱うように書く
+// （届いていたのに失敗として戻ると、切断時の予約がないルーム・在室が残る）
+const TX_RETRY_MAX = 3;
+async function transactRetry(ref, update) {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      return await ref.transaction(update);
+    } catch (error) {
+      if (error?.message !== 'disconnect' || attempt >= TX_RETRY_MAX) throw error;
+    }
+  }
+}
+
 async function waitAuth() {
   const handles = ensureFirebase();
   if (!handles) {
@@ -1098,8 +1112,9 @@ async function createRoom() {
     for (let attempt = 0; attempt < 5; attempt++) {
       const code = RoomkRTDB.generateRoomCode();
       const ref = db().ref(DB_PREFIX + '/' + code);
-      const result = await ref.transaction((data) => {
-        if (data) return;
+      const result = await transactRetry(ref, (data) => {
+        // やり直しのとき、前の送信で自分が作ったルームが届いていたら、そのまま使う
+        if (data) return data.hostUid === uid && data.players?.[nickname]?.joinedAt === joinedAt ? data : undefined;
         return {
           status: ROOM_STATUS.LOBBY,
           host: nickname,
@@ -1180,11 +1195,15 @@ async function joinRoom() {
     }
     const uid = currentUid();
     let reason = '';
-    const result = await ref.transaction((data) => {
+    const result = await transactRetry(ref, (data) => {
       reason = '';
       if (!data) { reason = '見つからない'; return; }
       if (isExpired(data)) { reason = '終了'; return; }
-      if (nickname === data.host || data.players?.[nickname]) { reason = '名前'; return; }
+      // 自分の在室がもう入っている（前の送信が届いていた・タブが落ちた直後に入りなおした）ときは、そのまま参加とする
+      const own = data.players?.[nickname];
+      const mine = !!own && !own.isHost && own.uid === uid;
+      if (nickname === data.host || (own && !mine)) { reason = '名前'; return; }
+      if (mine) return data;
       // ゲームの途中で抜けた人の名前は、同じ端末からだけ使える
       const member = data.scores?.[nickname];
       if (member && member.uid !== uid) { reason = '名前'; return; }
