@@ -841,6 +841,7 @@ async function hostCreateRoom() {
       if (committed) { roomCode = code; roomRef = ref; break; }
     }
     if (!roomRef) { report('ルームを作れなかったよ。もう一度押してね'); return; }
+    window.RoomkStats?.count('room-create');
 
     state.nickname = nickname; state.roomCode = roomCode; state.role = 'host';
     state.roomRef = roomRef; state.selected = [];
@@ -1044,7 +1045,7 @@ async function dealTopic() {
   const picks = state.selected.slice();
   if (picks.length !== 2) { showMsg('話し手を2人えらんでね'); return; }
   state.busy = true;
-  let abortReason = null;
+  let abortReason = null, playerCount = 0;
   try {
     const { committed } = await ref.transaction(room => {
       if (!room || room.status !== 'waiting' || room.host !== me) { abortReason = 'invalid'; return; }
@@ -1053,6 +1054,7 @@ async function dealTopic() {
       const active = selectableNames(room, players);
       if (active.length < MIN_PLAYERS) { abortReason = 'too_few'; return; }
       if (!picks.every(nick => active.includes(nick))) { abortReason = 'speaker_gone'; return; }
+      playerCount = active.length;
       // まだ話していないお題から3つを候補にする。足りなくなったら最初から
       let used = usedTopicIndexes(room);
       let pool = TOPICS.map((_, i) => i).filter(i => !used.includes(i));
@@ -1080,6 +1082,9 @@ async function dealTopic() {
       else showMsg('お題をくばれなかったよ。もう一度押してね');
     } else if (committed) {
       window.RoomkStats?.count('round');
+      // 利用回数（回数だけ。stats.js）: 1つのお題の始まりと、そのときの遊ぶ人（つながっている人）の人数
+      window.RoomkStats?.count('start');
+      window.RoomkStats?.count('players-' + playerCount);
     }
   } catch (error) {
     console.error('[kossori-word] deal failed', error);
@@ -1267,10 +1272,12 @@ async function revealTopic() {
   if (state.role !== 'host' || !state.roomRef) return;
   const ref = state.roomRef, me = state.nickname;
   try {
-    await ref.transaction(room => {
+    const { committed } = await ref.transaction(room => {
       if (!room || room.status !== 'answering' || room.host !== me) return;
       return { ...room, status: 'result' };
     });
+    // 利用回数: 発表まで進んだ
+    if (committed) window.RoomkStats?.count('finish');
   } catch (error) {
     console.error('[kossori-word] reveal failed', error);
     if (state.roomRef === ref) showMsg('うまく送れなかったよ。もう一度押してね');
@@ -1299,7 +1306,7 @@ async function nextRound() {
   if (state.role !== 'host' || !state.roomRef) return;
   const ref = state.roomRef, me = state.nickname;
   try {
-    await ref.transaction(room => {
+    const { committed } = await ref.transaction(room => {
       if (!room || room.status !== 'result' || room.host !== me) return;
       const players = room.players || {};
       // 話し手になった人を覚えておく（おまかせで、まだの人を先にえらぶため）。全員が話したら最初から
@@ -1316,6 +1323,8 @@ async function nextRound() {
         players: nextPlayers,
       };
     });
+    // 利用回数: 発表のあと、続けてつぎのお題へ
+    if (committed) window.RoomkStats?.count('again');
   } catch (error) {
     console.error('[kossori-word] nextRound failed', error);
     if (state.roomRef === ref) showMsg('うまく送れなかったよ。もう一度押してね');
