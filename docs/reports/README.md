@@ -14,6 +14,7 @@
 
 ## 一覧
 
+- [c1-nandoku-verification-batch5-station-2026-10-12.md](c1-nandoku-verification-batch5-station-2026-10-12.md) — 難読地名クイズ駅名編20問の読み・路線・設問の表記・解説を公開資料と照合した調査（C-1、P-24、2026-10-12）
 - [c1-nandoku-verification-batch4-kansai-2026-10-12.md](c1-nandoku-verification-batch4-kansai-2026-10-12.md) — 難読地名クイズ関西編20問の読み・帰属・設問の表記・解説を公開資料と照合した調査（C-1、P-23、2026-10-12）
 - [c1-nandoku-verification-batch3-kanto-2026-10-12.md](c1-nandoku-verification-batch3-kanto-2026-10-12.md) — 難読地名クイズ関東甲信越編20問の読み・帰属・解説を公開資料と照合した調査（C-1、P-21、P-22、2026-10-12）
 - [p13-namespace-rules-draft-2026-10-12.md](p13-namespace-rules-draft-2026-10-12.md) — RTDB ルールの名前空間固定のルール案（同名の .json）・一覧・適用手順の下書き（P-13、D-5、2026-10-12）
