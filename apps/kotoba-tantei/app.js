@@ -28,7 +28,7 @@ import {
   subscribeToRoom,
   subscribeToRoomForSpectator,
   updatePlayerRole,
-} from "./service.js?v=20261001";
+} from "./service.js?v=20261012";
 import { wordSets } from "./words.js";
 
 const appEl = document.querySelector("#app");
@@ -1098,6 +1098,7 @@ async function handleCreate(form) {
       team: "red",
       role: "guesser",
     }, wordSet.words, firstTeam);
+    window.RoomkStats?.count('room-create');
     state.roomId = roomId;
     state.playerId = playerId;
     state.room = null;
@@ -1215,7 +1216,10 @@ async function handleStartGame() {
   renderLobby();
 
   try {
-    await startGame(state.roomId, state.playerId);
+    const playerCount = await startGame(state.roomId, state.playerId);
+    // 利用回数（回数だけ。stats.js）: ゲームの始まりと、そのときの遊ぶ人の人数
+    window.RoomkStats?.count('start');
+    window.RoomkStats?.count('players-' + playerCount);
   } catch (error) {
     state.error = error.message || "ゲーム開始に失敗しました";
     state.loading = false;
@@ -1268,6 +1272,8 @@ async function handleRevealCard(cardIndex) {
 
   try {
     const result = await revealCard(state.roomId, cardIndex, state.room.turnTeam, state.playerId);
+    // 利用回数: このカードでゲームが終わり、結果へ進んだ（開いた人の端末で数える）
+    if (result.finished) window.RoomkStats?.count('finish');
     if (result.endedByTrap) {
       showNotification("トラップカード\nチャレンジ終了", "danger");
     }
@@ -1363,6 +1369,8 @@ async function handleFinishGame(winner) {
 
   try {
     await finishGame(state.roomId, state.playerId, winner);
+    // 利用回数: ホストが勝ちを決めて、結果へ進んだ
+    window.RoomkStats?.count('finish');
   } catch (error) {
     state.error = error.message || "ゲーム終了に失敗しました";
     state.loading = false;
@@ -1394,7 +1402,9 @@ async function handleRestartGame() {
   renderFinish();
 
   try {
-    await restartGame(state.roomId, state.playerId);
+    const fromResult = await restartGame(state.roomId, state.playerId);
+    // 利用回数: 結果のあと「もう一度」でロビーへ戻した
+    if (fromResult) window.RoomkStats?.count('again');
   } catch (error) {
     state.error = error.message || "もう一度始める準備に失敗しました";
     state.loading = false;

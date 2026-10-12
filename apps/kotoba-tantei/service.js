@@ -441,14 +441,14 @@ export async function removePlayerFromRoom(roomId, targetPlayerId, actorPlayerId
  * ゲームを開始する。
  * @param {string} roomId
  * @param {string} hostPlayerId
- * @returns {Promise<void>}
+ * @returns {Promise<number>} 開始したときの遊ぶ人の人数（利用回数の項目名に使う）
  */
 export async function startGame(roomId, hostPlayerId) {
   await ensureAuthenticated();
 
   const roomRef = doc(db, ROOMS_COLLECTION, normalizeRoomId(roomId));
 
-  await runTransaction(db, async (transaction) => {
+  return runTransaction(db, async (transaction) => {
     const snapshot = await transaction.get(roomRef);
     if (!snapshot.exists()) {
       throw new Error("ルームが見つかりません");
@@ -475,6 +475,7 @@ export async function startGame(roomId, hostPlayerId) {
     transaction.update(roomRef, {
       gamePhase: "in_progress",
     });
+    return playingPlayers(room).length;
   });
 }
 
@@ -541,7 +542,7 @@ export async function submitHint(roomId, hint) {
  * @param {number} cardIndex
  * @param {Team} expectedTurnTeam
  * @param {string} actorPlayerId
- * @returns {Promise<{ changed: boolean, endedByTrap: boolean }>}
+ * @returns {Promise<{ changed: boolean, endedByTrap: boolean, finished?: boolean }>} finished はこの公開でゲームが終わったとき true
  */
 export async function revealCard(roomId, cardIndex, expectedTurnTeam, actorPlayerId) {
   await ensureAuthenticated();
@@ -585,7 +586,7 @@ export async function revealCard(roomId, cardIndex, expectedTurnTeam, actorPlaye
       updates.winner = room.turnTeam === "red" ? "blue" : "red";
       updates.finishReason = "trap";
       transaction.update(roomRef, updates);
-      return { changed: true, endedByTrap: true };
+      return { changed: true, endedByTrap: true, finished: true };
     }
 
     if (["red", "blue"].includes(card.role)) {
@@ -596,7 +597,7 @@ export async function revealCard(roomId, cardIndex, expectedTurnTeam, actorPlaye
         updates.winner = card.role;
         updates.finishReason = "all_found";
         transaction.update(roomRef, updates);
-        return { changed: true, endedByTrap: false };
+        return { changed: true, endedByTrap: false, finished: true };
       }
     }
 
@@ -774,14 +775,14 @@ export async function finishGame(roomId, hostPlayerId, winner) {
  * 同じ参加者・役割でロビーに戻す。
  * @param {string} roomId
  * @param {string} hostPlayerId
- * @returns {Promise<void>}
+ * @returns {Promise<boolean>} 結果（finished）から戻したとき true（利用回数の「もう一度」の判定に使う）
  */
 export async function restartGame(roomId, hostPlayerId) {
   await ensureAuthenticated();
 
   const roomRef = doc(db, ROOMS_COLLECTION, normalizeRoomId(roomId));
 
-  await runTransaction(db, async (transaction) => {
+  return runTransaction(db, async (transaction) => {
     const snapshot = await transaction.get(roomRef);
     if (!snapshot.exists()) {
       throw new Error("ルームが見つかりません");
@@ -810,6 +811,7 @@ export async function restartGame(roomId, hostPlayerId) {
       winner: null,
       finishReason: null,
     });
+    return room.gamePhase === "finished";
   });
 }
 
