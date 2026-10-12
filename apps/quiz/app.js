@@ -1130,6 +1130,7 @@ async function createRoom() {
         };
       });
       if (result.committed) {
+        window.RoomkStats?.count('room-create');
         connectToRoom('host', nickname, code, ref);
         return;
       }
@@ -2158,11 +2159,15 @@ async function startRoomGame() {
   if (!questions.length) return;
   const limitSec = state.limitSec;
   const setup = { packId: pack.id, countKey: state.countKey, mode: state.mode, limitSec };
+  let playerCount = 0;
+  let fromFinal = false;
   const committed = await hostTransaction((data) => {
     if (data.status !== ROOM_STATUS.LOBBY && data.status !== ROOM_STATUS.FINAL) return;
     // 答える人（ホストが参加を選んでいればホストも）。点数・受付枠はこの人たちに作る
     const players = playerNames(data);
     if (!players.length) return;
+    playerCount = players.length;
+    fromFinal = data.status === ROOM_STATUS.FINAL;
     const id = (Number(data.gameSeq) || 0) + 1;
     return {
       ...data,
@@ -2193,6 +2198,10 @@ async function startRoomGame() {
   if (committed) {
     window.RoomkStats?.count('pack-' + pack.id);
     window.RoomkStats?.count('room-start');
+    // 利用回数（回数だけ。stats.js）: 結果発表からの「もう一度あそぶ」、ゲームの始まりと、そのときの答える人の人数
+    if (fromFinal) window.RoomkStats?.count('again');
+    window.RoomkStats?.count('start');
+    window.RoomkStats?.count('players-' + playerCount);
   } else if (committed === false) {
     toast('はじめられませんでした。参加者を確かめてね');
   }
@@ -2206,11 +2215,13 @@ function expectedGame() {
 async function nextQuestion() {
   const expected = expectedGame();
   if (!expected) return;
-  await hostTransaction((data) => {
+  let toFinal = false;
+  const committed = await hostTransaction((data) => {
     const game = data.game;
     if (data.status !== ROOM_STATUS.REVEAL || !game) return;
     if (game.id !== expected.id || game.index !== expected.index) return;
-    if (game.index + 1 >= game.total) return { ...data, status: ROOM_STATUS.FINAL };
+    toFinal = game.index + 1 >= game.total;
+    if (toFinal) return { ...data, status: ROOM_STATUS.FINAL };
     const nextGame = { ...game, index: game.index + 1, startedAt: RoomkRTDB.now() + COUNTDOWN_MS };
     return {
       ...data,
@@ -2219,21 +2230,25 @@ async function nextQuestion() {
       answers: { ...(data.answers || {}), [answerKey(nextGame)]: openSlots(membersFor(data, nextGame.index)) },
     };
   }, '進められませんでした。もう一度ためしてね');
+  // 利用回数: 最後の問題のあと、結果発表まで進んだ（次の問題へ進んだだけでは数えない）
+  if (committed && toFinal) window.RoomkStats?.count('finish');
 }
 
 async function finishGame() {
   const expected = expectedGame();
   if (!expected) return;
-  await hostTransaction((data) => {
+  const committed = await hostTransaction((data) => {
     const game = data.game;
     if (data.status !== ROOM_STATUS.REVEAL || !game) return;
     if (game.id !== expected.id || game.index !== expected.index) return;
     return { ...data, status: ROOM_STATUS.FINAL };
   }, '進められませんでした。もう一度ためしてね');
+  // 利用回数: 「ここで結果発表へ」で結果発表まで進んだ
+  if (committed) window.RoomkStats?.count('finish');
 }
 
 async function backToLobby() {
-  await hostTransaction((data) => {
+  const committed = await hostTransaction((data) => {
     if (data.status !== ROOM_STATUS.FINAL) return;
     return {
       ...data,
@@ -2244,6 +2259,8 @@ async function backToLobby() {
       scores: null,
     };
   }, '進められませんでした。もう一度ためしてね');
+  // 利用回数: 結果発表から「パックをえらび直す」（続けてもう1回。次の開始は start だけを数える）
+  if (committed) window.RoomkStats?.count('again');
 }
 
 /* ── みんなにみせる画面（画面共有用。ルームを読むだけ） ──
