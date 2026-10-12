@@ -761,6 +761,8 @@ async function hostCreateRoomInner() {
     if (committed) { roomCode = code; roomRef = ref; break; }
   }
   if (!roomCode) { showError('host-error', 'ルーム作成に失敗しました'); return; }
+  // 利用回数（回数だけ。stats.js）: ルームができた
+  window.RoomkStats?.count('room-create');
 
   state.role = 'host'; state.nickname = nickname;
   state.roomCode = roomCode; state.roomRef = roomRef;
@@ -871,13 +873,15 @@ async function startRound() {
   if (theme.length > 40) { showError('w-error', 'お題は40文字以内です'); return; }
   const durationSec = parseInt(document.getElementById('w-duration').value, 10) || 90;
   let abortReason = null;
+  let playerCount = 0;
   const { committed } = await ref.transaction((room) => {
     if (state.roomRef !== ref || state.role !== 'host' || state.expectedRoomRemoval) return;
     if (!room) { abortReason = 'not_found'; return; }
     if (room.status !== 'waiting') { abortReason = 'bad_status'; return; }
     const players = room.players || {};
     if (Object.values(players).some(player => !playerConnected(player))) { abortReason = 'disconnected'; return; }
-    if (answererNames(room).length < MIN_ANSWERERS) { abortReason = 'no_answerers'; return; }
+    playerCount = answererNames(room).length;
+    if (playerCount < MIN_ANSWERERS) { abortReason = 'no_answerers'; return; }
     const resetPlayers = {};
     Object.keys(players).forEach(nick => {
       resetPlayers[nick] = { ...(players[nick] || {}), answers: [] };
@@ -893,6 +897,11 @@ async function startRound() {
       players: resetPlayers,
     };
   });
+  // 利用回数（回数だけ。stats.js）: 1つのお題（ラウンド）の始まりと、そのときの答える人の人数
+  if (committed) {
+    window.RoomkStats?.count('start');
+    window.RoomkStats?.count('players-' + playerCount);
+  }
   if (!committed) {
     showError('w-error', abortReason === 'disconnected' ? '参加者の再接続を待っています'
       : abortReason === 'no_answerers' ? '答える人が1人以上いると始められます'
@@ -1045,7 +1054,7 @@ async function hostEndInput() {
 async function moveToReview() {
   if (state.role !== 'host' || !state.roomRef || state.expectedRoomRemoval) return;
   const ref = state.roomRef, expectedRound = state.round;
-  await ref.transaction((room) => {
+  const { committed } = await ref.transaction((room) => {
     if (state.roomRef !== ref || state.role !== 'host' || state.expectedRoomRemoval
       || !room || room.status !== 'input' || room.round !== expectedRound) return;
     const round = room.round || 1;
@@ -1065,14 +1074,19 @@ async function moveToReview() {
       },
     };
   });
+  // 利用回数: みんなの答えの画面まで進んだ（時間切れ・時間前に終了のどちらでも）
+  if (committed) window.RoomkStats?.count('finish');
 }
 
 // ── ホスト: 次のお題 / 終了 ──
 async function hostNextRound() {
   if (state.role !== 'host') return;
+  // 利用回数はみんなの答えの画面から進めたときだけ数える（二度押しの2回目は、もう待合室に移っている）
+  const fromReview = state.currentStatus === 'review';
   document.getElementById('w-theme-input').value = '';
   showError('w-error', '');
   await state.roomRef.update({ status: 'waiting', theme: null, endAt: null });
+  if (fromReview) window.RoomkStats?.count('again');
 }
 async function hostFinish() {
   if (state.role !== 'host') return;
