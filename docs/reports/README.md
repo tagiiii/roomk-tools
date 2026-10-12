@@ -14,6 +14,7 @@
 
 ## 一覧
 
+- [c1-nandoku-verification-batch3-kanto-2026-10-12.md](c1-nandoku-verification-batch3-kanto-2026-10-12.md) — 難読地名クイズ関東甲信越編20問の読み・帰属・解説を公開資料と照合した調査（C-1、P-21、P-22、2026-10-12）
 - [p13-namespace-rules-draft-2026-10-12.md](p13-namespace-rules-draft-2026-10-12.md) — RTDB ルールの名前空間固定のルール案（同名の .json）・一覧・適用手順の下書き（P-13、D-5、2026-10-12）
 - [p10-backlog-history-2026-10-12.md](p10-backlog-history-2026-10-12.md) — バックログの判断待ちから移した、クイズの事実確認の工程ごとの記録（P-10、2026-10-12）
 - [p12-session-only-rejoin-2026-09-09.md](p12-session-only-rejoin-2026-09-09.md) — 名前だけの再入室廃止と保存セッション復帰の非回帰・保証限界（P-12、B-32、2026-09-09）
