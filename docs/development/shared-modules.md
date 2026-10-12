@@ -130,7 +130,12 @@ Realtime Database を使う単一ファイルアプリは、Firebase compat SDK 
 #### ルーム型で共通に使う項目名（2026-10-12）
 
 起動回数（`open`）は端末と読み込みの数なので、ルーム型では何回遊ばれたかが分からない。遊ばれ方を見るときは次の項目名にそろえる。
-導入済み: do-mannaka・magire-eshi・oekaki-dengon・pita-hame・stamp-ate（各アプリの「1回」の単位は、そのアプリの `AGENTS.md`「利用回数」）。
+導入済み: ルーム型の全30本（2026-10-12。`scripts/lint.sh` の `RTDB_HTML_FILES` の29本と、Firestore の kotoba-tantei）。「1回」の単位と数える場所は、各アプリの `AGENTS.md`「利用回数」。
+
+- 「1回」が1ゲームのアプリ（始めてから最後の結果まで。もう一度あそぶ型）: （career-sugoroku・esadori・jinro・kaburazu-hint・kagi-awase・kotoba-pair・kotoba-tantei・name-change・oekaki-dengon・oshitsuke-zukan・pita-hame・quiz・stamp-ate・suki-bingo・tatoe-narabe・word-wolf）
+- 「1回」が1ラウンド（1問・1つのお題・1場面・1周）のアプリ（ホストが好きなところで終える型）: blackjack・do-mannaka・ikutsu-ieru・kakure-number・kimochi-ate・koedake-theater・kossori-word・magire-eshi・minna-ranking・moji-soroe・pittari-meter・tatoe-gp・toomawashi・uso-jisho
+- name-change は同じルームでの「もう一度」がないので `again` を数えない
+- 以前からある項目（`round`・`pack-*`・`theme-*`・`room-start`・`start-room`・`start-local`・`solo-start`）は、過去の数字と続けて見るために残している。新しいアプリは共通の項目名だけでよい
 
 | 項目 | 数えるとき | 分かること |
 |---|---|---|
@@ -140,7 +145,9 @@ Realtime Database を使う単一ファイルアプリは、Firebase compat SDK 
 | `finish` | その回の結果の画面まで進んだ | 最後まで進んだ割合（`finish ÷ start`） |
 | `again` | 結果のあと、続けてもう1回を選んだ（もう一度あそぶ／次のラウンドへ） | 続けて遊ばれた割合（`again ÷ finish`） |
 
-- **数えるのは、その進行を確定させた1台だけ**。transaction の `committed` のあと（または確定前の状態を確かめたうえ）で呼び、二度押し・再接続・再読み込みで二重に数えない。画面の描画やリスナーの中では呼ばない
+- 待合室を通らずに次の回が始まる操作（「次のラウンドへ」、そのまま始まる「もう一度」）は、`again` と `start`・`players-{N}` を同時に数える。待合室に戻る操作は `again` だけを数え、次の `start` は始めたときに数える
+
+- **数えるのは、その進行を確定させた1台だけ**。transaction の `committed` のあと（または確定前の状態を確かめたうえ）で呼び、二度押し・再接続・再読み込みで二重に数えない。画面の描画やリスナーの中では呼ばない（全員の回答・投票がそろうと自動で進む処理のようにリスナーから始まる進行は、その書き込みを確定させたあとでだけ数える）
 - 途中でやめた・不成立になった回は `finish` を数えない
 - 二重に数えないことを優先する。確定の応答を受け取る前に通信が切れたときなどは、進んでいても数え漏れることがある（少なめに出る側の誤差として読む）
 - 人数は回数の項目名に入れるだけで、だれが遊んだかは記録しない
