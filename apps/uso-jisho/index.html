@@ -1163,6 +1163,12 @@
     return hostPlaysOf(room) ? Object.keys(players) : getGuestNames(players);
   }
 
+  // 利用回数（回数だけ。stats.js）: ラウンドの始まりと、そのときの遊ぶ人の人数
+  function countRoundStart(playerCount) {
+    window.RoomkStats?.count('start');
+    window.RoomkStats?.count('players-' + playerCount);
+  }
+
   function isPlaying(room, name) {
     return !!name && playingNames(room).includes(name);
   }
@@ -1506,6 +1512,7 @@
       showError('host-nickname-error', 'ルーム作成に失敗しました。もう一度お試しください');
       return;
     }
+    window.RoomkStats?.count('room-create');
 
     state.nickname = nickname;
     state.role = 'host';
@@ -1668,6 +1675,7 @@
 
   async function hostStartGame() {
     let abortReason = null;
+    let playerCount = 0;
     const { committed } = await state.roomRef.transaction((room) => {
       if (!room) { abortReason = 'not_found'; return; }
       if (room.status !== STATUS.WAITING) { abortReason = 'bad_status'; return; }
@@ -1675,6 +1683,7 @@
       const count = playingNames(room).length;
       if (count < MIN_PLAYERS) { abortReason = 'too_few'; return; }
       if (count > MAX_PLAYERS) { abortReason = 'too_many'; return; }
+      playerCount = count;
       abortReason = null;
       const wordIndex = pickWordIndex(room);
       return {
@@ -1691,6 +1700,7 @@
         knows: null,
       };
     });
+    if (committed) countRoundStart(playerCount);
     if (!committed && abortReason === 'too_few') {
       RoomkRTDB.showToast(`遊ぶ人が${MIN_PLAYERS}人以上で始められます`);
     }
@@ -1742,7 +1752,7 @@
 
   async function hostToReveal() {
     if (state.role !== 'host') return;
-    await state.roomRef.transaction((room) => {
+    const { committed } = await state.roomRef.transaction((room) => {
       if (!room || room.status !== STATUS.VOTING) return;
       const deltas = calcDeltas(room.choices, room.votes);
       const nextPlayers = {};
@@ -1758,12 +1768,16 @@
         players: nextPlayers,
       };
     });
+    // 利用回数: 結果の画面まで進んだラウンド
+    if (committed) window.RoomkStats?.count('finish');
   }
 
   async function hostNextRound() {
     if (state.role !== 'host') return;
-    await state.roomRef.transaction((room) => {
+    let playerCount = 0;
+    const { committed } = await state.roomRef.transaction((room) => {
       if (!room || room.status !== STATUS.REVEAL) return;
+      playerCount = playingNames(room).length;
       const wordIndex = pickWordIndex(room);
       const used = [...new Set([...(room.usedWords || []), wordIndex])];
       return {
@@ -1780,6 +1794,10 @@
         knows: null,
       };
     });
+    if (committed) {
+      window.RoomkStats?.count('again');
+      countRoundStart(playerCount);
+    }
   }
 
   // 意味を知っている人がいたときなど、かく途中でお題だけを入れ替える（ラウンド数は変えない）。
