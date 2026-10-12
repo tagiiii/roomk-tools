@@ -852,7 +852,15 @@ function selectMode(mode) {
 /* ════════════════════════════════════════════════
    ルーム作成（ホスト）
    ════════════════════════════════════════════════ */
+// 作成が例外で終わったとき（送信後の切断・権限エラーなど）も無反応にしない
 async function hostCreate() {
+  try { await hostCreateInner(); }
+  catch (error) {
+    console.error('[kotoba-pair] create failed', error);
+    showMsg('ルームをつくれなかったよ。もう一度ためしてね');
+  }
+}
+async function hostCreateInner() {
   const nick = document.getElementById('create-nickname').value.trim();
   const err = validNick(nick);
   if (err) { showError('create-error', err); return; }
@@ -928,7 +936,15 @@ function roomCodeImeError(code) {
 /* ════════════════════════════════════════════════
    参加（ゲスト・途中参加もここ）
    ════════════════════════════════════════════════ */
+// 参加が例外で終わったとき（送信後の切断・権限エラーなど）も無反応にしない
 async function guestJoin() {
+  try { await guestJoinInner(); }
+  catch (error) {
+    console.error('[kotoba-pair] join failed', error);
+    showError('join-error', 'はいれなかったよ。もう一度ためしてね');
+  }
+}
+async function guestJoinInner() {
   const nick = document.getElementById('join-nickname').value.trim();
   const code = normalizeRoomCode(document.getElementById('join-code').value);
   const err = validNick(nick);
