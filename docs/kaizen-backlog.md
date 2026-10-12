@@ -104,6 +104,7 @@
 
 - [x] B-33. **作成・参加が例外で終わったときに、メッセージを出す**（P-20 選択肢①・2026-10-12 承認）。対象は、作成・参加の transaction を try/catch で囲まずに呼んでいる17本（blackjack・do-mannaka・esadori・ikutsu-ieru・jinro・kaburazu-hint・kakure-number・koedake-theater・kotoba-pair・magire-eshi・moji-soroe・oshitsuke-zukan・pittari-meter・tatoe-gp・toomawashi・uso-jisho・word-wolf）。失敗時に、各アプリの既存の表示手段と文体で「うまくいかなかった・もう一度」を伝える。やり直し（P-19）は入れず、参加処理の流れは変えない。1アプリ×1コミット。確認は隔離エミュレーターで、書き込みを拒否するルールに切り替えて作成・参加を失敗させ、メッセージが出ること・ボタンがもう一度押せること・通常の作成と参加が今までどおり通ることを見る。
   - 完了（2026-10-12、85a73a2〜aa5a601 の17コミット）: 17本とも、作成・参加の入口で例外を受けてメッセージを出すようにした。既にラッパーがある4本（blackjack・moji-soroe・esadori・oshitsuke-zukan）は catch を足し、残り13本は本体を `〜Inner` に改名して同じ名前のラッパーを足した。表示手段と文体は各アプリの既存のもの（トースト／入力欄の下のエラー欄、「〜だよ」／です・ます）。AI確認: 隔離エミュレーター（demo プロジェクト・本番未接続）で、書き込みを拒否するルールに切り替えて作成・参加を失敗させ、①メッセージが画面内に出る ②未処理のエラーが残らない ③ルームも参加者も作られていない ④ルールを戻して同じ画面のままもう一度押すと作成・参加が通る、を17本×PC 1280px・375px で確認（全項目合格）。対照として直す前の版を同じ手順にかけ、17本とも無反応で未処理のエラーが出ることを確認。送信後の切断そのもの（`'disconnect'`）は再現していない（権限エラーで同じ catch を通している）。「みんなにみせる画面」から入る処理（boardJoin・spectateJoin）は対象外。
+  - 追加（2026-10-12、オーナー承認）: 見せる専用の画面を持つ13本の入口を調べた。読み取りを拒否するルールで、10本（kaburazu-hint・magire-eshi・kakure-number・uso-jisho・kossori-word・kagi-awase・kimochi-ate・stamp-ate・suki-bingo・quiz）は `?watch=` の入口でメッセージが出ることを隔離エミュレーターで確認、kotoba-tantei（Firestore）は読み込み失敗時の表示があることをコードで確認。無反応だったのは「見るだけ」の入口（`boardJoin`）を持つ esadori・oshitsuke-zukan の2本で、同じ形の修正を入れた。AI確認: 直す前後を同じ手順にかけ、失敗時のメッセージ・未処理エラーなし・ルールを戻して押し直すと入れる・見るだけの人が参加者に入らない、を PC 1280px・375px で確認（22項目）。見せる画面を開いたあとに途中で読み込めなくなった場合の表示は見ていない。
 
 ## Tier C: 調査・報告のみ
 
