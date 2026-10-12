@@ -1260,7 +1260,15 @@
     showScreen('guest-join');
   }
 
+  // 作成が例外で終わったとき（送信後の切断・権限エラーなど）も無反応にしない
   async function hostCreateRoom() {
+    try { await hostCreateRoomInner(); }
+    catch (error) {
+      console.error('[tatoe-gp] create failed', error);
+      showError('host-nickname-error', 'ルーム作成に失敗しました。もう一度お試しください');
+    }
+  }
+  async function hostCreateRoomInner() {
     const nickname = document.getElementById('host-nickname').value.trim();
     const error = validateNickname(nickname);
     if (error) {
@@ -1467,7 +1475,15 @@
       : '';
   }
 
+  // 参加が例外で終わったとき（送信後の切断・権限エラーなど）も無反応にしない
   async function guestJoin() {
+    try { await guestJoinInner(); }
+    catch (error) {
+      console.error('[tatoe-gp] join failed', error);
+      showError('guest-join-error', '参加に失敗しました。もう一度お試しください');
+    }
+  }
+  async function guestJoinInner() {
     const nickname = document.getElementById('guest-nickname').value.trim();
     const roomCode = normalizeRoomCode(document.getElementById('guest-room-code').value);
 
