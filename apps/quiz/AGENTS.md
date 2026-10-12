@@ -10,6 +10,7 @@
 ## 技術スタック
 
 - `index.html` + `app.js` + `questions.js` + `style.css`（`app.js` と `style.css` は `?v=` 付きで読み込む）
+- `slides.html` は画面共有用の説明スライド（全12枚。slides-generator で作成。エンジンは正本テンプレート kotoba-tantei と同じ）。説明するのは「ルームであそぶ」だけ。ボタン名・入り方・点数（1000〜500点）・制限時間の選択肢・ランキングの人数を変えたら、スライドと発表者ノートの文も合わせる
 - ひとつの画面であそぶ: オフライン（通信なし）
 - ルームであそぶ: Realtime Database＋匿名認証（`rtdb-utils.js`）。Firebase は**ルームの画面を開いたとき、または再読み込みで戻るルームがあるときだけ**初期化する（ひとつの画面モードでは匿名ログインもしない）
 - 共通デザインシステムと `shuffle` / `popIn` / `copyToClipboard` を使用
