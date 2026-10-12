@@ -353,7 +353,12 @@ button.sb-cand:hover:not([aria-disabled="true"]) { border-color: var(--color-acc
   .wrapper.is-wide .sb-header { margin-bottom: 16px; }
   .wrapper.is-wide .sb-header__sub { display: none; }
   .sb-phase__title { font-size: 1.3rem; }
-  .sb-themes { grid-template-columns: 1fr; }
+  /* テーマが12個あるので、せまい画面は名前だけを2列で出す */
+  .sb-themes { gap: 8px; }
+  .sb-theme { min-height: 52px; padding: 8px 10px; gap: 6px; font-size: 15px; }
+  .sb-theme__num { font-size: 17px; }
+  .sb-theme__sample { display: none; }
+  .sb-theme__name { word-break: keep-all; overflow-wrap: anywhere; }
   .sb-cands { grid-template-columns: repeat(2, 1fr); }
   .sb-draw { padding: 24px 20px; }
   .sb-draw__word { font-size: 32px; min-height: 45px; }
