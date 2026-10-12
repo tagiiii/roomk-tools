@@ -106,6 +106,7 @@ apps/oekaki-dengon/
 - アイコン: Material Symbols Rounded（`draw` ほか）
 - viewport は `maximum-scale=1`、`const state = {...}`、`showScreen()`、`esc()`（RTDB アプリ共通ルール）
 - howto.js（title「あそびかた」）・stats.js 組み込み
+- 利用回数（2026-10-12）: 共通の項目名（docs/development/shared-modules.md「ルーム型で共通に使う項目名」）で回数だけを数える。「1回」はロビーからおしまいの画面までの1ゲーム。すべてホストの端末で、ctl の transaction の確定のあとに数える: `room-create`（ルームができた）・`start` と `players-{N}`（開始。N は描く人の人数）・`finish`（見せあいを終えて phase `end` へ進んだ。最後の1枚をめくった／「見せあいを終える」のどちらでも）・`again`（「もう一回あそぶ」）。回の進行と見せあいへの移行（ホスト以外の端末も行う）は数えない
 - RTDB パス: `oekaki_rooms/{roomCode}/`、sessionStorage キー: `oekaki_session`
 - localStorage キー: `oekaki_my_rooms`（この端末で作ったルームのコード。最大20件）・`oekaki_my_rooms_alive`（ホストがルームにいる間の「使っている」印の時刻）。どちらも後片付け用で、書いた文や絵は保存しない
 

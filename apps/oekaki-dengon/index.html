@@ -2260,10 +2260,12 @@ async function runShowTransaction(update, failMsg, capturedBefore) {
   const me = state.nickname;
   state.actionBusy = true;
   try {
-    const { committed } = await state.ctlRef.transaction((cur) => {
+    const { committed, snapshot } = await state.ctlRef.transaction((cur) => {
       if (!isSameShow(cur, cap) || cur.host !== me) return;
       return { ...cur, match: update(cur.match) };
     });
+    // 利用回数: 見せあいを終えて、おしまいの画面まで進んだ
+    if (committed && snapshot.val()?.match?.phase === 'end') window.RoomkStats?.count('finish');
     if (!committed && isSameShow(state.lastCtl, cap)) showMsg(failMsg);
   } catch { showMsg(failMsg); } finally {
     state.actionBusy = false;
@@ -2360,6 +2362,7 @@ async function hostPlayAgain() {
       return { ...cur, status: 'waiting', match: null };
     });
     if (committed) {
+      window.RoomkStats?.count('again');
       await state.roomRef.child('art/m' + mid).remove().catch(() => {});
     } else {
       showMsg('ロビーに戻れなかったよ');
@@ -2383,6 +2386,7 @@ async function hostStartGame() {
   const seed = Math.floor(Math.random() * 2147483646) + 1; // おまかせのお題を配る順番
   const me = state.nickname;
   let reason = null;
+  let memberCount = 0;
   state.actionBusy = true;
   renderLobby(ctl);
   try {
@@ -2395,6 +2399,7 @@ async function hostStartGame() {
       const members = guestNames(cur);
       if (settings.hostPlays) members.push(me);
       if (members.length < MIN_MEMBERS || members.length > MAX_MEMBERS) { reason = 'count'; return; }
+      memberCount = members.length;
       members.sort((a, b) => ((rank[a] != null ? rank[a] : 0.5) - (rank[b] != null ? rank[b] : 0.5)) || (a < b ? -1 : 1));
       const matchId = (Number(cur.lastMatchId) || 0) + 1;
       reason = null;
@@ -2415,6 +2420,11 @@ async function hostStartGame() {
         },
       };
     });
+    if (committed) {
+      // 利用回数（回数だけ。stats.js）: ゲームの始まりと、そのときの描く人の人数
+      window.RoomkStats?.count('start');
+      window.RoomkStats?.count('players-' + memberCount);
+    }
     if (!committed) {
       showMsg(reason === 'count' ? '描く人が' + MIN_MEMBERS + '〜' + MAX_MEMBERS + '人で始められるよ' : '始められなかったよ');
     }
@@ -2472,6 +2482,7 @@ async function hostCreateRoomInner() {
     }
   } catch { roomRef = null; }
   if (!roomRef) { report('ルームを作れなかったよ。もう一度ためしてね'); return; }
+  window.RoomkStats?.count('room-create');
 
   state.role = 'host';
   state.nickname = nickname;
