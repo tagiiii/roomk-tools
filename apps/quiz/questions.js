@@ -1343,7 +1343,7 @@ export const QUIZ_PACKS = [
       },
       {
         id: 'nk06', difficulty: 2,
-        question: '滋賀県のJRや京阪の駅名「膳所」は、何と読む？',
+        question: '滋賀県のJRの駅名「膳所」は、何と読む？',
         choices: ['ぜんしょ', 'ぜぜ', 'ぜんじょ'],
         answerIndex: 1,
         explanation: '正解は「ぜぜ」。古代に皇室の食事を整える「御膳所(ごぜんどころ)」があった、という由来の説があります。'
