@@ -35,7 +35,7 @@
 - Realtime Database と匿名認証。パスは `sukibingo_rooms/{roomCode}`、再接続用の sessionStorage キーは `sukibingo_session`
 - 構成は `index.html` + `app.js`（ES module）+ `style.css`。CSS 接頭辞は `.sb-`（BEM）。index.html・app.js・style.css を変えたら `?v=` をそろえて上げる
 - 描画はすべて DOM API（textContent）。innerHTML は使わない
-- `slides.html` は画面共有用の説明スライド（全13枚。slides-generator で作成。エンジンは正本テンプレート kotoba-tantei と同じで、こっそりワードの slides.html を元に中身だけ差し替えた）。ボタン名・進め方・候補の数（24語から16個）を変えたら、スライドと発表者ノートの文も合わせる
+- `slides.html` は画面共有用の説明スライド（全13枚。slides-generator で作成。エンジンは正本テンプレート kotoba-tantei と同じで、こっそりワードの slides.html を元に中身だけ差し替えた）。ボタン名・進め方・テーマの数（12個）・候補の数（24語から16個）を変えたら、スライドと発表者ノートの文、早見表の行も合わせる
 - 保存するのは進行用の一時状態だけ。カード（cards）はそのゲームの間だけルームに置き、つぎのゲームへ進むとき（テーマを選ぶ画面に戻るとき）とルームを閉じたときに消える。ホストが「ルームを閉じる」を押さずにタブを閉じた場合は、最後のゲームのカードがルームの削除（TTL 後の次回アクセス時の掃除）まで残る（rtdb.md の全体共通の制約）。sessionStorage には再接続用の `{role, nickname, roomCode, uid, joinedAt}` だけを置き、カードの中身は入れない
 - 利用回数は stats.js の `open` と、ホストが選んだテーマ（`theme-{id}`）だけを数える。だれが何を選んだかは数えない
 - 開発・静的監査から本番 Firebase に書き込まない
