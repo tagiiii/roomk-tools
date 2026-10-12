@@ -353,7 +353,7 @@ button.sb-cand:hover:not([aria-disabled="true"]) { border-color: var(--color-acc
   .wrapper.is-wide .sb-header { margin-bottom: 16px; }
   .wrapper.is-wide .sb-header__sub { display: none; }
   .sb-phase__title { font-size: 1.3rem; }
-  /* テーマが12個あるので、せまい画面は名前だけを2列で出す */
+  /* テーマが多いので、せまい画面は名前だけを2列で出す */
   .sb-themes { gap: 8px; }
   .sb-theme { min-height: 52px; padding: 8px 10px; gap: 6px; font-size: 15px; }
   .sb-theme__num { font-size: 17px; }
