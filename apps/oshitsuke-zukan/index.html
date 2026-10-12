@@ -1184,6 +1184,10 @@ async function boardJoin() {
   state.entryBusy = true;
   try {
     await boardJoinInner();
+  } catch (error) {
+    // 見るだけで入る処理が例外で終わったとき（読み込みの失敗・権限エラーなど）も無反応にしない
+    console.error('[oshitsuke-zukan] board join failed', error);
+    showMsg('接続できませんでした。もう一度お試しください');
   } finally {
     state.entryBusy = false;
   }
