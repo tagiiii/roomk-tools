@@ -810,7 +810,15 @@ async function waitAuthOrExplain() {
 }
 
 // ── ホストルーム作成 ──
+// 作成が例外で終わったとき（送信後の切断・権限エラーなど）も無反応にしない
 async function hostCreateRoom() {
+  try { await hostCreateRoomInner(); }
+  catch (error) {
+    console.error('[word-wolf] create failed', error);
+    showMsg('ルーム作成に失敗しました。もう一度お試しください');
+  }
+}
+async function hostCreateRoomInner() {
   const nickname = document.getElementById('host-nickname').value.trim();
   if (!validNick(nickname)) return;
   const discussionSecs = parseInt(document.getElementById('discussion-time').value);
@@ -911,7 +919,15 @@ function openJoinFromTop() {
   goTo('guest-join');
 }
 
+// 参加が例外で終わったとき（送信後の切断・権限エラーなど）も無反応にしない
 async function guestJoin() {
+  try { await guestJoinInner(); }
+  catch (error) {
+    console.error('[word-wolf] join failed', error);
+    RoomkRTDB.showFormError('join-form-error', '参加に失敗しました。もう一度お試しください');
+  }
+}
+async function guestJoinInner() {
   const reportJoinError = message => RoomkRTDB.showFormError('join-form-error', message);
   reportJoinError('');
   const nickname = document.getElementById('guest-nickname').value.trim();
