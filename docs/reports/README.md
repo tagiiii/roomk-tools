@@ -14,6 +14,7 @@
 
 ## 一覧
 
+- [c1-nandoku-verification-batch6-kyushu-2026-10-12.md](c1-nandoku-verification-batch6-kyushu-2026-10-12.md) — 難読地名クイズ九州沖縄編20問の読み・帰属・設問の表記・解説を公開資料と照合した調査（C-1、P-25、2026-10-12）
 - [c1-nandoku-verification-batch5-station-2026-10-12.md](c1-nandoku-verification-batch5-station-2026-10-12.md) — 難読地名クイズ駅名編20問の読み・路線・設問の表記・解説を公開資料と照合した調査（C-1、P-24、2026-10-12）
 - [c1-nandoku-verification-batch4-kansai-2026-10-12.md](c1-nandoku-verification-batch4-kansai-2026-10-12.md) — 難読地名クイズ関西編20問の読み・帰属・設問の表記・解説を公開資料と照合した調査（C-1、P-23、2026-10-12）
 - [c1-nandoku-verification-batch3-kanto-2026-10-12.md](c1-nandoku-verification-batch3-kanto-2026-10-12.md) — 難読地名クイズ関東甲信越編20問の読み・帰属・解説を公開資料と照合した調査（C-1、P-21、P-22、2026-10-12）
