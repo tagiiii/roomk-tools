@@ -158,7 +158,7 @@ async function transactRetry(ref, update) {
 ```
 
 - 対処済み: career-sugoroku（先行）、suki-bingo・kimochi-ate・quiz・minna-ranking（2026-10-12）。参加だけ対処済み: kagi-awase・stamp-ate（同じ uid の在室は入りなおしとして通す）。作成を「切断中」として作る形: kaburazu-hint
-- ほかのルーム型アプリは未対処（調査と段階分けは 2026-10-12 の横断調査。頻度は低い）。新しく作るアプリはこの形にする
+- ほかのルーム型アプリは未対処（頻度は低い。進めるかどうかは [kaizen-backlog.md](../kaizen-backlog.md) の判断待ち P-19、失敗時に何も出ないアプリは P-20）。新しく作るアプリはこの形にする
 - やり直す transaction では、事前に読んだ値を代わりに使う書き方（`room || 事前に読んだ値`）をしない。やり直しの間にホストがルームを閉じると、閉じたルームを古い内容で作り直す（2026-10-12 minna-ranking で再現）。先に値を購読し（`warmRoomCache`）、終わるまで購読を続けて、transaction の中の null を「ルームがない」として扱う
 - 参加の前に `players/{name}` の onDisconnect を先に予約する方法は取らない（その名前が他の人のものだったとき、取り消しが届く前に切れると他の人の在室を消す）
 - 再現は Playwright の `page.routeWebSocket` で WebSocket を中継し、transaction の送信（`"a":"p"` と `"h"` を含む）をサーバーへ通したあと、応答を捨ててページ側を閉じる（`context.setOffline` ではタイミングを狙えない）
