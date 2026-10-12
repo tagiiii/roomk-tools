@@ -808,6 +808,12 @@
     return !p.isHost || !!room?.hostPlays;
   }
 
+  // 利用回数（回数だけ。stats.js）: ラウンドの始まりと、そのときの遊ぶ人（回答・出題に入る人）の人数
+  function countRoundStart(playerCount) {
+    window.RoomkStats?.count('start');
+    window.RoomkStats?.count('players-' + playerCount);
+  }
+
   // 使っていない軸をランダムに1つ選ぶ（使い切ったらリセット）
   function pickAxisIndex(usedAxes) {
     const used = usedAxes || [];
@@ -990,6 +996,7 @@
       showError('host-nickname-error', 'ルーム作成に失敗しました。もう一度お試しください');
       return;
     }
+    window.RoomkStats?.count('room-create');
 
     state.nickname = nickname;
     state.role = 'host';
@@ -1138,6 +1145,7 @@
   // ════════════════════════════════════
   async function hostStartGame() {
     let abortReason = null;
+    let playerCount = 0;
     const { committed } = await state.roomRef.transaction((room) => {
       if (!room || room.status !== ST.WAITING) {
         abortReason = 'invalid_state';
@@ -1153,6 +1161,7 @@
       // hostPlays のときはホストも出題ローテーションと得点に入れる
       // （回答だけ参加だと出題番のぶんホストの得点機会が多くなり不公平なため）
       const turnOrder = shuffleList(room.hostPlays ? [...guests, room.host] : guests);
+      playerCount = turnOrder.length;
       const axisIndex = pickAxisIndex(room.usedAxes);
       const players = {};
       for (const [name, p] of Object.entries(room.players)) {
@@ -1182,6 +1191,7 @@
       };
     });
 
+    if (committed) countRoundStart(playerCount);
     if (!committed) {
       if (abortReason === 'too_few') {
         alert(`ゲストが${MIN_GUESTS}人以上で始められます`);
@@ -1270,6 +1280,8 @@
     }
     if (Object.keys(results).length === 0) return;
 
+    // 利用回数は回答の画面から進めたときだけ数える（transaction ではないので、二度押しの2回目は、もう結果発表に移っている）
+    const fromGuessing = state.currentScreen === 'guessing';
     await state.roomRef.update({
       ...scoreUpdates,
       status: ST.REVEAL,
@@ -1277,6 +1289,7 @@
       'round/points': points,
       roundsDone: (room.roundsDone || 0) + 1,
     });
+    if (fromGuessing) window.RoomkStats?.count('finish');
   }
 
   // ════════════════════════════════════
@@ -1327,13 +1340,20 @@
       updates[`players/${name}/decided`] = false;
     }
     await state.roomRef.update(updates);
+    return true;
   }
 
   async function hostNextRound() {
     const snap = await state.roomRef.get();
     const room = snap.val();
     if (!room || room.status !== ST.REVEAL) return;
-    await startNewRound(room);
+    // 利用回数は結果発表の画面から進めたときだけ数える（transaction ではないので、二度押しの2回目は、もう次のラウンドに移っている）
+    const fromReveal = state.currentScreen === 'reveal';
+    const started = await startNewRound(room);
+    if (fromReveal && started) {
+      window.RoomkStats?.count('again');
+      countRoundStart(Object.values(room.players || {}).filter(p => playsInGame(room, p)).length);
+    }
   }
 
   // 出題者が切断したとき（hinting 中のみ）: 新しいものさしで交代
