@@ -916,6 +916,10 @@ function playingNames(room, players = room?.players) {
 function alivePlaying(room, players = room?.players) {
   return Object.entries(players || {}).filter(([nick, p]) => p && p.isAlive && isPlaying(room, nick));
 }
+// 利用回数（回数だけ。stats.js）: 勝敗が決まって結果の画面へ進んだ。遊ぶ人が全員抜けて終わった回（不成立）は数えない
+function countFinish(room) {
+  if (playingNames(room).length > 0) window.RoomkStats?.count('finish');
+}
 
 // ══════════════════════════════════════════════════
 // 画面管理
@@ -1123,6 +1127,8 @@ async function hostCreateRoomInner() {
     showMsg('ルーム作成に失敗しました');
     return;
   }
+  // 利用回数（回数だけ。stats.js）: ルームができた
+  window.RoomkStats?.count('room-create');
 
   state.nickname    = nickname;
   state.roomCode    = roomCode;
@@ -1272,6 +1278,7 @@ async function startGame() {
   const total  = Object.values(state.roleCounts).reduce((a, b) => a + b, 0);
   let abortReason = null;
   let hostPlays = true;
+  let playerCount = 0;
 
   const { committed } = await state.roomRef.transaction((room) => {
     if (!room || room.status !== 'waiting') {
@@ -1280,7 +1287,7 @@ async function startGame() {
     }
     // 最少人数・役職の合計は遊ぶ人だけで数える（進行だけのGMは数えない）
     hostPlays = hostPlaysOf(room);
-    const playerCount = playingNames(room).length;
+    playerCount = playingNames(room).length;
     if (playerCount < MIN_PLAYERS) {
       abortReason = 'too_few';
       return;
@@ -1303,6 +1310,9 @@ async function startGame() {
     if (abortReason === 'count_mismatch') showMsg(`役職の合計と${hostPlays ? '参加者数' : '遊ぶ人数'}を合わせてください`);
     return;
   }
+  // 利用回数（回数だけ。stats.js）: ゲームの始まりと、そのときの遊ぶ人の人数
+  window.RoomkStats?.count('start');
+  window.RoomkStats?.count('players-' + playerCount);
 }
 
 // ── 待合室の設定: GMもプレイヤーとして参加するか（開始後は変えない）──
@@ -1931,7 +1941,10 @@ async function startDay() {
   const room = snap.val();
   // 朝のハンター道連れ後に勝敗が確定している場合は結果画面へ
   if (room.winner) {
+    // 利用回数は朝の画面から進めたときだけ数える（二度押しの2回目は、もう結果の画面に移っている）
+    const fromMorning = state.currentScreen === 'morning';
     await state.roomRef.child('status').set('result');
+    if (fromMorning) countFinish(room);
     return;
   }
   const endTs = Date.now() + (room.discussionSecs || 300) * 1000;
@@ -2313,7 +2326,10 @@ async function afterExecution() {
   const room  = snap.val();
   const winner = room.winner;
   if (winner) {
+    // 利用回数は追放のあとの画面から進めたときだけ数える（二度押しの2回目は、もう結果の画面に移っている）
+    const fromExecution = state.currentScreen === 'execution';
     await state.roomRef.child('status').set('result');
+    if (fromExecution) countFinish(room);
   } else {
     // 夜フェーズへ: day++ + 役職ごとの actionDone リセット
     const players = room.players || {};
@@ -2412,7 +2428,10 @@ async function playAgain() {
     update[`players/${nick}/actionDone`]  = false;
     update[`players/${nick}/lastGuardedDay`] = 0;
   });
+  // 利用回数は結果の画面から押したときだけ数える（二度押しの2回目は、もう待合室に移っている）
+  const fromResult = state.currentScreen === 'result';
   await state.roomRef.update(update);
+  if (fromResult) window.RoomkStats?.count('again');
 }
 
 // ══════════════════════════════════════════════════
