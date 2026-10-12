@@ -913,6 +913,12 @@ function hintGiversOf(room) {
   return playingNames(room).filter(n => n !== guesser);
 }
 
+// 利用回数（回数だけ。stats.js）: ゲームの始まりと、そのときの遊ぶ人の人数
+function countGameStart(playerCount) {
+  window.RoomkStats?.count('start');
+  window.RoomkStats?.count('players-' + playerCount);
+}
+
 function pickWord(usedWords) {
   const used = usedWords || [];
   if (used.length >= WORDS.length) used.length = 0;
@@ -1011,6 +1017,8 @@ async function hostCreateInner() {
     return;
   }
   if (state.roomRef !== roomRef || state.expectedRoomRemoval) return;
+  // 利用回数（回数だけ。stats.js）: ルームができて、ホストが入れた
+  window.RoomkStats?.count('room-create');
 
   saveSession();
   startRoomListener();
@@ -1103,6 +1111,7 @@ async function startGame() {
   const gameId = state.roomRef.push().key;
   let abortReason = null;
   let hostPlays = hostPlaysOf(state.lastRoom);
+  let playerCount = 0;
   const committed = await runOperation('start', 'waiting', room => {
     if (!room) { abortReason = 'not_found'; return; }
     if (room.status !== 'waiting') { abortReason = 'bad_status'; return; }
@@ -1110,6 +1119,7 @@ async function startGame() {
     // 回答者の順番に入るのは遊ぶ人だけ。最少人数も遊ぶ人で数える
     hostPlays = hostPlaysOf(room);
     const players = playingNames(room);
+    playerCount = players.length;
     if (players.length < 3) { abortReason = 'too_few'; return; }
     if (Object.values(room.players).some(p => !playerConnected(p))) { abortReason = 'offline'; return; }
 
@@ -1148,6 +1158,7 @@ async function startGame() {
     return;
   }
 
+  countGameStart(playerCount);
 }
 
 function tooFewMsg(hostPlays) {
@@ -1788,8 +1799,10 @@ async function deleteFinishedRoom(a) {
    ════════════════════════════════════════════════ */
 async function nextRound() {
   if (state.role !== 'host') return;
+  let finished = false;
   const committed = await runOperation('next', 'result', room => {
     if (!room || room.status !== 'result') return;
+    finished = false;
 
     const turnOrder = room.turnOrder || [];
     const players = room.players || {};
@@ -1810,6 +1823,7 @@ async function nextRound() {
     }
 
     if (!guesser) {
+      finished = true;
       return {
         ...room,
         history,
@@ -1843,11 +1857,19 @@ async function nextRound() {
     return;
   }
 
+  // 利用回数: 残りの回答者がみんな抜けていて、そのまま最終結果へ進んだ（最後まで進んだゲーム）
+  if (finished) window.RoomkStats?.count('finish');
 }
 
 async function endGame() {
   if (state.role !== 'host') return;
-  await runOperation('end', 'result', room => ({ ...room, status: 'finished' }));
+  let lastRound = false;
+  const committed = await runOperation('end', 'result', room => {
+    lastRound = room.round?.number >= room.round?.totalRounds;
+    return { ...room, status: 'finished' };
+  });
+  // 利用回数: 最後のラウンドの結果から最終結果へ進んだ（途中のラウンドでの「ゲーム終了」は数えない）
+  if (committed && lastRound) window.RoomkStats?.count('finish');
 }
 
 // 進行だけのホストで、ヒントの段階にヒント役が0人・ヒント0件になったか（遊ぶ人が抜けて進められない）
@@ -1868,6 +1890,7 @@ async function playAgain() {
   const a = captureAction('finished');
   let abortReason = null;
   let hostPlays = hostPlaysOf(state.lastRoom);
+  let playerCount = 0;
   const committed = await withHostLifecycle(async () => {
     if (!canApplyAction(a, state.lastRoom, true)) return false;
     return runOperation('replay', 'finished', room => {
@@ -1876,6 +1899,7 @@ async function playAgain() {
     // 待合室で選んだホストの参加をそのまま引き継ぐ。遊ぶ人だけで数える
     hostPlays = hostPlaysOf(room);
     const players = playingNames(room);
+    playerCount = players.length;
     if (players.length < 3) { abortReason = 'too_few'; return; }
     if (Object.values(room.players).some(p => !playerConnected(p))) { abortReason = 'offline'; return; }
 
@@ -1915,6 +1939,9 @@ async function playAgain() {
     showMsg('再開に失敗しました');
     return;
   }
+  // 利用回数: 「もう一度遊ぶ」は待合室を通らずに次のゲームが始まるので、again と start を両方数える
+  window.RoomkStats?.count('again');
+  countGameStart(playerCount);
 
   clearTimeout(oldTimer);
   if (state.cleanupTimer === oldTimer) state.cleanupTimer = null;
