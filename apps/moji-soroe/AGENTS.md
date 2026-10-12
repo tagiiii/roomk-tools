@@ -73,8 +73,8 @@ apps/moji-soroe/
   `generateRoomCode` / `esc` / `cancelRoomOnDisconnect` / `showToast`）
 - CSS 接頭辞: **`ms-`**（BEM）。画面切替は共通パターンの `.screen` / `.active`
 - viewport `maximum-scale=1`、`const state = {...}`、`showScreen()`、`esc()`（RTDB アプリ共通ルール）
-- howto.js（title「あそびかた」）・stats.js 組み込み。stats はラウンド開始時（開始・次のラウンド・
-  もう一度）にホスト端末だけが `count('round')` を送る
+- howto.js（title「あそびかた」）・stats.js 組み込み。stats は起動回数（`open`）のほか、
+  ルームの進み方の回数を数える（下記「利用回数」。以前からの `round` も残している）
 - 接続・再接続・期限切れ・退出の基盤は **blackjack をそのまま流用**（presence ノード有無方式・
   `.info/connected` 追従・`writeBackPresence` transaction・epoch ガード）
 
@@ -235,6 +235,23 @@ blackjack と同一（presence「ノードの有無方式」）:
 - クリーンアップ経路は3つ: ①ホストの「トップへ戻る」で即時 `remove()` ②ホスト切断
   onDisconnect + 2分 TTL ③次回アクセス時（join / tryReconnect / ルーム監視）の期限切れ判定。
 - すべての退出・削除経路で `remove()` の前に必ず `cancelRoomOnDisconnect()` を await する。
+
+## 利用回数（2026-10-12）
+
+共通の項目名（docs/development/shared-modules.md「ルーム型で共通に使う項目名」）で、回数だけを数える。
+このアプリの「1回」は1ラウンド（回数無制限で、ホストが好きなところで終えるため）。
+どれも transaction の確定のあとに、その進行を確定させた1台だけが数える。
+
+| 項目 | 数えるとき | 数える端末 |
+|---|---|---|
+| `room-create` | ルームができた | ホスト |
+| `start`・`players-{N}` | 「始める」・「次のラウンド」・「もう一度」（どれも1ラウンドの始まり）。N は遊ぶ人の人数（進行だけのホストは含めない。「次のラウンド」は `match/members` の人数） | ホスト |
+| `finish` | ラウンドが結果（`phase: 'settled'`）まで進んだ。「OK！あがり」／山切れ・回数切れの引き分け | あがりはホスト。引き分けは、最後の「引く」「捨てる」を確定させた端末（ゲストのこともある） |
+| `again` | 「次のラウンド」。「もう一度」は、前のラウンドが結果まで進んでいたとき（「ここで終わる」のあと）だけ | ホスト |
+
+- 「ここで終わる」「途中で終わる」「ちがうみたい（つづける）」は数えない。「途中で終わる」のあとの「もう一度」は `start`・`players-{N}` だけ（結果のあとではないので `again` は数えない）
+- 「退出する」で引き分けが決まったラウンドは `finish` を数えない（退出の処理はルーム監視からも呼ばれるため。少なめに出る側の誤差）
+- 以前からの `round`（開始・次のラウンド・もう一度。`start` と同じとき）は、過去の数字と続けて見るために残している
 
 ## 文言・UX ガイド
 

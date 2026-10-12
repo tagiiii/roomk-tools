@@ -483,6 +483,11 @@ function playingEntries(room, playersObj) {
     .filter(([nick]) => hostPlays || nick !== (room && room.host))
     .sort((a, b) => ((a[1] && a[1].seat) || 0) - ((b[1] && b[1].seat) || 0));
 }
+// 利用回数（回数だけ。stats.js）: ラウンドの始まりと、そのときの遊ぶ人の人数
+function countRoundStart(playerCount) {
+  window.RoomkStats?.count('start');
+  window.RoomkStats?.count('players-' + playerCount);
+}
 
 function validateNickname(value) {
   const t = (value || '').trim();
@@ -999,6 +1004,7 @@ async function hostCreateRoomInner() {
     if (committed) { roomCode = code; roomRef = ref; break; }
   }
   if (!roomRef) { showMsg('ルームを作れなかったよ'); return; }
+  window.RoomkStats?.count('room-create');
 
   state.role = 'host';
   state.nickname = nickname;
@@ -1392,6 +1398,7 @@ async function submitDraw(tileId = null) {
 async function submitDrawInner(tileId = null) {
   const cap = captureMatchState();
   const nick = state.nickname;
+  let settled = false;
   const { committed } = await state.roomRef.transaction((room) => {
     if (!room || room.status !== 'playing') return;
     const m = room.match;
@@ -1399,8 +1406,11 @@ async function submitDrawInner(tileId = null) {
     if (m.turn !== nick || m.step !== STEP.DRAW || m.turnSerial !== cap.turnSerial) return;
     const next = acquireTile(m, nick, tileId);
     if (!next) return;
+    settled = next.phase === PHASE.SETTLED;
     return { ...room, match: next };
   });
+  // 利用回数（回数だけ。stats.js）: この操作でラウンドの結果（引き分け）まで進んだ
+  if (committed && settled) window.RoomkStats?.count('finish');
   if (!committed) showMsg('取れなかったよ。今の文字から選び直してね');
 }
 
@@ -1419,6 +1429,7 @@ async function submitDiscardInner() {
   if (sel == null || sel < 0 || sel >= hand0.length) { showMsg('捨てる文字を選んでね'); return; }
   const tileId = hand0[sel];
 
+  let settled = false;
   const { committed } = await state.roomRef.transaction((room) => {
     if (!room || room.status !== 'playing') return;
     const m = room.match;
@@ -1431,20 +1442,21 @@ async function submitDiscardInner() {
     const myHand = [...cur];
     myHand.splice(idx, 1);
     const discards = [...((m.discards || []).map(Number)), tileId];
-    return {
-      ...room,
-      match: settleExhausted({
-        ...m,
-        hands: { ...hands, [nick]: myHand },
-        discards,
-        turn: nextMember(m, nick),
-        step: STEP.DRAW,
-        drawnId: null,
-      }),
-    };
+    const next = settleExhausted({
+      ...m,
+      hands: { ...hands, [nick]: myHand },
+      discards,
+      turn: nextMember(m, nick),
+      step: STEP.DRAW,
+      drawnId: null,
+    });
+    settled = next.phase === PHASE.SETTLED;
+    return { ...room, match: next };
   });
   state.selectedIndex = null;
   state.confirmDiscard = false;
+  // 利用回数: この操作でラウンドの結果（引き分け）まで進んだ
+  if (committed && settled) window.RoomkStats?.count('finish');
   if (!committed) showMsg('捨てられなかったよ');
 }
 
@@ -1485,6 +1497,7 @@ async function hostStartGame() {
   if (state.role !== 'host' || !state.roomRef) return;
   const deck = buildDeck(); // 乱数は transaction の外で生成
   let reason = null;
+  let playerCount = 0;
   const { committed } = await state.roomRef.transaction((room) => {
     if (!room || room.status !== 'waiting') { reason = 'invalid'; return; }
     if (room.host !== state.nickname) { reason = 'invalid'; return; }
@@ -1492,12 +1505,14 @@ async function hostStartGame() {
     if (!players[state.nickname] || !players[state.nickname].isHost) { reason = 'invalid'; return; }
     const count = playingEntries(room, players).length; // 遊ぶ人だけで数える
     if (count < MIN_PLAYERS || count > MAX_PLAYERS) { reason = 'count'; return; }
+    playerCount = count;
     reason = null;
     const { members, wins } = buildMatchMembers(room, players);
     const base = { matchId: 1, members, wins, round: 1, history: null };
     return { ...room, status: 'playing', match: dealRound(base, deck, starterForRound(base, 1)) };
   });
   if (committed) window.RoomkStats?.count('round');
+  if (committed) countRoundStart(playerCount);
   if (!committed) showMsg(reason === 'count' ? '遊ぶ人が2〜5人で始められるよ' : '始められなかったよ');
 }
 
@@ -1518,6 +1533,8 @@ async function hostApproveClaim() {
       match: { ...m, phase: PHASE.SETTLED, winner: { nick: c.nick, words: c.words || [] }, wins, history, claim: null },
     };
   });
+  // 利用回数: あがりが決まって、ラウンドの結果まで進んだ
+  if (committed) window.RoomkStats?.count('finish');
   if (!committed) showMsg('確定できなかったよ');
 }
 
@@ -1551,17 +1568,24 @@ async function hostNextRound() {
   const deck = buildDeck(); // 乱数は transaction の外で生成
   const cap = captureMatchState();
   let reason = null;
+  let playerCount = 0;
   const { committed } = await state.roomRef.transaction((room) => {
     if (!room || room.status !== 'playing' || room.host !== state.nickname) { reason = 'invalid'; return; }
     const m = room.match;
     if (!m || m.matchId !== cap.matchId || m.round !== cap.round || m.phase !== PHASE.SETTLED) { reason = 'invalid'; return; }
     if (Object.keys(m.members || {}).length < MIN_PLAYERS) { reason = 'count'; return; }
+    playerCount = Object.keys(m.members || {}).length;
     reason = null;
     const round = (Number(m.round) || 0) + 1;
     const base = { ...m, round };
     return { ...room, match: dealRound(base, deck, starterForRound(base, round)) };
   });
   if (committed) window.RoomkStats?.count('round');
+  // 利用回数: 結果から続けてもう1ラウンド
+  if (committed) {
+    window.RoomkStats?.count('again');
+    countRoundStart(playerCount);
+  }
   if (!committed) showMsg(reason === 'count' ? '2人以上いないと次のラウンドは始められないよ' : '進められなかったよ');
 }
 
@@ -1580,6 +1604,7 @@ async function hostRematch() {
   const deck = buildDeck(); // 乱数は transaction の外で生成
   const cap = captureMatchState();
   let reason = null;
+  let playerCount = 0; let afterSettled = false;
   const { committed } = await state.roomRef.transaction((room) => {
     if (!room || room.status !== 'result' || room.host !== state.nickname) { reason = 'invalid'; return; }
     if (!room.match || room.match.matchId !== cap.matchId) { reason = 'invalid'; return; }
@@ -1591,10 +1616,17 @@ async function hostRematch() {
     if (playingEntries(room, newPlayers).length < MIN_PLAYERS) { reason = 'count'; return; } // 遊ぶ人だけで数える
     reason = null;
     const { members, wins } = buildMatchMembers(room, newPlayers);
+    playerCount = Object.keys(members).length;
+    afterSettled = room.match.phase === PHASE.SETTLED;
     const base = { matchId: room.match.matchId + 1, members, wins, round: 1, history: null };
     return { ...room, status: 'playing', players: newPlayers, match: dealRound(base, deck, starterForRound(base, 1)) };
   });
   if (committed) window.RoomkStats?.count('round');
+  // 利用回数: 新しいラウンドの始まり。again は、前のラウンドが結果まで進んでいたときだけ（途中で終わったあとは数えない）
+  if (committed) {
+    if (afterSettled) window.RoomkStats?.count('again');
+    countRoundStart(playerCount);
+  }
   if (!committed) showMsg(reason === 'count' ? '遊ぶ人が2人以上つながっていないと、もう一度はできないよ' : 'もう一度できなかったよ');
 }
 
