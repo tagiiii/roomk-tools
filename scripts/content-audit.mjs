@@ -420,13 +420,14 @@ function collectEntries() {
   })));
 
   // suki-bingo: app.js の const THEMES = [ { id, name, items: [ { t }, ... ] }, ... ]（テーマと候補）。
-  //   ルームではテーマの id と候補の番号で共有するので、空の語・同じテーマ内の重複・16個でないテーマは fail-fast にする。
+  //   ルームではテーマの id と語の番号で共有するので、空の語・同じテーマ内の重複・24語でないテーマは fail-fast にする
+  //   （1テーマ24語から、ゲームごとに16個を候補に出す）。
   const bingoThemes = evalArrayFromSource(read('apps/suki-bingo/app.js'), 'THEMES', 'apps/suki-bingo/app.js') || [];
   const bingoProblems = [];
   if (bingoThemes.length === 0) bingoProblems.push('THEMES が空');
   bingoThemes.forEach((theme) => {
     const items = theme.items || [];
-    if (items.length !== 16) bingoProblems.push(`${theme.id} の候補が ${items.length} 個（16個にする）`);
+    if (items.length !== 24) bingoProblems.push(`${theme.id} の語が ${items.length} 個（24個にする）`);
     const seen = new Set();
     items.forEach((item, index) => {
       const text = item?.t;

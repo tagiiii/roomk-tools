@@ -686,6 +686,55 @@ done
 $REF5_OK && echo -e "  ${GREEN}OK${NC}"
 
 # ─────────────────────────────────────────────────────
+# [RULES-1] RTDB ルールの名前空間チェック
+#   database.rules.json が最上位の名前空間を列挙しているとき、コードが ref() に渡す
+#   最上位の名前（〜_rooms）と stats がルールにあるかを確かめる。
+#   足りないまま公開すると、そのアプリだけルームを作れない（ルールの編集はオーナー作業）。
+#   最上位がワイルドカード（$〜）の間は、どの名前でも通るので検査しない。
+# ─────────────────────────────────────────────────────
+echo ""
+echo -e "${BOLD}[RULES-1] RTDB ルールの名前空間チェック${NC}"
+
+RULES1_OUT=$(python3 - <<'PYEOF'
+import glob, json, re, sys
+
+try:
+    rules = json.load(open('database.rules.json', encoding='utf-8'))['rules']
+except Exception as e:
+    print(f'database.rules.json を読み込めません: {e}')
+    sys.exit(0)
+if any(k.startswith('$') for k in rules):
+    sys.exit(0)
+
+used = {'stats': ['apps/shared/js/stats.js']}
+for f in sorted(glob.glob('apps/*/index.html') + glob.glob('apps/*/*.js')):
+    t = open(f, encoding='utf-8').read()
+    if 'firebase-firestore' in t:
+        continue  # Firestore のコレクション名は RTDB のルールの対象外
+    consts = dict(re.findall(r"\b(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*['\"`]([A-Za-z0-9_-]+)['\"`]\s*;", t))
+    for m in re.finditer(r"\bref\(\s*(?:db\s*,\s*)?(.{0,60})", t):
+        arg = m.group(1)
+        lit = re.match(r"['\"`]([A-Za-z0-9_.-]+)", arg)
+        var = re.match(r"`\$\{([A-Za-z_$][\w$]*)\}|([A-Za-z_$][\w$]*)\s*(?:\+|,|\))", arg)
+        name = lit.group(1) if lit else consts.get(var.group(1) or var.group(2)) if var else None
+        if name and not name.startswith('.info'):
+            used.setdefault(name, []).append(f)
+
+for name in sorted(used):
+    if name not in rules:
+        print(f'{used[name][0]} — 名前空間 "{name}" が database.rules.json にありません（公開前にルールへ足す。オーナー作業）')
+PYEOF
+)
+if [ -n "$RULES1_OUT" ]; then
+  while IFS= read -r line; do
+    echo -e "  ${RED}[ERROR]${NC} $line"
+    ERRORS=$((ERRORS + 1))
+  done <<< "$RULES1_OUT"
+else
+  echo -e "  ${GREEN}OK${NC}"
+fi
+
+# ─────────────────────────────────────────────────────
 # 結果サマリ
 # ─────────────────────────────────────────────────────
 echo ""

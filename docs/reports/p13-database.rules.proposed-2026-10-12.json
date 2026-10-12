@@ -102,12 +102,6 @@
         ".write": "auth != null"
       }
     },
-    "oekaki_my_rooms": {
-      "$roomId": {
-        ".read": "auth != null",
-        ".write": "auth != null"
-      }
-    },
     "oekaki_rooms": {
       "$roomId": {
         ".read": "auth != null",
@@ -139,6 +133,12 @@
       }
     },
     "stampate_rooms": {
+      "$roomId": {
+        ".read": "auth != null",
+        ".write": "auth != null"
+      }
+    },
+    "sukibingo_rooms": {
       "$roomId": {
         ".read": "auth != null",
         ".write": "auth != null"
