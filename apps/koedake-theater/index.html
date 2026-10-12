@@ -737,6 +737,11 @@ function isPlaying(room, nick) {
   const players = (room && room.players) || {};
   return !!players[nick] && playingNames(room, players).includes(nick);
 }
+// 利用回数（回数だけ。stats.js）: ラウンドの始まりと、そのときの遊ぶ人の人数
+function countRoundStart(playerCount) {
+  window.RoomkStats?.count('start');
+  window.RoomkStats?.count('players-' + playerCount);
+}
 // 開始できる人数の案内（遊ぶ人だけで数える）
 function startRuleText(hostPlays) {
   return hostPlays
@@ -786,6 +791,7 @@ async function hostCreateRoomInner() {
     if (committed) { roomCode = code; roomRef = ref; break; }
   }
   if (!roomCode || !roomRef) { showMsg('ルーム作成に失敗しました'); return; }
+  window.RoomkStats?.count('room-create');
 
   state.nickname = nickname; state.roomCode = roomCode; state.role = 'host';
   state.roomRef = roomRef;
@@ -916,6 +922,7 @@ async function guestJoinInner() {
 async function startGame() {
   let abortReason = null;
   let hostPlays = false;
+  let playerCount = 0;
   const { committed } = await state.roomRef.transaction((room) => {
     if (!room || room.status !== STATUS.WAITING) { abortReason = 'bad_status'; return; }
     const players = room.players || {};
@@ -924,6 +931,7 @@ async function startGame() {
     const count = playingNames(room, players).length;
     if (count < MIN_PLAYERS) { abortReason = 'too_few'; return; }
     if (count > MAX_PLAYERS) { abortReason = 'too_many'; return; }
+    playerCount = count;
     const cardIndex = pickCardIndex(room.usedCards);
     abortReason = null;
     return {
@@ -933,6 +941,7 @@ async function startGame() {
       round: { number: 1, cardIndex, actor: null, answerIndex: null },
     };
   });
+  if (committed) countRoundStart(playerCount);
   if (!committed && abortReason === 'too_few') {
     showMsg(hostPlays ? '2人以上で始められます' : 'ホストのほかに2人以上で始められます');
   }
@@ -1076,13 +1085,17 @@ async function openVotes() {
     console.error('[koedake] openVotes failed', error);
     return { committed: false };
   });
+  // 利用回数: 開票して結果の画面まで進んだラウンド
+  if (committed) window.RoomkStats?.count('finish');
   if (!committed) state.revealTriggered = false;
 }
 
 // ── つぎのラウンドへ（ホスト）──
 async function nextRound() {
-  await state.roomRef.transaction((room) => {
+  let playerCount = 0;
+  const { committed } = await state.roomRef.transaction((room) => {
     if (!room || room.status !== STATUS.REVEAL) return;
+    playerCount = playingNames(room, room.players || {}).length;
     const cardIndex = pickCardIndex(room.usedCards);
     const nextPlayers = {};
     Object.entries(room.players || {}).forEach(([nick, player]) => {
@@ -1101,6 +1114,10 @@ async function nextRound() {
       },
     };
   });
+  if (committed) {
+    window.RoomkStats?.count('again');
+    countRoundStart(playerCount);
+  }
 }
 
 // ── おわる（ホスト）──
