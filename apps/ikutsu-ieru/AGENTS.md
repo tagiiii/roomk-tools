@@ -24,6 +24,7 @@
 - ※お題データのみ `themes.js` に分離(保守性のため)
 - 共通デザインシステム(`apps/shared/css/design-system.css`)を使用
 - Firebase SDK 10.14.1 (compat 版、単一ファイルアプリ共通)
+- `slides.html` は画面共有用の説明スライド（全12枚。slides-generator で作成。エンジンは正本テンプレート kotoba-tantei と同じで、中身だけ差し替えた）。ボタン名・進め方・例に出しているお題を変えたら、スライドと発表者ノートの文も合わせる
 
 ### Realtime Database パス
 
