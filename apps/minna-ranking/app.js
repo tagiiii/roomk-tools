@@ -400,6 +400,7 @@ async function createRoom() {
         };
       });
       if (result.committed) {
+        window.RoomkStats?.count('room-create');
         connectToRoom('host', nickname, code, ref);
         return;
       }
@@ -713,10 +714,12 @@ async function startRound() {
   const topic = state.selectedTopic;
   if (!topic || !topic.title || topic.items.length < 2) return;
   state.busy = true;
+  let playerCount = 0;
   try {
     const result = await state.roomRef.transaction((room) => {
       if (!room || room.status !== STATUS.WAITING || room.hostUid !== firebase.auth().currentUser?.uid) return;
       if (playerNames(room).length < 2) return;
+      playerCount = playerNames(room).length;
       return {
         ...room,
         status: STATUS.RANKING,
@@ -731,6 +734,11 @@ async function startRound() {
         scores: null,
       };
     });
+    if (result.committed) {
+      // 利用回数（回数だけ。stats.js）: 1つのお題の始まりと、そのときの遊ぶ人の人数
+      window.RoomkStats?.count('start');
+      window.RoomkStats?.count('players-' + playerCount);
+    }
     if (!result.committed) toast('始められませんでした。参加者を確かめてね');
   } catch (error) {
     console.warn('[minna-ranking] start failed', error);
@@ -1093,11 +1101,13 @@ function renderReveal(room) {
 async function nextReveal() {
   if (state.role !== 'host' || state.busy || !state.roomRef) return;
   state.busy = true;
+  let toDone = false;
   try {
-    await state.roomRef.transaction((room) => {
+    const result = await state.roomRef.transaction((room) => {
       if (!room || room.status !== STATUS.REVEAL || room.hostUid !== firebase.auth().currentUser?.uid) return;
       const nextIndex = (Number(room.targetIndex) || 0) + 1;
-      if (nextIndex >= (room.targets?.length || 0)) return { ...room, status: STATUS.DONE };
+      toDone = nextIndex >= (room.targets?.length || 0);
+      if (toDone) return { ...room, status: STATUS.DONE };
       return {
         ...room,
         status: STATUS.GUESS,
@@ -1105,6 +1115,8 @@ async function nextReveal() {
         phaseStartedAt: firebase.database.ServerValue.TIMESTAMP,
       };
     });
+    // 利用回数: 全員の公開を終えて、このお題の結果まで進んだ
+    if (result.committed && toDone) window.RoomkStats?.count('finish');
   } catch (error) {
     console.warn('[minna-ranking] next reveal failed', error);
     toast('進めませんでした。もう一度ためしてね');
@@ -1128,9 +1140,11 @@ function renderDone(room) {
 async function nextTopic() {
   if (state.role !== 'host' || state.busy || !state.roomRef) return;
   state.busy = true;
+  let hadResult = false;
   try {
-    await state.roomRef.transaction((room) => {
+    const result = await state.roomRef.transaction((room) => {
       if (!room || room.status !== STATUS.DONE || room.hostUid !== firebase.auth().currentUser?.uid) return;
+      hadResult = !!room.targets?.length;
       return {
         ...room,
         status: STATUS.WAITING,
@@ -1144,6 +1158,8 @@ async function nextTopic() {
         scores: null,
       };
     });
+    // 利用回数: 結果のあと、続けて次のお題へ進んだ（スキップしたお題のあとは数えない）
+    if (result.committed && hadResult) window.RoomkStats?.count('again');
   } catch (error) {
     console.warn('[minna-ranking] next topic failed', error);
     toast('進めませんでした。もう一度ためしてね');
