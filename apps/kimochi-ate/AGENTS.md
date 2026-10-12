@@ -22,6 +22,7 @@
 
 - Realtime Database と匿名認証。パスは `kimochiate_rooms/{roomCode}`、再接続用の sessionStorage キーは `kimochiate_session`
 - 構成は `index.html` + `app.js`（ES module）+ `style.css`。CSS 接頭辞は `.ka-`（BEM）。index.html・app.js・style.css を変えたら `?v=` をそろえて上げる
+- `slides.html` は画面共有用の説明スライド（全14枚。slides-generator で作成。エンジンは正本テンプレート kotoba-tantei と同じで、中身だけ差し替えた）。ボタン名・進め方・6つの系の名前と色・系ごとのことばの数（12個）を変えたら、スライドと発表者ノートの文も合わせる
 - 描画はすべて DOM API（textContent）。innerHTML は使わない
 - 保存するのは進行用の一時状態だけ。選んだ内容（picks）はそのラウンドの間だけルームに置き、次のラウンドへ進むときとルームを閉じたときに消える。ホストが「ルームを閉じる」を押さずにタブを閉じた場合は、最後の場面の選択がルームの削除（TTL 後の次回アクセス時の掃除）まで残る（rtdb.md の全体共通の制約）。sessionStorage には再接続用の `{role, nickname, roomCode, uid, joinedAt}` だけを置き、選んだ内容は入れない
 - 利用回数は stats.js の `open` だけを数える。選ばれた系やことばは数えない
