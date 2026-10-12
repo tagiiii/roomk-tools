@@ -37,7 +37,7 @@
 - 描画はすべて DOM API（textContent）。innerHTML は使わない
 - `slides.html` は画面共有用の説明スライド（全13枚。slides-generator で作成。エンジンは正本テンプレート kotoba-tantei と同じで、こっそりワードの slides.html を元に中身だけ差し替えた）。ボタン名・進め方・テーマの数（16個）・候補の数（24語から16個）を変えたら、スライドと発表者ノートの文、早見表の行も合わせる
 - 保存するのは進行用の一時状態だけ。カード（cards）はそのゲームの間だけルームに置き、つぎのゲームへ進むとき（テーマを選ぶ画面に戻るとき）とルームを閉じたときに消える。ホストが「ルームを閉じる」を押さずにタブを閉じた場合は、最後のゲームのカードがルームの削除（TTL 後の次回アクセス時の掃除）まで残る（rtdb.md の全体共通の制約）。sessionStorage には再接続用の `{role, nickname, roomCode, uid, joinedAt}` だけを置き、カードの中身は入れない
-- 利用回数は stats.js の `open` と、ホストが選んだテーマ（`theme-{id}`）だけを数える。だれが何を選んだかは数えない
+- 利用回数は stats.js の `open`、ホストが選んだテーマ（`theme-{id}`）、ルームの進み方の回数（下記「共通モジュールの使用箇所」の表）を数える。だれが何を選んだかは数えない
 - 開発・静的監査から本番 Firebase に書き込まない
 
 ## 役割と人数
@@ -173,5 +173,5 @@ waiting ─このテーマでカードを作る→ picking ─ビンゴをはじ
 |-----------|----------|
 | design-system.css | 色・角丸・余白のトークン、`.btn` 系のボタン、`.pop-in` |
 | rtdb-utils.js（`?v=20261005`） | `initFirebase`・`generateRoomCode`・`now`・`isRoomExpired`・`getHostDisconnectedAt`・`cancelRoomOnDisconnect`・`copyRoomCode`・`copyRoomLink`・`showToast` |
-| stats.js（`?v=1`） | 起動回数（`open`）と、ホストが選んだテーマ（`theme-{id}`） |
+| stats.js（`?v=1`） | 起動回数（`open`）と、ホストが選んだテーマ（`theme-{id}`）。加えて共通の項目名（docs/development/shared-modules.md「ルーム型で共通に使う項目名」。2026-10-12）。「1回」は「ビンゴをはじめる」から結果までの1ゲーム。すべてホストの端末で、transaction の確定のあとに数える: `room-create`（ルームができた）・`start` と `players-{N}`（「ビンゴをはじめる」。N はカードの枚数＝遊ぶ人の人数で、ホストが代わりに作ったカードも入る）・`finish`（結果へ進んだ。「ここで終わりにする」でも数える）・`again`（「ちがうテーマでもう一度」）。「このテーマでカードを作る」は従来どおり `theme-{id}` だけで、「テーマを選びなおす」は数えない |
 | howto.js | 「あそびかた」モーダル |

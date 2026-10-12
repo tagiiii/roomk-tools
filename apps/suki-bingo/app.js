@@ -754,6 +754,7 @@ async function createRoom() {
         };
       });
       if (result.committed) {
+        window.RoomkStats?.count('room-create');
         connectToRoom('host', nickname, code, ref, joinedAt);
         return;
       }
@@ -1626,11 +1627,18 @@ async function startPlaying() {
   const making = playingNames(room).filter((name) => !cardOf(room, name));
   if (making.length > 0
     && !window.confirm('まだカードを作っている人がいます。はじめると、その人は今回は見ているだけになります。はじめますか？')) return;
+  let cardCount = 0;
   const ok = await hostTransaction((current) => {
     if (current.status !== STATUS.PICKING || current.round !== round) return;
-    if (cardNames(current).length < MIN_CARDS) return;
+    cardCount = cardNames(current).length;
+    if (cardCount < MIN_CARDS) return;
     return { ...current, status: STATUS.PLAYING, drawn: null };
   }, 'はじめられませんでした。もう一度ためしてね');
+  // 利用回数（回数だけ。stats.js）: ビンゴの始まりと、そのときのカードの枚数（＝遊ぶ人の人数）
+  if (ok) {
+    window.RoomkStats?.count('start');
+    window.RoomkStats?.count('players-' + cardCount);
+  }
   if (ok === false) toast('はじめられませんでした。カードの数を確かめてね');
 }
 
@@ -1659,6 +1667,7 @@ async function showResult(early) {
     if (room.status !== STATUS.PLAYING || room.round !== round) return;
     return { ...room, status: STATUS.RESULT };
   }, '進めませんでした。もう一度ためしてね');
+  if (ok) window.RoomkStats?.count('finish');
   if (ok === false) toast('進めませんでした。画面を確かめてね');
 }
 
@@ -1668,6 +1677,7 @@ async function playAgain() {
     if (room.status !== STATUS.RESULT || room.round !== round) return;
     return toWaiting(room);
   }, '進めませんでした。もう一度ためしてね');
+  if (ok) window.RoomkStats?.count('again');
   if (ok === false) toast('進めませんでした。画面を確かめてね');
 }
 
