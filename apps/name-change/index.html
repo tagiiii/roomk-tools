@@ -732,6 +732,7 @@ async function hostCreateRoom() {
       if (btn) btn.disabled = false;
       return;
     }
+    window.RoomkStats?.count('room-create');
 
     roomRef.onDisconnect().update({
       hostConnected: false,
@@ -961,6 +962,7 @@ async function hostStartNaming() {
   if (!state.isHost || !state.roomRef) return;
   const action = captureAction('waiting');
   let abortReason = null;
+  let playerCount = 0;
   const { committed } = await action.ref.transaction((room) => {
     if (!canApplyAction(action, room)) return;
     if (!room) { abortReason = 'not_found'; return; }
@@ -971,6 +973,7 @@ async function hostStartNaming() {
     if (playing.length < MIN_PLAYING) { abortReason = 'too_few'; return; }
     if (playing.some(p => !playerConnected(p))) { abortReason = 'offline'; return; }
     abortReason = null;
+    playerCount = playing.length;
     const host = players[action.nickname];
     // GMが遊ぶときはゲストと同じく未選択から始める。進行だけのときは従来どおり gameRole:'host'
     const hostRecord = hostPlaysOf(room)
@@ -985,6 +988,11 @@ async function hostStartNaming() {
       revealOrder: null,
     };
   }, undefined, false).catch(() => ({ committed: false }));
+  if (committed) {
+    // 利用回数（回数だけ。stats.js）: ゲームの始まりと、そのときの遊ぶ人の人数
+    window.RoomkStats?.count('start');
+    window.RoomkStats?.count('players-' + playerCount);
+  }
   if (!committed) {
     if (abortReason === 'too_few') toast(`遊ぶ人が${MIN_PLAYING}人以上で開始できます`);
     else if (abortReason === 'offline') toast('再接続を待ってから始めてください');
@@ -1323,6 +1331,8 @@ async function hostStartRevealing() {
       revealOrder: changers.sort(() => Math.random() - 0.5),
     };
   }, undefined, false).catch(() => ({ committed: false }));
+  // 利用回数: 結果発表の画面まで進んだ
+  if (committed) window.RoomkStats?.count('finish');
   if (!committed) {
     const messages = {
       bad_status: '今は結果発表へ進めません',
