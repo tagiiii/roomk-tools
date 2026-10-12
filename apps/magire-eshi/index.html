@@ -993,6 +993,11 @@ function playingNames(room) {
 function isPlaying(room, nick) {
   return !!nick && !!room?.players?.[nick] && playingNames(room).includes(nick);
 }
+// 利用回数（回数だけ。stats.js）: ラウンドの始まりと、そのときの遊ぶ人の人数
+function countRoundStart(playerCount) {
+  window.RoomkStats?.count('start');
+  window.RoomkStats?.count('players-' + playerCount);
+}
 // 開始・次ラウンドの人数の可否（遊ぶ人だけで数える）
 function playerCountIssue(room) {
   const count = playingNames(room).length;
@@ -1041,6 +1046,7 @@ async function hostCreateRoomInner() {
     if (committed) { roomCode = code; roomRef = ref; break; }
   }
   if (!roomCode || !roomRef) { showMsg('ルーム作成に失敗しました'); return; }
+  window.RoomkStats?.count('room-create');
 
   state.nickname = nickname; state.roomCode = roomCode; state.role = 'host';
   state.roomRef = roomRef;
@@ -1193,11 +1199,12 @@ function buildRoundGame(room) {
 async function hostStartGame() {
   if (state.role !== 'host') return;
   const action = captureAction();
-  let abortReason = null, hostPlays = hostPlaysOf(state.lastRoom);
+  let abortReason = null, hostPlays = hostPlaysOf(state.lastRoom), playerCount = 0;
   const { committed } = await action.ref.transaction((room) => {
     if (!canApplyAction(action, room, STATUS.WAITING)) { abortReason = 'invalid_state'; return; }
     if (guestNames(room.players).some(nick => !playerConnected(room.players[nick]))) { abortReason = 'disconnected'; return; }
     hostPlays = hostPlaysOf(room);
+    playerCount = playingNames(room).length;
     const issue = playerCountIssue(room);
     if (issue) { abortReason = issue; return; }
     const built = buildRoundGame(room);
@@ -1205,6 +1212,7 @@ async function hostStartGame() {
     abortReason = null;
     return { ...room, ...built, status: STATUS.REVEAL, round: 1 };
   }, undefined, false);
+  if (committed) countRoundStart(playerCount);
   if (!committed && (abortReason === 'too_few' || abortReason === 'too_many')) {
     showMsg(countIssueMsg(abortReason, hostPlays, '始められます'));
   }
@@ -1215,11 +1223,12 @@ async function hostStartGame() {
 async function hostNextRound() {
   if (state.role !== 'host') return;
   const action = captureAction();
-  let abortReason = null, hostPlays = hostPlaysOf(state.lastRoom);
+  let abortReason = null, hostPlays = hostPlaysOf(state.lastRoom), playerCount = 0;
   const { committed } = await action.ref.transaction((room) => {
     if (!canApplyAction(action, room, STATUS.RESULT)) { abortReason = 'invalid_state'; return; }
     if (guestNames(room.players).some(nick => !playerConnected(room.players[nick]))) { abortReason = 'disconnected'; return; }
     hostPlays = hostPlaysOf(room);
+    playerCount = playingNames(room).length;
     const issue = playerCountIssue(room);
     if (issue) { abortReason = issue; return; }
     const built = buildRoundGame(room);
@@ -1227,6 +1236,10 @@ async function hostNextRound() {
     abortReason = null;
     return { ...room, ...built, status: STATUS.REVEAL, round: (room.round || 1) + 1 };
   }, undefined, false);
+  if (committed) {
+    window.RoomkStats?.count('again');
+    countRoundStart(playerCount);
+  }
   if (!committed && (abortReason === 'too_few' || abortReason === 'too_many')) {
     showMsg(countIssueMsg(abortReason, hostPlays, '続けられます'));
   }
@@ -1543,6 +1556,7 @@ async function computeResult() {
   if (state.role !== 'host' || state.resultTriggered) return;
   const action = captureAction();
   state.resultTriggered = action;
+  let aborted = false;
   try {
   const { committed } = await action.ref.transaction((room) => {
     if (!canApplyAction(action, room, STATUS.VOTING) || !room.game) return;
@@ -1564,11 +1578,14 @@ async function computeResult() {
       const caught = maxV > 0 && tops.length === 1 && tops[0] === fake;
       outcome = caught ? 'caught' : 'escaped';
     }
+    aborted = outcome === 'aborted';
     const result = { outcome, voteCounts: counts, reversalGuess: null, reversalJudge: null };
     // ホストも遊ぶときは判定する人がいないので、逆転当ては同じカテゴリからの選択式（自動で正誤）
     if (outcome === 'caught' && hostPlaysOf(room)) result.reversalChoices = buildReversalChoices(room.game);
     return { ...room, status: STATUS.RESULT, game: { ...room.game, result } };
   });
+  // 利用回数: 開票まで進んだラウンド（まぎれ絵師がいなくなった不成立は数えない）
+  if (committed && !aborted) window.RoomkStats?.count('finish');
   if (!committed && state.resultTriggered === action) state.resultTriggered = false;
   } catch (error) {
     if (state.resultTriggered === action) state.resultTriggered = false;
