@@ -726,7 +726,15 @@ function pickRandomTheme() {
 }
 
 // ── ホスト: ルーム作成 ──
+// 作成が例外で終わったとき（送信後の切断・権限エラーなど）も無反応にしない
 async function hostCreateRoom() {
+  try { await hostCreateRoomInner(); }
+  catch (error) {
+    console.error('[ikutsu-ieru] create failed', error);
+    showError('host-error', 'ルーム作成に失敗しました。もう一度お試しください');
+  }
+}
+async function hostCreateRoomInner() {
   showError('host-error', '');
   const nickname = document.getElementById('host-nickname').value.trim();
   const nickErr = validNick(nickname);
@@ -779,7 +787,15 @@ function roomCodeImeError(code) {
 }
 
 // ── ゲスト: 参加 ──
+// 参加が例外で終わったとき（送信後の切断・権限エラーなど）も無反応にしない
 async function guestJoin() {
+  try { await guestJoinInner(); }
+  catch (error) {
+    console.error('[ikutsu-ieru] join failed', error);
+    showError('guest-error', '参加に失敗しました。もう一度お試しください');
+  }
+}
+async function guestJoinInner() {
   showError('guest-error', '');
   const nickname = document.getElementById('guest-nickname').value.trim();
   const roomCode = normalizeRoomCode(document.getElementById('guest-code').value);
