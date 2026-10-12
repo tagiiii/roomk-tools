@@ -851,6 +851,8 @@ async function hostCreateRoomInner() {
     showMsg('ルーム作成に失敗しました');
     return;
   }
+  // 利用回数（回数だけ。stats.js）: ルームができた
+  window.RoomkStats?.count('room-create');
 
   state.nickname = nickname; state.roomCode = roomCode; state.role = 'host';
   state.discussionSecs = discussionSecs; state.wolfCount = wolfCount;
@@ -1002,6 +1004,7 @@ async function startGame() {
   const wolfWord    = swapped ? pair.citizen : pair.wolf;
   let abortReason = null;
   let hostPlays = true;
+  let playerCount = 0;
   const { committed } = await state.roomRef.transaction((room) => {
     if (!room || room.status !== 'waiting') {
       abortReason = 'invalid_state';
@@ -1012,6 +1015,7 @@ async function startGame() {
     hostPlays = hostPlaysOf(room);
     // お題・ウルフを配るのは遊ぶ人だけ。最少人数・ウルフの上限も遊ぶ人で数える
     const playing = playingNames(room, players);
+    playerCount = playing.length;
     if (!Object.values(players).every(playerConnected)) {
       abortReason = 'disconnected';
       return;
@@ -1054,6 +1058,9 @@ async function startGame() {
     return;
   }
   state.resultTriggered = false;
+  // 利用回数（回数だけ。stats.js）: ゲームの始まりと、そのときの遊ぶ人の人数
+  window.RoomkStats?.count('start');
+  window.RoomkStats?.count('players-' + playerCount);
 }
 
 // ── 待合室の設定: ホストもプレイヤーとして参加するか（開始後は変えない）──
@@ -1168,9 +1175,11 @@ async function computeResult(room, players) {
   if (state.resultTriggered) return;
   state.resultTriggered = true;
 
+  let playerCount = 0;
   const { committed } = await state.roomRef.transaction((currentRoom) => {
     if (!currentRoom || currentRoom.status !== 'voting') return;
     const currentPlayers = currentRoom.players || players || {};
+    playerCount = playingNames(currentRoom, currentPlayers).length;
     const counts = {};
     // 票を数えるのは遊ぶ人の票・遊ぶ人への票だけ（進行だけのホストは対象外）
     Object.entries(currentPlayers).forEach(([nick, p]) => {
@@ -1183,6 +1192,8 @@ async function computeResult(room, players) {
     const citizenWin = tops.length === 1 && currentPlayers[tops[0]]?.isWolf === true;
     return { ...currentRoom, status: 'result', citizenWin, voteCounts: counts };
   });
+  // 利用回数: 結果の画面まで進んだ（遊ぶ人が全員抜けたあとの締め切りは数えない）
+  if (committed && playerCount > 0) window.RoomkStats?.count('finish');
   if (!committed) state.resultTriggered = false;
 }
 
@@ -1191,7 +1202,7 @@ async function playAgain() {
   clearInterval(state.timerInterval);
   state.myVote = null; state.wordRevealed = false; state.myWord = null;
   state.resultTriggered = false;
-  await state.roomRef.transaction((room) => {
+  const { committed } = await state.roomRef.transaction((room) => {
     if (!room || room.status !== 'result') return;
     const nextPlayers = {};
     Object.entries(room.players || {}).forEach(([nick, player]) => {
@@ -1211,6 +1222,8 @@ async function playAgain() {
       players: nextPlayers,
     };
   });
+  // 利用回数: 結果から「もう一度」
+  if (committed) window.RoomkStats?.count('again');
 }
 
 // ── 退出 ──
