@@ -23,8 +23,11 @@
 apps/kotoba-pair/
 ├── AGENTS.md    # この仕様書
 ├── index.html   # 本体（CSS・JS インライン）
-└── packs.js     # 学習コンテンツパック（外部データファイル。下記「意図的な逸脱」参照）
+├── packs.js     # 学習コンテンツパック（外部データファイル。下記「意図的な逸脱」参照）
+└── slides.html  # 画面共有用の説明スライド
 ```
+
+- `slides.html` は画面共有用の説明スライド（全11枚。slides-generator で作成。エンジンは正本テンプレート kotoba-tantei と同じで、中身だけ差し替えた）。ボタン名・進め方・例に出しているペアを変えたら、スライドと発表者ノートの文も合わせる
 
 - Realtime Database + Firebase compat SDK **10.14.1**（app / auth / database）+ 匿名認証
 - 共有ヘルパー `../shared/js/rtdb-utils.js?v=20261005`（`initFirebase` / `now` / `isRoomExpired` / `getHostDisconnectedAt` / `generateRoomCode` / `esc` / `cancelRoomOnDisconnect` / `showToast`）
