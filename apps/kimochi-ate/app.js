@@ -600,6 +600,7 @@ async function createRoom() {
         };
       });
       if (result.committed) {
+        window.RoomkStats?.count('room-create');
         connectToRoom('host', nickname, code, ref, joinedAt);
         return;
       }
@@ -1474,6 +1475,12 @@ async function hostTransaction(update, failMessage) {
   }
 }
 
+// 利用回数（回数だけ。stats.js）: 1場面の始まりと、そのときの遊ぶ人の人数
+function countSceneStart(playerCount) {
+  window.RoomkStats?.count('start');
+  window.RoomkStats?.count('players-' + playerCount);
+}
+
 // 場面えらびに戻る（主役と選択は消す。lastStar は残して、次の主役の既定に使う）
 function toCasting(room, newScene) {
   return {
@@ -1488,8 +1495,10 @@ function toCasting(room, newScene) {
 }
 
 async function startGame() {
+  let playerCount = 0;
   const ok = await hostTransaction((room) => {
     if (room.status !== STATUS.WAITING || playingNames(room).length < 2) return;
+    playerCount = playingNames(room).length;
     return {
       ...room,
       ...pickScene(room),
@@ -1501,6 +1510,7 @@ async function startGame() {
       members: null,
     };
   }, 'はじめられませんでした。もう一度ためしてね');
+  if (ok) countSceneStart(playerCount);
   if (ok === false) toast('はじめられませんでした。参加している人を確かめてね');
 }
 
@@ -1541,6 +1551,8 @@ async function revealRound() {
     if (!pick || pick.pass || !isGroupIndex(pick.group)) return;
     return { ...room, status: STATUS.REVEAL };
   }, '公開できませんでした。もう一度ためしてね');
+  // 利用回数: その場面の公開まで進んだ
+  if (ok) window.RoomkStats?.count('finish');
   if (ok === false) toast('公開できませんでした。画面を確かめてね');
 }
 
@@ -1565,10 +1577,17 @@ async function recastStar() {
 
 async function nextScene() {
   const round = state.room?.round;
+  let playerCount = 0;
   const ok = await hostTransaction((room) => {
     if (room.status !== STATUS.REVEAL || room.round !== round) return;
+    playerCount = playingNames(room).length;
     return toCasting(room, true);
   }, '進めませんでした。もう一度ためしてね');
+  // 利用回数: 公開のあと、続けて次の場面へ進んだ
+  if (ok) {
+    window.RoomkStats?.count('again');
+    countSceneStart(playerCount);
+  }
   if (ok === false) toast('進めませんでした。画面を確かめてね');
 }
 
