@@ -971,7 +971,10 @@ function handleResult(room) {
 async function hostCreateRoom() {
   if (state.entryBusy) return;
   state.entryBusy = true;
-  try { await hostCreateRoomInner(); } finally { state.entryBusy = false; }
+  // 作成が例外で終わったとき（送信後の切断・権限エラーなど）も無反応にしない
+  try { await hostCreateRoomInner(); }
+  catch (error) { console.error('[moji-soroe] create failed', error); showMsg('ルームを作れなかったよ。もう一度ためしてね'); }
+  finally { state.entryBusy = false; }
 }
 async function hostCreateRoomInner() {
   const nickname = document.getElementById('top-host-nickname').value.trim();
@@ -1009,7 +1012,10 @@ async function hostCreateRoomInner() {
 async function guestJoin() {
   if (state.entryBusy) return;
   state.entryBusy = true;
-  try { await guestJoinInner(); } finally { state.entryBusy = false; }
+  // 参加が例外で終わったとき（送信後の切断・権限エラーなど）も無反応にしない
+  try { await guestJoinInner(); }
+  catch (error) { console.error('[moji-soroe] join failed', error); RoomkRTDB.showFormError('join-form-error', '入れなかったよ。もう一度ためしてね'); }
+  finally { state.entryBusy = false; }
 }
 
 // ルームコード: 日本語入力のまま打った全角の英数字は半角に、小文字は大文字にそろえて読む。
