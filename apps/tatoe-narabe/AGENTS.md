@@ -53,6 +53,21 @@ waiting → revealing → playing → result
 - `finishGame()` は `status: "result"` に進めるだけで、ルームを自動削除しない。result 画面からの再戦とリロード復帰を許可するため、root AGENTS.md の公認バリアント『ふりかえり画面滞在中は削除しない』（2026-08-10 追加）を採用
 - クリーンアップはホストの `leaveGame()` によるルーム削除、ゲストの `players/{nick}` 削除、ホスト切断時の2分TTL（`ORPHAN_TTL_MS`）に任せる
 
+## 利用回数（2026-10-12）
+
+共通の項目名（docs/development/shared-modules.md「ルーム型で共通に使う項目名」）で、回数だけを数える。このアプリの「1回」は、数字を配ってから答え合わせまでの1ゲーム。すべてホストの端末で数える。
+
+| 項目 | 数えるとき |
+|---|---|
+| `room-create` | ルームができた（切断時の予約まで通ったあと） |
+| `start`・`players-{N}` | `startGame()` の transaction が確定した（待合室の「ゲーム開始」と、結果からの「もう一度プレイ」の両方）。N は数字を配った人（遊ぶ人）の人数。進行だけのホストは含めない |
+| `finish` | 「答え合わせ」で結果へ進んだ |
+| `again` | 結果から「もう一度プレイ」（待合室に戻らず次のゲームが始まるので、`again` と `start`・`players-{N}` を同時に数える） |
+
+- 「答え合わせ」（`finishGame()`）は transaction ではなく update なので、発言フェーズ（`playing`）の画面から押したときだけ数える（二度押しの2回目は、もう結果に移っている）
+- お題選び・発言フェーズへの移行・タイマーは数えない。退出（ルームを閉じる）も数えない
+- 参加者の端末は数えない
+
 ## 参加用のリンク（2026-10-05）
 
 - 参加用のリンク `?room=CODE` と「リンクをコピー」（`#btnCopyLink`）。共通仕様は docs/development/rtdb.md「参加用のリンク」。このアプリの入口は index.html 末尾の `window.addEventListener("load", …)`（`tryReconnect()` の前に `?room=` を見る）、参加画面は `#screen-guest-join`（ヒント `#joinLinkHint`、コード欄 `#guest-code`、名前欄 `#guest-nick`）。`?room=` は `startRoomListener()`（作成・参加・再接続の共通の通り道）でアドレスから外す

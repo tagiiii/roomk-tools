@@ -1197,6 +1197,8 @@
           hostConnected: false,
           hostDisconnectedAt: firebase.database.ServerValue.TIMESTAMP,
         });
+        // 利用回数（回数だけ。stats.js）: ルームができた
+        window.RoomkStats?.count('room-create');
 
         state.role = "host";
         state.nickname = nick;
@@ -1337,6 +1339,9 @@
       // トランザクションが中断した理由を外部で受け取るための変数
       let abortReason = null;
       let hostPlays = true;
+      // 利用回数に使う値（確定した回の値を、確定のあとで数える）
+      let playerCount = 0;
+      let fromResult = false;
 
       try {
         // transaction() で読み取り〜書き込みをアトミックに行う。
@@ -1367,6 +1372,8 @@
             return;
           }
           abortReason = null; // 成功パスではリセット
+          playerCount = playing.length;
+          fromResult = room.status === "result";
 
           const assignedNumbers = pickUniqueNumbers(playing.length);
           const nextPlayers = {};
@@ -1399,6 +1406,10 @@
           else if (abortReason === "invalid_state") showMsg("ルームが終了しています。トップへ戻ってください");
           return;
         }
+        // 利用回数（回数だけ。stats.js）: ゲームの始まりと遊ぶ人の人数。結果からの「もう一度プレイ」は again も数える
+        if (fromResult) window.RoomkStats?.count('again');
+        window.RoomkStats?.count('start');
+        window.RoomkStats?.count('players-' + playerCount);
         state.numberRevealed = false;
       } catch (e) {
         console.error(e);
@@ -1542,8 +1553,11 @@
 
     async function finishGame() {
       if (state.role !== "host" || !state.roomRef) return;
+      // 利用回数は発言フェーズから進めたときだけ数える（二度押しの2回目は、もう結果に移っている）
+      const fromPlaying = state.currentStatus === "playing";
       try {
         await state.roomRef.update({ status: "result" });
+        if (fromPlaying) window.RoomkStats?.count('finish');
       } catch (e) {
         console.error(e);
         showMsg("答え合わせへ進めませんでした");
