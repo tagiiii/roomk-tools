@@ -63,7 +63,7 @@ apps/stamp-ate/
 - スタンプのふちは `index.html` の SVG フィルター `#sa-ink`（feTurbulence＋feDisplacementMap）で少しにじませ、重なりは `mix-blend-mode: multiply` でインクのように濃くする
 - RTDB パス: `stampate_rooms/{roomCode}`、sessionStorage キー: `stampate_session`（`{role, nickname, roomCode, uid, joinedAt}` だけ。お題や絵は入れない）
 - アイコン: Material Symbols Rounded（ポータルは `approval`）
-- 利用回数は stats.js の `open` だけ
+- 利用回数は stats.js の `open` と、ルームの進み方の回数（下記「共通モジュール」の表）
 
 ### 横断更新
 
@@ -269,5 +269,5 @@ stampate_rooms/{roomCode}/
 |-----------|----------|
 | design-system.css | 色・角丸・余白のトークン、`.btn` 系のボタン |
 | rtdb-utils.js（`?v=20261005`） | `initFirebase`・`generateRoomCode`・`now`・`isRoomExpired`・`getHostDisconnectedAt`・`cancelRoomOnDisconnect`・`copyRoomCode`・`copyRoomLink`・`showToast` |
-| stats.js（`?v=1`） | 起動回数（`open`）のみ |
+| stats.js（`?v=1`） | 起動回数（`open`）と、共通の項目名（docs/development/shared-modules.md「ルーム型で共通に使う項目名」）。「1回」は待合室からおしまいまでの1ゲーム（5回）。すべてホストの端末で、transaction の確定のあとに数える: `room-create`（ルームができた）・`start` と `players-{N}`（「はじめる」。N は遊ぶ人の人数）・`finish`（5回目のあとの「結果を見る」）・`again`（「もう一回あそぶ」）。「ゲームをやめる」は数えない（2026-10-12） |
 | howto.js | 「あそびかた」モーダル |

@@ -662,6 +662,7 @@ async function createRoom() {
         };
       });
       if (result.committed) {
+        window.RoomkStats?.count('room-create');
         connectToRoom('host', nickname, code, ref, joinedAt);
         return;
       }
@@ -1814,10 +1815,12 @@ async function setOption(key, value) {
 
 async function startGame() {
   const seed = randomSeed();
+  let playerCount = 0;
   const ok = await hostTransaction((room) => {
     if (room.status !== STATUS.WAITING) return;
     const names = playingNames(room);
     if (names.length < MIN_PLAYERS || names.length > MAX_PLAYERS) return;
+    playerCount = names.length;
     const rng = seededRandom(seed);
     const order = shuffled(names, rng);
     const id = (Number(room.lastGameId) || 0) + 1;
@@ -1833,6 +1836,11 @@ async function startGame() {
     };
     return dealRound({ ...room, lastGameId: id }, game, 1, Math.floor(rng() * 0x7fffffff));
   }, 'はじめられませんでした。もう一度ためしてね');
+  // 利用回数（回数だけ。stats.js）: ゲームの始まりと、そのときの遊ぶ人の人数
+  if (ok) {
+    window.RoomkStats?.count('start');
+    window.RoomkStats?.count('players-' + playerCount);
+  }
   if (ok === false) toast('はじめられませんでした。参加している人を確かめてね');
 }
 
@@ -1865,6 +1873,7 @@ async function nextRound() {
     if (round >= ROUNDS) return { ...room, status: STATUS.END };
     return dealRound(room, current, round + 1, seed);
   }, '進めませんでした。もう一度ためしてね');
+  if (ok && round >= ROUNDS) window.RoomkStats?.count('finish');
   if (ok === false) toast('進めませんでした。画面を確かめてね');
 }
 
@@ -1874,6 +1883,7 @@ async function playAgain() {
     if (room.status !== STATUS.END || gameOf(room)?.id !== gameId) return;
     return { ...room, status: STATUS.WAITING, game: null };
   }, '戻れませんでした。もう一度ためしてね');
+  if (ok) window.RoomkStats?.count('again');
   if (ok === false) toast('戻れませんでした。画面を確かめてね');
 }
 
