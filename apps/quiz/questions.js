@@ -1516,7 +1516,7 @@ export const QUIZ_PACKS = [
         question: '埼玉県のJR八高線・東武越生線の駅名「越生」は、何と読む？',
         choices: ['えっしょう', 'こしお', 'おごせ'],
         answerIndex: 2,
-        explanation: '正解は「おごせ」。峠の向こうを「見越す」地形にちなむ、という説など、由来には諸説あります。'
+        explanation: '正解は「おごせ」。尾根や峠を越える「尾根越し」が変化した、という説など、由来には諸説あります。'
       },
       {
         id: 'ns09', difficulty: 3,
