@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>作戦会議チャット（試作） | room-K</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet" />
+  <link rel="stylesheet" href="../../apps/shared/css/design-system.css" />
+  <link rel="stylesheet" href="style.css?v=20261013a" />
+</head>
+<body>
+
+  <!-- はじめの画面（リンクなしでひらいたとき） -->
+  <main id="sc-top" class="sc-front" hidden>
+    <section class="sc-panel" aria-labelledby="sc-top-title">
+      <p class="sc-panel__badge">試作</p>
+      <h1 id="sc-top-title" class="sc-panel__title">作戦会議チャット</h1>
+      <p class="sc-panel__lead">話題ごとに分けて話せるチャット。いくつもの話題を、同時に進められる。</p>
+      <ul class="sc-panel__notes">
+        <li>使えるのは、メンターが部屋をひらいている間だけ</li>
+        <li>画像も送れる</li>
+        <li>終わると、会話と画像はすべて消える</li>
+      </ul>
+      <button id="sc-open" type="button" class="btn btn-primary btn-full">部屋をひらく</button>
+      <p class="sc-panel__note">参加する人は、メンターから届いたリンクでひらいてね。</p>
+      <p class="sc-panel__note">試作のため、同じブラウザでひらいた2つのウィンドウの間だけでつながる。</p>
+    </section>
+  </main>
+
+  <!-- 参加の画面（リンクからひらいたとき） -->
+  <main id="sc-join" class="sc-front" hidden>
+    <section class="sc-panel" aria-labelledby="sc-join-title">
+      <p class="sc-panel__badge">試作</p>
+      <h1 id="sc-join-title" class="sc-panel__title">作戦会議チャット</h1>
+      <p class="sc-panel__lead">メンターの部屋に入るよ。話題ごとに分けて話せて、画像も送れる。</p>
+      <ul class="sc-panel__notes">
+        <li>終わると、会話と画像はすべて消える</li>
+      </ul>
+      <button id="sc-enter" type="button" class="btn btn-primary btn-full">入る</button>
+      <p id="sc-join-msg" class="sc-panel__alert" role="alert" hidden></p>
+    </section>
+  </main>
+
+  <!-- チャットの画面 -->
+  <div id="sc-app" class="sc-app" data-view="list" hidden>
+    <header class="sc-bar">
+      <h1 class="sc-bar__title">作戦会議チャット<span class="sc-bar__badge">試作</span></h1>
+      <p id="sc-peer" class="sc-bar__peer" aria-live="polite"></p>
+      <div class="sc-bar__actions">
+        <button id="sc-sound" type="button" class="sc-icon-btn" aria-pressed="true" aria-label="新着の音: オン">
+          <span class="material-symbols-rounded" aria-hidden="true">volume_up</span>
+        </button>
+        <button id="sc-copy" type="button" class="btn btn-secondary btn-sm" hidden>リンクをコピー</button>
+        <button id="sc-finish" type="button" class="btn btn-danger btn-sm" hidden>終わる</button>
+      </div>
+    </header>
+
+    <div class="sc-body">
+      <!-- 話題の一覧 -->
+      <aside class="sc-topics" aria-label="話題の一覧">
+        <h2 class="sc-topics__head">話題</h2>
+        <ul id="sc-topic-list" class="sc-topics__list"></ul>
+        <div class="sc-topics__foot">
+          <button id="sc-add-open" type="button" class="btn btn-secondary btn-sm btn-full">
+            <span class="material-symbols-rounded" aria-hidden="true">add</span>話題をふやす
+          </button>
+          <form id="sc-add-form" class="sc-add" hidden>
+            <label class="sc-add__label" for="sc-add-input">話題の名前</label>
+            <input id="sc-add-input" class="sc-add__input" type="text" maxlength="30" autocomplete="off" />
+            <div class="sc-add__row">
+              <button type="submit" class="btn btn-primary btn-sm">ふやす</button>
+              <button id="sc-add-cancel" type="button" class="sc-quiet-btn">やめる</button>
+            </div>
+          </form>
+        </div>
+      </aside>
+
+      <!-- 選んだ話題の会話 -->
+      <section class="sc-talk" aria-label="会話">
+        <header class="sc-talk__head">
+          <button id="sc-back" type="button" class="sc-talk__back" aria-label="話題の一覧にもどる">
+            <span class="material-symbols-rounded" aria-hidden="true">arrow_back</span>
+            <span>話題</span>
+            <span id="sc-back-badge" class="sc-count" hidden></span>
+          </button>
+          <h2 id="sc-talk-title" class="sc-talk__title"></h2>
+        </header>
+        <div id="sc-msgs" class="sc-talk__msgs" tabindex="0"></div>
+        <button id="sc-newer" type="button" class="sc-talk__newer" hidden>
+          <span class="material-symbols-rounded" aria-hidden="true">arrow_downward</span>新しいメッセージ
+        </button>
+        <p id="sc-typing" class="sc-talk__typing" aria-live="polite" hidden>入力中…</p>
+        <form id="sc-form" class="sc-compose">
+          <div id="sc-pending" class="sc-compose__pending" hidden>
+            <img id="sc-pending-img" class="sc-compose__thumb" alt="送る前の画像" />
+            <button id="sc-pending-remove" type="button" class="sc-quiet-btn">画像をやめる</button>
+          </div>
+          <div class="sc-compose__row">
+            <button id="sc-pick" type="button" class="sc-icon-btn" aria-label="画像をえらぶ">
+              <span class="material-symbols-rounded" aria-hidden="true">image</span>
+            </button>
+            <input id="sc-file" type="file" accept="image/*" hidden />
+            <textarea id="sc-text" class="sc-compose__text" rows="1" maxlength="500" placeholder="メッセージを書く" aria-label="メッセージ"></textarea>
+            <button id="sc-send" type="submit" class="btn btn-primary btn-sm sc-compose__send">送る</button>
+          </div>
+        </form>
+      </section>
+    </div>
+  </div>
+
+  <!-- おわりの画面 -->
+  <main id="sc-end" class="sc-front" hidden>
+    <section class="sc-panel" aria-labelledby="sc-end-title">
+      <h1 id="sc-end-title" class="sc-panel__title">作戦会議チャットはおわり</h1>
+      <p id="sc-end-lead" class="sc-panel__lead">会話と画像は、すべて消えたよ。</p>
+      <button id="sc-end-again" type="button" class="btn btn-primary btn-full" hidden>新しい部屋をひらく</button>
+    </section>
+  </main>
+
+  <!-- たしかめる -->
+  <dialog id="sc-confirm" class="sc-dialog" aria-labelledby="sc-confirm-title">
+    <h2 id="sc-confirm-title" class="sc-dialog__title"></h2>
+    <p id="sc-confirm-body" class="sc-dialog__body"></p>
+    <div class="sc-dialog__row">
+      <button id="sc-confirm-ok" type="button" class="btn btn-danger btn-sm"></button>
+      <button id="sc-confirm-cancel" type="button" class="btn btn-ghost btn-sm">やめる</button>
+    </div>
+  </dialog>
+
+  <!-- 画像を大きく見る -->
+  <dialog id="sc-viewer" class="sc-viewer" aria-label="画像を大きく見る">
+    <img id="sc-viewer-img" class="sc-viewer__img" alt="送られた画像" />
+    <button id="sc-viewer-close" type="button" class="btn btn-secondary btn-sm">とじる</button>
+  </dialog>
+
+  <div id="sc-toast" class="sc-toast" role="status" hidden></div>
+
+  <script src="app.js?v=20261013a"></script>
+</body>
+</html>

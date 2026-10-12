@@ -132,6 +132,12 @@
         ".write": "auth != null"
       }
     },
+    "sakusenchat_rooms": {
+      "$roomId": {
+        ".read": "auth != null",
+        ".write": "auth != null"
+      }
+    },
     "stampate_rooms": {
       "$roomId": {
         ".read": "auth != null",

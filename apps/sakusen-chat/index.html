@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+  <meta name="robots" content="noindex">
+  <title>作戦会議チャット | room-K</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
+  <link rel="stylesheet" href="../shared/css/design-system.css">
+  <!-- index.html と app.js・style.css はセットで変わるので、変えたら ?v= をそろえて上げる -->
+  <link rel="stylesheet" href="style.css?v=20261013a">
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+  <script src="../shared/js/rtdb-utils.js?v=20261005"></script>
+</head>
+<body>
+
+  <!-- はじめの画面 -->
+  <main class="sc-screen sc-front active" id="screen-top">
+    <section class="sc-panel" aria-labelledby="topTitle">
+      <h1 class="sc-panel__title" id="topTitle">作戦会議チャット</h1>
+      <p class="sc-panel__lead">話題ごとに分けて話せるチャット。いくつもの話題を、同時に進められる。</p>
+      <ul class="sc-panel__notes">
+        <li>使えるのは、メンターがルームをひらいている間だけ</li>
+        <li>画像も送れる</li>
+        <li>終わると、会話と画像はすべて消える</li>
+      </ul>
+
+      <!-- メンター用のリンクでひらいた端末にだけ出す -->
+      <div id="mentorTools" hidden>
+        <div id="prevRoom" class="sc-prev" hidden>
+          <p class="sc-prev__text">前のルームが残っているよ。もどるか、消すかを選んでね。</p>
+          <button type="button" class="btn btn-primary btn-full" id="btnPrevResume">前のルームにもどる</button>
+          <button type="button" class="btn btn-secondary btn-full" id="btnPrevDelete">前のルームを消す</button>
+        </div>
+        <form id="createForm" class="sc-form" novalidate>
+          <label class="sc-form__label" for="hostName">メンターの名前（8文字まで）</label>
+          <input class="sc-form__input" id="hostName" maxlength="8" autocomplete="nickname">
+          <p class="sc-form__error" id="createError" role="alert" hidden></p>
+          <button type="submit" class="btn btn-primary btn-full" id="btnCreateRoom">ルームを作る</button>
+        </form>
+      </div>
+      <p class="sc-panel__note" id="guestNote">参加する人は、メンターから届いたリンクでひらいてね。</p>
+    </section>
+  </main>
+
+  <!-- 参加の画面（リンクからひらいたとき） -->
+  <main class="sc-screen sc-front" id="screen-join">
+    <section class="sc-panel" aria-labelledby="joinTitle">
+      <h1 class="sc-panel__title" id="joinTitle">作戦会議チャット</h1>
+      <p class="sc-panel__lead">メンターのルームに入るよ。話題ごとに分けて話せて、画像も送れる。</p>
+      <ul class="sc-panel__notes">
+        <li>終わると、会話と画像はすべて消える</li>
+      </ul>
+      <form id="joinForm" class="sc-form" novalidate>
+        <label class="sc-form__label" for="guestName">名前（8文字まで）</label>
+        <input class="sc-form__input" id="guestName" maxlength="8" autocomplete="nickname">
+        <p class="sc-form__error" id="joinError" role="alert" hidden></p>
+        <button type="submit" class="btn btn-primary btn-full" id="btnJoinRoom">参加する</button>
+      </form>
+    </section>
+  </main>
+
+  <!-- チャットの画面 -->
+  <div class="sc-screen sc-app" id="screen-chat" data-view="list">
+    <header class="sc-bar">
+      <h1 class="sc-bar__title">作戦会議チャット</h1>
+      <p class="sc-bar__peer" id="peerLabel" aria-live="polite"></p>
+      <div class="sc-bar__actions">
+        <button type="button" class="sc-icon-btn" id="btnSound" aria-pressed="true" aria-label="新着の音: オン">
+          <span class="material-symbols-rounded" aria-hidden="true">volume_up</span>
+        </button>
+        <button type="button" class="btn btn-secondary btn-sm" id="btnCopyLink" hidden>リンクをコピー</button>
+        <button type="button" class="btn btn-danger btn-sm" id="btnFinish" hidden>終わる</button>
+        <button type="button" class="btn btn-ghost btn-sm" id="btnLeave" hidden>退出する</button>
+      </div>
+    </header>
+    <p class="sc-offline" id="offlineNote" role="status" hidden>接続が切れているよ。もどるまで少し待ってね。</p>
+
+    <div class="sc-body">
+      <!-- 話題の一覧 -->
+      <aside class="sc-topics" aria-label="話題の一覧">
+        <h2 class="sc-topics__head">話題</h2>
+        <ul class="sc-topics__list" id="topicList"></ul>
+        <div class="sc-topics__foot">
+          <button type="button" class="btn btn-secondary btn-sm btn-full" id="btnAddOpen">
+            <span class="material-symbols-rounded" aria-hidden="true">add</span>話題をふやす
+          </button>
+          <form class="sc-add" id="addForm" hidden novalidate>
+            <label class="sc-add__label" for="addInput">話題の名前（30文字まで）</label>
+            <input class="sc-add__input" id="addInput" type="text" maxlength="30" autocomplete="off">
+            <div class="sc-add__row">
+              <button type="submit" class="btn btn-primary btn-sm">ふやす</button>
+              <button type="button" class="sc-quiet-btn" id="btnAddCancel">やめる</button>
+            </div>
+          </form>
+        </div>
+      </aside>
+
+      <!-- 選んだ話題の会話 -->
+      <section class="sc-talk" id="talk" aria-label="会話">
+        <header class="sc-talk__head">
+          <button type="button" class="sc-talk__back" id="btnBack" aria-label="話題の一覧にもどる">
+            <span class="material-symbols-rounded" aria-hidden="true">arrow_back</span>
+            <span>話題</span>
+            <span class="sc-count" id="backBadge" hidden></span>
+          </button>
+          <h2 class="sc-talk__title" id="talkTitle"></h2>
+        </header>
+        <div class="sc-talk__msgs" id="msgList" tabindex="0"></div>
+        <button type="button" class="sc-talk__newer" id="btnNewer" hidden>
+          <span class="material-symbols-rounded" aria-hidden="true">arrow_downward</span>新しいメッセージ
+        </button>
+        <p class="sc-talk__typing" id="typingNote" aria-live="polite" hidden></p>
+        <form class="sc-compose" id="composeForm" novalidate>
+          <div class="sc-compose__pending" id="pendingBox" hidden>
+            <img class="sc-compose__thumb" id="pendingImg" alt="送る前の画像">
+            <button type="button" class="sc-quiet-btn" id="btnPendingRemove">画像をやめる</button>
+          </div>
+          <div class="sc-compose__row">
+            <button type="button" class="sc-icon-btn" id="btnPick" aria-label="画像をえらぶ">
+              <span class="material-symbols-rounded" aria-hidden="true">image</span>
+            </button>
+            <input id="fileInput" type="file" accept="image/*" hidden>
+            <textarea class="sc-compose__text" id="textInput" rows="1" maxlength="500" placeholder="メッセージを書く" aria-label="メッセージ"></textarea>
+            <button type="submit" class="btn btn-primary btn-sm sc-compose__send" id="btnSend">送る</button>
+          </div>
+        </form>
+      </section>
+    </div>
+  </div>
+
+  <!-- おわりの画面 -->
+  <main class="sc-screen sc-front" id="screen-end">
+    <section class="sc-panel" aria-labelledby="endTitle">
+      <h1 class="sc-panel__title" id="endTitle">作戦会議チャットは終わったよ</h1>
+      <p class="sc-panel__lead" id="endLead">会話と画像は、すべて消えたよ。</p>
+      <button type="button" class="btn btn-secondary btn-full" id="btnEndTop" hidden>トップへ戻る</button>
+    </section>
+  </main>
+
+  <div class="sc-overlay" id="hostOffOverlay" hidden>
+    <div class="sc-overlay__panel">
+      <h2>メンターの戻りを待っています</h2>
+      <p>しばらく待っても戻らないときは退出してね。</p>
+      <button type="button" class="btn btn-secondary" id="btnOverlayLeave">退出する</button>
+    </div>
+  </div>
+
+  <!-- たしかめる -->
+  <dialog class="sc-dialog" id="confirmDialog" aria-labelledby="confirmTitle">
+    <h2 class="sc-dialog__title" id="confirmTitle"></h2>
+    <p class="sc-dialog__body" id="confirmBody"></p>
+    <div class="sc-dialog__row">
+      <button type="button" class="btn btn-danger btn-sm" id="btnConfirmOk"></button>
+      <button type="button" class="btn btn-ghost btn-sm" id="btnConfirmCancel">やめる</button>
+    </div>
+  </dialog>
+
+  <!-- 画像を大きく見る -->
+  <dialog class="sc-viewer" id="viewer" aria-label="画像を大きく見る">
+    <img class="sc-viewer__img" id="viewerImg" alt="送られた画像">
+    <button type="button" class="btn btn-secondary btn-sm" id="btnViewerClose">とじる</button>
+  </dialog>
+
+  <script type="module" src="app.js?v=20261013a"></script>
+  <script src="../shared/js/stats.js?v=1" defer></script>
+  <script src="../shared/js/howto.js"></script>
+  <script>
+    RoomkHowto.init({
+      title: 'つかいかた',
+      lead: '話題ごとに分けて話せるチャット。いくつもの話題を同時に進められて、画像も送れる。',
+      sections: [
+        { heading: 'はじめかた', items: [
+          'メンターが「ルームを作る」を押し、「リンクをコピー」でリンクを送る',
+          '参加する人は、届いたリンクをひらき、名前を入れて「参加する」を押す（メンターのほかに2人まで）',
+        ] },
+        { heading: 'すすめかた', items: [
+          '左の一覧から話題を選ぶと、その話題の会話が出る。新しいメッセージが届いた話題には、数が出る',
+          '下の欄に書いて「送る」を押す。絵のボタンで画像も送れる',
+          '「話題をふやす」で、だれでも話題をふやせる',
+          '自分のメッセージは「消す」で取り消せる',
+        ] },
+        { heading: 'おわりかた', text: 'メンターが「終わる」を押すと、会話と画像はすべて消える。' },
+      ],
+    });
+  </script>
+</body>
+</html>

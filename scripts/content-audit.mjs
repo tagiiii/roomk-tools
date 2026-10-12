@@ -210,6 +210,8 @@ const NO_CONTENT_APPS = [
   'blackjack', 'esadori', 'moji-soroe', 'oshitsuke-zukan', 'pita-hame',
   // 数字のカギ（1〜12）だけ
   'kagi-awase',
+  // 会話は使う人が書く（アプリはお題を持たない。ポータルには載せていない）
+  'sakusen-chat',
 ];
 
 // apps/ 配下に存在するがアプリではないディレクトリ。
