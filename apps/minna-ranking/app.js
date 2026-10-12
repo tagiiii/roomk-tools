@@ -166,6 +166,31 @@ async function removeExpired(ref, fallback) {
   }
 }
 
+// transaction の最初の計算が空のキャッシュで走らないよう、先に値を購読しておく。
+// 購読している間は、transaction の中の null は「ルームがない」（閉じられた）を表す
+function warmRoomCache(ref) {
+  return new Promise((resolve, reject) => {
+    const callback = (snap) => {
+      resolve({ snap, release: () => ref.off('value', callback) });
+    };
+    ref.on('value', callback, reject);
+  });
+}
+
+// 送信したあとに通信が切れると、transaction は Error('disconnect') で中止される（サーバーに届いたかは分からない）。
+// ルームの作成と参加は、少しだけやり直す。update は、前の送信が届いていたら成功として扱うように書く
+// （届いていたのに失敗として戻ると、切断時の予約がないルーム・在室が残る）
+const TX_RETRY_MAX = 3;
+async function transactRetry(ref, update) {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      return await ref.transaction(update);
+    } catch (error) {
+      if (error?.message !== 'disconnect' || attempt >= TX_RETRY_MAX) throw error;
+    }
+  }
+}
+
 async function waitAuth() {
   try {
     await authReady;
@@ -358,8 +383,9 @@ async function createRoom() {
     for (let attempt = 0; attempt < 5; attempt++) {
       const code = RoomkRTDB.generateRoomCode();
       const ref = db.ref(DB_PREFIX + '/' + code);
-      const result = await ref.transaction((room) => {
-        if (room) return;
+      const result = await transactRetry(ref, (room) => {
+        // やり直しのとき、前の送信で自分が作ったルームが届いていたら、そのまま使う
+        if (room) return room.hostUid === uid && room.players?.[nickname]?.joinedAt === joinedAt ? room : undefined;
         return {
           status: STATUS.WAITING,
           host: nickname,
@@ -419,11 +445,15 @@ async function joinRoom() {
   if (!await waitAuth()) return;
   state.busy = true;
   $('btnJoinRoom').disabled = true;
+  let release = null;
   try {
     const ref = db.ref(DB_PREFIX + '/' + code);
-    const snap = await ref.get();
-    if (!snap.exists()) { setError('joinError', 'ルームが見つからないよ。コードを確かめてね'); return; }
-    const initial = snap.val();
+    // 読み取った時点の値を transaction の代わりの値に使わない（やり直しの間にホストがルームを閉じたとき、
+    // 古い値で閉じたルームを作り直してしまう）。参加が終わるまで購読して、手元の値を最新に保つ
+    const warm = await warmRoomCache(ref);
+    release = warm.release;
+    const initial = warm.snap.val();
+    if (!initial) { setError('joinError', 'ルームが見つからないよ。コードを確かめてね'); return; }
     if (isExpired(initial)) {
       await removeExpired(ref, initial);
       setError('joinError', 'このルームは終わったみたい');
@@ -432,13 +462,16 @@ async function joinRoom() {
     const uid = firebase.auth().currentUser.uid;
     const joinedAt = RoomkRTDB.now();
     let reason = '';
-    const result = await ref.transaction((room) => {
-      const current = room || initial;
+    const result = await transactRetry(ref, (current) => {
       reason = '';
       if (!current) { reason = '見つからない'; return; }
       if (isExpired(current)) { reason = '終了'; return; }
+      // 自分の在室がもう入っている（前の送信が届いていた・タブが落ちた直後に入りなおした）ときは、そのまま参加とする。
+      // 届いたあとにお題が始まっていても入れるよう、始まっているかより先に確かめる
+      const own = current.players?.[nickname];
+      if (own && !own.isHost && own.uid === uid) return current;
       if (current.status !== STATUS.WAITING) { reason = '開始済み'; return; }
-      if (current.players?.[nickname]) { reason = '名前'; return; }
+      if (own) { reason = '名前'; return; }
       if (guestNames(current).length >= MAX_GUESTS) { reason = '満員'; return; }
       return {
         ...current,
@@ -464,6 +497,7 @@ async function joinRoom() {
     console.warn('[minna-ranking] join failed', error);
     setError('joinError', '接続できませんでした。もう一度ためしてね');
   } finally {
+    release?.();
     state.busy = false;
     $('btnJoinRoom').disabled = false;
   }
