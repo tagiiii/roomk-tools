@@ -893,6 +893,12 @@
       .filter(([name, player]) => !(player?.isHost || name === room.host)));
   }
 
+  // 利用回数（回数だけ。stats.js）: ラウンドの始まりと、そのときの遊ぶ人の人数
+  function countRoundStart(playerCount) {
+    window.RoomkStats?.count('start');
+    window.RoomkStats?.count('players-' + playerCount);
+  }
+
   function isFacilitator() {
     return state.role === 'host' && !state.hostPlays;
   }
@@ -1311,6 +1317,7 @@
       showError('host-nickname-error', 'ルーム作成に失敗しました。もう一度お試しください');
       return;
     }
+    window.RoomkStats?.count('room-create');
 
     state.nickname = nickname;
     state.role = 'host';
@@ -1347,11 +1354,13 @@
 
   async function hostStartGame() {
     let abortReason = null;
+    let playerCount = 0;
     const { committed } = await state.roomRef.transaction((room) => {
       if (!room) { abortReason = 'not_found'; return; }
       if (room.hostConnected === false) { abortReason = 'host_gone'; return; }
       if (room.status !== STATUS.WAITING) { abortReason = 'bad_status'; return; }
-      if (Object.keys(playingPlayers(room)).length < MIN_PLAYERS) { abortReason = 'too_few'; return; }
+      playerCount = Object.keys(playingPlayers(room)).length;
+      if (playerCount < MIN_PLAYERS) { abortReason = 'too_few'; return; }
       abortReason = null;
       return {
         ...room,
@@ -1359,6 +1368,7 @@
         pendingThemes: pickThemes(room.usedThemes),
       };
     });
+    if (committed) countRoundStart(playerCount);
     if (!committed && abortReason === 'too_few') {
       document.getElementById('host-start-hint').textContent = `遊ぶ人が${MIN_PLAYERS}人以上いると始められます`;
     }
@@ -1424,14 +1434,20 @@
     state.votingTriggered = false;
     state.resultTriggered = false;
     updateSessionRoundData(null, null);
-    await state.roomRef.transaction((room) => {
+    let playerCount = 0;
+    const { committed } = await state.roomRef.transaction((room) => {
       if (!room || room.status !== STATUS.RESULT) return;
+      playerCount = Object.keys(playingPlayers(room)).length;
       return {
         ...room,
         status: STATUS.SELECTING,
         pendingThemes: pickThemes(room.usedThemes),
       };
     });
+    if (committed) {
+      window.RoomkStats?.count('again');
+      countRoundStart(playerCount);
+    }
   }
 
   // 終了後の自動削除は「終了時点の ref と deleteAt」を固定して予約する。
@@ -1686,6 +1702,8 @@
         players: nextPlayers,
       };
     });
+    // 利用回数: ラウンドの結果まで進んだ（全員の投票・締め切りのどちらでも）
+    if (committed) window.RoomkStats?.count('finish');
     return committed;
   }
 
