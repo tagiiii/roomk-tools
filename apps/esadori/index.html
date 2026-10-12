@@ -1102,7 +1102,10 @@ async function guestJoinInner() {
 async function boardJoin() {
   if (state.entryBusy) return;
   state.entryBusy = true;
-  try { await boardJoinInner(); } finally { state.entryBusy = false; }
+  // 見るだけで入る処理が例外で終わったとき（読み込みの失敗・権限エラーなど）も無反応にしない
+  try { await boardJoinInner(); }
+  catch (error) { console.error('[esadori] board join failed', error); showMsg('うまくつながらなかったよ。もう一度ためしてね'); }
+  finally { state.entryBusy = false; }
 }
 async function boardJoinInner() {
   const roomCode = normalizeRoomCode(document.getElementById('top-board-code').value);
