@@ -760,6 +760,12 @@ function playingNames(room, players) {
   return all.filter(n => n !== (room && room.host));
 }
 
+// 利用回数（回数だけ。stats.js）: 1周の始まりと、そのときの遊ぶ人（説明役の順番に入る人）の人数
+function countLapStart(playerCount) {
+  window.RoomkStats?.count('start');
+  window.RoomkStats?.count('players-' + playerCount);
+}
+
 const TOO_MANY_MSG = `遊ぶ人は${MAX_PLAYERS}人までだよ`;
 const HOST_JOIN_FULL_MSG = `遊ぶ人が${MAX_PLAYERS}人いるので、ホストは説明役の順番に入れないよ`;
 
@@ -917,6 +923,7 @@ async function hostCreateInner() {
     if (committed) { roomCode = code; roomRef = ref; break; }
   }
   if (!roomCode) { showMsg('ルームを作れなかったよ。もう一度ためしてね'); return; }
+  window.RoomkStats?.count('room-create');
 
   state.nickname = nick;
   state.roomCode = roomCode;
@@ -1061,6 +1068,7 @@ async function startGame() {
   const perm = shuffledIndices(MAX_CHOICES);
   let abortReason = null;
   let hostPlays = true;
+  let playerCount = 0;
   const { committed } = await state.roomRef.transaction(room => {
     if (!room) { abortReason = 'not_found'; return; }
     if (room.status !== 'waiting') { abortReason = 'bad_status'; return; }
@@ -1076,6 +1084,7 @@ async function startGame() {
     const picked = pickItem(pack, [], roll);
     if (!picked) { abortReason = 'no_pack'; return; }
     abortReason = null;
+    playerCount = names.length;
     return {
       ...room,
       turnOrder: names,
@@ -1087,7 +1096,7 @@ async function startGame() {
       round: buildRound(1, names[0], picked.index, pack, perm),
     };
   });
-  if (committed) return;
+  if (committed) { countLapStart(playerCount); return; }
   if (abortReason === 'too_few') showMsg(tooFewMsg(hostPlays));
   else if (abortReason === 'too_many') showMsg(TOO_MANY_MSG);
   else if (abortReason === 'no_pack') showMsg('お題のデータが読み込めなかったよ');
@@ -1217,7 +1226,9 @@ async function advanceRound(result) {
   const roll = Math.random();
   const perm = shuffledIndices(MAX_CHOICES);
   const expectNumber = state.roundNumber;
-  await state.roomRef.transaction(room => {
+  let lapEnd = false;
+  const res = await state.roomRef.transaction(room => {
+    lapEnd = false;
     if (!room) return;
     const round = room.round || {};
     // 二重押し・フェーズずれの防御
@@ -1252,6 +1263,7 @@ async function advanceRound(result) {
 
     // 1周終わり（or お題が引けない）→ reveal に留まり、ホストが「もう1周 / 終わる」を選ぶ
     if (!picked) {
+      lapEnd = true;
       return { ...room, history, score, status: 'reveal', round: { ...round, result } };
     }
     return {
@@ -1264,6 +1276,8 @@ async function advanceRound(result) {
       round: buildRound((Number(round.number) || 1) + 1, turnOrder[nextIdx], picked.index, pack, perm),
     };
   }).catch(() => {});
+  // 利用回数: 1周の終わり（「もう1周 / 終わる」を選ぶところ）まで進んだ
+  if (res?.committed && lapEnd) window.RoomkStats?.count('finish');
 }
 
 // ホスト: もう1周（いま接続している人で turnOrder を組み直す）
@@ -1273,6 +1287,7 @@ async function nextLap() {
   const perm = shuffledIndices(MAX_CHOICES);
   let reason = null;
   let hostPlays = true;
+  let playerCount = 0;
   const { committed } = await state.roomRef.transaction(room => {
     if (!room || room.status !== 'reveal') { reason = 'bad'; return; }
     const round = room.round || {};
@@ -1292,6 +1307,7 @@ async function nextLap() {
     const picked = pickItem(pack, room.usedItems, roll);
     if (!picked) { reason = 'bad'; return; }
     reason = null;
+    playerCount = turnOrder.length;
     return {
       ...room,
       turnOrder,
@@ -1301,6 +1317,11 @@ async function nextLap() {
       round: buildRound((Number(round.number) || 1) + 1, turnOrder[0], picked.index, pack, perm),
     };
   }).catch(() => ({ committed: false }));
+  // 利用回数: 1周の終わりから「もう1周」
+  if (committed) {
+    window.RoomkStats?.count('again');
+    countLapStart(playerCount);
+  }
   if (!committed) {
     if (reason === 'too_few') {
       showMsg(hostPlays ? `${MIN_PLAYERS}人以上いないと続けられないよ` : `ホストのほかに${MIN_PLAYERS}人以上いないと続けられないよ`);

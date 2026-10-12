@@ -45,7 +45,7 @@ apps/toomawashi/
 - CSS 接頭辞: **`.tw-`**（BEM）。画面切替は共通パターンの `.screen` / `.active`
 - アイコンは Material Symbols Rounded。ポータルカードは `record_voice_over`
 - `maximum-scale=1` / `const state = {...}` / `showScreen()` / `esc()`（RTDB アプリ共通ルール）
-- `stats.js?v=1`（defer・howto.js の直前）。ルーム作成時に `RoomkStats?.count('pack-{id}')`
+- `stats.js?v=1`（defer・howto.js の直前）。ルーム作成時に `RoomkStats?.count('pack-{id}')`。ほかに数える項目は下の「利用回数」
 - `howto.js` 組み込み（title「あそびかた」）
 
 ### 横断更新（統合担当が行う）
@@ -313,6 +313,22 @@ toomawashi_rooms/{roomCode}/
 - 参加用のリンク `?room=CODE` と「リンクをコピー」（待合室の「コードをコピー」の下）。共通仕様は docs/development/rtdb.md「参加用のリンク」。
 - このアプリの入口は `index.html` のインラインスクリプト末尾の `init()`（`?watch=` はない。`?room=` → 保存した記録 `tryReconnect` の順）。参加画面は `screen-join`（コード欄 `#join-code`、名前欄 `#join-nickname`、案内 `#joinLinkHint`）。`?room=` は `startRoomListener`（作成・参加・再接続の共通）で外す。
 - `?room=` の検査は「参加する」と同じ `/^[A-Z0-9]{6}$/`（`ROOM_CODE_PATTERN`）。トップの「ルームに参加する」は `goJoin()` を通して案内を隠す。途中参加できるアプリなので、ゲーム中に貼ったリンクからも参加できる（参加の可否は既存の「参加する」の検査のまま）。
+
+## 利用回数（2026-10-12）
+
+共通の項目名（docs/development/shared-modules.md「ルーム型で共通に使う項目名」）で、回数だけを数える。このアプリの「1回」は1周（遊ぶ人が1回ずつ説明役をする）。1周の終わりでホストが「もう1周／終わる」を選ぶ作りなので、ラウンドをくり返すアプリ（do-mannaka など）と同じ数え方にした。すべてホストの端末で、transaction の確定のあとに数える。
+
+| 項目 | 数えるとき |
+|---|---|
+| `room-create` | ルームができた |
+| `start`・`players-{N}` | 1周が始まった（待合室の「ゲームをはじめる」・「もう1周」のどちらも）。N は説明役の順番に入る人の人数（進行だけのホスト・途中から入った聞き手は含めない） |
+| `finish` | 1周の終わり（`reveal` のまま `round.result` が入り、「もう1周／終わる」を選ぶところ）まで進んだ。最後の人の判定（つたわった！／次へ）・最後の人のお題のスキップのどちらでも |
+| `again` | 1周の終わりから「もう1周」（`start`・`players-{N}` も数える） |
+
+- 前からある項目はそのまま残す: `pack-{id}`（ルームを作ったとき）
+- 「終わる」（1周の終わりから `finished` へ）と、周の途中の「ここまでにする」は数えない（途中の「ここまでにする」は結果の画面へ進むが、その周は終わっていないので `finish` に入れない）
+- 周の途中のお題ごとの進行（正解発表・判定・スキップ・説明役のパス・お題を変える）は数えない。参加者の端末は何も数えない
+- パックのデータを読めず次のお題を引けないとき（通常は起きない）も、1周の終わりと同じ画面になるので `finish` を数える
 
 ## 共通規約からの意図的な逸脱
 
