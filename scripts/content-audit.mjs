@@ -199,6 +199,8 @@ const COVERED_APPS = [
   'kossori-word',
   // 2026-10-12 追加
   'suki-bingo',
+  // 2026-10-13 追加（ポータルには載せていない）
+  'yokumite-kanji',
 ];
 
 // 数えられるコンテンツを持たないため重複検査の対象外にするアプリ（意図的除外）。
@@ -657,6 +659,22 @@ function collectEntries() {
   }
   if (wazaProblems.length > 0) {
     throw new Error(`kotoba-theme waza.js の構造エラー:\n  ${wazaProblems.join('\n  ')}`);
+  }
+
+  // yokumite-kanji: data.js（export const UNITS）。単元ごとの語（社会・理科の用語）を重複検査に載せる。
+  //   構造検査（よく見る1字 k が語にふくまれる・似た字 sim に k 自身がない）は fail-fast。
+  const ykUnits = evalModule('apps/yokumite-kanji/data.js').UNITS || [];
+  const ykProblems = [];
+  for (const unit of ykUnits) {
+    (unit.words || []).forEach((word, index) => {
+      const label = `${unit.id}[${index}]`;
+      if (!word.w || !word.k || !String(word.w).includes(word.k)) ykProblems.push(`${label}: k が語にふくまれていない`);
+      if ((word.sim || []).includes(word.k)) ykProblems.push(`${label}: sim に k 自身がある`);
+      rows.push(entry('yokumite-kanji', unit.id, word.w, { id: `yokumite-kanji:${unit.id}:${index}` }));
+    });
+  }
+  if (ykProblems.length > 0) {
+    throw new Error(`yokumite-kanji data.js の構造エラー:\n  ${ykProblems.join('\n  ')}`);
   }
 
   return rows.filter((row) => row.normText);

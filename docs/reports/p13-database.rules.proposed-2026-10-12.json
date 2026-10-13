@@ -180,6 +180,12 @@
         ".write": "auth != null"
       }
     },
+    "yokumitekanji_rooms": {
+      "$roomId": {
+        ".read": "auth != null",
+        ".write": "auth != null"
+      }
+    },
     "stats": {
       "$app": {
         ".read": "auth != null",

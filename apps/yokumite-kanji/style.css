@@ -1,0 +1,395 @@
+/* よく見て漢字（クラスの接頭辞は yk-） */
+
+/* 語は教科書体で出す（ゴシック体は手書きの形とちがう字があるため） */
+.yk-kyo {
+  font-family: 'Klee One', 'UD デジタル 教科書体 N-R', 'YuKyokasho Yoko', 'Hiragino Mincho ProN', serif;
+  font-weight: 600;
+}
+
+.yk-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+#app {
+  max-width: 960px;
+  padding-block: var(--space-md) var(--space-xl);
+}
+
+.yk-screen-title {
+  font-size: var(--font-size-lg);
+  color: var(--color-primary);
+  line-height: 1.4;
+  outline: none;
+}
+
+.yk-lead {
+  margin-top: var(--space-sm);
+  color: var(--color-muted);
+}
+
+.yk-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-md);
+  margin-top: var(--space-md);
+}
+.yk-actions--end { justify-content: flex-end; margin-top: var(--space-lg); }
+
+.yk-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 44px;
+  padding: 0 8px 0 0;
+  border: none;
+  background: none;
+  color: var(--color-muted);
+  font: inherit;
+  font-size: var(--font-size-sub);
+  cursor: pointer;
+}
+.yk-back-link:hover { color: var(--color-primary); }
+.yk-back-link .material-symbols-rounded { font-size: 18px; }
+
+.yk-credit {
+  padding: 0 var(--space-md) 96px;
+  text-align: center;
+  font-size: var(--font-size-sm);
+  color: var(--color-muted);
+}
+
+/* ── トップの下 ── */
+.yk-top-foot {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  margin-top: var(--space-xl);
+}
+
+/* ── 見せているときの帯（子ども側） ── */
+.yk-share-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 4px var(--space-md);
+  padding: 6px var(--space-md);
+  background: #DDF0F3;
+  border-bottom: 1px solid var(--color-accent);
+  color: var(--color-primary);
+  font-size: var(--font-size-sub);
+  font-weight: 700;
+}
+.yk-share-bar__text { display: inline-flex; align-items: center; gap: 6px; }
+.yk-share-bar__text .material-symbols-rounded { font-size: 20px; color: var(--color-accent); }
+.yk-share-bar__stop {
+  min-height: 36px;
+  padding: 4px 14px;
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-full);
+  background: var(--color-surface);
+  color: var(--color-primary);
+  font: inherit;
+  font-weight: 500;
+  cursor: pointer;
+}
+.yk-share-bar__stop:hover { background: #EEF3F8; }
+
+/* ── リンクからひらいたとき ── */
+.yk-invite { margin-top: var(--space-md); }
+.yk-invite__list { margin: var(--space-sm) 0 0 1.4em; color: var(--color-muted); }
+
+/* ── 見る画面（メンター側） ── */
+.yk-watch-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-sm) var(--space-md);
+  margin-top: var(--space-sm);
+  padding: 10px var(--space-md);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+}
+.yk-watch-bar__code { margin-right: auto; font-size: var(--font-size-sub); color: var(--color-muted); }
+.yk-watch-bar__code strong {
+  margin-left: 4px;
+  color: var(--color-primary);
+  font-size: 20px;
+  letter-spacing: 0.12em;
+}
+.yk-watch-body { margin-top: var(--space-md); }
+.yk-watch-note {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  padding: var(--space-xl) var(--space-md);
+  background: var(--color-surface);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-box);
+  color: var(--color-muted);
+  text-align: center;
+}
+/* 相手がスマホのときは、盤面がたて長になる。見る画面からはみ出さない高さにおさえる */
+.yk-stage--watch { max-height: 64vh; }
+/* 送られてくる位置は 0.08 秒おき。間をなめらかにつなぐ */
+.yk-stage--watch .yk-piece {
+  cursor: default;
+  pointer-events: none;
+  transition: transform 0.09s linear;
+}
+
+/* ── トップ：単元 ── */
+.yk-unit-group { margin-top: var(--space-lg); }
+.yk-unit-group__title {
+  font-size: var(--font-size-sub);
+  color: var(--color-muted);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+.yk-unit-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: var(--space-sm);
+}
+.yk-unit-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  width: 100%;
+  padding: 18px 20px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-box);
+  color: var(--color-text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: box-shadow var(--transition-base), border-color var(--transition-base);
+}
+.yk-unit-card:hover {
+  border-color: var(--color-accent);
+  box-shadow: var(--shadow-md);
+}
+.yk-unit-card > .material-symbols-rounded:first-child {
+  font-size: 32px;
+  color: var(--color-accent);
+}
+.yk-unit-card > .material-symbols-rounded:last-child { color: var(--color-muted); }
+.yk-unit-card__body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+.yk-unit-card__name { font-size: 18px; font-weight: 700; }
+.yk-unit-card__sub { font-size: var(--font-size-sub); color: var(--color-muted); }
+
+/* ── 単元：語の一覧 ── */
+.yk-tile-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 12px;
+  margin-top: var(--space-md);
+}
+.yk-word-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 14px 16px;
+  background: var(--color-surface);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-card);
+  color: var(--color-text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color var(--transition-base), box-shadow var(--transition-base);
+}
+.yk-word-tile:hover {
+  border-color: var(--color-accent);
+  box-shadow: var(--shadow-md);
+}
+.yk-word-tile:focus-visible { outline: 3px solid var(--color-accent); outline-offset: 2px; }
+.yk-word-tile__word { font-size: 24px; line-height: 1.35; overflow-wrap: anywhere; }
+.yk-word-tile__focus { color: var(--color-accent); font-size: 1.25em; }
+.yk-word-tile__yomi { font-size: var(--font-size-sm); color: var(--color-muted); }
+.yk-word-tile__marks {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 20px;
+  margin-top: 6px;
+}
+.yk-word-tile__wrote { color: var(--color-accent); }
+.yk-word-tile__wrote .material-symbols-rounded { font-size: 18px; }
+.yk-word-tile__built { color: #E0A106; }
+.yk-word-tile__built .material-symbols-rounded { font-size: 20px; }
+
+/* ── パズル ── */
+.yk-puzzle-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-sm) var(--space-lg);
+}
+.yk-puzzle-word { min-width: 0; }
+.yk-puzzle-word__text {
+  font-size: 34px;
+  line-height: 1.3;
+  letter-spacing: 0.04em;
+  outline: none;
+}
+.yk-puzzle-word__blank {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25em;
+  height: 1.25em;
+  margin-inline: 2px;
+  border: 2px dashed var(--color-accent);
+  border-radius: 6px;
+  color: var(--color-accent);
+  font-family: var(--font-base);
+  font-size: 0.8em;
+  vertical-align: 0.08em;
+}
+.yk-puzzle-word__yomi { font-size: var(--font-size-sub); color: var(--color-muted); }
+.yk-puzzle-word__meaning { font-size: var(--font-size-sub); }
+
+.yk-puzzle-guide {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-md);
+  margin-top: var(--space-sm);
+  font-size: var(--font-size-sub);
+  color: var(--color-muted);
+}
+.yk-puzzle-status {
+  flex-shrink: 0;
+  font-weight: 700;
+  color: var(--color-accent);
+}
+
+.yk-stage {
+  width: 100%;
+  height: auto;
+  margin-top: var(--space-sm);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.yk-stage__tray { fill: #F3F6F7; }
+.yk-stage__frame {
+  fill: #fff;
+  stroke: var(--color-accent);
+  stroke-width: 1.2;
+}
+.yk-stage__frame.is-done { stroke: #E0A106; stroke-width: 2; }
+.yk-stage__guide {
+  stroke: var(--color-border);
+  stroke-width: 0.5;
+  stroke-dasharray: 2 2;
+}
+
+.yk-ghost { opacity: 0; transition: opacity 0.2s ease; pointer-events: none; }
+.yk-ghost.is-on { opacity: 1; }
+.yk-ghost path,
+.yk-piece__ink,
+.yk-final path {
+  fill: none;
+  stroke-width: 5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.yk-ghost path { stroke: #DCE3E7; }
+.yk-final path { stroke: #1A1A1A; pointer-events: none; }
+
+.yk-piece { cursor: grab; outline: none; }
+.yk-piece__ink { stroke: var(--color-primary); pointer-events: none; }
+.yk-piece__hit {
+  fill: none;
+  stroke: transparent;
+  stroke-width: 16;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  pointer-events: stroke;
+}
+.yk-piece__area { fill: transparent; pointer-events: fill; }
+.yk-piece:hover .yk-piece__ink { stroke: var(--color-accent); }
+.yk-piece.is-drag { cursor: grabbing; }
+.yk-piece.is-drag .yk-piece__ink { stroke: var(--color-accent); stroke-width: 5.6; }
+.yk-piece:focus-visible .yk-piece__ink { stroke: var(--color-warning); }
+.yk-piece.is-locked { pointer-events: none; }
+.yk-piece.is-locked .yk-piece__ink {
+  stroke: #1A1A1A;
+  animation: piece-lock 0.45s ease;
+}
+@keyframes piece-lock {
+  from { stroke: var(--color-accent); stroke-width: 7.5; }
+}
+.yk-piece.is-gone {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+}
+/* できあがった字を上から書き直すあいだ、はめた部品はうすく残す */
+.is-under .yk-piece__ink { stroke: #DCE3E7 !important; animation: none; }
+
+.yk-puzzle-tools {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-sm);
+  margin-top: var(--space-sm);
+}
+
+.yk-puzzle-result {
+  margin-top: var(--space-md);
+  padding: var(--space-md) var(--space-lg);
+  background: #FFF8E6;
+  border-radius: var(--radius-card);
+  text-align: center;
+}
+.yk-puzzle-result__word { font-size: 40px; line-height: 1.3; letter-spacing: 0.04em; }
+.yk-puzzle-result__focus { color: var(--color-accent); }
+.yk-puzzle-result__point { margin-top: 4px; font-size: 17px; }
+.yk-puzzle-result__write {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: var(--space-sm) var(--space-md);
+  margin-top: var(--space-md);
+  padding-top: var(--space-md);
+  border-top: 1px dashed #E5D5A8;
+  font-size: var(--font-size-sub);
+  color: var(--color-muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .yk-stage--watch .yk-piece { transition: none; }
+  .yk-piece.is-locked .yk-piece__ink { animation: none; }
+  .yk-ghost, .yk-piece.is-gone { transition: none; }
+}
+
+@media (max-width: 700px) {
+  .yk-puzzle-word__text { font-size: 28px; }
+  .yk-puzzle-guide { flex-direction: column; gap: 2px; }
+  .yk-actions .btn { flex: 1 1 100%; }
+  .yk-actions--end .btn { flex: 0 0 auto; }
+}

@@ -53,6 +53,7 @@ RTDB_HTML_FILES=(
   "apps/toomawashi/index.html"
   "apps/uso-jisho/index.html"
   "apps/word-wolf/index.html"
+  "apps/yokumite-kanji/index.html"
 )
 
 # 分割ファイルの RTDB アプリ（画面を app.js 以外に持つもの）は、その JS も XSS・esc の検査に含める
