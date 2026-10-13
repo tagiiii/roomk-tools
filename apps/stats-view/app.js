@@ -2,7 +2,8 @@
 // 利用状況ダッシュボード（開発者専用）
 //
 // 読み取り専用。Realtime Database の `stats/{アプリ名}/{YYYY-MM}/{項目}` を
-// アプリごとに get() して、選択月の起動回数（open）と内訳を表示する。
+// アプリごとに get() して、選択月の起動回数（open）と内訳、
+// ルーム型アプリの遊ばれ方（room-create / start / players-N / finish / again）を表示する。
 // 書き込みは一切行わない。自分自身の閲覧も計測しない（stats.js を読み込まない）。
 //
 // 仕様の正本: apps/stats-view/AGENTS.md
@@ -30,6 +31,19 @@ const APP_NAME_RE = /^[A-Za-z0-9_-]+$/;
 // ポータルに載らないがカウンタを持つ擬似アプリ名（stats.js の detectAppName）
 const EXTRA_APPS = ['portal'];
 
+// ルーム型で共通に使う項目名（正本: docs/development/shared-modules.md）
+const PLAYERS_RE = /^players-(\d{1,2})$/;
+// 「開始」の1回の単位（表示のラベルだけに使う。正本は各アプリの AGENTS.md「利用回数」。
+// ここにないアプリは単位のラベルを出さないだけで、数字はそのまま出る）
+const UNIT_LABEL = { game: '1回＝1ゲーム', round: '1回＝1ラウンド' };
+const UNIT_BY_APP = {};
+['career-sugoroku', 'esadori', 'jinro', 'kaburazu-hint', 'kagi-awase', 'kotoba-pair', 'kotoba-tantei', 'name-change',
+  'oekaki-dengon', 'oshitsuke-zukan', 'pita-hame', 'quiz', 'stamp-ate', 'suki-bingo', 'tatoe-narabe', 'word-wolf',
+].forEach((name) => { UNIT_BY_APP[name] = 'game'; });
+['blackjack', 'do-mannaka', 'ikutsu-ieru', 'kakure-number', 'kimochi-ate', 'koedake-theater', 'kossori-word', 'magire-eshi',
+  'minna-ranking', 'moji-soroe', 'pittari-meter', 'tatoe-gp', 'toomawashi', 'uso-jisho',
+].forEach((name) => { UNIT_BY_APP[name] = 'round'; });
+
 // エラーは生の英語メッセージを出さず、日本語の固定文言に置き換える
 const MSG = {
   portal: 'アプリ一覧を読み込めませんでした。通信状況を確認して、もう一度読み込んでください。',
@@ -47,9 +61,14 @@ const el = {
   errorText: document.getElementById('errorText'),
   empty: document.getElementById('empty'),
   emptyTitle: document.getElementById('emptyTitle'),
-  tableWrap: document.getElementById('tableWrap'),
   tableBody: document.getElementById('tableBody'),
-  note: document.getElementById('note'),
+  roomSection: document.getElementById('roomSection'),
+  roomEmpty: document.getElementById('roomEmpty'),
+  roomBody: document.getElementById('roomBody'),
+  kpis: document.getElementById('kpis'),
+  dist: document.getElementById('dist'),
+  roomTableBody: document.getElementById('roomTableBody'),
+  openSection: document.getElementById('openSection'),
 };
 
 // アプリ名 → { 月キー → { 項目 → 回数 } }
@@ -150,9 +169,8 @@ function setState(state) {
   el.loading.hidden = state !== 'loading';
   el.error.hidden = state !== 'error';
   el.empty.hidden = state !== 'empty';
-  el.tableWrap.hidden = state !== 'ready';
-  el.note.hidden = state !== 'ready';
-  el.summary.hidden = state !== 'ready';
+  el.roomSection.hidden = state !== 'ready';
+  el.openSection.hidden = state !== 'ready';
   el.toolbar.hidden = state !== 'ready' && state !== 'empty';
 }
 
@@ -276,6 +294,257 @@ function buildRow(row, maxOpen) {
   return [tr, detail];
 }
 
+// ─────────────────────────────────────────────
+// ルームの遊ばれ方
+//   グラフライブラリは使わず、横棒は CSS の width だけで描く
+// ─────────────────────────────────────────────
+// 1アプリ・1か月ぶんの項目から、ルームの共通項目だけを取り出す
+function roomCounts(counts) {
+  const players = [];
+  Object.entries(counts).forEach(([key, count]) => {
+    const m = PLAYERS_RE.exec(key);
+    if (m && count > 0) players.push({ n: Number(m[1]), count });
+  });
+  players.sort((a, b) => a.n - b.n);
+  const num = (key) => Math.max(0, Number(counts[key]) || 0);
+  return {
+    rooms: num('room-create'),
+    start: num('start'),
+    finish: num('finish'),
+    again: num('again'),
+    players,
+  };
+}
+
+// ルームの記録があるアプリだけを対象にする。start・finish はルームのないツール
+// （tsuyomi-card など）も同じ名前で数えているので、room-create か players-N で見分ける
+function hasRoomData(room) {
+  return room.rooms > 0 || room.players.length > 0;
+}
+
+// いちばん多い人数（同じ回数で並んだら、並んだ人数をすべて返す）
+function topPlayers(players) {
+  const max = players.reduce((m, p) => Math.max(m, p.count), 0);
+  return max > 0 ? players.filter((p) => p.count === max) : [];
+}
+
+function formatPct(part, whole) {
+  return Math.round((part / whole) * 100) + '%';
+}
+
+// 棒・メーターの上に出す小さな説明。数字はすべて画面にも出しているので、補足だけ
+const tip = document.createElement('div');
+tip.className = 'sv-tip';
+tip.hidden = true;
+document.body.append(tip);
+
+function attachTip(target, lines) {
+  const show = (ev) => {
+    tip.replaceChildren(...lines.map((line) => {
+      const p = document.createElement('p');
+      p.textContent = line;
+      return p;
+    }));
+    tip.hidden = false;
+    const pad = 12;
+    const rect = tip.getBoundingClientRect();
+    const x = Math.min(ev.clientX + pad, window.innerWidth - rect.width - pad);
+    const y = ev.clientY + pad + rect.height > window.innerHeight ? ev.clientY - rect.height - pad : ev.clientY + pad;
+    tip.style.left = Math.max(pad, x) + 'px';
+    tip.style.top = Math.max(pad, y) + 'px';
+  };
+  target.addEventListener('pointerenter', show);
+  target.addEventListener('pointermove', show);
+  target.addEventListener('pointerleave', () => { tip.hidden = true; });
+}
+
+function buildKpi(label, value, sub) {
+  const wrap = document.createElement('div');
+  wrap.className = 'sv-kpi';
+  const dt = document.createElement('dt');
+  dt.className = 'sv-kpi__label';
+  dt.textContent = label;
+  const dd = document.createElement('dd');
+  dd.className = 'sv-kpi__value';
+  dd.textContent = value;
+  wrap.append(dt, dd);
+  if (sub) {
+    const note = document.createElement('dd');
+    note.className = 'sv-kpi__sub';
+    note.textContent = sub;
+    wrap.append(note);
+  }
+  return wrap;
+}
+
+// 人数ごとの横棒（全アプリの合計）。値は棒の先に書く
+function buildDistRow(entry, max, total) {
+  const li = document.createElement('li');
+  li.className = 'sv-dist__row';
+  const label = document.createElement('span');
+  label.className = 'sv-dist__label';
+  label.textContent = entry.n + '人';
+  const plot = document.createElement('span');
+  plot.className = 'sv-dist__plot';
+  const bar = document.createElement('span');
+  bar.className = 'sv-dist__bar';
+  // 棒の先に値を書く場所を残す（いちばん長い棒で 86%）
+  bar.style.width = (max > 0 ? (entry.count / max) * 86 : 0).toFixed(1) + '%';
+  const value = document.createElement('span');
+  value.className = 'sv-dist__value';
+  value.textContent = formatCount(entry.count) + '回';
+  plot.append(bar, value);
+  li.append(label, plot);
+  attachTip(li, [
+    entry.n + '人で始めた回: ' + formatCount(entry.count) + '回（' + formatPct(entry.count, total) + '）',
+    ...entry.apps.map((a) => a.name + ' ' + formatCount(a.count) + '回'),
+  ]);
+  return li;
+}
+
+// 割合のメーター。分母が 0 のときは「—」
+function buildMeterCell(part, whole, partLabel, wholeLabel) {
+  const td = document.createElement('td');
+  td.className = 'sv-room__metercell';
+  if (whole <= 0) {
+    td.classList.add('is-empty');
+    td.textContent = '—';
+    return td;
+  }
+  const meter = document.createElement('div');
+  meter.className = 'sv-meter';
+  meter.setAttribute('role', 'img');
+  meter.setAttribute('aria-label', formatPct(part, whole) + '（' + wholeLabel + ' ' + whole + '回のうち ' + partLabel + ' ' + part + '回）');
+  const track = document.createElement('div');
+  track.className = 'sv-meter__track';
+  const fill = document.createElement('div');
+  fill.className = 'sv-meter__fill';
+  fill.style.width = Math.min(100, (part / whole) * 100).toFixed(1) + '%';
+  track.append(fill);
+  const pct = document.createElement('span');
+  pct.className = 'sv-meter__pct';
+  pct.textContent = formatPct(part, whole);
+  const frac = document.createElement('span');
+  frac.className = 'sv-meter__frac';
+  frac.textContent = formatCount(part) + '/' + formatCount(whole);
+  meter.append(track, pct, frac);
+  td.append(meter);
+  attachTip(td, [partLabel + ' ' + formatCount(part) + '回 ÷ ' + wholeLabel + ' ' + formatCount(whole) + '回']);
+  return td;
+}
+
+function buildRoomRow(row) {
+  const tr = document.createElement('tr');
+  tr.className = 'sv-room';
+
+  const th = document.createElement('th');
+  th.scope = 'row';
+  th.className = 'sv-room__name';
+  const name = document.createElement('span');
+  name.className = 'sv-room__app';
+  name.textContent = row.name;
+  th.append(name);
+  const unit = UNIT_LABEL[UNIT_BY_APP[row.name]];
+  if (unit) {
+    const unitEl = document.createElement('span');
+    unitEl.className = 'sv-room__unit';
+    unitEl.textContent = unit;
+    th.append(unitEl);
+  }
+
+  const tdRooms = document.createElement('td');
+  tdRooms.className = 'sv-room__num';
+  tdRooms.textContent = formatCount(row.rooms);
+  const tdStart = document.createElement('td');
+  tdStart.className = 'sv-room__num';
+  tdStart.textContent = formatCount(row.start);
+
+  const tdPlayers = document.createElement('td');
+  tdPlayers.className = 'sv-room__players';
+  if (row.players.length === 0) {
+    tdPlayers.classList.add('is-empty');
+    tdPlayers.textContent = '—';
+  } else {
+    // いちばん多い人数が1つに決まるときだけ、その人数を目立たせる
+    const tops = topPlayers(row.players);
+    const mode = tops.length === 1 ? tops[0] : null;
+    row.players.forEach((p) => {
+      const chip = document.createElement('span');
+      chip.className = 'sv-chip' + (p === mode ? ' is-top' : '');
+      const n = document.createElement('span');
+      n.className = 'sv-chip__n';
+      n.textContent = p.n + '人';
+      const c = document.createElement('span');
+      c.className = 'sv-chip__count';
+      c.textContent = '×' + formatCount(p.count);
+      chip.append(n, c);
+      tdPlayers.append(chip);
+    });
+  }
+
+  tr.append(
+    th, tdRooms, tdStart,
+    buildMeterCell(row.finish, row.start, '最後まで進んだ', '開始'),
+    buildMeterCell(row.again, row.finish, '続けてもう1回', '最後まで進んだ'),
+    tdPlayers,
+  );
+  return tr;
+}
+
+function renderRooms(monthKey) {
+  const rows = Object.entries(stats)
+    .filter(([, byMonth]) => byMonth[monthKey])
+    .map(([name, byMonth]) => ({ name, ...roomCounts(byMonth[monthKey]) }))
+    .filter(hasRoomData)
+    .sort((a, b) => b.rooms - a.rooms || b.start - a.start || a.name.localeCompare(b.name));
+
+  el.kpis.replaceChildren();
+  el.dist.replaceChildren();
+  el.roomTableBody.replaceChildren();
+  tip.hidden = true;
+
+  el.roomEmpty.hidden = rows.length > 0;
+  el.roomBody.hidden = rows.length === 0;
+  if (rows.length === 0) return;
+
+  // 人数ごとの合計（どのアプリの分かも持つ）
+  const byN = new Map();
+  rows.forEach((row) => row.players.forEach((p) => {
+    if (!byN.has(p.n)) byN.set(p.n, { n: p.n, count: 0, apps: [] });
+    const entry = byN.get(p.n);
+    entry.count += p.count;
+    entry.apps.push({ name: row.name, count: p.count });
+  }));
+  const dist = [...byN.values()].sort((a, b) => a.n - b.n);
+  dist.forEach((entry) => entry.apps.sort((a, b) => b.count - a.count || a.name.localeCompare(b.name)));
+  const distTotal = dist.reduce((sum, entry) => sum + entry.count, 0);
+  const distMax = dist.reduce((max, entry) => Math.max(max, entry.count), 0);
+  const tops = topPlayers(dist);
+
+  const sum = (key) => rows.reduce((total, row) => total + row[key], 0);
+  el.kpis.append(
+    buildKpi('作られたルーム', formatCount(sum('rooms')), rows.length + ' アプリ'),
+    buildKpi('始まった回', formatCount(sum('start')), 'ゲームとラウンドの合計'),
+    buildKpi('最後まで進んだ回', formatCount(sum('finish')), null),
+    buildKpi(
+      'いちばん多い人数',
+      tops.length ? tops.map((p) => p.n + '人').join('・') : '—',
+      tops.length ? formatCount(distTotal) + '回のうち' + (tops.length > 1 ? 'それぞれ' : '') + formatCount(tops[0].count) + '回' : null,
+    ),
+  );
+
+  if (dist.length === 0) {
+    const li = document.createElement('li');
+    li.className = 'sv-dist__empty';
+    li.textContent = 'この月は、人数の記録がありません。';
+    el.dist.append(li);
+  } else {
+    dist.forEach((entry) => el.dist.append(buildDistRow(entry, distMax, distTotal)));
+  }
+
+  rows.forEach((row) => el.roomTableBody.append(buildRoomRow(row)));
+}
+
 function renderMonth(monthKey) {
   const rows = Object.entries(stats)
     .filter(([, byMonth]) => byMonth[monthKey])
@@ -303,6 +572,7 @@ function renderMonth(monthKey) {
 
   el.summary.textContent =
     formatMonth(monthKey) + ' — ' + rows.length + ' アプリ / 起動あわせて ' + formatCount(totalOpen) + ' 回';
+  renderRooms(monthKey);
   setState('ready');
 }
 

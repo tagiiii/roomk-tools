@@ -13,7 +13,7 @@
   <!-- 共通デザインシステム（M-1〜M-6）-->
   <link rel="stylesheet" href="../shared/css/design-system.css" />
   <!-- アプリ固有スタイル -->
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css?v=20261013" />
 </head>
 <body>
 
@@ -36,9 +36,6 @@
       </button>
     </section>
 
-    <!-- 選択月のサマリ -->
-    <p class="sv-summary" id="summary" hidden></p>
-
     <!-- 読み込み中 -->
     <div class="loading-overlay" id="loading" role="status">
       <div class="spinner"></div>
@@ -58,8 +55,56 @@
       <p class="sv-empty__desc">計測は本番サイトでの利用分のみ記録されます（localhost からは送信されません）。</p>
     </div>
 
-    <!-- 本体 -->
-    <div class="sv-table-wrap" id="tableWrap" hidden>
+    <!-- ルームの遊ばれ方（ルーム型アプリの共通項目: room-create / start / players-N / finish / again）-->
+    <section class="sv-section" id="roomSection" aria-labelledby="roomHeading" hidden>
+      <h2 class="sv-section__title" id="roomHeading">ルームの遊ばれ方</h2>
+      <p class="sv-section__lead">ルーム型アプリで、ルームが作られた数・始まった回数・結果まで進んだ回数。2026年10月12日から記録しています。</p>
+
+      <p class="sv-section__empty" id="roomEmpty" hidden>この月は、ルームの記録がありません。</p>
+
+      <div id="roomBody">
+        <!-- 見出しの数字 -->
+        <dl class="sv-kpis" id="kpis"></dl>
+
+        <!-- 始めたときの人数（全アプリの合計）-->
+        <div class="sv-card">
+          <h3 class="sv-card__title">始めたときの人数</h3>
+          <p class="sv-card__sub">全アプリの合計。進行だけのホストは人数に入れていません。</p>
+          <ul class="sv-dist" id="dist"></ul>
+        </div>
+
+        <!-- アプリごと -->
+        <div class="sv-table-wrap">
+          <table class="sv-table sv-table--room">
+            <thead>
+              <tr>
+                <th scope="col">アプリ</th>
+                <th scope="col" class="sv-table__num">ルーム</th>
+                <th scope="col" class="sv-table__num">開始</th>
+                <th scope="col" class="sv-table__meter">最後まで進んだ割合</th>
+                <th scope="col" class="sv-table__meter">続けて遊んだ割合</th>
+                <th scope="col" class="sv-table__players">始めたときの人数</th>
+              </tr>
+            </thead>
+            <tbody id="roomTableBody"></tbody>
+          </table>
+        </div>
+
+        <ul class="sv-notes">
+          <li>「開始」の1回は、アプリによって1ゲームか1ラウンドです（アプリ名の下に表示）。回数はアプリどうしで比べにくいので、割合で見比べてください。</li>
+          <li>割合は「最後まで進んだ回 ÷ 開始」「続けてもう1回 ÷ 最後まで進んだ回」です。右の分数の分母が小さいうちは、1回の違いで大きく動きます。</li>
+          <li>通信が切れたときなどは数え漏れることがあり、実際より少なめに出ます。</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- 起動回数 -->
+    <section class="sv-section" id="openSection" aria-labelledby="openHeading" hidden>
+      <h2 class="sv-section__title" id="openHeading">起動回数</h2>
+      <!-- 選択月のサマリ -->
+      <p class="sv-section__lead" id="summary"></p>
+
+    <div class="sv-table-wrap" id="tableWrap">
       <table class="sv-table">
         <thead>
           <tr>
@@ -72,10 +117,12 @@
       </table>
     </div>
 
-    <p class="sv-note" id="note" hidden>アプリ名を押すと、そのアプリの全項目（open・pack-* ・session-* など）を展開します。</p>
+    <p class="sv-note" id="note">アプリ名を押すと、そのアプリの全項目（open・pack-* ・start・finish など）を展開します。起動回数は端末と読み込みの数なので、ルームの数とは一致しません。</p>
+    </section>
 
   </div>
 
-  <script type="module" src="app.js"></script>
+  <!-- index.html と app.js・style.css はセットで変わるので、変えたら ?v= をそろえて上げる -->
+  <script type="module" src="app.js?v=20261013"></script>
 </body>
 </html>

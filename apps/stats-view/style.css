@@ -101,6 +101,305 @@
   margin-top: var(--space-xs);
 }
 
+/* ── セクション（ルームの遊ばれ方／起動回数）── */
+.sv-section {
+  margin-top: var(--space-lg);
+}
+
+.sv-section + .sv-section {
+  margin-top: var(--space-xl);
+}
+
+.sv-section__title {
+  font-size: var(--font-size-body);
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.sv-section__lead {
+  font-size: var(--font-size-sm);
+  color: var(--color-muted);
+  margin-top: var(--space-xs);
+}
+
+.sv-section__empty {
+  font-size: var(--font-size-sub);
+  color: var(--color-muted);
+  margin-top: var(--space-md);
+  padding: var(--space-md);
+  background: var(--color-surface);
+  border-radius: var(--radius-card);
+}
+
+/* ── 見出しの数字 ── */
+.sv-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-sm);
+  margin-top: var(--space-md);
+}
+
+.sv-kpi {
+  background: var(--color-surface);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-sm);
+  padding: 14px var(--space-md);
+  min-width: 0;
+}
+
+.sv-kpi__label {
+  font-size: var(--font-size-sm);
+  color: var(--color-muted);
+}
+
+.sv-kpi__value {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--color-primary);
+  margin-top: 2px;
+}
+
+.sv-kpi__sub {
+  font-size: 12px;
+  color: var(--color-muted);
+  margin-top: 2px;
+}
+
+/* ── カード（人数の分布）── */
+.sv-card {
+  margin-top: var(--space-md);
+  background: var(--color-surface);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-md);
+}
+
+.sv-card__title {
+  font-size: var(--font-size-sub);
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.sv-card__sub {
+  font-size: var(--font-size-sm);
+  color: var(--color-muted);
+  margin-top: 2px;
+}
+
+/* 人数ごとの横棒。棒は左の基準線から伸び、値は棒の先に書く */
+.sv-dist {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: var(--space-md);
+}
+
+.sv-dist__row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  border-radius: var(--radius-sm);
+}
+
+.sv-dist__row:hover .sv-dist__bar {
+  background: var(--color-primary);
+}
+
+.sv-dist__label {
+  flex: 0 0 3em;
+  text-align: right;
+  font-size: var(--font-size-sm);
+  color: var(--color-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.sv-dist__plot {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-left: 1px solid var(--color-border);
+  padding: 2px 0;
+}
+
+.sv-dist__bar {
+  flex: 0 0 auto;
+  height: 16px;
+  min-width: 2px;
+  border-radius: 0 4px 4px 0;
+  background: var(--color-accent);
+  transition: background var(--transition-base);
+}
+
+.sv-dist__value {
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  color: var(--color-primary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.sv-dist__empty {
+  font-size: var(--font-size-sm);
+  color: var(--color-muted);
+}
+
+/* ── ルームの表 ── */
+.sv-table--room {
+  min-width: 720px;
+}
+
+.sv-table__meter {
+  width: 19%;
+}
+
+.sv-table__players {
+  width: 27%;
+}
+
+.sv-room {
+  border-bottom: 1px solid #E7EDF0;
+}
+
+.sv-room:last-child {
+  border-bottom: none;
+}
+
+.sv-room > th,
+.sv-room > td {
+  padding: 10px var(--space-md);
+  vertical-align: middle;
+  text-align: left;
+}
+
+.sv-room__name {
+  font-weight: 500;
+}
+
+.sv-room__app {
+  display: block;
+  color: var(--color-primary);
+  word-break: break-all;
+}
+
+.sv-room__unit {
+  display: block;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--color-muted);
+  margin-top: 1px;
+  white-space: nowrap;
+}
+
+.sv-room > .sv-room__num {
+  text-align: right;
+  font-weight: 700;
+  color: var(--color-primary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.sv-room > .is-empty {
+  color: var(--color-muted);
+}
+
+/* 割合のメーター。塗っていない部分は同じ色みのうすい色 */
+.sv-meter {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.sv-meter__track {
+  flex: 1 1 auto;
+  min-width: 48px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  background: #D6E7EA;
+  overflow: hidden;
+}
+
+.sv-meter__fill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  background: var(--color-accent);
+}
+
+.sv-meter__pct {
+  flex: 0 0 3.2em;
+  text-align: right;
+  font-weight: 700;
+  color: var(--color-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.sv-meter__frac {
+  flex: 0 0 3.6em;
+  font-size: 12px;
+  color: var(--color-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* 人数ごとの回数（アプリごと）。いちばん多い人数だけ太くする */
+.sv-room__players {
+  line-height: 2;
+}
+
+.sv-chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 3px;
+  margin-right: 4px;
+  padding: 1px 7px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  color: var(--color-muted);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.sv-chip.is-top {
+  border-color: var(--color-accent);
+  color: var(--color-primary);
+  font-weight: 700;
+}
+
+/* ── 補足（棒・メーターの上に出す）── */
+.sv-tip {
+  position: fixed;
+  z-index: 10;
+  max-width: 260px;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--color-primary);
+  color: #FFFFFF;
+  font-size: 12px;
+  line-height: 1.6;
+  box-shadow: var(--shadow-sm);
+  pointer-events: none;
+}
+
+.sv-tip p:first-child {
+  font-weight: 700;
+}
+
+/* ── 注記のリスト ── */
+.sv-notes {
+  margin-top: var(--space-sm);
+  padding-left: 1.2em;
+  font-size: var(--font-size-sm);
+  color: var(--color-muted);
+}
+
+.sv-notes li + li {
+  margin-top: 2px;
+}
+
 /* ── テーブル ── */
 .sv-table-wrap {
   margin-top: var(--space-md);
@@ -296,6 +595,21 @@
   }
 
   .sv-detail > td {
+    padding-left: var(--space-sm);
+    padding-right: var(--space-sm);
+  }
+
+  .sv-kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* ルームの表は列が多いので、狭い画面では横にスクロールして見る */
+  .sv-table--room {
+    min-width: 680px;
+  }
+
+  .sv-room > th,
+  .sv-room > td {
     padding-left: var(--space-sm);
     padding-right: var(--space-sm);
   }
