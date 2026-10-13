@@ -7,6 +7,7 @@ const { authReady, db } = RoomkRTDB.initFirebase(firebase);
 const ROOMS = 'sakusenchat_rooms';
 const STATUS_OPEN = 'open';
 const BASE_TITLE = '作戦会議チャット | room-K';
+// 新着の音・通知音は鳴らさない（聴覚過敏への配慮。AGENTS.md「未読・入力中」）
 
 // ルームのカギ。リンクを知っている人だけが読めるように、6文字のコードではなく長いカギを使う（AGENTS.md「ルームのカギ」）
 const KEY_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -113,7 +114,6 @@ const state = {
   current: null,
   drafts: {},            // 話題 id → 書きかけ { text, img }
   pendingImg: null,      // { src, w, h }
-  sound: true,
   imgCache: new Map(),
   imgWait: new Map(),
   typingSentAt: 0,
@@ -125,7 +125,6 @@ const state = {
 };
 
 let confirmAction = null;
-let audio = null;
 const narrow = window.matchMedia('(max-width: 600px)');
 const coarse = window.matchMedia('(pointer: coarse)');
 
@@ -384,7 +383,6 @@ async function waitAuth(quiet = false) {
 
 async function createRoom() {
   if (state.busy || state.roomRef || !state.isMentor) return;
-  unlockAudio();
   const name = $('hostName').value.trim();
   const error = validName(name);
   if (error) {
@@ -498,7 +496,6 @@ async function enterAsGuest(key, name) {
 
 async function joinRoom() {
   if (state.busy || state.roomRef || !state.joinKey) return;
-  unlockAudio();
   const name = $('guestName').value.trim();
   const error = validName(name);
   if (error) {
@@ -570,7 +567,6 @@ async function tryReconnect(session) {
 async function resumePrev() {
   const key = state.prevKey;
   if (state.busy || state.roomRef || !key) return;
-  unlockAudio();
   state.busy = true;
   $('btnPrevResume').disabled = true;
   try {
@@ -960,7 +956,6 @@ function announceGuests(before, after) {
   Object.keys(b).forEach((id) => {
     if (id !== state.mid && !a[id]) {
       toast(String(b[id]?.name || '').slice(0, NAME_MAX) + 'が入ったよ', false);
-      beep();
     }
   });
   Object.keys(a).forEach((id) => {
@@ -1089,9 +1084,6 @@ function handleTopics(value) {
   if (first && state.firstJoin) {
     // 入ったときにもうあった話題は「新しい」にしない
     list.forEach((t) => state.seen.add(t.id));
-  } else if (!first) {
-    const known = new Set(state.topics.map((t) => t.id));
-    if (list.some((t) => !known.has(t.id) && isFresh(t))) beep();
   }
   state.topics = list;
   if (!currentTopic()) {
@@ -1466,7 +1458,6 @@ function onMsgAdded(id, raw) {
     if (stick) scrollBottom(); else $('btnNewer').hidden = false;
   } else {
     if (stick) scrollBottom();
-    beep();
   }
   renderTyping();
   renderTopics();
@@ -1688,7 +1679,7 @@ function openViewer(src) {
   $('viewer').showModal();
 }
 
-/* ── たしかめる・音・書く欄 ── */
+/* ── たしかめる・書く欄 ── */
 
 function ask(texts, action) {
   $('confirmTitle').textContent = texts.title;
@@ -1697,36 +1688,6 @@ function ask(texts, action) {
   if ($('confirmDialog').open) $('confirmDialog').close();
   confirmAction = action;
   $('confirmDialog').showModal();
-}
-
-function unlockAudio() {
-  try {
-    const Ctx = window.AudioContext || window.webkitAudioContext;
-    if (!audio && Ctx) audio = new Ctx();
-    if (audio && audio.state === 'suspended') audio.resume();
-  } catch {
-    audio = null;
-  }
-}
-
-function beep() {
-  if (!state.sound || !audio) return;
-  try {
-    const t = audio.currentTime;
-    const osc = audio.createOscillator();
-    const gain = audio.createGain();
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(880, t);
-    gain.gain.setValueAtTime(0.0001, t);
-    gain.gain.exponentialRampToValueAtTime(0.12, t + 0.02);
-    gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.28);
-    osc.connect(gain);
-    gain.connect(audio.destination);
-    osc.start(t);
-    osc.stop(t + 0.3);
-  } catch {
-    // 音が出せなくても続ける
-  }
 }
 
 function growText() {
@@ -1802,17 +1763,6 @@ function bindEvents() {
   $('btnLeave').addEventListener('click', leaveRoom);
   $('btnOverlayLeave').addEventListener('click', leaveRoom);
 
-  $('btnSound').addEventListener('click', () => {
-    state.sound = !state.sound;
-    $('btnSound').setAttribute('aria-pressed', String(state.sound));
-    $('btnSound').setAttribute('aria-label', '新着の音: ' + (state.sound ? 'オン' : 'オフ'));
-    $('btnSound').firstElementChild.textContent = state.sound ? 'volume_up' : 'volume_off';
-    if (state.sound) {
-      unlockAudio();
-      beep();
-    }
-  });
-
   $('btnAddOpen').addEventListener('click', () => {
     $('btnAddOpen').hidden = true;
     $('addForm').hidden = false;
@@ -1872,8 +1822,6 @@ function bindEvents() {
   $('viewer').addEventListener('click', (e) => { if (e.target === $('viewer')) $('viewer').close(); });
   $('viewer').addEventListener('close', () => $('viewerImg').removeAttribute('src'));
 
-  // 音は、画面を一度さわったあとでないと出せない（ブラウザの決まり）
-  ['pointerdown', 'keydown'].forEach((type) => window.addEventListener(type, unlockAudio, { once: true }));
   window.addEventListener('focus', checkRead);
   document.addEventListener('visibilitychange', checkRead);
   narrow.addEventListener('change', () => {

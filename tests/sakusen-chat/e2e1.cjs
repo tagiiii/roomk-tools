@@ -243,10 +243,9 @@ const fs = require('fs'); const path = require('path');
   await waitMsgs(H, before + 1);
   check('N enter sends', (await H.page.inputValue('#textInput')) === '');
 
-  // ── 音の切りかえ
-  await A.page.click('#btnSound');
-  check('O sound off', (await A.page.getAttribute('#btnSound', 'aria-pressed')) === 'false' && (await A.page.getAttribute('#btnSound', 'aria-label')) === '新着の音: オフ');
-  await A.page.click('#btnSound');
+  // ── 音は鳴らさない（切りかえボタンも置かない）
+  check('O no sound button', !(await A.page.$('#btnSound')) && !(await H.page.$('#btnSound')));
+  check('O no audio was ever started', (await A.page.evaluate(() => window.__audioMade)) === 0 && (await H.page.evaluate(() => window.__audioMade)) === 0);
 
   // ── つかいかた
   await H.page.click('.howto-fab');

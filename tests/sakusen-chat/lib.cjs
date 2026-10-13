@@ -80,6 +80,15 @@ async function newContext(label, opts = {}) {
 }
 async function newPage(context, label) {
   const page = await context.newPage();
+  // 音を鳴らす部品（AudioContext・Audio）が作られた回数を数える（このアプリは音を鳴らさない）
+  await page.addInitScript(() => {
+    window.__audioMade = 0;
+    ['AudioContext', 'webkitAudioContext', 'Audio'].forEach((name) => {
+      const Original = window[name];
+      if (!Original) return;
+      window[name] = function (...args) { window.__audioMade += 1; return new Original(...args); };
+    });
+  });
   const client = { label, context, page, errors: [] };
   page.on('websocket', (ws) => {
     const host = new URL(ws.url()).hostname;

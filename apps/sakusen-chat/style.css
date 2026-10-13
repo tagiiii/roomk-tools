@@ -168,7 +168,6 @@ body.sc-chatting .howto-fab {
 }
 
 .sc-icon-btn:hover { background: #EEF3F8; }
-.sc-icon-btn[aria-pressed="false"] { color: var(--color-muted); }
 
 .sc-icon-btn:focus-visible,
 .sc-topic:focus-visible,
