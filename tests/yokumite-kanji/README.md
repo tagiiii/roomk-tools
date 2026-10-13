@@ -1,0 +1,40 @@
+# よく見て漢字の E2E
+
+隔離した Firebase エミュレーターと Playwright で、メンター（見る側）・子ども（見せる側）の画面を別々のブラウザとして動かして確かめる。
+**本番の Firebase には接続しない**（共通の `rtdb-utils.js` をエミュレーター向けに差し替えた写しを使い、本番あての通信が出たら失敗にする）。
+
+| ファイル | 内容 |
+|---|---|
+| `e2e1.cjs` | 一人で遊ぶ・見る画面の作成・リンクから見せる・部品の動きが映る・完成・やめる・見せる人の切りかえ・おかしな値・とじる |
+| `e2e2.cjs` | 再読み込み・通信の切断と復帰・メンターの切断・期限切れ・残りかすの片付け |
+| `e2e3.cjs` | 作成・席の取得の送信直後の切断 |
+| `lib.cjs` | 共通の部品（配信用サーバー・本番あて通信の検出・部品をマウスで動かす操作） |
+| `sync-site.sh` | `apps/shared` と `apps/yokumite-kanji` を作業フォルダに写し、エミュレーター向けに差し替える |
+| `firebase.json` | エミュレーターのポート（auth 9491・database 9492・hub 4491・logging 4591） |
+
+## 実行
+
+作業フォルダ（リポジトリの外）を決めて、次の順に行う。Java（エミュレーターに必要）・Playwright の場所は環境に合わせる。
+
+```bash
+export YK_WORK=/tmp/yokumite-kanji-e2e
+export PLAYWRIGHT=（playwright のフォルダ）
+
+# 1. 写しを作る（アプリを直すたびにやり直す）
+bash tests/yokumite-kanji/sync-site.sh
+
+# 2. エミュレーターを起動する（別の端末で。設定とルールは作業フォルダに置く）
+cp tests/yokumite-kanji/firebase.json database.rules.json "$YK_WORK"/
+(cd "$YK_WORK" && npx --yes firebase-tools@15.29.0 emulators:start --only auth,database --project demo-roomk-yk)
+
+# 3. 1本ずつ流す（その2は、切断の検知を待つので数分かかる）
+node tests/yokumite-kanji/e2e1.cjs
+node tests/yokumite-kanji/e2e2.cjs
+node tests/yokumite-kanji/e2e3.cjs
+```
+
+- このアプリは、ルームを作る・入るときまで Firebase を初期化しない。写しの `rtdb-utils.js` は、読み込んだ時点で設定がエミュレーター向けかを確かめられるようにしてある（`window.__EMU__`）
+- 部品はばらまかれる場所が毎回ちがう。重なったときに別の部品をつかまないよう、`lib.cjs` は、ほかの部品にかくれていない点をさがしてつかむ
+- ポートを別のセッションが使っていたら、相手は止めずに、`firebase.json`・`sync-site.sh`・`lib.cjs` のポートをそろえて変える
+- 終わったらエミュレーターを止め、ポートが空いたことを確かめる
+- 2026-10-13 の結果: その1 93項目・その2 43項目・その3 15項目、すべて合格
