@@ -169,6 +169,7 @@ yokumitekanji_rooms/{コード}/
 ## 字のデータ（`kvg-data.js`）
 
 - KanjiVG（https://kanjivg.tagaini.net/ 、© Ulrich Apel、CC BY-SA 3.0）の筆順データから作った二次的なデータ。**このファイルも CC BY-SA 3.0**。画面下のクレジット（出典・ライセンスへのリンク・変更したこと）を消さない
+- 出典とライセンス原文は、共通のクレジットページ（`apps/third-party-notices.html` の 7. Klee One・8. KanjiVG）と台帳（`docs/third-party-sources.json`）にも載せている（2026-10-13。KanjiVG はコミット `70a0b7a` の内容）。字を足して取得し直したら、取得元のコミットと字数をそこでも直す
 - 手で直さない。**字のデータを作り直す**ときは:
   1. `tools/build.py` の `TARGETS`（よく見る字）と `SIMS`（似た字）に字を足す
   2. `https://raw.githubusercontent.com/KanjiVG/kanjivg/master/kanji/{5けたの16進}.svg` を、空のフォルダに取得する（取得はオーナーの許可を得てから。2026-10-13 に56字分を取得）

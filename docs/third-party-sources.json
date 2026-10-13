@@ -34,6 +34,24 @@
       "sha256": "58d1e17ffe5109a7ae296caafcadfdbe6a7d176f0bc4ab01e12a689b0499d8bd"
     },
     {
+      "component": "Klee One",
+      "source": "https://raw.githubusercontent.com/google/fonts/92345ac0dbb28d27dbd32f3a782e84c55eaac214/ofl/kleeone/OFL.txt",
+      "sha256": "e376b0df8e8a2345a9533db6f0a5333a1107975569ad9d1973a7ee557161ca38",
+      "checkedOn": "2026-10-13"
+    },
+    {
+      "component": "KanjiVG (COPYING)",
+      "source": "https://raw.githubusercontent.com/KanjiVG/kanjivg/70a0b7ae0c18ceb5cb358274b029cce0234a43bc/COPYING",
+      "sha256": "d255e07978fd16ddfec38bc59dc9d857b885dd44ddbf4e79baf207d30746bdcc",
+      "checkedOn": "2026-10-13"
+    },
+    {
+      "component": "KanjiVG (kanji/0907a.svg の先頭の表示。取得した56字のうちの1つ)",
+      "source": "https://raw.githubusercontent.com/KanjiVG/kanjivg/70a0b7ae0c18ceb5cb358274b029cce0234a43bc/kanji/0907a.svg",
+      "sha256": "cd1a42f3dd56c9979b587467e07d73aef5568a1f9a593b293ee5645b316b7eb4",
+      "checkedOn": "2026-10-13"
+    },
+    {
       "component": "css-line-break 2.1.0 (html2canvas内)",
       "source": "https://cdn.jsdelivr.net/npm/css-line-break@2.1.0/LICENSE",
       "sha256": "ce1ee0539f7fe1f7b75b76d121e674cb897c709c3e24ddba7f9a10fe2d0d88a5"
