@@ -11,7 +11,7 @@ const { check, sleep, rest, roomOf, seatOf, liveOf, emptySeats, roomWhen, open, 
   const code = await L.createWatch(H);
   const P = await L.newClient('player');
   await L.showVia(P, code);
-  await pickUnit(P, 1);
+  await pickUnit(P, '古代までの日本');
   await pickWord(P, 3);
   await waitText(H, '.yk-watch-body .yk-puzzle-word__text', '？来人');
   await dragLoose(P, 0);
@@ -28,7 +28,7 @@ const { check, sleep, rest, roomOf, seatOf, liveOf, emptySeats, roomWhen, open, 
   check('player reload: session kept', (await session(P)).role === 'player');
 
   // ── 見る側の再読み込み → 見る画面にもどり、今の盤面が出る
-  await pickUnit(P, 0);
+  await pickUnit(P, '身のまわりの物質');
   await pickWord(P, 4);
   await waitText(H, '.yk-watch-body .yk-puzzle-word__text', '？和水溶液');
   await dragLoose(P, 0);

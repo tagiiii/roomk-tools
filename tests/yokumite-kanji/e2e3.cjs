@@ -56,7 +56,7 @@ async function armDrop(page, state) {
   check('join: the seat is mine', seatOf(room) === (await pidOf(P)) && Object.keys(room.meta.seats).length === 1, room.meta);
   check('join: counted once', (await stats(P, 'show')) === 1);
   await waitWatch(H, '単元を選んでいます', 10000);
-  await L.pickUnit(P, 0);
+  await L.pickUnit(P, '身のまわりの物質');
   await waitWatch(H, '語を選んでいます', 10000);
   check('join: the viewer follows', true);
 

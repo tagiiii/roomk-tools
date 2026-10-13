@@ -3,9 +3,9 @@
 // 仕様の正本: AGENTS.md
 // =============================================
 import { shuffle } from '../shared/js/utils.js';
-import { UNITS } from './data.js?v=20261013a';
-import { KVG } from './kvg-data.js?v=20261013a';
-import { applyPath, createRoom, openLink } from './link.js?v=20261013a';
+import { UNITS } from './data.js?v=20261014a';
+import { KVG } from './kvg-data.js?v=20261014a';
+import { applyPath, createRoom, openLink } from './link.js?v=20261014a';
 
 const { RoomkRTDB } = window;
 
@@ -322,7 +322,8 @@ function showUnit(unitId) {
 // ── 盤面（遊ぶ側と見る側で同じものを組む） ─────────────────
 // にせものの部品（どの字の・何番目の部品か）。似た字の「ちがう所」を先に使い、足りなければほかの字から借りる
 function pickDecoys(word) {
-  const own = new Set(KVG[word.k].t);
+  // 自分の字にある部品（名前）は、にせものにしない
+  const own = new Set([...KVG[word.k].t, ...KVG[word.k].e]);
   const sims = word.sim || [];
   const partsOf = (ch) => {
     const data = KVG[ch];

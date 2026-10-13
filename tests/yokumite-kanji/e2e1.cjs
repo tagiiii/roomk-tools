@@ -11,7 +11,7 @@ const { check, sleep, rest, roomOf, seatOf, liveOf, emptySeats, roomWhen, open, 
   const S = await L.newClient('solo');
   await open(S);
   check('solo: top', (await title(S)) === '単元を選ぶ');
-  await pickUnit(S, 1);
+  await pickUnit(S, '古代までの日本');
   await waitTitle(S, '社会：古代までの日本');
   check('solo: 13 words', (await S.page.$$eval('.yk-word-tile', (e) => e.length)) === 13);
   await pickWord(S, 5);
@@ -33,6 +33,52 @@ const { check, sleep, rest, roomOf, seatOf, liveOf, emptySeats, roomWhen, open, 
   await S.page.click('.yk-puzzle-result .yk-actions .btn-secondary');
   await waitTitle(S, '社会：古代までの日本');
   check('solo: star on the tile', (await S.page.$$eval('.yk-word-tile', (els) => els.map((e) => (e.querySelector('.yk-word-tile__built') ? 1 : 0)).join(''))) === '0000010000000');
+
+  // ── 全部の単元・全部の語で、盤面が組める（正しい部品2つ以上＋にせもの2〜3つ・画が欠けていない）
+  await S.page.click('.yk-back-link');
+  await waitTitle(S, '単元を選ぶ');
+  const unitNames = await S.page.$$eval('.yk-unit-card__name', (els) => els.map((e) => e.textContent));
+  check('all: six units', unitNames.join('|') === 'いろいろな生物とその共通点|身のまわりの物質|身のまわりの現象（光・音・力）|大地の成り立ちと変化|古代までの日本|中世の日本', unitNames);
+  let wordsSeen = 0;
+  const broken = [];
+  for (const unitName of unitNames) {
+    await pickUnit(S, unitName);
+    await S.page.waitForSelector('.yk-word-tile');
+    const count = await S.page.$$eval('.yk-word-tile', (e) => e.length);
+    for (let i = 0; i < count; i += 1) {
+      await pickWord(S, i);
+      await S.page.waitForSelector('.yk-stage .yk-piece');
+      const info = await S.page.evaluate(() => {
+        const pieces = [...document.querySelectorAll('.yk-stage .yk-piece')];
+        const status = document.querySelector('.yk-puzzle-status').textContent;
+        const real = Number((/\d+/.exec(status) || [0])[0]);
+        const strokes = pieces.reduce((n, p) => n + p.querySelectorAll('.yk-piece__ink').length, 0);
+        const ghost = document.querySelectorAll('.yk-ghost path').length;
+        const inside = pieces.every((p) => { const r = p.getBoundingClientRect(); const s = document.querySelector('.yk-stage').getBoundingClientRect(); return r.right > s.left && r.left < s.right && r.bottom > s.top && r.top < s.bottom; });
+        return { word: document.querySelector('.yk-puzzle-word__text').textContent, real, decoys: pieces.length - real, strokes, ghost, inside };
+      });
+      wordsSeen += 1;
+      if (!(info.real >= 2 && info.decoys >= 2 && info.decoys <= 3 && info.ghost >= 7 && info.strokes > info.ghost && info.inside)) broken.push(info);
+      await S.page.click('.yk-back-link');
+      await S.page.waitForSelector('.yk-word-tile');
+    }
+    await S.page.click('.yk-back-link');
+    await waitTitle(S, '単元を選ぶ');
+  }
+  check('all: 76 words', wordsSeen === 76, wordsSeen);
+  check('all: every board is well formed', broken.length === 0, broken.slice(0, 5));
+  // 新しい単元の語を、いくつか最後まで組み立てる
+  for (const [unitName, index, word] of [['大地の成り立ちと変化', 5, '初期微動'], ['中世の日本', 6, '元寇'], ['いろいろな生物とその共通点', 6, '葉脈'], ['身のまわりの現象（光・音・力）', 9, '摩擦力']]) {
+    await pickUnit(S, unitName);
+    await pickWord(S, index);
+    await S.page.waitForSelector('.yk-stage .yk-piece');
+    await solve(S);
+    await waitText(S, '.yk-puzzle-status', 'できました');
+    check('new unit: ' + word + ' can be built', (await text(S, '.yk-puzzle-result__word')) === word, await text(S, '.yk-puzzle-result__word'));
+    await S.page.click('.yk-puzzle-result .yk-actions .btn-secondary');
+    await S.page.click('.yk-back-link');
+    await waitTitle(S, '単元を選ぶ');
+  }
   await S.context.close();
 
   // ── 見る画面を作る
@@ -71,7 +117,7 @@ const { check, sleep, rest, roomOf, seatOf, liveOf, emptySeats, roomWhen, open, 
   check('show: no create button while showing', !(await visible(P, '#btnCreateWatch')));
   await waitWatch(H, '単元を選んでいます');
 
-  await pickUnit(P, 1);
+  await pickUnit(P, '古代までの日本');
   await waitWatch(H, '語を選んでいます（社会：古代までの日本）');
   await pickWord(P, 8);
   await waitTitle(P, '？田永年私財法');
@@ -159,7 +205,7 @@ const { check, sleep, rest, roomOf, seatOf, liveOf, emptySeats, roomWhen, open, 
 
   // もう一度リンクから入る → 遊んでいる途中の画面がそのまま映る
   await L.showVia(P, code);
-  await pickUnit(P, 0);
+  await pickUnit(P, '身のまわりの物質');
   await pickWord(P, 0);
   await waitText(H, '.yk-watch-body .yk-puzzle-word__text', '？度');
   check('rejoin: viewer follows', await waitSame(P, H));
@@ -181,7 +227,7 @@ const { check, sleep, rest, roomOf, seatOf, liveOf, emptySeats, roomWhen, open, 
   check('replace: closing the old page keeps the new seat', seatOf(room) === pidQ && !!liveOf(room), room);
 
   // ── おかしな値が届いても、見る画面は止まらない（直接データベースに書かれた場合への備え）
-  await pickUnit(Q, 0);
+  await pickUnit(Q, '身のまわりの物質');
   await pickWord(Q, 2);
   await waitText(H, '.yk-watch-body .yk-puzzle-word__text', '溶？');
   const good = liveOf(await roomOf(code));
@@ -209,7 +255,7 @@ const { check, sleep, rest, roomOf, seatOf, liveOf, emptySeats, roomWhen, open, 
   await waitWatch(H, '単元を選んでいます');
 
   // ── メンターが「とじる」
-  await pickUnit(Q, 0);
+  await pickUnit(Q, '身のまわりの物質');
   await pickWord(Q, 1);
   await waitText(H, '.yk-watch-body .yk-puzzle-word__text', '？質');
   await H.page.click('#btnCloseWatch');
@@ -227,7 +273,7 @@ const { check, sleep, rest, roomOf, seatOf, liveOf, emptySeats, roomWhen, open, 
   const code5 = await L.createWatch(H5);
   const P5 = await L.newClient('player5');
   await L.showVia(P5, code5);
-  await pickUnit(P5, 0);
+  await pickUnit(P5, '身のまわりの物質');
   await pickWord(P5, 5);
   await waitText(H5, '.yk-watch-body .yk-puzzle-word__text', '再結？');
   await rest('PATCH', `${L.ROOMS}/${code5}/meta`, { player: 'yyyyyyyyyyyy', seats: { yyyyyyyyyyyy: { uid: 'x', joinedAt: 1 } } });

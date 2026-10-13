@@ -248,7 +248,8 @@ async function showVia(c, code) {
   await c.page.click('#btnShow');
   await waitBar(c, 'メンター');
 }
-const pickUnit = (c, i) => c.page.click(`.yk-unit-card >> nth=${i}`);
+// 単元は名前で選ぶ（単元の並び順は変わることがある）
+const pickUnit = (c, name) => c.page.click(`.yk-unit-card:has-text("${name}")`);
 const pickWord = (c, i) => c.page.click(`.yk-word-tile >> nth=${i}`);
 
 async function finishAll(server) {
