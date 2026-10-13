@@ -1,0 +1,411 @@
+/* よく見て漢字 */
+
+/* 語は教科書体で出す（ゴシック体は手書きの形とちがう字があるため） */
+.kyo {
+  font-family: 'Klee One', 'UD デジタル 教科書体 N-R', 'YuKyokasho Yoko', 'Hiragino Mincho ProN', serif;
+  font-weight: 600;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+#app {
+  max-width: 960px;
+  padding-block: var(--space-md) var(--space-xl);
+}
+
+.screen-title {
+  font-size: var(--font-size-lg);
+  color: var(--color-primary);
+  line-height: 1.4;
+  outline: none;
+}
+
+.lead {
+  margin-top: var(--space-sm);
+  color: var(--color-muted);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-md);
+  margin-top: var(--space-md);
+}
+.actions--end { justify-content: flex-end; margin-top: var(--space-lg); }
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 44px;
+  padding: 0 8px 0 0;
+  border: none;
+  background: none;
+  color: var(--color-muted);
+  font: inherit;
+  font-size: var(--font-size-sub);
+  cursor: pointer;
+}
+.back-link:hover { color: var(--color-primary); }
+.back-link .material-symbols-rounded { font-size: 18px; }
+
+.credit {
+  padding: 0 var(--space-md) 96px;
+  text-align: center;
+  font-size: var(--font-size-sm);
+  color: var(--color-muted);
+}
+
+/* ── 試作のしるし・トップの下 ── */
+.draft-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 1px 10px;
+  border-radius: var(--radius-full);
+  background: var(--color-warning);
+  color: #fff;
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  vertical-align: 0.15em;
+}
+.draft-note {
+  margin-top: var(--space-sm);
+  font-size: var(--font-size-sm);
+  color: var(--color-warning);
+}
+.top-foot {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  margin-top: var(--space-xl);
+}
+
+/* ── 見せているときの帯（子ども側） ── */
+.share-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 4px var(--space-md);
+  padding: 6px var(--space-md);
+  background: #DDF0F3;
+  border-bottom: 1px solid var(--color-accent);
+  color: var(--color-primary);
+  font-size: var(--font-size-sub);
+  font-weight: 700;
+}
+.share-bar__text { display: inline-flex; align-items: center; gap: 6px; }
+.share-bar__text .material-symbols-rounded { font-size: 20px; color: var(--color-accent); }
+.share-bar__stop {
+  min-height: 36px;
+  padding: 4px 14px;
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-full);
+  background: var(--color-surface);
+  color: var(--color-primary);
+  font: inherit;
+  font-weight: 500;
+  cursor: pointer;
+}
+.share-bar__stop:hover { background: #EEF3F8; }
+
+/* ── リンクからひらいたとき ── */
+.invite { margin-top: var(--space-md); }
+.invite__list { margin: var(--space-sm) 0 0 1.4em; color: var(--color-muted); }
+
+/* ── 見る画面（メンター側） ── */
+.watch-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-sm) var(--space-md);
+  margin-top: var(--space-sm);
+  padding: 10px var(--space-md);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+}
+.watch-bar__code { margin-right: auto; font-size: var(--font-size-sub); color: var(--color-muted); }
+.watch-bar__code strong {
+  margin-left: 4px;
+  color: var(--color-primary);
+  font-size: 20px;
+  letter-spacing: 0.12em;
+}
+.watch-body { margin-top: var(--space-md); }
+.watch-note {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  padding: var(--space-xl) var(--space-md);
+  background: var(--color-surface);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-box);
+  color: var(--color-muted);
+  text-align: center;
+}
+/* 相手がスマホのときは、盤面がたて長になる。見る画面からはみ出さない高さにおさえる */
+.stage--watch { max-height: 64vh; }
+/* 送られてくる位置は 0.08 秒おき。間をなめらかにつなぐ */
+.stage--watch .piece {
+  cursor: default;
+  pointer-events: none;
+  transition: transform 0.09s linear;
+}
+
+/* ── トップ：単元 ── */
+.unit-group { margin-top: var(--space-lg); }
+.unit-group__title {
+  font-size: var(--font-size-sub);
+  color: var(--color-muted);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+.unit-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: var(--space-sm);
+}
+.unit-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  width: 100%;
+  padding: 18px 20px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-box);
+  color: var(--color-text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: box-shadow var(--transition-base), border-color var(--transition-base);
+}
+.unit-card:hover {
+  border-color: var(--color-accent);
+  box-shadow: var(--shadow-md);
+}
+.unit-card > .material-symbols-rounded:first-child {
+  font-size: 32px;
+  color: var(--color-accent);
+}
+.unit-card > .material-symbols-rounded:last-child { color: var(--color-muted); }
+.unit-card__body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+.unit-card__name { font-size: 18px; font-weight: 700; }
+.unit-card__sub { font-size: var(--font-size-sub); color: var(--color-muted); }
+
+/* ── 単元：語の一覧 ── */
+.tile-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 12px;
+  margin-top: var(--space-md);
+}
+.word-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 14px 16px;
+  background: var(--color-surface);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-card);
+  color: var(--color-text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color var(--transition-base), box-shadow var(--transition-base);
+}
+.word-tile:hover {
+  border-color: var(--color-accent);
+  box-shadow: var(--shadow-md);
+}
+.word-tile:focus-visible { outline: 3px solid var(--color-accent); outline-offset: 2px; }
+.word-tile__word { font-size: 24px; line-height: 1.35; overflow-wrap: anywhere; }
+.word-tile__focus { color: var(--color-accent); font-size: 1.25em; }
+.word-tile__yomi { font-size: var(--font-size-sm); color: var(--color-muted); }
+.word-tile__marks {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 20px;
+  margin-top: 6px;
+}
+.word-tile__wrote { color: var(--color-accent); }
+.word-tile__wrote .material-symbols-rounded { font-size: 18px; }
+.word-tile__built { color: #E0A106; }
+.word-tile__built .material-symbols-rounded { font-size: 20px; }
+
+/* ── パズル ── */
+.puzzle-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-sm) var(--space-lg);
+}
+.puzzle-word { min-width: 0; }
+.puzzle-word__text {
+  font-size: 34px;
+  line-height: 1.3;
+  letter-spacing: 0.04em;
+  outline: none;
+}
+.puzzle-word__blank {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25em;
+  height: 1.25em;
+  margin-inline: 2px;
+  border: 2px dashed var(--color-accent);
+  border-radius: 6px;
+  color: var(--color-accent);
+  font-family: var(--font-base);
+  font-size: 0.8em;
+  vertical-align: 0.08em;
+}
+.puzzle-word__yomi { font-size: var(--font-size-sub); color: var(--color-muted); }
+.puzzle-word__meaning { font-size: var(--font-size-sub); }
+
+.puzzle-guide {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-md);
+  margin-top: var(--space-sm);
+  font-size: var(--font-size-sub);
+  color: var(--color-muted);
+}
+.puzzle-status {
+  flex-shrink: 0;
+  font-weight: 700;
+  color: var(--color-accent);
+}
+
+.stage {
+  width: 100%;
+  height: auto;
+  margin-top: var(--space-sm);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.stage__tray { fill: #F3F6F7; }
+.stage__frame {
+  fill: #fff;
+  stroke: var(--color-accent);
+  stroke-width: 1.2;
+}
+.stage__frame.is-done { stroke: #E0A106; stroke-width: 2; }
+.stage__guide {
+  stroke: var(--color-border);
+  stroke-width: 0.5;
+  stroke-dasharray: 2 2;
+}
+
+.ghost { opacity: 0; transition: opacity 0.2s ease; pointer-events: none; }
+.ghost.is-on { opacity: 1; }
+.ghost path,
+.piece__ink,
+.final path {
+  fill: none;
+  stroke-width: 5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.ghost path { stroke: #DCE3E7; }
+.final path { stroke: #1A1A1A; pointer-events: none; }
+
+.piece { cursor: grab; outline: none; }
+.piece__ink { stroke: var(--color-primary); pointer-events: none; }
+.piece__hit {
+  fill: none;
+  stroke: transparent;
+  stroke-width: 16;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  pointer-events: stroke;
+}
+.piece__area { fill: transparent; pointer-events: fill; }
+.piece:hover .piece__ink { stroke: var(--color-accent); }
+.piece.is-drag { cursor: grabbing; }
+.piece.is-drag .piece__ink { stroke: var(--color-accent); stroke-width: 5.6; }
+.piece:focus-visible .piece__ink { stroke: var(--color-warning); }
+.piece.is-locked { pointer-events: none; }
+.piece.is-locked .piece__ink {
+  stroke: #1A1A1A;
+  animation: piece-lock 0.45s ease;
+}
+@keyframes piece-lock {
+  from { stroke: var(--color-accent); stroke-width: 7.5; }
+}
+.piece.is-gone {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+}
+/* できあがった字を上から書き直すあいだ、はめた部品はうすく残す */
+.is-under .piece__ink { stroke: #DCE3E7 !important; animation: none; }
+
+.puzzle-tools {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-sm);
+  margin-top: var(--space-sm);
+}
+
+.puzzle-result {
+  margin-top: var(--space-md);
+  padding: var(--space-md) var(--space-lg);
+  background: #FFF8E6;
+  border-radius: var(--radius-card);
+  text-align: center;
+}
+.puzzle-result__word { font-size: 40px; line-height: 1.3; letter-spacing: 0.04em; }
+.puzzle-result__focus { color: var(--color-accent); }
+.puzzle-result__point { margin-top: 4px; font-size: 17px; }
+.puzzle-result__write {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: var(--space-sm) var(--space-md);
+  margin-top: var(--space-md);
+  padding-top: var(--space-md);
+  border-top: 1px dashed #E5D5A8;
+  font-size: var(--font-size-sub);
+  color: var(--color-muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stage--watch .piece { transition: none; }
+  .piece.is-locked .piece__ink { animation: none; }
+  .ghost, .piece.is-gone { transition: none; }
+}
+
+@media (max-width: 700px) {
+  .puzzle-word__text { font-size: 28px; }
+  .puzzle-guide { flex-direction: column; gap: 2px; }
+  .actions .btn { flex: 1 1 100%; }
+  .actions--end .btn { flex: 0 0 auto; }
+}

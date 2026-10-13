@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+  <title>よく見て漢字（試作） | room-K</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Klee+One:wght@600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
+  <link rel="stylesheet" href="../../apps/shared/css/design-system.css">
+  <link rel="stylesheet" href="style.css?v=20261013c">
+</head>
+<body>
+  <header class="app-header">
+    <h1 class="app-header__title">よく見て漢字<span class="draft-badge">試作</span></h1>
+    <p class="app-header__subtitle">社会・理科の用語の字を、バラバラの部品から組み立てる</p>
+  </header>
+
+  <!-- メンターに見せている間だけ出る帯 -->
+  <div id="shareBar" class="share-bar" hidden></div>
+
+  <main class="container" id="app"></main>
+
+  <p class="credit">
+    制作者個人による独自制作です。<br>
+    字の画のデータは KanjiVG（© Ulrich Apel、CC BY-SA 3.0）をもとにしています。
+  </p>
+
+  <script src="../../apps/shared/js/rtdb-utils.js?v=20261005"></script>
+  <script src="../../apps/shared/js/howto.js"></script>
+  <script>
+    RoomkHowto.init({
+      title: 'つかいかた',
+      lead: '社会や理科の用語の漢字を、バラバラの部品から組み立てるパズルです。組み立てるうちに、字の形が頭に入ります。',
+      sections: [
+        { heading: 'はじめかた', items: [
+          '今、学校でやっている単元を選ぶ',
+          '組み立てる語を選ぶ',
+        ] },
+        { heading: 'あそびかた', items: [
+          '部品をドラッグして、わくの中の正しい場所で放す',
+          '正しい場所なら、部品がはまって黒くなる',
+          'にせものの部品も混ざっている。はまらない部品が、にせもの',
+          '全部はまると、字ができあがる',
+        ] },
+        { heading: 'こまったとき', text: '「見本を見る」を押すと、少しの間だけ見本が出ます。何回押してもかまいません。' },
+        { heading: 'メンターといっしょにやる', items: [
+          'メンターが「見る画面をつくる（メンター用）」を押し、「リンクをコピー」でリンクを送る',
+          'リンクをひらいて「見せてはじめる」を押すと、パズルの画面がメンターにも見える',
+          '「見せるのをやめる」で、いつでもやめられる',
+        ] },
+        { heading: '記録', text: '組み立てた語には星が付きます。記録は、今使っている端末の中だけに残ります。' },
+      ],
+    });
+  </script>
+  <script type="module" src="app.js?v=20261013c"></script>
+</body>
+</html>
