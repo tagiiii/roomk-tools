@@ -3,9 +3,9 @@
 // 仕様の正本: AGENTS.md
 // =============================================
 import { shuffle } from '../shared/js/utils.js';
-import { UNITS } from './data.js?v=20261014c';
-import { KVG } from './kvg-data.js?v=20261014c';
-import { applyPath, createRoom, openLink } from './link.js?v=20261014c';
+import { UNITS } from './data.js?v=20261014e';
+import { KVG } from './kvg-data.js?v=20261014e';
+import { applyPath, createRoom, openLink } from './link.js?v=20261014e';
 
 const { RoomkRTDB } = window;
 
@@ -32,6 +32,8 @@ const ORDER_COUNTS = [3, 5, 10, 0]; // メンターが選べる問題数（0 は
 const ORDER_DEFAULT = 5;
 const ORDER_MAX = 30;
 const HANDLED_KEEP = 20;  // 済んだ問題の id をおぼえておく数（同じ問題を出しなおさないため）
+const ORDER_TIMES = [0, 60, 30]; // メンターが選べる1問の制限時間（秒。0 はなし）
+const TIMER_TICK_MS = 250;
 
 const GUIDE = '部品をドラッグして、わくの中で字を組み立てましょう。にせものの部品が混ざっています。はまらない部品は、にせものです。';
 
@@ -101,7 +103,46 @@ function button(label, variant, onClick, { iconName, iconAfter, ...attrs } = {})
     iconName && iconAfter ? icon(iconName) : null);
 }
 
+// 1問の制限時間の帯。endsAt（時刻）まで、だんだん短くなる。0 になったら onEnd を1回だけ呼ぶ
+let puzzleTimer = null;   // 遊ぶ側のパズルの帯
+let watchTimer = null;    // 見る画面の帯
+
+function timerBar(limitSec) {
+  const fill = el('span', { class: 'yk-timer__fill' });
+  const left = el('span', { class: 'yk-timer__left' }, `あと${limitSec}秒`);
+  const root = el('div', { class: 'yk-timer', role: 'timer', 'aria-label': `制限時間 ${limitSec}秒` },
+    el('span', { class: 'yk-timer__track' }, fill), left);
+  return { root, fill, left };
+}
+
+function startCountdown(bar, endsAt, limitSec, onEnd) {
+  let ended = false;
+  const tick = () => {
+    const rest = Math.max(0, endsAt - RoomkRTDB.now());
+    bar.fill.style.width = `${(rest / (limitSec * 1000)) * 100}%`;
+    bar.left.textContent = rest > 0 ? `あと${Math.ceil(rest / 1000)}秒` : '時間です';
+    bar.root.classList.toggle('is-low', rest > 0 && rest <= 10000);
+    if (rest <= 0 && !ended) {
+      ended = true;
+      stop();
+      if (onEnd) onEnd();
+    }
+  };
+  const handle = setInterval(tick, TIMER_TICK_MS);
+  function stop() {
+    clearInterval(handle);
+  }
+  tick();
+  return { stop };
+}
+
+function stopTimer(timer) {
+  if (timer) timer.stop();
+  return null;
+}
+
 function show(...nodes) {
+  puzzleTimer = stopTimer(puzzleTimer); // 画面を切りかえたら、前のパズルの時間は止める
   const screen = el('section', { class: 'yk-screen' }, ...nodes);
   app.replaceChildren(screen);
   window.scrollTo(0, 0);
@@ -207,7 +248,11 @@ function restoreSet(saved) {
   const i = old.i;
   if (!Number.isInteger(i) || i < 0 || i > words.length) return;
   if (i === words.length && done.length !== words.length) return; // 全部できていないのに「おわり」にはしない
-  set = { id: old.id, unit: unit.id, words: [...words], i, done, counted: Boolean(old.counted) };
+  const late = [...new Set(Array.isArray(old.late) ? old.late : [])].filter((k) => done.includes(k));
+  const t = ORDER_TIMES.includes(old.t) ? old.t : 0;
+  const dl = old.deadline;
+  const deadline = dl && Number.isInteger(dl.i) && dl.i === i && Number.isFinite(dl.at) ? { i: dl.i, at: dl.at } : null;
+  set = { id: old.id, unit: unit.id, words: [...words], i, done, late, t, deadline, counted: Boolean(old.counted) };
 }
 
 function clearSession() {
@@ -455,7 +500,8 @@ function drawFinal(parts) {
 }
 
 // ── パズル（遊ぶ側） ─────────────────────────────
-function showPuzzle(unit, index, { inSet = false } = {}) {
+// fresh: 制限時間を新しく始める（「もう一度」のとき）。再読み込み・「ばらし直す」では、前と同じ終わりの時刻を使う
+function showPuzzle(unit, index, { inSet = false, fresh = false } = {}) {
   const words = playable(unit);
   const word = words[index];
   setShown = inSet;
@@ -468,6 +514,9 @@ function showPuzzle(unit, index, { inSet = false } = {}) {
 
   const status = el('p', { class: 'yk-puzzle-status', 'aria-live': 'polite' }, `あと${remaining}つ`);
   const result = el('div', { class: 'yk-puzzle-result', hidden: true });
+  // メンターが制限時間を決めたときだけ、残り時間の帯を出す（一人で遊ぶときは時間制限なし）
+  const limitSec = inSet && set.t > 0 ? set.t : 0;
+  const bar = limitSec ? timerBar(limitSec) : null;
   const tools = el('div', { class: 'yk-puzzle-tools' },
     button('見本を見る', 'btn-ghost btn-sm', () => {
       ghost.classList.add('is-on');
@@ -484,6 +533,7 @@ function showPuzzle(unit, index, { inSet = false } = {}) {
     inSet ? el('p', { class: 'yk-set-count' }, `問題 ${set.i + 1} / ${set.words.length}`) : null,
     el('div', { class: 'yk-puzzle-head' }, wordHead(word)),
     el('div', { class: 'yk-puzzle-guide' }, el('p', {}, GUIDE), status),
+    bar ? bar.root : null,
     stage,
     tools,
     result,
@@ -553,6 +603,16 @@ function showPuzzle(unit, index, { inSet = false } = {}) {
     moveTo(piece, best.dx, best.dy);
   });
 
+  let endsAt = 0;
+  if (limitSec) {
+    if (!fresh && set.deadline && set.deadline.i === set.i) {
+      endsAt = set.deadline.at;
+    } else {
+      endsAt = RoomkRTDB.now() + limitSec * 1000;
+      set.deadline = { i: set.i, at: endsAt };
+      saveSession();
+    }
+  }
   publish('', {
     view: {
       name: 'puzzle',
@@ -560,8 +620,13 @@ function showPuzzle(unit, index, { inSet = false } = {}) {
       ...(inSet ? { set: { id: set.id, words: set.words, i: set.i } } : {}),
       ...(!inSet && afterSet ? { afterSet } : {}),
     },
-    puzzle: { unit: unit.id, w: index, layout: layoutName, decoys, pieces: pieces.map(wire), peek: false, done: false },
+    puzzle: {
+      unit: unit.id, w: index, layout: layoutName, decoys, pieces: pieces.map(wire), peek: false, done: false,
+      ...(limitSec ? { limit: limitSec, endsAt } : {}),
+    },
   });
+
+  if (bar) puzzleTimer = startCountdown(bar, endsAt, limitSec, () => finish({ timeUp: true }));
 
   function tryPlace(piece) {
     let best = null;
@@ -586,15 +651,21 @@ function showPuzzle(unit, index, { inSet = false } = {}) {
     return undefined;
   }
 
-  function finish() {
+  // timeUp: 制限時間になった。×は出さず、字を書き順どおりに書いて形をたしかめ、そのまま先へ進める。星は付けない
+  function finish({ timeUp = false } = {}) {
+    if (finished) return;
     finished = true;
-    store.clear[wordKey(unit, word)] = 1;
-    saveStore();
-    window.RoomkStats?.count('puzzle-done');
-    status.textContent = 'できました';
+    puzzleTimer = stopTimer(puzzleTimer);
+    if (!timeUp) {
+      store.clear[wordKey(unit, word)] = 1;
+      saveStore();
+      window.RoomkStats?.count('puzzle-done');
+    }
+    status.textContent = timeUp ? '時間です' : 'できました';
     tools.hidden = true;
     const still = drawFinal(parts);
-    publish('puzzle/done', true);
+    if (timeUp) publish('puzzle', { ...copyOf(live.puzzle), done: true, timeout: true });
+    else publish('puzzle/done', true);
 
     const nextIndex = (index + 1) % words.length;
     const wroteKey = wordKey(unit, word);
@@ -605,17 +676,21 @@ function showPuzzle(unit, index, { inSet = false } = {}) {
       wroteBtn.querySelector('.btn__label').textContent = '紙にも書きました';
     }, { iconName: 'edit', disabled: Boolean(store.wrote[wroteKey]) });
 
-    if (inSet && !set.done.includes(index)) {
-      set.done.push(index);
+    if (inSet) {
+      if (!set.done.includes(index)) set.done.push(index);
+      // もう一度やって組み立てられたら、時間切れのしるしは外す
+      if (timeUp && !set.late.includes(index)) set.late.push(index);
+      if (!timeUp) set.late = set.late.filter((k) => k !== index);
       saveSession();
     }
     const lastInSet = inSet && set.i >= set.words.length - 1;
     result.hidden = false;
     result.replaceChildren(
+      timeUp ? el('p', { class: 'yk-puzzle-result__timeup' }, '時間です。形をたしかめましょう。') : null,
       ...resultWord(word),
       inSet
         ? el('div', { class: 'yk-actions' },
-          button('もう一度', 'btn-ghost', () => showPuzzle(unit, index, { inSet }), { iconName: 'replay' }),
+          button('もう一度', 'btn-ghost', () => showPuzzle(unit, index, { inSet, fresh: true }), { iconName: 'replay' }),
           lastInSet
             ? button('おわりへ', 'btn-primary', showSetDone, { iconName: 'arrow_forward', iconAfter: true })
             : button('つぎの問題へ', 'btn-primary', () => {
@@ -696,16 +771,19 @@ function readOrder(value) {
   if (!value || typeof value !== 'object' || typeof value.id !== 'string' || !ORDER_ID_RE.test(value.id)) return null;
   const unit = UNITS.find((u) => u.id === value.unit);
   if (!unit) return null;
+  // 制限時間は、決めてある秒数だけ（書いていなければ、なし）
+  const t = value.t === undefined ? 0 : value.t;
+  if (!ORDER_TIMES.includes(t)) return null;
   if (value.words !== undefined) {
     const words = value.words;
     const count = playable(unit).length;
     if (!Array.isArray(words) || !words.length || words.length > ORDER_MAX || value.n !== words.length
       || !words.every((i) => Number.isInteger(i) && i >= 0 && i < count) || new Set(words).size !== words.length) return null;
-    return { id: value.id, unit, n: words.length, words: [...words] };
+    return { id: value.id, unit, n: words.length, words: [...words], t };
   }
   const n = value.n;
   if (!(n === 0 || (Number.isInteger(n) && n >= 1 && n <= ORDER_MAX))) return null;
-  return { id: value.id, unit, n };
+  return { id: value.id, unit, n, t };
 }
 
 function onOrder(value) {
@@ -741,7 +819,7 @@ function startSet(order) {
   const built = shuffle(all.filter((i) => isCleared(order.unit, words[i])));
   const count = order.n === 0 ? all.length : Math.min(order.n, all.length);
   const chosen = order.words || [...fresh, ...built].slice(0, count);
-  set = { id: order.id, unit: order.unit.id, words: chosen, i: 0, done: [], counted: false };
+  set = { id: order.id, unit: order.unit.id, words: chosen, i: 0, done: [], late: [], t: order.t, deadline: null, counted: false };
   saveSession();
   showSetScreen();
 }
@@ -766,15 +844,24 @@ function showSetDone() {
   }
   saveSession();
   setShown = true;
-  publish('', { view: { name: 'setdone', unit: unit.id, set: { id: set.id, words: set.words, i: set.i } } });
+  const late = set.late || [];
+  publish('', { view: { name: 'setdone', unit: unit.id, set: { id: set.id, words: set.words, i: set.i, ...(late.length ? { late } : {}) } } });
   show(
-    heading('全部組み立てました'),
-    el('p', { class: 'yk-lead' }, `${unitTitle(unit)}の${set.words.length}問です。`),
-    el('ul', { class: 'yk-set-list' }, set.words.map((i) => el('li', { class: 'yk-set-list__item yk-kyo' },
-      wordSpans(words[i], (k) => el('span', { class: 'yk-word-tile__focus' }, k))))),
+    heading(late.length ? 'おわりました' : '全部組み立てました'),
+    el('p', { class: 'yk-lead' }, late.length
+      ? `${unitTitle(unit)}の${set.words.length}問です。星のない語は、一覧からもう一度組み立てられます。`
+      : `${unitTitle(unit)}の${set.words.length}問です。`),
+    setList(words, set.words, late),
     el('div', { class: 'yk-actions' },
       button('一覧へもどる', 'btn-primary', () => leaveSet('done'), { iconName: 'arrow_forward', iconAfter: true })),
   );
+}
+
+// おわりの一覧。組み立てた語には星、時間切れの語には付けない
+function setList(words, chosen, late) {
+  return el('ul', { class: 'yk-set-list' }, chosen.map((i) => el('li', { class: 'yk-set-list__item' },
+    el('span', { class: 'yk-kyo' }, wordSpans(words[i], (k) => el('span', { class: 'yk-word-tile__focus' }, k))),
+    late.includes(i) ? null : el('span', { class: 'yk-word-tile__built' }, icon('star'), el('span', { class: 'yk-sr-only' }, '組み立てた')))));
 }
 
 // 子どもが問題から抜ける（やめる・おわる）。メンターの画面には、抜けたことが出る
@@ -848,7 +935,7 @@ let watchBody = null;
 let watchBoard = null;
 let watchPanel = null;     // 問題を出すパネル { root, start, end, status }
 // n: 問題数（0 は全部）か 'pick'（語を選ぶ）。picked: 選んだ語の番号（選んだ順）。単元を変えると空にする
-const panelState = { unit: UNITS[0].id, n: ORDER_DEFAULT, picked: [] };
+const panelState = { unit: UNITS[0].id, n: ORDER_DEFAULT, picked: [], t: 0 };
 
 async function createWatch() {
   if (share.busy || share.link) return;
@@ -899,6 +986,7 @@ async function startWatching(code) {
 }
 
 function leaveWatch() {
+  watchTimer = stopTimer(watchTimer);
   resetShare();
   watchBody = null;
   watchBoard = null;
@@ -906,7 +994,7 @@ function leaveWatch() {
   showTop();
 }
 
-const orderTitle = (order) => `${unitTitle(order.unit)}・${order.words ? `選んだ${order.n}語` : order.n === 0 ? '全部' : `${order.n}問`}`;
+const orderTitle = (order) => `${unitTitle(order.unit)}・${order.words ? `選んだ${order.n}語` : order.n === 0 ? '全部' : `${order.n}問`}${order.t ? `・1問${order.t}秒` : ''}`;
 
 function buildPanel() {
   const wordsBox = el('div', { class: 'yk-order__words', id: 'orderWords', role: 'group', 'aria-label': '出す語' });
@@ -962,6 +1050,15 @@ function buildPanel() {
       },
     },
   }, n === 'pick' ? '語を選ぶ' : n === 0 ? '全部' : `${n}問`));
+  const times = ORDER_TIMES.map((t) => el('button', {
+    type: 'button', class: 'yk-order__count yk-order__time', 'data-t': String(t), 'aria-pressed': String(t === panelState.t),
+    on: {
+      click: () => {
+        panelState.t = t;
+        times.forEach((b) => b.setAttribute('aria-pressed', String(Number(b.dataset.t) === t)));
+      },
+    },
+  }, t === 0 ? 'なし' : `${t}秒`));
   const start = button('はじめる', 'btn-primary', async () => {
     const link = share.link;
     if (!link || !share.peer) return;
@@ -974,8 +1071,8 @@ function buildPanel() {
     const picking = panelState.n === 'pick';
     if (picking && !panelState.picked.length) return;
     const ok = await link.sendOrder(picking
-      ? { id, unit: panelState.unit, n: panelState.picked.length, words: [...panelState.picked] }
-      : { id, unit: panelState.unit, n: panelState.n });
+      ? { id, unit: panelState.unit, n: panelState.picked.length, words: [...panelState.picked], t: panelState.t }
+      : { id, unit: panelState.unit, n: panelState.n, t: panelState.t });
     start.disabled = false;
     renderPanel();
     if (ok) window.RoomkStats?.count('order-start');
@@ -997,6 +1094,9 @@ function buildPanel() {
       el('div', { class: 'yk-order__field' },
         el('span', { class: 'yk-order__label', id: 'orderCountLabel' }, '問題数'),
         el('div', { class: 'yk-order__counts', role: 'group', 'aria-labelledby': 'orderCountLabel' }, counts)),
+      el('div', { class: 'yk-order__field' },
+        el('span', { class: 'yk-order__label', id: 'orderTimeLabel' }, '1問の制限時間'),
+        el('div', { class: 'yk-order__counts', role: 'group', 'aria-labelledby': 'orderTimeLabel' }, times)),
       start),
     pickNote,
     wordsBox,
@@ -1025,10 +1125,10 @@ function renderPanel() {
   const info = readSetView(view, state);
   const mine = info && info.id === order.id ? info : null;
   const after = readAfterSet(view);
-  if (mine && mine.done) progress = '全部組み立てました';
+  if (mine && mine.done) progress = mine.late.length ? 'おわりました' : '全部組み立てました';
   else if (mine) progress = `${mine.i + 1}問目 / ${mine.words.length}問`;
   else if (after && after.id === order.id) {
-    progress = after.how === 'done' ? '全部組み立てて、一覧にもどりました' : '問題をやめて、一覧にもどりました';
+    progress = after.how === 'done' ? 'おわって、一覧にもどりました' : '問題をやめて、一覧にもどりました';
   }
   watchPanel.status.textContent = `出している問題: ${orderTitle(order)} ・ ${progress}`;
 }
@@ -1069,6 +1169,7 @@ const watchNote = (text, iconName) => el('p', { class: 'yk-watch-note', role: 's
 // 画面の切りかえ・新しいパズル・はじめの一括のときに、見る画面の中身を作り直す
 function renderWatch() {
   if (!watchBody) return;
+  watchTimer = stopTimer(watchTimer);
   renderPanel();
   watchBoard = null;
   const state = share.link.get();
@@ -1088,9 +1189,8 @@ function renderWatch() {
   const setInfo = readSetView(view, state);
   if (view.name === 'setdone' && setInfo) {
     watchBody.replaceChildren(
-      watchNote(`全部組み立てました（${unitTitle(unit)}の${setInfo.words.length}問）。`, 'star'),
-      el('ul', { class: 'yk-set-list' }, setInfo.words.map((i) => el('li', { class: 'yk-set-list__item yk-kyo' },
-        wordSpans(words[i], (k) => el('span', { class: 'yk-word-tile__focus' }, k))))));
+      watchNote(`${setInfo.late.length ? 'おわりました' : '全部組み立てました'}（${unitTitle(unit)}の${setInfo.words.length}問）。`, 'star'),
+      setList(words, setInfo.words, setInfo.late));
     return;
   }
   const spec = state.puzzle;
@@ -1120,11 +1220,12 @@ function readSetView(view, state) {
   if (!Array.isArray(words) || !words.length || words.length > ORDER_MAX
     || !words.every((i) => Number.isInteger(i) && i >= 0 && i < count) || new Set(words).size !== words.length) return null;
   const i = raw.i;
-  if (view.name === 'setdone') return i === words.length ? { id: raw.id, words, i, done: true } : null;
+  const late = Array.isArray(raw.late) ? [...new Set(raw.late)].filter((k) => words.includes(k)) : [];
+  if (view.name === 'setdone') return i === words.length ? { id: raw.id, words, i, done: true, late } : null;
   const puzzle = state && state.puzzle;
   if (view.name !== 'puzzle' || !Number.isInteger(i) || i < 0 || i >= words.length) return null;
   if (!puzzle || puzzle.unit !== unit.id || puzzle.w !== words[i]) return null;
-  return { id: raw.id, words, i, done: false };
+  return { id: raw.id, words, i, done: false, late };
 }
 
 // メンターの画面に出す「抜けた」しるし
@@ -1143,6 +1244,9 @@ function renderWatchBoard(unit, word, spec, setInfo) {
   const status = el('p', { class: 'yk-puzzle-status', 'aria-live': 'polite' });
   const result = el('div', { class: 'yk-puzzle-result', hidden: true });
   const homeCount = parts.data.p.length;
+  // 制限時間は、見せる側が決めた終わりの時刻（サーバーの時刻にそろえた値）から数える
+  const limitSec = ORDER_TIMES.includes(spec.limit) && spec.limit > 0 && Number.isFinite(spec.endsAt) ? spec.limit : 0;
+  const bar = limitSec ? timerBar(limitSec) : null;
   const board = {
     parts,
     last: -1,
@@ -1166,25 +1270,31 @@ function renderWatchBoard(unit, word, spec, setInfo) {
     setPeek(on) {
       parts.ghost.classList.toggle('is-on', Boolean(on));
     },
-    finish() {
+    finish(timeUp) {
       if (board.done) return;
       board.done = true;
+      watchTimer = stopTimer(watchTimer);
+      if (bar) bar.root.hidden = true;
       drawFinal(parts);
-      status.textContent = 'できました';
+      status.textContent = timeUp ? '時間です' : 'できました';
       result.hidden = false;
-      result.replaceChildren(...resultWord(word));
+      result.replaceChildren(
+        timeUp ? el('p', { class: 'yk-puzzle-result__timeup' }, '時間です。') : null,
+        ...resultWord(word));
     },
   };
   watchBody.replaceChildren(
     setInfo ? el('p', { class: 'yk-set-count' }, `問題 ${setInfo.i + 1} / ${setInfo.words.length}`) : null,
     el('div', { class: 'yk-puzzle-head' }, wordHead(word)),
     el('div', { class: 'yk-puzzle-guide' }, el('p', {}, unitTitle(unit)), status),
+    bar ? bar.root : null,
     parts.stage,
     result,
   );
   (Array.isArray(spec.pieces) ? spec.pieces : []).slice(0, PIECE_MAX).forEach((p, i) => board.setPiece(i, p));
   board.setPeek(spec.peek);
-  if (spec.done) board.finish();
+  if (spec.done) board.finish(spec.timeout === true);
+  else if (bar) watchTimer = startCountdown(bar, spec.endsAt, limitSec, null); // 時間切れは、見せる側の知らせで出す
   watchBoard = board;
 }
 
@@ -1195,7 +1305,7 @@ function onWatchValue(state, path) {
     const piece = /^puzzle\/pieces\/(\d+)$/.exec(path);
     if (piece) return watchBoard.setPiece(Number(piece[1]), (puzzle.pieces || [])[piece[1]]);
     if (path === 'puzzle/peek') return watchBoard.setPeek(puzzle.peek);
-    if (path === 'puzzle/done') return puzzle.done ? watchBoard.finish() : undefined;
+    if (path === 'puzzle/done') return puzzle.done ? watchBoard.finish(puzzle.timeout === true) : undefined;
   }
   return renderWatch();
 }

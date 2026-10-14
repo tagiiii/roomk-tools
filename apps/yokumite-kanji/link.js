@@ -384,7 +384,8 @@ function makeLink(code, role, pid) {
     state = next;
     const core = (s) => JSON.stringify([
       s.view || null,
-      s.puzzle ? { ...s.puzzle, pieces: s.puzzle.pieces.length, peek: null, done: null } : null,
+      // 時間切れのしるしは、done と一緒に（1回の書きこみで）届く。盤面を作り直さずに done として読む
+      s.puzzle ? { ...s.puzzle, pieces: s.puzzle.pieces.length, peek: null, done: null, timeout: null } : null,
     ]);
     if (core(prev) !== core(next)) {
       emit('');

@@ -75,7 +75,7 @@ async function startOrder(H, unitId, n) {
   check('done: the mentor sees the list', (await H.page.$$eval('.yk-watch-body .yk-set-list__item', (e) => e.length)) === 3);
   await P.page.click('#app .btn-primary');
   await waitTitle(P, '理科：大地の成り立ちと変化');
-  await waitStatus(H, '全部組み立てて、一覧にもどりました');
+  await waitStatus(H, 'おわって、一覧にもどりました');
   // 組み立てた語に星が付いている（もとの1語＋3語）
   check('done: stars on the tiles', (await P.page.$$eval('.yk-word-tile__built', (e) => e.length)) === 4);
 
@@ -193,6 +193,64 @@ async function startOrder(H, unitId, n) {
   check('bad order: ignored by the child', (await setCount(P)) === null);
   check('bad order: the mentor panel treats it as none', (await status(H)).includes('を選んで「はじめる」'));
   await rest('DELETE', `${L.ROOMS}/${code}/order`);
+
+  // ── 1問の制限時間（30秒）。時間切れでも×は出さず、形をたしかめて先へ。星は付けない
+  check('timer: default is none', (await H.page.getAttribute('.yk-order__time[data-t="0"]', 'aria-pressed')) === 'true');
+  await H.page.click('.yk-order__count[data-n="3"]');
+  await H.page.click('.yk-order__time[data-t="30"]');
+  await H.page.selectOption('#orderUnit', 'rika-1-genshou');
+  await H.page.click('#btnStartOrder');
+  await waitSetCount(P, '問題 1 / 3');
+  room = await roomWhen(code, (r) => r.order && r.order.t === 30 && liveOf(r) && liveOf(r).puzzle && liveOf(r).puzzle.limit === 30);
+  check('timer: order and puzzle carry the limit', room.order.t === 30 && typeof liveOf(room).puzzle.endsAt === 'number', room.order);
+  check('timer: bar shown to the child', await P.page.isVisible('#app .yk-timer'));
+  await H.page.waitForSelector('.yk-watch-body .yk-timer');
+  await waitStatus(H, '1問30秒');
+  const firstLeft = await text(P, '#app .yk-timer__left');
+  check('timer: counts down from 30', /^あと(30|29|28)秒$/.test(firstLeft), firstLeft);
+  await solve(P);
+  await waitText(P, '.yk-puzzle-status', 'できました');
+  check('timer: bar stops when built', (await text(P, '#app .yk-timer__left')) !== '時間です');
+  await P.page.click('.yk-puzzle-result .btn-primary');
+  await waitSetCount(P, '問題 2 / 3');
+  // 2問目: 少し待ってから再読み込みしても、時間は始まり直さない
+  await sleep(6000);
+  await P.page.reload();
+  await waitBar(P, 'メンターに見せています', 15000);
+  await waitSetCount(P, '問題 2 / 3', 15000);
+  const afterReload = Number(((await text(P, '#app .yk-timer__left')) || '').replace(/[^0-9]/g, ''));
+  check('timer: reload keeps the same deadline', afterReload > 0 && afterReload <= 25, afterReload);
+  // さわらずに時間を待つ
+  await waitText(P, '.yk-puzzle-status', '時間です', 40000);
+  check('timeup: message to the child', (await text(P, '.yk-puzzle-result__timeup')).includes('形をたしかめましょう'));
+  check('timeup: no cross mark, the word is drawn', (await P.page.$$eval('.yk-final path', (e) => e.length)) > 0);
+  check('timeup: next button', (await text(P, '.yk-puzzle-result .btn-primary')).includes('つぎの問題へ'));
+  await waitText(H, '.yk-watch-body .yk-puzzle-status', '時間です', 10000);
+  check('timeup: mentor sees it', (await text(H, '.yk-watch-body .yk-puzzle-result__timeup')) === '時間です。');
+  room = await roomOf(code);
+  check('timeup: written as done with the timeout mark', liveOf(room).puzzle.done === true && liveOf(room).puzzle.timeout === true);
+  await P.page.click('.yk-puzzle-result .btn-primary');
+  await waitSetCount(P, '問題 3 / 3');
+  await solve(P);
+  await waitText(P, '.yk-puzzle-status', 'できました');
+  await P.page.click('.yk-puzzle-result .btn-primary');
+  await waitTitle(P, 'おわりました');
+  check('timeup: two stars in the list of three', (await P.page.$$eval('#app .yk-set-list__item', (e) => e.map((x) => (x.querySelector('.yk-word-tile__built') ? 1 : 0)).join(''))) === '101');
+  await waitStatus(H, 'おわりました');
+  await waitWatch(H, 'おわりました');
+  await P.page.click('#app .btn-primary');
+  await waitTitle(P, '理科：身のまわりの現象（光・音・力）');
+  check('timeup: the timed-out word has no star on the tiles', (await P.page.$$eval('.yk-word-tile__built', (e) => e.length)) === 2);
+  // 問題から抜けたら、時間は止まる（あとから時間切れが起きない）
+  await H.page.click('#btnStartOrder');
+  await waitSetCount(P, '問題 1 / 3');
+  await P.page.click('.yk-back-link');
+  await waitTitle(P, '理科：身のまわりの現象（光・音・力）');
+  await sleep(32000);
+  check('timer: stopped after leaving', (await title(P)) === '理科：身のまわりの現象（光・音・力）' && (await toastText(P)) === null);
+  check('timer: nothing written after leaving', !liveOf(await roomOf(code)).puzzle);
+  await H.page.click('#btnEndOrder');
+  await H.page.click('.yk-order__time[data-t="0"]');
 
   // ── せまい画面でも、パネルがはみ出さない
   await H.page.setViewportSize({ width: 375, height: 760 });

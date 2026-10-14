@@ -235,12 +235,49 @@
   list-style: none;
 }
 .yk-set-list__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
   padding: 12px 16px;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-card);
   font-size: 22px;
 }
+
+/* 1問の制限時間の帯（メンターが決めたときだけ）。音は鳴らさない */
+.yk-timer {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-top: var(--space-sm);
+}
+.yk-timer__track {
+  flex: 1;
+  height: 10px;
+  overflow: hidden;
+  border-radius: var(--radius-full);
+  background: #E3E9EC;
+}
+.yk-timer__fill {
+  display: block;
+  height: 100%;
+  width: 100%;
+  border-radius: var(--radius-full);
+  background: var(--color-accent);
+  transition: width 0.25s linear;
+}
+.yk-timer.is-low .yk-timer__fill { background: var(--color-warning); }
+.yk-timer__left {
+  flex-shrink: 0;
+  min-width: 5.5em;
+  text-align: right;
+  font-size: var(--font-size-sub);
+  font-weight: 700;
+  color: var(--color-primary);
+}
+.yk-puzzle-result__timeup { font-size: 17px; font-weight: 700; color: var(--color-primary); }
 
 /* 相手がスマホのときは、盤面がたて長になる。見る画面からはみ出さない高さにおさえる */
 .yk-stage--watch { max-height: 64vh; }
@@ -486,6 +523,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .yk-timer__fill { transition: none; }
   .yk-stage--watch .yk-piece { transition: none; }
   .yk-piece.is-locked .yk-piece__ink { animation: none; }
   .yk-ghost, .yk-piece.is-gone { transition: none; }
