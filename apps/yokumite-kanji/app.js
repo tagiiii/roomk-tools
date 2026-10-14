@@ -3,9 +3,9 @@
 // 仕様の正本: AGENTS.md
 // =============================================
 import { shuffle } from '../shared/js/utils.js';
-import { UNITS } from './data.js?v=20261014a';
-import { KVG } from './kvg-data.js?v=20261014a';
-import { applyPath, createRoom, openLink } from './link.js?v=20261014a';
+import { UNITS } from './data.js?v=20261014b';
+import { KVG } from './kvg-data.js?v=20261014b';
+import { applyPath, createRoom, openLink } from './link.js?v=20261014b';
 
 const { RoomkRTDB } = window;
 
@@ -27,6 +27,11 @@ const DRAW_STEP_MS = 150;
 const SCATTER_TRIES = 40; // ばらまくとき、重なりの少ない置き場所をこの回数だけ探す
 const MOVE_SEND_MS = 80;  // 動かしている間、見る画面へ位置を送る間隔
 const PIECE_MAX = 12;     // 見る側が受け取る部品の数の上限（正しい部品＋にせもの）
+const ORDER_ID_RE = /^[a-z0-9]{8}$/;
+const ORDER_COUNTS = [3, 5, 10, 0]; // メンターが選べる問題数（0 は全部）
+const ORDER_DEFAULT = 5;
+const ORDER_MAX = 30;
+const HANDLED_KEEP = 20;  // 済んだ問題の id をおぼえておく数（同じ問題を出しなおさないため）
 
 const GUIDE = '部品をドラッグして、わくの中で字を組み立てましょう。にせものの部品が混ざっています。はまらない部品は、にせものです。';
 
@@ -153,6 +158,12 @@ const pid = (() => {
 // 今の画面の写し。見せていない間もここに持っておき、見せはじめたときにまとめて送る
 let live = {};
 
+// メンターが出した問題（子ども側）: { id, unit, words: [語の番号], i: いまの問題, done, counted }
+let set = null;
+let setShown = false;      // いま問題の画面（パズル・おわり）を出しているか
+let afterSet = null;       // 問題から抜けたしるし { id, how: 'quit'|'done' }（メンターの画面に出す）
+const handledOrders = new Set();
+
 function readSession() {
   try {
     const saved = JSON.parse(sessionStorage.getItem(SESSION_KEY) || 'null');
@@ -163,9 +174,40 @@ function readSession() {
 }
 
 function saveSession() {
+  if (!share.code) return;
   try {
-    sessionStorage.setItem(SESSION_KEY, JSON.stringify({ code: share.code, role: share.role }));
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify({
+      code: share.code,
+      role: share.role,
+      set: share.role === 'player' ? set : null,
+      afterSet: share.role === 'player' ? afterSet : null,
+      handled: [...handledOrders].slice(-HANDLED_KEEP),
+    }));
   } catch { /* 保存できなくても、このウィンドウの間はつながる */ }
+}
+
+// 再読み込みの前に出されていた問題と、済んだ問題を戻す
+function restoreSet(saved) {
+  (Array.isArray(saved.handled) ? saved.handled : []).forEach((id) => {
+    if (typeof id === 'string' && ORDER_ID_RE.test(id)) handledOrders.add(id);
+  });
+  const after = saved.afterSet;
+  if (after && typeof after.id === 'string' && ORDER_ID_RE.test(after.id) && ['quit', 'done'].includes(after.how)) {
+    afterSet = { id: after.id, how: after.how };
+  }
+  // 出された問題は、形がそろっているときだけ戻す（そろっていなければ捨てる。済んだ問題の id は残る）
+  const old = saved.set;
+  const unit = old && UNITS.find((u) => u.id === old.unit);
+  if (!unit || typeof old.id !== 'string' || !ORDER_ID_RE.test(old.id) || !Array.isArray(old.words)) return;
+  const max = playable(unit).length;
+  const words = old.words;
+  const okIndex = (i) => Number.isInteger(i) && i >= 0 && i < max;
+  if (!words.length || words.length > ORDER_MAX || !words.every(okIndex) || new Set(words).size !== words.length) return;
+  const done = [...new Set(Array.isArray(old.done) ? old.done : [])].filter((i) => words.includes(i));
+  const i = old.i;
+  if (!Number.isInteger(i) || i < 0 || i > words.length) return;
+  if (i === words.length && done.length !== words.length) return; // 全部できていないのに「おわり」にはしない
+  set = { id: old.id, unit: unit.id, words: [...words], i, done, counted: Boolean(old.counted) };
 }
 
 function clearSession() {
@@ -227,6 +269,7 @@ async function startShowing(code) {
     });
     if (!share.link) return 'gone'; // つないだ直後に終わっていた（上の onEnd がもう片付けた）
     result.link.set('', copyOf(live)); // 今の画面を送る
+    result.link.onOrder(onOrder);
     renderShareBar();
     return true;
   } finally {
@@ -260,7 +303,8 @@ function renderShareBar() {
 
 // ── トップ ───────────────────────────────────
 function showTop() {
-  publish('', { view: { name: 'top' } });
+  setShown = false;
+  publish('', { view: { name: 'top', ...(afterSet ? { afterSet } : {}) } });
   const subjects = [...new Set(UNITS.map((u) => u.subject))];
   const hasRecord = Object.keys(store.clear).length > 0 || Object.keys(store.wrote).length > 0;
   show(
@@ -296,7 +340,8 @@ function unitCard(unit) {
 function showUnit(unitId) {
   const unit = UNITS.find((u) => u.id === unitId);
   if (!unit) return showTop();
-  publish('', { view: { name: 'unit', unit: unit.id } });
+  setShown = false;
+  publish('', { view: { name: 'unit', unit: unit.id, ...(afterSet ? { afterSet } : {}) } });
   const words = playable(unit);
   return show(
     backLink('単元を選ぶ', showTop),
@@ -410,9 +455,10 @@ function drawFinal(parts) {
 }
 
 // ── パズル（遊ぶ側） ─────────────────────────────
-function showPuzzle(unit, index) {
+function showPuzzle(unit, index, { inSet = false } = {}) {
   const words = playable(unit);
   const word = words[index];
+  setShown = inSet;
   const layoutName = window.matchMedia('(max-width: 700px)').matches ? 'tall' : 'wide';
   const decoys = pickDecoys(word);
   const parts = buildStage(word, decoys, layoutName, false);
@@ -431,10 +477,11 @@ function showPuzzle(unit, index) {
         if (!finished) publish('puzzle/peek', false);
       }, PEEK_MS);
     }, { iconName: 'visibility' }),
-    button('ばらし直す', 'btn-ghost btn-sm', () => showPuzzle(unit, index), { iconName: 'shuffle' }));
+    button('ばらし直す', 'btn-ghost btn-sm', () => showPuzzle(unit, index, { inSet }), { iconName: 'shuffle' }));
 
   show(
-    backLink('語の一覧', () => showUnit(unit.id)),
+    inSet ? backLink('問題をやめる', quitSet) : backLink('語の一覧', () => showUnit(unit.id)),
+    inSet ? el('p', { class: 'yk-set-count' }, `問題 ${set.i + 1} / ${set.words.length}`) : null,
     el('div', { class: 'yk-puzzle-head' }, wordHead(word)),
     el('div', { class: 'yk-puzzle-guide' }, el('p', {}, GUIDE), status),
     stage,
@@ -507,7 +554,12 @@ function showPuzzle(unit, index) {
   });
 
   publish('', {
-    view: { name: 'puzzle', unit: unit.id },
+    view: {
+      name: 'puzzle',
+      unit: unit.id,
+      ...(inSet ? { set: { id: set.id, words: set.words, i: set.i } } : {}),
+      ...(!inSet && afterSet ? { afterSet } : {}),
+    },
     puzzle: { unit: unit.id, w: index, layout: layoutName, decoys, pieces: pieces.map(wire), peek: false, done: false },
   });
 
@@ -553,13 +605,28 @@ function showPuzzle(unit, index) {
       wroteBtn.querySelector('.btn__label').textContent = '紙にも書きました';
     }, { iconName: 'edit', disabled: Boolean(store.wrote[wroteKey]) });
 
+    if (inSet && !set.done.includes(index)) {
+      set.done.push(index);
+      saveSession();
+    }
+    const lastInSet = inSet && set.i >= set.words.length - 1;
     result.hidden = false;
     result.replaceChildren(
       ...resultWord(word),
-      el('div', { class: 'yk-actions' },
-        button('もう一度', 'btn-ghost', () => showPuzzle(unit, index), { iconName: 'replay' }),
-        button('語の一覧へ', 'btn-secondary', () => showUnit(unit.id)),
-        button('つぎの語へ', 'btn-primary', () => showPuzzle(unit, nextIndex), { iconName: 'arrow_forward', iconAfter: true })),
+      inSet
+        ? el('div', { class: 'yk-actions' },
+          button('もう一度', 'btn-ghost', () => showPuzzle(unit, index, { inSet }), { iconName: 'replay' }),
+          lastInSet
+            ? button('おわりへ', 'btn-primary', showSetDone, { iconName: 'arrow_forward', iconAfter: true })
+            : button('つぎの問題へ', 'btn-primary', () => {
+              set.i += 1;
+              saveSession();
+              showSetPuzzle();
+            }, { iconName: 'arrow_forward', iconAfter: true }))
+        : el('div', { class: 'yk-actions' },
+          button('もう一度', 'btn-ghost', () => showPuzzle(unit, index), { iconName: 'replay' }),
+          button('語の一覧へ', 'btn-secondary', () => showUnit(unit.id)),
+          button('つぎの語へ', 'btn-primary', () => showPuzzle(unit, nextIndex), { iconName: 'arrow_forward', iconAfter: true })),
       el('div', { class: 'yk-puzzle-result__write' },
         el('span', {}, 'お手本を見ながら、紙にも1回書いてみましょう。'),
         wroteBtn));
@@ -622,6 +689,99 @@ function showPuzzle(unit, index) {
   }
 }
 
+// ── メンターが出した問題（子ども側） ─────────────────
+// メンターが「はじめる」を押すと、子どもの画面はその場で問題に切りかわる（オーナー決定）。
+// 語は、その単元から、まだ組み立てていない語を先に、おまかせで選ぶ
+function readOrder(value) {
+  if (!value || typeof value !== 'object' || typeof value.id !== 'string' || !ORDER_ID_RE.test(value.id)) return null;
+  const unit = UNITS.find((u) => u.id === value.unit);
+  const n = value.n;
+  if (!unit || !(n === 0 || (Number.isInteger(n) && n >= 1 && n <= ORDER_MAX))) return null;
+  return { id: value.id, unit, n };
+}
+
+function onOrder(value) {
+  const order = readOrder(value);
+  if (!order) {
+    if (afterSet) {
+      afterSet = null;
+      saveSession();
+    }
+    if (set) {
+      const unitId = set.unit;
+      set = null;
+      saveSession();
+      RoomkRTDB.showToast('メンターが問題をおわりにしました', false);
+      showUnit(unitId);
+    }
+    return;
+  }
+  if (set && set.id === order.id) {
+    if (!setShown) showSetScreen(); // 再読み込みのあと、続きにもどる
+    return;
+  }
+  if (handledOrders.has(order.id)) return;
+  startSet(order);
+}
+
+function startSet(order) {
+  handledOrders.add(order.id);
+  afterSet = null;
+  const words = playable(order.unit);
+  const all = words.map((_, i) => i);
+  const fresh = shuffle(all.filter((i) => !isCleared(order.unit, words[i])));
+  const built = shuffle(all.filter((i) => isCleared(order.unit, words[i])));
+  const count = order.n === 0 ? all.length : Math.min(order.n, all.length);
+  set = { id: order.id, unit: order.unit.id, words: [...fresh, ...built].slice(0, count), i: 0, done: [], counted: false };
+  saveSession();
+  showSetScreen();
+}
+
+function showSetScreen() {
+  if (set.i >= set.words.length) showSetDone();
+  else showSetPuzzle();
+}
+
+function showSetPuzzle() {
+  const unit = UNITS.find((u) => u.id === set.unit);
+  showPuzzle(unit, set.words[set.i], { inSet: true });
+}
+
+function showSetDone() {
+  const unit = UNITS.find((u) => u.id === set.unit);
+  const words = playable(unit);
+  set.i = set.words.length;
+  if (!set.counted) {
+    set.counted = true;
+    window.RoomkStats?.count('order-done');
+  }
+  saveSession();
+  setShown = true;
+  publish('', { view: { name: 'setdone', unit: unit.id, set: { id: set.id, words: set.words, i: set.i } } });
+  show(
+    heading('全部組み立てました'),
+    el('p', { class: 'yk-lead' }, `${unitTitle(unit)}の${set.words.length}問です。`),
+    el('ul', { class: 'yk-set-list' }, set.words.map((i) => el('li', { class: 'yk-set-list__item yk-kyo' },
+      wordSpans(words[i], (k) => el('span', { class: 'yk-word-tile__focus' }, k))))),
+    el('div', { class: 'yk-actions' },
+      button('一覧へもどる', 'btn-primary', () => leaveSet('done'), { iconName: 'arrow_forward', iconAfter: true })),
+  );
+}
+
+// 子どもが問題から抜ける（やめる・おわる）。メンターの画面には、抜けたことが出る
+function leaveSet(how) {
+  if (!set) return;
+  const unitId = set.unit;
+  afterSet = { id: set.id, how };
+  set = null;
+  saveSession(); // 抜けたしるしも残す（再読み込みしても、メンターの画面に「抜けた」と出しつづける）
+  showUnit(unitId);
+}
+
+function quitSet() {
+  leaveSet('quit');
+}
+
 // ── リンクからひらいたとき（子ども側） ─────────────────
 function showInvite(code) {
   const error = el('p', { class: 'form-message', id: 'inviteError', role: 'alert', hidden: true });
@@ -631,7 +791,7 @@ function showInvite(code) {
     const result = await startShowing(code);
     if (result === true) {
       window.RoomkStats?.count('show');
-      showTop();
+      if (!setShown) showTop(); // つないだ時点でメンターが問題を出していれば、もうその画面になっている
       return;
     }
     startBtn.disabled = false;
@@ -649,6 +809,7 @@ function showInvite(code) {
       el('p', {}, 'このリンクからひらくと、あなたのパズルの画面が、メンターの画面にも出ます。'),
       el('ul', { class: 'yk-invite__list' },
         el('li', {}, '見えるのは、パズルの画面だけです。'),
+        el('li', {}, 'メンターが問題を出すと、その問題がはじまります。'),
         el('li', {}, '上に出る「見せるのをやめる」で、いつでもやめられます。')),
       error,
       el('div', { class: 'yk-actions' },
@@ -676,6 +837,8 @@ function showGone() {
 // ── 見る画面（メンター側） ───────────────────────────
 let watchBody = null;
 let watchBoard = null;
+let watchPanel = null;     // 問題を出すパネル { root, start, end, status }
+const panelState = { unit: UNITS[0].id, n: ORDER_DEFAULT };
 
 async function createWatch() {
   if (share.busy || share.link) return;
@@ -712,6 +875,7 @@ async function startWatching(code) {
       renderWatch();
     });
     result.link.onValue(onWatchValue);
+    result.link.onOrder(() => renderPanel());
     result.link.onEnd((reason) => {
       leaveWatch();
       RoomkRTDB.showToast(reason === 'expired' ? '時間がたったので、ルームがとじました' : 'ルームがとじました', false);
@@ -728,8 +892,91 @@ function leaveWatch() {
   resetShare();
   watchBody = null;
   watchBoard = null;
+  watchPanel = null;
   showTop();
 }
+
+const orderTitle = (order) => `${unitTitle(order.unit)}・${order.n === 0 ? '全部' : `${order.n}問`}`;
+
+function buildPanel() {
+  const select = el('select', {
+    class: 'form-select yk-order__unit', id: 'orderUnit', 'aria-label': '単元',
+    on: { change: () => { panelState.unit = select.value; } },
+  }, [...new Set(UNITS.map((u) => u.subject))].map((subject) => el('optgroup', { label: subject },
+    UNITS.filter((u) => u.subject === subject).map((u) => el('option', { value: u.id, selected: u.id === panelState.unit }, u.name)))));
+  const counts = ORDER_COUNTS.map((n) => el('button', {
+    type: 'button', class: 'yk-order__count', 'data-n': String(n), 'aria-pressed': String(n === panelState.n),
+    on: {
+      click: () => {
+        panelState.n = n;
+        counts.forEach((b) => b.setAttribute('aria-pressed', String(Number(b.dataset.n) === n)));
+      },
+    },
+  }, n === 0 ? '全部' : `${n}問`));
+  const start = button('はじめる', 'btn-primary', async () => {
+    const link = share.link;
+    if (!link || !share.peer) return;
+    if (!link.isConnected()) {
+      RoomkRTDB.showToast('接続が切れています。つながってから、もう一度押してください');
+      return;
+    }
+    const id = Array.from(crypto.getRandomValues(new Uint8Array(8)), (n) => PID_CHARS[n % PID_CHARS.length]).join('');
+    start.disabled = true;
+    const ok = await link.sendOrder({ id, unit: panelState.unit, n: panelState.n });
+    start.disabled = false;
+    renderPanel();
+    if (ok) window.RoomkStats?.count('order-start');
+    else RoomkRTDB.showToast('問題を出せませんでした。もう一度ためしてください');
+  }, { iconName: 'play_arrow', id: 'btnStartOrder' });
+  const end = button('問題をおわる', 'btn-ghost btn-sm', async () => {
+    const link = share.link;
+    if (!link) return;
+    end.disabled = true;
+    const ok = await link.clearOrder();
+    end.disabled = false;
+    if (!ok) RoomkRTDB.showToast('おわりにできませんでした。もう一度ためしてください');
+  }, { iconName: 'stop', id: 'btnEndOrder' });
+  const status = el('p', { class: 'yk-order__status', 'aria-live': 'polite' });
+  const root = el('section', { class: 'card yk-order', 'aria-labelledby': 'orderTitle' },
+    el('h3', { class: 'yk-order__title', id: 'orderTitle' }, '問題を出す'),
+    el('div', { class: 'yk-order__row' },
+      el('label', { class: 'yk-order__field' }, el('span', { class: 'yk-order__label' }, '単元'), select),
+      el('div', { class: 'yk-order__field' },
+        el('span', { class: 'yk-order__label', id: 'orderCountLabel' }, '問題数'),
+        el('div', { class: 'yk-order__counts', role: 'group', 'aria-labelledby': 'orderCountLabel' }, counts)),
+      start),
+    el('div', { class: 'yk-order__foot' }, status, end));
+  return { root, start, end, status };
+}
+
+// 出している問題と、子どもの進み具合を、パネルに出す
+function renderPanel() {
+  if (!watchPanel || !share.link) return;
+  const order = readOrder(share.link.getOrder());
+  const state = share.link.get();
+  const view = state.view;
+  watchPanel.start.disabled = !share.peer;
+  watchPanel.end.hidden = !order;
+  if (!share.peer) {
+    watchPanel.status.textContent = order ? `出している問題: ${orderTitle(order)}（相手が入ると、はじまります）` : '相手が入ると、問題を出せます。';
+    return;
+  }
+  if (!order) {
+    watchPanel.status.textContent = '単元と問題数を選んで「はじめる」を押すと、相手の画面がその問題になります。';
+    return;
+  }
+  let progress = 'はじまるのを待っています';
+  const info = readSetView(view, state);
+  const mine = info && info.id === order.id ? info : null;
+  const after = readAfterSet(view);
+  if (mine && mine.done) progress = '全部組み立てました';
+  else if (mine) progress = `${mine.i + 1}問目 / ${mine.words.length}問`;
+  else if (after && after.id === order.id) {
+    progress = after.how === 'done' ? '全部組み立てて、一覧にもどりました' : '問題をやめて、一覧にもどりました';
+  }
+  watchPanel.status.textContent = `出している問題: ${orderTitle(order)} ・ ${progress}`;
+}
+
 
 function showWatch() {
   const code = share.code;
@@ -748,12 +995,14 @@ function showWatch() {
     if (done) leaveWatch();
     else RoomkRTDB.showToast('とじられませんでした。もう一度ためしてください');
   }, { iconName: 'close', id: 'btnCloseWatch' });
+  watchPanel = buildPanel();
   show(
     heading('見る画面'),
     el('div', { class: 'yk-watch-bar' },
       el('span', { class: 'yk-watch-bar__code' }, 'ルームコード ', el('strong', {}, code)),
       linkBtn,
       closeBtn),
+    watchPanel.root,
     watchBody,
   );
   renderWatch();
@@ -764,6 +1013,7 @@ const watchNote = (text, iconName) => el('p', { class: 'yk-watch-note', role: 's
 // 画面の切りかえ・新しいパズル・はじめの一括のときに、見る画面の中身を作り直す
 function renderWatch() {
   if (!watchBody) return;
+  renderPanel();
   watchBoard = null;
   const state = share.link.get();
   const view = state.view;
@@ -778,15 +1028,23 @@ function renderWatch() {
     watchBody.replaceChildren(watchNote('単元を選んでいます。', 'list'));
     return;
   }
-  const spec = state.puzzle;
   const words = playable(unit);
+  const setInfo = readSetView(view, state);
+  if (view.name === 'setdone' && setInfo) {
+    watchBody.replaceChildren(
+      watchNote(`全部組み立てました（${unitTitle(unit)}の${setInfo.words.length}問）。`, 'star'),
+      el('ul', { class: 'yk-set-list' }, setInfo.words.map((i) => el('li', { class: 'yk-set-list__item yk-kyo' },
+        wordSpans(words[i], (k) => el('span', { class: 'yk-word-tile__focus' }, k))))));
+    return;
+  }
+  const spec = state.puzzle;
   const word = spec && Number.isInteger(spec.w) && spec.w >= 0 && spec.w < words.length ? words[spec.w] : null;
   if (view.name !== 'puzzle' || !word) {
     watchBody.replaceChildren(watchNote(`語を選んでいます（${unitTitle(unit)}）。`, 'list'));
     return;
   }
   try {
-    renderWatchBoard(unit, word, spec);
+    renderWatchBoard(unit, word, spec, setInfo);
   } catch (error) {
     console.warn('[yokumite-kanji] watch render failed', error);
     watchBoard = null;
@@ -794,7 +1052,32 @@ function renderWatch() {
   }
 }
 
-function renderWatchBoard(unit, word, spec) {
+// 見せる側が送ってきた「問題の何問目か」を確かめる。形がそろっていなければ null（数は出さない）
+//   パズル中: i は 0〜問題数-1 で、出ている語（puzzle.w）が words[i] と同じ
+//   おわり（setdone）: i は問題数と同じ
+function readSetView(view, state) {
+  const raw = view && typeof view === 'object' ? view.set : null;
+  const unit = view && UNITS.find((u) => u.id === view.unit);
+  if (!unit || !raw || typeof raw !== 'object' || typeof raw.id !== 'string' || !ORDER_ID_RE.test(raw.id)) return null;
+  const count = playable(unit).length;
+  const words = raw.words;
+  if (!Array.isArray(words) || !words.length || words.length > ORDER_MAX
+    || !words.every((i) => Number.isInteger(i) && i >= 0 && i < count) || new Set(words).size !== words.length) return null;
+  const i = raw.i;
+  if (view.name === 'setdone') return i === words.length ? { id: raw.id, words, i, done: true } : null;
+  const puzzle = state && state.puzzle;
+  if (view.name !== 'puzzle' || !Number.isInteger(i) || i < 0 || i >= words.length) return null;
+  if (!puzzle || puzzle.unit !== unit.id || puzzle.w !== words[i]) return null;
+  return { id: raw.id, words, i, done: false };
+}
+
+// メンターの画面に出す「抜けた」しるし
+function readAfterSet(view) {
+  const after = view && typeof view === 'object' ? view.afterSet : null;
+  return after && typeof after.id === 'string' && ORDER_ID_RE.test(after.id) && ['quit', 'done'].includes(after.how) ? after : null;
+}
+
+function renderWatchBoard(unit, word, spec, setInfo) {
   // にせものは「どの字の・何番目の部品か」で届く。手元のデータにあるものだけを使う
   const decoys = (Array.isArray(spec.decoys) ? spec.decoys : [])
     .slice(0, MAX_DECOYS)
@@ -837,6 +1120,7 @@ function renderWatchBoard(unit, word, spec) {
     },
   };
   watchBody.replaceChildren(
+    setInfo ? el('p', { class: 'yk-set-count' }, `問題 ${setInfo.i + 1} / ${setInfo.words.length}`) : null,
     el('div', { class: 'yk-puzzle-head' }, wordHead(word)),
     el('div', { class: 'yk-puzzle-guide' }, el('p', {}, unitTitle(unit)), status),
     parts.stage,
@@ -879,7 +1163,8 @@ async function resume(saved) {
     else failed();
     return;
   }
-  showTop(); // 一人でも遊べるので、先に画面を出す
+  restoreSet(saved);
+  showTop(); // 一人でも遊べるので、先に画面を出す（問題の続きは、つないだあとに出す）
   const result = await startShowing(saved.code);
   if (result === true) return;
   if (result === 'gone') gone();

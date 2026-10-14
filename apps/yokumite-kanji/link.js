@@ -7,7 +7,8 @@
 //     player: pid                 いま見せている人（あとから入った人に切りかわる。切断では消えない）
 //     seats/{pid}: { uid, joinedAt }   在室。自分の pid の下だけを、切断時に消す
 //   live/{pid}/  その人だけが書く。切断で消える
-//     view: { name, unit } ／ puzzle: { unit, w, layout, decoys, pieces, peek, done }
+//     view: { name, unit, set, afterSet } ／ puzzle: { unit, w, layout, decoys, pieces, peek, done }
+//   order/  メンター（見る側）だけが書く。出している問題 { id, unit, n, at }。おわると消す
 //
 // 席と中身を人（pid）ごとに分けているのは、前の画面の切断時の予約や遅れて届いた書き込みが、
 // あとから入った人の席・盤面を消したり書きかえたりしないようにするため。
@@ -206,7 +207,7 @@ function makeLink(code, role, pid) {
   const metaRef = roomRef.child('meta');
   const seatRef = metaRef.child('seats/' + pid);      // 見せる側だけが使う
   const myLiveRef = roomRef.child('live/' + pid);     // 見せる側だけが使う
-  const handlers = { value: [], peer: [], end: [] };
+  const handlers = { value: [], peer: [], end: [], order: [] };
   const subs = [];
   let meta = null;
   let state = {};        // 見せる側: 自分が書いた中身 ／ 見る側: 受け取った中身
@@ -219,6 +220,8 @@ function makeLink(code, role, pid) {
   let presenceAgain = false;
   let resend = false;    // 見せる側: 今の中身を、つながったらまとめて送り直す
   let watched = null;    // 見る側: いま購読している相手 { pid, ref, callback }
+  let order = null;      // メンターが出している問題（両方の役が読む）
+  let orderLoaded = false;
 
   const emit = (path) => handlers.value.forEach((handler) => handler(state, path));
   const setPeer = (on) => {
@@ -404,6 +407,12 @@ function makeLink(code, role, pid) {
 
   const timer = setInterval(tick, TICK_MS);
   subscribe(metaRef, (snap) => handleMeta(snap.val()));
+  subscribe(roomRef.child('order'), (snap) => {
+    const value = snap.val();
+    order = value && typeof value === 'object' ? value : null;
+    orderLoaded = true;
+    handlers.order.forEach((handler) => handler(order));
+  });
   subscribe(db.ref('.info/connected'), (snap) => {
     connected = snap.val() === true;
     if (connected) ensurePresence(true);
@@ -436,6 +445,28 @@ function makeLink(code, role, pid) {
     onEnd(handler) {
       handlers.end.push(handler);
       if (endedReason) handler(endedReason);
+    },
+    // メンターが出している問題。登録より前に読めていた分も、その場で知らせる
+    onOrder(handler) {
+      handlers.order.push(handler);
+      if (orderLoaded) handler(order);
+    },
+    getOrder: () => order,
+
+    // 見る側: 問題を出す（同じ場所に書きなおすと、出しなおしになる）／問題をおわる
+    sendOrder(next) {
+      if (closed || role !== 'viewer') return Promise.resolve(false);
+      return roomRef.child('order').set({ ...next, at: serverTimestamp() }).then(() => true, (error) => {
+        warn('order failed')(error);
+        return false;
+      });
+    },
+    clearOrder() {
+      if (closed || role !== 'viewer') return Promise.resolve(false);
+      return roomRef.child('order').remove().then(() => true, (error) => {
+        warn('order clear failed')(error);
+        return false;
+      });
     },
 
     // 見せる側: 見せるのをやめる（ルームは残す）

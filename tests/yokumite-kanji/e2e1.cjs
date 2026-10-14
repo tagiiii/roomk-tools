@@ -88,7 +88,8 @@ const { check, sleep, rest, roomOf, seatOf, liveOf, emptySeats, roomWhen, open, 
   let room = await roomWhen(code, (r) => r.meta.hostConnected === true);
   check('create: room is open and connected', room.meta.status === 'open' && room.meta.hostConnected === true && !room.meta.player && !room.meta.seats, room.meta);
   check('create: counted once', (await stats(H, 'room-create')) === 1);
-  check('create: session saved', JSON.stringify(await session(H)) === JSON.stringify({ code, role: 'viewer' }));
+  const hs = await session(H);
+  check('create: session saved', hs.code === code && hs.role === 'viewer' && hs.set === null, hs);
   check('create: waiting note', (await watchText(H)).includes('まだだれも入っていません'));
   await H.page.click('#btnCopyLink');
   await waitToast(H, '参加用のリンクをコピーしました');

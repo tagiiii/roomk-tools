@@ -138,6 +138,73 @@
   color: var(--color-muted);
   text-align: center;
 }
+/* 問題を出すパネル（メンター側） */
+.yk-order { margin-top: var(--space-md); padding: var(--space-md) var(--space-lg); }
+.yk-order__title { font-size: 17px; color: var(--color-primary); }
+.yk-order__row {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: var(--space-sm) var(--space-md);
+  margin-top: var(--space-sm);
+}
+.yk-order__field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.yk-order__label { font-size: var(--font-size-sm); font-weight: 700; color: var(--color-muted); }
+.yk-order__unit { min-width: 240px; max-width: 100%; }
+.yk-order__counts { display: flex; gap: 6px; }
+.yk-order__count {
+  min-height: 44px;
+  padding: 6px 14px;
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-full);
+  background: var(--color-surface);
+  color: var(--color-muted);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+.yk-order__count:hover { border-color: var(--color-accent); }
+.yk-order__count[aria-pressed='true'] {
+  border-color: var(--color-accent);
+  background: #DDF0F3;
+  color: var(--color-primary);
+}
+.yk-order__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  margin-top: var(--space-sm);
+}
+.yk-order__status { font-size: var(--font-size-sub); color: var(--color-muted); }
+
+/* 出された問題の何問目か・おわりの一覧 */
+.yk-set-count {
+  display: inline-block;
+  margin-bottom: 4px;
+  padding: 2px 12px;
+  border-radius: var(--radius-full);
+  background: var(--color-primary);
+  color: #fff;
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+}
+.yk-set-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 10px;
+  margin-top: var(--space-md);
+  list-style: none;
+}
+.yk-set-list__item {
+  padding: 12px 16px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  font-size: 22px;
+}
+
 /* 相手がスマホのときは、盤面がたて長になる。見る画面からはみ出さない高さにおさえる */
 .yk-stage--watch { max-height: 64vh; }
 /* 送られてくる位置は 0.08 秒おき。間をなめらかにつなぐ */
@@ -388,6 +455,9 @@
 }
 
 @media (max-width: 700px) {
+  .yk-order__unit { min-width: 0; width: 100%; }
+  .yk-order__field { width: 100%; }
+  .yk-order__row .btn-primary { width: 100%; }
   .yk-puzzle-word__text { font-size: 28px; }
   .yk-puzzle-guide { flex-direction: column; gap: 2px; }
   .yk-actions .btn { flex: 1 1 100%; }

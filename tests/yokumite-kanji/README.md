@@ -8,6 +8,7 @@
 | `e2e1.cjs` | 一人で遊ぶ・見る画面の作成・リンクから見せる・部品の動きが映る・完成・やめる・見せる人の切りかえ・おかしな値・とじる |
 | `e2e2.cjs` | 再読み込み・通信の切断と復帰・メンターの切断・期限切れ・残りかすの片付け |
 | `e2e3.cjs` | 作成・席の取得の送信直後の切断 |
+| `e2e4.cjs` | メンターが問題を出す（単元と問題数・切りかわり・やめる・おわる・再読み込み） |
 | `lib.cjs` | 共通の部品（配信用サーバー・本番あて通信の検出・部品をマウスで動かす操作） |
 | `sync-site.sh` | `apps/shared` と `apps/yokumite-kanji` を作業フォルダに写し、エミュレーター向けに差し替える |
 | `firebase.json` | エミュレーターのポート（auth 9491・database 9492・hub 4491・logging 4591） |
@@ -31,6 +32,7 @@ cp tests/yokumite-kanji/firebase.json database.rules.json "$YK_WORK"/
 node tests/yokumite-kanji/e2e1.cjs
 node tests/yokumite-kanji/e2e2.cjs
 node tests/yokumite-kanji/e2e3.cjs
+node tests/yokumite-kanji/e2e4.cjs
 ```
 
 - このアプリは、ルームを作る・入るときまで Firebase を初期化しない。写しの `rtdb-utils.js` は、読み込んだ時点で設定がエミュレーター向けかを確かめられるようにしてある（`window.__EMU__`）
@@ -39,3 +41,4 @@ node tests/yokumite-kanji/e2e3.cjs
 - 終わったらエミュレーターを止め、ポートが空いたことを確かめる
 - 2026-10-13 の結果: その1 93項目・その2 43項目・その3 15項目、すべて合格
 - 2026-10-14（単元を6つに増やしたあと）の結果: その1 100項目・その2 43項目・その3 15項目、すべて合格。その1 に、全部の語で盤面が組めることの確認を足した。単元は名前で選ぶ（並び順が変わるため）
+- 2026-10-14（「問題を出す」を足したあと）の結果: その1 100項目・その2 43項目・その3 15項目・その4 41項目、すべて合格
