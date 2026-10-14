@@ -83,7 +83,7 @@ async function startOrder(H, unitId, n) {
   await H.page.click('#btnEndOrder');
   room = await roomWhen(code, (r) => !r.order);
   check('end: order removed', !room.order);
-  await waitStatus(H, '単元と問題数を選んで');
+  await waitStatus(H, 'を選んで「はじめる」');
   await sleep(500);
   check('end: child not disturbed', (await title(P)) === '理科：大地の成り立ちと変化' && (await toastText(P)) === null);
 
@@ -144,11 +144,54 @@ async function startOrder(H, unitId, n) {
   await waitTitle(P, '社会：中世の日本');
   check('end in the middle: child back to the list', (await setCount(P)) === null);
 
+  // ── メンターが語を選ぶ（押した順に出る）
+  await H.page.click('.yk-order__count[data-n="pick"]');
+  check('pick: start disabled until a word is chosen', await H.page.isDisabled('#btnStartOrder'));
+  await H.page.selectOption('#orderUnit', 'rika-1-busshitsu');
+  check('pick: the unit words are listed', (await H.page.$$eval('.yk-order__word', (e) => e.length)) === 12);
+  for (const i of [9, 2, 5]) await H.page.click(`.yk-order__word[data-i="${i}"]`);
+  // 押した順の番号が付く（語の並びは単元の順のまま）
+  const numbers = await H.page.$$eval('.yk-order__word[aria-pressed="true"]', (e) => e.map((x) => x.dataset.i + ':' + x.querySelector('.yk-order__word-no').textContent).join(','));
+  check('pick: numbers show the order', numbers === '2:2,5:3,9:1', numbers);
+  check('pick: note', (await text(H, '.yk-order__pick-note')).includes('3語を選んでいます'));
+  // 単元を変えると、選んだ語は空になる
+  await H.page.selectOption('#orderUnit', 'rika-1-daichi');
+  check('pick: changing the unit clears the choice', (await H.page.$$eval('.yk-order__word[aria-pressed="true"]', (e) => e.length)) === 0 && await H.page.isDisabled('#btnStartOrder'));
+  await H.page.selectOption('#orderUnit', 'rika-1-busshitsu');
+  for (const i of [9, 2, 5]) await H.page.click(`.yk-order__word[data-i="${i}"]`);
+  // 外して選び直せる
+  await H.page.click('.yk-order__word[data-i="2"]');
+  await H.page.click('.yk-order__word[data-i="2"]');
+  await H.page.click('#btnStartOrder');
+  await waitSetCount(P, '問題 1 / 3');
+  room = await roomWhen(code, (r) => r.order && r.order.words);
+  check('pick: order carries the words', JSON.stringify(room.order.words) === '[9,5,2]' && room.order.n === 3, room.order);
+  check('pick: first word is the first chosen', (await text(P, '.yk-puzzle-word__text')) === '状？変化', await text(P, '.yk-puzzle-word__text'));
+  await waitStatus(H, '選んだ3語');
+  await solve(P);
+  await waitText(P, '.yk-puzzle-status', 'できました');
+  await P.page.click('.yk-puzzle-result .btn-primary');
+  await waitSetCount(P, '問題 2 / 3');
+  check('pick: second word follows the order', (await text(P, '.yk-puzzle-word__text')) === '再結？', await text(P, '.yk-puzzle-word__text'));
+  await waitStatus(H, '2問目 / 3問');
+  await H.page.click('#btnEndOrder');
+  await waitToast(P, 'メンターが問題をおわりにしました');
+  await H.page.click('.yk-order__count[data-n="5"]');
+  check('pick: word list hidden in count mode', !(await H.page.isVisible('#orderWords')));
+  // 語の並びがおかしい問題（重なり・数の食いちがい）は使わない
+  await rest('PUT', `${L.ROOMS}/${code}/order`, { id: 'abcdefgh', unit: 'rika-1-busshitsu', n: 2, words: [1, 1] });
+  await sleep(800);
+  check('pick: broken word list ignored', (await setCount(P)) === null);
+  await rest('PUT', `${L.ROOMS}/${code}/order`, { id: 'abcdefgi', unit: 'rika-1-busshitsu', n: 5, words: [1, 2] });
+  await sleep(800);
+  check('pick: count mismatch ignored', (await setCount(P)) === null);
+  await rest('DELETE', `${L.ROOMS}/${code}/order`);
+
   // ── おかしな問題が書かれても、止まらない
   await rest('PUT', `${L.ROOMS}/${code}/order`, { id: 'BAD', unit: 'constructor', n: 999 });
   await sleep(800);
-  check('bad order: ignored by the child', (await title(P)) === '社会：中世の日本');
-  check('bad order: the mentor panel treats it as none', (await status(H)).includes('単元と問題数を選んで'));
+  check('bad order: ignored by the child', (await setCount(P)) === null);
+  check('bad order: the mentor panel treats it as none', (await status(H)).includes('を選んで「はじめる」'));
   await rest('DELETE', `${L.ROOMS}/${code}/order`);
 
   // ── せまい画面でも、パネルがはみ出さない

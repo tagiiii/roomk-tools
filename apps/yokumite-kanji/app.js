@@ -3,9 +3,9 @@
 // 仕様の正本: AGENTS.md
 // =============================================
 import { shuffle } from '../shared/js/utils.js';
-import { UNITS } from './data.js?v=20261014b';
-import { KVG } from './kvg-data.js?v=20261014b';
-import { applyPath, createRoom, openLink } from './link.js?v=20261014b';
+import { UNITS } from './data.js?v=20261014c';
+import { KVG } from './kvg-data.js?v=20261014c';
+import { applyPath, createRoom, openLink } from './link.js?v=20261014c';
 
 const { RoomkRTDB } = window;
 
@@ -691,12 +691,20 @@ function showPuzzle(unit, index, { inSet = false } = {}) {
 
 // ── メンターが出した問題（子ども側） ─────────────────
 // メンターが「はじめる」を押すと、子どもの画面はその場で問題に切りかわる（オーナー決定）。
-// 語は、その単元から、まだ組み立てていない語を先に、おまかせで選ぶ
+// 語は、メンターが選んだ語があればその語を選んだ順に。なければ、その単元から、まだ組み立てていない語を先に、おまかせで選ぶ
 function readOrder(value) {
   if (!value || typeof value !== 'object' || typeof value.id !== 'string' || !ORDER_ID_RE.test(value.id)) return null;
   const unit = UNITS.find((u) => u.id === value.unit);
+  if (!unit) return null;
+  if (value.words !== undefined) {
+    const words = value.words;
+    const count = playable(unit).length;
+    if (!Array.isArray(words) || !words.length || words.length > ORDER_MAX || value.n !== words.length
+      || !words.every((i) => Number.isInteger(i) && i >= 0 && i < count) || new Set(words).size !== words.length) return null;
+    return { id: value.id, unit, n: words.length, words: [...words] };
+  }
   const n = value.n;
-  if (!unit || !(n === 0 || (Number.isInteger(n) && n >= 1 && n <= ORDER_MAX))) return null;
+  if (!(n === 0 || (Number.isInteger(n) && n >= 1 && n <= ORDER_MAX))) return null;
   return { id: value.id, unit, n };
 }
 
@@ -732,7 +740,8 @@ function startSet(order) {
   const fresh = shuffle(all.filter((i) => !isCleared(order.unit, words[i])));
   const built = shuffle(all.filter((i) => isCleared(order.unit, words[i])));
   const count = order.n === 0 ? all.length : Math.min(order.n, all.length);
-  set = { id: order.id, unit: order.unit.id, words: [...fresh, ...built].slice(0, count), i: 0, done: [], counted: false };
+  const chosen = order.words || [...fresh, ...built].slice(0, count);
+  set = { id: order.id, unit: order.unit.id, words: chosen, i: 0, done: [], counted: false };
   saveSession();
   showSetScreen();
 }
@@ -838,7 +847,8 @@ function showGone() {
 let watchBody = null;
 let watchBoard = null;
 let watchPanel = null;     // 問題を出すパネル { root, start, end, status }
-const panelState = { unit: UNITS[0].id, n: ORDER_DEFAULT };
+// n: 問題数（0 は全部）か 'pick'（語を選ぶ）。picked: 選んだ語の番号（選んだ順）。単元を変えると空にする
+const panelState = { unit: UNITS[0].id, n: ORDER_DEFAULT, picked: [] };
 
 async function createWatch() {
   if (share.busy || share.link) return;
@@ -896,23 +906,62 @@ function leaveWatch() {
   showTop();
 }
 
-const orderTitle = (order) => `${unitTitle(order.unit)}・${order.n === 0 ? '全部' : `${order.n}問`}`;
+const orderTitle = (order) => `${unitTitle(order.unit)}・${order.words ? `選んだ${order.n}語` : order.n === 0 ? '全部' : `${order.n}問`}`;
 
 function buildPanel() {
+  const wordsBox = el('div', { class: 'yk-order__words', id: 'orderWords', role: 'group', 'aria-label': '出す語' });
+  const pickNote = el('p', { class: 'yk-order__pick-note', 'aria-live': 'polite' });
+  // 「語を選ぶ」のときだけ、単元の語を並べる。押した順に出す
+  function renderWords() {
+    const picking = panelState.n === 'pick';
+    wordsBox.hidden = !picking;
+    pickNote.hidden = !picking;
+    if (!picking) return;
+    const unit = UNITS.find((u) => u.id === panelState.unit);
+    wordsBox.replaceChildren(...playable(unit).map((word, i) => {
+      const at = panelState.picked.indexOf(i);
+      return el('button', {
+        type: 'button', class: 'yk-order__word', 'data-i': String(i), 'aria-pressed': String(at >= 0),
+        on: {
+          click: () => {
+            const k = panelState.picked.indexOf(i);
+            if (k >= 0) panelState.picked.splice(k, 1);
+            else if (panelState.picked.length < ORDER_MAX) panelState.picked.push(i);
+            renderWords();
+            renderPanel();
+          },
+        },
+      },
+      at >= 0 ? el('span', { class: 'yk-order__word-no' }, String(at + 1)) : null,
+      el('span', { class: 'yk-kyo' }, word.w));
+    }));
+    pickNote.textContent = panelState.picked.length
+      ? `${panelState.picked.length}語を選んでいます。押した順に出します。`
+      : '出したい語を押して選びます。押した順に出します。';
+  }
   const select = el('select', {
     class: 'form-select yk-order__unit', id: 'orderUnit', 'aria-label': '単元',
-    on: { change: () => { panelState.unit = select.value; } },
+    on: {
+      change: () => {
+        panelState.unit = select.value;
+        panelState.picked = [];
+        renderWords();
+        renderPanel();
+      },
+    },
   }, [...new Set(UNITS.map((u) => u.subject))].map((subject) => el('optgroup', { label: subject },
     UNITS.filter((u) => u.subject === subject).map((u) => el('option', { value: u.id, selected: u.id === panelState.unit }, u.name)))));
-  const counts = ORDER_COUNTS.map((n) => el('button', {
+  const counts = [...ORDER_COUNTS, 'pick'].map((n) => el('button', {
     type: 'button', class: 'yk-order__count', 'data-n': String(n), 'aria-pressed': String(n === panelState.n),
     on: {
       click: () => {
         panelState.n = n;
-        counts.forEach((b) => b.setAttribute('aria-pressed', String(Number(b.dataset.n) === n)));
+        counts.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.n === String(n))));
+        renderWords();
+        renderPanel();
       },
     },
-  }, n === 0 ? '全部' : `${n}問`));
+  }, n === 'pick' ? '語を選ぶ' : n === 0 ? '全部' : `${n}問`));
   const start = button('はじめる', 'btn-primary', async () => {
     const link = share.link;
     if (!link || !share.peer) return;
@@ -922,7 +971,11 @@ function buildPanel() {
     }
     const id = Array.from(crypto.getRandomValues(new Uint8Array(8)), (n) => PID_CHARS[n % PID_CHARS.length]).join('');
     start.disabled = true;
-    const ok = await link.sendOrder({ id, unit: panelState.unit, n: panelState.n });
+    const picking = panelState.n === 'pick';
+    if (picking && !panelState.picked.length) return;
+    const ok = await link.sendOrder(picking
+      ? { id, unit: panelState.unit, n: panelState.picked.length, words: [...panelState.picked] }
+      : { id, unit: panelState.unit, n: panelState.n });
     start.disabled = false;
     renderPanel();
     if (ok) window.RoomkStats?.count('order-start');
@@ -945,7 +998,10 @@ function buildPanel() {
         el('span', { class: 'yk-order__label', id: 'orderCountLabel' }, '問題数'),
         el('div', { class: 'yk-order__counts', role: 'group', 'aria-labelledby': 'orderCountLabel' }, counts)),
       start),
+    pickNote,
+    wordsBox,
     el('div', { class: 'yk-order__foot' }, status, end));
+  renderWords();
   return { root, start, end, status };
 }
 
@@ -955,14 +1011,14 @@ function renderPanel() {
   const order = readOrder(share.link.getOrder());
   const state = share.link.get();
   const view = state.view;
-  watchPanel.start.disabled = !share.peer;
+  watchPanel.start.disabled = !share.peer || (panelState.n === 'pick' && !panelState.picked.length);
   watchPanel.end.hidden = !order;
   if (!share.peer) {
     watchPanel.status.textContent = order ? `出している問題: ${orderTitle(order)}（相手が入ると、はじまります）` : '相手が入ると、問題を出せます。';
     return;
   }
   if (!order) {
-    watchPanel.status.textContent = '単元と問題数を選んで「はじめる」を押すと、相手の画面がその問題になります。';
+    watchPanel.status.textContent = '単元と問題数（または語）を選んで「はじめる」を押すと、相手の画面がその問題になります。';
     return;
   }
   let progress = 'はじまるのを待っています';
