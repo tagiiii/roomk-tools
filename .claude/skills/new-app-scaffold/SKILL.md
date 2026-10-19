@@ -41,7 +41,7 @@ description: room-Kの本体アプリを新規追加し、必要な共通機能�
 - `app-card__name` / `app-card__desc`
 - `meta-badge` × 3（人数・所要時間・特記事項）
 - **`data-scenes` 属性（必須）**: 利用シーンをスペース区切りで指定（例: `data-scenes="hiroba sakusen"`）。キーの定義は AGENTS.md「利用シーンタグ」参照。シーンバッジは自動描画されるのでカード HTML に手書きしない
-- `slides.html` も作る場合は `data-slides` 属性を追加（`slides-generator` スキル）
+- `slides.html` も作る場合は `data-slides` 属性を追加し、`RoomkHowto.init` に `slides: 'slides.html'` も足す（`slides-generator` スキル）
 
 あわせて `apps/updates.json` の**先頭**に更新情報を1エントリ追記する（`type: "new"`、フォーマットは AGENTS.md「更新情報」参照）。ポータルの更新情報欄と NEW フラグはここから自動描画される。
 
@@ -82,7 +82,7 @@ description: room-Kの本体アプリを新規追加し、必要な共通機能�
 - [ ] apps/{name}/ 一式（パターン準拠・命名ポリシー準拠）
 - [ ] あそびかた／つかいかたモーダル組み込み（`shared/js/howto.js`）
 - [ ] 利用回数カウンタ組み込み（`shared/js/stats.js`）
-- [ ] apps/index.html にカード追加（`data-scenes` 必須・slides があれば `data-slides`）
+- [ ] apps/index.html にカード追加（`data-scenes` 必須・slides があれば `data-slides` と howto の `slides`）
 - [ ] apps/updates.json の先頭に更新情報を追記（`type: "new"`）
 - [ ] apps/guide/index.html の早見表に1行追加
 - [ ] apps/{name}/AGENTS.md（逸脱の明文化を含む）

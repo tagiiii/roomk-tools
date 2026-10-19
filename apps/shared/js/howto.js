@@ -17,8 +17,13 @@
  *         { heading: 'おわりかた', text: '箇条書きでなく文章でもよい' },
  *       ],
  *       position: 'right',               // 'left' で左下に配置（既存FABとの衝突回避用）
+ *       slides: 'slides.html',           // 任意。説明スライドがあるアプリだけ指定する
  *     });
  *   </script>
+ *
+ * slides を指定すると、モーダルの先頭に「説明スライドを見る」ボタンが出る。
+ * スライドは別タブでなく今のページの上に重ねて開く（画面共有中のタブが変わらず、
+ * ルームの接続もそのまま）。RoomkHowto.openSlides() でアプリ側からも開ける。
  *
  * 後方互換で追加のみ。破壊的変更をする場合は ?v= 付き読み込みに切り替えること。
  */
@@ -72,6 +77,25 @@
     '.howto-body p { margin: 0 0 6px; }',
     '.howto-steps { padding-left: 20px; margin: 6px 0; }',
     '.howto-steps li { margin-bottom: 5px; }',
+    '.howto-slides-btn { margin-bottom: 14px; }',
+    // アプリ側の重ね表示（最大 1100）より上、共通トースト（9999）より下
+    '.howto-slides {',
+    '  display: none; position: fixed; inset: 0; z-index: 9000;',
+    '  background: #1C3F5E; flex-direction: column;',
+    '}',
+    '.howto-slides.show { display: flex; }',
+    '.howto-slides-bar {',
+    '  display: flex; justify-content: flex-end; flex-shrink: 0;',
+    '  padding: 6px 8px; background: #1C3F5E;',
+    '}',
+    '.howto-slides-close {',
+    '  display: inline-flex; align-items: center; gap: 4px;',
+    '  min-height: 44px; padding: 0 16px; border-radius: 999px;',
+    '  border: 1px solid rgba(255,255,255,0.6); background: transparent; color: #fff;',
+    '  font-family: inherit; font-size: 15px; font-weight: 500; cursor: pointer;',
+    '}',
+    '.howto-slides-close:hover { background: rgba(255,255,255,0.12); }',
+    '.howto-slides-frame { flex: 1; width: 100%; border: 0; background: #fff; }',
   ].join('\n');
 
   function injectStyle() {
@@ -89,8 +113,9 @@
     return node;
   }
 
-  function buildBody(config) {
+  function buildBody(config, slidesBtn) {
     var body = el('div', 'howto-body');
+    if (slidesBtn) body.appendChild(slidesBtn);
     if (config.lead) body.appendChild(el('p', 'howto-lead', config.lead));
     (config.sections || []).forEach(function (section) {
       if (section.heading) body.appendChild(el('div', 'howto-h', section.heading));
@@ -134,18 +159,28 @@
     closeBtn.appendChild(closeIcon);
     head.appendChild(closeBtn);
     sheet.appendChild(head);
-    sheet.appendChild(buildBody(config));
+
+    var slidesBtn = null;
+    if (config.slides) {
+      slidesBtn = el('button', 'btn btn-secondary btn-full howto-slides-btn');
+      slidesBtn.type = 'button';
+      var slidesIcon = el('span', 'material-symbols-rounded', 'co_present');
+      slidesIcon.setAttribute('aria-hidden', 'true');
+      slidesBtn.appendChild(slidesIcon);
+      slidesBtn.appendChild(document.createTextNode('説明スライドを見る'));
+    }
+    sheet.appendChild(buildBody(config, slidesBtn));
     modal.appendChild(sheet);
 
     // 背景の不活性化（docs/reports/c8-modal-overlay-classification.md のパターン4）。
     // 自分が inert にした要素だけを記録し、元から inert の要素は閉じるときに巻き込まない
     var inertSiblings = [];
-    function setBackgroundInert(on) {
+    function setBackgroundInert(on, layer) {
       if (!('inert' in HTMLElement.prototype)) return;
       if (on) {
         inertSiblings = [];
         Array.prototype.forEach.call(document.body.children, function (node) {
-          if (node === modal || node.inert) return;
+          if (node === (layer || modal) || node.inert) return;
           node.inert = true;
           inertSiblings.push(node);
         });
@@ -168,18 +203,86 @@
       fab.focus();
     }
 
+    // 説明スライド: 初めて開くときに iframe を作り、閉じても残す（見ていたページから再開できる）
+    var slidesLayer = null;
+    var slidesFrame = null;
+    var slidesReturnFocus = null;
+    function closeSlides() {
+      if (!slidesLayer || !slidesLayer.classList.contains('show')) return;
+      slidesLayer.classList.remove('show');
+      setBackgroundInert(false);
+      (slidesReturnFocus || fab).focus();
+    }
+    function focusSlides() {
+      try { slidesFrame.contentWindow.focus(); } catch (e) { /* 読み込み前は無視 */ }
+    }
+    function openSlides() {
+      if (!config.slides) return;
+      if (slidesLayer && slidesLayer.classList.contains('show')) return;
+      var fromModal = modal.classList.contains('show');
+      if (fromModal) {
+        modal.classList.remove('show');
+        setBackgroundInert(false);
+      }
+      slidesReturnFocus = fromModal ? fab : document.activeElement;
+      if (!slidesLayer) {
+        slidesLayer = el('div', 'howto-slides');
+        slidesLayer.setAttribute('role', 'dialog');
+        slidesLayer.setAttribute('aria-modal', 'true');
+        slidesLayer.setAttribute('aria-label', '説明スライド');
+        var bar = el('div', 'howto-slides-bar');
+        var back = el('button', 'howto-slides-close');
+        back.type = 'button';
+        var backIcon = el('span', 'material-symbols-rounded', 'close');
+        backIcon.setAttribute('aria-hidden', 'true');
+        back.appendChild(backIcon);
+        back.appendChild(document.createTextNode('スライドを閉じる'));
+        back.addEventListener('click', closeSlides);
+        bar.appendChild(back);
+        slidesFrame = el('iframe', 'howto-slides-frame');
+        slidesFrame.title = '説明スライド';
+        slidesFrame.setAttribute('allow', 'fullscreen; clipboard-write');
+        slidesFrame.setAttribute('allowfullscreen', '');
+        slidesFrame.addEventListener('load', function () {
+          // スライドの中でキーを押しているときも Esc で閉じられるようにする（同一オリジン）
+          try {
+            slidesFrame.contentWindow.document.addEventListener('keydown', function (e) {
+              if (e.key === 'Escape' && !slidesFrame.contentWindow.document.fullscreenElement) closeSlides();
+            });
+          } catch (e) { /* 別オリジンなら何もしない */ }
+          if (slidesLayer.classList.contains('show')) focusSlides();
+        });
+        slidesFrame.src = config.slides;
+        slidesLayer.appendChild(bar);
+        slidesLayer.appendChild(slidesFrame);
+        document.body.appendChild(slidesLayer);
+      }
+      slidesLayer.classList.add('show');
+      setBackgroundInert(true, slidesLayer);
+      focusSlides();
+    }
+
     fab.addEventListener('click', open);
     closeBtn.addEventListener('click', close);
+    if (slidesBtn) slidesBtn.addEventListener('click', openSlides);
     modal.addEventListener('click', function (e) {
       if (e.target === modal) close();
     });
     document.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape' && modal.classList.contains('show')) close();
+      if (e.key !== 'Escape') return;
+      if (slidesLayer && slidesLayer.classList.contains('show')) closeSlides();
+      else if (modal.classList.contains('show')) close();
     });
 
     document.body.appendChild(fab);
     document.body.appendChild(modal);
+    api.openSlides = openSlides;
   }
 
-  window.RoomkHowto = { init: init };
+  var api = {
+    init: init,
+    // slides を指定した init の後で使える。指定がなければ何もしない
+    openSlides: function () {},
+  };
+  window.RoomkHowto = api;
 })();

@@ -627,6 +627,42 @@ done
 $HOWTO1_OK && echo -e "  ${GREEN}OK${NC}"
 
 # ─────────────────────────────────────────────────────
+# [HOWTO-2] 説明スライドの入口チェック
+#   slides.html があるアプリは、ポータルのカードに data-slides、
+#   index.html の RoomkHowto.init に slides: 'slides.html' を付ける
+#   （ツール一覧のバッジと「？」の中のボタンの両方から開けるようにする）。
+#   旧URLからの自動移動スタブ（refresh / location.replace）は対象外
+# ─────────────────────────────────────────────────────
+echo ""
+echo -e "${BOLD}[HOWTO-2] 説明スライドの入口チェック${NC}"
+
+HOWTO2_OUT=$(python3 - <<'PYEOF'
+import glob, os, re
+
+portal = open('apps/index.html', encoding='utf-8').read()
+for sl in sorted(glob.glob('apps/*/slides.html')):
+    t = open(sl, encoding='utf-8').read()
+    if 'http-equiv="refresh"' in t or 'location.replace' in t:
+        continue
+    app = os.path.basename(os.path.dirname(sl))
+    card = re.search(r'<a class="app-card" href="' + re.escape(app) + r'/"[^>]*>', portal)
+    if card and 'data-slides' not in card.group(0):
+        print(f'apps/index.html — {app} のカードに data-slides がありません（ツール一覧にスライドのバッジが出ない）')
+    idx = f'apps/{app}/index.html'
+    if os.path.isfile(idx) and not re.search(r"RoomkHowto\.init\(\{[\s\S]*?\bslides:\s*'slides\.html'", open(idx, encoding='utf-8').read()):
+        print(f"{idx} — RoomkHowto.init に slides: 'slides.html' がありません（「？」からスライドを開けない）")
+PYEOF
+)
+if [ -n "$HOWTO2_OUT" ]; then
+  while IFS= read -r line; do
+    echo -e "  ${YELLOW}[WARN]${NC} $line"
+    WARNINGS=$((WARNINGS + 1))
+  done <<< "$HOWTO2_OUT"
+else
+  echo -e "  ${GREEN}OK${NC}"
+fi
+
+# ─────────────────────────────────────────────────────
 # [DEP-1] CDN バージョン固定チェック
 #   @latest は上流改竄がそのまま利用者に届くため禁止。
 #   バージョンを固定し、可能なら integrity (SRI) も付ける

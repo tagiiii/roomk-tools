@@ -34,8 +34,10 @@ description: room-Kアプリの画面共有用slides.htmlを作成・更新す�
 
 ## ポータルへの導線
 
-slides.html を作ったら、`apps/index.html` の該当カード（`<a class="app-card">`）に
-`data-slides` 属性を追加する。フッター右端の「スライド」バッジは JS が自動描画する。
+slides.html を作ったら、次の2か所に入口を付ける（`lint.sh` の HOWTO-2 が抜けを警告する）。
+
+- `apps/index.html` の該当カード（`<a class="app-card">`）に `data-slides` 属性を追加する。フッター右端の「スライド」バッジは JS が自動描画する
+- アプリの `RoomkHowto.init({...})` に `slides: 'slides.html',` を追加する。「？」の中に「説明スライドを見る」ボタンが出て、アプリを開いたままスライドを重ねて開ける
 
 ## 検証
 
