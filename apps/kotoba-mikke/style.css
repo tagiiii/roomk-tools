@@ -39,8 +39,7 @@
 }
 /* 日本語を文節で折り返す（対応していないブラウザはふつうの折り返し） */
 .kmk-panel__lead,
-.kmk-note-list li,
-.kmk-muted { word-break: auto-phrase; }
+.kmk-note-list li { word-break: auto-phrase; }
 .kmk-panel__lead {
   margin: 0 0 16px;
   text-align: center;
@@ -159,7 +158,7 @@
 .kmk-panel__actions {
   display: flex;
   justify-content: center;
-  margin: 20px 0 12px;
+  margin: 20px 0 6px;
 }
 .kmk-start {
   display: inline-flex;
@@ -167,13 +166,6 @@
   justify-content: center;
   gap: 6px;
   min-width: 240px;
-}
-.kmk-muted {
-  margin: 0;
-  font-size: 13px;
-  color: var(--color-muted);
-  text-align: center;
-  line-height: 1.6;
 }
 
 /* ── お題画面 ── */
