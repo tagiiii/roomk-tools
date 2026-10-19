@@ -7,7 +7,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet" />
   <link rel="stylesheet" href="../shared/css/design-system.css" />
-  <link rel="stylesheet" href="style.css?v=20261019b" />
+  <link rel="stylesheet" href="style.css?v=20261019c" />
 </head>
 <body>
   <div class="wrapper">
@@ -35,7 +35,7 @@
 
     <!-- 画面2: お題 -->
     <section class="kmk-screen" id="screen-odai">
-      <p class="kmk-odai__label">どんなのが あるかな?</p>
+      <p class="kmk-odai__label">どんなのがあるかな？</p>
 
       <div class="kmk-odai" aria-live="polite">
         <p class="kmk-odai__tag">お題</p>
@@ -45,33 +45,47 @@
         <p class="kmk-odai__theme" id="odaiTheme">やさしい言葉</p>
       </div>
 
-      <div class="kmk-timer" id="odaiTimer" hidden>
-        <p class="kmk-timer__num" id="odaiTimerLeft" role="timer">1:00</p>
-        <span class="kmk-timer__track"><span class="kmk-timer__fill" id="odaiTimerFill"></span></span>
-        <button type="button" class="btn btn-secondary kmk-timer__btn" id="btnTimer">スタート</button>
-      </div>
-
       <div class="kmk-copy">
-        <button class="btn btn-ghost btn-sm" id="btnCopy">
+        <button type="button" class="kmk-quiet-btn" id="btnCopy">
           <span class="material-symbols-rounded" aria-hidden="true">content_copy</span>
           お題をチャットにコピー
         </button>
       </div>
 
-      <div class="kmk-reroll">
-        <button class="btn btn-ghost" id="btnRerollInitial">はじめの文字を かえる</button>
-        <button class="btn btn-ghost" id="btnRerollTheme">おだいを かえる</button>
-        <button class="btn btn-primary" id="btnReroll">ぜんぶ かえる</button>
+      <div class="kmk-timer" id="odaiTimer" hidden>
+        <p class="kmk-timer__num" id="odaiTimerLeft" role="timer">1:00</p>
+        <span class="kmk-timer__track"><span class="kmk-timer__fill" id="odaiTimerFill"></span></span>
+        <button type="button" class="btn btn-secondary btn-sm kmk-timer__btn" id="btnTimer">
+          <span class="material-symbols-rounded" aria-hidden="true" id="btnTimerIcon">play_arrow</span>
+          <span id="btnTimerLabel">スタート</span>
+        </button>
+      </div>
+
+      <div class="kmk-next">
+        <button type="button" class="btn btn-primary kmk-next__btn" id="btnReroll">つぎのお題</button>
+        <div class="kmk-next__partial">
+          <button type="button" class="kmk-quiet-btn" id="btnRerollInitial">
+            <span class="material-symbols-rounded" aria-hidden="true">refresh</span>
+            文字だけ変える
+          </button>
+          <button type="button" class="kmk-quiet-btn" id="btnRerollTheme">
+            <span class="material-symbols-rounded" aria-hidden="true">refresh</span>
+            テーマだけ変える
+          </button>
+        </div>
       </div>
 
       <div class="kmk-odai__foot">
-        <button class="btn btn-ghost" id="btnBackTop">トップへ戻る</button>
+        <button type="button" class="kmk-quiet-btn" id="btnBackTop">
+          <span class="material-symbols-rounded" aria-hidden="true">arrow_back</span>
+          トップへ戻る
+        </button>
       </div>
     </section>
 
   </div>
 
-  <script type="module" src="app.js?v=20261019b"></script>
+  <script type="module" src="app.js?v=20261019c"></script>
   <script src="../shared/js/stats.js?v=1" defer></script>
   <script src="../shared/js/howto.js"></script>
   <script>
@@ -82,12 +96,12 @@
         { heading: 'はじめかた', items: [
           '制限時間を決めたいときは「1分」「2分」「3分」「5分」から選ぶ（「なし」なら時間は計らない）',
           '「はじめる」を押す',
-          '出てきたお題を読む（むずかしかったら「はじめの文字を かえる」「おだいを かえる」で変えられる）',
+          '出てきたお題を読む（むずかしかったら「文字だけ変える」「テーマだけ変える」で変えられる）',
         ] },
         { heading: 'すすめかた', items: [
           'お題に合うことばを思いついたら、チャットで送る',
           '「お題をチャットにコピー」を押すと、お題をチャットに貼りつけられる',
-          '「ぜんぶ かえる」で つぎのお題にすすむ',
+          '「つぎのお題」で、文字とテーマの両方を変えて次へすすむ',
           '制限時間を決めたときは、お題の下の「スタート」を押すと時間が減りはじめる。時間になると「時間です」と出て止まる',
           '「リセット」で時間をもとにもどせる。お題をかえたときも、時間はもとにもどって「スタート」を待つ',
         ] },

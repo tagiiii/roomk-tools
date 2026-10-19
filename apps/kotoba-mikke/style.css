@@ -89,10 +89,10 @@
 /* ── お題画面 ── */
 .kmk-odai__label {
   text-align: center;
-  font-size: 13px;
+  font-size: var(--font-size-sub);
   color: var(--color-muted);
-  letter-spacing: 0.06em;
-  margin: 8px 0 14px;
+  letter-spacing: 0.04em;
+  margin: 8px 0 12px;
 }
 .kmk-odai {
   text-align: center;
@@ -131,14 +131,49 @@
   word-break: break-word;
 }
 
-/* ── 残り時間（制限時間を選んだときだけ出る）。数字を大きく、その下に帯とスタート ── */
+/* ── 弱ボタン（テキストリンク風。コピー・部分の引き直し・トップへ戻る） ── */
+.kmk-quiet-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 44px;
+  padding: 8px 10px;
+  background: none;
+  border: none;
+  font: inherit;
+  font-size: var(--font-size-sub);
+  color: var(--color-muted);
+  cursor: pointer;
+  transition: color 0.15s;
+}
+.kmk-quiet-btn .material-symbols-rounded { font-size: 18px; }
+.kmk-quiet-btn:hover {
+  color: var(--color-text);
+  text-decoration: underline;
+}
+.kmk-quiet-btn:focus-visible {
+  outline: 3px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: var(--radius-card);
+}
+/* コピーできたとき（copyToClipboard が done を付ける） */
+.kmk-quiet-btn.done { color: var(--color-success); }
+
+/* ── コピー（お題カードのすぐ下） ── */
+.kmk-copy {
+  display: flex;
+  justify-content: center;
+  margin: 6px 0 0;
+}
+
+/* ── 残り時間（制限時間を選んだときだけ出る）。大きな数字、その下に帯とスタート ── */
 .kmk-timer {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 10px;
-  max-width: 520px;
-  margin: 16px auto 0;
+  max-width: 320px;
+  margin: 12px auto 0;
 }
 .kmk-timer__num {
   margin: 0;
@@ -148,8 +183,12 @@
   color: var(--color-primary);
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.02em;
+  min-height: calc(1.1 * clamp(40px, 10vw, 56px));
+  display: flex;
+  align-items: center;
 }
 .kmk-timer.is-low .kmk-timer__num { color: var(--color-warning); }
+/* 「時間です」は小さめの字。数字のときと同じ高さを保ち、下のボタンが動かないようにする */
 .kmk-timer.is-done .kmk-timer__num { font-size: clamp(28px, 7vw, 36px); }
 .kmk-timer__track {
   align-self: stretch;
@@ -168,45 +207,46 @@
 }
 .kmk-timer.is-low .kmk-timer__fill { background: var(--color-warning); }
 .kmk-timer__btn {
-  min-width: 160px;
-}
-
-/* ── コピー導線 ── */
-.kmk-copy {
-  display: flex;
-  justify-content: center;
-  margin: 18px 0 8px;
-}
-.kmk-copy .btn {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  font-size: 13px;
+  justify-content: center;
+  gap: 4px;
+  min-width: 140px;
+  min-height: 44px;
 }
-.kmk-copy .material-symbols-rounded {
-  font-size: 18px;
-}
+.kmk-timer__btn .material-symbols-rounded { font-size: 20px; }
 
-/* ── 引き直し（はじめの文字 / おだい / ぜんぶ）。3つとも同じ大きさに揃える ── */
-.kmk-reroll {
+/* ── つぎのお題（主ボタン）と、部分の引き直し（弱） ── */
+.kmk-next {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin-top: 28px;
+}
+.kmk-next__btn {
+  width: 100%;
+  max-width: 320px;
+  min-height: 52px;
+  font-size: 17px;
+}
+.kmk-next__partial {
   display: flex;
   justify-content: center;
-  align-items: center;
   flex-wrap: wrap;
-  gap: 10px;
-  margin: 12px 0 16px;
-}
-.kmk-reroll .btn {
-  flex: 0 0 210px;
-  width: 210px;
-  white-space: nowrap;
+  gap: 0 16px;
 }
 
 /* ── お題画面フッター ── */
 .kmk-odai__foot {
   display: flex;
   justify-content: center;
-  margin-top: 24px;
+  margin-top: 20px;
+  padding-top: 12px;
+  border-top: 1px solid var(--color-border);
+  max-width: 520px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -215,8 +255,9 @@
 
 /* ── モバイル ── */
 @media (max-width: 600px) {
-  .wrapper { padding: 20px 14px 48px; }
+  .wrapper { padding: 20px 16px 48px; }
   .kmk-hero { padding: 28px 12px 16px; }
   .kmk-odai { padding: 24px 20px; }
-  .kmk-reroll .btn { flex-basis: 100%; width: 100%; }
+  .kmk-next { margin-top: 24px; }
+  .kmk-next__partial { gap: 0 4px; }
 }

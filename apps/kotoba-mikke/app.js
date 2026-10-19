@@ -119,7 +119,12 @@ function resetTimer() {
   if (state.limitSec === 0) return;
   root.setAttribute('aria-label', `制限時間 ${state.limitSec / 60}分`);
   drawTimer(state.limitSec * 1000);
-  $('btnTimer').textContent = 'スタート';
+  setTimerButton('play_arrow', 'スタート');
+}
+
+function setTimerButton(icon, label) {
+  $('btnTimerIcon').textContent = icon;
+  $('btnTimerLabel').textContent = label;
 }
 
 function startTimer() {
@@ -130,7 +135,7 @@ function startTimer() {
     drawTimer(rest);
     if (rest <= 0) stopTimer();
   };
-  $('btnTimer').textContent = 'リセット';
+  setTimerButton('restart_alt', 'リセット');
   tick();
   state.timer = setInterval(tick, TIMER_TICK_MS);
 }
