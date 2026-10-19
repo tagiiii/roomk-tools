@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>はじめての人へ | room-K</title>
+  <!-- Google Fonts（Noto Sans JP）-->
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet" />
+  <!-- 共通デザインシステム（M-1〜M-6）-->
+  <link rel="stylesheet" href="../../shared/css/design-system.css" />
+  <style>
+    /* ── ヒーロー（早見表と同じ見た目）── */
+    .hj-hero {
+      background-color: var(--color-primary);
+      color: #fff;
+      padding: var(--space-xl) var(--space-lg);
+      text-align: center;
+    }
+
+    .hj-hero__eyebrow {
+      font-size: var(--font-size-sm);
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      opacity: 0.8;
+    }
+
+    .hj-hero__title {
+      margin-top: var(--space-xs);
+      font-size: var(--font-size-2xl);
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    .hj-hero__lead {
+      margin-top: var(--space-sm);
+      font-size: var(--font-size-body);
+      opacity: 0.9;
+      max-width: 560px;
+      margin-inline: auto;
+    }
+
+    .hj-main {
+      padding: var(--space-xl) var(--space-md) var(--space-2xl);
+    }
+
+    .hj-main .container {
+      max-width: 760px;
+    }
+
+    .hj-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: var(--font-size-sm);
+      color: var(--color-muted);
+      margin-bottom: var(--space-md);
+    }
+
+    .hj-back .material-symbols-rounded {
+      font-size: 18px;
+    }
+
+    /* ── 目次 ── */
+    .hj-toc {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-xs);
+      margin-bottom: var(--space-xl);
+    }
+
+    .hj-toc a {
+      display: inline-flex;
+      align-items: center;
+      min-height: 44px;
+      padding: 0 var(--space-md);
+      border: 1px solid var(--color-border);
+      border-radius: 999px;
+      background: var(--color-surface);
+      color: var(--color-primary);
+      font-size: var(--font-size-sm);
+      font-weight: 500;
+      text-decoration: none;
+    }
+
+    .hj-toc a:hover {
+      border-color: var(--color-accent);
+    }
+
+    /* ── 節 ── */
+    .hj-section {
+      scroll-margin-top: var(--space-md);
+    }
+
+    .hj-section + .hj-section {
+      margin-top: var(--space-2xl);
+    }
+
+    .hj-section__title {
+      display: flex;
+      align-items: center;
+      gap: var(--space-xs);
+      font-size: var(--font-size-xl);
+      font-weight: 700;
+      color: var(--color-primary);
+      padding-bottom: var(--space-xs);
+      border-bottom: 2px solid var(--color-primary);
+      margin-bottom: var(--space-md);
+    }
+
+    .hj-section__title .material-symbols-rounded {
+      color: var(--color-accent);
+    }
+
+    .hj-section p {
+      line-height: 1.8;
+    }
+
+    .hj-section p + p {
+      margin-top: var(--space-sm);
+    }
+
+    /* ── 2種類のツール ── */
+    .hj-types {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: var(--space-md);
+      margin-top: var(--space-md);
+    }
+
+    .hj-type {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-card);
+      padding: var(--space-md);
+    }
+
+    .hj-type__name {
+      font-weight: 700;
+      color: var(--color-primary);
+    }
+
+    .hj-type__mark {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-top: var(--space-xs);
+      padding: 2px var(--space-sm);
+      border-radius: 6px;
+      background: var(--color-bg);
+      font-size: var(--font-size-sm);
+      color: var(--color-muted);
+    }
+
+    .hj-type__mark .material-symbols-rounded {
+      font-size: 18px;
+    }
+
+    .hj-type__text {
+      margin-top: var(--space-sm);
+      font-size: var(--font-size-sm);
+      line-height: 1.8;
+    }
+
+    /* ── 手順 ── */
+    .hj-steps {
+      list-style: none;
+      counter-reset: hj-step;
+      padding: 0;
+      margin: 0;
+    }
+
+    .hj-steps > li {
+      counter-increment: hj-step;
+      position: relative;
+      padding-left: 48px;
+      line-height: 1.8;
+    }
+
+    .hj-steps > li + li {
+      margin-top: var(--space-md);
+    }
+
+    .hj-steps > li::before {
+      content: counter(hj-step);
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--color-primary);
+      color: #fff;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .hj-steps__head {
+      font-weight: 700;
+    }
+
+    .hj-steps__sub {
+      margin-top: 4px;
+      padding-left: 1.2em;
+      list-style: disc;
+      font-size: var(--font-size-sm);
+      color: var(--color-muted);
+    }
+
+    .hj-steps__sub li + li {
+      margin-top: 2px;
+    }
+
+    .hj-btn-name {
+      display: inline-block;
+      padding: 0 6px;
+      border: 1px solid var(--color-border);
+      border-radius: 6px;
+      background: var(--color-surface);
+      font-weight: 500;
+      white-space: nowrap;
+    }
+
+    /* ── 困ったとき ── */
+    .hj-faq {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-sm);
+    }
+
+    .hj-faq details {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-card);
+    }
+
+    .hj-faq summary {
+      cursor: pointer;
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      padding: var(--space-sm) var(--space-md);
+      font-weight: 700;
+      color: var(--color-primary);
+      list-style: none;
+    }
+
+    .hj-faq summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .hj-faq summary::before {
+      content: 'expand_more';
+      font-family: 'Material Symbols Rounded';
+      font-size: 22px;
+      margin-right: var(--space-xs);
+      color: var(--color-accent);
+      transition: transform 0.15s;
+    }
+
+    .hj-faq details[open] summary::before {
+      transform: rotate(180deg);
+    }
+
+    .hj-faq__body {
+      padding: 0 var(--space-md) var(--space-md) calc(var(--space-md) + 22px + var(--space-xs));
+      font-size: var(--font-size-sm);
+      line-height: 1.8;
+    }
+
+    .hj-faq__body ul {
+      padding-left: 1.2em;
+      list-style: disc;
+    }
+
+    .hj-faq__body li + li {
+      margin-top: 4px;
+    }
+
+    .hj-kbd {
+      display: inline-block;
+      padding: 0 6px;
+      border: 1px solid var(--color-border);
+      border-bottom-width: 2px;
+      border-radius: 4px;
+      background: var(--color-surface);
+      font-size: 0.9em;
+      white-space: nowrap;
+    }
+
+    .hj-next {
+      margin-top: var(--space-2xl);
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-sm);
+    }
+
+    footer {
+      text-align: center;
+      padding: var(--space-xl) var(--space-md);
+      color: var(--color-muted);
+      font-size: var(--font-size-sm);
+      border-top: 1px solid var(--color-border);
+    }
+
+    @media (max-width: 480px) {
+      .hj-hero {
+        padding: var(--space-lg) var(--space-md);
+      }
+
+      .hj-hero__title {
+        font-size: var(--font-size-xl);
+      }
+
+      .hj-steps > li {
+        padding-left: 42px;
+      }
+
+      .hj-faq__body {
+        padding-left: var(--space-md);
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="hj-hero">
+    <div class="hj-hero__eyebrow">スタッフ向け</div>
+    <h1 class="hj-hero__title">はじめての人へ</h1>
+    <p class="hj-hero__lead">room-K のツールをはじめて使うときに、最初に読んでほしいページです。ツールの種類、ルームの作り方から終わり方まで、困ったときの直し方、本番の前に1人で練習する方法をまとめました。</p>
+  </header>
+
+  <main class="hj-main">
+    <div class="container">
+
+      <a class="hj-back" href="../../">
+        <span class="material-symbols-rounded" aria-hidden="true">arrow_back</span>ツール一覧にもどる
+      </a>
+
+      <nav class="hj-toc" aria-label="このページの目次">
+        <a href="#types">ツールは2種類</a>
+        <a href="#flow">ルームの流れ</a>
+        <a href="#share">画面共有</a>
+        <a href="#trouble">困ったとき</a>
+        <a href="#practice">1人で練習する</a>
+      </nav>
+
+      <!-- ── 1. ツールは2種類 ── -->
+      <section class="hj-section" id="types">
+        <h2 class="hj-section__title">
+          <span class="material-symbols-rounded" aria-hidden="true">category</span>ツールは2種類
+        </h2>
+        <p>ツール一覧のカードのいちばん下を見ると、どちらの種類か分かります。</p>
+        <div class="hj-types">
+          <div class="hj-type">
+            <div class="hj-type__name">参加者がそれぞれの端末で入るツール</div>
+            <div class="hj-type__mark"><span class="material-symbols-rounded" aria-hidden="true">cloud_sync</span>Realtime Database同期／Firestore同期</div>
+            <p class="hj-type__text">メンターが「ルーム」を作り、参加者は自分のパソコンやタブレットから入ります。下の「<a href="#flow">ルームの流れ</a>」の手順で進めます。</p>
+          </div>
+          <div class="hj-type">
+            <div class="hj-type__name">メンターの画面を共有して使うツール</div>
+            <div class="hj-type__mark"><span class="material-symbols-rounded" aria-hidden="true">wifi_off</span>オフライン動作</div>
+            <p class="hj-type__text">メンターがツールを開いて画面共有するだけです。参加者は声やチャットで答え、操作はメンターがします（クイズなど、ルームでも遊べるものもあります）。</p>
+          </div>
+        </div>
+        <p class="mt-md">どのツールも、画面の隅にある <span class="hj-btn-name">？</span> ボタンを押すと「あそびかた」が開きます。説明スライドがあるツールは、その中の <span class="hj-btn-name">説明スライドを見る</span> から、ツールを開いたままスライドを見られます。</p>
+      </section>
+
+      <!-- ── 2. ルームの流れ ── -->
+      <section class="hj-section" id="flow">
+        <h2 class="hj-section__title">
+          <span class="material-symbols-rounded" aria-hidden="true">route</span>ルームの流れ
+        </h2>
+        <p class="mb-md">参加者がそれぞれの端末で入るツールは、ほとんどが同じ流れです。ボタンの名前も、だいたいそろえてあります。</p>
+        <ol class="hj-steps">
+          <li>
+            <div class="hj-steps__head">メンターがルームを作る</div>
+            ツールを開いて <span class="hj-btn-name">ルームを作る</span> を押し、名前を入れます。メンターが「ホスト」になります。
+          </li>
+          <li>
+            <div class="hj-steps__head">参加用のリンクをチャットに貼る</div>
+            待合室の <span class="hj-btn-name">リンクをコピー</span> を押して、Zoom・Meet・Metalife などのチャットに貼ります。参加者はリンクを開いて、名前を入れて <span class="hj-btn-name">参加する</span> を押すだけです。
+            <ul class="hj-steps__sub">
+              <li>コードを口で伝えるときは <span class="hj-btn-name">コードをコピー</span>。参加者はトップの <span class="hj-btn-name">ルームに参加する</span> から、名前、ルームコード（6文字）の順に入れます</li>
+              <li>リンクのほうが、打ち間違いや日本語入力のままで入れないことが起きにくいです</li>
+            </ul>
+          </li>
+          <li>
+            <div class="hj-steps__head">全員が待合室にそろったら「はじめる」</div>
+            待合室に参加者の名前が並んだら、ホストが <span class="hj-btn-name">はじめる</span> を押します。
+            <ul class="hj-steps__sub">
+              <li>多くのツールは、待合室で「ホストも遊ぶ」か「進行だけ」かを選べます</li>
+              <li>人数が足りないと始められません。遊べる人数はカードや「あそびかた」に書いてあります</li>
+            </ul>
+          </li>
+          <li>
+            <div class="hj-steps__head">遊ぶ</div>
+            進め方はツールごとにちがいます。分からなくなったら <span class="hj-btn-name">？</span> の「あそびかた」を見てください。進める操作は、たいていホストの画面にだけ出ます。
+          </li>
+          <li>
+            <div class="hj-steps__head">終わる</div>
+            結果が出たら、続けるときは <span class="hj-btn-name">もう一度</span>、終わるときは <span class="hj-btn-name">退出する</span>（ツールによっては <span class="hj-btn-name">ルームを閉じる</span>）を押します。
+          </li>
+        </ol>
+      </section>
+
+      <!-- ── 3. 画面共有 ── -->
+      <section class="hj-section" id="share">
+        <h2 class="hj-section__title">
+          <span class="material-symbols-rounded" aria-hidden="true">cast</span>画面共有
+        </h2>
+        <p>参加者が自分の端末で入るツールでも、メンターの画面を共有すると、みんなが同じものを見ながら話せます。</p>
+        <div class="alert alert-warning mt-md">
+          お題や役割を隠すゲーム（ワードウルフ・人狼など）で<strong>ホストも遊ぶ</strong>ときは、自分の画面をそのまま共有しないでください。ホストの秘密が全員に見えてしまいます。
+        </div>
+        <p class="mt-md">いくつかのツールには、だれの秘密も出ない「みんなにみせる画面」があります。ホストの画面の <span class="hj-btn-name">みんなにみせる画面</span>（またはトップの <span class="hj-btn-name">みんなにみせる画面をひらく</span> にルームコードを入れる）で別のタブに開き、そのタブを画面共有します。</p>
+        <p>「みんなにみせる画面」がないツールで画面共有したいときは、ホストは「進行だけ」にするか、画面共有をせずに進めてください。</p>
+      </section>
+
+      <!-- ── 4. 困ったとき ── -->
+      <section class="hj-section" id="trouble">
+        <h2 class="hj-section__title">
+          <span class="material-symbols-rounded" aria-hidden="true">support</span>困ったとき
+        </h2>
+        <div class="hj-faq">
+          <details>
+            <summary>参加者がルームに入れない</summary>
+            <div class="hj-faq__body">
+              <ul>
+                <li><strong>コードが違うと言われる</strong>: 6文字を打ち間違えていることが多いです。<span class="hj-btn-name">リンクをコピー</span> でリンクを送り直すのが確実です</li>
+                <li><strong>英字が打てない</strong>: 日本語入力のままになっています。キーボードを英字に切り替えてもらうか、リンクから入ってもらいます</li>
+                <li><strong>名前が使えない</strong>: 同じルームに同じ名前の人がいるか、文字数が多すぎます（多くのツールは8文字まで）。少し変えてもらいます</li>
+                <li><strong>「もう始まっている」と出る</strong>: 多くのツールは、始まったあとからは入れません。今の回が終わって待合室に戻ったときに入ってもらいます</li>
+              </ul>
+            </div>
+          </details>
+          <details>
+            <summary>画面が止まった・接続が切れた</summary>
+            <div class="hj-faq__body">
+              <ul>
+                <li>同じタブで再読み込みすると、たいていは同じルームに戻れます。タブを閉じてしまうと戻れないので、参加し直してもらいます</li>
+                <li>ホストの接続が切れている間、参加者の画面には「ホストの接続が切れた」といった表示が出ます。ホストが戻れば続けられます</li>
+                <li>ホストが2分ほど戻らないと、そのルームは使えなくなります。ルームを作り直して、新しいリンクを送ってください</li>
+              </ul>
+            </div>
+          </details>
+          <details>
+            <summary>どのボタンを押せばいいか分からない</summary>
+            <div class="hj-faq__body">
+              <ul>
+                <li>画面の隅の <span class="hj-btn-name">？</span> から「あそびかた」を開くと、その画面で押すボタンの名前が順番に書いてあります</li>
+                <li>説明スライドがあるツールは、スライドを画面共有しながら説明すると、参加者にもルールが伝わりやすいです</li>
+              </ul>
+            </div>
+          </details>
+          <details>
+            <summary>どのゲームを選べばいいか分からない</summary>
+            <div class="hj-faq__body">
+              <a href="../">ゲームえらび早見表</a>で、遊びの系統・人数・時間から探せます。ツール一覧の検索欄でも、人数や時間で絞り込めます。
+            </div>
+          </details>
+        </div>
+      </section>
+
+      <!-- ── 5. 1人で練習する ── -->
+      <section class="hj-section" id="practice">
+        <h2 class="hj-section__title">
+          <span class="material-symbols-rounded" aria-hidden="true">school</span>本番の前に1人で練習する
+        </h2>
+        <p class="mb-md">ホストと参加者を1人で両方やってみると、参加者の画面に何が出るかが分かり、本番であわてずにすみます。</p>
+        <ol class="hj-steps">
+          <li>
+            <div class="hj-steps__head">ふつうのウィンドウでホストになる</div>
+            ツールを開いて <span class="hj-btn-name">ルームを作る</span>、<span class="hj-btn-name">リンクをコピー</span> まで進めます。
+          </li>
+          <li>
+            <div class="hj-steps__head">シークレットウィンドウで参加者になる</div>
+            シークレットウィンドウ（Chrome なら <span class="hj-kbd">Ctrl</span> + <span class="hj-kbd">Shift</span> + <span class="hj-kbd">N</span>、Mac は <span class="hj-kbd">⌘</span> + <span class="hj-kbd">Shift</span> + <span class="hj-kbd">N</span>）を開き、コピーしたリンクを貼って参加します。2つのウィンドウを横に並べると、両方の画面を見比べられます。
+          </li>
+          <li>
+            <div class="hj-steps__head">はじめて、ひと通り遊ぶ</div>
+            ホストのウィンドウで <span class="hj-btn-name">はじめる</span> を押し、最後の結果まで進めます。終わったら <span class="hj-btn-name">退出する</span> で閉じます。
+          </li>
+        </ol>
+        <div class="alert alert-info mt-md">
+          同じウィンドウのタブを2つ使うと、ツールからは同じ人に見えて、うまく動かないことがあります。参加者側は必ずシークレットウィンドウか、別の端末（スマホなど）で開いてください。シークレットウィンドウを2つ開いても同じ人に見えるので、参加者が2人以上いるゲームを練習するときは、スマホや別のブラウザ（Safari・Edge など）を足してください。
+        </div>
+      </section>
+
+      <div class="hj-next">
+        <a class="btn btn-primary" href="../../">ツール一覧へ</a>
+        <a class="btn btn-secondary" href="../">ゲームえらび早見表へ</a>
+      </div>
+
+    </div>
+  </main>
+
+  <footer>
+    &copy; 2026 tagiiii
+  </footer>
+
+  <script src="../../shared/js/stats.js?v=1" defer></script>
+</body>
+</html>
