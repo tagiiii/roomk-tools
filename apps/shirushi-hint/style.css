@@ -240,6 +240,44 @@
 
 .sh-form > .btn { margin-top: 18px; }
 
+/* しるしごとに選ぶ時間 */
+.sh-timeset {
+  border-top: 1px solid var(--color-border);
+  margin-top: 18px;
+  padding-top: 16px;
+}
+
+.sh-timeopts { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.sh-timeopt {
+  min-width: 72px;
+  min-height: 44px;
+  padding: 8px 14px;
+  border-radius: var(--radius-full);
+  border: 2px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.sh-timeopt.is-on { border-color: var(--color-accent); background: #E6F2F4; color: #26697A; }
+.sh-timeopt.is-on::before { content: "✓ "; }
+
+/* 残り時間（音は鳴らさない） */
+.sh-timer {
+  color: var(--color-primary);
+  font-size: 28px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  margin: 0 0 4px;
+}
+
+.sh-timer.is-soon { color: var(--color-warning); }
+
 /* 端末なしの参加者を足す */
 .sh-proxyadd {
   border-top: 1px solid var(--color-border);

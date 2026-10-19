@@ -1,7 +1,7 @@
 // しるしでヒント：伝える人がアイコン（しるし）を1つずつ出してお題を伝え、ほかの人が12個の候補から当てる個人戦。
 // ルーム（Realtime Database）で進める。ルームの出入り・切断・再接続・みんなにみせる画面の作りはスタンプあてゲームにそろえている。
 // お題とだれが何を選んだかはゲームの間だけルームに置き、「もう一回あそぶ」とルームを閉じたときに消える。
-import { ICON_GROUPS, TOPICS, TOPIC_KINDS, BLOCKED } from './data.js?v=20261019';
+import { ICON_GROUPS, TOPICS, TOPIC_KINDS, BLOCKED } from './data.js?v=20261019b';
 
 const CANDS = 3;           // 伝える人が選ぶお題の候補の数
 const BOARD = 12;          // 当てる人に並べる候補の数（お題をふくむ）
@@ -15,6 +15,8 @@ const MAX_PROXIES = 4;     // 端末なしの参加者（ホストが代わり�
 const KEYS = 'ABCDEFGHIJKL'; // 候補の記号（声やチャットで「C」のように言えるように）
 const NUMS = ['①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨', '⑩'];
 const POP_MS = 2600;
+const SIGN_TIMES = [0, 15, 30, 60]; // しるしごとに選ぶ時間（秒）。0 は時間制限なし（はじめの設定）
+const signTimeOf = (value) => (SIGN_TIMES.includes(Number(value)) ? Number(value) : 0);
 const JUDGE_GRACE_MS = 4000; // 抜けた人を待たずに答え合わせするまでの待ち（再読み込みの一瞬は待つ）       // しるしごとの結果を出しておく時間（音は鳴らさない）
 
 const { authReady, db } = RoomkRTDB.initFirebase(firebase);
@@ -68,6 +70,10 @@ const state = {
   judging: false,      // ホストがほかの人の代わりに答え合わせを進めている途中
   judgeTimer: null,
   judgeKey: null,
+  timeTimer: null,     // ホストが、しるしの締め切りで答え合わせするタイマー
+  timeKey: null,
+  clockTimer: null,    // 残り時間の表示
+  clockZero: null,
 };
 const $ = (id) => document.getElementById(id);
 
@@ -249,10 +255,18 @@ function questionOf(game) {
     solved,
     misses,
     tellerPts: Number(raw.tellerPts) || 0,
+    openedAt: Number(raw.openedAt) || 0,
     last: raw.last && typeof raw.last === 'object'
       ? { n: Number(raw.last.n) || 0, hit: asList(raw.last.hit).filter((x) => typeof x === 'string'), missed: asList(raw.last.missed).filter((x) => typeof x === 'string') }
       : null,
   };
+}
+
+// いまのしるしの締め切り（時間制限があって、しるしの答え合わせがまだのときだけ）
+function deadlineOf(game, q) {
+  const sec = signTimeOf(game?.signTime);
+  if (!sec || !q || q.signs.length <= q.judged || !q.openedAt) return null;
+  return q.openedAt + sec * 1000;
 }
 
 // いまの問で当てる人（伝える人・いない人をのぞく。ゲームに入っている人だけ）
@@ -499,6 +513,8 @@ function resetBoxes() {
 function cleanupRoom() {
   clearInterval(state.timerInterval);
   clearTimeout(state.judgeTimer);
+  clearTimeout(state.timeTimer);
+  clearInterval(state.clockTimer);
   clearTimeout(state.orphanTimer);
   if (state.roomRef && state.roomCallback) state.roomRef.off('value', state.roomCallback);
   if (state.connectedRef && state.connectedCallback) state.connectedRef.off('value', state.connectedCallback);
@@ -524,6 +540,10 @@ function cleanupRoom() {
     judging: false,
     judgeTimer: null,
     judgeKey: null,
+    timeTimer: null,
+    timeKey: null,
+    clockTimer: null,
+    clockZero: null,
   });
   clearSession();
   resetBoxes();
@@ -588,6 +608,7 @@ function connectToRoom(role, nickname, code, ref, joinedAt) {
   };
   state.connectedRef.on('value', state.connectedCallback);
   state.timerInterval = setInterval(tickRoom, 1000);
+  state.clockTimer = setInterval(updateClock, 250);
 }
 
 function tickRoom() {
@@ -684,6 +705,7 @@ async function createRoom() {
           host: nickname,
           hostUid: uid,
           hostPlays: false,
+          signTime: 0,
           hostConnected: true,
           hostDisconnectedAt: null,
           createdAt: serverTimestamp(),
@@ -927,7 +949,10 @@ function handleRoom(room) {
   else if (needsPresence(room)) ensurePresence();
   updateHostOverlay(room);
   renderRoom(room);
-  if (state.role === 'host') hostJudgeIfReady(room);
+  if (state.role === 'host') {
+    hostJudgeIfReady(room);
+    hostWatchDeadline(room);
+  }
 }
 
 function renderRoom(room) {
@@ -1004,6 +1029,8 @@ function renderWaiting(room) {
     : (spectator
       ? 'ルームコード ' + state.roomCode + ' で参加できるよ。'
       : 'ホストが始めるまで待ってね。');
+  const sec = signTimeOf(room.signTime);
+  $('waitingTime').textContent = sec ? 'しるしごとに選ぶ時間: ' + sec + '秒' : '';
   const players = playingNames(room);
   const proxies = proxyNames(room);
   $('waitingCount').textContent = '参加者（遊ぶ人 ' + players.length + '人）';
@@ -1034,6 +1061,15 @@ function renderWaiting(room) {
     ? '端末なしの参加者がいるときは、ホストは進行だけになります（その子のお題や、選んだ候補を知るため）。'
     : '参加すると、ホストの画面にも自分のお題が出ます。そのときは「みんなにみせる画面」を共有してね。';
   $('btnAddProxy').disabled = proxies.length >= MAX_PROXIES;
+  const current = signTimeOf(room.signTime);
+  $('signTimeOpts').replaceChildren(...SIGN_TIMES.map((sec) => {
+    const on = sec === current;
+    const button = makeElement('button', 'sh-timeopt' + (on ? ' is-on' : ''), sec ? sec + '秒' : 'なし');
+    button.type = 'button';
+    button.setAttribute('aria-pressed', on ? 'true' : 'false');
+    button.addEventListener('click', () => { if (!on) setSignTime(sec); });
+    return button;
+  }));
   const count = players.length;
   const ok = count >= MIN_PLAYERS;
   $('btnStartGame').disabled = !ok;
@@ -1123,7 +1159,9 @@ function renderHint(room) {
   const solved = guesser && q.solved[state.nickname];
   const picked = guesser && (state.nickname in q.picks);
   const myPick = picked ? q.picks[state.nickname] : null;
-  const canTap = guesser && !solved && !picked && open;
+  const deadline = deadlineOf(game, q);
+  const timeUpNow = !!deadline && RoomkRTDB.now() >= deadline;
+  const canTap = guesser && !solved && !picked && open && !timeUpNow;
   $('hintRound').textContent = roundLabel(game);
 
   const away = !present(room, game, q.teller);
@@ -1173,6 +1211,7 @@ function renderHint(room) {
     guide = '次のしるしを待っているよ';
   }
   $('hintGuide').textContent = guide;
+  updateClock();
 
   // 候補（全員同じ並び。伝える人にだけお題の印）
   const answer = q.board.indexOf(q.topic);
@@ -1230,7 +1269,8 @@ function renderProxyPanel(room, game, q, open, step) {
     const head = makeElement('p', 'sh-proxy__name');
     head.append(makeElement('strong', '', name));
     let text = '';
-    const can = open && !q.solved[name] && !(name in q.picks);
+    const deadline = deadlineOf(game, q);
+    const can = open && !q.solved[name] && !(name in q.picks) && !(deadline && RoomkRTDB.now() >= deadline);
     if (q.solved[name]) text = NUMS[q.solved[name] - 1] + 'つ目で当てた';
     else if (name in q.picks) text = q.picks[name] < 0 ? '選ばない' : '選んだ（' + KEYS[q.picks[name]] + '）';
     else if (!open) text = '次のしるしを待っている';
@@ -1431,6 +1471,8 @@ async function enterWatch(code, fromForm = false) {
 
 function connectWatch(code, ref) {
   state.role = 'spectator';
+  clearInterval(state.clockTimer);
+  state.clockTimer = setInterval(updateClock, 250);
   // 共有するタブ・ウィンドウを選ぶときに見分けられるよう、題名と見出しを変える
   document.title = 'みんなにみせる画面 | しるしでヒント | room-K';
   document.body.classList.add('is-watch');
@@ -1483,6 +1525,9 @@ function updateWatchOverlay(room) {
 // 購読とタイマーを止めて、アドレスから watch を外す（ルームには触らない）
 function stopWatch() {
   clearTimeout(state.watchTimer);
+  clearInterval(state.clockTimer);
+  state.clockTimer = null;
+  state.clockZero = null;
   if (state.roomRef && state.roomCallback) state.roomRef.off('value', state.roomCallback);
   Object.assign(state, { role: null, roomCode: null, roomRef: null, room: null, roomCallback: null, watchTimer: null });
   resetBoxes();
@@ -1628,7 +1673,8 @@ async function sendSign() {
         if (next.status !== STATUS.HINT) return next;
       }
       const g = gameOf(next);
-      return withQ(next, g, { ...g.q, signs: q.signs.concat(id), picks: null });
+      // 時間制限があるときの締め切りの起点は、サーバーが書きこんだ時刻（端末の時計のずれが入らないように）
+      return withQ(next, g, { ...g.q, signs: q.signs.concat(id), picks: null, openedAt: signTimeOf(g.signTime) ? serverTimestamp() : null });
     }, 'しるしを出せませんでした。もう一度ためしてね');
     if (after) {
       state.sel = null;
@@ -1660,6 +1706,9 @@ async function showAnswer() {
 async function guess(name, step, b) {
   const after = await questionTransaction(({ room, game, q, nickname, uid, isHost }) => {
     if (room.status !== STATUS.HINT || step !== q.signs.length || q.signs.length <= q.judged) return;
+    // 時間制限があるときは、締め切りのあとの選択は受けない（処理の順で結果が変わらないように）
+    const deadline = deadlineOf(game, q);
+    if (deadline && RoomkRTDB.now() > deadline) return;
     const self = name === nickname && ownsName(game, name, uid);
     const forProxy = isHost && isProxy(game, name);
     if (!self && !forProxy) return;
@@ -1713,6 +1762,64 @@ function hostJudgeIfReady(room) {
   }, JUDGE_GRACE_MS);
 }
 
+// 時間制限: しるしの締め切りになったら、ホストがそのしるしの答え合わせをする（選んでいない人は「選ばない」）
+function hostWatchDeadline(room) {
+  const game = gameOf(room);
+  const q = questionOf(game);
+  const deadline = room.status === STATUS.HINT ? deadlineOf(game, q) : null;
+  const key = deadline ? [game.id, q.n, q.signs.length].join(':') : null;
+  if (key === state.timeKey) return;
+  clearTimeout(state.timeTimer);
+  state.timeTimer = null;
+  state.timeKey = key;
+  if (!key) return;
+  const ref = state.roomRef;
+  state.timeTimer = setTimeout(() => {
+    state.timeTimer = null;
+    if (state.roomRef === ref) timeUp(key, deadline);
+  }, Math.max(0, deadline - RoomkRTDB.now()) + 200);
+}
+
+async function timeUp(key, deadline) {
+  let finished = false;
+  const after = await questionTransaction(({ room, game, q, isHost }) => {
+    finished = false;
+    if (!isHost || room.status !== STATUS.HINT || q.signs.length <= q.judged) return;
+    if ([game.id, q.n, q.signs.length].join(':') !== key || RoomkRTDB.now() < deadline - 500) return;
+    const next = judge(room, game, q);
+    finished = next.status === STATUS.REVEAL;
+    return next;
+  }, null);
+  if (after && finished) window.RoomkStats?.count('finish');
+  // まだ締まっていなければ（書き込みが通らなかったとき）見はりなおす
+  state.timeKey = null;
+  if (state.room && state.role === 'host') hostWatchDeadline(state.room);
+}
+
+// 残り時間の表示（しるしの答え合わせがまだで、時間制限があるときだけ）。音は鳴らさない
+function updateClock() {
+  const box = $('hintTimer');
+  const room = state.room;
+  const game = gameOf(room);
+  const q = questionOf(game);
+  const deadline = room && room.status === STATUS.HINT ? deadlineOf(game, q) : null;
+  if (!deadline || state.currentScreen !== 'hint') {
+    box.hidden = true;
+    return;
+  }
+  const left = Math.max(0, Math.ceil((deadline - RoomkRTDB.now()) / 1000));
+  // 0秒になったら、候補を押せないように描きなおす（1回だけ）
+  const zeroKey = [state.roomCode, game.id, q.n, q.signs.length].join(':');
+  if (left === 0 && state.clockZero !== zeroKey) {
+    state.clockZero = zeroKey;
+    renderRoom(room);
+    return;
+  }
+  box.hidden = false;
+  box.textContent = left > 0 ? 'のこり ' + left + '秒' : '時間です';
+  box.classList.toggle('is-soon', left <= 5);
+}
+
 /* ── ホストの操作 ── */
 async function hostTransaction(update, failMessage) {
   // 処理中の二度押しは何もしない（失敗の通知も出さない）
@@ -1732,6 +1839,15 @@ async function hostTransaction(update, failMessage) {
   } finally {
     state.busy = false;
   }
+}
+
+async function setSignTime(value) {
+  const sec = signTimeOf(value);
+  const ok = await hostTransaction((room) => {
+    if (room.status !== STATUS.WAITING) return;
+    return { ...room, signTime: sec };
+  }, '設定を変えられませんでした。もう一度ためしてね');
+  if (!ok && state.room) renderRoom(state.room);
 }
 
 async function setHostPlays(value) {
@@ -1793,6 +1909,7 @@ async function startGame() {
       joined: Object.fromEntries(real.map((name) => [name, Number(room.players[name].joinedAt) || 0])),
       proxy: Object.keys(proxies).length ? Object.fromEntries(Object.keys(proxies).map((name) => [name, true])) : null,
       scores: Object.fromEntries(names.map((name) => [name, 0])),
+      signTime: signTimeOf(room.signTime), // 「はじめる」の時点の設定で固定
       lap: 1,
       turn: -1,
       qn: 0,
