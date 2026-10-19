@@ -1,0 +1,809 @@
+/* しるしでヒント 固有スタイル（接頭辞: sh- / BEM）
+   共通スタイルは design-system.css に定義済み。
+   部品の形（パネル・ルームバー・参加者の一覧・フォーム・オーバーレイ）はスタンプあてゲームにそろえている。 */
+
+.wrapper {
+  max-width: 820px;
+  margin: 0 auto;
+  padding: 40px 20px 80px;
+}
+
+/* hidden 属性を、display を指定した部品でも効かせる */
+.wrapper [hidden] { display: none !important; }
+
+/* ── ヘッダー ── */
+.sh-header {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.sh-header__title {
+  color: var(--color-primary);
+  font-size: 1.7rem;
+  font-weight: 700;
+  margin: 0 0 8px;
+}
+
+.sh-header__sub {
+  color: var(--color-muted);
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+/* みんなにみせる画面の目印（共有するタブを見分けるため） */
+.sh-watchbadge {
+  display: inline-block;
+  color: #26697A;
+  background: #E6F2F4;
+  border-radius: var(--radius-full);
+  font-size: 13px;
+  font-weight: 700;
+  padding: 4px 12px;
+  margin: 10px 0 0;
+}
+
+/* ── 画面切り替え ── */
+.sh-screen { display: none; }
+.sh-screen.active { display: block; }
+
+/* ── 共通の部品 ── */
+.sh-panel {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  padding: 20px;
+  margin-bottom: 16px;
+}
+
+.sh-panel p {
+  margin: 0 0 12px;
+  line-height: 1.7;
+}
+
+.sh-panel p:last-child { margin-bottom: 0; }
+.sh-panel > .btn:first-of-type { margin-top: 22px; }
+.sh-panel > .btn + .btn { margin-top: 10px; }
+
+.sh-panel__title {
+  color: var(--color-primary);
+  font-size: 1rem;
+  margin: 0 0 12px;
+}
+
+.sh-lead {
+  color: var(--color-text);
+  font-size: 1rem;
+  line-height: 1.8;
+}
+
+.sh-note {
+  color: var(--color-muted);
+  font-size: 0.85rem;
+  line-height: 1.6;
+  text-align: center;
+  margin: 16px 0 0;
+}
+
+.sh-note:empty { display: none; }
+
+.sh-note--warn {
+  color: var(--color-text);
+  background: #FFF7E6;
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin: 0 0 16px;
+  text-align: left;
+}
+
+.sh-tag {
+  display: inline-block;
+  color: #26697A; /* 淡いティールの上で 4.5:1 以上 */
+  background: #E6F2F4;
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 4px 8px;
+  margin-left: 8px;
+  vertical-align: 2px;
+}
+
+.sh-tag--now { color: #fff; background: var(--color-accent); }
+.sh-tag--muted { color: var(--color-text); background: #ECEEF0; }
+
+.sh-alt {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 16px;
+  margin: 14px 0 0;
+}
+
+.sh-alt .btn { display: inline-flex; align-items: center; gap: 6px; }
+.sh-alt--host { margin: 8px 0 0; }
+
+.sh-quiet-btn {
+  min-height: 44px;
+  padding: 10px 8px;
+  background: none;
+  border: none;
+  font-family: inherit;
+  font-size: var(--font-size-sm);
+  color: var(--color-muted);
+  cursor: pointer;
+}
+
+.sh-quiet-btn:hover {
+  color: var(--color-text);
+  text-decoration: underline;
+}
+
+.sh-quiet-btn:focus-visible {
+  outline: 3px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: var(--radius-full);
+}
+
+/* ── サブヘッダー・フォーム ── */
+.sh-subhead {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.sh-subhead__title {
+  color: var(--color-primary);
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.sh-form {
+  background: var(--color-surface);
+  border-radius: 14px;
+  padding: 20px;
+}
+
+.sh-form__label {
+  display: block;
+  color: var(--color-primary);
+  font-size: 0.9rem;
+  font-weight: 700;
+  margin: 0 0 8px;
+}
+
+.sh-form__input + .sh-form__label { margin-top: 18px; }
+
+.sh-form__input {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1.5px solid var(--color-border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-family: inherit;
+  font-size: 1rem;
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.sh-form__input:focus {
+  outline: none;
+  border-color: var(--color-accent);
+}
+
+.sh-form__input--code {
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 1.3rem;
+}
+
+.sh-check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--color-text);
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.sh-check input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--color-accent);
+  flex-shrink: 0;
+}
+
+.sh-form__hint {
+  color: var(--color-muted);
+  font-size: 13px;
+  line-height: 1.6;
+  margin: 6px 0 0 30px;
+}
+
+.sh-form__hint--lead {
+  font-size: 14px;
+  margin: 0 0 16px;
+}
+
+.sh-form__hint--flat { margin-left: 0; }
+
+.sh-form__error {
+  color: var(--color-error);
+  background: #FEF2F2;
+  border-left: 3px solid var(--color-error);
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin: 12px 0;
+}
+
+.sh-form > .btn { margin-top: 18px; }
+
+/* 端末なしの参加者を足す */
+.sh-proxyadd {
+  border-top: 1px solid var(--color-border);
+  margin-top: 18px;
+  padding-top: 16px;
+}
+
+.sh-proxyadd__row {
+  display: flex;
+  gap: 8px;
+}
+
+.sh-proxyadd__row .sh-form__input { flex: 1 1 auto; min-width: 0; }
+.sh-proxyadd__row .btn { flex-shrink: 0; }
+
+/* ── ルームバー ── */
+.sh-roombar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  color: var(--color-primary);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 8px 12px;
+  margin-bottom: 22px;
+}
+
+.sh-roombar strong {
+  font-size: 1.25rem;
+  letter-spacing: 0.13em;
+}
+
+.sh-roombar #btnLeave { margin-left: auto; }
+
+/* ── フェーズの見出し ── */
+.sh-round {
+  color: var(--color-accent);
+  font-size: 14px;
+  font-weight: 700;
+  text-align: center;
+  margin: 0 0 6px;
+}
+
+.sh-phase {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.sh-phase__title {
+  color: var(--color-primary);
+  font-size: 1.5rem;
+  margin: 0 0 6px;
+}
+
+.sh-phase__sub {
+  color: var(--color-muted);
+  line-height: 1.7;
+  margin: 0;
+}
+
+/* ── 参加者の一覧 ── */
+.sh-people {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.sh-people__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.sh-people__item:last-child { border-bottom: none; }
+.sh-people__name { overflow-wrap: anywhere; margin-right: auto; }
+
+.sh-people__status {
+  color: var(--color-accent);
+  font-weight: 700;
+  font-size: 0.88rem;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.sh-people__del { min-height: 36px; padding: 6px 4px; flex-shrink: 0; }
+
+/* ── お題の候補（伝える人が選ぶ） ── */
+.sh-cands {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.sh-cand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 72px;
+  padding: 14px 18px;
+  border-radius: 12px;
+  border: 2px solid var(--color-accent);
+  background: var(--color-surface);
+  color: var(--color-primary);
+  font-family: inherit;
+  font-size: 22px;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+}
+
+.sh-cand:hover { background: #EAF4F6; }
+
+.sh-cand__num {
+  color: var(--color-accent);
+  font-feature-settings: "palt";
+  flex-shrink: 0;
+}
+
+.sh-cand__text { flex: 1; overflow-wrap: anywhere; }
+
+/* ── お題（お題表示の定石: 白カード＋ティール枠）── */
+.sh-odai {
+  background: var(--color-surface);
+  border: 2px solid var(--color-accent);
+  border-radius: var(--radius-box);
+  padding: 24px 40px;
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.sh-odai__label {
+  color: var(--color-accent);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  margin: 0 0 12px;
+}
+
+.sh-odai__text {
+  color: var(--color-primary);
+  font-size: 40px;
+  font-weight: 700;
+  line-height: 1.3;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+/* ── しるし ── */
+.sh-signs {
+  background: var(--color-surface);
+  border: 2px solid var(--color-primary);
+  border-radius: 16px;
+  padding: 16px 20px;
+  margin-bottom: 16px;
+}
+
+.sh-signs__title {
+  color: var(--color-primary);
+  font-weight: 700;
+  margin: 0 0 12px;
+}
+
+.sh-signs__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  min-height: 52px;
+  align-items: center;
+}
+
+.sh-signs__empty { color: var(--color-muted); }
+
+.sh-sign {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 52px;
+  padding: 6px 16px 6px 10px;
+  border-radius: var(--radius-full);
+  background: var(--color-bg);
+  border: 2px solid var(--color-border);
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.sh-sign.is-preview {
+  border-style: dashed;
+  border-color: var(--color-accent);
+  background: #F4FAFB;
+  color: var(--color-muted);
+}
+
+.sh-sign__num { color: var(--color-accent); font-size: 18px; }
+.sh-sign__icon { font-size: 30px; color: var(--color-primary); }
+.sh-sign__note { font-size: 12px; font-weight: 500; }
+
+.sh-swatch {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid #8A8F98;
+  flex: none;
+}
+
+.sh-guide {
+  color: var(--color-primary);
+  font-weight: 700;
+  font-size: 17px;
+  text-align: center;
+  margin: 0 0 12px;
+}
+
+/* ── 当てる候補 ── */
+.sh-board {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+.sh-tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-height: 68px;
+  padding: 10px 6px;
+  border-radius: 12px;
+  border: 2px solid var(--color-border);
+  background: var(--color-surface);
+  font-family: inherit;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-primary);
+  text-align: center;
+}
+
+button.sh-tile { cursor: pointer; border-color: var(--color-accent); }
+button.sh-tile:hover { background: #EAF4F6; }
+
+.sh-tile__key {
+  position: absolute;
+  top: 4px;
+  left: 8px;
+  color: var(--color-accent);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.sh-tile__text { overflow-wrap: anywhere; }
+
+.sh-tile__tag {
+  color: #fff;
+  background: var(--color-accent);
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 1px 8px;
+}
+
+.sh-tile.is-crossed {
+  color: #6B7280;
+  background: #ECEEF0;
+  border-style: dashed;
+}
+
+.sh-tile.is-crossed .sh-tile__text { text-decoration: line-through; }
+.sh-tile.is-crossed .sh-tile__key { color: #6B7280; }
+
+.sh-tile__mark {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  font-size: 20px;
+  color: #6B7280;
+}
+
+.sh-tile.is-mine { border-color: var(--color-primary); border-width: 3px; background: #EEF3F8; }
+.sh-tile.is-answer { border-color: var(--color-success); border-width: 3px; background: #EAF6EE; }
+.sh-tile.is-answer .sh-tile__tag { background: var(--color-success); }
+
+/* ── だれが選んだか ── */
+.sh-picked {
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+
+.sh-picked__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: var(--radius-full);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  font-size: 14px;
+}
+
+.sh-picked__item .material-symbols-rounded { font-size: 20px; color: var(--color-muted); }
+.sh-picked__item.is-picked .material-symbols-rounded { color: var(--color-accent); }
+.sh-picked__item.is-solved { border-color: var(--color-success); }
+.sh-picked__item.is-solved .material-symbols-rounded { color: var(--color-success); }
+.sh-picked__state { color: var(--color-muted); }
+
+/* ── 代わりに押す（端末なしの参加者） ── */
+#proxyPanel { margin-top: 16px; }
+.sh-proxy__rows { display: grid; gap: 12px; }
+
+.sh-proxy__row {
+  display: grid;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--color-bg);
+}
+
+.sh-proxy__name {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: baseline;
+  margin: 0 !important;
+}
+
+.sh-proxy__state { font-size: 14px; color: var(--color-muted); }
+
+.sh-proxy__keys {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.sh-proxy__key {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  border: 2px solid var(--color-accent);
+  background: var(--color-surface);
+  color: var(--color-primary);
+  font-family: inherit;
+  font-size: 17px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.sh-proxy__key:disabled {
+  border-style: dashed;
+  border-color: var(--color-border);
+  color: #6B7280;
+  text-decoration: line-through;
+  cursor: not-allowed;
+}
+
+/* ── 伝える人の道具 ── */
+#tellerTools { margin-top: 16px; }
+
+.sh-sendrow {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--color-surface);
+  padding: 4px 0 12px;
+}
+
+.sh-sendrow__preview { color: var(--color-primary); font-weight: 700; margin: 0 !important; }
+
+.sh-palette { display: grid; gap: 16px; }
+
+.sh-pgroup__title {
+  color: var(--color-muted);
+  font-size: 14px;
+  margin: 0 0 8px;
+}
+
+.sh-pgrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+  gap: 8px;
+}
+
+.sh-pbtn {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 72px;
+  padding: 8px 4px;
+  border-radius: 12px;
+  border: 2px solid var(--color-border);
+  background: var(--color-surface);
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.sh-pbtn .sh-sign__icon { font-size: 28px; }
+.sh-pbtn:hover:not(:disabled) { border-color: var(--color-accent); }
+.sh-pbtn.is-on { border-color: var(--color-accent); background: #EAF4F6; font-weight: 700; }
+.sh-pbtn:disabled { opacity: 0.45; cursor: not-allowed; }
+.sh-pbtn.is-blocked { border-style: dashed; }
+
+.sh-pbtn__mark {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  font-size: 18px;
+  color: var(--color-accent);
+}
+
+.sh-pbtn__mark--muted { color: var(--color-muted); }
+
+/* ── この問の点 ── */
+.sh-result { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+
+.sh-result__item {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  gap: 10px;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: var(--color-bg);
+}
+
+.sh-result__item.is-solved { background: #EAF6EE; }
+.sh-result__item.is-solved .material-symbols-rounded { color: var(--color-success); }
+.sh-result__name { font-weight: 700; overflow-wrap: anywhere; }
+.sh-result__what { color: var(--color-muted); font-size: 14px; }
+.sh-result__pts { font-weight: 700; color: var(--color-primary); min-width: 3.5em; text-align: right; }
+.sh-result__pts.is-minus, .sh-order__pts.is-minus, .sh-rank__pts.is-minus { color: var(--color-error); }
+
+/* ── 順位 ── */
+.sh-rank { list-style: none; margin: 0 auto; padding: 0; display: grid; gap: 8px; max-width: 480px; }
+
+.sh-rank__item {
+  display: grid;
+  grid-template-columns: 2em 3.5em 1fr auto;
+  gap: 8px;
+  align-items: center;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: var(--color-bg);
+  font-size: 18px;
+}
+
+.sh-rank__item.is-top { background: #FFF6DB; border: 2px solid #E9B949; }
+.sh-rank__crown { color: #A86F00; font-size: 26px; }
+.sh-rank__no { font-weight: 700; color: var(--color-primary); }
+.sh-rank__name { font-weight: 700; overflow-wrap: anywhere; }
+.sh-rank__pts { font-weight: 700; color: var(--color-primary); }
+
+/* ── 順番と点 ── */
+#orderPanel { margin-top: 20px; }
+.sh-order { margin: 0; padding-left: 1.6em; display: grid; gap: 6px; }
+.sh-order__item { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.sh-order__item.is-now { font-weight: 700; color: var(--color-primary); }
+.sh-order__item.is-away { color: var(--color-muted); }
+.sh-order__name { overflow-wrap: anywhere; }
+.sh-order__pts { margin-left: auto; font-weight: 700; color: var(--color-primary); }
+
+/* ── しるしごとの結果（音は鳴らさない） ── */
+.sh-pop {
+  position: fixed;
+  top: 18%;
+  left: 50%;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: calc(100vw - 32px);
+  box-sizing: border-box;
+  padding: 16px 28px;
+  border-radius: 20px;
+  background: var(--color-primary);
+  color: #fff;
+  font-size: 24px;
+  font-weight: 700;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 0) scale(0.85);
+  transition: opacity 0.2s, transform 0.2s;
+}
+
+.sh-pop.is-hit { background: var(--color-success); }
+.sh-pop .material-symbols-rounded { font-size: 34px; }
+.sh-pop.is-on { opacity: 1; transform: translate(-50%, 0) scale(1); }
+
+@media (prefers-reduced-motion: reduce) {
+  .sh-pop { transition: none; }
+}
+
+/* ── ホスト切断のオーバーレイ ── */
+.sh-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(18, 37, 54, 0.8);
+}
+
+.sh-overlay[hidden] { display: none; }
+
+.sh-overlay__panel {
+  background: var(--color-surface);
+  border-radius: 14px;
+  padding: 28px;
+  max-width: 420px;
+  text-align: center;
+}
+
+.sh-overlay__panel h2 {
+  color: var(--color-primary);
+  font-size: 1.3rem;
+}
+
+.sh-overlay__panel p { line-height: 1.7; }
+
+/* ── みんなにみせる画面：しるしと候補を大きく ── */
+.is-watch .wrapper { max-width: 1100px; }
+.is-watch .sh-sign { font-size: 26px; min-height: 64px; padding: 8px 20px 8px 14px; }
+.is-watch .sh-sign__icon { font-size: 44px; }
+.is-watch .sh-swatch { width: 40px; height: 40px; }
+.is-watch .sh-tile { font-size: 22px; min-height: 76px; }
+.is-watch .sh-guide { font-size: 20px; }
+
+@media (max-width: 600px) {
+  .wrapper { padding: 28px 16px 64px; }
+  .sh-roombar #btnLeave { margin-left: 0; }
+  .sh-phase__title { font-size: 1.3rem; }
+  .sh-odai { padding: 18px 20px; }
+  .sh-odai__text { font-size: 30px; }
+  .sh-cand { font-size: 20px; }
+  .sh-board { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .sh-tile { font-size: 15px; min-height: 60px; }
+  .sh-sign { font-size: 16px; min-height: 44px; }
+  .sh-sign__icon { font-size: 26px; }
+  .sh-signs { padding: 12px 14px; }
+  .sh-pop { font-size: 19px; padding: 12px 18px; }
+  .sh-result__item { grid-template-columns: auto 1fr auto; }
+  .sh-result__what { grid-column: 2 / 4; grid-row: 2; }
+}

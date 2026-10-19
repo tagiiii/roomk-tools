@@ -195,6 +195,7 @@ const COVERED_APPS = [
   'kotoba-mikke',
   // 2026-10-03 追加
   'stamp-ate',
+  'shirushi-hint',
   // 2026-10-07 追加
   'kossori-word',
   // 2026-10-12 追加
@@ -503,6 +504,23 @@ function collectEntries() {
   });
   if (stampProblems.length > 0) {
     throw new Error(`stamp-ate app.js の構造エラー:\n  ${stampProblems.join('\n  ')}`);
+  }
+
+  // shirushi-hint: data.js の export const TOPICS = [ '文字列', ... ]（アイコンで伝えるお題）。
+  //   ルームでは番号で共有するので、空のお題と同じアプリ内の重複はここで fail-fast にする。
+  //   アイコンの名前（ICON_GROUPS の label）は、しるしの部品なので検査対象外
+  const shirushiTopics = evalArrayFromSource(read('apps/shirushi-hint/data.js'), 'TOPICS', 'apps/shirushi-hint/data.js') || [];
+  const shirushiSeen = new Set();
+  const shirushiProblems = [];
+  if (shirushiTopics.length === 0) shirushiProblems.push('TOPICS が空');
+  shirushiTopics.forEach((text, index) => {
+    if (typeof text !== 'string' || !text.trim()) shirushiProblems.push(`TOPICS[${index}] が空`);
+    if (shirushiSeen.has(text)) shirushiProblems.push(`TOPICS[${index}]「${text}」が重複`);
+    shirushiSeen.add(text);
+    rows.push(entry('shirushi-hint', 'topic', text, { id: `shirushi-hint:${index}` }));
+  });
+  if (shirushiProblems.length > 0) {
+    throw new Error(`shirushi-hint data.js の構造エラー:\n  ${shirushiProblems.join('\n  ')}`);
   }
 
   // career-sugoroku: data.js（ブラウザでは window.CS_DATA、Node では module.exports）。

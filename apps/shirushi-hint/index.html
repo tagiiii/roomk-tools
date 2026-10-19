@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+  <title>しるしでヒント | room-K</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
+  <link rel="stylesheet" href="../shared/css/design-system.css">
+  <!-- index.html と app.js・data.js・style.css はセットで変わるので、変えたら ?v= をそろえて上げる -->
+  <link rel="stylesheet" href="style.css?v=20261019">
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+  <script src="../shared/js/rtdb-utils.js?v=20261005"></script>
+</head>
+<body>
+  <div class="wrapper">
+    <header class="sh-header">
+      <h1 class="sh-header__title">しるしでヒント</h1>
+      <p class="sh-header__sub">アイコンを1つずつ出して、お題を伝えよう</p>
+      <p class="sh-watchbadge" id="watchBadge" hidden>みんなにみせる画面</p>
+    </header>
+    <main>
+      <section class="sh-screen active" id="screen-top">
+        <div class="sh-panel">
+          <p class="sh-lead">伝える人が、アイコン（しるし）を1つずつ出してお題を伝えるゲーム。ほかの人は、12個の候補の中からお題を当てるよ。少ないしるしで当てるほど、当てた人にも伝えた人にも点が入るよ。</p>
+          <p class="sh-note">1問2〜3分くらい。みんなが1回ずつ伝えたら、順位が出るよ。</p>
+          <button type="button" class="btn btn-primary btn-full" id="btnGoCreate">ルームを作る</button>
+          <button type="button" class="btn btn-secondary btn-full" id="btnGoJoin">ルームに参加する</button>
+          <button type="button" class="btn btn-ghost btn-full" id="btnGoWatch">みんなにみせる画面をひらく</button>
+        </div>
+      </section>
+
+      <section class="sh-screen" id="screen-create">
+        <div class="sh-subhead"><button type="button" class="btn btn-ghost btn-sm" id="btnCreateBack">トップへ戻る</button><h2 class="sh-subhead__title">ルームを作る</h2></div>
+        <div class="sh-form">
+          <label class="sh-form__label" for="hostName">ホストの名前（8文字まで）</label>
+          <input class="sh-form__input" id="hostName" maxlength="8" autocomplete="nickname">
+          <p class="sh-form__error" id="createError" hidden></p>
+          <button type="button" class="btn btn-primary btn-full" id="btnCreateRoom">ルームを作る</button>
+        </div>
+      </section>
+
+      <section class="sh-screen" id="screen-join">
+        <div class="sh-subhead"><button type="button" class="btn btn-ghost btn-sm" id="btnJoinBack">トップへ戻る</button><h2 class="sh-subhead__title">ルームに参加する</h2></div>
+        <div class="sh-form">
+          <p class="sh-form__hint sh-form__hint--lead" id="joinLinkHint" hidden>リンクからひらいたので、ルームコードは入っているよ。名前を入れて「参加する」を押してね。</p>
+          <label class="sh-form__label" for="guestName">名前（8文字まで）</label>
+          <input class="sh-form__input" id="guestName" maxlength="8" autocomplete="nickname">
+          <label class="sh-form__label" for="joinCode">ルームコード（6文字）</label>
+          <input class="sh-form__input sh-form__input--code" id="joinCode" maxlength="6" autocorrect="off" autocapitalize="characters" autocomplete="off" spellcheck="false">
+          <p class="sh-form__error" id="joinError" hidden></p>
+          <button type="button" class="btn btn-primary btn-full" id="btnJoinRoom">参加する</button>
+        </div>
+      </section>
+
+      <section class="sh-screen" id="screen-watch-join">
+        <div class="sh-subhead"><button type="button" class="btn btn-ghost btn-sm" id="btnWatchBack">トップへ戻る</button><h2 class="sh-subhead__title">みんなにみせる画面をひらく</h2></div>
+        <div class="sh-form">
+          <p class="sh-form__hint sh-form__hint--lead">画面共有でみんなに見せるための画面です。ルームには入らず、見るだけです。</p>
+          <label class="sh-form__label" for="watchCode">ルームコード（6文字）</label>
+          <input class="sh-form__input sh-form__input--code" id="watchCode" maxlength="6" autocorrect="off" autocapitalize="characters" autocomplete="off" spellcheck="false">
+          <p class="sh-form__error" id="watchError" hidden></p>
+          <button type="button" class="btn btn-primary btn-full" id="btnWatchOpen">画面をひらく</button>
+        </div>
+      </section>
+
+      <div class="sh-roombar" id="roomBar" hidden>
+        <span>ルーム <strong id="roomCodeLabel"></strong></span>
+        <button type="button" class="btn btn-ghost btn-sm" id="btnCopyCode">コードをコピー</button>
+        <button type="button" class="btn btn-ghost btn-sm" id="btnCopyLink">リンクをコピー</button>
+        <button type="button" class="btn btn-ghost btn-sm" id="btnOpenWatch" hidden>みんなにみせる画面</button>
+        <button type="button" class="btn btn-ghost btn-sm" id="btnLeave">退出する</button>
+      </div>
+
+      <section class="sh-screen" id="screen-waiting">
+        <div class="sh-phase"><h2 class="sh-phase__title">みんながそろうのを待っています</h2><p class="sh-phase__sub" id="waitingLead"></p></div>
+        <div class="sh-panel"><h3 class="sh-panel__title" id="waitingCount">参加者</h3><ul class="sh-people" id="waitingPlayers"></ul></div>
+        <div id="hostWaitingTools" hidden>
+          <div class="sh-panel">
+            <label class="sh-check" for="hostPlays">
+              <input type="checkbox" id="hostPlays">
+              <span>自分もプレイヤーとして参加する</span>
+            </label>
+            <p class="sh-form__hint" id="hostPlaysHint">参加すると、ホストの画面にも自分のお題が出ます。そのときは「みんなにみせる画面」を共有してね。</p>
+            <div class="sh-proxyadd">
+              <label class="sh-form__label" for="proxyName">端末なしの参加者を足す（8文字まで）</label>
+              <div class="sh-proxyadd__row">
+                <input class="sh-form__input" id="proxyName" maxlength="8" autocomplete="off">
+                <button type="button" class="btn btn-secondary" id="btnAddProxy">足す</button>
+              </div>
+              <p class="sh-form__hint sh-form__hint--flat">端末なしの参加者がいるときは、ホストが代わりに押します。ホストは進行だけになります。</p>
+              <p class="sh-form__error" id="proxyError" hidden></p>
+            </div>
+          </div>
+          <button type="button" class="btn btn-primary btn-full" id="btnStartGame">はじめる</button>
+          <p class="sh-note" id="startNote"></p>
+        </div>
+      </section>
+
+      <section class="sh-screen" id="screen-pick">
+        <p class="sh-round" id="pickRound"></p>
+        <div class="sh-phase"><h2 class="sh-phase__title" id="pickTitle"></h2><p class="sh-phase__sub" id="pickLead"></p></div>
+        <div id="pickPanel" hidden>
+          <div class="sh-cands" id="pickCands"></div>
+          <div class="sh-alt">
+            <button type="button" class="btn btn-secondary" id="btnReroll"><span class="material-symbols-rounded" aria-hidden="true">refresh</span>ほかの候補</button>
+          </div>
+          <div class="sh-alt"><button type="button" class="sh-quiet-btn" id="btnPass">この番をパスする</button></div>
+        </div>
+      </section>
+
+      <section class="sh-screen" id="screen-hint">
+        <p class="sh-round" id="hintRound"></p>
+        <p class="sh-note sh-note--warn" id="tellerAwayNote" hidden></p>
+        <div class="sh-odai" id="hintTopicBox" hidden><p class="sh-odai__label" id="hintTopicLabel">あなたのお題</p><p class="sh-odai__text" id="hintTopic"></p></div>
+        <div class="sh-signs">
+          <p class="sh-signs__title" id="signsTitle"></p>
+          <ol class="sh-signs__list" id="signsList"></ol>
+        </div>
+        <p class="sh-guide" id="hintGuide" role="status"></p>
+        <div class="sh-board" id="hintBoard"></div>
+        <div class="sh-alt"><button type="button" class="btn btn-secondary" id="btnSkipGuess" hidden>このしるしでは選ばない</button></div>
+        <ul class="sh-picked" id="pickedList" aria-label="選んだ人"></ul>
+
+        <div class="sh-panel" id="proxyPanel" hidden>
+          <h3 class="sh-panel__title">代わりに押す</h3>
+          <div class="sh-proxy__rows" id="proxyRows"></div>
+        </div>
+
+        <div class="sh-panel" id="tellerTools" hidden>
+          <div class="sh-sendrow">
+            <p class="sh-sendrow__preview" id="sendPreview"></p>
+            <button type="button" class="btn btn-primary" id="btnSend">しるしを出す</button>
+          </div>
+          <div class="sh-palette" id="palette"></div>
+          <div class="sh-alt"><button type="button" class="sh-quiet-btn" id="btnShow">答えを見せる</button></div>
+        </div>
+      </section>
+
+      <section class="sh-screen" id="screen-reveal">
+        <p class="sh-round" id="revealRound"></p>
+        <div class="sh-odai"><p class="sh-odai__label">答え</p><p class="sh-odai__text" id="revealTopic"></p></div>
+        <div class="sh-signs">
+          <p class="sh-signs__title">出したしるし</p>
+          <ol class="sh-signs__list" id="revealSigns"></ol>
+        </div>
+        <div class="sh-panel"><h3 class="sh-panel__title">この問の点</h3><ul class="sh-result" id="revealPoints"></ul></div>
+        <div id="hostRevealTools" hidden><button type="button" class="btn btn-primary btn-full" id="btnNext">次の人へ</button></div>
+        <p class="sh-note" id="revealWait" hidden>ホストが進めるまで待ってね。</p>
+      </section>
+
+      <section class="sh-screen" id="screen-lap">
+        <div class="sh-phase"><h2 class="sh-phase__title" id="lapTitle"></h2></div>
+        <div class="sh-panel"><ol class="sh-rank" id="lapRank"></ol></div>
+        <div id="hostLapTools" hidden><button type="button" class="btn btn-primary btn-full" id="btnLapAgain">もう一巡</button></div>
+        <p class="sh-note" id="lapWait" hidden>ホストが決めるまで待ってね。</p>
+      </section>
+
+      <section class="sh-screen" id="screen-end">
+        <div class="sh-phase"><h2 class="sh-phase__title">おしまい</h2><p class="sh-phase__sub">あそんでくれてありがとう。</p></div>
+        <div class="sh-panel"><ol class="sh-rank" id="endRank"></ol></div>
+        <div id="hostEndTools" hidden><button type="button" class="btn btn-primary btn-full" id="btnPlayAgain">もう一回あそぶ</button></div>
+        <p class="sh-note" id="endWait" hidden>ホストが次を決めるまで待ってね。</p>
+      </section>
+
+      <div class="sh-panel" id="orderPanel" hidden><h3 class="sh-panel__title">伝える順番と点</h3><ol class="sh-order" id="orderList"></ol></div>
+
+      <div class="sh-alt sh-alt--host" id="hostGameRow" hidden>
+        <button type="button" class="sh-quiet-btn" id="btnSkipQuestion">この問を終えて次の人へ</button>
+        <button type="button" class="sh-quiet-btn" id="btnFinish">ここでおしまい</button>
+      </div>
+
+      <section class="sh-screen" id="screen-watch-end">
+        <div class="sh-phase"><h2 class="sh-phase__title" id="watchEndTitle">このルームは終わりました</h2><p class="sh-phase__sub">遊んでくれてありがとう。</p></div>
+        <button type="button" class="btn btn-secondary btn-full" id="btnWatchEndTop">トップへ戻る</button>
+      </section>
+    </main>
+  </div>
+  <div class="sh-pop" id="popBanner" aria-live="polite"></div>
+  <div class="sh-overlay" id="hostOffOverlay" hidden><div class="sh-overlay__panel"><h2>ホストの戻りを待っています</h2><p id="hostOffText">しばらく待っても戻らないときは退出してね。</p><button type="button" class="btn btn-secondary" id="btnOverlayLeave">退出する</button></div></div>
+  <script type="module" src="app.js?v=20261019"></script>
+  <script src="../shared/js/stats.js?v=1" defer></script>
+  <script src="../shared/js/howto.js"></script>
+  <script>
+    RoomkHowto.init({
+      title: 'あそびかた',
+      lead: '伝える人が、アイコン（しるし）を1つずつ出してお題を伝える遊び。ほかの人は、12個の候補の中からお題を当てるよ。少ないしるしで当てるほど、点が高いよ。',
+      sections: [
+        { heading: 'はじめかた', items: [
+          'ホストが「ルームを作る」で名前を入れる。ルームコードは「コードをコピー」、参加用のリンクは「リンクをコピー」でチャットに送れる',
+          '参加する人は「ルームに参加する」で名前、ルームコード（6文字）の順に入れ、「参加する」を押す。リンクからひらいたときは、ルームコードは入っているので名前だけ入れる',
+          'ホストが「はじめる」を押す（遊ぶ人は2人から）',
+        ] },
+        { heading: '伝える', items: [
+          '伝える人は順番に交代する。3つの候補からお題を1つ選ぶ。「ほかの候補」で選びなおせるよ',
+          'アイコンを1つ選んで「しるしを出す」を押すと、みんなの画面に出る。ことばでの説明はしないでね',
+          'しるしは1問に6つまで。出したしるしは取り消せないよ',
+          'どうしても伝わらないときは「答えを見せる」',
+        ] },
+        { heading: '当てる', items: [
+          'しるしが1つ出るたびに、候補から1つ選べる（1回だけ）。自信がないときは「このしるしでは選ばない」',
+          'みんなが選んだら答え合わせ。はずれた候補は消えていくよ',
+          '候補には A〜L の記号がついているよ',
+        ] },
+        { heading: '点のつけかた', items: [
+          '1つ目のしるしで当てたら3点、2つ目で2点、3つ目から6つ目までは1点',
+          '当てた人と、伝えた人の両方に点が入る（伝えた人は、最初に当たったときの点）',
+          'はずれると1点減る。「このしるしでは選ばない」なら減らないよ',
+          'みんなが1回ずつ伝えたら順位が出る。「もう一巡」で続けて遊べるよ',
+        ] },
+      ],
+    });
+  </script>
+</body>
+</html>

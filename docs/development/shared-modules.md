@@ -133,7 +133,7 @@ Realtime Database を使う単一ファイルアプリは、Firebase compat SDK 
 導入済み: ルーム型の全30本（2026-10-12。`scripts/lint.sh` の `RTDB_HTML_FILES` の29本と、Firestore の kotoba-tantei）。「1回」の単位と数える場所は、各アプリの `AGENTS.md`「利用回数」。
 
 - 「1回」が1ゲームのアプリ（始めてから最後の結果まで。もう一度あそぶ型）: （career-sugoroku・esadori・jinro・kaburazu-hint・kagi-awase・kotoba-pair・kotoba-tantei・name-change・oekaki-dengon・oshitsuke-zukan・pita-hame・quiz・stamp-ate・suki-bingo・tatoe-narabe・word-wolf）
-- 「1回」が1ラウンド（1問・1つのお題・1場面・1周）のアプリ（ホストが好きなところで終える型）: blackjack・do-mannaka・ikutsu-ieru・kakure-number・kimochi-ate・koedake-theater・kossori-word・magire-eshi・minna-ranking・moji-soroe・pittari-meter・tatoe-gp・toomawashi・uso-jisho
+- 「1回」が1ラウンド（1問・1つのお題・1場面・1周）のアプリ（ホストが好きなところで終える型）: blackjack・do-mannaka・ikutsu-ieru・kakure-number・kimochi-ate・koedake-theater・kossori-word・magire-eshi・minna-ranking・moji-soroe・pittari-meter・shirushi-hint・tatoe-gp・toomawashi・uso-jisho
 - name-change は同じルームでの「もう一度」がないので `again` を数えない
 - 以前からある項目（`round`・`pack-*`・`theme-*`・`room-start`・`start-room`・`start-local`・`solo-start`）は、過去の数字と続けて見るために残している。新しいアプリは共通の項目名だけでよい
 
