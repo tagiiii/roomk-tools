@@ -93,7 +93,6 @@ button:disabled { cursor: default; }
 .cs-panel__notes { margin: 14px 0 22px 1.3em; color: var(--color-muted); font-size: 15px; }
 .cs-panel__notes li + li { margin-top: 4px; }
 .cs-panel__actions { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-top: 24px; }
-.cs-panel__foot { margin-top: 12px; text-align: center; font-size: 13px; color: var(--color-muted); }
 
 .cs-field { border: 0; margin-top: 18px; }
 .cs-field__label { font-weight: 700; color: var(--color-primary); margin-bottom: 8px; }

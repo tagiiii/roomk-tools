@@ -78,15 +78,6 @@
   line-height: 1.8;
 }
 
-.stc-muted {
-  color: var(--color-muted);
-  font-size: var(--font-size-sm);
-}
-
-.stc-muted--spaced {
-  margin-top: var(--space-md);
-}
-
 .stc-note-list {
   list-style: none;
   display: grid;

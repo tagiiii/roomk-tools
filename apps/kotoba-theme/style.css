@@ -78,13 +78,6 @@
   color: var(--color-primary);
 }
 
-.kw-panel__foot {
-  margin-top: 22px;
-  font-size: 13px;
-  color: var(--color-muted);
-  text-align: center;
-}
-
 /* ── TOP：ゲームからえらぶ（主の入口） ── */
 .kw-entry__lead {
   margin-top: 8px;

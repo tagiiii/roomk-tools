@@ -238,7 +238,6 @@ function renderStart() {
       <div class="stc-actions">
         <button class="btn btn-primary btn-lg" type="button" data-action="start">はじめる</button>
       </div>
-      <p class="stc-muted stc-muted--spaced">このアプリは、こたえた内容をどこにも保存しません。ページを閉じると消えます</p>
     </div>
   `;
 }

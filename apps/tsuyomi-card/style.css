@@ -96,14 +96,6 @@
 .ty-panel__actions {
   display: flex;
   justify-content: center;
-  margin-bottom: 18px;
-}
-
-.ty-muted {
-  font-size: var(--font-size-sm);
-  color: var(--color-muted);
-  text-align: center;
-  line-height: 1.6;
 }
 
 /* ── カード画面（1枚ずつ） ── */
