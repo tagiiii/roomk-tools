@@ -15,6 +15,7 @@
   const NAME_MAX = 10;
   const CANDS = 3;           // 伝える人が選ぶお題の候補の数
   const BOARD = 12;          // 当てる人に並べる候補の数（お題をふくむ）
+  const SAME_KIND = 6;       // そのうち、お題と同じなかまを入れる数（お題をふくむ。なかまが少なければあるだけ）
   const MAX_SIGNS = 6;       // 1問で出せるしるしの数
   // しるし何個目で当てたかの点（当てた人と、伝えた人の両方に入る）
   const POINTS = [3, 2, 1, 1, 1, 1];
@@ -29,6 +30,8 @@
   const JOIN_WAIT_MS = 1500;
   const NUMS = ['①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨', '⑩'];
 
+  // お題の番号 → なかま
+  const KIND_OF = DATA.topics.map((w) => Object.keys(DATA.kinds).find((k) => DATA.kinds[k].includes(w)) || null);
   const ICONS = {};
   DATA.groups.forEach((g) => g.icons.forEach((ic) => { ICONS[ic.id] = ic; }));
 
@@ -136,7 +139,7 @@
       case 'choose':
         if (!teller || R.phase !== 'pick' || !q.cands.includes(m.t)) break;
         q.topic = m.t;
-        q.board = shuffle([m.t].concat(shuffle(DATA.topics.map((_, i) => i).filter((i) => i !== m.t)).slice(0, BOARD - 1)));
+        q.board = boardFor(m.t);
         R.used.push(m.t);
         R.phase = 'hint';
         break;
@@ -213,6 +216,14 @@
     if (!left.length || n >= MAX_SIGNS) R.phase = 'reveal';
   }
 
+  // 当てる人に並べる候補。お題と同じなかまを SAME_KIND 個までそろえ、残りはほかのなかまから選ぶ
+  // （1つ目のしるしでなかまを出しても、まだ見分けがつかないように）
+  function boardFor(t) {
+    const others = DATA.topics.map((_, i) => i).filter((i) => i !== t);
+    const same = shuffle(others.filter((i) => KIND_OF[i] && KIND_OF[i] === KIND_OF[t])).slice(0, SAME_KIND - 1);
+    const rest = shuffle(others.filter((i) => !same.includes(i) && KIND_OF[i] !== KIND_OF[t])).slice(0, BOARD - 1 - same.length);
+    return shuffle([t].concat(same, rest));
+  }
   // お題の候補の3つ。まだ出していないお題を先に出す。「ほかの候補」では、いま出ている候補を避ける
   function candidatesFor(R, avoid) {
     const all = DATA.topics.map((_, i) => i).filter((i) => !(avoid || []).includes(i));
