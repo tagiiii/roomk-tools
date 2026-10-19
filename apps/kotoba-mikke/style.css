@@ -68,7 +68,7 @@
   gap: 6px;
 }
 .kmk-limit__option {
-  min-width: 64px;
+  min-width: 60px;
   min-height: 44px;
   padding: 6px 14px;
   border: 2px solid var(--color-border);
@@ -131,16 +131,28 @@
   word-break: break-word;
 }
 
-/* ── 残り時間（制限時間を選んだときだけ出る） ── */
+/* ── 残り時間（制限時間を選んだときだけ出る）。数字を大きく、その下に帯とスタート ── */
 .kmk-timer {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: var(--space-sm);
+  gap: 10px;
   max-width: 520px;
-  margin: 14px auto 0;
+  margin: 16px auto 0;
 }
+.kmk-timer__num {
+  margin: 0;
+  font-size: clamp(40px, 10vw, 56px);
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--color-primary);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+.kmk-timer.is-low .kmk-timer__num { color: var(--color-warning); }
+.kmk-timer.is-done .kmk-timer__num { font-size: clamp(28px, 7vw, 36px); }
 .kmk-timer__track {
-  flex: 1;
+  align-self: stretch;
   height: 10px;
   overflow: hidden;
   border-radius: var(--radius-full);
@@ -155,14 +167,8 @@
   transition: width 0.25s linear;
 }
 .kmk-timer.is-low .kmk-timer__fill { background: var(--color-warning); }
-.kmk-timer__left {
-  flex-shrink: 0;
-  min-width: 5.5em;
-  text-align: right;
-  font-size: var(--font-size-sub);
-  font-weight: 700;
-  color: var(--color-primary);
-  font-variant-numeric: tabular-nums;
+.kmk-timer__btn {
+  min-width: 160px;
 }
 
 /* ── コピー導線 ── */

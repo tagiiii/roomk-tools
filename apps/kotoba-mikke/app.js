@@ -55,7 +55,7 @@ const THEMES = [
 
 // ── 制限時間 ─────────────────────────────────────
 // 選べる制限時間（秒。0 はなし）。はじめは「なし」で、急かさない使い方を標準にする
-const LIMITS = [0, 60, 120, 180];
+const LIMITS = [0, 60, 120, 180, 300];
 const TIMER_TICK_MS = 250;
 const TIMER_LOW_MS = 10000; // 残り10秒から帯の色を変える
 
@@ -65,7 +65,7 @@ const state = {
   initial: null,   // 現在の頭文字
   theme: null,     // 現在のお題（テーマ）
   limitSec: 0,     // 制限時間（秒。0 はなし）
-  timer: null,     // 動いている残り時間の setInterval
+  timer: null,     // 動いている残り時間の setInterval（止まっているときは null）
 };
 
 // ── DOM ─────────────────────────────────────
@@ -91,10 +91,11 @@ function selectLimit(sec) {
 }
 
 // ── 残り時間 ─────────────────────────────────────
+// お題を出しただけでは動かさず、「スタート」を押してから減らす（急に始まらないように）。
 // 時間になったら「時間です」と出して止まるだけ。音は鳴らさず、お題も自動では変えない
 function formatRest(ms) {
   const sec = Math.ceil(ms / 1000);
-  return `あと${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`;
+  return `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`;
 }
 
 function stopTimer() {
@@ -102,25 +103,43 @@ function stopTimer() {
   state.timer = null;
 }
 
-function startTimer() {
+function drawTimer(rest) {
+  const root = $('odaiTimer');
+  $('odaiTimerFill').style.width = `${(rest / (state.limitSec * 1000)) * 100}%`;
+  $('odaiTimerLeft').textContent = rest > 0 ? formatRest(rest) : '時間です';
+  root.classList.toggle('is-low', rest > 0 && rest <= TIMER_LOW_MS);
+  root.classList.toggle('is-done', rest <= 0);
+}
+
+// 時間をもとにもどして「スタート」を待つ（お題を出したとき・お題をかえたとき・「リセット」）
+function resetTimer() {
   stopTimer();
   const root = $('odaiTimer');
   root.hidden = state.limitSec === 0;
   if (state.limitSec === 0) return;
-
-  const limitMs = state.limitSec * 1000;
-  const endsAt = Date.now() + limitMs;
   root.setAttribute('aria-label', `制限時間 ${state.limitSec / 60}分`);
+  drawTimer(state.limitSec * 1000);
+  $('btnTimer').textContent = 'スタート';
+}
+
+function startTimer() {
+  stopTimer();
+  const endsAt = Date.now() + state.limitSec * 1000;
   const tick = () => {
     const rest = Math.max(0, endsAt - Date.now());
-    $('odaiTimerFill').style.width = `${(rest / limitMs) * 100}%`;
-    $('odaiTimerLeft').textContent = rest > 0 ? formatRest(rest) : '時間です';
-    root.classList.toggle('is-low', rest > 0 && rest <= TIMER_LOW_MS);
-    root.classList.toggle('is-done', rest <= 0);
+    drawTimer(rest);
     if (rest <= 0) stopTimer();
   };
+  $('btnTimer').textContent = 'リセット';
   tick();
   state.timer = setInterval(tick, TIMER_TICK_MS);
+}
+
+// 止まっていればスタート、動いている・時間になったあとはリセット
+function toggleTimer() {
+  const idle = !state.timer && !$('odaiTimer').classList.contains('is-done');
+  if (idle) startTimer();
+  else resetTimer();
 }
 
 // ── お題を引く ─────────────────────────────────────
@@ -140,7 +159,7 @@ function rollOdai(mode = 'both') {
     state.theme = pickDifferent(THEMES, state.theme);
   }
   renderOdai();
-  startTimer(); // お題が変わったら、制限時間も最初から計る
+  resetTimer(); // お題が変わったら、時間はもとにもどして「スタート」を待つ
 }
 
 function renderOdai() {
@@ -164,6 +183,7 @@ function startGame() {
 
 // ── イベント ─────────────────────────────────────
 elLimitOptions.forEach((b) => b.addEventListener('click', () => selectLimit(Number(b.dataset.sec))));
+$('btnTimer').addEventListener('click', toggleTimer);
 $('btnStart').addEventListener('click', startGame);
 $('btnReroll').addEventListener('click', () => rollOdai('both'));
 $('btnRerollInitial').addEventListener('click', () => rollOdai('initial'));
