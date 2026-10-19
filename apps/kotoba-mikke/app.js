@@ -53,11 +53,19 @@ const THEMES = [
   'へんなもの',
 ];
 
+// ── 制限時間 ─────────────────────────────────────
+// 選べる制限時間（秒。0 はなし）。はじめは「なし」で、急かさない使い方を標準にする
+const LIMITS = [0, 60, 120, 180];
+const TIMER_TICK_MS = 250;
+const TIMER_LOW_MS = 10000; // 残り10秒から帯の色を変える
+
 // ── 状態 ─────────────────────────────────────
-// 点数・勝敗・累計は持たない。保持するのは今のお題だけ（保存もしない）。
+// 点数・勝敗・累計は持たない。保持するのは今のお題と制限時間だけ（保存もしない）。
 const state = {
   initial: null,   // 現在の頭文字
   theme: null,     // 現在のお題（テーマ）
+  limitSec: 0,     // 制限時間（秒。0 はなし）
+  timer: null,     // 動いている残り時間の setInterval
 };
 
 // ── DOM ─────────────────────────────────────
@@ -69,8 +77,50 @@ const elScreens = {
 
 // ── 画面切替 ─────────────────────────────────────
 function showScreen(name) {
+  if (name !== 'odai') stopTimer();
   Object.values(elScreens).forEach((s) => s.classList.remove('active'));
   elScreens[name].classList.add('active');
+}
+
+// ── 制限時間の選択 ─────────────────────────────────────
+const elLimitOptions = document.querySelectorAll('.kmk-limit__option');
+
+function selectLimit(sec) {
+  state.limitSec = LIMITS.includes(sec) ? sec : 0;
+  elLimitOptions.forEach((b) => b.setAttribute('aria-pressed', String(Number(b.dataset.sec) === state.limitSec)));
+}
+
+// ── 残り時間 ─────────────────────────────────────
+// 時間になったら「時間です」と出して止まるだけ。音は鳴らさず、お題も自動では変えない
+function formatRest(ms) {
+  const sec = Math.ceil(ms / 1000);
+  return `あと${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`;
+}
+
+function stopTimer() {
+  clearInterval(state.timer);
+  state.timer = null;
+}
+
+function startTimer() {
+  stopTimer();
+  const root = $('odaiTimer');
+  root.hidden = state.limitSec === 0;
+  if (state.limitSec === 0) return;
+
+  const limitMs = state.limitSec * 1000;
+  const endsAt = Date.now() + limitMs;
+  root.setAttribute('aria-label', `制限時間 ${state.limitSec / 60}分`);
+  const tick = () => {
+    const rest = Math.max(0, endsAt - Date.now());
+    $('odaiTimerFill').style.width = `${(rest / limitMs) * 100}%`;
+    $('odaiTimerLeft').textContent = rest > 0 ? formatRest(rest) : '時間です';
+    root.classList.toggle('is-low', rest > 0 && rest <= TIMER_LOW_MS);
+    root.classList.toggle('is-done', rest <= 0);
+    if (rest <= 0) stopTimer();
+  };
+  tick();
+  state.timer = setInterval(tick, TIMER_TICK_MS);
 }
 
 // ── お題を引く ─────────────────────────────────────
@@ -90,6 +140,7 @@ function rollOdai(mode = 'both') {
     state.theme = pickDifferent(THEMES, state.theme);
   }
   renderOdai();
+  startTimer(); // お題が変わったら、制限時間も最初から計る
 }
 
 function renderOdai() {
@@ -112,6 +163,7 @@ function startGame() {
 }
 
 // ── イベント ─────────────────────────────────────
+elLimitOptions.forEach((b) => b.addEventListener('click', () => selectLimit(Number(b.dataset.sec))));
 $('btnStart').addEventListener('click', startGame);
 $('btnReroll').addEventListener('click', () => rollOdai('both'));
 $('btnRerollInitial').addEventListener('click', () => rollOdai('initial'));

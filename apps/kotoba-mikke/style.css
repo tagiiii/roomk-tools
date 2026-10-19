@@ -49,6 +49,43 @@
   min-width: 220px;
 }
 
+/* ── 制限時間の選択（TOP） ── */
+.kmk-limit {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+.kmk-limit__label {
+  font-size: var(--font-size-sub);
+  color: var(--color-muted);
+}
+.kmk-limit__options {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+}
+.kmk-limit__option {
+  min-width: 64px;
+  min-height: 44px;
+  padding: 6px 14px;
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-full);
+  background: var(--color-surface);
+  color: var(--color-muted);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+.kmk-limit__option:hover { border-color: var(--color-accent); }
+.kmk-limit__option[aria-pressed='true'] {
+  border-color: var(--color-accent);
+  background: #DDF0F3;
+  color: var(--color-primary);
+}
+
 /* ── お題画面 ── */
 .kmk-odai__label {
   text-align: center;
@@ -94,6 +131,40 @@
   word-break: break-word;
 }
 
+/* ── 残り時間（制限時間を選んだときだけ出る） ── */
+.kmk-timer {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  max-width: 520px;
+  margin: 14px auto 0;
+}
+.kmk-timer__track {
+  flex: 1;
+  height: 10px;
+  overflow: hidden;
+  border-radius: var(--radius-full);
+  background: #E3E9EC;
+}
+.kmk-timer__fill {
+  display: block;
+  height: 100%;
+  width: 100%;
+  border-radius: var(--radius-full);
+  background: var(--color-accent);
+  transition: width 0.25s linear;
+}
+.kmk-timer.is-low .kmk-timer__fill { background: var(--color-warning); }
+.kmk-timer__left {
+  flex-shrink: 0;
+  min-width: 5.5em;
+  text-align: right;
+  font-size: var(--font-size-sub);
+  font-weight: 700;
+  color: var(--color-primary);
+  font-variant-numeric: tabular-nums;
+}
+
 /* ── コピー導線 ── */
 .kmk-copy {
   display: flex;
@@ -130,6 +201,10 @@
   display: flex;
   justify-content: center;
   margin-top: 24px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kmk-timer__fill { transition: none; }
 }
 
 /* ── モバイル ── */
