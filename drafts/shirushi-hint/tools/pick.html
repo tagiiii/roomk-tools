@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>しるしでヒント アイコンとお題えらび | room-K</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet" />
+  <link rel="stylesheet" href="../../../apps/shared/css/design-system.css" />
+  <link rel="stylesheet" href="pick.css?v=20261019a" />
+</head>
+<body>
+  <header class="pk-bar">
+    <h1 class="pk-bar__title">しるしでヒント アイコンとお題えらび</h1>
+    <p id="pk-sum" class="pk-bar__sum"></p>
+  </header>
+
+  <main class="pk-main">
+    <section class="card pk-intro">
+      <p>使うものにチェックを付けてください。名前は、押すと書きかえられます。チェックや書きかえは、このブラウザに残ります。</p>
+      <ul class="pk-legend">
+        <li><span class="pk-flag">いまの試作</span> 今のゲームに入っている仮のもの（はじめはチェック済み）</li>
+        <li><span class="pk-flag pk-flag--new">追加の候補</span> 新しく足せる候補（はじめはチェックなし）</li>
+      </ul>
+      <p>選び終えたら、いちばん下の「選んだ結果をコピー」を押して、チャットに貼ってください。</p>
+    </section>
+
+    <section class="card">
+      <h2 class="pk-h2">アイコン <span id="pk-icon-count" class="pk-count"></span></h2>
+      <p class="pk-note">目安は40個くらい。ひと目で意味が分かるか、ほかのアイコンとまぎれないかを見てください。</p>
+      <div id="pk-icons"></div>
+    </section>
+
+    <section class="card">
+      <h2 class="pk-h2">お題 <span id="pk-topic-count" class="pk-count"></span></h2>
+      <p class="pk-note">当てる人には、お題と同じなかまを6個まで（お題をふくむ）＋ほかのなかまで、12個の候補を並べます。どのなかまにも6個以上あると、そろえやすくなります。</p>
+      <p class="pk-note">「2通り」は、選んだアイコンで2通り以上の伝え方ができるか、確かめたら付ける印です（ゲームには入りません）。</p>
+      <div id="pk-topics"></div>
+      <form id="pk-add" class="pk-add">
+        <label class="form-label" for="pk-add-word">お題を足す</label>
+        <div class="pk-add__row">
+          <input id="pk-add-word" class="form-input" type="text" maxlength="12" autocomplete="off" />
+          <select id="pk-add-kind" class="form-select" aria-label="なかま"></select>
+          <button type="submit" class="btn btn-secondary">足す</button>
+        </div>
+        <p id="pk-add-msg" class="pk-add__msg" role="status"></p>
+      </form>
+    </section>
+
+    <section class="card pk-out">
+      <h2 class="pk-h2">選んだ結果</h2>
+      <p id="pk-out-sum" class="pk-note"></p>
+      <div class="pk-out__row">
+        <button id="pk-copy" type="button" class="btn btn-primary">選んだ結果をコピー</button>
+        <button id="pk-reset" type="button" class="btn btn-ghost">はじめにもどす</button>
+      </div>
+    </section>
+  </main>
+
+  <script src="../data.js?v=20261019f"></script>
+  <script src="pick.js?v=20261019b"></script>
+</body>
+</html>

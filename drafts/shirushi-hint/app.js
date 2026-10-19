@@ -28,6 +28,7 @@
   const AWAY_MS = 13000;
   const HOST_SILENT_MS = 15000;
   const JOIN_WAIT_MS = 1500;
+  const KEYS = 'ABCDEFGHIJKL'; // 候補の記号（声やチャットで「C」のように言えるように）
   const NUMS = ['①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨', '⑩'];
 
   // お題の番号 → なかま
@@ -85,7 +86,14 @@
     else if (S.role === 'guest') wire(type, body);
   }
   // 問の中の操作には、いまの問の番号をつける（古い操作で次の問が変わらないように）
-  const qAct = (type, body) => act(type, Object.assign({ q: S.view && S.view.q ? S.view.q.uid : null }, body));
+  // メンターが端末のない子の代わりに伝えるときは、その子として送る（as）
+  const TELLER_ACTS = ['choose', 'reroll', 'pass', 'sign', 'show'];
+  const qAct = (type, body) => {
+    const q = S.view && S.view.q;
+    const extra = { q: q ? q.uid : null };
+    if (isHost() && q && TELLER_ACTS.includes(type) && isProxyId(q.teller)) extra.as = q.teller;
+    act(type, Object.assign(extra, body));
+  };
 
   // ── ホスト ──
   function publish() {
@@ -104,6 +112,12 @@
     const R = S.room;
     if (!R) return;
     if (m.type === 'peek') { wire('state', { room: R }); return; } // みんなにみせる画面
+    // メンターが端末のない子の代わりにした操作は、その子の操作として受ける
+    if (m.as) {
+      const px = R.players.find((x) => x.id === m.as && x.proxy);
+      if (m.from !== R.hostId || !px) return;
+      m = Object.assign({}, m, { from: m.as });
+    }
     const now = Date.now();
     let p = R.players.find((x) => x.id === m.from);
     if (m.type === 'hello') {
@@ -251,7 +265,25 @@
     setHostPlays(on) {
       const R = S.room;
       if (R.phase !== 'lobby') return;
-      R.hostPlays = !!on;
+      R.hostPlays = !!on && !R.players.some((p) => p.proxy);
+      publish();
+    },
+    // 端末のない子。メンターがその子のお題や選んだ候補を知るので、いる間はメンターは進行だけ
+    addProxy(raw) {
+      const R = S.room;
+      if (R.phase !== 'lobby') return 'はじめる前だけ足せるよ';
+      const name = clean(raw, NAME_MAX);
+      if (!name) return '名前を入れてね';
+      if (R.players.some((p) => p.name === name)) return '「' + name + '」はもういるよ';
+      R.players.push({ id: 'px-' + randomCode(8), name, proxy: true, seen: Date.now() });
+      R.hostPlays = false;
+      publish();
+      return '';
+    },
+    removeProxy(id) {
+      const R = S.room;
+      if (R.phase !== 'lobby') return;
+      R.players = R.players.filter((p) => !(p.id === id && p.proxy));
       publish();
     },
     start() {
@@ -307,7 +339,7 @@
     const now = Date.now();
     let changed = false;
     R.players.forEach((p) => {
-      if (p.id === R.hostId) return;
+      if (p.id === R.hostId || p.proxy) return; // 端末のない子は切れない
       if (!p.away && now - (p.seen || 0) > AWAY_MS) { p.away = true; changed = true; }
     });
     if (changed) { maybeJudge(R); publish(); } else wire('state', { room: R }); // ホストがいることを知らせる
@@ -437,6 +469,13 @@
   function bindButtons() {
     $('chk-host-plays').addEventListener('change', (e) => host.setHostPlays(e.target.checked));
     $('btn-start').addEventListener('click', () => host.start());
+    $('proxy-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      if (e.isComposing) return;
+      const err = host.addProxy($('proxy-name').value);
+      $('proxy-msg').textContent = err;
+      if (!err) $('proxy-name').value = '';
+    });
     $('btn-copy').addEventListener('click', () => copyText(location.origin + location.pathname + '?room=' + S.code, $('btn-copy'), 'リンクをコピー'));
     $('btn-watch').addEventListener('click', () => { window.open(location.origin + location.pathname + '?watch=' + S.code, '_blank'); });
     $('btn-reroll').addEventListener('click', () => qAct('reroll'));
@@ -476,7 +515,10 @@
   const isHost = () => S.role === 'host';
   const playerOf = (id) => S.view.players.find((x) => x.id === id);
   const playerName = (id) => { const p = playerOf(id); return p ? p.name : '（はなれた人）'; };
-  const isTeller = () => !!(S.view.q && S.view.q.teller === S.me && S.role !== 'watch');
+  const isProxyId = (id) => { const p = S.view && S.view.players.find((x) => x.id === id); return !!(p && p.proxy); };
+  // 伝える操作をするのはこの画面か（メンターは、端末のない子の番に代わりに操作する）
+  const isTeller = () => !!(S.view.q && S.role !== 'watch' && (S.view.q.teller === S.me || (isHost() && isProxyId(S.view.q.teller))));
+  const forProxy = () => !!(S.view.q && isHost() && isProxyId(S.view.q.teller));
   const amGuesser = () => S.role === 'guest' || (isHost() && S.view.hostPlays);
 
   function render() {
@@ -506,6 +548,13 @@
       const li = el('li', 'sh-player' + (p.away ? ' is-away' : ''));
       li.append(msIcon(p.id === V.hostId ? 'star' : 'person'), el('span', '', p.name));
       if (p.id === V.hostId) li.append(el('span', 'sh-tag', V.hostPlays ? 'ホスト' : 'ホスト（進行だけ）'));
+      if (p.proxy && isHost()) {
+        li.append(el('span', 'sh-tag sh-tag--muted', '端末なし'));
+        const del = el('button', 'btn btn-ghost btn-sm sh-player__del', '外す');
+        del.type = 'button';
+        del.addEventListener('click', () => host.removeProxy(p.id));
+        li.append(del);
+      }
       if (p.away) li.append(el('span', 'sh-tag sh-tag--muted', '通信が切れたみたい'));
       return li;
     }));
@@ -513,6 +562,9 @@
     $('lobby-wait').hidden = isHost() || S.role === 'watch';
     if (isHost()) {
       $('chk-host-plays').checked = V.hostPlays;
+      const hasProxy = V.players.some((p) => p.proxy);
+      $('chk-host-plays').disabled = hasProxy;
+      $('host-plays-note').hidden = !hasProxy;
       const n = V.players.filter((p) => !p.away && (p.id !== V.hostId || V.hostPlays)).length;
       $('btn-start').disabled = n < 2;
       $('lobby-start-note').textContent = n < 2 ? '遊ぶ人が2人以上で始められるよ' : '遊ぶ人 ' + n + '人';
@@ -537,6 +589,8 @@
     $('pick-teller').hidden = !me;
     $('pick-other').hidden = me;
     if (me) {
+      $('pick-title').textContent = forProxy() ? playerName(V.q.teller) + 'さんが伝える番（代わりに選ぶ）' : 'あなたが伝える番だよ';
+      $('pick-lead').textContent = forProxy() ? 'お題を1つ選んでね。' : 'お題を1つ選んでね。ほかの人には見えないよ。';
       $('pick-cands').replaceChildren(...V.q.cands.map((t) => {
         const b = el('button', 'sh-cand', DATA.topics[t]);
         b.type = 'button';
@@ -563,7 +617,10 @@
       : playerName(q.teller) + 'さんの通信が切れたみたい。戻ってくるのを待っているよ';
 
     $('hint-topic').hidden = !me;
-    if (me) $('hint-topic-text').textContent = DATA.topics[q.topic];
+    if (me) {
+      $('hint-topic-label').textContent = forProxy() ? playerName(q.teller) + 'さんのお題' : 'あなたのお題';
+      $('hint-topic-text').textContent = DATA.topics[q.topic];
+    }
     $('hint-signs-title').textContent = playerName(q.teller) + 'さんのしるし（' + step + ' / ' + MAX_SIGNS + '）';
     renderSigns($('hint-signs'), q.signs, me ? S.sel : null);
 
@@ -600,7 +657,7 @@
         tile.type = 'button';
         tile.addEventListener('click', () => qAct('guess', { step, b }));
       }
-      tile.append(el('span', 'sh-tile__text', DATA.topics[t]));
+      tile.append(el('span', 'sh-tile__key', KEYS[b]), el('span', 'sh-tile__text', DATA.topics[t]));
       if (crossed) tile.append(msIcon('close', 'sh-tile__mark'));
       else if (me && b === answer) tile.append(el('span', 'sh-tile__tag', 'お題'));
       else if (b === myPick) tile.append(el('span', 'sh-tile__tag', '選んだ'));
@@ -623,8 +680,45 @@
       return li;
     }));
 
+    renderProxyPanel(V, q, open, step);
     $('hint-tools').hidden = !me;
     if (me) renderPalette(q);
+  }
+
+  // メンターが、端末のない子の代わりに候補を選ぶ欄
+  function renderProxyPanel(V, q, open, step) {
+    const px = isHost() ? V.players.filter((p) => p.proxy && p.id !== q.teller) : [];
+    $('proxy-panel').hidden = !px.length || !step;
+    if (!px.length) return;
+    $('proxy-rows').replaceChildren(...px.map((p) => {
+      const row = el('div', 'sh-proxy__row');
+      const head = el('p', 'sh-proxy__name');
+      head.append(el('strong', '', p.name));
+      let state = '';
+      const can = open && !q.solved[p.id] && !(p.id in q.picks);
+      if (q.solved[p.id]) state = NUMS[q.solved[p.id] - 1] + 'つ目で当てた';
+      else if (p.id in q.picks) state = q.picks[p.id] < 0 ? '選ばない' : '選んだ（' + KEYS[q.picks[p.id]] + '）';
+      else if (!open) state = '次のしるしを待っている';
+      if (state) head.append(el('span', 'sh-proxy__state', state));
+      row.append(head);
+      if (can) {
+        const keys = el('div', 'sh-proxy__keys');
+        q.board.forEach((t, b) => {
+          const k = el('button', 'sh-proxy__key', KEYS[b]);
+          k.type = 'button';
+          k.disabled = q.crossed.includes(b);
+          k.setAttribute('aria-label', p.name + 'さんの代わりに ' + KEYS[b] + '（' + DATA.topics[t] + '）を選ぶ');
+          k.addEventListener('click', () => qAct('guess', { step, b, as: p.id }));
+          keys.append(k);
+        });
+        const none = el('button', 'btn btn-ghost btn-sm', '選ばない');
+        none.type = 'button';
+        none.addEventListener('click', () => qAct('guess', { step, b: -1, as: p.id }));
+        keys.append(none);
+        row.append(keys);
+      }
+      return row;
+    }));
   }
 
   function renderSigns(root, signs, preview) {

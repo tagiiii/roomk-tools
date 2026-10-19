@@ -1,0 +1,54 @@
+/* しるしでヒント：アイコンとお題えらび 接頭辞 pk- */
+
+body { background: var(--color-bg); }
+.pk-bar { position: sticky; top: 0; z-index: 5; display: flex; flex-wrap: wrap; gap: 4px 16px; align-items: center; padding: 12px 20px; background: var(--color-primary); color: #fff; }
+.pk-bar__title { margin: 0; margin-right: auto; font-size: 18px; }
+.pk-bar__sum { margin: 0; font-size: 14px; font-weight: 700; }
+
+.pk-main { max-width: 1040px; margin: 0 auto; padding: 20px 16px 48px; display: grid; gap: 16px; }
+.pk-intro p { margin: 0 0 8px; line-height: 1.7; }
+.pk-legend { margin: 0 0 8px; padding: 0; list-style: none; display: grid; gap: 6px; }
+.pk-h2 { margin: 0 0 8px; font-size: 20px; color: var(--color-primary); }
+.pk-h3 { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 16px 0 8px; font-size: 16px; color: var(--color-primary); }
+.pk-count { font-size: 14px; color: var(--color-accent); margin-left: 8px; }
+.pk-note { margin: 0 0 8px; color: var(--color-muted); font-size: 14px; line-height: 1.6; }
+.pk-warn { font-size: 12px; font-weight: 700; color: var(--color-warning); background: #FFF4E5; padding: 2px 8px; border-radius: 999px; }
+
+.pk-flag { display: inline-block; font-size: 11px; font-weight: 700; padding: 1px 8px; border-radius: 999px; background: var(--color-border); color: var(--color-text); white-space: nowrap; }
+.pk-flag--new { background: var(--color-accent); color: #fff; }
+
+/* アイコン */
+.pk-igrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; }
+.pk-icard { position: relative; display: grid; justify-items: center; gap: 4px; padding: 10px 8px 8px; border-radius: 12px; border: 2px solid var(--color-border); background: var(--color-surface); opacity: 0.6; }
+.pk-icard.is-on { opacity: 1; border-color: var(--color-accent); background: #F4FAFB; }
+.pk-icard input[type="checkbox"] { position: absolute; top: 8px; left: 8px; width: 20px; height: 20px; accent-color: var(--color-accent); }
+.pk-icard__face { display: flex; align-items: center; justify-content: center; width: 52px; height: 52px; cursor: pointer; }
+.pk-glyph { font-size: 40px; color: var(--color-primary); }
+.pk-swatch { width: 36px; height: 36px; border-radius: 50%; border: 2px solid #8A8F98; }
+.pk-icard__name { width: 100%; text-align: center; font-family: inherit; font-size: 15px; font-weight: 700; border: 1px solid transparent; border-radius: 6px; padding: 4px; background: transparent; color: var(--color-text); }
+.pk-icard__name:hover, .pk-icard__name:focus { border-color: var(--color-border); background: #fff; }
+.pk-icard__code { font-size: 11px; color: var(--color-muted); }
+
+/* お題 */
+.pk-tlist { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.pk-trow { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 6px 10px; border-radius: 10px; border: 1px solid var(--color-border); background: var(--color-surface); opacity: 0.65; }
+.pk-trow.is-on { opacity: 1; border-color: var(--color-accent); }
+.pk-trow > input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--color-accent); }
+.pk-trow__word { flex: 1 1 8em; min-width: 6em; font-family: inherit; font-size: 16px; font-weight: 700; border: 1px solid transparent; border-radius: 6px; padding: 4px 6px; background: transparent; color: var(--color-text); }
+.pk-trow__word:hover, .pk-trow__word:focus { border-color: var(--color-border); background: #fff; }
+.pk-kind { width: auto; min-height: 36px; padding: 4px 8px; font-size: 14px; }
+.pk-two { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; color: var(--color-muted); cursor: pointer; }
+.pk-two input { width: 18px; height: 18px; accent-color: var(--color-accent); }
+
+.pk-add { margin-top: 16px; }
+.pk-add__row { display: flex; flex-wrap: wrap; gap: 8px; }
+.pk-add__row .form-input { flex: 1 1 10em; }
+.pk-add__row .form-select { width: auto; }
+.pk-add__msg { margin: 6px 0 0; font-size: 14px; color: var(--color-accent); min-height: 1.4em; }
+
+.pk-out__row { display: flex; flex-wrap: wrap; gap: 12px; }
+
+@media (max-width: 600px) {
+  .pk-bar { padding: 10px 16px; }
+  .pk-igrid { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); }
+}

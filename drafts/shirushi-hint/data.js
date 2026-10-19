@@ -21,6 +21,13 @@ window.SHIRUSHI_DATA = {
         { id: 'sport', label: 'スポーツ', icon: 'sports_soccer' },
         { id: 'music', label: '音楽', icon: 'music_note' },
         { id: 'sky', label: '空・天気', icon: 'partly_cloudy_day' },
+        // 2026-10-19 追加の候補（オーナーが全部入れてよいと判断）
+        { id: 'clothes', label: '服', icon: 'checkroom' },
+        { id: 'game', label: 'ゲーム', icon: 'sports_esports' },
+        { id: 'machine', label: '機械', icon: 'settings' },
+        { id: 'screen', label: '画面', icon: 'tv' },
+        { id: 'snack', label: 'おかし', icon: 'cookie' },
+        { id: 'leaf', label: '葉っぱ', icon: 'eco' },
       ],
     },
     {
@@ -35,6 +42,10 @@ window.SHIRUSHI_DATA = {
         { id: 'brown', label: '茶色', color: '#8D5524' },
         { id: 'pink', label: 'ピンク', color: '#F783AC' },
         { id: 'orange', label: 'オレンジ', color: '#F76707' },
+        // 2026-10-19 追加の候補（オーナーが全部入れてよいと判断）
+        { id: 'purple', label: '紫', color: '#7048E8' },
+        { id: 'gray', label: '灰色', color: '#8A8F98' },
+        { id: 'skyblue', label: '水色', color: '#74C0FC' },
       ],
     },
     {
@@ -46,6 +57,10 @@ window.SHIRUSHI_DATA = {
         { id: 'long', label: '長い', icon: 'straighten' },
         { id: 'big', label: '大きい', icon: 'open_in_full' },
         { id: 'small', label: '小さい', icon: 'close_fullscreen' },
+        // 2026-10-19 追加の候補（オーナーが全部入れてよいと判断）
+        { id: 'tall', label: '高い', icon: 'height' },
+        { id: 'grainy', label: 'つぶつぶ', icon: 'grain' },
+        { id: 'thin', label: '細い', icon: 'horizontal_rule' },
       ],
     },
     {
@@ -61,6 +76,13 @@ window.SHIRUSHI_DATA = {
         { id: 'sound', label: '音が出る', icon: 'volume_up' },
         { id: 'sweet', label: '甘い', icon: 'cake' },
         { id: 'electric', label: '電気', icon: 'electric_bolt' },
+        // 2026-10-19 追加の候補（オーナーが全部入れてよいと判断）
+        { id: 'spin', label: '回る', icon: 'autorenew' },
+        { id: 'float', label: '浮かぶ', icon: 'air' },
+        { id: 'see', label: '見る', icon: 'visibility' },
+        { id: 'time', label: '時間', icon: 'schedule' },
+        { id: 'cook', label: '料理', icon: 'cooking' },
+        { id: 'swim', label: '泳ぐ', icon: 'pool' },
       ],
     },
     {
@@ -72,6 +94,12 @@ window.SHIRUSHI_DATA = {
         { id: 'town', label: '町', icon: 'location_city' },
         { id: 'night', label: '夜', icon: 'dark_mode' },
         { id: 'summer', label: '夏', icon: 'sunny' },
+        // 2026-10-19 追加の候補（オーナーが全部入れてよいと判断）
+        { id: 'forest', label: '森', icon: 'forest' },
+        { id: 'indoor', label: '家の中', icon: 'chair' },
+        { id: 'winter', label: '冬', icon: 'weather_snowy' },
+        { id: 'rain', label: '雨', icon: 'rainy' },
+        { id: 'park', label: '公園', icon: 'park' },
       ],
     },
   ],
@@ -82,15 +110,21 @@ window.SHIRUSHI_DATA = {
     'ニワトリ', 'チョウ', 'バナナ', 'リンゴ', 'スイカ', 'おにぎり', 'ラーメン', 'アイスクリーム', 'たまご', 'カレーライス',
     'ハンバーガー', '自転車', '飛行機', '船', '電車', 'ロケット', '消防車', 'ひまわり', 'サボテン', '雪だるま',
     '虹', '太陽', '月', 'かさ', 'はさみ', '風船', 'サッカーボール', 'ピアノ', 'かき氷', 'ホタル',
+    // 2026-10-19 追加の候補（オーナーが全部入れてよいと判断）。番号を変えないよう、後ろに足す
+    'ライオン', 'サル', 'ウマ', 'ブタ', 'カメ', 'タコ', 'イルカ', 'フクロウ', 'カタツムリ', 'カブトムシ',
+    'トンボ', 'ピザ', 'ドーナツ', 'パン', 'いちご', 'ブドウ', 'トマト', 'ニンジン', 'みかん', 'ケーキ',
+    'すし', 'ポップコーン', 'バス', 'ヘリコプター', '新幹線', 'トラック', '気球', 'パトカー', 'ヨット', '雪',
+    '雲', '星', '花火', '木', 'キノコ', '海', '山', '時計', 'めがね', 'ぼうし',
+    'くつ', 'カメラ', 'テレビ', 'ギター', '電話', 'かがみ', 'なべ', '冷蔵庫', '電球',
   ],
 
   // お題のなかま（仮）。当てる人に並べる候補を、お題と同じなかまで多めにそろえるために使う。
   // どのお題も、どれか1つのなかまに入れる
   kinds: {
-    creature: ['ハチ', 'ネコ', 'イヌ', 'ペンギン', 'ゾウ', 'キリン', 'ウサギ', 'カエル', 'クジラ', 'パンダ', 'ニワトリ', 'チョウ', 'ホタル'],
-    food: ['バナナ', 'リンゴ', 'スイカ', 'おにぎり', 'ラーメン', 'アイスクリーム', 'たまご', 'カレーライス', 'ハンバーガー', 'かき氷'],
-    ride: ['自転車', '飛行機', '船', '電車', 'ロケット', '消防車'],
-    nature: ['ひまわり', 'サボテン', '雪だるま', '虹', '太陽', '月'],
-    thing: ['かさ', 'はさみ', '風船', 'サッカーボール', 'ピアノ'],
+    creature: ['ハチ', 'ネコ', 'イヌ', 'ペンギン', 'ゾウ', 'キリン', 'ウサギ', 'カエル', 'クジラ', 'パンダ', 'ニワトリ', 'チョウ', 'ホタル', 'ライオン', 'サル', 'ウマ', 'ブタ', 'カメ', 'タコ', 'イルカ', 'フクロウ', 'カタツムリ', 'カブトムシ', 'トンボ'],
+    food: ['バナナ', 'リンゴ', 'スイカ', 'おにぎり', 'ラーメン', 'アイスクリーム', 'たまご', 'カレーライス', 'ハンバーガー', 'かき氷', 'ピザ', 'ドーナツ', 'パン', 'いちご', 'ブドウ', 'トマト', 'ニンジン', 'みかん', 'ケーキ', 'すし', 'ポップコーン'],
+    ride: ['自転車', '飛行機', '船', '電車', 'ロケット', '消防車', 'バス', 'ヘリコプター', '新幹線', 'トラック', '気球', 'パトカー', 'ヨット'],
+    nature: ['ひまわり', 'サボテン', '雪だるま', '虹', '太陽', '月', '雪', '雲', '星', '花火', '木', 'キノコ', '海', '山'],
+    thing: ['かさ', 'はさみ', '風船', 'サッカーボール', 'ピアノ', '時計', 'めがね', 'ぼうし', 'くつ', 'カメラ', 'テレビ', 'ギター', '電話', 'かがみ', 'なべ', '冷蔵庫', '電球'],
   },
 };

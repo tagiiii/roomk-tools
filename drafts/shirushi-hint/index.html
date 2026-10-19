@@ -9,7 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet" />
   <link rel="stylesheet" href="../../apps/shared/css/design-system.css" />
-  <link rel="stylesheet" href="style.css?v=20261019e" />
+  <link rel="stylesheet" href="style.css?v=20261019g" />
 </head>
 <body>
 
@@ -56,6 +56,15 @@
               <input id="chk-host-plays" type="checkbox" checked />
               <span>自分もプレイヤーとして参加する</span>
             </label>
+            <p id="host-plays-note" class="sh-note" hidden>端末なしの参加者がいるときは、進行だけになるよ</p>
+            <form id="proxy-form" class="sh-proxyadd">
+              <label class="form-label" for="proxy-name">端末なしの参加者を足す</label>
+              <div class="sh-row">
+                <input id="proxy-name" class="form-input" type="text" maxlength="10" autocomplete="off" />
+                <button type="submit" class="btn btn-secondary">足す</button>
+              </div>
+              <p id="proxy-msg" class="sh-alert" role="status"></p>
+            </form>
             <button id="btn-copy" type="button" class="btn btn-secondary btn-full mt-md">リンクをコピー</button>
             <button id="btn-start" type="button" class="btn btn-primary btn-full mt-md">はじめる</button>
             <p id="lobby-start-note" class="sh-note"></p>
@@ -83,8 +92,8 @@
       <section id="ph-pick" class="sh-phase" hidden>
         <div id="pick-teller" hidden>
           <div class="card">
-            <h2 class="sh-h2">あなたが伝える番だよ</h2>
-            <p class="sh-lead">お題を1つ選んでね。ほかの人には見えないよ。</p>
+            <h2 id="pick-title" class="sh-h2">あなたが伝える番だよ</h2>
+            <p id="pick-lead" class="sh-lead">お題を1つ選んでね。ほかの人には見えないよ。</p>
             <div id="pick-cands" class="sh-cands"></div>
             <div class="sh-row mt-md">
               <button id="btn-reroll" type="button" class="btn btn-secondary">
@@ -104,7 +113,7 @@
       <section id="ph-hint" class="sh-phase" hidden>
         <p id="hint-away" class="sh-away" role="status" hidden></p>
         <div id="hint-topic" class="sh-odai sh-odai--small" hidden>
-          <p class="sh-odai__label">あなたのお題</p>
+          <p id="hint-topic-label" class="sh-odai__label">あなたのお題</p>
           <p id="hint-topic-text" class="sh-odai__text"></p>
         </div>
 
@@ -122,6 +131,11 @@
         </div>
 
         <ul id="hint-picked" class="sh-picked" aria-label="選んだ人"></ul>
+
+        <div id="proxy-panel" class="card sh-proxy" hidden>
+          <h2 class="sh-h2">代わりに押す</h2>
+          <div id="proxy-rows" class="sh-proxy__rows"></div>
+        </div>
 
         <div id="hint-tools" class="card sh-palette-card" hidden>
           <div class="sh-sendrow">
@@ -195,7 +209,7 @@
     </footer>
   </div>
 
-  <script src="data.js?v=20261019e"></script>
-  <script src="app.js?v=20261019e"></script>
+  <script src="data.js?v=20261019g"></script>
+  <script src="app.js?v=20261019g"></script>
 </body>
 </html>
