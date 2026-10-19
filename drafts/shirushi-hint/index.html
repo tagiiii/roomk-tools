@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>しるしでヒント（試作） | room-K</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet" />
+  <link rel="stylesheet" href="../../apps/shared/css/design-system.css" />
+  <link rel="stylesheet" href="style.css?v=20261019d" />
+</head>
+<body>
+
+  <!-- はじめの画面（リンクなし）／参加の画面（?room=）／みんなにみせる画面の入口（?watch=） -->
+  <main id="sh-front" class="sh-front" hidden>
+    <section class="sh-panel" aria-labelledby="sh-front-title">
+      <p class="sh-badge">試作</p>
+      <h1 id="sh-front-title" class="sh-panel__title">しるしでヒント</h1>
+      <p class="sh-panel__lead">伝える人が、アイコンを1つずつ出してお題を伝える。ほかのみんなは、並んだ候補から当てる。少ないしるしで当てるほど、当てた人にも伝えた人にも点が入る。</p>
+      <form id="sh-front-form" class="sh-form">
+        <label class="form-label" for="sh-name">ニックネーム</label>
+        <input id="sh-name" class="form-input" type="text" maxlength="10" autocomplete="off" />
+        <button id="sh-front-go" type="submit" class="btn btn-primary btn-full mt-md">ルームを作る</button>
+      </form>
+      <p id="sh-front-msg" class="sh-alert" role="alert" hidden></p>
+      <p class="sh-panel__note">試作のため、同じブラウザでひらいたウィンドウの間だけでつながる。</p>
+    </section>
+  </main>
+
+  <!-- ゲームの画面 -->
+  <div id="sh-app" class="sh-app" hidden>
+    <header class="sh-bar">
+      <h1 class="sh-bar__title">しるしでヒント<span class="sh-badge sh-badge--bar">試作</span></h1>
+      <p id="sh-bar-code" class="sh-bar__code"></p>
+      <p id="sh-bar-me" class="sh-bar__me"></p>
+      <button id="btn-watch" type="button" class="btn btn-secondary btn-sm" hidden>
+        <span class="material-symbols-rounded" aria-hidden="true">co_present</span>みんなにみせる画面
+      </button>
+    </header>
+
+    <p id="sh-closed" class="sh-closed" role="alert" hidden>ルームが閉じられたみたい。ホストのウィンドウがひらいているか確かめてね</p>
+
+    <!-- しるしごとの結果（音は鳴らさない） -->
+    <div id="sh-pop" class="sh-pop" aria-live="polite"></div>
+
+    <main class="sh-main">
+      <!-- 待合室 -->
+      <section id="ph-lobby" class="sh-phase" hidden>
+        <div class="card">
+          <h2 class="sh-h2">参加する人</h2>
+          <ul id="lobby-players" class="sh-players"></ul>
+          <div id="lobby-host" hidden>
+            <label class="sh-check">
+              <input id="chk-host-plays" type="checkbox" checked />
+              <span>自分もプレイヤーとして参加する</span>
+            </label>
+            <button id="btn-copy" type="button" class="btn btn-secondary btn-full mt-md">リンクをコピー</button>
+            <button id="btn-start" type="button" class="btn btn-primary btn-full mt-md">はじめる</button>
+            <p id="lobby-start-note" class="sh-note"></p>
+          </div>
+          <p id="lobby-wait" class="sh-wait" hidden>ホストがはじめるのを待っているよ</p>
+        </div>
+        <div class="card">
+          <h2 class="sh-h2">あそびかた</h2>
+          <ol class="sh-howto">
+            <li>伝える人が、お題を1つ選ぶ。みんなの画面には、お題をふくむ12個の候補が並ぶ</li>
+            <li>伝える人は、アイコン（しるし）を1つずつ出す。ことばでの説明はしない</li>
+            <li>当てる人は、しるしが1つ出るたびに、候補から1つ選べる（1回だけ）</li>
+            <li>みんなが選んだら答え合わせ。はずれた候補は消える。当たるまで、しるしが増えていく</li>
+            <li>しるしが少ないうちに当てるほど点が高い。当てた人と、伝えた人の両方に点が入る</li>
+            <li>はずれると1点減る。自信がないときは「このしるしでは選ばない」で待ってもいい</li>
+          </ol>
+          <table class="sh-pts">
+            <caption>点数</caption>
+            <tbody id="pts-table"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- お題を選ぶ -->
+      <section id="ph-pick" class="sh-phase" hidden>
+        <div id="pick-teller" hidden>
+          <div class="card">
+            <h2 class="sh-h2">あなたが伝える番だよ</h2>
+            <p class="sh-lead">お題を1つ選んでね。ほかの人には見えないよ。</p>
+            <div id="pick-cands" class="sh-cands"></div>
+            <div class="sh-row mt-md">
+              <button id="btn-reroll" type="button" class="btn btn-secondary">
+                <span class="material-symbols-rounded" aria-hidden="true">refresh</span>ほかの候補
+              </button>
+              <button id="btn-pass" type="button" class="btn btn-ghost">この番をパスする</button>
+            </div>
+          </div>
+        </div>
+        <div id="pick-other" class="card sh-status" hidden>
+          <span class="material-symbols-rounded sh-status__icon" aria-hidden="true">hourglass_top</span>
+          <p id="pick-other-text" class="sh-status__text"></p>
+        </div>
+      </section>
+
+      <!-- しるしを出す・当てる -->
+      <section id="ph-hint" class="sh-phase" hidden>
+        <p id="hint-away" class="sh-away" role="status" hidden></p>
+        <div id="hint-topic" class="sh-odai sh-odai--small" hidden>
+          <p class="sh-odai__label">あなたのお題</p>
+          <p id="hint-topic-text" class="sh-odai__text"></p>
+        </div>
+
+        <div class="sh-signs">
+          <p id="hint-signs-title" class="sh-signs__title"></p>
+          <ol id="hint-signs" class="sh-signs__list"></ol>
+        </div>
+
+        <p id="hint-guide" class="sh-guide" role="status"></p>
+
+        <div id="hint-board" class="sh-board"></div>
+
+        <div class="sh-row sh-row--center">
+          <button id="btn-skip-guess" type="button" class="btn btn-ghost" hidden>このしるしでは選ばない</button>
+        </div>
+
+        <ul id="hint-picked" class="sh-picked" aria-label="選んだ人"></ul>
+
+        <div id="hint-tools" class="card sh-palette-card" hidden>
+          <div class="sh-sendrow">
+            <p id="send-preview" class="sh-sendrow__preview"></p>
+            <button id="btn-send" type="button" class="btn btn-primary">しるしを出す</button>
+          </div>
+          <div id="palette" class="sh-palette"></div>
+          <div class="sh-row sh-row--center">
+            <button id="btn-show" type="button" class="btn btn-ghost">答えを見せる</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 答え -->
+      <section id="ph-reveal" class="sh-phase" hidden>
+        <div class="sh-odai">
+          <p class="sh-odai__label">答え</p>
+          <p id="reveal-topic" class="sh-odai__text"></p>
+        </div>
+        <div class="sh-signs">
+          <p class="sh-signs__title">出したしるし</p>
+          <ol id="reveal-signs" class="sh-signs__list"></ol>
+        </div>
+        <div class="card">
+          <h2 class="sh-h2">この問の点</h2>
+          <ul id="reveal-points" class="sh-result"></ul>
+        </div>
+        <div id="reveal-host" class="sh-row sh-row--center" hidden>
+          <button id="btn-next" type="button" class="btn btn-primary">次の人へ</button>
+          <button id="btn-lap" type="button" class="btn btn-primary" hidden>順位を見る</button>
+          <button id="btn-finish" type="button" class="btn btn-secondary">ここでおしまい</button>
+        </div>
+        <p id="reveal-wait" class="sh-wait" hidden>ホストが次へ進めるのを待っているよ</p>
+      </section>
+
+      <!-- 一巡した -->
+      <section id="ph-lap" class="sh-phase" hidden>
+        <div class="card">
+          <h2 id="lap-title" class="sh-h2 sh-h2--center"></h2>
+          <ol id="lap-rank" class="sh-rank"></ol>
+          <div id="lap-host" class="sh-row sh-row--center mt-lg" hidden>
+            <button id="btn-lap2" type="button" class="btn btn-primary">もう一巡</button>
+            <button id="btn-finish2" type="button" class="btn btn-secondary">ここでおしまい</button>
+          </div>
+          <p id="lap-wait" class="sh-wait" hidden>ホストが決めるのを待っているよ</p>
+        </div>
+      </section>
+
+      <!-- おしまい -->
+      <section id="ph-end" class="sh-phase" hidden>
+        <div class="card">
+          <h2 class="sh-h2 sh-h2--center">おしまい。あそんでくれてありがとう</h2>
+          <ol id="end-rank" class="sh-rank"></ol>
+          <div class="sh-row sh-row--center mt-lg">
+            <button id="btn-restart" type="button" class="btn btn-primary" hidden>もう一回あそぶ</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 順番と点（遊んでいる間） -->
+      <section id="sh-order" class="card sh-order" hidden>
+        <h2 class="sh-h2">伝える順番と点</h2>
+        <ol id="order-list" class="sh-order__list"></ol>
+      </section>
+    </main>
+
+    <!-- ホストの操作（遊んでいる間） -->
+    <footer id="host-ctl" class="sh-hostctl" hidden>
+      <button id="btn-skip" type="button" class="btn btn-secondary btn-sm">この問を終えて次の人へ</button>
+      <button id="btn-end" type="button" class="btn btn-ghost btn-sm">ここでおしまい</button>
+    </footer>
+  </div>
+
+  <script src="data.js?v=20261019d"></script>
+  <script src="app.js?v=20261019d"></script>
+</body>
+</html>

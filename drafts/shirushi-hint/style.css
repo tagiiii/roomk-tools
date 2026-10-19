@@ -1,0 +1,211 @@
+/* しるしでヒント（試作） 接頭辞 sh- */
+
+body { background: var(--color-bg); }
+
+.sh-badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--color-warning);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+}
+.sh-badge--bar { margin-left: 8px; vertical-align: middle; }
+
+/* はじめの画面 */
+.sh-front { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px 16px; }
+.sh-panel { width: 100%; max-width: 440px; background: var(--color-surface); border-radius: 16px; padding: 32px 28px; border: 1px solid var(--color-border); }
+.sh-panel__title { font-size: 28px; color: var(--color-primary); margin: 8px 0 12px; }
+.sh-panel__lead { color: var(--color-text); line-height: 1.7; margin-bottom: 20px; }
+.sh-panel__note { color: var(--color-muted); font-size: 13px; margin-top: 16px; }
+.sh-alert { margin-top: 12px; color: var(--color-error); font-weight: 500; }
+
+/* バー */
+.sh-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding: 12px 20px; background: var(--color-primary); color: #fff; }
+.sh-bar__title { font-size: 18px; margin: 0; margin-right: auto; }
+.sh-bar__code, .sh-bar__me { margin: 0; font-size: 14px; }
+.sh-bar .btn { display: inline-flex; align-items: center; gap: 4px; }
+
+.sh-closed { margin: 12px 20px 0; padding: 12px 16px; border-radius: 8px; background: #FDECEC; color: var(--color-error); font-weight: 500; }
+
+.sh-main { max-width: 960px; margin: 0 auto; padding: 20px 16px 96px; display: grid; gap: 16px; }
+.sh-phase { display: grid; gap: 16px; }
+.sh-phase[hidden], .sh-main [hidden] { display: none !important; }
+.sh-h2 { font-size: 18px; color: var(--color-primary); margin: 0 0 12px; }
+.sh-h2--center { text-align: center; }
+.sh-lead { margin: 0 0 16px; color: var(--color-text); }
+.sh-note { margin: 12px 0 0; color: var(--color-muted); font-size: 14px; line-height: 1.6; }
+.sh-wait { margin: 12px 0 0; color: var(--color-muted); text-align: center; }
+.sh-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.sh-row--center { justify-content: center; }
+.sh-row .btn { display: inline-flex; align-items: center; gap: 6px; }
+
+/* 待合室 */
+.sh-players { list-style: none; padding: 0; margin: 0 0 16px; display: grid; gap: 8px; }
+.sh-player { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 8px; background: var(--color-bg); }
+.sh-player.is-away { color: var(--color-muted); }
+.sh-tag { font-size: 12px; padding: 2px 8px; border-radius: 999px; background: var(--color-accent); color: #fff; white-space: nowrap; }
+.sh-tag--muted { background: var(--color-border); color: var(--color-text); }
+.sh-check { display: flex; align-items: center; gap: 10px; min-height: 44px; cursor: pointer; }
+.sh-check input { width: 20px; height: 20px; accent-color: var(--color-accent); }
+.sh-howto { margin: 0; padding-left: 1.4em; line-height: 1.8; }
+.sh-pts { margin-top: 12px; border-collapse: collapse; }
+.sh-pts caption { text-align: left; font-weight: 700; color: var(--color-primary); margin-bottom: 4px; }
+.sh-pts th, .sh-pts td { padding: 4px 16px 4px 0; text-align: left; font-weight: 500; }
+
+/* 状態の表示 */
+.sh-status { text-align: center; padding: 32px 20px; }
+.sh-status__icon { font-size: 40px; color: var(--color-accent); }
+.sh-status__text { font-size: 20px; font-weight: 700; color: var(--color-primary); margin: 8px 0 0; }
+
+/* お題の候補（伝える人が選ぶ） */
+.sh-cands { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
+.sh-cand {
+  min-height: 72px; padding: 16px; border-radius: 12px;
+  border: 2px solid var(--color-accent); background: var(--color-surface);
+  color: var(--color-primary); font-size: 22px; font-weight: 700; cursor: pointer; font-family: inherit;
+}
+.sh-cand:hover { background: #EAF4F6; }
+
+/* お題（白カード＋ティール枠） */
+.sh-odai { background: var(--color-surface); border: 2px solid var(--color-accent); border-radius: var(--radius-box, 16px); padding: 24px 32px; text-align: center; }
+.sh-odai--small { padding: 14px 24px; }
+.sh-odai__label { font-size: 13px; font-weight: 500; color: var(--color-accent); letter-spacing: 0.08em; margin: 0 0 8px; }
+.sh-odai__text { font-size: 40px; font-weight: 700; color: var(--color-primary); line-height: 1.3; margin: 0; overflow-wrap: anywhere; }
+.sh-odai--small .sh-odai__text { font-size: 32px; }
+
+.sh-guide { margin: 0; text-align: center; color: var(--color-primary); font-weight: 700; font-size: 17px; }
+.sh-away { margin: 0; padding: 12px 16px; border-radius: 8px; background: #FFF4E5; color: var(--color-warning); font-weight: 500; }
+
+/* しるし */
+.sh-signs { background: var(--color-surface); border: 2px solid var(--color-primary); border-radius: 16px; padding: 16px 20px; }
+.sh-signs__title { margin: 0 0 12px; font-weight: 700; color: var(--color-primary); }
+.sh-signs__list { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 10px; min-height: 52px; align-items: center; }
+.sh-signs__empty { color: var(--color-muted); }
+.sh-sign {
+  display: inline-flex; align-items: center; gap: 8px;
+  min-height: 52px; padding: 6px 16px 6px 10px; border-radius: 999px;
+  background: var(--color-bg); border: 2px solid var(--color-border);
+  font-size: 19px; font-weight: 700; color: var(--color-text);
+}
+.sh-sign.is-preview { border-style: dashed; border-color: var(--color-accent); background: #F4FAFB; color: var(--color-muted); }
+.sh-sign__num { color: var(--color-accent); font-size: 18px; }
+.sh-sign__icon { font-size: 30px; color: var(--color-primary); }
+.sh-sign__note { font-size: 12px; font-weight: 500; }
+.sh-swatch { width: 28px; height: 28px; border-radius: 50%; border: 2px solid #8A8F98; flex: none; }
+
+/* 当てる候補 */
+.sh-board { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.sh-tile {
+  position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  min-height: 68px; padding: 10px 6px; border-radius: 12px;
+  border: 2px solid var(--color-border); background: var(--color-surface);
+  font-family: inherit; font-size: 18px; font-weight: 700; color: var(--color-primary); text-align: center;
+}
+button.sh-tile { cursor: pointer; border-color: var(--color-accent); }
+button.sh-tile:hover { background: #EAF4F6; }
+.sh-tile__text { overflow-wrap: anywhere; }
+.sh-tile__tag { font-size: 12px; font-weight: 700; padding: 1px 8px; border-radius: 999px; background: var(--color-accent); color: #fff; }
+.sh-tile.is-crossed { background: #ECEEF0; color: #8A8F98; border-style: dashed; }
+.sh-tile.is-crossed .sh-tile__text { text-decoration: line-through; }
+.sh-tile__mark { position: absolute; top: 4px; right: 6px; font-size: 20px; color: #8A8F98; }
+.sh-tile.is-mine { border-color: var(--color-primary); border-width: 3px; background: #EEF3F8; }
+.sh-tile.is-answer { border-color: var(--color-success); border-width: 3px; background: #EAF6EE; }
+.sh-tile.is-answer .sh-tile__tag { background: var(--color-success); }
+
+/* だれが選んだか */
+.sh-picked { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.sh-picked__item { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; background: var(--color-surface); border: 1px solid var(--color-border); font-size: 14px; }
+.sh-picked__item .material-symbols-rounded { font-size: 20px; color: var(--color-muted); }
+.sh-picked__item.is-picked .material-symbols-rounded { color: var(--color-accent); }
+.sh-picked__item.is-solved { border-color: var(--color-success); }
+.sh-picked__item.is-solved .material-symbols-rounded { color: var(--color-success); }
+.sh-picked__state { color: var(--color-muted); }
+
+/* 伝える人の操作 */
+.sh-palette-card { display: grid; gap: 16px; }
+.sh-sendrow { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; position: sticky; top: 0; background: var(--color-surface); padding: 4px 0; z-index: 2; }
+.sh-sendrow__preview { margin: 0; font-weight: 700; color: var(--color-primary); }
+.sh-palette { display: grid; gap: 16px; }
+.sh-pgroup__title { margin: 0 0 8px; font-size: 14px; color: var(--color-muted); }
+.sh-pgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 8px; }
+.sh-pbtn {
+  position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  min-height: 72px; padding: 8px 4px; border-radius: 12px;
+  border: 2px solid var(--color-border); background: var(--color-surface);
+  font-family: inherit; font-size: 13px; color: var(--color-text); cursor: pointer;
+}
+.sh-pbtn .sh-sign__icon { font-size: 28px; }
+.sh-pbtn:hover:not(:disabled) { border-color: var(--color-accent); }
+.sh-pbtn.is-on { border-color: var(--color-accent); background: #EAF4F6; font-weight: 700; }
+.sh-pbtn:disabled { opacity: 0.45; cursor: not-allowed; }
+.sh-pbtn__check { position: absolute; top: 4px; right: 4px; font-size: 18px; color: var(--color-accent); }
+.sh-pbtn__check--used { color: var(--color-muted); }
+
+/* この問の点 */
+.sh-result { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.sh-result__item { display: grid; grid-template-columns: auto 1fr auto auto; gap: 10px; align-items: center; padding: 8px 12px; border-radius: 8px; background: var(--color-bg); }
+.sh-result__item.is-solved { background: #EAF6EE; }
+.sh-result__item.is-solved .material-symbols-rounded { color: var(--color-success); }
+.sh-result__name { font-weight: 700; }
+.sh-result__what { color: var(--color-muted); font-size: 14px; }
+.sh-result__pts { font-weight: 700; color: var(--color-primary); min-width: 3.5em; text-align: right; }
+.sh-result__pts.is-minus, .sh-order__pts.is-minus { color: var(--color-error); }
+
+/* 順位 */
+.sh-rank { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; max-width: 480px; margin-inline: auto; }
+.sh-rank__item { display: grid; grid-template-columns: 2em 3.5em 1fr auto; gap: 8px; align-items: center; padding: 10px 14px; border-radius: 10px; background: var(--color-bg); font-size: 18px; }
+.sh-rank__item.is-top { background: #FFF6DB; border: 2px solid #E9B949; }
+.sh-rank__crown { color: #C98A00; font-size: 26px; }
+.sh-rank__no { font-weight: 700; color: var(--color-primary); }
+.sh-rank__name { font-weight: 700; overflow-wrap: anywhere; }
+.sh-rank__pts { font-weight: 700; color: var(--color-primary); }
+
+/* しるしごとの結果 */
+.sh-pop {
+  position: fixed; top: 18%; left: 50%; transform: translate(-50%, 0) scale(0.85);
+  display: flex; align-items: center; gap: 12px; max-width: calc(100vw - 32px);
+  padding: 16px 28px; border-radius: 20px; background: var(--color-primary); color: #fff;
+  font-size: 26px; font-weight: 700; opacity: 0; pointer-events: none; transition: opacity 0.2s, transform 0.2s; z-index: 20;
+}
+.sh-pop.is-hit { background: var(--color-success); }
+.sh-pop .material-symbols-rounded { font-size: 36px; }
+.sh-pop.is-on { opacity: 1; transform: translate(-50%, 0) scale(1); }
+
+/* 順番と点 */
+.sh-order__list { margin: 0; padding-left: 1.6em; display: grid; gap: 6px; }
+.sh-order__item { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.sh-order__item.is-now { font-weight: 700; color: var(--color-primary); }
+.sh-order__item.is-away { color: var(--color-muted); }
+.sh-order__pts { margin-left: auto; font-weight: 700; color: var(--color-primary); }
+
+/* ホストの操作 */
+.sh-hostctl {
+  position: fixed; left: 0; right: 0; bottom: 0; display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;
+  padding: 10px 16px; background: var(--color-surface); border-top: 1px solid var(--color-border); z-index: 10;
+}
+.sh-hostctl[hidden] { display: none; }
+
+/* みんなにみせる画面：しるしと候補を大きく */
+.is-watch .sh-main { max-width: 1200px; }
+.is-watch .sh-sign { font-size: 26px; min-height: 64px; padding: 8px 20px 8px 14px; }
+.is-watch .sh-sign__icon { font-size: 44px; }
+.is-watch .sh-swatch { width: 40px; height: 40px; }
+.is-watch .sh-tile { font-size: 22px; min-height: 76px; }
+.is-watch .sh-guide { font-size: 20px; }
+
+@media (max-width: 600px) {
+  .sh-bar { padding: 10px 16px; }
+  .sh-odai { padding: 20px; }
+  .sh-odai__text { font-size: 30px; }
+  .sh-odai--small .sh-odai__text { font-size: 26px; }
+  .sh-board { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .sh-tile { font-size: 15px; min-height: 60px; }
+  .sh-sign { font-size: 16px; min-height: 44px; }
+  .sh-sign__icon { font-size: 26px; }
+  .sh-signs { padding: 12px 14px; }
+  .sh-pop { font-size: 20px; padding: 12px 18px; }
+  .sh-result__item { grid-template-columns: auto 1fr auto; }
+  .sh-result__what { grid-column: 2 / 4; grid-row: 2; }
+}
