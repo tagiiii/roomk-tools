@@ -20,45 +20,115 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ── ヒーロー（TOP） ── */
-.kmk-hero {
-  text-align: center;
-  padding: 40px 16px 24px;
+/* ── TOP（パネル1枚構成。tsuyomi-card / suki-type-check と同じ型） ── */
+.kmk-panel {
+  max-width: 560px;
+  margin: 8px auto 0;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-box);
+  padding: 28px 32px 22px;
 }
-.kmk-hero__title {
-  font-size: clamp(32px, 7vw, 48px);
+.kmk-panel__title {
+  margin: 0 0 14px;
+  font-size: clamp(28px, 6vw, 36px);
   font-weight: 700;
   color: var(--color-primary);
   letter-spacing: 0.04em;
-  margin: 0;
-}
-.kmk-hero__sub {
-  margin-top: 12px;
-  font-size: var(--font-size-body);
-  color: var(--color-muted);
-}
-.kmk-hero__action {
   text-align: center;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  align-items: center;
-  margin-top: 24px;
 }
-.kmk-hero__action .btn {
-  min-width: 220px;
+/* 日本語を文節で折り返す（対応していないブラウザはふつうの折り返し） */
+.kmk-panel__lead,
+.kmk-note-list li,
+.kmk-muted { word-break: auto-phrase; }
+.kmk-panel__lead {
+  margin: 0 0 16px;
+  text-align: center;
+  font-size: var(--font-size-body);
+  color: var(--color-text);
+  line-height: 1.8;
 }
 
-/* ── 制限時間の選択（TOP） ── */
+/* お題の見本。お題画面の白カード＋ティール枠を小さくしたもの */
+.kmk-sample {
+  max-width: 320px;
+  margin: 0 auto 18px;
+  padding: 14px 20px;
+  text-align: center;
+  background: var(--color-surface);
+  border: 2px solid var(--color-accent);
+  border-radius: var(--radius-box);
+}
+.kmk-sample__tag {
+  margin: 0 0 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-accent);
+  letter-spacing: 0.08em;
+}
+.kmk-sample__line1 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-text);
+  line-height: 1.4;
+}
+.kmk-sample__initial {
+  color: var(--color-accent);
+  font-size: 1.4em;
+  font-feature-settings: "palt";
+}
+.kmk-sample__theme {
+  margin: 4px 0 0;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--color-primary);
+  line-height: 1.35;
+}
+
+.kmk-note-list {
+  list-style: none;
+  margin: 0 0 20px;
+  padding: 14px 20px;
+  background: var(--color-bg);
+  border-radius: var(--radius-card);
+}
+.kmk-note-list li {
+  position: relative;
+  padding-left: 22px;
+  font-size: var(--font-size-sub);
+  color: var(--color-text);
+  line-height: 1.7;
+}
+.kmk-note-list li + li { margin-top: 6px; }
+.kmk-note-list li::before {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 0.75em;
+  width: 7px;
+  height: 7px;
+  border-radius: var(--radius-full);
+  background: var(--color-accent);
+}
+
+/* ── 制限時間の選択（TOP のパネル内の設定欄） ── */
 .kmk-limit {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 8px;
-  margin-top: 8px;
+  padding-top: 18px;
+  border-top: 1px solid var(--color-border);
 }
 .kmk-limit__label {
   font-size: var(--font-size-sub);
+  font-weight: 700;
+  color: var(--color-primary);
+}
+.kmk-limit__hint {
+  margin: 0;
+  font-size: 13px;
   color: var(--color-muted);
 }
 .kmk-limit__options {
@@ -84,6 +154,26 @@
   border-color: var(--color-accent);
   background: #DDF0F3;
   color: var(--color-primary);
+}
+
+.kmk-panel__actions {
+  display: flex;
+  justify-content: center;
+  margin: 20px 0 12px;
+}
+.kmk-start {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 240px;
+}
+.kmk-muted {
+  margin: 0;
+  font-size: 13px;
+  color: var(--color-muted);
+  text-align: center;
+  line-height: 1.6;
 }
 
 /* ── お題画面 ── */
@@ -256,7 +346,9 @@
 /* ── モバイル ── */
 @media (max-width: 600px) {
   .wrapper { padding: 20px 16px 48px; }
-  .kmk-hero { padding: 28px 12px 16px; }
+  .kmk-panel { padding: 28px 18px 24px; }
+  .kmk-limit__options { gap: 4px; }
+  .kmk-limit__option { min-width: 54px; padding: 6px 10px; }
   .kmk-odai { padding: 24px 20px; }
   .kmk-next { margin-top: 24px; }
   .kmk-next__partial { gap: 0 4px; }
