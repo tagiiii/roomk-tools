@@ -174,7 +174,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   await post(g1, { type: 'guess', code, from: g2id, q: 'old', step: 3, b: boardIdx });
   await sleep(200);
   ok((await host.$$eval('#hint-picked .is-picked', (els) => els.length)) === 0, 'D33 古い問の操作は受けない');
-  await sendSign(host, '飛ぶ');
+  await sendSign(host, '速い'); // 出せないしるしに当たらないもの
   ok(await until(async () => (await signs(g2)).length === 4), 'D34 しるし④（③は待たずに締まる）');
   ok(await until(async () => (await popText(g2)).includes('まだだれも当たらなかった')), 'D35 ③の結果');
   await tapTile(g2, topic1);
@@ -184,7 +184,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   const pts = await tv.$$eval('#reveal-points li', (els) => els.map((e) => e.innerText.replace(/\s+/g, ' ')));
   ok(pts.length === 3 && pts[0].includes('伝えた') && pts[0].includes('+2点') && pts[1].includes('②つ目で当てた・はずれ1回') && pts[1].includes('+1点') && pts[2].includes('④つ目で当てた・はずれ1回') && / 0点$/.test(pts[2].trim()), 'D38 この問の点（はずれの分を引く）', pts);
   ok(await until(async () => JSON.stringify(await orderPts(host)) === JSON.stringify(['メンター:2点', 'あおい:1点', '<b>そら</b>:0点'])), 'D39 伝えた人の点は1回だけ', await orderPts(host));
-  ok((await signs(tv, '#reveal-signs')).join() === '動物,黄色,黒,飛ぶ', 'D40 出したしるしが並ぶ');
+  ok((await signs(tv, '#reveal-signs')).join() === '動物,黄色,黒,速い', 'D40 出したしるしが並ぶ');
   ok(await visible(host, '#btn-next') && await visible(g1, '#reveal-wait'), 'D41 次の人へはホスト');
   await shot(tv, 'd-tv-reveal');
 
@@ -382,6 +382,39 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   await tapTile(pc, ans2);
   ok(await until(async () => (await orderPts(h3)).join() === 'みどり:5点,たろう:4点'), 'P27 伝えた端末なしの子にも点', await orderPts(h3));
   await shot(h3, 'p-mentor');
+
+  // ── Q. お題ごとの「出せないしるし」 ──
+  const ids = new Set(DATA.groups.flatMap((g) => g.icons.map((ic) => ic.id)));
+  const bk = Object.entries(DATA.blocked || {});
+  ok(bk.length > 0 && bk.every(([w, list]) => DATA.topics.includes(w) && list.length && list.every((id) => ids.has(id))), 'Q1 出せないしるしは、あるお題とあるアイコンだけ');
+  // どのお題でも「動物」を出せないようにした data.js で、伝える人の画面を確かめる
+  const ctx2 = await browser.newContext({ viewport: { width: 1100, height: 900 } });
+  await ctx2.route('**/drafts/shirushi-hint/data.js*', async (route) => {
+    const res = await route.fetch();
+    const body = (await res.text()) + "\n;(function(){var d=window.SHIRUSHI_DATA;d.topics.forEach(function(w){d.blocked[w]=(d.blocked[w]||[]).concat(['animal']);});})();\n";
+    await route.fulfill({ response: res, body });
+  });
+  const qh = await ctx2.newPage(); watch(qh, 'qh');
+  await qh.goto(BASE);
+  await qh.fill('#sh-name', 'ホスト'); await qh.click('#sh-front-go');
+  await until(() => visible(qh, '#ph-lobby'));
+  const code4 = (await text(qh, '#sh-bar-code')).replace(/^.*\s/, '');
+  const qg = await ctx2.newPage(); watch(qg, 'qg');
+  await qg.goto(BASE + '?room=' + code4); await qg.fill('#sh-name', 'ゆき'); await qg.click('#sh-front-go');
+  await until(() => visible(qg, '#ph-lobby'));
+  await qh.click('#btn-start');
+  await until(() => visible(qh, '#pick-teller'));
+  await qh.click('#pick-cands .sh-cand >> nth=0');
+  await until(() => visible(qh, '#ph-hint'));
+  const animalBtn = qh.locator('#palette .sh-pbtn', { hasText: '動物' }).first();
+  ok(await animalBtn.isDisabled() && (await animalBtn.getAttribute('class')).includes('is-blocked'), 'Q2 出せないしるしは押せない');
+  ok((await animalBtn.getAttribute('aria-label')).includes('このお題では出せない'), 'Q3 出せない理由が読み上げで分かる');
+  await animalBtn.evaluate((e) => { e.disabled = false; e.click(); });
+  ok(await qh.isDisabled('#btn-send') && !(await text(qh, '#send-preview')).includes('動物'), 'Q4 むりに選んでも出せない');
+  ok(!(await qg.locator('#palette .sh-pbtn').count()), 'Q5 当てる人には一覧が出ない');
+  await sendSign(qh, '虫');
+  ok(await until(async () => (await signs(qg)).join() === '虫'), 'Q6 ほかのしるしは出せる');
+  await ctx2.close();
 
   ok(errors.length === 0, 'Z コンソールのエラーなし', errors);
   console.log('\n' + pass + ' passed, ' + fail + ' failed   (写真: ' + OUT + ')');

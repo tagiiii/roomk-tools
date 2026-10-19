@@ -33,6 +33,8 @@
 
   // お題の番号 → なかま
   const KIND_OF = DATA.topics.map((w) => Object.keys(DATA.kinds).find((k) => DATA.kinds[k].includes(w)) || null);
+  // お題の番号 → そのお題では出せないしるし
+  const BLOCKED = DATA.topics.map((w) => ((DATA.blocked || {})[w] || []));
   const ICONS = {};
   DATA.groups.forEach((g) => g.icons.forEach((ic) => { ICONS[ic.id] = ic; }));
 
@@ -166,6 +168,7 @@
       case 'sign':
         // 前のしるしの答え合わせがまだなら、ここで締める
         if (!teller || R.phase !== 'hint' || !ICONS[m.id] || q.signs.includes(m.id) || q.signs.length >= MAX_SIGNS) break;
+        if (BLOCKED[q.topic].includes(m.id)) break; // このお題では出せないしるし
         if (q.signs.length > q.judged) judge(R);
         if (R.phase !== 'hint') break;
         q.signs.push(m.id);
@@ -746,7 +749,8 @@
   function renderPalette(q) {
     if (S.selQ !== q.uid) { S.selQ = q.uid; S.sel = null; }
     const full = q.signs.length >= MAX_SIGNS;
-    if (S.sel && q.signs.includes(S.sel)) S.sel = null;
+    const blocked = BLOCKED[q.topic] || [];
+    if (S.sel && (q.signs.includes(S.sel) || blocked.includes(S.sel))) S.sel = null;
     $('btn-send').disabled = !S.sel || full;
     $('btn-send').textContent = full ? 'しるしは' + MAX_SIGNS + 'つまで' : NUMS[q.signs.length] + 'つ目のしるしを出す';
     $('send-preview').textContent = S.sel ? '選んでいるしるし: ' + ICONS[S.sel].label : 'アイコンを1つ選んでね';
@@ -756,14 +760,16 @@
       const grid = el('div', 'sh-pgrid');
       g.icons.forEach((ic) => {
         const used = q.signs.includes(ic.id);
+        const no = blocked.includes(ic.id);
         const on = S.sel === ic.id;
-        const b = el('button', 'sh-pbtn' + (on ? ' is-on' : '') + (used ? ' is-used' : ''));
+        const b = el('button', 'sh-pbtn' + (on ? ' is-on' : '') + (used ? ' is-used' : '') + (no ? ' is-blocked' : ''));
         b.type = 'button';
         b.setAttribute('aria-pressed', on ? 'true' : 'false');
-        b.disabled = used || full;
+        b.disabled = used || full || no;
         b.append(iconFace(ICONS[ic.id]), el('span', 'sh-pbtn__label', ic.label));
         if (on) b.append(msIcon('check_circle', 'sh-pbtn__check'));
         if (used) { b.append(msIcon('done', 'sh-pbtn__check sh-pbtn__check--used')); b.setAttribute('aria-label', ic.label + '（出した）'); }
+        if (no) { b.append(msIcon('block', 'sh-pbtn__check sh-pbtn__check--used')); b.setAttribute('aria-label', ic.label + '（このお題では出せない）'); b.title = 'このお題では出せない'; }
         b.addEventListener('click', () => { S.sel = on ? null : ic.id; render(); });
         grid.append(b);
       });

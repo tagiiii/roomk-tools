@@ -157,6 +157,7 @@ button.sh-tile:hover { background: #EAF4F6; }
 .sh-pbtn:disabled { opacity: 0.45; cursor: not-allowed; }
 .sh-pbtn__check { position: absolute; top: 4px; right: 4px; font-size: 18px; color: var(--color-accent); }
 .sh-pbtn__check--used { color: var(--color-muted); }
+.sh-pbtn.is-blocked { border-style: dashed; }
 
 /* この問の点 */
 .sh-result { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
