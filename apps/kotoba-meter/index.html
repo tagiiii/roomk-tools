@@ -194,6 +194,13 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 }
 
 @media (max-width: 600px) {
+  /* ルームバーは2行: コード・役割・退出 ／ コピーのボタン */
+  .km-roombar { gap: 8px; }
+  .km-roombar__code { order: 1; }
+  #my-role { order: 2; }
+  .km-roombar__leave { order: 3; }
+  .km-roombar__actions { order: 4; flex-basis: 100%; }
+  .km-roombar strong { font-size: 1.1rem; letter-spacing: 0.08em; }
   .km-wrap { padding: 20px 12px 96px; }
   .km-header__title { font-size: 1.45rem; }
   .km-odai { padding: 24px 20px 20px; }
@@ -209,6 +216,13 @@ button:disabled { opacity: .5; cursor: not-allowed; }
   .km-column__num { width: 44px; flex: none; font-size: 20px; text-align: center; }
   .km-column__tag, .km-column__name { margin: 0; }
 }
+/* 幅の狭いスマホ（360px以下）でもルームバーを2行に収める */
+@media (max-width: 360px) {
+  .km-roombar { gap: 6px; padding: 8px 10px; }
+  .km-roombar .btn-sm { padding: 6px 8px; }
+  .km-roombar .km-tag { padding: 4px 6px; }
+}
+
   </style>
 </head>
 <body>
@@ -262,7 +276,7 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 
       <div id="game" hidden>
         <div class="km-roombar">
-          <span>ルーム <strong id="room-code"></strong></span>
+          <span class="km-roombar__code">ルーム <strong id="room-code"></strong></span>
           <span id="my-role" class="km-tag"></span>
           <span id="room-actions" class="km-roombar__actions">
             <button id="copy-code" class="btn btn-ghost btn-sm" type="button">コードをコピー</button>
@@ -872,7 +886,8 @@ function render(next) {
   const presenter = !watch && state.me === state.presenter;
   const lobby = state.phase === 'lobby', hint = state.phase === 'hint', vote = state.phase === 'vote', result = state.phase === 'result';
   show('front', false); show('watch-end', false); show('game', true);
-  show('room-actions', !watch); show('leave', !watch); show('my-role', !watch); show('watch-badge', watch);
+  // みんなにみせる画面は進行役が開いて共有する（しるしでヒント・スタンプあてゲームと同じ）
+  show('room-actions', !watch); show('watch-link', host); show('leave', !watch); show('my-role', !watch); show('watch-badge', watch);
   $('room-code').textContent = state.code;
   $('my-role').textContent = host ? '進行役' : '参加者';
   $('watch-link').href = `?watch=${encodeURIComponent(code)}`;
@@ -1037,6 +1052,6 @@ if (session || (watch && code)) {
 </script>
 <script src="../shared/js/stats.js?v=1" defer></script>
 <script src="../shared/js/howto.js"></script>
-<script>RoomkHowto.init({slides: 'slides.html', "title": "あそびかた", "lead": "ヒントのことばから、出題者が思い浮かべた1〜5の数字を予想するよ。数字は出題者の感覚。違う感じ方も楽しもう。", "sections": [{"heading": "はじめかた", "items": ["進行役が「ルームを作る」でニックネームを入れる。ルームコードは「コードをコピー」、参加用のリンクは「リンクをコピー」でチャットに送れるよ。", "参加する人は「ルームに参加する」でニックネーム、ルームコード（6文字）の順に入れ、「参加する」を押す。リンクからひらいたときは、ルームコードは入っているのでニックネームだけ入れてね。", "進行役が出題者の制限時間（なし・30秒・1分・2分・3分）と出題者を選んで「ラウンドを始める」を押す。お題はランダムで決まるよ。"]}, {"heading": "ヒントと予想", "items": ["出題者は秘密の数字を見て、その程度だと思うことばを「ヒントを出す」で送る。「お題を変更する」から別のお題も選べるよ。変更しても数字と残り時間は変わらないよ。時間切れになると、参加した順で次の出題者・お題へ進むよ。", "ほかの人は1〜5をタップ。公開前なら選び直せるし、「今回はパス」もできるよ。", "「みんなにみせる画面」で、画面共有でみんなに見せる画面が別のタブに開くよ。トップの「みんなにみせる画面をひらく」から、ルームコードを入れて開くこともできるよ。"]}, {"heading": "公開する", "items": ["進行役が「回答を締め切って公開」を押すと、まだ回答していない人がいても公開できるよ。締め切ったあとは回答できないよ。出題者の数字は、ことばの意味の唯一の正解ではないよ。", "「次のラウンドを始める」で続けられるよ。次の出題者は参加した順に自動で選ばれるよ。進行役が変更することもできるよ。", "参加者は「退出する」、進行役は「ルームを閉じる」で終わる。"]}]});</script>
+<script>RoomkHowto.init({slides: 'slides.html', "title": "あそびかた", "lead": "ヒントのことばから、出題者が思い浮かべた1〜5の数字を予想するよ。数字は出題者の感覚。違う感じ方も楽しもう。", "sections": [{"heading": "はじめかた", "items": ["進行役が「ルームを作る」でニックネームを入れる。ルームコードは「コードをコピー」、参加用のリンクは「リンクをコピー」でチャットに送れるよ。", "参加する人は「ルームに参加する」でニックネーム、ルームコード（6文字）の順に入れ、「参加する」を押す。リンクからひらいたときは、ルームコードは入っているのでニックネームだけ入れてね。", "進行役が出題者の制限時間（なし・30秒・1分・2分・3分）と出題者を選んで「ラウンドを始める」を押す。お題はランダムで決まるよ。"]}, {"heading": "ヒントと予想", "items": ["出題者は秘密の数字を見て、その程度だと思うことばを「ヒントを出す」で送る。「お題を変更する」から別のお題も選べるよ。変更しても数字と残り時間は変わらないよ。時間切れになると、参加した順で次の出題者・お題へ進むよ。", "ほかの人は1〜5をタップ。公開前なら選び直せるし、「今回はパス」もできるよ。", "進行役は「みんなにみせる画面」で、画面共有でみんなに見せる画面を別のタブに開けるよ。トップの「みんなにみせる画面をひらく」から、ルームコードを入れて開くこともできるよ。"]}, {"heading": "公開する", "items": ["進行役が「回答を締め切って公開」を押すと、まだ回答していない人がいても公開できるよ。締め切ったあとは回答できないよ。出題者の数字は、ことばの意味の唯一の正解ではないよ。", "「次のラウンドを始める」で続けられるよ。次の出題者は参加した順に自動で選ばれるよ。進行役が変更することもできるよ。", "参加者は「退出する」、進行役は「ルームを閉じる」で終わる。"]}]});</script>
 </body>
 </html>
