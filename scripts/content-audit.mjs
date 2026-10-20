@@ -178,6 +178,7 @@ function entry(tool, category, text, extra = {}) {
 
 // 重複検査でカバー済みのアプリ（collectEntries が entries を生成する）。
 const COVERED_APPS = [
+  'kotoba-meter',
   // 既存（A2 以前から抽出済み）
   'quiz', 'kotoba-shuffle', 'kanji-sagashi', 'kotoba-relay', 'tatoe-gp',
   'kaburazu-hint', 'kotoba-tantei', 'docchi', 'minna-ranking',
@@ -505,6 +506,17 @@ function collectEntries() {
   if (stampProblems.length > 0) {
     throw new Error(`stamp-ate app.js の構造エラー:\n  ${stampProblems.join('\n  ')}`);
   }
+
+  // ことばメーター: お題と両端の程度を1件として監査。
+  const meterThemes = evalArrayFromSource(read('apps/kotoba-meter/index.html'), 'THEMES', 'apps/kotoba-meter/index.html') || [];
+  if (!meterThemes.length) throw new Error('kotoba-meter THEMES が空');
+  const meterSeen = new Set();
+  meterThemes.forEach((theme, index) => {
+    if (![theme.name, theme.low, theme.high].every(v => typeof v === 'string' && v.trim())) throw new Error('kotoba-meter のお題または端点が空');
+    if (meterSeen.has(theme.name)) throw new Error('kotoba-meter のお題が重複');
+    meterSeen.add(theme.name);
+    rows.push(entry('kotoba-meter', 'theme', `${theme.name}：1＝${theme.low}／5＝${theme.high}`, { id: `kotoba-meter:${index}` }));
+  });
 
   // shirushi-hint: data.js の export const TOPICS = [ '文字列', ... ]（アイコンで伝えるお題）。
   //   ルームでは番号で共有するので、空のお題と同じアプリ内の重複はここで fail-fast にする。

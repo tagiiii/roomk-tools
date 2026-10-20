@@ -1,0 +1,631 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+  <title>ことばメーター | room-K</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="../shared/css/design-system.css">
+  <style>
+body { margin: 0; background: var(--color-bg); color: var(--color-text); font-family: var(--font-base); }
+.km-header { max-width: 1080px; margin: auto; padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; color: var(--color-primary); font-weight: 700; }
+main { max-width: 960px; margin: 12px auto 56px; padding: 0 24px; }
+.km-panel { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 24px; padding: 36px 40px; text-align: center; }
+.km-front { max-width: 560px; margin: 32px auto; }
+h1 { font-size: clamp(28px, 4vw, 38px); color: var(--color-primary); line-height: 1.4; margin: 8px 0 16px; }
+h2 { color: var(--color-primary); }
+p { line-height: 1.8; }
+.km-eyebrow { color: var(--color-accent); font-size: 13px; font-weight: 700; letter-spacing: .08em; margin: 0 0 10px; }
+.km-intro { line-height: 2; }
+.km-muted { color: var(--color-muted); font-size: 14px; }
+.km-tag { display: inline-block; background: #e8f2f1; color: var(--color-primary); font-size: 12px; border-radius: 20px; padding: 3px 10px; }
+.km-preview, .km-scale { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin: 24px 0; }
+.km-preview span { background: #edf4f3; border-radius: 12px; padding: 12px 0; font-size: 26px; color: var(--color-accent); }
+.km-preview span:nth-child(4) { background: #d1e8e6; transform: translateY(-5px); }
+label { display: block; text-align: left; font-weight: 500; font-size: 14px; margin: 18px 0 8px; }
+input, select { width: 100%; padding: 13px 14px; border: 1px solid var(--color-border); border-radius: 9px; font: inherit; background: white; color: var(--color-text); }
+#join-code { text-transform: uppercase; letter-spacing: .14em; }
+form .btn-primary, #start { margin-top: 20px; }
+.km-room-bar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+#room-code { font-size: 20px; letter-spacing: .1em; }
+#room-actions { display: flex; flex-wrap: wrap; }
+.btn.btn-ghost { border: 0; background: transparent; color: var(--color-muted); box-shadow: none; }
+.btn.btn-ghost:hover { background: #e8f2f1; color: var(--color-primary); }
+#phase-title:focus { outline: none; }
+.km-theme { border: 2px solid var(--color-accent); border-radius: var(--radius-box); padding: 24px 32px; margin: 24px 0; }
+.km-theme h2 { font-size: 38px; line-height: 1.4; margin: 8px 0 20px; }
+.km-endpoints { display: flex; justify-content: space-between; gap: 16px; color: var(--color-muted); font-size: 14px; text-align: left; }
+.km-endpoints span:last-child { text-align: right; }
+.km-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.km-secret { background: #f5f3eb; border-radius: 16px; padding: 24px; margin: 24px 0; }
+.km-secret > span { font-size: 14px; }
+.km-secret strong { display: block; font-size: 64px; color: var(--color-primary); line-height: 1.4; }
+.km-secret p { margin: 4px 0; font-size: 14px; }
+.km-hint { padding: 12px 0; }
+.km-hint h2 { font-size: 30px; line-height: 1.6; overflow-wrap: anywhere; margin: 8px 0 18px; white-space: pre-wrap; }
+.km-scale button { min-height: 74px; border: 2px solid var(--color-border); border-radius: 14px; font-size: 32px; font-weight: 700; color: var(--color-primary); background: white; cursor: pointer; }
+.km-scale button[aria-pressed="true"] { border-color: var(--color-accent); background: #dcefed; box-shadow: 0 0 0 2px var(--color-accent); }
+.km-scale button:hover { background: #edf4f3; }
+#answer-note { min-height: 26px; color: var(--color-accent); }
+.km-result-lead strong { font-size: 42px; padding: 0 10px; color: var(--color-accent); }
+.km-results { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin: 16px 0; }
+.km-column { background: #f4f6f6; border: 2px solid transparent; border-radius: 14px; min-height: 140px; padding: 12px 8px; }
+.km-column.km-target { background: #edf6f4; border-color: var(--color-accent); }
+.km-column h3 { font-size: 28px; margin: 0 0 10px; color: var(--color-primary); }
+.km-column p { font-size: 13px; margin: 6px 0; overflow-wrap: anywhere; background: white; border-radius: 6px; padding: 5px; }
+.km-column small { display: block; font-size: 11px; color: var(--color-accent); }
+.km-talk { color: var(--color-primary); margin: 24px 0; }
+.km-people { padding: 24px 4px 8px; }
+.km-people h2 { font-size: 14px; margin-bottom: 12px; }
+#players { display: flex; flex-wrap: wrap; gap: 8px; padding: 0; list-style: none; }
+#players li { border: 1px solid var(--color-border); border-radius: 24px; padding: 7px 14px; font-size: 13px; overflow-wrap: anywhere; }
+#message:empty { display: none; }
+#message, #connection { border-radius: 12px; padding: 12px 16px; background: #fff2e6; color: #783b10; }
+#message { position: sticky; bottom: 16px; z-index: 2; }
+#host-reset { margin-top: 16px; }
+button:disabled { opacity: .5; cursor: not-allowed; }
+:focus-visible { outline: 3px solid var(--color-accent); outline-offset: 4px; }
+dialog { border: 1px solid var(--color-border); border-radius: 20px; padding: 28px; width: min(600px, 90vw); max-height: 85vh; color: var(--color-text); }
+dialog::backdrop { background: #16304566; }
+dialog li { margin: 16px 0; line-height: 1.8; }
+@media (min-width: 800px) {
+  .km-watch .km-panel { padding: 20px 36px; }
+  .km-watch .km-theme { padding: 16px 24px; margin: 16px 0; }
+  .km-watch .km-theme h2 { margin-bottom: 12px; }
+  .km-watch .km-hint { padding: 0; }
+  .km-watch .km-hint h2 { margin-bottom: 8px; }
+  .km-watch .km-result-lead { margin: 4px 0; }
+  .km-watch .km-column { min-height: 115px; }
+  .km-watch .km-talk { margin: 16px 0 0; }
+}
+@media (max-width: 600px) {
+  main { padding: 0 12px; margin-top: 0; }
+  .km-header { padding: 12px 16px; }
+  .km-panel { padding: 24px 18px; border-radius: 18px; }
+  .km-front { margin-top: 12px; }
+  .km-theme { padding: 24px 20px; }
+  .km-theme h2 { font-size: 30px; }
+  .km-fields { grid-template-columns: 1fr; gap: 0; }
+  .km-scale { gap: 8px; }
+  .km-scale button { min-height: 60px; font-size: 27px; }
+  .km-results { gap: 5px; }
+  .km-column { padding: 10px 3px; }
+  .km-column p { font-size: 12px; padding: 4px 2px; }
+  .km-hint h2 { font-size: 24px; }
+}
+
+</style>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded" rel="stylesheet">
+</head>
+<body>
+  <header class="km-header"><span>room-K </span></header>
+  <main>
+    <section id="front" class="km-panel km-front">
+      <p class="km-eyebrow">どれくらい？</p><h1>ことばメーター</h1>
+      <p class="km-intro">そのことば、あなたにはどれくらい？<br>1〜5で予想して、みんなの感じ方を見てみよう。</p>
+      <div class="km-preview" aria-hidden="true"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span></div>
+      <p class="km-muted">2〜20人・1ラウンド2〜3分<br>数字は出題者の感覚。違う感じ方も楽しもう。</p>
+      <form id="entry-form">
+        <label for="nickname">ニックネーム（8文字まで）</label><input id="nickname" maxlength="8" autocomplete="nickname" required>
+        <div id="code-field" hidden><label for="join-code">ルームコード（6文字）</label><input id="join-code" maxlength="12" autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false"></div>
+        <p id="entry-note" class="km-muted"></p>
+        <button id="enter" class="btn btn-primary btn-full" type="submit">ルームを作る</button>
+      </form>
+      <button id="entry-toggle" class="btn btn-ghost">ルームに参加する</button>
+    </section>
+    <div id="game" hidden>
+      <div class="km-room-bar"><div><span class="km-muted">ルーム</span> <strong id="room-code"></strong> <span id="my-role" class="km-tag"></span></div><div id="room-actions"><button id="copy-code" class="btn btn-ghost btn-sm">コードをコピー</button><button id="copy-link" class="btn btn-ghost btn-sm">リンクをコピー</button><a id="watch-link" target="_blank" rel="noopener" class="btn btn-ghost btn-sm">共有画面を開く</a></div></div>
+      <p id="connection" role="status" hidden></p>
+      <section class="km-panel">
+        <p id="phase-label" class="km-eyebrow"></p><h1 id="phase-title" tabindex="-1"></h1><p id="phase-note" class="km-muted"></p>
+        <section id="theme-card" class="km-theme" hidden><p class="km-eyebrow">お題</p><h2 id="theme-name"></h2><div class="km-endpoints"><span id="low"></span><span id="high"></span></div></section>
+        <section id="setup" hidden><div class="km-fields"><div><label for="theme-select">お題を選ぶ</label><select id="theme-select"></select></div><div><label for="presenter-select">出題者を選ぶ</label><select id="presenter-select"></select></div></div><button id="start" class="btn btn-primary btn-full">ラウンドを始める</button></section>
+        <section id="secret-area" hidden><div class="km-secret"><span>あなただけの秘密の数字</span><strong id="secret-number"></strong><p>この数字くらいだと思うことばを考えよう。</p></div><form id="hint-form"><label for="hint-input">ヒント（60文字まで）</label><input id="hint-input" maxlength="60" required autocomplete="off" placeholder="思いついたものや、場面を入れてね"><button class="btn btn-primary btn-full" type="submit">ヒントを出す</button></form><p class="km-muted">この画面は共有せず、「共有画面を開く」の画面を見せてね。</p></section>
+        <section id="hint-area" class="km-hint" hidden><p class="km-eyebrow">出題者のヒント</p><h2 id="hint-text"></h2></section>
+        <section id="vote-area" hidden><p>出題者はどの数字を思い浮かべたかな？</p><div id="choices" class="km-scale" role="group" aria-label="1から5を選ぶ"></div><p id="answer-note" role="status"></p><button id="pass" class="btn btn-ghost">今回はパス</button></section>
+        <section id="result-area" hidden><p class="km-result-lead">出題者の数字は <strong id="result-number"></strong></p><div id="result-columns" class="km-results"></div><p id="other-answers" class="km-muted"></p><p class="km-talk">「私はこのくらいに感じたよ」<br>ことばから思い浮かべたものを、話してみよう。</p></section>
+        <div id="progress-area" hidden><p id="progress" role="status"></p><button id="reveal" class="btn btn-primary btn-full" hidden>一斉に公開</button></div>
+        <div id="host-reset" hidden><button id="reset" class="btn btn-ghost">このラウンドをやり直す</button></div>
+      </section>
+      <aside class="km-people"><h2>参加している人</h2><ul id="players"></ul></aside>
+      <button id="leave" class="btn btn-ghost">退出する</button>
+    </div>
+    <p id="message" role="alert"></p>
+  </main>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+<script src="../shared/js/rtdb-utils.js?v=20261005"></script>
+<script>
+/* Firebase transport for the permanent edition. UI state is filtered here;
+   underlying RTDB data follows room-K's documented UI-level secrecy policy. */
+window.MeterCloud = (() => {
+  const PREFIX = 'kotobameter_rooms';
+  const ORPHAN_TTL_MS = 2 * 60 * 1000;
+  const THEMES = [
+    { name: '大きさ', low: '小さい', high: 'とても大きい' },
+    { name: 'やわらかさ', low: '少しやわらかい', high: 'とてもやわらかい' },
+    { name: 'あたたかさ', low: '少しあたたかい', high: 'とてもあたたかい' },
+  ];
+  let db, authReady, setupError;
+  try {
+    ({ db, authReady } = RoomkRTDB.initFirebase(firebase));
+    authReady = authReady.catch(error => { setupError = error; return null; });
+  } catch (error) { setupError = error; }
+  let current = null, generation = 0, online = false;
+  if (db) db.ref('.info/connected').on('value', snap => {
+    online = snap.val() === true;
+    if (current) {
+      current.ready = false;
+      if (online) void ensurePresence(current).catch(() => {});
+    }
+  });
+  function fail(text, status = 400) { const error = new Error(text); error.status = status; return error; }
+  const now = () => RoomkRTDB.now();
+  const stamp = () => firebase.database.ServerValue.TIMESTAMP;
+  const expired = room => !!room && (!room.status || RoomkRTDB.isRoomExpired(room, ORPHAN_TTL_MS));
+  const own = (room, session) => session && session.token === firebase.auth().currentUser?.uid
+    && room.players?.[session.id]?.uid === session.token
+    && ((session.role === 'host' && room.host === session.id) || (session.role === 'guest' && room.host !== session.id));
+  function validateCode(value) {
+    const code = String(value || '').normalize('NFKC').replace(/\s/g, '').toUpperCase();
+    if (!/^[A-HJ-NP-Z2-9]{6}$/.test(code)) throw fail('ルームコードは英字と数字の6文字だよ。キーボードを英字に切り替えてね。');
+    return code;
+  }
+  function validateName(value) {
+    const name = String(value || '').normalize('NFKC').trim();
+    if (!name || [...name].length > 8 || /[\x00-\x1f]/.test(name)) throw fail('ニックネームは1〜8文字で入れてね。');
+    return name;
+  }
+  async function authenticated() {
+    if (setupError || !authReady) throw fail('接続の準備に失敗しました。ページを再読み込みしてね。', 503);
+    await authReady;
+    if (setupError || !firebase.auth().currentUser) throw fail('認証できませんでした。ページを再読み込みしてね。', 503);
+    // The connected event can arrive just after authentication.
+    if (!online) await new Promise((resolve, reject) => {
+      const ref = db.ref('.info/connected');
+      const cb = snap => { if (snap.val() === true) { clearTimeout(timer); ref.off('value', cb); resolve(); } };
+      const timer = setTimeout(() => { ref.off('value', cb); reject(new Error('offline')); }, 5000);
+      ref.on('value', cb);
+    });
+  }
+  async function transactRetry(ref, update) {
+    for (let attempt = 0; ; attempt++) {
+      try { return await ref.transaction(update, undefined, false); }
+      catch (error) { if (error?.message !== 'disconnect' || attempt >= 3) throw error; }
+    }
+  }
+  function warmRoomCache(ref) {
+    return new Promise((resolve, reject) => {
+      const cb = snap => resolve({ snap, release: () => ref.off('value', cb) });
+      ref.on('value', cb, reject);
+    });
+  }
+  async function cleanup(ref) {
+    await RoomkRTDB.cancelRoomOnDisconnect(ref);
+    await ref.transaction(room => expired(room) ? null : undefined, undefined, false);
+  }
+  async function detach() {
+    const old = current;
+    current = null; generation++;
+    if (!old) return;
+    old.leaving = true;
+    old.ref.off('value', old.listener);
+    if (online) {
+      await old.pending?.catch(() => {});
+      await RoomkRTDB.cancelRoomOnDisconnect(old.ref);
+    }
+    if (online && old.connectionRef) {
+      await old.connectionRef.onDisconnect().cancel();
+      await old.connectionRef.remove();
+    }
+  }
+  async function attach(code, session, watch) {
+    if (current && current.code === code && current.session?.id === session?.id && current.watch === watch) return current;
+    await detach();
+    const ref = db.ref(`${PREFIX}/${code}`);
+    const ctx = { code, ref, session, watch, data: null, error: null, ready: false, pending: null, connectionRef: null, generation: ++generation };
+    current = ctx;
+    await new Promise((resolve, reject) => {
+      ctx.listener = snap => { ctx.data = snap.val(); resolve(); };
+      ref.on('value', ctx.listener, error => { ctx.error = error; reject(error); });
+    });
+    if (!ctx.data) throw fail('ルームが見つかりません。終了したようです。', 410);
+    if (expired(ctx.data)) { await cleanup(ref); throw fail('接続が切れたまま2分たったため、ルームを終了しました。', 410); }
+    if (!watch && !own(ctx.data, session)) throw fail('参加の情報が見つかりません。もう一度参加してね。', 401);
+    await ensurePresence(ctx);
+    return ctx;
+  }
+  async function ensurePresence(ctx) {
+    if (ctx !== current || !online || ctx.leaving) throw new Error('offline');
+    if (ctx.watch) { ctx.ready = true; return; }
+    if (ctx.pending) return ctx.pending;
+    ctx.pending = (async () => {
+      const session = ctx.session;
+      if (!own(ctx.data || {}, session)) throw fail('参加の情報が見つかりません。もう一度参加してね。', 401);
+      const connectionRef = ctx.ref.child(`players/${session.id}/connections`).push();
+      // Reserve only a new unique connection node. Existing player data is retained for reconnects.
+      await connectionRef.onDisconnect().remove();
+      if (ctx !== current || ctx.leaving || !online) {
+        await connectionRef.onDisconnect().cancel();
+        throw new Error('offline');
+      }
+      if (session.role === 'host') {
+        await ctx.ref.onDisconnect().update({ hostConnected: false, hostDisconnectedAt: stamp() });
+      }
+      const previous = ctx.connectionRef;
+      const result = await transactRetry(ctx.ref, room => {
+        if (ctx !== current || ctx.leaving || !online || !room || expired(room) || !own(room, session)) return;
+        const player = room.players[session.id];
+        player.connections = { ...(player.connections || {}), [connectionRef.key]: true };
+        if (session.role === 'host') { room.hostConnected = true; delete room.hostDisconnectedAt; }
+        return room;
+      });
+      if (!result.committed) { await connectionRef.onDisconnect().cancel(); throw fail('ルームに戻れませんでした。終了した可能性があります。', 410); }
+      ctx.connectionRef = connectionRef;
+      ctx.data = result.snapshot.val();
+      if (previous && previous.key !== connectionRef.key) { await previous.onDisconnect().cancel(); await previous.remove(); }
+      ctx.ready = online && ctx === current;
+    })();
+    try { await ctx.pending; } finally { ctx.pending = null; }
+  }
+  function view(ctx) {
+    const room = ctx.data, me = ctx.watch ? null : ctx.session.id;
+    const answers = room.answers || {}, result = room.status === 'result';
+    const players = Object.entries(room.players || {}).map(([id, p]) => ({ id, name: p.name,
+      online: Object.keys(p.connections || {}).length > 0, answered: Object.hasOwn(answers, id) }));
+    return { code: ctx.code, me, host: room.host, phase: room.status, round: room.round,
+      theme: room.theme, themes: THEMES, presenter: room.presenter || null, hint: room.hint || '', players,
+      secret: me === room.presenter || result ? room.secret : null,
+      mine: answers[me] === 0 ? null : answers[me] ?? null,
+      hasAnswer: Object.hasOwn(answers, me),
+      answers: result ? Object.fromEntries(Object.entries(answers).map(([id, n]) => [id, n === 0 ? null : n])) : null };
+  }
+  async function read(code, session, watch) {
+    await authenticated();
+    const ctx = await attach(validateCode(code), session, watch);
+    if (ctx.error) throw ctx.error;
+    if (!ctx.data) throw fail('ルームが閉じられました。', 410);
+    if (expired(ctx.data)) { await cleanup(ctx.ref); throw fail('接続が切れたまま2分たったため、ルームを終了しました。', 410); }
+    if (!watch && !own(ctx.data, session)) throw fail('参加の情報が見つかりません。もう一度参加してね。', 401);
+    if (!ctx.ready || (!watch && session.role === 'host' && ctx.data.hostConnected === false)) await ensurePresence(ctx);
+    if (ctx.data.hostConnected === false) throw fail('進行役との接続が切れています。戻るまで待ってね。', 503);
+    return { state: view(ctx) };
+  }
+  async function create(name) {
+    name = validateName(name);
+    const uid = firebase.auth().currentUser.uid, id = crypto.randomUUID(), createdAt = now();
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const code = RoomkRTDB.generateRoomCode(), ref = db.ref(`${PREFIX}/${code}`);
+      const initial = { status: 'lobby', host: id, hostUid: uid, hostConnected: false,
+        hostDisconnectedAt: createdAt, createdAt, round: 0, theme: THEMES[0],
+        players: { [id]: { name, uid, isHost: true } } };
+      const result = await transactRetry(ref, room => room ? (room.host === id && room.hostUid === uid ? room : undefined) : initial);
+      if (!result.committed) continue;
+      const session = { code, id, token: uid, role: 'host' };
+      // Persist before presence so an ambiguous disconnect can resume this exact identity.
+      sessionStorage.setItem('roomk-kotoba-meter-cloud-session', JSON.stringify(session));
+      const ctx = await attach(code, session, false);
+      window.RoomkStats?.count('room-create');
+      return { session, state: view(ctx) };
+    }
+    throw fail('ルームを作れませんでした。もう一度ためしてね。');
+  }
+  async function join(code, name) {
+    name = validateName(name); code = validateCode(code);
+    const uid = firebase.auth().currentUser.uid, id = crypto.randomUUID();
+    const ref = db.ref(`${PREFIX}/${code}`), warm = await warmRoomCache(ref);
+    let reason = '';
+    try {
+      if (expired(warm.snap.val())) { await cleanup(ref); throw fail('このルームは終了しました。', 410); }
+      const result = await transactRetry(ref, room => {
+        reason = '';
+        if (!room || expired(room)) { reason = 'ルームが見つかりません。終了したようです。'; return; }
+        if (room.players?.[id]?.uid === uid) return room;
+        if (room.hostConnected === false) { reason = '進行役の接続を待ってから参加してね。'; return; }
+        if (!['lobby', 'result'].includes(room.status)) { reason = '今はラウンドの途中だよ。公開されたあとに参加してね。'; return; }
+        const players = room.players || {};
+        if (Object.values(players).some(p => p.name === name)) { reason = 'そのニックネームは使われているよ。別の名前にしてね。'; return; }
+        if (Object.keys(players).length >= 20) { reason = 'このルームは20人まで参加できるよ。'; return; }
+        room.players = { ...players, [id]: { name, uid, isHost: false } }; return room;
+      });
+      if (!result.committed) throw fail(reason || '参加できませんでした。もう一度ためしてね。');
+      const session = { code, id, token: uid, role: 'guest' };
+      sessionStorage.setItem('roomk-kotoba-meter-cloud-session', JSON.stringify(session));
+      const ctx = await attach(code, session, false);
+      return { session, state: view(ctx) };
+    } finally { warm.release(); }
+  }
+  async function mutate(data, session) {
+    const ctx = await attach(validateCode(data.code), session, false);
+    if (!online || !ctx.ready) throw new Error('offline');
+    const host = session.role === 'host', action = data.action;
+    if (['start', 'reveal', 'reset'].includes(action) && !host) throw fail('この操作は進行役が行います。', 403);
+    if (action === 'leave') {
+      ctx.leaving = true;
+      await ctx.pending?.catch(() => {});
+      await RoomkRTDB.cancelRoomOnDisconnect(ctx.ref);
+      try {
+        const result = await ctx.ref.transaction(room => {
+          if (!room) return room;
+          if (!own(room, session)) return;
+          if (host) return null;
+          delete room.players[session.id];
+          if (room.answers) delete room.answers[session.id];
+          if (room.presenter === session.id && room.status !== 'result') reset(room);
+          return room;
+        }, undefined, false);
+        if (!result.committed && result.snapshot.exists()) throw fail('退出できませんでした。もう一度ためしてね。');
+        await detach();
+        return { left: true };
+      } catch (error) { ctx.leaving = false; ctx.ready = false; await ensurePresence(ctx).catch(() => {}); throw error; }
+    }
+    let reason = '', previousStatus;
+    const secret = Math.floor(Math.random() * 5) + 1;
+    const result = await ctx.ref.transaction(room => {
+      reason = '';
+      if (!online || !room || expired(room) || !own(room, session)) { reason = '接続や参加の情報を確認してね。'; return; }
+      if (room.hostConnected === false) { reason = '進行役の接続を待ってね。'; return; }
+      if (room.round !== data.round) { reason = 'ラウンドが変わったよ。画面を確認してね。'; return; }
+      previousStatus = room.status;
+      if (action === 'start') {
+        if (!['lobby', 'result'].includes(room.status)) { reason = '今のラウンドを終えてから始めてね。'; return; }
+        if (!Number.isInteger(data.theme) || !THEMES[data.theme] || !room.players[data.presenter]) { reason = 'お題と出題者を選んでね。'; return; }
+        if (Object.keys(room.players).length < 2) { reason = '2人そろったら始められるよ。'; return; }
+        if (!Object.keys(room.players[data.presenter].connections || {}).length) { reason = '出題者の接続を待ってね。'; return; }
+        room.status = 'hint'; room.round++; room.theme = THEMES[data.theme]; room.presenter = data.presenter;
+        room.secret = secret; delete room.hint; delete room.answers;
+      } else if (action === 'hint') {
+        if (room.status !== 'hint' || room.presenter !== session.id) { reason = '今はヒントを出せません。'; return; }
+        if (typeof data.hint !== 'string' || !data.hint.trim() || [...data.hint.trim()].length > 60) { reason = 'ヒントは1〜60文字で入れてね。'; return; }
+        room.hint = data.hint.trim(); room.status = 'vote';
+      } else if (action === 'answer') {
+        if (room.status !== 'vote' || room.presenter === session.id) { reason = '今は回答できません。'; return; }
+        if (data.value !== null && (!Number.isInteger(data.value) || data.value < 1 || data.value > 5)) { reason = '1〜5かパスを選んでね。'; return; }
+        room.answers = { ...(room.answers || {}), [session.id]: data.value === null ? 0 : data.value };
+      } else if (action === 'reveal') {
+        if (room.status !== 'vote') { reason = 'ヒントが出てから公開してね。'; return; }
+        room.status = 'result';
+      } else if (action === 'reset') reset(room);
+      else { reason = '操作が見つかりません。'; return; }
+      return room;
+    }, undefined, false);
+    if (!result.committed) throw fail(reason || '操作できませんでした。画面を確認してね。', 409);
+    ctx.data = result.snapshot.val();
+    if (action === 'start') {
+      if (previousStatus === 'result') window.RoomkStats?.count('again');
+      window.RoomkStats?.count('start');
+      window.RoomkStats?.count(`players-${Object.keys(ctx.data.players).length}`);
+    } else if (action === 'reveal') window.RoomkStats?.count('finish');
+    return { state: view(ctx) };
+  }
+  function reset(room) {
+    room.status = 'lobby'; room.round++;
+    delete room.presenter; delete room.secret; delete room.hint; delete room.answers;
+  }
+  return {
+    disconnect: () => { void detach().catch(() => {}); },
+    async request(path, data, session, watch) {
+      await authenticated();
+      if (!data) return read(new URL(path, location.origin).searchParams.get('code'), session, watch);
+      if (data.action === 'create') return create(data.name);
+      if (data.action === 'join') return join(data.code, data.name);
+      if (!session || watch) throw fail('先にルームに参加してね。', 401);
+      return mutate(data, session);
+    },
+  };
+})();
+
+'use strict';
+const $ = id => document.getElementById(id);
+const show = (id, visible) => { $(id).hidden = !visible; };
+const say = text => { $('message').textContent = text; };
+const key = window.MeterCloud ? 'roomk-kotoba-meter-cloud-session' : 'roomk-kotoba-meter-session';
+const params = new URLSearchParams(location.search);
+const normalizeCode = value => value.normalize('NFKC').replace(/\s/g, '').toUpperCase();
+const watch = params.has('watch');
+document.body.classList.toggle('km-watch', watch);
+let code = normalizeCode(params.get(watch ? 'watch' : 'room') || '');
+let session = null, state = null, busy = false, polling = false, online = true, seq = 0;
+let pollTimer = null;
+function startPolling() { clearInterval(pollTimer); pollTimer = setInterval(poll, 1000); }
+function stopPolling() { clearInterval(pollTimer); pollTimer = null; }
+let joinMode = !!code, lastPhase = '', lastRoster = '';
+try { if (!watch) session = JSON.parse(sessionStorage.getItem(key)); } catch { /* Storage may be unavailable. */ }
+if (session && (!session.token || !session.code || (code && code !== session.code))) session = null;
+if (session) code = session.code;
+
+function saveSession(value) {
+  session = value;
+  try { value ? sessionStorage.setItem(key, JSON.stringify(value)) : sessionStorage.removeItem(key); }
+  catch { say('このブラウザでは再読み込みすると参加し直しになります。'); }
+}
+function entry() {
+  show('front', true); show('game', false);
+  show('code-field', joinMode);
+  $('join-code').required = joinMode;
+  $('join-code').value = code;
+  $('enter').textContent = joinMode ? '参加する' : 'ルームを作る';
+  $('entry-toggle').textContent = joinMode ? 'ルームを作る画面へ' : 'ルームに参加する';
+  $('entry-note').textContent = joinMode && code ? 'リンクから開いたので、コードは入っているよ。' : '';
+}
+function controls() {
+  document.querySelectorAll('#game button, #game input, #game select').forEach(el => { el.disabled = busy || !online; });
+  $('start').disabled = busy || !online || (state && state.players.length < 2);
+  $('enter').disabled = busy;
+  $('entry-toggle').disabled = busy;
+}
+async function request(path, payload) {
+  if (window.MeterCloud) return window.MeterCloud.request(path, payload, session, watch);
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 6000);
+  try {
+    const headers = {};
+    if (session && !watch) headers.Authorization = `Bearer ${session.token}`;
+    if (payload) headers['Content-Type'] = 'application/json';
+    const response = await fetch(path, { method: payload ? 'POST' : 'GET', headers,
+      body: payload ? JSON.stringify(payload) : undefined, signal: controller.signal, cache: 'no-store' });
+    const result = await response.json();
+    if (!response.ok) { const error = new Error(result.error); error.status = response.status; throw error; }
+    return result;
+  } finally { clearTimeout(timeout); }
+}
+function disconnected() {
+  online = false;
+  $('connection').textContent = '接続を確認しています。つながると自動で戻ります。';
+  show('connection', true); controls();
+}
+function ended(message) {
+  stopPolling();
+  window.MeterCloud?.disconnect();
+  saveSession(null); state = null; seq++; lastPhase = ''; lastRoster = '';
+  if (watch) {
+    show('front', false); show('game', false);
+    say(message);
+  } else { joinMode = true; entry(); say(message); }
+}
+async function poll() {
+  if ((!session && !watch) || polling || busy || !code) return;
+  polling = true;
+  const requestSeq = ++seq;
+  try {
+    const result = await request(`/api/state?code=${encodeURIComponent(code)}`);
+    if (seq === requestSeq) { online = true; show('connection', false); render(result.state); }
+  } catch (error) {
+    if (seq !== requestSeq) return;
+    if ([401, 410].includes(error.status)) { ended(error.message); if (watch) code = ''; }
+    else disconnected();
+  } finally { polling = false; }
+}
+async function act(action, extra = {}) {
+  if (busy) return;
+  busy = true; ++seq; controls(); say('');
+  try {
+    const result = await request('/api/action', { action, code, round: state?.round, ...extra });
+    online = true; show('connection', false);
+    if (result.session) {
+      saveSession(result.session); code = result.session.code;
+      startPolling();
+      history.replaceState(null, '', location.pathname);
+    }
+    if (result.left) { stopPolling(); saveSession(null); state = null; code = ''; joinMode = false; lastPhase = ''; lastRoster = ''; entry(); }
+    if (result.state) render(result.state);
+  } catch (error) {
+    if ([401, 410].includes(error.status) && session) ended(error.message);
+    else {
+      say(error.status ? error.message : 'つながりませんでした。接続を確認してね。');
+      if (!error.status && state) disconnected();
+    }
+  } finally { busy = false; controls(); }
+}
+function playerName(id) { return state.players.find(p => p.id === id)?.name || '退出した人'; }
+function option(value, label) { const el = document.createElement('option'); el.value = value; el.textContent = label; return el; }
+function render(next) {
+  const previousRound = state?.round;
+  state = next;
+  const host = !watch && state.me === state.host;
+  const presenter = !watch && state.me === state.presenter;
+  const lobby = state.phase === 'lobby', hint = state.phase === 'hint', vote = state.phase === 'vote', result = state.phase === 'result';
+  show('front', false); show('game', true); show('room-actions', !watch); show('leave', !watch);
+  $('room-code').textContent = state.code;
+  $('my-role').textContent = watch ? '共有画面' : host ? '進行役' : '参加者';
+  $('watch-link').href = `?watch=${encodeURIComponent(code)}`;
+  $('leave').textContent = host ? 'ルームを閉じる' : '退出する';
+  $('phase-label').textContent = lobby ? 'みんなで準備' : `ラウンド ${state.round}`;
+  $('phase-title').textContent = lobby ? 'みんながそろったら始めよう' : hint ? 'どんなことばにしよう？' : vote ? 'このヒント、どれくらい？' : 'みんなには、こう感じた！';
+  $('phase-note').textContent = lobby ? (host ? 'お題と出題者を選んでね。最初は進行役が出題者だよ。' : '進行役が始めるまで待ってね。') : hint ? `${playerName(state.presenter)}さんがヒントを考えているよ。` : vote ? '公開するまで、ほかの人の数字は秘密。' : '数字は出題者の感覚。違う感じ方も楽しもう。';
+  show('theme-card', !lobby);
+  $('theme-name').textContent = state.theme.name;
+  $('low').textContent = `1 = ${state.theme.low}`; $('high').textContent = `5 = ${state.theme.high}`;
+  show('setup', host && (lobby || result));
+  $('start').textContent = result ? '次のラウンドを始める' : 'ラウンドを始める';
+  // Keep draft input, selections and focus stable while polling.
+  if (!$('theme-select').options.length) state.themes.forEach((t, i) => $('theme-select').append(option(i, t.name)));
+  const roster = JSON.stringify(state.players.map(p => [p.id, p.name]));
+  if (roster !== lastRoster) {
+    const selected = $('presenter-select').value || state.host;
+    $('presenter-select').replaceChildren(...state.players.map(p => option(p.id, p.name)));
+    $('presenter-select').value = state.players.some(p => p.id === selected) ? selected : state.host;
+    lastRoster = roster;
+  }
+  show('secret-area', hint && presenter);
+  $('secret-number').textContent = presenter ? String(state.secret ?? '') : '';
+  if (previousRound !== state.round) $('hint-input').value = '';
+  show('hint-area', vote || result); $('hint-text').textContent = state.hint;
+  show('vote-area', vote && !presenter && !watch);
+  document.querySelectorAll('#choices button').forEach(b => b.setAttribute('aria-pressed', String(state.hasAnswer && state.mine === Number(b.value))));
+  $('pass').setAttribute('aria-pressed', String(state.hasAnswer && state.mine === null));
+  $('answer-note').textContent = state.hasAnswer ? (state.mine === null ? '今回はパス。公開前なら数字も選べるよ。' : `${state.mine} を選んだよ。公開前なら選び直せるよ。`) : '数字をタップすると回答できるよ。';
+  const voters = state.players.filter(p => p.id !== state.presenter);
+  $('progress').textContent = `${voters.filter(p => p.answered).length} / ${voters.length} 人が回答済み（パスを含む）`;
+  show('progress-area', vote); show('reveal', host && vote);
+  show('host-reset', host && (hint || vote));
+  show('result-area', result);
+  if (result) {
+    $('result-number').textContent = state.secret;
+    $('result-columns').replaceChildren(...[1, 2, 3, 4, 5].map(n => {
+      const col = document.createElement('div'); col.className = 'km-column' + (n === state.secret ? ' km-target' : '');
+      const heading = document.createElement('h3'); heading.textContent = n; col.append(heading);
+      if (n === state.secret) { const label = document.createElement('small'); label.textContent = '出題者'; col.append(label); }
+      voters.filter(p => state.answers[p.id] === n).forEach(p => { const el = document.createElement('p'); el.textContent = p.name; col.append(el); });
+      return col;
+    }));
+    const skipped = voters.filter(p => state.answers[p.id] === null).map(p => p.name);
+    const pending = voters.filter(p => !Object.hasOwn(state.answers, p.id)).map(p => p.name);
+    $('other-answers').textContent = [skipped.length ? `パス：${skipped.join('、')}` : '', pending.length ? `未回答：${pending.join('、')}` : ''].filter(Boolean).join(' ／ ');
+  }
+  $('players').replaceChildren(...state.players.map(p => {
+    const li = document.createElement('li');
+    const tags = [p.id === state.host ? '進行役' : '', p.id === state.presenter && !lobby ? '出題者' : '', !p.online ? '接続待ち' : '', vote && p.answered ? '回答済み' : ''].filter(Boolean);
+    li.textContent = p.name + (tags.length ? `（${tags.join('・')}）` : ''); return li;
+  }));
+  controls();
+  if (lastPhase !== `${state.round}:${state.phase}`) {
+    lastPhase = `${state.round}:${state.phase}`;
+    $('phase-title').focus({ preventScroll: true });
+  }
+}
+for (let n = 1; n <= 5; n++) {
+  const button = document.createElement('button'); button.type = 'button'; button.value = n;
+  button.textContent = n; button.setAttribute('aria-pressed', 'false'); button.setAttribute('aria-label', `${n}を選ぶ`);
+  button.addEventListener('click', () => act('answer', { value: n })); $('choices').append(button);
+}
+$('entry-form').addEventListener('submit', event => {
+  event.preventDefault(); code = joinMode ? normalizeCode($('join-code').value) : '';
+  act(joinMode ? 'join' : 'create', { name: $('nickname').value });
+});
+$('entry-toggle').addEventListener('click', () => { joinMode = !joinMode; entry(); });
+$('start').addEventListener('click', () => act('start', { theme: Number($('theme-select').value), presenter: $('presenter-select').value }));
+$('hint-form').addEventListener('submit', event => { event.preventDefault(); act('hint', { hint: $('hint-input').value }); });
+$('pass').addEventListener('click', () => act('answer', { value: null }));
+$('reveal').addEventListener('click', () => {
+  const pending = state.players.filter(p => p.id !== state.presenter && !p.answered).length;
+  if (pending && !confirm(`まだ${pending}人が回答していないよ。このまま公開する？`)) return;
+  act('reveal');
+});
+$('reset').addEventListener('click', () => { if (confirm('今のヒントと回答を取り消して、お題と出題者を選び直す？')) act('reset'); });
+$('leave').addEventListener('click', () => {
+  if (confirm(state.me === state.host ? '全員のルームを閉じますか？' : 'ルームから退出する？')) act('leave');
+});
+async function copy(text) {
+  try { await navigator.clipboard.writeText(text); say('コピーしました。'); }
+  catch { say(`コピーできませんでした。この文字を選んで伝えてね：${text}`); }
+}
+$('copy-code').addEventListener('click', () => copy(code));
+$('copy-link').addEventListener('click', () => copy(`${location.origin}${location.pathname}?room=${encodeURIComponent(code)}`));
+
+window.addEventListener('offline', disconnected);
+window.addEventListener('online', poll);
+if (session || watch) {
+  show('front', false); show('game', true);
+  $('phase-title').textContent = 'ルームにつないでいます';
+  poll();
+  startPolling();
+} else entry();
+
+</script>
+<script src="../shared/js/stats.js?v=1" defer></script>
+<script src="../shared/js/howto.js"></script>
+<script>RoomkHowto.init({"title": "あそびかた", "lead": "ヒントのことばから、出題者が思い浮かべた1〜5の数字を予想するよ。数字は出題者の感覚。違う感じ方も楽しもう。", "sections": [{"heading": "はじめかた", "items": ["ニックネームを入れて「ルームを作る」。ほかの人は「ルームに参加する」からニックネーム・ルームコードを入れ、「参加する」を押す。", "コードは「コードをコピー」、参加用リンクは「リンクをコピー」で送れるよ。リンクから開くとコードが入っているよ。", "進行役がお題と出題者を選んで「ラウンドを始める」を押す。"]}, {"heading": "ヒントと予想", "items": ["出題者は秘密の数字を見て、その程度だと思うことばを「ヒントを出す」で送る。", "ほかの人は1〜5をタップ。公開前なら選び直せるし、「今回はパス」もできるよ。", "「共有画面を開く」で、みんなに見せられる画面が別に開くよ。"]}, {"heading": "公開する", "items": ["進行役が「一斉に公開」を押すと、みんなの数字が見えるよ。出題者の数字は、ことばの意味の唯一の正解ではないよ。", "「次のラウンドを始める」で続けられるよ。出題者も交代できるよ。", "参加者は「退出する」、進行役は「ルームを閉じる」で終わる。"]}]});</script>
+</body>
+</html>
