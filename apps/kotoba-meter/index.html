@@ -125,7 +125,7 @@ dialog li { margin: 16px 0; line-height: 1.8; }
       <section class="km-panel">
         <p id="phase-label" class="km-eyebrow"></p><h1 id="phase-title" tabindex="-1"></h1><p id="phase-note" class="km-muted"></p>
         <section id="theme-card" class="km-theme" hidden><p class="km-eyebrow">お題</p><h2 id="theme-name"></h2><div class="km-endpoints"><span id="low"></span><span id="high"></span></div></section>
-        <section id="setup" hidden><div class="km-fields"><div><label for="hint-seconds">出題者の制限時間</label><select id="hint-seconds"><option value="0">なし</option><option value="30">30秒</option><option value="60">1分</option><option value="120">2分</option><option value="180">3分</option></select></div><div><label for="presenter-select">出題者を選ぶ</label><select id="presenter-select"></select></div></div><p class="km-muted">お題はランダム。出題者はヒントを送る前に変更できるよ。時間切れになると、同じ出題者で次のお題に進むよ。</p><button id="start" class="btn btn-primary btn-full">ラウンドを始める</button></section>
+        <section id="setup" hidden><div class="km-fields"><div><label for="hint-seconds">出題者の制限時間</label><select id="hint-seconds"><option value="0">なし</option><option value="30">30秒</option><option value="60">1分</option><option value="120">2分</option><option value="180">3分</option></select></div><div><label for="presenter-select">出題者を選ぶ</label><select id="presenter-select"></select></div></div><p class="km-muted">お題はランダム。出題者はヒントを送る前に変更できるよ。出題者は参加した順に自動交代。進行役は開始前に変更できるよ。時間切れでも次の人へ進むよ。</p><button id="start" class="btn btn-primary btn-full">ラウンドを始める</button></section>
         <p id="hint-timer" role="timer" hidden></p><section id="secret-area" hidden><details id="theme-change" class="km-examples"><summary>お題を変更する</summary><label for="theme-select">別のお題を選ぶ</label><select id="theme-select"></select><button id="change-theme" class="btn btn-secondary" type="button">このお題に変更</button><p class="km-muted">秘密の数字と残り時間は変わらないよ。</p></details><div class="km-secret"><span>あなただけの秘密の数字</span><strong id="secret-number"></strong><p>この数字くらいだと思うことばを考えよう。</p></div><details id="hint-examples" class="km-examples"><summary>ヒント例を見る（出題者だけ）</summary><p>数字は正解ではなく、感じ方の一例だよ。同じヒントを別の数字で使っても大丈夫。自分が思い浮かべたものや場面で考えてね。</p><ul id="hint-example-list"></ul></details><form id="hint-form"><label for="hint-input">ヒント（60文字まで）</label><input id="hint-input" maxlength="60" required autocomplete="off" placeholder="思いついたものや、場面を入れてね"><button class="btn btn-primary btn-full" type="submit">ヒントを出す</button></form><p class="km-muted">この画面は共有せず、「共有画面を開く」の画面を見せてね。</p></section>
         <section id="hint-area" class="km-hint" hidden><p class="km-eyebrow">出題者のヒント</p><h2 id="hint-text"></h2></section>
         <section id="vote-area" hidden><p>出題者はどの数字を思い浮かべたかな？</p><div id="choices" class="km-scale" role="group" aria-label="1から5を選ぶ"></div><p id="answer-note" role="status"></p><button id="pass" class="btn btn-ghost">今回はパス</button></section>
@@ -158,6 +158,21 @@ window.MeterCloud = (() => {
     { name: '甘さ', low: '少し甘い', high: 'とても甘い' },
     { name: 'わくわく感', low: '少しわくわく', high: 'とてもわくわく' },
   ];
+  // 退出したIDも順番の目印として残す。再参加は新しいIDで末尾に加わる。
+  function presenterOrder(room) {
+    const saved = Array.isArray(room.playerOrder) ? room.playerOrder : [];
+    const missing = Object.keys(room.players || {}).filter(id => !saved.includes(id))
+      .sort((a, b) => a === room.host ? -1 : b === room.host ? 1 : a.localeCompare(b));
+    return [...saved, ...missing];
+  }
+  function nextPresenter(room) {
+    const order = presenterOrder(room), after = order.indexOf(room.rotationAfter);
+    for (let step = 1; step <= order.length; step++) {
+      const id = order[(after + step) % order.length];
+      if (room.players?.[id]) return id;
+    }
+    return null;
+  }
   const HINT_SECONDS = [0, 30, 60, 120, 180];
   function randomTheme(previous, draw) {
     const choices = THEMES.filter(t => t.name !== previous?.name);
@@ -290,10 +305,12 @@ window.MeterCloud = (() => {
   function view(ctx) {
     const room = ctx.data, me = ctx.watch ? null : ctx.session.id;
     const answers = room.answers || {}, result = room.status === 'result';
-    const players = Object.entries(room.players || {}).map(([id, p]) => ({ id, name: p.name,
-      online: Object.keys(p.connections || {}).length > 0, answered: Object.hasOwn(answers, id) }));
+    const players = presenterOrder(room).filter(id => room.players?.[id]).map(id => {
+      const p = room.players[id];
+      return { id, name: p.name, online: Object.keys(p.connections || {}).length > 0, answered: Object.hasOwn(answers, id) };
+    });
     return { code: ctx.code, me, host: room.host, phase: room.status, round: room.round,
-      hintSeconds: room.hintSeconds || 0, hintStartedAt: room.hintStartedAt || null, timedOut: !!room.timedOut,
+      nextPresenter: nextPresenter(room), hintSeconds: room.hintSeconds || 0, hintStartedAt: room.hintStartedAt || null, timedOut: !!room.timedOut,
       theme: room.theme, themes: THEMES, presenter: room.presenter || null, hint: room.hint || '', players,
       secret: me === room.presenter || result ? room.secret : null,
       mine: answers[me] === 0 ? null : answers[me] ?? null,
@@ -317,7 +334,7 @@ window.MeterCloud = (() => {
     for (let attempt = 0; attempt < 5; attempt++) {
       const code = RoomkRTDB.generateRoomCode(), ref = db.ref(`${PREFIX}/${code}`);
       const initial = { status: 'lobby', host: id, hostUid: uid, hostConnected: false,
-        hostDisconnectedAt: createdAt, createdAt, round: 0, theme: THEMES[0],
+        hostDisconnectedAt: createdAt, createdAt, round: 0, theme: THEMES[0], playerOrder: [id],
         players: { [id]: { name, uid, isHost: true } } };
       const result = await transactRetry(ref, room => room ? (room.host === id && room.hostUid === uid ? room : undefined) : initial);
       if (!result.committed) continue;
@@ -346,6 +363,7 @@ window.MeterCloud = (() => {
         const players = room.players || {};
         if (Object.values(players).some(p => p.name === name)) { reason = 'そのニックネームは使われているよ。別の名前にしてね。'; return; }
         if (Object.keys(players).length >= 20) { reason = 'このルームは20人まで参加できるよ。'; return; }
+        room.playerOrder = [...presenterOrder(room), id];
         room.players = { ...players, [id]: { name, uid, isHost: false } }; return room;
       });
       if (!result.committed) throw fail(reason || '参加できませんでした。もう一度ためしてね。');
@@ -388,6 +406,7 @@ window.MeterCloud = (() => {
       if (room.hostConnected === false) { reason = '進行役の接続を待ってね。'; return; }
       if (room.round !== data.round) { reason = 'ラウンドが変わったよ。画面を確認してね。'; return; }
       previousStatus = room.status;
+      room.playerOrder = presenterOrder(room);
       if (action === 'start') {
         if (!['lobby', 'result'].includes(room.status)) { reason = '今のラウンドを終えてから始めてね。'; return; }
         if (!room.players[data.presenter] || !HINT_SECONDS.includes(data.hintSeconds)) { reason = '出題者と制限時間を選んでね。'; return; }
@@ -398,10 +417,12 @@ window.MeterCloud = (() => {
         room.secret = secret; delete room.hint; delete room.answers;
       } else if (action === 'timeout') {
         if (!hintExpired(room)) { reason = 'まだ制限時間内だよ。'; return; }
-        if (Object.keys(room.players).length < 2 || !Object.keys(room.players[room.presenter]?.connections || {}).length) {
+        room.rotationAfter = room.presenter;
+        const upcoming = nextPresenter(room);
+        if (Object.keys(room.players).length < 2 || !Object.keys(room.players[upcoming]?.connections || {}).length) {
           reset(room);
         } else {
-          room.round++; room.theme = randomTheme(room.theme, themeDraw); room.secret = secret;
+          room.round++; room.presenter = upcoming; room.theme = randomTheme(room.theme, themeDraw); room.secret = secret;
           room.hintStartedAt = stamp(); delete room.hint; delete room.answers;
         }
         room.timedOut = true;
@@ -420,7 +441,7 @@ window.MeterCloud = (() => {
         room.answers = { ...(room.answers || {}), [session.id]: data.value === null ? 0 : data.value };
       } else if (action === 'reveal') {
         if (room.status !== 'vote') { reason = 'ヒントが出てから公開してね。'; return; }
-        room.status = 'result';
+        room.rotationAfter = room.presenter; room.status = 'result';
       } else if (action === 'reset') reset(room);
       else { reason = '操作が見つかりません。'; return; }
       return room;
@@ -601,10 +622,11 @@ function render(next) {
   // Keep draft input, selections and focus stable while polling.
   if (!$('theme-select').options.length) state.themes.forEach((t, i) => $('theme-select').append(option(i, t.name)));
   const roster = JSON.stringify(state.players.map(p => [p.id, p.name]));
-  if (roster !== lastRoster) {
-    const selected = $('presenter-select').value || state.host;
+  const freshSetup = (lobby || result) && (previousRound !== state.round || previousPhase !== state.phase);
+  if (roster !== lastRoster || freshSetup) {
+    const selected = freshSetup ? state.nextPresenter : $('presenter-select').value || state.nextPresenter;
     $('presenter-select').replaceChildren(...state.players.map(p => option(p.id, p.name)));
-    $('presenter-select').value = state.players.some(p => p.id === selected) ? selected : state.host;
+    $('presenter-select').value = state.players.some(p => p.id === selected) ? selected : state.nextPresenter;
     lastRoster = roster;
   }
   if (previousRound !== state.round || previousTheme !== state.theme.name || previousPresenter !== state.presenter) {
@@ -702,6 +724,6 @@ if (session || watch) {
 </script>
 <script src="../shared/js/stats.js?v=1" defer></script>
 <script src="../shared/js/howto.js"></script>
-<script>RoomkHowto.init({"title": "あそびかた", "lead": "ヒントのことばから、出題者が思い浮かべた1〜5の数字を予想するよ。数字は出題者の感覚。違う感じ方も楽しもう。", "sections": [{"heading": "はじめかた", "items": ["ニックネームを入れて「ルームを作る」。ほかの人は「ルームに参加する」からニックネーム・ルームコードを入れ、「参加する」を押す。", "コードは「コードをコピー」、参加用リンクは「リンクをコピー」で送れるよ。リンクから開くとコードが入っているよ。", "進行役が出題者と制限時間（なし・30秒・1分・2分・3分）を選んで「ラウンドを始める」を押す。お題はランダムで決まるよ。"]}, {"heading": "ヒントと予想", "items": ["出題者は秘密の数字を見て、その程度だと思うことばを「ヒントを出す」で送る。「お題を変更する」から別のお題も選べるよ。変更しても数字と残り時間は変わらないよ。時間切れになると、同じ出題者で次のお題へ進むよ。", "ほかの人は1〜5をタップ。公開前なら選び直せるし、「今回はパス」もできるよ。", "「共有画面を開く」で、みんなに見せられる画面が別に開くよ。"]}, {"heading": "公開する", "items": ["進行役が「回答を締め切って公開」を押すと、まだ回答していない人がいても公開できるよ。締め切ったあとは回答できないよ。出題者の数字は、ことばの意味の唯一の正解ではないよ。", "「次のラウンドを始める」で続けられるよ。出題者も交代できるよ。", "参加者は「退出する」、進行役は「ルームを閉じる」で終わる。"]}]});</script>
+<script>RoomkHowto.init({"title": "あそびかた", "lead": "ヒントのことばから、出題者が思い浮かべた1〜5の数字を予想するよ。数字は出題者の感覚。違う感じ方も楽しもう。", "sections": [{"heading": "はじめかた", "items": ["ニックネームを入れて「ルームを作る」。ほかの人は「ルームに参加する」からニックネーム・ルームコードを入れ、「参加する」を押す。", "コードは「コードをコピー」、参加用リンクは「リンクをコピー」で送れるよ。リンクから開くとコードが入っているよ。", "進行役が出題者と制限時間（なし・30秒・1分・2分・3分）を選んで「ラウンドを始める」を押す。お題はランダムで決まるよ。"]}, {"heading": "ヒントと予想", "items": ["出題者は秘密の数字を見て、その程度だと思うことばを「ヒントを出す」で送る。「お題を変更する」から別のお題も選べるよ。変更しても数字と残り時間は変わらないよ。時間切れになると、参加した順で次の出題者・お題へ進むよ。", "ほかの人は1〜5をタップ。公開前なら選び直せるし、「今回はパス」もできるよ。", "「共有画面を開く」で、みんなに見せられる画面が別に開くよ。"]}, {"heading": "公開する", "items": ["進行役が「回答を締め切って公開」を押すと、まだ回答していない人がいても公開できるよ。締め切ったあとは回答できないよ。出題者の数字は、ことばの意味の唯一の正解ではないよ。", "「次のラウンドを始める」で続けられるよ。次の出題者は参加した順に自動で選ばれるよ。進行役が変更することもできるよ。", "参加者は「退出する」、進行役は「ルームを閉じる」で終わる。"]}]});</script>
 </body>
 </html>
