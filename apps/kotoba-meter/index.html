@@ -36,6 +36,7 @@ form .btn-primary, #start { margin-top: 20px; }
 .km-theme h2 { font-size: 38px; line-height: 1.4; margin: 8px 0 20px; }
 .km-endpoints { display: flex; justify-content: space-between; gap: 16px; color: var(--color-muted); font-size: 14px; text-align: left; }
 .km-endpoints span:last-child { text-align: right; }
+.km-next-presenter { padding: 16px; border-radius: 12px; background: #e7f2f3; color: var(--color-primary); font-size: 20px; font-weight: 700; overflow-wrap: anywhere; }
 .km-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
 .km-secret { background: #f5f3eb; border-radius: 16px; padding: 24px; margin: 24px 0; }
 .km-examples { text-align: left; margin: 20px 0; padding: 12px 16px; border: 1px solid var(--color-primary); border-radius: 12px; }
@@ -125,7 +126,7 @@ dialog li { margin: 16px 0; line-height: 1.8; }
       <section class="km-panel">
         <p id="phase-label" class="km-eyebrow"></p><h1 id="phase-title" tabindex="-1"></h1><p id="phase-note" class="km-muted"></p>
         <section id="theme-card" class="km-theme" hidden><p class="km-eyebrow">お題</p><h2 id="theme-name"></h2><div class="km-endpoints"><span id="low"></span><span id="high"></span></div></section>
-        <section id="setup" hidden><div class="km-fields"><div><label for="hint-seconds">出題者の制限時間</label><select id="hint-seconds"><option value="0">なし</option><option value="30">30秒</option><option value="60">1分</option><option value="120">2分</option><option value="180">3分</option></select></div><div><label for="presenter-select">出題者を選ぶ</label><select id="presenter-select"></select></div></div><p class="km-muted">お題はランダム。出題者はヒントを送る前に変更できるよ。出題者は参加した順に自動交代。進行役は開始前に変更できるよ。時間切れでも次の人へ進むよ。</p><button id="start" class="btn btn-primary btn-full">ラウンドを始める</button></section>
+        <p id="next-presenter" class="km-next-presenter" role="status" hidden></p><section id="setup" hidden><div class="km-fields"><div><label for="hint-seconds">出題者の制限時間</label><select id="hint-seconds"><option value="0">なし</option><option value="30">30秒</option><option value="60">1分</option><option value="120">2分</option><option value="180">3分</option></select></div><div><label for="presenter-select">出題者を選ぶ</label><select id="presenter-select"></select></div></div><p class="km-muted">お題はランダム。出題者はヒントを送る前に変更できるよ。出題者は参加した順に自動交代。進行役は開始前に変更できるよ。時間切れでも次の人へ進むよ。</p><button id="start" class="btn btn-primary btn-full">ラウンドを始める</button></section>
         <p id="hint-timer" role="timer" hidden></p><section id="secret-area" hidden><details id="theme-change" class="km-examples"><summary>お題を変更する</summary><label for="theme-select">別のお題を選ぶ</label><select id="theme-select"></select><button id="change-theme" class="btn btn-secondary" type="button">このお題に変更</button><p class="km-muted">秘密の数字と残り時間は変わらないよ。</p></details><div class="km-secret"><span>あなただけの秘密の数字</span><strong id="secret-number"></strong><p>この数字くらいだと思うことばを考えよう。</p></div><details id="hint-examples" class="km-examples"><summary>ヒント例を見る（出題者だけ）</summary><p>数字は正解ではなく、感じ方の一例だよ。同じヒントを別の数字で使っても大丈夫。自分が思い浮かべたものや場面で考えてね。</p><ul id="hint-example-list"></ul></details><form id="hint-form"><label for="hint-input">ヒント（60文字まで）</label><input id="hint-input" maxlength="60" required autocomplete="off" placeholder="思いついたものや、場面を入れてね"><button class="btn btn-primary btn-full" type="submit">ヒントを出す</button></form><p class="km-muted">この画面は共有せず、「共有画面を開く」の画面を見せてね。</p></section>
         <section id="hint-area" class="km-hint" hidden><p class="km-eyebrow">出題者のヒント</p><h2 id="hint-text"></h2></section>
         <section id="vote-area" hidden><p>出題者はどの数字を思い浮かべたかな？</p><div id="choices" class="km-scale" role="group" aria-label="1から5を選ぶ"></div><p id="answer-note" role="status"></p><button id="pass" class="btn btn-ghost">今回はパス</button></section>
@@ -173,6 +174,7 @@ window.MeterCloud = (() => {
     }
     return null;
   }
+  const plannedPresenter = room => room.players?.[room.pendingPresenter] ? room.pendingPresenter : nextPresenter(room);
   const HINT_SECONDS = [0, 30, 60, 120, 180];
   function randomTheme(previous, draw) {
     const choices = THEMES.filter(t => t.name !== previous?.name);
@@ -310,7 +312,7 @@ window.MeterCloud = (() => {
       return { id, name: p.name, online: Object.keys(p.connections || {}).length > 0, answered: Object.hasOwn(answers, id) };
     });
     return { code: ctx.code, me, host: room.host, phase: room.status, round: room.round,
-      nextPresenter: nextPresenter(room), hintSeconds: room.hintSeconds || 0, hintStartedAt: room.hintStartedAt || null, timedOut: !!room.timedOut,
+      nextPresenter: plannedPresenter(room), hintSeconds: room.hintSeconds || 0, hintStartedAt: room.hintStartedAt || null, timedOut: !!room.timedOut,
       theme: room.theme, themes: THEMES, presenter: room.presenter || null, hint: room.hint || '', players,
       secret: me === room.presenter || result ? room.secret : null,
       mine: answers[me] === 0 ? null : answers[me] ?? null,
@@ -377,7 +379,7 @@ window.MeterCloud = (() => {
     const ctx = await attach(validateCode(data.code), session, false);
     if (!online || !ctx.ready) throw new Error('offline');
     const host = session.role === 'host', action = data.action;
-    if (['start', 'timeout', 'reveal', 'reset'].includes(action) && !host) throw fail('この操作は進行役が行います。', 403);
+    if (['start', 'presenter', 'timeout', 'reveal', 'reset'].includes(action) && !host) throw fail('この操作は進行役が行います。', 403);
     if (action === 'leave') {
       ctx.leaving = true;
       await ctx.pending?.catch(() => {});
@@ -407,13 +409,17 @@ window.MeterCloud = (() => {
       if (room.round !== data.round) { reason = 'ラウンドが変わったよ。画面を確認してね。'; return; }
       previousStatus = room.status;
       room.playerOrder = presenterOrder(room);
-      if (action === 'start') {
+      if (action === 'presenter') {
+        if (!['lobby', 'result'].includes(room.status) || !room.players[data.presenter]) { reason = '次の出題者を選べる画面で変更してね。'; return; }
+        room.pendingPresenter = data.presenter;
+      } else if (action === 'start') {
         if (!['lobby', 'result'].includes(room.status)) { reason = '今のラウンドを終えてから始めてね。'; return; }
         if (!room.players[data.presenter] || !HINT_SECONDS.includes(data.hintSeconds)) { reason = '出題者と制限時間を選んでね。'; return; }
+        if (data.presenter !== plannedPresenter(room)) { reason = '次の出題者が変わったよ。確認してから始めてね。'; return; }
         if (Object.keys(room.players).length < 2) { reason = '2人そろったら始められるよ。'; return; }
         if (!Object.keys(room.players[data.presenter].connections || {}).length) { reason = '出題者の接続を待ってね。'; return; }
         room.status = 'hint'; room.round++; room.theme = randomTheme(room.round > 1 ? room.theme : null, themeDraw); room.presenter = data.presenter;
-        room.hintSeconds = data.hintSeconds; room.hintStartedAt = stamp(); delete room.timedOut;
+        room.hintSeconds = data.hintSeconds; room.hintStartedAt = stamp(); delete room.timedOut; delete room.pendingPresenter;
         room.secret = secret; delete room.hint; delete room.answers;
       } else if (action === 'timeout') {
         if (!hintExpired(room)) { reason = 'まだ制限時間内だよ。'; return; }
@@ -441,7 +447,7 @@ window.MeterCloud = (() => {
         room.answers = { ...(room.answers || {}), [session.id]: data.value === null ? 0 : data.value };
       } else if (action === 'reveal') {
         if (room.status !== 'vote') { reason = 'ヒントが出てから公開してね。'; return; }
-        room.rotationAfter = room.presenter; room.status = 'result';
+        room.rotationAfter = room.presenter; room.status = 'result'; delete room.pendingPresenter;
       } else if (action === 'reset') reset(room);
       else { reason = '操作が見つかりません。'; return; }
       return room;
@@ -457,7 +463,7 @@ window.MeterCloud = (() => {
   }
   function reset(room) {
     room.status = 'lobby'; room.round++;
-    delete room.presenter; delete room.secret; delete room.hint; delete room.answers; delete room.hintStartedAt; delete room.timedOut;
+    delete room.pendingPresenter; delete room.presenter; delete room.secret; delete room.hint; delete room.answers; delete room.hintStartedAt; delete room.timedOut;
   }
   return {
     disconnect: () => { void detach().catch(() => {}); },
@@ -584,7 +590,7 @@ async function act(action, extra = {}) {
       say(error.status ? error.message : 'つながりませんでした。接続を確認してね。');
       if (!error.status && state) disconnected();
     }
-  } finally { busy = false; controls(); }
+  } finally { busy = false; if (state) $('presenter-select').value = state.nextPresenter; controls(); }
 }
 function playerName(id) { return state.players.find(p => p.id === id)?.name || '退出した人'; }
 function option(value, label) { const el = document.createElement('option'); el.value = value; el.textContent = label; return el; }
@@ -616,19 +622,20 @@ function render(next) {
   show('theme-card', !lobby);
   $('theme-name').textContent = state.theme.name;
   $('low').textContent = `1 = ${state.theme.low}`; $('high').textContent = `5 = ${state.theme.high}`;
+  show('next-presenter', lobby || result);
+  const upcomingPlayer = state.players.find(p => p.id === state.nextPresenter);
+  $('next-presenter').textContent = `${state.round === 0 ? '最初' : '次'}の出題者：${upcomingPlayer?.name || '未定'}${upcomingPlayer && !upcomingPlayer.online ? '（接続待ち）' : ''}`;
   show('setup', host && (lobby || result));
   $('start').textContent = result ? '次のラウンドを始める' : 'ラウンドを始める';
   if (previousPhase !== state.phase || previousRound !== state.round) $('hint-seconds').value = String(state.hintSeconds || 0);
   // Keep draft input, selections and focus stable while polling.
   if (!$('theme-select').options.length) state.themes.forEach((t, i) => $('theme-select').append(option(i, t.name)));
   const roster = JSON.stringify(state.players.map(p => [p.id, p.name]));
-  const freshSetup = (lobby || result) && (previousRound !== state.round || previousPhase !== state.phase);
-  if (roster !== lastRoster || freshSetup) {
-    const selected = freshSetup ? state.nextPresenter : $('presenter-select').value || state.nextPresenter;
+  if (roster !== lastRoster) {
     $('presenter-select').replaceChildren(...state.players.map(p => option(p.id, p.name)));
-    $('presenter-select').value = state.players.some(p => p.id === selected) ? selected : state.nextPresenter;
     lastRoster = roster;
   }
+  $('presenter-select').value = state.nextPresenter;
   if (previousRound !== state.round || previousTheme !== state.theme.name || previousPresenter !== state.presenter) {
     $('theme-select').value = String(state.themes.findIndex(t => t.name === state.theme.name));
     $('theme-change').open = false;
@@ -692,7 +699,8 @@ $('entry-form').addEventListener('submit', event => {
   act(joinMode ? 'join' : 'create', { name: $('nickname').value });
 });
 $('entry-toggle').addEventListener('click', () => { joinMode = !joinMode; entry(); });
-$('start').addEventListener('click', () => act('start', { hintSeconds: Number($('hint-seconds').value), presenter: $('presenter-select').value }));
+$('presenter-select').addEventListener('change', () => act('presenter', { presenter: $('presenter-select').value }));
+$('start').addEventListener('click', () => act('start', { hintSeconds: Number($('hint-seconds').value), presenter: state.nextPresenter }));
 $('change-theme').addEventListener('click', () => act('theme', { theme: Number($('theme-select').value) }));
 $('hint-form').addEventListener('submit', event => { event.preventDefault(); act('hint', { hint: $('hint-input').value, themeName: state.theme.name }); });
 $('pass').addEventListener('click', () => act('answer', { value: null }));
