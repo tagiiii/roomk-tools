@@ -124,7 +124,7 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 
 /* ── 予想する（数字ボタンは同格。主ボタンと混ぜない） ── */
 .km-scale { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
-.km-scale__btn { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 8px; min-height: 96px; padding: 10px 6px 12px; border: 2px solid var(--color-border); border-radius: 14px; background: var(--color-surface); color: var(--color-primary); font-family: inherit; font-size: 32px; font-weight: 700; line-height: 1; cursor: pointer; }
+.km-scale__btn { display: flex; flex-direction: column; align-items: center; justify-content: space-between; gap: 8px; min-height: 96px; padding: 16px 6px 12px; border: 2px solid var(--color-border); border-radius: 14px; background: var(--color-surface); color: var(--color-primary); font-family: inherit; font-size: 32px; font-weight: 700; line-height: 1; cursor: pointer; }
 .km-scale__btn:hover:not(:disabled) { border-color: var(--color-accent); background: #F4FAFB; }
 .km-scale__btn[aria-pressed="true"] { border-color: var(--color-accent); background: #E6F2F4; box-shadow: 0 0 0 2px var(--color-accent); }
 .km-scale__bar { width: 60%; height: calc(var(--lv-h) * 0.24); min-height: 5px; border-radius: 4px; background: var(--lv-bg); }
@@ -999,6 +999,6 @@ if (session || (watch && code)) {
 </script>
 <script src="../shared/js/stats.js?v=1" defer></script>
 <script src="../shared/js/howto.js"></script>
-<script>RoomkHowto.init({"title": "あそびかた", "lead": "ヒントのことばから、出題者が思い浮かべた1〜5の数字を予想するよ。数字は出題者の感覚。違う感じ方も楽しもう。", "sections": [{"heading": "はじめかた", "items": ["進行役が「ルームを作る」でニックネームを入れる。ルームコードは「コードをコピー」、参加用のリンクは「リンクをコピー」でチャットに送れるよ。", "参加する人は「ルームに参加する」でニックネーム、ルームコード（6文字）の順に入れ、「参加する」を押す。リンクからひらいたときは、ルームコードは入っているのでニックネームだけ入れてね。", "進行役が出題者の制限時間（なし・30秒・1分・2分・3分）と出題者を選んで「ラウンドを始める」を押す。お題はランダムで決まるよ。"]}, {"heading": "ヒントと予想", "items": ["出題者は秘密の数字を見て、その程度だと思うことばを「ヒントを出す」で送る。「お題を変更する」から別のお題も選べるよ。変更しても数字と残り時間は変わらないよ。時間切れになると、参加した順で次の出題者・お題へ進むよ。", "ほかの人は1〜5をタップ。公開前なら選び直せるし、「今回はパス」もできるよ。", "「みんなにみせる画面」で、画面共有でみんなに見せる画面が別のタブに開くよ。トップの「みんなにみせる画面をひらく」から、ルームコードを入れて開くこともできるよ。"]}, {"heading": "公開する", "items": ["進行役が「回答を締め切って公開」を押すと、まだ回答していない人がいても公開できるよ。締め切ったあとは回答できないよ。出題者の数字は、ことばの意味の唯一の正解ではないよ。", "「次のラウンドを始める」で続けられるよ。次の出題者は参加した順に自動で選ばれるよ。進行役が変更することもできるよ。", "参加者は「退出する」、進行役は「ルームを閉じる」で終わる。"]}]});</script>
+<script>RoomkHowto.init({slides: 'slides.html', "title": "あそびかた", "lead": "ヒントのことばから、出題者が思い浮かべた1〜5の数字を予想するよ。数字は出題者の感覚。違う感じ方も楽しもう。", "sections": [{"heading": "はじめかた", "items": ["進行役が「ルームを作る」でニックネームを入れる。ルームコードは「コードをコピー」、参加用のリンクは「リンクをコピー」でチャットに送れるよ。", "参加する人は「ルームに参加する」でニックネーム、ルームコード（6文字）の順に入れ、「参加する」を押す。リンクからひらいたときは、ルームコードは入っているのでニックネームだけ入れてね。", "進行役が出題者の制限時間（なし・30秒・1分・2分・3分）と出題者を選んで「ラウンドを始める」を押す。お題はランダムで決まるよ。"]}, {"heading": "ヒントと予想", "items": ["出題者は秘密の数字を見て、その程度だと思うことばを「ヒントを出す」で送る。「お題を変更する」から別のお題も選べるよ。変更しても数字と残り時間は変わらないよ。時間切れになると、参加した順で次の出題者・お題へ進むよ。", "ほかの人は1〜5をタップ。公開前なら選び直せるし、「今回はパス」もできるよ。", "「みんなにみせる画面」で、画面共有でみんなに見せる画面が別のタブに開くよ。トップの「みんなにみせる画面をひらく」から、ルームコードを入れて開くこともできるよ。"]}, {"heading": "公開する", "items": ["進行役が「回答を締め切って公開」を押すと、まだ回答していない人がいても公開できるよ。締め切ったあとは回答できないよ。出題者の数字は、ことばの意味の唯一の正解ではないよ。", "「次のラウンドを始める」で続けられるよ。次の出題者は参加した順に自動で選ばれるよ。進行役が変更することもできるよ。", "参加者は「退出する」、進行役は「ルームを閉じる」で終わる。"]}]});</script>
 </body>
 </html>
