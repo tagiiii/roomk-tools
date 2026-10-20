@@ -163,6 +163,13 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 .km-person { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 6px; border: 1px solid var(--color-border); border-radius: var(--radius-full); padding: 6px 12px; font-size: 14px; background: var(--color-surface); overflow-wrap: anywhere; }
 .km-person.is-away { color: var(--color-muted); border-style: dashed; }
 
+/* ── 進行役の戻りを待つ画面（しるしでヒントのオーバーレイと同じ形） ── */
+.km-overlay { position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; padding: 20px; background: rgba(18, 37, 54, 0.8); }
+.km-overlay[hidden] { display: none; }
+.km-overlay__panel { background: var(--color-surface); border-radius: 14px; padding: 28px; max-width: 420px; text-align: center; }
+.km-overlay__title { color: var(--color-primary); font-size: 1.3rem; margin: 14px 0 8px; }
+.km-overlay__text { line-height: 1.7; margin: 0 0 18px; }
+
 /* ── みんなにみせる画面（大きな画面で1画面に収める） ── */
 @media (min-width: 800px) {
   .km-watch .km-wrap { max-width: 1040px; padding-top: 16px; }
@@ -343,6 +350,14 @@ button:disabled { opacity: .5; cursor: not-allowed; }
         </section>
       </div>
     </main>
+  </div>
+  <div id="host-away" class="km-overlay" role="alertdialog" aria-modal="true" aria-labelledby="host-away-title" aria-describedby="host-away-text" hidden>
+    <div class="km-overlay__panel">
+      <div class="spinner" aria-hidden="true"></div>
+      <h2 id="host-away-title" class="km-overlay__title">進行役の戻りを待っています</h2>
+      <p id="host-away-text" class="km-overlay__text">進行役の接続が切れました。戻ってきたら、そのまま続きから遊べるよ。しばらく待っても戻らないときは、退出してね。</p>
+      <button id="host-away-leave" class="btn btn-secondary" type="button">退出する</button>
+    </div>
   </div>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
@@ -532,7 +547,11 @@ window.MeterCloud = (() => {
     if (expired(ctx.data)) { await cleanup(ctx.ref); throw fail('接続が切れたまま2分たったため、ルームを終了しました。', 410); }
     if (!watch && !own(ctx.data, session)) throw fail('参加の情報が見つかりません。もう一度参加してね。', 401);
     if (!ctx.ready || (!watch && session.role === 'host' && ctx.data.hostConnected === false)) await ensurePresence(ctx);
-    if (ctx.data.hostConnected === false) throw fail('進行役との接続が切れています。戻るまで待ってね。', 503);
+    if (ctx.data.hostConnected === false) {
+      const error = fail('進行役との接続が切れています。戻るまで待ってね。', 503);
+      error.hostAway = true;
+      throw error;
+    }
     return { state: view(ctx) };
   }
   async function create(name) {
@@ -750,6 +769,7 @@ function controls() {
   document.querySelectorAll('#game button, #game input, #game select').forEach(el => { el.disabled = busy || !online; });
   $('start').disabled = busy || !online || (state && state.players.length < 2);
   document.querySelectorAll('#front button').forEach(el => { el.disabled = busy; });
+  $('host-away-leave').disabled = busy;
 }
 function setHintSeconds(value) {
   hintSeconds = value;
@@ -775,10 +795,19 @@ function disconnected() {
   $('connection').textContent = '接続を確認しています。つながると自動で戻ります。';
   show('connection', true); controls();
 }
+// 進行役の接続が切れている間は、ルームの画面の上に待ち画面を重ねる。戻れば消えて続きから。
+function hostAway(away) {
+  const wasAway = !$('host-away').hidden;
+  show('host-away', away);
+  $('game').inert = away;
+  // みんなにみせる画面は画面共有するので、ボタンにフォーカスの枠を出さない
+  if (away && !wasAway && !watch) $('host-away-leave').focus({ preventScroll: true });
+}
 function ended(message) {
   stopPolling();
   window.MeterCloud?.disconnect();
   saveSession(null); state = null; seq++; lastPhase = ''; lastRoster = '';
+  hostAway(false);
   if (watch) {
     show('front', false); show('game', false);
     $('watch-end-text').textContent = message;
@@ -791,10 +820,11 @@ async function poll() {
   const requestSeq = ++seq;
   try {
     const result = await request(`/api/state?code=${encodeURIComponent(code)}`);
-    if (seq === requestSeq) { online = true; show('connection', false); render(result.state); }
+    if (seq === requestSeq) { online = true; show('connection', false); hostAway(false); render(result.state); }
   } catch (error) {
     if (seq !== requestSeq) return;
     if ([401, 410].includes(error.status)) { ended(error.message); if (watch) code = ''; }
+    else if (error.hostAway) { online = true; show('connection', false); hostAway(true); }
     else disconnected();
   } finally { polling = false; }
 }
@@ -809,7 +839,7 @@ async function act(action, extra = {}) {
       startPolling();
       history.replaceState(null, '', location.pathname);
     }
-    if (result.left) { stopPolling(); saveSession(null); state = null; code = ''; fromLink = false; lastPhase = ''; lastRoster = ''; entry('top'); }
+    if (result.left) { stopPolling(); saveSession(null); state = null; code = ''; fromLink = false; lastPhase = ''; lastRoster = ''; hostAway(false); entry('top'); }
     if (result.state) render(result.state);
   } catch (error) {
     if ([401, 410].includes(error.status) && session) ended(error.message);
@@ -982,11 +1012,19 @@ $('reset').addEventListener('click', () => { if (confirm('今のヒントと回�
 $('leave').addEventListener('click', () => {
   if (confirm(state.me === state.host ? '全員のルームを閉じますか？' : 'ルームから退出する？')) act('leave');
 });
+$('host-away-leave').addEventListener('click', () => {
+  if (watch) { location.href = location.pathname; return; }
+  if (confirm('ルームから退出する？')) act('leave');
+});
 $('copy-code').addEventListener('click', event => RoomkRTDB.copyRoomCode(code, event.currentTarget));
 $('copy-link').addEventListener('click', event => RoomkRTDB.copyRoomLink(code, event.currentTarget));
 
 window.addEventListener('offline', disconnected);
 window.addEventListener('online', poll);
+if (watch) {
+  $('host-away-text').textContent = '進行役の接続が切れました。戻ってきたら、そのまま続きが映るよ。しばらく待っても戻らないときは、トップへ戻ってね。';
+  $('host-away-leave').textContent = 'トップへ戻る';
+}
 if (session || (watch && code)) {
   show('front', false); show('game', true);
   $('phase-title').textContent = 'ルームにつないでいます';
