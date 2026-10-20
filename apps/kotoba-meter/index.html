@@ -38,6 +38,12 @@ form .btn-primary, #start { margin-top: 20px; }
 .km-endpoints span:last-child { text-align: right; }
 .km-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
 .km-secret { background: #f5f3eb; border-radius: 16px; padding: 24px; margin: 24px 0; }
+.km-examples { text-align: left; margin: 20px 0; padding: 12px 16px; border: 1px solid var(--color-primary); border-radius: 12px; }
+.km-examples summary { cursor: pointer; padding: 10px 0; font-weight: 700; }
+.km-examples summary:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 4px; }
+.km-examples p, .km-examples li { font-size: 14px; line-height: 1.8; }
+.km-examples ul { list-style: none; padding: 0; }
+.km-examples li { margin: 8px 0; }
 .km-secret > span { font-size: 14px; }
 .km-secret strong { display: block; font-size: 64px; color: var(--color-primary); line-height: 1.4; }
 .km-secret p { margin: 4px 0; font-size: 14px; }
@@ -120,7 +126,7 @@ dialog li { margin: 16px 0; line-height: 1.8; }
         <p id="phase-label" class="km-eyebrow"></p><h1 id="phase-title" tabindex="-1"></h1><p id="phase-note" class="km-muted"></p>
         <section id="theme-card" class="km-theme" hidden><p class="km-eyebrow">お題</p><h2 id="theme-name"></h2><div class="km-endpoints"><span id="low"></span><span id="high"></span></div></section>
         <section id="setup" hidden><div class="km-fields"><div><label for="theme-select">お題を選ぶ</label><select id="theme-select"></select></div><div><label for="presenter-select">出題者を選ぶ</label><select id="presenter-select"></select></div></div><button id="start" class="btn btn-primary btn-full">ラウンドを始める</button></section>
-        <section id="secret-area" hidden><div class="km-secret"><span>あなただけの秘密の数字</span><strong id="secret-number"></strong><p>この数字くらいだと思うことばを考えよう。</p></div><form id="hint-form"><label for="hint-input">ヒント（60文字まで）</label><input id="hint-input" maxlength="60" required autocomplete="off" placeholder="思いついたものや、場面を入れてね"><button class="btn btn-primary btn-full" type="submit">ヒントを出す</button></form><p class="km-muted">この画面は共有せず、「共有画面を開く」の画面を見せてね。</p></section>
+        <section id="secret-area" hidden><div class="km-secret"><span>あなただけの秘密の数字</span><strong id="secret-number"></strong><p>この数字くらいだと思うことばを考えよう。</p></div><details id="hint-examples" class="km-examples"><summary>ヒント例を見る（出題者だけ）</summary><p>数字は正解ではなく、感じ方の一例だよ。同じヒントを別の数字で使っても大丈夫。自分が思い浮かべたものや場面で考えてね。</p><ul id="hint-example-list"></ul></details><form id="hint-form"><label for="hint-input">ヒント（60文字まで）</label><input id="hint-input" maxlength="60" required autocomplete="off" placeholder="思いついたものや、場面を入れてね"><button class="btn btn-primary btn-full" type="submit">ヒントを出す</button></form><p class="km-muted">この画面は共有せず、「共有画面を開く」の画面を見せてね。</p></section>
         <section id="hint-area" class="km-hint" hidden><p class="km-eyebrow">出題者のヒント</p><h2 id="hint-text"></h2></section>
         <section id="vote-area" hidden><p>出題者はどの数字を思い浮かべたかな？</p><div id="choices" class="km-scale" role="group" aria-label="1から5を選ぶ"></div><p id="answer-note" role="status"></p><button id="pass" class="btn btn-ghost">今回はパス</button></section>
         <section id="result-area" hidden><p class="km-result-lead">出題者の数字は <strong id="result-number"></strong></p><div id="result-columns" class="km-results"></div><p id="other-answers" class="km-muted"></p><p class="km-talk">「私はこのくらいに感じたよ」<br>ことばから思い浮かべたものを、話してみよう。</p></section>
@@ -425,6 +431,18 @@ window.MeterCloud = (() => {
 const $ = id => document.getElementById(id);
 const show = (id, visible) => { $(id).hidden = !visible; };
 const say = text => { $('message').textContent = text; };
+// 出題者の手元だけで参照する例。秘密の数字に合わせた選択・強調はしない。
+const HINT_EXAMPLES = {
+  '大きさ': ['ごま一粒', 'いちご', 'クッション', 'ソファ', '空に浮かぶ大きな雲'],
+  'やわらかさ': ['消しゴム', '食パンの耳', '食パンの白いところ', 'マシュマロ', 'ふわふわのホイップクリーム'],
+  'あたたかさ': ['手のひらで包んだ石', '猫が寝ていた座布団', '日なたのクッション', '毛布にくるまった体', 'お風呂上がりの体'],
+  '重さ': ['一枚の羽', 'りんご一個', '水がいっぱいの水筒', '大きなすいか', '荷物がいっぱいの旅行かばん'],
+  '速さ': ['カタツムリのお散歩', 'のんびり歩く', '自転車で走る', '駆け抜ける犬', '流れ星'],
+  '音の大きさ': ['ページをめくる音', '鉛筆が転がる音', 'ポップコーンがはじける音', '近くで聞く掃除機の音', 'すぐそばで聞く大きな太鼓'],
+  '甘さ': ['白いごはんをよくかんだとき', '牛乳', 'バナナ', 'ミルクチョコレート', 'はちみつをかけたパン'],
+  'わくわく感': ['いつもと違う色のペンを使う', '初めてのお菓子を開ける', '気になるゲームを始める', '中身のわからない包みを開ける直前', '自分だけの秘密基地を作り始める'],
+};
+let exampleContext = '';
 const key = window.MeterCloud ? 'roomk-kotoba-meter-cloud-session' : 'roomk-kotoba-meter-session';
 const params = new URLSearchParams(location.search);
 const normalizeCode = value => value.normalize('NFKC').replace(/\s/g, '').toUpperCase();
@@ -555,6 +573,17 @@ function render(next) {
   }
   show('secret-area', hint && presenter);
   $('secret-number').textContent = presenter ? String(state.secret ?? '') : '';
+  const nextExampleContext = hint && presenter ? JSON.stringify([state.code, state.round, state.presenter, state.theme.name]) : '';
+  if (nextExampleContext !== exampleContext) {
+    exampleContext = nextExampleContext;
+    $('hint-examples').open = false;
+    const examples = nextExampleContext ? HINT_EXAMPLES[state.theme.name] || [] : [];
+    $('hint-example-list').replaceChildren(...examples.map((text, i) => {
+      const item = document.createElement('li');
+      item.textContent = `${i + 1}のつもりの例：${text}`;
+      return item;
+    }));
+  }
   if (previousRound !== state.round) $('hint-input').value = '';
   show('hint-area', vote || result); $('hint-text').textContent = state.hint;
   show('vote-area', vote && !presenter && !watch);
