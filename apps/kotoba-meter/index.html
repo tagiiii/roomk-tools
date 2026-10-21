@@ -158,6 +158,19 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 .km-pill[aria-pressed="true"] { border-color: var(--color-accent); background: #E6F2F4; color: #26697A; }
 .km-pill[aria-pressed="true"]::before { content: "✓ "; }
 
+/* ── 端末なしの参加者（進行役が代わりに入力） ── */
+.km-proxyadd { border-top: 1px solid var(--color-border); margin-top: 20px; padding-top: 16px; }
+.km-proxyadd__row { display: flex; gap: 8px; }
+.km-proxyadd__row .km-input { flex: 1 1 auto; min-width: 0; }
+.km-proxyadd__row .btn { flex-shrink: 0; margin-top: 0; }
+.km-proxy__row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; padding: 10px 0; border-bottom: 1px solid var(--color-border); }
+.km-proxy__row:last-child { border-bottom: none; }
+.km-proxy__name { min-width: 7em; font-weight: 700; color: var(--color-primary); overflow-wrap: anywhere; }
+.km-proxy__btns { display: flex; flex-wrap: wrap; gap: 6px; }
+.km-proxy__btn { min-width: 44px; min-height: 44px; padding: 4px 10px; border: 2px solid var(--color-border); border-radius: 10px; background: var(--color-surface); color: var(--color-primary); font-family: inherit; font-size: 18px; font-weight: 700; cursor: pointer; }
+.km-proxy__btn--pass { font-size: 14px; color: var(--color-muted); }
+.km-proxy__btn[aria-pressed="true"] { border-color: var(--color-accent); background: #E6F2F4; box-shadow: 0 0 0 2px var(--color-accent); }
+
 /* ── 参加している人 ── */
 #players { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
 .km-person { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 6px; border: 1px solid var(--color-border); border-radius: var(--radius-full); padding: 6px 12px; font-size: 14px; background: var(--color-surface); overflow-wrap: anywhere; }
@@ -331,7 +344,7 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 
         <section id="secret-area" class="km-panel" hidden>
           <div class="km-secret">
-            <p class="km-secret__label"><span class="material-symbols-rounded" aria-hidden="true">lock</span>あなただけの秘密の数字</p>
+            <p class="km-secret__label"><span class="material-symbols-rounded" aria-hidden="true">lock</span><span id="secret-label">あなただけの秘密の数字</span></p>
             <p id="secret-number" class="km-secret__num"></p>
             <ol id="secret-gauge" class="km-gauge" aria-hidden="true"><li></li><li></li><li></li><li></li><li></li></ol>
             <div class="km-ends km-gauge-ends" aria-hidden="true"><span id="secret-low"></span><span id="secret-high"></span></div>
@@ -367,6 +380,11 @@ button:disabled { opacity: .5; cursor: not-allowed; }
           <div class="km-alt"><button id="pass" class="km-quiet-btn" type="button">今回はパス</button></div>
         </section>
 
+        <section id="proxy-area" class="km-panel" hidden>
+          <p class="km-panel__title">端末なしの参加者の予想（代わりに入力）</p>
+          <div id="proxy-rows" class="km-proxy"></div>
+        </section>
+
         <div id="progress-area" class="km-progress" hidden><p id="progress" role="status"></p><button id="reveal" class="btn btn-primary btn-full" type="button" hidden>回答を締め切って公開</button></div>
 
         <section id="result-area" class="km-panel" hidden>
@@ -385,6 +403,14 @@ button:disabled { opacity: .5; cursor: not-allowed; }
             <select class="km-input" id="presenter-select"></select>
             <p class="km-note km-note--left">お題はランダムで決まるよ。出題者は参加した順に交代するよ。</p>
             <button id="start" class="btn btn-primary btn-full" type="button">ラウンドを始める</button>
+            <div class="km-proxyadd">
+              <label class="km-label" for="proxy-name">端末なしの参加者を足す（8文字まで）</label>
+              <div class="km-proxyadd__row">
+                <input class="km-input" id="proxy-name" maxlength="8" autocomplete="off">
+                <button id="proxy-add" class="btn btn-secondary" type="button">足す</button>
+              </div>
+              <p class="km-note km-note--left">チャットや声で答える子の分を、進行役が代わりに入力します。その子が出題者の番は、進行役が代わりにヒントを出します。</p>
+            </div>
           </div>
         </section>
 
@@ -454,6 +480,9 @@ window.MeterCloud = (() => {
     }
     return null;
   }
+  // 端末なしの参加者（proxy）は在室を持たず、進行役が代わりに操作する。いつも遊べる人として扱う。
+  const isProxy = (room, id) => !!room.players?.[id]?.proxy;
+  const reachable = (room, id) => isProxy(room, id) || Object.keys(room.players?.[id]?.connections || {}).length > 0;
   const plannedPresenter = room => room.players?.[room.pendingPresenter] ? room.pendingPresenter : nextPresenter(room);
   const HINT_SECONDS = [0, 30, 60, 120, 180];
   function randomTheme(previous, draw) {
@@ -589,12 +618,17 @@ window.MeterCloud = (() => {
     const answers = room.answers || {}, result = room.status === 'result';
     const players = presenterOrder(room).filter(id => room.players?.[id]).map(id => {
       const p = room.players[id];
-      return { id, name: p.name, online: Object.keys(p.connections || {}).length > 0, answered: Object.hasOwn(answers, id) };
+      return { id, name: p.name, proxy: !!p.proxy, online: reachable(room, id), answered: Object.hasOwn(answers, id) };
     });
+    // 端末なしの子が出題者のとき、進行役が代わりにヒントを出すので秘密の数字を見せる
+    const actingHost = me === room.host && isProxy(room, room.presenter);
     return { code: ctx.code, me, host: room.host, phase: room.status, round: room.round,
       nextPresenter: plannedPresenter(room), hintSeconds: room.hintSeconds || 0, hintStartedAt: room.hintStartedAt || null, timedOut: !!room.timedOut,
       theme: room.theme, themes: THEMES, presenter: room.presenter || null, hint: room.hint || '', players,
-      secret: me === room.presenter || result ? room.secret : null,
+      secret: me === room.presenter || actingHost || result ? room.secret : null,
+      // 進行役が代わりに入力した、端末なしの子の予想（進行役の画面だけ。公開前の確認用）
+      proxyAnswers: me === room.host && !result ? Object.fromEntries(players.filter(p => p.proxy && p.answered)
+        .map(p => [p.id, answers[p.id] === 0 ? null : answers[p.id]])) : {},
       mine: answers[me] === 0 ? null : answers[me] ?? null,
       hasAnswer: Object.hasOwn(answers, me),
       answers: result ? Object.fromEntries(Object.entries(answers).map(([id, n]) => [id, n === 0 ? null : n])) : null };
@@ -663,7 +697,7 @@ window.MeterCloud = (() => {
     const ctx = await attach(validateCode(data.code), session, false);
     if (!online || !ctx.ready) throw new Error('offline');
     const host = session.role === 'host', action = data.action;
-    if (['start', 'presenter', 'timeout', 'reveal', 'reset', 'remove'].includes(action) && !host) throw fail('この操作は進行役が行います。', 403);
+    if (['start', 'presenter', 'timeout', 'reveal', 'reset', 'remove', 'proxy-add'].includes(action) && !host) throw fail('この操作は進行役が行います。', 403);
     if (action === 'leave') {
       ctx.leaving = true;
       await ctx.pending?.catch(() => {});
@@ -686,6 +720,7 @@ window.MeterCloud = (() => {
     let reason = '', previousStatus;
     const secret = Math.floor(Math.random() * 5) + 1;
     const themeDraw = Math.random();
+    const newId = crypto.randomUUID();
     const result = await ctx.ref.transaction(room => {
       reason = '';
       if (!online || !room || expired(room) || !own(room, session)) { reason = '接続や参加の情報を確認してね。'; return; }
@@ -701,7 +736,7 @@ window.MeterCloud = (() => {
         if (!room.players[data.presenter] || !HINT_SECONDS.includes(data.hintSeconds)) { reason = '出題者と制限時間を選んでね。'; return; }
         if (data.presenter !== plannedPresenter(room)) { reason = '次の出題者が変わったよ。確認してから始めてね。'; return; }
         if (Object.keys(room.players).length < 2) { reason = '2人そろったら始められるよ。'; return; }
-        if (!Object.keys(room.players[data.presenter].connections || {}).length) { reason = '出題者の接続を待ってね。'; return; }
+        if (!reachable(room, data.presenter)) { reason = '出題者の接続を待ってね。'; return; }
         room.status = 'hint'; room.round++; room.theme = randomTheme(room.round > 1 ? room.theme : null, themeDraw); room.presenter = data.presenter;
         room.hintSeconds = data.hintSeconds; room.hintStartedAt = stamp(); delete room.timedOut; delete room.pendingPresenter;
         room.secret = secret; delete room.hint; delete room.answers;
@@ -709,7 +744,7 @@ window.MeterCloud = (() => {
         if (!hintExpired(room)) { reason = 'まだ制限時間内だよ。'; return; }
         room.rotationAfter = room.presenter;
         const upcoming = nextPresenter(room);
-        if (Object.keys(room.players).length < 2 || !Object.keys(room.players[upcoming]?.connections || {}).length) {
+        if (Object.keys(room.players).length < 2 || !reachable(room, upcoming)) {
           reset(room);
         } else {
           room.round++; room.presenter = upcoming; room.theme = randomTheme(room.theme, themeDraw); room.secret = secret;
@@ -717,23 +752,36 @@ window.MeterCloud = (() => {
         }
         room.timedOut = true;
       } else if (action === 'theme') {
-        if (room.status !== 'hint' || room.presenter !== session.id || hintExpired(room)) { reason = '今はお題を変更できません。'; return; }
+        if (room.status !== 'hint' || !(room.presenter === session.id || (host && isProxy(room, room.presenter))) || hintExpired(room)) { reason = '今はお題を変更できません。'; return; }
         if (!Number.isInteger(data.theme) || !THEMES[data.theme]) { reason = 'お題を選んでね。'; return; }
         room.theme = THEMES[data.theme];
       } else if (action === 'hint') {
-        if (room.status !== 'hint' || room.presenter !== session.id || hintExpired(room)) { reason = '今はヒントを出せません。時間切れの場合は次のお題を待ってね。'; return; }
+        if (room.status !== 'hint' || !(room.presenter === session.id || (host && isProxy(room, room.presenter))) || hintExpired(room)) { reason = '今はヒントを出せません。時間切れの場合は次のお題を待ってね。'; return; }
         if (data.themeName !== room.theme.name) { reason = 'お題が変わったよ。ヒントを確認してから送ってね。'; return; }
         if (typeof data.hint !== 'string' || !data.hint.trim() || [...data.hint.trim()].length > 60) { reason = 'ヒントは1〜60文字で入れてね。'; return; }
         room.hint = data.hint.trim(); room.status = 'vote';
       } else if (action === 'answer') {
-        if (room.status !== 'vote' || room.presenter === session.id) { reason = '今は回答できません。'; return; }
+        // data.as があれば、進行役が端末なしの子の分を代わりに入力する
+        const target = data.as === undefined ? session.id : data.as;
+        if (data.as !== undefined && (!host || !isProxy(room, data.as))) { reason = '代わりに入力できるのは、進行役が端末なしの参加者の分だけだよ。'; return; }
+        if (room.status !== 'vote' || room.presenter === target) { reason = '今は回答できません。'; return; }
+        if (data.as === undefined && host && isProxy(room, room.presenter)) { reason = '端末なしの子が出題しているときは、進行役は予想しないよ。'; return; }
         if (data.value !== null && (!Number.isInteger(data.value) || data.value < 1 || data.value > 5)) { reason = '1〜5かパスを選んでね。'; return; }
-        room.answers = { ...(room.answers || {}), [session.id]: data.value === null ? 0 : data.value };
+        room.answers = { ...(room.answers || {}), [target]: data.value === null ? 0 : data.value };
+      } else if (action === 'proxy-add') {
+        if (!['lobby', 'result'].includes(room.status)) { reason = '端末なしの参加者は、ラウンドを始める前に足してね。'; return; }
+        let name;
+        try { name = validateName(data.name); } catch (error) { reason = error.message; return; }
+        const players = room.players || {};
+        if (Object.values(players).some(p => p.name === name)) { reason = 'そのニックネームは使われているよ。別の名前にしてね。'; return; }
+        if (Object.keys(players).length >= 20) { reason = 'このルームは20人まで参加できるよ。'; return; }
+        room.playerOrder = [...room.playerOrder, newId];
+        room.players = { ...players, [newId]: { name, proxy: true, isHost: false } };
       } else if (action === 'reveal') {
         if (room.status !== 'vote') { reason = 'ヒントが出てから公開してね。'; return; }
         room.rotationAfter = room.presenter; room.status = 'result'; delete room.pendingPresenter;
       } else if (action === 'remove') {
-        // 接続が切れたままの参加者だけ外せる。退出と同じく行と回答を消し、出題中の出題者ならラウンドをやり直す。
+        // 接続が切れたままの参加者と、端末なしの参加者（接続を持たない）だけ外せる。退出と同じく行と回答を消し、出題中の出題者ならラウンドをやり直す。
         // 参加順の目印（playerOrder）は退出と同じく残す。
         const target = room.players[data.target];
         if (!target || data.target === room.host) { reason = 'その人は外せません。画面を確認してね。'; return; }
@@ -813,7 +861,7 @@ function startPolling() { clearInterval(pollTimer); pollTimer = setInterval(poll
 function stopPolling() { clearInterval(pollTimer); pollTimer = null; }
 // 入口の画面: top（トップ）・create・join・watch（みんなにみせる画面をひらく）
 let entryMode = code ? 'join' : 'top', fromLink = !!code && !watch;
-let lastPhase = '', lastRoster = '', lastPeople = '', hintSeconds = 0;
+let lastPhase = '', lastRoster = '', lastPeople = '', lastProxy = '', hintSeconds = 0;
 try { if (!watch) session = JSON.parse(sessionStorage.getItem(key)); } catch { /* Storage may be unavailable. */ }
 if (session && (!session.token || !session.code || (code && code !== session.code))) session = null;
 if (session) code = session.code;
@@ -889,7 +937,7 @@ function hostAway(away) {
 function ended(message) {
   stopPolling();
   window.MeterCloud?.disconnect();
-  saveSession(null); state = null; seq++; lastPhase = ''; lastRoster = ''; lastPeople = '';
+  saveSession(null); state = null; seq++; lastPhase = ''; lastRoster = ''; lastPeople = ''; lastProxy = '';
   hostAway(false);
   if (watch) {
     show('front', false); show('game', false);
@@ -922,7 +970,7 @@ async function act(action, extra = {}) {
       startPolling();
       history.replaceState(null, '', location.pathname);
     }
-    if (result.left) { stopPolling(); saveSession(null); state = null; code = ''; fromLink = false; lastPhase = ''; lastRoster = ''; lastPeople = ''; hostAway(false); entry('top'); }
+    if (result.left) { stopPolling(); saveSession(null); state = null; code = ''; fromLink = false; lastPhase = ''; lastRoster = ''; lastPeople = ''; lastProxy = ''; hostAway(false); entry('top'); }
     if (result.state) render(result.state);
   } catch (error) {
     if ([401, 410].includes(error.status) && session) ended(error.message);
@@ -953,6 +1001,9 @@ function render(next) {
   state = next;
   const host = !watch && state.me === state.host;
   const presenter = !watch && state.me === state.presenter;
+  // 端末なしの子が出題者なら、進行役が代わりに出題する
+  const presenterProxy = !!state.players.find(p => p.id === state.presenter)?.proxy;
+  const acting = presenter || (host && presenterProxy);
   const lobby = state.phase === 'lobby', hint = state.phase === 'hint', vote = state.phase === 'vote', result = state.phase === 'result';
   show('front', false); show('watch-end', false); show('game', true);
   // みんなにみせる画面は進行役が開いて共有する（しるしでヒント・スタンプあてゲームと同じ）
@@ -1004,10 +1055,11 @@ function render(next) {
     $('theme-select').value = String(state.themes.findIndex(t => t.name === state.theme.name));
     $('theme-change').open = false;
   }
-  show('secret-area', hint && presenter);
-  $('secret-number').textContent = presenter ? String(state.secret ?? '') : '';
-  [...$('secret-gauge').children].forEach((item, i) => item.classList.toggle('is-on', presenter && i < state.secret));
-  const nextExampleContext = hint && presenter ? JSON.stringify([state.code, state.round, state.presenter, state.theme.name]) : '';
+  show('secret-area', hint && acting);
+  $('secret-label').textContent = acting && !presenter ? `${playerName(state.presenter)}さんの秘密の数字（代わりに入力）` : 'あなただけの秘密の数字';
+  $('secret-number').textContent = acting ? String(state.secret ?? '') : '';
+  [...$('secret-gauge').children].forEach((item, i) => item.classList.toggle('is-on', acting && i < state.secret));
+  const nextExampleContext = hint && acting ? JSON.stringify([state.code, state.round, state.presenter, state.theme.name]) : '';
   if (nextExampleContext !== exampleContext) {
     exampleContext = nextExampleContext;
     $('hint-examples').open = false;
@@ -1016,11 +1068,34 @@ function render(next) {
   }
   if (previousRound !== state.round) $('hint-input').value = '';
   show('hint-area', vote || result); $('hint-text').textContent = state.hint;
-  show('vote-area', vote && !presenter && !watch);
+  show('vote-area', vote && !acting && !watch);
+  // 進行役の画面: 端末なしの子の予想を代わりに入力する欄（出題者の子は除く）
+  const proxies = host && vote ? state.players.filter(p => p.proxy && p.id !== state.presenter) : [];
+  show('proxy-area', proxies.length > 0);
+  const proxyKey = JSON.stringify(proxies.map(p => [p.id, p.name, Object.hasOwn(state.proxyAnswers, p.id) ? state.proxyAnswers[p.id] : 'none']));
+  if (proxyKey !== lastProxy) {
+    lastProxy = proxyKey;
+    $('proxy-rows').replaceChildren(...proxies.map(p => {
+      const has = Object.hasOwn(state.proxyAnswers, p.id), value = state.proxyAnswers[p.id];
+      const row = el('div', 'km-proxy__row');
+      row.append(el('span', 'km-proxy__name', p.name));
+      const buttons = el('div', 'km-proxy__btns');
+      [1, 2, 3, 4, 5, null].forEach(n => {
+        const button = el('button', `km-proxy__btn${n === null ? ' km-proxy__btn--pass' : ` km-lv${n}`}`, n === null ? 'パス' : String(n));
+        button.type = 'button'; button.dataset.proxy = p.id; button.dataset.value = n === null ? 'pass' : String(n);
+        button.setAttribute('aria-pressed', String(has && value === n));
+        button.setAttribute('aria-label', `${p.name}さん：${n === null ? 'パス' : n}`);
+        buttons.append(button);
+      });
+      row.append(buttons);
+      return row;
+    }));
+  }
   document.querySelectorAll('#choices button').forEach(b => b.setAttribute('aria-pressed', String(state.hasAnswer && state.mine === Number(b.value))));
   $('pass').setAttribute('aria-pressed', String(state.hasAnswer && state.mine === null));
   $('answer-note').textContent = state.hasAnswer ? (state.mine === null ? '今回はパス。公開前なら数字も選べるよ。' : `${state.mine} を選んだよ。公開前なら選び直せるよ。`) : '数字をタップすると回答できるよ。';
-  const voters = state.players.filter(p => p.id !== state.presenter);
+  // 端末なしの子が出題しているときは、進行役は予想しないので数えない
+  const voters = state.players.filter(p => p.id !== state.presenter && !(presenterProxy && p.id === state.host));
   $('progress').textContent = `${voters.filter(p => p.answered).length} / ${voters.length} 人が回答済み（パスを含む）`;
   show('progress-area', vote); show('reveal', host && vote);
   show('host-reset', host && (hint || vote));
@@ -1041,8 +1116,9 @@ function render(next) {
   $('people-title').textContent = `参加している人（${state.players.length}人）`;
   // 毎秒の再描画で「外す」ボタンを作り直さない（押している途中に消えないように）
   const people = state.players.map(p => ({ id: p.id, name: p.name, online: p.online,
-    removable: host && !p.online && p.id !== state.host,
-    tags: [[p.id === state.host, '進行役', ''], [p.id === state.presenter && !lobby, '出題者', ''],
+    removable: host && (p.proxy || !p.online) && p.id !== state.host,
+    // 「端末なし」の印は進行役の画面だけ（子どもどうしの画面で区別しない）
+    tags: [[p.id === state.host, '進行役', ''], [host && p.proxy, '端末なし', ' km-tag--muted'], [p.id === state.presenter && !lobby, '出題者', ''],
       [!p.online, '接続待ち', ' km-tag--muted'], [vote && p.answered, '回答済み', ' km-tag--done']].filter(([on]) => on) }));
   const peopleKey = JSON.stringify(people);
   if (peopleKey !== lastPeople) {
@@ -1104,7 +1180,8 @@ $('change-theme').addEventListener('click', () => act('theme', { theme: Number($
 $('hint-form').addEventListener('submit', event => { event.preventDefault(); act('hint', { hint: $('hint-input').value, themeName: state.theme.name }); });
 $('pass').addEventListener('click', () => act('answer', { value: null }));
 $('reveal').addEventListener('click', () => {
-  const pending = state.players.filter(p => p.id !== state.presenter && !p.answered).length;
+  const proxyPresenting = !!state.players.find(p => p.id === state.presenter)?.proxy;
+  const pending = state.players.filter(p => p.id !== state.presenter && !(proxyPresenting && p.id === state.host) && !p.answered).length;
   if (pending && !confirm(`まだ${pending}人が回答していないよ。回答を締め切って公開する？`)) return;
   act('reveal');
 });
@@ -1114,7 +1191,21 @@ $('players').addEventListener('click', event => {
   const target = button && state?.players.find(p => p.id === button.dataset.remove);
   if (!target) return;
   const presenting = target.id === state.presenter && (state.phase === 'hint' || state.phase === 'vote');
-  if (confirm(`${target.name}さんを参加者から外す？${presenting ? '出題中なので、このラウンドはやり直しになるよ。' : ''}戻ってきたときは、もう一度参加してもらってね。`)) act('remove', { target: target.id });
+  const message = target.proxy
+    ? `${target.name}さん（端末なし）を参加者から外す？${presenting ? '出題中なので、このラウンドはやり直しになるよ。' : ''}`
+    : `${target.name}さんを参加者から外す？${presenting ? '出題中なので、このラウンドはやり直しになるよ。' : ''}戻ってきたときは、もう一度参加してもらってね。`;
+  if (confirm(message)) act('remove', { target: target.id });
+});
+$('proxy-rows').addEventListener('click', event => {
+  const button = event.target.closest('button[data-proxy]');
+  if (!button) return;
+  act('answer', { as: button.dataset.proxy, value: button.dataset.value === 'pass' ? null : Number(button.dataset.value) });
+});
+$('proxy-add').addEventListener('click', async () => {
+  const name = $('proxy-name').value;
+  const before = state?.players.length;
+  await act('proxy-add', { name });
+  if (state && state.players.length !== before) $('proxy-name').value = '';
 });
 $('leave').addEventListener('click', () => {
   if (confirm(state.me === state.host ? '全員のルームを閉じますか？' : 'ルームから退出する？')) act('leave');
@@ -1144,6 +1235,6 @@ if (session || (watch && code)) {
 </script>
 <script src="../shared/js/stats.js?v=1" defer></script>
 <script src="../shared/js/howto.js"></script>
-<script>RoomkHowto.init({slides: 'slides.html', "title": "あそびかた", "lead": "ヒントのことばから、出題者が思い浮かべた1〜5の数字を予想するよ。数字は出題者の感覚。違う感じ方も楽しもう。", "sections": [{"heading": "はじめかた", "items": ["進行役が「ルームを作る」でニックネームを入れる。ルームコードは「コードをコピー」、参加用のリンクは「リンクをコピー」でチャットに送れるよ。", "参加する人は「ルームに参加する」でニックネーム、ルームコード（6文字）の順に入れ、「参加する」を押す。リンクからひらいたときは、ルームコードは入っているのでニックネームだけ入れてね。", "進行役が出題者の制限時間（なし・30秒・1分・2分・3分）と出題者を選んで「ラウンドを始める」を押す。お題はランダムで決まるよ。"]}, {"heading": "ヒントと予想", "items": ["出題者は秘密の数字を見て、その程度だと思うことばを「ヒントを出す」で送る。「お題を変更する」から別のお題も選べるよ。変更しても数字と残り時間は変わらないよ。時間切れになると、参加した順で次の出題者・お題へ進むよ。", "ほかの人は1〜5をタップ。公開前なら選び直せるし、「今回はパス」もできるよ。", "進行役は「みんなにみせる画面」で、画面共有でみんなに見せる画面を別のタブに開けるよ。トップの「みんなにみせる画面をひらく」から、ルームコードを入れて開くこともできるよ。"]}, {"heading": "公開する", "items": ["進行役が「回答を締め切って公開」を押すと、まだ回答していない人がいても公開できるよ。締め切ったあとは回答できないよ。出題者の数字は、ことばの意味の唯一の正解ではないよ。", "「次のラウンドを始める」で続けられるよ。次の出題者は参加した順に自動で選ばれるよ。進行役が変更することもできるよ。", "参加者は「退出する」、進行役は「ルームを閉じる」で終わる。", "接続が切れたままの人がいるときは、進行役が「参加している人」の「外す」で外せるよ。戻ってきたら、もう一度参加してね。"]}]});</script>
+<script>RoomkHowto.init({slides: 'slides.html', "title": "あそびかた", "lead": "ヒントのことばから、出題者が思い浮かべた1〜5の数字を予想するよ。数字は出題者の感覚。違う感じ方も楽しもう。", "sections": [{"heading": "はじめかた", "items": ["進行役が「ルームを作る」でニックネームを入れる。ルームコードは「コードをコピー」、参加用のリンクは「リンクをコピー」でチャットに送れるよ。", "参加する人は「ルームに参加する」でニックネーム、ルームコード（6文字）の順に入れ、「参加する」を押す。リンクからひらいたときは、ルームコードは入っているのでニックネームだけ入れてね。", "進行役が出題者の制限時間（なし・30秒・1分・2分・3分）と出題者を選んで「ラウンドを始める」を押す。お題はランダムで決まるよ。", "端末がない子がいるときは、進行役が「端末なしの参加者を足す」で名前を足して、その子の数字を代わりに入力できるよ。その子が出題者の番は、進行役が代わりにヒントを出すよ。"]}, {"heading": "ヒントと予想", "items": ["出題者は秘密の数字を見て、その程度だと思うことばを「ヒントを出す」で送る。「お題を変更する」から別のお題も選べるよ。変更しても数字と残り時間は変わらないよ。時間切れになると、参加した順で次の出題者・お題へ進むよ。", "ほかの人は1〜5をタップ。公開前なら選び直せるし、「今回はパス」もできるよ。", "進行役は「みんなにみせる画面」で、画面共有でみんなに見せる画面を別のタブに開けるよ。トップの「みんなにみせる画面をひらく」から、ルームコードを入れて開くこともできるよ。"]}, {"heading": "公開する", "items": ["進行役が「回答を締め切って公開」を押すと、まだ回答していない人がいても公開できるよ。締め切ったあとは回答できないよ。出題者の数字は、ことばの意味の唯一の正解ではないよ。", "「次のラウンドを始める」で続けられるよ。次の出題者は参加した順に自動で選ばれるよ。進行役が変更することもできるよ。", "参加者は「退出する」、進行役は「ルームを閉じる」で終わる。", "接続が切れたままの人がいるときは、進行役が「参加している人」の「外す」で外せるよ。戻ってきたら、もう一度参加してね。"]}]});</script>
 </body>
 </html>
