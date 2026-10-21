@@ -144,7 +144,7 @@ const { check, sleep } = L;
   await L.waitVisible(A, '#result-area');
   check('F1 finish を数える', await L.waitStats(H, 'finish', 1));
   check('F2 出題者の数字の列', (await L.text(H, '#result-columns .is-target .km-column__num')) === String(secret));
-  const cols = await H.page.$$eval('#result-columns .km-column', (cs) => cs.map((c) => [...c.querySelectorAll('.km-column__name')].map((n) => n.textContent)));
+  const cols = await H.page.$$eval('#result-columns .km-column', (cs) => cs.map((c) => [...c.querySelectorAll('.km-column__name')].map((n) => n.firstChild.textContent)));
   check('F3 予想した数字の列に名前', cols[2].includes('ゆう') && cols[3].includes('はる'), cols);
   check('F4 「正解」と書かない', !(await H.page.evaluate(() => document.getElementById('result-area').textContent.includes('正解'))));
   check('F5 公開のあとは予想できない', !(await L.visible(A, '#vote-area')));

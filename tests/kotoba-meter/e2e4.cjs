@@ -71,7 +71,7 @@ const { check, sleep } = L;
   await H.page.setViewportSize({ width: 1100, height: 900 });
   await H.page.click('#reveal');
   await L.waitVisible(W, '#result-area');
-  const col5 = await W.page.$$eval('#result-columns .km-column', (cs) => [...cs[4].querySelectorAll('.km-column__name')].map((n) => n.textContent));
+  const col5 = await W.page.$$eval('#result-columns .km-column', (cs) => [...cs[4].querySelectorAll('.km-column__name')].map((n) => n.firstChild.textContent));
   check('B8 公開すると、その子の名前も列に出る', col5.includes('ゆい'), col5);
 
   // ── C. その子が出題者の番 ──

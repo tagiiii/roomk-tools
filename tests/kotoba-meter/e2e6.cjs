@@ -115,5 +115,36 @@ const { check, sleep } = L;
   await L.waitText(H, '#phase-title', 'みんながそろったら');
   check('D6 やり直したあとも、点があれば待合室に順位表', await L.visible(H, '#ranking'));
 
+  // ── E. おしまい ──
+  check('E1 「ここでおしまい」は進行役だけ', await L.visible(H, '#finish') && !(await L.visible(A, '#finish')));
+  check('E2 参加者はおしまいにできない', (await raw(A, { action: 'finish' })) !== 'ok');
+  await H.page.click('#finish');
+  await L.waitText(W, '#phase-label', 'おしまい');
+  await L.waitText(A, '#phase-label', 'おしまい');
+  room = await L.roomOf(code);
+  check('E3 おしまいでも点は残る', room.status === 'finished' && room.scores[id('ゆう')] === 2, room.scores);
+  check('E4 1位の発表', (await L.text(W, '#phase-title')) === '1位は ゆうさん！', await L.text(W, '#phase-title'));
+  check('E5 最後の順位表', await L.visible(W, '#ranking') && await W.page.evaluate(() => document.getElementById('ranking').classList.contains('is-final')));
+  check('E6 お題・ヒント・次の出題者は出さない', !(await L.visible(W, '#theme-card')) && !(await L.visible(W, '#hint-area')) && !(await L.visible(W, '#next-round')));
+  check('E7 進行役に「もう一回あそぶ」、参加者には待つ案内', await L.visible(H, '#replay') && !(await L.visible(A, '#replay')) && await L.visible(A, '#finished-wait'));
+  check('E8 みんなにみせる画面は最後の順位まで1画面', await W.page.evaluate(() => document.getElementById('ranking').getBoundingClientRect().bottom <= innerHeight));
+  await L.shot(W, 'e-finished-watch', false);
+  await L.shot(A, 'e-finished-guest-375');
+  const C = await L.newClient('late');
+  await L.open(C, '?room=' + code);
+  await C.page.fill('#nickname', 'そら');
+  await C.page.click('#enter');
+  await L.waitText(C, '#entry-error', 'おしまい');
+  check('E9 おしまいのあとは参加できない', true);
+  await H.page.click('#replay');
+  await L.waitText(A, '#phase-title', 'みんながそろったら');
+  room = await L.roomOf(code);
+  check('E10 もう一回あそぶと待合室・点は0', room.status === 'lobby' && !room.scores && !(await L.visible(A, '#ranking')));
+  await L.waitText(H, '#next-presenter', 'メンター');
+  check('E11 出題者は参加した順の最初から', true);
+  await H.page.click('#finish');
+  await L.waitText(W, '#phase-title', 'みんな同点');
+  check('E12 点がなければ「みんな同点！」', (await L.text(W, '#phase-title')) === 'みんな同点！');
+
   await L.finishAll(server);
 })().catch((e) => { console.error(e); process.exit(1); });
