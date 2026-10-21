@@ -139,8 +139,11 @@ async function createRoom(c, name) {
   await c.page.fill('#nickname', name);
   await c.page.click('#enter');
   await c.page.waitForFunction(() => /^[A-HJ-NP-Z2-9]{6}$/.test(document.querySelector('#room-code').textContent));
+  await openHostMenu(c);
   return (await text(c, '#room-code')).trim();
 }
+// 進行役の「そのほかの操作」を開いておく（中のボタンを押したり、出ているかを確かめたりするため）
+const openHostMenu = (c) => c.page.evaluate(() => { const d = document.getElementById('host-menu'); if (d) d.open = true; });
 async function joinRoom(c, name, code) {
   await open(c, '?room=' + code);
   await c.page.fill('#nickname', name);
@@ -174,6 +177,6 @@ async function finishAll(server) {
 module.exports = {
   T, check, sleep, startServer, rest, roomOf, launch, newClient, gate, open,
   text, waitText, visible, waitVisible, waitHidden, overflow, pressed, stats, waitStats, waitToast, roombarRows, shot,
-  createRoom, joinRoom, openWatch, phaseTitle, sendHint, answer, finishAll,
+  createRoom, joinRoom, openWatch, openHostMenu, phaseTitle, sendHint, answer, finishAll,
   BASE, OUT, NS, DB, ROOMS, clients,
 };

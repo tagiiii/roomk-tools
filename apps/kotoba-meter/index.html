@@ -20,6 +20,11 @@
 /* みんなにみせる画面の目印（共有するタブを見分けるため） */
 .km-watchbadge { display: inline-block; color: #26697A; background: #E6F2F4; border-radius: var(--radius-full); font-size: 13px; font-weight: 700; padding: 4px 12px; margin: 10px 0 0; }
 
+/* ルームの中ではヘッダーを小さく（説明文は入口の画面だけ） */
+.km-wrap:has(#game:not([hidden])) .km-header { margin-bottom: 14px; }
+.km-wrap:has(#game:not([hidden])) .km-header__title { font-size: 1.3rem; }
+.km-wrap:has(#game:not([hidden])) .km-header__sub { display: none; }
+
 /* ── 共通の部品 ── */
 .km-panel { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 14px; padding: 20px; margin-bottom: 16px; }
 .km-panel__title { color: var(--color-primary); font-size: 1rem; font-weight: 700; margin: 0 0 12px; }
@@ -101,7 +106,6 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 .km-gauge { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; max-width: 360px; margin: 0 auto; padding: 0; list-style: none; }
 .km-gauge li { height: 14px; border-radius: var(--radius-full); background: #ECEEF0; }
 .km-gauge li.is-on { background: var(--color-accent); }
-.km-gauge-ends { max-width: 360px; margin: 6px auto 0; font-size: 12px; }
 .km-secret__hint { color: var(--color-text); font-size: 14px; margin: 14px 0 0; }
 .km-hintform { border-top: 1px solid var(--color-border); margin-top: 20px; padding-top: 18px; }
 .km-hintform .btn { margin-top: 14px; }
@@ -128,7 +132,6 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 .km-scale__btn:hover:not(:disabled) { border-color: var(--color-accent); background: #F4FAFB; }
 .km-scale__btn[aria-pressed="true"] { border-color: var(--color-accent); background: #E6F2F4; box-shadow: 0 0 0 2px var(--color-accent); }
 .km-scale__bar { width: 60%; height: calc(var(--lv-h) * 0.24); min-height: 5px; border-radius: 4px; background: var(--lv-bg); }
-.km-scale-ends { margin: 8px 2px 0; font-size: 13px; }
 #answer-note { text-align: center; color: #26697A; font-weight: 500; min-height: 24px; margin: 14px 0 0; }
 .km-progress { text-align: center; margin: 0 0 16px; }
 .km-progress p { color: var(--color-primary); font-weight: 700; margin: 0; }
@@ -168,6 +171,8 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 .km-next__name { font-size: 22px; font-weight: 700; overflow-wrap: anywhere; }
 .km-next__away { color: var(--color-muted); font-size: 14px; }
 .km-setup { border-top: 1px solid var(--color-border); margin-top: 18px; padding-top: 16px; }
+/* 進行役は次の出題者の帯を出さないので、区切り線もいらない */
+.km-next[hidden] + .km-setup { border-top: 0; margin-top: 0; padding-top: 0; }
 .km-setup > .km-label:not(:first-child) { margin-top: 18px; }
 .km-setup .btn { margin-top: 18px; }
 .km-pills { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -187,6 +192,17 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 .km-proxy__btn { min-width: 44px; min-height: 44px; padding: 4px 10px; border: 2px solid var(--color-border); border-radius: 10px; background: var(--color-surface); color: var(--color-primary); font-family: inherit; font-size: 18px; font-weight: 700; cursor: pointer; }
 .km-proxy__btn--pass { font-size: 14px; color: var(--color-muted); }
 .km-proxy__btn[aria-pressed="true"] { border-color: var(--color-accent); background: #E6F2F4; box-shadow: 0 0 0 2px var(--color-accent); }
+
+/* ── そのほかの操作（進行役） ── */
+.km-hostmenu { padding: 4px 20px; }
+.km-hostmenu summary { min-height: 44px; display: flex; align-items: center; gap: 6px; color: var(--color-muted); font-size: 14px; font-weight: 700; cursor: pointer; list-style: none; }
+.km-hostmenu summary::-webkit-details-marker { display: none; }
+.km-hostmenu summary::before { content: "expand_more"; font-family: "Material Symbols Rounded"; font-size: 22px; color: var(--color-accent); transition: transform .15s; }
+.km-hostmenu[open] summary::before { transform: rotate(180deg); }
+.km-hostmenu[open] { padding-bottom: 16px; }
+.km-hostmenu__row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; padding: 8px 0; border-top: 1px solid var(--color-border); }
+.km-hostmenu__row .km-note { margin: 0; }
+.km-hostmenu .km-proxyadd { margin-top: 0; padding-top: 12px; }
 
 /* ── 参加している人 ── */
 #players { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
@@ -407,7 +423,6 @@ button:disabled { opacity: .5; cursor: not-allowed; }
             <p class="km-secret__label"><span class="material-symbols-rounded" aria-hidden="true">lock</span><span id="secret-label">あなただけの秘密の数字</span></p>
             <p id="secret-number" class="km-secret__num"></p>
             <ol id="secret-gauge" class="km-gauge" aria-hidden="true"><li></li><li></li><li></li><li></li><li></li></ol>
-            <div class="km-ends km-gauge-ends" aria-hidden="true"><span id="secret-low"></span><span id="secret-high"></span></div>
             <p class="km-secret__hint">この数字くらいだと思うことばを考えよう。</p>
           </div>
           <form id="hint-form" class="km-hintform">
@@ -427,13 +442,10 @@ button:disabled { opacity: .5; cursor: not-allowed; }
             <button id="change-theme" class="btn btn-secondary" type="button">このお題に変更</button>
             <p class="km-note">秘密の数字と残り時間は変わらないよ。</p>
           </details>
-          <p class="km-note">この画面はみんなに見せないでね。共有するのは「みんなにみせる画面」だよ。</p>
         </section>
 
         <section id="vote-area" class="km-panel" hidden>
-          <p class="km-panel__title">出題者はどの数字を思い浮かべたかな？</p>
           <div id="choices" class="km-scale" role="group" aria-label="1から5を選ぶ"></div>
-          <div class="km-ends km-scale-ends" aria-hidden="true"><span id="vote-low"></span><span id="vote-high"></span></div>
           <p id="answer-note" role="status"></p>
           <div class="km-alt"><button id="pass" class="km-quiet-btn" type="button">今回はパス</button></div>
         </section>
@@ -457,7 +469,6 @@ button:disabled { opacity: .5; cursor: not-allowed; }
           <h3 class="km-panel__title">点数</h3>
           <ol id="ranking-list" class="km-ranking__list"></ol>
           <p id="ranking-more" class="km-note" hidden></p>
-          <div id="scores-reset-row" class="km-alt" hidden><button id="scores-reset" class="km-quiet-btn" type="button">点を0にもどす</button></div>
         </section>
         </div>
 
@@ -466,10 +477,24 @@ button:disabled { opacity: .5; cursor: not-allowed; }
           <div id="setup" class="km-setup" hidden>
             <p class="km-label" id="hint-seconds-label">出題者の制限時間</p>
             <div id="hint-seconds" class="km-pills" role="group" aria-labelledby="hint-seconds-label"></div>
-            <label class="km-label" for="presenter-select">出題者</label>
+            <label class="km-label" for="presenter-select">次の出題者</label>
             <select class="km-input" id="presenter-select"></select>
-            <p class="km-note km-note--left">お題はランダムで決まるよ。出題者は参加した順に交代するよ。</p>
             <button id="start" class="btn btn-primary btn-full" type="button">ラウンドを始める</button>
+          </div>
+        </section>
+
+        <section id="finished-area" hidden>
+          <button id="replay" class="btn btn-primary btn-full" type="button" hidden>もう一回あそぶ</button>
+          <p id="finished-wait" class="km-note" hidden>進行役が次を決めるまで待ってね。</p>
+        </section>
+
+        <!-- 進行役がたまに使う操作は、ここにまとめる（開くと出る） -->
+        <details id="host-menu" class="km-panel km-hostmenu" hidden>
+          <summary>そのほかの操作</summary>
+          <div id="host-reset" class="km-hostmenu__row" hidden><button id="reset" class="btn btn-secondary btn-sm" type="button">このラウンドをやり直す</button></div>
+          <div id="scores-reset-row" class="km-hostmenu__row" hidden><button id="scores-reset" class="btn btn-secondary btn-sm" type="button">点を0にもどす</button></div>
+          <div id="finish-row" class="km-hostmenu__row" hidden><button id="finish" class="btn btn-secondary btn-sm" type="button">ここでおしまい</button><span class="km-note">最後の順位を出して終わる</span></div>
+          <div id="proxy-row" hidden>
             <div class="km-proxyadd">
               <label class="km-label" for="proxy-name">端末なしの参加者を足す（8文字まで）</label>
               <div class="km-proxyadd__row">
@@ -479,15 +504,7 @@ button:disabled { opacity: .5; cursor: not-allowed; }
               <p class="km-note km-note--left">チャットや声で答える子の分を、進行役が代わりに入力します。その子が出題者の番は、進行役が代わりにヒントを出します。</p>
             </div>
           </div>
-        </section>
-
-        <div id="finish-row" class="km-alt" hidden><button id="finish" class="km-quiet-btn" type="button">ここでおしまい</button></div>
-        <section id="finished-area" hidden>
-          <button id="replay" class="btn btn-primary btn-full" type="button" hidden>もう一回あそぶ</button>
-          <p id="finished-wait" class="km-note" hidden>進行役が次を決めるまで待ってね。</p>
-        </section>
-
-        <div id="host-reset" class="km-alt" hidden><button id="reset" class="km-quiet-btn" type="button">このラウンドをやり直す</button></div>
+        </details>
 
         <section class="km-panel km-people">
           <h3 id="people-title" class="km-panel__title">参加している人</h3>
@@ -1119,7 +1136,7 @@ function render(next) {
   const finishedTitle = top === 0 || winners.length === state.players.length ? 'みんな同点！' : `1位は ${winners.map(p => p.name).join('さん・')}さん！`;
   show('front', false); show('watch-end', false); show('game', true);
   // みんなにみせる画面は進行役が開いて共有する（しるしでヒント・スタンプあてゲームと同じ）
-  show('room-actions', !watch); show('watch-link', host); show('leave', !watch); show('my-role', !watch); show('watch-badge', watch);
+  show('room-actions', !watch); show('watch-link', host); show('leave', !watch); show('my-role', host); show('watch-badge', watch);
   $('room-code').textContent = state.code;
   $('my-role').textContent = host ? '進行役' : '参加者';
   $('watch-link').href = `?watch=${encodeURIComponent(code)}`;
@@ -1127,7 +1144,7 @@ function render(next) {
   $('phase-label').textContent = lobby ? 'みんなで準備' : finished ? 'おしまい' : `ラウンド ${state.round}`;
   $('phase-title').textContent = lobby ? 'みんながそろったら始めよう' : finished ? finishedTitle : hint ? 'どんなことばにしよう？' : vote ? 'このヒント、どれくらい？' : 'みんなには、こう感じた！';
   $('phase-title').classList.toggle('km-phase__title--final', finished);
-  $('phase-note').textContent = finished ? 'あそんでくれてありがとう。' : lobby ? (host ? '制限時間と出題者を選んで始めてね。' : watch ? 'スマホやパソコンで、ルームに入ってね。' : '進行役が始めるまで待ってね。') : hint ? `${playerName(state.presenter)}さんがヒントを考えているよ。` : vote ? '公開するまで、ほかの人の数字は秘密。' : '数字は出題者の感覚。違う感じ方も楽しもう。';
+  $('phase-note').textContent = finished ? 'あそんでくれてありがとう。' : lobby ? (host ? '制限時間と出題者を選んで始めてね。' : watch ? 'スマホやパソコンで、ルームに入ってね。' : '進行役が始めるまで待ってね。') : hint ? (acting ? '' : `${playerName(state.presenter)}さんがヒントを考えているよ。`) : '';
   if (state.timedOut && (hint || lobby)) $('phase-note').textContent = hint
     ? '前のラウンドは時間切れ。新しいお題でヒントを考えよう。'
     : '時間切れになったよ。出題者の接続を確認して、次のラウンドを始めてね。';
@@ -1136,7 +1153,7 @@ function render(next) {
     ? Math.max(0, Math.ceil((state.hintStartedAt + state.hintSeconds * 1000 - RoomkRTDB.now()) / 1000)) : null;
   $('hint-timer').classList.toggle('is-none', secondsLeft === null);
   $('hint-timer').classList.toggle('is-soon', !!secondsLeft && secondsLeft <= 10);
-  if (secondsLeft === null) $('hint-timer').textContent = '出題の制限時間：なし';
+  if (secondsLeft === null) show('hint-timer', false);
   else if (secondsLeft === 0) $('hint-timer').textContent = '時間切れ。次のお題へ進んでいます。';
   else $('hint-timer').replaceChildren(el('span', '', 'ヒントを出すまで あと'), el('strong', '', `${Math.floor(secondsLeft / 60)}分${String(secondsLeft % 60).padStart(2, '0')}秒`));
   // みんなにみせる画面の待合室では、参加のしかたを大きく出す（画面共有を見ながら入れるように）
@@ -1145,9 +1162,9 @@ function render(next) {
   show('theme-card', hint || vote || result);
   $('theme-name').textContent = state.theme.name;
   setEnds('low', 'high', state.theme);
-  setEnds('secret-low', 'secret-high', state.theme);
-  setEnds('vote-low', 'vote-high', state.theme);
   show('next-round', lobby || result);
+  // 進行役は下の選択欄で次の出題者を見るので、帯は参加者とみんなにみせる画面だけ
+  show('next-presenter', !host);
   const upcomingPlayer = state.players.find(p => p.id === state.nextPresenter);
   $('next-presenter').replaceChildren(
     el('span', 'km-next__label', `${state.round === 0 ? '最初' : '次'}の出題者`),
@@ -1206,10 +1223,10 @@ function render(next) {
   }
   document.querySelectorAll('#choices button').forEach(b => b.setAttribute('aria-pressed', String(state.hasAnswer && state.mine === Number(b.value))));
   $('pass').setAttribute('aria-pressed', String(state.hasAnswer && state.mine === null));
-  $('answer-note').textContent = state.hasAnswer ? (state.mine === null ? '今回はパス。公開前なら数字も選べるよ。' : `${state.mine} を選んだよ。公開前なら選び直せるよ。`) : '数字をタップすると回答できるよ。';
+  $('answer-note').textContent = state.hasAnswer ? (state.mine === null ? '今回はパスにしたよ' : `${state.mine} を選んだよ`) : '';
   // 端末なしの子が出題しているときは、進行役は予想しないので数えない
   const voters = state.players.filter(p => p.id !== state.presenter && !(presenterProxy && p.id === state.host));
-  $('progress').textContent = `${voters.filter(p => p.answered).length} / ${voters.length} 人が回答済み（パスを含む）`;
+  $('progress').textContent = `${voters.filter(p => p.answered).length} / ${voters.length}人が回答`;
   show('progress-area', vote); show('reveal', host && vote);
   show('host-reset', host && (hint || vote));
   show('result-area', result);
@@ -1220,7 +1237,6 @@ function render(next) {
     $('result-columns').replaceChildren(...[1, 2, 3, 4, 5].map(n => {
       const col = el('div', `km-column km-lv${n}${n === state.secret ? ' is-target' : ''}`);
       col.append(el('span', 'km-column__num', String(n)));
-      if (n === state.secret) col.append(el('span', 'km-column__tag', '出題者の数字'));
       voters.filter(p => state.answers[p.id] === n).forEach(p => {
         const chip = el('span', 'km-column__name', p.name);
         const pt = state.roundPoints?.[p.id];
@@ -1239,6 +1255,8 @@ function render(next) {
   show('scores-reset-row', host && anyScore && !finished);
   $('ranking').classList.toggle('is-final', finished);
   show('finish-row', host && (lobby || result) && state.round > 0);
+  show('proxy-row', host && (lobby || result));
+  show('host-menu', host && ['host-reset', 'scores-reset-row', 'finish-row', 'proxy-row'].some(id => !$(id).hidden));
   show('finished-area', finished);
   show('replay', host && finished);
   show('finished-wait', !host && !watch && finished);
@@ -1380,6 +1398,6 @@ if (session || (watch && code)) {
 </script>
 <script src="../shared/js/stats.js?v=1" defer></script>
 <script src="../shared/js/howto.js"></script>
-<script>RoomkHowto.init({slides: 'slides.html', "title": "あそびかた", "lead": "ヒントのことばから、出題者が思い浮かべた1〜5の数字を予想するよ。数字は出題者の感覚。違う感じ方も楽しもう。", "sections": [{"heading": "はじめかた", "items": ["進行役が「ルームを作る」でニックネームを入れる。ルームコードは「コードをコピー」、参加用のリンクは「リンクをコピー」でチャットに送れるよ。", "参加する人は「ルームに参加する」でニックネーム、ルームコード（6文字）の順に入れ、「参加する」を押す。リンクからひらいたときは、ルームコードは入っているのでニックネームだけ入れてね。", "進行役が出題者の制限時間（なし・30秒・1分・2分・3分）と出題者を選んで「ラウンドを始める」を押す。お題はランダムで決まるよ。", "端末がない子がいるときは、進行役が「端末なしの参加者を足す」で名前を足して、その子の数字を代わりに入力できるよ。その子が出題者の番は、進行役が代わりにヒントを出すよ。"]}, {"heading": "ヒントと予想", "items": ["出題者は秘密の数字を見て、その程度だと思うことばを「ヒントを出す」で送る。「お題を変更する」から別のお題も選べるよ。変更しても数字と残り時間は変わらないよ。時間切れになると、参加した順で次の出題者・お題へ進むよ。", "ほかの人は1〜5をタップ。公開前なら選び直せるし、「今回はパス」もできるよ。", "進行役は「みんなにみせる画面」で、画面共有でみんなに見せる画面を別のタブに開けるよ。トップの「みんなにみせる画面をひらく」から、ルームコードを入れて開くこともできるよ。"]}, {"heading": "公開する", "items": ["進行役が「回答を締め切って公開」を押すと、まだ回答していない人がいても公開できるよ。締め切ったあとは回答できないよ。出題者の数字は、ことばの意味の唯一の正解ではないよ。", "点数：予想がぴったりなら2点、1つちがいなら1点。出題者は、ぴったりの人がいれば2点。パスと時間切れは点なし。結果の画面に順位が出るよ。進行役は「点を0にもどす」でリセットできるよ。", "「次のラウンドを始める」で続けられるよ。次の出題者は参加した順に自動で選ばれるよ。進行役が変更することもできるよ。", "進行役が「ここでおしまい」を押すと、最後の順位が出るよ。「もう一回あそぶ」で点を0にして、はじめから遊べるよ。", "参加者は「退出する」、進行役は「ルームを閉じる」で終わる。", "接続が切れたままの人がいるときは、進行役が「参加している人」の「外す」で外せるよ。戻ってきたら、もう一度参加してね。"]}]});</script>
+<script>RoomkHowto.init({slides: 'slides.html', "title": "あそびかた", "lead": "ヒントのことばから、出題者が思い浮かべた1〜5の数字を予想するよ。数字は出題者の感覚。違う感じ方も楽しもう。", "sections": [{"heading": "はじめかた", "items": ["進行役が「ルームを作る」でニックネームを入れる。ルームコードは「コードをコピー」、参加用のリンクは「リンクをコピー」でチャットに送れるよ。", "参加する人は「ルームに参加する」でニックネーム、ルームコード（6文字）の順に入れ、「参加する」を押す。リンクからひらいたときは、ルームコードは入っているのでニックネームだけ入れてね。", "進行役が出題者の制限時間（なし・30秒・1分・2分・3分）と出題者を選んで「ラウンドを始める」を押す。お題はランダムで決まるよ。", "端末がない子がいるときは、進行役が「そのほかの操作」の「端末なしの参加者を足す」で名前を足して、その子の数字を代わりに入力できるよ。その子が出題者の番は、進行役が代わりにヒントを出すよ。"]}, {"heading": "ヒントと予想", "items": ["出題者は秘密の数字を見て、その程度だと思うことばを「ヒントを出す」で送る。「お題を変更する」から別のお題も選べるよ。変更しても数字と残り時間は変わらないよ。時間切れになると、参加した順で次の出題者・お題へ進むよ。", "ほかの人は1〜5をタップ。公開前なら選び直せるし、「今回はパス」もできるよ。", "進行役は「みんなにみせる画面」で、画面共有でみんなに見せる画面を別のタブに開けるよ。トップの「みんなにみせる画面をひらく」から、ルームコードを入れて開くこともできるよ。"]}, {"heading": "公開する", "items": ["進行役が「回答を締め切って公開」を押すと、まだ回答していない人がいても公開できるよ。締め切ったあとは回答できないよ。出題者の数字は、ことばの意味の唯一の正解ではないよ。", "点数：予想がぴったりなら2点、1つちがいなら1点。出題者は、ぴったりの人がいれば2点。パスと時間切れは点なし。結果の画面に順位が出るよ。進行役は「そのほかの操作」の「点を0にもどす」でリセットできるよ。", "「次のラウンドを始める」で続けられるよ。次の出題者は参加した順に自動で選ばれるよ。進行役が変更することもできるよ。", "進行役が「そのほかの操作」の「ここでおしまい」を押すと、最後の順位が出るよ。「もう一回あそぶ」で点を0にして、はじめから遊べるよ。", "参加者は「退出する」、進行役は「ルームを閉じる」で終わる。", "接続が切れたままの人がいるときは、進行役が「参加している人」の「外す」で外せるよ。戻ってきたら、もう一度参加してね。"]}]});</script>
 </body>
 </html>

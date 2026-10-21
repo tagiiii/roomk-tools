@@ -26,7 +26,7 @@ const { check, sleep } = L;
   // ── B. 開始（制限時間なし）と途中参加 ──
   await H.page.click('#start');
   await L.waitVisible(H, '#secret-area');
-  check('B1 制限時間なしの表示', (await L.text(H, '#hint-timer')).includes('なし'));
+  check('B1 制限時間なしのときは残り時間を出さない', !(await L.visible(H, '#hint-timer')));
   await C.page.fill('#nickname', 'そら');
   await C.page.click('#enter');
   await L.waitText(C, '#entry-error', 'ラウンドの途中');
@@ -44,6 +44,7 @@ const { check, sleep } = L;
   check('C1 参加者は再読み込みしても自分の予想が残る', await L.pressed(A, '#choices button[value="5"]'));
   await H.page.reload();
   await L.gate(H);
+  await L.openHostMenu(H);
   await L.waitVisible(H, '#reveal');
   check('C2 進行役は再読み込みしても進行役のまま', (await L.text(H, '#my-role')) === '進行役' && (await L.text(H, '#leave')) === 'ルームを閉じる');
 
