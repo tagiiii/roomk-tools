@@ -2,10 +2,19 @@
 // 時間はすべて「曲のはじまり（カウントの1拍目）からの秒」で数える。
 
 export const COURSES = [
-  { id: 'easy', label: 'やさしい', note: 'しるしは1種類。どのボタンでもOK', lanes: 1 },
-  { id: 'normal', label: 'ふつう', note: 'まる と ひしがた・こまかいリズム', lanes: 2 },
-  { id: 'hard', label: 'むずかしい', note: 'もっとこまかいリズム', lanes: 2 },
+  { id: 'easy', label: 'やさしい', note: 'しるしは1種類。どのボタンでもOK' },
+  { id: 'normal', label: 'ふつう', note: 'こまかいリズム' },
+  { id: 'hard', label: 'むずかしい', note: 'もっとこまかいリズム' },
 ];
+
+// マークの数（ふつう・むずかしいで選ぶ。やさしいはいつも1つ）。2つ＝まる・ひしがた、3つ＝まる・さんかく・ひしがた
+export const MARKS = [
+  { id: 2, label: '2つ', note: 'まる・ひしがた' },
+  { id: 3, label: '3つ', note: 'まる・さんかく・ひしがた' },
+];
+export function marksOf(value) { return Number(value) === 3 ? 3 : 2; }
+// 列の数（＝ボタンの数）
+export function lanesOf(courseId, marks) { return courseId === 'easy' ? 1 : marksOf(marks); }
 
 // 曲。music があるものは ElevenLabs で作った曲（ファイル）、ないものはツールの中で鳴らす仮の手拍子（いまは3曲とも曲のファイル）。
 // 曲の速さと1拍目の時刻は、できた曲を調べて決めた値（AGENTS.md「曲」）。
@@ -50,6 +59,16 @@ const PATTERNS = {
 };
 const FIRST = { easy: 'a.a.a.a.', normal: 'a.b.a.b.', hard: 'a.b.a.b.a.b.a.b.' };
 
+// マーク3つのときの並び。c＝さんかく（まんなかの列）。同じ列は8分音符より近づけない（16分音符はとなりの列とだけ）。
+const PATTERNS3 = {
+  normal: ['a.c.bca.', 'acb.c.ab', 'a.cbc.a.', 'acbca.b.', 'b.cac.b.', 'a.cba.cb', 'acb.bca.'],
+  hard: [
+    'a.c.b.c.acbca.c.', 'a.b.c.b.a.cbc.b.', 'acbc..a.b.c.acbc', 'a.c.acbc..b.c.a.',
+    'a.cbc.a.b.c.b.ac', 'a.b.c.b.acba..c.', 'ac..bc..a.c.bcac',
+  ],
+};
+const FIRST3 = { normal: 'a.c.b.c.', hard: 'a.c.b.c.a.c.b.c.' };
+
 // しるしが上から線まで落ちる秒数（コースごと）
 export const TRAVEL = { easy: 1.3, normal: 1.15, hard: 1.0 };
 
@@ -62,16 +81,19 @@ function seeded(seed) {
 }
 
 // 同じ曲・同じコースなら、毎回同じ譜面になる（何度か遊んでうまくなれるように）。
-export function buildChart(track, courseId) {
-  const bank = PATTERNS[courseId];
-  if (!bank) throw new Error('unknown course: ' + courseId);
+export function buildChart(track, courseId, marks = 2) {
+  if (!PATTERNS[courseId]) throw new Error('unknown course: ' + courseId);
+  const lanes = lanesOf(courseId, marks);
+  const bank = lanes === 3 ? PATTERNS3[courseId] : PATTERNS[courseId];
+  // 2つ: a＝左・b＝右。3つ: a＝左・c＝まんなか・b＝右。やさしいは全部 左
+  const laneOf = (c) => (lanes === 1 ? 0 : c === 'a' ? 0 : c === 'b' ? lanes - 1 : 1);
   const { bpm, music } = track;
   const beat = 60 / bpm;
   const eighth = beat / 2;
   const bar = beat * 4;
   const MEASURES = music ? music.measures : CLICK_MEASURES;
   const start = music ? music.firstBeat + music.introBeats * beat : COUNT_IN_BEATS * beat;
-  const rand = seeded(Math.round(bpm) * 7 + courseId.length * 131 + 1);
+  const rand = seeded(Math.round(bpm) * 7 + courseId.length * 131 + 1 + (lanes === 3 ? 7919 : 0));
   const pick = () => bank[Math.floor(rand() * bank.length)];
   const measures = [];
   for (let m = 0; m < MEASURES; m += 4) {
@@ -82,23 +104,23 @@ export function buildChart(track, courseId) {
     measures.push(p, p, q, p);
   }
   measures.length = MEASURES;
-  measures[0] = FIRST[courseId];
+  measures[0] = lanes === 3 ? FIRST3[courseId] : FIRST[courseId];
   measures[MEASURES - 1] = 'a.......';
   const notes = [];
   measures.forEach((pat, m) => {
     const step = bar / pat.length;
     for (let i = 0; i < pat.length; i++) {
       const c = pat[i];
-      if (c !== 'a' && c !== 'b') continue;
+      if (c !== 'a' && c !== 'b' && c !== 'c') continue;
       notes.push({
         id: notes.length,
         t: start + m * bar + i * step,
-        lane: courseId === 'easy' ? 0 : (c === 'a' ? 0 : 1),
+        lane: laneOf(c),
       });
     }
   });
   const musicEnd = music ? music.length : start + MEASURES * bar;
-  return { bpm, beat, eighth, bar, start, musicEnd, notes, music: music || null };
+  return { bpm, beat, eighth, bar, start, musicEnd, notes, lanes, music: music || null };
 }
 
 export function createState(chart) {

@@ -2,7 +2,7 @@
 // 実行: node tests/pittari-beat/engine.test.mjs
 import {
   COURSES, TRACKS, JUDGE, POINTS, CLICK_MEASURES, OFFSET_MIN, OFFSET_MAX, CALIB_BPM,
-  buildChart, createState, hit, sweepMisses, score, isFinished, estimateOffset, rankPlayers,
+  buildChart, createState, hit, sweepMisses, score, isFinished, estimateOffset, rankPlayers, lanesOf,
 } from '../../apps/pittari-beat/engine.js';
 
 let pass = 0;
@@ -21,23 +21,28 @@ function consistent(st, label) {
   ok(st.maxCombo <= st.perfect + st.good, label + ': つづけた回数は当てた数以下');
 }
 
+// コースとマークの数の組み合わせ（やさしいはマークの数を選ばない）
+const VARIANTS = [];
+for (const c of COURSES) for (const marks of c.id === 'easy' ? [2] : [2, 3]) VARIANTS.push({ id: c.id, marks, lanes: lanesOf(c.id, marks), name: c.id + (c.id === 'easy' ? '' : '/' + marks) });
+
 // 1. 譜面
 for (const tr of TRACKS) {
-  for (const c of COURSES) {
-    const ch = buildChart(tr, c.id);
-    const label = tr.id + '/' + c.id;
+  for (const c of VARIANTS) {
+    const ch = buildChart(tr, c.id, c.marks);
+    const label = tr.id + '/' + c.name;
+    ok(ch.lanes === c.lanes, label + ': 列の数', ch.lanes);
     ok(ch.notes.length > 0, label + ': しるしがある');
     ok(ch.notes.every((n, i) => i === 0 || n.t >= ch.notes[i - 1].t), label + ': 時刻の順に並ぶ');
     ok(ch.notes.every((n) => n.t >= ch.start - 1e-9 && n.t < ch.musicEnd), label + ': カウントのあと・曲のおわりまで');
     ok(ch.notes.every((n) => n.lane >= 0 && n.lane < c.lanes), label + ': 列の数に合う', c.lanes);
     if (c.id === 'easy') ok(ch.notes.every((n) => n.lane === 0), label + ': やさしいは1種類だけ');
-    else ok(new Set(ch.notes.map((n) => n.lane)).size === 2, label + ': 2種類が出る');
-    const sameLaneGap = Math.min(...[0, 1].flatMap((l) => {
+    else ok(new Set(ch.notes.map((n) => n.lane)).size === c.lanes, label + ': マークの数だけ種類が出る');
+    const sameLaneGap = Math.min(...[0, 1, 2].flatMap((l) => {
       const ts = ch.notes.filter((n) => n.lane === l).map((n) => n.t);
       return ts.slice(1).map((t, i) => t - ts[i]);
     }).concat([Infinity]));
     ok(sameLaneGap >= ch.eighth - 1e-9, label + ': 同じ列のしるしは8分音符より近づかない');
-    const again = buildChart(tr, c.id);
+    const again = buildChart(tr, c.id, c.marks);
     ok(JSON.stringify(again.notes) === JSON.stringify(ch.notes), label + ': 何度作っても同じ譜面');
     if (tr.music) {
       ok(ch.musicEnd === tr.music.length, label + ': 曲の長さ＝ファイルの長さ');
@@ -45,19 +50,25 @@ for (const tr of TRACKS) {
       ok(ch.notes[ch.notes.length - 1].t < tr.music.length - 2, label + ': 曲がおわる2秒前までにおわる');
     } else ok(Math.abs(ch.musicEnd - ch.start - CLICK_MEASURES * ch.bar) < 1e-9, label + ': 曲の長さ');
   }
-  const counts = COURSES.map((c) => buildChart(tr, c.id).notes.length);
-  ok(counts[0] < counts[1] && counts[1] < counts[2], tr.id + ': むずかしいほどしるしが多い', counts);
+  for (const marks of [2, 3]) {
+    const counts = COURSES.map((c) => buildChart(tr, c.id, marks).notes.length);
+    ok(counts[0] < counts[1] && counts[1] < counts[2], tr.id + '/' + marks + ': むずかしいほどしるしが多い', counts);
+  }
+  const two = buildChart(tr, 'hard', 2);
+  const three = buildChart(tr, 'hard', 3);
+  ok(JSON.stringify(two.notes) !== JSON.stringify(three.notes), tr.id + ': マーク3つは別の譜面');
+  ok(three.notes.some((n, i) => i > 0 && n.t - three.notes[i - 1].t < three.eighth - 1e-9), tr.id + ': マーク3つのむずかしいにも16分音符');
 }
 
 // 2. ぴったりにたたくと全部ぴったり・最高点
-for (const c of COURSES) {
-  const ch = buildChart(TRACKS.find((t) => t.id === 'mid'), c.id);
+for (const c of VARIANTS) {
+  const ch = buildChart(TRACKS.find((t) => t.id === 'mid'), c.id, c.marks);
   const st = createState(ch);
   for (const n of ch.notes) hit(st, n.lane, n.t + 0.01, JUDGE[c.id]);
-  ok(st.perfect === ch.notes.length && isFinished(st), c.id + ': 全部ぴったり');
-  ok(st.maxCombo === ch.notes.length, c.id + ': ずっとつづけて当てた');
-  ok(score(st) === ch.notes.length * 100, c.id + ': 最高点');
-  consistent(st, c.id + ' 全部ぴったり');
+  ok(st.perfect === ch.notes.length && isFinished(st), c.name + ': 全部ぴったり');
+  ok(st.maxCombo === ch.notes.length, c.name + ': ずっとつづけて当てた');
+  ok(score(st) === ch.notes.length * 100, c.name + ': 最高点');
+  consistent(st, c.name + ' 全部ぴったり');
 }
 
 // 3. 少しずれると「いいね」、大きくずれると流れる（点は入らない）
@@ -87,10 +98,10 @@ for (const c of COURSES) {
 
 // 4. でたらめにたたき続けても、数がくい違わない・同じしるしが2回数えられない
 function rng(seed) { let s = seed >>> 0; return () => ((s = (Math.imul(s, 1103515245) + 12345) >>> 0) / 4294967296); }
-for (const c of COURSES) {
+for (const c of VARIANTS) {
   for (let trial = 0; trial < 30; trial++) {
-    const rand = rng(trial * 97 + c.id.length);
-    const ch = buildChart(TRACKS[trial % 3], c.id);
+    const rand = rng(trial * 97 + c.id.length + c.marks);
+    const ch = buildChart(TRACKS[trial % 3], c.id, c.marks);
     const w = JUDGE[c.id];
     const st = createState(ch);
     const seen = new Set();
@@ -113,7 +124,7 @@ for (const c of COURSES) {
     ok(score(st) <= ch.notes.length * 100, c.id + ' #' + trial + ': 最高点をこえない');
   }
   // 連打（とても速く同じ列）は全部当たりにならない
-  const ch = buildChart(TRACKS.find((t) => t.id === 'mid'), c.id);
+  const ch = buildChart(TRACKS.find((t) => t.id === 'mid'), c.id, c.marks);
   const w = JUDGE[c.id];
   const st = createState(ch);
   for (let t = 0; t < ch.musicEnd + 1; t += 0.03) for (let l = 0; l < c.lanes; l++) hit(st, l, t, w);

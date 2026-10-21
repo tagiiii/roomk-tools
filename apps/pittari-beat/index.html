@@ -9,7 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet" />
   <link rel="stylesheet" href="../shared/css/design-system.css" />
-  <link rel="stylesheet" href="style.css?v=20261021a" />
+  <link rel="stylesheet" href="style.css?v=20261021b" />
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
@@ -56,6 +56,10 @@
         <p class="pb-field__label" id="pb-solo-course-label">コース</p>
         <div class="pb-choices" role="group" aria-labelledby="pb-solo-course-label" id="pb-solo-courses"></div>
       </div>
+      <div class="pb-field" data-marks-field>
+        <p class="pb-field__label" id="pb-solo-marks-label">マークの数</p>
+        <div class="pb-choices pb-choices--two" role="group" aria-labelledby="pb-solo-marks-label" id="pb-solo-marks"></div>
+      </div>
       <div class="pb-field">
         <p class="pb-field__label" id="pb-solo-track-label">曲</p>
         <div class="pb-choices" role="group" aria-labelledby="pb-solo-track-label" id="pb-solo-tracks"></div>
@@ -86,6 +90,10 @@
       <div class="pb-field">
         <p class="pb-field__label" id="pb-create-course-label">コース</p>
         <div class="pb-choices" role="group" aria-labelledby="pb-create-course-label" id="pb-create-courses"></div>
+      </div>
+      <div class="pb-field" data-marks-field>
+        <p class="pb-field__label" id="pb-create-marks-label">マークの数</p>
+        <div class="pb-choices pb-choices--two" role="group" aria-labelledby="pb-create-marks-label" id="pb-create-marks"></div>
       </div>
       <div class="pb-field">
         <p class="pb-field__label" id="pb-create-track-label">曲</p>
@@ -123,6 +131,10 @@
       <div id="pb-host-change" class="pb-change" hidden>
         <p class="pb-field__label" id="pb-change-course-label">コース</p>
         <div class="pb-choices" role="group" aria-labelledby="pb-change-course-label" id="pb-change-courses"></div>
+        <div class="pb-change__marks" data-marks-field>
+          <p class="pb-field__label" id="pb-change-marks-label">マークの数</p>
+          <div class="pb-choices pb-choices--two" role="group" aria-labelledby="pb-change-marks-label" id="pb-change-marks"></div>
+        </div>
         <p class="pb-field__label" id="pb-change-track-label">曲</p>
         <div class="pb-choices" role="group" aria-labelledby="pb-change-track-label" id="pb-change-tracks"></div>
         <p class="pb-change__note">変えると、みんなの点数は消えます</p>
@@ -289,7 +301,7 @@
     </section>
   </main>
 
-  <script type="module" src="app.js?v=20261021a"></script>
+  <script type="module" src="app.js?v=20261021b"></script>
   <script src="../shared/js/stats.js?v=1" defer></script>
   <script src="../shared/js/howto.js"></script>
   <script>
@@ -298,9 +310,9 @@
       slides: 'slides.html',
       lead: '上から落ちてくるしるしが線に来たときに、ボタンをたたくリズムあそび。',
       sections: [
-        { heading: 'ルームで遊ぶ（進行役）', items: ['「ルームを作る」でコースと曲を選んで、ルームを作る', 'ルームコードは「コードをコピー」、参加用のリンクは「リンクをコピー」でチャットに送れる', 'ランキングの画面を画面共有する。「お手本を見せる」で遊んでみせられる'] },
+        { heading: 'ルームで遊ぶ（進行役）', items: ['「ルームを作る」でコース・マークの数・曲を選んで、ルームを作る', 'ルームコードは「コードをコピー」、参加用のリンクは「リンクをコピー」でチャットに送れる', 'ランキングの画面を画面共有する。「お手本を見せる」で遊んでみせられる'] },
         { heading: 'ルームで遊ぶ（参加する人）', items: ['「ルームに参加する」で、ニックネーム → ルームコード → 「参加する」', 'リンクからひらいたときは、ルームコードは入っているので名前だけ入れる', '「はじめる」で何回でも遊べる。ランキングには、いちばんよい点数がのる'] },
-        { heading: 'たたきかた', items: ['まる は左、ひしがた は右のボタン（キーボードは F と J）', 'やさしいコースは、どのボタンでもOK', 'ぴったりは100点、いいねは50点'] },
+        { heading: 'たたきかた', items: ['まる は左、ひしがた は右のボタン（キーボードは F と J）', 'マークの数を「3つ」にすると、まんなかに さんかく（キーボードはスペース）', 'やさしいコースはマーク1つで、どのボタンでもOK', 'ぴったりは100点、いいねは50点'] },
         { heading: 'ずれるとき', items: ['音がおくれて聞こえるときは「タイミング合わせ」をする', 'とちゅうで止めたいときは、右上のボタン'] },
       ],
     });

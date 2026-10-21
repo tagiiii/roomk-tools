@@ -2,22 +2,24 @@
 // 時間は音の時計（AudioContext）を基準にし、「いま耳に届いている音の位置」に合わせてしるしを動かし、判定する。
 // 判定は各自の端末の中だけで行い、ルーム（Realtime Database）に送るのは、いちばんよい点数と「遊んでいる」の印だけ。
 import {
-  COURSES, TRACKS, JUDGE, TRAVEL, COUNT_IN_BEATS, CALIB_BPM, CALIB_BEATS,
-  buildChart, createState, hit, sweepMisses, score, estimateOffset, clampOffset, rankPlayers,
-} from './engine.js?v=20261021a';
+  COURSES, TRACKS, MARKS, JUDGE, TRAVEL, COUNT_IN_BEATS, CALIB_BPM, CALIB_BEATS,
+  marksOf, lanesOf, buildChart, createState, hit, sweepMisses, score, estimateOffset, clampOffset, rankPlayers,
+} from './engine.js?v=20261021b';
 
 const $ = (id) => document.getElementById(id);
-const SHAPES = ['maru', 'hishi'];
-const LANE_NAMES = ['まる', 'ひしがた'];
+// 列の数ごとのマーク（左から）。やさしいは1列
+const SHAPES_OF = { 1: ['maru'], 2: ['maru', 'hishi'], 3: ['maru', 'sankaku', 'hishi'] };
+const SHAPE_NAMES = { maru: 'まる', sankaku: 'さんかく', hishi: 'ひしがた' };
 const COLORS = {
-  maru: '#E8833A', hishi: '#2E8C9C',
-  laneBg: ['#FDF1E7', '#E7F3F5'],
+  maru: '#E8833A', sankaku: '#7A5FC0', hishi: '#2E8C9C',
+  bg: { maru: '#FDF1E7', sankaku: '#F0ECF9', hishi: '#E7F3F5' },
   line: '#1C3F5E', hit: '#F2B705',
 };
 const KEYS_LEFT = new Set(['KeyF', 'KeyD', 'KeyS', 'ArrowLeft']);
 const KEYS_RIGHT = new Set(['KeyJ', 'KeyK', 'KeyL', 'ArrowRight']);
+const KEYS_MID = new Set(['Space', 'ArrowUp', 'ArrowDown']); // マーク3つの まんなか（さんかく）
 const STORE = {
-  course: 'pittari-beat:course', track: 'pittari-beat:track',
+  course: 'pittari-beat:course', track: 'pittari-beat:track', marks: 'pittari-beat:marks',
   volume: 'pittari-beat:volume', offset: 'pittari-beat:offset',
 };
 
@@ -30,11 +32,13 @@ function save(key, v) {
 
 const courseOf = (id) => COURSES.find((c) => c.id === id) || COURSES[0];
 const trackOf = (id) => TRACKS.find((t) => t.id === id) || TRACKS[1];
-const settingText = (courseId, trackId) => courseOf(courseId).label + 'コース／曲：' + trackOf(trackId).label;
+const settingText = (courseId, trackId, marks) => courseOf(courseId).label + 'コース'
+  + (courseId === 'easy' ? '' : '・マーク' + marksOf(marks) + 'つ') + '／曲：' + trackOf(trackId).label;
 
 const prefs = {
   course: courseOf(load(STORE.course, 'easy')).id,
   track: trackOf(load(STORE.track, 'mid')).id,
+  marks: marksOf(load(STORE.marks, '2')),
   volume: (() => { const v = parseInt(load(STORE.volume, '60'), 10); return Number.isFinite(v) ? Math.min(100, Math.max(0, v)) : 60; })(),
   offset: clampOffset(parseFloat(load(STORE.offset, '0'))),
 };
@@ -62,8 +66,29 @@ function setOffset(v) {
   renderOffset();
 }
 
-// コースと曲の選択肢（ひとりで遊ぶ・ルームを作る・コースと曲を変える で使う）
-function renderChoices(courseBox, trackBox, sel, onChange) {
+// コース・マークの数・曲の選択肢（ひとりで遊ぶ・ルームを作る・コースと曲を変える で使う）。
+// マークの数は、やさしいのときは選ばない（欄を隠す）
+function renderChoices(courseBox, trackBox, sel, onChange, marksBox) {
+  const again = () => renderChoices(courseBox, trackBox, sel, onChange, marksBox);
+  if (marksBox) {
+    marksBox.textContent = '';
+    marksBox.closest('[data-marks-field]').hidden = sel.course === 'easy';
+    MARKS.forEach((m) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'pb-choice';
+      b.setAttribute('aria-pressed', String(m.id === marksOf(sel.marks)));
+      const main = document.createElement('span');
+      main.className = 'pb-choice__main';
+      main.textContent = m.label;
+      const sub = document.createElement('span');
+      sub.className = 'pb-choice__sub';
+      sub.textContent = m.note;
+      b.append(main, sub);
+      b.addEventListener('click', () => { sel.marks = m.id; onChange(); again(); });
+      marksBox.appendChild(b);
+    });
+  }
   courseBox.textContent = '';
   COURSES.forEach((c) => {
     const b = document.createElement('button');
@@ -77,7 +102,7 @@ function renderChoices(courseBox, trackBox, sel, onChange) {
     sub.className = 'pb-choice__sub';
     sub.textContent = c.note;
     b.append(main, sub);
-    b.addEventListener('click', () => { sel.course = c.id; onChange(); renderChoices(courseBox, trackBox, sel, onChange); });
+    b.addEventListener('click', () => { sel.course = c.id; onChange(); again(); });
     courseBox.appendChild(b);
   });
   trackBox.textContent = '';
@@ -87,7 +112,7 @@ function renderChoices(courseBox, trackBox, sel, onChange) {
     b.className = 'pb-choice pb-choice--small';
     b.setAttribute('aria-pressed', String(t.id === sel.track));
     b.textContent = t.label;
-    b.addEventListener('click', () => { sel.track = t.id; onChange(); renderChoices(courseBox, trackBox, sel, onChange); });
+    b.addEventListener('click', () => { sel.track = t.id; onChange(); again(); });
     trackBox.appendChild(b);
   });
 }
@@ -250,19 +275,21 @@ function songNow(perfMs) { return heardAt(perfMs) - run.songStart - prefs.offset
 
 function layoutPads(lanes) {
   const box = $('pb-pads');
+  const shapes = SHAPES_OF[lanes];
   box.textContent = '';
   box.classList.toggle('pb-pads--one', lanes === 1);
+  box.classList.toggle('pb-pads--three', lanes === 3);
   const judges = $('pb-judges');
   judges.textContent = '';
   for (let i = 0; i < lanes; i++) {
     const b = document.createElement('button');
     b.type = 'button';
-    b.className = 'pb-pad pb-pad--' + SHAPES[i];
+    b.className = 'pb-pad pb-pad--' + shapes[i];
     b.dataset.lane = String(i);
-    const name = lanes === 1 ? 'たたく' : LANE_NAMES[i];
+    const name = lanes === 1 ? 'たたく' : SHAPE_NAMES[shapes[i]];
     b.setAttribute('aria-label', name);
     const shape = document.createElement('span');
-    shape.className = 'pb-shape pb-shape--' + SHAPES[i];
+    shape.className = 'pb-shape pb-shape--' + shapes[i];
     shape.setAttribute('aria-hidden', 'true');
     const label = document.createElement('span');
     label.className = 'pb-pad__label';
@@ -277,7 +304,9 @@ function layoutPads(lanes) {
   }
   $('pb-keys').textContent = lanes === 1
     ? 'キーボード：F か J（どちらでもOK）'
-    : 'キーボード：まる＝F　ひしがた＝J';
+    : lanes === 3
+      ? 'キーボード：まる＝F　さんかく＝スペース　ひしがた＝J'
+      : 'キーボード：まる＝F　ひしがた＝J';
 }
 
 function resizeCanvas() {
@@ -297,13 +326,15 @@ function startRun(opts) {
   lastPlay = opts;
   const track = trackOf(opts.track);
   const course = courseOf(opts.course);
-  const chart = buildChart(track, course.id);
+  const marks = marksOf(opts.marks);
+  const chart = buildChart(track, course.id, marks);
   const win = JUDGE[course.id];
   const last = chart.notes[chart.notes.length - 1];
   const me = {
     mode: opts.mode, version: opts.version,
-    chart, win, track, course,
-    lanes: course.lanes,
+    chart, win, track, course, marks,
+    lanes: chart.lanes,
+    shapes: SHAPES_OF[chart.lanes],
     state: createState(chart),
     lastSlot: Math.round(chart.musicEnd / chart.eighth),
     endT: Math.max(last.t + win.good + 1.0, chart.musicEnd + 0.6),
@@ -323,6 +354,7 @@ function startRun(opts) {
   show('pb-play');
   resizeCanvas();
   window.RoomkStats?.count('play-' + track.id);
+  if (me.lanes === 3) window.RoomkStats?.count('marks-3');
   if (me.mode === 'guest') setPlaying(true);
   ensureAudio()
     .then(() => (chart.music ? loadMusic(chart.music.file) : null))
@@ -467,7 +499,12 @@ function updateHud(t) {
 function shapePath(kind, x, y, r) {
   ctx.beginPath();
   if (kind === 'maru') ctx.arc(x, y, r, 0, Math.PI * 2);
-  else {
+  else if (kind === 'sankaku') {
+    ctx.moveTo(x, y - r * 1.15);
+    ctx.lineTo(x + r * 1.15, y + r * 0.85);
+    ctx.lineTo(x - r * 1.15, y + r * 0.85);
+    ctx.closePath();
+  } else {
     ctx.moveTo(x, y - r * 1.15);
     ctx.lineTo(x + r, y);
     ctx.lineTo(x, y + r * 1.15);
@@ -502,13 +539,14 @@ function draw(t) {
   const r = Math.max(14, Math.min(lw * 0.2, H * 0.075, 30));
   ctx.fillStyle = '#FFFFFF';
   ctx.fillRect(0, 0, W, H);
+  const shapes = run.shapes;
   for (let i = 0; i < lanes; i++) {
-    ctx.fillStyle = COLORS.laneBg[i];
-    ctx.fillRect(i * lw + (i ? 2 : 0), 0, lw - (lanes === 2 ? 2 : 0), H);
+    ctx.fillStyle = COLORS.bg[shapes[i]];
+    ctx.fillRect(i * lw + (i ? 2 : 0), 0, lw - (lanes > 1 ? 2 : 0), H);
   }
   ctx.fillStyle = COLORS.line;
   ctx.fillRect(0, lineY - 3, W, 6);
-  for (let i = 0; i < lanes; i++) drawTarget(SHAPES[i], (i + 0.5) * lw, lineY, r);
+  for (let i = 0; i < lanes; i++) drawTarget(shapes[i], (i + 0.5) * lw, lineY, r);
 
   const now = performance.now();
   run.effects = run.effects.filter((fx) => now - fx.t0 < 320);
@@ -535,7 +573,7 @@ function draw(t) {
       if (alpha <= 0) continue;
       alpha *= 0.5;
     }
-    drawNote(SHAPES[n.lane], (n.lane + 0.5) * lw, lineY - dt * speed, r, alpha);
+    drawNote(shapes[n.lane], (n.lane + 0.5) * lw, lineY - dt * speed, r, alpha);
   }
 }
 
@@ -573,7 +611,7 @@ function finish() {
   const st = me.state;
   const sc = score(st);
   $('pb-result-title').textContent = me.mode === 'demo' ? 'お手本、おしまい' : 'おつかれさま！';
-  $('pb-result-sub').textContent = settingText(me.course.id, me.track.id);
+  $('pb-result-sub').textContent = settingText(me.course.id, me.track.id, me.marks);
   $('pb-result-score').textContent = String(sc);
   $('pb-result-perfect').textContent = String(st.perfect);
   $('pb-result-good').textContent = String(st.good);
@@ -700,10 +738,10 @@ function stopCalibIfRunning() {
 
 // ── ルーム（Realtime Database） ─────────────────────
 // pittari_beat_rooms/{code}:
-//   status: 'open'、hostUid、hostConnected、hostDisconnectedAt、createdAt、course、track、version
+//   status: 'open'、hostUid、hostConnected、hostDisconnectedAt、createdAt、course、track、marks（2|3）、version
 //   players/{名前}: { uid, joinedAt, best, v }   … いちばんよい点数と、その点を出したコースの版（v）。切断しても消さない
 //   online/{名前}:  { uid, playing }             … いまつながっているか。切断したら消える（「はなれている」と出す）
-// コースと曲を変えたら version を1つ上げる。v が今の version と違う点はランキングに出さない（＝消えたのと同じ）。
+// コース・マークの数・曲を変えたら version を1つ上げる。v が今の version と違う点はランキングに出さない（＝消えたのと同じ）。
 const { authReady, db } = RoomkRTDB.initFirebase(firebase);
 const DB_PREFIX = 'pittari_beat_rooms';
 const SESSION_KEY = 'pittari_beat_session';
@@ -938,7 +976,7 @@ function setPlaying(on) {
   ensurePresence(true);
 }
 
-async function createRoom(course, track) {
+async function createRoom(course, track, marks) {
   if (state.busy || state.roomRef) return;
   state.busy = true;
   $('pb-create-go').disabled = true;
@@ -959,7 +997,7 @@ async function createRoom(course, track) {
           hostConnected: true,
           hostDisconnectedAt: null,
           createdAt: serverTimestamp(),
-          course, track, version: 1,
+          course, track, marks: marksOf(marks), version: 1,
         };
       });
       if (result.committed) {
@@ -1149,15 +1187,16 @@ async function guestLeave() {
   show('pb-top');
 }
 
-async function hostChangeSetting(course, track) {
+async function hostChangeSetting(course, track, marks) {
   const ref = state.roomRef;
   if (!ref || state.role !== 'host') return;
   const uid = currentUid();
   try {
     await transactRetry(ref, (room) => {
       if (!room || room.hostUid !== uid || isExpired(room)) return;
-      if (room.course === course && room.track === track) return;
-      return { ...room, course, track, version: (Number(room.version) || 1) + 1 };
+      const m = marksOf(marks);
+      if (room.course === course && room.track === track && marksOf(room.marks) === m) return;
+      return { ...room, course, track, marks: m, version: (Number(room.version) || 1) + 1 };
     });
   } catch (error) {
     console.warn('[pittari-beat] change failed', error);
@@ -1254,7 +1293,7 @@ function renderHost() {
   const r = state.room;
   $('pb-host-code').textContent = state.roomCode || '------';
   if (!r) { $('pb-host-setting').textContent = ''; return; }
-  $('pb-host-setting').textContent = settingText(r.course, r.track);
+  $('pb-host-setting').textContent = settingText(r.course, r.track, r.marks);
   const players = roomPlayers(r);
   rankingItems($('pb-host-ranking'), players, null);
   $('pb-host-empty').hidden = players.length > 0;
@@ -1269,7 +1308,7 @@ function renderGuest() {
     $('pb-guest-setting').textContent = 'つないでいるよ…';
     return;
   }
-  $('pb-guest-setting').textContent = settingText(r.course, r.track);
+  $('pb-guest-setting').textContent = settingText(r.course, r.track, r.marks);
   const players = roomPlayers(r);
   const ranked = rankPlayers(players);
   const mine = ranked.find((p) => p.id === state.nickname);
@@ -1313,42 +1352,44 @@ async function boot() {
 }
 
 // ── 操作のつなぎこみ ────────────────────────────
-const soloSel = { course: prefs.course, track: prefs.track };
-const createSel = { course: prefs.course, track: prefs.track };
-const changeSel = { course: 'easy', track: 'mid' };
-const saveSel = (sel) => () => { save(STORE.course, sel.course); save(STORE.track, sel.track); };
+const soloSel = { course: prefs.course, track: prefs.track, marks: prefs.marks };
+const createSel = { course: prefs.course, track: prefs.track, marks: prefs.marks };
+const changeSel = { course: 'easy', track: 'mid', marks: 2 };
+const saveSel = (sel) => () => { save(STORE.course, sel.course); save(STORE.track, sel.track); save(STORE.marks, marksOf(sel.marks)); };
 
 document.querySelectorAll('[data-go-top]').forEach((b) => b.addEventListener('click', () => show('pb-top')));
 document.querySelectorAll('[data-open-calib]').forEach((b) => b.addEventListener('click', openCalib));
 $('pb-go-solo').addEventListener('click', () => {
-  renderChoices($('pb-solo-courses'), $('pb-solo-tracks'), soloSel, saveSel(soloSel));
+  renderChoices($('pb-solo-courses'), $('pb-solo-tracks'), soloSel, saveSel(soloSel), $('pb-solo-marks'));
   show('pb-solo');
 });
 $('pb-go-create').addEventListener('click', () => {
-  renderChoices($('pb-create-courses'), $('pb-create-tracks'), createSel, saveSel(createSel));
+  renderChoices($('pb-create-courses'), $('pb-create-tracks'), createSel, saveSel(createSel), $('pb-create-marks'));
   show('pb-create');
 });
 $('pb-go-join').addEventListener('click', () => openJoin(false));
 $('pb-solo-start').addEventListener('click', () => {
   window.RoomkStats?.count('solo');
-  startRun({ mode: 'solo', course: soloSel.course, track: soloSel.track });
+  startRun({ mode: 'solo', course: soloSel.course, track: soloSel.track, marks: soloSel.marks });
 });
-$('pb-create-go').addEventListener('click', () => createRoom(createSel.course, createSel.track));
+$('pb-create-go').addEventListener('click', () => createRoom(createSel.course, createSel.track, createSel.marks));
 
 $('btnCopyCode').addEventListener('click', (e) => state.roomCode && RoomkRTDB.copyRoomCode(state.roomCode, e.currentTarget));
 $('btnCopyLink').addEventListener('click', (e) => state.roomCode && RoomkRTDB.copyRoomLink(state.roomCode, e.currentTarget));
-$('pb-host-demo').addEventListener('click', () => state.room && startRun({ mode: 'demo', course: state.room.course, track: state.room.track }));
+const roomPlay = (mode) => ({ mode, course: state.room.course, track: state.room.track, marks: state.room.marks, version: state.room.version });
+$('pb-host-demo').addEventListener('click', () => state.room && startRun(roomPlay('demo')));
 $('pb-host-change-open').addEventListener('click', () => {
   if (!state.room) return;
   changeSel.course = state.room.course;
   changeSel.track = state.room.track;
-  renderChoices($('pb-change-courses'), $('pb-change-tracks'), changeSel, () => {});
+  changeSel.marks = marksOf(state.room.marks);
+  renderChoices($('pb-change-courses'), $('pb-change-tracks'), changeSel, () => {}, $('pb-change-marks'));
   $('pb-host-change').hidden = false;
   $('pb-host-change-open').hidden = true;
 });
 $('pb-change-cancel').addEventListener('click', () => { $('pb-host-change').hidden = true; $('pb-host-change-open').hidden = false; });
 $('pb-change-ok').addEventListener('click', () => {
-  hostChangeSetting(changeSel.course, changeSel.track);
+  hostChangeSetting(changeSel.course, changeSel.track, changeSel.marks);
   $('pb-host-change').hidden = true;
   $('pb-host-change-open').hidden = false;
 });
@@ -1360,14 +1401,14 @@ $('pb-join-form').addEventListener('submit', joinRoom);
 }));
 $('pb-guest-start').addEventListener('click', () => {
   if (!state.room) return;
-  startRun({ mode: 'guest', course: state.room.course, track: state.room.track, version: state.room.version });
+  startRun(roomPlay('guest'));
 });
 $('pb-guest-leave').addEventListener('click', guestLeave);
 
 $('pb-again').addEventListener('click', () => {
   if (!lastPlay) return;
-  if (lastPlay.mode === 'guest' && state.room) startRun({ mode: 'guest', course: state.room.course, track: state.room.track, version: state.room.version });
-  else if (lastPlay.mode === 'demo' && state.room) startRun({ mode: 'demo', course: state.room.course, track: state.room.track });
+  if (lastPlay.mode === 'guest' && state.room) startRun(roomPlay('guest'));
+  else if (lastPlay.mode === 'demo' && state.room) startRun(roomPlay('demo'));
   else startRun(lastPlay);
 });
 $('pb-back').addEventListener('click', () => goBack(lastPlay ? lastPlay.mode : 'solo'));
@@ -1385,16 +1426,14 @@ $('pb-stage').addEventListener('pointerdown', (e) => {
   if (!run) return;
   e.preventDefault();
   const rect = $('pb-stage').getBoundingClientRect();
-  const lane = run.lanes === 1 ? 0 : (e.clientX - rect.left < rect.width / 2 ? 0 : 1);
+  const lane = Math.min(run.lanes - 1, Math.max(0, Math.floor((e.clientX - rect.left) / rect.width * run.lanes)));
   tap(lane, eventTime(e));
 });
 
 document.addEventListener('keydown', (e) => {
-  let lane = null;
-  if (KEYS_LEFT.has(e.code)) lane = 0;
-  else if (KEYS_RIGHT.has(e.code)) lane = 1;
+  const side = KEYS_LEFT.has(e.code) ? 'L' : KEYS_RIGHT.has(e.code) ? 'R' : KEYS_MID.has(e.code) ? 'M' : null;
   if (!$('pb-calib').hidden) {
-    if (calib && (lane !== null || e.code === 'Space')) {
+    if (calib && side) {
       e.preventDefault();
       if (!e.repeat) calibTap(eventTime(e));
     }
@@ -1402,9 +1441,9 @@ document.addEventListener('keydown', (e) => {
   }
   if ($('pb-play').hidden || !run) return;
   if (e.code === 'Escape') { if (run.paused) resume(); else pause(); return; }
-  if (run.paused) return;
-  if (lane === null && e.code === 'Space' && run.lanes === 1) lane = 0;
-  if (lane === null && e.code !== 'Space') return;
+  if (run.paused || !side) return;
+  // 左のキーは左の列、右のキーは右の列、スペースは まんなか（マーク3つ）・やさしいは どれでも
+  let lane = side === 'L' ? 0 : side === 'R' ? run.lanes - 1 : (run.lanes === 3 ? 1 : run.lanes === 1 ? 0 : null);
   e.preventDefault();
   if (lane === null || e.repeat) return;
   tap(lane, eventTime(e));
@@ -1425,6 +1464,7 @@ if (location.hash === '#e2e') {
     offset: () => prefs.offset,
     audio: () => (ac ? ac.state : null),
     music: () => !!(run && run.source),
+    lanes: () => (run ? run.lanes : null),
     room: () => ({ role: state.role, code: state.roomCode, nickname: state.nickname, room: state.room, myBest: state.myBest }),
   };
 }

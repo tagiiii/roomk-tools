@@ -141,7 +141,8 @@ const results = (c) => c.page.evaluate(() => ({
 }));
 // 譜面どおりにキーを押す（ページの中で、しるしの時刻が来たら押す）。jitter はしるしごとのずらし（秒）を返す関数の本体
 const autoplay = (c, jitter, limit) => c.page.evaluate(([jitter, limit]) => new Promise((done) => {
-  const codes = ['KeyF', 'KeyJ'];
+  // マーク3つのときは まんなか＝スペース
+  const codes = window.__pb.lanes() === 3 ? ['KeyF', 'Space', 'KeyJ'] : ['KeyF', 'KeyJ'];
   const notes = window.__pb.notes().slice(0, limit || undefined);
   const j = new Function('i', jitter);
   let i = 0;
@@ -167,10 +168,11 @@ const rankingRows = (c, sel) => c.page.evaluate((s) => [...document.querySelecto
   away: li.classList.contains('is-away'),
 })), sel);
 
-async function createRoom(c, course, track) {
+async function createRoom(c, course, track, marks) {
   await open(c);
   await c.page.click('#pb-go-create');
   await pick(c, '#pb-create-courses', course);
+  if (marks) await pick(c, '#pb-create-marks', marks + 'つ');
   await pick(c, '#pb-create-tracks', track);
   await c.page.click('#pb-create-go');
   await waitScreen(c, 'pb-host');

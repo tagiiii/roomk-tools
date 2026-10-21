@@ -111,6 +111,38 @@ const goSolo = async (c, course, track) => {
     check('でたらめ: つづけた回数', r.combo <= r.perfect + r.good);
   })());
 
+  // 4b. マーク3つ・むずかしい・はやい: 譜面どおりなら全部ぴったり。やさしいではマークの数を選ばない
+  jobs.push((async () => {
+    const c = await L.newClient('marks3');
+    await L.open(c);
+    await c.page.click('#pb-go-solo');
+    await L.pick(c, '#pb-solo-courses', 'やさしい');
+    check('やさしいではマークの数の欄が隠れる', !(await L.visible(c, '#pb-solo-marks')));
+    await L.pick(c, '#pb-solo-courses', 'むずかしい');
+    check('むずかしいではマークの数を選べる', await L.visible(c, '#pb-solo-marks'));
+    await L.pick(c, '#pb-solo-marks', '3つ');
+    await L.pick(c, '#pb-solo-tracks', 'はやい');
+    await c.page.click('#pb-solo-start');
+    await L.waitPlaying(c);
+    check('マーク3つ: ボタンは まる・さんかく・ひしがた', (await c.page.evaluate(() => [...document.querySelectorAll('#pb-pads .pb-pad__label')].map((e) => e.textContent).join('/'))) === 'まる/さんかく/ひしがた');
+    check('マーク3つ: キーの案内', /さんかく＝スペース/.test(await L.text(c, '#pb-keys')));
+    check('利用回数: マーク3つ', (await L.stats(c, 'marks-3')) === 1);
+    const lanes = await c.page.evaluate(() => [...new Set(window.__pb.notes().map((n) => n.lane))].sort().join(','));
+    check('マーク3つ: 3つの列にしるしがある', lanes === '0,1,2', lanes);
+    const total = await c.page.evaluate(() => window.__pb.notes().length);
+    const playing = L.autoplay(c);
+    await sleep(9000);
+    await c.page.screenshot({ path: L.OUT + '/s07-marks3.png' });
+    await playing;
+    await L.waitResult(c);
+    const r = await L.results(c);
+    check('マーク3つ・むずかしい: 全部ぴったり', r.perfect === total, { r, total });
+    check('おわりの画面にマークの数', /マーク3つ/.test(await L.text(c, '#pb-result-sub')));
+    await L.reload(c);
+    await c.page.click('#pb-go-solo');
+    check('マークの数を覚えている', (await c.page.getAttribute('#pb-solo-marks .pb-choice:nth-child(2)', 'aria-pressed')) === 'true');
+  })());
+
   // 5. とちゅうで止める・つづける・画面を切りかえる
   jobs.push((async () => {
     const c = await L.newClient('pause');
@@ -253,6 +285,16 @@ const goSolo = async (c, course, track) => {
     await p.tap('#pb-pause');
     await p.tap('#pb-quit');
     check(name + ': やめられる', (await L.screen(c)) === 'pb-solo');
+    // マーク3つでもボタンが押しやすい大きさ
+    await p.tap('#pb-solo-marks .pb-choice:nth-child(2)');
+    await p.tap('#pb-solo-start');
+    await L.waitPlaying(c);
+    const boxes3 = await p.evaluate(() => [...document.querySelectorAll('#pb-pads .pb-pad')].map((b) => { const r = b.getBoundingClientRect(); return { w: r.width, h: r.height, bottom: r.bottom }; }));
+    check(name + ': マーク3つのボタンも大きい', boxes3.length === 3 && boxes3.every((b) => b.w >= 88 && b.h >= 64 && b.bottom <= vp.height + 0.5), boxes3);
+    check(name + ': マーク3つでもはみ出さない', (await L.overflow(c)) <= 0);
+    await p.screenshot({ path: L.OUT + '/s08-mobile3-' + name + '.png' });
+    await p.tap('#pb-pause');
+    await p.tap('#pb-quit');
   }
 
   await L.finishAll(server);
