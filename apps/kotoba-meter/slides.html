@@ -76,6 +76,11 @@
   .row__t{ font-size:25px; font-weight:900; color:var(--ink); line-height:1.4; }
   .row__d{ font-size:20px; color:var(--ink-soft); margin-top:3px; line-height:1.5; }
 
+  /* 4行の箇条書き（参加のしかた）は余白を詰める */
+  .rows--compact{ gap:10px; }
+  .rows--compact .row{ padding:10px 22px; align-items:center; }
+  .rows--compact .row__d{ margin-top:0; }
+
   /* メーターの見本（アプリと同じ5段階の色） */
   .mdemo{ display:flex; flex-direction:column; gap:18px; height:100%; }
   .mtheme{ background:var(--white); border:2.5px solid #2E7D8C; border-radius:18px; padding:12px 28px; text-align:center; }
@@ -328,12 +333,13 @@ const SLIDES = [
 
   /* 8 */ { type:'content', accent:'blue', section:'はじめかた', sectionEn:'how to join',
     headline:'ニックネーム → ルームコード →<br>「参加する」',
-    body:`<div class="rows">
+    body:`<div class="rows rows--compact">
       <div class="row"><div class="row__ic"><span class="material-symbols-rounded">login</span></div><div><div class="row__t">「ルームに参加する」を押す</div><div class="row__d">ニックネーム、ルームコード（6文字）の順に入れて「参加する」</div></div></div>
       <div class="row"><div class="row__ic"><span class="material-symbols-rounded">link</span></div><div><div class="row__t">リンクからひらいたときは、ニックネームだけ</div><div class="row__d">ルームコードは入っているよ</div></div></div>
       <div class="row"><div class="row__ic"><span class="material-symbols-rounded">cast</span></div><div><div class="row__t">画面共有には「みんなにみせる画面」が出るよ</div><div class="row__d">お題・ヒント・公開した結果が、みんなで見られる</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">devices_off</span></div><div><div class="row__t">端末がないときも参加できる</div><div class="row__d">数字はメンターに個別のチャットで送ってね。メンターが代わりに入力するよ</div></div></div>
     </div>`,
-    note:'参加のしかただよ。\n「ルームに参加する」を押して、ニックネーム、ルームコード（6文字）の順に入れて「参加する」。\nチャットのリンクからひらいたときは、ルームコードは入っているのでニックネームだけ入れてね。\n画面共有には「みんなにみせる画面」が出るので、お題やヒント、結果はそこでも見られるよ。' },
+    note:'参加のしかただよ。\n「ルームに参加する」を押して、ニックネーム、ルームコード（6文字）の順に入れて「参加する」。\nチャットのリンクからひらいたときは、ルームコードは入っているのでニックネームだけ入れてね。\n画面共有には「みんなにみせる画面」が出るので、お題やヒント、結果はそこでも見られるよ。\n端末がない人も参加できるよ。数字はメンターに個別のチャットで送ってね。メンターが代わりに入力するよ。' },
 
   /* 9 */ { type:'content', accent:'coral', section:'Q&A', sectionEn:'question & answer',
     headline:'よくある質問',
