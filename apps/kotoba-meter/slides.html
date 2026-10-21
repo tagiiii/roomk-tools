@@ -326,10 +326,10 @@ const SLIDES = [
   /* 7 */ { type:'content', accent:'teal', section:'ゲーム説明', sectionEn:'explain', num:'4',
     headline:'一斉に公開して、<br><span class="ul">感じ方のちがい</span>を話そう',
     body:`<div class="mdemo">
-      ${resultColumns(4, { 3:['そら'], 4:['ゆう','はる'], 5:['りく'] })}
-      <div class="demo-cap">進行役が「回答を締め切って公開」を押すと、みんなの数字が出るよ。<b>点数はなし</b>。「私はこのくらいに感じたよ」と話してみよう。出題者は、参加した順に交代するよ。</div>
+      ${resultColumns(4, { 3:['そら +1'], 4:['ゆう +2','はる +2'], 5:['りく +1'] })}
+      <div class="demo-cap">進行役が「回答を締め切って公開」を押すと、みんなの数字が出るよ。<b>ぴったりは2点、1つちがいは1点</b>。出題者も、ぴったりの人がいれば2点。結果の画面に順位が出るよ。</div>
     </div>`,
-    note:'進行役が「回答を締め切って公開」を押すと、出題者の数字と、みんなの予想が一斉に出るよ。\n点数はなし。出題者の数字は、ことばの正解ではなくて出題者の感覚です。\n「私はこのくらいに感じたよ」と、思い浮かべたものを話してみよう。次のラウンドは、参加した順に出題者が交代するよ。' },
+    note:'進行役が「回答を締め切って公開」を押すと、出題者の数字と、みんなの予想が一斉に出るよ。\n点数は、ぴったりなら2点、1つちがいなら1点。出題者も、ぴったりの人がいれば2点もらえるよ。パスは点なし。結果の画面に順位が出ます。\n出題者の数字は、ことばの正解ではなくて出題者の感覚。「私はこのくらいに感じたよ」と、思い浮かべたものを話してみよう。次のラウンドは、参加した順に出題者が交代するよ。' },
 
   /* 8 */ { type:'content', accent:'blue', section:'はじめかた', sectionEn:'how to join',
     headline:'ニックネーム → ルームコード →<br>「参加する」',
@@ -344,11 +344,11 @@ const SLIDES = [
   /* 9 */ { type:'content', accent:'coral', section:'Q&A', sectionEn:'question & answer',
     headline:'よくある質問',
     body:`<div class="qa">
-      <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>出題者と同じ数字じゃないと、だめ？</div><div class="qa__a"><span class="qa__badge a">A</span>ちがってOK。感じ方のちがいを楽しむゲームだよ。</div></div>
+      <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>出題者と同じ数字じゃないと、だめ？</div><div class="qa__a"><span class="qa__badge a">A</span>ちがってもOK。1つちがいでも1点。感じ方のちがいも楽しんでね。</div></div>
       <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>ヒントが思いつかないときは？</div><div class="qa__a"><span class="qa__badge a">A</span>「ヒント例を見る」や「お題を変更する」を使ってみてね。</div></div>
       <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>どうしてその数字にしたか、言わないといけない？</div><div class="qa__a"><span class="qa__badge a">A</span>話したいときだけでOK。数字を選ぶだけでも参加できるよ。</div></div>
     </div>`,
-    note:'よくある質問だよ\nQ. 出題者と同じ数字じゃないとだめ？→ A. ちがってOK。感じ方のちがいを楽しむゲームだよ。\nQ. ヒントが思いつかないとき→ A. 「ヒント例を見る」や「お題を変更する」を使ってみてね。\nQ. どうしてその数字にしたか言わないといけない？→ A. 話したいときだけでOK。数字を選ぶだけでも参加できるよ。' },
+    note:'よくある質問だよ\nQ. 出題者と同じ数字じゃないとだめ？→ A. ちがってもOK。1つちがいでも1点もらえるよ。感じ方のちがいも楽しんでね。\nQ. ヒントが思いつかないとき→ A. 「ヒント例を見る」や「お題を変更する」を使ってみてね。\nQ. どうしてその数字にしたか言わないといけない？→ A. 話したいときだけでOK。数字を選ぶだけでも参加できるよ。' },
 
   /* 10 */ { type:'divider', accent:'blue', icon:'live_help', jp:'質問タイム', en:'any questions?',
     sub:'気になることはある？',
@@ -397,7 +397,7 @@ function slideHTML(s){
       <div class="title-meta">
         <span class="m"><span class="material-symbols-rounded">group</span>2〜20人</span>
         <span class="m"><span class="material-symbols-rounded">schedule</span>1ラウンド2〜3分</span>
-        <span class="m"><span class="material-symbols-rounded">forum</span>感じ方を楽しむ</span>
+        <span class="m"><span class="material-symbols-rounded">emoji_events</span>近いほど点が入る</span>
       </div></section>`;
   }
   if(s.type==='divider'){

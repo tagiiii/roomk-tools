@@ -145,6 +145,16 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 .km-column__name { display: block; margin: 8px 0 0; padding: 5px 8px; border-radius: var(--radius-full); background: var(--color-bg); font-size: 14px; overflow-wrap: anywhere; }
 .km-talk { text-align: center; color: var(--color-primary); font-weight: 500; line-height: 1.8; margin: 18px 0 0; }
 
+/* ── 点数（個人戦の点と順位） ── */
+.km-column__pt { margin-left: 4px; color: #26697A; font-size: 12px; }
+.km-ranking__list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 6px 16px; }
+.km-rank { display: flex; align-items: center; gap: 10px; padding: 6px 10px; border-radius: 10px; background: var(--color-bg); }
+.km-rank.is-top { background: #FFF4D6; box-shadow: inset 0 0 0 2px #E8B931; }
+.km-rank__pos { flex: none; min-width: 2.6em; color: var(--color-accent); font-weight: 700; }
+.km-rank__name { flex: 1; min-width: 0; overflow-wrap: anywhere; font-weight: 500; }
+.km-rank__delta { flex: none; color: var(--color-muted); font-size: 13px; }
+.km-rank__total { flex: none; min-width: 3em; text-align: right; color: var(--color-primary); font-weight: 700; }
+
 /* ── 次のラウンド ── */
 .km-next { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: center; gap: 4px 12px; background: #E6F2F4; color: var(--color-primary); border-radius: 12px; padding: 14px 16px; margin: 0; text-align: center; }
 .km-next__label { color: #26697A; font-size: 14px; font-weight: 700; }
@@ -414,6 +424,12 @@ button:disabled { opacity: .5; cursor: not-allowed; }
           <p class="km-talk">「私はこのくらいに感じたよ」<br>ことばから思い浮かべたものを、話してみよう。</p>
         </section>
 
+        <section id="ranking" class="km-panel km-ranking" hidden>
+          <h3 class="km-panel__title">点数</h3>
+          <ol id="ranking-list" class="km-ranking__list"></ol>
+          <div id="scores-reset-row" class="km-alt" hidden><button id="scores-reset" class="km-quiet-btn" type="button">点を0にもどす</button></div>
+        </section>
+
         <section id="next-round" class="km-panel" hidden>
           <p id="next-presenter" class="km-next" role="status"></p>
           <div id="setup" class="km-setup" hidden>
@@ -647,6 +663,9 @@ window.MeterCloud = (() => {
       theme: room.theme, themes: THEMES, presenter: room.presenter || null, hint: room.hint || '', players,
       secret: me === room.presenter || actingHost || result ? room.secret : null,
       // 進行役が代わりに入力した、端末なしの子の予想（進行役の画面だけ。公開前の確認用）
+      // 個人戦の点（2026-10-21 オーナー判断）。合計はいまいる人の分だけ、今回の点は公開した時に確定した分
+      scores: Object.fromEntries(players.map(p => [p.id, room.scores?.[p.id] || 0])),
+      roundPoints: result ? (room.roundPoints || {}) : null,
       proxyAnswers: me === room.host && !result ? Object.fromEntries(players.filter(p => p.proxy && p.answered)
         .map(p => [p.id, answers[p.id] === 0 ? null : answers[p.id]])) : {},
       mine: answers[me] === 0 ? null : answers[me] ?? null,
@@ -717,7 +736,7 @@ window.MeterCloud = (() => {
     const ctx = await attach(validateCode(data.code), session, false);
     if (!online || !ctx.ready) throw new Error('offline');
     const host = session.role === 'host', action = data.action;
-    if (['start', 'presenter', 'timeout', 'reveal', 'reset', 'remove', 'proxy-add'].includes(action) && !host) throw fail('この操作は進行役が行います。', 403);
+    if (['start', 'presenter', 'timeout', 'reveal', 'reset', 'remove', 'proxy-add', 'scores-reset'].includes(action) && !host) throw fail('この操作は進行役が行います。', 403);
     if (action === 'leave') {
       ctx.leaving = true;
       await ctx.pending?.catch(() => {});
@@ -729,6 +748,7 @@ window.MeterCloud = (() => {
           if (host) return null;
           delete room.players[session.id];
           if (room.answers) delete room.answers[session.id];
+          if (room.scores) delete room.scores[session.id];
           if (room.presenter === session.id && room.status !== 'result') reset(room);
           return room;
         }, undefined, false);
@@ -759,7 +779,7 @@ window.MeterCloud = (() => {
         if (!reachable(room, data.presenter)) { reason = '出題者の接続を待ってね。'; return; }
         room.status = 'hint'; room.round++; room.theme = randomTheme(room.round > 1 ? room.theme : null, themeDraw); room.presenter = data.presenter;
         room.hintSeconds = data.hintSeconds; room.hintStartedAt = stamp(); delete room.timedOut; delete room.pendingPresenter;
-        room.secret = secret; delete room.hint; delete room.answers;
+        room.secret = secret; delete room.hint; delete room.answers; delete room.roundPoints;
       } else if (action === 'timeout') {
         if (!hintExpired(room)) { reason = 'まだ制限時間内だよ。'; return; }
         room.rotationAfter = room.presenter;
@@ -768,7 +788,7 @@ window.MeterCloud = (() => {
           reset(room);
         } else {
           room.round++; room.presenter = upcoming; room.theme = randomTheme(room.theme, themeDraw); room.secret = secret;
-          room.hintStartedAt = stamp(); delete room.hint; delete room.answers;
+          room.hintStartedAt = stamp(); delete room.hint; delete room.answers; delete room.roundPoints;
         }
         room.timedOut = true;
       } else if (action === 'theme') {
@@ -799,7 +819,23 @@ window.MeterCloud = (() => {
         room.players = { ...players, [newId]: { name, proxy: true, isHost: false } };
       } else if (action === 'reveal') {
         if (room.status !== 'vote') { reason = 'ヒントが出てから公開してね。'; return; }
+        // 点: 予想した人はぴったり2点・1つちがい1点。出題者は、ぴったりの人がいれば2点。パス・未回答は点なし
+        const points = {};
+        let exact = false;
+        Object.entries(room.answers || {}).forEach(([id, n]) => {
+          if (!room.players[id] || id === room.presenter || n === 0) return;
+          const diff = Math.abs(n - room.secret);
+          points[id] = diff === 0 ? 2 : diff === 1 ? 1 : 0;
+          if (diff === 0) exact = true;
+        });
+        if (room.players[room.presenter]) points[room.presenter] = exact ? 2 : 0;
+        room.scores = { ...(room.scores || {}) };
+        Object.entries(points).forEach(([id, pt]) => { room.scores[id] = (room.scores[id] || 0) + pt; });
+        room.roundPoints = points;
         room.rotationAfter = room.presenter; room.status = 'result'; delete room.pendingPresenter;
+      } else if (action === 'scores-reset') {
+        if (!['lobby', 'result'].includes(room.status)) { reason = '点は、ラウンドの前か結果の画面で0にもどしてね。'; return; }
+        delete room.scores; delete room.roundPoints;
       } else if (action === 'remove') {
         // 接続が切れたままの参加者と、端末なしの参加者（接続を持たない）だけ外せる。退出と同じく行と回答を消し、出題中の出題者ならラウンドをやり直す。
         // 参加順の目印（playerOrder）は退出と同じく残す。
@@ -808,6 +844,7 @@ window.MeterCloud = (() => {
         if (Object.keys(target.connections || {}).length) { reason = 'その人はつながっているので外せません。'; return; }
         delete room.players[data.target];
         if (room.answers) delete room.answers[data.target];
+        if (room.scores) delete room.scores[data.target];
         if (room.pendingPresenter === data.target) delete room.pendingPresenter;
         if (room.presenter === data.target && room.status !== 'result') reset(room);
       } else if (action === 'reset') reset(room);
@@ -825,7 +862,7 @@ window.MeterCloud = (() => {
   }
   function reset(room) {
     room.status = 'lobby'; room.round++;
-    delete room.pendingPresenter; delete room.presenter; delete room.secret; delete room.hint; delete room.answers; delete room.hintStartedAt; delete room.timedOut;
+    delete room.pendingPresenter; delete room.presenter; delete room.secret; delete room.hint; delete room.answers; delete room.hintStartedAt; delete room.timedOut; delete room.roundPoints;
   }
   return {
     disconnect: () => { void detach().catch(() => {}); },
@@ -1128,13 +1165,31 @@ function render(next) {
       const col = el('div', `km-column km-lv${n}${n === state.secret ? ' is-target' : ''}`);
       col.append(el('span', 'km-column__num', String(n)));
       if (n === state.secret) col.append(el('span', 'km-column__tag', '出題者の数字'));
-      voters.filter(p => state.answers[p.id] === n).forEach(p => col.append(el('span', 'km-column__name', p.name)));
+      voters.filter(p => state.answers[p.id] === n).forEach(p => {
+        const chip = el('span', 'km-column__name', p.name);
+        const pt = state.roundPoints?.[p.id];
+        if (pt > 0) chip.append(el('b', 'km-column__pt', `+${pt}`));
+        col.append(chip);
+      });
       return col;
     }));
     const skipped = voters.filter(p => state.answers[p.id] === null).map(p => p.name);
     const pending = voters.filter(p => !Object.hasOwn(state.answers, p.id)).map(p => p.name);
     $('other-answers').textContent = [skipped.length ? `パス：${skipped.join('、')}` : '', pending.length ? `未回答：${pending.join('、')}` : ''].filter(Boolean).join(' ／ ');
   }
+  // 点数の順位表（同点は同じ順位で次をとばす 1,1,3 方式。ピッタリメーターと同じ）
+  const anyScore = state.players.some(p => state.scores[p.id] > 0);
+  show('ranking', result || (lobby && anyScore));
+  show('scores-reset-row', host && anyScore);
+  const ranked = [...state.players].sort((a, b) => state.scores[b.id] - state.scores[a.id]);
+  $('ranking-list').replaceChildren(...ranked.map((p, i) => {
+    const pos = ranked.findIndex(q => state.scores[q.id] === state.scores[p.id]) + 1;
+    const li = el('li', `km-rank${pos === 1 && state.scores[p.id] > 0 ? ' is-top' : ''}`);
+    const pt = state.roundPoints?.[p.id];
+    const delta = !result ? '' : p.id === state.presenter ? `出題 +${pt ?? 0}` : pt === undefined ? '—' : `+${pt}`;
+    li.append(el('span', 'km-rank__pos', `${pos}位`), el('span', 'km-rank__name', p.name), el('span', 'km-rank__delta', delta), el('span', 'km-rank__total', `${state.scores[p.id]}点`));
+    return li;
+  }));
   $('people-title').textContent = `参加している人（${state.players.length}人）`;
   // 毎秒の再描画で「外す」ボタンを作り直さない（押している途中に消えないように）
   const people = state.players.map(p => ({ id: p.id, name: p.name, online: p.online,
@@ -1218,6 +1273,7 @@ $('players').addEventListener('click', event => {
     : `${target.name}さんを参加者から外す？${presenting ? '出題中なので、このラウンドはやり直しになるよ。' : ''}戻ってきたときは、もう一度参加してもらってね。`;
   if (confirm(message)) act('remove', { target: target.id });
 });
+$('scores-reset').addEventListener('click', () => { if (confirm('みんなの点を0にもどす？')) act('scores-reset'); });
 $('proxy-rows').addEventListener('click', event => {
   const button = event.target.closest('button[data-proxy]');
   if (!button) return;
@@ -1257,6 +1313,6 @@ if (session || (watch && code)) {
 </script>
 <script src="../shared/js/stats.js?v=1" defer></script>
 <script src="../shared/js/howto.js"></script>
-<script>RoomkHowto.init({slides: 'slides.html', "title": "あそびかた", "lead": "ヒントのことばから、出題者が思い浮かべた1〜5の数字を予想するよ。数字は出題者の感覚。違う感じ方も楽しもう。", "sections": [{"heading": "はじめかた", "items": ["進行役が「ルームを作る」でニックネームを入れる。ルームコードは「コードをコピー」、参加用のリンクは「リンクをコピー」でチャットに送れるよ。", "参加する人は「ルームに参加する」でニックネーム、ルームコード（6文字）の順に入れ、「参加する」を押す。リンクからひらいたときは、ルームコードは入っているのでニックネームだけ入れてね。", "進行役が出題者の制限時間（なし・30秒・1分・2分・3分）と出題者を選んで「ラウンドを始める」を押す。お題はランダムで決まるよ。", "端末がない子がいるときは、進行役が「端末なしの参加者を足す」で名前を足して、その子の数字を代わりに入力できるよ。その子が出題者の番は、進行役が代わりにヒントを出すよ。"]}, {"heading": "ヒントと予想", "items": ["出題者は秘密の数字を見て、その程度だと思うことばを「ヒントを出す」で送る。「お題を変更する」から別のお題も選べるよ。変更しても数字と残り時間は変わらないよ。時間切れになると、参加した順で次の出題者・お題へ進むよ。", "ほかの人は1〜5をタップ。公開前なら選び直せるし、「今回はパス」もできるよ。", "進行役は「みんなにみせる画面」で、画面共有でみんなに見せる画面を別のタブに開けるよ。トップの「みんなにみせる画面をひらく」から、ルームコードを入れて開くこともできるよ。"]}, {"heading": "公開する", "items": ["進行役が「回答を締め切って公開」を押すと、まだ回答していない人がいても公開できるよ。締め切ったあとは回答できないよ。出題者の数字は、ことばの意味の唯一の正解ではないよ。", "「次のラウンドを始める」で続けられるよ。次の出題者は参加した順に自動で選ばれるよ。進行役が変更することもできるよ。", "参加者は「退出する」、進行役は「ルームを閉じる」で終わる。", "接続が切れたままの人がいるときは、進行役が「参加している人」の「外す」で外せるよ。戻ってきたら、もう一度参加してね。"]}]});</script>
+<script>RoomkHowto.init({slides: 'slides.html', "title": "あそびかた", "lead": "ヒントのことばから、出題者が思い浮かべた1〜5の数字を予想するよ。数字は出題者の感覚。違う感じ方も楽しもう。", "sections": [{"heading": "はじめかた", "items": ["進行役が「ルームを作る」でニックネームを入れる。ルームコードは「コードをコピー」、参加用のリンクは「リンクをコピー」でチャットに送れるよ。", "参加する人は「ルームに参加する」でニックネーム、ルームコード（6文字）の順に入れ、「参加する」を押す。リンクからひらいたときは、ルームコードは入っているのでニックネームだけ入れてね。", "進行役が出題者の制限時間（なし・30秒・1分・2分・3分）と出題者を選んで「ラウンドを始める」を押す。お題はランダムで決まるよ。", "端末がない子がいるときは、進行役が「端末なしの参加者を足す」で名前を足して、その子の数字を代わりに入力できるよ。その子が出題者の番は、進行役が代わりにヒントを出すよ。"]}, {"heading": "ヒントと予想", "items": ["出題者は秘密の数字を見て、その程度だと思うことばを「ヒントを出す」で送る。「お題を変更する」から別のお題も選べるよ。変更しても数字と残り時間は変わらないよ。時間切れになると、参加した順で次の出題者・お題へ進むよ。", "ほかの人は1〜5をタップ。公開前なら選び直せるし、「今回はパス」もできるよ。", "進行役は「みんなにみせる画面」で、画面共有でみんなに見せる画面を別のタブに開けるよ。トップの「みんなにみせる画面をひらく」から、ルームコードを入れて開くこともできるよ。"]}, {"heading": "公開する", "items": ["進行役が「回答を締め切って公開」を押すと、まだ回答していない人がいても公開できるよ。締め切ったあとは回答できないよ。出題者の数字は、ことばの意味の唯一の正解ではないよ。", "点数：予想がぴったりなら2点、1つちがいなら1点。出題者は、ぴったりの人がいれば2点。パスと時間切れは点なし。結果の画面に順位が出るよ。進行役は「点を0にもどす」でリセットできるよ。", "「次のラウンドを始める」で続けられるよ。次の出題者は参加した順に自動で選ばれるよ。進行役が変更することもできるよ。", "参加者は「退出する」、進行役は「ルームを閉じる」で終わる。", "接続が切れたままの人がいるときは、進行役が「参加している人」の「外す」で外せるよ。戻ってきたら、もう一度参加してね。"]}]});</script>
 </body>
 </html>
