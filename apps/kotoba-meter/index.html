@@ -220,6 +220,24 @@ button:disabled { opacity: .5; cursor: not-allowed; }
   .km-watch .km-answer__num { width: 46px; height: 46px; font-size: 28px; }
   .km-watch .km-column { min-height: 96px; }
   .km-watch .km-talk { margin-top: 8px; line-height: 1.6; }
+  .km-watch .km-talk br { display: none; }
+  /* お題とヒントを横に並べる（出題中はお題だけなので1枠いっぱい） */
+  .km-watch .km-stage { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 12px; margin-bottom: 10px; }
+  .km-watch .km-stage > * { margin-bottom: 0; }
+  .km-watch .km-stage .km-hintcard { display: flex; flex-direction: column; justify-content: center; }
+  /* 1つの列に4人以上なら、数字ごとの横の行にして名前を詰める */
+  .km-watch .km-results--rows { grid-template-columns: 1fr; gap: 4px; }
+  .km-watch .km-results--rows .km-column { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; min-height: 0; padding: 4px 8px; text-align: left; }
+  .km-watch .km-results--rows .km-column.is-target { padding: 2px 6px; }
+  .km-watch .km-results--rows .km-column__num { width: 44px; flex: none; font-size: 20px; padding: 2px 0; text-align: center; }
+  .km-watch .km-results--rows .km-column__tag, .km-watch .km-results--rows .km-column__name { margin: 0; }
+  .km-watch .km-results--rows .km-column__name { font-size: 13px; padding: 2px 8px; }
+  /* 人数が多いときの待合室 */
+  .km-watch .km-joinguide { padding: 16px 24px; }
+  .km-watch .km-person { font-size: 13px; padding: 4px 10px; }
+  .km-watch #players { gap: 6px; }
+  .km-watch .km-people { padding: 12px 20px; }
+  .km-watch .km-people .km-panel__title { margin-bottom: 8px; }
 }
 
 @media (max-width: 600px) {
@@ -336,11 +354,15 @@ button:disabled { opacity: .5; cursor: not-allowed; }
           </div>
         </section>
 
+        <div class="km-stage">
         <section id="theme-card" class="km-odai" hidden>
           <p class="km-odai__label">お題</p>
           <p id="theme-name" class="km-odai__text"></p>
           <div class="km-ends"><span id="low"></span><span id="high"></span></div>
         </section>
+
+        <section id="hint-area" class="km-hintcard" hidden><p class="km-hintcard__label">出題者のヒント</p><p id="hint-text" class="km-hintcard__text"></p></section>
+        </div>
 
         <section id="secret-area" class="km-panel" hidden>
           <div class="km-secret">
@@ -369,8 +391,6 @@ button:disabled { opacity: .5; cursor: not-allowed; }
           </details>
           <p class="km-note">この画面はみんなに見せないでね。共有するのは「みんなにみせる画面」だよ。</p>
         </section>
-
-        <section id="hint-area" class="km-hintcard" hidden><p class="km-hintcard__label">出題者のヒント</p><p id="hint-text" class="km-hintcard__text"></p></section>
 
         <section id="vote-area" class="km-panel" hidden>
           <p class="km-panel__title">出題者はどの数字を思い浮かべたかな？</p>
@@ -416,7 +436,7 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 
         <div id="host-reset" class="km-alt" hidden><button id="reset" class="km-quiet-btn" type="button">このラウンドをやり直す</button></div>
 
-        <section class="km-panel">
+        <section class="km-panel km-people">
           <h3 id="people-title" class="km-panel__title">参加している人</h3>
           <ul id="players"></ul>
         </section>
@@ -1102,6 +1122,8 @@ function render(next) {
   show('result-area', result);
   if (result) {
     $('result-number').textContent = state.secret;
+    const most = Math.max(...[1, 2, 3, 4, 5].map(n => voters.filter(p => state.answers[p.id] === n).length));
+    $('result-columns').classList.toggle('km-results--rows', watch && most >= 4);
     $('result-columns').replaceChildren(...[1, 2, 3, 4, 5].map(n => {
       const col = el('div', `km-column km-lv${n}${n === state.secret ? ' is-target' : ''}`);
       col.append(el('span', 'km-column__num', String(n)));
