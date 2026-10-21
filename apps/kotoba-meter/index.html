@@ -249,6 +249,27 @@ button:disabled { opacity: .5; cursor: not-allowed; }
   .km-watch .km-results--rows .km-column__num { width: 44px; flex: none; font-size: 20px; padding: 2px 0; text-align: center; }
   .km-watch .km-results--rows .km-column__tag, .km-watch .km-results--rows .km-column__name { margin: 0; }
   .km-watch .km-results--rows .km-column__name { font-size: 13px; padding: 2px 8px; }
+  /* 結果: 結果の列と順位表を左右に並べ、点まで1画面に入れる（20人でも） */
+  .km-watch[data-phase="result"] .km-phase__sub { display: none; }
+  .km-watch[data-phase="result"] .km-phase { margin-bottom: 8px; }
+  .km-watch[data-phase="result"] .km-odai { padding: 8px 24px; }
+  .km-watch[data-phase="result"] .km-odai__label { margin-bottom: 0; }
+  .km-watch[data-phase="result"] .km-odai__text { font-size: 28px; margin-bottom: 2px; }
+  .km-watch[data-phase="result"] .km-ends { font-size: 13px; }
+  .km-watch[data-phase="result"] .km-hintcard { padding: 6px 24px; }
+  .km-watch[data-phase="result"] .km-hintcard__text { font-size: 24px; }
+  .km-watch[data-phase="result"] .km-resultrow { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 12px; align-items: start; margin-bottom: 16px; }
+  .km-watch[data-phase="result"] .km-resultrow > * { margin-bottom: 0; }
+  .km-watch[data-phase="result"] #ranking { padding: 12px 16px; }
+  .km-watch[data-phase="result"] .km-ranking .km-panel__title { margin-bottom: 8px; }
+  .km-watch[data-phase="result"] .km-ranking__list { grid-template-columns: 1fr; gap: 4px; }
+  .km-watch[data-phase="result"] #ranking-more { text-align: left; margin-top: 8px; }
+  .km-watch[data-phase="result"] .km-talk { font-size: 15px; }
+  .km-watch[data-phase="result"] .km-results--rows .km-column__name { padding: 1px 6px; }
+  .km-watch[data-phase="result"] .km-rank { padding: 3px 8px; gap: 6px; font-size: 14px; }
+  .km-watch[data-phase="result"] .km-rank__pos { min-width: 2.4em; }
+  .km-watch[data-phase="result"] .km-rank__delta { font-size: 12px; }
+  .km-watch[data-phase="result"] .km-results:not(.km-results--rows) .km-column__name { font-size: 13px; padding: 4px 6px; }
   /* 人数が多いときの待合室 */
   .km-watch .km-joinguide { padding: 16px 24px; }
   .km-watch .km-person { font-size: 13px; padding: 4px 10px; }
@@ -424,6 +445,7 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 
         <div id="progress-area" class="km-progress" hidden><p id="progress" role="status"></p><button id="reveal" class="btn btn-primary btn-full" type="button" hidden>回答を締め切って公開</button></div>
 
+        <div class="km-resultrow">
         <section id="result-area" class="km-panel" hidden>
           <p class="km-answer">出題者の数字 <span id="result-number" class="km-answer__num"></span></p>
           <div id="result-columns" class="km-results"></div>
@@ -434,8 +456,10 @@ button:disabled { opacity: .5; cursor: not-allowed; }
         <section id="ranking" class="km-panel km-ranking" hidden>
           <h3 class="km-panel__title">点数</h3>
           <ol id="ranking-list" class="km-ranking__list"></ol>
+          <p id="ranking-more" class="km-note" hidden></p>
           <div id="scores-reset-row" class="km-alt" hidden><button id="scores-reset" class="km-quiet-btn" type="button">点を0にもどす</button></div>
         </section>
+        </div>
 
         <section id="next-round" class="km-panel" hidden>
           <p id="next-presenter" class="km-next" role="status"></p>
@@ -1081,6 +1105,7 @@ function render(next) {
   const previousPresenter = state?.presenter;
   const previousPhase = state?.phase;
   state = next;
+  document.body.dataset.phase = state.phase;
   const host = !watch && state.me === state.host;
   const presenter = !watch && state.me === state.presenter;
   // 端末なしの子が出題者なら、進行役が代わりに出題する
@@ -1218,7 +1243,11 @@ function render(next) {
   show('replay', host && finished);
   show('finished-wait', !host && !watch && finished);
   const ranked = [...state.players].sort((a, b) => state.scores[b.id] - state.scores[a.id]);
-  $('ranking-list').replaceChildren(...ranked.map((p, i) => {
+  // みんなにみせる画面の結果では上位8人まで（結果と並べて1画面に入れる。全員の順位はそれぞれの画面に出る）
+  const shown = watch && result ? ranked.slice(0, 8) : ranked;
+  show('ranking-more', shown.length < ranked.length);
+  $('ranking-more').textContent = `ほか${ranked.length - shown.length}人は、それぞれの画面で見られるよ。`;
+  $('ranking-list').replaceChildren(...shown.map((p, i) => {
     const pos = ranked.findIndex(q => state.scores[q.id] === state.scores[p.id]) + 1;
     const li = el('li', `km-rank${pos === 1 && state.scores[p.id] > 0 ? ' is-top' : ''}`);
     const pt = state.roundPoints?.[p.id];

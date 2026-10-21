@@ -149,7 +149,7 @@ const { check, sleep } = L;
   check('F4 「正解」と書かない', !(await H.page.evaluate(() => document.getElementById('result-area').textContent.includes('正解'))));
   check('F5 公開のあとは予想できない', !(await L.visible(A, '#vote-area')));
   check('F6 結果の画面で横にはみ出さない', (await L.overflow(A)) <= 0);
-  check('F7 みんなにみせる画面は1280×720で「話してみよう」まで入る', await W.page.evaluate(() => document.querySelector('.km-talk').getBoundingClientRect().bottom <= innerHeight));
+  check('F7 みんなにみせる画面は1280×720で「話してみよう」と順位表まで入る', await W.page.evaluate(() => document.querySelector('.km-talk').getBoundingClientRect().bottom <= innerHeight && document.getElementById('ranking').getBoundingClientRect().bottom <= innerHeight));
   await L.waitText(W, '#next-presenter', 'ゆう').catch(() => {});
   check('F8 次の出題者は参加順でゆう', (await L.text(H, '#next-presenter')).includes('ゆう') && (await L.text(W, '#next-presenter')).includes('ゆう'));
   await L.shot(H, 'f-result-host');

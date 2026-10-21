@@ -57,7 +57,7 @@ const { check, sleep } = L;
   check('B5 結果の名前に +点（0点には付けない）', chips.includes('ゆう+2') && chips.includes('はる+1') && chips.includes('ゆい'), chips);
   check('B6 参加者の画面にも順位表', await L.visible(A, '#ranking'));
   check('B7 「点を0にもどす」は進行役だけ', await L.visible(H, '#scores-reset') && !(await L.visible(A, '#scores-reset')));
-  check('B8 みんなにみせる画面で「話してみよう」まで720に入る', await W.page.evaluate(() => document.querySelector('.km-talk').getBoundingClientRect().bottom <= innerHeight));
+  check('B8 みんなにみせる画面で「話してみよう」と順位表まで720に入る', await W.page.evaluate(() => document.querySelector('.km-talk').getBoundingClientRect().bottom <= innerHeight && document.getElementById('ranking').getBoundingClientRect().bottom <= innerHeight));
   await L.shot(W, 'b-points-watch', true);
   await L.shot(A, 'b-points-guest-375');
 
