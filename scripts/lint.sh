@@ -48,6 +48,7 @@ RTDB_HTML_FILES=(
   "apps/quiz/index.html"
   "apps/sakusen-chat/index.html"
   "apps/stamp-ate/index.html"
+  "apps/pittari-beat/index.html"
   "apps/shirushi-hint/index.html"
   "apps/suki-bingo/index.html"
   "apps/tatoe-gp/index.html"

@@ -216,6 +216,8 @@ const NO_CONTENT_APPS = [
   'kagi-awase',
   // 会話は使う人が書く（アプリはお題を持たない。ポータルには載せていない）
   'sakusen-chat',
+  // 曲と、しるしの並び（まる・ひしがた）だけ
+  'pittari-beat',
 ];
 
 // apps/ 配下に存在するがアプリではないディレクトリ。

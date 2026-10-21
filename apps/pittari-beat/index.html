@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, viewport-fit=cover" />
+  <title>ぴったりビート | room-K</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet" />
+  <link rel="stylesheet" href="../shared/css/design-system.css" />
+  <link rel="stylesheet" href="style.css?v=20261021a" />
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+  <script src="../shared/js/rtdb-utils.js?v=20261005"></script>
+</head>
+<body>
+
+  <!-- はじめの画面（パネル1枚） -->
+  <main id="pb-top" class="pb-page" hidden>
+    <section class="pb-panel" aria-labelledby="pb-title">
+      <h1 id="pb-title" class="pb-panel__title">ぴったりビート</h1>
+      <p class="pb-panel__lead">上から落ちてくるしるしが線に来たら、ボタンをたたこう。音に合わせてたたくほど、点が入るよ。1回およそ1分。</p>
+      <ul class="pb-notes">
+        <li>ずれても大丈夫。気にせずつづけてね</li>
+        <li>スマホは画面の下のボタン、パソコンは F と J のキー</li>
+        <li>音がおくれて聞こえるときは「タイミング合わせ」をしてね</li>
+      </ul>
+      <button id="pb-go-create" type="button" class="btn btn-primary btn-lg btn-full">
+        <span class="material-symbols-rounded" aria-hidden="true">add_circle</span>
+        ルームを作る
+      </button>
+      <button id="pb-go-join" type="button" class="btn btn-secondary btn-full">
+        <span class="material-symbols-rounded" aria-hidden="true">login</span>
+        ルームに参加する
+      </button>
+      <div class="pb-quiet-row">
+        <button id="pb-go-solo" type="button" class="pb-quiet-btn">
+          <span class="material-symbols-rounded" aria-hidden="true">person</span>
+          ひとりで遊ぶ
+        </button>
+        <button type="button" class="pb-quiet-btn" data-open-calib>
+          <span class="material-symbols-rounded" aria-hidden="true">tune</span>
+          タイミング合わせ（いま <span data-offset-now>0.00</span> 秒）
+        </button>
+      </div>
+    </section>
+  </main>
+
+  <!-- ひとりで遊ぶ -->
+  <main id="pb-solo" class="pb-page" hidden>
+    <section class="pb-panel" aria-labelledby="pb-solo-title">
+      <h1 id="pb-solo-title" class="pb-panel__title">ひとりで遊ぶ</h1>
+      <div class="pb-field">
+        <p class="pb-field__label" id="pb-solo-course-label">コース</p>
+        <div class="pb-choices" role="group" aria-labelledby="pb-solo-course-label" id="pb-solo-courses"></div>
+      </div>
+      <div class="pb-field">
+        <p class="pb-field__label" id="pb-solo-track-label">曲</p>
+        <div class="pb-choices" role="group" aria-labelledby="pb-solo-track-label" id="pb-solo-tracks"></div>
+      </div>
+      <div class="pb-field">
+        <p class="pb-field__label">音の大きさ</p>
+        <div class="pb-volume" data-volume></div>
+      </div>
+      <button id="pb-solo-start" type="button" class="btn btn-primary btn-lg btn-full">
+        <span class="material-symbols-rounded" aria-hidden="true">play_arrow</span>
+        はじめる
+      </button>
+      <div class="pb-quiet-row">
+        <button type="button" class="pb-quiet-btn" data-open-calib>
+          <span class="material-symbols-rounded" aria-hidden="true">tune</span>
+          タイミング合わせ（いま <span data-offset-now>0.00</span> 秒）
+        </button>
+        <button type="button" class="pb-quiet-btn" data-go-top>トップへ戻る</button>
+      </div>
+    </section>
+  </main>
+
+  <!-- ルームを作る -->
+  <main id="pb-create" class="pb-page" hidden>
+    <section class="pb-panel" aria-labelledby="pb-create-title">
+      <h1 id="pb-create-title" class="pb-panel__title">ルームを作る</h1>
+      <p class="pb-panel__lead">みんな同じコース・同じ曲で遊んで、いちばんよい点数でランキングを作るよ。何回でも遊べるよ。</p>
+      <div class="pb-field">
+        <p class="pb-field__label" id="pb-create-course-label">コース</p>
+        <div class="pb-choices" role="group" aria-labelledby="pb-create-course-label" id="pb-create-courses"></div>
+      </div>
+      <div class="pb-field">
+        <p class="pb-field__label" id="pb-create-track-label">曲</p>
+        <div class="pb-choices" role="group" aria-labelledby="pb-create-track-label" id="pb-create-tracks"></div>
+      </div>
+      <button id="pb-create-go" type="button" class="btn btn-primary btn-lg btn-full">
+        <span class="material-symbols-rounded" aria-hidden="true">add_circle</span>
+        ルームを作る
+      </button>
+      <button type="button" class="pb-quiet-btn" data-go-top>トップへ戻る</button>
+    </section>
+  </main>
+
+  <!-- 進行役の画面（ランキング。画面共有で見せる） -->
+  <main id="pb-host" class="pb-page pb-page--wide" hidden>
+    <section class="pb-board" aria-labelledby="pb-host-title">
+      <div class="pb-roombar">
+        <p class="pb-roombar__code">ルームコード <strong id="pb-host-code">------</strong></p>
+        <div class="pb-roombar__btns">
+          <button id="btnCopyCode" type="button" class="btn btn-secondary btn-sm">
+            <span class="material-symbols-rounded" aria-hidden="true">content_copy</span>コードをコピー
+          </button>
+          <button id="btnCopyLink" type="button" class="btn btn-secondary btn-sm">
+            <span class="material-symbols-rounded" aria-hidden="true">link</span>リンクをコピー
+          </button>
+        </div>
+      </div>
+      <div class="pb-board__head">
+        <h1 id="pb-host-title" class="pb-board__title">ランキング</h1>
+        <p class="pb-board__setting"><span id="pb-host-setting"></span></p>
+      </div>
+      <ol id="pb-host-ranking" class="pb-ranking pb-ranking--big"></ol>
+      <p id="pb-host-empty" class="pb-board__empty">参加する人を待っているよ</p>
+
+      <div id="pb-host-change" class="pb-change" hidden>
+        <p class="pb-field__label" id="pb-change-course-label">コース</p>
+        <div class="pb-choices" role="group" aria-labelledby="pb-change-course-label" id="pb-change-courses"></div>
+        <p class="pb-field__label" id="pb-change-track-label">曲</p>
+        <div class="pb-choices" role="group" aria-labelledby="pb-change-track-label" id="pb-change-tracks"></div>
+        <p class="pb-change__note">変えると、みんなの点数は消えます</p>
+        <div class="pb-change__btns">
+          <button id="pb-change-ok" type="button" class="btn btn-primary">この内容に変える</button>
+          <button id="pb-change-cancel" type="button" class="pb-quiet-btn">やめる</button>
+        </div>
+      </div>
+
+      <div class="pb-board__actions">
+        <button id="pb-host-demo" type="button" class="btn btn-secondary">
+          <span class="material-symbols-rounded" aria-hidden="true">play_arrow</span>
+          お手本を見せる
+        </button>
+        <button id="pb-host-change-open" type="button" class="pb-quiet-btn">コースと曲を変える</button>
+        <button id="pb-host-close" type="button" class="pb-quiet-btn">ルームを閉じる</button>
+      </div>
+    </section>
+  </main>
+
+  <!-- ルームに参加する -->
+  <main id="pb-join" class="pb-page" hidden>
+    <section class="pb-panel" aria-labelledby="pb-join-title">
+      <h1 id="pb-join-title" class="pb-panel__title">ルームに参加する</h1>
+      <p id="joinLinkHint" class="pb-hint" hidden>リンクからひらいたので、ルームコードは入っているよ。名前を入れて「参加する」を押してね。</p>
+      <form id="pb-join-form" class="pb-form" novalidate>
+        <label class="form-label" for="pb-join-name">ニックネーム（8文字まで）</label>
+        <input id="pb-join-name" class="form-input" type="text" maxlength="8" autocomplete="off" />
+        <label class="form-label" for="pb-join-code">ルームコード（6文字）</label>
+        <input id="pb-join-code" class="form-input pb-code-input" type="text" maxlength="12" autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false" />
+        <p id="pb-join-error" class="pb-error" role="alert" hidden></p>
+        <button id="pb-join-go" type="submit" class="btn btn-primary btn-lg btn-full">参加する</button>
+      </form>
+      <button type="button" class="pb-quiet-btn" data-go-top>トップへ戻る</button>
+    </section>
+  </main>
+
+  <!-- 参加する人の画面 -->
+  <main id="pb-guest" class="pb-page" hidden>
+    <section class="pb-panel" aria-labelledby="pb-guest-title">
+      <p class="pb-guest__room">ルーム <span id="pb-guest-code"></span>　<span id="pb-guest-name"></span> さん</p>
+      <p id="pb-guest-offline" class="pb-hint pb-hint--warn" hidden>進行役の画面とつながっていないよ。遊ぶことはできるよ。</p>
+      <h1 id="pb-guest-title" class="pb-panel__title">きょうのコース</h1>
+      <p id="pb-guest-setting" class="pb-guest__setting">―</p>
+      <div class="pb-result-score">
+        <p class="pb-result-score__label">あなたのいちばん</p>
+        <p id="pb-guest-best" class="pb-result-score__num pb-result-score__num--mid">まだ</p>
+        <p id="pb-guest-rank" class="pb-guest__rank"></p>
+      </div>
+      <button id="pb-guest-start" type="button" class="btn btn-primary btn-lg btn-full" disabled>
+        <span class="material-symbols-rounded" aria-hidden="true">play_arrow</span>
+        はじめる
+      </button>
+      <div class="pb-field">
+        <p class="pb-field__label">音の大きさ</p>
+        <div class="pb-volume" data-volume></div>
+      </div>
+      <div class="pb-field">
+        <p class="pb-field__label">ランキング</p>
+        <ol id="pb-guest-ranking" class="pb-ranking"></ol>
+      </div>
+      <div class="pb-quiet-row">
+        <button type="button" class="pb-quiet-btn" data-open-calib>
+          <span class="material-symbols-rounded" aria-hidden="true">tune</span>
+          タイミング合わせ（いま <span data-offset-now>0.00</span> 秒）
+        </button>
+        <button id="pb-guest-leave" type="button" class="pb-quiet-btn">退出する</button>
+      </div>
+    </section>
+  </main>
+
+  <!-- 遊ぶ画面 -->
+  <main id="pb-play" class="pb-play" hidden>
+    <header class="pb-hud">
+      <div class="pb-hud__score"><span class="pb-hud__label">点数</span><span id="pb-score" class="pb-hud__num">0</span></div>
+      <div id="pb-combo" class="pb-hud__combo" aria-live="off" hidden><span id="pb-combo-num">0</span> つづけて</div>
+      <button id="pb-pause" type="button" class="pb-icon-btn" aria-label="とめる">
+        <span class="material-symbols-rounded" aria-hidden="true">pause</span>
+      </button>
+      <div class="pb-progress" aria-hidden="true"><span id="pb-progress-fill" class="pb-progress__fill"></span></div>
+    </header>
+
+    <div id="pb-stage" class="pb-stage">
+      <canvas id="pb-canvas" class="pb-canvas" aria-hidden="true"></canvas>
+      <p id="pb-count" class="pb-count" aria-live="polite"></p>
+      <div id="pb-judges" class="pb-judges" aria-hidden="true"></div>
+    </div>
+
+    <div id="pb-pads" class="pb-pads"></div>
+    <p id="pb-keys" class="pb-keys"></p>
+
+    <div id="pb-pause-layer" class="pb-layer" hidden>
+      <div class="pb-layer__box" role="dialog" aria-modal="true" aria-labelledby="pb-pause-title">
+        <p id="pb-pause-title" class="pb-layer__title">ひとやすみ中</p>
+        <p class="pb-layer__text">つづけると、少し前からまた始まるよ。</p>
+        <button id="pb-resume" type="button" class="btn btn-primary btn-lg btn-full">
+          <span class="material-symbols-rounded" aria-hidden="true">play_arrow</span>
+          つづける
+        </button>
+        <button id="pb-quit" type="button" class="pb-quiet-btn">やめる</button>
+      </div>
+    </div>
+  </main>
+
+  <!-- おわりの画面 -->
+  <main id="pb-result" class="pb-page" hidden>
+    <section class="pb-panel" aria-labelledby="pb-result-title">
+      <h1 id="pb-result-title" class="pb-panel__title">おつかれさま！</h1>
+      <p id="pb-result-sub" class="pb-panel__lead pb-center"></p>
+      <div class="pb-result-score">
+        <p class="pb-result-score__label">点数</p>
+        <p id="pb-result-score" class="pb-result-score__num">0</p>
+      </div>
+      <dl class="pb-result-list">
+        <div><dt>ぴったり</dt><dd><span id="pb-result-perfect">0</span> 回</dd></div>
+        <div><dt>いいね</dt><dd><span id="pb-result-good">0</span> 回</dd></div>
+        <div><dt>つづけて当てた（いちばん長く）</dt><dd><span id="pb-result-combo">0</span> 回</dd></div>
+      </dl>
+      <p id="pb-result-room" class="pb-hint" hidden></p>
+      <button id="pb-again" type="button" class="btn btn-primary btn-lg btn-full">
+        <span class="material-symbols-rounded" aria-hidden="true">replay</span>
+        もう一回
+      </button>
+      <button id="pb-back" type="button" class="pb-quiet-btn">もどる</button>
+    </section>
+  </main>
+
+  <!-- タイミング合わせ -->
+  <main id="pb-calib" class="pb-page" hidden>
+    <section class="pb-panel" aria-labelledby="pb-calib-title">
+      <h1 id="pb-calib-title" class="pb-panel__title">タイミング合わせ</h1>
+      <p class="pb-panel__lead">イヤホンやスマホによって、音が少しおくれて聞こえることがあるよ。手拍子の音に合わせてボタンをたたくと、そのおくれを差し引いて数えるようにするね。</p>
+      <ul class="pb-notes">
+        <li>画面ではなく、音を聞いてたたいてね（8回くらい）</li>
+        <li>ワイヤレスのイヤホンは、おくれが大きくなりやすいよ</li>
+      </ul>
+
+      <button id="pb-calib-pad" type="button" class="pb-calib-pad" disabled>
+        <span id="pb-calib-pad-text">「音を鳴らす」を押してね</span>
+      </button>
+      <p id="pb-calib-msg" class="pb-calib-msg" aria-live="polite"></p>
+
+      <button id="pb-calib-run" type="button" class="btn btn-primary btn-lg btn-full">
+        <span class="material-symbols-rounded" aria-hidden="true">music_note</span>
+        <span id="pb-calib-run-label">音を鳴らす</span>
+      </button>
+
+      <div class="pb-offset">
+        <p class="pb-field__label">いまのずれ</p>
+        <div class="pb-offset__row">
+          <button id="pb-offset-minus" type="button" class="pb-step-btn" aria-label="0.01秒へらす">
+            <span class="material-symbols-rounded" aria-hidden="true">remove</span>
+          </button>
+          <p class="pb-offset__value"><span id="pb-offset-value">0.00</span> 秒</p>
+          <button id="pb-offset-plus" type="button" class="pb-step-btn" aria-label="0.01秒ふやす">
+            <span class="material-symbols-rounded" aria-hidden="true">add</span>
+          </button>
+        </div>
+        <p class="pb-offset__hint">音が聞こえるより先に、しるしが線に来るときは「＋」。音のあとに来るときは「−」</p>
+        <button id="pb-offset-reset" type="button" class="pb-quiet-btn pb-quiet-btn--sm">0 にもどす</button>
+      </div>
+
+      <button id="pb-calib-back" type="button" class="pb-quiet-btn">もどる</button>
+    </section>
+  </main>
+
+  <script type="module" src="app.js?v=20261021a"></script>
+  <script src="../shared/js/stats.js?v=1" defer></script>
+  <script src="../shared/js/howto.js"></script>
+  <script>
+    RoomkHowto.init({
+      title: 'あそびかた',
+      slides: 'slides.html',
+      lead: '上から落ちてくるしるしが線に来たときに、ボタンをたたくリズムあそび。',
+      sections: [
+        { heading: 'ルームで遊ぶ（進行役）', items: ['「ルームを作る」でコースと曲を選んで、ルームを作る', 'ルームコードは「コードをコピー」、参加用のリンクは「リンクをコピー」でチャットに送れる', 'ランキングの画面を画面共有する。「お手本を見せる」で遊んでみせられる'] },
+        { heading: 'ルームで遊ぶ（参加する人）', items: ['「ルームに参加する」で、ニックネーム → ルームコード → 「参加する」', 'リンクからひらいたときは、ルームコードは入っているので名前だけ入れる', '「はじめる」で何回でも遊べる。ランキングには、いちばんよい点数がのる'] },
+        { heading: 'たたきかた', items: ['まる は左、ひしがた は右のボタン（キーボードは F と J）', 'やさしいコースは、どのボタンでもOK', 'ぴったりは100点、いいねは50点'] },
+        { heading: 'ずれるとき', items: ['音がおくれて聞こえるときは「タイミング合わせ」をする', 'とちゅうで止めたいときは、右上のボタン'] },
+      ],
+    });
+  </script>
+</body>
+</html>
