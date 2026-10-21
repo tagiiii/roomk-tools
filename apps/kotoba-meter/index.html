@@ -162,6 +162,7 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 #players { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
 .km-person { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 6px; border: 1px solid var(--color-border); border-radius: var(--radius-full); padding: 6px 12px; font-size: 14px; background: var(--color-surface); overflow-wrap: anywhere; }
 .km-person.is-away { color: var(--color-muted); border-style: dashed; }
+.km-person .km-person__remove { min-height: 32px; padding: 4px 12px; font-size: 13px; }
 
 /* ── 進行役の戻りを待つ画面（しるしでヒントのオーバーレイと同じ形） ── */
 .km-overlay { position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; padding: 20px; background: rgba(18, 37, 54, 0.8); }
@@ -631,7 +632,7 @@ window.MeterCloud = (() => {
     const ctx = await attach(validateCode(data.code), session, false);
     if (!online || !ctx.ready) throw new Error('offline');
     const host = session.role === 'host', action = data.action;
-    if (['start', 'presenter', 'timeout', 'reveal', 'reset'].includes(action) && !host) throw fail('この操作は進行役が行います。', 403);
+    if (['start', 'presenter', 'timeout', 'reveal', 'reset', 'remove'].includes(action) && !host) throw fail('この操作は進行役が行います。', 403);
     if (action === 'leave') {
       ctx.leaving = true;
       await ctx.pending?.catch(() => {});
@@ -700,6 +701,16 @@ window.MeterCloud = (() => {
       } else if (action === 'reveal') {
         if (room.status !== 'vote') { reason = 'ヒントが出てから公開してね。'; return; }
         room.rotationAfter = room.presenter; room.status = 'result'; delete room.pendingPresenter;
+      } else if (action === 'remove') {
+        // 接続が切れたままの参加者だけ外せる。退出と同じく行と回答を消し、出題中の出題者ならラウンドをやり直す。
+        // 参加順の目印（playerOrder）は退出と同じく残す。
+        const target = room.players[data.target];
+        if (!target || data.target === room.host) { reason = 'その人は外せません。画面を確認してね。'; return; }
+        if (Object.keys(target.connections || {}).length) { reason = 'その人はつながっているので外せません。'; return; }
+        delete room.players[data.target];
+        if (room.answers) delete room.answers[data.target];
+        if (room.pendingPresenter === data.target) delete room.pendingPresenter;
+        if (room.presenter === data.target && room.status !== 'result') reset(room);
       } else if (action === 'reset') reset(room);
       else { reason = '操作が見つかりません。'; return; }
       return room;
@@ -771,7 +782,7 @@ function startPolling() { clearInterval(pollTimer); pollTimer = setInterval(poll
 function stopPolling() { clearInterval(pollTimer); pollTimer = null; }
 // 入口の画面: top（トップ）・create・join・watch（みんなにみせる画面をひらく）
 let entryMode = code ? 'join' : 'top', fromLink = !!code && !watch;
-let lastPhase = '', lastRoster = '', hintSeconds = 0;
+let lastPhase = '', lastRoster = '', lastPeople = '', hintSeconds = 0;
 try { if (!watch) session = JSON.parse(sessionStorage.getItem(key)); } catch { /* Storage may be unavailable. */ }
 if (session && (!session.token || !session.code || (code && code !== session.code))) session = null;
 if (session) code = session.code;
@@ -847,7 +858,7 @@ function hostAway(away) {
 function ended(message) {
   stopPolling();
   window.MeterCloud?.disconnect();
-  saveSession(null); state = null; seq++; lastPhase = ''; lastRoster = '';
+  saveSession(null); state = null; seq++; lastPhase = ''; lastRoster = ''; lastPeople = '';
   hostAway(false);
   if (watch) {
     show('front', false); show('game', false);
@@ -880,7 +891,7 @@ async function act(action, extra = {}) {
       startPolling();
       history.replaceState(null, '', location.pathname);
     }
-    if (result.left) { stopPolling(); saveSession(null); state = null; code = ''; fromLink = false; lastPhase = ''; lastRoster = ''; hostAway(false); entry('top'); }
+    if (result.left) { stopPolling(); saveSession(null); state = null; code = ''; fromLink = false; lastPhase = ''; lastRoster = ''; lastPeople = ''; hostAway(false); entry('top'); }
     if (result.state) render(result.state);
   } catch (error) {
     if ([401, 410].includes(error.status) && session) ended(error.message);
@@ -994,14 +1005,27 @@ function render(next) {
     $('other-answers').textContent = [skipped.length ? `パス：${skipped.join('、')}` : '', pending.length ? `未回答：${pending.join('、')}` : ''].filter(Boolean).join(' ／ ');
   }
   $('people-title').textContent = `参加している人（${state.players.length}人）`;
-  $('players').replaceChildren(...state.players.map(p => {
-    const li = el('li', `km-person${p.online ? '' : ' is-away'}`);
-    li.append(el('span', '', p.name));
-    [[p.id === state.host, '進行役', ''], [p.id === state.presenter && !lobby, '出題者', ''],
-      [!p.online, '接続待ち', ' km-tag--muted'], [vote && p.answered, '回答済み', ' km-tag--done']]
-      .filter(([on]) => on).forEach(([, label, mod]) => li.append(el('span', `km-tag${mod}`, label)));
-    return li;
-  }));
+  // 毎秒の再描画で「外す」ボタンを作り直さない（押している途中に消えないように）
+  const people = state.players.map(p => ({ id: p.id, name: p.name, online: p.online,
+    removable: host && !p.online && p.id !== state.host,
+    tags: [[p.id === state.host, '進行役', ''], [p.id === state.presenter && !lobby, '出題者', ''],
+      [!p.online, '接続待ち', ' km-tag--muted'], [vote && p.answered, '回答済み', ' km-tag--done']].filter(([on]) => on) }));
+  const peopleKey = JSON.stringify(people);
+  if (peopleKey !== lastPeople) {
+    lastPeople = peopleKey;
+    $('players').replaceChildren(...people.map(p => {
+      const li = el('li', `km-person${p.online ? '' : ' is-away'}`);
+      li.append(el('span', '', p.name));
+      p.tags.forEach(([, label, mod]) => li.append(el('span', `km-tag${mod}`, label)));
+      if (p.removable) {
+        const button = el('button', 'btn btn-ghost btn-sm km-person__remove', '外す');
+        button.type = 'button'; button.dataset.remove = p.id;
+        button.setAttribute('aria-label', `${p.name}さんを外す`);
+        li.append(button);
+      }
+      return li;
+    }));
+  }
   controls();
   if (host && hint && secondsLeft === 0 && online && !busy) void act('timeout');
   if (lastPhase !== `${state.round}:${state.phase}`) {
@@ -1051,6 +1075,13 @@ $('reveal').addEventListener('click', () => {
   act('reveal');
 });
 $('reset').addEventListener('click', () => { if (confirm('今のヒントと回答を取り消して、出題者と制限時間を選び直す？')) act('reset'); });
+$('players').addEventListener('click', event => {
+  const button = event.target.closest('button[data-remove]');
+  const target = button && state?.players.find(p => p.id === button.dataset.remove);
+  if (!target) return;
+  const presenting = target.id === state.presenter && (state.phase === 'hint' || state.phase === 'vote');
+  if (confirm(`${target.name}さんを参加者から外す？${presenting ? '出題中なので、このラウンドはやり直しになるよ。' : ''}戻ってきたときは、もう一度参加してもらってね。`)) act('remove', { target: target.id });
+});
 $('leave').addEventListener('click', () => {
   if (confirm(state.me === state.host ? '全員のルームを閉じますか？' : 'ルームから退出する？')) act('leave');
 });
@@ -1079,6 +1110,6 @@ if (session || (watch && code)) {
 </script>
 <script src="../shared/js/stats.js?v=1" defer></script>
 <script src="../shared/js/howto.js"></script>
-<script>RoomkHowto.init({slides: 'slides.html', "title": "あそびかた", "lead": "ヒントのことばから、出題者が思い浮かべた1〜5の数字を予想するよ。数字は出題者の感覚。違う感じ方も楽しもう。", "sections": [{"heading": "はじめかた", "items": ["進行役が「ルームを作る」でニックネームを入れる。ルームコードは「コードをコピー」、参加用のリンクは「リンクをコピー」でチャットに送れるよ。", "参加する人は「ルームに参加する」でニックネーム、ルームコード（6文字）の順に入れ、「参加する」を押す。リンクからひらいたときは、ルームコードは入っているのでニックネームだけ入れてね。", "進行役が出題者の制限時間（なし・30秒・1分・2分・3分）と出題者を選んで「ラウンドを始める」を押す。お題はランダムで決まるよ。"]}, {"heading": "ヒントと予想", "items": ["出題者は秘密の数字を見て、その程度だと思うことばを「ヒントを出す」で送る。「お題を変更する」から別のお題も選べるよ。変更しても数字と残り時間は変わらないよ。時間切れになると、参加した順で次の出題者・お題へ進むよ。", "ほかの人は1〜5をタップ。公開前なら選び直せるし、「今回はパス」もできるよ。", "進行役は「みんなにみせる画面」で、画面共有でみんなに見せる画面を別のタブに開けるよ。トップの「みんなにみせる画面をひらく」から、ルームコードを入れて開くこともできるよ。"]}, {"heading": "公開する", "items": ["進行役が「回答を締め切って公開」を押すと、まだ回答していない人がいても公開できるよ。締め切ったあとは回答できないよ。出題者の数字は、ことばの意味の唯一の正解ではないよ。", "「次のラウンドを始める」で続けられるよ。次の出題者は参加した順に自動で選ばれるよ。進行役が変更することもできるよ。", "参加者は「退出する」、進行役は「ルームを閉じる」で終わる。"]}]});</script>
+<script>RoomkHowto.init({slides: 'slides.html', "title": "あそびかた", "lead": "ヒントのことばから、出題者が思い浮かべた1〜5の数字を予想するよ。数字は出題者の感覚。違う感じ方も楽しもう。", "sections": [{"heading": "はじめかた", "items": ["進行役が「ルームを作る」でニックネームを入れる。ルームコードは「コードをコピー」、参加用のリンクは「リンクをコピー」でチャットに送れるよ。", "参加する人は「ルームに参加する」でニックネーム、ルームコード（6文字）の順に入れ、「参加する」を押す。リンクからひらいたときは、ルームコードは入っているのでニックネームだけ入れてね。", "進行役が出題者の制限時間（なし・30秒・1分・2分・3分）と出題者を選んで「ラウンドを始める」を押す。お題はランダムで決まるよ。"]}, {"heading": "ヒントと予想", "items": ["出題者は秘密の数字を見て、その程度だと思うことばを「ヒントを出す」で送る。「お題を変更する」から別のお題も選べるよ。変更しても数字と残り時間は変わらないよ。時間切れになると、参加した順で次の出題者・お題へ進むよ。", "ほかの人は1〜5をタップ。公開前なら選び直せるし、「今回はパス」もできるよ。", "進行役は「みんなにみせる画面」で、画面共有でみんなに見せる画面を別のタブに開けるよ。トップの「みんなにみせる画面をひらく」から、ルームコードを入れて開くこともできるよ。"]}, {"heading": "公開する", "items": ["進行役が「回答を締め切って公開」を押すと、まだ回答していない人がいても公開できるよ。締め切ったあとは回答できないよ。出題者の数字は、ことばの意味の唯一の正解ではないよ。", "「次のラウンドを始める」で続けられるよ。次の出題者は参加した順に自動で選ばれるよ。進行役が変更することもできるよ。", "参加者は「退出する」、進行役は「ルームを閉じる」で終わる。", "接続が切れたままの人がいるときは、進行役が「参加している人」の「外す」で外せるよ。戻ってきたら、もう一度参加してね。"]}]});</script>
 </body>
 </html>
