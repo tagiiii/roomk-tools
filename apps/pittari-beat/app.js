@@ -21,6 +21,7 @@ const KEYS_MID = new Set(['Space', 'ArrowUp', 'ArrowDown']); // マーク3つの
 const STORE = {
   course: 'pittari-beat:course', track: 'pittari-beat:track', marks: 'pittari-beat:marks',
   volume: 'pittari-beat:volume', offset: 'pittari-beat:offset',
+  sfx: 'pittari-beat:sfx', sfxVolume: 'pittari-beat:sfx-volume',
 };
 
 function load(key, fallback) {
@@ -40,6 +41,9 @@ const prefs = {
   track: trackOf(load(STORE.track, 'mid')).id,
   marks: marksOf(load(STORE.marks, '2')),
   volume: (() => { const v = parseInt(load(STORE.volume, '60'), 10); return Number.isFinite(v) ? Math.min(100, Math.max(0, v)) : 60; })(),
+  // たたく音（当たったときだけ鳴る）。聴覚過敏の子がいるかもしれないので、はじめは切（10-21 オーナー決定）
+  sfx: load(STORE.sfx, '0') === '1',
+  sfxVolume: (() => { const v = parseInt(load(STORE.sfxVolume, '50'), 10); return Number.isFinite(v) ? Math.min(100, Math.max(5, v)) : 50; })(),
   offset: clampOffset(parseFloat(load(STORE.offset, '0'))),
 };
 
@@ -145,10 +149,63 @@ function buildVolumes() {
   });
 }
 
+// たたく音の 切・入 と、その大きさ（同じつまみを、いくつかの画面に置く）
+function buildSfx() {
+  document.querySelectorAll('[data-sfx]').forEach((box, i) => {
+    box.textContent = '';
+    const group = document.createElement('div');
+    group.className = 'pb-choices pb-choices--two';
+    group.setAttribute('role', 'group');
+    group.setAttribute('aria-label', 'たたく音');
+    [false, true].forEach((on) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'pb-choice pb-choice--small';
+      b.textContent = on ? '入' : '切';
+      b.setAttribute('aria-pressed', String(prefs.sfx === on));
+      b.addEventListener('click', () => {
+        prefs.sfx = on;
+        save(STORE.sfx, on ? '1' : '0');
+        buildSfx();
+        if (on) { ensureAudio().then(() => playHit('maru')); } // 入にしたら、どんな音か1回だけ聞かせる
+      });
+      group.appendChild(b);
+    });
+    const row = document.createElement('div');
+    row.className = 'pb-volume';
+    row.hidden = !prefs.sfx;
+    const down = document.createElement('span');
+    down.className = 'material-symbols-rounded';
+    down.setAttribute('aria-hidden', 'true');
+    down.textContent = 'volume_down';
+    const input = document.createElement('input');
+    input.type = 'range';
+    input.min = '5';
+    input.max = '100';
+    input.step = '5';
+    input.value = String(prefs.sfxVolume);
+    input.setAttribute('aria-label', 'たたく音の大きさ');
+    input.id = 'pb-sfx-volume-' + i;
+    const up = down.cloneNode();
+    up.textContent = 'volume_up';
+    input.addEventListener('input', () => {
+      prefs.sfxVolume = parseInt(input.value, 10) || 5;
+      save(STORE.sfxVolume, prefs.sfxVolume);
+      document.querySelectorAll('[data-sfx] input').forEach((o) => { if (o !== input) o.value = input.value; });
+      if (sfxGain) sfxGain.gain.setTargetAtTime(gainFor(prefs.sfxVolume), ac.currentTime, 0.02);
+    });
+    input.addEventListener('change', () => { if (ac) playHit('maru'); });
+    row.append(down, input, up);
+    box.append(group, row);
+  });
+}
+
 // ── 音 ─────────────────────────────────────
 let ac = null;
 let master = null;
+let sfxGain = null; // たたく音は曲とは別の大きさ
 let noiseBuf = null;
+let sfxCount = 0;
 
 function gainFor(vol) { return Math.pow(vol / 100, 2) * 0.9; }
 
@@ -161,6 +218,9 @@ function ensureAudio() {
     master = ac.createGain();
     master.gain.value = gainFor(prefs.volume);
     master.connect(ac.destination);
+    sfxGain = ac.createGain();
+    sfxGain.gain.value = gainFor(prefs.sfxVolume);
+    sfxGain.connect(ac.destination);
     noiseBuf = ac.createBuffer(1, Math.floor(ac.sampleRate * 0.2), ac.sampleRate);
     const d = noiseBuf.getChannelData(0);
     for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
@@ -168,6 +228,25 @@ function ensureAudio() {
   if (ac.state === 'running') return Promise.resolve();
   const resumed = ac.resume().catch(() => {});
   return Promise.race([resumed, new Promise((r) => setTimeout(r, 1500))]);
+}
+
+// たたく音: 短くやわらかい音。マークごとに少し高さを変える（まる 低め・さんかく まんなか・ひしがた 高め）
+const HIT_PITCH = { maru: 660, sankaku: 784, hishi: 880 };
+function playHit(kind) {
+  if (!ac || !sfxGain) return;
+  const when = ac.currentTime;
+  const f = HIT_PITCH[kind] || 660;
+  [[f, 0.5, 0.09], [f * 2, 0.12, 0.05]].forEach(([freq, level, decay]) => {
+    const o = ac.createOscillator();
+    const g = ac.createGain();
+    o.type = 'sine';
+    o.frequency.value = freq;
+    env(g, when, level, decay);
+    o.connect(g).connect(sfxGain);
+    o.start(when);
+    o.stop(when + decay + 0.02);
+  });
+  sfxCount++;
 }
 
 // 曲のファイル（ElevenLabs で作った曲）。一度読んだら覚えておく
@@ -354,6 +433,7 @@ function startRun(opts) {
   show('pb-play');
   resizeCanvas();
   window.RoomkStats?.count('play-' + track.id);
+  if (prefs.sfx) window.RoomkStats?.count('sfx-on');
   if (me.lanes === 3) window.RoomkStats?.count('marks-3');
   if (me.mode === 'guest') setPlaying(true);
   ensureAudio()
@@ -450,6 +530,7 @@ function tap(lane, perfMs) {
   if (!r || r.result === 'miss') return; // はずれは、だまって流す
   run.effects.push({ lane: l, t0: performance.now(), kind: r.result });
   showJudge(l, r.result);
+  if (prefs.sfx) playHit(run.shapes[l]); // 当たったときだけ鳴らす（はずれは音もなく流す）
   updateScore();
 }
 
@@ -1465,10 +1546,12 @@ if (location.hash === '#e2e') {
     audio: () => (ac ? ac.state : null),
     music: () => !!(run && run.source),
     lanes: () => (run ? run.lanes : null),
+    sfx: () => sfxCount,
     room: () => ({ role: state.role, code: state.roomCode, nickname: state.nickname, room: state.room, myBest: state.myBest }),
   };
 }
 
 buildVolumes();
+buildSfx();
 renderOffset();
 boot();

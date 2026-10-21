@@ -9,7 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet" />
   <link rel="stylesheet" href="../shared/css/design-system.css" />
-  <link rel="stylesheet" href="style.css?v=20261021b" />
+  <link rel="stylesheet" href="style.css?v=20261021c" />
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
@@ -67,6 +67,10 @@
       <div class="pb-field">
         <p class="pb-field__label">音の大きさ</p>
         <div class="pb-volume" data-volume></div>
+      </div>
+      <div class="pb-field">
+        <p class="pb-field__label">たたく音（当たったときに鳴る）</p>
+        <div class="pb-sfx" data-sfx></div>
       </div>
       <button id="pb-solo-start" type="button" class="btn btn-primary btn-lg btn-full">
         <span class="material-symbols-rounded" aria-hidden="true">play_arrow</span>
@@ -193,6 +197,10 @@
         <div class="pb-volume" data-volume></div>
       </div>
       <div class="pb-field">
+        <p class="pb-field__label">たたく音（当たったときに鳴る）</p>
+        <div class="pb-sfx" data-sfx></div>
+      </div>
+      <div class="pb-field">
         <p class="pb-field__label">ランキング</p>
         <ol id="pb-guest-ranking" class="pb-ranking"></ol>
       </div>
@@ -301,7 +309,7 @@
     </section>
   </main>
 
-  <script type="module" src="app.js?v=20261021b"></script>
+  <script type="module" src="app.js?v=20261021c"></script>
   <script src="../shared/js/stats.js?v=1" defer></script>
   <script src="../shared/js/howto.js"></script>
   <script>
@@ -313,6 +321,7 @@
         { heading: 'ルームで遊ぶ（進行役）', items: ['「ルームを作る」でコース・マークの数・曲を選んで、ルームを作る', 'ルームコードは「コードをコピー」、参加用のリンクは「リンクをコピー」でチャットに送れる', 'ランキングの画面を画面共有する。「お手本を見せる」で遊んでみせられる'] },
         { heading: 'ルームで遊ぶ（参加する人）', items: ['「ルームに参加する」で、ニックネーム → ルームコード → 「参加する」', 'リンクからひらいたときは、ルームコードは入っているので名前だけ入れる', '「はじめる」で何回でも遊べる。ランキングには、いちばんよい点数がのる'] },
         { heading: 'たたきかた', items: ['まる は左、ひしがた は右のボタン（キーボードは F と J）', 'マークの数を「3つ」にすると、まんなかに さんかく（キーボードはスペース）', 'やさしいコースはマーク1つで、どのボタンでもOK', 'ぴったりは100点、いいねは50点'] },
+        { heading: '音', items: ['曲の大きさは「音の大きさ」で変えられる', '「たたく音」を「入」にすると、当たったときに短い音が鳴る（はじめは「切」）'] },
         { heading: 'ずれるとき', items: ['音がおくれて聞こえるときは「タイミング合わせ」をする', 'とちゅうで止めたいときは、右上のボタン'] },
       ],
     });

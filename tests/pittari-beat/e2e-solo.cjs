@@ -56,6 +56,7 @@ const goSolo = async (c, course, track) => {
     check('やさしい: 最高点・ずっとつづけて当てた', r.score === total * 100 && r.combo === total, r);
     check('おわりの画面に責めることばがない', !/ミス|はずれ|ざんねん|失敗/.test(r.text));
     check('ひとりのときはランキングの案内が出ない', r.note === '');
+    check('たたく音: はじめは切なので鳴らない', (await c.page.evaluate(() => window.__pb.sfx())) === 0);
     await c.page.screenshot({ path: L.OUT + '/s03-result.png' });
     await c.page.click('#pb-again');
     await L.waitPlaying(c);
@@ -141,6 +142,50 @@ const goSolo = async (c, course, track) => {
     await L.reload(c);
     await c.page.click('#pb-go-solo');
     check('マークの数を覚えている', (await c.page.getAttribute('#pb-solo-marks .pb-choice:nth-child(2)', 'aria-pressed')) === 'true');
+  })());
+
+  // 4c. たたく音: 入にすると、当たったときだけ鳴る（はずれ・空振りは鳴らない）
+  jobs.push((async () => {
+    const c = await L.newClient('sfx');
+    const p = c.page;
+    await L.open(c);
+    await p.click('#pb-go-solo');
+    check('たたく音: はじめは切', (await p.getAttribute('#pb-solo [data-sfx] .pb-choice:nth-child(1)', 'aria-pressed')) === 'true');
+    check('たたく音: 切のときは大きさのつまみを出さない', !(await L.visible(c, '#pb-solo [data-sfx] input')));
+    await p.click('#pb-solo [data-sfx] .pb-choice:nth-child(2)');
+    check('たたく音: 入にすると大きさのつまみが出る', await L.visible(c, '#pb-solo [data-sfx] input'));
+    await p.waitForFunction(() => window.__pb.sfx() === 1);
+    check('たたく音: 入にしたとき1回だけ聞かせる', true);
+    await L.pick(c, '#pb-solo-courses', 'ふつう');
+    await L.pick(c, '#pb-solo-tracks', 'ふつう');
+    await p.click('#pb-solo-start');
+    await L.waitPlaying(c);
+    check('利用回数: たたく音が入', (await L.stats(c, 'sfx-on')) === 1);
+    await sleep(2500); // しるしが来る前に空振り（何もないところ）
+    await p.keyboard.press('KeyF');
+    await p.keyboard.press('KeyJ');
+    check('たたく音: 空振りは鳴らない', (await p.evaluate(() => window.__pb.sfx())) === 1);
+    await L.autoplay(c, 'return 0;', 8);
+    const n = await p.evaluate(() => window.__pb.counts());
+    check('たたく音: 当たった数だけ鳴る', (await p.evaluate(() => window.__pb.sfx())) === 1 + n.perfect + n.good, { sfx: await p.evaluate(() => window.__pb.sfx()), n });
+    // わざと早すぎるタップ（しるしを流す）では鳴らない
+    const before = await p.evaluate(() => window.__pb.sfx());
+    await p.evaluate(() => new Promise((done) => {
+      const t0 = window.__pb.now();
+      const next = window.__pb.notes().find((x) => x.t > t0 + 0.5);
+      const step = () => {
+        const t = window.__pb.now();
+        if (t !== null && t >= next.t - 0.2) { document.dispatchEvent(new KeyboardEvent('keydown', { code: next.lane ? 'KeyJ' : 'KeyF', bubbles: true })); done(); return; }
+        setTimeout(step, 4);
+      };
+      step();
+    }));
+    check('たたく音: はずれは鳴らない', (await p.evaluate(() => window.__pb.sfx())) === before);
+    await p.click('#pb-pause');
+    await p.click('#pb-quit');
+    await L.reload(c);
+    await p.click('#pb-go-solo');
+    check('たたく音: 入を覚えている', (await p.getAttribute('#pb-solo [data-sfx] .pb-choice:nth-child(2)', 'aria-pressed')) === 'true');
   })());
 
   // 5. とちゅうで止める・つづける・画面を切りかえる

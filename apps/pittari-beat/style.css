@@ -60,6 +60,8 @@ body { background: var(--color-bg); }
 
 .pb-volume { display: flex; align-items: center; gap: 8px; color: var(--color-muted); }
 .pb-volume input { flex: 1; accent-color: var(--color-accent); min-height: 32px; }
+.pb-volume[hidden] { display: none; }
+.pb-sfx { display: flex; flex-direction: column; gap: 8px; }
 
 .pb-quiet-btn {
   align-self: center;

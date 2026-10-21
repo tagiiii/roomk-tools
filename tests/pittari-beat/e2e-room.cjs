@@ -110,6 +110,7 @@ const { check, sleep } = L;
   check('参加者: もどると参加者の画面', (await L.screen(g1)) === 'pb-guest');
   check('参加者: 自分のいちばん', (await L.text(g1, '#pb-guest-best')) === total * 100 + '点');
   check('参加者: 自分の順位', /1位/.test(await L.text(g1, '#pb-guest-rank')));
+  check('参加者の画面にも、たたく音の切・入', await L.visible(g1, '#pb-guest [data-sfx] .pb-choice'));
   check('参加者のランキングで自分がわかる', (await L.rankingRows(g1, '#pb-guest-ranking')).find((x) => x.me)?.name === 'あおい');
   await g1.page.screenshot({ path: L.OUT + '/r03-guest.png' });
 
