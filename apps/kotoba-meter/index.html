@@ -164,6 +164,21 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 .km-person.is-away { color: var(--color-muted); border-style: dashed; }
 .km-person .km-person__remove { min-height: 32px; padding: 4px 12px; font-size: 13px; }
 
+/* ── みんなにみせる画面の待合室：参加のしかた ── */
+.km-joinguide { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); gap: 20px 32px; align-items: center; padding: 24px 28px; }
+.km-joinguide__codebox { text-align: center; background: #E6F2F4; border-radius: 12px; padding: 18px 12px; }
+.km-joinguide__label { color: var(--color-accent); font-size: 14px; font-weight: 700; letter-spacing: 0.08em; margin: 0 0 6px; }
+.km-joinguide__code { color: var(--color-primary); font-size: 56px; font-weight: 700; letter-spacing: 0.14em; line-height: 1.2; margin: 0; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.km-joinguide__steps { list-style: none; margin: 0; padding: 0; }
+.km-joinguide__steps li { display: flex; gap: 10px; align-items: baseline; color: var(--color-primary); font-size: 20px; font-weight: 700; line-height: 1.5; margin: 6px 0; }
+.km-joinguide__num { color: var(--color-accent); font-feature-settings: "palt"; flex-shrink: 0; }
+.km-joinguide__note { color: var(--color-muted); font-size: 14px; margin: 10px 0 0; }
+@media (max-width: 600px) {
+  .km-joinguide { grid-template-columns: 1fr; padding: 18px; }
+  .km-joinguide__code { font-size: 40px; }
+  .km-joinguide__steps li { font-size: 17px; }
+}
+
 /* ── 進行役の戻りを待つ画面（しるしでヒントのオーバーレイと同じ形） ── */
 .km-overlay { position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; padding: 20px; background: rgba(18, 37, 54, 0.8); }
 .km-overlay[hidden] { display: none; }
@@ -291,6 +306,22 @@ button:disabled { opacity: .5; cursor: not-allowed; }
         <p id="phase-label" class="km-round"></p>
         <div class="km-phase"><h2 id="phase-title" class="km-phase__title" tabindex="-1"></h2><p id="phase-note" class="km-phase__sub"></p></div>
         <p id="hint-timer" class="km-timer" role="timer" hidden></p>
+
+        <section id="join-guide" class="km-panel km-joinguide" hidden>
+          <div class="km-joinguide__codebox">
+            <p class="km-joinguide__label">ルームコード</p>
+            <p id="join-guide-code" class="km-joinguide__code"></p>
+          </div>
+          <div class="km-joinguide__how">
+            <p class="km-joinguide__label">参加のしかた</p>
+            <ol class="km-joinguide__steps">
+              <li><span class="km-joinguide__num">①</span><span>「ルームに参加する」を押す</span></li>
+              <li><span class="km-joinguide__num">②</span><span>ニックネームを入れる</span></li>
+              <li><span class="km-joinguide__num">③</span><span>ルームコードを入れて「参加する」</span></li>
+            </ol>
+            <p class="km-joinguide__note">チャットのリンクからひらくと、ルームコードは入っているよ。</p>
+          </div>
+        </section>
 
         <section id="theme-card" class="km-odai" hidden>
           <p class="km-odai__label">お題</p>
@@ -932,7 +963,7 @@ function render(next) {
   $('leave').textContent = host ? 'ルームを閉じる' : '退出する';
   $('phase-label').textContent = lobby ? 'みんなで準備' : `ラウンド ${state.round}`;
   $('phase-title').textContent = lobby ? 'みんながそろったら始めよう' : hint ? 'どんなことばにしよう？' : vote ? 'このヒント、どれくらい？' : 'みんなには、こう感じた！';
-  $('phase-note').textContent = lobby ? (host ? '制限時間と出題者を選んで始めてね。' : '進行役が始めるまで待ってね。') : hint ? `${playerName(state.presenter)}さんがヒントを考えているよ。` : vote ? '公開するまで、ほかの人の数字は秘密。' : '数字は出題者の感覚。違う感じ方も楽しもう。';
+  $('phase-note').textContent = lobby ? (host ? '制限時間と出題者を選んで始めてね。' : watch ? 'スマホやパソコンで、ルームに入ってね。' : '進行役が始めるまで待ってね。') : hint ? `${playerName(state.presenter)}さんがヒントを考えているよ。` : vote ? '公開するまで、ほかの人の数字は秘密。' : '数字は出題者の感覚。違う感じ方も楽しもう。';
   if (state.timedOut && (hint || lobby)) $('phase-note').textContent = hint
     ? '前のラウンドは時間切れ。新しいお題でヒントを考えよう。'
     : '時間切れになったよ。出題者の接続を確認して、次のラウンドを始めてね。';
@@ -944,6 +975,9 @@ function render(next) {
   if (secondsLeft === null) $('hint-timer').textContent = '出題の制限時間：なし';
   else if (secondsLeft === 0) $('hint-timer').textContent = '時間切れ。次のお題へ進んでいます。';
   else $('hint-timer').replaceChildren(el('span', '', 'ヒントを出すまで あと'), el('strong', '', `${Math.floor(secondsLeft / 60)}分${String(secondsLeft % 60).padStart(2, '0')}秒`));
+  // みんなにみせる画面の待合室では、参加のしかたを大きく出す（画面共有を見ながら入れるように）
+  show('join-guide', watch && lobby);
+  $('join-guide-code').textContent = state.code;
   show('theme-card', !lobby);
   $('theme-name').textContent = state.theme.name;
   setEnds('low', 'high', state.theme);
