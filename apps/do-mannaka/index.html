@@ -10,6 +10,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
 <script src="../shared/js/rtdb-utils.js?v=20261005"></script>
+<script src="../shared/js/room-qr.js?v=20261022"></script>
   <script type="module">
     // 共通ユーティリティを利用（REF-3: shuffle / escapeHtml の重複定義を解消）
     import { shuffle, escapeHtml } from '../shared/js/utils.js';
@@ -297,6 +298,10 @@
       <button type="button" class="btn btn-ghost btn-full" id="btnCopyLink" onclick="hostCopyLink()">
         <span class="material-symbols-rounded" aria-hidden="true">link</span>
         リンクをコピー
+      </button>
+      <button type="button" class="btn btn-ghost btn-full" id="btnShowQr" onclick="hostShowQr()">
+        <span class="material-symbols-rounded" aria-hidden="true">qr_code_2</span>
+        QRコードを出す
       </button>
 
       <hr class="divider">
@@ -1103,6 +1108,15 @@
     RoomkRTDB.copyRoomLink(state.roomCode, document.getElementById('btnCopyLink'));
   }
 
+  // 別の端末（スマホ・タブレット）で入る人向けに、参加用のリンクを QR コードで大きく出す（共通の RoomkQR、room-qr.js）
+  function hostShowQr() {
+    if (!state.roomCode || !ROOM_CODE_PATTERN.test(state.roomCode)) {
+      RoomkRTDB.showToast('ルームコードがありません');
+      return;
+    }
+    RoomkQR.show(state.roomCode);
+  }
+
   // ════════════════════════════════════
   // ホスト: ゲーム開始 → 問題選択へ
   // ════════════════════════════════════
@@ -1863,7 +1877,7 @@
     sections: [
       { heading: 'はじめかた', items: [
         'ホストは「ルームを作る（ホスト）」を押して、ニックネームを入力する',
-        '画面に出たルームコードをみんなに伝える。ルームコードは「コードをコピー」、参加用のリンクは「リンクをコピー」でチャットに送れる',
+        '画面に出たルームコードをみんなに伝える。ルームコードは「コードをコピー」、参加用のリンクは「リンクをコピー」でチャットに送れる。スマホやタブレットで入る人には「QRコードを出す」をカメラで読みとってもらう',
         'ほかの人は「ルームに参加する」を押してニックネームとコードを入れ、3人以上そろったらホストが「ゲームを始める」を押す。リンクからひらいたときは、ルームコードは入っているのでニックネームだけ入れる',
         'ホストは進行だけにすることもできる（待合室の「自分もプレイヤーとして参加する」を外す）。そのときは、ホスト以外で3人以上いれば始められる',
       ] },

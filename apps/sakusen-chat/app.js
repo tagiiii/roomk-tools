@@ -674,6 +674,7 @@ function connectToRoom(role, name, key, restore) {
 
   const host = role === 'host';
   $('btnCopyLink').hidden = !host;
+  if ($('btnShowQr')) $('btnShowQr').hidden = !host;
   $('btnFinish').hidden = !host;
   $('btnLeave').hidden = host;
   $('screen-chat').dataset.view = 'list';
@@ -1752,6 +1753,12 @@ function bindEvents() {
       '参加用のリンクをコピーしました',
       'コピーできませんでした。もう一度ためしてね',
     );
+  });
+  // 別の端末（スマホ・タブレット）で入る人向けに、「リンクをコピー」と同じ参加用のリンクを QR コードで大きく出す（共通の RoomkQR、room-qr.js）
+  $('btnShowQr')?.addEventListener('click', () => {
+    if (!state.roomCode) return;
+    // カギ（20文字）は画面に出さないので、QR の下にも出さない
+    RoomkQR.show(state.roomCode, location.origin + location.pathname + '?room=' + state.roomCode, { showCode: false });
   });
   $('btnFinish').addEventListener('click', () => {
     ask({

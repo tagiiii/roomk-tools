@@ -149,6 +149,7 @@ waiting → night（1日目夜・襲撃なし）→ morning → day → vote →
 ## 参加用のリンク（`?room=CODE`。2026-10-05）
 
 - 待合室の GM パネル（ルームコードの下）に「コードをコピー」と並べて「リンクをコピー」（`id="btnCopyLink"`）。ルームコードは GM にだけ出るので、このボタンも GM だけ。共通仕様は docs/development/rtdb.md「参加用のリンク」
+- 「リンクをコピー」の下に「QRコードを出す」（`id="btnShowQr"`・`showJoinQr()`。2026-10-22）。スマホ・タブレットなど別の端末で入る人向けに、同じ参加用のリンクを QR コードにして画面の上に大きく出す。共通の `RoomkQR.show(code)`（`apps/shared/js/room-qr.js`）。GM だけ（同じパネルの中）
 - このアプリの入口は `<script>` 末尾の「初期化」（`?room=` → 保存した記録 `jinro_session` の順。`?watch=` はない）。参加画面は `screen-guest-join`（ヒントは `joinLinkHint`）。`?room=` は `startRoomListener`（作成・参加・再接続の共通の接続処理）で外す
 - sessionStorage には再接続用の記録（`jinro_session`）のほかに騎士の護衛メモリ（`jinro_session_guard_{コード}_{名前}`）がある。リンクの入口が扱うのは再接続用の記録だけで、消すときは既存の `clearSession()`（記録と、その記録のルームの護衛メモリだけを消す）を使う
 - 入力欄の名前が「ニックネーム」なので、ヒント・あそびかた・スライドのノートは「名前」でなく「ニックネームだけ入れる」と書く

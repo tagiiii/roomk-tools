@@ -65,6 +65,7 @@ TOP（screen-top）
 ### 参加用のリンク（`?room=CODE`。2026-10-05）
 
 - 待合室のホスト向けパネル（ルームコードの下）に「コードをコピー」と並べて「リンクをコピー」（`id="btnCopyLink"`）。ルームコードはホストにだけ出るので、このボタンもホストだけ。共通仕様は docs/development/rtdb.md「参加用のリンク」
+- 「リンクをコピー」の下に「QRコードを出す」（`id="btnShowQr"`・`showJoinQr()`。2026-10-22）。スマホ・タブレットなど別の端末で入る人向けに、同じ参加用のリンクを QR コードにして画面の上に大きく出す。共通の `RoomkQR.show(code)`（`apps/shared/js/room-qr.js`）。ホストだけ（同じパネルの中）
 - このアプリの入口は `<script>` 末尾の「初期化」（`?room=` → 保存した記録 `koedake_session` の順。`?watch=` はない）。参加画面は `screen-guest-join`、ヒントは `joinLinkHint`。`?room=` は `startRoomListener`（作成・参加・再接続の共通の接続処理）で外す
 - 入力欄の名前が「ニックネーム」なので、ヒント・あそびかた・スライドのノートは「名前」でなく「ニックネームだけ入れる」と書く
 - 同じコードの記録が残っているときの再接続は `tryReconnect()` の戻り値だけで判定する（このアプリの `tryReconnect` は途中で `state.roomRef` を入れてから失敗を返すことがあるため。kagi-awase の `|| state.roomRef` は使わない。失敗したら記録を消して参加画面へ）

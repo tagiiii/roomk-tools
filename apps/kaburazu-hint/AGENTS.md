@@ -49,6 +49,7 @@ TOP（screen-top）
 
 - 参加用のリンク `?room=CODE` と「リンクをコピー」（2026-10-05）。共通仕様は docs/development/rtdb.md「参加用のリンク」。このアプリの入口は末尾の `init()`（`?watch=` → `?room=` → sessionStorage の順）、参加画面は `screen-guest-join`（`openJoinFromLink` がコード欄 `#guest-code` に入れ、`#joinLinkHint` を出す）。`?room=` はつないだとき `startRoomListener()` の先頭で外す（観戦では触らない）
 - 「リンクをコピー」（`#btnCopyLink`）は待機画面のルームコードの下、「コードをコピー」の下に並べる（このアプリにはルームバーがない）
+- 「QRコードを出す」（`#btnShowQr`・`showLinkQr()`。2026-10-22）は「リンクをコピー」の下。スマホ・タブレットなど別の端末で入る人向けに、同じ参加用のリンクを QR コードにして画面の上に大きく出す。共通の `RoomkQR.show(code)`（`apps/shared/js/room-qr.js`）
 - 固有: 観戦の記録（`role: 'spectator'`）が同じコードで残っていても再接続を優先しない（記録を消して参加画面へ）。参加画面の欄名に合わせ、ヒント・あそびかたは「名前」でなく「ニックネーム」
 
 ## 観戦専用ビュー（みんなにみせる画面）
@@ -337,7 +338,7 @@ sessionStorage.removeItem('kaburazuhint_session');
 - ボタン: ルームをつくる / ルームに参加する
 
 #### screen-waiting
-- ルームコード表示（大きく・コピー可）・「コードをコピー」・「リンクをコピー」
+- ルームコード表示（大きく・コピー可）・「コードをコピー」・「リンクをコピー」・「QRコードを出す」
 - プレイヤーリスト
 - 「3人以上で開始できます」の注記（遊ぶ人で数える）
 - 設定欄「自分もプレイヤーとして参加する」（ホストのみ・初期値オン）

@@ -75,6 +75,8 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 .km-roombar__actions { display: flex; flex-wrap: wrap; gap: 6px; }
 .km-roombar .btn-sm { padding: 6px 12px; min-height: 36px; font-size: 13px; }
 .km-roombar__leave { margin-left: auto; }
+/* 進行役はボタンが多く1行に入らないので、PCでも「コード・役割・閉じる」と「ボタン」の2行にする（参加者は1行のまま） */
+.km-roombar:has(#watch-link:not([hidden])) .km-roombar__actions { order: 4; flex-basis: 100%; }
 
 /* ── フェーズの見出し ── */
 .km-round { color: var(--color-accent); font-size: 14px; font-weight: 700; text-align: center; margin: 0 0 6px; }
@@ -382,6 +384,7 @@ button:disabled { opacity: .5; cursor: not-allowed; }
           <span id="room-actions" class="km-roombar__actions">
             <button id="copy-code" class="btn btn-ghost btn-sm" type="button">コードをコピー</button>
             <button id="copy-link" class="btn btn-ghost btn-sm" type="button">リンクをコピー</button>
+            <button id="show-qr" class="btn btn-ghost btn-sm" type="button">QRコードを出す</button>
             <a id="watch-link" target="_blank" rel="noopener" class="btn btn-ghost btn-sm">みんなにみせる画面</a>
           </span>
           <button id="leave" class="btn btn-ghost btn-sm km-roombar__leave" type="button">退出する</button>
@@ -525,6 +528,7 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
 <script src="../shared/js/rtdb-utils.js?v=20261005"></script>
+<script src="../shared/js/room-qr.js?v=20261022"></script>
 <script>
 /* Firebase transport for the permanent edition. UI state is filtered here;
    underlying RTDB data follows room-K's documented UI-level secrecy policy. */
@@ -1136,7 +1140,7 @@ function render(next) {
   const finishedTitle = top === 0 || winners.length === state.players.length ? 'みんな同点！' : `1位は ${winners.map(p => p.name).join('さん・')}さん！`;
   show('front', false); show('watch-end', false); show('game', true);
   // みんなにみせる画面は進行役が開いて共有する（しるしでヒント・スタンプあてゲームと同じ）
-  show('room-actions', !watch); show('watch-link', host); show('leave', !watch); show('my-role', host); show('watch-badge', watch);
+  show('room-actions', !watch); show('watch-link', host); show('show-qr', host); show('leave', !watch); show('my-role', host); show('watch-badge', watch);
   $('room-code').textContent = state.code;
   $('my-role').textContent = host ? '進行役' : '参加者';
   $('watch-link').href = `?watch=${encodeURIComponent(code)}`;
@@ -1379,6 +1383,14 @@ $('host-away-leave').addEventListener('click', () => {
 });
 $('copy-code').addEventListener('click', event => RoomkRTDB.copyRoomCode(code, event.currentTarget));
 $('copy-link').addEventListener('click', event => RoomkRTDB.copyRoomLink(code, event.currentTarget));
+// 別の端末（スマホ・タブレット）で入る人向けに、参加用のリンクを QR コードで大きく出す（共通の RoomkQR、room-qr.js）。検査と通知は copyRoomLink と同じ
+$('show-qr').addEventListener('click', () => {
+  if (typeof code !== 'string' || !/^[A-Z0-9]{6}$/.test(code)) {
+    RoomkRTDB.showToast('ルームコードがありません');
+    return;
+  }
+  RoomkQR.show(code);
+});
 
 window.addEventListener('offline', disconnected);
 window.addEventListener('online', poll);
@@ -1398,6 +1410,6 @@ if (session || (watch && code)) {
 </script>
 <script src="../shared/js/stats.js?v=1" defer></script>
 <script src="../shared/js/howto.js"></script>
-<script>RoomkHowto.init({slides: 'slides.html', "title": "あそびかた", "lead": "ヒントのことばから、出題者が思い浮かべた1〜5の数字を予想するゲームだよ。数字は出題者の感覚。違う感じ方も楽しもう。", "sections": [{"heading": "あそびかた", "items": ["出題者は、自分だけに見える秘密の数字に合うことばを考えて「ヒントを出す」。迷ったら「ヒント例を見る」「お題を変更する」が使えるよ。", "ほかの人は、ヒントを見て1〜5をタップ。公開されるまでは選び直せるし、「今回はパス」もできるよ。", "みんなの数字がいっせいに出るよ。ぴったりは2点、1つちがいは1点。出題者も、ぴったりの人がいれば2点。結果の画面に順位が出るよ。"]}, {"heading": "はじめかた", "items": ["進行役が「ルームを作る」。ルームコードは「コードをコピー」、参加用のリンクは「リンクをコピー」でチャットに送れるよ。", "参加する人は「ルームに参加する」でニックネーム、ルームコード（6文字）の順に入れて「参加する」。リンクからひらいたときは、ニックネームだけでいいよ。", "終わるときは、参加者は「退出する」、進行役は「ルームを閉じる」。"]}, {"heading": "進行役の操作", "items": ["制限時間と次の出題者を選んで「ラウンドを始める」。お題はランダムで、出題者は参加した順に交代するよ。制限時間を過ぎると、次の出題者へ進むよ。", "「回答を締め切って公開」で結果へ進む（まだ回答していない人がいても進めるよ）。画面共有には「みんなにみせる画面」を使ってね。", "「そのほかの操作」には、このラウンドをやり直す・点を0にもどす・ここでおしまい（最後の順位を出す）・端末なしの参加者を足す（その子の分を代わりに入力）があるよ。", "接続が切れたままの人は、「参加している人」の「外す」で外せるよ。"]}]});</script>
+<script>RoomkHowto.init({slides: 'slides.html', "title": "あそびかた", "lead": "ヒントのことばから、出題者が思い浮かべた1〜5の数字を予想するゲームだよ。数字は出題者の感覚。違う感じ方も楽しもう。", "sections": [{"heading": "あそびかた", "items": ["出題者は、自分だけに見える秘密の数字に合うことばを考えて「ヒントを出す」。迷ったら「ヒント例を見る」「お題を変更する」が使えるよ。", "ほかの人は、ヒントを見て1〜5をタップ。公開されるまでは選び直せるし、「今回はパス」もできるよ。", "みんなの数字がいっせいに出るよ。ぴったりは2点、1つちがいは1点。出題者も、ぴったりの人がいれば2点。結果の画面に順位が出るよ。"]}, {"heading": "はじめかた", "items": ["進行役が「ルームを作る」。ルームコードは「コードをコピー」、参加用のリンクは「リンクをコピー」でチャットに送れるよ。スマホやタブレットで入る人には、「QRコードを出す」をカメラで読みとってもらってね。", "参加する人は「ルームに参加する」でニックネーム、ルームコード（6文字）の順に入れて「参加する」。リンクからひらいたときは、ニックネームだけでいいよ。", "終わるときは、参加者は「退出する」、進行役は「ルームを閉じる」。"]}, {"heading": "進行役の操作", "items": ["制限時間と次の出題者を選んで「ラウンドを始める」。お題はランダムで、出題者は参加した順に交代するよ。制限時間を過ぎると、次の出題者へ進むよ。", "「回答を締め切って公開」で結果へ進む（まだ回答していない人がいても進めるよ）。画面共有には「みんなにみせる画面」を使ってね。", "「そのほかの操作」には、このラウンドをやり直す・点を0にもどす・ここでおしまい（最後の順位を出す）・端末なしの参加者を足す（その子の分を代わりに入力）があるよ。", "接続が切れたままの人は、「参加している人」の「外す」で外せるよ。"]}]});</script>
 </body>
 </html>

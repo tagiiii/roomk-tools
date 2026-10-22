@@ -14,6 +14,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <script src="../shared/js/rtdb-utils.js?v=20261005"></script>
+  <script src="../shared/js/room-qr.js?v=20261022"></script>
 </head>
 <body>
   <!-- トップ -->
@@ -145,6 +146,7 @@
         <b id="cs-lobby-code" class="cs-code__value"></b>
         <button id="cs-copy-code" class="cs-btn cs-btn--secondary cs-btn--sm" type="button"><span class="material-symbols-rounded" aria-hidden="true">content_copy</span>コードをコピー</button>
         <button id="btnCopyLink" class="cs-btn cs-btn--secondary cs-btn--sm" type="button"><span class="material-symbols-rounded" aria-hidden="true">link</span>リンクをコピー</button>
+        <button id="btnShowQr" class="cs-btn cs-btn--secondary cs-btn--sm" type="button"><span class="material-symbols-rounded" aria-hidden="true">qr_code_2</span>QRコードを出す</button>
       </div>
       <p id="cs-lobby-host" class="cs-card__sub"></p>
       <h3 class="cs-field__label">あそぶ人</h3>
@@ -240,7 +242,7 @@
   <script src="text.js?v=20260929a"></script>
   <script src="room.js?v=20260929a"></script>
   <script src="net.js?v=20260929a"></script>
-  <script src="ui.js?v=20261012"></script>
+  <script src="ui.js?v=20261022"></script>
   <script src="../shared/js/stats.js?v=1" defer></script>
   <script src="../shared/js/howto.js"></script>
   <script>
@@ -250,7 +252,7 @@
       lead: 'すごろくで進みながら体験で「適性」をため、たまった適性に合う職業を選んでポイントを集めるゲームだよ。ポイントはゲームの中のもの。',
       sections: [
         { heading: 'はじめかた', items: [
-          'ホストが「ルームを作る」を押して、ルームコードを伝える。ルームコードは「コードをコピー」、参加用のリンクは「リンクをコピー」でチャットに送れる',
+          'ホストが「ルームを作る」を押して、ルームコードを伝える。ルームコードは「コードをコピー」、参加用のリンクは「リンクをコピー」でチャットに送れる。スマホやタブレットで入る人には「QRコードを出す」をカメラで読みとってもらう',
           'ほかの人は「ルームに参加する」を押し、名前 → ルームコードの順に入れて「参加する」。リンクからひらいたときは、ルームコードは入っているので名前だけ入れる',
           '端末がない人は、ホストが待合室の「端末のない人を追加」に名前を入れて「追加」。その人の番はホストが押す',
           '1台の画面をみんなで見て遊ぶときは「1台の画面であそぶ」',

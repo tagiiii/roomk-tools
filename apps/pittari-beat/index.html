@@ -14,6 +14,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <script src="../shared/js/rtdb-utils.js?v=20261005"></script>
+  <script src="../shared/js/room-qr.js?v=20261022"></script>
 </head>
 <body>
 
@@ -122,6 +123,9 @@
           </button>
           <button id="btnCopyLink" type="button" class="btn btn-secondary btn-sm">
             <span class="material-symbols-rounded" aria-hidden="true">link</span>リンクをコピー
+          </button>
+          <button id="btnShowQr" type="button" class="btn btn-secondary btn-sm">
+            <span class="material-symbols-rounded" aria-hidden="true">qr_code_2</span>QRコードを出す
           </button>
         </div>
       </div>
@@ -309,7 +313,7 @@
     </section>
   </main>
 
-  <script type="module" src="app.js?v=20261021c"></script>
+  <script type="module" src="app.js?v=20261022"></script>
   <script src="../shared/js/stats.js?v=1" defer></script>
   <script src="../shared/js/howto.js"></script>
   <script>
@@ -318,7 +322,7 @@
       slides: 'slides.html',
       lead: '上から落ちてくるしるしが線に来たときに、ボタンをたたくリズムあそび。',
       sections: [
-        { heading: 'ルームで遊ぶ（進行役）', items: ['「ルームを作る」でコース・マークの数・曲を選んで、ルームを作る', 'ルームコードは「コードをコピー」、参加用のリンクは「リンクをコピー」でチャットに送れる', 'ランキングの画面を画面共有する。「お手本を見せる」で遊んでみせられる'] },
+        { heading: 'ルームで遊ぶ（進行役）', items: ['「ルームを作る」でコース・マークの数・曲を選んで、ルームを作る', 'ルームコードは「コードをコピー」、参加用のリンクは「リンクをコピー」でチャットに送れる。スマホやタブレットで入る人には「QRコードを出す」をカメラで読みとってもらう', 'ランキングの画面を画面共有する。「お手本を見せる」で遊んでみせられる'] },
         { heading: 'ルームで遊ぶ（参加する人）', items: ['「ルームに参加する」で、ニックネーム → ルームコード → 「参加する」', 'リンクからひらいたときは、ルームコードは入っているので名前だけ入れる', '「はじめる」で何回でも遊べる。ランキングには、いちばんよい点数がのる'] },
         { heading: 'たたきかた', items: ['まる は左、ひしがた は右のボタン（キーボードは F と J）', 'マークの数を「3つ」にすると、まんなかに さんかく（キーボードはスペース）', 'やさしいコースはマーク1つで、どのボタンでもOK', 'ぴったりは100点、いいねは50点'] },
         { heading: '音', items: ['曲の大きさは「音の大きさ」で変えられる', '「たたく音」を「入」にすると、当たったときに短い音が鳴る（はじめは「切」）'] },

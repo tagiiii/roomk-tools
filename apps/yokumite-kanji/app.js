@@ -3,9 +3,9 @@
 // 仕様の正本: AGENTS.md
 // =============================================
 import { shuffle } from '../shared/js/utils.js';
-import { UNITS } from './data.js?v=20261014e';
-import { KVG } from './kvg-data.js?v=20261014e';
-import { applyPath, createRoom, openLink } from './link.js?v=20261014e';
+import { UNITS } from './data.js?v=20261022';
+import { KVG } from './kvg-data.js?v=20261022';
+import { applyPath, createRoom, openLink } from './link.js?v=20261022';
 
 const { RoomkRTDB } = window;
 
@@ -1138,6 +1138,14 @@ function showWatch() {
   const code = share.code;
   watchBody = el('div', { class: 'yk-watch-body' });
   const linkBtn = button('リンクをコピー', 'btn-secondary btn-sm', () => RoomkRTDB.copyRoomLink(code, linkBtn), { iconName: 'link', id: 'btnCopyLink' });
+  // 子どもがスマホ・タブレットでひらくとき向けに、同じリンクを QR コードで大きく出す（共通の RoomkQR、room-qr.js）。検査と通知は copyRoomLink と同じ
+  const qrBtn = button('QRコードを出す', 'btn-secondary btn-sm', () => {
+    if (typeof code !== 'string' || !/^[A-Z0-9]{6}$/.test(code)) {
+      RoomkRTDB.showToast('ルームコードがありません');
+      return;
+    }
+    RoomkQR.show(code);
+  }, { iconName: 'qr_code_2', id: 'btnShowQr' });
   const closeBtn = button('とじる', 'btn-ghost btn-sm', async () => {
     const link = share.link;
     if (!link) return;
@@ -1157,6 +1165,7 @@ function showWatch() {
     el('div', { class: 'yk-watch-bar' },
       el('span', { class: 'yk-watch-bar__code' }, 'ルームコード ', el('strong', {}, code)),
       linkBtn,
+      qrBtn,
       closeBtn),
     watchPanel.root,
     watchBody,

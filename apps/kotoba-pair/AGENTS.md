@@ -73,6 +73,7 @@ kotobapair_rooms/{roomCode}/
   （do-mannaka 等の `copyToClipboard(state.roomCode)` と同じ挙動。2026-08-10 オーナー実機フィードバックで統一）。
   コピー処理は `RoomkRTDB.copyRoomCode()` を使い、成功・失敗を共通の通知で表示する。
 - 待機画面には「リンクをコピー」（`#btnCopyLink`）もある。参加用のリンク `?room=CODE` をコピーする（下記「参加用のリンク」）。
+- その下に「QRコードを出す」（`#btnShowQr`。2026-10-22）。スマホ・タブレットなど別の端末で入る人向けに、同じ参加用のリンクを QR コードにして画面の上に大きく出す（画面共有越しにカメラで読みとる）。共通の `RoomkQR.show(code)`（`apps/shared/js/room-qr.js`）。検査と通知は「リンクをコピー」と同じ
 
 ## 画面・status 遷移
 
@@ -287,6 +288,7 @@ transaction 内の検証（この順に全部）:
 ## 参加用のリンク `?room=CODE`（2026-10-05）
 
 - 参加用のリンク `?room=CODE` と「リンクをコピー」（待機画面の「コードをコピー」の下）。共通仕様は docs/development/rtdb.md「参加用のリンク」。
+- 「QRコードを出す」（`#btnShowQr`、「リンクをコピー」の下。2026-10-22）: 同じリンクを QR コードで出す。`showRoomQr()` → 共通の `RoomkQR.show(code)`（`apps/shared/js/room-qr.js`）
 - このアプリの入口は `index.html` のインラインスクリプト末尾の `init()`（`?watch=` はない。`?room=` → 保存した記録 `tryReconnect` の順）。参加画面は `screen-join`（コード欄 `#join-code`、名前欄 `#join-nickname`、案内 `#joinLinkHint`）。`?room=` は `startRoomListener`（作成・参加・再接続の共通）で外す。
 - `?room=` の検査は「参加する」と同じ `/^[A-Z0-9]{6}$/`（`ROOM_CODE_PATTERN`）。トップの「ルームに参加する」（`goJoin()`）では案内を隠す。途中参加（`playing`・`result`）できるアプリなので、ゲーム中に貼ったリンクからも参加できる（参加の可否は既存の「参加する」の検査のまま）。
 

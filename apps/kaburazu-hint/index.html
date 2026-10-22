@@ -11,6 +11,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
 <script src="../shared/js/rtdb-utils.js?v=20261005"></script>
+<script src="../shared/js/room-qr.js?v=20261022"></script>
   <script type="module">
     // 共通ユーティリティを利用（REF-3: shuffle の重複定義を解消）
     import { shuffle } from '../shared/js/utils.js';
@@ -329,6 +330,7 @@
       <div class="kbz-room-code" id="waiting-room-code" role="button" tabindex="0" aria-label="コードをコピー" onclick="copyCode(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();copyCode(this);}"></div>
       <button type="button" class="btn btn-ghost btn-full" onclick="copyCode(this)"><span class="material-symbols-rounded" aria-hidden="true">content_copy</span>コードをコピー</button>
       <button type="button" class="btn btn-ghost btn-full" id="btnCopyLink" onclick="copyLink(this)"><span class="material-symbols-rounded" aria-hidden="true">link</span>リンクをコピー</button>
+      <button type="button" class="btn btn-ghost btn-full" id="btnShowQr" onclick="showLinkQr()"><span class="material-symbols-rounded" aria-hidden="true">qr_code_2</span>QRコードを出す</button>
     </div>
     <div class="card">
       <p class="section-label">参加者</p>
@@ -2034,6 +2036,15 @@ function copyLink(button) {
   RoomkRTDB.copyRoomLink(state.roomCode, button);
 }
 
+// 別の端末（スマホ・タブレット）で入る人向けに、参加用のリンクを QR コードで大きく出す（共通の RoomkQR、room-qr.js）
+function showLinkQr() {
+  if (!state.roomCode || !SPEC_CODE_RE.test(state.roomCode)) {
+    showMsg('ルームコードがありません');
+    return;
+  }
+  RoomkQR.show(state.roomCode);
+}
+
 // トップの「ルームに参加する」から: リンク用のヒントは出さない
 function openGuestJoin() {
   document.getElementById('joinLinkHint').hidden = true;
@@ -2563,7 +2574,7 @@ function renderSpecFinished(room) {
       {
         heading: 'はじめかた',
         items: [
-          'ホストが「ルームをつくる」を押して、コードをみんなに伝える。ルームコードは「コードをコピー」、参加用のリンクは「リンクをコピー」でチャットに送れる',
+          'ホストが「ルームをつくる」を押して、コードをみんなに伝える。ルームコードは「コードをコピー」、参加用のリンクは「リンクをコピー」でチャットに送れる。スマホやタブレットで入る人には「QRコードを出す」をカメラで読みとってもらう',
           'ほかの人は「ルームに参加する」からニックネームとルームコードを入れて「参加する」。リンクからひらいたときは、ルームコードは入っているのでニックネームだけ入れる',
           '3人以上そろったら、ホストが「ゲームを始める」を押す',
           'ホストは「自分もプレイヤーとして参加する」を外すと進行役になる。回答者やヒントを出す番は回ってこない（そのときはホストのほかに3人以上で遊べる）',

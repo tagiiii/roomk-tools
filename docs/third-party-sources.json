@@ -52,6 +52,12 @@
       "checkedOn": "2026-10-13"
     },
     {
+      "component": "QR Code Generator for JavaScript (qrcode-generator 2.0.4)",
+      "source": "https://raw.githubusercontent.com/kazuhikoarase/qrcode-generator/83b7e8fe3fddd3b0368dbafd6ce56995bd25e3c8/LICENSE",
+      "sha256": "3a850fa5f08101db6f40676c2786e10bd2cd5fff7b12ffdf1e0c434d4e49d90c",
+      "checkedOn": "2026-10-22"
+    },
+    {
       "component": "css-line-break 2.1.0 (html2canvas内)",
       "source": "https://cdn.jsdelivr.net/npm/css-line-break@2.1.0/LICENSE",
       "sha256": "ce1ee0539f7fe1f7b75b76d121e674cb897c709c3e24ddba7f9a10fe2d0d88a5"

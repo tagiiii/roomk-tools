@@ -39,6 +39,7 @@
 
 1. ホストが「ルームを作る」。参加する人は「ルームに参加する」で名前 → ルームコード → 「参加する」の順に入れる
    - 参加用のリンク `?room=CODE` と「リンクをコピー」（ルームバーの「コードをコピー」の隣。2026-10-05）。共通仕様は docs/development/rtdb.md「参加用のリンク」（作りはカギあわせと同じ）。このアプリの入口は app.js 末尾の起動時の処理（`?watch=` → `?room=` → 保存した記録の順）、参加画面は `screen-join`（ヒント `#joinLinkHint`・`openJoinFromLink`）。`?room=` は `connectToRoom` でアドレスから外す
+   - 「QRコードを出す」（ルームバーの「リンクをコピー」の隣。`id="btnShowQr"`。2026-10-22）: スマホ・タブレットなど別の端末で入る人向けに、同じ参加用のリンクを QR コードにして画面の上に大きく出す（画面共有越しにカメラで読みとる）。共通の `RoomkQR.show(code)`（`apps/shared/js/room-qr.js`）
 2. 待機画面で、ホストが「はじめる」を押す
 3. **場面（casting）**: 全員に場面カードが出る。ホストが主役を決めて「この人で始める」を押す
    - 主役の既定は参加順の順番回し（前の主役の次の人）。最初はいちばん先に参加した人（ホストが遊ぶならホスト）
@@ -203,5 +204,6 @@ waiting ─はじめる→ casting ─この人で始める→ answering ─公�
 |-----------|----------|
 | design-system.css | 色・角丸・余白のトークン、`.btn` 系のボタン |
 | rtdb-utils.js（`?v=20261005`） | `initFirebase`・`generateRoomCode`・`now`・`isRoomExpired`・`getHostDisconnectedAt`・`cancelRoomOnDisconnect`・`copyRoomCode`・`copyRoomLink`・`showToast` |
+| room-qr.js（`?v=20261022`） | `RoomkQR.show`（「QRコードを出す」） |
 | stats.js（`?v=1`） | 起動回数（`open`）と、ルームの進み方の回数（「利用回数」の節） |
 | howto.js | 「あそびかた」モーダル |

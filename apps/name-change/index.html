@@ -232,6 +232,7 @@
     <div class="rc-code" id="waiting-code">----</div>
     <button type="button" class="btn btn-ghost btn-full" onclick="RoomkRTDB.copyRoomCode(state.roomCode, this)"><span class="material-symbols-rounded" aria-hidden="true">content_copy</span>コードをコピー</button>
     <button type="button" class="btn btn-ghost btn-full" id="btnCopyLink" onclick="copyJoinLink(this)"><span class="material-symbols-rounded" aria-hidden="true">link</span>リンクをコピー</button>
+    <button type="button" class="btn btn-ghost btn-full" id="btnShowQr" onclick="showJoinQr()"><span class="material-symbols-rounded" aria-hidden="true">qr_code_2</span>QRコードを出す</button>
   </div>
   <div class="card">
     <div class="section-title">参加者</div>
@@ -450,6 +451,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
 <script src="../shared/js/rtdb-utils.js?v=20261005"></script>
+<script src="../shared/js/room-qr.js?v=20261022"></script>
 <script>
 // ===== Firebase =====
 const { authReady, db } = RoomkRTDB.initFirebase(firebase);
@@ -772,6 +774,15 @@ function copyJoinLink(button) {
     return;
   }
   RoomkRTDB.copyRoomLink(state.roomCode, button);
+}
+
+// 別の端末（スマホ・タブレット）で入る人向けに、参加用のリンクを QR コードで大きく出す（共通の RoomkQR、room-qr.js）
+function showJoinQr() {
+  if (!state.roomCode || !ROOM_CODE_PATTERN.test(state.roomCode)) {
+    toast('ルームコードがありません');
+    return;
+  }
+  RoomkQR.show(state.roomCode);
 }
 
 // 参加用のリンクでひらいたとき: コードを入れた状態で参加画面を開き、元の名前だけ入れてもらう（コード欄は直せるように残す）
@@ -1515,7 +1526,7 @@ window.addEventListener('load', async () => {
       {
         heading: 'はじめかた',
         items: [
-          'GMが「ルームを作る（GM）」からルームを作り、ルームコードをみんなに伝える。ルームコードは「コードをコピー」、参加用のリンクは「リンクをコピー」でチャットに送れる',
+          'GMが「ルームを作る（GM）」からルームを作り、ルームコードをみんなに伝える。ルームコードは「コードをコピー」、参加用のリンクは「リンクをコピー」でチャットに送れる。スマホやタブレットで入る人には「QRコードを出す」をカメラで読みとってもらう',
           '参加する人は「ルームに参加する」を押して、Metalifeでの元の名前とコードを入れて「参加する」を押す。リンクからひらいたときは、ルームコードは入っているので元の名前だけ入れる',
           'GMはふだん進行役。待合室で「自分もプレイヤーとして参加する」にチェックすると、GMも名前を変える側か投票する側を選んで遊べる',
           'みんながそろったら、GMが「ゲームを始める」を押す',

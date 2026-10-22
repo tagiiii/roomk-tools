@@ -414,6 +414,9 @@ function renderLobby() {
           <button class="btn btn-secondary btn-sm" id="btnCopyLink" type="button">
             <span class="material-symbols-rounded" aria-hidden="true">link</span>リンクをコピー
           </button>
+          <button class="btn btn-secondary btn-sm" id="btnShowQr" type="button">
+            <span class="material-symbols-rounded" aria-hidden="true">qr_code_2</span>QRコードを出す
+          </button>
         </div>
       </div>
       <div class="cn-status-grid mt-lg">
@@ -1468,6 +1471,16 @@ async function handlePlayerClick(event) {
       delete copyLinkButton.dataset.copyBusy;
     }
     showToast(copied ? "参加用のリンクをコピーしました" : "コピーできませんでした。コードをそのまま伝えてね", copied ? "success" : "error");
+    return;
+  }
+
+  // 別の端末（スマホ・タブレット）で入る人向けに、参加用のリンクを QR コードで大きく出す（共通の RoomkQR、room-qr.js）
+  if (event.target.closest("#btnShowQr")) {
+    if (!state.roomId || !SPEC_CODE_PATTERN.test(state.roomId)) {
+      showToast("ルームコードがありません", "error");
+      return;
+    }
+    RoomkQR.show(state.roomId, roomLink(state.roomId));
     return;
   }
 

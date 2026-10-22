@@ -1935,6 +1935,15 @@ $('btnCopyLink')?.addEventListener('click', (event) => {
   RoomkRTDB.copyRoomLink(state.roomCode, event.currentTarget);
 });
 
+// 別の端末（スマホ・タブレット）で入る人向けに、参加用のリンクを QR コードで大きく出す（共通の RoomkQR、room-qr.js）
+$('btnShowQr')?.addEventListener('click', () => {
+  if (!state.roomCode || !ROOM_CODE_PATTERN.test(state.roomCode)) {
+    toast('ルームコードがありません');
+    return;
+  }
+  RoomkQR.show(state.roomCode);
+});
+
 // 参加用のリンクでひらいたとき: コードを入れた状態で参加画面を開き、名前だけ入れてもらう（コード欄は直せるように残す）
 function openJoinFromLink(code) {
   setError('joinError', '');

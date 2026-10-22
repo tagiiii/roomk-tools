@@ -32,7 +32,7 @@
   gap: var(--space-md);
 }
 
-/* 「コードをコピー」「リンクをコピー」を並べる */
+/* 「コードをコピー」「リンクをコピー」「QRコードを出す」を並べる */
 .cn-lobby-header__actions {
   display: flex;
   flex-wrap: wrap;

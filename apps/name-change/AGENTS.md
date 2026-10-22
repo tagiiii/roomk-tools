@@ -39,6 +39,7 @@ TOP
 
 ## 参加用のリンク（`?room=CODE`。2026-10-05）
 - 待合室のルームコードの箱に「コードをコピー」と並べて「リンクをコピー」（`id="btnCopyLink"`。GM・参加者とも見える）。共通仕様は docs/development/rtdb.md「参加用のリンク」
+- 「リンクをコピー」の下に「QRコードを出す」（`id="btnShowQr"`、`showJoinQr()`。2026-10-22）: スマホ・タブレットなど別の端末で入る人向けに、同じ参加用のリンクを QR コードにして画面の上に大きく出す（画面共有越しにカメラで読みとる）。共通の `RoomkQR.show(code)`（`apps/shared/js/room-qr.js`）
 - このアプリの入口は `<script>` 末尾の「Init」の `load` ハンドラ（`?room=` → 保存した記録 `nc_session` の順。`?watch=` はない）。参加画面は `screen-guest-join`、ヒントは `joinLinkHint`。`?room=` は `startListener`（作成・参加・再接続の共通の接続処理）で外す
 - 参加画面の入力欄は「元の名前」なので、ヒント・あそびかた・スライドのノートは「元の名前だけ入れる」と書く。元の名前の上限（12文字）は変えていない
 

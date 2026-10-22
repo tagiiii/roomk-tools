@@ -58,6 +58,7 @@ RTDB パス `pitahame_rooms/{roomCode}`。実装は末尾 `<script>` 内の **`N
 - **開始条件**: `isPlaying` な参加者が2人以上（満たなければボタン無効＋「あと○人」）。「わたしも遊ぶ」OFF＝進行専任（`isPlaying:false`）。
 - **参加用のリンク `?room=CODE`（2026-10-05）**: 待機画面のルームコード欄に「コードをコピー」と並べて「リンクをコピー」（`#btnCopyLink`、`Net.copyLink`）。共通仕様は docs/development/rtdb.md「参加用のリンク」。このアプリの入口は末尾 `<script>` の `window.addEventListener('load', …)`（`?watch=` はない。`?room=` → 保存した記録 `Net.tryReconnect` の順）。参加画面は `screen-join`（コード欄 `#joinCode`、名前欄 `#joinNick`、案内 `#joinLinkHint`）で、ソロ（「ひとりで練習」）を経由せず、みんなでモードの参加フォームへ直接つなぐ。`?room=` は `startListeners`（作成・参加・再接続の共通）で外す。検査は「参加する」と同じ `/^[A-Z0-9]{6}$/`。
   - 同じコードの記録があるときの再接続の判定は、既存の起動処理と同じ `tryReconnect()` の戻り値だけで行う（`tryReconnect` は失敗の途中で `net.roomRef` を残すことがあるため、kagi-awase の `|| state.roomRef` は使わない）。盤面復元キー `pitahame_board` は再接続用ではないので触らない
+- **「QRコードを出す」（2026-10-22）**: 待機画面のルームコード欄で「リンクをコピー」の隣（`#btnShowQr`、`Net.showQr`）。スマホ・タブレットなど別の端末で入る人向けに、同じ参加用のリンクを QR コードにして画面の上に大きく出す（画面共有越しにカメラで読みとる）。共通の `RoomkQR.show(code)`（`apps/shared/js/room-qr.js`）
 
 ### 利用回数（2026-10-12）
 

@@ -66,6 +66,7 @@ TOP（screen-top）
 
 - 参加用のリンク `?room=CODE` と「リンクをコピー」（2026-10-05）。共通仕様は docs/development/rtdb.md「参加用のリンク」。このアプリの入口は末尾の `init()`（`?watch=` → `?room=` → sessionStorage の順）、参加画面は `screen-guest-join`（`openJoinFromLink` がコード欄 `#guest-room-code` に入れ、`#joinLinkHint` を出す）。`?room=` はつないだとき `startRoomListener()` の先頭で外す（みんなにみせる画面では触らない）
 - 「リンクをコピー」（`#btnCopyLink`）はホストの待機（`host-step-room`）の「コードをコピー」の下だけ（ゲストの待合室にはもともとコピーのボタンがない）。コピーは共通の `RoomkRTDB.copyRoomLink`（`copyToClipboard` はコード専用の `copyRoomCode` なので使わない）
+- 「QRコードを出す」（`#btnShowQr`。2026-10-22）: 「リンクをコピー」の下。スマホ・タブレットなど別の端末で入る人向けに、同じ参加用のリンクを QR コードにして画面の上に大きく出す（画面共有越しにカメラで読みとる）。`hostShowQr()` が `hostCopyLink` と同じ検査（`SPEC_CODE_RE`）をしてから共通の `RoomkQR.show(code)`（`apps/shared/js/room-qr.js`）
 - 固有: リンクのコードは `SPEC_CODE_RE`（ルームコードの文字集合）で検査する（参加フォームの `/^[A-Z0-9]{6}$/` より狭い）。みんなにみせる画面の記録（`role: 'spectator'`）が同じコードで残っていても再接続を優先しない（記録を消して参加画面へ）。参加画面の欄名に合わせ、ヒント・あそびかたは「名前」でなく「ニックネーム」
 
 ## みんなにみせる画面（画面共有用・2026-10-01 追加）

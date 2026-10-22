@@ -11,6 +11,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <script src="../shared/js/rtdb-utils.js?v=20261005"></script>
+  <script src="../shared/js/room-qr.js?v=20261022"></script>
   <script src="packs.js"></script>
   <style>
     /* ── 画面管理 ── */
@@ -396,6 +397,10 @@
       <button type="button" class="btn btn-ghost btn-full" id="btnCopyLink" onclick="copyRoomLink(this)">
         <span class="material-symbols-rounded" aria-hidden="true">link</span>
         リンクをコピー
+      </button>
+      <button type="button" class="btn btn-ghost btn-full" id="btnShowQr" onclick="showRoomQr()">
+        <span class="material-symbols-rounded" aria-hidden="true">qr_code_2</span>
+        QRコードを出す
       </button>
     </div>
     <div class="card">
@@ -1715,6 +1720,15 @@ function copyRoomLink(button) {
   RoomkRTDB.copyRoomLink(state.roomCode, button);
 }
 
+// 別の端末（スマホ・タブレット）で入る人向けに、参加用のリンクを QR コードで大きく出す（共通の RoomkQR、room-qr.js）
+function showRoomQr() {
+  if (!state.roomCode || !ROOM_CODE_PATTERN.test(state.roomCode)) {
+    showMsg('ルームコードがありません');
+    return;
+  }
+  RoomkQR.show(state.roomCode);
+}
+
 // トップの「ルームに参加する」: 参加用のリンクの案内は隠す
 function goJoin() {
   document.getElementById('joinLinkHint').hidden = true;
@@ -1876,7 +1890,7 @@ function resumeFromSession() {
       {
         heading: '始めかた',
         items: [
-          'ホストが「ルームを作る」を押して、コードをみんなに伝える。ルームコードは「コードをコピー」、参加用のリンクは「リンクをコピー」でチャットに送れる',
+          'ホストが「ルームを作る」を押して、コードをみんなに伝える。ルームコードは「コードをコピー」、参加用のリンクは「リンクをコピー」でチャットに送れる。スマホやタブレットで入る人には「QRコードを出す」をカメラで読みとってもらう',
           'ほかの人は「ルームに参加する」からニックネームとルームコードを入れて「参加する」を押す。リンクからひらいたときは、ルームコードは入っているのでニックネームだけ入れる',
           '2人以上そろったら、ホストが「始める」を押す',
           'ホストは「自分も説明役の順番に入る」を外すと進行役になって、説明役は回ってこない（そのときはホストのほかに2人以上で遊べる）',

@@ -12,6 +12,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <script src="../shared/js/rtdb-utils.js?v=20261005"></script>
+  <script src="../shared/js/room-qr.js?v=20261022"></script>
 </head>
 <body>
   <main class="qz-app">
@@ -170,6 +171,7 @@
       <span class="qz-roombar__code">ルーム <strong id="roomCodeLabel"></strong></span>
       <button class="btn btn-ghost btn-sm" id="btnCopyCode">コードをコピー</button>
       <button type="button" class="btn btn-ghost btn-sm" id="btnCopyLink">リンクをコピー</button>
+      <button type="button" class="btn btn-ghost btn-sm" id="btnShowQr">QRコードを出す</button>
       <button class="btn btn-ghost btn-sm" id="btnLeave">退出する</button>
     </div>
 
@@ -467,7 +469,7 @@
     </div>
   </div>
 
-  <script type="module" src="app.js?v=20261012b"></script>
+  <script type="module" src="app.js?v=20261022"></script>
   <script src="../shared/js/stats.js?v=1" defer></script>
   <script src="../shared/js/howto.js"></script>
   <script>
@@ -483,7 +485,7 @@
           '「問題をコピー」や「正解つきでコピー」を押すと、チャットに貼りつけられる',
         ] },
         { heading: 'ルームであそぶ', items: [
-          'ホストは「ルームを作る」を押して、パックと「問題数」「手ごたえ」「制限時間」をえらび、「スタート」を押す。ルームコードは「コードをコピー」、参加用のリンクは「リンクをコピー」でチャットに送れる',
+          'ホストは「ルームを作る」を押して、パックと「問題数」「手ごたえ」「制限時間」をえらび、「スタート」を押す。ルームコードは「コードをコピー」、参加用のリンクは「リンクをコピー」でチャットに送れる。スマホやタブレットで入る人には「QRコードを出す」をカメラで読みとってもらう',
           'ホストは最初は進行役（答えない）。待合室で「自分も答える側で参加する」にチェックすると、ホストも自分の画面で答えて、点数とランキングに入る',
           '答える人は「ルームに参加する」を押して、名前とルームコード（6文字）を入れて「参加する」を押す。リンクからひらいたときは、ルームコードは入っているので名前だけ入れる',
           '問題が出たら、自分の画面で答えを押す。正解すると点が入り、制限時間があるときは早く答えるほど点が高い',

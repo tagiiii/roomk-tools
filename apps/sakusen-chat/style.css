@@ -716,8 +716,9 @@ body.sc-chatting .howto-fab {
   .sc-bar { padding: 6px 64px 6px 12px; gap: 4px 10px; }
   /* いっしょにいる人の名前は、2行目に回す */
   .sc-bar__peer { order: 3; flex-basis: 100%; }
-  .sc-bar__actions { gap: 6px; }
-  .sc-bar .btn-sm { padding: 9px 12px; }
+  /* ボタンの文字は途中で折り返さず、入りきらないボタンは次の行へ回す（「QRコードを出す」を足した 2026-10-22） */
+  .sc-bar__actions { gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+  .sc-bar .btn-sm { padding: 9px 12px; white-space: nowrap; }
   .sc-bar__title { font-size: 16px; }
 
   .sc-body { grid-template-columns: minmax(0, 1fr); }

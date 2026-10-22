@@ -66,7 +66,8 @@ const { check, sleep } = L;
 
   // ── C. ルームバー ──
   check('C1 「みんなにみせる画面」は進行役だけ', await L.visible(H, '#watch-link') && !(await L.visible(A, '#watch-link')) && !(await L.visible(B, '#watch-link')));
-  check('C2 パソコンでは1行（進行役）', (await L.roombarRows(H)) === 1, await L.roombarRows(H));
+  check('C2 パソコンでは2行（進行役。「QRコードを出す」を足して1行に入らない）', (await L.roombarRows(H)) === 2, await L.roombarRows(H));
+  check('C2b 「QRコードを出す」は進行役だけ', await L.visible(H, '#show-qr') && !(await L.visible(A, '#show-qr')) && !(await L.visible(B, '#show-qr')));
   check('C3 パソコンでは1行（参加者）', (await L.roombarRows(B)) === 1, await L.roombarRows(B));
   check('C4 スマホの参加者は2行', (await L.roombarRows(A)) === 2, await L.roombarRows(A));
   check('C5 最初の出題者は進行役', (await L.text(A, '#next-presenter')).includes('メンター'));

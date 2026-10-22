@@ -1910,6 +1910,12 @@
     if (!code || !NET.validCode(code)) { toast('ルームコードがありません'); return; }
     window.RoomkRTDB.copyRoomLink(code, e.currentTarget, roomLink(code));
   });
+  // 別の端末（スマホ・タブレット）で入る人向けに、参加用のリンクを QR コードで大きく出す（共通の RoomkQR、room-qr.js）。リンクは「リンクをコピー」と同じ roomLink
+  $('btnShowQr')?.addEventListener('click', () => {
+    const code = sess && sess.code;
+    if (!code || !NET.validCode(code)) { toast('ルームコードがありません'); return; }
+    window.RoomkQR.show(code, roomLink(code));
+  });
   $('cs-proxy-add').addEventListener('click', onProxyAdd);
   $('cs-proxy-name').addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.isComposing && e.keyCode !== 229) { e.preventDefault(); $('cs-proxy-add').click(); } });
   $('cs-room-start').addEventListener('click', onRoomStart);

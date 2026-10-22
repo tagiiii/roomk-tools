@@ -61,12 +61,24 @@ Realtime Database 単一ファイルアプリ向けの共有ヘルパー。`wind
 | `copyRoomCode(code, button?)` | コード単体をコピーし、成功・失敗を通知。Clipboard API が使えない場合は代替コピーを試す（内部は `copyText`） |
 | `copyText(value, button?, okMessage, failMessage)` | 任意の文字列をコピーし、成功・失敗をトーストで通知（連打ガード・代替コピーつき。2026-10-05 追加） |
 | `roomLink(code)` | 参加用のリンク `location.origin + location.pathname + '?room=' + code` を返す（2026-10-05 追加） |
-| `copyRoomLink(code, button?, link?)` | 参加用のリンクをコピーし、成功「参加用のリンクをコピーしました」／失敗を通知。`link` を渡すとそのアドレスをコピーする（独自パラメータを引き継ぐアプリ用）。仕様は [rtdb.md](rtdb.md)「参加用のリンク」（2026-10-05 追加） |
+| `copyRoomLink(code, button?, link?)` | 参加用のリンクをコピーし、成功「参加用のリンクをコピーしました」／失敗を通知。`link` を渡すとそのアドレスをコピーする（独自パラメータを引き継ぐアプリ用）。仕様は [rtdb.md](rtdb.md)「参加用のリンク」（2026-10-05 追加）。同じリンクを QR コードで出すのは room-qr.js |
 | `generateRoomCode(length = 6)` | 紛らわしい文字を除外した英数字ルームコードを生成 |
 | `esc(value)` | XSS対策のHTMLエスケープ（シングルクォートを含む） |
 | `initFirebase(firebase)` | Firebase compat SDKを共通設定で初期化し、`{ authReady, db }` を返す。サーバー時刻補正も開始 |
 | `cancelRoomOnDisconnect(ref)` | `ref` へ予約した `onDisconnect` を接続単位でまとめて取り消す。room を `remove()` する経路では必ず await して remove の前に呼ぶ（ゴースト room 防止） |
 | `showToast(message, isError = true, durationMs = 3000)` | CSS依存なしの固定表示トースト（DOM id: `roomk-toast`） |
+
+### room-qr.js（非モジュール通常スクリプト）
+
+参加用のリンクを QR コードにして画面の上に大きく出す（「QRコードを出す」ボタン用。2026-10-22 追加）。`window.RoomkQR` 名前空間に公開する。
+CSS はスクリプトが自己注入する。RTDB アプリは rtdb-utils.js の直後、Firestore アプリ（ことば探偵）はアプリ本体より前に `<script src="../shared/js/room-qr.js?v=20261022"></script>` で読む。
+QR を作るライブラリ `vendor/qrcode-generator-2.0.4.js`（Kazuhiko Arase、MIT。npm の配布物をそのまま置いた）は、初めて開くときに room-qr.js と同じ場所から読み込む。
+**後方互換で追加のみ。**
+
+| API | 説明 |
+|-----|------|
+| `show(code, link?, options?)` | QR とルームコードを重ねて出す。`options.showCode: false` でルームコードを出さない（画面に出していない秘密のカギを使う作戦会議チャット用）。`link` を省くと `location.origin + location.pathname + '?room=' + code`。`code` が空ならトースト「ルームコードがありません」（RoomkRTDB があるとき）で `false`。「とじる」・Esc・外側で閉じ、押したボタンへフォーカスを戻す。背景は inert。ライブラリを読み込めなければ「リンクをコピー」を案内する |
+| `close()` | 開いていれば閉じる |
 
 ### howto.js（非モジュール通常スクリプト）
 

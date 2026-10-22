@@ -11,6 +11,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <script src="../shared/js/rtdb-utils.js?v=20261005"></script>
+  <script src="../shared/js/room-qr.js?v=20261022"></script>
   <style>
     /* ── 画面管理 ── */
     .screen { display: none; min-height: 100dvh; }
@@ -316,6 +317,9 @@
         </button>
         <button type="button" class="btn btn-ghost btn-full mt-sm" id="btnCopyLink" onclick="copyJoinLink(this)">
           <span class="material-symbols-rounded" aria-hidden="true">link</span>リンクをコピー
+        </button>
+        <button type="button" class="btn btn-ghost btn-full mt-sm" id="btnShowQr" onclick="showJoinQr()">
+          <span class="material-symbols-rounded" aria-hidden="true">qr_code_2</span>QRコードを出す
         </button>
         <button type="button" class="ksw-quiet" id="btn-open-spectator" onclick="openSpectatorWindow()">みんなにみせる画面をひらく</button>
       </div>
@@ -889,6 +893,14 @@ function copyJoinLink(button) {
     return;
   }
   RoomkRTDB.copyRoomLink(state.roomCode, button);
+}
+// 別の端末（スマホ・タブレット）で入る人向けに、参加用のリンクを QR コードで大きく出す（共通の RoomkQR、room-qr.js）
+function showJoinQr() {
+  if (!state.roomCode || !ROOM_CODE_PATTERN.test(state.roomCode)) {
+    showMsg('ルームコードがありません');
+    return;
+  }
+  RoomkQR.show(state.roomCode);
 }
 function openJoinFromLink(code) {
   RoomkRTDB.showFormError('join-form-error', '');
@@ -2024,7 +2036,7 @@ if (startParams.has('watch')) {
         heading: 'はじめかた',
         items: [
           'ホストが「ルームを作る」を押して、名前を入れて「ルームを作成する」を押す',
-          'ルームコードは「コードをコピー」、参加用のリンクは「リンクをコピー」でチャットに送れる。画面共有するときは「みんなにみせる画面をひらく」でひらいた画面を見せる',
+          'ルームコードは「コードをコピー」、参加用のリンクは「リンクをコピー」でチャットに送れる。スマホやタブレットで入る人には「QRコードを出す」をカメラで読みとってもらう（QRは押した画面に出る）。画面共有するときは「みんなにみせる画面をひらく」でひらいた画面を見せる',
           'ほかの人は「ルームに参加する」から名前とルームコードを入れて「参加する」を押す。リンクからひらいたときは、ルームコードは入っているので名前だけ入れる',
         ],
       },

@@ -1457,6 +1457,8 @@ $('pb-create-go').addEventListener('click', () => createRoom(createSel.course, c
 
 $('btnCopyCode').addEventListener('click', (e) => state.roomCode && RoomkRTDB.copyRoomCode(state.roomCode, e.currentTarget));
 $('btnCopyLink').addEventListener('click', (e) => state.roomCode && RoomkRTDB.copyRoomLink(state.roomCode, e.currentTarget));
+// 別の端末（スマホ・タブレット）で入る人向けに、参加用のリンクを QR コードで大きく出す（共通の RoomkQR、room-qr.js）
+$('btnShowQr')?.addEventListener('click', () => state.roomCode && RoomkQR.show(state.roomCode));
 const roomPlay = (mode) => ({ mode, course: state.room.course, track: state.room.track, marks: state.room.marks, version: state.room.version });
 $('pb-host-demo').addEventListener('click', () => state.room && startRun(roomPlay('demo')));
 $('pb-host-change-open').addEventListener('click', () => {

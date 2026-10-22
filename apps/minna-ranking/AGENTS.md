@@ -31,6 +31,7 @@
 ## 参加用のリンク（2026-10-05）
 
 - 参加用のリンク `?room=CODE` と「リンクをコピー」（ルームバーの「コードをコピー」の隣）。共通仕様は docs/development/rtdb.md「参加用のリンク」（作りはカギあわせと同じ）。このアプリの入口は app.js 末尾の起動時の処理（`?room=` → 保存した記録の順。`?watch=` はない）、参加画面は `screen-join`（ヒント `#joinLinkHint`・`openJoinFromLink`）。`?room=` は `connectToRoom` でアドレスから外す
+- 「QRコードを出す」（ルームバー、「リンクをコピー」の隣。`id="btnShowQr"`。2026-10-22）: スマホ・タブレットなど別の端末で入る人向けに、同じ参加用のリンクを QR コードにして画面の上に大きく出す（画面共有越しにカメラで読みとる）。共通の `RoomkQR.show(code)`（`apps/shared/js/room-qr.js`）。`btnShowQr` がないときも何もしない
 - 参加できるのは従来どおり待機中だけ（お題の途中にリンクをひらいた人は、参加画面で「今は参加できないよ。次のお題まで待ってね」）。記録を消すときは、戻れなかったときの起動時の処理と同じく再接続の記録と作りかけの並び（`DRAFT_KEY`）をいっしょに消す（`clearSavedRoom`）
 - 公開直後の古い index.html（キャッシュ）と新しい app.js の組み合わせでも止まらないよう、`btnCopyLink`・`joinLinkHint` がないときは何もしない（`HOST_PLAYS_UI` と同じ考え方）
 

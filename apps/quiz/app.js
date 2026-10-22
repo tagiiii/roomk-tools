@@ -207,6 +207,7 @@ const joinCodeInput = $('joinCode');
 // 参加用のリンク（?room=コード）の部品。古い index.html（キャッシュ）と組み合わさったときは無いので、無ければ使わない
 const joinLinkHint = $('joinLinkHint');
 const btnCopyLink = $('btnCopyLink');
+const btnShowQr = $('btnShowQr');
 const lobbyCode = $('lobbyCode');
 const lobbyLead = $('lobbyLead');
 const lobbyCount = $('lobbyCount');
@@ -2589,6 +2590,16 @@ function copyRoomLink(button) {
   RoomkRTDB.copyRoomLink(state.roomCode, button);
 }
 
+// 別の端末（スマホ・タブレット）で入る人向けに、参加用のリンクを QR コードで大きく出す（共通の RoomkQR、room-qr.js）
+// 検査と通知は「リンクをコピー」（共通の copyRoomLink）と同じ
+function showRoomQr() {
+  if (typeof state.roomCode !== 'string' || !/^[A-Z0-9]{6}$/.test(state.roomCode)) {
+    RoomkRTDB.showToast('ルームコードがありません');
+    return;
+  }
+  RoomkQR.show(state.roomCode);
+}
+
 // 参加用のリンクでひらいたとき: コードを入れた状態で参加画面を開き、名前だけ入れてもらう（コード欄は直せるように残す）
 function openJoinFromLink(code) {
   setError('joinError', '');
@@ -2635,6 +2646,7 @@ submitOnEnter(guestNameInput, joinRoom);
 submitOnEnter(joinCodeInput, joinRoom);
 $('btnCopyCode').addEventListener('click', (event) => RoomkRTDB.copyRoomCode(state.roomCode, event.currentTarget));
 if (btnCopyLink) btnCopyLink.addEventListener('click', () => copyRoomLink(btnCopyLink));
+if (btnShowQr) btnShowQr.addEventListener('click', showRoomQr);
 btnLeave.addEventListener('click', leaveRoom);
 $('btnOverlayLeave').addEventListener('click', leaveRoom);
 btnRoomStart.addEventListener('click', startRoomGame);

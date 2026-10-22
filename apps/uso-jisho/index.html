@@ -11,6 +11,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
 <script src="../shared/js/rtdb-utils.js?v=20261005"></script>
+<script src="../shared/js/room-qr.js?v=20261022"></script>
   <link rel="stylesheet" href="../shared/css/design-system.css">
   <style>
     .screen { display: none; min-height: 100dvh; }
@@ -669,6 +670,10 @@
       <button type="button" class="btn btn-ghost btn-full" id="btnCopyLink" onclick="hostCopyLink(this)">
         <span class="material-symbols-rounded" aria-hidden="true">link</span>
         リンクをコピー
+      </button>
+      <button type="button" class="btn btn-ghost btn-full" id="btnShowQr" onclick="hostShowQr()">
+        <span class="material-symbols-rounded" aria-hidden="true">qr_code_2</span>
+        QRコードを出す
       </button>
 
       <hr class="divider">
@@ -1545,6 +1550,15 @@
       return;
     }
     RoomkRTDB.copyRoomLink(state.roomCode, button);
+  }
+
+  // 別の端末（スマホ・タブレット）で入る人向けに、参加用のリンクを QR コードで大きく出す（共通の RoomkQR、room-qr.js）
+  function hostShowQr() {
+    if (!state.roomCode || !SPEC_CODE_RE.test(state.roomCode)) {
+      RoomkRTDB.showToast('ルームコードがありません');
+      return;
+    }
+    RoomkQR.show(state.roomCode);
   }
 
   // ルームコード: 日本語入力のまま打った全角の英数字は半角に、小文字は大文字にそろえて読む。
@@ -2726,7 +2740,7 @@
       {
         heading: 'はじめかた',
         items: [
-          'ホストが「ルームをつくる（ホスト）」を押して、出てきたルームコードをみんなに伝える。ルームコードは「コードをコピー」、参加用のリンクは「リンクをコピー」でチャットに送れる',
+          'ホストが「ルームをつくる（ホスト）」を押して、出てきたルームコードをみんなに伝える。ルームコードは「コードをコピー」、参加用のリンクは「リンクをコピー」でチャットに送れる。スマホやタブレットで入る人には「QRコードを出す」をカメラで読みとってもらう',
           'ほかの人は「ルームに参加する」からニックネームとコードを入れて「参加する」を押す。リンクからひらいたときは、ルームコードは入っているのでニックネームだけ入れる',
           '遊ぶ人が2〜8人そろったら、ホストが「はじめる」を押す（ホストは「自分もプレイヤーとして参加する」にチェックすると、いっしょに遊べる）',
         ],

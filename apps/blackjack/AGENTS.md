@@ -119,6 +119,9 @@ TOP（screen-top）
   参加画面は `screen-guest-join`（ヒント `#joinLinkHint`・コード欄 `#top-guest-code`）。`?room=` は `startRoomListener`
   （作成・参加・再接続の共通）で外す。「リンクをコピー」はロビーのホスト用パネル（「コードをコピー」の下。
   このアプリにルームバーはなく、コードのコピーもホストだけ）に置く。
+- **「QRコードを出す」**（`#btnShowQr`。「リンクをコピー」の下。2026-10-22）: スマホ・タブレットなど別の端末で入る人向けに、
+  同じ参加用のリンクを QR コードにして画面の上に大きく出す（画面共有越しにカメラで読みとる）。`showRoomQr()` で
+  「リンクをコピー」と同じ検査をしてから共通の `RoomkQR.show(state.roomCode)`（`apps/shared/js/room-qr.js`）。
 
 ## status 遷移
 

@@ -16,7 +16,7 @@
     <a href="./">ツール一覧へ戻る</a>
     <h1>外部ライブラリ・フォントのクレジット</h1>
     <pre>外部ライブラリ・フォントのクレジット
-room-K ツール群 / 確認日: 2026-09-17（7・8 は 2026-10-13 に追加・確認。8 の字数は 2026-10-14 に更新）
+room-K ツール群 / 確認日: 2026-09-17（7・8 は 2026-10-13 に追加・確認。8 の字数は 2026-10-14 に更新。9 は 2026-10-22 に追加・確認）
 
 本ツール群は以下の外部ライブラリ・フォントを利用しています。
 各資源にはそれぞれのライセンスが適用されます。
@@ -82,9 +82,18 @@ room-K ツール群 / 確認日: 2026-09-17（7・8 は 2026-10-13 に追加・�
    部品の名前を足して、1つのファイル（yokumite-kanji/kvg-data.js）に
    まとめています。このファイルも CC BY-SA 3.0 で提供します。
 
+9. QR Code Generator for JavaScript（qrcode-generator 2.0.4）
+   著作権表示: Copyright (c) 2009 Kazuhiko Arase
+   用途: 参加用のリンクの QR コード（「QRコードを出す」）
+   ライセンス: MIT
+   https://github.com/kazuhikoarase/qrcode-generator
+   QR コードは株式会社デンソーウェーブの登録商標です。
+
 読み込み方法
 
 JavaScriptライブラリはバージョンを指定したCDNから読み込みます。
+QR Code Generator だけは、npm の配布物（dist/qrcode.js）をそのまま
+このツール群に同梱しています（shared/js/vendor/qrcode-generator-2.0.4.js）。
 フォント・アイコンはGoogle Fonts API経由で読み込みます。
 フォントAPIの配信内容は固定版ではありません。以下の原文は確認日の
 公式リポジトリに基づきます。KanjiVG を除き、各資源そのものは改変していません。
@@ -1013,6 +1022,33 @@ Creative Commons is not a party to this License, and makes no warranty whatsoeve
 Except for the limited purpose of indicating to the public that the Work is licensed under the CCPL, Creative Commons does not authorize the use by either party of the trademark &quot;Creative Commons&quot; or any related trademark or logo of Creative Commons without the prior written consent of Creative Commons. Any permitted use will be in compliance with Creative Commons&#x27; then-current trademark usage guidelines, as may be published on its website or otherwise made available upon request from time to time. For the avoidance of doubt, this trademark restriction does not form part of the License.
 
 Creative Commons may be contacted at http://creativecommons.org/.
+
+========================================================================
+QR Code Generator for JavaScript (qrcode-generator 2.0.4)
+Source: https://raw.githubusercontent.com/kazuhikoarase/qrcode-generator/83b7e8fe3fddd3b0368dbafd6ce56995bd25e3c8/LICENSE
+========================================================================
+
+MIT License
+
+Copyright (c) 2009 Kazuhiko Arase
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the &quot;Software&quot;), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 
 ========================================================================
 css-line-break 2.1.0 (html2canvas内)
