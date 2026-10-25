@@ -71,7 +71,8 @@ apps/reversi/
 ├── index.html   # 画面の骨組み・howto.js の設定
 ├── app.js       # 進行・描画（ES module）
 ├── engine.js    # 盤のルール（window.ReversiEngine。node では module.exports）
-└── style.css    # 固有スタイル
+├── style.css    # 固有スタイル
+└── slides.html  # 画面共有用説明スライド（14枚）
 ```
 
 - 分割型。index.html・app.js・engine.js・style.css を変えたら `?v=` をそろえて上げる
@@ -86,10 +87,10 @@ apps/reversi/
 
 - `scripts/lint.sh` の `RTDB_HTML_FILES` に追加
 - `scripts/content-audit.mjs` の `NO_CONTENT_APPS` に追加（盤と黒白の石だけ）
-- `apps/index.html` にカード（`data-scenes="bodoge hiroba sakusen"`・サムネイル `assets/thumbnails/reversi.png`）
+- `apps/index.html` にカード（`data-slides`・`data-scenes="bodoge hiroba sakusen"`・サムネイル `assets/thumbnails/reversi.png`）
 - `apps/updates.json` 先頭に `type: "new"`
 - `apps/guide/index.html` の「すごろく・ボードゲーム系」に1行（節の説明に「2人で交互に置いて先を読み合う盤ゲーム」を足した）
-- 説明スライド（`slides.html`）はまだない
+- 説明スライド `slides.html`（14枚。しるしでヒントのスライドと同じエンジン。チャンネル `reversi_deck`・保存キー `rvs_`）。「？」の「説明スライドを見る」とポータルの「スライド」から開ける（2026-10-25）
 
 ## 画面構成・フロー
 
@@ -258,7 +259,7 @@ reversi_rooms/{roomCode}/
 | rtdb-utils.js（`?v=20261005`） | `initFirebase`・`generateRoomCode`・`now`・`isRoomExpired`・`getHostDisconnectedAt`・`cancelRoomOnDisconnect`・`copyRoomCode`・`copyRoomLink`・`showToast` |
 | room-qr.js（`?v=20261022`） | 「QRコードを出す」（`RoomkQR.show`） |
 | stats.js（`?v=1`） | 起動回数（`open`）と、上の「利用回数」 |
-| howto.js | 「あそびかた」モーダル |
+| howto.js | 「あそびかた」モーダル（`slides: 'slides.html'` で「説明スライドを見る」） |
 
 ## 確かめたこと
 
