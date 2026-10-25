@@ -25,6 +25,7 @@ ALL_JS_FILES=(apps/*/app.js)
 RTDB_HTML_FILES=(
   "apps/kotoba-meter/index.html"
   "apps/blackjack/index.html"
+  "apps/daifugo/index.html"
   "apps/career-sugoroku/index.html"
   "apps/do-mannaka/index.html"
   "apps/esadori/index.html"

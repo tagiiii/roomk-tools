@@ -220,6 +220,8 @@ const NO_CONTENT_APPS = [
   'pittari-beat',
   // 盤と黒白の石だけ
   'reversi',
+  // トランプ（52枚＋ジョーカー）だけ
+  'daifugo',
 ];
 
 // apps/ 配下に存在するがアプリではないディレクトリ。
