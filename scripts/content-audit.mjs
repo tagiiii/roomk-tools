@@ -218,6 +218,8 @@ const NO_CONTENT_APPS = [
   'sakusen-chat',
   // 曲と、しるしの並び（まる・ひしがた）だけ
   'pittari-beat',
+  // 盤と黒白の石だけ
+  'reversi',
 ];
 
 // apps/ 配下に存在するがアプリではないディレクトリ。

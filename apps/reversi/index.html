@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+  <title>リバーシ | room-K</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
+  <link rel="stylesheet" href="../shared/css/design-system.css">
+  <!-- index.html と app.js・engine.js・style.css はセットで変わるので、変えたら ?v= をそろえて上げる -->
+  <link rel="stylesheet" href="style.css?v=20261025a">
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+  <script src="../shared/js/rtdb-utils.js?v=20261005"></script>
+  <script src="../shared/js/room-qr.js?v=20261022"></script>
+  <script src="engine.js?v=20261025a"></script>
+</head>
+<body>
+
+  <!-- トップ -->
+  <section class="rv-screen rv-front active" id="screen-top">
+    <div class="rv-panel">
+      <h1 class="rv-panel__title">リバーシ</h1>
+      <p class="rv-panel__lead">黒と白の石を交互に置いて、相手の石をはさんでひっくり返す。最後に自分の色の石が多いほうの勝ち。1回は10〜20分くらい。</p>
+      <ul class="rv-panel__notes">
+        <li>はじめてなら、置ける場所に印が出る「補助」を使ってみてね</li>
+        <li>対戦しない人も、ルームに入れば勝負を見られるよ</li>
+      </ul>
+      <div class="rv-panel__actions">
+        <button type="button" class="btn btn-primary btn-full" id="btnGoCreate">ルームを作る</button>
+        <button type="button" class="btn btn-secondary btn-full" id="btnGoJoin">ルームに参加する</button>
+        <button type="button" class="btn btn-secondary btn-full" id="btnGoLocal">1台の画面であそぶ</button>
+        <button type="button" class="rv-quiet rv-quiet--center" id="btnGoWatch">みんなにみせる画面をひらく</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ルームを作る -->
+  <section class="rv-screen rv-front" id="screen-create">
+    <div class="rv-panel">
+      <button type="button" class="rv-quiet rv-back" id="btnCreateBack">トップへ戻る</button>
+      <h2 class="rv-panel__title rv-panel__title--sub">ルームを作る</h2>
+      <label class="form-label" for="hostName">ホストの名前（8文字まで）</label>
+      <input class="form-input" id="hostName" maxlength="8" autocomplete="nickname">
+      <p class="rv-alert" id="createError" hidden></p>
+      <button type="button" class="btn btn-primary btn-full mt-md" id="btnCreateRoom">ルームを作る</button>
+    </div>
+  </section>
+
+  <!-- ルームに参加する -->
+  <section class="rv-screen rv-front" id="screen-join">
+    <div class="rv-panel">
+      <button type="button" class="rv-quiet rv-back" id="btnJoinBack">トップへ戻る</button>
+      <h2 class="rv-panel__title rv-panel__title--sub">ルームに参加する</h2>
+      <p class="rv-hint" id="joinLinkHint" hidden>リンクからひらいたので、ルームコードは入っているよ。名前を入れて「参加する」を押してね。</p>
+      <label class="form-label" for="guestName">名前（8文字まで）</label>
+      <input class="form-input" id="guestName" maxlength="8" autocomplete="nickname">
+      <label class="form-label mt-md" for="joinCode">ルームコード（6文字）</label>
+      <input class="form-input rv-code-input" id="joinCode" maxlength="6" autocorrect="off" autocapitalize="characters" autocomplete="off" spellcheck="false">
+      <p class="rv-alert" id="joinError" hidden></p>
+      <button type="button" class="btn btn-primary btn-full mt-md" id="btnJoinRoom">参加する</button>
+    </div>
+  </section>
+
+  <!-- みんなにみせる画面をひらく -->
+  <section class="rv-screen rv-front" id="screen-watch-join">
+    <div class="rv-panel">
+      <button type="button" class="rv-quiet rv-back" id="btnWatchBack">トップへ戻る</button>
+      <h2 class="rv-panel__title rv-panel__title--sub">みんなにみせる画面をひらく</h2>
+      <p class="rv-hint">画面共有でみんなに見せるための画面です。ルームには入らず、見るだけです。</p>
+      <label class="form-label" for="watchCode">ルームコード（6文字）</label>
+      <input class="form-input rv-code-input" id="watchCode" maxlength="6" autocorrect="off" autocapitalize="characters" autocomplete="off" spellcheck="false">
+      <p class="rv-alert" id="watchError" hidden></p>
+      <button type="button" class="btn btn-primary btn-full mt-md" id="btnWatchOpen">画面をひらく</button>
+    </div>
+  </section>
+
+  <!-- 1台の画面であそぶ -->
+  <section class="rv-screen rv-front" id="screen-local">
+    <div class="rv-panel rv-panel--wide">
+      <button type="button" class="rv-quiet rv-back" id="btnLocalBack">トップへ戻る</button>
+      <h2 class="rv-panel__title rv-panel__title--sub">1台の画面であそぶ</h2>
+      <p class="rv-panel__lead">1台の画面をみんなで見てあそぶ。石を置くのは、画面を動かす人。</p>
+      <fieldset class="rv-fieldset">
+        <legend class="rv-legend">対戦する人の名前（なくてもいい）</legend>
+        <div class="rv-names">
+          <label class="rv-name">
+            <span class="rv-name__label"><span class="rv-chip rv-chip--b" aria-hidden="true"></span>黒（先に置く）</span>
+            <input id="localNameB" class="form-input" type="text" maxlength="8" autocomplete="off">
+          </label>
+          <button id="btnLocalSwap" type="button" class="rv-iconbtn" aria-label="黒と白の名前を入れかえる">
+            <span class="material-symbols-rounded" aria-hidden="true">swap_horiz</span>
+          </button>
+          <label class="rv-name">
+            <span class="rv-name__label"><span class="rv-chip rv-chip--w" aria-hidden="true"></span>白</span>
+            <input id="localNameW" class="form-input" type="text" maxlength="8" autocomplete="off">
+          </label>
+        </div>
+      </fieldset>
+      <label class="rv-legend rv-timesel" for="localMoveTime">1手の制限時間
+        <select id="localMoveTime" class="form-input">
+          <option value="0">なし</option>
+          <option value="15">15秒</option>
+          <option value="30">30秒</option>
+          <option value="60">60秒</option>
+        </select>
+      </label>
+      <p class="rv-note">時間を過ぎたら、CPU が代わりに置く。</p>
+      <div id="localAid" class="rv-aid"></div>
+      <button type="button" class="btn btn-primary btn-full mt-lg" id="btnLocalStart">はじめる</button>
+    </div>
+  </section>
+
+  <!-- ゲームの画面（ルーム・1台の画面・みんなにみせる画面） -->
+  <header class="rv-bar" id="appBar" hidden>
+    <h1 class="rv-bar__title">リバーシ</h1>
+    <p class="rv-bar__badge" id="watchBadge" hidden>みんなにみせる画面</p>
+    <p class="rv-bar__me" id="barMe" hidden></p>
+  </header>
+  <div class="rv-roombar" id="roomBar" hidden>
+    <span class="rv-roombar__code">ルーム <strong id="roomCodeLabel"></strong></span>
+    <button type="button" class="btn btn-ghost btn-sm" id="btnCopyCode">コードをコピー</button>
+    <button type="button" class="btn btn-ghost btn-sm" id="btnCopyLink">リンクをコピー</button>
+    <button type="button" class="btn btn-ghost btn-sm" id="btnShowQr">QRコードを出す</button>
+    <button type="button" class="btn btn-ghost btn-sm" id="btnOpenWatch" hidden>みんなにみせる画面</button>
+    <button type="button" class="btn btn-ghost btn-sm" id="btnLeave">退出する</button>
+  </div>
+
+  <!-- 待合室 -->
+  <section class="rv-screen" id="screen-waiting">
+    <div class="rv-main rv-phase">
+      <div id="lobbyJoin" class="rv-joininfo" hidden>
+        <p class="rv-joininfo__label">参加のしかた</p>
+        <p class="rv-joininfo__text">「ルームに参加する」で、名前とルームコードを入れてね</p>
+        <p id="lobbyJoinCode" class="rv-joininfo__code"></p>
+      </div>
+
+      <div class="card">
+        <h2 class="rv-h2">対戦する人</h2>
+        <div id="seatEdit" class="rv-seats-edit" hidden>
+          <label class="rv-seatsel">
+            <span class="rv-name__label"><span class="rv-chip rv-chip--b" aria-hidden="true"></span>黒（先に置く）</span>
+            <select id="seatB" class="form-input"></select>
+          </label>
+          <button id="btnSeatSwap" type="button" class="rv-iconbtn" aria-label="黒と白を入れかえる">
+            <span class="material-symbols-rounded" aria-hidden="true">swap_horiz</span>
+          </button>
+          <label class="rv-seatsel">
+            <span class="rv-name__label"><span class="rv-chip rv-chip--w" aria-hidden="true"></span>白</span>
+            <select id="seatW" class="form-input"></select>
+          </label>
+        </div>
+        <div id="seatView" class="rv-seats-view" hidden></div>
+        <p id="seatNote" class="rv-note" hidden></p>
+      </div>
+
+      <div class="card">
+        <h2 class="rv-h2">参加している人</h2>
+        <ul id="lobbyPeople" class="rv-people"></ul>
+        <p class="rv-note">対戦しない人は、自分の画面で勝負を見られるよ。</p>
+        <div id="proxyForm" class="rv-proxyadd" hidden>
+          <label class="form-label" for="proxyName">端末なしの参加者を足す</label>
+          <div class="rv-row rv-row--nowrap">
+            <input id="proxyName" class="form-input" type="text" maxlength="8" autocomplete="off">
+            <button id="btnAddProxy" type="button" class="btn btn-secondary">足す</button>
+          </div>
+          <p class="rv-note">その人の番には、ホストが代わりに置く。</p>
+          <p id="proxyError" class="rv-alert" hidden></p>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 class="rv-h2">1手の制限時間</h2>
+        <div id="moveTimeEdit" hidden>
+          <select id="moveTime" class="form-input rv-timesel__select" aria-label="1手の制限時間">
+            <option value="0">なし</option>
+            <option value="15">15秒</option>
+            <option value="30">30秒</option>
+            <option value="60">60秒</option>
+          </select>
+          <p class="rv-note">時間を過ぎたら、CPU が代わりに置く。</p>
+        </div>
+        <p id="moveTimeView" class="rv-aid-view" hidden></p>
+      </div>
+
+      <div class="card">
+        <h2 class="rv-h2">補助</h2>
+        <div id="lobbyAid" class="rv-aid" hidden></div>
+        <p id="lobbyAidView" class="rv-aid-view" hidden></p>
+      </div>
+
+      <button id="btnStartGame" type="button" class="btn btn-primary btn-full btn-lg" hidden>はじめる</button>
+      <p id="lobbyWait" class="rv-wait" hidden>ホストがはじめるのを待っているよ</p>
+    </div>
+  </section>
+
+  <!-- 対局 -->
+  <section class="rv-screen" id="screen-game">
+    <div class="rv-main rv-game">
+      <div id="seats" class="rv-seats"></div>
+      <p id="gameStatus" class="rv-status" role="status" aria-live="polite"></p>
+      <div id="board" class="rv-boardbox"></div>
+
+      <div id="confirmBox" class="rv-confirm" hidden>
+        <p id="confirmText" class="rv-confirm__text"></p>
+        <div class="rv-row rv-row--center">
+          <button id="btnPlace" type="button" class="btn btn-primary">ここに置く</button>
+          <button id="btnUnpick" type="button" class="rv-quiet">やめる</button>
+        </div>
+      </div>
+
+      <div id="resultBox" class="rv-result" hidden>
+        <div id="resultHost" class="rv-result__actions" hidden>
+          <button id="btnAgain" type="button" class="btn btn-primary btn-full"></button>
+          <button id="btnRelobby" type="button" class="btn btn-secondary btn-full"></button>
+        </div>
+        <p id="resultWait" class="rv-wait" hidden>ホストが次を決めるのを待っているよ</p>
+      </div>
+
+      <div id="tools" class="rv-tools" hidden>
+        <button id="btnUndo" type="button" class="rv-quiet">
+          <span class="material-symbols-rounded" aria-hidden="true">undo</span>1手もどす
+        </button>
+        <button id="btnAid" type="button" class="rv-quiet">
+          <span class="material-symbols-rounded" aria-hidden="true">tune</span>補助の設定
+        </button>
+        <button id="btnReset" type="button" class="rv-quiet"></button>
+        <button id="btnQuit" type="button" class="rv-quiet" hidden>トップへ戻る</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- みんなにみせる画面のおわり -->
+  <section class="rv-screen rv-front" id="screen-watch-end">
+    <div class="rv-panel">
+      <h2 class="rv-panel__title rv-panel__title--sub" id="watchEndTitle">このルームは終わりました</h2>
+      <p class="rv-panel__lead">遊んでくれてありがとう。</p>
+      <button type="button" class="btn btn-secondary btn-full" id="btnWatchEndTop">トップへ戻る</button>
+    </div>
+  </section>
+
+  <!-- 補助の設定（あそんでいる間） -->
+  <dialog id="aidDialog" class="rv-dialog" aria-labelledby="aidDialogTitle">
+    <h2 id="aidDialogTitle" class="rv-h2">補助の設定</h2>
+    <div id="dialogAid" class="rv-aid"></div>
+    <div class="rv-row rv-row--center mt-lg">
+      <button id="btnAidClose" type="button" class="btn btn-primary">閉じる</button>
+    </div>
+  </dialog>
+
+  <div class="rv-overlay" id="hostOffOverlay" hidden>
+    <div class="rv-overlay__panel">
+      <h2>ホストの戻りを待っています</h2>
+      <p id="hostOffText">しばらく待っても戻らないときは退出してね。</p>
+      <button type="button" class="btn btn-secondary" id="btnOverlayLeave">退出する</button>
+    </div>
+  </div>
+
+  <script type="module" src="app.js?v=20261025a"></script>
+  <script src="../shared/js/stats.js?v=1" defer></script>
+  <script src="../shared/js/howto.js"></script>
+  <script>
+    RoomkHowto.init({
+      title: 'あそびかた',
+      lead: '黒と白の石を交互に置いて、相手の石をはさんでひっくり返すゲーム。最後に自分の色の石が多いほうの勝ち。',
+      sections: [
+        { heading: 'はじめかた', items: [
+          'ホストが「ルームを作る」で名前を入れる。ルームコードは「コードをコピー」、参加用のリンクは「リンクをコピー」でチャットに送れる。スマホやタブレットで入る人には「QRコードを出す」をカメラで読みとってもらう',
+          '参加する人は「ルームに参加する」で名前、ルームコード（6文字）の順に入れ、「参加する」を押す。リンクからひらいたときは、ルームコードは入っているので名前だけ入れる',
+          '対戦するのは2人。ほかの人は、自分の画面で勝負を見られる',
+          '1台の画面でみんなで見るときは「1台の画面であそぶ」',
+        ] },
+        { heading: '置きかた', items: [
+          '黒から先に置く',
+          '相手の石を、自分の石ではさめる場所にだけ置ける（たて・よこ・ななめ）',
+          'はさんだ相手の石は、ぜんぶ自分の色にひっくり返る',
+          '置ける場所がないときはパスになって、相手がつづけて置く',
+        ] },
+        { heading: '補助', items: [
+          '「置ける場所を見せる」: 置ける場所に点が出る',
+          '「ひっくり返る数も見せる」: 点のかわりに、ひっくり返る石の数が出る',
+          '「置く前にたしかめる」: 1回押すと、ひっくり返る石が光る。「ここに置く」で置く',
+        ] },
+        { heading: 'おわりかた', items: [
+          '「1手の制限時間」を決めたときは、残り時間が出る。時間を過ぎると CPU が代わりに置くよ',
+          'どちらも置けなくなったらおしまい。自分の色の石が多いほうの勝ち。同じ数なら引き分け',
+          '場所は、横が左から A〜H、たてが上から 1〜8。「D3」のように言うと伝わるよ',
+        ] },
+      ],
+    });
+  </script>
+</body>
+</html>
