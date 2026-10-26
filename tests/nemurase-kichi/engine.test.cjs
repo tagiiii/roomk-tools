@@ -15,6 +15,16 @@ const roleIds = (g, role) => g.players.filter((id) => g.roles[id] === role);
 });
 for (let n = E.MIN_PLAYERS; n <= E.MAX_PLAYERS; n++) for (let i = 0; i < n; i++) { const q = E.spawnPoint(i, n); ok(E.canStand(q.x, q.y), 'はじめの場所 ' + n + '-' + i); }
 ok(E.step({ x: 2.5, y: 3.5 }, -1, 0, 1).x >= 2 + E.RADIUS - 1e-9, 'かべを通りぬけない');
+// 近道: 立てる・行ける・行き先が対になっている・仕事の場所やテーブルと重ならない
+E.VENTS.forEach((v) => {
+  ok(E.canStand(v.x, v.y), '近道に立てる ' + v.id);
+  ok(!!E.path({ x: 22, y: 12 }, { x: Math.floor(v.x), y: Math.floor(v.y) }), '近道に行ける ' + v.id);
+  ok(E.VENTS[v.to] && E.VENTS[v.to].to === v.id && v.to !== v.id, '近道の行き先が対 ' + v.id);
+  ok(E.SPOTS.every((sp) => E.dist(sp, v) > E.USE_RANGE * 2), '近道が仕事の場所から離れている ' + v.id);
+  ok(E.dist(E.FIX_SPOT, v) > E.USE_RANGE * 2 && E.dist(E.TABLE, v) > E.TABLE.r + E.USE_RANGE * 2, '近道がスイッチ・テーブルから離れている ' + v.id);
+});
+ok(E.VIEW.crew < E.VIEW.sleeper, '隊員の見える広さは、ねむらせ屋よりせまい');
+ok(E.DEFAULT_SETTINGS.cooldown === 20 && E.SETTING_OPTS.cooldown.join() === '15,20,30', 'ねむらせる待ち時間のはじめの値と選べる値');
 
 // 位置の形
 ok(E.encodePos(12.34, 5.06, -1) === '123,51,0', '位置を短い文字列に');

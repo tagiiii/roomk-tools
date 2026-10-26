@@ -109,6 +109,22 @@ const { E, check, sleep } = L;
   check('仕事がルームに届く', await L.waitFor(async () => L.doneCount(await L.gameIn(host)) === 1));
   check('みんなの仕事のバーが進む', await L.waitFor(async () => (await L.text(g3, '#hudProgressNum')).startsWith('1 /')));
 
+  // ══ 近道（ねむらせ屋だけ） ══
+  const v0 = E.VENTS[0];
+  const v1 = E.VENTS[v0.to];
+  await L.teleport(g1, v0.x, v0.y + 0.4);
+  check('ねむらせ屋は近道の上で「近道を使う」', await L.waitFor(async () => (await L.text(g1, '#actUseLabel')) === '近道を使う'));
+  await g1.page.click('#actUse');
+  const afterVent = await L.me(g1);
+  check('近道を使うと、つながった近道へ移る', Math.hypot(afterVent.x - v1.x, afterVent.y - v1.y) < 0.01, afterVent);
+  check('近道で移った位置がほかの人に届く', await L.waitFor(async () => {
+    const pa = await g2.page.evaluate(() => window.__NK__.PA['あお']);
+    return pa && Math.hypot(pa.tx - v1.x, pa.ty - v1.y) < 0.2;
+  }));
+  await L.teleport(g3, v0.x, v0.y + 0.4);
+  await L.sleep(400);
+  check('隊員は近道を使えない', (await L.text(g3, '#actUseLabel')) !== '近道を使う');
+
   // ══ 停電となおす ══
   await g1.page.click('#actDark');
   check('停電がみんなに出る', await L.waitFor(() => L.visible(host, '#hudDark')));

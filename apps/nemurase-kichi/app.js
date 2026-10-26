@@ -78,7 +78,8 @@ const state = {
   dueKey: null,        // 進められる状態（会議のしめきり・結果のあとなど）を最初に見た回
   dueSince: 0,
 };
-const ME = { x: 22, y: 12.5, face: 1, sentAt: 0, sentText: '', moving: false };
+const ME = { x: 22, y: 12.5, face: 1, sentAt: 0, sentText: '', moving: false, ventAt: 0 };
+const VENT_GAP_MS = 1200;       // 近道を使ったあと、続けて使えるまで（行ったり来たりを1回の押しまちがいでしないように）
 const PA = {};   // おきている人の位置 {id: {x, y, tx, ty, face}}（p から）
 const PG = {};   // ねむった人の位置（g から。自分がねむっているときだけ受け取る）
 const BOTS = {}; // ホストが動かすロボット
@@ -1857,6 +1858,9 @@ function draw(g) {
   ctx.font = Math.round(TS * 0.55) + 'px "Material Symbols Rounded"';
   ctx.fillText('bolt', fx, fy);
 
+  // 近道（だれにでも見える。使えるのはねむらせ屋だけ）
+  E.VENTS.forEach((v) => drawVent(sx(v.x), sy(v.y), TS));
+
   // 仕事の場所
   const me = state.nickname;
   const role = g.roles[me];
@@ -1948,12 +1952,32 @@ function drawOverview(g) {
   ctx.fillStyle = g.dark ? '#F5C518' : '#9AA3AD';
   roundRect(sx(E.FIX_SPOT.x) - s * 0.35, sy(E.FIX_SPOT.y) - s * 0.35, s * 0.7, s * 0.7, 4);
   E.SPOTS.forEach((sp) => { ctx.fillStyle = '#7B8794'; roundRect(sx(sp.x) - s * 0.32, sy(sp.y) - s * 0.32, s * 0.64, s * 0.64, 3); });
+  E.VENTS.forEach((v) => drawVent(sx(v.x), sy(v.y), s));
   ctx.font = '700 ' + Math.max(12, Math.round(s * 0.6)) + 'px "Noto Sans JP", sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillStyle = 'rgba(28,63,94,0.8)';
   E.ROOMS.forEach((r) => ctx.fillText(r.name, sx(r.x + r.w / 2), sy(r.y + r.h / 2) + (r.key === 'plaza' ? s * 3 : 0)));
   if (g.dark) { ctx.fillStyle = 'rgba(12,16,24,0.45)'; ctx.fillRect(0, 0, CW, CH); }
+}
+
+// 近道: 床のふた（しま模様の丸）
+function drawVent(x, y, size) {
+  const r = size * 0.38;
+  ctx.save();
+  ctx.fillStyle = '#5B6470';
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = '#A7B0BA';
+  ctx.lineWidth = Math.max(1.5, size * 0.06);
+  ctx.beginPath();
+  for (let i = -1; i <= 1; i++) {
+    ctx.moveTo(x - r * 0.7, y + i * r * 0.42);
+    ctx.lineTo(x + r * 0.7, y + i * r * 0.42);
+  }
+  ctx.stroke();
+  ctx.restore();
 }
 
 function drawPerson(x, y, hex, face, alpha, name, mate) {
@@ -2025,7 +2049,12 @@ function updateActions(g) {
 
   let use = null;
   if (play) {
-    if (role === 'crew') {
+    // 近道（ねむらせ屋だけ）
+    if (role === 'sleeper' && awake && Date.now() - ME.ventAt >= VENT_GAP_MS) {
+      const v = E.VENTS.find((x) => E.dist(x, ME) <= E.USE_RANGE);
+      if (v) use = { kind: 'vent', vent: v.id, label: '近道を使う' };
+    }
+    if (!use && role === 'crew') {
       const t = (g.tasks[me] || []).find((x) => !x.done && E.dist(spotOf(x.spot), ME) <= E.USE_RANGE);
       if (t) use = { kind: 'task', spot: t.spot, label: '仕事をする' };
     }
@@ -2080,6 +2109,15 @@ function setText(id, text) {
 function doUse() {
   const u = ACT.use;
   if (!u || u.off) return;
+  if (u.kind === 'vent') {
+    const to = E.VENTS[E.VENTS[u.vent].to];
+    ME.x = to.x;
+    ME.y = to.y;
+    ME.ventAt = Date.now();
+    const g = gameOf(state.room);
+    if (g) sendPosFor(state.nickname, ME, E.isAwake(g, state.nickname), true);
+    return;
+  }
   if (u.kind === 'task') openTask(u.spot);
   else if (u.kind === 'fix') gameAct(mut.fix(state.nickname)).then((ok) => { if (ok) smallToast('電気がついた！'); });
   else if (u.kind === 'button') gameAct(mut.button(state.nickname));

@@ -1,6 +1,7 @@
 /* ねむらせ基地 — 仕事のミニゲーム。
    NemuraseGames.open(box, kind, onDone) で box の中に作る。おわったら onDone() を1回だけ呼ぶ。
-   どれも数十秒でおわる、まちがえてもやりなおしにならない作り。 */
+   どれも数十秒でおわる、まちがえてもやりなおしにならない作り。
+   2026-10-26 ねむらせ屋を有利にする調整で、少し長くした（線4本→5本・番号1〜6→1〜8・メーターの合わせる幅±3→±2、合ったまま待つ時間0.6秒→1秒）。 */
 (function (root) {
   'use strict';
 
@@ -13,6 +14,7 @@
     { key: 'b', name: 'あお', hex: '#2F6FD6' },
     { key: 'y', name: 'きいろ', hex: '#E8B820' },
     { key: 'g', name: 'みどり', hex: '#2E9A4A' },
+    { key: 'p', name: 'むらさき', hex: '#8A4FC8' },
   ];
 
   // 線をつなぐ: 左の色を押してから、右の同じ色を押す
@@ -80,11 +82,11 @@
     box.appendChild(wrap);
   }
 
-  // 番号を順に押す: 1 から 6 まで
+  // 番号を順に押す: 1 から 8 まで
   function order(box, done) {
-    const N = 6;
+    const N = 8;
     let next = 1;
-    const how = el('p', 'nk-game__how', '1 から 6 まで、順番に押そう。');
+    const how = el('p', 'nk-game__how', '1 から 8 まで、順番に押そう。');
     const grid = el('div', 'nk-order');
     shuffle(Array.from({ length: N }, (_, i) => i + 1)).forEach((n) => {
       const b = el('button', 'nk-order__btn', String(n));
@@ -125,11 +127,11 @@
     const update = () => {
       const v = Number(input.value);
       fill.style.width = v + '%';
-      const near = Math.abs(v - target) <= 3;
+      const near = Math.abs(v - target) <= 2;
       wrap.classList.toggle('is-near', near);
       state.textContent = near ? 'ぴったり！そのまま…' : '';
       if (near && !timer && !finished) {
-        timer = setTimeout(() => { finished = true; done(); }, 600);
+        timer = setTimeout(() => { finished = true; done(); }, 1000);
       } else if (!near && timer) {
         clearTimeout(timer);
         timer = null;

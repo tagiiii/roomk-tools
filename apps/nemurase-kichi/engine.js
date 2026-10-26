@@ -41,13 +41,23 @@
   ];
   const FIX_SPOT = { x: 9.5, y: 18.5 };     // 停電をなおすスイッチ（電気室）
   const TABLE = { x: 22, y: 15, r: 1.6 };   // ひろばの会議テーブル（まるいので、ぶつかる）
+  // 近道（ねむらせ屋だけが使える。to の近道へ一瞬で移る）。2026-10-26 ねむらせ屋を有利にする調整で追加
+  const VENTS = [
+    { id: 0, x: 7.5, y: 5.5, to: 1 },    // 台所 ↔ 電気室
+    { id: 1, x: 6.5, y: 17.0, to: 0 },
+    { id: 2, x: 37.5, y: 6.0, to: 3 },   // 畑 ↔ 倉庫
+    { id: 3, x: 37.5, y: 17.5, to: 2 },
+    { id: 4, x: 22.5, y: 5.0, to: 5 },   // 通信室 ↔ 見はり台
+    { id: 5, x: 22.5, y: 25.5, to: 4 },
+  ];
 
   const SPEED = 4.2;          // 1秒に進むマス
   const RADIUS = 0.34;        // 人の大きさ
   const USE_RANGE = 1.3;      // 仕事・スイッチ・テーブルに手がとどく距離
   const SLEEP_RANGE = 1.5;    // ねむらせられる距離
   const FIND_RANGE = 2.2;     // ねむっている人を見つけられる距離
-  const VIEW = { crew: 6, dark: 2.4, sleeper: 7.5 }; // 見える広さ（隊員・停電中の隊員・ねむらせ屋）
+  // 見える広さ（隊員・停電中の隊員・ねむらせ屋）。隊員は 2026-10-26 に 6 → 4.5（ねむらせ屋を有利にする調整）
+  const VIEW = { crew: 4.5, dark: 2.4, sleeper: 7.5 };
 
   const COLORS = [
     { key: 'red', name: 'あか', hex: '#D9433B' },
@@ -68,12 +78,13 @@
   const MAX_PLAYERS = 10;
   const TWO_SLEEPERS_MIN = 7;
 
-  const DEFAULT_SETTINGS = { hostPlays: 1, sleepers: 1, tasks: 4, cooldown: 30, meeting: 90, buttons: 1 };
+  // ねむらせてから次までの時間は 2026-10-26 に はじめ30秒（20・30・45）→ はじめ20秒（15・20・30）（ねむらせ屋を有利にする調整）
+  const DEFAULT_SETTINGS = { hostPlays: 1, sleepers: 1, tasks: 4, cooldown: 20, meeting: 90, buttons: 1 };
   const SETTING_OPTS = {
     hostPlays: [1, 0],
     sleepers: [1, 2],
     tasks: [3, 4, 5],
-    cooldown: [20, 30, 45],
+    cooldown: [15, 20, 30],
     meeting: [60, 90, 120],
     buttons: [1, 2],
   };
@@ -272,7 +283,7 @@
   }
 
   const api = {
-    W, H, ROOMS, HALLS, HALL_FILL, SPOTS, FIX_SPOT, TABLE, GRID, COLORS,
+    W, H, ROOMS, HALLS, HALL_FILL, SPOTS, FIX_SPOT, TABLE, VENTS, GRID, COLORS,
     SPEED, RADIUS, USE_RANGE, SLEEP_RANGE, FIND_RANGE, VIEW,
     GAME_LIMIT_S, MIN_PLAYERS, MAX_PLAYERS, TWO_SLEEPERS_MIN, DEFAULT_SETTINGS, SETTING_OPTS,
     isFloor, dist, roomAt, roomName, canStand, step, path, spawnPoint, encodePos, decodePos,

@@ -206,7 +206,7 @@ body.is-watching .nk-tasks, body.is-watching .nk-actions, body.is-watching .nk-p
 @keyframes nk-nudge { 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
 
 .nk-wire { position: relative; display: flex; justify-content: space-between; padding: 8px 0; }
-.nk-wire__col { display: grid; gap: 18px; position: relative; z-index: 1; }
+.nk-wire__col { display: grid; gap: 14px; position: relative; z-index: 1; }
 .nk-wire__lines { position: absolute; inset: 0; pointer-events: none; }
 .nk-wire__line { position: absolute; height: 8px; margin-top: -4px; border-radius: 4px; transform-origin: 0 50%; }
 .nk-wire__end {
@@ -217,7 +217,7 @@ body.is-watching .nk-tasks, body.is-watching .nk-actions, body.is-watching .nk-p
 .nk-wire__end.is-picked { outline: 4px solid var(--color-primary); outline-offset: 2px; }
 .nk-wire__end.is-done { opacity: 0.6; cursor: default; }
 
-.nk-order { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.nk-order { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
 .nk-order__btn {
   height: 72px; border-radius: 12px; border: 2px solid var(--color-border); background: var(--color-bg);
   font-family: inherit; font-size: 28px; font-weight: 700; color: var(--color-primary); cursor: pointer;

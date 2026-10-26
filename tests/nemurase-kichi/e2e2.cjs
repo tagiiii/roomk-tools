@@ -76,6 +76,7 @@ const { E, check, sleep } = L;
   await host.page.click('#btnCloseVote');
   check('進行役がしめきると結果', await L.waitFor(() => L.visible(g1, '#ovResult')));
   check('結果のあとゲームにもどる', await L.waitFor(async () => !(await L.visible(g1, '#ovResult')), 9000));
+  await L.patchGame(code, { cooldown: { '*1': Date.now() + 3600000 } });
 
   // ══ ウィンドウを閉じた人は、会議の投票を待たない ══
   await late.page.close();
@@ -92,7 +93,8 @@ const { E, check, sleep } = L;
   check('抜けた人の、のこりの仕事は全体の数から外れる', E.taskProgress(gAfter).total === tpBefore.total - midoriLeft, { before: tpBefore, after: E.taskProgress(gAfter), midoriLeft });
   check('みんなの仕事のバーの数も変わる', await L.waitFor(async () => (await L.text(g1, '#hudProgressNum')).endsWith('/ ' + E.taskProgress(gAfter).total)));
   check('抜けた人は、おきている人に数えない', !E.awakeOf(gAfter).includes('みどり'));
-  await L.patchGame(code, { buttons: { 'あお': 1 } });
+  // ロボットのねむらせ屋は、会議のあとに待ち時間が設定の値へ戻るので、テストの間はねむらせないようにしておく
+  await L.patchGame(code, { buttons: { 'あお': 1 }, cooldown: { '*1': Date.now() + 3600000 }, asleep: {} });
   await L.teleport(g1, t0.x, t0.y);
   await L.waitFor(async () => (await L.text(g1, '#actUseLabel')).startsWith('会議ボタン（あと1回）'));
   await g1.page.click('#actUse');
@@ -100,9 +102,14 @@ const { E, check, sleep } = L;
   check('抜けた人に「抜けた」（投票できない）', await L.waitFor(async () => (await L.text(g1, '#meetingPeople')).includes('抜けた')));
   check('抜けた人は投票の相手に選べない', !(await g1.page.$('button.nk-vote__main:has-text("みどり")')));
   check('投票の数は、抜けた人をのぞいた人数', /\/ 3$/.test(await L.text(g1, '#meetingCount')), await L.text(g1, '#meetingCount'));
+  // ロボットの票はくじなので、ここではテストの側でスキップにしておく（たまたま票が集まってゲームがおわらないように）
+  const seqNow = (await L.roomOf(code)).game.meeting.seq;
+  await L.rest('PATCH', L.ROOMS + '/' + code + '/r/game/ballots/' + seqNow, { '*1': '*skip', '*2': '*skip' });
   await g1.page.click('#btnVoteSkip');
-  check('閉じた人の票を待たずに結果（ロボットが入れたら）', await L.waitFor(() => L.visible(g1, '#ovResult'), 16000));
+  check('閉じた人の票を待たずに結果', await L.waitFor(() => L.visible(g1, '#ovResult'), 16000));
+  check('だれもねむらない（みんなスキップ）', (await L.text(g1, '#resultMain')) === 'だれもねむらなかった');
   await L.waitFor(async () => !(await L.visible(g1, '#ovResult')), 9000);
+  await L.patchGame(code, { cooldown: { '*1': Date.now() + 3600000 } });
 
   // ══ ホストの切断と戻り ══
   host.offlineOk = true;
@@ -119,7 +126,8 @@ const { E, check, sleep } = L;
   // ══ 参加者が短く切れて戻る: 止まったままでも位置を送り直す ══
   g1.offlineOk = true;
   await sleep(800);
-  check('切れる前は位置がある', !!(await L.rootOf(code)).p?.['あお']);
+  const rootNow = await L.rootOf(code);
+  check('切れる前は位置がある', !!rootNow.p?.['あお'], { p: Object.keys(rootNow.p || {}), g: Object.keys(rootNow.g || {}), asleep: rootNow.r.game.asleep, stage: rootNow.r.game.stage, left: rootNow.r.game.left, sub: await L.subs(g1), me: await L.me(g1) });
   await g1.page.evaluate(() => firebase.database().goOffline());
   check('切れると位置が消える', await L.waitFor(async () => !(await L.rootOf(code)).p?.['あお'], 15000));
   await g1.page.evaluate(() => firebase.database().goOnline());
@@ -127,7 +135,8 @@ const { E, check, sleep } = L;
   check('戻ると在室も戻る', await L.waitFor(async () => !!(await L.roomOf(code)).players?.['あお']));
 
   // ══ 会議の途中で時間切れ → 結果を見せてから引き分け ══
-  await L.patchGame(code, { buttons: { 'あお': 1 } });
+  // ロボットのねむらせ屋は、会議のあとに待ち時間が設定の値へ戻るので、テストの間はねむらせないようにしておく
+  await L.patchGame(code, { buttons: { 'あお': 1 }, cooldown: { '*1': Date.now() + 3600000 }, asleep: {} });
   await L.teleport(g1, t0.x, t0.y);
   await L.waitFor(async () => (await L.text(g1, '#actUseLabel')).startsWith('会議ボタン（あと1回）'));
   await g1.page.click('#actUse');

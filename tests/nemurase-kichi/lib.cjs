@@ -188,12 +188,13 @@ async function solveTask(c) {
     return b.querySelector('.nk-wire') ? 'wire' : b.querySelector('.nk-order') ? 'order' : b.querySelector('.nk-meter') ? 'meter' : null;
   });
   if (kind === 'wire') {
-    for (const k of ['r', 'b', 'y', 'g']) {
+    for (const k of ['r', 'b', 'y', 'g', 'p']) {
       await page.click('.nk-wire__end--l[data-color="' + k + '"]');
       await page.click('.nk-wire__end--r[data-color="' + k + '"]');
     }
   } else if (kind === 'order') {
-    for (let n = 1; n <= 6; n++) await page.click('.nk-order__btn:text-is("' + n + '")');
+    const total = await page.$$eval('.nk-order__btn', (xs) => xs.length);
+    for (let n = 1; n <= total; n++) await page.click('.nk-order__btn:text-is("' + n + '")');
   } else if (kind === 'meter') {
     await page.evaluate(() => {
       const mark = parseFloat(document.querySelector('.nk-meter__mark').style.left);
