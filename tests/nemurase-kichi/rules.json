@@ -1,0 +1,10 @@
+{
+  "rules": {
+    "nemurase_rooms": {
+      "$roomId": {
+        ".read": "auth != null",
+        ".write": "auth != null"
+      }
+    }
+  }
+}

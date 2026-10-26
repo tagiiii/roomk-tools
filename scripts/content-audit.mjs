@@ -222,6 +222,8 @@ const NO_CONTENT_APPS = [
   'reversi',
   // トランプ（52枚＋ジョーカー）だけ
   'daifugo',
+  // マップと仕事のミニゲーム（線・番号・メーター）だけ
+  'nemurase-kichi',
 ];
 
 // apps/ 配下に存在するがアプリではないディレクトリ。

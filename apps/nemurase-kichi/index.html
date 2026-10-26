@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+  <title>ねむらせ基地 | room-K</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
+  <link rel="stylesheet" href="../shared/css/design-system.css">
+  <!-- index.html と app.js・engine.js・minigames.js・style.css はセットで変わるので、変えたら ?v= をそろえて上げる -->
+  <link rel="stylesheet" href="style.css?v=20261026d">
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+  <script src="../shared/js/rtdb-utils.js?v=20261005"></script>
+  <script src="../shared/js/room-qr.js?v=20261022"></script>
+  <!-- ねむらせ基地だけ、本体と別の Firebase プロジェクトにつなぐ（firebase-config.js） -->
+  <script src="firebase-config.js?v=20261026d"></script>
+  <script src="engine.js?v=20261026d"></script>
+  <script src="minigames.js?v=20261026d"></script>
+</head>
+<body>
+
+  <!-- トップ -->
+  <section class="nk-screen nk-front active" id="screen-top">
+    <div class="nk-panel">
+      <h1 class="nk-panel__title">ねむらせ基地</h1>
+      <p class="nk-panel__lead">ひみつ基地の中を歩きまわって、みんなで仕事を片づけよう。でも、仲間のふりをした「ねむらせ屋」がまぎれこんでいる。会議で話し合って、だれがねむらせ屋か見つけよう。1回は10〜15分くらい。</p>
+      <ul class="nk-panel__notes">
+        <li>4〜10人。ひとり1台の端末であそぶ</li>
+        <li>ねむってしまっても、仕事はそのままつづけられるよ</li>
+      </ul>
+      <div class="nk-panel__actions">
+        <button type="button" class="btn btn-primary btn-full" id="btnGoCreate">ルームを作る</button>
+        <button type="button" class="btn btn-secondary btn-full" id="btnGoJoin">ルームに参加する</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ルームを作る -->
+  <section class="nk-screen nk-front" id="screen-create">
+    <div class="nk-panel">
+      <button type="button" class="nk-quiet nk-back" id="btnCreateBack">トップへ戻る</button>
+      <h2 class="nk-panel__title nk-panel__title--sub">ルームを作る</h2>
+      <label class="form-label" for="hostName">ホストの名前（8文字まで）</label>
+      <input class="form-input" id="hostName" maxlength="8" autocomplete="nickname">
+      <p class="nk-alert" id="createError" hidden></p>
+      <button type="button" class="btn btn-primary btn-full mt-md" id="btnCreateRoom">ルームを作る</button>
+    </div>
+  </section>
+
+  <!-- ルームに参加する -->
+  <section class="nk-screen nk-front" id="screen-join">
+    <div class="nk-panel">
+      <button type="button" class="nk-quiet nk-back" id="btnJoinBack">トップへ戻る</button>
+      <h2 class="nk-panel__title nk-panel__title--sub">ルームに参加する</h2>
+      <p class="nk-hint" id="joinLinkHint" hidden>リンクからひらいたので、ルームコードは入っているよ。名前を入れて「参加する」を押してね。</p>
+      <label class="form-label" for="guestName">名前（8文字まで）</label>
+      <input class="form-input" id="guestName" maxlength="8" autocomplete="nickname">
+      <label class="form-label mt-md" for="joinCode">ルームコード（6文字）</label>
+      <input class="form-input nk-code-input" id="joinCode" maxlength="6" autocorrect="off" autocapitalize="characters" autocomplete="off" spellcheck="false">
+      <p class="nk-alert" id="joinError" hidden></p>
+      <button type="button" class="btn btn-primary btn-full mt-md" id="btnJoinRoom">参加する</button>
+    </div>
+  </section>
+
+  <!-- 待合室 -->
+  <section class="nk-screen nk-front" id="screen-waiting">
+    <div class="nk-panel nk-panel--wide">
+      <h2 class="nk-panel__title nk-panel__title--sub">待合室</h2>
+      <div class="card nk-codebox" id="codeBox">
+        <p class="nk-codebox__label">ルームコード</p>
+        <p class="nk-codebox__code" id="roomCodeLabel"></p>
+        <div class="nk-codebox__btns" id="codeButtons" hidden>
+          <button type="button" class="btn btn-secondary btn-sm" id="btnCopyCode">
+            <span class="material-symbols-rounded" aria-hidden="true">content_copy</span>コードをコピー
+          </button>
+          <button type="button" class="btn btn-secondary btn-sm" id="btnCopyLink">
+            <span class="material-symbols-rounded" aria-hidden="true">link</span>リンクをコピー
+          </button>
+          <button type="button" class="btn btn-secondary btn-sm" id="btnShowQr">
+            <span class="material-symbols-rounded" aria-hidden="true">qr_code_2</span>QRコードを出す
+          </button>
+        </div>
+      </div>
+      <p class="nk-panel__lead" id="guestWaitNote" hidden>ホストがはじめるのを待ってね。</p>
+
+      <h3 class="nk-h3">あそぶ人 <span class="nk-count" id="playerCount"></span></h3>
+      <ul class="nk-people" id="lobbyPeople"></ul>
+      <div class="nk-bots" id="botButtons" hidden>
+        <button type="button" class="btn btn-secondary btn-sm" id="btnAddBot">
+          <span class="material-symbols-rounded" aria-hidden="true">smart_toy</span>練習用のロボットを入れる
+        </button>
+        <button type="button" class="btn btn-secondary btn-sm" id="btnRemoveBot">ロボットを1つへらす</button>
+      </div>
+
+      <h3 class="nk-h3">設定</h3>
+      <div class="nk-settings" id="lobbySettings"></div>
+
+      <p class="nk-panel__note" id="lobbyNote" role="status"></p>
+      <button type="button" class="btn btn-primary btn-full mt-md" id="btnStart" hidden>はじめる</button>
+      <button type="button" class="nk-quiet mt-md" id="btnLeave">退出する</button>
+    </div>
+  </section>
+
+  <!-- ゲーム -->
+  <section class="nk-screen nk-game" id="screen-game">
+    <header class="nk-hud">
+      <div class="nk-hud__me">
+        <span class="nk-chip" id="hudChip" aria-hidden="true"></span>
+        <span class="nk-hud__name" id="hudName"></span>
+        <span class="nk-role" id="hudRole"></span>
+      </div>
+      <p class="nk-hud__time" id="hudTime" aria-label="のこり時間"></p>
+      <div class="nk-progress" aria-label="みんなの仕事">
+        <span class="nk-progress__label">みんなの仕事</span>
+        <span class="nk-progress__bar"><span class="nk-progress__fill" id="hudProgress"></span></span>
+        <span class="nk-progress__num" id="hudProgressNum"></span>
+      </div>
+      <p class="nk-hud__dark" id="hudDark" hidden><span class="material-symbols-rounded" aria-hidden="true">lightbulb</span>停電中！ 電気室のスイッチでなおせる</p>
+      <button type="button" class="nk-hud__menu" id="btnMenu" aria-label="メニュー">
+        <span class="material-symbols-rounded" aria-hidden="true">menu</span>
+      </button>
+    </header>
+
+    <div class="nk-stage" id="stage">
+      <canvas class="nk-map" id="map"></canvas>
+
+      <aside class="nk-tasks" id="taskList">
+        <button type="button" class="nk-tasks__head" id="btnTasks" aria-expanded="true">
+          <span id="tasksTitle">やること</span>
+          <span class="material-symbols-rounded" aria-hidden="true">expand_less</span>
+        </button>
+        <ul class="nk-tasks__items" id="tasksItems"></ul>
+        <p class="nk-tasks__note" id="tasksNote"></p>
+      </aside>
+
+      <p class="nk-banner" id="stageBanner" role="status" hidden></p>
+      <p class="nk-watch" id="watchNote" role="status"></p>
+
+      <div class="nk-pad" id="pad" aria-hidden="true"><span class="nk-pad__knob" id="padKnob"></span></div>
+
+      <div class="nk-actions">
+        <button type="button" class="nk-act nk-act--sleep" id="actSleep" hidden>
+          <span class="material-symbols-rounded" aria-hidden="true">bedtime</span><span class="nk-act__label">ねむらせる</span><span class="nk-act__cd" id="actSleepCd"></span>
+        </button>
+        <button type="button" class="nk-act nk-act--dark" id="actDark" hidden>
+          <span class="material-symbols-rounded" aria-hidden="true">flashlight_off</span><span class="nk-act__label">停電</span><span class="nk-act__cd" id="actDarkCd"></span>
+        </button>
+        <button type="button" class="nk-act nk-act--find" id="actFind" hidden>
+          <span class="material-symbols-rounded" aria-hidden="true">campaign</span><span class="nk-act__label">見つけた！</span>
+        </button>
+        <button type="button" class="nk-act nk-act--use" id="actUse">
+          <span class="material-symbols-rounded" aria-hidden="true">pan_tool</span><span class="nk-act__label" id="actUseLabel">つかう</span>
+        </button>
+      </div>
+      <p class="nk-keys" id="keyHint">うごく: 矢印キー / WASD　つかう: スペース　見つけた: R　ねむらせる: Q　停電: F</p>
+    </div>
+  </section>
+
+  <!-- 役のお知らせ -->
+  <div class="nk-overlay" id="ovRole" hidden>
+    <div class="nk-overlay__card nk-rolecard">
+      <p class="nk-rolecard__you">あなたは</p>
+      <p class="nk-rolecard__name" id="roleName"></p>
+      <p class="nk-rolecard__desc" id="roleDesc"></p>
+      <button type="button" class="btn btn-primary btn-full" id="btnRoleOk">わかった</button>
+    </div>
+  </div>
+
+  <!-- 仕事 -->
+  <div class="nk-overlay" id="ovTask" hidden>
+    <div class="nk-overlay__card nk-game__card">
+      <div class="nk-game__head">
+        <h2 class="nk-game__title" id="taskTitle"></h2>
+        <button type="button" class="nk-iconbtn" id="btnTaskClose" aria-label="とじる"><span class="material-symbols-rounded" aria-hidden="true">close</span></button>
+      </div>
+      <div class="nk-game__box" id="taskBox"></div>
+    </div>
+  </div>
+
+  <!-- 会議 -->
+  <div class="nk-overlay" id="ovMeeting" hidden>
+    <div class="nk-overlay__card nk-meeting">
+      <div class="nk-meeting__head">
+        <h2 class="nk-meeting__title"><span class="material-symbols-rounded" aria-hidden="true">forum</span>会議</h2>
+        <p class="nk-meeting__timer" id="meetingTimer"></p>
+      </div>
+      <p class="nk-meeting__why" id="meetingWhy"></p>
+      <p class="nk-meeting__how" id="meetingHow"></p>
+      <ul class="nk-vote" id="meetingPeople"></ul>
+      <div class="nk-meeting__foot">
+        <button type="button" class="btn btn-secondary" id="btnVoteSkip">スキップする</button>
+        <p class="nk-meeting__count" id="meetingCount"></p>
+        <button type="button" class="btn btn-secondary btn-sm" id="btnCloseVote" hidden>投票をしめきる</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 会議の結果 -->
+  <div class="nk-overlay" id="ovResult" hidden>
+    <div class="nk-overlay__card nk-resultcard">
+      <p class="nk-resultcard__votes" id="resultVotes"></p>
+      <p class="nk-resultcard__main" id="resultMain"></p>
+      <p class="nk-resultcard__sub" id="resultSub"></p>
+    </div>
+  </div>
+
+  <!-- おしまい -->
+  <div class="nk-overlay" id="ovEnd" hidden>
+    <div class="nk-overlay__card nk-endcard">
+      <p class="nk-endcard__title" id="endTitle"></p>
+      <p class="nk-endcard__why" id="endWhy"></p>
+      <ul class="nk-people nk-people--end" id="endPeople"></ul>
+      <button type="button" class="btn btn-primary btn-full" id="btnAgain" hidden>待合室にもどる</button>
+      <p class="nk-panel__note" id="endWait" hidden>ホストが待合室にもどすのを待ってね。</p>
+    </div>
+  </div>
+
+  <!-- メニュー（ゲーム中） -->
+  <dialog class="nk-dialog" id="menuDialog" aria-labelledby="menuTitle">
+    <h2 class="nk-h3" id="menuTitle">メニュー</h2>
+    <p class="nk-panel__note" id="menuCode"></p>
+    <div class="nk-menu">
+      <button type="button" class="btn btn-secondary btn-full" id="btnMenuLobby" hidden>このゲームをやめて待合室にもどる</button>
+      <button type="button" class="btn btn-secondary btn-full" id="btnMenuLeave">退出する</button>
+      <button type="button" class="nk-quiet" id="btnMenuClose">とじる</button>
+    </div>
+  </dialog>
+
+  <div class="nk-overlay nk-overlay--top" id="hostOffOverlay" hidden>
+    <div class="nk-overlay__card">
+      <h2 class="nk-h3">ホストの戻りを待っています</h2>
+      <p class="nk-panel__lead">しばらく待っても戻らないときは退出してね。</p>
+      <button type="button" class="btn btn-secondary" id="btnOverlayLeave">退出する</button>
+    </div>
+  </div>
+
+  <script type="module" src="app.js?v=20261026d"></script>
+  <script src="../shared/js/stats.js?v=1" defer></script>
+  <script src="../shared/js/howto.js"></script>
+  <script>
+    RoomkHowto.init({
+      title: 'あそびかた',
+      lead: 'ひみつ基地を歩いて仕事を片づけるゲーム。仲間のふりをした「ねむらせ屋」を、会議で見つけよう。',
+      sections: [
+        { heading: 'はじめかた', items: [
+          'ホストが「ルームを作る」で名前を入れる。ルームコードは「コードをコピー」、参加用のリンクは「リンクをコピー」でチャットに送れる。スマホやタブレットで入る人には「QRコードを出す」をカメラで読みとってもらう',
+          '参加する人は「ルームに参加する」で名前、ルームコード（6文字）の順に入れ、「参加する」を押す。リンクからひらいたときは、ルームコードは入っているので名前だけ入れる',
+          'はじまると、自分が「隊員」か「ねむらせ屋」かが出る。ほかの人には言わないでね',
+        ] },
+        { heading: '隊員', items: [
+          '矢印キー（スマホは左下のスティック）で歩く。黄色い「!」の場所で「仕事をする」を押すと、短いミニゲームが出る',
+          'みんなの仕事がぜんぶおわったら勝ち',
+          'ねむっている人を見つけたら「見つけた！」。ひろばのテーブルでは「会議ボタン」も押せる',
+        ] },
+        { heading: 'ねむらせ屋', items: [
+          '近くの隊員を「ねむらせる」。「停電」で、隊員の見える広さをせまくできる',
+          'おきている隊員が、ねむらせ屋と同じ数になったら勝ち',
+        ] },
+        { heading: '会議とおわりかた', items: [
+          '話し合って、ねむらせ屋だと思う人に投票する。わからなければ「スキップする」',
+          'いちばん多く票が入った人はねむる。ねむっても、仕事はつづけられるよ',
+          '15分たったら「時間切れ」で引き分け',
+        ] },
+      ],
+    });
+  </script>
+</body>
+</html>

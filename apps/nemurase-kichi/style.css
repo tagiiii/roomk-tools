@@ -1,0 +1,290 @@
+/* ねむらせ基地 接頭辞 nk- */
+
+body { background: var(--color-bg); }
+body.is-playing { overflow: hidden; background: #2D3642; overscroll-behavior: none; }
+
+:root {
+  --nk-sleeper: #B91C1C;
+  --nk-gold: #F5B700;
+  --nk-hud-h: 56px;
+}
+
+/* 画面の切りかえ */
+.nk-screen { display: none; }
+.nk-screen.active { display: flex; }
+.nk-screen.nk-game.active { display: grid; }
+
+/* はじめの画面・待合室 */
+.nk-front { min-height: 100vh; align-items: center; justify-content: center; padding: 24px 16px; }
+.nk-panel { width: 100%; max-width: 460px; background: var(--color-surface); border-radius: var(--radius-card); padding: 32px 28px; border: 1px solid var(--color-border); }
+.nk-panel--wide { max-width: 600px; }
+.nk-panel__title { font-size: 30px; color: var(--color-primary); margin: 8px 0 12px; }
+.nk-panel__title--sub { font-size: 24px; }
+.nk-panel__lead { color: var(--color-text); line-height: 1.7; margin: 0 0 16px; }
+.nk-panel__notes { margin: 0 0 24px; padding-left: 1.2em; color: var(--color-muted); line-height: 1.8; }
+.nk-panel__actions { display: grid; gap: 12px; }
+.nk-panel__note { color: var(--color-muted); font-size: 13px; margin: 16px 0 0; }
+.nk-panel__note:empty { display: none; }
+.nk-alert { margin: 12px 0 0; color: var(--color-error); font-weight: 500; }
+.nk-hint { margin: 0 0 12px; padding: 10px 12px; border-radius: 8px; background: #E3F1F3; color: var(--color-primary); line-height: 1.6; }
+.nk-back { margin: -8px 0 4px -8px; }
+.nk-code-input { text-transform: uppercase; letter-spacing: 0.2em; font-weight: 700; }
+.nk-h3 { font-size: 17px; color: var(--color-primary); margin: 24px 0 10px; display: flex; align-items: center; gap: 8px; }
+.nk-count { font-size: 14px; color: var(--color-muted); font-weight: 500; }
+
+.nk-quiet {
+  display: inline-flex; align-items: center; gap: 4px;
+  min-height: 44px; padding: 8px 10px; border: none; background: none;
+  color: var(--color-accent); font-family: inherit; font-size: 15px; font-weight: 500; cursor: pointer;
+  border-radius: var(--radius-sm);
+}
+.nk-quiet:hover { background: rgba(46, 125, 140, 0.08); }
+
+.nk-iconbtn {
+  width: 44px; height: 44px; flex: none; border-radius: 50%;
+  border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-accent);
+  display: inline-flex; align-items: center; justify-content: center; cursor: pointer;
+}
+
+.nk-codebox { text-align: center; margin-bottom: 8px; }
+.nk-codebox__label { margin: 0; color: var(--color-muted); font-size: 14px; }
+.nk-codebox__code { margin: 4px 0 12px; font-size: 34px; font-weight: 700; letter-spacing: 0.2em; color: var(--color-primary); }
+.nk-codebox__btns { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.nk-codebox__btns .btn, .nk-bots .btn { display: inline-flex; align-items: center; gap: 6px; }
+
+.nk-people { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+.nk-person { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 8px; background: var(--color-bg); min-height: 44px; }
+.nk-person__name { font-weight: 500; }
+.nk-person__remove { margin-left: auto; min-height: 36px; }
+.nk-chip { width: 20px; height: 20px; border-radius: 50%; flex: none; display: inline-block; border: 2px solid rgba(0, 0, 0, 0.35); }
+.nk-tag { font-size: 12px; padding: 2px 8px; border-radius: 999px; background: var(--color-border); color: var(--color-text); white-space: nowrap; font-weight: 500; }
+.nk-tag--me { background: var(--color-accent); color: #fff; }
+.nk-tag--away { background: #FDECEC; color: var(--color-error); }
+.nk-tag--done { background: #E3F2E8; color: var(--color-success); }
+.nk-tag--sleeper { background: var(--nk-sleeper); color: #fff; }
+.nk-bots { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+
+.nk-settings { display: grid; gap: 8px; }
+.nk-setting { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; }
+.nk-setting__label { font-weight: 500; }
+.nk-setting__select { width: auto; min-width: 140px; }
+.nk-setting__value { font-weight: 700; color: var(--color-primary); }
+#btn-start { margin-top: 16px; }
+
+/* ゲーム */
+.nk-game { position: fixed; inset: 0; grid-template-rows: auto 1fr; }
+.nk-hud {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px;
+  padding: 8px 16px; background: var(--color-primary); color: #fff; min-height: var(--nk-hud-h);
+}
+.nk-hud__me { display: flex; align-items: center; gap: 8px; }
+.nk-hud__name { font-weight: 700; }
+.nk-role { font-size: 13px; padding: 2px 10px; border-radius: 999px; background: rgba(255, 255, 255, 0.18); font-weight: 700; }
+.nk-role--sleeper { background: var(--nk-sleeper); }
+.nk-progress { display: flex; align-items: center; gap: 8px; flex: 1 1 220px; max-width: 420px; }
+.nk-progress__label { font-size: 13px; white-space: nowrap; }
+.nk-progress__bar { flex: 1; height: 12px; border-radius: 999px; background: rgba(255, 255, 255, 0.2); overflow: hidden; }
+.nk-progress__fill { display: block; height: 100%; width: 0; background: #4CC77A; transition: width 0.4s ease; }
+.nk-progress__num { font-size: 13px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.nk-hud__time { margin: 0; font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.nk-hud__time.is-soon { color: var(--nk-gold); }
+.nk-hud__dark { margin: 0; display: inline-flex; align-items: center; gap: 4px; padding: 2px 10px; border-radius: 999px; background: var(--nk-gold); color: #1A1A1A; font-size: 13px; font-weight: 700; }
+.nk-hud__dark .material-symbols-rounded { font-size: 18px; }
+.nk-hud__menu {
+  margin-left: auto; width: 44px; height: 44px; border-radius: 50%; border: none; flex: none;
+  background: rgba(255, 255, 255, 0.15); color: #fff; display: inline-flex; align-items: center; justify-content: center; cursor: pointer;
+}
+.nk-hud__menu:hover { background: rgba(255, 255, 255, 0.25); }
+
+.nk-stage { position: relative; overflow: hidden; touch-action: none; }
+.nk-map { position: absolute; inset: 0; display: block; }
+
+.nk-tasks {
+  position: absolute; top: 12px; left: 12px; width: 260px; max-width: calc(100% - 24px);
+  background: rgba(255, 255, 255, 0.94); border-radius: 12px; box-shadow: var(--shadow-md);
+  font-size: 14px;
+}
+.nk-tasks__head {
+  width: 100%; display: flex; align-items: center; justify-content: space-between;
+  min-height: 44px; padding: 6px 12px; border: none; background: none; cursor: pointer;
+  font-family: inherit; font-size: 15px; font-weight: 700; color: var(--color-primary);
+}
+.nk-tasks.is-closed .nk-tasks__head .material-symbols-rounded { transform: rotate(180deg); }
+.nk-tasks.is-closed .nk-tasks__items, .nk-tasks.is-closed .nk-tasks__note { display: none; }
+.nk-tasks.is-closed { width: auto; }
+.nk-tasks__items { list-style: none; margin: 0; padding: 0 12px 6px; display: grid; gap: 4px; }
+.nk-task { display: grid; grid-template-columns: 20px auto 1fr; align-items: center; gap: 6px; line-height: 1.4; }
+.nk-task .material-symbols-rounded { font-size: 18px; color: var(--color-muted); }
+.nk-task__room { font-weight: 700; color: var(--color-primary); white-space: nowrap; }
+.nk-task.is-done { color: var(--color-muted); }
+.nk-task.is-done .nk-task__label { text-decoration: line-through; }
+.nk-task.is-done .material-symbols-rounded { color: var(--color-success); }
+.nk-tasks__note { margin: 0; padding: 0 12px 10px; color: var(--color-muted); font-size: 13px; }
+.nk-tasks__note:empty { display: none; }
+
+.nk-banner {
+  position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
+  max-width: min(520px, calc(100% - 300px)); margin: 0; padding: 10px 16px; border-radius: 12px;
+  background: rgba(28, 63, 94, 0.94); color: #fff; font-weight: 700; text-align: center; line-height: 1.5;
+}
+
+/* 右下の「？」（あそびかた）とかさならないよう、その上に置く */
+.nk-actions { position: absolute; right: 16px; bottom: 76px; display: flex; align-items: flex-end; gap: 10px; }
+.nk-act {
+  position: relative; width: 92px; height: 92px; border-radius: 50%; border: 3px solid #fff;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  background: var(--color-accent); color: #fff; font-family: inherit; font-weight: 700; cursor: pointer;
+  box-shadow: var(--shadow-md); padding: 6px;
+}
+.nk-act .material-symbols-rounded { font-size: 30px; }
+.nk-act__label { font-size: 12px; line-height: 1.25; text-align: center; }
+.nk-act:disabled { background: #6B7580; opacity: 0.75; cursor: not-allowed; }
+.nk-act--find { background: #C9302C; }
+.nk-act--sleep { background: var(--nk-sleeper); }
+.nk-act--dark { background: #4B3B6B; }
+.nk-act__cd {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 30px; font-weight: 700; color: #fff; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6); pointer-events: none;
+}
+.nk-act__cd:empty { display: none; }
+.nk-act:has(.nk-act__cd:not(:empty)) .material-symbols-rounded,
+.nk-act:has(.nk-act__cd:not(:empty)) .nk-act__label { opacity: 0.25; }
+
+.nk-pad {
+  position: absolute; left: 20px; bottom: 20px; width: 140px; height: 140px; border-radius: 50%;
+  background: rgba(255, 255, 255, 0.18); border: 2px solid rgba(255, 255, 255, 0.5);
+  display: none; align-items: center; justify-content: center; touch-action: none;
+}
+.nk-pad__knob { width: 60px; height: 60px; border-radius: 50%; background: rgba(255, 255, 255, 0.85); pointer-events: none; }
+.nk-keys {
+  position: absolute; left: 50%; bottom: 8px; transform: translateX(-50%); margin: 0;
+  padding: 4px 12px; border-radius: 999px; background: rgba(0, 0, 0, 0.45); color: #fff; font-size: 12px; white-space: nowrap;
+}
+@media (pointer: coarse), (max-width: 760px) {
+  .nk-pad { display: flex; }
+  .nk-keys { display: none; }
+}
+
+/* 遊んでいない人（進行役・見学） */
+.nk-watch {
+  display: none; position: absolute; left: 50%; bottom: 16px; transform: translateX(-50%);
+  width: min(560px, calc(100% - 32px)); margin: 0; padding: 12px 16px; border-radius: 12px;
+  background: rgba(255, 255, 255, 0.95); color: var(--color-text); line-height: 1.6; box-shadow: var(--shadow-md);
+}
+body.is-watching .nk-watch { display: block; }
+body.is-watching .nk-tasks, body.is-watching .nk-actions, body.is-watching .nk-pad, body.is-watching .nk-keys { display: none; }
+
+/* 重なる画面 */
+.nk-overlay {
+  position: fixed; inset: 0; z-index: 20; display: flex; align-items: center; justify-content: center;
+  padding: 16px; background: rgba(12, 16, 24, 0.6);
+}
+.nk-overlay[hidden] { display: none; }
+.nk-overlay--top { z-index: 30; }
+
+.nk-dialog { border: none; border-radius: var(--radius-card); padding: 24px; width: min(360px, calc(100% - 32px)); box-shadow: var(--shadow-lg); }
+.nk-dialog::backdrop { background: rgba(12, 16, 24, 0.6); }
+.nk-dialog .nk-h3 { margin-top: 0; }
+.nk-menu { display: grid; gap: 10px; margin-top: 12px; }
+.nk-menu .nk-quiet { justify-self: center; }
+.nk-overlay__card {
+  width: 100%; max-width: 440px; max-height: calc(100vh - 32px); overflow: auto;
+  background: var(--color-surface); border-radius: var(--radius-card); padding: 24px; box-shadow: var(--shadow-lg);
+}
+.nk-rolecard { text-align: center; }
+.nk-rolecard__you { margin: 0; color: var(--color-muted); }
+.nk-rolecard__name { margin: 4px 0 12px; font-size: 34px; font-weight: 700; color: var(--color-accent); }
+.nk-rolecard__name--sleeper { color: var(--nk-sleeper); }
+.nk-rolecard__desc { margin: 0 0 20px; line-height: 1.7; text-align: left; }
+
+.nk-game__card { max-width: 480px; }
+.nk-game__head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+.nk-game__title { margin: 0; font-size: 18px; color: var(--color-primary); }
+.nk-game__how { margin: 0 0 16px; color: var(--color-muted); line-height: 1.6; }
+
+.is-nudge { animation: nk-nudge 0.3s ease; }
+@keyframes nk-nudge { 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+
+.nk-wire { position: relative; display: flex; justify-content: space-between; padding: 8px 0; }
+.nk-wire__col { display: grid; gap: 18px; position: relative; z-index: 1; }
+.nk-wire__lines { position: absolute; inset: 0; pointer-events: none; }
+.nk-wire__line { position: absolute; height: 8px; margin-top: -4px; border-radius: 4px; transform-origin: 0 50%; }
+.nk-wire__end {
+  width: 72px; height: 44px; border: 3px solid rgba(0, 0, 0, 0.25); background: var(--wire); cursor: pointer;
+}
+.nk-wire__end--l { border-radius: 8px 22px 22px 8px; }
+.nk-wire__end--r { border-radius: 22px 8px 8px 22px; }
+.nk-wire__end.is-picked { outline: 4px solid var(--color-primary); outline-offset: 2px; }
+.nk-wire__end.is-done { opacity: 0.6; cursor: default; }
+
+.nk-order { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.nk-order__btn {
+  height: 72px; border-radius: 12px; border: 2px solid var(--color-border); background: var(--color-bg);
+  font-family: inherit; font-size: 28px; font-weight: 700; color: var(--color-primary); cursor: pointer;
+}
+.nk-order__btn.is-done { background: #E3F2E8; border-color: var(--color-success); color: var(--color-success); cursor: default; }
+
+.nk-meter { display: grid; gap: 14px; }
+.nk-meter__bar { position: relative; height: 28px; border-radius: 999px; background: var(--color-bg); border: 2px solid var(--color-border); overflow: hidden; }
+.nk-meter__fill { position: absolute; left: 0; top: 0; bottom: 0; background: var(--color-accent); }
+.nk-meter__mark { position: absolute; top: -2px; bottom: -2px; width: 8px; margin-left: -4px; background: #EC7A1C; border-radius: 4px; }
+.nk-meter.is-near .nk-meter__fill { background: var(--color-success); }
+.nk-meter__input { width: 100%; height: 44px; accent-color: var(--color-accent); }
+.nk-meter__state { margin: 0; min-height: 1.5em; font-weight: 700; color: var(--color-success); text-align: center; }
+
+.nk-overlay--meeting { align-items: center; }
+.nk-meeting { max-width: 560px; }
+.nk-meeting__head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.nk-meeting__title { margin: 0; font-size: 22px; color: var(--color-primary); display: inline-flex; align-items: center; gap: 6px; }
+.nk-meeting__timer { margin: 0; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--color-primary); }
+.nk-meeting__why { margin: 10px 0 4px; font-weight: 700; line-height: 1.6; }
+.nk-meeting__how { margin: 0 0 14px; color: var(--color-muted); line-height: 1.6; }
+.nk-vote { list-style: none; padding: 0; margin: 0 0 14px; display: grid; gap: 6px; }
+.nk-vote__row { display: flex; align-items: center; gap: 8px; border-radius: 10px; background: var(--color-bg); }
+.nk-vote__main {
+  flex: 1; min-width: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-height: 48px; padding: 6px 12px;
+  border: 2px solid transparent; border-radius: 10px; background: none; font-family: inherit; font-size: 16px; text-align: left; color: inherit;
+}
+button.nk-vote__main { cursor: pointer; }
+button.nk-vote__main:hover { border-color: var(--color-border); }
+.nk-vote__row.is-picked .nk-vote__main { border-color: var(--color-accent); background: #E3F1F3; }
+.nk-vote__row.is-asleep { opacity: 0.55; }
+.nk-vote__name { font-weight: 700; }
+.nk-vote__go { margin-right: 8px; white-space: nowrap; }
+.nk-meeting__foot { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.nk-meeting__count { margin: 0 auto 0 0; color: var(--color-muted); font-size: 14px; }
+
+.nk-resultcard, .nk-endcard { text-align: center; }
+.nk-resultcard__votes { margin: 0 0 12px; color: var(--color-muted); font-size: 14px; }
+.nk-resultcard__main { margin: 0 0 10px; font-size: 22px; font-weight: 700; color: var(--color-primary); line-height: 1.5; }
+.nk-resultcard__sub { margin: 0; line-height: 1.6; }
+.nk-endcard__title { margin: 0 0 6px; font-size: 30px; font-weight: 700; color: var(--color-accent); }
+.nk-endcard__title--sleeper { color: var(--nk-sleeper); }
+.nk-endcard__why { margin: 0 0 16px; color: var(--color-muted); }
+.nk-people--end { text-align: left; margin-bottom: 16px; }
+
+.nk-closed {
+  position: fixed; left: 50%; top: 12px; transform: translateX(-50%); z-index: 40; margin: 0;
+  padding: 12px 16px; border-radius: 8px; background: #FDECEC; color: var(--color-error); font-weight: 500; max-width: calc(100% - 32px);
+}
+.nk-toast {
+  position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 50;
+  padding: 10px 18px; border-radius: 999px; background: rgba(26, 26, 26, 0.88); color: #fff; font-weight: 500; max-width: calc(100% - 32px);
+}
+
+@media (max-width: 760px) {
+  .nk-hud { padding: 6px 12px; gap: 4px 10px; }
+  .nk-progress { flex-basis: 100%; max-width: none; order: 2; }
+  .nk-hud__time { margin-left: auto; }
+  .nk-hud__menu { margin-left: 0; width: 40px; height: 40px; }
+  .nk-hud__dark { order: 3; }
+  .nk-tasks { width: 220px; font-size: 13px; }
+  .nk-banner { top: auto; bottom: 180px; max-width: calc(100% - 24px); }
+  .nk-act { width: 76px; height: 76px; }
+  .nk-act .material-symbols-rounded { font-size: 26px; }
+  .nk-act__label { font-size: 11px; }
+  .nk-actions { right: 10px; bottom: 72px; gap: 6px; flex-wrap: wrap; justify-content: flex-end; max-width: 170px; }
+  .nk-pad { left: 14px; bottom: 14px; width: 120px; height: 120px; }
+  .nk-pad__knob { width: 52px; height: 52px; }
+  .nk-panel { padding: 24px 20px; }
+}
