@@ -76,7 +76,8 @@ apps/nemurase-kichi/
 ├── app.js              # 進行・同期・描画・ロボット（ES module）
 ├── engine.js           # マップ・ぶつかる判定・道さがし・役と勝ち負け（window.NemuraseEngine。node では module.exports）
 ├── minigames.js        # 仕事のミニゲーム3種類（window.NemuraseGames）
-└── style.css           # 固有スタイル
+├── style.css           # 固有スタイル
+└── slides.html         # 画面共有用説明スライド（15枚）
 ```
 
 - 分割型。index.html・app.js・engine.js・minigames.js・firebase-config.js・style.css を変えたら `?v=` をそろえて上げる
@@ -263,7 +264,11 @@ TOP（screen-top）
 | rtdb-utils.js（`?v=20261005`） | `initServerTime`（firebase-config.js から）・`generateRoomCode`・`now`・`isRoomExpired`・`cancelRoomOnDisconnect`・`copyRoomCode`・`copyRoomLink`・`showToast` |
 | room-qr.js（`?v=20261022`） | 「QRコードを出す」（`RoomkQR.show`） |
 | stats.js（`?v=1`） | 起動回数（`open`）と、上の「利用回数」（本体のプロジェクト） |
-| howto.js | 「あそびかた」モーダル |
+| howto.js | 「あそびかた」モーダル（`slides: 'slides.html'` で「説明スライドを見る」） |
+
+## 説明スライド
+
+`slides.html`（15枚。リバーシ・しるしでヒントのスライドと同じエンジン。チャンネル `nemurase_deck`・保存キー `nks_`）。「？」の「説明スライドを見る」とポータルの「スライド」から開ける（2026-10-26）。流れは、チェックイン → タイトル → ゲームについて → 役わり → 歩いて仕事 → ねむらせる・停電 → 見つけた・会議・投票 → ねむっても仕事はつづけられる → おわりかた（勝ち負け・15分） → はじめかた → Q&A → 質問タイム → 参加確認 → ゲームスタート → けっか。ルールを変えたら、スライドと発表者ノートも合わせる
 
 ## 確かめたこと
 
