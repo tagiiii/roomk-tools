@@ -3,7 +3,22 @@
     "nemurase_rooms": {
       "$roomId": {
         ".read": "auth != null",
-        ".write": "auth != null"
+        ".write": "auth != null",
+        ".validate": "$roomId.matches(/^[A-HJ-NP-Z2-9]{6}$/)",
+        "r": {},
+        "p": {
+          "$id": {
+            ".validate": "$id.length <= 16 && newData.isString() && newData.val().length <= 16"
+          }
+        },
+        "g": {
+          "$id": {
+            ".validate": "$id.length <= 16 && newData.isString() && newData.val().length <= 16"
+          }
+        },
+        "$other": {
+          ".validate": false
+        }
       }
     }
   }

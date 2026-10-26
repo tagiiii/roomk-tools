@@ -73,6 +73,8 @@ const { E, check, sleep } = L;
     const seq = g.meeting?.seq;
     return !!seq && Object.keys(g.ballots?.[seq] || {}).some((k) => k.startsWith('*'));
   }, 15000));
+  // ロボットの票はくじなので、しめきる前にスキップにそろえる（たまたまねむらせ屋に入ってゲームがおわらないように）
+  await L.rest('PATCH', L.ROOMS + '/' + code + '/r/game/ballots/' + (await L.roomOf(code)).game.meeting.seq, { '*1': '*skip', '*2': '*skip' });
   await host.page.click('#btnCloseVote');
   check('進行役がしめきると結果', await L.waitFor(() => L.visible(g1, '#ovResult')));
   check('結果のあとゲームにもどる', await L.waitFor(async () => !(await L.visible(g1, '#ovResult')), 9000));
@@ -88,7 +90,9 @@ const { E, check, sleep } = L;
   const tpBefore = E.taskProgress(gBefore);
   const midoriLeft = gBefore.tasks['みどり'].filter((t) => !t.done).length;
   check('閉じてすぐは、まだ抜けたことにしない', !gBefore.left['みどり']);
-  check('30秒たつと、抜けた人になる', await L.waitFor(async () => (await L.roomOf(code)).game.left?.['みどり'] === true, 45000));
+  const leftOk = await L.waitFor(async () => (await L.roomOf(code)).game.left?.['みどり'] === true, 45000);
+  const rNow = await L.roomOf(code);
+  check('30秒たつと、抜けた人になる', leftOk, { stage: rNow.game.stage, winner: rNow.game.winner, reason: rNow.game.winReason, asleep: rNow.game.asleep, players: Object.keys(rNow.players || {}), hostConnected: rNow.hostConnected, hostScreen: await L.screen(host), hostAway: await host.page.evaluate(() => window.__NK__.state.awaySince) });
   const gAfter = await L.gameIn(g1);
   check('抜けた人の、のこりの仕事は全体の数から外れる', E.taskProgress(gAfter).total === tpBefore.total - midoriLeft, { before: tpBefore, after: E.taskProgress(gAfter), midoriLeft });
   check('みんなの仕事のバーの数も変わる', await L.waitFor(async () => (await L.text(g1, '#hudProgressNum')).endsWith('/ ' + E.taskProgress(gAfter).total)));
@@ -144,6 +148,8 @@ const { E, check, sleep } = L;
   await L.patchGame(code, { endsAt: Date.now() - 1000 });
   await sleep(2000);
   check('会議の途中では時間切れにしない', await L.visible(g1, '#ovMeeting'));
+  // ロボットの票はくじなので、しめきる前にスキップにそろえる（たまたまねむらせ屋に入ってゲームがおわらないように）
+  await L.rest('PATCH', L.ROOMS + '/' + code + '/r/game/ballots/' + (await L.roomOf(code)).game.meeting.seq, { '*1': '*skip', '*2': '*skip' });
   await host.page.click('#btnCloseVote');
   check('時間切れでも会議の結果は見せる', await L.waitFor(() => L.visible(g1, '#ovResult')));
   check('結果のあとで時間切れのおしまい', await L.waitFor(() => L.visible(g1, '#ovEnd'), 10000));

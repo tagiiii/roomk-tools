@@ -22,6 +22,23 @@ const { E, check, sleep } = L;
   check('リンクをコピー', link.endsWith('?room=' + code), link);
   check('1人ではじめられない', await host.page.$eval('#btnStart', (b) => b.disabled));
 
+  // ══ ルール（軽い決まり）: アプリを通さない書き込みは断る ══
+  const tryWrite = (c, path, val) => c.page.evaluate(async ([p, v]) => {
+    try { await firebase.database().ref(p).set(v); return 'ok'; } catch (e) { return /permission/i.test(String(e.code || e.message)) ? 'denied' : String(e.message); }
+  }, [path, val]);
+  const R0 = L.ROOMS + '/' + code;
+  check('ルール: 位置は短い文字列なら書ける', (await tryWrite(host, R0 + '/p/テスト', '123,45,1')) === 'ok');
+  check('ルール: 長い位置の文字列は断る', (await tryWrite(host, R0 + '/p/テスト', 'x'.repeat(40))) === 'denied');
+  check('ルール: 文字列でない位置は断る', (await tryWrite(host, R0 + '/g/テスト', { x: 1 })) === 'denied');
+  check('ルール: 長すぎる id の位置は断る', (await tryWrite(host, R0 + '/p/' + 'a'.repeat(30), '1,1,1')) === 'denied');
+  check('ルール: 位置は消せる', (await tryWrite(host, R0 + '/p/テスト', null)) === 'ok');
+  check('ルール: 部屋の中の r・p・g 以外は断る', (await tryWrite(host, R0 + '/x', 1)) === 'denied');
+  check('ルール: ルームコードの形でない場所は断る', (await tryWrite(host, L.ROOMS + '/abc/r', { status: 'waiting' })) === 'denied');
+  check('ルール: nemurase_rooms の外は断る', (await tryWrite(host, 'other/x', 1)) === 'denied');
+  check('ルール: ルームの一覧は読めない', await host.page.evaluate(async (p) => {
+    try { await firebase.database().ref(p).once('value'); return false; } catch (e) { return /permission/i.test(String(e.code || e.message)); }
+  }, L.ROOMS));
+
   // 名前の検査
   await L.open(g1, '?room=' + code);
   check('リンクからひらくと参加画面（コード入り・ヒント）', (await L.screen(g1)) === 'join' && (await g1.page.inputValue('#joinCode')) === code && await L.visible(g1, '#joinLinkHint'));

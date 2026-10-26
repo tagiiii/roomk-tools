@@ -65,9 +65,19 @@ function isProd(hostname) {
     || /(^|\.)firebaseapp\.com$/.test(hostname);
 }
 
+// エミュレーターは firebase.json の rules を、テストが使う名前空間（ns）には当てない（だれでも読み書きできる状態になる）。
+// 本番と同じルール（rules.json）を、はじめに ns へ直接入れて、ルールが効いた状態で確かめる
+async function loadRules() {
+  const rules = fs.readFileSync(path.join(__dirname, 'rules.json'), 'utf8');
+  const res = await fetch(`${DB}/.settings/rules.json?ns=${NS}`, { method: 'PUT', headers: { Authorization: 'Bearer owner' }, body: rules });
+  if (!res.ok) throw new Error('rules load failed: ' + res.status + ' ' + (await res.text()));
+  const now = await (await fetch(`${DB}/.settings/rules.json?ns=${NS}`, { headers: { Authorization: 'Bearer owner' } })).text();
+  if (!now.includes('nemurase_rooms')) throw new Error('rules not applied');
+}
+
 let browser;
 const clients = [];
-async function launch() { browser = await chromium.launch({ channel: 'chrome' }); return browser; }
+async function launch() { await loadRules(); browser = await chromium.launch({ channel: 'chrome' }); return browser; }
 async function newContext(label, opts = {}) {
   const context = await browser.newContext({ viewport: opts.viewport || { width: 1200, height: 800 } });
   await context.grantPermissions(['clipboard-read', 'clipboard-write']).catch(() => {});
