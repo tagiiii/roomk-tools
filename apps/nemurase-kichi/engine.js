@@ -16,12 +16,16 @@
     { key: 'power', name: '電気室', x: 2, y: 13, w: 9, h: 7, fill: '#F4EBC6' },
     { key: 'store', name: '倉庫', x: 33, y: 14, w: 9, h: 7, fill: '#E9E1D8' },
     { key: 'tower', name: '見はり台', x: 17, y: 23, w: 10, h: 5, fill: '#E4E0F0' },
+    // 行き止まりの小部屋（入口は1つ。2026-10-27 子どもの意見「マップに行き止まりがほしい」）
+    { key: 'tools', name: '道具室', x: 11, y: 10, w: 4, h: 3, fill: '#EADFC8' },   // 台所↔電気室の通路から
+    { key: 'green', name: '温室', x: 29, y: 11, w: 4, h: 3, fill: '#D6EEDD' },     // 畑↔倉庫の通路から
   ];
   // 通路（部屋どうしをつなぐ床）
   const HALLS = [
     [12, 4, 5, 2], [27, 4, 5, 2], [21, 8, 2, 3], [6, 9, 2, 4], [11, 15, 5, 2],
     [28, 16, 5, 2], [36, 10, 2, 4], [21, 19, 2, 4],
     [5, 20, 2, 6], [5, 25, 12, 2], [37, 21, 2, 5], [27, 25, 12, 2],
+    [8, 10, 3, 2], [33, 11, 3, 2],   // 行き止まりの小部屋への通路（道具室・温室）
   ];
   const HALL_FILL = '#E6E3DC';
 
@@ -38,6 +42,9 @@
     { id: 8, room: 'store', x: 35.5, y: 19.5, kind: 'wire', label: 'ケーブルをつなぐ' },
     { id: 9, room: 'tower', x: 25.5, y: 26.5, kind: 'meter', label: '望遠鏡のピントを合わせる' },
     { id: 10, room: 'tower', x: 18.5, y: 24.5, kind: 'wire', label: 'ライトの線をつなぐ' },
+    // 行き止まりの奥（わざわざ入る理由）。id は末尾に足す
+    { id: 11, room: 'tools', x: 14.5, y: 11.5, kind: 'order', label: '道具を番号順にならべる' },
+    { id: 12, room: 'green', x: 29.5, y: 12.5, kind: 'meter', label: '温室の温度を合わせる' },
   ];
   const FIX_SPOT = { x: 9.5, y: 18.5 };     // 停電をなおすスイッチ（電気室）
   const TABLE = { x: 22, y: 15, r: 1.6 };   // ひろばの会議テーブル（まるいので、ぶつかる）
@@ -57,7 +64,10 @@
   const SLEEP_RANGE = 1.5;    // ねむらせられる距離
   const FIND_RANGE = 2.2;     // ねむっている人を見つけられる距離
   // 見える広さ（隊員・停電中の隊員・ねむらせ屋）。隊員は 2026-10-26 に 6 → 4.5（ねむらせ屋を有利にする調整）
+  // 2026-10-27 からは、この広さの中でも かべの向こうは見えない（canSee・viewPolygon）
   const VIEW = { crew: 4.5, dark: 2.4, sleeper: 7.5 };
+  const VIEW_RAYS = 540;      // 暗がりを かべで切るときに飛ばす光線の本数（多いほどなめらか・重い）
+  const VIEW_OVER = 0.3;      // かべに当たった光線を、かべの面が少し見えるように のばすマス数
 
   const COLORS = [
     { key: 'red', name: 'あか', hex: '#D9433B' },
@@ -160,6 +170,51 @@
       });
     }
     return null;
+  }
+
+  // ── 見える・見えない（かべ） ──
+  // a から向き (dx, dy)（長さ1）へ光線を飛ばし、かべに当たるまでの距離を返す（max まで何も当たらなければ max）。
+  // マスの境目を1つずつ進む（かべのマスに入った瞬間の距離が答え）
+  function rayDist(a, dx, dy, max) {
+    let tx = Math.floor(a.x);
+    let ty = Math.floor(a.y);
+    if (!isFloor(tx, ty)) return 0;
+    const stepX = dx > 0 ? 1 : -1;
+    const stepY = dy > 0 ? 1 : -1;
+    const tdx = dx ? 1 / Math.abs(dx) : Infinity;
+    const tdy = dy ? 1 / Math.abs(dy) : Infinity;
+    let nx = dx > 0 ? (tx + 1 - a.x) * tdx : dx < 0 ? (a.x - tx) * tdx : Infinity;
+    let ny = dy > 0 ? (ty + 1 - a.y) * tdy : dy < 0 ? (a.y - ty) * tdy : Infinity;
+    for (let i = 0; i < W + H; i++) {
+      let t;
+      if (nx < ny) { t = nx; tx += stepX; nx += tdx; } else { t = ny; ty += stepY; ny += tdy; }
+      if (t >= max) return max;
+      if (!isFloor(tx, ty)) return t;
+    }
+    return max;
+  }
+
+  // a から b が見えるか（間にかべのマスがなければ true）。距離は見ない（見える広さは別に確かめる）
+  function canSee(a, b) {
+    const d = dist(a, b);
+    if (d < 1e-9) return isFloor(Math.floor(a.x), Math.floor(a.y));
+    return rayDist(a, (b.x - a.x) / d, (b.y - a.y) / d, d) >= d;
+  }
+
+  // from から見える範囲の多角形（半径 r。全方向に n 本の光線を飛ばし、かべで止める）。暗がりを切り抜くのに使う
+  function viewPolygon(from, r, n, over) {
+    const rays = n || VIEW_RAYS;
+    const ext = over === undefined ? VIEW_OVER : over;
+    const out = [];
+    for (let i = 0; i < rays; i++) {
+      const a = (Math.PI * 2 * i) / rays;
+      const dx = Math.cos(a);
+      const dy = Math.sin(a);
+      const t = rayDist(from, dx, dy, r);
+      const tt = t < r ? Math.min(r, t + ext) : r;
+      out.push({ x: from.x + dx * tt, y: from.y + dy * tt });
+    }
+    return out;
   }
 
   // 会議のあと・はじめに立つ場所（テーブルのまわり）
@@ -284,9 +339,9 @@
 
   const api = {
     W, H, ROOMS, HALLS, HALL_FILL, SPOTS, FIX_SPOT, TABLE, VENTS, GRID, COLORS,
-    SPEED, RADIUS, USE_RANGE, SLEEP_RANGE, FIND_RANGE, VIEW,
+    SPEED, RADIUS, USE_RANGE, SLEEP_RANGE, FIND_RANGE, VIEW, VIEW_RAYS, VIEW_OVER,
     GAME_LIMIT_S, MIN_PLAYERS, MAX_PLAYERS, TWO_SLEEPERS_MIN, DEFAULT_SETTINGS, SETTING_OPTS,
-    isFloor, dist, roomAt, roomName, canStand, step, path, spawnPoint, encodePos, decodePos,
+    isFloor, dist, roomAt, roomName, canStand, step, path, rayDist, canSee, viewPolygon, spawnPoint, encodePos, decodePos,
     shuffled, sleeperCount, newGame, isAwake, hasLeft, awakeOf, taskProgress, checkWin, tally,
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;

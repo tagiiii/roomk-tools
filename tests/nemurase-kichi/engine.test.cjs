@@ -24,6 +24,65 @@ E.VENTS.forEach((v) => {
   ok(E.dist(E.FIX_SPOT, v) > E.USE_RANGE * 2 && E.dist(E.TABLE, v) > E.TABLE.r + E.USE_RANGE * 2, '近道がスイッチ・テーブルから離れている ' + v.id);
 });
 ok(E.VIEW.crew < E.VIEW.sleeper, '隊員の見える広さは、ねむらせ屋よりせまい');
+
+// 行き止まりの小部屋（道具室・温室）: 入口は1つ。入口の2マスをふさぐと、ひろばから行けなくなる
+const DEAD_ENDS = [
+  { room: 'tools', spot: 11, mouth: [[8, 10], [8, 11]], from: 'power' },
+  { room: 'green', spot: 12, mouth: [[35, 11], [35, 12]], from: 'store' },
+];
+const roomTiles = (key) => { const r = E.ROOMS.find((q) => q.key === key); const out = []; for (let y = r.y; y < r.y + r.h; y++) for (let x = r.x; x < r.x + r.w; x++) out.push({ x, y }); return out; };
+DEAD_ENDS.forEach((d) => {
+  const sp = E.SPOTS[d.spot];
+  ok(sp && sp.room === d.room && E.roomAt(sp.x, sp.y) === d.room, '行き止まりの奥に仕事の場所 ' + d.room, sp);
+  const goal = { x: Math.floor(sp.x), y: Math.floor(sp.y) };
+  ok(!!E.path({ x: 22, y: 12 }, goal), '行き止まりまで歩いて行ける ' + d.room);
+  const saved = d.mouth.map(([x, y]) => { const v = E.GRID[y][x]; E.GRID[y][x] = 0; return () => { E.GRID[y][x] = v; }; });
+  ok(E.path({ x: 22, y: 12 }, goal) === null, '入口をふさぐと行けない（入口は1つ） ' + d.room);
+  saved.forEach((f) => f());
+  // 小部屋のまわりは、入口のとなり以外ぜんぶかべ
+  const tiles = roomTiles(d.room);
+  const inRoom = new Set(tiles.map((t) => t.y * E.W + t.x));
+  const outside = [];
+  tiles.forEach((t) => [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(([ax, ay]) => {
+    const nx = t.x + ax; const ny = t.y + ay;
+    if (!inRoom.has(ny * E.W + nx) && E.isFloor(nx, ny)) outside.push(nx + ',' + ny);
+  }));
+  ok(outside.length === 2, '小部屋の出口は通路の2マスだけ ' + d.room, outside);
+});
+ok(E.ROOMS.length === 9 && E.SPOTS.length === 13 && E.SPOTS.every((sp, i) => sp.id === i), '部屋9・仕事の場所13・id は並び順');
+
+// かべの向こうは見えない（canSee）
+ok(E.canSee({ x: 4.5, y: 3.5 }, { x: 9.5, y: 6.5 }), '同じ部屋の中は見える');
+ok(!E.canSee({ x: 10.5, y: 3.5 }, { x: 18.5, y: 3.5 }), '台所から通信室へ、かべごしには見えない');
+ok(E.canSee({ x: 10.5, y: 4.5 }, { x: 18.5, y: 4.5 }), '通路を通して見える');
+ok(!E.canSee({ x: 9.5, y: 13.5 }, { x: 12.5, y: 11.5 }), '電気室から道具室へ、かべごしには見えない（近くても）');
+ok(E.canSee({ x: 8.5, y: 10.5 }, { x: 14.5, y: 11.5 }), '道具室の入口から、奥の仕事の場所が見える');
+ok(!E.canSee({ x: 30.5, y: 12.5 }, { x: 30.5, y: 15.5 }), '温室から倉庫へ、かべごしには見えない');
+ok(!E.canSee({ x: 4.5, y: 3.5 }, { x: 0.5, y: 0.5 }), 'かべの中の点は見えない');
+ok(E.canSee({ x: 4.5, y: 3.5 }, { x: 4.5, y: 3.5 }), '自分の位置は見える');
+ok(!E.canSee({ x: 0.5, y: 0.5 }, { x: 4.5, y: 3.5 }), 'かべの中からは何も見えない');
+{
+  // 対称（a から b が見えれば b から a も見える）。床の上の点をくじで選ぶ
+  let seed = 7; const rnd = () => { seed = (seed * 48271) % 2147483647; return seed / 2147483647; };
+  const pt = () => { for (;;) { const x = rnd() * E.W; const y = rnd() * E.H; if (E.canStand(x, y)) return { x, y }; } };
+  let asym = 0; let n = 0;
+  for (let i = 0; i < 3000; i++) { const a = pt(); const b = pt(); if (E.dist(a, b) > 8) continue; n++; if (E.canSee(a, b) !== E.canSee(b, a)) asym++; }
+  ok(n > 500 && asym === 0, 'canSee は対称', { n, asym });
+}
+// 見える範囲の多角形（viewPolygon）: 半径の中・かべで止まる・本数
+{
+  const from = { x: 10.5, y: 3.5 }; // 台所の右はし（右はかべ、通路は y 4〜5）
+  const poly = E.viewPolygon(from, 7.5);
+  ok(poly.length === E.VIEW_RAYS, '光線の本数ぶんの点', poly.length);
+  ok(poly.every((p) => E.dist(p, from) <= 7.5 + 1e-9), 'どの点も半径の中');
+  ok(poly.every((p) => !(p.x >= 17 && p.y < 4)), '通信室の上の方（かべの向こう）には届かない');
+  ok(poly.some((p) => p.x >= 16.5 && p.y >= 4 && p.y <= 6), '通路を通して通信室の側へ届く');
+  const right = poly.filter((p) => Math.abs(p.y - 3.5) < 0.05 && p.x > from.x);
+  ok(right.length && right.every((p) => p.x >= 12 && p.x <= 12 + E.VIEW_OVER + 1e-9), '右のかべに当たった光線は、かべの面を少しこえた所で止まる', right);
+  const open = E.viewPolygon({ x: 22, y: 12.5 }, 2, 8, 0);
+  ok(open.every((p) => Math.abs(E.dist(p, { x: 22, y: 12.5 }) - 2) < 1e-9), 'かべがなければ丸');
+  ok(E.rayDist({ x: 4.5, y: 3.5 }, -1, 0, 10) === 2.5 && E.rayDist({ x: 4.5, y: 3.5 }, 0, -1, 10) === 1.5, 'かべまでの距離');
+}
 ok(E.DEFAULT_SETTINGS.cooldown === 20 && E.SETTING_OPTS.cooldown.join() === '15,20,30', 'ねむらせる待ち時間のはじめの値と選べる値');
 
 // 位置の形

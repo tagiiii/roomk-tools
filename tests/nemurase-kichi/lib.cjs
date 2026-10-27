@@ -229,6 +229,26 @@ async function doFirstTask(c, label) {
   check(label + ': ミニゲーム（' + kind + '）がおわってとじる', await waitFor(async () => !(await visible(c, '#ovTask')), 4000));
   return t.spot;
 }
+// マップの canvas の、マス座標 (wx, wy) の少し下（人の体の色が出る所）の色 [r, g, b]。描かれているかを色で確かめる
+const pixelAt = (c, wx, wy) => c.page.evaluate(([ax, ay]) => {
+  const canvas = document.getElementById('map');
+  const En = window.NemuraseEngine;
+  const CW = canvas.clientWidth;
+  const CH = canvas.clientHeight;
+  const dpr = canvas.width / CW;
+  const TS = Math.round(Math.max(26, Math.min(46, Math.min(CW / 15, CH / 10))));
+  const ME = window.__NK__.ME;
+  const clamp = (v, max) => (max <= 0 ? max / 2 : Math.max(0, Math.min(max, v)));
+  const camX = clamp(ME.x * TS - CW / 2, En.W * TS - CW);
+  const camY = clamp(ME.y * TS - CH / 2, En.H * TS - CH);
+  const r = En.RADIUS * TS * 1.25;
+  const px = Math.round((ax * TS - camX) * dpr);
+  const py = Math.round((ay * TS - camY + r * 0.5) * dpr);
+  const d = canvas.getContext('2d').getImageData(px, py, 1, 1).data;
+  return [d[0], d[1], d[2]];
+}, [wx, wy]);
+const hexRgb = (hex) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
+const nearColor = (rgb, hex, tol = 14) => hexRgb(hex).every((v, i) => Math.abs(v - rgb[i]) <= tol);
 const doneCount = (g) => { let n = 0; Object.keys(g.tasks).forEach((id) => { if (g.roles[id] === 'crew') g.tasks[id].forEach((t) => { if (t.done) n++; }); }); return n; };
 const shot = (c, name, opts = {}) => c.page.screenshot({ path: path.join(OUT, name + '.png'), ...opts });
 
@@ -250,5 +270,6 @@ module.exports = {
   E, T, check, sleep, startServer, rest, roomOf, rootOf, roomWhen, launch, newContext, newPage, newClient, open,
   text, waitText, visible, waitVisible, waitHidden, screen, waitScreen, overflow, stats, waitStats, waitToast, waitFor,
   createRoom, joinRoom, me, teleport, gameIn, subs, patchGame, dismissRole, solveTask, doFirstTask, doneCount, shot, finishAll,
+  pixelAt, hexRgb, nearColor,
   BASE, OUT, NS, DB, ROOMS, clients,
 };

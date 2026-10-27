@@ -1225,7 +1225,7 @@ function botStep(g, b, dt, now) {
   if (now < b.busyUntil) return;
   // おきているロボット: ねむっている人が近くにいたら知らせる
   if (awake) {
-    const body = Object.keys(g.bodies).find((id) => E.dist(g.bodies[id], b) <= E.FIND_RANGE);
+    const body = Object.keys(g.bodies).find((id) => E.dist(g.bodies[id], b) <= E.FIND_RANGE && E.canSee(b, g.bodies[id]));
     if (body) {
       if (!b.findAt) b.findAt = now + 700;
       else if (now >= b.findAt) { b.findAt = 0; b.busyUntil = now + 1500; gameAct(mut.find(b.id, body)); return; }
@@ -1234,8 +1234,8 @@ function botStep(g, b, dt, now) {
   // ねむらせ屋: ほかに見ている人がいなければ、近くの隊員をねむらせる
   if (role === 'sleeper' && awake && (g.cooldown[b.id] || 0) <= RoomkRTDB.now()) {
     const crew = E.awakeOf(g, 'crew');
-    const near = crew.filter((id) => { const p = knownPos(id); return p && E.dist(p, b) <= E.SLEEP_RANGE; });
-    const watchers = crew.filter((id) => { const p = knownPos(id); return p && E.dist(p, b) <= 5; });
+    const near = crew.filter((id) => { const p = knownPos(id); return p && E.dist(p, b) <= E.SLEEP_RANGE && E.canSee(b, p); });
+    const watchers = crew.filter((id) => { const p = knownPos(id); return p && E.dist(p, b) <= 5 && E.canSee(p, b); });
     if (near.length === 1 && watchers.length === 1) {
       const at = knownPos(near[0]);
       b.busyUntil = now + 1500;
@@ -1892,7 +1892,8 @@ function draw(g) {
 
   const meAwake = E.isAwake(g, me);
   const vr = viewRadius(g);
-  const inView = (p) => vr === Infinity || E.dist(p, ME) <= vr;
+  // 見える広さの中でも、間にかべがあれば描かない（ねむった人は vr が Infinity で、ぜんぶ見える）
+  const inView = (p) => vr === Infinity || (E.dist(p, ME) <= vr && E.canSee(ME, p));
 
   Object.keys(g.bodies).forEach((id) => {
     const b = g.bodies[id];
@@ -1923,8 +1924,11 @@ function draw(g) {
     grad.addColorStop(0, 'rgba(0,0,0,1)');
     grad.addColorStop(1, 'rgba(0,0,0,0)');
     fctx.fillStyle = grad;
+    // 丸でなく、自分から見える範囲（かべで止めた光線の多角形）だけを明るくする
+    const poly = E.viewPolygon(ME, vr);
     fctx.beginPath();
-    fctx.arc(cx, cy, rr, 0, Math.PI * 2);
+    poly.forEach((p, i) => { if (i) fctx.lineTo(sx(p.x), sy(p.y)); else fctx.moveTo(sx(p.x), sy(p.y)); });
+    fctx.closePath();
     fctx.fill();
     ctx.save();
     ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -2069,7 +2073,7 @@ function updateActions(g) {
   setText('actUseLabel', use ? use.label : 'つかう');
 
   let find = null;
-  if (play && awake) find = Object.keys(g.bodies).find((id) => E.dist(g.bodies[id], ME) <= E.FIND_RANGE) || null;
+  if (play && awake) find = Object.keys(g.bodies).find((id) => E.dist(g.bodies[id], ME) <= E.FIND_RANGE && E.canSee(ME, g.bodies[id])) || null;
   ACT.find = find;
   $('actFind').hidden = !find;
 
@@ -2084,7 +2088,7 @@ function updateActions(g) {
       const p = drawPos(g, id);
       if (!p) return;
       const d = E.dist(p, ME);
-      if (d <= E.SLEEP_RANGE && d < best) { best = d; target = id; }
+      if (d <= E.SLEEP_RANGE && d < best && E.canSee(ME, p)) { best = d; target = id; }
     });
     ACT.sleep = play && cd === 0 ? target : null;
     $('actSleep').disabled = !ACT.sleep;
