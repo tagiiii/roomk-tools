@@ -71,6 +71,24 @@ const { E, check, sleep } = L;
   check('ロボットをへらせる', await L.waitFor(async () => (await g1.page.$$('#lobbyPeople .nk-person')).length === 4));
   await L.shot(host, '01-lobby');
 
+  // ══ ねむらせ屋の決め方（ホストが選ぶ） ══
+  check('はじめはランダム', (await L.text(g1, '#set-pick')) === 'ランダム');
+  await host.page.selectOption('#set-pick', '1');
+  check('「ホストが選ぶ」が参加者に届く', await L.waitFor(async () => (await L.text(g1, '#set-pick')) === 'ホストが選ぶ'));
+  check('選ぶまで はじめられない・注意書き', await L.waitFor(async () => (await host.page.$eval('#btnStart', (b) => b.disabled)) && (await L.text(host, '#lobbyNote')) === 'ねむらせ屋にする人を、あと 1 人えらんでください'));
+  check('ホストの一覧に「ねむらせ屋にする」が4つ', (await host.page.$$('#lobbyPeople .nk-person__pick')).length === 4);
+  check('参加者の一覧には選ぶボタンがない', (await g1.page.$$('#lobbyPeople .nk-person__pick')).length === 0);
+  await host.page.click('#lobbyPeople .nk-person__pick[aria-label="ねむらせ屋にする: そら"]');
+  check('選んだ人にタグ・ボタンは「はずす」', await L.waitFor(async () => (await host.page.$$('#lobbyPeople .nk-tag--sleeper')).length === 1 && (await host.page.$('#lobbyPeople .nk-person__pick[aria-label="ねむらせ屋からはずす: そら"]')) !== null));
+  check('選ぶとはじめられる・注意書きが消える', await L.waitFor(async () => !(await host.page.$eval('#btnStart', (b) => b.disabled)) && (await L.text(host, '#lobbyNote')) === ''));
+  await host.page.click('#lobbyPeople .nk-person__pick[aria-label="ねむらせ屋にする: あお"]');
+  check('2人選ぶと多すぎの注意書き・はじめられない', await L.waitFor(async () => (await host.page.$eval('#btnStart', (b) => b.disabled)) && (await L.text(host, '#lobbyNote')) === 'ねむらせ屋は 1 人です。1 人はずしてください'));
+  await host.page.click('#lobbyPeople .nk-person__pick[aria-label="ねむらせ屋からはずす: あお"]');
+  check('はずすともどる', await L.waitFor(async () => !(await host.page.$eval('#btnStart', (b) => b.disabled))));
+  check('選んだ人は DB に書かれない（参加者には見えない）', !('picks' in (await L.roomOf(code))) && !('picks' in ((await L.roomOf(code)).settings || {})));
+  check('参加者の一覧にタグが出ない', (await g1.page.$$('#lobbyPeople .nk-tag--sleeper')).length === 0);
+  await L.shot(host, '01b-lobby-pick');
+
   // ══ はじめる ══
   check('4人ではじめられる', await L.waitFor(async () => !(await host.page.$eval('#btnStart', (b) => b.disabled))));
   await host.page.click('#btnStart');
@@ -80,6 +98,8 @@ const { E, check, sleep } = L;
   check('start・players-4 を1回', await L.waitStats(host, 'start', 1) && await L.waitStats(host, 'players-4', 1));
   let room = await L.roomOf(code);
   check('ねむらせ屋は1人・ひとり4つの仕事', Object.values(room.game.roles).filter((r) => r === 'sleeper').length === 1 && Object.values(room.game.tasks).every((t) => t.length === 4));
+  check('選んだ「そら」がねむらせ屋', room.game.roles['そら'] === 'sleeper');
+  check('はじめると選んだ人は空にもどる', await host.page.evaluate(() => window.__NK__.state.picks.length === 0));
   check('のこり時間が15分', /^のこり 1[45]:\d\d$/.test(await L.text(host, '#hudTime')), await L.text(host, '#hudTime'));
   for (const c of all) await L.dismissRole(c);
   // テスト用に役を決める: あお＝ねむらせ屋
@@ -254,6 +274,10 @@ const { E, check, sleep } = L;
   check('待合室にもどる', true);
   check('again を1回', await L.waitStats(host, 'again', 1));
   check('位置は消えている', await L.waitFor(async () => { const r = await L.rootOf(code); return !r.p && !r.g; }));
+  // 「ホストが選ぶ」のままなので、次の回は選び直すまではじめられない → ランダムにもどすと、はじめられる
+  check('次の回は選び直すまではじめられない', await L.waitFor(async () => (await host.page.$eval('#btnStart', (b) => b.disabled)) && (await L.text(host, '#lobbyNote')) === 'ねむらせ屋にする人を、あと 1 人えらんでください'));
+  await host.page.selectOption('#set-pick', '0');
+  check('ランダムにもどすと選ぶボタンが消え、はじめられる', await L.waitFor(async () => !(await host.page.$eval('#btnStart', (b) => b.disabled)) && (await host.page.$$('#lobbyPeople .nk-person__pick')).length === 0 && (await L.text(g1, '#set-pick')) === 'ランダム'));
   await host.page.click('#btnStart');
   for (const c of all) { await L.waitScreen(c, 'game'); await L.dismissRole(c); }
   await L.patchGame(code, { roles: { 'ホスト': 'crew', 'あお': 'crew', 'みどり': 'crew', 'そら': 'sleeper' }, cooldown: { 'そら': 1 } });

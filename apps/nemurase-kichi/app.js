@@ -36,6 +36,7 @@ const TOAST_MS = 2200;
 const SETTING_LABELS = {
   hostPlays: ['ホスト（あなた）', (v) => (v ? 'いっしょに遊ぶ' : '進行だけ')],
   sleepers: ['ねむらせ屋の数', (v) => (v === 2 ? '2人（7人以上のとき）' : '1人')],
+  pick: ['ねむらせ屋の決め方', (v) => (v === 1 ? 'ホストが選ぶ' : 'ランダム')],
   tasks: ['ひとりの仕事の数', (v) => v + 'つ'],
   cooldown: ['ねむらせてから次まで', (v) => v + '秒'],
   meeting: ['会議の時間', (v) => v + '秒'],
@@ -44,6 +45,7 @@ const SETTING_LABELS = {
 
 const state = {
   role: null,          // 'host' | 'guest'
+  picks: [],           // ホストが待合室で選んだねむらせ屋（id）。ホストの端末だけが持ち、はじめると空にする
   nickname: null,
   roomCode: null,
   rootRef: null,       // nemurase_rooms/{code}
@@ -465,6 +467,7 @@ function connectToRoom(role, nickname, code, joinedAt) {
   state.role = role;
   state.nickname = nickname;
   state.roomCode = code;
+  state.picks = [];
   state.rootRef = rootRef;
   state.roomRef = ref;
   state.joinedAt = Number(joinedAt) || RoomkRTDB.now();
@@ -890,6 +893,25 @@ async function hostTransaction(update, failMessage) {
   }
 }
 
+// ホストが選んだねむらせ屋のうち、次のゲームで遊ぶ人にいる分
+function validPicks(room) {
+  const ids = playersOf(room).map((p) => p.id);
+  return state.picks.filter((id, i, a) => ids.includes(id) && a.indexOf(id) === i);
+}
+
+// 「ホストが選ぶ」のとき、選んだ人数と必要な人数の差（0 なら合っている。正は足りない、負は多い）。ランダムのときは 0
+function pickShortage(room) {
+  const s = settingsOf(room);
+  if (s.pick !== 1) return 0;
+  return E.sleeperCount(s, playersOf(room).length) - validPicks(room).length;
+}
+
+function togglePick(id) {
+  if (state.role !== 'host' || !state.room) return;
+  state.picks = state.picks.includes(id) ? state.picks.filter((x) => x !== id) : state.picks.concat(id);
+  renderWaiting(state.room);
+}
+
 function setSetting(key, value) {
   const v = Number(value);
   if (!E.SETTING_OPTS[key] || !E.SETTING_OPTS[key].includes(v)) return;
@@ -928,6 +950,7 @@ async function startGame() {
   if (!room || room.status !== STATUS.WAITING) return;
   const n = playersOf(room).length;
   if (n < E.MIN_PLAYERS || n > E.MAX_PLAYERS) return;
+  if (pickShortage(room) !== 0) return;
   $('btnStart').disabled = true;
   // 前の回の位置を消してからはじめる（待合室では、だれも位置を書かない）
   try {
@@ -943,7 +966,9 @@ async function startGame() {
     if (list.length < E.MIN_PLAYERS || list.length > E.MAX_PLAYERS) return;
     const now = RoomkRTDB.now();
     const settings = settingsOf(current);
-    const base = E.newGame(list.map((p) => p.id), settings);
+    const picks = settings.pick === 1 ? validPicks(current) : [];
+    if (settings.pick === 1 && picks.length !== E.sleeperCount(settings, list.length)) return;
+    const base = E.newGame(list.map((p) => p.id), settings, null, picks);
     const g = {
       ...base,
       id: (Number(current.lastGameId) || 0) + 1,
@@ -967,6 +992,7 @@ async function startGame() {
   }, 'はじめられませんでした。もう一度ためしてね');
   $('btnStart').disabled = false;
   if (ok) {
+    state.picks = [];
     window.RoomkStats?.count('start');
     window.RoomkStats?.count('players-' + count);
   }
@@ -1370,6 +1396,7 @@ function updateHostOverlay(room) {
 function renderWaiting(room) {
   const host = state.role === 'host';
   const s = settingsOf(room);
+  const picks = host ? validPicks(room) : [];
   $('codeButtons').hidden = !host;
   $('guestWaitNote').hidden = host;
   $('botButtons').hidden = !host;
@@ -1382,6 +1409,17 @@ function renderWaiting(room) {
     if (p.isHost) li.appendChild(makeElement('span', 'nk-tag', s.hostPlays === 0 ? 'ホスト・進行役' : 'ホスト'));
     if (p.id === state.nickname) li.appendChild(makeElement('span', 'nk-tag nk-tag--me', 'あなた'));
     if (p.bot) li.appendChild(makeElement('span', 'nk-tag', 'ロボット'));
+    // 「ホストが選ぶ」のとき、ホストの画面にだけ選ぶボタンを出す（進行だけのホストは遊ばないので出さない）
+    if (host && s.pick === 1 && !(p.isHost && s.hostPlays === 0)) {
+      const picked = picks.includes(p.id);
+      if (picked) li.appendChild(makeElement('span', 'nk-tag nk-tag--sleeper', 'ねむらせ屋'));
+      const b = makeElement('button', 'btn btn-secondary btn-sm nk-person__pick', picked ? 'はずす' : 'ねむらせ屋にする');
+      b.type = 'button';
+      b.setAttribute('aria-pressed', picked ? 'true' : 'false');
+      b.setAttribute('aria-label', (picked ? 'ねむらせ屋からはずす: ' : 'ねむらせ屋にする: ') + p.name);
+      b.addEventListener('click', () => togglePick(p.id));
+      li.appendChild(b);
+    }
     list.appendChild(li);
   });
   const n = playersOf(room).length;
@@ -1426,8 +1464,14 @@ function renderWaiting(room) {
   if (n < E.MIN_PLAYERS) note = 'あと ' + (E.MIN_PLAYERS - n) + ' 人でスタートできます' + (host ? '（練習用のロボットでもいい）' : '');
   else if (n > E.MAX_PLAYERS) note = '遊ぶ人は10人までです';
   else if (s.sleepers === 2 && n < E.TWO_SLEEPERS_MIN) note = '7人より少ないので、ねむらせ屋は1人になります';
+  const shortage = pickShortage(room);
+  if (host && n >= E.MIN_PLAYERS && n <= E.MAX_PLAYERS && shortage !== 0) {
+    note = shortage > 0
+      ? 'ねむらせ屋にする人を、あと ' + shortage + ' 人えらんでください'
+      : 'ねむらせ屋は ' + E.sleeperCount(s, n) + ' 人です。' + (-shortage) + ' 人はずしてください';
+  }
   $('lobbyNote').textContent = note;
-  $('btnStart').disabled = n < E.MIN_PLAYERS || n > E.MAX_PLAYERS;
+  $('btnStart').disabled = n < E.MIN_PLAYERS || n > E.MAX_PLAYERS || shortage !== 0;
 }
 
 function closeOverlays() {

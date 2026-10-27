@@ -89,10 +89,12 @@
   const TWO_SLEEPERS_MIN = 7;
 
   // ねむらせてから次までの時間は 2026-10-26 に はじめ30秒（20・30・45）→ はじめ20秒（15・20・30）（ねむらせ屋を有利にする調整）
-  const DEFAULT_SETTINGS = { hostPlays: 1, sleepers: 1, tasks: 4, cooldown: 20, meeting: 90, buttons: 1 };
+  // pick: ねむらせ屋の決め方（0＝ランダム、1＝ホストが待合室で選ぶ）。2026-10-27 子どもの意見で追加
+  const DEFAULT_SETTINGS = { hostPlays: 1, sleepers: 1, tasks: 4, cooldown: 20, meeting: 90, buttons: 1, pick: 0 };
   const SETTING_OPTS = {
     hostPlays: [1, 0],
     sleepers: [1, 2],
+    pick: [0, 1],
     tasks: [3, 4, 5],
     cooldown: [15, 20, 30],
     meeting: [60, 90, 120],
@@ -240,10 +242,12 @@
   }
 
   // ids: 遊ぶ人。roles＝{id: 'crew'|'sleeper'}、tasks＝{id: [{spot, done}]}（ねむらせ屋は「ふりをする場所」で done は使わない）
-  function newGame(ids, settings, rnd) {
+  // picks: ホストが選んだねむらせ屋（id の配列）。遊ぶ人にいる分だけ使い、人数に足りなければ残りはシャッフルで決める
+  function newGame(ids, settings, rnd, picks) {
     const s = Object.assign({}, DEFAULT_SETTINGS, settings || {});
-    const order = shuffled(ids, rnd);
     const ns = sleeperCount(s, ids.length);
+    const chosen = (Array.isArray(picks) ? picks : []).filter((id, i, a) => ids.includes(id) && a.indexOf(id) === i).slice(0, ns);
+    const order = chosen.concat(shuffled(ids.filter((id) => !chosen.includes(id)), rnd));
     const roles = {};
     const tasks = {};
     const buttons = {};

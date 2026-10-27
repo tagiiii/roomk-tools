@@ -96,6 +96,19 @@ ok(roleIds(g, 'sleeper').length === 1, 'ねむらせ屋は1人');
 ok(g.players.every((id) => g.tasks[id].length === 3), 'ひとり3つの仕事');
 ok(roleIds(game(['a', 'b', 'c', 'd', 'e', 'f'], { sleepers: 2 }), 'sleeper').length === 1, '7人より少ないと、ねむらせ屋は1人');
 ok(roleIds(game(['a', 'b', 'c', 'd', 'e', 'f', 'h'], { sleepers: 2 }), 'sleeper').length === 2, '7人なら2人にできる');
+// ホストが選ぶ（picks）: 選んだ人がねむらせ屋。遊ぶ人にいない名前・重なりは無視し、足りない分はシャッフルで決める
+ok(E.DEFAULT_SETTINGS.pick === 0 && E.SETTING_OPTS.pick.join() === '0,1', 'ねむらせ屋の決め方は はじめランダム（0）・ホストが選ぶ（1）');
+ok(roleIds(E.newGame(['a', 'b', 'c', 'd'], { pick: 1 }, fixed, ['c']), 'sleeper').join() === 'c', '選んだ人がねむらせ屋になる');
+ok(roleIds(E.newGame(['a', 'b', 'c', 'd'], { pick: 1 }, fixed, ['d']), 'sleeper').join() === 'd', '最後の人も選べる');
+ok(roleIds(E.newGame(['a', 'b', 'c', 'd', 'e', 'f', 'h'], { sleepers: 2, pick: 1 }, fixed, ['h', 'b']), 'sleeper').sort().join() === 'b,h', '2人のときは2人とも選んだ人');
+ok(roleIds(E.newGame(['a', 'b', 'c', 'd', 'e', 'f', 'h'], { sleepers: 2, pick: 1 }, fixed, ['h', 'b', 'a']), 'sleeper').sort().join() === 'b,h', '多く選んでも人数ぶんだけ');
+ok(roleIds(E.newGame(['a', 'b', 'c', 'd'], { sleepers: 2, pick: 1 }, fixed, ['a', 'b']), 'sleeper').join() === 'a', '7人より少ないと、選んでも1人');
+{ const g2 = E.newGame(['a', 'b', 'c', 'd'], { pick: 1 }, fixed, ['zzz', 'c', 'c']); ok(roleIds(g2, 'sleeper').join() === 'c' && Object.keys(g2.roles).length === 4, '遊ぶ人にいない名前と重なりは無視'); }
+{ const g2 = E.newGame(['a', 'b', 'c', 'd'], { pick: 1 }, fixed, []); ok(roleIds(g2, 'sleeper').length === 1, '選んでいなければシャッフルで1人'); }
+{ const g2 = E.newGame(['a', 'b', 'c', 'd', 'e', 'f', 'h'], { sleepers: 2, pick: 1 }, fixed, ['a']); const r = roleIds(g2, 'sleeper'); ok(r.length === 2 && r.includes('a'), '1人だけ選んだら、もう1人はシャッフル'); }
+{ const g2 = E.newGame(['a', 'b', 'c', 'd'], { pick: 1 }, fixed, ['b']); ok(g2.players.join() === 'a,b,c,d' && Object.values(g2.tasks).every((t) => t.length === 4), '選んでも遊ぶ人の順と仕事の数は変わらない'); }
+// ランダム: 最後の人だけになる偏りがない（固定の乱数列で、だれでもねむらせ屋になれる）
+{ const seen = new Set(); for (let k = 0; k < 40; k++) { let i = k; const rnd = () => { i = (i * 9301 + 49297) % 233280; return i / 233280; }; seen.add(roleIds(E.newGame(['a', 'b', 'c', 'd', 'e'], {}, rnd), 'sleeper')[0]); } ok(seen.size === 5, 'ランダムでは5人のだれでもねむらせ屋になる', [...seen]); }
 
 // 勝ち負け
 g = game(['a', 'b', 'c', 'd'], { tasks: 2 });

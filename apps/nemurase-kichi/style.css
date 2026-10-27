@@ -57,6 +57,7 @@ body.is-playing { overflow: hidden; background: #2D3642; overscroll-behavior: no
 .nk-person__name { font-weight: 500; }
 .nk-person__remove { margin-left: auto; min-height: 36px; }
 .nk-chip { width: 20px; height: 20px; border-radius: 50%; flex: none; display: inline-block; border: 2px solid rgba(0, 0, 0, 0.35); }
+.nk-person__pick { margin-left: auto; }
 .nk-tag { font-size: 12px; padding: 2px 8px; border-radius: 999px; background: var(--color-border); color: var(--color-text); white-space: nowrap; font-weight: 500; }
 .nk-tag--me { background: var(--color-accent); color: #fff; }
 .nk-tag--away { background: #FDECEC; color: var(--color-error); }
