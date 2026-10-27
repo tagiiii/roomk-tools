@@ -37,12 +37,21 @@ const RULE_ITEMS = [
   ['elevenBack', 'イレブンバック', 'Jを出すと、場が流れるまで強さが逆になる'],
   ['tenDiscard', '10捨て', '10を出すと、出した枚数まで手札を捨てられる'],
   ['lock', 'しばり', '同じマークが続くと、場が流れるまでそのマークだけ'],
+  ['numLock', '数しばり', '続きの数（5の次に6など）が出ると、場が流れるまで続きの数だけ。しばりと重なると激しばり'],
   ['spade3', 'スペ3返し', 'ジョーカー1枚には♠3で勝てる'],
   ['forbiddenFinish', 'ジョーカー・2・8ではあがれない', '最後の1手に入れられない。革命中は2のかわりに3、8は8切りがオンのときだけ'],
+  ['sevenGive', '7渡し', '7を出すと、出した枚数まで手札を次の人にわたせる'],
+  ['qBomb', 'Qボンバー', 'Qを出すと場が流れて、続けて出せる'],
+  ['fiveSkip', '5飛び', '5を出すと、出した枚数だけ次の人をとばす'],
+  ['fourStop', '4止め', '4を出すと場が流れて、続けて出せる'],
 ];
 // ジョーカーだけで出すときの「何として出すか」のボタン
-const AS_LABEL = { 8: '8として（8切り）', 10: '10として（捨てられる）', 11: 'Jとして（イレブンバック）' };
-const FX_SPLASH = { revolution: '革命！', 'revolution-back': '革命返し！', eight: '8切り！', back: 'イレブンバック！', spade3: 'スペ3返し！', lock: 'しばり！' };
+const AS_LABEL = { 7: '7として（わたせる）', 8: '8として（8切り）', 10: '10として（捨てられる）', 11: 'Jとして（イレブンバック）' };
+const FX_SPLASH = {
+  revolution: '革命！', 'revolution-back': '革命返し！', eight: '8切り！', back: 'イレブンバック！', spade3: 'スペ3返し！',
+  gekilock: '激しばり！', lock: 'しばり！', numlock: '数しばり！', queen: 'Qボンバー！', four: '4止め！', five: '5飛び！',
+};
+const SPLASH_ORDER = ['revolution', 'revolution-back', 'gekilock', 'eight', 'queen', 'four', 'back', 'spade3', 'five', 'lock', 'numlock'];
 const REASON = {
   shape: (r) => (r.stairs ? '同じ数のカードか、同じマークで続いた3枚以上（階段）を選んでね' : '同じ数のカードを選んでね'),
   count: () => '場と同じ枚数で出してね',
@@ -339,13 +348,26 @@ function describe(room, G, g, cause) {
       else if (f === 'back') parts.push('イレブンバック！ 場が流れるまで強さが逆');
       else if (f === 'spade3') parts.push('スペ3返し！');
       else if (f === 'lock') parts.push('しばり！ ' + (g.lock || []).map((x) => E.SUIT_MARK[x]).join('') + 'だけ');
+      else if (f === 'numlock') parts.push('数しばり！' + (E.numLockNext(g) != null ? ' 次は ' + E.rankLabel(E.numLockNext(g)) + ' だけ' : ''));
+      else if (f === 'gekilock') parts.push('激しばり！');
+      else if (f === 'queen') parts.push('Qボンバー！');
+      else if (f === 'four') parts.push('4止め！');
+      else if (f === 'five') parts.push('5飛び！');
       else if (f === 'ten') parts.push('10捨て。捨てるカードを選んでいるよ');
+      else if (f === 'seven') parts.push('7渡し。わたすカードを選んでいるよ');
     });
+  } else if (L.kind === 'give7') {
+    parts.push(pre + (L.cards.length ? who + 'が ' + name(L.to) + 'に ' + L.cards.length + '枚 わたした' : who + 'はわたさなかった'));
+    if (L.fx.includes('ten')) parts.push('10捨て。捨てるカードを選んでいるよ');
   } else if (L.kind === 'give') {
     parts.push(pre + who + 'がカードを返した');
     if (L.fx.includes('exchanged')) parts.push('カード交換がおわった。' + name(L.lead) + 'から');
   } else if (L.kind === 'pass') parts.push(pre + who + 'はパス');
-  else if (L.kind === 'discard') parts.push(pre + (L.cards.length ? who + 'が ' + L.cards.length + '枚 捨てた' : who + 'は捨てなかった'));
+  else if (L.kind === 'discard') {
+    parts.push(pre + (L.cards.length ? who + 'が ' + L.cards.length + '枚 捨てた' : who + 'は捨てなかった'));
+    if (L.fx.includes('seven')) parts.push('7渡し。わたすカードを選んでいるよ');
+  }
+  if (L.skipped && L.skipped.length) parts.push(L.skipped.map(name).join('と') + 'をとばした');
   if (L.fx.includes('done')) parts.push(name(L.by) + 'があがり！（' + (g.places.indexOf(L.by) + 1) + '番）');
   if (L.fx.includes('foul')) parts.push(name(L.by) + 'は反則あがり（最後になる）');
   if (L.fx.includes('fallen')) parts.push('都落ち！ 前回の大富豪の' + name(g.fallen) + 'は抜けて、最後になる');
@@ -370,7 +392,7 @@ function timeUp(room, G, i, settings) {
   const g = G.s;
   let mv;
   if (g.exchange) mv = E.cpuMove(g, i);
-  else if (g.pending) mv = settings.time.onTimeout === 'cpu' ? E.cpuMove(g, i) : { kind: 'discard', cards: [] };
+  else if (g.pending) mv = settings.time.onTimeout === 'cpu' ? E.cpuMove(g, i) : { kind: g.pending.kind === 'give7' ? 'give7' : 'discard', cards: [] };
   else if (settings.time.onTimeout === 'pass' && g.field) mv = { kind: 'pass' };
   else mv = E.cpuMove(g, i);
   if (!applyMove(room, G, i, mv, 'timeout', settings)) {
@@ -451,7 +473,7 @@ async function act(kind, cards, as) {
       // カード交換はほかの人と同時に返すので、何手目かは見ない（自分がまだ返していないかだけ）
       if (kind !== 'give' && g.seq !== seq) return false;
       if ((kind === 'give') !== !!g.exchange) return false;
-      if (kind !== 'give' && (kind === 'discard') !== !!g.pending) return false;
+      if (kind !== 'give' && (kind === 'discard' || kind === 'give7') !== !!g.pending) return false;
       const i = mySeatIn(room, G, uid);
       if (i < 0) return false;
       const mv = kind === 'pass' ? { kind: 'pass' } : as ? { kind, cards, as } : { kind, cards };
@@ -1378,7 +1400,7 @@ function renderGame(R) {
     else if (g.done[i] && g.fouls.includes(i)) tags.append(el('span', 'df-tag df-tag--warn', '反則あがり'));
     else if (g.done[i] && g.fallen === i) tags.append(el('span', 'df-tag df-tag--warn', '都落ち'));
     else if (g.done[i] && place >= 0) tags.append(el('span', 'df-tag df-tag--win', (place + 1) + '番であがり'));
-    else if (turn) tags.append(el('span', 'df-tag df-tag--turn', g.exchange ? '返すカードを選び中' : g.pending ? '捨てるカードを選び中' : '番'));
+    else if (turn) tags.append(el('span', 'df-tag df-tag--turn', g.exchange ? '返すカードを選び中' : g.pending ? (g.pending.kind === 'give7' ? 'わたすカードを選び中' : '捨てるカードを選び中') : '番'));
     else if (g.passed[i]) tags.append(el('span', 'df-tag df-tag--muted', 'パス'));
     if (!g.over && (g.rules.exchange || g.rules.miyakoOchi) && g.prev) tags.append(el('span', 'df-tag df-tag--rank', rankWord(g, i)));
     if (!g.over && p && p.away) tags.append(el('span', 'df-tag df-tag--warn', '通信が切れた・CPUが代わり'));
@@ -1392,7 +1414,10 @@ function renderGame(R) {
   if (g.rev && g.back) modes.push(['revolution', '革命中にイレブンバック（いまはふつうの強さ）']);
   else if (g.rev) modes.push(['revolution', '革命中（3がいちばん強い）']);
   else if (g.back) modes.push(['back', 'イレブンバック中（場が流れるまで3がいちばん強い）']);
-  if (g.lock) modes.push(['lock', 'しばり：' + g.lock.map((x) => E.SUIT_MARK[x]).join('') + 'だけ']);
+  const nlNext = E.numLockNext(g);
+  if (g.lock && g.numLock != null) modes.push(['lock', '激しばり：' + g.lock.map((x) => E.SUIT_MARK[x]).join('') + 'の' + (nlNext != null ? E.rankLabel(nlNext) : 'ジョーカー') + 'だけ']);
+  else if (g.lock) modes.push(['lock', 'しばり：' + g.lock.map((x) => E.SUIT_MARK[x]).join('') + 'だけ']);
+  else if (g.numLock != null) modes.push(['lock', '数しばり：次は ' + (nlNext != null ? E.rankLabel(nlNext) : 'ジョーカー') + ' だけ']);
   $('modes').replaceChildren(...modes.map(([k, t]) => el('span', 'df-mode df-mode--' + k, t)));
   $('modes').hidden = !modes.length;
 
@@ -1415,7 +1440,7 @@ function renderGame(R) {
     state.fxRound = R.round;
     state.fxSeq = g.seq;
   } else if (g.seq !== state.fxSeq) {
-    const fx = ['revolution', 'revolution-back', 'eight', 'back', 'spade3', 'lock'].find((f) => g.last?.fx?.includes(f));
+    const fx = SPLASH_ORDER.find((f) => g.last?.fx?.includes(f));
     if (fx) splash(FX_SPLASH[fx]);
     state.fxSeq = g.seq;
   }
@@ -1426,8 +1451,11 @@ function renderGame(R) {
   if (g.over) status = 'おしまい！';
   else if (myGive) status = 'カード交換：' + seatName(R, myGive.poor) + 'に返すカードを' + myGive.k + '枚選んでね';
   else if (g.exchange) status = 'カード交換中。' + givers(g).map((i) => seatName(R, i)).join('と') + 'が返すカードを選んでいるよ';
-  else if (actor === myIdx) status = g.pending ? '10捨て：捨てるカードを' + g.pending.n + '枚まで選んでね' : 'あなたの番だよ' + (g.field ? '' : '。好きなカードを出せるよ');
-  else status = seatName(R, actor) + (g.pending ? 'が捨てるカードを選んでいるよ' : 'の番') + (cpuSeat(R, actor) ? '（CPUが出すよ）' : '');
+  else if (actor === myIdx) {
+    status = !g.pending ? 'あなたの番だよ' + (g.field ? '' : '。好きなカードを出せるよ')
+      : g.pending.kind === 'give7' ? '7渡し：' + seatName(R, g.pending.to) + 'にわたすカードを' + g.pending.n + '枚まで選んでね'
+        : '10捨て：捨てるカードを' + g.pending.n + '枚まで選んでね';
+  } else status = seatName(R, actor) + (g.pending ? (g.pending.kind === 'give7' ? 'がわたすカードを選んでいるよ' : 'が捨てるカードを選んでいるよ') : 'の番') + (cpuSeat(R, actor) ? '（CPUが出すよ）' : '');
   $('gameStatus').textContent = status;
   $('gameStatus').classList.toggle('is-mine', myIdx >= 0 && due.includes(myIdx));
   $('turnBox').hidden = g.over;
@@ -1496,6 +1524,11 @@ function renderMine(R, g, myIdx, actor, dir) {
         : 'カード交換で ' + labels(mp.up) + ' をわたして、' + labels(mp.down) + ' をもらったよ';
     }
   }
+  // 7渡しでもらったカード（次の手が入るまで）
+  if (!exNote && !done && g.last && g.last.kind === 'give7' && g.last.to === myIdx && g.last.cards.length) {
+    exNote = seatName(R, g.last.by) + 'から ' + labels(g.last.cards) + ' をもらったよ（7渡し）';
+    got = g.last.cards;
+  }
   $('exNote').hidden = !exNote;
   $('exNote').textContent = exNote;
   const giving = !!(mp && mp.rich === myIdx && !mp.down && g.exchange);
@@ -1535,7 +1568,7 @@ function renderMine(R, g, myIdx, actor, dir) {
     const chk = state.sel.length ? E.check(g, myIdx, state.sel) : null;
     // ジョーカーだけを出すときは「何として出すか」を選ぶ（オンのルールの分だけ。手札がなくなるなら10捨ては出さない）
     const asOpts = chk && chk.ok && state.sel.every(E.isJoker)
-      ? E.asOptions(g.rules).filter((r) => (r !== 10 || hand.length > state.sel.length) && (r !== 11 || !g.back)) : [];
+      ? E.asOptions(g.rules).filter((r) => ((r !== 10 && r !== 7) || hand.length > state.sel.length) && (r !== 11 || !g.back)) : [];
     asRow = asOpts;
     $('btnPlay').disabled = !(chk && chk.ok);
     $('btnPlay').hidden = asOpts.length > 0;
@@ -1546,8 +1579,12 @@ function renderMine(R, g, myIdx, actor, dir) {
     else msg = labels(state.sel) + ' を出せるよ';
   } else if (discarding) {
     const over = state.sel.length > g.pending.n;
+    const giving7 = g.pending.kind === 'give7';
     $('btnDiscard').disabled = !state.sel.length || over;
-    msg = over ? g.pending.n + '枚までだよ' : state.sel.length ? state.sel.length + '枚 捨てる' : '捨てるカードを選んでね（捨てなくてもいい）';
+    $('btnDiscard').textContent = giving7 ? 'わたす' : '捨てる';
+    $('btnNoDiscard').textContent = giving7 ? 'わたさない' : '捨てない';
+    const verb = giving7 ? 'わたす' : '捨てる';
+    msg = over ? g.pending.n + '枚までだよ' : state.sel.length ? state.sel.length + '枚 ' + verb : verb + 'カードを選んでね（' + (giving7 ? 'わたさなくてもいい' : '捨てなくてもいい') + '）';
   } else if (!done && state.sel.length) msg = '選んでおけるよ。自分の番になったら出してね';
   $('selMsg').textContent = msg;
   $('actAs').hidden = !asRow.length;
@@ -1802,8 +1839,9 @@ $('btnClearGive').addEventListener('click', () => {
   if (state.view) renderGame(state.view);
 });
 $('btnGive').addEventListener('click', () => act('give', state.sel.slice()));
-$('btnDiscard').addEventListener('click', () => act('discard', state.sel.slice()));
-$('btnNoDiscard').addEventListener('click', () => act('discard', []));
+const pendKind = () => (state.view?.game?.pending?.kind === 'give7' ? 'give7' : 'discard');
+$('btnDiscard').addEventListener('click', () => act(pendKind(), state.sel.slice()));
+$('btnNoDiscard').addEventListener('click', () => act(pendKind(), []));
 $('btnSelf').addEventListener('click', takeBack);
 $('btnAgain').addEventListener('click', () => startGame(true));
 $('btnRelobby').addEventListener('click', backToLobby);

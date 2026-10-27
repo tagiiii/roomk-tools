@@ -28,10 +28,23 @@ const { check, sleep, waitScreen, waitText, visible, waitVisible, text, table, h
   await waitText(A, '#lobbyRulesView', 'あり（2回目から）');
   await H.page.check('#lobbyRules input[data-rule="tenDiscard"]');
   await waitText(A, '#lobbyRulesView', '10捨て');
+  // 追加のローカルルール5つの項目（はじめオフ）
+  for (const k of ['numLock', 'sevenGive', 'qBomb', 'fiveSkip', 'fourStop']) {
+    check('項目あり・はじめオフ: ' + k, (await H.page.$('#lobbyRules input[data-rule="' + k + '"]')) !== null && !(await H.page.isChecked('#lobbyRules input[data-rule="' + k + '"]')));
+  }
+  await H.page.check('#lobbyRules input[data-rule="sevenGive"]');
+  await H.page.check('#lobbyRules input[data-rule="fiveSkip"]');
+  await H.page.check('#lobbyRules input[data-rule="numLock"]');
+  await H.page.check('#lobbyRules input[data-rule="lock"]');
+  await waitText(A, '#lobbyRulesView', '7渡し');
+  check('参加する人の一覧に 7渡し・5飛び・数しばり（使う）', /使う[^]*7渡し[^]*使わない/.test(await text(A, '#lobbyRulesView')) && /使う[^]*5飛び[^]*使わない/.test(await text(A, '#lobbyRulesView')), await text(A, '#lobbyRulesView'));
+  // 階段革命の場面（3〜7の階段）に 5飛び・7渡しが混ざらないよう、ここでいったん外す。各場面では game の rules を直接書きかえる
+  for (const k of ['sevenGive', 'fiveSkip', 'numLock', 'lock']) await H.page.uncheck('#lobbyRules input[data-rule="' + k + '"]');
+  await A.page.waitForFunction(() => /使わない[^]*7渡し/.test(document.querySelector('#lobbyRulesView').textContent), null, { timeout: 8000 });
   await H.page.click('#lobbyRules input[name="time-limit"][value="0"]', { force: true });
   await waitText(A, '#lobbyRulesView', '考える時間');
   const st = await L.roomOf(code);
-  check('設定はルームに入る', st.settings.rules.miyakoOchi === true && st.settings.rules.stairsRevolution === true && st.settings.rules.tenDiscard === true && st.settings.time.limit === 0, st.settings);
+  check('設定はルームに入る', st.settings.rules.miyakoOchi === true && st.settings.rules.stairsRevolution === true && st.settings.rules.tenDiscard === true && st.settings.rules.sevenGive === false && st.settings.rules.fiveSkip === false && st.settings.time.limit === 0, st.settings);
   await H.page.screenshot({ path: L.OUT + '/e2-01-lobby.png', fullPage: true });
   await L.open(W, '?watch=' + code);
   await waitScreen(W, 'lobby');
@@ -124,8 +137,43 @@ const { check, sleep, waitScreen, waitText, visible, waitVisible, text, table, h
   check('8として出すと8切り', await waitText(H, '#log', 'メンターが ジョーカー を出した（8として）　8切り！', 8000).then(() => true, () => false), await logText(H));
   check('場が流れてホストの番', await H.page.waitForFunction(() => document.querySelectorAll('#field .df-card').length === 0 && !document.querySelector('#actPlay').hidden, null, { timeout: 8000 }).then(() => true, () => false));
 
+  // ══ 7渡し: 7のペアを出すと、あおに2枚までわたせる ══
+  await setState((s) => { s.rules.sevenGive = true; s.hands = [['S7', 'H7', 'C3', 'C4', 'C6'], ['H3', 'D11'], ['D3', 'H11'], ['C5', 'D9']]; });
+  await playCards(H, ['S7', 'H7']);
+  check('7渡しの画面', await waitVisible(H, '#actDiscard', 8000).then(() => true, () => false));
+  check('ボタンは「わたす」「わたさない」', (await text(H, '#btnDiscard')) === 'わたす' && (await text(H, '#btnNoDiscard')) === 'わたさない');
+  check('案内: あおに2枚まで', /7渡し：あおにわたすカードを2枚まで選んでね/.test(await text(H, '#gameStatus')), await text(H, '#gameStatus'));
+  check('ほかの人には「わたすカードを選んでいるよ」', await waitText(A, '#gameStatus', 'メンターがわたすカードを選んでいるよ', 4000).then(() => true, () => false));
+  check('札に「わたすカードを選び中」', (await table(A))[0].tags.includes('わたすカードを選び中'), (await table(A))[0].tags);
+  await H.page.click('#hand .df-card[data-card="C3"]');
+  check('選ぶと「1枚 わたす」', /1枚 わたす/.test(await text(H, '#selMsg')), await text(H, '#selMsg'));
+  await H.page.screenshot({ path: L.OUT + '/e2-03c-seven-give.png', fullPage: true });
+  await H.page.click('#btnDiscard');
+  check('できごと「あおに 1枚 わたした」', await waitText(H, '#log', 'メンターが あおに 1枚 わたした', 8000).then(() => true, () => false), await logText(H));
+  check('あおの手札に ♣3 が入る', await A.page.waitForFunction(() => Array.from(document.querySelectorAll('#hand .df-card')).some((x) => x.dataset.card === 'C3'), null, { timeout: 8000 }).then(() => true, () => false));
+  check('あおに「メンターから ♣3 をもらったよ（7渡し）」', /メンターから ♣3 をもらったよ（7渡し）/.test(await text(A, '#exNote')), await text(A, '#exNote'));
+  check('もらったカードに印', (await A.page.$$eval('#hand .df-card.is-got', (xs) => xs.map((x) => x.dataset.card))).join() === 'C3');
+  check('ホストの手札から消える', !(await handOf(H)).includes('C3'));
+  check('次はあおの番', (await table(H))[1].turn, await table(H));
+  await A.page.screenshot({ path: L.OUT + '/e2-03d-seven-got.png', fullPage: true });
+
+  // ══ 5飛び: 5を出すと、あおをとばして みどりの番 ══
+  await setState((s) => { s.rules.sevenGive = false; s.rules.fiveSkip = true; s.hands = [['S5', 'C3', 'C4'], ['H3', 'D11'], ['D3', 'H11'], ['C5', 'D9']]; });
+  await playCards(H, ['S5']);
+  check('5飛び（できごと）', await waitText(H, '#log', '5飛び！　あおをとばした', 8000).then(() => true, () => false), await logText(H));
+  check('みどりの番', (await table(H))[2].turn && !(await table(H))[1].turn, await table(H));
+  // みどり（B）が ♦6 を出すと数しばり（5→6）
+  await setState((s) => { s.rules.numLock = true; s.hands = [['S5', 'C3', 'C4'], ['H3', 'D11'], ['D6', 'H11', 'H7'], ['C5', 'D9']]; });
+  await playCards(H, ['S5']);
+  await B.page.waitForFunction(() => !document.querySelector('#actPlay').hidden, null, { timeout: 8000 });
+  await playCards(B, ['D6']);
+  check('数しばり（できごと）', await waitText(H, '#log', '数しばり！ 次は 7 だけ', 8000).then(() => true, () => false), await logText(H));
+  check('しばりの表示', await waitText(H, '#modes', '数しばり：次は 7 だけ', 4000).then(() => true, () => false), await text(H, '#modes'));
+  await H.page.screenshot({ path: L.OUT + '/e2-03e-numlock.png', fullPage: true });
+
   // ══ 都落ち: 前回の大富豪はみどり（席2）。メンターが1番にあがると、みどりが抜けて最後 ══
   await setState((s) => {
+    s.rules.fiveSkip = false; s.rules.numLock = false;
     s.prev = [2, 0, 1, 3];
     s.hands = [['C3'], ['H3', 'H4'], ['D5', 'D6'], ['C9', 'C10']];
   });

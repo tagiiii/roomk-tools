@@ -273,6 +273,114 @@ const fieldOf = (cards, by, rules) => ({ play: E.analyze(cards, E.normRules(rule
   const aLast = E.play(state([['X1'], ['C9']], { rules: AR }), 0, ['X1'], 10);
   ok(aLast && aLast.done[0] && !aLast.pending, 'as: 最後の1枚を10として出しても、捨てる手札がなければそのままあがり');
 
+  // ── 追加できそうなルール（2026-10-27）: Qボンバー・4止め・5飛び・数しばり（激しばり）・7渡し ──
+  const q = E.play(state([['S12', 'C3'], ['C9']], { rules: { qBomb: true } }), 0, ['S12']);
+  ok(q && q.last.flow && q.turn === 0 && q.last.fx.includes('queen'), 'Qボンバー: Qで場が流れてもう一度');
+  const qOff = E.play(state([['S12', 'C3'], ['C9']]), 0, ['S12']);
+  ok(qOff && !qOff.last.flow, 'Qボンバー: オフなら流れない');
+  const f4 = E.play(state([['S4', 'C3'], ['C9']], { rules: { fourStop: true } }), 0, ['S4']);
+  ok(f4 && f4.last.flow && f4.turn === 0 && f4.last.fx.includes('four'), '4止め: 4で場が流れてもう一度');
+  const qj = E.play(state([['S12', 'X1', 'C3'], ['C9']], { rules: { qBomb: true } }), 0, ['S12', 'X1']);
+  ok(qj && qj.last.flow, 'Qボンバー: Q＋ジョーカーでも');
+
+  // 5飛び
+  const f5 = E.play(state([['S5', 'C3'], ['C9'], ['D9'], ['H9']], { rules: { fiveSkip: true } }), 0, ['S5']);
+  ok(f5 && f5.turn === 2 && f5.last.skipped.join() === '1' && f5.last.fx.includes('five'), '5飛び: 1枚で次の人をとばす');
+  const f52 = E.play(state([['S5', 'H5', 'C3'], ['C9'], ['D9'], ['H9']], { rules: { fiveSkip: true } }), 0, ['S5', 'H5']);
+  ok(f52 && f52.turn === 3 && f52.last.skipped.join() === '1,2', '5飛び: 2枚で2人とばす');
+  const f5all = E.play(state([['S5', 'H5', 'C3'], ['C9'], ['D9']], { rules: { fiveSkip: true } }), 0, ['S5', 'H5']);
+  ok(f5all && f5all.last.flow && f5all.turn === 0, '5飛び: みんなとばしたら場が流れて自分から');
+  const f5done = E.play(state([['S5', 'C3'], ['C9'], ['D9'], ['H9']], { rules: { fiveSkip: true }, done: [false, true, false, false] }), 0, ['S5']);
+  ok(f5done && f5done.turn === 3 && f5done.last.skipped.join() === '2', '5飛び: あがった人はとばす数に入らない');
+  const f5off = E.play(state([['S5', 'C3'], ['C9'], ['D9']]), 0, ['S5']);
+  ok(f5off && f5off.turn === 1, '5飛び: オフならとばさない');
+  // とばされた人は、次に場が回ってきたら出せる
+  let f5b = E.play(state([['S5', 'C3'], ['C9', 'C10'], ['D6', 'D7'], ['H9']], { rules: { fiveSkip: true } }), 0, ['S5']);
+  f5b = E.play(f5b, 2, ['D6']);
+  ok(f5b && f5b.turn === 3, '5飛び: とばされた人は次の人の後ろにはならない（順番どおり）');
+  f5b = E.play(f5b, 3, ['H9']);
+  ok(f5b && f5b.turn === 0, '5飛び: 3人目のあと自分へ');
+  f5b = E.pass(f5b, 0);
+  ok(f5b && f5b.turn === 1, '5飛び: とばされた人にも順番が来る');
+
+  // 数しばり
+  const NL = { rules: { numLock: true } };
+  const n1 = E.play(state([['S6', 'C3'], ['D7', 'D8', 'H6'], ['C9']], Object.assign({ field: fieldOf(['D5'], 2) }, NL)), 0, ['S6']);
+  ok(n1 && n1.numLock === 6 && n1.last.fx.includes('numlock') && E.numLockNext(n1) === 7, '数しばり: 5の次に6でかかる。次は7');
+  ok(n1.turn === 1 && E.check(n1, 1, ['D7']).ok && E.check(n1, 1, ['D8']).reason === 'numlock', '数しばり: 7は出せて8は出せない');
+  const n1j = state([['X1'], ['C9'], ['D7']], Object.assign({ field: fieldOf(['D6'], 1), numLock: 6 }, NL));
+  ok(E.check(n1j, 0, ['X1']).ok, '数しばり: ジョーカーだけは出せる');
+  const n1jp = E.play(n1j, 0, ['X1']);
+  ok(n1jp && n1jp.numLock === 7, '数しばり: ジョーカーは続きの数（7）とみなして次は8');
+  const n2 = E.play(state([['S7', 'C3'], ['C9']], Object.assign({ field: fieldOf(['D5'], 1) }, NL)), 0, ['S7']);
+  ok(n2 && n2.numLock == null, '数しばり: 5の次に7ではかからない');
+  const n3 = E.play(state([['S6', 'H6', 'C3'], ['C9']], Object.assign({ field: fieldOf(['D5', 'C5'], 1) }, NL)), 0, ['S6', 'H6']);
+  ok(n3 && n3.numLock === 6, '数しばり: ペアでもかかる');
+  const n4 = E.play(state([['S4', 'C3'], ['C9']], Object.assign({ field: fieldOf(['D5'], 1), rev: true }, NL)), 0, ['S4']);
+  ok(n4 && n4.numLock === 4 && E.numLockNext(n4) === 3, '数しばり: 革命中は下へ続く（5→4、次は3）');
+  const n5 = E.play(state([['S6', 'C3'], ['C9']], Object.assign({ field: fieldOf(['D5'], 1) }, { rules: { numLock: false } })), 0, ['S6']);
+  ok(n5 && n5.numLock == null, '数しばり: オフならかからない');
+  let n6 = E.play(state([['S6', 'C3'], ['C9'], ['D3']], Object.assign({ field: fieldOf(['D5'], 1) }, NL)), 0, ['S6']);
+  n6 = E.pass(E.pass(n6, 1), 2);
+  ok(n6 && n6.last.flow && n6.numLock == null, '数しばり: 場が流れたら解ける');
+  const n7 = E.play(state([['S6', 'S7', 'S8', 'C3'], ['C9']], Object.assign({ field: fieldOf(['D3', 'D4', 'D5'], 1) }, NL)), 0, ['S6', 'S7', 'S8']);
+  ok(n7 && n7.numLock == null, '数しばり: 階段ではかからない');
+  const n8 = E.play(state([['S15', 'C3'], ['C9'], ['D3']], Object.assign({ field: fieldOf(['D14'], 1) }, NL)), 0, ['S15']);
+  ok(n8 && n8.numLock === 15 && E.numLockNext(n8) == null && E.check(n8, 1, ['C9']).reason === 'numlock', '数しばり: 2の上は続きがないので、ジョーカーしか出せない');
+  // 激しばり
+  const g1 = E.play(state([['D6', 'C3'], ['C9']], { rules: { numLock: true, lock: true }, field: fieldOf(['D5'], 1), lock: ['D'] }), 0, ['D6']);
+  ok(g1 && g1.last.fx.includes('gekilock') && g1.lock && g1.numLock === 6, '激しばり: しばり中に続きの数で激しばり');
+  const g2 = E.play(state([['D6', 'C3'], ['C9']], { rules: { numLock: true, lock: true }, field: fieldOf(['D5'], 1), numLock: 5 }), 0, ['D6']);
+  ok(g2 && g2.last.fx.includes('gekilock') && g2.last.fx.includes('lock'), '激しばり: 数しばり中に同じマークで激しばり');
+  const g3 = E.play(state([['D7', 'C3'], ['C9']], { rules: { numLock: true, lock: true }, field: fieldOf(['D6'], 1), lock: ['D'], numLock: 6 }), 0, ['D7']);
+  ok(g3 && !g3.last.fx.includes('gekilock') && !g3.last.fx.includes('lock'), '激しばり: すでに両方かかっているときは、くり返し出さない');
+  ok(!E.check(state([['D8', 'C7'], ['C9']], { rules: { numLock: true, lock: true }, field: fieldOf(['D6'], 1), lock: ['D'], numLock: 6 }), 0, ['C7']).ok, '激しばり: マークがちがう続きの数は出せない');
+
+  // 7渡し
+  const SG = { rules: { sevenGive: true } };
+  const s7 = E.play(state([['S7', 'C3', 'C4'], ['C9'], ['D9']], SG), 0, ['S7']);
+  ok(s7 && s7.pending && s7.pending.kind === 'give7' && s7.pending.n === 1 && s7.pending.to === 1 && s7.last.fx.includes('seven'), '7渡し: 7を出すと次の人にわたす待ち');
+  ok(E.discard(s7, 0, ['C3']) === null, '7渡し: 待ちの種類がちがう手は入らない');
+  const s7b = E.give7(s7, 0, ['C3']);
+  ok(s7b && s7b.hands[0].join() === 'C4' && s7b.hands[1].join() === 'C3,C9' && s7b.last.kind === 'give7' && s7b.last.to === 1 && s7b.turn === 1, '7渡し: わたしたカードは次の人の手札に入り、次の人の番');
+  const s7c = E.give7(s7, 0, []);
+  ok(s7c && s7c.hands[0].length === 2 && s7c.turn === 1, '7渡し: わたさなくてもいい');
+  ok(E.give7(s7, 0, ['C3', 'C4']) === null, '7渡し: 枚数より多くはわたせない');
+  const s72 = E.play(state([['S7', 'H7', 'C3', 'C4', 'C5'], ['C9'], ['D9']], SG), 0, ['S7', 'H7']);
+  ok(s72 && s72.pending.n === 2, '7渡し: 2枚出したら2枚まで');
+  const s7last = E.play(state([['S7'], ['C9'], ['D9']], SG), 0, ['S7']);
+  ok(s7last && s7last.done[0] && !s7last.pending, '7渡し: 最後の1枚ならそのままあがり');
+  const s7cpu = E.cpuMove(s7, 0);
+  ok(s7cpu && s7cpu.kind === 'give7' && s7cpu.cards.join() === 'C3', '7渡し: CPU は弱いカードをわたす');
+  const s7ap = E.apply(s7, 0, { kind: 'give7', cards: ['C3'] });
+  ok(s7ap && s7ap.hands[1].includes('C3'), '7渡し: apply でも');
+  const s7done = E.play(state([['S7', 'C3'], ['C9'], ['D9']], Object.assign({ done: [false, true, false] }, SG)), 0, ['S7']);
+  ok(s7done && s7done.pending.to === 2, '7渡し: あがった人はとばして次の人へ');
+  const s7skip = E.play(state([['S7', 'C3'], ['C9'], ['D9'], ['H9']], { rules: { sevenGive: true, fiveSkip: true } }), 0, ['S7']);
+  ok(s7skip && s7skip.pending.to === 1, '7渡し: わたす相手は次の席の人');
+  // 7渡しで最後のカードをわたしたらあがり。反則あがりの札なら反則
+  const s7g = E.give7(E.play(state([['S7', 'S15'], ['C9'], ['D9']], { rules: { sevenGive: true, forbiddenFinish: true } }), 0, ['S7']), 0, ['S15']);
+  ok(s7g && s7g.done[0] && s7g.fouls.includes(0), '7渡し: 2をわたして手札がなくなったら反則あがり');
+  // 10捨てと7渡しの両方（7・8・9・10の階段＋8切り）: 捨てる→わたす→場が流れる
+  const both = E.play(state([['S7', 'S8', 'S9', 'S10', 'C3', 'C4'], ['C9'], ['D9']], { rules: { sevenGive: true, tenDiscard: true } }), 0, ['S7', 'S8', 'S9', 'S10']);
+  ok(both && both.pending.kind === 'discard' && both.pending.then.length === 1 && both.last.fx.includes('eight'), '7渡し＋10捨て: まず捨てる');
+  const both2 = E.discard(both, 0, ['C3']);
+  ok(both2 && both2.pending && both2.pending.kind === 'give7' && both2.pending.n === 1 && both2.last.fx.includes('seven'), '7渡し＋10捨て: 次にわたす');
+  const both3 = E.give7(both2, 0, []);
+  ok(both3 && both3.last.flow && both3.turn === 0 && !both3.pending, '7渡し＋10捨て: 終わったら8切りで場が流れて自分から');
+  const bothE = E.play(state([['S7', 'S8', 'S9', 'S10', 'C3'], ['C9'], ['D9']], { rules: { sevenGive: true, tenDiscard: true } }), 0, ['S7', 'S8', 'S9', 'S10']);
+  const bothEmpty = E.discard(bothE, 0, ['C3']);
+  ok(bothEmpty && bothEmpty.done[0] && !bothEmpty.pending, '7渡し＋10捨て: 捨てて手札がなくなったら、わたす待ちはなしであがり');
+  // ジョーカーだけを7として
+  ok(E.asOptions(E.normRules({ sevenGive: true })).join() === '7,8', 'as: 7渡しがオンなら7も選べる');
+  const aj7 = E.play(state([['X1', 'C3'], ['C9'], ['D9']], SG), 0, ['X1'], 7);
+  ok(aj7 && aj7.pending && aj7.pending.kind === 'give7' && aj7.pending.n === 1, 'as: 7として出すとわたせる');
+  // 5飛びのあとに7渡し: わたす相手は次の席、とばすのはそのあと
+  const s57 = E.play(state([['S5', 'S6', 'S7', 'C3'], ['C9'], ['D9'], ['H9']], { rules: { sevenGive: true, fiveSkip: true } }), 0, ['S5', 'S6', 'S7']);
+  ok(s57 && s57.pending.kind === 'give7' && s57.pending.skip === 1, '5飛び＋7渡し: わたす待ちに、とばす数を持ちこす');
+  const s57b = E.give7(s57, 0, []);
+  ok(s57b && s57b.turn === 2 && s57b.last.skipped.join() === '1', '5飛び＋7渡し: わたしたあとに1人とばす');
+
   // 都落ち: 前回の大富豪（prev[0]）が1番にあがれなかったら、その場で抜けて最後
   const M = { rules: { miyakoOchi: true }, prev: [2, 0, 1, 3] };
   const m1 = E.play(state([['S5'], ['C9', 'C10'], ['D7', 'D8'], ['H4', 'H5']], M), 0, ['S5']);
@@ -344,7 +452,7 @@ function playout(n, rules, seed, useCpu) {
     const p = s.pending ? s.pending.by : s.turn;
     let mv;
     if (useCpu) mv = E.cpuMove(s, p);
-    else if (s.pending) mv = { kind: 'discard', cards: s.hands[p].slice(0, Math.floor(rnd() * (s.pending.n + 1))) };
+    else if (s.pending) mv = { kind: s.pending.kind === 'give7' ? 'give7' : 'discard', cards: s.hands[p].slice(0, Math.floor(rnd() * (s.pending.n + 1))) };
     else {
       const legal = E.legalPlays(s, p);
       if (s.field && (rnd() < 0.3 || !legal.length)) mv = { kind: 'pass' };
@@ -368,6 +476,8 @@ function playout(n, rules, seed, useCpu) {
     { lock: true, elevenBack: true, tenDiscard: true, spade3: true, forbiddenFinish: true, jokers: 2 },
     { stairs: false, revolution: false, eightCut: false, jokers: 0 },
     { tenDiscard: true, jokers: 2, forbiddenFinish: true },
+    { numLock: true, lock: true, sevenGive: true, qBomb: true, fiveSkip: true, fourStop: true, tenDiscard: true, eightCut: true, jokers: 2 },
+    { numLock: true, sevenGive: true, fiveSkip: true, revolution: true, elevenBack: true, forbiddenFinish: true, jokers: 1 },
   ];
   let bad = 0;
   let first = null;

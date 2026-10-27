@@ -24,6 +24,11 @@
     spade3: false,          // スペ3返し: ジョーカー1枚には ♠3 で勝てる
     forbiddenFinish: false, // 反則あがり: ジョーカー・いちばん強い数・8 では、あがれない
     jokers: 1,              // ジョーカーの枚数（0〜2）
+    numLock: false,         // 数しばり: 続きの数が出ると、流れるまで続きの数だけ（しばりと重なると激しばり）
+    sevenGive: false,       // 7渡し: 7を出すと、出した枚数まで次の人に手札をわたせる
+    qBomb: false,           // Qボンバー: Q を出すと場が流れて、もう一度出せる
+    fiveSkip: false,        // 5飛び: 5を出すと、出した枚数だけ次の人をとばす
+    fourStop: false,        // 4止め: 4を出すと場が流れて、もう一度出せる
     exchange: false,        // カード交換（2回目から。大貧民から出す）
     miyakoOchi: false,      // 都落ち: 前回の大富豪が1番にあがれなかったら、その時点で大貧民（手札を捨てて抜ける）
   };
@@ -87,11 +92,16 @@
     const nat = cards.filter((c) => !isJoker(c));
     const k = n - nat.length;
     const base = { n, cards: cards.slice(), jokers: k, suits: nat.map(suitOf).sort() };
-    // 8切り・10捨て・イレブンバックの数え方。ジョーカーは、いっしょに出した数（階段ならその位置の数）として数える
+    // 8切り・10捨て・イレブンバック・7渡し・5飛び・Qボンバー・4止めの数え方。
+    // ジョーカーは、いっしょに出した数（階段ならその位置の数）として数える
     const fxOf = (low, high, perCard) => ({
       eight: low <= 8 && 8 <= high,
       tens: low <= 10 && 10 <= high ? perCard : 0,
       jacks: low <= 11 && 11 <= high ? perCard : 0,
+      sevens: low <= 7 && 7 <= high ? perCard : 0,
+      fives: low <= 5 && 5 <= high ? perCard : 0,
+      queen: low <= 12 && 12 <= high,
+      four: low <= 4 && 4 <= high,
     });
     // 同じ数（1枚・2枚以上）。ジョーカーはどの数にもなる（ジョーカーだけのときは数がないので、効果もない）
     const ranks = Array.from(new Set(nat.map(rankOf)));
@@ -132,15 +142,26 @@
       else if (!play.suits.every((x) => s.lock.includes(x))) return 'lock';
     }
     const dir = dirOf(s);
+    // 数しばり中は続きの数だけ（ジョーカーだけなら出せる）
+    if (s.numLock != null && play.type !== 'stairs' && play.rank !== JOKER && power(play.rank, dir) !== power(s.numLock, dir) + 1) return 'numlock';
     if (play.type === 'stairs') return (dir > 0 ? play.low > f.low : play.low < f.low) ? '' : 'weak';
     if (f.rank === JOKER) return 'weak';
     if (play.rank === JOKER) return '';
     return power(play.rank, dir) > power(f.rank, dir) ? '' : 'weak';
   }
 
-  // ジョーカーだけで出すときに「何として出すか」を選べる数（オンのルールの分だけ）。8=8切り・10=10捨て・11=イレブンバック
+  // 数しばり中に次に出せる数（なければ null）
+  function numLockNext(s) {
+    if (s.numLock == null) return null;
+    const r = s.numLock + dirOf(s);
+    return r >= 3 && r <= 15 ? r : null;
+  }
+
+  // ジョーカーだけで出すときに「何として出すか」を選べる数（オンのルールの分だけ）。7=7渡し・8=8切り・10=10捨て・11=イレブンバック
+  // （Qボンバー・4止めは8切りと同じ、5飛びはみんなパスするので意味がない。どちらも出さない）
   function asOptions(rules) {
     const out = [];
+    if (rules.sevenGive) out.push(7);
     if (rules.eightCut) out.push(8);
     if (rules.tenDiscard) out.push(10);
     if (rules.elevenBack) out.push(11);
@@ -190,6 +211,7 @@
     s.passed = s.passed.map(() => false);
     s.back = false;
     s.lock = null;
+    s.numLock = null;
   }
   function markDone(s, p, foul) {
     if (s.done[p]) return;
@@ -221,12 +243,17 @@
     return true;
   }
   // 次の番へ。パスしていない人がいなければ場が流れ、最後に出した人から（あがっていればその次の人から）
-  function advance(s, from) {
+  // skip: 5飛びでとばす人数（とばされた人は s.last.skipped に。みんなとばしたら場が流れる）
+  function advance(s, from, skip) {
     const by = s.field.by;
+    let left = skip || 0;
     for (let k = 1; k <= s.n; k += 1) {
       const i = (from + k) % s.n;
       if (i === by) break;
-      if (!s.done[i] && !s.passed[i]) { s.turn = i; return; }
+      if (s.done[i] || s.passed[i]) continue;
+      if (left > 0) { left -= 1; (s.last.skipped = s.last.skipped || []).push(i); continue; }
+      s.turn = i;
+      return;
     }
     flow(s, by);
   }
@@ -236,10 +263,27 @@
     s.last.flow = true;
     s.last.lead = s.turn;
   }
-  function continueAfter(s, p, cut) {
+  function continueAfter(s, p, cut, skip) {
     if (checkOver(s)) return;
     if (cut) { flow(s, p); return; }
-    advance(s, p);
+    advance(s, p, skip);
+  }
+  // 10捨て・7渡しの待ち（順に）。待つものがなければ次へ
+  function startPending(s, p, pends, cut, skip) {
+    while (pends.length && s.hands[p].length) {
+      const pd = pends.shift();
+      const to = pd.kind === 'give7' ? nextActive(s, p) : -1;
+      if (pd.kind === 'give7' && to < 0) continue;
+      s.pending = { by: p, kind: pd.kind, n: Math.min(pd.n, s.hands[p].length), to, cut: !!cut, skip: skip || 0, then: pends };
+      s.last.fx.push(pd.kind === 'give7' ? 'seven' : 'ten');
+      return;
+    }
+    continueAfter(s, p, cut, skip);
+  }
+  function afterPending(s, p, pd) {
+    s.pending = null;
+    if (!s.hands[p].length || s.done[p]) { continueAfter(s, p, pd.cut, pd.skip); return; }
+    startPending(s, p, (pd.then || []).slice(), pd.cut, pd.skip);
   }
   const removeCards = (hand, cards) => hand.filter((c) => !cards.includes(c));
 
@@ -272,7 +316,7 @@
       rules: R, n, hands: sorted,
       done: sorted.map(() => false), places: [], fouls: [],
       passed: sorted.map(() => false),
-      turn: first, field: null, rev: false, back: false, lock: null,
+      turn: first, field: null, rev: false, back: false, lock: null, numLock: null,
       pending: null, over: false, seq: 0,
       prev: okPrev ? prev.slice() : null, fallen: null,
       exchange, exchanged: null, exSeq: -1,
@@ -318,9 +362,18 @@
       pl.eight = as === 8;
       pl.tens = as === 10 ? pl.n : 0;
       pl.jacks = as === 11 ? pl.n : 0;
+      pl.sevens = as === 7 ? pl.n : 0;
       s.last.as = as;
     }
     s.hands[p] = removeCards(s.hands[p], cards);
+
+    // 数しばり（この手を出す前の強さの向きで見る）。ジョーカーだけの手は、数しばり中なら続きの数とみなす
+    if (s.rules.numLock && prev && pl.type !== 'stairs' && prev.type !== 'stairs') {
+      const d0 = dirOf(s);
+      const wasLocked = s.numLock != null;
+      if (wasLocked) s.numLock = pl.rank === JOKER ? (numLockNext(s) != null ? numLockNext(s) : s.numLock) : pl.rank;
+      else if (pl.rank !== JOKER && prev.rank !== JOKER && power(pl.rank, d0) === power(prev.rank, d0) + 1) { s.numLock = pl.rank; s.last.fx.push('numlock'); }
+    }
 
     const revo = pl.n >= 4 && (pl.type === 'group' || s.rules.stairsRevolution);
     if (s.rules.revolution && revo) { s.rev = !s.rev; s.last.fx.push(s.rev ? 'revolution' : 'revolution-back'); }
@@ -329,35 +382,56 @@
       s.lock = pl.type === 'stairs' ? [pl.suit] : pl.suits.slice();
       s.last.fx.push('lock');
     }
+    // 激しばり: マークと数の両方のしばりがかかった（この手でどちらかがかかったとき）
+    if (s.lock && s.numLock != null && (s.last.fx.includes('lock') || s.last.fx.includes('numlock'))) s.last.fx.push('gekilock');
     const s3 = !!(s.rules.spade3 && prev && prev.rank === JOKER && prev.n === 1 && pl.n === 1 && cards[0] === 'S3');
     const eight = !!(s.rules.eightCut && pl.eight);
+    const queen = !!(s.rules.qBomb && pl.queen);
+    const four = !!(s.rules.fourStop && pl.four);
+    const skip = s.rules.fiveSkip ? pl.fives : 0;
     if (eight) s.last.fx.push('eight');
     if (s3) s.last.fx.push('spade3');
+    if (queen) s.last.fx.push('queen');
+    if (four) s.last.fx.push('four');
+    if (skip) s.last.fx.push('five');
     s.field = { play: pl, by: p };
     if (!s.hands[p].length) markDone(s, p, c.foul);
 
-    if (s.rules.tenDiscard && pl.tens > 0 && s.hands[p].length) {
-      s.pending = { by: p, n: Math.min(pl.tens, s.hands[p].length), cut: eight || s3 };
-      s.last.fx.push('ten');
-      return s;
-    }
-    continueAfter(s, p, eight || s3);
+    const pends = [];
+    if (s.rules.tenDiscard && pl.tens > 0) pends.push({ kind: 'discard', n: pl.tens });
+    if (s.rules.sevenGive && pl.sevens > 0) pends.push({ kind: 'give7', n: pl.sevens });
+    startPending(s, p, pends, eight || s3 || queen || four, skip);
     return s;
   }
 
   // 10捨て: 捨てるカードを選ぶ（0枚でもいい）
   function discard(s0, p, cards) {
     const pd = s0.pending;
-    if (!pd || pd.by !== p || s0.over || s0.exchange) return null;
+    if (!pd || pd.by !== p || (pd.kind || 'discard') !== 'discard' || s0.over || s0.exchange) return null;
     const hand = s0.hands[p];
     if (cards.length > pd.n || new Set(cards).size !== cards.length || !cards.every((c) => hand.includes(c))) return null;
     const s = clone(s0);
     s.seq += 1;
     s.last = { kind: 'discard', by: p, cards: cards.slice(), fx: [] };
     s.hands[p] = removeCards(hand, cards);
-    s.pending = null;
     if (!s.hands[p].length) markDone(s, p, s.rules.forbiddenFinish && forbiddenIn(s, cards));
-    continueAfter(s, p, pd.cut);
+    afterPending(s, p, pd);
+    return s;
+  }
+
+  // 7渡し: 次の人にわたすカードを選ぶ（0枚でもいい）。わたしたカードはその人の手札に入る
+  function give7(s0, p, cards) {
+    const pd = s0.pending;
+    if (!pd || pd.by !== p || pd.kind !== 'give7' || s0.over || s0.exchange) return null;
+    const hand = s0.hands[p];
+    if (cards.length > pd.n || new Set(cards).size !== cards.length || !cards.every((c) => hand.includes(c))) return null;
+    const s = clone(s0);
+    s.seq += 1;
+    s.last = { kind: 'give7', by: p, to: pd.to, cards: cards.slice(), fx: [] };
+    s.hands[p] = removeCards(hand, cards);
+    if (cards.length) s.hands[pd.to] = sortHand(s.hands[pd.to].concat(cards));
+    if (!s.hands[p].length) markDone(s, p, s.rules.forbiddenFinish && forbiddenIn(s, cards));
+    afterPending(s, p, pd);
     return s;
   }
 
@@ -441,8 +515,9 @@
     }
     if (s.exchange) return null;
     if (s.pending && s.pending.by === p) {
+      // 捨てる・わたすのは弱いカード（ジョーカーは手放さない）
       const order = hand.filter((c) => !isJoker(c)).sort((a, b) => power(rankOf(a), dir) - power(rankOf(b), dir));
-      return { kind: 'discard', cards: order.slice(0, s.pending.n) };
+      return { kind: s.pending.kind === 'give7' ? 'give7' : 'discard', cards: order.slice(0, s.pending.n) };
     }
     if (s.over || s.turn !== p) return null;
     const legal = legalPlays(s, p);
@@ -473,6 +548,7 @@
     if (!mv) return null;
     if (mv.kind === 'pass') return pass(s, p);
     if (mv.kind === 'discard') return discard(s, p, mv.cards);
+    if (mv.kind === 'give7') return give7(s, p, mv.cards);
     if (mv.kind === 'give') return give(s, p, mv.cards);
     return play(s, p, mv.cards, mv.as);
   }
@@ -480,7 +556,7 @@
   const api = {
     SUITS, SUIT_MARK, SUIT_NAME, JOKER, PLAYERS_MIN, PLAYERS_MAX, DEFAULT_RULES,
     normRules, isJoker, rankOf, suitOf, rankLabel, cardLabel, sortHand, makeDeck, dirOf, power,
-    analyze, check, newGame, play, discard, pass, give, legalPlays, cpuMove, apply, titleOf, exchangePairs, asOptions,
+    analyze, check, newGame, play, discard, give7, pass, give, legalPlays, cpuMove, apply, titleOf, exchangePairs, asOptions, numLockNext,
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.DaifugoEngine = api;
