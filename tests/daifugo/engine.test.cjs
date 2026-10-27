@@ -209,6 +209,129 @@ const fieldOf = (cards, by, rules) => ({ play: E.analyze(cards, E.normRules(rule
 }
 
 // ── でたらめ対局・CPU対局 ──
+// ── 子どもの意見（2026-10-27）: 階段革命・都落ち・ジョーカーに同じ効果 ──
+{
+  // 階段革命: 4枚以上の階段で革命。3枚の階段ではならない。設定でオフにできる
+  const five = ['S5', 'S6', 'S7', 'S8', 'S9'];
+  const a = E.play(state([five.concat(['C3']), ['C9']]), 0, five);
+  ok(a && a.rev && a.last.fx.includes('revolution'), '階段革命: 5枚の階段で革命');
+  const a4 = E.play(state([['S5', 'S6', 'S7', 'S8', 'C3'], ['C9']]), 0, ['S5', 'S6', 'S7', 'S8']);
+  ok(a4 && a4.rev, '階段革命: 4枚の階段でも革命');
+  const b = E.play(state([['S5', 'S6', 'S7', 'C3'], ['C9']]), 0, ['S5', 'S6', 'S7']);
+  ok(b && !b.rev, '階段革命: 3枚の階段では革命にならない');
+  const c = E.play(state([five.concat(['C3']), ['C9']], { rules: { stairsRevolution: false } }), 0, five);
+  ok(c && !c.rev, '階段革命: 設定でオフ');
+  const d = E.play(state([five.concat(['C3']), ['C9']], { rules: { revolution: false } }), 0, five);
+  ok(d && !d.rev, '階段革命: 革命がオフなら階段でも革命にならない');
+  const e = E.play(state([five.concat(['C3']), ['C9']], { rev: true }), 0, five);
+  ok(e && !e.rev && e.last.fx.includes('revolution-back'), '階段革命: 革命中は革命返し');
+  const jk = ['S5', 'S6', 'S7', 'X1'];
+  const f = E.play(state([jk.concat(['C3']), ['C9']]), 0, jk);
+  ok(f && f.rev, '階段革命: ジョーカー入りの4枚でも革命');
+
+  // ジョーカーに同じ効果: いっしょに出した数として数える
+  const R = E.normRules({ tenDiscard: true, elevenBack: true });
+  ok(E.analyze(['S10', 'X1'], R)[0].tens === 2, 'ジョーカー: 10＋ジョーカーは10が2枚');
+  ok(E.analyze(['S11', 'X1', 'X2'], R)[0].jacks === 3, 'ジョーカー: J＋ジョーカー2枚はJが3枚');
+  ok(E.analyze(['S8', 'X1'], R)[0].eight, 'ジョーカー: 8＋ジョーカーは8切り');
+  ok(!E.analyze(['X1'], R)[0].eight && E.analyze(['X1'], R)[0].tens === 0, 'ジョーカー: 1枚だけなら効果はない');
+  ok(!E.analyze(['S9', 'X1'], R)[0].eight && E.analyze(['S9', 'X1'], R)[0].tens === 0, 'ジョーカー: 9＋ジョーカーは9');
+  const st = E.analyze(['S6', 'S7', 'X1'], R);
+  ok(st.length === 2 && st.find((r) => r.low === 6).eight && !st.find((r) => r.low === 5).eight, 'ジョーカー: 階段の8の位置なら8切り');
+  const g = E.play(state([['S10', 'X1', 'C3', 'C4'], ['C9']], { rules: { tenDiscard: true } }), 0, ['S10', 'X1']);
+  ok(g && g.pending && g.pending.n === 2, 'ジョーカー: 10＋ジョーカーで2枚捨てられる');
+  const h = E.play(state([['S6', 'S7', 'X1', 'C3'], ['C9']]), 0, ['S6', 'S7', 'X1']);
+  ok(h && h.last.flow && h.turn === 0 && h.last.fx.includes('eight'), 'ジョーカー: 6・7・ジョーカーは 6・7・8 と読んで8切り');
+  const i = E.play(state([['S9', 'X1', 'C3'], ['C9']], { rules: { tenDiscard: true } }), 0, ['S9', 'X1']);
+  ok(i && !i.pending, 'ジョーカー: 9＋ジョーカーでは捨てられない');
+  const j = E.play(state([['S11', 'X1', 'C3'], ['C9']], { rules: { elevenBack: true } }), 0, ['S11', 'X1']);
+  ok(j && j.back, 'ジョーカー: J＋ジョーカーでイレブンバック');
+  const k = E.play(state([['X1', 'C3'], ['C9']], { rules: { tenDiscard: true, eightCut: true } }), 0, ['X1']);
+  ok(k && !k.pending && !k.last.flow, 'ジョーカー: 1枚だけ出しても10捨て・8切りにならない');
+
+  // ジョーカーだけで出すとき「何として出すか」（as）。強さは変わらず、効果だけつく
+  const AR = { eightCut: true, tenDiscard: true, elevenBack: true };
+  ok(JSON.stringify(E.asOptions(E.normRules(AR))) === '[8,10,11]' && E.asOptions(E.normRules({ tenDiscard: false })).join() === '8', 'as: 選べる数はオンのルールの分だけ');
+  const a10 = E.play(state([['X1', 'C3', 'C4'], ['C9']], { rules: AR }), 0, ['X1'], 10);
+  ok(a10 && a10.pending && a10.pending.n === 1 && a10.last.as === 10 && a10.field.play.as === 10, 'as: 10として出すと1枚捨てられる');
+  const a8 = E.play(state([['X1', 'C3'], ['C9']], { rules: AR }), 0, ['X1'], 8);
+  ok(a8 && a8.last.flow && a8.turn === 0 && a8.last.fx.includes('eight'), 'as: 8として出すと8切り');
+  const a11 = E.play(state([['X1', 'C3'], ['C9']], { rules: AR }), 0, ['X1'], 11);
+  ok(a11 && a11.back && !a11.last.flow, 'as: Jとして出すとイレブンバック');
+  const a0 = E.play(state([['X1', 'C3'], ['C9']], { rules: AR }), 0, ['X1']);
+  ok(a0 && !a0.pending && !a0.last.flow && !a0.back && a0.last.as === undefined, 'as: 選ばなければ効果なし');
+  const aOff = E.play(state([['X1', 'C3'], ['C9']], { rules: { tenDiscard: false } }), 0, ['X1'], 10);
+  ok(aOff && !aOff.pending && aOff.last.as === undefined, 'as: オフのルールの数は無視');
+  const aNat = E.play(state([['S9', 'C3'], ['C9']], { rules: AR }), 0, ['S9'], 10);
+  ok(aNat && !aNat.pending && aNat.last.as === undefined, 'as: ジョーカー以外では無視');
+  const a2 = E.play(state([['X1', 'X2', 'C3', 'C4', 'C5'], ['C9']], { rules: Object.assign({ jokers: 2 }, AR) }), 0, ['X1', 'X2'], 10);
+  ok(a2 && a2.pending && a2.pending.n === 2, 'as: ジョーカー2枚を10として出すと2枚捨てられる');
+  const aMv = E.apply(state([['X1', 'C3', 'C4'], ['C9']], { rules: AR }), 0, { kind: 'play', cards: ['X1'], as: 10 });
+  ok(aMv && aMv.pending && aMv.pending.n === 1, 'as: apply の手にも as を渡せる');
+  const aStr = E.play(state([['X1', 'C3'], ['C9']], { rules: AR, field: fieldOf(['S15'], 1) }), 0, ['X1'], 8);
+  ok(aStr && aStr.last.flow, 'as: 2の上にも出せて、8として8切り');
+  const aLast = E.play(state([['X1'], ['C9']], { rules: AR }), 0, ['X1'], 10);
+  ok(aLast && aLast.done[0] && !aLast.pending, 'as: 最後の1枚を10として出しても、捨てる手札がなければそのままあがり');
+
+  // 都落ち: 前回の大富豪（prev[0]）が1番にあがれなかったら、その場で抜けて最後
+  const M = { rules: { miyakoOchi: true }, prev: [2, 0, 1, 3] };
+  const m1 = E.play(state([['S5'], ['C9', 'C10'], ['D7', 'D8'], ['H4', 'H5']], M), 0, ['S5']);
+  ok(m1 && m1.done[2] && m1.fallen === 2 && m1.hands[2].length === 0 && m1.last.fx.includes('fallen'), '都落ち: 前回の大富豪が抜ける');
+  ok(m1 && !m1.over && m1.turn === 1, '都落ち: 4人なら続く。次の人の番');
+  ok(m1 && m1.places.length === 1, '都落ち: あがった順にはまだ入れない');
+  let m2 = E.play(m1, 1, ['C10']);
+  m2 = E.pass(m2, 3);
+  ok(m2 && m2.last.flow && m2.turn === 1, '都落ち: 抜けた人はパスの数に入らず、場が流れる');
+  m2 = E.play(m2, 1, ['C9']);
+  ok(m2 && m2.over && JSON.stringify(m2.places) === '[0,1,3,2]', '都落ち: 都落ちの人がいちばん最後', m2 && m2.places);
+  const m3 = E.play(state([['S5'], ['C9', 'C10'], ['D7', 'D8']], { rules: { miyakoOchi: true }, prev: [2, 0, 1] }), 0, ['S5']);
+  ok(m3 && m3.over && JSON.stringify(m3.places) === '[0,1,2]', '都落ち: 3人なら、そのままおしまい', m3 && m3.places);
+  const m4 = E.play(state([['S5'], ['C9', 'C10'], ['D7', 'D8']], { rules: { miyakoOchi: true }, prev: [0, 1, 2] }), 0, ['S5']);
+  ok(m4 && m4.fallen == null && !m4.done[1] && !m4.done[2], '都落ち: 前回の大富豪が1番なら何も起きない');
+  const m5 = E.play(state([['S5'], ['C9', 'C10'], ['D7', 'D8']], { rules: { miyakoOchi: false }, prev: [2, 0, 1] }), 0, ['S5']);
+  ok(m5 && m5.fallen == null && !m5.done[2], '都落ち: 設定がオフなら何も起きない');
+  const m6 = E.play(state([['S5'], ['C9', 'C10'], ['D7', 'D8']], { rules: { miyakoOchi: true } }), 0, ['S5']);
+  ok(m6 && m6.fallen == null && !m6.done[2], '都落ち: 前回のあがり順がなければ何も起きない');
+  // 反則あがりが先でも、本当の1番が出たときに都落ち
+  const m7a = E.play(state([['S15'], ['C9', 'C10'], ['D7', 'D8'], ['H11']], { rules: { miyakoOchi: true, forbiddenFinish: true }, prev: [2, 0, 1, 3] }), 0, ['S15']);
+  ok(m7a && m7a.fouls.includes(0) && m7a.fallen == null, '都落ち: 反則あがりでは起きない');
+  let m7b = E.pass(E.pass(E.pass(m7a, 1), 2), 3);
+  ok(m7b && m7b.turn === 1 && m7b.last.flow, '都落ち: 反則あがりのあと、場が流れて次の人から');
+  m7b = E.play(E.pass(E.play(m7b, 1, ['C9']), 2), 3, ['H11']);
+  ok(m7b && m7b.fallen === 2 && m7b.over && JSON.stringify(m7b.places) === '[3,1,0,2]', '都落ち: 反則あがりのあとの1番で都落ち。反則の人より後ろ', m7b && m7b.places);
+  // 10捨てで手札がなくなってあがったときも都落ち
+  const m8 = E.discard(E.play(state([['S10', 'C3'], ['C9', 'C10'], ['D7', 'D8']], { rules: { miyakoOchi: true, tenDiscard: true }, prev: [1, 0, 2] }), 0, ['S10']), 0, ['C3']);
+  ok(m8 && m8.fallen === 1 && m8.over, '都落ち: 10捨てであがったときも');
+
+  // 都落ちありで続けて40回（CPU同士）
+  let y = 9;
+  const r4 = () => { y = (y * 1103515245 + 12345) % 2147483648; return y / 2147483648; };
+  let prevPlaces = null;
+  let rounds = 0;
+  let fell = 0;
+  for (let kk = 0; kk < 40; kk += 1) {
+    const n = 3 + Math.floor(kk / 10); // 10回ずつ同じ人数（前回のあがり順が使われるように）
+    if (prevPlaces && prevPlaces.length !== n) prevPlaces = null;
+    let s = E.newGame(n, { miyakoOchi: true, exchange: kk % 2 === 0, tenDiscard: true, jokers: 2 }, r4, prevPlaces);
+    let steps = 0;
+    while (!s.over && steps < 3000) {
+      steps += 1;
+      const ex = s.exchange && s.exchange.pairs.find((pp) => !pp.down);
+      const p = ex ? ex.rich : s.pending ? s.pending.by : s.turn;
+      const ns = E.apply(s, p, E.cpuMove(s, p));
+      if (!ns) break;
+      s = ns;
+      if (!s.over && s.done[s.turn]) break;
+    }
+    if (!s.over || new Set(s.places).size !== n || s.places.length !== n) break;
+    if (s.fallen != null) { fell += 1; if (s.places[n - 1] !== s.fallen) break; }
+    rounds += 1;
+    prevPlaces = s.places;
+  }
+  ok(rounds === 40, '都落ちありで40回続けて最後までいく', rounds);
+  ok(fell > 0, '都落ちありの40回で、都落ちが起きた回がある', fell);
+}
+
 function playout(n, rules, seed, useCpu) {
   let x = seed;
   const rnd = () => { x = (x * 1103515245 + 12345) % 2147483648; return x / 2147483648; };

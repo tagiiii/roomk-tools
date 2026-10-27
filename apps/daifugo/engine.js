@@ -15,6 +15,7 @@
   // 設定（はじめの値）
   const DEFAULT_RULES = {
     revolution: true,       // 革命: 同じ数を4枚以上で、強さが逆になる
+    stairsRevolution: true, // 階段革命: 4枚以上の階段でも革命（革命と階段がオンのとき）
     eightCut: true,         // 8切り: 8を出すと場が流れて、もう一度出せる
     stairs: true,           // 階段: 同じマークで続いた数を3枚以上
     lock: false,            // しばり: 同じマークが続くと、流れるまでそのマークだけ
@@ -24,6 +25,7 @@
     forbiddenFinish: false, // 反則あがり: ジョーカー・いちばん強い数・8 では、あがれない
     jokers: 1,              // ジョーカーの枚数（0〜2）
     exchange: false,        // カード交換（2回目から。大貧民から出す）
+    miyakoOchi: false,      // 都落ち: 前回の大富豪が1番にあがれなかったら、その時点で大貧民（手札を捨てて抜ける）
   };
   const normRules = (r) => {
     const o = Object.assign({}, DEFAULT_RULES, r || {});
@@ -84,19 +86,19 @@
     if (!n) return [];
     const nat = cards.filter((c) => !isJoker(c));
     const k = n - nat.length;
-    const base = {
-      n, cards: cards.slice(), jokers: k,
-      suits: nat.map(suitOf).sort(),
-      eight: nat.some((c) => rankOf(c) === 8),
-      tens: nat.filter((c) => rankOf(c) === 10).length,
-      jacks: nat.filter((c) => rankOf(c) === 11).length,
-    };
-    // 同じ数（1枚・2枚以上）。ジョーカーはどの数にもなる
+    const base = { n, cards: cards.slice(), jokers: k, suits: nat.map(suitOf).sort() };
+    // 8切り・10捨て・イレブンバックの数え方。ジョーカーは、いっしょに出した数（階段ならその位置の数）として数える
+    const fxOf = (low, high, perCard) => ({
+      eight: low <= 8 && 8 <= high,
+      tens: low <= 10 && 10 <= high ? perCard : 0,
+      jacks: low <= 11 && 11 <= high ? perCard : 0,
+    });
+    // 同じ数（1枚・2枚以上）。ジョーカーはどの数にもなる（ジョーカーだけのときは数がないので、効果もない）
     const ranks = Array.from(new Set(nat.map(rankOf)));
     const out = [];
     if (ranks.length <= 1) {
       const rank = ranks.length ? ranks[0] : JOKER;
-      out.push(Object.assign({}, base, { type: n === 1 ? 'single' : 'group', rank, low: rank, high: rank }));
+      out.push(Object.assign({}, base, { type: n === 1 ? 'single' : 'group', rank, low: rank, high: rank }, fxOf(rank, rank, n)));
       // 1枚＋ジョーカー2枚は、階段としても読める（場が階段のときに返せるように）
       if (!(ranks.length === 1 && nat.length === 1 && n >= 3)) return out;
     }
@@ -113,7 +115,7 @@
       const low = lo - a;
       const high = hi + (extra - a);
       if (low < 3 || high > 15) continue;
-      out.push(Object.assign({}, base, { type: 'stairs', rank: low, low, high, suit: base.suits[0] }));
+      out.push(Object.assign({}, base, { type: 'stairs', rank: low, low, high, suit: base.suits[0] }, fxOf(low, high, 1)));
     }
     return out;
   }
@@ -134,6 +136,15 @@
     if (f.rank === JOKER) return 'weak';
     if (play.rank === JOKER) return '';
     return power(play.rank, dir) > power(f.rank, dir) ? '' : 'weak';
+  }
+
+  // ジョーカーだけで出すときに「何として出すか」を選べる数（オンのルールの分だけ）。8=8切り・10=10捨て・11=イレブンバック
+  function asOptions(rules) {
+    const out = [];
+    if (rules.eightCut) out.push(8);
+    if (rules.tenDiscard) out.push(10);
+    if (rules.elevenBack) out.push(11);
+    return out;
   }
 
   // 反則あがり: 最後の1手に入れられないカード
@@ -186,13 +197,24 @@
     if (foul) { s.fouls.push(p); s.last.fx.push('foul'); return; }
     s.places.push(p);
     s.last.fx.push('done');
+    // 都落ち: 1番にあがったのが前回の大富豪でなければ、前回の大富豪はその場で抜けて最後（大貧民）になる
+    if (s.places.length === 1 && s.rules.miyakoOchi && s.prev && s.fallen == null) {
+      const top = s.prev[0];
+      if (top !== p && !s.done[top]) {
+        s.done[top] = true;
+        s.fallen = top;
+        s.hands[top] = [];
+        s.last.fx.push('fallen');
+      }
+    }
   }
-  // のこりが1人になったらおしまい（その人が最後。反則あがりの人はそのあと）
+  // のこりが1人になったらおしまい（その人が最後。反則あがりの人はそのあと、都落ちの人はいちばん最後）
   function checkOver(s) {
     const act = s.done.map((d, i) => (d ? -1 : i)).filter((i) => i >= 0);
     if (act.length > 1) return false;
     if (act.length === 1) { s.done[act[0]] = true; s.places.push(act[0]); }
     s.places = s.places.concat(s.fouls);
+    if (s.fallen != null) s.places.push(s.fallen);
     clearField(s);
     s.over = true;
     s.turn = -1;
@@ -252,7 +274,7 @@
       passed: sorted.map(() => false),
       turn: first, field: null, rev: false, back: false, lock: null,
       pending: null, over: false, seq: 0,
-      prev: okPrev ? prev.slice() : null,
+      prev: okPrev ? prev.slice() : null, fallen: null,
       exchange, exchanged: null, exSeq: -1,
       last: { kind: 'start', by: first, cards: [], fx: [] },
     };
@@ -282,17 +304,26 @@
     return s;
   }
 
-  function play(s0, p, cards) {
+  // as: ジョーカーだけで出すときの「何として出すか」（asOptions の数。それ以外・ジョーカー以外のときは無視）。強さは変わらず、効果だけつく
+  function play(s0, p, cards, as) {
     const c = check(s0, p, cards);
     if (!c.ok) return null;
     const s = clone(s0);
-    const pl = c.play;
+    const pl = Object.assign({}, c.play);
     const prev = s.field && s.field.play;
     s.seq += 1;
     s.last = { kind: 'play', by: p, cards: cards.slice(), fx: [] };
+    if (pl.rank === JOKER && asOptions(s.rules).includes(as)) {
+      pl.as = as;
+      pl.eight = as === 8;
+      pl.tens = as === 10 ? pl.n : 0;
+      pl.jacks = as === 11 ? pl.n : 0;
+      s.last.as = as;
+    }
     s.hands[p] = removeCards(s.hands[p], cards);
 
-    if (s.rules.revolution && pl.type === 'group' && pl.n >= 4) { s.rev = !s.rev; s.last.fx.push(s.rev ? 'revolution' : 'revolution-back'); }
+    const revo = pl.n >= 4 && (pl.type === 'group' || s.rules.stairsRevolution);
+    if (s.rules.revolution && revo) { s.rev = !s.rev; s.last.fx.push(s.rev ? 'revolution' : 'revolution-back'); }
     if (s.rules.elevenBack && pl.jacks > 0 && !s.back) { s.back = true; s.last.fx.push('back'); }
     if (s.rules.lock && prev && !s.lock && !pl.jokers && !prev.jokers && pl.suits.join() === prev.suits.join()) {
       s.lock = pl.type === 'stairs' ? [pl.suit] : pl.suits.slice();
@@ -443,13 +474,13 @@
     if (mv.kind === 'pass') return pass(s, p);
     if (mv.kind === 'discard') return discard(s, p, mv.cards);
     if (mv.kind === 'give') return give(s, p, mv.cards);
-    return play(s, p, mv.cards);
+    return play(s, p, mv.cards, mv.as);
   }
 
   const api = {
     SUITS, SUIT_MARK, SUIT_NAME, JOKER, PLAYERS_MIN, PLAYERS_MAX, DEFAULT_RULES,
     normRules, isJoker, rankOf, suitOf, rankLabel, cardLabel, sortHand, makeDeck, dirOf, power,
-    analyze, check, newGame, play, discard, pass, give, legalPlays, cpuMove, apply, titleOf, exchangePairs,
+    analyze, check, newGame, play, discard, pass, give, legalPlays, cpuMove, apply, titleOf, exchangePairs, asOptions,
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.DaifugoEngine = api;

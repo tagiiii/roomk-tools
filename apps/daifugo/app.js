@@ -32,6 +32,7 @@ const DEFAULT_TIME = { limit: 30, onTimeout: 'pass' };
 const RULE_ITEMS = [
   ['stairs', '階段', '同じマークで続いた数を3枚以上まとめて出せる'],
   ['revolution', '革命', '同じ数を4枚出すと、強さが逆になる'],
+  ['stairsRevolution', '階段革命', '4枚以上の階段でも革命になる（革命と階段がオンのとき）'],
   ['eightCut', '8切り', '8を出すと場が流れて、続けて出せる'],
   ['elevenBack', 'イレブンバック', 'Jを出すと、場が流れるまで強さが逆になる'],
   ['tenDiscard', '10捨て', '10を出すと、出した枚数まで手札を捨てられる'],
@@ -39,6 +40,8 @@ const RULE_ITEMS = [
   ['spade3', 'スペ3返し', 'ジョーカー1枚には♠3で勝てる'],
   ['forbiddenFinish', 'ジョーカー・2・8ではあがれない', '最後の1手に入れられない。革命中は2のかわりに3、8は8切りがオンのときだけ'],
 ];
+// ジョーカーだけで出すときの「何として出すか」のボタン
+const AS_LABEL = { 8: '8として（8切り）', 10: '10として（捨てられる）', 11: 'Jとして（イレブンバック）' };
 const FX_SPLASH = { revolution: '革命！', 'revolution-back': '革命返し！', eight: '8切り！', back: 'イレブンバック！', spade3: 'スペ3返し！', lock: 'しばり！' };
 const REASON = {
   shape: (r) => (r.stairs ? '同じ数のカードか、同じマークで続いた3枚以上（階段）を選んでね' : '同じ数のカードを選んでね'),
@@ -328,7 +331,7 @@ function describe(room, G, g, cause) {
   const pre = cause === 'timeout' ? '時間切れ。' : '';
   const parts = [];
   if (L.kind === 'play') {
-    parts.push(pre + who + 'が ' + L.cards.map(E.cardLabel).join('・') + ' を出した');
+    parts.push(pre + who + 'が ' + L.cards.map(E.cardLabel).join('・') + ' を出した' + (L.as ? '（' + E.rankLabel(L.as) + 'として）' : ''));
     L.fx.forEach((f) => {
       if (f === 'revolution') parts.push('革命！ 強さが逆になった');
       else if (f === 'revolution-back') parts.push('革命返し！ 強さが元にもどった');
@@ -345,6 +348,7 @@ function describe(room, G, g, cause) {
   else if (L.kind === 'discard') parts.push(pre + (L.cards.length ? who + 'が ' + L.cards.length + '枚 捨てた' : who + 'は捨てなかった'));
   if (L.fx.includes('done')) parts.push(name(L.by) + 'があがり！（' + (g.places.indexOf(L.by) + 1) + '番）');
   if (L.fx.includes('foul')) parts.push(name(L.by) + 'は反則あがり（最後になる）');
+  if (L.fx.includes('fallen')) parts.push('都落ち！ 前回の大富豪の' + name(g.fallen) + 'は抜けて、最後になる');
   if (g.over) parts.push('おしまい！');
   else if (L.flow) parts.push('場が流れた。' + name(L.lead) + 'から');
   return parts.join('　');
@@ -436,7 +440,7 @@ function mySeatIn(room, G, uid) {
 }
 
 // 自分の操作（出す・パス・捨てる・返す）
-async function act(kind, cards) {
+async function act(kind, cards, as) {
   if (state.acting || !state.view?.game) return;
   state.acting = true;
   const seq = state.view.game.seq;
@@ -450,7 +454,7 @@ async function act(kind, cards) {
       if (kind !== 'give' && (kind === 'discard') !== !!g.pending) return false;
       const i = mySeatIn(room, G, uid);
       if (i < 0) return false;
-      const mv = kind === 'pass' ? { kind: 'pass' } : { kind, cards };
+      const mv = kind === 'pass' ? { kind: 'pass' } : as ? { kind, cards, as } : { kind, cards };
       if (!applyMove(room, G, i, mv, 'self', settings)) return false;
       const id = G.seats[i].id;
       G.auto[id] = false;
@@ -1241,9 +1245,13 @@ function rulesEditor(root, R) {
   fsJ.append(segment('rule-jokers', JOKER_OPTS, rules.jokers, (v) => setSettings((cur) => ({ rules: { ...cur.rules, jokers: v } }))));
 
   const fsC = el('fieldset', 'df-fieldset');
-  fsC.append(el('legend', 'df-legend', 'カード交換'));
-  fsC.append(checkRow('カード交換をする', '2回目から、前回の大貧民は強いカード2枚を大富豪へ、大富豪は好きなカード2枚を大貧民へわたす（4人以上は富豪と貧民も1枚）。大貧民から出す',
+  fsC.append(el('legend', 'df-legend', '2回目からのルール（前回と同じ人たちのとき）'));
+  const grid2 = el('div', 'df-checks');
+  grid2.append(checkRow('カード交換をする', '配ったあと、前回の大貧民は強いカード2枚を大富豪へ、大富豪は好きなカード2枚を大貧民へわたす（4人以上は富豪と貧民も1枚）。大貧民から出す',
     !!rules.exchange, (v) => setSettings((cur) => ({ rules: { ...cur.rules, exchange: v } })), 'exchange'));
+  grid2.append(checkRow('都落ち', '前回の大富豪がいちばんにあがれなかったら、その場で手札を捨てて抜け、大貧民になる',
+    !!rules.miyakoOchi, (v) => setSettings((cur) => ({ rules: { ...cur.rules, miyakoOchi: v } })), 'miyakoOchi'));
+  fsC.append(grid2);
 
   const fsT = el('fieldset', 'df-fieldset');
   fsT.append(el('legend', 'df-legend', '1回に考える時間'));
@@ -1272,6 +1280,7 @@ function rulesSummary(R) {
     ['使わない', off.length ? off.join('・') : 'なし'],
     ['ジョーカー', rules.jokers ? rules.jokers + '枚' : 'なし'],
     ['カード交換', rules.exchange ? 'あり（2回目から）' : 'なし'],
+    ['都落ち', rules.miyakoOchi ? 'あり（2回目から）' : 'なし'],
     ['考える時間', R.time.limit ? R.time.limit + '秒（時間切れは' + (R.time.onTimeout === 'cpu' ? 'CPUが代わりに出す' : 'パス') + '）' : 'なし'],
   ];
   return items.map(([k, v]) => {
@@ -1367,10 +1376,11 @@ function renderGame(R) {
     const place = g.places.indexOf(i);
     if (g.over) tags.append(el('span', 'df-tag df-tag--win', (place + 1) + '番'));
     else if (g.done[i] && g.fouls.includes(i)) tags.append(el('span', 'df-tag df-tag--warn', '反則あがり'));
+    else if (g.done[i] && g.fallen === i) tags.append(el('span', 'df-tag df-tag--warn', '都落ち'));
     else if (g.done[i] && place >= 0) tags.append(el('span', 'df-tag df-tag--win', (place + 1) + '番であがり'));
     else if (turn) tags.append(el('span', 'df-tag df-tag--turn', g.exchange ? '返すカードを選び中' : g.pending ? '捨てるカードを選び中' : '番'));
     else if (g.passed[i]) tags.append(el('span', 'df-tag df-tag--muted', 'パス'));
-    if (!g.over && g.rules.exchange && g.prev) tags.append(el('span', 'df-tag df-tag--rank', rankWord(g, i)));
+    if (!g.over && (g.rules.exchange || g.rules.miyakoOchi) && g.prev) tags.append(el('span', 'df-tag df-tag--rank', rankWord(g, i)));
     if (!g.over && p && p.away) tags.append(el('span', 'df-tag df-tag--warn', '通信が切れた・CPUが代わり'));
     else if (!g.over && p && p.auto) tags.append(el('span', 'df-tag df-tag--cpu', 'CPUが代わり'));
     box.append(top, tags);
@@ -1389,7 +1399,7 @@ function renderGame(R) {
   // 場
   if (g.field) {
     $('field').replaceChildren(...g.field.play.cards.map((c) => cardEl(c)));
-    $('fieldBy').textContent = seatName(R, g.field.by) + 'が出したカード';
+    $('fieldBy').textContent = seatName(R, g.field.by) + 'が出したカード' + (g.field.play.as ? '（' + E.rankLabel(g.field.play.as) + 'として）' : '');
   } else {
     $('field').replaceChildren(el('p', 'df-field__empty', '場は空いているよ'));
     $('fieldBy').textContent = '';
@@ -1437,6 +1447,7 @@ function renderGame(R) {
       li.append(el('span', 'df-result__place', (k + 1) + '番'), el('span', 'df-result__name', seatName(R, i) + (i === myIdx ? '（あなた）' : '')));
       li.append(el('span', 'df-tag df-tag--rank', E.titleOf(g.n, k)));
       if (g.fouls.includes(i)) li.append(el('span', 'df-tag df-tag--warn', '反則あがり'));
+      if (g.fallen === i) li.append(el('span', 'df-tag df-tag--warn', '都落ち'));
       return li;
     }));
     $('resultHost').hidden = !isHost;
@@ -1462,7 +1473,8 @@ function renderMine(R, g, myIdx, actor, dir) {
   $('mineDone').hidden = !done;
   if (done) {
     const place = g.places.indexOf(myIdx);
-    $('mineDone').textContent = g.fouls.includes(myIdx) ? '反則あがり。のこりの人を見ていてね' : (place + 1) + '番であがり！ のこりの人を見ていてね';
+    $('mineDone').textContent = g.fouls.includes(myIdx) ? '反則あがり。のこりの人を見ていてね'
+      : g.fallen === myIdx ? '都落ち。のこりの人を見ていてね' : (place + 1) + '番であがり！ のこりの人を見ていてね';
   }
   $('hand').hidden = done;
 
@@ -1511,6 +1523,7 @@ function renderMine(R, g, myIdx, actor, dir) {
   }));
 
   const discarding = myTurn && !!g.pending;
+  let asRow = [];
   $('actPlay').hidden = !myTurn || discarding || done;
   $('actDiscard').hidden = !discarding;
   $('actGive').hidden = !giving;
@@ -1520,10 +1533,16 @@ function renderMine(R, g, myIdx, actor, dir) {
     msg = state.sel.length === mp.k ? labels(state.sel) + ' を返すよ' : state.sel.length > mp.k ? mp.k + '枚にしてね' : 'あと' + (mp.k - state.sel.length) + '枚選んでね';
   } else if (myTurn && !discarding) {
     const chk = state.sel.length ? E.check(g, myIdx, state.sel) : null;
+    // ジョーカーだけを出すときは「何として出すか」を選ぶ（オンのルールの分だけ。手札がなくなるなら10捨ては出さない）
+    const asOpts = chk && chk.ok && state.sel.every(E.isJoker)
+      ? E.asOptions(g.rules).filter((r) => (r !== 10 || hand.length > state.sel.length) && (r !== 11 || !g.back)) : [];
+    asRow = asOpts;
     $('btnPlay').disabled = !(chk && chk.ok);
+    $('btnPlay').hidden = asOpts.length > 0;
     $('btnPass').disabled = !g.field;
     if (!state.sel.length) msg = g.field ? '出すカードを選んでね。出せないときはパス' : '出すカードを選んでね';
     else if (!chk.ok) msg = (REASON[chk.reason] || (() => ''))(g.rules, dir);
+    else if (asOpts.length) msg = 'ジョーカーを何として出す？（強さはいちばん強いまま）';
     else msg = labels(state.sel) + ' を出せるよ';
   } else if (discarding) {
     const over = state.sel.length > g.pending.n;
@@ -1531,6 +1550,14 @@ function renderMine(R, g, myIdx, actor, dir) {
     msg = over ? g.pending.n + '枚までだよ' : state.sel.length ? state.sel.length + '枚 捨てる' : '捨てるカードを選んでね（捨てなくてもいい）';
   } else if (!done && state.sel.length) msg = '選んでおけるよ。自分の番になったら出してね';
   $('selMsg').textContent = msg;
+  $('actAs').hidden = !asRow.length;
+  $('actAs').replaceChildren(...asRow.length ? [['そのまま', 0]].concat(asRow.map((r) => [AS_LABEL[r], r])).map(([label, r]) => {
+    const b = el('button', 'btn ' + (r ? 'btn-secondary' : 'btn-primary'), label);
+    b.type = 'button';
+    b.dataset.as = String(r);
+    b.addEventListener('click', () => act('play', state.sel.slice(), r || undefined));
+    return b;
+  }) : []);
   $('btnClear').hidden = !state.sel.length;
   $('btnClearGive').hidden = !state.sel.length;
 }

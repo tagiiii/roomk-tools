@@ -8,13 +8,13 @@
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
   <link rel="stylesheet" href="../shared/css/design-system.css">
   <!-- index.html と app.js・engine.js・style.css はセットで変わるので、変えたら ?v= をそろえて上げる -->
-  <link rel="stylesheet" href="style.css?v=20261025a">
+  <link rel="stylesheet" href="style.css?v=20261027a">
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <script src="../shared/js/rtdb-utils.js?v=20261005"></script>
   <script src="../shared/js/room-qr.js?v=20261022"></script>
-  <script src="engine.js?v=20261025b"></script>
+  <script src="engine.js?v=20261027a"></script>
 </head>
 <body>
   <div class="wrapper">
@@ -143,6 +143,7 @@
             <p class="df-mine__done" id="mineDone" hidden></p>
             <div class="df-hand" id="hand" aria-label="あなたの手札"></div>
             <p class="df-selmsg" id="selMsg" aria-live="polite"></p>
+            <div class="df-actions df-as" id="actAs" aria-label="ジョーカーを何として出すか" hidden></div>
             <div class="df-actions" id="actPlay" hidden>
               <button type="button" class="btn btn-primary btn-lg" id="btnPlay">出す</button>
               <button type="button" class="btn btn-secondary btn-lg" id="btnPass">パス</button>
@@ -190,7 +191,7 @@
     </main>
   </div>
   <div class="df-overlay" id="hostOffOverlay" hidden><div class="df-overlay__panel"><h2>ホストの戻りを待っています</h2><p id="hostOffText">しばらく待っても戻らないときは退出してね。</p><button type="button" class="btn btn-secondary" id="btnOverlayLeave">退出する</button></div></div>
-  <script type="module" src="app.js?v=20261025c"></script>
+  <script type="module" src="app.js?v=20261027a"></script>
   <script src="../shared/js/stats.js?v=1" defer></script>
   <script src="../shared/js/howto.js"></script>
   <script>
@@ -214,18 +215,21 @@
         { heading: 'ホストが選べるルール', items: [
           '階段: 同じマークで続いた数を3枚以上まとめて出せる',
           '革命: 同じ数を4枚出すと、強さが逆になる（3がいちばん強い）',
+          '階段革命: 4枚以上の階段でも革命になる',
           '8切り: 8を出すと場が流れて、続けて出せる',
           'イレブンバック: Jを出すと、場が流れるまで強さが逆になる',
           '10捨て: 10を出すと、出した枚数まで手札を捨てられる',
           'しばり: 同じマークが続くと、場が流れるまでそのマークしか出せない',
           'スペ3返し: ジョーカー1枚には♠3で勝てる',
           'ジョーカー・2・8ではあがれない: 最後の1手に入れられない（革命中は2のかわりに3）。のこり1枚がそのカードなら出せるが、順番は最後になる',
+          '8切り・10捨て・イレブンバックは、ジョーカーを8・10・Jといっしょに出したときも、その数として数える（10とジョーカーなら2枚捨てられる）',
+          'ジョーカーだけを出すときは、「そのまま」か「8として」「10として」「Jとして」を選ぶ（オンのルールの分だけ出る）。強さはいちばん強いままで、効果だけつく',
         ] },
         { heading: '呼び名', text: 'あがった順に、大富豪・富豪・平民・貧民・大貧民と呼ぶ（3人なら大富豪・平民・大貧民）。' },
-        { heading: 'カード交換（ホストがオンにしたとき）', items: [
-          '2回目から、配ったあとに前回の大貧民がいちばん強いカード2枚を大富豪へわたし、大富豪は好きなカード2枚を選んで「返す」',
-          '4人以上なら、富豪と貧民も1枚ずつとりかえる',
-          'カード交換があるときは、大貧民から出す',
+        { heading: '2回目からのルール（ホストがオンにしたとき）', items: [
+          'カード交換: 配ったあとに前回の大貧民がいちばん強いカード2枚を大富豪へわたし、大富豪は好きなカード2枚を選んで「返す」。4人以上なら、富豪と貧民も1枚ずつとりかえる。カード交換があるときは、大貧民から出す',
+          '都落ち: 前回の大富豪がいちばんにあがれなかったら、その場で手札を捨てて抜け、大貧民になる',
+          'どちらも、前回と同じ人たちであそぶときだけ',
         ] },
         { heading: '時間と、ぬけたとき', items: [
           '制限時間をすぎると、パスになる（ホストの設定で、CPUが代わりに出すこともできる）',

@@ -219,6 +219,8 @@
 .df-actions { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 10px; }
 .df-actions[hidden] { display: none; }
 .df-actions .btn { min-width: 120px; }
+.df-as { margin-bottom: 10px; }
+.df-as .btn { min-width: 0; }
 
 /* カード */
 .df-card {
