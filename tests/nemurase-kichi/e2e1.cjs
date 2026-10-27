@@ -110,6 +110,28 @@ const { E, check, sleep } = L;
   check('ねむらせ屋の一覧は「ふりをする場所」', (await L.text(g1, '#tasksTitle')).startsWith('ふりをする場所'));
   await L.shot(g1, '02-sleeper');
 
+  // ══ ひとこと（遊んでいる間） ══
+  check('おきている人に「ひとこと」ボタン', await L.visible(host, '#actSay') && await L.visible(g1, '#actSay'));
+  await host.page.click('#actSay');
+  check('一覧がひらく（遊んでいる間の10＋どちらでも3）', await L.waitFor(async () => (await L.visible(host, '#sayBox')) && (await host.page.$$('#sayChips .nk-word')).length === 13));
+  check('部屋の名前が入っている（はじめはひろば）', (await host.page.$eval('#sayChips .nk-word[data-say="here"]', (b) => b.textContent)) === 'ひろばにいるよ');
+  await host.page.click('#sayChips .nk-word[data-say="here"]');
+  for (const c of all) check('みんなの画面の上に「ホスト: ひろばにいるよ」 ' + c.label, await L.waitFor(async () => (await L.text(c, '#sayTicker')) === 'ホストひろばにいるよ'));
+  check('送ると一覧がとじる', await L.waitFor(async () => !(await L.visible(host, '#sayBox'))));
+  room = await L.roomOf(code);
+  check('game/say にひとり1枠（キー・部屋・番号1・会議0）', room.game.say && room.game.say['ホスト'] && room.game.say['ホスト'].k === 'here' && room.game.say['ホスト'].r === 'plaza' && room.game.say['ホスト'].n === 1 && room.game.say['ホスト'].m === 0, room.game.say);
+  await host.page.click('#actSay');
+  await host.page.click('#sayChips .nk-word[data-say="plaza"]');
+  check('5秒に1回まで（続けて送れない）', await L.waitToast(host, '5秒に1回まで') && (await L.roomOf(code)).game.say['ホスト'].n === 1);
+  await host.page.click('#btnSayClose');
+  await g2.page.keyboard.press('KeyT');
+  check('キー T で一覧がひらく', await L.waitFor(() => L.visible(g2, '#sayBox')));
+  await g2.page.keyboard.press('KeyT');
+  check('もう一度 T でとじる', await L.waitFor(async () => !(await L.visible(g2, '#sayBox'))));
+  await sleep(E.SAY_SHOW_MS + 800);
+  check('6秒たつと画面の上から消える', (await L.text(g3, '#sayTicker')) === '');
+  await L.shot(host, '02b-say');
+
   // ══ 歩く・位置の送り方 ══
   await sleep(800);
   const before = await L.me(host);
@@ -249,6 +271,24 @@ const { E, check, sleep } = L;
   await g2.page.keyboard.up('ArrowRight');
   check('会議の間は位置を送らない', g2.posSends.length === 0, g2.posSends.length);
   await L.shot(g2, '05-meeting');
+
+  // ══ ひとこと（会議中） ══
+  check('ねむった人に言葉のボタンは出ない', !(await L.visible(host, '#meetingChips')));
+  check('おきている人に言葉のボタン（会議の10＋どちらでも3）', (await g2.page.$$('#meetingChips .nk-word')).length === 13);
+  check('会議のはじめは流れが空', !(await L.visible(g2, '#meetingSays')));
+  await g2.page.click('#meetingChips .nk-word[data-say="crew"]');
+  for (const c of all) check('会議の流れに「みどり: 自分は隊員だよ」 ' + c.label, await L.waitFor(async () => (await L.text(c, '#meetingSays')) === 'みどり自分は隊員だよ'));
+  check('名前の下に最新の1件', await L.waitFor(async () => (await host.page.$eval('.nk-vote__row:has-text("みどり") .nk-vote__say', (n) => n.textContent)) === '「自分は隊員だよ」'));
+  await g2.page.click('#meetingChips .nk-word[data-say="ok"]');
+  check('会議中も5秒に1回まで', await L.waitToast(g2, '5秒に1回まで'));
+  await g3.page.click('#meetingChips .nk-word[data-say="with"]');
+  check('名前の入る言葉は「だれ？」で人を選ぶ（自分は出ない）', await L.waitFor(async () => (await L.visible(g3, '#meetingNames')) && (await g3.page.$$('#meetingNames .nk-word--name')).length === 3 && !(await L.text(g3, '#meetingNames')).includes('そら')));
+  await g3.page.click('#meetingNames .nk-word--name:has-text("あお")');
+  for (const c of all) check('流れに「そら: あおさんといっしょにいた」 ' + c.label, await L.waitFor(async () => (await L.text(c, '#meetingSays')).endsWith('そらあおさんといっしょにいた')));
+  check('人を選ぶ欄がとじる', await L.waitFor(async () => !(await L.visible(g3, '#meetingNames'))));
+  room = await L.roomOf(code);
+  check('会議のひとことは会議の番号つき・相手つき', room.game.say['そら'].m === 1 && room.game.say['そら'].t === 'あお' && room.game.say['みどり'].m === 1);
+  await L.shot(g3, '05b-meeting-say');
   const pick = async (c, name) => {
     await c.page.click('.nk-vote__main:has-text("' + name + '")');
     await c.page.click('.nk-vote__go');
@@ -289,6 +329,7 @@ const { E, check, sleep } = L;
   await g1.page.click('#actUse');
   check('会議ボタンで会議', await L.waitFor(() => L.visible(host, '#ovMeeting')));
   check('会議ボタンの理由', (await L.text(host, '#meetingWhy')).includes('会議ボタン'));
+  check('次の会議では前の流れが出ない', !(await L.visible(g1, '#meetingSays')) && !(await g1.page.$('.nk-vote__say')));
   await pick(g1, 'みどり');
   await pick(g2, 'あお');
   await g3.page.click('#btnVoteSkip');

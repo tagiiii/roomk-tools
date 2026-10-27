@@ -107,6 +107,16 @@ ok(roleIds(E.newGame(['a', 'b', 'c', 'd'], { sleepers: 2, pick: 1 }, fixed, ['a'
 { const g2 = E.newGame(['a', 'b', 'c', 'd'], { pick: 1 }, fixed, []); ok(roleIds(g2, 'sleeper').length === 1, '選んでいなければシャッフルで1人'); }
 { const g2 = E.newGame(['a', 'b', 'c', 'd', 'e', 'f', 'h'], { sleepers: 2, pick: 1 }, fixed, ['a']); const r = roleIds(g2, 'sleeper'); ok(r.length === 2 && r.includes('a'), '1人だけ選んだら、もう1人はシャッフル'); }
 { const g2 = E.newGame(['a', 'b', 'c', 'd'], { pick: 1 }, fixed, ['b']); ok(g2.players.join() === 'a,b,c,d' && Object.values(g2.tasks).every((t) => t.length === 4), '選んでも遊ぶ人の順と仕事の数は変わらない'); }
+// ひとこと（ボタンで知らせる）: 言葉の数・キーの重なりなし・{name} は会議だけ・置きかえ・場面ごとに送れる言葉
+ok(E.SAYS.play.length === 10 && E.SAYS.meeting.length === 10 && E.SAYS.common.length === 3, 'ひとことは 10・10・3');
+{ const keys = E.SAYS.play.concat(E.SAYS.meeting, E.SAYS.common).map((p) => p.k); ok(new Set(keys).size === keys.length, 'ひとことのキーが重ならない'); }
+ok(E.SAYS.play.every((p) => !p.t.includes('{name}')), '遊んでいる間の言葉に名前は入らない');
+ok(E.SAYS.common.every((p) => !p.t.includes('{name}') && !p.t.includes('{room}')), 'どちらでも使える言葉に名前・部屋は入らない');
+ok(E.sayText('here', '台所') === '台所にいるよ' && E.sayText('here', '') === '通路にいるよ', '部屋の名前が入る（通路のときは「通路」）');
+ok(E.sayText('with', '', 'あお') === 'あおさんといっしょにいた' && E.sayText('from', '畑') === '畑のほうから来た', '名前・部屋が入る');
+ok(E.sayText('nope') === '' && E.sayPhrase('nope') === null, '知らないキーは空');
+ok(E.sayAllowed('here', 'play') && !E.sayAllowed('here', 'meeting') && E.sayAllowed('with', 'meeting') && !E.sayAllowed('with', 'play') && E.sayAllowed('ok', 'play') && E.sayAllowed('ok', 'meeting'), '場面ごとに送れる言葉');
+ok(E.SAY_GAP_MS === 5000 && E.SAY_LOG_MAX === 8, '5秒に1回・流れは8件');
 // ランダム: 最後の人だけになる偏りがない（固定の乱数列で、だれでもねむらせ屋になれる）
 { const seen = new Set(); for (let k = 0; k < 40; k++) { let i = k; const rnd = () => { i = (i * 9301 + 49297) % 233280; return i / 233280; }; seen.add(roleIds(E.newGame(['a', 'b', 'c', 'd', 'e'], {}, rnd), 'sleeper')[0]); } ok(seen.size === 5, 'ランダムでは5人のだれでもねむらせ屋になる', [...seen]); }
 

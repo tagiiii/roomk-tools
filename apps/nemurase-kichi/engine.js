@@ -101,6 +101,53 @@
     buttons: [1, 2],
   };
 
+  // ── ひとこと（ボタンで知らせる）──
+  // 2026-10-27 子どもの意見「ゲーム内にチャットがほしい」→ 自由に文字を打つチャットは入れず、決まった言葉をボタンで送る（語はオーナー承認済み）。
+  // {room} は送る人のいる部屋の名前（通路なら「通路」）、{name} は会議で選んだ人の名前。play＝遊んでいる間、meeting＝会議中、common＝どちらでも
+  const SAYS = {
+    play: [
+      { k: 'here', t: '{room}にいるよ' },
+      { k: 'come', t: '{room}に来て' },
+      { k: 'plaza', t: 'ひろばに集まろう' },
+      { k: 'fixgo', t: '停電をなおしに行く' },
+      { k: 'power', t: '電気室に来て' },
+      { k: 'together', t: 'いっしょに行こう' },
+      { k: 'work', t: '仕事をしてくるね' },
+      { k: 'body', t: 'ねむっている人がいた！' },
+      { k: 'wait', t: 'まって〜' },
+      { k: 'hey', t: 'おーい！' },
+    ],
+    meeting: [
+      { k: 'with', t: '{name}さんといっしょにいた' },
+      { k: 'saw', t: '{name}さんが仕事をしていた' },
+      { k: 'vent', t: '{name}さんが近道に入った' },
+      { k: 'ran', t: '{name}さんが走って行った' },
+      { k: 'sus', t: '{name}さんがあやしいと思う' },
+      { k: 'crew', t: '自分は隊員だよ' },
+      { k: 'no', t: 'ちがうよ！' },
+      { k: 'from', t: '{room}のほうから来た' },
+      { k: 'dunno', t: 'わからない' },
+      { k: 'skip', t: 'スキップにしよう' },
+    ],
+    common: [
+      { k: 'ok', t: 'オッケー' },
+      { k: 'thanks', t: 'ありがとう' },
+      { k: 'sorry', t: 'ごめんね' },
+    ],
+  };
+  const SAY_GAP_MS = 5000;   // ひとり5秒に1回まで
+  const SAY_SHOW_MS = 6000;  // 遊んでいる間、画面の上に出しておく時間
+  const SAY_LOG_MAX = 8;     // 会議の画面に出す流れの数
+  const HALL_LABEL = '通路';
+  const sayPhrase = (key) => SAYS.play.concat(SAYS.meeting, SAYS.common).find((p) => p.k === key) || null;
+  // stage（'play'|'meeting'）で送れる言葉か
+  const sayAllowed = (key, stage) => (SAYS[stage] || []).concat(SAYS.common).some((p) => p.k === key);
+  function sayText(key, roomLabel, nameLabel) {
+    const p = sayPhrase(key);
+    if (!p) return '';
+    return p.t.replace('{room}', roomLabel || HALL_LABEL).replace('{name}', nameLabel || '');
+  }
+
   // ── マップ ──
   // grid[y][x]: 0＝かべ、1＝床
   function buildGrid() {
@@ -347,6 +394,7 @@
     GAME_LIMIT_S, MIN_PLAYERS, MAX_PLAYERS, TWO_SLEEPERS_MIN, DEFAULT_SETTINGS, SETTING_OPTS,
     isFloor, dist, roomAt, roomName, canStand, step, path, rayDist, canSee, viewPolygon, spawnPoint, encodePos, decodePos,
     shuffled, sleeperCount, newGame, isAwake, hasLeft, awakeOf, taskProgress, checkWin, tally,
+    SAYS, SAY_GAP_MS, SAY_SHOW_MS, SAY_LOG_MAX, HALL_LABEL, sayPhrase, sayAllowed, sayText,
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.NemuraseEngine = api;
