@@ -113,7 +113,7 @@ const { E, check, sleep } = L;
   // ══ ひとこと（遊んでいる間） ══
   check('おきている人に「ひとこと」ボタン', await L.visible(host, '#actSay') && await L.visible(g1, '#actSay'));
   await host.page.click('#actSay');
-  check('一覧がひらく（遊んでいる間の10＋どちらでも3）', await L.waitFor(async () => (await L.visible(host, '#sayBox')) && (await host.page.$$('#sayChips .nk-word')).length === 13));
+  check('一覧がひらく（遊んでいる間の12＋どちらでも3）', await L.waitFor(async () => (await L.visible(host, '#sayBox')) && (await host.page.$$('#sayChips .nk-word')).length === 15));
   check('部屋の名前が入っている（はじめはひろば）', (await host.page.$eval('#sayChips .nk-word[data-say="here"]', (b) => b.textContent)) === 'ひろばにいるよ');
   await host.page.click('#sayChips .nk-word[data-say="here"]');
   for (const c of all) check('みんなの画面の上に「ホスト: ひろばにいるよ」 ' + c.label, await L.waitFor(async () => (await L.text(c, '#sayTicker')) === 'ホストひろばにいるよ'));

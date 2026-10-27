@@ -108,7 +108,8 @@ ok(roleIds(E.newGame(['a', 'b', 'c', 'd'], { sleepers: 2, pick: 1 }, fixed, ['a'
 { const g2 = E.newGame(['a', 'b', 'c', 'd', 'e', 'f', 'h'], { sleepers: 2, pick: 1 }, fixed, ['a']); const r = roleIds(g2, 'sleeper'); ok(r.length === 2 && r.includes('a'), '1人だけ選んだら、もう1人はシャッフル'); }
 { const g2 = E.newGame(['a', 'b', 'c', 'd'], { pick: 1 }, fixed, ['b']); ok(g2.players.join() === 'a,b,c,d' && Object.values(g2.tasks).every((t) => t.length === 4), '選んでも遊ぶ人の順と仕事の数は変わらない'); }
 // ひとこと（ボタンで知らせる）: 言葉の数・キーの重なりなし・{name} は会議だけ・置きかえ・場面ごとに送れる言葉
-ok(E.SAYS.play.length === 10 && E.SAYS.meeting.length === 10 && E.SAYS.common.length === 3, 'ひとことは 10・10・3');
+ok(E.SAYS.play.length === 12 && E.SAYS.meeting.length === 10 && E.SAYS.common.length === 3, 'ひとことは 12・10・3');
+ok(E.sayText('done1') === '仕事がひとつおわったよ' && E.sayText('doneall') === '仕事がぜんぶおわったよ' && E.sayAllowed('done1', 'play') && !E.sayAllowed('done1', 'meeting'), '仕事がおわった の2つは遊んでいる間の言葉');
 { const keys = E.SAYS.play.concat(E.SAYS.meeting, E.SAYS.common).map((p) => p.k); ok(new Set(keys).size === keys.length, 'ひとことのキーが重ならない'); }
 ok(E.SAYS.play.every((p) => !p.t.includes('{name}')), '遊んでいる間の言葉に名前は入らない');
 ok(E.SAYS.common.every((p) => !p.t.includes('{name}') && !p.t.includes('{room}')), 'どちらでも使える言葉に名前・部屋は入らない');
