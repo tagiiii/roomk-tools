@@ -97,21 +97,29 @@ const { E, check, sleep } = L;
   for (const c of all) check('役のお知らせ ' + c.label, await L.waitFor(() => L.visible(c, '#ovRole')));
   check('start・players-4 を1回', await L.waitStats(host, 'start', 1) && await L.waitStats(host, 'players-4', 1));
   let room = await L.roomOf(code);
-  check('ねむらせ屋は1人・ひとり4つの仕事', Object.values(room.game.roles).filter((r) => r === 'sleeper').length === 1 && Object.values(room.game.tasks).every((t) => t.length === 4));
+  check('ねむらせ屋は1人・ひとり4つの仕事（隊員はふたりの仕事を足して5）', Object.values(room.game.roles).filter((r) => r === 'sleeper').length === 1 && Object.keys(room.game.tasks).every((id) => room.game.tasks[id].length === (room.game.roles[id] === 'crew' ? 5 : 4)));
+  check('はじめは会議ボタンに待ち時間', room.game.buttonReadyAt > Date.now() + 10000, room.game.buttonReadyAt - Date.now());
   check('選んだ「そら」がねむらせ屋', room.game.roles['そら'] === 'sleeper');
   check('はじめると選んだ人は空にもどる', await host.page.evaluate(() => window.__NK__.state.picks.length === 0));
   check('のこり時間が15分', /^のこり 1[45]:\d\d$/.test(await L.text(host, '#hudTime')), await L.text(host, '#hudTime'));
   for (const c of all) await L.dismissRole(c);
   // テスト用に役を決める: あお＝ねむらせ屋
   const roles = { 'ホスト': 'crew', 'あお': 'sleeper', 'みどり': 'crew', 'そら': 'crew' };
-  await L.patchGame(code, { roles, cooldown: { 'あお': 1 }, darkReadyAt: 1 });
+  await L.patchGame(code, { roles, cooldown: { 'あお': 1 }, darkReadyAt: 1, buttonReadyAt: 1 });
   check('役の表示が変わる', await L.waitFor(async () => (await L.text(g1, '#hudRole')) === 'ねむらせ屋' && (await L.text(host, '#hudRole')) === '隊員'));
   check('ねむらせ屋にだけ、ねむらせる・停電', await L.waitFor(() => L.visible(g1, '#actSleep')) && !(await L.visible(g2, '#actSleep')));
   check('ねむらせ屋の一覧は「ふりをする場所」', (await L.text(g1, '#tasksTitle')).startsWith('ふりをする場所'));
   await L.shot(g1, '02-sleeper');
 
-  // ══ ひとこと（遊んでいる間） ══
+  // ══ ひとこと（遊んでいる間＝近くの人にだけ届く ささやき） ══
   check('おきている人に「ひとこと」ボタン', await L.visible(host, '#actSay') && await L.visible(g1, '#actSay'));
+  check('声の約束の帯（いまはミュート）', (await L.text(host, '#hudMuteText')).includes('ミュート') && !(await host.page.$eval('#hudMute', (n) => n.classList.contains('is-talk'))));
+  // みんなをホストの近く（見える広さの中）へ
+  const hp = await L.me(host);
+  await L.teleport(g1, hp.x + 1, hp.y);
+  await L.teleport(g2, hp.x - 1, hp.y);
+  await L.teleport(g3, hp.x, hp.y + 1);
+  await sleep(300);
   await host.page.click('#actSay');
   check('一覧がひらく（遊んでいる間の14＋どちらでも4）', await L.waitFor(async () => (await L.visible(host, '#sayBox')) && (await host.page.$$('#sayChips .nk-word')).length === 18));
   check('「そうだよ」がある', (await host.page.$eval('#sayChips .nk-word[data-say="yes"]', (b) => b.textContent)) === 'そうだよ');
@@ -121,7 +129,17 @@ const { E, check, sleep } = L;
   for (const c of all) check('みんなの画面の上に「ホスト: ひろばにいるよ」 ' + c.label, await L.waitFor(async () => (await L.text(c, '#sayTicker')) === 'ホストひろばにいるよ'));
   check('送ると一覧がとじる', await L.waitFor(async () => !(await L.visible(host, '#sayBox'))));
   room = await L.roomOf(code);
-  check('game/say にひとり1枠（キー・部屋・番号1・会議0）', room.game.say && room.game.say['ホスト'] && room.game.say['ホスト'].k === 'here' && room.game.say['ホスト'].r === 'plaza' && room.game.say['ホスト'].n === 1 && room.game.say['ホスト'].m === 0, room.game.say);
+  check('game/say にひとり1枠（キー・部屋・番号1・会議0・位置つき）', room.game.say && room.game.say['ホスト'] && room.game.say['ホスト'].k === 'here' && room.game.say['ホスト'].r === 'plaza' && room.game.say['ホスト'].n === 1 && room.game.say['ホスト'].m === 0 && Math.abs(room.game.say['ホスト'].x - hp.x) < 0.2, room.game.say);
+  // 遠くの人には届かない（ささやき）: そらを台所へ
+  await L.teleport(g3, 4.5, 5.5);
+  await sleep(300);
+  await g2.page.click('#actSay');
+  await g2.page.click('#sayChips .nk-word[data-say="hey"]');
+  for (const c of [host, g1]) check('近くの人には届く「みどり: おーい！」 ' + c.label, await L.waitFor(async () => (await L.text(c, '#sayTicker')).includes('みどりおーい！')));
+  await sleep(1200);
+  check('遠くの人（台所）には届かない', !(await L.text(g3, '#sayTicker')).includes('おーい'));
+  await L.teleport(g3, hp.x, hp.y + 1);
+  await sleep(300);
   await host.page.click('#actSay');
   await host.page.click('#sayChips .nk-word[data-say="plaza"]');
   check('5秒に1回まで（続けて送れない）', await L.waitToast(host, '5秒に1回まで') && (await L.roomOf(code)).game.say['ホスト'].n === 1);
@@ -259,7 +277,8 @@ const { E, check, sleep } = L;
   check('ねむらせ屋もはしごを使える', await L.waitFor(async () => (await L.text(g1, '#actUseLabel')) === 'はしごをおりる'));
 
   // ══ 停電となおす ══
-  await g1.page.click('#actDark');
+  await g1.page.click('#actSab');
+  await g1.page.click('#sabDark');
   check('停電がみんなに出る', await L.waitFor(() => L.visible(host, '#hudDark')));
   await L.teleport(g3, E.FIX_SPOT.x, E.FIX_SPOT.y + 0.6);
   check('スイッチの前で「電気をなおす」', await L.waitFor(async () => (await L.text(g3, '#actUseLabel')) === '電気をなおす'));
@@ -396,10 +415,12 @@ const { E, check, sleep } = L;
   for (const c of all) { await L.waitScreen(c, 'game'); await L.dismissRole(c); }
   await L.patchGame(code, { roles: { 'ホスト': 'crew', 'あお': 'crew', 'みどり': 'crew', 'そら': 'sleeper' }, cooldown: { 'そら': 1 } });
   check('2回目の役', await L.waitFor(async () => (await L.text(g3, '#hudRole')) === 'ねむらせ屋'));
-  // 会議ボタン
+  // 会議ボタン（はじめは待ち時間で押せない）
   const t0 = E.spawnPoint(1, 4);
   await L.teleport(g1, t0.x, t0.y);
-  check('テーブルの近くで会議ボタン', await L.waitFor(async () => (await L.text(g1, '#actUseLabel')).startsWith('会議ボタン')));
+  check('はじめの20秒は会議ボタンが押せない（あとN秒で押せる）', await L.waitFor(async () => /^会議ボタン（あと\d+秒で押せる）$/.test(await L.text(g1, '#actUseLabel')) && (await g1.page.$eval('#actUse', (b) => b.disabled))), await L.text(g1, '#actUseLabel'));
+  await L.patchGame(code, { buttonReadyAt: 1 });
+  check('テーブルの近くで会議ボタン', await L.waitFor(async () => (await L.text(g1, '#actUseLabel')).startsWith('会議ボタン（あと1回）')));
   await g1.page.click('#actUse');
   check('会議ボタンで会議', await L.waitFor(() => L.visible(host, '#ovMeeting')));
   check('会議ボタンの理由', (await L.text(host, '#meetingWhy')).includes('会議ボタン'));
@@ -411,6 +432,8 @@ const { E, check, sleep } = L;
   check('同じ数の票でも結果', await L.waitFor(() => L.visible(g1, '#ovResult')));
   check('同じ数ならだれもねむらない', (await L.text(g1, '#resultMain')) === 'だれもねむらなかった');
   check('結果のあとゲームにもどる', await L.waitFor(async () => !(await L.visible(g1, '#ovResult')), 9000));
+  check('会議のあとも会議ボタンに待ち時間', (await L.roomOf(code)).game.buttonReadyAt > Date.now() + 10000);
+  await L.patchGame(code, { buttonReadyAt: 1 });
   check('会議ボタンは1回まで', await L.waitFor(async () => (await L.text(g1, '#actUseLabel')).startsWith('会議ボタン（あと0回）')));
   // ねむらせ屋の勝ち
   await L.patchGame(code, { cooldown: { 'そら': 1 } });

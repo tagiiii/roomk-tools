@@ -8,16 +8,16 @@
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
   <link rel="stylesheet" href="../shared/css/design-system.css">
   <!-- index.html と app.js・engine.js・minigames.js・style.css はセットで変わるので、変えたら ?v= をそろえて上げる -->
-  <link rel="stylesheet" href="style.css?v=20261028a">
+  <link rel="stylesheet" href="style.css?v=20261028b">
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <script src="../shared/js/rtdb-utils.js?v=20261005"></script>
   <script src="../shared/js/room-qr.js?v=20261022"></script>
   <!-- ねむらせ基地だけ、本体と別の Firebase プロジェクトにつなぐ（firebase-config.js） -->
-  <script src="firebase-config.js?v=20261028a"></script>
-  <script src="engine.js?v=20261028a"></script>
-  <script src="minigames.js?v=20261028a"></script>
+  <script src="firebase-config.js?v=20261028b"></script>
+  <script src="engine.js?v=20261028b"></script>
+  <script src="minigames.js?v=20261028b"></script>
 </head>
 <body>
 
@@ -112,15 +112,20 @@
         <span class="nk-role" id="hudRole"></span>
       </div>
       <p class="nk-hud__time" id="hudTime" aria-label="のこり時間"></p>
-      <div class="nk-progress" aria-label="みんなの仕事">
+      <div class="nk-progress" id="hudGauge" aria-label="みんなの仕事">
         <span class="nk-progress__label">みんなの仕事</span>
         <span class="nk-progress__bar"><span class="nk-progress__fill" id="hudProgress"></span></span>
         <span class="nk-progress__num" id="hudProgressNum"></span>
       </div>
       <p class="nk-hud__dark" id="hudDark" hidden><span class="material-symbols-rounded" aria-hidden="true">lightbulb</span>停電中！ 電気室のスイッチでなおせる</p>
+      <p class="nk-hud__air" id="hudAir" hidden><span class="material-symbols-rounded" aria-hidden="true">air</span><span id="hudAirText"></span></p>
+      <button type="button" class="nk-hud__menu" id="btnMap" aria-label="地図（M）" title="地図" hidden>
+        <span class="material-symbols-rounded" aria-hidden="true">map</span>
+      </button>
       <button type="button" class="nk-hud__menu" id="btnMenu" aria-label="メニュー">
         <span class="material-symbols-rounded" aria-hidden="true">menu</span>
       </button>
+      <p class="nk-mute" id="hudMute" role="status" hidden><span class="material-symbols-rounded" aria-hidden="true" id="hudMuteIcon">mic_off</span><span id="hudMuteText"></span></p>
     </header>
 
     <div class="nk-stage" id="stage">
@@ -142,12 +147,38 @@
       <!-- ひとこと（ボタンで知らせる）の一覧 -->
       <div class="nk-say" id="sayBox" hidden>
         <div class="nk-say__head">
-          <p class="nk-say__title">ひとこと</p>
+          <p class="nk-say__title">ひとこと<span class="nk-say__sub">近くの人にだけ届く</span></p>
           <button type="button" class="nk-iconbtn" id="btnSayClose" aria-label="とじる"><span class="material-symbols-rounded" aria-hidden="true">close</span></button>
         </div>
         <!-- 名前の入る言葉を押したあとの「だれ？」（一覧が長いので、上に出す） -->
         <div class="nk-words nk-words--names nk-words--top" id="sayNames" hidden></div>
         <div class="nk-words" id="sayChips"></div>
+      </div>
+
+      <!-- ねむらせ屋の「しかけ」（停電・空気・ドア） -->
+      <div class="nk-say nk-sab" id="sabBox" hidden>
+        <div class="nk-say__head">
+          <p class="nk-say__title">しかけ</p>
+          <button type="button" class="nk-iconbtn" id="btnSabClose" aria-label="とじる"><span class="material-symbols-rounded" aria-hidden="true">close</span></button>
+        </div>
+        <div class="nk-sab__list">
+          <button type="button" class="nk-sab__item" id="sabDark">
+            <span class="material-symbols-rounded" aria-hidden="true">flashlight_off</span>
+            <span class="nk-sab__text"><span class="nk-sab__name">停電</span><span class="nk-sab__desc">隊員の見える広さがせまくなる。電気室のスイッチでなおされる</span></span>
+            <span class="nk-sab__note" id="sabDarkNote"></span>
+          </button>
+          <button type="button" class="nk-sab__item" id="sabAir">
+            <span class="material-symbols-rounded" aria-hidden="true">air</span>
+            <span class="nk-sab__text"><span class="nk-sab__name">空気を止める</span><span class="nk-sab__desc">60秒のうちに、台所と倉庫のパネルを両方なおされなければ勝ち。会議ボタンは押せなくなる</span></span>
+            <span class="nk-sab__note" id="sabAirNote"></span>
+          </button>
+          <button type="button" class="nk-sab__item" id="sabDoor" aria-expanded="false" aria-controls="sabRooms">
+            <span class="material-symbols-rounded" aria-hidden="true">door_front</span>
+            <span class="nk-sab__text"><span class="nk-sab__name">ドアをしめる</span><span class="nk-sab__desc">選んだ部屋の入口が10秒とじる（だれも通れない）</span></span>
+            <span class="nk-sab__note" id="sabDoorNote"></span>
+          </button>
+          <div class="nk-words nk-words--names" id="sabRooms" hidden></div>
+        </div>
       </div>
 
       <div class="nk-pad" id="pad" aria-hidden="true"><span class="nk-pad__knob" id="padKnob"></span></div>
@@ -156,8 +187,8 @@
         <button type="button" class="nk-act nk-act--sleep" id="actSleep" hidden>
           <span class="material-symbols-rounded" aria-hidden="true">bedtime</span><span class="nk-act__label">ねむらせる</span><span class="nk-act__cd" id="actSleepCd"></span>
         </button>
-        <button type="button" class="nk-act nk-act--dark" id="actDark" hidden>
-          <span class="material-symbols-rounded" aria-hidden="true">flashlight_off</span><span class="nk-act__label">停電</span><span class="nk-act__cd" id="actDarkCd"></span>
+        <button type="button" class="nk-act nk-act--dark" id="actSab" hidden aria-expanded="false" aria-controls="sabBox">
+          <span class="material-symbols-rounded" aria-hidden="true">build</span><span class="nk-act__label">しかけ</span>
         </button>
         <button type="button" class="nk-act nk-act--say" id="actSay" hidden aria-expanded="false" aria-controls="sayBox">
           <span class="material-symbols-rounded" aria-hidden="true">chat_bubble</span><span class="nk-act__label">ひとこと</span>
@@ -169,7 +200,7 @@
           <span class="material-symbols-rounded" aria-hidden="true">pan_tool</span><span class="nk-act__label" id="actUseLabel">つかう</span>
         </button>
       </div>
-      <p class="nk-keys" id="keyHint">うごく: 矢印キー / WASD　つかう: スペース　ひとこと: T　見つけた: R　ねむらせる: Q　停電: F</p>
+      <p class="nk-keys" id="keyHint">うごく: 矢印キー / WASD　つかう: スペース　地図: M　ひとこと: T　見つけた: R　ねむらせる: Q　しかけ: F</p>
     </div>
   </section>
 
@@ -206,6 +237,18 @@
     </div>
   </div>
 
+  <!-- 地図（自分の位置と自分の仕事だけ） -->
+  <div class="nk-overlay" id="ovMap" hidden>
+    <div class="nk-overlay__card nk-mapcard">
+      <div class="nk-game__head">
+        <h2 class="nk-game__title"><span class="material-symbols-rounded" aria-hidden="true">map</span>地図</h2>
+        <button type="button" class="nk-iconbtn" id="btnMapClose" aria-label="とじる"><span class="material-symbols-rounded" aria-hidden="true">close</span></button>
+      </div>
+      <p class="nk-cam__note">自分の場所と、自分の仕事の「!」が出る。ほかの人は出ない。見ている間は動けない。</p>
+      <canvas class="nk-mapcard__view" id="mapView" aria-label="基地の地図"></canvas>
+    </div>
+  </div>
+
   <!-- 会議 -->
   <div class="nk-overlay" id="ovMeeting" hidden>
     <div class="nk-overlay__card nk-meeting">
@@ -213,6 +256,8 @@
         <h2 class="nk-meeting__title"><span class="material-symbols-rounded" aria-hidden="true">forum</span>会議</h2>
         <p class="nk-meeting__timer" id="meetingTimer"></p>
       </div>
+      <div class="nk-meeting__bar" aria-hidden="true"><span class="nk-meeting__barfill" id="meetingBar"></span></div>
+      <p class="nk-meeting__talk"><span class="material-symbols-rounded" aria-hidden="true">mic</span>会議の時間。ミュートを外して話そう</p>
       <p class="nk-meeting__why" id="meetingWhy"></p>
       <p class="nk-meeting__how" id="meetingHow"></p>
       <ul class="nk-vote" id="meetingPeople"></ul>
@@ -269,7 +314,7 @@
     </div>
   </div>
 
-  <script type="module" src="app.js?v=20261028a"></script>
+  <script type="module" src="app.js?v=20261028b"></script>
   <script src="../shared/js/stats.js?v=1" defer></script>
   <script src="../shared/js/howto.js"></script>
   <script>
@@ -282,24 +327,28 @@
           'ホストが「ルームを作る」で名前を入れる。ルームコードは「コードをコピー」、参加用のリンクは「リンクをコピー」でチャットに送れる。スマホやタブレットで入る人には「QRコードを出す」をカメラで読みとってもらう',
           '参加する人は「ルームに参加する」で名前、ルームコード（6文字）の順に入れ、「参加する」を押す。リンクからひらいたときは、ルームコードは入っているので名前だけ入れる',
           'はじまると、自分が「隊員」か「ねむらせ屋」かが出る。ほかの人には言わないでね',
-          '「ひとこと」ボタン（キーは T）で、決まった言葉をみんなの画面に出せる。歩いている間も会議中も使える。名前の入る言葉は「だれ？」で人を選ぶ。5秒に1回まで',
+          '声は会議の時間だけ。歩いている間はミュートにして、「ひとこと」ボタン（キーは T）で決まった言葉を送る。歩いている間のひとことは近くの人にだけ届く（ささやき）。会議中はみんなに届く。名前の入る言葉は「だれ？」で人を選ぶ。5秒に1回まで',
+          '「地図」ボタン（キーは M）で、基地ぜんたいと自分の場所、自分の仕事の「!」が見られる。ほかの人は出ない',
         ] },
         { heading: '隊員', items: [
           '矢印キー（スマホは左下のスティック）で歩く。黄色い「!」の場所で「仕事をする」を押すと、短いミニゲームが出る',
-          'かべの向こうは見えない。入口が1つの行き止まりの部屋（道具室・温室）もあるよ',
+          'かべや家具の向こうは見えない。入口が1つの行き止まりの部屋（道具室・温室）もあるよ',
+          '「ふたりの仕事」は、離れた2つの部屋のスイッチを、だれかと同時におすとおわる。片方で「スイッチをおす」を押して待ち、もう片方をだれかがおせばできる',
           '通信室と見はり台をつなぐ「はしご」はだれでも使える（のぼる・おりるのに少し時間がかかる）。通信室の台で「カメラを見る」と、通路の4か所が映る。見ている間は動けず、だれかが見ているとカメラの赤いランプが光る。停電中は映らない',
           '停電したら、電気室のスイッチで「電気をなおす」。スイッチを順に入れなおすミニゲームをおえると直る',
+          '「空気が止まった！」と出たら、60秒のうちに台所と倉庫のパネルを両方なおす。間に合わないと、ねむらせ屋の勝ち。ふたり以上で手分けしよう',
+          'ねむらされても、仕事はつづけられる。かべを通りぬけて歩ける。だれにねむらされたかは自分の画面にだけ出るので、ないしょにしてね',
           'みんなの仕事がぜんぶおわったら勝ち',
-          'ねむっている人を見つけたら「見つけた！」。ひろばのテーブルでは「会議ボタン」も押せる',
+          'ねむっている人を見つけたら「見つけた！」。ひろばのテーブルでは「会議ボタン」も押せる（はじめと会議のあと20秒は押せない。空気が止まっている間も押せない）',
         ] },
         { heading: 'ねむらせ屋', items: [
-          '近くの隊員を「ねむらせる」。「停電」で、隊員の見える広さをせまくできる',
+          '近くの隊員を「ねむらせる」。「しかけ」（キーは F）で、停電・空気を止める・ドアをしめる（選んだ部屋の入口が10秒とじる）が使える',
           'ねむらせ屋だけが使える「近道」（床のまるいふた）がある。上に立って「近道を使う」を押すと、つながった部屋の近道へ移れる',
           'おきている隊員が、ねむらせ屋と同じ数になったら勝ち',
         ] },
         { heading: '会議とおわりかた', items: [
           '話し合って、ねむらせ屋だと思う人に投票する。わからなければ「スキップする」',
-          'いちばん多く票が入った人はねむる。ねむっても、仕事はつづけられるよ',
+          'いちばん多く票が入った人はねむる。ねむっても、仕事はつづけられるよ。時間切れのとき、まだ投票していない人はスキップとして数える',
           '15分たったら「時間切れ」で引き分け',
         ] },
       ],

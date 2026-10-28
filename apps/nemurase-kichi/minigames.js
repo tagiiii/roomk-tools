@@ -82,11 +82,10 @@
     box.appendChild(wrap);
   }
 
-  // 番号を順に押す: 1 から 8 まで
-  function order(box, done) {
-    const N = 8;
+  // 番号を順に押す: 1 から N まで（ふだんは 8。空気のパネルは 4 で短く）
+  function orderN(box, done, N) {
     let next = 1;
-    const how = el('p', 'nk-game__how', '1 から 8 まで、順番に押そう。');
+    const how = el('p', 'nk-game__how', '1 から ' + N + ' まで、順番に押そう。');
     const grid = el('div', 'nk-order');
     shuffle(Array.from({ length: N }, (_, i) => i + 1)).forEach((n) => {
       const b = el('button', 'nk-order__btn', String(n));
@@ -102,6 +101,8 @@
     });
     box.append(how, grid);
   }
+  const order = (box, done) => orderN(box, done, 8);
+  const order4 = (box, done) => orderN(box, done, 4);
 
   // メーターを合わせる: つまみを動かして、目印に合わせる（合ったまま少し待つとおわる）
   function meter(box, done) {
@@ -143,7 +144,7 @@
     update();
   }
 
-  const KINDS = { wire, order, meter };
+  const KINDS = { wire, order, order4, meter };
 
   function open(box, kind, onDone) {
     box.textContent = '';

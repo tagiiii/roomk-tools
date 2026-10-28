@@ -62,8 +62,9 @@ const { E, check, sleep } = L;
 
   // ══ 会議と、進行役のしめきり ══
   const t0 = E.spawnPoint(0, 4);
+  await L.patchGame(code, { buttonReadyAt: 1 });
   await L.teleport(g1, t0.x, t0.y);
-  await L.waitFor(async () => (await L.text(g1, '#actUseLabel')).startsWith('会議ボタン'));
+  await L.waitFor(async () => (await L.text(g1, '#actUseLabel')).startsWith('会議ボタン（あと'));
   await g1.page.click('#actUse');
   check('進行役にも会議', await L.waitFor(() => L.visible(host, '#ovMeeting')));
   check('進行役は投票しない', (await L.text(host, '#meetingHow')).includes('進行役は投票しない'));
@@ -98,7 +99,7 @@ const { E, check, sleep } = L;
   check('みんなの仕事のバーの数も変わる', await L.waitFor(async () => (await L.text(g1, '#hudProgressNum')).endsWith('/ ' + E.taskProgress(gAfter).total)));
   check('抜けた人は、おきている人に数えない', !E.awakeOf(gAfter).includes('みどり'));
   // ロボットのねむらせ屋は、会議のあとに待ち時間が設定の値へ戻るので、テストの間はねむらせないようにしておく
-  await L.patchGame(code, { buttons: { 'あお': 1 }, cooldown: { '*1': Date.now() + 3600000 }, asleep: {} });
+  await L.patchGame(code, { buttons: { 'あお': 1 }, cooldown: { '*1': Date.now() + 3600000 }, asleep: {}, buttonReadyAt: 1 });
   await L.teleport(g1, t0.x, t0.y);
   await L.waitFor(async () => (await L.text(g1, '#actUseLabel')).startsWith('会議ボタン（あと1回）'));
   await g1.page.click('#actUse');
@@ -140,7 +141,7 @@ const { E, check, sleep } = L;
 
   // ══ 会議の途中で時間切れ → 結果を見せてから引き分け ══
   // ロボットのねむらせ屋は、会議のあとに待ち時間が設定の値へ戻るので、テストの間はねむらせないようにしておく
-  await L.patchGame(code, { buttons: { 'あお': 1 }, cooldown: { '*1': Date.now() + 3600000 }, asleep: {} });
+  await L.patchGame(code, { buttons: { 'あお': 1 }, cooldown: { '*1': Date.now() + 3600000 }, asleep: {}, buttonReadyAt: 1 });
   await L.teleport(g1, t0.x, t0.y);
   await L.waitFor(async () => (await L.text(g1, '#actUseLabel')).startsWith('会議ボタン（あと1回）'));
   await g1.page.click('#actUse');

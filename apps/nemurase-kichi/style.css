@@ -344,3 +344,69 @@ button.nk-vote__main:hover { border-color: var(--color-border); }
   .nk-pad__knob { width: 52px; height: 52px; }
   .nk-panel { padding: 24px 20px; }
 }
+
+/* ── 2026-10-28 子どもの要望の第2便 ── */
+/* 声の約束の帯（会議の時間だけミュートを外す）。進行役の画面にも出す */
+.nk-mute {
+  flex-basis: 100%; order: 9; margin: 0; display: flex; align-items: center; gap: 6px;
+  padding: 3px 10px; border-radius: 8px; background: rgba(255, 255, 255, 0.14); font-size: 13px; font-weight: 700;
+}
+.nk-mute .material-symbols-rounded { font-size: 18px; }
+.nk-mute.is-talk { background: #2F7D6E; }
+.nk-mute[hidden] { display: none; }
+/* 空気が止まっている間の帯 */
+.nk-hud__air {
+  margin: 0; display: inline-flex; align-items: center; gap: 4px; padding: 2px 10px; border-radius: 999px;
+  background: #2BB3C6; color: #0B2A30; font-size: 13px; font-weight: 700;
+}
+.nk-hud__air .material-symbols-rounded { font-size: 18px; }
+.nk-hud__air.is-soon { background: #FF6B5B; color: #fff; animation: nk-blink 1s steps(2) infinite; }
+.nk-hud__air[hidden], .nk-progress[hidden] { display: none; }
+#btnMap { margin-left: auto; }
+#btnMap + .nk-hud__menu { margin-left: 0; }
+@keyframes nk-blink { 50% { opacity: 0.55; } }
+@media (prefers-reduced-motion: reduce) { .nk-hud__air.is-soon, .nk-meeting__timer.is-soon { animation: none; } }
+
+/* 会議の残り時間: 大きく。30秒でオレンジ、10秒で赤く点滅。下にバー */
+.nk-meeting__timer { font-size: 22px; padding: 2px 12px; border-radius: 999px; background: #E3F1F3; }
+.nk-meeting__timer.is-near { background: #FFF1D6; color: #B4600A; }
+.nk-meeting__timer.is-soon { background: #FDECEC; color: var(--color-error); animation: nk-blink 0.8s steps(2) infinite; }
+.nk-meeting__bar { height: 8px; margin: 10px 0 0; border-radius: 999px; background: var(--color-bg); overflow: hidden; }
+.nk-meeting__barfill { display: block; height: 100%; width: 100%; background: var(--color-accent); transition: width 0.9s linear; }
+.nk-meeting__talk { margin: 10px 0 0; display: flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 8px; background: #E3F2E8; color: #1F6B3A; font-size: 13px; font-weight: 700; }
+.nk-meeting__talk .material-symbols-rounded { font-size: 18px; }
+
+/* ひとこと＝ささやき */
+.nk-say__sub { margin-left: 8px; font-size: 12px; font-weight: 500; color: var(--color-muted); }
+
+/* しかけ（停電・空気・ドア） */
+.nk-sab__list { display: grid; gap: 8px; }
+.nk-sab__item {
+  display: grid; grid-template-columns: 28px 1fr auto; align-items: center; gap: 10px; width: 100%; min-height: 56px; padding: 8px 12px;
+  border: 2px solid var(--color-border); border-radius: 12px; background: var(--color-surface); font-family: inherit; text-align: left; color: var(--color-text); cursor: pointer;
+}
+.nk-sab__item:hover { border-color: var(--color-accent); }
+.nk-sab__item:disabled { opacity: 0.55; cursor: not-allowed; }
+.nk-sab__item .material-symbols-rounded { font-size: 26px; color: #4B3B6B; }
+.nk-sab__text { display: grid; gap: 2px; }
+.nk-sab__name { font-weight: 700; }
+.nk-sab__desc { font-size: 12px; color: var(--color-muted); line-height: 1.4; }
+.nk-sab__note { font-size: 12px; font-weight: 700; color: var(--color-primary); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.nk-sab__item:disabled .nk-sab__note { color: var(--color-muted); }
+.nk-sab .nk-words--names { margin-top: 0; }
+
+/* 地図 */
+.nk-mapcard { max-width: 720px; }
+.nk-mapcard .nk-game__title { display: inline-flex; align-items: center; gap: 6px; }
+.nk-mapcard__view { display: block; width: 100%; border-radius: 10px; background: #2D3642; }
+
+/* ふたりの仕事 */
+.nk-task--pair .nk-task__room { color: #2F7D6E; }
+.nk-task--pair .material-symbols-rounded { color: #2F7D6E; }
+
+@media (max-width: 760px) {
+  .nk-mute { font-size: 12px; padding: 2px 8px; }
+  .nk-hud__air { order: 3; flex-basis: 100%; border-radius: 8px; justify-content: center; }
+  .nk-meeting__timer { font-size: 18px; }
+  .nk-sab__desc { display: none; }
+}

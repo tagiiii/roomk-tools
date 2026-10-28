@@ -13,6 +13,7 @@ const G = window.NemuraseGames;
 const { authReady, db } = window.NemuraseFirebase.init(firebase);
 const DB_PREFIX = 'nemurase_rooms';
 const SESSION_KEY = 'nemurase_session';
+const POS_KEY = 'nemurase_pos';          // 読み込み直したときに元の場所へ戻るための、自分の位置（同じ回・同じ spawnSeq のときだけ使う）
 const ORPHAN_TTL_MS = 2 * 60 * 1000;
 const PRESENCE_RETRY_MS = 3000;
 const TX_RETRY_MAX = 3;
@@ -27,7 +28,10 @@ const FIRST_COOLDOWN_S = 15;
 const DARK_FIRST_S = 20;
 const DARK_AGAIN_S = 40;
 const FIX_TASK = -2;            // state.taskSpot: 停電をなおすミニゲームをひらいている（仕事の場所の番号とかぶらない）
-const BOT_FIX_MS = 5500;        // ロボットが停電をなおすのにかける時間（人のミニゲームと同じくらい）
+const AIR_TASK_A = -3;          // state.taskSpot: 空気のパネル a・b をなおすミニゲームをひらいている
+const AIR_TASK_B = -4;
+const BOT_FIX_MS = 5500;        // ロボットが停電・空気をなおすのにかける時間（人のミニゲームと同じくらい）
+const BOT_PAIR_HOLD_MS = 12000; // ロボットがふたりの仕事を手伝うとき、スイッチをおしつづける時間
 const LATE_MS = 3000;           // ホストの端末が遅れているとき、ほかの端末が進行を代わるまでの待ち
 const LEFT_GRACE_MS = 30000;    // ゲーム中に在室が消えてから、抜けたとみなすまでの時間（読み込み直し・短い切断は抜けたことにしない）
 const SKIP = '*skip';           // 投票のスキップ（名前に * は使えないので、だれの名前ともかぶらない）
@@ -40,9 +44,11 @@ const SETTING_LABELS = {
   sleepers: ['ねむらせ屋の数', (v) => (v === 2 ? '2人（7人以上のとき）' : '1人')],
   pick: ['ねむらせ屋の決め方', (v) => (v === 1 ? 'ホストが選ぶ' : 'ランダム')],
   tasks: ['ひとりの仕事の数', (v) => v + 'つ'],
+  pair: ['ふたりの仕事', (v) => (v ? 'あり（隊員はひとり1つ）' : 'なし')],
   cooldown: ['ねむらせてから次まで', (v) => v + '秒'],
   meeting: ['会議の時間', (v) => v + '秒'],
   buttons: ['会議ボタン（ひとり）', (v) => v + '回'],
+  gauge: ['みんなの仕事のバー', (v) => (v === 2 ? '出す' : v === 1 ? '進行役の画面だけ' : '出さない')],
 };
 
 const state = {
@@ -81,6 +87,10 @@ const state = {
   sayPending: null,    // 名前の入る言葉を押して、「だれ？」で人を選んでいる途中の言葉（会議中・遊んでいる間）
   sayOpen: false,      // 遊んでいる間の「ひとこと」の一覧をひらいている
   camOpen: false,      // 監視カメラを見ている（game/cam/{自分} に true を書く。とじたら消す）
+  sabOpen: false,      // ねむらせ屋の「しかけ」（停電・空気・ドア）の一覧をひらいている
+  sabDoor: false,      // 「ドアをしめる」を押して、部屋を選んでいる途中
+  mapOpen: false,      // 地図（自分の位置だけ）をひらいている
+  pairHold: null,      // ふたりの仕事のスイッチをおしている {pid, end, beatAt}（はなれるとやめる）
   bannerTimer: null,
   toastTimer: null,
   lastAdvanceTry: 0,
@@ -157,7 +167,9 @@ const objOf = (value) => (value && typeof value === 'object' && !Array.isArray(v
 const colorOf = (key) => E.COLORS.find((c) => c.key === key) || null;
 const colorHex = (key) => (colorOf(key) || { hex: '#C4D2D8' }).hex;
 const isBot = (id) => typeof id === 'string' && id.startsWith(BOT_PREFIX);
-const spotOf = (id) => E.SPOTS[id];
+const spotOf = (id) => E.spotInfo(id);
+// 仕事の場所の部屋の名前（ふたりの仕事は「電気室と畑」のように2つ）
+const spotRoom = (sp) => sp.roomLabel || E.roomName(sp.room);
 // RTDB は undefined を受け付けないので、書く前に落とす
 const plain = (value) => JSON.parse(JSON.stringify(value));
 
@@ -226,6 +238,13 @@ function gameOf(room) {
     cooldown: {},
     dark: !!raw.dark,
     darkReadyAt: Number(raw.darkReadyAt) || 0,
+    air: Number(raw.air) || 0,
+    airFixed: {},
+    doors: {},
+    doorReadyAt: Number(raw.doorReadyAt) || 0,
+    buttonReadyAt: Number(raw.buttonReadyAt) || 0,
+    pair: {},
+    sleptBy: {},
     spawnSeq: Number(raw.spawnSeq) || 1,
     meetingSeq: Number(raw.meetingSeq) || 0,
     endsAt: Number(raw.endsAt) || 0,
@@ -252,10 +271,29 @@ function gameOf(room) {
       n: Number(v.n) || 0,
       at: Number(v.at) || 0,
       m: Number(v.m) || 0,
+      // 送った人の位置（遊んでいる間のひとことは、近くの人にだけ届く「ささやき」。2026-10-28）
+      x: Number.isFinite(Number(v.x)) ? Number(v.x) : null,
+      y: Number.isFinite(Number(v.y)) ? Number(v.y) : null,
     };
   });
   const camRaw = objOf(raw.cam);
   players.forEach((id) => { if (camRaw[id] === true) g.cam[id] = true; });
+  // 空気のパネル・ドア・ふたりの仕事のスイッチ（2026-10-28）
+  const airFixedRaw = objOf(raw.airFixed);
+  E.AIR_PANELS.forEach((p) => { if (airFixedRaw[p.id] === true) g.airFixed[p.id] = true; });
+  const doorsRaw = objOf(raw.doors);
+  E.DOOR_ROOMS.forEach((key) => { if (Number(doorsRaw[key]) > 0) g.doors[key] = Number(doorsRaw[key]); });
+  const pairRaw = objOf(raw.pair);
+  E.PAIRS.forEach((p) => {
+    const v = objOf(pairRaw[p.id]);
+    const ends = {};
+    ['a', 'b'].forEach((end) => {
+      const h = objOf(v[end]);
+      if (typeof h.id === 'string' && players.includes(h.id) && Number(h.at) > 0) ends[end] = { id: h.id, at: Number(h.at) };
+    });
+    if (Object.keys(ends).length) g.pair[p.id] = ends;
+  });
+  const sleptByRaw = objOf(raw.sleptBy);
   const asleep = objOf(raw.asleep);
   const leftRaw = objOf(raw.left);
   // 仕事の完了は game/done/{id}/{場所} にゲームの番号を書く（ゲーム全体を書き直さないため）。ちがう回の印は使わない
@@ -268,10 +306,11 @@ function gameOf(room) {
     const doneMark = doneRaw[id] && typeof doneRaw[id] === 'object' ? doneRaw[id] : {};
     g.tasks[id] = asList(tasksRaw[id])
       .map((t) => ({ spot: Number(t && t.spot), done: !!(t && t.done) }))
-      .filter((t) => Number.isInteger(t.spot) && E.SPOTS[t.spot])
+      .filter((t) => Number.isInteger(t.spot) && E.spotInfo(t.spot))
       .map((t) => ({ spot: t.spot, done: t.done || Number(doneMark[t.spot]) === g.id }));
     g.buttons[id] = Number(buttons[id]) || 0;
     if (asleep[id] === 'slept' || asleep[id] === 'voted') g.asleep[id] = asleep[id];
+    if (typeof sleptByRaw[id] === 'string' && players.includes(sleptByRaw[id])) g.sleptBy[id] = sleptByRaw[id];
     if (leftRaw[id] === true) g.left[id] = true;
     const b = bodies[id];
     if (b && Number.isFinite(Number(b.x)) && Number.isFinite(Number(b.y))) g.bodies[id] = { x: Number(b.x), y: Number(b.y) };
@@ -476,6 +515,11 @@ function cleanupRoom() {
   });
   clearPositions();
   clearSession();
+  clearPos();
+  state.pairHold = null;
+  state.sabOpen = false;
+  state.sabDoor = false;
+  state.mapOpen = false;
   $('hostOffOverlay').hidden = true;
   if ($('menuDialog').open) $('menuDialog').close();
   document.body.classList.remove('is-watching');
@@ -1006,6 +1050,7 @@ async function startGame() {
       stage: 'play',
       endsAt: now + E.GAME_LIMIT_S * 1000,
       darkReadyAt: now + DARK_FIRST_S * 1000,
+      buttonReadyAt: now + E.BUTTON_WAIT_S * 1000,
       ended: false,
     };
     list.forEach((p) => {
@@ -1074,6 +1119,11 @@ function startMeeting(g, now, why, caller, found) {
   g.meeting = { seq: g.meetingSeq, why, caller, found: found || null, endsAt: now + g.settings.meeting * 1000, votes: {} };
   g.bodies = {};
   g.dark = false;
+  // 会議がひらいたら、空気の妨害・ドア・おしているスイッチは片づく
+  g.air = 0;
+  g.airFixed = {};
+  g.doors = {};
+  g.pair = {};
   g.cam = {};
 }
 
@@ -1082,7 +1132,9 @@ function everyoneVoted(g, room) {
   return E.awakeOf(g).every((id) => g.meeting.votes[id] || (!isBot(id) && !room.players?.[id]));
 }
 
-function endMeeting(g, now) {
+// timeout: しめきり（時間切れ・ホストのしめきり）で終わった会議。まだ入れていない人はスキップとして数える（2026-10-28 子どもの要望「時間切れは投票スキップ」）
+function endMeeting(g, now, timeout) {
+  if (timeout) E.awakeOf(g).forEach((id) => { if (!g.meeting.votes[id]) g.meeting.votes[id] = SKIP; });
   const t = E.tally(g.meeting.votes, SKIP);
   if (t.target) g.asleep[t.target] = 'voted';
   g.result = { counts: t.counts, target: t.target, tie: t.tie, wasSleeper: t.target ? g.roles[t.target] === 'sleeper' : false, until: now + RESULT_MS };
@@ -1103,6 +1155,7 @@ const mut = {
     if ((g.cooldown[actor] || 0) > now) return false;
     if (!E.awakeOf(g, 'crew').includes(target)) return false;
     g.asleep[target] = 'slept';
+    g.sleptBy[target] = actor;   // ねむらされた本人の画面にだけ出す（ほかの人には言わない約束）
     g.bodies[target] = { x: Math.round(at.x * 10) / 10, y: Math.round(at.y * 10) / 10 };
     g.cooldown[actor] = now + g.settings.cooldown * 1000;
     if (E.checkWin(g)) g.stage = 'end';
@@ -1113,14 +1166,17 @@ const mut = {
     startMeeting(g, now, 'body', actor, body);
     return true;
   },
+  // 会議ボタン: はじめと会議のあと BUTTON_WAIT_S 秒は押せない。空気が止まっている間も押せない（なおすのが先）
   button: (actor) => (g, now) => {
     if (g.stage !== 'play' || (E.hasLeft(g, actor) || !E.isAwake(g, actor)) || (g.buttons[actor] || 0) <= 0) return false;
+    if (g.buttonReadyAt > now || g.air) return false;
     g.buttons[actor] -= 1;
     startMeeting(g, now, 'button', actor, null);
     return true;
   },
+  // 停電と空気は同じ待ち時間を使い、同時には起こせない
   dark: (actor) => (g, now) => {
-    if (g.stage !== 'play' || g.roles[actor] !== 'sleeper' || (E.hasLeft(g, actor) || !E.isAwake(g, actor)) || g.dark || g.darkReadyAt > now) return false;
+    if (g.stage !== 'play' || g.roles[actor] !== 'sleeper' || (E.hasLeft(g, actor) || !E.isAwake(g, actor)) || g.dark || g.air || g.darkReadyAt > now) return false;
     g.dark = true;
     return true;
   },
@@ -1130,16 +1186,44 @@ const mut = {
     g.darkReadyAt = now + DARK_AGAIN_S * 1000;
     return true;
   },
+  // 空気を止める（ねむらせ屋）: AIR_LIMIT_S 秒のうちに2つのパネルを両方なおさないと、ねむらせ屋の勝ち
+  air: (actor) => (g, now) => {
+    if (g.stage !== 'play' || g.roles[actor] !== 'sleeper' || (E.hasLeft(g, actor) || !E.isAwake(g, actor)) || g.dark || g.air || g.darkReadyAt > now) return false;
+    g.air = now + E.AIR_LIMIT_S * 1000;
+    g.airFixed = {};
+    return true;
+  },
+  // 空気のパネルをなおす（おきている人。パネルの前のミニゲームのあと）。2つなおったら空気はもどる。時間がきていたら、なおせない
+  airFix: (actor, panel) => (g, now) => {
+    if (g.stage !== 'play' || (E.hasLeft(g, actor) || !E.isAwake(g, actor)) || !g.air || g.airFixed[panel]) return false;
+    if (!E.AIR_PANELS.some((p) => p.id === panel)) return false;
+    if (E.checkAir(g, now)) { g.stage = 'end'; return true; }
+    g.airFixed[panel] = true;
+    if (E.AIR_PANELS.every((p) => g.airFixed[p.id])) {
+      g.air = 0;
+      g.airFixed = {};
+      g.darkReadyAt = now + DARK_AGAIN_S * 1000;
+    }
+    return true;
+  },
+  // ドアをしめる（ねむらせ屋）: 部屋の入口がぜんぶ DOOR_MS の間とじる。次は DOOR_AGAIN_S 秒あと
+  door: (actor, room) => (g, now) => {
+    if (g.stage !== 'play' || g.roles[actor] !== 'sleeper' || (E.hasLeft(g, actor) || !E.isAwake(g, actor))) return false;
+    if (!E.DOOR_ROOMS.includes(room) || g.doorReadyAt > now || (g.doors[room] || 0) > now) return false;
+    g.doors[room] = now + E.DOOR_MS;
+    g.doorReadyAt = now + E.DOOR_AGAIN_S * 1000;
+    return true;
+  },
   left: (ids) => (g, now) => markLeft(g, ids, now),
   closeVote: () => (g, now) => {
     if (g.stage !== 'meeting') return false;
-    endMeeting(g, now);
+    endMeeting(g, now, true);
     return true;
   },
-  // 時間で進むところ（会議のしめきり・結果のあと・15分の時間切れ）。late はホスト以外の端末が代わるときの待ち
+  // 時間で進むところ（会議のしめきり・結果のあと・15分の時間切れ・空気の時間切れ）。late はホスト以外の端末が代わるときの待ち
   advance: (late) => (g, now, room) => {
     if (g.stage === 'meeting' && (now >= g.meeting.endsAt + late || everyoneVoted(g, room))) {
-      endMeeting(g, now);
+      endMeeting(g, now, !everyoneVoted(g, room));
       return true;
     }
     if (g.stage === 'result' && now >= g.result.until + late) {
@@ -1155,11 +1239,16 @@ const mut = {
         g.spawnSeq += 1;
         g.players.forEach((id) => { if (g.roles[id] === 'sleeper') g.cooldown[id] = now + g.settings.cooldown * 1000; });
         g.darkReadyAt = now + DARK_FIRST_S * 1000;
+        g.buttonReadyAt = now + E.BUTTON_WAIT_S * 1000;
       }
       return true;
     }
     // 仕事の完了は小さな印で書くので、ぜんぶおわったかはここで確かめる
     if (g.stage === 'play' && E.checkWin(g)) {
+      g.stage = 'end';
+      return true;
+    }
+    if (g.stage === 'play' && g.air && now >= g.air + late && E.checkAir(g, now)) {
       g.stage = 'end';
       return true;
     }
@@ -1230,6 +1319,9 @@ async function doSay(key, target) {
     n: (prev ? prev.n : 0) + 1,
     at: RoomkRTDB.now(),
     m: g.stage === 'meeting' ? g.meeting.seq : 0,
+    // 遊んでいる間は、近くの人にだけ届く（受け取る側が、自分の見える広さの中にいるかで決める）
+    x: Math.round(ME.x * 10) / 10,
+    y: Math.round(ME.y * 10) / 10,
   };
   try {
     await state.roomRef.child('game/say/' + me).set(data);
@@ -1243,16 +1335,30 @@ async function doSay(key, target) {
 
 const sayLabel = (g, v) => E.sayText(v.k, v.r ? E.roomName(v.r) : E.HALL_LABEL, v.t ? nameIn(g, v.t) : '');
 
-// 届いたひとことのうち、まだ見ていないものを流れに足し、遊んでいる間は画面の上に出す
+// 遊んでいる間のひとこと（ささやき）が自分に届くか: 送った人が、自分の見える広さの中にいて、間にかべがない。
+// 自分のは届く。ねむった人はぜんぶ見えるので、ぜんぶ届く。進行役・見学には届かない（位置の話なので、画面共有で流れないように）
+function sayReaches(g, id, v) {
+  const me = state.nickname;
+  if (id === me) return true;
+  if (!isPlaying(g, me)) return false;
+  if (!E.isAwake(g, me)) return true;
+  if (v.x == null || v.y == null) return false;
+  const from = { x: v.x, y: v.y };
+  return E.dist(from, ME) <= viewRadius(g) && E.canSee(ME, from);
+}
+
+// 届いたひとことのうち、まだ見ていないものを流れに足し、遊んでいる間は近くの人にだけ画面の上に出す（2026-10-28 ささやきに）
 function takeSays(g) {
   Object.keys(g.say).forEach((id) => {
     const v = g.say[id];
     if ((state.sayHeard[id] || 0) >= v.n) return;
     state.sayHeard[id] = v.n;
     const entry = { id, text: sayLabel(g, v), m: v.m };
-    state.sayLog.push(entry);
-    if (state.sayLog.length > E.SAY_LOG_MAX * 4) state.sayLog.shift();
-    if (g.stage === 'play' && !v.m) showSayTicker(g, entry);
+    if (v.m || sayReaches(g, id, v)) {
+      state.sayLog.push(entry);
+      if (state.sayLog.length > E.SAY_LOG_MAX * 4) state.sayLog.shift();
+    }
+    if (g.stage === 'play' && !v.m && sayReaches(g, id, v)) showSayTicker(g, entry);
   });
 }
 
@@ -1332,6 +1438,69 @@ function toggleSayBox() {
   renderSayBox(g);
 }
 
+/* ── ふたりの仕事（離れた2か所のスイッチを、ふたりが同時におす） ── */
+// スイッチをおしはじめる: game/pair/{仕事}/{a|b} に {id, at} を書く。おしている間は PAIR_BEAT_MS おきに at を書き直す（はなれたらやめる）
+async function pairPress(pid, end) {
+  const g = gameOf(state.room);
+  const me = state.nickname;
+  if (!g || g.stage !== 'play' || !isPlaying(g, me) || state.pairHold) return false;
+  state.pairHold = { pid, end, beatAt: 0 };
+  return pairBeat();
+}
+
+async function pairBeat() {
+  const h = state.pairHold;
+  if (!h || !state.roomRef) return false;
+  h.beatAt = Date.now();
+  try {
+    await state.roomRef.child('game/pair/' + h.pid + '/' + h.end).set({ id: state.nickname, at: RoomkRTDB.now() });
+    return true;
+  } catch (error) {
+    console.warn('[nemurase] pair press failed', error);
+    return false;
+  }
+}
+
+// スイッチからはなれる・会議・おわり: おしているのをやめる（自分の分だけ消す）
+function pairRelease() {
+  const h = state.pairHold;
+  if (!h) return;
+  state.pairHold = null;
+  if (!state.roomRef) return;
+  const ref = state.roomRef.child('game/pair/' + h.pid + '/' + h.end);
+  ref.transaction((cur) => (cur && cur.id === state.nickname ? null : undefined)).catch(() => {});
+}
+
+// おしつづけている間の世話: はなれたらやめる・時間がきたら書き直す・相手がもう一方をおしていたら仕事がおわる
+function tendPair(g) {
+  const h = state.pairHold;
+  if (!h) return;
+  const me = state.nickname;
+  const p = E.pairOf(h.pid);
+  if (!p || g.stage !== 'play' || !isPlaying(g, me) || E.dist(p[h.end], ME) > E.USE_RANGE) { pairRelease(); return; }
+  const now = RoomkRTDB.now();
+  const other = (g.pair[h.pid] || {})[h.end === 'a' ? 'b' : 'a'];
+  if (E.pairFresh(other, now) && other.id !== me) {
+    // ふたりそろった。自分がこの仕事を持っていればおわる。持っていなければ手伝えた
+    pairRelease();
+    const mine = (g.tasks[me] || []).find((t) => t.spot === p.spot && !t.done);
+    if (mine && g.roles[me] === 'crew') doTask(me, p.spot).then((ok) => { if (ok) smallToast('ふたりでできた！'); });
+    else smallToast('手伝えた！');
+    return;
+  }
+  if (Date.now() - h.beatAt >= E.PAIR_BEAT_MS) pairBeat();
+}
+
+// だれかがおしているスイッチ（有効なものだけ）{pid: {a: id, b: id}}
+function pairHolders(g, now) {
+  const out = {};
+  E.PAIRS.forEach((p) => {
+    const v = g.pair[p.id] || {};
+    ['a', 'b'].forEach((end) => { if (E.pairFresh(v[end], now)) { out[p.id] = out[p.id] || {}; out[p.id][end] = v[end].id; } });
+  });
+  return out;
+}
+
 // 時間で進むところは、ホストの端末が進める。ホストのタブが裏にあって遅れたら、ほかの端末が3秒あとに代わる
 function tryAdvance(room) {
   const g = gameOf(room);
@@ -1341,7 +1510,7 @@ function tryAdvance(room) {
   const now = RoomkRTDB.now();
   const due = (g.stage === 'meeting' && (now >= g.meeting.endsAt || everyoneVoted(g, room)))
     || (g.stage === 'result' && now >= g.result.until)
-    || (g.stage === 'play' && (now >= g.endsAt || E.checkWin(g)));
+    || (g.stage === 'play' && (now >= g.endsAt || (g.air && now >= g.air) || E.checkWin(g)));
   if (!due) { state.dueKey = null; return; }
   // ホスト以外は、進められる状態になってから3秒たってもホストが進めないときだけ代わる
   const key = g.id + ':' + g.stage + ':' + g.spawnSeq + ':' + g.meetingSeq;
@@ -1359,7 +1528,7 @@ function resetBots(g) {
   g.players.forEach((id, i) => {
     if (!isBot(id)) return;
     const sp = E.spawnPoint(i, g.players.length);
-    BOTS[id] = { id, x: sp.x, y: sp.y, face: 1, route: [], goal: null, waitUntil: Date.now() + 1500 + Math.random() * 2000, voteAt: 0, sentAt: 0, sentText: '', findAt: 0, busyUntil: 0 };
+    BOTS[id] = { id, x: sp.x, y: sp.y, face: 1, route: [], goal: null, waitUntil: Date.now() + 1500 + Math.random() * 2000, voteAt: 0, sentAt: 0, sentText: '', findAt: 0, busyUntil: 0, pairHold: null };
   });
 }
 
@@ -1381,14 +1550,44 @@ function botsVote(room) {
   });
 }
 
-function routeTo(b, x, y) {
-  const r = E.path({ x: Math.floor(b.x), y: Math.floor(b.y) }, { x: Math.floor(x), y: Math.floor(y) });
+// とじているドアのマス（いま）
+const closedNow = (g) => E.doorTiles(E.closedRooms(g, RoomkRTDB.now()));
+
+function routeTo(b, x, y, closed) {
+  const r = E.path({ x: Math.floor(b.x), y: Math.floor(b.y) }, { x: Math.floor(x), y: Math.floor(y) }, closed);
   b.route = r ? r.map((c) => ({ x: c.x + 0.5, y: c.y + 0.5 })) : [];
   if (b.route.length) b.route[b.route.length - 1] = { x, y };
+  return b.route.length > 0;
 }
 
+// おきている隊員のロボット（順番どおり）。停電は1つ目、空気は1つ目と2つ目がなおしに行く
+function crewBots(g) {
+  return Object.keys(BOTS).filter((id) => E.isAwake(g, id) && g.roles[id] === 'crew');
+}
 function firstCrewBot(g) {
-  return Object.keys(BOTS).find((id) => E.isAwake(g, id) && g.roles[id] === 'crew');
+  return crewBots(g)[0];
+}
+
+// ロボットがふたりの仕事を手伝う: おしているのを書く・書き直す・やめる
+function botPairWrite(b) {
+  const h = b.pairHold;
+  if (!h || !state.roomRef) return;
+  h.beatAt = Date.now();
+  state.roomRef.child('game/pair/' + h.pid + '/' + h.end).set({ id: b.id, at: RoomkRTDB.now() }).catch(() => {});
+}
+function botPairRelease(b) {
+  const h = b.pairHold;
+  if (!h) return;
+  b.pairHold = null;
+  if (!state.roomRef) return;
+  state.roomRef.child('game/pair/' + h.pid + '/' + h.end).transaction((cur) => (cur && cur.id === b.id ? null : undefined)).catch(() => {});
+}
+// だれかがおしていて、もう一方がまだ空いているスイッチ {pid, end（空いている側）}。ロボットはそこへ行って手伝う
+function pairNeedingHelp(g) {
+  const holders = pairHolders(g, RoomkRTDB.now());
+  const pid = Object.keys(holders).find((k) => (holders[k].a && !holders[k].b) || (holders[k].b && !holders[k].a));
+  if (!pid) return null;
+  return { pid, end: holders[pid].a ? 'b' : 'a' };
 }
 
 // ホストが知っている、その人の位置（ロボットはその場の位置）
@@ -1422,17 +1621,39 @@ function botStep(g, b, dt, now) {
       return;
     }
   }
+  // ふたりの仕事を手伝っている途中: おしつづける。相手がいなくなった・時間がきたらやめる
+  if (b.pairHold) {
+    const h = b.pairHold;
+    const other = (g.pair[h.pid] || {})[h.end === 'a' ? 'b' : 'a'];
+    if (now >= h.until || !E.pairFresh(other, RoomkRTDB.now()) && now - h.since > 2500) { botPairRelease(b); b.waitUntil = now + 1500; return; }
+    if (now - h.beatAt >= E.PAIR_BEAT_MS) botPairWrite(b);
+    return;
+  }
   if (now < b.waitUntil) return;
+  const closed = closedNow(g);
   if (!b.goal) {
-    if (g.dark && awake && role === 'crew' && firstCrewBot(g) === b.id) {
+    const cbots = crewBots(g);
+    const airPanel = g.air && awake && role === 'crew' ? E.AIR_PANELS.filter((p) => !g.airFixed[p.id])[cbots.indexOf(b.id)] : null;
+    const help = awake ? pairNeedingHelp(g) : null;
+    let ok = true;
+    if (airPanel && cbots.indexOf(b.id) < 2) {
+      b.goal = { kind: 'airfix', panel: airPanel.id };
+      ok = routeTo(b, airPanel.x, airPanel.y + 0.6, closed);
+    } else if (g.dark && awake && role === 'crew' && firstCrewBot(g) === b.id) {
       b.goal = { kind: 'fix' };
-      routeTo(b, E.FIX_SPOT.x, E.FIX_SPOT.y + 0.6);
+      ok = routeTo(b, E.FIX_SPOT.x, E.FIX_SPOT.y + 0.6, closed);
+    } else if (help && cbots[0] === b.id) {
+      const p = E.pairOf(help.pid);
+      b.goal = { kind: 'pair', pid: help.pid, end: help.end };
+      ok = routeTo(b, p[help.end].x, p[help.end].y + 0.6, closed);
     } else {
-      const todo = role === 'crew' ? g.tasks[b.id].filter((t) => !t.done) : [];
+      const todo = role === 'crew' ? g.tasks[b.id].filter((t) => !t.done && t.spot < E.PAIR_SPOT_BASE) : [];
       const sp = todo.length ? spotOf(todo[0].spot) : E.SPOTS[Math.floor(Math.random() * E.SPOTS.length)];
       b.goal = todo.length ? { kind: 'task', spot: todo[0].spot } : { kind: 'walk' };
-      routeTo(b, sp.x, sp.y + 0.6);
+      ok = routeTo(b, sp.x, sp.y + 0.6, closed);
     }
+    // ドアがとじていて行けなければ、少し待ってから考えなおす
+    if (!ok) { b.goal = null; b.waitUntil = now + 1500; return; }
   }
   if (b.route.length) {
     const w = b.route[0];
@@ -1440,9 +1661,13 @@ function botStep(g, b, dt, now) {
     const dy = w.y - b.y;
     const d = Math.hypot(dx, dy);
     if (d < 0.12) { b.route.shift(); return; }
-    const n = E.step(b, dx / d, dy / d, Math.min(dt, d / E.SPEED));
+    const n = E.step(b, dx / d, dy / d, Math.min(dt, d / E.SPEED), closed);
     if (Math.abs(dx) > 0.01) b.face = dx > 0 ? 1 : -1;
-    if (n.x === b.x && n.y === b.y) { b.x = w.x; b.y = w.y; b.route.shift(); return; }
+    if (n.x === b.x && n.y === b.y) {
+      // 進めない。ドアがとじたのなら、道を考えなおす（人と同じで通れない）。そうでなければ角に引っかかっただけなので、次の点へ
+      if (closed.size && closed.has(E.tileKey(Math.floor(w.x), Math.floor(w.y)))) { b.goal = null; b.route = []; b.waitUntil = now + 1500; return; }
+      b.x = w.x; b.y = w.y; b.route.shift(); return;
+    }
     b.x = n.x;
     b.y = n.y;
     return;
@@ -1463,6 +1688,16 @@ function botStep(g, b, dt, now) {
       const current = gameOf(state.room);
       if (current && current.id === g.id && current.stage === 'play' && current.dark) gameAct(mut.fix(b.id));
     }, BOT_FIX_MS);
+  } else if (goal.kind === 'airfix') {
+    b.busyUntil = now + BOT_FIX_MS;
+    setTimeout(() => {
+      const current = gameOf(state.room);
+      if (current && current.id === g.id && current.stage === 'play' && current.air && !current.airFixed[goal.panel]) gameAct(mut.airFix(b.id, goal.panel));
+    }, BOT_FIX_MS);
+  } else if (goal.kind === 'pair') {
+    // スイッチをおしつづける（相手がはなれるか、時間がくるまで）
+    b.pairHold = { pid: goal.pid, end: goal.end, until: now + BOT_PAIR_HOLD_MS, since: now, beatAt: 0 };
+    botPairWrite(b);
   }
 }
 
@@ -1474,7 +1709,7 @@ function botLoop() {
   const room = state.room;
   if (state.role !== 'host' || !room || room.status !== STATUS.PLAY) return;
   const g = gameOf(room);
-  if (!g || g.stage !== 'play') return;
+  if (!g || g.stage !== 'play') { Object.values(BOTS).forEach((b) => { if (b.pairHold) b.pairHold = null; }); return; }
   // 裏のタブではタイマーが1秒おきになるので、細かく分けて進める
   for (let left = dt; left > 0; left -= 0.05) {
     Object.values(BOTS).forEach((b) => botStep(g, b, Math.min(0.05, left), now));
@@ -1494,6 +1729,29 @@ function sendPosFor(id, pos, awake, force) {
   pos.sentAt = now;
   pos.sentText = text;
   state.rootRef.child((awake ? 'p/' : 'g/') + id).set(text).catch((error) => console.warn('[nemurase] position send failed', error));
+  if (id === state.nickname) savePos();
+}
+
+// 自分の位置を端末に残す（読み込み直しで、テーブルへ瞬間移動して逃げられないように。同じ回・同じ spawnSeq のときだけ使う）
+function savePos() {
+  try {
+    sessionStorage.setItem(POS_KEY, JSON.stringify({ g: state.gameId, s: state.spawnKey, x: Math.round(ME.x * 10) / 10, y: Math.round(ME.y * 10) / 10, f: ME.face }));
+  } catch {
+    // 保存できないときは、読み込み直しでテーブルのまわりから
+  }
+}
+function loadPos(spawnKey) {
+  try {
+    const v = JSON.parse(sessionStorage.getItem(POS_KEY));
+    if (!v || v.s !== spawnKey || !Number.isFinite(v.x) || !Number.isFinite(v.y)) return null;
+    if (v.x < 0 || v.y < 0 || v.x > E.W || v.y > E.H) return null;
+    return { x: v.x, y: v.y, face: v.f < 0 ? -1 : 1 };
+  } catch {
+    return null;
+  }
+}
+function clearPos() {
+  try { sessionStorage.removeItem(POS_KEY); } catch { /* 何もしない */ }
 }
 
 function takePos(map, id, text) {
@@ -1634,10 +1892,13 @@ function renderWaiting(room) {
 
 function closeOverlays() {
   if (state.camOpen) closeCam();
-  ['ovRole', 'ovTask', 'ovCam', 'ovMeeting', 'ovResult', 'ovEnd'].forEach((id) => { $(id).hidden = true; });
+  if (state.mapOpen) closeMap();
+  ['ovRole', 'ovTask', 'ovCam', 'ovMap', 'ovMeeting', 'ovResult', 'ovEnd'].forEach((id) => { $(id).hidden = true; });
   state.taskSpot = -1;
   state.votePick = null;
   state.sayPending = null;
+  state.sabOpen = false;
+  state.sabDoor = false;
   $('taskBox').replaceChildren();
 }
 
@@ -1681,13 +1942,17 @@ function renderGame(room) {
   // テーブルのまわりへもどる（はじめ・会議のあと）
   const sk = g.id + ':' + g.spawnSeq;
   if (state.spawnKey !== sk) {
+    const saved = state.spawnKey === '' ? loadPos(sk) : null;   // 読み込み直し（同じ回・同じ spawnSeq）なら元の場所から
     state.spawnKey = sk;
     if (state.role === 'host') resetBotsPosition(g);
     if (playing) {
       const sp = E.spawnPoint(g.players.indexOf(state.nickname), g.players.length);
-      ME.x = sp.x;
-      ME.y = sp.y;
+      const back = saved && (E.canStand(saved.x, saved.y) || !E.isAwake(g, state.nickname)) ? saved : sp;
+      ME.x = back.x;
+      ME.y = back.y;
+      if (saved) ME.face = saved.face;
       ME.climb = null;
+      pairRelease();
       if (g.stage === 'play') sendPosFor(state.nickname, ME, E.isAwake(g, state.nickname), true);
     }
   }
@@ -1698,9 +1963,14 @@ function renderGame(room) {
     state.rootRef.child('p/' + state.nickname).remove().catch(() => {});
     sendPosFor(state.nickname, ME, false, true);
     if (g.stage === 'play') {
-      banner(g.roles[state.nickname] === 'crew' ? 'ねむってしまった… でも、仕事はつづけられるよ。おきている人には見えないよ' : 'ねむってしまった。あとはみんなの様子を見ていてね', 6000);
+      // だれにねむらされたかは、本人の画面にだけ出す（ほかの人には言わない約束。2026-10-28）
+      const by = g.sleptBy[state.nickname] ? nameIn(g, g.sleptBy[state.nickname]) + ' さんにねむらされた… ' : 'ねむってしまった… ';
+      banner(g.roles[state.nickname] === 'crew'
+        ? by + 'でも、仕事はつづけられるよ。おきている人には見えず、かべも通りぬけられる。だれにねむらされたかは、ないしょだよ'
+        : by + 'あとはみんなの様子を見ていてね', 8000);
     }
   }
+  if (state.pairHold && !(playing && g.stage === 'play')) pairRelease();
   if (state.role === 'host') {
     // ねむったロボットの位置も、p から g へ移す
     Object.values(BOTS).forEach((b) => {
@@ -1720,6 +1990,12 @@ function renderGame(room) {
   if (state.taskSpot === FIX_TASK && (!g.dark || asleep)) { closeTask(); if (!g.dark) smallToast('電気はついたよ'); }
   // 監視カメラは、遊んでいる間におきている人だけ（会議がひらいた・ねむらされたら とじる）
   if (state.camOpen && (g.stage !== 'play' || !playing || asleep)) closeCam();
+  if (state.taskSpot === AIR_TASK_A || state.taskSpot === AIR_TASK_B) {
+    const panel = state.taskSpot === AIR_TASK_A ? 'a' : 'b';
+    if (!g.air || g.airFixed[panel] || asleep) { closeTask(); if (!g.air) smallToast('空気がもどった'); }
+  }
+  if (state.mapOpen && (g.stage !== 'play' || !playing)) closeMap();
+  if (state.sabOpen && (g.stage !== 'play' || !playing || asleep)) { state.sabOpen = false; state.sabDoor = false; }
   if (g.stage !== 'play' || !playing) $('ovRole').hidden = true;
   if (g.stage !== 'play') clearSayTicker();
   takeSays(g);
@@ -1735,7 +2011,7 @@ function resetBotsPosition(g) {
     const b = BOTS[id];
     if (!b) return;
     const sp = E.spawnPoint(i, g.players.length);
-    Object.assign(b, { x: sp.x, y: sp.y, route: [], goal: null, waitUntil: Date.now() + 1500 + Math.random() * 2000 });
+    Object.assign(b, { x: sp.x, y: sp.y, route: [], goal: null, pairHold: null, waitUntil: Date.now() + 1500 + Math.random() * 2000 });
     if (g.stage === 'play') sendPosFor(id, b, E.isAwake(g, id), true);
   });
 }
@@ -1755,7 +2031,28 @@ function renderHud(g, playing) {
   const tp = E.taskProgress(g);
   $('hudProgress').style.width = (tp.total ? Math.round((tp.done / tp.total) * 100) : 0) + '%';
   $('hudProgressNum').textContent = tp.done + ' / ' + tp.total;
+  // みんなの仕事のバー: 設定で「出す／進行役の画面だけ／出さない」（2026-10-28）
+  $('hudGauge').hidden = !(g.settings.gauge === 2 || (g.settings.gauge === 1 && !playing));
   $('hudDark').hidden = !g.dark;
+  // 声の約束: 会議（と結果）のときだけミュートを外す。帯は進行役の画面（画面共有）にも出す（2026-10-28 子どもの要望「会議の時間以外はミュート」）
+  const talk = g.stage === 'meeting' || g.stage === 'result';
+  const mute = $('hudMute');
+  mute.hidden = g.stage === 'end';
+  setText('hudMuteText', talk ? '会議の時間。ミュートを外して話そう' : 'いまはミュートの時間。ひとことで知らせよう');
+  mute.classList.toggle('is-talk', talk);
+  $('hudMuteIcon').textContent = talk ? 'mic' : 'mic_off';
+  updateAirHud(g);
+}
+
+// 空気が止まっている間の帯（のこり秒・なおすパネル）
+function updateAirHud(g) {
+  const box = $('hudAir');
+  if (!g.air || g.stage !== 'play') { box.hidden = true; return; }
+  box.hidden = false;
+  const left = Math.max(0, Math.ceil((g.air - RoomkRTDB.now()) / 1000));
+  const todo = E.AIR_PANELS.filter((p) => !g.airFixed[p.id]).map((p) => E.roomName(p.room));
+  setText('hudAirText', '空気が止まった！ あと ' + left + ' 秒で ' + (todo.length === 2 ? todo.join('と') + 'のパネルを両方' : todo.join('') + 'のパネルを') + 'なおして');
+  box.classList.toggle('is-soon', left <= 15);
 }
 
 function renderWatchNote() {
@@ -1792,13 +2089,14 @@ function renderTasks(g) {
   mine.forEach((t) => {
     const sp = spotOf(t.spot);
     const done = role === 'crew' && t.done;
-    const li = makeElement('li', 'nk-task' + (done ? ' is-done' : ''));
-    li.append(msIcon(done ? 'check_circle' : 'radio_button_unchecked'), makeElement('span', 'nk-task__room', E.roomName(sp.room)), makeElement('span', 'nk-task__label', sp.label));
+    const li = makeElement('li', 'nk-task' + (done ? ' is-done' : '') + (sp.kind === 'pair' ? ' nk-task--pair' : ''));
+    li.append(msIcon(done ? 'check_circle' : sp.kind === 'pair' ? 'group' : 'radio_button_unchecked'), makeElement('span', 'nk-task__room', spotRoom(sp)), makeElement('span', 'nk-task__label', sp.label));
     ul.appendChild(li);
   });
   let note = '';
   if (role === 'sleeper') note = asleep ? 'ねむってしまったので、見ているだけ' : '本当の仕事はできないよ。立って、仕事のふりをしよう';
-  else if (asleep) note = 'ねむっていても、仕事はつづけられる';
+  else if (asleep) note = 'ねむっていても、仕事はつづけられる' + (g.sleptBy[me] ? '（' + nameIn(g, g.sleptBy[me]) + ' さんにねむらされた。ないしょだよ）' : '');
+  else if (mine.some((t) => !t.done && spotOf(t.spot).kind === 'pair')) note = 'ふたりの仕事は、2つのスイッチをだれかと同時におす';
   $('tasksNote').textContent = note;
 }
 
@@ -1893,10 +2191,16 @@ function renderMeetingSay(g, awake, saysNow) {
   log.hidden = !saysNow.length;
 }
 
+// 会議の残り時間: 大きく出し、10秒を切ったら色を変えて点滅（音は鳴らさない）。進み具合のバーも出す
 function updateMeetingTimer(g) {
   if (!g || g.stage !== 'meeting') return;
   const left = Math.max(0, Math.ceil((g.meeting.endsAt - RoomkRTDB.now()) / 1000));
   setText('meetingTimer', 'のこり ' + left + ' 秒');
+  const t = $('meetingTimer');
+  t.classList.toggle('is-soon', left <= 10);
+  t.classList.toggle('is-near', left > 10 && left <= 30);
+  const total = Math.max(1, g.settings.meeting);
+  $('meetingBar').style.width = Math.max(0, Math.min(100, (left / total) * 100)) + '%';
 }
 
 function renderResult(g) {
@@ -1930,6 +2234,7 @@ function renderEnd(g) {
     outnumber: 'おきている隊員が、ねむらせ屋と同じ数になった',
     left: 'ねむらせ屋がいなくなった',
     timeup: '15分たった',
+    air: '空気が止まったまま、' + E.AIR_LIMIT_S + '秒たった',
   }[g.winReason] || '';
   const ul = $('endPeople');
   ul.replaceChildren();
@@ -1951,13 +2256,34 @@ function openTask(spotId) {
   if (!g) return;
   state.taskSpot = spotId;
   const gen = ++state.taskGen;
-  $('taskTitle').textContent = E.roomName(sp.room) + '：' + sp.label;
+  $('taskTitle').textContent = spotRoom(sp) + '：' + sp.label;
   $('ovTask').hidden = false;
   KEYS.clear();
   G.open($('taskBox'), sp.kind, async () => {
     if (state.taskSpot !== spotId || state.taskGen !== gen) return;
     closeTask();
     if (await doTask(state.nickname, spotId)) smallToast('仕事ができた！');
+  });
+}
+
+// 空気のパネルをなおす: パネルの前で短いミニゲーム（1〜4を順に）をおえてから直る。2つとも直すと空気がもどる
+function openAirFix(panel) {
+  const g = gameOf(state.room);
+  if (!g || !g.air || g.airFixed[panel]) return;
+  const p = E.AIR_PANELS.find((q) => q.id === panel);
+  state.taskSpot = panel === 'a' ? AIR_TASK_A : AIR_TASK_B;
+  const spot = state.taskSpot;
+  const gen = ++state.taskGen;
+  $('taskTitle').textContent = E.roomName(p.room) + '：空気のパネルを入れなおす';
+  $('ovTask').hidden = false;
+  KEYS.clear();
+  G.open($('taskBox'), 'order4', async () => {
+    if (state.taskSpot !== spot || state.taskGen !== gen) return;
+    closeTask();
+    if (await gameAct(mut.airFix(state.nickname, panel))) {
+      const now = gameOf(state.room);
+      smallToast(now && now.air ? 'このパネルはなおった！ もう1つも' : '空気がもどった！');
+    }
   });
 }
 
@@ -1986,7 +2312,7 @@ function closeTask() {
 
 /* ── 動く・描く ── */
 const canvas = $('map');
-const ctx = canvas.getContext('2d');
+let ctx = canvas.getContext('2d');   // 地図の重なる画面を描くときだけ、一時的に差しかえる（drawMapOverlay）
 const fog = document.createElement('canvas');
 const fctx = fog.getContext('2d');
 let TS = 36;
@@ -2009,7 +2335,7 @@ function resizeCanvas() {
   TS = Math.round(Math.max(26, Math.min(46, Math.min(CW / 15, CH / 10))));
 }
 
-const blocked = () => !$('ovRole').hidden || !$('ovTask').hidden || !$('ovCam').hidden || !$('ovMeeting').hidden || !$('ovResult').hidden || !$('ovEnd').hidden
+const blocked = () => !$('ovRole').hidden || !$('ovTask').hidden || !$('ovCam').hidden || !$('ovMap').hidden || !$('ovMeeting').hidden || !$('ovResult').hidden || !$('ovEnd').hidden
   || !$('hostOffOverlay').hidden || $('menuDialog').open;
 
 function inputDir() {
@@ -2044,7 +2370,8 @@ function frame(t) {
     } else if (g.stage === 'play' && !blocked()) {
       const d = inputDir();
       if (d.x || d.y) {
-        const n = E.step(ME, d.x, d.y, dt);
+        // ねむった人はかべ・ドアを通りぬける。おきている人は、とじているドアも通れない
+        const n = awake ? E.step(ME, d.x, d.y, dt, closedNow(g)) : E.stepFree(ME, d.x, d.y, dt);
         if (d.x) ME.face = d.x > 0 ? 1 : -1;
         ME.x = n.x;
         ME.y = n.y;
@@ -2052,6 +2379,9 @@ function frame(t) {
     }
     // 送るのは遊んでいる間だけ（会議・結果・おしまいの間は送らない）
     if (g.stage === 'play') sendPosFor(state.nickname, ME, awake, false);
+    // ふたりの仕事のスイッチ: はなれたらやめる・書き直す・相手がそろったらおわる（位置は毎フレーム変わるので、ここで見る）
+    if (g.stage === 'play') tendPair(g);
+    else if (state.pairHold) pairRelease();
     [PA, PG].forEach((map) => Object.values(map).forEach((p) => {
       const k = Math.min(1, dt * 8);
       p.x += (p.tx - p.x) * k;
@@ -2059,13 +2389,16 @@ function frame(t) {
     }));
     draw(g);
     if (state.camOpen) drawCams(g);
+    if (state.mapOpen) drawMapOverlay(g);
     updateActions(g);
     updateClock(g);
     updateMeetingTimer(g);
+    if (g.air) updateAirHud(g);
   } else if (g) {
     drawOverview(g);
     updateClock(g);
     updateMeetingTimer(g);
+    if (g.air) updateAirHud(g);
   }
   requestAnimationFrame(frame);
 }
@@ -2118,6 +2451,9 @@ function draw(g) {
   for (let x = Math.floor(camX / TS); x <= Math.ceil((camX + CW) / TS); x++) { ctx.moveTo(sx(x) + 0.5, 0); ctx.lineTo(sx(x) + 0.5, CH); }
   for (let y = Math.floor(camY / TS); y <= Math.ceil((camY + CH) / TS); y++) { ctx.moveTo(0, sy(y) + 0.5); ctx.lineTo(CW, sy(y) + 0.5); }
   ctx.stroke();
+  // 家具（部屋の目印）・ドア
+  drawFurniture(sx, sy, TS);
+  drawDoors(g, sx, sy, TS);
   ctx.font = '700 ' + Math.round(TS * 0.42) + 'px "Noto Sans JP", sans-serif';
   ctx.textAlign = 'left';
   ctx.textBaseline = 'top';
@@ -2157,6 +2493,22 @@ function draw(g) {
   const role = g.roles[me];
   const mine = {};
   (g.tasks[me] || []).forEach((t) => { mine[t.spot] = role === 'crew' ? (t.done ? 'done' : 'todo') : 'fake'; });
+  // 空気のパネル・ふたりの仕事のスイッチ
+  E.AIR_PANELS.forEach((p) => drawAirPanel(sx(p.x), sy(p.y), TS, g.air ? (g.airFixed[p.id] ? 'fixed' : 'todo') : 'off'));
+  const holders = pairHolders(g, RoomkRTDB.now());
+  E.PAIRS.forEach((p) => {
+    const st = mine[p.spot];
+    // どちらかをだれかがおしていたら、2つとも光る（もう一方に来てほしい合図）
+    const lit = !!(holders[p.id] && (holders[p.id].a || holders[p.id].b));
+    ['a', 'b'].forEach((end) => drawPairSwitch(sx(p[end].x), sy(p[end].y), TS, lit, st === 'todo', st === 'done'));
+    if (st === 'todo') {
+      ctx.fillStyle = '#F5B700';
+      ctx.font = '900 ' + Math.round(TS * 0.5) + 'px "Noto Sans JP", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ['a', 'b'].forEach((end) => ctx.fillText('!', sx(p[end].x), sy(p[end].y) - TS * 0.75));
+    }
+  });
   E.SPOTS.forEach((sp) => {
     const x = sx(sp.x);
     const y = sy(sp.y);
@@ -2237,16 +2589,25 @@ function drawOverview(g) {
   const oy = pad + (CH - pad - below - E.H * s) / 2;
   const sx = (x) => ox + x * s;
   const sy = (y) => oy + y * s;
+  drawWholeMap(g, sx, sy, s, null);
+}
+
+// 地図ぜんたい（進行役の画面と、遊んでいる人の「地図」で共通）。mine を渡すと、自分の位置と自分の仕事の「!」も描く
+function drawWholeMap(g, sx, sy, s, mine) {
   ctx.fillStyle = '#2D3642';
   ctx.fillRect(0, 0, CW, CH);
   ctx.fillStyle = E.HALL_FILL;
   E.HALLS.forEach((h) => ctx.fillRect(sx(h[0]), sy(h[1]), h[2] * s, h[3] * s));
   E.ROOMS.forEach((r) => { ctx.fillStyle = r.fill; ctx.fillRect(sx(r.x), sy(r.y), r.w * s, r.h * s); });
+  drawFurniture(sx, sy, s);
+  drawDoors(g, sx, sy, s);
   ctx.fillStyle = '#B98A5E';
   circle(sx(E.TABLE.x), sy(E.TABLE.y), E.TABLE.r * s);
   ctx.fillStyle = g.dark ? '#F5C518' : '#9AA3AD';
   roundRect(sx(E.FIX_SPOT.x) - s * 0.35, sy(E.FIX_SPOT.y) - s * 0.35, s * 0.7, s * 0.7, 4);
   E.SPOTS.forEach((sp) => { ctx.fillStyle = '#7B8794'; roundRect(sx(sp.x) - s * 0.32, sy(sp.y) - s * 0.32, s * 0.64, s * 0.64, 3); });
+  E.AIR_PANELS.forEach((p) => drawAirPanel(sx(p.x), sy(p.y), s, g.air ? (g.airFixed[p.id] ? 'fixed' : 'todo') : 'off'));
+  E.PAIRS.forEach((p) => ['a', 'b'].forEach((end) => drawPairSwitch(sx(p[end].x), sy(p[end].y), s, false, false, false)));
   E.VENTS.forEach((v) => drawVent(sx(v.x), sy(v.y), s));
   E.LADDERS.forEach((l) => drawLadder(sx(l.x), sy(l.y), s));
   E.CAMS.forEach((c) => drawCam(sx(c.x), sy(c.y), s, false));
@@ -2256,7 +2617,185 @@ function drawOverview(g) {
   ctx.textBaseline = 'middle';
   ctx.fillStyle = 'rgba(28,63,94,0.8)';
   E.ROOMS.forEach((r) => ctx.fillText(r.name, sx(r.x + r.w / 2), sy(r.y + r.h / 2) + (r.key === 'plaza' ? s * 3 : 0)));
+  if (mine) {
+    // 自分の仕事の「!」（おわっていないもの）と、自分の位置
+    ctx.fillStyle = '#F5B700';
+    ctx.font = '900 ' + Math.max(14, Math.round(s * 0.9)) + 'px "Noto Sans JP", sans-serif';
+    mine.spots.forEach((pt) => ctx.fillText('!', sx(pt.x), sy(pt.y) - s * 0.9));
+    ctx.fillStyle = colorHex(mine.color);
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(sx(mine.x), sy(mine.y), Math.max(6, s * 0.55), 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.font = '700 ' + Math.max(12, Math.round(s * 0.6)) + 'px "Noto Sans JP", sans-serif';
+    ctx.textBaseline = 'bottom';
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = 'rgba(255,255,255,0.95)';
+    ctx.strokeText('あなた', sx(mine.x), sy(mine.y) - s * 0.7);
+    ctx.fillStyle = '#1A1A1A';
+    ctx.fillText('あなた', sx(mine.x), sy(mine.y) - s * 0.7);
+  }
   if (g.dark) { ctx.fillStyle = 'rgba(12,16,24,0.45)'; ctx.fillRect(0, 0, CW, CH); }
+}
+
+/* ── 地図（遊んでいる人。自分の位置と自分の仕事だけ。ほかの人は出ない） ── */
+function openMap() {
+  const g = gameOf(state.room);
+  if (!g || g.stage !== 'play' || !isPlaying(g, state.nickname) || state.mapOpen) return;
+  state.mapOpen = true;
+  state.sayOpen = false;
+  state.sabOpen = false;
+  renderSayBox(g);
+  $('ovMap').hidden = false;
+  KEYS.clear();
+  drawMapOverlay(g);
+}
+function closeMap() {
+  state.mapOpen = false;
+  $('ovMap').hidden = true;
+}
+const mapCanvas = $('mapView');
+const mctx = mapCanvas.getContext('2d');
+function drawMapOverlay(g) {
+  const w = Math.max(200, Math.floor(mapCanvas.getBoundingClientRect().width));
+  const h = Math.round(w * (E.H / E.W));
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  if (mapCanvas.width !== w * dpr || mapCanvas.height !== h * dpr) {
+    mapCanvas.width = w * dpr;
+    mapCanvas.height = h * dpr;
+    mapCanvas.style.height = h + 'px';
+  }
+  mctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const s = w / E.W;
+  const me = state.nickname;
+  const spots = (g.tasks[me] || []).filter((t) => !t.done && g.roles[me] === 'crew').flatMap((t) => {
+    const sp = spotOf(t.spot);
+    if (!sp) return [];
+    if (sp.kind === 'pair') { const p = E.pairOf(sp.pair); return [p.a, p.b]; }
+    return [sp];
+  });
+  // 地図のキャンバスに、同じ描き方で描く（ctx を一時的に差しかえる）
+  const saved = { ctx, CW, CH };
+  ctx = mctx; CW = w; CH = h;
+  drawWholeMap(g, (x) => x * s, (y) => y * s, s, { x: ME.x, y: ME.y, color: g.colors[me], spots });
+  ctx = saved.ctx; CW = saved.CW; CH = saved.CH;
+}
+
+// 家具（部屋の目印）。マスの上に、種類ごとの形と Material Symbols の印を描く。2026-10-28 子どもの要望「象徴的なオブジェクト・装飾」
+const FURNITURE_STYLE = {
+  stove: { fill: '#4A4F57', icon: 'skillet', iconColor: '#F5C518' },
+  table: { fill: '#B98A5E', icon: 'restaurant', iconColor: '#3B2A17' },
+  antenna: { fill: '#5B6470', icon: 'cell_tower', iconColor: '#9FD3E8' },
+  desk: { fill: '#8C6A4A', icon: 'computer', iconColor: '#DDE9F3' },
+  crops: { fill: '#7A5A3A', icon: 'eco', iconColor: '#6CC070' },
+  tank: { fill: '#2F6FD6', icon: 'water_drop', iconColor: '#DDEBFF' },
+  sofa: { fill: '#C0574D', icon: 'weekend', iconColor: '#FFE1DC' },
+  plant: { fill: '#8C5A33', icon: 'potted_plant', iconColor: '#6CC070' },
+  generator: { fill: '#555C66', icon: 'bolt', iconColor: '#F5C518' },
+  barrel: { fill: '#8A5A2B', icon: 'oil_barrel', iconColor: '#F3E2C7' },
+  crate: { fill: '#B07A3C', icon: 'package_2', iconColor: '#4A2E12' },
+  shelf: { fill: '#6B4E2E', icon: 'shelves', iconColor: '#F3E2C7' },
+  light: { fill: '#4B5563', icon: 'light', iconColor: '#F5C518' },
+  bench: { fill: '#8C5A33', icon: 'chair', iconColor: '#F3E2C7' },
+};
+function drawFurniture(sx, sy, size) {
+  ctx.save();
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  E.FURNITURE.forEach((f) => {
+    const st = FURNITURE_STYLE[f.kind] || FURNITURE_STYLE.crate;
+    const x = sx(f.x);
+    const y = sy(f.y);
+    const w = f.w * size;
+    const h = f.h * size;
+    ctx.fillStyle = 'rgba(0,0,0,0.18)';
+    roundRect(x + size * 0.06, y + size * 0.1, w, h, Math.max(2, size * 0.14));
+    ctx.fillStyle = st.fill;
+    roundRect(x + size * 0.05, y + size * 0.05, w - size * 0.1, h - size * 0.1, Math.max(2, size * 0.14));
+    if (size >= 10) {
+      ctx.fillStyle = st.iconColor;
+      ctx.font = Math.round(Math.min(w, h) * 0.62) + 'px "Material Symbols Rounded"';
+      ctx.fillText(st.icon, x + w / 2, y + h / 2);
+    }
+  });
+  ctx.restore();
+}
+
+// ドア: ふだんは入口に細いわく（どこがドアか分かるように）。とじている間は板でふさぐ
+function drawDoors(g, sx, sy, size) {
+  const closed = new Set(E.closedRooms(g, RoomkRTDB.now()));
+  ctx.save();
+  E.DOORS.forEach((d) => {
+    const x = sx(d.x);
+    const y = sy(d.y);
+    const w = d.w * size;
+    const h = d.h * size;
+    if (closed.has(d.room)) {
+      ctx.fillStyle = '#6B4E2E';
+      ctx.fillRect(x, y, w, h);
+      ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+      ctx.lineWidth = Math.max(1, size * 0.06);
+      ctx.beginPath();
+      if (w >= h) { for (let i = 1; i < 3; i++) { ctx.moveTo(x, y + (h * i) / 3); ctx.lineTo(x + w, y + (h * i) / 3); } }
+      else { for (let i = 1; i < 3; i++) { ctx.moveTo(x + (w * i) / 3, y); ctx.lineTo(x + (w * i) / 3, y + h); } }
+      ctx.stroke();
+    } else {
+      ctx.strokeStyle = 'rgba(107,78,46,0.45)';
+      ctx.lineWidth = Math.max(1, size * 0.08);
+      ctx.setLineDash([size * 0.25, size * 0.2]);
+      ctx.strokeRect(x + 1, y + 1, w - 2, h - 2);
+      ctx.setLineDash([]);
+    }
+  });
+  ctx.restore();
+}
+
+// 空気のパネル: off＝ふだん（うすい）、todo＝止まっていてなおす（点滅）、fixed＝なおした（みどり）
+function drawAirPanel(x, y, size, st) {
+  ctx.save();
+  const blink = st === 'todo' && Math.floor(Date.now() / 400) % 2 === 0;
+  ctx.fillStyle = st === 'fixed' ? '#2E9A4A' : blink ? '#FF6B5B' : '#2BB3C6';
+  roundRect(x - size * 0.36, y - size * 0.36, size * 0.72, size * 0.72, 6);
+  ctx.fillStyle = '#fff';
+  ctx.font = Math.round(size * 0.5) + 'px "Material Symbols Rounded"';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(st === 'fixed' ? 'check' : 'air', x, y);
+  if (st === 'todo') {
+    ctx.strokeStyle = '#FF6B5B';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(x - size * 0.46, y - size * 0.46, size * 0.92, size * 0.92);
+  }
+  ctx.restore();
+}
+
+// ふたりの仕事のスイッチ: held＝だれかがおしている（光る）、todo＝自分の仕事（黄色いわく）、done＝おわった（みどりのわく）
+function drawPairSwitch(x, y, size, held, todo, done) {
+  ctx.save();
+  ctx.fillStyle = '#5B6470';
+  roundRect(x - size * 0.34, y - size * 0.34, size * 0.68, size * 0.68, 6);
+  ctx.fillStyle = held ? '#F5C518' : '#C8D3DC';
+  roundRect(x - size * 0.22, y - size * 0.26, size * 0.44, size * 0.52, 4);
+  ctx.fillStyle = held ? '#3B2A17' : '#4B5563';
+  ctx.font = Math.round(size * 0.42) + 'px "Material Symbols Rounded"';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('group', x, y);
+  if (held) {
+    ctx.strokeStyle = 'rgba(245,197,24,0.9)';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(x, y, size * 0.55 + (Math.floor(Date.now() / 300) % 2) * 2, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  if (todo || done) {
+    ctx.strokeStyle = done ? '#2E9A4A' : '#F5B700';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(x - size * 0.44, y - size * 0.44, size * 0.88, size * 0.88);
+  }
+  ctx.restore();
 }
 
 // 近道: 床のふた（しま模様の丸）
@@ -2409,14 +2948,30 @@ function updateActions(g) {
     }
     // 監視カメラの台（おきている人だけ）
     if (!use && awake && E.dist(E.CAM_STAND, ME) <= E.USE_RANGE) use = { kind: 'cam', label: 'カメラを見る' };
+    // 空気のパネル（止まっている間。おきている人だけ）
+    if (!use && awake && g.air) {
+      const p = E.AIR_PANELS.find((q) => !g.airFixed[q.id] && E.dist(q, ME) <= E.USE_RANGE);
+      if (p) use = { kind: 'airfix', panel: p.id, label: '空気をなおす' };
+    }
+    // ふたりの仕事のスイッチ（遊んでいる人ならだれでも。おしている間は「相手を待っている…」）
+    if (!use && state.pairHold) use = { kind: 'pairhold', label: '相手を待っている…（はなれるとやめる）', off: true };
+    if (!use) {
+      for (const p of E.PAIRS) {
+        const end = ['a', 'b'].find((e) => E.dist(p[e], ME) <= E.USE_RANGE);
+        if (end) { use = { kind: 'pair', pid: p.id, end, label: 'スイッチをおす' }; break; }
+      }
+    }
     if (!use && role === 'crew') {
-      const t = (g.tasks[me] || []).find((x) => !x.done && E.dist(spotOf(x.spot), ME) <= E.USE_RANGE);
+      const t = (g.tasks[me] || []).find((x) => !x.done && x.spot < E.PAIR_SPOT_BASE && E.dist(spotOf(x.spot), ME) <= E.USE_RANGE);
       if (t) use = { kind: 'task', spot: t.spot, label: '仕事をする' };
     }
     if (!use && awake && g.dark && E.dist(E.FIX_SPOT, ME) <= E.USE_RANGE) use = { kind: 'fix', label: '電気をなおす' };
     if (!use && awake && E.dist(E.TABLE, ME) <= E.TABLE.r + E.USE_RANGE) {
       const left = g.buttons[me] || 0;
-      use = { kind: 'button', label: '会議ボタン（あと' + left + '回）', off: left <= 0 };
+      const wait = Math.max(0, Math.ceil((g.buttonReadyAt - now) / 1000));
+      if (g.air) use = { kind: 'button', label: '会議ボタン（空気をなおしてから）', off: true };
+      else if (wait > 0) use = { kind: 'button', label: '会議ボタン（あと' + wait + '秒で押せる）', off: true };
+      else use = { kind: 'button', label: '会議ボタン（あと' + left + '回）', off: left <= 0 };
     }
   }
   ACT.use = use;
@@ -2434,7 +2989,8 @@ function updateActions(g) {
 
   const isSl = role === 'sleeper' && awake;
   $('actSleep').hidden = !isSl;
-  $('actDark').hidden = !isSl;
+  $('actSab').hidden = !isSl;
+  $('btnMap').hidden = !(g.stage === 'play' && isPlaying(g, me));
   if (isSl) {
     const cd = Math.max(0, Math.ceil(((g.cooldown[me] || 0) - now) / 1000));
     let target = null;
@@ -2448,10 +3004,56 @@ function updateActions(g) {
     ACT.sleep = play && cd === 0 ? target : null;
     $('actSleep').disabled = !ACT.sleep;
     setText('actSleepCd', cd > 0 ? String(cd) : '');
-    const dcd = Math.max(0, Math.ceil((g.darkReadyAt - now) / 1000));
-    $('actDark').disabled = !play || g.dark || dcd > 0;
-    setText('actDarkCd', !g.dark && dcd > 0 ? String(dcd) : '');
+    $('actSab').disabled = !play;
+    renderSabBox(g, now);
+  } else if (state.sabOpen) {
+    state.sabOpen = false;
+    $('sabBox').hidden = true;
   }
+}
+
+/* ── ねむらせ屋の「しかけ」（停電・空気・ドア）。右下のボタンでひらく一覧 ── */
+function renderSabBox(g, now) {
+  const box = $('sabBox');
+  const open = state.sabOpen && g.stage === 'play' && !blocked();
+  if (!open) state.sabDoor = false;
+  box.hidden = !open;
+  $('actSab').setAttribute('aria-expanded', String(open));
+  if (!open) return;
+  const scd = Math.max(0, Math.ceil((g.darkReadyAt - now) / 1000));
+  const busy = g.dark ? '停電中' : g.air ? '空気を止めている' : scd > 0 ? 'あと ' + scd + ' 秒' : '';
+  const dark = $('sabDark');
+  dark.disabled = !!busy;
+  setText('sabDarkNote', busy || 'いま使える');
+  const air = $('sabAir');
+  air.disabled = !!busy;
+  setText('sabAirNote', busy || 'いま使える');
+  const dcd = Math.max(0, Math.ceil((g.doorReadyAt - now) / 1000));
+  const door = $('sabDoor');
+  door.disabled = dcd > 0;
+  setText('sabDoorNote', dcd > 0 ? 'あと ' + dcd + ' 秒' : 'いま使える');
+  door.setAttribute('aria-expanded', String(state.sabDoor));
+  const rooms = $('sabRooms');
+  rooms.hidden = !state.sabDoor || dcd > 0;
+  if (!rooms.hidden && rooms.childElementCount === 0) {
+    rooms.appendChild(makeElement('span', 'nk-words__lead', 'どの部屋？'));
+    E.DOOR_ROOMS.forEach((key) => {
+      const b = makeElement('button', 'nk-word', E.roomName(key));
+      b.type = 'button';
+      b.dataset.room = key;
+      b.addEventListener('click', () => { state.sabDoor = false; state.sabOpen = false; gameAct(mut.door(state.nickname, key)); });
+      rooms.appendChild(b);
+    });
+  }
+}
+
+function toggleSabBox() {
+  const g = gameOf(state.room);
+  if (!g || $('actSab').hidden || $('actSab').disabled) return;
+  state.sabOpen = !state.sabOpen;
+  state.sabDoor = false;
+  if (state.sabOpen) { state.sayOpen = false; renderSayBox(g); }
+  renderSabBox(g, RoomkRTDB.now());
 }
 
 function updateClock(g) {
@@ -2485,6 +3087,8 @@ function doUse() {
   if (u.kind === 'cam') openCam();
   else if (u.kind === 'task') openTask(u.spot);
   else if (u.kind === 'fix') openFix();
+  else if (u.kind === 'airfix') openAirFix(u.panel);
+  else if (u.kind === 'pair') pairPress(u.pid, u.end);
   else if (u.kind === 'button') gameAct(mut.button(state.nickname));
 }
 function doFind() { if (ACT.find) gameAct(mut.find(state.nickname, ACT.find)); }
@@ -2496,8 +3100,14 @@ function doSleep() {
   if (at) gameAct(mut.sleep(state.nickname, t, { x: at.x, y: at.y }));
 }
 function doDark() {
-  if ($('actDark').hidden || $('actDark').disabled) return;
+  if ($('sabDark').disabled) return;
+  state.sabOpen = false;
   gameAct(mut.dark(state.nickname));
+}
+function doAir() {
+  if ($('sabAir').disabled) return;
+  state.sabOpen = false;
+  gameAct(mut.air(state.nickname));
 }
 
 /* ── 監視カメラ ── */
@@ -2690,7 +3300,13 @@ function bind() {
   $('actSay').addEventListener('click', toggleSayBox);
   $('btnSayClose').addEventListener('click', () => { state.sayOpen = false; state.sayPending = null; const g = gameOf(state.room); if (g) renderSayBox(g); });
   $('actSleep').addEventListener('click', doSleep);
-  $('actDark').addEventListener('click', doDark);
+  $('actSab').addEventListener('click', toggleSabBox);
+  $('btnSabClose').addEventListener('click', () => { state.sabOpen = false; state.sabDoor = false; $('sabBox').hidden = true; });
+  $('sabDark').addEventListener('click', doDark);
+  $('sabAir').addEventListener('click', doAir);
+  $('sabDoor').addEventListener('click', () => { state.sabDoor = !state.sabDoor; const g = gameOf(state.room); if (g) renderSabBox(g, RoomkRTDB.now()); });
+  $('btnMap').addEventListener('click', () => { if (state.mapOpen) closeMap(); else openMap(); });
+  $('btnMapClose').addEventListener('click', closeMap);
   $('btnTasks').addEventListener('click', () => {
     const closed = $('taskList').classList.toggle('is-closed');
     $('btnTasks').setAttribute('aria-expanded', String(!closed));
@@ -2702,6 +3318,8 @@ function bind() {
     if (state.currentScreen !== 'game') return;
     if (e.code === 'Escape' && !$('ovTask').hidden) { closeTask(); return; }
     if (e.code === 'Escape' && !$('ovCam').hidden) { closeCam(); return; }
+    if (e.code === 'Escape' && !$('ovMap').hidden) { closeMap(); return; }
+    if (e.code === 'KeyM' && !e.repeat && !$('ovMap').hidden) { closeMap(); return; }
     if (blocked()) return;
     if (/^(Arrow|Key[WASD]$)/.test(e.code)) { KEYS.add(e.code); e.preventDefault(); return; }
     if (e.repeat) return;
@@ -2709,7 +3327,8 @@ function bind() {
     else if (e.code === 'KeyR') doFind();
     else if (e.code === 'KeyT' && !$('actSay').hidden) toggleSayBox();
     else if (e.code === 'KeyQ') doSleep();
-    else if (e.code === 'KeyF') doDark();
+    else if (e.code === 'KeyF') toggleSabBox();
+    else if (e.code === 'KeyM' && !$('btnMap').hidden) openMap();
   });
   window.addEventListener('keyup', (e) => KEYS.delete(e.code));
   window.addEventListener('blur', () => KEYS.clear());
