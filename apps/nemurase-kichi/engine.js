@@ -57,6 +57,24 @@
     { id: 4, x: 22.5, y: 5.0, to: 5 },   // 通信室 ↔ 見はり台
     { id: 5, x: 22.5, y: 25.5, to: 4 },
   ];
+  // はしご（だれでも使える。ねむった人も）。2026-10-28 子どもの意見「マップにギミック（はしご）」
+  // 上に立って「はしごをおりる／のぼる」を押すと、CLIMB_MS のあいだその場に立ったまま（見える・ねむらせられる）で、to のはしごへ移る。
+  // 通信室（画面の上）↔ 見はり台（画面の下）。隊員の移動が速くなる＝隊員が有利になる向き（近道はねむらせ屋だけ、はしごはみんな）
+  const LADDERS = [
+    { id: 0, x: 19.5, y: 7.0, to: 1, room: 'radio', label: 'はしごをおりる', busy: 'おりている…' },
+    { id: 1, x: 19.5, y: 27.0, to: 0, room: 'tower', label: 'はしごをのぼる', busy: 'のぼっている…' },
+  ];
+  const CLIMB_MS = 2500;
+  // 監視カメラ。2026-10-28 子どもの意見。通信室のカメラの台（CAM_STAND）に立って「カメラを見る」と、通路に置いたカメラ（CAMS）のまわり CAM_R マスの
+  // 通路の部分だけが小窓に映る（部屋の中は映らない）。見ている間はその場から動けない。だれかが見ている間はカメラのランプが光る（ねむらせ屋が気づける）。停電中は映らない
+  const CAM_STAND = { x: 25.5, y: 3.0 };
+  const CAMS = [
+    { id: 0, x: 14.5, y: 5, name: '台所と通信室の間' },
+    { id: 1, x: 29.5, y: 5, name: '通信室と畑の間' },
+    { id: 2, x: 13.5, y: 16, name: '電気室とひろばの間' },
+    { id: 3, x: 30.5, y: 17, name: 'ひろばと倉庫の間' },
+  ];
+  const CAM_R = 2.5;
 
   const SPEED = 4.2;          // 1秒に進むマス
   const RADIUS = 0.34;        // 人の大きさ
@@ -319,6 +337,7 @@
       left: {},         // {id: true} ゲームの途中で抜けた人（勝ち負けの判定と、のこりの仕事の数から外す）
       bodies: [],       // ねむっている姿 [{id, x, y}]（会議で片づく）
       cooldown: {},     // {id: この時刻まで、ねむらせられない}
+      cam: {},          // {id: true} 監視カメラを見ている人（game/cam/{id}。会議で空にする）
       dark: false,      // 停電中
       darkReadyAt: 0,   // この時刻から停電を起こせる
       spawnSeq: 1,      // 増えたら、みんなテーブルのまわりへもどる
@@ -395,7 +414,7 @@
   }
 
   const api = {
-    W, H, ROOMS, HALLS, HALL_FILL, SPOTS, FIX_SPOT, TABLE, VENTS, GRID, COLORS,
+    W, H, ROOMS, HALLS, HALL_FILL, SPOTS, FIX_SPOT, TABLE, VENTS, LADDERS, CLIMB_MS, CAM_STAND, CAMS, CAM_R, GRID, COLORS,
     SPEED, RADIUS, USE_RANGE, SLEEP_RANGE, FIND_RANGE, VIEW, VIEW_RAYS, VIEW_OVER,
     GAME_LIMIT_S, MIN_PLAYERS, MAX_PLAYERS, TWO_SLEEPERS_MIN, DEFAULT_SETTINGS, SETTING_OPTS,
     isFloor, dist, roomAt, roomName, canStand, step, path, rayDist, canSee, viewPolygon, spawnPoint, encodePos, decodePos,

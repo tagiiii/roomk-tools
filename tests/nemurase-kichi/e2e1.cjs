@@ -126,6 +126,20 @@ const { E, check, sleep } = L;
   await host.page.click('#sayChips .nk-word[data-say="plaza"]');
   check('5秒に1回まで（続けて送れない）', await L.waitToast(host, '5秒に1回まで') && (await L.roomOf(code)).game.say['ホスト'].n === 1);
   await host.page.click('#btnSayClose');
+  // 名前の入る言葉（遊んでいる間）: 「だれ？」で人を選んでから送る
+  await g3.page.click('#actSay');
+  await L.waitVisible(g3, '#sayBox');
+  check('はじめは「だれ？」が出ていない', !(await L.visible(g3, '#sayNames')));
+  await g3.page.click('#sayChips .nk-word[data-say="sawnow"]');
+  check('名前の入る言葉を押すと「だれ？」（自分以外の3人＋やめる）', await L.waitFor(async () => (await L.visible(g3, '#sayNames')) && (await g3.page.$$('#sayNames .nk-word--name')).length === 3 && !(await g3.page.$('#sayNames .nk-word--name:text-is("そら")'))));
+  check('押した言葉に印', await g3.page.$eval('#sayChips .nk-word[data-say="sawnow"]', (b) => b.classList.contains('is-picked')));
+  await g3.page.click('#sayNames .nk-word--quiet');
+  check('「やめる」で「だれ？」がとじる', await L.waitFor(async () => !(await L.visible(g3, '#sayNames'))));
+  await g3.page.click('#sayChips .nk-word[data-say="sawnow"]');
+  await g3.page.click('#sayNames .nk-word--name:text-is("みどり")');
+  for (const c of [host, g2]) check('みんなの画面の上に「そら: みどりさんが仕事をしていた」 ' + c.label, await L.waitFor(async () => (await L.text(c, '#sayTicker')).includes('そらみどりさんが仕事をしていた')));
+  check('名前の入る言葉は相手つきで書かれる', (await L.roomOf(code)).game.say['そら'].k === 'sawnow' && (await L.roomOf(code)).game.say['そら'].t === 'みどり');
+  check('送ると一覧と「だれ？」がとじる', await L.waitFor(async () => !(await L.visible(g3, '#sayBox'))));
   await g2.page.keyboard.press('KeyT');
   check('キー T で一覧がひらく', await L.waitFor(() => L.visible(g2, '#sayBox')));
   await g2.page.keyboard.press('KeyT');
@@ -225,6 +239,25 @@ const { E, check, sleep } = L;
   await L.sleep(400);
   check('隊員は近道を使えない', (await L.text(g3, '#actUseLabel')) !== '近道を使う');
 
+  // ══ はしご（だれでも） ══
+  const l1 = E.LADDERS[1];
+  const l0 = E.LADDERS[l1.to];
+  await L.teleport(g3, l1.x, l1.y - 0.4);
+  check('隊員もはしごの上で「はしごをのぼる」', await L.waitFor(async () => (await L.text(g3, '#actUseLabel')) === 'はしごをのぼる' && !(await g3.page.$eval('#actUse', (b) => b.disabled))));
+  await g3.page.click('#actUse');
+  check('使っている間は「のぼっている…」で押せない', await L.waitFor(async () => (await L.text(g3, '#actUseLabel')) === 'のぼっている…' && (await g3.page.$eval('#actUse', (b) => b.disabled))));
+  const during = await L.me(g3);
+  check('使っている間はまだ その場にいる', Math.hypot(during.x - l1.x, during.y - (l1.y - 0.4)) < 0.01, during);
+  await g3.page.keyboard.down('ArrowRight');
+  await sleep(400);
+  await g3.page.keyboard.up('ArrowRight');
+  check('使っている間は歩けない', Math.abs((await L.me(g3)).x - l1.x) < 0.01);
+  check('2.5秒たつと、つながったはしごへ移る', await L.waitFor(async () => { const m = await L.me(g3); return Math.hypot(m.x - l0.x, m.y - l0.y) < 0.01; }, E.CLIMB_MS + 2000));
+  check('移った位置がほかの人に届く', await L.waitFor(async () => { const pa = await g2.page.evaluate(() => window.__NK__.PA['そら']); return pa && Math.hypot(pa.tx - l0.x, pa.ty - l0.y) < 0.2; }));
+  check('移ったあとは「はしごをおりる」', await L.waitFor(async () => (await L.text(g3, '#actUseLabel')) === 'はしごをおりる'));
+  await L.teleport(g1, l0.x, l0.y + 0.4);
+  check('ねむらせ屋もはしごを使える', await L.waitFor(async () => (await L.text(g1, '#actUseLabel')) === 'はしごをおりる'));
+
   // ══ 停電となおす ══
   await g1.page.click('#actDark');
   check('停電がみんなに出る', await L.waitFor(() => L.visible(host, '#hudDark')));
@@ -232,7 +265,46 @@ const { E, check, sleep } = L;
   check('スイッチの前で「電気をなおす」', await L.waitFor(async () => (await L.text(g3, '#actUseLabel')) === '電気をなおす'));
   await L.shot(g3, '03-dark');
   await g3.page.click('#actUse');
-  check('電気がなおる', await L.waitFor(async () => !(await L.visible(host, '#hudDark'))));
+  check('なおすのはミニゲーム（1〜8を順に）', await L.waitFor(() => L.visible(g3, '#ovTask')) && (await L.text(g3, '#taskTitle')) === '電気室：スイッチを順に入れなおす' && !!(await g3.page.$('#taskBox .nk-order')));
+  await sleep(300);
+  check('ミニゲームの途中は まだ停電中', await L.visible(host, '#hudDark'));
+  await L.shot(g3, '03b-fix');
+  check('ミニゲームは order', (await L.solveTask(g3)) === 'order');
+  check('おわると電気がなおる', await L.waitFor(async () => !(await L.visible(host, '#hudDark'))));
+  check('ミニゲームがとじる', await L.waitFor(async () => !(await L.visible(g3, '#ovTask'))));
+
+  // ══ 監視カメラ ══
+  const camPixel = (c, i, below) => c.page.evaluate(([idx, dy]) => {
+    const cv = document.getElementById('camView');
+    const En = window.NemuraseEngine;
+    const w = cv.clientWidth; const dpr = cv.width / w; const cell = w / 2; const s = (cell - 8) / (En.CAM_R * 2 + 1);
+    const cx = (idx % 2) * cell + 4 + (cell - 8) / 2; const cy = Math.floor(idx / 2) * cell + 4 + (cell - 8) / 2 + (dy ? En.RADIUS * s * 1.25 * 0.4 : 0);
+    const d = cv.getContext('2d').getImageData(Math.round(cx * dpr), Math.round(cy * dpr), 1, 1).data; return [d[0], d[1], d[2]];
+  }, [i, below]);
+  await L.teleport(host, E.CAM_STAND.x, E.CAM_STAND.y + 0.5);
+  check('カメラの台で「カメラを見る」', await L.waitFor(async () => (await L.text(host, '#actUseLabel')) === 'カメラを見る'));
+  await host.page.click('#actUse');
+  check('カメラの画面がひらく', await L.waitFor(() => L.visible(host, '#ovCam')));
+  check('見ていることが game/cam に書かれる', await L.waitFor(async () => (await L.roomOf(code)).game.cam?.['ホスト'] === true));
+  await host.page.keyboard.down('ArrowLeft');
+  await sleep(400);
+  await host.page.keyboard.up('ArrowLeft');
+  check('見ている間は歩けない', Math.abs((await L.me(host)).x - E.CAM_STAND.x) < 0.01);
+  check('だれもいない通路は床の色', L.nearColor(await camPixel(host, 0, true), E.HALL_FILL), await camPixel(host, 0, true));
+  await L.teleport(g2, E.CAMS[0].x, E.CAMS[0].y);
+  check('カメラの下に来た人が映る（体の色）', await L.waitFor(async () => L.nearColor(await camPixel(host, 0, true), '#2E9A4A')), await camPixel(host, 0, true));
+  await L.teleport(g2, 10.5, 5);
+  check('部屋の中に入ると映らない', await L.waitFor(async () => L.nearColor(await camPixel(host, 0, true), E.HALL_FILL)));
+  await L.shot(host, '03c-cam');
+  await host.page.keyboard.press('Escape');
+  check('Escape でとじる', await L.waitFor(async () => !(await L.visible(host, '#ovCam'))));
+  check('とじると game/cam から消える', await L.waitFor(async () => !(await L.roomOf(code)).game.cam?.['ホスト']));
+  await host.page.click('#actUse');
+  await L.waitVisible(host, '#ovCam');
+  await host.page.click('#btnCamClose');
+  check('とじるボタンでもとじる', await L.waitFor(async () => !(await L.visible(host, '#ovCam'))));
+  await L.teleport(g1, E.CAM_STAND.x, E.CAM_STAND.y + 0.5);
+  check('ねむらせ屋もカメラを見られる', await L.waitFor(async () => (await L.text(g1, '#actUseLabel')) === 'カメラを見る'));
 
   // ══ ねむらせる ══（道具室の通路で。あとで、かべごしに「見つけた！」が出ないことを確かめるため）
   await L.teleport(host, 9.5, 11.6);

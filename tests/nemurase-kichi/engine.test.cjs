@@ -24,6 +24,33 @@ E.VENTS.forEach((v) => {
   ok(E.dist(E.FIX_SPOT, v) > E.USE_RANGE * 2 && E.dist(E.TABLE, v) > E.TABLE.r + E.USE_RANGE * 2, '近道がスイッチ・テーブルから離れている ' + v.id);
 });
 ok(E.VIEW.crew < E.VIEW.sleeper, '隊員の見える広さは、ねむらせ屋よりせまい');
+// はしご（2026-10-28）: 立てる・行ける・対になっている・書いてある部屋の中・仕事の場所や近道・スイッチ・テーブルと重ならない
+ok(E.LADDERS.length === 2 && E.CLIMB_MS === 2500, 'はしごは2つ・使うのに2.5秒');
+E.LADDERS.forEach((l) => {
+  ok(E.canStand(l.x, l.y), 'はしごに立てる ' + l.id);
+  ok(!!E.path({ x: 22, y: 12 }, { x: Math.floor(l.x), y: Math.floor(l.y) }), 'はしごに行ける ' + l.id);
+  ok(E.LADDERS[l.to] && E.LADDERS[l.to].to === l.id && l.to !== l.id, 'はしごの行き先が対 ' + l.id);
+  ok(E.roomAt(l.x, l.y) === l.room, 'はしごは書いてある部屋の中 ' + l.id, E.roomAt(l.x, l.y));
+  ok(E.SPOTS.every((sp) => E.dist(sp, l) > E.USE_RANGE * 2) && E.VENTS.every((v) => E.dist(v, l) > E.USE_RANGE * 2), 'はしごが仕事の場所・近道から離れている ' + l.id);
+  ok(E.dist(E.FIX_SPOT, l) > E.USE_RANGE * 2 && E.dist(E.TABLE, l) > E.TABLE.r + E.USE_RANGE * 2, 'はしごがスイッチ・テーブルから離れている ' + l.id);
+  ok(typeof l.label === 'string' && l.label && typeof l.busy === 'string' && l.busy, 'はしごのボタンの言葉 ' + l.id);
+});
+ok(E.LADDERS[0].room === 'radio' && E.LADDERS[1].room === 'tower', 'はしごは通信室と見はり台をつなぐ');
+// 監視カメラ（2026-10-28）: 台は通信室・立てる・行ける・ほかの場所と重ならない。カメラは通路の上で、まわり CAM_R マスの床はぜんぶ通路（部屋の中は映らない）
+ok(E.canStand(E.CAM_STAND.x, E.CAM_STAND.y) && E.roomAt(E.CAM_STAND.x, E.CAM_STAND.y) === 'radio', 'カメラの台は通信室の中で立てる');
+ok(!!E.path({ x: 22, y: 12 }, { x: Math.floor(E.CAM_STAND.x), y: Math.floor(E.CAM_STAND.y) }), 'カメラの台に行ける');
+ok(E.SPOTS.every((sp) => E.dist(sp, E.CAM_STAND) > E.USE_RANGE * 2) && E.VENTS.every((v) => E.dist(v, E.CAM_STAND) > E.USE_RANGE * 2) && E.LADDERS.every((l) => E.dist(l, E.CAM_STAND) > E.USE_RANGE * 2), 'カメラの台が仕事の場所・近道・はしごから離れている');
+ok(E.CAMS.length === 4 && E.CAM_R === 2.5 && E.CAMS.every((c, i) => c.id === i && c.name), 'カメラは4つ・映る広さ2.5マス');
+E.CAMS.forEach((c) => {
+  ok(E.isFloor(Math.floor(c.x), Math.floor(c.y)) && E.roomAt(c.x, c.y) === null, 'カメラは通路の上 ' + c.id);
+  ok(!!E.path({ x: 22, y: 12 }, { x: Math.floor(c.x), y: Math.floor(c.y) }), 'カメラの下まで行ける ' + c.id);
+  const rooms = [];
+  for (let ty = 0; ty < E.H; ty++) for (let tx = 0; tx < E.W; tx++) {
+    if (E.isFloor(tx, ty) && E.dist({ x: tx + 0.5, y: ty + 0.5 }, c) <= E.CAM_R && E.roomAt(tx + 0.5, ty + 0.5)) rooms.push(tx + ',' + ty);
+  }
+  ok(rooms.length === 0, 'カメラのまわりの床はぜんぶ通路（部屋の中は映らない） ' + c.id, rooms);
+});
+ok(JSON.stringify(E.newGame(['a', 'b', 'c', 'd'], {}, fixed).cam) === '{}', 'はじめはだれもカメラを見ていない');
 
 // 行き止まりの小部屋（道具室・温室）: 入口は1つ。入口の2マスをふさぐと、ひろばから行けなくなる
 const DEAD_ENDS = [

@@ -236,6 +236,11 @@ body.is-watching .nk-tasks, body.is-watching .nk-actions, body.is-watching .nk-p
 .nk-rolecard__desc { margin: 0 0 20px; line-height: 1.7; text-align: left; }
 
 .nk-game__card { max-width: 480px; }
+/* 監視カメラ */
+.nk-cam { max-width: 480px; }
+.nk-cam .nk-game__title { display: inline-flex; align-items: center; gap: 6px; }
+.nk-cam__note { margin: 0 0 10px; color: var(--color-muted); font-size: 13px; line-height: 1.6; }
+.nk-cam__view { display: block; width: 100%; aspect-ratio: 1 / 1; border-radius: 10px; background: #1A2028; }
 .nk-game__head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
 .nk-game__title { margin: 0; font-size: 18px; color: var(--color-primary); }
 .nk-game__how { margin: 0 0 16px; color: var(--color-muted); line-height: 1.6; }

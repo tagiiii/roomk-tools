@@ -26,6 +26,8 @@ const RESULT_MS = 5500;
 const FIRST_COOLDOWN_S = 15;
 const DARK_FIRST_S = 20;
 const DARK_AGAIN_S = 40;
+const FIX_TASK = -2;            // state.taskSpot: 停電をなおすミニゲームをひらいている（仕事の場所の番号とかぶらない）
+const BOT_FIX_MS = 5500;        // ロボットが停電をなおすのにかける時間（人のミニゲームと同じくらい）
 const LATE_MS = 3000;           // ホストの端末が遅れているとき、ほかの端末が進行を代わるまでの待ち
 const LEFT_GRACE_MS = 30000;    // ゲーム中に在室が消えてから、抜けたとみなすまでの時間（読み込み直し・短い切断は抜けたことにしない）
 const SKIP = '*skip';           // 投票のスキップ（名前に * は使えないので、だれの名前ともかぶらない）
@@ -78,6 +80,7 @@ const state = {
   sayAt: 0,            // 自分が最後に送った時刻（5秒に1回まで）
   sayPending: null,    // 名前の入る言葉を押して、「だれ？」で人を選んでいる途中の言葉（会議中・遊んでいる間）
   sayOpen: false,      // 遊んでいる間の「ひとこと」の一覧をひらいている
+  camOpen: false,      // 監視カメラを見ている（game/cam/{自分} に true を書く。とじたら消す）
   bannerTimer: null,
   toastTimer: null,
   lastAdvanceTry: 0,
@@ -86,7 +89,7 @@ const state = {
   dueKey: null,        // 進められる状態（会議のしめきり・結果のあとなど）を最初に見た回
   dueSince: 0,
 };
-const ME = { x: 22, y: 12.5, face: 1, sentAt: 0, sentText: '', moving: false, ventAt: 0 };
+const ME = { x: 22, y: 12.5, face: 1, sentAt: 0, sentText: '', moving: false, ventAt: 0, climb: null };   // climb: はしごを使っている途中 {until, to, label}
 const VENT_GAP_MS = 1200;       // 近道を使ったあと、続けて使えるまで（行ったり来たりを1回の押しまちがいでしないように）
 const PA = {};   // おきている人の位置 {id: {x, y, tx, ty, face}}（p から）
 const PG = {};   // ねむった人の位置（g から。自分がねむっているときだけ受け取る）
@@ -234,6 +237,7 @@ function gameOf(room) {
     settings: settingsOf({ settings: raw.settings }),
     ended: !!raw.ended,
     say: {},          // ひとこと {id: {k, t, r, n, at, m}}（ひとり1枠。最新の1件だけ）
+    cam: {},          // 監視カメラを見ている人 {id: true}（game/cam/{id}。見おわったら消す。会議で空にする）
   };
   const buttons = objOf(raw.buttons);
   // ひとことは game/say/{id} にひとり1枠で書く。言葉の種類・相手・部屋は確かめて取りこむ（r 全体の transaction でもそのまま書き戻す）
@@ -250,6 +254,8 @@ function gameOf(room) {
       m: Number(v.m) || 0,
     };
   });
+  const camRaw = objOf(raw.cam);
+  players.forEach((id) => { if (camRaw[id] === true) g.cam[id] = true; });
   const asleep = objOf(raw.asleep);
   const leftRaw = objOf(raw.left);
   // 仕事の完了は game/done/{id}/{場所} にゲームの番号を書く（ゲーム全体を書き直さないため）。ちがう回の印は使わない
@@ -1068,6 +1074,7 @@ function startMeeting(g, now, why, caller, found) {
   g.meeting = { seq: g.meetingSeq, why, caller, found: found || null, endsAt: now + g.settings.meeting * 1000, votes: {} };
   g.bodies = {};
   g.dark = false;
+  g.cam = {};
 }
 
 // 投票できる人（おきていて、ルームにいる人。ロボットはいつもいる）がみんな入れたか
@@ -1450,7 +1457,12 @@ function botStep(g, b, dt, now) {
       if (current && current.id === g.id && current.stage === 'play') doTask(b.id, goal.spot);
     }, 2400);
   } else if (goal.kind === 'fix') {
-    gameAct(mut.fix(b.id));
+    // 人と同じくらいの時間をかけてなおす（その間に電気がついていれば何もしない）
+    b.busyUntil = now + BOT_FIX_MS;
+    setTimeout(() => {
+      const current = gameOf(state.room);
+      if (current && current.id === g.id && current.stage === 'play' && current.dark) gameAct(mut.fix(b.id));
+    }, BOT_FIX_MS);
   }
 }
 
@@ -1621,7 +1633,8 @@ function renderWaiting(room) {
 }
 
 function closeOverlays() {
-  ['ovRole', 'ovTask', 'ovMeeting', 'ovResult', 'ovEnd'].forEach((id) => { $(id).hidden = true; });
+  if (state.camOpen) closeCam();
+  ['ovRole', 'ovTask', 'ovCam', 'ovMeeting', 'ovResult', 'ovEnd'].forEach((id) => { $(id).hidden = true; });
   state.taskSpot = -1;
   state.votePick = null;
   state.sayPending = null;
@@ -1674,6 +1687,7 @@ function renderGame(room) {
       const sp = E.spawnPoint(g.players.indexOf(state.nickname), g.players.length);
       ME.x = sp.x;
       ME.y = sp.y;
+      ME.climb = null;
       if (g.stage === 'play') sendPosFor(state.nickname, ME, E.isAwake(g, state.nickname), true);
     }
   }
@@ -1701,7 +1715,11 @@ function renderGame(room) {
   renderHud(g, playing);
   if (playing) renderTasks(g);
   else renderWatchNote();
-  if ((g.stage !== 'play' || !playing) && state.taskSpot >= 0) closeTask();
+  if ((g.stage !== 'play' || !playing) && state.taskSpot !== -1) closeTask();
+  // なおしている途中に電気がついた（ほかの人がなおした）・ねむらされたら、ミニゲームをとじる
+  if (state.taskSpot === FIX_TASK && (!g.dark || asleep)) { closeTask(); if (!g.dark) smallToast('電気はついたよ'); }
+  // 監視カメラは、遊んでいる間におきている人だけ（会議がひらいた・ねむらされたら とじる）
+  if (state.camOpen && (g.stage !== 'play' || !playing || asleep)) closeCam();
   if (g.stage !== 'play' || !playing) $('ovRole').hidden = true;
   if (g.stage !== 'play') clearSayTicker();
   takeSays(g);
@@ -1943,6 +1961,22 @@ function openTask(spotId) {
   });
 }
 
+// 停電をなおす: スイッチの前で短いミニゲーム（1〜8を順に）をおえてから直る。2026-10-28 子どもの意見「電気を直しにくく」（ねむらせ屋が有利になる向き）
+function openFix() {
+  const g = gameOf(state.room);
+  if (!g || !g.dark) return;
+  state.taskSpot = FIX_TASK;
+  const gen = ++state.taskGen;
+  $('taskTitle').textContent = '電気室：スイッチを順に入れなおす';
+  $('ovTask').hidden = false;
+  KEYS.clear();
+  G.open($('taskBox'), 'order', async () => {
+    if (state.taskSpot !== FIX_TASK || state.taskGen !== gen) return;
+    closeTask();
+    if (await gameAct(mut.fix(state.nickname))) smallToast('電気がついた！');
+  });
+}
+
 function closeTask() {
   state.taskSpot = -1;
   state.taskGen += 1;
@@ -1975,7 +2009,7 @@ function resizeCanvas() {
   TS = Math.round(Math.max(26, Math.min(46, Math.min(CW / 15, CH / 10))));
 }
 
-const blocked = () => !$('ovRole').hidden || !$('ovTask').hidden || !$('ovMeeting').hidden || !$('ovResult').hidden || !$('ovEnd').hidden
+const blocked = () => !$('ovRole').hidden || !$('ovTask').hidden || !$('ovCam').hidden || !$('ovMeeting').hidden || !$('ovResult').hidden || !$('ovEnd').hidden
   || !$('hostOffOverlay').hidden || $('menuDialog').open;
 
 function inputDir() {
@@ -1997,7 +2031,17 @@ function frame(t) {
   const g = room && room.status === STATUS.PLAY && state.currentScreen === 'game' ? gameOf(room) : null;
   if (g && isPlaying(g, state.nickname)) {
     const awake = E.isAwake(g, state.nickname);
-    if (g.stage === 'play' && !blocked()) {
+    if (g.stage !== 'play') ME.climb = null;
+    if (g.stage === 'play' && ME.climb) {
+      // はしごを使っている途中: その場に立ったまま。時間がきたら、つながったはしごへ移る
+      if (Date.now() >= ME.climb.until) {
+        const to = E.LADDERS[ME.climb.to];
+        ME.x = to.x;
+        ME.y = to.y;
+        ME.climb = null;
+        sendPosFor(state.nickname, ME, awake, true);
+      }
+    } else if (g.stage === 'play' && !blocked()) {
       const d = inputDir();
       if (d.x || d.y) {
         const n = E.step(ME, d.x, d.y, dt);
@@ -2014,6 +2058,7 @@ function frame(t) {
       p.y += (p.ty - p.y) * k;
     }));
     draw(g);
+    if (state.camOpen) drawCams(g);
     updateActions(g);
     updateClock(g);
     updateMeetingTimer(g);
@@ -2101,6 +2146,11 @@ function draw(g) {
 
   // 近道（だれにでも見える。使えるのはねむらせ屋だけ）
   E.VENTS.forEach((v) => drawVent(sx(v.x), sy(v.y), TS));
+  // はしご（だれでも使える）・監視カメラ（通路。だれかが見ている間は赤いランプ）・カメラの台（通信室）
+  E.LADDERS.forEach((l) => drawLadder(sx(l.x), sy(l.y), TS));
+  const watched = camWatched(g);
+  E.CAMS.forEach((c) => drawCam(sx(c.x), sy(c.y), TS, watched));
+  drawCamStand(sx(E.CAM_STAND.x), sy(E.CAM_STAND.y), TS);
 
   // 仕事の場所
   const me = state.nickname;
@@ -2198,6 +2248,9 @@ function drawOverview(g) {
   roundRect(sx(E.FIX_SPOT.x) - s * 0.35, sy(E.FIX_SPOT.y) - s * 0.35, s * 0.7, s * 0.7, 4);
   E.SPOTS.forEach((sp) => { ctx.fillStyle = '#7B8794'; roundRect(sx(sp.x) - s * 0.32, sy(sp.y) - s * 0.32, s * 0.64, s * 0.64, 3); });
   E.VENTS.forEach((v) => drawVent(sx(v.x), sy(v.y), s));
+  E.LADDERS.forEach((l) => drawLadder(sx(l.x), sy(l.y), s));
+  E.CAMS.forEach((c) => drawCam(sx(c.x), sy(c.y), s, false));
+  drawCamStand(sx(E.CAM_STAND.x), sy(E.CAM_STAND.y), s);
   ctx.font = '700 ' + Math.max(12, Math.round(s * 0.6)) + 'px "Noto Sans JP", sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
@@ -2222,6 +2275,54 @@ function drawVent(x, y, size) {
     ctx.lineTo(x + r * 0.7, y + i * r * 0.42);
   }
   ctx.stroke();
+  ctx.restore();
+}
+
+// はしご: 2本のレールと3本の足場
+function drawLadder(x, y, size) {
+  const w = size * 0.5;
+  const h = size * 0.8;
+  ctx.save();
+  ctx.strokeStyle = '#8C5A33';
+  ctx.lineWidth = Math.max(2, size * 0.09);
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(x - w / 2, y - h / 2); ctx.lineTo(x - w / 2, y + h / 2);
+  ctx.moveTo(x + w / 2, y - h / 2); ctx.lineTo(x + w / 2, y + h / 2);
+  for (let i = -1; i <= 1; i++) { ctx.moveTo(x - w / 2, y + i * h * 0.3); ctx.lineTo(x + w / 2, y + i * h * 0.3); }
+  ctx.stroke();
+  ctx.restore();
+}
+
+// 監視カメラ（通路）: 小さな箱とレンズ。watched のときは赤いランプが点滅する
+function drawCam(x, y, size, watched) {
+  const r = size * 0.3;
+  ctx.save();
+  ctx.fillStyle = '#3A4350';
+  roundRect(x - r, y - r * 0.7, r * 2, r * 1.4, Math.max(2, size * 0.08));
+  ctx.fillStyle = '#9FD3E8';
+  circle(x - r * 0.3, y, r * 0.42);
+  ctx.fillStyle = '#1A2028';
+  circle(x - r * 0.3, y, r * 0.2);
+  if (watched && Math.floor(Date.now() / 500) % 2 === 0) {
+    ctx.fillStyle = '#FF3B30';
+    circle(x + r * 0.55, y - r * 0.3, r * 0.22);
+  }
+  ctx.restore();
+}
+
+// カメラの台（通信室）: 画面のついた机
+function drawCamStand(x, y, size) {
+  ctx.save();
+  ctx.fillStyle = '#4B5563';
+  roundRect(x - size * 0.42, y - size * 0.34, size * 0.84, size * 0.68, 5);
+  ctx.fillStyle = '#9FD3E8';
+  roundRect(x - size * 0.32, y - size * 0.26, size * 0.64, size * 0.4, 3);
+  ctx.fillStyle = '#1A2028';
+  ctx.font = Math.round(size * 0.42) + 'px "Material Symbols Rounded"';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('videocam', x, y - size * 0.06);
   ctx.restore();
 }
 
@@ -2294,11 +2395,20 @@ function updateActions(g) {
 
   let use = null;
   if (play) {
+    // はしごを使っている途中は、ほかのことはできない
+    if (ME.climb) use = { kind: 'climb', label: ME.climb.label, off: true };
     // 近道（ねむらせ屋だけ）
-    if (role === 'sleeper' && awake && Date.now() - ME.ventAt >= VENT_GAP_MS) {
+    if (!use && role === 'sleeper' && awake && Date.now() - ME.ventAt >= VENT_GAP_MS) {
       const v = E.VENTS.find((x) => E.dist(x, ME) <= E.USE_RANGE);
       if (v) use = { kind: 'vent', vent: v.id, label: '近道を使う' };
     }
+    // はしご（だれでも。ねむった人も）
+    if (!use) {
+      const l = E.LADDERS.find((x) => E.dist(x, ME) <= E.USE_RANGE);
+      if (l) use = { kind: 'ladder', ladder: l.id, label: l.label };
+    }
+    // 監視カメラの台（おきている人だけ）
+    if (!use && awake && E.dist(E.CAM_STAND, ME) <= E.USE_RANGE) use = { kind: 'cam', label: 'カメラを見る' };
     if (!use && role === 'crew') {
       const t = (g.tasks[me] || []).find((x) => !x.done && E.dist(spotOf(x.spot), ME) <= E.USE_RANGE);
       if (t) use = { kind: 'task', spot: t.spot, label: '仕事をする' };
@@ -2367,8 +2477,14 @@ function doUse() {
     if (g) sendPosFor(state.nickname, ME, E.isAwake(g, state.nickname), true);
     return;
   }
-  if (u.kind === 'task') openTask(u.spot);
-  else if (u.kind === 'fix') gameAct(mut.fix(state.nickname)).then((ok) => { if (ok) smallToast('電気がついた！'); });
+  if (u.kind === 'ladder') {
+    const l = E.LADDERS[u.ladder];
+    ME.climb = { until: Date.now() + E.CLIMB_MS, to: l.to, label: l.busy };
+    return;
+  }
+  if (u.kind === 'cam') openCam();
+  else if (u.kind === 'task') openTask(u.spot);
+  else if (u.kind === 'fix') openFix();
   else if (u.kind === 'button') gameAct(mut.button(state.nickname));
 }
 function doFind() { if (ACT.find) gameAct(mut.find(state.nickname, ACT.find)); }
@@ -2382,6 +2498,138 @@ function doSleep() {
 function doDark() {
   if ($('actDark').hidden || $('actDark').disabled) return;
   gameAct(mut.dark(state.nickname));
+}
+
+/* ── 監視カメラ ── */
+// だれかがカメラを見ているか（ランプ用。遊んでいて おきている人の分だけ）
+const camWatched = (g) => Object.keys(g.cam).some((id) => isPlaying(g, id) && E.isAwake(g, id));
+
+function openCam() {
+  const g = gameOf(state.room);
+  const me = state.nickname;
+  if (!g || g.stage !== 'play' || !isPlaying(g, me) || !E.isAwake(g, me) || state.camOpen) return;
+  state.camOpen = true;
+  state.sayOpen = false;
+  state.sayPending = null;
+  renderSayBox(g);
+  $('ovCam').hidden = false;
+  KEYS.clear();
+  // 見ていることをみんなに知らせる（カメラのランプ）。切れたら消える
+  const ref = state.roomRef.child('game/cam/' + me);
+  ref.onDisconnect().remove().catch(() => {});
+  ref.set(true).catch((error) => console.warn('[nemurase] cam failed', error));
+  drawCams(g);
+}
+
+function closeCam() {
+  const was = state.camOpen;
+  state.camOpen = false;
+  $('ovCam').hidden = true;
+  if (was && state.roomRef && state.nickname) {
+    const ref = state.roomRef.child('game/cam/' + state.nickname);
+    ref.onDisconnect().cancel().catch(() => {});
+    ref.remove().catch(() => {});
+  }
+}
+
+const camCanvas = $('camView');
+const cctx = camCanvas.getContext('2d');
+// 4つのカメラの映像を 2×2 に描く。映るのは、カメラのまわり CAM_R マスの通路の部分と、そこにいる おきている人・ねむっている姿だけ。停電中は映らない
+function drawCams(g) {
+  const w = Math.max(160, Math.floor(camCanvas.getBoundingClientRect().width));
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  if (camCanvas.width !== w * dpr) {
+    camCanvas.width = w * dpr;
+    camCanvas.height = w * dpr;
+    camCanvas.style.height = w + 'px';
+  }
+  cctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  cctx.fillStyle = '#1A2028';
+  cctx.fillRect(0, 0, w, w);
+  const cell = w / 2;
+  const s = (cell - 8) / (E.CAM_R * 2 + 1);
+  const me = state.nickname;
+  cctx.font = '700 ' + Math.max(11, Math.round(s * 0.36)) + 'px "Noto Sans JP", sans-serif';
+  E.CAMS.forEach((c, i) => {
+    const ox = (i % 2) * cell + 4;
+    const oy = Math.floor(i / 2) * cell + 4;
+    const cx = ox + (cell - 8) / 2;
+    const cy = oy + (cell - 8) / 2;
+    const px = (x) => cx + (x - c.x) * s;
+    const py = (y) => cy + (y - c.y) * s;
+    cctx.save();
+    cctx.beginPath();
+    cctx.rect(ox, oy, cell - 8, cell - 8);
+    cctx.clip();
+    cctx.fillStyle = '#242C36';
+    cctx.fillRect(ox, oy, cell - 8, cell - 8);
+    if (g.dark) {
+      cctx.fillStyle = '#B8C2CC';
+      cctx.textAlign = 'center';
+      cctx.textBaseline = 'middle';
+      cctx.fillText('停電中は映らない', cx, cy);
+    } else {
+      cctx.beginPath();
+      cctx.arc(cx, cy, E.CAM_R * s, 0, Math.PI * 2);
+      cctx.clip();
+      cctx.fillStyle = E.HALL_FILL;
+      for (let ty = Math.floor(c.y - E.CAM_R - 1); ty <= Math.ceil(c.y + E.CAM_R + 1); ty++) {
+        for (let tx = Math.floor(c.x - E.CAM_R - 1); tx <= Math.ceil(c.x + E.CAM_R + 1); tx++) {
+          if (E.isFloor(tx, ty) && !E.roomAt(tx + 0.5, ty + 0.5)) cctx.fillRect(px(tx), py(ty), s + 0.5, s + 0.5);
+        }
+      }
+      const inCam = (p) => E.dist(p, c) <= E.CAM_R && !E.roomAt(p.x, p.y);
+      Object.keys(g.bodies).forEach((id) => { if (inCam(g.bodies[id])) drawCamBody(px(g.bodies[id].x), py(g.bodies[id].y), s, colorHex(g.colors[id])); });
+      g.players.forEach((id) => {
+        const pos = drawPos(g, id);
+        if (!pos || !E.isAwake(g, id) || !inCam(pos)) return;
+        drawCamPerson(px(pos.x), py(pos.y), s, colorHex(g.colors[id]), pos.face || 1, nameIn(g, id), id === me);
+      });
+    }
+    cctx.restore();
+    cctx.fillStyle = 'rgba(255,255,255,0.9)';
+    cctx.textAlign = 'left';
+    cctx.textBaseline = 'top';
+    cctx.fillText(c.name, ox + 6, oy + 4);
+  });
+}
+
+function drawCamPerson(x, y, s, hex, face, name, isMe) {
+  const r = E.RADIUS * s * 1.25;
+  cctx.save();
+  cctx.fillStyle = hex;
+  cctx.strokeStyle = 'rgba(0,0,0,0.45)';
+  cctx.lineWidth = 2;
+  cctx.beginPath();
+  cctx.arc(x, y, r, 0, Math.PI * 2);
+  cctx.fill();
+  cctx.stroke();
+  cctx.fillStyle = '#fff';
+  const ex = x + face * r * 0.28;
+  cctx.beginPath(); cctx.arc(ex - r * 0.28, y - r * 0.18, r * 0.24, 0, Math.PI * 2); cctx.fill();
+  cctx.beginPath(); cctx.arc(ex + r * 0.28, y - r * 0.18, r * 0.24, 0, Math.PI * 2); cctx.fill();
+  cctx.font = '700 ' + Math.max(10, Math.round(s * 0.34)) + 'px "Noto Sans JP", sans-serif';
+  cctx.textAlign = 'center';
+  cctx.textBaseline = 'bottom';
+  cctx.lineWidth = 3;
+  cctx.strokeStyle = 'rgba(255,255,255,0.95)';
+  cctx.strokeText(name, x, y - r - 2);
+  cctx.fillStyle = isMe ? '#1C3F5E' : '#1A1A1A';
+  cctx.fillText(name, x, y - r - 2);
+  cctx.restore();
+}
+
+function drawCamBody(x, y, s, hex) {
+  const r = E.RADIUS * s * 1.25;
+  cctx.save();
+  cctx.fillStyle = hex;
+  cctx.strokeStyle = 'rgba(0,0,0,0.45)';
+  cctx.lineWidth = 2;
+  cctx.beginPath();
+  cctx.ellipse(x, y + r * 0.3, r * 1.2, r * 0.7, 0, 0, Math.PI * 2);
+  cctx.fill();
+  cctx.stroke();
+  cctx.restore();
 }
 
 /* ── 操作のつなぎ ── */
@@ -2421,6 +2669,7 @@ function bind() {
   $('btnOverlayLeave').addEventListener('click', leaveRoom);
   $('btnRoleOk').addEventListener('click', () => { $('ovRole').hidden = true; });
   $('btnTaskClose').addEventListener('click', closeTask);
+  $('btnCamClose').addEventListener('click', closeCam);
   $('btnVoteSkip').addEventListener('click', () => { state.votePick = null; doVote(state.nickname, SKIP); });
   $('btnCloseVote').addEventListener('click', () => {
     if (window.confirm('まだ投票していない人がいても、しめきりますか？')) gameAct(mut.closeVote());
@@ -2452,6 +2701,7 @@ function bind() {
     if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
     if (state.currentScreen !== 'game') return;
     if (e.code === 'Escape' && !$('ovTask').hidden) { closeTask(); return; }
+    if (e.code === 'Escape' && !$('ovCam').hidden) { closeCam(); return; }
     if (blocked()) return;
     if (/^(Arrow|Key[WASD]$)/.test(e.code)) { KEYS.add(e.code); e.preventDefault(); return; }
     if (e.repeat) return;
