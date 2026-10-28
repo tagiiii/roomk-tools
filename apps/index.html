@@ -672,6 +672,13 @@
       color: inherit;
     }
 
+    /* すべて表示中は一覧の中だけをスクロールし、「閉じる」を一覧のすぐ下に保つ */
+    .updates-list--expanded {
+      max-height: 50vh;
+      overflow-y: auto;
+      padding-right: var(--space-xs);
+    }
+
     .updates-panel__more {
       margin-top: var(--space-sm);
     }
@@ -726,7 +733,7 @@
         <span class="material-symbols-rounded">campaign</span>更新情報
       </h2>
       <ul class="updates-list" id="updates-list"></ul>
-      <button class="btn btn-ghost btn-sm updates-panel__more" id="updates-more" hidden>すべて表示</button>
+      <button class="btn btn-ghost btn-sm updates-panel__more" id="updates-more" aria-controls="updates-list" aria-expanded="false" hidden>すべて表示</button>
     </section>
 
     <!-- ============================================= -->
@@ -2218,7 +2225,12 @@
             list.querySelectorAll('.updates-list__item').forEach((li, i) => {
               li.hidden = !collapsed && i >= DEFAULT_SHOWN;
             });
+            list.classList.toggle('updates-list--expanded', collapsed);
+            list.scrollTop = 0;
+            if (collapsed) list.tabIndex = 0;
+            else list.removeAttribute('tabindex');
             moreBtn.textContent = collapsed ? '閉じる' : 'すべて表示';
+            moreBtn.setAttribute('aria-expanded', String(collapsed));
           });
         }
 
