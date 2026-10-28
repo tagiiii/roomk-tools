@@ -86,14 +86,14 @@ const { E, check, sleep } = L;
   await g2.context.close();
   check('閉じた人の在室が消える', await L.waitFor(async () => !(await L.roomOf(code)).players?.['みどり'], 15000));
   check('閉じた人の位置が消える', await L.waitFor(async () => !(await L.rootOf(code)).p?.['みどり'], 15000));
-  // 30秒たっても戻らなければ、抜けた人として勝ち負けの判定と、のこりの仕事の数から外す
+  // 1分たっても戻らなければ、抜けた人として勝ち負けの判定と、のこりの仕事の数から外す
   const gBefore = await L.gameIn(g1);
   const tpBefore = E.taskProgress(gBefore);
   const midoriLeft = gBefore.tasks['みどり'].filter((t) => !t.done).length;
   check('閉じてすぐは、まだ抜けたことにしない', !gBefore.left['みどり']);
-  const leftOk = await L.waitFor(async () => (await L.roomOf(code)).game.left?.['みどり'] === true, 45000);
+  const leftOk = await L.waitFor(async () => (await L.roomOf(code)).game.left?.['みどり'] === true, 80000);
   const rNow = await L.roomOf(code);
-  check('30秒たつと、抜けた人になる', leftOk, { stage: rNow.game.stage, winner: rNow.game.winner, reason: rNow.game.winReason, asleep: rNow.game.asleep, players: Object.keys(rNow.players || {}), hostConnected: rNow.hostConnected, hostScreen: await L.screen(host), hostAway: await host.page.evaluate(() => window.__NK__.state.awaySince) });
+  check('1分たつと、抜けた人になる', leftOk, { stage: rNow.game.stage, winner: rNow.game.winner, reason: rNow.game.winReason, asleep: rNow.game.asleep, players: Object.keys(rNow.players || {}), hostConnected: rNow.hostConnected, hostScreen: await L.screen(host), hostAway: await host.page.evaluate(() => window.__NK__.state.awaySince) });
   const gAfter = await L.gameIn(g1);
   check('抜けた人の、のこりの仕事は全体の数から外れる', E.taskProgress(gAfter).total === tpBefore.total - midoriLeft, { before: tpBefore, after: E.taskProgress(gAfter), midoriLeft });
   check('みんなの仕事のバーの数も変わる', await L.waitFor(async () => (await L.text(g1, '#hudProgressNum')).endsWith('/ ' + E.taskProgress(gAfter).total)));

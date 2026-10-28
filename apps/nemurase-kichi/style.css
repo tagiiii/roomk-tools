@@ -91,6 +91,8 @@ body.is-playing { overflow: hidden; background: #2D3642; overscroll-behavior: no
 .nk-hud__time.is-soon { color: var(--nk-gold); }
 .nk-hud__dark { margin: 0; display: inline-flex; align-items: center; gap: 4px; padding: 2px 10px; border-radius: 999px; background: var(--nk-gold); color: #1A1A1A; font-size: 13px; font-weight: 700; }
 .nk-hud__dark .material-symbols-rounded { font-size: 18px; }
+.nk-hud__off { margin: 0; display: inline-flex; align-items: center; gap: 4px; padding: 2px 10px; border-radius: 999px; background: var(--color-error); color: #fff; font-size: 13px; font-weight: 700; }
+.nk-hud__off .material-symbols-rounded { font-size: 18px; }
 .nk-hud__menu {
   margin-left: auto; width: 44px; height: 44px; border-radius: 50%; border: none; flex: none;
   background: rgba(255, 255, 255, 0.15); color: #fff; display: inline-flex; align-items: center; justify-content: center; cursor: pointer;
@@ -329,7 +331,7 @@ button.nk-vote__main:hover { border-color: var(--color-border); }
   .nk-progress { flex-basis: 100%; max-width: none; order: 2; }
   .nk-hud__time { margin-left: auto; }
   .nk-hud__menu { margin-left: 0; width: 40px; height: 40px; }
-  .nk-hud__dark { order: 3; }
+  .nk-hud__dark, .nk-hud__off { order: 3; }
   .nk-tasks { width: 220px; font-size: 13px; }
   .nk-banner { top: auto; bottom: 180px; max-width: calc(100% - 24px); }
   .nk-says { top: auto; bottom: 150px; left: 12px; right: 12px; transform: none; max-width: none; }

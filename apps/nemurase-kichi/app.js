@@ -33,7 +33,8 @@ const AIR_TASK_B = -4;
 const BOT_FIX_MS = 5500;        // ロボットが停電・空気をなおすのにかける時間（人のミニゲームと同じくらい）
 const BOT_PAIR_HOLD_MS = 12000; // ロボットがふたりの仕事を手伝うとき、スイッチをおしつづける時間
 const LATE_MS = 3000;           // ホストの端末が遅れているとき、ほかの端末が進行を代わるまでの待ち
-const LEFT_GRACE_MS = 30000;    // ゲーム中に在室が消えてから、抜けたとみなすまでの時間（読み込み直し・短い切断は抜けたことにしない）
+const LEFT_GRACE_MS = 60000;    // ゲーム中に在室が消えてから、抜けたとみなすまでの時間（読み込み直し・アプリの切り替え・短い切断は抜けたことにしない）
+const OFFLINE_SHOW_MS = 2000;   // 通信が切れてから、本人の画面に「切れています」を出すまで（一瞬の切れでちらつかないように）
 const SKIP = '*skip';           // 投票のスキップ（名前に * は使えないので、だれの名前ともかぶらない）
 const BOT_PREFIX = '*';         // ロボットの id（*1〜*9）
 const BOT_NAME = /^ロボ[1-9]$/;
@@ -77,7 +78,16 @@ const state = {
   // 端末の中だけの状態
   gameId: null,        // 画面に出しているゲーム
   spawnKey: '',
+  placedKey: '',       // 自分を置いた回と spawnSeq（抜けた人から戻ったときに置きなおすため spawnKey と分ける）
+  savedPos: null,      // 読み込み直しで端末から読んだ位置（置くまで持っておく）
+  wasWatching: false,  // この回で見学だった（抜けた人の印が外れたら「もどってきたね」）
+  backNote: false,     // 「もどってきたね」をまだ出していない（会議・結果の間に戻ったら、遊ぶ時間になってから出す）
   wasAsleep: false,
+  offlineTimer: null,
+  wakeLock: null,
+  wakeWant: false,     // 画面を消さないでほしい（遊んでいる間）。裏から戻ったときに取りなおす
+  wakePending: false,  // 画面を消さない約束を取りに行っている途中（重ねて取らない）
+  wakeRetry: false,    // 取りに行っている途中に、また要ると言われた（終わってから取りなおす）
   taskSpot: -1,
   votePick: null,
   // ひとこと（ボタンで知らせる）。端末の中だけの状態
@@ -356,7 +366,7 @@ function gameOf(room) {
 }
 
 const nameIn = (g, id) => (g && g.names[id]) || id;
-// このゲームで遊んでいる（途中で抜けた人は、戻ってきても次の回まで見学）
+// このゲームで遊んでいる（途中で抜けた人は、戻ってくるまで見学。戻ればホストの端末が印を外す）
 const isPlaying = (g, id) => !!g && g.players.includes(id) && !E.hasLeft(g, id);
 
 // 抜けた人の印をつける。遊んでいる間に勝ち負けが決まったら、おしまいにする（15分を過ぎていたら時間切れを先に）
@@ -511,8 +521,16 @@ function cleanupRoom() {
     dueKey: null,
     gameId: null,
     spawnKey: '',
+    placedKey: '',
+    savedPos: null,
+    wasWatching: false,
+    backNote: false,
     wasAsleep: false,
   });
+  clearTimeout(state.offlineTimer);
+  state.offlineTimer = null;
+  $('hudOffline').hidden = true;
+  releaseWakeLock();
   clearPositions();
   clearSession();
   clearPos();
@@ -573,6 +591,7 @@ function connectToRoom(role, nickname, code, joinedAt) {
   state.connectedRef = db.ref('.info/connected');
   state.connectedCallback = (snap) => {
     state.isConnected = snap.val() === true;
+    showOffline(!state.isConnected);
     if (state.isConnected && state.roomRef === ref) {
       state.presenceDirty = true;
       ensurePresence(true);
@@ -596,10 +615,13 @@ function tickRoom() {
   }
 }
 
-// ゲーム中に在室が消えたまま LEFT_GRACE_MS たった人（タブを閉じた人）を、抜けた人にする（ホストの端末が見る）
+// ゲーム中に在室が消えたまま LEFT_GRACE_MS たった人（タブを閉じた人）を、抜けた人にする。
+// 抜けた人が同じ名前で戻ってきたら（在室がある）、続きから遊べるように戻す（ホストの端末が見る）
 function watchLeavers(room) {
   const g = gameOf(room);
   if (!g || g.stage === 'end') { state.awaySince = {}; return; }
+  const back = g.players.filter((id) => !isBot(id) && g.left[id] && room.players?.[id]);
+  if (back.length) gameAct(mut.back(back));
   const now = Date.now();
   const gone = [];
   g.players.forEach((id) => {
@@ -1215,6 +1237,13 @@ const mut = {
     return true;
   },
   left: (ids) => (g, now) => markLeft(g, ids, now),
+  // 抜けた人が戻ってきた: 同じ役・同じ状態（おきている／ねむっている）で続きから。のこりの仕事も全体の数にもどる
+  back: (ids) => (g, now, room) => {
+    if (g.stage === 'end') return false;
+    let changed = false;
+    ids.forEach((id) => { if (g.left[id] && room.players?.[id]) { delete g.left[id]; changed = true; } });
+    return changed;
+  },
   closeVote: () => (g, now) => {
     if (g.stage !== 'meeting') return false;
     endMeeting(g, now, true);
@@ -1795,6 +1824,7 @@ function handleRoom(room) {
   } else {
     if (state.gameId != null) {
       state.gameId = null;
+      releaseWakeLock();
       clearPositions();
       closeOverlays();
       if ($('menuDialog').open) $('menuDialog').close();
@@ -1914,12 +1944,60 @@ function smallToast(text) {
   toast(text, false);
 }
 
+// 通信が切れている間は、本人の画面に「切れています」を出す（一瞬の切れは出さない）
+function showOffline(off) {
+  clearTimeout(state.offlineTimer);
+  state.offlineTimer = null;
+  if (!off) { $('hudOffline').hidden = true; return; }
+  state.offlineTimer = setTimeout(() => {
+    state.offlineTimer = null;
+    if (state.roomRef && !state.isConnected) $('hudOffline').hidden = false;
+  }, OFFLINE_SHOW_MS);
+}
+
+// 遊んでいる間は画面を消さない（タブレット・スマホがスリープして通信が切れないように）。対応していない端末では何もしない
+async function setWakeLock(want) {
+  state.wakeWant = want;
+  if (!want) { releaseWakeLock(); return; }
+  if (state.wakePending) { state.wakeRetry = true; return; }   // 取りに行っている途中なら、終わってから必要なら取りなおす
+  if (state.wakeLock || !navigator.wakeLock || document.visibilityState !== 'visible') return;
+  state.wakePending = true;
+  try {
+    const lock = await navigator.wakeLock.request('screen');
+    if (!state.wakeWant || state.wakeLock) { lock.release().catch(() => {}); return; }
+    state.wakeLock = lock;
+    lock.addEventListener('release', () => {
+      if (state.wakeLock !== lock) return;
+      state.wakeLock = null;
+      // タブが表のまま外れたときは、まだ要るなら取りなおす（裏にまわったときは visibilitychange で取りなおす）
+      if (state.wakeWant && document.visibilityState === 'visible') setWakeLock(true);
+    });
+  } catch {
+    // 省電力モードなどで断られたときは、そのまま
+  } finally {
+    state.wakePending = false;
+    if (state.wakeRetry) {
+      state.wakeRetry = false;
+      if (state.wakeWant && !state.wakeLock) setWakeLock(true);
+    }
+  }
+}
+function releaseWakeLock() {
+  state.wakeWant = false;
+  const lock = state.wakeLock;
+  state.wakeLock = null;
+  if (lock) lock.release().catch(() => {});
+}
+
 function renderGame(room) {
   const g = gameOf(room);
   // 新しい回
   if (state.gameId !== g.id) {
     state.gameId = g.id;
     state.spawnKey = '';
+    state.placedKey = '';
+    state.wasWatching = false;
+    state.backNote = false;
     state.wasAsleep = false;
     state.votePick = null;
     // 前の回のひとことは出さない（読み込み直しでも、いま入っている分は見たことにする）
@@ -1939,36 +2017,54 @@ function renderGame(room) {
   }
   const playing = isPlaying(g, state.nickname);
   document.body.classList.toggle('is-watching', !playing);
+  const wake = playing && g.stage !== 'end';
+  if (wake !== state.wakeWant) setWakeLock(wake);
   // テーブルのまわりへもどる（はじめ・会議のあと）
   const sk = g.id + ':' + g.spawnSeq;
   if (state.spawnKey !== sk) {
-    const saved = state.spawnKey === '' ? loadPos(sk) : null;   // 読み込み直し（同じ回・同じ spawnSeq）なら元の場所から
+    state.savedPos = state.spawnKey === '' ? loadPos(sk) : null;   // 読み込み直し（同じ回・同じ spawnSeq）なら元の場所から
     state.spawnKey = sk;
     if (state.role === 'host') resetBotsPosition(g);
-    if (playing) {
-      const sp = E.spawnPoint(g.players.indexOf(state.nickname), g.players.length);
-      const back = saved && (E.canStand(saved.x, saved.y) || !E.isAwake(g, state.nickname)) ? saved : sp;
-      ME.x = back.x;
-      ME.y = back.y;
-      if (saved) ME.face = saved.face;
-      ME.climb = null;
-      pairRelease();
-      if (g.stage === 'play') sendPosFor(state.nickname, ME, E.isAwake(g, state.nickname), true);
-    }
   }
+  // 自分を置く。抜けた人から戻ったときも、ここで置きなおす（見学の間は置かない）
+  if (playing && state.placedKey !== sk) {
+    state.placedKey = sk;
+    const saved = state.savedPos;
+    state.savedPos = null;
+    const sp = E.spawnPoint(g.players.indexOf(state.nickname), g.players.length);
+    const back = saved && (E.canStand(saved.x, saved.y) || !E.isAwake(g, state.nickname)) ? saved : sp;
+    ME.x = back.x;
+    ME.y = back.y;
+    if (saved) ME.face = saved.face;
+    ME.climb = null;
+    pairRelease();
+    if (g.stage === 'play') sendPosFor(state.nickname, ME, E.isAwake(g, state.nickname), true);
+  }
+  // 抜けた人から戻った（この回で見学だったのが、また遊ぶ人になった）。お知らせは遊んでいる間に一度だけ出す
+  if (playing && state.wasWatching) {
+    state.backNote = true;
+    if (g.stage === 'play') sendPosFor(state.nickname, ME, E.isAwake(g, state.nickname), true);   // 止まったままでも、ほかの人の画面に出す
+  }
+  if (!playing || g.stage === 'end') state.backNote = false;
+  state.wasWatching = !playing;
   const asleep = playing && !E.isAwake(g, state.nickname);
   if (playing && asleep && !state.wasAsleep) {
     state.wasAsleep = true;
     // おきている人の画面に残らないよう、p の位置を消して、ここからは g に送る
     state.rootRef.child('p/' + state.nickname).remove().catch(() => {});
     sendPosFor(state.nickname, ME, false, true);
-    if (g.stage === 'play') {
+    if (g.stage === 'play' && !state.backNote) {
       // だれにねむらされたかは、本人の画面にだけ出す（ほかの人には言わない約束。2026-10-28）
       const by = g.sleptBy[state.nickname] ? nameIn(g, g.sleptBy[state.nickname]) + ' さんにねむらされた… ' : 'ねむってしまった… ';
       banner(g.roles[state.nickname] === 'crew'
         ? by + 'でも、仕事はつづけられるよ。おきている人には見えず、かべも通りぬけられる。だれにねむらされたかは、ないしょだよ'
         : by + 'あとはみんなの様子を見ていてね', 8000);
     }
+  }
+  if (state.backNote && g.stage === 'play') {
+    state.backNote = false;
+    // 役のお知らせの中に書く（バナーだと、お知らせの下に隠れて読めないことがあるため）
+    showRole(g, asleep ? 'もどってきたね。ねむったまま、つづきから遊べるよ（仕事はつづけられる）。' : 'もどってきたね。つづきから遊べるよ。');
   }
   if (state.pairHold && !(playing && g.stage === 'play')) pairRelease();
   if (state.role === 'host') {
@@ -2061,7 +2157,7 @@ function renderWatchNote() {
     : 'いまはゲームの途中。次の回からいっしょに遊べるよ。会議の話し合いは聞いていてね';
 }
 
-function showRole(g) {
+function showRole(g, note) {
   const role = g.roles[state.nickname];
   $('roleName').textContent = role === 'sleeper' ? 'ねむらせ屋' : '隊員';
   $('roleName').className = 'nk-rolecard__name' + (role === 'sleeper' ? ' nk-rolecard__name--sleeper' : '');
@@ -2073,7 +2169,7 @@ function showRole(g) {
   } else {
     desc = '基地の仕事を片づけよう。みんなの仕事がぜんぶおわったら勝ち。ねむっている人を見つけたら「見つけた！」で会議をひらこう。';
   }
-  $('roleDesc').textContent = desc;
+  $('roleDesc').textContent = (note ? note + ' ' : '') + desc;
   $('ovRole').hidden = false;
 }
 
@@ -2360,14 +2456,15 @@ function frame(t) {
     if (g.stage !== 'play') ME.climb = null;
     if (g.stage === 'play' && ME.climb) {
       // はしごを使っている途中: その場に立ったまま。時間がきたら、つながったはしごへ移る
-      if (Date.now() >= ME.climb.until) {
+      if (Date.now() >= ME.climb.until && state.isConnected) {   // 切れている間は、のぼりおりを終えない
         const to = E.LADDERS[ME.climb.to];
         ME.x = to.x;
         ME.y = to.y;
         ME.climb = null;
         sendPosFor(state.nickname, ME, awake, true);
       }
-    } else if (g.stage === 'play' && !blocked()) {
+    } else if (g.stage === 'play' && !blocked() && state.isConnected) {
+      // 切れている間は歩けない（つながりなおしたときに、ほかの人が見ていない間に動いた場所へ現れないように）
       const d = inputDir();
       if (d.x || d.y) {
         // ねむった人はかべ・ドアを通りぬける。おきている人は、とじているドアも通れない
@@ -3069,7 +3166,7 @@ function setText(id, text) {
 
 function doUse() {
   const u = ACT.use;
-  if (!u || u.off) return;
+  if (!u || u.off || !state.isConnected) return;   // 切れている間は使えない（近道で、ほかの人の見ていない場所へ移らないように）
   if (u.kind === 'vent') {
     const to = E.VENTS[E.VENTS[u.vent].to];
     ME.x = to.x;
@@ -3332,6 +3429,8 @@ function bind() {
   });
   window.addEventListener('keyup', (e) => KEYS.delete(e.code));
   window.addEventListener('blur', () => KEYS.clear());
+  // 画面を消さない約束は、タブが裏にまわると外れるので、表にもどったら取りなおす
+  document.addEventListener('visibilitychange', () => { if (state.wakeWant && !state.wakeLock) setWakeLock(true); });
   window.addEventListener('resize', () => { if (state.currentScreen === 'game') resizeCanvas(); });
 
   // 画面の上のスティック
