@@ -154,6 +154,7 @@ body.is-playing { overflow: hidden; background: #2D3642; overscroll-behavior: no
 .nk-words { display: flex; flex-wrap: wrap; gap: 8px; }
 .nk-words[hidden] { display: none; }
 .nk-words--names { margin-top: 8px; padding: 8px 10px; border-radius: 10px; background: #E3F1F3; align-items: center; }
+.nk-words--top { margin: 0 0 10px; }
 .nk-words__lead { font-weight: 700; color: var(--color-primary); }
 .nk-word {
   min-height: 40px; padding: 6px 14px; border-radius: 999px; border: 2px solid var(--color-border); background: var(--color-surface);

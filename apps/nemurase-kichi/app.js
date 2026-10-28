@@ -76,7 +76,7 @@ const state = {
   sayHeard: {},        // {id: 受け取った最後の番号 n}
   sayLog: [],          // 受け取った順 [{id, text, m}]（m は会議の番号。遊んでいる間は 0）
   sayAt: 0,            // 自分が最後に送った時刻（5秒に1回まで）
-  sayPending: null,    // 会議で、名前の入る言葉を押して、人を選んでいる途中の言葉
+  sayPending: null,    // 名前の入る言葉を押して、「だれ？」で人を選んでいる途中の言葉（会議中・遊んでいる間）
   sayOpen: false,      // 遊んでいる間の「ひとこと」の一覧をひらいている
   bannerTimer: null,
   toastTimer: null,
@@ -1272,7 +1272,23 @@ function sayChip(g, p, onPick) {
   return b;
 }
 
-// 遊んでいる間の「ひとこと」の一覧（開くたびに作り直す。部屋の名前が変わるため）
+// 「だれ？」の一覧（名前の入る言葉を押したあと。自分と抜けた人は出ない。ねむっている人も出す＝だれがねむったかは知らせない）
+function renderNamePicker(g, box, key, onPick, onCancel) {
+  box.replaceChildren();
+  box.appendChild(makeElement('span', 'nk-words__lead', 'だれ？'));
+  g.players.filter((id) => id !== state.nickname && !E.hasLeft(g, id)).forEach((id) => {
+    const b = makeElement('button', 'nk-word nk-word--name', nameIn(g, id));
+    b.type = 'button';
+    b.addEventListener('click', () => onPick(key, id));
+    box.appendChild(b);
+  });
+  const cancel = makeElement('button', 'nk-word nk-word--quiet', 'やめる');
+  cancel.type = 'button';
+  cancel.addEventListener('click', onCancel);
+  box.appendChild(cancel);
+}
+
+// 遊んでいる間の「ひとこと」の一覧（開くたびに作り直す。部屋の名前が変わるため）。名前の入る言葉は「だれ？」で人を選んでから送る
 function renderSayBox(g) {
   const box = $('sayBox');
   const me = state.nickname;
@@ -1280,20 +1296,32 @@ function renderSayBox(g) {
   if (!can) state.sayOpen = false;
   box.hidden = !state.sayOpen;
   $('actSay').setAttribute('aria-expanded', String(state.sayOpen));
-  if (!state.sayOpen) return;
+  if (!state.sayOpen) { if (g.stage === 'play') state.sayPending = null; return; }
   const list = $('sayChips');
+  const names = $('sayNames');
   list.replaceChildren();
+  const send = async (key, target) => {
+    if (await doSay(key, target)) { state.sayOpen = false; state.sayPending = null; renderSayBox(g); }
+  };
   E.SAYS.play.concat(E.SAYS.common).forEach((p) => {
-    list.appendChild(sayChip(g, p, async (q) => {
-      if (await doSay(q.k, '')) { state.sayOpen = false; renderSayBox(g); }
+    list.appendChild(sayChip(g, p, (q) => {
+      if (!q.t.includes('{name}')) { state.sayPending = null; send(q.k, ''); return; }
+      state.sayPending = state.sayPending === q.k ? null : q.k;
+      renderSayBox(g);
     }));
   });
+  if (state.sayPending) {
+    list.querySelectorAll('.nk-word').forEach((b) => b.classList.toggle('is-picked', b.dataset.say === state.sayPending));
+    renderNamePicker(g, names, state.sayPending, send, () => { state.sayPending = null; renderSayBox(g); });
+  } else names.replaceChildren();
+  names.hidden = !state.sayPending;
 }
 
 function toggleSayBox() {
   const g = gameOf(state.room);
   if (!g) return;
   state.sayOpen = !state.sayOpen;
+  state.sayPending = null;
   renderSayBox(g);
 }
 
@@ -1832,19 +1860,8 @@ function renderMeetingSay(g, awake, saysNow) {
       }));
     });
     if (state.sayPending) {
-      const p = E.sayPhrase(state.sayPending);
       chips.querySelectorAll('.nk-word').forEach((b) => b.classList.toggle('is-picked', b.dataset.say === state.sayPending));
-      names.appendChild(makeElement('span', 'nk-words__lead', 'だれ？'));
-      g.players.filter((id) => id !== me && !E.hasLeft(g, id)).forEach((id) => {
-        const b = makeElement('button', 'nk-word nk-word--name', nameIn(g, id));
-        b.type = 'button';
-        b.addEventListener('click', async () => { state.sayPending = null; await doSay(p.k, id); renderMeeting(g, state.room); });
-        names.appendChild(b);
-      });
-      const cancel = makeElement('button', 'nk-word nk-word--quiet', 'やめる');
-      cancel.type = 'button';
-      cancel.addEventListener('click', () => { state.sayPending = null; renderMeeting(g, state.room); });
-      names.appendChild(cancel);
+      renderNamePicker(g, names, state.sayPending, async (key, id) => { state.sayPending = null; await doSay(key, id); renderMeeting(g, state.room); }, () => { state.sayPending = null; renderMeeting(g, state.room); });
     }
   }
   names.hidden = !awake || !state.sayPending;
@@ -2422,7 +2439,7 @@ function bind() {
   $('actUse').addEventListener('click', doUse);
   $('actFind').addEventListener('click', doFind);
   $('actSay').addEventListener('click', toggleSayBox);
-  $('btnSayClose').addEventListener('click', () => { state.sayOpen = false; const g = gameOf(state.room); if (g) renderSayBox(g); });
+  $('btnSayClose').addEventListener('click', () => { state.sayOpen = false; state.sayPending = null; const g = gameOf(state.room); if (g) renderSayBox(g); });
   $('actSleep').addEventListener('click', doSleep);
   $('actDark').addEventListener('click', doDark);
   $('btnTasks').addEventListener('click', () => {

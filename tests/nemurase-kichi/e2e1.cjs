@@ -113,7 +113,9 @@ const { E, check, sleep } = L;
   // ══ ひとこと（遊んでいる間） ══
   check('おきている人に「ひとこと」ボタン', await L.visible(host, '#actSay') && await L.visible(g1, '#actSay'));
   await host.page.click('#actSay');
-  check('一覧がひらく（遊んでいる間の12＋どちらでも3）', await L.waitFor(async () => (await L.visible(host, '#sayBox')) && (await host.page.$$('#sayChips .nk-word')).length === 15));
+  check('一覧がひらく（遊んでいる間の14＋どちらでも4）', await L.waitFor(async () => (await L.visible(host, '#sayBox')) && (await host.page.$$('#sayChips .nk-word')).length === 18));
+  check('「そうだよ」がある', (await host.page.$eval('#sayChips .nk-word[data-say="yes"]', (b) => b.textContent)) === 'そうだよ');
+  check('名前の入る言葉は〔名前〕で出る', (await host.page.$eval('#sayChips .nk-word[data-say="sawnow"]', (b) => b.textContent)) === '〔名前〕さんが仕事をしていた');
   check('部屋の名前が入っている（はじめはひろば）', (await host.page.$eval('#sayChips .nk-word[data-say="here"]', (b) => b.textContent)) === 'ひろばにいるよ');
   await host.page.click('#sayChips .nk-word[data-say="here"]');
   for (const c of all) check('みんなの画面の上に「ホスト: ひろばにいるよ」 ' + c.label, await L.waitFor(async () => (await L.text(c, '#sayTicker')) === 'ホストひろばにいるよ'));
@@ -274,7 +276,7 @@ const { E, check, sleep } = L;
 
   // ══ ひとこと（会議中） ══
   check('ねむった人に言葉のボタンは出ない', !(await L.visible(host, '#meetingChips')));
-  check('おきている人に言葉のボタン（会議の10＋どちらでも3）', (await g2.page.$$('#meetingChips .nk-word')).length === 13);
+  check('おきている人に言葉のボタン（会議の10＋どちらでも4）', (await g2.page.$$('#meetingChips .nk-word')).length === 14);
   check('会議のはじめは流れが空', !(await L.visible(g2, '#meetingSays')));
   await g2.page.click('#meetingChips .nk-word[data-say="crew"]');
   for (const c of all) check('会議の流れに「みどり: 自分は隊員だよ」 ' + c.label, await L.waitFor(async () => (await L.text(c, '#meetingSays')) === 'みどり自分は隊員だよ'));
