@@ -16,6 +16,7 @@
   const ANSWER_MAX = 40;
   const CANDS = 3;           // ホストが選ぶお題の候補の数
   const MAX_WAITING = 2;     // 1人が順番待ちにできる答えの数（1人が出し続けて、ほかの人の答えが出なくならないように）
+  const PROXY_MAX = 4;       // 端末のない参加者（ホストが代わりに書く・押す）の数
   // 時間はホストが決める。?fast=1 はテスト用
   const FAST = new URLSearchParams(location.search).get('fast') === '1';
   // 1つの答えを押せる時間（秒）。ホストが待合室で選ぶ。?fast=1 では3分の1に縮める（15秒→5秒）
@@ -168,8 +169,8 @@
     if (!text) return '答えを書いてね';
     if (waitingOf(R, p.id) >= MAX_WAITING) return '出るのを待っている答えが' + MAX_WAITING + 'つあるよ。出るまで待ってね';
     const a = { id: randomCode(8), by: p.id, name: p.name, text };
-    // ホストが確認してから順番に入れる。ホスト自身の答えは確認しない
-    if (p.id === R.hostId) R.queue.push(a); else R.pending.push(a);
+    // ホストが確認してから順番に入れる。ホスト自身の答えと、ホストが代わりに書いた答えは確認しない
+    if (p.id === R.hostId || p.proxy) R.queue.push(a); else R.pending.push(a);
     return '';
   }
 
@@ -249,6 +250,40 @@
       const R = S.room;
       if (R.phase !== 'lobby' || !MINUTES.includes(n)) return;
       R.minutes = n;
+      publish();
+    },
+    // 端末のない参加者。足すのは待合室と結果の画面（お題の間）、外すのは待合室だけ（一本の数が消えないように）
+    addProxy(name) {
+      const R = S.room;
+      if (R.phase !== 'lobby' && R.phase !== 'result') return 'いまは足せないよ';
+      const n = clean(name, NAME_MAX);
+      if (!n) return '名前を入れてね';
+      if (R.players.filter((x) => x.proxy).length >= PROXY_MAX) return PROXY_MAX + '人まで足せるよ';
+      if (R.players.some((x) => x.name === n)) return '同じ名前の人がいるよ';
+      R.players.push({ id: 'px-' + randomCode(8), name: n, mode: 'both', proxy: true, seen: Date.now() });
+      publish();
+      return '';
+    },
+    removeProxy(id) {
+      const R = S.room;
+      if (R.phase !== 'lobby') return;
+      R.players = R.players.filter((x) => !(x.proxy && x.id === id));
+      publish();
+    },
+    proxyAnswer(id, text) {
+      const R = S.room;
+      const p = R.players.find((x) => x.proxy && x.id === id);
+      if (!p) return '名前を選んでね';
+      const err = takeAnswer(R, p, { r: R.round, text });
+      if (!err) { step(R); publish(); }
+      return err;
+    },
+    proxyPress(id, aid) {
+      const R = S.room;
+      const p = R.players.find((x) => x.proxy && x.id === id);
+      if (!p) return;
+      takePress(R, p, { aid });
+      step(R);
       publish();
     },
     start() {
@@ -343,7 +378,7 @@
     const now = Date.now();
     let changed = false;
     R.players.forEach((p) => {
-      if (p.id === R.hostId) return;
+      if (p.id === R.hostId || p.proxy) return; // 端末のない参加者は切れない
       if (!p.away && now - (p.seen || 0) > AWAY_MS) { p.away = true; changed = true; }
     });
     if (step(R)) changed = true;
@@ -512,6 +547,25 @@
     $('btn-close').addEventListener('click', () => {
       if (window.confirm('答えを締め切る？（順番を待っている答えが出たら、結果へ進むよ）')) host.close();
     });
+    $('proxy-add').addEventListener('submit', (e) => {
+      e.preventDefault();
+      if (e.isComposing) return;
+      const err = host.addProxy($('proxy-name').value);
+      $('proxy-add-msg').textContent = err;
+      if (!err) $('proxy-name').value = '';
+    });
+    $('proxy-answer').addEventListener('submit', (e) => {
+      e.preventDefault();
+      if (e.isComposing) return;
+      const text = clean($('proxy-input').value, ANSWER_MAX);
+      const msg = $('proxy-msg');
+      const err = text ? host.proxyAnswer($('proxy-who').value, text) : '答えを書いてね';
+      const who = S.room.players.find((x) => x.id === $('proxy-who').value);
+      msg.textContent = err || (who ? who.name + 'さんの答えを出したよ。順番に出るよ' : '');
+      msg.classList.toggle('is-error', !!err);
+      if (!err) $('proxy-input').value = '';
+    });
+    ['proxy-name', 'proxy-input'].forEach((id) => $(id).addEventListener('keydown', (e) => { if (e.key === 'Enter' && (e.isComposing || e.keyCode === 229)) e.preventDefault(); }));
     $('btn-next').addEventListener('click', () => host.next());
     $('btn-finish').addEventListener('click', () => host.finish());
     $('btn-restart').addEventListener('click', () => host.restart());
@@ -546,6 +600,7 @@
     PHASES.forEach((ph) => { $('ph-' + ph).hidden = V.phase !== ph; });
     $('host-ctl').hidden = !(isHost() && V.phase === 'pick');
     renderMode(V);
+    renderProxyAdmin(V);
     if (V.phase === 'lobby') renderLobby(V);
     else if (V.phase === 'pick') renderPick(V);
     else if (V.phase === 'play') renderPlay(V);
@@ -568,6 +623,30 @@
     $('mode-opts').replaceChildren(...keys.map((k) => segBtn(MODES[k].label, p.mode === k, () => act('mode', { mode: k }))));
     $('mode-note').textContent = MODES[p.mode].note;
   }
+  // 端末のない参加者を足す・外す（ホストにだけ。待合室と結果の画面）
+  function renderProxyAdmin(V) {
+    const slot = isHost() && $('slot-proxy-' + V.phase);
+    $('proxy-admin').hidden = !slot;
+    if (!slot) return;
+    if ($('proxy-admin').parentNode !== slot) slot.append($('proxy-admin'));
+    const px = V.players.filter((p) => p.proxy);
+    $('proxy-admin-list').replaceChildren(...px.map((p) => {
+      const li = row(p.name, '', 'person');
+      if (V.phase === 'lobby') {
+        const b = el('button', 'btn btn-ghost btn-sm og-list__btn og-proxy-remove', '外す');
+        b.type = 'button';
+        b.addEventListener('click', () => host.removeProxy(p.id));
+        li.append(b);
+      }
+      return li;
+    }));
+    $('proxy-admin-list').hidden = !px.length;
+    $('proxy-add').hidden = px.length >= PROXY_MAX;
+    $('proxy-admin-note').textContent = px.length >= PROXY_MAX ? PROXY_MAX + '人まで足せるよ'
+      : V.phase === 'lobby' ? '名前を足すと、ホストの画面で代わりに答えを書いたり「おもしろい！」を押したりできるよ（' + PROXY_MAX + '人まで）'
+        : '次のお題から参加できるよ（外すのは、もう一回あそぶときの待合室で）';
+  }
+
   function segBtn(label, on, onClick) {
     const b = el('button', 'og-seg__btn' + (on ? ' is-on' : ''), label);
     b.type = 'button';
@@ -583,6 +662,8 @@
       const li = el('li', 'og-player' + (p.away ? ' is-away' : ''));
       li.append(msIcon(p.id === V.hostId ? 'star' : 'person'), el('span', '', p.name));
       if (p.id === V.hostId) li.append(el('span', 'og-tag', 'ホスト'));
+      // 端末なしの印はホストの画面にだけ（子どもどうしの画面で区別しない）
+      if (p.proxy && isHost()) li.append(el('span', 'og-tag og-tag--muted', '端末なし'));
       if (p.away) li.append(el('span', 'og-tag og-tag--muted', '通信が切れたみたい'));
       return li;
     }));
@@ -678,6 +759,9 @@
     $('mine-list').replaceChildren(...mineRows);
     $('my-card').hidden = $('answer-form').hidden && !mineRows.length;
 
+    // 端末のない参加者のぶん（ホストにだけ）
+    renderProxyBox(V);
+
     // 確認する答え（ホストにだけ）
     $('check-card').hidden = !isHost() || !V.pending.length;
     $('check-empty').hidden = !isHost() || !!V.pending.length || V.closing;
@@ -715,6 +799,37 @@
     $('shown-list').replaceChildren(...(V.shown.length ? V.shown.map((a) => shownRow(a)) : [el('li', 'og-list__empty', 'まだないよ')]));
 
     $('btn-close').hidden = !isHost() || V.closing;
+  }
+  function renderProxyBox(V) {
+    const px = isHost() ? V.players.filter((p) => p.proxy) : [];
+    $('proxy-box').hidden = !px.length;
+    if (!px.length) return;
+    const c = V.cur;
+    $('proxy-press-list').replaceChildren(...px.map((p) => {
+      const li = el('li', 'og-list__item og-proxy');
+      li.append(msIcon('person'), el('span', 'og-list__text', p.name + 'さん'));
+      const own = !!c && c.a.by === p.id;
+      const pressed = !!c && !!c.presses[p.id];
+      const b = el('button', 'btn btn-sm og-list__btn og-proxy-press' + (pressed ? ' is-pressed' : ''), own ? '本人の答え' : pressed ? '押したよ' : 'おもしろい！');
+      b.type = 'button';
+      b.disabled = !c || c.state !== 'open' || own || pressed;
+      if (c) { const aid = c.a.id; b.addEventListener('click', () => host.proxyPress(p.id, aid)); }
+      li.append(b);
+      return li;
+    }));
+    $('proxy-press-note').textContent = c && c.state === 'open' ? '「いま出ている答え」に、本人のかわりに投票する' : '答えが出たら、本人のかわりに押せるよ';
+    // 選んでいた名前は残す
+    const sel = $('proxy-who');
+    const keep = sel.value;
+    const ids = px.map((p) => p.id).join(',');
+    if (sel.dataset.ids !== ids) {
+      sel.replaceChildren(...px.map((p) => { const o = el('option', '', p.name + 'さん'); o.value = p.id; return o; }));
+      sel.dataset.ids = ids;
+      if (px.some((p) => p.id === keep)) sel.value = keep;
+    }
+    $('proxy-answer').hidden = !!V.closing;
+    // お題がかわったら、前のお題の知らせは消す
+    if ($('proxy-msg').dataset.round !== String(V.round)) { $('proxy-msg').textContent = ''; $('proxy-msg').dataset.round = String(V.round); }
   }
   function row(text, what, icon, cls) {
     const li = el('li', 'og-list__item' + (cls ? ' ' + cls : ''));
