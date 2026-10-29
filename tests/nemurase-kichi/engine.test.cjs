@@ -5,6 +5,9 @@ let pass = 0;
 let fail = 0;
 const ok = (c, name, extra) => { if (c) pass++; else { fail++; console.log('  NG', name, extra === undefined ? '' : JSON.stringify(extra)); } };
 const fixed = () => 0.1;
+// はじめのマップはパーク（2026-10-29）。このファイルのテストはひみつ基地のマップが前提なので、マップを書いていない newGame はひみつ基地にする
+const newGameAsIs = E.newGame;
+E.newGame = (ids, s, rnd, picks) => newGameAsIs(ids, Object.assign({ map: 0 }, s || {}), rnd, picks);
 const game = (ids, s) => E.newGame(ids, s, fixed);
 const roleIds = (g, role) => g.players.filter((id) => g.roles[id] === role);
 const HOME = { x: Math.floor(E.TABLE.x) + 3, y: Math.floor(E.TABLE.y) };   // ひろばの床（テーブルの右）
@@ -388,7 +391,9 @@ ok(JSON.stringify(E.newGame(['a', 'b', 'c', 'd'], {}, fixed).doors) === '{}' && 
   ok(E.mapKey() === 'park' && Object.values(gp.tasks).every((ts) => ts.every((t) => t.spot >= 100 || t.spot < 26)), 'newGame はマップを合わせる（パーク）');
   E.newGame(['a', 'b', 'c', 'd'], { map: 0 }, fixed);
   ok(E.mapKey() === 'kichi' && E.fixRoomName() === '電気室' && E.sayText('power') === '電気室に来て', 'newGame はマップを合わせる（ひみつ基地）');
-  ok(E.DEFAULT_SETTINGS.map === 0 && E.SETTING_OPTS.map.join() === '0,1' && E.MAP_NAMES.park === 'パーク', 'マップの設定（はじめはひみつ基地）');
+  ok(E.DEFAULT_SETTINGS.map === 1 && E.SETTING_OPTS.map.join() === '0,1' && E.MAP_NAMES.park === 'パーク', 'マップの設定（はじめはパーク）');
+  newGameAsIs(['a', 'b', 'c', 'd'], {}, fixed);
+  ok(E.mapKey() === 'park', '設定にマップがなければパーク');
   E.useMap('kichi');
 }
 

@@ -11,16 +11,14 @@ const { E, check, sleep } = L;
   const g2 = await L.newClient('g2');
   const all = [host, g1, g2];
 
-  const code = await L.createRoom(host, 'ホスト');
+  const code = await L.createRoom(host, 'ホスト', { keepMap: true });
   await L.joinRoom(g1, 'あお', code);
   await L.joinRoom(g2, 'みどり', code);
   await host.page.click('#btnAddBot');
   check('ロボット1つで4人', await L.waitFor(async () => (await L.text(host, '#playerCount')) === '4人'));
 
   // ══ マップの設定 ══
-  check('マップの設定（はじめはひみつ基地）', (await L.text(g1, '#set-map')) === 'ひみつ基地');
-  await host.page.selectOption('#set-map', '1');
-  check('「パーク」が参加者に届く', await L.waitFor(async () => (await L.text(g1, '#set-map')) === 'パーク'));
+  check('マップの設定（はじめはパーク）', (await L.text(g1, '#set-map')) === 'パーク' && (await host.page.$eval('#set-map', (s) => s.value)) === '1');
   await host.page.click('#btnStart');
   for (const c of all) await L.waitScreen(c, 'game');
   let room = await L.roomOf(code);

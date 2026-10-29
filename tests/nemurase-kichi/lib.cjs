@@ -163,13 +163,19 @@ async function waitFor(fn, timeout = 8000) {
 }
 
 // ── ゲームの操作 ──
-async function createRoom(c, name) {
+// はじめのマップはパーク（2026-10-29）。その1〜5と通信量はひみつ基地が前提なので、ここでひみつ基地を選ぶ（keepMap: true ならそのまま）
+async function createRoom(c, name, opts = {}) {
   await open(c);
   await c.page.click('#btnGoCreate');
   await c.page.fill('#hostName', name);
   await c.page.click('#btnCreateRoom');
   await waitScreen(c, 'waiting');
-  return (await text(c, '#roomCodeLabel')).trim();
+  const code = (await text(c, '#roomCodeLabel')).trim();
+  if (!opts.keepMap) {
+    await c.page.selectOption('#set-map', '0');
+    await roomWhen(code, (r) => r && r.settings && r.settings.map === 0);
+  }
+  return code;
 }
 async function joinRoom(c, name, code) {
   await open(c, '?room=' + code);
