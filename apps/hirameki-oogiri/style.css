@@ -1,49 +1,82 @@
-/* ひらめき大喜利（試作） 接頭辞 og- */
+/* ひらめき大喜利 固有スタイル（接頭辞: og- / BEM）
+   共通スタイルは design-system.css に定義済み。
+   ルームの出入りの部品（パネル・ルームバー・フォーム・オーバーレイ）はしるしでヒントにそろえている。 */
 
 body { background: var(--color-bg); }
 
-.og-badge {
-  display: inline-block;
-  padding: 2px 10px;
-  border-radius: 999px;
-  background: var(--color-warning);
-  color: #fff;
-  font-size: 12px;
-  font-weight: 700;
-}
-.og-badge--bar { margin-left: 8px; vertical-align: middle; }
+/* 遊ぶ画面は2列にするので広め。ほかの画面は読みやすい幅にしぼる */
+.og-wrap { max-width: 1080px; margin: 0 auto; padding: 36px 20px 96px; }
+.og-wrap [hidden] { display: none !important; }
+.og-main { display: grid; gap: 16px; }
+.og-screen { display: none; width: 100%; max-width: 760px; margin: 0 auto; }
+.og-screen.active { display: grid; gap: 16px; min-width: 0; }
+.og-screen--wide { max-width: none; }
+.og-modehome { width: 100%; max-width: 760px; margin: 0 auto; }
 
-/* はじめの画面 */
-.og-front { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px 16px; }
-.og-panel { width: 100%; max-width: 440px; background: var(--color-surface); border-radius: 16px; padding: 32px 28px; border: 1px solid var(--color-border); }
-.og-panel__title { font-size: 28px; color: var(--color-primary); margin: 8px 0 12px; }
-.og-panel__lead { color: var(--color-text); line-height: 1.7; margin-bottom: 20px; }
-.og-panel__note { color: var(--color-muted); font-size: 13px; margin-top: 16px; }
-.og-alert { margin-top: 12px; color: var(--color-error); font-weight: 500; }
-.og-modepick { border: none; padding: 0; margin-inline: 0; }
-.og-modepick[hidden] { display: none; }
+/* ── ヘッダー ── */
+.og-header { text-align: center; margin-bottom: 24px; }
+.og-header__title { color: var(--color-primary); font-size: 1.7rem; font-weight: 700; margin: 0 0 8px; }
+.og-header__sub { color: var(--color-muted); font-size: 0.95rem; margin: 0; }
+/* みんなにみせる画面の目印（共有するタブを見分けるため） */
+.og-watchbadge {
+  display: inline-block; color: #26697A; background: #E6F2F4; border-radius: var(--radius-full);
+  font-size: 13px; font-weight: 700; padding: 4px 12px; margin: 10px 0 0;
+}
+
+/* ── トップ・フォーム ── */
+.og-panel { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 14px; padding: 24px; }
+.og-panel > .btn:first-of-type { margin-top: 22px; }
+.og-panel > .btn + .btn { margin-top: 10px; }
+.og-panel--center { text-align: center; }
+.og-panel--center > .btn { margin-top: 18px; }
+.og-lead { color: var(--color-text); font-size: 1rem; line-height: 1.8; margin: 0 0 8px; }
+.og-subhead { display: flex; align-items: center; gap: 12px; }
+.og-subhead__title { color: var(--color-primary); font-size: 1.2rem; font-weight: 700; margin: 0; }
+.og-form { background: var(--color-surface); border-radius: 14px; padding: 20px; }
+.og-form__label { display: block; color: var(--color-primary); font-size: 0.9rem; font-weight: 700; margin: 0 0 8px; padding: 0; }
+.og-form__input + .og-form__label { margin-top: 18px; }
+.og-form__input {
+  width: 100%; box-sizing: border-box; border: 1.5px solid var(--color-border); border-radius: 8px;
+  padding: 10px 12px; font-family: inherit; font-size: 1rem; background: var(--color-surface); color: var(--color-text);
+}
+.og-form__input:focus { outline: none; border-color: var(--color-accent); }
+.og-form__input--code { text-transform: uppercase; letter-spacing: 0.18em; font-size: 1.3rem; }
+.og-form__hint { color: var(--color-muted); font-size: 13px; line-height: 1.6; margin: 6px 0 0; }
+.og-form__hint--lead { font-size: 14px; margin: 0 0 16px; }
+.og-form__error {
+  color: var(--color-error); background: #FEF2F2; border-left: 3px solid var(--color-error);
+  border-radius: 6px; padding: 10px 12px; margin: 12px 0;
+}
+.og-form > .btn { margin-top: 18px; }
+.og-modepick { border: none; padding: 0; margin: 18px 0 0; }
 .og-radio { display: flex; align-items: center; gap: 10px; min-height: 44px; cursor: pointer; }
 .og-radio input { flex: none; width: 20px; height: 20px; accent-color: var(--color-accent); }
 .og-radio span { display: grid; gap: 2px; padding: 6px 0; }
 .og-radio small { color: var(--color-muted); font-size: 13px; line-height: 1.5; }
+.og-note--left { margin-top: 4px; }
 
-/* バー */
-.og-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding: 12px 20px; background: var(--color-primary); color: #fff; }
-.og-bar__title { font-size: 18px; margin: 0; margin-right: auto; }
-.og-bar__code, .og-bar__me { margin: 0; font-size: 14px; }
-.og-bar .btn { display: inline-flex; align-items: center; gap: 4px; }
+/* ── ルームバー ── */
+.og-roombar {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; color: var(--color-primary);
+  background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 10px;
+  padding: 8px 12px; width: 100%; max-width: 760px; margin: 0 auto 6px; box-sizing: border-box;
+}
+.og-roombar strong { font-size: 1.25rem; letter-spacing: 0.13em; }
+.og-roombar #btnLeave { margin-left: auto; }
+.is-play .og-roombar { max-width: none; }
 
-.og-closed { margin: 12px 20px 0; padding: 12px 16px; border-radius: 8px; background: #FDECEC; color: var(--color-error); font-weight: 500; }
+/* ── ホスト切断のオーバーレイ ── */
+.og-overlay { position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; padding: 20px; background: rgba(18, 37, 54, 0.8); }
+.og-overlay[hidden] { display: none; }
+.og-overlay__panel { background: var(--color-surface); border-radius: 14px; padding: 28px; max-width: 420px; text-align: center; }
+.og-overlay__panel h2 { color: var(--color-primary); font-size: 1.3rem; }
+.og-overlay__panel p { line-height: 1.7; }
 
-.og-main { max-width: 1080px; margin: 0 auto; padding: 20px 16px 96px; display: grid; gap: 16px; }
-.og-phase { display: grid; gap: 16px; min-width: 0; }
-/* 遊ぶ画面のほかは、読みやすい幅にしぼる */
-.og-phase:not(#ph-play) { width: 100%; max-width: 760px; margin: 0 auto; }
+
+body { background: var(--color-bg); }
+
 .og-start { display: grid; gap: 4px; text-align: center; }
 .og-start .btn { min-height: 52px; font-size: 18px; }
-.og-phase[hidden], .og-main [hidden] { display: none !important; }
-/* お題を選ぶ・結果の画面の「参加のしかた」も、ほかのカードと同じ幅に */
-#og-mode-home { width: 100%; max-width: 760px; margin: 0 auto; }
 /* ホストのすること */
 .og-guide { border: 2px dashed var(--color-accent); background: #EAF4F6; }
 .og-guide strong { color: var(--color-primary); }
@@ -138,10 +171,10 @@ body { background: var(--color-bg); }
 @media (max-width: 899px) {
   .og-col { display: contents; }
   #stage { order: 1; }
-  #host-panel { order: 2; }
-  #my-card { order: 3; }
+  #hostPanel { order: 2; }
+  #myCard { order: 3; }
   #slot-mode-play { order: 4; }
-  #shown-card { order: 5; }
+  #shownCard { order: 5; }
 }
 
 /* 答えを書く */
@@ -170,8 +203,9 @@ body { background: var(--color-bg); }
 .og-proxy-press:hover:not(:disabled) { background: #DDA92F; }
 .og-proxy-press:disabled { background: #F3E3B5; color: #6B5A2A; cursor: default; }
 .og-proxy-who { width: 100%; }
-#proxy-add .form-input { min-width: 0; }
-#proxy-add .btn { flex: none; white-space: nowrap; }
+.og-auto { color: var(--color-muted); font-weight: 400; }
+#proxyAdd .form-input { min-width: 0; }
+#proxyAdd .btn { flex: none; white-space: nowrap; }
 
 /* 一覧 */
 .og-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
@@ -218,9 +252,12 @@ body { background: var(--color-bg); }
   padding: 10px 16px; background: var(--color-surface); border-top: 1px solid var(--color-border); z-index: 10;
 }
 .og-hostctl[hidden] { display: none; }
+/* お題の候補の番号 */
+.og-cand { display: flex; align-items: flex-start; gap: 10px; }
+.og-cand__num { color: var(--color-accent); flex: none; }
 
 /* みんなにみせる画面：お題と答えを大きく */
-.is-watch .og-main { max-width: 1100px; }
+.is-watch .og-wrap { max-width: 1180px; }
 .is-watch .og-odai__text { font-size: 34px; }
 .is-watch .og-odai__sub--time { font-size: 24px; }
 .is-watch .og-stage { min-height: 220px; }
@@ -229,7 +266,8 @@ body { background: var(--color-bg); }
 .is-watch .og-ippon__text { font-size: 34px; }
 
 @media (max-width: 600px) {
-  .og-bar { padding: 10px 16px; }
+  .og-wrap { padding: 24px 16px 72px; }
+  .og-roombar #btnLeave { margin-left: 0; }
   .og-odai { padding: 16px; }
   .og-odai__text { font-size: 21px; }
   .og-stage { padding: 18px 14px; }

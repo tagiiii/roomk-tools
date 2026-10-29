@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+  <title>ひらめき大喜利 | room-K</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
+  <link rel="stylesheet" href="../shared/css/design-system.css">
+  <!-- index.html と app.js・data.js・style.css はセットで変わるので、変えたら ?v= をそろえて上げる -->
+  <link rel="stylesheet" href="style.css?v=20261030b">
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+  <script src="../shared/js/rtdb-utils.js?v=20261005"></script>
+  <script src="../shared/js/room-qr.js?v=20261022"></script>
+</head>
+<body>
+  <div class="og-wrap">
+    <header class="og-header">
+      <h1 class="og-header__title">ひらめき大喜利</h1>
+      <p class="og-header__sub">思いついた答えを何回でも。おもしろければ「一本！」</p>
+      <p class="og-watchbadge" id="watchBadge" hidden>みんなにみせる画面</p>
+    </header>
+
+    <main class="og-main">
+      <section class="og-screen active" id="screen-top">
+        <div class="og-panel">
+          <p class="og-lead">お題に、思いついた答えを何回でも出す大喜利。出た答えは1つずつ、だれのか伏せてみんなの画面に出るよ。「おもしろい！」と思う人が多ければ「一本！」。</p>
+          <p class="og-note">答えを書かずに「投票だけ」でも参加できるよ。1つのお題は数分くらい。</p>
+          <button type="button" class="btn btn-primary btn-full" id="btnGoCreate">ルームを作る</button>
+          <button type="button" class="btn btn-secondary btn-full" id="btnGoJoin">ルームに参加する</button>
+          <button type="button" class="btn btn-ghost btn-full" id="btnGoWatch">みんなにみせる画面をひらく</button>
+        </div>
+      </section>
+
+      <section class="og-screen" id="screen-create">
+        <div class="og-subhead"><button type="button" class="btn btn-ghost btn-sm" id="btnCreateBack">トップへ戻る</button><h2 class="og-subhead__title">ルームを作る</h2></div>
+        <div class="og-form">
+          <label class="og-form__label" for="hostName">ホストの名前（8文字まで）</label>
+          <input class="og-form__input" id="hostName" maxlength="8" autocomplete="nickname">
+          <p class="og-form__error" id="createError" hidden></p>
+          <button type="button" class="btn btn-primary btn-full" id="btnCreateRoom">ルームを作る</button>
+        </div>
+      </section>
+
+      <section class="og-screen" id="screen-join">
+        <div class="og-subhead"><button type="button" class="btn btn-ghost btn-sm" id="btnJoinBack">トップへ戻る</button><h2 class="og-subhead__title">ルームに参加する</h2></div>
+        <div class="og-form">
+          <p class="og-form__hint og-form__hint--lead" id="joinLinkHint" hidden>リンクからひらいたので、ルームコードは入っているよ。名前を入れて「参加する」を押してね。</p>
+          <label class="og-form__label" for="guestName">名前（8文字まで）</label>
+          <input class="og-form__input" id="guestName" maxlength="8" autocomplete="nickname">
+          <label class="og-form__label" for="joinCode">ルームコード（6文字）</label>
+          <input class="og-form__input og-form__input--code" id="joinCode" maxlength="6" autocorrect="off" autocapitalize="characters" autocomplete="off" spellcheck="false">
+          <fieldset class="og-modepick">
+            <legend class="og-form__label">参加のしかた</legend>
+            <label class="og-radio"><input type="radio" name="joinMode" value="both" checked><span><b>答えも出す</b><small>答えを書いて出す。ほかの人の答えに「おもしろい！」も押せる</small></span></label>
+            <label class="og-radio"><input type="radio" name="joinMode" value="press"><span><b>投票だけ</b><small>答えは書かない。出た答えを見て、おもしろかったら「おもしろい！」を押して投票する</small></span></label>
+            <p class="og-note og-note--left">遊んでいる途中でも切りかえられるよ</p>
+          </fieldset>
+          <p class="og-form__error" id="joinError" hidden></p>
+          <button type="button" class="btn btn-primary btn-full" id="btnJoinRoom">参加する</button>
+        </div>
+      </section>
+
+      <section class="og-screen" id="screen-watch-join">
+        <div class="og-subhead"><button type="button" class="btn btn-ghost btn-sm" id="btnWatchBack">トップへ戻る</button><h2 class="og-subhead__title">みんなにみせる画面をひらく</h2></div>
+        <div class="og-form">
+          <p class="og-form__hint og-form__hint--lead">画面共有でみんなに見せるための画面です。ルームには入らず、見るだけです。</p>
+          <label class="og-form__label" for="watchCode">ルームコード（6文字）</label>
+          <input class="og-form__input og-form__input--code" id="watchCode" maxlength="6" autocorrect="off" autocapitalize="characters" autocomplete="off" spellcheck="false">
+          <p class="og-form__error" id="watchError" hidden></p>
+          <button type="button" class="btn btn-primary btn-full" id="btnWatchOpen">画面をひらく</button>
+        </div>
+      </section>
+
+      <div class="og-roombar" id="roomBar" hidden>
+        <span>ルーム <strong id="roomCodeLabel"></strong></span>
+        <button type="button" class="btn btn-ghost btn-sm" id="btnCopyCode">コードをコピー</button>
+        <button type="button" class="btn btn-ghost btn-sm" id="btnCopyLink">リンクをコピー</button>
+        <button type="button" class="btn btn-ghost btn-sm" id="btnShowQr">QRコードを出す</button>
+        <button type="button" class="btn btn-ghost btn-sm" id="btnOpenWatch" hidden>みんなにみせる画面</button>
+        <button type="button" class="btn btn-ghost btn-sm" id="btnLeave">退出する</button>
+      </div>
+
+      <!-- 待合室 -->
+      <section class="og-screen" id="screen-waiting">
+        <div class="card">
+          <h2 class="og-h2">参加する人</h2>
+          <ul id="lobbyPlayers" class="og-players"></ul>
+          <div id="slot-proxy-waiting"></div>
+          <p id="lobbyWait" class="og-wait" hidden>ホストがはじめるのを待っているよ</p>
+        </div>
+        <div id="lobbyGuide" class="card og-guide" hidden>
+          <h2 class="og-h2">ホストのすること</h2>
+          <ol class="og-howto">
+            <li><strong>画面共有は「みんなにみせる画面」で。</strong>この画面には、だれの答えかが出るので共有しない</li>
+            <li>「はじめる」を押したら、3つの候補からお題を選ぶ</li>
+            <li>届いた答えを見て「みんなに出す」を押す（まずい答えは「かくす」）</li>
+            <li>結果を見たら「次のお題へ」。やめるときは「ここでおしまい」</li>
+          </ol>
+          <button id="btnWatchGuide" type="button" class="btn btn-secondary mt-sm">
+            <span class="material-symbols-rounded" aria-hidden="true">co_present</span>みんなにみせる画面をひらく
+          </button>
+        </div>
+        <div id="lobbyHost" class="card" hidden>
+          <h2 class="og-h2">ルール</h2>
+          <fieldset class="og-ratio">
+            <legend class="og-h3">一本になる数</legend>
+            <div id="ratioOpts" class="og-seg" role="radiogroup" aria-label="一本になる数"></div>
+            <p id="ratioNote" class="og-note"></p>
+          </fieldset>
+          <fieldset class="og-ratio">
+            <legend class="og-h3">1つの答えを見る時間</legend>
+            <div id="showOpts" class="og-seg" role="radiogroup" aria-label="1つの答えを見る時間"></div>
+            <p class="og-note">1つの答えが出ているあいだに「おもしろい！」を押せる時間</p>
+          </fieldset>
+          <fieldset class="og-ratio">
+            <legend class="og-h3">お題の区切り</legend>
+            <div id="cutOpts" class="og-seg" role="radiogroup" aria-label="お題の区切り"></div>
+            <div id="timeOpts" class="og-seg mt-sm" role="radiogroup" aria-label="時間" hidden></div>
+            <p id="cutNote" class="og-note"></p>
+          </fieldset>
+        </div>
+        <div id="slot-mode-waiting"></div>
+        <div id="lobbyStart" class="og-start" hidden>
+          <button id="btnStart" type="button" class="btn btn-primary btn-full">はじめる</button>
+          <p id="lobbyStartNote" class="og-note"></p>
+        </div>
+        <div class="card">
+          <h2 class="og-h2">あそびかた</h2>
+          <ol class="og-howto">
+            <li>お題に、思いついた答えを書いて「出す」。何回出してもいい</li>
+            <li>ホストが確認した答えが、1つずつ、だれのか伏せてみんなの画面に出る</li>
+            <li id="howtoRatio">おもしろかったら「おもしろい！」で投票。投票する人の半分以上が押したら「一本！」</li>
+            <li id="howtoCut">一本が出たら答えの受付はおしまい。残りの答えを出し終えたら、結果を見て次のお題へ</li>
+            <li>答えは書かずに「投票だけ」でも参加できる</li>
+          </ol>
+        </div>
+      </section>
+
+      <!-- お題を選ぶ -->
+      <section class="og-screen" id="screen-pick">
+        <div id="pickHost" class="card" hidden>
+          <h2 class="og-h2">お題を選んでね</h2>
+          <div id="pickCands" class="og-cands"></div>
+          <div class="og-row mt-md">
+            <button id="btnReroll" type="button" class="btn btn-secondary">
+              <span class="material-symbols-rounded" aria-hidden="true">refresh</span>ほかの候補
+            </button>
+          </div>
+        </div>
+        <div id="pickOther" class="card og-status" hidden>
+          <span class="material-symbols-rounded og-status__icon" aria-hidden="true">hourglass_top</span>
+          <p class="og-status__text">ホストがお題を選んでいるよ</p>
+        </div>
+      </section>
+
+      <!-- 答える・投票する -->
+      <section class="og-screen og-screen--wide" id="screen-play">
+        <div class="og-odai">
+          <p class="og-odai__label">お題</p>
+          <p id="playTopic" class="og-odai__text"></p>
+          <p id="playRule" class="og-odai__sub" hidden>一本が出たら、答えの受付はおしまい</p>
+          <p id="playLeft" class="og-odai__sub og-odai__sub--time" hidden></p>
+          <p id="playClosed" class="og-odai__sub og-odai__sub--closed" hidden></p>
+        </div>
+
+        <div class="og-playgrid">
+          <div class="og-col">
+            <div id="stage" class="og-stage">
+              <p class="og-stage__label">いま出ている答え</p>
+              <div id="stageOn" hidden>
+                <p id="stageText" class="og-stage__text"></p>
+                <div class="og-timer" aria-hidden="true"><div id="stageBar" class="og-timer__bar"></div></div>
+                <p id="stageSec" class="og-stage__sec"></p>
+                <div class="og-row og-row--center">
+                  <button id="btnPress" type="button" class="btn og-press" hidden>
+                    <span class="material-symbols-rounded" aria-hidden="true">sentiment_very_satisfied</span><span id="btnPressLabel">おもしろい！</span>
+                  </button>
+                  <span id="stageMine" class="og-tag og-tag--big" hidden>あなたの答え</span>
+                  <button id="btnHideCur" type="button" class="btn btn-ghost btn-sm" hidden>この答えをかくす</button>
+                </div>
+                <p id="stageHint" class="og-stage__hint"></p>
+              </div>
+              <p id="stageEmpty" class="og-stage__empty" hidden>答えが出るのを待っているよ</p>
+            </div>
+
+            <section id="myCard" class="card" hidden>
+              <h2 class="og-h2">あなたの答え</h2>
+              <div id="answerForm" class="og-answer" hidden>
+                <label class="form-label" for="answerInput">思いついたら書いて「出す」（何回でも）</label>
+                <div class="og-row og-row--nowrap">
+                  <input id="answerInput" class="form-input" type="text" maxlength="40" autocomplete="off">
+                  <button id="btnAnswer" type="button" class="btn btn-primary">出す</button>
+                </div>
+                <p id="answerMsg" class="og-note" role="status"></p>
+              </div>
+              <div id="mineCard" class="og-mine" hidden>
+                <ul id="mineList" class="og-list"></ul>
+              </div>
+            </section>
+
+            <div id="slot-mode-play"></div>
+          </div>
+
+          <div class="og-col">
+            <section id="hostPanel" class="og-hostpanel" hidden>
+              <p class="og-hostpanel__title"><span class="material-symbols-rounded" aria-hidden="true">shield_person</span>ホストの画面にだけ出ているよ。この画面は共有しないでね</p>
+              <div id="proxyBox" class="og-hostbox" hidden>
+                <h2 class="og-h3">端末のない参加者のぶん</h2>
+                <p id="proxyPressNote" class="og-note og-note--top"></p>
+                <ul id="proxyPressList" class="og-list"></ul>
+                <div id="proxyAnswer" class="og-answer mt-sm">
+                  <label class="form-label" for="proxyInput">代わりに答えを書く</label>
+                  <select id="proxyWho" class="form-input og-proxy-who" aria-label="だれの答え"></select>
+                  <div class="og-row og-row--nowrap mt-sm">
+                    <input id="proxyInput" class="form-input" type="text" maxlength="40" autocomplete="off">
+                    <button id="btnProxyAnswer" type="button" class="btn btn-primary">代わりに出す</button>
+                  </div>
+                  <p id="proxyMsg" class="og-note" role="status"></p>
+                </div>
+              </div>
+              <div id="checkCard" class="og-hostbox og-check" hidden>
+                <h2 class="og-h3">届いた答え <span id="checkCount" class="og-count"></span></h2>
+                <p class="og-note og-note--top">「みんなに出す」を押すか、10秒たつと、順番にみんなの画面に出る。まずい答えは「かくす」</p>
+                <ul id="checkList" class="og-list"></ul>
+              </div>
+              <p id="checkEmpty" class="og-hostpanel__empty">届いた答えはここに出るよ</p>
+              <div id="queueCard" class="og-hostbox" hidden>
+                <h2 class="og-h3">このあと出る答え</h2>
+                <ul id="queueList" class="og-list"></ul>
+              </div>
+              <div class="og-hostpanel__btns">
+                <button id="btnClose" type="button" class="btn btn-secondary btn-full">答えを締め切る</button>
+                <button id="btnEnd" type="button" class="btn btn-ghost btn-sm">ここでおしまい</button>
+              </div>
+            </section>
+
+            <section id="shownCard" class="card">
+              <h2 class="og-h2">これまでに出た答え</h2>
+              <ul id="shownList" class="og-list"></ul>
+            </section>
+          </div>
+        </div>
+      </section>
+
+      <!-- このお題の結果 -->
+      <section class="og-screen" id="screen-result">
+        <div class="og-odai">
+          <p class="og-odai__label">お題</p>
+          <p id="resultTopic" class="og-odai__text"></p>
+        </div>
+        <div class="card">
+          <h2 class="og-h2">一本</h2>
+          <ul id="resultIppon" class="og-list"></ul>
+        </div>
+        <div class="card">
+          <h2 class="og-h2">ほかに出た答え</h2>
+          <ul id="resultOthers" class="og-list"></ul>
+        </div>
+        <div id="slot-proxy-result"></div>
+        <div id="resultHost" class="og-row og-row--center" hidden>
+          <button id="btnNext" type="button" class="btn btn-primary">次のお題へ</button>
+          <button id="btnFinish" type="button" class="btn btn-secondary">ここでおしまい</button>
+        </div>
+        <p id="resultWait" class="og-wait" hidden>ホストが次へ進めるのを待っているよ</p>
+      </section>
+
+      <!-- おしまい -->
+      <section class="og-screen" id="screen-end">
+        <div class="card">
+          <h2 class="og-h2 og-h2--center">おしまい。あそんでくれてありがとう</h2>
+          <h3 class="og-h3">一本の数</h3>
+          <ul id="endCounts" class="og-counts"></ul>
+          <h3 class="og-h3 mt-lg">お題ごとの一本</h3>
+          <div id="endHistory" class="og-history"></div>
+          <div class="og-row og-row--center mt-lg">
+            <button id="btnRestart" type="button" class="btn btn-primary" hidden>もう一回あそぶ</button>
+          </div>
+          <p id="endWait" class="og-wait mt-md" hidden>ホストが次を決めるまで待ってね</p>
+        </div>
+      </section>
+
+      <section class="og-screen" id="screen-watch-end">
+        <div class="og-panel og-panel--center">
+          <h2 class="og-h2 og-h2--center" id="watchEndTitle">このルームは終わりました</h2>
+          <p class="og-note">遊んでくれてありがとう。</p>
+          <button type="button" class="btn btn-secondary btn-full" id="btnWatchEndTop">トップへ戻る</button>
+        </div>
+      </section>
+
+      <!-- 参加のしかた（自分の画面にだけ出る。待合室・遊ぶ画面では決まった場所へ移す） -->
+      <div id="modeHome" class="og-modehome">
+        <section id="modeCard" class="card og-modecard" hidden>
+          <h2 class="og-h3">あなたの参加のしかた<span class="og-modecard__sub">いつでも切りかえられるよ</span></h2>
+          <div id="modeOpts" class="og-seg" role="radiogroup" aria-label="あなたの参加のしかた"></div>
+          <p id="modeNote" class="og-note"></p>
+        </section>
+      </div>
+
+      <!-- 端末のない参加者を足す（ホストにだけ。待合室と結果の画面に移して出す） -->
+      <details id="proxyAdmin" class="og-more" hidden>
+        <summary class="og-more__sum">端末のない参加者を足す</summary>
+        <p id="proxyAdminNote" class="og-note og-note--top"></p>
+        <ul id="proxyAdminList" class="og-list" hidden></ul>
+        <div id="proxyAdd" class="og-row og-row--nowrap mt-sm">
+          <input id="proxyName" class="form-input" type="text" maxlength="8" autocomplete="off" aria-label="端末のない参加者の名前" placeholder="名前">
+          <button id="btnAddProxy" type="button" class="btn btn-secondary">足す</button>
+        </div>
+        <p id="proxyAddMsg" class="og-note is-error" role="status"></p>
+      </details>
+    </main>
+  </div>
+
+  <!-- ホストの操作（お題を選んでいる間） -->
+  <footer id="hostCtl" class="og-hostctl" hidden>
+    <button id="btnEndPick" type="button" class="btn btn-ghost btn-sm">ここでおしまい</button>
+  </footer>
+
+  <!-- 一本（音は鳴らさない） -->
+  <div id="ipponPop" class="og-ippon" aria-live="polite" hidden>
+    <div class="og-ippon__box">
+      <p class="og-ippon__title">一本！</p>
+      <p id="ipponText" class="og-ippon__text"></p>
+      <p id="ipponName" class="og-ippon__name"></p>
+    </div>
+  </div>
+
+  <div class="og-overlay" id="hostOffOverlay" hidden><div class="og-overlay__panel"><h2>ホストの戻りを待っています</h2><p id="hostOffText">しばらく待っても戻らないときは退出してね。</p><button type="button" class="btn btn-secondary" id="btnOverlayLeave">退出する</button></div></div>
+
+  <script type="module" src="app.js?v=20261030b"></script>
+  <script src="../shared/js/stats.js?v=1" defer></script>
+  <script src="../shared/js/howto.js"></script>
+  <script>
+    RoomkHowto.init({
+      title: 'あそびかた',
+      lead: 'お題に、思いついた答えを何回でも出す大喜利。出た答えは1つずつ、だれのか伏せてみんなの画面に出るよ。「おもしろい！」と思う人が多ければ「一本！」。',
+      sections: [
+        { heading: 'はじめかた', items: [
+          'ホストが「ルームを作る」で名前を入れる。ルームコードは「コードをコピー」、参加用のリンクは「リンクをコピー」でチャットに送れる。スマホやタブレットで入る人には「QRコードを出す」をカメラで読みとってもらう',
+          '参加する人は「ルームに参加する」で名前、ルームコード（6文字）の順に入れ、参加のしかたを選んで「参加する」を押す。リンクからひらいたときは、ルームコードは入っているので名前だけ入れる',
+          '画面共有するときは、ホストが「みんなにみせる画面」をひらいて、そちらを共有する',
+          'ホストが「はじめる」を押して、お題を選ぶ（投票する人が2人から）',
+        ] },
+        { heading: '答える', items: [
+          'お題に、思いついた答えを書いて「出す」。何回出してもいいよ（40文字まで）',
+          'ホストが確認した答えが、1つずつ、だれのか伏せてみんなの画面に出る（ホストが押し忘れても、少しすると出る）',
+          '答えは書かずに「投票だけ」でも参加できる。参加のしかたは、遊んでいる途中でも切りかえられるよ',
+        ] },
+        { heading: '一本', items: [
+          '答えが出ているあいだに、おもしろかったら「おもしろい！」を押して投票する。自分の答えには押せないよ',
+          '投票する人のうち、ホストが決めた数（はじめは半分）が押したら「一本！」。そのときだけ、だれの答えか出る',
+          '一本が出たら答えの受付はおしまい。出ていない答えを最後まで出してから結果へ（ホストが「時間で」を選んだときは、時間まで答えを出せる）',
+          'おしまいの画面に、一本の数とお題ごとの一本が出るよ',
+        ] },
+      ],
+    });
+  </script>
+</body>
+</html>

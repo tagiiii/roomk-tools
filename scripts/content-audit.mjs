@@ -203,6 +203,8 @@ const COVERED_APPS = [
   'suki-bingo',
   // 2026-10-13 追加（ポータルには載せていない）
   'yokumite-kanji',
+  // 2026-10-30 追加
+  'hirameki-oogiri',
 ];
 
 // 数えられるコンテンツを持たないため重複検査の対象外にするアプリ（意図的除外）。
@@ -541,6 +543,22 @@ function collectEntries() {
   });
   if (shirushiProblems.length > 0) {
     throw new Error(`shirushi-hint data.js の構造エラー:\n  ${shirushiProblems.join('\n  ')}`);
+  }
+
+  // hirameki-oogiri: data.js の export const TOPICS = [ '文字列', ... ]（大喜利のお題）。
+  //   ルームでは番号で共有するので、空のお題と同じアプリ内の重複はここで fail-fast にする
+  const oogiriTopics = evalArrayFromSource(read('apps/hirameki-oogiri/data.js'), 'TOPICS', 'apps/hirameki-oogiri/data.js') || [];
+  const oogiriSeen = new Set();
+  const oogiriProblems = [];
+  if (oogiriTopics.length === 0) oogiriProblems.push('TOPICS が空');
+  oogiriTopics.forEach((text, index) => {
+    if (typeof text !== 'string' || !text.trim()) oogiriProblems.push(`TOPICS[${index}] が空`);
+    if (oogiriSeen.has(text)) oogiriProblems.push(`TOPICS[${index}]「${text}」が重複`);
+    oogiriSeen.add(text);
+    rows.push(entry('hirameki-oogiri', 'topic', text, { id: `hirameki-oogiri:${index}` }));
+  });
+  if (oogiriProblems.length > 0) {
+    throw new Error(`hirameki-oogiri data.js の構造エラー:\n  ${oogiriProblems.join('\n  ')}`);
   }
 
   // career-sugoroku: data.js（ブラウザでは window.CS_DATA、Node では module.exports）。
