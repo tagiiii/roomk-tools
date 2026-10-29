@@ -343,5 +343,54 @@ ok(JSON.stringify(E.newGame(['a', 'b', 'c', 'd'], {}, fixed).doors) === '{}' && 
   ok(E.JOB_NAMES.engineer === '整備係' && E.JOB_NAMES.watcher === '見守り係' && E.JOB_NAMES.shifter === 'へんしん屋' && E.JOB_NAMES.angel === 'まもり星', '役職の名前');
 }
 
+
+// パーク（2026-10-29 子どもの要望「カタリバパークのような空間で」）: 2つ目のマップ。どのマップでも成り立つことを確かめる
+{
+  ok(E.useMap('park') === 'park' && E.mapKey() === 'park' && E.W === 87 && E.H === 60, 'パークに切りかわる（87×60）');
+  ok(E.useMap(1) === 'park' && E.useMap(0) === 'kichi' && E.W === 84 && E.useMap('park') === 'park', '数字（settings.map）でも切りかわる');
+  const home = { x: Math.floor(E.TABLE.x) + 3, y: Math.floor(E.TABLE.y) };
+  ok(E.roomAt(E.TABLE.x, E.TABLE.y) === 'entrance', 'テーブルはエントランス');
+  let un = 0;
+  for (let y = 0; y < E.H; y++) for (let x = 0; x < E.W; x++) if (E.isFloor(x, y) && !E.path(home, { x, y })) un++;
+  ok(un === 0, 'パーク: 床はぜんぶ行ける', un);
+  ok(E.SPOTS.length === 26 && E.SPOTS.every((sp, i) => sp.id === i), 'パーク: 仕事の場所26・id は並び順');
+  E.SPOTS.forEach((sp) => ok(E.canStand(sp.x, sp.y) && E.roomAt(sp.x, sp.y) === sp.room && !!E.path(home, { x: Math.floor(sp.x), y: Math.floor(sp.y) }), 'パーク: 仕事の場所 ' + sp.id, E.roomAt(sp.x, sp.y)));
+  const pts = [...E.SPOTS, E.FIX_SPOT, ...E.VENTS, ...E.LADDERS, E.CAM_STAND, ...E.AIR_PANELS, ...E.PAIRS.flatMap((q) => [q.a, q.b])];
+  pts.forEach((q, i) => ok(E.canStand(q.x, q.y) && !!E.path(home, { x: Math.floor(q.x), y: Math.floor(q.y) }), 'パーク: 立てて行ける ' + i, q));
+  let close = 0;
+  for (let i = 0; i < pts.length; i++) for (let j = i + 1; j < pts.length; j++) if (E.dist(pts[i], pts[j]) < E.USE_RANGE * 2) close++;
+  ok(close === 0, 'パーク: 押す場所どうしが近すぎない', close);
+  [...E.AIR_PANELS, ...E.PAIRS.flatMap((q) => [q.a, q.b]), ...E.LADDERS].forEach((q, i) => ok(E.roomAt(q.x, q.y) === q.room, 'パーク: 書いてある部屋の中 ' + i, E.roomAt(q.x, q.y)));
+  ok(E.VENTS.length === 10 && new Set(E.VENTS.map((v) => E.roomAt(v.x, v.y))).size === 10 && E.VENTS.every((v) => E.roomAt(v.x, v.y)), 'パーク: 近道は10か所・どれもちがう部屋');
+  ok(E.LADDERS[0].room === 'hiroba' && E.LADDERS[0].label === 'すべり台ですべる' && E.LADDERS[1].room === 'roomk', 'パーク: すべり台（みんなのひろば）↔ はしご（作戦会議エリア）');
+  ok(E.roomAt(E.CAM_STAND.x, E.CAM_STAND.y) === 'mine' && E.roomAt(E.FIX_SPOT.x, E.FIX_SPOT.y) === 'staff', 'パーク: カメラの台はマイクラルーム・停電のスイッチはウェルカムセンター');
+  E.CAMS.forEach((c) => {
+    let bad = 0;
+    for (let ty = 0; ty < E.H; ty++) for (let tx = 0; tx < E.W; tx++) if (E.isFloor(tx, ty) && E.dist({ x: tx + 0.5, y: ty + 0.5 }, c) <= E.CAM_R && E.roomAt(tx + 0.5, ty + 0.5)) bad++;
+    ok(E.isFloor(Math.floor(c.x), Math.floor(c.y)) && !E.roomAt(c.x, c.y) && bad === 0, 'パーク: カメラは通路の上で、部屋の中は映らない ' + c.id, bad);
+  });
+  for (let n = E.MIN_PLAYERS; n <= E.MAX_PLAYERS; n++) for (let i = 0; i < n; i++) { const q = E.spawnPoint(i, n); ok(E.canStand(q.x, q.y), 'パーク: はじめの場所 ' + n + '-' + i); }
+  E.DOOR_ROOMS.forEach((key) => {
+    const r = E.ROOMS.find((q) => q.key === key && !q.part);
+    let inside = null;
+    for (let y = r.y; y < r.y + r.h && !inside; y++) for (let x = r.x; x < r.x + r.w && !inside; x++) if (E.isFloor(x, y)) inside = { x, y };
+    ok(!!E.path(home, inside) && !E.path(home, inside, E.doorTiles([key])), 'パーク: ドアをしめると入れない（入口はぜんぶドア） ' + key);
+  });
+  E.FURNITURE.forEach((f, i) => {
+    const under = (x, y) => E.FURNITURE.some((o) => !o.floor && x >= o.x && x < o.x + o.w && y >= o.y && y < o.y + o.h);
+    for (let y = f.y; y < f.y + f.h; y++) for (let x = f.x; x < f.x + f.w; x++) ok(f.floor ? E.isFloor(x, y) || under(x, y) : !E.isFloor(x, y), 'パーク: 置き物はかべ・じゅうたんは床（上の机はかべ） ' + i);
+    if (f.room) ok(E.ROOMS.filter((q) => q.key === f.room).some((r) => f.x >= r.x && f.y >= r.y && f.x + f.w <= r.x + r.w && f.y + f.h <= r.y + r.h), 'パーク: 置き物は部屋の中 ' + i);
+  });
+  const names = E.ROOMS.filter((r) => !r.part).map((r) => r.name);
+  ok(['黙々と作業する場所', 'メインルーム', 'MTGルーム8', 'ワークスペース', 'みんなのひろば', 'クラブルーム', 'ラウンジルーム', 'マイクラルーム', '談話室①', '小部屋', '休けい場所', '学びの沼', 'スタディルーム', 'もくもく学習エリア', 'エントランス', '作品展示場', 'ウェルカムセンター', '作戦会議エリア', 'のんびり', '探Qルーム'].every((n) => names.includes(n)), 'パーク: 部屋の名前は元の空間のまま');
+  ok(E.fixRoomName() === 'ウェルカムセンター' && E.sayText('power') === 'ウェルカムセンターに来て', 'パーク: 停電の部屋の名前（ひとこと）');
+  const gp = E.newGame(['a', 'b', 'c', 'd'], { map: 1 }, fixed);
+  ok(E.mapKey() === 'park' && Object.values(gp.tasks).every((ts) => ts.every((t) => t.spot >= 100 || t.spot < 26)), 'newGame はマップを合わせる（パーク）');
+  E.newGame(['a', 'b', 'c', 'd'], { map: 0 }, fixed);
+  ok(E.mapKey() === 'kichi' && E.fixRoomName() === '電気室' && E.sayText('power') === '電気室に来て', 'newGame はマップを合わせる（ひみつ基地）');
+  ok(E.DEFAULT_SETTINGS.map === 0 && E.SETTING_OPTS.map.join() === '0,1' && E.MAP_NAMES.park === 'パーク', 'マップの設定（はじめはひみつ基地）');
+  E.useMap('kichi');
+}
+
 console.log(`pass ${pass} / fail ${fail}`);
 process.exit(fail ? 1 : 0);

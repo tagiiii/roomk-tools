@@ -43,6 +43,7 @@ const TOAST_MS = 2200;
 
 const SETTING_LABELS = {
   hostPlays: ['ホスト（あなた）', (v) => (v ? 'いっしょに遊ぶ' : '進行だけ')],
+  map: ['マップ', (v) => E.MAP_NAMES[E.MAP_KEYS[v]] || E.MAP_NAMES.kichi],   // 2026-10-29 パークを足した
   sleepers: ['ねむらせ屋の数', (v) => (v === 2 ? '2人（7人以上のとき）' : '1人')],
   pick: ['ねむらせ屋の決め方', (v) => (v === 1 ? 'ホストが選ぶ' : 'ランダム')],
   tasks: ['ひとりの仕事の数', (v) => v + 'つ'],
@@ -393,6 +394,7 @@ function gameOf(room) {
       until: Number(r.until) || 0,
     };
   }
+  E.useMap(g.settings.map);   // このゲームのマップ（ひみつ基地／パーク）に合わせる
   if (g.stage === 'meeting' && !g.meeting) g.stage = 'play';
   if (g.stage === 'result' && !g.result) g.stage = 'play';
   return g;
@@ -1471,7 +1473,7 @@ function clearSayTicker() {
 
 // 言葉のボタン（chip）を作る。withName の言葉は onName で人を選ぶ
 function sayChip(g, p, onPick) {
-  const b = makeElement('button', 'nk-word', p.t.replace('{room}', E.roomName(E.roomAt(ME.x, ME.y)) || E.HALL_LABEL).replace('{name}', '〔名前〕'));
+  const b = makeElement('button', 'nk-word', p.t.replace('{room}', E.roomName(E.roomAt(ME.x, ME.y)) || E.HALL_LABEL).replace('{name}', '〔名前〕').replace('{fix}', E.fixRoomName()));
   b.type = 'button';
   b.dataset.say = p.k;
   b.addEventListener('click', () => onPick(p));
@@ -2208,6 +2210,7 @@ function renderHud(g, playing) {
   // みんなの仕事のバー: 設定で「出す／進行役の画面だけ／出さない」（2026-10-28）
   $('hudGauge').hidden = !(g.settings.gauge === 2 || (g.settings.gauge === 1 && !playing));
   $('hudDark').hidden = !g.dark;
+  setText('hudDarkText', '停電中！ ' + E.fixRoomName() + 'のスイッチでなおせる');
   // 声の約束: 会議（と結果）のときだけミュートを外す。帯は進行役の画面（画面共有）にも出す（2026-10-28 子どもの要望「会議の時間以外はミュート」）
   const talk = g.stage === 'meeting' || g.stage === 'result';
   const mute = $('hudMute');
@@ -2479,7 +2482,7 @@ function openFix() {
   if (!g || !g.dark) return;
   state.taskSpot = FIX_TASK;
   const gen = ++state.taskGen;
-  $('taskTitle').textContent = '電気室：スイッチを順に入れなおす';
+  $('taskTitle').textContent = E.fixRoomName() + '：スイッチを順に入れなおす';
   $('ovTask').hidden = false;
   KEYS.clear();
   G.open($('taskBox'), 'order', async () => {
@@ -2800,6 +2803,7 @@ function draw(g) {
 
 // 置き物が見えているか: 見える広さの中で、置き物にとなり合う床のどこかが見えていればよい
 function furnitureSeen(f, vr) {
+  if (f.floor) return false;   // じゅうたんは床なので、多角形でそのまま明るくなる
   // 暗がりのぼかし（見える広さの7割から外）にかかる物は抜かない（暗がりの中に四角く明るい所ができないように）
   if (E.dist({ x: f.x + f.w / 2, y: f.y + f.h / 2 }, ME) > vr * 0.8) return false;
   for (let yy = f.y - 1; yy <= f.y + f.h; yy++) {
@@ -2849,7 +2853,17 @@ function drawWholeMap(g, sx, sy, s, mine, small) {
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillStyle = 'rgba(28,63,94,0.8)';
-  if (!small) E.ROOMS.forEach((r) => { if (!r.part) ctx.fillText(r.name, sx(r.x + r.w / 2), sy(r.y + r.h / 2) + (r.key === 'plaza' ? s * 3 : 0)); });
+  // テーブルのある部屋は、名前をテーブルの下にずらす
+  const tableRoom = E.roomAt(E.TABLE.x, E.TABLE.y);
+  // 名前は部屋のはばに入る大きさまで小さくする（細い部屋の名前どうしが重ならないように）
+  const base = Math.max(12, Math.round(s * 0.6));
+  if (!small) E.ROOMS.forEach((r) => {
+    if (r.part) return;
+    ctx.font = '700 ' + base + 'px "Noto Sans JP", sans-serif';
+    const fit = Math.max(7, Math.floor(base * Math.min(1, (r.w * s * 0.92) / ctx.measureText(r.name).width)));
+    ctx.font = '700 ' + fit + 'px "Noto Sans JP", sans-serif';
+    ctx.fillText(r.name, sx(r.x + r.w / 2), sy(r.y + r.h / 2) + (r.key === tableRoom ? s * 3 : 0));
+  });
   if (mine) {
     // 自分の仕事の「!」（おわっていないもの）と、自分の位置
     ctx.fillStyle = '#F5B700';
@@ -2960,7 +2974,7 @@ function drawMini(g) {
   }
   const s = w / E.W;
   const spots = mySpots(g);
-  const key = [w, dpr, g.dark ? 1 : 0, E.closedRooms(g, RoomkRTDB.now()).join(','), g.air ? 'air' + Object.keys(g.airFixed).join('') : '',
+  const key = [E.mapKey(), w, dpr, g.dark ? 1 : 0, E.closedRooms(g, RoomkRTDB.now()).join(','), g.air ? 'air' + Object.keys(g.airFixed).join('') : '',
     spots.map((p) => p.x + ':' + p.y).join(',')].join('|');
   if (key !== miniKey) {
     miniKey = key;
@@ -3025,8 +3039,21 @@ const FURNITURE_STYLE = {
   toolbox: { top: '#C9302C', deco: 'toolbox' },
   shower: { top: '#CFE3EC', deco: 'shower' },
   telescope: { top: '#4B5563', deco: 'telescope' },
+  // 2026-10-29 パーク
+  swing: { top: '#8C5A33', deco: 'swing' },
+  statue: { top: '#8A8F99', deco: 'statue' },
+  bear: { top: '#F2A0B8', deco: 'bear' },
+  campfire: { top: '#7A5A36', deco: 'campfire' },
+  log: { top: '#A0703E', deco: 'log' },
+  tree: { top: '#7A5A36', deco: 'tree' },
+  board: { top: '#C9A46A', deco: 'board' },
+  flower: { top: '#3E8E48', deco: 'flower' },
+  pond: { top: '#4FA8D6', deco: 'pond' },
+  frame: { top: '#8C5A33', deco: 'frame' },
+  piano: { top: '#2A2E34', deco: 'piano' },
+  stool: { top: '#F28C28', deco: 'stool' },
 };
-const FURNITURE_TALL = new Set(['monitor', 'plant', 'light', 'antenna', 'arcade', 'scarecrow', 'telescope', 'radioset', 'treadmill', 'toolbox']);
+const FURNITURE_TALL = new Set(['monitor', 'plant', 'light', 'antenna', 'arcade', 'scarecrow', 'telescope', 'radioset', 'treadmill', 'toolbox', 'swing', 'statue', 'bear', 'campfire', 'tree', 'board', 'flower', 'frame']);
 // 色を明るく（amt > 0）・暗く（amt < 0）する
 function shade(hex, amt) {
   const n = parseInt(hex.slice(1), 16);
@@ -3076,7 +3103,23 @@ function furnCylinder(cx, top, bottom, rx, color) {
 function drawFurniture(sx, sy, size) {
   ctx.save();
   const detail = size >= 14;   // 小さな地図・進行役の地図では形だけ
+  // じゅうたん（floor: true。歩ける床の飾り）は先に平らに描く
   E.FURNITURE.forEach((f) => {
+    if (!f.floor) return;
+    ctx.fillStyle = f.color || '#C9473C';
+    ctx.globalAlpha = 0.85;
+    roundRect(sx(f.x) + size * 0.1, sy(f.y) + size * 0.1, f.w * size - size * 0.2, f.h * size - size * 0.2, Math.max(2, size * 0.2));
+    ctx.globalAlpha = 1;
+    if (f.label && detail) {
+      ctx.fillStyle = 'rgba(255,255,255,0.9)';
+      ctx.font = '700 ' + Math.round(size * 0.36) + 'px "Noto Sans JP", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      ctx.fillText(f.label, sx(f.x + f.w / 2), sy(f.y) + size * 0.25);
+    }
+  });
+  E.FURNITURE.forEach((f) => {
+    if (f.floor) return;
     const st = FURNITURE_STYLE[f.kind] || FURNITURE_STYLE.crate;
     const x = sx(f.x);
     const y = sy(f.y);
@@ -3085,7 +3128,7 @@ function drawFurniture(sx, sy, size) {
     const p = size * 0.08;               // まわりのすき間
     const d = detail ? size * 0.22 : size * 0.16;   // 手前の面の高さ（立体に見せる）
     const r = Math.max(1.5, size * 0.1);
-    const round = ['cylinder', 'barrel', 'pump', 'plant', 'light', 'antenna', 'scarecrow', 'tire', 'telescope'].includes(st.deco);
+    const round = ['cylinder', 'barrel', 'pump', 'plant', 'light', 'antenna', 'scarecrow', 'tire', 'telescope', 'bear', 'campfire', 'tree', 'flower', 'stool', 'statue', 'swing', 'pond'].includes(st.deco);
     // 床に落ちる影（少し右下）
     ctx.fillStyle = 'rgba(20,24,30,0.28)';
     if (round) {
@@ -3324,6 +3367,78 @@ function drawFurniture(sx, sy, size) {
         furnCircle(cx + s * 0.3, y + p - s * 0.05, s * 0.09, '#9FD3E8');
         break;
       }
+      case 'swing':
+        // ブランコ（わくと、つるした2つの席）
+        furnLine([[tx, ty - s * 0.25], [tx + tw, ty - s * 0.25]], '#8C5A33', Math.max(2, s * 0.08));
+        [0.3, 0.7].forEach((k) => {
+          furnLine([[tx + tw * k, ty - s * 0.25], [tx + tw * k, ty + th * 0.55]], '#5B6470', 1);
+          furnRect(tx + tw * k - s * 0.14, ty + th * 0.5, s * 0.28, s * 0.1, 1, '#D9433B');
+        });
+        break;
+      case 'statue':
+        // 石の像（大きな顔）
+        furnRect(tx + tw * 0.2, ty - s * 0.25, tw * 0.6, th + s * 0.15, Math.max(2, s * 0.12), '#8A8F99', '#5B6470');
+        ctx.fillStyle = '#5B6470';
+        ctx.fillRect(tx + tw * 0.3, ty + th * 0.05, tw * 0.4, s * 0.06);
+        ctx.fillRect(tx + tw * 0.44, ty + th * 0.2, tw * 0.12, th * 0.35);
+        break;
+      case 'bear': {
+        // くまのぬいぐるみ
+        const bc = f.x % 2 ? '#F2A0B8' : '#F5D04A';
+        furnCircle(cx, ty + th * 0.55, s * 0.26, bc, shade(bc, -0.3), 1);
+        furnCircle(cx, ty + th * 0.05, s * 0.2, bc);
+        furnCircle(cx - s * 0.14, ty - s * 0.1, s * 0.08, bc);
+        furnCircle(cx + s * 0.14, ty - s * 0.1, s * 0.08, bc);
+        furnCircle(cx - s * 0.06, ty + th * 0.02, s * 0.025, '#2A2E34');
+        furnCircle(cx + s * 0.06, ty + th * 0.02, s * 0.025, '#2A2E34');
+        break;
+      }
+      case 'campfire':
+        [-0.2, 0.2].forEach((k) => furnLine([[cx - s * 0.3, ty + th * (0.6 + k)], [cx + s * 0.3, ty + th * (0.6 - k)]], '#7A5A36', Math.max(2, s * 0.08)));
+        ctx.fillStyle = '#F28C28';
+        ctx.beginPath(); ctx.moveTo(cx - s * 0.18, ty + th * 0.6); ctx.quadraticCurveTo(cx, ty - s * 0.35, cx + s * 0.18, ty + th * 0.6); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = '#F5C518';
+        ctx.beginPath(); ctx.moveTo(cx - s * 0.09, ty + th * 0.6); ctx.quadraticCurveTo(cx, ty - s * 0.05, cx + s * 0.09, ty + th * 0.6); ctx.closePath(); ctx.fill();
+        break;
+      case 'log':
+        for (let i = 1; i < 3; i++) furnLine([[tx + tw * 0.2, ty + (th / 3) * i], [tx + tw * 0.8, ty + (th / 3) * i]], shade(st.top, -0.35), 1);
+        furnCircle(cx, ty + th * 0.15, Math.min(tw, s) * 0.22, '#D9B07A', '#7A5A36', 1);
+        break;
+      case 'tree': {
+        furnLine([[cx, y + h - p], [cx, y + p + s * 0.2]], '#7A5A36', Math.max(2, s * 0.1));
+        [[0, 0.05, 0.3], [-0.2, 0.25, 0.22], [0.2, 0.25, 0.22]].forEach(([dx, dy, rr], i) => furnCircle(cx + dx * s, y + p + dy * s, rr * s, i ? '#4FA857' : '#3E8E48'));
+        break;
+      }
+      case 'board':
+        // けいじ板（コルクの板と紙）
+        furnRect(tx + s * 0.06, ty - s * 0.2, tw - s * 0.12, th + s * 0.1, Math.max(1, s * 0.04), '#C9A46A', '#7A5A36');
+        ['#FFFFFF', '#F5D04A', '#9FD3E8'].forEach((c, i) => { ctx.fillStyle = c; ctx.fillRect(tx + s * 0.16 + i * tw * 0.28, ty - s * 0.1, tw * 0.2, th * 0.55); });
+        break;
+      case 'flower':
+        furnLine([[cx, y + h - p], [cx, y + p + s * 0.25]], '#3E8E48', Math.max(1.5, s * 0.06));
+        for (let i = 0; i < 6; i++) { const a = (Math.PI * 2 * i) / 6; furnCircle(cx + Math.cos(a) * s * 0.16, y + p + s * 0.2 + Math.sin(a) * s * 0.16, s * 0.1, '#F5C518'); }
+        furnCircle(cx, y + p + s * 0.2, s * 0.1, '#7A5A36');
+        break;
+      case 'pond':
+        // 池（水。歩けない）
+        furnRect(tx, ty, tw, th + d, Math.max(2, s * 0.3), '#4FA8D6');
+        ctx.strokeStyle = 'rgba(255,255,255,0.55)'; ctx.lineWidth = Math.max(1, s * 0.04);
+        for (let i = 0; i < 3; i++) { ctx.beginPath(); ctx.arc(tx + tw * (0.25 + i * 0.25), ty + th * (0.4 + (i % 2) * 0.3), s * 0.18, Math.PI * 1.1, Math.PI * 1.9); ctx.stroke(); }
+        break;
+      case 'frame':
+        furnRect(tx + s * 0.08, ty - s * 0.15, tw - s * 0.16, th + s * 0.05, Math.max(1, s * 0.03), '#F7F1E1', '#8C5A33');
+        ctx.fillStyle = f.x % 2 ? '#9FD3E8' : '#F2A0B8';
+        ctx.fillRect(tx + s * 0.18, ty - s * 0.05, tw - s * 0.36, th - s * 0.15);
+        break;
+      case 'piano':
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(tx + s * 0.08, ty + th * 0.55, tw - s * 0.16, th * 0.35);
+        ctx.fillStyle = '#22272E';
+        for (let i = 0; i < Math.round(tw / (s * 0.18)); i++) if (i % 3 !== 2) ctx.fillRect(tx + s * 0.14 + i * s * 0.18, ty + th * 0.55, s * 0.08, th * 0.2);
+        break;
+      case 'stool':
+        furnCircle(cx, y + h / 2, s * 0.3, '#F28C28', '#8A5A2B', Math.max(1, s * 0.05));
+        break;
       default:
         break;
     }
@@ -3637,6 +3752,8 @@ function renderSabBox(g, now) {
   const dark = $('sabDark');
   dark.disabled = !!busy;
   setText('sabDarkNote', busy || 'いま使える');
+  setText('sabDarkDesc', '隊員の見える広さがせまくなる。' + E.fixRoomName() + 'のスイッチでなおされる');
+  setText('sabAirDesc', E.AIR_LIMIT_S + '秒のうちに、' + E.AIR_PANELS.map((p) => E.roomName(p.room)).join('と') + 'のパネルを両方なおされなければ勝ち。会議ボタンは押せなくなる');
   const air = $('sabAir');
   air.disabled = !!busy;
   setText('sabAirNote', busy || 'いま使える');
@@ -3945,6 +4062,7 @@ function openCam() {
   state.sayOpen = false;
   state.sayPending = null;
   renderSayBox(g);
+  setText('camCount', '通路の' + E.CAMS.length + 'か所');
   $('ovCam').hidden = false;
   KEYS.clear();
   // 見ていることをみんなに知らせる（カメラのランプ）。切れたら消える

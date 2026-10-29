@@ -130,9 +130,9 @@ body.is-playing { overflow: hidden; background: #2D3642; overscroll-behavior: no
 .nk-tasks.is-closed .nk-tasks__items, .nk-tasks.is-closed .nk-tasks__note { display: none; }
 .nk-tasks.is-closed { width: auto; }
 .nk-tasks__items { list-style: none; margin: 0; padding: 0 12px 6px; display: grid; gap: 4px; }
-.nk-task { display: grid; grid-template-columns: 20px auto 1fr; align-items: center; gap: 6px; line-height: 1.4; }
+.nk-task { display: grid; grid-template-columns: 20px minmax(0, auto) minmax(0, 1fr); align-items: center; gap: 6px; line-height: 1.4; }
 .nk-task .material-symbols-rounded { font-size: 18px; color: var(--color-muted); }
-.nk-task__room { font-weight: 700; color: var(--color-primary); white-space: nowrap; }
+.nk-task__room { font-weight: 700; color: var(--color-primary); max-width: 8.5em; }   /* パークの長い部屋の名前は折り返す（2026-10-29） */
 .nk-task.is-done { color: var(--color-muted); }
 .nk-task.is-done .nk-task__label { text-decoration: line-through; }
 .nk-task.is-done .material-symbols-rounded { color: var(--color-success); }

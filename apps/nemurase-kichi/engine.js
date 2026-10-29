@@ -4,6 +4,8 @@
 (function (root) {
   'use strict';
 
+  // ── マップ1: ひみつ基地（settings.map 0）──
+  function kichiMap() {
   // 2026-10-29 子どもの要望の第3便「マップを広く・部屋と通路を増やす・部屋を広く覚えやすい形に・監視室」で 44×30（9部屋）→ 64×43（13部屋）に作りなおした。
   // 同日夕「もうちょいマップ拡張」→ オーナー決定「縦横1.3倍・部屋18ほど」で 84×56・18部屋に（屋根うら・トレーニング室・ガレージ・シャワー室を足した）。
   // 部屋は 5列×4段（列 x2-13 / 19-30 / 36-51 / 57-68 / 74-81、段 y2-10 / 15-24 / 29-38 / 43-53）。ひろばはまん中の列の2段ぶんの十字
@@ -47,7 +49,6 @@
     [14, 48, 22, 2], [54, 48, 3, 2],                                // ポンプ室↔見はり台↔ゲーム室
     [22, 44, 2, 4], [29, 50, 2, 1],                                 // 行き止まりへの通路（電気室・道具室）
   ];
-  const HALL_FILL = '#E6E3DC';
 
   // 仕事の場所。kind: wire＝線をつなぐ / order＝番号を順に押す / meter＝メーターを合わせる。id は並び順（新しい場所は末尾に足す）
   const SPOTS = [
@@ -92,7 +93,6 @@
     { id: 8, x: 3.5, y: 36.5 },    // トレーニング室
     { id: 9, x: 59.5, y: 36.5 },   // ガレージ
   ];
-  const VENT_STAY_S = 10;
   // はしご（だれでも使える。ねむった人も）。2026-10-28 子どもの意見「マップにギミック（はしご）」
   // 上に立って「はしごをおりる／のぼる」を押すと、CLIMB_MS のあいだその場に立ったまま（見える・ねむらせられる）で、to のはしごへ移る。
   // 通信室（画面の上）↔ 見はり台（画面の下）。隊員の移動が速くなる＝隊員が有利になる向き（近道はねむらせ屋だけ、はしごはみんな）
@@ -100,7 +100,6 @@
     { id: 0, x: 21.5, y: 10.0, to: 1, room: 'radio', label: 'はしごをおりる', busy: 'おりている…' },
     { id: 1, x: 37.5, y: 52.0, to: 0, room: 'tower', label: 'はしごをのぼる', busy: 'のぼっている…' },
   ];
-  const CLIMB_MS = 2500;
   // 監視カメラ。2026-10-28 子どもの意見。カメラの台（CAM_STAND）に立って「カメラを見る」と、通路に置いたカメラ（CAMS）のまわり CAM_R マスの
   // 通路の部分だけが小窓に映る（部屋の中は映らない）。見ている間はその場から動けない。だれかが見ている間はカメラのランプが光る（ねむらせ屋が気づける）。停電中は映らない
   // 2026-10-29 子どもの要望「カメラルーム（監視室）がほしい」で、台を通信室から監視室へ移し、カメラを増やした（18部屋で8つ）
@@ -115,7 +114,6 @@
     { id: 6, x: 18, y: 49, name: 'ポンプ室と電気室の間' },
     { id: 7, x: 32, y: 49, name: '電気室と見はり台の間' },
   ];
-  const CAM_R = 2.5;
 
   // ── 2026-10-28 子どもの要望の第2便（オーナー承認）──
   // 空気の妨害（ねむらせ屋）: 止めると AIR_LIMIT_S 秒のうちに、離れた2部屋のパネルを両方なおさないと ねむらせ屋の勝ち。
@@ -124,16 +122,12 @@
     { id: 'a', room: 'kitchen', x: 12.5, y: 3.0, label: '台所の空気のパネル' },
     { id: 'b', room: 'store', x: 67.5, y: 16.5, label: '倉庫の空気のパネル' },
   ];
-  const AIR_LIMIT_S = 60;
   // ふたりの仕事: 離れた2か所のスイッチを、ふたりが同時におしていないとおわらない。隊員はひとり1つ持つ（設定 pair で切れる）。
   // 2人組で動く理由を作る（集団を小さく割る向き）。おしている人は PAIR_HOLD_MS の間だけ「おしている」とみなす（2秒おきに書き直す）
   const PAIRS = [
     { id: 'p0', spot: 100, label: 'ふたりでスイッチを入れる', a: { room: 'lounge', x: 3.5, y: 17.5 }, b: { room: 'farm', x: 67.5, y: 3.5 } },
     { id: 'p1', spot: 101, label: 'ふたりでレバーを引く', a: { room: 'kitchen', x: 3.5, y: 11.5 }, b: { room: 'tower', x: 52.5, y: 51.5 } },
   ];
-  const PAIR_SPOT_BASE = 100;
-  const PAIR_HOLD_MS = 6000;
-  const PAIR_BEAT_MS = 2000;
   // ドア（ねむらせ屋）: 部屋を選ぶと、その部屋の入口がぜんぶ DOOR_MS の間とじる（見えるが通れない）。集団を分ける向き。ひろばにはドアがない（テーブルにいつでも行けるように）
   // ドアは、その部屋につながる通路の、部屋に接する1列
   const DOORS = [
@@ -153,10 +147,7 @@
   ];
   // 行き止まりの小部屋（道具室・温室・屋根うら・電気室）にはドアがない（とじこめないように）
   const DOOR_ROOMS = ['kitchen', 'radio', 'monitor', 'farm', 'lounge', 'laundry', 'store', 'gym', 'garage', 'shower', 'pump', 'tower', 'playroom'];
-  const DOOR_MS = 10000;
-  const DOOR_AGAIN_S = 20;
   // 会議ボタンの待ち時間: はじめと会議のあと BUTTON_WAIT_S 秒は押せない（はじまった直後の会議・会議の連続・追われたときの逃げ道をふせぐ）
-  const BUTTON_WAIT_S = 20;
   // 家具（部屋の目印。1マスのかべとして ぶつかる・かべごしに見えない）。x, y, w, h はマス。kind は描き方。
   // 2026-10-29 夕 子どもの要望「部屋の内装を部屋の名前に合わせて」で、部屋ごとに名前に合う物を3〜5個ずつ置いた
   const FURNITURE = [
@@ -198,6 +189,228 @@
     // 道具室: たな・道具箱
     { room: 'tools', kind: 'shelf', x: 27, y: 51, w: 1, h: 1 }, { room: 'tools', kind: 'toolbox', x: 32, y: 51, w: 1, h: 1 },
   ];
+    return { W, H, ROOMS, HALLS, SPOTS, FIX_SPOT, TABLE, VENTS, LADDERS, CAM_STAND, CAMS, AIR_PANELS, PAIRS, DOORS, DOOR_ROOMS, FURNITURE };
+  }
+
+  // ── マップ2: パーク（settings.map 1）──
+  // 2026-10-29 子どもの要望「Metalife のカタリバパークのような空間でゲームがしたい」→ オーナー決定: 2つ目のマップとして足す・部屋の並びは正確に・
+  // 部屋の名前はそのまま（マップの名前だけ独自の「パーク」）・ハロウィンの飾りとアバターは入れない・通りが悪い所はかべを取って通路にしてよい。
+  // 2026-10-29 夜 オーナーの直し: 面談室→談話室・その上は小部屋・room-K作戦会議エリア→作戦会議エリア・スタッフルーム→ウェルカムセンター・MTGルーム4↔ソファ席エリアの通りぬけ・ワークスペース側とのかべをまっすぐ1本に。同じ夜の2回目: 小部屋の上のすき間をなくし小部屋と談話室を同じ大きさで並べる・作戦会議エリアの下の出っぱりをなくす・エントランスの左のかべをなくす・もくもく学習エリアとのんびりの左をかべにして縦をそろえる（x=56）・探Qルームのかべをなくす・休けい場所のかべをなくす（もくもく学習エリアとの境目は残す）・ウェルカムセンターと作品展示場の下のかべをそろえる。3回目: 小部屋の上（上の横の通りの左はし）も小部屋にし、談話室①②を同じ大きさ（5×3）に。
+  // オーナーにもらったスクリーンショット（1138×792）を 1マス＝約13px で写した。名前のない場所（zoom の席が並ぶ所）は「ソファ席エリア」とした
+  function parkMap() {
+    const W = 87;
+    const H = 60;
+    const ROOMS = [
+      { key: 'mokumoku', name: '黙々と作業する場所', x: 2, y: 2, w: 8, h: 16, fill: '#D9D6E4' },
+      { key: 'main', name: 'メインルーム', x: 11, y: 2, w: 7, h: 8, fill: '#E9EEF5' },
+      { key: 'mtg1', name: 'MTGルーム1', x: 19, y: 2, w: 6, h: 8, fill: '#E9EEF5' },
+      { key: 'mtg2', name: 'MTGルーム2', x: 26, y: 2, w: 5, h: 8, fill: '#E9EEF5' },
+      { key: 'mtg3', name: 'MTGルーム3', x: 32, y: 2, w: 5, h: 8, fill: '#E9EEF5' },
+      { key: 'work', name: 'ワークスペース', x: 11, y: 11, w: 25, h: 10, fill: '#F0D9B5' },
+      { key: 'mtg4', name: 'MTGルーム4', x: 2, y: 22, w: 6, h: 4, fill: '#E9EEF5' },
+      { key: 'mtg5', name: 'MTGルーム5', x: 9, y: 22, w: 4, h: 4, fill: '#F6EBB5' },
+      { key: 'mtg6', name: 'MTGルーム6', x: 14, y: 22, w: 6, h: 4, fill: '#F6E3DA' },
+      { key: 'mtg7', name: 'MTGルーム7', x: 21, y: 22, w: 5, h: 4, fill: '#E3EED5' },
+      { key: 'mtg8', name: 'MTGルーム8', x: 27, y: 22, w: 4, h: 4, fill: '#F6E3DA' },
+      { key: 'hiroba', name: 'みんなのひろば', x: 38, y: 2, w: 10, h: 11, fill: '#BFE3A5' },
+      { key: 'club', name: 'クラブルーム', x: 49, y: 2, w: 9, h: 11, fill: '#FBEFB0' },
+      { key: 'lounge', name: 'ラウンジルーム', x: 59, y: 2, w: 13, h: 11, fill: '#C9E39B' },
+      { key: 'mine', name: 'マイクラルーム', x: 73, y: 2, w: 12, h: 11, fill: '#F3F4F7' },
+      { key: 'koheya', name: '小部屋', x: 37, y: 14, w: 5, h: 4, fill: '#D9D2C7' },
+      { key: 'mendan1', name: '談話室①', x: 37, y: 19, w: 5, h: 3, fill: '#F4E3EC' },
+      { key: 'mendan2', name: '談話室②', x: 37, y: 23, w: 5, h: 3, fill: '#F4E3EC' },
+      { key: 'rest', name: '休けい場所', x: 53, y: 18, w: 6, h: 13, fill: '#B5D8C0' },
+      { key: 'numa', name: '学びの沼', x: 60, y: 19, w: 12, h: 12, fill: '#B9E6F2' },
+      { key: 'study', name: 'スタディルーム', x: 73, y: 19, w: 12, h: 12, fill: '#F0D9B5' },
+      { key: 'mokugaku', name: 'もくもく学習エリア', x: 57, y: 32, w: 28, h: 6, fill: '#F3EDE0' },
+      { key: 'entrance', name: 'エントランス', x: 37, y: 30, w: 11, h: 8, fill: '#F2C9B8' },
+      { key: 'gallery', name: '作品展示場', x: 17, y: 28, w: 6, h: 6, fill: '#F7F1E1' },
+      { key: 'staff', name: 'ウェルカムセンター', x: 24, y: 28, w: 6, h: 6, fill: '#CDE8B0' },
+      { key: 'zoom', name: 'ソファ席エリア', x: 2, y: 35, w: 34, h: 23, fill: '#F0D9B5' },
+      { key: 'zoom', part: true, x: 2, y: 28, w: 14, h: 7, fill: '#F0D9B5' },
+      { key: 'zoom', part: true, x: 31, y: 28, w: 5, h: 7, fill: '#F0D9B5' },
+      { key: 'roomk', name: '作戦会議エリア', x: 38, y: 41, w: 13, h: 17, fill: '#E8F2DF' },
+      { key: 'nonbiri', name: 'のんびり', x: 57, y: 41, w: 12, h: 13, fill: '#D8EFC9' },
+      { key: 'tanq', name: '探Qルーム', x: 71, y: 41, w: 12, h: 13, fill: '#E3E6EC' },
+    ];
+    const HALLS = [
+      [2, 19, 9, 3], [5, 18, 2, 1],                                 // 黙々と作業する場所の下（MTGルーム4・5へ）・その入口
+      [3, 26, 2, 2],                                                // MTGルーム4 ↔ ソファ席エリア（通りぬけ）
+      [13, 10, 2, 1], [21, 10, 2, 1], [28, 10, 2, 1], [33, 10, 2, 1], // メインルーム・MTGルーム1〜3 ↔ ワークスペース
+      [16, 21, 2, 1], [23, 21, 2, 1], [28, 21, 2, 1],               // ワークスペース ↔ MTGルーム6〜8
+      [32, 21, 4, 7], [36, 27, 7, 3], [36, 30, 1, 8],                               // ワークスペースの右（ウェルカムセンター横の通路）→ 下をまわってエントランスの上へ（かべは x=36 でまっすぐ）
+      [43, 14, 42, 4], [43, 18, 10, 12],                            // 上の横の通り・まん中の通り
+      [42, 15, 1, 2], [42, 19, 1, 2], [42, 23, 1, 2],               // 小部屋・談話室①② の入口（小部屋は上の通りの所まで。談話室①②は同じ大きさ）
+      [44, 13, 2, 1], [52, 13, 2, 1], [64, 13, 2, 1], [78, 13, 2, 1], // みんなのひろば・クラブルーム・ラウンジルーム・マイクラルームの入口
+      [65, 18, 2, 1], [78, 18, 2, 1],                               // 学びの沼・スタディルームの入口（上）。休けい場所は左と上のかべをなくした
+      [66, 31, 2, 1], [79, 31, 2, 1],                               // 学びの沼・スタディルーム ↔ もくもく学習エリア（休けい場所との境目はかべのまま）
+      [48, 30, 5, 1], [48, 31, 8, 7],                               // エントランスの右（もくもく学習エリアの左はかべ x=56）
+      [36, 38, 49, 3], [36, 41, 2, 17], [51, 41, 5, 17],            // 下の横の通り・room-K作戦会議エリアの左右
+      [69, 41, 2, 13], [83, 41, 2, 17], [56, 54, 29, 4],            // のんびりと探Qルームのまわり（のんびりの左もかべ x=56。探Qルームはかべなし）
+      [19, 34, 2, 1], [26, 34, 2, 1],                               // 作品展示場・ウェルカムセンターの入口（下のかべをそろえた）
+    ];
+    const SPOTS = [
+      { id: 0, room: 'mokumoku', x: 3.5, y: 8.5, kind: 'order', label: '机のライトを順番につける' },
+      { id: 1, room: 'main', x: 14.5, y: 4.5, kind: 'wire', label: '大きな画面の線をつなぐ' },
+      { id: 2, room: 'mtg1', x: 22.5, y: 4.5, kind: 'order', label: 'いすを番号順にならべる' },
+      { id: 3, room: 'mtg2', x: 28.5, y: 4.5, kind: 'meter', label: '画面の明るさを合わせる' },
+      { id: 4, room: 'mtg3', x: 34.5, y: 4.5, kind: 'wire', label: 'マイクの線をつなぐ' },
+      { id: 5, room: 'work', x: 20.5, y: 18.5, kind: 'order', label: 'ふせんを順番にはる' },
+      { id: 6, room: 'work', x: 31.5, y: 13.5, kind: 'meter', label: '部屋の明かりを合わせる' },
+      { id: 7, room: 'mtg4', x: 4.5, y: 24.5, kind: 'wire', label: 'ノートパソコンの線をつなぐ' },
+      { id: 8, room: 'mtg6', x: 17.5, y: 24.5, kind: 'order', label: 'クッションを番号順にならべる' },
+      { id: 9, room: 'mtg7', x: 23.5, y: 24.5, kind: 'meter', label: 'スピーカーの音の大きさを合わせる' },
+      { id: 10, room: 'hiroba', x: 44.5, y: 5.5, kind: 'meter', label: 'ブランコの高さを合わせる' },
+      { id: 11, room: 'club', x: 53.5, y: 9.5, kind: 'order', label: 'ぬいぐるみを順番にならべる' },
+      { id: 12, room: 'lounge', x: 61.5, y: 8.5, kind: 'meter', label: 'たき火の火を合わせる' },
+      { id: 13, room: 'mine', x: 81.5, y: 8.5, kind: 'wire', label: 'パソコンの線をつなぐ' },
+      { id: 14, room: 'mendan1', x: 39.5, y: 20.5, kind: 'order', label: 'いすを番号順にそろえる' },
+      { id: 15, room: 'rest', x: 56.5, y: 27.5, kind: 'meter', label: 'ひまわりの水の量を合わせる' },
+      { id: 16, room: 'numa', x: 62.5, y: 29.5, kind: 'wire', label: '池のポンプの線をつなぐ' },
+      { id: 17, room: 'study', x: 82.5, y: 22.5, kind: 'order', label: '本を番号順にならべる' },
+      { id: 18, room: 'mokugaku', x: 70.5, y: 35.5, kind: 'order', label: '机のライトを順番につける' },
+      { id: 19, room: 'gallery', x: 20.5, y: 31.5, kind: 'order', label: '作品を番号順にかざる' },
+      { id: 20, room: 'zoom', x: 10.5, y: 45.5, kind: 'wire', label: 'カメラの線をつなぐ' },
+      { id: 21, room: 'zoom', x: 28.5, y: 53.5, kind: 'meter', label: 'ソファの高さを合わせる' },
+      { id: 22, room: 'roomk', x: 44.5, y: 49.5, kind: 'order', label: 'ベンチを番号順にならべる' },
+      { id: 23, room: 'nonbiri', x: 62.5, y: 47.5, kind: 'meter', label: 'ピアノの音を合わせる' },
+      { id: 24, room: 'tanq', x: 76.5, y: 46.5, kind: 'wire', label: 'ホワイトボードのライトの線をつなぐ' },
+      { id: 25, room: 'mendan2', x: 39.5, y: 24.5, kind: 'meter', label: 'へやの温度を合わせる' },
+    ];
+    const FIX_SPOT = { x: 28.5, y: 29.5 };   // 停電をなおすスイッチ（ウェルカムセンター。行き止まり）
+    const TABLE = { x: 42.5, y: 34, r: 1.6 }; // エントランスの会議テーブル
+    const VENTS = [
+      { id: 0, x: 8.5, y: 16.5 },    // 黙々と作業する場所
+      { id: 1, x: 12.5, y: 19.5 },   // ワークスペース
+      { id: 2, x: 39.5, y: 11.5 },   // みんなのひろば
+      { id: 3, x: 50.5, y: 11.5 },   // クラブルーム
+      { id: 4, x: 70.5, y: 11.5 },   // ラウンジルーム
+      { id: 5, x: 74.5, y: 11.5 },   // マイクラルーム
+      { id: 6, x: 83.5, y: 29.5 },   // スタディルーム
+      { id: 7, x: 3.5, y: 40.5 },    // ソファ席エリア
+      { id: 8, x: 67.5, y: 52.5 },   // のんびり
+      { id: 9, x: 80.5, y: 51.5 },   // 探Qルーム
+    ];
+    // すべり台（みんなのひろば）↔ はしご（作戦会議エリア）。ひみつ基地のはしごと同じしかけ
+    const LADDERS = [
+      { id: 0, x: 46.5, y: 10.0, to: 1, room: 'hiroba', label: 'すべり台ですべる', busy: 'すべっている…' },
+      { id: 1, x: 44.5, y: 56.0, to: 0, room: 'roomk', label: 'はしごをのぼる', busy: 'のぼっている…' },
+    ];
+    const CAM_STAND = { x: 78.5, y: 3.0 };   // マイクラルーム（元の空間にも画面がならぶ）
+    const CAMS = [
+      { id: 0, x: 34.5, y: 24, name: 'ワークスペースの右' },
+      { id: 1, x: 47.5, y: 24, name: 'まん中の通り' },
+      { id: 2, x: 51, y: 34, name: 'エントランスの右' },
+      { id: 3, x: 53.5, y: 47, name: 'のんびりの左' },
+      { id: 4, x: 63, y: 56.5, name: 'のんびりの下' },
+      { id: 5, x: 77, y: 56.5, name: '探Qルームの下' },
+    ];
+    const AIR_PANELS = [
+      { id: 'a', room: 'club', x: 56.5, y: 3.0, label: 'クラブルームの空気のパネル' },
+      { id: 'b', room: 'zoom', x: 3.5, y: 56.5, label: 'ソファ席エリアの空気のパネル' },
+    ];
+    const PAIRS = [
+      { id: 'p0', spot: 100, label: 'ふたりでスイッチを入れる', a: { room: 'mokumoku', x: 3.5, y: 3.5 }, b: { room: 'tanq', x: 80.5, y: 43.5 } },
+      { id: 'p1', spot: 101, label: 'ふたりでレバーを引く', a: { room: 'hiroba', x: 39.5, y: 3.5 }, b: { room: 'zoom', x: 34.5, y: 56.5 } },
+    ];
+    const DOORS = [
+    { room: 'mokumoku', x: 5, y: 18, w: 2, h: 1 },
+    { room: 'hiroba', x: 44, y: 13, w: 2, h: 1 },
+    { room: 'club', x: 52, y: 13, w: 2, h: 1 },
+    { room: 'lounge', x: 64, y: 13, w: 2, h: 1 },
+    { room: 'mine', x: 78, y: 13, w: 2, h: 1 },
+    { room: 'numa', x: 65, y: 18, w: 2, h: 1 }, { room: 'numa', x: 66, y: 31, w: 2, h: 1 },
+    { room: 'study', x: 78, y: 18, w: 2, h: 1 }, { room: 'study', x: 79, y: 31, w: 2, h: 1 },
+  ];
+    // ドアは、かべで囲まれた部屋だけ（行き止まりの小部屋・ひらけた場所にはない）
+    const DOOR_ROOMS = ['mokumoku', 'hiroba', 'club', 'lounge', 'mine', 'numa', 'study'];
+    const FURNITURE = [
+      // じゅうたん（床。歩ける。floor: true）。ワークスペースの4色・エントランスの赤・のんびりの緑
+      { room: 'work', kind: 'rug', floor: true, x: 11, y: 13, w: 5, h: 8, color: '#5B8DD6', label: 'キッカケ' },
+      { room: 'work', kind: 'rug', floor: true, x: 16, y: 13, w: 5, h: 8, color: '#E2675B', label: 'room-K' },
+      { room: 'work', kind: 'rug', floor: true, x: 21, y: 13, w: 5, h: 8, color: '#F1D25A' },
+      { room: 'work', kind: 'rug', floor: true, x: 26, y: 13, w: 10, h: 8, color: '#7B4FA8' },
+      { room: 'entrance', kind: 'rug', floor: true, x: 38, y: 31, w: 9, h: 6, color: '#C9473C' },
+      { room: 'nonbiri', kind: 'rug', floor: true, x: 59, y: 43, w: 8, h: 8, color: '#5DB25F' },
+      // 黙々と作業する場所: 机がならぶ
+      { room: 'mokumoku', kind: 'desk', x: 6, y: 3, w: 2, h: 1 }, { room: 'mokumoku', kind: 'desk', x: 6, y: 7, w: 2, h: 1 }, { room: 'mokumoku', kind: 'desk', x: 6, y: 11, w: 2, h: 1 }, { room: 'mokumoku', kind: 'desk', x: 2, y: 13, w: 2, h: 1 },
+      // メインルーム・MTGルーム1〜3: かべの画面と机
+      { room: 'main', kind: 'screen', x: 12, y: 2, w: 2, h: 1 }, { room: 'main', kind: 'table', x: 13, y: 6, w: 3, h: 2 },
+      { room: 'mtg1', kind: 'screen', x: 20, y: 2, w: 2, h: 1 }, { room: 'mtg1', kind: 'table', x: 21, y: 6, w: 2, h: 1 },
+      { room: 'mtg2', kind: 'screen', x: 27, y: 2, w: 2, h: 1 }, { room: 'mtg2', kind: 'table', x: 27, y: 6, w: 2, h: 1 },
+      { room: 'mtg3', kind: 'screen', x: 33, y: 2, w: 2, h: 1 }, { room: 'mtg3', kind: 'table', x: 33, y: 6, w: 2, h: 1 },
+      // ワークスペース: じゅうたんの上の机・植木
+      { room: 'work', kind: 'table', x: 12, y: 16, w: 3, h: 1 }, { room: 'work', kind: 'table', x: 17, y: 16, w: 3, h: 1 }, { room: 'work', kind: 'table', x: 22, y: 16, w: 3, h: 1 }, { room: 'work', kind: 'table', x: 28, y: 16, w: 4, h: 1 },
+      { room: 'work', kind: 'plant', x: 16, y: 11, w: 1, h: 1 }, { room: 'work', kind: 'plant', x: 25, y: 11, w: 1, h: 1 },
+      // MTGルーム4〜8: 小さな机
+      { room: 'mtg4', kind: 'table', x: 5, y: 22, w: 2, h: 1 }, { room: 'mtg5', kind: 'table', x: 10, y: 23, w: 2, h: 1 }, { room: 'mtg6', kind: 'table', x: 15, y: 23, w: 2, h: 1 },
+      { room: 'mtg7', kind: 'table', x: 22, y: 23, w: 2, h: 1 }, { room: 'mtg8', kind: 'table', x: 28, y: 24, w: 2, h: 1 },
+      // みんなのひろば: ブランコ・石の像・木
+      { room: 'hiroba', kind: 'swing', x: 40, y: 7, w: 2, h: 1 }, { room: 'hiroba', kind: 'statue', x: 46, y: 2, w: 1, h: 1 }, { room: 'hiroba', kind: 'tree', x: 44, y: 9, w: 1, h: 1 },
+      // クラブルーム: くまのぬいぐるみ・机
+      { room: 'club', kind: 'bear', x: 51, y: 2, w: 1, h: 1 }, { room: 'club', kind: 'bear', x: 53, y: 2, w: 1, h: 1 }, { room: 'club', kind: 'table', x: 52, y: 5, w: 2, h: 2 },
+      // ラウンジルーム: たき火・まるた・木
+      { room: 'lounge', kind: 'campfire', x: 65, y: 6, w: 1, h: 1 }, { room: 'lounge', kind: 'log', x: 63, y: 5, w: 1, h: 2 }, { room: 'lounge', kind: 'log', x: 67, y: 5, w: 1, h: 2 },
+      { room: 'lounge', kind: 'tree', x: 59, y: 2, w: 1, h: 1 }, { room: 'lounge', kind: 'tree', x: 71, y: 2, w: 1, h: 1 },
+      // マイクラルーム: パソコンの机・ソファ・画面
+      { room: 'mine', kind: 'desk', x: 75, y: 2, w: 2, h: 1 }, { room: 'mine', kind: 'desk', x: 81, y: 2, w: 2, h: 1 }, { room: 'mine', kind: 'sofa', x: 77, y: 7, w: 3, h: 1 }, { room: 'mine', kind: 'screen', x: 84, y: 5, w: 1, h: 2 },
+      // 上の横の通りのけいじ板
+      { room: '', kind: 'board', x: 46, y: 14, w: 2, h: 1 }, { room: '', kind: 'board', x: 57, y: 14, w: 2, h: 1 }, { room: '', kind: 'board', x: 70, y: 14, w: 2, h: 1 },
+      // 小部屋: まるい机・談話室①②: 植木
+      { room: 'koheya', kind: 'stool', x: 39, y: 15, w: 1, h: 1 }, { room: 'koheya', kind: 'plant', x: 37, y: 14, w: 1, h: 1 }, { room: 'mendan1', kind: 'plant', x: 37, y: 21, w: 1, h: 1 }, { room: 'mendan2', kind: 'plant', x: 37, y: 25, w: 1, h: 1 },
+      // 休けい場所: ひまわり・植木
+      { room: 'rest', kind: 'flower', x: 54, y: 24, w: 1, h: 1 }, { room: 'rest', kind: 'flower', x: 58, y: 24, w: 1, h: 1 }, { room: 'rest', kind: 'plant', x: 58, y: 20, w: 1, h: 1 },
+      // 学びの沼: 池（まん中に十字の道）
+      { room: 'numa', kind: 'pond', x: 61, y: 20, w: 4, h: 3 }, { room: 'numa', kind: 'pond', x: 68, y: 20, w: 3, h: 3 }, { room: 'numa', kind: 'pond', x: 61, y: 26, w: 4, h: 2 }, { room: 'numa', kind: 'pond', x: 68, y: 26, w: 3, h: 3 },
+      // スタディルーム: 大きな机・本だな
+      { room: 'study', kind: 'table', x: 76, y: 23, w: 6, h: 4 }, { room: 'study', kind: 'shelf', x: 73, y: 19, w: 1, h: 1 }, { room: 'study', kind: 'shelf', x: 84, y: 19, w: 1, h: 1 },
+      // もくもく学習エリア: かべぞいの机
+      { room: 'mokugaku', kind: 'desk', x: 58, y: 32, w: 2, h: 1 }, { room: 'mokugaku', kind: 'desk', x: 62, y: 32, w: 2, h: 1 }, { room: 'mokugaku', kind: 'desk', x: 72, y: 32, w: 2, h: 1 },
+      { room: 'mokugaku', kind: 'desk', x: 76, y: 32, w: 2, h: 1 }, { room: 'mokugaku', kind: 'desk', x: 82, y: 32, w: 2, h: 1 },
+      // 作品展示場: がく・ウェルカムセンター: ベンチ・植木
+      { room: 'gallery', kind: 'frame', x: 17, y: 28, w: 2, h: 1 }, { room: 'gallery', kind: 'frame', x: 21, y: 28, w: 2, h: 1 }, { room: 'gallery', kind: 'frame', x: 17, y: 31, w: 1, h: 1 },
+      { room: 'staff', kind: 'bench', x: 24, y: 28, w: 2, h: 1 }, { room: 'staff', kind: 'plant', x: 24, y: 32, w: 1, h: 1 },
+      // ソファ席エリア: ならんだ机・まわりのソファ
+      { room: 'zoom', kind: 'table', x: 8, y: 38, w: 2, h: 1 }, { room: 'zoom', kind: 'table', x: 14, y: 38, w: 2, h: 1 }, { room: 'zoom', kind: 'table', x: 20, y: 38, w: 2, h: 1 }, { room: 'zoom', kind: 'table', x: 26, y: 38, w: 2, h: 1 },
+      { room: 'zoom', kind: 'table', x: 14, y: 42, w: 2, h: 1 }, { room: 'zoom', kind: 'table', x: 20, y: 42, w: 2, h: 1 }, { room: 'zoom', kind: 'table', x: 26, y: 42, w: 2, h: 1 },
+      { room: 'zoom', kind: 'table', x: 14, y: 46, w: 2, h: 1 }, { room: 'zoom', kind: 'table', x: 20, y: 46, w: 2, h: 1 }, { room: 'zoom', kind: 'table', x: 26, y: 46, w: 2, h: 1 },
+      { room: 'zoom', kind: 'table', x: 8, y: 50, w: 2, h: 1 }, { room: 'zoom', kind: 'table', x: 14, y: 50, w: 2, h: 1 }, { room: 'zoom', kind: 'table', x: 20, y: 50, w: 2, h: 1 },
+      { room: 'zoom', kind: 'table', x: 8, y: 54, w: 2, h: 1 }, { room: 'zoom', kind: 'table', x: 14, y: 54, w: 2, h: 1 }, { room: 'zoom', kind: 'table', x: 20, y: 54, w: 2, h: 1 },
+      { room: 'zoom', kind: 'table', x: 8, y: 30, w: 2, h: 1 }, { room: 'zoom', kind: 'table', x: 12, y: 30, w: 2, h: 1 },
+      { room: 'zoom', kind: 'sofa', x: 2, y: 31, w: 2, h: 1 }, { room: 'zoom', kind: 'sofa', x: 2, y: 45, w: 2, h: 1 }, { room: 'zoom', kind: 'sofa', x: 2, y: 51, w: 2, h: 1 },
+      { room: 'zoom', kind: 'sofa', x: 31, y: 45, w: 3, h: 1 }, { room: 'zoom', kind: 'sofa', x: 17, y: 57, w: 3, h: 1 }, { room: 'zoom', kind: 'sofa', x: 31, y: 51, w: 3, h: 1 },
+      // 作戦会議エリア: 緑のベンチ
+      { room: 'roomk', kind: 'bench', x: 40, y: 43, w: 4, h: 1 }, { room: 'roomk', kind: 'bench', x: 46, y: 43, w: 4, h: 1 }, { room: 'roomk', kind: 'bench', x: 40, y: 53, w: 4, h: 1 }, { room: 'roomk', kind: 'bench', x: 46, y: 53, w: 4, h: 1 },
+      { room: 'roomk', kind: 'bench', x: 39, y: 46, w: 1, h: 4 }, { room: 'roomk', kind: 'bench', x: 49, y: 46, w: 1, h: 4 },
+      // のんびり: ピアノ・ソファ
+      { room: 'nonbiri', kind: 'piano', x: 57, y: 41, w: 2, h: 1 }, { room: 'nonbiri', kind: 'sofa', x: 61, y: 41, w: 3, h: 1 }, { room: 'nonbiri', kind: 'sofa', x: 63, y: 52, w: 3, h: 1 },
+      // 探Qルーム: まるくならんだいす・ホワイトボード
+      { room: 'tanq', kind: 'stool', x: 74, y: 44, w: 1, h: 1 }, { room: 'tanq', kind: 'stool', x: 74, y: 48, w: 1, h: 1 }, { room: 'tanq', kind: 'stool', x: 74, y: 51, w: 1, h: 1 },
+      { room: 'tanq', kind: 'stool', x: 79, y: 48, w: 1, h: 1 }, { room: 'tanq', kind: 'stool', x: 79, y: 51, w: 1, h: 1 }, { room: 'tanq', kind: 'board', x: 76, y: 42, w: 2, h: 1 },
+    ];
+    return { W, H, ROOMS, HALLS, SPOTS, FIX_SPOT, TABLE, VENTS, LADDERS, CAM_STAND, CAMS, AIR_PANELS, PAIRS, DOORS, DOOR_ROOMS, FURNITURE };
+  }
+
+  // ── どのマップでも同じ数字 ──
+  const HALL_FILL = '#E6E3DC';
+  const VENT_STAY_S = 10;
+  const CLIMB_MS = 2500;
+  const CAM_R = 2.5;
+  const AIR_LIMIT_S = 60;
+  const PAIR_SPOT_BASE = 100;
+  const PAIR_HOLD_MS = 6000;
+  const PAIR_BEAT_MS = 2000;
+  const DOOR_MS = 10000;
+  const DOOR_AGAIN_S = 20;
+  const BUTTON_WAIT_S = 20;
+
+  // ── マップの切りかえ（2026-10-29 子どもの要望「カタリバパークのような空間で遊びたい」→ オーナー決定: 2つ目のマップ「パーク」を足し、待合室で選ぶ）──
+  // マップの中身（W・H・ROOMS など）は useMap(key) で入れかわる。ゲームの中では settings.map（0＝ひみつ基地・1＝パーク）で決める
+  const MAPS = { kichi: kichiMap(), park: parkMap() };
+  const MAP_KEYS = ['kichi', 'park'];
+  const MAP_NAMES = { kichi: 'ひみつ基地', park: 'パーク' };
+  let W, H, ROOMS, HALLS, SPOTS, FIX_SPOT, TABLE, VENTS, LADDERS, CAM_STAND, CAMS, AIR_PANELS, PAIRS, DOORS, DOOR_ROOMS, FURNITURE;
+  let mapKey = '';
 
   const SPEED = 4.2;          // 1秒に進むマス
   const RADIUS = 0.34;        // 人の大きさ
@@ -234,7 +447,7 @@
   // pick: ねむらせ屋の決め方（0＝ランダム、1＝ホストが待合室で選ぶ）。2026-10-27 子どもの意見で追加
   // pair: ふたりの仕事（1＝隊員はひとり1つ持つ、0＝なし）。gauge: みんなの仕事のバー（2＝出す、1＝進行役の画面だけ、0＝出さない）。2026-10-28 子どもの要望の第2便
   // engineer・watcher・angel・shifter: 役職（1＝入れる、0＝入れない）。2026-10-29 子どもの要望の第3便。はじめはどれも入れない
-  const DEFAULT_SETTINGS = { hostPlays: 1, sleepers: 1, tasks: 4, cooldown: 20, meeting: 90, buttons: 1, pick: 0, pair: 1, gauge: 2, engineer: 0, watcher: 0, angel: 0, shifter: 0 };
+  const DEFAULT_SETTINGS = { hostPlays: 1, sleepers: 1, tasks: 4, cooldown: 20, meeting: 90, buttons: 1, pick: 0, pair: 1, gauge: 2, engineer: 0, watcher: 0, angel: 0, shifter: 0, map: 0 };   // map: 0＝ひみつ基地・1＝パーク（2026-10-29）
   const SETTING_OPTS = {
     hostPlays: [1, 0],
     sleepers: [1, 2],
@@ -249,6 +462,7 @@
     watcher: [0, 1],
     angel: [0, 1],
     shifter: [0, 1],
+    map: [0, 1],
   };
 
   // ── 役職（2026-10-29 子どもの要望の第3便。設定でひとつずつ入れる。名前は着想元から借りない）──
@@ -275,7 +489,7 @@
       { k: 'come', t: '{room}に来て' },
       { k: 'plaza', t: 'ひろばに集まろう' },
       { k: 'fixgo', t: '停電をなおしに行く' },
-      { k: 'power', t: '電気室に来て' },
+      { k: 'power', t: '{fix}に来て' },   // {fix} は停電をなおすスイッチのある部屋（ひみつ基地は電気室・パークはウェルカムセンター）
       { k: 'together', t: 'いっしょに行こう' },
       { k: 'withnow', t: '{name}さんといっしょにいる' },   // 2026-10-28 子どもの意見「〇〇が仕事やってたよ」→ 名前の入る言葉を遊んでいる間にも（「だれ？」で選ぶ）
       { k: 'sawnow', t: '{name}さんが仕事をしていた' },
@@ -315,8 +529,10 @@
   function sayText(key, roomLabel, nameLabel) {
     const p = sayPhrase(key);
     if (!p) return '';
-    return p.t.replace('{room}', roomLabel || HALL_LABEL).replace('{name}', nameLabel || '');
+    return p.t.replace('{room}', roomLabel || HALL_LABEL).replace('{name}', nameLabel || '').replace('{fix}', fixRoomName());
   }
+  // 停電をなおすスイッチのある部屋の名前（マップでちがう）
+  const fixRoomName = () => roomName(roomAt(FIX_SPOT.x, FIX_SPOT.y));
 
   // ── マップ ──
   // grid[y][x]: 0＝かべ、1＝床
@@ -328,10 +544,11 @@
     ROOMS.forEach((r) => fill(r.x, r.y, r.w, r.h));
     HALLS.forEach((h) => fill(h[0], h[1], h[2], h[3]));
     // 家具は1マスのかべ（ぶつかる・かべごしに見えない）
-    FURNITURE.forEach((f) => { for (let yy = f.y; yy < f.y + f.h; yy++) for (let xx = f.x; xx < f.x + f.w; xx++) g[yy][xx] = 0; });
+    // floor: true はじゅうたん（床の上の飾り。歩ける。2026-10-29 パーク）
+    FURNITURE.forEach((f) => { if (f.floor) return; for (let yy = f.y; yy < f.y + f.h; yy++) for (let xx = f.x; xx < f.x + f.w; xx++) g[yy][xx] = 0; });
     return g;
   }
-  const GRID = buildGrid();
+  let GRID = [];
 
   const isFloor = (tx, ty) => tx >= 0 && ty >= 0 && tx < W && ty < H && GRID[ty][tx] === 1;
   const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
@@ -501,6 +718,7 @@
   // picks: ホストが選んだねむらせ屋（id の配列）。遊ぶ人にいる分だけ使い、人数に足りなければ残りはシャッフルで決める
   function newGame(ids, settings, rnd, picks) {
     const s = Object.assign({}, DEFAULT_SETTINGS, settings || {});
+    useMap(s.map);   // 仕事の場所はマップで決まる
     const ns = sleeperCount(s, ids.length);
     const chosen = (Array.isArray(picks) ? picks : []).filter((id, i, a) => ids.includes(id) && a.indexOf(id) === i).slice(0, ns);
     const order = chosen.concat(shuffled(ids.filter((id) => !chosen.includes(id)), rnd));
@@ -649,13 +867,29 @@
     AIR_PANELS, AIR_LIMIT_S, PAIRS, PAIR_SPOT_BASE, PAIR_HOLD_MS, PAIR_BEAT_MS, DOORS, DOOR_ROOMS, DOOR_MS, DOOR_AGAIN_S, BUTTON_WAIT_S, FURNITURE,
     SPEED, RADIUS, USE_RANGE, SLEEP_RANGE, FIND_RANGE, VIEW, VIEW_RAYS, VIEW_OVER,
     JOB_NAMES, ENGINEER_GAP_S, WATCH_BATTERY_S, WATCH_CHARGE_S, SHIELD_S, ANGEL_GAP_S, ANGEL_RANGE, SHIFT_S, SHIFT_GAP_S,
-    jobOf, shielded, looksAs,
+    jobOf, shielded, looksAs, fixRoomName,
     GAME_LIMIT_S, MIN_PLAYERS, MAX_PLAYERS, TWO_SLEEPERS_MIN, DEFAULT_SETTINGS, SETTING_OPTS,
     isFloor, dist, roomAt, roomName, canStand, step, stepFree, path, rayDist, canSee, viewPolygon, spawnPoint, encodePos, decodePos,
     doorTiles, tileKey, spotInfo, pairOf, pairFresh, closedRooms, checkAir,
     shuffled, sleeperCount, newGame, isAwake, hasLeft, awakeOf, taskProgress, checkWin, tally,
     SAYS, SAY_GAP_MS, SAY_SHOW_MS, SAY_LOG_MAX, HALL_LABEL, sayPhrase, sayAllowed, sayText,
   };
+  // マップを入れかえる（key は 'kichi'|'park'、または settings.map の数字）。api の中身も入れかえる
+  function useMap(key) {
+    const k = typeof key === 'number' ? MAP_KEYS[key] || 'kichi' : MAPS[key] ? key : 'kichi';
+    if (k === mapKey) return k;
+    const m = MAPS[k];
+    ({ W, H, ROOMS, HALLS, SPOTS, FIX_SPOT, TABLE, VENTS, LADDERS, CAM_STAND, CAMS, AIR_PANELS, PAIRS, DOORS, DOOR_ROOMS, FURNITURE } = m);
+    mapKey = k;
+    GRID = buildGrid();
+    Object.assign(api, { W, H, ROOMS, HALLS, SPOTS, FIX_SPOT, TABLE, VENTS, LADDERS, CAM_STAND, CAMS, AIR_PANELS, PAIRS, DOORS, DOOR_ROOMS, FURNITURE, GRID });
+    return k;
+  }
+  api.useMap = useMap;
+  api.mapKey = () => mapKey;
+  api.MAP_KEYS = MAP_KEYS;
+  api.MAP_NAMES = MAP_NAMES;
+  useMap('kichi');
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.NemuraseEngine = api;
 })(typeof window !== 'undefined' ? window : this);
