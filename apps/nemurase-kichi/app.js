@@ -2316,7 +2316,9 @@ function renderMeeting(g, room) {
       main.type = 'button';
       main.addEventListener('click', () => { state.votePick = state.votePick === id ? null : id; renderMeeting(g, room); });
     }
-    main.append(chip(g.colors[id]), makeElement('span', 'nk-vote__name', nameIn(g, id)));
+    // ねむらせ屋どうしだけ、仲間（と自分）の名前を赤で（2026-10-29 子どもの要望。隊員・進行役の画面ではみんな同じ色）
+    const mate = isPlaying(g, me) && g.roles[me] === 'sleeper' && g.roles[id] === 'sleeper';
+    main.append(chip(g.colors[id]), makeElement('span', 'nk-vote__name' + (mate ? ' nk-vote__name--mate' : ''), nameIn(g, id)));
     if (id === me) main.appendChild(makeElement('span', 'nk-tag nk-tag--me', 'あなた'));
     if (gone) main.appendChild(makeElement('span', 'nk-tag', '抜けた'));
     else if (!up) main.appendChild(makeElement('span', 'nk-tag', 'ねむっている'));
@@ -3008,8 +3010,23 @@ const FURNITURE_STYLE = {
   pump: { top: '#5C7D9C', deco: 'pump' },
   arcade: { top: '#7A4BB3', deco: 'arcade' },
   gametable: { top: '#8C5A33', deco: 'gametable' },
+  // 2026-10-29 夕 子どもの要望「部屋の内装を部屋の名前に合わせて」で足した物
+  fridge: { top: '#E8EEF2', deco: 'fridge' },
+  sink: { top: '#B9C4CC', deco: 'sink' },
+  radioset: { top: '#5A6069', deco: 'radioset' },
+  scarecrow: { top: '#7A5A36', deco: 'scarecrow' },
+  chest: { top: '#A0652E', deco: 'chest' },
+  treadmill: { top: '#6A717B', deco: 'treadmill' },
+  weights: { top: '#7A818A', deco: 'weights' },
+  mat: { top: '#5DB2A2', deco: 'mat' },
+  battery: { top: '#3D4A57', deco: 'battery' },
+  cart: { top: '#D9433B', deco: 'cart' },
+  tire: { top: '#22272E', deco: 'tire' },
+  toolbox: { top: '#C9302C', deco: 'toolbox' },
+  shower: { top: '#CFE3EC', deco: 'shower' },
+  telescope: { top: '#4B5563', deco: 'telescope' },
 };
-const FURNITURE_TALL = new Set(['monitor', 'plant', 'light', 'antenna', 'arcade']);
+const FURNITURE_TALL = new Set(['monitor', 'plant', 'light', 'antenna', 'arcade', 'scarecrow', 'telescope', 'radioset', 'treadmill', 'toolbox']);
 // 色を明るく（amt > 0）・暗く（amt < 0）する
 function shade(hex, amt) {
   const n = parseInt(hex.slice(1), 16);
@@ -3068,7 +3085,7 @@ function drawFurniture(sx, sy, size) {
     const p = size * 0.08;               // まわりのすき間
     const d = detail ? size * 0.22 : size * 0.16;   // 手前の面の高さ（立体に見せる）
     const r = Math.max(1.5, size * 0.1);
-    const round = st.deco === 'cylinder' || st.deco === 'barrel' || st.deco === 'pump' || st.deco === 'plant' || st.deco === 'light' || st.deco === 'antenna';
+    const round = ['cylinder', 'barrel', 'pump', 'plant', 'light', 'antenna', 'scarecrow', 'tire', 'telescope'].includes(st.deco);
     // 床に落ちる影（少し右下）
     ctx.fillStyle = 'rgba(20,24,30,0.28)';
     if (round) {
@@ -3223,6 +3240,90 @@ function drawFurniture(sx, sy, size) {
         furnRect(tx + s * 0.08, ty + s * 0.07, tw - s * 0.16, th - s * 0.14, Math.max(1, s * 0.05), '#2E7D4F');
         ['#FFFFFF', '#D9433B', '#E8B820'].forEach((c, i) => furnCircle(tx + tw * (0.3 + i * 0.18), ty + th * (i % 2 ? 0.38 : 0.6), s * 0.06, c));
         break;
+      case 'fridge':
+        furnLine([[tx + s * 0.08, ty + th * 0.42], [tx + tw - s * 0.08, ty + th * 0.42]], shade(st.top, -0.35), Math.max(1, s * 0.05));
+        ctx.fillStyle = '#7B8794';
+        ctx.fillRect(tx + tw - s * 0.2, ty + th * 0.12, s * 0.06, th * 0.22);
+        ctx.fillRect(tx + tw - s * 0.2, ty + th * 0.52, s * 0.06, th * 0.3);
+        break;
+      case 'sink':
+        furnRect(tx + tw * 0.18, ty + th * 0.18, tw * 0.64, th * 0.62, Math.max(1, s * 0.1), '#7FB8DA', '#8A97A3');
+        furnCircle(tx + tw / 2, ty + th * 0.12, s * 0.07, '#5B6470');
+        break;
+      case 'radioset':
+        furnLine([[tx + tw * 0.8, ty + th * 0.2], [tx + tw * 0.9, ty - s * 0.3]], '#9AA3AD', Math.max(1, s * 0.05));
+        for (let i = 0; i < 3; i++) furnLine([[tx + tw * 0.12, ty + th * (0.28 + i * 0.2)], [tx + tw * 0.45, ty + th * (0.28 + i * 0.2)]], '#2A2E34', Math.max(1, s * 0.05));
+        furnCircle(tx + tw * 0.68, ty + th * 0.5, Math.min(th, tw) * 0.24, '#F5C518', '#8A6D00', 1);
+        break;
+      case 'scarecrow': {
+        // かかし（棒・うで・顔・むぎわらぼうし）。上にはみ出して高さを見せる
+        furnLine([[cx, y + h - p], [cx, y + p - s * 0.05]], '#7A5A36', Math.max(2, s * 0.08));
+        furnLine([[cx - s * 0.32, y + p + s * 0.32], [cx + s * 0.32, y + p + s * 0.32]], '#7A5A36', Math.max(2, s * 0.07));
+        furnCircle(cx, y + p + s * 0.08, s * 0.14, '#F3E2C7', '#8C5A33', 1);
+        ctx.fillStyle = '#E8B820';
+        ctx.beginPath(); ctx.ellipse(cx, y + p - s * 0.04, s * 0.24, s * 0.07, 0, 0, Math.PI * 2); ctx.fill();
+        break;
+      }
+      case 'chest':
+        ctx.fillStyle = shade(st.top, -0.3);
+        ctx.fillRect(tx, ty + th * 0.38, tw, th * 0.16);
+        furnRect(tx + tw / 2 - s * 0.09, ty + th * 0.3, s * 0.18, th * 0.34, Math.max(1, s * 0.03), '#F5C518');
+        break;
+      case 'treadmill':
+        furnRect(tx + s * 0.16, ty + th * 0.18, tw - s * 0.24, th * 0.64, Math.max(1, s * 0.05), '#2A2E34');
+        for (let i = 1; i < 4; i++) furnLine([[tx + s * 0.16 + (tw - s * 0.24) * (i / 4), ty + th * 0.22], [tx + s * 0.16 + (tw - s * 0.24) * (i / 4), ty + th * 0.78]], '#4A4F57', 1);
+        furnRect(tx + s * 0.02, ty - s * 0.12, s * 0.12, th * 0.9, Math.max(1, s * 0.03), '#9AA3AD');
+        break;
+      case 'weights':
+        for (let i = 0; i < 2; i++) {
+          const wy = ty + th * (0.3 + i * 0.4);
+          furnLine([[tx + tw * 0.2, wy], [tx + tw * 0.8, wy]], '#9AA3AD', Math.max(1.5, s * 0.06));
+          furnCircle(tx + tw * 0.2, wy, s * 0.11, '#2A2E34');
+          furnCircle(tx + tw * 0.8, wy, s * 0.11, '#2A2E34');
+        }
+        break;
+      case 'mat':
+        ctx.strokeStyle = shade(st.top, 0.35); ctx.lineWidth = Math.max(1, s * 0.04);
+        ctx.strokeRect(tx + s * 0.1, ty + s * 0.08, tw - s * 0.2, th - s * 0.16);
+        break;
+      case 'battery':
+        for (let i = 0; i < 2; i++) {
+          const by = ty + th * (0.08 + i * 0.48);
+          furnRect(tx + tw * 0.18, by, tw * 0.64, th * 0.4, Math.max(1, s * 0.04), '#2E9A4A', '#1F6B33');
+          ctx.fillStyle = '#FFFFFF';
+          ctx.fillRect(tx + tw * 0.44, by + th * 0.12, tw * 0.12, th * 0.04);
+          ctx.fillRect(tx + tw * 0.48, by + th * 0.08, tw * 0.04, th * 0.12);
+        }
+        break;
+      case 'cart':
+        furnRect(tx + tw * 0.55, ty + th * 0.15, tw * 0.3, th * 0.55, Math.max(1, s * 0.05), '#9FD3E8');   // 前のまど
+        [0.2, 0.8].forEach((k) => furnCircle(tx + tw * k, y + h - p - d * 0.4, s * 0.16, '#22272E', '#9AA3AD', 1));
+        break;
+      case 'tire': {
+        const ty0 = y + h / 2;
+        furnCircle(cx, ty0, tw * 0.4, '#22272E', '#4A4F57', Math.max(1.5, s * 0.08));
+        furnCircle(cx, ty0, tw * 0.16, '#9AA3AD');
+        break;
+      }
+      case 'toolbox':
+        furnLine([[tx + tw * 0.3, ty + th * 0.15], [tx + tw * 0.3, ty - s * 0.06], [tx + tw * 0.7, ty - s * 0.06], [tx + tw * 0.7, ty + th * 0.15]], '#2A2E34', Math.max(1.5, s * 0.06));
+        ctx.fillStyle = '#F5C518';
+        ctx.fillRect(tx + tw * 0.42, ty + th * 0.45, tw * 0.16, th * 0.2);
+        break;
+      case 'shower':
+        furnCircle(tx + tw * 0.5, ty + th * 0.25, s * 0.14, '#9AA3AD', '#5B6470', 1);
+        for (let i = 0; i < 5; i++) furnCircle(tx + tw * (0.3 + i * 0.1), ty + th * (0.55 + (i % 2) * 0.15), s * 0.035, '#4A86E0');
+        furnCircle(tx + tw * 0.85, ty + th * 0.8, s * 0.05, '#5B6470');
+        break;
+      case 'telescope': {
+        // 望遠鏡（三脚と、ななめの筒）
+        const by = y + h - p;
+        furnLine([[cx, y + h * 0.5], [cx - s * 0.25, by]], '#4B5563', Math.max(1.5, s * 0.05));
+        furnLine([[cx, y + h * 0.5], [cx + s * 0.25, by]], '#4B5563', Math.max(1.5, s * 0.05));
+        furnLine([[cx - s * 0.32, y + p + s * 0.36], [cx + s * 0.3, y + p - s * 0.05]], '#2F6FD6', Math.max(3, s * 0.16));
+        furnCircle(cx + s * 0.3, y + p - s * 0.05, s * 0.09, '#9FD3E8');
+        break;
+      }
       default:
         break;
     }

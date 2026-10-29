@@ -4,103 +4,116 @@
 (function (root) {
   'use strict';
 
-  // 2026-10-29 子どもの要望の第3便「マップを広く・部屋と通路を増やす・部屋を広く覚えやすい形に・監視室」で 44×30（9部屋）→ 64×43（13部屋）に作りなおした
-  const W = 64;
-  const H = 43;
+  // 2026-10-29 子どもの要望の第3便「マップを広く・部屋と通路を増やす・部屋を広く覚えやすい形に・監視室」で 44×30（9部屋）→ 64×43（13部屋）に作りなおした。
+  // 同日夕「もうちょいマップ拡張」→ オーナー決定「縦横1.3倍・部屋18ほど」で 84×56・18部屋に（屋根うら・トレーニング室・ガレージ・シャワー室を足した）。
+  // 部屋は 5列×4段（列 x2-13 / 19-30 / 36-51 / 57-68 / 74-81、段 y2-10 / 15-24 / 29-38 / 43-53）。ひろばはまん中の列の2段ぶんの十字
+  const W = 84;
+  const H = 56;
 
   // 部屋（x, y, 幅, 高さ）。fill は床の色。part: true は同じ部屋の続き（L字・T字・十字の形を四角の組み合わせで作る。名前は最初の四角に書く）
   const ROOMS = [
-    { key: 'kitchen', name: '台所', x: 2, y: 2, w: 12, h: 7, fill: '#F6E7D2' },
-    { key: 'kitchen', part: true, x: 2, y: 9, w: 5, h: 3, fill: '#F6E7D2' },        // L字（左下へのびる）
-    { key: 'radio', name: '通信室', x: 19, y: 2, w: 11, h: 7, fill: '#DDE9F3' },
-    { key: 'monitor', name: '監視室', x: 35, y: 2, w: 8, h: 6, fill: '#D5DCE6' },
-    { key: 'farm', name: '畑', x: 48, y: 2, w: 14, h: 7, fill: '#E2EFD6' },
-    { key: 'farm', part: true, x: 52, y: 9, w: 6, h: 4, fill: '#E2EFD6' },          // T字（まん中から下へ）
-    { key: 'plaza', name: 'ひろば', x: 24, y: 18, w: 18, h: 6, fill: '#F3EFE6' },
-    { key: 'plaza', part: true, x: 28, y: 14, w: 10, h: 14, fill: '#F3EFE6' },      // 十字（テーブルがまん中）
-    { key: 'lounge', name: '休けい室', x: 2, y: 17, w: 10, h: 8, fill: '#F1E2EA' },   // 2026-10-29 電気室が移ったあと
-    { key: 'laundry', name: '洗たく室', x: 14, y: 19, w: 7, h: 6, fill: '#DCEEF2' },
-    { key: 'store', name: '倉庫', x: 50, y: 18, w: 12, h: 7, fill: '#E9E1D8' },
-    { key: 'store', part: true, x: 56, y: 25, w: 6, h: 5, fill: '#E9E1D8' },        // L字（右下へのびる）
-    { key: 'pump', name: 'ポンプ室', x: 2, y: 30, w: 10, h: 9, fill: '#D9E4EE' },
-    { key: 'tower', name: '見はり台', x: 22, y: 35, w: 20, h: 6, fill: '#E4E0F0' },  // 横に長い
-    { key: 'playroom', name: 'ゲーム室', x: 47, y: 34, w: 12, h: 7, fill: '#F6DDE4' },
-    // 行き止まりの小部屋（入口は1つ。2026-10-27 子どもの意見「マップに行き止まりがほしい」）
-    { key: 'tools', name: '道具室', x: 9, y: 12, w: 4, h: 4, fill: '#EADFC8' },     // 台所↔電気室の通路から
-    { key: 'green', name: '温室', x: 59, y: 13, w: 4, h: 4, fill: '#D6EEDD' },      // 畑↔倉庫の通路から
+    { key: 'kitchen', name: '台所', x: 2, y: 2, w: 12, h: 9, fill: '#F6E7D2' },
+    { key: 'kitchen', part: true, x: 2, y: 11, w: 6, h: 2, fill: '#F6E7D2' },       // L字（左下へのびる）
+    { key: 'radio', name: '通信室', x: 19, y: 2, w: 12, h: 9, fill: '#DDE9F3' },
+    { key: 'monitor', name: '監視室', x: 39, y: 2, w: 10, h: 8, fill: '#D5DCE6' },
+    { key: 'farm', name: '畑', x: 57, y: 2, w: 12, h: 9, fill: '#E2EFD6' },
+    { key: 'farm', part: true, x: 60, y: 11, w: 6, h: 2, fill: '#E2EFD6' },         // T字（まん中から下へ）
+    { key: 'lounge', name: '休けい室', x: 2, y: 15, w: 12, h: 10, fill: '#F1E2EA' },
+    { key: 'laundry', name: '洗たく室', x: 19, y: 15, w: 12, h: 10, fill: '#DCEEF2' },
+    { key: 'plaza', name: 'ひろば', x: 34, y: 22, w: 20, h: 10, fill: '#F3EFE6' },
+    { key: 'plaza', part: true, x: 38, y: 15, w: 12, h: 24, fill: '#F3EFE6' },      // 十字（テーブルがまん中）
+    { key: 'store', name: '倉庫', x: 57, y: 15, w: 12, h: 10, fill: '#E9E1D8' },
+    { key: 'gym', name: 'トレーニング室', x: 2, y: 29, w: 12, h: 10, fill: '#E3ECDD' },
+    { key: 'garage', name: 'ガレージ', x: 57, y: 29, w: 12, h: 10, fill: '#E2E2E2' },
+    { key: 'shower', name: 'シャワー室', x: 74, y: 29, w: 8, h: 10, fill: '#D8EEF6' },
+    { key: 'pump', name: 'ポンプ室', x: 2, y: 43, w: 12, h: 11, fill: '#D9E4EE' },
+    { key: 'tower', name: '見はり台', x: 36, y: 45, w: 18, h: 8, fill: '#E4E0F0' },   // 横に長い
+    { key: 'playroom', name: 'ゲーム室', x: 57, y: 43, w: 16, h: 11, fill: '#F6DDE4' },
+    // 行き止まりの小部屋（入口は1つ・ドアなし。2026-10-27 子どもの意見「マップに行き止まりがほしい」）
+    { key: 'tools', name: '道具室', x: 27, y: 51, w: 6, h: 4, fill: '#EADFC8' },     // ポンプ室↔見はり台の通路の下
+    { key: 'green', name: '温室', x: 75, y: 16, w: 6, h: 6, fill: '#D6EEDD' },      // 倉庫の右
+    { key: 'attic', name: '屋根うら', x: 75, y: 3, w: 6, h: 6, fill: '#EFE3D0' },    // 畑の右
     // 2026-10-29 子どもの要望「電気室を行き止まりに（ポンプ室と見はり台の間の通路の上）」。停電をなおすスイッチもここ
-    { key: 'power', name: '電気室', x: 14, y: 30, w: 6, h: 5, fill: '#F4EBC6' },    // ポンプ室↔見はり台の通路から
+    { key: 'power', name: '電気室', x: 19, y: 36, w: 9, h: 8, fill: '#F4EBC6' },
   ];
   // 通路（部屋どうしをつなぐ床）
   const HALLS = [
-    [14, 4, 5, 2], [30, 4, 5, 2], [43, 4, 5, 2],     // 台所↔通信室↔監視室↔畑
-    [28, 9, 2, 5], [40, 8, 2, 10],                   // 通信室↔ひろば・監視室↔ひろば
-    [4, 12, 2, 5], [12, 20, 2, 2], [21, 20, 3, 2],   // 台所↔電気室↔洗たく室↔ひろば
-    [42, 20, 8, 2], [54, 13, 2, 5],                  // ひろば↔倉庫↔畑
-    [5, 25, 2, 5], [12, 36, 10, 2], [32, 28, 2, 7],  // 電気室↔ポンプ室↔見はり台↔ひろば
-    [42, 37, 5, 2], [57, 30, 2, 4],                  // 見はり台↔ゲーム室↔倉庫
-    [6, 13, 3, 2], [56, 14, 3, 2], [16, 35, 2, 1],   // 行き止まりの小部屋への通路（道具室・温室・電気室）
+    [14, 5, 5, 2], [31, 5, 8, 2], [49, 5, 8, 2], [69, 5, 6, 2],   // 台所↔通信室↔監視室↔畑↔屋根うら
+    [4, 13, 2, 2], [24, 11, 2, 4], [43, 10, 2, 5], [62, 13, 2, 2], // 1段目↔2段目（休けい室・洗たく室・ひろば・倉庫）
+    [14, 19, 5, 2], [31, 23, 3, 2], [54, 23, 3, 2], [69, 18, 6, 2], // 休けい室↔洗たく室↔ひろば↔倉庫↔温室
+    [6, 25, 2, 4], [62, 25, 2, 4], [54, 29, 3, 2], [69, 33, 5, 2], // 休けい室↔トレーニング室・倉庫↔ガレージ↔ひろば・ガレージ↔シャワー室
+    [6, 39, 2, 4], [43, 39, 2, 6], [62, 39, 2, 4],                 // トレーニング室↔ポンプ室・ひろば↔見はり台・ガレージ↔ゲーム室
+    [77, 39, 2, 6], [73, 43, 4, 2],                                 // シャワー室↔ゲーム室（L字の通路）
+    [14, 48, 22, 2], [54, 48, 3, 2],                                // ポンプ室↔見はり台↔ゲーム室
+    [22, 44, 2, 4], [29, 50, 2, 1],                                 // 行き止まりへの通路（電気室・道具室）
   ];
   const HALL_FILL = '#E6E3DC';
 
   // 仕事の場所。kind: wire＝線をつなぐ / order＝番号を順に押す / meter＝メーターを合わせる。id は並び順（新しい場所は末尾に足す）
   const SPOTS = [
-    { id: 0, room: 'kitchen', x: 4.5, y: 3.5, kind: 'order', label: 'お皿を順番にしまう' },
-    { id: 1, room: 'kitchen', x: 12.5, y: 7.5, kind: 'meter', label: 'なべの火を合わせる' },
-    { id: 2, room: 'radio', x: 23.5, y: 3.5, kind: 'wire', label: '通信の線をつなぐ' },
-    { id: 3, room: 'radio', x: 28.5, y: 7.5, kind: 'order', label: 'アンテナの番号を押す' },
-    { id: 4, room: 'farm', x: 50.5, y: 3.5, kind: 'meter', label: '水の量を合わせる' },
-    { id: 5, room: 'farm', x: 54.5, y: 11.5, kind: 'order', label: 'たねを順番にまく' },
-    { id: 6, room: 'power', x: 14.5, y: 31.5, kind: 'wire', label: '電線をつなぐ' },
-    { id: 7, room: 'store', x: 58.5, y: 28.5, kind: 'order', label: '荷物を番号順にのせる' },
-    { id: 8, room: 'store', x: 51.5, y: 19.5, kind: 'wire', label: 'ケーブルをつなぐ' },
-    { id: 9, room: 'tower', x: 38.5, y: 36.5, kind: 'meter', label: '望遠鏡のピントを合わせる' },
-    { id: 10, room: 'tower', x: 26.5, y: 39.5, kind: 'wire', label: 'ライトの線をつなぐ' },
-    // 行き止まりの奥（わざわざ入る理由）
-    { id: 11, room: 'tools', x: 11.5, y: 13.5, kind: 'order', label: '道具を番号順にならべる' },
-    { id: 12, room: 'green', x: 61.5, y: 15.5, kind: 'meter', label: '温室の温度を合わせる' },
-    // 2026-10-29 足した部屋
-    { id: 13, room: 'monitor', x: 41.5, y: 5.5, kind: 'wire', label: 'モニターの線をつなぐ' },
-    { id: 14, room: 'laundry', x: 15.5, y: 20.5, kind: 'order', label: '洗たく物を番号順にたたむ' },
-    { id: 15, room: 'pump', x: 3.5, y: 33.5, kind: 'meter', label: '水の強さを合わせる' },
-    { id: 16, room: 'playroom', x: 52.5, y: 36.5, kind: 'order', label: 'ボールを番号順にしまう' },
-    { id: 17, room: 'lounge', x: 10.5, y: 18.5, kind: 'order', label: 'クッションを番号順にならべる' },
+    { id: 0, room: 'kitchen', x: 4.5, y: 4.5, kind: 'order', label: 'お皿を順番にしまう' },
+    { id: 1, room: 'kitchen', x: 12.5, y: 9.5, kind: 'meter', label: 'なべの火を合わせる' },
+    { id: 2, room: 'radio', x: 25.5, y: 4.5, kind: 'wire', label: '通信の線をつなぐ' },
+    { id: 3, room: 'radio', x: 29.5, y: 9.5, kind: 'order', label: 'アンテナの番号を押す' },
+    { id: 4, room: 'farm', x: 59.5, y: 4.5, kind: 'meter', label: '水の量を合わせる' },
+    { id: 5, room: 'farm', x: 61.5, y: 11.5, kind: 'order', label: 'たねを順番にまく' },
+    { id: 6, room: 'power', x: 20.5, y: 39.5, kind: 'wire', label: '電線をつなぐ' },
+    { id: 7, room: 'store', x: 58.5, y: 17.5, kind: 'order', label: '荷物を番号順にのせる' },
+    { id: 8, room: 'store', x: 64.5, y: 23.5, kind: 'wire', label: 'ケーブルをつなぐ' },
+    { id: 9, room: 'tower', x: 51.5, y: 47.5, kind: 'meter', label: '望遠鏡のピントを合わせる' },
+    { id: 10, room: 'tower', x: 40.5, y: 51.5, kind: 'wire', label: 'ライトの線をつなぐ' },
+    { id: 11, room: 'tools', x: 31.5, y: 53.5, kind: 'order', label: '道具を番号順にならべる' },
+    { id: 12, room: 'green', x: 79.5, y: 20.5, kind: 'meter', label: '温室の温度を合わせる' },
+    { id: 13, room: 'monitor', x: 47.5, y: 7.5, kind: 'wire', label: 'モニターの線をつなぐ' },
+    { id: 14, room: 'laundry', x: 20.5, y: 18.5, kind: 'order', label: '洗たく物を番号順にたたむ' },
+    { id: 15, room: 'pump', x: 3.5, y: 46.5, kind: 'meter', label: '水の強さを合わせる' },
+    { id: 16, room: 'playroom', x: 64.5, y: 47.5, kind: 'order', label: 'ボールを番号順にしまう' },
+    { id: 17, room: 'lounge', x: 9.5, y: 21.5, kind: 'order', label: 'クッションを番号順にならべる' },
+    // 2026-10-29 夕 足した部屋
+    { id: 18, room: 'attic', x: 79.5, y: 7.5, kind: 'wire', label: '屋根うらの電球の線をつなぐ' },
+    { id: 19, room: 'gym', x: 9.5, y: 33.5, kind: 'meter', label: 'ランニングマシンの速さを合わせる' },
+    { id: 20, room: 'garage', x: 65.5, y: 32.5, kind: 'wire', label: 'カートの電池の線をつなぐ' },
+    { id: 21, room: 'shower', x: 79.5, y: 36.5, kind: 'meter', label: 'お湯の温度を合わせる' },
   ];
-  const FIX_SPOT = { x: 18.5, y: 32.5 };    // 停電をなおすスイッチ（電気室。2026-10-29 行き止まりへ移した）
-  const TABLE = { x: 33, y: 21, r: 1.6 };   // ひろばの会議テーブル（まるいので、ぶつかる）
+  const FIX_SPOT = { x: 26.5, y: 40.5 };    // 停電をなおすスイッチ（電気室。行き止まりの奥）
+  const TABLE = { x: 44, y: 27, r: 1.6 };   // ひろばの会議テーブル（まるいので、ぶつかる）
   // 近道（ねむらせ屋・整備係が使える）。2026-10-26 ねむらせ屋を有利にする調整で追加。
   // 2026-10-29 子どもの要望「ベントで飛ぶ場所を選べるように」→ オーナー決定: 近道に入ると姿が消え（中にいられるのは VENT_STAY_S 秒まで）、
-  // ほかの7か所のどこへでも、部屋の名前のボタンで選んで出られる（決まった組はなくした）。どれもちがう部屋にある
+  // ほかのどこへでも、部屋の名前のボタンで選んで出られる（決まった組はなくした）。どれもちがう部屋にある（18部屋にしたとき10か所に）
   const VENTS = [
-    { id: 0, x: 8.5, y: 6.5 },     // 台所
-    { id: 1, x: 4.5, y: 22.5 },    // 休けい室
-    { id: 2, x: 59.5, y: 7.5 },    // 畑
-    { id: 3, x: 54.5, y: 23.5 },   // 倉庫
-    { id: 4, x: 19.5, y: 23.5 },   // 洗たく室
-    { id: 5, x: 9.5, y: 36.5 },    // ポンプ室
-    { id: 6, x: 36.5, y: 6.5 },    // 監視室
-    { id: 7, x: 56.5, y: 39.5 },   // ゲーム室
+    { id: 0, x: 9.5, y: 6.5 },     // 台所
+    { id: 1, x: 11.5, y: 23.5 },   // 休けい室
+    { id: 2, x: 66.5, y: 8.5 },    // 畑
+    { id: 3, x: 66.5, y: 20.5 },   // 倉庫
+    { id: 4, x: 28.5, y: 22.5 },   // 洗たく室
+    { id: 5, x: 11.5, y: 51.5 },   // ポンプ室
+    { id: 6, x: 41.5, y: 7.5 },    // 監視室
+    { id: 7, x: 70.5, y: 51.5 },   // ゲーム室
+    { id: 8, x: 3.5, y: 36.5 },    // トレーニング室
+    { id: 9, x: 59.5, y: 36.5 },   // ガレージ
   ];
   const VENT_STAY_S = 10;
   // はしご（だれでも使える。ねむった人も）。2026-10-28 子どもの意見「マップにギミック（はしご）」
   // 上に立って「はしごをおりる／のぼる」を押すと、CLIMB_MS のあいだその場に立ったまま（見える・ねむらせられる）で、to のはしごへ移る。
   // 通信室（画面の上）↔ 見はり台（画面の下）。隊員の移動が速くなる＝隊員が有利になる向き（近道はねむらせ屋だけ、はしごはみんな）
   const LADDERS = [
-    { id: 0, x: 20.5, y: 8.0, to: 1, room: 'radio', label: 'はしごをおりる', busy: 'おりている…' },
-    { id: 1, x: 23.5, y: 40.0, to: 0, room: 'tower', label: 'はしごをのぼる', busy: 'のぼっている…' },
+    { id: 0, x: 21.5, y: 10.0, to: 1, room: 'radio', label: 'はしごをおりる', busy: 'おりている…' },
+    { id: 1, x: 37.5, y: 52.0, to: 0, room: 'tower', label: 'はしごをのぼる', busy: 'のぼっている…' },
   ];
   const CLIMB_MS = 2500;
   // 監視カメラ。2026-10-28 子どもの意見。カメラの台（CAM_STAND）に立って「カメラを見る」と、通路に置いたカメラ（CAMS）のまわり CAM_R マスの
   // 通路の部分だけが小窓に映る（部屋の中は映らない）。見ている間はその場から動けない。だれかが見ている間はカメラのランプが光る（ねむらせ屋が気づける）。停電中は映らない
-  // 2026-10-29 子どもの要望「カメラルーム（監視室）がほしい」で、台を通信室から監視室へ移し、カメラを4つ→6つにした
-  const CAM_STAND = { x: 38.5, y: 3.0 };
+  // 2026-10-29 子どもの要望「カメラルーム（監視室）がほしい」で、台を通信室から監視室へ移し、カメラを増やした（18部屋で8つ）
+  const CAM_STAND = { x: 44, y: 3.0 };
   const CAMS = [
-    { id: 0, x: 16.5, y: 5, name: '台所と通信室の間' },
-    { id: 1, x: 32.5, y: 5, name: '通信室と監視室の間' },
-    { id: 2, x: 41, y: 13, name: '監視室とひろばの間' },
-    { id: 3, x: 46, y: 21, name: 'ひろばと倉庫の間' },
-    { id: 4, x: 33, y: 31.5, name: 'ひろばと見はり台の間' },
-    { id: 5, x: 17, y: 37, name: 'ポンプ室と見はり台の間' },
+    { id: 0, x: 16.5, y: 6, name: '台所と通信室の間' },
+    { id: 1, x: 35, y: 6, name: '通信室と監視室の間' },
+    { id: 2, x: 53, y: 6, name: '監視室と畑の間' },
+    { id: 3, x: 16.5, y: 20, name: '休けい室と洗たく室の間' },
+    { id: 4, x: 44, y: 42, name: 'ひろばと見はり台の間' },
+    { id: 5, x: 71.5, y: 34, name: 'ガレージとシャワー室の間' },
+    { id: 6, x: 18, y: 49, name: 'ポンプ室と電気室の間' },
+    { id: 7, x: 32, y: 49, name: '電気室と見はり台の間' },
   ];
   const CAM_R = 2.5;
 
@@ -108,15 +121,15 @@
   // 空気の妨害（ねむらせ屋）: 止めると AIR_LIMIT_S 秒のうちに、離れた2部屋のパネルを両方なおさないと ねむらせ屋の勝ち。
   // 「停電で負けることはない」をはじめて破る（オーナー「破ってもOK」）。集団でかたまって動くと間に合わない向きの仕組み
   const AIR_PANELS = [
-    { id: 'a', room: 'kitchen', x: 11.5, y: 3.0, label: '台所の空気のパネル' },
-    { id: 'b', room: 'store', x: 60.5, y: 19.5, label: '倉庫の空気のパネル' },
+    { id: 'a', room: 'kitchen', x: 12.5, y: 3.0, label: '台所の空気のパネル' },
+    { id: 'b', room: 'store', x: 67.5, y: 16.5, label: '倉庫の空気のパネル' },
   ];
   const AIR_LIMIT_S = 60;
   // ふたりの仕事: 離れた2か所のスイッチを、ふたりが同時におしていないとおわらない。隊員はひとり1つ持つ（設定 pair で切れる）。
   // 2人組で動く理由を作る（集団を小さく割る向き）。おしている人は PAIR_HOLD_MS の間だけ「おしている」とみなす（2秒おきに書き直す）
   const PAIRS = [
-    { id: 'p0', spot: 100, label: 'ふたりでスイッチを入れる', a: { room: 'lounge', x: 3.5, y: 18.5 }, b: { room: 'farm', x: 60.5, y: 3.5 } },
-    { id: 'p1', spot: 101, label: 'ふたりでレバーを引く', a: { room: 'kitchen', x: 3.5, y: 10.5 }, b: { room: 'tower', x: 39.5, y: 39.5 } },
+    { id: 'p0', spot: 100, label: 'ふたりでスイッチを入れる', a: { room: 'lounge', x: 3.5, y: 17.5 }, b: { room: 'farm', x: 67.5, y: 3.5 } },
+    { id: 'p1', spot: 101, label: 'ふたりでレバーを引く', a: { room: 'kitchen', x: 3.5, y: 11.5 }, b: { room: 'tower', x: 52.5, y: 51.5 } },
   ];
   const PAIR_SPOT_BASE = 100;
   const PAIR_HOLD_MS = 6000;
@@ -124,39 +137,66 @@
   // ドア（ねむらせ屋）: 部屋を選ぶと、その部屋の入口がぜんぶ DOOR_MS の間とじる（見えるが通れない）。集団を分ける向き。ひろばにはドアがない（テーブルにいつでも行けるように）
   // ドアは、その部屋につながる通路の、部屋に接する1列
   const DOORS = [
-    { room: 'kitchen', x: 14, y: 4, w: 1, h: 2 }, { room: 'kitchen', x: 4, y: 12, w: 2, h: 1 },
-    { room: 'radio', x: 18, y: 4, w: 1, h: 2 }, { room: 'radio', x: 30, y: 4, w: 1, h: 2 }, { room: 'radio', x: 28, y: 9, w: 2, h: 1 },
-    { room: 'monitor', x: 34, y: 4, w: 1, h: 2 }, { room: 'monitor', x: 43, y: 4, w: 1, h: 2 }, { room: 'monitor', x: 40, y: 8, w: 2, h: 1 },
-    { room: 'farm', x: 47, y: 4, w: 1, h: 2 }, { room: 'farm', x: 54, y: 13, w: 2, h: 1 },
-    { room: 'lounge', x: 4, y: 16, w: 2, h: 1 }, { room: 'lounge', x: 12, y: 20, w: 1, h: 2 }, { room: 'lounge', x: 5, y: 25, w: 2, h: 1 },
-    { room: 'laundry', x: 13, y: 20, w: 1, h: 2 }, { room: 'laundry', x: 21, y: 20, w: 1, h: 2 },
-    { room: 'store', x: 54, y: 17, w: 2, h: 1 }, { room: 'store', x: 49, y: 20, w: 1, h: 2 }, { room: 'store', x: 57, y: 30, w: 2, h: 1 },
-    { room: 'pump', x: 5, y: 29, w: 2, h: 1 }, { room: 'pump', x: 12, y: 36, w: 1, h: 2 },
-    { room: 'tower', x: 32, y: 34, w: 2, h: 1 }, { room: 'tower', x: 21, y: 36, w: 1, h: 2 }, { room: 'tower', x: 42, y: 37, w: 1, h: 2 },
-    { room: 'playroom', x: 57, y: 33, w: 2, h: 1 }, { room: 'playroom', x: 46, y: 37, w: 1, h: 2 },
-  ]
-  // 行き止まりの小部屋（道具室・温室・電気室）にはドアがない（とじこめないように）
-  const DOOR_ROOMS = ['kitchen', 'radio', 'monitor', 'farm', 'lounge', 'laundry', 'store', 'pump', 'tower', 'playroom'];
+    { room: 'kitchen', x: 14, y: 5, w: 1, h: 2 }, { room: 'kitchen', x: 4, y: 13, w: 2, h: 1 },
+    { room: 'radio', x: 18, y: 5, w: 1, h: 2 }, { room: 'radio', x: 31, y: 5, w: 1, h: 2 }, { room: 'radio', x: 24, y: 11, w: 2, h: 1 },
+    { room: 'monitor', x: 38, y: 5, w: 1, h: 2 }, { room: 'monitor', x: 49, y: 5, w: 1, h: 2 }, { room: 'monitor', x: 43, y: 10, w: 2, h: 1 },
+    { room: 'farm', x: 56, y: 5, w: 1, h: 2 }, { room: 'farm', x: 69, y: 5, w: 1, h: 2 }, { room: 'farm', x: 62, y: 13, w: 2, h: 1 },
+    { room: 'lounge', x: 4, y: 14, w: 2, h: 1 }, { room: 'lounge', x: 14, y: 19, w: 1, h: 2 }, { room: 'lounge', x: 6, y: 25, w: 2, h: 1 },
+    { room: 'laundry', x: 24, y: 14, w: 2, h: 1 }, { room: 'laundry', x: 18, y: 19, w: 1, h: 2 }, { room: 'laundry', x: 31, y: 23, w: 1, h: 2 },
+    { room: 'store', x: 62, y: 14, w: 2, h: 1 }, { room: 'store', x: 69, y: 18, w: 1, h: 2 }, { room: 'store', x: 56, y: 23, w: 1, h: 2 }, { room: 'store', x: 62, y: 25, w: 2, h: 1 },
+    { room: 'gym', x: 6, y: 28, w: 2, h: 1 }, { room: 'gym', x: 6, y: 39, w: 2, h: 1 },
+    { room: 'garage', x: 62, y: 28, w: 2, h: 1 }, { room: 'garage', x: 56, y: 29, w: 1, h: 2 }, { room: 'garage', x: 69, y: 33, w: 1, h: 2 }, { room: 'garage', x: 62, y: 39, w: 2, h: 1 },
+    { room: 'shower', x: 73, y: 33, w: 1, h: 2 }, { room: 'shower', x: 77, y: 39, w: 2, h: 1 },
+    { room: 'pump', x: 6, y: 42, w: 2, h: 1 }, { room: 'pump', x: 14, y: 48, w: 1, h: 2 },
+    { room: 'tower', x: 43, y: 44, w: 2, h: 1 }, { room: 'tower', x: 35, y: 48, w: 1, h: 2 }, { room: 'tower', x: 54, y: 48, w: 1, h: 2 },
+    { room: 'playroom', x: 62, y: 42, w: 2, h: 1 }, { room: 'playroom', x: 73, y: 43, w: 1, h: 2 }, { room: 'playroom', x: 56, y: 48, w: 1, h: 2 },
+  ];
+  // 行き止まりの小部屋（道具室・温室・屋根うら・電気室）にはドアがない（とじこめないように）
+  const DOOR_ROOMS = ['kitchen', 'radio', 'monitor', 'farm', 'lounge', 'laundry', 'store', 'gym', 'garage', 'shower', 'pump', 'tower', 'playroom'];
   const DOOR_MS = 10000;
   const DOOR_AGAIN_S = 20;
   // 会議ボタンの待ち時間: はじめと会議のあと BUTTON_WAIT_S 秒は押せない（はじまった直後の会議・会議の連続・追われたときの逃げ道をふせぐ）
   const BUTTON_WAIT_S = 20;
-  // 家具（部屋の目印。1マスのかべとして ぶつかる・かべごしに見えない。マップを覚えやすくする）。x, y, w, h はマス。kind は描き方
+  // 家具（部屋の目印。1マスのかべとして ぶつかる・かべごしに見えない）。x, y, w, h はマス。kind は描き方。
+  // 2026-10-29 夕 子どもの要望「部屋の内装を部屋の名前に合わせて」で、部屋ごとに名前に合う物を3〜5個ずつ置いた
   const FURNITURE = [
-    { room: 'kitchen', kind: 'stove', x: 6, y: 2, w: 2, h: 1 }, { room: 'kitchen', kind: 'table', x: 8, y: 4, w: 1, h: 1 },
-    { room: 'radio', kind: 'antenna', x: 19, y: 2, w: 1, h: 1 }, { room: 'radio', kind: 'desk', x: 25, y: 2, w: 2, h: 1 },
-    { room: 'monitor', kind: 'screen', x: 36, y: 2, w: 2, h: 1 }, { room: 'monitor', kind: 'screen', x: 40, y: 2, w: 2, h: 1 },
-    { room: 'farm', kind: 'crops', x: 52, y: 7, w: 3, h: 1 }, { room: 'farm', kind: 'crops', x: 56, y: 7, w: 3, h: 1 }, { room: 'farm', kind: 'tank', x: 61, y: 8, w: 1, h: 1 },
-    { room: 'plaza', kind: 'sofa', x: 24, y: 18, w: 2, h: 1 }, { room: 'plaza', kind: 'plant', x: 37, y: 14, w: 1, h: 1 }, { room: 'plaza', kind: 'plant', x: 28, y: 27, w: 1, h: 1 }, { room: 'plaza', kind: 'plant', x: 41, y: 23, w: 1, h: 1 },
-    { room: 'lounge', kind: 'sofa', x: 7, y: 17, w: 2, h: 1 }, { room: 'lounge', kind: 'plant', x: 2, y: 24, w: 1, h: 1 },
-    { room: 'power', kind: 'generator', x: 16, y: 30, w: 2, h: 1 }, { room: 'power', kind: 'barrel', x: 19, y: 30, w: 1, h: 1 },
-    { room: 'laundry', kind: 'washer', x: 17, y: 19, w: 2, h: 1 }, { room: 'laundry', kind: 'basket', x: 14, y: 24, w: 1, h: 1 },
-    { room: 'store', kind: 'crate', x: 58, y: 24, w: 2, h: 1 }, { room: 'store', kind: 'crate', x: 61, y: 29, w: 1, h: 1 }, { room: 'store', kind: 'shelf', x: 50, y: 24, w: 1, h: 1 },
-    { room: 'pump', kind: 'pump', x: 7, y: 32, w: 2, h: 1 }, { room: 'pump', kind: 'tank', x: 2, y: 30, w: 1, h: 1 },
-    { room: 'tower', kind: 'light', x: 22, y: 35, w: 1, h: 1 }, { room: 'tower', kind: 'bench', x: 30, y: 40, w: 2, h: 1 }, { room: 'tower', kind: 'light', x: 41, y: 35, w: 1, h: 1 },
-    { room: 'playroom', kind: 'arcade', x: 48, y: 34, w: 2, h: 1 }, { room: 'playroom', kind: 'gametable', x: 53, y: 39, w: 2, h: 1 },
-    { room: 'tools', kind: 'shelf', x: 12, y: 15, w: 1, h: 1 },
-    { room: 'green', kind: 'plant', x: 62, y: 13, w: 1, h: 1 }, { room: 'green', kind: 'plant', x: 60, y: 16, w: 1, h: 1 },
+    // 台所: コンロ・流し・冷蔵庫・食卓
+    { room: 'kitchen', kind: 'fridge', x: 2, y: 2, w: 1, h: 2 }, { room: 'kitchen', kind: 'stove', x: 6, y: 2, w: 2, h: 1 }, { room: 'kitchen', kind: 'sink', x: 9, y: 2, w: 2, h: 1 },
+    { room: 'kitchen', kind: 'table', x: 5, y: 7, w: 3, h: 1 }, { room: 'kitchen', kind: 'table', x: 9, y: 7, w: 2, h: 1 },
+    // 通信室: アンテナ・無線機・机の画面
+    { room: 'radio', kind: 'antenna', x: 30, y: 2, w: 1, h: 1 }, { room: 'radio', kind: 'radioset', x: 22, y: 2, w: 2, h: 1 }, { room: 'radio', kind: 'desk', x: 27, y: 2, w: 2, h: 1 }, { room: 'radio', kind: 'radioset', x: 25, y: 8, w: 2, h: 1 },
+    // 監視室: モニターの机
+    { room: 'monitor', kind: 'screen', x: 40, y: 2, w: 2, h: 1 }, { room: 'monitor', kind: 'screen', x: 46, y: 2, w: 2, h: 1 },
+    // 畑: うね・かかし・水タンク
+    { room: 'farm', kind: 'crops', x: 59, y: 7, w: 3, h: 1 }, { room: 'farm', kind: 'crops', x: 63, y: 7, w: 3, h: 1 }, { room: 'farm', kind: 'scarecrow', x: 62, y: 4, w: 1, h: 1 }, { room: 'farm', kind: 'tank', x: 68, y: 10, w: 1, h: 1 },
+    // 屋根うら: 古い箱・宝箱・あかり
+    { room: 'attic', kind: 'chest', x: 76, y: 3, w: 2, h: 1 }, { room: 'attic', kind: 'crate', x: 80, y: 4, w: 1, h: 1 }, { room: 'attic', kind: 'crate', x: 75, y: 8, w: 1, h: 1 },
+    // 休けい室: ソファ・テレビ・低いテーブル・植木
+    { room: 'lounge', kind: 'sofa', x: 6, y: 15, w: 3, h: 1 }, { room: 'lounge', kind: 'screen', x: 2, y: 20, w: 1, h: 2 }, { room: 'lounge', kind: 'table', x: 6, y: 19, w: 2, h: 1 }, { room: 'lounge', kind: 'plant', x: 13, y: 15, w: 1, h: 1 }, { room: 'lounge', kind: 'sofa', x: 10, y: 17, w: 2, h: 1 }, { room: 'lounge', kind: 'plant', x: 2, y: 15, w: 1, h: 1 },
+    // 洗たく室: 洗たく機・かご
+    { room: 'laundry', kind: 'washer', x: 19, y: 15, w: 2, h: 1 }, { room: 'laundry', kind: 'washer', x: 21, y: 15, w: 2, h: 1 }, { room: 'laundry', kind: 'basket', x: 29, y: 15, w: 1, h: 1 }, { room: 'laundry', kind: 'basket', x: 19, y: 24, w: 1, h: 1 }, { room: 'laundry', kind: 'washer', x: 23, y: 15, w: 2, h: 1 }, { room: 'laundry', kind: 'basket', x: 25, y: 19, w: 1, h: 1 },
+    // ひろば: ソファ・植木
+    { room: 'plaza', kind: 'sofa', x: 35, y: 31, w: 2, h: 1 }, { room: 'plaza', kind: 'plant', x: 38, y: 15, w: 1, h: 1 }, { room: 'plaza', kind: 'plant', x: 49, y: 38, w: 1, h: 1 }, { room: 'plaza', kind: 'plant', x: 53, y: 22, w: 1, h: 1 },
+    // 倉庫: 荷物・たな・たる
+    { room: 'store', kind: 'crate', x: 65, y: 15, w: 2, h: 1 }, { room: 'store', kind: 'crate', x: 57, y: 20, w: 1, h: 1 }, { room: 'store', kind: 'shelf', x: 68, y: 21, w: 1, h: 1 }, { room: 'store', kind: 'barrel', x: 60, y: 24, w: 1, h: 1 }, { room: 'store', kind: 'crate', x: 63, y: 19, w: 1, h: 1 },
+    // 温室: 植木
+    { room: 'green', kind: 'plant', x: 80, y: 16, w: 1, h: 1 }, { room: 'green', kind: 'plant', x: 76, y: 21, w: 1, h: 1 }, { room: 'green', kind: 'plant', x: 78, y: 16, w: 1, h: 1 },
+    // トレーニング室: ランニングマシン・ダンベル・マット
+    { room: 'gym', kind: 'treadmill', x: 2, y: 29, w: 2, h: 1 }, { room: 'gym', kind: 'treadmill', x: 10, y: 29, w: 2, h: 1 }, { room: 'gym', kind: 'weights', x: 12, y: 36, w: 2, h: 1 }, { room: 'gym', kind: 'mat', x: 5, y: 33, w: 2, h: 1 }, { room: 'gym', kind: 'mat', x: 9, y: 37, w: 2, h: 1 },
+    // 電気室: 発電機・電池のたな
+    { room: 'power', kind: 'generator', x: 19, y: 36, w: 2, h: 1 }, { room: 'power', kind: 'battery', x: 27, y: 36, w: 1, h: 2 },
+    // ガレージ: カート・タイヤ・道具箱
+    { room: 'garage', kind: 'cart', x: 58, y: 29, w: 3, h: 1 }, { room: 'garage', kind: 'tire', x: 68, y: 29, w: 1, h: 1 }, { room: 'garage', kind: 'toolbox', x: 68, y: 37, w: 1, h: 1 }, { room: 'garage', kind: 'cart', x: 59, y: 34, w: 3, h: 1 }, { room: 'garage', kind: 'tire', x: 68, y: 30, w: 1, h: 1 },
+    // シャワー室: シャワー・タオルのたな
+    { room: 'shower', kind: 'shower', x: 80, y: 29, w: 2, h: 1 }, { room: 'shower', kind: 'shower', x: 76, y: 29, w: 2, h: 1 }, { room: 'shower', kind: 'shelf', x: 74, y: 29, w: 1, h: 1 }, { room: 'shower', kind: 'basket', x: 74, y: 37, w: 1, h: 1 },
+    // ポンプ室: ポンプ・タンク
+    { room: 'pump', kind: 'pump', x: 8, y: 44, w: 2, h: 1 }, { room: 'pump', kind: 'tank', x: 2, y: 43, w: 1, h: 1 }, { room: 'pump', kind: 'tank', x: 4, y: 43, w: 1, h: 1 }, { room: 'pump', kind: 'pump', x: 3, y: 52, w: 2, h: 1 }, { room: 'pump', kind: 'tank', x: 10, y: 46, w: 1, h: 1 },
+    // 見はり台: ライト・望遠鏡・ベンチ
+    { room: 'tower', kind: 'light', x: 36, y: 45, w: 1, h: 1 }, { room: 'tower', kind: 'light', x: 53, y: 45, w: 1, h: 1 }, { room: 'tower', kind: 'telescope', x: 49, y: 45, w: 1, h: 1 }, { room: 'tower', kind: 'bench', x: 44, y: 52, w: 2, h: 1 }, { room: 'tower', kind: 'telescope', x: 40, y: 45, w: 1, h: 1 },
+    // ゲーム室: ゲーム機・遊びのテーブル
+    { room: 'playroom', kind: 'arcade', x: 58, y: 43, w: 2, h: 1 }, { room: 'playroom', kind: 'arcade', x: 66, y: 43, w: 2, h: 1 }, { room: 'playroom', kind: 'gametable', x: 60, y: 50, w: 3, h: 1 }, { room: 'playroom', kind: 'arcade', x: 70, y: 43, w: 2, h: 1 }, { room: 'playroom', kind: 'gametable', x: 66, y: 50, w: 3, h: 1 },
+    // 道具室: たな・道具箱
+    { room: 'tools', kind: 'shelf', x: 27, y: 51, w: 1, h: 1 }, { room: 'tools', kind: 'toolbox', x: 32, y: 51, w: 1, h: 1 },
   ];
 
   const SPEED = 4.2;          // 1秒に進むマス

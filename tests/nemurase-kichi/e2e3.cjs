@@ -80,10 +80,10 @@ const { E, check, sleep } = L;
   check('F で しかけの一覧がひらく（停電・空気・ドア）', await L.waitFor(() => L.visible(g1, '#sabBox')) && await L.visible(g1, '#sabDark') && await L.visible(g1, '#sabAir') && await L.visible(g1, '#sabDoor'));
   check('停電・空気は いま使える', (await L.text(g1, '#sabDarkNote')) === 'いま使える' && (await L.text(g1, '#sabAirNote')) === 'いま使える');
   await g1.page.click('#sabDoor');
-  check('ドアを押すと部屋を選ぶ（10部屋・ひろばはない）', await L.waitFor(async () => (await L.visible(g1, '#sabRooms')) && (await g1.page.$$('#sabRooms .nk-word')).length === 10 && !(await L.text(g1, '#sabRooms')).includes('ひろば')));
+  check('ドアを押すと部屋を選ぶ（13部屋・ひろばはない）', await L.waitFor(async () => (await L.visible(g1, '#sabRooms')) && (await g1.page.$$('#sabRooms .nk-word')).length === 13 && !(await L.text(g1, '#sabRooms')).includes('ひろば')));
   await L.shot(g1, '10-sab');
   // みどりを台所の外（台所↔通信室の通路、ドアの右どなり）に置いてから、台所のドアをしめる
-  await L.teleport(g2, 15.5, 5.0);
+  await L.teleport(g2, 15.5, 6.0);
   await g1.page.click('#sabRooms .nk-word[data-room="kitchen"]');
   check('台所のドアがとじる（doors.kitchen）', await L.waitFor(async () => ((await L.roomOf(code)).game.doors?.kitchen || 0) > Date.now()));
   check('しかけの一覧がとじる', await L.waitFor(async () => !(await L.visible(g1, '#sabBox'))));
@@ -92,7 +92,7 @@ const { E, check, sleep } = L;
   await sleep(1000);
   await g2.page.keyboard.up('ArrowLeft');
   check('とじたドアは通れない（台所に入れない）', (await L.me(g2)).x >= 15 + E.RADIUS - 0.05, await L.me(g2));
-  check('ドアのマスが板の色で描かれる', L.nearColor(await L.pixelAt(g2, 14.5, 4.5), '#6B4E2E'), await L.pixelAt(g2, 14.5, 4.5));
+  check('ドアのマスが板の色で描かれる', L.nearColor(await L.pixelAt(g2, 14.5, 5.5), '#6B4E2E'), await L.pixelAt(g2, 14.5, 5.5));
   await g1.page.keyboard.press('KeyF');
   check('ドアは次まで待ち時間', await L.waitFor(async () => (await g1.page.$eval('#sabDoor', (b) => b.disabled)) && /あと \d+ 秒/.test(await L.text(g1, '#sabDoorNote'))));
   await g1.page.keyboard.press('KeyF');
@@ -105,25 +105,25 @@ const { E, check, sleep } = L;
   await L.patchGame(code, { doorReadyAt: 1 });
 
   // ══ ねむった人はかべを通りぬける・だれにねむらされたか ══
-  await L.teleport(host, 8.5, 13.6);
-  await L.teleport(g1, 7.8, 13.6);
+  await L.teleport(host, 8.5, 22.5);   // 休けい室
+  await L.teleport(g1, 7.8, 22.5);
   await L.waitFor(async () => !(await g1.page.$eval('#actSleep', (b) => b.disabled)));
   await g1.page.click('#actSleep');
   check('ホストがねむる・だれにねむらされたかが書かれる', await L.waitFor(async () => { const g = (await L.roomOf(code)).game; return g.asleep?.['ホスト'] === 'slept' && g.sleptBy?.['ホスト'] === 'あお'; }));
   check('ねむらされた本人のお知らせに相手の名前と「ないしょ」', await L.waitFor(async () => (await L.text(host, '#stageBanner')).includes('あお さんにねむらされた') && (await L.text(host, '#stageBanner')).includes('ないしょ')));
   check('やることの注意書きにも相手の名前', await L.waitFor(async () => (await L.text(host, '#tasksNote')).includes('あお さんにねむらされた')));
   check('ほかの人の画面には出ない', !(await L.text(g2, '#tasksNote')).includes('ねむらされた') && !(await L.text(g3, '#stageBanner') || '').includes('ねむらされた'));
-  await L.teleport(host, 2.6, 3.5);   // 台所の左はし
+  await L.teleport(host, 2.6, 5.5);   // 台所の左はし
   await sleep(200);
   await host.page.keyboard.down('ArrowLeft');
   await sleep(700);
   await host.page.keyboard.up('ArrowLeft');
   const hx = (await L.me(host)).x;
   check('ねむった人はかべを通りぬける（マップの外には出ない）', hx < 2 && hx >= E.RADIUS - 0.01, hx);
-  await L.teleport(host, 8.5, 13.6);
+  await L.teleport(host, 8.5, 22.5);
 
   // ══ 読み込み直しても元の場所 ══
-  await L.teleport(g3, 55.5, 4.5);   // 畑
+  await L.teleport(g3, 63.5, 5.5);   // 畑
   await sleep(900);
   await g3.page.reload();
   await g3.page.waitForFunction(() => window.__NK__ && document.querySelector('.nk-screen.active'));
@@ -131,7 +131,7 @@ const { E, check, sleep } = L;
   await L.dismissRole(g3).catch(() => {});
   await sleep(500);
   const back = await L.me(g3);
-  check('読み込み直しても元の場所（テーブルに瞬間移動しない）', Math.hypot(back.x - 55.5, back.y - 4.5) < 0.3, back);
+  check('読み込み直しても元の場所（テーブルに瞬間移動しない）', Math.hypot(back.x - 63.5, back.y - 5.5) < 0.3, back);
 
   // ══ ふたりの仕事（人どうし） ══
   const p0 = E.pairOf('p0');

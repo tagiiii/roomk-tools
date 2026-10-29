@@ -51,7 +51,7 @@ const { E, check, sleep } = L;
   check('まもり星の表示', (await L.text(host, '#hudRole')) === '隊員・まもり星');
 
   // ══ 広いマップ ══
-  check('マップは 64×43', E.W === 64 && E.H === 43);
+  check('マップは 84×56', E.W === 84 && E.H === 56);
   const sp0 = await L.me(host);
   check('はじめはテーブルのまわり（十字のひろば）', E.roomAt(sp0.x, sp0.y) === 'plaza', sp0);
 
@@ -68,8 +68,8 @@ const { E, check, sleep } = L;
     return [d[0], d[1], d[2]];
   }, [wx, wy]);
   const hostHex = E.COLORS.find((c) => c.key === (room.game.colors['ホスト'])).hex;
-  await L.teleport(host, 55.5, 4.5);   // 畑
-  check('小さな地図に自分の場所', await L.waitFor(async () => L.nearColor(await miniPx(host, 55.5, 4.5), hostHex, 30)), await miniPx(host, 55.5, 4.5));
+  await L.teleport(host, 63.5, 5.5);   // 畑
+  check('小さな地図に自分の場所', await L.waitFor(async () => L.nearColor(await miniPx(host, 63.5, 5.5), hostHex, 30)), await miniPx(host, 63.5, 5.5));
   check('ほかの人は出ない（みどりの場所は床の色）', !L.nearColor(await miniPx(host, (await L.me(g2)).x, (await L.me(g2)).y), E.COLORS.find((c) => c.key === room.game.colors['みどり']).hex, 30));
   await host.page.click('#miniMap');
   check('押すと大きな地図がひらく', await L.waitFor(() => L.visible(host, '#ovMap')));
@@ -93,9 +93,9 @@ const { E, check, sleep } = L;
   check('監視室で「カメラを見る」', await L.waitFor(async () => (await L.text(host, '#actUseLabel')) === 'カメラを見る'));
   await host.page.click('#actUse');
   check('カメラの画面がひらく', await L.waitFor(() => L.visible(host, '#ovCam')));
-  check('カメラは6か所（文言）', (await L.text(host, '#ovCam')).includes('6か所'));
+  check('カメラは8か所（文言）', (await L.text(host, '#ovCam')).includes('8か所'));
   const cv = await host.page.evaluate(() => { const c = document.getElementById('camView'); return { w: c.clientWidth, h: c.clientHeight }; });
-  check('カメラの映像は3列×2行', Math.abs(cv.h - Math.round(cv.w / 3) * 2) <= 2 || Math.abs(cv.h - Math.round((cv.w / 3) * 2)) <= 2, cv);
+  check('カメラの映像は3列×3行', Math.abs(cv.h - Math.round((cv.w / 3) * 3)) <= 2, cv);
   await L.shot(host, '52-cams');
   await host.page.click('#btnCamClose');
   await L.waitHidden(host, '#ovCam');
@@ -111,7 +111,7 @@ const { E, check, sleep } = L;
   await L.teleport(host, v0.x, v0.y + 0.4);
   await sleep(400);
   check('整備係でない隊員は近道を使えない', !(await L.text(host, '#actUseLabel')).includes('近道'));
-  await L.teleport(host, 33, 24.5);
+  await L.teleport(host, 44, 34.5);
   await L.teleport(g2, v0.x, v0.y + 0.4);
   check('整備係は近道の上で「近道に入る」', await L.waitFor(async () => (await L.text(g2, '#actUseLabel')) === '近道に入る'));
   await g2.page.click('#actUse');
@@ -123,7 +123,7 @@ const { E, check, sleep } = L;
   check('整備係に役職のボタンは出ない', !(await L.visible(g2, '#actJob')));
 
   // ══ 見守り係: ねむりチェッカー ══
-  await L.teleport(g3, 33, 25.5);
+  await L.teleport(g3, 44, 33.5);
   check('見守り係に「チェッカー」', await L.waitFor(async () => (await L.visible(g3, '#actJob')) && (await L.text(g3, '#actJobLabel')).startsWith('チェッカー')));
   await g3.page.click('#actJob');
   check('チェッカーがひらく', await L.waitFor(() => L.visible(g3, '#ovVitals')));
@@ -133,7 +133,7 @@ const { E, check, sleep } = L;
   await g3.page.keyboard.down('ArrowLeft');
   await sleep(500);
   await g3.page.keyboard.up('ArrowLeft');
-  check('見ている間は歩けない', Math.abs((await L.me(g3)).x - 33) < 0.01);
+  check('見ている間は歩けない', Math.abs((await L.me(g3)).x - 44) < 0.01);
   check('見ている間は電池がへる', (await g3.page.evaluate(() => window.__NK__.state.battery)) < b0 - 0.3);
   await L.shot(g3, '53-vitals');
   await g3.page.keyboard.press('KeyG');
@@ -160,15 +160,15 @@ const { E, check, sleep } = L;
   const midoriHex = E.COLORS.find((c) => c.key === room.game.colors['みどり']).hex;
   const aoHex = E.COLORS.find((c) => c.key === room.game.colors['あお']).hex;
   await L.teleport(g2, 60.5, 21.5);   // みどりは倉庫へ（同じ色がならばないように）
-  await L.teleport(g3, 34.5, 25.5);   // そらは十字のひろばの下（仕事をしに行った場所から戻す）
-  await L.teleport(g1, 31.5, 25.5);
+  await L.teleport(g3, 44.5, 33.5);   // そらは十字のひろばの下（仕事をしに行った場所から戻す）
+  await L.teleport(g1, 41.5, 33.5);
   const paSettled = (c, id, x, y) => L.waitFor(async () => {
     const pa = await c.page.evaluate((who) => window.__NK__.PA[who], id);
     return pa && Math.hypot(pa.tx - x, pa.ty - y) < 0.05 && Math.hypot(pa.x - pa.tx, pa.y - pa.ty) < 0.01;
   });
-  check('あおの位置がそらに届く', await paSettled(g3, 'あお', 31.5, 25.5));
+  check('あおの位置がそらに届く', await paSettled(g3, 'あお', 41.5, 33.5));
   await sleep(300);
-  const pxShift = await L.pixelAt(g3, 31.5, 25.5);
+  const pxShift = await L.pixelAt(g3, 41.5, 33.5);
   check('へんしん中のあおは、みどりの色で描かれる', L.nearColor(pxShift, midoriHex, 30) && !L.nearColor(pxShift, aoHex, 30), { pxShift, midoriHex, aoHex });
   await L.shot(g3, '55-shifted');
   await g1.page.click('#actSay');
@@ -177,20 +177,20 @@ const { E, check, sleep } = L;
   check('見た目のだれかは送った時点で決まる（say.a）', (await L.roomOf(code)).game.say['あお'].a === 'みどり');
   await L.patchGame(code, { shape: { 'あお': { as: 'みどり', until: Date.now() - 1 } } });
   await sleep(500);
-  check('へんしんがおわると、もとの色', await L.waitFor(async () => L.nearColor(await L.pixelAt(g3, 31.5, 25.5), aoHex, 30)), await L.pixelAt(g3, 31.5, 25.5));
+  check('へんしんがおわると、もとの色', await L.waitFor(async () => L.nearColor(await L.pixelAt(g3, 41.5, 33.5), aoHex, 30)), await L.pixelAt(g3, 41.5, 33.5));
   check('おわってから次まで待つ', await L.waitFor(async () => /^へんしん \d+$/.test(await L.text(g1, '#actJobLabel'))));
 
   // ══ まもり星: はじめから役職（2026-10-29 オーナー「最初から役職として」）。おきている間から使える ══
   check('まもり星はおきている間から「まもる」を持つ', await L.waitFor(async () => (await L.visible(host, '#actJob')) && (await L.text(host, '#actJobLabel')).startsWith('まもる')));
-  await L.teleport(g2, 26.5, 37.5);   // 見はり台
-  await L.teleport(host, 27.5, 37.5);
+  await L.teleport(g2, 40.5, 48.5);   // 見はり台
+  await L.teleport(host, 41.5, 48.5);
   check('おきている人の近くで「まもる」が押せる', await L.waitFor(async () => (await L.text(host, '#actJobLabel')) === 'まもる' && !(await host.page.$eval('#actJob', (b) => b.disabled))));
   await host.page.click('#actJob');
   check('バリアが書かれる（15秒）', await L.waitFor(async () => (((await L.roomOf(code)).game.shield || {})['みどり'] || 0) > Date.now() + 10000));
   check('まもったあとは待つ', await L.waitFor(async () => /^まもる \d+$/.test(await L.text(host, '#actJobLabel'))));
   // バリアのある人はねむらせられない
   await L.patchGame(code, { cooldown: { 'あお': 1 } });
-  await L.teleport(g1, 25.8, 37.5);
+  await L.teleport(g1, 39.8, 48.5);
   await L.waitFor(async () => !(await g1.page.$eval('#actSleep', (b) => b.disabled)));
   await g1.page.click('#actSleep');
   check('バリアで ねむらせられない', await L.waitFor(async () => { const g = (await L.roomOf(code)).game; return g.blocked?.by === 'あお' && g.blocked?.t === 'みどり' && !g.asleep?.['みどり'] && !(g.shield || {})['みどり']; }));
@@ -200,14 +200,14 @@ const { E, check, sleep } = L;
   check('ねむらせ屋の待ち時間ははじめから', ((await L.roomOf(code)).game.cooldown['あお'] || 0) > Date.now() + 10000);
   // ねむらされても、まもり星は使える
   await L.patchGame(code, { cooldown: { 'あお': 1 } });
-  await L.teleport(host, 40.5, 37.5);
-  await L.teleport(g1, 39.8, 37.5);
-  await L.teleport(g2, 30.5, 38.5);
+  await L.teleport(host, 48.5, 50.5);
+  await L.teleport(g1, 47.8, 50.5);
+  await L.teleport(g2, 42.5, 49.5);
   await L.waitFor(async () => !(await g1.page.$eval('#actSleep', (b) => b.disabled)));
   await g1.page.click('#actSleep');
   check('まもり星（ホスト）がねむる', await L.waitFor(async () => (await L.roomOf(code)).game.asleep?.['ホスト'] === 'slept'));
   await L.patchGame(code, { angelReadyAt: 1, cooldown: { 'あお': Date.now() + 3600000 } });
-  await L.teleport(host, 31.5, 38.5);
+  await L.teleport(host, 43.5, 49.5);
   check('ねむってからも「まもる」が押せる', await L.waitFor(async () => (await L.text(host, '#actJobLabel')) === 'まもる' && !(await host.page.$eval('#actJob', (b) => b.disabled))));
   check('チェッカーに「ねむっている」', await (async () => { await g3.page.click('#actJob'); const ok = await L.waitFor(async () => (await L.text(g3, '#vitalsList')).includes('ねむっている')); await g3.page.keyboard.press('Escape'); return ok; })());
 
@@ -218,6 +218,10 @@ const { E, check, sleep } = L;
   await L.waitFor(() => L.visible(g2, '#actFind'));
   await g2.page.click('#actFind');
   check('会議がひらく', await L.waitFor(() => L.visible(g3, '#ovMeeting')));
+  // ねむらせ屋どうしだけ、仲間の名前が赤（2026-10-29 子どもの要望）。隊員の画面ではみんな同じ色
+  check('ねむらせ屋の画面では、ねむらせ屋の名前が赤', await L.waitFor(async () => (await g1.page.$$eval('#ovMeeting .nk-vote__name--mate', (els) => els.map((e) => e.textContent).join(','))) === 'あお'));
+  check('赤は #D9433B', (await g1.page.$eval('#ovMeeting .nk-vote__name--mate', (e) => getComputedStyle(e).color)) === 'rgb(217, 67, 59)');
+  check('隊員の画面では赤い名前はない', (await g3.page.$$('#ovMeeting .nk-vote__name--mate')).length === 0 && (await g2.page.$$('#ovMeeting .nk-vote__name--mate')).length === 0);
   room = await L.roomOf(code);
   check('会議でへんしん・バリアは消える', !room.game.shape?.['あお'] && !room.game.shield?.['そら']);
   check('会議の間は小さな地図をかくす', await L.waitFor(async () => !(await L.visible(g3, '#miniMap'))));

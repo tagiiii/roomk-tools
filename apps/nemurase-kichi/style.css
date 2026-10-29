@@ -321,6 +321,7 @@ button.nk-vote__main:hover { border-color: var(--color-border); }
 .nk-vote__row.is-picked .nk-vote__main { border-color: var(--color-accent); background: #E3F1F3; }
 .nk-vote__row.is-asleep { opacity: 0.55; }
 .nk-vote__name { font-weight: 700; }
+.nk-vote__name--mate { color: #D9433B; }   /* ねむらせ屋の画面でだけ、仲間のねむらせ屋 */
 .nk-vote__go { margin-right: 8px; white-space: nowrap; }
 .nk-vote__say { flex-basis: 100%; font-size: 13px; color: var(--color-muted); font-weight: 500; }
 .nk-meeting__say { margin-bottom: 14px; }

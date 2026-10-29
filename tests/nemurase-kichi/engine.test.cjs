@@ -41,7 +41,7 @@ ok(E.LADDERS[0].room === 'radio' && E.LADDERS[1].room === 'tower', 'はしごは
 ok(E.canStand(E.CAM_STAND.x, E.CAM_STAND.y) && E.roomAt(E.CAM_STAND.x, E.CAM_STAND.y) === 'monitor', 'カメラの台は監視室の中で立てる（2026-10-29 通信室から移した）');
 ok(!!E.path(HOME, { x: Math.floor(E.CAM_STAND.x), y: Math.floor(E.CAM_STAND.y) }), 'カメラの台に行ける');
 ok(E.SPOTS.every((sp) => E.dist(sp, E.CAM_STAND) > E.USE_RANGE * 2) && E.VENTS.every((v) => E.dist(v, E.CAM_STAND) > E.USE_RANGE * 2) && E.LADDERS.every((l) => E.dist(l, E.CAM_STAND) > E.USE_RANGE * 2), 'カメラの台が仕事の場所・近道・はしごから離れている');
-ok(E.CAMS.length === 6 && E.CAM_R === 2.5 && E.CAMS.every((c, i) => c.id === i && c.name), 'カメラは6つ・映る広さ2.5マス');
+ok(E.CAMS.length === 8 && E.CAM_R === 2.5 && E.CAMS.every((c, i) => c.id === i && c.name), 'カメラは8つ・映る広さ2.5マス');
 E.CAMS.forEach((c) => {
   ok(E.isFloor(Math.floor(c.x), Math.floor(c.y)) && E.roomAt(c.x, c.y) === null, 'カメラは通路の上 ' + c.id);
   ok(!!E.path(HOME, { x: Math.floor(c.x), y: Math.floor(c.y) }), 'カメラの下まで行ける ' + c.id);
@@ -55,9 +55,10 @@ ok(JSON.stringify(E.newGame(['a', 'b', 'c', 'd'], {}, fixed).cam) === '{}', 'は
 
 // 行き止まりの小部屋（道具室・温室）: 入口は1つ。入口の2マスをふさぐと、ひろばから行けなくなる
 const DEAD_ENDS = [
-  { room: 'tools', spot: 11, mouth: [[8, 13], [8, 14]], from: 'power' },
-  { room: 'green', spot: 12, mouth: [[56, 14], [56, 15]], from: 'store' },
-  { room: 'power', spot: 6, mouth: [[16, 35], [17, 35]], from: 'tower' },   // 2026-10-29 電気室も行き止まり
+  { room: 'tools', spot: 11, mouth: [[29, 50], [30, 50]], from: 'pump' },
+  { room: 'green', spot: 12, mouth: [[74, 18], [74, 19]], from: 'store' },
+  { room: 'power', spot: 6, mouth: [[22, 44], [23, 44]], from: 'tower' },   // 2026-10-29 電気室も行き止まり
+  { room: 'attic', spot: 18, mouth: [[74, 5], [74, 6]], from: 'farm' },     // 2026-10-29 夕 屋根うら
 ];
 const roomTiles = (key) => { const r = E.ROOMS.find((q) => q.key === key); const out = []; for (let y = r.y; y < r.y + r.h; y++) for (let x = r.x; x < r.x + r.w; x++) out.push({ x, y }); return out; };
 DEAD_ENDS.forEach((d) => {
@@ -78,13 +79,13 @@ DEAD_ENDS.forEach((d) => {
   }));
   ok(outside.length === 2, '小部屋の出口は通路の2マスだけ ' + d.room, outside);
 });
-ok(new Set(E.ROOMS.map((r) => r.key)).size === 14 && E.SPOTS.length === 18 && E.SPOTS.every((sp, i) => sp.id === i), '部屋14・仕事の場所18・id は並び順（2026-10-29 マップを広げ、電気室を行き止まりへ移して休けい室を足した）');
+ok(new Set(E.ROOMS.map((r) => r.key)).size === 18 && E.SPOTS.length === 22 && E.SPOTS.every((sp, i) => sp.id === i), '部屋18・仕事の場所22・id は並び順（2026-10-29 夕 84×56 に広げた）');
 ok(E.roomAt(E.FIX_SPOT.x, E.FIX_SPOT.y) === 'power', '停電をなおすスイッチは電気室');
 ok(E.VIEW.crew === 5.5 && E.VIEW.sleeper === 7.5 && E.VIEW.dark === 2.4, '見える広さ（隊員 5.5・ねむらせ屋 7.5・停電中 2.4）');
-ok(E.W === 64 && E.H === 43, 'マップは 64×43 マス');
+ok(E.W === 84 && E.H === 56, 'マップは 84×56 マス');
 // 四角を組み合わせた部屋（L字・T字・十字）: 続きの四角も同じ部屋。名前は最初の四角だけ
-ok(E.ROOMS.filter((r) => r.part).length === 4 && E.ROOMS.filter((r) => r.part).every((r) => !r.name && E.ROOMS.find((q) => q.key === r.key && !q.part)), '続きの四角は4つで、名前のある本体がある');
-ok(E.roomAt(3.5, 10.5) === 'kitchen' && E.roomAt(54.5, 11.5) === 'farm' && E.roomAt(33, 15) === 'plaza' && E.roomAt(58.5, 28.5) === 'store', '続きの四角の中も、その部屋');
+ok(E.ROOMS.filter((r) => r.part).length === 3 && E.ROOMS.filter((r) => r.part).every((r) => !r.name && E.ROOMS.find((q) => q.key === r.key && !q.part)), '続きの四角は4つで、名前のある本体がある');
+ok(E.roomAt(3.5, 11.5) === 'kitchen' && E.roomAt(61.5, 11.5) === 'farm' && E.roomAt(44, 16) === 'plaza' && E.roomAt(36, 27) === 'plaza', '続きの四角の中も、その部屋');
 ok(E.roomName('kitchen') === '台所' && E.roomName('playroom') === 'ゲーム室' && E.roomName('monitor') === '監視室', '部屋の名前（本体から引く）');
 ok(E.roomAt(E.TABLE.x, E.TABLE.y) === 'plaza', 'テーブルはひろばのまん中');
 E.SPOTS.forEach((sp) => ok(E.roomAt(sp.x, sp.y) === sp.room, '仕事の場所は書いてある部屋の中 ' + sp.id, E.roomAt(sp.x, sp.y)));
@@ -93,11 +94,11 @@ E.SPOTS.forEach((sp) => ok(E.roomAt(sp.x, sp.y) === sp.room, '仕事の場所は
 // かべの向こうは見えない（canSee）
 ok(E.canSee({ x: 4.5, y: 3.5 }, { x: 9.5, y: 6.5 }), '同じ部屋の中は見える');
 ok(!E.canSee({ x: 12.5, y: 3.5 }, { x: 20.5, y: 3.5 }), '台所から通信室へ、かべごしには見えない');
-ok(E.canSee({ x: 12.5, y: 4.5 }, { x: 20.5, y: 4.5 }), '通路を通して見える');
-ok(!E.canSee({ x: 10.5, y: 18.5 }, { x: 10.5, y: 14.5 }), '休けい室から道具室へ、かべごしには見えない（近くても）');
-ok(E.canSee({ x: 6.5, y: 13.5 }, { x: 11.5, y: 13.5 }), '道具室の入口から、奥の仕事の場所が見える');
-ok(!E.canSee({ x: 60.5, y: 15.5 }, { x: 60.5, y: 19.5 }), '温室から倉庫へ、かべごしには見えない');
-ok(E.canSee({ x: 25, y: 21 }, { x: 40, y: 21 }) && E.canSee({ x: 33, y: 15 }, { x: 33, y: 26 }) && !E.canSee({ x: 29, y: 15 }, { x: 25, y: 20 }), '十字のひろばは、まん中の通りは見え、かどの向こうは見えない');
+ok(E.canSee({ x: 12.5, y: 5.5 }, { x: 20.5, y: 5.5 }), '通路を通して見える');
+ok(!E.canSee({ x: 10.5, y: 16.5 }, { x: 10.5, y: 9.5 }), '休けい室から台所へ、かべごしには見えない');
+ok(E.canSee({ x: 29.5, y: 49.5 }, { x: 31.5, y: 53.5 }), '道具室の入口から、奥の仕事の場所が見える');
+ok(!E.canSee({ x: 77.5, y: 21.5 }, { x: 66.5, y: 21.5 }), '温室から倉庫へ、かべごしには見えない');
+ok(E.canSee({ x: 35, y: 27 }, { x: 52, y: 27 }) && E.canSee({ x: 44, y: 16 }, { x: 44, y: 37 }) && !E.canSee({ x: 39, y: 16 }, { x: 35, y: 23 }), '十字のひろばは、まん中の通りは見え、かどの向こうは見えない');
 ok(!E.canSee({ x: 4.5, y: 3.5 }, { x: 0.5, y: 0.5 }), 'かべの中の点は見えない');
 ok(E.canSee({ x: 4.5, y: 3.5 }, { x: 4.5, y: 3.5 }), '自分の位置は見える');
 ok(!E.canSee({ x: 0.5, y: 0.5 }, { x: 4.5, y: 3.5 }), 'かべの中からは何も見えない');
@@ -116,12 +117,12 @@ ok(!E.canSee({ x: 0.5, y: 0.5 }, { x: 4.5, y: 3.5 }), 'かべの中からは何�
   ok(poly.length === E.VIEW_RAYS, '光線の本数ぶんの点', poly.length);
   ok(poly.every((p) => E.dist(p, from) <= 7.5 + 1e-9), 'どの点も半径の中');
   ok(poly.every((p) => !(p.x >= 19 && p.y < 4)), '通信室の上の方（かべの向こう）には届かない');
-  ok(poly.some((p) => p.x >= 18.5 && p.y >= 4 && p.y <= 6), '通路を通して通信室の側へ届く');
+  ok(E.viewPolygon({ x: 12.5, y: 5.5 }, 7.5).some((p) => p.x >= 18.5 && p.y >= 5 && p.y <= 7), '通路を通して通信室の側へ届く');
   const right = poly.filter((p) => Math.abs(p.y - 3.5) < 0.05 && p.x > from.x);
   ok(right.length && right.every((p) => p.x >= 14 && p.x <= 14 + E.VIEW_OVER + 1e-9), '右のかべに当たった光線は、かべの面を少しこえた所で止まる', right);
-  const open = E.viewPolygon({ x: 33, y: 25.5 }, 2, 8, 0);
-  ok(open.every((p) => Math.abs(E.dist(p, { x: 33, y: 25.5 }) - 2) < 1e-9), 'かべがなければ丸');
-  ok(E.rayDist({ x: 4.5, y: 3.5 }, -1, 0, 10) === 2.5 && E.rayDist({ x: 4.5, y: 3.5 }, 0, -1, 10) === 1.5, 'かべまでの距離');
+  const open = E.viewPolygon({ x: 44, y: 34.5 }, 2, 8, 0);
+  ok(open.every((p) => Math.abs(E.dist(p, { x: 44, y: 34.5 }) - 2) < 1e-9), 'かべがなければ丸');
+  ok(E.rayDist({ x: 4.5, y: 5.5 }, -1, 0, 10) === 2.5 && E.rayDist({ x: 4.5, y: 5.5 }, 0, -1, 10) === 3.5, 'かべまでの距離');
 }
 ok(E.DEFAULT_SETTINGS.cooldown === 20 && E.SETTING_OPTS.cooldown.join() === '15,20,30', 'ねむらせる待ち時間のはじめの値と選べる値');
 
@@ -130,7 +131,7 @@ ok(E.encodePos(12.34, 5.06, -1) === '123,51,0', '位置を短い文字列に');
 ok(JSON.stringify(E.decodePos('123,51,0')) === JSON.stringify({ x: 12.3, y: 5.1, face: -1, hidden: false }), '文字列から位置へ');
 ok(E.encodePos(12.34, 5.06, -1, true) === '123,51,2' && E.decodePos('123,51,2').hidden === true && E.decodePos('123,51,2').face === 1, '近道の中（見えない）の印は 2');
 // 近道は8か所で、どれもちがう部屋（行き先を部屋の名前で選ぶため。2026-10-29）
-ok(E.VENTS.length === 8 && new Set(E.VENTS.map((v) => E.roomAt(v.x, v.y))).size === 8 && E.VENTS.every((v) => E.roomAt(v.x, v.y)), '近道は8か所・どれもちがう部屋の中');
+ok(E.VENTS.length === 10 && new Set(E.VENTS.map((v) => E.roomAt(v.x, v.y))).size === 10 && E.VENTS.every((v) => E.roomAt(v.x, v.y)), '近道は10か所・どれもちがう部屋の中');
 ok(E.VENT_STAY_S === 10, '近道の中にいられるのは10秒');
 ['', 'x', '1,2', '1,2,3', '9999,1,1', '-5,1,1', '1,2,4'].forEach((t) => ok(E.decodePos(t) === null, 'こわれた位置は読まない ' + t));
 
@@ -264,7 +265,7 @@ ok(E.stepFree({ x: 0.5, y: 3.5 }, -1, 0, 1).x === E.RADIUS, 'ねむった人も�
 ok(E.stepFree({ x: E.W - 0.5, y: E.H - 0.5 }, 1, 1, 1).x === E.W - E.RADIUS && E.stepFree({ x: E.W - 0.5, y: E.H - 0.5 }, 1, 1, 1).y === E.H - E.RADIUS, 'ねむった人もマップの外には出ない（右下）');
 ok(E.stepFree({ x: E.TABLE.x, y: E.TABLE.y - 2.4 }, 0, 1, 1).y > E.TABLE.y, 'ねむった人はテーブルも通りぬける');
 // ドア: 通路の上・部屋のふち・6部屋・とじると通れない・上にいた人は出られる・道さがしも通らない・ひろばにはない
-ok(E.DOOR_ROOMS.length === 10 && !E.DOOR_ROOMS.includes('plaza') && !E.DOOR_ROOMS.includes('tools') && !E.DOOR_ROOMS.includes('green') && !E.DOOR_ROOMS.includes('power'), 'ドアは10部屋（ひろば・行き止まりの小部屋（道具室・温室・電気室）にはない）');
+ok(E.DOOR_ROOMS.length === 13 && ['plaza', 'tools', 'green', 'power', 'attic'].every((k) => !E.DOOR_ROOMS.includes(k)), 'ドアは13部屋（ひろば・行き止まりの小部屋（道具室・温室・電気室・屋根うら）にはない）');
 E.DOORS.forEach((d, i) => {
   for (let y = d.y; y < d.y + d.h; y++) for (let x = d.x; x < d.x + d.w; x++) ok(E.isFloor(x, y), 'ドアは床の上 ' + i + ' ' + x + ',' + y);
   ok(E.DOOR_ROOMS.includes(d.room), 'ドアの部屋はドアのある部屋 ' + i);
@@ -279,13 +280,13 @@ E.DOOR_ROOMS.forEach((key) => {
 });
 {
   const closed = E.doorTiles(['kitchen']);
-  // 台所と通信室の間のドア（x=14, y=4..5）。右（通路）から左へ歩いても入れない
-  const p = E.step({ x: 15.5, y: 5 }, -1, 0, 1, closed);
+  // 台所と通信室の間のドア（x=14, y=5..6）。右（通路）から左へ歩いても入れない
+  const p = E.step({ x: 15.5, y: 6 }, -1, 0, 1, closed);
   ok(p.x >= 15 + E.RADIUS - 1e-9, 'とじたドアには入れない', p);
   // ドアの上にいた人は出られる
-  const q = E.step({ x: 14.5, y: 5 }, 1, 0, 1, closed);
+  const q = E.step({ x: 14.5, y: 6 }, 1, 0, 1, closed);
   ok(q.x > 15, 'とじた瞬間にドアの上にいた人は出られる', q);
-  ok(!E.canStand(14.5, 5, closed) && E.canStand(14.5, 5), 'とじたドアの上には立てない（ひらいていれば立てる）');
+  ok(!E.canStand(14.5, 6, closed) && E.canStand(14.5, 6), 'とじたドアの上には立てない（ひらいていれば立てる）');
   ok(E.closedRooms({ doors: { kitchen: 100, farm: 50, plaza: 100 } }, 60).join() === 'kitchen', 'いまとじている部屋（時刻が過ぎたもの・ひろばは入れない）');
 }
 // 空気のパネル・ふたりの仕事のスイッチ: 立てる・行ける・書いてある部屋・ほかとかさならない
