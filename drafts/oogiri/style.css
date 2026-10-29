@@ -42,6 +42,16 @@ body { background: var(--color-bg); }
 .og-start { display: grid; gap: 4px; text-align: center; }
 .og-start .btn { min-height: 52px; font-size: 18px; }
 .og-phase[hidden], .og-main [hidden] { display: none !important; }
+/* お題を選ぶ・結果の画面の「参加のしかた」も、ほかのカードと同じ幅に */
+#og-mode-home { width: 100%; max-width: 760px; margin: 0 auto; }
+/* ホストのすること */
+.og-guide { border: 2px dashed var(--color-accent); background: #EAF4F6; }
+.og-guide strong { color: var(--color-primary); }
+/* たまに使う操作（開くと出る） */
+.og-more { margin-top: 14px; border-top: 1px solid var(--color-border); padding-top: 12px; }
+.og-more__sum { cursor: pointer; font-weight: 700; color: var(--color-primary); font-size: 15px; }
+.og-more[open] .og-more__sum { margin-bottom: 8px; }
+#slot-proxy-result > .og-more { margin: 0; padding: 16px 20px; border: none; border-radius: 16px; background: var(--color-surface); }
 .og-h2 { font-size: 18px; color: var(--color-primary); margin: 0 0 12px; }
 .og-h2--center { text-align: center; }
 .og-h3 { font-size: 15px; font-weight: 700; color: var(--color-primary); margin: 0 0 8px; padding: 0; }

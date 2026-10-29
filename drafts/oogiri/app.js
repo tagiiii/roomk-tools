@@ -525,7 +525,7 @@
   function bindButtons() {
     $('btn-start').addEventListener('click', () => host.start());
     $('btn-copy').addEventListener('click', () => copyText(location.origin + location.pathname + '?room=' + S.code, $('btn-copy'), 'リンクをコピー'));
-    $('btn-watch').addEventListener('click', () => { window.open(location.origin + location.pathname + '?watch=' + S.code, '_blank'); });
+    ['btn-watch', 'btn-watch-guide'].forEach((id) => $(id).addEventListener('click', () => { window.open(location.origin + location.pathname + '?watch=' + S.code, '_blank'); }));
     $('btn-reroll').addEventListener('click', () => host.reroll());
     $('answer-form').addEventListener('submit', (e) => {
       e.preventDefault();
@@ -672,6 +672,7 @@
       ? V.minutes + '分たったら答えを締め切って、結果を見る'
       : '一本が出たら、そのお題はおしまい。結果を見て次のお題へ';
     $('lobby-host').hidden = !isHost();
+    $('lobby-guide').hidden = !isHost();
     $('lobby-start').hidden = !isHost();
     $('btn-copy').hidden = !isHost();
     $('lobby-wait').hidden = isHost() || S.role === 'watch';
