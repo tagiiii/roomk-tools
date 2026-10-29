@@ -80,7 +80,7 @@ const { E, check, sleep } = L;
   check('参加者の一覧には選ぶボタンがない', (await g1.page.$$('#lobbyPeople .nk-person__pick')).length === 0);
   await host.page.click('#lobbyPeople .nk-person__pick[aria-label="ねむらせ屋にする: そら"]');
   check('選んだ人にタグ・ボタンは「はずす」', await L.waitFor(async () => (await host.page.$$('#lobbyPeople .nk-tag--sleeper')).length === 1 && (await host.page.$('#lobbyPeople .nk-person__pick[aria-label="ねむらせ屋からはずす: そら"]')) !== null));
-  check('選ぶとはじめられる・注意書きが消える', await L.waitFor(async () => !(await host.page.$eval('#btnStart', (b) => b.disabled)) && (await L.text(host, '#lobbyNote')) === ''));
+  check('選ぶとはじめられる・注意書きが消える', await L.waitFor(async () => !(await host.page.$eval('#btnStart', (b) => b.disabled)) && !(await L.text(host, '#lobbyNote')).includes('ねむらせ屋')));   // 2026-10-30 から、止める注意がないときは人数のおすすめが出る
   await host.page.click('#lobbyPeople .nk-person__pick[aria-label="ねむらせ屋にする: あお"]');
   check('2人選ぶと多すぎの注意書き・はじめられない', await L.waitFor(async () => (await host.page.$eval('#btnStart', (b) => b.disabled)) && (await L.text(host, '#lobbyNote')) === 'ねむらせ屋は 1 人です。1 人はずしてください'));
   await host.page.click('#lobbyPeople .nk-person__pick[aria-label="ねむらせ屋からはずす: あお"]');

@@ -1045,19 +1045,46 @@ function togglePick(id) {
 
 // 待合室で「まず決めること」として出す設定（ほかは「くわしい設定」にたたむ）。2026-10-30 はじめてのホストが迷わないように
 const MAIN_SETTINGS = ['hostPlays', 'map'];
-const moreKeys = () => Object.keys(SETTING_LABELS).filter((k) => !MAIN_SETTINGS.includes(k));
+// くわしい設定のまとまり（見出しと、その中の設定。SETTING_LABELS のうち MAIN_SETTINGS でないものを、ちょうど1回ずつ）
+const MORE_GROUPS = [
+  ['ねむらせ屋', ['sleepers', 'pick', 'cooldown']],
+  ['仕事', ['tasks', 'pair', 'gauge']],
+  ['会議', ['meeting', 'buttons']],
+  ['役職（なれてから1つずつ入れる）', ['engineer', 'watcher', 'angel', 'shifter']],
+];
+const moreKeys = () => MORE_GROUPS.flatMap((g) => g[1]);
+// 設定の下に出す1行の説明（何が変わるか）。役職は名前のかっこの中に書いてあるので出さない
+const SETTING_DESC = {
+  hostPlays: '「進行だけ」は遊ばずに進める。進行役の画面には、だれがどこにいるかが出ない',
+  map: 'パークは29部屋で広い。ひみつ基地は18部屋',
+  sleepers: '2人にできるのは、遊ぶ人が7人以上のとき',
+  pick: '「ホストが選ぶ」は、あそぶ人の一覧でねむらせ屋を選ぶ',
+  cooldown: '短いほど、ねむらせ屋が有利',
+  tasks: '多いほど、仕事で勝つまでが長くなる',
+  pair: '離れた2つの部屋のスイッチを、だれかと同時におす仕事',
+  gauge: 'みんなの仕事がどこまで進んだかのバー',
+  meeting: '話し合いと投票の時間',
+  buttons: 'テーブルの会議ボタンを、ひとりが押せる回数',
+};
+// 人数に合わせたおすすめ（ホストの画面だけ。押しつけず「〜もできる」の形で出す）
+function settingRecs(s, n) {
+  const out = {};
+  if (s.pair === 1 && n >= E.MIN_PLAYERS && n <= 5) out.pair = n + '人なら「なし」もおすすめ。ふたりの相手が見つかりにくい';
+  if (s.sleepers === 1 && n >= E.TWO_SLEEPERS_MIN && n <= E.MAX_PLAYERS) out.sleepers = n + '人なので、2人にもできる';
+  return out;
+}
 const moreChanged = (s) => moreKeys().filter((k) => s[k] !== E.DEFAULT_SETTINGS[k]).length;
 
 // 「はじめる」の上に出す、いまの設定の要約
 function lobbySummary(s, n) {
-  const jobs = ['engineer', 'watcher', 'angel', 'shifter'].filter((k) => s[k] === 1).length;
+  const jobs = ['engineer', 'watcher', 'angel', 'shifter'].filter((k) => s[k] === 1).map((k) => E.JOB_NAMES[k]);
   return [
     n + '人',
     SETTING_LABELS.map[1](s.map),
     'ねむらせ屋' + E.sleeperCount(s, Math.max(n, 1)) + '人',
     'ひとりの仕事' + s.tasks + 'つ' + (s.pair ? '＋ふたりの仕事' : ''),
     s.hostPlays === 0 ? 'ホストは進行だけ' : '',
-    jobs ? '役職' + jobs + 'つ' : '',
+    jobs.length ? '役職（' + jobs.join('・') + '）' : '',
   ].filter(Boolean).join('・');
 }
 
@@ -2022,22 +2049,26 @@ function renderWaiting(room) {
 
   const box = $('lobbySettings');
   const more = $('lobbyMore');
-  const key = JSON.stringify(s) + host;
+  const recs = host ? settingRecs(s, n) : {};
+  const key = JSON.stringify(s) + host + JSON.stringify(recs);
   if (box._key !== key) {
     box._key = key;
     box.replaceChildren();
     more.replaceChildren();
-    Object.keys(SETTING_LABELS).forEach((k) => {
-      if (k === 'hostPlays' && !host) return;
+    const rowOf = (k) => {
       const [label, fmt] = SETTING_LABELS[k];
       const changed = s[k] !== E.DEFAULT_SETTINGS[k];
       const row = makeElement('div', 'nk-setting' + (changed ? ' is-changed' : ''));
       const id = 'set-' + k;
+      const text = makeElement('div', 'nk-setting__text');
       const lab = makeElement('label', 'nk-setting__label', label);
       lab.htmlFor = id;
       // はじめの値から変えた設定には印（前の回に変えたままでも、ひと目で分かるように）
       if (changed) lab.appendChild(makeElement('span', 'nk-tag nk-tag--changed', '変えた'));
-      row.appendChild(lab);
+      text.appendChild(lab);
+      if (SETTING_DESC[k]) text.appendChild(makeElement('p', 'nk-setting__desc', SETTING_DESC[k]));
+      if (recs[k]) text.appendChild(makeElement('p', 'nk-setting__rec', recs[k]));
+      row.appendChild(text);
       if (host) {
         const sel = makeElement('select', 'form-input nk-setting__select');
         sel.id = id;
@@ -2054,12 +2085,23 @@ function renderWaiting(room) {
         v.id = id;
         row.appendChild(v);
       }
-      (MAIN_SETTINGS.includes(k) ? box : more).appendChild(row);
+      return row;
+    };
+    MAIN_SETTINGS.forEach((k) => { if (k !== 'hostPlays' || host) box.appendChild(rowOf(k)); });
+    // くわしい設定は、まとまりごとに見出しをつける
+    MORE_GROUPS.forEach(([title, keys]) => {
+      const sec = makeElement('section', 'nk-more__group');
+      sec.appendChild(makeElement('h4', 'nk-more__group-title', title));
+      keys.forEach((k) => sec.appendChild(rowOf(k)));
+      more.appendChild(sec);
     });
-    const n = moreChanged(s);
-    setText('moreSub', n ? n + 'つ変えています' : 'はじめのままで遊べます');
-    $('btnResetSettings').hidden = !host || !n;
+    const nc = moreChanged(s);
+    const nr = Object.keys(recs).filter((k) => !MAIN_SETTINGS.includes(k)).length;
+    setText('moreSub', (nc ? nc + 'つ変えています' : 'はじめのままで遊べます') + (nr ? '・おすすめあり' : ''));
+    $('btnResetSettings').hidden = !host || !nc;
   }
+  // 参加者の画面は、設定の欄を出さず、下の帯の要約だけ（選べないので。値は欄の中に持っておく）
+  $('lobbySettingsWrap').hidden = !host;
 
   let note = '';
   if (n < E.MIN_PLAYERS) note = 'あと ' + (E.MIN_PLAYERS - n) + ' 人でスタートできます' + (host ? '（練習用のロボットでもいい）' : '');
@@ -2070,6 +2112,11 @@ function renderWaiting(room) {
     note = shortage > 0
       ? 'ねむらせ屋にする人を、あと ' + shortage + ' 人えらんでください'
       : 'ねむらせ屋は ' + E.sleeperCount(s, n) + ' 人です。' + (-shortage) + ' 人はずしてください';
+  }
+  // 止める注意がないときは、人数に合わせたおすすめを1つ出す（ホストだけ）
+  if (!note && host) {
+    const k = Object.keys(recs)[0];
+    if (k) note = SETTING_LABELS[k][0] + ': ' + recs[k] + '（くわしい設定）';
   }
   $('lobbyNote').textContent = note;
   setText('startSummary', lobbySummary(s, n));

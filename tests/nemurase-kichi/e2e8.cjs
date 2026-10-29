@@ -1,5 +1,6 @@
 // その8: はじめてのホストが迷わない待合室（2026-10-30）
 // まず決めること（ホスト・マップ）と、たたんだ「くわしい設定」・下に固定した要約と「はじめる」・変えた印と「くわしい設定をはじめの値にもどす」・375px
+// まとまりの見出しと1行の説明・人数に合わせたおすすめ・参加者は要約だけ
 const L = require('./lib.cjs');
 const { E, check, sleep } = L;
 
@@ -18,9 +19,15 @@ const inView = (c, sel) => c.page.$eval(sel, (b) => { const r = b.getBoundingCli
 
   // ══ まず決めること と くわしい設定 ══
   check('ホストの「まず決めること」はホストとマップの2つ', (await rows(host, 'lobbySettings')).join() === 'set-hostPlays,set-map', await rows(host, 'lobbySettings'));
-  check('参加者の「まず決めること」はマップだけ', (await rows(g1, 'lobbySettings')).join() === 'set-map');
+  check('参加者には設定の欄を出さない（要約だけ）', !(await L.visible(g1, '#lobbySettingsWrap')) && (await L.visible(g1, '#startSummary')));
+  check('参加者の欄の中の値はある（マップだけ・ホストの行なし）', (await rows(g1, 'lobbySettings')).join() === 'set-map');
   const moreIds = await rows(host, 'lobbyMore');
   check('のこりの12個は「くわしい設定」', moreIds.length === 12 && moreIds.includes('set-tasks') && moreIds.includes('set-shifter'), moreIds);
+  const groups = await host.page.$$eval('#lobbyMore .nk-more__group-title', (n) => n.map((x) => x.textContent));
+  check('まとまりの見出し（ねむらせ屋・仕事・会議・役職）', groups.join('|') === 'ねむらせ屋|仕事|会議|役職（なれてから1つずつ入れる）', groups);
+  const descs = await host.page.$$eval('.nk-setting__desc', (n) => n.length);
+  check('1行の説明は10個（役職はなし）', descs === 10, descs);
+  check('説明の例: ねむらせてから次まで', (await host.page.$eval('#set-cooldown', (s) => s.closest('.nk-setting').querySelector('.nk-setting__desc').textContent)) === '短いほど、ねむらせ屋が有利');
   for (const c of [host, g1]) {
     const st = await c.page.evaluate(() => ({ open: document.getElementById('moreSettings').open, seen: document.querySelector('#lobbyMore .nk-setting').checkVisibility() }));
     check('くわしい設定は、はじめはたたんである ' + c.label, !st.open && !st.seen, st);
@@ -50,7 +57,7 @@ const inView = (c, sel) => c.page.$eval(sel, (b) => { const r = b.getBoundingCli
   check('「3つ変えています」', (await L.text(host, '#moreSub')) === '3つ変えています');
   check('参加者にも印と数', await L.waitFor(async () => (await changed(g1)).length === 3 && (await L.text(g1, '#moreSub')) === '3つ変えています'));
   check('ひらいた状態は描きなおしても保たれる', await host.page.$eval('#moreSettings', (d) => d.open));
-  check('要約: ひとりの仕事3つ（ふたりの仕事なし）・役職1つ', (await L.text(host, '#startSummary')) === '2人・パーク・ねむらせ屋1人・ひとりの仕事3つ・役職1つ', await L.text(host, '#startSummary'));
+  check('要約: ひとりの仕事3つ（ふたりの仕事なし）・役職（まもり星）', (await L.text(host, '#startSummary')) === '2人・パーク・ねむらせ屋1人・ひとりの仕事3つ・役職（まもり星）', await L.text(host, '#startSummary'));
   check('もどすボタンが出る', await L.visible(host, '#btnResetSettings'));
   check('参加者には、もどすボタンは出ない', !(await L.visible(g1, '#btnResetSettings')));
   await host.page.evaluate(() => window.scrollTo(0, 0));
@@ -67,7 +74,7 @@ const inView = (c, sel) => c.page.$eval(sel, (b) => { const r = b.getBoundingCli
   await host.page.selectOption('#set-hostPlays', '0');
   await L.roomWhen(code, (r) => r && r.settings && r.settings.hostPlays === 0);
   check('マップ・ホストにも印', await L.waitFor(async () => (await changed(host)).includes('set-map') && (await changed(host)).includes('set-hostPlays')));
-  check('要約: ひみつ基地・ホストは進行だけ（遊ぶ人は1人）', await L.waitFor(async () => (await L.text(host, '#startSummary')) === '1人・ひみつ基地・ねむらせ屋1人・ひとりの仕事3つ・ホストは進行だけ・役職1つ'), await L.text(host, '#startSummary'));
+  check('要約: ひみつ基地・ホストは進行だけ（遊ぶ人は1人）', await L.waitFor(async () => (await L.text(host, '#startSummary')) === '1人・ひみつ基地・ねむらせ屋1人・ひとりの仕事3つ・ホストは進行だけ・役職（まもり星）'), await L.text(host, '#startSummary'));
   check('くわしい設定の数には入らない（3つのまま）', (await L.text(host, '#moreSub')) === '3つ変えています');
   await host.page.click('#btnResetSettings');
   const r0 = await L.roomWhen(code, (r) => r && r.settings && r.settings.tasks === 4);
@@ -99,8 +106,27 @@ const inView = (c, sel) => c.page.$eval(sel, (b) => { const r = b.getBoundingCli
   await sleep(200);
   await L.shot(host, '83b-lobby-host-375-bottom');
 
-  // ══ はじめられる（ロボットを足して） ══
+  // ══ 人数に合わせたおすすめ（ホストだけ） ══
+  await host.page.setViewportSize({ width: 1200, height: 800 });
+  const rec = (k) => host.page.$eval('#set-' + k, (s) => (s.closest('.nk-setting').querySelector('.nk-setting__rec') || {}).textContent || '');
+  check('2人ではおすすめなし', (await rec('pair')) === '' && (await L.text(host, '#lobbyNote')).startsWith('あと'));
   for (let i = 0; i < 2; i++) await host.page.click('#btnAddBot');
+  check('4人: ふたりの仕事に「4人なら「なし」もおすすめ…」', await L.waitFor(async () => (await rec('pair')) === '4人なら「なし」もおすすめ。ふたりの相手が見つかりにくい'), await rec('pair'));
+  check('4人: 帯にもおすすめ（くわしい設定）', (await L.text(host, '#lobbyNote')) === 'ふたりの仕事: 4人なら「なし」もおすすめ。ふたりの相手が見つかりにくい（くわしい設定）', await L.text(host, '#lobbyNote'));
+  check('4人: 見出しに「おすすめあり」', (await L.text(host, '#moreSub')) === 'はじめのままで遊べます・おすすめあり', await L.text(host, '#moreSub'));
+  check('参加者にはおすすめを出さない', !(await L.text(g1, '#lobbyNote')).includes('おすすめ') && (await g1.page.$$('.nk-setting__rec')).length === 0);
+  await L.shot(host, '84-lobby-rec-4');
+  await host.page.$eval('#lobbySettings', (n) => n.scrollIntoView({ block: 'start' }));
+  await host.page.$eval('#moreSettings', (d) => { d.open = true; });
+  await host.page.$eval('#lobbyMore', (n) => n.scrollIntoView({ block: 'start' }));
+  await sleep(200);
+  await L.shot(host, '84b-lobby-groups');
+  for (let i = 0; i < 3; i++) await host.page.click('#btnAddBot');
+  check('7人: ふたりの仕事のおすすめは消え、ねむらせ屋の数に「7人なので、2人にもできる」', await L.waitFor(async () => (await rec('pair')) === '' && (await rec('sleepers')) === '7人なので、2人にもできる'));
+  await host.page.selectOption('#set-sleepers', '2');
+  check('2人にすると、おすすめは消える', await L.waitFor(async () => (await rec('sleepers')) === '' && (await L.text(host, '#lobbyNote')) === '' && !(await L.text(host, '#moreSub')).includes('おすすめ')));
+
+  // ══ はじめられる ══
   await host.page.click('#btnStart');
   for (const c of [host, g1]) await L.waitScreen(c, 'game');
   check('はじめると、ゲームの設定はもどしたあとの値', (await L.roomOf(code)).game.settings.tasks === 4);
