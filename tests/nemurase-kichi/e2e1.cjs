@@ -197,40 +197,40 @@ const { E, check, sleep } = L;
 
   // ══ 行き止まりの小部屋（道具室）══
   // 台所↔電気室の通路から右へ歩くと、通路を通って奥まで入れる。奥はかべで止まり、下へも出られない
-  await L.teleport(host, 6.8, 10.9);
+  await L.teleport(host, 6.8, 13.9);
   await host.page.keyboard.down('ArrowRight');
   await sleep(2600);
   await host.page.keyboard.up('ArrowRight');
   const deep = await L.me(host);
-  check('行き止まりの小部屋の奥まで入れる', deep.x > 14 && deep.x <= 15 - E.RADIUS + 0.01 && E.roomAt(deep.x, deep.y) === 'tools', deep);
+  check('行き止まりの小部屋の奥まで入れる', deep.x > 12 && deep.x <= 13 - E.RADIUS + 0.01 && E.roomAt(deep.x, deep.y) === 'tools', deep);
   await host.page.keyboard.down('ArrowDown');
   await sleep(1200);
   await host.page.keyboard.up('ArrowDown');
   const corner = await L.me(host);
-  check('行き止まりの奥はかべ（下へは出られない）', corner.y <= 13 - E.RADIUS + 0.01 && E.roomAt(corner.x, corner.y) === 'tools', corner);
+  check('行き止まりの奥はかべ（下へは出られない）', corner.y <= 16 - E.RADIUS + 0.01 && E.roomAt(corner.x, corner.y) === 'tools', corner);
   check('道具室の仕事の場所に「!」のやることとして出せる', E.SPOTS[11].room === 'tools' && E.SPOTS[12].room === 'green');
 
   // ══ かべの向こうの人は描かれない ══
-  // ホスト（隊員）は道具室の通路、みどりは電気室（かべ1枚へだてて2.1マス。見える広さの中）
+  // ホスト（隊員）は道具室、みどりは電気室（かべ1枚へだてて3マス。見える広さの中）
   const hexOf = async (id) => { const gg = await L.gameIn(host); return E.COLORS.find((c) => c.key === gg.colors[id]).hex; };
   const midoriHex = await hexOf('みどり');
-  await L.teleport(host, 9.5, 11.4);
-  await L.teleport(g2, 9.5, 13.5);
+  await L.teleport(host, 10.5, 14.4);
+  await L.teleport(g2, 10.5, 17.5);
   const paSettled = (x, y) => L.waitFor(async () => {
     const pa = await host.page.evaluate(() => window.__NK__.PA['みどり']);
     return pa && Math.hypot(pa.tx - x, pa.ty - y) < 0.05 && Math.hypot(pa.x - pa.tx, pa.y - pa.ty) < 0.01;
   });
-  check('かべの向こうの人の位置は届いている', await paSettled(9.5, 13.5));
+  check('かべの向こうの人の位置は届いている', await paSettled(10.5, 17.5));
   await sleep(300);
-  let px = await L.pixelAt(host, 9.5, 13.5);
+  let px = await L.pixelAt(host, 10.5, 17.5);
   check('かべの向こうの人は描かれない（その場所は暗がり）', !L.nearColor(px, midoriHex) && px.every((v) => v < 70), { px, midoriHex });
-  check('かべの向こうの床は暗がり', (await L.pixelAt(host, 8.5, 14.5)).every((v) => v < 70), await L.pixelAt(host, 8.5, 14.5));
-  check('同じ通路の床は明るい', (await L.pixelAt(host, 8.5, 10.5)).some((v) => v > 150), await L.pixelAt(host, 8.5, 10.5));
+  check('かべの向こうの床は暗がり', (await L.pixelAt(host, 9.5, 17.5)).every((v) => v < 70), await L.pixelAt(host, 9.5, 17.5));
+  check('同じ部屋の床は明るい', (await L.pixelAt(host, 9.5, 13.5)).some((v) => v > 150), await L.pixelAt(host, 9.5, 13.5));
   await L.shot(host, '02b-wall-hidden');
-  await L.teleport(g2, 7.5, 10.5);
-  check('通路に出てきた人の位置が届く', await paSettled(7.5, 10.5));
+  await L.teleport(g2, 7.5, 13.5);
+  check('通路に出てきた人の位置が届く', await paSettled(7.5, 13.5));
   await sleep(300);
-  px = await L.pixelAt(host, 7.5, 10.5);
+  px = await L.pixelAt(host, 7.5, 13.5);
   check('かべのない所の人は描かれる（同じ距離）', L.nearColor(px, midoriHex), { px, midoriHex });
   await L.shot(host, '02c-wall-visible');
   const s2 = await L.subs(g2);
@@ -296,8 +296,8 @@ const { E, check, sleep } = L;
   const camPixel = (c, i, below) => c.page.evaluate(([idx, dy]) => {
     const cv = document.getElementById('camView');
     const En = window.NemuraseEngine;
-    const w = cv.clientWidth; const dpr = cv.width / w; const cell = w / 2; const s = (cell - 8) / (En.CAM_R * 2 + 1);
-    const cx = (idx % 2) * cell + 4 + (cell - 8) / 2; const cy = Math.floor(idx / 2) * cell + 4 + (cell - 8) / 2 + (dy ? En.RADIUS * s * 1.25 * 0.4 : 0);
+    const w = cv.clientWidth; const dpr = cv.width / w; const cols = w >= 420 ? 3 : 2; const cell = w / cols; const s = (cell - 8) / (En.CAM_R * 2 + 1);
+    const cx = (idx % cols) * cell + 4 + (cell - 8) / 2; const cy = Math.floor(idx / cols) * cell + 4 + (cell - 8) / 2 + (dy ? En.RADIUS * s * 1.25 * 0.4 : 0);
     const d = cv.getContext('2d').getImageData(Math.round(cx * dpr), Math.round(cy * dpr), 1, 1).data; return [d[0], d[1], d[2]];
   }, [i, below]);
   await L.teleport(host, E.CAM_STAND.x, E.CAM_STAND.y + 0.5);
@@ -325,9 +325,9 @@ const { E, check, sleep } = L;
   await L.teleport(g1, E.CAM_STAND.x, E.CAM_STAND.y + 0.5);
   check('ねむらせ屋もカメラを見られる', await L.waitFor(async () => (await L.text(g1, '#actUseLabel')) === 'カメラを見る'));
 
-  // ══ ねむらせる ══（道具室の通路で。あとで、かべごしに「見つけた！」が出ないことを確かめるため）
-  await L.teleport(host, 9.5, 11.6);
-  await L.teleport(g1, 8.8, 11.6);
+  // ══ ねむらせる ══（道具室の下のはしで。あとで、かべごしに「見つけた！」が出ないことを確かめるため）
+  await L.teleport(host, 10.5, 15.4);
+  await L.teleport(g1, 9.8, 15.4);
   check('近くに隊員がいると、ねむらせるが押せる', await L.waitFor(async () => !(await g1.page.$eval('#actSleep', (b) => b.disabled))));
   await g1.page.click('#actSleep');
   check('ホストがねむる', await L.waitFor(async () => (await L.roomOf(code)).game.asleep?.['ホスト'] === 'slept'));
@@ -346,11 +346,11 @@ const { E, check, sleep } = L;
   await L.shot(host, '04-asleep');
 
   // ══ 見つけた → 会議 → 投票 → 結果 → おしまい ══
-  // かべ1枚へだてた電気室から（1.8マス。見つけられる距離の中）では「見つけた！」が出ない
-  await L.teleport(g2, 9.5, 13.4);
+  // かべ1枚へだてた電気室から（2マス。見つけられる距離の中）では「見つけた！」が出ない
+  await L.teleport(g2, 10.5, 17.4);
   await sleep(500);
   check('かべの向こうのねむっている人には「見つけた！」が出ない', !(await L.visible(g2, '#actFind')));
-  await L.teleport(g2, 9.5, 10.6);
+  await L.teleport(g2, 10.5, 13.6);
   check('ねむっている人の近くで「見つけた！」', await L.waitFor(() => L.visible(g2, '#actFind')));
   await g2.page.click('#actFind');
   for (const c of all) check('会議がひらく ' + c.label, await L.waitFor(() => L.visible(c, '#ovMeeting')));
@@ -437,13 +437,13 @@ const { E, check, sleep } = L;
   check('会議ボタンは1回まで', await L.waitFor(async () => (await L.text(g1, '#actUseLabel')).startsWith('会議ボタン（あと0回）')));
   // ねむらせ屋の勝ち
   await L.patchGame(code, { cooldown: { 'そら': 1 } });
-  await L.teleport(g3, 12.5, 15.5);
-  await L.teleport(g1, 13.2, 15.5);
+  await L.teleport(g3, 16.5, 22.5);   // 洗たく室
+  await L.teleport(g1, 17.2, 22.5);
   await L.waitFor(async () => !(await g3.page.$eval('#actSleep', (b) => b.disabled)));
   await g3.page.click('#actSleep');
   await L.waitFor(async () => (await L.roomOf(code)).game.asleep?.['あお']);
   await L.patchGame(code, { cooldown: { 'そら': 1 } });
-  await L.teleport(g2, 13.2, 16.3);
+  await L.teleport(g2, 17.2, 23.3);
   await L.waitFor(async () => !(await g3.page.$eval('#actSleep', (b) => b.disabled)));
   await g3.page.click('#actSleep');
   check('ねむらせ屋が勝つとおしまい', await L.waitFor(() => L.visible(host, '#ovEnd')));

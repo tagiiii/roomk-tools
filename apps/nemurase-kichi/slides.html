@@ -241,9 +241,9 @@ const SLIDES = [
     body:`<div class="rows">
       <div class="row"><div class="row__ic"><span class="material-symbols-rounded">keyboard</span></div><div><div class="row__t">矢印キーで歩く</div><div class="row__d">スマホ・タブレットは、左下のスティックで歩くよ</div></div></div>
       <div class="row"><div class="row__ic"><span class="material-symbols-rounded">pan_tool</span></div><div><div class="row__t">「!」の場所で「仕事をする」を押す</div><div class="row__d">線をつなぐ・番号を順に押す・メーターを合わせる。まちがえても大丈夫</div></div></div>
-      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">map</span></div><div><div class="row__t">どこに行くかは「やること」と「地図」を見る</div><div class="row__d">地図（M）には自分の場所と自分の仕事だけが出る。部屋には目印の家具があるよ</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">map</span></div><div><div class="row__t">どこに行くかは「やること」と右上の小さな地図を見る</div><div class="row__d">地図には自分の場所と自分の仕事だけが出る。押すと大きくなる。部屋は13こ、形と家具が目印</div></div></div>
     </div>`,
-    note:'歩くのは矢印キー。スマホやタブレットの人は、左下のスティックで歩くよ。\n黄色い「!」が出ている場所に行って「仕事をする」を押すと、短いミニゲームが出るよ。線をつなぐ、番号を順に押す、メーターを合わせる、の3つ。まちがえても大丈夫。\nどこに行けばいいかは、左上の「やること」と、上の「地図」ボタン（キーは M）を見てね。地図には自分の場所と自分の仕事だけが出るよ。部屋にはコンロやアンテナ、荷物などの目印があるから、おぼえる手がかりにしてね。\nかべや家具の向こうは見えないよ。入口が1つしかない行き止まりの部屋（道具室・温室）もあるから、入るときは気をつけて。\n通信室と見はり台をつなぐ「はしご」は、だれでも使えるよ。のぼったりおりたりするのに少し時間がかかる。\n通信室には「監視カメラ」の台がある。「カメラを見る」を押すと、通路の4か所が映るよ。でも、見ている間は動けないし、だれかが見ていると通路のカメラの赤いランプが光るから、ねむらせ屋にも分かる。停電中は映らない。' },
+    note:'歩くのは矢印キー。スマホやタブレットの人は、左下のスティックで歩くよ。\n黄色い「!」が出ている場所に行って「仕事をする」を押すと、短いミニゲームが出るよ。線をつなぐ、番号を順に押す、メーターを合わせる、の3つ。まちがえても大丈夫。\nどこに行けばいいかは、左上の「やること」と、右上の小さな地図を見てね。小さな地図には自分の場所と自分の仕事だけが出るよ。押すか「地図」ボタン（キーは M）で大きくなる。\n基地には部屋が13こある。L字や十字の形の部屋や、コンロやアンテナ、荷物などの目印があるから、おぼえる手がかりにしてね。\nかべや家具の向こうは見えないよ。入口が1つしかない行き止まりの部屋（道具室・温室）もあるから、入るときは気をつけて。\n通信室と見はり台をつなぐ「はしご」は、だれでも使えるよ。のぼったりおりたりするのに少し時間がかかる。\n監視室には「監視カメラ」の台がある。「カメラを見る」を押すと、通路の6か所が映るよ。でも、見ている間は動けないし、だれかが見ていると通路のカメラの赤いランプが光るから、ねむらせ屋にも分かる。停電中は映らない。' },
 
   /* 6 */ { type:'content', accent:'blue', section:'ゲーム説明', sectionEn:'explain', num:'2',
     headline:'「<span class="hl">ふたりの仕事</span>」と、<br>声の約束',
@@ -281,6 +281,15 @@ const SLIDES = [
     </div>`,
     note:'ねむってしまっても大丈夫。ねむった人は、おきている人には見えなくなるけど、そのまま歩いて仕事をつづけられるよ。かべも通りぬけて歩ける。ねむった人の仕事も、みんなの仕事のバーに入る。\nねむらされたときも、投票で選ばれたときも同じだよ。\nだれにねむらされたかは、ねむらされた人の画面にだけ出るよ。これはないしょ。声やチャットで言わないでね。会議では投票しないで、話を聞いていてね。' },
 
+  /* 9b */ { type:'content', accent:'blue', section:'ゲーム説明', sectionEn:'explain', num:'6',
+    headline:'ホストが入れたときだけ、<br><span class="hl">役職</span>がつくことも',
+    body:`<div class="rows">
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">swap_calls</span></div><div><div class="row__t">整備係（隊員）・見守り係（隊員）</div><div class="row__d">整備係は近道を使える。見守り係は「チェッカー」で、だれがねむっているかを見られる</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">theater_comedy</span></div><div><div class="row__t">へんしん屋（ねむらせ屋）</div><div class="row__d">ほかの人のすがたに20秒なれる。見た人が本人とは限らないよ</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">shield</span></div><div><div class="row__t">まもり星（最初にねむった隊員）</div><div class="row__d">おきている人の近くで「まもる」。15秒のあいだ、その人はねむらされない</div></div></div>
+    </div>`,
+    note:'ホストが設定で入れたときだけ、役職がつくことがあるよ。自分の役職は、はじめの役のお知らせと、画面の上に出るよ。役職のボタンはキーの G でも押せる。\n整備係は隊員。ねむらせ屋と同じ近道を使えるよ。1回使うと30秒は使えない。\n見守り係も隊員。「チェッカー」で、だれがおきていて、だれがねむっているかを見られる。電池は10秒ぶんで、少しずつたまる。仕事を1つおえると満タンになるよ。\nへんしん屋はねむらせ屋。ほかの人のすがたに20秒なれる。だから「〇〇さんを見た」と思っても、本人とは限らないよ。\nまもり星は、最初にねむった隊員がなる。おきている人の近くで「まもる」を押すと、15秒のあいだ、その人はねむらされない。' },
+
   /* 10 */ { type:'content', accent:'coral', section:'おわりかた', sectionEn:'how it ends',
     headline:'勝ち負けと、<span class="hl">15分</span>の時間切れ',
     body:`<div class="rows">
@@ -302,11 +311,11 @@ const SLIDES = [
   /* 12 */ { type:'content', accent:'teal', section:'Q&A', sectionEn:'question & answer',
     headline:'よくある質問',
     body:`<div class="qa">
-      <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>どこに行けばいいか、わからなくなったら？</div><div class="qa__a"><span class="qa__badge a">A</span>左上の「やること」に部屋の名前が出ているよ。上の「地図」ボタンで自分の場所もわかる。</div></div>
+      <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>どこに行けばいいか、わからなくなったら？</div><div class="qa__a"><span class="qa__badge a">A</span>左上の「やること」に部屋の名前が出ているよ。右上の小さな地図で自分の場所もわかる（押すと大きくなる）。</div></div>
       <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>ねむらされたら、もう遊べないの？</div><div class="qa__a"><span class="qa__badge a">A</span>ううん、そのまま仕事をつづけられるよ。みんなの仕事も進むよ。</div></div>
       <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>声で話していいのはいつ？</div><div class="qa__a"><span class="qa__badge a">A</span>会議の時間だけ。歩いている間はミュートにして、「ひとこと」で知らせてね。</div></div>
     </div>`,
-    note:'よくある質問だよ\nQ. どこに行けばいいか、わからなくなったら？→ A. 左上の「やること」に部屋の名前が出ているよ。上の「地図」ボタンで自分の場所もわかる。\nQ. ねむらされたら、もう遊べないの？→ A. ううん、そのまま仕事をつづけられるよ。だれにねむらされたかは、ないしょにしてね。\nQ. 声で話していいのはいつ？→ A. 会議の時間だけ。歩いている間はミュートにして、「ひとこと」で知らせてね。途中で抜けた人は、その回は見学になって、次の回からまた遊べるよ。' },
+    note:'よくある質問だよ\nQ. どこに行けばいいか、わからなくなったら？→ A. 左上の「やること」に部屋の名前が出ているよ。右上の小さな地図で自分の場所もわかる（押すと大きくなる）。\nQ. ねむらされたら、もう遊べないの？→ A. ううん、そのまま仕事をつづけられるよ。だれにねむらされたかは、ないしょにしてね。\nQ. 声で話していいのはいつ？→ A. 会議の時間だけ。歩いている間はミュートにして、「ひとこと」で知らせてね。途中で落ちても、同じリンクから同じ名前で入りなおせば、勝ち負けが決まる前なら続きから遊べるよ。' },
 
   /* 13 */ { type:'divider', accent:'blue', icon:'live_help', jp:'質問タイム', en:'any questions?',
     sub:'気になることはある？',

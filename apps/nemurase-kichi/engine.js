@@ -4,75 +4,97 @@
 (function (root) {
   'use strict';
 
-  const W = 44;
-  const H = 30;
+  // 2026-10-29 子どもの要望の第3便「マップを広く・部屋と通路を増やす・部屋を広く覚えやすい形に・監視室」で 44×30（9部屋）→ 64×43（13部屋）に作りなおした
+  const W = 64;
+  const H = 43;
 
-  // 部屋（x, y, 幅, 高さ）。fill は床の色
+  // 部屋（x, y, 幅, 高さ）。fill は床の色。part: true は同じ部屋の続き（L字・T字・十字の形を四角の組み合わせで作る。名前は最初の四角に書く）
   const ROOMS = [
-    { key: 'kitchen', name: '台所', x: 2, y: 2, w: 10, h: 7, fill: '#F6E7D2' },
-    { key: 'radio', name: '通信室', x: 17, y: 2, w: 10, h: 6, fill: '#DDE9F3' },
-    { key: 'farm', name: '畑', x: 32, y: 2, w: 10, h: 8, fill: '#E2EFD6' },
-    { key: 'plaza', name: 'ひろば', x: 16, y: 11, w: 12, h: 8, fill: '#F3EFE6' },
-    { key: 'power', name: '電気室', x: 2, y: 13, w: 9, h: 7, fill: '#F4EBC6' },
-    { key: 'store', name: '倉庫', x: 33, y: 14, w: 9, h: 7, fill: '#E9E1D8' },
-    { key: 'tower', name: '見はり台', x: 17, y: 23, w: 10, h: 5, fill: '#E4E0F0' },
+    { key: 'kitchen', name: '台所', x: 2, y: 2, w: 12, h: 7, fill: '#F6E7D2' },
+    { key: 'kitchen', part: true, x: 2, y: 9, w: 5, h: 3, fill: '#F6E7D2' },        // L字（左下へのびる）
+    { key: 'radio', name: '通信室', x: 19, y: 2, w: 11, h: 7, fill: '#DDE9F3' },
+    { key: 'monitor', name: '監視室', x: 35, y: 2, w: 8, h: 6, fill: '#D5DCE6' },
+    { key: 'farm', name: '畑', x: 48, y: 2, w: 14, h: 7, fill: '#E2EFD6' },
+    { key: 'farm', part: true, x: 52, y: 9, w: 6, h: 4, fill: '#E2EFD6' },          // T字（まん中から下へ）
+    { key: 'plaza', name: 'ひろば', x: 24, y: 18, w: 18, h: 6, fill: '#F3EFE6' },
+    { key: 'plaza', part: true, x: 28, y: 14, w: 10, h: 14, fill: '#F3EFE6' },      // 十字（テーブルがまん中）
+    { key: 'power', name: '電気室', x: 2, y: 17, w: 10, h: 8, fill: '#F4EBC6' },
+    { key: 'laundry', name: '洗たく室', x: 14, y: 19, w: 7, h: 6, fill: '#DCEEF2' },
+    { key: 'store', name: '倉庫', x: 50, y: 18, w: 12, h: 7, fill: '#E9E1D8' },
+    { key: 'store', part: true, x: 56, y: 25, w: 6, h: 5, fill: '#E9E1D8' },        // L字（右下へのびる）
+    { key: 'pump', name: 'ポンプ室', x: 2, y: 30, w: 10, h: 9, fill: '#D9E4EE' },
+    { key: 'tower', name: '見はり台', x: 22, y: 35, w: 20, h: 6, fill: '#E4E0F0' },  // 横に長い
+    { key: 'playroom', name: 'ゲーム室', x: 47, y: 34, w: 12, h: 7, fill: '#F6DDE4' },
     // 行き止まりの小部屋（入口は1つ。2026-10-27 子どもの意見「マップに行き止まりがほしい」）
-    { key: 'tools', name: '道具室', x: 11, y: 10, w: 4, h: 3, fill: '#EADFC8' },   // 台所↔電気室の通路から
-    { key: 'green', name: '温室', x: 29, y: 11, w: 4, h: 3, fill: '#D6EEDD' },     // 畑↔倉庫の通路から
+    { key: 'tools', name: '道具室', x: 9, y: 12, w: 4, h: 4, fill: '#EADFC8' },     // 台所↔電気室の通路から
+    { key: 'green', name: '温室', x: 59, y: 13, w: 4, h: 4, fill: '#D6EEDD' },      // 畑↔倉庫の通路から
   ];
   // 通路（部屋どうしをつなぐ床）
   const HALLS = [
-    [12, 4, 5, 2], [27, 4, 5, 2], [21, 8, 2, 3], [6, 9, 2, 4], [11, 15, 5, 2],
-    [28, 16, 5, 2], [36, 10, 2, 4], [21, 19, 2, 4],
-    [5, 20, 2, 6], [5, 25, 12, 2], [37, 21, 2, 5], [27, 25, 12, 2],
-    [8, 10, 3, 2], [33, 11, 3, 2],   // 行き止まりの小部屋への通路（道具室・温室）
+    [14, 4, 5, 2], [30, 4, 5, 2], [43, 4, 5, 2],     // 台所↔通信室↔監視室↔畑
+    [28, 9, 2, 5], [40, 8, 2, 10],                   // 通信室↔ひろば・監視室↔ひろば
+    [4, 12, 2, 5], [12, 20, 2, 2], [21, 20, 3, 2],   // 台所↔電気室↔洗たく室↔ひろば
+    [42, 20, 8, 2], [54, 13, 2, 5],                  // ひろば↔倉庫↔畑
+    [5, 25, 2, 5], [12, 36, 10, 2], [32, 28, 2, 7],  // 電気室↔ポンプ室↔見はり台↔ひろば
+    [42, 37, 5, 2], [57, 30, 2, 4],                  // 見はり台↔ゲーム室↔倉庫
+    [6, 13, 3, 2], [56, 14, 3, 2],                   // 行き止まりの小部屋への通路（道具室・温室）
   ];
   const HALL_FILL = '#E6E3DC';
 
-  // 仕事の場所。kind: wire＝線をつなぐ / order＝番号を順に押す / meter＝メーターを合わせる
+  // 仕事の場所。kind: wire＝線をつなぐ / order＝番号を順に押す / meter＝メーターを合わせる。id は並び順（新しい場所は末尾に足す）
   const SPOTS = [
     { id: 0, room: 'kitchen', x: 4.5, y: 3.5, kind: 'order', label: 'お皿を順番にしまう' },
-    { id: 1, room: 'kitchen', x: 10.5, y: 7.5, kind: 'meter', label: 'なべの火を合わせる' },
-    { id: 2, room: 'radio', x: 19.5, y: 3.5, kind: 'wire', label: '通信の線をつなぐ' },
-    { id: 3, room: 'radio', x: 25.5, y: 6.5, kind: 'order', label: 'アンテナの番号を押す' },
-    { id: 4, room: 'farm', x: 34.5, y: 3.5, kind: 'meter', label: '水の量を合わせる' },
-    { id: 5, room: 'farm', x: 40.5, y: 8.5, kind: 'order', label: 'たねを順番にまく' },
-    { id: 6, room: 'power', x: 3.5, y: 14.5, kind: 'wire', label: '電線をつなぐ' },
-    { id: 7, room: 'store', x: 40.5, y: 15.5, kind: 'order', label: '荷物を番号順にのせる' },
-    { id: 8, room: 'store', x: 35.5, y: 19.5, kind: 'wire', label: 'ケーブルをつなぐ' },
-    { id: 9, room: 'tower', x: 25.5, y: 26.5, kind: 'meter', label: '望遠鏡のピントを合わせる' },
-    { id: 10, room: 'tower', x: 18.5, y: 24.5, kind: 'wire', label: 'ライトの線をつなぐ' },
-    // 行き止まりの奥（わざわざ入る理由）。id は末尾に足す
-    { id: 11, room: 'tools', x: 14.5, y: 11.5, kind: 'order', label: '道具を番号順にならべる' },
-    { id: 12, room: 'green', x: 29.5, y: 12.5, kind: 'meter', label: '温室の温度を合わせる' },
+    { id: 1, room: 'kitchen', x: 12.5, y: 7.5, kind: 'meter', label: 'なべの火を合わせる' },
+    { id: 2, room: 'radio', x: 23.5, y: 3.5, kind: 'wire', label: '通信の線をつなぐ' },
+    { id: 3, room: 'radio', x: 28.5, y: 7.5, kind: 'order', label: 'アンテナの番号を押す' },
+    { id: 4, room: 'farm', x: 50.5, y: 3.5, kind: 'meter', label: '水の量を合わせる' },
+    { id: 5, room: 'farm', x: 54.5, y: 11.5, kind: 'order', label: 'たねを順番にまく' },
+    { id: 6, room: 'power', x: 10.5, y: 18.5, kind: 'wire', label: '電線をつなぐ' },
+    { id: 7, room: 'store', x: 58.5, y: 28.5, kind: 'order', label: '荷物を番号順にのせる' },
+    { id: 8, room: 'store', x: 51.5, y: 19.5, kind: 'wire', label: 'ケーブルをつなぐ' },
+    { id: 9, room: 'tower', x: 38.5, y: 36.5, kind: 'meter', label: '望遠鏡のピントを合わせる' },
+    { id: 10, room: 'tower', x: 26.5, y: 39.5, kind: 'wire', label: 'ライトの線をつなぐ' },
+    // 行き止まりの奥（わざわざ入る理由）
+    { id: 11, room: 'tools', x: 11.5, y: 13.5, kind: 'order', label: '道具を番号順にならべる' },
+    { id: 12, room: 'green', x: 61.5, y: 15.5, kind: 'meter', label: '温室の温度を合わせる' },
+    // 2026-10-29 足した部屋
+    { id: 13, room: 'monitor', x: 41.5, y: 5.5, kind: 'wire', label: 'モニターの線をつなぐ' },
+    { id: 14, room: 'laundry', x: 15.5, y: 20.5, kind: 'order', label: '洗たく物を番号順にたたむ' },
+    { id: 15, room: 'pump', x: 3.5, y: 33.5, kind: 'meter', label: '水の強さを合わせる' },
+    { id: 16, room: 'playroom', x: 52.5, y: 36.5, kind: 'order', label: 'ボールを番号順にしまう' },
   ];
-  const FIX_SPOT = { x: 9.5, y: 18.5 };     // 停電をなおすスイッチ（電気室）
-  const TABLE = { x: 22, y: 15, r: 1.6 };   // ひろばの会議テーブル（まるいので、ぶつかる）
-  // 近道（ねむらせ屋だけが使える。to の近道へ一瞬で移る）。2026-10-26 ねむらせ屋を有利にする調整で追加
+  const FIX_SPOT = { x: 9.5, y: 23.5 };     // 停電をなおすスイッチ（電気室）
+  const TABLE = { x: 33, y: 21, r: 1.6 };   // ひろばの会議テーブル（まるいので、ぶつかる）
+  // 近道（ねむらせ屋・整備係が使える。to の近道へ一瞬で移る）。2026-10-26 ねむらせ屋を有利にする調整で追加
   const VENTS = [
-    { id: 0, x: 7.5, y: 5.5, to: 1 },    // 台所 ↔ 電気室
-    { id: 1, x: 6.5, y: 17.0, to: 0 },
-    { id: 2, x: 37.5, y: 6.0, to: 3 },   // 畑 ↔ 倉庫
-    { id: 3, x: 37.5, y: 17.5, to: 2 },
-    { id: 4, x: 22.5, y: 5.0, to: 5 },   // 通信室 ↔ 見はり台
-    { id: 5, x: 22.5, y: 25.5, to: 4 },
+    { id: 0, x: 8.5, y: 6.5, to: 1 },     // 台所 ↔ 電気室
+    { id: 1, x: 4.5, y: 22.5, to: 0 },
+    { id: 2, x: 59.5, y: 7.5, to: 3 },    // 畑 ↔ 倉庫
+    { id: 3, x: 54.5, y: 23.5, to: 2 },
+    { id: 4, x: 19.5, y: 23.5, to: 5 },   // 洗たく室 ↔ ポンプ室
+    { id: 5, x: 9.5, y: 36.5, to: 4 },
+    { id: 6, x: 36.5, y: 6.5, to: 7 },    // 監視室 ↔ ゲーム室
+    { id: 7, x: 56.5, y: 39.5, to: 6 },
   ];
   // はしご（だれでも使える。ねむった人も）。2026-10-28 子どもの意見「マップにギミック（はしご）」
   // 上に立って「はしごをおりる／のぼる」を押すと、CLIMB_MS のあいだその場に立ったまま（見える・ねむらせられる）で、to のはしごへ移る。
   // 通信室（画面の上）↔ 見はり台（画面の下）。隊員の移動が速くなる＝隊員が有利になる向き（近道はねむらせ屋だけ、はしごはみんな）
   const LADDERS = [
-    { id: 0, x: 19.5, y: 7.0, to: 1, room: 'radio', label: 'はしごをおりる', busy: 'おりている…' },
-    { id: 1, x: 19.5, y: 27.0, to: 0, room: 'tower', label: 'はしごをのぼる', busy: 'のぼっている…' },
+    { id: 0, x: 20.5, y: 8.0, to: 1, room: 'radio', label: 'はしごをおりる', busy: 'おりている…' },
+    { id: 1, x: 23.5, y: 40.0, to: 0, room: 'tower', label: 'はしごをのぼる', busy: 'のぼっている…' },
   ];
   const CLIMB_MS = 2500;
-  // 監視カメラ。2026-10-28 子どもの意見。通信室のカメラの台（CAM_STAND）に立って「カメラを見る」と、通路に置いたカメラ（CAMS）のまわり CAM_R マスの
+  // 監視カメラ。2026-10-28 子どもの意見。カメラの台（CAM_STAND）に立って「カメラを見る」と、通路に置いたカメラ（CAMS）のまわり CAM_R マスの
   // 通路の部分だけが小窓に映る（部屋の中は映らない）。見ている間はその場から動けない。だれかが見ている間はカメラのランプが光る（ねむらせ屋が気づける）。停電中は映らない
-  const CAM_STAND = { x: 25.5, y: 3.0 };
+  // 2026-10-29 子どもの要望「カメラルーム（監視室）がほしい」で、台を通信室から監視室へ移し、カメラを4つ→6つにした
+  const CAM_STAND = { x: 38.5, y: 3.0 };
   const CAMS = [
-    { id: 0, x: 14.5, y: 5, name: '台所と通信室の間' },
-    { id: 1, x: 29.5, y: 5, name: '通信室と畑の間' },
-    { id: 2, x: 13.5, y: 16, name: '電気室とひろばの間' },
-    { id: 3, x: 30.5, y: 17, name: 'ひろばと倉庫の間' },
+    { id: 0, x: 16.5, y: 5, name: '台所と通信室の間' },
+    { id: 1, x: 32.5, y: 5, name: '通信室と監視室の間' },
+    { id: 2, x: 41, y: 13, name: '監視室とひろばの間' },
+    { id: 3, x: 46, y: 21, name: 'ひろばと倉庫の間' },
+    { id: 4, x: 33, y: 31.5, name: 'ひろばと見はり台の間' },
+    { id: 5, x: 17, y: 37, name: 'ポンプ室と見はり台の間' },
   ];
   const CAM_R = 2.5;
 
@@ -80,44 +102,53 @@
   // 空気の妨害（ねむらせ屋）: 止めると AIR_LIMIT_S 秒のうちに、離れた2部屋のパネルを両方なおさないと ねむらせ屋の勝ち。
   // 「停電で負けることはない」をはじめて破る（オーナー「破ってもOK」）。集団でかたまって動くと間に合わない向きの仕組み
   const AIR_PANELS = [
-    { id: 'a', room: 'kitchen', x: 10.5, y: 3.5, label: '台所の空気のパネル' },
-    { id: 'b', room: 'store', x: 34.5, y: 15.5, label: '倉庫の空気のパネル' },
+    { id: 'a', room: 'kitchen', x: 11.5, y: 3.0, label: '台所の空気のパネル' },
+    { id: 'b', room: 'store', x: 60.5, y: 19.5, label: '倉庫の空気のパネル' },
   ];
   const AIR_LIMIT_S = 60;
   // ふたりの仕事: 離れた2か所のスイッチを、ふたりが同時におしていないとおわらない。隊員はひとり1つ持つ（設定 pair で切れる）。
   // 2人組で動く理由を作る（集団を小さく割る向き）。おしている人は PAIR_HOLD_MS の間だけ「おしている」とみなす（2秒おきに書き直す）
   const PAIRS = [
-    { id: 'p0', spot: 100, label: 'ふたりでスイッチを入れる', a: { room: 'power', x: 3.5, y: 18.5 }, b: { room: 'farm', x: 40.5, y: 3.5 } },
-    { id: 'p1', spot: 101, label: 'ふたりでレバーを引く', a: { room: 'kitchen', x: 3.5, y: 7.5 }, b: { room: 'tower', x: 24.5, y: 23.5 } },
+    { id: 'p0', spot: 100, label: 'ふたりでスイッチを入れる', a: { room: 'power', x: 3.5, y: 18.5 }, b: { room: 'farm', x: 60.5, y: 3.5 } },
+    { id: 'p1', spot: 101, label: 'ふたりでレバーを引く', a: { room: 'kitchen', x: 3.5, y: 10.5 }, b: { room: 'tower', x: 39.5, y: 39.5 } },
   ];
   const PAIR_SPOT_BASE = 100;
   const PAIR_HOLD_MS = 6000;
   const PAIR_BEAT_MS = 2000;
   // ドア（ねむらせ屋）: 部屋を選ぶと、その部屋の入口がぜんぶ DOOR_MS の間とじる（見えるが通れない）。集団を分ける向き。ひろばにはドアがない（テーブルにいつでも行けるように）
+  // ドアは、その部屋につながる通路の、部屋に接する1列
   const DOORS = [
-    { room: 'kitchen', x: 12, y: 4, w: 1, h: 2 }, { room: 'kitchen', x: 6, y: 9, w: 2, h: 1 },
-    { room: 'radio', x: 16, y: 4, w: 1, h: 2 }, { room: 'radio', x: 27, y: 4, w: 1, h: 2 }, { room: 'radio', x: 21, y: 8, w: 2, h: 1 },
-    { room: 'farm', x: 31, y: 4, w: 1, h: 2 }, { room: 'farm', x: 36, y: 10, w: 2, h: 1 },
-    { room: 'power', x: 6, y: 12, w: 2, h: 1 }, { room: 'power', x: 11, y: 15, w: 1, h: 2 }, { room: 'power', x: 5, y: 20, w: 2, h: 1 },
-    { room: 'store', x: 32, y: 16, w: 1, h: 2 }, { room: 'store', x: 36, y: 13, w: 2, h: 1 }, { room: 'store', x: 37, y: 21, w: 2, h: 1 },
-    { room: 'tower', x: 21, y: 22, w: 2, h: 1 }, { room: 'tower', x: 16, y: 25, w: 1, h: 2 }, { room: 'tower', x: 27, y: 25, w: 1, h: 2 },
+    { room: 'kitchen', x: 14, y: 4, w: 1, h: 2 }, { room: 'kitchen', x: 4, y: 12, w: 2, h: 1 },
+    { room: 'radio', x: 18, y: 4, w: 1, h: 2 }, { room: 'radio', x: 30, y: 4, w: 1, h: 2 }, { room: 'radio', x: 28, y: 9, w: 2, h: 1 },
+    { room: 'monitor', x: 34, y: 4, w: 1, h: 2 }, { room: 'monitor', x: 43, y: 4, w: 1, h: 2 }, { room: 'monitor', x: 40, y: 8, w: 2, h: 1 },
+    { room: 'farm', x: 47, y: 4, w: 1, h: 2 }, { room: 'farm', x: 54, y: 13, w: 2, h: 1 },
+    { room: 'power', x: 4, y: 16, w: 2, h: 1 }, { room: 'power', x: 12, y: 20, w: 1, h: 2 }, { room: 'power', x: 5, y: 25, w: 2, h: 1 },
+    { room: 'laundry', x: 13, y: 20, w: 1, h: 2 }, { room: 'laundry', x: 21, y: 20, w: 1, h: 2 },
+    { room: 'store', x: 54, y: 17, w: 2, h: 1 }, { room: 'store', x: 49, y: 20, w: 1, h: 2 }, { room: 'store', x: 57, y: 30, w: 2, h: 1 },
+    { room: 'pump', x: 5, y: 29, w: 2, h: 1 }, { room: 'pump', x: 12, y: 36, w: 1, h: 2 },
+    { room: 'tower', x: 32, y: 34, w: 2, h: 1 }, { room: 'tower', x: 21, y: 36, w: 1, h: 2 }, { room: 'tower', x: 42, y: 37, w: 1, h: 2 },
+    { room: 'playroom', x: 57, y: 33, w: 2, h: 1 }, { room: 'playroom', x: 46, y: 37, w: 1, h: 2 },
   ];
-  const DOOR_ROOMS = ['kitchen', 'radio', 'farm', 'power', 'store', 'tower'];
+  const DOOR_ROOMS = ['kitchen', 'radio', 'monitor', 'farm', 'power', 'laundry', 'store', 'pump', 'tower', 'playroom'];
   const DOOR_MS = 10000;
   const DOOR_AGAIN_S = 20;
   // 会議ボタンの待ち時間: はじめと会議のあと BUTTON_WAIT_S 秒は押せない（はじまった直後の会議・会議の連続・追われたときの逃げ道をふせぐ）
   const BUTTON_WAIT_S = 20;
   // 家具（部屋の目印。1マスのかべとして ぶつかる・かべごしに見えない。マップを覚えやすくする）。x, y, w, h はマス。kind は描き方
   const FURNITURE = [
-    { room: 'kitchen', kind: 'stove', x: 6, y: 2, w: 2, h: 1 }, { room: 'kitchen', kind: 'table', x: 5, y: 5, w: 1, h: 1 },
-    { room: 'radio', kind: 'antenna', x: 17, y: 2, w: 1, h: 1 }, { room: 'radio', kind: 'desk', x: 21, y: 2, w: 2, h: 1 },
-    { room: 'farm', kind: 'crops', x: 33, y: 6, w: 2, h: 1 }, { room: 'farm', kind: 'crops', x: 33, y: 8, w: 2, h: 1 }, { room: 'farm', kind: 'tank', x: 41, y: 5, w: 1, h: 1 },
-    { room: 'plaza', kind: 'sofa', x: 16, y: 11, w: 2, h: 1 }, { room: 'plaza', kind: 'plant', x: 27, y: 11, w: 1, h: 1 }, { room: 'plaza', kind: 'plant', x: 16, y: 18, w: 1, h: 1 }, { room: 'plaza', kind: 'plant', x: 27, y: 18, w: 1, h: 1 },
-    { room: 'power', kind: 'generator', x: 9, y: 13, w: 2, h: 1 }, { room: 'power', kind: 'barrel', x: 2, y: 19, w: 1, h: 1 },
-    { room: 'store', kind: 'crate', x: 39, y: 19, w: 2, h: 1 }, { room: 'store', kind: 'crate', x: 33, y: 19, w: 1, h: 1 }, { room: 'store', kind: 'shelf', x: 38, y: 14, w: 1, h: 1 },
-    { room: 'tower', kind: 'light', x: 17, y: 23, w: 1, h: 1 }, { room: 'tower', kind: 'bench', x: 23, y: 27, w: 2, h: 1 },
-    { room: 'tools', kind: 'shelf', x: 12, y: 12, w: 1, h: 1 },
-    { room: 'green', kind: 'plant', x: 31, y: 13, w: 1, h: 1 }, { room: 'green', kind: 'plant', x: 30, y: 11, w: 1, h: 1 },
+    { room: 'kitchen', kind: 'stove', x: 6, y: 2, w: 2, h: 1 }, { room: 'kitchen', kind: 'table', x: 8, y: 4, w: 1, h: 1 },
+    { room: 'radio', kind: 'antenna', x: 19, y: 2, w: 1, h: 1 }, { room: 'radio', kind: 'desk', x: 25, y: 2, w: 2, h: 1 },
+    { room: 'monitor', kind: 'screen', x: 36, y: 2, w: 2, h: 1 }, { room: 'monitor', kind: 'screen', x: 40, y: 2, w: 2, h: 1 },
+    { room: 'farm', kind: 'crops', x: 52, y: 7, w: 3, h: 1 }, { room: 'farm', kind: 'crops', x: 56, y: 7, w: 3, h: 1 }, { room: 'farm', kind: 'tank', x: 61, y: 8, w: 1, h: 1 },
+    { room: 'plaza', kind: 'sofa', x: 24, y: 18, w: 2, h: 1 }, { room: 'plaza', kind: 'plant', x: 37, y: 14, w: 1, h: 1 }, { room: 'plaza', kind: 'plant', x: 28, y: 27, w: 1, h: 1 }, { room: 'plaza', kind: 'plant', x: 41, y: 23, w: 1, h: 1 },
+    { room: 'power', kind: 'generator', x: 7, y: 17, w: 2, h: 1 }, { room: 'power', kind: 'barrel', x: 2, y: 24, w: 1, h: 1 },
+    { room: 'laundry', kind: 'washer', x: 17, y: 19, w: 2, h: 1 }, { room: 'laundry', kind: 'basket', x: 14, y: 24, w: 1, h: 1 },
+    { room: 'store', kind: 'crate', x: 58, y: 24, w: 2, h: 1 }, { room: 'store', kind: 'crate', x: 61, y: 29, w: 1, h: 1 }, { room: 'store', kind: 'shelf', x: 50, y: 24, w: 1, h: 1 },
+    { room: 'pump', kind: 'pump', x: 7, y: 32, w: 2, h: 1 }, { room: 'pump', kind: 'tank', x: 2, y: 30, w: 1, h: 1 },
+    { room: 'tower', kind: 'light', x: 22, y: 35, w: 1, h: 1 }, { room: 'tower', kind: 'bench', x: 30, y: 40, w: 2, h: 1 }, { room: 'tower', kind: 'light', x: 41, y: 35, w: 1, h: 1 },
+    { room: 'playroom', kind: 'arcade', x: 48, y: 34, w: 2, h: 1 }, { room: 'playroom', kind: 'gametable', x: 53, y: 39, w: 2, h: 1 },
+    { room: 'tools', kind: 'shelf', x: 12, y: 15, w: 1, h: 1 },
+    { room: 'green', kind: 'plant', x: 62, y: 13, w: 1, h: 1 }, { room: 'green', kind: 'plant', x: 60, y: 16, w: 1, h: 1 },
   ];
 
   const SPEED = 4.2;          // 1秒に進むマス
@@ -153,7 +184,8 @@
   // ねむらせてから次までの時間は 2026-10-26 に はじめ30秒（20・30・45）→ はじめ20秒（15・20・30）（ねむらせ屋を有利にする調整）
   // pick: ねむらせ屋の決め方（0＝ランダム、1＝ホストが待合室で選ぶ）。2026-10-27 子どもの意見で追加
   // pair: ふたりの仕事（1＝隊員はひとり1つ持つ、0＝なし）。gauge: みんなの仕事のバー（2＝出す、1＝進行役の画面だけ、0＝出さない）。2026-10-28 子どもの要望の第2便
-  const DEFAULT_SETTINGS = { hostPlays: 1, sleepers: 1, tasks: 4, cooldown: 20, meeting: 90, buttons: 1, pick: 0, pair: 1, gauge: 2 };
+  // engineer・watcher・angel・shifter: 役職（1＝入れる、0＝入れない）。2026-10-29 子どもの要望の第3便。はじめはどれも入れない
+  const DEFAULT_SETTINGS = { hostPlays: 1, sleepers: 1, tasks: 4, cooldown: 20, meeting: 90, buttons: 1, pick: 0, pair: 1, gauge: 2, engineer: 0, watcher: 0, angel: 0, shifter: 0 };
   const SETTING_OPTS = {
     hostPlays: [1, 0],
     sleepers: [1, 2],
@@ -164,7 +196,26 @@
     meeting: [60, 90, 120, 150, 180],
     buttons: [1, 2],
     gauge: [2, 1, 0],
+    engineer: [0, 1],
+    watcher: [0, 1],
+    angel: [0, 1],
+    shifter: [0, 1],
   };
+
+  // ── 役職（2026-10-29 子どもの要望の第3便。設定でひとつずつ入れる。名前は着想元から借りない）──
+  // engineer＝整備係（隊員。ねむらせ屋と同じ近道を使える）／watcher＝見守り係（隊員。だれがねむっているかを見る「ねむりチェッカー」）／
+  // shifter＝へんしん屋（ねむらせ屋。少しの間ほかの人のすがたになる）／angel＝まもり星（最初にねむった隊員がなる。おきている人にバリア）。
+  // ロボットには付けない（わざを使わないため）。はじめに決まるのは engineer・watcher・shifter で、angel はねむったときに決まる
+  const JOB_NAMES = { engineer: '整備係', watcher: '見守り係', shifter: 'へんしん屋', angel: 'まもり星' };
+  const ENGINEER_GAP_S = 30;   // 整備係が近道を使ってから、次に使えるまで
+  const WATCH_BATTERY_S = 10;  // 見守り係のチェッカーの電池（見ている間へる）
+  const WATCH_CHARGE_S = 6;    // 見ていない間、この秒数ごとに電池が1秒ぶんたまる（仕事を1つおえると満タン）
+  const SHIELD_S = 15;         // まもり星のバリアが続く時間
+  const ANGEL_GAP_S = 30;      // まもり星がバリアをはってから、次にはれるまで
+  const ANGEL_FIRST_S = 10;    // まもり星になってから、はじめてはれるまで
+  const ANGEL_RANGE = 2.2;     // バリアをはれる距離
+  const SHIFT_S = 20;          // へんしんが続く時間
+  const SHIFT_GAP_S = 30;      // へんしんがおわってから、次にへんしんできるまで
 
   // ── ひとこと（ボタンで知らせる）──
   // 2026-10-27 子どもの意見「ゲーム内にチャットがほしい」→ 自由に文字を打つチャットは入れず、決まった言葉をボタンで送る（語はオーナー承認済み）。
@@ -419,6 +470,14 @@
       }
       buttons[id] = s.buttons;
     });
+    // 役職（人だけ。整備係・見守り係は隊員から1人ずつ、へんしん屋はねむらせ屋から1人）
+    const jobs = {};
+    const human = (id) => !String(id).startsWith('*');
+    const crewH = shuffled(order.filter((id) => roles[id] === 'crew' && human(id)), rnd);
+    const sleeperH = order.filter((id) => roles[id] === 'sleeper' && human(id));
+    if (s.engineer === 1 && crewH.length) jobs[crewH.shift()] = 'engineer';
+    if (s.watcher === 1 && crewH.length) jobs[crewH.shift()] = 'watcher';
+    if (s.shifter === 1 && sleeperH.length) jobs[sleeperH[0]] = 'shifter';
     return {
       settings: s,
       players: ids.slice(),
@@ -439,6 +498,13 @@
       doorReadyAt: 0,   // この時刻から、またドアをとじられる
       buttonReadyAt: 0, // この時刻から会議ボタンを押せる（はじめと会議のあと BUTTON_WAIT_S 秒）
       pair: {},         // {ふたりの仕事の id: {a: {id, at}, b: {id, at}}} いまスイッチをおしている人
+      jobs,             // {id: 'engineer'|'watcher'|'shifter'} 役職（2026-10-29）
+      angel: '',        // まもり星になった人（最初にねむった隊員。設定 angel があるときだけ）
+      angelReadyAt: 0,  // この時刻から、まもり星がバリアをはれる
+      shield: {},       // {id: この時刻までバリア}（ねむらせられない。会議で消える）
+      shape: {},        // {id: {as: なっている人, until}} へんしん中（会議で消える）
+      shiftReadyAt: {}, // {id: この時刻から、またへんしんできる}
+      blocked: null,    // {by, t, at} さいごにバリアで ねむらせられなかったとき（本人とまもり星にだけ知らせる）
       spawnSeq: 1,      // 増えたら、みんなテーブルのまわりへもどる
       meeting: null,
       result: null,
@@ -452,6 +518,22 @@
     if (g.winner) return true;
     if (g.air && now >= g.air) { g.winner = 'sleeper'; g.winReason = 'air'; return true; }
     return false;
+  }
+
+  // 役職。まもり星はほかの役職より先に見る（ねむった整備係・見守り係もまもり星になれる）
+  const jobOf = (g, id) => (g.angel && g.angel === id ? 'angel' : (g.jobs && g.jobs[id]) || '');
+  // ねむった人がまもり星になれるなら、なる（設定 angel があり、まだだれもなっていない・人の隊員）
+  function claimAngel(g, id, now) {
+    if (!g.settings || g.settings.angel !== 1 || g.angel || g.roles[id] !== 'crew' || String(id).startsWith('*')) return false;
+    g.angel = id;
+    g.angelReadyAt = now + ANGEL_FIRST_S * 1000;
+    return true;
+  }
+  const shielded = (g, id, now) => Number((g.shield || {})[id]) > now;
+  // 見た目のだれか（へんしん中は、なっている人）
+  function looksAs(g, id, now) {
+    const sh = (g.shape || {})[id];
+    return sh && Number(sh.until) > now && g.players.includes(sh.as) ? sh.as : id;
   }
 
   // いまとじているドアの部屋
@@ -526,6 +608,8 @@
     W, H, ROOMS, HALLS, HALL_FILL, SPOTS, FIX_SPOT, TABLE, VENTS, LADDERS, CLIMB_MS, CAM_STAND, CAMS, CAM_R, GRID, COLORS,
     AIR_PANELS, AIR_LIMIT_S, PAIRS, PAIR_SPOT_BASE, PAIR_HOLD_MS, PAIR_BEAT_MS, DOORS, DOOR_ROOMS, DOOR_MS, DOOR_AGAIN_S, BUTTON_WAIT_S, FURNITURE,
     SPEED, RADIUS, USE_RANGE, SLEEP_RANGE, FIND_RANGE, VIEW, VIEW_RAYS, VIEW_OVER,
+    JOB_NAMES, ENGINEER_GAP_S, WATCH_BATTERY_S, WATCH_CHARGE_S, SHIELD_S, ANGEL_GAP_S, ANGEL_FIRST_S, ANGEL_RANGE, SHIFT_S, SHIFT_GAP_S,
+    jobOf, claimAngel, shielded, looksAs,
     GAME_LIMIT_S, MIN_PLAYERS, MAX_PLAYERS, TWO_SLEEPERS_MIN, DEFAULT_SETTINGS, SETTING_OPTS,
     isFloor, dist, roomAt, roomName, canStand, step, stepFree, path, rayDist, canSee, viewPolygon, spawnPoint, encodePos, decodePos,
     doorTiles, tileKey, spotInfo, pairOf, pairFresh, closedRooms, checkAir,

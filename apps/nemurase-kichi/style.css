@@ -101,6 +101,12 @@ body.is-playing { overflow: hidden; background: #2D3642; overscroll-behavior: no
 
 .nk-stage { position: relative; overflow: hidden; touch-action: none; }
 .nk-map { position: absolute; inset: 0; display: block; }
+/* 小さな地図（右上にいつも出す。押すと大きな地図。2026-10-29） */
+.nk-mini {
+  position: absolute; top: 12px; right: 12px; z-index: 1; width: clamp(150px, 22vw, 240px); padding: 0; cursor: pointer;
+  border: 2px solid rgba(255, 255, 255, 0.85); border-radius: 10px; background: #2D3642; box-shadow: var(--shadow-md); overflow: hidden;
+}
+.nk-mini__view { display: block; width: 100%; }
 
 .nk-tasks {
   position: absolute; top: 12px; left: 12px; width: 260px; max-width: calc(100% - 24px);
@@ -127,14 +133,14 @@ body.is-playing { overflow: hidden; background: #2D3642; overscroll-behavior: no
 
 .nk-banner {
   position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
-  max-width: min(520px, calc(100% - 300px)); margin: 0; padding: 10px 16px; border-radius: 12px;
+  max-width: min(520px, calc(100% - 560px));  /* 左の「やること」と右の小さな地図にかからない */ margin: 0; padding: 10px 16px; border-radius: 12px;
   background: rgba(28, 63, 94, 0.94); color: #fff; font-weight: 700; text-align: center; line-height: 1.5;
 }
 
 /* ひとこと（ボタンで知らせる）: 遊んでいる間は画面の上に「名前: 言葉」、右下の一覧から送る */
 .nk-says {
   position: absolute; top: 12px; left: 50%; transform: translateX(-50%); z-index: 2;
-  list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; max-width: min(520px, calc(100% - 300px)); pointer-events: none;
+  list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; max-width: min(520px, calc(100% - 560px));  /* 左の「やること」と右の小さな地図にかからない */ pointer-events: none;
 }
 .nk-banner { z-index: 3; }
 .nk-says__item {
@@ -167,6 +173,10 @@ body.is-playing { overflow: hidden; background: #2D3642; overscroll-behavior: no
 .nk-word--name { font-weight: 700; }
 .nk-word--quiet { border-color: transparent; color: var(--color-muted); }
 .nk-act--say { background: #2F7D6E; }
+.nk-act--job { background: #3D5A99; }   /* 役職のわざ（2026-10-29） */
+.nk-tag--zzz { background: #E4E0F0; color: #4A3F78; }
+#shiftNames .nk-word { display: inline-flex; align-items: center; gap: 6px; }
+.nk-vitals__battery { margin: 0 0 10px; font-weight: 700; color: var(--color-primary); }
 
 /* 右下の「？」（あそびかた）とかさならないよう、その上に置く */
 .nk-actions { position: absolute; right: 16px; bottom: 76px; display: flex; align-items: flex-end; gap: 10px; }
@@ -239,10 +249,10 @@ body.is-watching .nk-tasks, body.is-watching .nk-actions, body.is-watching .nk-p
 
 .nk-game__card { max-width: 480px; }
 /* 監視カメラ */
-.nk-cam { max-width: 480px; }
+.nk-cam { max-width: 560px; }
 .nk-cam .nk-game__title { display: inline-flex; align-items: center; gap: 6px; }
 .nk-cam__note { margin: 0 0 10px; color: var(--color-muted); font-size: 13px; line-height: 1.6; }
-.nk-cam__view { display: block; width: 100%; aspect-ratio: 1 / 1; border-radius: 10px; background: #1A2028; }
+.nk-cam__view { display: block; width: 100%; border-radius: 10px; background: #1A2028; }
 .nk-game__head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
 .nk-game__title { margin: 0; font-size: 18px; color: var(--color-primary); }
 .nk-game__how { margin: 0 0 16px; color: var(--color-muted); line-height: 1.6; }
@@ -333,6 +343,7 @@ button.nk-vote__main:hover { border-color: var(--color-border); }
   .nk-hud__menu { margin-left: 0; width: 40px; height: 40px; }
   .nk-hud__dark, .nk-hud__off { order: 3; }
   .nk-tasks { width: 220px; font-size: 13px; }
+  .nk-mini { width: 118px; top: 10px; right: 10px; }
   .nk-banner { top: auto; bottom: 180px; max-width: calc(100% - 24px); }
   .nk-says { top: auto; bottom: 150px; left: 12px; right: 12px; transform: none; max-width: none; }
   .nk-says__item { font-size: 13px; padding: 5px 12px; }
