@@ -20,7 +20,7 @@ ok(E.step({ x: 2.5, y: 3.5 }, -1, 0, 1).x >= 2 + E.RADIUS - 1e-9, 'かべを通�
 E.VENTS.forEach((v) => {
   ok(E.canStand(v.x, v.y), '近道に立てる ' + v.id);
   ok(!!E.path(HOME, { x: Math.floor(v.x), y: Math.floor(v.y) }), '近道に行ける ' + v.id);
-  ok(E.VENTS[v.to] && E.VENTS[v.to].to === v.id && v.to !== v.id, '近道の行き先が対 ' + v.id);
+  ok(v.id === E.VENTS.indexOf(v) && v.to === undefined, '近道の id は並び順・決まった行き先はない ' + v.id);
   ok(E.SPOTS.every((sp) => E.dist(sp, v) > E.USE_RANGE * 2), '近道が仕事の場所から離れている ' + v.id);
   ok(E.dist(E.FIX_SPOT, v) > E.USE_RANGE * 2 && E.dist(E.TABLE, v) > E.TABLE.r + E.USE_RANGE * 2, '近道がスイッチ・テーブルから離れている ' + v.id);
 });
@@ -57,6 +57,7 @@ ok(JSON.stringify(E.newGame(['a', 'b', 'c', 'd'], {}, fixed).cam) === '{}', 'は
 const DEAD_ENDS = [
   { room: 'tools', spot: 11, mouth: [[8, 13], [8, 14]], from: 'power' },
   { room: 'green', spot: 12, mouth: [[56, 14], [56, 15]], from: 'store' },
+  { room: 'power', spot: 6, mouth: [[16, 35], [17, 35]], from: 'tower' },   // 2026-10-29 電気室も行き止まり
 ];
 const roomTiles = (key) => { const r = E.ROOMS.find((q) => q.key === key); const out = []; for (let y = r.y; y < r.y + r.h; y++) for (let x = r.x; x < r.x + r.w; x++) out.push({ x, y }); return out; };
 DEAD_ENDS.forEach((d) => {
@@ -77,7 +78,9 @@ DEAD_ENDS.forEach((d) => {
   }));
   ok(outside.length === 2, '小部屋の出口は通路の2マスだけ ' + d.room, outside);
 });
-ok(new Set(E.ROOMS.map((r) => r.key)).size === 13 && E.SPOTS.length === 17 && E.SPOTS.every((sp, i) => sp.id === i), '部屋13・仕事の場所17・id は並び順（2026-10-29 マップを広げた）');
+ok(new Set(E.ROOMS.map((r) => r.key)).size === 14 && E.SPOTS.length === 18 && E.SPOTS.every((sp, i) => sp.id === i), '部屋14・仕事の場所18・id は並び順（2026-10-29 マップを広げ、電気室を行き止まりへ移して休けい室を足した）');
+ok(E.roomAt(E.FIX_SPOT.x, E.FIX_SPOT.y) === 'power', '停電をなおすスイッチは電気室');
+ok(E.VIEW.crew === 5.5 && E.VIEW.sleeper === 7.5 && E.VIEW.dark === 2.4, '見える広さ（隊員 5.5・ねむらせ屋 7.5・停電中 2.4）');
 ok(E.W === 64 && E.H === 43, 'マップは 64×43 マス');
 // 四角を組み合わせた部屋（L字・T字・十字）: 続きの四角も同じ部屋。名前は最初の四角だけ
 ok(E.ROOMS.filter((r) => r.part).length === 4 && E.ROOMS.filter((r) => r.part).every((r) => !r.name && E.ROOMS.find((q) => q.key === r.key && !q.part)), '続きの四角は4つで、名前のある本体がある');
@@ -91,7 +94,7 @@ E.SPOTS.forEach((sp) => ok(E.roomAt(sp.x, sp.y) === sp.room, '仕事の場所は
 ok(E.canSee({ x: 4.5, y: 3.5 }, { x: 9.5, y: 6.5 }), '同じ部屋の中は見える');
 ok(!E.canSee({ x: 12.5, y: 3.5 }, { x: 20.5, y: 3.5 }), '台所から通信室へ、かべごしには見えない');
 ok(E.canSee({ x: 12.5, y: 4.5 }, { x: 20.5, y: 4.5 }), '通路を通して見える');
-ok(!E.canSee({ x: 10.5, y: 18.5 }, { x: 10.5, y: 14.5 }), '電気室から道具室へ、かべごしには見えない（近くても）');
+ok(!E.canSee({ x: 10.5, y: 18.5 }, { x: 10.5, y: 14.5 }), '休けい室から道具室へ、かべごしには見えない（近くても）');
 ok(E.canSee({ x: 6.5, y: 13.5 }, { x: 11.5, y: 13.5 }), '道具室の入口から、奥の仕事の場所が見える');
 ok(!E.canSee({ x: 60.5, y: 15.5 }, { x: 60.5, y: 19.5 }), '温室から倉庫へ、かべごしには見えない');
 ok(E.canSee({ x: 25, y: 21 }, { x: 40, y: 21 }) && E.canSee({ x: 33, y: 15 }, { x: 33, y: 26 }) && !E.canSee({ x: 29, y: 15 }, { x: 25, y: 20 }), '十字のひろばは、まん中の通りは見え、かどの向こうは見えない');
@@ -124,8 +127,12 @@ ok(E.DEFAULT_SETTINGS.cooldown === 20 && E.SETTING_OPTS.cooldown.join() === '15,
 
 // 位置の形
 ok(E.encodePos(12.34, 5.06, -1) === '123,51,0', '位置を短い文字列に');
-ok(JSON.stringify(E.decodePos('123,51,0')) === JSON.stringify({ x: 12.3, y: 5.1, face: -1 }), '文字列から位置へ');
-['', 'x', '1,2', '1,2,3', '9999,1,1', '-5,1,1'].forEach((t) => ok(E.decodePos(t) === null, 'こわれた位置は読まない ' + t));
+ok(JSON.stringify(E.decodePos('123,51,0')) === JSON.stringify({ x: 12.3, y: 5.1, face: -1, hidden: false }), '文字列から位置へ');
+ok(E.encodePos(12.34, 5.06, -1, true) === '123,51,2' && E.decodePos('123,51,2').hidden === true && E.decodePos('123,51,2').face === 1, '近道の中（見えない）の印は 2');
+// 近道は8か所で、どれもちがう部屋（行き先を部屋の名前で選ぶため。2026-10-29）
+ok(E.VENTS.length === 8 && new Set(E.VENTS.map((v) => E.roomAt(v.x, v.y))).size === 8 && E.VENTS.every((v) => E.roomAt(v.x, v.y)), '近道は8か所・どれもちがう部屋の中');
+ok(E.VENT_STAY_S === 10, '近道の中にいられるのは10秒');
+['', 'x', '1,2', '1,2,3', '9999,1,1', '-5,1,1', '1,2,4'].forEach((t) => ok(E.decodePos(t) === null, 'こわれた位置は読まない ' + t));
 
 // 役と仕事
 let g = game(['a', 'b', 'c', 'd'], { tasks: 3 });
@@ -257,7 +264,7 @@ ok(E.stepFree({ x: 0.5, y: 3.5 }, -1, 0, 1).x === E.RADIUS, 'ねむった人も�
 ok(E.stepFree({ x: E.W - 0.5, y: E.H - 0.5 }, 1, 1, 1).x === E.W - E.RADIUS && E.stepFree({ x: E.W - 0.5, y: E.H - 0.5 }, 1, 1, 1).y === E.H - E.RADIUS, 'ねむった人もマップの外には出ない（右下）');
 ok(E.stepFree({ x: E.TABLE.x, y: E.TABLE.y - 2.4 }, 0, 1, 1).y > E.TABLE.y, 'ねむった人はテーブルも通りぬける');
 // ドア: 通路の上・部屋のふち・6部屋・とじると通れない・上にいた人は出られる・道さがしも通らない・ひろばにはない
-ok(E.DOOR_ROOMS.length === 10 && !E.DOOR_ROOMS.includes('plaza') && !E.DOOR_ROOMS.includes('tools') && !E.DOOR_ROOMS.includes('green'), 'ドアは10部屋（ひろば・行き止まりの小部屋にはない）');
+ok(E.DOOR_ROOMS.length === 10 && !E.DOOR_ROOMS.includes('plaza') && !E.DOOR_ROOMS.includes('tools') && !E.DOOR_ROOMS.includes('green') && !E.DOOR_ROOMS.includes('power'), 'ドアは10部屋（ひろば・行き止まりの小部屋（道具室・温室・電気室）にはない）');
 E.DOORS.forEach((d, i) => {
   for (let y = d.y; y < d.y + d.h; y++) for (let x = d.x; x < d.x + d.w; x++) ok(E.isFloor(x, y), 'ドアは床の上 ' + i + ' ' + x + ',' + y);
   ok(E.DOOR_ROOMS.includes(d.room), 'ドアの部屋はドアのある部屋 ' + i);
@@ -290,7 +297,7 @@ E.DOOR_ROOMS.forEach((key) => {
 });
 ok(E.AIR_PANELS.length === 2 && E.dist(E.AIR_PANELS[0], E.AIR_PANELS[1]) > 20, '空気のパネルは2つで、離れている');
 E.PAIRS.forEach((p) => ok(E.dist(p.a, p.b) > 20 && p.a.room !== p.b.room, 'ふたりの仕事の2か所は離れた別の部屋 ' + p.id));
-ok(E.spotInfo(100).kind === 'pair' && E.spotInfo(100).roomLabel === '電気室と畑' && E.spotInfo(101).roomLabel === '台所と見はり台', 'ふたりの仕事の場所の名前');
+ok(E.spotInfo(100).kind === 'pair' && E.spotInfo(100).roomLabel === '休けい室と畑' && E.spotInfo(101).roomLabel === '台所と見はり台', 'ふたりの仕事の場所の名前');
 ok(E.spotInfo(0) === E.SPOTS[0] && E.spotInfo(999) === null, 'spotInfo はふつうの場所も引ける・ないものは null');
 ok(E.pairFresh({ id: 'a', at: 1000 }, 1000 + E.PAIR_HOLD_MS) && !E.pairFresh({ id: 'a', at: 1000 }, 1001 + E.PAIR_HOLD_MS) && !E.pairFresh(null, 0) && !E.pairFresh({ id: 1, at: 1000 }, 1000), 'おしているのが有効か');
 // 空気の時間切れ
@@ -310,26 +317,21 @@ ok(JSON.stringify(E.newGame(['a', 'b', 'c', 'd'], {}, fixed).doors) === '{}' && 
 {
   ok(['engineer', 'watcher', 'angel', 'shifter'].every((k) => E.DEFAULT_SETTINGS[k] === 0 && E.SETTING_OPTS[k].join() === '0,1'), '役職ははじめはどれも入れない・入れる／入れないを選べる');
   const none = game(['a', 'b', 'c', 'd', 'e'], {});
-  ok(JSON.stringify(none.jobs) === '{}' && none.angel === '' && JSON.stringify(none.shield) === '{}' && JSON.stringify(none.shape) === '{}', '役職なしなら、だれにも付かない');
+  ok(JSON.stringify(none.jobs) === '{}' && JSON.stringify(none.shield) === '{}' && JSON.stringify(none.shape) === '{}', '役職なしなら、だれにも付かない');
   const all = game(['a', 'b', 'c', 'd', 'e', 'f'], { engineer: 1, watcher: 1, angel: 1, shifter: 1 });
   const jobs = Object.entries(all.jobs);
-  ok(jobs.filter(([, j]) => j === 'engineer').length === 1 && jobs.filter(([, j]) => j === 'watcher').length === 1 && jobs.filter(([, j]) => j === 'shifter').length === 1, '整備係・見守り係・へんしん屋が1人ずつ');
-  ok(jobs.every(([id, j]) => (j === 'shifter' ? all.roles[id] === 'sleeper' : all.roles[id] === 'crew')), '整備係・見守り係は隊員、へんしん屋はねむらせ屋');
-  ok(all.angel === '', 'まもり星は、はじめはだれでもない');
+  ok(['engineer', 'watcher', 'angel', 'shifter'].every((k) => jobs.filter(([, j]) => j === k).length === 1), '整備係・見守り係・まもり星・へんしん屋が1人ずつ（はじめに決まる）');
+  ok(jobs.every(([id, j]) => (j === 'shifter' ? all.roles[id] === 'sleeper' : all.roles[id] === 'crew')), '整備係・見守り係・まもり星は隊員、へんしん屋はねむらせ屋');
+  ok(new Set(jobs.map(([id]) => id)).size === jobs.length, 'ひとり1つまで');
   const bots = game(['a', '*1', '*2', '*3', '*4'], { engineer: 1, watcher: 1, shifter: 1 });
   ok(Object.keys(bots.jobs).every((id) => !id.startsWith('*')), 'ロボットには役職を付けない');
   ok(Object.keys(bots.jobs).length <= 1, '人が1人なら、役職は多くても1つ');
-  // まもり星: 最初にねむった人の隊員だけがなる
   const crew = roleIds(all, 'crew');
   const sl = roleIds(all, 'sleeper')[0];
-  ok(!E.claimAngel(all, sl, 1000) && all.angel === '', 'ねむらせ屋はまもり星にならない');
-  ok(E.claimAngel(all, crew[0], 1000) && all.angel === crew[0] && all.angelReadyAt === 1000 + E.ANGEL_FIRST_S * 1000, '最初にねむった隊員がまもり星になる');
-  ok(!E.claimAngel(all, crew[1], 2000) && all.angel === crew[0], '2人目からはならない');
-  ok(E.jobOf(all, crew[0]) === 'angel' && E.jobOf(all, crew[1]) === (all.jobs[crew[1]] || ''), 'jobOf はまもり星を先に見る');
-  const off = game(['a', 'b', 'c', 'd'], {});
-  ok(!E.claimAngel(off, roleIds(off, 'crew')[0], 1) && off.angel === '', '設定がなければ、まもり星にならない');
-  const gb = game(['*1', 'b', 'c', 'd'], { angel: 1 });
-  if (gb.roles['*1'] === 'crew') ok(!E.claimAngel(gb, '*1', 1) && gb.angel === '', 'ロボットはまもり星にならない');
+  ok(crew.every((id) => E.jobOf(all, id) === (all.jobs[id] || '')) && E.jobOf(all, 'nobody') === '', 'jobOf');
+  ok(all.angelReadyAt === 0, 'まもり星は、はじめから「まもる」を使える');
+  const four = game(['a', 'b', 'c', 'd'], { engineer: 1, watcher: 1, angel: 1 });
+  ok(Object.keys(four.jobs).length === 3, '隊員が3人なら、隊員の役職3つがそれぞれに付く');
   // バリア・へんしんの見方
   all.shield = { [crew[1]]: 5000 };
   ok(E.shielded(all, crew[1], 4999) && !E.shielded(all, crew[1], 5000) && !E.shielded(all, crew[2], 0), 'バリアは時刻まで');

@@ -241,21 +241,38 @@ const { E, check, sleep } = L;
   check('仕事がルームに届く', await L.waitFor(async () => L.doneCount(await L.gameIn(host)) === 1));
   check('みんなの仕事のバーが進む', await L.waitFor(async () => (await L.text(g3, '#hudProgressNum')).startsWith('1 /')));
 
-  // ══ 近道（ねむらせ屋だけ） ══
+  // ══ 近道（ねむらせ屋だけ）: 入ると見えなくなり、出る部屋を選ぶ（2026-10-29） ══
   const v0 = E.VENTS[0];
-  const v1 = E.VENTS[v0.to];
+  const v1 = E.VENTS[3];
   await L.teleport(g1, v0.x, v0.y + 0.4);
-  check('ねむらせ屋は近道の上で「近道を使う」', await L.waitFor(async () => (await L.text(g1, '#actUseLabel')) === '近道を使う'));
+  check('ねむらせ屋は近道の上で「近道に入る」', await L.waitFor(async () => (await L.text(g1, '#actUseLabel')) === '近道に入る'));
   await g1.page.click('#actUse');
+  check('近道の中の一覧（ほかの7か所＋ここから出る）', await L.waitFor(async () => (await L.visible(g1, '#ventBox')) && (await g1.page.$$('#ventRooms .nk-word')).length === 8));
+  check('一覧は部屋の名前（入った台所はない）', (await L.text(g1, '#ventRooms')).includes('倉庫') && !(await L.text(g1, '#ventRooms .nk-word[data-vent="1"]')).includes('台所') && (await L.text(g1, '#ventLeft')).startsWith('あと'));
+  check('近道の中は位置の印が 2', await L.waitFor(async () => String((await L.rootOf(code)).p?.['あお'] || '').endsWith(',2')));
+  check('ほかの人の画面では見えない', await L.waitFor(() => g2.page.evaluate(() => !!(window.__NK__.PA['あお'] || {}).hidden)));
+  await L.shot(g1, '03a-vent');
+  await g1.page.keyboard.down('ArrowRight');
+  await L.sleep(400);
+  await g1.page.keyboard.up('ArrowRight');
+  check('近道の中では歩けない', Math.abs((await L.me(g1)).x - v0.x) < 0.01);
+  await g1.page.click('#ventRooms .nk-word[data-vent="3"]');
   const afterVent = await L.me(g1);
-  check('近道を使うと、つながった近道へ移る', Math.hypot(afterVent.x - v1.x, afterVent.y - v1.y) < 0.01, afterVent);
-  check('近道で移った位置がほかの人に届く', await L.waitFor(async () => {
+  check('選んだ部屋の近道から出る', Math.hypot(afterVent.x - v1.x, afterVent.y - v1.y) < 0.01 && !(await L.visible(g1, '#ventBox')), afterVent);
+  check('出た位置がほかの人に届き、また見える', await L.waitFor(async () => {
     const pa = await g2.page.evaluate(() => window.__NK__.PA['あお']);
-    return pa && Math.hypot(pa.tx - v1.x, pa.ty - v1.y) < 0.2;
+    return pa && Math.hypot(pa.tx - v1.x, pa.ty - v1.y) < 0.2 && !pa.hidden;
   }));
+  // 中にいられる時間がくると、入った近道から出る
+  check('出たあと、また入れる', await L.waitFor(async () => (await L.text(g1, '#actUseLabel')) === '近道に入る'));
+  await g1.page.click('#actUse');
+  await L.waitVisible(g1, '#ventBox');
+  await g1.page.evaluate(() => { window.__NK__.ME.vent.until = Date.now() + 200; });
+  check('時間がくると、入った所から出る', await L.waitFor(async () => !(await L.visible(g1, '#ventBox')) && Math.hypot((await L.me(g1)).x - v1.x, (await L.me(g1)).y - v1.y) < 0.01));
+  check('時間で出ても、また見える', await L.waitFor(async () => /,[01]$/.test(String((await L.rootOf(code)).p?.['あお'] || ''))));
   await L.teleport(g3, v0.x, v0.y + 0.4);
   await L.sleep(400);
-  check('隊員は近道を使えない', (await L.text(g3, '#actUseLabel')) !== '近道を使う');
+  check('隊員は近道を使えない', !(await L.text(g3, '#actUseLabel')).includes('近道'));
 
   // ══ はしご（だれでも） ══
   const l1 = E.LADDERS[1];

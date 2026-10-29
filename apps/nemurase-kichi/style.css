@@ -107,6 +107,14 @@ body.is-playing { overflow: hidden; background: #2D3642; overscroll-behavior: no
   border: 2px solid rgba(255, 255, 255, 0.85); border-radius: 10px; background: #2D3642; box-shadow: var(--shadow-md); overflow: hidden;
 }
 .nk-mini__view { display: block; width: 100%; }
+/* 小さな地図を出す／かくす（それぞれの子が自分で。2026-10-29）。地図の右上のすみに重ねる */
+.nk-mini-toggle {
+  position: absolute; top: 6px; right: 6px; z-index: 2; width: 34px; height: 34px; padding: 0; border: none; border-radius: 50%;
+  background: rgba(28, 63, 94, 0.88); color: #fff; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: var(--shadow-md);
+}
+.nk-mini-toggle .material-symbols-rounded { font-size: 20px; }
+.nk-mini-toggle.is-off { top: 12px; right: 12px; width: 44px; height: 44px; }
+.nk-mini-toggle.is-off .material-symbols-rounded { font-size: 24px; }
 
 .nk-tasks {
   position: absolute; top: 12px; left: 12px; width: 260px; max-width: calc(100% - 24px);
@@ -175,6 +183,7 @@ body.is-playing { overflow: hidden; background: #2D3642; overscroll-behavior: no
 .nk-act--say { background: #2F7D6E; }
 .nk-act--job { background: #3D5A99; }   /* 役職のわざ（2026-10-29） */
 .nk-tag--zzz { background: #E4E0F0; color: #4A3F78; }
+.nk-vent__note { margin: 0 0 8px; color: var(--color-muted); font-size: 13px; }
 #shiftNames .nk-word { display: inline-flex; align-items: center; gap: 6px; }
 .nk-vitals__battery { margin: 0 0 10px; font-weight: 700; color: var(--color-primary); }
 
@@ -290,6 +299,13 @@ body.is-watching .nk-tasks, body.is-watching .nk-actions, body.is-watching .nk-p
 .nk-overlay--meeting { align-items: center; }
 .nk-meeting { max-width: 560px; }
 .nk-meeting__head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+/* 会議中の地図（2026-10-29）。地図は会議の画面の上に重ねる */
+.nk-meeting__map {
+  margin-left: auto; min-height: 40px; padding: 6px 14px; border: 1.5px solid var(--color-primary); border-radius: 999px;
+  background: #fff; color: var(--color-primary); font: inherit; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; cursor: pointer;
+}
+.nk-meeting__map .material-symbols-rounded { font-size: 20px; }
+#ovMap { z-index: 21; }
 .nk-meeting__title { margin: 0; font-size: 22px; color: var(--color-primary); display: inline-flex; align-items: center; gap: 6px; }
 .nk-meeting__timer { margin: 0; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--color-primary); }
 .nk-meeting__why { margin: 10px 0 4px; font-weight: 700; line-height: 1.6; }
@@ -344,6 +360,8 @@ button.nk-vote__main:hover { border-color: var(--color-border); }
   .nk-hud__dark, .nk-hud__off { order: 3; }
   .nk-tasks { width: 220px; font-size: 13px; }
   .nk-mini { width: 118px; top: 10px; right: 10px; }
+  .nk-mini-toggle { top: 4px; right: 4px; width: 30px; height: 30px; }
+  .nk-mini-toggle.is-off { top: 10px; right: 10px; width: 40px; height: 40px; }
   .nk-banner { top: auto; bottom: 180px; max-width: calc(100% - 24px); }
   .nk-says { top: auto; bottom: 150px; left: 12px; right: 12px; transform: none; max-width: none; }
   .nk-says__item { font-size: 13px; padding: 5px 12px; }

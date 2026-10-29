@@ -34,7 +34,7 @@ const { E, check, sleep } = L;
   check('整備係・見守り係が1人ずつ、人の隊員に付く', Object.values(jobs0).filter((j) => j === 'engineer').length === 1 && Object.values(jobs0).filter((j) => j === 'watcher').length === 1
     && Object.keys(jobs0).every((id) => !id.startsWith('*') && (jobs0[id] === 'shifter' ? room.game.roles[id] === 'sleeper' : room.game.roles[id] === 'crew')), jobs0);
   check('へんしん屋は、人のねむらせ屋がいるときだけ', humanSleeper === Object.values(jobs0).includes('shifter'), { jobs0, roles: room.game.roles });
-  check('まもり星は、はじめはだれでもない', !room.game.angel);
+  check('まもり星も、はじめに人の隊員に付く', Object.entries(jobs0).some(([id, j]) => j === 'angel' && room.game.roles[id] === 'crew'), jobs0);
   const jobHolder = Object.keys(jobs0).find((id) => id === 'ホスト' || id === 'あお' || id === 'みどり' || id === 'そら');
   if (jobHolder) {
     const c = { 'ホスト': host, 'あお': g1, 'みどり': g2, 'そら': g3 }[jobHolder];
@@ -44,11 +44,11 @@ const { E, check, sleep } = L;
   // ここからは役と役職を決めて確かめる
   await L.patchGame(code, {
     roles: { 'ホスト': 'crew', 'あお': 'sleeper', 'みどり': 'crew', 'そら': 'crew', '*1': 'crew' },
-    jobs: { 'みどり': 'engineer', 'そら': 'watcher', 'あお': 'shifter' },
+    jobs: { 'みどり': 'engineer', 'そら': 'watcher', 'あお': 'shifter', 'ホスト': 'angel' },
     cooldown: { 'あお': Date.now() + 3600000 }, darkReadyAt: Date.now() + 3600000, buttonReadyAt: Date.now() + 3600000,
   });
   check('役の表示に役職', await L.waitFor(async () => (await L.text(g2, '#hudRole')) === '隊員・整備係' && (await L.text(g3, '#hudRole')) === '隊員・見守り係' && (await L.text(g1, '#hudRole')) === 'ねむらせ屋・へんしん屋'));
-  check('役職のない人はそのまま', (await L.text(host, '#hudRole')) === '隊員');
+  check('まもり星の表示', (await L.text(host, '#hudRole')) === '隊員・まもり星');
 
   // ══ 広いマップ ══
   check('マップは 64×43', E.W === 64 && E.H === 43);
@@ -77,6 +77,15 @@ const { E, check, sleep } = L;
   await host.page.click('#btnMapClose');
   check('とじると小さな地図がもどる', await L.waitFor(() => L.visible(host, '#miniMap')));
   await L.shot(host, '51-minimap');
+  // 小さな地図は、それぞれの子が自分で出す／かくす（2026-10-29）
+  check('小さな地図に「かくす」ボタン', await L.visible(host, '#miniToggle') && (await host.page.getAttribute('#miniToggle', 'aria-label')) === '小さな地図をかくす');
+  await host.page.click('#miniToggle');
+  check('押すと小さな地図がかくれる', await L.waitFor(async () => !(await L.visible(host, '#miniMap'))) && (await host.page.getAttribute('#miniToggle', 'aria-label')) === '小さな地図を出す');
+  check('かくしたことを端末に覚える', (await host.page.evaluate(() => localStorage.getItem('nemurase_mini'))) === '0');
+  check('ほかの人の小さな地図はそのまま', await L.visible(g1, '#miniMap'));
+  await L.shot(host, '51b-minimap-off');
+  await host.page.click('#miniToggle');
+  check('もう一度押すと出る', await L.waitFor(() => L.visible(host, '#miniMap')) && (await host.page.evaluate(() => localStorage.getItem('nemurase_mini'))) === '1');
 
   // ══ 監視室のカメラ ══
   check('カメラの台は監視室', E.roomAt(E.CAM_STAND.x, E.CAM_STAND.y) === 'monitor');
@@ -101,13 +110,15 @@ const { E, check, sleep } = L;
   const v0 = E.VENTS[0];
   await L.teleport(host, v0.x, v0.y + 0.4);
   await sleep(400);
-  check('役職のない隊員は近道を使えない', !(await L.text(host, '#actUseLabel')).includes('近道'));
+  check('整備係でない隊員は近道を使えない', !(await L.text(host, '#actUseLabel')).includes('近道'));
   await L.teleport(host, 33, 24.5);
   await L.teleport(g2, v0.x, v0.y + 0.4);
-  check('整備係は近道の上で「近道を使う」', await L.waitFor(async () => (await L.text(g2, '#actUseLabel')) === '近道を使う'));
+  check('整備係は近道の上で「近道に入る」', await L.waitFor(async () => (await L.text(g2, '#actUseLabel')) === '近道に入る'));
   await g2.page.click('#actUse');
-  const to = E.VENTS[v0.to];
-  check('整備係はつながった近道へ移る', await L.waitFor(async () => { const m = await L.me(g2); return Math.hypot(m.x - to.x, m.y - to.y) < 0.1; }));
+  await L.waitVisible(g2, '#ventBox');
+  await g2.page.click('#ventRooms .nk-word[data-vent="1"]');
+  const to = E.VENTS[1];
+  check('整備係は選んだ近道から出る', await L.waitFor(async () => { const m = await L.me(g2); return Math.hypot(m.x - to.x, m.y - to.y) < 0.1; }));
   check('続けては使えない（あと何秒）', await L.waitFor(async () => /^近道（あと\d+秒）$/.test(await L.text(g2, '#actUseLabel')) && await g2.page.$eval('#actUse', (b) => b.disabled)));
   check('整備係に役職のボタンは出ない', !(await L.visible(g2, '#actJob')));
 
@@ -169,18 +180,9 @@ const { E, check, sleep } = L;
   check('へんしんがおわると、もとの色', await L.waitFor(async () => L.nearColor(await L.pixelAt(g3, 31.5, 25.5), aoHex, 30)), await L.pixelAt(g3, 31.5, 25.5));
   check('おわってから次まで待つ', await L.waitFor(async () => /^へんしん \d+$/.test(await L.text(g1, '#actJobLabel'))));
 
-  // ══ まもり星: 最初にねむった隊員がなる ══
-  await L.patchGame(code, { cooldown: { 'あお': 1 } });
-  await L.teleport(host, 40.5, 37.5);   // 見はり台
-  await L.teleport(g1, 39.8, 37.5);
-  await L.waitFor(async () => !(await g1.page.$eval('#actSleep', (b) => b.disabled)));
-  await g1.page.click('#actSleep');
-  check('ホストがねむり、まもり星になる', await L.waitFor(async () => { const g = (await L.roomOf(code)).game; return g.asleep?.['ホスト'] === 'slept' && g.angel === 'ホスト' && g.angelReadyAt > Date.now(); }));
-  check('まもり星のお知らせ', await L.waitFor(async () => (await L.text(host, '#stageBanner')).includes('まもり星になった')));
-  check('役の表示に「まもり星」', await L.waitFor(async () => (await L.text(host, '#hudRole')).includes('まもり星')));
-  check('まもり星の「まもる」は、はじめは待つ', await L.waitFor(async () => /^まもる \d+$/.test(await L.text(host, '#actJobLabel'))));
-  await L.patchGame(code, { angelReadyAt: 1, cooldown: { 'あお': Date.now() + 3600000 } });
-  await L.teleport(g2, 26.5, 37.5);
+  // ══ まもり星: はじめから役職（2026-10-29 オーナー「最初から役職として」）。おきている間から使える ══
+  check('まもり星はおきている間から「まもる」を持つ', await L.waitFor(async () => (await L.visible(host, '#actJob')) && (await L.text(host, '#actJobLabel')).startsWith('まもる')));
+  await L.teleport(g2, 26.5, 37.5);   // 見はり台
   await L.teleport(host, 27.5, 37.5);
   check('おきている人の近くで「まもる」が押せる', await L.waitFor(async () => (await L.text(host, '#actJobLabel')) === 'まもる' && !(await host.page.$eval('#actJob', (b) => b.disabled))));
   await host.page.click('#actJob');
@@ -196,6 +198,17 @@ const { E, check, sleep } = L;
   check('まもり星に「まもれた！」', await L.waitToast(host, 'みどり さんをまもれた'));
   check('みどりには知らせない', !((await L.text(g2, '#roomk-toast').catch(() => '')) || '').includes('バリア'));
   check('ねむらせ屋の待ち時間ははじめから', ((await L.roomOf(code)).game.cooldown['あお'] || 0) > Date.now() + 10000);
+  // ねむらされても、まもり星は使える
+  await L.patchGame(code, { cooldown: { 'あお': 1 } });
+  await L.teleport(host, 40.5, 37.5);
+  await L.teleport(g1, 39.8, 37.5);
+  await L.teleport(g2, 30.5, 38.5);
+  await L.waitFor(async () => !(await g1.page.$eval('#actSleep', (b) => b.disabled)));
+  await g1.page.click('#actSleep');
+  check('まもり星（ホスト）がねむる', await L.waitFor(async () => (await L.roomOf(code)).game.asleep?.['ホスト'] === 'slept'));
+  await L.patchGame(code, { angelReadyAt: 1, cooldown: { 'あお': Date.now() + 3600000 } });
+  await L.teleport(host, 31.5, 38.5);
+  check('ねむってからも「まもる」が押せる', await L.waitFor(async () => (await L.text(host, '#actJobLabel')) === 'まもる' && !(await host.page.$eval('#actJob', (b) => b.disabled))));
   check('チェッカーに「ねむっている」', await (async () => { await g3.page.click('#actJob'); const ok = await L.waitFor(async () => (await L.text(g3, '#vitalsList')).includes('ねむっている')); await g3.page.keyboard.press('Escape'); return ok; })());
 
   // ══ 会議でへんしん・バリアは消える。小さな地図もかくす ══
@@ -208,6 +221,17 @@ const { E, check, sleep } = L;
   room = await L.roomOf(code);
   check('会議でへんしん・バリアは消える', !room.game.shape?.['あお'] && !room.game.shield?.['そら']);
   check('会議の間は小さな地図をかくす', await L.waitFor(async () => !(await L.visible(g3, '#miniMap'))));
+  // 会議中も地図を見られる（2026-10-29 子どもの要望）
+  check('会議の画面に「地図」ボタン', await L.visible(g3, '#btnMeetingMap'));
+  await g3.page.click('#btnMeetingMap');
+  check('会議中に地図がひらく（会議の上に重なる）', await L.waitFor(() => L.visible(g3, '#ovMap')) && await g3.page.evaluate(() => { const r = document.getElementById('mapView').getBoundingClientRect(); const el = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2); return el && el.id === 'mapView'; }));
+  await L.shot(g3, '55b-meeting-map');
+  await g3.page.click('#btnMapClose');
+  check('とじると会議の画面にもどる', await L.waitFor(async () => !(await L.visible(g3, '#ovMap'))) && await L.visible(g3, '#ovMeeting'));
+  await g3.page.keyboard.press('KeyM');
+  check('会議中も M で地図', await L.waitFor(() => L.visible(g3, '#ovMap')));
+  await g3.page.keyboard.press('KeyM');
+  await L.waitHidden(g3, '#ovMap');
 
   // ══ おしまいの一覧に役職 ══
   await L.patchGame(code, { stage: 'end', winner: 'crew', winReason: 'tasks', meeting: null });

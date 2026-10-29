@@ -54,7 +54,7 @@ const SETTING_LABELS = {
   // 役職（2026-10-29）。入れると、人のうち1人がなる（ロボットはならない）
   engineer: ['整備係（隊員・近道を使える）', (v) => (v ? '入れる' : '入れない')],
   watcher: ['見守り係（隊員・ねむりチェッカー）', (v) => (v ? '入れる' : '入れない')],
-  angel: ['まもり星（最初にねむった隊員）', (v) => (v ? '入れる' : '入れない')],
+  angel: ['まもり星（隊員・バリアをはる）', (v) => (v ? '入れる' : '入れない')],
   shifter: ['へんしん屋（ねむらせ屋）', (v) => (v ? '入れる' : '入れない')],
 };
 
@@ -113,7 +113,6 @@ const state = {
   vitalsOpen: false,   // 見守り係がチェッカーを見ている
   shiftOpen: false,    // へんしん屋が「だれになる？」を選んでいる
   blockedSeen: null,   // 知らせた「バリアでねむらせられなかった」の時刻（null＝この回はまだ見ていない）
-  angelNoted: false,   // 「まもり星になった」を知らせた
   bannerTimer: null,
   toastTimer: null,
   lastAdvanceTry: 0,
@@ -122,7 +121,7 @@ const state = {
   dueKey: null,        // 進められる状態（会議のしめきり・結果のあとなど）を最初に見た回
   dueSince: 0,
 };
-const ME = { x: E.TABLE.x, y: E.TABLE.y + 2.9, face: 1, sentAt: 0, sentText: '', moving: false, ventAt: 0, climb: null };   // climb: はしごを使っている途中 {until, to, label}
+const ME = { x: E.TABLE.x, y: E.TABLE.y + 2.9, face: 1, sentAt: 0, sentText: '', moving: false, ventAt: 0, climb: null, vent: null };   // vent: 近道の中 {id, until}（2026-10-29）   // climb: はしごを使っている途中 {until, to, label}
 const VENT_GAP_MS = 1200;       // 近道を使ったあと、続けて使えるまで（行ったり来たりを1回の押しまちがいでしないように）
 const PA = {};   // おきている人の位置 {id: {x, y, tx, ty, face}}（p から）
 const PG = {};   // ねむった人の位置（g から。自分がねむっているときだけ受け取る）
@@ -282,7 +281,6 @@ function gameOf(room) {
     cam: {},          // 監視カメラを見ている人 {id: true}（game/cam/{id}。見おわったら消す。会議で空にする）
     // 役職（2026-10-29）
     jobs: {},
-    angel: typeof raw.angel === 'string' && players.includes(raw.angel) ? raw.angel : '',
     angelReadyAt: Number(raw.angelReadyAt) || 0,
     shield: {},
     shape: {},
@@ -294,7 +292,7 @@ function gameOf(room) {
   const shapeRaw = objOf(raw.shape);
   const shiftRaw = objOf(raw.shiftReadyAt);
   players.forEach((id) => {
-    if (['engineer', 'watcher', 'shifter'].includes(jobsRaw[id])) g.jobs[id] = jobsRaw[id];
+    if (['engineer', 'watcher', 'shifter', 'angel'].includes(jobsRaw[id])) g.jobs[id] = jobsRaw[id];
     if (Number(shieldRaw[id]) > 0) g.shield[id] = Number(shieldRaw[id]);
     const sh = objOf(shapeRaw[id]);
     if (typeof sh.as === 'string' && players.includes(sh.as) && Number(sh.until) > 0) g.shape[id] = { as: sh.as, until: Number(sh.until) };
@@ -1195,10 +1193,7 @@ function everyoneVoted(g, room) {
 function endMeeting(g, now, timeout) {
   if (timeout) E.awakeOf(g).forEach((id) => { if (!g.meeting.votes[id]) g.meeting.votes[id] = SKIP; });
   const t = E.tally(g.meeting.votes, SKIP);
-  if (t.target) {
-    g.asleep[t.target] = 'voted';
-    E.claimAngel(g, t.target, now);   // 最初にねむった隊員がまもり星になる（設定があるとき）
-  }
+  if (t.target) g.asleep[t.target] = 'voted';
   g.result = { counts: t.counts, target: t.target, tie: t.tie, wasSleeper: t.target ? g.roles[t.target] === 'sleeper' : false, until: now + RESULT_MS };
   g.meeting = null;
   E.checkWin(g);
@@ -1224,7 +1219,6 @@ const mut = {
       return true;
     }
     g.asleep[target] = 'slept';
-    E.claimAngel(g, target, now);
     g.sleptBy[target] = actor;   // ねむらされた本人の画面にだけ出す（ほかの人には言わない約束）
     g.bodies[target] = { x: Math.round(at.x * 10) / 10, y: Math.round(at.y * 10) / 10 };
     g.cooldown[actor] = now + g.settings.cooldown * 1000;
@@ -1286,7 +1280,7 @@ const mut = {
   },
   // まもり星: おきている人にバリア（SHIELD_S 秒ねむらせられない）。次は ANGEL_GAP_S 秒あと。距離は押した端末が確かめる
   protect: (actor, target) => (g, now) => {
-    if (g.stage !== 'play' || g.angel !== actor || E.isAwake(g, actor) || E.hasLeft(g, actor)) return false;
+    if (g.stage !== 'play' || g.jobs[actor] !== 'angel' || E.hasLeft(g, actor)) return false;   // おきていても、ねむってからも使える
     if ((g.angelReadyAt || 0) > now || target === actor || !E.awakeOf(g).includes(target)) return false;
     g.shield = { [target]: now + E.SHIELD_S * 1000 };
     g.angelReadyAt = now + E.ANGEL_GAP_S * 1000;
@@ -1696,7 +1690,7 @@ function pairNeedingHelp(g) {
 function knownPos(id) {
   if (id === state.nickname) return ME;
   if (BOTS[id]) return BOTS[id];
-  return PA[id] ? { x: PA[id].tx, y: PA[id].ty } : null;
+  return PA[id] && !PA[id].hidden ? { x: PA[id].tx, y: PA[id].ty } : null;   // 近道の中の人は見えない
 }
 
 function botStep(g, b, dt, now) {
@@ -1824,7 +1818,7 @@ function botLoop() {
 function sendPosFor(id, pos, awake, force) {
   // 切れている間は送らない（SDK が書き込みをためて、ルームが消えたあとに位置だけを作りなおさないように）
   if (!state.rootRef || !state.isConnected || state.leaving) return;
-  const text = E.encodePos(pos.x, pos.y, pos.face || 1);
+  const text = E.encodePos(pos.x, pos.y, pos.face || 1, !!pos.vent);
   if (text === pos.sentText && !force) return;
   const now = Date.now();
   if (!force && now - (pos.sentAt || 0) < POS_MS) return;
@@ -1861,8 +1855,8 @@ function takePos(map, id, text) {
   const p = E.decodePos(text);
   if (!p) { delete map[id]; return; }
   const cur = map[id];
-  if (!cur || Math.hypot(cur.tx - p.x, cur.ty - p.y) > 3) map[id] = { x: p.x, y: p.y, tx: p.x, ty: p.y, face: p.face };
-  else { cur.tx = p.x; cur.ty = p.y; cur.face = p.face; }
+  if (!cur || Math.hypot(cur.tx - p.x, cur.ty - p.y) > 3) map[id] = { x: p.x, y: p.y, tx: p.x, ty: p.y, face: p.face, hidden: p.hidden };
+  else { cur.tx = p.x; cur.ty = p.y; cur.face = p.face; cur.hidden = p.hidden; }
 }
 
 function subscribeChannel(key, map) {
@@ -2079,7 +2073,6 @@ function renderGame(room) {
     state.engVentAt = 0;
     state.battery = E.WATCH_BATTERY_S;
     state.blockedSeen = null;
-    state.angelNoted = false;
     // 前の回のひとことは出さない（読み込み直しでも、いま入っている分は見たことにする）
     state.sayHeard = {};
     Object.keys(g.say).forEach((id) => { state.sayHeard[id] = g.say[id].n; });
@@ -2117,6 +2110,7 @@ function renderGame(room) {
     ME.y = back.y;
     if (saved) ME.face = saved.face;
     ME.climb = null;
+    leaveVent(false);
     pairRelease();
     if (g.stage === 'play') sendPosFor(state.nickname, ME, E.isAwake(g, state.nickname), true);
   }
@@ -2171,7 +2165,7 @@ function renderGame(room) {
     const panel = state.taskSpot === AIR_TASK_A ? 'a' : 'b';
     if (!g.air || g.airFixed[panel] || asleep) { closeTask(); if (!g.air) smallToast('空気がもどった'); }
   }
-  if (state.mapOpen && (g.stage !== 'play' || !playing)) closeMap();
+  if (state.mapOpen && (g.stage === 'end' || (g.stage === 'play' && !playing))) closeMap();
   if (state.vitalsOpen && (g.stage !== 'play' || !playing || asleep)) closeVitals();
   if (state.shiftOpen && (g.stage !== 'play' || !playing || asleep)) { state.shiftOpen = false; $('shiftBox').hidden = true; }
   if (state.sabOpen && (g.stage !== 'play' || !playing || asleep)) { state.sabOpen = false; state.sabDoor = false; }
@@ -2246,7 +2240,7 @@ const JOB_DESC = {
   engineer: '整備係なので、ねむらせ屋と同じ「近道」を使える（1回使うと' + E.ENGINEER_GAP_S + '秒は使えない）。近道に入るところを見られると、あやしまれるかも。',
   watcher: '見守り係なので、「チェッカー」で、だれがねむっているかを見られる。電池は' + E.WATCH_BATTERY_S + '秒ぶん。少しずつたまり、仕事を1つおえると満タンになる。',
   shifter: 'へんしん屋なので、「へんしん」で、ほかの人のすがたに' + E.SHIFT_S + '秒なれる（次は、もとにもどってから' + E.SHIFT_GAP_S + '秒あと）。',
-  angel: '',
+  angel: 'まもり星なので、近くの人に「まもる」でバリアをはれる。' + E.SHIELD_S + '秒のあいだ、その人はねむらされない（次は' + E.ANGEL_GAP_S + '秒あと。自分にははれない）。ねむらされても使えるよ。',
 };
 function showRole(g, note) {
   const role = g.roles[state.nickname];
@@ -2432,7 +2426,6 @@ function renderEnd(g) {
     const sl = g.roles[id] === 'sleeper';
     li.append(chip(g.colors[id]), makeElement('span', 'nk-person__name', nameIn(g, id)), makeElement('span', 'nk-tag' + (sl ? ' nk-tag--sleeper' : ''), sl ? 'ねむらせ屋' : '隊員'));
     if (g.jobs[id]) li.appendChild(makeElement('span', 'nk-tag', E.JOB_NAMES[g.jobs[id]]));
-    if (g.angel === id) li.appendChild(makeElement('span', 'nk-tag', E.JOB_NAMES.angel));
     if (E.hasLeft(g, id)) li.appendChild(makeElement('span', 'nk-tag', '途中で抜けた'));
     ul.appendChild(li);
   });
@@ -2527,7 +2520,7 @@ function resizeCanvas() {
 }
 
 const blocked = () => !$('ovRole').hidden || !$('ovTask').hidden || !$('ovCam').hidden || !$('ovMap').hidden || !$('ovVitals').hidden || !$('ovMeeting').hidden || !$('ovResult').hidden || !$('ovEnd').hidden
-  || !$('hostOffOverlay').hidden || $('menuDialog').open;
+  || !$('hostOffOverlay').hidden || $('menuDialog').open || !!ME.vent;
 
 function inputDir() {
   let x = 0;
@@ -2549,6 +2542,10 @@ function frame(t) {
   if (g && isPlaying(g, state.nickname)) {
     const awake = E.isAwake(g, state.nickname);
     if (g.stage !== 'play') ME.climb = null;
+    // 近道の中: 会議・ねむらされたら出る。中にいられる時間がきたら、入った近道から出る（切れている間は出ない）
+    if (ME.vent && (g.stage !== 'play' || !awake)) leaveVent(false);
+    else if (ME.vent && state.isConnected && Date.now() >= ME.vent.until) leaveVent(true);
+    if (ME.vent) renderVentBox();
     if (g.stage === 'play' && ME.climb) {
       // はしごを使っている途中: その場に立ったまま。時間がきたら、つながったはしごへ移る
       if (Date.now() >= ME.climb.until && state.isConnected) {   // 切れている間は、のぼりおりを終えない
@@ -2590,7 +2587,9 @@ function frame(t) {
     if (g.air) updateAirHud(g);
   } else if (g) {
     if (!miniBtn.hidden) miniBtn.hidden = true;
+    if (!miniToggle.hidden) miniToggle.hidden = true;
     drawOverview(g);
+    if (state.mapOpen) drawMapOverlay(g);
     updateClock(g);
     updateMeetingTimer(g);
     if (g.air) updateAirHud(g);
@@ -2601,7 +2600,8 @@ function frame(t) {
 function drawPos(g, id) {
   if (id === state.nickname) return ME;
   if (BOTS[id]) return BOTS[id];
-  return E.isAwake(g, id) ? PA[id] || null : PG[id] || null;
+  const p = E.isAwake(g, id) ? PA[id] || null : PG[id] || null;
+  return p && p.hidden ? null : p;   // 近道の中の人は、描かない・ねむらせられない・カメラに映らない
 }
 
 function viewRadius(g) {
@@ -2749,7 +2749,7 @@ function draw(g) {
 
   const order = g.players.slice().sort((a, b) => ((drawPos(g, a) || {}).y || 0) - ((drawPos(g, b) || {}).y || 0));
   const now = RoomkRTDB.now();
-  const shieldOn = g.angel === me;   // バリアの光は、まもり星にだけ見える
+  const shieldOn = g.jobs[me] === 'angel';   // バリアの光は、まもり星にだけ見える
   order.forEach((id) => {
     const pos = drawPos(g, id);
     if (!pos) return;
@@ -2760,7 +2760,7 @@ function draw(g) {
     // へんしん中は、なっている人の色と名前で描く（自分にも、なっている人のすがたで見える）
     const look = up ? E.looksAs(g, id, now) : id;
     if (shieldOn && up && E.shielded(g, id, now)) drawShield(sx(pos.x), sy(pos.y));
-    drawPerson(sx(pos.x), sy(pos.y), colorHex(g.colors[look]), pos.face || 1, up ? 1 : 0.45, nameIn(g, look), mate);
+    drawPerson(sx(pos.x), sy(pos.y), colorHex(g.colors[look]), pos.face || 1, up && !(id === me && ME.vent) ? 1 : 0.45, nameIn(g, look), mate);
   });
 
   if (vr !== Infinity) {
@@ -2876,7 +2876,9 @@ function drawWholeMap(g, sx, sy, s, mine, small) {
 /* ── 地図（遊んでいる人。自分の位置と自分の仕事だけ。ほかの人は出ない） ── */
 function openMap() {
   const g = gameOf(state.room);
-  if (!g || g.stage !== 'play' || !isPlaying(g, state.nickname) || state.mapOpen) return;
+  // 遊んでいる間は遊ぶ人だけ。会議・結果の間はだれでも（2026-10-29 子どもの要望「会議中にマップを確認したい」。会議の画面の上に重ねる）
+  const talk = g && (g.stage === 'meeting' || g.stage === 'result');
+  if (!g || !(talk || (g.stage === 'play' && isPlaying(g, state.nickname))) || state.mapOpen) return;
   state.mapOpen = true;
   state.sayOpen = false;
   state.sabOpen = false;
@@ -2905,7 +2907,9 @@ function drawMapOverlay(g) {
   // 地図のキャンバスに、同じ描き方で描く（ctx を一時的に差しかえる）
   const saved = { ctx, CW, CH };
   ctx = mctx; CW = w; CH = h;
-  drawWholeMap(g, (x) => x * s, (y) => y * s, s, { x: ME.x, y: ME.y, color: g.colors[state.nickname], spots: mySpots(g) });
+  // 遊ぶ人は自分の場所と自分の仕事。進行役・見学（会議中に見るとき）は地図だけ
+  const mine = isPlaying(g, state.nickname) ? { x: ME.x, y: ME.y, color: g.colors[state.nickname], spots: mySpots(g) } : { spots: [] };
+  drawWholeMap(g, (x) => x * s, (y) => y * s, s, mine);
   ctx = saved.ctx; CW = saved.CW; CH = saved.CH;
 }
 // 自分のおわっていない仕事の場所（隊員だけ。ふたりの仕事は2か所）
@@ -2925,8 +2929,23 @@ const miniCanvas = $('miniView');
 const nctx = miniCanvas.getContext('2d');
 const miniBase = document.createElement('canvas');   // 地図の部分（変わったときだけ描きなおす）
 let miniKey = '';
+// 小さな地図を出すか（2026-10-29 子どもの要望「MAPの表示を On/Off」→ それぞれの子が自分で。端末に覚えておく）
+const MINI_KEY = 'nemurase_mini';
+let miniOn = true;
+try { miniOn = localStorage.getItem(MINI_KEY) !== '0'; } catch (e) { /* 使えない端末では出したまま */ }
+const miniToggle = $('miniToggle');
+function setMiniOn(on) {
+  miniOn = on;
+  try { localStorage.setItem(MINI_KEY, on ? '1' : '0'); } catch (e) { /* 覚えられなくても切りかえはする */ }
+  miniToggle.setAttribute('aria-label', on ? '小さな地図をかくす' : '小さな地図を出す');
+  miniToggle.title = on ? '小さな地図をかくす' : '小さな地図を出す';
+  miniToggle.classList.toggle('is-off', !on);
+  $('miniToggleIcon').textContent = on ? 'close' : 'map';
+}
 function drawMini(g) {
-  const show = g.stage === 'play' && isPlaying(g, state.nickname) && !state.mapOpen && !state.camOpen;
+  const can = g.stage === 'play' && isPlaying(g, state.nickname) && !state.mapOpen && !state.camOpen;
+  if (miniToggle.hidden === can) miniToggle.hidden = !can;
+  const show = can && miniOn;
   if (miniBtn.hidden === show) miniBtn.hidden = !show;
   if (!show) return;
   const w = Math.max(80, Math.floor(miniCanvas.getBoundingClientRect().width));
@@ -3429,7 +3448,7 @@ function updateActions(g) {
     if (!use && (role === 'sleeper' || eng) && awake && Date.now() - ME.ventAt >= VENT_GAP_MS) {
       const v = E.VENTS.find((x) => E.dist(x, ME) <= E.USE_RANGE);
       const wait = eng && state.engVentAt ? Math.ceil((state.engVentAt + E.ENGINEER_GAP_S * 1000 - Date.now()) / 1000) : 0;
-      if (v) use = wait > 0 ? { kind: 'vent', vent: v.id, label: '近道（あと' + wait + '秒）', off: true } : { kind: 'vent', vent: v.id, label: '近道を使う' };
+      if (v) use = wait > 0 ? { kind: 'vent', vent: v.id, label: '近道（あと' + wait + '秒）', off: true } : { kind: 'vent', vent: v.id, label: '近道に入る' };
     }
     // はしご（だれでも。ねむった人も）
     if (!use) {
@@ -3562,16 +3581,7 @@ function setText(id, text) {
 function doUse() {
   const u = ACT.use;
   if (!u || u.off || !state.isConnected) return;   // 切れている間は使えない（近道で、ほかの人の見ていない場所へ移らないように）
-  if (u.kind === 'vent') {
-    const to = E.VENTS[E.VENTS[u.vent].to];
-    ME.x = to.x;
-    ME.y = to.y;
-    ME.ventAt = Date.now();
-    const g = gameOf(state.room);
-    if (g && g.jobs[state.nickname] === 'engineer') state.engVentAt = Date.now();
-    if (g) sendPosFor(state.nickname, ME, E.isAwake(g, state.nickname), true);
-    return;
-  }
+  if (u.kind === 'vent') { enterVent(u.vent); return; }
   if (u.kind === 'ladder') {
     const l = E.LADDERS[u.ladder];
     ME.climb = { until: Date.now() + E.CLIMB_MS, to: l.to, label: l.busy };
@@ -3608,18 +3618,13 @@ function doAir() {
 function noteJobs(g, playing) {
   const me = state.nickname;
   if (!playing) return;
-  if (g.angel === me && !state.angelNoted && g.stage === 'play') {
-    state.angelNoted = true;
-    banner('まもり星になった！ おきている人の近くで「まもる」を押すと、' + E.SHIELD_S + '秒のあいだ、その人はねむらされない（次は' + E.ANGEL_GAP_S + '秒あと）', 9000);
-  }
-  if (g.angel === me) state.angelNoted = true;
   const b = g.blocked;
   const key = b ? b.at : 0;
   if (state.blockedSeen === null) { state.blockedSeen = key; return; }   // 読み込み直したときは、前の分を出さない
   if (key && key !== state.blockedSeen) {
     state.blockedSeen = key;
     if (b.by === me) smallToast('バリアでまもられていて、ねむらせられなかった');
-    else if (g.angel === me) smallToast(nameIn(g, b.t) + ' さんをまもれた！');
+    else if (g.jobs[me] === 'angel') smallToast(nameIn(g, b.t) + ' さんをまもれた！');
   }
 }
 
@@ -3648,7 +3653,7 @@ function updateJobAction(g, play, now) {
       label = wait > 0 ? 'へんしん ' + wait : 'へんしん';
       off = !play || wait > 0;
     }
-  } else if (job === 'angel' && !awake) {
+  } else if (job === 'angel') {
     show = true;
     icon = 'shield';
     const wait = Math.ceil(((g.angelReadyAt || 0) - now) / 1000);
@@ -3668,6 +3673,7 @@ function updateJobAction(g, play, now) {
 
 // まもり星がバリアをはれる相手: いちばん近い、おきている人（ねむった人はかべに関係なく見える）
 function angelTarget(g) {
+  const awake = E.isAwake(g, state.nickname);
   let target = null;
   let best = Infinity;
   E.awakeOf(g).forEach((id) => {
@@ -3675,6 +3681,7 @@ function angelTarget(g) {
     const p = drawPos(g, id);
     if (!p) return;
     const d = E.dist(p, ME);
+    if (awake && !E.canSee(ME, p)) return;   // おきている間は、かべの向こうの人にははれない
     if (d <= E.ANGEL_RANGE && d < best) { best = d; target = id; }
   });
   return target;
@@ -3766,6 +3773,63 @@ function drawShield(x, y) {
   ctx.fill();
   ctx.stroke();
   ctx.restore();
+}
+
+/* ── 近道（2026-10-29 子どもの要望「ベントで飛ぶ場所を選べるように」）──
+   入ると姿が消え（位置の印が 2）、ほかの7か所から部屋の名前で選んで出る。中にいられるのは VENT_STAY_S 秒まで（過ぎたら入った所から出る） */
+const ventRoom = (v) => E.roomName(E.roomAt(v.x, v.y));
+function enterVent(id) {
+  const g = gameOf(state.room);
+  const v = E.VENTS[id];
+  if (!g || !v || ME.vent || !state.isConnected) return;
+  ME.x = v.x;
+  ME.y = v.y;
+  ME.vent = { id, until: Date.now() + E.VENT_STAY_S * 1000 };
+  KEYS.clear();
+  state.sayOpen = false;
+  state.sabOpen = false;
+  state.shiftOpen = false;
+  renderSayBox(g);
+  sendPosFor(state.nickname, ME, true, true);
+  $('ventBox').hidden = false;
+  $('ventRooms').replaceChildren();
+  renderVentBox();
+}
+// 出る。to をわたすと、その近道から出る。send: 位置を送る（会議・置きなおしのときは送らない）
+function leaveVent(send, to) {
+  if (!ME.vent) return;
+  if (send && !state.isConnected) return;   // 切れている間は出ない（ほかの人の見ていない間に動いた場所へ現れないように）
+  const v = E.VENTS[to === undefined ? ME.vent.id : to];
+  ME.vent = null;
+  $('ventBox').hidden = true;
+  if (!send) return;
+  ME.x = v.x;
+  ME.y = v.y;
+  ME.ventAt = Date.now();
+  const g = gameOf(state.room);
+  if (g && g.jobs[state.nickname] === 'engineer') state.engVentAt = Date.now();
+  sendPosFor(state.nickname, ME, true, true);
+}
+function renderVentBox() {
+  if (!ME.vent) return;
+  const left = Math.max(0, Math.ceil((ME.vent.until - Date.now()) / 1000));
+  setText('ventLeft', 'あと' + left + '秒で出る');
+  const box = $('ventRooms');
+  if (box.childElementCount) return;
+  box.appendChild(makeElement('span', 'nk-words__lead', 'どこに出る？'));
+  E.VENTS.forEach((v) => {
+    if (v.id === ME.vent.id) return;
+    const b = makeElement('button', 'nk-word', ventRoom(v));
+    b.type = 'button';
+    b.dataset.vent = String(v.id);
+    b.addEventListener('click', () => leaveVent(true, v.id));
+    box.appendChild(b);
+  });
+  const here = makeElement('button', 'nk-word nk-word--quiet', 'ここから出る（' + ventRoom(E.VENTS[ME.vent.id]) + '）');
+  here.type = 'button';
+  here.dataset.vent = 'here';
+  here.addEventListener('click', () => leaveVent(true));
+  box.appendChild(here);
 }
 
 /* ── 監視カメラ ── */
@@ -3968,7 +4032,10 @@ function bind() {
   $('sabDoor').addEventListener('click', () => { state.sabDoor = !state.sabDoor; const g = gameOf(state.room); if (g) renderSabBox(g, RoomkRTDB.now()); });
   $('btnMap').addEventListener('click', () => { if (state.mapOpen) closeMap(); else openMap(); });
   $('btnMapClose').addEventListener('click', closeMap);
+  $('btnMeetingMap').addEventListener('click', openMap);
   miniBtn.addEventListener('click', openMap);
+  setMiniOn(miniOn);
+  miniToggle.addEventListener('click', () => setMiniOn(!miniOn));
   $('actJob').addEventListener('click', doJob);
   $('btnVitalsClose').addEventListener('click', closeVitals);
   $('btnShiftClose').addEventListener('click', () => { state.shiftOpen = false; $('shiftBox').hidden = true; });
@@ -3984,8 +4051,10 @@ function bind() {
     if (e.code === 'Escape' && !$('ovTask').hidden) { closeTask(); return; }
     if (e.code === 'Escape' && !$('ovCam').hidden) { closeCam(); return; }
     if (e.code === 'Escape' && !$('ovMap').hidden) { closeMap(); return; }
+    if (e.code === 'Escape' && ME.vent) { leaveVent(true); return; }
     if ((e.code === 'Escape' || (e.code === 'KeyG' && !e.repeat)) && !$('ovVitals').hidden) { closeVitals(); return; }
     if (e.code === 'KeyM' && !e.repeat && !$('ovMap').hidden) { closeMap(); return; }
+    if (e.code === 'KeyM' && !e.repeat && !$('ovMeeting').hidden) { openMap(); return; }   // 会議中も M で地図
     if (blocked()) return;
     if (/^(Arrow|Key[WASD]$)/.test(e.code)) { KEYS.add(e.code); e.preventDefault(); return; }
     if (e.repeat) return;

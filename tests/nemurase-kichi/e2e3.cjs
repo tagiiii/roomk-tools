@@ -45,7 +45,7 @@ const { E, check, sleep } = L;
   };
   await L.patchGame(code, { roles, tasks, cooldown: { 'あお': 1 }, darkReadyAt: 1, buttonReadyAt: 1 });
   check('役が変わる', await L.waitFor(async () => (await L.text(g1, '#hudRole')) === 'ねむらせ屋'));
-  check('やることに「ふたりの仕事」（部屋が2つ）', await L.waitFor(async () => (await L.text(g2, '#tasksItems')).includes('電気室と畑') && (await L.text(g2, '#tasksItems')).includes('ふたりでスイッチを入れる')));
+  check('やることに「ふたりの仕事」（部屋が2つ）', await L.waitFor(async () => (await L.text(g2, '#tasksItems')).includes('休けい室と畑') && (await L.text(g2, '#tasksItems')).includes('ふたりでスイッチを入れる')));
   check('やることの注意書き', (await L.text(g2, '#tasksNote')).includes('ふたりの仕事'));
 
   // ══ 地図 ══

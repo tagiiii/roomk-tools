@@ -8,7 +8,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
   <link rel="stylesheet" href="../shared/css/design-system.css">
   <!-- index.html と app.js・engine.js・minigames.js・style.css はセットで変わるので、変えたら ?v= をそろえて上げる -->
-  <link rel="stylesheet" href="style.css?v=20261029a">
+  <link rel="stylesheet" href="style.css?v=20261029e">
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
@@ -16,7 +16,7 @@
   <script src="../shared/js/room-qr.js?v=20261022"></script>
   <!-- ねむらせ基地だけ、本体と別の Firebase プロジェクトにつなぐ（firebase-config.js） -->
   <script src="firebase-config.js?v=20261028b"></script>
-  <script src="engine.js?v=20261029a"></script>
+  <script src="engine.js?v=20261029d"></script>
   <script src="minigames.js?v=20261029a"></script>
 </head>
 <body>
@@ -132,6 +132,7 @@
     <div class="nk-stage" id="stage">
       <canvas class="nk-map" id="map"></canvas>
       <button type="button" class="nk-mini" id="miniMap" aria-label="地図を大きくする（M）" title="地図を大きくする" hidden><canvas class="nk-mini__view" id="miniView"></canvas></button>
+      <button type="button" class="nk-mini-toggle" id="miniToggle" aria-label="小さな地図をかくす" title="小さな地図をかくす" hidden><span class="material-symbols-rounded" aria-hidden="true" id="miniToggleIcon">close</span></button>
 
       <aside class="nk-tasks" id="taskList">
         <button type="button" class="nk-tasks__head" id="btnTasks" aria-expanded="true">
@@ -181,6 +182,15 @@
           </button>
           <div class="nk-words nk-words--names" id="sabRooms" hidden></div>
         </div>
+      </div>
+
+      <!-- 近道の中（行き先を選ぶ。2026-10-29） -->
+      <div class="nk-say nk-sab" id="ventBox" hidden>
+        <div class="nk-say__head">
+          <p class="nk-say__title">近道の中<span class="nk-say__sub" id="ventLeft"></span></p>
+        </div>
+        <p class="nk-vent__note">ほかの人からは見えない。出る部屋を選んでね</p>
+        <div class="nk-words nk-words--names" id="ventRooms"></div>
       </div>
 
       <!-- へんしん屋の「だれになる？」（2026-10-29） -->
@@ -281,6 +291,7 @@
     <div class="nk-overlay__card nk-meeting">
       <div class="nk-meeting__head">
         <h2 class="nk-meeting__title"><span class="material-symbols-rounded" aria-hidden="true">forum</span>会議</h2>
+        <button type="button" class="nk-meeting__map" id="btnMeetingMap" aria-label="地図を見る（M）"><span class="material-symbols-rounded" aria-hidden="true">map</span>地図</button>
         <p class="nk-meeting__timer" id="meetingTimer"></p>
       </div>
       <div class="nk-meeting__bar" aria-hidden="true"><span class="nk-meeting__barfill" id="meetingBar"></span></div>
@@ -341,7 +352,7 @@
     </div>
   </div>
 
-  <script type="module" src="app.js?v=20261029b"></script>
+  <script type="module" src="app.js?v=20261029e"></script>
   <script src="../shared/js/stats.js?v=1" defer></script>
   <script src="../shared/js/howto.js"></script>
   <script>
@@ -355,11 +366,11 @@
           '参加する人は「ルームに参加する」で名前、ルームコード（6文字）の順に入れ、「参加する」を押す。リンクからひらいたときは、ルームコードは入っているので名前だけ入れる',
           'はじまると、自分が「隊員」か「ねむらせ屋」かが出る。ほかの人には言わないでね',
           '声は会議の時間だけ。歩いている間はミュートにして、「ひとこと」ボタン（キーは T）で決まった言葉を送る。歩いている間のひとことは近くの人にだけ届く（ささやき）。会議中はみんなに届く。名前の入る言葉は「だれ？」で人を選ぶ。5秒に1回まで',
-          '画面の右上に、小さな地図がいつも出る（自分の場所と、自分の仕事の「!」）。押すか「地図」ボタン（キーは M）で大きくなる。ほかの人は出ない',
+          '画面の右上に、小さな地図が出る（自分の場所と、自分の仕事の「!」）。押すか「地図」ボタン（キーは M）で大きくなる。ほかの人は出ない。右上の×でかくせる。会議の間も「地図」ボタンで見られる',
         ] },
         { heading: '隊員', items: [
           '矢印キー（スマホは左下のスティック）で歩く。黄色い「!」の場所で「仕事をする」を押すと、短いミニゲームが出る',
-          'かべや家具の向こうは見えない。L字や十字の形の部屋や、入口が1つの行き止まりの部屋（道具室・温室）もあるよ',
+          'かべや家具の向こうは見えない。L字や十字の形の部屋や、入口が1つの行き止まりの部屋（道具室・温室・電気室）もあるよ。停電をなおすスイッチは、行き止まりの電気室にある',
           '「ふたりの仕事」は、離れた2つの部屋のスイッチを、だれかと同時におすとおわる。片方で「スイッチをおす」を押して待ち、もう片方をだれかがおせばできる',
           '通信室と見はり台をつなぐ「はしご」はだれでも使える（のぼる・おりるのに少し時間がかかる）。監視室の台で「カメラを見る」と、通路の6か所が映る。見ている間は動けず、だれかが見ているとカメラの赤いランプが光る。停電中は映らない',
           '停電したら、電気室のスイッチで「電気をなおす」。スイッチを順に入れなおすミニゲームをおえると直る',
@@ -370,14 +381,14 @@
         ] },
         { heading: 'ねむらせ屋', items: [
           '近くの隊員を「ねむらせる」。「しかけ」（キーは F）で、停電・空気を止める・ドアをしめる（選んだ部屋の入口が10秒とじる）が使える',
-          'ねむらせ屋（と整備係）だけが使える「近道」（床のまるいふた）がある。上に立って「近道を使う」を押すと、つながった部屋の近道へ移れる',
+          'ねむらせ屋（と整備係）だけが使える「近道」（床のまるいふた）がある。上に立って「近道に入る」を押すと姿が消え、ほかの7つの部屋の近道から、出る部屋を選べる（中にいられるのは10秒まで）',
           'おきている隊員が、ねむらせ屋と同じ数になったら勝ち',
         ] },
         { heading: '役職（ホストが設定で入れたときだけ）', items: [
           '整備係（隊員）: ねむらせ屋と同じ近道を使える。1回使うと30秒は使えない',
           '見守り係（隊員）: 「チェッカー」で、だれがねむっているかを見られる。電池は10秒ぶん。少しずつたまり、仕事を1つおえると満タン',
           'へんしん屋（ねむらせ屋）: 「へんしん」で、ほかの人のすがたに20秒なれる',
-          'まもり星: 最初にねむった隊員がなる。おきている人の近くで「まもる」を押すと、15秒のあいだ その人はねむらされない',
+          'まもり星（隊員）: 近くの人に「まもる」を押すと、15秒のあいだ その人はねむらされない。ねむらされたあとも使える',
           '役職のボタンはキーの G でも押せる',
         ] },
         { heading: '会議とおわりかた', items: [
