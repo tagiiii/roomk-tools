@@ -1043,6 +1043,34 @@ function togglePick(id) {
   renderWaiting(state.room);
 }
 
+// 待合室で「まず決めること」として出す設定（ほかは「くわしい設定」にたたむ）。2026-10-30 はじめてのホストが迷わないように
+const MAIN_SETTINGS = ['hostPlays', 'map'];
+const moreKeys = () => Object.keys(SETTING_LABELS).filter((k) => !MAIN_SETTINGS.includes(k));
+const moreChanged = (s) => moreKeys().filter((k) => s[k] !== E.DEFAULT_SETTINGS[k]).length;
+
+// 「はじめる」の上に出す、いまの設定の要約
+function lobbySummary(s, n) {
+  const jobs = ['engineer', 'watcher', 'angel', 'shifter'].filter((k) => s[k] === 1).length;
+  return [
+    n + '人',
+    SETTING_LABELS.map[1](s.map),
+    'ねむらせ屋' + E.sleeperCount(s, Math.max(n, 1)) + '人',
+    'ひとりの仕事' + s.tasks + 'つ' + (s.pair ? '＋ふたりの仕事' : ''),
+    s.hostPlays === 0 ? 'ホストは進行だけ' : '',
+    jobs ? '役職' + jobs + 'つ' : '',
+  ].filter(Boolean).join('・');
+}
+
+// くわしい設定を、はじめの値にもどす（ホスト・マップはそのまま）
+function resetMoreSettings() {
+  hostTransaction((room) => {
+    if (room.status !== STATUS.WAITING) return;
+    const next = { ...settingsOf(room) };
+    moreKeys().forEach((k) => { next[k] = E.DEFAULT_SETTINGS[k]; });
+    return { ...room, settings: next };
+  });
+}
+
 function setSetting(key, value) {
   const v = Number(value);
   if (!E.SETTING_OPTS[key] || !E.SETTING_OPTS[key].includes(v)) return;
@@ -1993,17 +2021,22 @@ function renderWaiting(room) {
   $('btnRemoveBot').disabled = !botsOf(room).length;
 
   const box = $('lobbySettings');
+  const more = $('lobbyMore');
   const key = JSON.stringify(s) + host;
   if (box._key !== key) {
     box._key = key;
     box.replaceChildren();
+    more.replaceChildren();
     Object.keys(SETTING_LABELS).forEach((k) => {
       if (k === 'hostPlays' && !host) return;
       const [label, fmt] = SETTING_LABELS[k];
-      const row = makeElement('div', 'nk-setting');
+      const changed = s[k] !== E.DEFAULT_SETTINGS[k];
+      const row = makeElement('div', 'nk-setting' + (changed ? ' is-changed' : ''));
       const id = 'set-' + k;
       const lab = makeElement('label', 'nk-setting__label', label);
       lab.htmlFor = id;
+      // はじめの値から変えた設定には印（前の回に変えたままでも、ひと目で分かるように）
+      if (changed) lab.appendChild(makeElement('span', 'nk-tag nk-tag--changed', '変えた'));
       row.appendChild(lab);
       if (host) {
         const sel = makeElement('select', 'form-input nk-setting__select');
@@ -2021,8 +2054,11 @@ function renderWaiting(room) {
         v.id = id;
         row.appendChild(v);
       }
-      box.appendChild(row);
+      (MAIN_SETTINGS.includes(k) ? box : more).appendChild(row);
     });
+    const n = moreChanged(s);
+    setText('moreSub', n ? n + 'つ変えています' : 'はじめのままで遊べます');
+    $('btnResetSettings').hidden = !host || !n;
   }
 
   let note = '';
@@ -2036,6 +2072,7 @@ function renderWaiting(room) {
       : 'ねむらせ屋は ' + E.sleeperCount(s, n) + ' 人です。' + (-shortage) + ' 人はずしてください';
   }
   $('lobbyNote').textContent = note;
+  setText('startSummary', lobbySummary(s, n));
   $('btnStart').disabled = n < E.MIN_PLAYERS || n > E.MAX_PLAYERS || shortage !== 0;
 }
 
@@ -4467,6 +4504,7 @@ function bind() {
   $('btnRemoveBot').addEventListener('click', removeBot);
   $('btnStart').addEventListener('click', startGame);
   $('btnLeave').addEventListener('click', leaveRoom);
+  $('btnResetSettings').addEventListener('click', resetMoreSettings);
   $('btnOverlayLeave').addEventListener('click', leaveRoom);
   $('btnRoleOk').addEventListener('click', () => { $('ovRole').hidden = true; });
   $('btnTaskClose').addEventListener('click', closeTask);

@@ -25,7 +25,7 @@ const { E, check, sleep } = L;
     await host.page.selectOption('#set-' + k, '1');
   }
   check('「入れる」が参加者に届く', await L.waitFor(async () => (await L.text(g1, '#set-shifter')) === '入れる' && (await L.text(g1, '#set-engineer')) === '入れる'));
-  check('設定の名前', (await L.text(g1, '.nk-settings')).includes('整備係') && (await L.text(g1, '.nk-settings')).includes('まもり星'));
+  check('設定の名前', (await L.text(g1, '#lobbyMore')).includes('整備係') && (await L.text(g1, '#lobbyMore')).includes('まもり星'));
   await host.page.click('#btnStart');
   for (const c of all) await L.waitScreen(c, 'game');
   let room = await L.roomOf(code);

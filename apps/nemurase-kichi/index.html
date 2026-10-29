@@ -8,7 +8,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
   <link rel="stylesheet" href="../shared/css/design-system.css">
   <!-- index.html と app.js・engine.js・minigames.js・style.css はセットで変わるので、変えたら ?v= をそろえて上げる -->
-  <link rel="stylesheet" href="style.css?v=20261030a">
+  <link rel="stylesheet" href="style.css?v=20261030b">
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
@@ -16,8 +16,8 @@
   <script src="../shared/js/room-qr.js?v=20261022"></script>
   <!-- ねむらせ基地だけ、本体と別の Firebase プロジェクトにつなぐ（firebase-config.js） -->
   <script src="firebase-config.js?v=20261028b"></script>
-  <script src="engine.js?v=20261030a"></script>
-  <script src="minigames.js?v=20261030a"></script>
+  <script src="engine.js?v=20261030b"></script>
+  <script src="minigames.js?v=20261030b"></script>
 </head>
 <body>
 
@@ -95,11 +95,21 @@
       </div>
 
       <h3 class="nk-h3">設定</h3>
+      <!-- まず決めること（ホスト・マップ）と、たたんだ「くわしい設定」に分ける（2026-10-30 はじめてのホストが迷わないように） -->
       <div class="nk-settings" id="lobbySettings"></div>
+      <details class="nk-more" id="moreSettings">
+        <summary class="nk-more__head"><span class="nk-more__title">くわしい設定</span><span class="nk-more__sub" id="moreSub"></span></summary>
+        <div class="nk-settings nk-more__body" id="lobbyMore"></div>
+        <button type="button" class="btn btn-secondary btn-sm nk-more__reset" id="btnResetSettings" hidden>くわしい設定をはじめの値にもどす</button>
+      </details>
 
-      <p class="nk-panel__note" id="lobbyNote" role="status"></p>
-      <button type="button" class="btn btn-primary btn-full mt-md" id="btnStart" hidden>はじめる</button>
-      <button type="button" class="nk-quiet mt-md" id="btnLeave">退出する</button>
+      <!-- 下に固定: いまの設定の要約と「はじめる」 -->
+      <div class="nk-startbar" id="startBar">
+        <p class="nk-startbar__sum" id="startSummary"></p>
+        <p class="nk-panel__note" id="lobbyNote" role="status"></p>
+        <button type="button" class="btn btn-primary btn-full mt-md" id="btnStart" hidden>はじめる</button>
+        <button type="button" class="nk-quiet" id="btnLeave">退出する</button>
+      </div>
     </div>
   </section>
 
@@ -358,7 +368,7 @@
     </div>
   </div>
 
-  <script type="module" src="app.js?v=20261030a"></script>
+  <script type="module" src="app.js?v=20261030b"></script>
   <script src="../shared/js/stats.js?v=1" defer></script>
   <script src="../shared/js/howto.js"></script>
   <script>

@@ -81,6 +81,13 @@ async function launch() { await loadRules(); browser = await chromium.launch({ c
 async function newContext(label, opts = {}) {
   const context = await browser.newContext({ viewport: opts.viewport || { width: 1200, height: 800 } });
   await context.grantPermissions(['clipboard-read', 'clipboard-write']).catch(() => {});
+  // 待合室の「くわしい設定」（2026-10-30 からたたんである）を、はじめから開いておく（設定の欄を操作するテストのため）。
+  // たたんだ状態を確かめるテストは opts.moreClosed で開かない
+  if (!opts.moreClosed) {
+    await context.addInitScript(() => {
+      document.addEventListener('DOMContentLoaded', () => { const d = document.getElementById('moreSettings'); if (d) d.open = true; });
+    });
+  }
   await context.route('**/*', (route) => {
     const host = new URL(route.request().url()).hostname;
     if (isProd(host)) { T.violations.push(label + ' http ' + route.request().url()); return route.abort(); }
