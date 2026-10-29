@@ -160,7 +160,17 @@ ok(roleIds(E.newGame(['a', 'b', 'c', 'd'], { sleepers: 2, pick: 1 }, fixed, ['a'
 { const g2 = E.newGame(['a', 'b', 'c', 'd', 'e', 'f', 'h'], { sleepers: 2, pick: 1 }, fixed, ['a']); const r = roleIds(g2, 'sleeper'); ok(r.length === 2 && r.includes('a'), '1人だけ選んだら、もう1人はシャッフル'); }
 { const g2 = E.newGame(['a', 'b', 'c', 'd'], { pick: 1 }, fixed, ['b']); ok(g2.players.join() === 'a,b,c,d' && g2.players.every((id) => g2.tasks[id].length === (g2.roles[id] === 'crew' ? 5 : 4)), '選んでも遊ぶ人の順と仕事の数は変わらない'); }
 // ひとこと（ボタンで知らせる）: 言葉の数・キーの重なりなし・{name} は会議だけ・置きかえ・場面ごとに送れる言葉
-ok(E.SAYS.play.length === 14 && E.SAYS.meeting.length === 10 && E.SAYS.common.length === 4, 'ひとことは 14・10・4');
+ok(E.SAYS.play.length === 14 && E.SAYS.meeting.length === 13 && E.SAYS.common.length === 4, 'ひとことは 14・13・4');
+// 2026-10-29 子どもの意見「＿＿＿にいたよ」: 部屋は「どこ？」で選ぶ（うそも言える）。部屋の入る言葉を足した
+ok(E.sayText('body', '台所') === '台所でねむっている人がいた！' && E.sayText('body', '') === '通路でねむっている人がいた！' && E.sayAllowed('body', 'play') && !E.sayAllowed('body', 'meeting'), '遊んでいる間の「ねむっている人がいた！」に部屋が入る');
+ok(E.sayText('was', '畑') === '畑にいた' && E.sayText('found', '温室') === '温室でねむっている人を見つけた' && E.sayAllowed('was', 'meeting') && E.sayAllowed('found', 'meeting') && !E.sayAllowed('was', 'play') && !E.sayAllowed('found', 'play'), '会議の「〔部屋〕にいた」「〔部屋〕でねむっている人を見つけた」');
+ok(E.sayText('sawat', '倉庫', 'あお') === 'あおさんが倉庫にいた' && E.sayAllowed('sawat', 'meeting') && !E.sayAllowed('sawat', 'play'), '会議の「〔名前〕さんが〔部屋〕にいた」（名前と部屋の両方）');
+ok(E.SAYS.play.concat(E.SAYS.meeting).filter((p) => p.t.includes('{room}')).map((p) => p.k).join() === 'here,come,body,found,was,sawat,from', '部屋の入る言葉は here・come・body・found・was・sawat・from');
+{
+  const kichi = E.roomList();
+  ok(kichi.length === 18 && new Set(kichi.map((r) => r.key)).size === 18 && kichi.every((r) => r.name && E.roomName(r.key) === r.name), '「どこ？」の部屋はひみつ基地の18部屋（続きの四角は1つ）');
+  ok(kichi[0].name === '台所' && kichi.some((r) => r.name === '電気室'), '「どこ？」はマップの並び');
+}
 ok(E.sayText('yes') === 'そうだよ' && E.sayAllowed('yes', 'play') && E.sayAllowed('yes', 'meeting'), '「そうだよ」はどちらでも使える');
 ok(E.sayText('withnow', '', 'あお') === 'あおさんといっしょにいる' && E.sayText('sawnow', '', 'あお') === 'あおさんが仕事をしていた' && E.sayAllowed('withnow', 'play') && E.sayAllowed('sawnow', 'play') && !E.sayAllowed('withnow', 'meeting') && !E.sayAllowed('sawnow', 'meeting'), '遊んでいる間の名前の入る言葉は2つ');
 ok(E.sayText('done1') === '仕事がひとつおわったよ' && E.sayText('doneall') === '仕事がぜんぶおわったよ' && E.sayAllowed('done1', 'play') && !E.sayAllowed('done1', 'meeting'), '仕事がおわった の2つは遊んでいる間の言葉');
@@ -387,6 +397,7 @@ ok(JSON.stringify(E.newGame(['a', 'b', 'c', 'd'], {}, fixed).doors) === '{}' && 
   const names = E.ROOMS.filter((r) => !r.part).map((r) => r.name);
   ok(['黙々と作業する場所', 'メインルーム', 'MTGルーム8', 'ワークスペース', 'みんなのひろば', 'クラブルーム', 'ラウンジルーム', 'マイクラルーム', '談話室①', '小部屋', '休けい場所', '学びの沼', 'スタディルーム', 'もくもく学習エリア', 'エントランス', '作品展示場', 'ウェルカムセンター', '作戦会議エリア', 'のんびり', '探Qルーム'].every((n) => names.includes(n)), 'パーク: 部屋の名前は元の空間のまま');
   ok(E.fixRoomName() === 'ウェルカムセンター' && E.sayText('power') === 'ウェルカムセンターに来て', 'パーク: 停電の部屋の名前（ひとこと）');
+  ok(E.roomList().length === 29 && E.roomList().some((r) => r.name === 'ウェルカムセンター') && !E.roomList().some((r) => r.name === '台所'), 'パーク: 「どこ？」はパークの29部屋');
   const gp = E.newGame(['a', 'b', 'c', 'd'], { map: 1 }, fixed);
   ok(E.mapKey() === 'park' && Object.values(gp.tasks).every((ts) => ts.every((t) => t.spot >= 100 || t.spot < 26)), 'newGame はマップを合わせる（パーク）');
   E.newGame(['a', 'b', 'c', 'd'], { map: 0 }, fixed);

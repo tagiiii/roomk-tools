@@ -124,12 +124,34 @@ const { E, check, sleep } = L;
   check('一覧がひらく（遊んでいる間の14＋どちらでも4）', await L.waitFor(async () => (await L.visible(host, '#sayBox')) && (await host.page.$$('#sayChips .nk-word')).length === 18));
   check('「そうだよ」がある', (await host.page.$eval('#sayChips .nk-word[data-say="yes"]', (b) => b.textContent)) === 'そうだよ');
   check('名前の入る言葉は〔名前〕で出る', (await host.page.$eval('#sayChips .nk-word[data-say="sawnow"]', (b) => b.textContent)) === '〔名前〕さんが仕事をしていた');
-  check('部屋の名前が入っている（はじめはひろば）', (await host.page.$eval('#sayChips .nk-word[data-say="here"]', (b) => b.textContent)) === 'ひろばにいるよ');
+  check('部屋の入る言葉は〔部屋〕で出る', (await host.page.$eval('#sayChips .nk-word[data-say="here"]', (b) => b.textContent)) === '〔部屋〕にいるよ');
+  // 2026-10-29 部屋は「どこ？」で選ぶ（いまいる部屋がいちばん上。ほかの部屋・通路も選べる＝うそも言える）
   await host.page.click('#sayChips .nk-word[data-say="here"]');
+  check('部屋の入る言葉を押すと「どこ？」（18部屋＋通路＋やめる）', await L.waitFor(async () => (await L.visible(host, '#sayNames')) && (await L.text(host, '#sayNames .nk-words__lead')) === 'どこ？' && (await host.page.$$('#sayNames .nk-word--room')).length === 19 && !!(await host.page.$('#sayNames .nk-word--room[data-room="hall"]'))));
+  check('いまいる部屋がいちばん上に「（いまいる）」', (await host.page.$eval('#sayNames .nk-word--room', (b) => b.dataset.room + ':' + b.textContent)) === 'plaza:ひろば（いまいる）');
+  check('押した言葉に印（部屋）', await host.page.$eval('#sayChips .nk-word[data-say="here"]', (b) => b.classList.contains('is-picked')));
+  await L.shot(host, '02c-say-where');
+  await host.page.click('#sayNames .nk-word--room[data-room="plaza"]');
   for (const c of all) check('みんなの画面の上に「ホスト: ひろばにいるよ」 ' + c.label, await L.waitFor(async () => (await L.text(c, '#sayTicker')) === 'ホストひろばにいるよ'));
   check('送ると一覧がとじる', await L.waitFor(async () => !(await L.visible(host, '#sayBox'))));
   room = await L.roomOf(code);
   check('game/say にひとり1枠（キー・部屋・番号1・会議0・位置つき）', room.game.say && room.game.say['ホスト'] && room.game.say['ホスト'].k === 'here' && room.game.say['ホスト'].r === 'plaza' && room.game.say['ホスト'].n === 1 && room.game.say['ホスト'].m === 0 && Math.abs(room.game.say['ホスト'].x - hp.x) < 0.2, room.game.say);
+  // いまいない部屋も選べる（うその場所・ねむっている人を見た場所）
+  await g1.page.click('#actSay');
+  await g1.page.click('#sayChips .nk-word[data-say="body"]');
+  check('「〔部屋〕でねむっている人がいた！」も「どこ？」', await L.waitFor(async () => (await L.visible(g1, '#sayNames')) && (await L.text(g1, '#sayNames .nk-words__lead')) === 'どこ？'));
+  {
+    const vp = g1.page.viewportSize();
+    await g1.page.setViewportSize({ width: 375, height: 740 });
+    await sleep(300);
+    check('375px: 「どこ？」に横スクロールがない', (await L.overflow(g1)) <= 0 && await g1.page.$eval('#sayBox', (b) => b.getBoundingClientRect().right <= window.innerWidth));
+    await L.shot(g1, '02d-say-where-375');
+    await g1.page.setViewportSize(vp);
+    await sleep(300);
+  }
+  await g1.page.click('#sayNames .nk-word--room[data-room="kitchen"]');
+  for (const c of [host, g2]) check('ひろばにいても「台所でねむっている人がいた！」と送れる ' + c.label, await L.waitFor(async () => (await L.text(c, '#sayTicker')).includes('台所でねむっている人がいた！')));
+  check('選んだ部屋が書かれる（r: kitchen・送った位置はひろば）', await L.waitFor(async () => { const v = (await L.roomOf(code)).game.say['あお']; return v && v.k === 'body' && v.r === 'kitchen' && Math.abs(v.x - (hp.x + 1)) < 0.3; }));
   // 遠くの人には届かない（ささやき）: そらを台所へ
   await L.teleport(g3, 4.5, 5.5);
   await sleep(300);
@@ -384,7 +406,7 @@ const { E, check, sleep } = L;
 
   // ══ ひとこと（会議中） ══
   check('ねむった人に言葉のボタンは出ない', !(await L.visible(host, '#meetingChips')));
-  check('おきている人に言葉のボタン（会議の10＋どちらでも4）', (await g2.page.$$('#meetingChips .nk-word')).length === 14);
+  check('おきている人に言葉のボタン（会議の13＋どちらでも4）', (await g2.page.$$('#meetingChips .nk-word')).length === 17);
   check('会議のはじめは流れが空', !(await L.visible(g2, '#meetingSays')));
   await g2.page.click('#meetingChips .nk-word[data-say="crew"]');
   for (const c of all) check('会議の流れに「みどり: 自分は隊員だよ」 ' + c.label, await L.waitFor(async () => (await L.text(c, '#meetingSays')) === 'みどり自分は隊員だよ'));
@@ -396,7 +418,17 @@ const { E, check, sleep } = L;
   await g3.page.click('#meetingNames .nk-word--name:has-text("あお")');
   for (const c of all) check('流れに「そら: あおさんといっしょにいた」 ' + c.label, await L.waitFor(async () => (await L.text(c, '#meetingSays')).endsWith('そらあおさんといっしょにいた')));
   check('人を選ぶ欄がとじる', await L.waitFor(async () => !(await L.visible(g3, '#meetingNames'))));
+  // 名前と部屋の両方が入る言葉（2026-10-29）: 「だれ？」→「どこ？」の順
+  await g1.page.click('#meetingChips .nk-word[data-say="sawat"]');
+  check('「〔名前〕さんが〔部屋〕にいた」はまず「だれ？」', await L.waitFor(async () => (await L.visible(g1, '#meetingNames')) && (await g1.page.$$('#meetingNames .nk-word--name')).length === 3));
+  await g1.page.click('#meetingNames .nk-word--name:has-text("みどり")');
+  check('人を選ぶと「どこ？」（いまいる部屋が上）', await L.waitFor(async () => (await L.text(g1, '#meetingNames .nk-words__lead')) === 'どこ？' && (await g1.page.$$('#meetingNames .nk-word--room')).length === 19 && (await g1.page.$eval('#meetingNames .nk-word--room', (b) => b.textContent)).endsWith('（いまいる）')));
+  await L.shot(g1, '05c-meeting-where');
+  await g1.page.click('#meetingNames .nk-word--room[data-room="store"]');
+  for (const c of all) check('流れに「あお: みどりさんが倉庫にいた」 ' + c.label, await L.waitFor(async () => (await L.text(c, '#meetingSays')).endsWith('あおみどりさんが倉庫にいた')));
+  check('選ぶ欄がとじる', await L.waitFor(async () => !(await L.visible(g1, '#meetingNames'))));
   room = await L.roomOf(code);
+  check('名前と部屋の両方が書かれる', room.game.say['あお'].k === 'sawat' && room.game.say['あお'].t === 'みどり' && room.game.say['あお'].r === 'store' && room.game.say['あお'].m === 1);
   check('会議のひとことは会議の番号つき・相手つき', room.game.say['そら'].m === 1 && room.game.say['そら'].t === 'あお' && room.game.say['みどり'].m === 1);
   await L.shot(g3, '05b-meeting-say');
   const pick = async (c, name) => {

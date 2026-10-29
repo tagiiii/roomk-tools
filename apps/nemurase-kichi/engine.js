@@ -481,7 +481,8 @@
 
   // ── ひとこと（ボタンで知らせる）──
   // 2026-10-27 子どもの意見「ゲーム内にチャットがほしい」→ 自由に文字を打つチャットは入れず、決まった言葉をボタンで送る（語はオーナー承認済み）。
-  // {room} は送る人のいる部屋の名前（通路なら「通路」）、{name} は選んだ人の名前（会議中は投票で選んでいる人。いなければ「だれ？」で選ぶ。遊んでいる間も「だれ？」で選ぶ）。
+  // {room} は「どこ？」で選んだ部屋の名前（通路なら「通路」）。いまいる部屋でなくても選べる（2026-10-29 子どもの意見「場所を自分で選べるとうその報告も、ねむっている人の報告もしやすい」）。
+  // {name} は選んだ人の名前（会議中は投票で選んでいる人。いなければ「だれ？」で選ぶ。遊んでいる間も「だれ？」で選ぶ）。名前と部屋の両方が入る言葉は、名前→部屋の順に選ぶ。
   // play＝遊んでいる間、meeting＝会議中、common＝どちらでも
   const SAYS = {
     play: [
@@ -496,13 +497,17 @@
       { k: 'work', t: '仕事をしてくるね' },
       { k: 'done1', t: '仕事がひとつおわったよ' },   // 2026-10-27 子どもの意見「仕事おわったよ」（ねむらせ屋のふりにも使える）
       { k: 'doneall', t: '仕事がぜんぶおわったよ' },
-      { k: 'body', t: 'ねむっている人がいた！' },
+      { k: 'body', t: '{room}でねむっている人がいた！' },   // 2026-10-29 部屋を入れた
       { k: 'wait', t: 'まって〜' },
       { k: 'hey', t: 'おーい！' },
     ],
     meeting: [
+      // 2026-10-29 子どもの意見「＿＿＿にいたよ」→ 部屋の入る言葉を足した（オーナー承認。sawat はおすすめとして足した）
+      { k: 'found', t: '{room}でねむっている人を見つけた' },
+      { k: 'was', t: '{room}にいた' },
       { k: 'with', t: '{name}さんといっしょにいた' },
       { k: 'saw', t: '{name}さんが仕事をしていた' },
+      { k: 'sawat', t: '{name}さんが{room}にいた' },
       { k: 'vent', t: '{name}さんが近道に入った' },
       { k: 'ran', t: '{name}さんが走って行った' },
       { k: 'sus', t: '{name}さんがあやしいと思う' },
@@ -531,6 +536,8 @@
     if (!p) return '';
     return p.t.replace('{room}', roomLabel || HALL_LABEL).replace('{name}', nameLabel || '').replace('{fix}', fixRoomName());
   }
+  // 「どこ？」で選べる部屋（マップの並び。続きの四角は1つにまとめる）
+  const roomList = () => ROOMS.filter((r) => !r.part).map((r) => ({ key: r.key, name: r.name }));
   // 停電をなおすスイッチのある部屋の名前（マップでちがう）
   const fixRoomName = () => roomName(roomAt(FIX_SPOT.x, FIX_SPOT.y));
 
@@ -872,7 +879,7 @@
     isFloor, dist, roomAt, roomName, canStand, step, stepFree, path, rayDist, canSee, viewPolygon, spawnPoint, encodePos, decodePos,
     doorTiles, tileKey, spotInfo, pairOf, pairFresh, closedRooms, checkAir,
     shuffled, sleeperCount, newGame, isAwake, hasLeft, awakeOf, taskProgress, checkWin, tally,
-    SAYS, SAY_GAP_MS, SAY_SHOW_MS, SAY_LOG_MAX, HALL_LABEL, sayPhrase, sayAllowed, sayText,
+    SAYS, SAY_GAP_MS, SAY_SHOW_MS, SAY_LOG_MAX, HALL_LABEL, roomList, sayPhrase, sayAllowed, sayText,
   };
   // マップを入れかえる（key は 'kichi'|'park'、または settings.map の数字）。api の中身も入れかえる
   function useMap(key) {

@@ -103,6 +103,8 @@ const { E, check, sleep } = L;
   await sleep(300);
   await g3.page.click('#actSay');
   await g3.page.click('#sayChips .nk-word[data-say="here"]');
+  check('「どこ？」のいちばん上は「監視室（いまいる）」', await L.waitFor(async () => (await L.visible(g3, '#sayNames')) && (await g3.page.$eval('#sayNames .nk-word--room', (b) => b.dataset.room + ':' + b.textContent)) === 'monitor:監視室（いまいる）'));
+  await g3.page.click('#sayNames .nk-word--room[data-room="monitor"]');
   check('ひとことの部屋の名前は「監視室」', await L.waitFor(async () => (await L.text(host, '#sayTicker')).includes('監視室にいるよ')));
   await sleep(5200);   // ひとことは5秒に1回
 

@@ -16,7 +16,7 @@
   <script src="../shared/js/room-qr.js?v=20261022"></script>
   <!-- ねむらせ基地だけ、本体と別の Firebase プロジェクトにつなぐ（firebase-config.js） -->
   <script src="firebase-config.js?v=20261028b"></script>
-  <script src="engine.js?v=20261029k"></script>
+  <script src="engine.js?v=20261029l"></script>
   <script src="minigames.js?v=20261029a"></script>
 </head>
 <body>
@@ -300,7 +300,7 @@
       <p class="nk-meeting__how" id="meetingHow"></p>
       <ul class="nk-vote" id="meetingPeople"></ul>
       <div class="nk-meeting__say">
-        <p class="nk-meeting__saylabel" id="meetingSayLabel">ひとこと（名前の入る言葉は、人を選んでから）</p>
+        <p class="nk-meeting__saylabel" id="meetingSayLabel">ひとこと（名前・部屋の入る言葉は、選んでから）</p>
         <div class="nk-words" id="meetingChips"></div>
         <div class="nk-words nk-words--names" id="meetingNames" hidden></div>
         <ul class="nk-saylog" id="meetingSays" aria-live="polite" aria-label="この会議のひとこと" hidden></ul>
@@ -352,7 +352,7 @@
     </div>
   </div>
 
-  <script type="module" src="app.js?v=20261029k"></script>
+  <script type="module" src="app.js?v=20261029l"></script>
   <script src="../shared/js/stats.js?v=1" defer></script>
   <script src="../shared/js/howto.js"></script>
   <script>

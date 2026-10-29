@@ -101,7 +101,8 @@ const state = {
   sayHeard: {},        // {id: 受け取った最後の番号 n}
   sayLog: [],          // 受け取った順 [{id, text, m}]（m は会議の番号。遊んでいる間は 0）
   sayAt: 0,            // 自分が最後に送った時刻（5秒に1回まで）
-  sayPending: null,    // 名前の入る言葉を押して、「だれ？」で人を選んでいる途中の言葉（会議中・遊んでいる間）
+  sayPending: null,    // 名前・部屋の入る言葉を押して、「だれ？」「どこ？」で選んでいる途中の言葉（会議中・遊んでいる間）
+  sayTarget: null,     // 名前と部屋の両方が入る言葉で、先に選んだ人（このあと「どこ？」で部屋を選ぶ）
   sayOpen: false,      // 遊んでいる間の「ひとこと」の一覧をひらいている
   camOpen: false,      // 監視カメラを見ている（game/cam/{自分} に true を書く。とじたら消す）
   sabOpen: false,      // ねむらせ屋の「しかけ」（停電・空気・ドア）の一覧をひらいている
@@ -1389,7 +1390,8 @@ async function doVote(actor, target) {
 
 /* ── ひとこと（ボタンで知らせる） ── */
 // 自分のひとことを game/say/{自分} に1件だけ書く（遊んでいる間と会議中。おきている人だけ。5秒に1回まで）
-async function doSay(key, target) {
+// place は「どこ？」で選んだ部屋のキー（'' は通路）。部屋の入る言葉だけで使う
+async function doSay(key, target, place) {
   const room = state.room;
   const g = gameOf(room);
   const me = state.nickname;
@@ -1399,6 +1401,8 @@ async function doSay(key, target) {
   if (!p || !E.sayAllowed(key, g.stage)) return false;
   const withName = p.t.includes('{name}');
   if (withName && (!target || target === me || !g.players.includes(target) || E.hasLeft(g, target))) return false;
+  const withRoom = p.t.includes('{room}');
+  if (withRoom && (typeof place !== 'string' || (place && !E.roomName(place)))) return false;
   const now = Date.now();
   if (now - state.sayAt < E.SAY_GAP_MS) { toast('ひとことは、5秒に1回まで', false); return false; }
   state.sayAt = now;
@@ -1406,7 +1410,7 @@ async function doSay(key, target) {
   const data = {
     k: key,
     t: withName ? target : '',
-    r: p.t.includes('{room}') ? (E.roomAt(ME.x, ME.y) || '') : '',
+    r: withRoom ? place : '',
     n: (prev ? prev.n : 0) + 1,
     at: RoomkRTDB.now(),
     m: g.stage === 'meeting' ? g.meeting.seq : 0,
@@ -1471,9 +1475,9 @@ function clearSayTicker() {
   $('sayTicker').replaceChildren();
 }
 
-// 言葉のボタン（chip）を作る。withName の言葉は onName で人を選ぶ
+// 言葉のボタン（chip）を作る。名前・部屋の入る言葉は、押したあとに「だれ？」「どこ？」で選ぶ
 function sayChip(g, p, onPick) {
-  const b = makeElement('button', 'nk-word', p.t.replace('{room}', E.roomName(E.roomAt(ME.x, ME.y)) || E.HALL_LABEL).replace('{name}', '〔名前〕').replace('{fix}', E.fixRoomName()));
+  const b = makeElement('button', 'nk-word', p.t.replace('{room}', '〔部屋〕').replace('{name}', '〔名前〕').replace('{fix}', E.fixRoomName()));
   b.type = 'button';
   b.dataset.say = p.k;
   b.addEventListener('click', () => onPick(p));
@@ -1496,7 +1500,53 @@ function renderNamePicker(g, box, key, onPick, onCancel) {
   box.appendChild(cancel);
 }
 
-// 遊んでいる間の「ひとこと」の一覧（開くたびに作り直す。部屋の名前が変わるため）。名前の入る言葉は「だれ？」で人を選んでから送る
+// 「どこ？」の一覧（部屋の入る言葉を押したあと。2026-10-29 子どもの意見「場所を自分で選べると、うその報告も、ねむっている人の報告もしやすい」）。
+// いまいる部屋をいちばん上に「（いまいる）」で出し、ほかの部屋と通路も選べる（うその場所も言える）。会議中は会議が始まったときにいた部屋
+function renderRoomPicker(box, onPick, onCancel) {
+  box.replaceChildren();
+  box.appendChild(makeElement('span', 'nk-words__lead', 'どこ？'));
+  const here = E.roomAt(ME.x, ME.y) || '';
+  const keys = [here].concat(E.roomList().map((r) => r.key).filter((k) => k !== here), here ? [''] : []);
+  keys.forEach((k) => {
+    const label = k ? E.roomName(k) : E.HALL_LABEL;
+    const b = makeElement('button', 'nk-word nk-word--room', k === here ? label + '（いまいる）' : label);
+    b.type = 'button';
+    b.dataset.room = k || 'hall';
+    b.addEventListener('click', () => onPick(k));
+    box.appendChild(b);
+  });
+  const cancel = makeElement('button', 'nk-word nk-word--quiet', 'やめる');
+  cancel.type = 'button';
+  cancel.addEventListener('click', onCancel);
+  box.appendChild(cancel);
+}
+
+// 押した言葉（state.sayPending）に足りないものを選ぶ一覧。名前→部屋の順（名前を選んだあとは state.sayTarget）。
+// send(key, target, room) で送る。rerender は一覧を作り直す
+function renderSayPicker(g, box, send, rerender) {
+  const p = E.sayPhrase(state.sayPending);
+  const cancel = () => { state.sayPending = null; state.sayTarget = null; rerender(); };
+  if (!p) { box.replaceChildren(); return; }
+  if (p.t.includes('{name}') && !state.sayTarget) {
+    renderNamePicker(g, box, p.k, (key, id) => {
+      if (!p.t.includes('{room}')) { send(key, id, ''); return; }
+      state.sayTarget = id;
+      rerender();
+    }, cancel);
+    return;
+  }
+  renderRoomPicker(box, (room) => send(p.k, state.sayTarget || '', room), cancel);
+}
+
+// 言葉を押したとき: 名前も部屋も入らなければすぐ送る。入るなら一覧で選ぶ（もう一度押すと閉じる）
+function pickSayPhrase(q, send, rerender) {
+  if (!q.t.includes('{name}') && !q.t.includes('{room}')) { state.sayPending = null; state.sayTarget = null; send(q.k, '', ''); return; }
+  state.sayPending = state.sayPending === q.k ? null : q.k;
+  state.sayTarget = null;
+  rerender();
+}
+
+// 遊んでいる間の「ひとこと」の一覧（開くたびに作り直す。部屋の名前が変わるため）。名前・部屋の入る言葉は「だれ？」「どこ？」で選んでから送る
 function renderSayBox(g) {
   const box = $('sayBox');
   const me = state.nickname;
@@ -1504,23 +1554,20 @@ function renderSayBox(g) {
   if (!can) state.sayOpen = false;
   box.hidden = !state.sayOpen;
   $('actSay').setAttribute('aria-expanded', String(state.sayOpen));
-  if (!state.sayOpen) { if (g.stage === 'play') state.sayPending = null; return; }
+  if (!state.sayOpen) { if (g.stage === 'play') { state.sayPending = null; state.sayTarget = null; } return; }
   const list = $('sayChips');
   const names = $('sayNames');
   list.replaceChildren();
-  const send = async (key, target) => {
-    if (await doSay(key, target)) { state.sayOpen = false; state.sayPending = null; renderSayBox(g); }
+  const rerender = () => renderSayBox(g);
+  const send = async (key, target, room) => {
+    if (await doSay(key, target, room)) { state.sayOpen = false; state.sayPending = null; state.sayTarget = null; renderSayBox(g); }
   };
   E.SAYS.play.concat(E.SAYS.common).forEach((p) => {
-    list.appendChild(sayChip(g, p, (q) => {
-      if (!q.t.includes('{name}')) { state.sayPending = null; send(q.k, ''); return; }
-      state.sayPending = state.sayPending === q.k ? null : q.k;
-      renderSayBox(g);
-    }));
+    list.appendChild(sayChip(g, p, (q) => pickSayPhrase(q, send, rerender)));
   });
   if (state.sayPending) {
     list.querySelectorAll('.nk-word').forEach((b) => b.classList.toggle('is-picked', b.dataset.say === state.sayPending));
-    renderNamePicker(g, names, state.sayPending, send, () => { state.sayPending = null; renderSayBox(g); });
+    renderSayPicker(g, names, send, rerender);
   } else names.replaceChildren();
   names.hidden = !state.sayPending;
 }
@@ -1530,6 +1577,7 @@ function toggleSayBox() {
   if (!g) return;
   state.sayOpen = !state.sayOpen;
   state.sayPending = null;
+  state.sayTarget = null;
   renderSayBox(g);
 }
 
@@ -1999,6 +2047,7 @@ function closeOverlays() {
   state.taskSpot = -1;
   state.votePick = null;
   state.sayPending = null;
+  state.sayTarget = null;
   state.sabOpen = false;
   state.sabDoor = false;
   $('taskBox').replaceChildren();
@@ -2288,7 +2337,7 @@ function renderTasks(g) {
 
 function renderMeeting(g, room) {
   const box = $('ovMeeting');
-  if (g.stage !== 'meeting') { box.hidden = true; state.votePick = null; state.sayPending = null; return; }
+  if (g.stage !== 'meeting') { box.hidden = true; state.votePick = null; state.sayPending = null; state.sayTarget = null; return; }
   box.hidden = false;
   const m = g.meeting;
   // この会議のひとこと（最新の1件を名前の横に、流れを下に）
@@ -2354,18 +2403,25 @@ function renderMeetingSay(g, awake, saysNow) {
   chips.hidden = !awake;
   $('meetingSayLabel').hidden = !awake;
   if (awake) {
+    const rerender = () => renderMeeting(g, state.room);
+    const send = async (key, target, room) => { state.sayPending = null; state.sayTarget = null; await doSay(key, target, room); rerender(); };
     E.SAYS.meeting.concat(E.SAYS.common).forEach((p) => {
-      chips.appendChild(sayChip(g, p, async (q) => {
-        if (!q.t.includes('{name}')) { state.sayPending = null; await doSay(q.k, ''); renderMeeting(g, state.room); return; }
-        // 名前の入る言葉: 投票で選んでいる人がいればその人、いなければ人を選ぶ
-        if (state.votePick && state.votePick !== me) { state.sayPending = null; await doSay(q.k, state.votePick); renderMeeting(g, state.room); return; }
-        state.sayPending = state.sayPending === q.k ? null : q.k;
-        renderMeeting(g, state.room);
+      chips.appendChild(sayChip(g, p, (q) => {
+        // 名前の入る言葉: 投票で選んでいる人がいればその人（部屋も入る言葉は、このあと「どこ？」）、いなければ人を選ぶ
+        if (q.t.includes('{name}') && state.votePick && state.votePick !== me) {
+          if (!q.t.includes('{room}')) { send(q.k, state.votePick, ''); return; }
+          const again = state.sayPending === q.k;
+          state.sayPending = again ? null : q.k;
+          state.sayTarget = again ? null : state.votePick;
+          rerender();
+          return;
+        }
+        pickSayPhrase(q, send, rerender);
       }));
     });
     if (state.sayPending) {
       chips.querySelectorAll('.nk-word').forEach((b) => b.classList.toggle('is-picked', b.dataset.say === state.sayPending));
-      renderNamePicker(g, names, state.sayPending, async (key, id) => { state.sayPending = null; await doSay(key, id); renderMeeting(g, state.room); }, () => { state.sayPending = null; renderMeeting(g, state.room); });
+      renderSayPicker(g, names, send, rerender);
     }
   }
   names.hidden = !awake || !state.sayPending;
@@ -4061,6 +4117,7 @@ function openCam() {
   state.camOpen = true;
   state.sayOpen = false;
   state.sayPending = null;
+  state.sayTarget = null;
   renderSayBox(g);
   setText('camCount', '通路の' + E.CAMS.length + 'か所');
   $('ovCam').hidden = false;
@@ -4242,7 +4299,7 @@ function bind() {
   $('actUse').addEventListener('click', doUse);
   $('actFind').addEventListener('click', doFind);
   $('actSay').addEventListener('click', toggleSayBox);
-  $('btnSayClose').addEventListener('click', () => { state.sayOpen = false; state.sayPending = null; const g = gameOf(state.room); if (g) renderSayBox(g); });
+  $('btnSayClose').addEventListener('click', () => { state.sayOpen = false; state.sayPending = null; state.sayTarget = null; const g = gameOf(state.room); if (g) renderSayBox(g); });
   $('actSleep').addEventListener('click', doSleep);
   $('actSab').addEventListener('click', toggleSabBox);
   $('btnSabClose').addEventListener('click', () => { state.sabOpen = false; state.sabDoor = false; $('sabBox').hidden = true; });

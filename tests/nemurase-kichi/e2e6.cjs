@@ -37,6 +37,8 @@ const { E, check, sleep } = L;
   await sleep(300);
   await host.page.click('#actSay');
   await host.page.click('#sayChips .nk-word[data-say="here"]');
+  check('パークの「どこ？」は29部屋＋通路で、いちばん上は「みんなのひろば（いまいる）」', await L.waitFor(async () => (await L.visible(host, '#sayNames')) && (await host.page.$$('#sayNames .nk-word--room')).length === 30 && (await host.page.$eval('#sayNames .nk-word--room', (b) => b.dataset.room + ':' + b.textContent)) === 'hiroba:みんなのひろば（いまいる）'));
+  await host.page.click('#sayNames .nk-word--room[data-room="hiroba"]');
   check('ひとことに「みんなのひろばにいるよ」', await L.waitFor(async () => (await L.text(host, '#sayTicker')).includes('みんなのひろばにいるよ')));
   await L.shot(host, '61-park-hiroba');
 
