@@ -62,6 +62,8 @@ const SETTING_LABELS = {
 const state = {
   role: null,          // 'host' | 'guest'
   picks: [],           // ホストが待合室で選んだねむらせ屋（id）。ホストの端末だけが持ち、はじめると空にする
+  guideStep: 0,        // ねむらせ屋の「いまやること」の段階（0: 仕事の場所へ／1: ねむらせる／2: おわり）
+  guideStepAt: 0,      // 段階1になった時刻
   nickname: null,
   roomCode: null,
   rootRef: null,       // nemurase_rooms/{code}
@@ -2124,6 +2126,10 @@ function renderGame(room) {
     state.engVentAt = 0;
     state.battery = E.WATCH_BATTERY_S;
     state.blockedSeen = null;
+    state.guideStep = 0;
+    state.guideStepAt = 0;
+    GUIDE.key = '';
+    GUIDE.goal = null;
     // 前の回のひとことは出さない（読み込み直しでも、いま入っている分は見たことにする）
     state.sayHeard = {};
     Object.keys(g.say).forEach((id) => { state.sayHeard[id] = g.say[id].n; });
@@ -2302,14 +2308,194 @@ function showRole(g, note) {
   let desc;
   if (role === 'sleeper') {
     const mates = g.players.filter((id) => id !== state.nickname && g.roles[id] === 'sleeper').map((id) => nameIn(g, id));
-    desc = '仲間のふりをして、こっそり隊員をねむらせよう。「停電」で、隊員の見える広さをせまくできるよ。仕事の場所に立てば、仕事をしているふりもできる。';
+    desc = '仲間のふりをして、こっそり隊員をねむらせよう。「停電」で、隊員の見える広さをせまくできるよ。';
     if (mates.length) desc += ' もうひとりのねむらせ屋は ' + mates.join('、') + ' さん。';
   } else {
-    desc = '基地の仕事を片づけよう。みんなの仕事がぜんぶおわったら勝ち。ねむっている人を見つけたら「見つけた！」で会議をひらこう。';
+    desc = '基地の仕事を片づけよう。みんなの仕事がぜんぶおわったら勝ち。';
   }
   if (job) desc += ' ' + JOB_DESC[job];
   $('roleDesc').textContent = (note ? note + ' ' : '') + desc;
+  // はじめにすること（2026-10-30）。読み込み直して戻ってきたとき（note あり）・補助をかくしている子には出さない
+  const walk = touchUI() ? '左下のスティック' : '矢印キー';
+  const steps = note || !guideOn ? [] : role === 'sleeper'
+    ? ['黄色い矢印の方へ歩いて（' + walk + '）、仕事の場所に立つ。仕事をしているふりができる', 'ひとりでいる隊員に近づいて「ねむらせる」。ほかの人に見られないようにね', '会議では、隊員のふりをして話そう']
+    : ['黄色い矢印の方へ歩く（' + walk + '）', '「!」の場所で「仕事をする」を押すと、ミニゲームが出る', 'ねむっている人を見つけたら「見つけた！」で会議をひらく'];
+  const ol = $('roleSteps');
+  ol.replaceChildren(...steps.map((s) => makeElement('li', '', s)));
+  $('roleStepsBox').hidden = !steps.length;
   $('ovRole').hidden = false;
+}
+
+// ── はじめの道しるべ（2026-10-30 オーナー「はじめてプレイする人が何をしていいかわからず終わってしまう」） ──
+// 自分の仕事のうち、通れる道でいちばん近い所を探して、そこへの道の向きを自分の画面に矢印で出す（隊員はずっと。ねむらせ屋は、はじめの一歩の間だけ）。
+// ひとりの仕事を先に指す（ふたりの仕事は相手が要るので、ひとりの仕事がおわってから）
+const GUIDE = { key: '', goal: null, aim: null, shown: false };
+const GUIDE_LOOK = 8;   // 道の先のどこまでを見て、矢印の向きを決めるか（マス）
+const touchUI = () => window.matchMedia('(pointer: coarse), (max-width: 760px)').matches;
+// 補助（矢印・いまやること・はじめにすること）を出すか。それぞれの子がメニューで決める（2026-10-30 オーナー「補助はプレイヤーそれぞれが設定できるように」。端末に覚えておく。はじめは出す）
+const GUIDE_KEY = 'nemurase_guide';
+let guideOn = true;
+try { guideOn = localStorage.getItem(GUIDE_KEY) !== '0'; } catch (e) { /* 使えない端末では出したまま */ }
+function setGuideOn(on) {
+  guideOn = on;
+  try { localStorage.setItem(GUIDE_KEY, on ? '1' : '0'); } catch (e) { /* 覚えられなくても切りかえはする */ }
+  renderGuideButton();
+  GUIDE.key = '';
+  if (!on) { GUIDE.goal = null; GUIDE.shown = false; }
+}
+function renderGuideButton() {
+  setText('btnMenuGuide', guideOn ? '補助（矢印・いまやること）をかくす' : '補助（矢印・いまやること）を出す');
+}
+
+function guideGoals(g) {
+  const me = state.nickname;
+  const role = g.roles[me];
+  if (!guideOn) return [];   // 補助をかくしている子
+  if (role === 'sleeper' && (state.guideStep >= 1 || !E.isAwake(g, me))) return [];
+  const todo = (g.tasks[me] || []).filter((t) => role === 'sleeper' || !t.done);
+  const solo = todo.filter((t) => t.spot < E.PAIR_SPOT_BASE).map((t) => spotOf(t.spot)).filter(Boolean);
+  if (solo.length) return solo;
+  const out = [];
+  todo.forEach((t) => {
+    const p = E.pairOf((spotOf(t.spot) || {}).pair);
+    if (p) out.push(p.a, p.b);
+  });
+  return out;
+}
+
+// テーブル（通れない丸）にかからないか。マスの中心で見る
+const offTable = (x, y) => Math.hypot(x - E.TABLE.x, y - E.TABLE.y) >= E.TABLE.r + E.RADIUS;
+// a から b へ、かべにもテーブルにも当たらずに見通せるか（矢印がテーブルの向こうを指さないように）
+function guideClear(a, b) {
+  if (!E.canSee(a, b)) return false;
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
+  const len2 = dx * dx + dy * dy || 1;
+  const k = Math.max(0, Math.min(1, ((E.TABLE.x - a.x) * dx + (E.TABLE.y - a.y) * dy) / len2));
+  return Math.hypot(a.x + dx * k - E.TABLE.x, a.y + dy * k - E.TABLE.y) >= E.TABLE.r;
+}
+
+// from（マス）から、いちばん近い goals のマスまでの道（4方向。テーブルはよける）。見つからなければ null
+function guideRoute(from, goals, closed) {
+  const W = E.W;
+  const want = new Map();
+  goals.forEach((p) => want.set(Math.floor(p.y) * W + Math.floor(p.x), p));
+  const open = (x, y) => E.isFloor(x, y) && !(closed && closed.has(E.tileKey(x, y))) && offTable(x + 0.5, y + 0.5);
+  const start = from.y * W + from.x;
+  const prev = new Map([[start, -1]]);
+  const q = [start];
+  for (let i = 0; i < q.length; i++) {
+    const k = q[i];
+    if (want.has(k)) {
+      const path = [];
+      for (let c = k; c !== -1; c = prev.get(c)) path.push({ x: c % W + 0.5, y: Math.floor(c / W) + 0.5 });
+      return { goal: want.get(k), path: path.reverse() };
+    }
+    const x = k % W;
+    const y = Math.floor(k / W);
+    [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(([ax, ay]) => {
+      const nk = (y + ay) * W + x + ax;
+      if (!open(x + ax, y + ay) || prev.has(nk)) return;
+      prev.set(nk, k);
+      q.push(nk);
+    });
+  }
+  return null;
+}
+
+// 行き先（goal）と矢印の向き（aim）を決める。自分のマス・仕事・ドアが変わったときだけ探しなおす
+function updateGuide(g) {
+  const goals = g.stage === 'play' ? guideGoals(g) : [];
+  if (!goals.length) { GUIDE.key = ''; GUIDE.goal = null; return; }
+  const awake = E.isAwake(g, state.nickname);
+  const closed = awake ? closedNow(g) : null;
+  const from = { x: Math.floor(ME.x), y: Math.floor(ME.y) };
+  const key = from.x + ',' + from.y + '|' + goals.map((p) => p.x + ',' + p.y).join(';') + '|' + (closed ? [...closed].join(';') : 'free');
+  if (key === GUIDE.key) return;
+  GUIDE.key = key;
+  const nearest = () => goals.reduce((a, b) => (E.dist(b, ME) < E.dist(a, ME) ? b : a));
+  // ねむった人はかべを通りぬけるので、まっすぐ指す。道が見つからない（ドアがとじている など）ときも、まっすぐ
+  const r = awake ? guideRoute(from, goals, closed) : null;
+  if (!r) { GUIDE.goal = nearest(); GUIDE.aim = GUIDE.goal; return; }
+  GUIDE.goal = r.goal;
+  // 道の先 GUIDE_LOOK マスのうち、自分からかべなしで見える いちばん先のマスを向く（曲がり角では、角の方を指す）
+  let aim = r.path.length > 1 ? r.path[1] : r.goal;
+  for (let i = Math.min(GUIDE_LOOK, r.path.length - 1); i >= 1; i--) {
+    if (guideClear(ME, r.path[i])) { aim = r.path[i]; break; }
+  }
+  GUIDE.aim = r.path.length - 1 <= GUIDE_LOOK && guideClear(ME, r.goal) ? r.goal : aim;
+}
+
+// 矢印: 自分のまわりに、行き先の向きで出す。行き先の「!」が見えているとき・その場にいるときは出さない
+function drawGuide(g, sx, sy, vr) {
+  GUIDE.shown = false;
+  if (!GUIDE.goal || g.stage !== 'play' || ME.vent || ME.climb) return;
+  const d = E.dist(GUIDE.goal, ME);
+  if (d <= E.USE_RANGE) return;
+  const gx = sx(GUIDE.goal.x);
+  const gy = sy(GUIDE.goal.y);
+  const onScreen = gx > TS && gx < CW - TS && gy > TS && gy < CH - TS;
+  const seen = vr === Infinity ? onScreen : onScreen && d <= vr * 0.7 && E.canSee(ME, GUIDE.goal);
+  if (seen) return;
+  const ax = GUIDE.aim.x - ME.x;
+  const ay = GUIDE.aim.y - ME.y;
+  const len = Math.hypot(ax, ay);
+  if (len < 1e-6) return;
+  GUIDE.shown = true;
+  const ux = ax / len;
+  const uy = ay / len;
+  const ring = TS * (1.65 + 0.12 * Math.sin(Date.now() / 260));   // 少しだけ前後にゆれて、目に入りやすく
+  const cx = sx(ME.x) + ux * ring;
+  const cy = sy(ME.y) + uy * ring;
+  const s = TS * 0.5;
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.rotate(Math.atan2(uy, ux));
+  ctx.beginPath();
+  ctx.moveTo(s, 0);
+  ctx.lineTo(-s * 0.7, -s * 0.8);
+  ctx.lineTo(-s * 0.3, 0);
+  ctx.lineTo(-s * 0.7, s * 0.8);
+  ctx.closePath();
+  ctx.fillStyle = '#F5B700';
+  ctx.strokeStyle = 'rgba(28,63,94,0.9)';
+  ctx.lineWidth = 2.5;
+  ctx.lineJoin = 'round';
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
+}
+
+// 「いまやること」の1行（やることの一覧の中。たたんでいても出す）。隊員は仕事を1つおえるまで、ねむらせ屋は2つの段階
+//   ねむらせ屋 0: 仕事の場所に立つまで → 1: 隊員をねむらせるまで（立ってから45秒たっても消す） → 2: おわり
+const GUIDE_SLEEPER_STEP_S = 45;
+function renderGuideHint(g) {
+  const me = state.nickname;
+  const role = g.roles[me];
+  const awake = E.isAwake(g, me);
+  const mine = g.tasks[me] || [];
+  let text = '';
+  if (g.stage === 'play' && !ME.vent && guideOn) {
+    const walk = touchUI() ? '左下のスティックで、' : 'キーボードで、';
+    const toward = GUIDE.shown ? '黄色い矢印の方へ歩こう' : '黄色い「!」の所まで歩こう';
+    if (role === 'crew' && !mine.some((t) => t.done)) {
+      if (ACT.use && ACT.use.kind === 'task') text = touchUI() ? '右下の「仕事をする」を押そう' : '「仕事をする」を押そう（スペースキーでもできる）';
+      else if (ACT.use && ACT.use.kind === 'pair') text = '「スイッチをおす」を押して、だれかがもう一方をおすのを待とう';
+      else if (GUIDE.goal) text = walk + toward;
+    } else if (role === 'sleeper' && awake) {
+      if (Object.values(g.sleptBy).includes(me)) state.guideStep = 2;
+      if (state.guideStep === 0 && mine.some((t) => E.dist(spotOf(t.spot), ME) <= E.USE_RANGE)) {
+        state.guideStep = 1;
+        state.guideStepAt = Date.now();
+      }
+      if (state.guideStep === 1 && Date.now() - state.guideStepAt > GUIDE_SLEEPER_STEP_S * 1000) state.guideStep = 2;
+      if (state.guideStep === 0) text = GUIDE.goal ? walk + toward + '。仕事の場所に立つと、仕事のふりができる' : '';
+      else if (state.guideStep === 1) text = 'ひとりでいる隊員に近づいて「ねむらせる」。見られないようにね';
+    }
+  }
+  const p = $('guideHint');
+  setText('guideHint', text);
+  if (p.hidden !== !text) p.hidden = !text;
 }
 
 function renderTasks(g) {
@@ -2637,12 +2823,14 @@ function frame(t) {
       p.x += (p.tx - p.x) * k;
       p.y += (p.ty - p.y) * k;
     }));
+    updateGuide(g);
     draw(g);
     drawMini(g);
     tickBattery(g, dt);
     if (state.camOpen) drawCams(g);
     if (state.mapOpen) drawMapOverlay(g);
     updateActions(g);
+    renderGuideHint(g);
     updateClock(g);
     updateMeetingTimer(g);
     if (g.air) updateAirHud(g);
@@ -2855,6 +3043,8 @@ function draw(g) {
     ctx.drawImage(fog, 0, 0);
     ctx.restore();
   }
+  // 自分の仕事への矢印（暗がりの上に描く）
+  drawGuide(g, sx, sy, vr);
 }
 
 // 置き物が見えているか: 見える広さの中で、置き物にとなり合う床のどこかが見えていればよい
@@ -4291,6 +4481,8 @@ function bind() {
     $('menuDialog').showModal();
   });
   $('btnMenuClose').addEventListener('click', () => $('menuDialog').close());
+  renderGuideButton();
+  $('btnMenuGuide').addEventListener('click', () => setGuideOn(!guideOn));
   $('btnMenuLeave').addEventListener('click', () => { $('menuDialog').close(); leaveRoom(); });
   $('btnMenuLobby').addEventListener('click', () => {
     $('menuDialog').close();

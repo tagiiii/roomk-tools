@@ -30,7 +30,7 @@ import sys
 p = sys.argv[1]
 s = open(p, encoding='utf-8').read()
 assert s.rstrip().endswith('init();')
-s = s.rstrip()[:-len('init();')] + "window.__NK__ = { ME, state, PA, PG, BOTS, gameOf, KEYS };\ninit();\n"
+s = s.rstrip()[:-len('init();')] + "window.__NK__ = { ME, state, PA, PG, BOTS, gameOf, KEYS, GUIDE };\ninit();\n"
 open(p, 'w', encoding='utf-8').write(s)
 PY
 echo "window.__STATS__ = []; window.RoomkStats = { count(item) { window.__STATS__.push(item); } };" > "$SP/site/shared/js/stats.js"

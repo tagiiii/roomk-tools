@@ -138,6 +138,10 @@ body.is-playing { overflow: hidden; background: #2D3642; overscroll-behavior: no
 .nk-task.is-done .material-symbols-rounded { color: var(--color-success); }
 .nk-tasks__note { margin: 0; padding: 0 12px 10px; color: var(--color-muted); font-size: 13px; }
 .nk-tasks__note:empty { display: none; }
+/* いまやること（はじめの一歩の間だけ。たたんでいても出す。2026-10-30） */
+.nk-tasks__hint { margin: 0 8px 8px; padding: 8px 10px; border-radius: 8px; background: #FFF6D6; border-left: 4px solid #F5B700; color: var(--color-text); font-weight: 700; line-height: 1.5; }
+.nk-tasks__hint[hidden] { display: none; }
+.nk-tasks.is-closed:has(.nk-tasks__hint:not([hidden])) { width: 260px; }
 
 .nk-banner {
   position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
@@ -255,6 +259,11 @@ body.is-watching .nk-tasks, body.is-watching .nk-actions, body.is-watching .nk-p
 .nk-rolecard__name { margin: 4px 0 12px; font-size: 34px; font-weight: 700; color: var(--color-accent); }
 .nk-rolecard__name--sleeper { color: var(--nk-sleeper); }
 .nk-rolecard__desc { margin: 0 0 20px; line-height: 1.7; text-align: left; }
+/* はじめにすること（2026-10-30） */
+.nk-rolecard__steps { margin: -8px 0 20px; padding: 12px 14px; border-radius: 12px; background: #FFF6D6; text-align: left; }
+.nk-rolecard__steps[hidden] { display: none; }
+.nk-rolecard__lead { margin: 0 0 6px; font-weight: 700; color: var(--color-primary); }
+.nk-rolecard__steps ol { margin: 0; padding-left: 1.5em; line-height: 1.65; }
 
 .nk-game__card { max-width: 480px; }
 /* 監視カメラ */
@@ -360,6 +369,7 @@ button.nk-vote__main:hover { border-color: var(--color-border); }
   .nk-hud__menu { margin-left: 0; width: 40px; height: 40px; }
   .nk-hud__dark, .nk-hud__off { order: 3; }
   .nk-tasks { width: 220px; font-size: 13px; }
+  .nk-tasks.is-closed:has(.nk-tasks__hint:not([hidden])) { width: 220px; }
   .nk-mini { width: 118px; top: 10px; right: 10px; }
   .nk-mini-toggle { top: 4px; right: 4px; width: 30px; height: 30px; }
   .nk-mini-toggle.is-off { top: 10px; right: 10px; width: 40px; height: 40px; }

@@ -8,7 +8,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
   <link rel="stylesheet" href="../shared/css/design-system.css">
   <!-- index.html と app.js・engine.js・minigames.js・style.css はセットで変わるので、変えたら ?v= をそろえて上げる -->
-  <link rel="stylesheet" href="style.css?v=20261029j">
+  <link rel="stylesheet" href="style.css?v=20261030a">
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
@@ -16,8 +16,8 @@
   <script src="../shared/js/room-qr.js?v=20261022"></script>
   <!-- ねむらせ基地だけ、本体と別の Firebase プロジェクトにつなぐ（firebase-config.js） -->
   <script src="firebase-config.js?v=20261028b"></script>
-  <script src="engine.js?v=20261029l"></script>
-  <script src="minigames.js?v=20261029a"></script>
+  <script src="engine.js?v=20261030a"></script>
+  <script src="minigames.js?v=20261030a"></script>
 </head>
 <body>
 
@@ -139,6 +139,7 @@
           <span id="tasksTitle">やること</span>
           <span class="material-symbols-rounded" aria-hidden="true">expand_less</span>
         </button>
+        <p class="nk-tasks__hint" id="guideHint" role="status" hidden></p>
         <ul class="nk-tasks__items" id="tasksItems"></ul>
         <p class="nk-tasks__note" id="tasksNote"></p>
       </aside>
@@ -234,6 +235,10 @@
       <p class="nk-rolecard__you">あなたは</p>
       <p class="nk-rolecard__name" id="roleName"></p>
       <p class="nk-rolecard__desc" id="roleDesc"></p>
+      <div class="nk-rolecard__steps" id="roleStepsBox">
+        <p class="nk-rolecard__lead">はじめにすること</p>
+        <ol id="roleSteps"></ol>
+      </div>
       <button type="button" class="btn btn-primary btn-full" id="btnRoleOk">わかった</button>
     </div>
   </div>
@@ -338,6 +343,7 @@
     <h2 class="nk-h3" id="menuTitle">メニュー</h2>
     <p class="nk-panel__note" id="menuCode"></p>
     <div class="nk-menu">
+      <button type="button" class="btn btn-secondary btn-full" id="btnMenuGuide">補助（矢印・いまやること）をかくす</button>
       <button type="button" class="btn btn-secondary btn-full" id="btnMenuLobby" hidden>このゲームをやめて待合室にもどる</button>
       <button type="button" class="btn btn-secondary btn-full" id="btnMenuLeave">退出する</button>
       <button type="button" class="nk-quiet" id="btnMenuClose">とじる</button>
@@ -352,7 +358,7 @@
     </div>
   </div>
 
-  <script type="module" src="app.js?v=20261029l"></script>
+  <script type="module" src="app.js?v=20261030a"></script>
   <script src="../shared/js/stats.js?v=1" defer></script>
   <script src="../shared/js/howto.js"></script>
   <script>
@@ -370,7 +376,7 @@
           '画面の右上に、小さな地図が出る（自分の場所と、自分の仕事の「!」）。押すか「地図」ボタン（キーは M）で大きくなる。ほかの人は出ない。右上の×でかくせる。会議の間も「地図」ボタンで見られる',
         ] },
         { heading: '隊員', items: [
-          '矢印キー（スマホは左下のスティック）で歩く。黄色い「!」の場所で「仕事をする」を押すと、短いミニゲームが出る',
+          '矢印キー（スマホは左下のスティック）で歩く。自分のまわりの黄色い矢印が、次の仕事への道を指す（メニューの「補助をかくす」で、自分の画面から消せる）。黄色い「!」の場所で「仕事をする」を押すと、短いミニゲームが出る',
           'かべや家具の向こうは見えない。L字や十字の形の部屋や、入口が1つの行き止まりの部屋（道具室・温室・電気室・屋根うら）もあるよ。停電をなおすスイッチは、行き止まりの電気室にある',
           '「ふたりの仕事」は、離れた2つの部屋のスイッチを、だれかと同時におすとおわる。片方で「スイッチをおす」を押して待ち、もう片方をだれかがおせばできる',
           '通信室と見はり台をつなぐ「はしご」はだれでも使える（のぼる・おりるのに少し時間がかかる）。監視室の台で「カメラを見る」と、通路の8か所が映る。見ている間は動けず、だれかが見ているとカメラの赤いランプが光る。停電中は映らない',
