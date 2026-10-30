@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex" />
+  <title>フィードバックを送信する | room-K</title>
+  <!--
+    スタッフ（メンター）も子どもも、ツールの困りごと・直してほしいことを送れるページ。
+    ポータルには載せない。各アプリの「？」の中のボタン（別タブで開く）と「はじめての人へ」から開く。
+    書き先は Realtime Database の feedback/{id}。
+    公開の前提: database.rules.json に feedback の専用ルール（書けるが読めない）が入っていること。
+    専用ルールがないと $app_rooms のワイルドカードに当たり、id が分かれば誰でも読めてしまう。
+    正本: docs/feedback-loop-plan.md
+  -->
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet" />
+  <link rel="stylesheet" href="../../shared/css/design-system.css" />
+  <style>
+    .fb-hero {
+      background-color: var(--color-primary);
+      color: #fff;
+      padding: var(--space-lg) var(--space-lg);
+      text-align: center;
+    }
+    .fb-hero__eyebrow { font-size: var(--font-size-sm); font-weight: 700; letter-spacing: 0.08em; opacity: 0.8; }
+    .fb-hero__title { margin-top: var(--space-xs); font-size: var(--font-size-2xl); font-weight: 700; letter-spacing: 0.02em; }
+    .fb-hero__lead { margin-top: var(--space-sm); font-size: var(--font-size-body); opacity: 0.9; max-width: 520px; margin-inline: auto; }
+    @media (max-width: 420px) {
+      .fb-hero__title { font-size: var(--font-size-xl); }
+      .fb-hero__lead { font-size: var(--font-size-sm); }
+    }
+
+    .fb-main { padding: var(--space-lg) var(--space-md) var(--space-2xl); }
+    .fb-main .container { max-width: 640px; }
+
+    .fb-back {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: var(--font-size-sm); color: var(--color-muted); margin-bottom: var(--space-md);
+    }
+    .fb-back .material-symbols-rounded { font-size: 18px; }
+
+    /* 注意（名前などを書かない） */
+    .fb-note {
+      display: flex; gap: var(--space-sm); align-items: center;
+      padding: var(--space-sm) var(--space-md);
+      border-radius: var(--radius-sm);
+      background: #FFF7E6; color: #6B4E00;
+      font-size: var(--font-size-sm); font-weight: 700; line-height: 1.6;
+      margin-bottom: var(--space-lg);
+    }
+    .fb-note .material-symbols-rounded { font-size: 20px; flex: none; }
+
+    /* 3つの手順 */
+    .fb-step { margin-bottom: var(--space-lg); }
+    .fb-step__head {
+      display: flex; align-items: center; gap: var(--space-sm);
+      margin-bottom: var(--space-xs);
+    }
+    .fb-step__num {
+      flex: none; width: 28px; height: 28px; border-radius: 50%;
+      background: var(--color-accent); color: #fff;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: var(--font-size-sm); font-weight: 700;
+    }
+    .fb-step__title { font-size: var(--font-size-body); font-weight: 700; color: var(--color-text); }
+    .fb-step__hint { font-size: var(--font-size-sm); color: var(--color-muted); margin: 0 0 var(--space-xs) 40px; }
+    .fb-step__body { margin-left: 40px; }
+    @media (max-width: 480px) {
+      .fb-step__hint, .fb-step__body { margin-left: 0; }
+    }
+
+    /* 種類（アイコンつきの選択肢）。枠を付けるのは外側の span だけ（中のアイコンには付けない） */
+    .fb-kinds {
+      display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-xs);
+    }
+    .fb-kind { position: relative; }
+    .fb-kind > input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+    .fb-kind > span {
+      display: flex; align-items: center; gap: 8px; min-height: 48px; padding: 0 var(--space-sm);
+      border: 2px solid var(--color-border); border-radius: var(--radius-sm);
+      background: var(--color-surface); color: var(--color-text); font-size: var(--font-size-sm); cursor: pointer;
+    }
+    .fb-kind > span > .material-symbols-rounded { font-size: 22px; color: var(--color-muted); flex: none; }
+    .fb-kind > input:checked + span { border-color: var(--color-accent); background: #E6F2F4; color: var(--color-accent); font-weight: 700; }
+    .fb-kind > input:checked + span > .material-symbols-rounded { color: var(--color-accent); }
+    .fb-kind > input:focus-visible + span { box-shadow: 0 0 0 3px rgba(46, 125, 140, 0.18); }
+    @media (max-width: 480px) {
+      .fb-kinds { grid-template-columns: 1fr; }  /* 狭い画面では1列（文字を折り返さない） */
+    }
+
+    .fb-count { font-size: var(--font-size-sm); color: var(--color-muted); text-align: right; margin-top: 4px; }
+    .fb-count.near { color: #B26A00; }
+    .fb-count.over { color: var(--color-error); font-weight: 700; }
+
+    .fb-send { margin-top: var(--space-sm); }
+
+    /* 送信したあと */
+    .fb-done { text-align: center; padding: var(--space-lg) var(--space-md); }
+    .fb-done .fb-done__icon { font-size: 56px; color: var(--color-success); }
+    .fb-done h2 { font-size: var(--font-size-xl); margin: var(--space-xs) 0; }
+    .fb-done p { color: var(--color-muted); margin: 0 0 var(--space-lg); }
+    .fb-done .btn + .btn { margin-top: var(--space-sm); }
+    .fb-done__close-note { font-size: var(--font-size-sm); color: var(--color-muted); margin-top: var(--space-sm); }
+  </style>
+</head>
+<body>
+  <header class="fb-hero">
+    <div class="fb-hero__eyebrow">room-K</div>
+    <h1 class="fb-hero__title">フィードバックを送信する</h1>
+    <p class="fb-hero__lead">困ったこと・直してほしいこと・こうだったらいいな、を送れます。<br />だれが送ったかは分かりません。</p>
+  </header>
+
+  <main class="fb-main">
+    <div class="container">
+      <a class="fb-back" href="../../"><span class="material-symbols-rounded" aria-hidden="true">arrow_back</span>ツール一覧</a>
+
+      <div class="card" id="form-card">
+        <div class="fb-note">
+          <span class="material-symbols-rounded" aria-hidden="true">lock</span>
+          <div>名前などは書かないでください。</div>
+        </div>
+
+        <form id="fb-form" novalidate>
+          <section class="fb-step">
+            <div class="fb-step__head">
+              <span class="fb-step__num" aria-hidden="true">1</span>
+              <label class="fb-step__title" for="fb-app">どのツールについて？</label>
+            </div>
+            <div class="fb-step__body">
+              <select class="form-select" id="fb-app"></select>
+            </div>
+          </section>
+
+          <section class="fb-step">
+            <div class="fb-step__head">
+              <span class="fb-step__num" aria-hidden="true">2</span>
+              <span class="fb-step__title" id="fb-kind-label">どんなフィードバック？</span>
+            </div>
+            <div class="fb-step__body">
+              <div class="fb-kinds" role="radiogroup" aria-labelledby="fb-kind-label" id="fb-kinds">
+                <label class="fb-kind"><input type="radio" name="kind" value="bug" /><span><span class="material-symbols-rounded" aria-hidden="true">bug_report</span>うまく動かない</span></label>
+                <label class="fb-kind"><input type="radio" name="kind" value="ui" /><span><span class="material-symbols-rounded" aria-hidden="true">edit_note</span>文字・見た目</span></label>
+                <label class="fb-kind"><input type="radio" name="kind" value="content" /><span><span class="material-symbols-rounded" aria-hidden="true">lightbulb</span>お題・問題</span></label>
+                <label class="fb-kind"><input type="radio" name="kind" value="howto" /><span><span class="material-symbols-rounded" aria-hidden="true">help</span>使い方が分からない</span></label>
+                <label class="fb-kind"><input type="radio" name="kind" value="wish" /><span><span class="material-symbols-rounded" aria-hidden="true">auto_awesome</span>こうだったらいいな</span></label>
+                <label class="fb-kind"><input type="radio" name="kind" value="other" checked /><span><span class="material-symbols-rounded" aria-hidden="true">chat</span>その他</span></label>
+              </div>
+            </div>
+          </section>
+
+          <section class="fb-step">
+            <div class="fb-step__head">
+              <span class="fb-step__num" aria-hidden="true">3</span>
+              <label class="fb-step__title" for="fb-text">何があった？</label>
+            </div>
+            <p class="fb-step__hint">どの画面で、何があったか（300字まで）</p>
+            <div class="fb-step__body">
+              <textarea class="form-textarea" id="fb-text" maxlength="300" rows="5" placeholder="例: こんな遊びがあったらうれしい"></textarea>
+              <div class="fb-count" id="fb-count">0 / 300</div>
+            </div>
+          </section>
+
+          <button type="submit" class="btn btn-primary btn-full fb-send" id="fb-send">
+            <span class="material-symbols-rounded" aria-hidden="true">send</span>送信する
+          </button>
+        </form>
+      </div>
+
+      <div class="card fb-done" id="done-card" hidden>
+        <span class="material-symbols-rounded fb-done__icon" aria-hidden="true">check_circle</span>
+        <h2>送信しました</h2>
+        <p>ありがとうございます。</p>
+        <button type="button" class="btn btn-primary btn-full" id="fb-close">このタブを閉じてもどる</button>
+        <button type="button" class="btn btn-secondary btn-full" id="fb-again">もう1件送信する</button>
+        <a class="btn btn-ghost btn-full" href="../../">ツール一覧へ</a>
+        <p class="fb-done__close-note" id="fb-close-note" hidden>閉じられないときは、このタブを手で閉じてください。</p>
+      </div>
+    </div>
+  </main>
+
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+  <script src="../../shared/js/rtdb-utils.js?v=20261005"></script>
+  <script src="../../shared/js/stats.js?v=1" defer></script>
+  <script>
+  (function () {
+    'use strict';
+    // ツール一覧（ポータルのカードと同じ名前）。?app=ID で開くと、そのツールを選んだ状態で始まる
+    const APPS = [
+      ['kotoba-theme', 'コトバのテーマクイズ'], ['quiz', 'クイズパック'], ['kotoba-shuffle', 'ことばシャッフル'],
+      ['kanji-sagashi', '漢字さがし'], ['kotoba-mikke', 'ことばみっけ'], ['kotoba-relay', 'ことばリレー'],
+      ['hirameki-oogiri', 'ひらめき大喜利'], ['tatoe-gp', 'たとえグランプリ'], ['kotoba-meter', 'ことばメーター'],
+      ['shirushi-hint', 'しるしでヒント'], ['pittari-beat', 'ぴったりビート'], ['kaburazu-hint', 'かぶらずヒント'],
+      ['kotoba-tantei', 'ことば探偵'], ['moji-soroe', 'もじそろえゲーム'], ['kotoba-pair', 'コトバペア'],
+      ['toomawashi', 'とおまわしクイズ'], ['talk-card', 'トークテーマカード'], ['otona-talk', 'おとなトークカード'],
+      ['docchi', 'どっちにする？'], ['suki-type-check', 'すきタイプチェック'], ['tsuyomi-card', 'つよみカード'],
+      ['do-mannaka', 'ドまんなか'], ['word-wolf', 'ワードウルフ'], ['nemurase-kichi', 'ねむらせ基地'],
+      ['kossori-word', 'こっそりワード'], ['jinro', '人狼ゲーム'], ['name-change', '名前変えゲーム'],
+      ['jitsuwa-game', 'え!? 実は○○なんですかゲーム'], ['tatoe-narabe', 'たとえならべ'], ['ishin-denshin', '以心伝心しないゲーム'],
+      ['uso-jisho', 'うそつき辞書'], ['magire-eshi', 'まぎれ絵師'], ['oekaki-dengon', 'お絵描き伝言ゲーム'],
+      ['stamp-ate', 'スタンプあてゲーム'], ['pittari-meter', 'ピッタリメーター'], ['kakure-number', 'かくれナンバー'],
+      ['kagi-awase', 'カギあわせ'], ['koedake-theater', 'こえだけシアター'], ['kimochi-ate', '気持ち当てゲーム'],
+      ['pita-hame', 'ピタハメ'], ['oshitsuke-zukan', 'おしつけずかん'], ['esadori', 'エサドリ'],
+      ['blackjack', 'ブラックジャック'], ['reversi', 'リバーシ'], ['daifugo', '大富豪'],
+      ['suki-bingo', '好きなものビンゴ'], ['minna-ranking', 'みんなでランキング'], ['kyoumi-sugoroku', '興味スゴロク'],
+      ['nurie-week', '塗り絵カレンダー'], ['value-card', 'バリューカード'], ['ikutsu-ieru', 'いくつ言える？'],
+      ['kyapa-graph', 'キャパグラフ'], ['career-sugoroku', 'キャリアすごろく'],
+      ['sakusen-chat', '作戦会議チャット'], ['yokumite-kanji', 'よく見て漢字'],
+      ['portal', 'ツール一覧（トップ）'], ['guide', 'スタッフ向けのページ'], ['hajimete', 'はじめての人へ'], ['other', 'どれでもない・わからない'],
+    ];
+    // 種類ごとの書き方の例（手順3のプレースホルダー）
+    const EXAMPLES = {
+      bug: '例: 待合室で「はじめる」を押しても進まなかった（スマホ・Safari）',
+      ui: '例: 結果の画面の字が小さくて読みにくかった',
+      content: '例: お題に知らないことばがあった',
+      howto: '例: 何を押せばいいか分からなくて止まった',
+      wish: '例: 制限時間を選べるとうれしい',
+      other: '例: こんな遊びがあったらうれしい',
+    };
+    const MAX = 300;
+    const $ = (id) => document.getElementById(id);
+    const appSel = $('fb-app'), text = $('fb-text'), count = $('fb-count'), send = $('fb-send');
+
+    APPS.forEach(([id, name]) => {
+      const opt = document.createElement('option');
+      opt.value = id; opt.textContent = name;
+      appSel.appendChild(opt);
+    });
+    const wanted = new URLSearchParams(location.search).get('app') || '';
+    appSel.value = APPS.some(([id]) => id === wanted) ? wanted : 'other';
+
+    const kindOf = () => (document.querySelector('input[name="kind"]:checked') || {}).value || 'other';
+    $('fb-kinds').addEventListener('change', () => {
+      text.placeholder = EXAMPLES[kindOf()] || EXAMPLES.other;
+    });
+
+    const updateCount = () => {
+      const n = [...text.value].length;
+      count.textContent = n + ' / ' + MAX;
+      count.classList.toggle('near', n >= MAX - 30 && n <= MAX);
+      count.classList.toggle('over', n > MAX);
+    };
+    text.addEventListener('input', updateCount);
+
+    let db = null, authReady = null, setupError = null;
+    try {
+      ({ db, authReady } = RoomkRTDB.initFirebase(firebase));
+    } catch (error) {
+      setupError = error;
+      console.error('[feedback] setup failed', error);
+    }
+
+    let busy = false;
+    $('fb-form').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      if (busy) return;
+      const body = text.value.trim();
+      if (!body) { RoomkRTDB.showToast('3の「何があった？」を書いてから送信してね'); text.focus(); return; }
+      if ([...body].length > MAX) { RoomkRTDB.showToast(MAX + '字までにしてね'); text.focus(); return; }
+      busy = true; send.disabled = true;
+      try {
+        if (setupError) throw setupError;
+        await authReady;
+        // 送った人は記録しない（UID・名前・端末の情報は書かない）
+        await db.ref('feedback').push({
+          app: appSel.value, kind: kindOf(), text: body,
+          at: firebase.database.ServerValue.TIMESTAMP,
+        });
+        if (window.RoomkStats) RoomkStats.count('sent');
+        $('form-card').hidden = true;
+        $('done-card').hidden = false;
+        text.value = ''; updateCount();
+        window.scrollTo(0, 0);
+      } catch (error) {
+        console.error('[feedback] send failed', error);
+        RoomkRTDB.showToast('送信できませんでした。電波のいいところで、もう一度ためしてね');
+      } finally {
+        busy = false; send.disabled = false;
+      }
+    });
+
+    // 「？」から別タブで開いたときは、このタブを閉じれば元の画面にもどれる
+    $('fb-close').addEventListener('click', () => {
+      window.close();
+      setTimeout(() => { $('fb-close-note').hidden = false; }, 300);
+    });
+    $('fb-again').addEventListener('click', () => {
+      $('done-card').hidden = true;
+      $('fb-close-note').hidden = true;
+      $('form-card').hidden = false;
+      text.focus();
+    });
+  }());
+  </script>
+</body>
+</html>

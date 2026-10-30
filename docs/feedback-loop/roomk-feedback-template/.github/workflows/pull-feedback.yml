@@ -1,0 +1,29 @@
+name: pull-feedback
+
+on:
+  schedule:
+    - cron: '15 * * * *'   # 毎時15分（UTC 基準。日本時間でも毎時15分）
+  workflow_dispatch:
+
+permissions:
+  issues: write
+  contents: read
+
+concurrency:
+  group: pull-feedback
+  cancel-in-progress: false
+
+jobs:
+  pull:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: RTDB の feedback/ を Issue にする
+        env:
+          FEEDBACK_SA_JSON: ${{ secrets.FEEDBACK_SA_JSON }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: node scripts/pull-to-issues.mjs

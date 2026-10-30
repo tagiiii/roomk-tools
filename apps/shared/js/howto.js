@@ -18,12 +18,17 @@
  *       ],
  *       position: 'right',               // 'left' で左下に配置（既存FABとの衝突回避用）
  *       slides: 'slides.html',           // 任意。説明スライドがあるアプリだけ指定する
+ *       feedback: false,                 // 任意。「フィードバックを送信する」ボタンを出さないときだけ false
  *     });
  *   </script>
  *
  * slides を指定すると、モーダルの先頭に「説明スライドを見る」ボタンが出る。
  * スライドは別タブでなく今のページの上に重ねて開く（画面共有中のタブが変わらず、
  * ルームの接続もそのまま）。RoomkHowto.openSlides() でアプリ側からも開ける。
+ *
+ * 「？」のとなりに「フィードバック」の丸ボタン、モーダルの末尾に「フィードバックを送信する」ボタンが出る
+ * （どちらも apps/guide/feedback/ を別タブで開く。?app= に URL の最後の区切りを入れる）。
+ * 遊んでいる画面はそのまま残る。feedback: false で両方とも消せる。
  *
  * 後方互換で追加のみ。破壊的変更をする場合は ?v= 付き読み込みに切り替えること。
  */
@@ -43,6 +48,17 @@
     '.howto-fab--right { right: 16px; }',
     '.howto-fab--left { left: 16px; }',
     '.howto-fab .material-symbols-rounded { font-size: 26px; }',
+    '.howto-feedback-fab {',
+    '  position: fixed; bottom: 16px; z-index: 500;',
+    '  width: 48px; height: 48px; border-radius: 50%;',
+    '  background: var(--color-surface); color: var(--color-primary);',
+    '  border: 2px solid var(--color-primary); text-decoration: none;',
+    '  box-shadow: 0 4px 14px rgba(0,0,0,0.25);',
+    '  display: flex; align-items: center; justify-content: center;',
+    '}',
+    '.howto-feedback-fab--right { right: 76px; }',
+    '.howto-feedback-fab--left { left: 76px; }',
+    '.howto-feedback-fab .material-symbols-rounded { font-size: 24px; }',
     '.howto-modal {',
     '  display: none; position: fixed; inset: 0; z-index: 600;',
     '  background: rgba(28,63,94,0.55);',
@@ -78,6 +94,7 @@
     '.howto-steps { padding-left: 20px; margin: 6px 0; }',
     '.howto-steps li { margin-bottom: 5px; }',
     '.howto-slides-btn { margin-bottom: 14px; }',
+    '.howto-feedback { margin-top: 20px; }',
     // アプリ側の重ね表示（最大 1100）より上、共通トースト（9999）より下
     '.howto-slides {',
     '  display: none; position: fixed; inset: 0; z-index: 9000;',
@@ -128,7 +145,31 @@
         body.appendChild(list);
       }
     });
+    if (config.feedback !== false) body.appendChild(buildFeedbackLink('btn btn-secondary btn-full howto-feedback', true));
     return body;
+  }
+
+  // URL の最後の区切りをアプリ名にする（stats.js の detectAppName と同じ考え方）
+  function appIdFromPath() {
+    var seg = window.location.pathname.split('/').filter(Boolean);
+    if (seg[seg.length - 1] === 'index.html') seg.pop();
+    var last = seg[seg.length - 1];
+    if (!last || last === 'apps' || last === 'roomk-tools') return 'portal';
+    return last;
+  }
+
+  // 送信ページへのリンク。withText=false なら丸ボタン（アイコンだけ・aria-label つき）
+  function buildFeedbackLink(className, withText) {
+    var link = el('a', className);
+    link.href = '../guide/feedback/?app=' + encodeURIComponent(appIdFromPath());
+    link.target = '_blank';
+    link.rel = 'noopener';
+    var icon = el('span', 'material-symbols-rounded', withText ? 'send' : 'feedback');
+    icon.setAttribute('aria-hidden', 'true');
+    link.appendChild(icon);
+    if (withText) link.appendChild(document.createTextNode('フィードバックを送信する'));
+    else { link.setAttribute('aria-label', 'フィードバックを送信する'); link.title = 'フィードバックを送信する'; }
+    return link;
   }
 
   function init(config) {
@@ -142,6 +183,12 @@
     var fabIcon = el('span', 'material-symbols-rounded', 'help');
     fabIcon.setAttribute('aria-hidden', 'true');
     fab.appendChild(fabIcon);
+
+    // 「？」のとなりの「フィードバック」丸ボタン（別タブで送信ページを開く）
+    var feedbackFab = null;
+    if (config.feedback !== false) {
+      feedbackFab = buildFeedbackLink('howto-feedback-fab ' + (config.position === 'left' ? 'howto-feedback-fab--left' : 'howto-feedback-fab--right'), false);
+    }
 
     var modal = el('div', 'howto-modal');
     modal.setAttribute('role', 'dialog');
@@ -275,6 +322,7 @@
     });
 
     document.body.appendChild(fab);
+    if (feedbackFab) document.body.appendChild(feedbackFab);
     document.body.appendChild(modal);
     api.openSlides = openSlides;
   }
