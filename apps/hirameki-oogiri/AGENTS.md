@@ -54,7 +54,8 @@ apps/hirameki-oogiri/
 ├── index.html   # 画面の骨組み・howto.js の設定
 ├── app.js       # 進行・描画（ES module）
 ├── data.js      # お題（TOPICS）
-└── style.css    # 固有スタイル
+├── style.css    # 固有スタイル
+└── slides.html  # 画面共有用説明スライド（14枚。しるしでヒントのスライドの作りを流用）
 ```
 
 - 構成はしるしでヒントと同じ分割型。index.html・app.js・data.js・style.css を変えたら `?v=` をそろえて上げる（app.js の `import ... from './data.js?v=…'` も）
@@ -69,7 +70,7 @@ apps/hirameki-oogiri/
 
 - `scripts/lint.sh` の `RTDB_HTML_FILES` に追加
 - `scripts/content-audit.mjs` の `COVERED_APPS` と `collectEntries()` に `TOPICS`（data.js）を追加（空・重複は fail-fast）
-- `apps/index.html` にカード（`data-scenes="kotoba bodoge circle"`。サムネイルはまだない）
+- `apps/index.html` にカード（`data-slides`・`data-scenes="kotoba bodoge circle"`・サムネイル `assets/thumbnails/hirameki-oogiri.png`）
 - `apps/updates.json` 先頭に `type: "new"`
 - `apps/guide/index.html` の「言葉あそび」系統に1行（たとえグランプリの次）
 
