@@ -145,6 +145,10 @@ ok(g.players.every((id) => g.tasks[id].length === (g.roles[id] === 'crew' ? 4 : 
 ok(roleIds(g, 'crew').every((id) => g.tasks[id].filter((t) => t.spot >= E.PAIR_SPOT_BASE).length === 1), '隊員はふたりの仕事を1つだけ持つ');
 ok(roleIds(g, 'sleeper').every((id) => g.tasks[id].every((t) => t.spot < E.PAIR_SPOT_BASE)), 'ねむらせ屋はふたりの仕事を持たない');
 { const g0 = game(['a', 'b', 'c', 'd'], { tasks: 3, pair: 0 }); ok(g0.players.every((id) => g0.tasks[id].length === 3), '設定 pair=0 ならふたりの仕事はない'); }
+// 2026-10-30 ひとりの仕事は 3〜8 から選べる。8つでも、どちらのマップでもちがう場所が8つ（＋隊員はふたりの仕事）
+ok(JSON.stringify(E.SETTING_OPTS.tasks) === '[3,4,5,6,7,8]', 'ひとりの仕事の数は3〜8から選べる');
+[0, 1].forEach((map) => { const g8 = E.newGame(['a', 'b', 'c', 'd', 'e'], { tasks: 8, map }, fixed); ok(g8.players.every((id) => { const own = g8.tasks[id].filter((t) => t.spot < E.PAIR_SPOT_BASE).map((t) => t.spot); return own.length === 8 && new Set(own).size === 8 && own.every((sp) => sp < E.SPOTS.length) && g8.tasks[id].length === (g8.roles[id] === 'crew' ? 9 : 8); }), 'マップ' + map + ': 仕事8つでも、ちがう場所が8つ（隊員はふたりの仕事で9つ）'); });
+E.useMap(0);
 { const gb = game(['a', 'b', 'c', '*1', '*2'], { tasks: 3 }); ok(['*1', '*2'].every((id) => gb.tasks[id].every((t) => t.spot < E.PAIR_SPOT_BASE)), 'ロボットはふたりの仕事を持たない'); }
 ok(roleIds(game(['a', 'b', 'c', 'd', 'e', 'f'], { sleepers: 2 }), 'sleeper').length === 1, '7人より少ないと、ねむらせ屋は1人');
 ok(roleIds(game(['a', 'b', 'c', 'd', 'e', 'f', 'h'], { sleepers: 2 }), 'sleeper').length === 2, '7人なら2人にできる');
