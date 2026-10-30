@@ -20,3 +20,7 @@ node_modules/
 # ツールが自動で作る検証用の記録（ブラウザ操作のログ・スクリーンショット）
 .playwright-cli/
 output/
+
+# Firebase のサービスアカウント鍵（フィードバックの取り込み用）。リポジトリに入れない
+*-firebase-adminsdk-*.json
+roomk-tools-*.json
