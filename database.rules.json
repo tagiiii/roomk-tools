@@ -1,5 +1,27 @@
 {
   "rules": {
+    "feedback": {
+      ".read": false,
+      "$id": {
+        ".write": "auth != null && !data.exists()",
+        ".validate": "newData.hasChildren(['app', 'kind', 'text', 'at'])",
+        "app": {
+          ".validate": "newData.isString() && newData.val().length <= 40"
+        },
+        "kind": {
+          ".validate": "newData.isString() && newData.val().length <= 20"
+        },
+        "text": {
+          ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 300"
+        },
+        "at": {
+          ".validate": "newData.isNumber()"
+        },
+        "$other": {
+          ".validate": false
+        }
+      }
+    },
     "$app_rooms": {
       "$roomId": {
         ".read": "auth != null",
