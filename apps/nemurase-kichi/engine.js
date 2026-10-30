@@ -421,6 +421,9 @@
   // 2026-10-27 からは、この広さの中でも かべの向こうは見えない（canSee・viewPolygon）
   // 2026-10-29 子どもの要望「視野が広くなるとよい」→ オーナー決定で隊員を 4.5 → 5.5（マップを広げた分）
   const VIEW = { crew: 5.5, dark: 2.4, sleeper: 7.5 };
+  // 見える広さの倍率（2026-10-30 子どもの要望「隊員とねむらせ屋、それぞれ視野の広さを選べるように」。上の広さを1倍として 0.5〜4倍を0.25きざみ）。
+  // 隊員の倍率は停電中の広さにもかける（停電のせまくなり方は同じ割合のまま）
+  const VIEW_SCALES = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.25, 2.5, 2.75, 3, 3.25, 3.5, 3.75, 4];
   const VIEW_RAYS = 540;      // 暗がりを かべで切るときに飛ばす光線の本数（多いほどなめらか・重い）
   const VIEW_OVER = 0.3;      // かべに当たった光線を、かべの面が少し見えるように のばすマス数
 
@@ -447,7 +450,7 @@
   // pick: ねむらせ屋の決め方（0＝ランダム、1＝ホストが待合室で選ぶ）。2026-10-27 子どもの意見で追加
   // pair: ふたりの仕事（1＝隊員はひとり1つ持つ、0＝なし）。gauge: みんなの仕事のバー（2＝出す、1＝進行役の画面だけ、0＝出さない）。2026-10-28 子どもの要望の第2便
   // engineer・watcher・angel・shifter: 役職（1＝入れる、0＝入れない）。2026-10-29 子どもの要望の第3便。はじめはどれも入れない
-  const DEFAULT_SETTINGS = { hostPlays: 1, sleepers: 1, tasks: 4, cooldown: 20, meeting: 90, buttons: 1, pick: 0, pair: 1, gauge: 2, engineer: 0, watcher: 0, angel: 0, shifter: 0, map: 1 };   // map: 0＝ひみつ基地・1＝パーク（2026-10-29。はじめはパーク＝オーナー決定）
+  const DEFAULT_SETTINGS = { hostPlays: 1, sleepers: 1, tasks: 4, cooldown: 20, meeting: 90, buttons: 1, pick: 0, pair: 1, gauge: 2, visCrew: 1, visSleeper: 1, engineer: 0, watcher: 0, angel: 0, shifter: 0, map: 1 };   // map: 0＝ひみつ基地・1＝パーク（2026-10-29。はじめはパーク＝オーナー決定）
   const SETTING_OPTS = {
     hostPlays: [1, 0],
     sleepers: [1, 2],
@@ -458,6 +461,8 @@
     meeting: [60, 90, 120, 150, 180],
     buttons: [1, 2],
     gauge: [2, 1, 0],
+    visCrew: VIEW_SCALES,
+    visSleeper: VIEW_SCALES,
     engineer: [0, 1],
     watcher: [0, 1],
     angel: [0, 1],
@@ -699,6 +704,15 @@
     return out;
   }
 
+  // おきている人の見える広さ（マス）。role は 'sleeper' か 'crew'、dark は停電中か。倍率は設定の visCrew・visSleeper（ない・ちがう値なら1倍）
+  function viewOf(settings, role, dark) {
+    const s = settings || {};
+    const k = role === 'sleeper' ? s.visSleeper : s.visCrew;
+    const scale = VIEW_SCALES.includes(k) ? k : 1;
+    if (role === 'sleeper') return VIEW.sleeper * scale;
+    return (dark ? VIEW.dark : VIEW.crew) * scale;
+  }
+
   // 会議のあと・はじめに立つ場所（テーブルのまわり）
   function spawnPoint(i, n) {
     const a = (Math.PI * 2 * i) / Math.max(1, n) - Math.PI / 2;
@@ -872,7 +886,7 @@
   const api = {
     W, H, ROOMS, HALLS, HALL_FILL, SPOTS, FIX_SPOT, TABLE, VENTS, VENT_STAY_S, LADDERS, CLIMB_MS, CAM_STAND, CAMS, CAM_R, GRID, COLORS,
     AIR_PANELS, AIR_LIMIT_S, PAIRS, PAIR_SPOT_BASE, PAIR_HOLD_MS, PAIR_BEAT_MS, DOORS, DOOR_ROOMS, DOOR_MS, DOOR_AGAIN_S, BUTTON_WAIT_S, FURNITURE,
-    SPEED, RADIUS, USE_RANGE, SLEEP_RANGE, FIND_RANGE, VIEW, VIEW_RAYS, VIEW_OVER,
+    SPEED, RADIUS, USE_RANGE, SLEEP_RANGE, FIND_RANGE, VIEW, VIEW_SCALES, VIEW_RAYS, VIEW_OVER, viewOf,
     JOB_NAMES, ENGINEER_GAP_S, WATCH_BATTERY_S, WATCH_CHARGE_S, SHIELD_S, ANGEL_GAP_S, ANGEL_RANGE, SHIFT_S, SHIFT_GAP_S,
     jobOf, shielded, looksAs, fixRoomName,
     GAME_LIMIT_S, MIN_PLAYERS, MAX_PLAYERS, TWO_SLEEPERS_MIN, DEFAULT_SETTINGS, SETTING_OPTS,

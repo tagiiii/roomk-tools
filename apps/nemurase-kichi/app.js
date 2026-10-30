@@ -52,6 +52,9 @@ const SETTING_LABELS = {
   meeting: ['会議の時間', (v) => v + '秒'],
   buttons: ['会議ボタン（ひとり）', (v) => v + '回'],
   gauge: ['みんなの仕事のバー', (v) => (v === 2 ? '出す' : v === 1 ? '進行役の画面だけ' : '出さない')],
+  // 見える広さ（2026-10-30）。いまの広さを1倍として 0.5〜4倍
+  visCrew: ['隊員の見える広さ', (v) => v + '倍' + (v === 1 ? '（ふつう）' : '')],
+  visSleeper: ['ねむらせ屋の見える広さ', (v) => v + '倍' + (v === 1 ? '（ふつう）' : '')],
   // 役職（2026-10-29）。入れると、人のうち1人がなる（ロボットはならない）
   engineer: ['整備係（隊員・近道を使える）', (v) => (v ? '入れる' : '入れない')],
   watcher: ['見守り係（隊員・ねむりチェッカー）', (v) => (v ? '入れる' : '入れない')],
@@ -1050,6 +1053,7 @@ const MORE_GROUPS = [
   ['ねむらせ屋', ['sleepers', 'pick', 'cooldown']],
   ['仕事', ['tasks', 'pair', 'gauge']],
   ['会議', ['meeting', 'buttons']],
+  ['見える広さ', ['visCrew', 'visSleeper']],
   ['役職（なれてから1つずつ入れる）', ['engineer', 'watcher', 'angel', 'shifter']],
 ];
 const moreKeys = () => MORE_GROUPS.flatMap((g) => g[1]);
@@ -1065,6 +1069,8 @@ const SETTING_DESC = {
   gauge: 'みんなの仕事がどこまで進んだかのバー',
   meeting: '話し合いと投票の時間',
   buttons: 'テーブルの会議ボタンを、ひとりが押せる回数',
+  visCrew: '大きいほど暗がりがせまく、遠くまで見える（隊員が有利）。停電中の広さも同じ倍率になる',
+  visSleeper: '大きいほど暗がりがせまく、遠くまで見える（ねむらせ屋が有利）',
 };
 // 人数に合わせたおすすめ（ホストの画面だけ。押しつけず「〜もできる」の形で出す）
 function settingRecs(s, n) {
@@ -1084,6 +1090,7 @@ function lobbySummary(s, n) {
     'ねむらせ屋' + E.sleeperCount(s, Math.max(n, 1)) + '人',
     'ひとりの仕事' + s.tasks + 'つ' + (s.pair ? '＋ふたりの仕事' : ''),
     s.hostPlays === 0 ? 'ホストは進行だけ' : '',
+    s.visCrew !== 1 || s.visSleeper !== 1 ? '見える広さ（隊員' + s.visCrew + '倍・ねむらせ屋' + s.visSleeper + '倍）' : '',
     jobs.length ? '役職（' + jobs.join('・') + '）' : '',
   ].filter(Boolean).join('・');
 }
@@ -2940,8 +2947,7 @@ function drawPos(g, id) {
 function viewRadius(g) {
   const me = state.nickname;
   if (!E.isAwake(g, me)) return Infinity;
-  if (g.roles[me] === 'sleeper') return E.VIEW.sleeper;
-  return g.dark ? E.VIEW.dark : E.VIEW.crew;
+  return E.viewOf(g.settings, g.roles[me], g.dark);
 }
 
 function clampCam(v, max) {

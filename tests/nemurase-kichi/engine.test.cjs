@@ -255,6 +255,15 @@ ok(E.tally({}, SK).target === null, '票がなければだれもねむらない'
 ok(E.SETTING_OPTS.meeting.join() === '60,90,120,150,180', '会議の時間は 60〜180');
 ok(E.SETTING_OPTS.gauge.join() === '2,1,0' && E.DEFAULT_SETTINGS.gauge === 2, 'みんなの仕事のバーの設定（はじめは出す）');
 ok(E.SETTING_OPTS.pair.join() === '1,0' && E.DEFAULT_SETTINGS.pair === 1, 'ふたりの仕事の設定（はじめは あり）');
+// 見える広さの倍率（2026-10-30）
+ok(E.SETTING_OPTS.visCrew.join() === '0.5,0.75,1,1.25,1.5,1.75,2,2.25,2.5,2.75,3,3.25,3.5,3.75,4' && E.SETTING_OPTS.visSleeper === E.SETTING_OPTS.visCrew, '見える広さの倍率は 0.5〜4倍を0.25きざみ（隊員・ねむらせ屋）');
+ok(E.DEFAULT_SETTINGS.visCrew === 1 && E.DEFAULT_SETTINGS.visSleeper === 1, '見える広さの倍率のはじめは1倍');
+ok(E.viewOf(E.DEFAULT_SETTINGS, 'crew', false) === E.VIEW.crew && E.viewOf(E.DEFAULT_SETTINGS, 'crew', true) === E.VIEW.dark && E.viewOf(E.DEFAULT_SETTINGS, 'sleeper', false) === E.VIEW.sleeper, '1倍はいまの広さのまま（隊員・停電中・ねむらせ屋）');
+ok(E.viewOf({}, 'crew', false) === E.VIEW.crew && E.viewOf(null, 'sleeper', true) === E.VIEW.sleeper && E.viewOf({ visCrew: 9, visSleeper: 'x' }, 'crew', false) === E.VIEW.crew && E.viewOf({ visSleeper: 0 }, 'sleeper', false) === E.VIEW.sleeper, '倍率がない・ちがう値なら1倍（前の版で作った部屋も）');
+ok(E.viewOf({ visCrew: 0.5, visSleeper: 4 }, 'crew', false) === E.VIEW.crew * 0.5 && E.viewOf({ visCrew: 0.5, visSleeper: 4 }, 'sleeper', false) === E.VIEW.sleeper * 4, '隊員とねむらせ屋は別々の倍率');
+ok(E.viewOf({ visCrew: 2, visSleeper: 0.5 }, 'crew', true) === E.VIEW.dark * 2, '停電中の広さにも隊員の倍率をかける');
+ok(E.viewOf({ visCrew: 2, visSleeper: 0.5 }, 'sleeper', true) === E.VIEW.sleeper * 0.5, 'ねむらせ屋は停電でもせまくならない（倍率だけ）');
+ok(E.newGame(['a', 'b', 'c', 'd'], { visCrew: 1.5, visSleeper: 0.75 }, () => 0.3).settings.visCrew === 1.5, 'newGame は倍率を持つ');
 ok(E.BUTTON_WAIT_S === 20 && E.AIR_LIMIT_S === 60 && E.DOOR_MS === 10000 && E.DOOR_AGAIN_S === 20, '待ち時間の数字');
 // 家具: 部屋の中・かべになる・ほかの物（仕事の場所・近道・はしご・スイッチ・パネル・テーブル・はじめの場所・入口）とかさならない
 const things = [...E.SPOTS, E.FIX_SPOT, E.CAM_STAND, ...E.VENTS, ...E.LADDERS, ...E.AIR_PANELS, ...E.PAIRS.flatMap((p) => [p.a, p.b])];

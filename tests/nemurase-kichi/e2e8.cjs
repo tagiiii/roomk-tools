@@ -22,11 +22,11 @@ const inView = (c, sel) => c.page.$eval(sel, (b) => { const r = b.getBoundingCli
   check('参加者には設定の欄を出さない（要約だけ）', !(await L.visible(g1, '#lobbySettingsWrap')) && (await L.visible(g1, '#startSummary')));
   check('参加者の欄の中の値はある（マップだけ・ホストの行なし）', (await rows(g1, 'lobbySettings')).join() === 'set-map');
   const moreIds = await rows(host, 'lobbyMore');
-  check('のこりの12個は「くわしい設定」', moreIds.length === 12 && moreIds.includes('set-tasks') && moreIds.includes('set-shifter'), moreIds);
+  check('のこりの14個は「くわしい設定」', moreIds.length === 14 && moreIds.includes('set-tasks') && moreIds.includes('set-shifter'), moreIds);
   const groups = await host.page.$$eval('#lobbyMore .nk-more__group-title', (n) => n.map((x) => x.textContent));
-  check('まとまりの見出し（ねむらせ屋・仕事・会議・役職）', groups.join('|') === 'ねむらせ屋|仕事|会議|役職（なれてから1つずつ入れる）', groups);
+  check('まとまりの見出し（ねむらせ屋・仕事・会議・見える広さ・役職）', groups.join('|') === 'ねむらせ屋|仕事|会議|見える広さ|役職（なれてから1つずつ入れる）', groups);
   const descs = await host.page.$$eval('.nk-setting__desc', (n) => n.length);
-  check('1行の説明は10個（役職はなし）', descs === 10, descs);
+  check('1行の説明は12個（役職はなし）', descs === 12, descs);
   check('説明の例: ねむらせてから次まで', (await host.page.$eval('#set-cooldown', (s) => s.closest('.nk-setting').querySelector('.nk-setting__desc').textContent)) === '短いほど、ねむらせ屋が有利');
   for (const c of [host, g1]) {
     const st = await c.page.evaluate(() => ({ open: document.getElementById('moreSettings').open, seen: document.querySelector('#lobbyMore .nk-setting').checkVisibility() }));
