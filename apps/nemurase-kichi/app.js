@@ -32,6 +32,8 @@ const AIR_TASK_A = -3;          // state.taskSpot: 空気のパネル a・b を�
 const AIR_TASK_B = -4;
 const BOT_FIX_MS = 5500;        // ロボットが停電・空気をなおすのにかける時間（人のミニゲームと同じくらい）
 const BOT_PAIR_HOLD_MS = 12000; // ロボットがふたりの仕事を手伝うとき、スイッチをおしつづける時間
+const BOT_WATCH_MS = 500;       // ロボットが、見えている人と場所を覚える間かく
+const BOT_MEMORY_MS = 90000;    // ロボットが覚えておく長さ
 const PAIR_LINGER_MS = 1500;    // ふたりの仕事がそろったあと、はなすまで（相手の画面がそろったのを見られるように）
 const LATE_MS = 3000;           // ホストの端末が遅れているとき、ほかの端末が進行を代わるまでの待ち
 const LEFT_GRACE_MS = 60000;    // ゲーム中に在室が消えてから、抜けたとみなすまでの時間（読み込み直し・アプリの切り替え・短い切断は抜けたことにしない）
@@ -1738,7 +1740,7 @@ function resetBots(g) {
   g.players.forEach((id, i) => {
     if (!isBot(id)) return;
     const sp = E.spawnPoint(i, g.players.length);
-    BOTS[id] = { id, x: sp.x, y: sp.y, face: 1, route: [], goal: null, waitUntil: Date.now() + 1500 + Math.random() * 2000, voteAt: 0, sentAt: 0, sentText: '', findAt: 0, busyUntil: 0, pairHold: null };
+    BOTS[id] = { id, x: sp.x, y: sp.y, face: 1, route: [], goal: null, waitUntil: Date.now() + 1500 + Math.random() * 2000, voteAt: 0, sentAt: 0, sentText: '', findAt: 0, busyUntil: 0, pairHold: null, seen: {}, cases: {}, seq: 0, watchAt: 0 };
   });
 }
 
@@ -1755,8 +1757,38 @@ function botsVote(room) {
     if (now < b.voteAt) return;
     b.voteAt = 0;
     const others = E.awakeOf(g).filter((id) => id !== b.id && !(g.roles[b.id] === 'sleeper' && g.roles[id] === 'sleeper'));
-    const target = Math.random() < 0.5 || !others.length ? SKIP : others[Math.floor(Math.random() * others.length)];
+    // ねむった人を最後に見た場所・ねむっていた場所の近くで見かけた人に入れる。手がかりがなければスキップ
+    const target = E.suspectOf(b.seen, Object.values(b.cases), others) || SKIP;
     doVote(b.id, target);
+  });
+}
+
+// ロボットが、見えている人（見た目のだれか）と場所を覚える。新しくねむった人は、その時刻・場所・最後に見かけた所を覚える
+function botsWatch(g, now) {
+  const at = RoomkRTDB.now();
+  Object.values(BOTS).forEach((b) => {
+    if (b.seq !== g.meetingSeq) { b.seq = g.meetingSeq; b.cases = {}; }   // 会議がおわったら、前の手がかりは使わない
+    if (!E.isAwake(g, b.id) || now - b.watchAt < BOT_WATCH_MS) return;
+    b.watchAt = now;
+    const view = E.viewOf(g.settings, g.roles[b.id], g.dark);
+    Object.keys(g.bodies).forEach((id) => {
+      if (b.cases[id]) return;
+      const list = b.seen[id] || [];
+      const last = list[list.length - 1];
+      b.cases[id] = { t: now, x: g.bodies[id].x, y: g.bodies[id].y, last: last ? { t: last.t, x: last.x, y: last.y } : null };
+    });
+    g.players.forEach((id) => {
+      if (id === b.id || !E.isAwake(g, id) || E.hasLeft(g, id)) return;
+      const p = knownPos(id);
+      if (!p || E.dist(p, b) > view || !E.canSee(b, p)) return;
+      const look = E.looksAs(g, id, at);
+      (b.seen[look] = b.seen[look] || []).push({ t: now, x: p.x, y: p.y });
+    });
+    Object.keys(b.seen).forEach((id) => {
+      const list = b.seen[id].filter((s) => now - s.t <= BOT_MEMORY_MS);
+      if (list.length) b.seen[id] = list;
+      else delete b.seen[id];
+    });
   });
 }
 
@@ -1924,6 +1956,7 @@ function botLoop() {
   for (let left = dt; left > 0; left -= 0.05) {
     Object.values(BOTS).forEach((b) => botStep(g, b, Math.min(0.05, left), now));
   }
+  botsWatch(g, now);
   Object.values(BOTS).forEach((b) => sendPosFor(b.id, b, E.isAwake(g, b.id), false));
 }
 

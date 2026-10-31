@@ -421,5 +421,24 @@ ok(JSON.stringify(E.newGame(['a', 'b', 'c', 'd'], {}, fixed).doors) === '{}' && 
   E.useMap('kichi');
 }
 
+// ロボットの票（2026-10-31）: ねむっていた場所・最後に見かけた場所の近くで見かけた人をあやしむ。手がかりがなければ null
+{
+  const T = 100000;
+  const body = { t: T, x: 10, y: 10, last: { t: T - 8000, x: 20, y: 10 } };
+  const seen = {
+    A: [{ t: T - 3000, x: 11, y: 10 }],            // ねむっていた場所のすぐ近く
+    B: [{ t: T - 6000, x: 23.5, y: 10 }],          // 最後に見かけた場所の近く（そのあと）
+    C: [{ t: T - 60000, x: 10, y: 10 }],           // ずっと前に近くにいただけ
+    D: [{ t: T - 5000, x: 10.5, y: 10 }, { t: T - 1000, x: 30, y: 30 }],   // ねむったころには遠く
+  };
+  ok(E.suspectOf(seen, [body], ['A', 'B', 'C', 'D']) === 'A', 'ロボットの票: ねむっていた場所のすぐ近くで見かけた人');
+  ok(E.suspectOf(seen, [body], ['B', 'C', 'D']) === 'B', 'ロボットの票: 最後に見かけた場所の近くで、そのあと見かけた人');
+  ok(E.suspectOf(seen, [body], ['C', 'D']) === null, 'ロボットの票: ずっと前に近くにいた人・ねむったころ遠くにいた人はあやしまない');
+  ok(E.suspectOf(seen, [], ['A', 'B']) === null && E.suspectOf({}, [body], ['A']) === null, 'ロボットの票: ねむった人がいない・見かけていないなら手がかりなし');
+  ok(E.suspectOf(seen, [body], ['B']) === 'B' && E.suspectOf(seen, [body], ['A', 'B'].filter((id) => id !== 'A')) === 'B', 'ロボットの票: 入れてよい人の中から選ぶ');
+  const tie = { X: [{ t: T - 2000, x: 13, y: 10 }], Y: [{ t: T - 2000, x: 10, y: 13 }] };
+  ok(E.suspectOf(tie, [body], ['X', 'Y'], () => 0) === 'X' && E.suspectOf(tie, [body], ['X', 'Y'], () => 0.99) === 'Y', 'ロボットの票: 同じあやしさならくじ');
+}
+
 console.log(`pass ${pass} / fail ${fail}`);
 process.exit(fail ? 1 : 0);
