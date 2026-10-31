@@ -872,7 +872,8 @@
 
   // ロボットの票（2026-10-31 子どもの要望「ロボットの投票をなんとかして。ねむった人を最後に見た場所の方で見かけた人に投票するとか」）。
   // seen＝{見た目のだれか: [{t, x, y}]}（そのロボットが見かけた時刻と場所）、cases＝[{t, x, y, last}]（ねむった時刻・ねむっていた場所・
-  // ねむる前に最後に見かけた {t, x, y} か null）、candidates＝票を入れてよい人。いちばんあやしい人を返す。手がかりがなければ null
+  // ねむる前に最後に見かけた {t, x, y} か null）、candidates＝票を入れてよい人。いちばんあやしい人を返す。手がかりがなければ null。
+  // 最後に見かけた場所は、ねむる20秒前までに見かけたときだけ使う。テーブルのまわり（会議のあとにみんながいる所）で最後に見かけたときは使わない
   const SUSPECT_NEAR = 5;          // この広さの中で見かけた人をあやしむ（マス）
   const SUSPECT_CLOSE = 2;         // ここまで近いと強くあやしむ
   const SUSPECT_BEFORE_MS = 20000; // ねむっていた場所の近くは、ねむる20秒前から
@@ -883,11 +884,12 @@
       const list = (seen && seen[id]) || [];
       let sum = 0;
       (cases || []).forEach((c) => {
+        const useLast = !!c.last && c.t - c.last.t <= SUSPECT_BEFORE_MS && dist(c.last, TABLE) > TABLE.r + SUSPECT_NEAR;
         if (list.some((s) => Math.abs(s.t - c.t) <= 3000 && dist(s, c) > SUSPECT_ALIBI)) return;
         list.forEach((s) => {
           let d = Infinity;
           if (s.t >= c.t - SUSPECT_BEFORE_MS && s.t <= c.t + 2000) d = dist(s, c);
-          if (c.last && s.t >= c.last.t - 5000 && s.t <= c.t) d = Math.min(d, dist(s, c.last));
+          if (useLast && s.t >= c.last.t && s.t <= c.t) d = Math.min(d, dist(s, c.last));
           if (d <= SUSPECT_CLOSE) sum += 3;
           else if (d <= SUSPECT_NEAR) sum += 1;
         });

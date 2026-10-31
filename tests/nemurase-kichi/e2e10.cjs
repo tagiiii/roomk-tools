@@ -4,10 +4,11 @@ const L = require('./lib.cjs');
 const { E, check, sleep } = L;
 
 const botsOf = (c) => c.page.evaluate(() => JSON.parse(JSON.stringify(window.__NK__.BOTS)));
-// ロボットをその場に止める（歩かない・仕事をしない・見つけたも押さない。覚えるのはつづける）
+// ロボットをその場に止める（歩かない・仕事をしない・見つけたも押さない。覚えるのはつづける）。
+// 止める前（テーブルのまわり）に見かけたことは消す（テストの場面を、止めたあとに見たものだけにする）
 const freeze = (c, id, x, y) => c.page.evaluate(([i, a, b]) => {
   const bot = window.__NK__.BOTS[i];
-  bot.x = a; bot.y = b; bot.route = []; bot.goal = null; bot.busyUntil = Date.now() + 3600000;
+  bot.x = a; bot.y = b; bot.route = []; bot.goal = null; bot.busyUntil = Date.now() + 3600000; bot.seen = {};
 }, [id, x, y]);
 
 (async () => {
@@ -39,6 +40,12 @@ const freeze = (c, id, x, y) => c.page.evaluate(([i, a, b]) => {
   check('現場と遠い場所は見える広さより離れている', E.dist(P, F) > E.VIEW.crew * 3, { P, F });
   await freeze(host, '*1', P.x, P.y);
   await freeze(host, '*2', F.x, F.y);
+  // 近道の中のホストは見えない（ホストの端末の位置もロボットに見えない）
+  await L.teleport(host, P.x, P.y);
+  await host.page.evaluate(() => { window.__NK__.ME.vent = { id: 0, until: Date.now() + 3600000 }; });
+  await sleep(1500);
+  check('近道の中のホストは、ロボットに見えない', !(await botsOf(host))['*1'].seen['ホスト'], Object.keys((await botsOf(host))['*1'].seen));
+  await host.page.evaluate(() => { window.__NK__.ME.vent = null; });
   // ホスト（ねむる人）とあお（ねむらせ屋）が現場に来る
   await L.teleport(host, P.x, P.y);
   await L.teleport(g1, P.x + 0.5, P.y);
@@ -73,6 +80,7 @@ const freeze = (c, id, x, y) => c.page.evaluate(([i, a, b]) => {
   check('みんな入れたら結果', await L.waitFor(() => L.visible(g1, '#ovResult'), 10000));
   check('結果のあと遊ぶ時間にもどる', await L.waitFor(async () => (await L.roomOf(code)).game.stage === 'play', 15000));
   check('会議のあとは、前のねむった人の手がかりを使わない', await L.waitFor(async () => Object.keys((await botsOf(host))['*1'].cases).length === 0));
+  check('会議のあとは、前に見かけたこと（現場のあお）も使わない', !((await botsOf(host))['*1'].seen['あお'] || []).some((s) => E.dist(s, P) < 1));
   g = (await L.roomOf(code)).game;
   check('あおはつかまっていない（スキップが多い）', !g.asleep?.['あお'] && !g.winner, { asleep: g.asleep, winner: g.winner });
 

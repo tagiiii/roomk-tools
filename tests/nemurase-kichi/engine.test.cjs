@@ -436,6 +436,12 @@ ok(JSON.stringify(E.newGame(['a', 'b', 'c', 'd'], {}, fixed).doors) === '{}' && 
   ok(E.suspectOf(seen, [body], ['C', 'D']) === null, 'ロボットの票: ずっと前に近くにいた人・ねむったころ遠くにいた人はあやしまない');
   ok(E.suspectOf(seen, [], ['A', 'B']) === null && E.suspectOf({}, [body], ['A']) === null, 'ロボットの票: ねむった人がいない・見かけていないなら手がかりなし');
   ok(E.suspectOf(seen, [body], ['B']) === 'B' && E.suspectOf(seen, [body], ['A', 'B'].filter((id) => id !== 'A')) === 'B', 'ロボットの票: 入れてよい人の中から選ぶ');
+  // 最後に見かけた場所: 見かけるより前の人・20秒より前に見かけたきり・テーブルのまわりは使わない
+  const before = { Q: [{ t: T - 9000, x: 21, y: 10 }] };
+  ok(E.suspectOf(before, [body], ['Q']) === null, 'ロボットの票: 最後に見かけるより前に、その場所にいただけの人はあやしまない');
+  ok(E.suspectOf(seen, [{ ...body, last: { t: T - 30000, x: 20, y: 10 } }], ['B']) === null, 'ロボットの票: 20秒より前に見かけたきりの場所は使わない');
+  const tbl = { x: E.TABLE.x + E.TABLE.r + 1.3, y: E.TABLE.y };
+  ok(E.suspectOf({ R: [{ t: T - 5000, x: tbl.x + 1, y: tbl.y }] }, [{ t: T, x: 10, y: 10, last: { t: T - 10000, ...tbl } }], ['R']) === null, 'ロボットの票: テーブルのまわりで最後に見かけたときは使わない');
   const tie = { X: [{ t: T - 2000, x: 13, y: 10 }], Y: [{ t: T - 2000, x: 10, y: 13 }] };
   ok(E.suspectOf(tie, [body], ['X', 'Y'], () => 0) === 'X' && E.suspectOf(tie, [body], ['X', 'Y'], () => 0.99) === 'Y', 'ロボットの票: 同じあやしさならくじ');
 }

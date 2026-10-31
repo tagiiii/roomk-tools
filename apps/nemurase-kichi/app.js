@@ -1767,7 +1767,7 @@ function botsVote(room) {
 function botsWatch(g, now) {
   const at = RoomkRTDB.now();
   Object.values(BOTS).forEach((b) => {
-    if (b.seq !== g.meetingSeq) { b.seq = g.meetingSeq; b.cases = {}; }   // 会議がおわったら、前の手がかりは使わない
+    if (b.seq !== g.meetingSeq) { b.seq = g.meetingSeq; b.cases = {}; b.seen = {}; }   // 会議がおわったら、前の手がかりと見かけたことは使わない
     if (!E.isAwake(g, b.id) || now - b.watchAt < BOT_WATCH_MS) return;
     b.watchAt = now;
     const view = E.viewOf(g.settings, g.roles[b.id], g.dark);
@@ -1834,7 +1834,7 @@ function pairNeedingHelp(g) {
 
 // ホストが知っている、その人の位置（ロボットはその場の位置）
 function knownPos(id) {
-  if (id === state.nickname) return ME;
+  if (id === state.nickname) return ME.vent ? null : ME;   // 近道の中のホストも見えない
   if (BOTS[id]) return BOTS[id];
   return PA[id] && !PA[id].hidden ? { x: PA[id].tx, y: PA[id].ty } : null;   // 近道の中の人は見えない
 }
