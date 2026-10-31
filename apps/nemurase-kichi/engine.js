@@ -870,6 +870,38 @@
     return { counts, target, tie: tie && max > 0 };
   }
 
+  // ロボットの票（2026-10-31 子どもの要望「ロボットの投票をなんとかして。ねむった人を最後に見た場所の方で見かけた人に投票するとか」）。
+  // seen＝{見た目のだれか: [{t, x, y}]}（そのロボットが見かけた時刻と場所）、cases＝[{t, x, y, last}]（ねむった時刻・ねむっていた場所・
+  // ねむる前に最後に見かけた {t, x, y} か null）、candidates＝票を入れてよい人。いちばんあやしい人を返す。手がかりがなければ null。
+  // 最後に見かけた場所は、ねむる20秒前までに見かけたときだけ使う。テーブルのまわり（会議のあとにみんながいる所）で最後に見かけたときは使わない
+  const SUSPECT_NEAR = 5;          // この広さの中で見かけた人をあやしむ（マス）
+  const SUSPECT_CLOSE = 2;         // ここまで近いと強くあやしむ
+  const SUSPECT_BEFORE_MS = 20000; // ねむっていた場所の近くは、ねむる20秒前から
+  const SUSPECT_ALIBI = 12;        // ねむったころに、これより遠くで見かけた人はあやしまない
+  function suspectOf(seen, cases, candidates, rnd) {
+    const score = {};
+    candidates.forEach((id) => {
+      const list = (seen && seen[id]) || [];
+      let sum = 0;
+      (cases || []).forEach((c) => {
+        const useLast = !!c.last && c.t - c.last.t <= SUSPECT_BEFORE_MS && dist(c.last, TABLE) > TABLE.r + SUSPECT_NEAR;
+        if (list.some((s) => Math.abs(s.t - c.t) <= 3000 && dist(s, c) > SUSPECT_ALIBI)) return;
+        list.forEach((s) => {
+          let d = Infinity;
+          if (s.t >= c.t - SUSPECT_BEFORE_MS && s.t <= c.t + 2000) d = dist(s, c);
+          if (useLast && s.t >= c.last.t && s.t <= c.t) d = Math.min(d, dist(s, c.last));
+          if (d <= SUSPECT_CLOSE) sum += 3;
+          else if (d <= SUSPECT_NEAR) sum += 1;
+        });
+      });
+      if (sum > 0) score[id] = sum;
+    });
+    const max = Math.max(0, ...Object.values(score));
+    if (!max) return null;
+    const top = Object.keys(score).filter((id) => score[id] === max);
+    return top[Math.floor((rnd || Math.random)() * top.length)];
+  }
+
   // 位置を送る形: "x,y,f"（座標×10の整数・向き 1＝右 0＝左・2＝近道の中で見えない）。通信を小さくするため短い文字列1つにする
   function encodePos(x, y, face, hidden) {
     return Math.round(x * 10) + ',' + Math.round(y * 10) + ',' + (hidden ? 2 : face < 0 ? 0 : 1);
@@ -892,7 +924,7 @@
     GAME_LIMIT_S, MIN_PLAYERS, MAX_PLAYERS, TWO_SLEEPERS_MIN, DEFAULT_SETTINGS, SETTING_OPTS,
     isFloor, dist, roomAt, roomName, canStand, step, stepFree, path, rayDist, canSee, viewPolygon, spawnPoint, encodePos, decodePos,
     doorTiles, tileKey, spotInfo, pairOf, pairFresh, closedRooms, checkAir,
-    shuffled, sleeperCount, newGame, isAwake, hasLeft, awakeOf, taskProgress, checkWin, tally,
+    shuffled, sleeperCount, newGame, isAwake, hasLeft, awakeOf, taskProgress, checkWin, tally, suspectOf,
     SAYS, SAY_GAP_MS, SAY_SHOW_MS, SAY_LOG_MAX, HALL_LABEL, roomList, sayPhrase, sayAllowed, sayText,
   };
   // マップを入れかえる（key は 'kichi'|'park'、または settings.map の数字）。api の中身も入れかえる

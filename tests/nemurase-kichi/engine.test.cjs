@@ -421,5 +421,30 @@ ok(JSON.stringify(E.newGame(['a', 'b', 'c', 'd'], {}, fixed).doors) === '{}' && 
   E.useMap('kichi');
 }
 
+// ロボットの票（2026-10-31）: ねむっていた場所・最後に見かけた場所の近くで見かけた人をあやしむ。手がかりがなければ null
+{
+  const T = 100000;
+  const body = { t: T, x: 10, y: 10, last: { t: T - 8000, x: 20, y: 10 } };
+  const seen = {
+    A: [{ t: T - 3000, x: 11, y: 10 }],            // ねむっていた場所のすぐ近く
+    B: [{ t: T - 6000, x: 23.5, y: 10 }],          // 最後に見かけた場所の近く（そのあと）
+    C: [{ t: T - 60000, x: 10, y: 10 }],           // ずっと前に近くにいただけ
+    D: [{ t: T - 5000, x: 10.5, y: 10 }, { t: T - 1000, x: 30, y: 30 }],   // ねむったころには遠く
+  };
+  ok(E.suspectOf(seen, [body], ['A', 'B', 'C', 'D']) === 'A', 'ロボットの票: ねむっていた場所のすぐ近くで見かけた人');
+  ok(E.suspectOf(seen, [body], ['B', 'C', 'D']) === 'B', 'ロボットの票: 最後に見かけた場所の近くで、そのあと見かけた人');
+  ok(E.suspectOf(seen, [body], ['C', 'D']) === null, 'ロボットの票: ずっと前に近くにいた人・ねむったころ遠くにいた人はあやしまない');
+  ok(E.suspectOf(seen, [], ['A', 'B']) === null && E.suspectOf({}, [body], ['A']) === null, 'ロボットの票: ねむった人がいない・見かけていないなら手がかりなし');
+  ok(E.suspectOf(seen, [body], ['B']) === 'B' && E.suspectOf(seen, [body], ['A', 'B'].filter((id) => id !== 'A')) === 'B', 'ロボットの票: 入れてよい人の中から選ぶ');
+  // 最後に見かけた場所: 見かけるより前の人・20秒より前に見かけたきり・テーブルのまわりは使わない
+  const before = { Q: [{ t: T - 9000, x: 21, y: 10 }] };
+  ok(E.suspectOf(before, [body], ['Q']) === null, 'ロボットの票: 最後に見かけるより前に、その場所にいただけの人はあやしまない');
+  ok(E.suspectOf(seen, [{ ...body, last: { t: T - 30000, x: 20, y: 10 } }], ['B']) === null, 'ロボットの票: 20秒より前に見かけたきりの場所は使わない');
+  const tbl = { x: E.TABLE.x + E.TABLE.r + 1.3, y: E.TABLE.y };
+  ok(E.suspectOf({ R: [{ t: T - 5000, x: tbl.x + 1, y: tbl.y }] }, [{ t: T, x: 10, y: 10, last: { t: T - 10000, ...tbl } }], ['R']) === null, 'ロボットの票: テーブルのまわりで最後に見かけたときは使わない');
+  const tie = { X: [{ t: T - 2000, x: 13, y: 10 }], Y: [{ t: T - 2000, x: 10, y: 13 }] };
+  ok(E.suspectOf(tie, [body], ['X', 'Y'], () => 0) === 'X' && E.suspectOf(tie, [body], ['X', 'Y'], () => 0.99) === 'Y', 'ロボットの票: 同じあやしさならくじ');
+}
+
 console.log(`pass ${pass} / fail ${fail}`);
 process.exit(fail ? 1 : 0);
