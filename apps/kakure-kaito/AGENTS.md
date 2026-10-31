@@ -72,7 +72,8 @@ apps/kakure-kaito/
 ├── index.html   # 画面の骨組み・howto.js の設定
 ├── app.js       # 進行・描画
 ├── engine.js    # ルール（window.KaitoEngine。node では module.exports）
-└── style.css    # 固有スタイル
+├── style.css    # 固有スタイル
+└── slides.html  # 画面共有用説明スライド（15枚）
 ```
 
 - 分割型。index.html・app.js・engine.js・style.css を変えたら `?v=` をそろえて上げる
@@ -87,7 +88,8 @@ apps/kakure-kaito/
 
 - `scripts/lint.sh` の `RTDB_HTML_FILES` に追加
 - `scripts/content-audit.mjs` の `NO_CONTENT_APPS` に追加（お題集はない。役の説明だけ）
-- `apps/index.html` にカード（`data-scenes="bodoge circle"`・`data-keywords="正体隠し、推理、役職、投票"`）。サムネイル・説明スライドはまだない
+- `apps/index.html` にカード（`data-slides`・`data-scenes="bodoge circle"`・`data-keywords="正体隠し、推理、役職、投票"`）。サムネイルはまだない
+- 説明スライド `slides.html`（15枚。リバーシ・しるしでヒントのスライドと同じエンジン。チャンネル `kakure_kaito_deck`・保存キー `kks_`）。「？」の「説明スライドを見る」とポータルの「スライド」から開ける（2026-10-31）
 - `apps/updates.json` 先頭に `type: "new"`
 - `apps/guide/index.html` の「正体かくし系」に1行（近い遊び『レジスタンス：アヴァロン』）
 
@@ -229,7 +231,7 @@ kakure_rooms/{roomCode}/
 - 同じ名前・同じ匿名IDのタブが2つ開いていると、両方が同じ `players/{name}` に切断予約を張る（ほかのルーム型ゲームと共通）
 - 話し合いの残り時間は、段階を進めた端末の時刻（`RoomkRTDB.now()`）から数える。端末どうしの時刻の見積もりのずれぶん、表示が少しずれることがある
 - 確定の応答が届く前に通信が切れると、`start`・`finish` などを数え漏れることがある（共通方針どおり、少なめに出る側の誤差として扱う）
-- 説明スライド・サムネイルはまだない
+- サムネイルはまだない
 
 ## メンター向けの心得（画面には出さない）
 
@@ -247,7 +249,7 @@ kakure_rooms/{roomCode}/
 | rtdb-utils.js（`?v=20261005`） | `initFirebase`・`generateRoomCode`・`now`・`isRoomExpired`・`getHostDisconnectedAt`・`cancelRoomOnDisconnect`・`copyRoomCode`・`copyRoomLink`・`copyText`・`showToast` |
 | room-qr.js（`?v=20261022`） | 「QRコードを出す」（`RoomkQR.show`） |
 | stats.js（`?v=1`） | 起動回数（`open`）と、上の「利用回数」 |
-| howto.js | 「あそびかた」モーダル |
+| howto.js | 「あそびかた」モーダル（`slides: 'slides.html'` で「説明スライドを見る」） |
 
 ## 確かめたこと
 
