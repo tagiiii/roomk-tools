@@ -210,7 +210,7 @@ const COVERED_APPS = [
 // 数えられるコンテンツを持たないため重複検査の対象外にするアプリ（意図的除外）。
 // 例: 内省ツール・進行支援・スタブ本体など、比較対象になる「お題集」が存在しない。
 const NO_CONTENT_APPS = [
-  'suki-type-check', 'kakure-number', 'jinro',
+  'suki-type-check', 'kakure-number', 'jinro', 'kakure-kaito',
   'name-change', 'kyapa-graph', 'nurie-week',
   // カードゲーム・パズルの部品だけ（トランプ・数字札・かなタイル・生き物8種・ピースと盤面）
   'blackjack', 'esadori', 'moji-soroe', 'oshitsuke-zukan', 'pita-hame',

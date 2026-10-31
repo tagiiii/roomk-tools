@@ -1,0 +1,574 @@
+/* かくれ怪盗 接頭辞 kk- */
+
+body { background: var(--color-bg); }
+
+:root {
+  --kk-night: #14304A;      /* 夜の美術館 */
+  --kk-night-2: #0E2337;
+  --kk-gold: #F2C14E;       /* 宝石 */
+  --kk-gold-deep: #B7861B;
+  --kk-gold-bg: #FFF6E0;
+  --kk-gold-text: #7E5A0B;
+  --kk-red: #C2410C;        /* すり替え */
+  --kk-red-bg: #FDEDE4;
+  --kk-thief: #6D3FA8;      /* 怪盗チーム */
+  --kk-thief-bg: #F2ECFA;
+  --kk-beam: rgba(255, 243, 196, 0.5);
+}
+
+.kk-badge {
+  display: inline-block; padding: 2px 10px; border-radius: 999px;
+  background: var(--color-warning); color: #fff; font-size: 12px; font-weight: 700;
+}
+.kk-badge--bar, .kk-badge--title { margin-left: 8px; vertical-align: middle; }
+
+/* ══ はじめの画面 ══ */
+.kk-screen { display: none; }
+.kk-screen.active { display: block; }
+.kk-front.active { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px 16px; }
+.kk-panel { width: 100%; max-width: 460px; background: var(--color-surface); border-radius: var(--radius-card); padding: 32px 28px; border: 1px solid var(--color-border); }
+.kk-panel--hero { padding-top: 0; overflow: hidden; }
+.kk-panel__title { font-size: 30px; color: var(--color-primary); margin: 8px 0 12px; }
+.kk-panel__title--sub { font-size: 24px; }
+.kk-panel__lead { color: var(--color-text); line-height: 1.7; margin: 0 0 16px; }
+.kk-panel__notes { margin: 0 0 24px; padding-left: 1.2em; color: var(--color-muted); line-height: 1.8; }
+.kk-panel__actions { display: grid; gap: 12px; }
+.kk-panel__note { color: var(--color-muted); font-size: 13px; margin: 16px 0 0; }
+.kk-alert { margin: 12px 0 0; color: var(--color-error); font-weight: 500; }
+.kk-alert:empty { display: none; }
+.kk-back { margin: -8px 0 4px -8px; }
+.kk-code-input { text-transform: uppercase; letter-spacing: 0.2em; font-weight: 700; }
+
+/* トップの絵（夜の美術館） */
+.kk-hero {
+  position: relative; margin: 0 -28px 20px; padding: 18px 12px 0;
+  background: radial-gradient(ellipse at 50% 0%, #24507A 0%, var(--kk-night) 55%, var(--kk-night-2) 100%);
+}
+.kk-hero__art { display: block; width: 100%; height: auto; max-height: 190px; }
+.kk-hero__tag {
+  position: absolute; top: 12px; left: 16px; margin: 0; padding: 2px 10px; border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12); color: #DCE9F3; font-size: 12px; font-weight: 500; letter-spacing: 0.1em;
+}
+.kk-hero__beam { animation: kk-sway 5s ease-in-out infinite alternate; transform-origin: 180px 0; }
+.kk-hero__gem { animation: kk-float 3s ease-in-out infinite; }
+.kk-hero__spark { animation: kk-twinkle 2.2s ease-in-out infinite; }
+.kk-hero__thief { animation: kk-peek 6s ease-in-out infinite; }
+@keyframes kk-sway { from { transform: rotate(-6deg); } to { transform: rotate(6deg); } }
+@keyframes kk-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+@keyframes kk-twinkle { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
+@keyframes kk-peek { 0%, 60%, 100% { transform: translateY(30px); } 70%, 90% { transform: translateY(0); } }
+
+/* 弱いボタン（テキストリンク風） */
+.kk-quiet {
+  display: inline-flex; align-items: center; gap: 4px;
+  min-height: 44px; padding: 8px 10px; border: none; background: none;
+  color: var(--color-accent); font-family: inherit; font-size: 15px; font-weight: 500; cursor: pointer;
+  border-radius: var(--radius-sm);
+}
+.kk-quiet:hover { background: rgba(46, 125, 140, 0.08); }
+.kk-quiet .material-symbols-rounded { font-size: 20px; }
+
+/* ══ バー ══ */
+.kk-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding: 12px 20px; background: var(--color-primary); color: #fff; }
+.kk-bar__title { font-size: 18px; margin: 0; margin-right: auto; }
+.kk-bar__code, .kk-bar__me { margin: 0; font-size: 14px; }
+.kk-bar .btn { display: inline-flex; align-items: center; gap: 4px; }
+
+.kk-bar__badge { margin: 0; padding: 2px 10px; border-radius: 999px; background: var(--color-accent); font-size: 13px; font-weight: 700; }
+.kk-roombar { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 4px 6px; padding: 6px 12px; background: var(--color-surface); border-bottom: 1px solid var(--color-border); }
+.kk-roombar[hidden] { display: none; }
+.kk-roombar__code { margin-right: 6px; font-size: 14px; color: var(--color-muted); }
+.kk-roombar__code strong { color: var(--color-primary); letter-spacing: 0.1em; font-size: 16px; }
+.is-watch .kk-roombar .btn { display: none; }
+.is-watch .kk-roombar #btnLeave { display: inline-flex; }
+.kk-hint { margin: 0 0 16px; padding: 10px 14px; border-radius: var(--radius-sm); background: #EAF4F6; color: var(--color-primary); line-height: 1.6; font-size: 14px; }
+.kk-hint[hidden] { display: none; }
+.kk-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.45); display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 60; }
+.kk-overlay[hidden] { display: none; }
+.kk-overlay__panel { background: var(--color-surface); border-radius: var(--radius-card); padding: 24px; max-width: 360px; text-align: center; display: grid; gap: 12px; }
+.kk-overlay__panel h2 { margin: 0; font-size: 20px; color: var(--color-primary); }
+.kk-overlay__panel p { margin: 0; color: var(--color-muted); line-height: 1.6; }
+.kk-closed { margin: 12px 20px 0; padding: 12px 16px; border-radius: 8px; background: #FDECEC; color: var(--color-error); font-weight: 500; }
+
+.kk-main { max-width: 760px; margin: 0 auto; padding: 20px 16px 64px; }
+.kk-phase { display: grid; gap: 16px; }
+.kk-h2 { font-size: 18px; color: var(--color-primary); margin: 0 0 12px; }
+.kk-note { margin: 0; color: var(--color-muted); font-size: 14px; line-height: 1.6; }
+.kk-note--center { text-align: center; }
+.kk-wait { margin: 0; color: var(--color-muted); text-align: center; }
+.kk-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.kk-row--center { justify-content: center; }
+.kk-row .btn { display: inline-flex; align-items: center; gap: 6px; }
+
+/* 顔マーク（名前の1文字目） */
+.kk-avatar {
+  width: 30px; height: 30px; flex: none; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  color: #fff; font-size: 14px; font-weight: 700; line-height: 1;
+  box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.15);
+}
+
+/* ══ 待合室 ══ */
+.kk-people { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+.kk-person { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 10px; background: var(--color-bg); min-height: 48px; }
+.kk-person.is-away { color: var(--color-muted); }
+.kk-person.is-away .kk-avatar { filter: grayscale(1); opacity: 0.6; }
+.kk-person__name { font-weight: 500; }
+.kk-person__del { margin-left: auto; min-height: 36px; }
+
+.kk-checks { display: grid; gap: 4px; }
+.kk-check { display: flex; align-items: flex-start; gap: 10px; min-height: 44px; padding: 6px 0; cursor: pointer; }
+.kk-check--sep { border-top: 1px solid var(--color-border); margin-top: 6px; padding-top: 12px; }
+.kk-check input { width: 20px; height: 20px; margin-top: 2px; flex: none; accent-color: var(--color-accent); }
+.kk-check__text { display: grid; gap: 2px; }
+.kk-check__label { font-weight: 500; }
+.kk-check__sub { font-size: 13px; color: var(--color-muted); line-height: 1.5; }
+.kk-check input:disabled ~ .kk-check__text { color: #A3AAB3; }
+.kk-check input:disabled ~ .kk-check__text .kk-check__sub { color: #B8BEC6; }
+
+.kk-optsview { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.kk-optview { display: grid; gap: 2px; padding: 8px 12px; border-radius: 8px; background: var(--color-bg); }
+.kk-optview__label { font-weight: 500; }
+.kk-optview__sub { font-size: 13px; color: var(--color-muted); line-height: 1.5; }
+
+.kk-lobby-actions { display: grid; gap: 12px; }
+.kk-lobby-actions .kk-alert { margin: 0; text-align: center; }
+.kk-codebox { text-align: center; }
+.kk-codebox__label { margin: 0; font-size: 13px; color: var(--color-muted); }
+.kk-codebox__code { margin: 2px 0 10px; font-size: 32px; font-weight: 700; letter-spacing: 0.15em; color: var(--color-primary); }
+
+.kk-joininfo { background: var(--color-surface); border: 2px solid var(--color-accent); border-radius: var(--radius-box); padding: 20px; text-align: center; }
+.kk-joininfo__label { margin: 0 0 6px; font-size: 13px; font-weight: 500; color: var(--color-accent); letter-spacing: 0.08em; }
+.kk-joininfo__text { margin: 0; }
+.kk-joininfo__code { margin: 6px 0 0; font-size: 40px; font-weight: 700; letter-spacing: 0.15em; color: var(--color-primary); }
+
+/* 札 */
+.kk-tag {
+  display: inline-flex; align-items: center; gap: 2px;
+  font-size: 12px; padding: 2px 8px; border-radius: 999px; background: var(--color-accent); color: #fff; white-space: nowrap; font-weight: 500;
+}
+.kk-tag .material-symbols-rounded { font-size: 15px; }
+.kk-tag--muted { background: var(--color-border); color: var(--color-text); }
+.kk-tag--warn { background: #FFF4E5; color: var(--color-warning); }
+.kk-tag--ok { background: #E3F1F3; color: var(--color-primary); }
+.kk-tag--leader { background: var(--kk-gold); color: #4A3405; }
+.kk-tag--lens { background: #E4DAF2; color: #4B2A78; }
+.kk-tag--team { background: var(--color-accent); }
+.kk-tag--yes { background: #2E7D4F; }
+.kk-tag--no { background: #8A8F98; }
+.kk-tag--thief { background: var(--kk-thief); }
+
+/* ══ 展示室（守った数・見回りの5回） ══ */
+.kk-hall {
+  border-radius: 18px; padding: 14px 14px 16px; color: #fff;
+  background: radial-gradient(ellipse at 50% -10%, #2A5A86 0%, var(--kk-night) 50%, var(--kk-night-2) 100%);
+  box-shadow: 0 6px 18px rgba(14, 35, 55, 0.25);
+  display: grid; gap: 12px;
+}
+.kk-score { display: flex; align-items: center; justify-content: center; gap: 14px; }
+.kk-score__side { display: flex; align-items: center; gap: 8px; }
+.kk-score__label { font-size: 13px; font-weight: 700; letter-spacing: 0.05em; }
+.kk-score__side--guard .kk-score__label { color: var(--kk-gold); }
+.kk-score__side--thief .kk-score__label { color: #D9C2F5; }
+.kk-score__pips { display: inline-flex; gap: 2px; }
+.kk-pip { font-size: 22px; color: rgba(255, 255, 255, 0.18); }
+.kk-score__side--guard .kk-pip.is-on { color: var(--kk-gold); filter: drop-shadow(0 0 4px rgba(242, 193, 78, 0.7)); }
+.kk-score__side--thief .kk-pip.is-on { color: #C9A6F2; filter: drop-shadow(0 0 4px rgba(201, 166, 242, 0.7)); }
+.kk-score__vs { font-size: 12px; font-weight: 700; color: rgba(255, 255, 255, 0.45); letter-spacing: 0.1em; }
+
+.kk-track { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+.kk-tile {
+  position: relative; display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: 8px 4px 10px; border-radius: 12px; text-align: center;
+  background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.12);
+}
+.kk-tile.is-current { background: rgba(255, 243, 196, 0.1); border-color: rgba(255, 243, 196, 0.55); }
+.kk-tile__no { font-size: 12px; color: rgba(255, 255, 255, 0.7); font-weight: 500; }
+.kk-tile__size { font-size: 12px; font-weight: 700; color: #DCE9F3; }
+.kk-tile.is-current .kk-tile__size { color: #FFF3C4; }
+.kk-tile__need { font-size: 11px; color: #FFB59A; font-weight: 700; line-height: 1.3; }
+.kk-tile__res { font-size: 13px; font-weight: 700; }
+.kk-tile.is-safe .kk-tile__res { color: var(--kk-gold); }
+.kk-tile.is-swap .kk-tile__res { color: #FFB59A; }
+
+/* 展示ケース */
+.kk-case { position: relative; width: 56px; height: 62px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; }
+.kk-case__stand { width: 44px; height: 10px; border-radius: 3px 3px 0 0; background: #3E6587; }
+.kk-case__beam {
+  position: absolute; top: -10px; left: 50%; width: 56px; height: 62px; transform: translateX(-50%);
+  background: linear-gradient(to bottom, var(--kk-beam), rgba(255, 243, 196, 0));
+  clip-path: polygon(38% 0, 62% 0, 100% 100%, 0 100%);
+  animation: kk-glow 1.8s ease-in-out infinite alternate;
+}
+@keyframes kk-glow { from { opacity: 0.45; } to { opacity: 1; } }
+.kk-gem { width: 38px; height: auto; margin-bottom: 4px; position: relative; }
+.kk-gem__body { fill: rgba(255, 255, 255, 0.06); stroke: rgba(220, 233, 243, 0.45); stroke-width: 2; }
+.kk-gem__line { fill: none; stroke: rgba(220, 233, 243, 0.3); stroke-width: 1.5; }
+.kk-tile.is-current .kk-gem__body { fill: rgba(255, 243, 196, 0.25); stroke: #FFF3C4; }
+.kk-tile.is-safe .kk-gem__body { fill: var(--kk-gold); stroke: #FFE7A0; }
+.kk-tile.is-safe .kk-gem__line { stroke: #FFF7DA; }
+.kk-tile.is-safe .kk-gem { filter: drop-shadow(0 0 6px rgba(242, 193, 78, 0.8)); }
+.kk-case__card {
+  width: 34px; height: 42px; margin-bottom: 4px; border-radius: 4px; transform: rotate(-8deg);
+  background: #FFF; color: var(--kk-red); display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+.kk-case__card .material-symbols-rounded { font-size: 24px; }
+.kk-tile.is-new { animation: kk-pop 0.6s ease-out both; }
+@keyframes kk-pop { 0% { transform: scale(0.7); opacity: 0; } 60% { transform: scale(1.08); opacity: 1; } 100% { transform: scale(1); } }
+
+/* ══ いまの段階 ══ */
+.kk-steps { list-style: none; margin: 0; padding: 0; display: flex; justify-content: center; gap: 6px; flex-wrap: wrap; }
+.kk-steps[hidden] { display: none; }
+.kk-step {
+  display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 999px;
+  font-size: 13px; font-weight: 500; color: var(--color-muted); background: transparent;
+}
+.kk-step .material-symbols-rounded { font-size: 17px; }
+.kk-step.is-done { color: var(--color-accent); }
+.kk-step.is-now { background: var(--color-primary); color: #fff; font-weight: 700; }
+
+.kk-rejects { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px 12px; font-size: 14px; }
+.kk-rejects[hidden] { display: none; }
+.kk-rejects__label { font-weight: 700; color: var(--color-primary); }
+.kk-rejects__dots { display: inline-flex; gap: 6px; }
+.kk-dot { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--color-border); background: var(--color-surface); }
+.kk-dot.is-used { background: #8A8F98; border-color: #8A8F98; }
+.kk-dot.is-now { border-color: var(--color-accent); background: #E3F1F3; }
+.kk-rejects__note { color: var(--color-muted); }
+
+/* ══ 大きな案内 ══ */
+.kk-banner {
+  display: flex; align-items: center; gap: 14px; padding: 14px 18px; border-radius: 16px;
+  background: var(--color-surface); border: 2px solid var(--color-border);
+}
+.kk-banner__icon {
+  width: 48px; height: 48px; flex: none; border-radius: 50%; font-size: 28px;
+  display: inline-flex; align-items: center; justify-content: center; background: var(--color-bg); color: var(--color-primary);
+}
+.kk-banner__body { display: grid; gap: 2px; min-width: 0; }
+.kk-status { margin: 0; font-size: 19px; font-weight: 700; color: var(--color-primary); line-height: 1.45; }
+.kk-banner__sub { margin: 0; font-size: 14px; color: var(--color-muted); line-height: 1.55; }
+.kk-banner--mine { border-color: var(--color-accent); background: #F1F9FA; animation: kk-ping 1.6s ease-out 1; }
+.kk-banner--mine .kk-banner__icon { background: var(--color-accent); color: #fff; }
+.kk-banner--mine .kk-status { color: var(--color-accent); }
+.kk-banner--good { border-color: var(--kk-gold); background: var(--kk-gold-bg); }
+.kk-banner--good .kk-banner__icon { background: var(--kk-gold); color: #4A3405; }
+.kk-banner--good .kk-status { color: var(--kk-gold-text); }
+.kk-banner--bad { border-color: var(--kk-red); background: var(--kk-red-bg); }
+.kk-banner--bad .kk-banner__icon { background: var(--kk-red); color: #fff; }
+.kk-banner--bad .kk-status { color: var(--kk-red); }
+.kk-banner--warn { border-color: #E2B36A; background: #FFF8EC; }
+.kk-banner--warn .kk-banner__icon { background: #FCE7C3; color: var(--color-warning); }
+.kk-banner--warn .kk-status { color: var(--color-warning); }
+.kk-banner--spot {
+  border: none; color: #fff;
+  background: radial-gradient(ellipse at 50% -20%, rgba(255, 243, 196, 0.45) 0%, var(--kk-night) 60%, var(--kk-night-2) 100%);
+}
+.kk-banner--spot .kk-banner__icon { background: var(--kk-gold); color: #4A3405; }
+.kk-banner--spot .kk-status { color: #FFF3C4; font-size: 24px; }
+.kk-banner--spot .kk-banner__sub { color: #DCE9F3; }
+.kk-banner--win-guard, .kk-banner--win-thief { flex-direction: column; text-align: center; padding: 24px 18px; border: none; }
+.kk-banner--win-guard { background: linear-gradient(160deg, #FFF6E0, #FFE7A0); }
+.kk-banner--win-thief { background: linear-gradient(160deg, #F2ECFA, #DCC8F5); }
+.kk-banner--win-guard .kk-banner__icon, .kk-banner--win-thief .kk-banner__icon { width: 72px; height: 72px; font-size: 44px; }
+.kk-banner--win-guard .kk-banner__icon { background: var(--kk-gold); color: #4A3405; }
+.kk-banner--win-thief .kk-banner__icon { background: var(--kk-thief); color: #fff; }
+.kk-banner--win-guard .kk-status, .kk-banner--win-thief .kk-status { font-size: 28px; }
+.kk-banner--win-guard .kk-status { color: var(--kk-gold-text); }
+.kk-banner--win-thief .kk-status { color: var(--kk-thief); }
+@keyframes kk-ping { 0% { box-shadow: 0 0 0 0 rgba(46, 125, 140, 0.45); } 100% { box-shadow: 0 0 0 14px rgba(46, 125, 140, 0); } }
+
+/* 結果をじらして出す（カード・票をめくり終わってから。--d は app.js が決める） */
+.kk-banner.is-anim { animation: kk-reveal 0.5s ease-out both; animation-delay: var(--d, 0s); }
+@keyframes kk-reveal { 0% { opacity: 0; transform: scale(0.85); } 70% { opacity: 1; transform: scale(1.04); } 100% { transform: scale(1); } }
+
+.kk-stage { display: grid; gap: 14px; }
+.kk-stage:empty { display: none; }
+.kk-stage > .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 52px; font-size: 17px; }
+
+/* メンバーの並び */
+.kk-teamline { display: grid; justify-items: center; gap: 8px; padding: 12px 14px; border-radius: 14px; background: var(--color-surface); border: 1px solid var(--color-border); }
+.kk-teamline__label { font-size: 13px; color: var(--color-muted); font-weight: 500; }
+.kk-teamline__names { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.kk-teamline__name {
+  display: inline-flex; align-items: center; gap: 6px; padding: 4px 14px 4px 4px; border-radius: 999px;
+  background: #E3F1F3; color: var(--color-primary); font-weight: 700; min-height: 38px;
+}
+.kk-teamline__name .kk-avatar { width: 28px; height: 28px; font-size: 13px; }
+.kk-teamline__name.is-empty { padding: 4px 16px; background: transparent; border: 2px dashed var(--color-border); color: var(--color-muted); }
+.kk-teamline--thief { background: var(--kk-thief-bg); border-color: var(--kk-thief); }
+.kk-teamline--thief .kk-teamline__label { color: var(--kk-thief); font-weight: 700; }
+.kk-teamline--thief .kk-teamline__name { background: #fff; color: var(--kk-thief); }
+
+/* 人を選ぶ */
+.kk-pick { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px; }
+.kk-pick__btn {
+  display: flex; align-items: center; gap: 10px; min-height: 56px; padding: 8px 12px;
+  border-radius: 14px; border: 2px solid var(--color-border); background: var(--color-surface);
+  font-family: inherit; font-size: 16px; font-weight: 500; color: var(--color-text); cursor: pointer; text-align: left;
+  transition: transform 0.12s, border-color 0.12s, background 0.12s;
+}
+.kk-pick__btn:hover:not(:disabled) { border-color: var(--color-accent); }
+.kk-pick__btn:active:not(:disabled) { transform: scale(0.97); }
+.kk-pick__name { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
+.kk-pick__mark { color: var(--color-border); font-size: 26px; }
+.kk-pick__btn.is-on { border-color: var(--color-accent); background: #E3F1F3; color: var(--color-primary); font-weight: 700; box-shadow: 0 0 0 3px rgba(46, 125, 140, 0.18); }
+.kk-pick__btn.is-on .kk-pick__mark { color: var(--color-accent); }
+.kk-pick__btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* 賛成・反対／異常なし・すり替える */
+.kk-choices { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.kk-choice {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+  min-height: 120px; border-radius: 18px; border: 3px solid; background: var(--color-surface);
+  font-family: inherit; font-size: 20px; font-weight: 700; cursor: pointer;
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.08); transition: transform 0.12s, box-shadow 0.12s;
+}
+.kk-choice .material-symbols-rounded { font-size: 42px; }
+.kk-choice:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 0 rgba(0, 0, 0, 0.08); }
+.kk-choice:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 1px 0 rgba(0, 0, 0, 0.08); }
+.kk-choice--yes { border-color: #2E7D4F; color: #2E7D4F; background: #F1F8F3; }
+.kk-choice--no { border-color: #8A8F98; color: #5B616B; background: #F5F6F7; }
+.kk-choice--safe { border-color: var(--color-accent); color: var(--color-primary); background: #F1F9FA; }
+.kk-choice--swap { border-color: var(--kk-red); color: var(--kk-red); background: var(--kk-red-bg); }
+.kk-choice:disabled { opacity: 0.3; cursor: not-allowed; box-shadow: none; }
+
+/* 投票を開く（1人ずつめくれる） */
+.kk-votes { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; }
+.kk-vote {
+  display: grid; justify-items: center; gap: 4px; padding: 10px 6px; border-radius: 14px; border: 2px solid; text-align: center;
+}
+.kk-vote .material-symbols-rounded { font-size: 26px; }
+.kk-vote__name { font-weight: 700; font-size: 14px; overflow-wrap: anywhere; }
+.kk-vote__v { font-size: 13px; font-weight: 700; }
+.kk-vote--yes { border-color: #2E7D4F; background: #F1F8F3; color: #2E7D4F; }
+.kk-vote--no { border-color: #A3AAB3; background: #F5F6F7; color: #5B616B; }
+.kk-vote--none { border-color: var(--color-border); border-style: dashed; color: var(--color-muted); }
+.kk-votes.is-anim .kk-vote { animation: kk-flipin 0.45s ease-out both; animation-delay: calc(var(--i) * 0.12s); }
+@keyframes kk-flipin { from { transform: rotateY(90deg); opacity: 0; } to { transform: rotateY(0); opacity: 1; } }
+
+/* 見回り中（夜の展示室） */
+.kk-night {
+  position: relative; height: 130px; border-radius: 16px; overflow: hidden;
+  background: radial-gradient(ellipse at 50% 120%, #24507A 0%, var(--kk-night) 55%, var(--kk-night-2) 100%);
+  display: flex; align-items: flex-end; justify-content: center; padding-bottom: 18px;
+}
+.kk-night .kk-gem { width: 54px; }
+.kk-night .kk-gem__body { fill: rgba(242, 193, 78, 0.85); stroke: #FFE7A0; }
+.kk-night .kk-gem__line { stroke: #FFF7DA; }
+.kk-night__beam {
+  position: absolute; top: -20px; left: 30%; width: 90px; height: 180px;
+  background: linear-gradient(to bottom, rgba(255, 243, 196, 0.55), rgba(255, 243, 196, 0));
+  clip-path: polygon(40% 0, 60% 0, 100% 100%, 0 100%); transform-origin: 50% 0;
+  animation: kk-search 3.6s ease-in-out infinite alternate;
+}
+.kk-night__beam--2 { left: 55%; animation-duration: 4.4s; animation-direction: alternate-reverse; }
+@keyframes kk-search { from { transform: rotate(-28deg); } to { transform: rotate(28deg); } }
+
+/* 見回りの結果のカード（伏せたまま並び、1枚ずつめくれる） */
+.kk-cards { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; perspective: 900px; }
+.kk-card { width: 96px; height: 128px; }
+.kk-card__inner { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; transform: rotateY(180deg); }
+.kk-cards.is-anim .kk-card__inner { animation: kk-cardflip 0.6s ease-in-out both; animation-delay: calc(var(--i) * 0.7s + 0.4s); }
+@keyframes kk-cardflip { from { transform: rotateY(0); } to { transform: rotateY(180deg); } }
+.kk-card__face {
+  position: absolute; inset: 0; border-radius: 12px; border: 2px solid; backface-visibility: hidden; -webkit-backface-visibility: hidden;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; font-weight: 700; font-size: 14px;
+}
+.kk-card__face .material-symbols-rounded { font-size: 36px; }
+.kk-card__face--back { background: repeating-linear-gradient(45deg, var(--kk-night), var(--kk-night) 8px, #1C4466 8px, #1C4466 16px); border-color: var(--kk-night-2); color: rgba(255, 255, 255, 0.6); }
+.kk-card__face--front { transform: rotateY(180deg); }
+.kk-card--safe .kk-card__face--front { background: var(--kk-gold-bg); border-color: var(--kk-gold); color: var(--kk-gold-text); }
+.kk-card--swap .kk-card__face--front { background: var(--kk-red-bg); border-color: var(--kk-red); color: var(--kk-red); }
+
+/* ══ 遊んでいる人 ══ */
+.kk-players { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; }
+.kk-players[hidden] { display: none; }
+.kk-player { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 12px; background: var(--color-surface); border: 1px solid var(--color-border); min-height: 52px; }
+.kk-player.is-team { border: 2px solid var(--color-accent); background: #F3FAFB; }
+.kk-player.is-leader { box-shadow: inset 4px 0 0 var(--kk-gold); }
+.kk-player.is-me .kk-avatar { box-shadow: 0 0 0 3px #fff, 0 0 0 5px var(--color-accent); }
+.kk-player.is-away { color: var(--color-muted); }
+.kk-player.is-away .kk-avatar { filter: grayscale(1); opacity: 0.6; }
+.kk-player__who { display: grid; gap: 4px; min-width: 0; }
+.kk-player__name { font-weight: 700; color: var(--color-primary); overflow-wrap: anywhere; line-height: 1.3; }
+.kk-player__tags { display: flex; flex-wrap: wrap; gap: 4px; }
+.kk-player__tags:empty { display: none; }
+
+/* ══ 役のカード ══ */
+.kk-role { border-radius: 18px; padding: 18px; border: 2px solid; display: grid; gap: 12px; }
+.kk-role--guard { background: linear-gradient(160deg, #F1F9FA, #E1EEF2); border-color: var(--color-accent); }
+.kk-role--thief { background: linear-gradient(160deg, #F7F2FD, #E9DDF8); border-color: var(--kk-thief); }
+.kk-role__head { display: flex; align-items: center; gap: 14px; }
+.kk-role__badge { width: 60px; height: 60px; flex: none; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; color: #fff; }
+.kk-role__badge .material-symbols-rounded { font-size: 34px; }
+.kk-role--guard .kk-role__badge { background: var(--color-accent); }
+.kk-role--thief .kk-role__badge { background: var(--kk-thief); }
+.kk-role__ttl { display: grid; gap: 0; }
+.kk-role__side { margin: 0; font-size: 13px; font-weight: 700; color: var(--color-muted); }
+.kk-role__name { margin: 0; font-size: 26px; font-weight: 700; color: var(--color-primary); }
+.kk-role--thief .kk-role__name { color: var(--kk-thief); }
+.kk-role__text { margin: 0; line-height: 1.7; }
+.kk-role__boss { font-weight: 700; color: var(--kk-thief); }
+.kk-role__sub { font-size: 14px; color: var(--color-muted); }
+.kk-role__knows { background: var(--color-surface); border-radius: 12px; padding: 10px 12px; }
+.kk-role__knows-label { margin: 0 0 8px; font-size: 13px; font-weight: 700; color: var(--color-muted); }
+.kk-role__knows-names { margin: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.kk-role__knows-name { display: inline-flex; align-items: center; gap: 6px; padding: 3px 12px 3px 3px; border-radius: 999px; background: var(--color-bg); font-weight: 700; color: var(--color-primary); }
+.kk-role__knows-name .kk-avatar { width: 26px; height: 26px; font-size: 12px; }
+
+/* 配ったときの役（伏せたカードをめくる） */
+.kk-flip { display: grid; perspective: 1100px; }
+.kk-flip > * { grid-area: 1 / 1; backface-visibility: hidden; -webkit-backface-visibility: hidden; transition: transform 0.6s ease-in-out; }
+.kk-flip__back {
+  min-height: 220px; border-radius: 18px; border: none; cursor: pointer; font-family: inherit; color: #fff;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+  background:
+    radial-gradient(circle at 50% 42%, rgba(255, 243, 196, 0.25) 0, rgba(255, 243, 196, 0) 38%),
+    repeating-linear-gradient(45deg, var(--kk-night), var(--kk-night) 12px, #1C4466 12px, #1C4466 24px);
+  box-shadow: 0 6px 16px rgba(14, 35, 55, 0.3); animation: kk-wiggle 2.4s ease-in-out infinite;
+}
+.kk-flip__seal { font-size: 56px; color: var(--kk-gold); }
+.kk-flip__title { font-size: 22px; font-weight: 700; }
+.kk-flip__hint { font-size: 14px; color: #DCE9F3; padding: 4px 14px; border-radius: 999px; background: rgba(255, 255, 255, 0.12); }
+.kk-flip__front { transform: rotateY(180deg); display: grid; gap: 4px; justify-items: center; }
+.kk-flip__front .kk-role { width: 100%; }
+.kk-flip.is-open .kk-flip__back { transform: rotateY(-180deg); pointer-events: none; animation: none; }
+.kk-flip.is-open .kk-flip__front { transform: rotateY(0); }
+.kk-flip:not(.is-open) .kk-flip__front { visibility: hidden; transition: transform 0.6s, visibility 0s 0.3s; }
+@keyframes kk-wiggle { 0%, 80%, 100% { transform: rotate(0); } 85% { transform: rotate(-1.5deg); } 90% { transform: rotate(1.5deg); } 95% { transform: rotate(-1deg); } }
+
+.kk-mycard-box { display: grid; gap: 10px; justify-items: center; }
+.kk-mycard-box[hidden] { display: none; }
+.kk-mycard { width: 100%; }
+
+/* ══ おしまい ══ */
+.kk-roles { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.kk-roles__col { border-radius: 14px; padding: 14px; border: 2px solid; }
+.kk-roles__col--guard { background: #EEF6F8; border-color: var(--color-accent); }
+.kk-roles__col--thief { background: var(--kk-thief-bg); border-color: var(--kk-thief); }
+.kk-roles__col.is-win { box-shadow: 0 0 0 4px rgba(242, 193, 78, 0.6); }
+.kk-roles__head { margin: 0 0 10px; display: flex; align-items: center; gap: 6px; font-weight: 700; color: var(--color-primary); }
+.kk-roles__col--thief .kk-roles__head { color: var(--kk-thief); }
+.kk-roles__win { margin-left: auto; font-size: 12px; padding: 2px 10px; border-radius: 999px; background: var(--kk-gold); color: #4A3405; }
+.kk-roles__list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.kk-roles__item { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
+.kk-roles__name { font-weight: 700; }
+.kk-roles__role { font-size: 13px; color: var(--color-muted); }
+
+/* 勝ったときのきらきら（一度だけ） */
+.kk-burst { position: relative; height: 0; }
+.kk-burst__p {
+  position: absolute; left: 50%; top: -60px; font-size: 22px; opacity: 0;
+  animation: kk-burst 1.4s ease-out both; animation-delay: calc(var(--i) * 0.04s);
+  --a: calc(var(--i) * 25.7deg);
+}
+.kk-burst--guard .kk-burst__p { color: var(--kk-gold); }
+.kk-burst--thief .kk-burst__p { color: #B48CE8; }
+@keyframes kk-burst {
+  0% { opacity: 0; transform: rotate(var(--a)) translateY(0) scale(0.4); }
+  20% { opacity: 1; }
+  100% { opacity: 0; transform: rotate(var(--a)) translateY(-120px) scale(1); }
+}
+
+.kk-tools { display: grid; gap: 10px; justify-items: center; }
+.kk-tools[hidden] { display: none; }
+.kk-tools .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; max-width: 420px; min-height: 52px; }
+
+.kk-toast {
+  position: fixed; left: 50%; bottom: 96px; transform: translateX(-50%);
+  max-width: calc(100vw - 32px); padding: 12px 18px; border-radius: 12px;
+  background: var(--color-primary); color: #fff; font-weight: 500; box-shadow: var(--shadow-md); z-index: 50; text-align: center;
+}
+
+/* ══ みんなにみせる画面 ══ */
+.is-watch .kk-main { max-width: 1040px; padding-top: 12px; }
+.is-watch .kk-status { font-size: 26px; }
+.is-watch .kk-case { transform: scale(1.3); margin: 8px 0; }
+.is-watch .kk-tile__size, .is-watch .kk-tile__res { font-size: 15px; }
+.is-watch .kk-pip { font-size: 30px; }
+
+/* 動きを減らす設定 */
+@media (prefers-reduced-motion: reduce) {
+  .kk-hero__beam, .kk-hero__gem, .kk-hero__spark, .kk-hero__thief, .kk-case__beam, .kk-night__beam, .kk-flip__back,
+  .kk-tile.is-new, .kk-banner, .kk-votes .kk-vote, .kk-burst__p, .kk-lensres { animation: none !important; }
+  .kk-cards .kk-card__inner { animation: none !important; transform: rotateY(180deg); }
+  .kk-hero__thief { transform: none; }
+  .kk-burst { display: none; }
+  .kk-flip > * { transition: none; }
+}
+
+@media (max-width: 600px) {
+  .kk-panel { padding: 24px 18px; }
+  .kk-panel--hero { padding-top: 0; }
+  .kk-hero { margin: 0 -18px 16px; }
+  .kk-bar { padding: 10px 16px; }
+  .kk-roombar { gap: 4px; padding: 6px 8px; }
+  .kk-roombar .btn { padding: 4px 8px; font-size: 13px; min-height: 36px; }
+  .kk-main { padding: 14px 12px 56px; }
+  .kk-hall { padding: 10px 8px 12px; border-radius: 14px; }
+  .kk-track { gap: 4px; }
+  .kk-tile { padding: 6px 2px 8px; }
+  .kk-case { width: 44px; height: 50px; }
+  .kk-gem { width: 30px; }
+  .kk-case__stand { width: 34px; }
+  .kk-case__card { width: 26px; height: 34px; }
+  .kk-tile__size { font-size: 10px; }
+  .kk-tile__res { font-size: 11px; }
+  .kk-tile__need { font-size: 9px; }
+  .kk-score { gap: 8px; }
+  .kk-pip { font-size: 18px; }
+  .kk-steps { gap: 2px; }
+  .kk-step { padding: 3px 7px; font-size: 12px; }
+  .kk-step .material-symbols-rounded { display: none; }
+  .kk-banner { padding: 12px 14px; gap: 10px; }
+  .kk-banner__icon { width: 40px; height: 40px; font-size: 24px; }
+  .kk-status { font-size: 17px; }
+  .kk-banner--win-guard .kk-status, .kk-banner--win-thief .kk-status { font-size: 22px; }
+  .kk-choice { min-height: 100px; font-size: 18px; }
+  .kk-pick { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .kk-pick__btn { padding: 8px; gap: 6px; font-size: 15px; }
+  .kk-pick__mark { display: none; }
+  .kk-roles { grid-template-columns: 1fr; }
+  .kk-players { grid-template-columns: 1fr 1fr; }
+  .kk-player { padding: 6px 8px; gap: 6px; }
+  .kk-player .kk-avatar { width: 26px; height: 26px; font-size: 12px; }
+  .kk-player__name { font-size: 14px; }
+  .kk-votes { grid-template-columns: repeat(3, 1fr); }
+  .kk-card { width: 80px; height: 108px; }
+}
+
+/* ── 端末のない人・話し合いの時間・しらべのルーペ（2026-10-30 追加） ── */
+.kk-nodev { display: grid; gap: 6px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--color-border); }
+.kk-nodev[hidden] { display: none; }
+.kk-nodev__label { font-weight: 500; }
+.kk-nodev__row { display: flex; gap: 8px; align-items: center; }
+.kk-nodev__row .form-input { flex: 1; min-width: 0; }
+.kk-nodev__row .btn { flex: none; display: inline-flex; align-items: center; gap: 4px; min-height: 44px; }
+.kk-nodev .kk-alert { margin: 0; }
+
+.kk-talk { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-top: 10px; padding-top: 12px; border-top: 1px solid var(--color-border); }
+.kk-talk__label { font-weight: 500; }
+.kk-talk select { min-height: 44px; padding: 0 12px; border: 1px solid var(--color-border); border-radius: 10px; background: var(--color-surface, #fff); font: inherit; }
+
+.kk-timer { display: flex; align-items: center; justify-content: center; gap: 6px; margin: 0 auto; padding: 6px 16px; border-radius: 999px; background: var(--kk-night); color: #fff; font-weight: 700; font-variant-numeric: tabular-nums; width: fit-content; }
+.kk-timer .material-symbols-rounded { color: var(--kk-gold); font-size: 20px; }
+.kk-timer.is-over { background: var(--kk-gold); color: var(--kk-night); }
+.kk-timer.is-over .material-symbols-rounded { color: var(--kk-night); }
+
+.kk-proxy { display: grid; gap: 10px; width: 100%; max-width: 560px; padding: 14px; border: 2px dashed var(--color-border); border-radius: 14px; background: var(--color-bg); }
+.kk-proxy__head { margin: 0; font-weight: 700; display: flex; align-items: center; gap: 6px; }
+.kk-proxy__row { display: grid; gap: 8px; padding: 10px; border-radius: 10px; background: var(--color-surface, #fff); }
+.kk-proxy__who { display: flex; align-items: center; gap: 8px; font-weight: 500; }
+.kk-proxy__acts { display: flex; flex-wrap: wrap; gap: 8px; }
+.kk-proxy__acts .btn, .kk-proxy__acts .kk-quiet { display: inline-flex; align-items: center; gap: 4px; min-height: 44px; }
+.kk-proxy__card .kk-role { margin: 0; }
+
+.kk-lensres { display: flex; align-items: center; gap: 14px; margin: 0 auto; padding: 16px 20px; border-radius: 16px; max-width: 420px; width: 100%; color: #fff; }
+.kk-lensres--guard { background: #2F6FA8; }
+.kk-lensres--thief { background: #6B3FA0; }
+.kk-lensres .material-symbols-rounded { font-size: 40px; }
+.kk-lensres__text { margin: 0; font-size: 18px; font-weight: 700; line-height: 1.5; }
+.kk-lensres.is-anim { animation: kk-pop 0.5s ease-out both; }
+.kk-quiet--center { display: flex; margin: 4px auto 0; }

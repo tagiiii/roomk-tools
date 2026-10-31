@@ -31,6 +31,7 @@ RTDB_HTML_FILES=(
   "apps/esadori/index.html"
   "apps/ikutsu-ieru/index.html"
   "apps/jinro/index.html"
+  "apps/kakure-kaito/index.html"
   "apps/kaburazu-hint/index.html"
   "apps/kagi-awase/index.html"
   "apps/kakure-number/index.html"
