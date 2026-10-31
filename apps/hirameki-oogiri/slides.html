@@ -80,20 +80,28 @@
   .demo{ display:flex; gap:28px; height:100%; align-items:stretch; }
   .demo__main{ flex:1.25; display:flex; flex-direction:column; gap:16px; }
   .demo__side{ flex:1; display:flex; flex-direction:column; gap:14px; justify-content:center; }
-  .odai{ background:var(--white); border:2.5px solid #2E7D8C; border-radius:18px; padding:16px 24px; text-align:center; }
+  .odai{ background:var(--white); border:2.5px solid #2E7D8C; border-radius:18px; padding:12px 24px; text-align:center; }
   .odai__l{ font-size:15px; font-weight:700; color:#2E7D8C; letter-spacing:.08em; }
   .odai__t{ font-size:28px; font-weight:900; color:#1C3F5E; margin-top:4px; line-height:1.4; }
-  .stage{ background:var(--white); border:3px solid #1C3F5E; border-radius:18px; padding:20px 24px; text-align:center; flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; }
+  .stage{ background:var(--white); border:3px solid #1C3F5E; border-radius:18px; padding:14px 24px; text-align:center; flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; }
   .stage__l{ font-size:15px; font-weight:700; color:var(--muted); letter-spacing:.08em; }
   .stage__t{ font-size:36px; font-weight:900; color:var(--ink); line-height:1.4; }
   .bar{ width:70%; height:9px; border-radius:999px; background:#EEF0F2; overflow:hidden; }
   .bar span{ display:block; width:62%; height:100%; background:#2E7D8C; }
-  .press{ display:inline-flex; align-items:center; gap:10px; border-radius:999px; background:#E9B949; color:#3B2A00; font-size:28px; font-weight:900; padding:12px 34px; }
+  .press{ display:inline-flex; align-items:center; gap:10px; border-radius:999px; background:#E9B949; color:#3B2A00; font-size:24px; font-weight:900; padding:8px 30px; }
   .press .material-symbols-rounded{ font-size:34px; }
   .ippon{ background:#FFF6DB; border:4px solid #E9B949; border-radius:24px; padding:26px 30px; text-align:center; }
   .ippon__t{ font-size:76px; font-weight:900; color:#B07800; letter-spacing:.1em; line-height:1.1; }
   .ippon__a{ font-size:32px; font-weight:900; color:var(--ink); margin-top:10px; line-height:1.4; }
   .ippon__n{ font-size:24px; font-weight:900; color:#1C3F5E; margin-top:8px; }
+  .gauge{ width:80%; display:grid; gap:4px; }
+  .gauge__l{ font-size:15px; font-weight:900; color:#8A6A10; text-align:left; }
+  .gauge__t{ position:relative; height:26px; border-radius:999px; background:#FFF6DB; border:2px solid #E9B949; overflow:hidden; }
+  .gauge__f{ height:100%; background:linear-gradient(90deg,#F3D27A,#E9B949); border-radius:999px; }
+  .gauge__g{ position:absolute; right:10px; top:50%; transform:translateY(-50%); font-size:14px; font-weight:900; color:#7A5A00; }
+  .reject{ background:#F4F5F7; border:4px solid #8A8F98; border-radius:24px; padding:30px; text-align:center; }
+  .reject__t{ display:inline-block; font-size:76px; font-weight:900; color:#B91C1C; border:6px solid #B91C1C; border-radius:16px; padding:2px 26px; transform:rotate(-6deg); letter-spacing:.1em; }
+  .reject__s{ font-size:22px; font-weight:700; color:var(--muted); margin-top:16px; }
   .demo-cap{ font-size:22px; color:var(--ink-soft); line-height:1.6; }
   .demo-cap b{ color:var(--acc); font-weight:900; }
   .step{ display:flex; gap:14px; align-items:center; background:var(--white); border:1.5px solid var(--line); border-radius:16px; padding:16px 20px; }
@@ -239,11 +247,12 @@
 <script>
 /* ===== 遊ぶ画面の見本 ===== */
 const ODAI = 'こんな傘はイヤだ。どんな傘？';
-function demoStage(answer){
+function demoStage(answer, fill){
   return `<div class="odai"><div class="odai__l">お題</div><div class="odai__t">${ODAI}</div></div>
     <div class="stage"><div class="stage__l">いま出ている答え</div><div class="stage__t">${answer}</div>
       <div class="bar"><span></span></div>
-      <span class="press"><span class="material-symbols-rounded">sentiment_very_satisfied</span>おもしろい！</span></div>`;
+      <span class="press"><span class="material-symbols-rounded">sentiment_very_satisfied</span>おもしろい！</span>
+      ${fill==null?'':`<div class="gauge"><span class="gauge__l">おもしろゲージ</span><div class="gauge__t"><div class="gauge__f" style="width:${fill}%"></div><span class="gauge__g">一本</span></div></div>`}</div>`;
 }
 
 const SLIDES = [
@@ -256,98 +265,112 @@ const SLIDES = [
   /* 3 */ { type:'content', accent:'teal', section:'ゲームについて', sectionEn:'summary',
     headline:'思いついた答えを<span class="hl">何回でも</span>。<br>おもしろければ「一本！」',
     body:`<div class="rows">
-      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">edit_note</span></div><div><div class="row__t">お題に、思いついた答えを書いて出す</div><div class="row__d">何回出してもいいよ。思いついた順にどんどん出そう</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">edit_note</span></div><div><div class="row__t">お題に、思いついた答えを書いて出す</div><div class="row__d">何回出してもいいよ。思いついた順に出そう</div></div></div>
       <div class="row"><div class="row__ic"><span class="material-symbols-rounded">visibility_off</span></div><div><div class="row__t">答えは1つずつ、だれのか伏せて出る</div><div class="row__d">みんなの画面に、名前なしで大きく出るよ</div></div></div>
-      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">sentiment_very_satisfied</span></div><div><div class="row__t">おもしろかったら「おもしろい！」で投票</div><div class="row__d">投票した人が多ければ「一本！」。順位はつけないよ</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">sentiment_very_satisfied</span></div><div><div class="row__t">審査員が「おもしろい！」でゲージをためる</div><div class="row__d">ゲージが「一本」に届いたら「一本！」。順位はつけないよ</div></div></div>
     </div>`,
-    note:'ひらめき大喜利は、お題に思いついた答えを何回でも出すゲーム。\n出た答えは1つずつ、だれの答えか伏せて、みんなの画面に出ます。\nおもしろかったら「おもしろい！」を押して投票。投票した人が多ければ「一本！」になるよ。順位はつけないよ。' },
+    note:'ひらめき大喜利は、お題に思いついた答えを何回でも出すゲーム。\n出た答えは1つずつ、だれの答えか伏せて、みんなの画面に出ます。\n審査員が「おもしろい！」を押すと、おもしろゲージがたまって、「一本」に届いたら「一本！」になるよ。順位はつけないよ。' },
 
   /* 4 */ { type:'content', accent:'teal', section:'ゲーム説明', sectionEn:'explain', num:'1',
-    headline:'参加のしかたは2つ。<br><span class="hl">いつでも切りかえ</span>られる',
+    headline:'参加スタイルは2つ。<br><span class="hl">両方えらんでもいい</span>',
     body:`<div class="cols">
       <div class="panel">
-        <div class="team-head"><div class="team-ic teal-bg"><span class="material-symbols-rounded">edit_note</span></div><div class="team-name">答えも出す</div></div>
+        <div class="team-head"><div class="team-ic teal-bg"><span class="material-symbols-rounded">edit_note</span></div><div class="team-name">回答者</div></div>
         <div class="role-row"><span class="material-symbols-rounded">edit</span><div><b>答えを書いて出す</b><span class="d">思いついたら何回でも</span></div></div>
-        <div class="role-row"><span class="material-symbols-rounded">sentiment_very_satisfied</span><div><b>「おもしろい！」も押せる</b><span class="d">ほかの人の答えに投票する</span></div></div>
+        <div class="role-row"><span class="material-symbols-rounded">hourglass_top</span><div><b>審査が終わったら、次の答え</b><span class="d">待っている間も、書いておけるよ</span></div></div>
       </div>
       <div class="panel">
-        <div class="team-head"><div class="team-ic coral-bg"><span class="material-symbols-rounded">how_to_vote</span></div><div class="team-name">投票だけ</div></div>
-        <div class="role-row"><span class="material-symbols-rounded">visibility</span><div><b>出た答えを見る</b><span class="d">答えは書かなくていいよ</span></div></div>
-        <div class="role-row"><span class="material-symbols-rounded">sentiment_very_satisfied</span><div><b>おもしろかったら押す</b><span class="d">「おもしろい！」で投票する</span></div></div>
+        <div class="team-head"><div class="team-ic coral-bg"><span class="material-symbols-rounded">gavel</span></div><div class="team-name">審査員</div></div>
+        <div class="role-row"><span class="material-symbols-rounded">visibility</span><div><b>出た答えを見る</b><span class="d">自分の答えには押せないよ</span></div></div>
+        <div class="role-row"><span class="material-symbols-rounded">sentiment_very_satisfied</span><div><b>おもしろかったら押す</b><span class="d">「おもしろい！」でゲージがたまる</span></div></div>
       </div>
     </div>`,
-    note:'参加のしかたは2つあるよ。\n「答えも出す」… 答えを書いて出せるし、ほかの人の答えに「おもしろい！」も押せる。\n「投票だけ」… 答えは書かないで、出た答えを見て、おもしろかったら「おもしろい！」を押す。\nどっちにしているかは、ほかの人には見えないよ。遊んでいる途中でも、自分の画面でいつでも切りかえられるよ。' },
+    note:'参加スタイルは「回答者」と「審査員」の2つ。どちらか1つでも、両方でもいいよ。\n回答者… 答えを書いて出す人。自分の答えの審査が終わったら、次の答えを出せるよ。待っている間も、次の答えは書いておけるよ。\n審査員… 出た答えを見て、おもしろかったら「おもしろい！」を押す人。\nどっちにしているかは、ほかの人には見えないよ。遊んでいる途中でも、自分の画面でいつでも切りかえられるよ。' },
 
   /* 5 */ { type:'content', accent:'blue', section:'ゲーム説明', sectionEn:'explain', num:'2',
     headline:'答えは<span class="ul">1つずつ</span>、<br>名前を伏せて出る',
     body:`<div class="demo">
-      <div class="demo__main">${demoStage('雨がやむまで、ずっと歌う')}</div>
+      <div class="demo__main">${demoStage('雨がやむまで、ずっと歌う', 40)}</div>
       <div class="demo__side">
         <div class="step"><span class="step__n">1</span><div><div class="step__t">書いて「出す」</div><div class="step__d">40文字まで。何回でも</div></div></div>
-        <div class="step"><span class="step__n">2</span><div><div class="step__t">ホストが確認して、順番に出る</div><div class="step__d">少しすると出るよ</div></div></div>
-        <div class="step"><span class="step__n">3</span><div><div class="step__t">出ている間に「おもしろい！」</div><div class="step__d">押せる時間は帯で分かるよ</div></div></div>
+        <div class="step"><span class="step__n">2</span><div><div class="step__t">順番に、みんなの画面に出る</div><div class="step__d">だれの答えかは出ないよ</div></div></div>
+        <div class="step"><span class="step__n">3</span><div><div class="step__t">審査員が「おもしろい！」</div><div class="step__d">押すたびにゲージがたまる</div></div></div>
       </div>
     </div>`,
-    note:'答えを書いて「出す」を押すと、ホストが確認して、順番にみんなの画面に出るよ。\n画面に出るのは1つずつ。だれの答えかは出ないよ。\n答えが出ている間に、おもしろかったら「おもしろい！」を押してね。押せる時間は、下の帯で分かるよ。自分の答えには押せないよ。' },
+    note:'回答者が答えを書いて「出す」を押すと、順番にみんなの画面に出るよ。\n画面に出るのは1つずつ。だれの答えかは出ないよ。\n答えが出ている間に、審査員はおもしろかったら「おもしろい！」を押してね。押すたびに、おもしろゲージがたまるよ。押せる時間は、上の帯で分かるよ。' },
 
   /* 6 */ { type:'content', accent:'coral', section:'ゲーム説明', sectionEn:'explain', num:'3',
-    headline:'投票した人が多ければ<br><span class="hl">「一本！」</span>',
+    headline:'ゲージが「一本」に届いたら<br><span class="hl">「一本！」</span>',
     body:`<div class="demo">
       <div class="demo__main" style="justify-content:center">
         <div class="ippon"><div class="ippon__t">一本！</div><div class="ippon__a">雨がやむまで、ずっと歌う</div><div class="ippon__n">そらさん</div></div>
       </div>
       <div class="demo__side">
-        <div class="demo-cap">投票する人の<b>半分</b>が押したら一本<br><span style="font-size:18px">（3分の2・全員にすることもあるよ）</span></div>
+        <div class="demo-cap">審査員の<b>半分</b>が押すと、ゲージが「一本」に届く<br><span style="font-size:18px">（3分の2・全員にすることもあるよ）</span></div>
         <div class="demo-cap">一本のときだけ、<b>だれの答えか</b>出る</div>
-        <div class="demo-cap">押した数は、だれにも見えない</div>
+        <div class="demo-cap">何人押したかの数字は出ないよ</div>
       </div>
     </div>`,
-    note:'投票する人のうち、決めた数の人が「おもしろい！」を押したら「一本！」。はじめは半分だよ。\n一本のときだけ、だれの答えかが出ます。\n押した数は、だれにも見えないよ。一本にならなかった答えも、名前を出さずに「これまでに出た答え」に並ぶよ。' },
+    note:'審査員のうち、決めた数の人が「おもしろい！」を押すと、ゲージが「一本」に届いて「一本！」。はじめは半分だよ。\n一本のときだけ、だれの答えかが出ます。\n何人押したかの数字は出ないよ。一本にならなかった答えも、名前を出さずに「これまでに出た答え」に並ぶよ。' },
 
-  /* 7 */ { type:'content', accent:'teal', section:'ゲーム説明', sectionEn:'explain', num:'4',
+  /* 7 */ { type:'content', accent:'coral', section:'ゲーム説明', sectionEn:'explain', num:'4',
+    headline:'ホストの判定で<br><span class="hl">「却下！」</span>になることも',
+    body:`<div class="demo">
+      <div class="demo__main" style="justify-content:center">
+        <div class="reject"><div class="reject__t">却下！</div><div class="reject__s">またの回答を、お待ちしております</div></div>
+      </div>
+      <div class="demo__side">
+        <div class="demo-cap">ホストが「却下」を押すと、その答えは<b>取り下げ</b></div>
+        <div class="demo-cap">だれの答えかは<b>出ない</b>よ</div>
+        <div class="demo-cap">気にせず、次の答えを出そう</div>
+      </div>
+    </div>`,
+    note:'答えが出ている間に、ホストが「却下」を押すことがあるよ。\nそのときは「却下！」と大きく出て、その答えは取り下げになります。\nだれの答えかは出ないよ。気にせず、次の答えを出してね。' },
+
+  /* 8 */ { type:'content', accent:'teal', section:'ゲーム説明', sectionEn:'explain', num:'5',
     headline:'お題の区切りと、おしまい',
     body:`<div class="rows">
-      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">workspace_premium</span></div><div><div class="row__t">一本が出たら、答えの受付はおしまい</div><div class="row__d">もう届いている答えは、最後まで出してから結果へ</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">workspace_premium</span></div><div><div class="row__t">一本が出たら、答えの受付はおしまい</div><div class="row__d">もう出した答えは、最後まで出してから結果へ</div></div></div>
       <div class="row"><div class="row__ic"><span class="material-symbols-rounded">timer</span></div><div><div class="row__t">「時間で」のときは、時間まで何回でも一本</div><div class="row__d">お題の下に、のこり時間が出るよ</div></div></div>
       <div class="row"><div class="row__ic"><span class="material-symbols-rounded">celebration</span></div><div><div class="row__t">おしまいに、一本の数とお題ごとの一本</div><div class="row__d">順位はつけないよ</div></div></div>
     </div>`,
-    note:'お題の区切りは2つ。ホストが決めるよ。\n「一本が出たら」… 一本が出たら、答えの受付はおしまい。もう届いている答えは、最後まで出してから結果を見るよ。\n「時間で」… 時間になるまで、何回でも一本が出せるよ。\nおしまいには、一本の数と、お題ごとの一本が出るよ。順位はつけないよ。' },
+    note:'お題の区切りは2つ。ホストが決めるよ。\n「一本が出たら」… 一本が出たら、答えの受付はおしまい。もう出した答えは、最後まで出してから結果を見るよ。\n「時間で」… 時間になるまで、何回でも一本が出せるよ。\nおしまいには、一本の数と、お題ごとの一本が出るよ。順位はつけないよ。' },
 
-  /* 8 */ { type:'content', accent:'blue', section:'はじめかた', sectionEn:'how to join',
-    headline:'名前 → ルームコード →<br>参加のしかた →「参加する」',
+  /* 9 */ { type:'content', accent:'blue', section:'はじめかた', sectionEn:'how to join',
+    headline:'名前 → ルームコード →<br>参加スタイル →「参加する」',
     body:`<div class="rows">
-      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">login</span></div><div><div class="row__t">「ルームに参加する」を押す</div><div class="row__d">名前、ルームコード（6文字）の順に入れて、参加のしかたを選んで「参加する」</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">login</span></div><div><div class="row__t">「ルームに参加する」を押す</div><div class="row__d">名前、ルームコード（6文字）の順に入れて、「回答者」「審査員」を選んで「参加する」</div></div></div>
       <div class="row"><div class="row__ic"><span class="material-symbols-rounded">link</span></div><div><div class="row__t">リンクからひらいたときは、名前だけ</div><div class="row__d">ルームコードは入っているよ</div></div></div>
       <div class="row"><div class="row__ic"><span class="material-symbols-rounded">devices_off</span></div><div><div class="row__t">端末がないときも参加できる</div><div class="row__d">メンターが代わりに書いたり押したりするよ。やり方はメンターが教えるね</div></div></div>
     </div>`,
-    note:'参加のしかただよ。\n「ルームに参加する」を押して、名前、ルームコード（6文字）の順に入れて、「答えも出す」か「投票だけ」を選んで「参加する」。\nチャットのリンクからひらいたときは、ルームコードは入っているので名前だけ入れてね。\n端末がない人も参加できるよ。メンターが代わりに書いたり押したりするので、やり方はメンターが教えるね。' },
+    note:'参加のしかただよ。\n「ルームに参加する」を押して、名前、ルームコード（6文字）の順に入れて、「回答者」「審査員」のどちらか（両方でもいいよ）を選んで「参加する」。\nチャットのリンクからひらいたときは、ルームコードは入っているので名前だけ入れてね。\n端末がない人も参加できるよ。メンターが代わりに書いたり押したりするので、やり方はメンターが教えるね。' },
 
-  /* 9 */ { type:'content', accent:'coral', section:'Q&A', sectionEn:'question & answer',
+  /* 10 */ { type:'content', accent:'coral', section:'Q&A', sectionEn:'question & answer',
     headline:'よくある質問',
     body:`<div class="qa">
-      <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>続けて何個も出していい？</div><div class="qa__a"><span class="qa__badge a">A</span>いいよ。出るのを待っている答えは2つまで。出たら、また出せるよ。</div></div>
-      <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>答えが思いつかないときは？</div><div class="qa__a"><span class="qa__badge a">A</span>「投票だけ」にして、みんなの答えを見て楽しんでOK。</div></div>
-      <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>何人が押したか、分かる？</div><div class="qa__a"><span class="qa__badge a">A</span>分からないよ。一本になったときだけ、大きく出るよ。</div></div>
+      <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>続けて何個も出していい？</div><div class="qa__a"><span class="qa__badge a">A</span>いいよ。自分の答えの審査が終わったら、次を出せるよ。待っている間に書いておこう。</div></div>
+      <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>答えが思いつかないときは？</div><div class="qa__a"><span class="qa__badge a">A</span>「審査員」だけにして、みんなの答えを見て楽しんでOK。</div></div>
+      <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>却下されたら？</div><div class="qa__a"><span class="qa__badge a">A</span>だれの答えかは出ないよ。気にせず、次の答えを出そう。</div></div>
     </div>`,
-    note:'よくある質問だよ\nQ. 続けて何個も出していい？→ A. いいよ。出るのを待っている答えは2つまで。出たら、また出せるよ。\nQ. 答えが思いつかないときは？→ A. 「投票だけ」にして、みんなの答えを見て楽しんでOK。\nQ. 何人が押したか分かる？→ A. 分からないよ。一本になったときだけ、大きく出るよ。' },
+    note:'よくある質問だよ\nQ. 続けて何個も出していい？→ A. いいよ。自分の答えの審査が終わったら、次を出せるよ。待っている間に書いておこう。\nQ. 答えが思いつかないときは？→ A. 「審査員」だけにして、みんなの答えを見て楽しんでOK。\nQ. 却下されたら？→ A. だれの答えかは出ないよ。気にせず、次の答えを出そう。' },
 
-  /* 10 */ { type:'divider', accent:'blue', icon:'live_help', jp:'質問タイム', en:'any questions?',
+  /* 11 */ { type:'divider', accent:'blue', icon:'live_help', jp:'質問タイム', en:'any questions?',
     sub:'気になることはある？',
     note:'ここまでで、質問がある人はいるかな？\nマイクON か チャットで教えてね！' },
 
-  /* 11 */ { type:'divider', accent:'coral', icon:'how_to_reg', jp:'参加確認', en:"let's check",
+  /* 12 */ { type:'divider', accent:'coral', icon:'how_to_reg', jp:'参加確認', en:"let's check",
     sub:'チャットで教えてね',
-    note:'やってみたい人〜？\n「①答えも出す」「②投票だけ」「③見学」を、チャットで教えてね！' },
+    note:'やってみたい人〜？\n「①回答者と審査員の両方」「②回答者だけ」「③審査員だけ」「④見学」を、チャットで教えてね！' },
 
-  /* 12 */ { type:'divider', accent:'teal', solid:true, icon:'rocket_launch', jp:'＼ ゲームスタート ／', en:'game start',
+  /* 13 */ { type:'divider', accent:'teal', solid:true, icon:'rocket_launch', jp:'＼ ゲームスタート ／', en:'game start',
     sub:'まずはルームに参加しよう',
     note:'それでは、ひらめき大喜利スタート！\nまずはルームに参加してね。わからなくなったら、いつでも聞いてね' },
 
-  /* 13 */ { type:'divider', accent:'coral', icon:'edit_note', jp:'お題タイム', en:'answer time',
+  /* 14 */ { type:'divider', accent:'coral', icon:'edit_note', jp:'お題タイム', en:'answer time',
     sub:'思いついたら、どんどん出そう',
-    note:'お題が出たよ！\n思いついたら、どんどん書いて「出す」を押してね。\nおもしろい答えが出たら「おもしろい！」で投票しよう。' },
+    note:'お題が出たよ！\n回答者は、思いついたら書いて「出す」を押してね。\n審査員は、おもしろい答えが出たら「おもしろい！」を押して、ゲージをためよう。' },
 
-  /* 14 */ { type:'divider', accent:'teal', solid:true, icon:'workspace_premium', jp:'けっか', en:'result',
+  /* 15 */ { type:'divider', accent:'teal', solid:true, icon:'workspace_premium', jp:'けっか', en:'result',
     sub:'おつかれさま！',
     note:'けっか発表！\nどんな一本が出たかな？ 気に入った答えを、ひとことずつ話してみよう。' },
 ];

@@ -146,7 +146,9 @@ async function joinRoom(c, name, code, mode, screenId = 'waiting') {
   await open(c, '?room=' + code);
   await waitScreen(c, 'join');
   await c.page.fill('#guestName', name);
-  if (mode) await c.page.check('input[name="joinMode"][value="' + mode + '"]');
+  // mode: 'both'（はじめ）・'answer'（回答者だけ）・'judge'（審査員だけ）
+  if (mode === 'answer') await c.page.uncheck('#joinJudge');
+  if (mode === 'judge') await c.page.uncheck('#joinAnswer');
   await c.page.click('#btnJoinRoom');
   await waitScreen(c, screenId);
 }
@@ -158,12 +160,19 @@ async function answer(c, t) {
   await c.page.fill('#answerInput', t);
   await c.page.click('#btnAnswer');
 }
+// 答えはホストの確認なしで順番待ちに入る（2026-10-31）。ホストの画面で、順番待ちか、いま出ている答えに入ったのを待つ
 async function approve(h, t, timeout = 8000) {
-  const sel = '#checkList li:has-text("' + t + '") .og-approve';
-  await h.page.waitForSelector(sel, { timeout });
-  await h.page.click(sel);
+  await h.page.waitForFunction((x) => (document.getElementById('queueList').textContent || '').includes(x)
+    || document.getElementById('stageText').textContent === x, t, { timeout });
 }
-const setMode = (c, label) => c.page.click('#modeOpts .og-seg__btn:text-is("' + label + '")');
+// 参加スタイルの「回答者」「審査員」を押して切りかえる
+const roleOn = (c) => c.page.$$eval('#modeOpts .og-seg__btn.is-on', (els) => els.map((e) => e.textContent).join('+'));
+async function setMode(c, label) {
+  const before = await roleOn(c);
+  await c.page.click('#modeOpts .og-seg__btn:text-is("' + label + '")');
+  await waitUntil(async () => (await roleOn(c)) !== before);
+}
+const gauge = (c) => c.page.evaluate(() => (document.getElementById('gauge').closest('[hidden]') ? -1 : parseFloat(document.getElementById('gaugeFill').style.width) || 0));
 async function waitUntil(fn, timeout = 8000) {
   const until = Date.now() + timeout;
   while (Date.now() < until) { try { if (await fn()) return true; } catch {} await sleep(60); }
@@ -186,6 +195,6 @@ async function finishAll(server) {
 module.exports = {
   T, check, sleep, startServer, rest, roomOf, roomWhen, launch, newContext, newPage, newClient, open,
   text, waitText, visible, waitVisible, screen, waitScreen, overflow, stats, waitStats, waitToast, bodyText,
-  createRoom, joinRoom, stage, listRows, ipponOn, answer, approve, setMode, waitUntil, finishAll,
+  createRoom, joinRoom, stage, listRows, ipponOn, answer, approve, setMode, roleOn, gauge, waitUntil, finishAll,
   BASE, OUT, NS, DB, ROOMS, clients,
 };

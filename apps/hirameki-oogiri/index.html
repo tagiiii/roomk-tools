@@ -8,7 +8,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
   <link rel="stylesheet" href="../shared/css/design-system.css">
   <!-- index.html と app.js・data.js・style.css はセットで変わるので、変えたら ?v= をそろえて上げる -->
-  <link rel="stylesheet" href="style.css?v=20261030b">
+  <link rel="stylesheet" href="style.css?v=20261031a">
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
@@ -27,7 +27,7 @@
       <section class="og-screen active" id="screen-top">
         <div class="og-panel">
           <p class="og-lead">お題に、思いついた答えを何回でも出す大喜利。出た答えは1つずつ、だれのか伏せてみんなの画面に出るよ。「おもしろい！」と思う人が多ければ「一本！」。</p>
-          <p class="og-note">答えを書かずに「投票だけ」でも参加できるよ。1つのお題は数分くらい。</p>
+          <p class="og-note">「回答者」と「審査員」の、どちらか・両方を選んで参加するよ。1つのお題は数分くらい。</p>
           <button type="button" class="btn btn-primary btn-full" id="btnGoCreate">ルームを作る</button>
           <button type="button" class="btn btn-secondary btn-full" id="btnGoJoin">ルームに参加する</button>
           <button type="button" class="btn btn-ghost btn-full" id="btnGoWatch">みんなにみせる画面をひらく</button>
@@ -53,9 +53,9 @@
           <label class="og-form__label" for="joinCode">ルームコード（6文字）</label>
           <input class="og-form__input og-form__input--code" id="joinCode" maxlength="6" autocorrect="off" autocapitalize="characters" autocomplete="off" spellcheck="false">
           <fieldset class="og-modepick">
-            <legend class="og-form__label">参加のしかた</legend>
-            <label class="og-radio"><input type="radio" name="joinMode" value="both" checked><span><b>答えも出す</b><small>答えを書いて出す。ほかの人の答えに「おもしろい！」も押せる</small></span></label>
-            <label class="og-radio"><input type="radio" name="joinMode" value="press"><span><b>投票だけ</b><small>答えは書かない。出た答えを見て、おもしろかったら「おもしろい！」を押して投票する</small></span></label>
+            <legend class="og-form__label">参加スタイル（どちらか・両方）</legend>
+            <label class="og-radio"><input type="checkbox" id="joinAnswer" checked><span><b>回答者</b><small>お題に答えを書いて出す</small></span></label>
+            <label class="og-radio"><input type="checkbox" id="joinJudge" checked><span><b>審査員</b><small>出た答えを見て、おもしろかったら「おもしろい！」を押す</small></span></label>
             <p class="og-note og-note--left">遊んでいる途中でも切りかえられるよ</p>
           </fieldset>
           <p class="og-form__error" id="joinError" hidden></p>
@@ -96,7 +96,7 @@
           <ol class="og-howto">
             <li><strong>画面共有は「みんなにみせる画面」で。</strong>この画面には、だれの答えかが出るので共有しない</li>
             <li>「はじめる」を押したら、3つの候補からお題を選ぶ</li>
-            <li>届いた答えを見て「みんなに出す」を押す（まずい答えは「かくす」）</li>
+            <li>答えが出ている間、まずい答えは「却下」を押す（「却下！」と大きく出て、取り下げになる）</li>
             <li>結果を見たら「次のお題へ」。やめるときは「ここでおしまい」</li>
           </ol>
           <button id="btnWatchGuide" type="button" class="btn btn-secondary mt-sm">
@@ -131,10 +131,10 @@
           <h2 class="og-h2">あそびかた</h2>
           <ol class="og-howto">
             <li>お題に、思いついた答えを書いて「出す」。何回出してもいい</li>
-            <li>ホストが確認した答えが、1つずつ、だれのか伏せてみんなの画面に出る</li>
-            <li id="howtoRatio">おもしろかったら「おもしろい！」で投票。投票する人の半分以上が押したら「一本！」</li>
+            <li>出した答えは、1つずつ、だれのか伏せてみんなの画面に出る。自分の答えの審査が終わるまで、次の答えは「出す」を押せない</li>
+            <li id="howtoRatio">審査員は、おもしろかったら「おもしろい！」。おもしろゲージがたまって、審査員の半分以上が押したら「一本！」</li>
             <li id="howtoCut">一本が出たら答えの受付はおしまい。残りの答えを出し終えたら、結果を見て次のお題へ</li>
-            <li>答えは書かずに「投票だけ」でも参加できる</li>
+            <li>参加スタイルは「回答者」と「審査員」の、どちらか・両方。途中でも切りかえられる</li>
           </ol>
         </div>
       </section>
@@ -156,7 +156,7 @@
         </div>
       </section>
 
-      <!-- 答える・投票する -->
+      <!-- 答える・審査する -->
       <section class="og-screen og-screen--wide" id="screen-play">
         <div class="og-odai">
           <p class="og-odai__label">お題</p>
@@ -179,7 +179,11 @@
                     <span class="material-symbols-rounded" aria-hidden="true">sentiment_very_satisfied</span><span id="btnPressLabel">おもしろい！</span>
                   </button>
                   <span id="stageMine" class="og-tag og-tag--big" hidden>あなたの答え</span>
-                  <button id="btnHideCur" type="button" class="btn btn-ghost btn-sm" hidden>この答えをかくす</button>
+                  <button id="btnReject" type="button" class="btn btn-ghost btn-sm og-reject-btn" hidden>却下</button>
+                </div>
+                <div id="gauge" class="og-gauge" aria-hidden="true">
+                  <span class="og-gauge__label">おもしろゲージ</span>
+                  <div class="og-gauge__track"><div id="gaugeFill" class="og-gauge__fill"></div><span class="og-gauge__goal">一本</span></div>
                 </div>
                 <p id="stageHint" class="og-stage__hint"></p>
               </div>
@@ -221,14 +225,10 @@
                   <p id="proxyMsg" class="og-note" role="status"></p>
                 </div>
               </div>
-              <div id="checkCard" class="og-hostbox og-check" hidden>
-                <h2 class="og-h3">届いた答え <span id="checkCount" class="og-count"></span></h2>
-                <p class="og-note og-note--top">「みんなに出す」を押すか、10秒たつと、順番にみんなの画面に出る。まずい答えは「かくす」</p>
-                <ul id="checkList" class="og-list"></ul>
-              </div>
-              <p id="checkEmpty" class="og-hostpanel__empty">届いた答えはここに出るよ</p>
+              <p id="queueEmpty" class="og-hostpanel__empty">このあと出る答えは、ここに名前つきで出るよ。出ている答えは、上の「却下」で取り下げられるよ</p>
               <div id="queueCard" class="og-hostbox" hidden>
                 <h2 class="og-h3">このあと出る答え</h2>
+                <p class="og-note og-note--top">まずい答えは、出る前に「かくす」こともできる</p>
                 <ul id="queueList" class="og-list"></ul>
               </div>
               <div class="og-hostpanel__btns">
@@ -293,8 +293,8 @@
       <!-- 参加のしかた（自分の画面にだけ出る。待合室・遊ぶ画面では決まった場所へ移す） -->
       <div id="modeHome" class="og-modehome">
         <section id="modeCard" class="card og-modecard" hidden>
-          <h2 class="og-h3">あなたの参加のしかた<span class="og-modecard__sub">いつでも切りかえられるよ</span></h2>
-          <div id="modeOpts" class="og-seg" role="radiogroup" aria-label="あなたの参加のしかた"></div>
+          <h2 class="og-h3">あなたの参加スタイル<span class="og-modecard__sub">どちらか・両方。いつでも切りかえられるよ</span></h2>
+          <div id="modeOpts" class="og-seg" role="group" aria-label="あなたの参加スタイル"></div>
           <p id="modeNote" class="og-note"></p>
         </section>
       </div>
@@ -321,7 +321,7 @@
   <!-- 一本（音は鳴らさない） -->
   <div id="ipponPop" class="og-ippon" aria-live="polite" hidden>
     <div class="og-ippon__box">
-      <p class="og-ippon__title">一本！</p>
+      <p id="ipponTitle" class="og-ippon__title">一本！</p>
       <p id="ipponText" class="og-ippon__text"></p>
       <p id="ipponName" class="og-ippon__name"></p>
     </div>
@@ -329,29 +329,30 @@
 
   <div class="og-overlay" id="hostOffOverlay" hidden><div class="og-overlay__panel"><h2>ホストの戻りを待っています</h2><p id="hostOffText">しばらく待っても戻らないときは退出してね。</p><button type="button" class="btn btn-secondary" id="btnOverlayLeave">退出する</button></div></div>
 
-  <script type="module" src="app.js?v=20261030b"></script>
+  <script type="module" src="app.js?v=20261031a"></script>
   <script src="../shared/js/stats.js?v=1" defer></script>
   <script src="../shared/js/howto.js"></script>
   <script>
     RoomkHowto.init({
       slides: 'slides.html',
       title: 'あそびかた',
-      lead: 'お題に、思いついた答えを何回でも出す大喜利。出た答えは1つずつ、だれのか伏せてみんなの画面に出るよ。「おもしろい！」と思う人が多ければ「一本！」。',
+      lead: 'お題に、思いついた答えを何回でも出す大喜利。出た答えは1つずつ、だれのか伏せてみんなの画面に出るよ。審査員の「おもしろい！」でおもしろゲージがたまったら「一本！」。',
       sections: [
         { heading: 'はじめかた', items: [
           'ホストが「ルームを作る」で名前を入れる。ルームコードは「コードをコピー」、参加用のリンクは「リンクをコピー」でチャットに送れる。スマホやタブレットで入る人には「QRコードを出す」をカメラで読みとってもらう',
-          '参加する人は「ルームに参加する」で名前、ルームコード（6文字）の順に入れ、参加のしかたを選んで「参加する」を押す。リンクからひらいたときは、ルームコードは入っているので名前だけ入れる',
+          '参加する人は「ルームに参加する」で名前、ルームコード（6文字）の順に入れ、参加スタイル（「回答者」「審査員」のどちらか・両方）を選んで「参加する」を押す。リンクからひらいたときは、ルームコードは入っているので名前だけ入れる',
           '画面共有するときは、ホストが「みんなにみせる画面」をひらいて、そちらを共有する',
-          'ホストが「はじめる」を押して、お題を選ぶ（投票する人が2人から）',
+          'ホストが「はじめる」を押して、お題を選ぶ（審査員が2人から）',
         ] },
         { heading: '答える', items: [
-          'お題に、思いついた答えを書いて「出す」。何回出してもいいよ（40文字まで）',
-          'ホストが確認した答えが、1つずつ、だれのか伏せてみんなの画面に出る（ホストが押し忘れても、少しすると出る）',
-          '答えは書かずに「投票だけ」でも参加できる。参加のしかたは、遊んでいる途中でも切りかえられるよ',
+          '回答者は、お題に思いついた答えを書いて「出す」。何回出してもいいよ（40文字まで）',
+          '出した答えは、1つずつ、だれのか伏せてみんなの画面に出る。自分の答えの審査が終わるまで、次の答えは書いておけるけど「出す」は押せないよ',
+          'まずい答えは、ホストが「却下」することがあるよ。「却下！」と大きく出るけど、だれの答えかは出ないよ',
+          '参加スタイル（回答者・審査員）は、遊んでいる途中でも切りかえられるよ',
         ] },
         { heading: '一本', items: [
-          '答えが出ているあいだに、おもしろかったら「おもしろい！」を押して投票する。自分の答えには押せないよ',
-          '投票する人のうち、ホストが決めた数（はじめは半分）が押したら「一本！」。そのときだけ、だれの答えか出る',
+          '審査員は、答えが出ているあいだに、おもしろかったら「おもしろい！」を押す。自分の答えには押せないよ',
+          '押すたびに、おもしろゲージがたまる。審査員のうち、ホストが決めた数（はじめは半分）が押すと、ゲージが「一本」の線に届いて「一本！」。そのときだけ、だれの答えか出る',
           '一本が出たら答えの受付はおしまい。出ていない答えを最後まで出してから結果へ（ホストが「時間で」を選んだときは、時間まで答えを出せる）',
           'おしまいの画面に、一本の数とお題ごとの一本が出るよ',
         ] },

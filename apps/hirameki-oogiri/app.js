@@ -1,35 +1,39 @@
 // ひらめき大喜利：お題に、思いついた答えを何回でも出す大喜利。出た答えは1つずつ、だれのか伏せてみんなの画面に出し、
-// 投票する人の何割か（ホストが決める）が「おもしろい！」を押したら「一本！」。順位はつけない。
+// 審査員の何割か（ホストが決める）が「おもしろい！」を押したら「一本！」。ホストは出ている答えを「却下」できる。順位はつけない。
 // ルーム（Realtime Database）で進める。ルームの出入り・切断・再接続・みんなにみせる画面の作りはしるしでヒントにそろえている。
 // 時間で進むこと（答えを出す・押せる時間の終わり・一本の表示・時間で区切る）は、ふだんはホストの端末が進める。
 // ホストのタブが裏に回って遅れたとき（みんなにみせる画面を前に出して共有するときなど）は、参加者の端末が少し遅れて代わりに進める。
-import { TOPICS } from './data.js?v=20261030b';
+import { TOPICS } from './data.js?v=20261031a';
 
 const CANDS = 3;           // ホストが選ぶお題の候補の数
 const NUMS = ['①', '②', '③', '④', '⑤'];
 const ANSWER_MAX = 40;
-const AUTO_MS = 10 * 1000;  // 届いた答えは、ホストが「みんなに出す」を押し忘れても、この時間で順番待ちへ（2026-10-30 オーナー判断）
-const MAX_WAITING = 2;     // 1人が確認待ち・順番待ちにできる答えの数（1人が出し続けて、ほかの人の答えが出なくならないように）
+// 1人が出しておける答えの数（順番待ちといま出ている答え）。自分の答えの審査が終わるまで、次の答えは書けるが「出す」は押せない（2026-10-31 オーナー判断）
+const MAX_WAITING = 1;
 const MAX_GUESTS = 15;
 const MAX_PROXIES = 4;     // 端末のない参加者（ホストが代わりに書く・押す）
 const MIN_VOTERS = 2;
 const SHOW_SECS = [10, 15, 20]; // 1つの答えを見る（押せる）時間
 const MINUTES = [2, 3, 5];      // 「時間で」区切るときの時間
 const IPPON_MS = 3500;     // 一本を大きく出しておく時間
+const REJECT_MS = 2200;    // 「却下！」を大きく出しておく時間
 const GAP_MS = 900;        // 次の答えまでの間
 const STEP_MS = 200;       // 時間の進みを見る間隔
 const GUEST_LAG_MS = 800;  // 参加者の端末は、ここまで遅れていたら代わりに進める（ふだんはホストが進める）
-// 一本に必要な割合（投票する人のうち）
+// 一本に必要な割合（審査員のうち）
 const RATIOS = {
-  half: { label: '半分', note: '投票する人の半分以上が押したら一本', frac: 1 / 2 },
-  two3: { label: '3分の2', note: '投票する人の3分の2以上が押したら一本', frac: 2 / 3 },
-  all: { label: '全員', note: '投票する人の全員が押したら一本', frac: 1 },
+  half: { label: '半分', note: '審査員の半分以上が押したら一本', frac: 1 / 2 },
+  two3: { label: '3分の2', note: '審査員の3分の2以上が押したら一本', frac: 2 / 3 },
+  all: { label: '全員', note: '審査員の全員が押したら一本', frac: 1 },
 };
+// 参加スタイル。「回答者」と「審査員」を、どちらか・両方から選ぶ（2026-10-31 オーナー判断）。両方なしは、ホストだけ（進行だけ）
 const MODES = {
-  both: { label: '答えも出す', note: '答えを書いて出せるし、ほかの人の答えに「おもしろい！」も押せるよ' },
-  press: { label: '投票だけ', note: '答えは書かないで、出た答えを見て、おもしろかったら「おもしろい！」を押して投票するよ' },
-  none: { label: '進行だけ', note: '答えも書かないし「おもしろい！」も押さないよ（投票する人にも数えない）' },
+  both: { answer: true, judge: true, note: '回答者と審査員の両方。答えを書いて出せるし、ほかの人の答えに「おもしろい！」も押せるよ' },
+  answer: { answer: true, judge: false, note: '回答者だけ。答えを書いて出すよ。「おもしろい！」は押さないよ（審査員には数えない）' },
+  judge: { answer: false, judge: true, note: '審査員だけ。答えは書かないで、出た答えを見て、おもしろかったら「おもしろい！」を押すよ' },
+  none: { answer: false, judge: false, note: '進行だけ。答えも書かないし「おもしろい！」も押さないよ' },
 };
+const modeFrom = (answer, judge) => (answer ? (judge ? 'both' : 'answer') : (judge ? 'judge' : 'none'));
 const CUTS = {
   ippon: { label: '一本が出たら', note: '一本が出たら、答えの受付はおしまい。残りの答えを出し終えたら、結果を見て次のお題へ' },
   time: { label: '時間で', note: '時間になったら答えを締め切る。そのあいだは何回でも一本が出せる' },
@@ -183,8 +187,11 @@ function ruleOf(room) {
 }
 
 function modeOf(player) {
+  if (player?.mode === 'press') return 'judge'; // 2026-10-31 より前の「投票だけ」
   return MODES[player?.mode] ? player.mode : 'both';
 }
+const isAnswerer = (mode) => MODES[mode].answer;
+const isJudge = (mode) => MODES[mode].judge;
 
 // 端末のない参加者（ホストが代わりに書く・押す）。切断しない
 function proxyNames(room) {
@@ -205,9 +212,9 @@ function guestCount(room) {
   return Object.values(room?.players || {}).filter((p) => p && !p.isHost).length;
 }
 
-// 答えを書いた人 by の答えに投票する人（いる人で、進行だけでない人。端末のない参加者は、いつもいる）
+// 答えを書いた人 by の答えの審査員（いる人で、審査員の人。端末のない参加者は、いつもいて、回答者と審査員の両方）
 function votersFor(room, by) {
-  const present = Object.entries(room?.players || {}).filter(([name, p]) => p && modeOf(p) !== 'none' && name !== by).map(([name]) => name);
+  const present = Object.entries(room?.players || {}).filter(([name, p]) => p && isJudge(modeOf(p)) && name !== by).map(([name]) => name);
   return present.concat(proxyNames(room).filter((name) => name !== by));
 }
 
@@ -223,7 +230,7 @@ function readAnswer(raw) {
   if (!raw || typeof raw !== 'object' || typeof raw.id !== 'string' || typeof raw.by !== 'string') return null;
   const text = cleanAnswer(raw.text);
   if (!text) return null;
-  return { id: raw.id, by: raw.by, text, ippon: raw.ippon === true, at: Number(raw.at) || 0 };
+  return { id: raw.id, by: raw.by, text, ippon: raw.ippon === true, rejected: raw.rejected === true };
 }
 
 // ゲームの中身。壊れた値は読み飛ばす（ないものは null か空の配列にする。transaction でそのまま書き戻せるように）
@@ -242,7 +249,7 @@ function gameOf(room) {
         at: Number(raw.cur.at) || 0,
         endsAt: Number(raw.cur.endsAt) || 0,
         presses,
-        state: raw.cur.state === 'ippon' ? 'ippon' : 'open',
+        state: ['ippon', 'reject'].includes(raw.cur.state) ? raw.cur.state : 'open',
         holdUntil: Number(raw.cur.holdUntil) || 0,
       };
     }
@@ -257,7 +264,6 @@ function gameOf(room) {
     roundEndsAt: Number(raw.roundEndsAt) || 0,
     gapUntil: Number(raw.gapUntil) || 0,
     cur,
-    pending: answers(raw.pending),
     queue: answers(raw.queue),
     shown: answers(raw.shown),
     hidden: answers(raw.hidden),
@@ -268,9 +274,9 @@ function gameOf(room) {
   };
 }
 
-// 1人の、確認待ちと順番待ちの答えの数
+// 1人の、順番待ちと、いま出ている（審査中の）答えの数
 function waitingOf(game, name) {
-  return game.pending.filter((a) => a.by === name).length + game.queue.filter((a) => a.by === name).length;
+  return game.queue.filter((a) => a.by === name).length + (game.cur && game.cur.a.by === name ? 1 : 0);
 }
 
 function pressCount(room, game) {
@@ -343,7 +349,7 @@ function finishCur(game, ippon, now) {
   game.gapUntil = now + GAP_MS;
 }
 
-// 一本になったか（押した数を、いまの投票する人で数えなおす）。一本で区切るときは、ここで締め切る
+// 一本になったか（押した数を、いまの審査員で数えなおす）。一本で区切るときは、ここで締め切る
 function checkIppon(room, game, now) {
   const c = game.cur;
   if (!c || c.state !== 'open') return false;
@@ -363,19 +369,18 @@ function checkIppon(room, game, now) {
 function stepGame(room, game, now) {
   if (room.status !== STATUS.PLAY) return false;
   let changed = false;
-  // ホストが「みんなに出す」を押し忘れても、届いてから AUTO_MS たった答えは順番待ちへ（届いた順に）
-  const due = game.pending.filter((a) => now >= a.at + AUTO_MS);
-  if (due.length) {
-    game.pending = game.pending.filter((a) => !due.includes(a));
-    game.queue = game.queue.concat(due);
-    changed = true;
-  }
   const c = game.cur;
   if (c && c.state === 'open') {
     if (checkIppon(room, game, now)) changed = true;
     else if (now >= c.endsAt) { finishCur(game, false, now); changed = true; }
   } else if (c && c.state === 'ippon' && now >= c.holdUntil) {
     finishCur(game, true, now);
+    changed = true;
+  } else if (c && c.state === 'reject' && now >= c.holdUntil) {
+    // 却下した答えは、出た答えにも結果にも並べない（書いた本人の画面にだけ「却下」）
+    game.hidden.push({ ...c.a, rejected: true });
+    game.cur = null;
+    game.gapUntil = now + GAP_MS;
     changed = true;
   }
   if (ruleOf(room).cut === 'time' && !game.closing && game.roundEndsAt && now >= game.roundEndsAt) {
@@ -388,8 +393,7 @@ function stepGame(room, game, now) {
     game.cur = { a, at: now, endsAt: now + ruleOf(room).showSec * 1000, presses: {}, state: 'open', holdUntil: 0 };
     changed = true;
   }
-  // 確認待ちの答えがあるあいだは結果へ進まない（確認していない答えを結果に出さないため）
-  if (!game.cur && game.closing && !game.queue.length && !game.pending.length) {
+  if (!game.cur && game.closing && !game.queue.length) {
     room.status = STATUS.RESULT;
     changed = true;
   }
@@ -434,7 +438,7 @@ function clearSession() {
 
 /* ── ルームへの出入り ── */
 function resetBoxes() {
-  ['lobbyPlayers', 'pickCands', 'mineList', 'checkList', 'queueList', 'shownList', 'proxyPressList', 'proxyAdminList', 'resultIppon', 'resultOthers', 'endCounts', 'endHistory'].forEach((id) => $(id).replaceChildren());
+  ['lobbyPlayers', 'pickCands', 'mineList', 'queueList', 'shownList', 'proxyPressList', 'proxyAdminList', 'resultIppon', 'resultOthers', 'endCounts', 'endHistory'].forEach((id) => $(id).replaceChildren());
   ['answerInput', 'proxyInput', 'proxyName'].forEach((id) => { $(id).value = ''; });
   ['answerMsg', 'proxyMsg', 'proxyAddMsg'].forEach((id) => { $(id).textContent = ''; });
   $('proxyWho').replaceChildren();
@@ -697,8 +701,7 @@ async function joinRoom() {
   if (state.busy || state.roomRef) return;
   const nickname = $('guestName').value.trim();
   const code = normalizeRoomCode($('joinCode').value);
-  const picked = document.querySelector('input[name="joinMode"]:checked');
-  const mode = picked && picked.value === 'press' ? 'press' : 'both';
+  const mode = modeFrom($('joinAnswer').checked, $('joinJudge').checked);
   const error = validNickname(nickname);
   if (error) {
     setError('joinError', error);
@@ -711,6 +714,10 @@ async function joinRoom() {
   }
   if (!ROOM_CODE_PATTERN.test(code)) {
     setError('joinError', 'ルームコードは6文字で入れてね');
+    return;
+  }
+  if (mode === 'none') {
+    setError('joinError', '「回答者」か「審査員」の、どちらか（両方でもいいよ）を選んでね');
     return;
   }
   setError('joinError', '');
@@ -984,8 +991,21 @@ function renderMode(room, phase) {
   if (slot && $('modeCard').parentNode !== slot) slot.append($('modeCard'));
   else if (!slot && $('modeCard').parentNode !== $('modeHome')) $('modeHome').append($('modeCard'));
   const mode = modeOf(me);
-  const keys = isHost() ? ['both', 'press', 'none'] : ['both', 'press'];
-  $('modeOpts').replaceChildren(...keys.map((k) => segBtn(MODES[k].label, mode === k, () => setMode(k))));
+  const answer = isAnswerer(mode);
+  const judge = isJudge(mode);
+  // 回答者・審査員は、どちらか・両方。参加者は両方を外せない（ホストは両方外すと進行だけ）
+  const toggle = (label, on, other, next) => {
+    const b = makeElement('button', 'og-seg__btn og-role' + (on ? ' is-on' : ''), label);
+    b.type = 'button';
+    b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    b.disabled = on && !other && !isHost();
+    b.addEventListener('click', () => setMode(next));
+    return b;
+  };
+  $('modeOpts').replaceChildren(
+    toggle('回答者', answer, judge, modeFrom(!answer, judge)),
+    toggle('審査員', judge, answer, modeFrom(answer, !judge)),
+  );
   $('modeNote').textContent = MODES[mode].note;
 }
 
@@ -1031,7 +1051,7 @@ function renderWaiting(room) {
     if (away) li.append(makeElement('span', 'og-tag og-tag--muted', '通信が切れたみたい'));
     return li;
   }));
-  $('howtoRatio').textContent = 'おもしろかったら「おもしろい！」で投票。' + RATIOS[rule.ratio].note.replace('一本', '「一本！」');
+  $('howtoRatio').textContent = '審査員は、おもしろかったら「おもしろい！」。おもしろゲージがたまって、' + RATIOS[rule.ratio].note.replace('一本', '「一本！」');
   $('howtoCut').textContent = rule.cut === 'time'
     ? rule.minutes + '分たったら答えを締め切って、結果を見る'
     : '一本が出たら答えの受付はおしまい。残りの答えを出し終えたら、結果を見て次のお題へ';
@@ -1041,7 +1061,7 @@ function renderWaiting(room) {
   $('lobbyWait').hidden = isHost() || isWatch();
   if (!isHost()) return;
   $('ratioOpts').replaceChildren(...Object.keys(RATIOS).map((k) => segBtn(RATIOS[k].label, rule.ratio === k, () => setRule('ratio', k))));
-  $('ratioNote').textContent = RATIOS[rule.ratio].note + '（投票する人は、答えを出した本人をのぞいた全員）';
+  $('ratioNote').textContent = RATIOS[rule.ratio].note + '（審査員は、答えを出した本人をのぞいた、審査員を選んでいる全員と、端末のない参加者）';
   $('cutOpts').replaceChildren(...Object.keys(CUTS).map((k) => segBtn(CUTS[k].label, rule.cut === k, () => setRule('cut', k))));
   $('timeOpts').hidden = rule.cut !== 'time';
   $('timeOpts').replaceChildren(...MINUTES.map((n) => segBtn(n + '分', rule.minutes === n, () => setRule('minutes', n))));
@@ -1049,7 +1069,7 @@ function renderWaiting(room) {
   $('cutNote').textContent = CUTS[rule.cut].note + '。ホストはいつでも「答えを締め切る」で区切れるよ';
   const n = allVoters(room).length;
   $('btnStart').disabled = n < MIN_VOTERS;
-  $('lobbyStartNote').textContent = n < MIN_VOTERS ? '投票する人が' + MIN_VOTERS + '人以上で始められるよ' : '投票する人 ' + n + '人';
+  $('lobbyStartNote').textContent = n < MIN_VOTERS ? '審査員が' + MIN_VOTERS + '人以上で始められるよ' : '審査員 ' + n + '人';
 }
 
 function renderPick(room, game) {
@@ -1094,25 +1114,32 @@ function renderPlay(room, game) {
   $('stageEmpty').hidden = !!c;
   $('stage').classList.toggle('is-on', !!c);
   if (c) {
-    $('stageText').textContent = c.a.text;
+    // 却下を出している間は、うしろにも答えの文を残さない（半透明の幕ごしに読めないように）
+    $('stageText').textContent = c.state === 'reject' ? '却下！' : c.a.text;
     const mine = !!me && c.a.by === state.nickname;
-    const canPress = !!me && !mine && mode !== 'none';
+    const canPress = !!me && !mine && isJudge(mode);
     const pressed = !!c.presses[state.nickname];
     $('btnPress').hidden = !canPress;
     $('btnPress').disabled = pressed || c.state !== 'open';
     $('btnPress').classList.toggle('is-pressed', pressed);
     $('btnPressLabel').textContent = pressed ? '押したよ' : 'おもしろい！';
     $('stageMine').hidden = !mine;
-    $('btnHideCur').hidden = !isHost();
+    $('btnReject').hidden = !isHost() || c.state === 'reject';
     $('stageHint').textContent = c.state !== 'open' ? ''
       : isWatch() ? 'おもしろかったら、自分の画面で「おもしろい！」を押してね'
-        : !canPress ? '' : pressed ? '投票したよ' : 'おもしろかったら押して投票してね';
+        : !canPress ? '' : pressed ? '押したよ。ゲージがたまると一本！' : 'おもしろかったら押してね';
+    // おもしろゲージ（押した数は数字で出さない。一本の線までの割合だけ）
+    const need = needOf(votersFor(room, c.a.by).length, rule.ratio);
+    const ratio = c.state === 'ippon' ? 1 : Number.isFinite(need) ? Math.min(1, pressCount(room, game) / need) : 0;
+    $('gauge').hidden = c.state === 'reject';
+    $('gauge').classList.toggle('is-full', c.state === 'ippon');
+    $('gaugeFill').style.width = (ratio * 100).toFixed(1) + '%';
   } else {
-    $('stageEmpty').textContent = isHost() && game.pending.length ? '「届いた答え」で「みんなに出す」を押すと、ここに出るよ' : '答えが出るのを待っているよ';
+    $('stageEmpty').textContent = '答えが出るのを待っているよ';
   }
 
-  // 答えを書く（「答えも出す」の人だけ）
-  const canAnswer = !!me && mode === 'both' && !game.closing;
+  // 答えを書く（回答者だけ）
+  const canAnswer = !!me && isAnswerer(mode) && !game.closing;
   $('answerForm').hidden = !canAnswer;
   $('playClosed').hidden = !game.closing;
   $('playClosed').textContent = (game.endBy === 'ippon' ? '一本が出たので、答えの受付はおしまい'
@@ -1121,7 +1148,7 @@ function renderPlay(room, game) {
     const waiting = waitingOf(game, state.nickname);
     $('btnAnswer').disabled = waiting >= MAX_WAITING || state.sending;
     if (waiting >= MAX_WAITING && !state.sending) {
-      $('answerMsg').textContent = '出るのを待っている答えが' + MAX_WAITING + 'つあるよ。出たら、また出せるよ';
+      $('answerMsg').textContent = 'いまの答えの審査が終わったら、また出せるよ。次の答えは書いておけるよ';
       $('answerMsg').classList.remove('is-error');
     }
   }
@@ -1135,11 +1162,10 @@ function renderPlay(room, game) {
   const mineRows = [];
   if (me) {
     const my = (a) => a.by === state.nickname;
-    game.pending.filter(my).forEach((a) => mineRows.push(row(a.text, 'ホストが確認中', 'hourglass_top')));
     game.queue.filter(my).forEach((a) => mineRows.push(row(a.text, '順番待ち', 'schedule')));
-    if (c && my(c.a)) mineRows.push(row(c.a.text, 'いま出ているよ', 'campaign'));
+    if (c && my(c.a)) mineRows.push(row(c.a.text, c.state === 'reject' ? '却下！' : c.state === 'ippon' ? '一本！' : 'いま審査中', 'campaign'));
     game.shown.filter(my).forEach((a) => mineRows.push(row(a.text, a.ippon ? '一本！' : '出たよ', a.ippon ? 'workspace_premium' : 'check', a.ippon ? 'is-ippon' : '')));
-    game.hidden.filter(my).forEach((a) => mineRows.push(row(a.text, 'ホストがかくした', 'visibility_off', 'is-hidden')));
+    game.hidden.filter(my).forEach((a) => mineRows.push(row(a.text, a.rejected ? '却下' : 'ホストがかくした', a.rejected ? 'gavel' : 'visibility_off', 'is-hidden')));
   }
   $('mineCard').hidden = !mineRows.length;
   $('mineList').replaceChildren(...mineRows);
@@ -1147,32 +1173,9 @@ function renderPlay(room, game) {
 
   renderProxyBox(room, game);
 
-  // 届いた答え（ホストにだけ）
-  $('checkCard').hidden = !isHost() || !game.pending.length;
-  $('checkEmpty').hidden = !isHost() || !!game.pending.length || game.closing;
-  $('checkCount').textContent = game.pending.length ? game.pending.length + 'つ' : '';
-  if (isHost()) {
-    $('checkList').replaceChildren(...game.pending.map((a) => {
-      const li = row(a.text, a.by + 'さん', 'mark_chat_unread');
-      // 押し忘れても、AUTO_MS で順番待ちへ。のこりの秒は時計（startClock）が書きかえる
-      const auto = makeElement('span', 'og-auto');
-      auto.dataset.at = String(a.at);
-      li.querySelector('.og-list__what').append(auto);
-      const btns = makeElement('div', 'og-list__btn og-list__btns');
-      const ok = makeElement('button', 'btn btn-primary btn-sm og-approve', 'みんなに出す');
-      ok.type = 'button';
-      ok.addEventListener('click', () => approveAnswer(a.id));
-      const ng = makeElement('button', 'btn btn-ghost btn-sm og-reject', 'かくす');
-      ng.type = 'button';
-      ng.addEventListener('click', () => hideAnswer(a.id));
-      btns.append(ok, ng);
-      li.append(btns);
-      return li;
-    }));
-  }
-
-  // このあと出る答え（ホストにだけ。まずい答えをかくせるように）
+  // このあと出る答え（ホストにだけ。名前つき。出る前でも、まずい答えはかくせる）
   $('queueCard').hidden = !isHost() || !game.queue.length;
+  $('queueEmpty').hidden = !isHost() || !!game.queue.length || game.closing;
   if (isHost()) {
     $('queueList').replaceChildren(...game.queue.map((a) => {
       const li = row(a.text, a.by + 'さん', 'schedule');
@@ -1209,7 +1212,7 @@ function renderProxyBox(room, game) {
     li.append(b);
     return li;
   }));
-  $('proxyPressNote').textContent = c && c.state === 'open' ? '「いま出ている答え」に、本人のかわりに投票する' : '答えが出たら、本人のかわりに押せるよ';
+  $('proxyPressNote').textContent = c && c.state === 'open' ? '「いま出ている答え」に、本人のかわりに「おもしろい！」を押す' : '答えが出たら、本人のかわりに押せるよ';
   // 選んでいた名前は残す
   const sel = $('proxyWho');
   const keep = sel.value;
@@ -1264,16 +1267,20 @@ function renderEnd(room, game) {
   $('endWait').hidden = isHost() || isWatch();
 }
 
-// 一本を大きく出す（音は鳴らさない）
+// 一本・却下を大きく出す（音は鳴らさない）。却下は、だれの答えかも答えの文も出さない（笑って流せるように）
 function renderIppon(room, game, phase) {
   const c = phase === STATUS.PLAY && game?.cur;
-  const on = !!(c && c.state === 'ippon');
+  const kind = c && (c.state === 'ippon' || c.state === 'reject') ? c.state : null;
   const box = $('ipponPop');
-  if (on) {
-    $('ipponText').textContent = c.a.text;
-    $('ipponName').textContent = c.a.by + 'さん';
-    if (state.ipponShown !== c.a.id) {
-      state.ipponShown = c.a.id;
+  if (kind) {
+    const reject = kind === 'reject';
+    box.classList.toggle('is-reject', reject);
+    $('ipponTitle').textContent = reject ? '却下！' : '一本！';
+    $('ipponText').textContent = reject ? 'またの回答を、お待ちしております' : c.a.text;
+    $('ipponName').textContent = reject ? '' : c.a.by + 'さん';
+    const key = c.a.id + ':' + kind;
+    if (state.ipponShown !== key) {
+      state.ipponShown = key;
       box.hidden = false;
       box.classList.remove('is-on');
       void box.offsetWidth;
@@ -1281,7 +1288,7 @@ function renderIppon(room, game, phase) {
     }
   } else {
     box.hidden = true;
-    box.classList.remove('is-on');
+    box.classList.remove('is-on', 'is-reject');
   }
 }
 
@@ -1299,10 +1306,6 @@ function startClock() {
       const sec = Math.max(0, Math.ceil((game.roundEndsAt - now) / 1000));
       $('playLeft').textContent = 'のこり ' + Math.floor(sec / 60) + ':' + String(sec % 60).padStart(2, '0');
     }
-    document.querySelectorAll('#checkList .og-auto').forEach((node) => {
-      const sec = Math.max(0, Math.ceil((Number(node.dataset.at) + AUTO_MS - now) / 1000));
-      node.textContent = '・あと' + sec + '秒で出るよ';
-    });
     const c = game.cur;
     if (c && c.state === 'open') {
       const left = Math.max(0, c.endsAt - now);
@@ -1471,7 +1474,7 @@ async function setMode(mode) {
     const me = room.players?.[nickname];
     if (!me || me.uid !== uid) return;
     const next = { ...room, players: { ...room.players, [nickname]: { ...me, mode } } };
-    // 投票する人の数が変わる。いま出ている答えが一本になっていれば、ここで一本にする
+    // 審査員の数が変わる。いま出ている答えが一本になっていれば、ここで一本にする
     const game = gameOf(next);
     if (game && next.status === STATUS.PLAY && checkIppon(next, game, RoomkRTDB.now())) return withGame(next, game);
     return next;
@@ -1572,7 +1575,6 @@ async function chooseTopic(t) {
         roundEndsAt: rule.cut === 'time' ? now + rule.minutes * 60 * 1000 : 0,
         gapUntil: 0,
         cur: null,
-        pending: [],
         queue: [],
         shown: [],
         hidden: [],
@@ -1608,12 +1610,11 @@ async function sendAnswer(text, asName) {
     } else {
       const me = room.players?.[nickname];
       if (!me || me.uid !== uid) { reason = '出せなかったよ'; return; }
-      if (modeOf(me) !== 'both') { reason = '「投票だけ」にしているよ'; return; }
+      if (!isAnswerer(modeOf(me))) { reason = '「回答者」を選ぶと出せるよ'; return; }
     }
-    if (waitingOf(current, by) >= MAX_WAITING) { reason = '出るのを待っている答えが' + MAX_WAITING + 'つあるよ。出るまで待ってね'; return; }
-    const a = { id: aid, by, text, at: RoomkRTDB.now() };
-    if (asName || (host && room.hostUid === uid)) current.queue.push(a);
-    else current.pending.push(a);
+    if (waitingOf(current, by) >= MAX_WAITING) { reason = 'いまの答えの審査が終わったら、また出せるよ'; return; }
+    // ホストの確認はしない（2026-10-31 オーナー判断）。まずい答えは、出ている間にホストが「却下」する
+    current.queue.push({ id: aid, by, text });
     stepGame(room, current, RoomkRTDB.now());
     return withGame(room, current);
   }, '');
@@ -1634,7 +1635,7 @@ async function submitAnswer() {
   $('btnAnswer').disabled = true;
   const err = await sendAnswer(text, null);
   state.sending = false;
-  msg.textContent = err || (isHost() ? '出したよ。順番に出るよ' : '出したよ。ホストが確認したら（10秒ほどで）、順番に出るよ');
+  msg.textContent = err || '出したよ。順番に出るよ';
   msg.classList.toggle('is-error', !!err);
   if (!err && cleanAnswer($('answerInput').value) === text) $('answerInput').value = '';
   if (state.room) renderRoom(state.room);
@@ -1670,11 +1671,11 @@ async function pressAnswer(aid, asName) {
     who = asName;
   } else {
     const me = room.players?.[who];
-    if (!me || me.uid !== uid || modeOf(me) === 'none') return;
+    if (!me || me.uid !== uid || !isJudge(modeOf(me))) return;
   }
   try {
     const result = await state.roomRef.child('game/cur').transaction((cur) => {
-      if (!cur || typeof cur !== 'object' || cur.a?.id !== aid || cur.state === 'ippon') return;
+      if (!cur || typeof cur !== 'object' || cur.a?.id !== aid || (cur.state || 'open') !== 'open') return;
       if (cur.a.by === who || cur.presses?.[who] === true) return;
       // 押せる時間を過ぎたあとは受けない（締めるのを待っている間）
       if (RoomkRTDB.now() >= (Number(cur.endsAt) || 0) + 300) return;
@@ -1688,45 +1689,35 @@ async function pressAnswer(aid, asName) {
   }
 }
 
-async function approveAnswer(aid) {
-  await hostTransaction((room) => {
+// 「却下」。いま出ている答え（一本を出している途中もふくむ）を、「却下！」を大きく出してから取り下げる（2026-10-31 オーナー判断）。
+// だれの答えかも、答えの文も、くり返して出さない。押してすぐ出るように確認はしない
+async function rejectAnswer(aid) {
+  const ok = await hostTransaction((room) => {
     const game = gameOf(room);
-    if (room.status !== STATUS.PLAY || !game) return;
-    const a = game.pending.find((x) => x.id === aid);
-    if (!a) return;
-    game.pending = game.pending.filter((x) => x.id !== aid);
-    game.queue.push(a);
-    stepGame(room, game, RoomkRTDB.now());
+    const c = game?.cur;
+    if (room.status !== STATUS.PLAY || !c || c.a.id !== aid || c.state === 'reject') return;
+    c.state = 'reject';
+    c.holdUntil = RoomkRTDB.now() + REJECT_MS;
     return withGame(room, game);
-  }, 'うまくいきませんでした。もう一度ためしてね', false);
+  }, '却下できませんでした。もう一度ためしてね', false);
+  if (ok === false) toast('もう出し終わった答えなので、却下できなかったよ');
 }
 
-// まずい答えが出たとき用。確認待ちの答えも、順番待ちの答えも、いま出ている答えもかくせる
+// まずい答えを出る前にかくす（このあと出る答え）
 async function hideAnswer(aid) {
   if (!window.confirm('この答えをかくす？（書いた人の画面にだけ「ホストがかくした」と出るよ）')) return;
   const ok = await hostTransaction((room) => {
     const game = gameOf(room);
     if (room.status !== STATUS.PLAY || !game) return;
-    const now = RoomkRTDB.now();
-    const pa = game.pending.find((a) => a.id === aid);
     const qa = game.queue.find((a) => a.id === aid);
-    if (pa) {
-      game.pending = game.pending.filter((a) => a.id !== aid);
-      game.hidden.push(pa);
-    } else if (qa) {
-      game.queue = game.queue.filter((a) => a.id !== aid);
-      game.hidden.push(qa);
-    } else if (game.cur && game.cur.a.id === aid) {
-      // 一本を出している途中でもかくせる（お題ごとの一本には入れない）
-      game.hidden.push(game.cur.a);
-      game.cur = null;
-      game.gapUntil = now + GAP_MS;
-    } else return;
-    stepGame(room, game, now);
+    if (!qa) return;
+    game.queue = game.queue.filter((a) => a.id !== aid);
+    game.hidden.push(qa);
+    stepGame(room, game, RoomkRTDB.now());
     return withGame(room, game);
   }, 'かくせませんでした。もう一度ためしてね', false);
-  // 確かめている間に、出し終わっていたとき
-  if (ok === false) toast('もう出し終わった答えなので、かくせなかったよ');
+  // 確かめている間に、出てしまっていたとき
+  if (ok === false) toast('もう出ている答えなので、かくせなかったよ。出ている答えは「却下」できるよ');
 }
 
 async function closeAnswers() {
@@ -1763,7 +1754,7 @@ async function finishGame() {
   // 押した時点の画面（status とお題の番号）を捕まえて、中で一致を確かめる
   const status = state.room.status;
   // まだ出ていない答えがあれば知らせる（書いた答えが出ないまま終わる子に気づけるように）
-  const unshown = status === STATUS.PLAY ? game.pending.length + game.queue.length : 0;
+  const unshown = status === STATUS.PLAY ? game.queue.length : 0;
   const ask = unshown ? 'まだ出ていない答えが' + unshown + 'つあるよ。ここでおしまいにする？（出ていない答えは出ないまま終わるよ）' : 'ここでおしまいにする？';
   if (!window.confirm(ask)) return;
   await hostTransaction((room) => {
@@ -1773,7 +1764,7 @@ async function finishGame() {
     // 一本を大きく出している途中なら、その一本はお題ごとの一本に入れる
     if (room.status === STATUS.PLAY && current.cur?.state === 'ippon') finishCur(current, true, RoomkRTDB.now());
     // 出ていない答えは捨てる（おしまいの画面は一本だけ）
-    return { ...room, status: STATUS.END, game: { ...current, cur: null, pending: [], queue: [], cands: [] } };
+    return { ...room, status: STATUS.END, game: { ...current, cur: null, queue: [], cands: [] } };
   }, 'おしまいにできませんでした。もう一度ためしてね');
 }
 
@@ -1908,9 +1899,9 @@ $('btnPress').addEventListener('click', () => {
   const c = gameOf(state.room)?.cur;
   if (c) pressAnswer(c.a.id, null);
 });
-$('btnHideCur').addEventListener('click', () => {
+$('btnReject').addEventListener('click', () => {
   const c = gameOf(state.room)?.cur;
-  if (c) hideAnswer(c.a.id);
+  if (c) rejectAnswer(c.a.id);
 });
 $('btnClose').addEventListener('click', closeAnswers);
 $('btnProxyAnswer').addEventListener('click', submitProxyAnswer);

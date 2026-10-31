@@ -43,8 +43,9 @@ async function startTopic(h, g) {
   await dup.page.click('#btnJoinRoom');
   check('P7 端末のない子と同じ名前では参加できない', await waitUntil(async () => ((await text(dup, '#joinError')) || '').includes('その名前は使われている')));
   await dup.page.close();
-  await setMode(h, '進行だけ');
-  check('P8 端末のない子も投票する人に数える（りく＋そら）', await waitUntil(async () => !(await h.page.isDisabled('#btnStart')) && (await text(h, '#lobbyStartNote')).includes('2人')));
+  await setMode(h, '回答者');
+  await setMode(h, '審査員');
+  check('P8 端末のない子も審査員に数える（りく＋そら）', await waitUntil(async () => !(await h.page.isDisabled('#btnStart')) && (await text(h, '#lobbyStartNote')).includes('2人')));
   await h.page.click('#btnStart');
   await startTopic(h, g);
   check('P9 代わりに書く・押す欄はホストにだけ', await visible(h, '#proxyBox') && !(await visible(g, '#proxyBox')));
@@ -85,7 +86,8 @@ async function startTopic(h, g) {
   await h.page.click('#btnRestart');
   await waitScreen(g, 'waiting');
   check('P24 端末のない子は待合室に残る', (await text(g, '#lobbyPlayers')).includes('そら') && (await text(g, '#lobbyPlayers')).includes('ほし'));
-  await setMode(h, '答えも出す');
+  await setMode(h, '回答者');
+  await setMode(h, '審査員');
   for (const name of ['そら', 'ほし']) {
     await h.page.click('#proxyAdminList li:has-text("' + name + '") .og-proxy-remove');
     await waitUntil(async () => !(await text(g, '#lobbyPlayers')).includes(name));
@@ -94,15 +96,15 @@ async function startTopic(h, g) {
   // ── Q. 再読み込み・途中参加・退出・入りなおし ──
   await h.page.click('#btnStart');
   await startTopic(h, g);
-  await setMode(g, '投票だけ');
+  await setMode(g, '回答者');
   await waitUntil(async () => !(await visible(g, '#answerForm')));
   await g.page.reload();
-  check('Q1 再読み込みで同じ画面に戻る（参加のしかたも）', await waitUntil(async () => (await L.screen(g)) === 'play' && !(await visible(g, '#answerForm')) && (await g.page.$eval('#modeOpts .og-seg__btn.is-on', (e) => e.textContent)) === '投票だけ'));
-  await setMode(g, '答えも出す');
+  check('Q1 再読み込みで同じ画面に戻る（参加スタイルも）', await waitUntil(async () => (await L.screen(g)) === 'play' && !(await visible(g, '#answerForm')) && (await L.roleOn(g)) === '審査員'));
+  await setMode(g, '回答者');
   const late = await L.newClient('late');
   await L.joinRoom(late, 'あさひ', code, 'both', 'play');
   check('Q2 遊んでいる途中からも入れる', (await L.screen(late)) === 'play' && await visible(late, '#answerForm'));
-  // りくの答えに投票する人は、メンター・あさひ（2人）→ 一本は1人。全員にして、あさひが抜けたら数えなおす
+  // りくの答えの審査員は、メンター・あさひ（2人）→ 一本は1人。全員にして、あさひが抜けたら数えなおす
   await answer(g, 'ぬけたらいっぽん');
   await approve(h, 'ぬけたらいっぽん');
   await waitUntil(async () => (await stage(late)) === 'ぬけたらいっぽん');
@@ -152,14 +154,15 @@ async function startTopic(h, g) {
   await answer(g, 'えすいち');
   await approve(h, 'えすいち');
   await waitUntil(async () => (await stage(late)) === 'えすいち');
-  await answer(g, 'えすに');
+  // 1人が出しておけるのは1つなので、順番待ちはあさひの答え
+  await answer(late, 'えすに');
   await approve(h, 'えすに');
   check('S1 順番待ちに1つ', await waitUntil(async () => (await h.page.$$('#queueList li')).length === 1));
   await h.page.click('#btnClose');
   await waitUntil(async () => (await text(g, '#playClosed')).includes('締め切った'));
   await late.page.click('#btnPress');
-  check('S2 一本のあとも、順番待ちの答えが出る（投票もできる）', await waitUntil(async () => (await stage(late)) === 'えすに', 10000) && await visible(late, '#btnPress'));
-  await late.page.click('#btnPress');
+  check('S2 一本のあとも、順番待ちの答えが出る（押すこともできる）', await waitUntil(async () => (await stage(g)) === 'えすに', 10000) && await visible(g, '#btnPress'));
+  await g.page.click('#btnPress');
   check('S2b 一本のあとの答えも一本になれる', await waitUntil(async () => await ipponOn(late) && (await text(late, '#ipponText')) === 'えすに'));
   check('S2c 出し終えたら結果へ（一本が2つ）', await waitUntil(async () => (await L.screen(late)) === 'result', 10000) && (await listRows(late, '#resultIppon')).length === 2);
 
@@ -169,22 +172,22 @@ async function startTopic(h, g) {
   await answer(g, 'てぃーいち');
   await approve(h, 'てぃーいち');
   await waitUntil(async () => (await stage(late)) === 'てぃーいち');
-  await answer(g, 'てぃーに');
+  await answer(late, 'てぃーに');
   await approve(h, 'てぃーに');
   await waitUntil(async () => (await h.page.$$('#queueList li')).length === 1);
   await late.page.click('#btnPress');
   check('T1 一本が出たら受付は締め切る', await waitUntil(async () => !(await visible(g, '#answerForm')) && (await text(g, '#playClosed')).includes('一本が出た')));
   check('T2 順番待ちの答えは最後まで出る', await waitUntil(async () => (await stage(late)) === 'てぃーに', 10000));
   await endWindow(code);
-  check('T3 出し終えたら結果へ。一本にならなかった答えは名前なしで並ぶ', await waitUntil(async () => (await L.screen(late)) === 'result', 10000) && (await listRows(late, '#resultOthers')).some((r) => r.t === 'てぃーに' && r.w === ''));
+  check('T3 出し終えたら結果へ。一本にならなかった答えは名前なしで並ぶ', await waitUntil(async () => (await L.screen(late)) === 'result', 10000) && (await listRows(g, '#resultOthers')).some((r) => r.t === 'てぃーに' && r.w === '') && (await listRows(late, '#resultOthers')).some((r) => r.t === 'てぃーに' && r.w === 'あなた'));
   // 一本を出している途中の「ここでおしまい」でも、その一本はおしまいの画面に入る
   await h.page.click('#btnNext');
   await startTopic(h, g);
   await answer(g, 'さいごのいっぽん');
   await approve(h, 'さいごのいっぽん');
   await waitUntil(async () => (await stage(late)) === 'さいごのいっぽん');
-  await answer(g, 'でないまま');
-  await waitUntil(async () => (await text(h, '#checkList')).includes('でないまま'));
+  await answer(late, 'でないまま');
+  await waitUntil(async () => (await text(h, '#queueList')).includes('でないまま'));
   await late.page.click('#btnPress');
   await waitUntil(async () => await ipponOn(h));
   h.dialogs.length = 0;

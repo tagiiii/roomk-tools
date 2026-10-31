@@ -161,6 +161,22 @@ body { background: var(--color-bg); }
 .og-press:hover:not(:disabled) { background: #DDA92F; }
 .og-press.is-pressed, .og-press:disabled { background: #F3E3B5; color: #6B5A2A; cursor: default; }
 
+/* おもしろゲージ（押した数は数字で出さない。右はしの「一本」の線に届いたら一本） */
+.og-gauge { width: 100%; max-width: 460px; margin: 14px auto 0; display: grid; gap: 4px; }
+.og-gauge__label { font-size: 13px; font-weight: 700; color: #8A6A10; letter-spacing: 0.06em; }
+.og-gauge__track { position: relative; height: 22px; border-radius: 999px; background: #FFF6DB; border: 2px solid #E9B949; overflow: hidden; }
+.og-gauge__fill { height: 100%; width: 0; background: linear-gradient(90deg, #F3D27A, #E9B949); border-radius: 999px; transition: width 0.45s ease-out; }
+.og-gauge__goal { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); font-size: 12px; font-weight: 700; color: #7A5A00; }
+.og-gauge.is-full .og-gauge__track { box-shadow: 0 0 0 4px rgba(233, 185, 73, 0.35); }
+.og-gauge.is-full .og-gauge__fill { background: #E9B949; }
+@media (prefers-reduced-motion: reduce) { .og-gauge__fill { transition: none; } }
+
+/* 却下（ホストにだけ） */
+.og-reject-btn { color: var(--color-error); border-color: #F0C8C8; }
+
+/* 参加スタイル（回答者・審査員。どちらか・両方） */
+.og-role:disabled { opacity: 1; cursor: default; }
+
 /* 遊ぶ画面: 広い画面では右に、ホストの操作と出た答え */
 .og-playgrid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; align-items: start; }
 .og-col { display: grid; gap: 16px; align-content: start; min-width: 0; }
@@ -188,7 +204,6 @@ body { background: var(--color-bg); }
 .og-hostpanel__title .material-symbols-rounded { font-size: 20px; }
 .og-hostpanel__empty { margin: 0; padding: 14px; border-radius: 10px; background: var(--color-surface); color: var(--color-muted); font-size: 14px; text-align: center; }
 .og-hostbox { padding: 14px; border-radius: 12px; background: var(--color-surface); }
-.og-hostbox.og-check { border: 2px solid var(--color-accent); }
 .og-hostpanel__btns { display: grid; gap: 8px; justify-items: center; }
 .og-count { display: inline-block; margin-left: 6px; padding: 0 8px; border-radius: 999px; background: var(--color-accent); color: #fff; font-size: 13px; }
 .og-count:empty { display: none; }
@@ -203,7 +218,6 @@ body { background: var(--color-bg); }
 .og-proxy-press:hover:not(:disabled) { background: #DDA92F; }
 .og-proxy-press:disabled { background: #F3E3B5; color: #6B5A2A; cursor: default; }
 .og-proxy-who { width: 100%; }
-.og-auto { color: var(--color-muted); font-weight: 400; }
 #proxyAdd .form-input { min-width: 0; }
 #proxyAdd .btn { flex: none; white-space: nowrap; }
 
@@ -231,6 +245,10 @@ body { background: var(--color-bg); }
 .og-ippon.is-on .og-ippon__box { animation: og-pop 0.35s ease-out forwards; }
 @keyframes og-pop { to { transform: scale(1); opacity: 1; } }
 .og-ippon__title { margin: 0 0 8px; font-size: 64px; font-weight: 700; color: #B07800; letter-spacing: 0.1em; line-height: 1.1; }
+/* 却下！（はんこのように少し傾ける。だれの答えかは出さない） */
+.og-ippon.is-reject .og-ippon__box { background: #F4F5F7; border-color: #8A8F98; }
+.og-ippon.is-reject .og-ippon__title { color: #B91C1C; display: inline-block; border: 5px solid #B91C1C; border-radius: 14px; padding: 4px 22px; transform: rotate(-6deg); }
+.og-ippon.is-reject .og-ippon__text { color: var(--color-muted); font-size: 20px; margin-top: 14px; }
 .og-ippon__text { margin: 0 0 10px; font-size: 26px; font-weight: 700; color: var(--color-text); line-height: 1.5; overflow-wrap: anywhere; }
 .og-ippon__name { margin: 0; font-size: 18px; font-weight: 700; color: var(--color-primary); }
 @media (prefers-reduced-motion: reduce) {
