@@ -18,10 +18,11 @@ const { check, sleep, text, visible, waitScreen, waitFor, key, fitsHeight, overf
   check('S3 時間を選ぶと残り時間が出る', await waitFor(async () => /^(2:00|1:59)$/.test(await text(P, '#playTimer'))));
   check('S4 ひとりのときは「おわる」', (await text(P, '#btnPlayEnd')) === 'おわる');
   check('S5 ひとりのときはルームのバー・じゃま・ほかの人を出さない', !(await visible(P, '#roomBar')) && !(await visible(P, '#jamaBox')) && !(await visible(P, '#others')) && !(await visible(P, '#othersList')));
+  check('S5b 画面のボタンは7つで、裏返すはない', (await P.page.$$eval('.sb-padbtn', (b) => b.length)) === 7 && !(await P.page.$('.sb-padbtn[data-act="flip"]')));
   const used = () => P.page.$eval('#hold', (c) => c.classList.contains('is-used'));
   check('S6 はじめは、とっておける', !(await used()));
   await key(P, 'a');
-  check('S6b A は裏返すで、とっておかない', !(await used()));
+  check('S6b A では、とっておかない（裏返すはない）', !(await used()));
   await key(P, 'c');
   check('S7 C でとっておくと箱がうすくなる', await used());
   await key(P, 'Space');
@@ -124,12 +125,12 @@ const { check, sleep, text, visible, waitScreen, waitFor, key, fitsHeight, overf
   L.E.hardDrop(g);
   r1 = await L.roomWhen(code, (r) => r.boards?.['そら']?.pieces === 2);
   check('S23 右クリックで右に回し、右はしへ寄せて落とす', r1.boards['そら'].b === L.E.packBoard(g.board));
-  // ホイールで左に回し、まん中のボタンで裏返して、まん中に落とす
+  // ホイールで左に回し、まん中のボタンを押しても何も起きないことを確かめて、まん中に落とす
   await M.page.mouse.move(colX(4), midY);
   await M.page.mouse.wheel(0, -100);
   await sleep(250);
   await M.page.mouse.down({ button: 'middle' }); await M.page.mouse.up({ button: 'middle' });
-  // 画面と同じ順に: まん中へ動かす → 左に回す → 裏返す → まん中へ動かす
+  // 画面と同じ順に: まん中へ動かす → 左に回す → まん中へ動かす
   const xs = () => g.piece.cells.map(([x]) => g.piece.x + x);
   const moveTo = (col) => {
     for (let i = 0; i < L.E.W; i++) {
@@ -139,13 +140,12 @@ const { check, sleep, text, visible, waitScreen, waitFor, key, fitsHeight, overf
   };
   moveTo(4);
   L.E.rotate(g, -1);
-  L.E.flip(g);
   moveTo(4);
   await M.page.mouse.move(colX(4) + 1, midY);
   await M.page.mouse.down(); await M.page.mouse.up();
   L.E.hardDrop(g);
   r1 = await L.roomWhen(code, (r) => r.boards?.['そら']?.pieces === 3);
-  check('S24 ホイールで回し、まん中のボタンで裏返して落とす', r1.boards['そら'].b === L.E.packBoard(g.board), { got: r1.boards['そら'].b.slice(-40), want: L.E.packBoard(g.board).slice(-40) });
+  check('S24 ホイールで回して落とす（まん中のボタンでは何も起きない）', r1.boards['そら'].b === L.E.packBoard(g.board), { got: r1.boards['そら'].b.slice(-40), want: L.E.packBoard(g.board).slice(-40) });
   check('S25 右クリックでメニューを出さない（盤の上）', await M.page.evaluate(() => { const ev = new MouseEvent('contextmenu', { bubbles: true, cancelable: true }); return !document.querySelector('#board').dispatchEvent(ev); }));
 
   await L.finishAll(server);

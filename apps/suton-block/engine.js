@@ -1,8 +1,8 @@
 /* すとんブロック 盤とブロックのしくみ（画面を持たない）
    ブラウザでは window.SutonEngine、node では require で読む。
    ・盤は横10・たて20。上にはみ出した部分（y < 0）は空きとして扱う
-   ・ブロックは1〜4マスの8種類。回す・裏返す（左右反転）・1つとっておく、ができる
-   ・回せないときは、少しずらして試す（回す向きの側を先に・下へのねじこみ・4マスの棒は大きめ）
+   ・ブロックは4マスの7種類（I・O・T・S・Z・L・J）。回す・1つとっておく、ができる
+   ・回せないときは、向きの組み合わせごとに決まった5通りのずらし方を順に試す（よく知られた回し方と同じ）
    ・横1段がうまったら消える。いっぱいになったら「おしまい」か「からにしてつづける」
    ・ルームで「じゃまあり」なら、下から1列あいた段（じゃまブロック）が押し上げてくる */
 (function (root, factory) {
@@ -14,37 +14,46 @@
   const W = 10;
   const H = 20;
 
-  // 形は n×n の箱の中のマス [x, y]。色は画面側で kind から決める
+  // 形は n×n の箱の中のマス [x, y]（はじめの向き）。色は画面側で kind から決める
+  // 箱の中で回すと、よく知られた回し方と同じ向きの変わり方になる（I は4×4、O は2×2、ほかは3×3）
   const SHAPES = {
-    bou4:  { n: 4, cells: [[0, 1], [1, 1], [2, 1], [3, 1]] },
-    shikaku: { n: 2, cells: [[0, 0], [1, 0], [0, 1], [1, 1]] },
-    yama:  { n: 3, cells: [[1, 0], [0, 1], [1, 1], [2, 1]] },
-    zure:  { n: 3, cells: [[1, 0], [2, 0], [0, 1], [1, 1]] },
-    kagi4: { n: 3, cells: [[2, 0], [0, 1], [1, 1], [2, 1]] },
-    bou3:  { n: 3, cells: [[0, 1], [1, 1], [2, 1]] },
-    kagi3: { n: 2, cells: [[0, 0], [0, 1], [1, 1]] },
-    futa:  { n: 2, cells: [[0, 0], [1, 0]] },
+    I: { n: 4, cells: [[0, 1], [1, 1], [2, 1], [3, 1]] },
+    O: { n: 2, cells: [[0, 0], [1, 0], [0, 1], [1, 1]] },
+    T: { n: 3, cells: [[1, 0], [0, 1], [1, 1], [2, 1]] },
+    S: { n: 3, cells: [[1, 0], [2, 0], [0, 1], [1, 1]] },
+    Z: { n: 3, cells: [[0, 0], [1, 0], [1, 1], [2, 1]] },
+    L: { n: 3, cells: [[2, 0], [0, 1], [1, 1], [2, 1]] },
+    J: { n: 3, cells: [[0, 0], [0, 1], [1, 1], [2, 1]] },
   };
   const KINDS = Object.keys(SHAPES);
 
-  // 回せないときに試すずらし方（独自。y は負が上・正が下）
-  //   s は回す向き（右回り 1・左回り -1）。回す向きの側を先に試す
-  //   1) その場 2) 横に1マス 3) 下に1マス（張り出しの下のすき間へねじこむ）
-  //   4) 下に2マス＋横に1マス（屋根の下の深いすき間へ縦に入れる。上より先に試す）
-  //   5) 上に1マス（床ぎわ） 6) 横に2マス。4マスの棒だけは、横に2マス＋上に1マスも試す
-  function kicksFor(kind, s) {
-    const k = [
-      [0, 0],
-      [s, 0], [-s, 0],
-      [0, 1], [s, 1], [-s, 1],
-      [s, 2], [-s, 2],
-      [0, -1], [s, -1], [-s, -1],
-      [2 * s, 0], [-2 * s, 0],
-    ];
-    if (kind === 'bou4') k.push([2 * s, -1], [-2 * s, -1]);
-    return k;
+  // 回せないときに試すずらし方。向きは 0 = はじめ・1 = 右に1回・2 = 2回・3 = 左に1回。
+  // 「いまの向き > 回した先の向き」ごとに5通りを順に試す（y は負が上・正が下）。
+  // I とそれ以外で表が分かれる。O は回しても形が変わらないので、その場だけ
+  const KICKS_JLSTZ = {
+    '0>1': [[0, 0], [-1, 0], [-1, -1], [0, 2], [-1, 2]],
+    '1>0': [[0, 0], [1, 0], [1, 1], [0, -2], [1, -2]],
+    '1>2': [[0, 0], [1, 0], [1, 1], [0, -2], [1, -2]],
+    '2>1': [[0, 0], [-1, 0], [-1, -1], [0, 2], [-1, 2]],
+    '2>3': [[0, 0], [1, 0], [1, -1], [0, 2], [1, 2]],
+    '3>2': [[0, 0], [-1, 0], [-1, 1], [0, -2], [-1, -2]],
+    '3>0': [[0, 0], [-1, 0], [-1, 1], [0, -2], [-1, -2]],
+    '0>3': [[0, 0], [1, 0], [1, -1], [0, 2], [1, 2]],
+  };
+  const KICKS_I = {
+    '0>1': [[0, 0], [-2, 0], [1, 0], [-2, 1], [1, -2]],
+    '1>0': [[0, 0], [2, 0], [-1, 0], [2, -1], [-1, 2]],
+    '1>2': [[0, 0], [-1, 0], [2, 0], [-1, -2], [2, 1]],
+    '2>1': [[0, 0], [1, 0], [-2, 0], [1, 2], [-2, -1]],
+    '2>3': [[0, 0], [2, 0], [-1, 0], [2, -1], [-1, 2]],
+    '3>2': [[0, 0], [-2, 0], [1, 0], [-2, 1], [1, -2]],
+    '3>0': [[0, 0], [1, 0], [-2, 0], [1, 2], [-2, -1]],
+    '0>3': [[0, 0], [-1, 0], [2, 0], [-1, -2], [2, 1]],
+  };
+  function kicksFor(kind, from, to) {
+    if (kind === 'O') return [[0, 0]];
+    return (kind === 'I' ? KICKS_I : KICKS_JLSTZ)[from + '>' + to];
   }
-  const KICKS = kicksFor('', 1);
 
   // 同じ種(seed)なら同じ順番でブロックが出る（ルームでみんなの出る順をそろえる）
   function rng(seed) {
@@ -58,24 +67,21 @@
     };
   }
 
-  // 8種類を1回ずつ混ぜた袋から順に出す。半分の確率で裏返した向きで出す
+  // 7種類を1回ずつ混ぜた袋から順に出す
   function makeBag(rand) {
     const bag = KINDS.slice();
     for (let i = bag.length - 1; i > 0; i--) {
       const j = Math.floor(rand() * (i + 1));
       [bag[i], bag[j]] = [bag[j], bag[i]];
     }
-    return bag.map((kind) => ({ kind, flip: rand() < 0.5 }));
+    return bag.map((kind) => ({ kind }));
   }
 
   function rotateCells(cells, n) { return cells.map(([x, y]) => [n - 1 - y, x]); }
-  function flipCells(cells, n) { return cells.map(([x, y]) => [n - 1 - x, y]); }
 
   function newPiece(spec) {
     const s = SHAPES[spec.kind];
-    let cells = s.cells.map((c) => c.slice());
-    if (spec.flip) cells = flipCells(cells, s.n);
-    return { kind: spec.kind, flip: !!spec.flip, n: s.n, cells, x: Math.floor((W - s.n) / 2), y: -1 };
+    return { kind: spec.kind, n: s.n, rot: 0, cells: s.cells.map((c) => c.slice()), x: Math.floor((W - s.n) / 2), y: -1 };
   }
 
   function emptyBoard() {
@@ -106,7 +112,7 @@
       resets: 0,
       taken: 0,         // 出る順番の列から取り出した数（読み込み直したとき、同じところから続けるため）
       over: false,
-      hold: null,       // とっておいたブロック（{ kind, flip }）
+      hold: null,       // とっておいたブロック（{ kind }）
       holdUsed: false,  // いまのブロックで、もう「とっておく」を使ったか
       onFull: o.onFull, // 'clear' = からにしてつづける / 'end' = おしまい
       rand,
@@ -147,30 +153,21 @@
     return true;
   }
 
-  function tryCells(g, cells, s) {
-    const p = g.piece;
-    for (const [kx, ky] of kicksFor(p.kind, s)) {
-      if (fits(g.board, p, cells, p.x + kx, p.y + ky)) {
-        p.cells = cells; p.x += kx; p.y += ky;
-        return true;
-      }
-    }
-    return false;
-  }
-
   // dir: 1 = 右回り / -1 = 左回り
   function rotate(g, dir) {
     const p = g.piece;
     if (!p || g.over) return false;
     let cells = rotateCells(p.cells, p.n);
     if (dir < 0) cells = rotateCells(rotateCells(cells, p.n), p.n);
-    return tryCells(g, cells, dir < 0 ? -1 : 1);
-  }
-
-  function flip(g) {
-    const p = g.piece;
-    if (!p || g.over) return false;
-    return tryCells(g, flipCells(p.cells, p.n), 1);
+    const from = p.rot || 0;
+    const to = (from + (dir < 0 ? 3 : 1)) % 4;
+    for (const [kx, ky] of kicksFor(p.kind, from, to)) {
+      if (fits(g.board, p, cells, p.x + kx, p.y + ky)) {
+        p.cells = cells; p.rot = to; p.x += kx; p.y += ky;
+        return true;
+      }
+    }
+    return false;
   }
 
   function dropY(g) {
@@ -232,7 +229,7 @@
     const p = g.piece;
     if (!p || g.over || g.holdUsed) return false;
     const out = g.hold;
-    g.hold = { kind: p.kind, flip: p.flip };
+    g.hold = { kind: p.kind };
     const res = out ? spawn(g, out) : spawn(g);
     g.holdUsed = true;
     return Object.assign({ held: true }, res);
@@ -273,7 +270,7 @@
   }
 
   // ルームでほかの人に見せる盤（ブロックの種類の頭文字、空きは .）
-  const CODE = { bou4: 'a', shikaku: 'b', yama: 'c', zure: 'd', kagi4: 'e', bou3: 'f', kagi3: 'g', futa: 'h', jama: 'j' };
+  const CODE = { I: 'a', O: 'b', T: 'c', S: 'd', L: 'e', Z: 'f', J: 'g', jama: 'j' };
   const UNCODE = Object.fromEntries(Object.entries(CODE).map(([k, v]) => [v, k]));
   function packBoard(board) { return board.map((r) => r.map((c) => (c ? CODE[c] : '.')).join('')).join(''); }
   function unpackBoard(s) {
@@ -296,7 +293,7 @@
     g.lines = Math.max(0, Number(s.lines) || 0);
     g.pieces = Math.max(0, Number(s.pieces) || 0);
     g.resets = Math.max(0, Number(s.resets) || 0);
-    g.hold = s.hold && SHAPES[s.hold.kind] ? { kind: s.hold.kind, flip: !!s.hold.flip } : null;
+    g.hold = s.hold && SHAPES[s.hold.kind] ? { kind: s.hold.kind } : null;
     g.holdUsed = !!s.holdUsed;
     if (!fits(g.board, g.piece, g.piece.cells, g.piece.x, g.piece.y)) {
       if (g.onFull === 'end') { g.piece = null; g.over = true; }
@@ -306,9 +303,9 @@
   }
 
   return {
-    W, H, SHAPES, KINDS, KICKS, kicksFor,
+    W, H, SHAPES, KINDS, kicksFor,
     rng, makeBag, newPiece, emptyBoard, fits,
-    createGame, spawn, move, rotate, flip, dropY, lock, hardDrop, addGarbage, hold,
+    createGame, spawn, move, rotate, dropY, lock, hardDrop, addGarbage, hold,
     packBoard, unpackBoard, cellsOf, restoreGame,
   };
 });

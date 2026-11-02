@@ -107,6 +107,7 @@
 
   /* 操作ボタン */
   .pad{ display:grid; grid-template-columns:repeat(4, 1fr); gap:16px; }
+  .pad .padbtn:last-child{ grid-column:span 2; }
   .padbtn{ background:var(--white); border:1.5px solid var(--line); border-radius:16px; padding:16px 12px 14px; display:flex; flex-direction:column; align-items:center; gap:8px; }
   .padbtn__ic{ width:58px; height:58px; border-radius:14px; background:var(--acc-tint); color:var(--acc); display:flex; align-items:center; justify-content:center; }
   .padbtn__ic .material-symbols-rounded{ font-size:34px; }
@@ -244,19 +245,18 @@
 /* ===== ブロックと盤の見本 ===== */
 // 色はアプリ（app.js の COLORS）と同じ
 const COLORS = {
-  B:'#3BA3B5', Y:'#E0B33A', V:'#9A7CC8', Z:'#5DAE6B',
-  K:'#E08454', S:'#5B8FD6', P:'#D07198', F:'#A3B061', g:'#7B8794',
+  I:'#D07198', O:'#3BA3B5', T:'#5DAE6B', S:'#E0B33A',
+  Z:'#5B8FD6', L:'#9A7CC8', J:'#E08454', g:'#7B8794',
 };
-// 8種類の形（engine.js の SHAPES と同じマス）
+// 7種類の形（engine.js の SHAPES と同じマス）
 const SHAPES = [
-  { c:'B', n:4, cells:[[0,1],[1,1],[2,1],[3,1]] },
-  { c:'Y', n:2, cells:[[0,0],[1,0],[0,1],[1,1]] },
-  { c:'V', n:3, cells:[[1,0],[0,1],[1,1],[2,1]] },
-  { c:'Z', n:3, cells:[[1,0],[2,0],[0,1],[1,1]] },
-  { c:'K', n:3, cells:[[2,0],[0,1],[1,1],[2,1]] },
-  { c:'S', n:3, cells:[[0,1],[1,1],[2,1]] },
-  { c:'P', n:2, cells:[[0,0],[0,1],[1,1]] },
-  { c:'F', n:2, cells:[[0,0],[1,0]] },
+  { c:'I', n:4, cells:[[0,1],[1,1],[2,1],[3,1]] },
+  { c:'O', n:2, cells:[[0,0],[1,0],[0,1],[1,1]] },
+  { c:'T', n:3, cells:[[1,0],[0,1],[1,1],[2,1]] },
+  { c:'S', n:3, cells:[[1,0],[2,0],[0,1],[1,1]] },
+  { c:'Z', n:3, cells:[[0,0],[1,0],[1,1],[2,1]] },
+  { c:'L', n:3, cells:[[2,0],[0,1],[1,1],[2,1]] },
+  { c:'J', n:3, cells:[[0,0],[0,1],[1,1],[2,1]] },
 ];
 function shapeHTML(s){
   // 使っている行と列だけを切り出して描く
@@ -271,7 +271,7 @@ function shapeHTML(s){
   return html+'</div>';
 }
 function shapesStrip(){
-  return '<div class="shapes">'+SHAPES.map(s=>'<div class="shape">'+shapeHTML(s)+'<div class="shape__n">'+s.cells.length+'マス</div></div>').join('')+'</div>';
+  return '<div class="shapes">'+SHAPES.map(s=>'<div class="shape">'+shapeHTML(s)+'<div class="shape__n">'+s.c+'</div></div>').join('')+'</div>';
 }
 // rows: 1行10文字。'.' 空き・英大文字 ブロック・'g' じゃま・'o' 落ちる場所の枠
 // o.ghost: 枠の色の文字、o.flash: 光らせる行の番号
@@ -282,7 +282,7 @@ function miniBoard(rows, o){
     for(let i=0;i<10;i++){
       const ch=r[i];
       const fl=(o.flash===ri)?' flash':'';
-      if(ch==='o') h+='<span class="tb__c ghost'+fl+'" style="--g:'+COLORS[o.ghost||'F']+'"></span>';
+      if(ch==='o') h+='<span class="tb__c ghost'+fl+'" style="--g:'+COLORS[o.ghost||'T']+'"></span>';
       else if(ch==='.') h+='<span class="tb__c'+fl+'"></span>';
       else h+='<span class="tb__c on'+fl+'" style="background:'+COLORS[ch]+'"></span>';
     }
@@ -290,13 +290,13 @@ function miniBoard(rows, o){
   return h+'</div>';
 }
 const BEFORE = [
-  '.....F....',
-  '.....F....',
+  '....TTT...',
+  '.....T....',
   '..........',
   '..........',
   '..........',
-  'YY...o.SSS',
-  'YYKKKoZZBB',
+  'OO..oooLLL',
+  'OOJJJoZZIL',
 ];
 const AFTER = [
   '..........',
@@ -305,15 +305,15 @@ const AFTER = [
   '..........',
   '..........',
   '..........',
-  'YY...F.SSS',
+  'OO..TTTLLL',
 ];
 const JAMA = [
   '..........',
   '..........',
   '..........',
-  '....V.....',
-  '...VVK....',
-  'YY.SSSKKKP',
+  '....T.....',
+  '...TTTZZ.L',
+  'OO.SSJJZZL',
   'ggg.gggggg',
   'ggg.gggggg',
 ];
@@ -325,7 +325,6 @@ const PAD = [
   { ic:'vertical_align_bottom', t:'すとんと落とす', k:'スペース' },
   { ic:'rotate_left', t:'左に回す', k:'Z' },
   { ic:'rotate_right', t:'右に回す', k:'↑ か X' },
-  { ic:'flip', t:'裏返す', k:'A' },
   { ic:'inventory_2', t:'とっておく', k:'C か Shift' },
 ];
 function padHTML(){
@@ -337,21 +336,21 @@ const SLIDES = [
     sub:'今の気分を、ひとことどうぞ',
     note:'まずはチェックインから！\n今の気分や、最近あったことを、ひとことチャットか声で教えてね\n（すとんブロックの説明は、このあとすぐ！）' },
 
-  /* 2 */ { type:'title', note:'今日のゲームは「すとんブロック」\n上から落ちてくるブロックを、回したり裏返したりしてすき間に入れるゲームだよ。横1段がうまると消える。みんなで、時間のうちに何段消せるかくらべよう！' },
+  /* 2 */ { type:'title', note:'今日のゲームは「すとんブロック」\n上から落ちてくるブロックを、回してすき間に入れるゲームだよ。横1段がうまると消える。みんなで、時間のうちに何段消せるかくらべよう！' },
 
   /* 3 */ { type:'content', accent:'teal', section:'ゲームについて', sectionEn:'summary',
     headline:'落ちてくるブロックを、<span class="hl">すき間</span>に入れよう',
-    body:`<div class="shapes-card">${shapesStrip()}<div class="shapes-cap">ブロックは<b>1〜4マスの8種類</b></div></div>
+    body:`<div class="shapes-card">${shapesStrip()}<div class="shapes-cap">ブロックは<b>4マスの7種類</b></div></div>
     <div class="rows mt">
-      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">rotate_right</span></div><div><div class="row__t">回したり裏返したりして、すき間に入れる</div><div class="row__d">ブロックは上から1つずつ落ちてくるよ</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">rotate_right</span></div><div><div class="row__t">回して、すき間に入れる</div><div class="row__d">ブロックは上から1つずつ落ちてくるよ</div></div></div>
       <div class="row"><div class="row__ic"><span class="material-symbols-rounded">table_rows</span></div><div><div class="row__t">横1段がうまると、その段が消える</div><div class="row__d">消えた段の上にあるブロックは、下にずれるよ</div></div></div>
     </div>`,
-    note:'すとんブロックは、上から落ちてくるブロックを、回したり裏返したりして、すき間に入れていくゲーム。\nブロックは1マスから4マスまでの8種類だよ。\n横1段がうまると、その段が消える。消えた段の上にあるブロックは、下にずれるよ。' },
+    note:'すとんブロックは、上から落ちてくるブロックを、回して、すき間に入れていくゲーム。\nブロックはどれも4マスで、7種類だよ。\n横1段がうまると、その段が消える。消えた段の上にあるブロックは、下にずれるよ。' },
 
   /* 4 */ { type:'content', accent:'blue', section:'ゲーム説明', sectionEn:'explain', num:'1',
     headline:'横1段が<span class="hl">うまると消える</span>',
     body:`<div class="boards">
-      <div class="bfig">${miniBoard(BEFORE, { ghost:'F', flash:6 })}<div class="bfig__cap">枠のところに入ると、<span>下の段がうまる</span></div></div>
+      <div class="bfig">${miniBoard(BEFORE, { ghost:'T', flash:6 })}<div class="bfig__cap">枠のところに入ると、<span>下の段がうまる</span></div></div>
       <div class="barrow"><span class="material-symbols-rounded">arrow_forward</span></div>
       <div class="bfig">${miniBoard(AFTER)}<div class="bfig__cap">うまった段が<span>消えた</span></div></div>
     </div>
@@ -362,7 +361,7 @@ const SLIDES = [
     headline:'動かしかた',
     body:`${padHTML()}
     <div class="demo-cap">左・右・下は、<b>押しっぱなしで続けて動く</b>よ。下の段の文字はキーボードのキー。<b>マウス</b>なら、盤の上で左右に動かす・クリックですとん・右クリックで回す。</div>`,
-    note:'動かしかただよ。\n左・右・下のボタンで動かす。押しっぱなしにすると、続けて動くよ。\n下に線のあるボタンで、すとんと落とす。\n回すボタンは、左に回すと右に回すの2つ。裏返すボタンで左右を逆にできる。\n箱のボタンが、とっておく。\nキーボードなら、← → ↓ で動かす、スペースですとん、↑ か X で右に回す、Z で左に回す、A で裏返す、C か Shift でとっておくだよ。\nマウスなら、盤の上で左右に動かすとブロックがついてくる。クリックですとん、右クリックで右に回す、ホイールで回す。まん中のボタンで裏返すよ。' },
+    note:'動かしかただよ。\n左・右・下のボタンで動かす。押しっぱなしにすると、続けて動くよ。\n下に線のあるボタンで、すとんと落とす。\n回すボタンは、左に回すと右に回すの2つ。\n箱のボタンが、とっておく。\nキーボードなら、← → ↓ で動かす、スペースですとん、↑ か X で右に回す、Z で左に回す、C か Shift でとっておくだよ。\nマウスなら、盤の上で左右に動かすとブロックがついてくる。クリックですとん、右クリックで右に回す、ホイールで回すよ。' },
 
   /* 6 */ { type:'content', accent:'coral', section:'ゲーム説明', sectionEn:'tips', num:'3',
     headline:'回すときのこつと<br><span class="ul">とっておく</span>',
@@ -449,11 +448,11 @@ function slideHTML(s){
       <div class="title-ic"><span class="material-symbols-rounded">grid_view</span></div>
       <div class="title-jp">すとんブロック</div>
       <div class="title-en">suton block</div>
-      <div class="title-tag">〜 回して、裏返して、すとんと落として、横1段をそろえよう 〜</div>
+      <div class="title-tag">〜 回して、すとんと落として、横1段をそろえよう 〜</div>
       <div class="title-meta">
         <span class="m"><span class="material-symbols-rounded">group</span>みんなでも、ひとりでも</span>
         <span class="m"><span class="material-symbols-rounded">schedule</span>1回 2〜5分</span>
-        <span class="m"><span class="material-symbols-rounded">extension</span>ブロックは8種類</span>
+        <span class="m"><span class="material-symbols-rounded">extension</span>ブロックは7種類</span>
       </div></section>`;
   }
   if(s.type==='divider'){

@@ -110,7 +110,7 @@ const { E, check, sleep, rest, roomOf, roomWhen, text, visible, waitVisible, wai
   const g = E.restoreGame({ seed: R1.seed, onFull: 'clear' }, hb);
   const far = [];
   let guard = 0;
-  while (!['bou4', 'bou3', 'futa'].includes(g.piece.kind) && guard++ < 12) {
+  while (g.piece.kind !== 'I' && guard++ < 12) {
     // あいた列の反対側へ寄せて置く
     const dir = gap < 5 ? 1 : -1;
     for (let i = 0; i < 6; i++) E.move(g, dir, 0);

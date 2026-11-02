@@ -19,9 +19,10 @@ const NEXT_MAX = 5;
 const NEXT_FIRST = 2.6;
 const NEXT_SMALL = { slot: 1.6, k: 0.6 };
 const NEXT_SMALL_NARROW = { slot: 1.35, k: 0.5 };
+// 形ごとの色は、よく知られた色の組み合わせと重ならないように、このアプリで決めたもの
 const COLORS = {
-  bou4: '#3BA3B5', shikaku: '#E0B33A', yama: '#9A7CC8', zure: '#5DAE6B',
-  kagi4: '#E08454', bou3: '#5B8FD6', kagi3: '#D07198', futa: '#A3B061',
+  I: '#D07198', O: '#3BA3B5', T: '#5DAE6B', S: '#E0B33A',
+  Z: '#5B8FD6', L: '#9A7CC8', J: '#E08454',
   jama: '#7B8794',
 };
 
@@ -1372,7 +1373,6 @@ function act(name) {
     case 'drop': afterLock(E.hardDrop(g)); break;
     case 'rotr': afterMove(E.rotate(g, 1)); break;
     case 'rotl': afterMove(E.rotate(g, -1)); break;
-    case 'flip': afterMove(E.flip(g)); break;
     case 'hold': {
       const res = E.hold(g);
       if (!res) break;
@@ -1389,7 +1389,7 @@ function act(name) {
 
 const KEYMAP = {
   ArrowLeft: 'left', ArrowRight: 'right', ArrowDown: 'down', ArrowUp: 'rotr',
-  ' ': 'drop', x: 'rotr', X: 'rotr', z: 'rotl', Z: 'rotl', a: 'flip', A: 'flip',
+  ' ': 'drop', x: 'rotr', X: 'rotr', z: 'rotl', Z: 'rotl',
   c: 'hold', C: 'hold', Shift: 'hold',
 };
 const REPEATABLE = { left: true, right: true, down: true };
@@ -1410,7 +1410,7 @@ document.addEventListener('keydown', (e) => {
 });
 
 // マウス: 盤の上で左右に動かすと、ブロックがその列へ動く。左クリックですとん、右クリックで右に回す、
-// ホイールで回す（上で左回り・下で右回り）、まん中のボタンで裏返す。タッチ・ペンは画面のボタンを使う
+// ホイールで回す（上で左回り・下で右回り）。タッチ・ペンは画面のボタンを使う
 function moveToColumn(col) {
   const g = state.game;
   for (let guard = 0; guard < E.W && g.piece; guard++) {
@@ -1434,7 +1434,6 @@ boardCanvas.addEventListener('pointerdown', (e) => {
   e.preventDefault();
   if (e.button === 0) act('drop');
   else if (e.button === 2) act('rotr');
-  else if (e.button === 1) act('flip');
 });
 boardCanvas.addEventListener('contextmenu', (e) => e.preventDefault());
 let wheelAt = 0;
