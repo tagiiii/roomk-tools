@@ -154,6 +154,7 @@ body { background: var(--color-bg); }
 }
 .sb-padbtn:active { background: #E3F1F3; }
 .sb-padbtn .material-symbols-rounded { font-size: 28px; }
+.sb-padbtn[data-act="hold"] { grid-column: span 2; } /* 7つのボタンを2段に。2段目は回す2つと、とっておく */
 .sb-keys { color: var(--color-muted); font-size: 13px; margin: 12px 0 0; text-align: center; }
 
 /* みんなの盤を見る画面 */

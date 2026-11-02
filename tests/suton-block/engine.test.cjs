@@ -13,10 +13,12 @@ t('同じ種なら同じ順番で出る', () => {
   }
 });
 
-t('8種類が袋ごとに1回ずつ出る', () => {
+t('7種類（I・O・T・S・Z・L・J）が袋ごとに1回ずつ出る', () => {
   const r = E.rng(7);
   const bag = E.makeBag(r).map((x) => x.kind).sort();
   assert.deepStrictEqual(bag, E.KINDS.slice().sort());
+  assert.deepStrictEqual(E.KINDS.slice().sort(), ['I', 'J', 'L', 'O', 'S', 'T', 'Z']);
+  for (const k of E.KINDS) assert.strictEqual(E.SHAPES[k].cells.length, 4, k + ' は4マス');
 });
 
 t('かべの外へは動かない', () => {
@@ -26,19 +28,23 @@ t('かべの外へは動かない', () => {
   assert.strictEqual(minX, 0);
 });
 
-t('4回回すと元の形にもどる・裏返し2回で元にもどる', () => {
-  const g = E.createGame({ seed: 3 });
-  E.move(g, 0, 3);
-  const before = JSON.stringify(g.piece.cells.map(([x, y]) => [g.piece.x + x, g.piece.y + y]).sort());
-  for (let i = 0; i < 4; i++) assert.ok(E.rotate(g, 1));
-  assert.strictEqual(JSON.stringify(g.piece.cells.map(([x, y]) => [g.piece.x + x, g.piece.y + y]).sort()), before);
-  E.flip(g); E.flip(g);
-  assert.strictEqual(JSON.stringify(g.piece.cells.map(([x, y]) => [g.piece.x + x, g.piece.y + y]).sort()), before);
+t('広いところで4回回すと、元の場所・元の向きにもどる（どの形も、右回り・左回り）', () => {
+  for (const kind of E.KINDS) for (const dir of [1, -1]) {
+    const g = E.createGame({ seed: 3 });
+    g.board = E.emptyBoard();
+    g.piece = E.newPiece({ kind });
+    g.piece.y = 8;
+    const at = () => JSON.stringify(g.piece.cells.map(([x, y]) => [g.piece.x + x, g.piece.y + y]).sort());
+    const before = at();
+    for (let i = 0; i < 4; i++) assert.ok(E.rotate(g, dir));
+    assert.strictEqual(at(), before, kind);
+    assert.strictEqual(g.piece.rot, 0);
+  }
 });
 
 t('かべぎわで回すと、ずらして回る', () => {
   const g = E.createGame({ seed: 1 });
-  g.piece = E.newPiece({ kind: 'bou4', flip: false });
+  g.piece = E.newPiece({ kind: 'I' });
   E.rotate(g, 1); // たて
   g.piece.y = 5;
   for (let i = 0; i < 10; i++) E.move(g, 1, 0);
@@ -47,88 +53,121 @@ t('かべぎわで回すと、ずらして回る', () => {
   assert.ok(Math.max(...xs) <= E.W - 1 && Math.min(...xs) >= 0);
 });
 
-t('張り出しの下のすき間へ、回してねじこめる（下にずらす）', () => {
+// 回した先がふさがっているとき、表の d 番目のずらし方だけが通るように盤をうめて、d 番目で回ることを確かめる
+const cellsAt = (cells, x, y) => cells.map(([cx, cy]) => (x + cx) + ',' + (y + cy));
+t('回せないときは、向きの組み合わせごとの5通りを順に試す（I・T・S・Z・L・J のすべての回し方）', () => {
+  let checked = 0;
+  for (const kind of E.KINDS.filter((k) => k !== 'O')) for (let from = 0; from < 4; from++) for (const dir of [1, -1]) {
+    const to = (from + (dir < 0 ? 3 : 1)) % 4;
+    const kicks = E.kicksFor(kind, from, to);
+    assert.strictEqual(kicks.length, 5);
+    for (let d = 0; d < 5; d++) {
+      const g = E.createGame({ seed: 1 });
+      g.board = E.emptyBoard();
+      const p = E.newPiece({ kind });
+      g.piece = p;
+      for (let i = 0; i < from; i++) assert.ok(E.rotate(g, 1));
+      p.x = 3; p.y = 8;
+      let cells = p.cells;
+      const rot = (c) => c.map(([x, y]) => [p.n - 1 - y, x]);
+      cells = dir > 0 ? rot(cells) : rot(rot(rot(cells)));
+      const keep = new Set([...cellsAt(p.cells, p.x, p.y), ...cellsAt(cells, p.x + kicks[d][0], p.y + kicks[d][1])]);
+      let ok = true;
+      for (let e = 0; e < d; e++) {
+        const block = cellsAt(cells, p.x + kicks[e][0], p.y + kicks[e][1]).filter((c) => !keep.has(c));
+        if (!block.length) { ok = false; break; }
+        const [bx, by] = block[0].split(',').map(Number);
+        g.board[by][bx] = 'jama';
+      }
+      if (!ok) continue; // 前のずらし方と同じマスしか使わないときは、ふさげない
+      assert.ok(E.rotate(g, dir), kind + ' ' + from + '>' + to + ' #' + d);
+      assert.deepStrictEqual([p.x - 3, p.y - 8], kicks[d], kind + ' ' + from + '>' + to + ' #' + d);
+      assert.strictEqual(p.rot, to);
+      checked++;
+    }
+  }
+  assert.ok(checked > 200, '確かめた数 ' + checked);
+});
+
+t('ずらし方の表（よく知られた回し方の表と同じ値）', () => {
+  assert.deepStrictEqual(E.kicksFor('T', 0, 1), [[0, 0], [-1, 0], [-1, -1], [0, 2], [-1, 2]]);
+  assert.deepStrictEqual(E.kicksFor('L', 3, 0), [[0, 0], [-1, 0], [-1, 1], [0, -2], [-1, -2]]);
+  assert.deepStrictEqual(E.kicksFor('I', 0, 1), [[0, 0], [-2, 0], [1, 0], [-2, 1], [1, -2]]);
+  assert.deepStrictEqual(E.kicksFor('I', 1, 2), [[0, 0], [-1, 0], [2, 0], [-1, -2], [2, 1]]);
+  assert.deepStrictEqual(E.kicksFor('O', 0, 1), [[0, 0]]);
+});
+
+// 2026-11-02 フィードバックボードの盤。左向きの T を右に回すと、下の穴には入らず、上へ2マスずれて回る
+t('入らないはずの穴には入らず、上へずれて回る', () => {
+  const rows = ['XXX..XXXXX', 'XXX...XXXX', 'XXXXX.XXXX', 'XXXX..XXXX', 'XXXXX.XXXX'];
   const g = E.createGame({ seed: 1 });
-  const r = E.H - 3;
   g.board = E.emptyBoard();
-  g.board[r][1] = 'futa';      // 張り出し
-  g.board[E.H - 1][1] = 'futa'; // すき間の床
-  // 「└」の形で、張り出しの左に乗っている
-  g.piece = { kind: 'kagi3', n: 2, cells: [[0, 0], [0, 1], [1, 1]], x: 0, y: r };
-  assert.ok(!E.fits(g.board, g.piece, g.piece.cells, 0, r + 1), '置かれる前の位置で止まっている');
+  rows.forEach((line, i) => [...line].forEach((ch, x) => { if (ch === 'X') g.board[E.H - 5 + i][x] = 'jama'; }));
+  const p = E.newPiece({ kind: 'T' });
+  g.piece = p;
+  p.y = 5;
+  assert.ok(E.rotate(g, -1)); // 左向き
+  p.x = 3; p.y = E.H - 6;     // (4,14) (3,15) (4,15) (4,16)
+  assert.ok(E.fits(g.board, p, p.cells, p.x, p.y));
   assert.ok(E.rotate(g, 1));
-  assert.strictEqual(g.piece.y, r + 1, '下へ1マスずれて入る');
-  const cells = g.piece.cells.map(([x, y]) => [g.piece.x + x, g.piece.y + y]).sort().join(' ');
-  assert.strictEqual(cells, '0,' + (r + 1) + ' 0,' + (r + 2) + ' 1,' + (r + 1));
-  E.lock(g);
-  assert.strictEqual(g.board[r + 1][1], 'kagi3', '張り出しの下に入った');
+  const cells = p.cells.map(([x, y]) => [p.x + x, p.y + y]).sort().join(' ');
+  assert.strictEqual(cells, [[4, 12], [3, 13], [4, 13], [5, 13]].sort().join(' '), '上へ2マス');
+  assert.strictEqual(p.rot, 0);
 });
 
-t('右回りは右へ、左回りは左へ先にずらす', () => {
-  const bar = () => {
-    const g = E.createGame({ seed: 1 });
-    g.board = E.emptyBoard();
-    g.piece = { kind: 'bou4', n: 4, cells: [[0, 1], [1, 1], [2, 1], [3, 1]], x: 3, y: 5 };
-    return g;
-  };
-  const right = bar();
-  right.board[8][5] = 'futa'; // その場で右回りした先をふさぐ
-  assert.ok(E.rotate(right, 1));
-  assert.strictEqual(right.piece.x, 4, '右へ1マス');
-  const left = bar();
-  left.board[8][4] = 'futa'; // その場で左回りした先をふさぐ
-  assert.ok(E.rotate(left, -1));
-  assert.strictEqual(left.piece.x, 2, '左へ1マス');
-});
-
-// 屋根の下の深いすき間（下3段に縦3マス＋まん中の出っぱり）へ、山を回して入れる。右向きは左右を反転した盤
-t('屋根の下の深いすき間へ、山を回して縦に入れる（下に2マス＋横に1マス）', () => {
+// 屋根の下の深いすき間（下3段に縦3マス＋まん中の出っぱり）へ、T を回して縦に入れる。右回りは左右を反転した盤
+t('屋根の下の深いすき間へ、T を回して縦に入れられる（3段・2段消える）', () => {
   const rows = ['...XXXXXXX', '....XXXXXX', 'XXX.XXXXXX', 'XX..XXXXXX', 'XXX.XXXXXX'];
   for (const [mirror, full] of [[false, 3], [true, 3], [false, 2], [true, 2]]) {
     const g = E.createGame({ seed: 1 });
     g.board = E.emptyBoard();
     rows.forEach((line, i) => [...line].forEach((ch, x) => {
       if (i === 2 && x === 9 && full === 2) return; // 1段だけうめずに、2段消しの形にする
-      if (ch === 'X') g.board[E.H - 5 + i][mirror ? 9 - x : x] = 'futa';
+      if (ch === 'X') g.board[E.H - 5 + i][mirror ? 9 - x : x] = 'jama';
     }));
-    // 屋根のすぐ下で、山を上向きに寝かせている
-    const p = E.newPiece({ kind: 'yama', flip: false });
+    const p = E.newPiece({ kind: 'T' });
     p.y = E.H - 5;
     p.x = mirror ? 6 : 1;
-    if (mirror) p.cells = p.cells.map(([x, y]) => [2 - x, y]);
     g.piece = p;
     assert.ok(E.fits(g.board, p, p.cells, p.x, p.y));
     assert.ok(E.rotate(g, mirror ? 1 : -1));
     const c = mirror ? 6 : 3, nub = mirror ? 7 : 2, r = E.H - 3;
     const cells = g.piece.cells.map(([x, y]) => [g.piece.x + x, g.piece.y + y]).sort().join(' ');
-    assert.strictEqual(cells, [[c, r], [c, r + 1], [c, r + 2], [nub, r + 1]].sort().join(' '), (mirror ? '右' : '左') + '向き');
+    assert.strictEqual(cells, [[c, r], [c, r + 1], [c, r + 2], [nub, r + 1]].sort().join(' '), (mirror ? '右' : '左') + '回り');
     assert.strictEqual(E.lock(g).lines, full);
   }
 });
 
-t('4マスの棒だけは、横に2マス＋上に1マスまで試す', () => {
-  assert.ok(E.kicksFor('bou4', 1).some(([x, y]) => x === 2 && y === -1));
-  assert.ok(!E.kicksFor('yama', 1).some(([x, y]) => x === 2 && y === -1));
-  assert.deepStrictEqual(E.kicksFor('yama', -1)[1], [-1, 0], '左回りは左が先');
+t('O は回しても動かない', () => {
+  const g = E.createGame({ seed: 1 });
+  g.board = E.emptyBoard();
+  g.piece = E.newPiece({ kind: 'O' });
+  g.piece.y = 5;
+  const at = () => JSON.stringify(g.piece.cells.map(([x, y]) => [g.piece.x + x, g.piece.y + y]).sort());
+  const before = at();
+  assert.ok(E.rotate(g, 1));
+  assert.strictEqual(at(), before);
+  assert.ok(E.rotate(g, -1));
+  assert.strictEqual(at(), before);
 });
 
 t('横1段がうまると消えて数える', () => {
   const g = E.createGame({ seed: 1 });
-  for (let x = 0; x < E.W - 1; x++) g.board[E.H - 1][x] = 'futa';
-  g.board[E.H - 2][0] = 'futa';
-  g.piece = { kind: 'futa', n: 2, cells: [[0, 0], [0, 1]], x: E.W - 1, y: 0 };
+  for (let x = 0; x < E.W - 1; x++) g.board[E.H - 1][x] = 'jama';
+  g.board[E.H - 2][0] = 'jama';
+  g.piece = { kind: 'I', n: 4, rot: 1, cells: [[2, 0], [2, 1], [2, 2], [2, 3]], x: E.W - 3, y: 0 };
   const res = E.hardDrop(g);
   assert.strictEqual(res.lines, 1);
   assert.strictEqual(g.lines, 1);
   // 1段下がる
-  assert.strictEqual(g.board[E.H - 1][0], 'futa');
-  assert.strictEqual(g.board[E.H - 1][E.W - 1], 'futa');
+  assert.strictEqual(g.board[E.H - 1][0], 'jama');
+  assert.strictEqual(g.board[E.H - 1][E.W - 1], 'I');
   assert.strictEqual(g.board[E.H - 1].filter(Boolean).length, 2);
 });
 
 t('いっぱいになったら、からにしてつづける', () => {
   const g = E.createGame({ seed: 5, onFull: 'clear' });
-  for (let y = 0; y < E.H; y++) for (let x = 0; x < E.W; x++) if (x !== 9) g.board[y][x] = 'bou3';
+  for (let y = 0; y < E.H; y++) for (let x = 0; x < E.W; x++) if (x !== 9) g.board[y][x] = 'jama';
   const r = E.spawn(g);
   assert.ok(r.full && r.cleared);
   assert.ok(!g.over);
@@ -160,10 +199,10 @@ t('盤をつめて送り、もどせる', () => {
 
 t('じゃまブロックが下から入り、1列だけあいている', () => {
   const g = E.createGame({ seed: 4 });
-  g.board[E.H - 1][0] = 'futa';
+  g.board[E.H - 1][0] = 'jama';
   const r = E.addGarbage(g, 2, 3);
   assert.ok(!r.full);
-  assert.strictEqual(g.board[E.H - 3][0], 'futa', 'もとの段は2段上がる');
+  assert.strictEqual(g.board[E.H - 3][0], 'jama', 'もとの段は2段上がる');
   for (const y of [E.H - 2, E.H - 1]) {
     assert.strictEqual(g.board[y][3], null);
     assert.strictEqual(g.board[y].filter((c) => c === 'jama').length, E.W - 1);
@@ -176,14 +215,14 @@ t('じゃまのあいた列にブロックを入れると消える', () => {
   const g = E.createGame({ seed: 4 });
   g.board = E.emptyBoard();
   E.addGarbage(g, 1, 9);
-  g.piece = { kind: 'futa', n: 2, cells: [[0, 0], [0, 1]], x: 9, y: 0 };
+  g.piece = { kind: 'I', n: 4, rot: 1, cells: [[2, 0], [2, 1], [2, 2], [2, 3]], x: 7, y: 0 };
   const res = E.hardDrop(g);
   assert.strictEqual(res.lines, 1);
 });
 
 t('じゃまで上にはみ出したら、からにしてつづける', () => {
   const g = E.createGame({ seed: 4, onFull: 'clear' });
-  g.board[1][5] = 'futa';
+  g.board[1][5] = 'jama';
   const r = E.addGarbage(g, 3, 0);
   assert.ok(r.full && r.cleared && !g.over);
   assert.strictEqual(g.board.flat().filter(Boolean).length, 0);
@@ -192,7 +231,7 @@ t('じゃまで上にはみ出したら、からにしてつづける', () => {
 t('じゃまで押し上げられても、落ちているブロックは重ならない', () => {
   const g = E.createGame({ seed: 4 });
   g.board = E.emptyBoard();
-  g.piece = { kind: 'shikaku', n: 2, cells: [[0, 0], [1, 0], [0, 1], [1, 1]], x: 2, y: E.H - 3 };
+  g.piece = { kind: 'O', n: 2, cells: [[0, 0], [1, 0], [0, 1], [1, 1]], x: 2, y: E.H - 3 };
   E.addGarbage(g, 2, 9);
   assert.ok(E.fits(g.board, g.piece, g.piece.cells, g.piece.x, g.piece.y));
   assert.strictEqual(g.piece.y, E.H - 4);
@@ -211,7 +250,8 @@ t('とっておく: しまって、つぎが出る。もう一度は置くまで
   const third = g.piece.kind;
   assert.ok(E.hold(g), '置いたらまた使える');
   assert.strictEqual(g.piece.kind, first, 'しまってあったものが出る');
-  assert.deepStrictEqual(g.piece.cells, E.newPiece({ kind: first, flip: g.piece.flip }).cells, 'はじめの向きで出る');
+  assert.deepStrictEqual(g.piece.cells, E.newPiece({ kind: first }).cells, 'はじめの向きで出る');
+  assert.strictEqual(g.piece.rot, 0);
   assert.strictEqual(g.hold.kind, third);
 });
 
@@ -251,22 +291,22 @@ t('上にはみ出して置いても、段が消えればはみ出した分が�
   const g = E.createGame({ seed: 3 });
   g.board = E.emptyBoard();
   // 下の2段を、0列だけあけてうめる。0列の上（1〜17段目）もうめて、たての棒がはみ出すようにする
-  for (let y = 0; y < E.H; y++) for (let x = 0; x < E.W; x++) if (x !== 0 && (y >= E.H - 2)) g.board[y][x] = 'futa';
-  for (let y = 2; y < E.H - 2; y++) g.board[y][1] = 'futa';
-  g.piece = { kind: 'bou4', flip: false, n: 4, cells: [[0, 0], [0, 1], [0, 2], [0, 3]], x: 0, y: -2 };
+  for (let y = 0; y < E.H; y++) for (let x = 0; x < E.W; x++) if (x !== 0 && (y >= E.H - 2)) g.board[y][x] = 'jama';
+  for (let y = 2; y < E.H - 2; y++) g.board[y][1] = 'jama';
+  g.piece = { kind: 'I', n: 4, rot: 1, cells: [[0, 0], [0, 1], [0, 2], [0, 3]], x: 0, y: -2 };
   // 0列に、上2マスがはみ出した状態で置く（下の2マスは 0・1段目）。段は消えないので、いっぱい
   const r1 = E.lock(g);
   assert.ok(r1.full, 'はみ出して消えなければいっぱい');
   const h = E.createGame({ seed: 3 });
   h.board = E.emptyBoard();
-  for (let x = 1; x < E.W; x++) { h.board[0][x] = 'futa'; h.board[1][x] = 'futa'; }
-  for (let y = 2; y < E.H; y++) for (let x = 1; x < E.W; x++) h.board[y][x] = 'futa';
-  h.piece = { kind: 'bou4', flip: false, n: 4, cells: [[0, 0], [0, 1], [0, 2], [0, 3]], x: 0, y: -2 };
+  for (let x = 1; x < E.W; x++) { h.board[0][x] = 'jama'; h.board[1][x] = 'jama'; }
+  for (let y = 2; y < E.H; y++) for (let x = 1; x < E.W; x++) h.board[y][x] = 'jama';
+  h.piece = { kind: 'I', n: 4, rot: 1, cells: [[0, 0], [0, 1], [0, 2], [0, 3]], x: 0, y: -2 };
   const r2 = E.lock(h);
   assert.ok(!r2.full, '2段消えて、はみ出した2マスは入る');
   assert.strictEqual(r2.lines, 2);
-  assert.strictEqual(h.board[0][0], 'bou4');
-  assert.strictEqual(h.board[1][0], 'bou4');
+  assert.strictEqual(h.board[0][0], 'I');
+  assert.strictEqual(h.board[1][0], 'I');
 });
 
 console.log('engine: ' + n + ' 項目 OK');
