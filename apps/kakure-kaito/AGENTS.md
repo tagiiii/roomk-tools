@@ -82,7 +82,8 @@ apps/kakure-kaito/
 - CSS 接頭辞: **`kk-`**（BEM）。画面切替は `.kk-screen` / `.active`。ルームの中は `body[data-phase]`（lobby・reveal・propose・vote・voteResult・mission・missionResult・lens・lensResult・guess・end）
 - 描画は DOM API（textContent）。innerHTML は宝石の絵（決まった文字列だけ）にだけ使う
 - アイコン: Material Symbols Rounded（ポータルは `diamond`）
-- RTDB パス: `kakure_rooms/{roomCode}`、sessionStorage キー: `kakure_session`（`{role, nickname, roomCode, uid, joinedAt}` だけ）
+- RTDB パス: `kakurekaito_rooms/{roomCode}`、sessionStorage キー: `kakurekaito_session`（`{role, nickname, roomCode, uid, joinedAt}` だけ）
+  - 公開時は、かくれナンバーと同じ `kakure_rooms`／`kakure_session` を使っていた。同じタブで続けて開くと、かくれナンバーが怪盗のルームへ入りなおそうとして書き込むため、2026-11-02 に分けた。新しいアプリは、ほかのアプリと重ならない名前にする
 
 ### 横断更新
 
@@ -129,7 +130,7 @@ play ─待合室にもどる（ホスト）→ waiting（game を消す）
 ## Firebase データ構造（Realtime Database）
 
 ```
-kakure_rooms/{roomCode}/
+kakurekaito_rooms/{roomCode}/
   ├── status:             'waiting' | 'play'
   ├── host / hostUid:     ホストの名前と匿名ID
   ├── hostConnected / hostDisconnectedAt / createdAt
@@ -255,5 +256,7 @@ kakure_rooms/{roomCode}/
 `tests/kakure-kaito/`（隔離した Firebase エミュレーター＋Playwright。本番に接続しない）。手順は `tests/kakure-kaito/README.md`。
 
 2026-10-31: ルール 51項目・その1 61項目・その2 79項目（B 進行だけのホスト＋端末なし3人の7人・C 読み込み直しと切断・D 見やぶりの途中でかしらが切れる）、すべて合格。lint エラー0・警告0。
+
+2026-11-02（DB の場所とセッションのキーを分けた）: ルール 51項目・その1 61項目・その2 79項目、すべて合格。加えて、同じタブで怪盗のあとにかくれナンバーを開く確認（参加者・ホスト）を一時スクリプトで行った。直す前の版では、かくれナンバーが怪盗の参加者の記録を `{isHost:false, score:0}` で上書きした。直したあとは、どちらも書き込まず、`kakure_rooms` にも何も作られない（13項目合格）。lint エラー0・警告0。
 テストで見つけて直したもの: 端末のない人を続けて足すと、確定を待つ間に打った次の名前が消える。
 二重レビュー（2026-10-31）: Codex（CLI・読み取り専用）と Claude のレビュー役（サブエージェント）。直したもの: 数字だけの名前で役・投票などが配列になって消える／票を開く・選びなおすをホストの画面の条件だけで許していた（transaction で確かめなおす。だれも投票しないまま全員切れると止まる）／かしらの確定と、ほかの怪盗の選びなおしが重なると、見ていない人に決まる／古いタブの「待合室にもどる」が新しいゲームを消す／かしらが切れて端末のある怪盗もいないと見やぶりが止まる（ホストが代わりに選ぶ）／話し合いの残り時間を端末の時計で数えていた（`RoomkRTDB.now()` に）／ホストが端末のない人の票を続けて押すと2つめが落ちる（二度押しよけを操作ごとに）・つなぎなおしの途中の操作が何も言わずに消える（知らせる）／怪盗にかしらがだれか出ていなかった（仕様どおり出す）／進行だけのホストのバーが「見ているだけ」。直さなかったもの: 切断予約の順序（既知の制約）・ルーペで選んでいる途中の相手が出る（意図した扱い）。

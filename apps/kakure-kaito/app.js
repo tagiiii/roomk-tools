@@ -1,5 +1,5 @@
 /* かくれ怪盗
-   ・ルーム: Realtime Database（kakure_rooms/{コード}）。操作はすべてルーム全体への transaction で、
+   ・ルーム: Realtime Database（kakurekaito_rooms/{コード}）。操作はすべてルーム全体への transaction で、
      その中で「押した人か（匿名ID）・押した時点の段階（step）か・その段階で押せる人か」を確かめてから進める。
    ・役と、はじめに知っていることはルームの game に置き、画面には自分の分だけ出す（DevTools で見えるのは性善説で許容）。
      見回りで出した札は、だれが出したかを残さず、枚数だけ数える。
@@ -9,8 +9,8 @@
 
   const E = window.KaitoEngine;
   const { authReady, db } = RoomkRTDB.initFirebase(firebase);
-  const DB_PREFIX = 'kakure_rooms';
-  const SESSION_KEY = 'kakure_session';
+  const DB_PREFIX = 'kakurekaito_rooms'; // かくれナンバーの kakure_rooms とは分ける
+  const SESSION_KEY = 'kakurekaito_session';
   const ORPHAN_TTL_MS = 2 * 60 * 1000;
   const PRESENCE_RETRY_MS = 3000;
   const TX_RETRY_MAX = 3;

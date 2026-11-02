@@ -54,6 +54,12 @@
         ".write": "auth != null"
       }
     },
+    "kakurekaito_rooms": {
+      "$roomId": {
+        ".read": "auth != null",
+        ".write": "auth != null"
+      }
+    },
     "kimochiate_rooms": {
       "$roomId": {
         ".read": "auth != null",

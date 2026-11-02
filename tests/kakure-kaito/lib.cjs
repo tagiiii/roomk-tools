@@ -14,7 +14,7 @@ const PORT = Number(process.env.E2E_PORT || 6661);
 const BASE = `http://127.0.0.1:${PORT}/kakure-kaito/`;
 const DB = 'http://127.0.0.1:9662';
 const NS = 'demo-roomk-kk';
-const ROOMS = 'kakure_rooms';
+const ROOMS = 'kakurekaito_rooms';
 fs.mkdirSync(OUT, { recursive: true });
 
 const T = { pass: 0, failures: [], violations: [] };

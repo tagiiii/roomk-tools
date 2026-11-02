@@ -63,6 +63,7 @@ C-6 の報告（2026-07-12）は名前空間を14個としていたが、その�
 
 - **2026-10-13 追記: `sakusenchat_rooms` を足した。** 作戦会議チャット（`apps/sakusen-chat/app.js`）を本体に追加したため。上の表は 2026-10-12 時点のままで、ルール案の JSON はルーム用30個＋`stats`。エミュレーターでの245項目の確認は、この1個を足す前のもの（足した行はほかの名前空間と同じ形）
 - **2026-10-13 追記（2件目）: `yokumitekanji_rooms` を足した。** よく見て漢字（`apps/yokumite-kanji/link.js`）を本体に追加したため。ルール案の JSON はルーム用31個＋`stats`。足した行はほかの名前空間と同じ形
+- **2026-11-02 追記: `kakurekaito_rooms` を足した。** かくれ怪盗（`apps/kakure-kaito/app.js`）が、かくれナンバーと同じ `kakure_rooms` を使っていたのを分けたため（同じ日に修正）。ルール案の JSON はルーム用32個＋`stats`。足した行はほかの名前空間と同じ形。なお 2026-10-13 より後に公開した8本（`daifugo_rooms`・`kanpe_rooms`・`kotobameter_rooms`・`oogiri_rooms`・`pittari_beat_rooms`・`reversi_rooms`・`shirushi_rooms`・`sutonblock_rooms`）はまだ入っていない。適用の前に足す
 
 同じ漏れを防ぐため、`scripts/lint.sh` に [RULES-1] を足した。ルールが名前空間を列挙しているとき、コードが使う名前空間がルールにないとエラーになる（最上位がワイルドカードの間は検査しない）。
 適用の直前に `bash scripts/lint.sh` をもう一度流し、[RULES-1] が OK であることを確かめる。
