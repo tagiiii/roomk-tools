@@ -81,6 +81,31 @@ t('右回りは右へ、左回りは左へ先にずらす', () => {
   assert.strictEqual(left.piece.x, 2, '左へ1マス');
 });
 
+// 屋根の下の深いすき間（下3段に縦3マス＋まん中の出っぱり）へ、山を回して入れる。右向きは左右を反転した盤
+t('屋根の下の深いすき間へ、山を回して縦に入れる（下に2マス＋横に1マス）', () => {
+  const rows = ['...XXXXXXX', '....XXXXXX', 'XXX.XXXXXX', 'XX..XXXXXX', 'XXX.XXXXXX'];
+  for (const [mirror, full] of [[false, 3], [true, 3], [false, 2], [true, 2]]) {
+    const g = E.createGame({ seed: 1 });
+    g.board = E.emptyBoard();
+    rows.forEach((line, i) => [...line].forEach((ch, x) => {
+      if (i === 2 && x === 9 && full === 2) return; // 1段だけうめずに、2段消しの形にする
+      if (ch === 'X') g.board[E.H - 5 + i][mirror ? 9 - x : x] = 'futa';
+    }));
+    // 屋根のすぐ下で、山を上向きに寝かせている
+    const p = E.newPiece({ kind: 'yama', flip: false });
+    p.y = E.H - 5;
+    p.x = mirror ? 6 : 1;
+    if (mirror) p.cells = p.cells.map(([x, y]) => [2 - x, y]);
+    g.piece = p;
+    assert.ok(E.fits(g.board, p, p.cells, p.x, p.y));
+    assert.ok(E.rotate(g, mirror ? 1 : -1));
+    const c = mirror ? 6 : 3, nub = mirror ? 7 : 2, r = E.H - 3;
+    const cells = g.piece.cells.map(([x, y]) => [g.piece.x + x, g.piece.y + y]).sort().join(' ');
+    assert.strictEqual(cells, [[c, r], [c, r + 1], [c, r + 2], [nub, r + 1]].sort().join(' '), (mirror ? '右' : '左') + '向き');
+    assert.strictEqual(E.lock(g).lines, full);
+  }
+});
+
 t('4マスの棒だけは、横に2マス＋上に1マスまで試す', () => {
   assert.ok(E.kicksFor('bou4', 1).some(([x, y]) => x === 2 && y === -1));
   assert.ok(!E.kicksFor('yama', 1).some(([x, y]) => x === 2 && y === -1));

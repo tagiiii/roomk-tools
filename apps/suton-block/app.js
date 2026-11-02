@@ -14,6 +14,11 @@ const LOCK_RESETS = 15;     // 着地したまま動かして待ちを延ばせ�
 const COUNTDOWN_MS = 3500;  // 「はじめる」から落ちはじめるまで（3・2・1）
 const FINISH_GRACE_MS = 1500;   // 時間のあと、最後の盤が届くのを待つ
 const FINISH_BACKUP_MS = 4000;  // ホストのタブが裏に回っていても、あそぶ人の端末が結果を出す
+// 「つぎ」に出す数の上限と、1つ目の高さ・2つ目からの高さと大きさ（ブロック1マスの4倍が箱の幅。高さはその何マスぶんか）
+const NEXT_MAX = 5;
+const NEXT_FIRST = 2.6;
+const NEXT_SMALL = { slot: 1.6, k: 0.6 };
+const NEXT_SMALL_NARROW = { slot: 1.35, k: 0.5 };
 const COLORS = {
   bou4: '#3BA3B5', shikaku: '#E0B33A', yama: '#9A7CC8', zure: '#5DAE6B',
   kagi4: '#E08454', bou3: '#5B8FD6', kagi3: '#D07198', futa: '#A3B061',
@@ -1103,8 +1108,8 @@ function startRun(o) {
   $('jamaBox').hidden = !state.run.jama;
   renderJama();
   showScreen('play');
+  renderOthers(); // スマホのほかの人の一覧の高さを、layout で「つぎ」の数を決めるときに使う
   layout();
-  renderOthers();
   state.run.raf = requestAnimationFrame(tick);
 }
 
@@ -1448,6 +1453,7 @@ document.querySelectorAll('.sb-padbtn').forEach((btn) => {
 
 /* ── 描く ── */
 let CELL = 24;
+let nextShow = { count: NEXT_MAX, small: NEXT_SMALL };
 function isRoomPlayer() {
   const R = roundOf(state.room);
   return !!R && (state.role === 'host' || state.role === 'guest') && R.players.includes(state.nickname);
@@ -1470,8 +1476,19 @@ function layout() {
   CELL = Math.max(14, Math.min(30, byW, byH));
   sizeCanvas($('board'), CELL * E.W, CELL * E.H);
   const nc = Math.floor((side - 18) / 4);
-  sizeCanvas($('next'), nc * 4, narrow ? Math.round(nc * 4.8) : nc * 7); // スマホでは2つだけ
   sizeCanvas($('hold'), nc * 4, Math.round(nc * 2.4));
+  // 「つぎ」は5つまで。横の列（とっておく・来るじゃま・ほかの人の一覧など）が盤より長くならない数だけ出す（2つより減らさない）
+  const small = narrow ? NEXT_SMALL_NARROW : NEXT_SMALL;
+  const nextBox = $('next').parentElement;
+  const sideGap = parseFloat(getComputedStyle(nextBox.parentElement).rowGap) || 0;
+  const rest = [...nextBox.parentElement.children]
+    .filter((el) => el !== nextBox && el.offsetHeight > 0)
+    .reduce((sum, el) => sum + el.offsetHeight + sideGap, 0);
+  const space = CELL * E.H - rest - (nextBox.offsetHeight - $('next').offsetHeight);
+  let count = NEXT_MAX;
+  while (count > 2 && nc * (NEXT_FIRST + (count - 1) * small.slot) > space) count--;
+  nextShow = { count, small };
+  sizeCanvas($('next'), nc * 4, Math.round(nc * (NEXT_FIRST + (count - 1) * small.slot)));
   draw();
 }
 
@@ -1485,7 +1502,7 @@ function sizeCanvas(cv, w, h) {
 }
 
 window.addEventListener('resize', () => {
-  if (state.currentScreen === 'play') { layout(); renderOthers(); }
+  if (state.currentScreen === 'play') { renderOthers(); layout(); }
   if (state.currentScreen === 'watch') renderWatch();
 });
 
@@ -1554,11 +1571,11 @@ function drawNext() {
   const w = parseFloat(cv.style.width), h = parseFloat(cv.style.height);
   const s = w / 4;
   ctx.clearRect(0, 0, w, h);
-  // 1つ目は大きく、2つ目・3つ目は小さく
-  const slots = [[0, 2.6, 1], [2.6, 2.2, 0.7], [4.8, 2.2, 0.7]];
-  state.game.queue.slice(0, h < s * 6 ? 2 : 3).forEach((spec, i) => {
-    const [top, height, k] = slots[i];
-    drawSpecIn(ctx, spec, w, top * s, height * s, s * k);
+  // 1つ目は大きく、2つ目からは小さく（スマホではもう少し小さく）
+  const { count, small } = nextShow;
+  state.game.queue.slice(0, count).forEach((spec, i) => {
+    const top = i ? NEXT_FIRST + (i - 1) * small.slot : 0;
+    drawSpecIn(ctx, spec, w, top * s, (i ? small.slot : NEXT_FIRST) * s, s * (i ? small.k : 1));
   });
 }
 
