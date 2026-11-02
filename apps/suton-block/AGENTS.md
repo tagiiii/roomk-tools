@@ -79,7 +79,7 @@ apps/suton-block/
 
 - `scripts/lint.sh` の `RTDB_HTML_FILES` に追加
 - `scripts/content-audit.mjs` の `NO_CONTENT_APPS` に追加（ブロックの形だけ）
-- `apps/index.html` にカード（`data-slides`・`data-scenes="hiroba bodoge"`）。サムネイルはまだない
+- `apps/index.html` にカード（`data-slides`・`data-genre="puzzle"`・`data-scenes="hiroba bodoge"`・サムネイル `assets/thumbnails/suton-block.png`。撮り方は `docs/development/thumbnails.md`）
 - `apps/updates.json` 先頭に `type: "new"`
 - `apps/guide/index.html` の「パズル・アクション系」に1行（近い遊びは「落ちものパズル系」）
 
