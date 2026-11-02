@@ -1096,13 +1096,15 @@ function startRun(o) {
     speedMs: SPEED[o.speed] || SPEED.slow,
     lastFall: now, lockAt: null, resets: 0,
     startAt: o.startAt || 0, endAt: o.endAt || 0,
-    done: false, raf: 0, noteTimer: 0,
+    done: false, raf: 0, noteTimer: 0, paused: false,
     jama: !!o.jama, pending: Math.max(0, Math.min(E.H, Number(o.pending) || 0)),
   };
   const room = state.role !== 'solo';
   $('playTimer').hidden = !state.run.endAt;
   $('playTimer').textContent = '';
   $('btnPlayEnd').textContent = state.role === 'host' ? '早めにおわる' : room ? '退出する' : 'おわる';
+  $('btnPause').hidden = room;
+  $('pauseCover').hidden = true;
   $('playLines').textContent = String(state.game.lines);
   $('playNote').hidden = true;
   $('jamaBox').hidden = !state.run.jama;
@@ -1120,6 +1122,17 @@ function stopRun() {
   state.run = null;
   stopRepeat();
   $('countdown').hidden = true;
+  $('pauseCover').hidden = true;
+}
+
+// ひとりのときだけ、とめる・つづける（とめている間は落ちず、時間も進まない。ずらすのは tick）
+function setPaused(on) {
+  const R = state.run;
+  if (state.role !== 'solo' || !R || R.done) return;
+  R.paused = on;
+  stopRepeat();
+  $('pauseCover').hidden = !on;
+  $('btnPause').hidden = on;
 }
 
 // ルームの値から、あそんでいる回を始める・時計を合わせる・じゃまを受けとる
@@ -1148,7 +1161,7 @@ function syncRun(room, R) {
 
 function playing() {
   const R = state.run;
-  return R && !R.done && nowOf() >= R.startAt;
+  return R && !R.done && !R.paused && nowOf() >= R.startAt;
 }
 
 function grounded() {
@@ -1280,9 +1293,9 @@ function tick() {
   const R = state.run;
   if (!R) return;
   const now = nowOf();
-  // ひとりのときは「あそびかた」を開いている間（あそぶ画面が inert）は止め、閉じたら止めていたぶんだけずらす
+  // ひとりのときは「とめる」の間と「あそびかた」を開いている間（あそぶ画面が inert）は止め、つづけたら止めていたぶんだけずらす
   if (state.role === 'solo') {
-    if ($('screen-play').inert) {
+    if (R.paused || $('screen-play').inert) {
       if (!R.pausedAt) R.pausedAt = now;
       R.raf = requestAnimationFrame(tick);
       return;
@@ -1383,6 +1396,12 @@ const REPEATABLE = { left: true, right: true, down: true };
 document.addEventListener('keydown', (e) => {
   // 「あそびかた」を開いている間は、あそぶ画面が inert になるので動かさない
   if (state.currentScreen !== 'play' || $('screen-play').inert || e.ctrlKey || e.metaKey || e.altKey) return;
+  // ひとりのときは P でとめる・つづける
+  if ((e.key === 'p' || e.key === 'P') && state.role === 'solo' && state.run) {
+    e.preventDefault();
+    if (!e.repeat) setPaused(!state.run.paused);
+    return;
+  }
   const a = KEYMAP[e.key];
   if (!a) return;
   e.preventDefault();
@@ -1766,6 +1785,8 @@ $('btnPlayEnd').addEventListener('click', () => {
     showSoloResult(g);
   }
 });
+$('btnPause').addEventListener('click', () => setPaused(true));
+$('btnResume').addEventListener('click', () => setPaused(false));
 $('btnAgain').addEventListener('click', () => {
   if (state.role === 'solo') startSolo();
   else if (state.role === 'host') playAgain();

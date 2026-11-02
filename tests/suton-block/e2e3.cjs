@@ -1,5 +1,5 @@
 // すとんブロック E2E その3: ひとりであそぶ（通信しない）・とっておく・いっぱいでからにする・あそびかた中はキーで動かない・
-// 時間切れ・おしまい・もう一回・375px・あそびかたとフィードバックのボタン
+// 時間切れ・おしまい・もう一回・375px・あそびかたとフィードバックのボタン・とめる（ひとりのとき）
 const L = require('./lib.cjs');
 const { check, sleep, text, visible, waitScreen, waitFor, key, fitsHeight, overflow, stats, shot } = L;
 
@@ -41,6 +41,25 @@ const { check, sleep, text, visible, waitScreen, waitFor, key, fitsHeight, overf
   check('S11 あそびかたに説明スライドの入口', await visible(P, '.howto-slides-btn, [data-howto-slides]') || (await P.page.content()).includes('説明スライドを見る'));
   await P.page.keyboard.press('Escape');
   check('S12 Esc で閉じる', await waitFor(async () => !(await P.page.$eval('#screen-play', (e) => e.inert))));
+  // とめる・つづける（ひとりのとき）
+  check('S12a ひとりのときは「とめる」が出る', await visible(P, '#btnPause') && !(await visible(P, '#pauseCover')));
+  await P.page.click('#btnPause');
+  check('S12b 「とめる」で「とめています」と「つづける」が出て、「とめる」はかくれる', await visible(P, '#pauseCover') && (await text(P, '#pauseCover')).includes('とめています') && !(await visible(P, '#btnPause')));
+  await sleep(200);
+  const pBoard = await P.page.$eval('#board', (c) => c.toDataURL());
+  const pTimer = await text(P, '#playTimer');
+  await key(P, 'ArrowLeft', 4);
+  await key(P, 'Space');
+  await P.page.click('.sb-padbtn[data-act="right"]');
+  await sleep(1600);
+  check('S12c とめている間は、キー・ボタンで動かず、落ちるのも時間も止まる', (await P.page.$eval('#board', (c) => c.toDataURL())) === pBoard && (await text(P, '#playTimer')) === pTimer);
+  await P.page.click('#btnResume');
+  check('S12d 「つづける」で、とめる前の続きから', !(await visible(P, '#pauseCover')) && await visible(P, '#btnPause'));
+  check('S12e つづけたら時間が進む', await waitFor(async () => (await text(P, '#playTimer')) !== pTimer, 2500));
+  await key(P, 'p');
+  check('S12f P でとめる', await visible(P, '#pauseCover'));
+  await key(P, 'P');
+  check('S12g もう一度 P でつづける', !(await visible(P, '#pauseCover')));
   // 時間になったら結果へ（時計を進める。止めていたぶんをずらし終えてから）
   await sleep(300);
   await P.page.evaluate(() => { window.__realNow = Date.now; Date.now = () => window.__realNow.call(Date) + 130000; });
@@ -82,6 +101,7 @@ const { check, sleep, text, visible, waitScreen, waitFor, key, fitsHeight, overf
   const code = await L.createRoom(M, 'そら');
   await M.page.click('#btnStartGame');
   await L.waitPlaying(M);
+  check('S21b ルームでは「とめる」を出さない', !(await visible(M, '#btnPause')));
   const room = await L.roomWhen(code, (r) => r.round && typeof r.round.startedAt === 'number');
   const g = L.E.createGame({ seed: room.round.seed, onFull: 'clear' });
   const box = await M.page.$eval('#board', (c) => { const r = c.getBoundingClientRect(); return { x: r.left, y: r.top, w: r.width, h: r.height }; });
