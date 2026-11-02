@@ -205,6 +205,8 @@ const COVERED_APPS = [
   'yokumite-kanji',
   // 2026-10-30 追加
   'hirameki-oogiri',
+  // 2026-11-02 追加
+  'kanpe-housou',
 ];
 
 // 数えられるコンテンツを持たないため重複検査の対象外にするアプリ（意図的除外）。
@@ -561,6 +563,30 @@ function collectEntries() {
   });
   if (oogiriProblems.length > 0) {
     throw new Error(`hirameki-oogiri data.js の構造エラー:\n  ${oogiriProblems.join('\n  ')}`);
+  }
+
+  // kanpe-housou: data.js（ブラウザでは window.KanpeData、Node では module.exports）。
+  //   番組の原稿の行（空らんは {ヒント} のまま）と、おまかせの言葉を抽出する。
+  //   ルームでは番組の id と行の番号で共有するので、id の重複・1行に空らん1つでない行はここで fail-fast にする
+  const kanpeContext = { module: { exports: {} } };
+  vm.runInNewContext(read('apps/kanpe-housou/data.js'), kanpeContext, { filename: 'apps/kanpe-housou/data.js' });
+  const kanpeData = kanpeContext.module.exports || {};
+  const kanpeProblems = [];
+  const kanpeIds = new Set();
+  if (!(kanpeData.PROGRAMS || []).length) kanpeProblems.push('PROGRAMS が空');
+  (kanpeData.PROGRAMS || []).forEach((prog) => {
+    if (kanpeIds.has(prog.id)) kanpeProblems.push(`番組 ${prog.id} が重複`);
+    kanpeIds.add(prog.id);
+    (prog.lines || []).forEach((line, i) => {
+      if ((String(line).match(/\{[a-z]+\}/g) || []).length !== 1) kanpeProblems.push(`${prog.id} の ${i} 行目の空らんが1つでない`);
+      rows.push(entry('kanpe-housou', 'line', line, { id: `kanpe-housou:${prog.id}:${i}`, variant: prog.id }));
+    });
+  });
+  Object.entries(kanpeData.HINTS || {}).forEach(([hint, h]) => (h.words || []).forEach((word, i) => {
+    rows.push(entry('kanpe-housou', 'omakase', word, { id: `kanpe-housou:omakase:${hint}:${i}`, variant: hint }));
+  }));
+  if (kanpeProblems.length > 0) {
+    throw new Error(`kanpe-housou data.js の構造エラー:\n  ${kanpeProblems.join('\n  ')}`);
   }
 
   // career-sugoroku: data.js（ブラウザでは window.CS_DATA、Node では module.exports）。

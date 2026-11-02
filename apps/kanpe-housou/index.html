@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+  <title>カンペ放送局 | room-K</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
+  <link rel="stylesheet" href="../shared/css/design-system.css">
+  <!-- index.html と app.js・engine.js・data.js・style.css はセットで変わるので、変えたら ?v= をそろえて上げる -->
+  <link rel="stylesheet" href="style.css?v=20261102a">
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+  <script src="../shared/js/rtdb-utils.js?v=20261005"></script>
+  <script src="../shared/js/room-qr.js?v=20261022"></script>
+  <script src="engine.js?v=20261102a"></script>
+  <script src="data.js?v=20261102a"></script>
+</head>
+<body>
+
+  <!-- トップ -->
+  <section class="kh-screen kh-front active" id="screen-top">
+    <div class="kh-panel kh-panel--hero">
+      <div class="kh-hero" aria-hidden="true">
+        <svg class="kh-hero__art" viewBox="0 0 360 160" role="presentation">
+          <rect x="112" y="18" width="136" height="40" rx="10" fill="#C2410C" />
+          <rect x="112" y="18" width="136" height="40" rx="10" fill="none" stroke="#FFD9C2" stroke-width="2" class="kh-hero__glow" />
+          <text x="180" y="46" text-anchor="middle" font-size="22" font-weight="700" fill="#FFF7EE" letter-spacing="4">ON AIR</text>
+          <rect x="30" y="80" width="300" height="70" rx="12" fill="#FFFFFF" fill-opacity="0.1" />
+          <g class="kh-hero__card">
+            <rect x="200" y="74" width="104" height="66" rx="6" fill="#FFF7EE" />
+            <rect x="214" y="92" width="76" height="8" rx="4" fill="#F2C14E" />
+            <rect x="214" y="110" width="52" height="8" rx="4" fill="#E6D3BE" />
+          </g>
+          <g class="kh-hero__mic">
+            <rect x="92" y="132" width="40" height="6" rx="3" fill="#9FC3DD" />
+            <rect x="109" y="108" width="6" height="26" fill="#9FC3DD" />
+            <rect x="98" y="76" width="28" height="40" rx="14" fill="#DCE9F3" />
+            <path d="M102 90 h20 M102 98 h20 M102 106 h20" stroke="#9FC3DD" stroke-width="2" />
+          </g>
+          <g class="kh-hero__wave" fill="none" stroke="#F2C14E" stroke-width="3" stroke-linecap="round">
+            <path d="M144 88 q8 8 0 16" />
+            <path d="M154 82 q14 14 0 28" />
+          </g>
+        </svg>
+        <p class="kh-hero__tag">きょうの放送</p>
+      </div>
+      <h1 class="kh-panel__title">カンペ放送局</h1>
+      <p class="kh-panel__lead">読む人の原稿には、空らんがある。ほかの人は「食べ物」「音」みたいなヒントだけを見て、言葉を書く。読む人は、出てきた言葉をそのまま読む。聞いている人は、おもしろかった言葉に「笑った！」を押そう。3〜8人で、1回は15〜30分くらい。</p>
+      <ul class="kh-panel__notes">
+        <li>書く人は、文の中身を知らないまま言葉を書くよ</li>
+        <li>思いつかないときは「おまかせ」を押してね</li>
+        <li>マイクを使わない人は「書くだけ」で遊べるよ</li>
+      </ul>
+      <div class="kh-panel__actions">
+        <button type="button" class="btn btn-primary btn-full" id="btnGoCreate">ルームを作る</button>
+        <button type="button" class="btn btn-secondary btn-full" id="btnGoJoin">ルームに参加する</button>
+        <button type="button" class="kh-quiet kh-quiet--center" id="btnGoWatch">みんなにみせる画面をひらく</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ルームを作る -->
+  <section class="kh-screen kh-front" id="screen-create">
+    <div class="kh-panel">
+      <button type="button" class="kh-quiet kh-back" id="btnCreateBack">トップへ戻る</button>
+      <h2 class="kh-panel__title kh-panel__title--sub">ルームを作る</h2>
+      <label class="form-label" for="hostName">ホストの名前（8文字まで）</label>
+      <input class="form-input" id="hostName" maxlength="8" autocomplete="nickname">
+      <p class="kh-alert" id="createError" hidden></p>
+      <button type="button" class="btn btn-primary btn-full mt-md" id="btnCreateRoom">ルームを作る</button>
+    </div>
+  </section>
+
+  <!-- ルームに参加する -->
+  <section class="kh-screen kh-front" id="screen-join">
+    <div class="kh-panel">
+      <button type="button" class="kh-quiet kh-back" id="btnJoinBack">トップへ戻る</button>
+      <h2 class="kh-panel__title kh-panel__title--sub">ルームに参加する</h2>
+      <p class="kh-hint" id="joinLinkHint" hidden>リンクからひらいたので、ルームコードは入っているよ。名前を入れて「参加する」を押してね。</p>
+      <label class="form-label" for="guestName">名前（8文字まで）</label>
+      <input class="form-input" id="guestName" maxlength="8" autocomplete="nickname">
+      <label class="form-label mt-md" for="joinCode">ルームコード（6文字）</label>
+      <input class="form-input kh-code-input" id="joinCode" maxlength="6" autocorrect="off" autocapitalize="characters" autocomplete="off" spellcheck="false">
+      <p class="kh-alert" id="joinError" hidden></p>
+      <button type="button" class="btn btn-primary btn-full mt-md" id="btnJoinRoom">参加する</button>
+    </div>
+  </section>
+
+  <!-- みんなにみせる画面をひらく -->
+  <section class="kh-screen kh-front" id="screen-watch-join">
+    <div class="kh-panel">
+      <button type="button" class="kh-quiet kh-back" id="btnWatchBack">トップへ戻る</button>
+      <h2 class="kh-panel__title kh-panel__title--sub">みんなにみせる画面をひらく</h2>
+      <p class="kh-hint">画面共有でみんなに見せるための画面です。ルームには入らず、見るだけです。まだ読んでいない言葉は出ません。</p>
+      <label class="form-label" for="watchCode">ルームコード（6文字）</label>
+      <input class="form-input kh-code-input" id="watchCode" maxlength="6" autocorrect="off" autocapitalize="characters" autocomplete="off" spellcheck="false">
+      <p class="kh-alert" id="watchError" hidden></p>
+      <button type="button" class="btn btn-primary btn-full mt-md" id="btnWatchOpen">画面をひらく</button>
+    </div>
+  </section>
+
+  <!-- みんなにみせる画面のおわり -->
+  <section class="kh-screen kh-front" id="screen-watch-end">
+    <div class="kh-panel">
+      <h2 class="kh-panel__title kh-panel__title--sub" id="watchEndTitle">このルームは閉じられました</h2>
+      <button type="button" class="btn btn-primary btn-full mt-md" id="btnWatchEndTop">トップへ戻る</button>
+    </div>
+  </section>
+
+  <!-- ルームの画面（待合室・ゲーム・みんなにみせる画面） -->
+  <section class="kh-screen" id="screen-room">
+    <header class="kh-bar">
+      <h1 class="kh-bar__title">カンペ放送局</h1>
+      <p class="kh-bar__badge" id="watchBadge" hidden>みんなにみせる画面</p>
+      <p class="kh-bar__me" id="barMe" hidden></p>
+    </header>
+    <div class="kh-roombar" id="roomBar">
+      <span class="kh-roombar__code">ルーム <strong id="roomCodeLabel"></strong></span>
+      <button type="button" class="btn btn-ghost btn-sm" id="btnCopyCode">コードをコピー</button>
+      <button type="button" class="btn btn-ghost btn-sm" id="btnCopyLink">リンクをコピー</button>
+      <button type="button" class="btn btn-ghost btn-sm" id="btnShowQr">QRコードを出す</button>
+      <button type="button" class="btn btn-ghost btn-sm" id="btnOpenWatch" hidden>みんなにみせる画面</button>
+      <button type="button" class="btn btn-ghost btn-sm" id="btnLeave">退出する</button>
+    </div>
+
+    <main class="kh-main">
+      <!-- 待合室 -->
+      <section id="ph-lobby" class="kh-phase" hidden>
+        <div id="lobby-join" class="kh-joininfo" hidden>
+          <p class="kh-joininfo__label">参加のしかた</p>
+          <p class="kh-joininfo__text">「ルームに参加する」でコードを入れてね</p>
+          <p id="lobby-join-code" class="kh-joininfo__code"></p>
+        </div>
+
+        <div class="card">
+          <h2 class="kh-h2">参加している人</h2>
+          <ul id="lobby-people" class="kh-people"></ul>
+          <p id="lobby-noread-note" class="kh-note mt-sm">マイクを使わない人は「読まない（書くだけ）」にしてね。読む番が来ないで、言葉を書いて「笑った！」を押して遊べるよ</p>
+          <label id="host-plays-row" class="kh-check mt-md" hidden>
+            <input id="host-plays" type="checkbox" />
+            <span class="kh-check__text">
+              <span class="kh-check__label">自分（ホスト）も遊ぶ</span>
+              <span class="kh-check__sub">外すと進行だけ。読む番も書く番も来ない</span>
+            </span>
+          </label>
+          <form id="nodev-form" class="kh-nodev" hidden>
+            <label class="kh-nodev__label" for="nodev-name">端末のない人を足す</label>
+            <p class="kh-check__sub">その人のヒントはチャットの個別メッセージで伝えて、言葉は本人から聞いてホストが代わりに入れる。読む番のときは、みんなにみせる画面の原稿を読んでもらう</p>
+            <div class="kh-nodev__row">
+              <input id="nodev-name" class="form-input" type="text" maxlength="8" autocomplete="off" placeholder="名前（8文字まで）" />
+              <button type="submit" class="btn btn-secondary btn-sm">
+                <span class="material-symbols-rounded" aria-hidden="true">person_add</span>足す
+              </button>
+            </div>
+            <p id="nodev-msg" class="kh-alert" hidden></p>
+          </form>
+          <p id="lobby-count" class="kh-note mt-sm"></p>
+        </div>
+
+        <div class="card">
+          <h2 class="kh-h2">遊び方の設定</h2>
+          <div id="lobby-opts" hidden></div>
+          <ul id="lobby-opts-view" class="kh-optsview" hidden></ul>
+        </div>
+
+        <div id="lobby-host" class="kh-lobby-actions" hidden>
+          <p id="lobby-check" class="kh-alert" role="status"></p>
+          <button id="btn-start" type="button" class="btn btn-primary btn-full btn-lg">放送をはじめる</button>
+        </div>
+        <p id="lobby-wait" class="kh-wait" hidden>ホストがはじめるのを待っているよ</p>
+      </section>
+
+      <!-- ゲーム -->
+      <section id="ph-game" class="kh-phase kh-game" hidden>
+        <div id="onair" class="kh-onair"></div>
+        <div id="banner" class="kh-banner">
+          <span id="banner-icon" class="kh-banner__icon material-symbols-rounded" aria-hidden="true"></span>
+          <div class="kh-banner__body">
+            <p id="game-status" class="kh-status" role="status" aria-live="polite"></p>
+            <p id="game-sub" class="kh-banner__sub"></p>
+          </div>
+        </div>
+        <div id="stage" class="kh-stage"></div>
+        <div id="tools" class="kh-tools" hidden></div>
+        <ul id="players" class="kh-players" aria-label="遊んでいる人"></ul>
+      </section>
+    </main>
+  </section>
+
+  <div class="kh-overlay" id="hostOffOverlay" hidden>
+    <div class="kh-overlay__panel">
+      <h2>ホストの戻りを待っています</h2>
+      <p id="hostOffText">しばらく待っても戻らないときは退出してね。</p>
+      <button type="button" class="btn btn-secondary" id="btnOverlayLeave">退出する</button>
+    </div>
+  </div>
+
+  <script type="module" src="app.js?v=20261102a"></script>
+  <script src="../shared/js/stats.js?v=1" defer></script>
+  <script src="../shared/js/howto.js"></script>
+  <script>
+    RoomkHowto.init({
+      title: 'あそびかた',
+      lead: '読む人の原稿の空らんに、ほかの人が言葉を書く。読む人は、出てきた言葉をそのまま読む。聞いている人は、おもしろかった言葉に「笑った！」を押す。',
+      sections: [
+        { heading: 'はじめかた', items: [
+          'ホストが「ルームを作る」で名前を入れる。ルームコードは「コードをコピー」、参加用のリンクは「リンクをコピー」でチャットに送れる。スマホやタブレットで入る人には「QRコードを出す」をカメラで読みとってもらう',
+          '参加する人は「ルームに参加する」で名前、ルームコード（6文字）の順に入れ、「参加する」を押す。リンクからひらいたときは、ルームコードは入っているので名前だけ入れる',
+          'マイクを使わない人は、待合室で自分の「読まない（書くだけ）」にチェックを入れる。読む番が来ない',
+          '3〜8人そろったら、ホストが「放送をはじめる」',
+        ] },
+        { heading: '1回の番組', items: [
+          '読む人が1人決まる。ほかの人には「食べ物」「音」のようなヒントだけが届く',
+          'ヒントに合う言葉を書いて「出す」を押す。思いつかないときは「おまかせ」。読む人が「読みはじめる」を押すまでは「書きなおす」ができる',
+          'みんなが出したら、読む人が「つぎへ」を押しながら原稿を読む。言葉はそのとき初めて出る',
+          '聞いている人は、おもしろかった行の「笑った！」を押す（前の行にもあとから押せる。自分の言葉には押せない。もう一度押すと取り消し）',
+          '読み終わったら、「笑った！」がいちばん多い言葉が「いちばん笑った言葉」になる',
+        ] },
+        { heading: '順番', items: [
+          '読む人は順番に交代する。みんなが1回ずつ（設定によっては2回ずつ）読んだらおしまい',
+        ] },
+        { heading: 'ホストができること', items: [
+          'まだ書いていない人を待たずに読みはじめる（その人の空らんには、おまかせの言葉が入る）',
+          '読みはじめる前なら、届いた言葉をたしかめて、おまかせの言葉に替えられる',
+          '読む人が進められないときは「代わりに：つぎへ」で進める。「放送をやめて待合室にもどる」で途中でやめられる',
+          '端末のない人を足して、言葉を代わりに入れる。読む番のときは代わりに「つぎへ」を押す',
+          '画面共有には「みんなにみせる画面」を使う。まだ読んでいない言葉は出ない',
+        ] },
+      ],
+    });
+  </script>
+</body>
+</html>
