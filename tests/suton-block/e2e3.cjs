@@ -21,9 +21,14 @@ const { check, sleep, text, visible, waitScreen, waitFor, key, fitsHeight, overf
   const used = () => P.page.$eval('#hold', (c) => c.classList.contains('is-used'));
   check('S6 はじめは、とっておける', !(await used()));
   await key(P, 'a');
-  check('S7 とっておくと箱がうすくなる', await used());
+  check('S6b A は裏返すで、とっておかない', !(await used()));
+  await key(P, 'c');
+  check('S7 C でとっておくと箱がうすくなる', await used());
   await key(P, 'Space');
   check('S8 置いたら、またとっておける', !(await used()));
+  await key(P, 'Shift');
+  check('S8b Shift でもとっておける', await used());
+  await key(P, 'Space');
   let noted = false;
   for (let i = 0; i < 150 && !noted; i++) { await key(P, 'Space'); noted = await visible(P, '#playNote'); }
   check('S9 いっぱいになったら、からにしてつづける', noted && (await text(P, '#playNote')).includes('からにしたよ'));

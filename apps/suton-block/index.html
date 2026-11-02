@@ -8,13 +8,13 @@
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
   <link rel="stylesheet" href="../shared/css/design-system.css">
   <!-- index.html と app.js・engine.js・style.css はセットで変わるので、変えたら ?v= をそろえて上げる -->
-  <link rel="stylesheet" href="style.css?v=20261102b">
+  <link rel="stylesheet" href="style.css?v=20261102c">
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <script src="../shared/js/rtdb-utils.js?v=20261005"></script>
   <script src="../shared/js/room-qr.js?v=20261022"></script>
-  <script src="engine.js?v=20261102b"></script>
+  <script src="engine.js?v=20261102c"></script>
 </head>
 <body>
 
@@ -222,7 +222,7 @@
         <button type="button" class="sb-padbtn" data-act="flip" aria-label="裏返す"><span class="material-symbols-rounded" aria-hidden="true">flip</span></button>
         <button type="button" class="sb-padbtn" data-act="hold" aria-label="とっておく"><span class="material-symbols-rounded" aria-hidden="true">inventory_2</span></button>
       </div>
-      <p class="sb-keys">キーボード: ← → 動かす／↓ 下へ／スペース すとん／↑ か X 右に回す／Z 左に回す／C 裏返す／A とっておく<br>マウス: 盤の上で左右に動かす／クリック すとん／右クリック 右に回す／ホイール 回す</p>
+      <p class="sb-keys">キーボード: ← → 動かす／↓ 下へ／スペース すとん／↑ か X 右に回す／Z 左に回す／A 裏返す／C か Shift とっておく<br>マウス: 盤の上で左右に動かす／クリック すとん／右クリック 右に回す／ホイール 回す</p>
     </div>
   </section>
 
@@ -270,7 +270,7 @@
     </div>
   </div>
 
-  <script type="module" src="app.js?v=20261102b"></script>
+  <script type="module" src="app.js?v=20261102c"></script>
   <script src="../shared/js/stats.js?v=1" defer></script>
   <script src="../shared/js/howto.js"></script>
   <script>
@@ -290,7 +290,7 @@
           '回すボタンは左回りと右回り。裏返すボタンで左右を逆にする',
           '箱のボタンで、いまのブロックを1つとっておける。とっておいたものと入れかえて出せる（1つのブロックにつき1回）',
           '盤の中の枠は、そのまま落としたときに入る場所',
-          'キーボードなら ← → ↓ で動かす、スペースですとん、↑ か X で右に回す、Z で左に回す、C で裏返す、A でとっておく',
+          'キーボードなら ← → ↓ で動かす、スペースですとん、↑ か X で右に回す、Z で左に回す、A で裏返す、C か Shift でとっておく',
           'マウスなら、盤の上で左右に動かすとブロックがついてくる。クリックですとん、右クリックで右に回す、ホイールで回す（まん中のボタンで裏返す）',
         ] },
         { heading: '回すときのこつ', items: [
