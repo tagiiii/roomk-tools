@@ -38,3 +38,4 @@ node tests/suton-block/e2e3.cjs
 - じゃまのあく列はでたらめなので、その1ではホストのページの `Math.random` を固定して左はしにし、node で同じ盤を作りなおして（`restoreGame`）縦のブロックが来るまでの手を決めてから、画面で同じキーを押す
 - ポートを別のセッションが使っていたら、相手は止めずに、`firebase.json`・`sync-site.sh`・`lib.cjs` のポートをそろえて変える
 - 終わったらエミュレーターを止め、ポートが空いたことを確かめる
+- `E2E_BROWSER=webkit` を付けると、Safari と同じエンジン（Playwright の WebKit。`playwright install webkit` で入れる）で流す。2026-11-02 に流した結果: その1 76項目・その3 41項目は合格。その2は R13（結果の画面でホストを待つオーバーレイ）だけ落ちる。WebKit では `setOffline` で切ったホストがすぐつなぎなおして `hostConnected` が true にもどるため（ホストがじっさいには切れていない）で、アプリの不具合ではない。切断まわりは Chrome の結果で見る

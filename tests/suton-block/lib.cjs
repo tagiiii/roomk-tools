@@ -1,5 +1,5 @@
 // すとんブロックの E2E の土台（隔離エミュレーター）。本番の Firebase には接続しない。
-const { chromium } = require(process.env.PLAYWRIGHT || 'playwright');
+const { chromium, webkit } = require(process.env.PLAYWRIGHT || 'playwright');
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
@@ -66,10 +66,14 @@ function isProd(hostname) {
 
 let browser;
 const clients = [];
-async function launch() { browser = await chromium.launch({ channel: 'chrome' }); return browser; }
+// E2E_BROWSER=webkit で Safari と同じエンジン（Playwright の WebKit）で流す。ふだんは Chrome
+async function launch() {
+  browser = process.env.E2E_BROWSER === 'webkit' ? await webkit.launch() : await chromium.launch({ channel: 'chrome' });
+  return browser;
+}
 async function newContext(label, opts = {}) {
   const context = await browser.newContext({ viewport: opts.viewport || { width: 1100, height: 900 } });
-  await context.grantPermissions(['clipboard-read', 'clipboard-write']).catch(() => {});
+  if (process.env.E2E_BROWSER !== 'webkit') await context.grantPermissions(['clipboard-read', 'clipboard-write']).catch(() => {});
   await context.route('**/*', (route) => {
     const host = new URL(route.request().url()).hostname;
     if (isProd(host)) { T.violations.push(label + ' http ' + route.request().url()); return route.abort(); }
