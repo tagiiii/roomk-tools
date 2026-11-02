@@ -706,35 +706,32 @@
     }
 
     /* ── よく開かれたツール（ranking.json から描画・回数は出さない） ── */
-    .ranking-panel {
-      background-color: var(--color-surface);
-      border-radius: var(--radius-card);
-      box-shadow: var(--shadow-sm);
-      padding: var(--space-md) var(--space-lg);
-      margin-bottom: var(--space-xl);
+    .ranking {
+      margin-bottom: var(--space-lg);
     }
 
-    .ranking-panel__head {
+    .ranking__head {
       display: flex;
       flex-wrap: wrap;
       align-items: baseline;
       gap: 0 var(--space-sm);
+      margin-bottom: var(--space-sm);
     }
 
-    .ranking-panel__title {
+    .ranking__title {
       display: flex;
       align-items: center;
       gap: var(--space-xs);
-      font-size: var(--font-size-lg);
+      font-size: var(--font-size-body);
       font-weight: 700;
       color: var(--color-primary);
     }
 
-    .ranking-panel__title .material-symbols-rounded {
-      font-size: 22px;
+    .ranking__title .material-symbols-rounded {
+      font-size: 20px;
     }
 
-    .ranking-panel__period {
+    .ranking__period {
       font-size: var(--font-size-sm);
       color: var(--color-muted);
       font-feature-settings: "tnum";
@@ -742,59 +739,96 @@
 
     .ranking-list {
       list-style: none;
-      margin: var(--space-sm) 0 0;
+      margin: 0;
       padding: 0;
-      display: flex;
-      flex-wrap: wrap;
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
       gap: var(--space-sm);
     }
 
-    /* スマホでは1行に1つずつ並べ、押しやすくする */
-    @media (max-width: 600px) {
-      .ranking-list {
-        flex-direction: column;
-      }
-    }
-
-    .ranking-list__link {
+    .ranking-card {
       display: flex;
-      align-items: center;
-      gap: var(--space-sm);
-      min-height: 44px;
-      padding: var(--space-xs) var(--space-md) var(--space-xs) var(--space-sm);
-      border: 1px solid var(--color-border);
+      flex-direction: column;
+      height: 100%;
+      background-color: var(--color-surface);
       border-radius: var(--radius-card);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
       color: var(--color-text);
-      font-size: var(--font-size-sm);
-      font-weight: 700;
-      line-height: 1.4;
       text-decoration: none;
-      transition: background-color var(--transition-base);
+      transition: box-shadow var(--transition-base), transform var(--transition-base);
     }
 
-    .ranking-list__link:hover {
-      background-color: #EEF3F8;
+    .ranking-card:hover {
+      box-shadow: var(--shadow-md);
+      transform: translateY(-2px);
       text-decoration: none;
     }
 
-    .ranking-list__rank {
-      flex: none;
+    .ranking-card__thumb {
+      position: relative;
       display: flex;
       align-items: center;
       justify-content: center;
-      width: 24px;
-      height: 24px;
+      aspect-ratio: 16 / 10;
+      background-color: var(--color-bg);
+    }
+
+    .ranking-card__thumb img {
+      position: absolute;
+      inset: 0;
+      display: block;
+      width: 100%;
+      height: 100%;
+      padding: 6px;
+      object-fit: contain;
+    }
+
+    .ranking-card__thumb .material-symbols-rounded {
+      font-size: 36px;
+      color: var(--color-primary);
+    }
+
+    .ranking-card__rank {
+      position: absolute;
+      top: 6px;
+      left: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 26px;
+      height: 26px;
       border-radius: var(--radius-full);
       background-color: var(--color-primary);
       color: #fff;
-      font-size: 12px;
+      font-size: 13px;
+      font-weight: 700;
       font-feature-settings: "tnum";
+      box-shadow: 0 0 0 2px #fff;
     }
 
-    .ranking-list__icon {
-      flex: none;
-      font-size: 22px;
-      color: var(--color-primary);
+    .ranking-card__name {
+      padding: var(--space-xs) var(--space-sm) var(--space-sm);
+      font-size: var(--font-size-sm);
+      font-weight: 700;
+      line-height: 1.4;
+    }
+
+    /* スマホ・タブレットでは横に並べたまま、横にスワイプして見る */
+    @media (max-width: 760px) {
+      .ranking-list {
+        display: flex;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        margin: 0 calc(var(--space-md) * -1);
+        padding: 2px var(--space-md) var(--space-sm);
+        scroll-padding: 0 var(--space-md);
+      }
+
+      .ranking-list > li {
+        flex: 0 0 38%;
+        scroll-snap-align: start;
+      }
     }
 
     footer {
@@ -829,25 +863,22 @@
     </section>
 
     <!-- ============================================= -->
-    <!-- よく開かれたツール（ranking.json から描画）     -->
-    <!-- 週1回 scripts/ranking-build.mjs で作る。回数は出さない -->
-    <!-- ============================================= -->
-    <section class="ranking-panel" id="ranking-panel" aria-labelledby="ranking-title" hidden>
-      <div class="ranking-panel__head">
-        <h2 class="ranking-panel__title" id="ranking-title">
-          <span class="material-symbols-rounded" aria-hidden="true">trending_up</span><span id="ranking-title-text">よく開かれたツール</span>
-        </h2>
-        <span class="ranking-panel__period" id="ranking-period"></span>
-      </div>
-      <ol class="ranking-list" id="ranking-list"></ol>
-    </section>
-
-    <!-- ============================================= -->
     <!-- ツール一覧（利用シーンで絞り込み）             -->
     <!-- ============================================= -->
     <section class="portal-section">
       <h2 class="section-title">ツール一覧</h2>
       <p class="section-desc">画像はプレイ・操作画面の一例です。</p>
+
+      <!-- よく開かれたツール（ranking.json から描画。週1回 scripts/ranking-build.mjs で作る。回数は出さない） -->
+      <section class="ranking" id="ranking-panel" aria-labelledby="ranking-title" hidden>
+        <div class="ranking__head">
+          <h3 class="ranking__title" id="ranking-title">
+            <span class="material-symbols-rounded" aria-hidden="true">trending_up</span><span id="ranking-title-text">よく開かれたツール</span>
+          </h3>
+          <span class="ranking__period" id="ranking-period"></span>
+        </div>
+        <ol class="ranking-list" id="ranking-list"></ol>
+      </section>
 
       <div class="tool-filter">
       <div class="tool-search" role="search" aria-label="ツール一覧">
@@ -2904,6 +2935,15 @@
     // よく開かれたツール: apps/ranking.json（scripts/ranking-build.mjs が週1回作る）が正本。
     // 名前とアイコンはポータルのカードから取る。カードがないアプリは飛ばす。
     (function () {
+      // サムネイルがないカードは、カードと同じアイコンを出す
+      function fallbackIcon(card) {
+        const icon = document.createElement('span');
+        icon.className = 'material-symbols-rounded';
+        icon.setAttribute('aria-hidden', 'true');
+        icon.textContent = card.querySelector('.app-card__icon .material-symbols-rounded')?.textContent || 'apps';
+        return icon;
+      }
+
       function shortDate(dateStr) {
         const [, m, d] = String(dateStr).split('-').map(Number);
         return m + '/' + d;
@@ -2916,23 +2956,37 @@
           if (!card) return null;
           const li = document.createElement('li');
           const link = document.createElement('a');
-          link.className = 'ranking-list__link';
+          link.className = 'ranking-card';
           link.href = app + '/';
+          const thumb = document.createElement('div');
+          thumb.className = 'ranking-card__thumb';
+          const image = card.querySelector('.app-card__thumbnail');
+          if (image && !image.hidden) {
+            const img = document.createElement('img');
+            img.src = image.getAttribute('src');
+            img.alt = '';
+            img.decoding = 'async';
+            img.addEventListener('error', () => { img.replaceWith(fallbackIcon(card)); });
+            thumb.appendChild(img);
+          } else {
+            thumb.appendChild(fallbackIcon(card));
+          }
           const rank = document.createElement('span');
-          rank.className = 'ranking-list__rank';
-          const icon = document.createElement('span');
-          icon.className = 'material-symbols-rounded ranking-list__icon';
-          icon.setAttribute('aria-hidden', 'true');
-          icon.textContent = card.querySelector('.app-card__icon .material-symbols-rounded')?.textContent || 'apps';
+          rank.className = 'ranking-card__rank';
+          thumb.appendChild(rank);
           const name = document.createElement('span');
+          name.className = 'ranking-card__name';
           name.textContent = card.querySelector('.app-card__name')?.textContent || app;
-          link.append(rank, icon, name);
+          link.append(thumb, name);
           li.appendChild(link);
           return li;
         }).filter(Boolean);
         if (items.length === 0) return;
 
-        items.forEach((li, i) => { li.querySelector('.ranking-list__rank').textContent = String(i + 1); });
+        items.forEach((li, i) => {
+          li.querySelector('.ranking-card__rank').textContent = String(i + 1);
+          li.querySelector('.ranking-card').setAttribute('aria-label', (i + 1) + '位 ' + li.querySelector('.ranking-card__name').textContent);
+        });
         list.replaceChildren(...items);
 
         const period = data.period || {};
