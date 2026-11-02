@@ -90,7 +90,7 @@
 
   /* 原稿とカンペの見本 */
   .cols--write{ grid-template-columns:400px 1fr; align-items:start; }
-  .cols--laugh{ grid-template-columns:600px 1fr; align-items:start; }
+  .cols--judge{ grid-template-columns:520px 1fr; align-items:start; }
   .flow--3{ grid-template-columns:repeat(3, 1fr); }
   .hintcard{ background:var(--white); border:1.5px solid var(--line); border-radius:18px; padding:24px 26px; display:flex; flex-direction:column; gap:8px; }
   .hintcard__cap{ font-size:17px; font-weight:700; color:var(--muted); letter-spacing:.08em; }
@@ -100,17 +100,13 @@
   .hintcard__btns{ display:flex; gap:10px; margin-top:6px; }
   .mbtn{ display:inline-flex; align-items:center; justify-content:center; min-width:110px; border-radius:12px; padding:11px 18px; font-size:20px; font-weight:900; border:2px solid var(--line); color:var(--ink); background:#fff; }
   .mbtn--primary{ background:var(--teal); border-color:var(--teal); color:#fff; }
-  .script{ background:var(--kanpe-paper); border:1.5px solid #E6D3BE; border-radius:18px; padding:20px 22px; display:flex; flex-direction:column; gap:10px; }
-  .script__head{ display:flex; align-items:center; gap:10px; font-size:21px; font-weight:900; color:#fff; background:var(--studio); border-radius:10px; padding:9px 14px; }
-  .script__head .material-symbols-rounded{ font-size:24px; color:var(--kanpe); }
-  .script__line{ font-size:22px; line-height:1.7; color:#4A4F57; padding:8px 12px; border-radius:10px; }
-  .script__line--frame{ color:var(--muted); font-size:20px; }
-  .script__line.is-current{ background:#fff; color:var(--ink); font-weight:700; box-shadow:0 0 0 2px var(--air) inset; }
-  .kw{ background:var(--kanpe-bg); color:var(--kanpe-text); border-bottom:3px solid var(--kanpe); border-radius:6px; padding:0 6px; font-weight:900; }
-  .lcount{ display:inline-flex; align-items:center; gap:3px; margin-left:10px; font-size:20px; font-weight:900; color:var(--kanpe-text); vertical-align:middle; }
-  .lcount .material-symbols-rounded{ font-size:26px; color:#D69A12; }
-  .lbtn{ display:inline-flex; align-items:center; gap:4px; margin-left:10px; padding:4px 14px; border:2px solid var(--kanpe); border-radius:999px; background:#fff; color:var(--kanpe-text); font-size:18px; font-weight:900; vertical-align:middle; }
-  .lbtn .material-symbols-rounded{ font-size:22px; }
+  .judgecard{ background:var(--white); border:1.5px solid var(--line); border-radius:18px; padding:26px 26px 28px; display:flex; flex-direction:column; gap:20px; }
+  .judgecard__q{ font-size:28px; font-weight:900; color:var(--ink); }
+  .judgecard__row{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .choice{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; min-height:150px; border:2px solid var(--line); border-radius:16px; background:#fff; font-size:22px; font-weight:900; text-align:center; padding:14px 10px; }
+  .choice .material-symbols-rounded{ font-size:52px; }
+  .choice--ok{ color:#1D6F86; border-color:#BFDCE4; background:#EAF4F6; }
+  .choice--laugh{ color:var(--kanpe-text); border-color:var(--kanpe); background:var(--kanpe-bg); }
 
   /* Q&A */
   .qa{ display:flex; flex-direction:column; gap:16px; }
@@ -245,16 +241,16 @@ const SLIDES = [
     sub:'今の気分を、ひとことどうぞ',
     note:'まずはチェックインから！\n今の気分や、最近あったことを、ひとことチャットか声で教えてね\n（カンペ放送局の説明は、このあとすぐ！）' },
 
-  /* 2 */ { type:'title', note:'今日のゲームは「カンペ放送局」\nみんなでテレビやラジオの放送をするよ。読む人の原稿には空らんがあって、そこにほかの人が書いた言葉が入る。どんな放送になるかは、読んでみるまでだれにもわからないよ！' },
+  /* 2 */ { type:'title', note:'今日のゲームは「カンペ放送局」\nみんなでテレビやラジオの放送をするよ。読む人の原稿には空らんがあって、そこにほかの人が書いた言葉が入る。読む人は、どんな言葉が出てきても、笑わずに読みきれるかな？' },
 
   /* 3 */ { type:'content', accent:'teal', section:'ゲームについて', sectionEn:'summary',
-    headline:'原稿の空らんに、<br><span class="hl">みんなが書いた言葉</span>が入る',
+    headline:'原稿の空らんに入った言葉を、<br><span class="hl">笑わずに読みきれるかな？</span>',
     body:`<div class="rows">
       <div class="row"><div class="row__ic"><span class="material-symbols-rounded">edit_note</span></div><div><div class="row__t">書く人は、ヒントだけを見て言葉を書く</div><div class="row__d">「食べ物」「音」のようなヒント。文の中身は知らないまま</div></div></div>
-      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">mic</span></div><div><div class="row__t">読む人は、出てきた言葉をそのまま読む</div><div class="row__d">言葉は、読むときに初めて出てくる</div></div></div>
-      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">sentiment_very_satisfied</span></div><div><div class="row__t">聞いている人は、「笑った！」を押す</div><div class="row__d">おもしろかった言葉に押そう</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">mic</span></div><div><div class="row__t">読む人は、出てきた言葉をそのまま読む</div><div class="row__d">言葉は、読むときに初めて出てくる。笑わずに読みきれるかな</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">gavel</span></div><div><div class="row__t">読み終わったら、みんなで判定</div><div class="row__d">「笑わずに読めた」か「笑った」かを、いっせいに出す</div></div></div>
     </div>`,
-    note:'読む人の原稿には、空らんがあるよ。\nほかの人は「食べ物」「音」みたいなヒントだけを見て、言葉を書く。文の中身は知らないまま書くのがポイント。\n読む人は、出てきた言葉をそのまま読む。言葉は、読むときに初めて出てくるよ。\n聞いている人は、おもしろかった言葉に「笑った！」を押してね。' },
+    note:'読む人の原稿には、空らんがあるよ。\nほかの人は「食べ物」「音」みたいなヒントだけを見て、言葉を書く。文の中身は知らないまま書くのがポイント。\n読む人は、出てきた言葉をそのまま読む。言葉は、読むときに初めて出てくるよ。どんな言葉が出てきても、笑わずに読みきれるかな？\n読み終わったら、読む人のほかのみんなで「笑わずに読めた」か「笑った」かを判定するよ。' },
 
   /* 4 */ { type:'content', accent:'blue', section:'ゲーム説明', sectionEn:'explain', num:'1',
     headline:'書く人には<span class="hl">ヒントだけ</span>が届く',
@@ -281,45 +277,55 @@ const SLIDES = [
       <div class="flow__step"><div class="flow__no">②</div><span class="material-symbols-rounded">skip_next</span><div class="flow__t">つぎへ</div><div class="flow__d">押すたびに、<br>次の行が出る</div></div>
       <div class="flow__step"><div class="flow__no">③</div><span class="material-symbols-rounded">flag</span><div class="flow__t">読みおわった</div><div class="flow__d">最後まで読んだら押す</div></div>
     </div>
-    <div class="demo-cap">言葉が変でも、<b>そのまま読んでね</b>。読んでいて笑っちゃっても大丈夫。</div>`,
-    note:'みんなが言葉を出したら、読む人の番組がはじまるよ。\n読む人は「読みはじめる」を押して、「つぎへ」を押しながら原稿を声に出して読む。押すたびに、次の行がみんなの画面にも出るよ。\n最後まで読んだら「読みおわった」を押してね。\n言葉が変でも、そのまま読んでね。読んでいて笑っちゃっても大丈夫だよ。' },
+    <div class="demo-cap">言葉が変でも、<b>笑わずにそのまま読みきろう</b>。聞いている人は、読む人が笑うかどうか、よく聞いていてね。</div>`,
+    note:'みんなが言葉を出したら、読む人の番組がはじまるよ。\n読む人は「読みはじめる」を押して、「つぎへ」を押しながら原稿を声に出して読む。押すたびに、次の行がみんなの画面にも出るよ。\n最後まで読んだら「読みおわった」を押してね。\n言葉が変でも、笑わずにそのまま読みきろう。聞いている人は、読む人が笑うかどうか、よく聞いていてね。' },
 
   /* 6 */ { type:'content', accent:'coral', section:'ゲーム説明', sectionEn:'explain', num:'3',
-    headline:'おもしろかったら<span class="hl">「笑った！」</span>',
-    body:`<div class="cols cols--auto cols--laugh">
-      <div class="script">
-        <div class="script__head"><span class="material-symbols-rounded">partly_cloudy_day</span>お天気コーナー</div>
-        <div class="script__line script__line--frame">こんばんは。お天気コーナーの時間です。</div>
-        <div class="script__line">あしたは朝から、空から<span class="kw">ソフトクリーム</span>がふってくるでしょう。<span class="lcount"><span class="material-symbols-rounded">sentiment_very_satisfied</span>3</span></div>
-        <div class="script__line is-current">お昼ごろには、<span class="kw">カピバラ</span>の形をした雲が出てきます。<span class="lbtn"><span class="material-symbols-rounded">sentiment_very_satisfied</span>笑った！</span></div>
+    headline:'読みおわったら、<span class="hl">みんなで判定</span>',
+    body:`<div class="cols cols--auto cols--judge">
+      <div class="judgecard">
+        <div class="judgecard__q">そら は、笑わずに読めた？</div>
+        <div class="judgecard__row">
+          <span class="choice choice--ok"><span class="material-symbols-rounded">sentiment_neutral</span>笑わずに読めた</span>
+          <span class="choice choice--laugh"><span class="material-symbols-rounded">sentiment_very_satisfied</span>笑った</span>
+        </div>
       </div>
       <div class="rows">
-        <div class="row"><div class="row__ic"><span class="material-symbols-rounded">history</span></div><div><div class="row__t">前の行にも、あとから押せる</div><div class="row__d">押すのがおくれても大丈夫</div></div></div>
-        <div class="row"><div class="row__ic"><span class="material-symbols-rounded">touch_app</span></div><div><div class="row__t">1つの言葉に1回</div><div class="row__d">もう一度押すと取り消し</div></div></div>
-        <div class="row"><div class="row__ic"><span class="material-symbols-rounded">block</span></div><div><div class="row__t">自分の言葉には押せない</div><div class="row__d">「おまかせ」で入った言葉にも押せないよ</div></div></div>
+        <div class="row"><div class="row__ic"><span class="material-symbols-rounded">groups</span></div><div><div class="row__t">読む人のほかのみんなが出す</div><div class="row__d">「書くだけ」の人も出すよ</div></div></div>
+        <div class="row"><div class="row__ic"><span class="material-symbols-rounded">touch_app</span></div><div><div class="row__t">1人1回、いっせいに出す</div><div class="row__d">みんなが出したら、結果が開く</div></div></div>
+        <div class="row"><div class="row__ic"><span class="material-symbols-rounded">visibility_off</span></div><div><div class="row__t">だれが何を出したかは出ない</div><div class="row__d">出したかどうかだけが出るよ</div></div></div>
       </div>
     </div>`,
-    note:'聞いている人は、おもしろかった行の「笑った！」を押してね。読む人も押せるよ。\n今読んでいる行だけじゃなくて、前の行にもあとから押せる。\n1つの言葉に押せるのは1回。もう一度押すと取り消しになるよ。\n自分の言葉と、「おまかせ」で入った言葉には押せないよ。' },
+    note:'読む人が「読みおわった」を押したら、判定の時間だよ。\n読む人のほかのみんなが、「笑わずに読めた」か「笑った」を1回だけ出す。「書くだけ」の人も出すよ。\nみんなが出したら、結果が開く。だれが何を出したかは出ないから、思ったとおりに出してね。' },
 
   /* 7 */ { type:'content', accent:'blue', section:'ゲーム説明', sectionEn:'explain', num:'4',
-    headline:'読みおわったら、<br><span class="ul">いちばん笑った言葉</span>',
+    headline:'「笑わずに読めた」が<br><span class="ul">半分より多ければ</span>読みきり',
     body:`<div class="rows">
-      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">star</span></div><div><div class="row__t">「笑った！」がいちばん多い言葉が出る</div><div class="row__d">同じ数ならみんな。だれが書いたかも出るよ</div></div></div>
-      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">sync_alt</span></div><div><div class="row__t">読む人は順番に交代</div><div class="row__d">みんなが1回ずつ（設定によっては2回ずつ）読んだらおしまい</div></div></div>
-      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">movie</span></div><div><div class="row__t">おしまいに「きょうの名場面」</div><div class="row__d">番組ごとの、いちばん笑った言葉が並ぶ</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">emoji_events</span></div><div><div class="row__t">半分より多ければ「笑わずに読みきった！」</div><div class="row__d">読む人の成功</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">sentiment_very_satisfied</span></div><div><div class="row__t">そうでなければ「笑っちゃった！」</div><div class="row__d">同じ数のときも「笑っちゃった！」になる</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">edit_note</span></div><div><div class="row__t">原稿の中に、だれが書いたかも出る</div><div class="row__d">どの言葉をだれが書いたか、見てみよう</div></div></div>
     </div>`,
-    note:'読みおわったら、「笑った！」がいちばん多かった言葉が「いちばん笑った言葉」として出るよ。同じ数ならみんな出る。だれが書いたかも出るよ。\n読む人は順番に交代して、みんなが1回ずつ読んだらおしまい。ホストの設定によっては2回ずつになるよ。\nおしまいには「きょうの名場面」として、番組ごとのいちばん笑った言葉が並ぶよ。' },
+    note:'判定で「笑わずに読めた」が半分より多ければ、「笑わずに読みきった！」。読む人の成功だよ。\nそうでなければ「笑っちゃった！」。同じ数のときも「笑っちゃった！」になるよ。\n結果の画面では、原稿の中に、どの言葉をだれが書いたかも出るよ。' },
 
-  /* 8 */ { type:'content', accent:'teal', section:'書くだけ', sectionEn:'write only',
+  /* 8 */ { type:'content', accent:'teal', section:'ゲーム説明', sectionEn:'explain', num:'5',
+    headline:'読む人は交代、<br>おしまいに<span class="hl">「きょうの放送」</span>',
+    body:`<div class="rows">
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">sync_alt</span></div><div><div class="row__t">読む人は順番に交代</div><div class="row__d">みんなが1回ずつ（設定によっては2回ずつ）読んだらおしまい</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">movie</span></div><div><div class="row__t">おしまいに「きょうの放送」</div><div class="row__d">1本ごとに、読みきったかと、書かれた言葉が並ぶ</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">leaderboard</span></div><div><div class="row__t">順位を出す設定のときは、点が入る</div><div class="row__d">読みきった読む人に1点。笑った回は、言葉を書いた人に1点ずつ</div></div></div>
+    </div>`,
+    note:'読む人は順番に交代して、みんなが1回ずつ読んだらおしまい。ホストの設定によっては2回ずつになるよ。\nおしまいには「きょうの放送」として、1本ごとに読みきったかと、書かれた言葉が並ぶよ。\nホストが「おしまいに順位を出す」にしたときは、点が入る。読みきった読む人に1点、読む人が笑った回は、言葉を書いた人に1点ずつだよ。' },
+
+  /* 9 */ { type:'content', accent:'coral', section:'書くだけ', sectionEn:'write only',
     headline:'マイクを使わない人は<br><span class="hl">「読まない（書くだけ）」</span>',
     body:`<div class="rows">
       <div class="row"><div class="row__ic"><span class="material-symbols-rounded">check_box</span></div><div><div class="row__t">待合室で、自分の「読まない（書くだけ）」にチェック</div><div class="row__d">ゲームがはじまる前に選んでね</div></div></div>
       <div class="row"><div class="row__ic"><span class="material-symbols-rounded">mic_off</span></div><div><div class="row__t">読む番は来ない</div><div class="row__d">声を出さなくても遊べるよ</div></div></div>
-      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">edit_note</span></div><div><div class="row__t">言葉を書くのと「笑った！」はある</div><div class="row__d">みんなと同じように、放送に参加できる</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">edit_note</span></div><div><div class="row__t">言葉を書くのと判定はある</div><div class="row__d">みんなと同じように、放送に参加できる</div></div></div>
     </div>`,
-    note:'マイクを使わない人は、待合室で自分の「読まない（書くだけ）」にチェックを入れてね。\nそうすると、読む番は来ないよ。\n言葉を書くのと、「笑った！」を押すのはみんなと同じ。声を出さなくても、放送に参加できるよ。' },
+    note:'マイクを使わない人は、待合室で自分の「読まない（書くだけ）」にチェックを入れてね。\nそうすると、読む番は来ないよ。\n言葉を書くのと、読みおわったあとの判定はみんなと同じ。声を出さなくても、放送に参加できるよ。' },
 
-  /* 9 */ { type:'content', accent:'blue', section:'はじめかた', sectionEn:'how to join',
+  /* 10 */ { type:'content', accent:'blue', section:'はじめかた', sectionEn:'how to join',
     headline:'名前 → ルームコード →<br>「参加する」',
     body:`<div class="rows">
       <div class="row"><div class="row__ic"><span class="material-symbols-rounded">login</span></div><div><div class="row__t">「ルームに参加する」を押す</div><div class="row__d">名前、ルームコード（6文字）の順に入れて「参加する」</div></div></div>
@@ -328,30 +334,30 @@ const SLIDES = [
     </div>`,
     note:'参加のしかただよ。\n「ルームに参加する」を押して、名前、ルームコード（6文字）の順に入れて「参加する」。\nチャットのリンクからひらいたときは、ルームコードは入っているので名前だけ入れてね。スマホやタブレットの人は、QR コードを読みとってもOK。\n3〜8人そろったら、ホストが「放送をはじめる」を押すよ。それまで待合室で待っていてね。' },
 
-  /* 10 */ { type:'content', accent:'teal', section:'Q&A', sectionEn:'question & answer',
+  /* 11 */ { type:'content', accent:'teal', section:'Q&A', sectionEn:'question & answer',
     headline:'よくある質問',
     body:`<div class="qa">
       <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>言葉が思いつかないときは？</div><div class="qa__a"><span class="qa__badge a">A</span>「おまかせ」を押すと、ヒントに合う言葉が入るよ。</div></div>
-      <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>読んでいて笑っちゃったら？</div><div class="qa__a"><span class="qa__badge a">A</span>大丈夫。笑っちゃうのも、このゲームの楽しいところだよ。</div></div>
-      <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>「笑った！」を押しまちがえたら？</div><div class="qa__a"><span class="qa__badge a">A</span>もう一度押すと取り消しになるよ。</div></div>
+      <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>読んでいて笑っちゃったら？</div><div class="qa__a"><span class="qa__badge a">A</span>そのまま最後まで読もう。笑っちゃうのも、このゲームの楽しいところだよ。</div></div>
+      <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>判定で、だれが何を出したかわかる？</div><div class="qa__a"><span class="qa__badge a">A</span>わからないよ。画面に出るのは、出したかどうかと結果だけだよ。</div></div>
     </div>`,
-    note:'よくある質問だよ\nQ. 言葉が思いつかないときは？→ A. 「おまかせ」を押すと、ヒントに合う言葉が入るよ。\nQ. 読んでいて笑っちゃったら？→ A. 大丈夫。笑っちゃうのも、このゲームの楽しいところだよ。\nQ. 「笑った！」を押しまちがえたら？→ A. もう一度押すと取り消しになるよ。' },
+    note:'よくある質問だよ\nQ. 言葉が思いつかないときは？→ A. 「おまかせ」を押すと、ヒントに合う言葉が入るよ。\nQ. 読んでいて笑っちゃったら？→ A. そのまま最後まで読もう。笑っちゃうのも、このゲームの楽しいところだよ。\nQ. 判定で、だれが何を出したかわかる？→ A. わからないよ。画面に出るのは、出したかどうかと結果だけだよ。' },
 
-  /* 11 */ { type:'divider', accent:'blue', icon:'live_help', jp:'質問タイム', en:'any questions?',
+  /* 12 */ { type:'divider', accent:'blue', icon:'live_help', jp:'質問タイム', en:'any questions?',
     sub:'気になることはある？',
     note:'ここまでで、質問がある人はいるかな？\nマイクON か チャットで教えてね！' },
 
-  /* 12 */ { type:'divider', accent:'coral', icon:'how_to_reg', jp:'参加確認', en:"let's check",
+  /* 13 */ { type:'divider', accent:'coral', icon:'how_to_reg', jp:'参加確認', en:"let's check",
     sub:'チャットで教えてね',
     note:'遊んでみたい人〜？\n「①遊びたい」「②見ていたい」「③その他」を、チャットで教えてね！\nマイクを使わないで遊びたい人は、待合室で「読まない（書くだけ）」を選べるよ。' },
 
-  /* 13 */ { type:'divider', accent:'teal', solid:true, icon:'podcasts', jp:'＼ 放送スタート ／', en:'on air',
-    sub:'どんな放送になるかな？',
+  /* 14 */ { type:'divider', accent:'teal', solid:true, icon:'podcasts', jp:'＼ 放送スタート ／', en:'on air',
+    sub:'笑わずに読みきれるかな？',
     note:'それでは、カンペ放送局スタート！\nまずはルームに参加してね。マイクを使わない人は、待合室で「読まない（書くだけ）」にチェックしてね。わからなくなったら、いつでも聞いてね' },
 
-  /* 14 */ { type:'divider', accent:'teal', solid:true, icon:'movie', jp:'きょうの名場面', en:'highlights',
+  /* 15 */ { type:'divider', accent:'teal', solid:true, icon:'movie', jp:'きょうの放送', en:'today\'s show',
     sub:'おつかれさま！',
-    note:'放送おつかれさま！\nきょうの名場面をふりかえってみよう。いちばんおもしろかった言葉や、読んでいて笑いそうになった行を、ひとことずつ教えてね。' },
+    note:'放送おつかれさま！\nきょうの放送をふりかえってみよう。おもしろかった言葉や、読んでいて笑いそうになった行を、ひとことずつ教えてね。' },
 ];
 
 /* ===== ウィンドウ間同期 ===== */
@@ -368,7 +374,7 @@ function slideHTML(s){
       <div class="title-ic"><span class="material-symbols-rounded">mic</span></div>
       <div class="title-jp">カンペ放送局</div>
       <div class="title-en">kanpe housou</div>
-      <div class="title-tag">〜 原稿の空らんに、思いがけない言葉 〜</div>
+      <div class="title-tag">〜 笑わずに読みきれるかな？ 〜</div>
       <div class="title-meta">
         <span class="m"><span class="material-symbols-rounded">group</span>3〜8人</span>
         <span class="m"><span class="material-symbols-rounded">schedule</span>15〜30分</span>
