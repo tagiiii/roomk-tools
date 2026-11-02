@@ -543,7 +543,7 @@
     }
 
     /* 一覧の上（ページの地の上）に置くので、パネルの中の選択欄と逆に白地にする。
-       おすすめ順から変えたときは、人数・時間を指定したときと同じ色にする */
+       種類順から変えたときは、人数・時間を指定したときと同じ色にする */
     .tool-sort__select.form-select {
       width: auto;
       min-width: 170px;
@@ -552,6 +552,33 @@
     .tool-sort__select.form-select:not(.is-set) {
       background-color: var(--color-surface);
       box-shadow: var(--shadow-sm);
+    }
+
+    /* 種類順の小見出し（並び替えのスクリプトが一覧の中に入れる） */
+    .genre-heading {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+      margin: var(--space-md) 0 0;
+      font-size: var(--font-size-body);
+      font-weight: 700;
+      color: var(--color-primary);
+    }
+
+    .genre-heading::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background-color: var(--color-border);
+    }
+
+    .apps-grid > .genre-heading:first-child {
+      margin-top: 0;
+    }
+
+    .genre-heading[hidden] {
+      display: none;
     }
 
     .tool-list-heading__count {
@@ -992,7 +1019,7 @@
           <label class="form-label tool-sort__label" for="tool-sort">並び順</label>
           <div class="tool-size__field">
             <select class="form-select tool-size__select tool-sort__select" id="tool-sort" autocomplete="off">
-            <option value="">おすすめ順</option>
+            <option value="">種類順</option>
             <option value="new">新しい順</option>
             </select>
             <span class="material-symbols-rounded tool-size__arrow" aria-hidden="true">expand_more</span>
@@ -1015,7 +1042,7 @@
       <div class="apps-grid">
 
         <!-- コトバのテーマクイズ -->
-        <a class="app-card" href="kotoba-theme/" data-added="2026-08-10" data-scenes="kotoba" data-old-names="コトバの技クイズ">
+        <a class="app-card" href="kotoba-theme/" data-added="2026-08-10" data-genre="kotoba" data-scenes="kotoba" data-old-names="コトバの技クイズ">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">tips_and_updates</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/kotoba-theme.png" alt="コトバのテーマを紹介する問題と3つの選択肢" width="744" height="390" loading="eager" decoding="async" />
@@ -1041,7 +1068,7 @@
         </a>
 
         <!-- クイズパック -->
-        <a class="app-card" href="quiz/" data-added="2026-07-08" data-slides data-scenes="kotoba circle hiroba" data-keywords="1対1、早押し、雑学">
+        <a class="app-card" href="quiz/" data-added="2026-07-08" data-genre="puzzle" data-slides data-scenes="kotoba circle hiroba" data-keywords="1対1、早押し、雑学">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">quiz</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/quiz.png" alt="雑学クイズの問題と3つの選択肢" width="784" height="488" loading="eager" decoding="async" />
@@ -1067,7 +1094,7 @@
         </a>
 
         <!-- ことばシャッフル -->
-        <a class="app-card" href="kotoba-shuffle/" data-added="2026-04-14" data-scenes="kotoba circle hiroba" data-keywords="1対1、並べ替え、アナグラム">
+        <a class="app-card" href="kotoba-shuffle/" data-added="2026-04-14" data-genre="puzzle" data-scenes="kotoba circle hiroba" data-keywords="1対1、並べ替え、アナグラム">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">shuffle</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/kotoba-shuffle.png" alt="バラバラの文字と並べ替える回答欄" width="372" height="210" loading="eager" decoding="async" />
@@ -1093,7 +1120,7 @@
         </a>
 
         <!-- 漢字さがし -->
-        <a class="app-card" href="kanji-sagashi/" data-added="2026-04-03" data-scenes="kotoba circle hiroba" data-yomi="かんじさがし" data-keywords="1対1、間違い探し、観察">
+        <a class="app-card" href="kanji-sagashi/" data-added="2026-04-03" data-genre="puzzle" data-scenes="kotoba circle hiroba" data-yomi="かんじさがし" data-keywords="1対1、間違い探し、観察">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">search</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/kanji-sagashi.png" alt="似た漢字が並ぶ6×6の盤面" width="520" height="521" loading="lazy" decoding="async" />
@@ -1119,7 +1146,7 @@
         </a>
 
         <!-- ことばみっけ -->
-        <a class="app-card" href="kotoba-mikke/" data-added="2026-07-15" data-scenes="kotoba hiroba circle" data-keywords="頭文字、チャット">
+        <a class="app-card" href="kotoba-mikke/" data-added="2026-07-15" data-genre="kotoba" data-scenes="kotoba hiroba circle" data-keywords="頭文字、チャット">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">search</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/kotoba-mikke.png" alt="頭文字とテーマを組み合わせたお題" width="544" height="255" loading="lazy" decoding="async" />
@@ -1145,7 +1172,7 @@
         </a>
 
         <!-- ことばリレー -->
-        <a class="app-card" href="kotoba-relay/" data-added="2026-04-07" data-scenes="kotoba circle" data-keywords="1対1、接続詞、トーク">
+        <a class="app-card" href="kotoba-relay/" data-added="2026-04-07" data-genre="kotoba" data-scenes="kotoba circle" data-keywords="1対1、接続詞、トーク">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">forum</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/kotoba-relay.png" alt="話の始まりとつなぎ言葉のカード" width="720" height="292" loading="lazy" decoding="async" />
@@ -1171,7 +1198,7 @@
         </a>
 
         <!-- ひらめき大喜利 -->
-        <a class="app-card" href="hirameki-oogiri/" data-added="2026-10-30" data-slides data-scenes="kotoba bodoge circle" data-yomi="ひらめきおおぎり" data-keywords="大喜利、お笑い、投票、順位なし">
+        <a class="app-card" href="hirameki-oogiri/" data-added="2026-10-30" data-genre="kotoba" data-slides data-scenes="kotoba bodoge circle" data-yomi="ひらめきおおぎり" data-keywords="大喜利、お笑い、投票、順位なし">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">sentiment_very_satisfied</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/hirameki-oogiri.png" alt="お題「こんな傘はイヤだ。どんな傘？」と、いま出ている答え、一本になった答えが並ぶ画面" width="960" height="458" loading="lazy" decoding="async" />
@@ -1197,7 +1224,7 @@
         </a>
 
         <!-- たとえグランプリ -->
-        <a class="app-card" href="tatoe-gp/" data-added="2026-04-14" data-slides data-scenes="kotoba bodoge" data-keywords="大喜利、投票">
+        <a class="app-card" href="tatoe-gp/" data-added="2026-04-14" data-genre="kotoba" data-slides data-scenes="kotoba bodoge" data-keywords="大喜利、投票">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">emoji_objects</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/tatoe-gp.png" alt="お題をたとえた回答を選ぶ投票画面" width="504" height="600" loading="lazy" decoding="async" />
@@ -1224,7 +1251,7 @@
 
         <!-- かぶらずヒント -->
         <!-- ことばメーター -->
-        <a class="app-card" href="kotoba-meter/" data-added="2026-10-20" data-slides data-scenes="kotoba bodoge sakusen" data-keywords="程度、たとえ、感じ方、1対1">
+        <a class="app-card" href="kotoba-meter/" data-added="2026-10-20" data-genre="kotoba" data-slides data-scenes="kotoba bodoge sakusen" data-keywords="程度、たとえ、感じ方、1対1">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">tune</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/kotoba-meter.png" alt="お題「もふもふ度」とヒント「ひつじ」の下に、出題者の数字4と、みんなが予想した1〜5の列に名前が並ぶ結果の画面" width="820" height="673" loading="lazy" decoding="async" />
@@ -1241,7 +1268,7 @@
           <div class="app-card__footer"><span class="material-symbols-rounded">cloud_sync</span> Realtime Database同期</div>
         </a>
 
-        <a class="app-card" href="shirushi-hint/" data-added="2026-10-19" data-slides data-scenes="bodoge circle" data-yomi="しるしでひんと" data-keywords="アイコン、連想、当てっこ、個人戦">
+        <a class="app-card" href="shirushi-hint/" data-added="2026-10-19" data-genre="atekko" data-slides data-scenes="bodoge circle" data-yomi="しるしでひんと" data-keywords="アイコン、連想、当てっこ、個人戦">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">interests</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/shirushi-hint.png" alt="「虫」「黄色」のしるしが出ていて、その下にお題の候補が12個並び、はずれた候補が1つ消えている画面" width="844" height="473" loading="lazy" decoding="async" />
@@ -1265,7 +1292,7 @@
             <span class="material-symbols-rounded">cloud_sync</span> Realtime Database同期
           </div>
         </a>
-        <a class="app-card" href="pittari-beat/" data-added="2026-10-21" data-slides data-scenes="hiroba circle" data-yomi="ぴったりびーと" data-keywords="リズム、音楽、音ゲー、ランキング、個人戦">
+        <a class="app-card" href="pittari-beat/" data-added="2026-10-21" data-genre="puzzle" data-slides data-scenes="hiroba circle" data-yomi="ぴったりびーと" data-keywords="リズム、音楽、音ゲー、ランキング、個人戦">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">music_note</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/pittari-beat.png" alt="オレンジの丸と青緑のひし形が上から落ちてきて、線の上で「ぴったり」が出ている画面。下に「まる」「ひしがた」のボタン" width="640" height="560" loading="lazy" decoding="async" />
@@ -1289,7 +1316,7 @@
             <span class="material-symbols-rounded">cloud_sync</span> Realtime Database同期
           </div>
         </a>
-        <a class="app-card" href="kaburazu-hint/" data-added="2026-04-10" data-slides data-scenes="kotoba bodoge" data-old-names="ヒントでピント" data-keywords="協力、連想">
+        <a class="app-card" href="kaburazu-hint/" data-added="2026-04-10" data-genre="kotoba" data-slides data-scenes="kotoba bodoge" data-old-names="ヒントでピント" data-keywords="協力、連想">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">lightbulb</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/kaburazu-hint.png" alt="回答者に見せるヒントが並ぶ画面" width="464" height="269" loading="lazy" decoding="async" />
@@ -1315,7 +1342,7 @@
         </a>
 
         <!-- ことば探偵 -->
-        <a class="app-card" href="kotoba-tantei/" data-added="2026-03-25" data-slides data-scenes="kotoba bodoge" data-yomi="ことばたんてい" data-keywords="チーム戦、連想">
+        <a class="app-card" href="kotoba-tantei/" data-added="2026-03-25" data-genre="kotoba" data-slides data-scenes="kotoba bodoge" data-yomi="ことばたんてい" data-keywords="チーム戦、連想">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">search</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/kotoba-tantei.png" alt="赤と青のカードがある5×5の言葉の盤面" width="712" height="446" loading="lazy" decoding="async" />
@@ -1341,7 +1368,7 @@
         </a>
 
         <!-- もじそろえゲーム -->
-        <a class="app-card" href="moji-soroe/" data-added="2026-09-02" data-slides data-scenes="kotoba bodoge" data-keywords="1対1、ひらがな、手番">
+        <a class="app-card" href="moji-soroe/" data-added="2026-09-02" data-genre="kotoba" data-slides data-scenes="kotoba bodoge" data-keywords="1対1、ひらがな、手番">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">font_download</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/moji-soroe.png" alt="文字タイルの手札と2文字・3文字・3文字の組み合わせ" width="456" height="220" loading="lazy" decoding="async" />
@@ -1367,7 +1394,7 @@
         </a>
 
         <!-- コトバペア -->
-        <a class="app-card" href="kotoba-pair/" data-added="2026-08-09" data-slides data-scenes="kotoba circle" data-keywords="1対1、神経衰弱、マッチング">
+        <a class="app-card" href="kotoba-pair/" data-added="2026-08-09" data-genre="kotoba" data-slides data-scenes="kotoba circle" data-keywords="1対1、神経衰弱、マッチング">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">link</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/kotoba-pair.png" alt="意味のつながるペアを探す言葉のカード" width="704" height="272" loading="lazy" decoding="async" />
@@ -1393,7 +1420,7 @@
         </a>
 
         <!-- とおまわしクイズ -->
-        <a class="app-card" href="toomawashi/" data-added="2026-08-09" data-slides data-scenes="kotoba" data-keywords="1対1、説明、NGワード">
+        <a class="app-card" href="toomawashi/" data-added="2026-08-09" data-genre="kotoba" data-slides data-scenes="kotoba" data-keywords="1対1、説明、NGワード">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">record_voice_over</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/toomawashi.png" alt="説明するお題と言っちゃダメことば" width="504" height="496" loading="lazy" decoding="async" />
@@ -1419,7 +1446,7 @@
         </a>
 
         <!-- トークテーマカード -->
-        <a class="app-card" href="talk-card/" data-added="2026-03-25" data-scenes="circle hiroba sakusen" data-keywords="1対1、雑談、話題">
+        <a class="app-card" href="talk-card/" data-added="2026-03-25" data-genre="talk" data-scenes="circle hiroba sakusen" data-keywords="1対1、雑談、話題">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">style</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/talk-card.png" alt="開いたトークテーマと3枚のカード" width="844" height="732" loading="lazy" decoding="async" />
@@ -1445,7 +1472,7 @@
         </a>
 
         <!-- おとなトークカード -->
-        <a class="app-card" href="otona-talk/" data-added="2026-03-25" data-scenes="circle" data-keywords="雑談、キャリア">
+        <a class="app-card" href="otona-talk/" data-added="2026-03-25" data-genre="talk" data-scenes="circle" data-keywords="雑談、キャリア">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">record_voice_over</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/otona-talk.png" alt="大人どうしで話すお題と3枚のカード" width="844" height="676" loading="lazy" decoding="async" />
@@ -1471,7 +1498,7 @@
         </a>
 
         <!-- どっちにする？ -->
-        <a class="app-card" href="docchi/" data-added="2026-07-04" data-scenes="sakusen" data-keywords="1対1、2択">
+        <a class="app-card" href="docchi/" data-added="2026-07-04" data-genre="talk" data-scenes="sakusen" data-keywords="1対1、2択">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">alt_route</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/docchi.png" alt="お題と2択、その他の選択肢" width="804" height="369" loading="lazy" decoding="async" />
@@ -1497,7 +1524,7 @@
         </a>
 
         <!-- すきタイプチェック -->
-        <a class="app-card" href="suki-type-check/" data-added="2026-07-30" data-scenes="sakusen" data-old-names="すきなことマップ" data-keywords="1対1、診断、好き">
+        <a class="app-card" href="suki-type-check/" data-added="2026-07-30" data-genre="talk" data-scenes="sakusen" data-old-names="すきなことマップ" data-keywords="1対1、診断、好き">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">fact_check</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/suki-type-check.png" alt="好きについての質問と5つの選択肢" width="736" height="653" loading="lazy" decoding="async" />
@@ -1523,7 +1550,7 @@
         </a>
 
         <!-- つよみカード -->
-        <a class="app-card" href="tsuyomi-card/" data-added="2026-07-05" data-scenes="sakusen" data-keywords="1対1、強み、自己理解">
+        <a class="app-card" href="tsuyomi-card/" data-added="2026-07-05" data-genre="talk" data-scenes="sakusen" data-keywords="1対1、強み、自己理解">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">flare</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/tsuyomi-card.png" alt="つよみカードとある・ない・どちらでもないの選択肢" width="584" height="369" loading="lazy" decoding="async" />
@@ -1551,7 +1578,7 @@
 
 
         <!-- ドまんなか -->
-        <a class="app-card" href="do-mannaka/" data-added="2026-03-25" data-slides data-scenes="bodoge circle" data-old-names="いいセンいきまSHOW!" data-keywords="数字、中央値">
+        <a class="app-card" href="do-mannaka/" data-added="2026-03-25" data-genre="atekko" data-slides data-scenes="bodoge circle" data-old-names="いいセンいきまSHOW!" data-keywords="数字、中央値">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">sports_esports</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/do-mannaka.png" alt="数字の回答を小さい順に並べた答え合わせ" width="464" height="322" loading="lazy" decoding="async" />
@@ -1577,7 +1604,7 @@
         </a>
 
         <!-- ワードウルフ -->
-        <a class="app-card" href="word-wolf/" data-added="2026-03-26" data-slides data-scenes="bodoge circle" data-keywords="正体隠し、会話">
+        <a class="app-card" href="word-wolf/" data-added="2026-03-26" data-genre="suiri" data-slides data-scenes="bodoge circle" data-keywords="正体隠し、会話">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">psychology</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/word-wolf.png" alt="自分のお題カードと参加者の準備状況" width="464" height="420" loading="lazy" decoding="async" />
@@ -1603,7 +1630,7 @@
         </a>
 
         <!-- ねむらせ基地 -->
-        <a class="app-card" href="nemurase-kichi/" data-added="2026-10-26" data-slides data-scenes="bodoge hiroba circle" data-yomi="ねむらせきち" data-keywords="正体隠し、推理、ミニゲーム、アクション">
+        <a class="app-card" href="nemurase-kichi/" data-added="2026-10-26" data-genre="suiri" data-slides data-scenes="bodoge hiroba circle" data-yomi="ねむらせきち" data-keywords="正体隠し、推理、ミニゲーム、アクション">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">bedtime</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/nemurase-kichi.png" alt="ひみつ基地の通信室を歩く4人と、仕事の場所の印・やることの一覧・のこり時間" width="1000" height="625" loading="lazy" decoding="async" />
@@ -1629,7 +1656,7 @@
         </a>
 
         <!-- こっそりワード -->
-        <a class="app-card" href="kossori-word/" data-added="2026-10-07" data-slides data-scenes="bodoge circle" data-keywords="会話、雑談、聞きとり">
+        <a class="app-card" href="kossori-word/" data-added="2026-10-07" data-genre="suiri" data-slides data-scenes="bodoge circle" data-keywords="会話、雑談、聞きとり">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">hearing</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/kossori-word.png" alt="話し手に出るお題カードと「話しおわった」ボタン" width="440" height="322" loading="lazy" decoding="async" />
@@ -1655,7 +1682,7 @@
         </a>
 
         <!-- 人狼ゲーム -->
-        <a class="app-card" href="jinro/" data-added="2026-03-31" data-slides data-scenes="bodoge" data-yomi="じんろうげーむ" data-keywords="正体隠し、推理、役職">
+        <a class="app-card" href="jinro/" data-added="2026-03-31" data-genre="suiri" data-slides data-scenes="bodoge" data-yomi="じんろうげーむ" data-keywords="正体隠し、推理、役職">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">groups</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/jinro.png" alt="村人の役職カード" width="464" height="244" loading="lazy" decoding="async" />
@@ -1681,7 +1708,7 @@
         </a>
 
         <!-- かくれ怪盗 -->
-        <a class="app-card" href="kakure-kaito/" data-added="2026-10-31" data-slides data-scenes="bodoge circle" data-yomi="かくれかいとう" data-keywords="正体隠し、推理、役職、投票">
+        <a class="app-card" href="kakure-kaito/" data-added="2026-10-31" data-genre="suiri" data-slides data-scenes="bodoge circle" data-yomi="かくれかいとう" data-keywords="正体隠し、推理、役職、投票">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">diamond</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/kakure-kaito.png" alt="5回の見回りの結果（1回目は守った・2回目はすり替え）の下に、3回目の見回りに行く2人と、みんなの賛成・反対が並ぶ画面" width="992" height="703" loading="lazy" decoding="async" />
@@ -1707,7 +1734,7 @@
         </a>
 
         <!-- 名前変えゲーム -->
-        <a class="app-card" href="name-change/" data-added="2026-03-26" data-slides data-scenes="bodoge circle" data-yomi="なまえかえげーむ" data-keywords="メタバース、推理">
+        <a class="app-card" href="name-change/" data-added="2026-03-26" data-genre="suiri" data-slides data-scenes="bodoge circle" data-yomi="なまえかえげーむ" data-keywords="メタバース、推理">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">manage_accounts</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/name-change.png" alt="変えた名前から元の名前を当てる選択肢" width="472" height="402" loading="lazy" decoding="async" />
@@ -1733,7 +1760,7 @@
         </a>
 
         <!-- え!? 実は○○なんですかゲーム -->
-        <a class="app-card" href="jitsuwa-game/" data-added="2026-03-31" data-scenes="circle hiroba sakusen" data-yomi="えじつはまるまるなんですかげーむ" data-keywords="1対1、推理、自己紹介">
+        <a class="app-card" href="jitsuwa-game/" data-added="2026-03-31" data-genre="suiri" data-scenes="circle hiroba sakusen" data-yomi="えじつはまるまるなんですかげーむ" data-keywords="1対1、推理、自己紹介">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">search_insights</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/jitsuwa-game.png" alt="開いたお題と3枚の質問カード" width="844" height="776" loading="lazy" decoding="async" />
@@ -1759,7 +1786,7 @@
         </a>
 
         <!-- たとえならべ -->
-        <a class="app-card" href="tatoe-narabe/" data-added="2026-04-02" data-slides data-scenes="kotoba bodoge circle sakusen" data-old-names="ito クモノイト" data-keywords="1対1、数字、協力">
+        <a class="app-card" href="tatoe-narabe/" data-added="2026-04-02" data-genre="atekko" data-slides data-scenes="kotoba bodoge circle sakusen" data-old-names="ito クモノイト" data-keywords="1対1、数字、協力">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">filter_1</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/tatoe-narabe.png" alt="お題と自分の数字、宣言した順番" width="464" height="451" loading="lazy" decoding="async" />
@@ -1785,7 +1812,7 @@
         </a>
 
         <!-- 以心伝心しないゲーム -->
-        <a class="app-card" href="ishin-denshin/" data-added="2026-04-05" data-scenes="circle hiroba" data-yomi="いしんでんしんしないげーむ" data-keywords="かぶらない、回答">
+        <a class="app-card" href="ishin-denshin/" data-added="2026-04-05" data-genre="kotoba" data-scenes="circle hiroba" data-yomi="いしんでんしんしないげーむ" data-keywords="かぶらない、回答">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">lightbulb</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/ishin-denshin.png" alt="みんなとかぶらない回答を考えるお題" width="844" height="455" loading="lazy" decoding="async" />
@@ -1811,7 +1838,7 @@
         </a>
 
         <!-- うそつき辞書 -->
-        <a class="app-card" href="uso-jisho/" data-added="2026-07-05" data-slides data-scenes="bodoge" data-yomi="うそつきじしょ" data-keywords="ブラフ、意味当て">
+        <a class="app-card" href="uso-jisho/" data-added="2026-07-05" data-genre="kotoba" data-slides data-scenes="bodoge" data-yomi="うそつきじしょ" data-keywords="ブラフ、意味当て">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">auto_stories</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/uso-jisho.png" alt="言葉の本当の意味を当てる選択肢" width="504" height="610" loading="lazy" decoding="async" />
@@ -1837,7 +1864,7 @@
         </a>
 
         <!-- まぎれ絵師 -->
-        <a class="app-card" href="magire-eshi/" data-added="2026-07-05" data-slides data-scenes="bodoge" data-yomi="まぎれえし" data-keywords="お絵描き、正体隠し">
+        <a class="app-card" href="magire-eshi/" data-added="2026-07-05" data-genre="suiri" data-slides data-scenes="bodoge" data-yomi="まぎれえし" data-keywords="お絵描き、正体隠し">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">brush</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/magire-eshi.png" alt="みんなで少しずつ描いた絵の見本" width="544" height="459" loading="lazy" decoding="async" />
@@ -1863,7 +1890,7 @@
         </a>
 
         <!-- お絵描き伝言ゲーム -->
-        <a class="app-card" href="oekaki-dengon/" data-added="2026-09-28" data-slides data-scenes="bodoge" data-yomi="おえかきでんごんげーむ" data-keywords="伝言、お絵描き">
+        <a class="app-card" href="oekaki-dengon/" data-added="2026-09-28" data-genre="atekko" data-slides data-scenes="bodoge" data-yomi="おえかきでんごんげーむ" data-keywords="伝言、お絵描き">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">draw</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/oekaki-dengon.png" alt="お題の文と、それを見て描いた絵、絵を見て書いた文が順番に並ぶ見せあいの画面" width="504" height="689" loading="lazy" decoding="async" />
@@ -1889,7 +1916,7 @@
         </a>
 
         <!-- スタンプあてゲーム -->
-        <a class="app-card" href="stamp-ate/" data-added="2026-10-03" data-slides data-scenes="bodoge circle" data-yomi="すたんぷあてげーむ" data-keywords="協力、お絵描き、当てっこ">
+        <a class="app-card" href="stamp-ate/" data-added="2026-10-03" data-genre="atekko" data-slides data-scenes="bodoge circle" data-yomi="すたんぷあてげーむ" data-keywords="協力、お絵描き、当てっこ">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">approval</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/stamp-ate.png" alt="大きい四角と三角の家、大きさのちがう三角を重ねたクリスマスツリー、大きい丸と小さい長方形の太陽をスタンプで作った絵と、答え合わせのお題が並ぶ画面" width="804" height="609" loading="lazy" decoding="async" />
@@ -1915,7 +1942,7 @@
         </a>
 
         <!-- ピッタリメーター -->
-        <a class="app-card" href="pittari-meter/" data-added="2026-07-05" data-slides data-scenes="bodoge" data-keywords="感覚、得点">
+        <a class="app-card" href="pittari-meter/" data-added="2026-07-05" data-genre="atekko" data-slides data-scenes="bodoge" data-keywords="感覚、得点">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">tune</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/pittari-meter.png" alt="ものさしの両端、ヒントと予想するスライダー" width="504" height="488" loading="lazy" decoding="async" />
@@ -1941,7 +1968,7 @@
         </a>
 
         <!-- かくれナンバー -->
-        <a class="app-card" href="kakure-number/" data-added="2026-07-05" data-slides data-scenes="bodoge" data-keywords="数字、推理">
+        <a class="app-card" href="kakure-number/" data-added="2026-07-05" data-genre="atekko" data-slides data-scenes="bodoge" data-keywords="数字、推理">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">visibility_off</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/kakure-number.png" alt="自分と隠しカードの数字が見えない数字カード" width="464" height="220" loading="lazy" decoding="async" />
@@ -1967,7 +1994,7 @@
         </a>
 
         <!-- カギあわせ -->
-        <a class="app-card" href="kagi-awase/" data-added="2026-10-03" data-slides data-scenes="bodoge sakusen" data-yomi="かぎあわせ" data-keywords="1対1、数字、推理、協力">
+        <a class="app-card" href="kagi-awase/" data-added="2026-10-03" data-genre="atekko" data-slides data-scenes="bodoge sakusen" data-yomi="かぎあわせ" data-keywords="1対1、数字、推理、協力">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">key</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/kagi-awase.png" alt="3人の数字のカギが小さい順に並び、あいたカギと見えている数字だけが表に出ている盤面と警報ランプ" width="784" height="547" loading="lazy" decoding="async" />
@@ -1993,7 +2020,7 @@
         </a>
 
         <!-- こえだけシアター -->
-        <a class="app-card" href="koedake-theater/" data-added="2026-07-05" data-slides data-scenes="bodoge" data-keywords="演技、声">
+        <a class="app-card" href="koedake-theater/" data-added="2026-07-05" data-genre="atekko" data-slides data-scenes="bodoge" data-keywords="演技、声">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">theater_comedy</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/koedake-theater.png" alt="声で演じるセリフとシチュエーションの選択肢" width="466" height="489" loading="lazy" decoding="async" />
@@ -2019,7 +2046,7 @@
         </a>
 
         <!-- 気持ち当てゲーム -->
-        <a class="app-card" href="kimochi-ate/" data-added="2026-09-26" data-slides data-scenes="circle sakusen bodoge" data-yomi="きもちあてげーむ" data-old-names="きもちのことばマップ" data-keywords="1対1、感情、気持ち">
+        <a class="app-card" href="kimochi-ate/" data-added="2026-09-26" data-genre="atekko" data-slides data-scenes="circle sakusen bodoge" data-yomi="きもちあてげーむ" data-old-names="きもちのことばマップ" data-keywords="1対1、感情、気持ち">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">mood</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/kimochi-ate.png" alt="場面カードと、主役の気持ちを予想する6つの系" width="736" height="677" loading="lazy" decoding="async" />
@@ -2045,7 +2072,7 @@
         </a>
 
         <!-- ピタハメ -->
-        <a class="app-card" href="pita-hame/" data-added="2026-07-19" data-slides data-scenes="bodoge hiroba" data-keywords="1対1、パズル、スピード">
+        <a class="app-card" href="pita-hame/" data-added="2026-07-19" data-genre="puzzle" data-slides data-scenes="bodoge hiroba" data-keywords="1対1、パズル、スピード">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">extension</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/pita-hame.png" alt="グレーの型とカラフルなパズルピース" width="600" height="427" loading="lazy" decoding="async" />
@@ -2071,7 +2098,7 @@
         </a>
 
         <!-- おしつけずかん -->
-        <a class="app-card" href="oshitsuke-zukan/" data-added="2026-07-19" data-slides data-scenes="bodoge" data-keywords="ブラフ、カード">
+        <a class="app-card" href="oshitsuke-zukan/" data-added="2026-07-19" data-genre="board" data-slides data-scenes="bodoge" data-keywords="ブラフ、カード">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">auto_stories</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/oshitsuke-zukan.png" alt="生き物の種類が色分けされた手札" width="416" height="400" loading="lazy" decoding="async" />
@@ -2097,7 +2124,7 @@
         </a>
 
         <!-- エサドリ -->
-        <a class="app-card" href="esadori/" data-added="2026-07-21" data-slides data-scenes="bodoge" data-keywords="1対1、数字、同時出し">
+        <a class="app-card" href="esadori/" data-added="2026-07-21" data-genre="board" data-slides data-scenes="bodoge" data-keywords="1対1、数字、同時出し">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">flutter_dash</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/esadori.png" alt="場のエサカードと1から15の手札" width="416" height="523" loading="lazy" decoding="async" />
@@ -2123,7 +2150,7 @@
         </a>
 
         <!-- ブラックジャック -->
-        <a class="app-card" href="blackjack/" data-added="2026-08-31" data-slides data-scenes="bodoge hiroba" data-keywords="1対1、トランプ、21">
+        <a class="app-card" href="blackjack/" data-added="2026-08-31" data-genre="board" data-slides data-scenes="bodoge hiroba" data-keywords="1対1、トランプ、21">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">style</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/blackjack.png" alt="トランプの手札とカードを引く・ストップの選択肢" width="416" height="242" loading="lazy" decoding="async" />
@@ -2149,7 +2176,7 @@
         </a>
 
         <!-- リバーシ -->
-        <a class="app-card" href="reversi/" data-added="2026-10-25" data-slides data-scenes="bodoge hiroba sakusen" data-keywords="1対1、盤ゲーム、定番、対戦、観戦">
+        <a class="app-card" href="reversi/" data-added="2026-10-25" data-genre="board" data-slides data-scenes="bodoge hiroba sakusen" data-keywords="1対1、盤ゲーム、定番、対戦、観戦">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">contrast</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/reversi.png" alt="黒と白の石が並ぶ8×8の盤と、置ける場所の印・対戦する2人の石の数" width="1026" height="628" loading="lazy" decoding="async" />
@@ -2173,7 +2200,7 @@
             <span class="material-symbols-rounded">cloud_sync</span> Realtime Database同期
           </div>
         </a>
-        <a class="app-card" href="daifugo/" data-added="2026-10-25" data-scenes="bodoge hiroba" data-yomi="だいふごう" data-keywords="トランプ、カードゲーム、定番、CPU、大貧民、8切り、革命">
+        <a class="app-card" href="daifugo/" data-added="2026-10-25" data-genre="board" data-scenes="bodoge hiroba" data-yomi="だいふごう" data-keywords="トランプ、カードゲーム、定番、CPU、大貧民、8切り、革命">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">playing_cards</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/daifugo.png" alt="場に出たカードと、4人の手札の枚数・自分の手札（出せないカードは薄い）・「出す」「パス」のボタン" width="780" height="648" loading="lazy" decoding="async" />
@@ -2199,7 +2226,7 @@
         </a>
 
         <!-- 好きなものビンゴ -->
-        <a class="app-card" href="suki-bingo/" data-added="2026-10-12" data-slides data-scenes="circle hiroba bodoge" data-yomi="すきなものびんご" data-keywords="運まかせ、定番、知り合う">
+        <a class="app-card" href="suki-bingo/" data-added="2026-10-12" data-genre="talk" data-slides data-scenes="circle hiroba bodoge" data-yomi="すきなものびんご" data-keywords="運まかせ、定番、知り合う">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">grid_on</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/suki-bingo.png" alt="ひいたもの「たこ焼き」と選んでいた人の名前、食べものを9個ならべてたて1列がそろった3×3のビンゴカード" width="844" height="450" loading="lazy" decoding="async" />
@@ -2225,7 +2252,7 @@
         </a>
 
         <!-- みんなでランキング -->
-        <a class="app-card" href="minna-ranking/" data-added="2026-07-06" data-slides data-scenes="hiroba sakusen" data-keywords="順位、予想">
+        <a class="app-card" href="minna-ranking/" data-added="2026-07-06" data-genre="talk" data-slides data-scenes="hiroba sakusen" data-keywords="順位、予想">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">format_list_numbered</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/minna-ranking.png" alt="お題のアイテムを並べ替えるランキング" width="704" height="394" loading="lazy" decoding="async" />
@@ -2251,7 +2278,7 @@
         </a>
 
         <!-- 興味スゴロク -->
-        <a class="app-card" href="kyoumi-sugoroku/" data-added="2026-04-07" data-scenes="hiroba sakusen" data-yomi="きょうみすごろく" data-keywords="1対1、すごろく、好き">
+        <a class="app-card" href="kyoumi-sugoroku/" data-added="2026-04-07" data-genre="talk" data-scenes="hiroba sakusen" data-yomi="きょうみすごろく" data-keywords="1対1、すごろく、好き">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">casino</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/kyoumi-sugoroku.png" alt="スタートからゴールまでのスゴロク盤面" width="544" height="348" loading="lazy" decoding="async" />
@@ -2277,7 +2304,7 @@
         </a>
 
         <!-- 塗り絵カレンダー -->
-        <a class="app-card" href="nurie-week/" data-added="2026-05-26" data-scenes="sakusen" data-yomi="ぬりえかれんだー" data-keywords="1対1、1週間、ふりかえり">
+        <a class="app-card" href="nurie-week/" data-added="2026-05-26" data-genre="talk" data-scenes="sakusen" data-yomi="ぬりえかれんだー" data-keywords="1対1、1週間、ふりかえり">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">calendar_view_week</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/nurie-week.png" alt="曜日と時間のマスを色で塗ったカレンダーの見本" width="860" height="608" loading="lazy" decoding="async" />
@@ -2303,7 +2330,7 @@
         </a>
 
         <!-- バリューカード -->
-        <a class="app-card" href="value-card/" data-added="2026-04-10" data-scenes="sakusen" data-keywords="1対1、価値観、大事">
+        <a class="app-card" href="value-card/" data-added="2026-04-10" data-genre="talk" data-scenes="sakusen" data-keywords="1対1、価値観、大事">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">favorite</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/value-card.png" alt="大事にしたいことが書かれたカード" width="584" height="309" loading="lazy" decoding="async" />
@@ -2329,7 +2356,7 @@
         </a>
 
         <!-- いくつ言える？ -->
-        <a class="app-card" href="ikutsu-ieru/" data-added="2026-04-21" data-slides data-scenes="circle hiroba sakusen" data-yomi="いくついえる" data-keywords="1対1、書き出し、お題">
+        <a class="app-card" href="ikutsu-ieru/" data-added="2026-04-21" data-genre="kotoba" data-slides data-scenes="circle hiroba sakusen" data-yomi="いくついえる" data-keywords="1対1、書き出し、お題">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">format_list_numbered</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/ikutsu-ieru.png" alt="お題に思いついた答えを並べた見本" width="504" height="482" loading="lazy" decoding="async" />
@@ -2355,7 +2382,7 @@
         </a>
 
         <!-- キャパグラフ -->
-        <a class="app-card" href="kyapa-graph/" data-added="2026-05-26" data-scenes="sakusen" data-keywords="1対1、頑張りすぎ、負荷">
+        <a class="app-card" href="kyapa-graph/" data-added="2026-05-26" data-genre="talk" data-scenes="sakusen" data-keywords="1対1、頑張りすぎ、負荷">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">monitoring</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/kyapa-graph.png" alt="1週間の棒グラフとキャパラインの見本" width="840" height="340" loading="lazy" decoding="async" />
@@ -2381,7 +2408,7 @@
         </a>
 
         <!-- キャリアすごろく -->
-        <a class="app-card" href="career-sugoroku/" data-added="2026-09-30" data-slides data-scenes="bodoge sakusen" data-keywords="1対1、仕事、職業">
+        <a class="app-card" href="career-sugoroku/" data-added="2026-09-30" data-genre="talk" data-slides data-scenes="bodoge sakusen" data-keywords="1対1、仕事、職業">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">signpost</span>
             <img class="app-card__thumbnail" src="assets/thumbnails/career-sugoroku.png" alt="子どものころからおとなまでのステージに分かれたすごろく盤面と、3人の駒" width="712" height="448" loading="lazy" decoding="async" />
@@ -2509,9 +2536,23 @@
         sakusen: '作戦会議',
       };
 
+      // 種類（各カードの data-genre）。並び順「種類順」はこの順に小見出しを付けて並べ、検索にも使う
+      const GENRES = [
+        ['kotoba', 'ことばのゲーム'],
+        ['puzzle', 'クイズ・パズル'],
+        ['suiri', '推理・正体かくし'],
+        ['atekko', '当てっこ・協力ゲーム'],
+        ['board', 'カード・ボードゲーム'],
+        ['talk', '話す・自分を知る'],
+      ];
+
       const cards = Array.from(document.querySelectorAll('.apps-grid .app-card'));
       const cardScenes = cards.map((card) =>
         (card.dataset.scenes || '').split(' ').filter((s) => SCENE_LABELS[s]));
+      const cardGenres = cards.map((card) => {
+        const i = GENRES.findIndex(([key]) => key === card.dataset.genre);
+        return i === -1 ? GENRES.length : i;
+      });
 
       // カード下部にシーンバッジを描画
       cards.forEach((card, i) => {
@@ -2534,7 +2575,7 @@
           .replace(/[\u30a1-\u30f6]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0x60));
       }
 
-      // 検索対象: 名前・説明・人数などのバッジ・動作環境・画像の説明・利用シーン名。
+      // 検索対象: 名前・説明・人数などのバッジ・動作環境・画像の説明・利用シーン名・種類名。
       // アイコンは "group" などの英字で描画されるため、検索対象から外す。
       const searchTexts = cards.map((card, i) => {
         const parts = [];
@@ -2549,6 +2590,7 @@
           const chip = document.querySelector(`.scene-filter__chip[data-scene="${s}"]`);
           parts.push(SCENE_LABELS[s], chip ? chip.textContent : '');
         });
+        if (GENRES[cardGenres[i]]) parts.push(GENRES[cardGenres[i]][1]);
         if (card.hasAttribute('data-slides')) parts.push('説明スライド');
         // 画面に出ない補足（名前の読み・改名前の名前・ジャンルのことば）
         parts.push(card.dataset.yomi || '', card.dataset.oldNames || '', card.dataset.keywords || '');
@@ -2708,6 +2750,7 @@
         if (countText.textContent !== message) countText.textContent = message;
         listCount.textContent = filtered ? `${visibleCount}件（全${cards.length}件中）` : `${visibleCount}件`;
         renderResult(filtered, visibleCount);
+        updateGenreHeadings();
       }
 
       // パネル内の結果の行。絞り込み中は色を変え、全何件中の何件かと「条件をクリア」を出す
@@ -2972,34 +3015,53 @@
         resultText.focus();
       });
 
-      window.addEventListener('hashchange', () => {
-        setScene(sceneFromHash());
-        applyFilters();
-      });
-      setScene(sceneFromHash());
-      applyFilters();
-
-      // 並び順: おすすめ順＝HTML に書いた順。新しい順はカードの data-added（公開日）、
-      // よく開かれた順は ranking.json の order（下の「よく開かれたツール」が読み込んで知らせる）。
-      // 同じ日・order にないカードはおすすめ順のまま後ろに並べる。並び順は絞り込みの条件に数えない
+      // 並び順: 種類順（初期値）は種類ごとに小見出しを付け、種類の中は新しい順。
+      // 新しい順はカードの data-added（公開日）、よく開かれた順は ranking.json の order
+      // （下の「よく開かれたツール」が読み込んで知らせる）。同じ日・order にないカードは HTML に書いた順で後ろに並べる。
+      // 並び順は絞り込みの条件に数えない
       const grid = document.querySelector('.apps-grid');
       const sortSelect = document.getElementById('tool-sort');
       let popularOrder = null;
 
+      const genreHeadings = GENRES.map(([key, label]) => {
+        const heading = document.createElement('h4');
+        heading.className = 'genre-heading';
+        heading.dataset.genre = key;
+        heading.textContent = label;
+        return heading;
+      });
+
+      // 種類順のときだけ出す。絞り込みで1件もなくなった種類は見出しごと隠す
+      function updateGenreHeadings() {
+        const byGenre = sortSelect.value === '';
+        genreHeadings.forEach((heading, g) => {
+          heading.hidden = !byGenre || !cards.some((card, i) => !card.hidden && cardGenres[i] === g);
+        });
+      }
+
       function sortCards() {
         const mode = sortSelect.value;
         const keyOf = (card) => {
-          if (mode === 'new') return -Date.parse(card.dataset.added || '') || 0;
           if (mode === 'popular') {
             const r = popularOrder.indexOf(card.getAttribute('href').replace(/\/$/, ''));
             return r === -1 ? Infinity : r;
           }
-          return 0;
+          return -Date.parse(card.dataset.added || '') || 0;
         };
-        const sorted = cards.map((card, i) => ({ card, i, key: keyOf(card) }))
-          .sort((a, b) => (a.key === b.key ? 0 : a.key < b.key ? -1 : 1) || a.i - b.i)
-          .map((x) => x.card);
-        grid.append(...sorted);
+        const sorted = cards.map((card, i) => ({ card, i, g: mode ? 0 : cardGenres[i], key: keyOf(card) }))
+          .sort((a, b) => a.g - b.g || (a.key === b.key ? 0 : a.key < b.key ? -1 : 1) || a.i - b.i);
+        const items = [];
+        let lastGenre = -1;
+        sorted.forEach((x) => {
+          if (!mode && x.g !== lastGenre) {
+            lastGenre = x.g;
+            if (genreHeadings[x.g]) items.push(genreHeadings[x.g]);
+          }
+          items.push(x.card);
+        });
+        if (mode) items.push(...genreHeadings);
+        grid.append(...items);
+        updateGenreHeadings();
         sortSelect.classList.toggle('is-set', Boolean(mode));
       }
 
@@ -3014,6 +3076,14 @@
         option.textContent = 'よく開かれた順';
         sortSelect.appendChild(option);
       });
+
+      window.addEventListener('hashchange', () => {
+        setScene(sceneFromHash());
+        applyFilters();
+      });
+      setScene(sceneFromHash());
+      applyFilters();
+
     })();
   </script>
   <script>

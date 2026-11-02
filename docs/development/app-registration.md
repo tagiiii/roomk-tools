@@ -16,7 +16,7 @@
 
 1. `apps/{app-name}/` フォルダを作成
 2. 上表のパターンを参考にファイルを作成
-3. `apps/index.html` のツール一覧にカードを追記（下記「利用シーンタグ」の `data-scenes` と、公開日の `data-added` を必ず付ける）
+3. `apps/index.html` のツール一覧にカードを追記（下記「利用シーンタグ」の `data-scenes`、公開日の `data-added`、種類の `data-genre` を必ず付ける）
 4. アプリ固有の仕様を `apps/{app-name}/AGENTS.md` に記載
 5. `apps/updates.json` の先頭に更新情報を追記（下記「更新情報」参照）
 6. 共通の「あそびかた／つかいかた」モーダル（`apps/shared/js/howto.js`、[shared-modules.md](shared-modules.md)「howto.js」参照）を組み込む
@@ -36,7 +36,7 @@
 絞り込める。シーンバッジはこの属性から自動描画されるので、カード HTML にバッジを
 手書きしない。1つのツールが複数シーンに属してよい（スペース区切り）。
 `data-scenes` の有無とキーの妥当性は lint（PORTAL-2）で検証される。
-同じく必須の `data-added` は公開日（`YYYY-MM-DD`。`updates.json` の `"new"` と同じ日）で、並び順の「新しい順」に使う（lint PORTAL-2 で有無を検証）。
+同じく必須の `data-added` は公開日（`YYYY-MM-DD`。`updates.json` の `"new"` と同じ日）、`data-genre` は下の表の種類で、どちらも並び順に使う（lint PORTAL-2 で検証）。
 
 選択中のシーンは URL ハッシュと同期する（例: `…/apps/#scene=bodoge`）。
 シーン別リンクとしてチャットに貼れば、そのシーンで絞り込んだ状態で開ける。
@@ -85,14 +85,26 @@
 
 | 並び順 | 並べ方 |
 |--------|--------|
-| おすすめ順（初期値） | `apps/index.html` に書いた順 |
-| 新しい順 | `data-added` の新しい順 |
-| よく開かれた順 | `ranking.json` の `order` の順。`ranking.json` を読めないときは選択肢に出さない |
+| 種類順（初期値） | `data-genre` の種類ごとに小見出しを付け（下の表の順）、種類の中は `data-added` の新しい順 |
+| 新しい順 | `data-added` の新しい順（小見出しなし） |
+| よく開かれた順 | `ranking.json` の `order` の順（小見出しなし）。`ranking.json` を読めないときは選択肢に出さない |
 
-同じ日・`order` にないカードは、おすすめ順のまま後ろに並ぶ。
+同じ日・`order` にないカードは、`apps/index.html` に書いた順で後ろに並ぶ（HTML の並びは画面の並びに関係しないので、カードはどこに足してもよい）。
+絞り込みで1件もなくなった種類は、小見出しごと隠す。種類名は検索の対象にも入る。
+
+| `data-genre` | 種類（小見出し） | 入れるもの |
+|---|---|---|
+| `kotoba` | ことばのゲーム | ことばを考える・言い合う・当てるゲーム |
+| `puzzle` | クイズ・パズル | クイズ・パズル・リズムなど、ひとりでも遊べるもの |
+| `suiri` | 推理・正体かくし | 正体をかくした人を話し合いで見つけるゲーム |
+| `atekko` | 当てっこ・協力ゲーム | 絵・数字・気持ちなどを当て合う、協力するゲーム |
+| `board` | カード・ボードゲーム | トランプ・カードゲーム・盤のゲーム |
+| `talk` | 話す・自分を知る | トーク・内省・キャリアのツール（「好き」を見せ合うゲームを含む） |
+
+種類分けは 2026-11-02 にオーナーが決めた。新しいツールの種類も、迷うときはオーナーが決める。
 
 ```html
-<a class="app-card" href="{app-name}/" data-added="2026-07-06" data-scenes="hiroba sakusen" data-yomi="…" data-keywords="…、…">
+<a class="app-card" href="{app-name}/" data-added="2026-07-06" data-genre="talk" data-scenes="hiroba sakusen" data-yomi="…" data-keywords="…、…">
 ```
 
 | キー | シーン |

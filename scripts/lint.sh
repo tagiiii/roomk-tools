@@ -469,13 +469,13 @@ else
 fi
 
 # ─────────────────────────────────────────────────────
-# [PORTAL-2] data-scenes・data-added チェック
+# [PORTAL-2] data-scenes・data-added・data-genre チェック
 #   ポータルの表示中カード全てに data-scenes があり、
 #   シーンキーが有効値のみかを検証（AGENTS.md「利用シーンタグ」）。
-#   並び順「新しい順」に使う data-added（公開日 YYYY-MM-DD）も必須
+#   並び順に使う data-added（公開日 YYYY-MM-DD）と data-genre（種類）も必須
 # ─────────────────────────────────────────────────────
 echo ""
-echo -e "${BOLD}[PORTAL-2] ポータルカード data-scenes・data-added チェック${NC}"
+echo -e "${BOLD}[PORTAL-2] ポータルカード data-scenes・data-added・data-genre チェック${NC}"
 
 PORTAL2_OUT=$(python3 - <<'PYEOF'
 import re
@@ -487,6 +487,7 @@ with open('apps/index.html', encoding='utf-8') as f:
 html = re.sub(r'<!--.*?-->', '', html, flags=re.S)
 
 VALID = {'kotoba', 'bodoge', 'hiroba', 'circle', 'sakusen'}
+GENRES = {'kotoba', 'puzzle', 'suiri', 'atekko', 'board', 'talk'}
 
 for m in re.finditer(r'<a class="app-card"([^>]*)>', html):
     attrs = m.group(1)
@@ -494,6 +495,9 @@ for m in re.finditer(r'<a class="app-card"([^>]*)>', html):
     name = href.group(1) if href else '(href 不明)'
     if not re.search(r'data-added="\d{4}-\d{2}-\d{2}"', attrs):
         print(f'{name}: data-added（公開日 YYYY-MM-DD）がありません')
+    dg = re.search(r'data-genre="([^"]*)"', attrs)
+    if not dg or dg.group(1) not in GENRES:
+        print(f'{name}: data-genre がないか不明です（有効: {"/".join(sorted(GENRES))}）')
     ds = re.search(r'data-scenes="([^"]*)"', attrs)
     if not ds:
         print(f'{name}: data-scenes がありません（キー: kotoba/bodoge/hiroba/circle/sakusen）')
