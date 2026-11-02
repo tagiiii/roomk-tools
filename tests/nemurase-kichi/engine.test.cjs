@@ -122,7 +122,14 @@ ok(!E.canSee({ x: 0.5, y: 0.5 }, { x: 4.5, y: 3.5 }), 'かべの中からは何�
   ok(poly.every((p) => !(p.x >= 19 && p.y < 4)), '通信室の上の方（かべの向こう）には届かない');
   ok(E.viewPolygon({ x: 12.5, y: 5.5 }, 7.5).some((p) => p.x >= 18.5 && p.y >= 5 && p.y <= 7), '通路を通して通信室の側へ届く');
   const right = poly.filter((p) => Math.abs(p.y - 3.5) < 0.05 && p.x > from.x);
-  ok(right.length && right.every((p) => p.x >= 14 && p.x <= 14 + E.VIEW_OVER + 1e-9), '右のかべに当たった光線は、かべの面を少しこえた所で止まる', right);
+  ok(right.length && right.every((p) => Math.abs(p.x - 14) < 1e-9), '右のかべに当たった光線は、かべの面で止まる', right);
+  // かべの角の裏（自分からはかべで隠れている床）は、多角形の外（2026-11-02 「影のバグ」。のばした光線が角を回りこんで明るくなっていた）
+  const inPoly = (q, pl) => { let c = false; for (let i = 0, j = pl.length - 1; i < pl.length; j = i++) { const a = pl[i]; const b = pl[j]; if ((a.y > q.y) !== (b.y > q.y) && q.x < ((b.x - a.x) * (q.y - a.y)) / (b.y - a.y) + a.x) c = !c; } return c; };
+  const me = { x: 26.5, y: 9.5 };   // 通信室の置き物（x 25〜26・y 8）のすぐ下
+  const behind = { x: 27.08, y: 8.85 }; // その置き物の右下の角の裏
+  ok(E.isFloor(27, 8) && !E.isFloor(26, 8) && !E.canSee(me, behind), '角の裏の床は、かべで隠れている');
+  ok(!inPoly(behind, E.viewPolygon(me, E.VIEW.crew)), 'かべの角の裏の床は明るくならない');
+  ok(inPoly(behind, E.viewPolygon(me, E.VIEW.crew, undefined, 0.3)), '（のばすと角を回りこんで明るくなっていた）');
   const open = E.viewPolygon({ x: 44, y: 34.5 }, 2, 8, 0);
   ok(open.every((p) => Math.abs(E.dist(p, { x: 44, y: 34.5 }) - 2) < 1e-9), 'かべがなければ丸');
   ok(E.rayDist({ x: 4.5, y: 5.5 }, -1, 0, 10) === 2.5 && E.rayDist({ x: 4.5, y: 5.5 }, 0, -1, 10) === 3.5, 'かべまでの距離');
