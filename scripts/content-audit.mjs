@@ -222,6 +222,8 @@ const NO_CONTENT_APPS = [
   'pittari-beat',
   // 盤と黒白の石だけ
   'reversi',
+  // 落ちてくるブロック（1〜4マスの8種類の形）だけ
+  'suton-block',
   // トランプ（52枚＋ジョーカー）だけ
   'daifugo',
   // マップと仕事のミニゲーム（線・番号・メーター）だけ

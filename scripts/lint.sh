@@ -53,6 +53,7 @@ RTDB_HTML_FILES=(
   "apps/stamp-ate/index.html"
   "apps/pittari-beat/index.html"
   "apps/reversi/index.html"
+  "apps/suton-block/index.html"
   "apps/shirushi-hint/index.html"
   "apps/hirameki-oogiri/index.html"
   "apps/suki-bingo/index.html"
