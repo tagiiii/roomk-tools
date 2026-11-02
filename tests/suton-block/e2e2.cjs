@@ -19,7 +19,7 @@ const { E, check, sleep, rest, roomOf, roomWhen, text, visible, waitScreen, wait
 
   // ── 参加者の読み込み直し: 盤・段の数・とっておいたものが戻り、同じ順番の続きになる ──
   for (let i = 0; i < 4; i++) await key(A, 'Space');
-  await key(A, 'a');
+  await key(A, 'c');
   await key(A, 'Space');
   room = await roomWhen(code, (r) => r.boards?.['あおい']?.pieces === 5);
   const before = room?.boards?.['あおい'];
