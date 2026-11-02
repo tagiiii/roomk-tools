@@ -94,6 +94,17 @@ Google のものを使わないことで、必要な外部の仕組みは **Fire
 本文は `.claude/commands/feedback-import.md` / `feedback-fix.md`。
 この形なら非公開リポジトリ（§2.5 C）は**無くてもよい**（通知が欲しくなったら足す）。
 
+### 新着の通知と自動取り込み（2026-10-31）
+
+- **通知**: Claude Code の `SessionStart` フック（`~/.claude/settings.json` → `~/.config/roomk/feedback-notify.sh`）。
+  Claude デスクトップアプリでセッションを開く／再開すると、鍵で RTDB `feedback/` を読み、新着があれば macOS の通知（「room-K ／ ボードに取り込みます ／ フィードバック N件（ツール名 n・…）」）を出し、
+  そのセッションの Claude に「すぐ `/feedback-import` で取り込む」と文脈で指示する。30分に1回まで（stamp ファイル）。失敗しても黙って終わる。
+  件数とツール名だけを出し、本文は通知にも文脈にも出さない。
+- **自動取り込み**: デスクトップアプリの定期タスク `feedback-import`（毎時 8〜22時。アプリが閉じていた分は次に開いたときに実行）が `/feedback-import` を実行し、取り込めたら通知する。
+  フックの文脈行とタスクの両方が取り込みに行っても、`/feedback-import` はボードにある id を飛ばすので二重にならない。
+  時間指定の通知は「見逃す」「開いたときに知りたい」というオーナーの希望で使わない（通知はフック、取り込みはタスク）。
+- どちらも手元の Mac にあり、リポジトリには入っていない（鍵と同じく `~/.config/roomk/`、`~/.claude/`）。
+
 ### 作業の手順（Claude Code 向け。routine-b-fix.md と同じ制約）
 
 1. 取り込み: `feedback-pull.mjs --json` または非公開 Issue を読み、`requests/{id}` に `{app, appName, kind, text, at, status:'new', note:'', source}` を書く（id は RTDB の id か Issue 番号。二重に入れない）
