@@ -89,6 +89,10 @@
       .fb-kinds { grid-template-columns: 1fr; }  /* 狭い画面では1列（文字を折り返さない） */
     }
 
+    /* ツールをさがす欄（下の選択肢をしぼりこむ） */
+    .fb-search { margin-bottom: var(--space-xs); }
+    .fb-search-none { font-size: var(--font-size-sm); color: var(--color-muted); margin: 4px 0 0; }
+
     .fb-count { font-size: var(--font-size-sm); color: var(--color-muted); text-align: right; margin-top: 4px; }
     .fb-count.near { color: #B26A00; }
     .fb-count.over { color: var(--color-error); font-weight: 700; }
@@ -128,7 +132,10 @@
               <label class="fb-step__title" for="fb-app">どのツールについて？</label>
             </div>
             <div class="fb-step__body">
+              <input class="form-input fb-search" id="fb-app-search" type="search" autocomplete="off"
+                placeholder="名前でさがす（例: すとん）" aria-label="ツールを名前でさがす" aria-controls="fb-app" />
               <select class="form-select" id="fb-app"></select>
+              <p class="fb-search-none" id="fb-app-none" hidden>見つかりませんでした。「どれでもない・わからない」のまま送れます</p>
             </div>
           </section>
 
@@ -187,28 +194,29 @@
   <script>
   (function () {
     'use strict';
-    // ツール一覧（ポータルのカードと同じ名前）。?app=ID で開くと、そのツールを選んだ状態で始まる
+    // ツール一覧（ポータルのカードと同じ名前・読み）。?app=ID で開くと、そのツールを選んだ状態で始まる
+    // ポータルにツールを足したら、ここにも足す（漢字を含む名前は読みも。カードの data-yomi と同じにする）
     const APPS = [
       ['kotoba-theme', 'コトバのテーマクイズ'], ['quiz', 'クイズパック'], ['kotoba-shuffle', 'ことばシャッフル'],
-      ['kanji-sagashi', '漢字さがし'], ['kotoba-mikke', 'ことばみっけ'], ['kotoba-relay', 'ことばリレー'],
-      ['hirameki-oogiri', 'ひらめき大喜利'], ['tatoe-gp', 'たとえグランプリ'], ['kotoba-meter', 'ことばメーター'],
-      ['shirushi-hint', 'しるしでヒント'], ['pittari-beat', 'ぴったりビート'], ['kaburazu-hint', 'かぶらずヒント'],
-      ['kotoba-tantei', 'ことば探偵'], ['moji-soroe', 'もじそろえゲーム'], ['kotoba-pair', 'コトバペア'],
+      ['kanji-sagashi', '漢字さがし', 'かんじさがし'], ['kotoba-mikke', 'ことばみっけ'], ['kotoba-relay', 'ことばリレー'],
+      ['hirameki-oogiri', 'ひらめき大喜利', 'ひらめきおおぎり'], ['tatoe-gp', 'たとえグランプリ'], ['kotoba-meter', 'ことばメーター'], ['kanpe-housou', 'カンペ放送局', 'かんぺほうそうきょく'],
+      ['shirushi-hint', 'しるしでヒント', 'しるしでひんと'], ['pittari-beat', 'ぴったりビート', 'ぴったりびーと'], ['kaburazu-hint', 'かぶらずヒント'],
+      ['kotoba-tantei', 'ことば探偵', 'ことばたんてい'], ['moji-soroe', 'もじそろえゲーム'], ['kotoba-pair', 'コトバペア'],
       ['toomawashi', 'とおまわしクイズ'], ['talk-card', 'トークテーマカード'], ['otona-talk', 'おとなトークカード'],
       ['docchi', 'どっちにする？'], ['suki-type-check', 'すきタイプチェック'], ['tsuyomi-card', 'つよみカード'],
-      ['do-mannaka', 'ドまんなか'], ['word-wolf', 'ワードウルフ'], ['nemurase-kichi', 'ねむらせ基地'],
-      ['kossori-word', 'こっそりワード'], ['jinro', '人狼ゲーム'], ['name-change', '名前変えゲーム'],
-      ['jitsuwa-game', 'え!? 実は○○なんですかゲーム'], ['tatoe-narabe', 'たとえならべ'], ['ishin-denshin', '以心伝心しないゲーム'],
-      ['uso-jisho', 'うそつき辞書'], ['magire-eshi', 'まぎれ絵師'], ['oekaki-dengon', 'お絵描き伝言ゲーム'],
-      ['stamp-ate', 'スタンプあてゲーム'], ['pittari-meter', 'ピッタリメーター'], ['kakure-number', 'かくれナンバー'],
-      ['kagi-awase', 'カギあわせ'], ['koedake-theater', 'こえだけシアター'], ['kimochi-ate', '気持ち当てゲーム'],
-      ['pita-hame', 'ピタハメ'], ['oshitsuke-zukan', 'おしつけずかん'], ['esadori', 'エサドリ'],
-      ['blackjack', 'ブラックジャック'], ['reversi', 'リバーシ'], ['daifugo', '大富豪'],
-      ['suki-bingo', '好きなものビンゴ'], ['minna-ranking', 'みんなでランキング'], ['kyoumi-sugoroku', '興味スゴロク'],
-      ['nurie-week', '塗り絵カレンダー'], ['value-card', 'バリューカード'], ['ikutsu-ieru', 'いくつ言える？'],
+      ['do-mannaka', 'ドまんなか'], ['word-wolf', 'ワードウルフ'], ['nemurase-kichi', 'ねむらせ基地', 'ねむらせきち'],
+      ['kossori-word', 'こっそりワード'], ['jinro', '人狼ゲーム', 'じんろうげーむ'], ['name-change', '名前変えゲーム', 'なまえかえげーむ'], ['kakure-kaito', 'かくれ怪盗', 'かくれかいとう'],
+      ['jitsuwa-game', 'え!? 実は○○なんですかゲーム', 'えじつはまるまるなんですかげーむ'], ['tatoe-narabe', 'たとえならべ'], ['ishin-denshin', '以心伝心しないゲーム', 'いしんでんしんしないげーむ'],
+      ['uso-jisho', 'うそつき辞書', 'うそつきじしょ'], ['magire-eshi', 'まぎれ絵師', 'まぎれえし'], ['oekaki-dengon', 'お絵描き伝言ゲーム', 'おえかきでんごんげーむ'],
+      ['stamp-ate', 'スタンプあてゲーム', 'すたんぷあてげーむ'], ['pittari-meter', 'ピッタリメーター'], ['kakure-number', 'かくれナンバー'],
+      ['kagi-awase', 'カギあわせ', 'かぎあわせ'], ['koedake-theater', 'こえだけシアター'], ['kimochi-ate', '気持ち当てゲーム', 'きもちあてげーむ'],
+      ['pita-hame', 'ピタハメ'], ['oshitsuke-zukan', 'おしつけずかん'], ['esadori', 'エサドリ'], ['suton-block', 'すとんブロック', 'すとんぶろっく'],
+      ['blackjack', 'ブラックジャック'], ['reversi', 'リバーシ'], ['daifugo', '大富豪', 'だいふごう'],
+      ['suki-bingo', '好きなものビンゴ', 'すきなものびんご'], ['minna-ranking', 'みんなでランキング'], ['kyoumi-sugoroku', '興味スゴロク', 'きょうみすごろく'],
+      ['nurie-week', '塗り絵カレンダー', 'ぬりえかれんだー'], ['value-card', 'バリューカード'], ['ikutsu-ieru', 'いくつ言える？', 'いくついえる'],
       ['kyapa-graph', 'キャパグラフ'], ['career-sugoroku', 'キャリアすごろく'],
-      ['sakusen-chat', '作戦会議チャット'], ['yokumite-kanji', 'よく見て漢字'],
-      ['portal', 'ツール一覧（トップ）'], ['guide', 'スタッフ向けのページ'], ['hajimete', 'はじめての人へ'], ['other', 'どれでもない・わからない'],
+      ['sakusen-chat', '作戦会議チャット', 'さくせんかいぎちゃっと'], ['yokumite-kanji', 'よく見て漢字', 'よくみてかんじ'],
+      ['portal', 'ツール一覧（トップ）', 'つーるいちらん とっぷ'], ['guide', 'スタッフ向けのページ', 'すたっふむけのぺーじ'], ['hajimete', 'はじめての人へ', 'はじめてのひとへ'], ['other', 'どれでもない・わからない', 'どれでもない わからない'],
     ];
     // 種類ごとの書き方の例（手順3のプレースホルダー）
     const EXAMPLES = {
@@ -223,11 +231,31 @@
     const $ = (id) => document.getElementById(id);
     const appSel = $('fb-app'), text = $('fb-text'), count = $('fb-count'), send = $('fb-send');
 
-    APPS.forEach(([id, name]) => {
-      const opt = document.createElement('option');
-      opt.value = id; opt.textContent = name;
-      appSel.appendChild(opt);
-    });
+    // ひらがな・カタカナ、全角・半角、大文字・小文字の違いは区別しない（ポータルの検索と同じ）
+    const normalize = (t) => String(t).normalize('NFKC').toLowerCase()
+      .replace(/[\u30a1-\u30f6]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0x60))
+      .replace(/\s+/g, '');
+    const keys = new Map(APPS.map(([id, name, yomi]) => [id, normalize(name) + ' ' + normalize(yomi || '')]));
+
+    // 選択肢をしぼりこむ。「どれでもない・わからない」はいつも残す。
+    // 今選んでいるツールが残らないとき・「どれでもない」を選んでいたときは、いちばん上の候補を選ぶ
+    const renderApps = () => {
+      const q = normalize(search.value);
+      const hits = APPS.filter(([id]) => !q || id === 'other' || keys.get(id).includes(q));
+      const current = appSel.value;
+      appSel.replaceChildren(...hits.map(([id, name]) => {
+        const opt = document.createElement('option');
+        opt.value = id; opt.textContent = name;
+        return opt;
+      }));
+      appSel.value = current !== 'other' && hits.some(([id]) => id === current) ? current : hits[0][0];
+      $('fb-app-none').hidden = hits.length > 1;
+    };
+    const search = $('fb-app-search');
+    search.addEventListener('input', renderApps);
+    // Enter で送信しない（日本語入力の確定の Enter もここに来る）
+    search.addEventListener('keydown', (event) => { if (event.key === 'Enter') event.preventDefault(); });
+    renderApps();
     const wanted = new URLSearchParams(location.search).get('app') || '';
     appSel.value = APPS.some(([id]) => id === wanted) ? wanted : 'other';
 

@@ -72,5 +72,56 @@ const { check, sleep, text, visible, waitScreen, waitFor, key, fitsHeight, overf
   await P.page.click('.sb-padbtn[data-act="drop"]');
   check('S21 画面のボタンでも置ける', true);
 
+  // ── マウス（ルームで、盤をルームの記録と照らし合わせる）──
+  const M = await L.newClient('mouse', { viewport: { width: 1000, height: 820 } });
+  const code = await L.createRoom(M, 'そら');
+  await M.page.click('#btnStartGame');
+  await L.waitPlaying(M);
+  const room = await L.roomWhen(code, (r) => r.round && typeof r.round.startedAt === 'number');
+  const g = L.E.createGame({ seed: room.round.seed, onFull: 'clear' });
+  const box = await M.page.$eval('#board', (c) => { const r = c.getBoundingClientRect(); return { x: r.left, y: r.top, w: r.width, h: r.height }; });
+  const colX = (col) => box.x + (col + 0.5) * (box.w / L.E.W);
+  const midY = box.y + box.h * 0.6;
+  // 左はしへ動かしてクリック → 左のかべまで寄せて、すとん
+  await M.page.mouse.move(colX(5), midY);
+  await M.page.mouse.move(colX(0), midY, { steps: 6 });
+  await M.page.mouse.down(); await M.page.mouse.up();
+  while (L.E.move(g, -1, 0));
+  L.E.hardDrop(g);
+  let r1 = await L.roomWhen(code, (r) => r.boards?.['そら']?.pieces === 1);
+  check('S22 マウスを左はしへ動かしてクリックで、左のかべに寄せて落とす', r1.boards['そら'].b === L.E.packBoard(g.board));
+  // 右クリックで右に回し、右はしへ動かしてクリック
+  await M.page.mouse.click(colX(5), midY, { button: 'right' });
+  L.E.rotate(g, 1);
+  await M.page.mouse.move(colX(9), midY, { steps: 6 });
+  await M.page.mouse.down(); await M.page.mouse.up();
+  while (L.E.move(g, 1, 0));
+  L.E.hardDrop(g);
+  r1 = await L.roomWhen(code, (r) => r.boards?.['そら']?.pieces === 2);
+  check('S23 右クリックで右に回し、右はしへ寄せて落とす', r1.boards['そら'].b === L.E.packBoard(g.board));
+  // ホイールで左に回し、まん中のボタンで裏返して、まん中に落とす
+  await M.page.mouse.move(colX(4), midY);
+  await M.page.mouse.wheel(0, -100);
+  await sleep(250);
+  await M.page.mouse.down({ button: 'middle' }); await M.page.mouse.up({ button: 'middle' });
+  // 画面と同じ順に: まん中へ動かす → 左に回す → 裏返す → まん中へ動かす
+  const xs = () => g.piece.cells.map(([x]) => g.piece.x + x);
+  const moveTo = (col) => {
+    for (let i = 0; i < L.E.W; i++) {
+      const cur = Math.round((Math.min(...xs()) + Math.max(...xs())) / 2);
+      if (cur === col || !L.E.move(g, cur < col ? 1 : -1, 0)) break;
+    }
+  };
+  moveTo(4);
+  L.E.rotate(g, -1);
+  L.E.flip(g);
+  moveTo(4);
+  await M.page.mouse.move(colX(4) + 1, midY);
+  await M.page.mouse.down(); await M.page.mouse.up();
+  L.E.hardDrop(g);
+  r1 = await L.roomWhen(code, (r) => r.boards?.['そら']?.pieces === 3);
+  check('S24 ホイールで回し、まん中のボタンで裏返して落とす', r1.boards['そら'].b === L.E.packBoard(g.board), { got: r1.boards['そら'].b.slice(-40), want: L.E.packBoard(g.board).slice(-40) });
+  check('S25 右クリックでメニューを出さない（盤の上）', await M.page.evaluate(() => { const ev = new MouseEvent('contextmenu', { bubbles: true, cancelable: true }); return !document.querySelector('#board').dispatchEvent(ev); }));
+
   await L.finishAll(server);
 })().catch((e) => { console.error(e); process.exit(1); });
