@@ -170,11 +170,6 @@ const clickText = (c, scope, label) => c.page.locator(scope + ' button', { hasTe
 const words = (c) => c.page.$$eval('#stage .kh-word', (els) => els.map((e) => e.textContent));
 const lineCount = (c) => c.page.$$eval('#stage .kh-line', (els) => els.length);
 const lineWith = (c, w) => c.page.locator('#stage .kh-line', { hasText: w }).first();
-async function laughCount(c, w) {
-  const n = lineWith(c, w).locator('.kh-laughs__count');
-  return (await n.count()) ? Number((await n.innerText()).replace(/\D/g, '')) : 0;
-}
-const laughAt = (c, w) => lineWith(c, w).locator('.kh-laugh').click();
 // 読む人の画面で、書き出しから締めまで読みすすめる（読みおわったは押さない）
 async function readThrough(c, k, scope = '#stage') {
   const label = (n) => (n === 0 ? '読みはじめる' : 'つぎへ');
@@ -202,6 +197,6 @@ async function finishAll(server) {
 module.exports = {
   E, T, check, sleep, startServer, rest, roomOf, roomWhen, launch, newContext, newPage, newClient, open,
   text, waitText, visible, waitVisible, screen, waitScreen, overflow, stats, waitStats, waitToast, waitFor,
-  createRoom, joinRoom, phaseOf, waitPhase, waitPhaseAll, stepOf, readerOf, writeAll, clickText, words, lineCount, lineWith, laughCount, laughAt, readThrough, shot, finishAll,
+  createRoom, joinRoom, phaseOf, waitPhase, waitPhaseAll, stepOf, readerOf, writeAll, clickText, words, lineCount, lineWith, readThrough, shot, finishAll,
   BASE, OUT, NS, DB, ROOMS, clients,
 };

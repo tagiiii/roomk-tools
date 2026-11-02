@@ -144,7 +144,6 @@ body { background: var(--color-bg); }
 .kh-tag--warn { background: #FFF4E5; color: var(--color-warning); }
 .kh-tag--ok { background: #E3F1F3; color: var(--color-primary); }
 .kh-tag--reader { background: var(--kh-air); }
-.kh-tag--top { background: var(--kh-kanpe); color: #4A3405; }
 
 /* ══ ゲーム ══ */
 .kh-onair {
@@ -195,7 +194,6 @@ body { background: var(--color-bg); }
 .kh-line--frame { color: var(--color-muted); }
 .kh-line.is-current { background: #fff; color: var(--color-text); font-size: 24px; font-weight: 500; box-shadow: 0 0 0 2px var(--kh-air) inset; }
 .kh-line.is-new { animation: kh-in 0.35s ease-out; }
-.kh-line.is-top { background: var(--kh-kanpe-bg); }
 @keyframes kh-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 .kh-word {
   display: inline-block; padding: 0 8px; margin: 0 2px; border-radius: 6px;
@@ -204,19 +202,6 @@ body { background: var(--color-bg); }
 .kh-word.is-auto { background: #E9E2D3; color: #4A4F57; }
 .kh-line__by { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 13px; color: var(--color-muted); }
 
-/* 笑った！ */
-.kh-laughs { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-.kh-laugh {
-  display: inline-flex; align-items: center; gap: 4px; min-height: 44px; padding: 6px 14px;
-  border: 2px solid var(--kh-kanpe); border-radius: 999px; background: #fff; color: var(--kh-kanpe-text);
-  font-family: inherit; font-size: 15px; font-weight: 700; cursor: pointer;
-}
-.kh-laugh:hover { background: var(--kh-kanpe-bg); }
-.kh-laugh.is-on { background: var(--kh-kanpe); color: #3A2A04; }
-.kh-laugh .material-symbols-rounded { font-size: 22px; }
-.kh-laughs__count { display: inline-flex; align-items: center; gap: 2px; font-size: 15px; font-weight: 700; color: var(--kh-kanpe-text); }
-.kh-laughs__count .material-symbols-rounded { font-size: 22px; color: #D69A12; }
-.kh-line.is-current .kh-laugh, .kh-line.is-current .kh-laughs__count { font-size: 15px; }
 .kh-next { position: sticky; bottom: 12px; box-shadow: var(--shadow-md); }
 
 /* 言葉を書く */
@@ -234,6 +219,19 @@ body { background: var(--color-bg); }
 .kh-myword, .kh-checkword { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 10px; background: var(--color-bg); }
 .kh-myword__hint { font-size: 13px; color: var(--color-muted); min-width: 4em; }
 .kh-myword__word { font-weight: 700; font-size: 17px; }
+
+/* 判定 */
+.kh-judge { display: grid; gap: 8px; }
+.kh-judge__row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.kh-choice {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  min-height: 96px; padding: 12px; border: 2px solid var(--color-border); border-radius: var(--radius-box);
+  background: var(--color-surface); font-family: inherit; font-size: 18px; font-weight: 700; color: var(--color-primary); cursor: pointer;
+}
+.kh-choice .material-symbols-rounded { font-size: 36px; }
+.kh-choice--ok:hover { border-color: var(--color-accent); background: #EAF4F6; }
+.kh-choice--laugh { color: var(--kh-kanpe-text); }
+.kh-choice--laugh:hover { border-color: var(--kh-kanpe); background: var(--kh-kanpe-bg); }
 
 /* ホストの道具 */
 .kh-tools { display: grid; gap: 12px; }
@@ -255,8 +253,8 @@ body { background: var(--color-bg); }
 .kh-scenes { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
 .kh-scene { padding: 12px 14px; border-radius: 12px; background: var(--kh-kanpe-bg); display: grid; gap: 4px; }
 .kh-scene__head { display: flex; align-items: center; gap: 6px; margin: 0; font-size: 14px; font-weight: 700; color: var(--kh-kanpe-text); }
-.kh-scene__line { margin: 0; font-size: 17px; line-height: 1.8; }
-.kh-scene__by { margin: 0; font-size: 13px; color: var(--color-muted); }
+.kh-scene__result { margin: 0; font-size: 17px; font-weight: 700; color: var(--color-primary); }
+.kh-scene__words { margin: 0; display: flex; flex-wrap: wrap; gap: 6px; }
 .kh-rank { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
 .kh-rank__row { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 10px; background: var(--color-bg); }
 .kh-rank__place { font-weight: 700; color: var(--color-primary); min-width: 2.5em; }

@@ -48,25 +48,23 @@ for (let i = 0; i < D.PROGRAMS.length; i += 1) used.push(E.pickProgram(D.PROGRAM
 ok(new Set(used).size === D.PROGRAMS.length, 'G1 使いきるまで同じ番組は出ない');
 ok(!!E.pickProgram(D.PROGRAMS, used), 'G2 使いきったら、また全部から');
 
-// 「笑った！」
+// 判定
 const blanks = [
   { writer: 'a', word: 'カレー', auto: false },
   { writer: 'b', word: 'ドカーン', auto: false },
   { writer: 'a', word: 'かさ', auto: false },
   { writer: 'c', word: 'パンダ', auto: true },
 ];
-ok(!E.canLaugh(blanks, 0, 'a') && E.canLaugh(blanks, 1, 'a'), 'L1 自分の言葉には押せない');
-ok(!E.canLaugh(blanks, 3, 'r'), 'L2 おまかせの言葉には押せない');
-ok(E.canLaugh(blanks, 0, 'r') && !E.canLaugh(blanks, 9, 'r'), 'L3 読む人は押せる・ない空らんには押せない');
-let t = E.tally(blanks, { 1: ['r', 'a'], 0: ['b'] });
-ok(JSON.stringify(t.top) === '[1]' && t.counts[1] === 2, 'L4 いちばん多い言葉');
-t = E.tally(blanks, { 0: ['r'], 1: ['a'] });
-ok(JSON.stringify(t.top) === '[0,1]', 'L5 同じ数ならどちらも');
-ok(E.tally(blanks, {}).top.length === 0, 'L6 だれも押さなければ空');
-t = E.tally(blanks, { 0: ['a', 'a'], 3: ['r', 'b'] });
-ok(t.top.length === 0, 'L7 書いた本人とおまかせの分は数えない', t);
-const pts = E.pointsFrom(blanks, [1, 2, 1, 3]);
-ok(pts.a === 2 && pts.b === 2 && pts.c === undefined, 'L8 書いた人ごとの数（おまかせは数えない）', pts);
+ok(E.judge({ a: 'ok', b: 'ok', c: 'laugh' }).success === true, 'J1 半分より多くが読めたなら読みきった');
+ok(E.judge({ a: 'ok', b: 'laugh' }).success === false, 'J2 同じ数なら読みきったにしない');
+ok(E.judge({ a: 'laugh', b: 'laugh', c: 'ok' }).success === false, 'J3 笑ったが多ければ読みきっていない');
+ok(E.judge({ a: 'ok' }).success === true && E.judge({}).success === false, 'J4 1人だけ・だれもいないとき');
+const j = E.judge({ a: 'ok', b: 'laugh', c: 'ok' });
+ok(j.ok === 2 && j.laugh === 1, 'J5 数を数える');
+let pts = E.roundPoints(blanks, 'r', true);
+ok(JSON.stringify(pts) === '{"r":1}', 'P8 読みきったら読む人に1点', pts);
+pts = E.roundPoints(blanks, 'r', false);
+ok(pts.a === 1 && pts.b === 1 && pts.c === undefined && pts.r === undefined, 'P9 笑ったら書いた人に1点ずつ（おまかせだけの人は入らない・2つ書いても1点）', pts);
 
 ok(JSON.stringify(E.readOrder(['x', 'y'], 2)) === '["x","y","x","y"]', 'O1 2周の順番');
 ok(JSON.stringify(E.readOrder(['x', 'y', 'z'], 2, ['y'])) === '["x","z","x","z"]', 'O3 書くだけの人は読む番に入らない');

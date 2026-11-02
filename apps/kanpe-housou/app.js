@@ -3,6 +3,7 @@
      その中で「押した人か（匿名ID）・押した時点の段階（step）か・その段階で押せる人か」を確かめてから進める。
    ・まだ読んでいない言葉と、だれが書いたかはルームの game に置き、画面には読んだ行の言葉だけ出す
      （DevTools で見えるのは性善説で許容）。自分が書く空らんのヒントと言葉は、自分の画面にだけ出す。
+   ・読み終わったら、読む人のほかのみんなで「笑わずに読めた」か「笑った」かを同時に出して判定する（だれが何を出したかは画面に出さない）。
    ・みんなにみせる画面（?watch=）: 見るだけ。ルームに書き込まない */
 (() => {
   'use strict';
@@ -96,8 +97,6 @@
   // 届いたゲームを、欠けた値を補った形にする（RTDB は空の配列・null を残さない）
   function normGame(g) {
     if (!g || typeof g !== 'object') return null;
-    const laughs = {};
-    Object.entries(asObj(g.laughs)).forEach(([k, v]) => { const list = asArr(v); if (list.length) laughs[k] = list; });
     return {
       gid: Number(g.gid) || 0,
       step: Number(g.step) || 0,
@@ -108,7 +107,7 @@
       round: Number(g.round) || 0,
       used: asArr(g.used),
       points: asObj(g.points),
-      history: asArr(g.history).map((h) => ({ reader: h.reader, prog: h.prog, k: Number(h.k) || 0, blanks: normBlanks(h.blanks), top: asArr(h.top).map(Number) })),
+      history: asArr(g.history).map((h) => ({ reader: h.reader, prog: h.prog, k: Number(h.k) || 0, blanks: normBlanks(h.blanks), success: !!h.success })),
       reader: g.reader || null,
       prog: g.prog || null,
       k: Number(g.k) || 0,
@@ -116,8 +115,9 @@
       submitted: asObj(g.submitted),
       rev: asObj(g.rev),
       pos: g.pos == null ? -1 : Number(g.pos),
-      laughs,
-      top: asArr(g.top).map(Number),
+      judges: asArr(g.judges),
+      verdicts: asObj(g.verdicts),
+      success: g.success == null ? null : !!g.success,
     };
   }
 
@@ -167,11 +167,11 @@
         const open = i + 1 <= upTo;
         return {
           hint: b.hint, word: open ? b.word : null, auto: open ? b.auto : false, writer: named ? b.writer : null,
-          laughs: open ? (g.laughs[i] || []) : [],
         };
       }),
       submitted: Object.keys(g.submitted).filter((id) => g.submitted[id]),
-      top: named ? g.top : [],
+      // 判定は、だれが何を出したかは入れない（出したかどうかと、結果だけ）
+      judges: g.judges, judged: Object.keys(g.verdicts), success: named ? g.success : null,
       history: phase === 'end' ? g.history : [],
       points: phase === 'end' && opts.score ? g.points : null,
     };
@@ -211,7 +211,7 @@
       gid: R.lastGameId, step: 0, phase: 'write', players, uids,
       order: E.readOrder(players, normOpts(R.opts).laps, noReadOf(R)),
       round: 0, used: [], points: {}, history: [],
-      reader: null, prog: null, k: 0, blanks: [], submitted: {}, rev: {}, pos: -1, laughs: {}, top: [],
+      reader: null, prog: null, k: 0, blanks: [], submitted: {}, rev: {}, pos: -1, judges: [], verdicts: {}, success: null,
     };
     R.status = STATUS.PLAY;
     startRound(R);
@@ -228,22 +228,30 @@
     g.submitted = {};
     g.rev = {};
     g.pos = -1;
-    g.laughs = {};
-    g.top = [];
+    g.judges = [];
+    g.verdicts = {};
+    g.success = null;
     go(R, 'write');
   }
   function toRead(R) {
     R.game.pos = -1;
     go(R, 'read');
   }
-  // 読みおわったら、「笑った！」の数で、いちばん笑った言葉を決める
-  function closeRound(R) {
+  // 読みおわったら、読む人のほかのみんなで判定する
+  function toJudge(R) {
     const g = R.game;
-    const { counts, top } = E.tally(g.blanks, g.laughs);
-    g.top = top;
-    const pts = E.pointsFrom(g.blanks, counts);
+    g.judges = g.players.filter((id) => id !== g.reader);
+    g.verdicts = {};
+    go(R, 'judge');
+  }
+  // 判定を開く。半分より多くが「笑わずに読めた」なら読みきった
+  function closeJudge(R) {
+    const g = R.game;
+    const { success } = E.judge(g.verdicts);
+    g.success = success;
+    const pts = E.roundPoints(g.blanks, g.reader, success);
     Object.keys(pts).forEach((id) => { g.points[id] = (Number(g.points[id]) || 0) + pts[id]; });
-    g.history = g.history.concat({ reader: g.reader, prog: g.prog, k: g.k, blanks: clone(g.blanks), top });
+    g.history = g.history.concat({ reader: g.reader, prog: g.prog, k: g.k, blanks: clone(g.blanks), success });
     go(R, 'result');
   }
   function fillAuto(g, i) {
@@ -270,9 +278,9 @@
     const g = normGame(R.game);
     if (R.status !== STATUS.PLAY || !g) return false;
     R.game = g;
-    const proxied = !!m.as;
+    // 代わりに押せるのは端末のない人の分。判定だけは、通信が切れた人の分もホストが出せる（だれも出せずに止まらないように）
     if (m.as) {
-      if (m.from !== R.host || !isNodevR(R, m.as)) return false;
+      if (m.from !== R.host || !(isNodevR(R, m.as) || (m.type === 'judge' && isAwayR(R, m.as)))) return false;
       m = Object.assign({}, m, { from: m.as });
     }
     // 古い操作は使わない（前のゲーム・前の段階の操作が遅れて届いても通さない）
@@ -310,20 +318,16 @@
         if (g.phase !== 'read' || m.pos !== g.pos) return false;
         if (m.from !== g.reader && m.from !== R.host) return false;
         if (g.pos < g.k + 1) g.pos += 1;
-        else closeRound(R);
+        else toJudge(R);
         return true;
       }
-      // 「笑った！」は、もう出た行の言葉にだけ押せる。押したあとの状態（on）を送る（送りなおしても同じ結果になるように）
-      case 'laugh': {
-        const i = m.idx;
-        if (proxied || g.phase !== 'read' || !g.players.includes(m.from)) return false;
-        if (!Number.isInteger(i) || i + 1 > g.pos || !E.canLaugh(g.blanks, i, m.from)) return false;
-        const list = g.laughs[i] || [];
-        const has = list.includes(m.from);
-        if (!!m.on === has) return false;
-        g.laughs[i] = m.on ? list.concat(m.from) : list.filter((id) => id !== m.from);
+      // 判定: 読む人のほかのみんなが1回だけ出す（端末のない人の分はホストが as で）。最後の人が出すと開く
+      case 'judge':
+        if (g.phase !== 'judge' || !g.judges.includes(m.from) || g.verdicts[m.from]) return false;
+        if (m.verdict !== 'ok' && m.verdict !== 'laugh') return false;
+        g.verdicts[m.from] = m.verdict;
+        if (g.judges.every((id) => g.verdicts[id])) closeJudge(R);
         return true;
-      }
       default:
         return false;
     }
@@ -397,6 +401,14 @@
       fillAuto(g, i);
       return true;
     },
+    // まだ出していない人を待たずに判定を開く（1人以上が出しているときだけ）
+    openJudge(R, gid, step) {
+      const g = R.game;
+      if (g.gid !== gid || g.phase !== 'judge' || g.step !== step) return false;
+      if (!Object.keys(g.verdicts).length || g.judges.every((id) => g.verdicts[id])) return false;
+      closeJudge(R);
+      return true;
+    },
     next(R, gid, step) {
       const g = R.game;
       if (g.gid !== gid || g.phase !== 'result' || g.step !== step) return false;
@@ -419,7 +431,7 @@
     },
   };
   // 待合室のほかは、整えたゲームの上で操作する
-  const NEEDS_GAME = ['skipWrite', 'replaceWord', 'next', 'finish'];
+  const NEEDS_GAME = ['skipWrite', 'replaceWord', 'openJudge', 'next', 'finish'];
 
   // ══════════════════════════════════════════════
   // つなぐ（RTDB）
@@ -1150,7 +1162,7 @@
     } else {
       $('lobby-opts-view').replaceChildren(
         optView('読む回数', 'みんな' + V.opts.laps + '回ずつ読む（書くだけの人はのぞく）'),
-        optView('おしまいの順位', V.opts.score ? '「笑った！」をもらった数で順位を出す' : '出さない（いちばん笑った言葉だけを出す）'),
+        optView('おしまいの順位', V.opts.score ? '点で順位を出す（読みきった読む人と、笑わせた書く人に1点）' : '出さない'),
       );
     }
 
@@ -1184,7 +1196,7 @@
     input.checked = opts.score;
     input.addEventListener('change', () => hostAct('setOpts', { score: input.checked }));
     const text = el('span', 'kh-check__text');
-    text.append(el('span', 'kh-check__label', 'おしまいに順位を出す'), el('span', 'kh-check__sub', '「笑った！」をもらった数で順位を出す。外すと、いちばん笑った言葉だけを出す'));
+    text.append(el('span', 'kh-check__label', 'おしまいに順位を出す'), el('span', 'kh-check__sub', '笑わずに読みきった読む人と、読む人を笑わせた回の書く人に1点ずつ入れて、おしまいに順位を出す'));
     lab.append(input, text);
     root.append(box, lab);
   }
@@ -1206,7 +1218,7 @@
     const onair = $('onair');
     onair.replaceChildren();
     if (V.phase !== 'end') {
-      const lamp = el('span', 'kh-onair__lamp', V.phase === 'read' ? 'ON AIR' : V.phase === 'write' ? '準備中' : 'ふりかえり');
+      const lamp = el('span', 'kh-onair__lamp', V.phase === 'read' ? 'ON AIR' : V.phase === 'write' ? '準備中' : V.phase === 'judge' ? '判定中' : 'ふりかえり');
       if (V.phase === 'read') lamp.classList.add('is-live');
       const title = el('span', 'kh-onair__title');
       title.append(msIcon(prog.icon), el('span', '', prog.title));
@@ -1244,21 +1256,33 @@
       icon = 'mic';
       if (amReader) {
         status = g.pos < 0 ? '準備ができたら「読みはじめる」を押してね' : '声に出して読もう';
-        sub = '「つぎへ」を押すと、次の行が出るよ。言葉が変でも、そのまま読んでね';
+        sub = '「つぎへ」を押すと、次の行が出るよ。言葉が変でも、笑わずにそのまま読みきろう';
       } else {
         status = nameOf(V, g.reader) + ' が読んでいるよ';
-        sub = g.players.includes(S.me) ? 'おもしろかったら、その行の「笑った！」を押してね。前の行にもあとから押せるよ' : '耳をすませて聞こう';
+        sub = g.players.includes(S.me) ? '読む人が笑うかどうか、よく聞いていてね。読みおわったら、みんなで判定するよ' : '耳をすませて聞こう';
       }
-      stage.append(g.pos < 0 ? titleCard(prog) : scriptEl(V, { upTo: g.pos, current: g.pos, laugh: true }));
+      stage.append(g.pos < 0 ? titleCard(prog) : scriptEl(V, { upTo: g.pos, current: g.pos }));
       if (amReader) stage.append(nextButton(g, false));
       // 読みはじめる前は、出した言葉を書きなおせる（書く段階にもどる）
       if (g.pos < 0 && mine && mine.submitted) stage.append(writeCard(V, S.me, mine, false));
+    } else if (V.phase === 'judge') {
+      icon = 'gavel';
+      const waiting = g.judges.filter((id) => !g.judged.includes(id));
+      const mineJudge = g.judges.includes(S.me) && S.mode !== 'watch';
+      if (mineJudge && !g.judged.includes(S.me)) {
+        status = nameOf(V, g.reader) + ' は、笑わずに読めた？';
+        sub = 'みんなでいっせいに出すよ。だれが何を出したかは出ない';
+        stage.append(judgeCard(V, S.me, false));
+      } else {
+        status = amReader ? 'みんなが判定しているよ' : mineJudge ? '出したよ。みんなを待っているよ' : 'みんなが判定しているよ';
+        sub = waiting.length ? 'まだ：' + listNames(V, waiting) : '';
+      }
+      stage.append(scriptEl(V, { upTo: g.k + 1 }));
     } else if (V.phase === 'result') {
-      icon = 'emoji_events';
-      const words = g.top.map((i) => '「' + g.blanks[i].word + '」');
-      status = words.length ? 'いちばん笑った言葉は ' + words.join('と') + '！' : '放送おわり！';
+      icon = g.success ? 'emoji_events' : 'sentiment_very_satisfied';
+      status = g.success ? nameOf(V, g.reader) + ' は、笑わずに読みきった！' : nameOf(V, g.reader) + ' は、笑っちゃった！';
       sub = 'だれが書いたか、原稿の中で見てみよう';
-      stage.append(scriptEl(V, { upTo: g.k + 1, top: g.top, named: true }));
+      stage.append(scriptEl(V, { upTo: g.k + 1, named: true }));
       if (isHost) {
         const last = g.round + 1 >= g.order.length;
         const row = el('div', 'kh-actions');
@@ -1269,7 +1293,7 @@
     } else if (V.phase === 'end') {
       icon = 'celebration';
       status = 'きょうの放送は、これでおしまい！';
-      sub = 'いちばん笑った言葉を、もう一度ふりかえろう';
+      sub = 'きょうの番組を、もう一度ふりかえろう';
       stage.append(endCard(V));
       if (isHost) {
         const row = el('div', 'kh-actions');
@@ -1305,7 +1329,7 @@
     return c;
   }
 
-  // 原稿。o: { upTo, current, top, named, laugh }
+  // 原稿。o: { upTo, current, named }
   function scriptEl(V, o) {
     const g = V.game;
     const prog = progOf(g.prog);
@@ -1315,13 +1339,10 @@
     head.append(msIcon(prog.icon), el('span', '', prog.title));
     box.append(head);
     const list = el('ol', 'kh-script__lines');
-    // 今の行が新しく出たときだけ動かす（「笑った！」で描きなおすたびに動かさない）
+    // 今の行が新しく出たときだけ動かす（ほかの人の変化で描きなおすたびに動かさない）
     const lineKey = g.gid + ':' + g.round + ':' + o.current;
     const fresh = o.current != null && S.lastLine !== lineKey;
     if (o.current != null) S.lastLine = lineKey;
-    // 自分の言葉には「笑った！」を押せない（読んでいるあいだは、だれが書いたかはみんなには出さない）
-    const own = S.mine && S.mine.gid === g.gid && S.mine.round === g.round ? S.mine.idx : [];
-    const canPress = o.laugh && S.mode !== 'watch' && g.players.includes(S.me);
     seq.forEach((text, s) => {
       if (s > o.upTo) return;
       const li = el('li', 'kh-line' + (s === o.current ? ' is-current' : '') + (s === o.current && fresh ? ' is-new' : ''));
@@ -1334,32 +1355,11 @@
       const i = s - 1;
       const b = g.blanks[i];
       const parts = E.splitLine(text);
-      const isTop = o.top && o.top.includes(i);
-      if (isTop) li.classList.add('is-top');
       const body = el('span', 'kh-line__text');
       body.append(document.createTextNode(parts.before), el('span', 'kh-word' + (b.auto ? ' is-auto' : ''), b.word || '？'), document.createTextNode(parts.after));
       li.append(body);
-      if (o.laugh && (b.laughs.length || canPress)) {
-        const row = el('span', 'kh-laughs');
-        if (canPress && !b.auto && !own.includes(i)) {
-          const on = b.laughs.includes(S.me);
-          const lb = btn('kh-laugh' + (on ? ' is-on' : ''), '笑った！', 'sentiment_very_satisfied', () => act('laugh', { idx: i, on: !on }));
-          lb.setAttribute('aria-pressed', on ? 'true' : 'false');
-          lb.dataset.key = 'laugh-' + i;
-          row.append(lb);
-        }
-        // 押された行にだけ数を出す（0 とは書かない）
-        if (b.laughs.length) {
-          const n = el('span', 'kh-laughs__count');
-          n.append(msIcon('sentiment_very_satisfied'), el('span', '', String(b.laughs.length)));
-          n.setAttribute('aria-label', '笑った人 ' + b.laughs.length + '人');
-          row.append(n);
-        }
-        if (row.childElementCount) li.append(row);
-      }
       if (o.named && b.writer) {
         const by = el('span', 'kh-line__by');
-        if (isTop) by.append(tagEl('いちばん笑った', 'top', 'star'));
         by.append(el('span', '', b.auto ? 'おまかせの言葉' : nameOf(V, b.writer) + ' が書いた'));
         li.append(by);
       }
@@ -1442,11 +1442,28 @@
     return card;
   }
 
+  // 判定を出す。who は自分か、端末のない人
+  function judgeCard(V, who, proxy) {
+    const g = V.game;
+    const card = el('div', 'card kh-judge');
+    if (proxy) card.append(el('p', 'kh-write__who', nameOf(V, who) + ' の代わりに出す' + (awayOf(V, who) && !nodevOf(V, who) ? '（通信が切れた）' : '')));
+    const row = el('div', 'kh-judge__row');
+    const send = (verdict) => act('judge', Object.assign({ verdict }, proxy ? { as: who } : {}));
+    const okBtn = btn('kh-choice kh-choice--ok', '笑わずに読めた', 'sentiment_neutral', () => send('ok'));
+    const laughBtn = btn('kh-choice kh-choice--laugh', '笑った', 'sentiment_very_satisfied', () => send('laugh'));
+    // 人ごとに分ける（1人目の分を出したあと、2人目の同じボタンにフォーカスが移らないように）
+    okBtn.dataset.key = 'judge-ok-' + (proxy ? 'p-' + who : 'me');
+    laughBtn.dataset.key = 'judge-laugh-' + (proxy ? 'p-' + who : 'me');
+    row.append(okBtn, laughBtn);
+    card.append(row);
+    return card;
+  }
+
   function endCard(V) {
     const g = V.game;
     const wrap = el('div', 'kh-end');
     const box = el('div', 'card');
-    box.append(el('h2', 'kh-h2', 'きょうの名場面'));
+    box.append(el('h2', 'kh-h2', 'きょうの放送'));
     const ul = el('ul', 'kh-scenes');
     g.history.forEach((h, n) => {
       const prog = progOf(h.prog);
@@ -1454,15 +1471,11 @@
       const head = el('p', 'kh-scene__head');
       head.append(msIcon(prog.icon), el('span', '', (n + 1) + '本目 ' + prog.title + '（読んだ人 ' + nameOf(V, h.reader) + '）'));
       li.append(head);
-      if (!h.top.length) li.append(el('p', 'kh-note', 'みんなの言葉で放送したよ'));
-      h.top.forEach((i) => {
-        const b = h.blanks[i];
-        if (!b) return;
-        const parts = E.splitLine(prog.lines[i]);
-        const line = el('p', 'kh-scene__line');
-        line.append(document.createTextNode(parts.before), el('span', 'kh-word', b.word), document.createTextNode(parts.after));
-        li.append(line, el('p', 'kh-scene__by', nameOf(V, b.writer) + ' が書いた'));
-      });
+      li.append(el('p', 'kh-scene__result', h.success ? '笑わずに読みきった！' : '笑っちゃった！'));
+      // 書かれた言葉を並べてふりかえる（おまかせの言葉は出さない）
+      const words = el('p', 'kh-scene__words');
+      h.blanks.forEach((b) => { if (!b.auto && b.word) words.append(el('span', 'kh-word', b.word)); });
+      if (words.childElementCount) li.append(words);
       ul.append(li);
     });
     box.append(ul);
@@ -1470,18 +1483,18 @@
 
     if (g.points) {
       const rank = el('div', 'card');
-      rank.append(el('h2', 'kh-h2', '「笑った！」をもらった数'));
+      rank.append(el('h2', 'kh-h2', '点数'));
       const ol = el('ol', 'kh-rank');
       const pt = (id) => Number(g.points[id]) || 0;
-      // もらった人だけ並べる（0回は出さない）
+      // 点がある人だけ並べる（0点は出さない）
       const sorted = g.players.filter((id) => pt(id) > 0).sort((a, b) => pt(b) - pt(a));
-      if (!sorted.length) ol.append(el('li', 'kh-note', 'みんなの言葉で放送したよ'));
+      if (!sorted.length) ol.append(el('li', 'kh-note', 'みんなで放送できたね'));
       let place = 0;
       let prev = null;
       sorted.forEach((id, n) => {
         if (pt(id) !== prev) { place = n + 1; prev = pt(id); }
         const li = el('li', 'kh-rank__row');
-        li.append(el('span', 'kh-rank__place', place + '位'), avatar(V, id), el('span', 'kh-rank__name', nameOf(V, id)), el('span', 'kh-rank__pt', pt(id) + '回'));
+        li.append(el('span', 'kh-rank__place', place + '位'), avatar(V, id), el('span', 'kh-rank__name', nameOf(V, id)), el('span', 'kh-rank__pt', pt(id) + '点'));
         ol.append(li);
       });
       rank.append(ol);
@@ -1500,7 +1513,8 @@
     const nodevWriters = V.phase === 'write' ? g.writers.filter((id) => nodevOf(V, id)) : [];
     const readerOff = nodevOf(V, g.reader) || awayOf(V, g.reader);
     // 中身が変わらないうちは作りなおさない（端末のない人の代わりに書いている途中でキーボードが閉じないように）
-    const key = JSON.stringify([V.phase, g.gid, g.round, g.step, g.pos, g.submitted, S.showWords, early ? rg.blanks : null, nodevWriters.map((id) => mineOf(rg, id)), readerOff]);
+    const awayJudges = V.phase === 'judge' ? g.judges.filter((id) => awayOf(V, id)) : [];
+    const key = JSON.stringify([V.phase, g.gid, g.round, g.step, g.pos, g.submitted, g.judged, awayJudges, S.showWords, early ? rg.blanks : null, nodevWriters.map((id) => mineOf(rg, id)), readerOff]);
     if (key === S.toolsKey) return;
     S.toolsKey = key;
     tools.replaceChildren();
@@ -1510,8 +1524,20 @@
       const m = mineOf(rg, id);
       if (m) parts.push(writeCard(V, id, m, true));
     });
+    // 判定: 端末のない人・通信が切れた人の分を代わりに出す
+    if (V.phase === 'judge') {
+      g.judges.filter((id) => (nodevOf(V, id) || awayOf(V, id)) && !g.judged.includes(id)).forEach((id) => parts.push(judgeCard(V, id, true)));
+    }
     const box = el('div', 'card kh-host');
     box.append(el('p', 'kh-host__label', 'ホストだけ'));
+    if (V.phase === 'judge') {
+      const waiting = g.judges.filter((id) => !g.judged.includes(id));
+      if (waiting.length && g.judged.length) {
+        box.append(btn('btn btn-secondary btn-full', 'まだの人を待たずに判定を開く', 'fast_forward', () => {
+          if (window.confirm('まだ出していない人を待たずに、出た分だけで判定する？')) hostAct('openJudge', g.gid, g.step);
+        }));
+      }
+    }
     if (V.phase === 'write') {
       const waiting = g.writers.filter((id) => !g.submitted.includes(id));
       if (waiting.length) {
@@ -1561,6 +1587,7 @@
       li.append(avatar(V, id), el('span', 'kh-player__name', nameOf(V, id)));
       if (V.phase !== 'end' && id === g.reader) li.append(tagEl('読む人', 'reader', 'mic'));
       if (V.phase === 'write' && g.writers.includes(id)) li.append(g.submitted.includes(id) ? tagEl('出した', 'ok', 'check') : tagEl('書いている', 'muted'));
+      if (V.phase === 'judge' && g.judges.includes(id)) li.append(g.judged.includes(id) ? tagEl('出した', 'ok', 'check') : tagEl('考えている', 'muted'));
       const p = personOf(V, id);
       if (p && p.noRead) li.append(tagEl('書くだけ', 'muted', 'edit'));
       if (isHost && nodevOf(V, id)) li.append(tagEl('端末なし', 'muted')); // 印はホストにだけ出す

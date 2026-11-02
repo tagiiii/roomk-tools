@@ -116,7 +116,7 @@ const { check, sleep } = L;
   // 読む
   await L.clickText(H, '#stage', '読みはじめる');
   await K.page.waitForFunction(() => document.querySelectorAll('#stage .kh-line').length === 1);
-  check('C1 書き出しの行には言葉も「笑った！」もない', (await L.words(K)).length === 0 && (await K.page.$$('#stage .kh-laugh')).length === 0);
+  check('C1 書き出しの行には言葉がない', (await L.words(K)).length === 0);
   for (let n = 1; n <= 4; n += 1) {
     await L.clickText(H, '#stage', 'つぎへ');
     await K.page.waitForFunction((x) => document.querySelectorAll('#stage .kh-word').length === x, n);
@@ -124,47 +124,40 @@ const { check, sleep } = L;
     check('C3 みんなにみせる画面にも出る ' + n, await L.waitFor(async () => (await W.page.$$('#stage .kh-word')).length === n));
     check('C4 新しく出た行だけ動く ' + n, (await H.page.$$('#stage .kh-line.is-new')).length === 1);
   }
-  check('C5 自分の言葉には「笑った！」がない', (await L.lineWith(S2, 'プリンアラモード').locator('.kh-laugh').count()) === 0);
-  check('C6 ほかの人の言葉には押せる（4つのうち3つ）', (await S2.page.$$('#stage .kh-laugh')).length === 3);
-  check('C7 読む人は全部に押せる', (await H.page.$$('#stage .kh-laugh')).length === 4);
-  check('C8 みんなにみせる画面には「笑った！」ボタンが出ない', (await W.page.$$('#stage .kh-laugh')).length === 0);
-
-  await L.laughAt(H, 'プリンアラモード');
-  await L.laughAt(K, 'プリンアラモード');
-  await L.laughAt(RK, 'プリンアラモード');
-  check('C9 押した数がみんなにみせる画面にも出る', await L.waitFor(async () => (await L.laughCount(W, 'プリンアラモード')) === 3));
-  check('C10 書いた本人にも数が見える', await L.waitFor(async () => (await L.laughCount(S2, 'プリンアラモード')) === 3));
-  check('C11 「笑った！」で描きなおしても行は動かない', (await H.page.$$('#stage .kh-line.is-new')).length === 0);
-  check('C12 押した人のボタンは押した見た目', (await L.lineWith(K, 'プリンアラモード').locator('.kh-laugh.is-on').count()) === 1);
-  await L.laughAt(RK, 'プリンアラモード');
-  check('C13 もう一度押すと取り消せる', await L.waitFor(async () => (await L.laughCount(K, 'プリンアラモード')) === 2));
-  await L.laughAt(RK, 'プリンアラモード');
-  await L.laughAt(S2, 'ズンドコ');
-  check('C14 ほかの言葉にも押せる', await L.waitFor(async () => (await L.laughCount(K, 'ズンドコ')) === 1 && (await L.laughCount(K, 'プリンアラモード')) === 3));
-  const zero = await K.page.$$eval('#stage .kh-line', (lis) => lis.filter((li) => li.querySelector('.kh-word') && !li.querySelector('.kh-laughs__count')).length);
-  check('C15 だれも押していない行には数を出さない（0 と書かない）', zero === 2, zero);
+  check('C5 読んでいるあいだは判定のボタンが出ない', (await K.page.$$('#stage .kh-choice')).length === 0);
+  check('C6 聞いている人には「よく聞いていてね」', (await L.text(K, '#game-sub')).includes('読む人が笑うかどうか'));
   await L.shot(W, 'c-watch-read');
-  await L.shot(S2, 'c-read-laugh');
-
   await L.clickText(H, '#stage', 'つぎへ');
   await H.page.waitForFunction(() => document.querySelectorAll('#stage .kh-line').length === 6);
-  check('C16 締めの行のあとは「読みおわった」', (await L.text(H, '#stage .kh-next')).includes('読みおわった'));
-  check('C17 読む人のほかに「つぎへ」は出ない', (await K.page.$$('#stage .kh-next')).length === 0);
-  // 前の行にもあとから押せる
-  await L.laughAt(H, 'カピバラ');
-  check('C18 締めまで進んでも、前の行に押せる', await L.waitFor(async () => (await L.laughCount(K, 'カピバラ')) === 1));
+  check('C7 締めの行のあとは「読みおわった」', (await L.text(H, '#stage .kh-next')).includes('読みおわった'));
+  check('C8 読む人のほかに「つぎへ」は出ない', (await K.page.$$('#stage .kh-next')).length === 0);
   await L.shot(H, 'c-read');
   await L.clickText(H, '#stage', '読みおわった');
+  await L.waitPhaseAll(all.concat(W), 'judge');
+
+  // 判定: 読む人のほかのみんなが、いっせいに出す
+  check('J1 読みおわったら判定へ', true);
+  check('J2 読む人には判定のボタンが出ない', (await H.page.$$('#stage .kh-choice')).length === 0);
+  check('J3 聞いていた人には2つのボタン', (await K.page.$$('#stage .kh-choice')).length === 2);
+  check('J4 みんなにみせる画面には判定のボタンが出ない', (await W.page.$$('#stage .kh-choice')).length === 0);
+  check('J5 判定のときは原稿をぜんぶ見られる', (await L.words(K)).length === 4);
+  await L.shot(K, 'j-judge');
+  await L.clickText(K, '#stage', '笑わずに読めた');
+  await L.clickText(S2, '#stage', '笑わずに読めた');
+  await L.clickText(RK, '#stage', '笑った');
+  check('J6 出した人は待つ画面になる', await L.waitFor(async () => (await L.text(K, '#game-status')).includes('出したよ')));
+  check('J7 まだの人がいれば判定のまま', (await L.phaseOf(H)) === 'judge');
+  check('J8 だれが何を出したかは、みんなにみせる画面にもほかの人の画面にも出ない', !(await L.text(W, '#ph-game')).includes('笑った') && !(await L.text(K, '#ph-game')).includes('笑った'));
+  check('J9 出したかどうかは札でわかる', (await L.text(H, '#players')).includes('出した') && (await L.text(H, '#players')).includes('考えている'));
+  await L.clickText(HN, '#stage', '笑わずに読めた');
   await L.waitPhaseAll(all.concat(W), 'result');
-  check('D1 読みおわったら、そのまま結果へ', true);
-  check('D2 いちばん笑った言葉が出る', (await L.text(K, '#game-status')).includes('プリンアラモード'));
+  check('D1 みんな出したら結果へ', true);
+  check('D2 半分より多くが読めたなら「読みきった」', (await L.text(K, '#game-status')).includes('メンター は、笑わずに読みきった！'));
   check('D3 だれが書いたかが出る', (await L.text(K, '#stage')).includes('ソラ が書いた'));
-  check('D4 結果では数を出さない', (await K.page.$$('#stage .kh-laughs__count')).length === 0);
-  check('D5 結果では「笑った！」は押せない', (await K.page.$$('#stage .kh-laugh')).length === 0);
-  check('D6 いちばんの行に印', (await K.page.$$('#stage .kh-line.is-top')).length === 1);
-  check('D7 参加者に「ホストだけ」は出ない', !(await L.visible(K, '#tools')));
+  check('D4 判定の数は出さない', !/[0-9]+人|[0-9]+票/.test(await L.text(K, '#stage')));
+  check('D5 参加者に「ホストだけ」は出ない', !(await L.visible(K, '#tools')));
   const r1 = await L.roomOf(code);
-  check('D8 もらった数を数えている（ソラ3・リク1・ハナ1）', r1.game.points?.['ソラ'] === 3 && r1.game.points?.['リク'] === 1 && r1.game.points?.['ハナ'] === 1, r1.game.points);
+  check('D6 読みきった読む人に1点', r1.game.points?.['メンター'] === 1 && Object.keys(r1.game.points).length === 1, r1.game.points);
   await L.shot(K, 'd-result');
 
   // ── 2本目: 読むのはアキラ。ホストが届いた言葉をたしかめて替える→待たずに読む ──
@@ -183,20 +176,26 @@ const { check, sleep } = L;
   await L.waitPhaseAll(all, 'read');
   check('E5 待たずに読みはじめられる', true);
   await L.readThrough(K, 4);
-  check('E6 おまかせの言葉には「笑った！」が出ない', (await H.page.$$('#stage .kh-laugh')).length === 0);
   await L.clickText(K, '#stage', '読みおわった');
+  await L.waitPhaseAll(all, 'judge');
+  await L.clickText(H, '#stage', '笑った');
+  await L.clickText(S2, '#stage', '笑った');
+  await L.clickText(RK, '#stage', '笑わずに読めた');
+  await L.clickText(HN, '#stage', '笑った');
   await L.waitPhaseAll(all, 'result');
-  check('E7 いちばんがないときは「放送おわり」', (await L.text(S2, '#game-status')).includes('放送おわり'));
-  check('E8 おまかせの言葉とわかる', (await L.text(S2, '#stage')).includes('おまかせの言葉'));
+  check('E6 笑ったが多ければ「笑っちゃった」', (await L.text(S2, '#game-status')).includes('アキラ は、笑っちゃった！'));
+  check('E7 おまかせの言葉とわかる', (await L.text(S2, '#stage')).includes('おまかせの言葉'));
+  const r2 = await L.roomOf(code);
+  check('E8 おまかせの言葉しかない回は、だれにも点が入らない', JSON.stringify(r2.game.points) === JSON.stringify({ 'メンター': 1 }), r2.game.points);
 
   // ここでおしまい
   await L.clickText(H, '#stage', 'ここでおしまいにする');
   await L.waitPhaseAll(all.concat(W), 'end');
   check('F1 finish を数えた', await L.waitStats(H, 'finish', 1));
-  check('F2 名場面が出る', (await L.text(K, '#stage')).includes('きょうの名場面'));
-  check('F3 1本目のいちばんが名場面にある', (await L.text(K, '#stage')).includes('プリンアラモード'));
-  check('F4 いちばんがない回は「みんなの言葉で放送したよ」', (await L.text(K, '#stage')).includes('みんなの言葉で放送したよ'));
-  check('F5 順位は出さない（はじめの設定）', !(await L.text(K, '#stage')).includes('「笑った！」をもらった数'));
+  check('F2 きょうの放送が出る', (await L.text(K, '#stage')).includes('きょうの放送'));
+  check('F3 1本目は読みきった・2本目は笑っちゃった', (await L.text(K, '#stage')).includes('笑わずに読みきった！') && (await L.text(K, '#stage')).includes('笑っちゃった！'));
+  check('F4 書かれた言葉がふりかえりに出る', (await L.text(K, '#stage')).includes('プリンアラモード'));
+  check('F5 順位は出さない（はじめの設定）', !(await L.text(K, '#stage')).includes('点数'));
   await L.shot(K, 'f-end');
 
   // もう一回
@@ -228,6 +227,10 @@ const { check, sleep } = L;
   check('G8 読みはじめたら書きなおせない', !(await L.text(K, '#stage')).includes('書きなおす'));
   await L.shot(K, 'g-375-read');
   await L.clickText(H, '#stage', '読みおわった');
+  await L.waitPhaseAll(all, 'judge');
+  check('G8b 375px: 判定の画面で横にはみ出さない', (await L.overflow(K)) <= 0, await L.overflow(K));
+  await L.shot(K, 'g-375-judge');
+  for (const c of [K, S2, RK, HN]) await L.clickText(c, '#stage', '笑わずに読めた');
   await L.waitPhaseAll(all, 'result');
   check('G9 375px: 結果の画面で横にはみ出さない', (await L.overflow(K)) <= 0, await L.overflow(K));
   // 途中で待合室にもどる

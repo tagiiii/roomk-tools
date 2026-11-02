@@ -8,14 +8,14 @@
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
   <link rel="stylesheet" href="../shared/css/design-system.css">
   <!-- index.html と app.js・engine.js・data.js・style.css はセットで変わるので、変えたら ?v= をそろえて上げる -->
-  <link rel="stylesheet" href="style.css?v=20261102a">
+  <link rel="stylesheet" href="style.css?v=20261102c">
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <script src="../shared/js/rtdb-utils.js?v=20261005"></script>
   <script src="../shared/js/room-qr.js?v=20261022"></script>
-  <script src="engine.js?v=20261102a"></script>
-  <script src="data.js?v=20261102a"></script>
+  <script src="engine.js?v=20261102c"></script>
+  <script src="data.js?v=20261102c"></script>
 </head>
 <body>
 
@@ -47,7 +47,7 @@
         <p class="kh-hero__tag">きょうの放送</p>
       </div>
       <h1 class="kh-panel__title">カンペ放送局</h1>
-      <p class="kh-panel__lead">読む人の原稿には、空らんがある。ほかの人は「食べ物」「音」みたいなヒントだけを見て、言葉を書く。読む人は、出てきた言葉をそのまま読む。聞いている人は、おもしろかった言葉に「笑った！」を押そう。3〜8人で、1回は15〜30分くらい。</p>
+      <p class="kh-panel__lead">読む人の原稿には、空らんがある。ほかの人は「食べ物」「音」みたいなヒントだけを見て、言葉を書く。読む人は、出てきた言葉を笑わずにそのまま読みきれるかな？読み終わったら、みんなで「笑わずに読めた」か「笑った」かを判定しよう。3〜8人で、1回は15〜30分くらい。</p>
       <ul class="kh-panel__notes">
         <li>書く人は、文の中身を知らないまま言葉を書くよ</li>
         <li>思いつかないときは「おまかせ」を押してね</li>
@@ -137,7 +137,7 @@
         <div class="card">
           <h2 class="kh-h2">参加している人</h2>
           <ul id="lobby-people" class="kh-people"></ul>
-          <p id="lobby-noread-note" class="kh-note mt-sm">マイクを使わない人は「読まない（書くだけ）」にしてね。読む番が来ないで、言葉を書いて「笑った！」を押して遊べるよ</p>
+          <p id="lobby-noread-note" class="kh-note mt-sm">マイクを使わない人は「読まない（書くだけ）」にしてね。読む番が来ないで、言葉を書いて判定をして遊べるよ</p>
           <label id="host-plays-row" class="kh-check mt-md" hidden>
             <input id="host-plays" type="checkbox" />
             <span class="kh-check__text">
@@ -197,14 +197,14 @@
     </div>
   </div>
 
-  <script type="module" src="app.js?v=20261102a"></script>
+  <script type="module" src="app.js?v=20261102c"></script>
   <script src="../shared/js/stats.js?v=1" defer></script>
   <script src="../shared/js/howto.js"></script>
   <script>
     RoomkHowto.init({
       title: 'あそびかた',
       slides: 'slides.html',
-      lead: '読む人の原稿の空らんに、ほかの人が言葉を書く。読む人は、出てきた言葉をそのまま読む。聞いている人は、おもしろかった言葉に「笑った！」を押す。',
+      lead: '読む人の原稿の空らんに、ほかの人が言葉を書く。読む人は、出てきた言葉を笑わずにそのまま読みきれるかな？',
       sections: [
         { heading: 'はじめかた', items: [
           'ホストが「ルームを作る」で名前を入れる。ルームコードは「コードをコピー」、参加用のリンクは「リンクをコピー」でチャットに送れる。スマホやタブレットで入る人には「QRコードを出す」をカメラで読みとってもらう',
@@ -216,17 +216,19 @@
           '読む人が1人決まる。ほかの人には「食べ物」「音」のようなヒントだけが届く',
           'ヒントに合う言葉を書いて「出す」を押す。思いつかないときは「おまかせ」。読む人が「読みはじめる」を押すまでは「書きなおす」ができる',
           'みんなが出したら、読む人が「つぎへ」を押しながら原稿を読む。言葉はそのとき初めて出る',
-          '聞いている人は、おもしろかった行の「笑った！」を押す（前の行にもあとから押せる。自分の言葉には押せない。もう一度押すと取り消し）',
-          '読み終わったら、「笑った！」がいちばん多い言葉が「いちばん笑った言葉」になる',
+          '読み終わったら、読む人のほかのみんなが「笑わずに読めた」か「笑った」をいっせいに出す（だれが何を出したかは出ない）',
+          '「笑わずに読めた」が半分より多ければ、読む人は読みきった',
         ] },
-        { heading: '順番', items: [
+        { heading: '順番と点', items: [
           '読む人は順番に交代する。みんなが1回ずつ（設定によっては2回ずつ）読んだらおしまい',
+          '「おしまいに順位を出す」のときは、読みきった読む人に1点、読む人が笑った回は言葉を書いた人に1点ずつ入る',
         ] },
         { heading: 'ホストができること', items: [
           'まだ書いていない人を待たずに読みはじめる（その人の空らんには、おまかせの言葉が入る）',
           '読みはじめる前なら、届いた言葉をたしかめて、おまかせの言葉に替えられる',
           '読む人が進められないときは「代わりに：つぎへ」で進める。「放送をやめて待合室にもどる」で途中でやめられる',
-          '端末のない人を足して、言葉を代わりに入れる。読む番のときは代わりに「つぎへ」を押す',
+          '端末のない人を足して、言葉と判定を代わりに入れる。読む番のときは代わりに「つぎへ」を押す',
+          '判定で、まだ出していない人を待たずに判定を開ける',
           '画面共有には「みんなにみせる画面」を使う。まだ読んでいない言葉は出ない',
         ] },
       ],

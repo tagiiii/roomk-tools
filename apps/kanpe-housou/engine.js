@@ -1,5 +1,5 @@
 /* カンペ放送局のルールだけ。画面・通信に触らない（node でも読める）。
-   読む人の原稿の空らんに、ほかの人がヒントだけを見て言葉を書く。読んでいる途中に、聞いている人が言葉ごとに「笑った！」を押す。 */
+   読む人の原稿の空らんに、ほかの人がヒントだけを見て言葉を書く。読み終わったら、ほかのみんなで読む人が笑わずに読めたかを判定する。 */
 (function (root) {
   'use strict';
 
@@ -52,25 +52,20 @@
     return list[Math.floor(Math.random() * list.length)];
   }
 
-  // 「笑った！」を押せる言葉か（自分の言葉と、おまかせで入った言葉には押せない）
-  function canLaugh(blanks, i, id) {
-    const b = blanks[i];
-    return !!(b && b.word && !b.auto && b.writer !== id);
+  // 読み終わったあとの判定。読む人のほかのみんなが「笑わずに読めた」（ok）か「笑った」（laugh）を出す。
+  // 出た判定の半分より多くが「笑わずに読めた」なら、読む人は読みきった（同じ数なら読みきったにしない）
+  function judge(verdicts) {
+    const list = Object.values(verdicts || {});
+    const ok = list.filter((v) => v === 'ok').length;
+    const laugh = list.filter((v) => v === 'laugh').length;
+    return { ok, laugh, success: ok * 2 > ok + laugh };
   }
 
-  // 言葉ごとに「笑った！」を押した人を数え、いちばん多い言葉（同じ数ならみんな）を返す。だれも押していなければ空
-  // laughs: { 空らんの番号: [押した人, ...] }
-  function tally(blanks, laughs) {
-    const counts = blanks.map((b, i) => (b.auto ? 0 : (laughs[i] || []).filter((id) => id !== b.writer).length));
-    const max = Math.max(0, ...counts);
-    const top = max > 0 ? counts.map((c, i) => (c === max ? i : -1)).filter((i) => i >= 0) : [];
-    return { counts, top };
-  }
-
-  // 書いた人ごとの、「笑った！」をもらった数
-  function pointsFrom(blanks, counts) {
+  // その番組の点。読みきったら読む人に1点、笑ったら言葉を書いた人に1点ずつ（おまかせの言葉しかない人は入らない）
+  function roundPoints(blanks, reader, success) {
     const pts = {};
-    blanks.forEach((b, i) => { if (!b.auto && counts[i]) pts[b.writer] = (pts[b.writer] || 0) + counts[i]; });
+    if (success) { pts[reader] = 1; return pts; }
+    blanks.forEach((b) => { if (!b.auto && b.word && b.writer) pts[b.writer] = 1; });
     return pts;
   }
 
@@ -82,7 +77,7 @@
     return out;
   }
 
-  const api = { MIN, MAX, LINES, shuffle, blanksFor, pickProgram, assign, hintOf, splitLine, omakase, canLaugh, tally, pointsFrom, readOrder };
+  const api = { MIN, MAX, LINES, shuffle, blanksFor, pickProgram, assign, hintOf, splitLine, omakase, judge, roundPoints, readOrder };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.KanpeEngine = api;
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -26,7 +26,7 @@ const { check, sleep } = L;
   check('A3 参加者と同じ名前は足せない', true);
   await H.page.check('input[name=opt-laps][value="2"]');
   await H.page.check('#opt-score');
-  check('A4 参加者に設定が見える', await L.waitFor(async () => (await L.text(N, '#lobby-opts-view')).includes('2回ずつ') && (await L.text(N, '#lobby-opts-view')).includes('「笑った！」をもらった数')));
+  check('A4 参加者に設定が見える', await L.waitFor(async () => (await L.text(N, '#lobby-opts-view')).includes('2回ずつ') && (await L.text(N, '#lobby-opts-view')).includes('点で順位を出す')));
   check('A5 進行だけのホストは数えない', (await L.text(H, '#lobby-count')).includes('遊ぶ人 3人'));
 
   // 書くだけ
@@ -68,15 +68,20 @@ const { check, sleep } = L;
   check('C10 みんな出したら読む', true);
   await L.readThrough(N, 4);
   check('C11 空らん4つが出る', (await L.words(N)).length === 4);
-  check('C12 書くだけの人も「笑った！」を押せる（自分の2つはのぞく）', (await HR.page.$$('#stage .kh-laugh')).length === 2);
-  check('C13 進行だけのホストには「笑った！」は出ない', (await H.page.$$('#stage .kh-laugh')).length === 0);
-  await L.laughAt(HR, 'ミオのことば1');
-  await L.laughAt(N, 'ハルトのことば1');
-  await L.laughAt(N, 'ミオのことば1');
-  check('C14 数がそろう', await L.waitFor(async () => (await L.laughCount(H, 'ミオのことば1')) === 2 && (await L.laughCount(H, 'ハルトのことば1')) === 1));
+  check('C12 読んでいるあいだは判定のボタンが出ない', (await HR.page.$$('#stage .kh-choice')).length === 0);
   await L.clickText(N, '#stage', '読みおわった');
+  await L.waitPhaseAll(all, 'judge');
+  check('C13 書くだけの人も判定する', (await HR.page.$$('#stage .kh-choice')).length === 2);
+  check('C14 進行だけのホストは判定しない', (await H.page.$$('#stage .kh-choice')).length === 0);
+  check('C15 端末のない人の代わりに出す欄が出る', (await L.text(H, '#tools')).includes('ミオ の代わりに出す'));
+  check('C16 1人も出していないうちは「待たずに開く」は出ない', !(await L.text(H, '#tools')).includes('待たずに判定を開く'));
+  await L.shot(H, 'c-host-judge');
+  await L.clickText(H, '#tools', '笑った');
+  await L.clickText(HR, '#stage', '笑わずに読めた');
   await L.waitPhaseAll(all, 'result');
-  check('C15 いちばん押された言葉が出る', (await L.text(N, '#game-status')).includes('ミオのことば1'));
+  check('C17 同じ数なら読みきりにしない', (await L.text(N, '#game-status')).includes('ナツキ は、笑っちゃった！'));
+  const r1 = await L.roomOf(code);
+  check('C18 笑った回は言葉を書いた人に1点ずつ', r1.game.points?.['ハルト'] === 1 && r1.game.points?.['ミオ'] === 1 && !r1.game.points?.['ナツキ'], r1.game.points);
 
   // ── 2本目: 端末のない ミオ が読む → ホストが代わりに進める（書くだけの ハルト はとばす） ──
   await L.clickText(H, '#stage', 'つぎの番組へ');
@@ -91,7 +96,13 @@ const { check, sleep } = L;
   check('D4 ホストが代わりに進められる', (await L.lineCount(N)) === 6);
   await L.shot(H, 'd-host-proxy-read');
   await L.clickText(H, '#tools', '代わりに：読みおわった');
+  await L.waitPhaseAll(all, 'judge');
+  await L.clickText(N, '#stage', '笑わずに読めた');
+  await L.waitText(H, '#tools', 'まだの人を待たずに判定を開く');
+  check('D5 1人出したら「待たずに開く」が出る', true);
+  await L.clickText(H, '#tools', 'まだの人を待たずに判定を開く');
   await L.waitPhaseAll(all, 'result');
+  check('D6 待たずに開くと、出た分だけで決まる', (await L.text(N, '#game-status')).includes('ミオ は、笑わずに読みきった！'));
 
   // ── 3本目: ナツキ（2周目）。読んでいる途中で通信が切れる → ホストが代わりに進める → もどると続きから ──
   await L.clickText(H, '#stage', 'つぎの番組へ');
@@ -126,7 +137,7 @@ const { check, sleep } = L;
   await Y.page.click('#btnJoinRoom');
   await L.waitPhase(Y, 'read');
   check('F1 途中から入った人は「見ているだけ」', (await L.text(Y, '#barMe')).includes('見ているだけ'));
-  check('F2 見ているだけの人には「笑った！」が出ない', (await Y.page.$$('#stage .kh-laugh')).length === 0);
+  check('F2 見ているだけの人には書く欄も判定のボタンも出ない', (await Y.page.$$('#stage .kh-choice, #stage .kh-hint__input')).length === 0);
   check('F3 見ているだけの人は遊ぶ人に入らない', !(await L.roomOf(code)).game.players.includes('ユウ'));
 
   // ホストが切れたときのオーバーレイ
@@ -145,15 +156,29 @@ const { check, sleep } = L;
     await N.page.waitForFunction((x) => document.querySelectorAll('#stage .kh-line').length === x, n + 1);
   }
   await L.clickText(N, '#stage', '読みおわった');
-  await L.waitPhaseAll(all, 'result');
+  await L.waitPhaseAll(all, 'judge');
+  // 判定する人の通信が切れたら、ホストが代わりに出せる（だれも出せずに止まらないように）
+  HR.offlineOk = true;
+  await HR.context.setOffline(true);
+  check('G4a 判定する人の通信が切れたと分かる', await L.waitFor(async () => !(await L.roomOf(code)).players?.['ハルト'], 120000));
+  await L.waitText(H, '#tools', 'ハルト の代わりに出す（通信が切れた）', 10000);
+  check('G4b 通信が切れた人の代わりに出す欄が出る', true);
+  await H.page.locator('#tools .kh-judge', { hasText: 'ハルト の代わりに' }).locator('button', { hasText: '笑わずに読めた' }).click();
+  await L.waitFor(async () => !!(await L.roomOf(code)).game.verdicts?.['ハルト']);
+  await H.page.locator('#tools .kh-judge', { hasText: 'ミオ の代わりに' }).locator('button', { hasText: '笑わずに読めた' }).click();
+  await L.waitPhaseAll([H, N], 'result');
+  check('G4 端末のない人・通信が切れた人の代わりの判定も入る', (await L.text(N, '#game-status')).includes('笑わずに読みきった'));
+  await HR.context.setOffline(false);
+  check('G5 判定した人がもどる', await L.waitFor(async () => !!(await L.roomOf(code)).players?.['ハルト'], 60000));
+  await L.waitPhase(HR, 'result', 15000);
   await L.clickText(H, '#stage', 'ここでおしまいにする');
   await L.waitPhaseAll(all, 'end');
   const endText = await L.text(N, '#stage');
-  check('H1 順位が出る（設定でオン）', endText.includes('「笑った！」をもらった数'));
-  check('H2 もらった人だけ並ぶ（書くだけの人も入る・0回は出さない）', (await N.page.$$('.kh-rank__row')).length === 2 && !endText.includes('0回'));
+  check('H1 順位が出る（設定でオン）', endText.includes('点数'));
+  check('H2 点のある人が並ぶ（書くだけの人も入る・0点は出さない）', (await N.page.$$('.kh-rank__row')).length === 3 && !endText.includes('0点'));
   const first = await L.text(N, '.kh-rank__row');
-  check('H3 いちばん上は いちばん多くもらった人', first.includes('ミオ') && first.includes('2回'), first);
-  check('H4 名場面に、いちばんがない回もある', endText.includes('みんなの言葉で放送したよ'));
+  check('H3 いちばん上は いちばん点の多い人', first.includes('ミオ') && first.includes('2点'), first);
+  check('H4 ふりかえりに読みきった回と笑っちゃった回', endText.includes('笑わずに読みきった！') && endText.includes('笑っちゃった！'));
   await L.shot(N, 'h-end');
   await L.clickText(H, '#stage', '待合室にもどる');
   await L.waitPhaseAll(all, 'lobby');
