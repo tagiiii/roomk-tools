@@ -93,7 +93,8 @@ apps/kanpe-housou/
 
 - `scripts/lint.sh` の `RTDB_HTML_FILES` に追加
 - `scripts/content-audit.mjs` の `COVERED_APPS` に追加し、`collectEntries()` で原稿の行とおまかせの言葉を抽出
-- `apps/index.html` にカード（`data-scenes="kotoba bodoge circle"`・`data-keywords="読み上げ、空らん、お笑い、マイクなし"`）。サムネイル・説明スライドはまだない
+- `apps/index.html` にカード（`data-scenes="kotoba bodoge circle"`・`data-keywords="読み上げ、空らん、お笑い、マイクなし"`・`data-slides`）とサムネイル `assets/thumbnails/kanpe-housou.png`（撮り方は `docs/development/thumbnails.md`）
+- 説明スライド `slides.html`（14枚。`RoomkHowto.init` の `slides` で「？」からも開ける）。ルール・ボタン名を変えたらスライドと発表者ノートも直す
 - `apps/updates.json` 先頭に `type: "new"`
 - `apps/guide/index.html` の「言葉あそび系」に1行（近い遊び『ニュースの時間です』）
 
