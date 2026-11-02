@@ -1376,8 +1376,8 @@ function act(name) {
 
 const KEYMAP = {
   ArrowLeft: 'left', ArrowRight: 'right', ArrowDown: 'down', ArrowUp: 'rotr',
-  ' ': 'drop', x: 'rotr', X: 'rotr', z: 'rotl', Z: 'rotl', c: 'flip', C: 'flip',
-  a: 'hold', A: 'hold', Shift: 'hold',
+  ' ': 'drop', x: 'rotr', X: 'rotr', z: 'rotl', Z: 'rotl', a: 'flip', A: 'flip',
+  c: 'hold', C: 'hold', Shift: 'hold',
 };
 const REPEATABLE = { left: true, right: true, down: true };
 document.addEventListener('keydown', (e) => {
