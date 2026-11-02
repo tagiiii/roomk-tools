@@ -1385,6 +1385,45 @@ document.addEventListener('keydown', (e) => {
   act(a);
 });
 
+// マウス: 盤の上で左右に動かすと、ブロックがその列へ動く。左クリックですとん、右クリックで右に回す、
+// ホイールで回す（上で左回り・下で右回り）、まん中のボタンで裏返す。タッチ・ペンは画面のボタンを使う
+function moveToColumn(col) {
+  const g = state.game;
+  for (let guard = 0; guard < E.W && g.piece; guard++) {
+    const xs = g.piece.cells.map(([x]) => g.piece.x + x);
+    const cur = Math.round((Math.min(...xs) + Math.max(...xs)) / 2);
+    if (cur === col) return;
+    const moved = E.move(g, cur < col ? 1 : -1, 0);
+    afterMove(moved);
+    if (!moved) return;
+  }
+}
+const boardCanvas = $('board');
+boardCanvas.addEventListener('pointermove', (e) => {
+  if (e.pointerType !== 'mouse' || !playing()) return;
+  const rect = boardCanvas.getBoundingClientRect();
+  const col = Math.max(0, Math.min(E.W - 1, Math.floor((e.clientX - rect.left) / (rect.width / E.W))));
+  moveToColumn(col);
+});
+boardCanvas.addEventListener('pointerdown', (e) => {
+  if (e.pointerType !== 'mouse') return;
+  e.preventDefault();
+  if (e.button === 0) act('drop');
+  else if (e.button === 2) act('rotr');
+  else if (e.button === 1) act('flip');
+});
+boardCanvas.addEventListener('contextmenu', (e) => e.preventDefault());
+let wheelAt = 0;
+boardCanvas.addEventListener('wheel', (e) => {
+  if (state.currentScreen !== 'play') return;
+  e.preventDefault();
+  // トラックパッドの細かいスクロールで回りすぎないよう、0.15秒に1回まで
+  const now = Date.now();
+  if (!e.deltaY || now - wheelAt < 150) return;
+  wheelAt = now;
+  act(e.deltaY < 0 ? 'rotl' : 'rotr');
+}, { passive: false });
+
 // 画面のボタン。左右と下は押しっぱなしでくり返す
 let rep = null;
 function stopRepeat() {
@@ -1427,7 +1466,7 @@ function layout() {
   // ルームで広い画面なら、ほかの人の盤を右にもう1列ならべる
   const othersCol = !narrow && otherPlayers().length ? 164 + 16 : 0;
   const byW = Math.floor((vw - 34 - 16 - side - othersCol) / E.W);
-  const byH = Math.floor((window.innerHeight - 56 - 134 - (narrow ? 16 : 46)) / E.H); // バー・ボタン2段・キーの説明
+  const byH = Math.floor((window.innerHeight - 56 - 134 - (narrow ? 16 : 66)) / E.H); // バー・ボタン2段・キーとマウスの説明
   CELL = Math.max(14, Math.min(30, byW, byH));
   sizeCanvas($('board'), CELL * E.W, CELL * E.H);
   const nc = Math.floor((side - 18) / 4);

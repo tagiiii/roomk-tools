@@ -104,7 +104,7 @@ body { background: var(--color-bg); }
 
 .sb-stage { display: flex; gap: 16px; align-items: flex-start; justify-content: center; }
 .sb-boardwrap { position: relative; }
-.sb-board { display: block; border-radius: var(--radius-sm); background: var(--sb-well); }
+.sb-board { display: block; border-radius: var(--radius-sm); background: var(--sb-well); cursor: pointer; touch-action: manipulation; }
 .sb-boardnote {
   position: absolute; left: 8px; right: 8px; top: 40%; margin: 0;
   padding: 10px 12px; border-radius: var(--radius-sm);
