@@ -3123,6 +3123,8 @@ function draw(g) {
   const now = RoomkRTDB.now();
   const shieldOn = g.jobs[me] === 'angel';   // バリアの光は、まもり星にだけ見える
   order.forEach((id) => {
+    // 会議・結果の間は、うしろの地図にほかの人を描かない（会議でへんしんが消え、化けていた場所に本当のすがたが出てしまうため。2026-11-02 子どもの意見）
+    if (g.stage !== 'play' && id !== me) return;
     const pos = drawPos(g, id);
     if (!pos) return;
     const up = E.isAwake(g, id);
