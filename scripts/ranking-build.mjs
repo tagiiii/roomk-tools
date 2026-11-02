@@ -10,6 +10,8 @@
 //   ~/.config/roomk/feedback-sa.json。stats/ を読むだけで、書き込みはしない。
 //
 // apps/ranking.json には順位（アプリのフォルダ名）だけを書き、回数は書かない。
+//   apps:  「よく開かれたツール」の欄に出す上位（TOP_N まで。少なすぎる週は空）
+//   order: ポータルの全アプリの順番。ツール一覧の「よく開かれた順」に使う
 // ポータルは画面共有で子どもが見ることもあるため（stats.js「子ども向け画面に計測値を表示しない」）。
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { createSign } from 'node:crypto';
@@ -64,6 +66,12 @@ function rank(counts, totals) {
   return rows.length >= MIN_APPS ? rows.slice(0, TOP_N) : [];
 }
 
+// 一覧の並び順用。回数が同じ（0 も含む）なら累計の多い順
+function orderAll(counts, totals) {
+  return Object.keys(counts)
+    .sort((a, b) => counts[b] - counts[a] || (totals[b] || 0) - (totals[a] || 0) || a.localeCompare(b));
+}
+
 const token = await accessToken();
 const res = await fetch(`${DB_URL}/stats.json`, { headers: { Authorization: 'Bearer ' + token } });
 if (!res.ok) throw new Error('stats を読めなかった: ' + res.status);
@@ -85,11 +93,13 @@ const base = snapshots
 
 let period;
 let rows;
+let order;
 if (base) {
   const counts = {};
   for (const app of apps) counts[app] = totals[app] - (base.totals[app] || 0);
   period = { kind: 'week', from: jstDate(new Date(base.at)), to: today };
   rows = rank(counts, totals);
+  order = orderAll(counts, totals);
 } else {
   // 比べるスナップショットがまだない（はじめての週）ときは、先月の回数で並べる
   const [y, m] = today.split('-').map(Number);
@@ -98,9 +108,10 @@ if (base) {
   for (const app of apps) counts[app] = Number(stats[app]?.[prev]?.open) || 0;
   period = { kind: 'month', month: prev };
   rows = rank(counts, totals);
+  order = orderAll(counts, totals);
 }
 
-const ranking = { updated: today, period, apps: rows.map(([app]) => app) };
+const ranking = { updated: today, period, apps: rows.map(([app]) => app), order };
 console.log(JSON.stringify(ranking, null, 2));
 console.log(rows.map(([app, n], i) => `${i + 1}. ${app} ${n}`).join('\n') || '（載せられるアプリが足りないので、欄は出ない）');
 if (base) console.log(`比べたスナップショット: ${base.at}`);
