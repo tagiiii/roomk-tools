@@ -705,6 +705,98 @@
       background-color: var(--color-primary);
     }
 
+    /* ── よく開かれたツール（ranking.json から描画・回数は出さない） ── */
+    .ranking-panel {
+      background-color: var(--color-surface);
+      border-radius: var(--radius-card);
+      box-shadow: var(--shadow-sm);
+      padding: var(--space-md) var(--space-lg);
+      margin-bottom: var(--space-xl);
+    }
+
+    .ranking-panel__head {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 0 var(--space-sm);
+    }
+
+    .ranking-panel__title {
+      display: flex;
+      align-items: center;
+      gap: var(--space-xs);
+      font-size: var(--font-size-lg);
+      font-weight: 700;
+      color: var(--color-primary);
+    }
+
+    .ranking-panel__title .material-symbols-rounded {
+      font-size: 22px;
+    }
+
+    .ranking-panel__period {
+      font-size: var(--font-size-sm);
+      color: var(--color-muted);
+      font-feature-settings: "tnum";
+    }
+
+    .ranking-list {
+      list-style: none;
+      margin: var(--space-sm) 0 0;
+      padding: 0;
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-sm);
+    }
+
+    /* スマホでは1行に1つずつ並べ、押しやすくする */
+    @media (max-width: 600px) {
+      .ranking-list {
+        flex-direction: column;
+      }
+    }
+
+    .ranking-list__link {
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+      min-height: 44px;
+      padding: var(--space-xs) var(--space-md) var(--space-xs) var(--space-sm);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-card);
+      color: var(--color-text);
+      font-size: var(--font-size-sm);
+      font-weight: 700;
+      line-height: 1.4;
+      text-decoration: none;
+      transition: background-color var(--transition-base);
+    }
+
+    .ranking-list__link:hover {
+      background-color: #EEF3F8;
+      text-decoration: none;
+    }
+
+    .ranking-list__rank {
+      flex: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      border-radius: var(--radius-full);
+      background-color: var(--color-primary);
+      color: #fff;
+      font-size: 12px;
+      font-feature-settings: "tnum";
+    }
+
+    .ranking-list__icon {
+      flex: none;
+      font-size: 22px;
+      color: var(--color-primary);
+    }
+
     footer {
       text-align: center;
       padding: var(--space-xl) var(--space-md);
@@ -734,6 +826,20 @@
       </h2>
       <ul class="updates-list" id="updates-list"></ul>
       <button class="btn btn-ghost btn-sm updates-panel__more" id="updates-more" aria-controls="updates-list" aria-expanded="false" hidden>すべて表示</button>
+    </section>
+
+    <!-- ============================================= -->
+    <!-- よく開かれたツール（ranking.json から描画）     -->
+    <!-- 週1回 scripts/ranking-build.mjs で作る。回数は出さない -->
+    <!-- ============================================= -->
+    <section class="ranking-panel" id="ranking-panel" aria-labelledby="ranking-title" hidden>
+      <div class="ranking-panel__head">
+        <h2 class="ranking-panel__title" id="ranking-title">
+          <span class="material-symbols-rounded" aria-hidden="true">trending_up</span><span id="ranking-title-text">よく開かれたツール</span>
+        </h2>
+        <span class="ranking-panel__period" id="ranking-period"></span>
+      </div>
+      <ol class="ranking-list" id="ranking-list"></ol>
     </section>
 
     <!-- ============================================= -->
@@ -2794,6 +2900,60 @@
       applyFilters();
     })();
   </script>
+  <script>
+    // よく開かれたツール: apps/ranking.json（scripts/ranking-build.mjs が週1回作る）が正本。
+    // 名前とアイコンはポータルのカードから取る。カードがないアプリは飛ばす。
+    (function () {
+      function shortDate(dateStr) {
+        const [, m, d] = String(dateStr).split('-').map(Number);
+        return m + '/' + d;
+      }
+
+      function render(data) {
+        const list = document.getElementById('ranking-list');
+        const items = (Array.isArray(data.apps) ? data.apps : []).map((app) => {
+          const card = document.querySelector(`.app-card[href="${CSS.escape(app)}/"]`);
+          if (!card) return null;
+          const li = document.createElement('li');
+          const link = document.createElement('a');
+          link.className = 'ranking-list__link';
+          link.href = app + '/';
+          const rank = document.createElement('span');
+          rank.className = 'ranking-list__rank';
+          const icon = document.createElement('span');
+          icon.className = 'material-symbols-rounded ranking-list__icon';
+          icon.setAttribute('aria-hidden', 'true');
+          icon.textContent = card.querySelector('.app-card__icon .material-symbols-rounded')?.textContent || 'apps';
+          const name = document.createElement('span');
+          name.textContent = card.querySelector('.app-card__name')?.textContent || app;
+          link.append(rank, icon, name);
+          li.appendChild(link);
+          return li;
+        }).filter(Boolean);
+        if (items.length === 0) return;
+
+        items.forEach((li, i) => { li.querySelector('.ranking-list__rank').textContent = String(i + 1); });
+        list.replaceChildren(...items);
+
+        const period = data.period || {};
+        const title = document.getElementById('ranking-title-text');
+        const periodText = document.getElementById('ranking-period');
+        if (period.kind === 'week') {
+          title.textContent = 'この1週間よく開かれたツール';
+          periodText.textContent = shortDate(period.from) + '〜' + shortDate(period.to);
+        } else if (period.kind === 'month' && period.month) {
+          title.textContent = Number(period.month.split('-')[1]) + '月によく開かれたツール';
+        }
+        document.getElementById('ranking-panel').hidden = false;
+      }
+
+      fetch('ranking.json')
+        .then((res) => { if (!res.ok) throw new Error(res.status); return res.json(); })
+        .then(render)
+        .catch(() => { /* 取得失敗時は欄を出さない */ });
+    })();
+  </script>
+
   <script>
     // 説明スライドへのリンク: data-slides 属性を持つカードのフッターにバッジを描画。
     // カード本体が <a> のためリンクを入れ子にせず、クリックで slides.html を別タブに開く。

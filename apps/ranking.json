@@ -1,0 +1,14 @@
+{
+  "updated": "2026-11-02",
+  "period": {
+    "kind": "month",
+    "month": "2026-10"
+  },
+  "apps": [
+    "nemurase-kichi",
+    "stamp-ate",
+    "pittari-beat",
+    "pita-hame",
+    "oekaki-dengon"
+  ]
+}
