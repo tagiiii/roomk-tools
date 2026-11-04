@@ -174,7 +174,10 @@ const indicator = (c) => c.page.$$eval('#indicator .ks-player-label', (els) => e
 // 質問のカードが出ている（アニメーションが終わった）
 const waitQuestion = (c, timeout = 8000) => waitVisible(c, '#roomStage #questionCard', timeout);
 const card = (c) => c.page.evaluate(() => ({
-  player: document.getElementById('modal-player').textContent,
+  // 宛先はコマの番号（.ks-pawn）のあとの文字
+  player: [...document.getElementById('modal-player').childNodes].filter((n) => n.nodeType === 3).map((n) => n.textContent).join(''),
+  pawn: document.querySelector('#modal-player .ks-pawn')?.textContent ?? null,
+  dice: document.getElementById('modal-dice').hidden ? null : document.getElementById('modal-dice').textContent.replace('casino', '').trim(),
   question: document.getElementById('modal-question').textContent,
   theme: document.getElementById('modal-theme').textContent.trim(),
   choices: [...document.querySelectorAll('#modal-choices .ks-choice')].map((b) => ({ text: b.textContent.trim(), chosen: b.classList.contains('is-chosen'), disabled: b.disabled })),

@@ -8,7 +8,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet" />
   <link rel="stylesheet" href="../shared/css/design-system.css" />
   <!-- index.html と app.js・logic.js・style.css はセットで変わるので、変えたら ?v= をそろえて上げる -->
-  <link rel="stylesheet" href="style.css?v=20261104" />
+  <link rel="stylesheet" href="style.css?v=20261104b" />
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
@@ -121,7 +121,7 @@
       <button type="button" class="btn btn-ghost btn-sm" id="btnCopyCode">コードをコピー</button>
       <button type="button" class="btn btn-ghost btn-sm" id="btnCopyLink">リンクをコピー</button>
       <button type="button" class="btn btn-ghost btn-sm" id="btnShowQr">QRコードを出す</button>
-      <button type="button" class="btn btn-ghost btn-sm" id="btnLeave">退出する</button>
+      <button type="button" class="btn btn-ghost btn-sm ks-roombar__leave" id="btnLeave">退出する</button>
     </div>
 
     <!-- ============ 待合室 ============ -->
@@ -176,7 +176,7 @@
 
       <div class="ks-board" id="board"></div>
 
-      <div class="ks-dice-area">
+      <div class="ks-dice-area" id="diceArea">
         <div class="ks-dice" id="dice">?</div>
         <button class="btn btn-primary btn-lg" id="btn-roll">
           <span class="material-symbols-rounded" aria-hidden="true">casino</span>
@@ -201,7 +201,10 @@
   <!-- ============ 質問（1台の画面ではモーダル、ルームでは画面の中に出す） ============ -->
   <div class="ks-modal-bg" id="modal" style="display:none">
     <div class="ks-modal pop-in" id="questionCard">
-      <div class="ks-modal__theme" id="modal-theme"></div>
+      <div class="ks-modal__head">
+        <div class="ks-modal__theme" id="modal-theme"></div>
+        <span class="ks-modal__dice" id="modal-dice" hidden></span>
+      </div>
       <div class="ks-modal__player" id="modal-player"></div>
       <div class="ks-modal__question" id="modal-question"></div>
       <div class="ks-modal__choices" id="modal-choices"></div>
@@ -245,7 +248,7 @@
     </div>
   </div>
 
-  <script type="module" src="app.js?v=20261104"></script>
+  <script type="module" src="app.js?v=20261104b"></script>
   <script src="../shared/js/stats.js?v=1" defer></script>
   <script src="../shared/js/howto.js"></script>
   <script>
