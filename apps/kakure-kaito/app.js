@@ -1387,7 +1387,7 @@
           b.disabled = g.team.length !== size;
           stage.append(b);
         } else {
-          setBanner('wait', 'flag', '主任の' + nameOf(V, leader) + 'が、' + size + '人を選んでいるよ', 'だれを行かせたらいいか、声で話し合ってね');
+          setBanner('wait', 'flag', '主任の' + nameOf(V, leader) + 'が、' + size + '人を選んでいるよ', 'だれを行かせたらいいか、声かチャットで話し合ってね');
           stage.append(teamLine(V, g.team, '選んでいるところ', null, size));
         }
         break;
