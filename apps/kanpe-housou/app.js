@@ -1260,6 +1260,10 @@
       } else {
         status = nameOf(V, g.reader) + ' が読んでいるよ';
         sub = g.players.includes(S.me) ? '読む人が笑うかどうか、よく聞いていてね。読みおわったら、みんなで判定するよ' : '耳をすませて聞こう';
+        // 読む人の声が聞きとれるように、番組のはじまりから読みおわるまで出す（みんなにみせる画面にも）
+        const mic = el('p', 'kh-micoff');
+        mic.append(msIcon('mic_off'), el('span', '', '読む人のほかのみんなは、マイクをOFFにしてね'));
+        stage.append(mic);
       }
       stage.append(g.pos < 0 ? titleCard(prog) : scriptEl(V, { upTo: g.pos, current: g.pos }));
       if (amReader) stage.append(nextButton(g, false));

@@ -177,6 +177,13 @@ body { background: var(--color-bg); }
 .kh-readerwait__title { margin: 0; display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-size: 24px; font-weight: 700; color: var(--color-primary); }
 .kh-readerwait__title .material-symbols-rounded { font-size: 32px; color: var(--kh-air); }
 
+/* 読んでいるあいだのマイクの案内 */
+.kh-micoff {
+  display: flex; align-items: center; gap: 8px; margin: 0; padding: 10px 14px; border-radius: var(--radius-card);
+  background: var(--kh-air-bg); border: 2px solid var(--kh-air); color: var(--color-text); font-weight: 700; line-height: 1.5;
+}
+.kh-micoff .material-symbols-rounded { font-size: 26px; color: var(--kh-air); flex: none; }
+
 /* 番組のはじまり */
 .kh-titlecard {
   text-align: center; padding: 32px 16px; border-radius: var(--radius-card);
