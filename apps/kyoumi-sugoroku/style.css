@@ -111,10 +111,23 @@
 .ks-theme__box .material-symbols-rounded {
   font-size: 26px;
 }
+.ks-theme__box { position: relative; }
+.ks-theme input:not(:checked) + .ks-theme__box .material-symbols-rounded { opacity: 0.4; }
 .ks-theme input:checked + .ks-theme__box {
   border-color: var(--color-accent);
   background: #E8F1F3;
   color: var(--color-primary);
+}
+/* 選んでいるテーマは、右上のチェック印でも分かるように（画面共有でも見分けやすく） */
+.ks-theme input:checked + .ks-theme__box::after {
+  content: 'check_circle';
+  font-family: 'Material Symbols Rounded';
+  font-size: 20px;
+  line-height: 1;
+  color: var(--color-accent);
+  position: absolute;
+  top: 5px;
+  right: 6px;
 }
 
 /* ── プレイヤーコマ色（pawn） ── */
@@ -277,7 +290,7 @@
   background: #fff;
   border-radius: var(--radius-box);
   padding: 32px 28px 24px;
-  max-width: 440px;
+  max-width: 480px;
   width: 100%;
   text-align: center;
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
@@ -336,6 +349,8 @@
   color: var(--color-primary);
   line-height: 1.5;
   margin-bottom: 18px;
+  word-break: auto-phrase;
+  text-wrap: pretty;
 }
 .ks-modal__choices {
   display: flex;
@@ -393,6 +408,9 @@
   flex: 1 1 0;
   min-width: 150px;
   max-width: 260px;
+  /* 2つ並べても、ボタンの文字が折り返さないように */
+  padding-left: 14px;
+  padding-right: 14px;
 }
 
 /* ── ゴール ── */
@@ -451,6 +469,9 @@
   color: var(--color-primary);
 }
 .ks-quiet-btn {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
   background: none;
   border: none;
   padding: 6px 4px;
@@ -610,21 +631,54 @@
 }
 .ks-modal__wait[hidden],
 .ks-modal__actions[hidden] { display: none; }
-.ks-choice:disabled {
-  cursor: default;
-}
+/* 自分の番でない人の画面では押せない（押せそうに見せない） */
+.ks-choice:disabled,
 .ks-choice:disabled:hover {
-  border-color: var(--color-border);
-  background: #fff;
+  cursor: default;
+  border-color: #E1E7EA;
+  background: #F6F8F9;
   color: var(--color-text);
 }
-.ks-choice.is-chosen,
-.ks-choice.is-chosen:disabled:hover {
-  border-color: var(--color-accent);
-  background: #E8F1F3;
-  color: var(--color-primary);
-  box-shadow: inset 0 0 0 1px var(--color-accent);
+
+/* ── 前の人が選んだもの（盤の上。次にサイコロが振られると消える） ── */
+.ks-pick {
+  max-width: 520px;
+  margin: 0 auto 14px;
+  padding: 10px 14px;
+  background: #fff;
+  border: 2px solid var(--color-accent);
+  border-radius: 12px;
 }
+.ks-pick[hidden] { display: none; }
+.ks-pick__who {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--color-muted);
+}
+.ks-pick__who .ks-pawn { width: 20px; height: 20px; font-size: 11px; }
+.ks-pick__q {
+  margin-top: 4px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-primary);
+  word-break: auto-phrase;
+  text-wrap: pretty;
+}
+.ks-pick__a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: var(--color-accent);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+}
+.ks-pick__a .material-symbols-rounded { font-size: 18px; }
 #btn-roll[hidden] { display: none; }
 
 /* ── ホストの切断 ── */
@@ -658,27 +712,6 @@
   grid-template-columns: repeat(6, minmax(0, 1fr));
 }
 #player-count .ks-toggle__btn { min-width: 0; }
-
-/* ── ルームのゲーム画面：広いときは盤の横に質問・ゴールのカード ── */
-@media (min-width: 860px) {
-  .ks-game.has-stage {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    grid-template-areas:
-      "ind ind"
-      "note note"
-      "board stage"
-      "actions actions";
-    column-gap: 24px;
-    align-items: start;
-  }
-  .ks-game.has-stage .ks-indicator { grid-area: ind; }
-  .ks-game.has-stage .ks-turn { grid-area: note; }
-  .ks-game.has-stage .ks-stage { grid-area: stage; }
-  .ks-game.has-stage .ks-board { grid-area: board; margin: 0; max-width: none; width: 100%; }
-  .ks-game.has-stage .ks-actions { grid-area: actions; }
-  .ks-game.has-stage .ks-stage .ks-modal { margin: 0; max-width: none; }
-}
 
 /* ── レスポンシブ ── */
 @media (max-width: 600px) {

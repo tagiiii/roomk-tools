@@ -137,6 +137,19 @@ export function questionOf(game, counts) {
   return { theme: q.theme, idx, choice, n: Number(q.n) || 0 };
 }
 
+// 前の人が選んだもの（選ぶと次の人の番になり、次にサイコロが振られるまで盤の上に出す）。壊れた値は読み飛ばす
+export function pickedOf(game, counts) {
+  const p = game?.picked;
+  if (!p || typeof p !== 'object' || !counts[p.theme]) return null;
+  const idx = Number(p.idx);
+  const turn = Number(p.turn);
+  const choice = Number(p.choice);
+  if (!Number.isInteger(idx) || idx < 0 || idx >= counts[p.theme]) return null;
+  if (!Number.isInteger(turn) || turn < 0 || turn >= orderOf(game).length) return null;
+  if (!Number.isInteger(choice) || choice < CHOICE_FREE) return null;
+  return { theme: p.theme, idx, turn, choice };
+}
+
 // 自分が、いまの番の操作（サイコロ・質問のボタン）をしてよいか。
 // 番の人の端末と、ホスト（だれの番でも代わりに押せる）
 export function canAct(room, uid, nickname, role) {
@@ -226,6 +239,7 @@ export function roll(room, gameId, rollNo, seed, counts) {
     pos,
     rollNo: rollNo + 1,
     last: { dice, from, to, turn },
+    picked: null, // 前の人が選んだものは、次のサイコロで消す
   };
   if (to >= max) {
     return { ...room, status: STATUS.GOAL, game: { ...moved, step: STEP.ROLL, q: null, winner: turn } };
@@ -243,7 +257,7 @@ export function roll(room, gameId, rollNo, seed, counts) {
   };
 }
 
-// 「別の質問」: テーマはそのままで、ちがう質問にする（選んだ答えは消える）。
+// 「別の質問」: テーマはそのままで、ちがう質問にする。
 // 押した時点の質問（qn）と一致するときだけ（番の人とホストが同時に押しても1回だけ変わる）
 export function reask(room, gameId, rollNo, qn, seed, counts) {
   const game = gameOf(room);
@@ -257,14 +271,24 @@ export function reask(room, gameId, rollNo, qn, seed, counts) {
   };
 }
 
-// 選択肢を選ぶ（CHOICE_FREE は「自由に話す」）。みんなの画面に出る。次の人へ進むまで選び直せる
+// 選択肢を選ぶ（CHOICE_FREE は「自由に話す」）。選ぶと次の人の番になり、選んだものは
+// 次にサイコロが振られるまで、みんなの画面の盤の上に出る（記録・集計はしない）
 export function choose(room, gameId, rollNo, qn, choice, choiceCount, counts) {
   const game = gameOf(room);
   const q = questionOf(game, counts);
   if (room?.status !== STATUS.PLAYING || !game || game.id !== gameId || game.step !== STEP.TALK) return null;
   if ((Number(game.rollNo) || 0) !== rollNo || !q || q.n !== qn) return null;
   if (choice !== CHOICE_FREE && !(Number.isInteger(choice) && choice >= 0 && choice < choiceCount)) return null;
-  return { ...room, game: { ...game, q: { ...game.q, choice } } };
+  return {
+    ...room,
+    game: {
+      ...game,
+      step: STEP.ROLL,
+      q: null,
+      picked: { turn: turnOf(game), theme: q.theme, idx: q.idx, choice },
+      turn: nextTurn(room, game),
+    },
+  };
 }
 
 // 「話せた！次の人へ」: 質問を消して、次の人がサイコロを振る番に
@@ -272,7 +296,7 @@ export function nextPlayer(room, gameId, rollNo) {
   const game = gameOf(room);
   if (room?.status !== STATUS.PLAYING || !game || game.id !== gameId || game.step !== STEP.TALK) return null;
   if ((Number(game.rollNo) || 0) !== rollNo) return null;
-  return { ...room, game: { ...game, step: STEP.ROLL, q: null, turn: nextTurn(room, game) } };
+  return { ...room, game: { ...game, step: STEP.ROLL, q: null, picked: null, turn: nextTurn(room, game) } };
 }
 
 // サイコロを振る番の人がいなくなったら（退出・切断）、次にいる人へとばす（ホストの見はりと退出から）

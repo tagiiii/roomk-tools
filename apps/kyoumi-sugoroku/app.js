@@ -3,7 +3,7 @@
 // ルームの決まりは logic.js。質問はテーマのキーと QUESTIONS の中の番号で共有するので、
 // QUESTIONS は並べ替え・途中の削除をしない（足すのは末尾だけ）。
 import { shuffle, popIn } from '../shared/js/utils.js';
-import * as L from './logic.js?v=20261104';
+import * as L from './logic.js?v=20261104d';
 
 const NUMBERS = ['①', '②', '③', '④', '⑤'];
 
@@ -223,7 +223,7 @@ function renderBoard(total, positions) {
 }
 
 // 質問のカード。1台の画面ではモーダルの中、ルームでは画面の中（#roomStage）に置く
-// opts: { playerIndex, dice, chosen, canPress, onChoose, showNext, showSkip, waitText }
+// opts: { playerIndex, dice, canPress, onChoose, showNext, showSkip, waitText }
 function fillQuestion(themeKey, item, playerName, opts) {
   const t = THEMES[themeKey];
   $('modal-theme').replaceChildren(msIcon(t.icon), document.createTextNode(' ' + t.label));
@@ -241,20 +241,18 @@ function fillQuestion(themeKey, item, playerName, opts) {
   choicesEl.replaceChildren();
   if (item.choices && item.choices.length) {
     item.choices.forEach((c, i) => {
-      const btn = makeElement('button', 'ks-choice' + (opts.chosen === i ? ' is-chosen' : ''));
+      const btn = makeElement('button', 'ks-choice');
       btn.type = 'button';
       btn.appendChild(makeElement('span', 'ks-choice__num', NUMBERS[i]));
       btn.appendChild(makeElement('span', 'ks-choice__text', c));
       btn.disabled = !opts.canPress;
-      btn.setAttribute('aria-pressed', String(opts.chosen === i));
       btn.addEventListener('click', () => opts.onChoose(i));
       choicesEl.appendChild(btn);
     });
-    const free = makeElement('button', 'ks-choice ks-choice--free' + (opts.chosen === L.CHOICE_FREE ? ' is-chosen' : ''));
+    const free = makeElement('button', 'ks-choice ks-choice--free');
     free.type = 'button';
     free.append(msIcon('chat'), document.createTextNode('自由に話す'));
     free.disabled = !opts.canPress;
-    free.setAttribute('aria-pressed', String(opts.chosen === L.CHOICE_FREE));
     free.addEventListener('click', () => opts.onChoose(L.CHOICE_FREE));
     choicesEl.appendChild(free);
   }
@@ -264,6 +262,22 @@ function fillQuestion(themeKey, item, playerName, opts) {
   $('modal-wait').hidden = !opts.waitText;
   $('modal-wait').textContent = opts.waitText || '';
 }
+
+// 前の人が選んだもの。選ぶと次の人の番になり、次にサイコロが振られるまで盤の上に出す
+// pick: { playerIndex, name, item, choice } または null
+function renderPick(pick) {
+  $('lastPick').hidden = !pick;
+  if (!pick) return;
+  $('pickWho').replaceChildren(
+    makeElement('span', `ks-pawn ks-pawn--${pick.playerIndex}`, pick.playerIndex + 1),
+    document.createTextNode(`${pick.name} さんが選んだもの`),
+  );
+  $('pickQ').textContent = pick.item.q;
+  const label = pick.choice === L.CHOICE_FREE ? '自由に話す' : (pick.item.choices?.[pick.choice] ?? '');
+  $('pickA').replaceChildren(msIcon(pick.choice === L.CHOICE_FREE ? 'chat' : 'check_circle'), document.createTextNode(label));
+}
+
+const CHOICE_HINT = '選ぶと、次の人の番になるよ';
 
 // 質問とゴールのカードを、1台の画面ではモーダルに、ルームでは画面の中に置く
 function placeCards(inRoom) {
@@ -289,6 +303,7 @@ const local = {
   history: [],
   pools: {},
   currentQ: null,
+  lastPick: null,
   diceTimer: null,
   moveTimer: null,
 };
@@ -414,6 +429,7 @@ function startLocalGame() {
   local.rolling = false;
   local.ended = false;
   local.history = [];
+  local.lastPick = null;
   local.pools = {};
   themes.forEach((t) => { local.pools[t] = shuffle(QUESTIONS[t]); });
 
@@ -421,7 +437,6 @@ function startLocalGame() {
   showScreen('game');
   $('btn-back').hidden = false;
   $('btnRoomBack').hidden = true;
-  $('turnNote').hidden = true;
   $('roomStage').hidden = true;
   $('btn-roll').hidden = false;
   renderLocalGame();
@@ -429,6 +444,11 @@ function startLocalGame() {
 
 function renderLocalGame() {
   renderIndicator(local.players.map((p, i) => ({ name: p.name, current: i === local.currentIndex })));
+  // だれの番かを1行で（ルームと同じ）
+  const name = local.players[local.currentIndex].name;
+  $('turnNote').hidden = local.ended;
+  $('turnNote').textContent = local.rolling ? `${name}さんがサイコロを振ったよ` : `${name}さんの番だよ`;
+  renderPick(local.lastPick);
   renderBoard(local.totalSquares, local.players.map((p) => p.pos));
   $('btn-roll').disabled = local.rolling || local.ended;
 }
@@ -436,6 +456,7 @@ function renderLocalGame() {
 function rollLocalDice() {
   if (local.rolling || local.ended) return;
   local.rolling = true;
+  local.lastPick = null; // 前の人が選んだものは、次のサイコロで消す
   renderLocalGame();
   const diceEl = $('dice');
   let ticks = 0;
@@ -492,16 +513,15 @@ function renderLocalModal() {
   const { theme, question } = local.currentQ;
   const player = local.players[local.currentIndex];
   const hasChoices = !!(question.choices && question.choices.length);
-  // 選択肢がある場合は、選ぶと次の人へ進む（「話せた！次の人へ」ボタンは不要）
+  // 選択肢がある場合は、選ぶと次の人の番になる（選んだものは盤の上に残る。「話せた！次の人へ」は出さない）
   fillQuestion(theme, question, player.name, {
     playerIndex: local.currentIndex,
     dice: null,
-    chosen: null,
     canPress: true,
-    onChoose: closeLocalQuestion,
+    onChoose: chooseLocal,
     showNext: !hasChoices,
     showSkip: true,
-    waitText: '',
+    waitText: hasChoices ? CHOICE_HINT : '',
   });
 }
 
@@ -514,6 +534,12 @@ function showLocalQuestion() {
   const modal = $('modal');
   modal.style.display = 'flex';
   popIn($('questionCard'));
+}
+
+function chooseLocal(choice) {
+  const player = local.players[local.currentIndex];
+  local.lastPick = { playerIndex: local.currentIndex, name: player.name, item: local.currentQ.question, choice };
+  closeLocalQuestion();
 }
 
 function closeLocalQuestion() {
@@ -537,19 +563,34 @@ function showLocalGoal(winner) {
   $('goal-name').textContent = `${winner.name} さん、おめでとう！`;
   $('goal-wait').hidden = true;
   $('btn-restart').hidden = false;
+  $('btnGoalSettings').hidden = false;
   const m = $('goal-modal');
   m.style.display = 'flex';
   popIn($('goalCard'));
 }
 
-function restartLocal() {
+function resetLocal() {
   clearTimers();
   local.rolling = false;
   local.ended = false;
+  local.lastPick = null;
   $('modal').style.display = 'none';
   $('goal-modal').style.display = 'none';
   $('dice').textContent = '?';
+}
+
+// 設定に戻る（人数・名前・マス数・テーマは残る）
+function backToLocalSettings() {
+  resetLocal();
+  renderPick(null);
+  $('turnNote').hidden = true;
   showScreen('settings');
+}
+
+// ゴールのあと「もう一度あそぶ」: 同じ設定ですぐはじめる
+function playAgainLocal() {
+  resetLocal();
+  startLocalGame();
 }
 
 /* ════════════ ルーム（各自の端末。Realtime Database） ════════════ */
@@ -737,7 +778,8 @@ function cleanupRoom() {
   $('hostOffOverlay').hidden = true;
   $('roomBar').hidden = true;
   $('roomStage').hidden = true;
-  $('screen-game').classList.remove('has-stage');
+  $('lastPick').hidden = true;
+  $('turnNote').hidden = true;
   $('diceArea').hidden = false;
   $('dice').textContent = '?';
   placeCards(false);
@@ -1290,6 +1332,14 @@ function renderRoomGame(room, game) {
   const current = anim ? anim.turn : goal ? winner : turn;
 
   renderIndicator(order.map((name, i) => ({ name, current: i === current, tags: playerTags(room, game, name) })));
+  // 前の人が選んだもの（次にサイコロが振られると消える）
+  const pick = !goal && !anim ? L.pickedOf(game, COUNTS) : null;
+  renderPick(pick && {
+    playerIndex: pick.turn,
+    name: order[pick.turn],
+    item: normalizeQ(QUESTIONS[pick.theme][pick.idx]),
+    choice: pick.choice,
+  });
   renderBoard(L.squaresOf(game.squares), positions);
 
   const uid = currentUid();
@@ -1331,6 +1381,7 @@ function renderRoomGame(room, game) {
     $('goalCard').hidden = false;
     $('goal-name').textContent = `${order[winner]} さん、おめでとう！`;
     $('btn-restart').hidden = net.role !== 'host';
+    $('btnGoalSettings').hidden = true;
     $('goal-wait').hidden = net.role === 'host';
   } else if (!anim && !rolling && q) {
     key = 'q:' + game.id + ':' + game.rollNo + ':' + q.n;
@@ -1341,17 +1392,17 @@ function renderRoomGame(room, game) {
     fillQuestion(q.theme, item, actor, {
       playerIndex: turn,
       dice: game.last?.dice || null,
-      chosen: q.choice,
       canPress: act && !net.busy,
       onChoose: roomChoose,
-      // 選択肢がある質問は、選んでから「話せた！次の人へ」（選んだものはみんなの画面に出る）
-      showNext: act && (!hasChoices || q.choice != null),
+      // 選択肢がある質問は、選ぶと次の人の番になる（選んだものは盤の上に出る）
+      showNext: act && !hasChoices,
       showSkip: act,
-      waitText: act ? '' : `${actor}さんが話しおわると、次の人へ進むよ`,
+      waitText: act
+        ? (hasChoices ? CHOICE_HINT : '')
+        : (hasChoices ? `${actor}さんが選ぶと、次の人の番になるよ` : `${actor}さんが話しおわると、次の人へ進むよ`),
     });
   }
   stage.hidden = key == null;
-  $('screen-game').classList.toggle('has-stage', key != null);
   $('diceArea').hidden = key != null;
   if (key && key !== net.shownKey) popIn(key.startsWith('goal') ? $('goalCard') : $('questionCard'));
   net.shownKey = key;
@@ -1549,7 +1600,7 @@ async function startRoomGame() {
 async function backToWaiting(fromGoal) {
   const gameId = L.gameOf(net.room)?.id;
   if (gameId == null) return;
-  if (!fromGoal && !window.confirm('ゲームを終わって待合室にもどりますか？')) return;
+  if (!fromGoal && !window.confirm('ゲームを終わって待合室に戻りますか？')) return;
   const ok = await hostTransaction((room) => {
     if (fromGoal && room.status !== L.STATUS.GOAL) return;
     return L.backToWaiting(room, gameId);
@@ -1620,9 +1671,10 @@ $('btnRoomBack').addEventListener('click', () => backToWaiting(false));
 $('btn-roll').addEventListener('click', () => (inRoom() ? roomRoll() : rollLocalDice()));
 $('btn-next').addEventListener('click', () => (inRoom() ? roomNext() : closeLocalQuestion()));
 $('btn-skip').addEventListener('click', () => (inRoom() ? roomReask() : skipLocalQuestion()));
-$('btn-restart').addEventListener('click', () => (inRoom() ? backToWaiting(true) : restartLocal()));
+$('btn-restart').addEventListener('click', () => (inRoom() ? backToWaiting(true) : playAgainLocal()));
+$('btnGoalSettings').addEventListener('click', backToLocalSettings);
 $('btn-back').addEventListener('click', () => {
-  if (confirm('ゲームを終わって設定に戻りますか？')) restartLocal();
+  if (confirm('ゲームを終わって設定に戻りますか？')) backToLocalSettings();
 });
 
 // 参加用のリンクでひらいたとき: コードを入れた状態で参加画面を開き、名前だけ入れてもらう（コード欄は直せるように残す）

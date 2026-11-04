@@ -133,12 +133,10 @@ function test(name, fn) {
 
   const talk = L.roll(started, 1, 0, 42, COUNTS);
 
-  test('別の質問: テーマはそのまま・ちがう質問・選んだ答えは消える', () => {
-    const chosen = L.choose(talk, 1, 1, 1, L.CHOICE_FREE, 0, COUNTS);
-    const next = L.reask(chosen, 1, 1, 1, 99, COUNTS);
+  test('別の質問: テーマはそのまま・ちがう質問', () => {
+    const next = L.reask(talk, 1, 1, 1, 99, COUNTS);
     assert.strictEqual(next.game.q.theme, talk.game.q.theme);
     assert.notStrictEqual(next.game.q.idx, talk.game.q.idx);
-    assert.strictEqual(next.game.q.choice, undefined);
     assert.strictEqual(next.game.q.n, 2);
     assert.strictEqual(next.game.step, L.STEP.TALK);
     assert.strictEqual(L.reask(started, 1, 0, 0, 1, COUNTS), null); // 振る番では使えない
@@ -147,18 +145,32 @@ function test(name, fn) {
     assert.strictEqual(L.reask(next, 1, 1, 2, 5, COUNTS).game.q.n, 3);
   });
 
-  test('選ぶ: 選択肢の番号と「自由に話す」だけ。選び直せる。古い質問には書かない', () => {
+  test('選ぶ: 選ぶと次の人の番。選んだものは次のサイコロまで残る。古い質問・二度押しは通らない', () => {
     const one = L.choose(talk, 1, 1, 1, 2, 3, COUNTS);
-    assert.strictEqual(one.game.q.choice, 2);
-    assert.strictEqual(L.choose(one, 1, 1, 1, 0, 3, COUNTS).game.q.choice, 0);
-    assert.strictEqual(L.choose(talk, 1, 1, 1, L.CHOICE_FREE, 3, COUNTS).game.q.choice, L.CHOICE_FREE);
+    assert.strictEqual(one.game.step, L.STEP.ROLL);
+    assert.strictEqual(one.game.q, null);
+    assert.strictEqual(one.game.turn, 1);
+    assert.deepStrictEqual(L.pickedOf(one.game, COUNTS), { turn: 0, theme: talk.game.q.theme, idx: talk.game.q.idx, choice: 2 });
+    assert.strictEqual(L.choose(one, 1, 1, 1, 0, 3, COUNTS), null); // もう話す番ではない（二度押し）
+    assert.strictEqual(L.pickedOf(L.choose(talk, 1, 1, 1, L.CHOICE_FREE, 3, COUNTS).game, COUNTS).choice, L.CHOICE_FREE);
     assert.strictEqual(L.choose(talk, 1, 1, 1, 3, 3, COUNTS), null);
     assert.strictEqual(L.choose(talk, 1, 1, 1, 0, 0, COUNTS), null);
     assert.strictEqual(L.choose(talk, 1, 1, 2, 0, 3, COUNTS), null);
+    // 次の人がサイコロを振ると消える（ゴールでも）
+    const rolled = L.roll(one, 1, 1, 7, COUNTS);
+    assert.strictEqual(L.pickedOf(rolled.game, COUNTS), null);
+    const nearGoal = { ...one, game: { ...one.game, pos: [0, 13, 0] } };
+    const goal = L.roll(nearGoal, 1, 1, 7, COUNTS);
+    assert.strictEqual(goal.status, L.STATUS.GOAL);
+    assert.strictEqual(L.pickedOf(goal.game, COUNTS), null);
+    // 壊れた値は読み飛ばす
+    assert.strictEqual(L.pickedOf({ ...one.game, picked: { ...one.game.picked, idx: 9999 } }, COUNTS), null);
+    assert.strictEqual(L.pickedOf({ ...one.game, picked: { ...one.game.picked, turn: 5 } }, COUNTS), null);
+    assert.strictEqual(L.pickedOf({ ...one.game, picked: { ...one.game.picked, choice: -2 } }, COUNTS), null);
   });
 
   test('次の人へ: 質問を消し、順番どおり。いない人はとばす。最後のあとは最初へ', () => {
-    const next = L.nextPlayer(L.choose(talk, 1, 1, 1, 0, 3, COUNTS), 1, 1);
+    const next = L.nextPlayer(talk, 1, 1);
     assert.strictEqual(next.game.step, L.STEP.ROLL);
     assert.strictEqual(next.game.q, null);
     assert.strictEqual(next.game.turn, 1);

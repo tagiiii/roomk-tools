@@ -8,7 +8,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet" />
   <link rel="stylesheet" href="../shared/css/design-system.css" />
   <!-- index.html と app.js・logic.js・style.css はセットで変わるので、変えたら ?v= をそろえて上げる -->
-  <link rel="stylesheet" href="style.css?v=20261104c" />
+  <link rel="stylesheet" href="style.css?v=20261104d" />
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
@@ -21,13 +21,13 @@
 
     <header class="ks-header">
       <h1 class="ks-header__title">興味スゴロク</h1>
-      <p class="ks-header__sub" id="headerSub">サイコロを振ってマスに止まり、お題について話そう</p>
+      <p class="ks-header__sub" id="headerSub">サイコロを振ってマスに止まり、出てきた質問について話そう</p>
     </header>
 
     <!-- ============ トップ ============ -->
     <section class="ks-screen" id="screen-top">
       <div class="card ks-top">
-        <p class="ks-top__lead">サイコロを振ってマスに止まったら、出てきた質問について話すスゴロク。1〜6人で遊べるよ。</p>
+        <p class="ks-top__lead">1〜6人で遊べるよ。遊び方は2つから選べるよ。</p>
         <ul class="ks-top__notes">
           <li>ひとりひとりの端末で遊ぶときは「ルームを作る」「ルームに参加する」。自分の番は自分の端末でサイコロを振るよ</li>
           <li>1台の画面をみんなで見て遊ぶときは「1台の画面であそぶ」</li>
@@ -173,6 +173,11 @@
       <div class="ks-indicator" id="indicator"></div>
       <p class="ks-turn" id="turnNote" role="status" hidden></p>
       <div class="ks-stage" id="roomStage" hidden></div>
+      <div class="ks-pick" id="lastPick" role="status" hidden>
+        <p class="ks-pick__who" id="pickWho"></p>
+        <p class="ks-pick__q" id="pickQ"></p>
+        <p class="ks-pick__a" id="pickA"></p>
+      </div>
 
       <div class="ks-board" id="board"></div>
 
@@ -191,7 +196,7 @@
         </button>
         <button class="btn btn-ghost" id="btnRoomBack" hidden>
           <span class="material-symbols-rounded" aria-hidden="true">arrow_back</span>
-          待合室にもどる
+          待合室に戻る
         </button>
       </div>
     </section>
@@ -236,6 +241,10 @@
           <span class="material-symbols-rounded" aria-hidden="true">replay</span>
           もう一度あそぶ
         </button>
+        <button class="btn btn-secondary" id="btnGoalSettings" hidden>
+          <span class="material-symbols-rounded" aria-hidden="true">tune</span>
+          設定に戻る
+        </button>
       </div>
     </div>
   </div>
@@ -248,20 +257,20 @@
     </div>
   </div>
 
-  <script type="module" src="app.js?v=20261104c"></script>
+  <script type="module" src="app.js?v=20261104d"></script>
   <script src="../shared/js/stats.js?v=1" defer></script>
   <script src="../shared/js/howto.js"></script>
   <script>
     RoomkHowto.init({
       title: 'あそびかた',
-      lead: 'サイコロを振ってマスに止まり、出てきたお題についてみんなで話すスゴロク。1〜6人で遊べるよ。',
+      lead: 'サイコロを振ってマスに止まり、出てきた質問についてみんなで話すスゴロク。1〜6人で遊べるよ。',
       sections: [
         { heading: 'ひとりひとりの端末で遊ぶとき', items: [
           'ホストが「ルームを作る」で名前を入れる。ルームコードは「コードをコピー」、参加用のリンクは「リンクをコピー」でチャットに送れる。スマホやタブレットで入る人には「QRコードを出す」をカメラで読みとってもらう',
           '参加する人は「ルームに参加する」で名前、ルームコード（6文字）の順に入れ、「参加する」を押す。リンクからひらいたときは、ルームコードは入っているので名前だけ入れる',
           'ホストは待合室で、マス数・テーマを選び、「はじめる」を押す。端末のない人は「端末のない人を足す」で足すと、その人の番はホストが代わりに押せる',
           '自分の番になったら、自分の端末で「サイコロを振る」を押す。質問はみんなの画面に出る',
-          '選択肢がある質問は、選んだものがみんなの画面に出る。話しおわったら「話せた！次の人へ」を押す',
+          '話しおわったら「話せた！次の人へ」を押す',
         ] },
         { heading: '1台の画面で遊ぶとき', items: [
           '「1台の画面であそぶ」で、何人であそぶか・マス数・テーマを選ぶ',
@@ -272,6 +281,7 @@
         { heading: 'どちらでも', items: [
           '止まったマスに出てきた質問について話す',
           '「別の質問」を押すと、ちがう質問に変えられる',
+          '選択肢がある質問は、ひとつ選ぶ（選ばないときは「自由に話す」）と次の人の番になる。選んだものは、次の人がサイコロを振るまで盤の上に出る',
         ] },
         { heading: 'おわりかた', text: 'だれかがゴールしたらおわり。「もう一度あそぶ」で、またあそべるよ。' },
       ],
