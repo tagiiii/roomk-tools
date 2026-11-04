@@ -1393,6 +1393,42 @@ const KEYMAP = {
   c: 'hold', C: 'hold', Shift: 'hold',
 };
 const REPEATABLE = { left: true, right: true, down: true };
+// 左右を押しっぱなしにしたとき、はじめの1マスのあと SHIFT_DELAY_MS 待って、SHIFT_REPEAT_MS ごとに動く。
+// キーボードは OS のくり返し（待ちが0.5秒ほどと長い）を使わず、この時間で動かす
+const SHIFT_DELAY_MS = 130;
+const SHIFT_REPEAT_MS = 30;
+const SIDE = { left: true, right: true };
+let keyRep = null;   // { key, a, t, i }
+const sideHeld = []; // 押している左右のキー（あとから押したものが後ろ）
+function stopKeyRepeat() {
+  if (!keyRep) return;
+  clearTimeout(keyRep.t);
+  clearInterval(keyRep.i);
+  keyRep = null;
+}
+function startKeyRepeat(key, a) {
+  stopKeyRepeat();
+  const r = { key, a, t: 0, i: 0 };
+  const step = () => {
+    // 「あそびかた」を開いた・あそぶ画面を出たら止める
+    if (state.currentScreen !== 'play' || $('screen-play').inert) { stopKeyRepeat(); return; }
+    act(a);
+  };
+  r.t = setTimeout(() => { if (keyRep === r) r.i = setInterval(step, SHIFT_REPEAT_MS); }, SHIFT_DELAY_MS);
+  keyRep = r;
+}
+document.addEventListener('keyup', (e) => {
+  const a = KEYMAP[e.key];
+  if (!SIDE[a]) return;
+  const at = sideHeld.indexOf(e.key);
+  if (at >= 0) sideHeld.splice(at, 1);
+  if (!keyRep || keyRep.key !== e.key) return;
+  stopKeyRepeat();
+  // 反対のキーをまだ押していれば、そちらのくり返しにもどる
+  const back = sideHeld[sideHeld.length - 1];
+  if (back) startKeyRepeat(back, KEYMAP[back]);
+});
+window.addEventListener('blur', () => { sideHeld.length = 0; stopKeyRepeat(); });
 document.addEventListener('keydown', (e) => {
   // 「あそびかた」を開いている間は、あそぶ画面が inert になるので動かさない
   if (state.currentScreen !== 'play' || $('screen-play').inert || e.ctrlKey || e.metaKey || e.altKey) return;
@@ -1405,6 +1441,13 @@ document.addEventListener('keydown', (e) => {
   const a = KEYMAP[e.key];
   if (!a) return;
   e.preventDefault();
+  if (SIDE[a]) {
+    if (e.repeat) return;
+    if (!sideHeld.includes(e.key)) sideHeld.push(e.key);
+    act(a);
+    startKeyRepeat(e.key, a);
+    return;
+  }
   if (e.repeat && !REPEATABLE[a]) return;
   act(a);
 });
@@ -1450,6 +1493,7 @@ boardCanvas.addEventListener('wheel', (e) => {
 // 画面のボタン。左右と下は押しっぱなしでくり返す
 let rep = null;
 function stopRepeat() {
+  stopKeyRepeat();
   if (!rep) return;
   clearTimeout(rep.t);
   clearInterval(rep.i);
@@ -1462,7 +1506,10 @@ document.querySelectorAll('.sb-padbtn').forEach((btn) => {
     stopRepeat();
     act(a);
     if (REPEATABLE[a]) {
-      rep = { t: setTimeout(() => { if (rep) rep.i = setInterval(() => act(a), 55); }, 180), i: 0 };
+      const side = SIDE[a];
+      const r = { t: 0, i: 0 };
+      r.t = setTimeout(() => { if (rep === r) r.i = setInterval(() => act(a), side ? SHIFT_REPEAT_MS : 55); }, side ? SHIFT_DELAY_MS : 180);
+      rep = r;
     }
   });
   ['pointerup', 'pointerleave', 'pointercancel'].forEach((ev) => btn.addEventListener(ev, stopRepeat));
