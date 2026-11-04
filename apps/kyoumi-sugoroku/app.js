@@ -178,6 +178,8 @@ function toast(message, isError = true) {
 const SCREENS = ['top', 'settings', 'create', 'join', 'waiting', 'game'];
 function showScreen(name) {
   SCREENS.forEach((s) => { $('screen-' + s).hidden = s !== name; });
+  // 説明の1行はトップだけ（ほかの画面では盤や質問を上に寄せる）
+  $('headerSub').hidden = name !== 'top';
 }
 
 // ── 盤とコマ（1台の画面・ルーム共通） ──
@@ -221,11 +223,18 @@ function renderBoard(total, positions) {
 }
 
 // 質問のカード。1台の画面ではモーダルの中、ルームでは画面の中（#roomStage）に置く
-// opts: { chosen, canPress, onChoose, showNext, showSkip, waitText }
+// opts: { playerIndex, dice, chosen, canPress, onChoose, showNext, showSkip, waitText }
 function fillQuestion(themeKey, item, playerName, opts) {
   const t = THEMES[themeKey];
   $('modal-theme').replaceChildren(msIcon(t.icon), document.createTextNode(' ' + t.label));
-  $('modal-player').textContent = `${playerName} さんへ`;
+  // 宛先は、その人のコマの色の番号を添えて出す（盤のコマと見比べられるように）
+  $('modal-player').replaceChildren(
+    makeElement('span', `ks-pawn ks-pawn--${opts.playerIndex}`, opts.playerIndex + 1),
+    document.createTextNode(`${playerName} さんへ`),
+  );
+  // ルームでは、サイコロの出た目をカードに出す（サイコロの欄は質問の間かくす）
+  $('modal-dice').hidden = !opts.dice;
+  $('modal-dice').replaceChildren(msIcon('casino'), document.createTextNode(opts.dice ? ` ${opts.dice}` : ''));
   $('modal-question').textContent = item.q;
 
   const choicesEl = $('modal-choices');
@@ -485,6 +494,8 @@ function renderLocalModal() {
   const hasChoices = !!(question.choices && question.choices.length);
   // 選択肢がある場合は、選ぶと次の人へ進む（「話せた！次の人へ」ボタンは不要）
   fillQuestion(theme, question, player.name, {
+    playerIndex: local.currentIndex,
+    dice: null,
     chosen: null,
     canPress: true,
     onChoose: closeLocalQuestion,
@@ -726,6 +737,8 @@ function cleanupRoom() {
   $('hostOffOverlay').hidden = true;
   $('roomBar').hidden = true;
   $('roomStage').hidden = true;
+  $('screen-game').classList.remove('has-stage');
+  $('diceArea').hidden = false;
   $('dice').textContent = '?';
   placeCards(false);
 }
@@ -1326,6 +1339,8 @@ function renderRoomGame(room, game) {
     $('goalCard').hidden = true;
     $('questionCard').hidden = false;
     fillQuestion(q.theme, item, actor, {
+      playerIndex: turn,
+      dice: game.last?.dice || null,
       chosen: q.choice,
       canPress: act && !net.busy,
       onChoose: roomChoose,
@@ -1336,6 +1351,8 @@ function renderRoomGame(room, game) {
     });
   }
   stage.hidden = key == null;
+  $('screen-game').classList.toggle('has-stage', key != null);
+  $('diceArea').hidden = key != null;
   if (key && key !== net.shownKey) popIn(key.startsWith('goal') ? $('goalCard') : $('questionCard'));
   net.shownKey = key;
 }

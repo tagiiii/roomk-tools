@@ -283,10 +283,40 @@
   margin-bottom: 14px;
 }
 .ks-modal__theme .material-symbols-rounded { font-size: 18px; }
+.ks-modal__head {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.ks-modal__head .ks-modal__theme { margin-bottom: 0; }
+.ks-modal__dice {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 5px 12px;
+  background: var(--color-primary);
+  color: #fff;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 700;
+}
+.ks-modal__dice .material-symbols-rounded { font-size: 18px; }
 .ks-modal__player {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   font-size: 14px;
   color: var(--color-muted);
   margin-bottom: 10px;
+}
+.ks-modal__player .ks-pawn {
+  width: 22px;
+  height: 22px;
+  font-size: 12px;
 }
 .ks-modal__question {
   font-size: 22px;
@@ -345,6 +375,12 @@
   gap: 10px;
   justify-content: center;
   flex-wrap: wrap;
+}
+/* 並べたボタンは同じ幅に（せまいときは縦に積んで横いっぱい） */
+.ks-modal__actions .btn {
+  flex: 1 1 0;
+  min-width: 150px;
+  max-width: 260px;
 }
 
 /* ── ゴール ── */
@@ -459,6 +495,7 @@
   font-size: 1.2rem;
   letter-spacing: 0.13em;
 }
+.ks-roombar__leave { margin-left: auto; }
 
 /* ── 待合室 ── */
 .ks-panel__title {
@@ -603,6 +640,34 @@
 }
 .ks-overlay__panel p { margin-bottom: 16px; }
 
+/* ── 人数（1〜6人）は同じ幅で1列に。せまいときは3つずつ ── */
+#player-count {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+#player-count .ks-toggle__btn { min-width: 0; }
+
+/* ── ルームのゲーム画面：広いときは盤の横に質問・ゴールのカード ── */
+@media (min-width: 860px) {
+  .ks-game.has-stage {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas:
+      "ind ind"
+      "note note"
+      "board stage"
+      "actions actions";
+    column-gap: 24px;
+    align-items: start;
+  }
+  .ks-game.has-stage .ks-indicator { grid-area: ind; }
+  .ks-game.has-stage .ks-turn { grid-area: note; }
+  .ks-game.has-stage .ks-stage { grid-area: stage; }
+  .ks-game.has-stage .ks-board { grid-area: board; margin: 0; max-width: none; width: 100%; }
+  .ks-game.has-stage .ks-actions { grid-area: actions; }
+  .ks-game.has-stage .ks-stage .ks-modal { margin: 0; max-width: none; }
+}
+
 /* ── レスポンシブ ── */
 @media (max-width: 600px) {
   .wrapper { padding: 24px 14px 60px; }
@@ -610,4 +675,21 @@
   .ks-board { padding: 12px; gap: 6px; }
   .ks-dice { width: 72px; height: 72px; font-size: 44px; }
   .ks-modal__question { font-size: 18px; }
+  .ks-header { margin-bottom: 18px; }
+  .ks-roombar .btn { padding: 6px 4px; font-size: 12px; min-height: 34px; }
+}
+/* 1行に収まらない幅では、ルームバーを2段に: ルームコードと退出、その下にコピー・QR を3つ同じ幅で */
+@media (max-width: 860px) {
+  .ks-roombar {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+    padding: 8px;
+  }
+  .ks-roombar__code { grid-column: 1 / 3; align-self: center; padding-left: 4px; }
+  .ks-roombar__leave { grid-column: 3; grid-row: 1; margin-left: 0; }
+  .ks-roombar .btn { white-space: nowrap; min-width: 0; padding-left: 4px; padding-right: 4px; }
+}
+@media (max-width: 480px) {
+  #player-count { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }

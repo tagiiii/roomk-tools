@@ -29,7 +29,8 @@ const { check, sleep } = L;
   check('A6 ルームバーは出ない', !(await L.visible(O, '#roomBar')));
   await O.page.click('#btn-roll');
   await L.waitVisible(O, '#modal #questionCard');
-  check('A7 質問はモーダルで出る', (await L.text(O, '#modal-player')) === 'プレイヤー1 さんへ');
+  const cO = await L.card(O);
+  check('A7 質問はモーダルで出る・宛先にコマの番号', cO.player === 'プレイヤー1 さんへ' && cO.pawn === '1' && cO.dice === null, cO);
   check('A8 start-local を数える', (await L.stats(O, 'start-local')) === 1);
   check('A9 1台の画面では通信しない', O.sockets === 0, O.sockets);
   await O.context.close();
@@ -124,11 +125,14 @@ const { check, sleep } = L;
   room = await L.roomOf(code);
   const d1 = room.game.last.dice;
   check('D9 出目のぶん進む', room.game.pos[0] === d1 && (await L.text(A, '#dice')) === String(d1), { pos: room.game.pos, d1 });
+  check('D9b 質問の間はサイコロの欄をかくし、出た目をカードに出す', !(await L.visible(A, '#diceArea')) && (await L.card(A)).dice === String(d1));
   let cA = await L.card(A);
   let cH = await L.card(H);
   check('D10 質問はみんなに出る', cA.player === 'メンター さんへ' && cA.question === cH.question && cA.question.length > 0);
   check('D11 番の人でない人はボタンなし・待つ案内', !cA.next && !cA.skip && cA.wait.includes('メンターさんが話しおわると'), cA);
   check('D12 番の人に「別の質問」', cH.skip);
+  check('D12b 広い画面では盤の横に質問のカード', await H.page.evaluate(() => { const b = document.getElementById('board').getBoundingClientRect(); const c = document.getElementById('roomStage').getBoundingClientRect(); return c.left >= b.right && Math.abs(c.top - b.top) < 4; }));
+  check('D12c せまい画面では質問のカードが盤の上', await B.page.evaluate(() => document.getElementById('roomStage').getBoundingClientRect().bottom <= document.getElementById('board').getBoundingClientRect().top));
   // 選択肢なしの質問にそろえて「話せた！次の人へ」
   await L.rest('PATCH', `${L.ROOMS}/${code}/game/q`, { theme: 'suki', idx: plainAt('suki'), n: 5, choice: null });
   await L.waitText(H, '#modal-question', Q.suki[plainAt('suki')]);
@@ -137,7 +141,7 @@ const { check, sleep } = L;
   await H.page.click('#btn-next');
   await L.waitText(A, '#turnNote', 'あなたの番だよ');
   check('D14 次はあおい', (await L.indicator(H))[1].current);
-  check('D15 質問のカードは消える', !(await L.visible(A, '#roomStage')));
+  check('D15 質問のカードは消え、サイコロの欄がもどる', !(await L.visible(A, '#roomStage')) && await L.visible(A, '#diceArea'));
 
   // ── E. 参加者の番（選択肢をみんなに出す） ──
   check('E1 あおいとホストにサイコロ・そらにはない', await L.visible(A, '#btn-roll') && await L.visible(H, '#btn-roll') && !(await L.visible(B, '#btn-roll')));
@@ -177,13 +181,15 @@ const { check, sleep } = L;
   await L.waitText(B, '#turnNote', 'あなたの番だよ');
   check('E13 次はそら', true);
   check('E14 ゲーム画面で横にはみ出さない（375px）', (await L.overflow(B)) <= 0);
+  check('E15 375px のルームバーは2段', await B.page.evaluate(() => { const r = [...document.querySelectorAll('#roomBar > .btn')].map((n) => Math.round(n.getBoundingClientRect().top)); return new Set(r).size === 2; }));
+  check('E16 説明の1行はトップだけ', !(await L.visible(B, '#headerSub')));
   await B.page.screenshot({ path: L.OUT + '/e2e1-sora-375.png', fullPage: true });
 
   // ── F. ホストが代わりに振る・番の人が次へ ──
   await H.page.click('#btn-roll');
   await L.waitQuestion(B);
   cB = await L.card(B);
-  check('F1 ホストが代わりに振ってもそらの質問', cB.player === 'そら さんへ' && cB.skip, cB);
+  check('F1 ホストが代わりに振ってもそらの質問（そらのコマの番号）', cB.player === 'そら さんへ' && cB.pawn === '3' && cB.skip, cB);
   await L.rest('PATCH', `${L.ROOMS}/${code}/game/q`, { theme: 'suki', idx: plainAt('suki'), n: 3 });
   await L.waitText(B, '#modal-question', Q.suki[plainAt('suki')]);
   await B.page.click('#btn-next');
