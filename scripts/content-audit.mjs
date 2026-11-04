@@ -224,6 +224,8 @@ const NO_CONTENT_APPS = [
   'pittari-beat',
   // 盤と黒白の石だけ
   'reversi',
+  // 6種類の小銭の絵だけ（問題はその場でくじで作る）
+  'charin-baton',
   // 落ちてくるブロック（1〜4マスの8種類の形）だけ
   'suton-block',
   // トランプ（52枚＋ジョーカー）だけ
