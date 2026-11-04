@@ -1317,6 +1317,8 @@ function afterLock(res) {
     el.classList.add('sb-lines--up');
   };
   if (res.lines && !R.battle) bump(g.lines);
+  // 4段いっしょに消したら一言（対戦は attackNote の中で出す）
+  if (res.lines === 4 && !R.battle) note(FOUR_LINES_WORD, 1400);
   if (R.battle) {
     // 対戦: 送るじゃまは表で決める（attack）。来るじゃまがあれば先にへらし、のこりを送る
     let atk = res.attack || 0;
@@ -1360,9 +1362,13 @@ function afterLock(res) {
   draw();
 }
 
+// 4段いっしょに消したときの一言（着想元の技の呼び名は使わない）
+const FOUR_LINES_WORD = '4段すとん！';
+
 // 対戦で、大技・れんぞくのときと、じゃまを送った・へらしたときに一言出す
 function attackNote(res, sent, cancel) {
   const parts = [];
+  if (res.lines === 4) parts.push(FOUR_LINES_WORD);
   if (res.allClear) parts.push('全部消えた！');
   else if (res.spin === 'spin') parts.push('回し入れ！');
   else if (res.spin === 'mini' && res.lines) parts.push('小さな回し入れ');
