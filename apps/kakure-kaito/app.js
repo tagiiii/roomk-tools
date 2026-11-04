@@ -94,6 +94,15 @@
     flipped: false, // 配ったときの役のカードをめくったか
     proxyShow: {},  // ホストが開いている、端末のない人の役
     proxyGid: null,
+    sayKey: null,   // 届いた ひとこと（say）の中身。ほかが変わっていなければ、ひとことの所だけ描きなおす
+    says: [],       // いま入っている、ひとりひとりの最新のひとこと
+    sayLog: [],     // ひとことの流れ（端末の中だけに持つ。読み込み直すと、いま入っている分から）
+    saySeen: {},
+    sayGid: null,
+    sayOpen: false, // 言葉の一覧をひらいている
+    sayWord: null,  // 「だれ？」を選んでいる途中の言葉
+    sayAt: 0,       // 最後に送った時刻（5秒に1回まで）
+    sayFresh: null, // 新しく届いたひとこと（読み上げで知らせる）
   };
 
   // ══════════════════════════════════════════════
@@ -404,6 +413,7 @@
         guessPick: null, guess: null, winner: null, how: null, talkEnd: null,
         lensHolder: null, lensUsed: [], lensLog: [], lensSeen: {}, lensPick: null,
       };
+      R.say = null; // 前の回のひとことは消す
       if (E.lensOn(ids.length, opts)) { R.game.lensHolder = E.lensFirst(d.order); R.game.lensUsed = [R.game.lensHolder]; }
       R.status = STATUS.PLAY;
       return true;
@@ -474,6 +484,7 @@
       if (R.status !== STATUS.PLAY || Number(R.game && R.game.gid) !== gid) return false;
       R.status = STATUS.WAITING;
       R.game = null;
+      R.say = null;
       return true;
     },
   };
@@ -565,8 +576,15 @@
   }
 
   function resetView() {
-    Object.assign(S, { room: null, raw: null, view: null, secret: null, lastKey: null, showCard: false, cardGid: null, anim: {}, flipped: false, proxyShow: {}, proxyGid: null });
+    Object.assign(S, {
+      room: null, raw: null, view: null, secret: null, lastKey: null, showCard: false, cardGid: null, anim: {}, flipped: false, proxyShow: {}, proxyGid: null,
+      sayKey: null, says: [], sayLog: [], saySeen: {}, sayGid: null, sayOpen: false, sayWord: null, sayFresh: null,
+    });
+    $('say-live').textContent = '';
     $('lobby-opts')._key = null;
+    $('say').hidden = true;
+    $('say-pick').replaceChildren();
+    $('say-log').replaceChildren();
     $('stage').replaceChildren();
     $('players').replaceChildren();
     $('tools').replaceChildren();
@@ -731,14 +749,174 @@
   }
 
   // 届いたルームを画面の形にして描く。同じ中身なら描きなおさない（押している途中のボタンを作りなおさないため）
+  // ひとことだけが変わったときは、ひとことの所だけ描きなおす
   function applyRoom(room) {
     const key = JSON.stringify([room.status, room.host, room.hostPlays, room.hostConnected, room.opts, room.players, room.proxies, room.game]);
-    if (key === S.lastKey) return;
+    const sayKey = JSON.stringify(room.say || null);
+    if (key === S.lastKey && sayKey === S.sayKey) return;
+    const full = key !== S.lastKey;
     S.lastKey = key;
-    S.raw = normGame(room.game);
-    S.view = publicView(room);
-    S.secret = S.mode === 'watch' ? null : secretOf(S.raw, S.me);
-    render();
+    S.sayKey = sayKey;
+    if (full) {
+      S.raw = normGame(room.game);
+      S.view = publicView(room);
+      S.secret = S.mode === 'watch' ? null : secretOf(S.raw, S.me);
+    }
+    const g = room.status === STATUS.PLAY ? S.raw : null;
+    S.says = saysOf(room, g);
+    if (g) takeSays(S.says, g.gid);
+    if (full) render();
+    else renderSay();
+  }
+
+  // ── ひとこと ──
+  // ルームの say/{名前} に、ひとり1枠で { k: 言葉のキー, t: 「だれ？」で選んだ人か '', at: 時刻, gid, s: 送ったときの段階 } を置く。
+  // いまのゲームの、遊んでいる人の、決まった言葉だけを読む
+  function saysOf(room, g) {
+    const out = [];
+    if (!g) return out;
+    Object.entries(asObj(room.say)).forEach(([from, v]) => {
+      if (!v || typeof v !== 'object' || Number(v.gid) !== g.gid || !g.players.includes(from) || !E.sayText(v.k)) return;
+      const t = v.t || '';
+      if (E.sayNeedsName(v.k) ? !(g.players.includes(t) && t !== from) : t) return;
+      out.push({ from, k: v.k, t, at: Number(v.at) || 0, s: Number(v.s) || 0 });
+    });
+    return out;
+  }
+  // 流れに足す（同じ人の同じ時刻のものは一度だけ）
+  function takeSays(list, gid) {
+    if (S.sayGid !== gid) Object.assign(S, { sayGid: gid, sayLog: [], saySeen: {}, sayWord: null });
+    list.forEach((x) => {
+      const id = x.from + '@' + x.at;
+      if (S.saySeen[id]) return;
+      S.saySeen[id] = true;
+      S.sayLog.push(x);
+      if (!S.sayFresh || x.at > S.sayFresh.at) S.sayFresh = x;
+    });
+    S.sayLog.sort((a, b) => a.at - b.at);
+    if (S.sayLog.length > 30) S.sayLog = S.sayLog.slice(-30);
+  }
+
+  // 遊んでいる人だけが送る（ホストが進行だけのときは声で話せるので送らない。端末のない人・見ている人も送らない）
+  const canSay = (V) => !!(V && V.game && V.phase !== 'lobby' && S.mode !== 'watch' && V.game.players.includes(S.me));
+  function sayReady() {
+    if (Date.now() - S.sayAt >= E.SAY_GAP_MS) return true;
+    toast('ひとことは、5秒に1回まで', false);
+    return false;
+  }
+  async function sendSay(k, t) {
+    if (!S.roomRef || !S.raw || !canSay(S.view) || !sayReady()) return;
+    S.sayAt = Date.now();
+    const uid = currentUid();
+    const me = S.me;
+    const gid = S.raw.gid;
+    try {
+      const res = await S.roomRef.transaction((room) => {
+        if (!room || isExpired(room) || room.status !== STATUS.PLAY) return;
+        const g = normGame(room.game);
+        if (!g || g.gid !== gid || !g.players.includes(me) || !E.sayAllowed(g.phase, k)) return;
+        if (!room.players?.[me] || room.players[me].uid !== uid) return;
+        if (E.sayNeedsName(k) ? !(g.players.includes(t) && t !== me) : t) return;
+        return Object.assign({}, room, { say: Object.assign({}, asObj(room.say), { [me]: { k, t: t || '', at: RoomkRTDB.now(), gid, s: g.step } }) });
+      });
+      if (!res.committed) { S.sayAt = 0; toast('うまく送れなかったよ。もう一度押してね'); }
+    } catch (error) {
+      console.warn('[kakure-kaito] say failed', error);
+      S.sayAt = 0;
+      toast('うまく送れなかったよ。もう一度押してね');
+    }
+  }
+
+  const sayLine = (V, x) => E.sayText(x.k, x.t ? nameOf(V, x.t) : '');
+
+  // 言葉の一覧（ひらいたとき・段階が変わったときに作りなおす）。focus: 作りなおしたあとにフォーカスを置くボタン（'who'＝「だれ？」の最初の人、言葉のキー）
+  function renderSayPick(focus) {
+    const V = S.view;
+    const pick = $('say-pick');
+    const ok = canSay(V);
+    if (!ok) { S.sayOpen = false; S.sayWord = null; }
+    $('btn-say').hidden = !ok;
+    $('btn-say-label').textContent = S.sayOpen ? 'とじる' : 'ひとことを送る';
+    $('btn-say-icon').textContent = S.sayOpen ? 'close' : 'add_comment';
+    $('btn-say').setAttribute('aria-expanded', S.sayOpen ? 'true' : 'false');
+    pick.hidden = !S.sayOpen;
+    if (!S.sayOpen) { pick.replaceChildren(); return; }
+    const groups = E.sayGroups(V.phase);
+    if (S.sayWord && !groups.some((gk) => E.SAYS[gk].some(([k]) => k === S.sayWord))) S.sayWord = null;
+    if (S.sayWord) {
+      // 「だれ？」で人を選ぶ（自分は出さない）
+      const ask = el('p', 'kk-say__ask');
+      ask.append(el('span', 'kk-say__ask-q', 'だれ？'), el('span', '', E.sayText(S.sayWord, '〇〇')));
+      const row = el('div', 'kk-say__words');
+      V.game.players.filter((id) => id !== S.me).forEach((id) => {
+        const b = el('button', 'kk-word kk-word--who');
+        b.type = 'button';
+        b.append(avatar(V, id), el('span', '', nameOf(V, id)));
+        b.addEventListener('click', () => {
+          const k = S.sayWord;
+          S.sayWord = null;
+          renderSayPick(k);
+          sendSay(k, id);
+        });
+        row.append(b);
+      });
+      const word = S.sayWord;
+      const back = btn('kk-quiet', 'やめる', 'undo', () => { S.sayWord = null; renderSayPick(word); });
+      pick.replaceChildren(ask, row, back);
+      if (focus === 'who') row.querySelector('button')?.focus();
+      return;
+    }
+    pick.replaceChildren(...groups.map((gk) => {
+      const box = el('div', 'kk-say__group');
+      box.append(el('p', 'kk-say__group-label', E.SAY_GROUPS[gk]));
+      const row = el('div', 'kk-say__words');
+      E.SAYS[gk].forEach(([k]) => {
+        const b = el('button', 'kk-word', E.sayText(k, '〇〇'));
+        b.type = 'button';
+        b.dataset.k = k;
+        b.addEventListener('click', () => {
+          if (!E.sayNeedsName(k)) { sendSay(k); return; }
+          if (!sayReady()) return;
+          S.sayWord = k;
+          renderSayPick('who');
+        });
+        row.append(b);
+      });
+      box.append(row);
+      return box;
+    }));
+    if (focus) [...pick.querySelectorAll('.kk-word')].find((b) => b.dataset.k === focus)?.focus();
+  }
+
+  // 名前の下の最新のひとことと、流れ（新しい順に6つ）
+  function renderSay() {
+    const V = S.view;
+    const box = $('say');
+    if (!V || V.phase === 'lobby' || !V.game) { box.hidden = true; return; }
+    const g = V.game;
+    // 名前の下には、送ったときの段階かその次の段階のあいだだけ出す（古い話が残らないように）
+    const latest = {};
+    S.says.forEach((x) => { if (x.s >= g.step - 1) latest[x.from] = x; });
+    $('players').querySelectorAll('.kk-player').forEach((li) => {
+      const slot = li.querySelector('.kk-player__say');
+      const x = latest[li.dataset.id];
+      if (!slot) return;
+      slot.hidden = !x;
+      slot.replaceChildren();
+      if (x) slot.append(msIcon('chat_bubble'), el('span', '', sayLine(V, x)));
+    });
+    const log = S.sayLog.slice(-6).reverse();
+    $('say-log').replaceChildren(...log.map((x) => {
+      const li = el('li', 'kk-say__item');
+      li.append(avatar(V, x.from), el('span', 'kk-say__who', nameOf(V, x.from)), el('span', 'kk-say__text', sayLine(V, x)));
+      return li;
+    }));
+    $('say-log').hidden = !log.length;
+    // 読み上げは、新しく届いた1件だけ（流れ全体を作りなおすたびに読みなおさない）
+    if (S.sayFresh) { $('say-live').textContent = nameOf(V, S.sayFresh.from) + '、' + sayLine(V, S.sayFresh); S.sayFresh = null; }
+    const ok = canSay(V);
+    $('say-empty').hidden = !!log.length || !ok;
+    box.hidden = !ok && !log.length;
   }
 
   async function createRoom() {
@@ -1134,6 +1312,8 @@
     $('ph-game').hidden = V.phase === 'lobby';
     if (V.phase === 'lobby') renderLobby(V);
     else renderGame(V);
+    renderSayPick();
+    renderSay();
   }
 
   // ── 待合室 ──
@@ -1575,6 +1755,7 @@
     $('players').hidden = phase === 'end';
     $('players').replaceChildren(...g.players.map((id) => {
       const li = el('li', 'kk-player' + (inTeam(id) ? ' is-team' : '') + (awayOf(V, id) ? ' is-away' : '') + (id === S.me && !watch ? ' is-me' : '') + (id === leader && !['guess', 'end'].includes(phase) ? ' is-leader' : ''));
+      li.dataset.id = id;
       li.append(avatar(V, id));
       const who = el('span', 'kk-player__who');
       who.append(el('span', 'kk-player__name', nameOf(V, id) + (id === S.me && !watch ? '（あなた）' : '')));
@@ -1586,6 +1767,9 @@
       tagFor[id].forEach(([t, k]) => tags.append(tagEl(t, k)));
       if (awayOf(V, id)) tags.append(tagEl('通信が切れた', 'warn'));
       who.append(tags);
+      const say = el('span', 'kk-player__say');
+      say.hidden = true;
+      who.append(say);
       li.append(who);
       return li;
     }));
@@ -1894,6 +2078,7 @@
     $('nodev-form').addEventListener('submit', (e) => { e.preventDefault(); addProxy(); });
     $('btn-start').addEventListener('click', () => hostAct('start'));
     $('btn-mycard').addEventListener('click', () => { S.showCard = !S.showCard; render(); });
+    $('btn-say').addEventListener('click', () => { S.sayOpen = !S.sayOpen; S.sayWord = null; renderSayPick(); });
   }
 
   // 参加用のリンクでひらいたとき: コードを入れた状態で参加画面を開き、名前だけ入れてもらう（コード欄は直せるように残す）
