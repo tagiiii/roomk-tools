@@ -241,7 +241,8 @@ a:hover {
 
 /* サイズバリアント */
 .btn-sm { font-size: var(--font-size-sub); padding: 9px 20px; min-height: 36px; }
-.btn-lg { font-size: 19px; padding: 16px 40px; min-height: 56px; border-radius: var(--radius-box); }
+/* 角丸は .btn と同じ（並べたときにそろうように。2026-11-04） */
+.btn-lg { font-size: 19px; padding: 16px 40px; min-height: 56px; }
 .btn-full { width: 100%; }
 
 /* ─────────────────────────────────────────────
