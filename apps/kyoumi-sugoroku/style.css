@@ -64,6 +64,23 @@
   color: #fff;
 }
 
+/* ── 名前欄（任意）── */
+.ks-names {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px 12px;
+}
+.ks-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.ks-name .ks-pawn { flex-shrink: 0; }
+.ks-name__input { min-width: 0; }
+@media (max-width: 480px) {
+  .ks-names { grid-template-columns: 1fr; }
+}
+
 /* ── テーマ選択 ── */
 .ks-themes {
   display: grid;
