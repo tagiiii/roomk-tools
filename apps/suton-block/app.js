@@ -1,6 +1,7 @@
 /* すとんブロック
    ・ひとりであそぶ: このタブだけで遊ぶ（通信しない）
-   ・ルーム: Realtime Database。みんな同じ種（seed）でブロックが出る。時間内に消した段の数をくらべる。
+   ・ルーム: Realtime Database。みんな同じ種（seed）でブロックが出る。時間内に消した段の数をくらべるか、対戦する。
+     対戦は、よく知られた対戦の表で送るじゃまを決める。いっぱいになったら「ここまで」か「からにしてつづける」を選ぶ。
      盤は置くたびに boards/{名前} へ送り、ほかの人の画面に小さく出す。じゃまブロックは jama/{名前} へ送る
    ・みんなにみせる画面（?watch=）: 見るだけ。ルームに書き込まない */
 const E = window.SutonEngine;
@@ -9,6 +10,8 @@ const MAX_GUESTS = 8;
 const SPEED = { slow: 1000, normal: 650, fast: 380 };
 const SPEED_LABEL = { slow: 'ゆっくり', normal: 'ふつう', fast: 'はやい' };
 const ROOM_TIMES = [120, 180, 300];
+const NO_TIME_CAP_S = 30 * 60; // 対戦の「時間なし」も、ルームが残りつづけないよう30分で区切る（画面には時間を出さない）
+const BATTLE_END_MS = 800;     // 対戦で1人になってから、最後の盤が届くのを待って結果を出す
 const LOCK_MS = 500;        // 着地してから置かれるまで
 const LOCK_RESETS = 15;     // 着地したまま動かして待ちを延ばせる回数
 const COUNTDOWN_MS = 3500;  // 「はじめる」から落ちはじめるまで（3・2・1）
@@ -35,7 +38,8 @@ const TX_RETRY_MAX = 3;
 const ROOM_CODE_PATTERN = /^[A-HJ-NP-Z2-9]{6}$/;
 const STATUS = { WAITING: 'waiting', PLAY: 'play', RESULT: 'result' };
 const DEFAULT_TITLE = document.title;
-const DEFAULT_SETTINGS = { time: 180, speed: 'slow', jama: false };
+// mode: 'lines' = 消した段の数をくらべる / 'battle' = 対戦。full（対戦だけ）: 'out' = その人はここまで / 'clear' = からにしてつづける
+const DEFAULT_SETTINGS = { mode: 'lines', full: 'out', time: 180, speed: 'slow', jama: false };
 
 const state = {
   role: null,          // 'host' | 'guest' | 'spectator'（みんなにみせる画面）| 'solo'（ひとり）
@@ -122,17 +126,29 @@ function clockText(ms) {
   return Math.floor(sec / 60) + ':' + String(sec % 60).padStart(2, '0');
 }
 
+// 時間「なし」（0）は、対戦で「ここまで」のときだけ選べる
+function timeOf(value, mode, full) {
+  const t = Number(value);
+  return ROOM_TIMES.includes(t) || (t === 0 && mode === 'battle' && full === 'out') ? t : DEFAULT_SETTINGS.time;
+}
+
 function settingsOf(room) {
   const s = room?.settings || {};
+  const mode = s.mode === 'battle' ? 'battle' : 'lines';
+  const full = s.full === 'clear' ? 'clear' : 'out';
   return {
-    time: ROOM_TIMES.includes(Number(s.time)) ? Number(s.time) : DEFAULT_SETTINGS.time,
+    mode,
+    full,
+    time: timeOf(s.time, mode, full),
     speed: SPEED[s.speed] ? s.speed : DEFAULT_SETTINGS.speed,
     jama: s.jama === true,
   };
 }
 
 function settingsText(s) {
-  return Math.round(s.time / 60) + '分・' + SPEED_LABEL[s.speed] + '・じゃま' + (s.jama ? 'あり' : 'なし');
+  const time = s.time ? Math.round(s.time / 60) + '分' : '時間なし';
+  if (s.mode === 'battle') return '対戦・' + (s.full === 'out' ? 'いっぱいでここまで' : 'からにしてつづける') + '・' + time + '・' + SPEED_LABEL[s.speed];
+  return '段の数をくらべる・' + time + '・' + SPEED_LABEL[s.speed] + '・じゃま' + (s.jama ? 'あり' : 'なし');
 }
 
 function byJoined(entries) {
@@ -166,30 +182,50 @@ function roundOf(room) {
   const r = room?.round;
   if (!r || typeof r !== 'object' || !Number(r.id) || !Number(r.startedAt)) return null;
   const players = Array.isArray(r.players) ? r.players.filter((x) => typeof x === 'string') : [];
+  const mode = r.mode === 'battle' ? 'battle' : 'lines';
+  const full = r.full === 'clear' ? 'clear' : 'out';
   return {
     id: Number(r.id),
     seed: Number(r.seed) >>> 0,
     startedAt: Number(r.startedAt),
-    time: ROOM_TIMES.includes(Number(r.time)) ? Number(r.time) : DEFAULT_SETTINGS.time,
+    mode,
+    full,
+    time: timeOf(r.time, mode, full),
     speed: SPEED[r.speed] ? r.speed : DEFAULT_SETTINGS.speed,
-    jama: r.jama === true,
+    jama: r.jama === true || mode === 'battle',
     players,
     endedAt: Number(r.endedAt) || null,
   };
 }
+
+const isBattle = (R) => R?.mode === 'battle';
+// 対戦で、いっぱいになったらその人はここまで（盤をからにしない）
+const isOutMode = (R) => isBattle(R) && R.full === 'out';
 
 function playStartOf(R) {
   return R.startedAt + COUNTDOWN_MS;
 }
 
 function endOf(R) {
-  const end = playStartOf(R) + R.time * 1000;
+  const end = playStartOf(R) + (R.time || NO_TIME_CAP_S) * 1000;
   return R.endedAt ? Math.min(end, R.endedAt) : end;
 }
 
 function boardOf(room, R, name) {
   const b = room?.boards?.[name];
   return b && Number(b.round) === R.id ? b : null;
+}
+
+function isOut(room, R, name) {
+  return boardOf(room, R, name)?.out === true;
+}
+
+// 対戦の「ここまで」で、のこりが1人（ひとりであそぶ回は0人）になった時刻。まだなら null
+function battleOverAt(room, R) {
+  if (!isOutMode(R)) return null;
+  const alive = R.players.filter((name) => !isOut(room, R, name)).length;
+  if (alive > (R.players.length >= 2 ? 1 : 0)) return null;
+  return Math.max(0, ...R.players.map((name) => Number(boardOf(room, R, name)?.outAt) || 0));
 }
 
 // ホストが切れたルームの期限。ふだんは切れてから2分。あそんでいる回は、時間で結果が出て2分たつまで、
@@ -673,6 +709,8 @@ async function leaveRoom() {
   if (role === 'guest' && state.run && !state.run.done && !window.confirm('ルームから出ますか？')) return;
   state.busy = true;
   state.leaving = true;
+  // 退出の間に盤を送って、退出で書いた「ここまで」を上書きしないよう、先に止める（失敗したら handleRoom で続きから）
+  if (role === 'guest') stopRun();
   try {
     await RoomkRTDB.cancelRoomOnDisconnect(ref);
     if (role === 'host') {
@@ -682,9 +720,17 @@ async function leaveRoom() {
       await ref.transaction((room) => {
         if (!room) return;
         const mine = room.players?.[nickname];
-        if (!mine || mine.uid !== uid) return;
+        // 切れて在室から消えていても、その回の人なら「ここまで」は書く
+        if (mine ? mine.uid !== uid : room.roundUids?.[nickname] !== uid) return;
         const players = { ...(room.players || {}) };
         delete players[nickname];
+        // 対戦の「ここまで」で回の途中に出たら、その人はここまでにする（のこりの人だけで決着がつくように）
+        const R = room.status === STATUS.PLAY ? roundOf(room) : null;
+        if (R && isOutMode(R) && R.players.includes(nickname) && !isOut(room, R, nickname)) {
+          const b = boardOf(room, R, nickname) || { round: R.id, lines: 0 };
+          return { ...room, players, boards: { ...(room.boards || {}), [nickname]: { ...b, out: true, outAt: RoomkRTDB.now() } } };
+        }
+        if (!mine) return;
         return { ...room, players };
       });
     }
@@ -839,16 +885,36 @@ async function hostTransaction(update, failMessage, lock = true) {
 }
 
 function readRoomSettings() {
+  const mode = document.querySelector('input[name="roomMode"]:checked').value === 'battle' ? 'battle' : 'lines';
+  const full = document.querySelector('input[name="roomFull"]:checked').value === 'clear' ? 'clear' : 'out';
   return {
-    time: Number(document.querySelector('input[name="roomTime"]:checked').value),
+    mode,
+    full,
+    time: timeOf(document.querySelector('input[name="roomTime"]:checked').value, mode, full),
     speed: document.querySelector('input[name="roomSpeed"]:checked').value,
     jama: document.querySelector('input[name="roomJama"]:checked').value === 'on',
   };
 }
 
+// 対戦では「盤がいっぱいになったら」を出し、じゃまブロックの設定をかくす（いつもあり）。時間「なし」は「ここまで」のときだけ
+function applyLobbyFields(s) {
+  const battle = s.mode === 'battle';
+  const noTime = battle && s.full === 'out';
+  $('fsFull').hidden = !battle;
+  $('fsJama').hidden = battle;
+  $('modeNote').textContent = battle
+    ? '2段いじょう消す・T を回し入れて消す・つづけて消すと、つぎの人の盤の下にじゃまが入る。来るじゃまは、送るぶんで先にへらせる。'
+    : '時間内に消した段の数をくらべる。';
+  $('timeNone').hidden = !noTime;
+  $('timeSeg').classList.toggle('sb-seg--4', noTime);
+  $('timeSeg').classList.toggle('sb-seg--3', !noTime);
+  document.querySelector('input[name="roomTime"][value="' + s.time + '"]').checked = true;
+}
+
 // 設定は続けて変えても取りこぼさないよう、二度押しよけのロックを使わない（中で今の値から作りなおす）
 function saveSettings() {
   const settings = readRoomSettings();
+  applyLobbyFields(settings);
   const hostPlays = $('hostPlays').checked;
   hostTransaction((room) => {
     if (room.status !== STATUS.WAITING) return;
@@ -886,9 +952,11 @@ async function startGame() {
         id,
         seed,
         startedAt: serverTimestamp(),
+        mode: s.mode,
+        full: s.full,
         time: s.time,
         speed: s.speed,
-        jama: s.jama,
+        jama: s.mode === 'battle' || s.jama,
         players,
       },
       roundUids: uids,
@@ -915,15 +983,20 @@ async function endEarly() {
   }, 'おわれませんでした。もう一度ためしてね');
 }
 
-// 時間のあと、結果を出す。ホストの端末が出し、ホストのタブが裏に回っていても、あそぶ人の端末が少しあとに出す
+// 時間のあと（対戦の「ここまで」は、のこりが1人になったあと）、結果を出す。
+// ホストの端末が出し、ホストのタブが裏に回っていても、あそぶ人の端末が少しあとに出す
 function maybeFinishRound(room) {
   if (room.status !== STATUS.PLAY || state.finishing) return;
   const R = roundOf(room);
   if (!R) return;
   const mayFinish = state.role === 'host' || (state.role === 'guest' && R.players.includes(state.nickname));
   if (!mayFinish) return;
-  const wait = state.role === 'host' ? FINISH_GRACE_MS : FINISH_BACKUP_MS;
-  if (RoomkRTDB.now() < endOf(R) + wait) return;
+  const host = state.role === 'host';
+  const now = RoomkRTDB.now();
+  const overAt = battleOverAt(room, R);
+  const timeUp = now >= endOf(R) + (host ? FINISH_GRACE_MS : FINISH_BACKUP_MS);
+  const settled = overAt != null && now >= overAt + (host ? BATTLE_END_MS : FINISH_BACKUP_MS);
+  if (!timeUp && !settled) return;
   state.finishing = true;
   const ref = state.roomRef;
   let finished = false;
@@ -934,10 +1007,18 @@ function maybeFinishRound(room) {
     if (!cur || cur.id !== R.id) return;
     const rows = cur.players.map((name) => {
       const b = boardOf(current, cur, name);
-      return { name, lines: b ? Math.max(0, Number(b.lines) || 0) : 0 };
+      const num = (v) => Math.max(0, Number(v) || 0);
+      return {
+        name,
+        lines: num(b?.lines),
+        sent: num(b?.sent),
+        resets: num(b?.resets),
+        out: b?.out === true,
+        outAt: num(b?.outAt),
+      };
     });
     finished = true;
-    return { ...current, status: STATUS.RESULT, result: { id: cur.id, rows, at: serverTimestamp() }, jama: null };
+    return { ...current, status: STATUS.RESULT, result: { id: cur.id, mode: cur.mode, full: cur.full, rows, at: serverTimestamp() }, jama: null };
   }).then(() => {
     if (finished) window.RoomkStats?.count('finish');
   }).catch((error) => {
@@ -1046,7 +1127,9 @@ function renderWaiting(room, playing) {
   $('lobbySettings').textContent = 'いまの設定: ' + settingsText(s);
   if (host && !playing) {
     // 自分で押しているときに上書きしない（値が同じなら触らない）
-    document.querySelector('input[name="roomTime"][value="' + s.time + '"]').checked = true;
+    document.querySelector('input[name="roomMode"][value="' + s.mode + '"]').checked = true;
+    document.querySelector('input[name="roomFull"][value="' + s.full + '"]').checked = true;
+    applyLobbyFields(s);
     document.querySelector('input[name="roomSpeed"][value="' + s.speed + '"]').checked = true;
     document.querySelector('input[name="roomJama"][value="' + (s.jama ? 'on' : 'off') + '"]').checked = true;
     $('hostPlays').checked = room.hostPlays !== false;
@@ -1055,22 +1138,55 @@ function renderWaiting(room, playing) {
 
 function renderRoomResult(room) {
   const rows = Array.isArray(room.result?.rows) ? room.result.rows : [];
-  showRanking(rows.map((r) => ({ name: String(r?.name || ''), lines: Math.max(0, Number(r?.lines) || 0) })));
+  const num = (v) => Math.max(0, Number(v) || 0);
+  const mode = room.result?.mode === 'battle' ? 'battle' : 'lines';
+  const full = room.result?.full === 'clear' ? 'clear' : 'out';
+  showRanking(rows.map((r) => ({
+    name: String(r?.name || ''),
+    lines: num(r?.lines),
+    sent: num(r?.sent),
+    resets: num(r?.resets),
+    out: r?.out === true,
+    outAt: num(r?.outAt),
+  })), mode, full);
   const host = state.role === 'host';
   $('btnAgain').hidden = !host;
   $('btnResultTop').hidden = true;
   $('resultWait').hidden = host || state.role === 'spectator';
 }
 
-function showRanking(rows) {
-  const sorted = rows.slice().sort((a, b) => b.lines - a.lines);
+// 順位のくらべ方。段の数をくらべる: 消した段の数 / 対戦（からにしてつづける）: 送ったじゃまの数 /
+// 対戦（ここまで）: のこった人が上（その中は送ったじゃまの数）、ここまでになった人は、あとまでのこった人が上
+function rankKey(r, mode, full) {
+  if (mode !== 'battle') return [r.lines];
+  if (full === 'clear') return [r.sent];
+  return r.out ? [0, r.outAt] : [1, r.sent];
+}
+
+function showRanking(rows, mode = 'lines', full = 'out') {
+  const keyed = rows.map((r) => ({ r, k: rankKey(r, mode, full) }));
+  const cmp = (a, b) => {
+    for (let i = 0; i < Math.max(a.k.length, b.k.length); i++) if ((b.k[i] || 0) !== (a.k[i] || 0)) return (b.k[i] || 0) - (a.k[i] || 0);
+    return 0;
+  };
+  keyed.sort(cmp);
   const ol = makeElement('ol', 'sb-rank');
   let rank = 0;
-  sorted.forEach((r, i) => {
-    if (i === 0 || sorted[i - 1].lines !== r.lines) rank = i + 1;
+  keyed.forEach((x, i) => {
+    const r = x.r;
+    if (i === 0 || cmp(keyed[i - 1], x) !== 0) rank = i + 1;
     const li = document.createElement('li');
     if (r.name === state.nickname) li.classList.add('is-me');
-    li.append(makeElement('span', 'sb-rank__no', rank + '位'), makeElement('span', 'sb-rank__name', r.name), makeElement('span', 'sb-rank__lines', r.lines + '段'));
+    const who = makeElement('span', 'sb-rank__who');
+    const sub = [];
+    if (mode === 'battle') {
+      if (full === 'out') sub.push(r.out ? 'ここまで' : 'のこった');
+      sub.push('消した段 ' + r.lines);
+    }
+    if (!(mode === 'battle' && full === 'out')) sub.push('からにした ' + r.resets + '回');
+    who.append(makeElement('span', 'sb-rank__name', r.name), makeElement('span', 'sb-rank__sub', sub.join('・')));
+    const main = mode === 'battle' ? '送った ' + r.sent + '段' : r.lines + '段';
+    li.append(makeElement('span', 'sb-rank__no', rank + '位'), who, makeElement('span', 'sb-rank__lines', main));
     ol.append(li);
   });
   $('resultBody').replaceChildren(ol);
@@ -1079,6 +1195,7 @@ function showRanking(rows) {
 function showSoloResult(g) {
   const p = makeElement('p', 'sb-solo-result');
   p.append('消した段 ', makeElement('strong', null, g.lines), document.createElement('br'), '置いたブロック ' + g.pieces + 'こ');
+  if (g.onFull === 'clear') p.append(document.createElement('br'), 'からにした ' + g.resets + '回');
   $('resultBody').replaceChildren(p);
   $('btnAgain').hidden = false;
   $('btnResultTop').hidden = false;
@@ -1096,17 +1213,21 @@ function startRun(o) {
   state.run = {
     speedMs: SPEED[o.speed] || SPEED.slow,
     lastFall: now, lockAt: null, resets: 0,
-    startAt: o.startAt || 0, endAt: o.endAt || 0,
+    startAt: o.startAt || 0, endAt: o.endAt || 0, showTimer: !!o.endAt && o.showTimer !== false,
     done: false, raf: 0, noteTimer: 0, paused: false,
     jama: !!o.jama, pending: Math.max(0, Math.min(E.H, Number(o.pending) || 0)),
+    battle: !!o.battle,                    // 対戦（送るじゃまは表で決める）
+    sent: Math.max(0, Number(o.sent) || 0), // 送ったじゃまの数
+    outAt: Number(o.outAt) || null,         // 対戦の「ここまで」になった時刻
   };
   const room = state.role !== 'solo';
-  $('playTimer').hidden = !state.run.endAt;
+  $('playTimer').hidden = !state.run.showTimer;
+  $('playLinesLabel').textContent = state.run.battle ? '送ったじゃま' : '消した段';
   $('playTimer').textContent = '';
   $('btnPlayEnd').textContent = state.role === 'host' ? '早めにおわる' : room ? '退出する' : 'おわる';
   $('btnPause').hidden = room;
   $('pauseCover').hidden = true;
-  $('playLines').textContent = String(state.game.lines);
+  $('playLines').textContent = String(state.run.battle ? state.run.sent : state.game.lines);
   $('playNote').hidden = true;
   $('jamaBox').hidden = !state.run.jama;
   renderJama();
@@ -1144,12 +1265,15 @@ function syncRun(room, R) {
     state.jamaSeen.clear();
     const mine = boardOf(room, R, state.nickname);
     startRun({
-      seed: R.seed, speed: R.speed, jama: R.jama, onFull: 'clear',
-      startAt: playStartOf(R), endAt: endOf(R),
-      saved: mine && Number(mine.taken) ? mine : null,
+      seed: R.seed, speed: R.speed, jama: R.jama, onFull: isOutMode(R) ? 'end' : 'clear',
+      startAt: playStartOf(R), endAt: endOf(R), showTimer: R.time > 0,
+      battle: isBattle(R),
+      saved: mine && (Number(mine.taken) || mine.out) ? mine : null,
       pending: mine ? Number(mine.pending) || 0 : 0,
+      sent: mine ? Number(mine.sent) || 0 : 0,
+      outAt: mine ? Number(mine.outAt) || null : null,
     });
-    if (mine && mine.done) finishRun();
+    if (mine && (mine.done || mine.out)) finishRun();
   } else {
     // 手元で見積もった「はじめた時刻」は、サーバーの時刻が届いたら合わせる
     state.run.startAt = playStartOf(R);
@@ -1183,15 +1307,38 @@ function afterMove(moved) {
 
 function afterLock(res) {
   const R = state.run, g = state.game;
+  let outgoing = null;
   R.lockAt = null; R.resets = 0; R.lastFall = nowOf();
-  if (res.lines) {
+  const bump = (value) => {
     const el = $('playLines');
-    el.textContent = String(g.lines);
+    el.textContent = String(value);
     el.classList.remove('sb-lines--up');
     void el.offsetWidth;
     el.classList.add('sb-lines--up');
-  }
-  if (R.jama) {
+  };
+  if (res.lines && !R.battle) bump(g.lines);
+  if (R.battle) {
+    // 対戦: 送るじゃまは表で決める（attack）。来るじゃまがあれば先にへらし、のこりを送る
+    let atk = res.attack || 0;
+    const cancel = Math.min(R.pending, atk);
+    R.pending -= cancel;
+    atk -= cancel;
+    // 送るじゃまは、盤（送った数・来るじゃま）と同じ1回の update で書く（片方だけ届くと、読み込み直したとき数がずれる）
+    const to = atk > 0 ? jamaTarget() : null;
+    if (to) {
+      R.sent += atk;
+      outgoing = { ['jama/' + to + '/' + state.roomRef.child('jama/' + to).push().key]: { round: state.playRound, rows: atk, from: state.nickname } };
+      bump(R.sent);
+    }
+    attackNote(res, to ? atk : 0, cancel);
+    if (!res.lines && R.pending > 0 && !g.over) {
+      const rows = R.pending;
+      R.pending = 0;
+      const gr = E.addGarbage(g, rows, Math.floor(Math.random() * E.W));
+      if (gr.cleared) res = { ...res, cleared: true };
+    }
+    renderJama();
+  } else if (R.jama) {
     // 2段いじょういっしょに消したら、となりの人へ（消した段数−1）段。
     // 来るじゃまがあれば、消した段の数だけ先にへらし、へらしたぶん送る段も少なくなる
     let atk = Math.max(0, res.lines - 1);
@@ -1208,9 +1355,22 @@ function afterLock(res) {
     renderJama();
   }
   if (res.cleared) note('盤がいっぱいになったので、からにしたよ。つづけよう', 1800);
-  sendBoard();
+  sendBoard(false, outgoing);
   if (g.over) { finishRun(); return; }
   draw();
+}
+
+// 対戦で、大技・れんぞくのときと、じゃまを送った・へらしたときに一言出す
+function attackNote(res, sent, cancel) {
+  const parts = [];
+  if (res.allClear) parts.push('全部消えた！');
+  else if (res.spin === 'spin') parts.push('回し入れ！');
+  else if (res.spin === 'mini' && res.lines) parts.push('小さな回し入れ');
+  if (res.b2b) parts.push('つづけて大技！');
+  if (res.combo >= 1) parts.push((res.combo + 1) + 'れんぞく！');
+  if (sent > 0) parts.push(sent + '段おくったよ');
+  else if (cancel > 0) parts.push('来るじゃまを' + cancel + '段へらしたよ');
+  if (parts.length) note(parts.join(' '), 1400);
 }
 
 function note(text, ms) {
@@ -1221,11 +1381,11 @@ function note(text, ms) {
   if (ms) state.run.noteTimer = setTimeout(() => { el.hidden = true; }, ms);
 }
 
-// 置くたびに、自分の盤と続きに要るもの（読み込み直し用）を送る
-function sendBoard(done = false) {
-  if (state.role === 'solo' || !state.roomRef || !state.playRound) return;
+// 置くたびに、自分の盤と続きに要るもの（読み込み直し用）を送る。extra（対戦で送るじゃま）があれば同じ update に入れる
+function sendBoard(done = false, extra = null) {
+  if (state.role === 'solo' || !state.roomRef || !state.playRound || state.leaving) return;
   const g = state.game;
-  state.roomRef.child('boards/' + state.nickname).set({
+  const board = {
     round: state.playRound,
     b: E.packBoard(g.board),
     lines: g.lines,
@@ -1234,12 +1394,38 @@ function sendBoard(done = false) {
     taken: g.taken,
     hold: g.hold || null,
     holdUsed: !!g.holdUsed,
+    b2b: !!g.b2b,
+    combo: g.combo,
+    sent: state.run ? state.run.sent : 0,
     pending: state.run ? state.run.pending : 0,
     done: done || !!(state.run && state.run.done),
-  }).catch((error) => console.warn('[suton-block] board send failed', error));
+    // 対戦の「ここまで」（いっぱいで止まった）。時刻は1回だけ決める（順位に使う）
+    out: !!g.over,
+    outAt: g.over && state.run ? (state.run.outAt = state.run.outAt || RoomkRTDB.now()) : null,
+  };
+  state.roomRef.update({ ['boards/' + state.nickname]: board, ...(extra || {}) })
+    .catch((error) => console.warn('[suton-block] board send failed', error));
 }
 
-// じゃまを送る相手は、あそぶ人の並びで自分のつぎの人
+// 並びで name のつぎの、のこっている人（対戦で「ここまで」になった人はとばす）。いなければ null
+function nextAlive(room, R, name) {
+  const i = R.players.indexOf(name);
+  if (i < 0) return null;
+  for (let k = 1; k < R.players.length; k++) {
+    const to = R.players[(i + k) % R.players.length];
+    if (!isOut(room, R, to)) return to;
+  }
+  return null;
+}
+
+// 対戦でじゃまを送る相手
+function jamaTarget() {
+  const R = roundOf(state.room);
+  if (!R || !state.roomRef || R.players.length < 2) return null;
+  return nextAlive(state.room, R, state.nickname);
+}
+
+// じゃまを送る相手は、あそぶ人の並びで自分のつぎの人（段の数をくらべるときのじゃまブロック）
 function sendJama(rows) {
   const R = roundOf(state.room);
   if (!R || !state.roomRef) return;
@@ -1253,15 +1439,21 @@ function sendJama(rows) {
 function receiveJama(room, R) {
   const run = state.run;
   if (!run || !run.jama || run.done) return;
-  const box = room.jama?.[state.nickname];
-  if (!box || typeof box !== 'object') return;
+  // 自分あてのほか、対戦で「ここまで」になった人あてに届いたじゃまのうち、その人のつぎののこっている人が自分のものも受けとる
+  // （ここまでになったのを相手が知る前に送ったじゃまが、なくならないように）
+  const owners = [state.nickname];
+  if (isOutMode(R)) R.players.forEach((name) => { if (name !== state.nickname && isOut(room, R, name) && nextAlive(room, R, name) === state.nickname) owners.push(name); });
   let added = 0;
   const done = {};
-  Object.entries(box).forEach(([key, v]) => {
-    if (state.jamaSeen.has(key)) return;
-    state.jamaSeen.add(key);
-    if (Number(v?.round) === R.id) added += Math.max(0, Math.min(E.H, Number(v.rows) || 0));
-    done['jama/' + state.nickname + '/' + key] = null;
+  owners.forEach((owner) => {
+    const box = room.jama?.[owner];
+    if (!box || typeof box !== 'object') return;
+    Object.entries(box).forEach(([key, v]) => {
+      if (state.jamaSeen.has(key)) return;
+      state.jamaSeen.add(key);
+      if (Number(v?.round) === R.id) added += Math.max(0, Math.min(E.H, Number(v.rows) || 0));
+      done['jama/' + owner + '/' + key] = null;
+    });
   });
   if (!Object.keys(done).length) return;
   run.pending = Math.min(run.pending + added, E.H);
@@ -1320,9 +1512,11 @@ function tick() {
   }
   cd.hidden = true;
   if (R.endAt) {
-    const t = $('playTimer');
-    t.textContent = clockText(R.endAt - now);
-    t.classList.toggle('sb-timer--low', R.endAt - now <= 10000);
+    if (R.showTimer) {
+      const t = $('playTimer');
+      t.textContent = clockText(R.endAt - now);
+      t.classList.toggle('sb-timer--low', R.endAt - now <= 10000);
+    }
     if (!R.done && now >= R.endAt) { finishRun(); if (!state.run) return; }
   }
   if (!R.done) {
@@ -1355,7 +1549,11 @@ function finishRun() {
     return;
   }
   sendBoard(true);
-  $('playTimer').textContent = '0:00';
+  if (state.game.over) {
+    note('ここまで！ ほかの人がおわるのを待ってね', 0);
+    return;
+  }
+  if (R.showTimer) $('playTimer').textContent = '0:00';
   note('時間になったよ。結果を待ってね', 0);
 }
 
@@ -1614,16 +1812,24 @@ function miniCard(name, s) {
   const box = makeElement('div', 'sb-mini');
   // ホストは切れても在室に残るので、hostConnected で見る。退出した人と切れた人は区別できないので「いない」とだけ出す
   const away = name === room?.host ? room.hostConnected === false : !room?.players?.[name];
-  if (away) box.classList.add('is-off');
+  const out = b?.out === true;
+  if (away || out) box.classList.add('is-off');
   const cv = document.createElement('canvas');
   sizeCanvas(cv, s * E.W, s * E.H);
   drawWell(cv.getContext('2d'), E.unpackBoard(b?.b), s);
   box.append(
     makeElement('div', 'sb-mini__name', name),
-    makeElement('div', 'sb-mini__lines', (b ? Number(b.lines) || 0 : 0) + '段' + (away ? '・いまはいない' : '')),
+    // 小さな盤（右の列）はせまいので、数だけか「ここまで」だけ。ならべて見る画面の大きな盤はくわしく
+    makeElement('div', 'sb-mini__lines', (s >= 12 ? statText(R, b) + (out ? '・ここまで' : '') : out ? 'ここまで' : statText(R, b, true)) + (away ? '・いまはいない' : '')),
     cv,
   );
   return box;
+}
+
+// ほかの人の盤に出す数。段の数をくらべるときは消した段、対戦は送ったじゃま（short はせまい欄むけに数だけ）
+function statText(R, b, short = false) {
+  if (!isBattle(R)) return (b ? Number(b.lines) || 0 : 0) + '段';
+  return (short ? '' : '送った') + (b ? Number(b.sent) || 0 : 0) + '段';
 }
 
 // ほかの人: 広い画面は小さな盤を右の列に、スマホは名前と段の数だけを横の欄に
@@ -1644,7 +1850,8 @@ function renderOthers() {
     names.slice(0, 4).forEach((name) => {
       const b = boardOf(room, R, name);
       const li = document.createElement('li');
-      li.append(makeElement('span', 'sb-otherlist__name', name), makeElement('span', 'sb-otherlist__lines', (b ? Number(b.lines) || 0 : 0) + '段'));
+      if (b?.out === true) li.classList.add('is-out');
+      li.append(makeElement('span', 'sb-otherlist__name', name), makeElement('span', 'sb-otherlist__lines', b?.out === true ? 'ここまで' : statText(R, b, true)));
       list.append(li);
     });
     return;
@@ -1675,6 +1882,7 @@ function updateWatchTimer() {
   const now = RoomkRTDB.now();
   const t = $('watchTimer');
   if (now < playStartOf(R)) { t.textContent = 'まもなく'; return; }
+  if (!R.time && !R.endedAt) { t.textContent = '時間なし'; return; }
   t.textContent = clockText(endOf(R) - now);
   t.classList.toggle('sb-timer--low', endOf(R) - now <= 10000);
 }

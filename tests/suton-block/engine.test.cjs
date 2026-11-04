@@ -309,4 +309,125 @@ t('上にはみ出して置いても、段が消えればはみ出した分が�
   assert.strictEqual(h.board[1][0], 'I');
 });
 
+// ── 対戦で送るじゃま（よく知られた対戦の表）──
+// 下の段から文字で盤を作る（X はうまっている）
+function boardFrom(rows) {
+  const b = E.emptyBoard();
+  rows.forEach((row, i) => {
+    const y = E.H - rows.length + i;
+    for (let x = 0; x < E.W; x++) if (row[x] === 'X') b[y][x] = 'jama';
+  });
+  return b;
+}
+// 向き rot の T を (x, y) に置いて、最後の動きを回すにする
+function tAt(rot, x, y, kick = 0) {
+  const p = E.newPiece({ kind: 'T' });
+  for (let i = 0; i < rot; i++) p.cells = p.cells.map(([cx, cy]) => [p.n - 1 - cy, cx]);
+  return Object.assign(p, { rot, x, y, spun: true, kick });
+}
+// たての棒を列 x に、下の4段へ置く
+function iDown(x) {
+  return { kind: 'I', n: 4, rot: 1, cells: [[0, 0], [0, 1], [0, 2], [0, 3]], x, y: E.H - 4 };
+}
+// うめていない1列を残して、下の n 段をうめる。その上に1マス残して、消しても全部は消えないようにする
+function wellRows(n, gap) {
+  return ['........X.'].concat(Array.from({ length: n }, () => 'XXXXXXXXXX'.split('').map((c, x) => (x === gap ? '.' : c)).join('')));
+}
+
+t('回し入れダブルは4段、つづけて4段消すと 4＋1（つづけて大技）', () => {
+  const g = E.createGame({ seed: 1 });
+  // まん中に T のすき間。左上がひさしになっている
+  g.board = boardFrom(['...X......', 'XXX...XXXX', 'XXXX.XXXXX']);
+  g.piece = tAt(2, 3, E.H - 3);
+  const r = E.lock(g);
+  assert.strictEqual(r.lines, 2);
+  assert.strictEqual(r.spin, 'spin');
+  assert.strictEqual(r.attack, 4);
+  g.board = boardFrom(wellRows(4, 0));
+  g.piece = iDown(0);
+  const r2 = E.lock(g);
+  assert.strictEqual(r2.lines, 4);
+  assert.ok(r2.b2b);
+  assert.strictEqual(r2.attack, 5, '4＋つづけて大技1（れんぞく2回目は0）');
+});
+
+t('1段0・2段1・3段2・4段4。ふつうに消すと、つづけて大技が切れる', () => {
+  const lines = (n) => {
+    const g = E.createGame({ seed: 1 });
+    g.board = boardFrom(wellRows(n, 0));
+    g.piece = iDown(0);
+    return E.lock(g).attack;
+  };
+  assert.deepStrictEqual([1, 2, 3, 4].map(lines), [0, 1, 2, 4]);
+  const g = E.createGame({ seed: 1 });
+  g.board = boardFrom(wellRows(4, 0)); g.piece = iDown(0); E.lock(g);
+  g.board = boardFrom(wellRows(2, 0)); g.piece = iDown(0); E.lock(g);
+  assert.ok(!g.b2b, '2段で切れる');
+  g.board = E.emptyBoard(); g.piece = iDown(0); E.lock(g); // 消さずに置いて、れんぞくを切る
+  g.board = boardFrom(wellRows(4, 0)); g.piece = iDown(0);
+  assert.strictEqual(E.lock(g).attack, 4, '切れたあとの4段は4のまま');
+});
+
+t('れんぞくで消すと 0・0・1・1・2…と足す（消さずに置くともどる。つづけて大技はのこる）', () => {
+  const g = E.createGame({ seed: 1 });
+  const got = [];
+  for (let i = 0; i < 5; i++) {
+    g.board = boardFrom(wellRows(2, 0)); g.piece = iDown(0);
+    got.push(E.lock(g).attack);
+  }
+  assert.deepStrictEqual(got, [1, 1, 2, 2, 3]);
+  g.board = boardFrom(wellRows(4, 0)); g.piece = iDown(0); E.lock(g);
+  g.board = E.emptyBoard(); g.piece = iDown(0);
+  const r = E.lock(g);
+  assert.strictEqual(r.combo, -1);
+  assert.ok(g.b2b, '消さずに置いても、つづけて大技は切れない');
+});
+
+t('盤が全部消えたら10段', () => {
+  const g = E.createGame({ seed: 1 });
+  g.board = boardFrom(['....XXXXXX']);
+  g.piece = Object.assign(E.newPiece({ kind: 'I' }), { x: 0, y: E.H - 2 });
+  const r = E.lock(g);
+  assert.ok(r.allClear);
+  assert.strictEqual(r.attack, 10);
+});
+
+t('小さな回し入れ（出っぱりの側のすみが1つあいている）は、ふつうに消したのと同じ', () => {
+  const g = E.createGame({ seed: 1 });
+  // 右向きの T を左はしに。うしろ（左）のすみはかべ。出っぱりの側は右下だけうまっている
+  g.board = boardFrom(['..........', '..XXXXXXXX', '.XXXXXXXXX']);
+  g.piece = tAt(1, -1, E.H - 3);
+  const r = E.lock(g);
+  assert.strictEqual(r.spin, 'mini');
+  assert.strictEqual(r.lines, 2);
+  assert.strictEqual(r.attack, 1, '小さな回し入れの2段は、ふつうの2段と同じ1');
+  // 5番目のずらし方で入ったときは、ふつうの回し入れ
+  const h = E.createGame({ seed: 1 });
+  h.board = boardFrom(['..........', '..XXXXXXXX', '.XXXXXXXXX']);
+  h.piece = tAt(1, -1, E.H - 3, 4);
+  assert.strictEqual(E.lock(h).spin, 'spin');
+});
+
+t('回したあと動かした・落ちた T は回し入れにならない。回すと回し入れの目じるしがつく', () => {
+  const g = E.createGame({ seed: 1 });
+  g.board = E.emptyBoard();
+  g.piece = E.newPiece({ kind: 'T' });
+  g.piece.y = 5;
+  assert.ok(E.rotate(g, 1));
+  assert.ok(g.piece.spun);
+  assert.ok(E.move(g, 1, 0));
+  assert.ok(!g.piece.spun);
+  assert.ok(E.rotate(g, 1));
+  E.hardDrop(g);
+  assert.strictEqual(E.spinOf(g, { kind: 'T', spun: false }), null);
+});
+
+t('読み込み直し: ここまでになった人は、そのまま', () => {
+  const g = E.restoreGame({ seed: 5, onFull: 'end' }, { b: '.'.repeat(200), taken: 3, out: true, b2b: true, combo: 2 });
+  assert.ok(g.over);
+  assert.strictEqual(g.piece, null);
+  assert.ok(g.b2b);
+  assert.strictEqual(g.combo, 2);
+});
+
 console.log('engine: ' + n + ' 項目 OK');
