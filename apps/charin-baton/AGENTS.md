@@ -63,7 +63,8 @@ apps/charin-baton/
 ├── index.html   # 画面の骨組み・howto.js の設定
 ├── app.js       # 進行・描画（ES module）
 ├── engine.js    # 小銭の問題づくりと対決のルール（window.CharinEngine。node では module.exports）
-└── style.css    # 固有スタイル
+├── style.css    # 固有スタイル
+└── slides.html  # 画面共有用説明スライド（14枚）
 ```
 
 - 分割型。index.html・app.js・engine.js・style.css を変えたら `?v=` をそろえて上げる
@@ -81,7 +82,8 @@ apps/charin-baton/
 - `apps/index.html` にカード（`data-scenes="bodoge hiroba sakusen"`・`data-genre="puzzle"`）
 - `apps/updates.json` 先頭に `type: "new"`
 - `apps/guide/index.html` の「数字・感覚あてっこ系」に1行
-- 説明スライド・サムネイルはまだない
+- 説明スライド `slides.html`（14枚。リバーシのスライドと同じエンジン。チャンネル `charin_baton_deck`・保存キー `cbs_`）。「？」の「説明スライドを見る」とポータルの「スライド」から開ける（2026-11-04）
+- サムネイル `apps/assets/thumbnails/charin-baton.png`（撮り方は `docs/development/thumbnails.md`）
 
 ## 画面構成・フロー
 
@@ -222,7 +224,6 @@ charinbaton_rooms/{roomCode}/
 ## あとで考えること
 
 - **複数人での対戦**（2026-11-04 オーナー「複数人でも対戦できたら利用の幅が広がる」）。AI のおすすめはチーム戦（2チームでチームに1つの持ち時間、チームの中で順番に答える。1対1は1人ずつのチームとして今までどおり）。ほかの案は勝ち残り（3人以上で順番に、時計がなくなった人から抜ける。早く抜けた子の待ち時間が長い）。同日、まず2人対戦で公開すると決めた
-- 説明スライド（`slides.html`）とサムネイル
 - 硬貨の数字をかくす上級（色・穴・大きさだけで見分ける）
 
 ## 既知の制約（v1）
@@ -249,7 +250,7 @@ charinbaton_rooms/{roomCode}/
 | rtdb-utils.js（`?v=20261005`） | `initFirebase`・`generateRoomCode`・`now`・`isRoomExpired`・`getHostDisconnectedAt`・`cancelRoomOnDisconnect`・`copyRoomCode`・`copyRoomLink`・`showToast` |
 | room-qr.js（`?v=20261022`） | 「QRコードを出す」（`RoomkQR.show`） |
 | stats.js（`?v=1`） | 起動回数（`open`）と、上の「利用回数」 |
-| howto.js | 「あそびかた」モーダル |
+| howto.js | 「あそびかた」モーダル（`slides: 'slides.html'` で「説明スライドを見る」） |
 
 ## 確かめたこと
 
