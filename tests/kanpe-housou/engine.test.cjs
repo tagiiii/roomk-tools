@@ -42,6 +42,24 @@ hintKeys.forEach((k) => {
   ok(new Set(h.words).size === h.words.length, 'H3 おまかせがかぶらない ' + k);
 });
 
+// ふりがな（原稿とおまかせの言葉の漢字すべてに読みがある・文字は変わらない）
+const kanji = /[\u4e00-\u9fff々]/;
+const rubyTargets = [];
+D.PROGRAMS.forEach((p) => rubyTargets.push(p.open, ...p.lines, p.close));
+hintKeys.forEach((k) => rubyTargets.push(...D.HINTS[k].words));
+rubyTargets.forEach((t) => {
+  const parts = E.rubyParts(t, D.RUBY);
+  ok(parts.map((x) => x.text).join('') === t, 'R1 ふりがなを付けても文字は変わらない', t);
+  const miss = parts.filter((x) => kanji.test(x.text) && !x.rt).map((x) => x.text);
+  ok(!miss.length, 'R2 漢字すべてにふりがな', t + ' ' + miss.join(''));
+});
+const rr = (t) => E.rubyParts(t, D.RUBY).map((x) => (x.rt ? x.text + '(' + x.rt + ')' : x.text)).join('');
+ok(rr('お皿を入れてください') === 'お皿(さら)を入(い)れてください', 'R3 送りがなで読みを変える（入れ）');
+ok(rr('お湯に入っています') === 'お湯(ゆ)に入(はい)っています', 'R4 送りがなで読みを変える（入っ）');
+ok(rr('大好きな') === '大(だい)好(す)きな', 'R5 1字ずつの読み');
+ok(rr('ABCかな') === 'ABCかな' && E.rubyParts('', D.RUBY).length === 0, 'R6 漢字がなければそのまま');
+ok(rr('謎') === '謎', 'R7 辞書にない字はふりがななし');
+
 // 番組を選ぶ
 const used = [];
 for (let i = 0; i < D.PROGRAMS.length; i += 1) used.push(E.pickProgram(D.PROGRAMS, used).id);

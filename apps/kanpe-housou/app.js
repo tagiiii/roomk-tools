@@ -48,6 +48,18 @@
   const progOf = (id) => D.PROGRAMS.find((p) => p.id === id) || D.PROGRAMS[0];
   const hintOf = (key) => D.HINTS[key] || { label: key, example: '', words: [] };
   const normOpts = (o) => ({ laps: o && Number(o.laps) === 2 ? 2 : 1, score: !!(o && o.score) });
+  // 原稿にはふりがなを付ける（読む人が声に出して読むので）。書かれた言葉はおまかせの言葉と同じときだけ付ける
+  const OMAKASE = new Set(Object.values(D.HINTS).flatMap((h) => h.words));
+  const rubyText = (text) => {
+    const f = document.createDocumentFragment();
+    E.rubyParts(text, D.RUBY).forEach((p) => {
+      if (!p.rt) { f.append(document.createTextNode(p.text)); return; }
+      const r = el('ruby', '', p.text);
+      r.append(el('rt', '', p.rt));
+      f.append(r);
+    });
+    return f;
+  };
 
   const S = {
     mode: null,     // 'host' | 'guest' | 'watch'
@@ -1352,7 +1364,9 @@
       const li = el('li', 'kh-line' + (s === o.current ? ' is-current' : '') + (s === o.current && fresh ? ' is-new' : ''));
       if (s === 0 || s === g.k + 1) {
         li.classList.add('kh-line--frame');
-        li.append(el('span', '', text));
+        const frame = el('span', '');
+        frame.append(rubyText(text));
+        li.append(frame);
         list.append(li);
         return;
       }
@@ -1360,7 +1374,9 @@
       const b = g.blanks[i];
       const parts = E.splitLine(text);
       const body = el('span', 'kh-line__text');
-      body.append(document.createTextNode(parts.before), el('span', 'kh-word' + (b.auto ? ' is-auto' : ''), b.word || '？'), document.createTextNode(parts.after));
+      const word = el('span', 'kh-word' + (b.auto ? ' is-auto' : ''));
+      word.append(b.word && OMAKASE.has(b.word) ? rubyText(b.word) : document.createTextNode(b.word || '？'));
+      body.append(rubyText(parts.before), word, rubyText(parts.after));
       li.append(body);
       if (o.named && b.writer) {
         const by = el('span', 'kh-line__by');

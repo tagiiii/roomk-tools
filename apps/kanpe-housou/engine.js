@@ -47,6 +47,46 @@
     return m ? { before: m[1], after: m[2] } : { before: line, after: '' };
   }
 
+  // 文を「ふつうの文字」と「漢字＋ふりがな」に分ける。[{ text, rt }]（rt が '' ならふりがななし）
+  // 漢字のつながりごとに、うしろのかなまで入れたキー → つながりだけ、の順に辞書を探す。無ければ1字ずつ
+  const KANJI = /[一-鿿々]+/g;
+  function lookup(dict, run, rest) {
+    for (let k = 2; k >= 0; k -= 1) {
+      const v = dict[run + rest.slice(0, k)];
+      if (v != null && (k === 0 || /^[ぁ-ゟ]+$/.test(rest.slice(0, k)))) return v;
+    }
+    return null;
+  }
+  function rubyParts(text, dict) {
+    const s = String(text == null ? '' : text);
+    const out = [];
+    const push = (t, rt) => {
+      const last = out[out.length - 1];
+      if (!rt && last && !last.rt) last.text += t;
+      else out.push({ text: t, rt });
+    };
+    let at = 0;
+    let m;
+    KANJI.lastIndex = 0;
+    while ((m = KANJI.exec(s))) {
+      if (m.index > at) push(s.slice(at, m.index), '');
+      const run = m[0];
+      const end = m.index + run.length;
+      const v = lookup(dict || {}, run, s.slice(end));
+      if (typeof v === 'string') push(run, v);
+      else if (Array.isArray(v) && v.length === run.length) [...run].forEach((c, i) => push(c, v[i]));
+      else {
+        [...run].forEach((c, i) => {
+          const one = lookup(dict || {}, c, i === run.length - 1 ? s.slice(end) : '');
+          push(c, typeof one === 'string' ? one : '');
+        });
+      }
+      at = end;
+    }
+    if (at < s.length) push(s.slice(at), '');
+    return out;
+  }
+
   function omakase(hints, hint) {
     const list = (hints[hint] && hints[hint].words) || ['なにか'];
     return list[Math.floor(Math.random() * list.length)];
@@ -77,7 +117,7 @@
     return out;
   }
 
-  const api = { MIN, MAX, LINES, shuffle, blanksFor, pickProgram, assign, hintOf, splitLine, omakase, judge, roundPoints, readOrder };
+  const api = { MIN, MAX, LINES, shuffle, blanksFor, pickProgram, assign, hintOf, splitLine, rubyParts, omakase, judge, roundPoints, readOrder };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.KanpeEngine = api;
 })(typeof window !== 'undefined' ? window : globalThis);
