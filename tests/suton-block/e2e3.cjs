@@ -97,6 +97,52 @@ const { check, sleep, text, visible, waitScreen, waitFor, key, fitsHeight, overf
   await P.page.click('.sb-padbtn[data-act="drop"]');
   check('S21 画面のボタンでも置ける', true);
 
+  // ── 左右の押しっぱなし（新しいひとりの画面で。盤の下半分のマスの色で、置いた列を見る）──
+  const K = await L.newClient('shift');
+  await L.open(K);
+  await K.page.click('#btnGoSolo');
+  await waitScreen(K, 'solo');
+  await K.page.click('#btnSoloStart');
+  await waitScreen(K, 'play');
+  await sleep(400);
+  const lowerGrid = () => K.page.$eval('#board', (c) => {
+    const ctx = c.getContext('2d'); const out = [];
+    for (let r = 10; r < 20; r++) for (let x = 0; x < 10; x++) {
+      out.push(ctx.getImageData(Math.floor((x + 0.5) * c.width / 10), Math.floor((r + 0.5) * c.height / 20), 1, 1).data.join(','));
+    }
+    return out;
+  });
+  const emptyCell = (await lowerGrid())[99];
+  const placedCols = async (fn) => {
+    const before = await lowerGrid();
+    await fn();
+    await K.page.keyboard.press('Space');
+    await sleep(120);
+    const cols = new Set();
+    (await lowerGrid()).forEach((v, i) => { if (v !== before[i] && before[i] === emptyCell) cols.add(i % 10); });
+    return [...cols].sort((a, b) => a - b);
+  };
+  const holdKey = async (k, ms) => { await K.page.keyboard.down(k); await sleep(ms); await K.page.keyboard.up(k); };
+  const tap = await placedCols(() => holdKey('ArrowLeft', 60));
+  check('S22 左を短く押すと1マスだけ（待ちの間はくり返さない）', tap[0] >= 2 && tap[0] <= 3, tap);
+  const longL = await placedCols(() => holdKey('ArrowLeft', 450));
+  check('S23 左を0.45秒押しっぱなしにすると、かべまで動く（OS のくり返しを待たない）', longL[0] === 0, longL);
+  const longR = await placedCols(() => holdKey('ArrowRight', 450));
+  check('S24 右も同じ', longR[longR.length - 1] === 9, longR);
+  const both = await placedCols(async () => {
+    await K.page.keyboard.down('ArrowLeft'); await sleep(40);
+    await K.page.keyboard.down('ArrowRight'); await sleep(450);
+    await K.page.keyboard.up('ArrowRight'); await sleep(450);
+    await K.page.keyboard.up('ArrowLeft');
+  });
+  check('S25 左を押したまま右を押してはなすと、左へもどる', both[0] === 0, both);
+  const padR = await placedCols(async () => {
+    const box = await (await K.page.$('.sb-padbtn[data-act="right"]')).boundingBox();
+    await K.page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await K.page.mouse.down(); await sleep(450); await K.page.mouse.up();
+  });
+  check('S26 画面のボタンも0.45秒で右のかべまで', padR[padR.length - 1] === 9, padR);
+
   // ── マウス（ルームで、盤をルームの記録と照らし合わせる）──
   const M = await L.newClient('mouse', { viewport: { width: 1000, height: 820 } });
   const code = await L.createRoom(M, 'そら');
