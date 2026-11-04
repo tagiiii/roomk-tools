@@ -64,6 +64,23 @@
   color: #fff;
 }
 
+/* ── 名前欄（任意）── */
+.ks-names {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px 12px;
+}
+.ks-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.ks-name .ks-pawn { flex-shrink: 0; }
+.ks-name__input { min-width: 0; }
+@media (max-width: 480px) {
+  .ks-names { grid-template-columns: 1fr; }
+}
+
 /* ── テーマ選択 ── */
 .ks-themes {
   display: grid;
@@ -117,6 +134,8 @@
 .ks-pawn--1 { background: #E08E45; }
 .ks-pawn--2 { background: #5A8F4A; }
 .ks-pawn--3 { background: #B5476B; }
+.ks-pawn--4 { background: #5B5FA8; }
+.ks-pawn--5 { background: #8C6A3F; }
 
 /* ── ゲーム画面：プレイヤーインジケーター ── */
 .ks-indicator {
@@ -349,6 +368,240 @@
   color: var(--color-text);
   margin-bottom: 24px;
 }
+
+/* ── 画面の切り替え ── */
+.ks-screen[hidden] { display: none; }
+
+/* ── トップ ── */
+.ks-top {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.ks-top__lead {
+  color: var(--color-text);
+  line-height: 1.7;
+}
+.ks-top__notes {
+  margin: 0 0 8px;
+  padding-left: 1.3em;
+  color: var(--color-muted);
+  font-size: var(--font-size-sub);
+  line-height: 1.7;
+}
+
+/* ── 見出しと弱いボタン ── */
+.ks-subhead {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.ks-subhead__title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+.ks-quiet-btn {
+  background: none;
+  border: none;
+  padding: 6px 4px;
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--color-muted);
+  text-decoration: underline;
+  cursor: pointer;
+}
+.ks-quiet-btn:hover { color: var(--color-primary); }
+
+/* ── 名前・ルームコードの入力 ── */
+.ks-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.ks-form__label {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+.ks-form__code {
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+}
+.ks-form__hint {
+  font-size: var(--font-size-sub);
+  color: var(--color-muted);
+  margin-top: 6px;
+}
+.ks-form__error {
+  color: #B3261E;
+  font-size: 14px;
+  font-weight: 600;
+}
+.ks-form__error[hidden] { display: none; }
+
+/* ── ルームバー ── */
+.ks-roombar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  color: var(--color-primary);
+  background: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 8px 12px;
+  margin-bottom: 18px;
+}
+.ks-roombar[hidden] { display: none; }
+.ks-roombar strong {
+  font-size: 1.2rem;
+  letter-spacing: 0.13em;
+}
+
+/* ── 待合室 ── */
+.ks-panel__title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-primary);
+  margin-bottom: 6px;
+}
+.ks-panel__sub {
+  font-size: var(--font-size-sub);
+  color: var(--color-muted);
+  margin: 6px 0;
+}
+.ks-people {
+  list-style: none;
+  margin: 10px 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.ks-people__item {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #EEF3F5;
+  border-radius: 10px;
+}
+.ks-people__name {
+  font-weight: 700;
+  color: var(--color-primary);
+}
+.ks-people__item .ks-quiet-btn { margin-left: auto; }
+.ks-tag {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-muted);
+  background: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  padding: 1px 8px;
+}
+.ks-check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-text);
+  cursor: pointer;
+  margin-bottom: 20px;
+}
+.ks-check input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--color-accent);
+}
+.ks-proxyadd {
+  display: flex;
+  gap: 8px;
+}
+.ks-proxyadd .form-input { min-width: 0; }
+.ks-proxyadd .btn {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.ks-note {
+  text-align: center;
+  font-size: var(--font-size-sub);
+  color: var(--color-muted);
+  margin-top: 10px;
+}
+.ks-note:empty { display: none; }
+#screen-waiting > .card,
+#hostWaitingTools .card { margin-bottom: 16px; }
+
+/* ── ルームのゲーム画面 ── */
+.ks-turn {
+  text-align: center;
+  font-weight: 700;
+  color: var(--color-primary);
+  margin: -6px 0 14px;
+}
+.ks-turn[hidden] { display: none; }
+.ks-stage[hidden] { display: none; }
+.ks-stage .ks-modal {
+  margin: 0 auto 18px;
+  box-shadow: 0 4px 16px rgba(28, 63, 94, 0.15);
+  border: 2px solid var(--color-accent);
+}
+.ks-stage .ks-modal[hidden] { display: none; }
+.ks-player-label__name { white-space: nowrap; }
+.ks-player-label .ks-tag { font-size: 11px; }
+.ks-modal__wait {
+  font-size: var(--font-size-sub);
+  color: var(--color-muted);
+  margin-bottom: 14px;
+}
+.ks-modal__wait[hidden],
+.ks-modal__actions[hidden] { display: none; }
+.ks-choice:disabled {
+  cursor: default;
+}
+.ks-choice:disabled:hover {
+  border-color: var(--color-border);
+  background: #fff;
+  color: var(--color-text);
+}
+.ks-choice.is-chosen,
+.ks-choice.is-chosen:disabled:hover {
+  border-color: var(--color-accent);
+  background: #E8F1F3;
+  color: var(--color-primary);
+  box-shadow: inset 0 0 0 1px var(--color-accent);
+}
+#btn-roll[hidden] { display: none; }
+
+/* ── ホストの切断 ── */
+.ks-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(18, 37, 54, 0.8);
+}
+.ks-overlay[hidden] { display: none; }
+.ks-overlay__panel {
+  background: #fff;
+  border-radius: 14px;
+  padding: 28px;
+  max-width: 420px;
+  text-align: center;
+}
+.ks-overlay__panel h2 {
+  color: var(--color-primary);
+  font-size: 1.2rem;
+  margin-bottom: 10px;
+}
+.ks-overlay__panel p { margin-bottom: 16px; }
 
 /* ── レスポンシブ ── */
 @media (max-width: 600px) {
