@@ -173,7 +173,8 @@ function clearTimers() {
 const $ = (id) => document.getElementById(id);
 
 // ── 設定画面 ──
-const settings = { playerCount: 2, totalSquares: 15 };
+const settings = { playerCount: 2, totalSquares: 15, names: ['', '', '', ''] };
+const NAME_MAX = 8;
 
 function buildToggle(containerId, options, selectedValue, onChange) {
   const el = $(containerId);
@@ -202,12 +203,38 @@ function buildToggle(containerId, options, selectedValue, onChange) {
   });
 }
 
+// 名前欄（任意）。人数を変えても入れた名前は残す
+function renderNameInputs() {
+  const el = $('player-names');
+  el.innerHTML = '';
+  for (let i = 0; i < settings.playerCount; i++) {
+    const row = document.createElement('label');
+    row.className = 'ks-name';
+    const pawn = document.createElement('span');
+    pawn.className = `ks-pawn ks-pawn--${i}`;
+    pawn.textContent = i + 1;
+    row.appendChild(pawn);
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'form-input ks-name__input';
+    input.maxLength = NAME_MAX;
+    input.autocomplete = 'off';
+    input.placeholder = `プレイヤー${i + 1}`;
+    input.setAttribute('aria-label', `${i + 1}人目の名前`);
+    input.value = settings.names[i];
+    input.addEventListener('input', () => { settings.names[i] = input.value; });
+    row.appendChild(input);
+    el.appendChild(row);
+  }
+}
+
 function initSettings() {
   buildToggle('player-count',
     [1, 2, 3, 4].map((n) => ({ value: n, label: `${n}人` })),
     settings.playerCount,
-    (v) => { settings.playerCount = v; }
+    (v) => { settings.playerCount = v; renderNameInputs(); }
   );
+  renderNameInputs();
   buildToggle('square-count',
     [10, 15, 20].map((n) => ({ value: n, label: `${n}マス` })),
     settings.totalSquares,
@@ -249,7 +276,8 @@ function startGame() {
 
   const players = [];
   for (let i = 0; i < settings.playerCount; i++) {
-    players.push({ name: `プレイヤー${i + 1}`, pos: 0 });
+    const name = settings.names[i].trim().slice(0, NAME_MAX);
+    players.push({ name: name || `プレイヤー${i + 1}`, pos: 0 });
   }
 
   state.players = players;

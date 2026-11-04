@@ -27,6 +27,11 @@
         </div>
 
         <div class="ks-field">
+          <span class="ks-field__label">名前（入れなくてもOK・8文字まで）</span>
+          <div class="ks-names" id="player-names"></div>
+        </div>
+
+        <div class="ks-field">
           <span class="ks-field__label">マス数</span>
           <div class="ks-toggle" id="square-count" role="radiogroup" aria-label="マス数"></div>
         </div>
@@ -120,6 +125,7 @@
       sections: [
         { heading: 'はじめかた', items: [
           '何人であそぶか・マス数・テーマを選ぶ',
+          '名前を入れたいときは、名前の欄に入れる（入れないときは「プレイヤー1」のように出る）',
           '「ゲームスタート」を押す',
         ] },
         { heading: 'すすめかた', items: [
