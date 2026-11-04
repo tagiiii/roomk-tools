@@ -168,7 +168,8 @@
 /* ── ボード（蛇行レイアウト）── */
 .ks-board {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  /* minmax(0, 1fr): コマが集まったマスがあっても、列の幅を同じに保つ（盤が画面からはみ出さないように） */
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 10px;
   justify-content: center;
   background: var(--color-surface);
@@ -191,6 +192,11 @@
   justify-content: flex-start;
   position: relative;
   padding-top: 4px;
+  /* コマとマスの番号は、マスの幅に合わせて小さくする（6人が同じマスにいても正方形に収まるように） */
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  container-type: inline-size;
 }
 .ks-square.is-start {
   background: #DEEBE8;
@@ -202,6 +208,7 @@
 }
 .ks-square__num {
   font-size: 11px;
+  font-size: min(11px, 20cqi);
   font-weight: 700;
   color: var(--color-muted);
   line-height: 1;
@@ -210,6 +217,7 @@
 .ks-square.is-start .ks-square__num {
   color: var(--color-primary);
   font-size: 14px;
+  font-size: min(14px, 22cqi);
 }
 .ks-square__pawns {
   display: flex;
@@ -222,6 +230,10 @@
   width: 20px;
   height: 20px;
   font-size: 11px;
+  /* 3つで1段・2段で6人分。せまいマスでは小さくする */
+  width: min(20px, 30cqi);
+  height: min(20px, 30cqi);
+  font-size: min(11px, 17cqi);
 }
 
 /* ── サイコロエリア ── */
