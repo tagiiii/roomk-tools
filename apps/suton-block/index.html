@@ -8,13 +8,13 @@
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
   <link rel="stylesheet" href="../shared/css/design-system.css">
   <!-- index.html と app.js・engine.js・style.css はセットで変わるので、変えたら ?v= をそろえて上げる -->
-  <link rel="stylesheet" href="style.css?v=20261104">
+  <link rel="stylesheet" href="style.css?v=20261104b">
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <script src="../shared/js/rtdb-utils.js?v=20261005"></script>
   <script src="../shared/js/room-qr.js?v=20261022"></script>
-  <script src="engine.js?v=20261104"></script>
+  <script src="engine.js?v=20261104b"></script>
 </head>
 <body>
 
@@ -25,7 +25,7 @@
       <p class="sb-panel__lead">上から落ちてくるブロックを、回してすき間に入れる。横1段がうまると消える。ブロックは4マスの7種類。</p>
       <ul class="sb-panel__notes">
         <li>盤がいっぱいになっても、からにしてつづけられるよ</li>
-        <li>ルームでは、みんな同じ順番でブロックが出る。時間内に何段消せるかくらべよう</li>
+        <li>ルームでは、みんな同じ順番でブロックが出る。時間内に何段消せるかくらべるか、じゃまを送りあって対戦しよう</li>
       </ul>
       <div class="sb-panel__actions">
         <button type="button" class="btn btn-primary btn-full" id="btnGoCreate">ルームを作る</button>
@@ -144,8 +144,25 @@
         <label class="sb-check"><input type="checkbox" id="hostPlays" checked><span>ホストもあそぶ</span></label>
         <p class="sb-note sb-note--tight">外すと、ホストの画面はあそぶ人の盤をならべて見る画面になる。</p>
         <fieldset class="sb-fieldset mt-md">
+          <legend class="sb-legend">あそびかた</legend>
+          <div class="sb-seg sb-seg--2">
+            <label class="sb-seg__opt"><input type="radio" name="roomMode" value="lines" checked><span>段の数をくらべる</span></label>
+            <label class="sb-seg__opt"><input type="radio" name="roomMode" value="battle"><span>対戦</span></label>
+          </div>
+          <p id="modeNote" class="sb-note sb-note--tight">時間内に消した段の数をくらべる。</p>
+        </fieldset>
+        <fieldset class="sb-fieldset mt-md" id="fsFull" hidden>
+          <legend class="sb-legend">盤がいっぱいになったら</legend>
+          <div class="sb-seg sb-seg--2">
+            <label class="sb-seg__opt"><input type="radio" name="roomFull" value="out" checked><span>その人はここまで</span></label>
+            <label class="sb-seg__opt"><input type="radio" name="roomFull" value="clear"><span>からにしてつづける</span></label>
+          </div>
+          <p class="sb-note sb-note--tight">ここまで: のこった人が上。からにしてつづける: 時間内に送ったじゃまの数が多い人が上。</p>
+        </fieldset>
+        <fieldset class="sb-fieldset mt-md">
           <legend class="sb-legend">時間</legend>
-          <div class="sb-seg sb-seg--3">
+          <div class="sb-seg sb-seg--3" id="timeSeg">
+            <label class="sb-seg__opt" id="timeNone" hidden><input type="radio" name="roomTime" value="0"><span>なし</span></label>
             <label class="sb-seg__opt"><input type="radio" name="roomTime" value="120"><span>2分</span></label>
             <label class="sb-seg__opt"><input type="radio" name="roomTime" value="180" checked><span>3分</span></label>
             <label class="sb-seg__opt"><input type="radio" name="roomTime" value="300"><span>5分</span></label>
@@ -159,7 +176,7 @@
             <label class="sb-seg__opt"><input type="radio" name="roomSpeed" value="fast"><span>はやい</span></label>
           </div>
         </fieldset>
-        <fieldset class="sb-fieldset mt-md">
+        <fieldset class="sb-fieldset mt-md" id="fsJama">
           <legend class="sb-legend">じゃまブロック</legend>
           <div class="sb-seg sb-seg--2">
             <label class="sb-seg__opt"><input type="radio" name="roomJama" value="off" checked><span>なし</span></label>
@@ -206,7 +223,7 @@
             <canvas id="next" class="sb-next" aria-label="つぎのブロック"></canvas>
           </div>
           <div class="sb-box">
-            <p class="sb-box__label">消した段</p>
+            <p class="sb-box__label" id="playLinesLabel">消した段</p>
             <p id="playLines" class="sb-lines">0</p>
           </div>
           <div id="jamaBox" class="sb-box" hidden>
@@ -274,7 +291,7 @@
     </div>
   </div>
 
-  <script type="module" src="app.js?v=20261104"></script>
+  <script type="module" src="app.js?v=20261104b"></script>
   <script src="../shared/js/stats.js?v=1" defer></script>
   <script src="../shared/js/howto.js"></script>
   <script>
@@ -303,9 +320,13 @@
           '出っぱりの下のすき間にも、回してもぐりこませられる',
         ] },
         { heading: 'ルーム', items: [
-          'みんな同じ順番でブロックが出る。時間内に消した段の数をくらべる',
-          '盤がいっぱいになっても、からにしてつづく',
+          'みんな同じ順番でブロックが出る。「あそびかた」は、段の数をくらべるか、対戦かをホストが選ぶ',
+          '段の数をくらべる: 時間内に消した段の数をくらべる。盤がいっぱいになっても、からにしてつづく',
           '「じゃまブロック」ありのときは、2段いじょういっしょに消すと、となりの人の盤の下に段が入る。自分も段を消すと、来るじゃまをへらせる',
+          '対戦: 消すと、つぎの人の盤の下にじゃまが入る。2段で1、3段で2、4段で4。T を回し入れて消すと、1段で2・2段で4・3段で6。4段や回し入れを、ふつうの消し方をはさまずにつづけると1多い。つづけて消すと、2回目から少しずつ多くなる。盤が全部消えると10',
+          '来るじゃまは、消して送るぶんで先にへらせる。消さずに置いたとき、のこりが盤の下から入る',
+          '対戦で「その人はここまで」のときは、盤がいっぱいになった人から止まり、のこった人が上。「からにしてつづける」のときは、時間内に送ったじゃまの数をくらべる',
+          '結果には、盤をからにした回数も出る',
         ] },
       ],
     });

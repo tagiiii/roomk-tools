@@ -104,6 +104,16 @@
   .demo-cap b{ color:var(--acc); font-weight:900; }
   .side{ display:grid; grid-template-columns:auto 1fr; gap:40px; align-items:center; height:100%; }
   .grid2{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .atk{ display:grid; grid-template-columns:1fr 1fr; gap:12px 16px; }
+  .atk__i{ display:flex; align-items:center; justify-content:space-between; gap:14px; background:var(--white); border:1.5px solid var(--line); border-radius:14px; padding:14px 22px; }
+  .atk__t{ font-size:23px; font-weight:900; color:var(--ink); line-height:1.35; }
+  .atk__t small{ display:block; font-size:17px; font-weight:700; color:var(--ink-soft); margin-top:2px; }
+  .atk__n{ flex:none; font-size:24px; font-weight:900; color:var(--acc); white-space:nowrap; }
+  .mode{ background:var(--white); border:1.5px solid var(--line); border-radius:18px; padding:22px 26px; display:flex; flex-direction:column; gap:10px; }
+  .mode__t{ display:flex; align-items:center; gap:12px; font-size:27px; font-weight:900; color:var(--ink); }
+  .mode__t .material-symbols-rounded{ width:46px; height:46px; border-radius:12px; background:var(--acc-tint); color:var(--acc); display:flex; align-items:center; justify-content:center; font-size:28px; }
+  .mode__d{ font-size:20px; color:var(--ink-soft); line-height:1.55; }
+  .mode__d b{ color:var(--acc); font-weight:900; }
 
   /* 操作ボタン */
   .pad{ display:grid; grid-template-columns:repeat(4, 1fr); gap:16px; }
@@ -373,16 +383,20 @@ const SLIDES = [
     note:'回すときのこつだよ。\n回せないときは、少しずれて回る。かべぎわでも回せるよ。\n出っぱりの下のすき間にも、回してもぐりこませられる。\n「とっておく」は、いまのブロックを1つしまっておけるボタン。とっておいたものと入れかえて出せるよ。使えるのは、1つのブロックにつき1回。' },
 
   /* 7 */ { type:'content', accent:'blue', section:'ルームであそぶ', sectionEn:'room',
-    headline:'みんなで<span class="hl">消した段の数</span>をくらべる',
-    body:`<div class="rows">
-      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">format_list_numbered</span></div><div><div class="row__t">みんな同じ順番でブロックが出る</div><div class="row__d">「はじめる」のあと、3・2・1 で落ちはじめるよ</div></div></div>
-      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">timer</span></div><div><div class="row__t">時間（2・3・5分）のうちに、消した段の数をくらべる</div><div class="row__d">結果は、順位と段の数で出るよ</div></div></div>
-      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">restart_alt</span></div><div><div class="row__t">盤がいっぱいになっても、からにしてつづく</div><div class="row__d">ルームでは、とちゅうでぬけることはないよ</div></div></div>
+    headline:'<span class="hl">段の数をくらべる</span>か、<span class="hl">対戦</span>する',
+    body:`<div class="grid2">
+      <div class="mode"><div class="mode__t"><span class="material-symbols-rounded">table_rows</span>①段の数をくらべる</div>
+        <div class="mode__d">時間（2・3・5分）のうちに、<b>消した段の数</b>をくらべる。盤がいっぱいになっても、からにしてつづく</div></div>
+      <div class="mode"><div class="mode__t"><span class="material-symbols-rounded">swords</span>②対戦</div>
+        <div class="mode__d">消すと、つぎの人の盤に<b>じゃま</b>が入る。来るじゃまにたえながら、じゃまを送りあう</div></div>
+    </div>
+    <div class="rows mt">
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">format_list_numbered</span></div><div><div class="row__t">どちらも、みんな同じ順番でブロックが出る</div><div class="row__d">「はじめる」のあと、3・2・1 で落ちはじめるよ。どちらにするかは、ホストが待合室で選ぶ</div></div></div>
     </div>`,
-    note:'ルームであそぶときは、みんな同じ順番でブロックが出るよ。「はじめる」のあと、3・2・1 で落ちはじめる。\n時間は2分・3分・5分のどれか。そのあいだに消した段の数をくらべるよ。結果は順位と段の数で出る。\n盤がいっぱいになっても、からにしてつづくから、とちゅうでぬけることはないよ。' },
+    note:'ルームのあそびかたは2つあるよ。\n①段の数をくらべる … 時間は2分・3分・5分のどれか。そのあいだに消した段の数をくらべるよ。盤がいっぱいになっても、からにしてつづく。\n②対戦 … 段を消すと、つぎの人の盤にじゃまが入る。来るじゃまにたえながら、じゃまを送りあうよ。\nどちらも、みんな同じ順番でブロックが出る。「はじめる」のあと、3・2・1 で落ちはじめるよ。どちらにするかは、ホストが待合室で選ぶ。' },
 
   /* 8 */ { type:'content', accent:'coral', section:'じゃまブロック', sectionEn:'jama block',
-    headline:'じゃまブロック「<span class="hl">あり</span>」のとき',
+    headline:'①で、じゃまブロック「<span class="hl">あり</span>」のとき',
     body:`<div class="side">
       ${miniBoard(JAMA, { small:true })}
       <div class="rows">
@@ -391,19 +405,44 @@ const SLIDES = [
         <div class="row"><div class="row__ic"><span class="material-symbols-rounded">remove_circle</span></div><div><div class="row__t">自分が段を消すと、来るじゃまをへらせる</div><div class="row__d">はじめは「なし」。ホストが待合室で選ぶよ</div></div></div>
       </div>
     </div>`,
-    note:'じゃまブロックを「あり」にしたときのルールだよ。\n2段いじょういっしょに消すと、となりの人の盤の下に、1列あいた段が入る。となりの人は、ならびで次の人だよ。\n自分に来るじゃまは、横の「来るじゃま」に出て、次に段を消さずに置いたときに入る。\n自分が段を消すと、来るじゃまをへらせるよ。\nはじめは「なし」になっていて、ホストが待合室で選ぶよ。' },
+    note:'①段の数をくらべるで、じゃまブロックを「あり」にしたときのルールだよ。\n2段いじょういっしょに消すと、となりの人の盤の下に、1列あいた段が入る。となりの人は、ならびで次の人だよ。\n自分に来るじゃまは、横の「来るじゃま」に出て、次に段を消さずに置いたときに入る。\n自分が段を消すと、来るじゃまをへらせるよ。\nはじめは「なし」になっていて、ホストが待合室で選ぶよ。' },
 
-  /* 9 */ { type:'content', accent:'teal', section:'待合室の設定', sectionEn:'settings',
+  /* 9 */ { type:'content', accent:'blue', section:'対戦', sectionEn:'versus', num:'1',
+    headline:'消し方で、<span class="hl">送るじゃま</span>がかわる',
+    body:`<div class="atk">
+      <div class="atk__i"><div class="atk__t">2段・3段・4段いっしょに消す</div><div class="atk__n">1・2・4段</div></div>
+      <div class="atk__i"><div class="atk__t">T を回して入れて消す<small>回し入れ。1段・2段・3段</small></div><div class="atk__n">2・4・6段</div></div>
+      <div class="atk__i"><div class="atk__t">4段か回し入れを、つづけて出す<small>あいだにふつうの消し方をはさまない</small></div><div class="atk__n">＋1段</div></div>
+      <div class="atk__i"><div class="atk__t">置くたびに、つづけて消す<small>2回目から少しずつ多くなる</small></div><div class="atk__n">＋0〜5段</div></div>
+      <div class="atk__i"><div class="atk__t">盤が全部消えた</div><div class="atk__n">10段</div></div>
+      <div class="atk__i"><div class="atk__t">来るじゃまがあるとき<small>送るぶんで先にへらす。のこりは、消さずに置いたときに入る</small></div><div class="atk__n">へらせる</div></div>
+    </div>`,
+    note:'対戦では、消し方で、つぎの人に送るじゃまの数がかわるよ。\n2段いっしょに消すと1段、3段で2段、4段で4段。1段だけだと送らない。\nT のブロックを回してすき間に入れて消すと、回し入れ。1段で2段、2段で4段、3段で6段送れる。\n4段消しや回し入れを、あいだにふつうの消し方をはさまずにつづけると、1段多くなる。\n置くたびにつづけて消すと、2回目から少しずつ多くなるよ。\n盤が全部消えたら10段！\n自分に来るじゃまがあるときは、送るぶんで先にへらせる。のこったじゃまは、消さずに置いたときに盤の下から入るよ。' },
+
+  /* 10 */ { type:'content', accent:'coral', section:'対戦', sectionEn:'versus', num:'2',
+    headline:'盤が<span class="hl">いっぱい</span>になったら',
+    body:`<div class="grid2">
+      <div class="mode"><div class="mode__t"><span class="material-symbols-rounded">flag</span>その人はここまで</div>
+        <div class="mode__d">いっぱいになった人は、そこで止まって、ほかの人の様子を見て待つ。<b>のこった人が上</b>。のこりが1人になったらおしまい。時間は なし・2・3・5分</div></div>
+      <div class="mode"><div class="mode__t"><span class="material-symbols-rounded">restart_alt</span>からにしてつづける</div>
+        <div class="mode__d">盤がからになって、そのままつづく。時間（2・3・5分）のうちに、<b>送ったじゃまの数</b>をくらべる</div></div>
+    </div>
+    <div class="demo-cap">どちらにするかは、ホストが待合室で選ぶよ。結果には、<b>盤をからにした回数</b>も出る。</div>`,
+    note:'対戦で、盤がいっぱいになったときのルールは2つあるよ。ホストが待合室で選ぶ。\n「その人はここまで」… いっぱいになった人は、そこで止まって、ほかの人の様子を見て待つよ。のこった人が上。のこりが1人になったらおしまい。時間は、なし・2分・3分・5分から選べる。\n「からにしてつづける」… 盤がからになって、そのままつづく。時間のうちに、送ったじゃまの数をくらべるよ。\n結果には、盤をからにした回数も出るよ。' },
+
+  /* 11 */ { type:'content', accent:'teal', section:'待合室の設定', sectionEn:'settings',
     headline:'待合室で<span class="hl">ホストが選ぶ</span>こと',
     body:`<div class="grid2">
       <div class="row"><div class="row__ic"><span class="material-symbols-rounded">sports_esports</span></div><div><div class="row__t">「ホストもあそぶ」</div><div class="row__d">外すと、ホストの画面は、あそぶ人の盤をならべて見る画面になる</div></div></div>
-      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">timer</span></div><div><div class="row__t">時間</div><div class="row__d">2分・3分・5分</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">swords</span></div><div><div class="row__t">あそびかた</div><div class="row__d">段の数をくらべる・対戦（はじめは 段の数をくらべる）</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">timer</span></div><div><div class="row__t">時間</div><div class="row__d">2分・3分・5分（対戦の「ここまで」は なし も）</div></div></div>
       <div class="row"><div class="row__ic"><span class="material-symbols-rounded">speed</span></div><div><div class="row__t">落ちる速さ</div><div class="row__d">ゆっくり・ふつう・はやい</div></div></div>
-      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">view_week</span></div><div><div class="row__t">じゃまブロック</div><div class="row__d">なし・あり（はじめは なし）</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">view_week</span></div><div><div class="row__t">じゃまブロック（①のとき）</div><div class="row__d">なし・あり（はじめは なし）</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">flag</span></div><div><div class="row__t">盤がいっぱいになったら（②のとき）</div><div class="row__d">その人はここまで・からにしてつづける</div></div></div>
     </div>`,
-    note:'待合室では、ホストがこんなことを選ぶよ。\n「ホストもあそぶ」… 外すと、ホストの画面は、あそぶ人の盤をならべて見る画面になる。\n時間 … 2分・3分・5分。\n落ちる速さ … ゆっくり・ふつう・はやい。\nじゃまブロック … なし・あり。はじめは「なし」だよ。' },
+    note:'待合室では、ホストがこんなことを選ぶよ。\n「ホストもあそぶ」… 外すと、ホストの画面は、あそぶ人の盤をならべて見る画面になる。\nあそびかた … 段の数をくらべるか、対戦か。はじめは「段の数をくらべる」。\n時間 … 2分・3分・5分。対戦の「ここまで」のときは、なしも選べる。\n落ちる速さ … ゆっくり・ふつう・はやい。\nじゃまブロック … 段の数をくらべるときだけ。なし・あり。はじめは「なし」だよ。\n盤がいっぱいになったら … 対戦のときだけ。その人はここまで、か、からにしてつづける。' },
 
-  /* 10 */ { type:'content', accent:'coral', section:'はじめかた', sectionEn:'how to join',
+  /* 12 */ { type:'content', accent:'coral', section:'はじめかた', sectionEn:'how to join',
     headline:'名前 → ルームコード →<br>「参加する」',
     body:`<div class="rows">
       <div class="row"><div class="row__ic"><span class="material-symbols-rounded">login</span></div><div><div class="row__t">「ルームに参加する」を押す</div><div class="row__d">名前、ルームコード（6文字）の順に入れて「参加する」</div></div></div>
@@ -412,24 +451,24 @@ const SLIDES = [
     </div>`,
     note:'参加のしかただよ。\n「ルームに参加する」を押して、名前、ルームコード（6文字）の順に入れて「参加する」。\nチャットのリンクからひらいたときは、ルームコードは入っているので名前だけ入れてね。スマホやタブレットの人は、QRコードを読みとってもOK。' },
 
-  /* 11 */ { type:'content', accent:'teal', section:'Q&A', sectionEn:'question & answer',
+  /* 13 */ { type:'content', accent:'teal', section:'Q&A', sectionEn:'question & answer',
     headline:'よくある質問',
     body:`<div class="qa">
-      <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>盤がいっぱいになったら？</div><div class="qa__a"><span class="qa__badge a">A</span>盤がからになって、そのままつづくよ。ひとりであそぶときは「おしまい」にもできる。</div></div>
+      <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>盤がいっぱいになったら？</div><div class="qa__a"><span class="qa__badge a">A</span>ふだんは盤がからになって、そのままつづくよ。対戦の「その人はここまで」のときは、そこで止まって、ほかの人の様子を見て待つ。</div></div>
       <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>ひとりで練習したいときは？</div><div class="qa__a"><span class="qa__badge a">A</span>トップの「ひとりであそぶ」。速さ・時間（なし・2・3・5分）・いっぱいになったら（からにしてつづける／おしまい）を選べるよ。</div></div>
       <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>みんなの盤を画面で見せたいときは？</div><div class="qa__a"><span class="qa__badge a">A</span>ホストのバーの「みんなにみせる画面」。あそぶ人の盤がならぶ、見るだけの画面だよ。</div></div>
     </div>`,
-    note:'よくある質問だよ\nQ. 盤がいっぱいになったら？→ A. 盤がからになって、そのままつづくよ。ひとりであそぶときは「おしまい」にもできる。\nQ. ひとりで練習したいときは？→ A. トップの「ひとりであそぶ」。速さ・時間・いっぱいになったらどうするかを選べるよ。\nQ. みんなの盤を画面で見せたいときは？→ A. ホストのバーの「みんなにみせる画面」。あそぶ人の盤がならぶ、見るだけの画面だよ。' },
+    note:'よくある質問だよ\nQ. 盤がいっぱいになったら？→ A. ふだんは盤がからになって、そのままつづくよ。対戦の「その人はここまで」のときは、そこで止まって、ほかの人の様子を見て待つ。\nQ. ひとりで練習したいときは？→ A. トップの「ひとりであそぶ」。速さ・時間・いっぱいになったらどうするかを選べるよ。\nQ. みんなの盤を画面で見せたいときは？→ A. ホストのバーの「みんなにみせる画面」。あそぶ人の盤がならぶ、見るだけの画面だよ。' },
 
-  /* 12 */ { type:'divider', accent:'blue', icon:'live_help', jp:'質問タイム', en:'any questions?',
+  /* 14 */ { type:'divider', accent:'blue', icon:'live_help', jp:'質問タイム', en:'any questions?',
     sub:'気になることはある？',
     note:'ここまでで、質問がある人はいるかな？\nマイクON か チャットで教えてね！' },
 
-  /* 13 */ { type:'divider', accent:'teal', solid:true, icon:'rocket_launch', jp:'＼ ゲームスタート ／', en:'game start',
+  /* 15 */ { type:'divider', accent:'teal', solid:true, icon:'rocket_launch', jp:'＼ ゲームスタート ／', en:'game start',
     sub:'3・2・1 で落ちはじめるよ！',
     note:'それでは、すとんブロックスタート！\nまずはルームに参加してね。「はじめる」のあと、3・2・1 で落ちはじめるよ。わからなくなったら、いつでも聞いてね' },
 
-  /* 14 */ { type:'divider', accent:'teal', solid:true, icon:'emoji_events', jp:'けっか', en:'result',
+  /* 16 */ { type:'divider', accent:'teal', solid:true, icon:'emoji_events', jp:'けっか', en:'result',
     sub:'おつかれさま！',
     note:'けっか発表！\nおつかれさま。最後にひとことずつ、ふりかえってみよう。' },
 ];
@@ -513,7 +552,7 @@ if(isPresenter){
   const $=(id)=>document.getElementById(id);
   const elCount=$('pvCount'), elTitle=$('pvTitle'), elLead=$('pvLead'), elNote=$('pvNote'), elNext=$('pvNextTitle'), elConn=$('pvConn');
   const btnCopy=$('pvCopy'), btnReset=$('pvReset'), btnPrev=$('pvPrev'), btnNext=$('pvNext');
-  let cur=0; const KEY=(i)=>'sbs_note_'+i;
+  let cur=0; const KEY=(i)=>'sbs_note_v2_'+i; // 2026-11-04 に対戦のスライドを足して番号がずれたので、書きかえたノートの保存先を分けた
   function label(s){
     if(s.type==='title') return 'すとんブロック（タイトル）';
     if(s.type==='divider') return s.jp.replace(/[＼／]/g,'').trim()+'（区切り）';

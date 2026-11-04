@@ -139,6 +139,7 @@ body { background: var(--color-bg); }
 .sb-otherlist li { display: flex; justify-content: space-between; gap: 4px; font-size: 12px; }
 .sb-otherlist__name { font-weight: 700; color: var(--color-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sb-otherlist__lines { color: var(--color-muted); flex: none; font-variant-numeric: tabular-nums; }
+.sb-otherlist li.is-out { opacity: 0.55; }
 .sb-mini { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: 6px; text-align: center; }
 .sb-mini canvas { display: block; margin: 4px auto 0; border-radius: 4px; }
 .sb-mini__name { font-size: 12px; font-weight: 700; color: var(--color-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -167,7 +168,9 @@ body { background: var(--color-bg); }
 .sb-rank { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
 .sb-rank li { display: grid; grid-template-columns: 48px 1fr auto; align-items: center; gap: 8px; padding: 10px 12px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); }
 .sb-rank__no { font-weight: 700; color: var(--color-accent); }
+.sb-rank__who { display: grid; min-width: 0; }
 .sb-rank__name { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sb-rank__sub { font-size: 12px; color: var(--color-muted); }
 .sb-rank__lines { font-weight: 700; color: var(--color-primary); font-variant-numeric: tabular-nums; }
 .sb-rank li.is-me { border: 2px solid var(--color-accent); }
 .sb-solo-result { font-size: 18px; line-height: 1.9; margin: 0; }

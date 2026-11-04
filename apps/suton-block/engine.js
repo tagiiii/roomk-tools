@@ -4,7 +4,8 @@
    ・ブロックは4マスの7種類（I・O・T・S・Z・L・J）。回す・1つとっておく、ができる
    ・回せないときは、向きの組み合わせごとに決まった5通りのずらし方を順に試す（よく知られた回し方と同じ）
    ・横1段がうまったら消える。いっぱいになったら「おしまい」か「からにしてつづける」
-   ・ルームで「じゃまあり」なら、下から1列あいた段（じゃまブロック）が押し上げてくる */
+   ・ルームで「じゃまあり」なら、下から1列あいた段（じゃまブロック）が押し上げてくる
+   ・対戦で送るじゃまの数は、よく知られた対戦の表で決める（attackOf。回し入れ・つづけて大技・れんぞく・全部消す） */
 (function (root, factory) {
   if (typeof module === 'object' && module.exports) module.exports = factory();
   else root.SutonEngine = factory();
@@ -50,6 +51,12 @@
     '3>0': [[0, 0], [1, 0], [-2, 0], [1, 2], [-2, -1]],
     '0>3': [[0, 0], [-1, 0], [2, 0], [-1, -2], [2, 1]],
   };
+  // 対戦で送るじゃまの数（よく知られた対戦の表と同じ）。消した段の数ごと
+  const ATTACK_LINES = [0, 0, 1, 2, 4];       // ふつうに消した
+  const ATTACK_SPIN = [0, 2, 4, 6];           // T を回し入れて消した
+  const ATTACK_MINI = [0, 0, 1];              // 小さな回し入れ（ふつうと同じ数）
+  const ATTACK_COMBO = [0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 4, 5]; // れんぞくで消した回数（1回目が0）ごとに足す。11回目からは5
+  const ATTACK_ALL_CLEAR = 10;                // 盤が全部消えた
   function kicksFor(kind, from, to) {
     if (kind === 'O') return [[0, 0]];
     return (kind === 'I' ? KICKS_I : KICKS_JLSTZ)[from + '>' + to];
@@ -84,6 +91,14 @@
     return { kind: spec.kind, n: s.n, rot: 0, cells: s.cells.map((c) => c.slice()), x: Math.floor((W - s.n) / 2), y: -1 };
   }
 
+  // 盤をからにしてつづける。れんぞく・つづけて大技もそこまで
+  function resetBoard(g) {
+    g.board = emptyBoard();
+    g.resets++;
+    g.b2b = false;
+    g.combo = -1;
+  }
+
   function emptyBoard() {
     const b = [];
     for (let y = 0; y < H; y++) b.push(new Array(W).fill(null));
@@ -115,6 +130,8 @@
       hold: null,       // とっておいたブロック（{ kind }）
       holdUsed: false,  // いまのブロックで、もう「とっておく」を使ったか
       onFull: o.onFull, // 'clear' = からにしてつづける / 'end' = おしまい
+      b2b: false,       // 前に消したのが大技（4段・回し入れ）だったか
+      combo: -1,        // れんぞくで消した回数（消さずに置くと -1 にもどる）
       rand,
     };
     fillQueue(g);
@@ -136,8 +153,7 @@
     g.holdUsed = !!spec;
     if (!fits(g.board, p, p.cells, p.x, p.y)) {
       if (g.onFull === 'end') { g.piece = null; g.over = true; return { full: true }; }
-      g.board = emptyBoard();
-      g.resets++;
+      resetBoard(g);
       g.piece = p;
       return { full: true, cleared: true };
     }
@@ -150,6 +166,7 @@
     if (!p || g.over) return false;
     if (!fits(g.board, p, p.cells, p.x + dx, p.y + dy)) return false;
     p.x += dx; p.y += dy;
+    p.spun = false;
     return true;
   }
 
@@ -161,9 +178,13 @@
     if (dir < 0) cells = rotateCells(rotateCells(cells, p.n), p.n);
     const from = p.rot || 0;
     const to = (from + (dir < 0 ? 3 : 1)) % 4;
-    for (const [kx, ky] of kicksFor(p.kind, from, to)) {
+    const kicks = kicksFor(p.kind, from, to);
+    for (let i = 0; i < kicks.length; i++) {
+      const [kx, ky] = kicks[i];
       if (fits(g.board, p, cells, p.x + kx, p.y + ky)) {
         p.cells = cells; p.rot = to; p.x += kx; p.y += ky;
+        // 最後に回したか・何番目のずらし方で回ったか（回し入れの見分けに使う）
+        p.spun = true; p.kick = i;
         return true;
       }
     }
@@ -178,10 +199,38 @@
     return y;
   }
 
-  // 置いて、うまった段を消し、つぎを出す。消した段数・いっぱいになったかを返す
+  // T を回して入れたか（よく知られた見分け方）。最後の動きが回すで、T のまん中のまわり4すみのうち3つ以上がうまっている。
+  // 出っぱりの側の2すみの片方があいていれば小さな回し入れ（5番目のずらし方で入ったときはふつうの回し入れ）
+  function spinOf(g, p) {
+    if (p.kind !== 'T' || !p.spun) return null;
+    const cx = p.x + 1, cy = p.y + 1;
+    const filled = (x, y) => x < 0 || x >= W || y >= H || (y >= 0 && !!g.board[y][x]);
+    const c = [filled(cx - 1, cy - 1), filled(cx + 1, cy - 1), filled(cx + 1, cy + 1), filled(cx - 1, cy + 1)]; // 左上・右上・右下・左下
+    if (c.filter(Boolean).length < 3) return null;
+    const front = [[0, 1], [1, 2], [2, 3], [3, 0]][p.rot || 0];
+    return (c[front[0]] && c[front[1]]) || p.kick === 4 ? 'spin' : 'mini';
+  }
+
+  // 消した段の数と回し入れから、送るじゃまの数を出す。れんぞく・つづけて大技も、ここで進める
+  function attackOf(g, lines, spin, allClear) {
+    if (!lines) {
+      g.combo = -1;
+      return { attack: 0, b2b: false, combo: -1 };
+    }
+    g.combo++;
+    const big = lines === 4 || !!spin;
+    const b2b = big && g.b2b;
+    g.b2b = big;
+    const base = spin === 'spin' ? ATTACK_SPIN[lines] : spin === 'mini' ? ATTACK_MINI[lines] : ATTACK_LINES[lines];
+    const attack = allClear ? ATTACK_ALL_CLEAR : (base || 0) + (b2b ? 1 : 0) + ATTACK_COMBO[Math.min(g.combo, ATTACK_COMBO.length - 1)];
+    return { attack, b2b, combo: g.combo };
+  }
+
+  // 置いて、うまった段を消し、つぎを出す。消した段数・いっぱいになったか・対戦で送るじゃまの数を返す
   function lock(g) {
     const p = g.piece;
-    if (!p || g.over) return { lines: 0 };
+    if (!p || g.over) return { lines: 0, attack: 0 };
+    const spin = spinOf(g, p);
     const aboveCells = [];
     for (const [cx, cy] of p.cells) {
       const by = p.y + cy;
@@ -204,15 +253,17 @@
       if (ny >= 0) g.board[ny][x] = p.kind;
       else above = true;
     }
+    const allClear = rows.length > 0 && !above && g.board.every((r) => r.every((c) => !c));
+    const atk = attackOf(g, rows.length, spin, allClear);
     let res;
     if (above) {
       // 上にはみ出して置いた（消えても入りきらなかった）＝いっぱい
       if (g.onFull === 'end') { g.piece = null; g.over = true; res = { full: true }; }
-      else { g.board = emptyBoard(); g.resets++; res = Object.assign({ full: true, cleared: true }, spawnOnly(g)); }
+      else { resetBoard(g); res = Object.assign({ full: true, cleared: true }, spawnOnly(g)); }
     } else {
       res = spawn(g);
     }
-    return Object.assign({ lines: rows.length, rows }, res);
+    return Object.assign({ lines: rows.length, rows, spin, allClear }, atk, res);
   }
 
   function spawnOnly(g) {
@@ -243,8 +294,7 @@
     const spill = g.board.slice(0, rows).some((r) => r.some(Boolean));
     if (spill) {
       if (g.onFull === 'end') { g.piece = null; g.over = true; return { full: true }; }
-      g.board = emptyBoard();
-      g.resets++;
+      resetBoard(g);
       return { full: true, cleared: true };
     }
     g.board = g.board.slice(rows);
@@ -266,6 +316,7 @@
     const y = dropY(g);
     const dist = y - g.piece.y;
     g.piece.y = y;
+    if (dist > 0) g.piece.spun = false; // 回したあと落ちたら、回し入れではない
     return Object.assign({ dist }, lock(g));
   }
 
@@ -295,9 +346,12 @@
     g.resets = Math.max(0, Number(s.resets) || 0);
     g.hold = s.hold && SHAPES[s.hold.kind] ? { kind: s.hold.kind } : null;
     g.holdUsed = !!s.holdUsed;
+    g.b2b = s.b2b === true;
+    g.combo = Number.isInteger(s.combo) && s.combo >= -1 ? s.combo : -1;
+    if (s.out === true) { g.piece = null; g.over = true; return g; }
     if (!fits(g.board, g.piece, g.piece.cells, g.piece.x, g.piece.y)) {
       if (g.onFull === 'end') { g.piece = null; g.over = true; }
-      else { g.board = emptyBoard(); g.resets++; }
+      else resetBoard(g);
     }
     return g;
   }
@@ -305,7 +359,7 @@
   return {
     W, H, SHAPES, KINDS, kicksFor,
     rng, makeBag, newPiece, emptyBoard, fits,
-    createGame, spawn, move, rotate, dropY, lock, hardDrop, addGarbage, hold,
+    createGame, spawn, move, rotate, dropY, lock, hardDrop, addGarbage, hold, spinOf, attackOf,
     packBoard, unpackBoard, cellsOf, restoreGame,
   };
 });
