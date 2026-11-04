@@ -2,24 +2,58 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
   <title>興味スゴロク | room-K</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet" />
   <link rel="stylesheet" href="../shared/css/design-system.css" />
-  <link rel="stylesheet" href="style.css" />
+  <!-- index.html と app.js・logic.js・style.css はセットで変わるので、変えたら ?v= をそろえて上げる -->
+  <link rel="stylesheet" href="style.css?v=20261104" />
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+  <script src="../shared/js/rtdb-utils.js?v=20261005"></script>
+  <script src="../shared/js/room-qr.js?v=20261022"></script>
 </head>
 <body>
 
   <div class="wrapper">
 
-    <!-- ============ 設定画面 ============ -->
-    <section class="screen ks-settings" id="screen-settings">
-      <header class="ks-header">
-        <h1 class="ks-header__title">興味スゴロク</h1>
-        <p class="ks-header__sub">サイコロを振ってマスに止まり、お題について話そう</p>
-      </header>
+    <header class="ks-header">
+      <h1 class="ks-header__title">興味スゴロク</h1>
+      <p class="ks-header__sub" id="headerSub">サイコロを振ってマスに止まり、お題について話そう</p>
+    </header>
 
+    <!-- ============ トップ ============ -->
+    <section class="ks-screen" id="screen-top">
+      <div class="card ks-top">
+        <p class="ks-top__lead">サイコロを振ってマスに止まったら、出てきた質問について話すスゴロク。1〜6人で遊べるよ。</p>
+        <ul class="ks-top__notes">
+          <li>ひとりひとりの端末で遊ぶときは「ルームを作る」「ルームに参加する」。自分の番は自分の端末でサイコロを振るよ</li>
+          <li>1台の画面をみんなで見て遊ぶときは「1台の画面であそぶ」</li>
+          <li>答えにくい質問は「別の質問」で変えてOK</li>
+        </ul>
+        <button type="button" class="btn btn-primary btn-full btn-lg" id="btnGoCreate">
+          <span class="material-symbols-rounded" aria-hidden="true">add_home</span>
+          ルームを作る
+        </button>
+        <button type="button" class="btn btn-secondary btn-full" id="btnGoJoin">
+          <span class="material-symbols-rounded" aria-hidden="true">login</span>
+          ルームに参加する
+        </button>
+        <button type="button" class="btn btn-secondary btn-full" id="btnGoLocal">
+          <span class="material-symbols-rounded" aria-hidden="true">tv</span>
+          1台の画面であそぶ
+        </button>
+      </div>
+    </section>
+
+    <!-- ============ 1台の画面：設定 ============ -->
+    <section class="ks-screen ks-settings" id="screen-settings" hidden>
+      <div class="ks-subhead">
+        <button type="button" class="ks-quiet-btn" id="btnSettingsBack">トップへ戻る</button>
+        <h2 class="ks-subhead__title">1台の画面であそぶ</h2>
+      </div>
       <div class="card">
         <div class="ks-field">
           <span class="ks-field__label">何人であそぶ？</span>
@@ -44,95 +78,197 @@
         <div class="error-msg" id="settings-error"></div>
 
         <button class="btn btn-primary btn-full btn-lg" id="btn-start">
-          <span class="material-symbols-rounded">play_arrow</span>
+          <span class="material-symbols-rounded" aria-hidden="true">play_arrow</span>
           ゲームスタート
         </button>
       </div>
     </section>
 
-    <!-- ============ ゲーム画面 ============ -->
-    <section class="screen ks-game" id="screen-game" style="display:none">
-      <header class="ks-header">
-        <h1 class="ks-header__title">興味スゴロク</h1>
-      </header>
+    <!-- ============ ルームを作る ============ -->
+    <section class="ks-screen" id="screen-create" hidden>
+      <div class="ks-subhead">
+        <button type="button" class="ks-quiet-btn" id="btnCreateBack">トップへ戻る</button>
+        <h2 class="ks-subhead__title">ルームを作る</h2>
+      </div>
+      <div class="card ks-form">
+        <label class="ks-form__label" for="hostName">ホストの名前（8文字まで）</label>
+        <input class="form-input" id="hostName" maxlength="8" autocomplete="nickname" />
+        <p class="ks-form__error" id="createError" hidden></p>
+        <button type="button" class="btn btn-primary btn-full" id="btnCreateRoom">ルームを作る</button>
+      </div>
+    </section>
 
+    <!-- ============ ルームに参加する ============ -->
+    <section class="ks-screen" id="screen-join" hidden>
+      <div class="ks-subhead">
+        <button type="button" class="ks-quiet-btn" id="btnJoinBack">トップへ戻る</button>
+        <h2 class="ks-subhead__title">ルームに参加する</h2>
+      </div>
+      <div class="card ks-form">
+        <p class="ks-form__hint" id="joinLinkHint" hidden>リンクからひらいたので、ルームコードは入っているよ。名前を入れて「参加する」を押してね。</p>
+        <label class="ks-form__label" for="guestName">名前（8文字まで）</label>
+        <input class="form-input" id="guestName" maxlength="8" autocomplete="nickname" />
+        <label class="ks-form__label" for="joinCode">ルームコード（6文字）</label>
+        <input class="form-input ks-form__code" id="joinCode" maxlength="6" autocorrect="off" autocapitalize="characters" autocomplete="off" spellcheck="false" />
+        <p class="ks-form__error" id="joinError" hidden></p>
+        <button type="button" class="btn btn-primary btn-full" id="btnJoinRoom">参加する</button>
+      </div>
+    </section>
+
+    <!-- ============ ルームバー ============ -->
+    <div class="ks-roombar" id="roomBar" hidden>
+      <span class="ks-roombar__code">ルーム <strong id="roomCodeLabel"></strong></span>
+      <button type="button" class="btn btn-ghost btn-sm" id="btnCopyCode">コードをコピー</button>
+      <button type="button" class="btn btn-ghost btn-sm" id="btnCopyLink">リンクをコピー</button>
+      <button type="button" class="btn btn-ghost btn-sm" id="btnShowQr">QRコードを出す</button>
+      <button type="button" class="btn btn-ghost btn-sm" id="btnLeave">退出する</button>
+    </div>
+
+    <!-- ============ 待合室 ============ -->
+    <section class="ks-screen" id="screen-waiting" hidden>
+      <div class="card">
+        <h2 class="ks-panel__title">みんながそろうのを待っています</h2>
+        <p class="ks-panel__sub" id="waitingCount"></p>
+        <ul class="ks-people" id="waitingPlayers"></ul>
+        <p class="ks-panel__sub" id="waitingSettings"></p>
+      </div>
+      <div id="hostWaitingTools" hidden>
+        <div class="card">
+          <label class="ks-check" for="hostPlays">
+            <input type="checkbox" id="hostPlays" />
+            <span>自分もプレイヤーとして参加する</span>
+          </label>
+
+          <div class="ks-field">
+            <span class="ks-field__label">マス数</span>
+            <div class="ks-toggle" id="roomSquares" role="radiogroup" aria-label="マス数"></div>
+          </div>
+
+          <div class="ks-field">
+            <span class="ks-field__label">テーマ（2つ以上選ぼう）</span>
+            <div class="ks-themes" id="roomThemes"></div>
+          </div>
+
+          <div class="ks-field">
+            <label class="ks-field__label" for="proxyName">端末のない人を足す（8文字まで）</label>
+            <div class="ks-proxyadd">
+              <input class="form-input" id="proxyName" maxlength="8" autocomplete="off" />
+              <button type="button" class="btn btn-secondary" id="btnAddProxy">足す</button>
+            </div>
+            <p class="ks-form__hint">端末のない人の番は、ホストが代わりに押します。</p>
+            <p class="ks-form__error" id="proxyError" hidden></p>
+          </div>
+        </div>
+        <button type="button" class="btn btn-primary btn-full btn-lg" id="btnStartGame">
+          <span class="material-symbols-rounded" aria-hidden="true">play_arrow</span>
+          はじめる
+        </button>
+        <p class="ks-note" id="startNote"></p>
+      </div>
+      <p class="ks-note" id="guestWaitingNote" hidden>ホストが「はじめる」を押すのを待ってね。</p>
+    </section>
+
+    <!-- ============ ゲーム画面（1台の画面・ルーム共通） ============ -->
+    <section class="ks-screen ks-game" id="screen-game" hidden>
       <div class="ks-indicator" id="indicator"></div>
+      <p class="ks-turn" id="turnNote" role="status" hidden></p>
+      <div class="ks-stage" id="roomStage" hidden></div>
 
       <div class="ks-board" id="board"></div>
 
       <div class="ks-dice-area">
         <div class="ks-dice" id="dice">?</div>
         <button class="btn btn-primary btn-lg" id="btn-roll">
-          <span class="material-symbols-rounded">casino</span>
+          <span class="material-symbols-rounded" aria-hidden="true">casino</span>
           サイコロを振る
         </button>
       </div>
 
       <div class="ks-actions">
         <button class="btn btn-ghost" id="btn-back">
-          <span class="material-symbols-rounded">arrow_back</span>
+          <span class="material-symbols-rounded" aria-hidden="true">arrow_back</span>
           設定に戻る
+        </button>
+        <button class="btn btn-ghost" id="btnRoomBack" hidden>
+          <span class="material-symbols-rounded" aria-hidden="true">arrow_back</span>
+          待合室にもどる
         </button>
       </div>
     </section>
 
   </div>
 
-  <!-- ============ 質問モーダル ============ -->
+  <!-- ============ 質問（1台の画面ではモーダル、ルームでは画面の中に出す） ============ -->
   <div class="ks-modal-bg" id="modal" style="display:none">
-    <div class="ks-modal pop-in">
+    <div class="ks-modal pop-in" id="questionCard">
       <div class="ks-modal__theme" id="modal-theme"></div>
       <div class="ks-modal__player" id="modal-player"></div>
       <div class="ks-modal__question" id="modal-question"></div>
       <div class="ks-modal__choices" id="modal-choices"></div>
-      <div class="ks-modal__actions">
+      <p class="ks-modal__wait" id="modal-wait" hidden></p>
+      <div class="ks-modal__actions" id="modal-actions">
         <button class="btn btn-secondary" id="btn-skip">
-          <span class="material-symbols-rounded">refresh</span>
+          <span class="material-symbols-rounded" aria-hidden="true">refresh</span>
           別の質問
         </button>
         <button class="btn btn-primary" id="btn-next">
-          <span class="material-symbols-rounded">check</span>
+          <span class="material-symbols-rounded" aria-hidden="true">check</span>
           話せた！次の人へ
         </button>
       </div>
     </div>
   </div>
 
-  <!-- ============ ゴールモーダル ============ -->
+  <!-- ============ ゴール ============ -->
   <div class="ks-modal-bg" id="goal-modal" style="display:none">
-    <div class="ks-modal pop-in">
+    <div class="ks-modal pop-in" id="goalCard">
       <div class="ks-goal__icon">
-        <span class="material-symbols-rounded">emoji_events</span>
+        <span class="material-symbols-rounded" aria-hidden="true">emoji_events</span>
       </div>
       <div class="ks-goal__title">ゴール！</div>
       <div class="ks-goal__name" id="goal-name"></div>
+      <p class="ks-modal__wait" id="goal-wait" hidden>ホストが「もう一度あそぶ」を押すのを待ってね。</p>
       <div class="ks-modal__actions">
         <button class="btn btn-primary" id="btn-restart">
-          <span class="material-symbols-rounded">replay</span>
+          <span class="material-symbols-rounded" aria-hidden="true">replay</span>
           もう一度あそぶ
         </button>
       </div>
     </div>
   </div>
 
-  <script type="module" src="app.js"></script>
+  <div class="ks-overlay" id="hostOffOverlay" hidden>
+    <div class="ks-overlay__panel">
+      <h2>ホストの戻りを待っています</h2>
+      <p>しばらく待っても戻らないときは退出してね。</p>
+      <button type="button" class="btn btn-secondary" id="btnOverlayLeave">退出する</button>
+    </div>
+  </div>
+
+  <script type="module" src="app.js?v=20261104"></script>
   <script src="../shared/js/stats.js?v=1" defer></script>
   <script src="../shared/js/howto.js"></script>
   <script>
     RoomkHowto.init({
       title: 'あそびかた',
-      lead: 'サイコロを振ってマスに止まり、出てきたお題についてみんなで話すスゴロク。',
+      lead: 'サイコロを振ってマスに止まり、出てきたお題についてみんなで話すスゴロク。1〜6人で遊べるよ。',
       sections: [
-        { heading: 'はじめかた', items: [
-          '何人であそぶか・マス数・テーマを選ぶ',
-          '名前を入れたいときは、名前の欄に入れる（入れないときは「プレイヤー1」のように出る）',
-          '「ゲームスタート」を押す',
+        { heading: 'ひとりひとりの端末で遊ぶとき', items: [
+          'ホストが「ルームを作る」で名前を入れる。ルームコードは「コードをコピー」、参加用のリンクは「リンクをコピー」でチャットに送れる。スマホやタブレットで入る人には「QRコードを出す」をカメラで読みとってもらう',
+          '参加する人は「ルームに参加する」で名前、ルームコード（6文字）の順に入れ、「参加する」を押す。リンクからひらいたときは、ルームコードは入っているので名前だけ入れる',
+          'ホストは待合室で、マス数・テーマを選び、「はじめる」を押す。端末のない人は「端末のない人を足す」で足すと、その人の番はホストが代わりに押せる',
+          '自分の番になったら、自分の端末で「サイコロを振る」を押す。質問はみんなの画面に出る',
+          '選択肢がある質問は、選んだものがみんなの画面に出る。話しおわったら「話せた！次の人へ」を押す',
         ] },
-        { heading: 'すすめかた', items: [
-          '自分の番になったら「サイコロを振る」を押す',
+        { heading: '1台の画面で遊ぶとき', items: [
+          '「1台の画面であそぶ」で、何人であそぶか・マス数・テーマを選ぶ',
+          '名前を入れたいときは、名前の欄に入れる（入れないときは「プレイヤー1」のように出る）',
+          '「ゲームスタート」を押し、自分の番になったら「サイコロを振る」を押す',
+          '話しおわったら「話せた！次の人へ」を押す',
+        ] },
+        { heading: 'どちらでも', items: [
           '止まったマスに出てきた質問について話す',
           '「別の質問」を押すと、ちがう質問に変えられる',
-          '話しおわったら「話せた！次の人へ」を押す',
         ] },
         { heading: 'おわりかた', text: 'だれかがゴールしたらおわり。「もう一度あそぶ」で、またあそべるよ。' },
       ],
