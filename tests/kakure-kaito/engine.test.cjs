@@ -89,5 +89,19 @@ ok(E.lensFirst(['a', 'b', 'c', 'd']) === 'd', 'L3 はじめに持つのは最初
 ok(JSON.stringify(E.lensTargets(['a', 'b', 'c', 'd'], ['d', 'b'])) === '["a","c"]', 'L4 一度持った人は確かめられない');
 ok(!E.lensOn(6, { lens: true }) && E.lensOn(7, { lens: true }) && !E.lensOn(10, { lens: false }), 'L5 ルーペは7人から・オンのときだけ');
 
+// ひとこと
+const sayKeys = Object.values(E.SAYS).flat().map(([k]) => k);
+ok(new Set(sayKeys).size === sayKeys.length, 'H1 言葉のキーは重ならない');
+ok(sayKeys.length === 14 && E.SAYS.common.length === 6 && E.SAYS.team.length === 4 && E.SAYS.after.length === 3 && E.SAYS.guess.length === 1, 'H2 言葉の数 6・4・3・1');
+ok(Object.keys(E.SAYS).every((g) => E.SAY_GROUPS[g]), 'H3 組の名前がある');
+ok(E.sayText('want', 'ソラ') === 'ソラさんを入れたい' && E.sayText('yes') === 'そう思う' && E.sayText('nope') === '', 'H4 言葉を組み立てる・知らないキーは空');
+ok(JSON.stringify(sayKeys.filter(E.sayNeedsName)) === '["want","notWant","trust","sus","det"]', 'H5 名前の入る言葉');
+ok(!E.sayNeedsName('nope'), 'H6 知らないキーは名前を求めない');
+ok(JSON.stringify(E.sayGroups('guess')) === '["common","guess"]', 'H7 見やぶりは「いつでも」と見やぶり');
+ok(JSON.stringify(E.sayGroups('reveal')) === '["common"]' && JSON.stringify(E.sayGroups('end')) === '["common"]', 'H8 役の確認とおしまいは「いつでも」だけ');
+ok(['propose', 'vote', 'voteResult', 'mission', 'missionResult', 'lens', 'lensResult'].every((ph) => JSON.stringify(E.sayGroups(ph)) === '["common","team","after"]'), 'H9 見回りの間は見やぶりの言葉を出さない');
+ok(E.SAY_GAP_MS === 5000, 'H10 5秒に1回まで');
+ok(E.sayAllowed('guess', 'det') && !E.sayAllowed('guess', 'sus') && !E.sayAllowed('missionResult', 'det') && E.sayAllowed('missionResult', 'sus') && !E.sayAllowed('vote', 'nope'), 'H11 その段階で送ってよい言葉か');
+
 console.log((fail ? 'NG ' : 'OK ') + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);

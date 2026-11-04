@@ -8,13 +8,13 @@
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
   <link rel="stylesheet" href="../shared/css/design-system.css">
   <!-- index.html と app.js・engine.js・style.css はセットで変わるので、変えたら ?v= をそろえて上げる -->
-  <link rel="stylesheet" href="style.css?v=20261104a">
+  <link rel="stylesheet" href="style.css?v=20261104b">
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <script src="../shared/js/rtdb-utils.js?v=20261005"></script>
   <script src="../shared/js/room-qr.js?v=20261022"></script>
-  <script src="engine.js?v=20261104a"></script>
+  <script src="engine.js?v=20261104b"></script>
 </head>
 <body>
 
@@ -202,6 +202,19 @@
         <div id="stage" class="kk-stage"></div>
         <ul id="players" class="kk-players" aria-label="遊んでいる人"></ul>
 
+        <section id="say" class="kk-say" aria-labelledby="say-title" hidden>
+          <div class="kk-say__head">
+            <h2 id="say-title" class="kk-say__title"><span class="material-symbols-rounded" aria-hidden="true">chat_bubble</span>ひとこと</h2>
+            <button id="btn-say" type="button" class="btn btn-secondary btn-sm" aria-controls="say-pick" aria-expanded="false" hidden>
+              <span id="btn-say-icon" class="material-symbols-rounded" aria-hidden="true">add_comment</span><span id="btn-say-label">ひとことを送る</span>
+            </button>
+          </div>
+          <p id="say-empty" class="kk-say__empty">声のかわりに、決まった言葉をボタンでみんなに送れるよ</p>
+          <ol id="say-log" class="kk-say__log" hidden></ol>
+          <p id="say-live" class="kk-say__live" aria-live="polite"></p>
+          <div id="say-pick" class="kk-say__pick" hidden></div>
+        </section>
+
         <div id="mycard-box" class="kk-mycard-box" hidden>
           <button id="btn-mycard" type="button" class="kk-quiet">
             <span id="mycard-icon" class="material-symbols-rounded" aria-hidden="true">visibility</span><span id="mycard-label">自分の役を見る</span>
@@ -222,7 +235,7 @@
     </div>
   </div>
 
-  <script type="module" src="app.js?v=20261104a"></script>
+  <script type="module" src="app.js?v=20261104b"></script>
   <script src="../shared/js/stats.js?v=1" defer></script>
   <script src="../shared/js/howto.js"></script>
   <script>
@@ -247,6 +260,10 @@
           '見回りに行った人は「異常なし」か「すり替える」をこっそり出す。警備員チームは「異常なし」しか出せない',
           '「すり替える」が1枚でもあれば、宝石はすり替えられる（7人以上の4回目だけは2枚いる）',
           'だれが「すり替える」を出したかは、最後まで出ない',
+        ] },
+        { heading: 'ひとこと', items: [
+          '「ひとことを送る」を押すと、決まった言葉をボタンでみんなに送れる。名前の入る言葉は、押したあとに「だれ？」で人を選ぶ',
+          '送った言葉は、遊んでいる人の名前の下と「ひとこと」の流れに出る。送れるのは、ひとり5秒に1回まで',
         ] },
         { heading: '役（待合室で選ぶ）', items: [
           '名探偵: 怪盗がだれか知っている。警備員チームが3回守っても、最後に怪盗が名探偵を見やぶったら怪盗チームの逆転勝ち',

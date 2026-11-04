@@ -155,9 +155,33 @@
   // 選んではいけない手: 警備員チームは「すり替える」を選べない
   const canSwap = (role) => sideOf(role) === 'thief';
 
+  // ひとこと（決まった言葉をボタンで送る。マイクを使えない人も話し合いに入れるように）。語はオーナー承認済み（2026-11-04）
+  // [キー, 言葉]。{name} は送るときに「だれ？」で選んだ人
+  const SAYS = {
+    common: [['yes', 'そう思う'], ['no', 'ちがうと思う'], ['idk', 'わからない'], ['wait', 'ちょっと待って'], ['ok', 'オッケー'], ['thanks', 'ありがとう']],
+    team: [['want', '{name}さんを入れたい'], ['notWant', '{name}さんは入れないほうがいい'], ['fine', 'このメンバーでいいと思う'], ['addMe', '自分を入れてほしい']],
+    after: [['notMe', 'すり替えたのは自分じゃないよ'], ['trust', '{name}さんを信じる'], ['sus', '{name}さんがあやしいと思う']],
+    guess: [['det', '{name}さんが名探偵だと思う']],
+  };
+  const SAY_GROUPS = { common: 'いつでも', team: 'メンバー選び', after: '見回りのあと', guess: '見やぶり' };
+  const SAY_GAP_MS = 5000; // ひとり5秒に1回まで
+  const SAY_TEXT = {};
+  Object.values(SAYS).forEach((list) => list.forEach(([k, t]) => { SAY_TEXT[k] = t; }));
+  const sayNeedsName = (k) => !!SAY_TEXT[k] && SAY_TEXT[k].includes('{name}');
+  const sayText = (k, name) => (SAY_TEXT[k] ? SAY_TEXT[k].replace('{name}', name || '') : '');
+  // その段階で出す言葉の組（見やぶりの言葉は見やぶりのときだけ。役の確認とおしまいは「いつでも」だけ）
+  function sayGroups(phase) {
+    if (phase === 'guess') return ['common', 'guess'];
+    if (phase === 'reveal' || phase === 'end') return ['common'];
+    return ['common', 'team', 'after'];
+  }
+  // その段階で送ってよい言葉か（一覧をひらいたまま段階が進んだときに、送る側で確かめなおす）
+  const sayAllowed = (phase, k) => sayGroups(phase).some((gk) => SAYS[gk].some(([key]) => key === k));
+
   const api = {
     MIN, MAX, THIEVES, TEAM, ROUNDS, WIN, PROPOSALS, ROLES, DEFAULT_OPTS, TALKS, LENS_MIN, lensOn, lensAfter, lensTargets, lensFirst,
     normOpts, checkOpts, deal, sideOf, knows, teamSize, needFails, approved, missionResult, score, canSwap, shuffle,
+    SAYS, SAY_GROUPS, SAY_GAP_MS, sayNeedsName, sayText, sayGroups, sayAllowed,
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.KaitoEngine = api;
