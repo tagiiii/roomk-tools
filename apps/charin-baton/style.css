@@ -65,9 +65,9 @@ body { background: var(--color-bg); }
   display: flex; flex-direction: column; gap: 8px;
 }
 .cb-seat__title { font-weight: 700; color: var(--color-primary); padding: 0 4px; }
-.cb-seat__view { margin: 0; font-weight: 700; font-size: 18px; color: var(--color-primary); overflow-wrap: anywhere; }
-.cb-seat__view.is-empty { color: var(--color-muted); font-weight: 400; font-size: 15px; }
-.cb-seat__sub { margin: 0; color: var(--color-muted); font-size: 14px; }
+.cb-seats > .cb-seat__add { grid-column: 1 / -1; justify-self: center; }
+.cb-seat__del { align-self: flex-end; min-height: 36px; font-size: 14px; color: var(--color-muted); }
+.cb-seat__order { font-size: 13px; font-weight: 700; color: #fff; background: var(--color-accent); border-radius: 999px; padding: 2px 10px; }
 .cb-field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .cb-field .form-label { margin: 0; }
 .cb-select { width: 100%; }
@@ -105,6 +105,7 @@ body { background: var(--color-bg); }
   .cb-roombar .btn { padding: 4px 8px; font-size: 13px; min-height: 36px; }
   .cb-main { padding: 14px 12px 56px; }
   .cb-seats, .cb-common { grid-template-columns: 1fr; }
+  .cb-cards > .cb-player { flex-basis: 30%; }
   .cb-trayhost { max-width: 100%; }
 }
 
@@ -125,15 +126,18 @@ body { background: var(--color-bg); }
 
 /* ── 対決 ── */
 .cb-main.cb-duel { max-width: 1160px; padding-top: 14px; }
-.cb-duel__board {
-  max-width: 1100px; margin: 0 auto; display: grid; gap: var(--space-sm);
-  grid-template-columns: 1fr 1fr; grid-template-areas: "p0 p1" "c c";
-}
-#card0 { grid-area: p0; }
-#card1 { grid-area: p1; }
-.cb-duel__center { grid-area: c; display: flex; flex-direction: column; gap: var(--space-sm); min-width: 0; }
+.cb-duel__board { max-width: 1100px; margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-sm); }
+/* 対戦する人の札（2〜6人）。2人のときは、広い画面でトレーの左右に置く */
+.cb-cards { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.cb-cards > .cb-player { flex: 1 1 150px; max-width: 220px; }
+.cb-duel__board.is-two .cb-cards > .cb-player { max-width: none; }
+.cb-duel__center { display: flex; flex-direction: column; gap: var(--space-sm); min-width: 0; }
 @media (min-width: 900px) {
-  .cb-duel__board { grid-template-columns: 200px 1fr 200px; grid-template-areas: "p0 c p1"; align-items: start; }
+  .cb-duel__board.is-two { display: grid; grid-template-columns: 200px 1fr 200px; grid-template-areas: "p0 c p1"; align-items: start; }
+  .cb-duel__board.is-two .cb-cards { display: contents; }
+  .cb-duel__board.is-two .cb-cards > :nth-child(1) { grid-area: p0; }
+  .cb-duel__board.is-two .cb-cards > :nth-child(2) { grid-area: p1; }
+  .cb-duel__board.is-two .cb-duel__center { grid-area: c; }
 }
 .cb-player {
   background: var(--color-surface); border-radius: var(--radius-card); border: 3px solid var(--color-border);
@@ -144,6 +148,8 @@ body { background: var(--color-bg); }
 .cb-player.is-turn { background: var(--color-accent); border-color: var(--color-accent); color: #fff; box-shadow: var(--shadow-md); }
 .cb-player.is-turn.is-low { background: var(--color-error); border-color: var(--color-error); }
 .cb-player.is-win { border-color: var(--color-success); background: #EAF4EC; }
+/* 時計が0になって「ここまで」の人 */
+.cb-player.is-out { opacity: 0.55; }
 .cb-player__name {
   margin: 0; font-weight: 700; font-size: 18px; overflow-wrap: anywhere;
   display: flex; align-items: center; justify-content: center; gap: 2px;
@@ -292,4 +298,41 @@ body { background: var(--color-bg); }
   .cb-pad { gap: 6px; }
   .cb-key, .cb-okkey { min-height: 46px; }
   .cb-acts > .btn { min-height: 48px; }
+}
+
+/* 待合室: 「ホストも対戦する」 */
+.cb-check { display: flex; align-items: center; gap: 10px; min-height: 44px; margin-top: 10px; cursor: pointer; font-weight: 500; }
+.cb-check input { width: 20px; height: 20px; accent-color: var(--color-accent); flex: none; }
+.cb-person .cb-seat__order { font-size: 12px; padding: 1px 8px; }
+
+/* 3人以上: 札の段がトレーの上にあるぶん、トレーを小さくして帯まで1画面に入れる */
+.cb-duel__board:not(.is-two) .cb-trayhost { max-width: max(300px, min(680px, calc((100vh - 700px) * 1.667))); }
+.cb-duel.is-nopad .cb-duel__board:not(.is-two) .cb-trayhost { max-width: max(300px, min(760px, calc((100vh - 620px) * 1.667))); }
+.is-watch .cb-duel .cb-duel__board:not(.is-two) .cb-trayhost { max-width: max(300px, min(900px, calc((100vh - 420px) * 1.667))); }
+@media (max-width: 600px) {
+  .cb-duel__board .cb-trayhost, .cb-duel .cb-duel__board:not(.is-two) .cb-trayhost, .cb-duel.is-nopad .cb-duel__board:not(.is-two) .cb-trayhost { max-width: 100%; }
+  /* スマホで3人以上なら、札を3枚ずつにして小さくする */
+  .cb-duel__board:not(.is-two) .cb-cards > .cb-player { flex: 1 1 28%; max-width: none; padding: 4px 6px 6px; }
+  .cb-duel__board:not(.is-two) .cb-player__name { font-size: 14px; }
+  .cb-duel__board:not(.is-two) .cb-player__sec { font-size: 24px; }
+  .cb-duel__board:not(.is-two) .cb-player__bar { height: 6px; }
+}
+
+/* 広い画面で3人以上: 札をトレーの左に縦にならべて、トレーを大きく出す（高さ768pxのノートPCでも小銭が小さくならないように） */
+@media (min-width: 900px) {
+  .cb-duel__board:not(.is-two) { display: grid; grid-template-columns: 220px 1fr; gap: 14px; align-items: start; }
+  .cb-duel__board:not(.is-two) .cb-cards { flex-direction: column; flex-wrap: nowrap; gap: 6px; }
+  .cb-duel__board:not(.is-two) .cb-cards > .cb-player {
+    flex: none; max-width: none; padding: 6px 12px 8px; text-align: left;
+    display: grid; grid-template-columns: 1fr auto; align-items: center; column-gap: 8px;
+  }
+  .cb-duel__board:not(.is-two) .cb-player__name { justify-content: flex-start; font-size: 16px; }
+  .cb-duel__board:not(.is-two) .cb-player__clock { margin: 0; }
+  .cb-duel__board:not(.is-two) .cb-player__sec { font-size: 28px; }
+  .cb-duel__board:not(.is-two) .cb-player__bar,
+  .cb-duel__board:not(.is-two) .cb-player__tags { grid-column: 1 / -1; }
+  .cb-duel__board:not(.is-two) .cb-player__tags { justify-content: flex-start; margin-top: 4px; }
+  .cb-duel__board:not(.is-two) .cb-trayhost { max-width: max(300px, min(680px, calc((100vh - 560px) * 1.667))); }
+  .cb-duel.is-nopad .cb-duel__board:not(.is-two) .cb-trayhost { max-width: max(300px, min(760px, calc((100vh - 470px) * 1.667))); }
+  .is-watch .cb-duel .cb-duel__board:not(.is-two) .cb-trayhost { max-width: max(300px, min(900px, calc((100vh - 260px) * 1.667))); }
 }

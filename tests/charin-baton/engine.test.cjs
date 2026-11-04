@@ -216,4 +216,90 @@ t('due は時間で進めるときだけ true', () => {
   assert.strictEqual(E.due(R, 2500), true);
 });
 
+const SET3 = () => ({
+  players: [{ name: 'A', time: 45, kinds: 'all' }, { name: 'B', time: 30, kinds: 'all' }, { name: 'C', time: 60, kinds: 'three' }],
+  maxCoins: 5, arrange: 'scatter', first: 0,
+});
+
+t('3人: 正解すると次の人へ。席の順にまわる', () => {
+  const rng = E.makeRng(41);
+  let S = begin(SET3(), rng);
+  const order = [];
+  let now = 0;
+  for (let k = 0; k < 6; k++) {
+    order.push(S.turn);
+    S = E.answer(S, S.turn, S.problem.total, now += 100).state;
+    S = E.tick(S, now += 1600, rng);
+  }
+  assert.deepStrictEqual(order, [0, 1, 2, 0, 1, 2]);
+  assert.deepStrictEqual(S.correct, [2, 2, 2]);
+});
+
+t('3人: 時計が0の人は「ここまで」。時計を止めて小銭を見せ、残っている次の人へ', () => {
+  const rng = E.makeRng(42);
+  let S = begin(SET3(), rng);
+  S = E.answer(S, 0, S.problem.total, 1000).state;
+  S = E.tick(S, 2600, rng);              // B の番（30秒）
+  assert.strictEqual(S.turn, 1);
+  S = E.tick(S, 2600 + 30000, rng);      // B の時間切れ
+  assert.strictEqual(S.phase, 'out');
+  assert.strictEqual(S.lastOut, 1);
+  assert.deepStrictEqual(S.out, [false, true, false]);
+  assert.strictEqual(E.remaining(S, 0, 40000), 44000, 'ここまでの間はみんなの時計が止まる');
+  assert.strictEqual(S.history[S.history.length - 1].how, 'timeout');
+  assert.strictEqual(E.due(S, 2600 + 30000 + E.OUT_MS - 1), false);
+  S = E.tick(S, 2600 + 30000 + E.OUT_MS, rng);
+  assert.strictEqual(S.phase, 'play');
+  assert.strictEqual(S.turn, 2, 'B をとばして C へ');
+  S.problem.coins.forEach((c) => assert.ok([1, 10, 100].includes(c.v)));
+});
+
+t('3人: 抜けた人はとばす。最後の1人が勝ち', () => {
+  const rng = E.makeRng(43);
+  let S = begin(SET3(), rng);
+  // A が時間切れ → B の番
+  S = E.tick(S, 45000, rng);
+  assert.strictEqual(S.phase, 'out');
+  S = E.tick(S, 45000 + E.OUT_MS, rng);
+  assert.strictEqual(S.turn, 1);
+  const t0 = 45000 + E.OUT_MS;
+  S = E.answer(S, 1, S.problem.total, t0 + 1000).state;
+  S = E.tick(S, t0 + 2600, rng);
+  assert.strictEqual(S.turn, 2, 'B の次は C');
+  S = E.answer(S, 2, S.problem.total, t0 + 3000).state;
+  S = E.tick(S, t0 + 4600, rng);
+  assert.strictEqual(S.turn, 1, 'C の次は A をとばして B');
+  S = E.tick(S, t0 + 4600 + 29000, rng); // B の残り29秒が切れる
+  assert.strictEqual(S.phase, 'over');
+  assert.strictEqual(S.winner, 2);
+  assert.deepStrictEqual(S.out, [true, true, false]);
+});
+
+t('3人: 「ここまで」の途中のつづきからは、次の人の 3・2・1 から', () => {
+  const rng = E.makeRng(44);
+  let S = begin(SET3(), rng);
+  S = E.tick(S, 45000, rng);           // A が「ここまで」
+  S = E.resume(S, 45500, 90000, rng);
+  assert.strictEqual(S.phase, 'ready');
+  assert.strictEqual(S.turn, 1);
+  assert.strictEqual(E.remaining(S, 1, 95000), 30000);
+});
+
+t('3人: 止めた時点で時間切れなら「ここまで」のあと次の人の 3・2・1', () => {
+  const rng = E.makeRng(45);
+  const S = E.resume(begin(SET3(), rng), 50000, 60000, rng);
+  assert.strictEqual(S.phase, 'ready');
+  assert.deepStrictEqual(S.out, [true, false, false]);
+  assert.strictEqual(S.turn, 1);
+});
+
+t('6人まで作れる・先に答える人を選べる', () => {
+  const players = [1, 2, 3, 4, 5, 6].map((k) => ({ name: 'P' + k, time: 30, kinds: 'all' }));
+  const S = E.createDuel({ players, maxCoins: 5, arrange: 'scatter', first: 4 }, 0, E.makeRng(46));
+  assert.strictEqual(S.turn, 4);
+  assert.strictEqual(S.rem.length, 6);
+  assert.strictEqual(E.nextAlive(S, 5), 0);
+  assert.strictEqual(E.MAX_PLAYERS, 6);
+});
+
 console.log('all ' + n + ' passed');

@@ -247,16 +247,16 @@ const SLIDES = [
     sub:'今の気分を、ひとことどうぞ',
     note:'まずはチェックインから！\n今の気分や、最近あったことを、ひとことチャットか声で教えてね\n（ちゃりんバトンの説明は、このあとすぐ！）' },
 
-  /* 2 */ { type:'title', note:'今日のゲームは「ちゃりんバトン」\nならんだ小銭がぜんぶでいくらかを答えて、正解したら相手にバトンを渡す、2人の対決だよ！' },
+  /* 2 */ { type:'title', note:'今日のゲームは「ちゃりんバトン」\nならんだ小銭がぜんぶでいくらかを答えて、正解したら次の人にバトンを渡す対決だよ。2人から6人まで遊べるよ！' },
 
   /* 3 */ { type:'content', accent:'teal', section:'ゲームについて', sectionEn:'summary',
     headline:'小銭を数えて、<br><span class="hl">正解したらバトンを渡そう</span>',
     body:`<div class="rows">
       <div class="row"><div class="row__ic"><span class="material-symbols-rounded">toll</span></div><div><div class="row__t">ならんだ小銭が、ぜんぶでいくらかを答える</div><div class="row__d">自分の番に、金額を入れて「こたえる」</div></div></div>
-      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">sync_alt</span></div><div><div class="row__t">正解すると、相手の番になる</div><div class="row__d">番が、バトンみたいに行ったり来たりするよ</div></div></div>
-      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">timer</span></div><div><div class="row__t">自分の番の間だけ、自分の時計が減る</div><div class="row__d">先に時計が0になった人の負け</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">sync_alt</span></div><div><div class="row__t">正解すると、次の人の番になる</div><div class="row__d">番が、バトンみたいに順番にまわっていくよ</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">timer</span></div><div><div class="row__t">自分の番の間だけ、自分の時計が減る</div><div class="row__d">時計が0になった人から「ここまで」。最後まで残った人の勝ち</div></div></div>
     </div>`,
-    note:'ちゃりんバトンは、ならんだ小銭がぜんぶでいくらかを答えるゲーム。\n正解すると相手の番になって、番がバトンみたいに行ったり来たりするよ。\n自分の番の間だけ自分の時計が減っていって、先に0になった人の負け！' },
+    note:'ちゃりんバトンは、ならんだ小銭がぜんぶでいくらかを答えるゲーム。\n正解すると次の人の番になって、番がバトンみたいに順番にまわっていくよ。\n自分の番の間だけ自分の時計が減っていって、0になった人から「ここまで」。最後まで残った人の勝ち！' },
 
   /* 4 */ { type:'content', accent:'teal', section:'ゲーム説明', sectionEn:'explain', num:'1',
     headline:'小銭は<span class="hl">6種類</span>。ぜんぶでいくら？',
@@ -280,45 +280,45 @@ const SLIDES = [
     body:`<div class="rows">
       <div class="row"><div class="row__ic"><span class="material-symbols-rounded">counter_3</span></div><div><div class="row__t">3・2・1 のあとに、はじまる</div><div class="row__d">はじまるまでは、小銭はかくれているよ</div></div></div>
       <div class="row"><div class="row__ic"><span class="material-symbols-rounded">trending_up</span></div><div><div class="row__t">正解するごとに、小銭がだんだん増える</div><div class="row__d">はじめは2枚。2回正解するたびに1枚ずつ</div></div></div>
-      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">pause_circle</span></div><div><div class="row__t">正解の金額が出ている間は、時計が止まる</div><div class="row__d">ふたりとも止まるので、ゆっくり見てOK</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">pause_circle</span></div><div><div class="row__t">正解の金額が出ている間は、時計が止まる</div><div class="row__d">みんなの時計が止まるので、ゆっくり見てOK</div></div></div>
     </div>`,
-    note:'はじまるときは、3・2・1 のカウントダウンがあるよ。それまでは小銭はかくれているよ。\n小銭ははじめ2枚。正解するごとに、だんだん増えていくよ。\n正解の金額が出ている間は、ふたりとも時計が止まるので、どんな小銭だったか、ゆっくり見てね。' },
+    note:'はじまるときは、3・2・1 のカウントダウンがあるよ。それまでは小銭はかくれているよ。\n小銭ははじめ2枚。正解するごとに、だんだん増えていくよ。\n正解の金額が出ている間は、みんなの時計が止まるので、どんな小銭だったか、ゆっくり見てね。' },
 
   /* 7 */ { type:'content', accent:'teal', section:'ゲーム説明', sectionEn:'explain', num:'4',
     headline:'時計が<span class="hl">0</span>になったらおしまい',
     body:`<div class="rows">
-      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">hourglass_empty</span></div><div><div class="row__t">自分の時計が0になった人の負け</div><div class="row__d">残りが10秒を切ると、名前の札が赤くなるよ</div></div></div>
-      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">emoji_events</span></div><div><div class="row__t">勝った人の名前が出る</div><div class="row__d">最後に出ていた小銭の、合計と内訳も出るよ</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">hourglass_empty</span></div><div><div class="row__t">自分の時計が0になったら「ここまで」</div><div class="row__d">残りが10秒を切ると、名前の札が赤くなるよ。ここまでの人も、最後まで見ていてね</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">emoji_events</span></div><div><div class="row__t">最後まで残った人の勝ち</div><div class="row__d">2人のときは、時計が0になった人の負け</div></div></div>
       <div class="row"><div class="row__ic"><span class="material-symbols-rounded">zoom_in</span></div><div><div class="row__t">出た小銭は、あとから見られる</div><div class="row__d">押すと大きく出て、何円玉が何枚かがわかる</div></div></div>
     </div>`,
-    note:'自分の時計が0になった人の負け。残りが10秒を切ると、名前の札が赤くなるよ。\nおしまいになると、勝った人の名前と、最後に出ていた小銭の合計が出るよ。\nこの対決で出た小銭は、あとから押すと大きく出て、何円玉が何枚だったかを見られるよ。' },
+    note:'自分の時計が0になったら「ここまで」。残りが10秒を切ると、名前の札が赤くなるよ。ここまでの人も、最後まで見ていてね。\n最後まで残った人の勝ち。2人のときは、時計が0になった人の負けだよ。\nこの対決で出た小銭は、あとから押すと大きく出て、何円玉が何枚だったかを見られるよ。' },
 
   /* 8 */ { type:'content', accent:'blue', section:'いろいろな遊びかた', sectionEn:'ways to play',
     headline:'1台の画面でも、<br>時間なしでも遊べるよ',
     body:`<div class="rows">
       <div class="row"><div class="row__ic"><span class="material-symbols-rounded">tv</span></div><div><div class="row__t">「1台の画面であそぶ」</div><div class="row__d">金額を声かチャットで伝えると、画面を動かす人が入れてくれる</div></div></div>
       <div class="row"><div class="row__ic"><span class="material-symbols-rounded">self_improvement</span></div><div><div class="row__t">「いっしょに数える（時間なし）」</div><div class="row__d">時計も勝ち負けもなし。みんなで数えて「答えを見る」</div></div></div>
-      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">tune</span></div><div><div class="row__t">持ち時間と小銭の種類は、人ごとに変えられる</div><div class="row__d">ホストが待合室で決めるよ</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">tune</span></div><div><div class="row__t">持ち時間と小銭の種類は、ホストが決める</div><div class="row__d">みんな同じ。長くしたり、種類を少なくしたりできるよ</div></div></div>
     </div>`,
-    note:'1台の画面でみんなで遊ぶときは、金額を声かチャットで教えてね。画面を動かす人が入れてくれるよ。\n時間を気にせず数えたいときは「いっしょに数える（時間なし）」。時計も勝ち負けもないよ。\n持ち時間と小銭の種類は、人ごとに変えられる。ホストが待合室で決めるよ。' },
+    note:'1台の画面でみんなで遊ぶときは、金額を声かチャットで教えてね。画面を動かす人が入れてくれるよ。\n時間を気にせず数えたいときは「いっしょに数える（時間なし）」。時計も勝ち負けもないよ。\n持ち時間と小銭の種類は、みんな同じ。ホストが待合室で決めるよ。' },
 
   /* 9 */ { type:'content', accent:'coral', section:'はじめかた', sectionEn:'how to join',
     headline:'名前 → ルームコード →<br>「参加する」',
     body:`<div class="rows">
       <div class="row"><div class="row__ic"><span class="material-symbols-rounded">login</span></div><div><div class="row__t">「ルームに参加する」を押す</div><div class="row__d">名前、ルームコード（6文字）の順に入れて「参加する」</div></div></div>
       <div class="row"><div class="row__ic"><span class="material-symbols-rounded">link</span></div><div><div class="row__t">リンクからひらいたときは、名前だけ</div><div class="row__d">ルームコードは入っているよ。スマホやタブレットは QR コードを読みとってもOK</div></div></div>
-      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">groups</span></div><div><div class="row__t">対戦するのは2人。ほかの人は観戦</div><div class="row__d">だれが1人目と2人目になるかは、ホストが決めるよ</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">groups</span></div><div><div class="row__t">参加した人みんなで対戦（2〜6人）</div><div class="row__d">参加した順に答えるよ。見るだけの人は「みんなにみせる画面」で見られる</div></div></div>
     </div>`,
-    note:'参加のしかただよ。\n「ルームに参加する」を押して、名前、ルームコード（6文字）の順に入れて「参加する」。\nチャットのリンクからひらいたときは、ルームコードは入っているので名前だけ入れてね。スマホやタブレットの人は、QR コードを読みとってもOK。\n対戦するのは2人で、ほかの人は自分の画面で勝負を見られるよ。だれが1人目と2人目になるかは、ホストが決めるよ。' },
+    note:'参加のしかただよ。\n「ルームに参加する」を押して、名前、ルームコード（6文字）の順に入れて「参加する」。\nチャットのリンクからひらいたときは、ルームコードは入っているので名前だけ入れてね。スマホやタブレットの人は、QR コードを読みとってもOK。\n参加した人みんなで対戦するよ（2人から6人）。参加した順に答えるよ。見るだけの人は「みんなにみせる画面」で見られるよ。' },
 
   /* 10 */ { type:'content', accent:'teal', section:'Q&A', sectionEn:'question & answer',
     headline:'よくある質問',
     body:`<div class="qa">
-      <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>相手の番のときは？</div><div class="qa__a"><span class="qa__badge a">A</span>金額は入れられないよ。同じ小銭が見えるので、いっしょに数えてみてね。</div></div>
+      <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>ほかの人の番のときは？</div><div class="qa__a"><span class="qa__badge a">A</span>金額は入れられないよ。同じ小銭が見えるので、いっしょに数えてみてね。</div></div>
       <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>まちがえたら、時計は止まる？</div><div class="qa__a"><span class="qa__badge a">A</span>止まらないよ。何回でも答えなおせるので、もう一回数えてみよう。</div></div>
       <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>時間がたりないときは？</div><div class="qa__a"><span class="qa__badge a">A</span>ホストに伝えてね。持ち時間を長くしたり、小銭の種類を少なくしたりできるよ。</div></div>
     </div>`,
-    note:'よくある質問だよ\nQ. 相手の番のときは？→ A. 金額は入れられないよ。同じ小銭が見えるので、いっしょに数えてみてね。\nQ. まちがえたら、時計は止まる？→ A. 止まらないよ。何回でも答えなおせるよ。\nQ. 時間がたりないときは？→ A. ホストに伝えてね。持ち時間を長くしたり、小銭の種類を少なくしたりできるよ。' },
+    note:'よくある質問だよ\nQ. ほかの人の番のときは？→ A. 金額は入れられないよ。同じ小銭が見えるので、いっしょに数えてみてね。\nQ. まちがえたら、時計は止まる？→ A. 止まらないよ。何回でも答えなおせるよ。\nQ. 時間がたりないときは？→ A. ホストに伝えてね。持ち時間を長くしたり、小銭の種類を少なくしたりできるよ。' },
 
   /* 11 */ { type:'divider', accent:'blue', icon:'live_help', jp:'質問タイム', en:'any questions?',
     sub:'気になることはある？',
@@ -353,7 +353,7 @@ function slideHTML(s){
       <div class="title-en">charin baton</div>
       <div class="title-tag">〜 小銭を数えて、バトンを渡そう 〜</div>
       <div class="title-meta">
-        <span class="m"><span class="material-symbols-rounded">group</span>対戦は2人</span>
+        <span class="m"><span class="material-symbols-rounded">group</span>対戦は2〜6人</span>
         <span class="m"><span class="material-symbols-rounded">schedule</span>3〜5分</span>
         <span class="m"><span class="material-symbols-rounded">visibility</span>観戦できる</span>
       </div></section>`;

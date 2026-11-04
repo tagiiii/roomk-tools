@@ -8,13 +8,13 @@
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
   <link rel="stylesheet" href="../shared/css/design-system.css">
   <!-- index.html と app.js・engine.js・style.css はセットで変わるので、変えたら ?v= をそろえて上げる -->
-  <link rel="stylesheet" href="style.css?v=20261104c">
+  <link rel="stylesheet" href="style.css?v=20261104i">
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <script src="../shared/js/rtdb-utils.js?v=20261005"></script>
   <script src="../shared/js/room-qr.js?v=20261022"></script>
-  <script src="engine.js?v=20261104c"></script>
+  <script src="engine.js?v=20261104i"></script>
 </head>
 <body>
 
@@ -22,7 +22,7 @@
   <section class="cb-screen cb-front active" id="screen-top">
     <div class="cb-panel">
       <h1 class="cb-panel__title">ちゃりんバトン</h1>
-      <p class="cb-panel__lead">ならんだ小銭がぜんぶでいくらかを答えて、相手にバトンを渡す2人の対決。自分の番の間だけ、自分の時計が減っていく。先に時間がなくなった人の負け。1回は3〜5分くらい。</p>
+      <p class="cb-panel__lead">ならんだ小銭がぜんぶでいくらかを答えて、次の人にバトンを渡す対決（2〜6人）。自分の番の間だけ、自分の時計が減っていく。時計が0になった人から「ここまで」で、最後まで残った人の勝ち。1回は3〜5分くらい。</p>
       <ul class="cb-panel__notes">
         <li>小銭は2枚からはじまって、正解するごとにだんだん増える</li>
         <li>まちがえても、何回でも答えなおせる</li>
@@ -115,18 +115,14 @@
       </div>
 
       <div class="card">
-        <h2 class="cb-h2">対戦する人</h2>
-        <div id="lobbySeats" class="cb-seats"></div>
-        <button id="btnSeatSwap" type="button" class="cb-quiet cb-quiet--center" hidden>
-          <span class="material-symbols-rounded" aria-hidden="true">swap_horiz</span>1人目と2人目を入れかえる
-        </button>
-        <p id="seatNote" class="cb-note" hidden></p>
-      </div>
-
-      <div class="card">
-        <h2 class="cb-h2">参加している人</h2>
+        <h2 class="cb-h2">対戦する人（参加している人みんな・2〜6人）</h2>
         <ul id="lobbyPeople" class="cb-people"></ul>
-        <p class="cb-note">対戦しない人は、自分の画面で勝負を見られるよ。</p>
+        <label id="hostPlaysBox" class="cb-check" hidden>
+          <input type="checkbox" id="hostPlays">
+          <span>ホストも対戦する（外すと、ホストは進行だけ）</span>
+        </label>
+        <p id="seatNote" class="cb-note" hidden></p>
+        <p class="cb-note">見るだけの人は、トップの「みんなにみせる画面をひらく」から見られるよ。</p>
         <div id="proxyForm" class="cb-proxyadd" hidden>
           <label class="form-label" for="proxyName">端末なしの参加者を足す</label>
           <div class="cb-row cb-row--nowrap">
@@ -139,7 +135,7 @@
       </div>
 
       <div class="card">
-        <h2 class="cb-h2">小銭の出し方</h2>
+        <h2 class="cb-h2">持ち時間と小銭の出し方</h2>
         <div id="lobbyCommon"></div>
         <p id="lobbyCommonView" class="cb-setview" hidden></p>
       </div>
@@ -152,8 +148,8 @@
   <!-- 対決 -->
   <section class="cb-screen" id="screen-game">
     <div class="cb-main cb-duel" id="duel">
-      <div class="cb-duel__board">
-        <div id="card0" class="cb-player"></div>
+      <div class="cb-duel__board" id="board">
+        <div id="cards" class="cb-cards"></div>
         <div class="cb-duel__center">
           <p id="turnLine" class="cb-turn" role="status" aria-live="polite"></p>
           <div class="cb-trayhost">
@@ -165,7 +161,6 @@
           <div id="answerBox" class="cb-input"></div>
           <div id="resultBox" class="cb-result" hidden></div>
         </div>
-        <div id="card1" class="cb-player"></div>
       </div>
       <div id="tools" class="cb-tools"></div>
     </div>
@@ -215,29 +210,29 @@
   <!-- SVG の名前空間はここから読む（HTML の中の svg は自動で SVG の名前空間になる） -->
   <svg id="svgNs" hidden aria-hidden="true"></svg>
 
-  <script type="module" src="app.js?v=20261104c"></script>
+  <script type="module" src="app.js?v=20261104i"></script>
   <script src="../shared/js/stats.js?v=1" defer></script>
   <script src="../shared/js/howto.js"></script>
   <script>
     RoomkHowto.init({
       slides: 'slides.html',
       title: 'あそびかた',
-      lead: 'ならんだ小銭がぜんぶでいくらかを答えて、相手にバトンを渡す2人の対決。先に時間がなくなった人の負け。',
+      lead: 'ならんだ小銭がぜんぶでいくらかを答えて、次の人にバトンを渡す対決（2〜6人）。最後まで残った人の勝ち。',
       sections: [
         { heading: 'はじめかた', items: [
           'ホストが「ルームを作る」で名前を入れる。ルームコードは「コードをコピー」、参加用のリンクは「リンクをコピー」でチャットに送れる。スマホやタブレットで入る人には「QRコードを出す」をカメラで読みとってもらう',
           '参加する人は「ルームに参加する」で名前、ルームコード（6文字）の順に入れ、「参加する」を押す。リンクからひらいたときは、ルームコードは入っているので名前だけ入れる',
-          '対戦するのは2人。ほかの人は、自分の画面で勝負を見られる',
+          '参加している人みんなで対戦する（2〜6人）。参加した順に答える。見るだけの人は「みんなにみせる画面をひらく」から見られる',
           '1台の画面でみんなで見るときは「1台の画面であそぶ」。時間なしで数えるだけなら「いっしょに数える」',
         ] },
         { heading: 'あそびかた', items: [
           '3・2・1 のあと、自分の番になったら、小銭がぜんぶでいくらかを数字で入れて「こたえる」',
-          '正解すると、相手の番になる。まちがえても、何回でも答えなおせる',
+          '正解すると、次の人の番になる。まちがえても、何回でも答えなおせる',
           'わからないときは「パス」。3秒待つと次の小銭が出る（その間も自分の時計は減る）',
           '小銭は2枚からはじまって、正解するごとにだんだん増える',
         ] },
         { heading: 'おわりかた', items: [
-          '自分の時計が0になったら負け',
+          '自分の時計が0になったら「ここまで」。最後まで残った人の勝ち（2人なら、時計が0になった人の負け）',
           'おわったら、出た小銭を押すと、何円玉が何枚だったかを見られる',
         ] },
       ],

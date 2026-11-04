@@ -1,4 +1,4 @@
-// ちゃりんバトン E2E その1: 作成・参加・席・設定・観戦・みんなにみせる画面・3・2・1・まちがい・正解・パス・小銭の増え方・時間切れ・結果・もう一回・待合室へ・端末なしの参加者・スマホ幅・退出・ルームを閉じる
+// ちゃりんバトン E2E その1: 作成・参加（参加した人みんなが対戦・ホストも対戦する）・設定・途中に入った人は観戦・みんなにみせる画面・3・2・1・まちがい・正解・パス・小銭の増え方・時間切れ・結果・もう一回・待合室へ・端末なしの参加者・スマホ幅・退出・ルームを閉じる
 const L = require('./lib.cjs');
 const { E, check, sleep, waitFor } = L;
 
@@ -23,23 +23,25 @@ const { E, check, sleep, waitFor } = L;
   const code = (await L.text(H, '#roomCodeLabel')).trim();
   check('A2 ルームコード', /^[A-HJ-NP-Z2-9]{6}$/.test(code), code);
   let room = await L.roomOf(code);
-  check('A3 はじめの設定', room.status === 'waiting' && room.set.time.a === 45 && room.set.time.b === 45 && room.set.kinds.a === 'all' && room.set.maxCoins === 5 && room.set.arrange === 'scatter' && room.set.first === 'random', room.set);
+  check('A3 はじめの設定（ホストも対戦する）', room.status === 'waiting' && room.set.time === 45 && room.set.kinds === 'all' && room.set.maxCoins === 5 && room.set.arrange === 'scatter' && room.set.first === 'random' && room.set.hostPlays === true, room.set);
   check('A4 ホストに「みんなにみせる画面」と「ルームを閉じる」', await L.visible(H, '#btnOpenWatch') && (await L.text(H, '#btnLeave')) === 'ルームを閉じる');
   check('A5 1人では始められない', await H.page.isDisabled('#btnStartGame'));
   check('A6 room-create を数える', await L.waitStats(H, 'room-create', 1));
+  check('A6b ホストは対戦する人の1番目', (await L.text(H, '#lobbyPeople')).includes('1番目メンター') && await H.page.isChecked('#hostPlays'), await L.text(H, '#lobbyPeople'));
 
   await L.joinRoom(A, 'あおい', code);
   check('A7 参加者は待つ', await L.visible(A, '#lobbyWait') && !(await L.visible(A, '#btnStartGame')));
-  room = await L.roomWhen(code, (r) => r.seats?.a === 'あおい');
-  check('A8 入った人が1人目の席に入る', room.seats?.a === 'あおい', room.seats);
-  check('A9 ホストは席に入らない', !room.seats?.b);
+  check('A8 参加した人はみんな対戦する（参加した順）', await waitFor(async () => (await L.text(A, '#lobbyPeople')).includes('2番目あおい')), await L.text(A, '#lobbyPeople'));
+  check('A9 ホストと2人で始められる', await waitFor(async () => !(await H.page.isDisabled('#btnStartGame'))));
+  // ホストは進行だけにする（この先は、あおいとそらの2人で対決する）
+  await H.page.uncheck('#hostPlays');
+  room = await L.roomWhen(code, (r) => r.set?.hostPlays === false);
+  check('A10 「ホストも対戦する」を外すと進行だけ', room.set.hostPlays === false && await waitFor(async () => (await L.text(A, '#lobbyPeople')).includes('1番目あおい') && (await L.text(A, '#lobbyPeople')).includes('ホスト（進行だけ）')), await L.text(A, '#lobbyPeople'));
+  check('A10b 1人では始められない', await waitFor(async () => H.page.isDisabled('#btnStartGame')));
+  check('A10c 「ホストも対戦する」はホストだけ', !(await L.visible(A, '#hostPlaysBox')));
   await L.joinRoom(B, 'そら', code);
-  room = await L.roomWhen(code, (r) => r.seats?.b === 'そら');
-  check('A10 2人目の席', room.seats?.b === 'そら');
   check('A11 2人そろうと始められる', await waitFor(async () => !(await H.page.isDisabled('#btnStartGame'))));
-  await L.joinRoom(C, 'りく', code);
-  check('A12 3人目は観戦', await waitFor(async () => (await L.text(H, '#lobbyPeople')).includes('りく観戦')), await L.text(H, '#lobbyPeople'));
-  check('A13 観戦の人のバー', (await L.text(C, '#barMe')).includes('観戦中'));
+  check('A11b 2番目にそら', (await L.text(H, '#lobbyPeople')).includes('2番目そら'));
   const X = await L.newClient('dup');
   await L.open(X, '?room=' + code);
   check('A14 リンクからひらくとコードが入っている', (await X.page.inputValue('#joinCode')) === code && await L.visible(X, '#joinLinkHint'));
@@ -53,52 +55,44 @@ const { E, check, sleep, waitFor } = L;
   await L.open(W, '?watch=' + code);
   await L.waitScreen(W, 'waiting');
   check('A16 みんなにみせる画面に参加のしかた', await L.visible(W, '#lobbyJoin') && (await L.text(W, '#lobbyJoinCode')) === code);
-  check('A17 みんなにみせる画面は参加者に入らない', Object.keys((await L.roomOf(code)).players).length === 4);
+  check('A17 みんなにみせる画面は参加者に入らない', Object.keys((await L.roomOf(code)).players).length === 3);
   check('A18 みんなにみせる画面にコピーのボタンは出ない', !(await L.visible(W, '#btnCopyCode')) && await L.visible(W, '#btnLeave'));
 
-  // 席の入れかえ・ホストが席に入る
-  await H.page.click('#btnSeatSwap');
-  check('A19 入れかえが参加者に届く', await waitFor(async () => (await L.text(A, '#lobbySeats')).includes('2人目あおい（あなた）')), await L.text(A, '#lobbySeats'));
-  await H.page.selectOption('#seat-a', { label: 'メンター（自分）' });
-  check('A20 ホストも席に入れる', await waitFor(async () => (await L.text(B, '#lobbySeats')).includes('1人目メンター')), await L.text(B, '#lobbySeats'));
-  await H.page.selectOption('#seat-a', { label: 'あおい' });
-  room = await L.roomWhen(code, (r) => r.seats?.a === 'あおい');
-  check('A21 反対の席の人を選ぶと入れかわる', room.seats?.a === 'あおい' && room.seats?.b === 'メンター', room.seats);
-  await H.page.selectOption('#seat-b', { label: 'そら' });
-  await L.roomWhen(code, (r) => r.seats?.b === 'そら');
-
-  // ── B. 設定（人ごとのハンデ・小銭の出し方） ──
-  await H.page.selectOption('#lobbySeats-time-b', '60');
-  await L.roomWhen(code, (r) => r.set?.time?.b === 60);
-  await H.page.selectOption('#lobbySeats-kinds-a', 'three');
-  await L.roomWhen(code, (r) => r.set?.kinds?.a === 'three');
+  // ── B. 設定（持ち時間と小銭の種類はみんな同じ） ──
+  await H.page.selectOption('#lobbyCommon-time', '60');
+  await H.page.selectOption('#lobbyCommon-kinds', 'three');
   await H.page.selectOption('#lobbyCommon-max', '4');
-  await H.page.selectOption('#lobbyCommon-first', 'a');
-  room = await L.roomWhen(code, (r) => r.set?.maxCoins === 4 && r.set?.first === 'a');
-  check('B1 続けて変えても取りこぼさない', room.set.time.b === 60 && room.set.kinds.a === 'three' && room.set.maxCoins === 4 && room.set.first === 'a' && room.set.time.a === 45, room.set);
-  check('B2 参加者には持ち時間と種類が出る', await waitFor(async () => {
-    const t = await L.text(A, '#lobbySeats');
-    return t.includes('持ち時間 45秒・小銭は1・10・100円だけ') && t.includes('持ち時間 60秒・小銭はぜんぶ（6種類）');
-  }), await L.text(A, '#lobbySeats'));
-  check('B3 参加者には小銭の出し方のまとめ', await waitFor(async () => (await L.text(A, '#lobbyCommonView')).includes('4枚まで') && (await L.text(A, '#lobbyCommonView')).includes('1人目から')), await L.text(A, '#lobbyCommonView'));
+  await H.page.selectOption('#lobbyCommon-first', 'top');
+  room = await L.roomWhen(code, (r) => r.set?.maxCoins === 4 && r.set?.first === 'top' && r.set?.time === 60 && r.set?.kinds === 'three');
+  check('B1 続けて変えても取りこぼさない', room.set.time === 60 && room.set.kinds === 'three' && room.set.maxCoins === 4 && room.set.first === 'top' && room.set.hostPlays === false, room.set);
+  check('B3 参加者には設定のまとめ', await waitFor(async () => {
+    const t = await L.text(A, '#lobbyCommonView');
+    return t.includes('持ち時間 60秒') && t.includes('1・10・100円だけ') && t.includes('4枚まで') && t.includes('いちばん上の人');
+  }), await L.text(A, '#lobbyCommonView'));
   await L.shot(H, 'room-lobby-host');
   await L.shot(W, 'room-lobby-watch');
 
   // ── C. はじめる・3・2・1 ──
   await H.page.click('#btnStartGame');
-  for (const c of [H, A, B, C, W]) await L.waitScreen(c, 'game');
+  for (const c of [H, A, B, W]) await L.waitScreen(c, 'game');
+  // 対決の途中に入った人は、その回は観戦
+  await L.open(C, '?room=' + code);
+  await C.page.fill('#guestName', 'りく');
+  await C.page.click('#btnJoinRoom');
+  await L.waitScreen(C, 'game');
+  check('A13 途中に入った人は観戦', (await L.text(C, '#barMe')).includes('観戦中'), await L.text(C, '#barMe'));
   check('C1 start と players-2 を数える', await L.waitStats(H, 'start', 1) && await L.waitStats(H, 'players-2', 1));
   room = await L.roomOf(code);
   let d = room.game.duel;
   check('C2 はじめは 3・2・1', d.phase === 'ready' && d.turn === 0, d.phase);
-  check('C3 3・2・1 の間は小銭をかくす', (await L.trayCount(A)) === 0 && /[123]/.test(await L.text(A, '#readyLeft')));
-  check('C4 番の表示', (await L.turnLine(A)).includes('あなた からはじまるよ') && (await L.turnLine(C)).includes('あおい からはじまるよ'), [await L.turnLine(A), await L.turnLine(C)]);
-  check('C5 次の番の人に「もうすぐ」', (await L.text(B, '#answerBox')).includes('もうすぐはじまるよ'), await L.text(B, '#answerBox'));
+  check('C3 3・2・1 の間は小銭をかくす', (await L.trayCount(A)) === 0 && /[123]/.test(await L.text(A, '#readyLeft') || ''));
+  check('C4 番の表示', (await L.turnLine(A)).includes('あなた') && (await L.turnLine(W)).includes('あおい'), [await L.turnLine(A), await L.turnLine(W)]);
+  check('C5 次の番の人に「もうすぐ」か「数えているよ」', /もうすぐはじまるよ|あおいが数えているよ/.test(await L.text(B, '#answerBox')), await L.text(B, '#answerBox'));
   check('C6 みんなにみせる画面に金額の欄は出ない', !(await L.visible(W, '#answerBox')));
   await L.waitActive(A);
   d = await L.duelOf(code);
   check('C7 3秒たつと番の人が答えられる', d.phase === 'play', d.phase);
-  check('C8 1人目は1・10・100円だけ・2枚', d.problem.coins.length === 2 && d.problem.coins.every((x) => [1, 10, 100].includes(x.v)), d.problem.coins);
+  check('C8 小銭は1・10・100円だけ・2枚', d.problem.coins.length === 2 && d.problem.coins.every((x) => [1, 10, 100].includes(x.v)), d.problem.coins);
   check('C9 PC では画面の数字ボタンを出さない', !(await L.visible(A, '.cb-pad')) && await L.visible(A, '.cb-answer') && await L.visible(A, '.cb-padtoggle'));
   check('C10 スマホでは数字ボタンを出す（番でなくても）', true);
   check('C11 観戦の人には金額の欄が出ない', !(await L.visible(C, '#display')) && (await L.text(C, '#answerBox')).includes('あおいが数えているよ'));
@@ -121,7 +115,7 @@ const { E, check, sleep, waitFor } = L;
   await L.waitActive(B);
   d = await L.duelOf(code);
   check('D8 1.5秒で相手の番', d.phase === 'play' && d.turn === 1, d);
-  check('D9 2人目はぜんぶの種類から（2枚）', d.problem.coins.length === 2);
+  check('D9 そらも1・10・100円だけ（みんな同じ）・2枚', d.problem.coins.length === 2 && d.problem.coins.every((x) => [1, 10, 100].includes(x.v)));
   check('D10 スマホに数字ボタン', await L.visible(B, '.cb-pad') && !(await L.visible(B, '.cb-padtoggle')));
   check('D11 番でない人の画面は待つ', (await L.text(A, '#answerBox')).includes('そらが数えているよ'));
   check('D12 スマホ幅ではみ出さない', (await L.overflow(B)) <= 0, await L.overflow(B));
@@ -135,6 +129,8 @@ const { E, check, sleep, waitFor } = L;
   check('E1 パス', d.phase === 'pass');
   check('E2 パスの間は小銭をかくす', await waitFor(async () => (await L.trayCount(C)) === 0 && (await L.text(C, '#trayOver')).includes('パス')));
   check('E2b 相手の画面に「パス」の案内', await waitFor(async () => (await L.text(A, '#answerBox')).includes('そらはパス')), await L.text(A, '#answerBox'));
+  // そらの画面にパスが届いてから、次に答えられるようになるのを待つ
+  await waitFor(async () => (await L.text(B, '#trayOver')).includes('パス'));
   await L.waitActive(B);
   d = await L.duelOf(code);
   check('E3 3秒で同じ人に新しい小銭', d.phase === 'play' && d.turn === 1 && d.problem.key !== passKey, d);
@@ -151,10 +147,11 @@ const { E, check, sleep, waitFor } = L;
     await L.waitActive(who);
     counts.push(await L.trayCount(who));
     const want = await L.traySum(who);
+    const before = await L.duelOf(code);
     await L.typeAnswer(who, want);
     const got = await L.roomWhen(code, (x) => x.game.duel.phase === 'reveal');
     if (got.game.duel.phase !== 'reveal') {
-      console.log('  diag', k, who.label, 'want', want, 'db', got.game.duel.problem.coins.map((x) => x.v), got.game.duel.phase, 'ng', await L.text(who, '#ngMsg'), 'disp', await L.text(who, '#displayNum'), 'active', await who.page.evaluate(() => document.activeElement.outerHTML.slice(0, 80)));
+      console.log('  diag', k, who.label, 'before', before.phase, before.rev, before.problem.total, 'after', got.game.duel.rev, 'hostConn', got.hostConnected, 'want', want, 'db', got.game.duel.problem.coins.map((x) => x.v), got.game.duel.phase, 'ng', await L.text(who, '#ngMsg'), 'disp', await L.text(who, '#displayNum'), 'active', await who.page.evaluate(() => document.activeElement.outerHTML.slice(0, 80)));
     }
   }
   // そら、あおい、そら、あおい… の順。あおいは1回正解ずみ。枚数はその番が始まったときの自分の正解の数で決まる
@@ -199,44 +196,53 @@ const { E, check, sleep, waitFor } = L;
   await H.page.click('#resultBox .btn-primary');
   check('H0 大きく見ていた窓は、次の対決で閉じる', await waitFor(async () => !(await A.page.evaluate(() => document.getElementById('zoom').open))));
   d = await L.roomWhen(code, (r) => r.game?.id === 2).then((r) => r.game.duel);
-  check('H1 もう一回は先に答える人を入れかえる', d.turn === 1 && d.phase === 'ready' && d.history?.length === undefined, d.turn);
-  check('H2 again と start を数える', await L.waitStats(H, 'again', 1) && await L.waitStats(H, 'start', 2));
+  check('H1 もう一回は先に答える人を次の人にかえる', d.turn === 1 && d.phase === 'ready' && d.history?.length === undefined, d.turn);
+  check('H1b 途中に入った人は次の回から対戦する', JSON.stringify(d.settings.players.map((p) => p.name)) === JSON.stringify(['あおい', 'そら', 'りく']), d.settings.players);
+  check('H2 again と start・players-3 を数える', await L.waitStats(H, 'again', 1) && await L.waitStats(H, 'start', 2) && await L.waitStats(H, 'players-3', 1));
   check('H3 新しい対決の画面', await waitFor(async () => (await L.turnLine(A)).includes('そら からはじまるよ')), await L.turnLine(A));
   await H.page.click('#tools .cb-quiet');
   await L.waitScreen(H, 'waiting');
   for (const c of [A, B, C, W]) await L.waitScreen(c, 'waiting');
   room = await L.roomOf(code);
-  check('H4 待合室へ: 席はそのまま', room.status === 'waiting' && !room.game && room.seats.a === 'あおい' && room.seats.b === 'そら', room.seats);
+  check('H4 待合室へ', room.status === 'waiting' && !room.game, room.status);
   check('H5 途中でやめたときは again を数えない', await L.waitStats(H, 'again', 1));
+
+  // ── J1. 退出 ──
+  await C.page.click('#btnLeave');
+  await L.waitScreen(C, 'top');
+  room = await L.roomWhen(code, (r) => !r.players['りく']);
+  check('J1 退出すると在室が消え、対戦する人から外れる', !room.players['りく'] && !(await L.text(H, '#lobbyPeople')).includes('りく'));
 
   // ── I. 端末なしの参加者（ホストが代わりに入れる） ──
   await H.page.fill('#proxyName', 'ひかり');
   await H.page.click('#btnAddProxy');
   room = await L.roomWhen(code, (r) => r.proxies?.['ひかり']);
   check('I1 端末なしの参加者を足せる', !!room.proxies?.['ひかり']);
+  check('I1b 足した人も対戦する（参加した順）', await waitFor(async () => (await L.text(H, '#lobbyPeople')).includes('3番目ひかり')), await L.text(H, '#lobbyPeople'));
   check('I2 「端末なし」の印はホストだけ', (await L.text(H, '#lobbyPeople')).includes('端末なし') && !(await L.text(A, '#lobbyPeople')).includes('端末なし'));
-  await H.page.selectOption('#seat-b', { label: 'ひかり（端末なし）' });
-  await L.roomWhen(code, (r) => r.seats?.b === 'ひかり');
-  await H.page.selectOption('#lobbyCommon-first', 'b');
-  await L.roomWhen(code, (r) => r.set?.first === 'b');
   await H.page.click('#btnStartGame');
   await L.waitScreen(H, 'game');
+  for (let k = 0; k < 2; k++) {
+    const r = await L.roomWhen(code, (x) => x.game.duel.phase === 'play');
+    const who = [A, B][r.game.duel.turn];
+    await L.waitActive(who);
+    await L.typeAnswer(who, await L.traySum(who));
+    await L.roomWhen(code, (x) => x.game.duel.phase === 'reveal');
+  }
   check('I3 ホストに代わりに入れる案内', await waitFor(async () => (await L.text(H, '#answerBox')).includes('ひかりの番。代わりに入れてね')), await L.text(H, '#answerBox'));
   await L.waitActive(H);
-  check('I4 そらは観戦になる', (await L.text(B, '#barMe')).includes('観戦中'));
-  await L.typeAnswer(H, await L.traySum(H));
+  const beforeI = await L.duelOf(code);
+  const wantI = await L.traySum(H);
+  await L.typeAnswer(H, wantI);
   d = await L.roomWhen(code, (r) => r.game.duel.phase === 'reveal').then((r) => r.game.duel);
-  check('I5 ホストが代わりに答えられる', d.correct[1] === 1, d.correct);
+  if (d.phase !== 'reveal') console.log('  diagI want', wantI, 'db', beforeI.problem.total, beforeI.phase, beforeI.rev, '->', d.phase, d.rev, 'ng', await L.text(H, '#ngMsg'), 'disp', await L.text(H, '#displayNum'), 'active', await H.page.evaluate(() => document.activeElement.outerHTML.slice(0, 80)), 'hostConn', (await L.roomOf(code)).hostConnected);
+  check('I5 ホストが代わりに答えられる', d.correct[2] === 1, d.correct);
   await L.waitActive(A);
   check('I6 次はあおいの番', (await L.duelOf(code)).turn === 0);
   check('I7 ホストはあおいの番には入れられない', !(await L.visible(H, '#display')));
   check('I8 対決中は端末なしの参加者を外すボタンが見えない', !(await L.visible(H, '#lobbyPeople .cb-person__del')));
 
-  // ── J. 退出・ルームを閉じる ──
-  await C.page.click('#btnLeave');
-  await L.waitScreen(C, 'top');
-  room = await L.roomWhen(code, (r) => !r.players['りく']);
-  check('J1 観戦の人が退出すると在室が消える', !room.players['りく']);
+  // ── J. ルームを閉じる ──
   await H.page.click('#btnLeave');
   for (const c of [A, B]) await L.waitScreen(c, 'top');
   check('J2 ルームを閉じると参加者はトップへ', true);

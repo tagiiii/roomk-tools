@@ -132,13 +132,18 @@
   }
 
   // ══════════════════════════════════════════════
-  // 対決
-  // settings = { players: [{ name, time(秒), kinds }, {…}], maxCoins, arrange, first: 0|1 }
+  // 対決（2〜6人の勝ち残り。2人なら1対1の対決）
+  // settings = { players: [{ name, time(秒), kinds }, …], maxCoins, arrange, first: 先に答える人の番号 }
   // phase: ready（はじまる前の 3・2・1）→ play
-  //        play（番の人が数える）→ reveal（正解を見せる。時計は止まる）→ 相手の play
+  //        play（番の人が数える）→ reveal（正解を見せる。時計は止まる）→ 残っている次の人の play
   //        play → pass（問題をかくして3秒。自分の時計は減る）→ 同じ人の play
-  //        play / pass で番の人の時計が0 → over
+  //        play / pass で番の人の時計が0 → その人は「ここまで」（out）
+  //          残りが2人以上なら out（その小銭を見せる。時計は止まる）→ 残っている次の人の play
+  //          残りが1人なら over（その人の勝ち）
   // ══════════════════════════════════════════════
+  const MIN_PLAYERS = 2;
+  const MAX_PLAYERS = 6;
+  const OUT_MS = 1500;         // 「ここまで」を見せる間（みんなの時計を止める）
   const clone = (o) => JSON.parse(JSON.stringify(o));
 
   function nextProblem(S, who, rng) {
@@ -151,18 +156,34 @@
     });
   }
 
+  // まだ残っている人の数
+  const aliveCount = (S) => S.out.filter((o) => !o).length;
+  // from の次に答える、まだ残っている人（from 自身は数えない）
+  function nextAlive(S, from) {
+    const n = S.settings.players.length;
+    for (let k = 1; k <= n; k += 1) {
+      const i = (from + k) % n;
+      if (!S.out[i]) return i;
+    }
+    return from;
+  }
+
   function createDuel(settings, now, rng) {
+    const n = settings.players.length;
+    const first = Number.isInteger(settings.first) && settings.first >= 0 && settings.first < n ? settings.first : 0;
     const S = {
-      settings: clone(settings),
+      settings: clone(Object.assign({}, settings, { first })),
       phase: 'ready',
-      turn: settings.first === 1 ? 1 : 0,
+      turn: first,
       rem: settings.players.map((p) => p.time * 1000),
       at: now,          // 番の人の時計が動きはじめた時刻
       phaseEnd: now + READY_MS,
-      correct: [0, 0],
+      correct: settings.players.map(() => 0),
+      out: settings.players.map(() => false), // 時計が0になって「ここまで」になった人
       problem: null,
       history: [],      // 出た問題（だれが解いたかは画面に出さない）
       last: null,       // 直前の正解 { total, by }
+      lastOut: null,    // 直前に「ここまで」になった人
       winner: null,
       rev: 0,
       startedAt: now, // 対決ごとの印（ルームで新しい対決を見分ける）
@@ -177,6 +198,7 @@
     return S.rem[i];
   }
 
+  // 番の人の時計が0になった。残りが1人なら決着、2人以上なら「ここまで」を見せてから次の人へ
   function finish(S, now) {
     // 時間切れのときの小銭も、答えといっしょに一覧に入れる。
     // パスの間に切れたときは、パスした小銭（いま出ている小銭）がもう入っているので、それを時間切れにする
@@ -184,8 +206,15 @@
     if (S.phase === 'pass' && last) last.how = 'timeout';
     else if (S.phase === 'play') S.history.push({ coins: S.problem.coins, total: S.problem.total, how: 'timeout' });
     S.rem[S.turn] = 0;
-    S.phase = 'over';
-    S.winner = 1 - S.turn;
+    S.out[S.turn] = true;
+    S.lastOut = S.turn;
+    if (aliveCount(S) <= 1) {
+      S.phase = 'over';
+      S.winner = S.out.findIndex((o) => !o);
+    } else {
+      S.phase = 'out';
+      S.phaseEnd = now + OUT_MS;
+    }
     S.rev += 1;
     return S;
   }
@@ -218,7 +247,17 @@
     return S;
   }
 
-  // 時間で進める（時間切れ・正解の間のおわり・パスのおわり）
+  // 番を、残っている次の人へ渡す
+  function handOver(S, now, rng) {
+    S.turn = nextAlive(S, S.turn);
+    S.problem = nextProblem(S, S.turn, rng);
+    S.phase = 'play';
+    S.at = now;
+    S.rev += 1;
+    return S;
+  }
+
+  // 時間で進める（3・2・1 のおわり・時間切れ・正解の間のおわり・「ここまで」のおわり・パスのおわり）
   function tick(S0, now, rng) {
     if (S0.phase === 'over') return S0;
     if (S0.phase === 'ready') {
@@ -230,15 +269,7 @@
       return S;
     }
     if ((S0.phase === 'play' || S0.phase === 'pass') && remaining(S0, S0.turn, now) <= 0) return finish(clone(S0), now);
-    if (S0.phase === 'reveal' && now >= S0.phaseEnd) {
-      const S = clone(S0);
-      S.turn = 1 - S.turn;
-      S.problem = nextProblem(S, S.turn, rng);
-      S.phase = 'play';
-      S.at = now;
-      S.rev += 1;
-      return S;
-    }
+    if ((S0.phase === 'reveal' || S0.phase === 'out') && now >= S0.phaseEnd) return handOver(clone(S0), now, rng);
     if (S0.phase === 'pass' && now >= S0.phaseEnd) {
       const S = clone(S0);
       S.problem = nextProblem(S, S.turn, rng);
@@ -254,12 +285,17 @@
   function resume(S0, frozenAt, now, rng) {
     if (S0.phase === 'over') return S0;
     const S = clone(S0);
-    if (S0.phase === 'play' || S0.phase === 'pass') S.rem[S.turn] = remaining(S0, S.turn, frozenAt);
-    if (S.rem[S.turn] <= 0) return finish(S, now);
-    if (S0.phase === 'reveal') {
-      S.turn = 1 - S.turn;
+    if (S0.phase === 'play' || S0.phase === 'pass') {
+      S.rem[S.turn] = remaining(S0, S.turn, frozenAt);
+      if (S.rem[S.turn] <= 0) {
+        finish(S, now);
+        if (S.phase === 'over') return S;
+      }
+    }
+    if (S.phase === 'reveal' || S.phase === 'out') {
+      S.turn = nextAlive(S, S.turn);
       S.problem = nextProblem(S, S.turn, rng);
-    } else if (S0.phase === 'pass') {
+    } else if (S.phase === 'pass') {
       S.problem = nextProblem(S, S.turn, rng);
     }
     S.phase = 'ready';
@@ -268,18 +304,18 @@
     return S;
   }
 
-  // いま時間で進めるところがあるか（3・2・1 のおわり・正解の帯のおわり・パスのおわり・時間切れ）
+  // いま時間で進めるところがあるか（3・2・1 のおわり・正解の帯のおわり・「ここまで」のおわり・パスのおわり・時間切れ）
   function due(S, now) {
     if (S.phase === 'over') return false;
-    if (S.phase === 'ready' || S.phase === 'reveal') return now >= S.phaseEnd;
+    if (S.phase === 'ready' || S.phase === 'reveal' || S.phase === 'out') return now >= S.phaseEnd;
     if (S.phase === 'pass' && now >= S.phaseEnd) return true;
     return remaining(S, S.turn, now) <= 0;
   }
 
   const api = {
-    COINS, KINDS, TRAY, REVEAL_MS, PASS_MS, READY_MS, SAME_MAX,
+    COINS, KINDS, TRAY, REVEAL_MS, PASS_MS, READY_MS, OUT_MS, SAME_MAX, MIN_PLAYERS, MAX_PLAYERS,
     makeRng, coinCountFor, makeCoins, layout, makeProblem, breakdown, keyOf, totalOf,
-    createDuel, remaining, answer, pass, tick, resume, due,
+    createDuel, remaining, answer, pass, tick, resume, due, nextAlive, aliveCount,
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.CharinEngine = api;

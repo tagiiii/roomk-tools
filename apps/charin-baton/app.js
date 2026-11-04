@@ -1,22 +1,23 @@
 /* ちゃりんバトン
-   ・ルーム: Realtime Database。対戦する2人がそれぞれの端末で答え、ほかの参加者は観戦する
+   ・ルーム: Realtime Database。対戦する2〜6人がそれぞれの端末で答え、ほかの参加者は観戦する（勝ち残り。2人なら1対1）
    ・1台の画面: このタブだけで遊ぶ（答えた金額を入れるのは画面を動かす人。通信しない）
    ・いっしょに数える: 時間なし・勝ち負けなし（通信しない）
    ・みんなにみせる画面（?watch=）: 見るだけ。ルームに書き込まない
    ルール（小銭の作り方・持ち時間・番の進め方）は engine.js。 */
 const E = window.CharinEngine;
 
-const MAX_GUESTS = 20;
 const MAX_PROXIES = 4;       // 端末なしの参加者（ホストが代わりに金額を入れる）
-const SEATS = ['a', 'b'];    // 1人目・2人目（対決のルールでは 0・1）
-const SEAT_LABEL = ['1人目', '2人目'];
+const MIN_SEATS = E.MIN_PLAYERS; // 参加している人みんなが対戦する（2〜6人。参加した順に答える）
+const MAX_SEATS = E.MAX_PLAYERS;
+const orderLabel = (i) => (i + 1) + '番目';
 const TIMES = [30, 45, 60, 90];
 const MAXES = [4, 5, 6, 8];
 const ARRANGES = { scatter: 'ばらばら', sort: 'そろえる（大きい順）' };
-const FIRSTS = { random: 'くじで決める', a: '1人目から', b: '2人目から' };
+const FIRSTS = { random: 'くじで決める', top: 'いちばん上の人から' };
 const KIND_LABEL = { all: 'ぜんぶ（6種類）', three: '1・10・100円だけ' };
-const DEFAULT_SET = { time: { a: 45, b: 45 }, kinds: { a: 'all', b: 'all' }, maxCoins: 5, arrange: 'scatter', first: 'random' };
-const PHASES = ['ready', 'play', 'reveal', 'pass', 'over'];
+// 持ち時間と小銭の種類はみんな同じ。hostPlays はホストも対戦するか（外すとホストは進行だけ）
+const DEFAULT_SET = { time: 45, kinds: 'all', maxCoins: 5, arrange: 'scatter', first: 'random', hostPlays: true };
+const PHASES = ['ready', 'play', 'reveal', 'pass', 'out', 'over'];
 const LOW_MS = 10000;        // 番の人の残りが10秒を切ったら札を赤くする（音は鳴らさない）
 const CLOCK_MS = 200;
 const RETRY_MS = 700;        // 時間で進める書き込みが通らなかったときに、もう一度ためすまで
@@ -70,8 +71,8 @@ const state = {
   watchTimer: null,
   // 端末の中だけで持つ状態
   local: null,         // 1台の画面の対決 { duel, savedAt }
-  localSet: null,      // 1台の画面の準備中の設定
-  localNames: ['', ''],
+  localSet: null,      // 1台の画面の準備中の設定（小銭の出し方）
+  localPlayers: null,  // 1台の画面の対戦する人 [{ name, time, kinds }]（2〜6人）
   input: '',           // 入れている途中の金額（ほかの端末には送らない）
   ngUntil: 0,
   renderSig: null,
@@ -148,33 +149,30 @@ const num = (v, fallback) => (typeof v === 'number' && Number.isFinite(v) ? v : 
 /* ── 設定 ── */
 function normSet(raw) {
   const s = raw && typeof raw === 'object' ? raw : {};
-  const per = (obj, ok, fallback) => {
-    const o = obj && typeof obj === 'object' ? obj : {};
-    return { a: ok(o.a) ? o.a : fallback, b: ok(o.b) ? o.b : fallback };
-  };
   return {
-    time: per(s.time, (v) => TIMES.includes(v), DEFAULT_SET.time.a),
-    kinds: per(s.kinds, (v) => !!E.KINDS[v], DEFAULT_SET.kinds.a),
+    time: TIMES.includes(s.time) ? s.time : DEFAULT_SET.time,
+    kinds: E.KINDS[s.kinds] ? s.kinds : DEFAULT_SET.kinds,
     maxCoins: MAXES.includes(s.maxCoins) ? s.maxCoins : DEFAULT_SET.maxCoins,
     arrange: ARRANGES[s.arrange] ? s.arrange : DEFAULT_SET.arrange,
     first: FIRSTS[s.first] ? s.first : DEFAULT_SET.first,
+    hostPlays: typeof s.hostPlays === 'boolean' ? s.hostPlays : DEFAULT_SET.hostPlays,
   };
 }
 
 function settingSummary(set) {
-  return '小銭は2枚から' + set.maxCoins + '枚まで増える・ならべ方は' + ARRANGES[set.arrange] + '・' + FIRSTS[set.first].replace('決める', '決めた人から');
+  return '持ち時間 ' + set.time + '秒・小銭は' + KIND_LABEL[set.kinds] + '・2枚から' + set.maxCoins + '枚まで増える・ならべ方は' + ARRANGES[set.arrange] + '・先に答える人は' + (set.first === 'random' ? 'くじで決める' : 'いちばん上の人');
 }
 
-// 対決のルールに渡す設定。first は 0（1人目から）か 1（2人目から）
-function duelSettings(set, names, first) {
+// 対決のルールに渡す設定。names は答える順の名前、first は先に答える人の番号
+function duelSettings(names, set, first) {
   return {
-    players: SEATS.map((k, i) => ({ name: names[i], time: set.time[k], kinds: set.kinds[k] })),
+    players: names.map((name) => ({ name, time: set.time, kinds: set.kinds })),
     maxCoins: set.maxCoins,
     arrange: set.arrange,
-    first: first === 1 ? 1 : 0,
+    first,
   };
 }
-const firstOf = (set) => (set.first === 'random' ? (Math.random() < 0.5 ? 0 : 1) : set.first === 'b' ? 1 : 0);
+const firstOf = (set, n) => (set.first === 'random' ? Math.floor(Math.random() * n) : 0);
 
 function selectField(labelText, id, options, value, onChange) {
   const wrap = makeElement('div', 'cb-field');
@@ -195,30 +193,16 @@ function selectField(labelText, id, options, value, onChange) {
 const timeOpts = TIMES.map((t) => [t, t + '秒']);
 const kindOpts = Object.keys(E.KINDS).map((k) => [k, KIND_LABEL[k]]);
 
-// 対戦する人の札（1台の画面の準備・待合室）。head(i) が名前の欄（入力・選択・表示）を返す
-function buildSeats(box, set, head, editable, onChange) {
-  box.replaceChildren(...SEATS.map((k, i) => {
-    const card = makeElement('fieldset', 'cb-seat');
-    card.append(makeElement('legend', 'cb-seat__title', SEAT_LABEL[i]));
-    card.append(head(i));
-    if (editable) {
-      card.append(selectField('持ち時間', box.id + '-time-' + k, timeOpts, set.time[k], (v) => { set.time[k] = Number(v); onChange(['time', k], Number(v)); }));
-      card.append(selectField('小銭の種類', box.id + '-kinds-' + k, kindOpts, set.kinds[k], (v) => { set.kinds[k] = v; onChange(['kinds', k], v); }));
-    } else {
-      card.append(makeElement('p', 'cb-seat__sub', '持ち時間 ' + set.time[k] + '秒・小銭は' + KIND_LABEL[set.kinds[k]]));
-    }
-    return card;
-  }));
-}
-
 function buildCommon(box, set, onChange) {
   const grid = makeElement('div', 'cb-common');
   grid.append(
+    selectField('持ち時間（ひとりずつ）', box.id + '-time', timeOpts, set.time, (v) => { set.time = Number(v); onChange(['time'], Number(v)); }),
+    selectField('小銭の種類', box.id + '-kinds', kindOpts, set.kinds, (v) => { set.kinds = v; onChange(['kinds'], v); }),
     selectField('小銭の枚数', box.id + '-max', MAXES.map((m) => [m, m + '枚まで']), set.maxCoins, (v) => { set.maxCoins = Number(v); onChange(['maxCoins'], Number(v)); }),
     selectField('ならべ方', box.id + '-arrange', Object.keys(ARRANGES).map((k) => [k, ARRANGES[k]]), set.arrange, (v) => { set.arrange = v; onChange(['arrange'], v); }),
     selectField('先に答える人', box.id + '-first', Object.keys(FIRSTS).map((k) => [k, FIRSTS[k]]), set.first, (v) => { set.first = v; onChange(['first'], v); }),
   );
-  box.replaceChildren(grid, makeElement('p', 'cb-note', '小銭は2枚からはじまり、正解2回ごとに1枚ずつ増える。持ち時間と小銭の種類は、人ごとに変えられる（ハンデ）。'));
+  box.replaceChildren(grid, makeElement('p', 'cb-note', '持ち時間と小銭の種類は、みんな同じ。小銭は2枚からはじまり、正解2回ごとに1枚ずつ増える。時計が0になった人から「ここまで」で、最後まで残った人の勝ち。'));
 }
 
 /* ── 硬貨のトレー（SVG） ── */
@@ -280,10 +264,23 @@ const proxyNames = (room) => byJoined(Object.entries(room?.proxies || {}));
 // 在室の人は匿名IDがあるときだけ（壊れた在室で対決を作らない）
 const seatable = (room, name) => typeof name === 'string' && ((typeof room?.players?.[name]?.uid === 'string' && !!room.players[name].uid) || !!room?.proxies?.[name]);
 
-function seatsOf(room) {
-  const s = room?.seats || {};
-  return { a: typeof s.a === 'string' ? s.a : null, b: typeof s.b === 'string' ? s.b : null };
+// 対戦する人（参加している人みんなと端末なしの参加者。参加した順に答える）。ホストは「ホストも対戦する」のときだけ
+function seatList(room) {
+  const hostPlays = normSet(room?.set).hostPlays;
+  const all = Object.entries(room?.players || {}).concat(Object.entries(room?.proxies || {}));
+  return byJoined(all).filter((name) => hostPlays || name !== room.host).slice(0, MAX_SEATS);
 }
+// 対戦する人の名前（いる人と端末なしの参加者。対決中は、通信が切れている席の人の枠も残す）
+function playerNames(room) {
+  const hostPlays = normSet(room?.set).hostPlays;
+  const names = new Set(Object.keys(room?.players || {}).concat(Object.keys(room?.proxies || {})).filter((name) => hostPlays || name !== room.host));
+  const game = room?.status === STATUS.PLAY ? gameOf(room) : null;
+  if (game) game.seats.forEach((name) => names.add(name));
+  return names;
+}
+// 対戦する人の数（参加できるか・端末なしの参加者を足せるかの判定に使う）
+const playerCount = (room) => playerNames(room).size;
+const FULL_MESSAGE = 'このルームはいっぱいだよ（対戦は' + MAX_SEATS + '人まで）。見るだけなら、トップの「みんなにみせる画面をひらく」から見てね';
 
 function normCoins(list) {
   return asList(list)
@@ -295,37 +292,43 @@ function normCoins(list) {
 function normDuel(d) {
   if (!d || typeof d !== 'object') return null;
   const players = asList(d.settings?.players);
+  const n = players.length;
   const coins = normCoins(d.problem?.coins);
-  if (players.length !== 2 || !coins.length) return null;
+  if (n < MIN_SEATS || n > MAX_SEATS || !coins.length) return null;
   // 進行に要る値が壊れていたら読み飛ばす（補って続けると、すぐ時間切れにして書き戻すことがあるため）
   const fin = (v) => typeof v === 'number' && Number.isFinite(v);
+  const idx = (v) => Number.isInteger(v) && v >= 0 && v < n;
   const rem = asList(d.rem);
-  if (!PHASES.includes(d.phase) || (d.turn !== 0 && d.turn !== 1)) return null;
-  if (rem.length !== 2 || !rem.every((v) => fin(v) && v >= 0)) return null;
+  const out = asList(d.out);
+  if (!PHASES.includes(d.phase) || !idx(d.turn)) return null;
+  if (rem.length !== n || !rem.every((v) => fin(v) && v >= 0)) return null;
+  if (out.length !== n || !out.every((v) => typeof v === 'boolean')) return null;
   if (!fin(d.at) || !fin(d.phaseEnd) || !fin(d.rev) || d.rev < 0) return null;
-  const pair = (v) => { const a = asList(v); return [num(a[0], 0), num(a[1], 0)]; };
+  const correct = asList(d.correct);
   const values = coins.map((c) => c.v);
   return {
     settings: {
       players: players.map((p) => ({ name: String(p?.name || ''), time: TIMES.includes(p?.time) ? p.time : 45, kinds: E.KINDS[p?.kinds] ? p.kinds : 'all' })),
       maxCoins: MAXES.includes(d.settings.maxCoins) ? d.settings.maxCoins : 5,
       arrange: d.settings.arrange === 'sort' ? 'sort' : 'scatter',
-      first: d.settings.first === 1 ? 1 : 0,
+      first: idx(d.settings.first) ? d.settings.first : 0,
     },
     phase: d.phase,
     turn: d.turn,
-    rem: [rem[0], rem[1]],
+    rem: rem.slice(),
     at: num(d.at, 0),
     phaseEnd: num(d.phaseEnd, 0),
-    correct: pair(d.correct),
+    correct: players.map((_, i) => num(correct[i], 0)),
+    out: out.slice(),
     problem: { coins, key: E.keyOf(values), total: E.totalOf(values) },
     history: asList(d.history)
       .map((h) => ({ coins: normCoins(h?.coins), how: ['ok', 'pass', 'timeout'].includes(h?.how) ? h.how : 'ok' }))
       .filter((h) => h.coins.length)
       .map((h) => ({ coins: h.coins, total: E.totalOf(h.coins.map((c) => c.v)), how: h.how })),
     // 正解の帯の金額は、いまの小銭から計算しなおす
-    last: d.last && typeof d.last === 'object' ? { total: E.totalOf(values), by: d.last.by === 1 ? 1 : 0 } : null,
-    winner: d.winner === 0 || d.winner === 1 ? d.winner : null,
+    last: d.last && typeof d.last === 'object' ? { total: E.totalOf(values), by: idx(d.last.by) ? d.last.by : 0 } : null,
+    lastOut: idx(d.lastOut) ? d.lastOut : null,
+    winner: idx(d.winner) ? d.winner : null,
     rev: num(d.rev, 0),
     startedAt: num(d.startedAt, 0),
   };
@@ -337,14 +340,16 @@ function gameOf(room) {
   if (!g || typeof g !== 'object') return null;
   const duel = normDuel(g.duel);
   if (!duel) return null;
-  const seats = g.seats || {};
-  const uids = g.uids || {};
-  const proxy = g.proxy || {};
+  const n = duel.settings.players.length;
+  const seats = asList(g.seats);
+  const uids = asList(g.uids);
+  const proxy = asList(g.proxy);
+  if (seats.length !== n || !seats.every((x) => typeof x === 'string' && x)) return null;
   return {
     id: Number(g.id) || 0,
-    seats: { a: typeof seats.a === 'string' ? seats.a : null, b: typeof seats.b === 'string' ? seats.b : null },
-    uids: { a: uids.a || null, b: uids.b || null },
-    proxy: { a: proxy.a === true, b: proxy.b === true },
+    seats: seats.slice(),
+    uids: seats.map((_, i) => (typeof uids[i] === 'string' ? uids[i] : '')),   // 端末なしの人は ''
+    proxy: seats.map((_, i) => proxy[i] === true),
     duel,
     // 一度でもおわったか（finish を1回の対決に1回だけ数えるため）
     ended: g.ended === true,
@@ -353,32 +358,30 @@ function gameOf(room) {
 
 // その席の人が、いまルームにいるか（端末なしの参加者はいつもいる）
 function seatPresent(room, game, i) {
-  const k = SEATS[i];
-  return game.proxy[k] || !!room?.players?.[game.seats[k]];
+  return game.proxy[i] || !!room?.players?.[game.seats[i]];
 }
 
 // その席の番に、この端末が答えてよいか。ホストは、端末なしの人と通信が切れた人の代わりに入れられる
 function mayAnswer(room, game, i, uid, nickname, role) {
   if (role !== 'host' && role !== 'guest') return false;
-  const k = SEATS[i];
   const isHost = role === 'host' && room.hostUid === uid;
-  if (game.proxy[k]) return isHost;
-  if (game.seats[k] === nickname && game.uids[k] === uid) return true;
-  return isHost && !room.players?.[game.seats[k]];
+  if (game.proxy[i]) return isHost;
+  if (game.seats[i] === nickname && game.uids[i] === uid) return true;
+  return isHost && !room.players?.[game.seats[i]];
 }
 
-// 時間で進める書き込み（3・2・1 のおわり・正解の帯のおわり・パスのおわり・時間切れ）をしてよい端末
+// 時間で進める書き込み（3・2・1 のおわり・正解の帯のおわり・「ここまで」のおわり・パスのおわり・時間切れ）をしてよい端末
 function mayAdvance(room, game, uid, nickname, role) {
   if (role === 'host') return room.hostUid === uid;
   if (role !== 'guest') return false;
-  return SEATS.some((k) => !game.proxy[k] && game.seats[k] === nickname && game.uids[k] === uid);
+  return game.seats.some((name, i) => !game.proxy[i] && name === nickname && game.uids[i] === uid);
 }
 
 // 対決の席の名前の持ち主（匿名ID）。対決の間は、その名前を同じ人だけが使える
 function reservedByOther(room, name, uid) {
   const game = gameOf(room);
   if (!game || room.status !== STATUS.PLAY) return false;
-  return SEATS.some((k) => game.seats[k] === name && (game.proxy[k] || (game.uids[k] && game.uids[k] !== uid)));
+  return game.seats.some((x, i) => x === name && (game.proxy[i] || (game.uids[i] && game.uids[i] !== uid)));
 }
 
 // 時計の「いま」。ホストが切れている間は、切れた時刻で止める（戻ると 3・2・1 からつづける）
@@ -469,7 +472,7 @@ function clearSession() {
 
 /* ── ルームへの出入り ── */
 function resetBoxes() {
-  ['tray', 'answerBox', 'resultBox', 'tools', 'card0', 'card1', 'lobbySeats', 'lobbyCommon'].forEach((id) => $(id).replaceChildren());
+  ['tray', 'answerBox', 'resultBox', 'tools', 'cards', 'lobbyPeople', 'lobbyCommon'].forEach((id) => $(id).replaceChildren());
   $('lobbyCommon')._key = null;
   state.input = '';
   state.ngUntil = 0;
@@ -642,8 +645,8 @@ async function ensurePresence(force = false) {
         }
         // 戻るときは参加したときの順番のまま。対決中の席の人は人数の上限を見ない
         const game = gameOf(room);
-        const seated = room.status === STATUS.PLAY && game && SEATS.some((k) => game.seats[k] === nickname);
-        if (!seated && guestNames(room).length >= MAX_GUESTS) {
+        const seated = room.status === STATUS.PLAY && game && game.seats.includes(nickname);
+        if (!seated && playerCount(room) >= MAX_SEATS) {
           full = true;
           return;
         }
@@ -657,7 +660,7 @@ async function ensurePresence(force = false) {
       });
       if ((full || taken) && state.roomRef === ref && !state.leaving) {
         await RoomkRTDB.cancelRoomOnDisconnect(ref);
-        leaveLocally(full ? 'このルームはいっぱいだよ' : '同じ名前の人がいるので、ルームから外れました。名前を変えて入りなおしてね');
+        leaveLocally(full ? FULL_MESSAGE : '同じ名前の人がいるので、ルームから外れました。名前を変えて入りなおしてね');
       }
     }
   } catch (error) {
@@ -785,9 +788,9 @@ async function joinRoom() {
         return;
       }
       const game = gameOf(room);
-      const seated = room.status === STATUS.PLAY && game && SEATS.some((k) => game.seats[k] === nickname);
+      const seated = room.status === STATUS.PLAY && game && game.seats.includes(nickname);
       if (mine) rejoinAt = Number(stale.joinedAt) || joinedAt;
-      else if (!seated && guestNames(room).length >= MAX_GUESTS) { reason = '満員'; return; }
+      else if (!seated && playerCount(room) >= MAX_SEATS) { reason = '満員'; return; }
       const next = {
         ...room,
         players: {
@@ -795,12 +798,6 @@ async function joinRoom() {
           [nickname]: { isHost: false, uid, joinedAt: rejoinAt || joinedAt },
         },
       };
-      // 待合室では、空いている席に入った順で入る（ホストは自分で選んだときだけ席に入る）
-      if (room.status === STATUS.WAITING && !mine) {
-        const seats = seatsOf(room);
-        const k = SEATS.find((s) => !seats[s]);
-        if (k && !SEATS.some((s) => seats[s] === nickname)) next.seats = { ...seats, [k]: nickname };
-      }
       return next;
     });
     if (!result.committed) {
@@ -808,7 +805,7 @@ async function joinRoom() {
         '見つからない': 'ルームが見つからないよ。コードを確かめてね',
         '終了': 'このルームは終わったみたい',
         '名前': 'その名前は使われているよ。少し変えてみてね',
-        '満員': 'このルームはいっぱいだよ',
+        '満員': FULL_MESSAGE,
       };
       setError('joinError', messages[reason] || '参加できませんでした。もう一度ためしてね');
       return;
@@ -891,7 +888,7 @@ async function leaveRoom() {
     if (role === 'host') {
       await ref.remove();
     } else {
-      // 自分の在室だけを消す。待合室なら席も空ける（対決中の席は残し、ホストが代わりに入れられる）
+      // 自分の在室だけを消す（対決中の席は残し、ホストが代わりに入れられる）
       await ref.transaction((room) => {
         if (!room) return;
         const mine = room.players?.[nickname];
@@ -899,13 +896,7 @@ async function leaveRoom() {
         if (mine && mine.uid !== uid) return;
         const players = { ...(room.players || {}) };
         delete players[nickname];
-        const next = { ...room, players };
-        if (room.status === STATUS.WAITING) {
-          const seats = seatsOf(room);
-          SEATS.forEach((k) => { if (seats[k] === nickname) seats[k] = null; });
-          next.seats = seats;
-        }
-        return next;
+        return { ...room, players };
       });
     }
   } catch (error) {
@@ -1054,37 +1045,20 @@ async function hostTransaction(update, failMessage, lock = true) {
   }
 }
 
-// 席・設定は続けて変えても取りこぼさないよう、二度押しよけのロックを使わない（どれも中で今の値から作りなおす）
-async function setSeat(k, name) {
-  const ok = await hostTransaction((room) => {
-    if (room.status !== STATUS.WAITING) return;
-    if (name && !seatable(room, name)) return;
-    const seats = seatsOf(room);
-    const other = k === 'a' ? 'b' : 'a';
-    if (name && seats[other] === name) seats[other] = seats[k]; // 反対の席にいた人なら入れかえる
-    seats[k] = name || null;
-    return { ...room, seats };
-  }, '席を変えられませんでした。もう一度ためしてね', false);
-  if (!ok && state.room) { state.renderSig = null; renderRoom(state.room); }
-}
-
-async function swapSeats() {
-  await hostTransaction((room) => {
-    if (room.status !== STATUS.WAITING) return;
-    const s = seatsOf(room);
-    return { ...room, seats: { a: s.b, b: s.a } };
-  }, '入れかえられませんでした。もう一度ためしてね', false);
-}
-
+// 設定は続けて変えても取りこぼさないよう、二度押しよけのロックを使わない（中で今の値から作りなおす）
 // 変えた項目だけを、今の設定に重ねて書く（2か所を続けて変えても、先に変えた値をもどさない）
+// path: ['time'] などの項目。ホストを対戦に入れるときは、6人をこえないか確かめる
 async function saveSet(path, value) {
+  let reason = '';
   const ok = await hostTransaction((room) => {
+    reason = '';
     if (room.status !== STATUS.WAITING) return;
     const next = normSet(room.set);
-    if (path.length === 2) next[path[0]] = { ...next[path[0]], [path[1]]: value };
-    else next[path[0]] = value;
+    if (path[0] === 'hostPlays' && value && !next.hostPlays && playerCount(room) >= MAX_SEATS) { reason = '対戦するのは' + MAX_SEATS + '人までだよ'; return; }
+    next[path[0]] = value;
     return { ...room, set: normSet(next) };
   }, '設定を変えられませんでした。もう一度ためしてね', false);
+  if (ok === false && reason) toast(reason, false);
   if (!ok && state.room) {
     $('lobbyCommon')._key = null;
     renderRoom(state.room);
@@ -1103,14 +1077,10 @@ async function addProxy() {
   const ok = await hostTransaction((room) => {
     reason = '';
     if (room.status !== STATUS.WAITING) { reason = 'はじめる前だけ足せるよ'; return; }
-    // 席に名前が残っている人（一時的に切れている人）と同じ名前も断る
-    const seats = seatsOf(room);
-    if (room.players?.[name] || room.proxies?.[name] || name === room.host || seats.a === name || seats.b === name) { reason = '「' + name + '」はもういるよ'; return; }
+    if (room.players?.[name] || room.proxies?.[name] || name === room.host) { reason = '「' + name + '」はもういるよ'; return; }
     if (proxyNames(room).length >= MAX_PROXIES) { reason = '端末なしの参加者は' + MAX_PROXIES + '人までだよ'; return; }
-    const next = { ...room, proxies: { ...(room.proxies || {}), [name]: { joinedAt: RoomkRTDB.now() } } };
-    const k = SEATS.find((s) => !seats[s]);
-    if (k) next.seats = { ...seats, [k]: name };
-    return next;
+    if (playerCount(room) >= MAX_SEATS) { reason = '対戦するのは' + MAX_SEATS + '人までだよ'; return; }
+    return { ...room, proxies: { ...(room.proxies || {}), [name]: { joinedAt: RoomkRTDB.now() } } };
   }, '足せませんでした。もう一度ためしてね');
   if (ok) $('proxyName').value = '';
   else if (ok === false) setError('proxyError', reason || '足せませんでした。もう一度ためしてね');
@@ -1121,63 +1091,78 @@ async function removeProxy(name) {
     if (room.status !== STATUS.WAITING || !room.proxies?.[name]) return;
     const proxies = { ...room.proxies };
     delete proxies[name];
-    const seats = seatsOf(room);
-    SEATS.forEach((k) => { if (seats[k] === name) seats[k] = null; });
-    return { ...room, proxies: Object.keys(proxies).length ? proxies : null, seats };
+    return { ...room, proxies: Object.keys(proxies).length ? proxies : null };
   }, '外せませんでした。もう一度ためしてね');
 }
 
-// 席の2人で新しい対決を作る（そろっていなければ null）。first は 0 か 1（null なら設定のとおり）
+// 席の人たちで新しい対決を作る（2人そろっていなければ null）。first は先に答える人の番号（null なら設定のとおり）
 function newGameFor(room, seats, first) {
-  if (!seats.a || !seats.b || seats.a === seats.b) return null;
-  if (!seatable(room, seats.a) || !seatable(room, seats.b)) return null;
+  if (seats.length < MIN_SEATS || seats.length > MAX_SEATS || new Set(seats).size !== seats.length) return null;
+  if (!seats.every((name) => seatable(room, name))) return null;
   const id = (Number(room.lastGameId) || 0) + 1;
-  const proxy = {};
-  const uids = {};
-  SEATS.forEach((k) => {
-    if (room.proxies?.[seats[k]]) proxy[k] = true;
-    else uids[k] = room.players[seats[k]].uid;
-  });
+  const proxy = seats.map((name) => !!room.proxies?.[name]);
+  const uids = seats.map((name, i) => (proxy[i] ? '' : room.players[name].uid));
   const set = normSet(room.set);
-  const order = first == null ? firstOf(set) : first;
-  const duel = E.createDuel(duelSettings(set, [seats.a, seats.b], order), RoomkRTDB.now(), Math.random);
-  return { id, seats: { ...seats }, uids, proxy, duel, ended: false };
+  const order = first == null ? firstOf(set, seats.length) : first;
+  const duel = E.createDuel(duelSettings(seats, set, order), RoomkRTDB.now(), Math.random);
+  return { id, seats: seats.slice(), uids, proxy, duel, ended: false };
 }
 
-function countStart() {
+function countStart(n) {
   window.RoomkStats?.count('start');
-  window.RoomkStats?.count('players-2');
+  window.RoomkStats?.count('players-' + n);
 }
 
 async function startGame() {
+  let n = 0;
   const ok = await hostTransaction((room) => {
     // 対決のデータが壊れて play のまま残ったときも、待合室の画面から始めなおせるようにする
     if (room.status !== STATUS.WAITING && !(room.status === STATUS.PLAY && !gameOf(room))) return;
-    const game = newGameFor(room, seatsOf(room), null);
+    const game = newGameFor(room, seatList(room), null);
     if (!game) return;
+    n = game.seats.length;
     return { ...room, status: STATUS.PLAY, lastGameId: game.id, game };
   }, 'はじめられませんでした。もう一度ためしてね');
-  if (ok) countStart();
-  else if (ok === false) toast('対戦する2人を選んでね');
+  if (ok) countStart(n);
+  else if (ok === false) toast('対戦するには2人以上いるよ。もう1人入るのを待ってね');
 }
 
-// もう一回（先に答える人を入れかえる）
+// 次の回の先に答える人: 前の回の先に答えた人の次の人（前の回の順で、いまもいる人）。人が入れかわっても同じ人から始めない
+function nextFirst(game, seats) {
+  const prev = game.seats;
+  const start = game.duel.settings.first;
+  for (let k = 1; k <= prev.length; k += 1) {
+    const i = seats.indexOf(prev[(start + k) % prev.length]);
+    if (i >= 0 && prev[(start + k) % prev.length] !== prev[start]) return i;
+  }
+  return 0;
+}
+
+// もう一回（いま参加している人みんなで。先に答える人を、次の人にかえる）
 async function playAgain() {
   const gid = gameOf(state.room)?.id;
   let reason = '';
+  let n = 0;
+  let left = [];
   const ok = await hostTransaction((room) => {
     reason = '';
+    left = [];
     const game = gameOf(room);
     if (room.status !== STATUS.PLAY || !game || game.id !== gid || game.duel.phase !== 'over') return;
-    const next = newGameFor(room, game.seats, 1 - game.duel.settings.first);
+    const seats = seatList(room);
+    const next = newGameFor(room, seats, nextFirst(game, seats));
     if (!next) { reason = 'そろっていない'; return; }
-    return { ...room, seats: { ...game.seats }, lastGameId: next.id, game: next };
+    n = next.seats.length;
+    // 前の回に対戦した人で、いまいない人（通信が切れている・退出した）は入らない。ホストに知らせる
+    left = game.seats.filter((name) => !next.seats.includes(name));
+    return { ...room, lastGameId: next.id, game: next };
   }, 'はじめられませんでした。もう一度ためしてね');
   if (ok) {
     window.RoomkStats?.count('again');
-    countStart();
+    countStart(n);
+    if (left.length) toast(left.join('・') + 'は、いないのでこの回には入っていないよ。戻ったら次の回から入るよ', false);
   } else if (ok === false && reason) {
-    toast('対戦した2人がそろっていないよ。「待合室へ（対戦する人を選びなおす）」から選んでね');
+    toast('対戦するには2人以上いるよ。「待合室へ」でもう1人入るのを待ってね');
   }
 }
 
@@ -1190,7 +1175,7 @@ async function backToLobby() {
   const ok = await hostTransaction((room) => {
     const cur = gameOf(room);
     if (room.status !== STATUS.PLAY || !cur || cur.id !== gid) return;
-    return { ...room, status: STATUS.WAITING, game: null, seats: { ...cur.seats } };
+    return { ...room, status: STATUS.WAITING, game: null };
   }, 'もどれませんでした。もう一度ためしてね');
   if (ok && wasOver) window.RoomkStats?.count('again');
 }
@@ -1213,7 +1198,9 @@ async function duelTransaction(gid, rev, step, needSeat) {
     if (!next || next === cur.duel) return;
     finished = next.phase === 'over' && !cur.ended;
     return { ...r, game: { ...r.game, duel: next, ended: cur.ended || next.phase === 'over' } };
-  });
+  // 手元には通る前の値を出さない（applyLocally:false）。時間で進める書き込みはホストと対戦する人の端末が
+  // それぞれ送り、1つだけ通る。負けた端末に自分がくじで作った小銭が一瞬出て、同じ場面の番号のまま残るのを防ぐ
+  }, undefined, false);
   if (result.committed && finished) window.RoomkStats?.count('finish');
   return result.committed;
 }
@@ -1270,7 +1257,7 @@ function saveLocal() {
   try {
     if (!state.local) return;
     state.savedAt = Date.now();
-    sessionStorage.setItem(LOCAL_KEY, JSON.stringify({ duel: state.local.duel, savedAt: state.savedAt, set: state.localSet, names: state.localNames }));
+    sessionStorage.setItem(LOCAL_KEY, JSON.stringify({ duel: state.local.duel, savedAt: state.savedAt, set: state.localSet, players: state.localPlayers }));
   } catch {
     // 保存できないときは、再読み込みで続きから戻れないだけ
   }
@@ -1283,7 +1270,7 @@ function loadLocal() {
     const duel = normDuel(saved.duel);
     if (!duel || duel.phase === 'over') return null;
     if (saved.set) state.localSet = normSet(saved.set);
-    if (Array.isArray(saved.names)) state.localNames = [String(saved.names[0] || '').slice(0, 8), String(saved.names[1] || '').slice(0, 8)];
+    if (Array.isArray(saved.players)) state.localPlayers = normLocalPlayers(saved.players);
     // 読み込み直したら、閉じていた間は数えずに 3・2・1 からつづける
     const now = Date.now();
     return { duel: E.resume(duel, num(saved.savedAt, now), now, Math.random) };
@@ -1300,10 +1287,27 @@ function clearLocal() {
   }
 }
 
+const blankPlayer = () => ({ name: '' });
+function normLocalPlayers(list) {
+  const out = asList(list).slice(0, MAX_SEATS).map((p) => ({ name: String(p?.name || '').slice(0, 8) }));
+  while (out.length < MIN_SEATS) out.push(blankPlayer());
+  return out;
+}
+
 function openLocalSetup() {
   state.localSet = normSet(state.localSet || DEFAULT_SET);
-  const set = state.localSet;
-  buildSeats($('localSeats'), set, (i) => {
+  state.localPlayers = normLocalPlayers(state.localPlayers);
+  renderLocalSeats();
+  buildCommon($('localCommon'), state.localSet, () => {});
+  showScreen('local');
+}
+
+// 1台の画面の対戦する人の札（名前。2〜6人。持ち時間と小銭の種類はみんな同じ）
+function renderLocalSeats() {
+  const list = state.localPlayers;
+  const cards = list.map((p, i) => {
+    const card = makeElement('fieldset', 'cb-seat');
+    card.append(makeElement('legend', 'cb-seat__title', (i + 1) + '人目'));
     const wrap = makeElement('div', 'cb-field');
     const lab = makeElement('label', 'form-label', '名前（なくてもいい）');
     lab.htmlFor = 'localName' + i;
@@ -1312,21 +1316,41 @@ function openLocalSetup() {
     inp.type = 'text';
     inp.maxLength = 8;
     inp.autocomplete = 'off';
-    inp.placeholder = SEAT_LABEL[i];
-    inp.value = state.localNames[i] || '';
-    inp.addEventListener('input', () => { state.localNames[i] = inp.value; });
-    submitOnEnter(inp, startLocal);
+    inp.placeholder = (i + 1) + '人目';
+    inp.value = p.name;
+    inp.addEventListener('input', () => { p.name = inp.value; });
+    submitOnEnter(inp, () => startLocal());
     wrap.append(lab, inp);
-    return wrap;
-  }, true, () => {});
-  buildCommon($('localCommon'), set, () => {});
-  showScreen('local');
+    card.append(wrap);
+    if (list.length > MIN_SEATS) {
+      const del = makeElement('button', 'cb-quiet cb-seat__del', 'この人を外す');
+      del.type = 'button';
+      del.addEventListener('click', () => { list.splice(i, 1); renderLocalSeats(); });
+      card.append(del);
+    }
+    return card;
+  });
+  const add = makeElement('button', 'cb-quiet cb-seat__add');
+  add.type = 'button';
+  add.append(msIcon('person_add'), document.createTextNode('対戦する人を足す（' + MAX_SEATS + '人まで）'));
+  add.hidden = list.length >= MAX_SEATS;
+  add.addEventListener('click', () => {
+    if (list.length >= MAX_SEATS) return;
+    list.push(blankPlayer());
+    renderLocalSeats();
+    $('localName' + (list.length - 1))?.focus();
+  });
+  $('localSeats').replaceChildren(...cards, add);
 }
 
 function localNamesForDuel() {
-  const names = [0, 1].map((i) => String(state.localNames[i] || '').trim().slice(0, 8) || SEAT_LABEL[i]);
-  if (names[0] === names[1]) names[1] += '（2）';
-  return names;
+  const used = new Set();
+  return state.localPlayers.map((p, i) => {
+    let name = String(p.name || '').trim().slice(0, 8) || (i + 1) + '人目';
+    if (used.has(name)) name = (name + '（' + (i + 1) + '）').slice(0, 12);
+    used.add(name);
+    return name;
+  });
 }
 
 function startLocal(first) {
@@ -1334,9 +1358,10 @@ function startLocal(first) {
   const cur = state.local?.duel;
   if (state.role === 'local' && cur && cur.phase === 'ready' && Date.now() - cur.startedAt < 800) return;
   const set = normSet(state.localSet);
-  const order = typeof first === 'number' ? first : firstOf(set);
+  const names = localNamesForDuel();
+  const order = typeof first === 'number' ? first : firstOf(set, names.length);
   state.role = 'local';
-  state.local = { duel: E.createDuel(duelSettings(set, localNamesForDuel(), order), Date.now(), Math.random) };
+  state.local = { duel: E.createDuel(duelSettings(names, set, order), Date.now(), Math.random) };
   state.input = '';
   state.renderSig = null;
   saveLocal();
@@ -1428,16 +1453,15 @@ function updateHostOverlay(room) {
 
 function mySeat(room) {
   const game = gameOf(room);
-  const seats = room.status === STATUS.PLAY && game ? game.seats : seatsOf(room);
-  const i = SEATS.findIndex((k) => seats[k] === state.nickname);
-  return i;
+  const seats = room.status === STATUS.PLAY && game ? game.seats : seatList(room);
+  return seats.indexOf(state.nickname);
 }
 
 function renderBar(room) {
   let me = '';
   if (state.role === 'host' || state.role === 'guest') {
     const seat = mySeat(room);
-    me = (state.role === 'host' ? 'ホスト' : state.nickname) + (seat >= 0 ? '・あなたは' + SEAT_LABEL[seat] : state.role === 'guest' ? '・観戦中' : '');
+    me = (state.role === 'host' ? 'ホスト' : state.nickname) + (seat >= 0 ? '・対戦する人（' + orderLabel(seat) + '）' : state.role === 'guest' ? '・観戦中' : '');
   }
   $('barMe').hidden = !me;
   $('barMe').textContent = me;
@@ -1446,48 +1470,30 @@ function renderBar(room) {
 function renderWaiting(room) {
   const host = state.role === 'host';
   const watch = state.role === 'spectator';
-  const seats = seatsOf(room);
+  const seats = seatList(room);
   const set = normSet(room.set);
   $('lobbyJoin').hidden = !watch;
   $('lobbyJoinCode').textContent = state.roomCode || '';
 
-  // 対戦する人（ホストは選ぶ。ほかの人は見るだけ）
-  const people = memberNames(room).concat(proxyNames(room));
-  const work = JSON.parse(JSON.stringify(set));
-  buildSeats($('lobbySeats'), work, (i) => {
-    const k = SEATS[i];
-    if (host) {
-      const opts = [['', '（えらんでね）']].concat(people.map((name) => [name, name + (name === room.host ? '（自分）' : room.proxies?.[name] ? '（端末なし）' : '')]));
-      // 席の人がいまいないときも、そのまま見えるように残す
-      if (seats[k] && !people.includes(seats[k])) opts.push([seats[k], seats[k] + '（いない）']);
-      return selectField('対戦する人', 'seat-' + k, opts, seats[k] || '', (v) => setSeat(k, v));
-    }
-    const name = seats[k];
-    const label = name ? name + (name === state.nickname && !watch ? '（あなた）' : '') + (seatable(room, name) ? '' : '（いない）') : 'まだ決まっていない';
-    return makeElement('p', 'cb-seat__view' + (name ? '' : ' is-empty'), label);
-  }, host, saveSet);
-  $('btnSeatSwap').hidden = !host;
-
-  const ready = !!seats.a && !!seats.b && seats.a !== seats.b && seatable(room, seats.a) && seatable(room, seats.b);
+  // 対戦する人（参加している人みんな。参加した順に答える）
+  const people = memberNames(room).concat(proxyNames(room)).filter((name) => !seats.includes(name));
+  const ready = seats.length >= MIN_SEATS && seats.every((name) => seatable(room, name));
   let note = '';
   if (host) {
-    if (people.length < 2) note = 'もう1人入ると、はじめられるよ。ホストも対戦するときは、自分を選んでね';
-    else if (!ready) note = '1人目と2人目を選んでね。ホストも対戦できるよ';
+    if (seats.length < MIN_SEATS) note = 'もう1人入ると、はじめられるよ';
+    else note = '上から順に答えるよ。時計が0になった人から「ここまで」で、最後まで残った人の勝ち';
   }
   $('seatNote').textContent = note;
   $('seatNote').hidden = !note;
-
-  // 参加している人
-  $('lobbyPeople').replaceChildren(...people.map((name) => {
+  const row = (name, si) => {
     const proxy = !!room.proxies?.[name];
     const li = makeElement('li', 'cb-person');
     // 「端末なし」の印はホストの画面にだけ出す（子どもどうしの画面で区別しない）
-    li.append(msIcon(host && proxy ? 'person_off' : 'person'), makeElement('span', 'cb-person__name', name));
-    if (name === room.host) li.append(makeElement('span', 'cb-tag cb-tag--muted', 'ホスト'));
+    li.append(msIcon(host && proxy ? 'person_off' : 'person'));
+    if (si >= 0) li.append(makeElement('span', 'cb-seat__order', orderLabel(si)));
+    li.append(makeElement('span', 'cb-person__name', name));
+    if (name === room.host) li.append(makeElement('span', 'cb-tag cb-tag--muted', si >= 0 ? 'ホスト' : 'ホスト（進行だけ）'));
     if (host && proxy) li.append(makeElement('span', 'cb-tag cb-tag--muted', '端末なし'));
-    const si = SEATS.findIndex((k) => seats[k] === name);
-    if (si >= 0) li.append(makeElement('span', 'cb-tag', SEAT_LABEL[si]));
-    else li.append(makeElement('span', 'cb-tag cb-tag--watch', '観戦'));
     if (name === state.nickname && !watch) li.append(makeElement('span', 'cb-tag cb-tag--watch', 'あなた'));
     if (host && proxy) {
       const del = makeElement('button', 'cb-quiet cb-person__del', '外す');
@@ -1496,17 +1502,21 @@ function renderWaiting(room) {
       li.append(del);
     }
     return li;
-  }));
+  };
+  $('lobbyPeople').replaceChildren(...seats.map((name, i) => row(name, i)), ...people.map((name) => row(name, -1)));
   $('proxyForm').hidden = !host;
+  $('hostPlaysBox').hidden = !host;
+  if (host) $('hostPlays').checked = set.hostPlays;
 
   // 小銭の出し方（ホストは選ぶ。変えている途中の欄を作りなおさないよう、値が変わったときだけ作る）
   $('lobbyCommon').hidden = !host;
   $('lobbyCommonView').hidden = host;
   if (host) {
-    const key = JSON.stringify(set);
+    const keyOf = (x) => JSON.stringify([x.time, x.kinds, x.maxCoins, x.arrange, x.first]);
+    const key = keyOf(set);
     if ($('lobbyCommon')._key !== key) {
       const common = JSON.parse(JSON.stringify(set));
-      buildCommon($('lobbyCommon'), common, (path, value) => { $('lobbyCommon')._key = JSON.stringify(normSet(common)); saveSet(path, value); });
+      buildCommon($('lobbyCommon'), common, (path, value) => { $('lobbyCommon')._key = keyOf(common); saveSet(path, value); });
       $('lobbyCommon')._key = key;
     }
   } else {
@@ -1543,11 +1553,11 @@ function viewModel() {
     duel: game.duel,
     game,
     room,
-    names: SEATS.map((k) => game.seats[k] || ''),
+    names: game.seats.slice(),
     now: roomNow(room),
     away: (i) => !seatPresent(room, game, i),
-    proxy: (i) => game.proxy[SEATS[i]],
-    mine: (i) => (state.role === 'host' || state.role === 'guest') && game.seats[SEATS[i]] === state.nickname && game.uids[SEATS[i]] === uid,
+    proxy: (i) => game.proxy[i],
+    mine: (i) => (state.role === 'host' || state.role === 'guest') && game.seats[i] === state.nickname && game.uids[i] === uid,
     canAnswer: () => game.duel.phase === 'play' && room.hostConnected !== false && mayAnswer(room, game, game.duel.turn, uid, state.nickname, state.role),
     mayAdvance: () => mayAdvance(room, game, uid, state.nickname, state.role),
     key: state.roomCode + ':' + game.id,
@@ -1562,11 +1572,14 @@ function renderGame() {
   if (!V) return;
   const D = V.duel;
   // 同じ場面なら作りなおさない（入れている途中の数字・数字ボタンをそのまま残す）
-  const sig = [V.key, D.rev, V.canAnswer(), V.away(0), V.away(1), state.role, state.showPad, PC_MQ.matches].join('|');
+  const n = D.settings.players.length;
+  // 場面の番号に加えて、段階と小銭の組み合わせも見る（同じ番号のまま中身がかわっても作りなおす）
+  const scene = D.rev + ':' + D.phase + ':' + D.turn + ':' + D.problem.key + ':' + D.startedAt;
+  const sig = [V.key, scene, V.canAnswer(), V.names.map((_, i) => (V.away(i) ? 1 : 0)).join(''), state.role, state.showPad, PC_MQ.matches].join('|');
   if (sig === state.renderSig) { updateClock(); return; }
-  // 場面（rev）が変わったら、入れている途中の数字を消す（番・小銭・答える人が変わっているため）
+  // 場面が変わったら、入れている途中の数字を消す（番・小銭・答える人が変わっているため）
   const prev = state.renderSig ? state.renderSig.split('|') : [];
-  if (prev[0] !== V.key || prev[1] !== String(D.rev)) state.input = '';
+  if (prev[0] !== V.key || prev[1] !== scene) state.input = '';
   state.renderSig = sig;
   const live = D.phase !== 'over';
   // 結果の小銭を大きく見ている途中に次の対決が始まったら閉じる（トレーと数字キーをふさがない）
@@ -1574,13 +1587,16 @@ function renderGame() {
   const host = state.role === 'host';
   const names = V.names;
 
-  [0, 1].forEach((i) => {
-    const card = $('card' + i);
-    card.className = 'cb-player' + (live && D.turn === i ? ' is-turn' : '') + (!live && D.winner === i ? ' is-win' : '');
+  // 対戦する人の札（2人のときは広い画面でトレーの左右に置く）
+  $('board').classList.toggle('is-two', n === 2);
+  $('cards').replaceChildren(...names.map((name, i) => {
+    const out = D.out[i];
+    const card = makeElement('div', 'cb-player' + (live && D.turn === i && !out ? ' is-turn' : '') + (!live && D.winner === i ? ' is-win' : '') + (out ? ' is-out' : ''));
+    card.id = 'card' + i;
     const head = makeElement('p', 'cb-player__name');
-    if (live && D.turn === i) head.append(msIcon('play_arrow'));
+    if (live && D.turn === i && !out) head.append(msIcon('play_arrow'));
     if (!live && D.winner === i) head.append(msIcon('emoji_events'));
-    head.append(document.createTextNode(names[i] + (V.mine(i) ? '（あなた）' : '')));
+    head.append(document.createTextNode(name + (V.mine(i) ? '（あなた）' : '')));
     const clock = makeElement('p', 'cb-player__clock');
     clock.id = 'clock' + i;
     // 残り時間のバー（数字を読まなくても、どれくらい減ったかが見える）
@@ -1589,20 +1605,24 @@ function renderGame() {
     fill.id = 'bar' + i;
     bar.append(fill);
     const tags = makeElement('div', 'cb-player__tags');
+    if (out && n > 2) tags.append(makeElement('span', 'cb-tag cb-tag--muted', 'ここまで'));
     if (V.away(i)) tags.append(makeElement('span', 'cb-tag cb-tag--warn', '通信が切れた'));
     // 「端末なし」の印はホストの画面にだけ出す（子どもどうしの画面で区別しない）
     if (host && V.proxy(i)) tags.append(makeElement('span', 'cb-tag cb-tag--muted', '端末なし'));
-    card.replaceChildren(head, clock, bar, tags);
-  });
+    card.append(head, clock, bar, tags);
+    return card;
+  }));
 
   // いまの番を大きく出す（1台の画面で、メンターがだれの答えを入れるのか迷わないように）
   const turn = $('turnLine');
   turn.className = 'cb-turn';
   const nameOf = (i) => makeElement('span', 'cb-turn__name', V.mine(i) ? 'あなた' : names[i]);
   const text = (t) => document.createTextNode(t);
-  if (D.phase === 'ready') turn.replaceChildren(nameOf(D.turn), text(' からはじまるよ'));
+  const next = E.nextAlive(D, D.turn);
+  // 3・2・1 は、はじめと、ホストが戻ったとき・読み込み直したときのつづき
+  if (D.phase === 'ready') turn.replaceChildren(nameOf(D.turn), text(D.history.length || D.correct.some((c) => c > 0) || D.out.some((o) => o) ? ' からつづけるよ' : ' からはじまるよ'));
   else if (D.phase === 'play') turn.replaceChildren(nameOf(D.turn), text(' の番'));
-  else if (D.phase === 'reveal') turn.replaceChildren(text('次は '), nameOf(1 - D.turn), text(' の番'));
+  else if (D.phase === 'reveal' || D.phase === 'out') turn.replaceChildren(text('次は '), nameOf(next), text(' の番'));
   else if (D.phase === 'pass') turn.replaceChildren(nameOf(D.turn), text(' はパス'));
   else { turn.classList.add('is-over'); turn.replaceChildren(msIcon('emoji_events'), nameOf(D.winner), text(' の勝ち！')); }
 
@@ -1627,10 +1647,12 @@ function renderGame() {
     band.hidden = false;
     band.className = 'cb-band cb-band--ok';
     band.replaceChildren(makeElement('p', 'cb-band__big', '正解！ ' + yen(D.last.total)), makeElement('p', 'cb-band__small', E.breakdown(D.problem.coins)));
-  } else if (D.phase === 'over' && lastH && lastH.how === 'timeout') {
+  } else if ((D.phase === 'out' || D.phase === 'over') && lastH && lastH.how === 'timeout') {
+    // 時計が0になった人の小銭。3人以上なら「○○はここまで」、2人なら「時間切れ」
     band.hidden = false;
     band.className = 'cb-band';
-    band.replaceChildren(makeElement('p', 'cb-band__big', 'この小銭は ' + yen(lastH.total)), makeElement('p', 'cb-band__small', '時間切れ・' + E.breakdown(lastH.coins)));
+    const who = n > 2 && D.lastOut != null ? (V.mine(D.lastOut) ? 'あなた' : names[D.lastOut]) + 'はここまで' : '時間切れ';
+    band.replaceChildren(makeElement('p', 'cb-band__big', 'この小銭は ' + yen(lastH.total)), makeElement('p', 'cb-band__small', who + '・' + E.breakdown(lastH.coins)));
   } else {
     band.hidden = true;
     band.replaceChildren();
@@ -1651,22 +1673,25 @@ function renderInput(V) {
   box.hidden = false;
   const local = V.local;
   const seatTurnMine = V.mine(D.turn);
-  // ルームで、この端末が答える番でないとき
-  if (!local && !(seatTurnMine || (state.role === 'host' && (V.proxy(D.turn) || V.away(D.turn))))) {
+  // ルームで、この端末が答える番でないとき。「ここまで」の帯の間は、だれも答えないので案内だけ出す
+  if (D.phase === 'out' || (!local && !(seatTurnMine || (state.role === 'host' && (V.proxy(D.turn) || V.away(D.turn)))))) {
     const who = V.names[D.turn];
-    const next = V.names[1 - D.turn];
-    const nextMine = V.mine(1 - D.turn);
+    const ni = E.nextAlive(D, D.turn);
+    const next = V.names[ni];
+    const nextMine = V.mine(ni);
+    const meOut = V.names.some((_, i) => V.mine(i) && D.out[i]);
     let note;
     if (D.phase === 'ready') note = 'もうすぐはじまるよ';
-    else if (D.phase === 'reveal') note = nextMine ? '次はあなたの番だよ' : '次は' + next + 'の番';
+    else if (meOut) note = 'ここからは見る番だよ。最後まで見ていてね';
+    else if (D.phase === 'reveal' || D.phase === 'out') note = nextMine ? '次はあなたの番だよ' : '次は' + next + 'の番';
     else if (D.phase === 'pass') note = who + 'はパス。もうすぐ次の小銭が出るよ';
     else note = who + 'が数えているよ' + (nextMine ? '。次はあなたの番' : '');
     box.append(makeElement('p', 'cb-waitnote', note));
     return;
   }
   const active = V.canAnswer();
-  // 正解の帯の間は、金額の欄の場所に帯が出る（下のボタンは押せないまま残す）
-  const revealing = D.phase === 'reveal';
+  // 正解・「ここまで」の帯の間は、金額の欄の場所に帯が出る（下のボタンは押せないまま残す）
+  const revealing = D.phase === 'reveal' || D.phase === 'out';
   if (!local && state.role === 'host' && !seatTurnMine && !revealing) {
     box.append(makeElement('p', 'cb-proxynote', V.names[D.turn] + 'の番。代わりに入れてね'));
   }
@@ -1803,13 +1828,13 @@ function renderResult(V) {
   box.hidden = false;
   const acts = makeElement('div', 'cb-stack');
   if (V.local || state.role === 'host') {
-    const again = makeElement('button', 'btn btn-primary btn-full', 'もう一回（先に答える人を入れかえる）');
+    const again = makeElement('button', 'btn btn-primary btn-full', 'もう一回（先に答える人をかえる）');
     again.type = 'button';
     again.addEventListener('click', () => {
-      if (V.local) startLocal(1 - D.settings.first);
+      if (V.local) startLocal((D.settings.first + 1) % D.settings.players.length);
       else playAgain();
     });
-    const change = makeElement('button', 'btn btn-secondary btn-full', V.local ? '名前や設定を変える' : '待合室へ（対戦する人を選びなおす）');
+    const change = makeElement('button', 'btn btn-secondary btn-full', V.local ? '名前や設定を変える' : '待合室へ');
     change.type = 'button';
     change.addEventListener('click', () => {
       if (V.local) {
@@ -1876,14 +1901,14 @@ function updateClock() {
   if (!V) return;
   const D = V.duel;
   const now = V.now;
-  [0, 1].forEach((i) => {
+  D.settings.players.forEach((_, i) => {
     const c = $('clock' + i);
     if (!c) return;
     const ms = E.remaining(D, i, now);
     const full = D.settings.players[i].time * 1000;
     const fill = $('bar' + i);
     if (fill) fill.style.width = Math.max(0, Math.min(100, (ms / full) * 100)) + '%';
-    $('card' + i).classList.toggle('is-low', ms <= LOW_MS && D.phase !== 'over' && D.turn === i);
+    $('card' + i)?.classList.toggle('is-low', ms <= LOW_MS && D.phase !== 'over' && D.turn === i && !D.out[i]);
     c.replaceChildren(makeElement('span', 'cb-player__sec', secs(ms)), makeElement('span', 'cb-player__unit', '秒'));
     c.setAttribute('aria-label', 'のこり ' + secs(ms) + '秒');
   });
@@ -2068,8 +2093,8 @@ $('btnOpenWatch').addEventListener('click', () => {
 $('btnLeave').addEventListener('click', leaveRoom);
 $('btnOverlayLeave').addEventListener('click', leaveRoom);
 
-$('btnSeatSwap').addEventListener('click', swapSeats);
 $('btnAddProxy').addEventListener('click', addProxy);
+$('hostPlays').addEventListener('change', (event) => saveSet(['hostPlays'], event.currentTarget.checked));
 submitOnEnter($('proxyName'), addProxy);
 $('btnStartGame').addEventListener('click', startGame);
 $('btnLocalStart').addEventListener('click', () => startLocal());
