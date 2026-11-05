@@ -202,7 +202,7 @@ function buildCommon(box, set, onChange) {
     selectField('ならべ方', box.id + '-arrange', Object.keys(ARRANGES).map((k) => [k, ARRANGES[k]]), set.arrange, (v) => { set.arrange = v; onChange(['arrange'], v); }),
     selectField('先に答える人', box.id + '-first', Object.keys(FIRSTS).map((k) => [k, FIRSTS[k]]), set.first, (v) => { set.first = v; onChange(['first'], v); }),
   );
-  box.replaceChildren(grid, makeElement('p', 'cb-note', '持ち時間と小銭の種類は、みんな同じ。小銭は2枚からはじまり、正解2回ごとに1枚ずつ増える。時計が0になった人から「ここまで」で、最後まで残った人の勝ち。'));
+  box.replaceChildren(grid, makeElement('p', 'cb-note', '持ち時間と小銭の種類は、みんな同じ。小銭は2枚からはじまり、正解2回ごとに1枚ずつ増える。時計が0になった人から「ここまで」で、最後まで残った人の勝ち（ひとりのときは、時計が0でおしまい。正解した数がその回の点数）。'));
 }
 
 /* ── 硬貨のトレー（SVG） ── */
@@ -1596,7 +1596,7 @@ function renderGame() {
   $('board').classList.toggle('is-two', n === 2);
   $('cards').replaceChildren(...names.map((name, i) => {
     const out = D.out[i];
-    const card = makeElement('div', 'cb-player' + (live && D.turn === i && !out ? ' is-turn' : '') + (!live && D.winner === i ? ' is-win' : '') + (out ? ' is-out' : ''));
+    const card = makeElement('div', 'cb-player' + (live && D.turn === i && !out ? ' is-turn' : '') + (!live && D.winner === i ? ' is-win' : '') + (out && !solo ? ' is-out' : ''));
     card.id = 'card' + i;
     const head = makeElement('p', 'cb-player__name');
     if (live && D.turn === i && !out) head.append(msIcon('play_arrow'));

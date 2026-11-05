@@ -1,7 +1,7 @@
 // ちゃりんバトン E2E その5: ひとりで遊ぶ（ルームで対戦する人が1人・ホストは見るだけ／ホストがひとりで／1台の画面で1人）
 // 正解するたびに同じ人に次の小銭・時計が0でおしまい・その回の点数（正解した数）・勝ち負けを出さない・もう一回
 const L = require('./lib.cjs');
-const { check, waitFor } = L;
+const { check, waitFor, sleep, E } = L;
 
 (async () => {
   const server = await L.startServer();
@@ -18,11 +18,15 @@ const { check, waitFor } = L;
   await L.joinRoom(A, 'あおい', code);
   check('A2 参加する人が1人なら始められる（ひとりで数える）', await waitFor(async () => !(await H.page.isDisabled('#btnStartGame')) && (await L.text(H, '#seatNote')).includes('ひとりで数える')), await L.text(H, '#seatNote'));
   await L.open(W, '?watch=' + code);
+  check('A2b 持ち時間に120秒・180秒がある', JSON.stringify(await H.page.$$eval('#lobbyCommon-time option', (os) => os.map((o) => o.value))) === JSON.stringify(['30', '45', '60', '90', '120', '180']));
+  await H.page.selectOption('#lobbyCommon-time', '180');
+  await L.roomWhen(code, (r) => r.set?.time === 180);
   await H.page.click('#btnStartGame');
   for (const c of [H, A, W]) await L.waitScreen(c, 'game');
   check('A3 players-1 を数える', await L.waitStats(H, 'players-1', 1));
   let room = await L.roomOf(code);
   check('A4 対戦する人はあおいだけ', JSON.stringify(room.game.seats) === JSON.stringify(['あおい']), room.game.seats);
+  check('A4b 180秒で始まる', room.game.duel.settings.players[0].time === 180 && room.game.duel.rem[0] === 180000 && await waitFor(async () => (await L.text(W, '#card0')).includes('180')), [room.game.duel.rem, await L.text(W, '#card0')]);
   check('A5 札は1枚で「0点」', (await A.page.$$('.cb-player')).length === 1 && await waitFor(async () => (await L.text(W, '#card0')).includes('0点')), await L.text(W, '#card0'));
 
   // ── B. 正解するたびに同じ人に次の小銭 ──
@@ -46,6 +50,27 @@ const { check, waitFor } = L;
   check('B8 スマホ幅ではみ出さない', (await L.overflow(A)) <= 0, await L.overflow(A));
   await L.shot(A, 'solo-mobile', { fullPage: false });
   await L.shot(W, 'solo-watch', { fullPage: false });
+
+  // ── B2. ホストが切れている間は止め、戻ると同じ人・同じ点数で 3・2・1 から ──
+  H.offlineOk = true;
+  await H.context.setOffline(true);
+  let off = await L.roomWhen(code, (r) => r.hostConnected === false, 90000);
+  check('B9 ホストの切断を検知・あおいの画面はホストを待つ', await waitFor(async () => L.visible(A, '#hostOffOverlay')));
+  const remAt = E.remaining(off.game.duel, 0, Number(off.hostDisconnectedAt));
+  const c1 = await L.clocks(A);
+  await sleep(2200);
+  check('B10 その間は時計が止まる', JSON.stringify(c1) === JSON.stringify(await L.clocks(A)));
+  await H.context.setOffline(false);
+  H.offlineOk = false;
+  off = await L.roomWhen(code, (r) => r.hostConnected === true, 30000);
+  check('B11 戻ると同じ人・同じ点数・止めた時刻の残りで 3・2・1 から', off.game.duel.phase === 'ready' && off.game.duel.turn === 0 && off.game.duel.correct[0] === 3 && Math.abs(off.game.duel.rem[0] - remAt) < 50, [off.game.duel.phase, off.game.duel.correct, off.game.duel.rem[0], remAt]);
+  check('B12 「からつづけるよ」', await waitFor(async () => (await L.turnLine(A)).includes('あなた からつづけるよ') || (await L.duelOf(code)).phase === 'play'), await L.turnLine(A));
+  await L.waitActive(A, 15000);
+  // 参加者の読み込み直し
+  await A.page.reload();
+  await L.waitScreen(A, 'game', 15000);
+  await L.waitActive(A, 15000);
+  check('B13 あおいは読み込み直しても続きから・点数はそのまま', (await L.text(A, '#card0')).includes('3点'), await L.text(A, '#card0'));
 
   // ── C. 時計が0でおしまい（残りを1.2秒に早送り） ──
   const sum = await L.traySum(A);
@@ -86,6 +111,26 @@ const { check, waitFor } = L;
   await L.waitText(H2, '#turnLine', 'おしまい', 9000);
   check('E3 おしまい！ あなた は 1点', (await L.turnLine(H2)).includes('おしまい！ あなた は 1点'), await L.turnLine(H2));
 
+  // ── E2. 対戦する人が端末なしの参加者1人だけ（ホストが代わりに入れる） ──
+  const H3 = await L.newClient('host3');
+  const code3 = await L.createRoom(H3, 'すず');
+  await H3.page.uncheck('#hostPlays');
+  await L.roomWhen(code3, (r) => r.set?.hostPlays === false);
+  await H3.page.fill('#proxyName', 'なぎ');
+  await H3.page.click('#btnAddProxy');
+  await L.roomWhen(code3, (r) => r.proxies?.['なぎ']);
+  check('E4 端末なしの参加者1人でも始められる', await waitFor(async () => !(await H3.page.isDisabled('#btnStartGame'))));
+  await H3.page.click('#btnStartGame');
+  await L.waitScreen(H3, 'game');
+  await L.waitActive(H3);
+  check('E5 ホストに「なぎの番。代わりに入れてね」', (await L.text(H3, '#answerBox')).includes('なぎの番。代わりに入れてね'), await L.text(H3, '#answerBox'));
+  await L.typeAnswer(H3, await L.traySum(H3));
+  await L.roomWhen(code3, (r) => r.game.duel.phase === 'play' && r.game.duel.correct[0] === 1);
+  check('E6 ホストが代わりに入れて1点', await waitFor(async () => (await L.text(H3, '#card0')).includes('1点')), await L.text(H3, '#card0'));
+  await L.rest('PATCH', L.ROOMS + '/' + code3 + '/game/duel', { rem: [800], at: Date.now() });
+  await L.waitText(H3, '#turnLine', 'おしまい', 9000);
+  check('E7 おしまい！ なぎ は 1点・札は薄くしない', (await L.turnLine(H3)).includes('おしまい！ なぎ は 1点') && !(await H3.page.$eval('#card0', (n) => n.classList.contains('is-out'))), await L.turnLine(H3));
+
   // ── F. 1台の画面で1人 ──
   const P = await L.newClient('local', { viewport: { width: 1280, height: 800 } });
   await P.page.clock.install();
@@ -108,6 +153,11 @@ const { check, waitFor } = L;
     await L.waitActive(P);
   }
   check('F4 同じ人に次の小銭・2点', (await L.turnLine(P)).includes('はる の番') && (await L.text(P, '#card0')).includes('2点'), [await L.turnLine(P), await L.text(P, '#card0')]);
+  await P.page.reload();
+  await L.waitScreen(P, 'game');
+  check('F4b 読み込み直すと続きから（同じ1人・点数そのまま）', (await L.turnLine(P)).includes('はる からつづけるよ') && (await L.text(P, '#card0')).includes('2点') && (await P.page.$$('.cb-player')).length === 1, [await L.turnLine(P), await L.text(P, '#card0')]);
+  await P.page.clock.runFor(3200);
+  await L.waitActive(P);
   await P.page.clock.runFor(31000);
   await L.waitText(P, '#turnLine', 'おしまい', 5000);
   check('F5 おしまい！ はる は 2点', (await L.turnLine(P)).includes('おしまい！ はる は 2点'), await L.turnLine(P));

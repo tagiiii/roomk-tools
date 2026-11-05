@@ -352,6 +352,19 @@ t('1人: 止めた時点の残りで 3・2・1 から続き、止めた時点で
   assert.strictEqual(V.turn, 0, '正解の帯の途中からでも同じ人');
 });
 
+t('1人: パスの間に時計が0になってもおしまい（パスした小銭を時間切れとして残す）', () => {
+  const rng = E.makeRng(50);
+  const SOLO = { players: [{ name: 'A', time: 30, kinds: 'all' }], maxCoins: 5, arrange: 'scatter', first: 0 };
+  let S = begin(SOLO, rng);
+  S = E.pass(S, 0, 28500);
+  assert.strictEqual(S.phase, 'pass');
+  S = E.tick(S, 30000, rng);
+  assert.strictEqual(S.phase, 'over');
+  assert.strictEqual(S.winner, null);
+  assert.strictEqual(S.history.length, 1);
+  assert.strictEqual(S.history[0].how, 'timeout');
+});
+
 t('2人以上の勝ち負けは前のまま（winner は番号）', () => {
   const rng = E.makeRng(49);
   const S = E.tick(begin(SET0(), rng), 45000, rng);
