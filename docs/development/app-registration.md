@@ -118,6 +118,8 @@
 <a class="app-card" href="{app-name}/" data-added="2026-07-06" data-genre="talk" data-scenes="hiroba sakusen" data-yomi="…" data-keywords="…、…">
 ```
 
+カードの図柄の面（`.app-card__icon`）には、アイコンのすぐ後にイラスト `<img class="app-card__illust" src="assets/illustrations/{app-name}.webp" alt="" …>` を入れる。作り方と決まりは [illustrations.md](illustrations.md)。イラストがまだないときは入れなくてよい（アイコンが出る）。
+
 | キー | シーン |
 |------|--------|
 | `kotoba` | コトバであそぼ！（国語ワークショップ） |
@@ -147,7 +149,7 @@
 
 ### よく開かれたツール（`apps/ranking.json`）
 
-ポータルの「ツール一覧」の見出しのすぐ下（種類のタブの上）に「この1週間よく開かれたツール」を上位5つまで、カードと同じ図柄（種類の色とアイコン）の小さなカードで出す（スマホでは横にスワイプ）。`apps/ranking.json` から描画し、ファイルがない・載せるアプリがないときは欄ごと出さない。
+ポータルの「ツール一覧」の見出しのすぐ下（種類のタブの上）に「この1週間よく開かれたツール」を上位5つまで、カードと同じ図柄（種類の色の面とイラスト。イラストがないときはアイコン）の小さなカードで出す（スマホでは横にスワイプ）。`apps/ranking.json` から描画し、ファイルがない・載せるアプリがないときは欄ごと出さない。
 
 - 週1回、`/ranking-update`（`node scripts/ranking-build.mjs`）で作り直してコミットする。利用回数（`stats/`）は月ごとしかないため、実行のたびに各アプリの `open` の累計を `scripts/ranking-snapshots.json` に残し、6日以上前のうち最も新しいスナップショットとの差で並べる。比べるスナップショットがないときは先月の回数で並べ、見出しは「◯月によく開かれたツール」になる
 - **回数は `ranking.json` にも画面にも出さない**（順位だけ）。ポータルは画面共有で子どもが見ることもあるため（stats.js「子ども向け画面に計測値を表示しない」）
