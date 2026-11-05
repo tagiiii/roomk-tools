@@ -11,7 +11,7 @@ description: room-Kの本体アプリを新規追加し、必要な共通機能�
 
 1. `docs/development/app-registration.md` を読む。UIは `docs/development/ui.md`、共通機能は `docs/development/shared-modules.md` の該当節を参照する。Firebase利用時は `docs/development/firebase.md`、セッションを扱う場合は `docs/development/rtdb.md` の共通規約と採用DBの該当節を読む。以下の旧「AGENTS.mdの節」参照はルートの対応表から辿る
 2. **アプリ名を決める**（AGENTS.md「アプリ名のつけかた」に従う）:
-   - 実在のゲーム・番組・商品の名称やそのもじりは使わない。着想元は `updates.json` の紹介文と `apps/guide/` で「『◯◯』から着想」と記述的に紹介する
+   - 実在のゲーム・番組・商品の名称やそのもじりは使わない。着想元の紹介のしかた（既定は `updates.json` の紹介文と `apps/guide/` で「『◯◯』から着想」。更新情報に書かない・系統ラベルだけ、の段階もある）は app-registration.md「アプリ名のつけかた」に従う
    - 遊びの動きが伝わる、ひらがな・カタカナ中心の短い名前（例: ピタハメ、おしつけずかん、かぶらずヒント）
    - フォルダ名は表示名に対応するローマ字。既存フォルダと衝突しないこと（`apps/codenames/` `apps/hint-de-pinto/` `apps/iisen-show/` `apps/ito/` は改名前のリダイレクトスタブなので流用しない）
 3. ファイル構成パターンを決める:
@@ -24,6 +24,7 @@ description: room-Kの本体アプリを新規追加し、必要な共通機能�
 
 - `apps/{app-name}/index.html`（+ パターンに応じて app.js / style.css）
 - Realtime Database を使う場合は AGENTS.md の「Realtime Database 実装ルール」「切断時の挙動」「セッションデータの自動削除」「再接続」を全て実装する（`RoomkRTDB.initFirebase()`・transaction・onDisconnect・`cancelRoomOnDisconnect()`・ORPHAN_TTL_MS=2分・serverTimeOffset・sessionStorage 再接続・終了後削除・認証失敗ハンドリング）
+- ルーム型のゲームは、rtdb.md「ホストも遊ぶかを選ぶ」と「端末のない参加者」を読み、ホスト参加の初期値と、端末のない参加者を作るか作らないかを決めて AGENTS.md に書く。話し合い・読み上げが中心のゲームは ui.md「マイクを使わない子が参加できる手段」も読む
 - 絵文字禁止・Material Symbols Rounded 使用、design-system.css のトークンを再利用
 - UI 設計は AGENTS.md「ボタン階層の定石」「トップ画面の定石」に従う（塗りつぶしの主ボタンは1画面に1つ・同格の枠線ボタンを3つ以上並べない・トップはパネル1枚構成であそびかたのインライン展開は置かない）
 - 比喩は導入で1回だけ説明し、ボタンなどの操作名は比喩を使わない素直な動詞にする
