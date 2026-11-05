@@ -161,7 +161,12 @@
     .oek-tool:disabled, .oek-swatch:disabled, .oek-tone:disabled { opacity: 0.45; cursor: default; }
     .oek-tool.is-armed { border-color: var(--color-error); background: #FEF2F2; color: var(--color-error); }
     .oek-width__dot { display: block; border-radius: 50%; background: var(--color-primary); }
-    .oek-shape-icon { width: 20px; height: 20px; flex-shrink: 0; }
+    /* 形のアイコン。Material Symbols（FILL=1）には三角の輪郭が無いので SVG で描き、ほかのアイコンと線の太さ・角の丸みをそろえる */
+    .oek-shape-icon {
+      width: 22px; height: 22px; flex-shrink: 0;
+      fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linejoin: round;
+    }
+    .oek-tools__sep { align-self: stretch; width: 2px; margin: 6px 2px; border-radius: 1px; background: var(--color-border); }
     .oek-tools__spacer { flex: 1; }
 
     /* ── 入力（文） ── */
@@ -429,6 +434,21 @@
                 <span class="material-symbols-rounded" aria-hidden="true">format_color_fill</span><span class="oek-tool__text">塗りつぶし</span>
               </button>
             </div>
+            <span class="oek-tools__sep" aria-hidden="true"></span>
+            <div class="oek-tools__modes" role="group" aria-label="形">
+              <button type="button" class="oek-tool" id="tool-circle" aria-label="丸" aria-pressed="false" onclick="selectMode('circle')">
+                <svg class="oek-shape-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/></svg><span class="oek-tool__text">丸</span>
+              </button>
+              <button type="button" class="oek-tool" id="tool-triangle" aria-label="三角" aria-pressed="false" onclick="selectMode('triangle')">
+                <svg class="oek-shape-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.8 L20.5 19.5 H3.5 Z"/></svg><span class="oek-tool__text">三角</span>
+              </button>
+              <button type="button" class="oek-tool" id="tool-rect" aria-label="四角" aria-pressed="false" onclick="selectMode('rect')">
+                <svg class="oek-shape-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"/></svg><span class="oek-tool__text">四角</span>
+              </button>
+            </div>
+          </div>
+          <div class="oek-tools__row">
+            <div class="oek-tools__widths" role="group" aria-label="太さ" id="tool-widths"></div>
             <span class="oek-tools__spacer"></span>
             <button type="button" class="oek-tool" id="tool-undo" onclick="undoStroke()" aria-label="1つ戻す">
               <span class="material-symbols-rounded" aria-hidden="true">undo</span><span class="oek-tool__text">1つ戻す</span>
@@ -436,21 +456,6 @@
             <button type="button" class="oek-tool" id="tool-clear" onclick="clearDrawing()" aria-label="全部消す">
               <span class="material-symbols-rounded" aria-hidden="true">delete</span><span class="oek-tool__text" id="tool-clear-text">全部消す</span>
             </button>
-          </div>
-          <div class="oek-tools__row">
-            <div class="oek-tools__widths" role="group" aria-label="太さ" id="tool-widths"></div>
-            <span class="oek-tools__spacer"></span>
-            <div class="oek-tools__modes" role="group" aria-label="形">
-              <button type="button" class="oek-tool" id="tool-circle" aria-label="丸" aria-pressed="false" onclick="selectMode('circle')">
-                <svg class="oek-shape-icon" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="7.5" fill="none" stroke="currentColor" stroke-width="2.2"/></svg><span class="oek-tool__text">丸</span>
-              </button>
-              <button type="button" class="oek-tool" id="tool-triangle" aria-label="三角" aria-pressed="false" onclick="selectMode('triangle')">
-                <svg class="oek-shape-icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 2.5 L18 17 L2 17 Z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/></svg><span class="oek-tool__text">三角</span>
-              </button>
-              <button type="button" class="oek-tool" id="tool-rect" aria-label="四角" aria-pressed="false" onclick="selectMode('rect')">
-                <svg class="oek-shape-icon" viewBox="0 0 20 20" aria-hidden="true"><rect x="3" y="4" width="14" height="12" fill="none" stroke="currentColor" stroke-width="2.2"/></svg><span class="oek-tool__text">四角</span>
-              </button>
-            </div>
           </div>
         </div>
       </div>
@@ -1987,7 +1992,10 @@ function endPointerStroke(e) {
   const d = state.play.drawing;
   if (!d || (e && d.pointerId !== e.pointerId)) return;
   state.play.drawing = null;
-  if (d.shape && d.pts.length && state.play.pointsUsed + d.pts.length > MAX_TOTAL_POINTS) {
+  if (d.shape && !d.pts.length) {
+    // 押しただけ・ほとんど動かさなかったときは置かずに、引き方を知らせる（指がはなれたときだけ）
+    if (e && e.type === 'pointerup') showMsg('形は、キャンバスの上で引いて描くよ');
+  } else if (d.shape && state.play.pointsUsed + d.pts.length > MAX_TOTAL_POINTS) {
     warnDrawLimit(state.play); // 形は途中で切らない（足りないときは置かない）
   } else {
     commitStroke(d);

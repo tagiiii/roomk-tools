@@ -127,6 +127,9 @@ const sameAsViewer = (page) => page.evaluate(() => {
     for (const [id, label] of [['tool-circle', '丸'], ['tool-triangle', '三角'], ['tool-rect', '四角']]) {
       check(label + 'のボタンがある', await page.locator('#' + id).getAttribute('aria-label') === label);
     }
+    check('道具と形が同じ行にある（どれか1つを選ぶものを1行にまとめる）', await page.evaluate(() =>
+      $('tool-pen').closest('.oek-tools__row') === $('tool-rect').closest('.oek-tools__row')
+      && $('tool-undo').closest('.oek-tools__row') === $('tool-widths').closest('.oek-tools__row')));
     await page.click('#tool-rect');
     check('四角を押すと四角が選ばれる', await page.locator('#tool-rect').getAttribute('aria-pressed') === 'true'
       && await page.locator('#tool-pen').getAttribute('aria-pressed') === 'false');
@@ -191,6 +194,7 @@ const sameAsViewer = (page) => page.evaluate(() => {
     await page.click('#tool-rect');
     await drag(page, [600, 450], [602, 452]);
     check('ほとんど動かさなかったときは置かない', (await strokes(page)).length === 5);
+    check('置かなかったときは引き方を知らせる', await page.getByText('形は、キャンバスの上で引いて描くよ').isVisible());
     await drag(page, [700, 500], [900, 700]); // キャンバスの外まで引く
     st = await strokes(page);
     check('外まで引くと、キャンバスのふちまでの四角になる', st.length === 6
@@ -227,12 +231,16 @@ const sameAsViewer = (page) => page.evaluate(() => {
       await page.setViewportSize({ width: 375, height: 900 });
       await page.waitForTimeout(100);
       await page.locator('#work-draw').screenshot({ path: path.join(SHOT_DIR, 'shapes-375.png') });
-      const rows = await page.evaluate(() => {
-        const r = document.querySelectorAll('#work-draw .oek-tools__row')[1];
-        const tops = new Set(Array.from(r.querySelectorAll('button')).map((b) => Math.round(b.getBoundingClientRect().top)));
-        return { lines: tops.size, overflow: document.documentElement.scrollWidth > window.innerWidth };
-      });
-      check('375px で太さと形が1行に収まり、横にはみ出さない', rows.lines === 1 && !rows.overflow, rows);
+      const rows = await page.evaluate(() => ({
+        lines: Array.from(document.querySelectorAll('#work-draw .oek-tools__row')).map((r) =>
+          new Set(Array.from(r.querySelectorAll('button')).map((b) => Math.round(b.getBoundingClientRect().top))).size),
+        overflow: document.documentElement.scrollWidth > window.innerWidth,
+        small: Array.from(document.querySelectorAll('#work-draw .oek-tools__row button')).filter((b) => {
+          const r = b.getBoundingClientRect(); return r.width < 44 || r.height < 44;
+        }).length,
+      }));
+      check('375px で道具と形・太さと戻す消すが、それぞれ1行に収まり、横にはみ出さない', rows.lines.every((n) => n === 1) && !rows.overflow, rows);
+      check('375px でどのボタンも 44px 以上', rows.small === 0, rows);
     }
     check('コンソールにエラーが出ない', errors.length === 0, errors);
   } finally {
