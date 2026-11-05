@@ -247,7 +247,7 @@ const SLIDES = [
     sub:'今の気分を、ひとことどうぞ',
     note:'まずはチェックインから！\n今の気分や、最近あったことを、ひとことチャットか声で教えてね\n（ちゃりんバトンの説明は、このあとすぐ！）' },
 
-  /* 2 */ { type:'title', note:'今日のゲームは「ちゃりんバトン」\nならんだ小銭がぜんぶでいくらかを答えて、正解したら次の人にバトンを渡す対決だよ。2人から6人まで遊べるよ！' },
+  /* 2 */ { type:'title', note:'今日のゲームは「ちゃりんバトン」\nならんだ小銭がぜんぶでいくらかを答えて、正解したら次の人にバトンを渡す対決だよ。2人から6人まで遊べるよ！ ひとりでも遊べるよ。' },
 
   /* 3 */ { type:'content', accent:'teal', section:'ゲームについて', sectionEn:'summary',
     headline:'小銭を数えて、<br><span class="hl">正解したらバトンを渡そう</span>',
@@ -288,10 +288,10 @@ const SLIDES = [
     headline:'時計が<span class="hl">0</span>になったらおしまい',
     body:`<div class="rows">
       <div class="row"><div class="row__ic"><span class="material-symbols-rounded">hourglass_empty</span></div><div><div class="row__t">自分の時計が0になったら「ここまで」</div><div class="row__d">残りが10秒を切ると、名前の札が赤くなるよ。ここまでの人も、最後まで見ていてね</div></div></div>
-      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">emoji_events</span></div><div><div class="row__t">最後まで残った人の勝ち</div><div class="row__d">2人のときは、時計が0になった人の負け</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">emoji_events</span></div><div><div class="row__t">最後まで残った人の勝ち</div><div class="row__d">2人のときは、時計が0になった人の負け。ひとりのときは、正解した数がその回の点数</div></div></div>
       <div class="row"><div class="row__ic"><span class="material-symbols-rounded">zoom_in</span></div><div><div class="row__t">出た小銭は、あとから見られる</div><div class="row__d">押すと大きく出て、何円玉が何枚かがわかる</div></div></div>
     </div>`,
-    note:'自分の時計が0になったら「ここまで」。残りが10秒を切ると、名前の札が赤くなるよ。ここまでの人も、最後まで見ていてね。\n最後まで残った人の勝ち。2人のときは、時計が0になった人の負けだよ。\nこの対決で出た小銭は、あとから押すと大きく出て、何円玉が何枚だったかを見られるよ。' },
+    note:'自分の時計が0になったら「ここまで」。残りが10秒を切ると、名前の札が赤くなるよ。ここまでの人も、最後まで見ていてね。\n最後まで残った人の勝ち。2人のときは、時計が0になった人の負けだよ。\nひとりのときは、時計が0になったらおしまい。正解した数が、その回の点数になるよ。\nこの対決で出た小銭は、あとから押すと大きく出て、何円玉が何枚だったかを見られるよ。' },
 
   /* 8 */ { type:'content', accent:'blue', section:'いろいろな遊びかた', sectionEn:'ways to play',
     headline:'1台の画面でも、<br>時間なしでも遊べるよ',
@@ -307,9 +307,9 @@ const SLIDES = [
     body:`<div class="rows">
       <div class="row"><div class="row__ic"><span class="material-symbols-rounded">login</span></div><div><div class="row__t">「ルームに参加する」を押す</div><div class="row__d">名前、ルームコード（6文字）の順に入れて「参加する」</div></div></div>
       <div class="row"><div class="row__ic"><span class="material-symbols-rounded">link</span></div><div><div class="row__t">リンクからひらいたときは、名前だけ</div><div class="row__d">ルームコードは入っているよ。スマホやタブレットは QR コードを読みとってもOK</div></div></div>
-      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">groups</span></div><div><div class="row__t">参加した人みんなで対戦（2〜6人）</div><div class="row__d">参加した順に答えるよ。見るだけの人は「みんなにみせる画面」で見られる</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">groups</span></div><div><div class="row__t">参加した人みんなで対戦（1〜6人）</div><div class="row__d">参加した順に答えるよ。見るだけの人は「みんなにみせる画面」で見られる</div></div></div>
     </div>`,
-    note:'参加のしかただよ。\n「ルームに参加する」を押して、名前、ルームコード（6文字）の順に入れて「参加する」。\nチャットのリンクからひらいたときは、ルームコードは入っているので名前だけ入れてね。スマホやタブレットの人は、QR コードを読みとってもOK。\n参加した人みんなで対戦するよ（2人から6人）。参加した順に答えるよ。見るだけの人は「みんなにみせる画面」で見られるよ。' },
+    note:'参加のしかただよ。\n「ルームに参加する」を押して、名前、ルームコード（6文字）の順に入れて「参加する」。\nチャットのリンクからひらいたときは、ルームコードは入っているので名前だけ入れてね。スマホやタブレットの人は、QR コードを読みとってもOK。\n参加した人みんなで対戦するよ（1人から6人。1人なら、ひとりで数えるよ）。参加した順に答えるよ。見るだけの人は「みんなにみせる画面」で見られるよ。' },
 
   /* 10 */ { type:'content', accent:'teal', section:'Q&A', sectionEn:'question & answer',
     headline:'よくある質問',
@@ -353,7 +353,7 @@ function slideHTML(s){
       <div class="title-en">charin baton</div>
       <div class="title-tag">〜 小銭を数えて、バトンを渡そう 〜</div>
       <div class="title-meta">
-        <span class="m"><span class="material-symbols-rounded">group</span>対戦は2〜6人</span>
+        <span class="m"><span class="material-symbols-rounded">group</span>対戦は1〜6人</span>
         <span class="m"><span class="material-symbols-rounded">schedule</span>3〜5分</span>
         <span class="m"><span class="material-symbols-rounded">visibility</span>観戦できる</span>
       </div></section>`;

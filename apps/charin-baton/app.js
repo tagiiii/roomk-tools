@@ -1,5 +1,5 @@
 /* ちゃりんバトン
-   ・ルーム: Realtime Database。対戦する2〜6人がそれぞれの端末で答え、ほかの参加者は観戦する（勝ち残り。2人なら1対1）
+   ・ルーム: Realtime Database。対戦する1〜6人がそれぞれの端末で答え、ほかの参加者は観戦する（勝ち残り。2人なら1対1。1人なら時計が0になるまで数えつづけ、正解の数が点数）
    ・1台の画面: このタブだけで遊ぶ（答えた金額を入れるのは画面を動かす人。通信しない）
    ・いっしょに数える: 時間なし・勝ち負けなし（通信しない）
    ・みんなにみせる画面（?watch=）: 見るだけ。ルームに書き込まない
@@ -7,7 +7,7 @@
 const E = window.CharinEngine;
 
 const MAX_PROXIES = 4;       // 端末なしの参加者（ホストが代わりに金額を入れる）
-const MIN_SEATS = E.MIN_PLAYERS; // 参加している人みんなが対戦する（2〜6人。参加した順に答える）
+const MIN_SEATS = E.MIN_PLAYERS; // 参加している人みんなが対戦する（1〜6人。参加した順に答える。1人ならひとりで数えつづける）
 const MAX_SEATS = E.MAX_PLAYERS;
 const orderLabel = (i) => (i + 1) + '番目';
 const TIMES = [30, 45, 60, 90, 120, 180];
@@ -202,7 +202,7 @@ function buildCommon(box, set, onChange) {
     selectField('ならべ方', box.id + '-arrange', Object.keys(ARRANGES).map((k) => [k, ARRANGES[k]]), set.arrange, (v) => { set.arrange = v; onChange(['arrange'], v); }),
     selectField('先に答える人', box.id + '-first', Object.keys(FIRSTS).map((k) => [k, FIRSTS[k]]), set.first, (v) => { set.first = v; onChange(['first'], v); }),
   );
-  box.replaceChildren(grid, makeElement('p', 'cb-note', '持ち時間と小銭の種類は、みんな同じ。小銭は2枚からはじまり、正解2回ごとに1枚ずつ増える。時計が0になった人から「ここまで」で、最後まで残った人の勝ち。'));
+  box.replaceChildren(grid, makeElement('p', 'cb-note', '持ち時間と小銭の種類は、みんな同じ。小銭は2枚からはじまり、正解2回ごとに1枚ずつ増える。時計が0になった人から「ここまで」で、最後まで残った人の勝ち（ひとりのときは、時計が0でおしまい。正解した数がその回の点数）。'));
 }
 
 /* ── 硬貨のトレー（SVG） ── */
@@ -1095,7 +1095,7 @@ async function removeProxy(name) {
   }, '外せませんでした。もう一度ためしてね');
 }
 
-// 席の人たちで新しい対決を作る（2人そろっていなければ null）。first は先に答える人の番号（null なら設定のとおり）
+// 席の人たちで新しい対決を作る（対戦する人がいなければ null）。first は先に答える人の番号（null なら設定のとおり）
 function newGameFor(room, seats, first) {
   if (seats.length < MIN_SEATS || seats.length > MAX_SEATS || new Set(seats).size !== seats.length) return null;
   if (!seats.every((name) => seatable(room, name))) return null;
@@ -1124,7 +1124,7 @@ async function startGame() {
     return { ...room, status: STATUS.PLAY, lastGameId: game.id, game };
   }, 'はじめられませんでした。もう一度ためしてね');
   if (ok) countStart(n);
-  else if (ok === false) toast('対戦するには2人以上いるよ。もう1人入るのを待ってね');
+  else if (ok === false) toast('対戦する人がいないよ。だれかが入るのを待つか、「ホストも対戦する」をオンにしてね');
 }
 
 // 次の回の先に答える人: 前の回の先に答えた人の次の人（前の回の順で、いまもいる人）。人が入れかわっても同じ人から始めない
@@ -1162,7 +1162,7 @@ async function playAgain() {
     countStart(n);
     if (left.length) toast(left.join('・') + 'は、いないのでこの回には入っていないよ。戻ったら次の回から入るよ', false);
   } else if (ok === false && reason) {
-    toast('対戦するには2人以上いるよ。「待合室へ」でもう1人入るのを待ってね');
+    toast('対戦する人がいないよ。「待合室へ」でだれかが入るのを待ってね');
   }
 }
 
@@ -1290,6 +1290,8 @@ function clearLocal() {
 const blankPlayer = () => ({ name: '' });
 function normLocalPlayers(list) {
   const out = asList(list).slice(0, MAX_SEATS).map((p) => ({ name: String(p?.name || '').slice(0, 8) }));
+  // はじめて開いたときは2人分の欄を出す（「この人を外す」で1人にすると、ひとりで数えつづける）
+  if (!out.length) out.push(blankPlayer(), blankPlayer());
   while (out.length < MIN_SEATS) out.push(blankPlayer());
   return out;
 }
@@ -1302,7 +1304,7 @@ function openLocalSetup() {
   showScreen('local');
 }
 
-// 1台の画面の対戦する人の札（名前。2〜6人。持ち時間と小銭の種類はみんな同じ）
+// 1台の画面の対戦する人の札（名前。1〜6人。1人ならひとりで数えつづける。持ち時間と小銭の種類はみんな同じ）
 function renderLocalSeats() {
   const list = state.localPlayers;
   const cards = list.map((p, i) => {
@@ -1480,7 +1482,8 @@ function renderWaiting(room) {
   const ready = seats.length >= MIN_SEATS && seats.every((name) => seatable(room, name));
   let note = '';
   if (host) {
-    if (seats.length < MIN_SEATS) note = 'もう1人入ると、はじめられるよ';
+    if (seats.length < MIN_SEATS) note = 'だれかが入るか、「ホストも対戦する」をオンにすると、はじめられるよ';
+    else if (seats.length === 1) note = 'ひとりで数えるよ。正解するたびに次の小銭が出て、時計が0になったらおしまい。正解した数が点数になるよ';
     else note = '上から順に答えるよ。時計が0になった人から「ここまで」で、最後まで残った人の勝ち';
   }
   $('seatNote').textContent = note;
@@ -1586,12 +1589,14 @@ function renderGame() {
   if (live && $('zoom').open) $('zoom').close();
   const host = state.role === 'host';
   const names = V.names;
+  // 1人のときは勝ち負けがなく、正解した数がその回の点数（記録も比較もしない）
+  const solo = n === 1;
 
   // 対戦する人の札（2人のときは広い画面でトレーの左右に置く）
   $('board').classList.toggle('is-two', n === 2);
   $('cards').replaceChildren(...names.map((name, i) => {
     const out = D.out[i];
-    const card = makeElement('div', 'cb-player' + (live && D.turn === i && !out ? ' is-turn' : '') + (!live && D.winner === i ? ' is-win' : '') + (out ? ' is-out' : ''));
+    const card = makeElement('div', 'cb-player' + (live && D.turn === i && !out ? ' is-turn' : '') + (!live && D.winner === i ? ' is-win' : '') + (out && !solo ? ' is-out' : ''));
     card.id = 'card' + i;
     const head = makeElement('p', 'cb-player__name');
     if (live && D.turn === i && !out) head.append(msIcon('play_arrow'));
@@ -1606,6 +1611,7 @@ function renderGame() {
     bar.append(fill);
     const tags = makeElement('div', 'cb-player__tags');
     if (out && n > 2) tags.append(makeElement('span', 'cb-tag cb-tag--muted', 'ここまで'));
+    if (solo) tags.append(makeElement('span', 'cb-tag cb-tag--score', D.correct[i] + '点'));
     if (V.away(i)) tags.append(makeElement('span', 'cb-tag cb-tag--warn', '通信が切れた'));
     // 「端末なし」の印はホストの画面にだけ出す（子どもどうしの画面で区別しない）
     if (host && V.proxy(i)) tags.append(makeElement('span', 'cb-tag cb-tag--muted', '端末なし'));
@@ -1622,8 +1628,10 @@ function renderGame() {
   // 3・2・1 は、はじめと、ホストが戻ったとき・読み込み直したときのつづき
   if (D.phase === 'ready') turn.replaceChildren(nameOf(D.turn), text(D.history.length || D.correct.some((c) => c > 0) || D.out.some((o) => o) ? ' からつづけるよ' : ' からはじまるよ'));
   else if (D.phase === 'play') turn.replaceChildren(nameOf(D.turn), text(' の番'));
+  else if (solo && D.phase === 'reveal') turn.replaceChildren(text('次の小銭が出るよ'));
   else if (D.phase === 'reveal' || D.phase === 'out') turn.replaceChildren(text('次は '), nameOf(next), text(' の番'));
   else if (D.phase === 'pass') turn.replaceChildren(nameOf(D.turn), text(' はパス'));
+  else if (solo) { turn.classList.add('is-over'); turn.replaceChildren(msIcon('flag'), text('おしまい！ '), nameOf(0), text(' は ' + D.correct[0] + '点')); }
   else { turn.classList.add('is-over'); turn.replaceChildren(msIcon('emoji_events'), nameOf(D.winner), text(' の勝ち！')); }
 
   // 小銭は、はじまる前とパスの間だけかくす。正解と時間切れは小銭を見せたまま、下に金額と内訳を出す
@@ -1683,6 +1691,7 @@ function renderInput(V) {
     let note;
     if (D.phase === 'ready') note = 'もうすぐはじまるよ';
     else if (meOut) note = 'ここからは見る番だよ。最後まで見ていてね';
+    else if (D.phase === 'reveal' && V.names.length === 1) note = 'もうすぐ次の小銭が出るよ';
     else if (D.phase === 'reveal' || D.phase === 'out') note = nextMine ? '次はあなたの番だよ' : '次は' + next + 'の番';
     else if (D.phase === 'pass') note = who + 'はパス。もうすぐ次の小銭が出るよ';
     else note = who + 'が数えているよ' + (nextMine ? '。次はあなたの番' : '');
@@ -1828,7 +1837,7 @@ function renderResult(V) {
   box.hidden = false;
   const acts = makeElement('div', 'cb-stack');
   if (V.local || state.role === 'host') {
-    const again = makeElement('button', 'btn btn-primary btn-full', 'もう一回（先に答える人をかえる）');
+    const again = makeElement('button', 'btn btn-primary btn-full', D.settings.players.length === 1 ? 'もう一回' : 'もう一回（先に答える人をかえる）');
     again.type = 'button';
     again.addEventListener('click', () => {
       if (V.local) startLocal((D.settings.first + 1) % D.settings.players.length);
@@ -1855,7 +1864,7 @@ function renderResult(V) {
   if (acts.childNodes.length) box.append(acts);
   const list = D.history;
   if (!list.length) return;
-  box.append(makeElement('h2', 'cb-h2 mt-md', 'この対決で出た小銭（' + list.length + '回）'));
+  box.append(makeElement('h2', 'cb-h2 mt-md', (D.settings.players.length === 1 ? 'この回で出た小銭（' : 'この対決で出た小銭（') + list.length + '回）'));
   box.append(makeElement('p', 'cb-note', '押すと大きく出て、何円玉が何枚かも見られるよ'));
   const grid = makeElement('div', 'cb-history');
   list.forEach((h, k) => {

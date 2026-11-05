@@ -132,16 +132,16 @@
   }
 
   // ══════════════════════════════════════════════
-  // 対決（2〜6人の勝ち残り。2人なら1対1の対決）
+  // 対決（2〜6人の勝ち残り。2人なら1対1の対決。1人なら、時計が0になるまで数えつづける。勝ち負けはなく、正解の数が点数）
   // settings = { players: [{ name, time(秒), kinds }, …], maxCoins, arrange, first: 先に答える人の番号 }
   // phase: ready（はじまる前の 3・2・1）→ play
   //        play（番の人が数える）→ reveal（正解を見せる。時計は止まる）→ 残っている次の人の play
   //        play → pass（問題をかくして3秒。自分の時計は減る）→ 同じ人の play
   //        play / pass で番の人の時計が0 → その人は「ここまで」（out）
   //          残りが2人以上なら out（その小銭を見せる。時計は止まる）→ 残っている次の人の play
-  //          残りが1人なら over（その人の勝ち）
+  //          残りが1人なら over（その人の勝ち）。1人で遊んでいるときは over（勝ち負けなし。winner は null）
   // ══════════════════════════════════════════════
-  const MIN_PLAYERS = 2;
+  const MIN_PLAYERS = 1;
   const MAX_PLAYERS = 6;
   const OUT_MS = 1500;         // 「ここまで」を見せる間（みんなの時計を止める）
   const clone = (o) => JSON.parse(JSON.stringify(o));
@@ -210,7 +210,8 @@
     S.lastOut = S.turn;
     if (aliveCount(S) <= 1) {
       S.phase = 'over';
-      S.winner = S.out.findIndex((o) => !o);
+      const w = S.out.findIndex((o) => !o);
+      S.winner = w >= 0 ? w : null;
     } else {
       S.phase = 'out';
       S.phaseEnd = now + OUT_MS;

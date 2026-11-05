@@ -25,7 +25,7 @@ const { E, check, sleep, waitFor } = L;
   let room = await L.roomOf(code);
   check('A3 はじめの設定（ホストも対戦する）', room.status === 'waiting' && room.set.time === 45 && room.set.kinds === 'all' && room.set.maxCoins === 5 && room.set.arrange === 'scatter' && room.set.first === 'random' && room.set.hostPlays === true, room.set);
   check('A4 ホストに「みんなにみせる画面」と「ルームを閉じる」', await L.visible(H, '#btnOpenWatch') && (await L.text(H, '#btnLeave')) === 'ルームを閉じる');
-  check('A5 1人では始められない', await H.page.isDisabled('#btnStartGame'));
+  check('A5 ホスト1人でも始められる（ひとりで数える）', !(await H.page.isDisabled('#btnStartGame')) && (await L.text(H, '#seatNote')).includes('ひとりで数える'), await L.text(H, '#seatNote'));
   check('A6 room-create を数える', await L.waitStats(H, 'room-create', 1));
   check('A6b ホストは対戦する人の1番目', (await L.text(H, '#lobbyPeople')).includes('1番目メンター') && await H.page.isChecked('#hostPlays'), await L.text(H, '#lobbyPeople'));
 
@@ -37,7 +37,7 @@ const { E, check, sleep, waitFor } = L;
   await H.page.uncheck('#hostPlays');
   room = await L.roomWhen(code, (r) => r.set?.hostPlays === false);
   check('A10 「ホストも対戦する」を外すと進行だけ', room.set.hostPlays === false && await waitFor(async () => (await L.text(A, '#lobbyPeople')).includes('1番目あおい') && (await L.text(A, '#lobbyPeople')).includes('ホスト（進行だけ）')), await L.text(A, '#lobbyPeople'));
-  check('A10b 1人では始められない', await waitFor(async () => H.page.isDisabled('#btnStartGame')));
+  check('A10b あおい1人でも始められる（ひとりで数える）', await waitFor(async () => !(await H.page.isDisabled('#btnStartGame')) && (await L.text(H, '#seatNote')).includes('ひとりで数える')), await L.text(H, '#seatNote'));
   check('A10c 「ホストも対戦する」はホストだけ', !(await L.visible(A, '#hostPlaysBox')));
   await L.joinRoom(B, 'そら', code);
   check('A11 2人そろうと始められる', await waitFor(async () => !(await H.page.isDisabled('#btnStartGame'))));
