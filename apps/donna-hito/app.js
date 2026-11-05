@@ -1,7 +1,7 @@
-// わたし、ぼくってどんな人？（試作）
+// わたし、ぼくってどんな人？
 // 1対1の作戦会議で、メンターが画面共有して読み上げ、子どもの答えを聞いて 1〜4 を押す。
 // 回答は画面の中だけで持ち、保存・点数・タイプ分け・比較はしない。
-import { copyToClipboard, showToast } from '../../apps/shared/js/utils.js';
+import { copyToClipboard, showToast } from '../shared/js/utils.js';
 
 // ── 問い（9つ） ──
 // 元資料「わたし、ぼくってどんな人？」の9つの軸をもとに、2026-11-05 の修正案で言葉を直した。
@@ -41,6 +41,7 @@ const state = {
   reviewList: [], // ふりかえる問いの位置
   reviewPos: 0,
   detailIndex: null, // 一覧から大きく出している問いの位置
+  counted: false, // stats 'finish' を1回の通しで1回にするためのフラグ
 };
 
 // ── DOM ──
@@ -243,6 +244,10 @@ function openDetail(i) {
 }
 
 function goToSummary(focusIndex = null) {
+  if (!state.counted) {
+    state.counted = true;
+    window.RoomkStats?.count('finish');
+  }
   state.mode = 'answer';
   state.pending = null;
   state.detailIndex = null;
@@ -319,11 +324,13 @@ function resetAll() {
   state.reviewList = [];
   state.reviewPos = 0;
   state.detailIndex = null;
+  state.counted = false;
 }
 
 // ── イベント ──
 $('btn-start').addEventListener('click', () => {
   resetAll();
+  window.RoomkStats?.count('start');
   showScreen('question');
   renderQuestion();
 });

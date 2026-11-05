@@ -183,6 +183,8 @@ const COVERED_APPS = [
   'quiz', 'kotoba-shuffle', 'kanji-sagashi', 'kotoba-relay', 'tatoe-gp',
   'kaburazu-hint', 'kotoba-tantei', 'docchi', 'minna-ranking',
   'talk-card', 'otona-talk', 'tsuyomi-card', 'kimochi-ate',
+  // 2026-11-05 追加（作戦会議の自己理解ワーク。9つの問いと両はしの言葉）
+  'donna-hito',
   // A2 で追加した12アプリ
   'jitsuwa-game', 'do-mannaka', 'ishin-denshin', 'word-wolf', 'tatoe-narabe', 'magire-eshi',
   'ikutsu-ieru', 'pittari-meter', 'uso-jisho', 'value-card', 'koedake-theater', 'kyoumi-sugoroku',
@@ -382,6 +384,14 @@ function collectEntries() {
   tsuyomiCards.forEach((def, index) => rows.push(entry('tsuyomi-card', 'card', def.text, {
     id: `tsuyomi-card:${index}`,
   })));
+
+  // donna-hito: 9つの問い（title）と両はしの言葉（left / right）。両はしは category を分ける
+  const donnaQuestions = evalArrayFromSource(read('apps/donna-hito/app.js'), 'QUESTIONS', 'apps/donna-hito/app.js') || [];
+  donnaQuestions.forEach((q, index) => {
+    rows.push(entry('donna-hito', 'question', q.title, { id: `donna-hito:${index}:title` }));
+    rows.push(entry('donna-hito', 'end', q.left, { id: `donna-hito:${index}:left` }));
+    rows.push(entry('donna-hito', 'end', q.right, { id: `donna-hito:${index}:right` }));
+  });
 
   // kimochi-ate（2026-09-25 に kimochi-map から作り変え）: 6系×12語の GROUPS と場面カード SCENES。
   //   ことばは系ごとの category、場面は category 'scene'。構造検査（6系×12語・語の重複なし・

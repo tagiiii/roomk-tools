@@ -1,4 +1,4 @@
-/* わたし、ぼくってどんな人？（試作）
+/* わたし、ぼくってどんな人？
    共通スタイルは apps/shared/css/design-system.css。つよみカードの型をもとにしている */
 
 .wrapper {
@@ -20,16 +20,6 @@
   text-align: center;
 }
 
-.dh-badge {
-  display: inline-block;
-  padding: 2px 12px;
-  margin-bottom: 10px;
-  border-radius: var(--radius-full);
-  background: var(--color-bg);
-  color: var(--color-muted);
-  font-size: var(--font-size-sm);
-  font-weight: 700;
-}
 
 .dh-panel__title {
   font-size: var(--font-size-xl);
