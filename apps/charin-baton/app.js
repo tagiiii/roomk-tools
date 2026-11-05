@@ -10,7 +10,7 @@ const MAX_PROXIES = 4;       // 端末なしの参加者（ホストが代わり
 const MIN_SEATS = E.MIN_PLAYERS; // 参加している人みんなが対戦する（2〜6人。参加した順に答える）
 const MAX_SEATS = E.MAX_PLAYERS;
 const orderLabel = (i) => (i + 1) + '番目';
-const TIMES = [30, 45, 60, 90];
+const TIMES = [30, 45, 60, 90, 120, 180];
 const MAXES = [4, 5, 6, 8];
 const ARRANGES = { scatter: 'ばらばら', sort: 'そろえる（大きい順）' };
 const FIRSTS = { random: 'くじで決める', top: 'いちばん上の人から' };
