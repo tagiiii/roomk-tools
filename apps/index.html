@@ -726,9 +726,34 @@
       color: var(--color-primary);
     }
 
+    .updates-list__tag--feedback {
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      padding-left: 6px;
+      background-color: #FFF1D6;
+      color: #7F5300;
+    }
+
+    .updates-list__tag--feedback .material-symbols-rounded {
+      font-size: 13px;
+    }
+
     .updates-list__text {
       flex: 1;
       line-height: 1.5;
+    }
+
+    /* スマホでは、日付とラベルの次の行から文を出す（ラベルが2つ並ぶと文の幅がなくなるため） */
+    @media (max-width: 600px) {
+      .updates-list__item {
+        flex-wrap: wrap;
+        gap: 4px var(--space-sm);
+      }
+
+      .updates-list__text {
+        flex-basis: 100%;
+      }
     }
 
     .updates-list__text a {
@@ -2571,9 +2596,13 @@
         const moreBtn = document.getElementById('updates-more');
 
         list.innerHTML = entries.map((e, i) => {
-          const tag = e.type === 'new'
+          const tag = (e.type === 'new'
             ? '<span class="updates-list__tag updates-list__tag--new">NEW</span>'
-            : '<span class="updates-list__tag updates-list__tag--update">更新</span>';
+            : '<span class="updates-list__tag updates-list__tag--update">更新</span>') +
+            // フィードバックボードの声から直したもの（"from": "feedback"）。送った人に届いたことがわかるように
+            (e.from === 'feedback'
+              ? '<span class="updates-list__tag updates-list__tag--feedback"><span class="material-symbols-rounded" aria-hidden="true">forum</span>フィードバックから</span>'
+              : '');
           const text = e.app
             ? `<a href="${esc(e.app)}/">${esc(e.text)}</a>`
             : esc(e.text);
