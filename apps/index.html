@@ -48,7 +48,7 @@
 
     .apps-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
       gap: var(--space-md);
     }
 
@@ -199,8 +199,8 @@
     /* ── 検索と利用シーンをまとめたパネル ── */
     .tool-filter {
       margin-bottom: var(--space-lg);
-      padding: var(--space-md) var(--space-lg) var(--space-lg);
-      border-radius: var(--radius-card);
+      padding: var(--space-md);
+      border-radius: var(--radius-box);
       background-color: var(--color-surface);
       box-shadow: var(--shadow-sm);
     }
@@ -313,8 +313,27 @@
       margin-bottom: 6px;
     }
 
+    /* 検索と「くわしく絞り込む」を1行に並べる（スマホでは2行） */
+    .tool-filter__row {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
     .tool-search {
-      margin-bottom: var(--space-md);
+      flex: 1;
+      min-width: 0;
+    }
+
+    /* 入力欄の中の虫めがねと文字で何の欄かわかるので、見出しは読み上げだけにする */
+    .tool-search__label {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
     }
 
     .tool-search__field {
@@ -323,27 +342,39 @@
 
     .tool-search__icon {
       position: absolute;
-      top: 24px; /* 入力欄の高さの半分（候補が開いても動かない） */
-      left: 16px;
+      top: 26px; /* 入力欄の高さの半分（候補が開いても動かない） */
+      left: 8px;
       transform: translateY(-50%);
+      display: grid;
+      place-items: center;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background-color: #E8EEF4;
       font-size: 22px;
-      color: var(--color-muted);
+      color: var(--color-primary);
       pointer-events: none;
     }
 
     .tool-search__input.form-input {
       -webkit-appearance: none;
       appearance: none;
-      min-height: 48px;
-      padding-left: 48px;
+      min-height: 52px;
+      padding-left: 56px;
+      border: 2px solid var(--color-border);
       border-radius: var(--radius-full);
-      background-color: var(--color-bg);
-      border-color: transparent;
+      background-color: var(--color-surface);
+      font-size: var(--font-size-body);
+      transition: border-color var(--transition-base), box-shadow var(--transition-base);
+    }
+
+    .tool-search__input.form-input:hover {
+      border-color: #A9BCC6;
     }
 
     .tool-search__input.form-input:focus {
-      background-color: var(--color-surface);
       border-color: var(--color-accent);
+      box-shadow: 0 0 0 4px rgba(46, 125, 140, 0.15);
     }
 
     /* 入力中に出す候補（ツール名）と、空欄のときの検索ヒント */
@@ -355,9 +386,9 @@
       z-index: 20;
       padding: var(--space-xs);
       border: 1px solid var(--color-border);
-      border-radius: var(--radius-card);
+      border-radius: var(--radius-box);
       background-color: var(--color-surface);
-      box-shadow: var(--shadow-md);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.16);
     }
 
     .tool-suggest[hidden],
@@ -470,9 +501,9 @@
       align-items: center;
       justify-content: space-between;
       gap: var(--space-xs) var(--space-sm);
-      margin-top: var(--space-md);
-      padding: 8px 8px 8px 14px;
-      border-radius: var(--radius-btn);
+      margin-top: 10px;
+      padding: 6px 8px 6px 16px;
+      border-radius: var(--radius-card);
       background-color: var(--color-bg);
       color: var(--color-muted);
       font-size: var(--font-size-sm);
@@ -561,16 +592,22 @@
       align-items: center;
       gap: var(--space-sm);
       margin: var(--space-md) 0 0;
+      padding: 8px 14px;
+      border-radius: var(--radius-btn);
+      background-color: var(--g-pale);
       font-size: var(--font-size-body);
       font-weight: 700;
-      color: var(--color-primary);
+      color: var(--g-ink);
     }
 
-    .genre-heading::after {
-      content: '';
-      flex: 1;
-      height: 1px;
-      background-color: var(--color-border);
+    .genre-heading .material-symbols-rounded {
+      font-size: 22px;
+    }
+
+    .genre-heading__count {
+      margin-left: auto;
+      font-size: var(--font-size-sm);
+      font-weight: 500;
     }
 
     .apps-grid > .genre-heading:first-child {
@@ -754,7 +791,7 @@
     .app-card__flag {
       position: absolute;
       top: 8px;
-      right: 8px;
+      left: 8px;
       padding: 2px 10px;
       border-radius: var(--radius-full);
       font-size: 12px;
@@ -894,6 +931,575 @@
       }
     }
 
+    /* ── 種類ごとの色（data-genre）──
+       --g は図柄の飾り・線、--g-pale は面、--g-ink はアイコンと文字（白・淡い面の上で読める濃さ）。
+       濃い色の面は目にきついので、面は淡い色だけにする */
+    [data-genre="all"]    { --g: #7F9BB5; --g-pale: #E8EEF4; --g-ink: #1C3F5E; }
+    [data-genre="popular"] { --g: #E2B23E; --g-pale: #FFF5D6; --g-ink: #7F5300; }
+    [data-genre="kotoba"] { --g: #F0A04B; --g-pale: #FFF1E0; --g-ink: #9A4D00; }
+    [data-genre="puzzle"] { --g: #5B9BE6; --g-pale: #E6F0FC; --g-ink: #1D5799; }
+    [data-genre="suiri"]  { --g: #9C7BDB; --g-pale: #F0EAFB; --g-ink: #5B3797; }
+    [data-genre="atekko"] { --g: #4CB884; --g-pale: #E3F5EC; --g-ink: #1D6B45; }
+    [data-genre="board"]  { --g: #E8707B; --g-pale: #FDE9EB; --g-ink: #A3303C; }
+    [data-genre="talk"]   { --g: #E07BAA; --g-pale: #FCE9F2; --g-ink: #9E2F63; }
+
+    .section-desc__icon {
+      font-size: 16px;
+      vertical-align: -3px;
+      margin: 0 1px;
+    }
+
+    /* ── 種類のタブ ── */
+    .genre-tabs {
+      display: grid;
+      grid-auto-columns: minmax(0, 1fr); /* タブの数（人気の有無）に合わせて等分する */
+      grid-auto-flow: column;
+      gap: 10px;
+      margin-bottom: var(--space-md);
+    }
+
+    .genre-tab {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      min-height: 112px;
+      padding: 14px 6px 12px;
+      border: 2px solid transparent;
+      border-radius: var(--radius-box);
+      background-color: var(--color-surface);
+      box-shadow: var(--shadow-sm);
+      font-family: inherit;
+      color: var(--color-text);
+      cursor: pointer;
+      transition: transform var(--transition-base), box-shadow var(--transition-base), background-color var(--transition-base);
+    }
+
+    .genre-tab:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .genre-tab:focus-visible {
+      outline: 3px solid var(--g-ink);
+      outline-offset: 2px;
+    }
+
+    .genre-tab__icon {
+      display: grid;
+      place-items: center;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background-color: var(--g-pale);
+      color: var(--g-ink);
+    }
+
+    .genre-tab__icon .material-symbols-rounded {
+      font-size: 28px;
+    }
+
+    /* 「・」の位置でだけ折り返す（スクリプトが ・ のあとに <wbr> を入れる） */
+    .genre-tab__label {
+      font-size: var(--font-size-sub);
+      font-weight: 700;
+      line-height: 1.3;
+      text-align: center;
+      word-break: keep-all;
+    }
+
+    .genre-tab__count {
+      font-size: 12px;
+      color: var(--color-muted);
+    }
+
+    .genre-tab[aria-pressed="true"] {
+      border-color: var(--g);
+      background-color: var(--g-pale);
+      box-shadow: none;
+    }
+
+    .genre-tab[aria-pressed="true"] .genre-tab__icon {
+      background-color: var(--g-ink);
+      color: #fff;
+    }
+
+    .genre-tab[aria-pressed="true"] .genre-tab__count {
+      color: var(--g-ink);
+      font-weight: 700;
+    }
+
+    /* スマホ・タブレットではタブを横にスクロール（次のタブが少し見えるので、続きがあるとわかる） */
+    @media (max-width: 760px) {
+      .genre-tabs {
+        display: flex;
+        gap: 8px;
+        margin: 0 calc(var(--space-md) * -1) var(--space-sm);
+        padding: 4px var(--space-md) 8px;
+        overflow-x: auto;
+        scroll-snap-type: x proximity;
+        scroll-padding: 0 var(--space-md);
+        scrollbar-width: none;
+      }
+
+      .genre-tabs::-webkit-scrollbar {
+        display: none;
+      }
+
+      .genre-tab {
+        flex: 0 0 92px;
+        min-height: 100px;
+        padding: 10px 4px;
+        border-radius: var(--radius-card);
+        scroll-snap-align: start;
+      }
+
+      .genre-tab__icon {
+        width: 40px;
+        height: 40px;
+      }
+
+      .genre-tab__icon .material-symbols-rounded {
+        font-size: 24px;
+      }
+
+      .genre-tab__label {
+        font-size: 12px;
+      }
+    }
+
+    /* ── くわしく絞り込む（利用シーン・人数・目安時間）── */
+    .more-filter__toggle {
+      display: inline-flex;
+      flex-shrink: 0;
+      align-items: center;
+      gap: 6px;
+      min-height: 52px;
+      padding: 0 14px 0 16px;
+      border: 2px solid var(--color-border);
+      border-radius: var(--radius-full);
+      background-color: var(--color-surface);
+      font-family: inherit;
+      font-size: var(--font-size-sub);
+      font-weight: 700;
+      color: var(--color-primary);
+      cursor: pointer;
+      transition: border-color var(--transition-base), background-color var(--transition-base);
+    }
+
+    .more-filter__toggle:hover {
+      border-color: #A9BCC6;
+    }
+
+    .more-filter__toggle:focus-visible {
+      outline: 3px solid var(--color-accent);
+      outline-offset: 2px;
+    }
+
+    .more-filter__toggle[aria-expanded="true"] {
+      border-color: var(--color-accent);
+      background-color: #E4EEF0;
+    }
+
+    .more-filter__toggle .material-symbols-rounded {
+      font-size: 20px;
+    }
+
+    /* 指定しているときは、たたんでいても分かるように数を出す */
+    .more-filter__state {
+      padding: 1px 9px;
+      border-radius: var(--radius-full);
+      background-color: var(--color-accent);
+      color: #fff;
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    .more-filter__state[hidden] {
+      display: none;
+    }
+
+    .more-filter__arrow {
+      transition: transform var(--transition-base);
+    }
+
+    .more-filter__toggle[aria-expanded="true"] .more-filter__arrow {
+      transform: rotate(180deg);
+    }
+
+    .more-filter__body {
+      margin-top: 10px;
+      padding: 14px 16px 16px;
+      border-radius: var(--radius-card);
+      background-color: var(--color-bg);
+    }
+
+    .more-filter__body[hidden] {
+      display: none;
+    }
+
+    .more-filter__body .tool-size__select.form-select:not(.is-set) {
+      background-color: var(--color-surface);
+    }
+
+    @media (max-width: 600px) {
+      .tool-filter__row {
+        flex-wrap: wrap;
+      }
+
+      .tool-search {
+        flex-basis: 100%;
+      }
+
+      .more-filter__toggle {
+        width: 100%;
+        min-height: 48px;
+      }
+
+      .more-filter__arrow {
+        margin-left: auto;
+      }
+    }
+
+    /* ── カード: 種類の色の面に、カードのアイコンを白い丸で大きく出す ── */
+    .app-card {
+      transition: box-shadow var(--transition-base), transform var(--transition-base);
+    }
+
+    .app-card__icon {
+      background:
+        radial-gradient(circle at 12% 22%, color-mix(in srgb, var(--g) 28%, transparent) 0 18px, transparent 19px),
+        radial-gradient(circle at 88% 78%, color-mix(in srgb, var(--g) 22%, transparent) 0 30px, transparent 31px),
+        radial-gradient(circle at 80% 18%, color-mix(in srgb, var(--g) 18%, transparent) 0 9px, transparent 10px),
+        radial-gradient(circle at 20% 85%, color-mix(in srgb, var(--g) 16%, transparent) 0 7px, transparent 8px),
+        var(--g-pale, #EEF3F8);
+    }
+
+    .app-card__icon > .material-symbols-rounded {
+      display: grid;
+      place-items: center;
+      width: 84px;
+      height: 84px;
+      border-radius: 50%;
+      background-color: var(--color-surface);
+      box-shadow: 0 3px 0 color-mix(in srgb, var(--g) 45%, transparent);
+      font-size: 48px;
+      color: var(--g-ink, var(--color-primary));
+    }
+
+    /* 画面の例は、マウスを当てたとき・「i」の説明に出す */
+    .app-card .app-card__thumbnail {
+      display: none;
+    }
+
+    .app-card__body {
+      padding: 10px 12px 12px;
+    }
+
+    .app-card__name {
+      font-size: var(--font-size-body);
+      line-height: 1.4;
+    }
+
+    .app-card__meta {
+      margin-top: 6px;
+    }
+
+    /* 説明・人数と時間のほかのバッジ・利用シーン・動作環境は、説明の中に出す。
+       カードのリンクの読み上げには残す（見た目だけ隠す） */
+    .app-card__desc,
+    .app-card .meta-badge--extra,
+    .app-card__scenes,
+    .app-card__footer {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      margin: -1px;
+      padding: 0;
+      border: 0;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
+    }
+
+    /* 「人気」タブのあいだだけ出す順位（左下）。「位」は読み上げだけ */
+    .app-card__rank-suffix {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
+    }
+
+    .app-card__rank {
+      display: none;
+    }
+
+    .apps-grid.is-popular .app-card__rank {
+      position: absolute;
+      left: 8px;
+      bottom: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 30px;
+      height: 30px;
+      border-radius: var(--radius-full);
+      background-color: var(--color-primary);
+      color: #fff;
+      font-size: 15px;
+      font-weight: 700;
+      font-feature-settings: "tnum";
+      box-shadow: 0 0 0 2px #fff;
+    }
+
+    /* 「i」: マウスのない端末で説明を開く（カード本体が <a> のため span。タッチ用なので Tab では選ばない） */
+    .app-card__info {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      z-index: 1;
+      display: grid;
+      place-items: center;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background-color: rgba(255, 255, 255, 0.92);
+      color: var(--g-ink, var(--color-primary));
+      box-shadow: var(--shadow-sm);
+      cursor: pointer;
+    }
+
+    .app-card__info .material-symbols-rounded {
+      font-size: 24px;
+    }
+
+    .app-card__info:hover {
+      background-color: #fff;
+    }
+
+    @media (max-width: 760px) {
+      .apps-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      .app-card__icon > .material-symbols-rounded {
+        width: 60px;
+        height: 60px;
+        font-size: 34px;
+      }
+
+      .app-card__info {
+        top: 4px;
+        right: 4px;
+      }
+
+      .app-card__body {
+        padding: 8px 10px 10px;
+      }
+
+      .app-card__name {
+        font-size: var(--font-size-sub);
+      }
+
+      .app-card__flag {
+        top: 6px;
+        left: 6px;
+        padding: 1px 8px;
+        font-size: 11px;
+      }
+
+      .app-card .app-card__slides {
+        margin-left: 0;
+      }
+    }
+
+    /* よく開かれたツールも、カードと同じ図柄にする */
+    .ranking-card__thumb {
+      background:
+        radial-gradient(circle at 14% 24%, color-mix(in srgb, var(--g) 26%, transparent) 0 10px, transparent 11px),
+        radial-gradient(circle at 86% 78%, color-mix(in srgb, var(--g) 22%, transparent) 0 18px, transparent 19px),
+        var(--g-pale, var(--color-bg));
+    }
+
+    .ranking-card__thumb > .material-symbols-rounded {
+      display: grid;
+      place-items: center;
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background-color: var(--color-surface);
+      box-shadow: 0 2px 0 color-mix(in srgb, var(--g) 45%, transparent);
+      font-size: 30px;
+      color: var(--g-ink, var(--color-primary));
+    }
+
+    /* ── マウスを当てたときに浮かぶ説明 ── */
+    .tool-peek {
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 20;
+      width: 360px;
+      max-width: calc(100vw - 16px);
+      background-color: var(--color-surface);
+      border-radius: var(--radius-box);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.22);
+      overflow: hidden;
+      pointer-events: none;
+      visibility: hidden;
+      opacity: 0;
+      transform: scale(0.96);
+      transition: opacity 0.15s, transform 0.15s, visibility 0s 0.15s;
+    }
+
+    .tool-peek.is-open {
+      visibility: visible;
+      opacity: 1;
+      transform: none;
+      transition: opacity 0.15s, transform 0.15s;
+    }
+
+    .tool-detail__shot {
+      padding: 10px;
+      border-bottom: 4px solid var(--g);
+      background-color: var(--color-bg);
+    }
+
+    .tool-detail__shot img {
+      display: block;
+      width: 100%;
+      max-height: 220px;
+      object-fit: contain;
+    }
+
+    .tool-detail__body {
+      padding: 12px 16px 16px;
+    }
+
+    .tool-detail__genre {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--g-ink);
+    }
+
+    .tool-detail__genre .material-symbols-rounded {
+      font-size: 16px;
+    }
+
+    .tool-detail__name {
+      margin-top: 2px;
+      font-size: 18px;
+      font-weight: 700;
+      line-height: 1.4;
+    }
+
+    .tool-detail__desc {
+      margin-top: 6px;
+      font-size: var(--font-size-sub);
+      line-height: 1.6;
+    }
+
+    .tool-detail__chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 10px;
+    }
+
+    .tool-detail__chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      padding: 3px 9px;
+      border-radius: var(--radius-full);
+      background-color: var(--g-pale);
+      color: var(--g-ink);
+      font-size: 12px;
+      font-weight: 500;
+      line-height: 1.4;
+    }
+
+    .tool-detail__chip .material-symbols-rounded {
+      font-size: 15px;
+    }
+
+    .tool-detail__chip--scene {
+      background-color: transparent;
+      border: 1px solid var(--g-ink);
+      font-weight: 700;
+    }
+
+    /* ── 「i」で開く説明（スマホは下から）── */
+    .tool-sheet {
+      width: min(440px, calc(100% - 32px));
+      max-height: calc(100% - 32px);
+      padding: 0;
+      border: none;
+      border-radius: 20px;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+      color: var(--color-text);
+    }
+
+    .tool-sheet::backdrop {
+      background-color: rgba(20, 30, 40, 0.45);
+    }
+
+    .tool-sheet .tool-detail__shot img {
+      max-height: 260px;
+    }
+
+    .tool-sheet__actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 0 16px 16px;
+    }
+
+    .tool-sheet__actions .btn {
+      flex: 1;
+      min-width: 0;
+      text-decoration: none;
+    }
+
+    .tool-sheet__actions .btn[hidden] {
+      display: none;
+    }
+
+    .tool-sheet__actions .material-symbols-rounded {
+      font-size: 18px;
+    }
+
+    @media (max-width: 760px) {
+      .tool-sheet {
+        width: 100%;
+        max-width: none;
+        margin: auto auto 0;
+        border-radius: 20px 20px 0 0;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .genre-tab,
+      .app-card,
+      .tool-peek,
+      .tool-peek.is-open,
+      .more-filter__arrow,
+      .tool-search__input.form-input {
+        transition: none;
+      }
+
+      .genre-tab:hover,
+      .tool-peek {
+        transform: none;
+      }
+    }
+
     footer {
       text-align: center;
       padding: var(--space-xl) var(--space-md);
@@ -930,7 +1536,7 @@
     <!-- ============================================= -->
     <section class="portal-section">
       <h2 class="section-title">ツール一覧</h2>
-      <p class="section-desc">画像はプレイ・操作画面の一例です。</p>
+      <p class="section-desc">カードにマウスを当てる（スマホは<span class="material-symbols-rounded section-desc__icon" aria-hidden="true">info</span>を押す）と、画面の例と説明が出ます。</p>
 
       <!-- よく開かれたツール（ranking.json から描画。週1回 scripts/ranking-build.mjs で作る。回数は出さない） -->
       <section class="ranking" id="ranking-panel" aria-labelledby="ranking-title" hidden>
@@ -943,12 +1549,16 @@
         <ol class="ranking-list" id="ranking-list"></ol>
       </section>
 
+      <!-- 種類のタブ（各カードの data-genre。中身はスクリプトが GENRES から作る） -->
+      <div class="genre-tabs" id="genre-tabs" role="group" aria-label="種類"></div>
+
       <div class="tool-filter">
+      <div class="tool-filter__row">
       <div class="tool-search" role="search" aria-label="ツール一覧">
-        <label class="form-label tool-filter__label" for="tool-search">ツール検索</label>
+        <label class="tool-search__label" for="tool-search">ツール検索</label>
         <div class="tool-search__field" id="tool-search-field">
           <span class="material-symbols-rounded tool-search__icon" aria-hidden="true">search</span>
-          <input class="form-input tool-search__input" type="search" id="tool-search" placeholder="例: カード、1対1、オフライン" autocomplete="off" enterkeyhint="search"
+          <input class="form-input tool-search__input" type="search" id="tool-search" placeholder="ツール名やことばで探す" autocomplete="off" enterkeyhint="search"
             role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="tool-suggest-list" />
           <div class="tool-suggest" id="tool-suggest" hidden>
             <div class="tool-hints" id="tool-hints-popup" role="group" aria-labelledby="tool-hints-popup-label" hidden>
@@ -959,7 +1569,15 @@
           </div>
         </div>
       </div>
+      <button class="more-filter__toggle" type="button" id="more-filter-toggle" aria-expanded="false" aria-controls="more-filter-body">
+        <span class="material-symbols-rounded" aria-hidden="true">tune</span>
+        <span>くわしく絞り込む</span>
+        <span class="more-filter__state" id="more-filter-state" hidden></span>
+        <span class="material-symbols-rounded more-filter__arrow" aria-hidden="true">expand_more</span>
+      </button>
+      </div>
 
+      <div class="more-filter__body" id="more-filter-body" hidden>
       <p class="form-label tool-filter__label" id="scene-filter-label">利用シーン</p>
       <div class="scene-filter" role="group" aria-labelledby="scene-filter-label">
         <button class="scene-filter__chip" type="button" data-scene="all" aria-pressed="true">すべて</button>
@@ -1005,6 +1623,7 @@
             <span class="material-symbols-rounded tool-size__arrow" aria-hidden="true">expand_more</span>
           </div>
         </div>
+      </div>
       </div>
 
       <div class="tool-result" id="tool-result">
@@ -2542,6 +3161,21 @@
 
   </main>
 
+  <!-- マウスを当てたときに浮かぶ説明（見た目だけ。カードと同じ内容なので読み上げない） -->
+  <div class="tool-peek" id="tool-peek" aria-hidden="true"></div>
+
+  <!-- 「i」で開く説明 -->
+  <dialog class="tool-sheet" id="tool-sheet" aria-labelledby="tool-sheet-name">
+    <div class="tool-sheet__content" id="tool-sheet-content"></div>
+    <div class="tool-sheet__actions">
+      <button class="btn btn-secondary" type="button" id="tool-sheet-close">とじる</button>
+      <button class="btn btn-secondary" type="button" id="tool-sheet-slides" hidden>
+        <span class="material-symbols-rounded" aria-hidden="true">co_present</span>スライド
+      </button>
+      <a class="btn btn-primary" id="tool-sheet-open" href="#">ひらく</a>
+    </div>
+  </dialog>
+
   <footer>
     &copy; 2026 たぎ
     <p><a href="third-party-notices.html">外部ライブラリ・フォントのクレジット</a></p>
@@ -2627,6 +3261,18 @@
   </script>
 
   <script>
+    // 種類（各カードの data-genre）: [キー, 名前, アイコン]。この順でタブと「種類順」の小見出しを並べ、検索にも使う。
+    // 色は CSS の [data-genre="…"]。種類を足すときは、ここ・CSS・lint PORTAL-2・app-registration.md の表をそろえる
+    const PORTAL_GENRES = [
+      ['kotoba', 'ことばのゲーム', 'chat_bubble'],
+      ['puzzle', 'クイズ・パズル', 'extension'],
+      ['suiri', '推理・正体かくし', 'search'],
+      ['atekko', '当てっこ・協力ゲーム', 'lightbulb'],
+      ['board', 'カード・ボードゲーム', 'style'],
+      ['talk', '話す・自分を知る', 'sentiment_satisfied'],
+    ];
+  </script>
+  <script>
     // 利用シーンの絞り込み・ことば検索・バッジ描画: 各カードの data-scenes 属性が正本。
     // 検索の索引はカードの表示内容から作るので、カードを足すときに検索用の追記はいらない。
     (function () {
@@ -2638,15 +3284,7 @@
         sakusen: '作戦会議',
       };
 
-      // 種類（各カードの data-genre）。並び順「種類順」はこの順に小見出しを付けて並べ、検索にも使う
-      const GENRES = [
-        ['kotoba', 'ことばのゲーム'],
-        ['puzzle', 'クイズ・パズル'],
-        ['suiri', '推理・正体かくし'],
-        ['atekko', '当てっこ・協力ゲーム'],
-        ['board', 'カード・ボードゲーム'],
-        ['talk', '話す・自分を知る'],
-      ];
+      const GENRES = PORTAL_GENRES;
 
       const cards = Array.from(document.querySelectorAll('.apps-grid .app-card'));
       const cardScenes = cards.map((card) =>
@@ -2654,6 +3292,16 @@
       const cardGenres = cards.map((card) => {
         const i = GENRES.findIndex(([key]) => key === card.dataset.genre);
         return i === -1 ? GENRES.length : i;
+      });
+
+      // カードに出すバッジは人数（人数の代わりの「1対1向け」も）と時間だけ。ほかは説明（マウスを当てたとき・「i」）に出す
+      cards.forEach((card) => {
+        card.querySelectorAll('.meta-badge').forEach((badge) => {
+          const icon = badge.querySelector('.material-symbols-rounded');
+          const name = icon ? icon.textContent.trim() : '';
+          const keep = name === 'group' || name === 'schedule' || badge.textContent.includes('1対1向け');
+          if (!keep) badge.classList.add('meta-badge--extra');
+        });
       });
 
       // カード下部にシーンバッジを描画
@@ -2717,7 +3365,12 @@
       const suggestBox = document.getElementById('tool-suggest');
       const suggestList = document.getElementById('tool-suggest-list');
       const popupHints = document.getElementById('tool-hints-popup');
+      const genreTabsBox = document.getElementById('genre-tabs');
+      const moreToggle = document.getElementById('more-filter-toggle');
+      const moreBody = document.getElementById('more-filter-body');
+      const moreFilterState = document.getElementById('more-filter-state');
       let currentScene = 'all';
+      let currentGenre = 'all';
       let emptyAction = 'all-scenes';
 
       function setScene(scene) {
@@ -2725,15 +3378,101 @@
         chips.forEach((c) => c.setAttribute('aria-pressed', String(c.dataset.scene === currentScene)));
       }
 
-      function syncSceneHash() {
-        history.replaceState(null, '', currentScene === 'all'
-          ? location.pathname + location.search
-          : '#scene=' + currentScene);
+      // ── 種類のタブ ──
+      function makeGenreTab(key, label, iconName, countText) {
+        const tab = document.createElement('button');
+        tab.type = 'button';
+        tab.className = 'genre-tab';
+        tab.dataset.genre = key;
+        tab.setAttribute('aria-pressed', 'false');
+        const icon = document.createElement('span');
+        icon.className = 'genre-tab__icon';
+        const symbol = document.createElement('span');
+        symbol.className = 'material-symbols-rounded';
+        symbol.setAttribute('aria-hidden', 'true');
+        symbol.textContent = iconName;
+        icon.appendChild(symbol);
+        const name = document.createElement('span');
+        name.className = 'genre-tab__label';
+        // 「・」のあとでだけ折り返す
+        label.split('・').forEach((part, i, parts) => {
+          name.append(part + (i < parts.length - 1 ? '・' : ''));
+          if (i < parts.length - 1) name.appendChild(document.createElement('wbr'));
+        });
+        const num = document.createElement('span');
+        num.className = 'genre-tab__count';
+        num.textContent = countText;
+        tab.append(icon, name, num);
+        tab.addEventListener('click', () => {
+          setGenre(key, true);
+          syncHash();
+          applyFilters();
+        });
+        return tab;
       }
 
-      function sceneFromHash() {
-        const m = location.hash.match(/^#scene=([a-z]+)$/);
-        return m ? m[1] : 'all';
+      const genreTabs = [['all', 'すべて', 'apps'], ...GENRES].map(([key, label, iconName]) => {
+        const count = key === 'all' ? cards.length : cards.filter((card) => card.dataset.genre === key).length;
+        const tab = makeGenreTab(key, label, iconName, count + '本');
+        genreTabsBox.appendChild(tab);
+        return tab;
+      });
+
+      // 「人気」タブ: よく開かれた順（ranking.json の order）の上位。ranking.json を読めたときだけ出す（回数は出さない）
+      const POPULAR_TOP = 12;
+      let popularTop = null; // 上位のカードの href の集まり
+
+      function genreMatchOf(card) {
+        if (currentGenre === 'all') return true;
+        if (currentGenre === 'popular') return Boolean(popularTop && popularTop.has(card.getAttribute('href')));
+        return card.dataset.genre === currentGenre;
+      }
+
+      let needsSort = false;
+
+      function setGenre(genre, smooth) {
+        const wasPopular = currentGenre === 'popular';
+        currentGenre = genre === 'all' || (genre === 'popular' && popularTop) || GENRES.some(([key]) => key === genre) ? genre : 'all';
+        // 人気は並べ方も変わるので、入る・出るときは絞り込みのあとで並べ直す
+        if (wasPopular !== (currentGenre === 'popular')) needsSort = true;
+        genreTabs.forEach((tab) => {
+          const on = tab.dataset.genre === currentGenre;
+          tab.setAttribute('aria-pressed', String(on));
+          // スマホでは横にスクロールするので、選んだタブが切れていたら見える位置に出す
+          if (on && genreTabsBox.scrollWidth > genreTabsBox.clientWidth) {
+            const box = genreTabsBox.getBoundingClientRect();
+            const r = tab.getBoundingClientRect();
+            if (r.left < box.left || r.right > box.right) {
+              genreTabsBox.scrollBy({ left: r.left - box.left - 16, behavior: smooth ? 'smooth' : 'auto' });
+            }
+          }
+        });
+      }
+
+      // 種類とシーンの選択は URL ハッシュ（#genre=kotoba&scene=bodoge）と同期し、
+      // 共有したりリロードしても選択が保てるようにする。前からの #scene=bodoge もそのまま使える
+      function syncHash() {
+        const parts = [];
+        if (currentGenre !== 'all') parts.push('genre=' + currentGenre);
+        if (currentScene !== 'all') parts.push('scene=' + currentScene);
+        history.replaceState(null, '', parts.length
+          ? '#' + parts.join('&')
+          : location.pathname + location.search);
+      }
+
+      function fromHash() {
+        const found = { genre: 'all', scene: 'all' };
+        location.hash.replace(/^#/, '').split('&').forEach((part) => {
+          const m = part.match(/^(genre|scene)=([a-z]+)$/);
+          if (m) found[m[1]] = m[2];
+        });
+        return found;
+      }
+
+      function setFromHash() {
+        const found = fromHash();
+        setGenre(found.genre);
+        setScene(found.scene);
       }
 
       // 人数・時間はカードの表示（人数・時間のバッジ）から読み取る。
@@ -2803,15 +3542,28 @@
         let visibleCount = 0;
         let textMatchCount = 0;
         let withoutSizeCount = 0;
+        let withoutGenreCount = 0;
+        let withoutSceneCount = 0;
         cards.forEach((card, i) => {
           const textMatch = terms.every((alts) => alts.some((t) => searchTexts[i].includes(t)));
           const sceneMatch = currentScene === 'all' || cardScenes[i].includes(currentScene);
-          card.hidden = !(textMatch && sceneMatch && sizeMatch(i));
+          const genreMatch = genreMatchOf(card);
+          const sizeOk = sizeMatch(i);
+          card.hidden = !(textMatch && sceneMatch && genreMatch && sizeOk);
           if (textMatch) textMatchCount += 1;
-          if (textMatch && sceneMatch) withoutSizeCount += 1;
+          if (textMatch && sceneMatch && genreMatch) withoutSizeCount += 1;
+          if (textMatch && sceneMatch && sizeOk) withoutGenreCount += 1;
+          if (textMatch && genreMatch && sizeOk) withoutSceneCount += 1;
           if (!card.hidden) visibleCount += 1;
         });
         [peopleSelect, timeSelect].forEach((select) => select.classList.toggle('is-set', Boolean(select.value)));
+
+        // 「くわしく絞り込む」の中で指定しているものの数。指定があるときは開いておく（たたむこともできる）
+        const moreCount = (currentScene !== 'all' ? 1 : 0) + (peopleSelect.value ? 1 : 0) + (timeSelect.value ? 1 : 0);
+        moreFilterState.hidden = moreCount === 0;
+        moreFilterState.textContent = moreCount + 'つ指定中';
+        if (moreCount > 0 && moreCount > lastMoreCount) setMoreOpen(true);
+        lastMoreCount = moreCount;
 
         if (visibleCount === 0) {
           if (terms.length > 0 && textMatchCount === 0) {
@@ -2824,14 +3576,20 @@
             emptyDesc.textContent = `人数・時間の指定をはずすと ${withoutSizeCount}件 見つかります。`;
             emptyButton.textContent = '人数・時間の指定をはずす';
             emptyAction = 'clear-size';
+          } else if (currentGenre !== 'all' && withoutGenreCount > 0) {
+            const popular = currentGenre === 'popular';
+            emptyTitle.textContent = popular ? '人気のツールには、条件に合うものがありません' : 'この種類には、条件に合うツールがありません';
+            emptyDesc.textContent = `${popular ? 'タブ' : '種類'}を「すべて」にすると ${withoutGenreCount}件 見つかります。`;
+            emptyButton.textContent = popular ? 'すべてのツールで探す' : 'すべての種類で探す';
+            emptyAction = 'all-genres';
           } else if (terms.length === 0) {
             emptyTitle.textContent = 'このシーンのツールはまだありません';
             emptyDesc.textContent = '「すべて」に戻すと、ほかのツールを見られます。';
             emptyButton.textContent = 'すべてのツールを見る';
             emptyAction = 'all-scenes';
-          } else if (currentScene !== 'all' && textMatchCount > 0) {
+          } else if (currentScene !== 'all' && withoutSceneCount > 0) {
             emptyTitle.textContent = `このシーンには「${query}」に合うツールがありません`;
-            emptyDesc.textContent = `シーンを「すべて」にすると ${textMatchCount}件 見つかります。`;
+            emptyDesc.textContent = `シーンを「すべて」にすると ${withoutSceneCount}件 見つかります。`;
             emptyButton.textContent = 'すべてのシーンで探す';
             emptyAction = 'all-scenes';
           } else {
@@ -2845,14 +3603,19 @@
         emptyHints.hidden = !(visibleCount === 0 && emptyAction === 'clear-search');
 
         // 読み上げは常設の1か所だけ。同じ内容なら書き換えず、二重に読まれないようにする
-        const filtered = terms.length > 0 || currentScene !== 'all' || sizeSet;
+        const filtered = terms.length > 0 || currentScene !== 'all' || currentGenre !== 'all' || sizeSet;
         let message = '';
         if (visibleCount === 0) message = emptyTitle.textContent + '。' + emptyDesc.textContent;
         else if (filtered) message = visibleCount + '件のツール';
         if (countText.textContent !== message) countText.textContent = message;
         listCount.textContent = filtered ? `${visibleCount}件（全${cards.length}件中）` : `${visibleCount}件`;
         renderResult(filtered, visibleCount);
-        updateGenreHeadings();
+        if (needsSort) {
+          needsSort = false;
+          sortCards();
+        } else {
+          updateGenreHeadings();
+        }
       }
 
       // パネル内の結果の行。絞り込み中は色を変え、全何件中の何件かと「条件をクリア」を出す
@@ -2883,10 +3646,20 @@
         resultText.replaceChildren(icon, label);
       }
 
+      let lastMoreCount = 0;
+
+      function setMoreOpen(open) {
+        moreBody.hidden = !open;
+        moreToggle.setAttribute('aria-expanded', String(open));
+      }
+      moreToggle.addEventListener('click', () => {
+        setMoreOpen(moreBody.hidden);
+      });
+
       chips.forEach((chip) => {
         chip.addEventListener('click', () => {
           setScene(chip.dataset.scene);
-          syncSceneHash();
+          syncHash();
           applyFilters();
         });
       });
@@ -3098,9 +3871,14 @@
           searchInput.value = '';
           applyFilters();
           searchInput.focus();
+        } else if (emptyAction === 'all-genres') {
+          setGenre('all');
+          syncHash();
+          applyFilters();
+          genreTabs[0].focus();
         } else {
           setScene('all');
-          syncSceneHash();
+          syncHash();
           applyFilters();
           document.querySelector('.scene-filter__chip[data-scene="all"]').focus();
         }
@@ -3111,7 +3889,8 @@
         peopleSelect.value = '';
         timeSelect.value = '';
         setScene('all');
-        syncSceneHash();
+        setGenre('all');
+        syncHash();
         applyFilters();
         // ボタンは消えるので、結果の行へフォーカスを移す（スマホでキーボードを開かない）
         resultText.focus();
@@ -3125,24 +3904,35 @@
       const sortSelect = document.getElementById('tool-sort');
       let popularOrder = null;
 
-      const genreHeadings = GENRES.map(([key, label]) => {
+      const genreHeadings = GENRES.map(([key, label, iconName]) => {
         const heading = document.createElement('h4');
         heading.className = 'genre-heading';
         heading.dataset.genre = key;
-        heading.textContent = label;
+        const icon = document.createElement('span');
+        icon.className = 'material-symbols-rounded';
+        icon.setAttribute('aria-hidden', 'true');
+        icon.textContent = iconName;
+        const count = document.createElement('span');
+        count.className = 'genre-heading__count';
+        heading.append(icon, label, count);
         return heading;
       });
 
       // 種類順のときだけ出す。絞り込みで1件もなくなった種類は見出しごと隠す
       function updateGenreHeadings() {
-        const byGenre = sortSelect.value === '';
+        const byGenre = sortSelect.value === '' && currentGenre !== 'popular';
         genreHeadings.forEach((heading, g) => {
-          heading.hidden = !byGenre || !cards.some((card, i) => !card.hidden && cardGenres[i] === g);
+          const shown = cards.filter((card, i) => !card.hidden && cardGenres[i] === g).length;
+          heading.hidden = !byGenre || shown === 0;
+          heading.querySelector('.genre-heading__count').textContent = shown + '件';
         });
       }
 
       function sortCards() {
-        const mode = sortSelect.value;
+        // 「人気」タブのあいだは、並び順の選択にかかわらず人気の順に並べる
+        const mode = currentGenre === 'popular' ? 'popular' : sortSelect.value;
+        grid.classList.toggle('is-popular', currentGenre === 'popular');
+        sortSelect.disabled = currentGenre === 'popular';
         const keyOf = (card) => {
           if (mode === 'popular') {
             const r = popularOrder.indexOf(card.getAttribute('href').replace(/\/$/, ''));
@@ -3164,7 +3954,7 @@
         if (mode) items.push(...genreHeadings);
         grid.append(...items);
         updateGenreHeadings();
-        sortSelect.classList.toggle('is-set', Boolean(mode));
+        sortSelect.classList.toggle('is-set', Boolean(sortSelect.value));
       }
 
       sortSelect.addEventListener('change', sortCards);
@@ -3177,22 +3967,47 @@
         option.value = 'popular';
         option.textContent = 'よく開かれた順';
         sortSelect.appendChild(option);
+
+        // 「人気」タブと、そのあいだだけカードに出す順位
+        const top = order.map((app) => cards.find((card) => card.getAttribute('href') === app + '/'))
+          .filter(Boolean).slice(0, POPULAR_TOP);
+        if (top.length === 0) return;
+        popularTop = new Set(top.map((card) => card.getAttribute('href')));
+        top.forEach((card, i) => {
+          const rank = document.createElement('span');
+          rank.className = 'app-card__rank';
+          rank.textContent = String(i + 1);
+          const suffix = document.createElement('span');
+          suffix.className = 'app-card__rank-suffix';
+          suffix.textContent = '位 ';
+          rank.appendChild(suffix);
+          const art = card.querySelector('.app-card__icon');
+          if (art) art.appendChild(rank);
+        });
+        const tab = makeGenreTab('popular', '人気', 'trending_up', '上位' + top.length);
+        genreTabsBox.insertBefore(tab, genreTabs[1]);
+        genreTabs.splice(1, 0, tab);
+        if (fromHash().genre === 'popular') {
+          setGenre('popular');
+          applyFilters();
+        } else {
+          setGenre(currentGenre);
+        }
       });
 
       window.addEventListener('hashchange', () => {
-        setScene(sceneFromHash());
+        setFromHash();
         applyFilters();
       });
-      setScene(sceneFromHash());
+      setFromHash();
       applyFilters();
 
     })();
   </script>
   <script>
     // よく開かれたツール: apps/ranking.json（scripts/ranking-build.mjs が週1回作る）が正本。
-    // 名前とアイコンはポータルのカードから取る。カードがないアプリは飛ばす。
+    // 名前・アイコン・種類の色はポータルのカードから取る。カードがないアプリは飛ばす。
     (function () {
-      // サムネイルがないカードは、カードと同じアイコンを出す
       function fallbackIcon(card) {
         const icon = document.createElement('span');
         icon.className = 'material-symbols-rounded';
@@ -3217,17 +4032,9 @@
           link.href = app + '/';
           const thumb = document.createElement('div');
           thumb.className = 'ranking-card__thumb';
-          const image = card.querySelector('.app-card__thumbnail');
-          if (image && !image.hidden) {
-            const img = document.createElement('img');
-            img.src = image.getAttribute('src');
-            img.alt = '';
-            img.decoding = 'async';
-            img.addEventListener('error', () => { img.replaceWith(fallbackIcon(card)); });
-            thumb.appendChild(img);
-          } else {
-            thumb.appendChild(fallbackIcon(card));
-          }
+          // ツール一覧のカードと同じ図柄（種類の色の面にカードのアイコン）
+          if (card.dataset.genre) thumb.dataset.genre = card.dataset.genre;
+          thumb.appendChild(fallbackIcon(card));
           const rank = document.createElement('span');
           rank.className = 'ranking-card__rank';
           thumb.appendChild(rank);
@@ -3274,7 +4081,7 @@
     // カード本体が <a> のためリンクを入れ子にせず、クリックで slides.html を別タブに開く。
     (function () {
       document.querySelectorAll('.app-card[data-slides]').forEach((card) => {
-        const footer = card.querySelector('.app-card__footer');
+        const footer = card.querySelector('.app-card__meta') || card.querySelector('.app-card__footer');
         if (!footer) return;
         const name = card.querySelector('.app-card__name');
         const badge = document.createElement('span');
@@ -3294,6 +4101,215 @@
         });
         footer.appendChild(badge);
       });
+    })();
+  </script>
+
+
+  <script>
+    // カードの説明: マウスを当てたとき（マウスのある端末）とキーボードで選んだときに浮かび、
+    // 「i」を押すと開く。中身はカードの表示（説明・バッジ・動作環境・利用シーン）とサムネイルから作るので、
+    // カードを足すときに説明用の追記はいらない。
+    (function () {
+      const grid = document.querySelector('.apps-grid');
+      const peek = document.getElementById('tool-peek');
+      const sheet = document.getElementById('tool-sheet');
+      const sheetContent = document.getElementById('tool-sheet-content');
+      const sheetOpen = document.getElementById('tool-sheet-open');
+      const sheetSlides = document.getElementById('tool-sheet-slides');
+      const canHover = window.matchMedia('(hover: hover) and (pointer: fine)');
+      const HOVER_DELAY = 300;
+      let timer = 0;
+      let peekFor = null;
+      let sheetFor = null;
+
+      function iconEl(name) {
+        const icon = document.createElement('span');
+        icon.className = 'material-symbols-rounded';
+        icon.setAttribute('aria-hidden', 'true');
+        icon.textContent = name;
+        return icon;
+      }
+
+      // アイコン（英字で描画される）を除いた文字
+      function plainText(el) {
+        const copy = el.cloneNode(true);
+        copy.querySelectorAll('.material-symbols-rounded, .app-card__slides').forEach((x) => x.remove());
+        return copy.textContent.replace(/\s+/g, ' ').trim();
+      }
+
+      function chip(iconName, text, extraClass) {
+        const c = document.createElement('span');
+        c.className = 'tool-detail__chip' + (extraClass ? ' ' + extraClass : '');
+        if (iconName) c.appendChild(iconEl(iconName));
+        c.append(text);
+        return c;
+      }
+
+      function buildDetail(card, idForName) {
+        const parts = [];
+        const image = card.querySelector('.app-card__thumbnail');
+        if (image && image.getAttribute('src') && !image.hidden) {
+          const shot = document.createElement('div');
+          shot.className = 'tool-detail__shot';
+          const img = document.createElement('img');
+          img.src = image.getAttribute('src');
+          img.alt = image.alt;
+          img.decoding = 'async';
+          img.addEventListener('error', () => shot.remove());
+          shot.appendChild(img);
+          parts.push(shot);
+        }
+        const body = document.createElement('div');
+        body.className = 'tool-detail__body';
+        const genre = PORTAL_GENRES.find(([key]) => key === card.dataset.genre);
+        if (genre) {
+          const g = document.createElement('div');
+          g.className = 'tool-detail__genre';
+          g.append(iconEl(genre[2]), genre[1]);
+          body.appendChild(g);
+        }
+        const name = document.createElement('div');
+        name.className = 'tool-detail__name';
+        if (idForName) name.id = idForName;
+        name.textContent = plainText(card.querySelector('.app-card__name'));
+        body.appendChild(name);
+        const descEl = card.querySelector('.app-card__desc');
+        if (descEl) {
+          const desc = document.createElement('p');
+          desc.className = 'tool-detail__desc';
+          desc.textContent = plainText(descEl);
+          body.appendChild(desc);
+        }
+        const chips = document.createElement('div');
+        chips.className = 'tool-detail__chips';
+        card.querySelectorAll('.meta-badge').forEach((badge) => {
+          const icon = badge.querySelector('.material-symbols-rounded');
+          chips.appendChild(chip(icon ? icon.textContent.trim() : '', plainText(badge)));
+        });
+        const footer = card.querySelector('.app-card__footer');
+        if (footer) {
+          const icon = footer.querySelector('.material-symbols-rounded');
+          const text = plainText(footer);
+          if (text) chips.appendChild(chip(icon ? icon.textContent.trim() : '', text));
+        }
+        if (card.hasAttribute('data-slides')) chips.appendChild(chip('co_present', '説明スライドあり'));
+        card.querySelectorAll('.scene-badge').forEach((badge) => {
+          chips.appendChild(chip('', badge.textContent, 'tool-detail__chip--scene'));
+        });
+        body.appendChild(chips);
+        parts.push(body);
+        return parts;
+      }
+
+      // ── 浮かぶ説明 ──
+      function placePeek(card) {
+        const r = card.getBoundingClientRect();
+        const w = peek.offsetWidth;
+        const h = peek.offsetHeight;
+        const gap = 12;
+        const vw = document.documentElement.clientWidth;
+        const vh = window.innerHeight;
+        let left;
+        let top;
+        if (r.right + gap + w <= vw - 8) {
+          left = r.right + gap;
+          top = Math.min(Math.max(8, r.top), vh - h - 8);
+        } else if (r.left - gap - w >= 8) {
+          left = r.left - gap - w;
+          top = Math.min(Math.max(8, r.top), vh - h - 8);
+        } else {
+          left = Math.min(Math.max(8, r.left + r.width / 2 - w / 2), vw - w - 8);
+          top = r.bottom + gap + h <= vh - 8 ? r.bottom + gap : r.top - gap - h;
+        }
+        peek.style.left = left + 'px';
+        peek.style.top = Math.max(8, top) + 'px';
+      }
+
+      function showPeek(card, delay) {
+        clearTimeout(timer);
+        if (delay > 0) {
+          timer = setTimeout(() => showPeek(card, 0), delay);
+          return;
+        }
+        if (card.hidden || sheet.open) return;
+        peek.dataset.genre = card.dataset.genre || 'all';
+        peek.replaceChildren(...buildDetail(card, ''));
+        peekFor = card;
+        placePeek(card);
+        const img = peek.querySelector('img');
+        if (img && !img.complete) {
+          img.addEventListener('load', () => { if (peekFor === card) placePeek(card); }, { once: true });
+        }
+        peek.classList.add('is-open');
+      }
+
+      function hidePeek() {
+        clearTimeout(timer);
+        peekFor = null;
+        peek.classList.remove('is-open');
+      }
+
+      grid.addEventListener('mouseover', (e) => {
+        if (!canHover.matches) return;
+        const card = e.target.closest('.app-card');
+        if (!card || card === peekFor) return;
+        // 説明が出ているあいだに隣へ移ったときは、待たずに切りかえる
+        showPeek(card, peekFor ? 80 : HOVER_DELAY);
+      });
+      grid.addEventListener('mouseout', (e) => {
+        const card = e.target.closest('.app-card');
+        if (!card || card.contains(e.relatedTarget)) return;
+        hidePeek();
+      });
+      grid.addEventListener('focusin', (e) => {
+        const card = e.target.closest('.app-card');
+        if (card && e.target === card && card.matches(':focus-visible')) showPeek(card, 0);
+      });
+      grid.addEventListener('focusout', hidePeek);
+      // スクロールしたら閉じる。キーボードで選んだカード（選ぶとそこまでスクロールする）は、閉じずに位置を合わせる
+      window.addEventListener('scroll', () => {
+        if (peekFor && document.activeElement === peekFor) placePeek(peekFor);
+        else hidePeek();
+      }, { passive: true });
+      window.addEventListener('resize', hidePeek);
+      document.addEventListener('keydown', (e) => { if (e.key === 'Escape') hidePeek(); });
+      // 戻るボタンで戻ってきたとき、出たままの説明を残さない
+      window.addEventListener('pageshow', hidePeek);
+
+      // ── 「i」で開く説明 ──
+      function openSheet(card) {
+        hidePeek();
+        sheetFor = card;
+        sheet.dataset.genre = card.dataset.genre || 'all';
+        sheetContent.replaceChildren(...buildDetail(card, 'tool-sheet-name'));
+        sheetOpen.href = card.getAttribute('href');
+        sheetSlides.hidden = !card.hasAttribute('data-slides');
+        sheet.showModal();
+      }
+
+      document.querySelectorAll('.apps-grid .app-card').forEach((card) => {
+        const name = card.querySelector('.app-card__name');
+        const info = document.createElement('span');
+        info.className = 'app-card__info';
+        // タッチの端末で説明を開くためのもの。キーボードではカードを選ぶと説明が出て、読み上げではリンクが説明文まで読むので、
+        // リンクの中に操作できるものを入れ子にしない（Tab で選ばない・読み上げない）
+        info.setAttribute('aria-hidden', 'true');
+        info.title = (name ? plainText(name) + 'の' : '') + '説明を見る';
+        info.appendChild(iconEl('info'));
+        info.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          openSheet(card);
+        });
+        card.appendChild(info);
+      });
+
+      document.getElementById('tool-sheet-close').addEventListener('click', () => sheet.close());
+      sheetSlides.addEventListener('click', () => {
+        if (sheetFor) window.open(sheetFor.getAttribute('href') + 'slides.html', '_blank', 'noopener');
+      });
+      // 説明の外（暗いところ）を押したら閉じる
+      sheet.addEventListener('click', (e) => { if (e.target === sheet) sheet.close(); });
     })();
   </script>
 
