@@ -302,4 +302,61 @@ t('6人まで作れる・先に答える人を選べる', () => {
   assert.strictEqual(E.MAX_PLAYERS, 6);
 });
 
+t('1人: 正解すると同じ人に次の小銭、時計が0でおしまい（勝ち負けなし・正解の数が残る）', () => {
+  const rng = E.makeRng(47);
+  assert.strictEqual(E.MIN_PLAYERS, 1);
+  const SOLO = { players: [{ name: 'A', time: 30, kinds: 'all' }], maxCoins: 5, arrange: 'scatter', first: 0 };
+  let S = begin(SOLO, rng);
+  assert.strictEqual(S.phase, 'play');
+  const keys = [];
+  let t0 = 0;
+  for (let k = 0; k < 4; k += 1) {
+    keys.push(S.problem.key);
+    S = E.answer(S, 0, S.problem.total, t0 + 1000).state;
+    assert.strictEqual(S.phase, 'reveal');
+    t0 += 1000 + E.REVEAL_MS;
+    S = E.tick(S, t0, rng);
+    assert.strictEqual(S.phase, 'play');
+    assert.strictEqual(S.turn, 0, '番は同じ人のまま');
+    assert.notStrictEqual(S.problem.key, keys[keys.length - 1], '直前と同じ組み合わせは出ない');
+  }
+  assert.strictEqual(S.correct[0], 4);
+  assert.strictEqual(S.problem.coins.length, 4, '4問正解で4枚');
+  assert.strictEqual(E.remaining(S, 0, t0), 26000, '正解の帯の間は時計が止まる');
+  S = E.pass(S, 0, t0 + 1000);
+  S = E.tick(S, t0 + 1000 + E.PASS_MS, rng);
+  assert.strictEqual(S.phase, 'play');
+  assert.strictEqual(S.correct[0], 4, 'パスでは増えない');
+  S = E.tick(S, t0 + 26000, rng);
+  assert.strictEqual(S.phase, 'over');
+  assert.strictEqual(S.winner, null);
+  assert.deepStrictEqual(S.out, [true]);
+  assert.strictEqual(S.correct[0], 4);
+  assert.strictEqual(S.history.filter((h) => h.how === 'ok').length, 4);
+  assert.strictEqual(S.history[S.history.length - 1].how, 'timeout');
+});
+
+t('1人: 止めた時点の残りで 3・2・1 から続き、止めた時点で時間切れならおしまい', () => {
+  const rng = E.makeRng(48);
+  const SOLO = { players: [{ name: 'A', time: 45, kinds: 'three' }], maxCoins: 4, arrange: 'sort', first: 0 };
+  let S = begin(SOLO, rng);
+  const R = E.resume(S, 5000, 90000, rng);
+  assert.strictEqual(R.phase, 'ready');
+  assert.strictEqual(E.remaining(R, 0, 92000), 40000);
+  const O = E.resume(S, 50000, 90000, rng);
+  assert.strictEqual(O.phase, 'over');
+  assert.strictEqual(O.winner, null);
+  S = E.answer(S, 0, S.problem.total, 1000).state;
+  const V = E.resume(S, 1200, 90000, rng);
+  assert.strictEqual(V.phase, 'ready');
+  assert.strictEqual(V.turn, 0, '正解の帯の途中からでも同じ人');
+});
+
+t('2人以上の勝ち負けは前のまま（winner は番号）', () => {
+  const rng = E.makeRng(49);
+  const S = E.tick(begin(SET0(), rng), 45000, rng);
+  assert.strictEqual(S.phase, 'over');
+  assert.strictEqual(S.winner, 1);
+});
+
 console.log('all ' + n + ' passed');

@@ -92,10 +92,13 @@ body { background: var(--color-bg); }
 .cb-joininfo__text { margin: 0; }
 .cb-joininfo__code { margin: 6px 0 0; font-size: 40px; font-weight: 700; letter-spacing: 0.15em; color: var(--color-primary); }
 
-/* 対決の札の小さな印（通信が切れた・端末なし） */
+/* 対決の札の小さな印（通信が切れた・端末なし・1人のときの点数） */
 .cb-player__tags { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; margin-top: 6px; }
 .cb-player__tags:empty { display: none; }
 .cb-player.is-turn .cb-tag--warn { background: #fff; }
+/* 1人で遊ぶときの、その回の点数（正解した数） */
+.cb-tag--score { font-size: 14px; font-weight: 700; }
+.cb-player.is-turn .cb-tag--score { background: #fff; color: var(--color-accent); }
 .cb-proxynote { margin: 0; color: var(--color-accent); font-weight: 700; text-align: center; }
 
 @media (max-width: 600px) {
