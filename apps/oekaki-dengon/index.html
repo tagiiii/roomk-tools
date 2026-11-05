@@ -161,6 +161,12 @@
     .oek-tool:disabled, .oek-swatch:disabled, .oek-tone:disabled { opacity: 0.45; cursor: default; }
     .oek-tool.is-armed { border-color: var(--color-error); background: #FEF2F2; color: var(--color-error); }
     .oek-width__dot { display: block; border-radius: 50%; background: var(--color-primary); }
+    /* 形のアイコン。Material Symbols（FILL=1）には三角の輪郭が無いので SVG で描き、ほかのアイコンと線の太さ・角の丸みをそろえる */
+    .oek-shape-icon {
+      width: 22px; height: 22px; flex-shrink: 0;
+      fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linejoin: round;
+    }
+    .oek-tools__sep { align-self: stretch; width: 2px; margin: 6px 2px; border-radius: 1px; background: var(--color-border); }
     .oek-tools__spacer { flex: 1; }
 
     /* ── 入力（文） ── */
@@ -428,6 +434,21 @@
                 <span class="material-symbols-rounded" aria-hidden="true">format_color_fill</span><span class="oek-tool__text">塗りつぶし</span>
               </button>
             </div>
+            <span class="oek-tools__sep" aria-hidden="true"></span>
+            <div class="oek-tools__modes" role="group" aria-label="形">
+              <button type="button" class="oek-tool" id="tool-circle" aria-label="丸" aria-pressed="false" onclick="selectMode('circle')">
+                <svg class="oek-shape-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/></svg><span class="oek-tool__text">丸</span>
+              </button>
+              <button type="button" class="oek-tool" id="tool-triangle" aria-label="三角" aria-pressed="false" onclick="selectMode('triangle')">
+                <svg class="oek-shape-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.8 L20.5 19.5 H3.5 Z"/></svg><span class="oek-tool__text">三角</span>
+              </button>
+              <button type="button" class="oek-tool" id="tool-rect" aria-label="四角" aria-pressed="false" onclick="selectMode('rect')">
+                <svg class="oek-shape-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"/></svg><span class="oek-tool__text">四角</span>
+              </button>
+            </div>
+          </div>
+          <div class="oek-tools__row">
+            <div class="oek-tools__widths" role="group" aria-label="太さ" id="tool-widths"></div>
             <span class="oek-tools__spacer"></span>
             <button type="button" class="oek-tool" id="tool-undo" onclick="undoStroke()" aria-label="1つ戻す">
               <span class="material-symbols-rounded" aria-hidden="true">undo</span><span class="oek-tool__text">1つ戻す</span>
@@ -435,9 +456,6 @@
             <button type="button" class="oek-tool" id="tool-clear" onclick="clearDrawing()" aria-label="全部消す">
               <span class="material-symbols-rounded" aria-hidden="true">delete</span><span class="oek-tool__text" id="tool-clear-text">全部消す</span>
             </button>
-          </div>
-          <div class="oek-tools__row">
-            <div class="oek-tools__widths" role="group" aria-label="太さ" id="tool-widths"></div>
           </div>
         </div>
       </div>
@@ -593,6 +611,8 @@ const MAX_STROKES = 600;          // 1枚の線の本数の上限
 const MAX_TOTAL_POINTS = 30000;   // 1枚の点数の合計の上限（1枚およそ120KBまで）
 const MAX_FILLS = 80;             // 1枚の塗りつぶしの回数の上限（絵を出すたびに塗りなおすので、重くしない）
 const FILL_TOLERANCE = 24;        // 塗りつぶしで「押したところと同じ色」とみなす色の差（RGB それぞれ 0〜255）
+const SHAPES = ['circle', 'triangle', 'rect']; // 形の道具（丸・三角・四角）
+const SHAPE_MIN = 4;              // 押した点から縦・横とも 4px 未満しか動かさなかったときは、形を置かない
 const MY_ROOMS_KEY = 'oekaki_my_rooms';   // この端末で作ったルームのコード（後片付け用）
 const MY_ROOMS_MAX = 20;
 const MY_ROOMS_ALIVE_KEY = 'oekaki_my_rooms_alive'; // ホストがルームにいる間の「使っている」印（後片付け用）
@@ -734,7 +754,7 @@ const state = {
   lastCtl: null,
   epoch: 0,
   play: newPlayState(),
-  tool: { color: 0, width: 1, tone: 0, mode: 'pen' }, // mode: 'pen' | 'eraser' | 'fill'
+  tool: { color: 0, width: 1, tone: 0, mode: 'pen' }, // mode: 'pen' | 'eraser' | 'fill' | 'circle' | 'triangle' | 'rect'
   input: { path: null, data: undefined },          // 回ってきた材料（undefined = 読み込み中）
   showView: { path: null, data: undefined, version: 0, renderKey: null, upto: 0 },
   endView: { mid: null, art: undefined, selected: 0, renderKey: null },
@@ -1756,7 +1776,7 @@ function renderToolState() {
   document.querySelectorAll('#tool-widths .oek-tool').forEach((b, i) => {
     b.setAttribute('aria-pressed', String(t.width === i));
   });
-  ['pen', 'eraser', 'fill'].forEach((mode) => {
+  ['pen', 'eraser', 'fill', ...SHAPES].forEach((mode) => {
     $('tool-' + mode).setAttribute('aria-pressed', String(t.mode === mode));
   });
   syncToneLock();
@@ -1771,7 +1791,7 @@ function syncToneLock() {
   document.querySelectorAll('#tool-tones .oek-tone').forEach((b) => { b.disabled = locked; });
 }
 // ほかの色を選ぶと濃さはふつうに戻る。同じ色を押し直したとき（消しゴムから戻るときなど）は濃さを保つ。
-// 色・濃さを押すと消しゴムからペンに戻る（塗りつぶしは、色を選びなおしても塗りつぶしのまま）
+// 色・濃さを押すと消しゴムからペンに戻る（塗りつぶし・形は、色を選びなおしてもそのまま）
 function selectColor(i) {
   if (i !== state.tool.color) state.tool.tone = 0;
   state.tool.color = i;
@@ -1785,10 +1805,85 @@ function selectTone(d) {
   renderToolState();
 }
 function selectWidth(i) { state.tool.width = i; renderToolState(); }
-// 道具（ペン・消しゴム・塗りつぶし）。選んでいる消しゴム・塗りつぶしをもう一度押すと、ペンに戻る
+// 道具（ペン・消しゴム・塗りつぶし・形）。選んでいる消しゴム・塗りつぶし・形をもう一度押すと、ペンに戻る
 function selectMode(mode) {
   state.tool.mode = (mode !== 'pen' && state.tool.mode === mode) ? 'pen' : mode;
   renderToolState();
+}
+
+// ── 形（丸・三角・四角） ──
+// 形は、輪郭をなぞる点の列にして、ペンの線と同じ形式（{ c, w, d?, p }）で保存する。
+// 見る側（更新前の画面も）は、ふつうの線として同じ絵に描ける
+function isShapeMode(mode) { return SHAPES.includes(mode); }
+// 角のすぐ手前と先にも点を置く。線は点の中点を通る曲線でつなぐので、角の点だけだと角が丸くなるため
+function cornerPath(corners) {
+  const pts = [];
+  const n = corners.length;
+  const toward = (a, b, k) => {
+    const len = Math.hypot(b[0] - a[0], b[1] - a[1]);
+    if (!len) return a;
+    const r = Math.min(k, len / 2) / len;
+    return [a[0] + (b[0] - a[0]) * r, a[1] + (b[1] - a[1]) * r];
+  };
+  // 1つめの辺のまん中から始めて、ひと回りして同じ点で閉じる
+  const first = [(corners[0][0] + corners[1][0]) / 2, (corners[0][1] + corners[1][1]) / 2];
+  pts.push(first);
+  for (let i = 1; i <= n; i += 1) {
+    const c = corners[i % n];
+    const prev = corners[i - 1];
+    const next = corners[(i + 1) % n];
+    pts.push(toward(c, prev, 2), c, toward(c, next, 2));
+  }
+  pts.push(first);
+  return pts;
+}
+function shapePoints(mode, from, to) {
+  const x0 = Math.min(from[0], to[0]);
+  const x1 = Math.max(from[0], to[0]);
+  const y0 = Math.min(from[1], to[1]);
+  const y1 = Math.max(from[1], to[1]);
+  if (x1 - x0 < SHAPE_MIN && y1 - y0 < SHAPE_MIN) return [];
+  let pts;
+  if (mode === 'rect') {
+    pts = cornerPath([[x0, y0], [x1, y0], [x1, y1], [x0, y1]]);
+  } else if (mode === 'triangle') {
+    // とがった角は、押しはじめた側（上から下へ引けば上、下から上へ引けば下）
+    const mx = (x0 + x1) / 2;
+    pts = cornerPath([[x0, to[1]], [mx, from[1]], [x1, to[1]]]);
+  } else {
+    // 丸は、引いた四角に入る楕円（まん丸にしたいときは、ななめに同じ長さだけ引く）
+    const cx = (x0 + x1) / 2;
+    const cy = (y0 + y1) / 2;
+    const rx = (x1 - x0) / 2;
+    const ry = (y1 - y0) / 2;
+    const around = 2 * Math.PI * Math.sqrt((rx * rx + ry * ry) / 2);
+    const n = Math.max(16, Math.min(96, Math.round(around / 10)));
+    pts = [];
+    for (let i = 0; i <= n; i += 1) {
+      const a = (i / n) * Math.PI * 2;
+      pts.push([cx + rx * Math.cos(a), cy + ry * Math.sin(a)]);
+    }
+  }
+  // 保存する座標は整数。丸めて同じになった点は1つにする
+  const out = [];
+  pts.forEach((pt) => {
+    const q = [
+      Math.max(0, Math.min(CANVAS_W, Math.round(pt[0]))),
+      Math.max(0, Math.min(CANVAS_H, Math.round(pt[1]))),
+    ];
+    const last = out[out.length - 1];
+    if (!last || last[0] !== q[0] || last[1] !== q[1]) out.push(q);
+  });
+  return out;
+}
+// 引いているあいだの形は、1コマに1回だけ描きなおす
+let shapeFrame = 0;
+function scheduleShapePreview() {
+  if (shapeFrame) return;
+  shapeFrame = requestAnimationFrame(() => {
+    shapeFrame = 0;
+    if (state.play.drawing && state.play.drawing.shape) redrawMyCanvas();
+  });
 }
 
 function redrawMyCanvas() {
@@ -1839,6 +1934,19 @@ drawCanvas.addEventListener('pointerdown', (e) => {
   try { drawCanvas.setPointerCapture(e.pointerId); } catch { /* noop */ }
   const pt = toLogicalPoint(e);
   if (state.tool.mode === 'fill') { fillAt(pt); return; }
+  if (isShapeMode(state.tool.mode)) {
+    state.play.drawing = {
+      key: state.play.key,
+      pointerId: e.pointerId,
+      c: state.tool.color,
+      w: state.tool.width,
+      tone: state.tool.tone,
+      shape: state.tool.mode,
+      from: pt,
+      pts: [],
+    };
+    return;
+  }
   const isEraser = state.tool.mode === 'eraser';
   state.play.drawing = {
     key: state.play.key,
@@ -1855,6 +1963,11 @@ drawCanvas.addEventListener('pointermove', (e) => {
   const d = state.play.drawing;
   if (!d || d.pointerId !== e.pointerId) return;
   e.preventDefault();
+  if (d.shape) {
+    d.pts = shapePoints(d.shape, d.from, toLogicalPoint(e));
+    scheduleShapePreview();
+    return;
+  }
   const events = typeof e.getCoalescedEvents === 'function' ? e.getCoalescedEvents() : [e];
   (events.length ? events : [e]).forEach((ev) => {
     const cur = state.play.drawing;
@@ -1879,7 +1992,14 @@ function endPointerStroke(e) {
   const d = state.play.drawing;
   if (!d || (e && d.pointerId !== e.pointerId)) return;
   state.play.drawing = null;
-  commitStroke(d);
+  if (d.shape && !d.pts.length) {
+    // 押しただけ・ほとんど動かさなかったときは置かずに、引き方を知らせる（指がはなれたときだけ）
+    if (e && e.type === 'pointerup') showMsg('形は、キャンバスの上で引いて描くよ');
+  } else if (d.shape && state.play.pointsUsed + d.pts.length > MAX_TOTAL_POINTS) {
+    warnDrawLimit(state.play); // 形は途中で切らない（足りないときは置かない）
+  } else {
+    commitStroke(d);
+  }
   redrawMyCanvas();
 }
 drawCanvas.addEventListener('pointerup', (e) => { e.preventDefault(); endPointerStroke(e); });
