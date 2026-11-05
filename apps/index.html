@@ -1663,10 +1663,36 @@
     :root.tab-img-talk .genre-tab[data-genre="talk"] .genre-tab__icon .material-symbols-rounded {
       display: none;
     }
+    /* 更新情報はたたんでいるとき、いちばん新しい1件を1行（スマホは2行）だけ出す。読み上げには全文が残る */
+    :root .updates-panel { margin-bottom: var(--space-lg); }
+    :root .updates-list:not(.updates-list--expanded) .updates-list__text {
+      display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 1; overflow: hidden;
+    }
+
+    /* 文字は画面共有でもつぶれにくい大きさにする（札・補足も 13px 以上、本文は 14px 以上） */
+    :root :is(.meta-badge, .scene-badge, .app-card__flag, .updates-list__tag, .app-card__slides, .genre-tab__count,
+      .tool-detail__chip, .tool-detail__genre, .more-filter__state) { font-size: 13px; }
+    :root :is(.section-desc, .updates-list__item, .updates-list__date, .ranking-card__name, .portal-hero__staff-link,
+      .tool-result__label, .tool-list-heading__count, .genre-heading__count, footer) { font-size: 14px; }
+    :root .app-card__info { font-size: 14px; }
+
+    /* 「説明」は見た目より広く押せる（高さ 44px。カードの上の端からはみ出さないよう下に広げる） */
+    :root .app-card__info::before { content: ''; position: absolute; inset: -4px -6px -6px; } /* 34px → 44px */
+
     @media (max-width: 760px) {
       :root .genre-tab__icon { width: 48px; height: 48px; }
       :root .tool-sheet { border-bottom: 0; border-radius: 20px 20px 0 0; }
-      :root .app-card__info { height: 30px; padding: 0 8px 0 5px; font-size: 12px; }
+      :root .app-card__info { height: 30px; padding: 0 8px 0 5px; font-size: 13px; }
+      :root .app-card__info::before { inset: -4px -6px -10px; } /* 30px → 44px */
+      :root .updates-list:not(.updates-list--expanded) .updates-list__text { -webkit-line-clamp: 2; }
+      :root .genre-tab { flex-basis: 100px; }
+      :root .genre-tab__label { font-size: 14px; }
+      :root .app-card__name { font-size: 15px; }
+    }
+    @media (max-width: 600px) {
+      :root .portal-hero { padding: 18px 16px 24px; }
+      :root .portal-hero__logo { font-size: 1.9rem; }
+      :root .portal-hero__tagline { margin-top: 2px; font-size: 14px; }
     }
   </style>
 </head>
@@ -1688,7 +1714,7 @@
         <span class="material-symbols-rounded">campaign</span>更新情報
       </h2>
       <ul class="updates-list" id="updates-list"></ul>
-      <button class="btn btn-ghost btn-sm updates-panel__more" id="updates-more" aria-controls="updates-list" aria-expanded="false" hidden>すべて表示</button>
+      <button class="btn btn-ghost btn-sm updates-panel__more" id="updates-more" aria-controls="updates-list" aria-expanded="false" hidden>ほかの更新を見る</button>
     </section>
 
     <!-- ============================================= -->
@@ -3404,7 +3430,7 @@
     // 直近 FLAG_DAYS 日以内の更新は該当アプリのカードに NEW / 更新 フラグも付ける。
     (function () {
       const FLAG_DAYS = 14;
-      const DEFAULT_SHOWN = 5;
+      const DEFAULT_SHOWN = 1; // ツールを探す前に長く読ませない。ほかは「ほかの更新を見る」で開く
 
       function esc(s) {
         return String(s)
@@ -3439,7 +3465,7 @@
         if (entries.length > DEFAULT_SHOWN) {
           moreBtn.hidden = false;
           moreBtn.addEventListener('click', () => {
-            const collapsed = moreBtn.textContent === 'すべて表示';
+            const collapsed = moreBtn.getAttribute('aria-expanded') !== 'true';
             list.querySelectorAll('.updates-list__item').forEach((li, i) => {
               li.hidden = !collapsed && i >= DEFAULT_SHOWN;
             });
@@ -3447,7 +3473,7 @@
             list.scrollTop = 0;
             if (collapsed) list.tabIndex = 0;
             else list.removeAttribute('tabindex');
-            moreBtn.textContent = collapsed ? '閉じる' : 'すべて表示';
+            moreBtn.textContent = collapsed ? '閉じる' : 'ほかの更新を見る';
             moreBtn.setAttribute('aria-expanded', String(collapsed));
           });
         }
