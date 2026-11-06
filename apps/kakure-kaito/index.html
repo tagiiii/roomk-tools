@@ -9,13 +9,13 @@
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
   <link rel="stylesheet" href="../shared/css/design-system.css?v=20261106c">
   <!-- index.html と app.js・engine.js・style.css はセットで変わるので、変えたら ?v= をそろえて上げる -->
-  <link rel="stylesheet" href="style.css?v=20261106b">
+  <link rel="stylesheet" href="style.css?v=20261106r2">
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <script src="../shared/js/rtdb-utils.js?v=20261005"></script>
   <script src="../shared/js/room-qr.js?v=20261022"></script>
-  <script src="engine.js?v=20261106b"></script>
+  <script src="engine.js?v=20261106r2"></script>
 </head>
 <body data-genre="suiri">
 
@@ -174,7 +174,14 @@
 
         <div class="card">
           <h2 class="kk-h2">役</h2>
-          <div id="lobby-opts" hidden></div>
+          <!-- まず決めること（名探偵・話し合いの時間）と、たたんだ「くわしい設定」に分ける（ホストだけ） -->
+          <div id="lobby-opts" hidden>
+            <div id="lobby-opts-main"></div>
+            <details id="lobby-more" class="kk-more">
+              <summary class="kk-more__head"><span class="kk-more__title">くわしい設定</span><span id="lobby-more-sub" class="kk-more__sub"></span></summary>
+              <div id="lobby-opts-more" class="kk-more__body"></div>
+            </details>
+          </div>
           <ul id="lobby-opts-view" class="kk-optsview" hidden></ul>
         </div>
 
@@ -236,7 +243,7 @@
     </div>
   </div>
 
-  <script type="module" src="app.js?v=20261106b"></script>
+  <script type="module" src="app.js?v=20261106r2"></script>
   <script src="../shared/js/stats.js?v=1" defer></script>
   <script src="../shared/js/howto.js"></script>
   <script>

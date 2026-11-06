@@ -296,3 +296,28 @@ button.df-card { position: relative; }
 .wrapper:has(#screen-top.active) > .df-header { margin-bottom: 0; }
 /* 型の中では説明の下のあきが消えるので、ひとことの注意を少し離す */
 .app-entry > .df-note { margin-top: 10px; }
+
+/* 待合室: たたんだ「くわしい設定」（ホストだけ。開くと出る） */
+.df-more { margin-top: 4px; border: 1px solid var(--color-border); border-radius: 12px; }
+.df-more__head {
+  display: flex; align-items: center; gap: 4px 10px; flex-wrap: wrap; min-height: 48px; padding: 8px 14px; cursor: pointer; list-style: none;
+}
+.df-more__head::-webkit-details-marker { display: none; }
+.df-more__head::before { content: 'expand_more'; font-family: 'Material Symbols Rounded'; font-size: 22px; color: var(--color-accent); transition: transform 0.15s; }
+.df-more[open] > .df-more__head::before { transform: rotate(180deg); }
+.df-more__title { font-weight: 700; color: var(--color-accent); }
+.df-more__sub { font-size: 13px; color: var(--color-muted); line-height: 1.5; min-width: 0; }
+.df-more__body { padding: 4px 14px 14px; }
+.df-more__body .df-fieldset { margin-bottom: 22px; }
+.df-more__body .df-fieldset:last-child { margin-bottom: 0; }
+.df-more__desc { margin: -4px 0 6px; font-size: 13px; line-height: 1.5; color: var(--color-muted); }
+
+/* 待合室: 下に固定した「配ってはじめる」（下は右下の「？」などのボタンより上に来る分をあける） */
+.df-startbar {
+  position: sticky; bottom: 0; z-index: 2; margin: 0; padding: 12px 0 76px;
+  background: var(--color-bg) url("../assets/paper-grain.png"); border-top: 1px solid var(--color-border); /* 地と同じ紙の粒 */
+}
+@media (min-width: 1080px) {
+  .df-startbar { padding-bottom: 16px; }
+}
+#lobbyRulesTop { margin-bottom: 14px; }

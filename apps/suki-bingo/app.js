@@ -1826,7 +1826,8 @@ function renderPlaying(room) {
       button.append(icon(finished ? 'flag' : 'casino'), label);
     });
     $('btnDraw').disabled = state.rolling;
-    $('btnEndEarly').hidden = finished;
+    // ひき終わったら主ボタンが「結果を見る」になるので、「そのほかの操作」ごと出さない
+    $('playingMenu').hidden = finished;
   }
   $('playingWait').hidden = host || spectator;
   $('playingWait').textContent = finished ? 'ホストが結果を出すまで待ってね。' : 'ホストがひくのを待ってね。';

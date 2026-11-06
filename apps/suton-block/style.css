@@ -203,3 +203,28 @@ body { background: var(--color-bg); }
   .sb-roombar .btn { padding: 4px 8px; font-size: 13px; min-height: 36px; }
 }
 @media (hover: none) { .sb-keys { display: none; } }
+
+/* 待合室: たたんだ「くわしい設定」（ホストだけ。開くと出る） */
+.sb-more { border: 1px solid var(--color-border); border-radius: 12px; }
+.sb-more__head {
+  display: flex; align-items: center; gap: 4px 10px; flex-wrap: wrap; min-height: 48px; padding: 8px 14px; cursor: pointer; list-style: none;
+}
+.sb-more__head::-webkit-details-marker { display: none; }
+.sb-more__head::before { content: 'expand_more'; font-family: 'Material Symbols Rounded'; font-size: 22px; color: var(--color-accent); transition: transform 0.15s; }
+.sb-more[open] > .sb-more__head::before { transform: rotate(180deg); }
+.sb-more__title { font-weight: 700; color: var(--color-accent); }
+.sb-more__sub { font-size: 13px; color: var(--color-muted); line-height: 1.5; min-width: 0; }
+.sb-more__body { padding: 4px 14px 14px; display: grid; gap: 14px; }
+.sb-more__body .sb-fieldset[hidden] { display: none; }
+.sb-more__desc { margin: -4px 0 8px; font-size: 13px; line-height: 1.5; color: var(--color-muted); }
+
+/* 待合室: 下に固定した「はじめる」（せまい画面では、右下の「？」などのボタンより上に来る分をあける） */
+.sb-startbar {
+  position: sticky; bottom: 0; z-index: 2; padding: 12px 0 76px;
+  background: var(--color-bg) url("../assets/paper-grain.png"); border-top: 1px solid var(--color-border); /* 地と同じ紙の粒 */
+}
+.sb-startbar[hidden] { display: none; }
+.sb-startbar .sb-alert { margin: 8px 0 0; }
+@media (min-width: 820px) {
+  .sb-startbar { padding-bottom: 16px; }
+}

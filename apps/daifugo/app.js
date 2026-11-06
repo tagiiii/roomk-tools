@@ -636,7 +636,9 @@ function clearSession() {
 /* ── ルームへの出入り ── */
 function resetBoxes() {
   ['lobbyPeople', 'lobbyRulesView', 'players', 'modes', 'field', 'log', 'hand', 'resultList', 'gameRules'].forEach((id) => $(id).replaceChildren());
-  $('lobbyRules').replaceChildren();
+  $('lobbyRulesTop').replaceChildren();
+  $('lobbyRulesMore').replaceChildren();
+  $('lobbyMoreSub').textContent = '';
   state.rulesKey = null;
   state.sel = [];
   state.selKey = '';
@@ -1250,12 +1252,21 @@ function checkRow(label, sub, checked, onToggle, key) {
   return lb;
 }
 
-function rulesEditor(root, R) {
+// たたんだ「くわしい設定」のまとまりの下に出す、何が変わるかの1行
+function moreDesc(text) {
+  return el('p', 'df-more__desc', text);
+}
+
+// 上（top）にはまず決めること（ジョーカー・考える時間）、たたんだ中（more）にはほかの設定を作る。
+// 中身だけを作りなおすので、「くわしい設定」の開け閉めは設定を変えてもそのまま
+function rulesEditor(top, more, R) {
   const rules = { ...R.rules };
-  root.replaceChildren();
+  top.replaceChildren();
+  more.replaceChildren();
 
   const fsR = el('fieldset', 'df-fieldset');
   fsR.append(el('legend', 'df-legend', '使うルール'));
+  fsR.append(moreDesc('オンにしたルールだけが、この回で効く'));
   const grid = el('div', 'df-checks');
   RULE_ITEMS.forEach(([key, label, sub]) => {
     grid.append(checkRow(label, sub, !!rules[key], (v) => setSettings((cur) => ({ rules: { ...cur.rules, [key]: v } })), key));
@@ -1268,6 +1279,7 @@ function rulesEditor(root, R) {
 
   const fsC = el('fieldset', 'df-fieldset');
   fsC.append(el('legend', 'df-legend', '2回目からのルール（前回と同じ人たちのとき）'));
+  fsC.append(moreDesc('1回目には効かない。2回目から、前回のあがり順で配り方や順位が変わる'));
   const grid2 = el('div', 'df-checks');
   grid2.append(checkRow('カード交換をする', '配ったあと、前回の大貧民は強いカード2枚を大富豪へ、大富豪は好きなカード2枚を大貧民へわたす（4人以上は富豪と貧民も1枚）。大貧民から出す',
     !!rules.exchange, (v) => setSettings((cur) => ({ rules: { ...cur.rules, exchange: v } })), 'exchange'));
@@ -1280,6 +1292,7 @@ function rulesEditor(root, R) {
   fsT.append(segment('time-limit', TIME_OPTS, R.time.limit, (v) => setSettings((cur) => ({ time: { ...cur.time, limit: v } }))));
   const fsO = el('fieldset', 'df-fieldset');
   fsO.append(el('legend', 'df-legend', '時間切れのとき'));
+  fsO.append(moreDesc('考える時間をすぎた人の番が、どう進むかが変わる（考える時間が「なし」なら使わない）'));
   fsO.append(segment('time-out', TIMEOUT_OPTS, R.time.onTimeout, (v) => setSettings((cur) => ({ time: { ...cur.time, onTimeout: v } }))));
   fsO.append(el('p', 'df-note', '場が空いているときは、パスのかわりにCPUが1枚出す。' + AUTO_AFTER + '回続けて時間切れになった人は、CPUが代わりに出す（「自分でやる」でもどれる）。'));
   fsO.disabled = !R.time.limit;
@@ -1287,9 +1300,20 @@ function rulesEditor(root, R) {
 
   const fsH = el('fieldset', 'df-fieldset');
   fsH.append(el('legend', 'df-legend', '補助'));
+  fsH.append(moreDesc('自分の番の、手札の見え方が変わる'));
   fsH.append(checkRow('出せるカードを目立たせる', '自分の番に、出せないカードを薄くする', R.hint, (v) => setSettings(() => ({ hint: v }))));
 
-  root.append(fsR, fsJ, fsC, fsT, fsO, fsH);
+  top.append(fsJ, fsT);
+  more.append(fsR, fsC, fsO, fsH);
+}
+
+// たたんだ「くわしい設定」の見出しの横に出す、いまの値の要約
+function moreSummary(R) {
+  const rules = R.rules;
+  const on = RULE_ITEMS.filter(([k]) => rules[k]).map(([, label]) => label);
+  if (rules.exchange) on.push('カード交換');
+  if (rules.miyakoOchi) on.push('都落ち');
+  return '使う: ' + (on.length ? on.join('・') : 'なし');
 }
 
 // 設定の一覧（参加する人・いまのルール）
@@ -1350,7 +1374,8 @@ function renderLobby(R) {
   if (isHost) {
     const key = JSON.stringify([R.rules, R.time, R.hint]);
     if (state.rulesKey !== key) {
-      rulesEditor($('lobbyRules'), R);
+      rulesEditor($('lobbyRulesTop'), $('lobbyRulesMore'), R);
+      $('lobbyMoreSub').textContent = moreSummary(R);
       state.rulesKey = key;
     }
   } else $('lobbyRulesView').replaceChildren(...rulesSummary(R));

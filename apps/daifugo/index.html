@@ -9,13 +9,13 @@
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
   <link rel="stylesheet" href="../shared/css/design-system.css?v=20261106c">
   <!-- index.html と app.js・engine.js・style.css はセットで変わるので、変えたら ?v= をそろえて上げる -->
-  <link rel="stylesheet" href="style.css?v=20261106r1">
+  <link rel="stylesheet" href="style.css?v=20261106r2">
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <script src="../shared/js/rtdb-utils.js?v=20261005"></script>
   <script src="../shared/js/room-qr.js?v=20261022"></script>
-  <script src="engine.js?v=20261106r1"></script>
+  <script src="engine.js?v=20261106r2"></script>
 </head>
 <body data-genre="board">
   <div class="wrapper">
@@ -109,11 +109,19 @@
 
           <div class="card">
             <h2 class="df-h2">ルール</h2>
-            <div id="lobbyRules" hidden></div>
+            <!-- ホスト: まず決めること（ジョーカー・考える時間）を上に、ほかはたたんだ「くわしい設定」に -->
+            <div id="lobbyRules" hidden>
+              <div id="lobbyRulesTop"></div>
+              <details class="df-more" id="lobbyMore">
+                <summary class="df-more__head"><span class="df-more__title">くわしい設定</span><span class="df-more__sub" id="lobbyMoreSub"></span></summary>
+                <div class="df-more__body" id="lobbyRulesMore"></div>
+              </details>
+            </div>
             <ul class="df-rulesview" id="lobbyRulesView" hidden></ul>
           </div>
 
-          <div id="lobbyHost" hidden>
+          <!-- 下に固定: 設定が長くても「配ってはじめる」をすぐ押せる -->
+          <div id="lobbyHost" class="df-startbar" hidden>
             <button type="button" class="btn btn-primary btn-full btn-lg" id="btnStartGame">配ってはじめる</button>
           </div>
           <p class="df-wait" id="lobbyWait" hidden>ホストがはじめるのを待っているよ</p>
@@ -197,7 +205,7 @@
     </main>
   </div>
   <div class="df-overlay" id="hostOffOverlay" hidden><div class="df-overlay__panel"><h2>ホストの戻りを待っています</h2><p id="hostOffText">しばらく待っても戻らないときは退出してね。</p><button type="button" class="btn btn-secondary" id="btnOverlayLeave">退出する</button></div></div>
-  <script type="module" src="app.js?v=20261106r1"></script>
+  <script type="module" src="app.js?v=20261106r2"></script>
   <script src="../shared/js/stats.js?v=1" defer></script>
   <script src="../shared/js/howto.js"></script>
   <script>

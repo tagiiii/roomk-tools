@@ -912,6 +912,10 @@ function applyLobbyFields(s) {
   $('timeSeg').classList.toggle('sb-seg--4', noTime);
   $('timeSeg').classList.toggle('sb-seg--3', !noTime);
   document.querySelector('input[name="roomTime"][value="' + s.time + '"]').checked = true;
+  // たたんだ「くわしい設定」の見出しの横に、いまの値を出す（開け閉めはそのまま）
+  const time = s.time ? Math.round(s.time / 60) + '分' : '時間なし';
+  $('moreSub').textContent = [battle ? (s.full === 'out' ? 'いっぱいでここまで' : 'からにしてつづける') : null,
+    time, SPEED_LABEL[s.speed], battle ? null : 'じゃま' + (s.jama ? 'あり' : 'なし')].filter(Boolean).join('・');
 }
 
 // 設定は続けて変えても取りこぼさないよう、二度押しよけのロックを使わない（中で今の値から作りなおす）
@@ -1124,6 +1128,7 @@ function renderWaiting(room, playing) {
   });
   $('lobbyLate').hidden = !playing;
   $('lobbyHost').hidden = !host || playing;
+  $('startBar').hidden = !host || playing;
   $('btnStartGame').hidden = !host || playing;
   $('lobbyWait').hidden = host || spectator || playing;
   $('lobbySettings').hidden = host && !playing;

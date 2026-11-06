@@ -9,13 +9,13 @@
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
   <link rel="stylesheet" href="../shared/css/design-system.css?v=20261106c">
   <!-- index.html と app.js・engine.js・style.css はセットで変わるので、変えたら ?v= をそろえて上げる -->
-  <link rel="stylesheet" href="style.css?v=20261106e">
+  <link rel="stylesheet" href="style.css?v=20261106r2">
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <script src="../shared/js/rtdb-utils.js?v=20261005"></script>
   <script src="../shared/js/room-qr.js?v=20261022"></script>
-  <script src="engine.js?v=20261106k"></script>
+  <script src="engine.js?v=20261106r2"></script>
 </head>
 <body data-genre="puzzle">
 
@@ -153,7 +153,11 @@
           </div>
           <p id="modeNote" class="sb-note sb-note--tight">時間内に消した段の数をくらべる。</p>
         </fieldset>
-        <fieldset class="sb-fieldset mt-md" id="fsFull" hidden>
+        <!-- まず決めること（ホストもあそぶ・あそびかた）のほかは、たたんだ「くわしい設定」に -->
+        <details class="sb-more mt-md" id="moreSettings">
+        <summary class="sb-more__head"><span class="sb-more__title">くわしい設定</span><span class="sb-more__sub" id="moreSub"></span></summary>
+        <div class="sb-more__body">
+        <fieldset class="sb-fieldset" id="fsFull" hidden>
           <legend class="sb-legend">盤がいっぱいになったら</legend>
           <div class="sb-seg sb-seg--2">
             <label class="sb-seg__opt"><input type="radio" name="roomFull" value="out" checked><span>その人はここまで</span></label>
@@ -161,8 +165,9 @@
           </div>
           <p class="sb-note sb-note--tight">ここまで: のこった人が上。からにしてつづける: 時間内に送ったじゃまの数が多い人が上。</p>
         </fieldset>
-        <fieldset class="sb-fieldset mt-md">
+        <fieldset class="sb-fieldset">
           <legend class="sb-legend">時間</legend>
+          <p class="sb-more__desc">時間になると、その回の結果が出る。</p>
           <div class="sb-seg sb-seg--3" id="timeSeg">
             <label class="sb-seg__opt" id="timeNone" hidden><input type="radio" name="roomTime" value="0"><span>なし</span></label>
             <label class="sb-seg__opt"><input type="radio" name="roomTime" value="120"><span>2分</span></label>
@@ -170,15 +175,16 @@
             <label class="sb-seg__opt"><input type="radio" name="roomTime" value="300"><span>5分</span></label>
           </div>
         </fieldset>
-        <fieldset class="sb-fieldset mt-md">
+        <fieldset class="sb-fieldset">
           <legend class="sb-legend">落ちる速さ</legend>
+          <p class="sb-more__desc">はやいほど、むずかしくなる。</p>
           <div class="sb-seg sb-seg--3">
             <label class="sb-seg__opt"><input type="radio" name="roomSpeed" value="slow" checked><span>ゆっくり</span></label>
             <label class="sb-seg__opt"><input type="radio" name="roomSpeed" value="normal"><span>ふつう</span></label>
             <label class="sb-seg__opt"><input type="radio" name="roomSpeed" value="fast"><span>はやい</span></label>
           </div>
         </fieldset>
-        <fieldset class="sb-fieldset mt-md" id="fsJama">
+        <fieldset class="sb-fieldset" id="fsJama">
           <legend class="sb-legend">じゃまブロック</legend>
           <div class="sb-seg sb-seg--2">
             <label class="sb-seg__opt"><input type="radio" name="roomJama" value="off" checked><span>なし</span></label>
@@ -186,11 +192,16 @@
           </div>
           <p class="sb-note sb-note--tight">ありにすると、2段いじょういっしょに消したとき、となりの人の盤の下に1列あいた段が入る。</p>
         </fieldset>
+        </div>
+        </details>
       </div>
       <p id="lobbySettings" class="sb-settings-view" hidden></p>
 
-      <button id="btnStartGame" type="button" class="btn btn-primary btn-full btn-lg" hidden>はじめる</button>
-      <p id="startError" class="sb-alert" hidden></p>
+      <!-- 下に固定: 設定が長くても「はじめる」をすぐ押せる -->
+      <div id="startBar" class="sb-startbar" hidden>
+        <button id="btnStartGame" type="button" class="btn btn-primary btn-full btn-lg" hidden>はじめる</button>
+        <p id="startError" class="sb-alert" hidden></p>
+      </div>
       <p id="lobbyWait" class="sb-wait" hidden>ホストがはじめるのを待っているよ</p>
     </div>
   </section>
@@ -293,7 +304,7 @@
     </div>
   </div>
 
-  <script type="module" src="app.js?v=20261106k"></script>
+  <script type="module" src="app.js?v=20261106r2"></script>
   <script src="../shared/js/stats.js?v=1" defer></script>
   <script src="../shared/js/howto.js"></script>
   <script>

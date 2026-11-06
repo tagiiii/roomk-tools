@@ -51,6 +51,8 @@ const state = {
   focusJoinName: false,
   // 参加用のリンクでひらき、同じルームの記録から戻ろうとしている間のコード（戻れなければ参加画面へ）
   linkResumeCode: "",
+  // ゲーム中のホストの「そのほかの操作」を開いているか（描き直しても開いたまま保つ）
+  hostMenuOpen: false,
 };
 
 const esc = escapeHtml;
@@ -369,6 +371,7 @@ function buildSpectatorUrl(code) {
 }
 
 function renderLobby() {
+  state.hostMenuOpen = false;
   if (!state.roomId || !state.playerId) {
     if (!restoreSession()) {
       state.error = "参加情報が見つかりません。もう一度入室してください。";
@@ -527,11 +530,12 @@ function renderGame() {
       </div>
       ${renderTurnActions(state.room, currentPlayer)}
       ${renderHostGameControls(state.room, currentPlayer)}
-      ${renderHostPlayerManagement(state.room, currentPlayer)}
     </section>
     ${renderNotification()}
     ${renderCardConfirmModal(currentPlayer)}
   `;
+  const hostMenu = appEl.querySelector("#host-menu");
+  if (hostMenu) hostMenu.addEventListener("toggle", () => { state.hostMenuOpen = hostMenu.open; });
 }
 
 function renderFinish() {
@@ -999,24 +1003,26 @@ function renderTurnActions(room, currentPlayer) {
   `;
 }
 
+// ゲーム中のホスト: みせる画面は本文に、たまに使う操作は「そのほかの操作」にたたむ
 function renderHostGameControls(room, currentPlayer) {
   if (!currentPlayer.isHost || room.gamePhase !== "in_progress") return "";
 
   return `
     <section class="cn-host-controls" aria-label="ホスト操作">
-      <h2 class="cn-section-title">ホスト操作</h2>
-      <div class="cn-host-control-grid">
-        <button class="btn btn-secondary" id="abort-to-lobby" type="button" ${state.loading ? "disabled" : ""}>
-          ロビーへ戻す
-        </button>
-        <button class="btn btn-danger" data-finish-winner="red" type="button" ${state.loading ? "disabled" : ""}>
-          赤勝ちで終了
-        </button>
-        <button class="btn btn-danger" data-finish-winner="blue" type="button" ${state.loading ? "disabled" : ""}>
-          青勝ちで終了
-        </button>
-      </div>
       ${renderSpectatorShareControls(currentPlayer)}
+      <details id="host-menu" class="cn-hostmenu" ${state.hostMenuOpen ? "open" : ""}>
+        <summary>そのほかの操作</summary>
+        <div class="cn-hostmenu__row">
+          <button class="btn btn-secondary btn-sm" id="abort-to-lobby" type="button" ${state.loading ? "disabled" : ""}>ロビーへ戻す</button>
+          <span class="cn-hostmenu__note">ゲームを中止して、チーム分けからやり直す</span>
+        </div>
+        <div class="cn-hostmenu__row">
+          <button class="btn btn-secondary btn-sm" data-finish-winner="red" type="button" ${state.loading ? "disabled" : ""}>赤勝ちで終了</button>
+          <button class="btn btn-secondary btn-sm" data-finish-winner="blue" type="button" ${state.loading ? "disabled" : ""}>青勝ちで終了</button>
+          <span class="cn-hostmenu__note">勝ちのチームを決めて結果を出す</span>
+        </div>
+        ${renderHostPlayerManagement(room, currentPlayer)}
+      </details>
     </section>
   `;
 }
@@ -1043,13 +1049,13 @@ function renderHostPlayerManagement(room, currentPlayer) {
   `).join("");
 
   return `
-    <section class="cn-player-management" aria-label="参加者管理">
+    <div class="cn-player-management cn-hostmenu__row" role="group" aria-label="参加者管理">
       <div>
         <h2 class="cn-section-title">参加者管理</h2>
         <p class="text-muted">途中で抜けた人が残った場合は削除し、必要に応じて役割を調整してください。</p>
       </div>
       <ul class="cn-player-list">${playerItems}</ul>
-    </section>
+    </div>
   `;
 }
 

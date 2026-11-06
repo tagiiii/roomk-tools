@@ -9,13 +9,13 @@
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
   <link rel="stylesheet" href="../shared/css/design-system.css?v=20261106c">
   <!-- index.html と app.js・engine.js・style.css はセットで変わるので、変えたら ?v= をそろえて上げる -->
-  <link rel="stylesheet" href="style.css?v=20261106">
+  <link rel="stylesheet" href="style.css?v=20261106r2">
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <script src="../shared/js/rtdb-utils.js?v=20261005"></script>
   <script src="../shared/js/room-qr.js?v=20261022"></script>
-  <script src="engine.js?v=20261106"></script>
+  <script src="engine.js?v=20261106r2"></script>
 </head>
 <body data-genre="puzzle">
 
@@ -125,15 +125,19 @@
         </label>
         <p id="seatNote" class="cb-note" hidden></p>
         <p class="cb-note">見るだけの人は、トップの「みんなにみせる画面をひらく」から見られるよ。</p>
-        <div id="proxyForm" class="cb-proxyadd" hidden>
-          <label class="form-label" for="proxyName">端末なしの参加者を足す</label>
-          <div class="cb-row cb-row--nowrap">
-            <input id="proxyName" class="form-input" type="text" maxlength="8" autocomplete="off">
-            <button id="btnAddProxy" type="button" class="btn btn-secondary">足す</button>
+        <!-- ホストがたまに使う操作は、ここにまとめる（開くと出る） -->
+        <details id="proxyMenu" class="cb-hostmenu" hidden>
+          <summary>そのほかの操作</summary>
+          <div id="proxyForm" class="cb-proxyadd">
+            <label class="form-label" for="proxyName">端末なしの参加者を足す</label>
+            <div class="cb-row cb-row--nowrap">
+              <input id="proxyName" class="form-input" type="text" maxlength="8" autocomplete="off">
+              <button id="btnAddProxy" type="button" class="btn btn-secondary">足す</button>
+            </div>
+            <p class="cb-note">その人の番には、ホストが代わりに金額を入れる。</p>
+            <p id="proxyError" class="cb-alert" hidden></p>
           </div>
-          <p class="cb-note">その人の番には、ホストが代わりに金額を入れる。</p>
-          <p id="proxyError" class="cb-alert" hidden></p>
-        </div>
+        </details>
       </div>
 
       <div class="card">
@@ -212,7 +216,7 @@
   <!-- SVG の名前空間はここから読む（HTML の中の svg は自動で SVG の名前空間になる） -->
   <svg id="svgNs" hidden aria-hidden="true"></svg>
 
-  <script type="module" src="app.js?v=20261106"></script>
+  <script type="module" src="app.js?v=20261106r2"></script>
   <script src="../shared/js/stats.js?v=1" defer></script>
   <script src="../shared/js/howto.js"></script>
   <script>

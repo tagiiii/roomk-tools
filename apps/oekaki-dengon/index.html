@@ -201,6 +201,15 @@
     .oek-entry--new { animation: oek-pop 0.35s ease-out; }
     @keyframes oek-pop { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
     .oek-show-actions { margin-top: 20px; }
+    /* ── そのほかの操作（ホストだけ。たまに使う操作をたたむ） ── */
+    .oek-hostmenu { margin-top: var(--space-md); padding: 4px 20px; }
+    .oek-hostmenu summary { min-height: 44px; display: flex; align-items: center; gap: 6px; color: var(--color-muted); font-size: 14px; font-weight: 700; cursor: pointer; list-style: none; }
+    .oek-hostmenu summary::-webkit-details-marker { display: none; }
+    .oek-hostmenu summary::before { content: "expand_more"; font-family: "Material Symbols Rounded"; font-size: 22px; font-weight: 400; color: var(--color-accent); transition: transform .15s; }
+    .oek-hostmenu[open] summary::before { transform: rotate(180deg); }
+    .oek-hostmenu[open] { padding-bottom: 16px; }
+    .oek-hostmenu__row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; padding: 8px 0; border-top: 1px solid var(--color-border); }
+    .oek-hostmenu__note { font-size: 13px; color: var(--color-muted); line-height: 1.6; }
 
     /* ── おしまい（列えらび） ── */
     .oek-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
@@ -482,8 +491,16 @@
       <button type="button" class="btn btn-secondary btn-full mt-md" id="btn-close-step" onclick="hostCloseStep()">
         <span class="material-symbols-rounded" aria-hidden="true">skip_next</span><span id="btn-close-step-label">しめきって次へ</span>
       </button>
-      <button type="button" class="oek-quiet-btn" id="btn-finish-early" onclick="hostFinishEarly()">途中で終わる</button>
     </div>
+
+    <!-- ホストがたまに使う操作は、ここにまとめる（開くと出る） -->
+    <details class="card oek-hostmenu" id="play-host-menu" hidden>
+      <summary>そのほかの操作</summary>
+      <div class="oek-hostmenu__row">
+        <button type="button" class="btn btn-secondary btn-sm" id="btn-finish-early" onclick="hostFinishEarly()">途中で終わる</button>
+        <span class="oek-hostmenu__note">ここまでの分で見せあいに進む</span>
+      </div>
+    </details>
 
     <button type="button" class="oek-quiet-btn" id="btn-play-leave" onclick="guestLeave()" hidden>退出する</button>
   </div>
@@ -503,8 +520,15 @@
         <span class="material-symbols-rounded" aria-hidden="true">arrow_forward</span><span id="btn-show-next-label">つぎへ</span>
       </button>
       <button type="button" class="oek-quiet-btn" id="btn-show-all" onclick="hostShowAll()">この列をまとめて見せる</button>
-      <button type="button" class="oek-quiet-btn" id="btn-show-end" onclick="hostShowEnd()">見せあいを終える</button>
     </div>
+    <!-- ホストがたまに使う操作は、ここにまとめる（開くと出る） -->
+    <details class="card oek-hostmenu" id="show-host-menu" hidden>
+      <summary>そのほかの操作</summary>
+      <div class="oek-hostmenu__row">
+        <button type="button" class="btn btn-secondary btn-sm" id="btn-show-end" onclick="hostShowEnd()">見せあいを終える</button>
+        <span class="oek-hostmenu__note">のこりは見せずに、おしまいの画面に進む</span>
+      </div>
+    </details>
     <p class="oek-hint" id="show-guest-hint" hidden>ホストが1つずつめくっていくよ</p>
     <button type="button" class="oek-quiet-btn" id="btn-show-leave" onclick="guestLeave()" hidden>退出する</button>
   </div>
@@ -1416,6 +1440,8 @@ function canEditNow() {
 }
 
 function renderPlay(ctl) {
+  // 画面に入りなおしたら「そのほかの操作」は閉じておく
+  if (state.currentScreen !== 'play') $('play-host-menu').open = false;
   showScreen('play');
   const m = ctl.match;
   const order = orderOf(m);
@@ -1442,6 +1468,7 @@ function renderPlay(ctl) {
   if (isMember) renderPlayControls();
 
   $('play-host').hidden = !isHost;
+  $('play-host-menu').hidden = !isHost;
   if (isHost) renderHostPanel(ctl);
   $('btn-play-leave').hidden = isHost;
   updateTimerUI();
@@ -2332,6 +2359,7 @@ function renderAlbum(listEl, m, chain, data, upto, newIndex) {
 }
 
 function renderShow(ctl) {
+  if (state.currentScreen !== 'show') $('show-host-menu').open = false;
   showScreen('show');
   const m = ctl.match;
   const order = orderOf(m);
@@ -2370,8 +2398,11 @@ function renderShow(ctl) {
     $('btn-show-next-label').textContent = !isLastEntry ? 'つぎへ' : (!isLastChain ? 'つぎの人のお題へ' : 'おしまいにする');
     $('btn-show-next').disabled = state.actionBusy;
     $('btn-show-all').hidden = isLastEntry;
-    $('btn-show-end').hidden = isLastEntry && isLastChain;
   }
+  // 「見せあいを終える」は「そのほかの操作」にたたむ（最後の1枚では「おしまいにする」と同じなので出さない）
+  const showEndMenu = isHost && !(isLastEntry && isLastChain);
+  $('show-host-menu').hidden = !showEndMenu;
+  if (!showEndMenu) $('show-host-menu').open = false;
 }
 
 function captureShow() {
