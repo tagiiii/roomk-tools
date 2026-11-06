@@ -89,6 +89,21 @@
       .fb-kinds { grid-template-columns: 1fr; }  /* 狭い画面では1列（文字を折り返さない） */
     }
 
+    /* どんなこと？の選択肢（いくつでも選べる）。言葉が思いつかなくても選ぶだけで伝わるように */
+    .fb-chips { display: flex; flex-wrap: wrap; gap: var(--space-xs); margin-bottom: var(--space-sm); }
+    .fb-chip { position: relative; }
+    .fb-chip > input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+    .fb-chip > span {
+      display: inline-flex; align-items: center; gap: 4px; min-height: 44px; padding: 0 var(--space-sm);
+      border: 2px solid var(--color-border); border-radius: var(--radius-full);
+      background: var(--color-surface); color: var(--color-text); font-size: var(--font-size-sm); cursor: pointer;
+    }
+    .fb-chip > span > .material-symbols-rounded { font-size: 18px; display: none; }
+    .fb-chip > input:checked + span { border-color: var(--color-accent); background: var(--color-accent-soft); color: var(--color-accent); font-weight: 700; }
+    .fb-chip > input:checked + span > .material-symbols-rounded { display: inline; }
+    .fb-chip > input:focus-visible + span { box-shadow: 0 0 0 3px rgba(40, 111, 124, 0.18); }
+    .fb-detail-label { display: block; font-size: var(--font-size-sm); font-weight: 700; color: var(--color-text); margin-bottom: 4px; }
+
     /* ツールをさがす欄（下の選択肢をしぼりこむ） */
     .fb-search { margin-bottom: var(--space-xs); }
     .fb-search-none { font-size: var(--font-size-sm); color: var(--color-muted); margin: 4px 0 0; }
@@ -159,11 +174,29 @@
           <section class="fb-step">
             <div class="fb-step__head">
               <span class="fb-step__num" aria-hidden="true">3</span>
-              <label class="fb-step__title" for="fb-text">何があった？</label>
+              <span class="fb-step__title" id="fb-where-label">どこで？</span>
             </div>
-            <p class="fb-step__hint">どの画面で、何があったか（300字まで）</p>
             <div class="fb-step__body">
-              <textarea class="form-textarea" id="fb-text" maxlength="300" rows="5" placeholder="例: こんな遊びがあったらうれしい"></textarea>
+              <div class="fb-kinds" role="radiogroup" aria-labelledby="fb-where-label" id="fb-where">
+                <label class="fb-kind"><input type="radio" name="where" value="入るまで" /><span><span class="material-symbols-rounded" aria-hidden="true">login</span>入るまで（名前やコードを入れる）</span></label>
+                <label class="fb-kind"><input type="radio" name="where" value="始まるのを待っているとき" /><span><span class="material-symbols-rounded" aria-hidden="true">hourglass_top</span>始まるのを待っているとき</span></label>
+                <label class="fb-kind"><input type="radio" name="where" value="遊んでいるとき" /><span><span class="material-symbols-rounded" aria-hidden="true">sports_esports</span>遊んでいるとき</span></label>
+                <label class="fb-kind"><input type="radio" name="where" value="終わったあと・結果" /><span><span class="material-symbols-rounded" aria-hidden="true">flag</span>終わったあと・結果</span></label>
+                <label class="fb-kind"><input type="radio" name="where" value="わからない" checked /><span><span class="material-symbols-rounded" aria-hidden="true">more_horiz</span>わからない・ぜんぶ</span></label>
+              </div>
+            </div>
+          </section>
+
+          <section class="fb-step">
+            <div class="fb-step__head">
+              <span class="fb-step__num" aria-hidden="true">4</span>
+              <span class="fb-step__title" id="fb-what-label">どんなこと？</span>
+            </div>
+            <p class="fb-step__hint" id="fb-what-hint">近いものを選んでね（いくつでも）。書けたら下にくわしく書いてね</p>
+            <div class="fb-step__body">
+              <div class="fb-chips" role="group" aria-labelledby="fb-what-label" id="fb-chips"></div>
+              <label class="fb-detail-label" for="fb-text">くわしく（何をしたら、どうなった？）</label>
+              <textarea class="form-textarea" id="fb-text" maxlength="300" rows="4" placeholder="例: こんな遊びがあったらうれしい"></textarea>
               <div class="fb-count" id="fb-count">0 / 300</div>
             </div>
           </section>
@@ -217,14 +250,24 @@
       ['kyapa-graph', 'キャパグラフ'], ['career-sugoroku', 'キャリアすごろく'],
       ['portal', 'ツール一覧（トップ）', 'つーるいちらん とっぷ'], ['guide', 'スタッフ向けのページ', 'すたっふむけのぺーじ'], ['hajimete', 'はじめての人へ', 'はじめてのひとへ'], ['other', 'どれでもない・わからない', 'どれでもない わからない'],
     ];
-    // 種類ごとの書き方の例（手順3のプレースホルダー）
+    // 種類ごとの書き方の例（手順4のプレースホルダー）。押したもの・出ていた文字を書くと伝わる、が分かる例にする
     const EXAMPLES = {
-      bug: '例: 待合室で「はじめる」を押しても進まなかった（スマホ・Safari）',
-      ui: '例: 結果の画面の字が小さくて読みにくかった',
-      content: '例: お題に知らないことばがあった',
-      howto: '例: 何を押せばいいか分からなくて止まった',
+      bug: '例: 「はじめる」を押しても、待っている画面のままだった',
+      ui: '例: 答えの文字が小さくて、画面を共有すると読めなかった',
+      content: '例: 「○○」という言葉の意味が分からなかった',
+      howto: '例: 自分の番なのに、どこを押せばいいか分からなかった',
       wish: '例: 制限時間を選べるとうれしい',
       other: '例: こんな遊びがあったらうれしい',
+    };
+    // 種類ごとの「どんなこと？」の選択肢。言葉が思いつかない人も、選ぶだけで中身が伝わるようにする。
+    // 選んだものは本文の頭に入れて送る（feedback/ のルールは app・kind・text・at しか書けないため）
+    const CHIPS = {
+      bug: ['押しても動かない', '画面が止まった', 'ほかの人と画面がちがった', '入れなかった', '最初の画面にもどった'],
+      ui: ['字が小さい', '読みにくい', 'ボタンが押しにくい', '画面からはみ出す', '色が見にくい'],
+      content: ['知らない言葉があった', 'むずかしすぎた', 'かんたんすぎた', '同じのが何回も出た', 'いやな感じのものがあった'],
+      howto: ['何を押せばいいか分からない', 'ルールが分からない', '次に何をするか分からない', '自分の番か分からない'],
+      wish: ['お題や問題をふやしてほしい', '時間を選びたい', '人数をふやしたい', 'ほかの遊び方もしたい'],
+      other: [],
     };
     const MAX = 300;
     const $ = (id) => document.getElementById(id);
@@ -259,17 +302,53 @@
     appSel.value = APPS.some(([id]) => id === wanted) ? wanted : 'other';
 
     const kindOf = () => (document.querySelector('input[name="kind"]:checked') || {}).value || 'other';
-    $('fb-kinds').addEventListener('change', () => {
+    const whereOf = () => (document.querySelector('input[name="where"]:checked') || {}).value || 'わからない';
+    const chipBox = $('fb-chips');
+    const renderChips = () => {
+      const list = CHIPS[kindOf()] || [];
+      chipBox.replaceChildren(...list.map((word) => {
+        const label = document.createElement('label');
+        label.className = 'fb-chip';
+        const input = document.createElement('input');
+        input.type = 'checkbox'; input.value = word;
+        const span = document.createElement('span');
+        const icon = document.createElement('span');
+        icon.className = 'material-symbols-rounded'; icon.setAttribute('aria-hidden', 'true'); icon.textContent = 'check';
+        span.append(icon, word);
+        label.append(input, span);
+        return label;
+      }));
+      chipBox.hidden = list.length === 0;
+      $('fb-what-hint').textContent = list.length
+        ? '近いものを選んでね（いくつでも）。書けたら下にくわしく書いてね'
+        : '何をしたら、どうなったかを書いてね';
       text.placeholder = EXAMPLES[kindOf()] || EXAMPLES.other;
-    });
+      updateCount();
+    };
+    const chosen = () => [...chipBox.querySelectorAll('input:checked')].map((input) => input.value);
+    // 送る本文。どこで・選んだものを頭に1行で入れ、書いた文をつづける
+    //   例: 【遊んでいるとき】押しても動かない、画面が止まった
+    //       「はじめる」を押しても…
+    const compose = () => {
+      const picks = chosen();
+      const free = text.value.trim();
+      if (!picks.length && !free) return '';
+      const where = whereOf();
+      const head = (where !== 'わからない' ? '【' + where + '】' : '') + picks.join('、');
+      return [head, free].filter(Boolean).join('\n');
+    };
 
     const updateCount = () => {
-      const n = [...text.value].length;
+      const n = [...compose()].length;
       count.textContent = n + ' / ' + MAX;
       count.classList.toggle('near', n >= MAX - 30 && n <= MAX);
       count.classList.toggle('over', n > MAX);
     };
     text.addEventListener('input', updateCount);
+    chipBox.addEventListener('change', updateCount);
+    $('fb-where').addEventListener('change', updateCount);
+    $('fb-kinds').addEventListener('change', renderChips);
+    renderChips();
 
     let db = null, authReady = null, setupError = null;
     try {
@@ -283,8 +362,11 @@
     $('fb-form').addEventListener('submit', async (event) => {
       event.preventDefault();
       if (busy) return;
-      const body = text.value.trim();
-      if (!body) { RoomkRTDB.showToast('3の「何があった？」を書いてから送信してね'); text.focus(); return; }
+      const body = compose();
+      if (!body) {
+        RoomkRTDB.showToast(chosen().length || (CHIPS[kindOf()] || []).length ? '4の「どんなこと？」を選ぶか、書いてから送信してね' : '4に何があったかを書いてから送信してね');
+        text.focus(); return;
+      }
       if ([...body].length > MAX) { RoomkRTDB.showToast(MAX + '字までにしてね'); text.focus(); return; }
       busy = true; send.disabled = true;
       try {
@@ -298,7 +380,9 @@
         if (window.RoomkStats) RoomkStats.count('sent');
         $('form-card').hidden = true;
         $('done-card').hidden = false;
-        text.value = ''; updateCount();
+        text.value = '';
+        chipBox.querySelectorAll('input:checked').forEach((input) => { input.checked = false; });
+        updateCount();
         window.scrollTo(0, 0);
       } catch (error) {
         console.error('[feedback] send failed', error);
