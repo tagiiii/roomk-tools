@@ -23,24 +23,12 @@
     .nc-header h1 { font-size: 1.5rem; font-weight: 700; color: var(--color-primary); }
     .nc-header p  { font-size: 0.85rem; color: var(--color-muted); margin-top: 4px; }
 
-    /* Card */
-    .card { background: var(--color-surface); border-radius: 12px; padding: 20px; margin-bottom: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+    /* Card（見た目は共通の .card。ここでは間だけ） */
+    .card { margin-bottom: 16px; }
 
-    /* Buttons */
-    .btn {
-      display: flex; align-items: center; justify-content: center; gap: 8px;
-      width: 100%; padding: 14px 20px; border: none; border-radius: 10px;
-      font-family: var(--font-base); font-size: 1rem; font-weight: 700;
-      cursor: pointer; transition: opacity .15s, transform .1s; text-decoration: none;
-    }
-    .btn:active { transform: scale(0.97); }
-    .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+    /* Buttons（見た目は共通の .btn。このアプリはボタンを幅いっぱいに縦に積む） */
+    .btn { display: flex; width: 100%; gap: 8px; }
     .btn + .btn   { margin-top: 8px; }
-    .btn-primary  { background: var(--color-accent); color: #fff; }
-    .btn-secondary{ background: var(--color-surface); color: var(--color-primary); border: 2px solid var(--color-border); }
-    .btn-ghost    { background: transparent; color: var(--color-muted); }
-    .btn-lg       { padding: 18px 24px; font-size: 1.1rem; }
-    .btn-sm       { padding: 8px 14px; font-size: 0.85rem; }
 
     /* Room code */
     .room-code-box { background: var(--color-accent-soft); border-radius: 10px; padding: 16px; text-align: center; margin-bottom: 16px; }

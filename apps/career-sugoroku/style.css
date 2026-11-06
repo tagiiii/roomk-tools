@@ -53,8 +53,9 @@ button:disabled { cursor: default; }
   transition: background-color .15s, border-color .15s, transform .08s;
 }
 .cs-btn:active:not(:disabled) { transform: translateY(1px); }
-.cs-btn--primary { background: var(--color-primary); color: #fff; }
-.cs-btn--primary:hover:not(:disabled) { background: var(--color-primary-dark); }
+/* 主ボタンは共通の .btn-primary と同じティール（ui.md「ボタン階層の定石」。2026-11-06 にこげ茶から変更） */
+.cs-btn--primary { background: var(--color-accent); color: #fff; }
+.cs-btn--primary:hover:not(:disabled) { filter: brightness(0.88); }
 .cs-btn--secondary { background: var(--color-surface); color: var(--color-primary); border-color: var(--color-primary); }
 .cs-btn--secondary:hover:not(:disabled) { background: var(--color-primary-soft); }
 .cs-btn--danger { background: var(--color-surface); color: var(--color-error); border-color: var(--color-error); }
