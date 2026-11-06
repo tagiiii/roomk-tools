@@ -429,7 +429,7 @@
           placeholder="例：メンター"
           style="width:100%; padding:12px 14px; border:1px solid var(--color-border); border-radius:10px; font-size:16px; font-family:var(--font-base); box-sizing:border-box;"
         >
-        <button class="btn btn-primary btn-full" style="margin-top:16px;" onclick="createRoom()">
+        <button class="btn btn-primary btn-full" id="btn-create-room" style="margin-top:16px;" onclick="createRoom()">
           <span class="material-symbols-rounded" aria-hidden="true">add_home</span>
           ルームを作成する
         </button>
@@ -477,7 +477,7 @@
           style="width:100%; padding:12px 14px; border:1px solid var(--color-border); border-radius:10px; font-size:24px; font-weight:700; letter-spacing:0.2em; text-align:center; font-family:var(--font-base); box-sizing:border-box; text-transform:uppercase;"
         >
 
-        <button class="btn btn-primary btn-full" style="margin-top:16px;" onclick="joinRoom()">
+        <button class="btn btn-primary btn-full" id="btn-join-room" style="margin-top:16px;" onclick="joinRoom()">
           <span class="material-symbols-rounded" aria-hidden="true">login</span>
           参加する
         </button>
@@ -842,6 +842,7 @@
       if (target) target.classList.add("active");
       state.currentScreen = id;
       window.scrollTo(0, 0);
+      if (ENTRY_SCREENS.includes(id)) resetRoomEntry();
     }
 
     function showOverlay(id, show) {
@@ -1150,17 +1151,75 @@
       return players[state.nickname] || null;
     }
 
+    // ── ルーム作成・参加の二度押しのロックと認証待ち ──
+    // ロックは処理の最初から終わり（transaction の完了）まで。入れたらボタンは押せないまま（待合室が出るまでに
+    // もう一度押せないように）、入れなかったら押せる状態とフォーカスを戻す。
+    // 入口の画面（トップ・作成・参加）を出すたびに、ボタンとロックを戻す（showScreen。どの道でトップへ戻っても止まらないように）。
+    // ロック中に入口の画面へ戻ったときは、その回の処理を取り消す（入れていたら自分の分を消して、ルームへは進まない）。
+    // authReady は一度失敗すると固定されるので、再試行は案内せず読み込みなおしを案内する。
+    // catch は authReady だけを囲む（transaction まで囲むと、届いたか分からない失敗を認証の失敗と取り違える）
+    const AUTH_FAIL_MSG = "うまくつながらなかったよ。ページを読み込みなおしてね";
+    const ENTRY_SCREENS = ["top", "host-setup", "guest-join"];
+    const ENTRY_BUTTON_IDS = ["btn-create-room", "btn-join-room"];
+    let roomEntryBusy = false;
+    let roomEntryGen = 0;
+    function resetRoomEntry() {
+      roomEntryGen += 1;
+      roomEntryBusy = false;
+      ENTRY_BUTTON_IDS.forEach((id) => {
+        const btn = document.getElementById(id);
+        if (btn) btn.disabled = false;
+      });
+    }
+    async function withEntryLock(buttonId, fn) {
+      if (roomEntryBusy) return;
+      roomEntryBusy = true;
+      const gen = roomEntryGen;
+      const isCurrent = () => gen === roomEntryGen;
+      const btn = document.getElementById(buttonId);
+      const hadFocus = !!btn && document.activeElement === btn;
+      if (btn) btn.disabled = true;
+      let entered = false;
+      try {
+        entered = await fn(isCurrent);
+      } finally {
+        // 途中で入口の画面へ戻った回は、もう戻してあるので触らない
+        if (isCurrent()) {
+          roomEntryBusy = false;
+          if (btn && !entered) {
+            btn.disabled = false;
+            if (hadFocus) btn.focus({ preventScroll: true });
+          }
+        }
+      }
+    }
+    async function waitAuthOrExplain(errorId) {
+      try {
+        await authReady;
+        return true;
+      } catch (e) {
+        console.error(e);
+        showError(errorId, AUTH_FAIL_MSG);
+        return false;
+      }
+    }
+
     // ── ルーム作成 ──────────────────────────
 
-    async function createRoom() {
+    function createRoom() {
+      return withEntryLock("btn-create-room", createRoomInner);
+    }
+
+    async function createRoomInner(isCurrent) {
       hideError("host-error");
       const input = document.getElementById("host-nick");
       const nick = input ? input.value.trim() : "";
       const nickError = validateNickname(nick);
-      if (nickError) { showError("host-error", nickError); return; }
+      if (nickError) { showError("host-error", nickError); return false; }
 
+      if (!await waitAuthOrExplain("host-error")) return false;
+      if (!isCurrent()) return false;
       try {
-        await authReady;
         let roomCode = null;
         let roomRef = null;
         for (let i = 0; i < 5; i++) {
@@ -1185,7 +1244,7 @@
         }
         if (!roomCode || !roomRef) {
           showError("host-error", "ルーム作成に失敗しました。もう一度お試しください");
-          return;
+          return false;
         }
 
         // ホスト切断時は切断時刻を残す。誰も残っていなくても次回アクセス時に期限切れ判定できる。
@@ -1193,6 +1252,12 @@
           hostConnected: false,
           hostDisconnectedAt: firebase.database.ServerValue.TIMESTAMP,
         });
+        if (!isCurrent()) {
+          // 作っている間に入口の画面へ戻った: できたルームを消して、ルームへは進まない
+          await RoomkRTDB.cancelRoomOnDisconnect(roomRef);
+          await roomRef.remove().catch(() => {});
+          return false;
+        }
         // 利用回数（回数だけ。stats.js）: ルームができた
         window.RoomkStats?.count('room-create');
 
@@ -1205,9 +1270,11 @@
 
         saveSession();
         startRoomListener();
+        return true;
       } catch (e) {
         console.error(e);
         showError("host-error", "ルーム作成に失敗しました");
+        return false;
       }
     }
 
@@ -1240,7 +1307,11 @@
         : "";
     }
 
-    async function joinRoom() {
+    function joinRoom() {
+      return withEntryLock("btn-join-room", joinRoomInner);
+    }
+
+    async function joinRoomInner(isCurrent) {
       hideError("guest-error");
       const codeInput = document.getElementById("guest-code");
       const nickInput = document.getElementById("guest-nick");
@@ -1248,31 +1319,33 @@
       const nick = nickInput ? nickInput.value.trim() : "";
 
       const nickError = validateNickname(nick);
-      if (nickError) { showError("guest-error", nickError); return; }
-      if (!roomCode) { showError("guest-error", "ルームコードを入力してください"); return; }
+      if (nickError) { showError("guest-error", nickError); return false; }
+      if (!roomCode) { showError("guest-error", "ルームコードを入力してください"); return false; }
       const imeErr = roomCodeImeError(roomCode);
-      if (imeErr) { showError("guest-error", imeErr); return; }
-      if (!/^[A-Z0-9]{6}$/.test(roomCode)) { showError("guest-error", "ルームコードは6文字です"); return; }
+      if (imeErr) { showError("guest-error", imeErr); return false; }
+      if (!/^[A-Z0-9]{6}$/.test(roomCode)) { showError("guest-error", "ルームコードは6文字です"); return false; }
 
+      if (!await waitAuthOrExplain("guest-error")) return false;
+      if (!isCurrent()) return false;
       try {
-        await authReady;
         const roomRef = db.ref(`tatoenarabe_rooms/${roomCode}`);
         const preSnap = await roomRef.get();
         if (!preSnap.exists()) {
           showError("guest-error", "ルームが見つかりません");
-          return;
+          return false;
         }
         const preRoom = preSnap.val();
         if (isRoomExpired(preRoom)) {
           await roomRef.remove().catch(() => {});
           showError("guest-error", "このルームは期限切れのため終了しました");
-          return;
+          return false;
         }
 
         // ルーム全体に対して transaction() を実行。
         // status チェック・hostConnected チェック・ニックネーム重複チェック・
         // プレイヤー書き込みをすべて原子的に行うことで、
         // 「スナップショット確認後にゲームが開始した」競合を防ぐ。
+        if (!isCurrent()) return false;
         let abortReason = null;
         const { committed, snapshot } = await joinTransaction(roomRef, (room) => {
           const currentRoom = room;
@@ -1293,18 +1366,23 @@
         });
 
         if (!committed) {
-          if (abortReason === "not_found")   { showError("guest-error", "ルームが見つかりません"); return; }
-          if (abortReason === "not_waiting") { showError("guest-error", "このルームには今入れません"); return; }
-          if (abortReason === "host_gone")   { showError("guest-error", "ホストが切断されています"); return; }
-          if (abortReason === "nick_taken")  { showError("guest-error", "そのニックネームは使われています"); return; }
+          if (abortReason === "not_found")   { showError("guest-error", "ルームが見つかりません"); return false; }
+          if (abortReason === "not_waiting") { showError("guest-error", "このルームには今入れません"); return false; }
+          if (abortReason === "host_gone")   { showError("guest-error", "ホストが切断されています"); return false; }
+          if (abortReason === "nick_taken")  { showError("guest-error", "そのニックネームは使われています"); return false; }
           showError("guest-error", "参加に失敗しました");
-          return;
+          return false;
         }
         if (abortReason === "expired" && !snapshot.val()) {
           showError("guest-error", "このルームは期限切れのため終了しました");
-          return;
+          return false;
         }
 
+        if (!isCurrent()) {
+          // 参加している間に入口の画面へ戻った: 自分の分を消して、ルームへは進まない
+          await roomRef.child(`players/${nick}`).remove().catch(() => {});
+          return false;
+        }
         state.role = "guest";
         state.nickname = nick;
         state.roomCode = roomCode;
@@ -1315,9 +1393,11 @@
         saveSession();
         startRoomListener();
         startGuestPresence();
+        return true;
       } catch (e) {
         console.error(e);
         showError("guest-error", "参加に失敗しました");
+        return false;
       }
     }
 
