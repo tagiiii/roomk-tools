@@ -175,7 +175,9 @@ const { check, sleep } = L;
   await L.waitPhaseAll(all.concat(W), 'end');
   check('A36 名探偵を見やぶって怪盗チームの逆転勝ち', (await L.text(W, '#banner')).includes('逆転'));
   check('A37 おしまいで全員の役が出る', (await W.page.$$('.kk-roles__item')).length === 5);
-  check('A38 finish を1回数えた', await L.waitStats(B, 'finish', 1) && (await L.stats(H, 'finish')) === 0);
+  // finish は、かしらの端末が1回だけ数える。役は毎回ランダムなので、ホストがかしらに当たったときは同じ端末になる
+  const hostIsBoss = B === H;
+  check('A38 finish を1回数えた', await L.waitStats(B, 'finish', 1) && (hostIsBoss || (await L.stats(H, 'finish')) === 0), { bossName, B: await L.stats(B, 'finish'), H: await L.stats(H, 'finish') });
   await sleep(800);
   await L.shot(W, 'A-watch-end');
 
@@ -184,7 +186,7 @@ const { check, sleep } = L;
   await L.waitPhaseAll(all, 'reveal');
   check('A39 もう一回で配りなおす', Number((await L.roomOf(code)).game.gid) === 2 && await L.waitStats(H, 'start', 2));
   // ゲームの途中で待合室へ
-  await H.page.locator('#tools .kk-quiet', { hasText: '待合室にもどる' }).click();
+  await H.page.evaluate(() => { document.getElementById('host-menu').open = true; }); await H.page.locator('#host-menu button', { hasText: '待合室にもどる' }).click();
   await L.waitPhaseAll(all, 'lobby');
   check('A40 待合室にもどる', !(await L.roomOf(code)).game);
 
