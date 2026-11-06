@@ -5,7 +5,7 @@
 import { shuffle } from '../shared/js/utils.js';
 import { UNITS } from './data.js?v=20261022';
 import { KVG } from './kvg-data.js?v=20261022';
-import { applyPath, createRoom, openLink } from './link.js?v=20261022';
+import { AUTH_FAILED, applyPath, createRoom, openLink } from './link.js?v=20261106r5';
 
 const { RoomkRTDB } = window;
 
@@ -290,13 +290,16 @@ function publish(path, value) {
   if (share.role === 'player') share.link.set(path, copyOf(value));
 }
 
+// 認証の失敗。authReady は失敗のまま変わらないので、もう一度ためす案内はしない
+const AUTH_NOTE = 'うまくつながりませんでした。ページを読み直してください。';
+
 const END_NOTES = {
   closed: 'メンターが見る画面をとじました',
   expired: 'メンターの画面がもどらなかったので、見せるのをおわりました',
   replaced: 'ほかの画面で見せはじめたので、この画面は見せるのをやめました',
 };
 
-// 見せはじめる。つながったら true（ルームがない・終わっているときは 'gone'、通信の失敗は 'error'）
+// 見せはじめる。つながったら true（ルームがない・終わっているときは 'gone'、認証の失敗は 'auth'、通信の失敗は 'error'）
 async function startShowing(code) {
   if (share.busy || share.link) return 'busy';
   share.busy = true;
@@ -896,7 +899,7 @@ function showInvite(code) {
       return;
     }
     // 入れなかった間は ?room= を残す（再読み込みしても、このリンクのまま）
-    error.textContent = 'うまくつながりませんでした。もう一度ためしてください。';
+    error.textContent = result === AUTH_FAILED ? AUTH_NOTE : 'うまくつながりませんでした。もう一度ためしてください。';
     error.hidden = false;
   }, { iconName: 'visibility', id: 'btnShow' });
   show(
@@ -937,52 +940,66 @@ let watchPanel = null;     // 問題を出すパネル { root, start, end, statu
 // n: 問題数（0 は全部）か 'pick'（語を選ぶ）。picked: 選んだ語の番号（選んだ順）。単元を変えると空にする
 const panelState = { unit: UNITS[0].id, n: ORDER_DEFAULT, picked: [], t: 0 };
 
+// 二度押しのロックは、ルームを作ってから見る画面をひらき終わるまでかけたまま（途中で外さない）
 async function createWatch() {
   if (share.busy || share.link) return;
   share.busy = true;
   const createBtn = document.getElementById('btnCreateWatch');
   if (createBtn) createBtn.disabled = true;
-  let code = null;
   try {
-    code = await createRoom();
-    window.RoomkStats?.count('room-create');
-  } catch (error) {
-    console.warn('[yokumite-kanji] create failed', error);
-    RoomkRTDB.showToast('ルームを作れませんでした。もう一度ためしてください');
+    let code = null;
+    try {
+      code = await createRoom();
+      window.RoomkStats?.count('room-create');
+    } catch (error) {
+      if (error?.message === AUTH_FAILED) {
+        RoomkRTDB.showToast(AUTH_NOTE);
+        return;
+      }
+      console.warn('[yokumite-kanji] create failed', error);
+      RoomkRTDB.showToast('ルームを作れませんでした。もう一度ためしてください');
+      return;
+    }
+    const result = await watchRoom(code);
+    if (result === AUTH_FAILED) RoomkRTDB.showToast(AUTH_NOTE);
+    else if (result !== true) RoomkRTDB.showToast('うまくつながりませんでした。もう一度ためしてください');
   } finally {
     share.busy = false;
     if (createBtn) createBtn.disabled = false;
   }
-  if (code && await startWatching(code) !== true) {
-    RoomkRTDB.showToast('うまくつながりませんでした。もう一度ためしてください');
-  }
 }
 
-// 見る画面をひらく。つながったら true（ルームがない・終わっているときは 'gone'、通信の失敗は 'error'）
+// 見る画面をひらく。つながったら true（ルームがない・終わっているときは 'gone'、認証の失敗は 'auth'、通信の失敗は 'error'）
 async function startWatching(code) {
   if (share.busy || share.link) return 'busy';
   share.busy = true;
   try {
-    const result = await openLink(code, 'viewer', pid);
-    if (!result.ok) return result.reason;
-    adoptLink(result.link, code, 'viewer');
-    result.link.onPeer((on) => {
-      share.peer = on;
-      if (on) share.everPeer = true;
-      renderWatch();
-    });
-    result.link.onValue(onWatchValue);
-    result.link.onOrder(() => renderPanel());
-    result.link.onEnd((reason) => {
-      leaveWatch();
-      RoomkRTDB.showToast(reason === 'expired' ? '時間がたったので、ルームがとじました' : 'ルームがとじました', false);
-    });
-    if (!share.link) return 'gone'; // つないだ直後に終わっていた（上の onEnd がもう片付けた）
-    showWatch();
-    return true;
+    return await watchRoom(code);
   } finally {
     share.busy = false;
   }
+}
+
+// startWatching の中身。ロック（share.busy）は呼ぶ側がかける
+async function watchRoom(code) {
+  if (share.link) return 'busy';
+  const result = await openLink(code, 'viewer', pid);
+  if (!result.ok) return result.reason;
+  adoptLink(result.link, code, 'viewer');
+  result.link.onPeer((on) => {
+    share.peer = on;
+    if (on) share.everPeer = true;
+    renderWatch();
+  });
+  result.link.onValue(onWatchValue);
+  result.link.onOrder(() => renderPanel());
+  result.link.onEnd((reason) => {
+    leaveWatch();
+    RoomkRTDB.showToast(reason === 'expired' ? '時間がたったので、ルームがとじました' : 'ルームがとじました', false);
+  });
+  if (!share.link) return 'gone'; // つないだ直後に終わっていた（上の onEnd がもう片付けた）
+  showWatch();
+  return true;
 }
 
 function leaveWatch() {
