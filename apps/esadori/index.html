@@ -21,6 +21,15 @@
     .card + .card { margin-top: 16px; }
     .btn + .btn { margin-top: 10px; }
 
+    /* ── そのほかの操作（ホストだけ。たまに使う操作をたたむ） ── */
+    .esa-hostmenu { margin-top: var(--space-md); padding: 4px 20px; }
+    .esa-hostmenu summary { min-height: 44px; display: flex; align-items: center; gap: 6px; color: var(--color-muted); font-size: 14px; font-weight: 700; cursor: pointer; list-style: none; }
+    .esa-hostmenu summary::-webkit-details-marker { display: none; }
+    .esa-hostmenu summary::before { content: "expand_more"; font-family: "Material Symbols Rounded"; font-size: 22px; font-weight: 400; color: var(--color-accent); transition: transform .15s; }
+    .esa-hostmenu[open] summary::before { transform: rotate(180deg); }
+    .esa-hostmenu[open] { padding-bottom: 16px; }
+    .esa-hostmenu__row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; padding: 8px 0; border-top: 1px solid var(--color-border); }
+    .esa-hostmenu__note { font-size: 13px; color: var(--color-muted); line-height: 1.6; }
     .esa-section-label {
       font-size: 12px; font-weight: 700; color: var(--color-muted);
       letter-spacing: 0.06em; margin-bottom: 10px;
@@ -348,9 +357,14 @@
       <div class="esa-history" id="game-history"></div>
     </div>
 
-    <button class="btn btn-danger btn-full mt-md" id="btn-abort" onclick="hostAbort()" style="display:none">
-      <span class="material-symbols-rounded">stop_circle</span>途中で終わる
-    </button>
+    <!-- ホストがたまに使う操作は、ここにまとめる（開くと出る） -->
+    <details class="card esa-hostmenu" id="host-menu" style="display:none">
+      <summary>そのほかの操作</summary>
+      <div class="esa-hostmenu__row">
+        <button class="btn btn-secondary btn-sm" id="btn-abort" type="button" onclick="hostAbort()">途中で終わる</button>
+        <span class="esa-hostmenu__note">勝負はなしになるよ</span>
+      </div>
+    </details>
     <button class="btn btn-ghost btn-full mt-md" id="btn-guest-leave-game" onclick="guestGoToTop()" style="display:none">
       <span class="material-symbols-rounded">logout</span>退出する
     </button>
@@ -792,6 +806,8 @@ async function onHostPlaysChange(checked) {
 // ゲーム画面
 // ══════════════════════════════════════════════════
 function handleGame(room) {
+  // 画面に入りなおしたら「そのほかの操作」は閉じておく
+  if (state.currentScreen !== 'game') document.getElementById('host-menu').open = false;
   showScreen('game');
   const m = room.match;
   const key = m ? (m.matchId + '|' + m.round + '|' + m.phase) : 'none';
@@ -803,7 +819,8 @@ function handleGame(room) {
   renderMembers('game-members', room);
   document.getElementById('game-history').innerHTML = m ? buildHistoryHtml(m) : '';
 
-  document.getElementById('btn-abort').style.display = state.role === 'host' ? 'block' : 'none';
+  // 「途中で終わる」は「そのほかの操作」にたたむ（ホストだけ）
+  document.getElementById('host-menu').style.display = state.role === 'host' ? 'block' : 'none';
   document.getElementById('btn-guest-leave-game').style.display = state.role === 'guest' ? 'block' : 'none';
 }
 
