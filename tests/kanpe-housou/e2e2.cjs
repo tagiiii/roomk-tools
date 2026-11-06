@@ -20,10 +20,14 @@ const { check, sleep } = L;
   await H.page.press('#nodev-name', 'Enter');
   check('A1 端末のない人を足せる', await L.waitFor(async () => (await H.page.$$('#lobby-people li')).length === 4));
   check('A2 「端末なし」の印はホストにだけ', (await L.text(H, '#lobby-people')).includes('端末なし') && !(await L.text(N, '#lobby-people')).includes('端末なし'));
-  await H.page.fill('#nodev-name', 'ナツキ');
-  await H.page.press('#nodev-name', 'Enter');
-  await L.waitText(H, '#nodev-msg', 'その名前は使われている');
-  check('A3 参加者と同じ名前は足せない', true);
+  // 前の「ミオ」を足す操作がまだ終わっていないと、次の操作は断られることがある（そのときは押しなおす）
+  let sameNameRefused = false;
+  for (let i = 0; i < 5 && !sameNameRefused; i += 1) {
+    await H.page.fill('#nodev-name', 'ナツキ');
+    await H.page.press('#nodev-name', 'Enter');
+    sameNameRefused = await L.waitFor(async () => (await L.text(H, '#nodev-msg')).includes('その名前は使われている'), 2000);
+  }
+  check('A3 参加者と同じ名前は足せない', sameNameRefused, await L.text(H, '#nodev-msg'));
   await H.page.check('input[name=opt-laps][value="2"]');
   await H.page.check('#opt-score');
   check('A4 参加者に設定が見える', await L.waitFor(async () => (await L.text(N, '#lobby-opts-view')).includes('2回ずつ') && (await L.text(N, '#lobby-opts-view')).includes('点で順位を出す')));
@@ -93,7 +97,8 @@ const { check, sleep } = L;
   check('D2 ホストに代わりに進めるボタン', (await L.text(H, '#tools')).includes('代わりに：読みはじめる'));
   check('D3 参加者には代わりのボタンは出ない', !(await L.visible(N, '#tools')));
   await L.readThrough(H, 4, '#tools');
-  check('D4 ホストが代わりに進められる', (await L.lineCount(N)) === 6);
+  // ホストの画面で進めたあと、参加者の画面が追いつくのを待ってから数える
+  check('D4 ホストが代わりに進められる', await L.waitFor(async () => (await L.lineCount(N)) === 6), await L.lineCount(N));
   await L.shot(H, 'd-host-proxy-read');
   await L.clickText(H, '#tools', '代わりに：読みおわった');
   await L.waitPhaseAll(all, 'judge');
@@ -171,7 +176,7 @@ const { check, sleep } = L;
   await HR.context.setOffline(false);
   check('G5 判定した人がもどる', await L.waitFor(async () => !!(await L.roomOf(code)).players?.['ハルト'], 60000));
   await L.waitPhase(HR, 'result', 15000);
-  await L.clickText(H, '#stage', 'ここでおしまいにする');
+  await H.page.evaluate(() => { document.getElementById('host-menu').open = true; }); await L.clickText(H, '#host-menu', 'ここでおしまいにする');
   await L.waitPhaseAll(all, 'end');
   const endText = await L.text(N, '#stage');
   check('H1 順位が出る（設定でオン）', endText.includes('点数'));

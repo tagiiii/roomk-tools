@@ -189,7 +189,7 @@ const { check, sleep } = L;
   check('E8 おまかせの言葉しかない回は、だれにも点が入らない', JSON.stringify(r2.game.points) === JSON.stringify({ 'メンター': 1 }), r2.game.points);
 
   // ここでおしまい
-  await L.clickText(H, '#stage', 'ここでおしまいにする');
+  await H.page.evaluate(() => { document.getElementById('host-menu').open = true; }); await L.clickText(H, '#host-menu', 'ここでおしまいにする');
   await L.waitPhaseAll(all.concat(W), 'end');
   check('F1 finish を数えた', await L.waitStats(H, 'finish', 1));
   check('F2 きょうの放送が出る', (await L.text(K, '#stage')).includes('きょうの放送'));
@@ -234,7 +234,7 @@ const { check, sleep } = L;
   await L.waitPhaseAll(all, 'result');
   check('G9 375px: 結果の画面で横にはみ出さない', (await L.overflow(K)) <= 0, await L.overflow(K));
   // 途中で待合室にもどる
-  await L.clickText(H, '#tools', '放送をやめて待合室にもどる');
+  await H.page.evaluate(() => { document.getElementById('host-menu').open = true; }); await L.clickText(H, '#host-menu', '放送をやめて待合室にもどる');
   await L.waitPhaseAll(all, 'lobby');
   check('G10 放送の途中でも待合室にもどれる（ゲームは消える）', !(await L.roomOf(code)).game);
   check('G11 375px: 待合室で横にはみ出さない', (await L.overflow(K)) <= 0, await L.overflow(K));
