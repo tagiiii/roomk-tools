@@ -369,3 +369,10 @@ button.sb-cand:hover:not([aria-disabled="true"]) { border-color: var(--color-acc
 @media (prefers-reduced-motion: reduce) {
   .sb-cell.is-new { animation: none; }
 }
+
+/* ── はじめの画面の型（2026-11-06）: ツール名・ひとこと・絵は、はじめの画面の白い面（.app-entry）に入れた。
+   そのあいだだけ、ヘッダーのツール名とひとことを隠す（ほかの画面では今までどおり出る。みんなにみせる画面の印は隠さない） ── */
+.wrapper:has(#screen-top.active) > .sb-header > :is(.sb-header__title, .sb-header__sub) { display: none; }
+.wrapper:has(#screen-top.active) > .sb-header { margin-bottom: 0; }
+/* 型の中では説明の下のあきが消えるので、ひとことの注意を少し離す */
+.app-entry > .sb-note { margin-top: 12px; }

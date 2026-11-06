@@ -26,6 +26,7 @@ description: room-Kの本体アプリを新規追加し、必要な共通機能�
 - Realtime Database を使う場合は AGENTS.md の「Realtime Database 実装ルール」「切断時の挙動」「セッションデータの自動削除」「再接続」を全て実装する（`RoomkRTDB.initFirebase()`・transaction・onDisconnect・`cancelRoomOnDisconnect()`・ORPHAN_TTL_MS=2分・serverTimeOffset・sessionStorage 再接続・終了後削除・認証失敗ハンドリング）
 - ルーム型のゲームは、rtdb.md「ホストも遊ぶかを選ぶ」と「端末のない参加者」を読み、ホスト参加の初期値と、端末のない参加者を作るか作らないかを決めて AGENTS.md に書く。話し合い・読み上げが中心のゲームは ui.md「マイクを使わない子が参加できる手段」も読む
 - 絵文字禁止・Material Symbols Rounded 使用、design-system.css のトークンを再利用
+- ツール一覧と同じ見た目にする（ui.md「あそびのたなの見た目」）: `<body data-genre="…">`（カードと同じ種類）・Zen Maru Gothic の読み込み・`design-system.css?v=…`・はじめの画面のツール名の上に絵の面（illustrations.md「ツールのはじめの画面」。絵がまだないときは置かない）
 - UI 設計は AGENTS.md「ボタン階層の定石」「トップ画面の定石」に従う（塗りつぶしの主ボタンは1画面に1つ・同格の枠線ボタンを3つ以上並べない・トップはパネル1枚構成であそびかたのインライン展開は置かない）
 - 比喩は導入で1回だけ説明し、ボタンなどの操作名は比喩を使わない素直な動詞にする
 - 利用回数カウンタ `<script src="../shared/js/stats.js?v=1" defer></script>` を howto.js の直前に入れる（AGENTS.md「stats.js」参照）。パック・お題などコンテンツ単位で数えたい箇所があれば `window.RoomkStats?.count('項目名')` を呼ぶ
@@ -86,6 +87,7 @@ description: room-Kの本体アプリを新規追加し、必要な共通機能�
 
 - [ ] apps/{name}/ 一式（パターン準拠・命名ポリシー準拠）
 - [ ] あそびかた／つかいかたモーダル組み込み（`shared/js/howto.js`）
+- [ ] `<body data-genre>`・Zen Maru Gothic・はじめの画面の絵（絵があるとき）
 - [ ] 利用回数カウンタ組み込み（`shared/js/stats.js`）
 - [ ] apps/index.html にカード追加（`data-scenes`・`data-added`（公開日）・`data-genre`（種類）必須・slides があれば `data-slides` と howto の `slides`）
 - [ ] apps/updates.json の先頭に更新情報を追記（`type: "new"`）

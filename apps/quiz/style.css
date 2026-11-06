@@ -1344,3 +1344,11 @@
     font-size: 18px;
   }
 }
+
+/* はじめの画面の型（2026-11-06）: 入口の面の中の「ルームであそぶ」と、下のパックの面とのあき */
+.qz-screen--top > .app-entry { margin: 0 auto 20px; }
+.app-entry > .qz-room-entry__text { margin-top: 18px; }
+.app-entry__actions > .qz-room-entry__watch { flex: none; }
+
+/* はじめの画面の型（2026-11-06）: 入口の下の一覧の面も、入口と同じ幅にそろえる */
+.qz-top-panel { max-width: 440px; margin-left: auto; margin-right: auto; }

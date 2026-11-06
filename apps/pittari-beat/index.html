@@ -7,44 +7,48 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet" />
-  <link rel="stylesheet" href="../shared/css/design-system.css" />
-  <link rel="stylesheet" href="style.css?v=20261021c" />
+  <link rel="stylesheet" href="../shared/css/design-system.css?v=20261106" />
+  <link rel="stylesheet" href="style.css?v=20261106look" />
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <script src="../shared/js/rtdb-utils.js?v=20261005"></script>
   <script src="../shared/js/room-qr.js?v=20261022"></script>
 </head>
-<body>
+<body data-genre="puzzle">
 
   <!-- はじめの画面（パネル1枚） -->
   <main id="pb-top" class="pb-page" hidden>
-    <section class="pb-panel" aria-labelledby="pb-title">
-      <h1 id="pb-title" class="pb-panel__title">ぴったりビート</h1>
-      <p class="pb-panel__lead">上から落ちてくるしるしが線に来たら、ボタンをたたこう。音に合わせてたたくほど、点が入るよ。1回およそ1分。</p>
-      <ul class="pb-notes">
+    <section class="pb-panel app-entry" aria-labelledby="pb-title">
+      <div class="app-hero"><img class="app-illust" src="../assets/illustrations/pittari-beat.webp" alt="" width="156" height="156" decoding="async" onerror="this.parentNode.remove()" /></div>
+      <h1 id="pb-title" class="pb-panel__title app-title">ぴったりビート</h1>
+      <p class="pb-panel__lead app-entry__lead">上から落ちてくるしるしが線に来たら、ボタンをたたこう。音に合わせてたたくほど、点が入るよ。1回およそ1分。</p>
+      <ul class="pb-notes app-entry__notes">
         <li>ずれても大丈夫。気にせずつづけてね</li>
         <li>スマホは画面の下のボタン、パソコンは F と J のキー</li>
         <li>音がおくれて聞こえるときは「タイミング合わせ」をしてね</li>
       </ul>
-      <button id="pb-go-create" type="button" class="btn btn-primary btn-lg btn-full">
-        <span class="material-symbols-rounded" aria-hidden="true">add_circle</span>
-        ルームを作る
-      </button>
-      <button id="pb-go-join" type="button" class="btn btn-secondary btn-full">
-        <span class="material-symbols-rounded" aria-hidden="true">login</span>
-        ルームに参加する
-      </button>
-      <div class="pb-quiet-row">
-        <button id="pb-go-solo" type="button" class="pb-quiet-btn">
-          <span class="material-symbols-rounded" aria-hidden="true">person</span>
-          ひとりで遊ぶ
+      <div class="app-entry__actions">
+        <button id="pb-go-create" type="button" class="btn btn-primary btn-lg btn-full">
+          <span class="material-symbols-rounded" aria-hidden="true">add_circle</span>
+          ルームを作る
         </button>
-        <button type="button" class="pb-quiet-btn" data-open-calib>
-          <span class="material-symbols-rounded" aria-hidden="true">tune</span>
-          タイミング合わせ（いま <span data-offset-now>0.00</span> 秒）
+        <button id="pb-go-join" type="button" class="btn btn-secondary btn-full">
+          <span class="material-symbols-rounded" aria-hidden="true">login</span>
+          ルームに参加する
         </button>
+        <div class="pb-quiet-row">
+          <button id="pb-go-solo" type="button" class="pb-quiet-btn">
+            <span class="material-symbols-rounded" aria-hidden="true">person</span>
+            ひとりで遊ぶ
+          </button>
+          <button type="button" class="pb-quiet-btn" data-open-calib>
+            <span class="material-symbols-rounded" aria-hidden="true">tune</span>
+            タイミング合わせ（いま <span data-offset-now>0.00</span> 秒）
+          </button>
+        </div>
       </div>
     </section>
   </main>

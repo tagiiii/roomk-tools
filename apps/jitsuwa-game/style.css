@@ -228,3 +228,6 @@
     font-size: 13px;
   }
 }
+
+/* ── 種類の色（2026-11-06）: カードの裏は種類（推理）の濃い紫（白い数字が読める濃さ） ── */
+.card-face-back { background-color: var(--g-ink); border-color: #472A78; }

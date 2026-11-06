@@ -5,25 +5,23 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
   <title>クイズパック | あそびのたな</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet" />
-  <link rel="stylesheet" href="../shared/css/design-system.css" />
-  <link rel="stylesheet" href="style.css?v=20261106" />
+  <link rel="stylesheet" href="../shared/css/design-system.css?v=20261106" />
+  <link rel="stylesheet" href="style.css?v=20261106look" />
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <script src="../shared/js/rtdb-utils.js?v=20261005"></script>
   <script src="../shared/js/room-qr.js?v=20261022"></script>
 </head>
-<body>
+<body data-genre="puzzle">
   <main class="qz-app">
     <section class="qz-screen qz-screen--top" id="screen-top">
-      <header class="qz-hero">
-        <span class="material-symbols-rounded qz-hero__icon">quiz</span>
-        <h1 class="qz-hero__title">クイズパック</h1>
-        <p class="qz-hero__sub">雑学3択と連続2択を、ひとつの画面でサクサク進めよう</p>
-      </header>
-
-      <section class="qz-room-entry card" aria-labelledby="roomEntryTitle">
+      <section class="app-entry" aria-labelledby="roomEntryTitle">
+        <div class="app-hero"><img class="app-illust" src="../assets/illustrations/quiz.webp" alt="" width="156" height="156" decoding="async" onerror="this.parentNode.remove()" /></div>
+        <h1 class="qz-hero__title app-title">クイズパック</h1>
+        <p class="qz-hero__sub app-catch">雑学3択と連続2択を、ひとつの画面でサクサク進めよう</p>
         <div class="qz-room-entry__text">
           <h2 class="qz-room-entry__title" id="roomEntryTitle">
             <span class="material-symbols-rounded" aria-hidden="true">devices</span>
@@ -31,7 +29,7 @@
           </h2>
           <p class="qz-room-entry__sub">ホストの画面を見ながら、自分の端末で答えるモード。正解すると点が入り、制限時間があるときは早く答えるほど点が高くなるよ。</p>
         </div>
-        <div class="qz-room-entry__actions">
+        <div class="qz-room-entry__actions app-entry__actions">
           <button class="btn btn-secondary" id="btnGoJoin">
             <span class="material-symbols-rounded">login</span>
             ルームに参加する
@@ -40,11 +38,11 @@
             <span class="material-symbols-rounded">add_circle</span>
             ルームを作る
           </button>
+          <button class="btn btn-ghost btn-sm qz-room-entry__watch" id="btnGoWatch">
+            <span class="material-symbols-rounded" aria-hidden="true">cast</span>
+            みんなにみせる画面をひらく
+          </button>
         </div>
-        <button class="btn btn-ghost btn-sm qz-room-entry__watch" id="btnGoWatch">
-          <span class="material-symbols-rounded" aria-hidden="true">cast</span>
-          みんなにみせる画面をひらく
-        </button>
       </section>
 
       <section class="qz-top-panel card">

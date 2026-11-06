@@ -297,3 +297,6 @@ body { background: var(--color-bg); }
   .og-ippon__title { font-size: 48px; }
   .og-ippon__text { font-size: 21px; }
 }
+
+/* はじめの画面の型（2026-11-06）: はじめの画面のあいだは、ツール名・ひとこと・絵を入口の面に出すので、上の見出しの名前とひとことは隠す（ほかの画面では今までどおり出る。みんなにみせる画面の印は隠さない） */
+body:has(#screen-top.active) .og-header > :is(.og-header__title, .og-header__sub) { display: none; }

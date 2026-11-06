@@ -5,8 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
   <title>コトバペア | あそびのたな</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
-  <link rel="stylesheet" href="../shared/css/design-system.css">
+  <link rel="stylesheet" href="../shared/css/design-system.css?v=20261106">
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
@@ -60,6 +61,9 @@
       font-size: 14px; color: var(--color-muted); line-height: 1.7; margin-bottom: 6px;
     }
     .kp-notes .material-symbols-rounded { font-size: 18px; color: var(--color-accent); flex-shrink: 0; margin-top: 3px; }
+    /* はじめの画面の型（2026-11-06）の中: 注意書きは印つきの行なので、左のあきを詰める */
+    body .app-entry > .kp-notes.app-entry__notes { padding-left: 16px; }
+    body .app-entry > .kp-notes.app-entry__notes li:last-child { margin-bottom: 0; }
     .kp-fineprint { font-size: 12px; color: var(--color-muted); line-height: 1.7; }
     /* 参加用のリンクでひらいたときの案内（参加画面のフォームの先頭） */
     .kp-fineprint--lead { font-size: 14px; line-height: 1.6; margin-bottom: 14px; }
@@ -293,33 +297,31 @@
     }
   </style>
 </head>
-<body>
+<body data-genre="kotoba">
 
 <!-- ═══════════════ screen-top ═══════════════ -->
 <div id="screen-top" class="screen">
   <div class="page">
-    <div class="kp-hero">
-      <div class="kp-hero__icon">
-        <span class="material-symbols-rounded" aria-hidden="true">link</span>
-      </div>
-      <h1 class="kp-hero__title">コトバペア</h1>
-    </div>
-    <div class="card">
-      <p class="kp-lead">意味がつながる2枚のことばカードを、みんなで相談しながらそろえるゲーム。裏向きのカードを順番に2枚ずつめくって、つながる組を探すよ。1ボードは5〜10分くらい。</p>
-      <ul class="kp-notes">
+    <section class="app-entry">
+      <div class="app-hero"><img class="app-illust" src="../assets/illustrations/kotoba-pair.webp" alt="" width="156" height="156" decoding="async" onerror="this.parentNode.remove()" /></div>
+      <h1 class="kp-hero__title app-title">コトバペア</h1>
+      <p class="kp-lead app-entry__lead">意味がつながる2枚のことばカードを、みんなで相談しながらそろえるゲーム。裏向きのカードを順番に2枚ずつめくって、つながる組を探すよ。1ボードは5〜10分くらい。</p>
+      <ul class="kp-notes app-entry__notes">
         <li><span class="material-symbols-rounded" aria-hidden="true">forum</span>声やチャットで相談しながら選んでOK</li>
         <li><span class="material-symbols-rounded" aria-hidden="true">groups</span>ひとりずつの点数はつけない。みんなの記録だけ</li>
         <li><span class="material-symbols-rounded" aria-hidden="true">schedule</span>時間制限はなし。迷ってもだいじょうぶ</li>
       </ul>
-    </div>
-    <button class="btn btn-primary btn-full btn-lg" onclick="goCreate()">
-      <span class="material-symbols-rounded" aria-hidden="true">add_circle</span>
-      ルームをつくる
-    </button>
-    <button class="btn btn-secondary btn-full btn-lg" onclick="goJoin()">
-      <span class="material-symbols-rounded" aria-hidden="true">login</span>
-      ルームに参加する
-    </button>
+      <div class="app-entry__actions">
+        <button class="btn btn-primary btn-full btn-lg" onclick="goCreate()">
+          <span class="material-symbols-rounded" aria-hidden="true">add_circle</span>
+          ルームをつくる
+        </button>
+        <button class="btn btn-secondary btn-full btn-lg" onclick="goJoin()">
+          <span class="material-symbols-rounded" aria-hidden="true">login</span>
+          ルームに参加する
+        </button>
+      </div>
+    </section>
   </div>
 </div>
 

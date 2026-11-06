@@ -845,3 +845,6 @@ button.sh-tile:hover { background: var(--color-accent-soft); }
   .sh-result__item { grid-template-columns: auto 1fr auto; }
   .sh-result__what { grid-column: 2 / 4; grid-row: 2; }
 }
+
+/* はじめの画面の型（2026-11-06）: はじめの画面のあいだは、ツール名・ひとこと・絵を入口の面に出すので、上の見出しの名前とひとことは隠す（ほかの画面では今までどおり出る。みんなにみせる画面の印は隠さない） */
+body:has(#screen-top.active) .sh-header > :is(.sh-header__title, .sh-header__sub) { display: none; }

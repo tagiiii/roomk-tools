@@ -220,3 +220,7 @@
     font-size: 11px;
   }
 }
+
+/* ── 種類の色（2026-11-06）: カードの裏は種類の濃い色（トークテーマカードと同じ。白い数字が読める濃さ） ── */
+.ot-card-back { background-color: var(--g-ink); border-color: #7E2550; }
+.ot-grid .flip-card:not(.dimmed):not(.flipped):hover .ot-card-back { background-color: #7E2550; }
