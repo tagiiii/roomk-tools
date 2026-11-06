@@ -708,6 +708,7 @@ const state = {
   voteSelection: null,   // ゲストが選択中の投票先 index
   orphanTimer: null,
   doneTimer: null,
+  doneToken: null,       // おしまい後の削除予約の識別（新しい予約・退出で古い予約を無効にする）
   revealTriggered: false,
   lastRoom: null,        // 最後に受け取ったルーム（設定の書き込み失敗時に描き直す）
 };
@@ -730,7 +731,9 @@ const getEstimatedServerNow = RoomkRTDB.now;
 const getHostDisconnectedAt = RoomkRTDB.getHostDisconnectedAt;
 
 function isRoomExpired(room) {
-  return RoomkRTDB.isRoomExpired(room, ORPHAN_TTL_MS);
+  // status を持たない room は、削除後に onDisconnect が発火して再生成された
+  // ゴースト（部分 room）。TTL を待たず期限切れ扱いにして掃除する
+  return RoomkRTDB.isRoomExpired(room, ORPHAN_TTL_MS) || (!!room && !room.status);
 }
 
 const genCode = RoomkRTDB.generateRoomCode;
@@ -1170,18 +1173,36 @@ async function finishGame() {
     if (!room || room.status !== STATUS.REVEAL) return;
     return { ...room, status: STATUS.DONE };
   });
-  if (committed) {
-    clearTimeout(state.doneTimer);
-    state.doneTimer = setTimeout(() => {
-      if (state.roomRef) state.roomRef.remove().catch(() => {});
-    }, 30000);
-  }
+  if (committed) scheduleDoneCleanup(state.roomRef);
+}
+
+// おしまいの30秒後にルームを消す（ホスト）。
+// 終了時点の ref を固定して予約する（可変な state.roomRef を読むと、あとで作った新しいルームを消しうる）。
+// 消す前に自分の onDisconnect 予約を取り消す（残ったままだと、削除後にタブを閉じたとき
+// hostConnected:false だけのゴースト room を作る）。消すのは、まだおしまい（done）のときだけ
+function scheduleDoneCleanup(roomRef) {
+  clearTimeout(state.doneTimer);
+  const token = {};
+  state.doneToken = token;
+  state.doneTimer = setTimeout(async () => {
+    if (state.doneToken !== token) return;
+    state.doneTimer = null;
+    state.doneToken = null;
+    await RoomkRTDB.cancelRoomOnDisconnect(roomRef);
+    // 購読中なので applyLocally は false（途中の値で画面を描き直さない）
+    roomRef.transaction((room) => {
+      if (!room) return null; // キャッシュがないときは null で問い合わせ、サーバーの値でやり直す
+      if (room.status !== STATUS.DONE) return;
+      return null;
+    }, undefined, false).catch(() => {});
+  }, 30000);
 }
 
 // ── 退出 ──
 async function leaveGame() {
   clearTimeout(state.orphanTimer);
   clearTimeout(state.doneTimer);
+  state.doneToken = null;
   clearSession();
   if (state.roomRef) {
     // remove の前に予約済み onDisconnect を取り消す（削除後の実切断でゴースト room が再生成されるのを防ぐ）
@@ -1197,7 +1218,7 @@ async function leaveGame() {
     role: null, nickname: null, roomCode: null, roomRef: null,
     currentScreen: null,
     castSelection: null, voteSelection: null,
-    orphanTimer: null, doneTimer: null, revealTriggered: false,
+    orphanTimer: null, doneTimer: null, doneToken: null, revealTriggered: false,
     lastRoom: null,
   });
   showOverlay('host-off-overlay', false);
@@ -1544,10 +1565,8 @@ function handleDone(room, players) {
   if (state.currentScreen !== 'done') {
     showScreen('done');
     // ホストは30秒後にルームを削除（finishGame のタイマーが生きていない場合の保険）
-    if (state.role === 'host' && !state.doneTimer) {
-      state.doneTimer = setTimeout(() => {
-        if (state.roomRef) state.roomRef.remove().catch(() => {});
-      }, 30000);
+    if (state.role === 'host' && !state.doneTimer && state.roomRef) {
+      scheduleDoneCleanup(state.roomRef);
     }
   }
   renderScoreChips('done-score', players, room);
