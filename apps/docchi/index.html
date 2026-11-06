@@ -11,7 +11,7 @@
   <!-- 共通デザインシステム -->
   <link rel="stylesheet" href="../shared/css/design-system.css" />
   <!-- アプリ固有スタイル -->
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css?v=20261106" />
 </head>
 <body>
 
@@ -25,13 +25,24 @@
         <p class="dc-header__sub">軽い2択を選んで遊ぼう。どっちを選んでもOK！</p>
       </header>
 
-      <div class="dc-cat">
-        <p class="dc-cat__label">カテゴリを選ぶ</p>
-        <div class="dc-cat__list" id="catList" role="group" aria-label="カテゴリを選ぶ"></div>
-      </div>
+      <div class="card dc-panel">
+        <div class="dc-intro">
+          <p class="dc-intro__lead">軽い2択のお題が1つずつ出てくる。好きなほうを選んで、「次へ」で次のお題へ。5〜10分くらい。</p>
+          <ul class="dc-intro__notes">
+            <li>どっちを選んでもOK。正解はない</li>
+            <li>理由はなくてもOK</li>
+            <li>決められないときは「その他」でもOK</li>
+          </ul>
+        </div>
 
-      <div class="dc-start">
-        <button class="btn btn-primary btn-lg" id="btnStart">はじめる</button>
+        <div class="dc-cat">
+          <p class="dc-cat__label">カテゴリを選ぶ</p>
+          <div class="dc-cat__list" id="catList" role="group" aria-label="カテゴリを選ぶ"></div>
+        </div>
+
+        <div class="dc-start">
+          <button class="btn btn-primary btn-lg" id="btnStart">はじめる</button>
+        </div>
       </div>
     </section>
 
