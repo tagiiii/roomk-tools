@@ -1087,6 +1087,17 @@
       }
     });
   }
+  // transaction の最初の計算が空のキャッシュで走らないよう、先に値を購読しておく。
+  // transaction の中で null なら「ルームがない」として扱う（前に読んだ値で代用すると、消えたルームを作り直してしまう）
+  function warmRoomCache(ref) {
+    return new Promise((resolve, reject) => {
+      const callback = (snap) => {
+        resolve({ snap, release: () => ref.off('value', callback) });
+      };
+      ref.on('value', callback, reject);
+    });
+  }
+
   async function guestJoinInner() {
     const nickname = document.getElementById('guest-nickname').value.trim();
     const roomCode = normalizeRoomCode(document.getElementById('guest-room-code').value);
@@ -1101,35 +1112,42 @@
     if (!await waitAuthOrExplain('guest-join-error')) return;
 
     const roomRef = db.ref(`pittari_rooms/${roomCode}`);
-    const snap = await roomRef.get();
+    const warm = await warmRoomCache(roomRef);
+    const snap = warm.snap;
     if (!snap.exists()) {
+      warm.release();
       showError('guest-join-error', 'ルームが見つかりません'); return;
     }
     const room = snap.val();
     if (isRoomExpired(room)) {
+      warm.release();
       await roomRef.remove().catch(() => {});
       showError('guest-join-error', 'このルームは期限切れのため終了しました'); return;
     }
     if (room.hostConnected === false) {
+      warm.release();
       showError('guest-join-error', 'ホストが切断されています'); return;
     }
     const alreadyInRoom = room.players && room.players[nickname];
 
     // ホストと同じニックネームでは復帰させない（hostPlays でも同じ／ホストのノードを消させないため）
     if (nickname === room.host || (alreadyInRoom && alreadyInRoom.isHost)) {
+      warm.release();
       showError('guest-join-error', 'そのニックネームはすでに使われています'); return;
     }
 
     if (room.status !== ST.WAITING) {
+      warm.release();
       showError('guest-join-error', 'このルームはすでにゲームが始まっています'); return;
     }
     if (alreadyInRoom) {
+      warm.release();
       showError('guest-join-error', 'そのニックネームはすでに使われています'); return;
     }
 
     let abortReason = null;
     const { committed, snapshot } = await roomRef.transaction((currentRoom) => {
-      const roomForJoin = currentRoom || room;
+      const roomForJoin = currentRoom; // null は「ルームがない」（先に購読しているので、空のキャッシュではない）
       if (!roomForJoin) { abortReason = 'not_found'; return; }
       if (isRoomExpired(roomForJoin)) { abortReason = 'expired'; return null; }
       if (roomForJoin.hostConnected === false) { abortReason = 'host_gone'; return; }
@@ -1145,7 +1163,7 @@
           [nickname]: { isHost: false, guess: null, decided: false },
         },
       };
-    });
+    }).finally(warm.release);
 
     if (!committed) {
       if (abortReason === 'not_found')   { showError('guest-join-error', 'ルームが見つかりません'); return; }
