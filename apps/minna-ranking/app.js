@@ -191,12 +191,14 @@ async function transactRetry(ref, update) {
   }
 }
 
+// 認証を待つ（ここだけを狭く囲む。transaction まで囲むと、送信が届いたか分からない失敗を認証の失敗と取り違える）。
+// authReady は一度失敗すると失敗のまま変わらないので、もう一度押してもらう案内はせず、読み直してもらう
 async function waitAuth() {
   try {
     await authReady;
     return true;
   } catch {
-    toast('接続できませんでした。ページを読み直してね');
+    toast('うまくつながらなかったよ。ページを読み直してね');
     return false;
   }
 }
@@ -269,6 +271,11 @@ function cleanupRoom() {
 }
 
 function connectToRoom(role, nickname, code, ref) {
+  // 前のつなぎの購読が残っていたら外す（同じ画面で購読が二重にならないように）
+  clearInterval(state.timerInterval);
+  state.timerInterval = null;
+  if (state.roomRef && state.roomCallback) state.roomRef.off('value', state.roomCallback);
+  if (state.connectedRef && state.connectedCallback) state.connectedRef.off('value', state.connectedCallback);
   state.role = role;
   state.nickname = nickname;
   state.roomCode = code;
@@ -281,6 +288,8 @@ function connectToRoom(role, nickname, code, ref) {
   if (new URLSearchParams(location.search).has('room')) history.replaceState(null, '', location.pathname);
 
   state.roomCallback = (snap) => {
+    // 外したあとに遅れて届いた値・前のルームの値では、画面を動かさない
+    if (state.roomRef !== ref) return;
     if (!snap.exists()) {
       cleanupRoom();
       showScreen('top');
@@ -369,15 +378,16 @@ function handleRoom(room) {
 }
 
 async function createRoom() {
-  if (state.busy) return;
+  if (state.busy || state.roomRef) return;
   const nickname = $('hostName').value.trim();
   const error = validNickname(nickname);
   if (error) { setError('createError', error); return; }
   setError('createError', '');
-  if (!await waitAuth()) return;
+  // 認証待ちの間の二度押しでルームが2つできないよう、待つ前にロックする（作り終わるまで外さない）
   state.busy = true;
   $('btnCreateRoom').disabled = true;
   try {
+    if (!await waitAuth()) return;
     const uid = firebase.auth().currentUser.uid;
     const joinedAt = RoomkRTDB.now();
     for (let attempt = 0; attempt < 5; attempt++) {
@@ -428,7 +438,7 @@ function roomCodeImeError(code) {
 }
 
 async function joinRoom() {
-  if (state.busy) return;
+  if (state.busy || state.roomRef) return;
   const nickname = $('guestName').value.trim();
   const code = normalizeRoomCode($('joinCode').value);
   const error = validNickname(nickname);
@@ -443,11 +453,12 @@ async function joinRoom() {
     return;
   }
   setError('joinError', '');
-  if (!await waitAuth()) return;
+  // 認証待ちの間の二度押しで参加が2回走らないよう、待つ前にロックする（参加し終わるまで外さない）
   state.busy = true;
   $('btnJoinRoom').disabled = true;
   let release = null;
   try {
+    if (!await waitAuth()) return;
     const ref = db.ref(DB_PREFIX + '/' + code);
     // 読み取った時点の値を transaction の代わりの値に使わない（やり直しの間にホストがルームを閉じたとき、
     // 古い値で閉じたルームを作り直してしまう）。参加が終わるまで購読して、手元の値を最新に保つ

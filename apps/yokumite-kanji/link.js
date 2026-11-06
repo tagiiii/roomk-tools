@@ -100,10 +100,24 @@ function clearDeadRoom(roomRef, meta) {
   return meta ? removeExpiredRoom(roomRef, meta) : roomRef.remove().catch(warn('leftover cleanup failed'));
 }
 
+// 匿名認証を待つ。失敗したら Error('auth') を投げる（ここだけを狭く囲む。
+// transaction まで囲むと、送信が届いたか分からない失敗を認証の失敗と取り違える）。
+// authReady は一度失敗すると失敗のまま変わらないので、呼ぶ側はもう一度ためす案内をせず、読み直してもらう
+export const AUTH_FAILED = 'auth';
+async function waitAuth() {
+  try {
+    await init().authReady;
+  } catch (error) {
+    warn('auth failed')(error);
+    throw new Error(AUTH_FAILED);
+  }
+}
+
 // ── ルームを作る（見る側） ──
-// できたルームコードを返す。切断時の予約を張る前なので「切断中」として作り、つないだあとの在室確認で接続中にする
+// できたルームコードを返す。切断時の予約を張る前なので「切断中」として作り、つないだあとの在室確認で接続中にする。
+// 認証の失敗は Error('auth')、空きコードが見つからないときは Error('no free room code')
 export async function createRoom() {
-  await init().authReady;
+  await waitAuth();
   const uid = currentUid();
   for (let i = 0; i < CREATE_TRIES; i += 1) {
     const code = RoomkRTDB.generateRoomCode();
@@ -164,11 +178,15 @@ async function claimSeat(code, pid) {
 }
 
 // ── つなぐ ──
-// 返り値: { ok: true, link } ／ { ok: false, reason: 'gone'（ルームがない・終わっている）| 'error'（通信の失敗） }
+// 返り値: { ok: true, link } ／ { ok: false, reason: 'gone'（ルームがない・終わっている）| 'auth'（認証の失敗）| 'error'（通信の失敗） }
 export async function openLink(code, role, pid) {
+  if (!PID_RE.test(pid)) return { ok: false, reason: 'error' };
   try {
-    if (!PID_RE.test(pid)) return { ok: false, reason: 'error' };
-    await init().authReady;
+    await waitAuth();
+  } catch {
+    return { ok: false, reason: AUTH_FAILED };
+  }
+  try {
     const roomRef = roomRefOf(code);
     if (role === 'viewer') {
       const meta = (await roomRef.child('meta').once('value')).val();

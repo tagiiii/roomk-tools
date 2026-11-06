@@ -478,6 +478,7 @@ function showScreen(id) {
   document.getElementById('screen-' + id).classList.add('active');
   state.currentScreen = id;
   window.scrollTo(0, 0);
+  if (ENTRY_SCREENS.includes(id)) resetRoomEntry();
 }
 function initial(name) { return name ? name.charAt(0) : '?'; }
 const generateCode = RoomkRTDB.generateRoomCode;
@@ -688,17 +689,69 @@ function focusChangedName() {
   document.getElementById('changed-name-input').focus();
 }
 
-// ===== Host: Create Room =====
-async function hostCreateRoom() {
-  const nick = document.getElementById('host-nickname').value.trim();
-  if (!nick)         { toast('ニックネームを入力してください'); return; }
-  if (nick.length > 8) { toast('8文字以内で入力してください'); return; }
-  if (!validNick(nick, 8)) { toast('ニックネームに使えない文字があります'); return; }
-
-  const btn = (typeof event !== 'undefined' && event?.target?.closest('button')) || null;
+// ===== ルーム作成・参加の二度押しのロックと認証待ち =====
+// ロックは処理の最初から終わり（transaction の完了）まで。入れたらボタンは押せないまま（待合室が出るまでに
+// もう一度押せないように）、入れなかったら押せる状態とフォーカスを戻す。
+// 入口の画面（トップ・作成・参加）を出すたびに、ボタンとロックを戻す（showScreen。どの道でトップへ戻っても止まらないように）。
+// ロック中に入口の画面へ戻ったときは、その回の処理を取り消す（入れていたら自分の分を消して、ルームへは進まない）。
+// authReady は一度失敗すると固定されるので、再試行は案内せず読み込みなおしを案内する。
+// catch は authReady だけを囲む（transaction まで囲むと、届いたか分からない失敗を認証の失敗と取り違える）
+const AUTH_FAIL_MSG = 'うまくつながらなかったよ。ページを読み込みなおしてね';
+const ENTRY_SCREENS = ['top', 'host-setup', 'guest-join'];
+const ENTRY_BUTTON_IDS = ['host-create-btn', 'guest-join-btn'];
+let roomEntryBusy = false;
+let roomEntryGen = 0;
+function resetRoomEntry() {
+  roomEntryGen += 1;
+  roomEntryBusy = false;
+  ENTRY_BUTTON_IDS.forEach(id => { const b = document.getElementById(id); if (b) b.disabled = false; });
+}
+async function withEntryLock(buttonId, fn) {
+  if (roomEntryBusy) return;
+  roomEntryBusy = true;
+  const gen = roomEntryGen;
+  const isCurrent = () => gen === roomEntryGen;
+  const btn = document.getElementById(buttonId);
+  const hadFocus = !!btn && document.activeElement === btn;
   if (btn) btn.disabled = true;
+  let entered = false;
+  try {
+    entered = await fn(isCurrent);
+  } finally {
+    // 途中で入口の画面へ戻った回は、もう戻してあるので触らない
+    if (isCurrent()) {
+      roomEntryBusy = false;
+      if (btn && !entered) {
+        btn.disabled = false;
+        if (hadFocus) btn.focus({ preventScroll: true });
+      }
+    }
+  }
+}
+async function waitAuthOrExplain(report) {
   try {
     await authReady;
+    return true;
+  } catch (e) {
+    console.error('[name-change] auth failed', e);
+    report(AUTH_FAIL_MSG);
+    return false;
+  }
+}
+
+// ===== Host: Create Room =====
+function hostCreateRoom() {
+  return withEntryLock('host-create-btn', hostCreateRoomInner);
+}
+async function hostCreateRoomInner(isCurrent) {
+  const nick = document.getElementById('host-nickname').value.trim();
+  if (!nick)         { toast('ニックネームを入力してください'); return false; }
+  if (nick.length > 8) { toast('8文字以内で入力してください'); return false; }
+  if (!validNick(nick, 8)) { toast('ニックネームに使えない文字があります'); return false; }
+
+  if (!await waitAuthOrExplain(toast)) return false;
+  if (!isCurrent()) return false;
+  try {
     let code;
     let roomRef = null;
     for (let i = 0; i < 5; i++) {
@@ -720,8 +773,12 @@ async function hostCreateRoom() {
     }
     if (!code || !roomRef) {
       toast('ルーム作成に失敗しました。もう一度お試しください');
-      if (btn) btn.disabled = false;
-      return;
+      return false;
+    }
+    if (!isCurrent()) {
+      // 作っている間に入口の画面へ戻った: できたルームを消して、ルームへは進まない
+      await roomRef.remove().catch(() => {});
+      return false;
     }
     window.RoomkStats?.count('room-create');
 
@@ -737,7 +794,12 @@ async function hostCreateRoom() {
     document.getElementById('waiting-code').textContent = code;
     document.getElementById('waiting-host-ctrl').style.display = 'block';
     showScreen('waiting');
-  } catch(e) { toast('エラー: ' + e.message); if (btn) btn.disabled = false; }
+    return true;
+  } catch(e) {
+    console.error('[name-change] create failed', e);
+    toast('ルーム作成に失敗しました。もう一度お試しください');
+    return false;
+  }
 }
 
 // ルームコード: 日本語入力のまま打った全角の英数字は半角に、小文字は大文字にそろえて読む。
@@ -784,34 +846,37 @@ function openJoinFromLink(code) {
 }
 
 // ===== Guest: Join =====
-async function guestJoin() {
+function guestJoin() {
+  return withEntryLock('guest-join-btn', guestJoinInner);
+}
+async function guestJoinInner(isCurrent) {
   const reportJoinError = message => RoomkRTDB.showFormError('join-form-error', message);
   reportJoinError('');
   const code = normalizeRoomCode(document.getElementById('guest-code').value);
   const nick = document.getElementById('guest-nickname').value.trim();
-  if (!nick)          { reportJoinError('元の名前を入力してください'); return; }
-  if (nick.length > 12) { reportJoinError('12文字以内で入力してください'); return; }
-  if (!validNick(nick, 12)) { reportJoinError('名前に使えない文字があります'); return; }
+  if (!nick)          { reportJoinError('元の名前を入力してください'); return false; }
+  if (nick.length > 12) { reportJoinError('12文字以内で入力してください'); return false; }
+  if (!validNick(nick, 12)) { reportJoinError('名前に使えない文字があります'); return false; }
   const imeErr = roomCodeImeError(code);
-  if (imeErr) { reportJoinError(imeErr); return; }
-  if (!/^[A-Z0-9]{6}$/.test(code)) { reportJoinError('6文字の英数字コードを入力してください'); return; }
+  if (imeErr) { reportJoinError(imeErr); return false; }
+  if (!/^[A-Z0-9]{6}$/.test(code)) { reportJoinError('6文字の英数字コードを入力してください'); return false; }
 
-  const btn = (typeof event !== 'undefined' && event?.target?.closest('button')) || null;
-  if (btn) btn.disabled = true;
+  if (!await waitAuthOrExplain(reportJoinError)) return false;
+  if (!isCurrent()) return false;
   try {
-    await authReady;
     const roomRef = db.ref(`namechange_rooms/${code}`);
     const snap = await roomRef.get();
-    if (!snap.exists())                   { reportJoinError('ルームが見つかりません'); if(btn)btn.disabled=false; return; }
+    if (!snap.exists())                   { reportJoinError('ルームが見つかりません'); return false; }
     const room = snap.val();
     if (isRoomExpired(room)) {
       await removeExpiredRoom(roomRef).catch(() => {});
-      reportJoinError('このルームは期限切れのため終了しました'); if(btn)btn.disabled=false; return;
+      reportJoinError('このルームは期限切れのため終了しました'); return false;
     }
-    if (room.hostConnected === false)     { reportJoinError('GMが切断されています'); if(btn)btn.disabled=false; return; }
-    if (room.status !== 'waiting')        { reportJoinError('すでにゲームが始まっています'); if(btn)btn.disabled=false; return; }
-    if (room.host === nick || room.players?.[nick]) { reportJoinError('その名前はすでに使われています'); if(btn)btn.disabled=false; return; }
+    if (room.hostConnected === false)     { reportJoinError('GMが切断されています'); return false; }
+    if (room.status !== 'waiting')        { reportJoinError('すでにゲームが始まっています'); return false; }
+    if (room.host === nick || room.players?.[nick]) { reportJoinError('その名前はすでに使われています'); return false; }
 
+    if (!isCurrent()) return false;
     let abortReason = null;
     const { committed } = await joinTransaction(roomRef, (roomForJoin) => {
       if (!roomForJoin) { abortReason = 'not_found'; return; }
@@ -834,23 +899,33 @@ async function guestJoin() {
     });
 
     if (!committed) {
-      if (abortReason === 'not_found')   { reportJoinError('ルームが見つかりません'); if(btn)btn.disabled=false; return; }
+      if (abortReason === 'not_found')   { reportJoinError('ルームが見つかりません'); return false; }
       if (abortReason === 'expired') {
-        reportJoinError('このルームは期限切れのため終了しました'); if(btn)btn.disabled=false; return;
+        reportJoinError('このルームは期限切れのため終了しました'); return false;
       }
-      if (abortReason === 'host_gone')   { reportJoinError('GMが切断されています'); if(btn)btn.disabled=false; return; }
-      if (abortReason === 'not_waiting') { reportJoinError('すでにゲームが始まっています'); if(btn)btn.disabled=false; return; }
-      if (abortReason === 'nick_taken')  { reportJoinError('その名前はすでに使われています'); if(btn)btn.disabled=false; return; }
-      reportJoinError('参加に失敗しました'); if(btn)btn.disabled=false; return;
+      if (abortReason === 'host_gone')   { reportJoinError('GMが切断されています'); return false; }
+      if (abortReason === 'not_waiting') { reportJoinError('すでにゲームが始まっています'); return false; }
+      if (abortReason === 'nick_taken')  { reportJoinError('その名前はすでに使われています'); return false; }
+      reportJoinError('参加に失敗しました'); return false;
     }
 
+    if (!isCurrent()) {
+      // 参加している間に入口の画面へ戻った: 自分の分を消して、ルームへは進まない
+      await roomRef.child(`players/${nick}`).remove().catch(() => {});
+      return false;
+    }
     state.roomCode = code; state.nickname = nick; state.isHost = false;
     state.roomRef = roomRef;
     saveSession(); startListener(); startGuestPresence();
 
     document.getElementById('waiting-code').textContent = code;
     document.getElementById('waiting-guest-msg').style.display = 'block';
-  } catch(e) { reportJoinError('エラー: ' + e.message); if (btn) btn.disabled = false; }
+    return true;
+  } catch(e) {
+    console.error('[name-change] join failed', e);
+    reportJoinError('参加に失敗しました');
+    return false;
+  }
 }
 
 // ===== Room Listener =====

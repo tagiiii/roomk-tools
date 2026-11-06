@@ -356,7 +356,7 @@
         <p class="text-muted" style="font-size:12px; margin-top:6px">少人数で全員遊ぶときにチェック。進行に専念するときはそのままでOK</p>
       </div>
       <div class="ptm-error" id="host-nickname-error"></div>
-      <button class="btn btn-primary btn-full" onclick="hostCreateRoom()">ルームを作る</button>
+      <button class="btn btn-primary btn-full" id="btn-create-room" onclick="hostCreateRoom()">ルームを作る</button>
       <button class="btn btn-ghost btn-full" onclick="showScreen('top')">← 戻る</button>
     </div>
 
@@ -414,7 +414,7 @@
              maxlength="6" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="XXXXXX" autocomplete="off">
     </div>
     <div class="ptm-error" id="guest-join-error"></div>
-    <button class="btn btn-primary btn-full" onclick="guestJoin()">参加する</button>
+    <button class="btn btn-primary btn-full" id="btn-guest-join" onclick="guestJoin()">参加する</button>
     <button class="btn btn-ghost btn-full" onclick="showScreen('top')">← 戻る</button>
   </div>
 </div>
@@ -755,19 +755,31 @@
   }
 
   // 認証待ちの狭いガード。authReady は一度 reject すると固定されるため
-  // 再試行は案内せず、ページ再読み込みへ誘導する（B-20）
-  let _authWaitBusy = false;
+  // 再試行は案内せず、ページ再読み込みへ誘導する（B-20）。
+  // 二度押しのロックは、ここでなく作成・参加の処理全体（runRoomAction）でかける
   async function waitAuthOrExplain(errorId) {
-    if (_authWaitBusy) return false;
-    _authWaitBusy = true;
     try {
       await authReady;
       return true;
     } catch {
       showError(errorId, 'うまくつながらなかったよ。ページを読み込み直してね');
       return false;
+    }
+  }
+
+  // ルームの作成・参加の二度押しのロック。認証を待つ間だけでなく、transaction が終わるまでかける
+  //（認証が済んだあとのダブルクリックでルームが2つできないように）。終わったらボタンを戻す
+  let _roomActionBusy = false;
+  async function runRoomAction(buttonId, action) {
+    if (_roomActionBusy || state.roomRef) return;
+    _roomActionBusy = true;
+    const btn = document.getElementById(buttonId);
+    if (btn) btn.disabled = true;
+    try {
+      await action();
     } finally {
-      _authWaitBusy = false;
+      _roomActionBusy = false;
+      if (btn) btn.disabled = false;
     }
   }
 
@@ -959,11 +971,13 @@
   // ════════════════════════════════════
   // 作成が例外で終わったとき（送信後の切断・権限エラーなど）も無反応にしない
   async function hostCreateRoom() {
-    try { await hostCreateRoomInner(); }
-    catch (error) {
-      console.error('[pittari-meter] create failed', error);
-      showError('host-nickname-error', 'ルーム作成に失敗しました。もう一度お試しください');
-    }
+    await runRoomAction('btn-create-room', async () => {
+      try { await hostCreateRoomInner(); }
+      catch (error) {
+        console.error('[pittari-meter] create failed', error);
+        showError('host-nickname-error', 'ルーム作成に失敗しました。もう一度お試しください');
+      }
+    });
   }
   async function hostCreateRoomInner() {
     const nickname = document.getElementById('host-nickname').value.trim();
@@ -1065,11 +1079,13 @@
   // ════════════════════════════════════
   // 参加が例外で終わったとき（送信後の切断・権限エラーなど）も無反応にしない
   async function guestJoin() {
-    try { await guestJoinInner(); }
-    catch (error) {
-      console.error('[pittari-meter] join failed', error);
-      showError('guest-join-error', '参加に失敗しました。もう一度お試しください');
-    }
+    await runRoomAction('btn-guest-join', async () => {
+      try { await guestJoinInner(); }
+      catch (error) {
+        console.error('[pittari-meter] join failed', error);
+        showError('guest-join-error', '参加に失敗しました。もう一度お試しください');
+      }
+    });
   }
   async function guestJoinInner() {
     const nickname = document.getElementById('guest-nickname').value.trim();
