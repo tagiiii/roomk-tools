@@ -91,6 +91,11 @@
   function rotateCells(cells, n) { return cells.map(([x, y]) => [n - 1 - y, x]); }
 
   const SPAWN_Y = -2; // 出る所（箱の上の段が y = -2）
+  // 出たあと、入ればすぐ1段下げる（よく知られた出かたと同じ。ふだんは盤のいちばん上の段に見える）
+  function dropOne(g) {
+    const p = g.piece;
+    if (p && fitsG(g, p, p.cells, p.x, p.y + 1)) p.y++;
+  }
 
   function newPiece(spec) {
     const s = SHAPES[spec.kind];
@@ -175,15 +180,16 @@
     fillQueue(g);
     g.holdUsed = !!spec;
     p.y = SPAWN_Y;
-    if (fitsG(g, p, p.cells, p.x, p.y + 1)) p.y++;
-    else if (!fitsG(g, p, p.cells, p.x, p.y)) {
+    if (!fitsG(g, p, p.cells, p.x, p.y)) {
       // おしまいのときは、出せなかったブロックを重なったまま残す（なぜここまでになったか盤で見えるように。もう動かせない）
       if (g.onFull === 'end') { g.piece = p; g.over = true; g.overBy = 'spawn'; return { full: true }; }
       resetBoard(g);
       g.piece = p;
+      dropOne(g);
       return { full: true, cleared: true };
     }
     g.piece = p;
+    dropOne(g);
     return { full: false };
   }
 
@@ -383,15 +389,23 @@
     g.holdUsed = !!s.holdUsed;
     g.b2b = s.b2b === true;
     g.combo = Number.isInteger(s.combo) && s.combo >= -1 ? s.combo : -1;
-    if (s.out === true) { g.piece = null; g.over = true; return g; }
+    if (s.out === true) {
+      g.over = true;
+      g.overBy = ['spawn', 'top', 'jama'].includes(s.overBy) ? s.overBy : null;
+      // つぎが出る所に入らなかったときは、出せなかったブロック（列から最後に取り出したもの）を出る所に戻す。
+      // とっておくで出したときは、どのブロックだったか残っていないので出さない
+      if (g.overBy === 'spawn' && !s.holdUsed) g.piece.y = SPAWN_Y;
+      else g.piece = null;
+      return g;
+    }
     // 落ちていた途中のブロックは、出る所から出なおす
     const p = g.piece;
     p.y = SPAWN_Y;
-    if (fitsG(g, p, p.cells, p.x, p.y + 1)) p.y++;
-    else if (!fitsG(g, p, p.cells, p.x, p.y)) {
-      if (g.onFull === 'end') { g.piece = null; g.over = true; }
-      else { resetBoard(g); p.y++; }
+    if (!fitsG(g, p, p.cells, p.x, p.y)) {
+      if (g.onFull === 'end') { g.over = true; g.overBy = 'spawn'; return g; }
+      resetBoard(g);
     }
+    dropOne(g);
     return g;
   }
 

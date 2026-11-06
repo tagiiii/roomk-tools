@@ -510,4 +510,37 @@ t('読み込み直し: 見えない段も送って戻せる', () => {
   assert.deepStrictEqual(E.unpackHidden('へん'), E.emptyHidden());
 });
 
+t('出る所: 出る所に入らなければ、1段下があいていてもおしまい（先に出る所を確かめる）', () => {
+  const g = E.createGame({ seed: 5, onFull: 'end' });
+  const kind = g.queue[0].kind;
+  const p = E.newPiece({ kind });
+  // 出る所（y = -2）でブロックが使うマスのうち、1段下では使わないマスを1つうめる
+  const at = (y) => p.cells.map(([cx, cy]) => (p.x + cx) + ',' + (y + cy));
+  const lower = new Set(at(-1));
+  const [x, y] = at(-2).find((k) => !lower.has(k)).split(',').map(Number);
+  g.hidden[E.HB + y][x] = 'jama';
+  const r = E.spawn(g);
+  assert.ok(r.full && g.over && g.overBy === 'spawn', kind);
+  const c = E.createGame({ seed: 5, onFull: 'clear' });
+  c.hidden[E.HB + y][x] = 'jama';
+  const rc = E.spawn(c);
+  assert.ok(rc.full && rc.cleared && !c.over);
+  assert.strictEqual(c.piece.y, -1, 'からにしたあとも、すぐ1段下がる');
+});
+
+t('読み込み直し: ここまでになったわけと、出せなかったブロックが戻る', () => {
+  const g = E.createGame({ seed: 5, onFull: 'end' });
+  for (const y of [-2, -1]) for (let x = 3; x < 7; x++) g.hidden[E.HB + y][x] = 'jama';
+  E.spawn(g);
+  assert.strictEqual(g.overBy, 'spawn');
+  const saved = { b: E.packBoard(g.board), h: E.packHidden(g.hidden), taken: g.taken, out: true, overBy: g.overBy, holdUsed: g.holdUsed };
+  const r = E.restoreGame({ seed: 5, onFull: 'end' }, saved);
+  assert.ok(r.over && r.overBy === 'spawn');
+  assert.ok(r.piece && r.piece.kind === g.piece.kind && r.piece.y === -2 && r.piece.x === g.piece.x);
+  const r2 = E.restoreGame({ seed: 5, onFull: 'end' }, { ...saved, overBy: 'jama' });
+  assert.ok(r2.over && r2.overBy === 'jama' && r2.piece === null);
+  const r3 = E.restoreGame({ seed: 5, onFull: 'end' }, { ...saved, overBy: 'へん' });
+  assert.ok(r3.over && r3.overBy === null && r3.piece === null);
+});
+
 console.log('engine: ' + n + ' 項目 OK');

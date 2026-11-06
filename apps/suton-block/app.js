@@ -1411,6 +1411,7 @@ function sendBoard(done = false, extra = null) {
     done: done || !!(state.run && state.run.done),
     // 対戦の「ここまで」（いっぱいで止まった）。時刻は1回だけ決める（順位に使う）
     out: !!g.over,
+    overBy: g.over ? g.overBy || null : null, // ここまでになったわけ（読み込み直したときも出すため）
     outAt: g.over && state.run ? (state.run.outAt = state.run.outAt || RoomkRTDB.now()) : null,
   };
   state.roomRef.update({ ['boards/' + state.nickname]: board, ...(extra || {}) })
