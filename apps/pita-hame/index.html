@@ -53,51 +53,6 @@
       gap: 14px;
       margin-top: 32px;
     }
-    .ph-menu-btn {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      width: 100%;
-      padding: 18px 20px;
-      border: 2px solid var(--color-border);
-      border-radius: var(--radius-box);
-      background: var(--color-surface);
-      cursor: pointer;
-      text-align: left;
-      transition: border-color var(--transition-base), transform var(--transition-base);
-      font-family: inherit;
-      color: var(--color-text);
-    }
-    .ph-menu-btn:hover:not(:disabled) { border-color: var(--color-accent); transform: translateY(-1px); }
-    /* はじめの画面の型（2026-11-06）の中では、ほかのツールと同じボタンの見た目にそろえる（主ボタンはティール・ほかは枠線） */
-    .app-entry .ph-menu-btn { padding: 12px 18px; border-color: var(--color-primary); border-radius: var(--radius-btn); }
-    .app-entry .ph-menu-btn .ph-menu-btn__label { font-size: 17px; }
-    .app-entry .ph-menu-btn .ph-menu-btn__icon { color: var(--color-primary); }
-    .app-entry #btnCreate { background: var(--color-accent); border-color: var(--color-accent); color: #fff; }
-    .app-entry #btnCreate :is(.ph-menu-btn__icon, .ph-menu-btn__desc) { color: #fff; }
-    .app-entry #btnCreate:hover:not(:disabled) { background: #1A4850; border-color: #1A4850; }
-    .ph-menu-btn:disabled { opacity: 0.55; cursor: default; }
-    .ph-menu-btn__icon {
-      font-size: 30px;
-      color: var(--color-accent);
-      flex-shrink: 0;
-    }
-    .ph-menu-btn:disabled .ph-menu-btn__icon { color: var(--color-muted); }
-    .ph-menu-btn__body { flex: 1; min-width: 0; }
-    .ph-menu-btn__label { font-size: 19px; font-weight: 700; }
-    .ph-menu-btn__soon {
-      display: inline-block;
-      margin-left: 8px;
-      font-size: 12px;
-      font-weight: 700;
-      color: var(--color-muted);
-      background: var(--color-bg);
-      border: 1px solid var(--color-border);
-      border-radius: var(--radius-full);
-      padding: 1px 9px;
-      vertical-align: middle;
-    }
-    .ph-menu-btn__desc { font-size: var(--font-size-sub); color: var(--color-muted); margin-top: 2px; }
 
     /* ── 難易度選択 ── */
     .ph-subhead {
@@ -505,26 +460,14 @@
         <h1 class="ph-top__title app-title">ピタハメ</h1>
         <p class="ph-top__lead app-catch">カラフルなピースを回して動かして、グレーの型（かた）をぴったり埋めるパズル。</p>
         <div class="ph-top__menu app-entry__actions">
-          <button type="button" class="ph-menu-btn" id="btnCreate">
-            <span class="material-symbols-rounded ph-menu-btn__icon" aria-hidden="true">add_home</span>
-            <span class="ph-menu-btn__body">
-              <span class="ph-menu-btn__label">ルームを作る</span>
-              <span class="ph-menu-btn__desc">みんなで同じ問題に挑戦する</span>
-            </span>
+          <button type="button" class="btn btn-primary btn-full btn-lg" id="btnCreate">
+            <span class="material-symbols-rounded" aria-hidden="true">add_home</span>ルームを作る
           </button>
-          <button type="button" class="ph-menu-btn" id="btnJoin">
-            <span class="material-symbols-rounded ph-menu-btn__icon" aria-hidden="true">login</span>
-            <span class="ph-menu-btn__body">
-              <span class="ph-menu-btn__label">ルームに参加する</span>
-              <span class="ph-menu-btn__desc">コードを入れてルームに参加する</span>
-            </span>
+          <button type="button" class="btn btn-secondary btn-full" id="btnJoin">
+            <span class="material-symbols-rounded" aria-hidden="true">login</span>ルームに参加する
           </button>
-          <button type="button" class="ph-menu-btn" id="btnSolo">
-            <span class="material-symbols-rounded ph-menu-btn__icon" aria-hidden="true">extension</span>
-            <span class="ph-menu-btn__body">
-              <span class="ph-menu-btn__label">ひとりで練習</span>
-              <span class="ph-menu-btn__desc">自分のペースで1問ずつ挑戦する</span>
-            </span>
+          <button type="button" class="btn btn-secondary btn-full" id="btnSolo">
+            <span class="material-symbols-rounded" aria-hidden="true">extension</span>ひとりで練習
           </button>
         </div>
       </div>
