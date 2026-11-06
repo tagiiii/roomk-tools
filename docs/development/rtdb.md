@@ -56,7 +56,7 @@
 ### viewport 設定（Realtime Database アプリ）
 
 Realtime Database アプリでは、ゲーム中の誤ズームで操作が崩れることを防ぐため `maximum-scale=1` を指定する。
-`maximum-scale=1` はアクセシビリティ上は推奨されない指定だが、room-K ツールでは画面共有中の安定した進行を優先する。
+`maximum-scale=1` はアクセシビリティ上は推奨されない指定だが、このツール群（あそびのたな）では画面共有中の安定した進行を優先する。
 
 ```html
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">

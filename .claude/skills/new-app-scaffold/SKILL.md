@@ -38,6 +38,7 @@ description: room-Kの本体アプリを新規追加し、必要な共通機能�
 ## 3. ポータル登録
 
 `apps/index.html` にカードを追加する。既存カード（例: otona-talk のカード）の HTML 構造をそのままコピーして書き換える:
+- 各ページの `<title>` は「ツール名 | あそびのたな」
 - `app-card__icon` の Material Symbols アイコン名
 - `app-card__illust` のイラスト（`apps/assets/illustrations/{app}.webp`）。作り方と決まりは `docs/development/illustrations.md`。fal を使うので、作るかはオーナーに確かめる。まだないときは `<img>` を入れない（アイコンが出る）
 - `app-card__name` / `app-card__hitokoto`（何をするツールかを20字前後で1行。docs/development/app-registration.md）/ `app-card__desc`

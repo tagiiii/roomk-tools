@@ -1663,7 +1663,7 @@ function connectWatch(code, ref) {
   state.tickTimer?.stop();
   state.tickTimer = startTicker(updateTimer);
   // 共有するタブ・ウィンドウを選ぶときに見分けられるよう、題名と見出しを変える
-  document.title = 'みんなにみせる画面 | 大富豪 | room-K';
+  document.title = 'みんなにみせる画面 | 大富豪 | あそびのたな';
   document.body.classList.add('is-watch');
   $('watchBadge').hidden = false;
   state.roomCode = code;

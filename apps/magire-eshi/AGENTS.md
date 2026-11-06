@@ -86,7 +86,7 @@ TOP（screen-top）
 - ルームに一切書き込まない: players にも入らない・onDisconnect 予約なし・期限切れのルームも削除しない・done 後の削除もしない。匿名認証だけは要る（ルールが `auth != null`）
 - 描画は `#spec-top` / `#spec-canvas-area`（キャンバス・凡例・残り時間）/ `#spec-content`。HTML は変わったときだけ差し替える。キャンバス `#cv-spec` は `touch-action: auto`（スマホで画面をスクロールできる）
 - 結果の部品（`resultBannerHtml` / `resultFakeCardHtml` / `resultTopicCardHtml` / `resultGuessBoxHtml` / `resultVotesHtml` / `resultIsFinal`）と `renderCanvas`・`renderLegend` は参加者の画面と共用。これらを変えるときは、みんなにみせる画面でも確かめる
-- タブの題名を「みんなにみせる画面 | まぎれ絵師 | room-K」にする（共有するタブを選ぶときに間違えないため）
+- タブの題名を「みんなにみせる画面 | まぎれ絵師 | あそびのたな」にする（共有するタブを選ぶときに間違えないため）
 
 ### フェーズ別の表示
 **お題を DOM に書くのは決着後（`resultIsFinal`: にげきり・中断・逆転判定済み）の結果だけ。まぎれ絵師がだれかは開票後（result）だけ。**
