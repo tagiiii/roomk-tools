@@ -147,7 +147,8 @@ async function endWindow(code) {
   check('D5 おもしろゲージが半分たまる（数字は出さない）', await waitUntil(async () => (await L.gauge(tv)) === 50) && !/\d+人/.test(await text(tv, '#stage')));
   await endWindow(code);
   check('D7 押せる時間が終わると、名前なしで「これまでに出た答え」へ', await waitUntil(async () => (await stage(g2)) === '' && (await listRows(g2, '#shownList')).some((r) => r.t === 'にばんめ' && r.w === '' && !r.ippon)));
-  check('D8 書いた人には「あなた」', (await listRows(g1, '#shownList')).some((r) => r.t === 'にばんめ' && r.w === 'あなた'));
+  // g2 の画面のあと、書いた人（g1）の画面が追いつくのを待ってから確かめる
+  check('D8 書いた人には「あなた」', await waitUntil(async () => (await listRows(g1, '#shownList')).some((r) => r.t === 'にばんめ' && r.w === 'あなた')));
   check('D9 審査が終わったら、また出せる', await waitUntil(async () => !(await g1.page.isDisabled('#btnAnswer'))));
   await g1.page.click('#btnAnswer');
   await waitUntil(async () => (await stage(g2)) === 'さんばんめ');
@@ -186,7 +187,7 @@ async function endWindow(code) {
   await setMode(h, '審査員');
 
   // ── E. おしまい・もう一回あそぶ ──
-  await h.page.click('#btnFinish');
+  await h.page.evaluate(() => { document.getElementById('resultMenu').open = true; }); await h.page.click('#btnFinish');
   await waitScreen(g1, 'end');
   const counts = await g1.page.$$eval('#endCounts .og-counts__item', (els) => els.map((e) => e.innerText.replace(/\s+/g, ' ').trim()));
   check('E1 一本の数（1本以上の人だけ）', counts.length === 1 && counts[0].includes('あお') && counts[0].includes('2本'), counts);
