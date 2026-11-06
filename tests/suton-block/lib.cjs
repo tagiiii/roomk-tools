@@ -107,6 +107,14 @@ async function newPage(context, label) {
   });
   page.on('pageerror', (err) => client.errors.push('pageerror: ' + err.message));
   page.on('dialog', (d) => d.accept());
+  // ホストのたまに使う操作（「そのほかの操作」）と待合室の「くわしい設定」は <details> にたたんである（2026-11-06）。
+  // このテストの手順はたたむ前に書いたものなので、操作や表示の確かめの前に、たたんだ欄を開いておく
+  const openAll = () => page.evaluate(() => document.querySelectorAll('details').forEach((d) => { d.open = true; })).catch(() => {});
+  for (const m of ['click', 'fill', 'check', 'uncheck', 'selectOption', 'press']) {
+    const orig = page[m].bind(page);
+    page[m] = async (...args) => { await openAll(); return orig(...args); };
+  }
+  client.openAll = openAll;
   clients.push(client);
   return client;
 }
@@ -123,8 +131,8 @@ async function open(c, query = '') {
 
 const text = (c, sel) => c.page.evaluate((s) => document.querySelector(s)?.textContent ?? null, sel);
 const waitText = (c, sel, part, timeout = 8000) => c.page.waitForFunction(([s, p]) => (document.querySelector(s)?.textContent || '').includes(p), [sel, part], { timeout });
-const visible = (c, sel) => c.page.evaluate((s) => { const n = document.querySelector(s); return !!n && !n.closest('[hidden]') && n.getClientRects().length > 0; }, sel);
-const waitVisible = (c, sel, timeout = 8000) => c.page.waitForFunction((s) => { const n = document.querySelector(s); return !!n && !n.closest('[hidden]') && n.getClientRects().length > 0; }, sel, { timeout });
+const visible = async (c, sel) => { if (c.openAll) await c.openAll(); return c.page.evaluate((s) => { const n = document.querySelector(s); return !!n && !n.closest('[hidden]') && n.getClientRects().length > 0; }, sel); };
+const waitVisible = async (c, sel, timeout = 8000) => { if (c.openAll) await c.openAll(); return c.page.waitForFunction((s) => { const n = document.querySelector(s); return !!n && !n.closest('[hidden]') && n.getClientRects().length > 0; }, sel, { timeout }); };
 const screen = (c) => c.page.evaluate(() => document.querySelector('.sb-screen.active')?.id.replace('screen-', '') ?? null);
 const waitScreen = (c, id, timeout = 8000) => c.page.waitForFunction((x) => document.querySelector('.sb-screen.active')?.id === 'screen-' + x, id, { timeout });
 const overflow = (c) => c.page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
