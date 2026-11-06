@@ -111,6 +111,18 @@ body { background: var(--color-bg); }
   padding: 10px 12px; border-radius: var(--radius-sm);
   background: rgba(255, 255, 255, 0.94); color: var(--color-primary);
   font-weight: 700; text-align: center; line-height: 1.5;
+  pointer-events: none; /* 盤のマウス操作をじゃましない */
+}
+/* 盤の左に場所があるときは、盤の外の左に出す（盤にかぶせない。幅は layout で決める） */
+.sb-boardwrap.is-noteleft .sb-boardnote {
+  left: auto; right: calc(100% + 12px); top: 30%; width: var(--sb-note-w, 150px);
+  background: var(--color-surface); border: 1px solid var(--color-border);
+}
+/* 左に場所がないとき（スマホなど）は、盤にかぶせず、右の列（とっておく・つぎ…）の下のはしに重ねて出す */
+.sb-boardwrap:not(.is-noteleft) .sb-boardnote {
+  left: calc(100% + 16px); right: auto; top: auto; bottom: 0; width: var(--sb-side-w, 92px);
+  padding: 6px 8px; font-size: 12px; text-align: left;
+  background: var(--color-surface); border: 1px solid var(--color-border); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
 }
 .sb-pause {
   position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px;
