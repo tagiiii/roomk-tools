@@ -165,13 +165,23 @@ t('横1段がうまると消えて数える', () => {
   assert.strictEqual(g.board[E.H - 1].filter(Boolean).length, 2);
 });
 
-t('いっぱいになったら、からにしてつづける', () => {
+t('いっぱいになったら、からにしてつづける（つぎが出る所に入らない）', () => {
   const g = E.createGame({ seed: 5, onFull: 'clear' });
-  for (let y = 0; y < E.H; y++) for (let x = 0; x < E.W; x++) if (x !== 9) g.board[y][x] = 'jama';
+  // 盤の上の見えない2段（出る所）のまん中をうめる
+  for (const y of [-2, -1]) for (let x = 3; x < 7; x++) g.hidden[E.HB + y][x] = 'jama';
   const r = E.spawn(g);
   assert.ok(r.full && r.cleared);
   assert.ok(!g.over);
-  assert.strictEqual(g.board.flat().filter(Boolean).length, 0);
+  assert.strictEqual(g.board.flat().filter(Boolean).length + g.hidden.flat().filter(Boolean).length, 0);
+});
+
+t('出る所: 盤のすぐ上に出て1段下がる。盤のいちばん上の段がうまっていても、出る所があいていればつづく', () => {
+  const g = E.createGame({ seed: 5, onFull: 'end' });
+  assert.strictEqual(g.piece.y, -1, 'からの盤では1段下がって、盤のいちばん上の段に見える');
+  for (let y = 0; y < E.H; y++) for (let x = 0; x < E.W; x++) if (x !== 9) g.board[y][x] = 'jama';
+  const r = E.spawn(g);
+  assert.ok(!r.full && !g.over, '盤のいちばん上の段までうまっていても、出る所（見えない2段）に入ればつづく');
+  assert.strictEqual(g.piece.y, -2, '下がれないときは出た所のまま');
 });
 
 t('いっぱいになったら、おしまい', () => {
@@ -220,12 +230,20 @@ t('じゃまのあいた列にブロックを入れると消える', () => {
   assert.strictEqual(res.lines, 1);
 });
 
-t('じゃまで上にはみ出したら、からにしてつづける', () => {
+t('じゃまで押し上げても、見えない段に入るのでつづく（盤の上に出たマスは消えない）', () => {
+  const g = E.createGame({ seed: 4, onFull: 'end' });
+  g.board[1][5] = 'L';
+  const r = E.addGarbage(g, 3, 0);
+  assert.ok(!r.full && !g.over);
+  assert.strictEqual(g.hidden[E.HB - 2][5], 'L', '盤の1段目のマスは、3段上がって見えない段の -2 段目に');
+});
+
+t('じゃまで見えない段のいちばん上より上へ押し出したら、からにしてつづける', () => {
   const g = E.createGame({ seed: 4, onFull: 'clear' });
-  g.board[1][5] = 'jama';
+  g.hidden[1][5] = 'L'; // y = -19
   const r = E.addGarbage(g, 3, 0);
   assert.ok(r.full && r.cleared && !g.over);
-  assert.strictEqual(g.board.flat().filter(Boolean).length, 0);
+  assert.strictEqual(g.board.flat().filter(Boolean).length + g.hidden.flat().filter(Boolean).length, 0);
 });
 
 t('じゃまで押し上げられても、落ちているブロックは重ならない', () => {
@@ -287,26 +305,27 @@ t('読み込み直し: こわれた記録でも動く', () => {
   assert.strictEqual(g.taken, 1);
 });
 
-t('上にはみ出して置いても、段が消えればはみ出した分が下がって入る', () => {
-  const g = E.createGame({ seed: 3 });
+t('上にはみ出して置いても、つづく（はみ出したマスは見えない段に残る）。段が消えれば下がって入る', () => {
+  const g = E.createGame({ seed: 3, onFull: 'end' });
   g.board = E.emptyBoard();
-  // 下の2段を、0列だけあけてうめる。0列の上（1〜17段目）もうめて、たての棒がはみ出すようにする
   for (let y = 0; y < E.H; y++) for (let x = 0; x < E.W; x++) if (x !== 0 && (y >= E.H - 2)) g.board[y][x] = 'jama';
   for (let y = 2; y < E.H - 2; y++) g.board[y][1] = 'jama';
   g.piece = { kind: 'I', n: 4, rot: 1, cells: [[0, 0], [0, 1], [0, 2], [0, 3]], x: 0, y: -2 };
-  // 0列に、上2マスがはみ出した状態で置く（下の2マスは 0・1段目）。段は消えないので、いっぱい
+  // 0列に、上2マスがはみ出した状態で置く（下の2マスは 0・1段目）。一部が盤の中なのでつづく
   const r1 = E.lock(g);
-  assert.ok(r1.full, 'はみ出して消えなければいっぱい');
+  assert.ok(!r1.full && !g.over, '一部が盤の中ならつづく');
+  assert.strictEqual(g.hidden[E.HB - 1][0], 'I');
+  assert.strictEqual(g.hidden[E.HB - 2][0], 'I');
   const h = E.createGame({ seed: 3 });
   h.board = E.emptyBoard();
-  for (let x = 1; x < E.W; x++) { h.board[0][x] = 'jama'; h.board[1][x] = 'jama'; }
-  for (let y = 2; y < E.H; y++) for (let x = 1; x < E.W; x++) h.board[y][x] = 'jama';
+  for (let y = 0; y < E.H; y++) for (let x = 1; x < E.W; x++) h.board[y][x] = 'jama';
   h.piece = { kind: 'I', n: 4, rot: 1, cells: [[0, 0], [0, 1], [0, 2], [0, 3]], x: 0, y: -2 };
   const r2 = E.lock(h);
   assert.ok(!r2.full, '2段消えて、はみ出した2マスは入る');
   assert.strictEqual(r2.lines, 2);
   assert.strictEqual(h.board[0][0], 'I');
   assert.strictEqual(h.board[1][0], 'I');
+  assert.strictEqual(h.hidden.flat().filter(Boolean).length, 0);
 });
 
 // ── 対戦で送るじゃま（よく知られた対戦の表）──
@@ -430,14 +449,15 @@ t('読み込み直し: ここまでになった人は、そのまま', () => {
   assert.strictEqual(g.combo, 2);
 });
 
-t('おしまい: つぎが出せないときは、出せなかったブロックを残す（動かせない）', () => {
+t('おしまい: つぎが出る所に入らないときは、出せなかったブロックを残す（動かせない）', () => {
   const g = E.createGame({ seed: 5, onFull: 'end' });
-  for (let y = 0; y < 3; y++) for (let x = 0; x < E.W; x++) if (x !== 0) g.board[y][x] = 'jama';
+  for (const y of [-2, -1]) for (let x = 0; x < E.W; x++) if (x !== 0) g.hidden[E.HB + y][x] = 'jama';
   const r = E.spawn(g);
   assert.ok(r.full && g.over);
   assert.strictEqual(g.overBy, 'spawn');
   assert.ok(g.piece, '出せなかったブロックが残る');
-  assert.ok(!E.fits(g.board, g.piece, g.piece.cells, g.piece.x, g.piece.y));
+  assert.strictEqual(g.piece.y, -2);
+  assert.ok(!E.fits(g.board, g.piece, g.piece.cells, g.piece.x, g.piece.y, g.hidden));
   const before = JSON.stringify(g.piece);
   assert.ok(!E.move(g, 1, 0) && !E.rotate(g, 1));
   assert.strictEqual(JSON.stringify(g.piece), before);
@@ -445,10 +465,10 @@ t('おしまい: つぎが出せないときは、出せなかったブロック
   assert.strictEqual(E.hold(g), false);
 });
 
-t('おしまい: じゃまで押し上げられたら、じゃまが入った盤のまま止まる', () => {
+t('おしまい: じゃまで見えない段より上へ押し出されたら、じゃまが入った盤のまま止まる', () => {
   const g = E.createGame({ seed: 4, onFull: 'end' });
   g.board = E.emptyBoard();
-  g.board[1][5] = 'L';
+  g.hidden[1][5] = 'L'; // y = -19
   g.board[E.H - 1][2] = 'T';
   const r = E.addGarbage(g, 3, 0);
   assert.ok(r.full && g.over && !r.cleared);
@@ -459,18 +479,68 @@ t('おしまい: じゃまで押し上げられたら、じゃまが入った盤
     assert.strictEqual(g.board[y].filter((c) => c === 'jama').length, E.W - 1);
   }
   assert.strictEqual(g.board[E.H - 4][2], 'T', 'もとの段は3段上がる');
-  assert.strictEqual(g.board.flat().filter((c) => c === 'L').length, 0, '上にはみ出したマスは盤の外');
   assert.strictEqual(E.unpackBoard(E.packBoard(g.board))[E.H - 1][1], 'jama', '入ったじゃまも送る盤に入る');
 });
 
-t('おしまい: 上にはみ出して置いたら、わけは top', () => {
+t('おしまい: 全部が盤より上で置いたら、わけは top。一部でも盤の中ならつづく', () => {
   const g = E.createGame({ seed: 4, onFull: 'end' });
   g.board = E.emptyBoard();
-  for (let y = 2; y < E.H; y++) g.board[y][0] = 'jama';
-  g.piece = { kind: 'I', n: 4, rot: 1, cells: [[2, 0], [2, 1], [2, 2], [2, 3]], x: -2, y: -4 };
+  for (let y = 0; y < E.H; y++) g.board[y][0] = 'jama';
+  g.piece = { kind: 'I', n: 4, rot: 1, cells: [[2, 0], [2, 1], [2, 2], [2, 3]], x: -2, y: -6 };
   E.hardDrop(g);
   assert.ok(g.over);
   assert.strictEqual(g.overBy, 'top');
+  const h = E.createGame({ seed: 4, onFull: 'end' });
+  h.board = E.emptyBoard();
+  for (let y = 2; y < E.H; y++) h.board[y][0] = 'jama';
+  h.piece = { kind: 'I', n: 4, rot: 1, cells: [[2, 0], [2, 1], [2, 2], [2, 3]], x: -2, y: -6 };
+  E.hardDrop(h);
+  assert.ok(!h.over, '2マスが盤の中ならつづく');
+});
+
+t('読み込み直し: 見えない段も送って戻せる', () => {
+  const g = E.createGame({ seed: 8, onFull: 'end' });
+  assert.strictEqual(E.packHidden(g.hidden), '', '何もなければ空の文字');
+  g.hidden[E.HB - 1][3] = 'S';
+  g.hidden[E.HB - 3][0] = 'jama';
+  const h = E.packHidden(g.hidden);
+  assert.strictEqual(h.length, E.W * E.HB);
+  const r = E.restoreGame({ seed: 8, onFull: 'end' }, { b: E.packBoard(g.board), h, taken: 1 });
+  assert.deepStrictEqual(r.hidden, g.hidden);
+  assert.deepStrictEqual(E.unpackHidden('へん'), E.emptyHidden());
+});
+
+t('出る所: 出る所に入らなければ、1段下があいていてもおしまい（先に出る所を確かめる）', () => {
+  const g = E.createGame({ seed: 5, onFull: 'end' });
+  const kind = g.queue[0].kind;
+  const p = E.newPiece({ kind });
+  // 出る所（y = -2）でブロックが使うマスのうち、1段下では使わないマスを1つうめる
+  const at = (y) => p.cells.map(([cx, cy]) => (p.x + cx) + ',' + (y + cy));
+  const lower = new Set(at(-1));
+  const [x, y] = at(-2).find((k) => !lower.has(k)).split(',').map(Number);
+  g.hidden[E.HB + y][x] = 'jama';
+  const r = E.spawn(g);
+  assert.ok(r.full && g.over && g.overBy === 'spawn', kind);
+  const c = E.createGame({ seed: 5, onFull: 'clear' });
+  c.hidden[E.HB + y][x] = 'jama';
+  const rc = E.spawn(c);
+  assert.ok(rc.full && rc.cleared && !c.over);
+  assert.strictEqual(c.piece.y, -1, 'からにしたあとも、すぐ1段下がる');
+});
+
+t('読み込み直し: ここまでになったわけと、出せなかったブロックが戻る', () => {
+  const g = E.createGame({ seed: 5, onFull: 'end' });
+  for (const y of [-2, -1]) for (let x = 3; x < 7; x++) g.hidden[E.HB + y][x] = 'jama';
+  E.spawn(g);
+  assert.strictEqual(g.overBy, 'spawn');
+  const saved = { b: E.packBoard(g.board), h: E.packHidden(g.hidden), taken: g.taken, out: true, overBy: g.overBy, holdUsed: g.holdUsed };
+  const r = E.restoreGame({ seed: 5, onFull: 'end' }, saved);
+  assert.ok(r.over && r.overBy === 'spawn');
+  assert.ok(r.piece && r.piece.kind === g.piece.kind && r.piece.y === -2 && r.piece.x === g.piece.x);
+  const r2 = E.restoreGame({ seed: 5, onFull: 'end' }, { ...saved, overBy: 'jama' });
+  assert.ok(r2.over && r2.overBy === 'jama' && r2.piece === null);
+  const r3 = E.restoreGame({ seed: 5, onFull: 'end' }, { ...saved, overBy: 'へん' });
+  assert.ok(r3.over && r3.overBy === null && r3.piece === null);
 });
 
 console.log('engine: ' + n + ' 項目 OK');

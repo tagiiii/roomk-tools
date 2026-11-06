@@ -12,6 +12,9 @@ const SPEED_LABEL = { slow: 'ゆっくり', normal: 'ふつう', fast: 'はや�
 const ROOM_TIMES = [120, 180, 300];
 const NO_TIME_CAP_S = 30 * 60; // 対戦の「時間なし」も、ルームが残りつづけないよう30分で区切る（画面には時間を出さない）
 const BATTLE_END_MS = 800;     // 対戦で1人になってから、最後の盤が届くのを待って結果を出す
+// あそぶ盤の上に、盤のすぐ上の見えない段を2段だけ出す（ブロックが出る所。押し上げられたマスや、はみ出して置いたマスも見える）
+const TOP_ROWS = 2;
+const TOP_COLOR = '#4B5866';
 const LOCK_MS = 500;        // 着地してから置かれるまで
 const LOCK_RESETS = 15;     // 着地したまま動かして待ちを延ばせる回数
 const COUNTDOWN_MS = 3500;  // 「はじめる」から落ちはじめるまで（3・2・1）
@@ -1291,7 +1294,7 @@ function playing() {
 
 function grounded() {
   const g = state.game, p = g.piece;
-  return p && !E.fits(g.board, p, p.cells, p.x, p.y + 1);
+  return p && !E.fits(g.board, p, p.cells, p.x, p.y + 1, g.hidden);
 }
 
 // 動かせたあとの着地の待ち
@@ -1394,6 +1397,7 @@ function sendBoard(done = false, extra = null) {
   const board = {
     round: state.playRound,
     b: E.packBoard(g.board),
+    h: E.packHidden(g.hidden) || null, // 盤の上の見えない段（読み込み直し用。何もなければ書かない）
     lines: g.lines,
     pieces: g.pieces,
     resets: g.resets,
@@ -1407,6 +1411,7 @@ function sendBoard(done = false, extra = null) {
     done: done || !!(state.run && state.run.done),
     // 対戦の「ここまで」（いっぱいで止まった）。時刻は1回だけ決める（順位に使う）
     out: !!g.over,
+    overBy: g.over ? g.overBy || null : null, // ここまでになったわけ（読み込み直したときも出すため）
     outAt: g.over && state.run ? (state.run.outAt = state.run.outAt || RoomkRTDB.now()) : null,
   };
   state.roomRef.update({ ['boards/' + state.nickname]: board, ...(extra || {}) })
@@ -1748,9 +1753,9 @@ function layout() {
   // ルームで広い画面なら、ほかの人の盤を右にもう1列ならべる
   const othersCol = !narrow && otherPlayers().length ? 164 + 16 : 0;
   const byW = Math.floor((vw - 34 - 16 - side - othersCol) / E.W);
-  const byH = Math.floor((window.innerHeight - 56 - 134 - (narrow ? 16 : 66)) / E.H); // バー・ボタン2段・キーとマウスの説明
+  const byH = Math.floor((window.innerHeight - 56 - 134 - (narrow ? 16 : 66)) / (E.H + TOP_ROWS)); // バー・ボタン2段・キーとマウスの説明
   CELL = Math.max(14, Math.min(30, byW, byH));
-  sizeCanvas($('board'), CELL * E.W, CELL * E.H);
+  sizeCanvas($('board'), CELL * E.W, CELL * (E.H + TOP_ROWS));
   const nc = Math.floor((side - 18) / 4);
   sizeCanvas($('hold'), nc * 4, Math.round(nc * 2.4));
   // 「つぎ」は5つまで。横の列（とっておく・来るじゃま・ほかの人の一覧など）が盤より長くならない数だけ出す（2つより減らさない）
@@ -1760,7 +1765,7 @@ function layout() {
   const rest = [...nextBox.parentElement.children]
     .filter((el) => el !== nextBox && el.offsetHeight > 0)
     .reduce((sum, el) => sum + el.offsetHeight + sideGap, 0);
-  const space = CELL * E.H - rest - (nextBox.offsetHeight - $('next').offsetHeight);
+  const space = CELL * (E.H + TOP_ROWS) - rest - (nextBox.offsetHeight - $('next').offsetHeight);
   let count = NEXT_MAX;
   while (count > 2 && nc * (NEXT_FIRST + (count - 1) * small.slot) > space) count--;
   nextShow = { count, small };
@@ -1829,13 +1834,25 @@ function draw() {
   const g = state.game;
   if (!g || state.currentScreen !== 'play') return;
   const ctx = $('board').getContext('2d');
+  const off = TOP_ROWS * CELL;
+  const w = CELL * E.W;
+  ctx.clearRect(0, 0, w, off);
+  ctx.fillStyle = TOP_COLOR; // 盤より淡くして、盤の外だとわかるように
+  ctx.fillRect(0, 0, w, off);
+  ctx.save();
+  ctx.translate(0, off);
   drawWell(ctx, g.board, CELL);
+  for (let y = -TOP_ROWS; y < 0; y++) for (let x = 0; x < E.W; x++) {
+    const c = g.hidden[E.HB + y][x];
+    if (c) cellRect(ctx, x * CELL, y * CELL, CELL, COLORS[c]);
+  }
   const p = g.piece;
+  const seen = (y) => y >= -TOP_ROWS;
   if (p && g.over) {
     // ここまでになったとき: 出せなかったブロックを、重なったところがわかるように枠つきで描く（落ちる先は出さない）
     const warn = getComputedStyle(document.documentElement).getPropertyValue('--color-warning').trim() || '#B45309';
     p.cells.forEach(([cx, cy]) => {
-      if (p.y + cy < 0) return;
+      if (!seen(p.y + cy)) return;
       cellRect(ctx, (p.x + cx) * CELL, (p.y + cy) * CELL, CELL, COLORS[p.kind]);
       ctx.strokeStyle = warn;
       ctx.lineWidth = 3;
@@ -1843,9 +1860,10 @@ function draw() {
     });
   } else if (p) {
     const gy = E.dropY(g);
-    p.cells.forEach(([cx, cy]) => { if (gy + cy >= 0) cellRect(ctx, (p.x + cx) * CELL, (gy + cy) * CELL, CELL, COLORS[p.kind], true); });
-    p.cells.forEach(([cx, cy]) => { if (p.y + cy >= 0) cellRect(ctx, (p.x + cx) * CELL, (p.y + cy) * CELL, CELL, COLORS[p.kind]); });
+    p.cells.forEach(([cx, cy]) => { if (seen(gy + cy)) cellRect(ctx, (p.x + cx) * CELL, (gy + cy) * CELL, CELL, COLORS[p.kind], true); });
+    p.cells.forEach(([cx, cy]) => { if (seen(p.y + cy)) cellRect(ctx, (p.x + cx) * CELL, (p.y + cy) * CELL, CELL, COLORS[p.kind]); });
   }
+  ctx.restore();
   drawNext();
   drawHold();
 }
