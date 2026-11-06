@@ -1474,7 +1474,7 @@ function connectWatch(code, ref) {
   clearInterval(state.clockTimer);
   state.clockTimer = setInterval(updateClock, 250);
   // 共有するタブ・ウィンドウを選ぶときに見分けられるよう、題名と見出しを変える
-  document.title = 'みんなにみせる画面 | しるしでヒント | room-K';
+  document.title = 'みんなにみせる画面 | しるしでヒント | あそびのたな';
   document.body.classList.add('is-watch');
   $('watchBadge').hidden = false;
   state.roomCode = code;

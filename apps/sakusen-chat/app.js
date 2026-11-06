@@ -6,7 +6,7 @@ const { authReady, db } = RoomkRTDB.initFirebase(firebase);
 
 const ROOMS = 'sakusenchat_rooms';
 const STATUS_OPEN = 'open';
-const BASE_TITLE = '作戦会議チャット | room-K';
+const BASE_TITLE = '作戦会議チャット | あそびのたな';
 // 新着の音・通知音は鳴らさない（聴覚過敏への配慮。AGENTS.md「未読・入力中」）
 
 // ルームのカギ。リンクを知っている人だけが読めるように、6文字のコードではなく長いカギを使う（AGENTS.md「ルームのカギ」）
