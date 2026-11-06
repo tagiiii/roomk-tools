@@ -99,6 +99,7 @@ TOP（screen-top）
               ゲスト: 「退出する」（自分の退出のみ）
 ```
 
+- ゲーム画面の「途中で終わる」（確認つき）は、ホストだけに出す「そのほかの操作」（`#host-menu`、閉じた `<details>`）にたたむ。精算のあと（settled）は出さない（2026-11-06）
 - **参加用のリンク `?room=CODE` と「リンクをコピー」（2026-10-05）**。共通仕様は docs/development/rtdb.md
   「参加用のリンク」。このアプリの入口は `<script>` 末尾の「初期化」（`?room=` → 保存した記録 `tryReconnect` の順）、
   参加画面は `screen-guest-join`（ヒント `#joinLinkHint`・コード欄 `#top-guest-code`）。`?room=` は `startRoomListener`
