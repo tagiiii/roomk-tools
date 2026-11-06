@@ -13,8 +13,21 @@ const SHAPE_NAMES = { maru: 'まる', sankaku: 'さんかく', hishi: 'ひしが
 const COLORS = {
   maru: '#E8833A', sankaku: '#7A5FC0', hishi: '#2E8C9C',
   bg: { maru: '#FDF1E7', sankaku: '#F0ECF9', hishi: '#E7F3F5' },
-  line: '#1C3F5E', hit: '#F2B705',
+  line: '#6A4F35', hit: '#F2B705', // line は共通の --color-primary（描く前にページから読み直す）
 };
+// 共通の色（design-system.css の変数）を canvas でも使うために、はじめて使うときにページから読み取る。
+// 読めないとき（6けたの #RRGGBB でないとき）は、同じ値を使う
+const UI_COLOR_CACHE = {};
+function uiColor(name, fallback, alpha) {
+  if (!(name in UI_COLOR_CACHE)) {
+    const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    UI_COLOR_CACHE[name] = /^#[0-9a-f]{6}$/i.test(v) ? v : fallback;
+  }
+  const hex = UI_COLOR_CACHE[name];
+  if (alpha == null) return hex;
+  const n = parseInt(hex.slice(1), 16);
+  return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${alpha})`;
+}
 const KEYS_LEFT = new Set(['KeyF', 'KeyD', 'KeyS', 'ArrowLeft']);
 const KEYS_RIGHT = new Set(['KeyJ', 'KeyK', 'KeyL', 'ArrowRight']);
 const KEYS_MID = new Set(['Space', 'ArrowUp', 'ArrowDown']); // マーク3つの まんなか（さんかく）
@@ -625,7 +638,7 @@ function draw(t) {
     ctx.fillStyle = COLORS.bg[shapes[i]];
     ctx.fillRect(i * lw + (i ? 2 : 0), 0, lw - (lanes > 1 ? 2 : 0), H);
   }
-  ctx.fillStyle = COLORS.line;
+  ctx.fillStyle = uiColor('--color-primary', COLORS.line);
   ctx.fillRect(0, lineY - 3, W, 6);
   for (let i = 0; i < lanes; i++) drawTarget(shapes[i], (i + 0.5) * lw, lineY, r);
 
