@@ -525,7 +525,7 @@
   }
 
   function resetView() {
-    Object.assign(S, { room: null, raw: null, view: null, mine: null, lastKey: null, drafts: {}, showWords: false, composing: false, pending: false, lastLine: null, stageKey: null, toolsKey: null });
+    Object.assign(S, { room: null, raw: null, view: null, mine: null, lastKey: null, drafts: {}, showWords: false, composing: false, pending: false, lastLine: null, stageKey: null, toolsKey: null, hostMenuOpen: false });
     $('lobby-opts')._key = null;
     $('stage').replaceChildren();
     $('players').replaceChildren();
@@ -1129,6 +1129,7 @@
 
   // ── 待合室 ──
   function renderLobby(V) {
+    S.hostMenuOpen = false; // 次のゲームの「そのほかの操作」は閉じた状態から
     const isHost = S.mode === 'host';
     const watch = S.mode === 'watch';
     $('lobby-join').hidden = !watch;
@@ -1303,7 +1304,6 @@
         const last = g.round + 1 >= g.order.length;
         const row = el('div', 'kh-actions');
         row.append(btn('btn btn-primary btn-full btn-lg', last ? 'おしまいの画面へ' : 'つぎの番組へ（次に読むのは ' + nameOf(V, g.order[g.round + 1]) + '）', last ? 'flag' : 'skip_next', () => hostAct('next', g.gid, g.step)));
-        if (!last) row.append(btn('kh-quiet', 'ここでおしまいにする', 'stop_circle', () => { if (window.confirm('ここでおしまいにする？')) hostAct('finish', g.gid, g.step); }));
         stage.append(row);
       } else sub = 'だれが書いたか、原稿の中で見てみよう。ホストが次へ進めるのを待っているよ';
     } else if (V.phase === 'end') {
@@ -1591,13 +1591,29 @@
         box.append(ul);
       }
     }
-    // 途中でやめて待合室にもどる（人数や設定を変えたいとき）
-    box.append(btn('kh-quiet', '放送をやめて待合室にもどる', 'meeting_room', () => {
-      if (window.confirm('放送をやめて、待合室にもどる？ここまでの名場面は消えるよ')) hostAct('relobby', g.gid);
-    }));
+    box.append(hostMenu(V, g));
     parts.push(box);
     tools.hidden = false;
     tools.append(...parts);
+  }
+
+  // ホストがたまに使う操作（開くと出る）。作りなおしても開いたまま（S.hostMenuOpen）
+  function hostMenu(V, g) {
+    const d = el('details', 'kh-hostmenu');
+    d.id = 'host-menu';
+    d.open = !!S.hostMenuOpen;
+    d.addEventListener('toggle', () => { S.hostMenuOpen = d.open; });
+    d.append(el('summary', '', 'そのほかの操作'));
+    const row = (b, note) => { const r = el('div', 'kh-hostmenu__row'); r.append(b); if (note) r.append(el('span', 'kh-hostmenu__note', note)); d.append(r); };
+    // 結果の画面: 最後の番組でなければ、ここでおしまいにできる
+    if (V.phase === 'result' && g.round + 1 < g.order.length) {
+      row(btn('btn btn-secondary btn-sm', 'ここでおしまいにする', 'stop_circle', () => { if (window.confirm('ここでおしまいにする？')) hostAct('finish', g.gid, g.step); }), 'のこりの番組をとばして、おしまいの画面へ');
+    }
+    // 途中でやめて待合室にもどる（人数や設定を変えたいとき）
+    row(btn('btn btn-secondary btn-sm', '放送をやめて待合室にもどる', 'meeting_room', () => {
+      if (window.confirm('放送をやめて、待合室にもどる？ここまでの名場面は消えるよ')) hostAct('relobby', g.gid);
+    }));
+    return d;
   }
 
   function renderPlayers(V) {
