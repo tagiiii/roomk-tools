@@ -5,31 +5,37 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
   <title>カギあわせ | あそびのたな</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
-  <link rel="stylesheet" href="../shared/css/design-system.css">
+  <link rel="stylesheet" href="../shared/css/design-system.css?v=20261106">
   <!-- index.html と app.js・style.css はセットで変わるので、変えたら ?v= をそろえて上げる -->
-  <link rel="stylesheet" href="style.css?v=20261106">
+  <link rel="stylesheet" href="style.css?v=20261106look">
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <script src="../shared/js/rtdb-utils.js?v=20261005"></script>
   <script src="../shared/js/room-qr.js?v=20261022"></script>
 </head>
-<body>
+<body data-genre="atekko">
   <div class="wrapper">
     <header class="kag-header">
-      <h1 class="kag-header__title">カギあわせ</h1>
+      <h1 class="kag-header__title app-title">カギあわせ</h1>
       <p class="kag-header__sub">仲間のカギの数字を推理して、宝箱をあけよう</p>
       <p class="kag-watchbadge" id="watchBadge" hidden>みんなにみせる画面</p>
     </header>
     <main>
       <section class="kag-screen active" id="screen-top">
-        <div class="kag-panel">
-          <p class="kag-lead">宝箱には、数字のカギがたくさんかかっているよ。みんなは数字のカギを小さい順に並べて持っているけれど、見えるのは自分のカギだけ。仲間のカギの数字を推理して、自分と同じ数字のカギをあわせていこう。全部あわせたら宝箱があくよ。</p>
+        <div class="kag-panel app-entry">
+          <div class="app-hero"><img class="app-illust" src="../assets/illustrations/kagi-awase.webp" alt="" width="156" height="156" decoding="async" onerror="this.parentNode.remove()" /></div>
+          <h1 class="app-title">カギあわせ</h1>
+          <p class="app-catch">仲間のカギの数字を推理して、宝箱をあけよう</p>
+          <p class="kag-lead app-entry__lead">宝箱には、数字のカギがたくさんかかっているよ。みんなは数字のカギを小さい順に並べて持っているけれど、見えるのは自分のカギだけ。仲間のカギの数字を推理して、自分と同じ数字のカギをあわせていこう。全部あわせたら宝箱があくよ。</p>
           <p class="kag-note">みんなで力を合わせるゲーム。2〜5人、10〜25分くらい。</p>
-          <button type="button" class="btn btn-primary btn-full" id="btnGoCreate">ルームを作る</button>
-          <button type="button" class="btn btn-secondary btn-full" id="btnGoJoin">ルームに参加する</button>
-          <button type="button" class="btn btn-ghost btn-full" id="btnGoWatch">みんなにみせる画面をひらく</button>
+          <div class="app-entry__actions">
+            <button type="button" class="btn btn-primary btn-full" id="btnGoCreate">ルームを作る</button>
+            <button type="button" class="btn btn-secondary btn-full" id="btnGoJoin">ルームに参加する</button>
+            <button type="button" class="btn btn-ghost btn-full" id="btnGoWatch">みんなにみせる画面をひらく</button>
+          </div>
         </div>
       </section>
 

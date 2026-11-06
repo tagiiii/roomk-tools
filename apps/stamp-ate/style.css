@@ -810,3 +810,8 @@ button.sa-choice:hover { border-color: var(--color-accent); }
   .sa-result__main { font-size: 22px; }
   .sa-rounds__score { margin-left: 0; }
 }
+
+/* はじめの画面の型（2026-11-06）: はじめの画面のあいだは、ツール名・ひとことを入口の面に出すので、上のヘッダーの名前・ひとことは隠す
+   （みんなにみせる画面の印は隠さない。ほかの画面では今までどおり出る） */
+.wrapper:has(#screen-top.active) > .sa-header > :is(.sa-header__title, .sa-header__sub) { display: none; }
+.wrapper:has(#screen-top.active) > .sa-header:has(> .sa-watchbadge[hidden]) { margin-bottom: 0; }

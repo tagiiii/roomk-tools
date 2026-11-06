@@ -74,6 +74,9 @@
   justify-content: center;
 }
 
+/* はじめの画面の型（2026-11-06）の中では、レベルの見出しを、ひとことの下に少しあけて置く */
+.app-entry > .ks-top-panel__title { margin-top: 22px; margin-bottom: 14px; font-size: 18px; }
+
 /* ── レベル選択グリッド ── */
 
 .ks-level-grid {

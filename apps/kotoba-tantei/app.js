@@ -165,11 +165,13 @@ function render() {
 function renderHome() {
   stopRoomSubscription();
   appEl.innerHTML = `
-    <section class="card cn-panel">
-      <h1 class="cn-title">ことば探偵</h1>
-      <p class="text-muted">ヒント役の言葉をもとに、チームで相談しながら単語カードを見つけるゲームです。</p>
+    <section class="card cn-panel app-entry">
+      <div class="app-hero"><img class="app-illust" src="../assets/illustrations/kotoba-tantei.webp" alt="" width="156" height="156" decoding="async" onerror="this.parentNode.remove()" /></div>
+      <h1 class="cn-title app-title">ことば探偵</h1>
+      <p class="app-catch">ヒントから言葉を見つける相談ゲーム</p>
+      <p class="text-muted app-entry__lead">ヒント役の言葉をもとに、チームで相談しながら単語カードを見つけるゲームです。</p>
       ${state.error ? `<div class="alert alert-error mt-md">${esc(state.error)}</div>` : ""}
-      <div class="cn-actions mt-lg">
+      <div class="cn-actions mt-lg app-entry__actions">
         <button class="btn btn-primary btn-full" data-route="create">
           <span class="material-symbols-rounded" aria-hidden="true">add_circle</span>ルームを作る
         </button>

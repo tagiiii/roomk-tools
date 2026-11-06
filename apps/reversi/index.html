@@ -5,8 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
   <title>リバーシ | あそびのたな</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
-  <link rel="stylesheet" href="../shared/css/design-system.css">
+  <link rel="stylesheet" href="../shared/css/design-system.css?v=20261106">
   <!-- index.html と app.js・engine.js・style.css はセットで変わるので、変えたら ?v= をそろえて上げる -->
   <link rel="stylesheet" href="style.css?v=20261106">
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
@@ -16,18 +17,19 @@
   <script src="../shared/js/room-qr.js?v=20261022"></script>
   <script src="engine.js?v=20261106"></script>
 </head>
-<body>
+<body data-genre="board">
 
   <!-- トップ -->
   <section class="rv-screen rv-front active" id="screen-top">
-    <div class="rv-panel">
-      <h1 class="rv-panel__title">リバーシ</h1>
-      <p class="rv-panel__lead">黒と白の石を交互に置いて、相手の石をはさんでひっくり返す。最後に自分の色の石が多いほうの勝ち。1回は10〜20分くらい。</p>
-      <ul class="rv-panel__notes">
+    <div class="rv-panel app-entry">
+      <div class="app-hero"><img class="app-illust" src="../assets/illustrations/reversi.webp" alt="" width="156" height="156" decoding="async" onerror="this.parentNode.remove()" /></div>
+      <h1 class="rv-panel__title app-title">リバーシ</h1>
+      <p class="rv-panel__lead app-entry__lead">黒と白の石を交互に置いて、相手の石をはさんでひっくり返す。最後に自分の色の石が多いほうの勝ち。1回は10〜20分くらい。</p>
+      <ul class="rv-panel__notes app-entry__notes">
         <li>はじめてなら、置ける場所に印が出る「補助」を使ってみてね</li>
         <li>対戦しない人も、ルームに入れば勝負を見られるよ</li>
       </ul>
-      <div class="rv-panel__actions">
+      <div class="rv-panel__actions app-entry__actions">
         <button type="button" class="btn btn-primary btn-full" id="btnGoCreate">ルームを作る</button>
         <button type="button" class="btn btn-secondary btn-full" id="btnGoJoin">ルームに参加する</button>
         <button type="button" class="btn btn-secondary btn-full" id="btnGoLocal">1台の画面であそぶ</button>

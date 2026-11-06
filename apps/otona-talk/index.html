@@ -6,20 +6,22 @@
   <title>おとなトークカード | あそびのたな</title>
   <!-- Google Fonts（Noto Sans JP）-->
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet" />
   <!-- Material Symbols Rounded -->
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet" />
   <!-- 共通デザインシステム（M-1〜M-6）-->
-  <link rel="stylesheet" href="../shared/css/design-system.css" />
+  <link rel="stylesheet" href="../shared/css/design-system.css?v=20261106" />
   <!-- アプリ固有スタイル -->
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css?v=20261106look" />
 </head>
-<body>
+<body data-genre="talk">
 
   <div class="wrapper">
 
     <!-- ヘッダー -->
     <header class="ot-header">
-      <h1 class="ot-header__title">おとなトークカード</h1>
+      <div class="app-hero app-hero--compact"><img class="app-illust" src="../assets/illustrations/otona-talk.webp" alt="" width="92" height="92" decoding="async" onerror="this.parentNode.remove()" /></div>
+      <h1 class="ot-header__title app-title">おとなトークカード</h1>
       <p class="ot-header__sub">大人どうしで質問し合う雑談タイム。カードをめくってお題を引こう。子どもたちも、大人の「ほんと」を聞けます。</p>
     </header>
 

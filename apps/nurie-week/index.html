@@ -5,8 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>塗り絵カレンダー | あそびのたな</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet" />
-  <link rel="stylesheet" href="../shared/css/design-system.css" />
+  <link rel="stylesheet" href="../shared/css/design-system.css?v=20261106" />
   <style>
     body {
       background: var(--color-bg);
@@ -233,12 +234,13 @@
     }
   </style>
 </head>
-<body>
+<body data-genre="talk">
 
   <div class="nw-wrapper">
 
     <header class="nw-header">
-      <h1 class="nw-header__title">塗り絵カレンダー</h1>
+      <div class="app-hero app-hero--compact"><img class="app-illust" src="../assets/illustrations/nurie-week.webp" alt="" width="92" height="92" decoding="async" onerror="this.parentNode.remove()" /></div>
+      <h1 class="nw-header__title app-title">塗り絵カレンダー</h1>
       <p class="nw-header__sub">ここ1週間の過ごし方を、色で塗ってみよう</p>
     </header>
 

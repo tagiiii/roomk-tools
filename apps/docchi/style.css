@@ -324,3 +324,13 @@
     padding: 8px 16px;
   }
 }
+
+/* ── 種類の色（2026-11-06）: 問題の面は枠なしの白い面、2択は種類の淡い色の面、選んだものは種類の濃い色の枠 ── */
+.dc-card { border: 0; border-radius: var(--radius-card); box-shadow: var(--shadow-soft); }
+.dc-card__q { font-family: 'Zen Maru Gothic', var(--font-base); }
+.dc-choice { background: var(--g-pale); border-color: transparent; }
+.dc-choice:hover { border-color: var(--g); }
+.dc-choice--picked { border-color: var(--g-ink); background: #F8D7E6; }
+
+/* はじめの画面の型（2026-11-06）の中では、カテゴリの下のあきを型にそろえる */
+.app-entry .dc-cat { margin: 20px 0 0; }

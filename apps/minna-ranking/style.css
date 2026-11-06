@@ -762,3 +762,10 @@
   .mr-phase__title { font-size: 1.3rem; }
   .mr-item__rank { min-width: 2.4em; }
 }
+
+/* ── はじめの画面の型（2026-11-06）: ツール名・ひとこと・絵は、はじめの画面の白い面（.app-entry）に入れた。
+   そのあいだだけ、ヘッダーのツール名とひとことを隠す（ほかの画面では今までどおり出る。みんなにみせる画面の印は隠さない） ── */
+.wrapper:has(#screen-top.active) > .mr-header > :is(.mr-header__title, .mr-header__sub) { display: none; }
+.wrapper:has(#screen-top.active) > .mr-header { margin-bottom: 0; }
+/* 型の中では説明の下のあきが消えるので、ひとことの注意を少し離す */
+.app-entry > .mr-note { margin-top: 12px; }

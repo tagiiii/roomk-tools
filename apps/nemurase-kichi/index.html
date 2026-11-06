@@ -5,8 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
   <title>ねむらせ基地 | あそびのたな</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
-  <link rel="stylesheet" href="../shared/css/design-system.css">
+  <link rel="stylesheet" href="../shared/css/design-system.css?v=20261106">
   <!-- index.html と app.js・engine.js・minigames.js・style.css はセットで変わるので、変えたら ?v= をそろえて上げる -->
   <link rel="stylesheet" href="style.css?v=20261106b">
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
@@ -19,18 +20,19 @@
   <script src="engine.js?v=20261106b"></script>
   <script src="minigames.js?v=20261106b"></script>
 </head>
-<body>
+<body data-genre="suiri">
 
   <!-- トップ -->
   <section class="nk-screen nk-front active" id="screen-top">
-    <div class="nk-panel">
-      <h1 class="nk-panel__title">ねむらせ基地</h1>
-      <p class="nk-panel__lead">ひみつ基地の中を歩きまわって、みんなで仕事を片づけよう。でも、仲間のふりをした「ねむらせ屋」がまぎれこんでいる。会議で話し合って、だれがねむらせ屋か見つけよう。1回は10〜15分くらい。</p>
-      <ul class="nk-panel__notes">
+    <div class="nk-panel app-entry">
+      <div class="app-hero"><img class="app-illust" src="../assets/illustrations/nemurase-kichi.webp" alt="" width="156" height="156" decoding="async" onerror="this.parentNode.remove()" /></div>
+      <h1 class="nk-panel__title app-title">ねむらせ基地</h1>
+      <p class="nk-panel__lead app-entry__lead">ひみつ基地の中を歩きまわって、みんなで仕事を片づけよう。でも、仲間のふりをした「ねむらせ屋」がまぎれこんでいる。会議で話し合って、だれがねむらせ屋か見つけよう。1回は10〜15分くらい。</p>
+      <ul class="nk-panel__notes app-entry__notes">
         <li>4〜10人。ひとり1台の端末であそぶ</li>
         <li>ねむってしまっても、仕事はそのままつづけられるよ</li>
       </ul>
-      <div class="nk-panel__actions">
+      <div class="nk-panel__actions app-entry__actions">
         <button type="button" class="btn btn-primary btn-full" id="btnGoCreate">ルームを作る</button>
         <button type="button" class="btn btn-secondary btn-full" id="btnGoJoin">ルームに参加する</button>
       </div>

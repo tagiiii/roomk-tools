@@ -5,8 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
   <title>まぎれ絵師 | あそびのたな</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
-  <link rel="stylesheet" href="../shared/css/design-system.css">
+  <link rel="stylesheet" href="../shared/css/design-system.css?v=20261106">
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
@@ -234,30 +235,30 @@
     }
   </style>
 </head>
-<body>
+<body data-genre="suiri">
 
 <!-- ══════════════════ TOP ══════════════════ -->
 <div id="screen-top" class="screen">
   <div class="page">
-    <div class="mgr-header">
-      <div class="mgr-header__icon"><span class="material-symbols-rounded" aria-hidden="true">brush</span></div>
-      <div class="mgr-header__title">まぎれ絵師</div>
-      <div class="mgr-header__sub">
+    <section class="app-entry">
+      <div class="app-hero"><img class="app-illust" src="../assets/illustrations/magire-eshi.webp" alt="" width="156" height="156" decoding="async" onerror="this.parentNode.remove()" /></div>
+      <h1 class="app-title">まぎれ絵師</h1>
+      <p class="app-catch">
         みんなで1枚の絵を1筆ずつ描いて完成させよう。<br>
         でもひとりだけ、お題を知らない「まぎれ絵師」がまぎれこんでいる！
+      </p>
+      <div class="app-entry__actions">
+        <button class="btn btn-primary btn-full" onclick="goTo('host-setup')">
+          <span class="material-symbols-rounded" aria-hidden="true">add_circle</span>ルームを作る
+        </button>
+        <button class="btn btn-secondary btn-full" onclick="openGuestJoin()">
+          <span class="material-symbols-rounded" aria-hidden="true">login</span>ルームに参加する
+        </button>
+        <button class="btn btn-ghost btn-full" onclick="goTo('spectate-join')">
+          <span class="material-symbols-rounded" aria-hidden="true">cast</span>みんなにみせる画面をひらく
+        </button>
       </div>
-    </div>
-    <div class="card">
-      <button class="btn btn-primary btn-full" onclick="goTo('host-setup')">
-        <span class="material-symbols-rounded" aria-hidden="true">add_circle</span>ルームを作る
-      </button>
-      <button class="btn btn-secondary btn-full mgr-sep" onclick="openGuestJoin()">
-        <span class="material-symbols-rounded" aria-hidden="true">login</span>ルームに参加する
-      </button>
-      <button class="btn btn-ghost btn-full mgr-sep" onclick="goTo('spectate-join')">
-        <span class="material-symbols-rounded" aria-hidden="true">cast</span>みんなにみせる画面をひらく
-      </button>
-    </div>
+    </section>
   </div>
 </div>
 

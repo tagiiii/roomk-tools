@@ -5,8 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
   <title>すとんブロック | あそびのたな</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
-  <link rel="stylesheet" href="../shared/css/design-system.css">
+  <link rel="stylesheet" href="../shared/css/design-system.css?v=20261106">
   <!-- index.html と app.js・engine.js・style.css はセットで変わるので、変えたら ?v= をそろえて上げる -->
   <link rel="stylesheet" href="style.css?v=20261106e">
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
@@ -16,18 +17,19 @@
   <script src="../shared/js/room-qr.js?v=20261022"></script>
   <script src="engine.js?v=20261106j"></script>
 </head>
-<body>
+<body data-genre="puzzle">
 
   <!-- トップ -->
   <section class="sb-screen sb-front active" id="screen-top">
-    <div class="sb-panel">
-      <h1 class="sb-panel__title">すとんブロック</h1>
-      <p class="sb-panel__lead">上から落ちてくるブロックを、回してすき間に入れる。横1段がうまると消える。ブロックは4マスの7種類。</p>
-      <ul class="sb-panel__notes">
+    <div class="sb-panel app-entry">
+      <div class="app-hero"><img class="app-illust" src="../assets/illustrations/suton-block.webp" alt="" width="156" height="156" decoding="async" onerror="this.parentNode.remove()" /></div>
+      <h1 class="sb-panel__title app-title">すとんブロック</h1>
+      <p class="sb-panel__lead app-entry__lead">上から落ちてくるブロックを、回してすき間に入れる。横1段がうまると消える。ブロックは4マスの7種類。</p>
+      <ul class="sb-panel__notes app-entry__notes">
         <li>盤がいっぱいになっても、からにしてつづけられるよ</li>
         <li>ルームでは、みんな同じ順番でブロックが出る。時間内に何段消せるかくらべるか、じゃまを送りあって対戦しよう</li>
       </ul>
-      <div class="sb-panel__actions">
+      <div class="sb-panel__actions app-entry__actions">
         <button type="button" class="btn btn-primary btn-full" id="btnGoCreate">ルームを作る</button>
         <button type="button" class="btn btn-secondary btn-full" id="btnGoJoin">ルームに参加する</button>
         <button type="button" class="btn btn-secondary btn-full" id="btnGoSolo">ひとりであそぶ</button>
