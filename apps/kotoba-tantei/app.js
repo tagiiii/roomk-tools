@@ -764,11 +764,13 @@ function renderLobbyPlayer(room, player, canEditAssignments) {
   `;
 }
 
+// 選ばれている方は主ボタンにせず、選んだ印（淡いティール）で示す（主ボタンは1画面に1つ）
 function renderPlayerControls(player) {
   const teamButtons = ["red", "blue"].map((team) => `
     <button
-      class="btn ${player.team === team ? "btn-primary" : "btn-secondary"} btn-sm"
+      class="btn btn-secondary btn-sm"
       type="button"
+      aria-pressed="${player.team === team ? "true" : "false"}"
       data-player-id="${esc(player.id)}"
       data-team="${team}"
       ${state.loading ? "disabled" : ""}
@@ -777,8 +779,9 @@ function renderPlayerControls(player) {
 
   const roleButtons = ["spymaster", "guesser"].map((role) => `
     <button
-      class="btn ${player.role === role ? "btn-primary" : "btn-secondary"} btn-sm"
+      class="btn btn-secondary btn-sm"
       type="button"
+      aria-pressed="${player.role === role ? "true" : "false"}"
       data-player-id="${esc(player.id)}"
       data-role="${role}"
       ${state.loading ? "disabled" : ""}
