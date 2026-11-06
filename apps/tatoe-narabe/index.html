@@ -180,20 +180,13 @@
       transform: none;
     }
     .ito-theme-option__num {
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      background: rgba(106, 79, 53, 0.1);
-      color: var(--color-primary);
-      font-size: 14px;
+      flex-shrink: 0;
+      color: var(--color-accent);
+      font-size: 18px;
       font-weight: 700;
-      flex: 0 0 28px;
+      font-feature-settings: "palt";
     }
     .ito-theme-option.selected .ito-theme-option__num {
-      background: rgba(255, 255, 255, 0.22);
       color: #fff;
     }
     .ito-theme-option__text {
@@ -1799,7 +1792,7 @@
             onclick="selectTheme(${index})"
             ${state.role === "host" ? "" : "disabled"}
           >
-            <span class="ito-theme-option__num">${index + 1}</span>
+            <span class="ito-theme-option__num">${themeNumber(index)}</span>
             <span class="ito-theme-option__text">${esc(theme)}</span>
           </button>
         `).join("");
@@ -2139,6 +2132,12 @@
       RoomkQR.show(state.roomCode);
     }
 
+    // お題の候補の番号は丸数字（画面とチャット用のコピーで同じ表記。ui.md「選択肢・カードの番号付け」）
+    const THEME_NUMBERS = ['①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨', '⑩'];
+    function themeNumber(index) {
+      return THEME_NUMBERS[index] || `(${index + 1})`;
+    }
+
     async function copyThemeOptions() {
       const options = (state.themeOptions || []).filter(Boolean);
       if (options.length === 0) {
@@ -2147,7 +2146,7 @@
       }
       const text = [
         "今日のお題候補です。番号で教えてね。",
-        ...options.map((theme, index) => `${index + 1}. ${theme}`)
+        ...options.map((theme, index) => `${themeNumber(index)} ${theme}`)
       ].join("\n");
       try {
         if (navigator.clipboard && navigator.clipboard.writeText) {

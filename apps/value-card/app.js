@@ -45,8 +45,6 @@ let exchangeCount = 5;
 // ── DOM ──
 const screens = document.querySelectorAll('.screen');
 const btnStart = document.getElementById('btn-start');
-const btnHowto = document.getElementById('btn-howto-toggle');
-const howtoPanel = document.getElementById('howto-panel');
 const handArea = document.getElementById('hand-area');
 const btnExchange = document.getElementById('btn-exchange');
 const exchangeNum = document.getElementById('exchange-num');
@@ -321,12 +319,6 @@ function saveImage() {
 // ── イベントリスナー ──
 btnStart.addEventListener('click', startGame);
 
-btnHowto.addEventListener('click', () => {
-  howtoPanel.classList.toggle('visible');
-  btnHowto.textContent = howtoPanel.classList.contains('visible')
-    ? 'あそびかたを閉じる' : 'あそびかた';
-});
-
 btnExchange.addEventListener('click', exchangeCard);
 btnConfirm.addEventListener('click', showRanking);
 btnFinishRanking.addEventListener('click', showResult);
@@ -339,8 +331,6 @@ function goToTop() {
     sortableInstance = null;
   }
   showScreen('top');
-  howtoPanel.classList.remove('visible');
-  btnHowto.textContent = 'あそびかた';
 }
 
 btnRestart.addEventListener('click', goToTop);

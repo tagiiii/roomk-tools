@@ -26,7 +26,7 @@ body { background: var(--color-bg); }
   border-radius: var(--radius-sm);
 }
 .cb-quiet:hover { background: rgba(40, 111, 124, 0.08); }
-.cb-quiet:disabled { color: #A3AAB3; cursor: not-allowed; background: none; }
+.cb-quiet:disabled { color: var(--color-muted); opacity: 0.55; cursor: not-allowed; background: none; }
 .cb-quiet .material-symbols-rounded { font-size: 20px; }
 .cb-quiet--center { justify-self: center; align-self: center; }
 

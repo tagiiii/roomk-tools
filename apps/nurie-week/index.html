@@ -119,7 +119,7 @@
 
     /* 消しゴム用：色のスウォッチではなくアイコンで表現 */
     .nw-cat-btn--eraser .nw-cat-btn__swatch {
-      background: repeating-linear-gradient(45deg, #fff, #fff 3px, #E5E7EB 3px, #E5E7EB 6px);
+      background: repeating-linear-gradient(45deg, #fff, #fff 3px, var(--color-border) 3px, var(--color-border) 6px);
     }
 
     /* ── ツールバー ── */
@@ -193,7 +193,7 @@
     }
 
     .nw-cell--latenight {
-      background: #F4F6F8;
+      background: var(--color-primary-soft);
     }
 
     /* ── レスポンシブ ── */
@@ -408,7 +408,7 @@
     function applyCellStyle(el, catId) {
       const isLate = LATE_NIGHT_HOURS.has(Number(el.dataset.idx) % HOURS);
       if (!catId) {
-        el.style.backgroundColor = isLate ? '#F4F6F8' : '';
+        el.style.backgroundColor = isLate ? 'var(--color-primary-soft)' : '';
       } else {
         const cat = CATEGORIES.find(c => c.id === catId);
         el.style.backgroundColor = cat ? cat.color : '';

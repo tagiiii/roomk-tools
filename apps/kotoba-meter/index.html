@@ -37,7 +37,7 @@
 .km-note:empty { display: none; }
 .km-note--left { text-align: left; }
 .km-tag { display: inline-block; color: var(--color-accent); background: var(--color-accent-soft); border-radius: var(--radius-full); font-size: 12px; font-weight: 700; line-height: 1; padding: 4px 8px; white-space: nowrap; }
-.km-tag--muted { color: var(--color-text); background: #ECEEF0; }
+.km-tag--muted { color: var(--color-text); background: var(--color-primary-soft); }
 .km-tag--done { color: var(--color-success); background: #EAF6EE; }
 .km-alt { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 16px; margin: 8px 0 0; }
 .km-quiet-btn { min-height: 44px; padding: 10px 8px; background: none; border: none; font-family: inherit; font-size: var(--font-size-sm); color: var(--color-muted); cursor: pointer; }
@@ -111,7 +111,7 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 .km-secret__label .material-symbols-rounded { font-size: 20px; color: var(--color-accent); }
 .km-secret__num { color: var(--color-primary); font-size: 72px; font-weight: 700; line-height: 1.2; margin: 4px 0 8px; }
 .km-gauge { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; max-width: 360px; margin: 0 auto; padding: 0; list-style: none; }
-.km-gauge li { height: 14px; border-radius: var(--radius-full); background: #ECEEF0; }
+.km-gauge li { height: 14px; border-radius: var(--radius-full); background: var(--color-primary-soft); }
 .km-gauge li.is-on { background: var(--color-accent); }
 .km-secret__hint { color: var(--color-text); font-size: 14px; margin: 14px 0 0; }
 .km-hintform { border-top: 1px solid var(--color-border); margin-top: 20px; padding-top: 18px; }
@@ -136,7 +136,7 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 /* ── 予想する（数字ボタンは同格。主ボタンと混ぜない） ── */
 .km-scale { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
 .km-scale__btn { display: flex; flex-direction: column; align-items: center; justify-content: space-between; gap: 8px; min-height: 96px; padding: 16px 6px 12px; border: 2px solid var(--color-border); border-radius: 14px; background: var(--color-surface); color: var(--color-primary); font-family: inherit; font-size: 32px; font-weight: 700; line-height: 1; cursor: pointer; }
-.km-scale__btn:hover:not(:disabled) { border-color: var(--color-accent); background: #F4FAFB; }
+.km-scale__btn:hover:not(:disabled) { border-color: var(--color-accent); background: var(--color-primary-soft); }
 .km-scale__btn[aria-pressed="true"] { border-color: var(--color-accent); background: var(--color-accent-soft); box-shadow: 0 0 0 2px var(--color-accent); }
 .km-scale__bar { width: 60%; height: calc(var(--lv-h) * 0.24); min-height: 5px; border-radius: 4px; background: var(--lv-bg); }
 #answer-note { text-align: center; color: var(--color-accent); font-weight: 500; min-height: 24px; margin: 14px 0 0; }

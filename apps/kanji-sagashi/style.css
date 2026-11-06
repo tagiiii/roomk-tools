@@ -250,6 +250,50 @@
 }
 
 /* ── Accessibility: Reduced Motion ── */
+/* ── トップの説明と注意点（ui.md「トップ画面の定石」。2026-11-06） ── */
+.ks-intro {
+  text-align: left;
+  margin-bottom: 20px;
+}
+
+.ks-intro__lead {
+  font-size: var(--font-size-sub);
+  color: var(--color-text);
+  line-height: 1.8;
+  margin: 0 0 14px;
+}
+
+.ks-intro__notes {
+  list-style: none;
+  padding: 14px 18px;
+  margin: 0;
+  background: var(--color-bg);
+  border-radius: var(--radius-card);
+}
+
+.ks-intro__notes li {
+  position: relative;
+  padding-left: 20px;
+  font-size: var(--font-size-sub);
+  color: var(--color-text);
+  line-height: 1.7;
+}
+
+.ks-intro__notes li + li {
+  margin-top: 6px;
+}
+
+.ks-intro__notes li::before {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 0.75em;
+  width: 7px;
+  height: 7px;
+  border-radius: var(--radius-full);
+  background: var(--color-accent);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .ks-cell__inner {
     transform: none !important;

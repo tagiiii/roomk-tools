@@ -282,7 +282,7 @@ body .app-entry > .kmk-note-list { padding-left: 16px; }
   height: 10px;
   overflow: hidden;
   border-radius: var(--radius-full);
-  background: #E3E9EC;
+  background: var(--color-primary-soft);
 }
 .kmk-timer__fill {
   display: block;

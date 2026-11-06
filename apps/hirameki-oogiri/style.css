@@ -246,7 +246,7 @@ body { background: var(--color-bg); }
 @keyframes og-pop { to { transform: scale(1); opacity: 1; } }
 .og-ippon__title { margin: 0 0 8px; font-size: 64px; font-weight: 700; color: #B07800; letter-spacing: 0.1em; line-height: 1.1; }
 /* 却下！（はんこのように少し傾ける。だれの答えかは出さない） */
-.og-ippon.is-reject .og-ippon__box { background: #F4F5F7; border-color: #8A8F98; }
+.og-ippon.is-reject .og-ippon__box { background: var(--color-primary-soft); border-color: var(--color-muted); }
 .og-ippon.is-reject .og-ippon__title { color: #B91C1C; display: inline-block; border: 5px solid #B91C1C; border-radius: 14px; padding: 4px 22px; transform: rotate(-6deg); }
 .og-ippon.is-reject .og-ippon__text { color: var(--color-muted); font-size: 20px; margin-top: 14px; }
 .og-ippon__text { margin: 0 0 10px; font-size: 26px; font-weight: 700; color: var(--color-text); line-height: 1.5; overflow-wrap: anywhere; }

@@ -1603,11 +1603,14 @@ function act(name) {
   }
 }
 
+// 文字のキーは小文字で引く（Caps Lock でも同じに動く）。WASD は矢印キーと同じ（W は ↑ と同じ右に回す）
 const KEYMAP = {
   ArrowLeft: 'left', ArrowRight: 'right', ArrowDown: 'down', ArrowUp: 'rotr',
-  ' ': 'drop', x: 'rotr', X: 'rotr', z: 'rotl', Z: 'rotl',
-  c: 'hold', C: 'hold', Shift: 'hold',
+  a: 'left', d: 'right', s: 'down', w: 'rotr',
+  ' ': 'drop', x: 'rotr', z: 'rotl',
+  c: 'hold', Shift: 'hold',
 };
+const keyOf = (e) => (e.key.length === 1 ? e.key.toLowerCase() : e.key);
 const REPEATABLE = { left: true, right: true, down: true };
 // 左右を押しっぱなしにしたとき、はじめの1マスのあと SHIFT_DELAY_MS 待って、SHIFT_REPEAT_MS ごとに動く。
 // キーボードは OS のくり返し（待ちが0.5秒ほどと長い）を使わず、この時間で動かす
@@ -1634,11 +1637,12 @@ function startKeyRepeat(key, a) {
   keyRep = r;
 }
 document.addEventListener('keyup', (e) => {
-  const a = KEYMAP[e.key];
+  const k = keyOf(e);
+  const a = KEYMAP[k];
   if (!SIDE[a]) return;
-  const at = sideHeld.indexOf(e.key);
+  const at = sideHeld.indexOf(k);
   if (at >= 0) sideHeld.splice(at, 1);
-  if (!keyRep || keyRep.key !== e.key) return;
+  if (!keyRep || keyRep.key !== k) return;
   stopKeyRepeat();
   // 反対のキーをまだ押していれば、そちらのくり返しにもどる
   const back = sideHeld[sideHeld.length - 1];
@@ -1649,19 +1653,20 @@ document.addEventListener('keydown', (e) => {
   // 「あそびかた」を開いている間は、あそぶ画面が inert になるので動かさない
   if (state.currentScreen !== 'play' || $('screen-play').inert || e.ctrlKey || e.metaKey || e.altKey) return;
   // ひとりのときは P でとめる・つづける
-  if ((e.key === 'p' || e.key === 'P') && state.role === 'solo' && state.run) {
+  const k = keyOf(e);
+  if (k === 'p' && state.role === 'solo' && state.run) {
     e.preventDefault();
     if (!e.repeat) setPaused(!state.run.paused);
     return;
   }
-  const a = KEYMAP[e.key];
+  const a = KEYMAP[k];
   if (!a) return;
   e.preventDefault();
   if (SIDE[a]) {
     if (e.repeat) return;
-    if (!sideHeld.includes(e.key)) sideHeld.push(e.key);
+    if (!sideHeld.includes(k)) sideHeld.push(k);
     act(a);
-    startKeyRepeat(e.key, a);
+    startKeyRepeat(k, a);
     return;
   }
   if (e.repeat && !REPEATABLE[a]) return;

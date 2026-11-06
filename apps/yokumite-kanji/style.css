@@ -258,7 +258,7 @@
   height: 10px;
   overflow: hidden;
   border-radius: var(--radius-full);
-  background: #E3E9EC;
+  background: var(--color-primary-soft);
 }
 .yk-timer__fill {
   display: block;
