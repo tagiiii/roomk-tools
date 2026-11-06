@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>ねむらせ基地 — 説明スライド</title>
+<title>ねむらせ墓地 — 説明スライド</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap" rel="stylesheet" />
@@ -169,7 +169,7 @@
     <button class="nav next" id="navNext" aria-label="次へ"><span class="material-symbols-rounded">chevron_right</span></button>
     <div id="slides"></div>
     <div class="footer">
-      <div class="brand"><span class="material-symbols-rounded">bedtime</span>ねむらせ基地</div>
+      <div class="brand"><span class="material-symbols-rounded">bedtime</span>ねむらせ墓地</div>
       <div class="dots" id="dots"></div>
       <div class="counter" id="counter">1 / 1</div>
     </div>
@@ -207,9 +207,9 @@
 const SLIDES = [
   /* 1 */ { type:'divider', accent:'teal', icon:'waving_hand', jp:'チェックイン', en:'check-in',
     sub:'今の気分を、ひとことどうぞ',
-    note:'まずはチェックインから！\n今の気分や、最近あったことを、ひとことチャットか声で教えてね\n（ねむらせ基地の説明は、このあとすぐ！）' },
+    note:'まずはチェックインから！\n今の気分や、最近あったことを、ひとことチャットか声で教えてね\n（ねむらせ墓地の説明は、このあとすぐ！）' },
 
-  /* 2 */ { type:'title', note:'今日のゲームは「ねむらせ基地」\nひみつ基地の中をそれぞれの端末で歩いて、みんなで仕事を片づけるゲームだよ。でも、仲間のふりをした「ねむらせ屋」がまぎれこんでいるんだ。' },
+  /* 2 */ { type:'title', note:'今日のゲームは「ねむらせ墓地」\nひみつ基地の中をそれぞれの端末で歩いて、みんなで仕事を片づけるゲームだよ。でも、仲間のふりをした「ねむらせ屋」がまぎれこんでいるんだ。' },
 
   /* 3 */ { type:'content', accent:'teal', section:'ゲームについて', sectionEn:'summary',
     headline:'仕事を片づけて、<br><span class="hl">ねむらせ屋を見つけよう</span>',
@@ -218,7 +218,7 @@ const SLIDES = [
       <div class="row"><div class="row__ic"><span class="material-symbols-rounded">bedtime</span></div><div><div class="row__t">仲間のふりをした「ねむらせ屋」がまぎれている</div><div class="row__d">近くの人を、こっそりねむらせてしまう</div></div></div>
       <div class="row"><div class="row__ic"><span class="material-symbols-rounded">forum</span></div><div><div class="row__t">会議で話し合って、だれがねむらせ屋か見つける</div><div class="row__d">1回は15分まで</div></div></div>
     </div>`,
-    note:'ねむらせ基地は、ひみつ基地の中を自分の端末で歩いて、みんなで仕事を片づけるゲーム。ひとり1台で、4人から10人で遊ぶよ。\nでも、仲間のふりをした「ねむらせ屋」がまぎれていて、近くの人をこっそりねむらせてしまうんだ。\n会議で話し合って、だれがねむらせ屋か見つけよう。1回は15分までだよ。' },
+    note:'ねむらせ墓地は、ひみつ基地の中を自分の端末で歩いて、みんなで仕事を片づけるゲーム。ひとり1台で、4人から10人で遊ぶよ。\nでも、仲間のふりをした「ねむらせ屋」がまぎれていて、近くの人をこっそりねむらせてしまうんだ。\n会議で話し合って、だれがねむらせ屋か見つけよう。1回は15分までだよ。' },
 
   /* 4 */ { type:'content', accent:'blue', section:'役わり', sectionEn:'roles',
     headline:'はじまると、自分の役が出るよ',
@@ -327,7 +327,7 @@ const SLIDES = [
 
   /* 15 */ { type:'divider', accent:'teal', solid:true, icon:'rocket_launch', jp:'＼ ゲームスタート ／', en:'game start',
     sub:'自分の役を、こっそり確かめよう',
-    note:'それでは、ねむらせ基地スタート！\nルームに参加して、画面に出た自分の役をこっそり確かめてね。わからなくなったら、いつでも聞いてね' },
+    note:'それでは、ねむらせ墓地スタート！\nルームに参加して、画面に出た自分の役をこっそり確かめてね。わからなくなったら、いつでも聞いてね' },
 
   /* 16 */ { type:'divider', accent:'teal', solid:true, icon:'emoji_events', jp:'けっか', en:'result',
     sub:'おつかれさま！',
@@ -346,7 +346,7 @@ function slideHTML(s){
   if(s.type==='title'){
     return `<section class="slide title-slide accent-teal">
       <div class="title-ic"><span class="material-symbols-rounded">bedtime</span></div>
-      <div class="title-jp">ねむらせ基地</div>
+      <div class="title-jp">ねむらせ墓地</div>
       <div class="title-en">nemurase kichi</div>
       <div class="title-tag">〜 仕事を片づけて、ねむらせ屋を見つけよう 〜</div>
       <div class="title-meta">
@@ -404,7 +404,7 @@ if(!isPresenter){
 }
 
 if(isPresenter){
-  document.title='発表者ノート — ねむらせ基地';
+  document.title='発表者ノート — ねむらせ墓地';
   document.body.classList.add('presenter');
   document.getElementById('deck').style.display='none';
   document.getElementById('toolbar').style.display='none';
@@ -415,13 +415,13 @@ if(isPresenter){
   const btnCopy=$('pvCopy'), btnReset=$('pvReset'), btnPrev=$('pvPrev'), btnNext=$('pvNext');
   let cur=0; const KEY=(i)=>'nks_note_'+i;
   function label(s){
-    if(s.type==='title') return 'ねむらせ基地（タイトル）';
+    if(s.type==='title') return 'ねむらせ墓地（タイトル）';
     if(s.type==='divider') return s.jp.replace(/[＼／]/g,'').trim()+'（区切り）';
     return `${s.section}${s.num?' '+s.num:''} ／ ${s.sectionEn}`;
   }
   function plain(html){ const d=document.createElement('div'); d.innerHTML=html||''; d.querySelectorAll('rt').forEach(r=>r.remove()); return (d.textContent||'').replace(/\s+/g,' ').trim(); }
   function titleOf(s){
-    if(s.type==='title') return 'ねむらせ基地';
+    if(s.type==='title') return 'ねむらせ墓地';
     if(s.type==='divider') return s.jp;
     return plain(s.headline);
   }
