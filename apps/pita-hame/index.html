@@ -400,6 +400,16 @@
 
     /* ── みんなで: フィード・メッセージ ── */
     .ph-room-play { margin-top: 16px; }
+    /* ── そのほかの操作（ホストだけ。たまに使う操作をたたむ） ── */
+    .ph-hostmenu { margin-top: var(--space-md); padding: 4px 20px; }
+    .ph-hostmenu summary { min-height: 44px; display: flex; align-items: center; gap: 6px; color: var(--color-muted); font-size: 14px; font-weight: 700; cursor: pointer; list-style: none; }
+    .ph-hostmenu summary::-webkit-details-marker { display: none; }
+    .ph-hostmenu summary::before { content: "expand_more"; font-family: "Material Symbols Rounded"; font-size: 22px; font-weight: 400; color: var(--color-accent); transition: transform .15s; }
+    .ph-hostmenu[open] summary::before { transform: rotate(180deg); }
+    .ph-hostmenu[open] { padding-bottom: 16px; }
+    .ph-hostmenu__row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; padding: 8px 0; border-top: 1px solid var(--color-border); }
+    .ph-hostmenu__note { font-size: 13px; color: var(--color-muted); line-height: 1.6; }
+    .ph-hostmenu { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-box); }
     .ph-roommsg { text-align: center; font-weight: 700; color: var(--color-accent); min-height: 1.3em; margin: 0 0 8px; }
     .ph-feed { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
     .ph-feed__item {
@@ -551,9 +561,14 @@
       <div class="ph-room-play" id="roomPlay" hidden>
         <p class="ph-roommsg" id="roomMsg" aria-live="polite"></p>
         <div class="ph-feed" id="roomFeed" aria-live="polite"></div>
-        <button type="button" class="btn btn-secondary btn-full" id="btnEndRound" hidden>
-          <span class="material-symbols-rounded" aria-hidden="true">flag</span>ラウンドを終わる
-        </button>
+        <!-- ホストがたまに使う操作は、ここにまとめる（開くと出る） -->
+        <details class="ph-hostmenu" id="roomHostMenu" hidden>
+          <summary>そのほかの操作</summary>
+          <div class="ph-hostmenu__row">
+            <button type="button" class="btn btn-secondary btn-sm" id="btnEndRound">ラウンドを終わる</button>
+            <span class="ph-hostmenu__note">時間の前に、このラウンドの結果へ進む</span>
+          </div>
+        </details>
       </div>
     </section>
 
@@ -2211,7 +2226,8 @@
         startTimebar();
       }
       // ホスト操作
-      el('btnEndRound').hidden = net.role !== 'host';
+      // 「ラウンドを終わる」は「そのほかの操作」にたたむ（ホストだけ）
+      el('roomHostMenu').hidden = net.role !== 'host';
       scheduleHostEnd();   // endsAt が status より先に届いた場合もここで確実に予約
       renderFeed();
     }
@@ -2785,7 +2801,11 @@
   el('btnShowQr').addEventListener('click', Net.showQr);
   el('btnStartRound').addEventListener('click', Net.startRound);
   el('btnLeaveWaiting').addEventListener('click', Net.leaveRoom);
-  el('btnEndRound').addEventListener('click', () => Net.endRound('host'));
+  el('btnEndRound').addEventListener('click', () => {
+    if (!confirm('このラウンドを終わって、結果へ進むよ。いい？')) return;
+    el('roomHostMenu').open = false;
+    Net.endRound('host');
+  });
   el('btnNextRound').addEventListener('click', Net.hostNext);
   el('btnPlayAgain').addEventListener('click', Net.playAgain);
   el('btnCloseRoom').addEventListener('click', Net.closeRoom);
