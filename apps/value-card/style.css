@@ -133,7 +133,7 @@
 
 .vc-card--selected {
   border-color: var(--color-accent);
-  box-shadow: 0 0 0 3px rgba(40, 111, 124, 0.15);
+  box-shadow: 0 0 0 3px rgba(138, 74, 16, 0.15);
 }
 
 .vc-card__number {

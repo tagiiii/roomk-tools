@@ -5,8 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
   <title>人狼ゲーム | あそびのたな</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
-  <link rel="stylesheet" href="../shared/css/design-system.css">
+  <link rel="stylesheet" href="../shared/css/design-system.css?v=20261106c">
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
@@ -75,7 +76,9 @@
       transform: rotateY(180deg);
       border: 3px solid var(--color-border);
     }
-    .role-flip-front.village { background: #EFF9F8; border-color: var(--color-accent); }
+    /* 村人チームの色。人狼チームの赤と見分けやすいよう、共通のアクセント（茶オレンジ）ではなくティールにする */
+    body { --jr-village: #286F7C; }
+    .role-flip-front.village { background: #EFF9F8; border-color: var(--jr-village); }
     .role-flip-front.wolf    { background: #FEF2F2; border-color: var(--color-error); }
     .role-flip-front.third   { background: #F5F3FF; border-color: #7C3AED; }
     .role-name {
@@ -85,7 +88,7 @@
       font-size: 12px; font-weight: 700; padding: 3px 10px;
       border-radius: 999px; color: #fff;
     }
-    .role-faction.village { background: var(--color-accent); }
+    .role-faction.village { background: var(--jr-village); }
     .role-faction.wolf    { background: var(--color-error); }
     .role-faction.third   { background: #7C3AED; }
     .role-desc { font-size: 12px; color: var(--color-muted); text-align: center; padding: 0 16px; }
@@ -104,7 +107,7 @@
       font-size: 10px; font-weight: 700; padding: 2px 6px;
       border-radius: 4px; color: #fff; margin-left: 6px;
     }
-    .role-config-faction.village { background: var(--color-accent); }
+    .role-config-faction.village { background: var(--jr-village); }
     .role-config-faction.wolf    { background: var(--color-error); }
     .role-config-faction.third   { background: #7C3AED; }
     .role-spinner {
@@ -226,7 +229,7 @@
       text-align: center; padding: 28px 20px;
       border-radius: var(--radius-card); margin-bottom: 16px;
     }
-    .result-banner.village { background: linear-gradient(135deg, #EFF9F8, #E0F2F7); border: 2px solid var(--color-accent); }
+    .result-banner.village { background: linear-gradient(135deg, #EFF9F8, #E0F2F7); border: 2px solid var(--jr-village); }
     .result-banner.wolf    { background: linear-gradient(135deg, #FEF2F2, #FDECEA); border: 2px solid var(--color-error); }
     .result-banner.third   { background: linear-gradient(135deg, #F5F3FF, #EDE9FE); border: 2px solid #7C3AED; }
     .result-banner.draw    { background: linear-gradient(135deg, var(--color-surface), var(--color-primary-soft)); border: 2px solid var(--color-border); }
@@ -246,7 +249,7 @@
       font-size: 12px; font-weight: 700; padding: 2px 8px;
       border-radius: 6px; color: #fff;
     }
-    .role-reveal-badge.village { background: var(--color-accent); }
+    .role-reveal-badge.village { background: var(--jr-village); }
     .role-reveal-badge.wolf    { background: var(--color-error); }
     .role-reveal-badge.third   { background: #7C3AED; }
 
@@ -327,7 +330,7 @@
       font-size: 12px; font-weight: 700; color: #fff;
       display: inline-block; padding: 3px 10px; border-radius: 999px; margin: 16px 0 8px;
     }
-    .rules-sub.village { background: var(--color-accent); }
+    .rules-sub.village { background: var(--jr-village); }
     .rules-sub.wolf    { background: var(--color-error); }
     .rules-sub.third   { background: #7C3AED; }
     .rules-roles { list-style: none; padding: 0; margin: 0; }
@@ -340,29 +343,27 @@
     .rules-role-desc { font-size: 13px; color: var(--color-muted); }
   </style>
 </head>
-<body>
+<body data-genre="suiri">
 
 <!-- ══ TOP ══════════════════════════════════════════ -->
 <div id="screen-top" class="screen">
   <div class="page">
-    <div class="jn-header">
-      <div class="jn-header__icon">
-        <span class="material-symbols-rounded">groups</span>
+    <section class="app-entry">
+      <div class="app-hero"><img class="app-illust" src="../assets/illustrations/jinro.webp" alt="" width="156" height="156" decoding="async" onerror="this.parentNode.remove()" /></div>
+      <h1 class="jn-header__title app-title">人狼ゲーム</h1>
+      <p class="jn-header__sub app-catch">正体を隠して生き残れ</p>
+      <div class="app-entry__actions">
+        <button class="btn btn-primary btn-full" onclick="goTo('host-setup')">
+          <span class="material-symbols-rounded">add_circle</span>ルームを作る（GM）
+        </button>
+        <button class="btn btn-secondary btn-full" onclick="openJoinFromTop()">
+          <span class="material-symbols-rounded">login</span>ルームに参加する
+        </button>
+        <button class="btn btn-ghost btn-full" onclick="openRules()">
+          <span class="material-symbols-rounded">help</span>遊び方・役職を見る
+        </button>
       </div>
-      <div class="jn-header__title">人狼ゲーム</div>
-      <div class="jn-header__sub">正体を隠して生き残れ</div>
-    </div>
-    <div class="card">
-      <button class="btn btn-primary btn-full" onclick="goTo('host-setup')">
-        <span class="material-symbols-rounded">add_circle</span>ルームを作る（GM）
-      </button>
-      <button class="btn btn-secondary btn-full sep" onclick="openJoinFromTop()">
-        <span class="material-symbols-rounded">login</span>ルームに参加する
-      </button>
-      <button class="btn btn-ghost btn-full sep" onclick="openRules()">
-        <span class="material-symbols-rounded">help</span>遊び方・役職を見る
-      </button>
-    </div>
+    </section>
   </div>
 </div>
 

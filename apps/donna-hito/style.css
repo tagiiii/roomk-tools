@@ -450,3 +450,6 @@
   .dh-end__icon .material-symbols-rounded { font-size: 30px; }
   .dh-mini { grid-column: 1 / -1; grid-row: 2; }
 }
+
+/* はじめの画面の型（2026-11-06）: 注意書きは印つきの行なので、左のあきを詰める */
+body .app-entry > .dh-note-list.app-entry__notes { padding-left: 16px; }

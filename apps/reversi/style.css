@@ -34,7 +34,7 @@ body { background: var(--color-bg); }
   color: var(--color-accent); font-family: inherit; font-size: 15px; font-weight: 500; cursor: pointer;
   border-radius: var(--radius-sm);
 }
-.rv-quiet:hover { background: rgba(40, 111, 124, 0.08); }
+.rv-quiet:hover { background: rgba(138, 74, 16, 0.08); }
 .rv-quiet:disabled { color: var(--color-muted); opacity: 0.55; cursor: not-allowed; background: none; }
 .rv-quiet .material-symbols-rounded { font-size: 20px; }
 .rv-quiet--center { justify-self: center; }
@@ -151,7 +151,7 @@ body { background: var(--color-bg); }
   padding: 10px 12px; border-radius: 12px; background: var(--color-surface);
   border: 2px solid var(--color-border);
 }
-.rv-seat.is-turn { border-color: var(--color-accent); box-shadow: 0 0 0 3px rgba(40, 111, 124, 0.18); }
+.rv-seat.is-turn { border-color: var(--color-accent); box-shadow: 0 0 0 3px rgba(138, 74, 16, 0.18); }
 .rv-seat__stone { width: 30px; height: 30px; border-radius: 50%; flex: none; }
 .rv-seat--b .rv-seat__stone { background: var(--rv-black); }
 .rv-seat--w .rv-seat__stone { background: var(--rv-white); border: 2px solid #8A8F98; }

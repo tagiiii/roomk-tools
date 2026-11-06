@@ -53,7 +53,7 @@ body { background: var(--color-bg); }
   color: var(--color-accent); font-family: inherit; font-size: 15px; font-weight: 500; cursor: pointer;
   border-radius: var(--radius-sm);
 }
-.kh-quiet:hover { background: rgba(40, 111, 124, 0.08); }
+.kh-quiet:hover { background: rgba(138, 74, 16, 0.08); }
 .kh-quiet .material-symbols-rounded { font-size: 20px; }
 .kh-quiet--center { display: flex; margin: 4px auto 0; }
 

@@ -5,8 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
   <title>カンペ放送局 | あそびのたな</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
-  <link rel="stylesheet" href="../shared/css/design-system.css">
+  <link rel="stylesheet" href="../shared/css/design-system.css?v=20261106c">
   <!-- index.html と app.js・engine.js・data.js・style.css はセットで変わるので、変えたら ?v= をそろえて上げる -->
   <link rel="stylesheet" href="style.css?v=20261106b">
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
@@ -17,12 +18,12 @@
   <script src="engine.js?v=20261106b"></script>
   <script src="data.js?v=20261106b"></script>
 </head>
-<body>
+<body data-genre="kotoba">
 
   <!-- トップ -->
   <section class="kh-screen kh-front active" id="screen-top">
-    <div class="kh-panel kh-panel--hero">
-      <div class="kh-hero" aria-hidden="true">
+    <div class="kh-panel kh-panel--hero app-entry">
+      <div class="kh-hero app-entry__head" aria-hidden="true">
         <svg class="kh-hero__art" viewBox="0 0 360 160" role="presentation">
           <rect x="112" y="18" width="136" height="40" rx="10" fill="#C2410C" />
           <rect x="112" y="18" width="136" height="40" rx="10" fill="none" stroke="#FFD9C2" stroke-width="2" class="kh-hero__glow" />
@@ -46,14 +47,14 @@
         </svg>
         <p class="kh-hero__tag">きょうの放送</p>
       </div>
-      <h1 class="kh-panel__title">カンペ放送局</h1>
-      <p class="kh-panel__lead">読む人の原稿には、空らんがある。ほかの人は「食べ物」「音」みたいなヒントだけを見て、言葉を書く。読む人は、出てきた言葉を笑わずにそのまま読みきれるかな？読み終わったら、みんなで「笑わずに読めた」か「笑った」かを判定しよう。3〜8人で、1回は15〜30分くらい。</p>
-      <ul class="kh-panel__notes">
+      <h1 class="kh-panel__title app-title">カンペ放送局</h1>
+      <p class="kh-panel__lead app-entry__lead">読む人の原稿には、空らんがある。ほかの人は「食べ物」「音」みたいなヒントだけを見て、言葉を書く。読む人は、出てきた言葉を笑わずにそのまま読みきれるかな？読み終わったら、みんなで「笑わずに読めた」か「笑った」かを判定しよう。3〜8人で、1回は15〜30分くらい。</p>
+      <ul class="kh-panel__notes app-entry__notes">
         <li>書く人は、文の中身を知らないまま言葉を書くよ</li>
         <li>思いつかないときは「おまかせ」を押してね</li>
         <li>マイクを使わない人は「書くだけ」で遊べるよ</li>
       </ul>
-      <div class="kh-panel__actions">
+      <div class="kh-panel__actions app-entry__actions">
         <button type="button" class="btn btn-primary btn-full" id="btnGoCreate">ルームを作る</button>
         <button type="button" class="btn btn-secondary btn-full" id="btnGoJoin">ルームに参加する</button>
         <button type="button" class="kh-quiet kh-quiet--center" id="btnGoWatch">みんなにみせる画面をひらく</button>

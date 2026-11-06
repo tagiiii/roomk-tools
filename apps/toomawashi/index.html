@@ -5,8 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
   <title>とおまわしクイズ | あそびのたな</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
-  <link rel="stylesheet" href="../shared/css/design-system.css">
+  <link rel="stylesheet" href="../shared/css/design-system.css?v=20261106c">
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
@@ -70,7 +71,7 @@
     .tw-hero { text-align: center; margin-bottom: 18px; }
     .tw-hero__icon {
       width: 76px; height: 76px; border-radius: 50%;
-      background: linear-gradient(135deg, var(--color-accent), #1A4850);
+      background: linear-gradient(135deg, var(--color-accent), #5A300A);
       display: flex; align-items: center; justify-content: center;
       margin: 0 auto 14px;
     }
@@ -84,6 +85,8 @@
     }
     .tw-notes li + li { margin-top: 6px; }
     .tw-notes .material-symbols-rounded { font-size: 18px; color: var(--color-accent); margin-top: 3px; }
+    /* はじめの画面の型（2026-11-06）の中: 注意書きは印つきの行なので、左のあきを詰める */
+    body .app-entry > .tw-notes.app-entry__notes { padding-left: 16px; }
 
     /* ── 見出し ── */
     .tw-page-title { font-size: 22px; font-weight: 700; color: var(--color-primary); margin-bottom: 6px; }
@@ -298,36 +301,34 @@
     }
   </style>
 </head>
-<body>
+<body data-genre="kotoba">
 
 <!-- ═══════════════ screen-top ═══════════════ -->
 <div id="screen-top" class="screen">
   <div class="page">
-    <div class="card">
-      <div class="tw-hero">
-        <div class="tw-hero__icon">
-          <span class="material-symbols-rounded" aria-hidden="true">record_voice_over</span>
-        </div>
-        <h1 class="tw-hero__title">とおまわしクイズ</h1>
-      </div>
-      <p class="tw-lead">
+    <section class="card app-entry">
+      <div class="app-hero"><img class="app-illust" src="../assets/illustrations/toomawashi.webp" alt="" width="156" height="156" decoding="async" onerror="this.parentNode.remove()" /></div>
+      <h1 class="tw-hero__title app-title">とおまわしクイズ</h1>
+      <p class="tw-lead app-entry__lead">
         秘密のお題を、「言っちゃダメことば」を使わずに説明して、
         みんなに当ててもらうゲームです。説明は声でOK。
       </p>
-      <ul class="tw-notes">
+      <ul class="tw-notes app-entry__notes">
         <li><span class="material-symbols-rounded" aria-hidden="true">group</span><span>2〜10人。ひとり2〜3分くらいで、全部で15〜25分</span></li>
         <li><span class="material-symbols-rounded" aria-hidden="true">forum</span><span>相談OK。声でもチャットでも答えられる</span></li>
         <li><span class="material-symbols-rounded" aria-hidden="true">timer_off</span><span>時間制限はなし。答えなくても大丈夫</span></li>
       </ul>
-      <button class="btn btn-primary btn-full btn-lg" onclick="showScreen('create')">
-        <span class="material-symbols-rounded" aria-hidden="true">add_circle</span>
-        ルームを作る
-      </button>
-      <button class="btn btn-secondary btn-full" onclick="goJoin()">
-        <span class="material-symbols-rounded" aria-hidden="true">login</span>
-        ルームに参加する
-      </button>
-    </div>
+      <div class="app-entry__actions">
+        <button class="btn btn-primary btn-full btn-lg" onclick="showScreen('create')">
+          <span class="material-symbols-rounded" aria-hidden="true">add_circle</span>
+          ルームを作る
+        </button>
+        <button class="btn btn-secondary btn-full" onclick="goJoin()">
+          <span class="material-symbols-rounded" aria-hidden="true">login</span>
+          ルームに参加する
+        </button>
+      </div>
+    </section>
   </div>
 </div>
 

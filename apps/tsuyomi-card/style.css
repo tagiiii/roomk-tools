@@ -343,3 +343,6 @@
     font-size: var(--font-size-lg);
   }
 }
+
+/* はじめの画面の型（2026-11-06）: 注意書きは印つきの行なので、左のあきを詰める */
+body .app-entry > .ty-note-list.app-entry__notes { padding-left: 16px; }

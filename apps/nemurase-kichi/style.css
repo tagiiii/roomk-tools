@@ -38,7 +38,7 @@ body.is-playing { overflow: hidden; background: #2D3642; overscroll-behavior: no
   color: var(--color-accent); font-family: inherit; font-size: 15px; font-weight: 500; cursor: pointer;
   border-radius: var(--radius-sm);
 }
-.nk-quiet:hover { background: rgba(40, 111, 124, 0.08); }
+.nk-quiet:hover { background: rgba(138, 74, 16, 0.08); }
 
 .nk-iconbtn {
   width: 44px; height: 44px; flex: none; border-radius: 50%;

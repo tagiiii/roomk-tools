@@ -5,8 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
   <title>かくれ怪盗 | あそびのたな</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
-  <link rel="stylesheet" href="../shared/css/design-system.css">
+  <link rel="stylesheet" href="../shared/css/design-system.css?v=20261106c">
   <!-- index.html と app.js・engine.js・style.css はセットで変わるので、変えたら ?v= をそろえて上げる -->
   <link rel="stylesheet" href="style.css?v=20261106b">
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
@@ -16,12 +17,12 @@
   <script src="../shared/js/room-qr.js?v=20261022"></script>
   <script src="engine.js?v=20261106b"></script>
 </head>
-<body>
+<body data-genre="suiri">
 
   <!-- トップ -->
   <section class="kk-screen kk-front active" id="screen-top">
-    <div class="kk-panel kk-panel--hero">
-      <div class="kk-hero" aria-hidden="true">
+    <div class="kk-panel kk-panel--hero app-entry">
+      <div class="kk-hero app-entry__head" aria-hidden="true">
         <svg class="kk-hero__art" viewBox="0 0 360 170" role="presentation">
           <defs>
             <linearGradient id="kk-beam" x1="0" y1="0" x2="0" y2="1">
@@ -60,13 +61,13 @@
         </svg>
         <p class="kk-hero__tag">夜の美術館</p>
       </div>
-      <h1 class="kk-panel__title">かくれ怪盗</h1>
-      <p class="kk-panel__lead">美術館の警備員の中に、変装した怪盗がまざっている。だれを見回りに行かせるか話し合って、宝石を3回守れば警備員チームの勝ち。3回すり替えられたら怪盗チームの勝ち。4〜10人で、1回は20〜30分くらい。</p>
-      <ul class="kk-panel__notes">
+      <h1 class="kk-panel__title app-title">かくれ怪盗</h1>
+      <p class="kk-panel__lead app-entry__lead">美術館の警備員の中に、変装した怪盗がまざっている。だれを見回りに行かせるか話し合って、宝石を3回守れば警備員チームの勝ち。3回すり替えられたら怪盗チームの勝ち。4〜10人で、1回は20〜30分くらい。</p>
+      <ul class="kk-panel__notes app-entry__notes">
         <li>役は自分の画面にだけ出るよ</li>
         <li>だれも途中でぬけない。最後までみんなで遊べるよ</li>
       </ul>
-      <div class="kk-panel__actions">
+      <div class="kk-panel__actions app-entry__actions">
         <button type="button" class="btn btn-primary btn-full" id="btnGoCreate">ルームを作る</button>
         <button type="button" class="btn btn-secondary btn-full" id="btnGoJoin">ルームに参加する</button>
         <button type="button" class="kk-quiet kk-quiet--center" id="btnGoWatch">みんなにみせる画面をひらく</button>

@@ -113,7 +113,7 @@
 .isd-candidate.selected {
   border-color: var(--color-accent);
   background: var(--color-accent-soft);
-  box-shadow: 0 0 0 3px rgba(40, 111, 124, 0.25);
+  box-shadow: 0 0 0 3px rgba(138, 74, 16, 0.25);
   transform: scale(1.04);
 }
 
@@ -361,3 +361,6 @@
     font-size: 56px;
   }
 }
+
+/* はじめの画面の型（2026-11-06）の中では、ラウンド数の上下のあきを型にそろえる */
+.app-entry > .isd-setup__group { margin: 20px 0 0; }

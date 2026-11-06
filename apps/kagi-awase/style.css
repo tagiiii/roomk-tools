@@ -95,7 +95,7 @@
 
 .kag-tag {
   display: inline-block;
-  color: var(--color-accent); /* 淡いティールの上で 4.5:1 以上 */
+  color: var(--color-accent); /* 淡いアクセントの上で 4.5:1 以上 */
   background: var(--color-accent-soft);
   border-radius: var(--radius-full);
   font-size: 12px;
@@ -552,16 +552,16 @@ button.kag-tile { cursor: pointer; }
 /* 選べる・選んだ・いま動いた */
 button.kag-tile:hover .kag-tile__face { border-color: var(--color-accent); }
 
-.kag-tile.is-hidden.is-pickable:hover .kag-tile__face { border-color: #7FC3CF; }
+.kag-tile.is-hidden.is-pickable:hover .kag-tile__face { border-color: #DFA766; }
 
 .kag-tile.is-picked .kag-tile__face {
   border-color: var(--color-accent);
-  box-shadow: 0 0 0 3px #8FD0DA;
+  box-shadow: 0 0 0 3px #DFA766;
   transform: translateY(-4px);
 }
 
 .kag-tile.is-recent .kag-tile__face { box-shadow: 0 0 0 3px #F2C14E; }
-.kag-tile.is-picked.is-recent .kag-tile__face { box-shadow: 0 0 0 3px #8FD0DA; }
+.kag-tile.is-picked.is-recent .kag-tile__face { box-shadow: 0 0 0 3px #DFA766; }
 
 button.kag-tile:focus-visible { outline: none; }
 
@@ -665,3 +665,8 @@ button.kag-tile:focus-visible .kag-tile__face {
   .kag-tile__mark { font-size: 11px; top: 1px; right: 1px; }
   .kag-last { font-size: 14px; }
 }
+
+/* はじめの画面の型（2026-11-06）: はじめの画面のあいだは、ツール名・ひとことを入口の面に出すので、上のヘッダーの名前・ひとことは隠す
+   （みんなにみせる画面の印は隠さない。ほかの画面では今までどおり出る） */
+.wrapper:has(#screen-top.active) > .kag-header > :is(.kag-header__title, .kag-header__sub) { display: none; }
+.wrapper:has(#screen-top.active) > .kag-header:has(> .kag-watchbadge[hidden]) { margin-bottom: 0; }

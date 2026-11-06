@@ -48,7 +48,7 @@
   line-height: 1.8;
 }
 
-/* お題の見本。お題画面の白カード＋ティール枠を小さくしたもの */
+/* お題の見本。お題画面の白カード＋アクセント色の枠を小さくしたもの */
 .kmk-sample {
   max-width: 320px;
   margin: 0 auto 18px;
@@ -167,6 +167,11 @@
   gap: 6px;
   min-width: 240px;
 }
+
+/* はじめの画面の型（2026-11-06）の中のあき。注意書きの点は、もとの位置に近く */
+.app-entry > .kmk-sample { margin-top: 16px; margin-bottom: 0; }
+body .app-entry > .kmk-note-list { padding-left: 16px; }
+.app-entry > .kmk-limit { margin-top: 20px; }
 
 /* ── お題画面 ── */
 .kmk-odai__label {

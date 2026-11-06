@@ -5,8 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
   <title>お絵描き伝言ゲーム | あそびのたな</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
-  <link rel="stylesheet" href="../shared/css/design-system.css">
+  <link rel="stylesheet" href="../shared/css/design-system.css?v=20261106c">
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
@@ -103,7 +104,7 @@
     .oek-play-title { font-size: 22px; font-weight: 700; color: var(--color-primary); margin-top: 18px; }
     .oek-play-sub { font-size: 14px; color: var(--color-muted); line-height: 1.7; margin: 6px 0 16px; }
 
-    /* ── お題表示の定石（白カード＋ティール枠） ── */
+    /* ── お題表示の定石（白カード＋アクセント色の枠） ── */
     .oek-odai {
       background: var(--color-surface); border: 2px solid var(--color-accent);
       border-radius: var(--radius-box); padding: 32px 40px; text-align: center;
@@ -250,24 +251,24 @@
     }
   </style>
 </head>
-<body>
+<body data-genre="atekko">
 
 <!-- ════════════════════════════════════ TOP ════════════════════════════════════ -->
 <div class="screen" id="screen-top">
   <div class="oek-page">
-    <div class="oek-hero">
-      <div class="oek-hero__icon-wrap"><span class="material-symbols-rounded" aria-hidden="true">draw</span></div>
-      <h1 class="oek-hero__title">お絵描き伝言ゲーム</h1>
-      <p class="oek-hero__sub">書いた文を次の人が絵にして、その絵を次の人が文にして……。<br>順番に回していくと、最初のお題はどう変わるかな？</p>
-    </div>
-    <div class="oek-hero__buttons">
-      <button type="button" class="btn btn-primary btn-lg btn-full" onclick="openHostSetup()">
-        <span class="material-symbols-rounded" aria-hidden="true">add_home</span>ルームを作る
-      </button>
-      <button type="button" class="btn btn-secondary btn-lg btn-full" onclick="openGuestJoin()">
-        <span class="material-symbols-rounded" aria-hidden="true">login</span>ルームに参加する
-      </button>
-    </div>
+    <section class="app-entry">
+      <div class="app-hero"><img class="app-illust" src="../assets/illustrations/oekaki-dengon.webp" alt="" width="156" height="156" decoding="async" onerror="this.parentNode.remove()" /></div>
+      <h1 class="oek-hero__title app-title">お絵描き伝言ゲーム</h1>
+      <p class="oek-hero__sub app-catch">書いた文を次の人が絵にして、その絵を次の人が文にして……。<br>順番に回していくと、最初のお題はどう変わるかな？</p>
+      <div class="oek-hero__buttons app-entry__actions">
+        <button type="button" class="btn btn-primary btn-lg btn-full" onclick="openHostSetup()">
+          <span class="material-symbols-rounded" aria-hidden="true">add_home</span>ルームを作る
+        </button>
+        <button type="button" class="btn btn-secondary btn-lg btn-full" onclick="openGuestJoin()">
+          <span class="material-symbols-rounded" aria-hidden="true">login</span>ルームに参加する
+        </button>
+      </div>
+    </section>
   </div>
 </div>
 

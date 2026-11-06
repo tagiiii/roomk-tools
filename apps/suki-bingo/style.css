@@ -3,7 +3,7 @@
 
 .wrapper {
   --sb-tint: var(--color-accent-soft);
-  --sb-teal-text: var(--color-accent); /* 淡いティールの上で 4.5:1 以上 */
+  --sb-teal-text: var(--color-accent); /* 淡いアクセントの上で 4.5:1 以上 */
   max-width: 760px;
   margin: 0 auto;
   padding: 40px 20px 80px;
@@ -147,7 +147,7 @@
 
 .sb-mini { display: inline-grid; grid-template-columns: repeat(3, 8px); gap: 2px; }
 .sb-mini__dot { width: 8px; height: 8px; border-radius: 2px; background: var(--color-border); }
-.sb-mini__dot.is-open { background: #7FBFC8; }
+.sb-mini__dot.is-open { background: #DFA766; }
 .sb-mini__dot.is-line { background: var(--color-primary); }
 
 /* ── テーマとひく回数（ホスト） ── */
@@ -230,7 +230,7 @@ button.sb-cand:hover:not([aria-disabled="true"]) { border-color: var(--color-acc
 }
 .sb-card--small .sb-cell { font-size: 12px; border-radius: 7px; padding: 4px 2px; }
 .sb-cell.is-empty { background: rgba(255, 255, 255, 0.16); }
-.sb-cell.is-open { background: #BFE3E8; }
+.sb-cell.is-open { background: #F2CFA5; }
 .sb-cell.is-line { background: var(--color-accent); color: #fff; }
 .sb-cell__mark.material-symbols-rounded {
   position: absolute; top: 3px; right: 3px; font-size: 18px; color: var(--color-accent);
@@ -256,7 +256,7 @@ button.sb-cand:hover:not([aria-disabled="true"]) { border-color: var(--color-acc
 .sb-play__side > .sb-label:first-child,
 .sb-play__side > div:first-child > .sb-label:first-child { margin-top: 0; }
 
-/* お題表示の定石（白カード＋ティール枠） */
+/* お題表示の定石（白カード＋アクセント色の枠） */
 .sb-draw {
   background: var(--color-surface); border: 2px solid var(--color-accent);
   border-radius: var(--radius-box); padding: 32px 40px; text-align: center;
@@ -369,3 +369,10 @@ button.sb-cand:hover:not([aria-disabled="true"]) { border-color: var(--color-acc
 @media (prefers-reduced-motion: reduce) {
   .sb-cell.is-new { animation: none; }
 }
+
+/* ── はじめの画面の型（2026-11-06）: ツール名・ひとこと・絵は、はじめの画面の白い面（.app-entry）に入れた。
+   そのあいだだけ、ヘッダーのツール名とひとことを隠す（ほかの画面では今までどおり出る。みんなにみせる画面の印は隠さない） ── */
+.wrapper:has(#screen-top.active) > .sb-header > :is(.sb-header__title, .sb-header__sub) { display: none; }
+.wrapper:has(#screen-top.active) > .sb-header { margin-bottom: 0; }
+/* 型の中では説明の下のあきが消えるので、ひとことの注意を少し離す */
+.app-entry > .sb-note { margin-top: 12px; }

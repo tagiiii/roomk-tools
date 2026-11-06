@@ -65,7 +65,7 @@ body { background: var(--color-bg); }
   color: var(--color-accent); font-family: inherit; font-size: 15px; font-weight: 500; cursor: pointer;
   border-radius: var(--radius-sm);
 }
-.kk-quiet:hover { background: rgba(40, 111, 124, 0.08); }
+.kk-quiet:hover { background: rgba(138, 74, 16, 0.08); }
 .kk-quiet .material-symbols-rounded { font-size: 20px; }
 
 /* ══ バー ══ */
@@ -277,7 +277,7 @@ body { background: var(--color-bg); }
 .kk-banner--win-guard .kk-status, .kk-banner--win-thief .kk-status { font-size: 28px; }
 .kk-banner--win-guard .kk-status { color: var(--kk-gold-text); }
 .kk-banner--win-thief .kk-status { color: var(--kk-thief); }
-@keyframes kk-ping { 0% { box-shadow: 0 0 0 0 rgba(40, 111, 124, 0.45); } 100% { box-shadow: 0 0 0 14px rgba(40, 111, 124, 0); } }
+@keyframes kk-ping { 0% { box-shadow: 0 0 0 0 rgba(138, 74, 16, 0.45); } 100% { box-shadow: 0 0 0 14px rgba(138, 74, 16, 0); } }
 
 /* 結果をじらして出す（カード・票をめくり終わってから。--d は app.js が決める） */
 .kk-banner.is-anim { animation: kk-reveal 0.5s ease-out both; animation-delay: var(--d, 0s); }
@@ -313,7 +313,7 @@ body { background: var(--color-bg); }
 .kk-pick__btn:active:not(:disabled) { transform: scale(0.97); }
 .kk-pick__name { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
 .kk-pick__mark { color: var(--color-border); font-size: 26px; }
-.kk-pick__btn.is-on { border-color: var(--color-accent); background: var(--color-accent-soft); color: var(--color-primary); font-weight: 700; box-shadow: 0 0 0 3px rgba(40, 111, 124, 0.18); }
+.kk-pick__btn.is-on { border-color: var(--color-accent); background: var(--color-accent-soft); color: var(--color-primary); font-weight: 700; box-shadow: 0 0 0 3px rgba(138, 74, 16, 0.18); }
 .kk-pick__btn.is-on .kk-pick__mark { color: var(--color-accent); }
 .kk-pick__btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
@@ -398,7 +398,7 @@ body { background: var(--color-bg); }
 
 /* ══ 役のカード ══ */
 .kk-role { border-radius: 18px; padding: 18px; border: 2px solid; display: grid; gap: 12px; }
-.kk-role--guard { background: linear-gradient(160deg, #F1F9FA, #E1EEF2); border-color: var(--color-accent); }
+.kk-role--guard { background: linear-gradient(160deg, #FFF8EF, #FFF1E0); border-color: var(--color-accent); }
 .kk-role--thief { background: linear-gradient(160deg, #F7F2FD, #E9DDF8); border-color: var(--kk-thief); }
 .kk-role__head { display: flex; align-items: center; gap: 14px; }
 .kk-role__badge { width: 60px; height: 60px; flex: none; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; color: #fff; }

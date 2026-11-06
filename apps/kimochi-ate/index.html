@@ -5,31 +5,37 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
   <title>気持ち当てゲーム | あそびのたな</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
-  <link rel="stylesheet" href="../shared/css/design-system.css">
+  <link rel="stylesheet" href="../shared/css/design-system.css?v=20261106c">
   <!-- index.html と app.js・style.css はセットで変わるので、変えたら ?v= をそろえて上げる -->
-  <link rel="stylesheet" href="style.css?v=20261012b">
+  <link rel="stylesheet" href="style.css?v=20261106look">
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <script src="../shared/js/rtdb-utils.js?v=20261005"></script>
   <script src="../shared/js/room-qr.js?v=20261022"></script>
 </head>
-<body>
+<body data-genre="atekko">
   <div class="wrapper">
     <header class="ka-header">
-      <h1 class="ka-header__title">気持ち当てゲーム</h1>
+      <h1 class="ka-header__title app-title">気持ち当てゲーム</h1>
       <p class="ka-header__sub">同じ場面でも、気持ちは人それぞれ</p>
       <p class="ka-watchbadge" id="watchBadge" hidden>みんなにみせる画面</p>
     </header>
     <main>
       <section class="ka-screen active" id="screen-top">
-        <div class="ka-panel">
-          <p class="ka-lead">場面カードを見て、主役の気持ちがどの系かをみんなで予想するゲーム。主役は、系とぴったりのことばを先にこっそり選んでおくよ。</p>
+        <div class="ka-panel app-entry">
+          <div class="app-hero"><img class="app-illust" src="../assets/illustrations/kimochi-ate.webp" alt="" width="156" height="156" decoding="async" onerror="this.parentNode.remove()" /></div>
+          <h1 class="app-title">気持ち当てゲーム</h1>
+          <p class="app-catch">同じ場面でも、気持ちは人それぞれ</p>
+          <p class="ka-lead app-entry__lead">場面カードを見て、主役の気持ちがどの系かをみんなで予想するゲーム。主役は、系とぴったりのことばを先にこっそり選んでおくよ。</p>
           <p class="ka-note">どんな気持ちでもOK。点数はつけないよ。</p>
-          <button type="button" class="btn btn-primary btn-full" id="btnGoCreate">ルームを作る</button>
-          <button type="button" class="btn btn-secondary btn-full" id="btnGoJoin">ルームに参加する</button>
-          <button type="button" class="btn btn-ghost btn-full" id="btnGoWatch">みんなにみせる画面をひらく</button>
+          <div class="app-entry__actions">
+            <button type="button" class="btn btn-primary btn-full" id="btnGoCreate">ルームを作る</button>
+            <button type="button" class="btn btn-secondary btn-full" id="btnGoJoin">ルームに参加する</button>
+            <button type="button" class="btn btn-ghost btn-full" id="btnGoWatch">みんなにみせる画面をひらく</button>
+          </div>
         </div>
       </section>
 

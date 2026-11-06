@@ -202,10 +202,10 @@
 
 /* ── Result: Found Highlight ── */
 .ks-cell--found {
-  background: rgba(40, 111, 124, 0.13);
+  background: rgba(138, 74, 16, 0.13);
   border-color: var(--color-accent);
   border-width: 2.5px;
-  box-shadow: 0 0 0 3px rgba(40, 111, 124, 0.10);
+  box-shadow: 0 0 0 3px rgba(138, 74, 16, 0.10);
 }
 .ks-cell--found .ks-cell__inner {
   color: var(--color-accent);
@@ -328,3 +328,8 @@
     align-items: stretch;
   }
 }
+
+/* はじめの画面の型（2026-11-06）: 設定画面のあいだは、ツール名・ひとこと・絵を入口の面に出すので、上の見出しは隠す（ほかの画面では今までどおり出る） */
+body:has(#screen-settings.active) .ks-header { display: none; }
+.app-entry > .app-catch + .ks-settings__group { margin-top: 22px; }
+.app-entry > .ks-settings__group:has(+ .app-entry__actions) { margin-bottom: 0; }

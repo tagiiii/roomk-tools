@@ -6,41 +6,38 @@
   <title>どっちにする？ | あそびのたな</title>
   <!-- Google Fonts（Noto Sans JP）-->
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet" />
   <!-- Material Symbols Rounded -->
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet" />
   <!-- 共通デザインシステム -->
-  <link rel="stylesheet" href="../shared/css/design-system.css" />
+  <link rel="stylesheet" href="../shared/css/design-system.css?v=20261106c" />
   <!-- アプリ固有スタイル -->
-  <link rel="stylesheet" href="style.css?v=20261106" />
+  <link rel="stylesheet" href="style.css?v=20261106look" />
 </head>
-<body>
+<body data-genre="talk">
 
   <div class="wrapper">
 
     <!-- ── トップ画面 ── -->
     <section class="dc-screen dc-screen--active" id="screenTop">
-      <header class="dc-header">
-        <span class="material-symbols-rounded dc-header__icon">alt_route</span>
-        <h1 class="dc-header__title">どっちにする？</h1>
-        <p class="dc-header__sub">軽い2択を選んで遊ぼう。どっちを選んでもOK！</p>
-      </header>
+      <div class="app-entry">
+        <div class="app-hero"><img class="app-illust" src="../assets/illustrations/docchi.webp" alt="" width="156" height="156" decoding="async" onerror="this.parentNode.remove()" /></div>
+        <h1 class="app-title">どっちにする？</h1>
+        <p class="app-catch">軽い2択を選んで遊ぼう。どっちを選んでもOK！</p>
 
-      <div class="card dc-panel">
-        <div class="dc-intro">
-          <p class="dc-intro__lead">軽い2択のお題が1つずつ出てくる。好きなほうを選んで、「次へ」で次のお題へ。5〜10分くらい。</p>
-          <ul class="dc-intro__notes">
-            <li>どっちを選んでもOK。正解はない</li>
-            <li>理由はなくてもOK</li>
-            <li>決められないときは「その他」でもOK</li>
-          </ul>
-        </div>
+        <p class="dc-intro__lead app-entry__lead">軽い2択のお題が1つずつ出てくる。好きなほうを選んで、「次へ」で次のお題へ。5〜10分くらい。</p>
+        <ul class="dc-intro__notes app-entry__notes">
+          <li>どっちを選んでもOK。正解はない</li>
+          <li>理由はなくてもOK</li>
+          <li>決められないときは「その他」でもOK</li>
+        </ul>
 
         <div class="dc-cat">
           <p class="dc-cat__label">カテゴリを選ぶ</p>
           <div class="dc-cat__list" id="catList" role="group" aria-label="カテゴリを選ぶ"></div>
         </div>
 
-        <div class="dc-start">
+        <div class="app-entry__actions">
           <button class="btn btn-primary btn-lg" id="btnStart">はじめる</button>
         </div>
       </div>

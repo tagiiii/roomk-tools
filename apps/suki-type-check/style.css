@@ -325,7 +325,7 @@
 .stc-bar__fill {
   height: 100%;
   border-radius: var(--radius-full);
-  background: #9FBAC4;
+  background: #DFA766;
 }
 
 .stc-bar--top .stc-bar__name,
@@ -396,3 +396,8 @@
     width: 100%;
   }
 }
+
+/* はじめの画面の型（2026-11-06）: 注意書きは印つきの行なので、左のあきを詰める。
+   はじめの画面のあいだは、上の見出し（ツール名・ひとこと）を隠す（ツール一覧へのリンクは残す。ほかの画面では今までどおり出る） */
+body .app-entry > .stc-note-list.app-entry__notes { padding-left: 16px; }
+.stc-shell:has(#screen-start.active) :is(.stc-header__title, .stc-header__sub) { display: none; }
