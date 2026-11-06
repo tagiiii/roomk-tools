@@ -688,6 +688,8 @@
   const SESSION_KEY = 'pittari_session';
   const ORPHAN_TTL_MS = 2 * 60 * 1000;
   const ROOM_DELETE_DELAY_MS = 30 * 1000;
+  // ゲストの削除はホストより少し遅らせる（ホストのタブがあればホストが先に予約を取り消して消す）
+  const GUEST_DELETE_GRACE_MS = 3 * 1000;
 
   const state = {
     role:          null,   // 'host' | 'guest'
@@ -1380,18 +1382,44 @@
   // 終了後の自動削除は「終了時点の ref と deleteAt」を固定して予約する。
   // 可変な state.roomRef を読むと、TOP復帰後に作った新ルームを誤削除しうる。
   // 削除は transaction で「まだ同じ終了状態か」を確認してから消す。
+  // ホストのタブを閉じてもルームが残らないよう、DONE を受け取ったゲストも同じ条件で予約する。
   // 削除失敗時は何もしない（onDisconnect + 2分TTL の掃除経路が残る）
-  function scheduleDoneCleanup(roomRef, deleteAt) {
-    const delay = Math.max(0, deleteAt - getEstimatedServerNow());
-    setTimeout(async () => {
-      // 削除の前に自接続の onDisconnect 予約を取り消す。予約が残ったままだと、
+  const _doneCleanups = new Map(); // `${ref}|${deleteAt}` → { timer, byHost }
+
+  function scheduleDoneCleanup(roomRef, deleteAt, byHost = true) {
+    const key = `${roomRef.toString()}|${deleteAt}`;
+    if (_doneCleanups.has(key)) return;
+    const delay = Math.max(0, deleteAt - getEstimatedServerNow()) + (byHost ? 0 : GUEST_DELETE_GRACE_MS);
+    const timer = setTimeout(async () => {
+      _doneCleanups.delete(key);
+      // ホストは削除の前に自接続の onDisconnect 予約を取り消す。予約が残ったままだと、
       // 削除後にこのタブを閉じた時に update が発火してゴースト room を再生成する
-      await RoomkRTDB.cancelRoomOnDisconnect(roomRef);
-      roomRef.transaction((room) => {
-        if (room && room.status === ST.DONE && room.deleteAt === deleteAt) return null;
-        return room;
-      }).catch(() => {});
+      if (byHost) await RoomkRTDB.cancelRoomOnDisconnect(roomRef);
+      try {
+        // 購読中のことがあるので applyLocally は false（途中の値で画面を描き直さない）
+        const { committed, snapshot } = await roomRef.transaction((room) => {
+          if (!room) return null; // キャッシュがないときは null で問い合わせ、サーバーの値でやり直す
+          if (room.status === ST.DONE && room.deleteAt === deleteAt) return null;
+          return; // 別の状態になっていたら触らない
+        }, undefined, false);
+        // ゲストの在室の予約（players/自分 の remove）は、ルームが消えてから取り消す
+        //（先に取り消すと、削除が届く前にタブを閉じたとき在室が残る）
+        if (!byHost && committed && !snapshot.exists()) {
+          await RoomkRTDB.cancelRoomOnDisconnect(roomRef);
+        }
+      } catch (_) { /* 掃除は TTL に任せる */ }
     }, delay);
+    _doneCleanups.set(key, { timer, byHost });
+  }
+
+  // ゲストが退出・トップへ戻るときは、ゲストとして予約した削除を解除する。
+  // ホストの予約は残す（DONE の「トップへ戻る」はルームを消さないので、この予約が消す経路になる）
+  function clearGuestDoneCleanups() {
+    for (const [key, entry] of _doneCleanups) {
+      if (entry.byHost) continue;
+      clearTimeout(entry.timer);
+      _doneCleanups.delete(key);
+    }
   }
 
   async function hostFinish() {
@@ -1745,6 +1773,10 @@
   function handleDone(room) {
     if (state.currentScreen !== 'done') showScreen('done');
     showHostDisconnectOverlay(false);
+    // ゲストも削除を予約する（ホストが最終ランキングのあとすぐタブを閉じてもルームが残らないように）
+    if (state.roomRef && Number.isFinite(room.deleteAt)) {
+      scheduleDoneCleanup(state.roomRef, room.deleteAt, state.role === 'host');
+    }
 
     const rows = rankedScores(room);
     const champs = rows.filter(r => r.rank === 1).map(r => r.name);
@@ -1787,6 +1819,7 @@
   // ════════════════════════════════════
   function goToTop() {
     clearSession();
+    clearGuestDoneCleanups();
     if (state.roomRef) {
       // 予約済み onDisconnect を取り消してから listener を外す（削除済み room の再生成を防ぐ）
       RoomkRTDB.cancelRoomOnDisconnect(state.roomRef);
