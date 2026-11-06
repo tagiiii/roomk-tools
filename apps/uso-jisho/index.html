@@ -2212,7 +2212,8 @@
 
       if (canVote && !hasVoted) {
         const button = document.createElement('button');
-        button.className = 'btn btn-primary btn-full btn-sm';
+        // 選択肢の「投票する」はぜんぶ同じ見た目の副ボタンにする（ホストの「結果をみる」と主ボタンを混ぜない）
+        button.className = 'btn btn-secondary btn-full btn-sm';
         button.textContent = '投票する';
         button.disabled = isMine;
         if (isMine) button.textContent = 'じぶんのには投票できません';
