@@ -40,6 +40,15 @@
     .bj-hero__sub   { font-size: 14px; color: var(--color-muted); margin-top: 10px; line-height: 1.8; }
     .bj-hero__buttons { display: flex; flex-direction: column; gap: 12px; margin-top: 36px; }
     .bj-hint { font-size: 13px; color: var(--color-muted); text-align: center; margin-top: 4px; line-height: 1.7; }
+    /* ── そのほかの操作（ホストだけ。たまに使う操作をたたむ） ── */
+    .bj-hostmenu { margin-top: var(--space-md); padding: 4px 20px; }
+    .bj-hostmenu summary { min-height: 44px; display: flex; align-items: center; gap: 6px; color: var(--color-muted); font-size: 14px; font-weight: 700; cursor: pointer; list-style: none; }
+    .bj-hostmenu summary::-webkit-details-marker { display: none; }
+    .bj-hostmenu summary::before { content: "expand_more"; font-family: "Material Symbols Rounded"; font-size: 22px; font-weight: 400; color: var(--color-accent); transition: transform .15s; }
+    .bj-hostmenu[open] summary::before { transform: rotate(180deg); }
+    .bj-hostmenu[open] { padding-bottom: 16px; }
+    .bj-hostmenu__row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; padding: 8px 0; border-top: 1px solid var(--color-border); }
+    .bj-hostmenu__note { font-size: 13px; color: var(--color-muted); line-height: 1.6; }
     .bj-hint--lead { font-size: 14px; text-align: left; margin: 0 0 16px; line-height: 1.6; }
 
     /* ── ルームコード ── */
@@ -332,9 +341,14 @@
       <ul class="bj-player-list" id="game-members"></ul>
     </div>
 
-    <button class="btn btn-danger btn-full mt-md" id="btn-abort" onclick="hostFinish(true)" style="display:none">
-      <span class="material-symbols-rounded">stop_circle</span>途中で終わる
-    </button>
+    <!-- ホストがたまに使う操作は、ここにまとめる（開くと出る） -->
+    <details class="card bj-hostmenu" id="host-menu" style="display:none">
+      <summary>そのほかの操作</summary>
+      <div class="bj-hostmenu__row">
+        <button class="btn btn-secondary btn-sm" id="btn-abort" type="button" onclick="hostFinish(true)">途中で終わる</button>
+        <span class="bj-hostmenu__note">いまのラウンドはなしになるよ</span>
+      </div>
+    </details>
     <button class="btn btn-ghost btn-full mt-md" id="btn-guest-leave-game" onclick="guestGoToTop()" style="display:none">
       <span class="material-symbols-rounded">logout</span>退出する
     </button>
@@ -752,6 +766,8 @@ function renderLobbyList(players, host, hostPlays) {
 // ゲーム画面
 // ══════════════════════════════════════════════════
 function handleGame(room) {
+  // 画面に入りなおしたら「そのほかの操作」は閉じておく
+  if (state.currentScreen !== 'game') document.getElementById('host-menu').open = false;
   showScreen('game');
   const m = room.match;
   const key = m ? (m.matchId + '|' + m.round + '|' + m.phase) : 'none';
@@ -761,8 +777,11 @@ function handleGame(room) {
   renderMyArea(room);
   renderGameMembers(room);
 
+  // 「途中で終わる」は「そのほかの操作」にたたむ（ホストだけ・精算のあとは出さない）
   const showAbort = state.role === 'host' && m && m.phase !== 'settled';
-  document.getElementById('btn-abort').style.display = showAbort ? 'block' : 'none';
+  const hostMenu = document.getElementById('host-menu');
+  hostMenu.style.display = showAbort ? 'block' : 'none';
+  if (!showAbort) hostMenu.open = false;
   document.getElementById('btn-guest-leave-game').style.display = state.role === 'guest' ? 'block' : 'none';
 }
 
