@@ -22,7 +22,7 @@ const { check, sleep, text, visible, waitScreen, waitFor, key, fitsHeight, overf
   const used = () => P.page.$eval('#hold', (c) => c.classList.contains('is-used'));
   check('S6 はじめは、とっておける', !(await used()));
   await key(P, 'a');
-  check('S6b A では、とっておかない（裏返すはない）', !(await used()));
+  check('S6b A では、とっておかない（A は左へ動かす。裏返すはない）', !(await used()));
   await key(P, 'c');
   check('S7 C でとっておくと箱がうすくなる', await used());
   await key(P, 'Space');
@@ -142,6 +142,30 @@ const { check, sleep, text, visible, waitScreen, waitFor, key, fitsHeight, overf
     await K.page.mouse.down(); await sleep(450); await K.page.mouse.up();
   });
   check('S26 画面のボタンも0.45秒で右のかべまで', padR[padR.length - 1] === 9, padR);
+
+  // WASD（矢印キーと同じ。W は ↑ と同じ右に回す。大文字でも動く）。まっさらな盤で、袋の中の続く4つで確かめる
+  const W2 = await L.newClient('wasd');
+  K.page = W2.page; // placedCols・holdKey・lowerGrid は K.page を見る
+  await L.open(W2);
+  await W2.page.click('#btnGoSolo');
+  await waitScreen(W2, 'solo');
+  await W2.page.click('#btnSoloStart');
+  await waitScreen(W2, 'play');
+  await sleep(400);
+  const width = (cols) => cols.length ? cols[cols.length - 1] - cols[0] + 1 : 0;
+  const wa = await placedCols(async () => { await key(W2, 'w'); await holdKey('a', 450); });
+  check('S27 A の押しっぱなしで左のかべまで動く', wa[0] === 0, wa);
+  const dd = await placedCols(() => holdKey('D', 450));
+  check('S28 D（大文字）の押しっぱなしで右のかべまで動く', dd[dd.length - 1] === 9, dd);
+  const wd = await placedCols(async () => { await key(W2, 'w'); await key(W2, 'd', 2); });
+  // 回すと横はばが2マス以下になる（O は回しても2マス。同じ袋の2つなので、O はどちらか1つだけ）
+  check('S29 W で右に回す（回した2つとも横はばが2マス以下）', width(wa) >= 1 && width(wa) <= 2 && width(wd) >= 1 && width(wd) <= 2, { wa, wd });
+  const beforeS = await lowerGrid();
+  await key(W2, 's', 25);
+  await sleep(900);
+  const afterS = await lowerGrid();
+  check('S30 S で下まで動かすと、すとんを押さなくても置ける', afterS.some((v, i) => v !== beforeS[i] && beforeS[i] === emptyCell));
+  await shot(W2, 'e2e3-wasd');
 
   // ── マウス（ルームで、盤をルームの記録と照らし合わせる）──
   const M = await L.newClient('mouse', { viewport: { width: 1000, height: 820 } });
