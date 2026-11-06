@@ -233,6 +233,16 @@
       .kdt-serifu__text { font-size: 28px; }
       .kdt-secret__situ { font-size: 20px; }
     }
+
+    /* ── ホストの「そのほかの操作」（開くと出る） ── */
+    .kdt-hostmenu { margin-top: 8px; }
+    .kdt-hostmenu summary { min-height: 44px; display: flex; align-items: center; gap: 6px; color: var(--color-muted); font-size: 14px; font-weight: 700; cursor: pointer; list-style: none; }
+    .kdt-hostmenu summary::-webkit-details-marker { display: none; }
+    .kdt-hostmenu summary::before { content: "expand_more"; font-family: "Material Symbols Rounded"; font-size: 22px; color: var(--color-accent); transition: transform .15s; }
+    .kdt-hostmenu[open] summary::before { transform: rotate(180deg); }
+    .kdt-hostmenu__row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; padding: 8px 0; border-top: 1px solid var(--color-border); }
+    .kdt-hostmenu__row .btn { width: auto; margin: 0; }
+    .kdt-hostmenu__note { font-size: 13px; color: var(--color-muted); }
   </style>
 </head>
 <body data-genre="atekko">
@@ -438,7 +448,14 @@
       <button class="btn btn-primary btn-full" onclick="moveToVoting()">
         <span class="material-symbols-rounded" aria-hidden="true">how_to_vote</span>投票へ
       </button>
-      <button class="btn btn-ghost btn-full sep" onclick="reselectActor()">演じる人を選び直す</button>
+      <!-- たまに使う操作（開くと出る） -->
+      <details id="act-host-menu" class="kdt-hostmenu">
+        <summary>そのほかの操作</summary>
+        <div class="kdt-hostmenu__row">
+          <button class="btn btn-secondary btn-sm" id="btn-reselect" onclick="reselectActor()">演じる人を選び直す</button>
+          <span class="kdt-hostmenu__note">同じカードのまま、演じる人を選ぶところにもどる</span>
+        </div>
+      </details>
     </div>
   </div>
 </div>
@@ -538,7 +555,14 @@
       <button class="btn btn-primary btn-full" onclick="nextRound()">
         <span class="material-symbols-rounded" aria-hidden="true">arrow_forward</span>次のラウンドへ
       </button>
-      <button class="btn btn-ghost btn-full sep" onclick="finishGame()">終わる</button>
+      <!-- たまに使う操作（開くと出る） -->
+      <details id="rev-host-menu" class="kdt-hostmenu">
+        <summary>そのほかの操作</summary>
+        <div class="kdt-hostmenu__row">
+          <button class="btn btn-secondary btn-sm" id="btn-finish" onclick="finishGame()">終わる</button>
+          <span class="kdt-hostmenu__note">ここでおしまいにして、ポイントを出す</span>
+        </div>
+      </details>
     </div>
   </div>
 </div>
@@ -1029,6 +1053,7 @@ async function confirmActor() {
 
 // ── 演者のえらびなおし（ホスト）──
 async function reselectActor() {
+  if (!window.confirm('演じる人を選び直す？正解のシチュエーションは引き直しになるよ')) return;
   await state.roomRef.transaction((room) => {
     if (!room || room.status !== STATUS.ACTING) return;
     return {
@@ -1140,6 +1165,7 @@ async function nextRound() {
 
 // ── おわる（ホスト）──
 async function finishGame() {
+  if (!window.confirm('ここで終わる？')) return;
   const { committed } = await state.roomRef.transaction((room) => {
     if (!room || room.status !== STATUS.REVEAL) return;
     return { ...room, status: STATUS.DONE };
@@ -1630,7 +1656,7 @@ if (roomParam !== null) {
         'ほかの人はどのシチュエーションだったかを選んで「きめた」を押す',
         '結果が出ると、当てた人にも演じた人にもポイントが入る',
       ] },
-      { heading: 'おわりかた', text: 'ホストが「次のラウンドへ」を押すと次のカード、「終わる」を押すとおしまい。' },
+      { heading: 'おわりかた', text: 'ホストが「次のラウンドへ」を押すと次のカード、「そのほかの操作」の「終わる」を押すとおしまい。' },
     ],
   });
 </script>
