@@ -278,19 +278,36 @@ const { E, check, sleep } = L;
   await L.sleep(400);
   await g1.page.keyboard.up('ArrowRight');
   check('近道の中では歩けない', Math.abs((await L.me(g1)).x - v0.x) < 0.01);
+  // 部屋を選ぶと、隠れたままその近道へ移る（2026-11-06）。何回でも移れて、「ここから出る」で出る
+  const v2 = E.VENTS[5];
+  await g1.page.click('#ventRooms .nk-word[data-vent="5"]');
+  const moved = await L.me(g1);
+  check('選ぶと隠れたままその近道へ移る（一覧は出たまま）', Math.hypot(moved.x - v2.x, moved.y - v2.y) < 0.01 && await L.visible(g1, '#ventBox'), moved);
+  check('移った先の一覧に、いまの近道はなく、入った近道はある', !(await g1.page.$('#ventRooms .nk-word[data-vent="5"]')) && !!(await g1.page.$('#ventRooms .nk-word[data-vent="0"]')) && (await g1.page.$$('#ventRooms .nk-word')).length === 10);
+  check('「ここから出る」はいまの部屋の名前', (await L.text(g1, '#ventRooms .nk-word[data-vent="here"]')).includes(await g1.page.evaluate((i) => { const E = window.NemuraseEngine; const v = E.VENTS[i]; return E.roomName(E.roomAt(v.x, v.y)); }, 5)));
+  check('移った位置は印が 2 のまま届く', await L.waitFor(async () => {
+    const p = String((await L.rootOf(code)).p?.['あお'] || '');
+    const [x, y, f] = p.split(',').map(Number);
+    return f === 2 && Math.hypot(x / 10 - v2.x, y / 10 - v2.y) < 0.2;
+  }));
+  check('移っても、ほかの人の画面では見えない', await g2.page.evaluate(() => !!(window.__NK__.PA['あお'] || {}).hidden));
+  await g1.page.evaluate(() => { window.__NK__.ME.vent.until = Date.now() + 2000; });
   await g1.page.click('#ventRooms .nk-word[data-vent="3"]');
+  check('もう一度移れる・移ると1か所の時間を数えなおす', await g1.page.evaluate(() => window.__NK__.ME.vent.id === 3 && window.__NK__.ME.vent.until - Date.now() > 8000));
+  await L.shot(g1, '03b-vent-moved');
+  await g1.page.click('#ventRooms .nk-word[data-vent="here"]');
   const afterVent = await L.me(g1);
-  check('選んだ部屋の近道から出る', Math.hypot(afterVent.x - v1.x, afterVent.y - v1.y) < 0.01 && !(await L.visible(g1, '#ventBox')), afterVent);
+  check('「ここから出る」で、いまの近道から出る', Math.hypot(afterVent.x - v1.x, afterVent.y - v1.y) < 0.01 && !(await L.visible(g1, '#ventBox')), afterVent);
   check('出た位置がほかの人に届き、また見える', await L.waitFor(async () => {
     const pa = await g2.page.evaluate(() => window.__NK__.PA['あお']);
     return pa && Math.hypot(pa.tx - v1.x, pa.ty - v1.y) < 0.2 && !pa.hidden;
   }));
-  // 中にいられる時間がくると、入った近道から出る
+  // 1か所にいられる時間がくると、いまいる近道から出る
   check('出たあと、また入れる', await L.waitFor(async () => (await L.text(g1, '#actUseLabel')) === '近道に入る'));
   await g1.page.click('#actUse');
   await L.waitVisible(g1, '#ventBox');
   await g1.page.evaluate(() => { window.__NK__.ME.vent.until = Date.now() + 200; });
-  check('時間がくると、入った所から出る', await L.waitFor(async () => !(await L.visible(g1, '#ventBox')) && Math.hypot((await L.me(g1)).x - v1.x, (await L.me(g1)).y - v1.y) < 0.01));
+  check('時間がくると、いまいる所から出る', await L.waitFor(async () => !(await L.visible(g1, '#ventBox')) && Math.hypot((await L.me(g1)).x - v1.x, (await L.me(g1)).y - v1.y) < 0.01));
   check('時間で出ても、また見える', await L.waitFor(async () => /,[01]$/.test(String((await L.rootOf(code)).p?.['あお'] || ''))));
   await L.teleport(g3, v0.x, v0.y + 0.4);
   await L.sleep(400);
