@@ -457,6 +457,8 @@ for i, e in enumerate(entries, 1):
         print(f'{where}: date は YYYY-MM-DD 形式にしてください → {e.get("date")!r}')
     if e.get('type') not in ('new', 'update'):
         print(f'{where}: type は "new" か "update" にしてください → {e.get("type")!r}')
+    if 'from' in e and e.get('from') != 'feedback':
+        print(f'{where}: from は "feedback"（フィードバックボードの声から直したもの）だけにしてください → {e.get("from")!r}')
     app = e.get('app')
     if app is not None and not os.path.isdir(os.path.join('apps', str(app))):
         print(f'{where}: apps/{app}/ が存在しません')

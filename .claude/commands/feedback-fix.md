@@ -10,7 +10,8 @@
    3. 本文と `note`（オーナーの追記）を要件として直す。**触ってよいのは `apps/{app}/` と `tests/{app}/` だけ**。
       `firestore.rules` `database.rules.json` `firebase.json` `apps/shared/**` `.github/**` `scripts/**` `docs/**` `apps/index.html` と、ほかのアプリに差分が出るなら止める
    4. `bash scripts/lint.sh`（エラー0・新規警告なし）。お題・問題に触ったら `node scripts/content-audit.mjs` も。`tests/{app}/` があれば E2E を流す
-   5. 機能の変更なら `apps/updates.json` に1行足す
+   5. `apps/updates.json` の先頭に**必ず**1行足す（小さな修正も）。`"from": "feedback"` を付ける（ツール一覧の更新情報に「フィードバックから」と出て、送った人が直ったとわかる）。
+      文は「何をどう変えたか」だけ。要望の本文・送った人・配慮の理由は書かない
    6. コミット → push → `gh pr create`（ベース `main`）。PR 本文は「どの画面の何をどう直したか／確認したこと／確認できていないこと／board id」。**要望の本文やオーナーの追記は貼らない**（公開リポジトリのため）
    7. `ArtifactData` の `update` で `requests/{id}` に `{ pr: <PRのURL>, reply: <直した内容と確認結果を2〜3文>, updatedAt: <今の ms> }` を書く（`if_version` を付ける）
 3. 直せない・あいまい・対象外（同期や切断に関わる／`apps/shared/**` が要る／お題・方針の中身）のときは、直さずに
