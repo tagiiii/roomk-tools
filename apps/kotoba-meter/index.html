@@ -46,11 +46,12 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 #phase-title:focus { outline: none; }
 
 /* ── メーター（トップの飾り・数字ボタン・結果で同じ5段階の色を使う） ── */
-.km-lv1 { --lv-bg: #DCEDEF; --lv-fg: var(--color-primary); --lv-h: 20%; }
-.km-lv2 { --lv-bg: #B5D9DE; --lv-fg: var(--color-primary); --lv-h: 40%; }
-.km-lv3 { --lv-bg: #84BFC8; --lv-fg: var(--color-primary); --lv-h: 60%; }
+/* 1〜5 はティールの濃淡だけで並べる（5 はいちばん濃いティール。1〜3 の数字も同じ色） */
+.km-lv1 { --lv-bg: #DCEDEF; --lv-fg: #1A4850; --lv-h: 20%; }
+.km-lv2 { --lv-bg: #B5D9DE; --lv-fg: #1A4850; --lv-h: 40%; }
+.km-lv3 { --lv-bg: #84BFC8; --lv-fg: #1A4850; --lv-h: 60%; }
 .km-lv4 { --lv-bg: var(--color-accent); --lv-fg: #fff; --lv-h: 80%; }
-.km-lv5 { --lv-bg: var(--color-primary); --lv-fg: #fff; --lv-h: 100%; }
+.km-lv5 { --lv-bg: #1A4850; --lv-fg: #fff; --lv-h: 100%; }
 .km-meter { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; align-items: end; height: 96px; margin: 4px 0 20px; }
 .km-meter span { display: flex; align-items: flex-end; justify-content: center; height: var(--lv-h); min-height: 34px; padding-bottom: 6px; border-radius: 10px; background: var(--lv-bg); color: var(--lv-fg); font-size: 20px; font-weight: 700; }
 

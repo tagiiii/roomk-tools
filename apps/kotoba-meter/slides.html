@@ -251,8 +251,8 @@
 <script>
 /* ===== メーターの見本（アプリと同じ5段階の色） ===== */
 const LV = [
-  { bg:'#DCEDEF', fg:'#6A4F35', h:30 }, { bg:'#B5D9DE', fg:'#6A4F35', h:45 }, { bg:'#84BFC8', fg:'#6A4F35', h:60 },
-  { bg:'#286F7C', fg:'#fff', h:80 }, { bg:'#6A4F35', fg:'#fff', h:100 },
+  { bg:'#DCEDEF', fg:'#1A4850', h:30 }, { bg:'#B5D9DE', fg:'#1A4850', h:45 }, { bg:'#84BFC8', fg:'#1A4850', h:60 },
+  { bg:'#286F7C', fg:'#fff', h:80 }, { bg:'#1A4850', fg:'#fff', h:100 },
 ];
 function bars(){
   return '<div class="mbars">'+LV.map((l,i)=>`<div class="mbar" style="height:${l.h}%;background:${l.bg};color:${l.fg}">${i+1}</div>`).join('')+'</div>';
