@@ -127,6 +127,7 @@
       resets: 0,
       taken: 0,         // 出る順番の列から取り出した数（読み込み直したとき、同じところから続けるため）
       over: false,
+      overBy: null,     // おしまいになったわけ（'spawn' = つぎが出せない / 'top' = 上にはみ出して置いた / 'jama' = じゃまで押し上げられた）
       hold: null,       // とっておいたブロック（{ kind }）
       holdUsed: false,  // いまのブロックで、もう「とっておく」を使ったか
       onFull: o.onFull, // 'clear' = からにしてつづける / 'end' = おしまい
@@ -152,7 +153,8 @@
     fillQueue(g);
     g.holdUsed = !!spec;
     if (!fits(g.board, p, p.cells, p.x, p.y)) {
-      if (g.onFull === 'end') { g.piece = null; g.over = true; return { full: true }; }
+      // おしまいのときは、出せなかったブロックを重なったまま残す（なぜここまでになったか盤で見えるように。もう動かせない）
+      if (g.onFull === 'end') { g.piece = p; g.over = true; g.overBy = 'spawn'; return { full: true }; }
       resetBoard(g);
       g.piece = p;
       return { full: true, cleared: true };
@@ -258,7 +260,7 @@
     let res;
     if (above) {
       // 上にはみ出して置いた（消えても入りきらなかった）＝いっぱい
-      if (g.onFull === 'end') { g.piece = null; g.over = true; res = { full: true }; }
+      if (g.onFull === 'end') { g.piece = null; g.over = true; g.overBy = 'top'; res = { full: true }; }
       else { resetBoard(g); res = Object.assign({ full: true, cleared: true }, spawnOnly(g)); }
     } else {
       res = spawn(g);
@@ -292,8 +294,7 @@
     if (g.over || rows <= 0) return { full: false };
     rows = Math.min(rows, H);
     const spill = g.board.slice(0, rows).some((r) => r.some(Boolean));
-    if (spill) {
-      if (g.onFull === 'end') { g.piece = null; g.over = true; return { full: true }; }
+    if (spill && g.onFull !== 'end') {
       resetBoard(g);
       return { full: true, cleared: true };
     }
@@ -303,6 +304,8 @@
       row[((gapX % W) + W) % W] = null;
       g.board.push(row);
     }
+    // おしまいのときは、じゃまを入れて押し上げた盤のまま止める（なぜここまでになったか盤で見えるように）
+    if (spill) { g.piece = null; g.over = true; g.overBy = 'jama'; return { full: true }; }
     const p = g.piece;
     if (p) {
       let up = 0;
