@@ -35,7 +35,7 @@ body { background: var(--color-bg); }
   border-radius: var(--radius-sm);
 }
 .rv-quiet:hover { background: rgba(40, 111, 124, 0.08); }
-.rv-quiet:disabled { color: #A3AAB3; cursor: not-allowed; background: none; }
+.rv-quiet:disabled { color: var(--color-muted); opacity: 0.55; cursor: not-allowed; background: none; }
 .rv-quiet .material-symbols-rounded { font-size: 20px; }
 .rv-quiet--center { justify-self: center; }
 
@@ -77,7 +77,7 @@ body { background: var(--color-bg); }
 .rv-check__text { display: grid; gap: 2px; }
 .rv-check__label { font-weight: 500; }
 .rv-check__sub { font-size: 13px; color: var(--color-muted); line-height: 1.5; }
-.rv-check input:disabled ~ .rv-check__text { color: #A3AAB3; }
+.rv-check input:disabled ~ .rv-check__text { color: var(--color-muted); opacity: 0.55; }
 .rv-aid-view { margin: 0; font-weight: 500; }
 
 /* バー */
