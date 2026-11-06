@@ -294,6 +294,16 @@
       .kkn-room-code { font-size: 36px; }
       .kkn-total-box__value { font-size: 40px; }
     }
+
+    /* ── ホストの「そのほかの操作」（開くと出る） ── */
+    .kkn-hostmenu { margin-top: 8px; }
+    .kkn-hostmenu summary { min-height: 44px; display: flex; align-items: center; gap: 6px; color: var(--color-muted); font-size: 14px; font-weight: 700; cursor: pointer; list-style: none; }
+    .kkn-hostmenu summary::-webkit-details-marker { display: none; }
+    .kkn-hostmenu summary::before { content: "expand_more"; font-family: "Material Symbols Rounded"; font-size: 22px; color: var(--color-accent); transition: transform .15s; }
+    .kkn-hostmenu[open] summary::before { transform: rotate(180deg); }
+    .kkn-hostmenu__row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; padding: 8px 0; border-top: 1px solid var(--color-border); }
+    .kkn-hostmenu__row .btn { width: auto; margin: 0; }
+    .kkn-hostmenu__note { font-size: 13px; color: var(--color-muted); }
   </style>
 </head>
 <body data-genre="atekko">
@@ -528,11 +538,18 @@
     <!-- ホストのみ -->
     <div id="reveal-host-actions" style="display:none; margin-top:8px">
       <button class="btn btn-primary btn-full" onclick="hostStartRound()">つぎへ</button>
-      <button class="btn btn-ghost btn-full" onclick="hostFinish()">おわる</button>
       <button class="btn btn-ghost btn-full" onclick="openSpectatorWindow()">
         <span class="material-symbols-rounded">cast</span>
         みんなにみせる画面をひらく
       </button>
+      <!-- たまに使う操作（開くと出る） -->
+      <details id="host-menu" class="kkn-hostmenu">
+        <summary>そのほかの操作</summary>
+        <div class="kkn-hostmenu__row">
+          <button class="btn btn-secondary btn-sm" id="btn-finish" onclick="hostFinish()">おわる</button>
+          <span class="kkn-hostmenu__note">ここでおしまいにして、ポイントを出す</span>
+        </div>
+      </details>
     </div>
     <!-- ゲストのみ -->
     <div id="reveal-guest-waiting" class="text-center text-muted mt-lg" style="display:none">
@@ -1314,6 +1331,7 @@
   }
 
   async function hostFinish() {
+    if (!window.confirm('ここでおしまいにする？')) return;
     const doneRoomRef = state.roomRef;
     const deleteAt = getEstimatedServerNow() + 30000;
     const { committed } = await doneRoomRef.transaction((room) => {
@@ -1990,7 +2008,7 @@
         '合計（自分の？と隠しカードもふくむ）をよそうして「きめた」を押す',
         '答え合わせで、本当の合計にいちばん近かった人にポイントが入る',
       ] },
-      { heading: 'おわりかた', text: 'ホストが「つぎへ」を押すとつぎのラウンド、「おわる」を押すとおしまい。' },
+      { heading: 'おわりかた', text: 'ホストが「つぎへ」を押すとつぎのラウンド、「そのほかの操作」の「おわる」を押すとおしまい。' },
       { heading: 'みんなにみせる画面', items: [
         'TOPの「みんなにみせる画面をひらく」でルームコードを入れて「画面をひらく」を押す（ホストは待合室のボタンからもひらける）',
         'だれが「きめた」かと、答え合わせの結果が見られる。数字は答え合わせまで出ないから、みんなでいっしょに見てだいじょうぶ',
