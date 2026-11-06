@@ -1589,7 +1589,8 @@ function renderMine(R, g, myIdx, actor, dir) {
   $('selMsg').textContent = msg;
   $('actAs').hidden = !asRow.length;
   $('actAs').replaceChildren(...asRow.length ? [['そのまま', 0]].concat(asRow.map((r) => [AS_LABEL[r], r])).map(([label, r]) => {
-    const b = el('button', 'btn ' + (r ? 'btn-secondary' : 'btn-primary'), label);
+    // 何として出すかは選択肢なので、ぜんぶ同じ見た目にする（「そのまま」だけを主ボタンにしない）
+    const b = el('button', 'btn btn-secondary', label);
     b.type = 'button';
     b.dataset.as = String(r);
     b.addEventListener('click', () => act('play', state.sel.slice(), r || undefined));
