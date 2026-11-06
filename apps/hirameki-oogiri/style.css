@@ -205,6 +205,14 @@ body { background: var(--color-bg); }
 .og-hostpanel__empty { margin: 0; padding: 14px; border-radius: 10px; background: var(--color-surface); color: var(--color-muted); font-size: 14px; text-align: center; }
 .og-hostbox { padding: 14px; border-radius: 12px; background: var(--color-surface); }
 .og-hostpanel__btns { display: grid; gap: 8px; justify-items: center; }
+/* ホストの「そのほかの操作」（開くと出る） */
+.og-hostmenu summary { min-height: 44px; display: flex; align-items: center; gap: 6px; color: var(--color-muted); font-size: 14px; font-weight: 700; cursor: pointer; list-style: none; }
+.og-hostmenu summary::-webkit-details-marker { display: none; }
+.og-hostmenu summary::before { content: 'expand_more'; font-family: 'Material Symbols Rounded'; font-size: 22px; color: var(--color-accent); transition: transform 0.15s; }
+.og-hostmenu[open] summary::before { transform: rotate(180deg); }
+.og-hostmenu__row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; padding: 8px 0; border-top: 1px solid var(--color-border); }
+.og-hostmenu__note { font-size: 13px; color: var(--color-muted); }
+.og-row > .og-hostmenu { flex-basis: 100%; max-width: 480px; }
 .og-count { display: inline-block; margin-left: 6px; padding: 0 8px; border-radius: 999px; background: var(--color-accent); color: #fff; font-size: 13px; }
 .og-count:empty { display: none; }
 /* 答えを1行ぶん広くとり、名前とボタンは下に並べる */
