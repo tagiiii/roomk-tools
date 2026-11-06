@@ -235,6 +235,15 @@
     .tw-hostbar {
       border-top: 2px solid var(--color-border); margin-top: 22px; padding-top: 16px;
     }
+    /* ホストがたまに使う操作（開くと出る） */
+    .tw-hostmenu { margin-top: 14px; }
+    .tw-hostmenu summary { min-height: 44px; display: flex; align-items: center; gap: 6px; color: var(--color-muted); font-size: 14px; font-weight: 700; cursor: pointer; list-style: none; }
+    .tw-hostmenu summary::-webkit-details-marker { display: none; }
+    .tw-hostmenu summary::before { content: "expand_more"; font-family: "Material Symbols Rounded"; font-size: 22px; color: var(--color-accent); transition: transform .15s; }
+    .tw-hostmenu[open] summary::before { transform: rotate(180deg); }
+    .tw-hostmenu__row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; padding: 8px 0; border-top: 1px solid var(--color-border); }
+    .tw-hostmenu__row[hidden] { display: none; }
+    .tw-hostmenu__note { font-size: 12px; color: var(--color-muted); line-height: 1.6; }
     .tw-hostbar__label {
       font-size: 12px; font-weight: 700; color: var(--color-muted);
       letter-spacing: 0.06em; margin-bottom: 10px;
@@ -514,15 +523,13 @@
         <span class="material-symbols-rounded" aria-hidden="true">campaign</span>
         正解発表
       </button>
-      <button class="btn btn-secondary btn-full" onclick="hostSkipItem()">
-        <span class="material-symbols-rounded" aria-hidden="true">skip_next</span>
-        お題をスキップ
-      </button>
-      <button class="btn btn-secondary btn-full" onclick="passExplainer()">
-        <span class="material-symbols-rounded" aria-hidden="true">person_add</span>
-        説明役を次の人に
-      </button>
-      <button class="tw-quiet-btn" onclick="hostFinish()">ここまでにする</button>
+      <!-- ホストがたまに使う操作は、ここにまとめる（開くと出る） -->
+      <details class="tw-hostmenu" id="round-hostmenu">
+        <summary>そのほかの操作</summary>
+        <div class="tw-hostmenu__row"><button type="button" class="btn btn-secondary btn-sm" id="btn-host-skip" onclick="hostSkipItemAsk()">お題をスキップ</button><span class="tw-hostmenu__note">答えを出さずに次の人の番へ</span></div>
+        <div class="tw-hostmenu__row" id="round-hostmenu-pass"><button type="button" class="btn btn-secondary btn-sm" id="btn-host-pass" onclick="hostPassAsk()">説明役を次の人に</button><span class="tw-hostmenu__note">お題も変わる</span></div>
+        <div class="tw-hostmenu__row"><button type="button" class="btn btn-secondary btn-sm" id="btn-host-finish" onclick="hostFinishAsk()">ここまでにする</button><span class="tw-hostmenu__note">結果の画面へ進む</span></div>
+      </details>
     </div>
 
     <p class="tw-soudan">
@@ -567,7 +574,10 @@
         次へ
       </button>
       <p class="tw-note">つたわらなくても大丈夫。また今度つたわるかも。</p>
-      <button class="tw-quiet-btn" onclick="hostFinish()">ここまでにする</button>
+      <details class="tw-hostmenu" id="reveal-hostmenu">
+        <summary>そのほかの操作</summary>
+        <div class="tw-hostmenu__row"><button type="button" class="btn btn-secondary btn-sm" id="btn-reveal-finish" onclick="hostFinishAsk()">ここまでにする</button><span class="tw-hostmenu__note">結果の画面へ進む</span></div>
+      </details>
     </div>
 
     <!-- ホスト: 1周 終わり -->
@@ -1202,7 +1212,7 @@ async function passExplainer() {
     };
   }).catch(() => ({ committed: false }));
   if (!committed && reason === 'no_next') {
-    showMsg('次の説明役がいないよ。「正解発表」か「ここまでにする」を使ってね');
+    showMsg('次の説明役がいないよ。「正解発表」か、「そのほかの操作」の「ここまでにする」を使ってね');
   }
 }
 
@@ -1218,6 +1228,16 @@ async function revealNow() {
 // ホスト: お題をスキップ（reveal を経ずに次のラウンドへ・score には数えない）
 async function hostSkipItem() {
   await advanceRound('skip');
+}
+// 「そのほかの操作」から押したとき（取り消せないので確かめる）
+function hostSkipItemAsk() {
+  if (confirm('このお題をスキップして、次の人の番にする？')) hostSkipItem();
+}
+function hostPassAsk() {
+  if (confirm('説明役を次の人に代える？（お題も変わるよ）')) passExplainer();
+}
+function hostFinishAsk() {
+  if (confirm('ここまでにして、結果を見る？')) hostFinish();
 }
 
 // ホスト: つたわった！/ 次へ
@@ -1561,8 +1581,15 @@ function handleExplain(room, players) {
   const explainerGone = !!round.explainer && !players[round.explainer];
   goneEl.hidden = !(isHost && explainerGone);
   goneEl.textContent = (isHost && explainerGone)
-    ? `${round.explainer}さんの通信が切れているみたい。「説明役を次の人に」か「お題をスキップ」で進められるよ`
+    ? `${round.explainer}さんの通信が切れているみたい。「そのほかの操作」の「説明役を次の人に」か「お題をスキップ」で進められるよ`
     : '';
+  // 説明役が自分のときは、説明役の欄の「説明役をパスする」と同じなので出さない
+  setHidden('round-hostmenu-pass', isExplainer);
+  // 説明役の通信が切れたら、そのラウンドで1回だけ「そのほかの操作」を開いておく（開閉はホストにまかせる）
+  if (isHost && explainerGone && state.goneMenuRound !== round.number) {
+    state.goneMenuRound = round.number;
+    document.getElementById('round-hostmenu').open = true;
+  }
 }
 
 // ── reveal ──
