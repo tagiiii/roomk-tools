@@ -1604,6 +1604,55 @@
     :root .ranking-card__thumb > img.ranking-card__illust { border-radius: 10px; }
     :root .genre-tab__icon { width: 58px; height: 58px; overflow: hidden; border: 0; }
     :root .genre-tab[aria-pressed="true"] .genre-tab__icon { box-shadow: 0 0 0 3px var(--g); }
+    /* 種類の見出し: 色の帯をやめ、タブと同じ絵・大きめの名前・すぐ横に本数・下に種類の色の細い線 */
+    :root .genre-heading {
+      align-items: center; gap: 10px;
+      margin: 28px 0 2px; padding: 0 0 10px;
+      border-radius: 0; background: none;
+      border-bottom: 2px solid color-mix(in srgb, var(--g) 55%, transparent);
+      color: var(--color-text);
+    }
+    :root .genre-heading__icon {
+      display: grid; place-items: center; flex: none;
+      width: 40px; height: 40px; border-radius: 50%; overflow: hidden;
+      background-color: var(--g-pale); color: var(--g-ink);
+    }
+    :root .genre-heading__icon .material-symbols-rounded { font-size: 22px; }
+    :root .genre-heading__label { font-size: 20px; line-height: 1.3; }
+    :root .genre-heading__count { margin-left: 2px; font-size: 14px; font-weight: 500; color: var(--color-muted); }
+    :root.tab-img-kotoba .genre-heading[data-genre="kotoba"] .genre-heading__icon { background: center / cover no-repeat url("assets/illustrations/tabs/kotoba.webp"); }
+    :root.tab-img-puzzle .genre-heading[data-genre="puzzle"] .genre-heading__icon { background: center / cover no-repeat url("assets/illustrations/tabs/puzzle.webp"); }
+    :root.tab-img-suiri .genre-heading[data-genre="suiri"] .genre-heading__icon { background: center / cover no-repeat url("assets/illustrations/tabs/suiri.webp"); }
+    :root.tab-img-atekko .genre-heading[data-genre="atekko"] .genre-heading__icon { background: center / cover no-repeat url("assets/illustrations/tabs/atekko.webp"); }
+    :root.tab-img-board .genre-heading[data-genre="board"] .genre-heading__icon { background: center / cover no-repeat url("assets/illustrations/tabs/board.webp"); }
+    :root.tab-img-talk .genre-heading[data-genre="talk"] .genre-heading__icon { background: center / cover no-repeat url("assets/illustrations/tabs/talk.webp"); }
+    :root.tab-img-kotoba .genre-heading[data-genre="kotoba"] .genre-heading__icon .material-symbols-rounded,
+    :root.tab-img-puzzle .genre-heading[data-genre="puzzle"] .genre-heading__icon .material-symbols-rounded,
+    :root.tab-img-suiri .genre-heading[data-genre="suiri"] .genre-heading__icon .material-symbols-rounded,
+    :root.tab-img-atekko .genre-heading[data-genre="atekko"] .genre-heading__icon .material-symbols-rounded,
+    :root.tab-img-board .genre-heading[data-genre="board"] .genre-heading__icon .material-symbols-rounded,
+    :root.tab-img-talk .genre-heading[data-genre="talk"] .genre-heading__icon .material-symbols-rounded {
+      display: none;
+    }
+
+    /* カードの札（人数・時間・スライド）は、左にそろえて同じ高さ・余白・アイコンの大きさにする */
+    :root .app-card__meta { align-items: center; gap: 6px; }
+    :root :is(.app-card .meta-badge, .app-card .app-card__slides) {
+      box-sizing: border-box; min-height: 26px; margin-left: 0; padding: 2px 9px 2px 7px; gap: 3px; line-height: 1.4;
+    }
+    :root :is(.app-card .meta-badge, .app-card .app-card__slides) .material-symbols-rounded { font-size: 15px; }
+    :root .app-card__slides:hover, :root .app-card__slides:focus-visible { background-color: #EADFCB; }
+
+    /* 説明の窓のボタン: 主な操作「このツールをひらく」を1段目に大きく、2段目に「説明スライド」「とじる」 */
+    :root .tool-sheet__actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    :root .tool-sheet__actions .btn { min-height: 48px; padding-inline: 12px; border-radius: 14px; white-space: nowrap; }
+    @media (max-width: 380px) {
+      :root .tool-sheet__actions { grid-template-columns: 1fr; } /* せまい画面では、どのボタンも横いっぱいに縦に並べる */
+    }
+    :root .tool-sheet__actions #tool-sheet-open { grid-column: 1 / -1; background-color: var(--color-primary); border-color: var(--color-primary); color: #fff; font-size: 17px; }
+    :root .tool-sheet__actions #tool-sheet-open:hover { filter: brightness(1.1); }
+    :root .tool-sheet__actions:has(#tool-sheet-slides[hidden]) #tool-sheet-close { grid-column: 1 / -1; }
+
     /* 種類のタブの絵は、読み込めたもの（html に tab-img-{種類} が付く）だけアイコンと入れかえる */
     :root.tab-img-all .genre-tab[data-genre="all"] .genre-tab__icon { background: center / cover no-repeat url("assets/illustrations/tabs/all.webp"); }
     :root.tab-img-popular .genre-tab[data-genre="popular"] .genre-tab__icon { background: center / cover no-repeat url("assets/illustrations/tabs/popular.webp"); }
@@ -1673,6 +1722,9 @@
       :root .genre-tab__label { font-size: 14px; }
       :root .app-card__name { font-size: 15px; }
       :root .app-card__hitokoto { font-size: 13px; }
+      :root .genre-heading { margin-top: 22px; }
+      :root .genre-heading__label { font-size: 18px; }
+      :root .genre-heading__icon { width: 36px; height: 36px; }
     }
     @media (max-width: 600px) {
       :root .portal-hero { padding: 18px 16px 24px; }
@@ -3456,11 +3508,11 @@
   <dialog class="tool-sheet" id="tool-sheet" aria-labelledby="tool-sheet-name">
     <div class="tool-sheet__content" id="tool-sheet-content"></div>
     <div class="tool-sheet__actions">
-      <button class="btn btn-secondary" type="button" id="tool-sheet-close">とじる</button>
+      <a class="btn btn-primary" id="tool-sheet-open" href="#">このツールをひらく</a>
       <button class="btn btn-secondary" type="button" id="tool-sheet-slides" hidden>
-        <span class="material-symbols-rounded" aria-hidden="true">co_present</span>スライド
+        <span class="material-symbols-rounded" aria-hidden="true">co_present</span>説明スライド
       </button>
-      <a class="btn btn-primary" id="tool-sheet-open" href="#">ひらく</a>
+      <button class="btn btn-secondary" type="button" id="tool-sheet-close">とじる</button>
     </div>
   </dialog>
 
@@ -4197,12 +4249,18 @@
         heading.className = 'genre-heading';
         heading.dataset.genre = key;
         const icon = document.createElement('span');
-        icon.className = 'material-symbols-rounded';
+        icon.className = 'genre-heading__icon';
         icon.setAttribute('aria-hidden', 'true');
-        icon.textContent = iconName;
+        const symbol = document.createElement('span');
+        symbol.className = 'material-symbols-rounded';
+        symbol.textContent = iconName;
+        icon.appendChild(symbol);
+        const name = document.createElement('span');
+        name.className = 'genre-heading__label';
+        name.textContent = label;
         const count = document.createElement('span');
         count.className = 'genre-heading__count';
-        heading.append(icon, label, count);
+        heading.append(icon, name, count);
         return heading;
       });
 
@@ -4212,7 +4270,7 @@
         genreHeadings.forEach((heading, g) => {
           const shown = cards.filter((card, i) => !card.hidden && cardGenres[i] === g).length;
           heading.hidden = !byGenre || shown === 0;
-          heading.querySelector('.genre-heading__count').textContent = shown + '件';
+          heading.querySelector('.genre-heading__count').textContent = shown + '本';
         });
       }
 
