@@ -118,6 +118,7 @@
 <a class="app-card" href="{app-name}/" data-added="2026-07-06" data-genre="talk" data-scenes="hiroba sakusen" data-yomi="…" data-keywords="…、…">
 ```
 
+カードの名前（`.app-card__name`）のすぐ下には、何をするツールかを1行で書いた `<div class="app-card__hitokoto">…</div>` を入れる（2026-11-06 から。20字前後でスマホでも2行に収まる長さ。通常表記で、配慮の理由や着想元のゲームの名前は書かない。画面に出る文なのでオーナーが確かめる）。
 カードの図柄の面（`.app-card__icon`）には、アイコンのすぐ後にイラスト `<img class="app-card__illust" src="assets/illustrations/{app-name}.webp" alt="" …>` を入れる。作り方と決まりは [illustrations.md](illustrations.md)。イラストがまだないときは入れなくてよい（アイコンが出る）。
 
 | キー | シーン |

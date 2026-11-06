@@ -1676,6 +1676,16 @@
       .tool-result__label, .tool-list-heading__count, .genre-heading__count, footer) { font-size: 14px; }
     :root .app-card__info { font-size: 14px; }
 
+    /* 名前の下の「ひとことで」（何をするツールかを1行で。スマホは2行まで） */
+    :root .app-card__hitokoto {
+      margin-top: 2px;
+      font-size: 14px;
+      line-height: 1.45;
+      color: var(--color-muted);
+      word-break: auto-phrase; /* 文の切れ目で折り返す（対応しないブラウザはふつうの折り返し） */
+      text-wrap: pretty;
+    }
+
     /* 「説明」は見た目より広く押せる（高さ 44px。カードの上の端からはみ出さないよう下に広げる） */
     :root .app-card__info::before { content: ''; position: absolute; inset: -4px -6px -6px; } /* 34px → 44px */
 
@@ -1688,6 +1698,7 @@
       :root .genre-tab { flex-basis: 100px; }
       :root .genre-tab__label { font-size: 14px; }
       :root .app-card__name { font-size: 15px; }
+      :root .app-card__hitokoto { font-size: 13px; }
     }
     @media (max-width: 600px) {
       :root .portal-hero { padding: 18px 16px 24px; }
@@ -1855,6 +1866,7 @@
           </div>
           <div class="app-card__body">
             <div class="app-card__name">コトバのテーマクイズ</div>
+            <div class="app-card__hitokoto">その日のことばのテーマを3択で知る</div>
             <div class="app-card__desc">その日のゲームで使う「コトバのテーマ」を、3択ミニクイズ4問で先に紹介するツール。最後のまとめ画面から、そのテーマを使うゲームへそのまま進める。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -1882,6 +1894,7 @@
           </div>
           <div class="app-card__body">
             <div class="app-card__name">クイズパック</div>
+            <div class="app-card__hitokoto">3択・2択のクイズをテンポよく</div>
             <div class="app-card__desc">雑学3択クイズと連続2択クイズをまとめて進行できる画面共有向けツール。ことばクイズや全部シャッフルにも対応。ルームを作れば、各自の端末で答えて早さと正解を競うこともできる。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -1909,6 +1922,7 @@
           </div>
           <div class="app-card__body">
             <div class="app-card__name">ことばシャッフル</div>
+            <div class="app-card__hitokoto">バラバラの文字を並べてことばに</div>
             <div class="app-card__desc">バラバラの文字をならべかえて、ことばを当てる脳トレゲーム。4段階のレベルで楽しめる。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -1936,6 +1950,7 @@
           </div>
           <div class="app-card__body">
             <div class="app-card__name">漢字さがし</div>
+            <div class="app-card__hitokoto">似た漢字の中からお題の字をさがす</div>
             <div class="app-card__desc">にている漢字の中からお題の漢字をさがす観察力ゲーム。3つの難易度で楽しめる。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -1963,6 +1978,7 @@
           </div>
           <div class="app-card__body">
             <div class="app-card__name">ことばみっけ</div>
+            <div class="app-card__hitokoto">頭文字とお題に合うことばを出し合う</div>
             <div class="app-card__desc">「『あ』からはじまる、やさしい言葉」のように、頭文字とお題に合うことばを、みんなでチャットに出し合う言葉あそび。ゲームマスターはお題を出してチャットにコピーするだけ。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -1990,6 +2006,7 @@
           </div>
           <div class="app-card__body">
             <div class="app-card__name">ことばリレー</div>
+            <div class="app-card__hitokoto">つなぎ言葉のカードで話をつなぐ</div>
             <div class="app-card__desc">「だから」「でも」「ちなみに」…つなぎ言葉カードを引いて話を転がす多人数向けトークゲーム。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -2017,6 +2034,7 @@
           </div>
           <div class="app-card__body">
             <div class="app-card__name">ひらめき大喜利</div>
+            <div class="app-card__hitokoto">思いついた答えで「一本！」をねらう</div>
             <div class="app-card__desc">お題に、思いついた答えを何回でも出す大喜利。答えは1つずつ名前を伏せて出て、投票する人の何割かが「おもしろい！」を押したら「一本！」。順位はつけない。答えずに投票だけでも参加できる。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -2044,6 +2062,7 @@
           </div>
           <div class="app-card__body">
             <div class="app-card__name">カンペ放送局</div>
+            <div class="app-card__hitokoto">空らんに入った言葉を笑わずに読む</div>
             <div class="app-card__desc">読む人の原稿の空らんに、ほかの人が「食べ物」「音」などのヒントだけを見て言葉を書く。読む人は出てきた言葉を笑わずに読みきれるか、読み終わったらみんなで判定する。マイクを使わない人は書くだけで参加できる。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -2071,6 +2090,7 @@
           </div>
           <div class="app-card__body">
             <div class="app-card__name">たとえグランプリ</div>
+            <div class="app-card__hitokoto">お題をたとえで表して投票し合う</div>
             <div class="app-card__desc">お題をたとえで表現して、お気に入りに匿名投票する大喜利ゲーム。比喩や語彙を遊びながら使える。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -2099,6 +2119,7 @@
           </div>
           <div class="app-card__body">
             <div class="app-card__name">ことばメーター</div>
+            <div class="app-card__hitokoto">ヒントから1〜5の数字を予想する</div>
             <div class="app-card__desc">ヒントのことばから、出題者が思い浮かべた1〜5の数字を予想。一斉に公開して、みんなの感じ方の違いを楽しむ。</div>
             <div class="app-card__meta">
               <span class="meta-badge"><span class="material-symbols-rounded">group</span>2〜20人</span>
@@ -2117,6 +2138,7 @@
           </div>
           <div class="app-card__body">
             <div class="app-card__name">しるしでヒント</div>
+            <div class="app-card__hitokoto">アイコンのしるしからお題を当てる</div>
             <div class="app-card__desc">伝える人がアイコンを1つずつ出してお題を伝え、ほかの人は12個の候補から当てる。少ないしるしで当てるほど、当てた人にも伝えた人にも点が入る。はずれると1点減る。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -2142,6 +2164,7 @@
           </div>
           <div class="app-card__body">
             <div class="app-card__name">ぴったりビート</div>
+            <div class="app-card__hitokoto">落ちてくるしるしをリズムよくたたく</div>
             <div class="app-card__desc">上から落ちてくるしるしが線に来たら、ボタンをたたくリズムあそび。曲はオリジナルの3曲。ルームを作ると、それぞれの端末で遊んだいちばんよい点数でランキングができる。ひとりでも遊べる。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -2168,6 +2191,7 @@
           </div>
           <div class="app-card__body">
             <div class="app-card__name">すとんブロック</div>
+            <div class="app-card__hitokoto">ブロックを回して横1段をそろえる</div>
             <div class="app-card__desc">上から落ちてくるブロックを回してすき間に入れ、横1段をそろえて消す。ルームではみんな同じ順番でブロックが出て、時間内に消した段の数をくらべる。じゃまブロックを送りあう設定もある。ひとりでも遊べる。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -2193,6 +2217,7 @@
           </div>
           <div class="app-card__body">
             <div class="app-card__name">かぶらずヒント</div>
+            <div class="app-card__hitokoto">かぶらないヒントでお題を当ててもらう</div>
             <div class="app-card__desc">みんなでヒントを出してお題を当てよう！ただし被ったヒントは消えてしまう協力型ワードゲーム。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -2220,6 +2245,7 @@
           </div>
           <div class="app-card__body">
             <div class="app-card__name">ことば探偵</div>
+            <div class="app-card__hitokoto">ヒントのことばからチームのカードを探す</div>
             <div class="app-card__desc">ヒント役の言葉から、自分のチームのカードを見つけ出す連想型チームゲーム。相談しながら推理しよう。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -2247,6 +2273,7 @@
           </div>
           <div class="app-card__body">
             <div class="app-card__name">もじそろえゲーム</div>
+            <div class="app-card__hitokoto">文字タイルを集めて3つの言葉にそろえる</div>
             <div class="app-card__desc">山か捨て札（新しい順に3枚まで）から文字タイルを1枚取って1枚捨てる、を順番にくり返し、手もとの8枚を「2文字・3文字・3文字」の3つの言葉にそろえたら「あがり」。言葉になっているかはみんなで確かめる。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -2274,6 +2301,7 @@
           </div>
           <div class="app-card__body">
             <div class="app-card__name">コトバペア</div>
+            <div class="app-card__hitokoto">意味でつながる2枚をめくってそろえる</div>
             <div class="app-card__desc">裏向きのことばカードをめくって、意味でつながる2枚を探す神経衰弱式の協力ゲーム。そろえたら同じ人がもう一回。相談しながらでOK。全カード表向きの相談向けモードも選べる。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -2301,6 +2329,7 @@
           </div>
           <div class="app-card__body">
             <div class="app-card__name">とおまわしクイズ</div>
+            <div class="app-card__hitokoto">言っちゃダメことばを避けてお題を説明</div>
             <div class="app-card__desc">お題のことばを「言っちゃダメことば」を使わずに説明して、みんなに当ててもらう協力ゲーム。観点チップと答えの候補つきで、声を出しにくい子も選んで参加できる。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -2328,6 +2357,7 @@
           </div>
           <div class="app-card__body">
             <div class="app-card__name">トークテーマカード</div>
+            <div class="app-card__hitokoto">カードをめくってトークテーマを引く</div>
             <div class="app-card__desc">カードをめくってトークテーマを引くアイスブレイクツール。セッション開始時や話題に詰まったときに。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -2355,6 +2385,7 @@
           </div>
           <div class="app-card__body">
             <div class="app-card__name">おとなトークカード</div>
+            <div class="app-card__hitokoto">大人どうしの雑談を、横で聞く</div>
             <div class="app-card__desc">大人どうしが質問し合う雑談カード。子どもは大人の仕事や歩んできた道を横で聞ける、キャリアにつながる雑談タイムに。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -2382,6 +2413,7 @@
           </div>
           <div class="app-card__body">
             <div class="app-card__name">どっちにする？</div>
+            <div class="app-card__hitokoto">軽い2択から好きなほうを選ぶ</div>
             <div class="app-card__desc">軽い2択を選ぶアイスブレイクカード。どっちを選んでもOK、「自分で決めていい」感覚を育てる1対1面談向けツール。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -2409,6 +2441,7 @@
           </div>
           <div class="app-card__body">
             <div class="app-card__name">すきタイプチェック</div>
+            <div class="app-card__hitokoto">質問に答えて「すき」のタイプを知る</div>
             <div class="app-card__desc">18この質問にこたえると、じぶんの「すき」のタイプがわかる診断。6つの軸のわりあいも出るので、作戦会議で会話のタネにできる1対1向けツール。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -2436,6 +2469,7 @@
           </div>
           <div class="app-card__body">
             <div class="app-card__name">わたし、ぼくってどんな人？</div>
+            <div class="app-card__hitokoto">問いに1〜4で答えて、自分をふりかえる</div>
             <div class="app-card__desc">「動くときは？」「予定は？」のような問いに、両はしの言葉のどちらに近いかを1〜4で答えていく1対1面談向けツール。答えたところを1つずつふりかえって話す。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -2463,6 +2497,7 @@
           </div>
           <div class="app-card__body">
             <div class="app-card__name">つよみカード</div>
+            <div class="app-card__hitokoto">強みカードに「ある」「ない」で答える</div>
             <div class="app-card__desc">「こういうところ、ありそう？」の強みカードに1枚ずつ「ある」「ない」「どちらでもない」で答えていく1対1面談向けツール。「ある」と答えたカードをながめながら話す。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -2492,6 +2527,7 @@
           </div>
           <div class="app-card__body">
             <div class="app-card__name">ドまんなか</div>
+            <div class="app-card__hitokoto">みんなの数字のまん中をねらう</div>
             <div class="app-card__desc">数字でいいセンをいこう！リアルタイム対戦パーティーゲーム。中央値を当てた人が勝ち。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -2519,6 +2555,7 @@
           </div>
           <div class="app-card__body">
             <div class="app-card__name">ワードウルフ</div>
+            <div class="app-card__hitokoto">ひとりだけ違うお題の人を会話で探す</div>
             <div class="app-card__desc">ひとりだけ違うお題を持つのは誰？会話の中からウルフを見つけ出す正体隠し系ゲーム。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -2546,6 +2583,7 @@
           </div>
           <div class="app-card__body">
             <div class="app-card__name">ねむらせ基地</div>
+            <div class="app-card__hitokoto">基地で仕事をしながら「ねむらせ屋」を探す</div>
             <div class="app-card__desc">ひみつ基地を歩いて仕事を片づけよう。仲間のふりをした「ねむらせ屋」を、会議の話し合いで見つける。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -2573,6 +2611,7 @@
           </div>
           <div class="app-card__body">
             <div class="app-card__name">こっそりワード</div>
+            <div class="app-card__hitokoto">雑談にまぎれたお題の言葉を見抜く</div>
             <div class="app-card__desc">2人の雑談にこっそりまぎれた「お題」の言葉はどれ？聞いていたみんなで見抜く会話ゲーム。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -2600,6 +2639,7 @@
           </div>
           <div class="app-card__body">
             <div class="app-card__name">人狼ゲーム</div>
+            <div class="app-card__hitokoto">村人と人狼で正体をかくし合う</div>
             <div class="app-card__desc">正体を隠して生き残れ。村人と人狼が騙し合う本格リアルタイム対戦ゲーム。全14役職対応。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -2627,6 +2667,7 @@
           </div>
           <div class="app-card__body">
             <div class="app-card__name">かくれ怪盗</div>
+            <div class="app-card__hitokoto">警備員にまざった怪盗を投票で見ぬく</div>
             <div class="app-card__desc">美術館の警備員の中に、変装した怪盗がまざっている。主任が見回りのメンバーを選び、みんなで投票。宝石を3回守れば警備員チーム、3回すり替えられたら怪盗チームの勝ち。だれも途中でぬけない正体かくし。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -2654,6 +2695,7 @@
           </div>
           <div class="app-card__body">
             <div class="app-card__name">名前変えゲーム</div>
+            <div class="app-card__hitokoto">こっそり名前を変えた人を当てる</div>
             <div class="app-card__desc">メタバース上で名前を変えた人を当てよう！変えた人は投票されないように隠しきれるか。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -2681,6 +2723,7 @@
           </div>
           <div class="app-card__body">
             <div class="app-card__name">え!? 実は○○なんですかゲーム</div>
+            <div class="app-card__hitokoto">ある人の意外な一面を推理する</div>
             <div class="app-card__desc">ある人の意外な一面を推理するクイズ。カードをめくって「え!? 本当に！？」を楽しもう。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -2708,6 +2751,7 @@
           </div>
           <div class="app-card__body">
             <div class="app-card__name">たとえならべ</div>
+            <div class="app-card__hitokoto">数字をたとえで伝えて小さい順に並ぶ</div>
             <div class="app-card__desc">数字をお題に例えてヒントを言い合い、小さい順に宣言するタイミングを競う協力ゲーム。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -2735,6 +2779,7 @@
           </div>
           <div class="app-card__body">
             <div class="app-card__name">以心伝心しないゲーム</div>
+            <div class="app-card__hitokoto">みんなとかぶらない答えを出す</div>
             <div class="app-card__desc">お題に対してみんなとかぶらない回答をしよう！かぶらなかった人の勝ち。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -2762,6 +2807,7 @@
           </div>
           <div class="app-card__body">
             <div class="app-card__name">うそつき辞書</div>
+            <div class="app-card__hitokoto">うその意味をまぜて、本物を当てる</div>
             <div class="app-card__desc">めずらしいことばの意味の「？？？」にそれっぽいうそを入れて本物にまぜる。どれが本物か当て合うことばパーティーゲーム。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -2789,6 +2835,7 @@
           </div>
           <div class="app-card__body">
             <div class="app-card__name">まぎれ絵師</div>
+            <div class="app-card__hitokoto">お題を知らない絵師を絵から探す</div>
             <div class="app-card__desc">お題を知らない「まぎれ絵師」がひとりだけ。1人1筆ずつのおえかきから見つけ出そう。話さなくても遊べる正体かくしゲーム。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -2816,6 +2863,7 @@
           </div>
           <div class="app-card__body">
             <div class="app-card__name">お絵描き伝言ゲーム</div>
+            <div class="app-card__hitokoto">文を絵に、絵を文にして順に回す</div>
             <div class="app-card__desc">書いた文を次の人が絵に、その絵を次の人が文に。順番に回していくと、最初のお題はどう変わる？ 最後にみんなで見せあう、点数のない伝言ゲーム。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -2843,6 +2891,7 @@
           </div>
           <div class="app-card__body">
             <div class="app-card__name">スタンプあてゲーム</div>
+            <div class="app-card__hitokoto">形のスタンプの絵からお題を当てる</div>
             <div class="app-card__desc">丸・四角・長方形・三角のスタンプだけで、こっそり配られたお題を表す。当てる人が、どの絵がどのお題かを当てる協力ゲーム。押せる回数は5回から1回まで減っていく。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -2870,6 +2919,7 @@
           </div>
           <div class="app-card__body">
             <div class="app-card__name">ピッタリメーター</div>
+            <div class="app-card__hitokoto">ヒントからメーターの位置をぴったり当てる</div>
             <div class="app-card__desc">ヒントをたよりに、メーターの位置をぴったり当てる得点ゲーム。ターゲットに近いほど高得点。ヒントは文字入力だから話さなくても出題者になれる。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -2897,6 +2947,7 @@
           </div>
           <div class="app-card__body">
             <div class="app-card__name">かくれナンバー</div>
+            <div class="app-card__hitokoto">見えない数字の合計を推理する</div>
             <div class="app-card__desc">自分の数字と場の隠しカードが見えない！みんなの発言をヒントに、全部の数字の合計を推理する数字ゲーム。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -2924,6 +2975,7 @@
           </div>
           <div class="app-card__body">
             <div class="app-card__name">カギあわせ</div>
+            <div class="app-card__hitokoto">仲間のカギの数字を推理して宝箱をあける</div>
             <div class="app-card__desc">数字のカギを小さい順に並べて持つ。見えるのは自分のカギだけ。仲間のカギの数字を推理して、同じ数字どうしをあわせ、宝箱をあける協力ゲーム。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -2951,6 +3003,7 @@
           </div>
           <div class="app-card__body">
             <div class="app-card__name">こえだけシアター</div>
+            <div class="app-card__hitokoto">声だけの演技から気持ちを当てる</div>
             <div class="app-card__desc">短いセリフを声だけで演技して、どんな気持ちかを当て合うゲーム。演じるのは立候補制、当てる側はボタンで参加。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -2978,6 +3031,7 @@
           </div>
           <div class="app-card__body">
             <div class="app-card__name">気持ち当てゲーム</div>
+            <div class="app-card__hitokoto">場面カードから主役の気持ちを予想する</div>
             <div class="app-card__desc">場面カードを見て、主役の気持ちがどの系かをみんなで予想する。主役は系とぴったりのことばを先にこっそり選んでおく。点数はなし。ルームに入らない子も、共有画面を見てチャットで予想できる。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -3005,6 +3059,7 @@
           </div>
           <div class="app-card__body">
             <div class="app-card__name">ピタハメ</div>
+            <div class="app-card__hitokoto">ピースを回して型にぴったりはめる</div>
             <div class="app-card__desc">カラフルなピースを回して動かして、グレーの型（かた）にぴったりはめるスピードパズル。ひとりで練習も、みんなで同じ問題に挑戦して完成した順を見ることもできる。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -3032,6 +3087,7 @@
           </div>
           <div class="app-card__body">
             <div class="app-card__name">おしつけずかん</div>
+            <div class="app-card__hitokoto">宣言つきでカードを押しつけ合う</div>
             <div class="app-card__desc">イヤ〜な生きもののカードを、宣言つきで押しつけ合うブラフゲーム。「ホントかウソか」を当てるか、こっそり見て次の人に回すか。同じ生きもの4枚か全8種類を引き取るとひとり負け。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -3059,6 +3115,7 @@
           </div>
           <div class="app-card__body">
             <div class="app-card__name">エサドリ</div>
+            <div class="app-card__hitokoto">数字の札を同時に出してエサを取り合う</div>
             <div class="app-card__desc">エサカードをねらって、1〜15の手札から1枚を同時に出す。おなじ数字を出した人どうしはかぶって無効。15ラウンドの合計点で勝負する数字カードゲーム。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -3086,6 +3143,7 @@
           </div>
           <div class="app-card__body">
             <div class="app-card__name">ブラックジャック</div>
+            <div class="app-card__hitokoto">合計21をめざしてディーラーと勝負</div>
             <div class="app-card__desc">カードを引いて、手札の合計21ちょうどをめざすカードゲーム。21を超えたらバースト。ポイントをかけて、ディーラー（アプリ）との勝負に挑む。ポイントが0になっても自動チャージで最後まで遊べる。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -3113,6 +3171,7 @@
           </div>
           <div class="app-card__body">
             <div class="app-card__name">リバーシ</div>
+            <div class="app-card__hitokoto">黒と白の石をはさんでひっくり返す</div>
             <div class="app-card__desc">黒と白の石を交互に置いて、はさんだ相手の石をひっくり返す。対戦する2人はそれぞれの端末で置き、ほかの人は勝負を観戦できる。1台の画面でも遊べる。置ける場所を見せる補助や、1手の制限時間もある。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -3139,6 +3198,7 @@
           </div>
           <div class="app-card__body">
             <div class="app-card__name">ちゃりんバトン</div>
+            <div class="app-card__hitokoto">小銭の合計を答えて次の人に番を渡す</div>
             <div class="app-card__desc">ならんだ小銭がぜんぶでいくらかを答えて、正解したら次の人にバトンを渡す対決（2〜6人）。自分の番の間だけ自分の時計が減り、0になった人から「ここまで」で、最後まで残った人の勝ち。小銭は2枚からだんだん増える。ひとりでも遊べて（正解した数が点数）、1台の画面でも遊べる。時間なしで数えるだけの「いっしょに数える」もある。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -3164,6 +3224,7 @@
           </div>
           <div class="app-card__body">
             <div class="app-card__name">大富豪</div>
+            <div class="app-card__hitokoto">強いカードを出して、手札を早くなくす</div>
             <div class="app-card__desc">場より強いカードを出していき、手札を早くなくした人からあがるトランプの定番。それぞれの端末で自分の手札を見て出す。8切り・階段・革命などのルールと考える時間を選べて、人数が足りないときや抜けた人の代わりはCPUが出す。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -3191,6 +3252,7 @@
           </div>
           <div class="app-card__body">
             <div class="app-card__name">好きなものビンゴ</div>
+            <div class="app-card__hitokoto">好きなもの9つでビンゴカードを作る</div>
             <div class="app-card__desc">テーマにそって好きなものを9個選んでビンゴカードを作り、ホストがひくのを見る運まかせのビンゴ。ひかれたものを選んでいた人の名前が出るので、「同じだ」が見つかる。順位はつけない。ルームに入れない子の分は、ホストがカードを作れる。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -3218,6 +3280,7 @@
           </div>
           <div class="app-card__body">
             <div class="app-card__name">みんなでランキング</div>
+            <div class="app-card__hitokoto">ランキングを作って1位を予想し合う</div>
             <div class="app-card__desc">ホストがお題を選び、各自でランキングを作る。ほかの人の1位を予想してから、結果を見せ合う。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -3245,6 +3308,7 @@
           </div>
           <div class="app-card__body">
             <div class="app-card__name">興味スゴロク</div>
+            <div class="app-card__hitokoto">サイコロで止まったマスの「好き」を話す</div>
             <div class="app-card__desc">サイコロを振ってマスに止まり、好きなことややってみたいことを話そう。対話のきっかけづくりに。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -3272,6 +3336,7 @@
           </div>
           <div class="app-card__body">
             <div class="app-card__name">塗り絵カレンダー</div>
+            <div class="app-card__hitokoto">1週間の過ごし方を色でぬってながめる</div>
             <div class="app-card__desc">1週間の過ごし方を5色で塗って眺めるツール。メンターと一緒に、自分の時間の使い方を見つめ直す対話のきっかけに。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -3299,6 +3364,7 @@
           </div>
           <div class="app-card__body">
             <div class="app-card__name">バリューカード</div>
+            <div class="app-card__hitokoto">自分の「大事」をカードで見つける</div>
             <div class="app-card__desc">カードを選んで並び替えて、自分の「大事」を見つけるカードワーク。メンターとの対話の材料に。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -3326,6 +3392,7 @@
           </div>
           <div class="app-card__body">
             <div class="app-card__name">いくつ言える？</div>
+            <div class="app-card__hitokoto">お題に思いつく答えをたくさん書き出す</div>
             <div class="app-card__desc">お題にいくつ答えられるかな？ 制限時間内に思いついた答えを書き出して、みんなの答えを眺めよう。比較なし、発見重視。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -3353,6 +3420,7 @@
           </div>
           <div class="app-card__body">
             <div class="app-card__name">キャパグラフ</div>
+            <div class="app-card__hitokoto">1週間のがんばり量をグラフで見る</div>
             <div class="app-card__desc">1週間のがんばり量を項目別の負荷で見える化。自分でドラッグして引く「キャパライン」と見比べて、頑張りすぎを客観視するツール。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -3380,6 +3448,7 @@
           </div>
           <div class="app-card__body">
             <div class="app-card__name">キャリアすごろく</div>
+            <div class="app-card__hitokoto">体験をためて職業を選び、おとなへ</div>
             <div class="app-card__desc">子どものころから、おとなになるまでを、すごろくで進む。体験で「適性」をため、たまった適性に合う職業を選ぶほど、しごとマスのポイントが多い。各自の端末でも、1台の画面をみんなで見ても遊べる。ポイントはゲームの中だけのもの。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -3573,7 +3642,7 @@
       // アイコンは "group" などの英字で描画されるため、検索対象から外す。
       const searchTexts = cards.map((card, i) => {
         const parts = [];
-        card.querySelectorAll('.app-card__name, .app-card__desc, .meta-badge, .app-card__footer').forEach((el) => {
+        card.querySelectorAll('.app-card__name, .app-card__hitokoto, .app-card__desc, .meta-badge, .app-card__footer').forEach((el) => {
           const copy = el.cloneNode(true);
           copy.querySelectorAll('.material-symbols-rounded').forEach((icon) => icon.remove());
           parts.push(copy.textContent);
