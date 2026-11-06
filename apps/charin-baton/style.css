@@ -25,7 +25,7 @@ body { background: var(--color-bg); }
   color: var(--color-accent); font-family: inherit; font-size: 15px; font-weight: 500; cursor: pointer;
   border-radius: var(--radius-sm);
 }
-.cb-quiet:hover { background: rgba(40, 111, 124, 0.08); }
+.cb-quiet:hover { background: rgba(138, 74, 16, 0.08); }
 .cb-quiet:disabled { color: var(--color-muted); opacity: 0.55; cursor: not-allowed; background: none; }
 .cb-quiet .material-symbols-rounded { font-size: 20px; }
 .cb-quiet--center { justify-self: center; align-self: center; }
@@ -198,8 +198,8 @@ body { background: var(--color-bg); }
   width: 100%; max-width: 360px; height: 72px; padding: 0 18px; border-radius: var(--radius-btn);
   background: var(--color-surface); border: 2px solid var(--color-border); cursor: text;
 }
-/* 入れられるときは、フォーカスした入力欄と同じ見た目（ティールの枠と影） */
-.cb-display.is-active { border-color: var(--color-accent); box-shadow: 0 0 0 4px rgba(40, 111, 124, 0.18); }
+/* 入れられるときは、フォーカスした入力欄と同じ見た目（アクセント色の枠と影） */
+.cb-display.is-active { border-color: var(--color-accent); box-shadow: 0 0 0 4px rgba(138, 74, 16, 0.18); }
 .cb-display__kb { color: var(--color-accent); font-size: 26px; margin-right: 2px; }
 .cb-display__num { font-size: 40px; line-height: 1; font-weight: 700; color: var(--color-primary); font-variant-numeric: tabular-nums; }
 .cb-display__unit { font-size: 20px; font-weight: 700; margin-left: auto; padding-left: 8px; }
