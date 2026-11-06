@@ -14,7 +14,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <script src="../shared/js/rtdb-utils.js?v=20261005"></script>
   <script src="../shared/js/room-qr.js?v=20261022"></script>
-  <script src="engine.js?v=20261106i"></script>
+  <script src="engine.js?v=20261106j"></script>
 </head>
 <body>
 
@@ -243,7 +243,7 @@
         <button type="button" class="sb-padbtn" data-act="rotr" aria-label="右に回す"><span class="material-symbols-rounded" aria-hidden="true">rotate_right</span></button>
         <button type="button" class="sb-padbtn" data-act="hold" aria-label="とっておく"><span class="material-symbols-rounded" aria-hidden="true">inventory_2</span></button>
       </div>
-      <p class="sb-keys">キーボード: ← → 動かす／↓ 下へ／スペース すとん／↑ か X 右に回す／Z 左に回す／C か Shift とっておく／P とめる（ひとりのとき）<br>マウス: 盤の上で左右に動かす／クリック すとん／右クリック 右に回す／ホイール 回す</p>
+      <p class="sb-keys">キーボード: ← → 動かす／↓ 下へ／スペース すとん／↑ か X 右に回す／Z 左に回す／C か Shift とっておく／P とめる（ひとりのとき）<br>W A S D でも動かせる（W は右に回す）／マウス: 盤の上で左右に動かす／クリック すとん／右クリック 右に回す／ホイール 回す</p>
     </div>
   </section>
 
@@ -291,7 +291,7 @@
     </div>
   </div>
 
-  <script type="module" src="app.js?v=20261106i"></script>
+  <script type="module" src="app.js?v=20261106j"></script>
   <script src="../shared/js/stats.js?v=1" defer></script>
   <script src="../shared/js/howto.js"></script>
   <script>
@@ -311,7 +311,7 @@
           '回すボタンは左回りと右回り',
           '箱のボタンで、いまのブロックを1つとっておける。とっておいたものと入れかえて出せる（1つのブロックにつき1回）',
           '盤の中の枠は、そのまま落としたときに入る場所',
-          'キーボードなら ← → ↓ で動かす、スペースですとん、↑ か X で右に回す、Z で左に回す、C か Shift でとっておく',
+          'キーボードなら ← → ↓（A D S でも）で動かす、スペースですとん、↑（W でも）か X で右に回す、Z で左に回す、C か Shift でとっておく',
           'マウスなら、盤の上で左右に動かすとブロックがついてくる。クリックですとん、右クリックで右に回す、ホイールで回す',
           'ひとりであそぶときは、上の「とめる」（キーボードなら P）でとめられる。「つづける」で、とめたところから続く',
         ] },
