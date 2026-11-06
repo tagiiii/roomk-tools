@@ -1765,8 +1765,17 @@ function layout() {
   while (count > 2 && nc * (NEXT_FIRST + (count - 1) * small.slot) > space) count--;
   nextShow = { count, small };
   sizeCanvas($('next'), nc * 4, Math.round(nc * (NEXT_FIRST + (count - 1) * small.slot)));
+  // 一言（送った段・4段すとん！など）は、盤の左に場所があれば盤の外の左に出す（盤にかぶせない。なければ右の列の下に重ねる）
+  const noteRoom = Math.floor($('board').getBoundingClientRect().left) - 12 - 8;
+  const wrap = $('board').parentElement;
+  wrap.classList.toggle('is-noteleft', noteRoom >= NOTE_LEFT_MIN);
+  wrap.style.setProperty('--sb-note-w', Math.min(NOTE_LEFT_MAX, noteRoom) + 'px');
+  wrap.style.setProperty('--sb-side-w', side + 'px'); // 左に場所がないときは右の列に重ねる
   draw();
 }
+
+const NOTE_LEFT_MIN = 110; // 盤の左に一言を出すのに要る幅
+const NOTE_LEFT_MAX = 170;
 
 function sizeCanvas(cv, w, h) {
   const dpr = window.devicePixelRatio || 1;
