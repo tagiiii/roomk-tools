@@ -123,8 +123,8 @@ body { background: var(--color-bg); }
 .kk-check__text { display: grid; gap: 2px; }
 .kk-check__label { font-weight: 500; }
 .kk-check__sub { font-size: 13px; color: var(--color-muted); line-height: 1.5; }
-.kk-check input:disabled ~ .kk-check__text { color: #A3AAB3; }
-.kk-check input:disabled ~ .kk-check__text .kk-check__sub { color: #B8BEC6; }
+.kk-check input:disabled ~ .kk-check__text { color: var(--color-muted); opacity: 0.55; }
+.kk-check input:disabled ~ .kk-check__text .kk-check__sub { color: var(--color-muted); }
 
 .kk-optsview { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
 .kk-optview { display: grid; gap: 2px; padding: 8px 12px; border-radius: 8px; background: var(--color-bg); }
@@ -155,7 +155,7 @@ body { background: var(--color-bg); }
 .kk-tag--lens { background: #E4DAF2; color: #4B2A78; }
 .kk-tag--team { background: var(--color-accent); }
 .kk-tag--yes { background: #2E7D4F; }
-.kk-tag--no { background: #8A8F98; }
+.kk-tag--no { background: var(--color-muted); }
 .kk-tag--thief { background: var(--kk-thief); }
 
 /* ══ 展示室（守った数・見回りの5回） ══ */
@@ -233,7 +233,7 @@ body { background: var(--color-bg); }
 .kk-rejects__label { font-weight: 700; color: var(--color-primary); }
 .kk-rejects__dots { display: inline-flex; gap: 6px; }
 .kk-dot { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--color-border); background: var(--color-surface); }
-.kk-dot.is-used { background: #8A8F98; border-color: #8A8F98; }
+.kk-dot.is-used { background: var(--color-muted); border-color: var(--color-muted); }
 .kk-dot.is-now { border-color: var(--color-accent); background: var(--color-accent-soft); }
 .kk-rejects__note { color: var(--color-muted); }
 
@@ -329,7 +329,7 @@ body { background: var(--color-bg); }
 .kk-choice:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 0 rgba(0, 0, 0, 0.08); }
 .kk-choice:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 1px 0 rgba(0, 0, 0, 0.08); }
 .kk-choice--yes { border-color: #2E7D4F; color: #2E7D4F; background: #F1F8F3; }
-.kk-choice--no { border-color: #8A8F98; color: #5B616B; background: #F5F6F7; }
+.kk-choice--no { border-color: var(--color-muted); color: var(--color-muted); background: var(--color-primary-soft); }
 .kk-choice--safe { border-color: var(--color-accent); color: var(--color-primary); background: var(--color-accent-soft); }
 .kk-choice--swap { border-color: var(--kk-red); color: var(--kk-red); background: var(--kk-red-bg); }
 .kk-choice:disabled { opacity: 0.3; cursor: not-allowed; box-shadow: none; }
@@ -343,7 +343,7 @@ body { background: var(--color-bg); }
 .kk-vote__name { font-weight: 700; font-size: 14px; overflow-wrap: anywhere; }
 .kk-vote__v { font-size: 13px; font-weight: 700; }
 .kk-vote--yes { border-color: #2E7D4F; background: #F1F8F3; color: #2E7D4F; }
-.kk-vote--no { border-color: #A3AAB3; background: #F5F6F7; color: #5B616B; }
+.kk-vote--no { border-color: var(--color-muted); background: var(--color-primary-soft); color: var(--color-muted); }
 .kk-vote--none { border-color: var(--color-border); border-style: dashed; color: var(--color-muted); }
 .kk-votes.is-anim .kk-vote { animation: kk-flipin 0.45s ease-out both; animation-delay: calc(var(--i) * 0.12s); }
 @keyframes kk-flipin { from { transform: rotateY(90deg); opacity: 0; } to { transform: rotateY(0); opacity: 1; } }
