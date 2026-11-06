@@ -1541,6 +1541,13 @@ function tick() {
   R.raf = requestAnimationFrame(tick);
 }
 
+// ここまでになったわけ（盤といっしょに見て、なぜかわかるように）
+const OVER_WHY = {
+  spawn: 'つぎのブロックが入らなかったよ。',
+  top: '上にはみ出して置いたよ。',
+  jama: 'じゃまで上まで押し上げられたよ。',
+};
+
 function finishRun() {
   const R = state.run;
   if (!R || R.done) return;
@@ -1556,7 +1563,7 @@ function finishRun() {
   }
   sendBoard(true);
   if (state.game.over) {
-    note('ここまで！ ほかの人がおわるのを待ってね', 0);
+    note('ここまで！ ' + (OVER_WHY[state.game.overBy] || '') + 'ほかの人がおわるのを待ってね', 0);
     return;
   }
   if (R.showTimer) $('playTimer').textContent = '0:00';
@@ -1815,7 +1822,17 @@ function draw() {
   const ctx = $('board').getContext('2d');
   drawWell(ctx, g.board, CELL);
   const p = g.piece;
-  if (p) {
+  if (p && g.over) {
+    // ここまでになったとき: 出せなかったブロックを、重なったところがわかるように枠つきで描く（落ちる先は出さない）
+    const warn = getComputedStyle(document.documentElement).getPropertyValue('--color-warning').trim() || '#B45309';
+    p.cells.forEach(([cx, cy]) => {
+      if (p.y + cy < 0) return;
+      cellRect(ctx, (p.x + cx) * CELL, (p.y + cy) * CELL, CELL, COLORS[p.kind]);
+      ctx.strokeStyle = warn;
+      ctx.lineWidth = 3;
+      ctx.strokeRect((p.x + cx) * CELL + 1.5, (p.y + cy) * CELL + 1.5, CELL - 3, CELL - 3);
+    });
+  } else if (p) {
     const gy = E.dropY(g);
     p.cells.forEach(([cx, cy]) => { if (gy + cy >= 0) cellRect(ctx, (p.x + cx) * CELL, (gy + cy) * CELL, CELL, COLORS[p.kind], true); });
     p.cells.forEach(([cx, cy]) => { if (p.y + cy >= 0) cellRect(ctx, (p.x + cx) * CELL, (p.y + cy) * CELL, CELL, COLORS[p.kind]); });
