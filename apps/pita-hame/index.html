@@ -989,6 +989,44 @@
     document.querySelectorAll('.ph-screen').forEach((s) => s.classList.remove('is-active'));
     el('screen-' + id).classList.add('is-active');
     state.screen = id;
+    if (ENTRY_SCREENS.includes(id)) resetRoomEntry();
+  }
+
+  /* ---- ルーム作成・参加の二度押しのロック ----
+     ロックは処理の最初から終わり（transaction の完了）まで。入れたらボタンは押せないまま（待合室が出るまでに
+     もう一度押せないように）、入れなかったら押せる状態とフォーカスを戻す。
+     入口の画面（トップ・作成・参加）を出すたびに、ボタンとロックを戻す（どの道でトップへ戻っても止まらないように）。
+     ロック中に入口の画面へ戻ったときは、その回の処理を取り消す（入れていたら自分の分を消して、ルームへは進まない） */
+  const ENTRY_SCREENS = ['top', 'create', 'join'];
+  const ENTRY_BUTTON_IDS = ['btnCreateGo', 'btnJoinGo'];
+  let roomEntryBusy = false;
+  let roomEntryGen = 0;
+  function resetRoomEntry() {
+    roomEntryGen += 1;
+    roomEntryBusy = false;
+    ENTRY_BUTTON_IDS.forEach((id) => { const b = el(id); if (b) b.disabled = false; });
+  }
+  async function withEntryLock(buttonId, fn) {
+    if (roomEntryBusy) return;
+    roomEntryBusy = true;
+    const gen = roomEntryGen;
+    const isCurrent = () => gen === roomEntryGen;
+    const btn = el(buttonId);
+    const hadFocus = !!btn && document.activeElement === btn;
+    if (btn) btn.disabled = true;
+    let entered = false;
+    try {
+      entered = await fn(isCurrent);
+    } finally {
+      // 途中で入口の画面へ戻った回は、もう戻してあるので触らない
+      if (isCurrent()) {
+        roomEntryBusy = false;
+        if (btn && !entered) {
+          btn.disabled = false;
+          if (hadFocus) btn.focus({ preventScroll: true });
+        }
+      }
+    }
   }
 
   /* ---- タイマー ---- */
@@ -1932,14 +1970,33 @@
       return warmTxn(net.roomRef, mutator);
     }
 
+    // ═════════ ルーム作成・参加の認証待ち（ロックは showScreen の下の withEntryLock） ═════════
+    // authReady は一度失敗すると固定されるので、再試行は案内せず読み込みなおしを案内する。
+    // catch は authReady だけを囲む（transaction まで囲むと、届いたか分からない失敗を認証の失敗と取り違える）
+    const AUTH_FAIL_MSG = 'うまくつながらなかったよ。ページを読み込みなおしてね';
+    async function waitAuthOrExplain(errorId) {
+      try {
+        await authReady;
+        return true;
+      } catch (e) {
+        console.error(e);
+        el(errorId).textContent = AUTH_FAIL_MSG;
+        return false;
+      }
+    }
+
     // ═════════ ルーム作成 ═════════
-    async function createRoom() {
+    function createRoom() {
+      return withEntryLock('btnCreateGo', createRoomInner);
+    }
+    async function createRoomInner(isCurrent) {
       el('createError').textContent = '';
       const nick = el('createNick').value.trim();
       const err = validateNickname(nick);
-      if (err) { el('createError').textContent = err; return; }
+      if (err) { el('createError').textContent = err; return false; }
+      if (!await waitAuthOrExplain('createError')) return false;
+      if (!isCurrent()) return false;
       try {
-        await authReady;
         let code = null, ref = null;
         const gameId = 'g' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
         for (let i = 0; i < 5; i++) {
@@ -1959,15 +2016,23 @@
           const { committed } = await r.transaction((room) => (room === null ? initial : undefined));
           if (committed) { code = c; ref = r; break; }
         }
-        if (!code) { el('createError').textContent = 'ルームを作れなかったよ。もう一度。'; return; }
+        if (!code) { el('createError').textContent = 'ルームを作れなかったよ。もう一度。'; return false; }
         window.RoomkStats?.count('room-create');
         await ref.onDisconnect().update({ hostConnected: false, hostDisconnectedAt: TS() });
+        if (!isCurrent()) {
+          // 作っている間に入口の画面へ戻った: できたルームを消して、ルームへは進まない
+          await RoomkRTDB.cancelRoomOnDisconnect(ref);
+          await ref.remove().catch(() => {});
+          return false;
+        }
         net.role = 'host'; net.nickname = nick; net.roomCode = code; net.roomRef = ref; net.gameId = gameId;
         saveSession();
         startListeners();
+        return true;
       } catch (e) {
         console.error(e);
         el('createError').textContent = 'ルームを作れなかったよ。';
+        return false;
       }
     }
 
@@ -1984,21 +2049,26 @@
     }
 
     // ═════════ ルーム参加 ═════════
-    async function joinRoom() {
+    function joinRoom() {
+      return withEntryLock('btnJoinGo', joinRoomInner);
+    }
+    async function joinRoomInner(isCurrent) {
       el('joinError').textContent = '';
       const code = normalizeRoomCode(el('joinCode').value);
       const nick = el('joinNick').value.trim();
       const err = validateNickname(nick);
-      if (err) { el('joinError').textContent = err; return; }
+      if (err) { el('joinError').textContent = err; return false; }
       const imeErr = roomCodeImeError(code);
-      if (imeErr) { el('joinError').textContent = imeErr; return; }
-      if (!/^[A-Z0-9]{6}$/.test(code)) { el('joinError').textContent = 'ルームコードは6文字だよ'; return; }
+      if (imeErr) { el('joinError').textContent = imeErr; return false; }
+      if (!/^[A-Z0-9]{6}$/.test(code)) { el('joinError').textContent = 'ルームコードは6文字だよ'; return false; }
+      if (!await waitAuthOrExplain('joinError')) return false;
+      if (!isCurrent()) return false;
       try {
-        await authReady;
         const ref = db.ref(`${ROOM_PATH}/${code}`);
         const pre = await ref.get();
-        if (!pre.exists()) { el('joinError').textContent = 'ルームが見つからないよ'; return; }
-        if (isRoomExpired(pre.val())) { await ref.remove().catch(() => {}); el('joinError').textContent = 'このルームは終わっているよ'; return; }
+        if (!pre.exists()) { el('joinError').textContent = 'ルームが見つからないよ'; return false; }
+        if (isRoomExpired(pre.val())) { await ref.remove().catch(() => {}); el('joinError').textContent = 'このルームは終わっているよ'; return false; }
+        if (!isCurrent()) return false;
         let reason = null;
         // warmTxn: 実値 null（ルーム消滅）は mutator を呼ばず必ず中断される。
         // expired 時の return null（ルーム削除）は仕様として維持。
@@ -2015,20 +2085,28 @@
           const msg = { not_waiting: 'いまは入れないよ', host_gone: 'ホストがいないよ', nick_taken: 'そのニックネームは使われているよ', expired: 'このルームは終わっているよ' };
           // reason=null の中断＝実値 null（get〜txn 間に消滅）
           el('joinError').textContent = msg[reason] || 'ルームが見つからないよ';
-          return;
+          return false;
         }
         // expired の削除が committed=true になるため、参加成立（room が残っている）ことを確認してから進む
         if (reason === 'expired' || !snapshot || !snapshot.val()) {
           el('joinError').textContent = 'このルームは終わっているよ';
-          return;
+          return false;
         }
         await ref.child(`players/${nick}`).onDisconnect().remove();
+        if (!isCurrent()) {
+          // 参加している間に入口の画面へ戻った: 自分の分を消して、ルームへは進まない
+          await ref.child(`players/${nick}`).onDisconnect().cancel().catch(() => {});
+          await ref.child(`players/${nick}`).remove().catch(() => {});
+          return false;
+        }
         net.role = 'guest'; net.nickname = nick; net.roomCode = code; net.roomRef = ref;
         saveSession();
         startListeners();
+        return true;
       } catch (e) {
         console.error(e);
         el('joinError').textContent = '入れなかったよ';
+        return false;
       }
     }
 
