@@ -1,7 +1,7 @@
 /* すとんブロック 盤とブロックのしくみ（画面を持たない）
    ブラウザでは window.SutonEngine、node では require で読む。
    ・盤は横10・たて20。その上に見えない段が20段ある（y = -1 〜 -20。g.hidden）。それより上は空き
-   ・ブロックは盤のすぐ上の見えない2段（y = -2・-1）に出て、すぐ1段下がる（よく知られた出かたと同じ）
+   ・ブロックは盤のすぐ上の見えない2段（y = -2・-1）に出て、入る所まで（2段まで）すぐ下がる
    ・おわるのは、つぎのブロックが出る所に入らないとき・置いたブロックが全部盤より上にあるとき・
      じゃまで見えない段のいちばん上より上へ押し出されたとき（よく知られた決まりと同じ）
    ・ブロックは4マスの7種類（I・O・T・S・Z・L・J）。回す・1つとっておく、ができる
@@ -91,10 +91,15 @@
   function rotateCells(cells, n) { return cells.map(([x, y]) => [n - 1 - y, x]); }
 
   const SPAWN_Y = -2; // 出る所（箱の上の段が y = -2）
-  // 出たあと、入ればすぐ1段下げる（よく知られた出かたと同じ。ふだんは盤のいちばん上の段に見える）
-  function dropOne(g) {
+  const SPAWN_DROP = 2; // 出たあと、すぐ下げる段の数
+  // 出たあと、入る所まで（2段まで）すぐ下げる。ふだんは盤のいちばん上の2段に見える。
+  // 2026-11-06 まではよく知られた出かたと同じ1段だった（ブロックの上の段が盤の上の帯に出ていた）
+  function dropIn(g) {
     const p = g.piece;
-    if (p && fitsG(g, p, p.cells, p.x, p.y + 1)) p.y++;
+    for (let i = 0; i < SPAWN_DROP; i++) {
+      if (!p || !fitsG(g, p, p.cells, p.x, p.y + 1)) return;
+      p.y++;
+    }
   }
 
   function newPiece(spec) {
@@ -171,7 +176,7 @@
     while (g.queue.length < 5) g.queue.push(...makeBag(g.rand));
   }
 
-  // つぎのブロックを出す。盤のすぐ上の見えない2段に出し、入れば1段下げる（盤のいちばん上の段に見える）。
+  // つぎのブロックを出す。盤のすぐ上の見えない2段に出し、入る所まで（2段まで）下げる（盤のいちばん上の2段に見える）。
   // 出る所に入らないときは、いっぱい
   function spawn(g, spec) {
     fillQueue(g);
@@ -185,11 +190,11 @@
       if (g.onFull === 'end') { g.piece = p; g.over = true; g.overBy = 'spawn'; return { full: true }; }
       resetBoard(g);
       g.piece = p;
-      dropOne(g);
+      dropIn(g);
       return { full: true, cleared: true };
     }
     g.piece = p;
-    dropOne(g);
+    dropIn(g);
     return { full: false };
   }
 
@@ -405,7 +410,7 @@
       if (g.onFull === 'end') { g.over = true; g.overBy = 'spawn'; return g; }
       resetBoard(g);
     }
-    dropOne(g);
+    dropIn(g);
     return g;
   }
 

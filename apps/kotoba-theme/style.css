@@ -30,7 +30,7 @@
   height: 88px;
   margin-bottom: 14px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--color-accent), #1A4850);
+  background: linear-gradient(135deg, var(--color-accent), #5A300A);
   color: #fff;
   font-size: 46px;
   box-shadow: var(--shadow-md);
@@ -76,6 +76,13 @@
   border-top: 1px solid var(--color-border);
   font-size: 20px;
   color: var(--color-primary);
+}
+
+/* はじめの画面の型（2026-11-06）: 説明と注意書きは入口の面へ移したので、一覧の面の最初の見出しには上の線を引かない */
+.kw-panel > .kw-entry:first-child > .kw-panel__title {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
 }
 
 /* ── TOP：ゲームからえらぶ（主の入口） ── */
@@ -700,3 +707,6 @@
     width: 100%;
   }
 }
+
+/* はじめの画面の型（2026-11-06）: 入口の下の一覧の面も、入口と同じ幅にそろえる */
+.kw-panel { max-width: 440px; margin-left: auto; margin-right: auto; }

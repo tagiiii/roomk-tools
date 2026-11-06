@@ -347,7 +347,7 @@
 @keyframes cn-turn-pulse {
   from {
     transform: translateY(-4px);
-    box-shadow: 0 0 0 4px rgba(40, 111, 124, 0.2);
+    box-shadow: 0 0 0 4px rgba(138, 74, 16, 0.2);
   }
 
   to {
@@ -796,3 +796,8 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* はじめの画面の型（2026-11-06）: 型のあきにそろえる（パネルの gap を足さない）。
+   はじめの画面のあいだは、上の帯（ツール名・ひとこと）を隠す（ほかの画面では今までどおり出る） */
+.cn-panel.app-entry { display: block; }
+body:has(#app > .app-entry) > .app-header { display: none; }

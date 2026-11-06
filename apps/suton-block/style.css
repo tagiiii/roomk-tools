@@ -32,7 +32,7 @@ body { background: var(--color-bg); }
   color: var(--color-accent); font-family: inherit; font-size: 15px; font-weight: 500; cursor: pointer;
   border-radius: var(--radius-sm);
 }
-.sb-quiet:hover { background: rgba(40, 111, 124, 0.08); }
+.sb-quiet:hover { background: rgba(138, 74, 16, 0.08); }
 .sb-quiet .material-symbols-rounded { font-size: 20px; }
 .sb-quiet--center { justify-self: center; }
 .sb-hint { margin: 0 0 16px; padding: 10px 14px; border-radius: var(--radius-sm); background: var(--color-accent-soft); color: var(--color-primary); line-height: 1.6; font-size: 14px; }

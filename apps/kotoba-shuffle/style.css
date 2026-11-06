@@ -36,7 +36,7 @@
   height: 88px;
   margin-bottom: 14px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--color-accent), #1A4850);
+  background: linear-gradient(135deg, var(--color-accent), #5A300A);
   color: #fff;
   font-size: 46px;
   box-shadow: var(--shadow-md);
@@ -74,6 +74,9 @@
   justify-content: center;
 }
 
+/* はじめの画面の型（2026-11-06）の中では、レベルの見出しを、ひとことの下に少しあけて置く */
+.app-entry > .ks-top-panel__title { margin-top: 22px; margin-bottom: 14px; font-size: 18px; }
+
 /* ── レベル選択グリッド ── */
 
 .ks-level-grid {
@@ -109,7 +112,7 @@
 .ks-level-card.is-selected {
   border-color: var(--color-accent);
   background: var(--color-accent-soft);
-  box-shadow: 0 0 0 3px rgba(40, 111, 124, 0.12);
+  box-shadow: 0 0 0 3px rgba(138, 74, 16, 0.12);
 }
 
 .ks-level-card__icon {

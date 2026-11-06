@@ -5,13 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
   <title>かくれナンバー | あそびのたな</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
 <script src="../shared/js/rtdb-utils.js?v=20261005"></script>
 <script src="../shared/js/room-qr.js?v=20261022"></script>
-  <link rel="stylesheet" href="../shared/css/design-system.css">
+  <link rel="stylesheet" href="../shared/css/design-system.css?v=20261106c">
   <style>
     /* ── 画面管理（AGENTS.md 共通パターン） ── */
     .screen { display: none; min-height: 100dvh; }
@@ -295,34 +296,32 @@
     }
   </style>
 </head>
-<body>
+<body data-genre="atekko">
 
 <!-- ════════════════════════════════════
      SCREEN: TOP
 ════════════════════════════════════ -->
 <div class="screen" id="screen-top">
   <div class="kkn-page">
-    <div class="kkn-hero">
-      <div class="kkn-hero__icon-wrap">
-        <span class="material-symbols-rounded">visibility_off</span>
+    <section class="app-entry">
+      <div class="app-hero"><img class="app-illust" src="../assets/illustrations/kakure-number.webp" alt="" width="156" height="156" decoding="async" onerror="this.parentNode.remove()" /></div>
+      <h1 class="kkn-hero__title app-title">かくれナンバー</h1>
+      <p class="kkn-hero__sub app-catch">自分の数字と隠しカードは見えない！<br>声できき合って、みんなの合計をよそうしよう</p>
+      <div class="kkn-hero__buttons app-entry__actions">
+        <button class="btn btn-primary btn-lg btn-full" onclick="goHostSetup()">
+          <span class="material-symbols-rounded">add_home</span>
+          ルームを作る（ホスト）
+        </button>
+        <button class="btn btn-secondary btn-lg btn-full" onclick="goGuestJoin()">
+          <span class="material-symbols-rounded">login</span>
+          ルームに参加する
+        </button>
+        <button class="btn btn-ghost btn-full" onclick="goSpectateJoin()">
+          <span class="material-symbols-rounded">cast</span>
+          みんなにみせる画面をひらく
+        </button>
       </div>
-      <h1 class="kkn-hero__title">かくれナンバー</h1>
-      <p class="kkn-hero__sub">自分の数字と隠しカードは見えない！<br>声できき合って、みんなの合計をよそうしよう</p>
-    </div>
-    <div class="kkn-hero__buttons">
-      <button class="btn btn-primary btn-lg btn-full" onclick="goHostSetup()">
-        <span class="material-symbols-rounded">add_home</span>
-        ルームを作る（ホスト）
-      </button>
-      <button class="btn btn-secondary btn-lg btn-full" onclick="goGuestJoin()">
-        <span class="material-symbols-rounded">login</span>
-        ルームに参加する
-      </button>
-      <button class="btn btn-ghost btn-full" onclick="goSpectateJoin()">
-        <span class="material-symbols-rounded">cast</span>
-        みんなにみせる画面をひらく
-      </button>
-    </div>
+    </section>
   </div>
 </div>
 

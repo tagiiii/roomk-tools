@@ -5,46 +5,52 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
   <title>興味スゴロク | あそびのたな</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet" />
-  <link rel="stylesheet" href="../shared/css/design-system.css" />
+  <link rel="stylesheet" href="../shared/css/design-system.css?v=20261106c" />
   <!-- index.html と app.js・logic.js・style.css はセットで変わるので、変えたら ?v= をそろえて上げる -->
-  <link rel="stylesheet" href="style.css?v=20261106b" />
+  <link rel="stylesheet" href="style.css?v=20261106look" />
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <script src="../shared/js/rtdb-utils.js?v=20261005"></script>
   <script src="../shared/js/room-qr.js?v=20261022"></script>
 </head>
-<body>
+<body data-genre="talk">
 
   <div class="wrapper">
 
     <header class="ks-header">
-      <h1 class="ks-header__title">興味スゴロク</h1>
+      <h1 class="ks-header__title app-title">興味スゴロク</h1>
       <p class="ks-header__sub" id="headerSub">サイコロを振ってマスに止まり、出てきた質問について話そう</p>
     </header>
 
     <!-- ============ トップ ============ -->
     <section class="ks-screen" id="screen-top">
-      <div class="card ks-top">
-        <p class="ks-top__lead">1〜6人で遊べるよ。遊び方は2つから選べるよ。</p>
-        <ul class="ks-top__notes">
+      <div class="card ks-top app-entry">
+        <div class="app-hero"><img class="app-illust" src="../assets/illustrations/kyoumi-sugoroku.webp" alt="" width="156" height="156" decoding="async" onerror="this.parentNode.remove()" /></div>
+        <h1 class="app-title">興味スゴロク</h1>
+        <p class="app-catch">サイコロを振ってマスに止まり、出てきた質問について話そう</p>
+        <p class="ks-top__lead app-entry__lead">1〜6人で遊べるよ。遊び方は2つから選べるよ。</p>
+        <ul class="ks-top__notes app-entry__notes">
           <li>ひとりひとりの端末で遊ぶときは「ルームを作る」「ルームに参加する」。自分の番は自分の端末でサイコロを振るよ</li>
           <li>1台の画面をみんなで見て遊ぶときは「1台の画面であそぶ」</li>
           <li>答えにくい質問は「別の質問」で変えてOK</li>
         </ul>
-        <button type="button" class="btn btn-primary btn-full btn-lg" id="btnGoCreate">
-          <span class="material-symbols-rounded" aria-hidden="true">add_home</span>
-          ルームを作る
-        </button>
-        <button type="button" class="btn btn-secondary btn-full" id="btnGoJoin">
-          <span class="material-symbols-rounded" aria-hidden="true">login</span>
-          ルームに参加する
-        </button>
-        <button type="button" class="btn btn-secondary btn-full" id="btnGoLocal">
-          <span class="material-symbols-rounded" aria-hidden="true">tv</span>
-          1台の画面であそぶ
-        </button>
+        <div class="app-entry__actions">
+          <button type="button" class="btn btn-primary btn-full btn-lg" id="btnGoCreate">
+            <span class="material-symbols-rounded" aria-hidden="true">add_home</span>
+            ルームを作る
+          </button>
+          <button type="button" class="btn btn-secondary btn-full" id="btnGoJoin">
+            <span class="material-symbols-rounded" aria-hidden="true">login</span>
+            ルームに参加する
+          </button>
+          <button type="button" class="btn btn-secondary btn-full" id="btnGoLocal">
+            <span class="material-symbols-rounded" aria-hidden="true">tv</span>
+            1台の画面であそぶ
+          </button>
+        </div>
       </div>
     </section>
 

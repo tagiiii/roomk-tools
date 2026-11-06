@@ -6,13 +6,14 @@
   <title>うそつき辞書 | あそびのたな</title>
   <meta name="description" content="めずらしいことばに「それっぽい意味」をでっちあげて、本物をあてっこするパーティーゲーム">
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
 <script src="../shared/js/rtdb-utils.js?v=20261005"></script>
 <script src="../shared/js/room-qr.js?v=20261022"></script>
-  <link rel="stylesheet" href="../shared/css/design-system.css">
+  <link rel="stylesheet" href="../shared/css/design-system.css?v=20261106c">
   <style>
     .screen { display: none; min-height: 100dvh; }
     .screen.active { display: flex; flex-direction: column; align-items: center; }
@@ -60,7 +61,7 @@
       height: 76px;
       margin: 0 auto 20px;
       border-radius: 22px;
-      background: linear-gradient(135deg, #1A4850, var(--color-accent));
+      background: linear-gradient(135deg, #5A300A, var(--color-accent));
       box-shadow: var(--shadow-md);
     }
     .uj-hero__icon .material-symbols-rounded {
@@ -616,31 +617,29 @@
     }
   </style>
 </head>
-<body>
+<body data-genre="kotoba">
 
 <div class="screen" id="screen-top">
   <div class="uj-page">
-    <div class="uj-hero">
-      <div class="uj-hero__icon">
-        <span class="material-symbols-rounded" aria-hidden="true">menu_book</span>
+    <section class="app-entry">
+      <div class="app-hero"><img class="app-illust" src="../assets/illustrations/uso-jisho.webp" alt="" width="156" height="156" decoding="async" onerror="this.parentNode.remove()" /></div>
+      <h1 class="uj-hero__title app-title">うそつき辞書</h1>
+      <p class="uj-hero__sub app-catch">めずらしいことばに「それっぽい意味」をでっちあげて、<br>どれが本物かあてっこするゲーム</p>
+      <div class="uj-hero__buttons app-entry__actions">
+        <button class="btn btn-primary btn-lg btn-full" onclick="goHostSetup()">
+          <span class="material-symbols-rounded" aria-hidden="true">add_home</span>
+          ルームをつくる（ホスト）
+        </button>
+        <button class="btn btn-secondary btn-lg btn-full" onclick="goGuestJoin()">
+          <span class="material-symbols-rounded" aria-hidden="true">login</span>
+          ルームに参加する
+        </button>
+        <button class="btn btn-ghost btn-full" onclick="goSpectateJoin()">
+          <span class="material-symbols-rounded" aria-hidden="true">cast</span>
+          みんなにみせる画面をひらく
+        </button>
       </div>
-      <h1 class="uj-hero__title">うそつき辞書</h1>
-      <p class="uj-hero__sub">めずらしいことばに「それっぽい意味」をでっちあげて、<br>どれが本物かあてっこするゲーム</p>
-    </div>
-    <div class="uj-hero__buttons">
-      <button class="btn btn-primary btn-lg btn-full" onclick="goHostSetup()">
-        <span class="material-symbols-rounded" aria-hidden="true">add_home</span>
-        ルームをつくる（ホスト）
-      </button>
-      <button class="btn btn-secondary btn-lg btn-full" onclick="goGuestJoin()">
-        <span class="material-symbols-rounded" aria-hidden="true">login</span>
-        ルームに参加する
-      </button>
-      <button class="btn btn-ghost btn-full" onclick="goSpectateJoin()">
-        <span class="material-symbols-rounded" aria-hidden="true">cast</span>
-        みんなにみせる画面をひらく
-      </button>
-    </div>
+    </section>
   </div>
 </div>
 

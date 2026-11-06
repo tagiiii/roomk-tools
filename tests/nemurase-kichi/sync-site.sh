@@ -6,6 +6,7 @@ SP="${NK_WORK:?NK_WORK（作業フォルダ）を指定してね}"
 mkdir -p "$SP"
 rm -rf "$SP/site"; mkdir -p "$SP/site"
 cp -R "$REPO/apps/shared" "$SP/site/shared"
+cp -R "$REPO/apps/assets" "$SP/site/assets"
 cp -R "$REPO/apps/nemurase-kichi" "$SP/site/nemurase-kichi"
 # 接続先: ねむらせ基地の設定ファイルだけを、エミュレーター向けにまるごと差し替える
 cat > "$SP/site/nemurase-kichi/firebase-config.js" <<'JS'

@@ -5,8 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
   <title>ブラックジャック | あそびのたな</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
-  <link rel="stylesheet" href="../shared/css/design-system.css">
+  <link rel="stylesheet" href="../shared/css/design-system.css?v=20261106c">
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
@@ -203,25 +204,25 @@
     }
   </style>
 </head>
-<body>
+<body data-genre="board">
 
 <!-- ════════════════════════════════════ TOP ════════════════════════════════════ -->
 <div class="screen" id="screen-top">
   <div class="bj-page">
-    <div class="bj-hero">
-      <div class="bj-hero__icon-wrap"><span class="material-symbols-rounded">style</span></div>
-      <h1 class="bj-hero__title">ブラックジャック</h1>
-      <p class="bj-hero__sub">カードを引いて、合計21ちょうどをめざそう。<br>21を超えたらバースト！<br>ポイントをかけてディーラーと勝負するよ。</p>
-    </div>
-    <div class="bj-hero__buttons">
-      <button class="btn btn-primary btn-lg btn-full" onclick="showScreen('host-setup')">
-        <span class="material-symbols-rounded">add_home</span>ルームを作る
-      </button>
-      <button class="btn btn-secondary btn-lg btn-full" onclick="openJoinFromTop()">
-        <span class="material-symbols-rounded">login</span>ルームに参加する
-      </button>
-      <p class="bj-hint">相手はディーラー（アプリ）だから、1人でも遊べるよ。</p>
-    </div>
+    <section class="app-entry">
+      <div class="app-hero"><img class="app-illust" src="../assets/illustrations/blackjack.webp" alt="" width="156" height="156" decoding="async" onerror="this.parentNode.remove()" /></div>
+      <h1 class="bj-hero__title app-title">ブラックジャック</h1>
+      <p class="bj-hero__sub app-catch">カードを引いて、合計21ちょうどをめざそう。<br>21を超えたらバースト！<br>ポイントをかけてディーラーと勝負するよ。</p>
+      <div class="bj-hero__buttons app-entry__actions">
+        <button class="btn btn-primary btn-lg btn-full" onclick="showScreen('host-setup')">
+          <span class="material-symbols-rounded">add_home</span>ルームを作る
+        </button>
+        <button class="btn btn-secondary btn-lg btn-full" onclick="openJoinFromTop()">
+          <span class="material-symbols-rounded">login</span>ルームに参加する
+        </button>
+        <p class="bj-hint">相手はディーラー（アプリ）だから、1人でも遊べるよ。</p>
+      </div>
+    </section>
   </div>
 </div>
 

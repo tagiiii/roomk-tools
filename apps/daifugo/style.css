@@ -86,7 +86,7 @@
   color: var(--color-accent); font-family: inherit; font-size: 15px; font-weight: 500; cursor: pointer;
   border-radius: var(--radius-sm);
 }
-.df-quiet:hover { background: rgba(40, 111, 124, 0.08); }
+.df-quiet:hover { background: rgba(138, 74, 16, 0.08); }
 .df-quiet .material-symbols-rounded { font-size: 20px; }
 
 /* ── 待合室 ── */
@@ -149,7 +149,7 @@
   padding: 8px 10px; border-radius: 12px; background: var(--color-surface); border: 2px solid var(--color-border);
   min-height: 64px;
 }
-.df-player.is-turn { border-color: var(--color-accent); box-shadow: 0 0 0 3px rgba(40, 111, 124, 0.18); }
+.df-player.is-turn { border-color: var(--color-accent); box-shadow: 0 0 0 3px rgba(138, 74, 16, 0.18); }
 .df-player.is-me { background: var(--color-accent-soft); }
 .df-player.is-done { opacity: 0.7; }
 .df-player__top { display: flex; align-items: flex-start; gap: 4px; min-width: 0; padding-right: 2px; }
@@ -238,7 +238,7 @@
 button.df-card { cursor: pointer; transition: transform 0.12s ease, box-shadow 0.12s ease, opacity 0.12s ease; }
 button.df-card:hover { box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18); }
 button.df-card:focus-visible { outline: 3px solid var(--color-accent); outline-offset: 2px; }
-button.df-card.is-sel { transform: translateY(-12px); border: 2px solid var(--color-accent); box-shadow: 0 6px 12px rgba(40, 111, 124, 0.3); }
+button.df-card.is-sel { transform: translateY(-12px); border: 2px solid var(--color-accent); box-shadow: 0 6px 12px rgba(138, 74, 16, 0.3); }
 button.df-card.is-dim { opacity: 0.4; }
 button.df-card.is-got::after { content: ''; position: absolute; top: 4px; right: 4px; width: 8px; height: 8px; border-radius: 50%; background: var(--color-warning); }
 button.df-card { position: relative; }
@@ -288,3 +288,10 @@ button.df-card { position: relative; }
   .df-splash.is-on { animation: none; }
   button.df-card, .df-timer__bar { transition: none; }
 }
+
+/* ── はじめの画面の型（2026-11-06）: ツール名・ひとこと・絵は、はじめの画面の白い面（.app-entry）に入れた。
+   そのあいだだけ、ヘッダーのツール名とひとことを隠す（ほかの画面では今までどおり出る。みんなにみせる画面の印は隠さない） ── */
+.wrapper:has(#screen-top.active) > .df-header > :is(.df-header__title, .df-header__sub) { display: none; }
+.wrapper:has(#screen-top.active) > .df-header { margin-bottom: 0; }
+/* 型の中では説明の下のあきが消えるので、ひとことの注意を少し離す */
+.app-entry > .df-note { margin-top: 10px; }

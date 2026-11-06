@@ -79,6 +79,7 @@ const { E, check, sleep } = L;
   await g1.page.click('#actUse');
   check('行き先にパークの部屋（探Qルーム・のんびり）', await L.waitFor(async () => (await L.visible(g1, '#ventBox')) && (await L.text(g1, '#ventRooms')).includes('探Qルーム') && (await L.text(g1, '#ventRooms')).includes('のんびり')));
   await g1.page.click('#ventRooms .nk-word[data-vent="9"]');
+  await g1.page.click('#ventRooms .nk-word[data-vent="here"]');
   check('探Qルームの近道から出る', await L.waitFor(async () => { const m = await L.me(g1); return Math.hypot(m.x - E.VENTS[9].x, m.y - E.VENTS[9].y) < 0.1; }));
 
   // ══ 仕事（パークの場所で） ══

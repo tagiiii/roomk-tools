@@ -97,7 +97,7 @@
 
 .sh-tag {
   display: inline-block;
-  color: var(--color-accent); /* 淡いティールの上で 4.5:1 以上 */
+  color: var(--color-accent); /* 淡いアクセントの上で 4.5:1 以上 */
   background: var(--color-accent-soft);
   border-radius: var(--radius-full);
   font-size: 12px;
@@ -403,7 +403,7 @@
 
 .sh-cand__text { flex: 1; overflow-wrap: anywhere; }
 
-/* ── お題（お題表示の定石: 白カード＋ティール枠）── */
+/* ── お題（お題表示の定石: 白カード＋アクセント色の枠）── */
 .sh-odai {
   background: var(--color-surface);
   border: 2px solid var(--color-accent);
@@ -845,3 +845,6 @@ button.sh-tile:hover { background: var(--color-accent-soft); }
   .sh-result__item { grid-template-columns: auto 1fr auto; }
   .sh-result__what { grid-column: 2 / 4; grid-row: 2; }
 }
+
+/* はじめの画面の型（2026-11-06）: はじめの画面のあいだは、ツール名・ひとこと・絵を入口の面に出すので、上の見出しの名前とひとことは隠す（ほかの画面では今までどおり出る。みんなにみせる画面の印は隠さない） */
+body:has(#screen-top.active) .sh-header > :is(.sh-header__title, .sh-header__sub) { display: none; }

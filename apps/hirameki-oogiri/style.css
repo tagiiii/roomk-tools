@@ -135,7 +135,7 @@ body { background: var(--color-bg); }
 }
 .og-cand:hover { background: var(--color-accent-soft); }
 
-/* お題（白カード＋ティール枠） */
+/* お題（白カード＋アクセント色の枠） */
 .og-odai { background: var(--color-surface); border: 2px solid var(--color-accent); border-radius: var(--radius-box, 16px); padding: 20px 28px; text-align: center; }
 .og-odai__label { font-size: 13px; font-weight: 500; color: var(--color-accent); letter-spacing: 0.08em; margin: 0 0 6px; }
 .og-odai__text { font-size: 28px; font-weight: 700; color: var(--color-primary); line-height: 1.45; margin: 0; overflow-wrap: anywhere; }
@@ -297,3 +297,6 @@ body { background: var(--color-bg); }
   .og-ippon__title { font-size: 48px; }
   .og-ippon__text { font-size: 21px; }
 }
+
+/* はじめの画面の型（2026-11-06）: はじめの画面のあいだは、ツール名・ひとこと・絵を入口の面に出すので、上の見出しの名前とひとことは隠す（ほかの画面では今までどおり出る。みんなにみせる画面の印は隠さない） */
+body:has(#screen-top.active) .og-header > :is(.og-header__title, .og-header__sub) { display: none; }
