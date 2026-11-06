@@ -2139,6 +2139,9 @@
 
       const allDone = names.length > 0 && submittedCount === names.length;
       document.getElementById('btn-to-voting').disabled = !allDone;
+      // ホストも遊んで、まだ出していない間は「投票にすすむ」を副ボタンにする（主ボタンは1画面に1つ）
+      document.getElementById('btn-to-voting').className = 'btn btn-full btn-lg '
+        + (hostPlaysOf(room) && !mySubmitted ? 'btn-secondary' : 'btn-primary');
       const forceBtn = document.getElementById('btn-force-voting');
       forceBtn.style.display = (!allDone && entryCount > 0) ? 'block' : 'none';
       const hint = document.getElementById('writing-host-hint');
