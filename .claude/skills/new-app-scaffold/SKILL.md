@@ -39,7 +39,8 @@ description: room-Kの本体アプリを新規追加し、必要な共通機能�
 
 `apps/index.html` にカードを追加する。既存カード（例: otona-talk のカード）の HTML 構造をそのままコピーして書き換える:
 - `app-card__icon` の Material Symbols アイコン名
-- `app-card__name` / `app-card__desc`
+- `app-card__illust` のイラスト（`apps/assets/illustrations/{app}.webp`）。作り方と決まりは `docs/development/illustrations.md`。fal を使うので、作るかはオーナーに確かめる。まだないときは `<img>` を入れない（アイコンが出る）
+- `app-card__name` / `app-card__hitokoto`（何をするツールかを20字前後で1行。docs/development/app-registration.md）/ `app-card__desc`
 - `meta-badge` × 3（人数・所要時間・特記事項）
 - **`data-scenes` 属性（必須）**: 利用シーンをスペース区切りで指定（例: `data-scenes="hiroba sakusen"`）。キーの定義は AGENTS.md「利用シーンタグ」参照。シーンバッジは自動描画されるのでカード HTML に手書きしない
 - **`data-added` 属性（必須）**: 公開日 `YYYY-MM-DD`（`updates.json` の `"new"` と同じ日）。一覧の並び順「新しい順」に使う
