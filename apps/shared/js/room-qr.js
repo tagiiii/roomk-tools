@@ -26,7 +26,7 @@
     // アプリ側の重ね表示（最大 1100）より上、説明スライド（9000）と共通トースト（9999）より下
     '.roomk-qr {',
     '  display: none; position: fixed; inset: 0; z-index: 8000;',
-    '  background: rgba(28,63,94,0.55);',
+    '  background: rgba(63,54,45,0.55);',
     '  align-items: center; justify-content: center; padding: 16px;',
     '}',
     '.roomk-qr.show { display: flex; }',

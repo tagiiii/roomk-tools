@@ -23,7 +23,10 @@
      アクセントのティールは、各ツールが淡いティールの面や陣営の色（人狼の村人など）と組み合わせて使っているので色合いを残し、
      クリームの地・淡いティールの面の上でも文字が読めるよう少しだけ濃くした */
   --color-primary:   #6A4F35;   /* メインカラー（こげ茶。白い文字が読める濃さ）*/
+  --color-primary-dark: #523C28; /* こげ茶の濃いほう（こげ茶の面の縁・押したときなど）*/
+  --color-primary-soft: #F3ECE2; /* 淡いこげ茶（説明の箱・タグ・ボタンに乗せたときの面）*/
   --color-accent:    #286F7C;   /* アクセントカラー（ティール）*/
+  --color-accent-soft: #E6F2F4; /* 淡いティール（選んだ印の塗り。ティールの文字・枠と組む）*/
   --color-bg:        #F6ECD8;   /* ページ背景（クリーム）*/
   --color-surface:   #FFFFFF;   /* カード・ボックス背景 */
   --color-text:      #3F362D;   /* 本文テキスト（真っ黒の代わりのこげ茶）*/
@@ -213,7 +216,7 @@ a:hover {
   color: var(--color-primary);
   border-color: var(--color-primary);
 }
-.btn-secondary:hover:not(:disabled) { background: #EEF3F8; }
+.btn-secondary:hover:not(:disabled) { background: var(--color-primary-soft); }
 
 /* Ghost：控えめな操作 */
 .btn-ghost {
@@ -222,7 +225,7 @@ a:hover {
   border-color: var(--color-border);
 }
 .btn-ghost:hover:not(:disabled) {
-  background: #EEF3F8;
+  background: var(--color-primary-soft);
   border-color: var(--color-primary);
   color: var(--color-primary);
 }
@@ -357,7 +360,7 @@ a:hover {
 .form-select:focus,
 .form-textarea:focus {
   border-color: var(--color-accent);
-  box-shadow: 0 0 0 3px rgba(46, 125, 140, 0.18);
+  box-shadow: 0 0 0 3px rgba(40, 111, 124, 0.18);
 }
 
 .form-textarea {
