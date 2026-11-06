@@ -499,7 +499,7 @@
         <p id="vote-host-count" style="font-size:15px"></p>
         <p id="vote-host-hint" class="kdt-note" style="text-align:left"></p>
       </div>
-      <button class="btn btn-primary btn-full mt-md" onclick="openVotes()">
+      <button class="btn btn-primary btn-full mt-md" id="btn-open-votes" onclick="openVotes()">
         <span class="material-symbols-rounded" aria-hidden="true">celebration</span>結果を見る
       </button>
     </div>
@@ -1450,6 +1450,9 @@ function handleVoting(room, players) {
   document.getElementById('vote-actor-count').textContent = countText;
   document.getElementById('vote-done-count').textContent = countText;
   if (isHost) {
+    // ホストも投票する人で、まだ投票していない間は「結果を見る」を副ボタンにする（主ボタンは1画面に1つ）
+    document.getElementById('btn-open-votes').className =
+      'btn btn-full mt-md ' + (isVoter && !iVoted ? 'btn-secondary' : 'btn-primary');
     document.getElementById('vote-host-count').textContent = countText;
     document.getElementById('vote-host-hint').textContent =
       votedCount < totalVoters ? 'まだの人がいても、結果を見ることができます' : '全員が投票しました';

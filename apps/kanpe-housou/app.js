@@ -1446,7 +1446,8 @@
       row.append(lab, line);
       card.append(row);
     });
-    card.append(btn('btn btn-primary btn-full mt-md', '出す', 'send', () => {
+    // 代わりに書く欄の「出す」は副ボタンにする（自分の「出す」と主ボタンが並ばないように。読む段階の代わりに押すボタンとそろえる）
+    card.append(btn('btn btn-full mt-md ' + (proxy ? 'btn-secondary' : 'btn-primary'), '出す', 'send', () => {
       const out = {};
       for (const [i, input] of inputs) {
         const w = cleanWord(input.value);

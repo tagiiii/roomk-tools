@@ -1500,6 +1500,13 @@ function handleRole(room, players) {
       ? '<span class="player-tag voted">準備OK</span>'
       : '<span style="font-size:12px;color:var(--color-muted)">確認中</span>'
   , null, room);
+  // 確認したあとは「確認した！」を副ボタンにする（「夜フェーズへ」と主ボタンが2つ並ばないように）
+  if (players[state.nickname]?.actionDone) {
+    document.getElementById('btn-role-ready').disabled = true;
+    document.getElementById('btn-role-ready').className = 'btn btn-secondary btn-full';
+  } else {
+    document.getElementById('btn-role-ready').className = 'btn btn-primary btn-full';
+  }
   if (state.isHost) {
     // 準備を待つのは遊ぶ人だけ。遊ぶ人がいなくなったら夜へ進めない
     const playing = playingNames(room, players);

@@ -2139,6 +2139,9 @@
 
       const allDone = names.length > 0 && submittedCount === names.length;
       document.getElementById('btn-to-voting').disabled = !allDone;
+      // ホストも遊んで、まだ出していない間は「投票にすすむ」を副ボタンにする（主ボタンは1画面に1つ）
+      document.getElementById('btn-to-voting').className = 'btn btn-full btn-lg '
+        + (hostPlaysOf(room) && !mySubmitted ? 'btn-secondary' : 'btn-primary');
       const forceBtn = document.getElementById('btn-force-voting');
       forceBtn.style.display = (!allDone && entryCount > 0) ? 'block' : 'none';
       const hint = document.getElementById('writing-host-hint');
@@ -2209,7 +2212,8 @@
 
       if (canVote && !hasVoted) {
         const button = document.createElement('button');
-        button.className = 'btn btn-primary btn-full btn-sm';
+        // 選択肢の「投票する」はぜんぶ同じ見た目の副ボタンにする（ホストの「結果をみる」と主ボタンを混ぜない）
+        button.className = 'btn btn-secondary btn-full btn-sm';
         button.textContent = '投票する';
         button.disabled = isMine;
         if (isMine) button.textContent = 'じぶんのには投票できません';
