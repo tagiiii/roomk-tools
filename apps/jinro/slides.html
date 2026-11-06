@@ -12,9 +12,9 @@
   :root{
     --ink:#434343; --ink-soft:#6B6B6B; --paper:#FAFAFA; --white:#FFFFFF;
     --line:#E6E6E6; --muted:#9A9A9A;
-    --navy:#2C4A66; --amber:#C76B06; --purple:#6B3FA0;
-    --village:#2E7D8C; --wolf:#D9534F; --third:#7C3AED; --night:#1e1b4b;
-    --acc:var(--navy); --acc-tint:#E8EEF4;
+    --navy:#6A4F35; --amber:#C76B06; --purple:#6B3FA0;
+    --village:#286F7C; --wolf:#D9534F; --third:#7C3AED; --night:#1e1b4b;
+    --acc:var(--navy); --acc-tint:#F3ECE2;
     --font:"Zen Kaku Gothic New", -apple-system, "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif;
   }
   *{ box-sizing:border-box; margin:0; padding:0; }
@@ -24,7 +24,7 @@
   ruby rt{ font-size:.42em; font-weight:700; color:var(--acc); letter-spacing:0; transform:translateY(2px); }
 
   /* accent themes（スライドごとに切替） */
-  .accent-navy  { --acc:var(--navy);  --acc-tint:#E8EEF4; }
+  .accent-navy  { --acc:var(--navy);  --acc-tint:#F3ECE2; }
   .accent-amber { --acc:var(--amber); --acc-tint:#FAEEDC; }
   .accent-purple{ --acc:var(--purple);--acc-tint:#F0EAF8; }
 
@@ -107,7 +107,7 @@
 
   /* タイトルスライド */
   .title-slide{ align-items:center; justify-content:center; text-align:center; padding-bottom:76px; }
-  .title-ic{ width:118px; height:118px; border-radius:32px; background:linear-gradient(135deg,#1C3F5E,#4A1942); color:#fff; display:flex; align-items:center; justify-content:center; box-shadow:0 16px 34px rgba(44,74,102,.35); }
+  .title-ic{ width:118px; height:118px; border-radius:32px; background:linear-gradient(135deg,#1C3F5E,#4A1942); color:#fff; display:flex; align-items:center; justify-content:center; box-shadow:0 16px 34px rgba(106,79,53,.35); }
   .title-ic .material-symbols-rounded{ font-size:72px; }
   .title-jp{ font-size:74px; font-weight:900; color:var(--ink); margin-top:24px; letter-spacing:.02em; }
   .title-en{ font-size:22px; font-weight:700; color:var(--navy); letter-spacing:.34em; margin-top:6px; text-transform:lowercase; }
@@ -167,9 +167,9 @@
   .pv-card h3{ font-size:14px; font-weight:900; color:var(--navy); display:flex; align-items:center; gap:8px; margin-bottom:12px; }
   .pv-card h3 .material-symbols-rounded{ font-size:18px; }
   #pvNote{ width:100%; min-height:175px; resize:vertical; border:1px solid var(--line); border-radius:12px; padding:14px 16px; font-family:var(--font); font-size:17px; line-height:1.7; color:var(--ink); background:#FBFCFD; }
-  #pvNote:focus{ outline:none; border-color:var(--navy); box-shadow:0 0 0 3px rgba(44,74,102,.15); }
+  #pvNote:focus{ outline:none; border-color:var(--navy); box-shadow:0 0 0 3px rgba(106,79,53,.15); }
   .pv-actions{ display:flex; gap:10px; margin-top:14px; align-items:center; }
-  .pv-copy{ flex:1; cursor:pointer; border:none; border-radius:12px; padding:15px; font-family:var(--font); font-size:18px; font-weight:900; color:#fff; background:var(--navy); display:flex; align-items:center; justify-content:center; gap:10px; box-shadow:0 6px 16px rgba(44,74,102,.28); transition:.15s; }
+  .pv-copy{ flex:1; cursor:pointer; border:none; border-radius:12px; padding:15px; font-family:var(--font); font-size:18px; font-weight:900; color:#fff; background:var(--navy); display:flex; align-items:center; justify-content:center; gap:10px; box-shadow:0 6px 16px rgba(106,79,53,.28); transition:.15s; }
   .pv-copy:active{ transform:translateY(1px); } .pv-copy.done{ background:#1F3A52; }
   .pv-copy .material-symbols-rounded{ font-size:22px; }
   .pv-reset{ cursor:pointer; border:1px solid var(--line); background:#fff; color:var(--muted); border-radius:12px; padding:15px 16px; font-family:var(--font); font-weight:700; font-size:14px; }

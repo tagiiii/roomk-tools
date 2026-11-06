@@ -10,9 +10,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@48,500,1,0" rel="stylesheet" />
 <style>
   :root{
-    --ink:#26323C; --ink-soft:#5A6270; --paper:#FAFAF7; --white:#FFFFFF;
+    --ink:#3F362D; --ink-soft:#5C5146; --paper:#FAFAF7; --white:#FFFFFF;
     --line:#E4E7E2; --muted:#9AA4A0;
-    --teal:#2E7D8C; --coral:#E0733C; --blue:#3C78D8;
+    --teal:#286F7C; --coral:#E0733C; --blue:#3C78D8;
     --acc:var(--teal); --acc-tint:#E5EFF1;
     --font:"Zen Kaku Gothic New", -apple-system, "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif;
   }
@@ -81,7 +81,7 @@
   .esd-play__mark{ font-size:13px; font-weight:700; opacity:.95; }
   .esd-play.is-canceled{ opacity:.65; }
   .esd-play.is-canceled .esd-play__num{ text-decoration:line-through; }
-  .esd-play.is-taker{ background:rgba(255,255,255,.32); box-shadow:0 0 0 2px #fff inset; }
+  .esd-play.is-taker{ background:rgba(255,255,255,.26); box-shadow:0 0 0 2px #fff inset; }
 
   /* Q&A */
   .qa{ display:flex; flex-direction:column; gap:16px; }
@@ -93,7 +93,7 @@
 
   /* タイトルスライド */
   .title-slide{ align-items:center; justify-content:center; text-align:center; padding-bottom:76px; }
-  .title-ic{ width:118px; height:118px; border-radius:32px; background:var(--teal); color:#fff; display:flex; align-items:center; justify-content:center; box-shadow:0 16px 34px rgba(46,125,140,.32); }
+  .title-ic{ width:118px; height:118px; border-radius:32px; background:var(--teal); color:#fff; display:flex; align-items:center; justify-content:center; box-shadow:0 16px 34px rgba(40,111,124,.32); }
   .title-ic .material-symbols-rounded{ font-size:72px; }
   .title-jp{ font-size:74px; font-weight:900; color:var(--ink); margin-top:24px; letter-spacing:.04em; }
   .title-en{ font-size:22px; font-weight:700; color:var(--teal); letter-spacing:.34em; margin-top:6px; text-transform:lowercase; }
@@ -153,9 +153,9 @@
   .pv-card h3{ font-size:14px; font-weight:900; color:var(--teal); display:flex; align-items:center; gap:8px; margin-bottom:12px; }
   .pv-card h3 .material-symbols-rounded{ font-size:18px; }
   #pvNote{ width:100%; min-height:175px; resize:vertical; border:1px solid var(--line); border-radius:12px; padding:14px 16px; font-family:var(--font); font-size:17px; line-height:1.7; color:var(--ink); background:#FBFCFD; }
-  #pvNote:focus{ outline:none; border-color:var(--teal); box-shadow:0 0 0 3px rgba(46,125,140,.15); }
+  #pvNote:focus{ outline:none; border-color:var(--teal); box-shadow:0 0 0 3px rgba(40,111,124,.15); }
   .pv-actions{ display:flex; gap:10px; margin-top:14px; align-items:center; }
-  .pv-copy{ flex:1; cursor:pointer; border:none; border-radius:12px; padding:15px; font-family:var(--font); font-size:18px; font-weight:900; color:#fff; background:var(--teal); display:flex; align-items:center; justify-content:center; gap:10px; box-shadow:0 6px 16px rgba(46,125,140,.28); transition:.15s; }
+  .pv-copy{ flex:1; cursor:pointer; border:none; border-radius:12px; padding:15px; font-family:var(--font); font-size:18px; font-weight:900; color:#fff; background:var(--teal); display:flex; align-items:center; justify-content:center; gap:10px; box-shadow:0 6px 16px rgba(40,111,124,.28); transition:.15s; }
   .pv-copy:active{ transform:translateY(1px); } .pv-copy.done{ background:#235F6B; }
   .pv-copy .material-symbols-rounded{ font-size:22px; }
   .pv-reset{ cursor:pointer; border:1px solid var(--line); background:#fff; color:var(--muted); border-radius:12px; padding:15px 16px; font-family:var(--font); font-weight:700; font-size:14px; }

@@ -12,8 +12,8 @@
   :root{
     --ink:#434343; --ink-soft:#6B6B6B; --paper:#FAFAFA; --white:#FFFFFF;
     --line:#E6E6E6; --muted:#9A9A9A;
-    --teal:#2E7D8C; --coral:#D96C4F; --blue:#2E5A80;
-    --navy:#1C3F5E;
+    --teal:#286F7C; --coral:#D96C4F; --blue:#2E5A80;
+    --navy:#6A4F35;
     --acc:var(--teal); --acc-tint:#E4F1F0;
     --font:"Zen Kaku Gothic New", -apple-system, "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif;
   }
@@ -26,7 +26,7 @@
   /* accent themes（スライドごとに切替） */
   .accent-teal { --acc:var(--teal); --acc-tint:#E4F1F0; }
   .accent-coral{ --acc:var(--coral);--acc-tint:#FBECE6; }
-  .accent-blue { --acc:var(--blue); --acc-tint:#E8EEF5; }
+  .accent-blue { --acc:var(--blue); --acc-tint:#F3ECE2; }
 
   /* ===================== 発表（デッキ） ===================== */
   #deck{ position:fixed; inset:0; }
@@ -130,7 +130,7 @@
 
   /* タイトルスライド */
   .title-slide{ align-items:center; justify-content:center; text-align:center; padding-bottom:76px; }
-  .title-ic{ width:118px; height:118px; border-radius:32px; background:linear-gradient(135deg,var(--navy),var(--teal)); color:#fff; display:flex; align-items:center; justify-content:center; box-shadow:0 16px 34px rgba(46,125,140,.32); }
+  .title-ic{ width:118px; height:118px; border-radius:32px; background:linear-gradient(135deg,var(--navy),var(--teal)); color:#fff; display:flex; align-items:center; justify-content:center; box-shadow:0 16px 34px rgba(40,111,124,.32); }
   .title-ic .material-symbols-rounded{ font-size:72px; }
   .title-jp{ font-size:74px; font-weight:900; color:var(--ink); margin-top:24px; letter-spacing:.02em; }
   .title-en{ font-size:22px; font-weight:700; color:var(--teal); letter-spacing:.34em; margin-top:6px; text-transform:lowercase; }
@@ -190,9 +190,9 @@
   .pv-card h3{ font-size:14px; font-weight:900; color:var(--teal); display:flex; align-items:center; gap:8px; margin-bottom:12px; }
   .pv-card h3 .material-symbols-rounded{ font-size:18px; }
   #pvNote{ width:100%; min-height:175px; resize:vertical; border:1px solid var(--line); border-radius:12px; padding:14px 16px; font-family:var(--font); font-size:17px; line-height:1.7; color:var(--ink); background:#FBFCFD; }
-  #pvNote:focus{ outline:none; border-color:var(--teal); box-shadow:0 0 0 3px rgba(46,125,140,.15); }
+  #pvNote:focus{ outline:none; border-color:var(--teal); box-shadow:0 0 0 3px rgba(40,111,124,.15); }
   .pv-actions{ display:flex; gap:10px; margin-top:14px; align-items:center; }
-  .pv-copy{ flex:1; cursor:pointer; border:none; border-radius:12px; padding:15px; font-family:var(--font); font-size:18px; font-weight:900; color:#fff; background:var(--teal); display:flex; align-items:center; justify-content:center; gap:10px; box-shadow:0 6px 16px rgba(46,125,140,.28); transition:.15s; }
+  .pv-copy{ flex:1; cursor:pointer; border:none; border-radius:12px; padding:15px; font-family:var(--font); font-size:18px; font-weight:900; color:#fff; background:var(--teal); display:flex; align-items:center; justify-content:center; gap:10px; box-shadow:0 6px 16px rgba(40,111,124,.28); transition:.15s; }
   .pv-copy:active{ transform:translateY(1px); } .pv-copy.done{ background:#1F6E5E; }
   .pv-copy .material-symbols-rounded{ font-size:22px; }
   .pv-reset{ cursor:pointer; border:1px solid var(--line); background:#fff; color:var(--muted); border-radius:12px; padding:15px 16px; font-family:var(--font); font-weight:700; font-size:14px; }
