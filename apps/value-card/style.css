@@ -42,58 +42,50 @@
   flex-direction: column;
   align-items: center;
   gap: 12px;
-  margin-bottom: 24px;
 }
 
-.vc-howto {
-  display: none;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-box);
-  padding: 24px 28px;
-  margin-top: 8px;
+/* TOP（パネル1枚構成。説明は howto.js のモーダルに一本化） */
+.vc-panel {
+  max-width: 560px;
+  margin: 0 auto;
 }
 
-.vc-howto.visible {
-  display: block;
-}
-
-.vc-howto__list {
-  list-style: none;
-  counter-reset: howto;
-  padding: 0;
-  margin: 0;
-}
-
-.vc-howto__list li {
-  counter-increment: howto;
-  position: relative;
-  padding-left: 32px;
-  margin-bottom: 12px;
+.vc-intro__lead {
   font-size: var(--font-size-sub);
   color: var(--color-text);
-  line-height: 1.6;
+  line-height: 1.8;
+  margin: 0 0 14px;
 }
 
-.vc-howto__list li:last-child {
-  margin-bottom: 0;
+.vc-intro__notes {
+  list-style: none;
+  padding: 14px 18px;
+  margin: 0 0 20px;
+  background: var(--color-bg);
+  border-radius: var(--radius-card);
 }
 
-.vc-howto__list li::before {
-  content: counter(howto);
+.vc-intro__notes li {
+  position: relative;
+  padding-left: 20px;
+  font-size: var(--font-size-sub);
+  color: var(--color-text);
+  line-height: 1.7;
+}
+
+.vc-intro__notes li + li {
+  margin-top: 6px;
+}
+
+.vc-intro__notes li::before {
+  content: "";
   position: absolute;
-  left: 0;
-  top: 1px;
-  width: 22px;
-  height: 22px;
+  left: 4px;
+  top: 0.75em;
+  width: 7px;
+  height: 7px;
   border-radius: var(--radius-full);
   background: var(--color-accent);
-  color: #fff;
-  font-size: 12px;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
 /* ── GAME 画面 ── */
@@ -365,10 +357,6 @@
 
   .vc-card__desc {
     font-size: 12px;
-  }
-
-  .vc-howto {
-    padding: 20px 20px;
   }
 
   .vc-result-item__desc {
