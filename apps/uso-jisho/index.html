@@ -586,7 +586,9 @@
       cursor: default;
       user-select: text;
     }
-    .uj-spec-open { margin-top: 16px; }
+    /* みんなにみせる画面をひらく: 弱い操作なので、枠のないテキストリンク風（ui.md「ボタン階層の定石」） */
+    .uj-spec-open { margin-top: 12px; background: none; border-color: transparent; color: var(--color-primary); text-decoration: underline; text-underline-offset: 3px; }
+    .uj-spec-open:hover:not(:disabled) { background: var(--color-primary-soft); border-color: transparent; color: var(--color-primary); }
     .uj-spec__leave { margin-top: 24px; }
 
     .material-symbols-rounded {
