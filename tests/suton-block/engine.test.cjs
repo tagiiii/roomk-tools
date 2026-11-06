@@ -175,13 +175,29 @@ t('いっぱいになったら、からにしてつづける（つぎが出る�
   assert.strictEqual(g.board.flat().filter(Boolean).length + g.hidden.flat().filter(Boolean).length, 0);
 });
 
-t('出る所: 盤のすぐ上に出て1段下がる。盤のいちばん上の段がうまっていても、出る所があいていればつづく', () => {
+t('出る所: 盤のすぐ上に出て2段下がる。盤のいちばん上の段がうまっていても、出る所があいていればつづく', () => {
   const g = E.createGame({ seed: 5, onFull: 'end' });
-  assert.strictEqual(g.piece.y, -1, 'からの盤では1段下がって、盤のいちばん上の段に見える');
+  assert.strictEqual(g.piece.y, 0, 'からの盤では2段下がって、盤のいちばん上の2段に見える');
   for (let y = 0; y < E.H; y++) for (let x = 0; x < E.W; x++) if (x !== 9) g.board[y][x] = 'jama';
   const r = E.spawn(g);
   assert.ok(!r.full && !g.over, '盤のいちばん上の段までうまっていても、出る所（見えない2段）に入ればつづく');
   assert.strictEqual(g.piece.y, -2, '下がれないときは出た所のまま');
+});
+
+t('出る所: 1段だけ下がれるときは1段で止まる。7種類とも、からの盤では2段下がって全部のマスが盤の中', () => {
+  for (const kind of E.KINDS) {
+    const g = E.createGame({ seed: 5, onFull: 'end' });
+    const r = E.spawn(g, { kind });
+    assert.ok(!r.full, kind);
+    assert.strictEqual(g.piece.y, 0, kind);
+    assert.ok(g.piece.cells.every(([, cy]) => g.piece.y + cy >= 0), kind + ' は全部のマスが盤の中');
+    // 2段下がったときにブロックのいちばん下が来る段をふさぐと、1段だけ下がる
+    const h = E.createGame({ seed: 5, onFull: 'end' });
+    const low = Math.max(...E.SHAPES[kind].cells.map(([, cy]) => cy));
+    for (let x = 0; x < E.W; x++) h.board[low][x] = 'jama';
+    E.spawn(h, { kind });
+    assert.strictEqual(h.piece.y, -1, kind + ' は1段で止まる');
+  }
 });
 
 t('いっぱいになったら、おしまい', () => {
@@ -525,7 +541,7 @@ t('出る所: 出る所に入らなければ、1段下があいていてもお�
   c.hidden[E.HB + y][x] = 'jama';
   const rc = E.spawn(c);
   assert.ok(rc.full && rc.cleared && !c.over);
-  assert.strictEqual(c.piece.y, -1, 'からにしたあとも、すぐ1段下がる');
+  assert.strictEqual(c.piece.y, 0, 'からにしたあとも、すぐ2段下がる');
 });
 
 t('読み込み直し: ここまでになったわけと、出せなかったブロックが戻る', () => {
