@@ -119,6 +119,7 @@ const { E, check, sleep } = L;
   await g2.page.click('#actUse');
   await L.waitVisible(g2, '#ventBox');
   await g2.page.click('#ventRooms .nk-word[data-vent="1"]');
+  await g2.page.click('#ventRooms .nk-word[data-vent="here"]');
   const to = E.VENTS[1];
   check('整備係は選んだ近道から出る', await L.waitFor(async () => { const m = await L.me(g2); return Math.hypot(m.x - to.x, m.y - to.y) < 0.1; }));
   check('続けては使えない（あと何秒）', await L.waitFor(async () => /^近道（あと\d+秒）$/.test(await L.text(g2, '#actUseLabel')) && await g2.page.$eval('#actUse', (b) => b.disabled)));

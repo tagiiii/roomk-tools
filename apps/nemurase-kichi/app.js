@@ -2926,7 +2926,7 @@ function frame(t) {
   if (g && isPlaying(g, state.nickname)) {
     const awake = E.isAwake(g, state.nickname);
     if (g.stage !== 'play') ME.climb = null;
-    // 近道の中: 会議・ねむらされたら出る。中にいられる時間がきたら、入った近道から出る（切れている間は出ない）
+    // 近道の中: 会議・ねむらされたら出る。1か所にいられる時間がきたら、いまいる近道から出る（切れている間は出ない）
     if (ME.vent && (g.stage !== 'play' || !awake)) leaveVent(false);
     else if (ME.vent && state.isConnected && Date.now() >= ME.vent.until) leaveVent(true);
     if (ME.vent) renderVentBox();
@@ -4378,7 +4378,9 @@ function drawShield(x, y) {
 }
 
 /* ── 近道（2026-10-29 子どもの要望「ベントで飛ぶ場所を選べるように」）──
-   入ると姿が消え（位置の印が 2）、ほかの7か所から部屋の名前で選んで出る。中にいられるのは VENT_STAY_S 秒まで（過ぎたら入った所から出る） */
+   入ると姿が消え（位置の印が 2）、ほかの近道へ部屋の名前で選んで移る。移っても隠れたままで、何回でも移れる。
+   「ここから出る」でいまの近道から出る（2026-11-06 子どもの要望「ワープしたら隠れたまま・出るまで何回でも移動」）。
+   1か所にいられるのは VENT_STAY_S 秒まで（移るたびに数えなおす。過ぎたら、いまいる近道から出る） */
 const ventRoom = (v) => E.roomName(E.roomAt(v.x, v.y));
 function enterVent(id) {
   const g = gameOf(state.room);
@@ -4397,11 +4399,24 @@ function enterVent(id) {
   $('ventRooms').replaceChildren();
   renderVentBox();
 }
-// 出る。to をわたすと、その近道から出る。send: 位置を送る（会議・置きなおしのときは送らない）
-function leaveVent(send, to) {
+// 近道の中で、ほかの近道へ移る（隠れたまま）。切れている間は移らない（出るときと同じ理由）
+function moveVent(to) {
+  const v = E.VENTS[to];
+  if (!ME.vent || !v || to === ME.vent.id || !state.isConnected) return;
+  ME.x = v.x;
+  ME.y = v.y;
+  ME.vent = { id: to, until: Date.now() + E.VENT_STAY_S * 1000 };
+  sendPosFor(state.nickname, ME, true, true);
+  $('ventRooms').replaceChildren();
+  renderVentBox();
+  const first = $('ventRooms').querySelector('button');
+  if (first) first.focus({ preventScroll: true });
+}
+// いまいる近道から出る。send: 位置を送る（会議・置きなおしのときは送らない）
+function leaveVent(send) {
   if (!ME.vent) return;
   if (send && !state.isConnected) return;   // 切れている間は出ない（ほかの人の見ていない間に動いた場所へ現れないように）
-  const v = E.VENTS[to === undefined ? ME.vent.id : to];
+  const v = E.VENTS[ME.vent.id];
   ME.vent = null;
   $('ventBox').hidden = true;
   if (!send) return;
@@ -4418,13 +4433,13 @@ function renderVentBox() {
   setText('ventLeft', 'あと' + left + '秒で出る');
   const box = $('ventRooms');
   if (box.childElementCount) return;
-  box.appendChild(makeElement('span', 'nk-words__lead', 'どこに出る？'));
+  box.appendChild(makeElement('span', 'nk-words__lead', 'どこへ移る？'));
   E.VENTS.forEach((v) => {
     if (v.id === ME.vent.id) return;
     const b = makeElement('button', 'nk-word', ventRoom(v));
     b.type = 'button';
     b.dataset.vent = String(v.id);
-    b.addEventListener('click', () => leaveVent(true, v.id));
+    b.addEventListener('click', () => moveVent(v.id));
     box.appendChild(b);
   });
   const here = makeElement('button', 'nk-word nk-word--quiet', 'ここから出る（' + ventRoom(E.VENTS[ME.vent.id]) + '）');

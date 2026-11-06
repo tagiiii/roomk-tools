@@ -7,9 +7,9 @@
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
-  <link rel="stylesheet" href="../shared/css/design-system.css?v=20261106c">
+  <link rel="stylesheet" href="../shared/css/design-system.css?v=20261106d">
   <!-- index.html と app.js・engine.js・minigames.js・style.css はセットで変わるので、変えたら ?v= をそろえて上げる -->
-  <link rel="stylesheet" href="style.css?v=20261106b">
+  <link rel="stylesheet" href="style.css?v=20261106d">
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
@@ -17,8 +17,8 @@
   <script src="../shared/js/room-qr.js?v=20261022"></script>
   <!-- ねむらせ基地だけ、本体と別の Firebase プロジェクトにつなぐ（firebase-config.js） -->
   <script src="firebase-config.js?v=20261028b"></script>
-  <script src="engine.js?v=20261106b"></script>
-  <script src="minigames.js?v=20261106b"></script>
+  <script src="engine.js?v=20261106d"></script>
+  <script src="minigames.js?v=20261106d"></script>
 </head>
 <body data-genre="suiri">
 
@@ -205,7 +205,7 @@
         <div class="nk-say__head">
           <p class="nk-say__title">近道の中<span class="nk-say__sub" id="ventLeft"></span></p>
         </div>
-        <p class="nk-vent__note">ほかの人からは見えない。出る部屋を選んでね</p>
+        <p class="nk-vent__note">ほかの人からは見えない。部屋を選ぶと、隠れたままその近道へ移るよ。出るときは「ここから出る」</p>
         <div class="nk-words nk-words--names" id="ventRooms"></div>
       </div>
 
@@ -373,7 +373,7 @@
     </div>
   </div>
 
-  <script type="module" src="app.js?v=20261106b"></script>
+  <script type="module" src="app.js?v=20261106d"></script>
   <script src="../shared/js/stats.js?v=1" defer></script>
   <script src="../shared/js/howto.js"></script>
   <script>
@@ -404,7 +404,7 @@
         ] },
         { heading: 'ねむらせ屋', items: [
           '近くの隊員を「ねむらせる」。「しかけ」（キーは F）で、停電・空気を止める・ドアをしめる（選んだ部屋の入口が10秒とじる）が使える',
-          'ねむらせ屋（と整備係）だけが使える「近道」（床のまるいふた）がある。上に立って「近道に入る」を押すと姿が消え、ほかの7つの部屋の近道から、出る部屋を選べる（中にいられるのは10秒まで）',
+          'ねむらせ屋（と整備係）だけが使える「近道」（床のまるいふた）がある。上に立って「近道に入る」を押すと姿が消え、ほかの部屋の近道へ隠れたまま何回でも移れる。「ここから出る」で、いまいる近道から出る（1か所にいられるのは10秒まで）',
           'おきている隊員が、ねむらせ屋と同じ数になったら勝ち',
         ] },
         { heading: '役職（ホストが設定で入れたときだけ）', items: [
