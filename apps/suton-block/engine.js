@@ -1,6 +1,9 @@
 /* すとんブロック 盤とブロックのしくみ（画面を持たない）
    ブラウザでは window.SutonEngine、node では require で読む。
-   ・盤は横10・たて20。上にはみ出した部分（y < 0）は空きとして扱う
+   ・盤は横10・たて20。その上に見えない段が20段ある（y = -1 〜 -20。g.hidden）。それより上は空き
+   ・ブロックは盤のすぐ上の見えない2段（y = -2・-1）に出て、すぐ1段下がる（よく知られた出かたと同じ）
+   ・おわるのは、つぎのブロックが出る所に入らないとき・置いたブロックが全部盤より上にあるとき・
+     じゃまで見えない段のいちばん上より上へ押し出されたとき（よく知られた決まりと同じ）
    ・ブロックは4マスの7種類（I・O・T・S・Z・L・J）。回す・1つとっておく、ができる
    ・回せないときは、向きの組み合わせごとに決まった5通りのずらし方を順に試す（よく知られた回し方と同じ）
    ・横1段がうまったら消える。いっぱいになったら「おしまい」か「からにしてつづける」
@@ -14,6 +17,7 @@
 
   const W = 10;
   const H = 20;
+  const HB = 20; // 盤の上の見えない段の数
 
   // 形は n×n の箱の中のマス [x, y]（はじめの向き）。色は画面側で kind から決める
   // 箱の中で回すと、よく知られた回し方と同じ向きの変わり方になる（I は4×4、O は2×2、ほかは3×3）
@@ -86,6 +90,8 @@
 
   function rotateCells(cells, n) { return cells.map(([x, y]) => [n - 1 - y, x]); }
 
+  const SPAWN_Y = -2; // 出る所（箱の上の段が y = -2）
+
   function newPiece(spec) {
     const s = SHAPES[spec.kind];
     return { kind: spec.kind, n: s.n, rot: 0, cells: s.cells.map((c) => c.slice()), x: Math.floor((W - s.n) / 2), y: -1 };
@@ -94,6 +100,7 @@
   // 盤をからにしてつづける。れんぞく・つづけて大技もそこまで
   function resetBoard(g) {
     g.board = emptyBoard();
+    g.hidden = emptyHidden();
     g.resets++;
     g.b2b = false;
     g.combo = -1;
@@ -105,21 +112,35 @@
     return b;
   }
 
-  function fits(board, p, cells, x, y) {
+  function emptyHidden() {
+    const b = [];
+    for (let i = 0; i < HB; i++) b.push(new Array(W).fill(null));
+    return b;
+  }
+
+  // hidden（盤の上の見えない段）を渡すと、y < 0 もそこで確かめる。渡さなければ y < 0 は空き
+  function fits(board, p, cells, x, y, hidden) {
     for (const [cx, cy] of cells) {
       const bx = x + cx;
       const by = y + cy;
       if (bx < 0 || bx >= W || by >= H) return false;
-      if (by >= 0 && board[by][bx]) return false;
+      if (by >= 0) { if (board[by][bx]) return false; }
+      else if (hidden && by >= -HB && hidden[HB + by][bx]) return false;
     }
     return true;
   }
+  const fitsG = (g, p, cells, x, y) => fits(g.board, p, cells, x, y, g.hidden);
+
+  // 見えない段と盤をつないだ1つの列（上から）。分けもどすのは splitField
+  const fieldOf = (g) => g.hidden.concat(g.board);
+  function splitField(g, f) { g.hidden = f.slice(0, HB); g.board = f.slice(HB); }
 
   function createGame(opts) {
     const o = Object.assign({ seed: 1, onFull: 'clear' }, opts);
     const rand = rng(o.seed);
     const g = {
       board: emptyBoard(),
+      hidden: emptyHidden(), // 盤の上の見えない段（hidden[HB + y] が y 段目。y は -1 〜 -HB）
       piece: null,
       queue: [],
       lines: 0,
@@ -127,7 +148,7 @@
       resets: 0,
       taken: 0,         // 出る順番の列から取り出した数（読み込み直したとき、同じところから続けるため）
       over: false,
-      overBy: null,     // おしまいになったわけ（'spawn' = つぎが出せない / 'top' = 上にはみ出して置いた / 'jama' = じゃまで押し上げられた）
+      overBy: null,     // おしまいになったわけ（'spawn' = つぎが出る所に入らない / 'top' = 全部が盤より上で置いた / 'jama' = じゃまで見えない段より上へ押し出された）
       hold: null,       // とっておいたブロック（{ kind }）
       holdUsed: false,  // いまのブロックで、もう「とっておく」を使ったか
       onFull: o.onFull, // 'clear' = からにしてつづける / 'end' = おしまい
@@ -145,14 +166,17 @@
     while (g.queue.length < 5) g.queue.push(...makeBag(g.rand));
   }
 
-  // つぎのブロックを出す。出せないときは、いっぱい
+  // つぎのブロックを出す。盤のすぐ上の見えない2段に出し、入れば1段下げる（盤のいちばん上の段に見える）。
+  // 出る所に入らないときは、いっぱい
   function spawn(g, spec) {
     fillQueue(g);
     if (!spec) g.taken++;
     const p = newPiece(spec || g.queue.shift());
     fillQueue(g);
     g.holdUsed = !!spec;
-    if (!fits(g.board, p, p.cells, p.x, p.y)) {
+    p.y = SPAWN_Y;
+    if (fitsG(g, p, p.cells, p.x, p.y + 1)) p.y++;
+    else if (!fitsG(g, p, p.cells, p.x, p.y)) {
       // おしまいのときは、出せなかったブロックを重なったまま残す（なぜここまでになったか盤で見えるように。もう動かせない）
       if (g.onFull === 'end') { g.piece = p; g.over = true; g.overBy = 'spawn'; return { full: true }; }
       resetBoard(g);
@@ -166,7 +190,7 @@
   function move(g, dx, dy) {
     const p = g.piece;
     if (!p || g.over) return false;
-    if (!fits(g.board, p, p.cells, p.x + dx, p.y + dy)) return false;
+    if (!fitsG(g, p, p.cells, p.x + dx, p.y + dy)) return false;
     p.x += dx; p.y += dy;
     p.spun = false;
     return true;
@@ -183,7 +207,7 @@
     const kicks = kicksFor(p.kind, from, to);
     for (let i = 0; i < kicks.length; i++) {
       const [kx, ky] = kicks[i];
-      if (fits(g.board, p, cells, p.x + kx, p.y + ky)) {
+      if (fitsG(g, p, cells, p.x + kx, p.y + ky)) {
         p.cells = cells; p.rot = to; p.x += kx; p.y += ky;
         // 最後に回したか・何番目のずらし方で回ったか（回し入れの見分けに使う）
         p.spun = true; p.kick = i;
@@ -197,7 +221,7 @@
     const p = g.piece;
     if (!p) return 0;
     let y = p.y;
-    while (fits(g.board, p, p.cells, p.x, y + 1)) y++;
+    while (fitsG(g, p, p.cells, p.x, y + 1)) y++;
     return y;
   }
 
@@ -206,7 +230,7 @@
   function spinOf(g, p) {
     if (p.kind !== 'T' || !p.spun) return null;
     const cx = p.x + 1, cy = p.y + 1;
-    const filled = (x, y) => x < 0 || x >= W || y >= H || (y >= 0 && !!g.board[y][x]);
+    const filled = (x, y) => x < 0 || x >= W || y >= H || (y >= 0 ? !!g.board[y][x] : y >= -HB && !!g.hidden[HB + y][x]);
     const c = [filled(cx - 1, cy - 1), filled(cx + 1, cy - 1), filled(cx + 1, cy + 1), filled(cx - 1, cy + 1)]; // 左上・右上・右下・左下
     if (c.filter(Boolean).length < 3) return null;
     const front = [[0, 1], [1, 2], [2, 3], [3, 0]][p.rot || 0];
@@ -228,38 +252,34 @@
     return { attack, b2b, combo: g.combo };
   }
 
-  // 置いて、うまった段を消し、つぎを出す。消した段数・いっぱいになったか・対戦で送るじゃまの数を返す
+  // 置いて、うまった段を消し、つぎを出す。消した段数・いっぱいになったか・対戦で送るじゃまの数を返す。
+  // 盤より上（見えない段）にはみ出したマスはそのまま残る。全部が盤より上で置いたときだけ、いっぱい
   function lock(g) {
     const p = g.piece;
     if (!p || g.over) return { lines: 0, attack: 0 };
     const spin = spinOf(g, p);
-    const aboveCells = [];
+    let f = fieldOf(g);
+    let allAbove = true;
     for (const [cx, cy] of p.cells) {
       const by = p.y + cy;
-      if (by < 0) { aboveCells.push([p.x + cx, by]); continue; }
-      g.board[by][p.x + cx] = p.kind;
+      if (by >= 0) allAbove = false;
+      if (by >= -HB) f[HB + by][p.x + cx] = p.kind;
     }
     g.pieces++;
     g.holdUsed = false;
     const rows = [];
-    for (let y = 0; y < H; y++) if (g.board[y].every((c) => c)) rows.push(y);
+    for (let i = 0; i < f.length; i++) if (f[i].every((c) => c)) rows.push(i - HB);
     if (rows.length) {
-      g.board = g.board.filter((_, y) => !rows.includes(y));
-      while (g.board.length < H) g.board.unshift(new Array(W).fill(null));
+      f = f.filter((r) => !r.every((c) => c));
+      while (f.length < HB + H) f.unshift(new Array(W).fill(null));
       g.lines += rows.length;
     }
-    // 上にはみ出していたマスは、消えた段の数だけ下がって盤に入る。それでも上に残れば、いっぱい
-    let above = false;
-    for (const [x, by] of aboveCells) {
-      const ny = by + rows.length;
-      if (ny >= 0) g.board[ny][x] = p.kind;
-      else above = true;
-    }
-    const allClear = rows.length > 0 && !above && g.board.every((r) => r.every((c) => !c));
+    splitField(g, f);
+    const allClear = rows.length > 0 && f.every((r) => r.every((c) => !c));
     const atk = attackOf(g, rows.length, spin, allClear);
     let res;
-    if (above) {
-      // 上にはみ出して置いた（消えても入りきらなかった）＝いっぱい
+    if (allAbove && !rows.length) {
+      // 全部が盤より上で置いた＝いっぱい
       if (g.onFull === 'end') { g.piece = null; g.over = true; g.overBy = 'top'; res = { full: true }; }
       else { resetBoard(g); res = Object.assign({ full: true, cleared: true }, spawnOnly(g)); }
     } else {
@@ -289,27 +309,30 @@
   }
 
   // じゃまブロック（ルームで「じゃまあり」のとき）。下から rows 段、gapX の列だけあけて押し上げる。
-  // 上にはみ出したら、いっぱいと同じ扱い。いま落ちているブロックは重なるぶん上へよける
+  // 押し上げたマスは盤の上の見えない段に入る。見えない段のいちばん上より上へ押し出したら、いっぱいと同じ扱い。
+  // いま落ちているブロックは重なるぶん上へよける
   function addGarbage(g, rows, gapX) {
     if (g.over || rows <= 0) return { full: false };
     rows = Math.min(rows, H);
-    const spill = g.board.slice(0, rows).some((r) => r.some(Boolean));
+    let f = fieldOf(g);
+    const spill = f.slice(0, rows).some((r) => r.some(Boolean));
     if (spill && g.onFull !== 'end') {
       resetBoard(g);
       return { full: true, cleared: true };
     }
-    g.board = g.board.slice(rows);
+    f = f.slice(rows);
     for (let i = 0; i < rows; i++) {
       const row = new Array(W).fill('jama');
       row[((gapX % W) + W) % W] = null;
-      g.board.push(row);
+      f.push(row);
     }
+    splitField(g, f);
     // おしまいのときは、じゃまを入れて押し上げた盤のまま止める（なぜここまでになったか盤で見えるように）
     if (spill) { g.piece = null; g.over = true; g.overBy = 'jama'; return { full: true }; }
     const p = g.piece;
     if (p) {
       let up = 0;
-      while (!fits(g.board, p, p.cells, p.x, p.y) && up < rows) { p.y--; up++; }
+      while (!fitsG(g, p, p.cells, p.x, p.y) && up < rows) { p.y--; up++; }
     }
     return { full: false };
   }
@@ -327,6 +350,14 @@
   const CODE = { I: 'a', O: 'b', T: 'c', S: 'd', L: 'e', Z: 'f', J: 'g', jama: 'j' };
   const UNCODE = Object.fromEntries(Object.entries(CODE).map(([k, v]) => [v, k]));
   function packBoard(board) { return board.map((r) => r.map((c) => (c ? CODE[c] : '.')).join('')).join(''); }
+  // 見えない段（読み込み直し用）。何もなければ空の文字
+  function packHidden(hidden) { return hidden.some((r) => r.some(Boolean)) ? packBoard(hidden) : ''; }
+  function unpackHidden(s) {
+    const b = emptyHidden();
+    if (typeof s !== 'string' || s.length !== W * HB) return b;
+    for (let i = 0; i < s.length; i++) b[Math.floor(i / W)][i % W] = UNCODE[s[i]] || null;
+    return b;
+  }
   function unpackBoard(s) {
     const b = emptyBoard();
     if (typeof s !== 'string' || s.length !== W * H) return b;
@@ -344,6 +375,7 @@
     const taken = Math.max(1, Math.min(100000, Number(s.taken) || 1));
     while (g.taken < taken) spawnOnly(g);
     g.board = unpackBoard(s.b);
+    g.hidden = unpackHidden(s.h);
     g.lines = Math.max(0, Number(s.lines) || 0);
     g.pieces = Math.max(0, Number(s.pieces) || 0);
     g.resets = Math.max(0, Number(s.resets) || 0);
@@ -352,17 +384,21 @@
     g.b2b = s.b2b === true;
     g.combo = Number.isInteger(s.combo) && s.combo >= -1 ? s.combo : -1;
     if (s.out === true) { g.piece = null; g.over = true; return g; }
-    if (!fits(g.board, g.piece, g.piece.cells, g.piece.x, g.piece.y)) {
+    // 落ちていた途中のブロックは、出る所から出なおす
+    const p = g.piece;
+    p.y = SPAWN_Y;
+    if (fitsG(g, p, p.cells, p.x, p.y + 1)) p.y++;
+    else if (!fitsG(g, p, p.cells, p.x, p.y)) {
       if (g.onFull === 'end') { g.piece = null; g.over = true; }
-      else resetBoard(g);
+      else { resetBoard(g); p.y++; }
     }
     return g;
   }
 
   return {
-    W, H, SHAPES, KINDS, kicksFor,
-    rng, makeBag, newPiece, emptyBoard, fits,
+    W, H, HB, SHAPES, KINDS, kicksFor,
+    rng, makeBag, newPiece, emptyBoard, emptyHidden, fits,
     createGame, spawn, move, rotate, dropY, lock, hardDrop, addGarbage, hold, spinOf, attackOf,
-    packBoard, unpackBoard, cellsOf, restoreGame,
+    packBoard, unpackBoard, packHidden, unpackHidden, cellsOf, restoreGame,
   };
 });

@@ -85,6 +85,27 @@ const rankText = (c) => c.page.$$eval('.sb-rank li', (lis) => lis.map((li) => li
   room = await roomWhen(code, (r) => !r.jama?.['はる']);
   check('B19c 受けとったら消える', !room.jama?.['はる'], room.jama);
 
+  // 盤の上の見えない段: じゃまで盤より上へ押し上げられても、出る所があいていればつづく（2026-11-06）
+  // メンターの盤を、左はしの列だけ1〜19段目までうめたものにして読み込み直す（来るじゃま2段はそのまま）
+  room = await roomOf(code);
+  const mb = room.boards['メンター'];
+  const tall = Array.from({ length: E.H }, (_, y) => (y >= 1 ? 'j' : '.') + '.'.repeat(E.W - 1)).join('');
+  await rest('PUT', `${ROOMS}/${code}/boards/メンター`, { ...mb, b: tall, h: null, pending: 2 });
+  await H.page.reload();
+  await waitFalling(H);
+  check('B19d 読み込み直すと来るじゃま2段', await waitFor(async () => (await text(H, '#playJama')) === '2段'));
+  await key(H, 'Space');
+  room = await roomWhen(code, (r) => Number(r.boards?.['メンター']?.pieces) === Number(mb.pieces) + 1);
+  const m2 = room.boards['メンター'];
+  check('B19e じゃまで盤より上へ押し上げられても、出る所があいていればここまでにならない', m2.out === false && !(await text(H, '#playNote')).includes('ここまで'), m2);
+  check('B19f 盤より上へ出たマスは、見えない段として送る', typeof m2.h === 'string' && m2.h.length === E.W * E.HB && m2.h[(E.HB - 1) * E.W] === 'j' && m2.b[0] === 'j', m2.h);
+  await H.page.reload();
+  await waitFalling(H);
+  await key(H, 'Space');
+  room = await roomWhen(code, (r) => Number(r.boards?.['メンター']?.pieces) === Number(mb.pieces) + 2);
+  check('B19g 読み込み直しても、見えない段のマスは残る', (room.boards['メンター'].h || '')[(E.HB - 1) * E.W] === 'j', room.boards['メンター'].h);
+  await shot(H, 'e2e4-top-rows');
+
   // あおいが回の途中で出る → あおいもここまで → のこりはメンターだけで結果
   await A.page.click('#btnPlayEnd');
   await waitScreen(A, 'top');
