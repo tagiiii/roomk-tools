@@ -562,6 +562,7 @@ const state = {
   turnFixTimer: null,    // 手番の人が居ないときの手番送り（ホスト）
   boardKey: null,        // 描画済み盤面の世代キー
   tapBusy: false,
+  roomListener: null,    // ルームの購読（外すときは off('value', この関数)。引数なしの off() は transaction の購読まで外す）
   createPackId: null,
   createBoardSize: 16,
   createMode: MODE_CLOSED,
@@ -1030,14 +1031,16 @@ async function guestJoinInner() {
 }
 
 /* 期限切れルームの掃除。判定と削除を transaction で行い、
-   判定の間にホストが復帰した場合は生きているルームを消さない */
+   判定の間にホストが復帰した場合は生きているルームを消さない。
+   applyLocally は false（第3引数）。手元で先に消えたことにすると、ルームの購読が null を受けて
+   leaveCleanup() へ進み、サーバーに届く前に transaction が止まってルームが残ることがある */
 async function removeExpiredRoom(ref, preRoom) {
   try {
     await ref.transaction(room => {
       const cur = room || preRoom;
       if (!cur) return;
       return isRoomExpired(cur) ? null : undefined;
-    });
+    }, undefined, false);
   } catch (error) {
     console.warn('[kotoba-pair] removeExpiredRoom failed', error);
   }
@@ -1123,7 +1126,7 @@ function startRoomListener() {
   // 参加用のリンク（?room=コード）でひらいたときは、つないだあとにコードをアドレスから外す
   //（再読み込みで古いコードの参加画面に戻らず、保存した記録から同じルームへ戻れるように）
   if (new URLSearchParams(location.search).has('room')) history.replaceState(null, '', location.pathname);
-  state.roomRef.on('value', snap => {
+  const onRoomValue = snap => {
     if (!snap.exists()) {
       clearSession();
       showMsg('ルームが閉じられたよ');
@@ -1132,7 +1135,9 @@ function startRoomListener() {
       return;
     }
     handleRoom(snap.val());
-  });
+  };
+  state.roomListener = onRoomValue;
+  state.roomRef.on('value', onRoomValue);
 }
 
 function handleRoom(room) {
@@ -1857,10 +1862,11 @@ function leaveCleanup() {
   clearTimeout(state.turnFixTimer);
   if (state.roomRef) {
     RoomkRTDB.cancelRoomOnDisconnect(state.roomRef);
-    state.roomRef.off();
+    // 自分の購読だけを外す（引数なしの off() は、送信中の transaction の購読まで外して止めてしまう）
+    if (state.roomListener) state.roomRef.off('value', state.roomListener);
   }
   Object.assign(state, {
-    role: null, nickname: null, roomCode: null, roomRef: null, room: null,
+    role: null, nickname: null, roomCode: null, roomRef: null, room: null, roomListener: null,
     orphanTimer: null, clearTimer: null, watchdogTimer: null, watchdogKey: null,
     turnFixTimer: null, boardKey: null, tapBusy: false,
   });

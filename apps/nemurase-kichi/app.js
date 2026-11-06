@@ -91,6 +91,7 @@ const state = {
   currentScreen: null,
   timerInterval: null,
   botTimer: null,
+  orphanTimer: null,   // ホストが切れたとき、2分（ORPHAN_TTL_MS）でルームを期限切れにして消すタイマー（参加者の端末）
   connectedRef: null,
   connectedCallback: null,
   roomCallback: null,
@@ -551,6 +552,7 @@ function unsubscribePositions() {
 function cleanupRoom() {
   clearInterval(state.timerInterval);
   clearInterval(state.botTimer);
+  clearTimeout(state.orphanTimer);
   if (state.roomRef && state.roomCallback) state.roomRef.off('value', state.roomCallback);
   if (state.connectedRef && state.connectedCallback) state.connectedRef.off('value', state.connectedCallback);
   unsubscribePositions();
@@ -566,6 +568,7 @@ function cleanupRoom() {
     joinedAt: null,
     timerInterval: null,
     botTimer: null,
+    orphanTimer: null,
     connectedRef: null,
     connectedCallback: null,
     roomCallback: null,
@@ -2061,9 +2064,37 @@ function handleRoom(room) {
   }
 }
 
+// ホストが切れている間は、参加者の画面に「ホストの戻りを待っています」を出し、2分（ORPHAN_TTL_MS）で期限切れにする。
+// 位置は p・g に分かれていて、ホストが抜けると r が変わらなくなる（r の購読だけでは期限切れに気づけない）ので、
+// 参加者の端末がタイマーで確かめて、ルートごと消してトップへ戻る。ホストが戻ったら・ルームを出たらタイマーを外す
 function updateHostOverlay(room) {
   const show = state.role === 'guest' && room.hostConnected === false;
   $('hostOffOverlay').hidden = !show;
+  if (!show) {
+    clearTimeout(state.orphanTimer);
+    state.orphanTimer = null;
+    return;
+  }
+  if (state.orphanTimer) return;
+  const at = RoomkRTDB.getHostDisconnectedAt(room);
+  const delay = at == null ? ORPHAN_TTL_MS : Math.max(0, at + ORPHAN_TTL_MS - RoomkRTDB.now());
+  scheduleOrphanCheck(state.rootRef, delay);
+}
+
+function scheduleOrphanCheck(rootRef, delay) {
+  state.orphanTimer = setTimeout(() => {
+    state.orphanTimer = null;
+    if (state.rootRef !== rootRef || state.leaving || !state.room) return;
+    const room = state.room;
+    if (room.hostConnected !== false) return;
+    if (!isExpired(room)) {
+      // 時刻の補正の差でまだ期限前と判定されたときは、少しあとで確かめなおす
+      scheduleOrphanCheck(rootRef, 1000);
+      return;
+    }
+    removeExpired(rootRef, room);
+    leaveLocally('このルームは終わったみたい');
+  }, delay);
 }
 
 function renderWaiting(room) {

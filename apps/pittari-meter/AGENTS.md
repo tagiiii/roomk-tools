@@ -83,7 +83,7 @@ waiting → hinting → guessing → reveal ─┬→ hinting（次ラウンド�
 | `hinting` | 出題者がターゲットを見てヒントをテキスト入力 |
 | `guessing` | 出題者以外のゲストがメーターを動かして「決めた」 |
 | `reveal` | ターゲットと全員の予想を公開。各回答者の個人得点を加算 |
-| `done` | きょうのきろく表示。30秒後にルーム削除 |
+| `done` | きょうのきろく表示。30秒後にルーム削除（ホストとゲストの両方が予約する。下記「おしまい後の削除」） |
 
 ## Firebase データ構造
 
@@ -94,6 +94,7 @@ pittari_rooms/{roomCode}/
   ├── hostDisconnectedAt:  number | null
   ├── hostPlays:           boolean         # ホストも回答者として遊ぶか（作成時に確定・以後不変）
   ├── status:              string          # 上記 status 参照
+  ├── deleteAt:            number          # done にしたときの削除予定時刻（サーバー時刻寄りの ms）。削除の予約の照合に使う
   ├── scores/                              # 個人累計得点（ゲーム開始時に turnOrder 全員を 0 で初期化）
   │    └── {nickname}:     number          # players と別に room 直下へ持つ（ゲスト切断で消えないように）
   ├── roundsDone:          number          # 発表まで終えたラウンド数
@@ -136,6 +137,14 @@ pittari_rooms/{roomCode}/
 - ゲーム中の名前だけによる再参加は拒否し、復帰は同じタブの保存済みsessionによる `tryReconnect()` のみとする（2026-09-09 P-12）。sessionStorageは認証境界ではなく、別端末の本人確認を追加したものではない。ホスト名の参加拒否は維持する（`hostPlays` が true でも同じ）。
 - TTL 判定は `RoomkRTDB.now()` / `RoomkRTDB.isRoomExpired()` でサーバー時刻補正
 - 未決定のゲストがいてもホストは「結果発表」で進行できる（1人以上決定が条件）
+
+### おしまい後の削除（2026-11-06）
+
+- ホストの「終わる」で `status: 'done'` と `deleteAt`（いま＋30秒）を transaction で書く。削除は `scheduleDoneCleanup(ref, deleteAt, byHost)` で、終了時点の ref と `deleteAt` を固定して予約し、transaction で **status が `done` で `deleteAt` が同じときだけ** 消す（applyLocally は false）。同じ ref と `deleteAt` の予約は1つにまとめる
+- **ゲストも `done` を受け取ったら同じ条件で予約する**（`handleDone`）。ホストが最終ランキングのあとすぐタブを閉じると、`done` のゲストはホスト切断のカウントダウンもしないので、ルームが残り続けていた（2026-11-06 監査の所見1）。ゲストの予約はホストより3秒遅い（`GUEST_DELETE_GRACE_MS`。ホストのタブがあればホストが先に消す）
+- 切断の予約の取り消し: ホストは**消す前**に取り消す（残ると削除後にタブを閉じたときゴーストができる）。ゲストは**消えたあと**に取り消す（`players/{自分}` の remove の予約なので、残っていてもゴーストはできない。先に取り消すと、削除が届く前にタブを閉じたとき在室が残る）
+- 「トップへ戻る」（`goToTop`）・退出では、ゲストの予約だけ解除する。ホストの予約は残す（`done` の「トップへ戻る」はルームを消さないので、この予約が消す経路になる。ref と `deleteAt` を固定しているので、あとで作った新しいルームは消さない）
+- ホストもゲストも30秒より前にタブを閉じたときは、ホスト切断の TTL（2分）か次の参加時の期限切れ掃除に任せる
 
 ## 得点ルール（個人得点制）
 

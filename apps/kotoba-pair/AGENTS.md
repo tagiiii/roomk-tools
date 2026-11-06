@@ -313,6 +313,8 @@ transaction 内の検証（この順に全部）:
 - **すべての退出・削除経路で、`remove()` の前に必ず `RoomkRTDB.cancelRoomOnDisconnect()` を await する**（削除後の実切断でゴースト room が再生成されるのを防ぐ）
 - ゲストの「おわる」「ぬける」は自分の `players/{nick}` 削除のみ
 - ルーム値が `null` になったら（ホストが削除）、`leaveCleanup()`（リスナー off・全タイマー clear・onDisconnect 取消）→「ルームが閉じられたよ」→ TOP へ
+- 期限切れの削除（`removeExpiredRoom()`）の transaction は **applyLocally を false**（第3引数）にする。ルームの購読中に呼ばれるので、手元で先に消えたことにすると上の `leaveCleanup()` へ進み、サーバーに届く前に transaction が止まってルームが残る（2026-11-06 修正。ホストが閉じたタブのルームが2分後も消えなかった）
+- ルームの購読を外すのは `off('value', state.roomListener)`（自分の関数だけ）。引数なしの `off()` は送信中の transaction の購読まで外して止めてしまう
 
 ## 共通規約からの意図的な逸脱
 

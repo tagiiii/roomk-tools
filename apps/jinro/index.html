@@ -821,6 +821,7 @@ const state = {
   roleCounts:   { ...DEFAULT_ROLE_COUNTS },
   timerInterval: null,
   orphanTimer: null,
+  roomListener: null,  // ルームの購読（外すときはこの関数を指定する）
   roleFlipped:  false,
   resolveTriggered: false,
   hunterResolved: false,
@@ -1357,17 +1358,25 @@ function startRoomListener() {
   // 参加用のリンク（?room=コード）でひらいたときは、つないだあとにコードをアドレスから外す
   //（再読み込みで古いコードの参加画面に戻らず、保存した記録から同じルームへ戻れるように）
   if (new URLSearchParams(location.search).has('room')) history.replaceState(null, '', location.pathname);
-  state.roomRef.on('value', snap => {
+  const ref = state.roomRef;
+  const listener = snap => {
+    if (state.roomRef !== ref) return;
     if (!snap.exists()) {
       if (!state.isHost) {
-        // guest の connected onDisconnect(set false) を取り消してから離脱（削除済み room の再生成を防ぐ）
-        RoomkRTDB.cancelRoomOnDisconnect(state.roomRef);
-        clearSession(); showMsg('GMがルームを終了しました'); showScreen('top');
+        // ルームが消えた（GMの終了・2分たってゲストの端末が消した）。
+        // guest の connected onDisconnect(set false) を取り消し、タイマー・購読・GM切断のオーバーレイも片付けてから離脱する
+        //（オーバーレイが残るとトップのボタンが押せない。削除済み room の再生成も防ぐ）
+        RoomkRTDB.cancelRoomOnDisconnect(ref);
+        ref.off('value', listener);
+        resetLocalState();
+        showMsg('GMがルームを終了しました');
       }
       return;
     }
     handleRoom(snap.val());
-  });
+  };
+  state.roomListener = listener;
+  ref.on('value', listener);
 }
 
 function handleRoom(room) {
@@ -2499,14 +2508,23 @@ async function leaveGame() {
     } else {
       await state.roomRef.child(`players/${state.nickname}`).remove();
     }
-    state.roomRef.off();
+    if (state.roomListener) state.roomRef.off('value', state.roomListener);
   }
+  resetLocalState();
+}
+
+// ルームから離れたあとの手元の片付け（タイマー・記録・GM切断のオーバーレイ）とトップへ。
+// 退出（leaveGame）とルームが消えたとき（ゲスト）の両方で使う
+function resetLocalState() {
+  clearInterval(state.timerInterval);
+  clearTimeout(state.orphanTimer);
+  clearSession();
   Object.assign(state, {
     nickname: null, roomCode: null, roomRef: null, isHost: false,
     currentScreen: null, myRole: null, myFaction: null, isAlive: true,
     wolfPartners: [], sharerPartner: null, foxPlayer: null,
     lastGuarded: null, lastGuardedDay: 0, currentDay: 1, nightActionDone: false, myVote: null,
-    timerInterval: null, orphanTimer: null,
+    timerInterval: null, orphanTimer: null, roomListener: null,
     roleFlipped: false, resolveTriggered: false, hunterResolved: false,
     renderedVoteRound: 0,
   });

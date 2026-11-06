@@ -85,7 +85,7 @@ waiting → casting → acting → voting → reveal ─┬→ casting（次の�
 | `acting` | 演者がマイクでセリフを演技。演者にだけ正解シチュエーションを表示 |
 | `voting` | 演者以外の遊ぶ人が①〜⑥に投票 |
 | `reveal` | 開票結果・得点を表示 |
-| `done` | 終了画面。ホスト端末が30秒後に `roomRef.remove()` |
+| `done` | 終了画面。ホスト端末が30秒後にルームを消す（`scheduleDoneCleanup`。下記「おしまい後の削除」） |
 
 status の更新はすべてホスト操作起点で、`transaction()` で前状態を検証してから遷移する。
 
@@ -131,6 +131,14 @@ koedake_rooms/{roomCode}/
 | ホスト切断 | `hostConnected=false` + `hostDisconnectedAt=ServerValue.TIMESTAMP`。ゲストにオーバーレイ表示。TTL（`ORPHAN_TTL_MS = 2分`）超過でルーム削除 |
 | ゲスト切断 | `onDisconnect().remove()` で自分の players データのみ削除 |
 | **演者が切断** | acting 画面のホスト用「演じる人を選び直す」で casting に戻し、別の演者を選べる（answerIndex も引き直し） |
+
+### おしまい後の削除（2026-11-06）
+
+- ホストが「終わる」（`done` が確定）か、`done` のルームを受け取った（再読み込み後など）ときに `scheduleDoneCleanup(ref)` で30秒後の削除を予約する
+- タイマーには**終了時点の ref** を固定する（可変の `state.roomRef` を読まない）。予約ごとに `state.doneToken` を作り、新しい予約・「退出する」（`leaveGame`）で古い予約を無効にする
+- 30秒後は、先に `RoomkRTDB.cancelRoomOnDisconnect(ref)` で自分の切断の予約を取り消してから、transaction で **status がまだ `done` のときだけ** 消す（購読中なので applyLocally は false）。取り消さずに消すと、ホストがおしまい画面のまま「退出する」を押さずにタブを閉じたとき、`{hostConnected:false, hostDisconnectedAt}` だけのゴーストが `koedake_rooms/{code}` にできていた（2026-11-06 監査の所見1）
+- `isRoomExpired` は status のないルーム（ゴースト）も期限切れとみなす（rtdb.md の雛形どおり）
+- ゲストは削除を予約しない（ホストが30秒より前にタブを閉じると、ルームはホスト切断の TTL（2分）か、次にだれかが入ろうとしたときの期限切れ掃除で消える）
 
 ### 再接続
 

@@ -152,6 +152,7 @@ kakure_rooms/{roomCode}/
 |------|------|
 | ホスト切断 | `onDisconnect().update({ hostConnected: false, hostDisconnectedAt: ServerValue.TIMESTAMP })`。ゲストにはカウントダウン付きオーバーレイを表示し、TTL（`ORPHAN_TTL_MS = 2分`）超過で期限切れ扱い→ルーム削除を試みて退出 |
 | ゲスト切断 | `onDisconnect().remove()` で `players/{nickname}` のみ削除 |
+| ゲストの「退出する」（ホスト切断中のオーバーレイ） | `guestLeaveRoom()`: 切断の予約を取り消してから `players/{nickname}` を `remove()`（2026-11-06 修正。消さないと、ホストが戻ったときに一覧・人数の上限・配る相手・自動 reveal の待ちに残った）。`round/` の数字・予想は下の方針どおり残す。自分の通信も切れているときに止まらないよう、待つのは3秒まで |
 
 - TTL 判定は `RoomkRTDB.initServerTime(db)` + `RoomkRTDB.now()` / `RoomkRTDB.isRoomExpired()` でサーバー時刻寄りに補正。
 - `joinRoom` / `tryReconnect` / ルーム監視の各タイミングで期限切れルームを検知したら `remove()` を試みる。
