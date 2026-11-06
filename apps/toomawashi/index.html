@@ -467,7 +467,7 @@
       <button class="tw-quiet-btn" onclick="passExplainer()">説明役をパスする</button>
     </div>
 
-    <!-- ホストの進行用のぞき見（説明役でないとき）-->
+    <!-- ホストの進行用のぞき見（進行役のときだけ）-->
     <div class="tw-hostpeek" id="round-hostpeek" hidden>
       <span class="material-symbols-rounded" aria-hidden="true">visibility</span>
       <span>
@@ -1472,7 +1472,8 @@ function handleWaiting(room, players) {
 
 // ── explain ──
 // 秘密の出し分け: お題・言っちゃダメことばを DOM に書くのは
-// 「説明役本人」と「ホスト」だけ。それ以外の画面には title / aria-label も含め一切出さない
+// 「説明役本人」と「進行役のホスト（説明役の順番に入らないとき）」だけ。それ以外の画面には title / aria-label も含め一切出さない。
+// ホストが説明役の順番に入るときは、ほかの人の番では聞き手として答える（お題は見えない）
 function handleExplain(room, players) {
   if (state.currentScreen !== 'round') showScreen('round');
 
@@ -1481,8 +1482,10 @@ function handleExplain(room, players) {
   const item = getItem(pack, round.itemIndex);
   const isExplainer = !!state.nickname && state.nickname === round.explainer;
   const isHost = state.role === 'host';
-  const canSeeTopic = isExplainer || isHost;
-  const isListener = !isExplainer && !isHost;
+  const hostPlays = hostPlaysOf(room);
+  const isFacilitator = isHost && !hostPlays;
+  const canSeeTopic = isExplainer || isFacilitator;
+  const isListener = !isExplainer && !isFacilitator;
 
   // ラウンドが変わったら入力欄をリセット
   const key = `${round.number}:${round.itemIndex}`;
@@ -1520,8 +1523,8 @@ function handleExplain(room, players) {
       : '知らない言葉だったら変えてOK。1回だけ使えるよ');
   }
 
-  // ── ホストの進行用のぞき見（説明役でないとき）──
-  const showPeek = isHost && !isExplainer;
+  // ── ホストの進行用のぞき見（進行役のときだけ）──
+  const showPeek = isFacilitator && !isExplainer;
   setHidden('round-hostpeek', !showPeek);
   setText('hostpeek-topic', showPeek && item ? item.answer : '');
   setText('hostpeek-ng', showPeek && item && Array.isArray(item.ng)
@@ -1545,7 +1548,7 @@ function handleExplain(room, players) {
     setText('listener-mine-text', '');
   }
 
-  // ── 回答の見え方: 全文は説明役とホストだけ。ほかは人数だけ ──
+  // ── 回答の見え方: 全文は説明役と進行役のホストだけ。ほかは人数だけ ──
   const answers = answerEntries(round);
   setHidden('round-answers-card', !canSeeTopic);
   document.getElementById('round-answers').innerHTML = canSeeTopic ? answersHtml(answers) : '';
