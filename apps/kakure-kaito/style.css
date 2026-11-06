@@ -65,7 +65,7 @@ body { background: var(--color-bg); }
   color: var(--color-accent); font-family: inherit; font-size: 15px; font-weight: 500; cursor: pointer;
   border-radius: var(--radius-sm);
 }
-.kk-quiet:hover { background: rgba(46, 125, 140, 0.08); }
+.kk-quiet:hover { background: rgba(40, 111, 124, 0.08); }
 .kk-quiet .material-symbols-rounded { font-size: 20px; }
 
 /* ══ バー ══ */
@@ -81,7 +81,7 @@ body { background: var(--color-bg); }
 .kk-roombar__code strong { color: var(--color-primary); letter-spacing: 0.1em; font-size: 16px; }
 .is-watch .kk-roombar .btn { display: none; }
 .is-watch .kk-roombar #btnLeave { display: inline-flex; }
-.kk-hint { margin: 0 0 16px; padding: 10px 14px; border-radius: var(--radius-sm); background: #EAF4F6; color: var(--color-primary); line-height: 1.6; font-size: 14px; }
+.kk-hint { margin: 0 0 16px; padding: 10px 14px; border-radius: var(--radius-sm); background: var(--color-accent-soft); color: var(--color-primary); line-height: 1.6; font-size: 14px; }
 .kk-hint[hidden] { display: none; }
 .kk-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.45); display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 60; }
 .kk-overlay[hidden] { display: none; }
@@ -150,7 +150,7 @@ body { background: var(--color-bg); }
 .kk-tag .material-symbols-rounded { font-size: 15px; }
 .kk-tag--muted { background: var(--color-border); color: var(--color-text); }
 .kk-tag--warn { background: #FFF4E5; color: var(--color-warning); }
-.kk-tag--ok { background: #E3F1F3; color: var(--color-primary); }
+.kk-tag--ok { background: var(--color-accent-soft); color: var(--color-primary); }
 .kk-tag--leader { background: var(--kk-gold); color: #4A3405; }
 .kk-tag--lens { background: #E4DAF2; color: #4B2A78; }
 .kk-tag--team { background: var(--color-accent); }
@@ -234,7 +234,7 @@ body { background: var(--color-bg); }
 .kk-rejects__dots { display: inline-flex; gap: 6px; }
 .kk-dot { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--color-border); background: var(--color-surface); }
 .kk-dot.is-used { background: #8A8F98; border-color: #8A8F98; }
-.kk-dot.is-now { border-color: var(--color-accent); background: #E3F1F3; }
+.kk-dot.is-now { border-color: var(--color-accent); background: var(--color-accent-soft); }
 .kk-rejects__note { color: var(--color-muted); }
 
 /* ══ 大きな案内 ══ */
@@ -249,7 +249,7 @@ body { background: var(--color-bg); }
 .kk-banner__body { display: grid; gap: 2px; min-width: 0; }
 .kk-status { margin: 0; font-size: 19px; font-weight: 700; color: var(--color-primary); line-height: 1.45; }
 .kk-banner__sub { margin: 0; font-size: 14px; color: var(--color-muted); line-height: 1.55; }
-.kk-banner--mine { border-color: var(--color-accent); background: #F1F9FA; animation: kk-ping 1.6s ease-out 1; }
+.kk-banner--mine { border-color: var(--color-accent); background: var(--color-accent-soft); animation: kk-ping 1.6s ease-out 1; }
 .kk-banner--mine .kk-banner__icon { background: var(--color-accent); color: #fff; }
 .kk-banner--mine .kk-status { color: var(--color-accent); }
 .kk-banner--good { border-color: var(--kk-gold); background: var(--kk-gold-bg); }
@@ -277,7 +277,7 @@ body { background: var(--color-bg); }
 .kk-banner--win-guard .kk-status, .kk-banner--win-thief .kk-status { font-size: 28px; }
 .kk-banner--win-guard .kk-status { color: var(--kk-gold-text); }
 .kk-banner--win-thief .kk-status { color: var(--kk-thief); }
-@keyframes kk-ping { 0% { box-shadow: 0 0 0 0 rgba(46, 125, 140, 0.45); } 100% { box-shadow: 0 0 0 14px rgba(46, 125, 140, 0); } }
+@keyframes kk-ping { 0% { box-shadow: 0 0 0 0 rgba(40, 111, 124, 0.45); } 100% { box-shadow: 0 0 0 14px rgba(40, 111, 124, 0); } }
 
 /* 結果をじらして出す（カード・票をめくり終わってから。--d は app.js が決める） */
 .kk-banner.is-anim { animation: kk-reveal 0.5s ease-out both; animation-delay: var(--d, 0s); }
@@ -293,7 +293,7 @@ body { background: var(--color-bg); }
 .kk-teamline__names { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
 .kk-teamline__name {
   display: inline-flex; align-items: center; gap: 6px; padding: 4px 14px 4px 4px; border-radius: 999px;
-  background: #E3F1F3; color: var(--color-primary); font-weight: 700; min-height: 38px;
+  background: var(--color-accent-soft); color: var(--color-primary); font-weight: 700; min-height: 38px;
 }
 .kk-teamline__name .kk-avatar { width: 28px; height: 28px; font-size: 13px; }
 .kk-teamline__name.is-empty { padding: 4px 16px; background: transparent; border: 2px dashed var(--color-border); color: var(--color-muted); }
@@ -313,7 +313,7 @@ body { background: var(--color-bg); }
 .kk-pick__btn:active:not(:disabled) { transform: scale(0.97); }
 .kk-pick__name { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
 .kk-pick__mark { color: var(--color-border); font-size: 26px; }
-.kk-pick__btn.is-on { border-color: var(--color-accent); background: #E3F1F3; color: var(--color-primary); font-weight: 700; box-shadow: 0 0 0 3px rgba(46, 125, 140, 0.18); }
+.kk-pick__btn.is-on { border-color: var(--color-accent); background: var(--color-accent-soft); color: var(--color-primary); font-weight: 700; box-shadow: 0 0 0 3px rgba(40, 111, 124, 0.18); }
 .kk-pick__btn.is-on .kk-pick__mark { color: var(--color-accent); }
 .kk-pick__btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
@@ -330,7 +330,7 @@ body { background: var(--color-bg); }
 .kk-choice:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 1px 0 rgba(0, 0, 0, 0.08); }
 .kk-choice--yes { border-color: #2E7D4F; color: #2E7D4F; background: #F1F8F3; }
 .kk-choice--no { border-color: #8A8F98; color: #5B616B; background: #F5F6F7; }
-.kk-choice--safe { border-color: var(--color-accent); color: var(--color-primary); background: #F1F9FA; }
+.kk-choice--safe { border-color: var(--color-accent); color: var(--color-primary); background: var(--color-accent-soft); }
 .kk-choice--swap { border-color: var(--kk-red); color: var(--kk-red); background: var(--kk-red-bg); }
 .kk-choice:disabled { opacity: 0.3; cursor: not-allowed; box-shadow: none; }
 
@@ -386,7 +386,7 @@ body { background: var(--color-bg); }
 .kk-players { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; }
 .kk-players[hidden] { display: none; }
 .kk-player { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 12px; background: var(--color-surface); border: 1px solid var(--color-border); min-height: 52px; }
-.kk-player.is-team { border: 2px solid var(--color-accent); background: #F3FAFB; }
+.kk-player.is-team { border: 2px solid var(--color-accent); background: var(--color-accent-soft); }
 .kk-player.is-leader { box-shadow: inset 4px 0 0 var(--kk-gold); }
 .kk-player.is-me .kk-avatar { box-shadow: 0 0 0 3px #fff, 0 0 0 5px var(--color-accent); }
 .kk-player.is-away { color: var(--color-muted); }
@@ -446,7 +446,7 @@ body { background: var(--color-bg); }
 /* ══ おしまい ══ */
 .kk-roles { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .kk-roles__col { border-radius: 14px; padding: 14px; border: 2px solid; }
-.kk-roles__col--guard { background: #EEF6F8; border-color: var(--color-accent); }
+.kk-roles__col--guard { background: var(--color-accent-soft); border-color: var(--color-accent); }
 .kk-roles__col--thief { background: var(--kk-thief-bg); border-color: var(--kk-thief); }
 .kk-roles__col.is-win { box-shadow: 0 0 0 4px rgba(242, 193, 78, 0.6); }
 .kk-roles__head { margin: 0 0 10px; display: flex; align-items: center; gap: 6px; font-weight: 700; color: var(--color-primary); }
@@ -590,7 +590,7 @@ body { background: var(--color-bg); }
 .kk-say__group-label { margin: 0; font-size: 13px; font-weight: 700; color: var(--color-muted); }
 .kk-say__words { display: flex; flex-wrap: wrap; gap: 8px; }
 .kk-word { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 6px 14px; border-radius: 999px; border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-text); font: inherit; font-size: 15px; cursor: pointer; text-align: left; }
-.kk-word:hover { border-color: var(--color-accent); background: #F3FAFB; }
+.kk-word:hover { border-color: var(--color-accent); background: var(--color-accent-soft); }
 .kk-word:focus-visible { outline: 3px solid var(--color-accent); outline-offset: 2px; }
 .kk-word--who .kk-avatar { width: 26px; height: 26px; font-size: 12px; }
 .kk-say__ask { margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-weight: 500; }

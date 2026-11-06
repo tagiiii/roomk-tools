@@ -45,7 +45,7 @@
     .esa-room-code {
       font-size: 44px; font-weight: 700; letter-spacing: 0.22em;
       color: var(--color-primary); text-align: center;
-      padding: 16px; background: #EEF3F8; border-radius: 12px;
+      padding: 16px; background: var(--color-primary-soft); border-radius: 12px;
       margin-bottom: 12px; user-select: all;
     }
 
@@ -69,7 +69,7 @@
     .esa-tag { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; }
     .esa-tag--me   { background: var(--color-muted); color: #fff; }
     .esa-tag--host { background: var(--color-primary); color: #fff; }
-    .esa-tag--role { background: #EEF3F8; color: var(--color-primary); }
+    .esa-tag--role { background: var(--color-primary-soft); color: var(--color-primary); }
 
     /* ── ロビーの設定（ホストのみ） ── */
     .esa-lobby-setting { margin-top: 10px; padding-top: 6px; border-top: 1px solid var(--color-border); }
@@ -99,7 +99,7 @@
     .esa-phase:empty { display: none; }
     .esa-phase__prompt {
       text-align: center; font-weight: 700; color: var(--color-primary);
-      background: #EAF4F5; border-radius: var(--radius-card); padding: 14px;
+      background: var(--color-accent-soft); border-radius: var(--radius-card); padding: 14px;
     }
     .esa-phase__mine { text-align: center; font-size: 16px; margin-bottom: 6px; }
     .esa-phase__mine strong { font-size: 26px; color: var(--color-accent); }
@@ -127,7 +127,7 @@
     }
     button.esa-hand__cell { cursor: pointer; }
     .esa-hand__cell.is-used { color: var(--color-muted); background: #EEF0F2; text-decoration: line-through; opacity: 0.55; }
-    .esa-hand__cell.is-selected { border-color: var(--color-accent); background: #EAF4F5; box-shadow: 0 0 0 3px rgba(46,125,140,0.25); }
+    .esa-hand__cell.is-selected { border-color: var(--color-accent); background: var(--color-accent-soft); box-shadow: 0 0 0 3px rgba(40,111,124,0.25); }
     .esa-hand__cell.is-picked { border-color: var(--color-accent); background: var(--color-accent); color: #fff; }
 
     /* ── ラウンド履歴 ── */

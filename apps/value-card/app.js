@@ -255,7 +255,7 @@ function saveImage() {
     cardsHtml += `
       <div style="
         background: #fff;
-        border: 2px solid #C4D2D8;
+        border: 2px solid var(--color-border);
         border-radius: 16px;
         padding: 16px 20px;
         margin-bottom: 12px;
@@ -263,16 +263,16 @@ function saveImage() {
         <div style="display:flex; align-items:center; gap:12px;">
           <span style="
             width:28px; height:28px; border-radius:50%;
-            background:#2E7D8C; color:#fff;
+            background:var(--color-accent); color:#fff;
             font-size:13px; font-weight:700;
             display:flex; align-items:center; justify-content:center;
             flex-shrink:0;
           ">${i + 1}</span>
-          <span style="font-size:16px; font-weight:700; color:#1A1A1A;">
+          <span style="font-size:16px; font-weight:700; color:var(--color-text);">
             ${escapeHtml(card.keyword)}
           </span>
         </div>
-        <div style="font-size:13px; color:#5A6270; margin-top:4px; margin-left:40px;">
+        <div style="font-size:13px; color:var(--color-muted); margin-top:4px; margin-left:40px;">
           ${escapeHtml(card.description)}
         </div>
       </div>
@@ -282,11 +282,11 @@ function saveImage() {
   container.innerHTML = `
     <h2 style="
       text-align:center; font-size:22px; font-weight:700;
-      color:#1C3F5E; margin:0 0 24px;
+      color:var(--color-primary); margin:0 0 24px;
     ">わたしの「大事」</h2>
     ${cardsHtml}
     <p style="
-      text-align:center; font-size:11px; color:#5A6270;
+      text-align:center; font-size:11px; color:var(--color-muted);
       margin-top:20px;
     ">バリューカード | あそびのたな</p>
   `;

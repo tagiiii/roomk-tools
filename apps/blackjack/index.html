@@ -45,7 +45,7 @@
     .bj-room-code {
       font-size: 44px; font-weight: 700; letter-spacing: 0.22em;
       color: var(--color-primary); text-align: center;
-      padding: 16px; background: #EEF3F8; border-radius: 12px;
+      padding: 16px; background: var(--color-primary-soft); border-radius: 12px;
       margin-bottom: 12px; user-select: all;
     }
 
@@ -62,17 +62,17 @@
     .bj-card--red   { color: #C2413B; }
     .bj-card--black { color: #2B3440; }
     .bj-card--back {
-      background: repeating-linear-gradient(135deg, var(--color-primary), var(--color-primary) 6px, #2A5378 6px, #2A5378 12px);
+      background: repeating-linear-gradient(135deg, var(--color-primary), var(--color-primary) 6px, #80644A 6px, #80644A 12px);
       border-color: var(--color-primary); color: #fff;
     }
     .bj-card--back .bj-card__rank { font-size: 24px; }
     .bj-total {
       display: inline-flex; align-items: center; gap: 6px;
       margin-top: 10px; padding: 4px 14px; border-radius: 999px;
-      background: #EEF3F8; font-weight: 700; color: var(--color-primary); font-size: 15px;
+      background: var(--color-primary-soft); font-weight: 700; color: var(--color-primary); font-size: 15px;
     }
     .bj-total--bust { background: #FBEAEA; color: var(--color-error); }
-    .bj-total--bj   { background: #EAF4F5; color: var(--color-accent); }
+    .bj-total--bj   { background: var(--color-accent-soft); color: var(--color-accent); }
 
     /* ── ディーラー ── */
     .bj-dealer { text-align: center; }
@@ -84,7 +84,7 @@
     .bj-my { text-align: center; }
     .bj-my__points { font-size: 14px; font-weight: 700; color: var(--color-primary); margin-bottom: 12px; }
     .bj-my__points strong { font-size: 22px; color: var(--color-accent); }
-    .bj-my__prompt { font-weight: 700; color: var(--color-primary); background: #EAF4F5; border-radius: var(--radius-card); padding: 12px; margin-bottom: 14px; }
+    .bj-my__prompt { font-weight: 700; color: var(--color-primary); background: var(--color-accent-soft); border-radius: var(--radius-card); padding: 12px; margin-bottom: 14px; }
     .bj-my__wait { color: var(--color-muted); font-weight: 600; margin-top: 12px; }
     .bj-bet-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
     .bj-bet-btn {
@@ -94,7 +94,7 @@
     }
     .bj-bet-btn__num { font-size: 24px; font-weight: 800; color: var(--color-primary); line-height: 1; }
     .bj-bet-btn__unit { font-size: 11px; font-weight: 700; color: var(--color-muted); margin-top: 4px; }
-    .bj-bet-btn:not(:disabled):hover { border-color: var(--color-accent); background: #EAF4F5; }
+    .bj-bet-btn:not(:disabled):hover { border-color: var(--color-accent); background: var(--color-accent-soft); }
     .bj-bet-btn:disabled { opacity: 0.35; cursor: default; }
     .bj-bet-mine { font-size: 15px; font-weight: 700; color: var(--color-primary); }
     .bj-bet-mine strong { font-size: 22px; color: var(--color-accent); }
@@ -105,22 +105,22 @@
       background: var(--color-surface); color: var(--color-accent);
       font-family: var(--font-base); font-size: 15px; font-weight: 700; cursor: pointer;
     }
-    .bj-action-btn:hover { background: #EAF4F5; }
+    .bj-action-btn:hover { background: var(--color-accent-soft); }
     .bj-action-btn .material-symbols-rounded { font-size: 20px; }
     .bj-state-badge {
       display: inline-block; margin-top: 12px; padding: 4px 14px; border-radius: 999px;
       font-size: 14px; font-weight: 700;
     }
     .bj-state-badge--bust  { background: #FBEAEA; color: var(--color-error); }
-    .bj-state-badge--stand { background: #EEF3F8; color: var(--color-primary); }
-    .bj-state-badge--bj    { background: #EAF4F5; color: var(--color-accent); }
+    .bj-state-badge--stand { background: var(--color-primary-soft); color: var(--color-primary); }
+    .bj-state-badge--bj    { background: var(--color-accent-soft); color: var(--color-accent); }
 
     /* ── ラウンド結果 ── */
     .bj-outcome { border-radius: var(--radius-card); padding: 16px; text-align: center; margin-top: 14px; }
     .bj-outcome--win  { background: #EAF7EE; border: 2px solid var(--color-success); }
     .bj-outcome--lose { background: var(--color-bg); border: 2px solid var(--color-border); }
     .bj-outcome--push { background: var(--color-bg); border: 2px solid var(--color-border); }
-    .bj-outcome--bj   { background: #EAF4F5; border: 2px solid var(--color-accent); }
+    .bj-outcome--bj   { background: var(--color-accent-soft); border: 2px solid var(--color-accent); }
     .bj-outcome__main { font-size: 19px; font-weight: 800; color: var(--color-primary); }
     .bj-outcome__sub  { font-size: 13px; font-weight: 600; color: var(--color-muted); margin-top: 6px; line-height: 1.6; }
 
@@ -151,12 +151,12 @@
     .bj-result-chip--win  { background: #EAF7EE; color: var(--color-success); }
     .bj-result-chip--lose { background: #EEF0F2; color: var(--color-muted); }
     .bj-result-chip--push { background: #EEF0F2; color: var(--color-muted); }
-    .bj-result-chip--bj   { background: #EAF4F5; color: var(--color-accent); }
+    .bj-result-chip--bj   { background: var(--color-accent-soft); color: var(--color-accent); }
     .bj-result-chip--charge { background: #FFF7ED; color: #92400E; }
     .bj-tag { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; }
     .bj-tag--me   { background: var(--color-muted); color: #fff; }
     .bj-tag--host { background: var(--color-primary); color: #fff; }
-    .bj-tag--role { background: #EEF3F8; color: var(--color-primary); }
+    .bj-tag--role { background: var(--color-primary-soft); color: var(--color-primary); }
 
     /* ── ロビーの設定（ホストだけ） ── */
     .bj-lobby-setting { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--color-border); }

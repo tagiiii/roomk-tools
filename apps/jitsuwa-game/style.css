@@ -36,7 +36,7 @@
   padding: 32px 40px;
   margin-bottom: 28px;
   text-align: center;
-  box-shadow: 0 0 0 4px rgba(46, 125, 140, 0.12);
+  box-shadow: 0 0 0 4px rgba(40, 111, 124, 0.12);
 }
 
 .prompt-panel.visible {
@@ -127,13 +127,13 @@
     rgba(255, 255, 255, 0.06) 10px,
     rgba(255, 255, 255, 0.06) 20px
   );
-  border-color: #236472;
+  border-color: #1F5A64; /* ティールより少し濃い縁 */
   flex-direction: column;
   gap: 8px;
 }
 
 .card-grid .flip-card:not(.dimmed):not(.flipped):hover .card-face-back {
-  background-color: #256e7c;
+  filter: brightness(0.88);
 }
 
 .card-grid .flip-card:not(.dimmed):not(.flipped):focus-visible .card-face-back {
@@ -166,7 +166,7 @@
 }
 
 .flip-card.flipped .card-face-front {
-  box-shadow: 0 0 0 3px rgba(46, 125, 140, 0.25);
+  box-shadow: 0 0 0 3px rgba(40, 111, 124, 0.25);
 }
 
 .card-prompt {

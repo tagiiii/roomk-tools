@@ -18,7 +18,7 @@
 .km-header__title { color: var(--color-primary); font-size: 1.7rem; font-weight: 700; margin: 0 0 6px; }
 .km-header__sub { color: var(--color-muted); font-size: 0.95rem; margin: 0; }
 /* みんなにみせる画面の目印（共有するタブを見分けるため） */
-.km-watchbadge { display: inline-block; color: #26697A; background: #E6F2F4; border-radius: var(--radius-full); font-size: 13px; font-weight: 700; padding: 4px 12px; margin: 10px 0 0; }
+.km-watchbadge { display: inline-block; color: var(--color-accent); background: var(--color-accent-soft); border-radius: var(--radius-full); font-size: 13px; font-weight: 700; padding: 4px 12px; margin: 10px 0 0; }
 
 /* ルームの中ではヘッダーを小さく（説明文は入口の画面だけ） */
 .km-wrap:has(#game:not([hidden])) .km-header { margin-bottom: 14px; }
@@ -32,13 +32,13 @@
 .km-note { color: var(--color-muted); font-size: 0.85rem; line-height: 1.6; text-align: center; margin: 12px 0 0; }
 .km-note:empty { display: none; }
 .km-note--left { text-align: left; }
-.km-tag { display: inline-block; color: #26697A; background: #E6F2F4; border-radius: var(--radius-full); font-size: 12px; font-weight: 700; line-height: 1; padding: 4px 8px; white-space: nowrap; }
+.km-tag { display: inline-block; color: var(--color-accent); background: var(--color-accent-soft); border-radius: var(--radius-full); font-size: 12px; font-weight: 700; line-height: 1; padding: 4px 8px; white-space: nowrap; }
 .km-tag--muted { color: var(--color-text); background: #ECEEF0; }
 .km-tag--done { color: var(--color-success); background: #EAF6EE; }
 .km-alt { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 16px; margin: 8px 0 0; }
 .km-quiet-btn { min-height: 44px; padding: 10px 8px; background: none; border: none; font-family: inherit; font-size: var(--font-size-sm); color: var(--color-muted); cursor: pointer; }
 .km-quiet-btn:hover:not(:disabled) { color: var(--color-text); text-decoration: underline; }
-.km-quiet-btn[aria-pressed="true"] { color: #26697A; font-weight: 700; }
+.km-quiet-btn[aria-pressed="true"] { color: var(--color-accent); font-weight: 700; }
 .km-quiet-btn[aria-pressed="true"]::before { content: "✓ "; }
 .km-notice { background: #FFF7E6; color: var(--color-text); border-radius: 10px; padding: 10px 14px; margin: 0 0 16px; }
 button:disabled { opacity: .5; cursor: not-allowed; }
@@ -132,9 +132,9 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 .km-scale { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
 .km-scale__btn { display: flex; flex-direction: column; align-items: center; justify-content: space-between; gap: 8px; min-height: 96px; padding: 16px 6px 12px; border: 2px solid var(--color-border); border-radius: 14px; background: var(--color-surface); color: var(--color-primary); font-family: inherit; font-size: 32px; font-weight: 700; line-height: 1; cursor: pointer; }
 .km-scale__btn:hover:not(:disabled) { border-color: var(--color-accent); background: #F4FAFB; }
-.km-scale__btn[aria-pressed="true"] { border-color: var(--color-accent); background: #E6F2F4; box-shadow: 0 0 0 2px var(--color-accent); }
+.km-scale__btn[aria-pressed="true"] { border-color: var(--color-accent); background: var(--color-accent-soft); box-shadow: 0 0 0 2px var(--color-accent); }
 .km-scale__bar { width: 60%; height: calc(var(--lv-h) * 0.24); min-height: 5px; border-radius: 4px; background: var(--lv-bg); }
-#answer-note { text-align: center; color: #26697A; font-weight: 500; min-height: 24px; margin: 14px 0 0; }
+#answer-note { text-align: center; color: var(--color-accent); font-weight: 500; min-height: 24px; margin: 14px 0 0; }
 .km-progress { text-align: center; margin: 0 0 16px; }
 .km-progress p { color: var(--color-primary); font-weight: 700; margin: 0; }
 .km-progress .btn { margin-top: 12px; }
@@ -151,7 +151,7 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 .km-talk { text-align: center; color: var(--color-primary); font-weight: 500; line-height: 1.8; margin: 18px 0 0; }
 
 /* ── 点数（個人戦の点と順位） ── */
-.km-column__pt { margin-left: 4px; color: #26697A; font-size: 12px; }
+.km-column__pt { margin-left: 4px; color: var(--color-accent); font-size: 12px; }
 .km-ranking__list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 6px 16px; }
 .km-rank { display: flex; align-items: center; gap: 10px; padding: 6px 10px; border-radius: 10px; background: var(--color-bg); }
 .km-rank.is-top { background: #FFF4D6; box-shadow: inset 0 0 0 2px #E8B931; }
@@ -168,8 +168,8 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 #finished-area .btn { margin-bottom: 16px; }
 
 /* ── 次のラウンド ── */
-.km-next { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: center; gap: 4px 12px; background: #E6F2F4; color: var(--color-primary); border-radius: 12px; padding: 14px 16px; margin: 0; text-align: center; }
-.km-next__label { color: #26697A; font-size: 14px; font-weight: 700; }
+.km-next { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: center; gap: 4px 12px; background: var(--color-accent-soft); color: var(--color-primary); border-radius: 12px; padding: 14px 16px; margin: 0; text-align: center; }
+.km-next__label { color: var(--color-accent); font-size: 14px; font-weight: 700; }
 .km-next__name { font-size: 22px; font-weight: 700; overflow-wrap: anywhere; }
 .km-next__away { color: var(--color-muted); font-size: 14px; }
 .km-setup { border-top: 1px solid var(--color-border); margin-top: 18px; padding-top: 16px; }
@@ -179,7 +179,7 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 .km-setup .btn { margin-top: 18px; }
 .km-pills { display: flex; flex-wrap: wrap; gap: 8px; }
 .km-pill { min-width: 72px; min-height: 44px; padding: 8px 14px; border-radius: var(--radius-full); border: 2px solid var(--color-border); background: var(--color-surface); color: var(--color-text); font-family: inherit; font-size: 15px; font-weight: 700; cursor: pointer; }
-.km-pill[aria-pressed="true"] { border-color: var(--color-accent); background: #E6F2F4; color: #26697A; }
+.km-pill[aria-pressed="true"] { border-color: var(--color-accent); background: var(--color-accent-soft); color: var(--color-accent); }
 .km-pill[aria-pressed="true"]::before { content: "✓ "; }
 
 /* ── 端末なしの参加者（進行役が代わりに入力） ── */
@@ -193,7 +193,7 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 .km-proxy__btns { display: flex; flex-wrap: wrap; gap: 6px; }
 .km-proxy__btn { min-width: 44px; min-height: 44px; padding: 4px 10px; border: 2px solid var(--color-border); border-radius: 10px; background: var(--color-surface); color: var(--color-primary); font-family: inherit; font-size: 18px; font-weight: 700; cursor: pointer; }
 .km-proxy__btn--pass { font-size: 14px; color: var(--color-muted); }
-.km-proxy__btn[aria-pressed="true"] { border-color: var(--color-accent); background: #E6F2F4; box-shadow: 0 0 0 2px var(--color-accent); }
+.km-proxy__btn[aria-pressed="true"] { border-color: var(--color-accent); background: var(--color-accent-soft); box-shadow: 0 0 0 2px var(--color-accent); }
 
 /* ── そのほかの操作（進行役） ── */
 .km-hostmenu { padding: 4px 20px; }
@@ -214,7 +214,7 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 
 /* ── みんなにみせる画面の待合室：参加のしかた ── */
 .km-joinguide { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); gap: 20px 32px; align-items: center; padding: 24px 28px; }
-.km-joinguide__codebox { text-align: center; background: #E6F2F4; border-radius: 12px; padding: 18px 12px; }
+.km-joinguide__codebox { text-align: center; background: var(--color-accent-soft); border-radius: 12px; padding: 18px 12px; }
 .km-joinguide__label { color: var(--color-accent); font-size: 14px; font-weight: 700; letter-spacing: 0.08em; margin: 0 0 6px; }
 .km-joinguide__code { color: var(--color-primary); font-size: 56px; font-weight: 700; letter-spacing: 0.14em; line-height: 1.2; margin: 0; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 .km-joinguide__steps { list-style: none; margin: 0; padding: 0; }
@@ -228,7 +228,7 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 }
 
 /* ── 進行役の戻りを待つ画面（しるしでヒントのオーバーレイと同じ形） ── */
-.km-overlay { position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; padding: 20px; background: rgba(18, 37, 54, 0.8); }
+.km-overlay { position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; padding: 20px; background: rgba(63, 54, 45, 0.8); }
 .km-overlay[hidden] { display: none; }
 .km-overlay__panel { background: var(--color-surface); border-radius: 14px; padding: 28px; max-width: 420px; text-align: center; }
 .km-overlay__title { color: var(--color-primary); font-size: 1.3rem; margin: 14px 0 8px; }

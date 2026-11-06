@@ -51,7 +51,12 @@
   const icon = (name, cls) => h('span', { class: 'material-symbols-rounded' + (cls ? ' ' + cls : ''), 'aria-hidden': 'true', text: name });
   function sv(tag, attrs, parent) {
     const e = document.createElementNS(SVGNS, tag);
-    Object.entries(attrs || {}).forEach(([k, v]) => { if (v != null) e.setAttribute(k, String(v)); });
+    Object.entries(attrs || {}).forEach(([k, v]) => {
+      if (v == null) return;
+      // 共通の色の変数（var(...)）は SVG の属性では効かないブラウザがあるので、style で入れる
+      if ((k === 'fill' || k === 'stroke') && String(v).startsWith('var(')) e.style.setProperty(k, String(v));
+      else e.setAttribute(k, String(v));
+    });
     if (parent) parent.appendChild(e);
     return e;
   }
@@ -276,14 +281,14 @@
       const w = text.length * 15 + 20;
       const g = sv('g', { 'aria-hidden': 'true' }, svg);
       const work = D.LANES[t.lane].kind === 'work';
-      sv('rect', { x: t.x - w / 2, y: t.y - 12, width: w, height: 24, rx: 12, fill: work ? '#1C3F5E' : '#FFFFFF', stroke: '#1C3F5E', 'stroke-width': 1.5 }, g);
-      svText(g, text, { x: t.x, y: t.y + 1, 'font-size': 14, 'font-weight': 700, fill: work ? '#FFFFFF' : '#1C3F5E', class: 'cs-b-label' });
+      sv('rect', { x: t.x - w / 2, y: t.y - 12, width: w, height: 24, rx: 12, fill: work ? 'var(--color-primary)' : '#FFFFFF', stroke: 'var(--color-primary)', 'stroke-width': 1.5 }, g);
+      svText(g, text, { x: t.x, y: t.y + 1, 'font-size': 14, 'font-weight': 700, fill: work ? '#FFFFFF' : 'var(--color-primary)', class: 'cs-b-label' });
     });
     // 近道・寄り道の札
     D.NODES.filter((n) => n.fork).forEach((n) => n.next.forEach((m, i) => {
       const b = NODE[m];
       const up = b.y <= n.y;
-      svText(svg, n.fork[i], { x: b.x + (up ? 0 : -16), y: up ? b.y - 30 : b.y + 30, 'font-size': 13, 'font-weight': 700, fill: '#5A6270', class: 'cs-b-label', 'aria-hidden': 'true' });
+      svText(svg, n.fork[i], { x: b.x + (up ? 0 : -16), y: up ? b.y - 30 : b.y + 30, 'font-size': 13, 'font-weight': 700, fill: 'var(--color-muted)', class: 'cs-b-label', 'aria-hidden': 'true' });
     }));
     const tiles = sv('g', {}, svg);
     D.NODES.forEach((n) => drawNode(tiles, n));
@@ -321,19 +326,19 @@
       sv('circle', { cx: x, cy: y, r, fill: '#FFFFFF' }, g);
       const len = (2 * Math.PI * r) / 6;
       D.APTS.forEach((t, i) => sv('circle', { cx: x, cy: y, r, fill: 'none', stroke: t.color, 'stroke-width': 4, 'stroke-dasharray': `${len} ${len * 5}`, 'stroke-dashoffset': String(-len * i), transform: `rotate(-90 ${x} ${y})` }, g));
-      iconAt('interests', '#1C3F5E', 19);
+      iconAt('interests', 'var(--color-primary)', 19);
     } else if (type === 'event') {
-      sv('circle', { cx: x, cy: y, r, fill: '#1C3F5E' }, g);
+      sv('circle', { cx: x, cy: y, r, fill: 'var(--color-primary)' }, g);
       iconAt('style', '#FFFFFF', 19);
     } else if (type === 'pay') {
-      sv('circle', { cx: x, cy: y, r, fill: '#FFFFFF', stroke: '#2E7D8C', 'stroke-width': 3 }, g);
+      sv('circle', { cx: x, cy: y, r, fill: '#FFFFFF', stroke: 'var(--color-accent)', 'stroke-width': 3 }, g);
       iconAt('work', '#9A6400', 20);
     } else if (type === 'grow') {
-      sv('circle', { cx: x, cy: y, r, fill: '#E3F1F2', stroke: '#2E7D8C', 'stroke-width': 2 }, g);
-      iconAt('trending_up', '#2E7D8C');
+      sv('circle', { cx: x, cy: y, r, fill: 'var(--color-accent-soft)', stroke: 'var(--color-accent)', 'stroke-width': 2 }, g);
+      iconAt('trending_up', 'var(--color-accent)');
     } else if (type === 'change') {
-      sv('circle', { cx: x, cy: y, r, fill: '#FFFFFF', stroke: '#5A6270', 'stroke-width': 2 }, g);
-      iconAt('swap_horiz', '#1C3F5E');
+      sv('circle', { cx: x, cy: y, r, fill: '#FFFFFF', stroke: 'var(--color-muted)', 'stroke-width': 2 }, g);
+      iconAt('swap_horiz', 'var(--color-primary)');
     } else if (type === 'mini') {
       sv('circle', { cx: x, cy: y, r, fill: '#FFE9C7', stroke: '#D9822B', 'stroke-width': 3 }, g);
       iconAt('sports_esports', '#B35C00');
@@ -344,19 +349,19 @@
     const g = sv('g', { role: 'img', 'aria-label': nodeTitle(n) }, parent);
     sv('title', {}, g).textContent = nodeTitle(n);
     if (n.type === 'start') {
-      sv('rect', { x: n.x - 38, y: n.y - 24, width: 76, height: 48, rx: 12, fill: '#E6EDF3', stroke: '#1C3F5E', 'stroke-width': 2 }, g);
-      svText(g, 'スタート', { x: n.x, y: n.y - 7, 'font-size': 14, 'font-weight': 700, fill: '#1C3F5E', class: 'cs-b-label' });
-      svText(g, '6さい', { x: n.x, y: n.y + 11, 'font-size': 12, fill: '#1C3F5E', class: 'cs-b-label' });
+      sv('rect', { x: n.x - 38, y: n.y - 24, width: 76, height: 48, rx: 12, fill: 'var(--color-primary-soft)', stroke: 'var(--color-primary)', 'stroke-width': 2 }, g);
+      svText(g, 'スタート', { x: n.x, y: n.y - 7, 'font-size': 14, 'font-weight': 700, fill: 'var(--color-primary)', class: 'cs-b-label' });
+      svText(g, '6さい', { x: n.x, y: n.y + 11, 'font-size': 12, fill: 'var(--color-primary)', class: 'cs-b-label' });
     } else if (n.type === 'stop') {
-      sv('rect', { x: n.x - 40, y: n.y - 25, width: 80, height: 50, rx: 12, fill: '#1C3F5E' }, g);
+      sv('rect', { x: n.x - 40, y: n.y - 25, width: 80, height: 50, rx: 12, fill: 'var(--color-primary)' }, g);
       svText(g, `${n.age}さい`, { x: n.x, y: n.y - 6, 'font-size': 18, 'font-weight': 700, fill: '#FFFFFF', class: 'cs-b-label' });
-      svText(g, '節目', { x: n.x, y: n.y + 13, 'font-size': 12, fill: '#CFE0EC', class: 'cs-b-label' });
+      svText(g, '節目', { x: n.x, y: n.y + 13, 'font-size': 12, fill: 'var(--color-primary-soft)', class: 'cs-b-label' });
     } else if (n.type === 'goal') {
-      sv('circle', { cx: n.x, cy: n.y, r: 42, fill: '#1C3F5E' }, g);
-      sv('circle', { cx: n.x, cy: n.y, r: 48, fill: 'none', stroke: '#1C3F5E', 'stroke-width': 2, 'stroke-dasharray': '4 5' }, g);
+      sv('circle', { cx: n.x, cy: n.y, r: 42, fill: 'var(--color-primary)' }, g);
+      sv('circle', { cx: n.x, cy: n.y, r: 48, fill: 'none', stroke: 'var(--color-primary)', 'stroke-width': 2, 'stroke-dasharray': '4 5' }, g);
       svText(g, 'flag', { x: n.x, y: n.y - 14, 'font-size': 24, fill: '#FFD76A', class: 'cs-b-icon', 'aria-hidden': 'true' });
       svText(g, 'ゴール', { x: n.x, y: n.y + 8, 'font-size': 15, 'font-weight': 700, fill: '#FFFFFF', class: 'cs-b-label' });
-      svText(g, '35さい', { x: n.x, y: n.y + 26, 'font-size': 12, fill: '#CFE0EC', class: 'cs-b-label' });
+      svText(g, '35さい', { x: n.x, y: n.y + 26, 'font-size': 12, fill: 'var(--color-primary-soft)', class: 'cs-b-label' });
     } else {
       drawSquare(g, n.type, n.x, n.y, n.apt);
     }
@@ -624,7 +629,7 @@
     return n;
   }
   function meter(v) {
-    return h('span', { class: 'cs-meter', role: 'img', 'aria-label': `いま ${v}` }, Array.from({ length: D.APT_CAP }, (_, i) => h('i', { style: i < v ? 'background:#2E7D8C' : null })));
+    return h('span', { class: 'cs-meter', role: 'img', 'aria-label': `いま ${v}` }, Array.from({ length: D.APT_CAP }, (_, i) => h('i', { style: i < v ? 'background:var(--color-accent)' : null })));
   }
   const rewardText = (r) => (r.t === 'apt' ? `${aptOf(r.a).name} +1` : `+${r.n}ポイント`);
 
@@ -716,10 +721,10 @@
       const n = NODE[pv.node];
       const k = seen[pv.node] = (seen[pv.node] || 0) + 1;
       const big = n.type === 'stop' || n.type === 'start' || n.type === 'goal';
-      if (k === 1) sv('circle', { cx: n.x, cy: n.y, r: big ? 50 : 27, fill: 'none', stroke: '#2E7D8C', 'stroke-width': 3, 'stroke-dasharray': '6 4' }, hiLayer);
+      if (k === 1) sv('circle', { cx: n.x, cy: n.y, r: big ? 50 : 27, fill: 'none', stroke: 'var(--color-accent)', 'stroke-width': 3, 'stroke-dasharray': '6 4' }, hiLayer);
       const bx = n.x + (k === 1 ? 0 : 26);
       const by = n.y - (big ? 52 : 34);
-      sv('circle', { cx: bx, cy: by, r: 13, fill: '#2E7D8C', stroke: '#FFFFFF', 'stroke-width': 2 }, hiLayer);
+      sv('circle', { cx: bx, cy: by, r: 13, fill: 'var(--color-accent)', stroke: '#FFFFFF', 'stroke-width': 2 }, hiLayer);
       svText(hiLayer, NUM[i], { x: bx, y: by + 1, 'font-size': 15, 'font-weight': 700, fill: '#FFFFFF', class: 'cs-b-label' });
     });
   }
@@ -1109,7 +1114,7 @@
   function openNotebook(pid, opener) {
     const p = P(pid);
     const body = h('div', {});
-    body.appendChild(h('p', { style: 'display:flex;align-items:center;gap:10px;margin-bottom:12px' }, dot(p), h('b', { style: 'font-size:18px' }, `${p.name}さん`), h('span', { style: 'color:#5A6270;font-size:14px' }, where(p) + (p.skip > 0 && !p.done ? '・つぎの番は休み' : ''))));
+    body.appendChild(h('p', { style: 'display:flex;align-items:center;gap:10px;margin-bottom:12px' }, dot(p), h('b', { style: 'font-size:18px' }, `${p.name}さん`), h('span', { style: 'color:var(--color-muted);font-size:14px' }, where(p) + (p.skip > 0 && !p.done ? '・つぎの番は休み' : ''))));
     body.appendChild(h('h3', {}, '職業'));
     if (p.job != null) {
       const j = jobOf(p.job);
@@ -1118,7 +1123,7 @@
         jobCalc(p.apt, p.job),
       ), payBadge(E.stars(p.apt, p.job))));
     } else {
-      body.appendChild(h('p', { style: 'color:#5A6270' }, p.prevJob != null ? `いまは学びの道（前の仕事: ${jobOf(p.prevJob).name}）` : 'まだ決めていない。体験で適性をためて、あとで選ぶ'));
+      body.appendChild(h('p', { style: 'color:var(--color-muted)' }, p.prevJob != null ? `いまは学びの道（前の仕事: ${jobOf(p.prevJob).name}）` : 'まだ決めていない。体験で適性をためて、あとで選ぶ'));
     }
     body.appendChild(h('button', { class: 'cs-quiet', type: 'button', onclick: () => { const o = modalOpener; closeModal(); openJobBook(p.id, o); } }, icon('menu_book'), 'しごと図鑑（職業ごとの合う適性とポイント）'));
     body.appendChild(h('h3', {}, '適性'));
@@ -1135,7 +1140,7 @@
       h('div', {}, h('b', {}, String(p.pts.mini || 0)), h('span', {}, 'ミニゲーム')),
       h('div', {}, h('b', {}, String(p.pts.bonus)), h('span', {}, 'ゴール')),
     ));
-    body.appendChild(h('p', { style: 'margin-top:10px;font-size:13px;color:#5A6270' }, 'ポイントはゲームの中のもの。本当の向き・不向きとは関係ありません。'));
+    body.appendChild(h('p', { style: 'margin-top:10px;font-size:13px;color:var(--color-muted)' }, 'ポイントはゲームの中のもの。本当の向き・不向きとは関係ありません。'));
     openModal('手帳', body, opener);
   }
 
@@ -1189,7 +1194,7 @@
     svg.setAttribute('viewBox', '0 0 40 40');
     svg.setAttribute('aria-hidden', 'true');
     if (type === 'stop') {
-      sv('rect', { x: 2, y: 8, width: 36, height: 24, rx: 6, fill: '#1C3F5E' }, svg);
+      sv('rect', { x: 2, y: 8, width: 36, height: 24, rx: 6, fill: 'var(--color-primary)' }, svg);
       svText(svg, '節目', { x: 20, y: 21, 'font-size': 11, 'font-weight': 700, fill: '#FFFFFF', class: 'cs-b-label' });
     } else {
       drawSquare(svg, type, 20, 20, apt);
@@ -1251,7 +1256,7 @@
       h('p', {}, '自分の番は、自分の端末で押す。ほかの人の番は、その人が選ぶのを見ていてね。端末のない人・つながらなくなった人の番は、ホストが代わりに押す。途中で「退出する」を押しても、その人の番はホストが代わりに押せる。'),
       h('h3', {}, '休み・応援'),
       h('p', {}, 'イベントで1回休みになっても、なかまマスでさそってもらうと休みがなくなる。ゴールした人は、まだの人のサイコロに +1 の応援ができる。'),
-      h('p', { style: 'margin-top:12px;font-size:14px;color:#5A6270' }, 'ポイントはゲームの中のもの。本当の向き・不向きとは関係ありません。'),
+      h('p', { style: 'margin-top:12px;font-size:14px;color:var(--color-muted)' }, 'ポイントはゲームの中のもの。本当の向き・不向きとは関係ありません。'),
     );
     openModal('あそびかた', body, opener);
   }

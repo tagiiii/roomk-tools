@@ -133,7 +133,7 @@
   font-size: var(--font-size-body);
   font-weight: 700;
   color: var(--color-primary);
-  background: rgba(28, 63, 94, 0.08);
+  background: rgba(106, 79, 53, 0.08);
   padding: 4px 14px;
   border-radius: var(--radius-full);
 }
@@ -202,10 +202,10 @@
 
 /* ── Result: Found Highlight ── */
 .ks-cell--found {
-  background: rgba(46, 125, 140, 0.13);
+  background: rgba(40, 111, 124, 0.13);
   border-color: var(--color-accent);
   border-width: 2.5px;
-  box-shadow: 0 0 0 3px rgba(46, 125, 140, 0.10);
+  box-shadow: 0 0 0 3px rgba(40, 111, 124, 0.10);
 }
 .ks-cell--found .ks-cell__inner {
   color: var(--color-accent);

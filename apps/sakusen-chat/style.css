@@ -167,7 +167,7 @@ body.sc-chatting .howto-fab {
   cursor: pointer;
 }
 
-.sc-icon-btn:hover { background: #EEF3F8; }
+.sc-icon-btn:hover { background: var(--color-primary-soft); }
 
 .sc-icon-btn:focus-visible,
 .sc-topic:focus-visible,
@@ -248,10 +248,10 @@ body.sc-chatting .howto-fab {
   cursor: pointer;
 }
 
-.sc-topic:hover { background: #EEF3F8; }
+.sc-topic:hover { background: var(--color-primary-soft); }
 
 .sc-topic[aria-current="true"] {
-  background: #E6F1F3;
+  background: var(--color-accent-soft);
   border-color: var(--color-accent);
 }
 
@@ -459,7 +459,7 @@ body.sc-chatting .howto-fab {
 }
 
 .sc-msg--me .sc-msg__bubble {
-  background: #DDEEF1;
+  background: var(--color-accent-soft);
   border-color: #B9D8DE;
   border-bottom-right-radius: 4px;
 }
@@ -560,7 +560,7 @@ body.sc-chatting .howto-fab {
   cursor: pointer;
 }
 
-.sc-choice:hover { border-color: var(--color-accent); background: #F2F8F9; }
+.sc-choice:hover { border-color: var(--color-accent); background: var(--color-accent-soft); }
 
 .sc-choice__num {
   flex-shrink: 0;
@@ -632,7 +632,7 @@ body.sc-chatting .howto-fab {
   align-items: center;
   justify-content: center;
   padding: 20px;
-  background: rgba(28, 63, 94, 0.55);
+  background: rgba(106, 79, 53, 0.55);
 }
 
 .sc-overlay__panel {

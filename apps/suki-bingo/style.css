@@ -2,8 +2,8 @@
    共通スタイルは design-system.css に定義済み */
 
 .wrapper {
-  --sb-tint: #E4F1F3;
-  --sb-teal-text: #26697A; /* 淡いティールの上で 4.5:1 以上 */
+  --sb-tint: var(--color-accent-soft);
+  --sb-teal-text: var(--color-accent); /* 淡いティールの上で 4.5:1 以上 */
   max-width: 760px;
   margin: 0 auto;
   padding: 40px 20px 80px;
@@ -16,7 +16,7 @@
 .sb-header__sub { color: var(--color-muted); font-size: 0.95rem; margin: 0; }
 /* みんなにみせる画面の目印（共有するタブを見分けるため） */
 .sb-watchbadge {
-  display: inline-block; color: var(--sb-teal-text); background: #E6F2F4;
+  display: inline-block; color: var(--sb-teal-text); background: var(--color-accent-soft);
   border-radius: var(--radius-full); font-size: 13px; font-weight: 700;
   padding: 4px 12px; margin: 10px 0 0;
 }
@@ -55,7 +55,7 @@
   letter-spacing: 0.06em; margin: 24px 0 10px;
 }
 .sb-tag {
-  display: inline-block; color: var(--sb-teal-text); background: #E6F2F4;
+  display: inline-block; color: var(--sb-teal-text); background: var(--color-accent-soft);
   border-radius: var(--radius-full); font-size: 12px; font-weight: 700; line-height: 1;
   padding: 4px 8px; margin-left: 8px; vertical-align: 2px; white-space: nowrap;
 }
@@ -319,7 +319,7 @@ button.sb-cand:hover:not([aria-disabled="true"]) { border-color: var(--color-acc
 /* ── ホスト切断のオーバーレイ ── */
 .sb-overlay {
   position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center;
-  padding: 20px; background: rgba(18, 37, 54, 0.8);
+  padding: 20px; background: rgba(63, 54, 45, 0.8);
 }
 .sb-overlay__panel { background: var(--color-surface); border-radius: 14px; padding: 28px; max-width: 420px; text-align: center; }
 .sb-overlay__panel h2 { color: var(--color-primary); font-size: 1.3rem; }

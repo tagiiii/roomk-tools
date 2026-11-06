@@ -200,7 +200,7 @@
 
 .dc-choice--picked {
   border-color: var(--color-accent);
-  background: #e7f1f3;
+  background: var(--color-accent-soft);
   animation: dc-pick-in 0.45s ease;
 }
 

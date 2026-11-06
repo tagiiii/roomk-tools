@@ -41,7 +41,7 @@
     .kp-hero { text-align: center; padding: 8px 0 20px; }
     .kp-hero__icon {
       width: 76px; height: 76px; border-radius: 50%;
-      background: linear-gradient(135deg, #2E7D8C, #1C3F5E);
+      background: linear-gradient(135deg, var(--color-accent), var(--color-primary));
       display: flex; align-items: center; justify-content: center;
       margin: 0 auto 14px;
     }
@@ -77,7 +77,7 @@
     .kp-room-code {
       font-size: 48px; font-weight: 700; letter-spacing: 0.2em;
       color: var(--color-primary); text-align: center;
-      padding: 16px; background: #EEF3F8; border-radius: 12px;
+      padding: 16px; background: var(--color-primary-soft); border-radius: 12px;
       user-select: all; margin-bottom: 12px;
     }
     .kp-code-input {
@@ -97,7 +97,7 @@
       border-radius: 4px; background: var(--color-accent); color: #fff;
     }
     .kp-tag--me { background: var(--color-muted); }
-    .kp-tag--role { background: #EEF3F8; color: var(--color-primary); }
+    .kp-tag--role { background: var(--color-primary-soft); color: var(--color-primary); }
 
     /* ── 待合室の設定（ホストのみ）── */
     .kp-check {
@@ -114,7 +114,7 @@
       border-radius: 12px; cursor: pointer; font-family: var(--font-base);
       transition: border-color var(--transition-base), background var(--transition-base);
     }
-    .kp-pack[aria-pressed="true"] { border-color: var(--color-accent); background: #EEF6F7; }
+    .kp-pack[aria-pressed="true"] { border-color: var(--color-accent); background: var(--color-accent-soft); }
     .kp-pack__num { color: var(--color-accent); font-weight: 700; font-feature-settings: "palt"; flex-shrink: 0; }
     .kp-pack__body { flex: 1; }
     .kp-pack__title { display: block; font-size: 17px; font-weight: 700; color: var(--color-primary); }
@@ -130,7 +130,7 @@
       font-size: 17px; font-weight: 700; color: var(--color-primary);
       display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
     }
-    .kp-size[aria-pressed="true"] { border-color: var(--color-accent); background: #EEF6F7; }
+    .kp-size[aria-pressed="true"] { border-color: var(--color-accent); background: var(--color-accent-soft); }
     .kp-size:disabled { opacity: 0.4; cursor: not-allowed; }
     .kp-size span { font-size: 12px; font-weight: 500; color: var(--color-muted); }
 
@@ -141,7 +141,7 @@
       background: var(--color-surface); border: 2px solid var(--color-border);
       font-size: 17px; font-weight: 700; color: var(--color-primary); text-align: center;
     }
-    .kp-turnbar--mine { border-color: var(--color-accent); background: #EEF6F7; }
+    .kp-turnbar--mine { border-color: var(--color-accent); background: var(--color-accent-soft); }
     .kp-turnbar .material-symbols-rounded { font-size: 22px; color: var(--color-accent); flex-shrink: 0; }
     .kp-meta {
       display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 14px;
@@ -160,7 +160,7 @@
     }
     .kp-banner--match { border-color: var(--color-success); background: #ECFDF5; }
     .kp-banner--miss { border-color: var(--color-border); background: #F7F5F1; }
-    .kp-banner--cross { border-color: var(--color-accent); background: #EEF6F7; }
+    .kp-banner--cross { border-color: var(--color-accent); background: var(--color-accent-soft); }
     .kp-banner .material-symbols-rounded { font-size: 28px; flex-shrink: 0; }
     .kp-banner--match .material-symbols-rounded { color: var(--color-success); }
     .kp-banner--miss .material-symbols-rounded { color: var(--color-muted); }
@@ -188,7 +188,7 @@
 
     /* 裏向きの札。番号だけを大きく見せる（語のテキストは DOM に入れない）。
        色は控えめにしつつ、枠と番号の濃さで「押せる」ことは分かるようにする */
-    .kp-card--closed { background: #F3F6FA; border-style: dashed; }
+    .kp-card--closed { background: var(--color-primary-soft); border-style: dashed; }
     .kp-card--closed .kp-card__num { font-size: 24px; color: var(--color-muted); }
     .kp-card--closed:not(:disabled) .kp-card__num { color: var(--color-accent); }
 
@@ -202,8 +202,8 @@
     .kp-card:not(:disabled):hover { border-color: var(--color-accent); }
     .kp-card:not(:disabled):active { transform: scale(0.97); }
     .kp-card--selected {
-      border-color: var(--color-accent); background: #EEF6F7;
-      box-shadow: 0 0 0 3px rgba(46, 125, 140, 0.18); opacity: 1;
+      border-color: var(--color-accent); background: var(--color-accent-soft);
+      box-shadow: 0 0 0 3px rgba(40, 111, 124, 0.18); opacity: 1;
     }
     .kp-card--selected .kp-card__mark { display: block; color: var(--color-accent); }
     .kp-card--matched {
@@ -256,7 +256,7 @@
       cursor: pointer; font-family: var(--font-base); font-size: 14px; font-weight: 700;
       color: var(--color-primary);
     }
-    .kp-chip[aria-pressed="true"] { border-color: var(--color-accent); background: #EEF6F7; }
+    .kp-chip[aria-pressed="true"] { border-color: var(--color-accent); background: var(--color-accent-soft); }
 
     /* ── 待機中ドット ── */
     .kp-dots::after { content: ''; animation: kp-dots 1.5s infinite; }
@@ -265,7 +265,7 @@
     /* ── オーバーレイ ── */
     .overlay {
       display: none; position: fixed; inset: 0;
-      background: rgba(28,63,94,0.88); z-index: 100;
+      background: rgba(106,79,53,0.88); z-index: 100;
       flex-direction: column; align-items: center; justify-content: center;
       gap: 16px; color: #fff; text-align: center; padding: 24px;
     }

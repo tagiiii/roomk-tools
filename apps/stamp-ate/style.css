@@ -38,8 +38,8 @@
 /* みんなにみせる画面の目印（共有するタブを見分けるため） */
 .sa-watchbadge {
   display: inline-block;
-  color: #26697A;
-  background: #E6F2F4;
+  color: var(--color-accent);
+  background: var(--color-accent-soft);
   border-radius: var(--radius-full);
   font-size: 13px;
   font-weight: 700;
@@ -105,8 +105,8 @@
 
 .sa-tag {
   display: inline-block;
-  color: #26697A; /* 淡いティールの上で 4.5:1 以上 */
-  background: #E6F2F4;
+  color: var(--color-accent); /* 淡いティールの上で 4.5:1 以上 */
+  background: var(--color-accent-soft);
   border-radius: var(--radius-full);
   font-size: 12px;
   font-weight: 700;
@@ -425,7 +425,7 @@
 
 .sa-pal.is-selected {
   border-color: var(--color-accent);
-  background: #E6F2F4;
+  background: var(--color-accent-soft);
   box-shadow: inset 0 0 0 1px var(--color-accent);
 }
 
@@ -493,7 +493,7 @@
 
 .sa-size.is-selected {
   border-color: var(--color-accent);
-  background: #E6F2F4;
+  background: var(--color-accent-soft);
   box-shadow: inset 0 0 0 1px var(--color-accent);
 }
 
@@ -648,7 +648,7 @@ button.sa-choice:hover { border-color: var(--color-accent); }
 
 .sa-choice.is-selected {
   border-color: var(--color-accent);
-  background: #E6F2F4;
+  background: var(--color-accent-soft);
   color: var(--color-primary);
   box-shadow: inset 0 0 0 1px var(--color-accent);
 }
@@ -769,7 +769,7 @@ button.sa-choice:hover { border-color: var(--color-accent); }
   display: grid;
   place-items: center;
   padding: 20px;
-  background: rgba(18, 37, 54, 0.8);
+  background: rgba(63, 54, 45, 0.8);
 }
 
 .sa-overlay__panel {

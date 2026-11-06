@@ -15,7 +15,7 @@ body { background: var(--color-bg); }
 .cb-panel__actions { display: grid; gap: 12px; }
 .cb-alert { margin: 12px 0 0; color: var(--color-error); font-weight: 500; }
 .cb-back { margin: -8px 0 4px -8px; }
-.cb-hint { margin: 0 0 16px; padding: 10px 14px; border-radius: var(--radius-sm); background: #EAF4F6; color: var(--color-primary); line-height: 1.6; font-size: 14px; }
+.cb-hint { margin: 0 0 16px; padding: 10px 14px; border-radius: var(--radius-sm); background: var(--color-accent-soft); color: var(--color-primary); line-height: 1.6; font-size: 14px; }
 .cb-code-input { text-transform: uppercase; letter-spacing: 0.2em; font-weight: 700; }
 
 /* 弱いボタン（テキストリンク風） */
@@ -25,7 +25,7 @@ body { background: var(--color-bg); }
   color: var(--color-accent); font-family: inherit; font-size: 15px; font-weight: 500; cursor: pointer;
   border-radius: var(--radius-sm);
 }
-.cb-quiet:hover { background: rgba(46, 125, 140, 0.08); }
+.cb-quiet:hover { background: rgba(40, 111, 124, 0.08); }
 .cb-quiet:disabled { color: #A3AAB3; cursor: not-allowed; background: none; }
 .cb-quiet .material-symbols-rounded { font-size: 20px; }
 .cb-quiet--center { justify-self: center; align-self: center; }
@@ -121,7 +121,7 @@ body { background: var(--color-bg); }
 .cb-tray__svg { display: block; width: 100%; height: auto; border-radius: 14px; box-shadow: var(--shadow-sm); }
 .cb-overlay {
   position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
-  background: rgba(28, 63, 94, 0.82); color: #fff; border-radius: 14px; text-align: center; gap: 4px;
+  background: rgba(106, 79, 53, 0.82); color: #fff; border-radius: 14px; text-align: center; gap: 4px;
 }
 .cb-overlay--ok { background: rgba(31, 110, 60, 0.86); }
 .cb-overlay__big { margin: 0; font-size: clamp(32px, 8vw, 60px); font-weight: 700; line-height: 1.2; }
@@ -199,7 +199,7 @@ body { background: var(--color-bg); }
   background: var(--color-surface); border: 2px solid var(--color-border); cursor: text;
 }
 /* 入れられるときは、フォーカスした入力欄と同じ見た目（ティールの枠と影） */
-.cb-display.is-active { border-color: var(--color-accent); box-shadow: 0 0 0 4px rgba(46, 125, 140, 0.18); }
+.cb-display.is-active { border-color: var(--color-accent); box-shadow: 0 0 0 4px rgba(40, 111, 124, 0.18); }
 .cb-display__kb { color: var(--color-accent); font-size: 26px; margin-right: 2px; }
 .cb-display__num { font-size: 40px; line-height: 1; font-weight: 700; color: var(--color-primary); font-variant-numeric: tabular-nums; }
 .cb-display__unit { font-size: 20px; font-weight: 700; margin-left: auto; padding-left: 8px; }

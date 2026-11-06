@@ -4,10 +4,8 @@
    接頭辞 cs-（career sugoroku）・BEM。 */
 
 :root {
-  --color-primary-soft: #E6EDF3;
-  --color-accent-soft: #E3F1F2;
   --cs-radius: 16px;
-  --cs-shadow: 0 1px 2px rgba(28, 63, 94, .06), 0 8px 24px rgba(28, 63, 94, .10);
+  --cs-shadow: 0 1px 2px rgba(106, 79, 53, .06), 0 8px 24px rgba(106, 79, 53, .10);
   --font-base: 'Noto Sans JP', 'Hiragino Sans', sans-serif;
   --font-display: 'Zen Maru Gothic', 'Noto Sans JP', sans-serif;
 }
@@ -56,7 +54,7 @@ button:disabled { cursor: default; }
 }
 .cs-btn:active:not(:disabled) { transform: translateY(1px); }
 .cs-btn--primary { background: var(--color-primary); color: #fff; }
-.cs-btn--primary:hover:not(:disabled) { background: #163349; }
+.cs-btn--primary:hover:not(:disabled) { background: var(--color-primary-dark); }
 .cs-btn--secondary { background: var(--color-surface); color: var(--color-primary); border-color: var(--color-primary); }
 .cs-btn--secondary:hover:not(:disabled) { background: var(--color-primary-soft); }
 .cs-btn--danger { background: var(--color-surface); color: var(--color-error); border-color: var(--color-error); }
@@ -138,7 +136,7 @@ button:disabled { cursor: default; }
 .cs-quiet--danger { color: var(--color-error); }
 .cs-quiet--danger:hover { color: #8F1414; }
 .cs-player__tag--me { background: var(--color-primary-soft); color: var(--color-primary); padding-left: 8px; }
-.cs-player__tag--off { background: #EEEAE2; color: #5A6270; }
+.cs-player__tag--off { background: #EEEAE2; color: var(--color-muted); }
 .cs-banner { margin: 10px 16px 0; padding: 10px 14px; border-radius: 12px; background: #FFF1D6; color: #7A4E00; font-weight: 700; }
 .cs-card__wait, .cs-card__proxy { display: flex; align-items: center; gap: 6px; margin: -6px 0 8px; font-size: 14px; font-weight: 700; }
 .cs-card__wait { color: #7A4E00; }
@@ -198,16 +196,16 @@ button:disabled { cursor: default; }
 /* カード（盤面の上に重ねる） */
 .cs-card-layer {
   position: absolute; inset: 0; border-radius: var(--cs-radius);
-  background: rgba(28, 63, 94, .18);
+  background: rgba(106, 79, 53, .18);
   display: flex; align-items: center; justify-content: center; padding: 14px;
 }
 .cs-card {
   width: 100%; max-width: 580px; max-height: 100%; overflow-y: auto;
-  background: var(--color-surface); border-radius: 18px; box-shadow: 0 10px 40px rgba(28, 63, 94, .28);
+  background: var(--color-surface); border-radius: 18px; box-shadow: 0 10px 40px rgba(106, 79, 53, .28);
   padding: 22px 26px 20px; border-top: 6px solid var(--color-accent);
 }
 /* 盤面を見ながら選ぶカード（サイコロ2つ）: 背景を暗くしすぎず、駒と反対側に寄せる */
-.cs-card-layer--top, .cs-card-layer--bottom { background: rgba(28, 63, 94, .05); }
+.cs-card-layer--top, .cs-card-layer--bottom { background: rgba(106, 79, 53, .05); }
 .cs-card-layer--top { align-items: flex-start; }
 .cs-card-layer--bottom { align-items: flex-end; }
 .cs-card--compact { max-width: 760px; padding: 14px 20px 14px; border-top-width: 5px; }
@@ -247,7 +245,7 @@ button:disabled { cursor: default; }
   min-height: 56px; padding: 10px 14px; border-radius: 12px;
   border: 2px solid var(--color-border); background: var(--color-surface);
 }
-.cs-choice:hover:not(:disabled) { border-color: var(--color-accent); background: #F4FAFA; }
+.cs-choice:hover:not(:disabled) { border-color: var(--color-accent); background: var(--color-accent-soft); }
 .cs-choice__num { color: var(--color-accent); font-weight: 700; font-size: 20px; font-feature-settings: 'palt'; flex-shrink: 0; min-width: 1.2em; text-align: center; }
 .cs-choice__body { flex: 1; min-width: 0; }
 .cs-choice__name { display: block; font-weight: 700; font-size: 17px; line-height: 1.4; }
@@ -338,7 +336,7 @@ button:disabled { cursor: default; }
 .cs-player {
   display: flex; align-items: center; gap: 10px; width: 100%; text-align: left;
   background: var(--color-surface); border-radius: 12px; padding: 8px 12px; min-height: 52px;
-  border: 2px solid transparent; box-shadow: 0 1px 2px rgba(28, 63, 94, .06);
+  border: 2px solid transparent; box-shadow: 0 1px 2px rgba(106, 79, 53, .06);
 }
 .cs-player:hover { border-color: var(--color-border); }
 .cs-player--now { border-color: var(--color-primary); }
@@ -387,7 +385,7 @@ button:disabled { cursor: default; }
 .cs-book__chip[aria-pressed="true"] { border-color: var(--color-primary); background: var(--color-primary); color: #fff; }
 .cs-book__list { list-style: none; margin: 0 !important; display: flex; flex-direction: column; gap: 6px; }
 .cs-book__item { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 12px; background: #FAF8F3; }
-.cs-book__item--now { background: var(--color-primary-soft); }
+.cs-book__item--now { background: var(--color-accent-soft); }
 .cs-book__icon { font-size: 28px; color: var(--color-primary); flex-shrink: 0; }
 .cs-book__body { flex: 1; min-width: 0; }
 .cs-book__name { display: flex; align-items: center; gap: 8px; font-weight: 700; }
@@ -441,7 +439,7 @@ button:disabled { cursor: default; }
   .cs-bar__btn { padding: 6px 10px; min-width: 44px; min-height: 44px; justify-content: center; }
   .cs-main { padding: 10px 8px 16px; gap: 10px; }
   .cs-card-layer { position: fixed; inset: auto 0 0 0; background: none; padding: 8px; z-index: 40; }
-  .cs-card { max-height: 72vh; box-shadow: 0 -4px 30px rgba(28, 63, 94, .3); padding: 18px 16px 16px; }
+  .cs-card { max-height: 72vh; box-shadow: 0 -4px 30px rgba(106, 79, 53, .3); padding: 18px 16px 16px; }
   .cs-card__foot { bottom: -16px; margin: 10px -16px -16px; padding: 10px 16px 12px; }
   .cs-choices.cs-choices--row { flex-direction: column; }
   .cs-card__title { font-size: 22px; }

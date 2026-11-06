@@ -49,12 +49,12 @@
       border-radius: 4px; background: var(--color-accent); color: #fff;
     }
     .player-tag.me { background: var(--color-muted); }
-    .player-tag.role { background: #EEF3F8; color: var(--color-primary); }
+    .player-tag.role { background: var(--color-primary-soft); color: var(--color-primary); }
 
     /* ── オーバーレイ ── */
     .overlay {
       display: none; position: fixed; inset: 0;
-      background: rgba(28,63,94,0.88); z-index: 100;
+      background: rgba(106,79,53,0.88); z-index: 100;
       flex-direction: column; align-items: center; justify-content: center;
       gap: 16px; color: #fff; text-align: center; padding: 24px;
     }
@@ -70,7 +70,7 @@
     .tw-hero { text-align: center; margin-bottom: 18px; }
     .tw-hero__icon {
       width: 76px; height: 76px; border-radius: 50%;
-      background: linear-gradient(135deg, #2E7D8C, #1C3F5E);
+      background: linear-gradient(135deg, var(--color-accent), var(--color-primary));
       display: flex; align-items: center; justify-content: center;
       margin: 0 auto 14px;
     }
@@ -93,7 +93,7 @@
     .tw-room-code {
       font-size: 46px; font-weight: 700; letter-spacing: 0.2em;
       color: var(--color-primary); text-align: center;
-      padding: 14px; background: #EEF3F8; border-radius: 12px;
+      padding: 14px; background: var(--color-primary-soft); border-radius: 12px;
       cursor: pointer; user-select: all; margin-bottom: 12px; min-height: 44px;
     }
     .tw-code-input {
@@ -110,7 +110,7 @@
       font-family: var(--font-base); color: var(--color-text);
       transition: border-color var(--transition-base);
     }
-    .tw-pack.is-selected { border-color: var(--color-accent); background: #F2F8F9; }
+    .tw-pack.is-selected { border-color: var(--color-accent); background: var(--color-accent-soft); }
     .tw-pack__num { color: var(--color-accent); font-weight: 700; font-feature-settings: "palt"; flex-shrink: 0; }
     .tw-pack__body { flex: 1; }
     .tw-pack__title { font-size: 17px; font-weight: 700; color: var(--color-primary); }
@@ -138,7 +138,7 @@
     .tw-aspect-now {
       display: flex; align-items: center; justify-content: center; gap: 6px;
       font-size: 15px; font-weight: 700; color: var(--color-accent);
-      background: #F2F8F9; border-radius: var(--radius-full);
+      background: var(--color-accent-soft); border-radius: var(--radius-full);
       padding: 8px 14px; margin-bottom: 16px;
     }
     .tw-aspect-now .material-symbols-rounded { font-size: 18px; }
@@ -182,7 +182,7 @@
       transition: border-color var(--transition-base), background var(--transition-base);
     }
     .tw-chip .material-symbols-rounded { font-size: 18px; color: var(--color-accent); }
-    .tw-chip.is-active { border-color: var(--color-accent); background: #E7F1F3; }
+    .tw-chip.is-active { border-color: var(--color-accent); background: var(--color-accent-soft); }
 
     /* ── 答えの候補 ── */
     .tw-choice {
@@ -192,7 +192,7 @@
       border-radius: 12px; cursor: pointer; font-family: var(--font-base); color: var(--color-text);
       transition: border-color var(--transition-base), background var(--transition-base);
     }
-    .tw-choice.is-mine { border-color: var(--color-accent); background: #F2F8F9; }
+    .tw-choice.is-mine { border-color: var(--color-accent); background: var(--color-accent-soft); }
     .tw-choice__num { color: var(--color-accent); font-weight: 700; font-feature-settings: "palt"; flex-shrink: 0; font-size: 18px; }
     .tw-choice__text { flex: 1; font-size: 18px; font-weight: 700; color: var(--color-primary); }
     .tw-choice__mark { flex-shrink: 0; color: var(--color-accent); font-size: 0; }
@@ -202,7 +202,7 @@
     .tw-mine {
       display: flex; align-items: center; gap: 8px;
       font-size: 14px; color: var(--color-primary);
-      background: #F2F8F9; border-radius: 10px; padding: 10px 14px; margin-top: 12px;
+      background: var(--color-accent-soft); border-radius: 10px; padding: 10px 14px; margin-top: 12px;
     }
     .tw-mine .material-symbols-rounded { font-size: 20px; color: var(--color-accent); flex-shrink: 0; }
     .tw-mine__text { font-weight: 700; word-break: break-word; }
@@ -225,7 +225,7 @@
     .tw-hostpeek {
       display: flex; align-items: flex-start; gap: 8px;
       font-size: 13px; color: var(--color-muted); line-height: 1.7;
-      background: #EEF3F8; border-radius: 10px; padding: 10px 14px; margin-bottom: 16px;
+      background: var(--color-primary-soft); border-radius: 10px; padding: 10px 14px; margin-bottom: 16px;
     }
     .tw-hostpeek .material-symbols-rounded { font-size: 18px; flex-shrink: 0; margin-top: 2px; }
     .tw-hostpeek__topic { font-weight: 700; color: var(--color-primary); }
