@@ -11,7 +11,7 @@
   <!-- 共通デザインシステム -->
   <link rel="stylesheet" href="../shared/css/design-system.css" />
   <!-- アプリ固有スタイル -->
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css?v=20261106" />
 </head>
 <body>
 
@@ -25,20 +25,29 @@
         <p class="isd-hero__sub">お題に対してみんなと<strong>かぶらない</strong>回答をしよう！</p>
       </div>
 
-      <div class="isd-setup">
-        <div class="isd-setup__group">
-          <label class="isd-setup__label" for="roundSelect">ラウンド数</label>
-          <select class="form-select" id="roundSelect">
-            <option value="3">3 ラウンド</option>
-            <option value="5" selected>5 ラウンド</option>
-            <option value="7">7 ラウンド</option>
-            <option value="10">10 ラウンド</option>
-          </select>
+      <div class="card isd-panel">
+        <div class="isd-intro">
+          <p class="isd-intro__lead">3枚のカードからお題を1つ選んで、みんなはチャットに答えを書く。ほかの人とかぶらなかった人の勝ち。5ラウンドで10〜20分くらい。</p>
+          <ul class="isd-intro__notes">
+            <li>答えに正解はない。思いついたものでOK</li>
+            <li>かぶっても大丈夫。つぎのラウンドでまたちょうせんしよう</li>
+          </ul>
         </div>
-        <button class="btn btn-primary btn-full btn-lg" id="btnStart">
-          <span class="material-symbols-rounded" aria-hidden="true">play_arrow</span>
-          ゲームスタート
-        </button>
+        <div class="isd-setup">
+          <div class="isd-setup__group">
+            <label class="isd-setup__label" for="roundSelect">ラウンド数</label>
+            <select class="form-select" id="roundSelect">
+              <option value="3">3 ラウンド</option>
+              <option value="5" selected>5 ラウンド</option>
+              <option value="7">7 ラウンド</option>
+              <option value="10">10 ラウンド</option>
+            </select>
+          </div>
+          <button class="btn btn-primary btn-full btn-lg" id="btnStart">
+            <span class="material-symbols-rounded" aria-hidden="true">play_arrow</span>
+            ゲームスタート
+          </button>
+        </div>
       </div>
     </div>
 
