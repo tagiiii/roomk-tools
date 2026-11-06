@@ -79,7 +79,7 @@ async function startTopic(h, g) {
   let room = await roomOf(code);
   check('P22 押したのは、ほしのぶん', room.game?.cur?.presses?.['ほし'] === true || (room.game?.shown || []).some((a) => a.text === 'ほんにんのこたえ' && a.ippon), room.game?.cur);
   await waitScreen(h, 'result', 9000);
-  await h.page.click('#btnFinish');
+  await h.page.evaluate(() => { document.getElementById('resultMenu').open = true; }); await h.page.click('#btnFinish');
   await waitScreen(g, 'end');
   const counts = await g.page.$$eval('#endCounts .og-counts__item', (els) => els.map((e) => e.innerText.replace(/\s+/g, ' ').trim()));
   check('P23 一本の数に端末のない子も入る（参加した順）', counts.length === 2 && counts[0].includes('りく') && counts[1].includes('そら'), counts);
@@ -191,7 +191,7 @@ async function startTopic(h, g) {
   await late.page.click('#btnPress');
   await waitUntil(async () => await ipponOn(h));
   h.dialogs.length = 0;
-  await h.page.click('#btnEnd');
+  await h.page.evaluate(() => { document.getElementById('playMenu').open = true; }); await h.page.click('#btnEnd');
   check('S4 おしまいの確認に、まだ出ていない答えの数が出る', h.dialogs.some((m) => m.includes('まだ出ていない答えが1つ')), h.dialogs);
   await waitScreen(g, 'end');
   const lastHist = await g.page.$$eval('#endHistory .og-history__item', (els) => els.map((e) => e.innerText.replace(/\s+/g, ' ').trim()));

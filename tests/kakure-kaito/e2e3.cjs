@@ -186,7 +186,7 @@ const groupLabels = (c) => c.page.$$eval('#say-pick .kk-say__group-label', (x) =
   check('H37e 読み上げには新しく届いた1件だけ', (await L.text(W, '#say-live')).startsWith('アキラ、') && (await L.text(W, '#say-live')).includes('名探偵だと思う') && !(await W.page.getAttribute('#say-log', 'aria-live')));
 
   // 待合室にもどると消える
-  await H.page.locator('#tools .kk-quiet', { hasText: '待合室にもどる' }).click();
+  await H.page.evaluate(() => { document.getElementById('host-menu').open = true; }); await H.page.locator('#host-menu button', { hasText: '待合室にもどる' }).click();
   await L.waitPhaseAll(all, 'lobby');
   check('H37 待合室にもどると say を消す', !(await L.roomOf(code)).say);
   check('H38 待合室では欄が出ない', !(await L.visible(A, '#say')) && !(await L.visible(W, '#say')));

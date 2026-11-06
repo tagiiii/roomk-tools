@@ -41,7 +41,7 @@ const { check, sleep } = L;
     check('B6 端末なしの人と同じ名前では入れない', true);
     await dup.context.close();
 
-    await H.page.click('#lobby-opts input[data-key="lens"]');
+    await H.page.evaluate(() => { document.getElementById('lobby-more').open = true; }); await H.page.click('#lobby-opts input[data-key="lens"]');
     await L.waitFor(async () => (await L.roomOf(code)).opts?.lens === true);
     await H.page.selectOption('#talk-select', '60');
     check('B7 参加者の待合室にルーペと時間', await L.waitFor(async () => { const t = await L.text(C['アキラ'], '#lobby-opts-view'); return t.includes('しらべのルーペ') && t.includes('話し合いの時間 1分'); }));
