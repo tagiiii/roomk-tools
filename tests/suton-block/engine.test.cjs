@@ -430,4 +430,47 @@ t('読み込み直し: ここまでになった人は、そのまま', () => {
   assert.strictEqual(g.combo, 2);
 });
 
+t('おしまい: つぎが出せないときは、出せなかったブロックを残す（動かせない）', () => {
+  const g = E.createGame({ seed: 5, onFull: 'end' });
+  for (let y = 0; y < 3; y++) for (let x = 0; x < E.W; x++) if (x !== 0) g.board[y][x] = 'jama';
+  const r = E.spawn(g);
+  assert.ok(r.full && g.over);
+  assert.strictEqual(g.overBy, 'spawn');
+  assert.ok(g.piece, '出せなかったブロックが残る');
+  assert.ok(!E.fits(g.board, g.piece, g.piece.cells, g.piece.x, g.piece.y));
+  const before = JSON.stringify(g.piece);
+  assert.ok(!E.move(g, 1, 0) && !E.rotate(g, 1));
+  assert.strictEqual(JSON.stringify(g.piece), before);
+  assert.strictEqual(E.hardDrop(g).lines, 0);
+  assert.strictEqual(E.hold(g), false);
+});
+
+t('おしまい: じゃまで押し上げられたら、じゃまが入った盤のまま止まる', () => {
+  const g = E.createGame({ seed: 4, onFull: 'end' });
+  g.board = E.emptyBoard();
+  g.board[1][5] = 'L';
+  g.board[E.H - 1][2] = 'T';
+  const r = E.addGarbage(g, 3, 0);
+  assert.ok(r.full && g.over && !r.cleared);
+  assert.strictEqual(g.overBy, 'jama');
+  assert.strictEqual(g.piece, null);
+  for (const y of [E.H - 3, E.H - 2, E.H - 1]) {
+    assert.strictEqual(g.board[y][0], null);
+    assert.strictEqual(g.board[y].filter((c) => c === 'jama').length, E.W - 1);
+  }
+  assert.strictEqual(g.board[E.H - 4][2], 'T', 'もとの段は3段上がる');
+  assert.strictEqual(g.board.flat().filter((c) => c === 'L').length, 0, '上にはみ出したマスは盤の外');
+  assert.strictEqual(E.unpackBoard(E.packBoard(g.board))[E.H - 1][1], 'jama', '入ったじゃまも送る盤に入る');
+});
+
+t('おしまい: 上にはみ出して置いたら、わけは top', () => {
+  const g = E.createGame({ seed: 4, onFull: 'end' });
+  g.board = E.emptyBoard();
+  for (let y = 2; y < E.H; y++) g.board[y][0] = 'jama';
+  g.piece = { kind: 'I', n: 4, rot: 1, cells: [[2, 0], [2, 1], [2, 2], [2, 3]], x: -2, y: -4 };
+  E.hardDrop(g);
+  assert.ok(g.over);
+  assert.strictEqual(g.overBy, 'top');
+});
+
 console.log('engine: ' + n + ' 項目 OK');
