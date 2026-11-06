@@ -8,6 +8,19 @@
      よく起きる操作（仕事の完了・投票）はゲーム全体を書き直さず、小さな場所に1つだけ書く（全員に配られる量を小さくする）
    ・練習用のロボットはホストの端末が動かす */
 const E = window.NemuraseEngine;
+// 共通の色（design-system.css の変数）を canvas でも使うために、はじめて使うときにページから読み取る。
+// 読めないとき（6けたの #RRGGBB でないとき）は、同じ値を使う
+const UI_COLOR_CACHE = {};
+function uiColor(name, fallback, alpha) {
+  if (!(name in UI_COLOR_CACHE)) {
+    const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    UI_COLOR_CACHE[name] = /^#[0-9a-f]{6}$/i.test(v) ? v : fallback;
+  }
+  const hex = UI_COLOR_CACHE[name];
+  if (alpha == null) return hex;
+  const n = parseInt(hex.slice(1), 16);
+  return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${alpha})`;
+}
 const G = window.NemuraseGames;
 
 const { authReady, db } = window.NemuraseFirebase.init(firebase);
@@ -2582,7 +2595,7 @@ function drawGuide(g, sx, sy, vr) {
   ctx.lineTo(-s * 0.7, s * 0.8);
   ctx.closePath();
   ctx.fillStyle = '#F5B700';
-  ctx.strokeStyle = 'rgba(28,63,94,0.9)';
+  ctx.strokeStyle = uiColor('--color-primary', '#6A4F35', 0.9);
   ctx.lineWidth = 2.5;
   ctx.lineJoin = 'round';
   ctx.fill();
@@ -3032,7 +3045,7 @@ function draw(g) {
     ctx.globalAlpha = 0.85;
     roundRect(sx(r.x) + TS * 0.12, sy(r.y) + TS * 0.1, tw + TS * 0.26, TS * 0.62, TS * 0.16);
     ctx.globalAlpha = 1;
-    ctx.fillStyle = 'rgba(28,63,94,0.7)';
+    ctx.fillStyle = uiColor('--color-text', '#3F362D', 0.7);
     ctx.fillText(r.name, sx(r.x) + TS * 0.25, sy(r.y) + TS * 0.2);
   });
 
@@ -3223,7 +3236,7 @@ function drawWholeMap(g, sx, sy, s, mine, small) {
   ctx.font = '700 ' + Math.max(12, Math.round(s * 0.6)) + 'px "Noto Sans JP", sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillStyle = 'rgba(28,63,94,0.8)';
+  ctx.fillStyle = uiColor('--color-text', '#3F362D', 0.8);
   // テーブルのある部屋は、名前をテーブルの下にずらす
   const tableRoom = E.roomAt(E.TABLE.x, E.TABLE.y);
   // 名前は部屋のはばに入る大きさまで小さくする（細い部屋の名前どうしが重ならないように）
@@ -4009,7 +4022,7 @@ function drawBody(x, y, hex) {
   ctx.moveTo(x + r * 0.53, y + r * 0.1);
   ctx.arc(x + r * 0.35, y + r * 0.1, r * 0.18, 0.15 * Math.PI, 0.85 * Math.PI);
   ctx.stroke();
-  ctx.fillStyle = '#1C3F5E';
+  ctx.fillStyle = uiColor('--color-primary', '#6A4F35');
   ctx.font = '700 ' + Math.round(TS * 0.36) + 'px "Noto Sans JP", sans-serif';
   ctx.textAlign = 'left';
   ctx.textBaseline = 'bottom';
@@ -4540,7 +4553,7 @@ function drawCamPerson(x, y, s, hex, face, name, isMe) {
   cctx.lineWidth = 3;
   cctx.strokeStyle = 'rgba(255,255,255,0.95)';
   cctx.strokeText(name, x, y - r - 2);
-  cctx.fillStyle = isMe ? '#1C3F5E' : '#1A1A1A';
+  cctx.fillStyle = isMe ? uiColor('--color-primary', '#6A4F35') : '#1A1A1A';
   cctx.fillText(name, x, y - r - 2);
   cctx.restore();
 }
