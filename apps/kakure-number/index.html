@@ -611,7 +611,7 @@
   <div class="kkn-overlay__countdown" id="host-disconnect-countdown">120</div>
   <p class="kkn-overlay__sub">秒後に自動終了します</p>
   <button class="btn btn-ghost btn-full" style="max-width:280px;margin-top:20px"
-          onclick="leaveGame()">退出する</button>
+          onclick="guestLeaveRoom()">退出する</button>
 </div>
 
 <!-- ホスト切断オーバーレイ（みんなにみせる画面用。ルームには触らない） -->
@@ -877,6 +877,30 @@
       clearInterval(_hostDisconnectTimer);
       _hostDisconnectTimer = null;
       _hostDisconnectDeadline = null;
+    }
+  }
+
+  // ホストが切れている間の「退出する」（ゲスト）: 切断の予約を取り消してから、自分の在室（players/{nickname}）を消す。
+  // 消さないと、ホストが戻ったときに一覧・人数の上限・数字を配る相手・自動の答え合わせの待ちに残る。
+  // 配られた数字・提出済みの予想（round/）は残す（ゲストの退出では合計を変えない。AGENTS.md）。
+  // 自分の通信も切れているときに止まったままにならないよう、待つのは3秒まで（書き込みは順に送られる）
+  let _guestLeaving = false;
+  async function guestLeaveRoom() {
+    if (_guestLeaving) return;
+    _guestLeaving = true;
+    try {
+      if (state.role === 'guest' && state.roomRef && state.nickname) {
+        const ref = state.roomRef;
+        const nick = state.nickname;
+        const removing = (async () => {
+          await RoomkRTDB.cancelRoomOnDisconnect(ref);
+          await ref.child(`players/${nick}`).remove();
+        })().catch((error) => console.warn('[kakure-number] leave failed', error));
+        await Promise.race([removing, new Promise((resolve) => setTimeout(resolve, 3000))]);
+      }
+      leaveGame();
+    } finally {
+      _guestLeaving = false;
     }
   }
 
