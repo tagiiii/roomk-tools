@@ -1550,7 +1550,8 @@
           const done = !!g.seen[S.me];
           setBanner(done ? 'wait' : 'mine', 'badge', done ? 'みんながたしかめるのを待っているよ' : 'あなたの役が届いたよ', done ? waitList(waiting) : 'まわりの人に見えないようにして、カードをめくってね');
           stage.append(flipRole(V, sec));
-          const b = btn('btn btn-primary btn-full', done ? 'たしかめたよ' : 'たしかめた', 'check', () => act('seen'));
+          // たしかめたあとは副ボタンにする（ホストの「見回りをはじめる」と主ボタンが2つ並ばないように）
+          const b = btn('btn btn-full ' + (done ? 'btn-secondary' : 'btn-primary'), done ? 'たしかめたよ' : 'たしかめた', 'check', () => act('seen'));
           b.disabled = done;
           b.hidden = !S.flipped && !done;
           stage.append(b);
@@ -1790,7 +1791,9 @@
     if (isHost) {
       if (phase === 'reveal') {
         const waiting = g.players.filter((id) => !g.seen[id]);
-        tools.append(btn('btn btn-primary btn-full', '見回りをはじめる', 'play_arrow', () => {
+        // ホストも遊んで、まだ自分の役をたしかめていない間は副ボタンにする（主ボタンは1画面に1つ）
+        const hostChecking = g.players.includes(S.me) && !g.seen[S.me];
+        tools.append(btn('btn btn-full ' + (hostChecking ? 'btn-secondary' : 'btn-primary'), '見回りをはじめる', 'play_arrow', () => {
           if (waiting.length && !window.confirm('まだたしかめていない人がいるよ（' + waiting.map((id) => nameOf(V, id)).join('・') + '）。はじめる？')) return;
           hostAct('begin', g.step);
         }));
@@ -1851,7 +1854,7 @@
       row.append(who);
       const acts = el('div', 'kk-proxy__acts');
       const as = { as: id };
-      if (V.phase === 'reveal' && !g.seen[id]) acts.append(btn('btn btn-primary btn-sm', '役を伝えた', 'check', () => act('seen', as)));
+      if (V.phase === 'reveal' && !g.seen[id]) acts.append(btn('btn btn-secondary btn-sm', '役を伝えた', 'check', () => act('seen', as)));
       if (V.phase === 'vote' && !g.voted.includes(id)) {
         acts.append(btn('btn btn-secondary btn-sm', '賛成', 'thumb_up', () => act('vote', Object.assign({ yes: true }, as))),
           btn('btn btn-secondary btn-sm', '反対', 'thumb_down', () => act('vote', Object.assign({ yes: false }, as))));

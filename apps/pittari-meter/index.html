@@ -1701,6 +1701,9 @@
     if (state.role === 'host') {
       const btn = document.getElementById('btn-reveal');
       btn.disabled = decidedCount === 0;
+      // ホストも答える人で、まだ決めていない間は「結果発表」を副ボタンにする（主ボタンは1画面に1つ）
+      const hostChoosing = isAnswerer && !room.players?.[state.nickname]?.decided;
+      btn.className = 'btn btn-lg btn-full ' + (hostChoosing ? 'btn-secondary' : 'btn-primary');
       const hint = document.getElementById('reveal-hint');
       if (decidedCount === 0) {
         hint.textContent = '誰かが決めると発表できます';
