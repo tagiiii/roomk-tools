@@ -95,7 +95,7 @@
 }
 
 .card-grid .flip-card:not(.dimmed):not(.flipped):hover .card-face-back {
-  background-color: #80644A;
+  background-color: var(--color-primary-dark);
 }
 
 .card-number {
@@ -107,7 +107,7 @@
 
 .card-hint {
   font-size: 13px;
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(255, 255, 255, 0.85); /* こげ茶の面の上で 4.5:1 以上 */
   letter-spacing: 0.06em;
 }
 
