@@ -7,6 +7,7 @@ SP="${FB_WORK:?FB_WORK（作業フォルダ）を指定してね}"
 mkdir -p "$SP"
 rm -rf "$SP/site"; mkdir -p "$SP/site/guide"
 cp -R "$REPO/apps/shared" "$SP/site/shared"
+cp -R "$REPO/apps/assets" "$SP/site/assets"
 cp -R "$REPO/apps/guide/feedback" "$SP/site/guide/feedback"
 python3 - "$SP/site/shared/js/rtdb-utils.js" <<'PY'
 import sys

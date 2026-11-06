@@ -6,6 +6,7 @@ SP="${SH_WORK:?SH_WORK（作業フォルダ）を指定してね}"
 mkdir -p "$SP"
 rm -rf "$SP/site"; mkdir -p "$SP/site"
 cp -R "$REPO/apps/shared" "$SP/site/shared"
+cp -R "$REPO/apps/assets" "$SP/site/assets"
 cp -R "$REPO/apps/shirushi-hint" "$SP/site/shirushi-hint"
 python3 - "$SP/site/shared/js/rtdb-utils.js" <<'PY'
 import sys
