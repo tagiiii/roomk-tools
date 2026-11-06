@@ -367,7 +367,7 @@
 
 .kag-lamp {
   font-size: 22px;
-  color: #B8C2C8;
+  color: var(--color-border);
 }
 
 .kag-lamp.is-lit { color: #D9541E; }
@@ -520,10 +520,10 @@ button.kag-tile { cursor: pointer; }
   border-color: var(--color-primary);
 }
 
-.kag-tile.is-hidden .kag-tile__icon { color: #B9CCDA; }
+.kag-tile.is-hidden .kag-tile__icon { color: var(--color-border); }
 
 /* 自分だけに見えている */
-.kag-tile.is-own .kag-tile__face { border-color: #9DB1BE; }
+.kag-tile.is-own .kag-tile__face { border-color: var(--color-muted); }
 
 /* 数字がみんなに見えている */
 .kag-tile.is-hint .kag-tile__face {
