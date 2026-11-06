@@ -398,10 +398,53 @@
   margin-top: 0;
 }
 
-.cn-host-control-grid {
+/* ── そのほかの操作（ゲーム中のホスト。開くと出る） ── */
+.cn-hostmenu summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--color-muted);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  list-style: none;
+}
+
+.cn-hostmenu summary::-webkit-details-marker {
+  display: none;
+}
+
+.cn-hostmenu summary::before {
+  content: "expand_more";
+  font-family: "Material Symbols Rounded";
+  font-size: 22px;
+  color: var(--color-accent);
+  transition: transform .15s;
+}
+
+.cn-hostmenu[open] summary::before {
+  transform: rotate(180deg);
+}
+
+.cn-hostmenu__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  padding: 8px 0;
+  border-top: 1px solid var(--color-border);
+}
+
+.cn-hostmenu__note {
+  color: var(--color-muted);
+  font-size: 14px;
+}
+
+.cn-hostmenu .cn-player-management {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--space-sm);
+  margin-top: 0;
+  padding-top: 8px;
 }
 
 .cn-board {
@@ -763,10 +806,6 @@
   }
 
   .cn-hint-form {
-    grid-template-columns: 1fr;
-  }
-
-  .cn-host-control-grid {
     grid-template-columns: 1fr;
   }
 
