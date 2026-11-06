@@ -26,7 +26,7 @@ body.is-playing { overflow: hidden; background: #2D3642; overscroll-behavior: no
 .nk-panel__note { color: var(--color-muted); font-size: 13px; margin: 16px 0 0; }
 .nk-panel__note:empty { display: none; }
 .nk-alert { margin: 12px 0 0; color: var(--color-error); font-weight: 500; }
-.nk-hint { margin: 0 0 12px; padding: 10px 12px; border-radius: 8px; background: #E3F1F3; color: var(--color-primary); line-height: 1.6; }
+.nk-hint { margin: 0 0 12px; padding: 10px 12px; border-radius: 8px; background: var(--color-accent-soft); color: var(--color-primary); line-height: 1.6; }
 .nk-back { margin: -8px 0 4px -8px; }
 .nk-code-input { text-transform: uppercase; letter-spacing: 0.2em; font-weight: 700; }
 .nk-h3 { font-size: 17px; color: var(--color-primary); margin: 24px 0 10px; display: flex; align-items: center; gap: 8px; }
@@ -38,7 +38,7 @@ body.is-playing { overflow: hidden; background: #2D3642; overscroll-behavior: no
   color: var(--color-accent); font-family: inherit; font-size: 15px; font-weight: 500; cursor: pointer;
   border-radius: var(--radius-sm);
 }
-.nk-quiet:hover { background: rgba(46, 125, 140, 0.08); }
+.nk-quiet:hover { background: rgba(40, 111, 124, 0.08); }
 
 .nk-iconbtn {
   width: 44px; height: 44px; flex: none; border-radius: 50%;
@@ -96,7 +96,7 @@ body.is-playing { overflow: hidden; background: #2D3642; overscroll-behavior: no
 .nk-startbar {
   position: sticky; bottom: 0; z-index: 2; margin: 20px -28px -32px; padding: 14px 28px 24px;   /* 下は右下の「？」（16px＋48px）より「はじめる」が上に来る分 */
   background: var(--color-surface); border-top: 1px solid var(--color-border); border-radius: 0 0 var(--radius-card) var(--radius-card);
-  box-shadow: 0 -6px 14px rgba(28, 63, 94, 0.08); display: grid; justify-items: center;
+  box-shadow: 0 -6px 14px rgba(106, 79, 53, 0.08); display: grid; justify-items: center;
 }
 .nk-startbar > .btn { width: 100%; }
 .nk-startbar__sum { margin: 0; font-weight: 700; color: var(--color-primary); text-align: center; line-height: 1.5; }
@@ -141,7 +141,7 @@ body.is-playing { overflow: hidden; background: #2D3642; overscroll-behavior: no
 /* 小さな地図を出す／かくす（それぞれの子が自分で。2026-10-29）。地図の右上のすみに重ねる */
 .nk-mini-toggle {
   position: absolute; top: 6px; right: 6px; z-index: 2; width: 34px; height: 34px; padding: 0; border: none; border-radius: 50%;
-  background: rgba(28, 63, 94, 0.88); color: #fff; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: var(--shadow-md);
+  background: rgba(106, 79, 53, 0.88); color: #fff; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: var(--shadow-md);
 }
 .nk-mini-toggle .material-symbols-rounded { font-size: 20px; }
 .nk-mini-toggle.is-off { top: 12px; right: 12px; width: 44px; height: 44px; }
@@ -177,7 +177,7 @@ body.is-playing { overflow: hidden; background: #2D3642; overscroll-behavior: no
 .nk-banner {
   position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
   max-width: min(520px, calc(100% - 560px));  /* 左の「やること」と右の小さな地図にかからない */ margin: 0; padding: 10px 16px; border-radius: 12px;
-  background: rgba(28, 63, 94, 0.94); color: #fff; font-weight: 700; text-align: center; line-height: 1.5;
+  background: rgba(106, 79, 53, 0.94); color: #fff; font-weight: 700; text-align: center; line-height: 1.5;
 }
 
 /* ひとこと（ボタンで知らせる）: 遊んでいる間は画面の上に「名前: 言葉」、右下の一覧から送る */
@@ -204,7 +204,7 @@ body.is-playing { overflow: hidden; background: #2D3642; overscroll-behavior: no
 .nk-say__title { margin: 0; font-weight: 700; color: var(--color-primary); }
 .nk-words { display: flex; flex-wrap: wrap; gap: 8px; }
 .nk-words[hidden] { display: none; }
-.nk-words--names { margin-top: 8px; padding: 8px 10px; border-radius: 10px; background: #E3F1F3; align-items: center; }
+.nk-words--names { margin-top: 8px; padding: 8px 10px; border-radius: 10px; background: var(--color-accent-soft); align-items: center; }
 .nk-words--top { margin: 0 0 10px; }
 .nk-words__lead { font-weight: 700; color: var(--color-primary); }
 .nk-word {
@@ -212,7 +212,7 @@ body.is-playing { overflow: hidden; background: #2D3642; overscroll-behavior: no
   font-family: inherit; font-size: 14px; font-weight: 500; color: var(--color-text); cursor: pointer; line-height: 1.3;
 }
 .nk-word:hover { border-color: var(--color-accent); }
-.nk-word.is-picked { border-color: var(--color-accent); background: #E3F1F3; }
+.nk-word.is-picked { border-color: var(--color-accent); background: var(--color-accent-soft); }
 .nk-word--name { font-weight: 700; }
 .nk-word--quiet { border-color: transparent; color: var(--color-muted); }
 .nk-act--say { background: #2F7D6E; }
@@ -358,7 +358,7 @@ body.is-watching .nk-tasks, body.is-watching .nk-actions, body.is-watching .nk-p
 }
 button.nk-vote__main { cursor: pointer; }
 button.nk-vote__main:hover { border-color: var(--color-border); }
-.nk-vote__row.is-picked .nk-vote__main { border-color: var(--color-accent); background: #E3F1F3; }
+.nk-vote__row.is-picked .nk-vote__main { border-color: var(--color-accent); background: var(--color-accent-soft); }
 .nk-vote__row.is-asleep { opacity: 0.55; }
 .nk-vote__name { font-weight: 700; }
 .nk-vote__name--mate { color: #D9433B; }   /* ねむらせ屋の画面でだけ、仲間のねむらせ屋 */
@@ -444,7 +444,7 @@ button.nk-vote__main:hover { border-color: var(--color-border); }
 @media (prefers-reduced-motion: reduce) { .nk-hud__air.is-soon, .nk-meeting__timer.is-soon { animation: none; } }
 
 /* 会議の残り時間: 大きく。30秒でオレンジ、10秒で赤く点滅。下にバー */
-.nk-meeting__timer { font-size: 22px; padding: 2px 12px; border-radius: 999px; background: #E3F1F3; }
+.nk-meeting__timer { font-size: 22px; padding: 2px 12px; border-radius: 999px; background: var(--color-accent-soft); }
 .nk-meeting__timer.is-near { background: #FFF1D6; color: #B4600A; }
 .nk-meeting__timer.is-soon { background: #FDECEC; color: var(--color-error); animation: nk-blink 0.8s steps(2) infinite; }
 .nk-meeting__bar { height: 8px; margin: 10px 0 0; border-radius: 999px; background: var(--color-bg); overflow: hidden; }

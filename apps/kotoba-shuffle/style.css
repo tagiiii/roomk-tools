@@ -36,7 +36,7 @@
   height: 88px;
   margin-bottom: 14px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #2e7d8c, #1c3f5e);
+  background: linear-gradient(135deg, var(--color-accent), var(--color-primary));
   color: #fff;
   font-size: 46px;
   box-shadow: var(--shadow-md);
@@ -108,8 +108,8 @@
 
 .ks-level-card.is-selected {
   border-color: var(--color-accent);
-  background: #eef8f9;
-  box-shadow: 0 0 0 3px rgba(46, 125, 140, 0.12);
+  background: var(--color-accent-soft);
+  box-shadow: 0 0 0 3px rgba(40, 111, 124, 0.12);
 }
 
 .ks-level-card__icon {
@@ -223,7 +223,7 @@
 
 .ks-slot--filled {
   border: 2px solid var(--color-accent);
-  background: #eef8f9;
+  background: var(--color-accent-soft);
   color: var(--color-primary);
   cursor: pointer;
 }

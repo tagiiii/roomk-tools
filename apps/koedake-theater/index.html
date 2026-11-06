@@ -55,7 +55,7 @@
     }
     .kdt-tag--me { background: var(--color-muted); }
     .kdt-tag--actor { background: var(--color-primary); }
-    .kdt-tag--role { background: #EEF3F8; color: var(--color-primary); }
+    .kdt-tag--role { background: var(--color-primary-soft); color: var(--color-primary); }
 
     /* ── 待合室の設定（ホストだけ） ── */
     .kdt-check {
@@ -147,7 +147,7 @@
     }
     .kdt-choice:hover { border-color: var(--color-accent); background: #F0F7F8; }
     .kdt-choice.selected {
-      border-color: var(--color-accent); background: #E8F3F5;
+      border-color: var(--color-accent); background: var(--color-accent-soft);
       color: var(--color-accent); font-weight: 700;
     }
     .kdt-choice__num {
@@ -163,7 +163,7 @@
     /* ── 結果 ── */
     .kdt-result-banner {
       text-align: center; padding: 24px 16px;
-      background: linear-gradient(135deg, #E8F3F5, #EAF4EF);
+      background: linear-gradient(135deg, var(--color-accent-soft), #EAF4EF);
       border-radius: var(--radius-card, 16px);
       margin-bottom: 16px;
     }
@@ -197,7 +197,7 @@
     /* ── オーバーレイ ── */
     .kdt-overlay {
       display: none; position: fixed; inset: 0;
-      background: rgba(28,63,94,0.88); z-index: 100;
+      background: rgba(106,79,53,0.88); z-index: 100;
       flex-direction: column; align-items: center; justify-content: center;
       gap: 16px; color: #fff; text-align: center; padding: 24px;
     }

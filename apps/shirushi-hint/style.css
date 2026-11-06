@@ -33,8 +33,8 @@
 /* みんなにみせる画面の目印（共有するタブを見分けるため） */
 .sh-watchbadge {
   display: inline-block;
-  color: #26697A;
-  background: #E6F2F4;
+  color: var(--color-accent);
+  background: var(--color-accent-soft);
   border-radius: var(--radius-full);
   font-size: 13px;
   font-weight: 700;
@@ -97,8 +97,8 @@
 
 .sh-tag {
   display: inline-block;
-  color: #26697A; /* 淡いティールの上で 4.5:1 以上 */
-  background: #E6F2F4;
+  color: var(--color-accent); /* 淡いティールの上で 4.5:1 以上 */
+  background: var(--color-accent-soft);
   border-radius: var(--radius-full);
   font-size: 12px;
   font-weight: 700;
@@ -263,7 +263,7 @@
   cursor: pointer;
 }
 
-.sh-timeopt.is-on { border-color: var(--color-accent); background: #E6F2F4; color: #26697A; }
+.sh-timeopt.is-on { border-color: var(--color-accent); background: var(--color-accent-soft); color: var(--color-accent); }
 .sh-timeopt.is-on::before { content: "✓ "; }
 
 /* 残り時間（音は鳴らさない） */
@@ -393,7 +393,7 @@
   cursor: pointer;
 }
 
-.sh-cand:hover { background: #EAF4F6; }
+.sh-cand:hover { background: var(--color-accent-soft); }
 
 .sh-cand__num {
   color: var(--color-accent);
@@ -475,7 +475,7 @@
 .sh-sign.is-preview {
   border-style: dashed;
   border-color: var(--color-accent);
-  background: #F4FAFB;
+  background: var(--color-accent-soft);
   color: var(--color-muted);
 }
 
@@ -526,7 +526,7 @@
 }
 
 button.sh-tile { cursor: pointer; border-color: var(--color-accent); }
-button.sh-tile:hover { background: #EAF4F6; }
+button.sh-tile:hover { background: var(--color-accent-soft); }
 
 .sh-tile__key {
   position: absolute;
@@ -565,7 +565,7 @@ button.sh-tile:hover { background: #EAF4F6; }
   color: #6B7280;
 }
 
-.sh-tile.is-mine { border-color: var(--color-primary); border-width: 3px; background: #EEF3F8; }
+.sh-tile.is-mine { border-color: var(--color-primary); border-width: 3px; background: var(--color-primary-soft); }
 .sh-tile.is-answer { border-color: var(--color-success); border-width: 3px; background: #EAF6EE; }
 .sh-tile.is-answer .sh-tile__tag { background: var(--color-success); }
 
@@ -699,7 +699,7 @@ button.sh-tile:hover { background: #EAF4F6; }
 
 .sh-pbtn .sh-sign__icon { font-size: 28px; }
 .sh-pbtn:hover:not(:disabled) { border-color: var(--color-accent); }
-.sh-pbtn.is-on { border-color: var(--color-accent); background: #EAF4F6; font-weight: 700; }
+.sh-pbtn.is-on { border-color: var(--color-accent); background: var(--color-accent-soft); font-weight: 700; }
 .sh-pbtn:disabled { opacity: 0.45; cursor: not-allowed; }
 .sh-pbtn.is-blocked { border-style: dashed; }
 
@@ -801,7 +801,7 @@ button.sh-tile:hover { background: #EAF4F6; }
   display: grid;
   place-items: center;
   padding: 20px;
-  background: rgba(18, 37, 54, 0.8);
+  background: rgba(63, 54, 45, 0.8);
 }
 
 .sh-overlay[hidden] { display: none; }

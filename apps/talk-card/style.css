@@ -89,13 +89,13 @@
     rgba(255, 255, 255, 0.05) 10px,
     rgba(255, 255, 255, 0.05) 20px
   );
-  border-color: #163352;
+  border-color: var(--color-primary-dark);
   flex-direction: column;
   gap: 8px;
 }
 
 .card-grid .flip-card:not(.dimmed):not(.flipped):hover .card-face-back {
-  background-color: #234d70;
+  background-color: #80644A;
 }
 
 .card-number {

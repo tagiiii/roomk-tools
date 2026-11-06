@@ -151,7 +151,7 @@
 .kmk-limit__option:hover { border-color: var(--color-accent); }
 .kmk-limit__option[aria-pressed='true'] {
   border-color: var(--color-accent);
-  background: #DDF0F3;
+  background: var(--color-accent-soft);
   color: var(--color-primary);
 }
 

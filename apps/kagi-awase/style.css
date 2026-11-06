@@ -30,8 +30,8 @@
 /* みんなにみせる画面の目印（共有するタブを見分けるため） */
 .kag-watchbadge {
   display: inline-block;
-  color: #26697A;
-  background: #E6F2F4;
+  color: var(--color-accent);
+  background: var(--color-accent-soft);
   border-radius: var(--radius-full);
   font-size: 13px;
   font-weight: 700;
@@ -95,8 +95,8 @@
 
 .kag-tag {
   display: inline-block;
-  color: #26697A; /* 淡いティールの上で 4.5:1 以上 */
-  background: #E6F2F4;
+  color: var(--color-accent); /* 淡いティールの上で 4.5:1 以上 */
+  background: var(--color-accent-soft);
   border-radius: var(--radius-full);
   font-size: 12px;
   font-weight: 700;
@@ -634,7 +634,7 @@ button.kag-tile:focus-visible .kag-tile__face {
   display: grid;
   place-items: center;
   padding: 20px;
-  background: rgba(18, 37, 54, 0.8);
+  background: rgba(63, 54, 45, 0.8);
 }
 
 .kag-overlay__panel {

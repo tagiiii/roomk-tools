@@ -149,7 +149,7 @@
     .player-tag.wolf   { background: var(--color-error); }
     .player-tag.dead   { background: #aaa; }
     .player-tag.voted  { background: var(--color-success); }
-    .player-tag.facil  { background: #EEF3F8; color: var(--color-primary); }
+    .player-tag.facil  { background: var(--color-primary-soft); color: var(--color-primary); }
 
     /* ── 待合室の設定（GMのみ）── */
     .jn-check {
@@ -253,7 +253,7 @@
     /* ── オーバーレイ ── */
     .overlay {
       display: none; position: fixed; inset: 0;
-      background: rgba(28,63,94,0.88); z-index: 100;
+      background: rgba(106,79,53,0.88); z-index: 100;
       flex-direction: column; align-items: center; justify-content: center;
       gap: 16px; color: #fff; text-align: center; padding: 24px;
     }
@@ -294,7 +294,7 @@
     .rules-fab .material-symbols-rounded { font-size: 26px; }
     .rules-modal {
       display: none; position: fixed; inset: 0; z-index: 300;
-      background: rgba(28,63,94,0.55);
+      background: rgba(106,79,53,0.55);
       align-items: flex-end; justify-content: center;
     }
     .rules-modal.show { display: flex; }

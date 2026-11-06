@@ -3,7 +3,7 @@
 // ルームの決まりは logic.js。質問はテーマのキーと QUESTIONS の中の番号で共有するので、
 // QUESTIONS は並べ替え・途中の削除をしない（足すのは末尾だけ）。
 import { shuffle, popIn } from '../shared/js/utils.js';
-import * as L from './logic.js?v=20261104d';
+import * as L from './logic.js?v=20261106';
 
 const NUMBERS = ['①', '②', '③', '④', '⑤'];
 

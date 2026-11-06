@@ -63,7 +63,7 @@
   flex-direction: column;
   gap: var(--space-xs);
   padding: var(--space-md);
-  background: #EEF3F8;
+  background: var(--color-primary-soft);
   border-radius: var(--radius-sm);
 }
 
@@ -322,7 +322,7 @@
 }
 
 .cn-score--active {
-  background: #EEF3F8;
+  background: var(--color-accent-soft);
   border-color: var(--color-accent);
 }
 
@@ -339,7 +339,7 @@
 @keyframes cn-turn-pulse {
   from {
     transform: translateY(-4px);
-    box-shadow: 0 0 0 4px rgba(46, 125, 140, 0.2);
+    box-shadow: 0 0 0 4px rgba(40, 111, 124, 0.2);
   }
 
   to {
@@ -354,7 +354,7 @@
   align-items: end;
   gap: var(--space-md);
   padding: var(--space-md);
-  background: #EEF3F8;
+  background: var(--color-primary-soft);
   border-radius: var(--radius-sm);
 }
 
@@ -369,7 +369,7 @@
   flex-wrap: wrap;
   gap: var(--space-sm);
   padding: var(--space-md);
-  background: #EEF3F8;
+  background: var(--color-primary-soft);
   border-radius: var(--radius-sm);
 }
 
@@ -552,7 +552,7 @@
 .cn-result {
   padding: var(--space-lg);
   border-radius: var(--radius-sm);
-  background: #EEF3F8;
+  background: var(--color-primary-soft);
   border-left: 6px solid var(--color-border);
 }
 
@@ -609,7 +609,7 @@
   align-items: center;
   gap: var(--space-sm);
   padding: var(--space-sm) var(--space-md);
-  background: #EEF3F8;
+  background: var(--color-primary-soft);
   border-radius: var(--radius-sm);
   color: var(--color-primary);
   font-size: var(--font-size-sm);

@@ -78,7 +78,7 @@
       justify-content: center;
       flex: none;
       aspect-ratio: 16 / 10;
-      background-color: #EEF3F8;
+      background-color: var(--color-primary-soft);
     }
 
     .app-card__icon .material-symbols-rounded {
@@ -130,7 +130,7 @@
       border-radius: var(--radius-full);
       font-size: 12px;
       font-weight: 500;
-      background-color: #EEF3F8;
+      background-color: var(--color-primary-soft);
       color: var(--color-primary);
       line-height: 1.4;
     }
@@ -163,17 +163,12 @@
       border-radius: var(--radius-full);
       font-size: 12px;
       font-weight: 500;
-      background-color: #EEF3F8;
+      background-color: var(--color-primary-soft);
       color: var(--color-primary);
       line-height: 1.4;
       white-space: nowrap;
       cursor: pointer;
       transition: background-color var(--transition-base);
-    }
-
-    .app-card__slides:hover,
-    .app-card__slides:focus-visible {
-      background-color: #DCE7F1;
     }
 
     .app-card__slides .material-symbols-rounded {
@@ -249,7 +244,7 @@
     /* 指定しているときは、シーンの選択中チップと同じ色にする */
     .tool-size__select.form-select.is-set {
       border: 2px solid var(--color-accent);
-      background-color: #E4EEF0;
+      background-color: var(--color-accent-soft);
       color: var(--color-primary);
       font-weight: 700;
     }
@@ -292,7 +287,7 @@
     .scene-filter__chip[aria-pressed="true"] {
       padding: 5px 13px 5px 9px;
       border: 2px solid var(--color-accent);
-      background-color: #E4EEF0;
+      background-color: var(--color-accent-soft);
       color: var(--color-primary);
       font-weight: 700;
     }
@@ -351,7 +346,7 @@
       width: 38px;
       height: 38px;
       border-radius: 50%;
-      background-color: #E8EEF4;
+      background-color: var(--color-primary-soft);
       font-size: 22px;
       color: var(--color-primary);
       pointer-events: none;
@@ -370,12 +365,12 @@
     }
 
     .tool-search__input.form-input:hover {
-      border-color: #A9BCC6;
+      border-color: var(--color-border);
     }
 
     .tool-search__input.form-input:focus {
       border-color: var(--color-accent);
-      box-shadow: 0 0 0 4px rgba(46, 125, 140, 0.15);
+      box-shadow: 0 0 0 4px rgba(40, 111, 124, 0.15);
     }
 
     /* 入力中に出す候補（ツール名）と、空欄のときの検索ヒント */
@@ -416,7 +411,7 @@
 
     .tool-suggest__option:hover,
     .tool-suggest__option[aria-selected="true"] {
-      background-color: rgba(46, 125, 140, 0.12);
+      background-color: rgba(40, 111, 124, 0.12);
     }
 
     .tool-suggest__option > .material-symbols-rounded {
@@ -478,7 +473,7 @@
       padding: 4px 14px 4px 10px;
       border: none;
       border-radius: var(--radius-full);
-      background-color: rgba(46, 125, 140, 0.10);
+      background-color: rgba(40, 111, 124, 0.10);
       color: var(--color-accent);
       font-family: inherit;
       font-size: var(--font-size-sm);
@@ -488,7 +483,7 @@
     }
 
     .tool-hint:hover {
-      background-color: rgba(46, 125, 140, 0.18);
+      background-color: rgba(40, 111, 124, 0.18);
     }
 
     .tool-hint > .material-symbols-rounded {
@@ -511,7 +506,7 @@
     }
 
     .tool-result.is-filtered {
-      background-color: #E4EEF0;
+      background-color: var(--color-accent-soft);
       color: var(--color-primary);
     }
 
@@ -760,7 +755,7 @@
     }
 
     .updates-list__tag--update {
-      background-color: #EEF3F8;
+      background-color: var(--color-primary-soft);
       color: var(--color-primary);
     }
 
@@ -1108,7 +1103,7 @@
     }
 
     .more-filter__toggle:hover {
-      border-color: #A9BCC6;
+      border-color: var(--color-border);
     }
 
     .more-filter__toggle:focus-visible {
@@ -1118,7 +1113,7 @@
 
     .more-filter__toggle[aria-expanded="true"] {
       border-color: var(--color-accent);
-      background-color: #E4EEF0;
+      background-color: var(--color-accent-soft);
     }
 
     .more-filter__toggle .material-symbols-rounded {
@@ -1491,7 +1486,7 @@
     }
 
     .tool-sheet::backdrop {
-      background-color: rgba(20, 30, 40, 0.45);
+      background-color: rgba(63, 54, 45, 0.45);
     }
 
     .tool-sheet .tool-detail__shot img {

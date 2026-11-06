@@ -45,7 +45,7 @@
     .ms-room-code {
       font-size: 44px; font-weight: 700; letter-spacing: 0.22em;
       color: var(--color-primary); text-align: center;
-      padding: 16px; background: #EEF3F8; border-radius: 12px;
+      padding: 16px; background: var(--color-primary-soft); border-radius: 12px;
       margin-bottom: 12px; user-select: all;
     }
 
@@ -62,7 +62,7 @@
       transition: transform .12s, border-color .12s, background .12s;
     }
     .ms-tile:hover { border-color: var(--color-accent); }
-    .ms-tile.is-selected { border-color: var(--color-accent); background: #EAF4F5; transform: translateY(-6px); }
+    .ms-tile.is-selected { border-color: var(--color-accent); background: var(--color-accent-soft); transform: translateY(-6px); }
     .ms-tile.is-new::after {
       content: 'new'; position: absolute; top: -8px; right: -6px;
       font-size: 9px; font-weight: 700; color: #fff; background: var(--color-accent);
@@ -70,7 +70,7 @@
     }
     .ms-tile { touch-action: none; user-select: none; -webkit-user-select: none; }
     .ms-tile.is-dragging { opacity: 0.3; }
-    .ms-tile.is-drop { border-color: var(--color-accent); box-shadow: 0 0 0 3px #EAF4F5; }
+    .ms-tile.is-drop { border-color: var(--color-accent); box-shadow: 0 0 0 3px var(--color-accent-soft); }
     .ms-ghost {
       position: fixed; z-index: 300; pointer-events: none;
       transform: translate(-50%, -50%) scale(1.08); box-shadow: 0 8px 20px rgba(0,0,0,0.18);
@@ -83,9 +83,9 @@
     .ms-split { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; align-items: center; margin-top: 10px; }
     .ms-split__word {
       display: inline-flex; gap: 4px; padding: 6px 8px; border-radius: 12px;
-      background: #EEF3F8; border: 1.5px dashed var(--color-border);
+      background: var(--color-primary-soft); border: 1.5px dashed var(--color-border);
     }
-    .ms-split__word.is-full { border-style: solid; border-color: var(--color-accent); background: #EAF4F5; }
+    .ms-split__word.is-full { border-style: solid; border-color: var(--color-accent); background: var(--color-accent-soft); }
     .ms-split__len { font-size: 11px; font-weight: 700; color: var(--color-muted); align-self: center; margin-right: 2px; }
     .ms-split__ch {
       display: inline-flex; align-items: center; justify-content: center;
@@ -96,7 +96,7 @@
 
     /* ── 手番エリア ── */
     .ms-my { text-align: center; }
-    .ms-my__prompt { font-weight: 700; color: var(--color-primary); background: #EAF4F5; border-radius: var(--radius-card); padding: 12px; margin-bottom: 14px; line-height: 1.6; }
+    .ms-my__prompt { font-weight: 700; color: var(--color-primary); background: var(--color-accent-soft); border-radius: var(--radius-card); padding: 12px; margin-bottom: 14px; line-height: 1.6; }
     .ms-my__prompt--turn { background: #FFF4E5; color: #92400E; }
     .ms-my__wait { color: var(--color-muted); font-weight: 600; margin-top: 12px; line-height: 1.6; }
     .ms-my__tip { font-size: 12px; color: var(--color-muted); margin-top: 10px; line-height: 1.6; }
@@ -160,7 +160,7 @@
     .ms-tag--me   { background: var(--color-muted); color: #fff; }
     .ms-tag--host { background: var(--color-primary); color: #fff; }
     .ms-tag--turn { background: #F0B36B; color: #fff; }
-    .ms-tag--role { background: #EEF3F8; color: var(--color-primary); }
+    .ms-tag--role { background: var(--color-primary-soft); color: var(--color-primary); }
 
     /* ── 待合室の設定（ホストだけ） ── */
     .ms-check {

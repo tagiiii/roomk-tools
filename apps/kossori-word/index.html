@@ -59,7 +59,7 @@
       background: var(--color-accent); color: #fff;
     }
     .player-tag.me { background: var(--color-muted); }
-    .player-tag.role { background: #EEF3F8; color: var(--color-primary); }
+    .player-tag.role { background: var(--color-primary-soft); color: var(--color-primary); }
 
     /* ── 待合室の設定（ホストのみ）── */
     .ksw-check {
@@ -76,7 +76,7 @@
       background: var(--color-surface); color: var(--color-text);
       font-family: var(--font-base); font-size: 15px; cursor: pointer;
     }
-    .ksw-chip[aria-pressed="true"] { border-color: var(--color-accent); background: #E6F2F4; font-weight: 700; }
+    .ksw-chip[aria-pressed="true"] { border-color: var(--color-accent); background: var(--color-accent-soft); font-weight: 700; }
     .ksw-chip:focus-visible { outline: 3px solid var(--color-accent); outline-offset: 2px; }
 
     /* ── お題（白カード＋ティール枠）── */
@@ -111,7 +111,7 @@
       background: var(--color-surface); color: var(--color-primary);
       font-family: var(--font-base); font-size: 20px; font-weight: 700; cursor: pointer; overflow-wrap: anywhere;
     }
-    .ksw-option:hover { background: #E6F2F4; }
+    .ksw-option:hover { background: var(--color-accent-soft); }
     .ksw-option:focus-visible { outline: 3px solid var(--color-accent); outline-offset: 2px; }
     .ksw-own { margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--color-border); }
 
@@ -158,7 +158,7 @@
     /* ── オーバーレイ ── */
     .overlay {
       display: none; position: fixed; inset: 0;
-      background: rgba(28,63,94,0.88); z-index: 100;
+      background: rgba(106,79,53,0.88); z-index: 100;
       flex-direction: column; align-items: center; justify-content: center;
       gap: 16px; color: #fff; text-align: center; padding: 24px;
     }

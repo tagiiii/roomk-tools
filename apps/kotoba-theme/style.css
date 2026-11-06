@@ -30,7 +30,7 @@
   height: 88px;
   margin-bottom: 14px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #2e7d8c, #1c3f5e);
+  background: linear-gradient(135deg, var(--color-accent), var(--color-primary));
   color: #fff;
   font-size: 46px;
   box-shadow: var(--shadow-md);

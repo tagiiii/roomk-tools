@@ -53,7 +53,7 @@ body { background: var(--color-bg); }
   color: var(--color-accent); font-family: inherit; font-size: 15px; font-weight: 500; cursor: pointer;
   border-radius: var(--radius-sm);
 }
-.kh-quiet:hover { background: rgba(46, 125, 140, 0.08); }
+.kh-quiet:hover { background: rgba(40, 111, 124, 0.08); }
 .kh-quiet .material-symbols-rounded { font-size: 20px; }
 .kh-quiet--center { display: flex; margin: 4px auto 0; }
 
@@ -67,7 +67,7 @@ body { background: var(--color-bg); }
 .kh-roombar__code strong { color: var(--color-primary); letter-spacing: 0.1em; font-size: 16px; }
 .is-watch .kh-roombar .btn { display: none; }
 .is-watch .kh-roombar #btnLeave { display: inline-flex; }
-.kh-hint { margin: 0 0 16px; padding: 10px 14px; border-radius: var(--radius-sm); background: #EAF4F6; color: var(--color-primary); line-height: 1.6; font-size: 14px; }
+.kh-hint { margin: 0 0 16px; padding: 10px 14px; border-radius: var(--radius-sm); background: var(--color-accent-soft); color: var(--color-primary); line-height: 1.6; font-size: 14px; }
 .kh-hint[hidden] { display: none; }
 .kh-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.45); display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 60; }
 .kh-overlay[hidden] { display: none; }
@@ -142,7 +142,7 @@ body { background: var(--color-bg); }
 .kh-tag .material-symbols-rounded { font-size: 15px; }
 .kh-tag--muted { background: var(--color-border); color: var(--color-text); }
 .kh-tag--warn { background: #FFF4E5; color: var(--color-warning); }
-.kh-tag--ok { background: #E3F1F3; color: var(--color-primary); }
+.kh-tag--ok { background: var(--color-accent-soft); color: var(--color-primary); }
 .kh-tag--reader { background: var(--kh-air); }
 
 /* ══ ゲーム ══ */
@@ -238,7 +238,7 @@ body { background: var(--color-bg); }
   background: var(--color-surface); font-family: inherit; font-size: 18px; font-weight: 700; color: var(--color-primary); cursor: pointer;
 }
 .kh-choice .material-symbols-rounded { font-size: 36px; }
-.kh-choice--ok:hover { border-color: var(--color-accent); background: #EAF4F6; }
+.kh-choice--ok:hover { border-color: var(--color-accent); background: var(--color-accent-soft); }
 .kh-choice--laugh { color: var(--kh-kanpe-text); }
 .kh-choice--laugh:hover { border-color: var(--kh-kanpe); background: var(--kh-kanpe-bg); }
 

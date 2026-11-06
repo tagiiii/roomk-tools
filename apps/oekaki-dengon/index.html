@@ -57,7 +57,7 @@
     .oek-room-code {
       font-size: 44px; font-weight: 700; letter-spacing: 0.22em;
       color: var(--color-primary); text-align: center;
-      padding: 16px; background: #EEF3F8; border-radius: 12px;
+      padding: 16px; background: var(--color-primary-soft); border-radius: 12px;
       margin-bottom: 12px; user-select: all;
     }
 
@@ -87,8 +87,8 @@
     .oek-tag { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; }
     .oek-tag--me   { background: var(--color-muted); color: #fff; }
     .oek-tag--host { background: var(--color-primary); color: #fff; }
-    .oek-tag--role { background: #EEF3F8; color: var(--color-primary); }
-    .oek-tag--auto { background: #EAF4F5; color: var(--color-accent); }
+    .oek-tag--role { background: var(--color-primary-soft); color: var(--color-primary); }
+    .oek-tag--auto { background: var(--color-accent-soft); color: var(--color-accent); }
 
     /* ── 回の表示・残り時間 ── */
     .oek-stepbar {
@@ -157,7 +157,7 @@
       font-family: var(--font-base); font-size: 13px; font-weight: 700; color: var(--color-primary);
     }
     .oek-tool .material-symbols-rounded { font-size: 20px; }
-    .oek-tool[aria-pressed="true"] { border-color: var(--color-accent); background: #EAF4F5; }
+    .oek-tool[aria-pressed="true"] { border-color: var(--color-accent); background: var(--color-accent-soft); }
     .oek-tool:disabled, .oek-swatch:disabled, .oek-tone:disabled { opacity: 0.45; cursor: default; }
     .oek-tool.is-armed { border-color: var(--color-error); background: #FEF2F2; color: var(--color-error); }
     .oek-width__dot { display: block; border-radius: 50%; background: var(--color-primary); }
@@ -184,7 +184,7 @@
     .oek-progress { text-align: center; font-size: 14px; font-weight: 700; color: var(--color-muted); margin-top: 12px; }
     .oek-timeup {
       text-align: center; font-weight: 700; color: var(--color-primary);
-      background: #EEF3F8; border-radius: var(--radius-card); padding: 12px; margin-top: 12px;
+      background: var(--color-primary-soft); border-radius: var(--radius-card); padding: 12px; margin-top: 12px;
     }
 
     /* ── 見せあい・アルバム ── */
@@ -209,7 +209,7 @@
       font-family: var(--font-base); font-size: 14px; font-weight: 700; color: var(--color-primary); cursor: pointer;
     }
     .oek-chip__num { color: var(--color-accent); font-feature-settings: "palt"; }
-    .oek-chip[aria-pressed="true"] { border-color: var(--color-accent); background: #EAF4F5; }
+    .oek-chip[aria-pressed="true"] { border-color: var(--color-accent); background: var(--color-accent-soft); }
 
     /* ── オーバーレイ ── */
     .oek-overlay {
