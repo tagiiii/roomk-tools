@@ -578,7 +578,7 @@
   function resetView() {
     Object.assign(S, {
       room: null, raw: null, view: null, secret: null, lastKey: null, showCard: false, cardGid: null, anim: {}, flipped: false, proxyShow: {}, proxyGid: null,
-      sayKey: null, says: [], sayLog: [], saySeen: {}, sayGid: null, sayOpen: false, sayWord: null, sayFresh: null,
+      sayKey: null, says: [], sayLog: [], saySeen: {}, sayGid: null, sayOpen: false, sayWord: null, sayFresh: null, hostMenuOpen: false,
     });
     $('say-live').textContent = '';
     $('lobby-opts')._key = null;
@@ -1318,6 +1318,7 @@
 
   // ── 待合室 ──
   function renderLobby(V) {
+    S.hostMenuOpen = false; // 次のゲームの「そのほかの操作」は閉じた状態から
     const isHost = S.mode === 'host';
     const watch = S.mode === 'watch';
     $('lobby-join').hidden = !watch;
@@ -1351,7 +1352,7 @@
     $('lobby-opts-view').hidden = isHost;
     if (isHost) {
       const key = JSON.stringify(V.opts);
-      if ($('lobby-opts')._key !== key) { optsEditor($('lobby-opts'), V.opts); $('lobby-opts')._key = key; }
+      if ($('lobby-opts')._key !== key) { optsEditor(V.opts); $('lobby-opts')._key = key; }
     } else {
       const on = OPT_LIST.filter(([k]) => V.opts[k]);
       const rows = (on.length ? on : [[null, '特別な役はなし（警備員と怪盗だけ）', '']]).concat(V.opts.talk ? [[null, '話し合いの時間 ' + talkLabel(V.opts.talk), 'メンバー選びと見やぶりのときに、残り時間が出る']] : []);
@@ -1372,25 +1373,34 @@
     $('lobby-wait').hidden = isHost || watch;
   }
 
-  function optsEditor(root, opts) {
+  // 待合室の設定（ホストだけ）。まず決めること（名探偵・話し合いの時間）を上に、ほかは「くわしい設定」にたたむ。
+  // たたみの開け閉めは HTML の details のまま（描きなおしても開いたまま）
+  const OPT_MAIN = ['detective'];
+  const OPT_GROUPS = [
+    ['ほかの役', '入れると、知っていることがちがう役が増える', ['assistant', 'fake', 'disguise', 'lone']],
+    ['ルール', '見回りの進み方が変わる', ['lens', 'fifthGo']],
+  ];
+  function optCheck(key, o) {
+    const [, label, sub] = OPT_LIST.find(([k]) => k === key);
+    const lb = el('label', 'kk-check');
+    const c = el('input');
+    c.type = 'checkbox';
+    c.checked = !!o[key];
+    c.dataset.key = key;
+    c.disabled = (key === 'assistant' || key === 'disguise') ? !o.detective : key === 'fake' ? !o.assistant : false;
+    c.addEventListener('change', () => hostAct('setOpts', { [key]: c.checked }));
+    const txt = el('span', 'kk-check__text');
+    txt.append(el('span', 'kk-check__label', label), el('span', 'kk-check__sub', sub));
+    lb.append(c, txt);
+    return lb;
+  }
+  function optsEditor(opts) {
     const o = E.normOpts(opts);
-    root.replaceChildren();
+    const main = $('lobby-opts-main');
+    main.replaceChildren();
     const list = el('div', 'kk-checks');
-    OPT_LIST.forEach(([key, label, sub]) => {
-      const lb = el('label', 'kk-check');
-      const c = el('input');
-      c.type = 'checkbox';
-      c.checked = !!o[key];
-      c.dataset.key = key;
-      c.disabled = (key === 'assistant' || key === 'disguise') ? !o.detective : key === 'fake' ? !o.assistant : false;
-      c.addEventListener('change', () => hostAct('setOpts', { [key]: c.checked }));
-      const txt = el('span', 'kk-check__text');
-      txt.append(el('span', 'kk-check__label', label), el('span', 'kk-check__sub', sub));
-      lb.append(c, txt);
-      if (key === 'fifthGo') lb.classList.add('kk-check--sep');
-      list.append(lb);
-    });
-    root.append(list);
+    OPT_MAIN.forEach((key) => list.append(optCheck(key, o)));
+    main.append(list);
     // 話し合いの時間
     const talk = el('label', 'kk-talk');
     talk.append(el('span', 'kk-talk__label', '話し合いの時間'));
@@ -1399,7 +1409,18 @@
     E.TALKS.forEach((sec) => { const o2 = el('option', '', talkLabel(sec)); o2.value = String(sec); if (sec === o.talk) o2.selected = true; sel.append(o2); });
     sel.addEventListener('change', () => hostAct('setOpts', { talk: Number(sel.value) }));
     talk.append(sel, el('span', 'kk-check__sub', 'メンバー選びと見やぶりのときに残り時間を出す。時間になっても自動では進まない'));
-    root.append(talk);
+    main.append(talk);
+    // くわしい設定
+    const more = $('lobby-opts-more');
+    more.replaceChildren(...OPT_GROUPS.map(([title, desc, keys]) => {
+      const g = el('div', 'kk-more__group');
+      const checks = el('div', 'kk-checks');
+      keys.forEach((key) => checks.append(optCheck(key, o)));
+      g.append(el('p', 'kk-more__group-title', title), el('p', 'kk-check__sub', desc), checks);
+      return g;
+    }));
+    const changed = OPT_GROUPS.flatMap(([, , keys]) => keys).filter((k) => !!o[k] !== !!E.DEFAULT_OPTS[k]).length;
+    $('lobby-more-sub').textContent = changed ? changed + 'つ変えています' : 'はじめのままで遊べます';
   }
 
   // 話し合いの残り時間（描きなおさずに、数字だけ書きかえる）
@@ -1824,17 +1845,28 @@
           btn('btn btn-secondary btn-full', '待合室にもどる', 'meeting_room', () => hostAct('relobby', g.gid)),
         );
       }
-      if (phase !== 'end') {
-        tools.append(btn('kk-quiet', 'このゲームをやめて待合室にもどる', 'logout', () => {
-          if (window.confirm('このゲームをやめて、待合室にもどる？')) hostAct('relobby', g.gid);
-        }));
-      }
+      if (phase !== 'end') tools.append(hostMenu(g));
       const px = proxyPanel(V);
       if (px) tools.prepend(px);
     } else if (!watch && ['voteResult', 'missionResult', 'lensResult'].includes(phase)) {
       tools.append(el('p', 'kk-wait', 'ホストが次へ進めるのを待っているよ'));
     }
     tools.hidden = !tools.childNodes.length;
+  }
+
+  // ホストがたまに使う操作（開くと出る）。描きなおしても開いたまま（S.hostMenuOpen）
+  function hostMenu(g) {
+    const d = el('details', 'kk-hostmenu');
+    d.id = 'host-menu';
+    d.open = !!S.hostMenuOpen;
+    d.addEventListener('toggle', () => { S.hostMenuOpen = d.open; });
+    d.append(el('summary', '', 'そのほかの操作'));
+    const row = el('div', 'kk-hostmenu__row');
+    row.append(btn('btn btn-secondary btn-sm', 'このゲームをやめて待合室にもどる', 'logout', () => {
+      if (window.confirm('このゲームをやめて、待合室にもどる？')) hostAct('relobby', g.gid);
+    }));
+    d.append(row);
+    return d;
   }
 
   // 端末のない人の代わりに押す欄（ホストだけ）。役もここで見て、チャットで伝える

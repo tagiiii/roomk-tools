@@ -131,7 +131,25 @@ body { background: var(--color-bg); }
 .kk-optview__label { font-weight: 500; }
 .kk-optview__sub { font-size: 13px; color: var(--color-muted); line-height: 1.5; }
 
+/* 待合室の「くわしい設定」（ホストだけ。開くと出る） */
+.kk-more { margin-top: 12px; border: 1px solid var(--color-border); border-radius: 12px; }
+.kk-more__head { display: flex; align-items: center; gap: 4px 10px; flex-wrap: wrap; min-height: 48px; padding: 8px 14px; cursor: pointer; list-style: none; }
+.kk-more__head::-webkit-details-marker { display: none; }
+.kk-more__head::before { content: 'expand_more'; font-family: 'Material Symbols Rounded'; font-size: 22px; color: var(--color-accent); transition: transform 0.15s; }
+.kk-more[open] > .kk-more__head::before { transform: rotate(180deg); }
+.kk-more__title { font-weight: 700; color: var(--color-accent); }
+.kk-more__sub { font-size: 13px; color: var(--color-muted); }
+.kk-more__body { padding: 0 14px 10px; }
+.kk-more__group + .kk-more__group { margin-top: 8px; padding-top: 10px; border-top: 1px dashed var(--color-border); }
+.kk-more__group-title { margin: 4px 0 0; font-size: 14px; font-weight: 700; color: var(--color-primary); }
+.kk-more__group > .kk-check__sub { margin: 0 0 4px; }
+
+/* 下に固定する「役を配ってはじめる」（ホストだけ） */
 .kk-lobby-actions { display: grid; gap: 12px; }
+#lobby-host { position: sticky; bottom: 0; z-index: 2; margin-top: 16px; padding: 12px 0 20px; background: var(--color-bg) url("../assets/paper-grain.png"); border-top: 1px solid var(--color-border); } /* 地と同じ紙の粒 */
+#lobby-host[hidden] { display: none; }
+/* 幅がせまいと右下の「？」（16px＋48px）が重なるので、そのぶん上に出す */
+@media (max-width: 860px) { #lobby-host { padding-bottom: 72px; } }
 .kk-lobby-actions .kk-alert { margin: 0; text-align: center; }
 .kk-codebox { text-align: center; }
 .kk-codebox__label { margin: 0; font-size: 13px; color: var(--color-muted); }
@@ -475,6 +493,14 @@ body { background: var(--color-bg); }
 .kk-tools { display: grid; gap: 10px; justify-items: center; }
 .kk-tools[hidden] { display: none; }
 .kk-tools .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; max-width: 420px; min-height: 52px; }
+/* ゲーム中のホストの「そのほかの操作」（開くと出る） */
+.kk-hostmenu { justify-self: stretch; max-width: 420px; width: 100%; margin: 0 auto; }
+.kk-hostmenu summary { min-height: 44px; display: flex; align-items: center; justify-content: center; gap: 6px; color: var(--color-muted); font-size: 14px; font-weight: 700; cursor: pointer; list-style: none; }
+.kk-hostmenu summary::-webkit-details-marker { display: none; }
+.kk-hostmenu summary::before { content: 'expand_more'; font-family: 'Material Symbols Rounded'; font-size: 22px; color: var(--color-accent); transition: transform 0.15s; }
+.kk-hostmenu[open] summary::before { transform: rotate(180deg); }
+.kk-hostmenu__row { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px 12px; padding: 8px 0; border-top: 1px solid var(--color-border); }
+.kk-tools .kk-hostmenu__row .btn { min-height: 44px; max-width: none; }
 
 .kk-toast {
   position: fixed; left: 50%; bottom: 96px; transform: translateX(-50%);
