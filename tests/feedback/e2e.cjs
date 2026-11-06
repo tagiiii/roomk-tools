@@ -101,13 +101,13 @@ const tryRef = async (page, op, p, value) => page.evaluate(async ({ op, p, value
   // 2. 空のまま送るとトースト、保存されない
   await page.click('#fb-send');
   await page.waitForSelector('#roomk-toast');
-  check('空で送れない', (await page.textContent('#roomk-toast')).includes('何があった？'));
+  check('空で送れない', (await page.textContent('#roomk-toast')).includes('書いてから送信'));
   check('空では保存されない', (await rest('GET', 'feedback')) === null);
 
   // 3. 書いて送ると、feedback/ に4つの欄だけで入り、完了の表示になる
   check('初期の例文', (await page.getAttribute('#fb-text', 'placeholder')).includes('こんな遊び'));
   await page.click('input[name="kind"][value="bug"]');
-  check('種類で例文が変わる', (await page.getAttribute('#fb-text', 'placeholder')).includes('待合室'));
+  check('種類で例文が変わる', (await page.getAttribute('#fb-text', 'placeholder')).includes('待っている画面'));
   await page.fill('#fb-text', '待合室で「はじめる」を押しても進まなかった（スマホ・Safari）');
   check('文字数が出る', (await page.textContent('#fb-count')) === [...(await page.inputValue('#fb-text'))].length + ' / 300');
   await page.click('#fb-send');
