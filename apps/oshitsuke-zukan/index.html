@@ -1133,6 +1133,17 @@ function roomCodeImeError(code) {
     : '';
 }
 
+// transaction の最初の計算が空のキャッシュで走らないよう、先に値を購読しておく。
+// transaction の中で null なら「ルームがない」として扱う（前に読んだ値で代用すると、消えたルームを作り直してしまう）
+function warmRoomCache(ref) {
+  return new Promise((resolve, reject) => {
+    const callback = (snap) => {
+      resolve({ snap, release: () => ref.off('value', callback) });
+    };
+    ref.on('value', callback, reject);
+  });
+}
+
 async function guestJoinInner() {
   const reportJoinError = message => RoomkRTDB.showFormError('join-form-error', message);
   reportJoinError('');
@@ -1146,10 +1157,12 @@ async function guestJoinInner() {
   if (!await waitAuthOrExplain()) return;
 
   const roomRef = db.ref(`${ROOMS_PATH}/${roomCode}`);
-  const preSnap = await roomRef.get();
-  if (!preSnap.exists()) { reportJoinError('ルームが見つかりません'); return; }
+  const warm = await warmRoomCache(roomRef);
+  const preSnap = warm.snap;
+  if (!preSnap.exists()) { warm.release(); reportJoinError('ルームが見つかりません'); return; }
   const preRoom = preSnap.val();
   if (isRoomExpired(preRoom)) {
+    warm.release();
     await removeRoomIfExpired(roomRef);
     reportJoinError('このルームは期限切れのため終了しました');
     return;
@@ -1157,7 +1170,7 @@ async function guestJoinInner() {
 
   let abortReason = null;
   const { committed, snapshot } = await roomRef.transaction((room) => {
-    const currentRoom = room || preRoom;
+    const currentRoom = room; // null は「ルームがない」（先に購読しているので、空のキャッシュではない）
     if (!currentRoom) { abortReason = 'not_found'; return; }
     if (isRoomExpired(currentRoom)) { abortReason = 'expired'; return null; }
     if (currentRoom.hostConnected === false) { abortReason = 'host_gone'; return; }
@@ -1175,7 +1188,7 @@ async function guestJoinInner() {
         [nickname]: { isHost: false, seat: maxSeat + 1, connected: true, disconnectedAt: null },
       },
     };
-  });
+  }).finally(warm.release);
 
   if (!committed) {
     if (abortReason === 'not_found') { reportJoinError('ルームが見つかりません'); return; }
