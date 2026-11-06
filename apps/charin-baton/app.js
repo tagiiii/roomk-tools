@@ -1507,7 +1507,7 @@ function renderWaiting(room) {
     return li;
   };
   $('lobbyPeople').replaceChildren(...seats.map((name, i) => row(name, i)), ...people.map((name) => row(name, -1)));
-  $('proxyForm').hidden = !host;
+  $('proxyMenu').hidden = !host;
   $('hostPlaysBox').hidden = !host;
   if (host) $('hostPlays').checked = set.hostPlays;
 
