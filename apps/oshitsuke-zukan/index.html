@@ -5,8 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
   <title>おしつけずかん | あそびのたな</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
-  <link rel="stylesheet" href="../shared/css/design-system.css">
+  <link rel="stylesheet" href="../shared/css/design-system.css?v=20261106">
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
@@ -187,32 +188,30 @@
     }
   </style>
 </head>
-<body>
+<body data-genre="board">
 
 <!-- ════════════════════════════════════
      SCREEN: TOP
 ════════════════════════════════════ -->
 <div class="screen" id="screen-top">
   <div class="ozk-page">
-    <div class="ozk-hero">
-      <div class="ozk-hero__icon-wrap">
-        <span class="material-symbols-rounded">auto_stories</span>
+    <section class="app-entry">
+      <div class="app-hero"><img class="app-illust" src="../assets/illustrations/oshitsuke-zukan.webp" alt="" width="156" height="156" decoding="async" onerror="this.parentNode.remove()" /></div>
+      <h1 class="ozk-hero__title app-title">おしつけずかん</h1>
+      <p class="ozk-hero__sub app-catch">イヤ〜な生きもののカードを、宣言つきでほかの人へ押しつけ合うゲーム。<br>「ホントかウソか」を見やぶれ！</p>
+      <div class="ozk-hero__buttons app-entry__actions">
+        <button class="btn btn-primary btn-lg btn-full" onclick="showScreen('host-setup')">
+          <span class="material-symbols-rounded">add_home</span>ルームを作る
+        </button>
+        <button class="btn btn-secondary btn-lg btn-full" onclick="openJoinFromTop()">
+          <span class="material-symbols-rounded">login</span>ルームに参加する
+        </button>
+        <button class="btn btn-ghost btn-lg btn-full" onclick="showScreen('board-join')">
+          <span class="material-symbols-rounded">visibility</span>見るだけ
+        </button>
+        <p class="ozk-hint">「見るだけ」は画面共有するときや、見て楽しみたいときに。ニックネームはいらないよ。</p>
       </div>
-      <h1 class="ozk-hero__title">おしつけずかん</h1>
-      <p class="ozk-hero__sub">イヤ〜な生きもののカードを、宣言つきでほかの人へ押しつけ合うゲーム。<br>「ホントかウソか」を見やぶれ！</p>
-    </div>
-    <div class="ozk-hero__buttons">
-      <button class="btn btn-primary btn-lg btn-full" onclick="showScreen('host-setup')">
-        <span class="material-symbols-rounded">add_home</span>ルームを作る
-      </button>
-      <button class="btn btn-secondary btn-lg btn-full" onclick="openJoinFromTop()">
-        <span class="material-symbols-rounded">login</span>ルームに参加する
-      </button>
-      <button class="btn btn-ghost btn-lg btn-full" onclick="showScreen('board-join')">
-        <span class="material-symbols-rounded">visibility</span>見るだけ
-      </button>
-      <p class="ozk-hint">「見るだけ」は画面共有するときや、見て楽しみたいときに。ニックネームはいらないよ。</p>
-    </div>
+    </section>
   </div>
 </div>
 

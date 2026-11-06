@@ -5,8 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
   <title>人狼ゲーム | あそびのたな</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
-  <link rel="stylesheet" href="../shared/css/design-system.css">
+  <link rel="stylesheet" href="../shared/css/design-system.css?v=20261106">
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
@@ -340,29 +341,27 @@
     .rules-role-desc { font-size: 13px; color: var(--color-muted); }
   </style>
 </head>
-<body>
+<body data-genre="suiri">
 
 <!-- ══ TOP ══════════════════════════════════════════ -->
 <div id="screen-top" class="screen">
   <div class="page">
-    <div class="jn-header">
-      <div class="jn-header__icon">
-        <span class="material-symbols-rounded">groups</span>
+    <section class="app-entry">
+      <div class="app-hero"><img class="app-illust" src="../assets/illustrations/jinro.webp" alt="" width="156" height="156" decoding="async" onerror="this.parentNode.remove()" /></div>
+      <h1 class="jn-header__title app-title">人狼ゲーム</h1>
+      <p class="jn-header__sub app-catch">正体を隠して生き残れ</p>
+      <div class="app-entry__actions">
+        <button class="btn btn-primary btn-full" onclick="goTo('host-setup')">
+          <span class="material-symbols-rounded">add_circle</span>ルームを作る（GM）
+        </button>
+        <button class="btn btn-secondary btn-full" onclick="openJoinFromTop()">
+          <span class="material-symbols-rounded">login</span>ルームに参加する
+        </button>
+        <button class="btn btn-ghost btn-full" onclick="openRules()">
+          <span class="material-symbols-rounded">help</span>遊び方・役職を見る
+        </button>
       </div>
-      <div class="jn-header__title">人狼ゲーム</div>
-      <div class="jn-header__sub">正体を隠して生き残れ</div>
-    </div>
-    <div class="card">
-      <button class="btn btn-primary btn-full" onclick="goTo('host-setup')">
-        <span class="material-symbols-rounded">add_circle</span>ルームを作る（GM）
-      </button>
-      <button class="btn btn-secondary btn-full sep" onclick="openJoinFromTop()">
-        <span class="material-symbols-rounded">login</span>ルームに参加する
-      </button>
-      <button class="btn btn-ghost btn-full sep" onclick="openRules()">
-        <span class="material-symbols-rounded">help</span>遊び方・役職を見る
-      </button>
-    </div>
+    </section>
   </div>
 </div>
 

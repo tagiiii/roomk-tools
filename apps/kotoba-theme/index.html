@@ -5,29 +5,29 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>コトバのテーマクイズ | あそびのたな</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet" />
-  <link rel="stylesheet" href="../shared/css/design-system.css" />
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="../shared/css/design-system.css?v=20261106" />
+  <link rel="stylesheet" href="style.css?v=20261106" />
 </head>
-<body>
+<body data-genre="kotoba">
   <main class="kw-app">
 
     <!-- ── TOP（えらびかたは2つ。主＝ゲームから／副＝テーマのいちらんから） ── -->
     <section class="kw-screen" id="screen-top">
-      <header class="kw-hero">
-        <span class="material-symbols-rounded kw-hero__icon">tips_and_updates</span>
-        <h1 class="kw-hero__title">コトバのテーマクイズ</h1>
-        <p class="kw-hero__sub">きょうのゲームで使う「コトバのテーマ」を、先にのぞいてみよう</p>
-      </header>
+      <section class="app-entry">
+        <div class="app-hero"><img class="app-illust" src="../assets/illustrations/kotoba-theme.webp" alt="" width="156" height="156" decoding="async" onerror="this.parentNode.remove()" /></div>
+        <h1 class="kw-hero__title app-title">コトバのテーマクイズ</h1>
+        <p class="kw-hero__sub app-catch">きょうのゲームで使う「コトバのテーマ」を、先にのぞいてみよう</p>
+        <p class="kw-panel__lead app-entry__lead">きょうのゲームで使う「コトバのテーマ」を、クイズで先に見てみよう。4問・5分くらい。</p>
 
-      <section class="kw-panel card">
-        <p class="kw-panel__lead">きょうのゲームで使う「コトバのテーマ」を、クイズで先に見てみよう。4問・5分くらい。</p>
-
-        <ul class="kw-panel__notes">
+        <ul class="kw-panel__notes app-entry__notes">
           <li>正解の数は数えません。「そういう見方があるんだ」が1つ持って帰れれば十分。</li>
           <li>答えはチャットに番号（①②③）でも、声でもOK。</li>
         </ul>
+      </section>
 
+      <section class="kw-panel card">
         <!-- 主の入口: ゲームからの逆引き -->
         <div class="kw-entry" id="gameEntry">
           <h2 class="kw-panel__title">きょうのゲームからえらぶ</h2>

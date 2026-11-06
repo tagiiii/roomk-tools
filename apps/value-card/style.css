@@ -58,6 +58,11 @@
   display: block;
 }
 
+/* はじめの画面の型（2026-11-06）の下に開くので、白い面から少し離す */
+.app-entry + .vc-howto {
+  margin-top: 16px;
+}
+
 .vc-howto__list {
   list-style: none;
   counter-reset: howto;

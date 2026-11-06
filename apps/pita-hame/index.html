@@ -7,10 +7,11 @@
   <title>ピタハメ | あそびのたな</title>
   <!-- Google Fonts（Noto Sans JP）-->
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet" />
   <!-- Material Symbols Rounded (FILL=1) -->
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet" />
   <!-- 共通デザインシステム -->
-  <link rel="stylesheet" href="../shared/css/design-system.css" />
+  <link rel="stylesheet" href="../shared/css/design-system.css?v=20261106" />
 
   <style>
     /* =========================================================================
@@ -68,6 +69,13 @@
       color: var(--color-text);
     }
     .ph-menu-btn:hover:not(:disabled) { border-color: var(--color-accent); transform: translateY(-1px); }
+    /* はじめの画面の型（2026-11-06）の中では、ほかのツールと同じボタンの見た目にそろえる（主ボタンはティール・ほかは枠線） */
+    .app-entry .ph-menu-btn { padding: 12px 18px; border-color: var(--color-primary); border-radius: var(--radius-btn); }
+    .app-entry .ph-menu-btn .ph-menu-btn__label { font-size: 17px; }
+    .app-entry .ph-menu-btn .ph-menu-btn__icon { color: var(--color-primary); }
+    .app-entry #btnCreate { background: var(--color-accent); border-color: var(--color-accent); color: #fff; }
+    .app-entry #btnCreate :is(.ph-menu-btn__icon, .ph-menu-btn__desc) { color: #fff; }
+    .app-entry #btnCreate:hover:not(:disabled) { background: #1A4850; border-color: #1A4850; }
     .ph-menu-btn:disabled { opacity: 0.55; cursor: default; }
     .ph-menu-btn__icon {
       font-size: 30px;
@@ -486,36 +494,39 @@
     }
   </style>
 </head>
-<body>
+<body data-genre="puzzle">
 
   <div class="ph-wrapper">
 
     <!-- ═══════════ TOP ═══════════ -->
     <section class="ph-screen is-active" id="screen-top">
-      <h1 class="ph-top__title">ピタハメ</h1>
-      <p class="ph-top__lead">カラフルなピースを回して動かして、グレーの型（かた）をぴったり埋めるパズル。</p>
-      <div class="ph-top__menu">
-        <button type="button" class="ph-menu-btn" id="btnCreate">
-          <span class="material-symbols-rounded ph-menu-btn__icon" aria-hidden="true">add_home</span>
-          <span class="ph-menu-btn__body">
-            <span class="ph-menu-btn__label">ルームを作る</span>
-            <span class="ph-menu-btn__desc">みんなで同じ問題に挑戦する</span>
-          </span>
-        </button>
-        <button type="button" class="ph-menu-btn" id="btnJoin">
-          <span class="material-symbols-rounded ph-menu-btn__icon" aria-hidden="true">login</span>
-          <span class="ph-menu-btn__body">
-            <span class="ph-menu-btn__label">ルームに参加する</span>
-            <span class="ph-menu-btn__desc">コードを入れてルームに参加する</span>
-          </span>
-        </button>
-        <button type="button" class="ph-menu-btn" id="btnSolo">
-          <span class="material-symbols-rounded ph-menu-btn__icon" aria-hidden="true">extension</span>
-          <span class="ph-menu-btn__body">
-            <span class="ph-menu-btn__label">ひとりで練習</span>
-            <span class="ph-menu-btn__desc">自分のペースで1問ずつ挑戦する</span>
-          </span>
-        </button>
+      <div class="app-entry">
+        <div class="app-hero"><img class="app-illust" src="../assets/illustrations/pita-hame.webp" alt="" width="156" height="156" decoding="async" onerror="this.parentNode.remove()" /></div>
+        <h1 class="ph-top__title app-title">ピタハメ</h1>
+        <p class="ph-top__lead app-catch">カラフルなピースを回して動かして、グレーの型（かた）をぴったり埋めるパズル。</p>
+        <div class="ph-top__menu app-entry__actions">
+          <button type="button" class="ph-menu-btn" id="btnCreate">
+            <span class="material-symbols-rounded ph-menu-btn__icon" aria-hidden="true">add_home</span>
+            <span class="ph-menu-btn__body">
+              <span class="ph-menu-btn__label">ルームを作る</span>
+              <span class="ph-menu-btn__desc">みんなで同じ問題に挑戦する</span>
+            </span>
+          </button>
+          <button type="button" class="ph-menu-btn" id="btnJoin">
+            <span class="material-symbols-rounded ph-menu-btn__icon" aria-hidden="true">login</span>
+            <span class="ph-menu-btn__body">
+              <span class="ph-menu-btn__label">ルームに参加する</span>
+              <span class="ph-menu-btn__desc">コードを入れてルームに参加する</span>
+            </span>
+          </button>
+          <button type="button" class="ph-menu-btn" id="btnSolo">
+            <span class="material-symbols-rounded ph-menu-btn__icon" aria-hidden="true">extension</span>
+            <span class="ph-menu-btn__body">
+              <span class="ph-menu-btn__label">ひとりで練習</span>
+              <span class="ph-menu-btn__desc">自分のペースで1問ずつ挑戦する</span>
+            </span>
+          </button>
+        </div>
       </div>
     </section>
 

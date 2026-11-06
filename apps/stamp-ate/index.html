@@ -5,17 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
   <title>スタンプあてゲーム | あそびのたな</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
-  <link rel="stylesheet" href="../shared/css/design-system.css">
+  <link rel="stylesheet" href="../shared/css/design-system.css?v=20261106">
   <!-- index.html と app.js・style.css はセットで変わるので、変えたら ?v= をそろえて上げる -->
-  <link rel="stylesheet" href="style.css?v=20261012">
+  <link rel="stylesheet" href="style.css?v=20261106">
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <script src="../shared/js/rtdb-utils.js?v=20261005"></script>
   <script src="../shared/js/room-qr.js?v=20261022"></script>
 </head>
-<body>
+<body data-genre="atekko">
   <!-- スタンプのインクのふち（すべての絵で共用する） -->
   <svg class="sa-defs" width="0" height="0" aria-hidden="true" focusable="false">
     <defs>
@@ -27,18 +28,23 @@
   </svg>
   <div class="wrapper">
     <header class="sa-header">
-      <h1 class="sa-header__title">スタンプあてゲーム</h1>
+      <h1 class="sa-header__title app-title">スタンプあてゲーム</h1>
       <p class="sa-header__sub">4つの形のスタンプで、お題を伝えよう</p>
       <p class="sa-watchbadge" id="watchBadge" hidden>みんなにみせる画面</p>
     </header>
     <main>
       <section class="sa-screen active" id="screen-top">
-        <div class="sa-panel">
-          <p class="sa-lead">丸・四角・長方形・三角の4つのスタンプだけで、こっそり配られたお題を表すゲーム。当てる人が、どの絵がどのお題かを当てるよ。押せる回数は5回から始まって、1回ずつ減っていくよ。</p>
+        <div class="sa-panel app-entry">
+          <div class="app-hero"><img class="app-illust" src="../assets/illustrations/stamp-ate.webp" alt="" width="156" height="156" decoding="async" onerror="this.parentNode.remove()" /></div>
+          <h1 class="app-title">スタンプあてゲーム</h1>
+          <p class="app-catch">4つの形のスタンプで、お題を伝えよう</p>
+          <p class="sa-lead app-entry__lead">丸・四角・長方形・三角の4つのスタンプだけで、こっそり配られたお題を表すゲーム。当てる人が、どの絵がどのお題かを当てるよ。押せる回数は5回から始まって、1回ずつ減っていくよ。</p>
           <p class="sa-note">みんなで力を合わせるゲーム。全部で5回、15〜20分くらい。</p>
-          <button type="button" class="btn btn-primary btn-full" id="btnGoCreate">ルームを作る</button>
-          <button type="button" class="btn btn-secondary btn-full" id="btnGoJoin">ルームに参加する</button>
-          <button type="button" class="btn btn-ghost btn-full" id="btnGoWatch">みんなにみせる画面をひらく</button>
+          <div class="app-entry__actions">
+            <button type="button" class="btn btn-primary btn-full" id="btnGoCreate">ルームを作る</button>
+            <button type="button" class="btn btn-secondary btn-full" id="btnGoJoin">ルームに参加する</button>
+            <button type="button" class="btn btn-ghost btn-full" id="btnGoWatch">みんなにみせる画面をひらく</button>
+          </div>
         </div>
       </section>
 

@@ -6,8 +6,9 @@
   <title>ことばメーター | あそびのたな</title>
   <link rel="icon" href="data:,">
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
-  <link rel="stylesheet" href="../shared/css/design-system.css">
+  <link rel="stylesheet" href="../shared/css/design-system.css?v=20261106">
   <style>
 /* ことばメーター 固有スタイル（接頭辞: km- / BEM）
    部品の形（ヘッダー・パネル・ルームバー・フォーム・お題の枠）は、しるしでヒント・スタンプあてゲームにそろえている。 */
@@ -24,6 +25,9 @@
 .km-wrap:has(#game:not([hidden])) .km-header { margin-bottom: 14px; }
 .km-wrap:has(#game:not([hidden])) .km-header__title { font-size: 1.3rem; }
 .km-wrap:has(#game:not([hidden])) .km-header__sub { display: none; }
+/* はじめの画面の型（2026-11-06）: はじめの画面のあいだは、ツール名・ひとこと・絵を入口の面に出すので、上の見出しの名前とひとことは隠す（ほかの画面では今までどおり出る。みんなにみせる画面の印は隠さない） */
+.km-wrap:has(#front:not([hidden]) > #screen-top:not([hidden])) .km-header > :is(.km-header__title, .km-header__sub) { display: none; }
+.app-entry > .km-meter { margin-top: 18px; }
 
 /* ── 共通の部品 ── */
 .km-panel { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 14px; padding: 20px; margin-bottom: 16px; }
@@ -329,23 +333,28 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 
   </style>
 </head>
-<body>
+<body data-genre="kotoba">
   <div class="km-wrap">
     <header class="km-header">
-      <h1 class="km-header__title">ことばメーター</h1>
+      <h1 class="km-header__title app-title">ことばメーター</h1>
       <p class="km-header__sub">ヒントのことばから、どれくらいかを予想しよう</p>
       <p class="km-watchbadge" id="watch-badge" hidden>みんなにみせる画面</p>
     </header>
     <main>
       <div id="front" class="km-front">
         <section id="screen-top" hidden>
-          <div class="km-panel">
+          <div class="km-panel app-entry">
+            <div class="app-hero"><img class="app-illust" src="../assets/illustrations/kotoba-meter.webp" alt="" width="156" height="156" decoding="async" onerror="this.parentNode.remove()" /></div>
+            <h1 class="app-title">ことばメーター</h1>
+            <p class="app-catch">ヒントのことばから、どれくらいかを予想しよう</p>
             <div class="km-meter" aria-hidden="true"><span class="km-lv1">1</span><span class="km-lv2">2</span><span class="km-lv3">3</span><span class="km-lv4">4</span><span class="km-lv5">5</span></div>
-            <p class="km-lead">出題者が思い浮かべた「どれくらい」を、ヒントのことばから1〜5で予想するゲーム。みんなの数字を一斉に見せて、感じ方の違いを楽しもう。</p>
+            <p class="km-lead app-entry__lead">出題者が思い浮かべた「どれくらい」を、ヒントのことばから1〜5で予想するゲーム。みんなの数字を一斉に見せて、感じ方の違いを楽しもう。</p>
             <p class="km-note">2〜20人・1ラウンド2〜3分。数字は出題者の感覚で、違う感じ方も楽しもう。</p>
-            <button id="go-create" class="btn btn-primary btn-full" type="button">ルームを作る</button>
-            <button id="go-join" class="btn btn-secondary btn-full" type="button">ルームに参加する</button>
-            <button id="go-watch" class="btn btn-ghost btn-full" type="button">みんなにみせる画面をひらく</button>
+            <div class="app-entry__actions">
+              <button id="go-create" class="btn btn-primary btn-full" type="button">ルームを作る</button>
+              <button id="go-join" class="btn btn-secondary btn-full" type="button">ルームに参加する</button>
+              <button id="go-watch" class="btn btn-ghost btn-full" type="button">みんなにみせる画面をひらく</button>
+            </div>
           </div>
         </section>
 

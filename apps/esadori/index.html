@@ -5,8 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
   <title>エサドリ | あそびのたな</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
-  <link rel="stylesheet" href="../shared/css/design-system.css">
+  <link rel="stylesheet" href="../shared/css/design-system.css?v=20261106">
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
@@ -184,28 +185,28 @@
     }
   </style>
 </head>
-<body>
+<body data-genre="board">
 
 <!-- ════════════════════════════════════ TOP ════════════════════════════════════ -->
 <div class="screen" id="screen-top">
   <div class="esa-page">
-    <div class="esa-hero">
-      <div class="esa-hero__icon-wrap"><span class="material-symbols-rounded">flutter_dash</span></div>
-      <h1 class="esa-hero__title">エサドリ</h1>
-      <p class="esa-hero__sub">エサをねらう鳥になって、1〜15のカードでエサを取り合うよ。<br>同じ数を出した人同士は無効！</p>
-    </div>
-    <div class="esa-hero__buttons">
-      <button class="btn btn-primary btn-lg btn-full" onclick="showScreen('host-setup')">
-        <span class="material-symbols-rounded">add_home</span>ルームを作る
-      </button>
-      <button class="btn btn-secondary btn-lg btn-full" onclick="openJoinFromTop()">
-        <span class="material-symbols-rounded">login</span>ルームに参加する
-      </button>
-      <button class="btn btn-ghost btn-lg btn-full" onclick="showScreen('board-join')">
-        <span class="material-symbols-rounded">visibility</span>見るだけ
-      </button>
-      <p class="esa-hint">「見るだけ」は画面をみんなに見せるときや、見て楽しみたいときに。ニックネームはいらないよ。</p>
-    </div>
+    <section class="app-entry">
+      <div class="app-hero"><img class="app-illust" src="../assets/illustrations/esadori.webp" alt="" width="156" height="156" decoding="async" onerror="this.parentNode.remove()" /></div>
+      <h1 class="esa-hero__title app-title">エサドリ</h1>
+      <p class="esa-hero__sub app-catch">エサをねらう鳥になって、1〜15のカードでエサを取り合うよ。<br>同じ数を出した人同士は無効！</p>
+      <div class="esa-hero__buttons app-entry__actions">
+        <button class="btn btn-primary btn-lg btn-full" onclick="showScreen('host-setup')">
+          <span class="material-symbols-rounded">add_home</span>ルームを作る
+        </button>
+        <button class="btn btn-secondary btn-lg btn-full" onclick="openJoinFromTop()">
+          <span class="material-symbols-rounded">login</span>ルームに参加する
+        </button>
+        <button class="btn btn-ghost btn-lg btn-full" onclick="showScreen('board-join')">
+          <span class="material-symbols-rounded">visibility</span>見るだけ
+        </button>
+        <p class="esa-hint">「見るだけ」は画面をみんなに見せるときや、見て楽しみたいときに。ニックネームはいらないよ。</p>
+      </div>
+    </section>
   </div>
 </div>
 

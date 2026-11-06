@@ -53,8 +53,8 @@ button:disabled { cursor: default; }
   transition: background-color .15s, border-color .15s, transform .08s;
 }
 .cs-btn:active:not(:disabled) { transform: translateY(1px); }
-.cs-btn--primary { background: var(--color-primary); color: #fff; }
-.cs-btn--primary:hover:not(:disabled) { background: var(--color-primary-dark); }
+.cs-btn--primary { background: var(--color-accent); color: #fff; }
+.cs-btn--primary:hover:not(:disabled) { background: #1A4850; }
 .cs-btn--secondary { background: var(--color-surface); color: var(--color-primary); border-color: var(--color-primary); }
 .cs-btn--secondary:hover:not(:disabled) { background: var(--color-primary-soft); }
 .cs-btn--danger { background: var(--color-surface); color: var(--color-error); border-color: var(--color-error); }

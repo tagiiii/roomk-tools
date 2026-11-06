@@ -738,3 +738,10 @@
 @media (max-width: 480px) {
   #player-count { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
+
+/* ── はじめの画面の型（2026-11-06）: ツール名・ひとこと・絵は、はじめの画面の白い面（.app-entry）に入れた。
+   そのあいだだけ、ヘッダーのツール名とひとことを隠す（ほかの画面では今までどおり出る。みんなにみせる画面の印は隠さない） ── */
+.wrapper:has(> #screen-top:not([hidden])) > .ks-header > :is(.ks-header__title, .ks-header__sub) { display: none; }
+.wrapper:has(> #screen-top:not([hidden])) > .ks-header { margin-bottom: 0; }
+/* 型の中は、もとのトップの白い面の縦並び（flex の gap）をやめて、型のあきにする */
+.ks-top.app-entry { display: block; }

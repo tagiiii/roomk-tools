@@ -227,15 +227,17 @@ function buildResultText(result) {
 // ── 画面描画 ───────────────────────────────
 function renderStart() {
   document.querySelector('#screen-start').innerHTML = `
-    <div class="stc-panel">
-      <h2 class="stc-panel__title" id="start-title" tabindex="-1">すきタイプチェック</h2>
-      <p class="stc-panel__lead">18この質問にこたえていくと、じぶんの「すき」のタイプが出てきます。ぜんぶで10分くらい。</p>
-      <ul class="stc-note-list">
+    <div class="stc-panel app-entry">
+      <div class="app-hero"><img class="app-illust" src="../assets/illustrations/suki-type-check.webp" alt="" width="156" height="156" decoding="async" onerror="this.parentNode.remove()" /></div>
+      <h2 class="stc-panel__title app-title" id="start-title" tabindex="-1">すきタイプチェック</h2>
+      <p class="app-catch">18この質問にこたえると、じぶんの「すき」のタイプがわかる</p>
+      <p class="stc-panel__lead app-entry__lead">18この質問にこたえていくと、じぶんの「すき」のタイプが出てきます。ぜんぶで10分くらい。</p>
+      <ul class="stc-note-list app-entry__notes">
         <li>正解はありません。ぱっと思ったほうでOK</li>
         <li>まよったときは、まんなかの「どちらでもない」でOK</li>
         <li>タイプは、話のきっかけにするためのものです</li>
       </ul>
-      <div class="stc-actions">
+      <div class="stc-actions app-entry__actions">
         <button class="btn btn-primary btn-lg" type="button" data-action="start">はじめる</button>
       </div>
     </div>

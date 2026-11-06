@@ -796,3 +796,8 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* はじめの画面の型（2026-11-06）: 型のあきにそろえる（パネルの gap を足さない）。
+   はじめの画面のあいだは、上の帯（ツール名・ひとこと）を隠す（ほかの画面では今までどおり出る） */
+.cn-panel.app-entry { display: block; }
+body:has(#app > .app-entry) > .app-header { display: none; }

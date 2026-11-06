@@ -5,25 +5,23 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ことばシャッフル | あそびのたな</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet" />
-  <link rel="stylesheet" href="../shared/css/design-system.css" />
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="../shared/css/design-system.css?v=20261106" />
+  <link rel="stylesheet" href="style.css?v=20261106" />
 </head>
-<body>
+<body data-genre="puzzle">
   <main class="ks-app">
 
     <!-- ===== TOP画面 ===== -->
     <section class="ks-screen" id="screen-top">
-      <header class="ks-hero">
-        <span class="material-symbols-rounded ks-hero__icon">shuffle</span>
-        <h1 class="ks-hero__title">ことばシャッフル</h1>
-        <p class="ks-hero__sub">バラバラの文字をならべかえて、ことばを当てよう</p>
-      </header>
-
-      <section class="ks-top-panel card">
+      <section class="ks-top-panel card app-entry">
+        <div class="app-hero"><img class="app-illust" src="../assets/illustrations/kotoba-shuffle.webp" alt="" width="156" height="156" decoding="async" onerror="this.parentNode.remove()" /></div>
+        <h1 class="ks-hero__title app-title">ことばシャッフル</h1>
+        <p class="ks-hero__sub app-catch">バラバラの文字をならべかえて、ことばを当てよう</p>
         <h2 class="ks-top-panel__title">もんだいのレベル</h2>
         <div class="ks-level-grid" id="levelGrid" role="radiogroup" aria-label="レベル選択"></div>
-        <div class="ks-top-panel__actions">
+        <div class="ks-top-panel__actions app-entry__actions">
           <button class="btn btn-primary btn-lg" id="btnStart" disabled>
             <span class="material-symbols-rounded">play_arrow</span>
             スタート

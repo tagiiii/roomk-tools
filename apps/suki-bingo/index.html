@@ -5,31 +5,37 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
   <title>好きなものビンゴ | あそびのたな</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
-  <link rel="stylesheet" href="../shared/css/design-system.css">
+  <link rel="stylesheet" href="../shared/css/design-system.css?v=20261106">
   <!-- index.html と app.js・style.css はセットで変わるので、変えたら ?v= をそろえて上げる -->
-  <link rel="stylesheet" href="style.css?v=20261012f">
+  <link rel="stylesheet" href="style.css?v=20261106">
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <script src="../shared/js/rtdb-utils.js?v=20261005"></script>
   <script src="../shared/js/room-qr.js?v=20261022"></script>
 </head>
-<body>
+<body data-genre="talk">
   <div class="wrapper" id="wrapper">
     <header class="sb-header">
-      <h1 class="sb-header__title">好きなものビンゴ</h1>
+      <h1 class="sb-header__title app-title">好きなものビンゴ</h1>
       <p class="sb-header__sub">好きなものでカードを作る、運まかせのビンゴ</p>
       <p class="sb-watchbadge" id="watchBadge" hidden>みんなにみせる画面</p>
     </header>
     <main>
       <section class="sb-screen active" id="screen-top">
-        <div class="sb-panel">
-          <p class="sb-lead">テーマにそって、好きなものを9個選んでビンゴカードを作るゲーム。あとは、ホストがひくのを見ているだけ。ひかれたものを選んでいた人の名前が出るから、「同じだ」が見つかるよ。</p>
+        <div class="sb-panel app-entry">
+          <div class="app-hero"><img class="app-illust" src="../assets/illustrations/suki-bingo.webp" alt="" width="156" height="156" decoding="async" onerror="this.parentNode.remove()" /></div>
+          <h1 class="app-title">好きなものビンゴ</h1>
+          <p class="app-catch">好きなものでカードを作る、運まかせのビンゴ</p>
+          <p class="sb-lead app-entry__lead">テーマにそって、好きなものを9個選んでビンゴカードを作るゲーム。あとは、ホストがひくのを見ているだけ。ひかれたものを選んでいた人の名前が出るから、「同じだ」が見つかるよ。</p>
           <p class="sb-note">ビンゴになるかは運だけ。順位はつけないよ。</p>
-          <button type="button" class="btn btn-primary btn-full" id="btnGoCreate">ルームを作る</button>
-          <button type="button" class="btn btn-secondary btn-full" id="btnGoJoin">ルームに参加する</button>
-          <button type="button" class="btn btn-ghost btn-full" id="btnGoWatch">みんなにみせる画面をひらく</button>
+          <div class="app-entry__actions">
+            <button type="button" class="btn btn-primary btn-full" id="btnGoCreate">ルームを作る</button>
+            <button type="button" class="btn btn-secondary btn-full" id="btnGoJoin">ルームに参加する</button>
+            <button type="button" class="btn btn-ghost btn-full" id="btnGoWatch">みんなにみせる画面をひらく</button>
+          </div>
         </div>
       </section>
 

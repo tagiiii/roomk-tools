@@ -5,8 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
   <title>ちゃりんバトン | あそびのたな</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
-  <link rel="stylesheet" href="../shared/css/design-system.css">
+  <link rel="stylesheet" href="../shared/css/design-system.css?v=20261106">
   <!-- index.html と app.js・engine.js・style.css はセットで変わるので、変えたら ?v= をそろえて上げる -->
   <link rel="stylesheet" href="style.css?v=20261105b">
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
@@ -16,19 +17,20 @@
   <script src="../shared/js/room-qr.js?v=20261022"></script>
   <script src="engine.js?v=20261105b"></script>
 </head>
-<body>
+<body data-genre="puzzle">
 
   <!-- トップ -->
   <section class="cb-screen cb-front active" id="screen-top">
-    <div class="cb-panel">
-      <h1 class="cb-panel__title">ちゃりんバトン</h1>
-      <p class="cb-panel__lead">ならんだ小銭がぜんぶでいくらかを答えて、次の人にバトンを渡す対決（2〜6人）。自分の番の間だけ、自分の時計が減っていく。時計が0になった人から「ここまで」で、最後まで残った人の勝ち。ひとりでも遊べる（時計が0になるまで小銭が続けて出て、正解した数が点数）。1回は3〜5分くらい。</p>
-      <ul class="cb-panel__notes">
+    <div class="cb-panel app-entry">
+      <div class="app-hero"><img class="app-illust" src="../assets/illustrations/charin-baton.webp" alt="" width="156" height="156" decoding="async" onerror="this.parentNode.remove()" /></div>
+      <h1 class="cb-panel__title app-title">ちゃりんバトン</h1>
+      <p class="cb-panel__lead app-entry__lead">ならんだ小銭がぜんぶでいくらかを答えて、次の人にバトンを渡す対決（2〜6人）。自分の番の間だけ、自分の時計が減っていく。時計が0になった人から「ここまで」で、最後まで残った人の勝ち。ひとりでも遊べる（時計が0になるまで小銭が続けて出て、正解した数が点数）。1回は3〜5分くらい。</p>
+      <ul class="cb-panel__notes app-entry__notes">
         <li>小銭は2枚からはじまって、正解するごとにだんだん増える</li>
         <li>まちがえても、何回でも答えなおせる</li>
         <li>わからないときは「パス」。3秒待つと次の小銭が出る</li>
       </ul>
-      <div class="cb-panel__actions">
+      <div class="cb-panel__actions app-entry__actions">
         <button type="button" class="btn btn-primary btn-full" id="btnGoCreate">ルームを作る</button>
         <button type="button" class="btn btn-secondary btn-full" id="btnGoJoin">ルームに参加する</button>
         <button type="button" class="btn btn-secondary btn-full" id="btnGoLocal">1台の画面であそぶ</button>

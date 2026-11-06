@@ -288,3 +288,10 @@ button.df-card { position: relative; }
   .df-splash.is-on { animation: none; }
   button.df-card, .df-timer__bar { transition: none; }
 }
+
+/* ── はじめの画面の型（2026-11-06）: ツール名・ひとこと・絵は、はじめの画面の白い面（.app-entry）に入れた。
+   そのあいだだけ、ヘッダーのツール名とひとことを隠す（ほかの画面では今までどおり出る。みんなにみせる画面の印は隠さない） ── */
+.wrapper:has(#screen-top.active) > .df-header > :is(.df-header__title, .df-header__sub) { display: none; }
+.wrapper:has(#screen-top.active) > .df-header { margin-bottom: 0; }
+/* 型の中では説明の下のあきが消えるので、ひとことの注意を少し離す */
+.app-entry > .df-note { margin-top: 10px; }

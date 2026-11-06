@@ -5,28 +5,34 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
   <title>みんなでランキング | あそびのたな</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
-  <link rel="stylesheet" href="../shared/css/design-system.css">
-  <link rel="stylesheet" href="style.css?v=20261005">
+  <link rel="stylesheet" href="../shared/css/design-system.css?v=20261106">
+  <link rel="stylesheet" href="style.css?v=20261106">
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <script src="../shared/js/rtdb-utils.js?v=20261005"></script>
   <script src="../shared/js/room-qr.js?v=20261022"></script>
 </head>
-<body>
+<body data-genre="talk">
   <div class="wrapper">
     <header class="mr-header">
-      <h1 class="mr-header__title">みんなでランキング</h1>
+      <h1 class="mr-header__title app-title">みんなでランキング</h1>
       <p class="mr-header__sub">自分のランキングを作って、みんなの1位を予想しよう</p>
     </header>
     <main>
       <section class="mr-screen active" id="screen-top">
-        <div class="mr-panel">
-          <p class="mr-lead">同じお題で一人ずつランキングを作るよ。提出したら、ほかの人の1位を予想して、結果を見せ合おう。</p>
+        <div class="mr-panel app-entry">
+          <div class="app-hero"><img class="app-illust" src="../assets/illustrations/minna-ranking.webp" alt="" width="156" height="156" decoding="async" onerror="this.parentNode.remove()" /></div>
+          <h1 class="app-title">みんなでランキング</h1>
+          <p class="app-catch">自分のランキングを作って、みんなの1位を予想しよう</p>
+          <p class="mr-lead app-entry__lead">同じお題で一人ずつランキングを作るよ。提出したら、ほかの人の1位を予想して、結果を見せ合おう。</p>
           <p class="mr-note">好きな順に正解はないよ。ランキングの内容には点を付けないよ。</p>
-          <button type="button" class="btn btn-primary btn-full" id="btnGoCreate">ルームをつくる</button>
-          <button type="button" class="btn btn-secondary btn-full" id="btnGoJoin">ルームに参加する</button>
+          <div class="app-entry__actions">
+            <button type="button" class="btn btn-primary btn-full" id="btnGoCreate">ルームをつくる</button>
+            <button type="button" class="btn btn-secondary btn-full" id="btnGoJoin">ルームに参加する</button>
+          </div>
         </div>
       </section>
       <section class="mr-screen" id="screen-create">

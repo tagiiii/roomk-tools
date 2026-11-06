@@ -5,32 +5,38 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
   <title>ひらめき大喜利 | あそびのたな</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
-  <link rel="stylesheet" href="../shared/css/design-system.css">
+  <link rel="stylesheet" href="../shared/css/design-system.css?v=20261106">
   <!-- index.html と app.js・data.js・style.css はセットで変わるので、変えたら ?v= をそろえて上げる -->
-  <link rel="stylesheet" href="style.css?v=20261031a">
+  <link rel="stylesheet" href="style.css?v=20261106">
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <script src="../shared/js/rtdb-utils.js?v=20261005"></script>
   <script src="../shared/js/room-qr.js?v=20261022"></script>
 </head>
-<body>
+<body data-genre="kotoba">
   <div class="og-wrap">
     <header class="og-header">
-      <h1 class="og-header__title">ひらめき大喜利</h1>
+      <h1 class="og-header__title app-title">ひらめき大喜利</h1>
       <p class="og-header__sub">思いついた答えを何回でも。おもしろければ「一本！」</p>
       <p class="og-watchbadge" id="watchBadge" hidden>みんなにみせる画面</p>
     </header>
 
     <main class="og-main">
       <section class="og-screen active" id="screen-top">
-        <div class="og-panel">
-          <p class="og-lead">お題に、思いついた答えを何回でも出す大喜利。出た答えは1つずつ、だれのか伏せてみんなの画面に出るよ。「おもしろい！」と思う人が多ければ「一本！」。</p>
+        <div class="og-panel app-entry">
+          <div class="app-hero"><img class="app-illust" src="../assets/illustrations/hirameki-oogiri.webp" alt="" width="156" height="156" decoding="async" onerror="this.parentNode.remove()" /></div>
+          <h1 class="app-title">ひらめき大喜利</h1>
+          <p class="app-catch">思いついた答えを何回でも。おもしろければ「一本！」</p>
+          <p class="og-lead app-entry__lead">お題に、思いついた答えを何回でも出す大喜利。出た答えは1つずつ、だれのか伏せてみんなの画面に出るよ。「おもしろい！」と思う人が多ければ「一本！」。</p>
           <p class="og-note">「回答者」と「審査員」の、どちらか・両方を選んで参加するよ。1つのお題は数分くらい。</p>
-          <button type="button" class="btn btn-primary btn-full" id="btnGoCreate">ルームを作る</button>
-          <button type="button" class="btn btn-secondary btn-full" id="btnGoJoin">ルームに参加する</button>
-          <button type="button" class="btn btn-ghost btn-full" id="btnGoWatch">みんなにみせる画面をひらく</button>
+          <div class="app-entry__actions">
+            <button type="button" class="btn btn-primary btn-full" id="btnGoCreate">ルームを作る</button>
+            <button type="button" class="btn btn-secondary btn-full" id="btnGoJoin">ルームに参加する</button>
+            <button type="button" class="btn btn-ghost btn-full" id="btnGoWatch">みんなにみせる画面をひらく</button>
+          </div>
         </div>
       </section>
 

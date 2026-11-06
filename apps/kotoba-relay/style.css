@@ -172,3 +172,6 @@
     padding: 40px 16px;
   }
 }
+
+/* はじめの画面の型（2026-11-06）: スタート前の画面のあいだは、ツール名・ひとこと・絵を入口の面に出すので、上の見出しは隠す（ゲーム中は今までどおり出る） */
+body:has(#screenStart:not([hidden])) .kr-header { display: none; }

@@ -173,3 +173,10 @@
     font-size: 11px;
   }
 }
+
+/* ── 種類の色（2026-11-06）: カードの裏は種類の濃い色（白い数字が読める濃さ）、お題と表の枠は種類の色 ── */
+.tc-header:has(> .app-hero) { margin-bottom: 28px; }
+.card-face-back { background-color: var(--g-ink); border-color: #7E2550; }
+.card-grid .flip-card:not(.dimmed):not(.flipped):hover .card-face-back { background-color: #7E2550; }
+.card-face-front, .topic-area { border-color: var(--g); }
+.card-number, .card-topic, .topic-area__label { font-family: 'Zen Maru Gothic', var(--font-base); }

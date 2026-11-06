@@ -665,3 +665,8 @@ button.kag-tile:focus-visible .kag-tile__face {
   .kag-tile__mark { font-size: 11px; top: 1px; right: 1px; }
   .kag-last { font-size: 14px; }
 }
+
+/* はじめの画面の型（2026-11-06）: はじめの画面のあいだは、ツール名・ひとことを入口の面に出すので、上のヘッダーの名前・ひとことは隠す
+   （みんなにみせる画面の印は隠さない。ほかの画面では今までどおり出る） */
+.wrapper:has(#screen-top.active) > .kag-header > :is(.kag-header__title, .kag-header__sub) { display: none; }
+.wrapper:has(#screen-top.active) > .kag-header:has(> .kag-watchbadge[hidden]) { margin-bottom: 0; }

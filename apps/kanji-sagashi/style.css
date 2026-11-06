@@ -284,3 +284,8 @@
     align-items: stretch;
   }
 }
+
+/* はじめの画面の型（2026-11-06）: 設定画面のあいだは、ツール名・ひとこと・絵を入口の面に出すので、上の見出しは隠す（ほかの画面では今までどおり出る） */
+body:has(#screen-settings.active) .ks-header { display: none; }
+.app-entry > .app-catch + .ks-settings__group { margin-top: 22px; }
+.app-entry > .ks-settings__group:has(+ .app-entry__actions) { margin-bottom: 0; }

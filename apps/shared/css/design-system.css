@@ -456,6 +456,133 @@ a:hover {
 .mb-lg        { margin-bottom: var(--space-lg); }
 
 /* ─────────────────────────────────────────────
+   M-7. あそびのたなの見た目（2026-11-06 オーナー判断）
+   ツール一覧と同じ見た目にそろえる: 画用紙の地・枠なしでやわらかい影の白い面・見出しとボタンは丸い書体・
+   種類の色（<body data-genre="…">）・はじめの画面の絵の面（.app-hero）。
+   丸い書体は、各ツールの <head> で Zen Maru Gothic を読み込んだときだけ効く（読み込まないと Noto Sans JP のまま）:
+   <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet">
+   ───────────────────────────────────────────── */
+
+/* 地: 一覧と同じ細かい粒（白と黒の点。どの地の色にも重ねられる）。
+   各ツールの body { background: … } に消されないよう html body で指定する。
+   暗い地にする画面（body のクラスや style で background を指定するもの）は、そちらが勝って粒が消える */
+html body { background-image: url("../../assets/paper-grain.png"); }
+
+/* 種類の色（ツール一覧の [data-genre] と同じ値）。
+   --g: 枠・印 / --g-pale: 淡い面 / --g-ink: 濃い文字や面（白い文字が読める濃さ） */
+[data-genre="kotoba"] { --g: #F0A04B; --g-pale: #FFF1E0; --g-ink: #9A4D00; }
+[data-genre="puzzle"] { --g: #5B9BE6; --g-pale: #E6F0FC; --g-ink: #1D5799; }
+[data-genre="suiri"]  { --g: #9C7BDB; --g-pale: #F0EAFB; --g-ink: #5B3797; }
+[data-genre="atekko"] { --g: #4CB884; --g-pale: #E3F5EC; --g-ink: #1D6B45; }
+[data-genre="board"]  { --g: #E8707B; --g-pale: #FDE9EB; --g-ink: #A3303C; }
+[data-genre="talk"]   { --g: #E07BAA; --g-pale: #FCE9F2; --g-ink: #9E2F63; }
+
+/* 白い面: 枠なしで、あたたかい色のやわらかい影だけ */
+:root { --shadow-soft: 0 1px 2px rgba(63, 54, 45, 0.10), 0 2px 10px rgba(63, 54, 45, 0.07); }
+.card { border-radius: var(--radius-card); box-shadow: var(--shadow-soft); }
+
+/* 見出しとボタンは丸い書体（ツール名には .app-title を付ける） */
+h1, h2, .btn, .app-title { font-family: 'Zen Maru Gothic', var(--font-base); }
+
+/* はじめの画面の絵の面: ツール一覧のカードと同じ組み方（種類の淡い色の面の中央に、角を丸めた絵）。
+   <div class="app-hero"><img class="app-illust" src="../assets/illustrations/{app}.webp" alt="" width="156" height="156"
+     decoding="async" onerror="this.parentNode.remove()" /></div>
+   絵が読めないときは面ごと消える。そのとき元のアイコンに戻すには、アイコンに .app-hero-fallback を付けて
+   絵の面と同じ親に置く（絵の面があるあいだは隠れる） */
+.app-hero {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 360px;
+  height: 184px;
+  margin: 0 auto 20px;
+  border-radius: var(--radius-card);
+  background-color: var(--g-pale, var(--color-primary-soft));
+}
+.app-hero > .app-illust {
+  width: 156px;
+  height: 156px;
+  border-radius: 12px;
+  object-fit: cover;
+}
+/* はじめの画面でそのまま遊ぶツール（カードを並べるなど）は低めの面 */
+.app-hero--compact { max-width: 280px; height: 112px; margin-bottom: 14px; }
+.app-hero--compact > .app-illust { width: 92px; height: 92px; border-radius: 10px; }
+:has(> .app-hero) > .app-hero-fallback { display: none !important; }
+
+/* はじめの画面の型（入口の白い面1枚）: ツール一覧のカードを大きくした形。
+   上の端に絵の面（端まで）・ツール名（中央）・ひとこと（中央）・説明（左寄せ）・ボタン（幅いっぱいで縦に並ぶ）。
+   各ツールの白い面のクラスと一緒に付ける。ツールの CSS より強くするため body から書く
+   <section class="app-entry">
+     <div class="app-hero">…</div>
+     <h1 class="app-title">ツール名</h1>
+     <p class="app-catch">ひとこと</p>
+     <p class="app-entry__lead">説明</p>            （あれば）
+     <ul class="app-entry__notes"><li>…</li></ul>   （あれば）
+     （設定などがあれば、ここに置く）
+     <div class="app-entry__actions">ボタン</div>
+   </section> */
+body .app-entry {
+  width: 100%;
+  max-width: 440px;
+  margin: 0 auto;
+  padding: 0 28px 28px;
+  overflow: hidden;
+  text-align: left;
+  background: var(--color-surface);
+  border: 0;
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-soft);
+}
+/* 上の端: 絵の面、またはそのツールにもとからある場面の図（.app-entry__head。かくれ怪盗の夜の美術館など） */
+body .app-entry > :is(.app-hero, .app-entry__head) {
+  max-width: none;
+  margin: 0 -28px 20px;
+  border-radius: 0;
+}
+body .app-entry > .app-title {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.35;
+  letter-spacing: 0.04em;
+  color: var(--color-primary);
+  text-align: center;
+}
+body .app-entry > .app-catch {
+  margin: 6px 0 0;
+  font-size: 15px;
+  color: var(--color-muted);
+  text-align: center;
+}
+body .app-entry > .app-entry__lead {
+  margin: 18px 0 0;
+  font-size: 15px;
+  line-height: 1.8;
+  color: var(--color-text);
+  text-align: left;
+}
+body .app-entry > .app-entry__notes {
+  margin: 14px 0 0;
+  padding: 12px 16px 12px 32px;
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--color-text);
+  text-align: left;
+  background: var(--color-primary-soft);
+  border-radius: 12px;
+}
+body .app-entry > .app-entry__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 22px 0 0;
+}
+/* 幅いっぱいにするのはボタンだけ（「あそびかた」などの文字だけのリンクは中央に小さく） */
+body .app-entry > .app-entry__actions > :is(.btn, [class*="-btn"], [class*="btn-"]) { width: 100%; margin: 0; }
+body .app-entry > .app-entry__actions > :not(.btn, [class*="-btn"], [class*="btn-"]) { align-self: center; }
+
+/* ─────────────────────────────────────────────
    レスポンシブ
    ───────────────────────────────────────────── */
 @media (max-width: 600px) {
@@ -473,4 +600,12 @@ a:hover {
     font-size: var(--font-size-body);
     padding: 12px 24px;
   }
+
+  /* スマホは主ボタンが下に押し出されないよう低め */
+  .app-hero:not(.app-hero--compact) { height: 136px; margin-bottom: 16px; }
+  .app-hero:not(.app-hero--compact) > .app-illust { width: 116px; height: 116px; }
+
+  body .app-entry { padding: 0 18px 20px; }
+  body .app-entry > :is(.app-hero, .app-entry__head) { margin: 0 -18px 16px; }
+  body .app-entry > .app-title { font-size: 24px; }
 }

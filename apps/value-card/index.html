@@ -5,27 +5,29 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>バリューカード | あそびのたな</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet" />
-  <link rel="stylesheet" href="../shared/css/design-system.css" />
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="../shared/css/design-system.css?v=20261106" />
+  <link rel="stylesheet" href="style.css?v=20261106" />
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.7/Sortable.min.js" integrity="sha384-DgmC6Xe2bSN2WjTDXzWYbUbxyhNP+NNkGDR/g78pCXV7E7rcVTGxVg0uIVCUUcBc" crossorigin="anonymous"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" integrity="sha512-BNaRQnYJYiPSqHHDb58B0yaPfCu+Wgds8Gp/gU33kqBtgNS4tSPHuGibyoeqMV/TJlSKda6FXzoEyYGjTe+vXA==" crossorigin="anonymous"></script>
 </head>
-<body>
+<body data-genre="talk">
 
   <div class="wrapper">
 
     <!-- TOP -->
     <div class="screen active" id="screen-top">
-      <header class="vc-header">
-        <h1 class="vc-header__title">バリューカード</h1>
-        <p class="vc-header__sub">自分の「大事」を見つけるカードワーク</p>
-      </header>
+      <section class="app-entry">
+        <div class="app-hero"><img class="app-illust" src="../assets/illustrations/value-card.webp" alt="" width="156" height="156" decoding="async" onerror="this.parentNode.remove()" /></div>
+        <h1 class="vc-header__title app-title">バリューカード</h1>
+        <p class="vc-header__sub app-catch">自分の「大事」を見つけるカードワーク</p>
 
-      <div class="vc-top-actions">
-        <button class="btn btn-primary btn-lg" id="btn-start">はじめる</button>
-        <button class="btn btn-ghost" id="btn-howto-toggle">あそびかた</button>
-      </div>
+        <div class="vc-top-actions app-entry__actions">
+          <button class="btn btn-primary btn-lg" id="btn-start">はじめる</button>
+          <button class="btn btn-ghost" id="btn-howto-toggle">あそびかた</button>
+        </div>
+      </section>
 
       <div class="vc-howto" id="howto-panel">
         <ol class="vc-howto__list">

@@ -5,8 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
   <title>たとえならべ | あそびのたな</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
-  <link rel="stylesheet" href="../shared/css/design-system.css">
+  <link rel="stylesheet" href="../shared/css/design-system.css?v=20261106">
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
@@ -370,31 +371,28 @@
     }
   </style>
 </head>
-<body>
+<body data-genre="atekko">
 
   <!-- ============================= -->
   <!-- TOP 画面                      -->
   <!-- ============================= -->
   <div id="screen-top" class="screen">
     <div class="page">
-      <div class="ito-header">
-        <div class="ito-header__icon">
-          <span class="material-symbols-rounded" aria-hidden="true">filter_1</span>
+      <section class="app-entry">
+        <div class="app-hero"><img class="app-illust" src="../assets/illustrations/tatoe-narabe.webp" alt="" width="156" height="156" decoding="async" onerror="this.parentNode.remove()" /></div>
+        <h1 class="app-title">たとえならべ</h1>
+        <p class="app-catch">数字をお題に例えて、小さい順に宣言しよう！</p>
+        <div class="app-entry__actions">
+          <button class="btn btn-primary btn-lg btn-full" onclick="showScreen('host-setup')">
+            <span class="material-symbols-rounded" aria-hidden="true">add_circle</span>
+            ルームを作る（ホスト）
+          </button>
+          <button class="btn btn-secondary btn-lg btn-full" onclick="goGuestJoin()">
+            <span class="material-symbols-rounded" aria-hidden="true">login</span>
+            ルームに参加する
+          </button>
         </div>
-        <div class="ito-header__title">たとえならべ</div>
-        <div class="ito-header__sub">数字をお題に例えて、小さい順に宣言しよう！</div>
-      </div>
-
-      <div style="display:flex; flex-direction:column; gap:12px;">
-        <button class="btn btn-primary btn-lg btn-full" onclick="showScreen('host-setup')">
-          <span class="material-symbols-rounded" aria-hidden="true">add_circle</span>
-          ルームを作る（ホスト）
-        </button>
-        <button class="btn btn-secondary btn-lg btn-full" onclick="goGuestJoin()">
-          <span class="material-symbols-rounded" aria-hidden="true">login</span>
-          ルームに参加する
-        </button>
-      </div>
+      </section>
 
       <div class="card" style="margin-top: 32px; padding: 16px 20px;">
         <div style="font-size:13px; font-weight:700; color:var(--color-primary); margin-bottom:10px;">

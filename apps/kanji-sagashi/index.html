@@ -5,22 +5,26 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>漢字さがし | あそびのたな</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet" />
-  <link rel="stylesheet" href="../shared/css/design-system.css" />
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="../shared/css/design-system.css?v=20261106" />
+  <link rel="stylesheet" href="style.css?v=20261106" />
 </head>
-<body>
+<body data-genre="puzzle">
 
   <div class="wrapper">
 
     <header class="ks-header">
-      <h1 class="ks-header__title">漢字さがし</h1>
+      <h1 class="ks-header__title app-title">漢字さがし</h1>
       <p class="ks-header__sub">にている漢字の中から正しい漢字をさがそう！</p>
     </header>
 
     <!-- ===== 設定画面 ===== -->
     <main id="screen-settings" class="ks-screen active">
-      <div class="card ks-card">
+      <div class="card ks-card app-entry">
+        <div class="app-hero"><img class="app-illust" src="../assets/illustrations/kanji-sagashi.webp" alt="" width="156" height="156" decoding="async" onerror="this.parentNode.remove()" /></div>
+        <h1 class="app-title">漢字さがし</h1>
+        <p class="app-catch">にている漢字の中から正しい漢字をさがそう！</p>
         <div class="ks-settings__group">
           <p class="ks-settings__label">
             <span class="material-symbols-rounded">tune</span>むずかしさ
@@ -47,9 +51,11 @@
             <button class="ks-option" data-value="30" type="button">30秒</button>
           </div>
         </div>
-        <button class="btn btn-primary btn-lg btn-full" id="btn-start-game" type="button">
-          <span class="material-symbols-rounded">play_arrow</span>はじめる
-        </button>
+        <div class="app-entry__actions">
+          <button class="btn btn-primary btn-lg btn-full" id="btn-start-game" type="button">
+            <span class="material-symbols-rounded">play_arrow</span>はじめる
+          </button>
+        </div>
       </div>
     </main>
 

@@ -683,3 +683,8 @@
   .ka-word { flex: 0 1 auto; }
   .ka-answer__word { font-size: 32px; }
 }
+
+/* はじめの画面の型（2026-11-06）: はじめの画面のあいだは、ツール名・ひとことを入口の面に出すので、上のヘッダーの名前・ひとことは隠す
+   （みんなにみせる画面の印は隠さない。ほかの画面では今までどおり出る） */
+.wrapper:has(#screen-top.active) > .ka-header > :is(.ka-header__title, .ka-header__sub) { display: none; }
+.wrapper:has(#screen-top.active) > .ka-header:has(> .ka-watchbadge[hidden]) { margin-bottom: 0; }
