@@ -8,7 +8,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet" />
   <link rel="stylesheet" href="../shared/css/design-system.css?v=20261106c" />
-  <link rel="stylesheet" href="style.css?v=20261106look" />
+  <link rel="stylesheet" href="style.css?v=20261106r2" />
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
@@ -133,12 +133,14 @@
             </button>
           </div>
 
-          <div class="qz-quiz-actions qz-quiz-actions--finish">
-            <button class="btn btn-ghost btn-sm" id="btnFinishEarly" hidden>
-              <span class="material-symbols-rounded">flag</span>
-              ここで結果を見る
-            </button>
-          </div>
+          <!-- たまに使う操作は、ここにまとめる（開くと出る） -->
+          <details class="qz-hostmenu" id="quizMoreMenu" hidden>
+            <summary>そのほかの操作</summary>
+            <div class="qz-hostmenu__row">
+              <button class="btn btn-secondary btn-sm" id="btnFinishEarly" type="button">ここで結果を見る</button>
+              <span class="qz-hostmenu__note">のこりの問題は出さずに終わる</span>
+            </div>
+          </details>
         </div>
       </div>
     </section>
@@ -307,15 +309,19 @@
         </section>
         <div class="qz-room-actions" id="hostRevealTools" hidden>
           <button class="btn btn-primary btn-lg" id="btnNextQuestion"></button>
-          <button class="btn btn-ghost btn-sm" id="btnFinishGame">
-            <span class="material-symbols-rounded">flag</span>
-            ここで結果発表へ
-          </button>
           <button class="btn btn-ghost btn-sm" id="btnOpenWatchReveal">
             <span class="material-symbols-rounded" aria-hidden="true">cast</span>
             みんなにみせる画面をひらく
           </button>
         </div>
+        <!-- ホストがたまに使う操作は、ここにまとめる（開くと出る） -->
+        <details class="qz-hostmenu" id="hostRevealMenu" hidden>
+          <summary>そのほかの操作</summary>
+          <div class="qz-hostmenu__row">
+            <button class="btn btn-secondary btn-sm" id="btnFinishGame" type="button">ここで結果発表へ</button>
+            <span class="qz-hostmenu__note">のこりの問題は出さずに終わる</span>
+          </div>
+        </details>
         <p class="qz-note qz-note--center" id="guestRevealWait" hidden>ホストが次へ進めるのを待ってね</p>
       </div>
     </section>
@@ -467,7 +473,7 @@
     </div>
   </div>
 
-  <script type="module" src="app.js?v=20261022"></script>
+  <script type="module" src="app.js?v=20261106r2"></script>
   <script src="../shared/js/stats.js?v=1" defer></script>
   <script src="../shared/js/howto.js"></script>
   <script>
@@ -479,7 +485,7 @@
         { heading: 'ひとつの画面であそぶ', items: [
           'パックと「問題数」「手ごたえ」をえらんで「スタート」を押す',
           '答えを押して、正解と解説をたしかめたら「次の問題へ」を押す',
-          'とちゅうでやめたいときは「ここで結果を見る」を押す',
+          'とちゅうでやめたいときは「そのほかの操作」をひらいて「ここで結果を見る」を押す',
           '「問題をコピー」や「正解つきでコピー」を押すと、チャットに貼りつけられる',
         ] },
         { heading: 'ルームであそぶ', items: [

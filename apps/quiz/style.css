@@ -495,9 +495,17 @@
   justify-content: center;
 }
 
-.qz-quiz-actions--finish {
-  margin-top: -6px;
-}
+/* ── そのほかの操作（ホストだけ。たまに使う操作をたたむ） ── */
+.qz-hostmenu { margin-top: var(--space-md); padding: 4px 20px; }
+.qz-hostmenu summary { min-height: 44px; display: flex; align-items: center; gap: 6px; color: var(--color-muted); font-size: 14px; font-weight: 700; cursor: pointer; list-style: none; }
+.qz-hostmenu summary::-webkit-details-marker { display: none; }
+.qz-hostmenu summary::before { content: "expand_more"; font-family: "Material Symbols Rounded"; font-size: 22px; font-weight: 400; color: var(--color-accent); transition: transform .15s; }
+.qz-hostmenu[open] summary::before { transform: rotate(180deg); }
+.qz-hostmenu[open] { padding-bottom: 16px; }
+.qz-hostmenu__row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; padding: 8px 0; border-top: 1px solid var(--color-border); }
+.qz-hostmenu__note { font-size: 13px; color: var(--color-muted); line-height: 1.6; }
+.qz-hostmenu { margin: 16px auto 0; max-width: 440px; padding: 4px 18px; text-align: left; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 14px; }
+.qz-hostmenu[hidden] { display: none; }
 
 .qz-end {
   text-align: center;

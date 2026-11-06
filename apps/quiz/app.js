@@ -178,6 +178,8 @@ const feedbackAnswer = document.getElementById('feedbackAnswer');
 const feedbackExplanation = document.getElementById('feedbackExplanation');
 const btnNext = document.getElementById('btnNext');
 const btnFinishEarly = document.getElementById('btnFinishEarly');
+// 「ここで結果を見る」「ここで結果発表へ」は、たまに使う操作として「そのほかの操作」にたたむ
+const quizMoreMenu = document.getElementById('quizMoreMenu');
 const endPackName = document.getElementById('endPackName');
 const endScore = document.getElementById('endScore');
 const endMessage = document.getElementById('endMessage');
@@ -247,6 +249,7 @@ const revealRanking = $('revealRanking');
 const hostRevealTools = $('hostRevealTools');
 const btnNextQuestion = $('btnNextQuestion');
 const btnFinishGame = $('btnFinishGame');
+const hostRevealMenu = $('hostRevealMenu');
 const guestRevealWait = $('guestRevealWait');
 const finalPackName = $('finalPackName');
 const finalPodium = $('finalPodium');
@@ -668,7 +671,7 @@ function renderQuestion() {
   `;
 
   // 中断ボタンは、1問以上答えたあとだけ押せる
-  btnFinishEarly.hidden = state.answeredCount === 0;
+  setMoreMenu(quizMoreMenu, state.answeredCount > 0);
 
   renderChoices(current);
 }
@@ -721,7 +724,7 @@ function answerQuestion(choiceIndex) {
   feedbackCard.hidden = false;
   btnNext.hidden = false;
   // 最終問題では「結果を見る」(btnNext) と役割が重なるので中断ボタンは隠す
-  btnFinishEarly.hidden = state.index >= state.deck.length - 1;
+  setMoreMenu(quizMoreMenu, state.index < state.deck.length - 1);
 
   popIn(feedbackCard);
 }
@@ -740,7 +743,14 @@ function goNext() {
 
 function finishEarly() {
   if (state.answeredCount === 0) return;
+  if (!confirm('ここで終わって、結果を見るよ。いい？')) return;
   finishQuiz();
+}
+
+// 「そのほかの操作」を出す・隠す（隠すときは閉じておく）
+function setMoreMenu(menu, show) {
+  menu.hidden = !show;
+  if (!show) menu.open = false;
 }
 
 function finishQuiz() {
@@ -2040,11 +2050,12 @@ function renderReveal(data) {
   hostRevealTools.hidden = !isHost;
   hostRevealCopy.hidden = !isHost;
   setButtonLabel(btnNextQuestion, isLast ? 'emoji_events' : 'arrow_forward', isLast ? '結果発表へ' : '次の問題へ');
-  btnFinishGame.hidden = isLast;
+  setMoreMenu(hostRevealMenu, isHost && !isLast);
   guestRevealWait.hidden = isHost;
 
   if (state.renderedKey !== 'reveal-' + key) {
     state.renderedKey = 'reveal-' + key;
+    hostRevealMenu.open = false;
     popIn(revealFeedback);
   }
 }
@@ -2238,6 +2249,7 @@ async function nextQuestion() {
 async function finishGame() {
   const expected = expectedGame();
   if (!expected) return;
+  if (!confirm('ここで終わって、結果発表へ進むよ。いい？')) return;
   const committed = await hostTransaction((data) => {
     const game = data.game;
     if (data.status !== ROOM_STATUS.REVEAL || !game) return;
