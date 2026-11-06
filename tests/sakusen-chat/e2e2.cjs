@@ -146,7 +146,7 @@ const ROOMS = 'sakusenchat_rooms/';
   room = await roomWhen(key, (r) => r === null);
   check('P db: room is gone', room === null, room);
   check('P guest end text', (await text(A, '#endLead')) === '会話と画像は、すべて消えたよ。' && !(await visible(A, '#btnEndTop')));
-  check('P dom wiped', (await A.page.$$('.sc-msg, .sc-topic')).length === 0 && (await A.page.title()) === '作戦会議チャット | room-K');
+  check('P dom wiped', (await A.page.$$('.sc-msg, .sc-topic')).length === 0 && (await A.page.title()) === '作戦会議チャット | あそびのたな');
   await sleep(1500);
   check('P no ghost after everyone is done', (await roomOf(key)) === null);
   await A.page.reload();

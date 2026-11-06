@@ -3,9 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>room-K ツール一覧</title>
+  <title>あそびのたな</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="shared/css/design-system.css" />
   <style>
     .portal-hero {
@@ -48,7 +49,7 @@
 
     .apps-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
       gap: var(--space-md);
     }
 
@@ -199,8 +200,8 @@
     /* ── 検索と利用シーンをまとめたパネル ── */
     .tool-filter {
       margin-bottom: var(--space-lg);
-      padding: var(--space-md) var(--space-lg) var(--space-lg);
-      border-radius: var(--radius-card);
+      padding: var(--space-md);
+      border-radius: var(--radius-box);
       background-color: var(--color-surface);
       box-shadow: var(--shadow-sm);
     }
@@ -313,8 +314,27 @@
       margin-bottom: 6px;
     }
 
+    /* 検索と「くわしく絞り込む」を1行に並べる（スマホでは2行） */
+    .tool-filter__row {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
     .tool-search {
-      margin-bottom: var(--space-md);
+      flex: 1;
+      min-width: 0;
+    }
+
+    /* 入力欄の中の虫めがねと文字で何の欄かわかるので、見出しは読み上げだけにする */
+    .tool-search__label {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
     }
 
     .tool-search__field {
@@ -323,27 +343,39 @@
 
     .tool-search__icon {
       position: absolute;
-      top: 24px; /* 入力欄の高さの半分（候補が開いても動かない） */
-      left: 16px;
+      top: 26px; /* 入力欄の高さの半分（候補が開いても動かない） */
+      left: 8px;
       transform: translateY(-50%);
+      display: grid;
+      place-items: center;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background-color: #E8EEF4;
       font-size: 22px;
-      color: var(--color-muted);
+      color: var(--color-primary);
       pointer-events: none;
     }
 
     .tool-search__input.form-input {
       -webkit-appearance: none;
       appearance: none;
-      min-height: 48px;
-      padding-left: 48px;
+      min-height: 52px;
+      padding-left: 56px;
+      border: 2px solid var(--color-border);
       border-radius: var(--radius-full);
-      background-color: var(--color-bg);
-      border-color: transparent;
+      background-color: var(--color-surface);
+      font-size: var(--font-size-body);
+      transition: border-color var(--transition-base), box-shadow var(--transition-base);
+    }
+
+    .tool-search__input.form-input:hover {
+      border-color: #A9BCC6;
     }
 
     .tool-search__input.form-input:focus {
-      background-color: var(--color-surface);
       border-color: var(--color-accent);
+      box-shadow: 0 0 0 4px rgba(46, 125, 140, 0.15);
     }
 
     /* 入力中に出す候補（ツール名）と、空欄のときの検索ヒント */
@@ -355,9 +387,9 @@
       z-index: 20;
       padding: var(--space-xs);
       border: 1px solid var(--color-border);
-      border-radius: var(--radius-card);
+      border-radius: var(--radius-box);
       background-color: var(--color-surface);
-      box-shadow: var(--shadow-md);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.16);
     }
 
     .tool-suggest[hidden],
@@ -470,9 +502,9 @@
       align-items: center;
       justify-content: space-between;
       gap: var(--space-xs) var(--space-sm);
-      margin-top: var(--space-md);
-      padding: 8px 8px 8px 14px;
-      border-radius: var(--radius-btn);
+      margin-top: 10px;
+      padding: 6px 8px 6px 16px;
+      border-radius: var(--radius-card);
       background-color: var(--color-bg);
       color: var(--color-muted);
       font-size: var(--font-size-sm);
@@ -561,16 +593,22 @@
       align-items: center;
       gap: var(--space-sm);
       margin: var(--space-md) 0 0;
+      padding: 8px 14px;
+      border-radius: var(--radius-btn);
+      background-color: var(--g-pale);
       font-size: var(--font-size-body);
       font-weight: 700;
-      color: var(--color-primary);
+      color: var(--g-ink);
     }
 
-    .genre-heading::after {
-      content: '';
-      flex: 1;
-      height: 1px;
-      background-color: var(--color-border);
+    .genre-heading .material-symbols-rounded {
+      font-size: 22px;
+    }
+
+    .genre-heading__count {
+      margin-left: auto;
+      font-size: var(--font-size-sm);
+      font-weight: 500;
     }
 
     .apps-grid > .genre-heading:first-child {
@@ -779,7 +817,7 @@
     .app-card__flag {
       position: absolute;
       top: 8px;
-      right: 8px;
+      left: 8px;
       padding: 2px 10px;
       border-radius: var(--radius-full);
       font-size: 12px;
@@ -919,6 +957,593 @@
       }
     }
 
+    /* ── 種類ごとの色（data-genre）──
+       --g は図柄の飾り・線、--g-pale は面、--g-ink はアイコンと文字（白・淡い面の上で読める濃さ）。
+       濃い色の面は目にきついので、面は淡い色だけにする */
+    [data-genre="all"]    { --g: #C8A97E; --g-pale: #F6EEE2; --g-ink: #6A5440; }
+    [data-genre="popular"] { --g: #E2B23E; --g-pale: #FFF5D6; --g-ink: #7F5300; }
+    [data-genre="kotoba"] { --g: #F0A04B; --g-pale: #FFF1E0; --g-ink: #9A4D00; }
+    [data-genre="puzzle"] { --g: #5B9BE6; --g-pale: #E6F0FC; --g-ink: #1D5799; }
+    [data-genre="suiri"]  { --g: #9C7BDB; --g-pale: #F0EAFB; --g-ink: #5B3797; }
+    [data-genre="atekko"] { --g: #4CB884; --g-pale: #E3F5EC; --g-ink: #1D6B45; }
+    [data-genre="board"]  { --g: #E8707B; --g-pale: #FDE9EB; --g-ink: #A3303C; }
+    [data-genre="talk"]   { --g: #E07BAA; --g-pale: #FCE9F2; --g-ink: #9E2F63; }
+
+    /* ── 種類のタブ ── */
+    .genre-tabs {
+      display: grid;
+      grid-auto-columns: minmax(0, 1fr); /* タブの数（人気の有無）に合わせて等分する */
+      grid-auto-flow: column;
+      gap: 10px;
+      margin-bottom: var(--space-md);
+    }
+
+    .genre-tab {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      min-height: 112px;
+      padding: 14px 6px 12px;
+      border: 2px solid transparent;
+      border-radius: var(--radius-box);
+      background-color: var(--color-surface);
+      box-shadow: var(--shadow-sm);
+      font-family: inherit;
+      color: var(--color-text);
+      cursor: pointer;
+      transition: transform var(--transition-base), box-shadow var(--transition-base), background-color var(--transition-base);
+    }
+
+    .genre-tab:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .genre-tab:focus-visible {
+      outline: 3px solid var(--g-ink);
+      outline-offset: 2px;
+    }
+
+    .genre-tab__icon {
+      display: grid;
+      place-items: center;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background-color: var(--g-pale);
+      color: var(--g-ink);
+    }
+
+    .genre-tab__icon .material-symbols-rounded {
+      font-size: 28px;
+    }
+
+    /* 「・」の位置でだけ折り返す（スクリプトが ・ のあとに <wbr> を入れる） */
+    .genre-tab__label {
+      font-size: var(--font-size-sub);
+      font-weight: 700;
+      line-height: 1.3;
+      text-align: center;
+      word-break: keep-all;
+    }
+
+    .genre-tab__count {
+      font-size: 12px;
+      color: var(--color-muted);
+    }
+
+    .genre-tab[aria-pressed="true"] {
+      border-color: var(--g);
+      background-color: var(--g-pale);
+      box-shadow: none;
+    }
+
+    .genre-tab[aria-pressed="true"] .genre-tab__icon {
+      background-color: var(--g-ink);
+      color: #fff;
+    }
+
+    .genre-tab[aria-pressed="true"] .genre-tab__count {
+      color: var(--g-ink);
+      font-weight: 700;
+    }
+
+    /* スマホ・タブレットではタブを横にスクロール（次のタブが少し見えるので、続きがあるとわかる） */
+    @media (max-width: 760px) {
+      .genre-tabs {
+        display: flex;
+        gap: 8px;
+        margin: 0 calc(var(--space-md) * -1) var(--space-sm);
+        padding: 4px var(--space-md) 8px;
+        overflow-x: auto;
+        scroll-snap-type: x proximity;
+        scroll-padding: 0 var(--space-md);
+        scrollbar-width: none;
+      }
+
+      .genre-tabs::-webkit-scrollbar {
+        display: none;
+      }
+
+      .genre-tab {
+        flex: 0 0 92px;
+        min-height: 100px;
+        padding: 10px 4px;
+        border-radius: var(--radius-card);
+        scroll-snap-align: start;
+      }
+
+      .genre-tab__icon {
+        width: 40px;
+        height: 40px;
+      }
+
+      .genre-tab__icon .material-symbols-rounded {
+        font-size: 24px;
+      }
+
+      .genre-tab__label {
+        font-size: 12px;
+      }
+    }
+
+    /* ── くわしく絞り込む（利用シーン・人数・目安時間）── */
+    .more-filter__toggle {
+      display: inline-flex;
+      flex-shrink: 0;
+      align-items: center;
+      gap: 6px;
+      min-height: 52px;
+      padding: 0 14px 0 16px;
+      border: 2px solid var(--color-border);
+      border-radius: var(--radius-full);
+      background-color: var(--color-surface);
+      font-family: inherit;
+      font-size: var(--font-size-sub);
+      font-weight: 700;
+      color: var(--color-primary);
+      cursor: pointer;
+      transition: border-color var(--transition-base), background-color var(--transition-base);
+    }
+
+    .more-filter__toggle:hover {
+      border-color: #A9BCC6;
+    }
+
+    .more-filter__toggle:focus-visible {
+      outline: 3px solid var(--color-accent);
+      outline-offset: 2px;
+    }
+
+    .more-filter__toggle[aria-expanded="true"] {
+      border-color: var(--color-accent);
+      background-color: #E4EEF0;
+    }
+
+    .more-filter__toggle .material-symbols-rounded {
+      font-size: 20px;
+    }
+
+    /* 指定しているときは、たたんでいても分かるように数を出す */
+    .more-filter__state {
+      padding: 1px 9px;
+      border-radius: var(--radius-full);
+      background-color: var(--color-accent);
+      color: #fff;
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    .more-filter__state[hidden] {
+      display: none;
+    }
+
+    .more-filter__arrow {
+      transition: transform var(--transition-base);
+    }
+
+    .more-filter__toggle[aria-expanded="true"] .more-filter__arrow {
+      transform: rotate(180deg);
+    }
+
+    .more-filter__body {
+      margin-top: 10px;
+      padding: 14px 16px 16px;
+      border-radius: var(--radius-card);
+      background-color: var(--color-bg);
+    }
+
+    .more-filter__body[hidden] {
+      display: none;
+    }
+
+    .more-filter__body .tool-size__select.form-select:not(.is-set) {
+      background-color: var(--color-surface);
+    }
+
+    @media (max-width: 600px) {
+      .tool-filter__row {
+        flex-wrap: wrap;
+      }
+
+      .tool-search {
+        flex-basis: 100%;
+      }
+
+      .more-filter__toggle {
+        width: 100%;
+        min-height: 48px;
+      }
+
+      .more-filter__arrow {
+        margin-left: auto;
+      }
+    }
+
+    /* ── カード: 種類の色の面に、カードのアイコンを白い丸で大きく出す ── */
+    .app-card {
+      transition: box-shadow var(--transition-base), transform var(--transition-base);
+    }
+
+    .app-card__icon > .material-symbols-rounded {
+      display: grid;
+      place-items: center;
+      width: 84px;
+      height: 84px;
+      border-radius: 50%;
+      background-color: var(--color-surface);
+      box-shadow: 0 3px 0 color-mix(in srgb, var(--g) 45%, transparent);
+      font-size: 48px;
+      color: var(--g-ink, var(--color-primary));
+    }
+
+    /* イラスト（assets/illustrations/{app}.webp）があるカードは、アイコンの代わりに出す。
+       絵は四角く描かれているので、角を丸めて面の中央に置く。読めないときはアイコンに戻す */
+    .app-card__illust,
+    .ranking-card__thumb > img.ranking-card__illust {
+      position: absolute;
+      inset: auto;
+      top: 7%;
+      left: 50%;
+      width: auto;
+      height: 86%;
+      aspect-ratio: 1;
+      padding: 0;
+      transform: translateX(-50%);
+      object-fit: cover;
+      border-radius: 12px;
+      background-color: var(--color-surface);
+      box-shadow: 0 3px 0 color-mix(in srgb, var(--g) 40%, transparent);
+    }
+
+    .ranking-card__thumb > img.ranking-card__illust {
+      border-radius: 8px;
+      box-shadow: 0 2px 0 color-mix(in srgb, var(--g) 40%, transparent);
+    }
+
+    /* 読み込み終わるまではアイコンを出しておき、絵が届いてから入れかえる */
+    .app-card__illust:not(.is-loaded),
+    .ranking-card__thumb > img.ranking-card__illust:not(.is-loaded) {
+      visibility: hidden;
+    }
+
+    .app-card__icon:has(> .app-card__illust.is-loaded:not([hidden])) > .material-symbols-rounded,
+    .ranking-card__thumb:has(> .ranking-card__illust.is-loaded) > .material-symbols-rounded {
+      display: none;
+    }
+
+    /* 画面の例は、マウスを当てたとき・「説明」の説明に出す */
+    .app-card .app-card__thumbnail {
+      display: none;
+    }
+
+    .app-card__body {
+      padding: 10px 12px 12px;
+    }
+
+    .app-card__name {
+      font-size: var(--font-size-body);
+      line-height: 1.4;
+    }
+
+    .app-card__meta {
+      margin-top: 6px;
+    }
+
+    /* 説明・人数と時間のほかのバッジ・利用シーン・動作環境は、説明の中に出す。
+       カードのリンクの読み上げには残す（見た目だけ隠す） */
+    .app-card__desc,
+    .app-card .meta-badge--extra,
+    .app-card__scenes,
+    .app-card__footer {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      margin: -1px;
+      padding: 0;
+      border: 0;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
+    }
+
+    /* 「人気」タブのあいだだけ出す順位（左下）。「位」は読み上げだけ */
+    .app-card__rank-suffix {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
+    }
+
+    .app-card__rank {
+      display: none;
+    }
+
+    .apps-grid.is-popular .app-card__rank {
+      position: absolute;
+      left: 8px;
+      bottom: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 30px;
+      height: 30px;
+      border-radius: var(--radius-full);
+      background-color: var(--color-primary);
+      color: #fff;
+      font-size: 15px;
+      font-weight: 700;
+      font-feature-settings: "tnum";
+      box-shadow: 0 0 0 2px #fff;
+    }
+
+    /* 「説明」: マウスのない端末で説明を開く（カード本体が <a> のため span。タッチ用なので Tab では選ばない） */
+    .app-card__info {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      z-index: 1;
+      display: grid;
+      place-items: center;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background-color: rgba(255, 255, 255, 0.92);
+      color: var(--g-ink, var(--color-primary));
+      box-shadow: var(--shadow-sm);
+      cursor: pointer;
+    }
+
+    .app-card__info .material-symbols-rounded {
+      font-size: 24px;
+    }
+
+    .app-card__info:hover {
+      background-color: #fff;
+    }
+
+    @media (max-width: 760px) {
+      .apps-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      .app-card__icon > .material-symbols-rounded {
+        width: 60px;
+        height: 60px;
+        font-size: 34px;
+      }
+
+      .app-card__info {
+        top: 4px;
+        right: 4px;
+      }
+
+      .app-card__body {
+        padding: 8px 10px 10px;
+      }
+
+      .app-card__name {
+        font-size: var(--font-size-sub);
+      }
+
+      .app-card__flag {
+        top: 6px;
+        left: 6px;
+        padding: 1px 8px;
+        font-size: 11px;
+      }
+
+      .app-card .app-card__slides {
+        margin-left: 0;
+      }
+    }
+
+    /* よく開かれたツールも、カードと同じ図柄にする */
+    .ranking-card__thumb {
+      background-color: var(--g-pale, var(--color-bg));
+    }
+
+    .ranking-card__thumb > .material-symbols-rounded {
+      display: grid;
+      place-items: center;
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background-color: var(--color-surface);
+      box-shadow: 0 2px 0 color-mix(in srgb, var(--g) 45%, transparent);
+      font-size: 30px;
+      color: var(--g-ink, var(--color-primary));
+    }
+
+    /* ── マウスを当てたときに浮かぶ説明 ── */
+    .tool-peek {
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 20;
+      width: 360px;
+      max-width: calc(100vw - 16px);
+      background-color: var(--color-surface);
+      border-radius: var(--radius-box);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.22);
+      overflow: hidden;
+      pointer-events: none;
+      visibility: hidden;
+      opacity: 0;
+      transform: scale(0.96);
+      transition: opacity 0.15s, transform 0.15s, visibility 0s 0.15s;
+    }
+
+    .tool-peek.is-open {
+      visibility: visible;
+      opacity: 1;
+      transform: none;
+      transition: opacity 0.15s, transform 0.15s;
+    }
+
+    .tool-detail__shot {
+      padding: 10px;
+      border-bottom: 4px solid var(--g);
+      background-color: var(--color-bg);
+    }
+
+    .tool-detail__shot img {
+      display: block;
+      width: 100%;
+      max-height: 220px;
+      object-fit: contain;
+    }
+
+    .tool-detail__body {
+      padding: 12px 16px 16px;
+    }
+
+    .tool-detail__genre {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--g-ink);
+    }
+
+    .tool-detail__genre .material-symbols-rounded {
+      font-size: 16px;
+    }
+
+    .tool-detail__name {
+      margin-top: 2px;
+      font-size: 18px;
+      font-weight: 700;
+      line-height: 1.4;
+    }
+
+    .tool-detail__desc {
+      margin-top: 6px;
+      font-size: var(--font-size-sub);
+      line-height: 1.6;
+    }
+
+    .tool-detail__chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 10px;
+    }
+
+    .tool-detail__chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      padding: 3px 9px;
+      border-radius: var(--radius-full);
+      background-color: var(--g-pale);
+      color: var(--g-ink);
+      font-size: 12px;
+      font-weight: 500;
+      line-height: 1.4;
+    }
+
+    .tool-detail__chip .material-symbols-rounded {
+      font-size: 15px;
+    }
+
+    .tool-detail__chip--scene {
+      background-color: transparent;
+      border: 1px solid var(--g-ink);
+      font-weight: 700;
+    }
+
+    /* ── 「説明」で開く説明（スマホは下から）── */
+    .tool-sheet {
+      width: min(440px, calc(100% - 32px));
+      max-height: calc(100% - 32px);
+      margin: auto; /* 共通 CSS が余白を 0 にするので、PC では画面の中央に置き直す */
+      padding: 0;
+      border: none;
+      border-radius: 20px;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+      color: var(--color-text);
+    }
+
+    .tool-sheet::backdrop {
+      background-color: rgba(20, 30, 40, 0.45);
+    }
+
+    .tool-sheet .tool-detail__shot img {
+      max-height: 260px;
+    }
+
+    .tool-sheet__actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 0 16px 16px;
+    }
+
+    .tool-sheet__actions .btn {
+      flex: 1;
+      min-width: 0;
+      text-decoration: none;
+    }
+
+    .tool-sheet__actions .btn[hidden] {
+      display: none;
+    }
+
+    .tool-sheet__actions .material-symbols-rounded {
+      font-size: 18px;
+    }
+
+    @media (max-width: 760px) {
+      .tool-sheet {
+        width: 100%;
+        max-width: none;
+        margin: auto auto 0;
+        border-radius: 20px 20px 0 0;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .genre-tab,
+      .app-card,
+      .tool-peek,
+      .tool-peek.is-open,
+      .more-filter__arrow,
+      .tool-search__input.form-input {
+        transition: none;
+      }
+
+      .genre-tab:hover,
+      .tool-peek {
+        transform: none;
+      }
+    }
+
     footer {
       text-align: center;
       padding: var(--space-xl) var(--space-md);
@@ -927,13 +1552,217 @@
       border-top: 1px solid var(--color-border);
       margin-top: var(--space-xl);
     }
+
+    /* ===== ツール一覧の見た目（2026-11-06。オーナーの方針: シンプルで、はじめての人にもわかりやすく、
+       ユニバーサルデザインに配慮し、余計な装飾は使わない。地はクリームの画用紙の質感） =====
+       地はクリームに細かい粒（assets/paper-grain.png）・面は白で枠なし、やわらかい影だけ・
+       文字はあたたかい焦げ茶（紺と真っ黒は使わない）・見出しやボタンは Zen Maru Gothic・押せるとわかる「説明」ボタン */
+    :root {
+      --color-primary: #6A4F35;
+      --color-text: #3F362D;
+      --color-muted: #5C5146;
+      --color-bg: #F6ECD8;
+      --color-border: #DCCBB0;
+      --color-accent: #8A4A10;
+      --hd-line: rgba(63, 54, 45, 0.16); /* 入力欄・ボタンの枠（うすい焦げ茶） */
+      --hd-radius: 16px;
+      --hd-shadow: 0 1px 2px rgba(63, 54, 45, 0.10), 0 2px 10px rgba(63, 54, 45, 0.07);
+    }
+    body { background-color: var(--color-bg); background-image: url("assets/paper-grain.png"); color: var(--color-text); }
+    :root .portal-hero { background: transparent; color: var(--color-text); }
+    :root .portal-hero__logo { font-size: 2.3rem; }
+    :root .portal-hero__tagline, :root .portal-hero__staff-link { color: var(--color-muted); }
+    :root .portal-hero__staff-link a { color: var(--color-primary); }
+    :root :is(.portal-hero__logo, .section-title, .updates-panel__title, .ranking__title, .genre-heading, .genre-tab__label,
+      .app-card__name, .more-filter__toggle, .btn, .tool-sheet h2, .tool-detail__name) {
+      font-family: 'Zen Maru Gothic', 'Noto Sans JP', sans-serif;
+    }
+    /* 面は白・枠なし・やわらかい影だけ（色の枠や色の影は使わない） */
+    :root :is(.tool-filter, .updates-panel, .tool-peek, .tool-sheet, .app-card, .genre-tab, .ranking-card) {
+      border: 0;
+      border-radius: var(--hd-radius);
+      box-shadow: var(--hd-shadow);
+      background-color: #fff;
+    }
+    :root :is(.app-card, .ranking-card):hover {
+      transform: translateY(-2px);
+      box-shadow: 0 2px 4px rgba(63, 54, 45, 0.12), 0 8px 20px rgba(63, 54, 45, 0.12);
+    }
+    :root :is(.tool-search__input, .form-select, .more-filter__toggle, .btn-ghost, .btn-secondary) {
+      border: 2px solid var(--hd-line); border-radius: 14px; background-color: #fff; color: var(--color-text);
+    }
+    /* 選んでいる種類は、その種類の淡い面と色の囲み */
+    :root .genre-tab[aria-pressed="true"] { background-color: var(--g-pale); box-shadow: inset 0 0 0 3px var(--g), var(--hd-shadow); }
+    :root .genre-tab[aria-pressed="true"] .genre-tab__icon { background-color: #fff; color: var(--g-ink); }
+    :root .scene-badge { border-color: var(--color-border); }
+    /* 選んでいる・開いている絞り込みは、あたたかい色の面と枠 */
+    :root :is(.tool-size__select.form-select.is-set, .scene-filter__chip[aria-pressed="true"], .tool-result.is-filtered,
+      .more-filter__toggle[aria-expanded="true"]) {
+      border-color: var(--color-accent);
+      background-color: #FFF1E0;
+    }
+    /* 人数・時間の札などの面も、あたたかい色にそろえる（青みの灰色を使わない） */
+    :root :is(.meta-badge, .app-card__slides, .tool-search__icon) { background-color: #F6EFE3; }
+    :root :is(.apps-grid.is-popular .app-card__rank, .ranking-card__rank) {
+      background-color: #fff; color: var(--g-ink, var(--color-primary));
+      border: 2px solid var(--g, var(--color-border)); box-shadow: none;
+    }
+    /* NEW / 更新 の札も、淡い色の面に濃い文字 */
+    :root :is(.app-card__flag, .updates-list__tag--new) { background-color: #E3F5EC; color: #1D6B45; }
+    :root :is(.app-card__flag--update, .updates-list__tag--update) { background-color: #FFF1E0; color: #8A4500; }
+    :root footer { background: transparent; color: var(--color-muted); }
+    /* 「説明」ボタン（文字は JS が入れる。カードのリンクの中なので読み上げからは外している） */
+    :root .app-card__info {
+      display: flex; align-items: center; gap: 2px;
+      width: auto; height: 34px; padding: 0 11px 0 7px;
+      border: 2px solid var(--g, var(--color-border)); border-radius: 999px;
+      background-color: #fff; color: var(--g-ink);
+      box-shadow: none;
+      font-family: 'Zen Maru Gothic', 'Noto Sans JP', sans-serif; font-size: 13px; font-weight: 700; line-height: 1;
+    }
+    :root .app-card__info .material-symbols-rounded { font-size: 18px; }
+    :root .app-card__info:hover { background-color: var(--g-pale); }
+
+    /* カードの絵は、種類の淡い面の中央に角丸の四角で置くだけ（傾け・ふち・影はつけない） */
+    :root :is(.app-card__icon, .ranking-card__thumb) { background: var(--g-pale); }
+    :root :is(.app-card__illust, .ranking-card__thumb > img.ranking-card__illust) { border: 0; box-shadow: none; }
+    :root .ranking-card__thumb > img.ranking-card__illust { border-radius: 10px; }
+    :root .genre-tab__icon { width: 58px; height: 58px; overflow: hidden; border: 0; }
+    :root .genre-tab[aria-pressed="true"] .genre-tab__icon { box-shadow: 0 0 0 3px var(--g); }
+    /* 種類の見出し: 色の帯をやめ、タブと同じ絵・大きめの名前・すぐ横に本数・下に種類の色の細い線 */
+    :root .genre-heading {
+      align-items: center; gap: 10px;
+      margin: 28px 0 2px; padding: 0 0 10px;
+      border-radius: 0; background: none;
+      border-bottom: 2px solid color-mix(in srgb, var(--g) 55%, transparent);
+      color: var(--color-text);
+    }
+    :root .genre-heading__icon {
+      display: grid; place-items: center; flex: none;
+      width: 40px; height: 40px; border-radius: 50%; overflow: hidden;
+      background-color: var(--g-pale); color: var(--g-ink);
+    }
+    :root .genre-heading__icon .material-symbols-rounded { font-size: 22px; }
+    :root .genre-heading__label { font-size: 20px; line-height: 1.3; }
+    :root .genre-heading__count { margin-left: 2px; font-size: 14px; font-weight: 500; color: var(--color-muted); }
+    :root.tab-img-kotoba .genre-heading[data-genre="kotoba"] .genre-heading__icon { background: center / cover no-repeat url("assets/illustrations/tabs/kotoba.webp"); }
+    :root.tab-img-puzzle .genre-heading[data-genre="puzzle"] .genre-heading__icon { background: center / cover no-repeat url("assets/illustrations/tabs/puzzle.webp"); }
+    :root.tab-img-suiri .genre-heading[data-genre="suiri"] .genre-heading__icon { background: center / cover no-repeat url("assets/illustrations/tabs/suiri.webp"); }
+    :root.tab-img-atekko .genre-heading[data-genre="atekko"] .genre-heading__icon { background: center / cover no-repeat url("assets/illustrations/tabs/atekko.webp"); }
+    :root.tab-img-board .genre-heading[data-genre="board"] .genre-heading__icon { background: center / cover no-repeat url("assets/illustrations/tabs/board.webp"); }
+    :root.tab-img-talk .genre-heading[data-genre="talk"] .genre-heading__icon { background: center / cover no-repeat url("assets/illustrations/tabs/talk.webp"); }
+    :root.tab-img-kotoba .genre-heading[data-genre="kotoba"] .genre-heading__icon .material-symbols-rounded,
+    :root.tab-img-puzzle .genre-heading[data-genre="puzzle"] .genre-heading__icon .material-symbols-rounded,
+    :root.tab-img-suiri .genre-heading[data-genre="suiri"] .genre-heading__icon .material-symbols-rounded,
+    :root.tab-img-atekko .genre-heading[data-genre="atekko"] .genre-heading__icon .material-symbols-rounded,
+    :root.tab-img-board .genre-heading[data-genre="board"] .genre-heading__icon .material-symbols-rounded,
+    :root.tab-img-talk .genre-heading[data-genre="talk"] .genre-heading__icon .material-symbols-rounded {
+      display: none;
+    }
+
+    /* カードの札（人数・時間・スライド）は、左にそろえて同じ高さ・余白・アイコンの大きさにする */
+    :root .app-card__meta { align-items: center; gap: 6px; }
+    :root :is(.app-card .meta-badge, .app-card .app-card__slides) {
+      box-sizing: border-box; min-height: 26px; margin-left: 0; padding: 2px 9px 2px 7px; gap: 3px; line-height: 1.4;
+    }
+    :root :is(.app-card .meta-badge, .app-card .app-card__slides) .material-symbols-rounded { font-size: 15px; }
+    :root .app-card__slides:hover, :root .app-card__slides:focus-visible { background-color: #EADFCB; }
+
+    /* 説明の窓のボタン: 主な操作「このツールをひらく」を1段目に大きく、2段目に「説明スライド」「とじる」 */
+    :root .tool-sheet__actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    :root .tool-sheet__actions .btn { min-height: 48px; padding-inline: 12px; border-radius: 14px; white-space: nowrap; }
+    @media (max-width: 380px) {
+      :root .tool-sheet__actions { grid-template-columns: 1fr; } /* せまい画面では、どのボタンも横いっぱいに縦に並べる */
+    }
+    :root .tool-sheet__actions #tool-sheet-open { grid-column: 1 / -1; background-color: var(--color-primary); border-color: var(--color-primary); color: #fff; font-size: 17px; }
+    :root .tool-sheet__actions #tool-sheet-open:hover { filter: brightness(1.1); }
+    :root .tool-sheet__actions:has(#tool-sheet-slides[hidden]) #tool-sheet-close { grid-column: 1 / -1; }
+
+    /* 種類のタブの絵は、読み込めたもの（html に tab-img-{種類} が付く）だけアイコンと入れかえる */
+    :root.tab-img-all .genre-tab[data-genre="all"] .genre-tab__icon { background: center / cover no-repeat url("assets/illustrations/tabs/all.webp"); }
+    :root.tab-img-popular .genre-tab[data-genre="popular"] .genre-tab__icon { background: center / cover no-repeat url("assets/illustrations/tabs/popular.webp"); }
+    :root.tab-img-kotoba .genre-tab[data-genre="kotoba"] .genre-tab__icon { background: center / cover no-repeat url("assets/illustrations/tabs/kotoba.webp"); }
+    :root.tab-img-puzzle .genre-tab[data-genre="puzzle"] .genre-tab__icon { background: center / cover no-repeat url("assets/illustrations/tabs/puzzle.webp"); }
+    :root.tab-img-suiri .genre-tab[data-genre="suiri"] .genre-tab__icon { background: center / cover no-repeat url("assets/illustrations/tabs/suiri.webp"); }
+    :root.tab-img-atekko .genre-tab[data-genre="atekko"] .genre-tab__icon { background: center / cover no-repeat url("assets/illustrations/tabs/atekko.webp"); }
+    :root.tab-img-board .genre-tab[data-genre="board"] .genre-tab__icon { background: center / cover no-repeat url("assets/illustrations/tabs/board.webp"); }
+    :root.tab-img-talk .genre-tab[data-genre="talk"] .genre-tab__icon { background: center / cover no-repeat url("assets/illustrations/tabs/talk.webp"); }
+    :root.tab-img-all .genre-tab[data-genre="all"] .genre-tab__icon .material-symbols-rounded,
+    :root.tab-img-popular .genre-tab[data-genre="popular"] .genre-tab__icon .material-symbols-rounded,
+    :root.tab-img-kotoba .genre-tab[data-genre="kotoba"] .genre-tab__icon .material-symbols-rounded,
+    :root.tab-img-puzzle .genre-tab[data-genre="puzzle"] .genre-tab__icon .material-symbols-rounded,
+    :root.tab-img-suiri .genre-tab[data-genre="suiri"] .genre-tab__icon .material-symbols-rounded,
+    :root.tab-img-atekko .genre-tab[data-genre="atekko"] .genre-tab__icon .material-symbols-rounded,
+    :root.tab-img-board .genre-tab[data-genre="board"] .genre-tab__icon .material-symbols-rounded,
+    :root.tab-img-talk .genre-tab[data-genre="talk"] .genre-tab__icon .material-symbols-rounded {
+      display: none;
+    }
+    /* 更新情報はたたんでいるとき、いちばん新しい1件を1行（スマホは2行）だけ出す。読み上げには全文が残る */
+    :root .updates-panel { margin-bottom: var(--space-lg); }
+    :root .updates-list:not(.updates-list--expanded) .updates-list__text {
+      display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 1; overflow: hidden;
+    }
+
+    /* 文字は画面共有でもつぶれにくい大きさにする（札・補足も 13px 以上、本文は 14px 以上） */
+    :root :is(.meta-badge, .scene-badge, .app-card__flag, .updates-list__tag, .app-card__slides, .genre-tab__count,
+      .tool-detail__chip, .tool-detail__genre, .more-filter__state) { font-size: 13px; }
+    :root :is(.section-desc, .updates-list__item, .updates-list__date, .ranking-card__name, .portal-hero__staff-link,
+      .tool-result__label, .tool-list-heading__count, .genre-heading__count, footer) { font-size: 14px; }
+    :root .app-card__info { font-size: 14px; }
+
+    /* 「よく開かれたツール」の帯から「人気」タブへ。人気タブを選んでいるあいだは、同じ内容の帯を隠す */
+    :root .ranking__more {
+      display: inline-flex; align-items: center; gap: 2px;
+      min-height: 44px; margin-left: auto; padding: 0 6px 0 14px;
+      border: 2px solid var(--hd-line); border-radius: 999px;
+      background-color: #fff; color: var(--color-primary);
+      font: inherit; font-family: 'Zen Maru Gothic', 'Noto Sans JP', sans-serif; font-size: 14px; font-weight: 700;
+      cursor: pointer;
+    }
+    :root .ranking__more[hidden] { display: none; }
+    :root .ranking__more:hover { background-color: #FFF1E0; border-color: var(--color-accent); }
+    :root .ranking__more .material-symbols-rounded { font-size: 20px; }
+    :root .portal-section:has(.genre-tab[data-genre="popular"][aria-pressed="true"]) .ranking { display: none; }
+
+    /* 名前の下の「ひとことで」（何をするツールかを1行で。スマホは2行まで） */
+    :root .app-card__hitokoto {
+      margin-top: 2px;
+      font-size: 14px;
+      line-height: 1.45;
+      color: var(--color-muted);
+      word-break: auto-phrase; /* 文の切れ目で折り返す（対応しないブラウザはふつうの折り返し） */
+      text-wrap: pretty;
+    }
+
+    /* 「説明」は見た目より広く押せる（高さ 44px。カードの上の端からはみ出さないよう下に広げる） */
+    :root .app-card__info::before { content: ''; position: absolute; inset: -4px -6px -6px; } /* 34px → 44px */
+
+    @media (max-width: 760px) {
+      :root .genre-tab__icon { width: 48px; height: 48px; }
+      :root .tool-sheet { border-bottom: 0; border-radius: 20px 20px 0 0; }
+      :root .app-card__info { height: 30px; padding: 0 8px 0 5px; font-size: 13px; }
+      :root .app-card__info::before { inset: -4px -6px -10px; } /* 30px → 44px */
+      :root .updates-list:not(.updates-list--expanded) .updates-list__text { -webkit-line-clamp: 2; }
+      :root .genre-tab { flex-basis: 100px; }
+      :root .genre-tab__label { font-size: 14px; }
+      :root .app-card__name { font-size: 15px; }
+      :root .app-card__hitokoto { font-size: 13px; }
+      :root .genre-heading { margin-top: 22px; }
+      :root .genre-heading__label { font-size: 18px; }
+      :root .genre-heading__icon { width: 36px; height: 36px; }
+    }
+    @media (max-width: 600px) {
+      :root .portal-hero { padding: 18px 16px 24px; }
+      :root .portal-hero__logo { font-size: 1.9rem; }
+      :root .portal-hero__tagline { margin-top: 2px; font-size: 14px; }
+    }
   </style>
 </head>
 <body>
 
   <header class="portal-hero">
-    <div class="portal-hero__logo">room-K ツール</div>
-    <div class="portal-hero__tagline">オンライン支援現場で使えるWebツール集</div>
+    <h1 class="portal-hero__logo">あそびのたな</h1>
+    <div class="portal-hero__tagline">オンラインでいっしょに遊んだり話したりするためのツール集</div>
     <div class="portal-hero__staff-link">スタッフ向け: <a href="guide/hajimete/">はじめての人へ</a> ／ <a href="guide/">ゲームえらび早見表</a></div>
   </header>
 
@@ -947,7 +1776,7 @@
         <span class="material-symbols-rounded">campaign</span>更新情報
       </h2>
       <ul class="updates-list" id="updates-list"></ul>
-      <button class="btn btn-ghost btn-sm updates-panel__more" id="updates-more" aria-controls="updates-list" aria-expanded="false" hidden>すべて表示</button>
+      <button class="btn btn-ghost btn-sm updates-panel__more" id="updates-more" aria-controls="updates-list" aria-expanded="false" hidden>ほかの更新を見る</button>
     </section>
 
     <!-- ============================================= -->
@@ -955,7 +1784,7 @@
     <!-- ============================================= -->
     <section class="portal-section">
       <h2 class="section-title">ツール一覧</h2>
-      <p class="section-desc">画像はプレイ・操作画面の一例です。</p>
+      <p class="section-desc">カードにマウスを当てる（スマホは「説明」を押す）と、画面の例と説明が出ます。</p>
 
       <!-- よく開かれたツール（ranking.json から描画。週1回 scripts/ranking-build.mjs で作る。回数は出さない） -->
       <section class="ranking" id="ranking-panel" aria-labelledby="ranking-title" hidden>
@@ -964,16 +1793,21 @@
             <span class="material-symbols-rounded" aria-hidden="true">trending_up</span><span id="ranking-title-text">よく開かれたツール</span>
           </h3>
           <span class="ranking__period" id="ranking-period"></span>
+          <button type="button" class="ranking__more" id="ranking-more" hidden>人気の12本を見る<span class="material-symbols-rounded" aria-hidden="true">chevron_right</span></button>
         </div>
         <ol class="ranking-list" id="ranking-list"></ol>
       </section>
 
+      <!-- 種類のタブ（各カードの data-genre。中身はスクリプトが GENRES から作る） -->
+      <div class="genre-tabs" id="genre-tabs" role="group" aria-label="種類"></div>
+
       <div class="tool-filter">
+      <div class="tool-filter__row">
       <div class="tool-search" role="search" aria-label="ツール一覧">
-        <label class="form-label tool-filter__label" for="tool-search">ツール検索</label>
+        <label class="tool-search__label" for="tool-search">ツール検索</label>
         <div class="tool-search__field" id="tool-search-field">
           <span class="material-symbols-rounded tool-search__icon" aria-hidden="true">search</span>
-          <input class="form-input tool-search__input" type="search" id="tool-search" placeholder="例: カード、1対1、オフライン" autocomplete="off" enterkeyhint="search"
+          <input class="form-input tool-search__input" type="search" id="tool-search" placeholder="ツール名やことばで探す" autocomplete="off" enterkeyhint="search"
             role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="tool-suggest-list" />
           <div class="tool-suggest" id="tool-suggest" hidden>
             <div class="tool-hints" id="tool-hints-popup" role="group" aria-labelledby="tool-hints-popup-label" hidden>
@@ -984,7 +1818,15 @@
           </div>
         </div>
       </div>
+      <button class="more-filter__toggle" type="button" id="more-filter-toggle" aria-expanded="false" aria-controls="more-filter-body">
+        <span class="material-symbols-rounded" aria-hidden="true">tune</span>
+        <span>くわしく絞り込む</span>
+        <span class="more-filter__state" id="more-filter-state" hidden></span>
+        <span class="material-symbols-rounded more-filter__arrow" aria-hidden="true">expand_more</span>
+      </button>
+      </div>
 
+      <div class="more-filter__body" id="more-filter-body" hidden>
       <p class="form-label tool-filter__label" id="scene-filter-label">利用シーン</p>
       <div class="scene-filter" role="group" aria-labelledby="scene-filter-label">
         <button class="scene-filter__chip" type="button" data-scene="all" aria-pressed="true">すべて</button>
@@ -1031,6 +1873,7 @@
           </div>
         </div>
       </div>
+      </div>
 
       <div class="tool-result" id="tool-result">
         <p class="tool-result__text" id="tool-result-text" tabindex="-1"></p>
@@ -1070,10 +1913,12 @@
         <a class="app-card" href="kotoba-theme/" data-added="2026-08-10" data-genre="kotoba" data-scenes="kotoba" data-old-names="コトバの技クイズ">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">tips_and_updates</span>
+            <img class="app-card__illust" src="assets/illustrations/kotoba-theme.webp" alt="" width="400" height="400" loading="lazy" decoding="async" />
             <img class="app-card__thumbnail" src="assets/thumbnails/kotoba-theme.png" alt="コトバのテーマを紹介する問題と3つの選択肢" width="744" height="390" loading="eager" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">コトバのテーマクイズ</div>
+            <div class="app-card__hitokoto">その日のことばのテーマを3択で知る</div>
             <div class="app-card__desc">その日のゲームで使う「コトバのテーマ」を、3択ミニクイズ4問で先に紹介するツール。最後のまとめ画面から、そのテーマを使うゲームへそのまま進める。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -1096,10 +1941,12 @@
         <a class="app-card" href="quiz/" data-added="2026-07-08" data-genre="puzzle" data-slides data-scenes="kotoba circle hiroba" data-keywords="1対1、早押し、雑学">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">quiz</span>
+            <img class="app-card__illust" src="assets/illustrations/quiz.webp" alt="" width="400" height="400" loading="lazy" decoding="async" />
             <img class="app-card__thumbnail" src="assets/thumbnails/quiz.png" alt="雑学クイズの問題と3つの選択肢" width="784" height="488" loading="eager" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">クイズパック</div>
+            <div class="app-card__hitokoto">3択・2択のクイズをテンポよく</div>
             <div class="app-card__desc">雑学3択クイズと連続2択クイズをまとめて進行できる画面共有向けツール。ことばクイズや全部シャッフルにも対応。ルームを作れば、各自の端末で答えて早さと正解を競うこともできる。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -1122,10 +1969,12 @@
         <a class="app-card" href="kotoba-shuffle/" data-added="2026-04-14" data-genre="puzzle" data-scenes="kotoba circle hiroba" data-keywords="1対1、並べ替え、アナグラム">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">shuffle</span>
+            <img class="app-card__illust" src="assets/illustrations/kotoba-shuffle.webp" alt="" width="400" height="400" loading="lazy" decoding="async" />
             <img class="app-card__thumbnail" src="assets/thumbnails/kotoba-shuffle.png" alt="バラバラの文字と並べ替える回答欄" width="372" height="210" loading="eager" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">ことばシャッフル</div>
+            <div class="app-card__hitokoto">バラバラの文字を並べてことばに</div>
             <div class="app-card__desc">バラバラの文字をならべかえて、ことばを当てる脳トレゲーム。4段階のレベルで楽しめる。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -1148,10 +1997,12 @@
         <a class="app-card" href="kanji-sagashi/" data-added="2026-04-03" data-genre="puzzle" data-scenes="kotoba circle hiroba" data-yomi="かんじさがし" data-keywords="1対1、間違い探し、観察">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">search</span>
+            <img class="app-card__illust" src="assets/illustrations/kanji-sagashi.webp" alt="" width="400" height="400" loading="lazy" decoding="async" />
             <img class="app-card__thumbnail" src="assets/thumbnails/kanji-sagashi.png" alt="似た漢字が並ぶ6×6の盤面" width="520" height="521" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">漢字さがし</div>
+            <div class="app-card__hitokoto">似た漢字の中からお題の字をさがす</div>
             <div class="app-card__desc">にている漢字の中からお題の漢字をさがす観察力ゲーム。3つの難易度で楽しめる。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -1174,10 +2025,12 @@
         <a class="app-card" href="kotoba-mikke/" data-added="2026-07-15" data-genre="kotoba" data-scenes="kotoba hiroba circle" data-keywords="頭文字、チャット">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">search</span>
+            <img class="app-card__illust" src="assets/illustrations/kotoba-mikke.webp" alt="" width="400" height="400" loading="lazy" decoding="async" />
             <img class="app-card__thumbnail" src="assets/thumbnails/kotoba-mikke.png" alt="頭文字とテーマを組み合わせたお題" width="544" height="255" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">ことばみっけ</div>
+            <div class="app-card__hitokoto">頭文字とお題に合うことばを出し合う</div>
             <div class="app-card__desc">「『あ』からはじまる、やさしい言葉」のように、頭文字とお題に合うことばを、みんなでチャットに出し合う言葉あそび。ゲームマスターはお題を出してチャットにコピーするだけ。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -1200,10 +2053,12 @@
         <a class="app-card" href="kotoba-relay/" data-added="2026-04-07" data-genre="kotoba" data-scenes="kotoba circle" data-keywords="1対1、接続詞、トーク">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">forum</span>
+            <img class="app-card__illust" src="assets/illustrations/kotoba-relay.webp" alt="" width="400" height="400" loading="lazy" decoding="async" />
             <img class="app-card__thumbnail" src="assets/thumbnails/kotoba-relay.png" alt="話の始まりとつなぎ言葉のカード" width="720" height="292" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">ことばリレー</div>
+            <div class="app-card__hitokoto">つなぎ言葉のカードで話をつなぐ</div>
             <div class="app-card__desc">「だから」「でも」「ちなみに」…つなぎ言葉カードを引いて話を転がす多人数向けトークゲーム。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -1226,10 +2081,12 @@
         <a class="app-card" href="hirameki-oogiri/" data-added="2026-10-30" data-genre="kotoba" data-slides data-scenes="kotoba bodoge circle" data-yomi="ひらめきおおぎり" data-keywords="大喜利、お笑い、投票、順位なし">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">sentiment_very_satisfied</span>
+            <img class="app-card__illust" src="assets/illustrations/hirameki-oogiri.webp" alt="" width="400" height="400" loading="lazy" decoding="async" />
             <img class="app-card__thumbnail" src="assets/thumbnails/hirameki-oogiri.png" alt="お題「こんな傘はイヤだ。どんな傘？」と、いま出ている答え、一本になった答えが並ぶ画面" width="960" height="458" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">ひらめき大喜利</div>
+            <div class="app-card__hitokoto">思いついた答えで「一本！」をねらう</div>
             <div class="app-card__desc">お題に、思いついた答えを何回でも出す大喜利。答えは1つずつ名前を伏せて出て、投票する人の何割かが「おもしろい！」を押したら「一本！」。順位はつけない。答えずに投票だけでも参加できる。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -1252,10 +2109,12 @@
         <a class="app-card" href="kanpe-housou/" data-added="2026-11-02" data-genre="kotoba" data-slides data-scenes="kotoba bodoge circle" data-yomi="かんぺほうそうきょく" data-keywords="読み上げ、空らん、お笑い、マイクなし">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">mic</span>
+            <img class="app-card__illust" src="assets/illustrations/kanpe-housou.webp" alt="" width="400" height="400" loading="lazy" decoding="async" />
             <img class="app-card__thumbnail" src="assets/thumbnails/kanpe-housou.png" alt="お天気コーナーを読みおわったあとの判定の画面。「そら は、笑わずに読めた？」の下に「笑わずに読めた」「笑った」のボタンと、空らんに「ソフトクリーム」「カピバラ」「ぽよーん」「フライパン」が入った原稿が並ぶ" width="744" height="834" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">カンペ放送局</div>
+            <div class="app-card__hitokoto">空らんに入った言葉を笑わずに読む</div>
             <div class="app-card__desc">読む人の原稿の空らんに、ほかの人が「食べ物」「音」などのヒントだけを見て言葉を書く。読む人は出てきた言葉を笑わずに読みきれるか、読み終わったらみんなで判定する。マイクを使わない人は書くだけで参加できる。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -1278,10 +2137,12 @@
         <a class="app-card" href="tatoe-gp/" data-added="2026-04-14" data-genre="kotoba" data-slides data-scenes="kotoba bodoge" data-keywords="大喜利、投票">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">emoji_objects</span>
+            <img class="app-card__illust" src="assets/illustrations/tatoe-gp.webp" alt="" width="400" height="400" loading="lazy" decoding="async" />
             <img class="app-card__thumbnail" src="assets/thumbnails/tatoe-gp.png" alt="お題をたとえた回答を選ぶ投票画面" width="504" height="600" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">たとえグランプリ</div>
+            <div class="app-card__hitokoto">お題をたとえで表して投票し合う</div>
             <div class="app-card__desc">お題をたとえで表現して、お気に入りに匿名投票する大喜利ゲーム。比喩や語彙を遊びながら使える。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -1305,10 +2166,12 @@
         <a class="app-card" href="kotoba-meter/" data-added="2026-10-20" data-genre="kotoba" data-slides data-scenes="kotoba bodoge sakusen" data-keywords="程度、たとえ、感じ方、1対1">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">tune</span>
+            <img class="app-card__illust" src="assets/illustrations/kotoba-meter.webp" alt="" width="400" height="400" loading="lazy" decoding="async" />
             <img class="app-card__thumbnail" src="assets/thumbnails/kotoba-meter.png" alt="お題「もふもふ度」とヒント「ひつじ」の下に、出題者の数字4と、みんなが予想した1〜5の列に名前が並ぶ結果の画面" width="820" height="673" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">ことばメーター</div>
+            <div class="app-card__hitokoto">ヒントから1〜5の数字を予想する</div>
             <div class="app-card__desc">ヒントのことばから、出題者が思い浮かべた1〜5の数字を予想。一斉に公開して、みんなの感じ方の違いを楽しむ。</div>
             <div class="app-card__meta">
               <span class="meta-badge"><span class="material-symbols-rounded">group</span>2〜20人</span>
@@ -1322,10 +2185,12 @@
         <a class="app-card" href="shirushi-hint/" data-added="2026-10-19" data-genre="atekko" data-slides data-scenes="bodoge circle" data-yomi="しるしでひんと" data-keywords="アイコン、連想、当てっこ、個人戦">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">interests</span>
+            <img class="app-card__illust" src="assets/illustrations/shirushi-hint.webp" alt="" width="400" height="400" loading="lazy" decoding="async" />
             <img class="app-card__thumbnail" src="assets/thumbnails/shirushi-hint.png" alt="「虫」「黄色」のしるしが出ていて、その下にお題の候補が12個並び、はずれた候補が1つ消えている画面" width="844" height="473" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">しるしでヒント</div>
+            <div class="app-card__hitokoto">アイコンのしるしからお題を当てる</div>
             <div class="app-card__desc">伝える人がアイコンを1つずつ出してお題を伝え、ほかの人は12個の候補から当てる。少ないしるしで当てるほど、当てた人にも伝えた人にも点が入る。はずれると1点減る。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -1346,10 +2211,12 @@
         <a class="app-card" href="pittari-beat/" data-added="2026-10-21" data-genre="puzzle" data-slides data-scenes="hiroba circle" data-yomi="ぴったりびーと" data-keywords="リズム、音楽、音ゲー、ランキング、個人戦">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">music_note</span>
+            <img class="app-card__illust" src="assets/illustrations/pittari-beat.webp" alt="" width="400" height="400" loading="lazy" decoding="async" />
             <img class="app-card__thumbnail" src="assets/thumbnails/pittari-beat.png" alt="オレンジの丸と青緑のひし形が上から落ちてきて、線の上で「ぴったり」が出ている画面。下に「まる」「ひしがた」のボタン" width="640" height="560" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">ぴったりビート</div>
+            <div class="app-card__hitokoto">落ちてくるしるしをリズムよくたたく</div>
             <div class="app-card__desc">上から落ちてくるしるしが線に来たら、ボタンをたたくリズムあそび。曲はオリジナルの3曲。ルームを作ると、それぞれの端末で遊んだいちばんよい点数でランキングができる。ひとりでも遊べる。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -1371,10 +2238,12 @@
         <a class="app-card" href="suton-block/" data-added="2026-11-02" data-genre="puzzle" data-slides data-scenes="hiroba bodoge" data-yomi="すとんぶろっく" data-keywords="落ちもの、パズル、ブロック、対戦、ひとりでも、アクション">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">view_quilt</span>
+            <img class="app-card__illust" src="assets/illustrations/suton-block.webp" alt="" width="400" height="400" loading="lazy" decoding="async" />
             <img class="app-card__thumbnail" src="assets/thumbnails/suton-block.png" alt="色とりどりのブロックが積み上がった盤と落ちてくる棒、とっておいたブロック・つぎのブロック・来るじゃま、ほかの2人の小さな盤" width="588" height="560" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">すとんブロック</div>
+            <div class="app-card__hitokoto">ブロックを回して横1段をそろえる</div>
             <div class="app-card__desc">上から落ちてくるブロックを回してすき間に入れ、横1段をそろえて消す。ルームではみんな同じ順番でブロックが出て、時間内に消した段の数をくらべる。じゃまブロックを送りあう設定もある。ひとりでも遊べる。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -1395,10 +2264,12 @@
         <a class="app-card" href="kaburazu-hint/" data-added="2026-04-10" data-genre="kotoba" data-slides data-scenes="kotoba bodoge" data-old-names="ヒントでピント" data-keywords="協力、連想">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">lightbulb</span>
+            <img class="app-card__illust" src="assets/illustrations/kaburazu-hint.webp" alt="" width="400" height="400" loading="lazy" decoding="async" />
             <img class="app-card__thumbnail" src="assets/thumbnails/kaburazu-hint.png" alt="回答者に見せるヒントが並ぶ画面" width="464" height="269" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">かぶらずヒント</div>
+            <div class="app-card__hitokoto">かぶらないヒントでお題を当ててもらう</div>
             <div class="app-card__desc">みんなでヒントを出してお題を当てよう！ただし被ったヒントは消えてしまう協力型ワードゲーム。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -1421,10 +2292,12 @@
         <a class="app-card" href="kotoba-tantei/" data-added="2026-03-25" data-genre="kotoba" data-slides data-scenes="kotoba bodoge" data-yomi="ことばたんてい" data-keywords="チーム戦、連想">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">search</span>
+            <img class="app-card__illust" src="assets/illustrations/kotoba-tantei.webp" alt="" width="400" height="400" loading="lazy" decoding="async" />
             <img class="app-card__thumbnail" src="assets/thumbnails/kotoba-tantei.png" alt="赤と青のカードがある5×5の言葉の盤面" width="712" height="446" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">ことば探偵</div>
+            <div class="app-card__hitokoto">ヒントのことばからチームのカードを探す</div>
             <div class="app-card__desc">ヒント役の言葉から、自分のチームのカードを見つけ出す連想型チームゲーム。相談しながら推理しよう。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -1447,10 +2320,12 @@
         <a class="app-card" href="moji-soroe/" data-added="2026-09-02" data-genre="kotoba" data-slides data-scenes="kotoba bodoge" data-keywords="1対1、ひらがな、手番">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">font_download</span>
+            <img class="app-card__illust" src="assets/illustrations/moji-soroe.webp" alt="" width="400" height="400" loading="lazy" decoding="async" />
             <img class="app-card__thumbnail" src="assets/thumbnails/moji-soroe.png" alt="文字タイルの手札と2文字・3文字・3文字の組み合わせ" width="456" height="220" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">もじそろえゲーム</div>
+            <div class="app-card__hitokoto">文字タイルを集めて3つの言葉にそろえる</div>
             <div class="app-card__desc">山か捨て札（新しい順に3枚まで）から文字タイルを1枚取って1枚捨てる、を順番にくり返し、手もとの8枚を「2文字・3文字・3文字」の3つの言葉にそろえたら「あがり」。言葉になっているかはみんなで確かめる。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -1473,10 +2348,12 @@
         <a class="app-card" href="kotoba-pair/" data-added="2026-08-09" data-genre="kotoba" data-slides data-scenes="kotoba circle" data-keywords="1対1、神経衰弱、マッチング">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">link</span>
+            <img class="app-card__illust" src="assets/illustrations/kotoba-pair.webp" alt="" width="400" height="400" loading="lazy" decoding="async" />
             <img class="app-card__thumbnail" src="assets/thumbnails/kotoba-pair.png" alt="意味のつながるペアを探す言葉のカード" width="704" height="272" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">コトバペア</div>
+            <div class="app-card__hitokoto">意味でつながる2枚をめくってそろえる</div>
             <div class="app-card__desc">裏向きのことばカードをめくって、意味でつながる2枚を探す神経衰弱式の協力ゲーム。そろえたら同じ人がもう一回。相談しながらでOK。全カード表向きの相談向けモードも選べる。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -1499,10 +2376,12 @@
         <a class="app-card" href="toomawashi/" data-added="2026-08-09" data-genre="kotoba" data-slides data-scenes="kotoba" data-keywords="1対1、説明、NGワード">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">record_voice_over</span>
+            <img class="app-card__illust" src="assets/illustrations/toomawashi.webp" alt="" width="400" height="400" loading="lazy" decoding="async" />
             <img class="app-card__thumbnail" src="assets/thumbnails/toomawashi.png" alt="説明するお題と言っちゃダメことば" width="504" height="496" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">とおまわしクイズ</div>
+            <div class="app-card__hitokoto">言っちゃダメことばを避けてお題を説明</div>
             <div class="app-card__desc">お題のことばを「言っちゃダメことば」を使わずに説明して、みんなに当ててもらう協力ゲーム。観点チップと答えの候補つきで、声を出しにくい子も選んで参加できる。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -1525,10 +2404,12 @@
         <a class="app-card" href="talk-card/" data-added="2026-03-25" data-genre="talk" data-scenes="circle hiroba sakusen" data-keywords="1対1、雑談、話題">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">style</span>
+            <img class="app-card__illust" src="assets/illustrations/talk-card.webp" alt="" width="400" height="400" loading="lazy" decoding="async" />
             <img class="app-card__thumbnail" src="assets/thumbnails/talk-card.png" alt="開いたトークテーマと3枚のカード" width="844" height="732" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">トークテーマカード</div>
+            <div class="app-card__hitokoto">カードをめくってトークテーマを引く</div>
             <div class="app-card__desc">カードをめくってトークテーマを引くアイスブレイクツール。セッション開始時や話題に詰まったときに。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -1551,10 +2432,12 @@
         <a class="app-card" href="otona-talk/" data-added="2026-03-25" data-genre="talk" data-scenes="circle" data-keywords="雑談、キャリア">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">record_voice_over</span>
+            <img class="app-card__illust" src="assets/illustrations/otona-talk.webp" alt="" width="400" height="400" loading="lazy" decoding="async" />
             <img class="app-card__thumbnail" src="assets/thumbnails/otona-talk.png" alt="大人どうしで話すお題と3枚のカード" width="844" height="676" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">おとなトークカード</div>
+            <div class="app-card__hitokoto">大人どうしの雑談を、横で聞く</div>
             <div class="app-card__desc">大人どうしが質問し合う雑談カード。子どもは大人の仕事や歩んできた道を横で聞ける、キャリアにつながる雑談タイムに。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -1577,10 +2460,12 @@
         <a class="app-card" href="docchi/" data-added="2026-07-04" data-genre="talk" data-scenes="sakusen" data-keywords="1対1、2択">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">alt_route</span>
+            <img class="app-card__illust" src="assets/illustrations/docchi.webp" alt="" width="400" height="400" loading="lazy" decoding="async" />
             <img class="app-card__thumbnail" src="assets/thumbnails/docchi.png" alt="お題と2択、その他の選択肢" width="804" height="369" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">どっちにする？</div>
+            <div class="app-card__hitokoto">軽い2択から好きなほうを選ぶ</div>
             <div class="app-card__desc">軽い2択を選ぶアイスブレイクカード。どっちを選んでもOK、「自分で決めていい」感覚を育てる1対1面談向けツール。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -1603,10 +2488,12 @@
         <a class="app-card" href="suki-type-check/" data-added="2026-07-30" data-genre="talk" data-scenes="sakusen" data-old-names="すきなことマップ" data-keywords="1対1、診断、好き">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">fact_check</span>
+            <img class="app-card__illust" src="assets/illustrations/suki-type-check.webp" alt="" width="400" height="400" loading="lazy" decoding="async" />
             <img class="app-card__thumbnail" src="assets/thumbnails/suki-type-check.png" alt="好きについての質問と5つの選択肢" width="736" height="653" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">すきタイプチェック</div>
+            <div class="app-card__hitokoto">質問に答えて「すき」のタイプを知る</div>
             <div class="app-card__desc">18この質問にこたえると、じぶんの「すき」のタイプがわかる診断。6つの軸のわりあいも出るので、作戦会議で会話のタネにできる1対1向けツール。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -1629,10 +2516,12 @@
         <a class="app-card" href="donna-hito/" data-added="2026-11-05" data-genre="talk" data-scenes="sakusen" data-yomi="わたしぼくってどんなひと" data-keywords="1対1、自己理解">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">contrast</span>
+            <img class="app-card__illust" src="assets/illustrations/donna-hito.webp" alt="" width="400" height="400" loading="lazy" decoding="async" />
             <img class="app-card__thumbnail" src="assets/thumbnails/donna-hito.png" alt="「動くときは？」の問いと、両はしの言葉のあいだの1〜4の選択肢" width="688" height="432" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">わたし、ぼくってどんな人？</div>
+            <div class="app-card__hitokoto">問いに1〜4で答えて、自分をふりかえる</div>
             <div class="app-card__desc">「動くときは？」「予定は？」のような問いに、両はしの言葉のどちらに近いかを1〜4で答えていく1対1面談向けツール。答えたところを1つずつふりかえって話す。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -1655,10 +2544,12 @@
         <a class="app-card" href="tsuyomi-card/" data-added="2026-07-05" data-genre="talk" data-scenes="sakusen" data-keywords="1対1、強み、自己理解">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">flare</span>
+            <img class="app-card__illust" src="assets/illustrations/tsuyomi-card.webp" alt="" width="400" height="400" loading="lazy" decoding="async" />
             <img class="app-card__thumbnail" src="assets/thumbnails/tsuyomi-card.png" alt="つよみカードとある・ない・どちらでもないの選択肢" width="584" height="369" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">つよみカード</div>
+            <div class="app-card__hitokoto">強みカードに「ある」「ない」で答える</div>
             <div class="app-card__desc">「こういうところ、ありそう？」の強みカードに1枚ずつ「ある」「ない」「どちらでもない」で答えていく1対1面談向けツール。「ある」と答えたカードをながめながら話す。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -1683,10 +2574,12 @@
         <a class="app-card" href="do-mannaka/" data-added="2026-03-25" data-genre="atekko" data-slides data-scenes="bodoge circle" data-old-names="いいセンいきまSHOW!" data-keywords="数字、中央値">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">sports_esports</span>
+            <img class="app-card__illust" src="assets/illustrations/do-mannaka.webp" alt="" width="400" height="400" loading="lazy" decoding="async" />
             <img class="app-card__thumbnail" src="assets/thumbnails/do-mannaka.png" alt="数字の回答を小さい順に並べた答え合わせ" width="464" height="322" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">ドまんなか</div>
+            <div class="app-card__hitokoto">みんなの数字のまん中をねらう</div>
             <div class="app-card__desc">数字でいいセンをいこう！リアルタイム対戦パーティーゲーム。中央値を当てた人が勝ち。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -1709,10 +2602,12 @@
         <a class="app-card" href="word-wolf/" data-added="2026-03-26" data-genre="suiri" data-slides data-scenes="bodoge circle" data-keywords="正体隠し、会話">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">psychology</span>
+            <img class="app-card__illust" src="assets/illustrations/word-wolf.webp" alt="" width="400" height="400" loading="lazy" decoding="async" />
             <img class="app-card__thumbnail" src="assets/thumbnails/word-wolf.png" alt="自分のお題カードと参加者の準備状況" width="464" height="420" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">ワードウルフ</div>
+            <div class="app-card__hitokoto">ひとりだけ違うお題の人を会話で探す</div>
             <div class="app-card__desc">ひとりだけ違うお題を持つのは誰？会話の中からウルフを見つけ出す正体隠し系ゲーム。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -1735,10 +2630,12 @@
         <a class="app-card" href="nemurase-kichi/" data-added="2026-10-26" data-genre="suiri" data-slides data-scenes="bodoge hiroba circle" data-yomi="ねむらせきち" data-keywords="正体隠し、推理、ミニゲーム、アクション">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">bedtime</span>
+            <img class="app-card__illust" src="assets/illustrations/nemurase-kichi.webp" alt="" width="400" height="400" loading="lazy" decoding="async" />
             <img class="app-card__thumbnail" src="assets/thumbnails/nemurase-kichi.png" alt="ひみつ基地の通信室を歩く4人と、仕事の場所の印・やることの一覧・のこり時間" width="1000" height="625" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">ねむらせ基地</div>
+            <div class="app-card__hitokoto">基地で仕事をしながら「ねむらせ屋」を探す</div>
             <div class="app-card__desc">ひみつ基地を歩いて仕事を片づけよう。仲間のふりをした「ねむらせ屋」を、会議の話し合いで見つける。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -1761,10 +2658,12 @@
         <a class="app-card" href="kossori-word/" data-added="2026-10-07" data-genre="suiri" data-slides data-scenes="bodoge circle" data-keywords="会話、雑談、聞きとり">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">hearing</span>
+            <img class="app-card__illust" src="assets/illustrations/kossori-word.webp" alt="" width="400" height="400" loading="lazy" decoding="async" />
             <img class="app-card__thumbnail" src="assets/thumbnails/kossori-word.png" alt="話し手に出るお題カードと「話しおわった」ボタン" width="440" height="322" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">こっそりワード</div>
+            <div class="app-card__hitokoto">雑談にまぎれたお題の言葉を見抜く</div>
             <div class="app-card__desc">2人の雑談にこっそりまぎれた「お題」の言葉はどれ？聞いていたみんなで見抜く会話ゲーム。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -1787,10 +2686,12 @@
         <a class="app-card" href="jinro/" data-added="2026-03-31" data-genre="suiri" data-slides data-scenes="bodoge" data-yomi="じんろうげーむ" data-keywords="正体隠し、推理、役職">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">groups</span>
+            <img class="app-card__illust" src="assets/illustrations/jinro.webp" alt="" width="400" height="400" loading="lazy" decoding="async" />
             <img class="app-card__thumbnail" src="assets/thumbnails/jinro.png" alt="村人の役職カード" width="464" height="244" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">人狼ゲーム</div>
+            <div class="app-card__hitokoto">村人と人狼で正体をかくし合う</div>
             <div class="app-card__desc">正体を隠して生き残れ。村人と人狼が騙し合う本格リアルタイム対戦ゲーム。全14役職対応。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -1813,10 +2714,12 @@
         <a class="app-card" href="kakure-kaito/" data-added="2026-10-31" data-genre="suiri" data-slides data-scenes="bodoge circle" data-yomi="かくれかいとう" data-keywords="正体隠し、推理、役職、投票">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">diamond</span>
+            <img class="app-card__illust" src="assets/illustrations/kakure-kaito.webp" alt="" width="400" height="400" loading="lazy" decoding="async" />
             <img class="app-card__thumbnail" src="assets/thumbnails/kakure-kaito.png" alt="5回の見回りの結果（1回目は守った・2回目はすり替え）の下に、3回目の見回りに行く2人と、みんなの賛成・反対が並ぶ画面" width="992" height="703" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">かくれ怪盗</div>
+            <div class="app-card__hitokoto">警備員にまざった怪盗を投票で見ぬく</div>
             <div class="app-card__desc">美術館の警備員の中に、変装した怪盗がまざっている。主任が見回りのメンバーを選び、みんなで投票。宝石を3回守れば警備員チーム、3回すり替えられたら怪盗チームの勝ち。だれも途中でぬけない正体かくし。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -1839,10 +2742,12 @@
         <a class="app-card" href="name-change/" data-added="2026-03-26" data-genre="suiri" data-slides data-scenes="bodoge circle" data-yomi="なまえかえげーむ" data-keywords="メタバース、推理">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">manage_accounts</span>
+            <img class="app-card__illust" src="assets/illustrations/name-change.webp" alt="" width="400" height="400" loading="lazy" decoding="async" />
             <img class="app-card__thumbnail" src="assets/thumbnails/name-change.png" alt="変えた名前から元の名前を当てる選択肢" width="472" height="402" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">名前変えゲーム</div>
+            <div class="app-card__hitokoto">こっそり名前を変えた人を当てる</div>
             <div class="app-card__desc">メタバース上で名前を変えた人を当てよう！変えた人は投票されないように隠しきれるか。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -1865,10 +2770,12 @@
         <a class="app-card" href="jitsuwa-game/" data-added="2026-03-31" data-genre="suiri" data-scenes="circle hiroba sakusen" data-yomi="えじつはまるまるなんですかげーむ" data-keywords="1対1、推理、自己紹介">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">search_insights</span>
+            <img class="app-card__illust" src="assets/illustrations/jitsuwa-game.webp" alt="" width="400" height="400" loading="lazy" decoding="async" />
             <img class="app-card__thumbnail" src="assets/thumbnails/jitsuwa-game.png" alt="開いたお題と3枚の質問カード" width="844" height="776" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">え!? 実は○○なんですかゲーム</div>
+            <div class="app-card__hitokoto">ある人の意外な一面を推理する</div>
             <div class="app-card__desc">ある人の意外な一面を推理するクイズ。カードをめくって「え!? 本当に！？」を楽しもう。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -1891,10 +2798,12 @@
         <a class="app-card" href="tatoe-narabe/" data-added="2026-04-02" data-genre="atekko" data-slides data-scenes="kotoba bodoge circle sakusen" data-old-names="ito クモノイト" data-keywords="1対1、数字、協力">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">filter_1</span>
+            <img class="app-card__illust" src="assets/illustrations/tatoe-narabe.webp" alt="" width="400" height="400" loading="lazy" decoding="async" />
             <img class="app-card__thumbnail" src="assets/thumbnails/tatoe-narabe.png" alt="お題と自分の数字、宣言した順番" width="464" height="451" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">たとえならべ</div>
+            <div class="app-card__hitokoto">数字をたとえで伝えて小さい順に並ぶ</div>
             <div class="app-card__desc">数字をお題に例えてヒントを言い合い、小さい順に宣言するタイミングを競う協力ゲーム。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -1917,10 +2826,12 @@
         <a class="app-card" href="ishin-denshin/" data-added="2026-04-05" data-genre="kotoba" data-scenes="circle hiroba" data-yomi="いしんでんしんしないげーむ" data-keywords="かぶらない、回答">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">lightbulb</span>
+            <img class="app-card__illust" src="assets/illustrations/ishin-denshin.webp" alt="" width="400" height="400" loading="lazy" decoding="async" />
             <img class="app-card__thumbnail" src="assets/thumbnails/ishin-denshin.png" alt="みんなとかぶらない回答を考えるお題" width="844" height="455" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">以心伝心しないゲーム</div>
+            <div class="app-card__hitokoto">みんなとかぶらない答えを出す</div>
             <div class="app-card__desc">お題に対してみんなとかぶらない回答をしよう！かぶらなかった人の勝ち。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -1943,10 +2854,12 @@
         <a class="app-card" href="uso-jisho/" data-added="2026-07-05" data-genre="kotoba" data-slides data-scenes="bodoge" data-yomi="うそつきじしょ" data-keywords="ブラフ、意味当て">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">auto_stories</span>
+            <img class="app-card__illust" src="assets/illustrations/uso-jisho.webp" alt="" width="400" height="400" loading="lazy" decoding="async" />
             <img class="app-card__thumbnail" src="assets/thumbnails/uso-jisho.png" alt="言葉の本当の意味を当てる選択肢" width="504" height="610" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">うそつき辞書</div>
+            <div class="app-card__hitokoto">うその意味をまぜて、本物を当てる</div>
             <div class="app-card__desc">めずらしいことばの意味の「？？？」にそれっぽいうそを入れて本物にまぜる。どれが本物か当て合うことばパーティーゲーム。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -1969,10 +2882,12 @@
         <a class="app-card" href="magire-eshi/" data-added="2026-07-05" data-genre="suiri" data-slides data-scenes="bodoge" data-yomi="まぎれえし" data-keywords="お絵描き、正体隠し">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">brush</span>
+            <img class="app-card__illust" src="assets/illustrations/magire-eshi.webp" alt="" width="400" height="400" loading="lazy" decoding="async" />
             <img class="app-card__thumbnail" src="assets/thumbnails/magire-eshi.png" alt="みんなで少しずつ描いた絵の見本" width="544" height="459" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">まぎれ絵師</div>
+            <div class="app-card__hitokoto">お題を知らない絵師を絵から探す</div>
             <div class="app-card__desc">お題を知らない「まぎれ絵師」がひとりだけ。1人1筆ずつのおえかきから見つけ出そう。話さなくても遊べる正体かくしゲーム。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -1995,10 +2910,12 @@
         <a class="app-card" href="oekaki-dengon/" data-added="2026-09-28" data-genre="atekko" data-slides data-scenes="bodoge" data-yomi="おえかきでんごんげーむ" data-keywords="伝言、お絵描き">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">draw</span>
+            <img class="app-card__illust" src="assets/illustrations/oekaki-dengon.webp" alt="" width="400" height="400" loading="lazy" decoding="async" />
             <img class="app-card__thumbnail" src="assets/thumbnails/oekaki-dengon.png" alt="お題の文と、それを見て描いた絵、絵を見て書いた文が順番に並ぶ見せあいの画面" width="504" height="689" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">お絵描き伝言ゲーム</div>
+            <div class="app-card__hitokoto">文を絵に、絵を文にして順に回す</div>
             <div class="app-card__desc">書いた文を次の人が絵に、その絵を次の人が文に。順番に回していくと、最初のお題はどう変わる？ 最後にみんなで見せあう、点数のない伝言ゲーム。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -2021,10 +2938,12 @@
         <a class="app-card" href="stamp-ate/" data-added="2026-10-03" data-genre="atekko" data-slides data-scenes="bodoge circle" data-yomi="すたんぷあてげーむ" data-keywords="協力、お絵描き、当てっこ">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">approval</span>
+            <img class="app-card__illust" src="assets/illustrations/stamp-ate.webp" alt="" width="400" height="400" loading="lazy" decoding="async" />
             <img class="app-card__thumbnail" src="assets/thumbnails/stamp-ate.png" alt="大きい四角と三角の家、大きさのちがう三角を重ねたクリスマスツリー、大きい丸と小さい長方形の太陽をスタンプで作った絵と、答え合わせのお題が並ぶ画面" width="804" height="609" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">スタンプあてゲーム</div>
+            <div class="app-card__hitokoto">形のスタンプの絵からお題を当てる</div>
             <div class="app-card__desc">丸・四角・長方形・三角のスタンプだけで、こっそり配られたお題を表す。当てる人が、どの絵がどのお題かを当てる協力ゲーム。押せる回数は5回から1回まで減っていく。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -2047,10 +2966,12 @@
         <a class="app-card" href="pittari-meter/" data-added="2026-07-05" data-genre="atekko" data-slides data-scenes="bodoge" data-keywords="感覚、得点">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">tune</span>
+            <img class="app-card__illust" src="assets/illustrations/pittari-meter.webp" alt="" width="400" height="400" loading="lazy" decoding="async" />
             <img class="app-card__thumbnail" src="assets/thumbnails/pittari-meter.png" alt="ものさしの両端、ヒントと予想するスライダー" width="504" height="488" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">ピッタリメーター</div>
+            <div class="app-card__hitokoto">ヒントからメーターの位置をぴったり当てる</div>
             <div class="app-card__desc">ヒントをたよりに、メーターの位置をぴったり当てる得点ゲーム。ターゲットに近いほど高得点。ヒントは文字入力だから話さなくても出題者になれる。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -2073,10 +2994,12 @@
         <a class="app-card" href="kakure-number/" data-added="2026-07-05" data-genre="atekko" data-slides data-scenes="bodoge" data-keywords="数字、推理">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">visibility_off</span>
+            <img class="app-card__illust" src="assets/illustrations/kakure-number.webp" alt="" width="400" height="400" loading="lazy" decoding="async" />
             <img class="app-card__thumbnail" src="assets/thumbnails/kakure-number.png" alt="自分と隠しカードの数字が見えない数字カード" width="464" height="220" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">かくれナンバー</div>
+            <div class="app-card__hitokoto">見えない数字の合計を推理する</div>
             <div class="app-card__desc">自分の数字と場の隠しカードが見えない！みんなの発言をヒントに、全部の数字の合計を推理する数字ゲーム。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -2099,10 +3022,12 @@
         <a class="app-card" href="kagi-awase/" data-added="2026-10-03" data-genre="atekko" data-slides data-scenes="bodoge sakusen" data-yomi="かぎあわせ" data-keywords="1対1、数字、推理、協力">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">key</span>
+            <img class="app-card__illust" src="assets/illustrations/kagi-awase.webp" alt="" width="400" height="400" loading="lazy" decoding="async" />
             <img class="app-card__thumbnail" src="assets/thumbnails/kagi-awase.png" alt="3人の数字のカギが小さい順に並び、あいたカギと見えている数字だけが表に出ている盤面と警報ランプ" width="784" height="547" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">カギあわせ</div>
+            <div class="app-card__hitokoto">仲間のカギの数字を推理して宝箱をあける</div>
             <div class="app-card__desc">数字のカギを小さい順に並べて持つ。見えるのは自分のカギだけ。仲間のカギの数字を推理して、同じ数字どうしをあわせ、宝箱をあける協力ゲーム。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -2125,10 +3050,12 @@
         <a class="app-card" href="koedake-theater/" data-added="2026-07-05" data-genre="atekko" data-slides data-scenes="bodoge" data-keywords="演技、声">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">theater_comedy</span>
+            <img class="app-card__illust" src="assets/illustrations/koedake-theater.webp" alt="" width="400" height="400" loading="lazy" decoding="async" />
             <img class="app-card__thumbnail" src="assets/thumbnails/koedake-theater.png" alt="声で演じるセリフとシチュエーションの選択肢" width="466" height="489" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">こえだけシアター</div>
+            <div class="app-card__hitokoto">声だけの演技から気持ちを当てる</div>
             <div class="app-card__desc">短いセリフを声だけで演技して、どんな気持ちかを当て合うゲーム。演じるのは立候補制、当てる側はボタンで参加。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -2151,10 +3078,12 @@
         <a class="app-card" href="kimochi-ate/" data-added="2026-09-26" data-genre="atekko" data-slides data-scenes="circle sakusen bodoge" data-yomi="きもちあてげーむ" data-old-names="きもちのことばマップ" data-keywords="1対1、感情、気持ち">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">mood</span>
+            <img class="app-card__illust" src="assets/illustrations/kimochi-ate.webp" alt="" width="400" height="400" loading="lazy" decoding="async" />
             <img class="app-card__thumbnail" src="assets/thumbnails/kimochi-ate.png" alt="場面カードと、主役の気持ちを予想する6つの系" width="736" height="677" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">気持ち当てゲーム</div>
+            <div class="app-card__hitokoto">場面カードから主役の気持ちを予想する</div>
             <div class="app-card__desc">場面カードを見て、主役の気持ちがどの系かをみんなで予想する。主役は系とぴったりのことばを先にこっそり選んでおく。点数はなし。ルームに入らない子も、共有画面を見てチャットで予想できる。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -2177,10 +3106,12 @@
         <a class="app-card" href="pita-hame/" data-added="2026-07-19" data-genre="puzzle" data-slides data-scenes="bodoge hiroba" data-keywords="1対1、パズル、スピード">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">extension</span>
+            <img class="app-card__illust" src="assets/illustrations/pita-hame.webp" alt="" width="400" height="400" loading="lazy" decoding="async" />
             <img class="app-card__thumbnail" src="assets/thumbnails/pita-hame.png" alt="グレーの型とカラフルなパズルピース" width="600" height="427" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">ピタハメ</div>
+            <div class="app-card__hitokoto">ピースを回して型にぴったりはめる</div>
             <div class="app-card__desc">カラフルなピースを回して動かして、グレーの型（かた）にぴったりはめるスピードパズル。ひとりで練習も、みんなで同じ問題に挑戦して完成した順を見ることもできる。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -2203,10 +3134,12 @@
         <a class="app-card" href="oshitsuke-zukan/" data-added="2026-07-19" data-genre="board" data-slides data-scenes="bodoge" data-keywords="ブラフ、カード">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">auto_stories</span>
+            <img class="app-card__illust" src="assets/illustrations/oshitsuke-zukan.webp" alt="" width="400" height="400" loading="lazy" decoding="async" />
             <img class="app-card__thumbnail" src="assets/thumbnails/oshitsuke-zukan.png" alt="生き物の種類が色分けされた手札" width="416" height="400" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">おしつけずかん</div>
+            <div class="app-card__hitokoto">宣言つきでカードを押しつけ合う</div>
             <div class="app-card__desc">イヤ〜な生きもののカードを、宣言つきで押しつけ合うブラフゲーム。「ホントかウソか」を当てるか、こっそり見て次の人に回すか。同じ生きもの4枚か全8種類を引き取るとひとり負け。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -2229,10 +3162,12 @@
         <a class="app-card" href="esadori/" data-added="2026-07-21" data-genre="board" data-slides data-scenes="bodoge" data-keywords="1対1、数字、同時出し">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">flutter_dash</span>
+            <img class="app-card__illust" src="assets/illustrations/esadori.webp" alt="" width="400" height="400" loading="lazy" decoding="async" />
             <img class="app-card__thumbnail" src="assets/thumbnails/esadori.png" alt="場のエサカードと1から15の手札" width="416" height="523" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">エサドリ</div>
+            <div class="app-card__hitokoto">数字の札を同時に出してエサを取り合う</div>
             <div class="app-card__desc">エサカードをねらって、1〜15の手札から1枚を同時に出す。おなじ数字を出した人どうしはかぶって無効。15ラウンドの合計点で勝負する数字カードゲーム。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -2255,10 +3190,12 @@
         <a class="app-card" href="blackjack/" data-added="2026-08-31" data-genre="board" data-slides data-scenes="bodoge hiroba" data-keywords="1対1、トランプ、21">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">style</span>
+            <img class="app-card__illust" src="assets/illustrations/blackjack.webp" alt="" width="400" height="400" loading="lazy" decoding="async" />
             <img class="app-card__thumbnail" src="assets/thumbnails/blackjack.png" alt="トランプの手札とカードを引く・ストップの選択肢" width="416" height="242" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">ブラックジャック</div>
+            <div class="app-card__hitokoto">合計21をめざしてディーラーと勝負</div>
             <div class="app-card__desc">カードを引いて、手札の合計21ちょうどをめざすカードゲーム。21を超えたらバースト。ポイントをかけて、ディーラー（アプリ）との勝負に挑む。ポイントが0になっても自動チャージで最後まで遊べる。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -2281,10 +3218,12 @@
         <a class="app-card" href="reversi/" data-added="2026-10-25" data-genre="board" data-slides data-scenes="bodoge hiroba sakusen" data-keywords="1対1、盤ゲーム、定番、対戦、観戦">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">contrast</span>
+            <img class="app-card__illust" src="assets/illustrations/reversi.webp" alt="" width="400" height="400" loading="lazy" decoding="async" />
             <img class="app-card__thumbnail" src="assets/thumbnails/reversi.png" alt="黒と白の石が並ぶ8×8の盤と、置ける場所の印・対戦する2人の石の数" width="1026" height="628" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">リバーシ</div>
+            <div class="app-card__hitokoto">黒と白の石をはさんでひっくり返す</div>
             <div class="app-card__desc">黒と白の石を交互に置いて、はさんだ相手の石をひっくり返す。対戦する2人はそれぞれの端末で置き、ほかの人は勝負を観戦できる。1台の画面でも遊べる。置ける場所を見せる補助や、1手の制限時間もある。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -2306,10 +3245,12 @@
         <a class="app-card" href="charin-baton/" data-added="2026-11-04" data-genre="puzzle" data-slides data-scenes="bodoge hiroba sakusen" data-keywords="1対1、お金、硬貨、対戦、勝ち残り、持ち時間、ひとり">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">toll</span>
+            <img class="app-card__illust" src="assets/illustrations/charin-baton.webp" alt="" width="400" height="400" loading="lazy" decoding="async" />
             <img class="app-card__thumbnail" src="assets/thumbnails/charin-baton.png" alt="小銭が4枚ならんだトレーと、「正解！ 556円」と何円玉が何枚かの内訳・対戦する人の残り時間" width="1124" height="513" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">ちゃりんバトン</div>
+            <div class="app-card__hitokoto">小銭の合計を答えて次の人に番を渡す</div>
             <div class="app-card__desc">ならんだ小銭がぜんぶでいくらかを答えて、正解したら次の人にバトンを渡す対決（2〜6人）。自分の番の間だけ自分の時計が減り、0になった人から「ここまで」で、最後まで残った人の勝ち。小銭は2枚からだんだん増える。ひとりでも遊べて（正解した数が点数）、1台の画面でも遊べる。時間なしで数えるだけの「いっしょに数える」もある。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -2330,10 +3271,12 @@
         <a class="app-card" href="daifugo/" data-added="2026-10-25" data-genre="board" data-scenes="bodoge hiroba" data-yomi="だいふごう" data-keywords="トランプ、カードゲーム、定番、CPU、大貧民、8切り、革命">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">playing_cards</span>
+            <img class="app-card__illust" src="assets/illustrations/daifugo.webp" alt="" width="400" height="400" loading="lazy" decoding="async" />
             <img class="app-card__thumbnail" src="assets/thumbnails/daifugo.png" alt="場に出たカードと、4人の手札の枚数・自分の手札（出せないカードは薄い）・「出す」「パス」のボタン" width="780" height="648" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">大富豪</div>
+            <div class="app-card__hitokoto">強いカードを出して、手札を早くなくす</div>
             <div class="app-card__desc">場より強いカードを出していき、手札を早くなくした人からあがるトランプの定番。それぞれの端末で自分の手札を見て出す。8切り・階段・革命などのルールと考える時間を選べて、人数が足りないときや抜けた人の代わりはCPUが出す。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -2356,10 +3299,12 @@
         <a class="app-card" href="suki-bingo/" data-added="2026-10-12" data-genre="talk" data-slides data-scenes="circle hiroba bodoge" data-yomi="すきなものびんご" data-keywords="運まかせ、定番、知り合う">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">grid_on</span>
+            <img class="app-card__illust" src="assets/illustrations/suki-bingo.webp" alt="" width="400" height="400" loading="lazy" decoding="async" />
             <img class="app-card__thumbnail" src="assets/thumbnails/suki-bingo.png" alt="ひいたもの「たこ焼き」と選んでいた人の名前、食べものを9個ならべてたて1列がそろった3×3のビンゴカード" width="844" height="450" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">好きなものビンゴ</div>
+            <div class="app-card__hitokoto">好きなもの9つでビンゴカードを作る</div>
             <div class="app-card__desc">テーマにそって好きなものを9個選んでビンゴカードを作り、ホストがひくのを見る運まかせのビンゴ。ひかれたものを選んでいた人の名前が出るので、「同じだ」が見つかる。順位はつけない。ルームに入れない子の分は、ホストがカードを作れる。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -2382,10 +3327,12 @@
         <a class="app-card" href="minna-ranking/" data-added="2026-07-06" data-genre="talk" data-slides data-scenes="hiroba sakusen" data-keywords="順位、予想">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">format_list_numbered</span>
+            <img class="app-card__illust" src="assets/illustrations/minna-ranking.webp" alt="" width="400" height="400" loading="lazy" decoding="async" />
             <img class="app-card__thumbnail" src="assets/thumbnails/minna-ranking.png" alt="お題のアイテムを並べ替えるランキング" width="704" height="394" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">みんなでランキング</div>
+            <div class="app-card__hitokoto">ランキングを作って1位を予想し合う</div>
             <div class="app-card__desc">ホストがお題を選び、各自でランキングを作る。ほかの人の1位を予想してから、結果を見せ合う。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -2408,10 +3355,12 @@
         <a class="app-card" href="kyoumi-sugoroku/" data-added="2026-04-07" data-genre="talk" data-scenes="hiroba sakusen" data-yomi="きょうみすごろく" data-keywords="1対1、すごろく、好き">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">casino</span>
+            <img class="app-card__illust" src="assets/illustrations/kyoumi-sugoroku.webp" alt="" width="400" height="400" loading="lazy" decoding="async" />
             <img class="app-card__thumbnail" src="assets/thumbnails/kyoumi-sugoroku.png" alt="スタートからゴールまでのスゴロク盤面" width="544" height="348" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">興味スゴロク</div>
+            <div class="app-card__hitokoto">サイコロで止まったマスの「好き」を話す</div>
             <div class="app-card__desc">サイコロを振ってマスに止まり、好きなことややってみたいことを話そう。対話のきっかけづくりに。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -2434,10 +3383,12 @@
         <a class="app-card" href="nurie-week/" data-added="2026-05-26" data-genre="talk" data-scenes="sakusen" data-yomi="ぬりえかれんだー" data-keywords="1対1、1週間、ふりかえり">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">calendar_view_week</span>
+            <img class="app-card__illust" src="assets/illustrations/nurie-week.webp" alt="" width="400" height="400" loading="lazy" decoding="async" />
             <img class="app-card__thumbnail" src="assets/thumbnails/nurie-week.png" alt="曜日と時間のマスを色で塗ったカレンダーの見本" width="860" height="608" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">塗り絵カレンダー</div>
+            <div class="app-card__hitokoto">1週間の過ごし方を色でぬってながめる</div>
             <div class="app-card__desc">1週間の過ごし方を5色で塗って眺めるツール。メンターと一緒に、自分の時間の使い方を見つめ直す対話のきっかけに。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -2460,10 +3411,12 @@
         <a class="app-card" href="value-card/" data-added="2026-04-10" data-genre="talk" data-scenes="sakusen" data-keywords="1対1、価値観、大事">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">favorite</span>
+            <img class="app-card__illust" src="assets/illustrations/value-card.webp" alt="" width="400" height="400" loading="lazy" decoding="async" />
             <img class="app-card__thumbnail" src="assets/thumbnails/value-card.png" alt="大事にしたいことが書かれたカード" width="584" height="309" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">バリューカード</div>
+            <div class="app-card__hitokoto">自分の「大事」をカードで見つける</div>
             <div class="app-card__desc">カードを選んで並び替えて、自分の「大事」を見つけるカードワーク。メンターとの対話の材料に。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -2486,10 +3439,12 @@
         <a class="app-card" href="ikutsu-ieru/" data-added="2026-04-21" data-genre="kotoba" data-slides data-scenes="circle hiroba sakusen" data-yomi="いくついえる" data-keywords="1対1、書き出し、お題">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">format_list_numbered</span>
+            <img class="app-card__illust" src="assets/illustrations/ikutsu-ieru.webp" alt="" width="400" height="400" loading="lazy" decoding="async" />
             <img class="app-card__thumbnail" src="assets/thumbnails/ikutsu-ieru.png" alt="お題に思いついた答えを並べた見本" width="504" height="482" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">いくつ言える？</div>
+            <div class="app-card__hitokoto">お題に思いつく答えをたくさん書き出す</div>
             <div class="app-card__desc">お題にいくつ答えられるかな？ 制限時間内に思いついた答えを書き出して、みんなの答えを眺めよう。比較なし、発見重視。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -2512,10 +3467,12 @@
         <a class="app-card" href="kyapa-graph/" data-added="2026-05-26" data-genre="talk" data-scenes="sakusen" data-keywords="1対1、頑張りすぎ、負荷">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">monitoring</span>
+            <img class="app-card__illust" src="assets/illustrations/kyapa-graph.webp" alt="" width="400" height="400" loading="lazy" decoding="async" />
             <img class="app-card__thumbnail" src="assets/thumbnails/kyapa-graph.png" alt="1週間の棒グラフとキャパラインの見本" width="840" height="340" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">キャパグラフ</div>
+            <div class="app-card__hitokoto">1週間のがんばり量をグラフで見る</div>
             <div class="app-card__desc">1週間のがんばり量を項目別の負荷で見える化。自分でドラッグして引く「キャパライン」と見比べて、頑張りすぎを客観視するツール。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -2538,10 +3495,12 @@
         <a class="app-card" href="career-sugoroku/" data-added="2026-09-30" data-genre="talk" data-slides data-scenes="bodoge sakusen" data-keywords="1対1、仕事、職業">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">signpost</span>
+            <img class="app-card__illust" src="assets/illustrations/career-sugoroku.webp" alt="" width="400" height="400" loading="lazy" decoding="async" />
             <img class="app-card__thumbnail" src="assets/thumbnails/career-sugoroku.png" alt="子どものころからおとなまでのステージに分かれたすごろく盤面と、3人の駒" width="712" height="448" loading="lazy" decoding="async" />
           </div>
           <div class="app-card__body">
             <div class="app-card__name">キャリアすごろく</div>
+            <div class="app-card__hitokoto">体験をためて職業を選び、おとなへ</div>
             <div class="app-card__desc">子どものころから、おとなになるまでを、すごろくで進む。体験で「適性」をため、たまった適性に合う職業を選ぶほど、しごとマスのポイントが多い。各自の端末でも、1台の画面をみんなで見ても遊べる。ポイントはゲームの中だけのもの。</div>
             <div class="app-card__meta">
               <span class="meta-badge">
@@ -2567,6 +3526,21 @@
 
   </main>
 
+  <!-- マウスを当てたときに浮かぶ説明（見た目だけ。カードと同じ内容なので読み上げない） -->
+  <div class="tool-peek" id="tool-peek" aria-hidden="true"></div>
+
+  <!-- 「説明」で開く説明 -->
+  <dialog class="tool-sheet" id="tool-sheet" aria-labelledby="tool-sheet-name">
+    <div class="tool-sheet__content" id="tool-sheet-content"></div>
+    <div class="tool-sheet__actions">
+      <a class="btn btn-primary" id="tool-sheet-open" href="#">このツールをひらく</a>
+      <button class="btn btn-secondary" type="button" id="tool-sheet-slides" hidden>
+        <span class="material-symbols-rounded" aria-hidden="true">co_present</span>説明スライド
+      </button>
+      <button class="btn btn-secondary" type="button" id="tool-sheet-close">とじる</button>
+    </div>
+  </dialog>
+
   <footer>
     &copy; 2026 たぎ
     <p><a href="third-party-notices.html">外部ライブラリ・フォントのクレジット</a></p>
@@ -2577,7 +3551,7 @@
     // 直近 FLAG_DAYS 日以内の更新は該当アプリのカードに NEW / 更新 フラグも付ける。
     (function () {
       const FLAG_DAYS = 14;
-      const DEFAULT_SHOWN = 5;
+      const DEFAULT_SHOWN = 1; // ツールを探す前に長く読ませない。ほかは「ほかの更新を見る」で開く
 
       function esc(s) {
         return String(s)
@@ -2616,7 +3590,7 @@
         if (entries.length > DEFAULT_SHOWN) {
           moreBtn.hidden = false;
           moreBtn.addEventListener('click', () => {
-            const collapsed = moreBtn.textContent === 'すべて表示';
+            const collapsed = moreBtn.getAttribute('aria-expanded') !== 'true';
             list.querySelectorAll('.updates-list__item').forEach((li, i) => {
               li.hidden = !collapsed && i >= DEFAULT_SHOWN;
             });
@@ -2624,7 +3598,7 @@
             list.scrollTop = 0;
             if (collapsed) list.tabIndex = 0;
             else list.removeAttribute('tabindex');
-            moreBtn.textContent = collapsed ? '閉じる' : 'すべて表示';
+            moreBtn.textContent = collapsed ? '閉じる' : 'ほかの更新を見る';
             moreBtn.setAttribute('aria-expanded', String(collapsed));
           });
         }
@@ -2656,6 +3630,18 @@
   </script>
 
   <script>
+    // 種類（各カードの data-genre）: [キー, 名前, アイコン]。この順でタブと「種類順」の小見出しを並べ、検索にも使う。
+    // 色は CSS の [data-genre="…"]。種類を足すときは、ここ・CSS・lint PORTAL-2・app-registration.md の表をそろえる
+    const PORTAL_GENRES = [
+      ['kotoba', 'ことばのゲーム', 'chat_bubble'],
+      ['puzzle', 'クイズ・パズル', 'extension'],
+      ['suiri', '推理・正体かくし', 'search'],
+      ['atekko', '当てっこ・協力ゲーム', 'lightbulb'],
+      ['board', 'カード・ボードゲーム', 'style'],
+      ['talk', '話す・自分を知る', 'sentiment_satisfied'],
+    ];
+  </script>
+  <script>
     // 利用シーンの絞り込み・ことば検索・バッジ描画: 各カードの data-scenes 属性が正本。
     // 検索の索引はカードの表示内容から作るので、カードを足すときに検索用の追記はいらない。
     (function () {
@@ -2667,15 +3653,7 @@
         sakusen: '作戦会議',
       };
 
-      // 種類（各カードの data-genre）。並び順「種類順」はこの順に小見出しを付けて並べ、検索にも使う
-      const GENRES = [
-        ['kotoba', 'ことばのゲーム'],
-        ['puzzle', 'クイズ・パズル'],
-        ['suiri', '推理・正体かくし'],
-        ['atekko', '当てっこ・協力ゲーム'],
-        ['board', 'カード・ボードゲーム'],
-        ['talk', '話す・自分を知る'],
-      ];
+      const GENRES = PORTAL_GENRES;
 
       const cards = Array.from(document.querySelectorAll('.apps-grid .app-card'));
       const cardScenes = cards.map((card) =>
@@ -2683,6 +3661,16 @@
       const cardGenres = cards.map((card) => {
         const i = GENRES.findIndex(([key]) => key === card.dataset.genre);
         return i === -1 ? GENRES.length : i;
+      });
+
+      // カードに出すバッジは人数（人数の代わりの「1対1向け」も）と時間だけ。ほかは説明（マウスを当てたとき・「説明」）に出す
+      cards.forEach((card) => {
+        card.querySelectorAll('.meta-badge').forEach((badge) => {
+          const icon = badge.querySelector('.material-symbols-rounded');
+          const name = icon ? icon.textContent.trim() : '';
+          const keep = name === 'group' || name === 'schedule' || badge.textContent.includes('1対1向け');
+          if (!keep) badge.classList.add('meta-badge--extra');
+        });
       });
 
       // カード下部にシーンバッジを描画
@@ -2710,7 +3698,7 @@
       // アイコンは "group" などの英字で描画されるため、検索対象から外す。
       const searchTexts = cards.map((card, i) => {
         const parts = [];
-        card.querySelectorAll('.app-card__name, .app-card__desc, .meta-badge, .app-card__footer').forEach((el) => {
+        card.querySelectorAll('.app-card__name, .app-card__hitokoto, .app-card__desc, .meta-badge, .app-card__footer').forEach((el) => {
           const copy = el.cloneNode(true);
           copy.querySelectorAll('.material-symbols-rounded').forEach((icon) => icon.remove());
           parts.push(copy.textContent);
@@ -2746,7 +3734,12 @@
       const suggestBox = document.getElementById('tool-suggest');
       const suggestList = document.getElementById('tool-suggest-list');
       const popupHints = document.getElementById('tool-hints-popup');
+      const genreTabsBox = document.getElementById('genre-tabs');
+      const moreToggle = document.getElementById('more-filter-toggle');
+      const moreBody = document.getElementById('more-filter-body');
+      const moreFilterState = document.getElementById('more-filter-state');
       let currentScene = 'all';
+      let currentGenre = 'all';
       let emptyAction = 'all-scenes';
 
       function setScene(scene) {
@@ -2754,15 +3747,101 @@
         chips.forEach((c) => c.setAttribute('aria-pressed', String(c.dataset.scene === currentScene)));
       }
 
-      function syncSceneHash() {
-        history.replaceState(null, '', currentScene === 'all'
-          ? location.pathname + location.search
-          : '#scene=' + currentScene);
+      // ── 種類のタブ ──
+      function makeGenreTab(key, label, iconName, countText) {
+        const tab = document.createElement('button');
+        tab.type = 'button';
+        tab.className = 'genre-tab';
+        tab.dataset.genre = key;
+        tab.setAttribute('aria-pressed', 'false');
+        const icon = document.createElement('span');
+        icon.className = 'genre-tab__icon';
+        const symbol = document.createElement('span');
+        symbol.className = 'material-symbols-rounded';
+        symbol.setAttribute('aria-hidden', 'true');
+        symbol.textContent = iconName;
+        icon.appendChild(symbol);
+        const name = document.createElement('span');
+        name.className = 'genre-tab__label';
+        // 「・」のあとでだけ折り返す
+        label.split('・').forEach((part, i, parts) => {
+          name.append(part + (i < parts.length - 1 ? '・' : ''));
+          if (i < parts.length - 1) name.appendChild(document.createElement('wbr'));
+        });
+        const num = document.createElement('span');
+        num.className = 'genre-tab__count';
+        num.textContent = countText;
+        tab.append(icon, name, num);
+        tab.addEventListener('click', () => {
+          setGenre(key, true);
+          syncHash();
+          applyFilters();
+        });
+        return tab;
       }
 
-      function sceneFromHash() {
-        const m = location.hash.match(/^#scene=([a-z]+)$/);
-        return m ? m[1] : 'all';
+      const genreTabs = [['all', 'すべて', 'apps'], ...GENRES].map(([key, label, iconName]) => {
+        const count = key === 'all' ? cards.length : cards.filter((card) => card.dataset.genre === key).length;
+        const tab = makeGenreTab(key, label, iconName, count + '本');
+        genreTabsBox.appendChild(tab);
+        return tab;
+      });
+
+      // 「人気」タブ: よく開かれた順（ranking.json の order）の上位。ranking.json を読めたときだけ出す（回数は出さない）
+      const POPULAR_TOP = 12;
+      let popularTop = null; // 上位のカードの href の集まり
+
+      function genreMatchOf(card) {
+        if (currentGenre === 'all') return true;
+        if (currentGenre === 'popular') return Boolean(popularTop && popularTop.has(card.getAttribute('href')));
+        return card.dataset.genre === currentGenre;
+      }
+
+      let needsSort = false;
+
+      function setGenre(genre, smooth) {
+        const wasPopular = currentGenre === 'popular';
+        currentGenre = genre === 'all' || (genre === 'popular' && popularTop) || GENRES.some(([key]) => key === genre) ? genre : 'all';
+        // 人気は並べ方も変わるので、入る・出るときは絞り込みのあとで並べ直す
+        if (wasPopular !== (currentGenre === 'popular')) needsSort = true;
+        genreTabs.forEach((tab) => {
+          const on = tab.dataset.genre === currentGenre;
+          tab.setAttribute('aria-pressed', String(on));
+          // スマホでは横にスクロールするので、選んだタブが切れていたら見える位置に出す
+          if (on && genreTabsBox.scrollWidth > genreTabsBox.clientWidth) {
+            const box = genreTabsBox.getBoundingClientRect();
+            const r = tab.getBoundingClientRect();
+            if (r.left < box.left || r.right > box.right) {
+              genreTabsBox.scrollBy({ left: r.left - box.left - 16, behavior: smooth ? 'smooth' : 'auto' });
+            }
+          }
+        });
+      }
+
+      // 種類とシーンの選択は URL ハッシュ（#genre=kotoba&scene=bodoge）と同期し、
+      // 共有したりリロードしても選択が保てるようにする。前からの #scene=bodoge もそのまま使える
+      function syncHash() {
+        const parts = [];
+        if (currentGenre !== 'all') parts.push('genre=' + currentGenre);
+        if (currentScene !== 'all') parts.push('scene=' + currentScene);
+        history.replaceState(null, '', parts.length
+          ? '#' + parts.join('&')
+          : location.pathname + location.search);
+      }
+
+      function fromHash() {
+        const found = { genre: 'all', scene: 'all' };
+        location.hash.replace(/^#/, '').split('&').forEach((part) => {
+          const m = part.match(/^(genre|scene)=([a-z]+)$/);
+          if (m) found[m[1]] = m[2];
+        });
+        return found;
+      }
+
+      function setFromHash() {
+        const found = fromHash();
+        setGenre(found.genre);
+        setScene(found.scene);
       }
 
       // 人数・時間はカードの表示（人数・時間のバッジ）から読み取る。
@@ -2832,15 +3911,28 @@
         let visibleCount = 0;
         let textMatchCount = 0;
         let withoutSizeCount = 0;
+        let withoutGenreCount = 0;
+        let withoutSceneCount = 0;
         cards.forEach((card, i) => {
           const textMatch = terms.every((alts) => alts.some((t) => searchTexts[i].includes(t)));
           const sceneMatch = currentScene === 'all' || cardScenes[i].includes(currentScene);
-          card.hidden = !(textMatch && sceneMatch && sizeMatch(i));
+          const genreMatch = genreMatchOf(card);
+          const sizeOk = sizeMatch(i);
+          card.hidden = !(textMatch && sceneMatch && genreMatch && sizeOk);
           if (textMatch) textMatchCount += 1;
-          if (textMatch && sceneMatch) withoutSizeCount += 1;
+          if (textMatch && sceneMatch && genreMatch) withoutSizeCount += 1;
+          if (textMatch && sceneMatch && sizeOk) withoutGenreCount += 1;
+          if (textMatch && genreMatch && sizeOk) withoutSceneCount += 1;
           if (!card.hidden) visibleCount += 1;
         });
         [peopleSelect, timeSelect].forEach((select) => select.classList.toggle('is-set', Boolean(select.value)));
+
+        // 「くわしく絞り込む」の中で指定しているものの数。指定があるときは開いておく（たたむこともできる）
+        const moreCount = (currentScene !== 'all' ? 1 : 0) + (peopleSelect.value ? 1 : 0) + (timeSelect.value ? 1 : 0);
+        moreFilterState.hidden = moreCount === 0;
+        moreFilterState.textContent = moreCount + 'つ指定中';
+        if (moreCount > 0 && moreCount > lastMoreCount) setMoreOpen(true);
+        lastMoreCount = moreCount;
 
         if (visibleCount === 0) {
           if (terms.length > 0 && textMatchCount === 0) {
@@ -2853,14 +3945,20 @@
             emptyDesc.textContent = `人数・時間の指定をはずすと ${withoutSizeCount}件 見つかります。`;
             emptyButton.textContent = '人数・時間の指定をはずす';
             emptyAction = 'clear-size';
+          } else if (currentGenre !== 'all' && withoutGenreCount > 0) {
+            const popular = currentGenre === 'popular';
+            emptyTitle.textContent = popular ? '人気のツールには、条件に合うものがありません' : 'この種類には、条件に合うツールがありません';
+            emptyDesc.textContent = `${popular ? 'タブ' : '種類'}を「すべて」にすると ${withoutGenreCount}件 見つかります。`;
+            emptyButton.textContent = popular ? 'すべてのツールで探す' : 'すべての種類で探す';
+            emptyAction = 'all-genres';
           } else if (terms.length === 0) {
             emptyTitle.textContent = 'このシーンのツールはまだありません';
             emptyDesc.textContent = '「すべて」に戻すと、ほかのツールを見られます。';
             emptyButton.textContent = 'すべてのツールを見る';
             emptyAction = 'all-scenes';
-          } else if (currentScene !== 'all' && textMatchCount > 0) {
+          } else if (currentScene !== 'all' && withoutSceneCount > 0) {
             emptyTitle.textContent = `このシーンには「${query}」に合うツールがありません`;
-            emptyDesc.textContent = `シーンを「すべて」にすると ${textMatchCount}件 見つかります。`;
+            emptyDesc.textContent = `シーンを「すべて」にすると ${withoutSceneCount}件 見つかります。`;
             emptyButton.textContent = 'すべてのシーンで探す';
             emptyAction = 'all-scenes';
           } else {
@@ -2874,14 +3972,19 @@
         emptyHints.hidden = !(visibleCount === 0 && emptyAction === 'clear-search');
 
         // 読み上げは常設の1か所だけ。同じ内容なら書き換えず、二重に読まれないようにする
-        const filtered = terms.length > 0 || currentScene !== 'all' || sizeSet;
+        const filtered = terms.length > 0 || currentScene !== 'all' || currentGenre !== 'all' || sizeSet;
         let message = '';
         if (visibleCount === 0) message = emptyTitle.textContent + '。' + emptyDesc.textContent;
         else if (filtered) message = visibleCount + '件のツール';
         if (countText.textContent !== message) countText.textContent = message;
         listCount.textContent = filtered ? `${visibleCount}件（全${cards.length}件中）` : `${visibleCount}件`;
         renderResult(filtered, visibleCount);
-        updateGenreHeadings();
+        if (needsSort) {
+          needsSort = false;
+          sortCards();
+        } else {
+          updateGenreHeadings();
+        }
       }
 
       // パネル内の結果の行。絞り込み中は色を変え、全何件中の何件かと「条件をクリア」を出す
@@ -2912,10 +4015,20 @@
         resultText.replaceChildren(icon, label);
       }
 
+      let lastMoreCount = 0;
+
+      function setMoreOpen(open) {
+        moreBody.hidden = !open;
+        moreToggle.setAttribute('aria-expanded', String(open));
+      }
+      moreToggle.addEventListener('click', () => {
+        setMoreOpen(moreBody.hidden);
+      });
+
       chips.forEach((chip) => {
         chip.addEventListener('click', () => {
           setScene(chip.dataset.scene);
-          syncSceneHash();
+          syncHash();
           applyFilters();
         });
       });
@@ -3127,9 +4240,14 @@
           searchInput.value = '';
           applyFilters();
           searchInput.focus();
+        } else if (emptyAction === 'all-genres') {
+          setGenre('all');
+          syncHash();
+          applyFilters();
+          genreTabs[0].focus();
         } else {
           setScene('all');
-          syncSceneHash();
+          syncHash();
           applyFilters();
           document.querySelector('.scene-filter__chip[data-scene="all"]').focus();
         }
@@ -3140,7 +4258,8 @@
         peopleSelect.value = '';
         timeSelect.value = '';
         setScene('all');
-        syncSceneHash();
+        setGenre('all');
+        syncHash();
         applyFilters();
         // ボタンは消えるので、結果の行へフォーカスを移す（スマホでキーボードを開かない）
         resultText.focus();
@@ -3154,24 +4273,41 @@
       const sortSelect = document.getElementById('tool-sort');
       let popularOrder = null;
 
-      const genreHeadings = GENRES.map(([key, label]) => {
+      const genreHeadings = GENRES.map(([key, label, iconName]) => {
         const heading = document.createElement('h4');
         heading.className = 'genre-heading';
         heading.dataset.genre = key;
-        heading.textContent = label;
+        const icon = document.createElement('span');
+        icon.className = 'genre-heading__icon';
+        icon.setAttribute('aria-hidden', 'true');
+        const symbol = document.createElement('span');
+        symbol.className = 'material-symbols-rounded';
+        symbol.textContent = iconName;
+        icon.appendChild(symbol);
+        const name = document.createElement('span');
+        name.className = 'genre-heading__label';
+        name.textContent = label;
+        const count = document.createElement('span');
+        count.className = 'genre-heading__count';
+        heading.append(icon, name, count);
         return heading;
       });
 
       // 種類順のときだけ出す。絞り込みで1件もなくなった種類は見出しごと隠す
       function updateGenreHeadings() {
-        const byGenre = sortSelect.value === '';
+        const byGenre = sortSelect.value === '' && currentGenre !== 'popular';
         genreHeadings.forEach((heading, g) => {
-          heading.hidden = !byGenre || !cards.some((card, i) => !card.hidden && cardGenres[i] === g);
+          const shown = cards.filter((card, i) => !card.hidden && cardGenres[i] === g).length;
+          heading.hidden = !byGenre || shown === 0;
+          heading.querySelector('.genre-heading__count').textContent = shown + '本';
         });
       }
 
       function sortCards() {
-        const mode = sortSelect.value;
+        // 「人気」タブのあいだは、並び順の選択にかかわらず人気の順に並べる
+        const mode = currentGenre === 'popular' ? 'popular' : sortSelect.value;
+        grid.classList.toggle('is-popular', currentGenre === 'popular');
+        sortSelect.disabled = currentGenre === 'popular';
         const keyOf = (card) => {
           if (mode === 'popular') {
             const r = popularOrder.indexOf(card.getAttribute('href').replace(/\/$/, ''));
@@ -3193,7 +4329,7 @@
         if (mode) items.push(...genreHeadings);
         grid.append(...items);
         updateGenreHeadings();
-        sortSelect.classList.toggle('is-set', Boolean(mode));
+        sortSelect.classList.toggle('is-set', Boolean(sortSelect.value));
       }
 
       sortSelect.addEventListener('change', sortCards);
@@ -3206,22 +4342,47 @@
         option.value = 'popular';
         option.textContent = 'よく開かれた順';
         sortSelect.appendChild(option);
+
+        // 「人気」タブと、そのあいだだけカードに出す順位
+        const top = order.map((app) => cards.find((card) => card.getAttribute('href') === app + '/'))
+          .filter(Boolean).slice(0, POPULAR_TOP);
+        if (top.length === 0) return;
+        popularTop = new Set(top.map((card) => card.getAttribute('href')));
+        top.forEach((card, i) => {
+          const rank = document.createElement('span');
+          rank.className = 'app-card__rank';
+          rank.textContent = String(i + 1);
+          const suffix = document.createElement('span');
+          suffix.className = 'app-card__rank-suffix';
+          suffix.textContent = '位 ';
+          rank.appendChild(suffix);
+          const art = card.querySelector('.app-card__icon');
+          if (art) art.appendChild(rank);
+        });
+        const tab = makeGenreTab('popular', '人気', 'trending_up', '上位' + top.length);
+        genreTabsBox.insertBefore(tab, genreTabs[1]);
+        genreTabs.splice(1, 0, tab);
+        if (fromHash().genre === 'popular') {
+          setGenre('popular');
+          applyFilters();
+        } else {
+          setGenre(currentGenre);
+        }
       });
 
       window.addEventListener('hashchange', () => {
-        setScene(sceneFromHash());
+        setFromHash();
         applyFilters();
       });
-      setScene(sceneFromHash());
+      setFromHash();
       applyFilters();
 
     })();
   </script>
   <script>
     // よく開かれたツール: apps/ranking.json（scripts/ranking-build.mjs が週1回作る）が正本。
-    // 名前とアイコンはポータルのカードから取る。カードがないアプリは飛ばす。
+    // 名前・アイコン・種類の色はポータルのカードから取る。カードがないアプリは飛ばす。
     (function () {
-      // サムネイルがないカードは、カードと同じアイコンを出す
       function fallbackIcon(card) {
         const icon = document.createElement('span');
         icon.className = 'material-symbols-rounded';
@@ -3246,16 +4407,22 @@
           link.href = app + '/';
           const thumb = document.createElement('div');
           thumb.className = 'ranking-card__thumb';
-          const image = card.querySelector('.app-card__thumbnail');
-          if (image && !image.hidden) {
+          // ツール一覧のカードと同じ図柄（種類の色の面にカードのアイコン）
+          if (card.dataset.genre) thumb.dataset.genre = card.dataset.genre;
+          thumb.appendChild(fallbackIcon(card));
+          // カードにイラストがあれば、帯にも同じ絵を出す（読めないときはアイコンに戻す）
+          const illust = card.querySelector('.app-card__illust');
+          if (illust && !illust.hidden) {
             const img = document.createElement('img');
-            img.src = image.getAttribute('src');
+            img.className = 'ranking-card__illust';
+            img.src = illust.getAttribute('src');
             img.alt = '';
+            img.width = 400;
+            img.height = 400;
             img.decoding = 'async';
-            img.addEventListener('error', () => { img.replaceWith(fallbackIcon(card)); });
+            img.addEventListener('load', () => img.classList.add('is-loaded'));
+            img.addEventListener('error', () => img.remove());
             thumb.appendChild(img);
-          } else {
-            thumb.appendChild(fallbackIcon(card));
           }
           const rank = document.createElement('span');
           rank.className = 'ranking-card__rank';
@@ -3285,6 +4452,17 @@
           title.textContent = Number(period.month.split('-')[1]) + '月によく開かれたツール';
         }
         document.getElementById('ranking-panel').hidden = false;
+
+        // 「人気の12本を見る」: 人気タブがあるときだけ出す（タブは ranking-loaded で先に作られている）
+        const more = document.getElementById('ranking-more');
+        const popularTab = document.querySelector('.genre-tab[data-genre="popular"]');
+        more.hidden = !popularTab;
+        more.addEventListener('click', () => {
+          if (!popularTab) return;
+          popularTab.click();
+          popularTab.focus({ preventScroll: true });
+          document.getElementById('genre-tabs').scrollIntoView({ block: 'start' });
+        });
       }
 
       fetch('ranking.json')
@@ -3303,7 +4481,7 @@
     // カード本体が <a> のためリンクを入れ子にせず、クリックで slides.html を別タブに開く。
     (function () {
       document.querySelectorAll('.app-card[data-slides]').forEach((card) => {
-        const footer = card.querySelector('.app-card__footer');
+        const footer = card.querySelector('.app-card__meta') || card.querySelector('.app-card__footer');
         if (!footer) return;
         const name = card.querySelector('.app-card__name');
         const badge = document.createElement('span');
@@ -3326,11 +4504,232 @@
     })();
   </script>
 
+
+  <script>
+    // カードの説明: マウスを当てたとき（マウスのある端末）とキーボードで選んだときに浮かび、
+    // 「説明」を押すと開く。中身はカードの表示（説明・バッジ・動作環境・利用シーン）とサムネイルから作るので、
+    // カードを足すときに説明用の追記はいらない。
+    (function () {
+      const grid = document.querySelector('.apps-grid');
+      const peek = document.getElementById('tool-peek');
+      const sheet = document.getElementById('tool-sheet');
+      const sheetContent = document.getElementById('tool-sheet-content');
+      const sheetOpen = document.getElementById('tool-sheet-open');
+      const sheetSlides = document.getElementById('tool-sheet-slides');
+      const canHover = window.matchMedia('(hover: hover) and (pointer: fine)');
+      const HOVER_DELAY = 300;
+      let timer = 0;
+      let peekFor = null;
+      let sheetFor = null;
+
+      function iconEl(name) {
+        const icon = document.createElement('span');
+        icon.className = 'material-symbols-rounded';
+        icon.setAttribute('aria-hidden', 'true');
+        icon.textContent = name;
+        return icon;
+      }
+
+      // アイコン（英字で描画される）を除いた文字
+      function plainText(el) {
+        const copy = el.cloneNode(true);
+        copy.querySelectorAll('.material-symbols-rounded, .app-card__slides').forEach((x) => x.remove());
+        return copy.textContent.replace(/\s+/g, ' ').trim();
+      }
+
+      function chip(iconName, text, extraClass) {
+        const c = document.createElement('span');
+        c.className = 'tool-detail__chip' + (extraClass ? ' ' + extraClass : '');
+        if (iconName) c.appendChild(iconEl(iconName));
+        c.append(text);
+        return c;
+      }
+
+      function buildDetail(card, idForName) {
+        const parts = [];
+        const image = card.querySelector('.app-card__thumbnail');
+        if (image && image.getAttribute('src') && !image.hidden) {
+          const shot = document.createElement('div');
+          shot.className = 'tool-detail__shot';
+          const img = document.createElement('img');
+          img.src = image.getAttribute('src');
+          img.alt = image.alt;
+          img.decoding = 'async';
+          img.addEventListener('error', () => shot.remove());
+          shot.appendChild(img);
+          parts.push(shot);
+        }
+        const body = document.createElement('div');
+        body.className = 'tool-detail__body';
+        const genre = PORTAL_GENRES.find(([key]) => key === card.dataset.genre);
+        if (genre) {
+          const g = document.createElement('div');
+          g.className = 'tool-detail__genre';
+          g.append(iconEl(genre[2]), genre[1]);
+          body.appendChild(g);
+        }
+        const name = document.createElement('div');
+        name.className = 'tool-detail__name';
+        if (idForName) name.id = idForName;
+        name.textContent = plainText(card.querySelector('.app-card__name'));
+        body.appendChild(name);
+        const descEl = card.querySelector('.app-card__desc');
+        if (descEl) {
+          const desc = document.createElement('p');
+          desc.className = 'tool-detail__desc';
+          desc.textContent = plainText(descEl);
+          body.appendChild(desc);
+        }
+        const chips = document.createElement('div');
+        chips.className = 'tool-detail__chips';
+        card.querySelectorAll('.meta-badge').forEach((badge) => {
+          const icon = badge.querySelector('.material-symbols-rounded');
+          chips.appendChild(chip(icon ? icon.textContent.trim() : '', plainText(badge)));
+        });
+        const footer = card.querySelector('.app-card__footer');
+        if (footer) {
+          const icon = footer.querySelector('.material-symbols-rounded');
+          const text = plainText(footer);
+          if (text) chips.appendChild(chip(icon ? icon.textContent.trim() : '', text));
+        }
+        if (card.hasAttribute('data-slides')) chips.appendChild(chip('co_present', '説明スライドあり'));
+        card.querySelectorAll('.scene-badge').forEach((badge) => {
+          chips.appendChild(chip('', badge.textContent, 'tool-detail__chip--scene'));
+        });
+        body.appendChild(chips);
+        parts.push(body);
+        return parts;
+      }
+
+      // ── 浮かぶ説明 ──
+      function placePeek(card) {
+        const r = card.getBoundingClientRect();
+        const w = peek.offsetWidth;
+        const h = peek.offsetHeight;
+        const gap = 12;
+        const vw = document.documentElement.clientWidth;
+        const vh = window.innerHeight;
+        let left;
+        let top;
+        if (r.right + gap + w <= vw - 8) {
+          left = r.right + gap;
+          top = Math.min(Math.max(8, r.top), vh - h - 8);
+        } else if (r.left - gap - w >= 8) {
+          left = r.left - gap - w;
+          top = Math.min(Math.max(8, r.top), vh - h - 8);
+        } else {
+          left = Math.min(Math.max(8, r.left + r.width / 2 - w / 2), vw - w - 8);
+          top = r.bottom + gap + h <= vh - 8 ? r.bottom + gap : r.top - gap - h;
+        }
+        peek.style.left = left + 'px';
+        peek.style.top = Math.max(8, top) + 'px';
+      }
+
+      function showPeek(card, delay) {
+        clearTimeout(timer);
+        if (delay > 0) {
+          timer = setTimeout(() => showPeek(card, 0), delay);
+          return;
+        }
+        if (card.hidden || sheet.open) return;
+        peek.dataset.genre = card.dataset.genre || 'all';
+        peek.replaceChildren(...buildDetail(card, ''));
+        peekFor = card;
+        placePeek(card);
+        const img = peek.querySelector('img');
+        if (img && !img.complete) {
+          img.addEventListener('load', () => { if (peekFor === card) placePeek(card); }, { once: true });
+        }
+        peek.classList.add('is-open');
+      }
+
+      function hidePeek() {
+        clearTimeout(timer);
+        peekFor = null;
+        peek.classList.remove('is-open');
+      }
+
+      grid.addEventListener('mouseover', (e) => {
+        if (!canHover.matches) return;
+        const card = e.target.closest('.app-card');
+        if (!card || card === peekFor) return;
+        // 説明が出ているあいだに隣へ移ったときは、待たずに切りかえる
+        showPeek(card, peekFor ? 80 : HOVER_DELAY);
+      });
+      grid.addEventListener('mouseout', (e) => {
+        const card = e.target.closest('.app-card');
+        if (!card || card.contains(e.relatedTarget)) return;
+        hidePeek();
+      });
+      grid.addEventListener('focusin', (e) => {
+        const card = e.target.closest('.app-card');
+        if (card && e.target === card && card.matches(':focus-visible')) showPeek(card, 0);
+      });
+      grid.addEventListener('focusout', hidePeek);
+      // スクロールしたら閉じる。キーボードで選んだカード（選ぶとそこまでスクロールする）は、閉じずに位置を合わせる
+      window.addEventListener('scroll', () => {
+        if (peekFor && document.activeElement === peekFor) placePeek(peekFor);
+        else hidePeek();
+      }, { passive: true });
+      window.addEventListener('resize', hidePeek);
+      document.addEventListener('keydown', (e) => { if (e.key === 'Escape') hidePeek(); });
+      // 戻るボタンで戻ってきたとき、出たままの説明を残さない
+      window.addEventListener('pageshow', hidePeek);
+
+      // ── 「説明」で開く説明 ──
+      function openSheet(card) {
+        hidePeek();
+        sheetFor = card;
+        sheet.dataset.genre = card.dataset.genre || 'all';
+        sheetContent.replaceChildren(...buildDetail(card, 'tool-sheet-name'));
+        sheetOpen.href = card.getAttribute('href');
+        sheetSlides.hidden = !card.hasAttribute('data-slides');
+        sheet.showModal();
+      }
+
+      document.querySelectorAll('.apps-grid .app-card').forEach((card) => {
+        const name = card.querySelector('.app-card__name');
+        const info = document.createElement('span');
+        info.className = 'app-card__info';
+        // タッチの端末で説明を開くためのもの。キーボードではカードを選ぶと説明が出て、読み上げではリンクが説明文まで読むので、
+        // リンクの中に操作できるものを入れ子にしない（Tab で選ばない・読み上げない）
+        info.setAttribute('aria-hidden', 'true');
+        info.title = (name ? plainText(name) + 'の' : '') + '説明を見る';
+        info.append(iconEl('info'), document.createTextNode('説明'));
+        info.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          openSheet(card);
+        });
+        card.appendChild(info);
+      });
+
+      document.getElementById('tool-sheet-close').addEventListener('click', () => sheet.close());
+      sheetSlides.addEventListener('click', () => {
+        if (sheetFor) window.open(sheetFor.getAttribute('href') + 'slides.html', '_blank', 'noopener');
+      });
+      // 説明の外（暗いところ）を押したら閉じる
+      sheet.addEventListener('click', (e) => { if (e.target === sheet) sheet.close(); });
+    })();
+  </script>
+
   <script>
     // 画像が読み込めないときも、既存のアイコンとカードのリンクを使えるようにする。
-    document.querySelectorAll('.app-card__thumbnail').forEach((image) => {
+    document.querySelectorAll('.app-card__thumbnail, .app-card__illust').forEach((image) => {
       image.addEventListener('error', () => { image.hidden = true; });
       if (image.complete && image.naturalWidth === 0) image.hidden = true;
+    });
+    // 種類のタブの絵（assets/illustrations/tabs/）は、読み込めたものだけアイコンと入れかえる
+    ['all', 'popular'].concat(PORTAL_GENRES.map((g) => g[0])).forEach((key) => {
+      const img = new Image();
+      img.addEventListener('load', () => document.documentElement.classList.add('tab-img-' + key));
+      img.src = 'assets/illustrations/tabs/' + key + '.webp';
+    });
+    // イラストは読み込み終わってから、アイコンと入れかえる
+    document.querySelectorAll('.app-card__illust').forEach((image) => {
+      const show = () => image.classList.add('is-loaded');
+      if (image.complete && image.naturalWidth > 0) show();
+      else image.addEventListener('load', show);
     });
   </script>
   <script src="shared/js/stats.js?v=1" defer></script>

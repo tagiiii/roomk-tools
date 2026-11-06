@@ -1,17 +1,9 @@
-/* キャリアすごろく v2（試作）— スタイル
-   drafts/ は自己完結（apps/shared は参照しない）。色は design-system.css のトークンの値を手で写している。
+/* キャリアすごろく — スタイル
+   共通の色（--color-primary など）は ../shared/css/design-system.css のものを使う（2026-11-06 まで試作のときに写した値を
+   ここで決め直していたため、共通の色を替えても変わらなかった）。ここではこのツール専用の色だけを決める。
    接頭辞 cs-（career sugoroku）・BEM。 */
 
 :root {
-  --color-primary: #1C3F5E;
-  --color-accent: #2E7D8C;
-  --color-bg: #F5F2EC;
-  --color-surface: #FFFFFF;
-  --color-text: #1A1A1A;
-  --color-muted: #5A6270;
-  --color-border: #C4D2D8;
-  --color-success: #1F6E3C;
-  --color-error: #B91C1C;
   --color-primary-soft: #E6EDF3;
   --color-accent-soft: #E3F1F2;
   --cs-radius: 16px;

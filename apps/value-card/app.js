@@ -288,7 +288,7 @@ function saveImage() {
     <p style="
       text-align:center; font-size:11px; color:#5A6270;
       margin-top:20px;
-    ">バリューカード | room-K</p>
+    ">バリューカード | あそびのたな</p>
   `;
 
   document.body.appendChild(container);

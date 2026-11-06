@@ -951,7 +951,7 @@ function connectWatch(code, ref) {
   state.role = 'spectator';
   startClock();
   // 共有するタブ・ウィンドウを選ぶときに見分けられるよう、題名と見出しを変える
-  document.title = 'みんなにみせる画面 | ちゃりんバトン | room-K';
+  document.title = 'みんなにみせる画面 | ちゃりんバトン | あそびのたな';
   document.body.classList.add('is-watch');
   $('watchBadge').hidden = false;
   state.roomCode = code;
