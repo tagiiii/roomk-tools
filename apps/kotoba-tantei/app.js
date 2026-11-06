@@ -766,7 +766,7 @@ function renderLobbyPlayer(room, player, canEditAssignments) {
   `;
 }
 
-// 選ばれている方は主ボタンにせず、選んだ印（淡いティール）で示す（主ボタンは1画面に1つ）
+// 選ばれている方は主ボタンにせず、選んだ印（淡いアクセント）で示す（主ボタンは1画面に1つ）
 function renderPlayerControls(player) {
   const teamButtons = ["red", "blue"].map((team) => `
     <button
