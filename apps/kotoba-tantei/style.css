@@ -443,7 +443,7 @@
 
 .cn-card--hidden {
   border-left-color: var(--color-border);
-  background: #F8FAFC;
+  background: var(--color-surface);
 }
 
 .cn-card--red {
@@ -680,7 +680,7 @@
 
 .cn-spec-card--hidden {
   border-left-color: var(--color-border);
-  background: #F8FAFC;
+  background: var(--color-surface);
 }
 
 .cn-spec-card--red {
