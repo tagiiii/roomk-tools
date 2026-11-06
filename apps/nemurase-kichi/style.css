@@ -232,7 +232,7 @@ body.is-playing { overflow: hidden; background: #2D3642; overscroll-behavior: no
 }
 .nk-act .material-symbols-rounded { font-size: 30px; }
 .nk-act__label { font-size: 12px; line-height: 1.25; text-align: center; }
-.nk-act:disabled { background: #6B7580; opacity: 0.75; cursor: not-allowed; }
+.nk-act:disabled { background: var(--color-muted); opacity: 0.75; cursor: not-allowed; }
 .nk-act--find { background: #C9302C; }
 .nk-act--sleep { background: var(--nk-sleeper); }
 .nk-act--dark { background: #4B3B6B; }
@@ -271,13 +271,13 @@ body.is-watching .nk-tasks, body.is-watching .nk-actions, body.is-watching .nk-p
 /* 重なる画面 */
 .nk-overlay {
   position: fixed; inset: 0; z-index: 20; display: flex; align-items: center; justify-content: center;
-  padding: 16px; background: rgba(12, 16, 24, 0.6);
+  padding: 16px; background: rgba(63, 54, 45, 0.6);
 }
 .nk-overlay[hidden] { display: none; }
 .nk-overlay--top { z-index: 30; }
 
 .nk-dialog { border: none; border-radius: var(--radius-card); padding: 24px; width: min(360px, calc(100% - 32px)); box-shadow: var(--shadow-lg); }
-.nk-dialog::backdrop { background: rgba(12, 16, 24, 0.6); }
+.nk-dialog::backdrop { background: rgba(63, 54, 45, 0.6); }
 .nk-dialog .nk-h3 { margin-top: 0; }
 .nk-menu { display: grid; gap: 10px; margin-top: 12px; }
 .nk-menu .nk-quiet { justify-self: center; }

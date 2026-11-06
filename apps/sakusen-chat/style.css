@@ -460,7 +460,7 @@ body.sc-chatting .howto-fab {
 
 .sc-msg--me .sc-msg__bubble {
   background: var(--color-accent-soft);
-  border-color: #B9D8DE;
+  border-color: var(--color-border);
   border-bottom-right-radius: 4px;
 }
 
@@ -476,7 +476,7 @@ body.sc-chatting .howto-fab {
   max-width: 100%;
   padding: 0;
   border: 0;
-  background: #E3EAED;
+  background: var(--color-primary-soft);
   cursor: zoom-in;
   border-radius: 10px;
   overflow: hidden;

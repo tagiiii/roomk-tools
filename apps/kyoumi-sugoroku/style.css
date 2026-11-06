@@ -212,7 +212,7 @@
   container-type: inline-size;
 }
 .ks-square.is-start {
-  background: #DEEBE8;
+  background: var(--color-accent-soft);
   border-color: var(--color-accent);
 }
 .ks-square.is-goal {
@@ -635,8 +635,8 @@
 .ks-choice:disabled,
 .ks-choice:disabled:hover {
   cursor: default;
-  border-color: #E1E7EA;
-  background: #F6F8F9;
+  border-color: var(--color-border);
+  background: var(--color-primary-soft);
   color: var(--color-text);
 }
 
