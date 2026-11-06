@@ -111,7 +111,7 @@
 
 .ka-tag {
   display: inline-block;
-  color: var(--color-accent); /* 淡いティールの上で 4.5:1 以上（B-11 と同じ） */
+  color: var(--color-accent); /* 淡いアクセントの上で 4.5:1 以上（B-11 と同じ） */
   background: var(--color-accent-soft);
   border-radius: var(--radius-full);
   font-size: 12px;
@@ -312,7 +312,7 @@
   flex-shrink: 0;
 }
 
-/* ── 場面カード（お題表示の定石: 白カード＋ティール枠）── */
+/* ── 場面カード（お題表示の定石: 白カード＋アクセント色の枠）── */
 .ka-scene {
   background: var(--color-surface);
   border: 2px solid var(--color-accent);

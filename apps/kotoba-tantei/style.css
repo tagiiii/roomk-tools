@@ -347,7 +347,7 @@
 @keyframes cn-turn-pulse {
   from {
     transform: translateY(-4px);
-    box-shadow: 0 0 0 4px rgba(40, 111, 124, 0.2);
+    box-shadow: 0 0 0 4px rgba(138, 74, 16, 0.2);
   }
 
   to {

@@ -36,7 +36,7 @@
   height: 88px;
   margin-bottom: 14px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--color-accent), #1A4850);
+  background: linear-gradient(135deg, var(--color-accent), #5A300A);
   color: #fff;
   font-size: 46px;
   box-shadow: var(--shadow-md);
@@ -112,7 +112,7 @@
 .ks-level-card.is-selected {
   border-color: var(--color-accent);
   background: var(--color-accent-soft);
-  box-shadow: 0 0 0 3px rgba(40, 111, 124, 0.12);
+  box-shadow: 0 0 0 3px rgba(138, 74, 16, 0.12);
 }
 
 .ks-level-card__icon {

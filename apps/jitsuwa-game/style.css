@@ -36,7 +36,7 @@
   padding: 32px 40px;
   margin-bottom: 28px;
   text-align: center;
-  box-shadow: 0 0 0 4px rgba(40, 111, 124, 0.12);
+  box-shadow: 0 0 0 4px rgba(138, 74, 16, 0.12);
 }
 
 .prompt-panel.visible {
@@ -127,7 +127,7 @@
     rgba(255, 255, 255, 0.06) 10px,
     rgba(255, 255, 255, 0.06) 20px
   );
-  border-color: #1F5A64; /* ティールより少し濃い縁 */
+  border-color: #5A300A; /* アクセントより少し濃い縁 */
   flex-direction: column;
   gap: 8px;
 }
@@ -166,7 +166,7 @@
 }
 
 .flip-card.flipped .card-face-front {
-  box-shadow: 0 0 0 3px rgba(40, 111, 124, 0.25);
+  box-shadow: 0 0 0 3px rgba(138, 74, 16, 0.25);
 }
 
 .card-prompt {
