@@ -58,6 +58,8 @@ button:disabled { cursor: default; }
 .cs-btn--primary:hover:not(:disabled) { filter: brightness(0.88); }
 .cs-btn--secondary { background: var(--color-surface); color: var(--color-primary); border-color: var(--color-primary); }
 .cs-btn--secondary:hover:not(:disabled) { background: var(--color-primary-soft); }
+.cs-btn--ghost { background: var(--color-surface); color: var(--color-muted); border-color: var(--color-border); }
+.cs-btn--ghost:hover:not(:disabled) { background: var(--color-primary-soft); border-color: var(--color-primary); color: var(--color-primary); }
 .cs-btn--danger { background: var(--color-surface); color: var(--color-error); border-color: var(--color-error); }
 .cs-btn--lg { min-height: 56px; font-size: 18px; }
 .cs-btn--full { width: 100%; }

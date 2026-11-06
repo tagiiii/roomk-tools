@@ -1137,9 +1137,9 @@ function renderPanel() {
 function showWatch() {
   const code = share.code;
   watchBody = el('div', { class: 'yk-watch-body' });
-  const linkBtn = button('リンクをコピー', 'btn-secondary btn-sm', () => RoomkRTDB.copyRoomLink(code, linkBtn), { iconName: 'link', id: 'btnCopyLink' });
+  const linkBtn = button('リンクをコピー', 'btn-ghost btn-sm', () => RoomkRTDB.copyRoomLink(code, linkBtn), { iconName: 'link', id: 'btnCopyLink' });
   // 子どもがスマホ・タブレットでひらくとき向けに、同じリンクを QR コードで大きく出す（共通の RoomkQR、room-qr.js）。検査と通知は copyRoomLink と同じ
-  const qrBtn = button('QRコードを出す', 'btn-secondary btn-sm', () => {
+  const qrBtn = button('QRコードを出す', 'btn-ghost btn-sm', () => {
     if (typeof code !== 'string' || !/^[A-Z0-9]{6}$/.test(code)) {
       RoomkRTDB.showToast('ルームコードがありません');
       return;

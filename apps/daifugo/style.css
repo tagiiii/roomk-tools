@@ -169,7 +169,8 @@
 .df-modes[hidden] { display: none; }
 .df-mode { font-size: 13px; font-weight: 700; padding: 4px 10px; border-radius: 999px; background: #FFF4D6; color: #6B4A00; }
 .df-mode--revolution { background: #FCE4E6; color: #8E1F2A; }
-.df-mode--lock { background: #E8EEF9; color: #23407A; }
+/* しばりの札はティールで固定（ふつうの黄・革命の赤と色合いで見分ける。アクセント色が茶オレンジになったので変数にしない。2026-11-06 オーナー判断） */
+.df-mode--lock { background: #E6F2F4; color: #286F7C; }
 .df-field { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; min-height: 96px; align-items: center; }
 .df-field .df-card { --df-card-w: 64px; --df-card-h: 92px; }
 .df-field__empty { margin: 0; color: rgba(255, 255, 255, 0.85); font-weight: 500; }

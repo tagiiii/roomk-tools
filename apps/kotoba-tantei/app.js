@@ -410,13 +410,13 @@ function renderLobby() {
           <h1 class="cn-room-code">${esc(state.roomId)}</h1>
         </div>
         <div class="cn-lobby-header__actions">
-          <button class="btn btn-secondary btn-sm" id="copy-room-code" type="button">
+          <button class="btn btn-ghost btn-sm" id="copy-room-code" type="button">
             <span class="material-symbols-rounded" aria-hidden="true">content_copy</span>コードをコピー
           </button>
-          <button class="btn btn-secondary btn-sm" id="btnCopyLink" type="button">
+          <button class="btn btn-ghost btn-sm" id="btnCopyLink" type="button">
             <span class="material-symbols-rounded" aria-hidden="true">link</span>リンクをコピー
           </button>
-          <button class="btn btn-secondary btn-sm" id="btnShowQr" type="button">
+          <button class="btn btn-ghost btn-sm" id="btnShowQr" type="button">
             <span class="material-symbols-rounded" aria-hidden="true">qr_code_2</span>QRコードを出す
           </button>
         </div>
