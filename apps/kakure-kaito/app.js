@@ -1155,7 +1155,7 @@
     S.mode = 'watch';
     S.me = null;
     // 共有するタブ・ウィンドウを選ぶときに見分けられるよう、題名と見出しを変える
-    document.title = 'みんなにみせる画面 | かくれ怪盗 | room-K';
+    document.title = 'みんなにみせる画面 | かくれ怪盗 | あそびのたな';
     document.body.classList.add('is-watch');
     $('watchBadge').hidden = false;
     S.code = code;

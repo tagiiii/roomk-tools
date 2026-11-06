@@ -1488,7 +1488,7 @@ async function enterWatch(code, fromForm = false) {
 function connectWatch(code, ref) {
   state.role = 'spectator';
   // 共有するタブ・ウィンドウを選ぶときに見分けられるよう、題名と見出しを変える
-  document.title = 'みんなにみせる画面 | スタンプあてゲーム | room-K';
+  document.title = 'みんなにみせる画面 | スタンプあてゲーム | あそびのたな';
   $('watchBadge').hidden = false;
   state.roomCode = code;
   state.roomRef = ref;
