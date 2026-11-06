@@ -1438,6 +1438,13 @@ function handleRevealing(room, players) {
       ? '<span class="player-tag ready">準備OK</span>'
       : '<span style="font-size:13px;color:var(--color-muted)">確認中</span>'
   , room);
+  // 確認したあとは「確認した！」を副ボタンにする（「討論スタート！」と主ボタンが2つ並ばないように）
+  if (players[state.nickname]?.ready) {
+    document.getElementById('btn-ready').disabled = true;
+    document.getElementById('btn-ready').className = 'btn btn-secondary btn-full';
+  } else {
+    document.getElementById('btn-ready').className = 'btn btn-primary btn-full';
+  }
   if (state.role === 'host') {
     // 準備完了を待つのは遊ぶ人だけ。遊ぶ人がいなくなったら討論は始めない
     const playing = playingNames(room, players);
