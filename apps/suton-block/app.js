@@ -22,10 +22,10 @@ const NEXT_MAX = 5;
 const NEXT_FIRST = 2.6;
 const NEXT_SMALL = { slot: 1.6, k: 0.6 };
 const NEXT_SMALL_NARROW = { slot: 1.35, k: 0.5 };
-// 形ごとの色は、よく知られた色の組み合わせと重ならないように、このアプリで決めたもの
+// 形ごとの色は、着想元と同じ組み合わせ（I 水色・O 黄・T 紫・S 緑・Z 赤・L オレンジ・J 青）。2026-11-06 オーナー判断（仕様書の「色」）
 const COLORS = {
-  I: '#D07198', O: '#3BA3B5', T: '#5DAE6B', S: '#E0B33A',
-  Z: '#5B8FD6', L: '#9A7CC8', J: '#E08454',
+  I: '#3EC1D3', O: '#E8C53A', T: '#9A68C9', S: '#5DB55A',
+  Z: '#D9534F', L: '#E8893A', J: '#4A78D0',
   jama: '#7B8794',
 };
 
