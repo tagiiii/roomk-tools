@@ -848,3 +848,18 @@ button.sh-tile:hover { background: var(--color-accent-soft); }
 
 /* はじめの画面の型（2026-11-06）: はじめの画面のあいだは、ツール名・ひとこと・絵を入口の面に出すので、上の見出しの名前とひとことは隠す（ほかの画面では今までどおり出る。みんなにみせる画面の印は隠さない） */
 body:has(#screen-top.active) .sh-header > :is(.sh-header__title, .sh-header__sub) { display: none; }
+
+/* ホストがたまに使う操作（「そのほかの操作」。開くと出る） */
+.sh-hostmenu { padding: 4px 20px; }
+.sh-hostmenu[open] { padding-bottom: 16px; }
+.sh-hostmenu summary {
+  min-height: 44px; display: flex; align-items: center; gap: 6px;
+  color: var(--color-muted); font-size: 14px; font-weight: 700; cursor: pointer; list-style: none;
+}
+.sh-hostmenu summary::-webkit-details-marker { display: none; }
+.sh-hostmenu summary::before { content: "expand_more"; font-family: "Material Symbols Rounded"; font-size: 22px; color: var(--color-accent); transition: transform .15s; }
+.sh-hostmenu[open] summary::before { transform: rotate(180deg); }
+.sh-hostmenu__row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; padding: 8px 0; border-top: 1px solid var(--color-border); }
+.sh-hostmenu__row[hidden] { display: none; }
+.sh-hostmenu__note { font-size: 12px; color: var(--color-muted); line-height: 1.6; }
+.sh-hostmenu .sh-proxyadd { margin-top: 0; padding-top: 12px; }

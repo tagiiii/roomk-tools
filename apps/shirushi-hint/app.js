@@ -973,7 +973,7 @@ function renderRoom(room) {
   // 遊んでいる途中（問の間）は、ホストだけ「この問を終えて次の人へ」「ここでおしまい」を出す
   const host = state.role === 'host';
   $('hostGameRow').hidden = !(host && inGame && status !== STATUS.END);
-  $('btnSkipQuestion').hidden = !(status === STATUS.PICK || status === STATUS.HINT);
+  $('skipQuestionRow').hidden = !(status === STATUS.PICK || status === STATUS.HINT);
   checkPop(room);
 }
 
