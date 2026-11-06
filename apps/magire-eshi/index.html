@@ -108,7 +108,15 @@
     .mgr-turn__count { font-size: 13px; color: var(--color-muted); }
     .mgr-draw-timer { font-size: 18px; font-weight: 700; color: var(--color-primary); margin-bottom: 12px; }
     .mgr-draw-timer--ended { color: var(--color-muted); }
-    #btn-skip-turn { margin-bottom: 12px; }
+    /* ── ホストの「そのほかの操作」（開くと出る） ── */
+    .mgr-hostmenu { margin-top: 8px; }
+    .mgr-hostmenu summary { min-height: 44px; display: flex; align-items: center; gap: 6px; color: var(--color-muted); font-size: 14px; font-weight: 700; cursor: pointer; list-style: none; }
+    .mgr-hostmenu summary::-webkit-details-marker { display: none; }
+    .mgr-hostmenu summary::before { content: "expand_more"; font-family: "Material Symbols Rounded"; font-size: 22px; color: var(--color-accent); transition: transform .15s; }
+    .mgr-hostmenu[open] summary::before { transform: rotate(180deg); }
+    .mgr-hostmenu__row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; padding: 8px 0; border-top: 1px solid var(--color-border); }
+    .mgr-hostmenu__row .btn { width: auto; margin: 0; }
+    .mgr-hostmenu__note { font-size: 13px; color: var(--color-muted); }
     .mgr-legend { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
     .mgr-legend__chip {
       display: inline-flex; align-items: center; gap: 6px;
@@ -473,9 +481,6 @@
     <div class="mgr-center" id="dr-topic-chip-area" style="margin-bottom:12px"></div>
 
     <div id="dr-host-area" style="display:none">
-      <button class="btn btn-secondary btn-full" id="btn-skip-turn" onclick="hostSkipTurn()">
-        <span class="material-symbols-rounded" aria-hidden="true">skip_next</span>この人の番をスキップ
-      </button>
       <details class="mgr-secret" id="dr-host-secret">
         <summary><span class="material-symbols-rounded" aria-hidden="true">visibility</span>お題とまぎれ絵師（タップで見る）</summary>
         <div class="mgr-secret__body" id="dr-secret-body"></div>
@@ -484,6 +489,16 @@
       <button type="button" class="btn btn-ghost btn-full mgr-sep" onclick="openSpectatorWindow()">
         <span class="material-symbols-rounded" aria-hidden="true">cast</span>みんなにみせる画面をひらく
       </button>
+      <!-- たまに使う操作（開くと出る） -->
+      <details class="mgr-hostmenu" id="dr-host-menu">
+        <summary>そのほかの操作</summary>
+        <div class="mgr-hostmenu__row">
+          <button class="btn btn-secondary btn-sm" id="btn-skip-turn" onclick="hostSkipTurn()">
+            <span class="material-symbols-rounded" aria-hidden="true">skip_next</span>この人の番をスキップ
+          </button>
+          <span class="mgr-hostmenu__note">いま描いている人の番をとばして、次の人へ</span>
+        </div>
+      </details>
     </div>
   </div>
 </div>
@@ -566,9 +581,16 @@
       <button id="btn-next-round" class="btn btn-primary btn-full" onclick="hostNextRound()">
         <span class="material-symbols-rounded" aria-hidden="true">replay</span>次のラウンドへ
       </button>
-      <button class="btn btn-ghost btn-full mgr-sep" onclick="hostFinish()">
-        <span class="material-symbols-rounded" aria-hidden="true">flag</span>終わる
-      </button>
+      <!-- たまに使う操作（開くと出る） -->
+      <details class="mgr-hostmenu" id="rs-host-menu">
+        <summary>そのほかの操作</summary>
+        <div class="mgr-hostmenu__row">
+          <button class="btn btn-secondary btn-sm" id="btn-finish" onclick="hostFinish()">
+            <span class="material-symbols-rounded" aria-hidden="true">flag</span>終わる
+          </button>
+          <span class="mgr-hostmenu__note">ここでおしまいにする</span>
+        </div>
+      </details>
     </div>
     <div id="rs-host-watch" style="display:none">
       <button type="button" class="btn btn-ghost btn-full mgr-sep" onclick="openSpectatorWindow()">
@@ -1710,6 +1732,7 @@ async function hostSkipReversal() {
 // ── ホスト: 終了 ──
 async function hostFinish() {
   if (state.role !== 'host') return;
+  if (!window.confirm('ここで終わる？')) return;
   const action = captureAction();
   await action.ref.transaction(room => canApplyAction(action, room, STATUS.RESULT) ? { ...room, status: STATUS.DONE } : undefined);
 }
@@ -2828,12 +2851,12 @@ function resumeFromSession() {
         '自分のカードをタップして見て、「確認した」を押す',
         'ホストは描く時間を「制限なし」か1人の手番ごとに1〜5分から選んで、「描き始める」を押す',
         '順番が来たら1筆だけ描いて、「これでOK」を押す（「描き直す」もできる）',
-        '時間切れになると次の人に進む。ホストは「この人の番をスキップ」でも次に進められる',
+        '時間切れになると次の人に進む。ホストは「そのほかの操作」の「この人の番をスキップ」でも次に進められる',
         '相談タイムで、まぎれ絵師が誰かを声やチャットで話し合う',
         'まぎれ絵師だと思う人に投票する',
         'まぎれ絵師が見つかったら、まぎれ絵師がお題を当てる逆転チャンス。答えはホストが判定する（ホストも遊ぶときは、6つの中から選ぶと自動で判定される）',
       ] },
-      { heading: '終わりかた', text: '結果のあと、ホストが「次のラウンドへ」か「終わる」を選ぶ。' },
+      { heading: '終わりかた', text: '結果のあと、ホストが「次のラウンドへ」か、「そのほかの操作」の「終わる」を選ぶ。' },
       { heading: 'みんなにみせる画面', items: [
         'TOPの「みんなにみせる画面をひらく」でルームコードを入れて「画面をひらく」を押す（ホストは画面の「みんなにみせる画面をひらく」からでもひらける）',
         '絵や手番、投票の進みぐあいが見られる画面がひらく。お題やまぎれ絵師がだれかは出ないから、みんなで見てだいじょうぶ',
