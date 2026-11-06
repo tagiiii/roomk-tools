@@ -1528,26 +1528,23 @@
       margin-top: var(--space-xl);
     }
 
-    /* ===== ツール一覧の見た目（2026-11-06。手描き風のイラストに合わせ、明るい配色にする） =====
-       白い面に種類の色の枠と色つきの影（黒っぽい線は使わない）・あたたかい焦げ茶の文字（紺と真っ黒の代わり）・
-       上の帯の下に6種類の色の線・見出しやボタンは Zen Maru Gothic・押せるとわかる「説明」ボタン */
+    /* ===== ツール一覧の見た目（2026-11-06。オーナーの方針: シンプルで、はじめての人にもわかりやすく、
+       ユニバーサルデザインに配慮し、余計な装飾は使わない。地はクリームの画用紙の質感） =====
+       地はクリームに細かい粒（assets/paper-grain.png）・面は白で枠なし、やわらかい影だけ・
+       文字はあたたかい焦げ茶（紺と真っ黒は使わない）・見出しやボタンは Zen Maru Gothic・押せるとわかる「説明」ボタン */
     :root {
-      --color-primary: #6A5440;
-      --color-text: #463C32;
-      --color-muted: #75685A;
-      --color-bg: #FFF9EE;
-      --hd-line: #EFE3CF;
-      --color-border: #E6D9C3;
-      --color-accent: #A65A12;
-      --hd-radius: 20px;
-      --hd-scribble: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMDAgMTQiIHByZXNlcnZlQXNwZWN0UmF0aW89Im5vbmUiPjxwYXRoIGQ9Ik0zIDggQyAyOCAyLCA1MiAxMiwgODAgNyBTIDEyOCAzLCAxNTYgOCBTIDE4NiAxMCwgMTk3IDUiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzAwMCIgc3Ryb2tlLXdpZHRoPSI1IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48cGF0aCBkPSJNMTAgMTEgQyA1MCA3LCA5MCAxMiwgMTMwIDkgUyAxNzUgOCwgMTkwIDEwIiBmaWxsPSJub25lIiBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iMi41IiBzdHJva2UtbGluZWNhcD0icm91bmQiIG9wYWNpdHk9IjAuNiIvPjwvc3ZnPg==");
+      --color-primary: #6A4F35;
+      --color-text: #3F362D;
+      --color-muted: #5C5146;
+      --color-bg: #F6ECD8;
+      --color-border: #DCCBB0;
+      --color-accent: #8A4A10;
+      --hd-line: rgba(63, 54, 45, 0.16); /* 入力欄・ボタンの枠（うすい焦げ茶） */
+      --hd-radius: 16px;
+      --hd-shadow: 0 1px 2px rgba(63, 54, 45, 0.10), 0 2px 10px rgba(63, 54, 45, 0.07);
     }
-    body { background-color: var(--color-bg); color: var(--color-text); }
-    :root .portal-hero { position: relative; background: #fff; color: var(--color-text); padding-bottom: 30px; }
-    :root .portal-hero::after {
-      content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 8px;
-      background: linear-gradient(90deg, #F0A04B 0 16.6%, #5B9BE6 0 33.3%, #9C7BDB 0 50%, #4CB884 0 66.6%, #E8707B 0 83.3%, #E07BAA 0);
-    }
+    body { background-color: var(--color-bg); background-image: url("assets/paper-grain.png"); color: var(--color-text); }
+    :root .portal-hero { background: transparent; color: var(--color-text); }
     :root .portal-hero__logo { font-size: 2.3rem; }
     :root .portal-hero__tagline, :root .portal-hero__staff-link { color: var(--color-muted); }
     :root .portal-hero__staff-link a { color: var(--color-primary); }
@@ -1555,31 +1552,25 @@
       .app-card__name, .more-filter__toggle, .btn, .tool-sheet h2, .tool-detail__name) {
       font-family: 'Zen Maru Gothic', 'Noto Sans JP', sans-serif;
     }
-    :root :is(.tool-filter, .updates-panel, .tool-peek, .tool-sheet) {
-      border: 3px solid var(--hd-line);
+    /* 面は白・枠なし・やわらかい影だけ（色の枠や色の影は使わない） */
+    :root :is(.tool-filter, .updates-panel, .tool-peek, .tool-sheet, .app-card, .genre-tab, .ranking-card) {
+      border: 0;
       border-radius: var(--hd-radius);
-      box-shadow: 0 4px 0 var(--hd-line);
-      background-color: #fff;
-    }
-    /* カード・タブ・帯は、その種類の色の枠と影 */
-    :root :is(.app-card, .genre-tab, .ranking-card) {
-      border: 3px solid color-mix(in srgb, var(--g, #C9B79C) 32%, #fff);
-      border-radius: var(--hd-radius);
-      box-shadow: 0 4px 0 color-mix(in srgb, var(--g, #C9B79C) 32%, #fff);
+      box-shadow: var(--hd-shadow);
       background-color: #fff;
     }
     :root :is(.app-card, .ranking-card):hover {
-      border-color: var(--g);
-      box-shadow: 0 7px 0 color-mix(in srgb, var(--g) 40%, #fff);
-      transform: translateY(-3px);
+      transform: translateY(-2px);
+      box-shadow: 0 2px 4px rgba(63, 54, 45, 0.12), 0 8px 20px rgba(63, 54, 45, 0.12);
     }
     :root :is(.tool-search__input, .form-select, .more-filter__toggle, .btn-ghost, .btn-secondary) {
-      border: 3px solid var(--hd-line); border-radius: 16px; background-color: #fff; color: var(--color-text);
+      border: 2px solid var(--hd-line); border-radius: 14px; background-color: #fff; color: var(--color-text);
     }
-    :root .genre-tab[aria-pressed="true"] { border-color: var(--g); background-color: var(--g-pale); box-shadow: 0 4px 0 color-mix(in srgb, var(--g) 45%, #fff); }
+    /* 選んでいる種類は、その種類の淡い面と色の囲み */
+    :root .genre-tab[aria-pressed="true"] { background-color: var(--g-pale); box-shadow: inset 0 0 0 3px var(--g), var(--hd-shadow); }
     :root .genre-tab[aria-pressed="true"] .genre-tab__icon { background-color: #fff; color: var(--g-ink); }
-    :root .scene-badge { border-color: var(--hd-line); }
-    /* 選んでいる・開いている絞り込みは、あたたかい色の面と枠（ティールと青灰色を使わない） */
+    :root .scene-badge { border-color: var(--color-border); }
+    /* 選んでいる・開いている絞り込みは、あたたかい色の面と枠 */
     :root :is(.tool-size__select.form-select.is-set, .scene-filter__chip[aria-pressed="true"], .tool-result.is-filtered,
       .more-filter__toggle[aria-expanded="true"]) {
       border-color: var(--color-accent);
@@ -1589,7 +1580,7 @@
     :root :is(.meta-badge, .app-card__slides, .tool-search__icon) { background-color: #F6EFE3; }
     :root :is(.apps-grid.is-popular .app-card__rank, .ranking-card__rank) {
       background-color: #fff; color: var(--g-ink, var(--color-primary));
-      border: 2px solid var(--g, var(--hd-line)); box-shadow: 0 2px 0 color-mix(in srgb, var(--g, #C9B79C) 35%, #fff);
+      border: 2px solid var(--g, var(--color-border)); box-shadow: none;
     }
     /* NEW / 更新 の札も、淡い色の面に濃い文字 */
     :root :is(.app-card__flag, .updates-list__tag--new) { background-color: #E3F5EC; color: #1D6B45; }
@@ -1599,51 +1590,20 @@
     :root .app-card__info {
       display: flex; align-items: center; gap: 2px;
       width: auto; height: 34px; padding: 0 11px 0 7px;
-      border: 2px solid var(--g, var(--hd-line)); border-radius: 999px;
+      border: 2px solid var(--g, var(--color-border)); border-radius: 999px;
       background-color: #fff; color: var(--g-ink);
-      box-shadow: 0 2px 0 color-mix(in srgb, var(--g, #C9B79C) 40%, #fff);
+      box-shadow: none;
       font-family: 'Zen Maru Gothic', 'Noto Sans JP', sans-serif; font-size: 13px; font-weight: 700; line-height: 1;
     }
     :root .app-card__info .material-symbols-rounded { font-size: 18px; }
     :root .app-card__info:hover { background-color: var(--g-pale); }
 
-    /* クレヨンの面・テープで貼った絵・種類のタブの絵（assets/illustrations/tabs/）・クレヨンの下線 */
-    :root .app-card__icon {
-      background: var(--g-pale) url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNDAiIGhlaWdodD0iMTQwIj48ZmlsdGVyIGlkPSJuIj48ZmVUdXJidWxlbmNlIHR5cGU9ImZyYWN0YWxOb2lzZSIgYmFzZUZyZXF1ZW5jeT0iMS40IiBudW1PY3RhdmVzPSIzIiBzdGl0Y2hUaWxlcz0ic3RpdGNoIi8+PGZlQ29sb3JNYXRyaXggdmFsdWVzPSIwIDAgMCAwIDEgIDAgMCAwIDAgMSAgMCAwIDAgMCAxICAwIDAgMCAwLjU1IC0wLjEyIi8+PC9maWx0ZXI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsdGVyPSJ1cmwoI24pIi8+PC9zdmc+");
-    }
-    :root .app-card__illust {
-      border: 4px solid #fff; border-radius: 3px;
-      box-shadow: 2px 3px 0 rgba(90, 78, 60, 0.22);
-      transform: translateX(-50%) rotate(-2deg);
-    }
-    :root .app-card:nth-child(even) .app-card__illust { transform: translateX(-50%) rotate(1.6deg); }
-    :root .app-card__illust, :root .ranking-card__thumb > img.ranking-card__illust { box-shadow: 0 3px 0 color-mix(in srgb, var(--g) 30%, #fff); }
-    :root .app-card__icon:has(> .app-card__illust.is-loaded:not([hidden]))::after {
-      content: ''; position: absolute; top: 2%; left: 50%; z-index: 1;
-      width: 58px; height: 17px;
-      transform: translateX(-50%) rotate(-5deg);
-      background: color-mix(in srgb, var(--g) 62%, #fff);
-      opacity: 0.9;
-      clip-path: polygon(0 8%, 6% 0, 12% 10%, 18% 0, 82% 0, 88% 9%, 94% 0, 100% 10%, 100% 90%, 94% 100%, 88% 91%, 82% 100%, 18% 100%, 12% 90%, 6% 100%, 0 92%);
-    }
-    :root .app-card:nth-child(even) .app-card__icon::after { transform: translateX(-50%) rotate(4deg); }
-    :root .ranking-card__thumb { background: var(--g-pale) url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNDAiIGhlaWdodD0iMTQwIj48ZmlsdGVyIGlkPSJuIj48ZmVUdXJidWxlbmNlIHR5cGU9ImZyYWN0YWxOb2lzZSIgYmFzZUZyZXF1ZW5jeT0iMS40IiBudW1PY3RhdmVzPSIzIiBzdGl0Y2hUaWxlcz0ic3RpdGNoIi8+PGZlQ29sb3JNYXRyaXggdmFsdWVzPSIwIDAgMCAwIDEgIDAgMCAwIDAgMSAgMCAwIDAgMCAxICAwIDAgMCAwLjU1IC0wLjEyIi8+PC9maWx0ZXI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsdGVyPSJ1cmwoI24pIi8+PC9zdmc+"); }
-    :root .ranking-card__thumb > img.ranking-card__illust { border: 3px solid #fff; border-radius: 3px; transform: translateX(-50%) rotate(-2deg); }
-    :root .genre-tab__icon {
-      width: 58px; height: 58px; overflow: hidden;
-      border: 3px solid #fff; box-shadow: 0 0 0 2px var(--g);
-    }
-    :root .genre-tab[aria-pressed="true"] .genre-tab__icon { box-shadow: 0 0 0 4px var(--g); }
-    :root .genre-tab[aria-pressed="true"]::after,
-    :root .genre-heading::after,
-    :root .section-title::after {
-      content: ''; display: block; width: 72%; height: 9px; margin: 0 auto;
-      background: var(--g, #F0A04B);
-      -webkit-mask: var(--hd-scribble) center / 100% 100% no-repeat; mask: var(--hd-scribble) center / 100% 100% no-repeat;
-    }
-    :root .genre-heading { position: relative; padding-bottom: 14px; }
-    :root .genre-heading::after { position: absolute; left: 14px; bottom: 4px; width: 190px; margin: 0; }
-    :root .section-title::after { width: 140px; margin: 2px 0 0; }
+    /* カードの絵は、種類の淡い面の中央に角丸の四角で置くだけ（傾け・ふち・影はつけない） */
+    :root :is(.app-card__icon, .ranking-card__thumb) { background: var(--g-pale); }
+    :root :is(.app-card__illust, .ranking-card__thumb > img.ranking-card__illust) { border: 0; box-shadow: none; }
+    :root .ranking-card__thumb > img.ranking-card__illust { border-radius: 10px; }
+    :root .genre-tab__icon { width: 58px; height: 58px; overflow: hidden; border: 0; }
+    :root .genre-tab[aria-pressed="true"] .genre-tab__icon { box-shadow: 0 0 0 3px var(--g); }
     /* 種類のタブの絵は、読み込めたもの（html に tab-img-{種類} が付く）だけアイコンと入れかえる */
     :root.tab-img-all .genre-tab[data-genre="all"] .genre-tab__icon { background: center / cover no-repeat url("assets/illustrations/tabs/all.webp"); }
     :root.tab-img-popular .genre-tab[data-genre="popular"] .genre-tab__icon { background: center / cover no-repeat url("assets/illustrations/tabs/popular.webp"); }
