@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>かぶらずヒント — 説明スライド</title>
+<title>説明スライド | かぶらずヒント | あそびのたな</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet" />
@@ -476,7 +476,7 @@ const isPresenter = new URLSearchParams(location.search).get('view') === 'presen
    発表（デッキ）側
    ============================================================ */
 if(!isPresenter){
-  document.title = 'かぶらずヒント — 説明スライド';
+  document.title = '説明スライド | かぶらずヒント | あそびのたな';
   const slidesEl = document.getElementById('slides');
   const dotsEl = document.getElementById('dots');
   const counterEl = document.getElementById('counter');
@@ -558,7 +558,7 @@ if(!isPresenter){
    発表者ビュー側
    ============================================================ */
 if(isPresenter){
-  document.title = '発表者ノート — かぶらずヒント';
+  document.title = '発表者ノート | かぶらずヒント | あそびのたな';
   document.body.classList.add('presenter');
   document.getElementById('deck').style.display = 'none';
   document.getElementById('toolbar').style.display = 'none';

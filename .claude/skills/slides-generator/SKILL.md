@@ -19,6 +19,7 @@ description: room-Kアプリの画面共有用slides.htmlを作成・更新す�
    - BroadcastChannel + localStorage による発表者ウィンドウ同期、発表者ノートの Metalife チャット用コピー
 2. エンジン部分（ナビゲーション・同期・fit・コピー）は**そのまま流用**し、BroadcastChannel のチャンネル名と localStorage キーの接頭辞だけアプリ固有に変える（kotoba-tantei は `kotoba_tantei_deck`）
 3. カスタマイズしてよいのは: `SLIDES` の中身、`:root` の配色トークン、フォント
+   - `<title>` は「説明スライド | ツール名 | あそびのたな」、発表者ウィンドウの `document.title` は「発表者ノート | ツール名 | あそびのたな」（app-registration.md「アプリ名のつけかた」の形。みんなにみせる画面と同じ並び）
 4. スライド構成の目安（kotoba-tantei は 16枚）:
    - divider（チェックイン）→ title → content 数枚（ゲーム概要 / 役割 / 進行 / ルール詳細）→ content（Q&A）→ 進行用 divider 数枚（質問タイム / 参加確認 / ゲームスタート / …）→ divider（結果）
 
