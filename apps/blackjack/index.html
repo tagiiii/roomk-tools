@@ -1069,6 +1069,17 @@ function roomCodeImeError(code) {
     : '';
 }
 
+// transaction の最初の計算が空のキャッシュで走らないよう、先に値を購読しておく。
+// transaction の中で null なら「ルームがない」として扱う（前に読んだ値で代用すると、消えたルームを作り直してしまう）
+function warmRoomCache(ref) {
+  return new Promise((resolve, reject) => {
+    const callback = (snap) => {
+      resolve({ snap, release: () => ref.off('value', callback) });
+    };
+    ref.on('value', callback, reject);
+  });
+}
+
 async function guestJoinInner() {
   const reportJoinError = message => RoomkRTDB.showFormError('join-form-error', message);
   reportJoinError('');
@@ -1082,17 +1093,16 @@ async function guestJoinInner() {
   if (!await waitAuthOrExplain()) return;
 
   const roomRef = db.ref(ROOMS_PATH + '/' + roomCode);
-  const preSnap = await roomRef.get();
-  if (!preSnap.exists()) { reportJoinError('ルームが見つからないよ'); return; }
+  const warm = await warmRoomCache(roomRef);
+  const preSnap = warm.snap;
+  if (!preSnap.exists()) { warm.release(); reportJoinError('ルームが見つからないよ'); return; }
   const preRoom = preSnap.val();
-  if (!preRoom.status || !preRoom.host) { await removeBrokenRoom(roomRef); reportJoinError('そのルームはもうないみたい'); return; }
-  if (isRoomExpired(preRoom)) { await removeRoomIfExpired(roomRef); reportJoinError('このルームは終わっているよ'); return; }
+  if (!preRoom.status || !preRoom.host) { warm.release(); await removeBrokenRoom(roomRef); reportJoinError('そのルームはもうないみたい'); return; }
+  if (isRoomExpired(preRoom)) { warm.release(); await removeRoomIfExpired(roomRef); reportJoinError('このルームは終わっているよ'); return; }
 
   let reason = null;
   const { committed } = await roomRef.transaction((room) => {
-    // ローカルキャッシュ未取得（null）の初回実行では事前取得スナップショットで代用し、
-    // サーバー照会を強制する（oshitsuke-zukan と同じ確立パターン）
-    const cur = room || preRoom;
+    const cur = room; // null は「ルームがない」（先に購読しているので、空のキャッシュではない）
     if (!cur) { reason = 'not_found'; return; }
     if (!cur.status || !cur.host) { reason = 'broken'; return; }
     if (isRoomExpired(cur)) { reason = 'expired'; return null; }
@@ -1129,7 +1139,7 @@ async function guestJoinInner() {
     }
     reason = 'not_waiting';
     return;
-  });
+  }).finally(warm.release);
 
   if (!committed) {
     const map = {
@@ -1569,10 +1579,10 @@ async function hostGoToTop() {
 // ゲストの退出は players と match の両方から自分を抜く。
 // 自分が最後の待ち人だったときは、抜けたことで配り・精算まで進める（進行を止めない）
 async function removeSelfFromRoom(roomRef, nick) {
-  const preSnap = await roomRef.get().catch(() => null);
-  const preRoom = preSnap && preSnap.exists() ? preSnap.val() : null;
+  // 先に購読して、サーバーの値で計算する（ルームが閉じられていたら null。前に読んだ値で作り直さない）
+  const warm = await warmRoomCache(roomRef).catch(() => null);
   await roomRef.transaction((room) => {
-    const cur = room || preRoom; // ローカルキャッシュ null 対策
+    const cur = room;
     if (!cur) return;
     const players = { ...(cur.players || {}) };
     delete players[nick];
@@ -1604,7 +1614,7 @@ async function removeSelfFromRoom(roomRef, nick) {
       if (match.phase === 'betting' || match.phase === 'acting') match = advanceIfReady(match);
     }
     return { ...cur, players, match };
-  });
+  }).finally(() => { if (warm) warm.release(); });
 }
 
 async function guestGoToTop(msg) {
@@ -1642,16 +1652,13 @@ async function writeBackPresence() {
   const isHost = state.role === 'host';
   if (!roomRef || (state.role !== 'host' && state.role !== 'guest')) return { committed: false, reason: 'norole' };
 
-  // ローカルキャッシュ未取得（null）の初回実行に備えて事前取得（サーバー照会の強制用）
-  let preRoom = null;
-  try {
-    const preSnap = await roomRef.get();
-    preRoom = preSnap.exists() ? preSnap.val() : null;
-  } catch { /* transaction 側の判定に任せる */ }
+  // 先に購読して、サーバーの値で計算する。通信が切れている間にルームが閉じられていたら null（＝ない）になり、
+  // 前に読んだ値で作り直さない
+  const warm = await warmRoomCache(roomRef).catch(() => null);
 
   let reason = null;
   const { committed } = await roomRef.transaction((room) => {
-    const cur = room || preRoom;
+    const cur = room;
     if (!cur || !cur.status) { reason = 'gone'; return; }
     if (isRoomExpired(cur)) { reason = 'expired'; return; }
     if (isHost && cur.host !== nick) { reason = 'gone'; return; } // ホストを名乗る復帰は host 本人のみ
@@ -1694,7 +1701,7 @@ async function writeBackPresence() {
     const patch = { ...cur, players: { ...(cur.players || {}), [nick]: { isHost, seat: members[nick].seat } } };
     if (isHost) { patch.hostConnected = true; patch.hostDisconnectedAt = null; }
     return patch;
-  });
+  }).finally(() => { if (warm) warm.release(); });
 
   return { committed, reason };
 }
