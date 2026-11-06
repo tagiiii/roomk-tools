@@ -119,6 +119,7 @@ pittari_rooms/{roomCode}/
 ### データ操作の注意点
 
 - **ルーム作成・参加・ゲーム開始**: `transaction()` で原子的に確定（コード衝突・status 判定・重複ニックネーム・満員判定を同一 transaction 内で行う）
+- **作成・参加の二度押しと認証の失敗**（2026-11-06）: 作成・参加は `runRoomAction` で、押した時点から transaction が終わるまでロックし、ボタン（`#btn-create-room`・`#btn-guest-join`）を押せなくする（以前は認証を待つ間だけのロックで、認証が済んだあとのダブルクリックでルームが2つできた）。認証の失敗は `waitAuthOrExplain` が `await authReady` だけを狭く囲んで「うまくつながらなかったよ。ページを読み込み直してね」を出す。`authReady` は一度失敗すると失敗のままなので、もう一度押す案内はしない
 - **ヒント提出**: 出題者が `round/hint` と `status: 'guessing'` を同時 `update()`
 - **きめた**: 各ゲストが自分の `players/{nick}` に `guess` / `decided` を書くだけ（競合なし）
 - **けっか発表**: ホストが最新スナップショットを `get()` → 決定済みの予想を `round/results`、各自の獲得点を `round/points` に固定し、`scores/{nickname}` へ加算（プレイヤー切断後も表示が崩れないようスナップショットする）。scores を書くのはホストだけなので transaction は不要（単一ライター）
