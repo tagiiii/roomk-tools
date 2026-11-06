@@ -6,6 +6,7 @@ SP="${TW_WORK:?TW_WORK（作業フォルダ）を指定してね}"
 mkdir -p "$SP"
 rm -rf "$SP/site"; mkdir -p "$SP/site"
 cp -R "$REPO/apps/shared" "$SP/site/shared"
+if [ -d "$REPO/apps/assets" ]; then cp -R "$REPO/apps/assets" "$SP/site/assets"; fi
 cp -R "$REPO/apps/toomawashi" "$SP/site/toomawashi"
 python3 - "$SP/site/shared/js/rtdb-utils.js" <<'PY'
 import sys

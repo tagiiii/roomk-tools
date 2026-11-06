@@ -6,7 +6,7 @@ SP="${KS_WORK:?KS_WORK（作業フォルダ）を指定してね}"
 mkdir -p "$SP"
 rm -rf "$SP/site"; mkdir -p "$SP/site"
 cp -R "$REPO/apps/shared" "$SP/site/shared"
-cp -R "$REPO/apps/assets" "$SP/site/assets"
+if [ -d "$REPO/apps/assets" ]; then cp -R "$REPO/apps/assets" "$SP/site/assets"; fi
 cp -R "$REPO/apps/kyoumi-sugoroku" "$SP/site/kyoumi-sugoroku"
 python3 - "$SP/site/shared/js/rtdb-utils.js" <<'PY'
 import sys
