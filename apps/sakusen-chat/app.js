@@ -784,8 +784,8 @@ function endLocally(expired) {
     });
   }
   showEnd(expired
-    ? 'メンターがもどらなかったので、ルームをとじたよ。会話と画像は、すべて消えたよ。'
-    : '会話と画像は、すべて消えたよ。', host || state.isMentor);
+    ? 'メンターがもどらなかったので、ルームをとじたよ。'
+    : 'おつかれさま。', host || state.isMentor);
 }
 
 async function finishRoom() {
@@ -815,7 +815,7 @@ async function finishRoom() {
   $('btnFinish').disabled = false;
   cleanupRoom();
   forgetRoom(key);
-  showEnd('会話と画像は、すべて消えたよ。', true);
+  showEnd('おつかれさま。', true);
 }
 
 function leaveRoom() {

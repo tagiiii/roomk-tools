@@ -881,7 +881,7 @@ function quitSet() {
   leaveSet('quit');
 }
 
-// ── リンクからひらいたとき（子ども側） ─────────────────
+// ── リンクから開いたとき（子ども側） ─────────────────
 function showInvite(code) {
   const error = el('p', { class: 'form-message', id: 'inviteError', role: 'alert', hidden: true });
   const startBtn = button('見せてはじめる', 'btn-primary', async () => {
