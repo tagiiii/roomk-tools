@@ -225,20 +225,20 @@ const SLIDES = [
   /* 3 */ { type:'content', accent:'teal', section:'ゲームについて', sectionEn:'summary',
     headline:'みんなで<span class="hl">1枚の絵</span>を1筆ずつ。<br>でも1人だけ、<span class="ul">お題を知らない</span>',
     body:`<div class="rows">
-      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">draw</span></div><div><div class="row__t">じゅんばんに、1人1筆ずつ描く</div><div class="row__d">線1本を足していって、みんなで1枚の絵を完成させるよ</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">draw</span></div><div><div class="row__t">順番に、1人1筆ずつ描く</div><div class="row__d">線1本を足していって、みんなで1枚の絵を完成させるよ</div></div></div>
       <div class="row"><div class="row__ic"><span class="material-symbols-rounded">domino_mask</span></div><div><div class="row__t">1人だけ「まぎれ絵師」がまぎれてる</div><div class="row__d">お題を知らないまま、バレないように描いてる</div></div></div>
       <div class="row"><div class="row__ic"><span class="material-symbols-rounded">search</span></div><div><div class="row__t">絵を見て、だれがまぎれ絵師かを当てる</div><div class="row__d">うまい絵を目指すゲームじゃないよ。線1本でだいじょうぶ</div></div></div>
     </div>`,
     note:'『まぎれ絵師』は、みんなで1枚の絵を1筆ずつ描くゲーム。\nでも1人だけ、お題を知らない「まぎれ絵師」がまぎれてる！\n絵を見て、だれがまぎれ絵師かを当てよう。うまい絵を目指すゲームじゃないから、線1本でだいじょうぶだよ。' },
 
   /* 4 */ { type:'content', accent:'teal', section:'ゲーム説明', sectionEn:'explain', num:'1',
-    headline:'<ruby>役割<rt>やくわり</rt></ruby>は3つ。ホストは<span class="hl">ふだんは</span>進行係',
+    headline:'役割は3つ。ホストは<span class="hl">ふだんは</span>進行係',
     body:`<div class="rows">
-      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">palette</span></div><div><div class="row__t">ゲスト（3〜8人）</div><div class="row__d">お題を見て、じゅんばんに1筆ずつ描く人たち</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">palette</span></div><div><div class="row__t">ゲスト（3〜8人）</div><div class="row__d">お題を見て、順番に1筆ずつ描く人たち</div></div></div>
       <div class="row"><div class="row__ic" style="background:#FBEBEB;color:#E06666"><span class="material-symbols-rounded">domino_mask</span></div><div><div class="row__t">まぎれ絵師（ゲストのうち1人）</div><div class="row__d">お題を知らない。ヒントはカテゴリだけ。バレないように描く</div></div></div>
       <div class="row"><div class="row__ic"><span class="material-symbols-rounded">support_agent</span></div><div><div class="row__t">ホスト（メンター）</div><div class="row__d">ふだんは進行だけ。いっしょに遊ぶ日は、描く・投票する・まぎれ絵師にもなる</div></div></div>
     </div>`,
-    note:'役割は3つあるよ。\nゲスト（3〜8人）…お題を見て、じゅんばんに1筆ずつ描く。\nまぎれ絵師（ゲストのうち1人）…お題を知らない！ヒントはカテゴリだけ。\nホスト（メンター）…ふだんは進行だけ。いっしょに遊ぶ日は、描いたり投票したりするよ。まぎれ絵師になることもあるよ。' },
+    note:'役割は3つあるよ。\nゲスト（3〜8人）…お題を見て、順番に1筆ずつ描く。\nまぎれ絵師（ゲストのうち1人）…お題を知らない！ヒントはカテゴリだけ。\nホスト（メンター）…ふだんは進行だけ。いっしょに遊ぶ日は、描いたり投票したりするよ。まぎれ絵師になることもあるよ。' },
 
   /* 5 */ { type:'content', accent:'coral', section:'ゲーム説明', sectionEn:'explain', num:'2',
     headline:'お題カードの<span class="hl">見え方</span>が、1人だけちがう',
@@ -246,83 +246,83 @@ const SLIDES = [
       <div class="panel panel--guest">
         <div class="team-head"><div class="team-ic teal-bg"><span class="material-symbols-rounded">palette</span></div><div class="team-name">ふつうのゲスト</div></div>
         <div class="tcard">
-          <div class="tcard__label">きみのお題</div>
+          <div class="tcard__label">あなたへのお題</div>
           <div class="tcard__word">ねこ</div>
           <div class="tcard__cat" style="background:#E4F0F2;color:#286F7C">カテゴリ: どうぶつ</div>
         </div>
-        <div class="tcard-note">お題が<b>ぜんぶ見える</b></div>
+        <div class="tcard-note">お題が<b>全部見える</b></div>
       </div>
       <div class="panel panel--fake">
         <div class="team-head"><div class="team-ic coral-bg"><span class="material-symbols-rounded">domino_mask</span></div><div class="team-name">まぎれ絵師</div></div>
         <div class="tcard">
-          <div class="tcard__label">きみは まぎれ絵師！</div>
+          <div class="tcard__label">君はまぎれ絵師！</div>
           <div class="tcard__word q">？</div>
-          <div class="tcard__cat">カテゴリ: どうぶつ</div>
+          <div class="tcard__cat">ヒント → カテゴリ: どうぶつ</div>
         </div>
         <div class="tcard-note">分かるのは<b>カテゴリだけ</b></div>
       </div>
     </div>`,
-    note:'ゲームが始まると、1人ずつお題カードがくばられるよ。\nふつうのゲストには、お題（例：ねこ）がぜんぶ見える。\nまぎれ絵師には「？」とカテゴリ（例：どうぶつ）だけ。\nだれがまぎれ絵師かは、本人にしか分からない…！' },
+    note:'ゲームが始まると、1人ずつお題カードが配られるよ。\nふつうのゲストには、お題（例：ねこ）が全部見える。\nまぎれ絵師には、お題は出なくて、カテゴリ（例：どうぶつ）だけ。\nだれがまぎれ絵師かは、本人にしか分からない…！' },
 
   /* 6 */ { type:'content', accent:'blue', section:'ゲーム説明', sectionEn:'explain', num:'3',
-    headline:'ながれは<span class="hl">4ステップ</span>',
+    headline:'流れは<span class="hl">4ステップ</span>',
     body:`<div class="rows rows--4">
-      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">style</span></div><div><div class="row__t">① お題くばり</div><div class="row__d">自分のカードをタップして、こっそりかくにん</div></div></div>
-      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">draw</span></div><div><div class="row__t">② おえかき — 1人1筆ずつ、最大2周</div><div class="row__d">自分の番が来たら、線を1本だけ描く</div></div></div>
-      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">forum</span></div><div><div class="row__t">③ そうだんタイム</div><div class="row__d">「だれがあやしい？」を話し合う。声でもチャットでもOK</div></div></div>
-      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">how_to_vote</span></div><div><div class="row__t">④ とうひょう</div><div class="row__d">まぎれ絵師だと思う人に、1人1票</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">style</span></div><div><div class="row__t">①お題配り</div><div class="row__d">自分のカードをタップして、こっそり確認</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">draw</span></div><div><div class="row__t">②お絵かき — 1人1筆ずつ、最大2周</div><div class="row__d">自分の番が来たら、線を1本だけ描く</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">forum</span></div><div><div class="row__t">③相談タイム</div><div class="row__d">「だれがあやしい？」を話し合う。声でもチャットでもOK</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">how_to_vote</span></div><div><div class="row__t">④投票</div><div class="row__d">まぎれ絵師だと思う人に、1人1票</div></div></div>
     </div>`,
-    note:'ながれは4ステップ！\n①お題くばり…自分のカードをタップしてこっそりかくにん\n②おえかき…1人1筆ずつ、最大2周。自分の番に線を1本だけ描くよ。時間を決めたときは、その人の時間が終わると次の人に進むよ\n③そうだんタイム…だれがあやしいか話し合う。チャットでもOK\n④とうひょう…まぎれ絵師だと思う人に1票！' },
+    note:'流れは4ステップ！\n①お題配り…自分のカードをタップしてこっそり確認\n②お絵かき…1人1筆ずつ、最大2周。自分の番に線を1本だけ描くよ。時間を決めたときは、その人の時間が終わると次の人に進むよ\n③相談タイム…だれがあやしいか話し合う。チャットでもOK\n④投票…まぎれ絵師だと思う人に1票！' },
 
   /* 7 */ { type:'content', accent:'coral', section:'ゲーム説明', sectionEn:'explain', num:'4',
     headline:'当てられても、<span class="hl">逆転チャンス</span>あり！',
     body:`<div class="rows">
-      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">visibility_off</span></div><div><div class="row__t">最多票が まぎれ絵師じゃない／同数だった → まぎれ絵師のかち</div><div class="row__d">にげきり成功！だれにもしぼれなかったときも絵師のかち</div></div></div>
-      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">bolt</span></div><div><div class="row__t">当てられたら →「逆転当て」チャンス</div><div class="row__d">まぎれ絵師がお題をズバリ当てたら、それでも絵師のかち！</div></div></div>
-      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">celebration</span></div><div><div class="row__t">逆転当てがはずれたら → みんなのかち</div><div class="row__d">見つけて、当てさせない。それで初めてみんなの勝利</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">visibility_off</span></div><div><div class="row__t">最多票がまぎれ絵師じゃない／同数だった → まぎれ絵師の勝ち</div><div class="row__d">逃げ切り成功！だれにも票が入らなかったときも、まぎれ絵師の勝ち</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">bolt</span></div><div><div class="row__t">当てられたら → 逆転当てのチャンス</div><div class="row__d">まぎれ絵師がお題をズバリ当てたら、それでもまぎれ絵師の勝ち！</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">celebration</span></div><div><div class="row__t">逆転当てが外れたら → みんなの勝ち</div><div class="row__d">見つけて、当てさせない。それで初めてみんなの勝利</div></div></div>
     </div>`,
-    note:'勝敗はこうなるよ。\n最多票がまぎれ絵師じゃない・同数だった→まぎれ絵師のかち（にげきり成功！）\n当てられても「逆転当て」チャンス！お題をズバリ当てたら、それでも絵師のかち。\n逆転当てがはずれたら、みんなのかち！' },
+    note:'勝敗はこうなるよ。\n最多票がまぎれ絵師じゃない・同数だった・だれにも票が入らなかった→まぎれ絵師の勝ち（逃げ切り成功！）\n当てられても逆転当てのチャンス！お題をズバリ当てたら、それでもまぎれ絵師の勝ち。当たりか外れかは、ホストが決めるよ（ホストもいっしょに遊ぶときは、まぎれ絵師が6つの中から選んで、自動で決まるよ）\n逆転当てが外れたら、みんなの勝ち！' },
 
   /* 8 */ { type:'content', accent:'blue', section:'Q&A', sectionEn:'question & answer',
-    headline:'よくある<ruby>質問<rt>しつもん</rt></ruby>',
+    headline:'よくある質問',
     body:`<div class="qa">
       <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>絵がへたでもいい？</div><div class="qa__a"><span class="qa__badge a">A</span>もちろん！1筆は線1本。点だけでもOK。うまい絵を目指すゲームじゃないよ。</div></div>
-      <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>話すのがにがて…</div><div class="qa__a"><span class="qa__badge a">A</span>チャットだけでOK。描く・見る・投票するだけでも、りっぱな主役だよ。</div></div>
-      <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>まぎれ絵師になっちゃったら？</div><div class="qa__a"><span class="qa__badge a">A</span>カテゴリと、みんなの線をヒントに「それっぽく」描いてにげきろう！</div></div>
+      <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>話すのが苦手…</div><div class="qa__a"><span class="qa__badge a">A</span>チャットだけでOK。描く・見る・投票するだけでも、立派な主役だよ。</div></div>
+      <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>まぎれ絵師になっちゃったら？</div><div class="qa__a"><span class="qa__badge a">A</span>カテゴリと、みんなの線をヒントに「それっぽく」描いて逃げ切ろう！</div></div>
     </div>`,
-    note:'よくある質問だよ\nQ. 絵がへたでもいい？→ A. もちろん！1筆は線1本、点だけでもOK。うまい絵を目指すゲームじゃないよ。\nQ. 話すのがにがて…→ A. チャットだけでOK。描く・見る・投票するだけでも主役！\nQ. まぎれ絵師になったら？→ A. カテゴリとみんなの線をヒントに、それっぽく描いてにげきろう！' },
+    note:'よくある質問だよ\nQ. 絵がへたでもいい？→ A. もちろん！1筆は線1本、点だけでもOK。うまい絵を目指すゲームじゃないよ。\nQ. 話すのが苦手…→ A. チャットだけでOK。描く・見る・投票するだけでも主役！\nQ. まぎれ絵師になったら？→ A. カテゴリとみんなの線をヒントに、それっぽく描いて逃げ切ろう！' },
 
   /* 9 */ { type:'divider', accent:'blue', icon:'live_help', jp:'質問タイム', en:'any questions?',
     sub:'気になることはある？',
-    note:'ここまでで、質問がある人はいるかな？\nマイクON か チャットで教えてね！' },
+    note:'ここまでで、質問がある人はいるかな？\nマイクONかチャットで教えてね！' },
 
   /* 10 */ { type:'divider', accent:'coral', icon:'how_to_reg', jp:'参加確認', en:"let's check",
     sub:'チャットで教えてね',
     note:'やってみたい人〜？\n「①参加」「②見学」「③その他」を、チャットで教えてね！' },
 
   /* 11 */ { type:'divider', accent:'teal', solid:true, icon:'rocket_launch', jp:'＼ ゲームスタート ／', en:'game start',
-    sub:'ルームコードを チャットで送るよ',
-    note:'それでは、まぎれ絵師スタート！\nいまからルームコードをチャットで送るね。ニックネームとコードを入れて入室してね。リンクで送ったときは、リンクをひらくとコードが入っているので、ニックネームだけ入れてね。わからなくなったら、いつでも聞いてね' },
+    sub:'ルームコードをチャットで送るよ',
+    note:'それでは、まぎれ絵師スタート！\n今からルームコードをチャットで送るね。「ルームに参加する」を押して、ニックネームとルームコードを入れて「参加する」を押してね。リンクで送ったときは、リンクをひらくとコードが入っているので、ニックネームだけ入れてね。わからなくなったら、いつでも聞いてね' },
 
-  /* 12 */ { type:'divider', accent:'blue', icon:'style', jp:'お題くばり', en:'topic',
-    sub:'カードをタップして、こっそりかくにん',
-    note:'お題カードをくばったよ！\n自分のカードをタップして、こっそりかくにんしてね。\nかくにんできたら「確認した」ボタンを押してね。' },
+  /* 12 */ { type:'divider', accent:'blue', icon:'style', jp:'お題配り', en:'topic',
+    sub:'カードをタップして、こっそり確認',
+    note:'お題カードを配ったよ！\n自分のカードをタップして、こっそり確認してね。\n確認できたら「確認した」を押してね。' },
 
-  /* 13 */ { type:'divider', accent:'teal', icon:'draw', jp:'おえかきタイム', en:'drawing',
+  /* 13 */ { type:'divider', accent:'teal', icon:'draw', jp:'お絵かきタイム', en:'drawing',
     sub:'1人1筆ずつ、最大2周',
-    note:'おえかきタイム！自分の番が来たら、線を1本だけ描いてね。\n点でも、まるひとつでもOK。時間を決めたときは、自分の番の残り時間を見ながら進めてね' },
+    note:'お絵かきタイム！自分の番が来たら、線を1本だけ描いて「これでOK」を押してね（「描き直す」もできるよ）。\n点でも、まるひとつでもOK。時間を決めたときは、自分の番の残り時間を見ながら進めてね' },
 
-  /* 14 */ { type:'divider', accent:'blue', icon:'forum', jp:'そうだんタイム', en:'discussion',
+  /* 14 */ { type:'divider', accent:'blue', icon:'forum', jp:'相談タイム', en:'discussion',
     sub:'だれがまぎれ絵師…？',
-    note:'絵が完成！そうだんタイムだよ。\n「〇〇さんの2筆目があやしい」みたいに、気づいたことを話そう。\n声でもチャットでもOK！' },
+    note:'絵が完成！相談タイムだよ。\n「〇〇さんの2筆目があやしい」みたいに、気づいたことを話そう。\n声でもチャットでもOK！' },
 
-  /* 15 */ { type:'divider', accent:'coral', icon:'how_to_vote', jp:'とうひょう', en:'voting',
+  /* 15 */ { type:'divider', accent:'coral', icon:'how_to_vote', jp:'投票', en:'voting',
     sub:'まぎれ絵師だと思う人に1票',
-    note:'とうひょうタイム！\nまぎれ絵師だと思う人を1人えらんで、投票してね。\n全員の投票がそろったら、開票するよ' },
+    note:'投票タイム！\nまぎれ絵師だと思う人を1人選んで、投票してね。\n全員の投票がそろったら、結果が出るよ' },
 
-  /* 16 */ { type:'divider', accent:'teal', solid:true, icon:'emoji_events', jp:'けっか', en:'result',
+  /* 16 */ { type:'divider', accent:'teal', solid:true, icon:'emoji_events', jp:'結果', en:'result',
     sub:'おつかれさま！',
-    note:'けっか発表！\nまぎれ絵師はにげきれたかな？それとも逆転当て…？\n最後にひとことずつ、ふりかえってみよう。' },
+    note:'結果発表！\nまぎれ絵師は逃げ切れたかな？それとも逆転当て…？\n最後にひとことずつ、振り返ってみよう。' },
 ];
 
 /* ===== ウィンドウ間同期 ===== */
@@ -343,7 +343,7 @@ function slideHTML(s){
       <div class="title-meta">
         <span class="m"><span class="material-symbols-rounded">group</span>ゲスト3〜8人（＋ホスト）</span>
         <span class="m"><span class="material-symbols-rounded">schedule</span>15〜30分</span>
-        <span class="m"><span class="material-symbols-rounded">draw</span>おえかき推理ゲーム</span>
+        <span class="m"><span class="material-symbols-rounded">draw</span>お絵かき推理ゲーム</span>
       </div></section>`;
   }
   if(s.type==='divider'){
