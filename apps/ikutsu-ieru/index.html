@@ -1231,8 +1231,10 @@ function startRoomListener() {
       stopGuestPresence(); ref.off();
       RoomkRTDB.cancelRoomOnDisconnect(ref).catch(error => console.warn('[ikutsu-ieru] room cleanup failed', error));
       clearSession(); resetRoomState();
+      // 2026-11-07: ルームが消えた（ふりかえりのあとの自動削除・ホストの退出・ホストが戻らないまま2分）は「閉じられた」。
+      // ルームはあるのに自分の参加の記録が合わないときだけ「見つからない」
       if (rejoin) openRejoin(rejoin.code, rejoin.nickname);
-      else showMsg('ルームまたは参加情報が見つからないため、トップに戻りました');
+      else showMsg(room ? '参加の記録が見つからないので、トップにもどったよ' : 'ルームが閉じられたよ');
       return;
     }
     handleRoom(snap.val());
