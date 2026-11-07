@@ -145,8 +145,9 @@ koedake_rooms/{roomCode}/
 
 ### 再接続
 
-- sessionStorage `koedake_session` に `{ nickname, roomCode, role, score, vote }` を保存
-- ゲストはスナップショット受信のたびに score / vote をセッションへ反映し、リロードで players から消えていても同じスコアで復元する（tatoe-gp と同方式）
+- sessionStorage `koedake_session` に `{ nickname, roomCode, role, score, vote, voteRound }` を保存（`voteRound` はその票のラウンド番号 `round.number`）
+- ゲストはスナップショット受信のたびに score / vote / voteRound をセッションへ反映し、リロードで players から消えていても同じスコアで復元する（tatoe-gp と同方式）
+- 票を戻すのは、今が投票中（`voting`）で、`voteRound` が今の `round.number` と同じときだけ。それ以外は `vote: null` で作り直す（2026-11-07。結果画面のあいだに抜けて次のラウンドの投票中に戻った子に前のラウンドの票が戻り、「投票しました」のまま投票できず、古い票が集計されていた。P4 監査の所見）。`voteRound` のない古い記録からは票を戻さない
 - ホスト再接続時は `hostConnected=true` / `hostDisconnectedAt=null` を戻す
 - TTL 判定は `RoomkRTDB.now()` / `RoomkRTDB.isRoomExpired()` を使用
 
