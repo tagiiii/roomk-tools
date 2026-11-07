@@ -135,7 +135,7 @@ function showPreview() {
 function startPlay() {
   state.revealed = false;
   renderGrid('kanji-grid');
-  $('play-target').textContent = `さがす字: ${state.currentRound.target}`;
+  $('play-target').textContent = `探す字: ${state.currentRound.target}`;
   showScreen('play');
   startTimer();
 }
