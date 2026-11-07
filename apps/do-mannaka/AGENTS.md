@@ -67,6 +67,7 @@ domannaka_rooms/{roomCode}/
   ├── hostConnected:    boolean       # ホスト接続状態
   ├── hostDisconnectedAt: number|null # ホスト切断時刻
   ├── status:           string        # waiting | selecting | answering | result | finished
+  ├── deleteAt:         number        # finished にしたときの削除予定時刻（サーバー時刻寄りの ms）。削除の予約の照合に使う
   ├── currentQuestion:  string        # 現在の問題文
   ├── round:            number        # 現在のラウンド数
   ├── usedQuestions:    number[]      # 使用済み問題インデックス
@@ -81,7 +82,7 @@ domannaka_rooms/{roomCode}/
 ```
 
 ## 離脱時の挙動
-- **ホスト離脱**: `onDisconnect().update()` で `hostConnected=false` と `hostDisconnectedAt=ServerValue.TIMESTAMP` を保存。ゲストにはオーバーレイを表示し、2分TTL（`ORPHAN_TTL_MS`）超過後に期限切れルームとして削除を試みる
+- **ホスト離脱**: `onDisconnect().update()` で `hostConnected=false` と `hostDisconnectedAt=ServerValue.TIMESTAMP` を保存。ゲストにはオーバーレイを表示し、2分TTL（`ORPHAN_TTL_MS`）超過後に期限切れルームとして削除を試みる。**`finished`（最終結果）ではオーバーレイもカウントダウンも出さない**（下記「終了後の削除」。2026-11-07）
 - **ゲスト離脱**: `onDisconnect().remove()` でそのプレイヤーデータのみ削除
 - 採点（結果へ進む）はルーム全体の transaction で、その時点の `players` にいる答える人だけで採点し、その人たちだけに書く（自動の結果移行・締め切りボタンの両方）。読み取ってから `update` すると、直前に退出した人のノードを score だけで作り直してしまう（2026-10-01 修正）。`status === 'answering'` のときだけ確定するので二重に加点しない
 - ホストは `.info/connected` を監視し、ページを開いたままの通信回復でも `onDisconnect` を再登録してから `hostConnected=true` / `hostDisconnectedAt=null` に戻す（2026-09-06 B-25）。リロード時の `sessionStorage: domannaka_session` 復帰も同じ処理を使う
@@ -95,7 +96,15 @@ domannaka_rooms/{roomCode}/
 - ニックネームは1〜8文字・同ルーム内重複NG
 - 答える人が3人以上でないとゲーム開始不可（進行だけのホストは数えない）
 - 問題は重複しないようにトラッキング（全問使用後はリセット）
-- ゲーム終了30秒後に Realtime Database のルームデータを自動削除。削除の transaction は `applyLocally:false`（確定前の null をルーム監視に通知すると、監視の `roomRef.off()` が transaction 自身の購読まで外して削除が届かない）
+- ゲーム終了30秒後に Realtime Database のルームデータを自動削除。削除の transaction は `applyLocally:false`（確定前の null をルーム監視に通知すると、監視の `roomRef.off()` が transaction 自身の購読まで外して削除が届かない）。詳しくは下記「終了後の削除」
+
+### 終了後の削除（2026-11-07）
+- ホストの「ゲームを終了する」で `status: 'finished'` と `deleteAt`（いま＋30秒）を transaction で書く。削除は `scheduleFinishedCleanup(ref, deleteAt, byHost)` で、終了時点の ref と `deleteAt` を固定して予約し、transaction で **status が `finished` で `deleteAt` が同じときだけ** 消す（applyLocally は false）。同じ ref と `deleteAt` の予約は1つにまとめる
+- **ゲストも `finished` を受け取ったら同じ条件で予約する**（`handleFinished`）。以前はホストのタブだけが予約していたので、最終結果のあとすぐホストがタブを閉じると削除が届かず、ゲストの最終順位に「ホストが一時的に接続を失いました…120秒後に自動終了します」が重なり、2分後に「ホストが再接続できなかったためゲームが終了しました」でトップに戻されていた（2026-11-07 監査の所見。pittari-meter の 11-06 の直しにそろえた）。ゲストの予約はホストより3秒遅い（`GUEST_DELETE_GRACE_MS`。ホストのタブがあればホストが先に消す）
+- `finished` ではゲストにホスト切断のオーバーレイとカウントダウンを出さない。ゲストは順位を見続け、ルームが消えても最終結果の画面のまま（「もう一度遊ぶ」でトップへ）
+- 切断の予約の取り消し: ホストは**消す前**に取り消す（残ると削除後にタブを閉じたときゴーストができる）。ゲストは**消えたあと**に取り消す（`players/{自分}` の remove の予約なので、残っていてもゴーストはできない。先に取り消すと、削除が届く前にタブを閉じたとき在室が残る）
+- 「もう一度遊ぶ」（`goToTop`）・退出では、ゲストの予約だけ解除する。ホストの予約は残す（`finished` の「もう一度遊ぶ」はルームを消さないので、この予約が消す経路になる。ref と `deleteAt` を固定しているので、あとで作った新しいルームは消さない）
+- ホストもゲストも30秒より前にタブを閉じたときは、ホスト切断の TTL（2分）か次の参加時の期限切れ掃除に任せる
 - Firebase compat SDK の初期化は `RoomkRTDB.initFirebase(firebase)` を使用する
   - **Realtime Database** を使用（Firestoreではない）
   - 匿名認証の完了は返り値の `authReady` を await してから読み書きする
@@ -117,3 +126,4 @@ domannaka_rooms/{roomCode}/
 - 2026-10-01 オーナー決定: 待合室でホストの参加を選べる（初期値は従来どおり「参加する」）。採点ルール（中央値・最大/最小の扱い）は変えず、回答・採点・ランキングの対象を答える人に絞るだけ
 - 2026-10-01: 回答中に答える人が0人になったら、進行だけのホストが回答画面から「ゲームを終了する」を押せるようにした（たとえグランプリにそろえる）
 - 2026-10-01: ホストが最終画面に残ったままだと終了30秒後の自動削除が届かずルームが残る不具合を修正（削除の transaction を `applyLocally:false` に。name-change と同じ方式）
+- 2026-11-07: 最終結果でホストがタブを閉じると、ゲストの順位にホスト切断のオーバーレイが重なり、終了30秒後の削除も届かなかった。`finished` ではオーバーレイを出さず、ゲストも削除を予約する（「終了後の削除」）

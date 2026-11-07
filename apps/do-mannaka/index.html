@@ -709,6 +709,8 @@
   // ════════════════════════════════════
   const SESSION_KEY = 'domannaka_session';
   const ORPHAN_TTL_MS = 2 * 60 * 1000;
+  // 終了後のゲストの削除はホストより少し遅らせる（ホストのタブがあればホストが先に消す）
+  const GUEST_DELETE_GRACE_MS = 3 * 1000;
   const MIN_PLAYERS = 3; // 答える人（遊ぶ人）だけで数える
 
   // ホストもプレイヤーとして答えるか。キーがない部屋（旧版が作った部屋）は従来どおり「答える」
@@ -1229,22 +1231,49 @@
   // 終了後の自動削除は「終了時点の ref と deleteAt」を固定して予約する。
   // 可変な state.roomRef を読むと、TOP復帰後に作った新ルームを誤削除しうる。
   // 削除は transaction で「まだ同じ終了状態か」を確認してから消す。
+  // ホストのタブを閉じてもルームが残らないよう、finished を受け取ったゲストも同じ条件で予約する（2026-11-07）。
   // 削除失敗時は何もしない（onDisconnect + 2分TTL の掃除経路が残る）
-  function scheduleFinishedCleanup(roomRef, deleteAt) {
-    const delay = Math.max(0, deleteAt - getEstimatedServerNow());
-    setTimeout(async () => {
-      await stopHostPresence(roomRef);
-      // 削除の前に自接続の onDisconnect 予約を取り消す。予約が残ったままだと、
-      // 削除後にこのタブを閉じた時に update が発火してゴースト room を再生成する
-      await RoomkRTDB.cancelRoomOnDisconnect(roomRef);
-      // applyLocally:false で、確定前の null をこの端末のルーム監視に通知しない。
-      // 通知すると監視の roomRef.off() が transaction 自身の購読まで外し、
-      // 空のキャッシュで再試行を繰り返してサーバー側が消えない（最終画面に残ったとき）
-      roomRef.transaction((room) => {
-        if (room && room.status === 'finished' && room.deleteAt === deleteAt) return null;
-        return room;
-      }, undefined, false).catch(() => {});
+  const _finishedCleanups = new Map(); // `${ref}|${deleteAt}` → { timer, byHost }
+
+  function scheduleFinishedCleanup(roomRef, deleteAt, byHost = true) {
+    const key = `${roomRef.toString()}|${deleteAt}`;
+    if (_finishedCleanups.has(key)) return;
+    const delay = Math.max(0, deleteAt - getEstimatedServerNow()) + (byHost ? 0 : GUEST_DELETE_GRACE_MS);
+    const timer = setTimeout(async () => {
+      _finishedCleanups.delete(key);
+      if (byHost) {
+        await stopHostPresence(roomRef);
+        // 削除の前に自接続の onDisconnect 予約を取り消す。予約が残ったままだと、
+        // 削除後にこのタブを閉じた時に update が発火してゴースト room を再生成する
+        await RoomkRTDB.cancelRoomOnDisconnect(roomRef);
+      }
+      try {
+        // applyLocally:false で、確定前の null をこの端末のルーム監視に通知しない。
+        // 通知すると監視の roomRef.off() が transaction 自身の購読まで外し、
+        // 空のキャッシュで再試行を繰り返してサーバー側が消えない（最終画面に残ったとき）
+        const { committed, snapshot } = await roomRef.transaction((room) => {
+          if (!room) return null; // キャッシュがないときは null で問い合わせ、サーバーの値でやり直す
+          if (room.status === 'finished' && room.deleteAt === deleteAt) return null;
+          return; // 別の状態になっていたら触らない
+        }, undefined, false);
+        // ゲストの在室の予約（players/自分 の remove）は、ルームが消えてから取り消す
+        //（先に取り消すと、削除が届く前にタブを閉じたとき在室が残る）
+        if (!byHost && committed && !snapshot.exists()) {
+          await RoomkRTDB.cancelRoomOnDisconnect(roomRef);
+        }
+      } catch (_) { /* 掃除は TTL に任せる */ }
     }, delay);
+    _finishedCleanups.set(key, { timer, byHost });
+  }
+
+  // ゲストが退出・トップへ戻るときは、ゲストとして予約した削除を解除する。
+  // ホストの予約は残す（finished の「もう一度遊ぶ」はルームを消さないので、この予約が消す経路になる）
+  function clearGuestFinishedCleanups() {
+    for (const [key, entry] of _finishedCleanups) {
+      if (entry.byHost) continue;
+      clearTimeout(entry.timer);
+      _finishedCleanups.delete(key);
+    }
   }
 
   async function hostEndGame() {
@@ -1486,7 +1515,9 @@
           leaveGame('ホストが再接続できなかったためゲームが終了しました');
           return;
         }
-        if (room.hostConnected === false) {
+        // 最終結果（finished）ではホストが閉じても待たない。順位を見続けられるようにし、
+        // ルームは終了30秒後の削除（ゲストも予約する）で消す（2026-11-07）
+        if (room.hostConnected === false && room.status !== 'finished') {
           showHostDisconnectOverlay(true, room);
           return;
         }
@@ -1499,7 +1530,7 @@
         case 'selecting':  handleSelecting(room.pendingQuestions);                   break;
         case 'answering':  handleAnswering(roomPlayingPlayers(room), room.currentQuestion, room.round); break;
         case 'result':     handleResult(roomPlayingPlayers(room), room.currentQuestion); break;
-        case 'finished':   handleFinished(roomPlayingPlayers(room));                 break;
+        case 'finished':   handleFinished(roomPlayingPlayers(room), room);           break;
       }
     });
   }
@@ -1737,8 +1768,12 @@
   }
 
   // ── finished ──
-  function handleFinished(players) {
+  function handleFinished(players, room) {
     if (state.currentScreen !== 'final') showScreen('final');
+    // ゲストも削除を予約する（ホストが最終結果のあとすぐタブを閉じてもルームが残らないように）
+    if (state.role === 'guest' && state.roomRef && Number.isFinite(room?.deleteAt)) {
+      scheduleFinishedCleanup(state.roomRef, room.deleteAt, false);
+    }
 
     const sorted = Object.entries(players || {})
       .map(([name, p]) => ({ name, score: p.score || 0 }))
@@ -1792,6 +1827,7 @@
   // ════════════════════════════════════
   function goToTop() {
     stopHostPresence();
+    clearGuestFinishedCleanups();
     // leaveGame を経由しない遷移でもカウントダウンを確実に解放する（対称化）
     clearInterval(_hostDisconnectTimer);
     _hostDisconnectTimer = null;
