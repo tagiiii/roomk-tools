@@ -949,7 +949,7 @@ function showOverlay(id, show) {
 function buildRulesContent() {
   const byFaction = { village: [], wolf: [], third: [] };
   ROLES.forEach(r => { (byFaction[r.faction] || byFaction.village).push(r); });
-  const factionTitle = { village: '村人チーム', wolf: '人狼チーム', third: '第三陣営' };
+  const factionTitle = { village: '村人チーム', wolf: '人狼チーム', third: '第三チーム' };
   const roleSections = ['village', 'wolf', 'third'].map(f => `
     <p class="rules-sub ${f}">${factionTitle[f]}</p>
     <ul class="rules-roles">
@@ -973,7 +973,7 @@ function buildRulesContent() {
     <ul class="rules-win">
       <li><b>村人チーム</b>：人狼を全員見つけたら勝ち</li>
       <li><b>人狼チーム</b>：人狼と村人が同じ人数になったら勝ち</li>
-      <li><b>第三陣営</b>：それぞれの目標を達成したら勝ち</li>
+      <li><b>第三チーム</b>：それぞれの目標を達成したら勝ち</li>
     </ul>
     <h3 class="rules-h">役職一覧</h3>
     ${roleSections}
@@ -997,7 +997,7 @@ function buildRoleConfigGrid() {
       <div style="display:flex;align-items:center">
         <span class="role-config-name">${esc(r.id)}</span>
         <span class="role-config-faction ${r.faction}">${
-          r.faction === 'village' ? '村人陣営' : r.faction === 'wolf' ? '人狼陣営' : '第三陣営'
+          r.faction === 'village' ? '村人チーム' : r.faction === 'wolf' ? '人狼チーム' : '第三チーム'
         }</span>
       </div>
       <div class="role-spinner">
@@ -1055,7 +1055,7 @@ function updateStartButton(playerCount, total) {
     btn.disabled = true; hint.textContent = '人狼を1人以上設定してください'; return;
   }
   if (wolfCount >= vilCount) {
-    btn.disabled = true; hint.textContent = '村人陣営が人狼陣営以下になっています'; return;
+    btn.disabled = true; hint.textContent = '村人チームが人狼チーム以下になっています'; return;
   }
   btn.disabled = false;
   hint.textContent = '';
@@ -1595,7 +1595,7 @@ function setupRoleExtraInfo(room, players, me) {
 }
 
 function factionLabel(f) {
-  return f === 'village' ? '村人陣営' : f === 'wolf' ? '人狼陣営' : '第三陣営';
+  return f === 'village' ? '村人チーム' : f === 'wolf' ? '人狼チーム' : '第三チーム';
 }
 
 function flipRoleCard() {
@@ -2414,8 +2414,8 @@ function handleResult(room, players) {
     const winner = room.winner;
     const banner = document.getElementById('result-banner');
     const titleMap = {
-      village: '村人陣営の勝利！',
-      wolf:    '人狼陣営の勝利！',
+      village: '村人チームの勝利！',
+      wolf:    '人狼チームの勝利！',
       teruteru:'てるてる坊主の勝利！',
       fox:     '妖狐の勝利！',
       draw:    '引き分け',
