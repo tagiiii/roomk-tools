@@ -693,9 +693,18 @@
       </div>
 
       <div class="ph-waiting-actions">
+        <p class="ph-waiting-note" id="resultsHostNote" hidden>遊ぶ人が足りないので、ここで終わりにできるよ</p>
         <button type="button" class="btn btn-primary btn-full btn-lg" id="btnNextRound" hidden></button>
         <p class="ph-waiting-guestmsg" id="resultsGuestMsg" hidden>ホストが進めるのを待ってね。</p>
       </div>
+      <!-- ホストだけ: 残りのラウンドをやめる（最後のラウンド・人数が足りないときは主ボタンが同じことをするので出さない） -->
+      <details class="ph-hostmenu" id="resultsHostMenu" hidden>
+        <summary>そのほかの操作</summary>
+        <div class="ph-hostmenu__row">
+          <button type="button" class="btn btn-secondary btn-sm" id="btnFinishEarly">ここで終わる</button>
+          <span class="ph-hostmenu__note">残りのラウンドをやめて、ふりかえりへ進む</span>
+        </div>
+      </details>
     </section>
 
     <!-- ═══════════ ふりかえり（finished）═══════════ -->
@@ -2131,7 +2140,11 @@
       add('currentRound', (v) => { net.currentRound = Number(v) || 0; sync(); });
       add('gameId', (v) => { net.gameId = v; });
       add('settings', (v) => { net.settings = v; if (net.status === 'waiting') renderWaiting(); });
-      add('players', (v) => { net.players = v || {}; if (net.status === 'waiting') renderWaiting(); });
+      add('players', (v) => {
+        net.players = v || {};
+        if (net.status === 'waiting') renderWaiting();
+        else if (net.status === 'results') renderResultsHost();
+      });
       add('hostConnected', (v) => { net.hostConnected = v !== false; onHostConn(); });
       add('hostDisconnectedAt', (v) => { net.hostDisconnectedAt = v == null ? null : Number(v); onHostConn(); });
       add('finishedAt', (v) => { net.finishedAt = v == null ? null : Number(v); onFinishedAt(); });
@@ -2541,29 +2554,67 @@
       }
       // 基準解アニメ
       if (net.puzzle) renderSolution(el('resultsSol'), net.puzzle, { animate: true });
-      // ホスト操作
-      const isLast = net.currentRound >= (net.settings ? net.settings.totalRounds : net.currentRound);
+      renderResultsHost();
+    }
+
+    // 遊ぶ人（isPlaying が false でない参加者）の人数。startRound の参加条件と同じ数え方
+    function countPlaying(players) {
+      return Object.values(players || {}).filter((p) => p && p.isPlaying !== false).length;
+    }
+    function isLastRound() {
+      return net.currentRound >= (net.settings ? net.settings.totalRounds : net.currentRound);
+    }
+    // results のホスト操作（players が変わるたびにも描き直す。答えのアニメはやり直さない）。
+    // ラウンドの途中で抜けた子は players から消える（onDisconnect）ので、遊ぶ人が2人より少ないと
+    // 次のラウンドを始められない（startRound の too_few）。そのときは主ボタンを「結果を見る」にして、
+    // 一言そえてふりかえり（finished）へ進めるようにする。自動では進めない（押したときだけ）。
+    function renderResultsHost() {
+      if (net.status !== 'results') return;
+      const isHost = net.role === 'host';
+      const isLast = isLastRound();
+      const tooFew = !isLast && countPlaying(net.players) < 2;
       const nextBtn = el('btnNextRound');
       nextBtn.hidden = !isHost;
       el('resultsGuestMsg').hidden = isHost;
-      if (isHost) nextBtn.textContent = isLast ? '結果を見る' : '次のラウンドへ';
+      el('resultsHostNote').hidden = !(isHost && tooFew);
+      if (isHost) nextBtn.textContent = (isLast || tooFew) ? '結果を見る' : '次のラウンドへ';
+      const menu = el('resultsHostMenu');
+      menu.hidden = !isHost || isLast || tooFew;
+      if (menu.hidden) menu.open = false;
     }
 
     async function hostNext() {
       if (net.role !== 'host' || !net.roomRef) return;
-      const isLast = net.currentRound >= (net.settings ? net.settings.totalRounds : net.currentRound);
-      if (isLast) {
+      if (isLastRound()) await finishGame('last');
+      else if (countPlaying(net.players) < 2) await finishGame('too_few');
+      else await startRound();
+    }
+
+    // results → finished（ふりかえり）。reason:
+    //   'last'    最後のラウンドのあと（利用回数の finish を数えるのはこれだけ）
+    //   'too_few' 遊ぶ人が足りないとき。サーバの値でも2人より少ないかを確かめる
+    //             （そのあいだに子が読み込み直して戻っていたら進めず、ボタンを「次のラウンドへ」に戻す）
+    //   'host'    「そのほかの操作」の「ここで終わる」（確認つき）
+    // 途中でやめた回は finish を数えない（shared-modules.md「途中でやめた・不成立になった回」）
+    async function finishGame(reason) {
+      if (net.role !== 'host' || !net.roomRef) return;
+      const roundNo = net.currentRound;
+      let enough = false;
+      try {
         const { committed } = await roomTxn((r) => {
+          enough = false;
           if (!r || r.status !== 'results') return;
+          if (reason !== 'last' && Number(r.currentRound) !== roundNo) return;
+          if (reason === 'too_few' && countPlaying(r.players) >= 2) { enough = true; return; }
           r.status = 'finished';
           r.finishedAt = now();
           return r;
         });
-        if (committed) window.RoomkStats?.count('finish');
-      } else {
-        await startRound();
-      }
+        if (committed && reason === 'last') window.RoomkStats?.count('finish');
+        if (!committed && enough) { renderResultsHost(); RoomkRTDB.showToast('遊ぶ人がそろっているよ'); }
+      } catch (e) { console.error(e); RoomkRTDB.showToast('進めなかったよ'); }
     }
+    function finishEarly() { return finishGame('host'); }
 
     // ── finished ──
     async function enterFinished() {
@@ -2757,7 +2808,12 @@
     }
 
     // ═════════ 再接続 ═════════
+    // ルームは残っているが、ゲストの自分が戻れなかった（待合室で一覧から消えていた・ラウンドの参加者でない）とき。
+    // 起動の処理がこれを見て「ルームにもどれなかったよ。もう一度参加してね」を出す（takeReconnectMiss）
+    let reconnectMiss = null;
+    function takeReconnectMiss() { const m = reconnectMiss; reconnectMiss = null; return m; }
     async function tryReconnect() {
+      reconnectMiss = null;
       const session = loadSession();
       if (!session || !session.roomCode || !session.nickname || !session.role) { clearSession(); return false; }
       overlay('overlayReconnect', true);
@@ -2777,10 +2833,11 @@
 
         // ゲストの新規復帰は waiting のみ。round/results 中は participants に含まれる場合だけ復帰。
         if (session.role === 'guest') {
+          const miss = { code: session.roomCode, nick: session.nickname, waiting: room.status === 'waiting' };
           if (room.status === 'waiting') {
-            if (!inPlayers) { clearSession(); return false; }
+            if (!inPlayers) { reconnectMiss = miss; clearSession(); return false; }
           } else {
-            if (!isParticipant) { clearSession(); return false; }
+            if (!isParticipant) { reconnectMiss = miss; clearSession(); return false; }
           }
         } else {
           // ホスト: players に自分がいることを前提（通常は残っている）
@@ -2858,8 +2915,8 @@
     }
 
     return {
-      createRoom, joinRoom, startRound, endRound, hostNext, playAgain, closeRoom,
-      restartRound, leaveRoom, tryReconnect, onLocalComplete, copyCode, updateSetting,
+      createRoom, joinRoom, startRound, endRound, hostNext, finishEarly, playAgain, closeRoom,
+      restartRound, leaveRoom, tryReconnect, takeReconnectMiss, onLocalComplete, copyCode, updateSetting,
       getSeg, showRoundBrokenIfHost, saveBoard,
       copyLink, showQr, normalizeRoomCode, ROOM_CODE_PATTERN, loadSession, clearSession,
       _net: net,
@@ -2885,6 +2942,11 @@
     Net.endRound('host');
   });
   el('btnNextRound').addEventListener('click', Net.hostNext);
+  el('btnFinishEarly').addEventListener('click', () => {
+    if (!confirm('残りのラウンドをやめて、ふりかえりへ進むよ。いい？')) return;
+    el('resultsHostMenu').open = false;
+    Net.finishEarly();
+  });
   el('btnPlayAgain').addEventListener('click', Net.playAgain);
   el('btnCloseRoom').addEventListener('click', Net.closeRoom);
   el('btnHostOffLeave').addEventListener('click', Net.leaveRoom);
@@ -2915,10 +2977,23 @@
     showScreen('join');
     el('joinNick').focus({ preventScroll: true });
   }
+  // 保存した記録で戻れなかったとき（ルームは残っている）。待合室なら、コードと名前を入れた参加画面を開く
+  const RECONNECT_MISS_MSG = 'ルームにもどれなかったよ。もう一度参加してね';
+  function openJoinAfterMiss(miss) {
+    el('joinError').textContent = '';
+    el('joinCode').value = miss.code;
+    el('joinNick').value = miss.nick;
+    el('joinLinkHint').hidden = true;
+    showScreen('join');
+  }
   // 再読み込みなどで、保存した記録から同じルームへ戻る（戻れなければ TOP）
   async function resumeFromSession() {
     const ok = await Net.tryReconnect();
-    if (!ok) showScreen('top');
+    if (ok) return;
+    const miss = Net.takeReconnectMiss();
+    if (miss) RoomkRTDB.showToast(RECONNECT_MISS_MSG, true, 5000);
+    if (miss && miss.waiting) openJoinAfterMiss(miss);
+    else showScreen('top');
   }
 
   // 起動時: 参加用のリンク（?room=コード）→ セッションがあれば再接続 → なければ TOP
@@ -2942,7 +3017,9 @@
       const reconnected = await Net.tryReconnect();
       if (reconnected) return;
       Net.clearSession();
+      const miss = Net.takeReconnectMiss();
       openJoinFromLink(linkCode);
+      if (miss) { RoomkRTDB.showToast(RECONNECT_MISS_MSG, true, 5000); el('joinNick').value = miss.nick; }
     } else {
       // 別のルームの記録が残っていても、ひらいたリンクのルームを優先する
       if (saved) Net.clearSession();
@@ -2975,7 +3052,10 @@
           '置いたピースは、型の外に出して離すとトレイに戻る（「戻す」「全部戻す」でもOK）',
           '型がぴったり埋まったら「ピタハメ！」でクリア',
         ] },
-        { heading: 'こまったとき', text: 'ひとりで練習のときは「答えを見る」で、置きかたの例を見られるよ。' },
+        { heading: 'こまったとき', items: [
+          'ひとりで練習のときは「答えを見る」で、置きかたの例を見られるよ',
+          'みんなで遊ぶとき、途中で遊ぶ人が1人になったら、結果の画面でホストが「結果を見る」を押すと、ふりかえりへ進める',
+        ] },
       ],
       position: 'left',
     });
