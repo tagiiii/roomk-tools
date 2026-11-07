@@ -165,6 +165,7 @@ function entry(tool, category, text, extra = {}) {
     // 異種要素（citizen と wolf、left と right、serifu と situation）どうしの
     // 一致を「同一意味の重複」と断定しないための識別子。
     variant: extra.variant ?? '',
+    extraText: String(extra.extraText ?? ''),
     pairIndex: extra.pairIndex ?? null,
   };
 }
@@ -264,6 +265,44 @@ const REPEAT_EXPECTED_VARIANTS = new Set([
   'koedake-theater::situation',
 ]);
 
+// 異種要素どうしの一致が設計どおりのアプリ（intraAppCrossVariantMatches に出さない）。
+//   - suki-bingo はテーマ（variant＝テーマの id）ごとに24語で、同じ語が別のテーマに出るのは設計どおり
+//     （同じテーマ内の重複は collectEntries で fail-fast にしている）。2026-11-08 P3 監査で、
+//     要確認の17組がすべてこれだったため外した
+const CROSS_VARIANT_EXPECTED_TOOLS = new Set([
+  'suki-bingo',
+]);
+
+// 禁止題材の候補語（ルート AGENTS.md「使用しない表現・トピック」）。見つけたら stderr に警告を出すだけで、
+// 終了コードは 0 のまま（語があっても別の意味のことが多い。最後は人が読んで決める）。2026-11-08 P3 監査で追加。
+// クイズは不正解の選択肢と解説（extraText）も見る。ことばシャッフルのヒントは question に入っている
+const FORBIDDEN_TOPIC_CANDIDATES = [
+  '学校', '宿題', 'テスト', '成績', '授業', '勉強', '教科書', '教室', '先生',
+  '転校', '登校', '欠席', '不登校', '出席',
+  '恋', '告白', 'デート', '付き合', '彼氏', '彼女',
+  '死', '殺', '幽霊', 'ホラー', '怖', '血', 'いじめ', '暴力', '戦争',
+];
+// 読んで問題ないと決めたもの（項目の id → 語）。理由を添えて足す
+const FORBIDDEN_TOPIC_ALLOWED = {
+  nd11: ['恋'], // 地名「嬬恋村」の読み
+  ns10: ['戦争'], // 地名「田原坂」の解説に出る史実の名前
+  'otona-talk:58': ['付き合'], // 「失敗と付き合う」。大人どうしの雑談カード
+  'otona-talk:61': ['付き合'], // 「苦手なことと付き合う」
+  'do-mannaka:57': ['血'], // 蚊が吸う血の量（数の予想）
+  'do-mannaka:82': ['血'], // 人の体の血液の量（数の予想）
+  'ishin-denshin:94': ['殺'], // 「必殺技」
+};
+function forbiddenTopicCandidates(rows) {
+  const out = [];
+  for (const row of rows) {
+    const haystack = [row.text, row.question, row.answer, row.extraText].join(' / ');
+    const allowed = FORBIDDEN_TOPIC_ALLOWED[row.id] || [];
+    const words = FORBIDDEN_TOPIC_CANDIDATES.filter((word) => haystack.includes(word) && !allowed.includes(word));
+    if (words.length > 0) out.push({ id: row.id, tool: row.tool, words, text: haystack.slice(0, 120) });
+  }
+  return out;
+}
+
 function checkCoverage(toolsWithEntries = new Set()) {
   const appsDir = path.join(root, 'apps');
   const dirs = fs.readdirSync(appsDir, { withFileTypes: true })
@@ -298,6 +337,8 @@ function collectEntries() {
         id: q.id,
         question: q.question,
         answer: q.choices?.[q.answerIndex] ?? q.answer ?? '',
+        // 重複の判定には使わず、禁止題材の候補語の検査だけで見る（不正解の選択肢と解説）
+        extraText: [...(q.choices || []), q.explanation || ''].join(' / '),
       }));
     }
   }
@@ -466,7 +507,7 @@ function collectEntries() {
       if (typeof text !== 'string' || !text.trim()) bingoProblems.push(`${theme.id}[${index}] が空`);
       if (seen.has(text)) bingoProblems.push(`${theme.id}[${index}]「${text}」が重複`);
       seen.add(text);
-      rows.push(entry('suki-bingo', theme.id, text, { id: `suki-bingo:${theme.id}:${index}` }));
+      rows.push(entry('suki-bingo', theme.id, text, { id: `suki-bingo:${theme.id}:${index}`, variant: theme.id }));
     });
   });
   if (bingoProblems.length > 0) {
@@ -825,7 +866,13 @@ function similarQuestions(rows) {
 
 const rows = collectEntries();
 const exactMatches = grouped(rows, (row) => row.normText);
-const structuralMatches = grouped(rows, (row) => `${row.tool}:${row.category}:${row.normAnswer}`);
+// 構造一致にも、下の intraApp と同じ許可（INTENTIONAL_INTRA_APP_DUPLICATES・REPEAT_EXPECTED_VARIANTS）を当てる。
+// 当てないと、設計どおりの反復だけで毎回10組前後が出て、新しい本当の重複が埋もれる（2026-11-08 P3 監査）
+const structuralMatches = grouped(
+  rows.filter((row) => !REPEAT_EXPECTED_VARIANTS.has(`${row.tool}::${row.variant || ''}`)
+    && !INTENTIONAL_INTRA_APP_DUPLICATES.includes(row.normAnswer)),
+  (row) => `${row.tool}:${row.category}:${row.normAnswer}`,
+);
 const similar = similarQuestions(rows);
 
 const known = ['さかな', 'やま', 'たいよう', 'つき', 'ほし', 'みず', 'はし', 'ボール', 'ラケット', 'ロボット', 'もり', 'かわ'];
@@ -860,10 +907,10 @@ for (const group of exactMatches) {
   }
   let sameVariant = false;
   let crossVariant = false;
-  for (const variants of perTool.values()) {
+  for (const [tool, variants] of perTool.entries()) {
     const counts = [...variants.values()];
     if (counts.some((count) => count >= 2)) sameVariant = true;
-    else if (counts.reduce((a, b) => a + b, 0) >= 2) crossVariant = true;
+    else if (counts.reduce((a, b) => a + b, 0) >= 2 && !CROSS_VARIANT_EXPECTED_TOOLS.has(tool)) crossVariant = true;
   }
   if (sameVariant) intraAppExactMatches.push(group);
   else if (crossVariant) intraAppCrossVariantMatches.push(group);
@@ -888,6 +935,12 @@ if (coverage.coveredButEmpty.length > 0) {
     + coverage.coveredButEmpty.join(', '));
 }
 
+const forbiddenCandidates = forbiddenTopicCandidates(rows);
+if (forbiddenCandidates.length > 0) {
+  console.error('⚠️  [forbidden-topic] 禁止題材の候補語を含む項目があります（別の意味なら FORBIDDEN_TOPIC_ALLOWED に理由を添えて足す）:');
+  for (const hit of forbiddenCandidates) console.error(`    - ${hit.id}「${hit.words.join('・')}」 ${hit.text}`);
+}
+
 console.log(JSON.stringify({
   stats: {
     entries: rows.length,
@@ -896,6 +949,7 @@ console.log(JSON.stringify({
     intraAppCrossVariantMatchGroups: intraAppCrossVariantMatches.length,
     structuralMatchGroups: structuralMatches.length,
     similarQuestionPairs: similar.length,
+    forbiddenTopicCandidates: forbiddenCandidates.length,
   },
   coverage,
   knownCodenamesDuplicates: detectedKnownCodenames,
@@ -903,5 +957,6 @@ console.log(JSON.stringify({
   intraAppCrossVariantMatches,
   exactMatches,
   structuralMatches,
+  forbiddenTopicCandidates: forbiddenCandidates,
   similarQuestions: similar,
 }, null, 2));
