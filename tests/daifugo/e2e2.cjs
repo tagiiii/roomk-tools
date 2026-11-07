@@ -29,7 +29,7 @@ const { check, sleep, waitScreen, waitText, visible, waitVisible, text, table, h
   await H.page.check('#lobbyRules input[data-rule="tenDiscard"]');
   await waitText(A, '#lobbyRulesView', '10捨て');
   // 追加のローカルルール5つの項目（はじめオフ）
-  for (const k of ['numLock', 'sevenGive', 'qBomb', 'fiveSkip', 'fourStop']) {
+  for (const k of ['numLock', 'sevenGive', 'qBomb', 'fiveSkip', 'fourStop', 'lock3']) {
     check('項目あり・はじめオフ: ' + k, (await H.page.$('#lobbyRules input[data-rule="' + k + '"]')) !== null && !(await H.page.isChecked('#lobbyRules input[data-rule="' + k + '"]')));
   }
   await H.page.check('#lobbyRules input[data-rule="sevenGive"]');
@@ -170,6 +170,24 @@ const { check, sleep, waitScreen, waitText, visible, waitVisible, text, table, h
   check('数しばり（できごと）', await waitText(H, '#log', '数しばり！ 次は 7 だけ', 8000).then(() => true, () => false), await logText(H));
   check('しばりの表示', await waitText(H, '#modes', '数しばり：次は 7 だけ', 4000).then(() => true, () => false), await text(H, '#modes'));
   await H.page.screenshot({ path: L.OUT + '/e2-03e-numlock.png', fullPage: true });
+
+  // ══ 3連しばり（2026-11-08）: ♠5 → ♠6 ではかからず、♠9 で3回続いてしばり ══
+  await setState((s) => { s.rules.numLock = false; s.rules.fiveSkip = false; s.rules.lock = false; s.rules.lock3 = true; s.lockRun = 0; s.numLock = null; s.hands = [['S5', 'C3', 'C4'], ['S6', 'D11'], ['S9', 'H11'], ['C5', 'D9']]; });
+  await playCards(H, ['S5']);
+  await A.page.waitForFunction(() => !document.querySelector('#actPlay').hidden, null, { timeout: 8000 });
+  await playCards(A, ['S6']);
+  await B.page.waitForFunction(() => !document.querySelector('#actPlay').hidden, null, { timeout: 8000 });
+  check('3連しばり: 2回ではかからない', !(await text(H, '#modes')).includes('しばり') && !(await logText(H)).includes('しばり！ ♠'), await logText(H));
+  await playCards(B, ['S9']);
+  check('3連しばり: 3回続いてしばり（できごと）', await waitText(H, '#log', 'しばり！ ♠だけ', 8000).then(() => true, () => false), await logText(H));
+  check('3連しばり: しばりの表示', await waitText(H, '#modes', 'しばり：♠だけ', 4000).then(() => true, () => false), await text(H, '#modes'));
+  await H.page.screenshot({ path: L.OUT + '/e2-03f-lock3.png', fullPage: true });
+
+  // ══ 階段に8が入っていても8切りにならない（2026-11-08） ══
+  await setState((s) => { s.rules.lock3 = false; s.rules.eightCut = true; s.hands = [['S6', 'S7', 'S8', 'C4'], ['H3', 'D11'], ['D3', 'H11'], ['C5', 'D9']]; });
+  await playCards(H, ['S6', 'S7', 'S8']);
+  await A.page.waitForFunction(() => !document.querySelector('#actPlay').hidden, null, { timeout: 8000 });
+  check('階段の8では8切りにならず、あおの番', !(await logText(H)).includes('8切り') && (await table(H))[1].turn, await logText(H));
 
   // ══ 都落ち: 前回の大富豪はみどり（席2）。メンターが1番にあがると、みどりが抜けて最後 ══
   await setState((s) => {
