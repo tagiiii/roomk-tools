@@ -978,6 +978,17 @@ async function guestJoin() {
     showError('join-error', '入れなかったよ。もう一度ためしてね');
   }
 }
+// transaction の最初の計算が空のキャッシュで走らないよう、先に値を購読しておく。
+// transaction の中で null なら「ルームがない」として扱う（前に読んだ値で代用すると、消えたルームを作り直してしまう）
+function warmRoomCache(ref) {
+  return new Promise((resolve, reject) => {
+    const callback = (snap) => {
+      resolve({ snap, release: () => ref.off('value', callback) });
+    };
+    ref.on('value', callback, reject);
+  });
+}
+
 async function guestJoinInner() {
   const nick = document.getElementById('join-nickname').value.trim();
   const code = normalizeRoomCode(document.getElementById('join-code').value);
@@ -990,19 +1001,22 @@ async function guestJoinInner() {
   if (!await waitAuthOrExplain()) return;
 
   const roomRef = db.ref(`${DB_PREFIX}/${code}`);
-  let preSnap;
+  let warm;
   try {
-    preSnap = await roomRef.get();
+    warm = await warmRoomCache(roomRef);
   } catch {
     showError('join-error', 'うまくつながらなかったよ。もう一度ためしてね');
     return;
   }
+  const preSnap = warm.snap;
   if (!preSnap.exists()) {
+    warm.release();
     showError('join-error', 'ルームが見つからないよ。コードを確かめてね');
     return;
   }
   const preRoom = preSnap.val();
   if (isRoomExpired(preRoom)) {
+    warm.release();
     await roomRef.remove().catch(() => {});
     showError('join-error', 'このルームは終わったみたい');
     return;
@@ -1010,9 +1024,9 @@ async function guestJoinInner() {
 
   const joinedAt = serverNow();
   let abortReason = null;
-  // ローカルキャッシュ null 対策: リスナー未接続のため preRoom で代用してサーバー照会を強制する
+  // 先に購読しているので、room の null は空のキャッシュではなく「ルームがない」（前に読んだ値で代用しない）
   const { committed } = await roomRef.transaction(room => {
-    const r = room || preRoom;
+    const r = room;
     if (!r) { abortReason = 'not_found'; return; }
     if (isRoomExpired(r)) { abortReason = 'expired'; return null; }
     if (r.hostConnected === false) { abortReason = 'host_gone'; return; }
@@ -1028,7 +1042,7 @@ async function guestJoinInner() {
       if (!turnOrder.includes(nick)) next.turnOrder = [...turnOrder, nick];
     }
     return next;
-  });
+  }).finally(warm.release);
 
   if (!committed) {
     const msgs = {
@@ -1818,18 +1832,21 @@ async function tryReconnect() {
   try {
     await authReady;
     const ref = db.ref(`${DB_PREFIX}/${roomCode}`);
-    const snap = await ref.get();
-    if (!snap.exists()) { clearSession(); showOverlay('reconnect-overlay', false); return false; }
+    const warm = await warmRoomCache(ref);
+    const snap = warm.snap;
+    if (!snap.exists()) { warm.release(); clearSession(); showOverlay('reconnect-overlay', false); return false; }
     const preRoom = snap.val();
     if (isRoomExpired(preRoom)) {
+      warm.release();
       await ref.remove().catch(() => {});
       clearSession(); showOverlay('reconnect-overlay', false); return false;
     }
 
     const joinedAt = serverNow();
-    // ローカルキャッシュ null 対策で preRoom を代用。ホストは復帰、ゲストは自分の presence を戻す
+    // ホストは復帰、ゲストは自分の presence を戻す。先に購読しているので、room の null は「ルームがない」
+    // （通信が切れている間や読み込み直しの途中にルームが閉じられたら、前に読んだ値で作り直さない）
     const { committed } = await ref.transaction(room => {
-      const r = room || preRoom;
+      const r = room;
       if (!r || !r.status) return;
       if (isRoomExpired(r)) return null;
       if (role === 'host') {
@@ -1846,7 +1863,7 @@ async function tryReconnect() {
         if (!turnOrder.includes(nickname)) next.turnOrder = [...turnOrder, nickname];
       }
       return next;
-    });
+    }).finally(warm.release);
     if (!committed) { clearSession(); showOverlay('reconnect-overlay', false); return false; }
 
     state.nickname = nickname;

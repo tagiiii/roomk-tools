@@ -292,9 +292,13 @@ toomawashi_rooms/{roomCode}/
 - **乱数は transaction コールバックの外で作る**（コールバックは複数回呼ばれうるため純粋に保つ）。
   お題抽選用の `Math.random()` と候補順の `shuffledIndices()` は呼び出し前に1回だけ生成し、
   コールバックには値として渡す
-- **ローカルキャッシュ null 対策**: リスナー未接続の状態から実行する transaction（参加・復帰・期限切れ削除）は、
-  コールバックが `null` で始まると abort だけしてサーバー照会せずに終わるため、事前に `get()` した
-  スナップショットを `const r = room || preRoom` で代用してサーバー照会を強制する（esadori / oshitsuke-zukan の確立パターン）
+- **ローカルキャッシュ null 対策**: リスナー未接続の状態から実行する transaction（参加・復帰の書き戻し）は、
+  先に `warmRoomCache` で値を購読してから実行し、終わるまで購読を続ける。transaction の中の `null` は
+  「ルームがない」として扱う（2026-11-07 に `const r = room || preRoom` をやめた。事前に読んだ値で代用すると、
+  参加や読み込み直しの途中にホストが「退出する」でルームを消したとき、消えたルームを `hostConnected:true` のまま
+  作り直し、参加した子はホストのいないゲーム画面に入って、期限切れの掃除にもかからず残っていた。
+  docs/development/rtdb.md の「やり直す transaction」、esadori など5本（blackjack・esadori・jinro・oshitsuke-zukan・pittari-meter）は PR #103 で同じ形に直した）。
+  期限切れのルームを消す処理は、消すか何もしないかだけなので購読の外のままでよい
 - **世代ガード**: ホストの「正解発表」「判定」「説明役交代」は、押した時点の `round.number` /
   `turnIndex` を捕捉して transaction 内で再検証する。連打・遅延クリックで2ラウンド飛ぶのを防ぐ
 - 二重押し防御: 判定は `status === 'reveal' && round.result == null`、発表は `status === 'explain'`、

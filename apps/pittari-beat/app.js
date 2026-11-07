@@ -846,6 +846,7 @@ const ROOM_CODE_PATTERN = /^[A-HJ-NP-Z2-9]{6}$/;
 const NAME_MAX = 8;
 const MAX_GUESTS = 30;
 const STATUS = { OPEN: 'open' };
+const EXPIRED_NOTE = 'このルームは終わったみたい';
 
 const state = {
   role: null,          // 'host' | 'guest'
@@ -856,6 +857,7 @@ const state = {
   joinedAt: null,
   currentScreen: null,
   timerInterval: null,
+  orphanTimer: null,   // 参加者: 進行役が切断したまま期限（ORPHAN_TTL_MS）が来たら外れる
   connectedRef: null,
   connectedCallback: null,
   roomCallback: null,
@@ -889,6 +891,29 @@ async function removeExpired(ref, fallback) {
   } catch (error) {
     console.warn('[pittari-beat] expired room cleanup failed', error);
   }
+}
+
+// 期限切れのルームを消して、はじめの画面へ（遊んでいる途中なら、おわってから知らせる）
+function expireRoom(ref, room) {
+  removeExpired(ref, room);
+  leaveLocally(EXPIRED_NOTE);
+}
+
+// 参加者: 進行役が切断しているあいだ、期限（hostDisconnectedAt + ORPHAN_TTL_MS）に合わせて見はる。
+// 進行役が戻らないままでも、ルームの値が変わるのを待たずに外れる（ほかのルーム型と同じ）
+function watchOrphan(room) {
+  clearTimeout(state.orphanTimer);
+  state.orphanTimer = null;
+  if (state.role !== 'guest' || !room || room.hostConnected !== false) return;
+  const at = RoomkRTDB.getHostDisconnectedAt(room);
+  if (at == null) return;
+  const ref = state.roomRef;
+  state.orphanTimer = setTimeout(() => {
+    state.orphanTimer = null;
+    if (state.roomRef !== ref || state.leaving || !state.room) return;
+    if (isExpired(state.room)) expireRoom(ref, state.room);
+    else watchOrphan(state.room);
+  }, Math.max(0, at + ORPHAN_TTL_MS - RoomkRTDB.now()) + 50);
 }
 
 // transaction の最初の計算が空のキャッシュで走らないよう、先に値を購読しておく
@@ -938,12 +963,13 @@ function clearSession() {
 
 function cleanupRoom() {
   clearInterval(state.timerInterval);
+  clearTimeout(state.orphanTimer);
   if (state.roomRef && state.roomCallback) state.roomRef.off('value', state.roomCallback);
   if (state.connectedRef && state.connectedCallback) state.connectedRef.off('value', state.connectedCallback);
   if (state.roomRef) RoomkRTDB.cancelRoomOnDisconnect(state.roomRef);
   Object.assign(state, {
     role: null, nickname: null, roomCode: null, roomRef: null, room: null, joinedAt: null,
-    timerInterval: null, connectedRef: null, connectedCallback: null, roomCallback: null,
+    timerInterval: null, orphanTimer: null, connectedRef: null, connectedCallback: null, roomCallback: null,
     isConnected: false, presenceAt: 0, leaving: false, playing: false,
     myBest: null, myBestVersion: null,
   });
@@ -988,12 +1014,14 @@ function connectToRoom(role, nickname, code, ref, joinedAt) {
     }
     const room = snap.val();
     if (isExpired(room)) {
-      removeExpired(ref, room);
-      leaveLocally('このルームは終わったみたい');
+      expireRoom(ref, room);
       return;
     }
+    const first = !state.room;
     state.room = room;
     handleRoom(room);
+    // 作った直後は .info/connected がルームの値より先に届き、切断の予約を張れていない。はじめて値が来たら張る
+    if (first) ensurePresence(true);
   };
   ref.on('value', state.roomCallback, (error) => {
     console.warn('[pittari-beat] room listener failed', error);
@@ -1302,6 +1330,8 @@ async function hostChangeSetting(course, track, marks) {
 async function sendBest(version, sc) {
   const ref = state.roomRef;
   if (!ref || state.role !== 'guest') return;
+  // 期限切れのルームには書かない（書くと消えるだけ）
+  if (!state.room || isExpired(state.room)) return;
   const uid = currentUid();
   try {
     await transactRetry(ref.child('players/' + state.nickname), (p) => {
@@ -1342,6 +1372,7 @@ function handleRoom(room) {
       if (!(sent >= state.myBest)) sendBest(room.version, state.myBest);
     }
     $('pb-guest-offline').hidden = room.hostConnected !== false;
+    watchOrphan(room);
     if (current === 'pb-guest') renderGuest();
   } else if (state.role === 'host' && current === 'pb-host') {
     renderHost();
@@ -1349,6 +1380,8 @@ function handleRoom(room) {
 }
 
 function guestReport(version, sc) {
+  // 見はりより先に曲が終わったときも、期限切れのルームには送らない
+  if (state.role === 'guest' && state.room && isExpired(state.room)) expireRoom(state.roomRef, state.room);
   if (state.role !== 'guest' || !state.room) return 'ルームは閉じられたので、この回はランキングにのらないよ';
   if (version !== state.room.version) return 'とちゅうでコースが変わったので、この回はランキングにのらないよ';
   if (state.myBestVersion !== version || !Number.isFinite(state.myBest) || sc > state.myBest) {

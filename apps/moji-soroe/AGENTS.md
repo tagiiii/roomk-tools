@@ -223,6 +223,15 @@ blackjack と同一（presence「ノードの有無方式」）:
   切断表示は「members に居て players に居ない人」。
 - `.info/connected` を購読し、復帰のたびに `writeBackPresence` transaction で presence を再作成 →
   成功後に onDisconnect 予約を張り直す。epoch ガードで「書き戻し中に退出」を無効化。
+- 参加・ゲストの退出（`removeSelfFromRoom`）・復帰の書き戻し（`writeBackPresence`）の transaction は、
+  先に `warmRoomCache` で値を購読してから実行し、終わるまで購読を続ける（各 return と `.finally` で外す）。
+  transaction の中の null は「ルームがない」として扱う（2026-11-07 に `const cur = room || preRoom` をやめた。
+  ゲストの通信が切れている間にホストが待合室の「ルームを出る」やまとめの「トップへ戻る」で閉じると、
+  つながり直したときに事前に読んだ古い値で閉じたルームを `hostConnected:true` のまま作り直し、
+  ゲストは待合室・まとめの画面で止まり、期限切れの掃除にもかからず残っていた。エミュレーターで6回中6回再現。
+  blackjack の PR #103 と同じ直し方。docs/development/rtdb.md の「やり直す transaction」）。
+  いまは閉じたルームには戻らず「ルームが閉じられたよ」でトップへ戻る。
+  期限切れ・壊れたルームの削除の transaction は、消すか何もしないかだけなので `room || preRoom` のままでよい。
 - sessionStorage キー **`mojisoroe_session`**（roomCode / nickname / isHost / matchId）。
   リロード時 `tryReconnect()` で復帰。RTDB の値から画面を完全再構築できる。
 - ホスト切断: ゲストにオーバーレイ + 2分カウントダウン（`ORPHAN_TTL_MS = 2 * 60 * 1000`）。
