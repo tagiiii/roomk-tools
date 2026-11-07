@@ -53,7 +53,7 @@ description: room-Kの本体アプリを新規追加し、必要な共通機能�
 
 ## 4. スタッフ向け早見表への掲載
 
-`apps/guide/index.html`（ゲームえらび早見表）の該当系統セクション（`<section class="gd-section">`）の `<tbody>` に `<tr>` を1行追加する。既存行をコピーして5列を埋める:
+作戦会議の1対1の内面・対話ツールは載せない（app-registration.md 手順7）。ゲームは、`apps/guide/index.html`（ゲームえらび早見表）の該当系統セクション（`<section class="gd-section">`）の `<tbody>` に `<tr>` を1行追加する。既存行をコピーして5列を埋める:
 
 | 列 | 内容 |
 |---|---|
@@ -91,7 +91,7 @@ description: room-Kの本体アプリを新規追加し、必要な共通機能�
 - [ ] 利用回数カウンタ組み込み（`shared/js/stats.js`）
 - [ ] apps/index.html にカード追加（`data-scenes`・`data-added`（公開日）・`data-genre`（種類）必須・slides があれば `data-slides` と howto の `slides`）
 - [ ] apps/updates.json の先頭に更新情報を追記（`type: "new"`）
-- [ ] apps/guide/index.html の早見表に1行追加
+- [ ] apps/guide/index.html の早見表に1行追加（1対1の内面・対話ツールは載せない）
 - [ ] apps/{name}/AGENTS.md（逸脱の明文化を含む）
 - [ ] lint.sh の RTDB_HTML_FILES（RTDB の場合）
 - [ ] lint エラー0・警告0
