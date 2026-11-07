@@ -960,7 +960,7 @@ function buildRulesContent() {
     </ul>`).join('');
   return `
     <h3 class="rules-h">どんなゲーム？</h3>
-    <p>村の中にかくれている「人狼」を、みんなの話し合いで見つけ出すゲームです。人狼は正体をかくして生きのこることをめざします。</p>
+    <p>村の中に隠れている「人狼」を、みんなの話し合いで見つけ出すゲームです。人狼は正体を隠して生き残ることを目指します。</p>
     <h3 class="rules-h">ゲームの流れ</h3>
     <ol class="rules-flow">
       <li><b>夜</b>：占い師や人狼などが、こっそり動きます（1日目の夜はおそいません）</li>
@@ -968,7 +968,7 @@ function buildRulesContent() {
       <li><b>昼</b>：みんなで話し合って、あやしい人を考えます</li>
       <li><b>投票</b>：いちばんあやしい人を1人選びます（追放）</li>
     </ol>
-    <p class="rules-note">この流れをくりかえします。</p>
+    <p class="rules-note">この流れをくり返します。</p>
     <h3 class="rules-h">勝ち負け</h3>
     <ul class="rules-win">
       <li><b>村人チーム</b>：人狼を全員見つけたら勝ち</li>
@@ -1700,7 +1700,7 @@ function setupNightActionUI(room, players) {
       // 初日の夜は襲撃がないので護衛もなし（翌日の連続護衛ブロックも残さない）
       document.getElementById('night-role-sub').textContent = '初日の夜は守らなくて大丈夫です';
       area.innerHTML = `<div class="night-panel">
-        <p style="font-size:13px;color:#94a3b8;line-height:1.7">初日の夜は襲撃がないので、守らなくて大丈夫です。<br>静かに待ちましょう。</p>
+        <p style="font-size:13px;color:#94a3b8;line-height:1.7">初日の夜は人狼が誰もおそわないので、守らなくて大丈夫です。<br>静かに待ちましょう。</p>
       </div>`;
       waitPanel.style.display = 'block';
     } else {

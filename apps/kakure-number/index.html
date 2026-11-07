@@ -316,7 +316,7 @@
     <section class="app-entry">
       <div class="app-hero"><img class="app-illust" src="../assets/illustrations/kakure-number.webp" alt="" width="156" height="156" decoding="async" onerror="this.parentNode.remove()" /></div>
       <h1 class="kkn-hero__title app-title">かくれナンバー</h1>
-      <p class="kkn-hero__sub app-catch">自分の数字と隠しカードは見えない！<br>声できき合って、みんなの合計をよそうしよう</p>
+      <p class="kkn-hero__sub app-catch">自分の数字と隠しカードは見えない！<br>声で聞き合って、みんなの合計を予想しよう</p>
       <div class="kkn-hero__buttons app-entry__actions">
         <button class="btn btn-primary btn-lg btn-full" onclick="goHostSetup()">
           <span class="material-symbols-rounded">add_home</span>
@@ -471,12 +471,12 @@
 
     <!-- ゲスト用 -->
     <div id="thinking-guest" style="display:none">
-      <p class="kkn-talk-hint">「？」は2まい。自分の数字と、誰にも見えない隠しカード。<br>「わたしの数字、大きい？」みたいに声できき合って、合計をよそうしよう</p>
+      <p class="kkn-talk-hint">「？」は2枚。自分の数字と、誰にも見えない隠しカード。<br>「わたしの数字、大きい？」みたいに声で聞き合って、合計を予想しよう</p>
       <div class="kkn-number-grid" id="thinking-number-grid"></div>
-      <p class="kkn-range-note">隠しカードは誰にも見えません。1〜10のどれかで、合計にふくまれます</p>
+      <p class="kkn-range-note">隠しカードは誰にも見えません。1〜10のどれかで、合計に含まれます</p>
 
       <div id="guess-input-area">
-        <label class="kkn-section-label" for="guess-input" style="display:block">合計のよそう（？の2まいもふくむ）</label>
+        <label class="kkn-section-label" for="guess-input" style="display:block">合計の予想（？の2枚も含む）</label>
         <div class="kkn-stepper">
           <button type="button" class="kkn-stepper__btn" aria-label="1へらす" onclick="stepGuess(-1)">
             <span class="material-symbols-rounded">remove</span>
@@ -503,7 +503,7 @@
 
     <!-- ホスト用の進行欄（数字は表示しない。ホストも遊ぶときは上のゲスト用と並べて出す） -->
     <div id="thinking-host" style="display:none">
-      <p class="kkn-talk-hint" id="host-talk-hint">みんなが声できき合いながら考える時間です</p>
+      <p class="kkn-talk-hint" id="host-talk-hint">みんなが声で聞き合いながら考える時間です</p>
       <div class="kkn-status-count" id="host-submit-count"></div>
       <div class="kkn-submit-list" id="host-submit-list"></div>
       <button class="btn btn-ghost btn-full" id="btn-close-round" onclick="hostCloseRound()">締め切る</button>
@@ -529,7 +529,7 @@
       <div class="kkn-total-box__value" id="reveal-total">0</div>
     </div>
 
-    <div class="kkn-section-label">みんなの数字とよそう</div>
+    <div class="kkn-section-label">みんなの数字と予想</div>
     <div class="kkn-reveal-list" id="reveal-list"></div>
 
     <div class="kkn-section-label">これまでのポイント</div>
@@ -1492,7 +1492,7 @@
       document.getElementById('guess-input-area').style.display     = mySubmitted ? 'none' : 'block';
       document.getElementById('guess-submitted-area').style.display = mySubmitted ? 'block' : 'none';
       document.getElementById('guess-range-note').textContent =
-        `よそうできるのは ${_guessRange.min}〜${_guessRange.max}`;
+        `予想できるのは ${_guessRange.min}〜${_guessRange.max}`;
       if (mySubmitted) {
         document.getElementById('my-guess-display').textContent = guesses[state.nickname];
         document.getElementById('guess-waiting-count').textContent =
@@ -1603,7 +1603,7 @@
         <div class="kkn-reveal-row kkn-reveal-row--field">
           <div class="kkn-reveal-row__number">${esc(String(round.fieldNumber))}</div>
           <div class="kkn-reveal-row__name">隠しカード</div>
-          <div class="kkn-reveal-row__guess">誰にも見えなかった1まい</div>
+          <div class="kkn-reveal-row__guess">誰にも見えなかった1枚</div>
         </div>`;
     }
     Object.keys(numbers).forEach((name) => {
@@ -1625,8 +1625,8 @@
           : '';
 
       const guessHtml = guess !== undefined
-        ? `よそう <strong>${esc(String(guess))}</strong>`
-        : 'よそうなし';
+        ? `予想 <strong>${esc(String(guess))}</strong>`
+        : '予想なし';
       const leftTag = gone ? '<span class="kkn-reveal-row__left">（退出）</span>' : '';
       const meTag = isMe ? '<span style="font-size:11px;color:var(--color-accent)">（あなた）</span>' : '';
 
@@ -1926,7 +1926,7 @@
     const submitted = dealt.filter(name => guesses[name] !== undefined).length;
     setSpecContent(`
       <div class="kkn-round-banner">ラウンド ${esc(String(round.number || 1))}</div>
-      <p class="kkn-talk-hint">「？」は2まい。自分の数字と、誰にも見えない隠しカード。<br>声できき合って、合計をよそうしよう</p>
+      <p class="kkn-talk-hint">「？」は2枚。自分の数字と、誰にも見えない隠しカード。<br>声で聞き合って、合計を予想しよう</p>
       <div class="kkn-status-count">${submitted} 人 / ${dealt.length} 人がきめた</div>
       <div class="kkn-submit-list">${submitListHtml(dealt, guesses, room.players || {})}</div>`);
   }
@@ -1941,7 +1941,7 @@
         <div class="kkn-total-box__label">本当の合計</div>
         <div class="kkn-total-box__value">${esc(String(round.total ?? '-'))}</div>
       </div>
-      <div class="kkn-section-label">みんなの数字とよそう</div>
+      <div class="kkn-section-label">みんなの数字と予想</div>
       <div class="kkn-reveal-list">${revealListHtml(round, players, null)}</div>
       <div class="kkn-section-label">これまでのポイント</div>
       <div class="kkn-score-chips">${scoreChipsHtml(room, null)}</div>`);
@@ -2018,7 +2018,7 @@
   RoomkHowto.init({
     slides: 'slides.html',
     title: 'あそびかた',
-    lead: '自分の数字と場の「隠しカード」が見えない！声できき合って、全部の数字の合計をよそうするゲーム。',
+    lead: '自分の数字と場の「隠しカード」が見えない！声で聞き合って、全部の数字の合計を予想するゲーム。',
     sections: [
       { heading: 'はじめかた', items: [
         'ホストが「ルームを作る（ホスト）」からルームを作る',
@@ -2027,9 +2027,9 @@
         'ホストは待合室の「自分もプレイヤーとして参加する」にチェックを入れると、いっしょに数字を配られて遊べる（入れないときは進行だけ）。遊ぶ人が3〜8人で始められる',
       ] },
       { heading: 'すすめかた', items: [
-        '1〜10の数字がひとりに1つ。それとは別に、誰にも見えない「隠しカード」が1まい場に出る',
-        '数字がくばられたら、「わたしの数字、大きい？」みたいに声やチャットできき合う',
-        '合計（自分の？と隠しカードもふくむ）をよそうして「きめた」を押す',
+        '1〜10の数字がひとりに1つ。それとは別に、誰にも見えない「隠しカード」が1枚、場に出る',
+        '数字が配られたら、「わたしの数字、大きい？」みたいに声やチャットで聞き合う',
+        '合計（自分の？と隠しカードも含む）を予想して「きめた」を押す',
         '答え合わせで、本当の合計にいちばん近かった人にポイントが入る',
       ] },
       { heading: 'おわりかた', text: 'ホストが「つぎへ」を押すとつぎのラウンド、「そのほかの操作」の「おわる」を押すとおしまい。' },

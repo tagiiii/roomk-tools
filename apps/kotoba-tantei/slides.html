@@ -241,7 +241,7 @@ function board(showColor){
   ];
   return '<div class="board">'+cells.map(([w,r])=>{
     const cls = showColor ? r : '';
-    const inner = (showColor && r==='trap') ? '<span class="material-symbols-rounded">skull</span>' : w;
+    const inner = (showColor && r==='trap') ? '<span class="material-symbols-rounded">block</span>' : w;
     return `<div class="cell ${cls}">${inner}</div>`;
   }).join('')+'</div>';
 }
@@ -314,7 +314,7 @@ const SLIDES = [
     body:`<div class="rows">
       <div class="row"><div class="row__ic teal-bg" style="color:#fff;background:#3C78D8"><span class="material-symbols-rounded">verified</span></div><div><div class="row__t">味方カード → 先に全部見つけたチームの勝ち！</div><div class="row__d">これが目標。チームの色のカードを集めよう</div></div></div>
       <div class="row"><div class="row__ic" style="color:#fff;background:#C2B69E"><span class="material-symbols-rounded">do_not_disturb_on</span></div><div><div class="row__t">相手カード／関係ないカード → 番が交代</div><div class="row__d">相手の色を選ぶと、相手を助けてしまうことも</div></div></div>
-      <div class="row"><div class="row__ic" style="color:#fff;background:#3A3A3A"><span class="material-symbols-rounded">skull</span></div><div><div class="row__t">トラップカード → 選んだら、そのチームは即まけ</div><div class="row__d">25枚に1枚だけまぎれてる。ぜったいに当てないで！</div></div></div>
+      <div class="row"><div class="row__ic" style="color:#fff;background:#3A3A3A"><span class="material-symbols-rounded">block</span></div><div><div class="row__t">トラップカード → 選んだら、そのチームは即まけ</div><div class="row__d">25枚に1枚だけまぎれてる。ぜったいに当てないで！</div></div></div>
     </div>`,
     note:'カードは4種類。\n味方カード…全部先に見つけたチームが勝ち！\n関係ないカード／相手カード…選ぶと番が交代。\nトラップカード…これを選んだら、そのチームは即まけ。1枚だけまぎれてるよ、気をつけて！' },
 

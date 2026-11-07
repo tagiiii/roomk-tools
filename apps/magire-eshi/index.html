@@ -280,7 +280,7 @@
         <label class="form-label" for="host-nickname">ニックネーム（8文字以内）</label>
         <input class="form-input" id="host-nickname" type="text" maxlength="8" placeholder="例: たろう">
       </div>
-      <p style="font-size:13px;color:var(--color-muted);margin-bottom:12px">ルームを作った人は進める係になります（待合室で、自分も描いて遊ぶかを選べます）</p>
+      <p style="font-size:13px;color:var(--color-muted);margin-bottom:12px">ルームを作った人は進行役になります（待合室で、自分も描いて遊ぶかを選べます）</p>
       <button class="btn btn-primary btn-full" onclick="hostCreateRoom()">
         <span class="material-symbols-rounded" aria-hidden="true">add_home</span>ルームを作成する
       </button>
@@ -2000,7 +2000,7 @@ function handleReveal(room, players) {
   const confirmedCount = guests.filter(n => players[n].confirmed).length;
   document.getElementById('rv-count').textContent = `${confirmedCount} / ${guests.length} 人`;
   renderPlayerList('rv-player-list', players, (nick, p) => {
-    if (!guests.includes(nick)) return '<span style="font-size:13px;color:var(--color-muted)">進める係</span>';
+    if (!guests.includes(nick)) return '<span style="font-size:13px;color:var(--color-muted)">進行役</span>';
     return p.confirmed
       ? '<span class="mgr-tag mgr-tag--ok">確認済み</span>'
       : '<span style="font-size:13px;color:var(--color-muted)">確認中</span>';
@@ -2709,7 +2709,7 @@ function renderSpecReveal(room, players) {
   setSpecHtml('spec-content', `<div class="card">
       <p class="mgr-section-lbl">確認状況 ${confirmed} / ${guests.length} 人</p>
       ${specPlayerListHtml(players, (nick, p) => {
-        if (!guests.includes(nick)) return '<span style="font-size:13px;color:var(--color-muted)">進める係</span>';
+        if (!guests.includes(nick)) return '<span style="font-size:13px;color:var(--color-muted)">進行役</span>';
         return p.confirmed ? '<span class="mgr-tag mgr-tag--ok">確認済み</span>'
           : '<span style="font-size:13px;color:var(--color-muted)">確認中</span>';
       })}

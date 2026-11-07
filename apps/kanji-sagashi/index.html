@@ -16,7 +16,7 @@
 
     <header class="ks-header">
       <h1 class="ks-header__title app-title">漢字さがし</h1>
-      <p class="ks-header__sub">にている漢字の中から正しい漢字をさがそう！</p>
+      <p class="ks-header__sub">似ている漢字の中から正しい漢字を探そう！</p>
     </header>
 
     <!-- ===== 設定画面 ===== -->
@@ -24,10 +24,10 @@
       <div class="card ks-card app-entry">
         <div class="app-hero"><img class="app-illust" src="../assets/illustrations/kanji-sagashi.webp" alt="" width="156" height="156" decoding="async" onerror="this.parentNode.remove()" /></div>
         <h1 class="app-title">漢字さがし</h1>
-        <p class="app-catch">にている漢字の中から正しい漢字をさがそう！</p>
-        <p class="ks-intro__lead app-entry__lead">にている漢字がならんだ中から、お題の漢字がいくつあるかを数える。1問15〜30秒で、好きなだけつづけられる（5〜10分くらい）。</p>
+        <p class="app-catch">似ている漢字の中から正しい漢字を探そう！</p>
+        <p class="ks-intro__lead app-entry__lead">似ている漢字が並んだ中から、お題の漢字がいくつあるかを数える。1問15〜30秒で、好きなだけ続けられる（5〜10分くらい）。</p>
         <ul class="ks-intro__notes app-entry__notes">
-          <li>数がちがっても大丈夫。答えを見てたしかめよう</li>
+          <li>数が違っても大丈夫。答えを見て確かめよう</li>
           <li>むずかしいときは「やさしい」や長い時間にしてOK</li>
         </ul>
         <div class="ks-settings__group">
@@ -67,7 +67,7 @@
     <!-- ===== お題プレビュー ===== -->
     <main id="screen-preview" class="ks-screen">
       <div class="ks-preview">
-        <p class="ks-preview__label">この漢字をさがそう！</p>
+        <p class="ks-preview__label">この漢字を探そう！</p>
         <p class="ks-preview__kanji" id="preview-kanji" aria-live="polite"></p>
         <p class="ks-preview__hint" id="preview-hint"></p>
         <button class="btn btn-primary btn-lg" id="btn-start-round" type="button">
@@ -114,24 +114,24 @@
 
   </div>
 
-  <script type="module" src="app.js"></script>
+  <script type="module" src="app.js?v=20261107s2"></script>
   <script src="../shared/js/stats.js?v=1" defer></script>
   <script src="../shared/js/howto.js"></script>
   <script>
     RoomkHowto.init({
       title: 'あそびかた',
-      lead: 'にている漢字がならんだ中から、お題の漢字がいくつあるかをさがす観察ゲーム。',
+      lead: '似ている漢字が並んだ中から、お題の漢字がいくつあるかを探す観察ゲーム。',
       sections: [
         { heading: 'はじめかた', items: [
-          'むずかしさと制限時間をえらんで、「はじめる」を押す',
-          'さがす漢字をたしかめて、「スタート」を押す',
+          'むずかしさと制限時間を選んで、「はじめる」を押す',
+          '探す漢字を確かめて、「スタート」を押す',
         ] },
         { heading: 'すすめかた', items: [
-          '時間がおわるまでに、お題の漢字がいくつあるか数える',
+          '時間が終わるまでに、お題の漢字がいくつあるか数える',
           '何個見つけたか言い合ってから、「答えを見る」を押す',
-          '「次の問題」で続ける。「設定を変える」で最初の画面にもどる',
+          '「次の問題」で続ける。「設定を変える」で最初の画面に戻る',
         ] },
-        { heading: 'おわりかた', text: '好きなタイミングで終わってOK。とくに操作はいらない。' },
+        { heading: 'おわりかた', text: '好きなタイミングで終わってOK。特に操作はいらない。' },
       ],
     });
   </script>

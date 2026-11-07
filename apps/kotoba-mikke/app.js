@@ -176,7 +176,7 @@ function renderOdai() {
 function buildCopyText() {
   return [
     `「${state.initial}」からはじまる、${state.theme}`,
-    '思いついたら チャットで送ってね',
+    '思いついたら、チャットで送ってね',
   ].join('\n');
 }
 

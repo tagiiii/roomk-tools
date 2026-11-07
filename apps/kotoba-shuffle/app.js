@@ -3,10 +3,10 @@ import { WORDS } from './words.js';
 
 /* ── レベル定義 ── */
 const LEVELS = [
-  { id: 'easy',   label: 'かんたん',   chars: 3, icon: 'looks_3',  desc: '3もじ' },
-  { id: 'normal', label: 'ふつう',     chars: 4, icon: 'looks_4',  desc: '4もじ' },
-  { id: 'hard',   label: 'むずかしい', chars: 5, icon: 'looks_5',  desc: '5もじ' },
-  { id: 'expert', label: 'ちょうせん', chars: 6, icon: 'looks_6',  desc: '6もじ' },
+  { id: 'easy',   label: 'かんたん',   chars: 3, icon: 'looks_3',  desc: '3文字' },
+  { id: 'normal', label: 'ふつう',     chars: 4, icon: 'looks_4',  desc: '4文字' },
+  { id: 'hard',   label: 'むずかしい', chars: 5, icon: 'looks_5',  desc: '5文字' },
+  { id: 'expert', label: 'ちょうせん', chars: 6, icon: 'looks_6',  desc: '6文字' },
 ];
 
 const QUESTIONS_PER_ROUND = 5;
@@ -222,8 +222,8 @@ function checkAnswer() {
     slot.classList.add(isCorrect ? 'ks-slot--correct' : 'ks-slot--wrong');
   });
 
-  feedbackResult.textContent = isCorrect ? 'せいかい！' : 'おしい！';
-  feedbackWord.textContent = `こたえ: ${correct}`;
+  feedbackResult.textContent = isCorrect ? '正解！' : 'おしい！';
+  feedbackWord.textContent = `答え: ${correct}`;
   feedbackArea.hidden = false;
   btnNext.hidden = false;
   btnHint.hidden = true;
@@ -231,7 +231,7 @@ function checkAnswer() {
 
   btnNext.innerHTML = state.index >= state.deck.length - 1
     ? '<span class="material-symbols-rounded">emoji_events</span> 結果を見る'
-    : '<span class="material-symbols-rounded">arrow_forward</span> 次のもんだい';
+    : '<span class="material-symbols-rounded">arrow_forward</span> 次の問題';
 
   popIn(feedbackArea);
 }
@@ -249,7 +249,7 @@ function showHint() {
   popIn(hintArea);
 }
 
-/* ── やりなおす ── */
+/* ── やり直す ── */
 function resetTiles() {
   if (state.solved) return;
   state.placedChars = new Array(state.currentWord.word.length).fill(null);

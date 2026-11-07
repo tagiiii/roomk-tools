@@ -18,13 +18,13 @@
       <section class="ks-top-panel card app-entry">
         <div class="app-hero"><img class="app-illust" src="../assets/illustrations/kotoba-shuffle.webp" alt="" width="156" height="156" decoding="async" onerror="this.parentNode.remove()" /></div>
         <h1 class="ks-hero__title app-title">ことばシャッフル</h1>
-        <p class="ks-hero__sub app-catch">バラバラの文字をならべかえて、ことばを当てよう</p>
-        <p class="ks-intro__lead app-entry__lead">バラバラになった文字をならべかえて、もとのことばを当てる。1回のちょうせんは5問、5〜10分くらい。</p>
+        <p class="ks-hero__sub app-catch">バラバラの文字を並べ替えて、ことばを当てよう</p>
+        <p class="ks-intro__lead app-entry__lead">バラバラになった文字を並べ替えて、元のことばを当てる。1回の挑戦は5問、5〜10分くらい。</p>
         <ul class="ks-intro__notes app-entry__notes">
-          <li>こまったら「ヒント」を押してOK</li>
+          <li>困ったら「ヒント」を押してOK</li>
           <li>レベルは文字の数。「かんたん」からでOK</li>
         </ul>
-        <h2 class="ks-top-panel__title">もんだいのレベル</h2>
+        <h2 class="ks-top-panel__title">問題のレベル</h2>
         <div class="ks-level-grid" id="levelGrid" role="radiogroup" aria-label="レベル選択"></div>
         <div class="ks-top-panel__actions app-entry__actions">
           <button class="btn btn-primary btn-lg" id="btnStart" disabled>
@@ -63,7 +63,7 @@
           </button>
           <button class="btn btn-ghost" id="btnReset">
             <span class="material-symbols-rounded">restart_alt</span>
-            やりなおす
+            やり直す
           </button>
         </div>
 
@@ -76,7 +76,7 @@
         <div class="ks-play-actions">
           <button class="btn btn-secondary btn-lg" id="btnNext" hidden>
             <span class="material-symbols-rounded">arrow_forward</span>
-            次のもんだい
+            次の問題
           </button>
         </div>
       </div>
@@ -86,7 +86,7 @@
     <section class="ks-screen" id="screen-end" hidden>
       <div class="ks-end card">
         <span class="material-symbols-rounded ks-end__icon">celebration</span>
-        <p class="ks-end__label">おわり</p>
+        <p class="ks-end__label">終わり</p>
         <h2 class="ks-end__title" id="endLevel"></h2>
         <p class="ks-end__score" id="endScore">0 / 0</p>
         <p class="ks-end__sub" id="endMessage"></p>
@@ -105,25 +105,25 @@
 
   </main>
 
-  <script type="module" src="app.js"></script>
+  <script type="module" src="app.js?v=20261107s2"></script>
   <script src="../shared/js/stats.js?v=1" defer></script>
   <script src="../shared/js/howto.js"></script>
   <script>
     RoomkHowto.init({
       title: 'あそびかた',
-      lead: 'バラバラになった文字をならべかえて、もとのことばを当てるあそび。1回のちょうせんは5問。',
+      lead: 'バラバラになった文字を並べ替えて、元のことばを当てるあそび。1回の挑戦は5問。',
       sections: [
         { heading: 'はじめかた', items: [
-          'もんだいのレベル（文字数）をえらぶ',
+          '問題のレベル（文字数）を選ぶ',
           '「スタート」を押す',
         ] },
         { heading: 'すすめかた', items: [
-          'バラバラの文字を、正しいじゅんばんに押してならべる',
-          'ならべた文字を押すと、もとにもどせる',
-          'こまったら「ヒント」、ならべなおしたいときは「やりなおす」を押す',
-          'ぜんぶならべると答え合わせになるので、「次のもんだい」を押す',
+          'バラバラの文字を、正しい順番に押して並べる',
+          '並べた文字を押すと、元に戻せる',
+          '困ったら「ヒント」、並べ直したいときは「やり直す」を押す',
+          '全部並べると答え合わせになるので、「次の問題」を押す',
         ] },
-        { heading: 'おわりかた', text: '5問おわると結果が出る。「もう一度あそぶ」か「トップへ戻る」をえらぶ。' },
+        { heading: 'おわりかた', text: '5問終わると結果が出る。「もう一度あそぶ」か「トップへ戻る」を選ぶ。' },
       ],
     });
   </script>
