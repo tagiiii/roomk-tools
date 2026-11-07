@@ -237,11 +237,11 @@ const fieldOf = (cards, by, rules) => ({ play: E.analyze(cards, E.normRules(rule
   ok(!E.analyze(['X1'], R)[0].eight && E.analyze(['X1'], R)[0].tens === 0, 'ジョーカー: 1枚だけなら効果はない');
   ok(!E.analyze(['S9', 'X1'], R)[0].eight && E.analyze(['S9', 'X1'], R)[0].tens === 0, 'ジョーカー: 9＋ジョーカーは9');
   const st = E.analyze(['S6', 'S7', 'X1'], R);
-  ok(st.length === 2 && st.find((r) => r.low === 6).eight && !st.find((r) => r.low === 5).eight, 'ジョーカー: 階段の8の位置なら8切り');
+  ok(st.length === 2 && st.every((r) => !r.eight), 'ジョーカー: 階段では8の位置でも8切りにならない（2026-11-08）');
   const g = E.play(state([['S10', 'X1', 'C3', 'C4'], ['C9']], { rules: { tenDiscard: true } }), 0, ['S10', 'X1']);
   ok(g && g.pending && g.pending.n === 2, 'ジョーカー: 10＋ジョーカーで2枚捨てられる');
   const h = E.play(state([['S6', 'S7', 'X1', 'C3'], ['C9']]), 0, ['S6', 'S7', 'X1']);
-  ok(h && h.last.flow && h.turn === 0 && h.last.fx.includes('eight'), 'ジョーカー: 6・7・ジョーカーは 6・7・8 と読んで8切り');
+  ok(h && !h.last.flow && h.turn === 1 && !h.last.fx.includes('eight'), 'ジョーカー: 6・7・ジョーカーを出しても8切りにならない');
   const i = E.play(state([['S9', 'X1', 'C3'], ['C9']], { rules: { tenDiscard: true } }), 0, ['S9', 'X1']);
   ok(i && !i.pending, 'ジョーカー: 9＋ジョーカーでは捨てられない');
   const j = E.play(state([['S11', 'X1', 'C3'], ['C9']], { rules: { elevenBack: true } }), 0, ['S11', 'X1']);
@@ -361,25 +361,63 @@ const fieldOf = (cards, by, rules) => ({ play: E.analyze(cards, E.normRules(rule
   // 7渡しで最後のカードをわたしたらあがり。反則あがりの札なら反則
   const s7g = E.give7(E.play(state([['S7', 'S15'], ['C9'], ['D9']], { rules: { sevenGive: true, forbiddenFinish: true } }), 0, ['S7']), 0, ['S15']);
   ok(s7g && s7g.done[0] && s7g.fouls.includes(0), '7渡し: 2をわたして手札がなくなったら反則あがり');
-  // 10捨てと7渡しの両方（7・8・9・10の階段＋8切り）: 捨てる→わたす→場が流れる
-  const both = E.play(state([['S7', 'S8', 'S9', 'S10', 'C3', 'C4'], ['C9'], ['D9']], { rules: { sevenGive: true, tenDiscard: true } }), 0, ['S7', 'S8', 'S9', 'S10']);
-  ok(both && both.pending.kind === 'discard' && both.pending.then.length === 1 && both.last.fx.includes('eight'), '7渡し＋10捨て: まず捨てる');
-  const both2 = E.discard(both, 0, ['C3']);
-  ok(both2 && both2.pending && both2.pending.kind === 'give7' && both2.pending.n === 1 && both2.last.fx.includes('seven'), '7渡し＋10捨て: 次にわたす');
-  const both3 = E.give7(both2, 0, []);
-  ok(both3 && both3.last.flow && both3.turn === 0 && !both3.pending, '7渡し＋10捨て: 終わったら8切りで場が流れて自分から');
-  const bothE = E.play(state([['S7', 'S8', 'S9', 'S10', 'C3'], ['C9'], ['D9']], { rules: { sevenGive: true, tenDiscard: true } }), 0, ['S7', 'S8', 'S9', 'S10']);
-  const bothEmpty = E.discard(bothE, 0, ['C3']);
-  ok(bothEmpty && bothEmpty.done[0] && !bothEmpty.pending, '7渡し＋10捨て: 捨てて手札がなくなったら、わたす待ちはなしであがり');
+  // 階段では1枚の効果（8切り・10捨て・7渡し・イレブンバック・Qボンバー・5飛び・4止め）は起きない（2026-11-08）
+  const ALL = { sevenGive: true, tenDiscard: true, eightCut: true, elevenBack: true, qBomb: true, fiveSkip: true, fourStop: true };
+  const st1 = E.play(state([['S7', 'S8', 'S9', 'S10', 'C3', 'C4'], ['C9'], ['D9']], { rules: ALL }), 0, ['S7', 'S8', 'S9', 'S10']);
+  ok(st1 && !st1.pending && !st1.last.flow && st1.turn === 1 && st1.last.fx.join() === 'revolution', '階段: 7・8・9・10 で7渡し・8切り・10捨ては起きない', st1 && st1.last);
+  const st2 = E.play(state([['S10', 'S11', 'S12', 'C3'], ['C9'], ['D9']], { rules: ALL }), 0, ['S10', 'S11', 'S12']);
+  ok(st2 && !st2.back && !st2.pending && !st2.last.flow && st2.turn === 1, '階段: 10・J・Q でイレブンバック・Qボンバー・10捨ては起きない');
+  const st3 = E.play(state([['S3', 'S4', 'S5', 'C3'], ['C9'], ['D9'], ['H9']], { rules: ALL }), 0, ['S3', 'S4', 'S5']);
+  ok(st3 && !st3.last.flow && st3.turn === 1 && !st3.last.skipped, '階段: 3・4・5 で4止め・5飛びは起きない');
+  const st4 = E.play(state([['S5', 'S6', 'S7', 'S8', 'C3'], ['C9']], { rules: ALL }), 0, ['S5', 'S6', 'S7', 'S8']);
+  ok(st4 && st4.rev && st4.last.fx.join() === 'revolution', '階段: 階段革命は起きる（8切りは起きない）');
+  const st5 = E.play(state([['S8', 'H8', 'C3'], ['C9']], { rules: ALL }), 0, ['S8', 'H8']);
+  ok(st5 && st5.last.flow && st5.last.fx.includes('eight'), '階段でなければ、同じ数の組の8切りはこれまでどおり');
   // ジョーカーだけを7として
   ok(E.asOptions(E.normRules({ sevenGive: true })).join() === '7,8', 'as: 7渡しがオンなら7も選べる');
   const aj7 = E.play(state([['X1', 'C3'], ['C9'], ['D9']], SG), 0, ['X1'], 7);
   ok(aj7 && aj7.pending && aj7.pending.kind === 'give7' && aj7.pending.n === 1, 'as: 7として出すとわたせる');
-  // 5飛びのあとに7渡し: わたす相手は次の席、とばすのはそのあと
-  const s57 = E.play(state([['S5', 'S6', 'S7', 'C3'], ['C9'], ['D9'], ['H9']], { rules: { sevenGive: true, fiveSkip: true } }), 0, ['S5', 'S6', 'S7']);
-  ok(s57 && s57.pending.kind === 'give7' && s57.pending.skip === 1, '5飛び＋7渡し: わたす待ちに、とばす数を持ちこす');
-  const s57b = E.give7(s57, 0, []);
-  ok(s57b && s57b.turn === 2 && s57b.last.skipped.join() === '1', '5飛び＋7渡し: わたしたあとに1人とばす');
+  // 3連しばり（2026-11-08）: 同じマークが3回続くとしばり
+  const L3 = { rules: { lock3: true } };
+  let t3 = E.play(state([['S5', 'C14'], ['S6', 'H10'], ['S7', 'D12'], ['S9', 'H12']], L3), 0, ['S5']);
+  t3 = E.play(t3, 1, ['S6']);
+  ok(t3 && !t3.lock && t3.lockRun === 2, '3連しばり: 2回ではかからない');
+  t3 = E.play(t3, 2, ['S7']);
+  ok(t3 && t3.lock && t3.lock[0] === 'S' && t3.last.fx.includes('lock'), '3連しばり: 3回続いてかかる');
+  ok(E.check(t3, 3, ['H12']).reason === 'lock' && E.check(t3, 3, ['S9']).ok, '3連しばり: かかったら同じマークだけ');
+  let t3b = E.play(state([['S5', 'C14'], ['S6', 'H10'], ['H11', 'D12'], ['H12', 'S9']], L3), 0, ['S5']);
+  t3b = E.play(t3b, 1, ['S6']);
+  t3b = E.play(t3b, 2, ['H11']);
+  t3b = E.play(t3b, 3, ['H12']);
+  ok(t3b && !t3b.lock && t3b.lockRun === 2, '3連しばり: マークが変わったら数えなおす');
+  let t3j = E.play(state([['S5', 'C14'], ['S6', 'X1'], ['S9', 'D12'], ['S10', 'S11']], L3), 0, ['S5']);
+  t3j = E.play(t3j, 1, ['S6']);
+  t3j = E.play(t3j, 2, ['S9']);
+  ok(t3j && t3j.lock, '3連しばり: 1枚ずつ3回で');
+  let t3x = E.play(state([['S5', 'C14'], ['X1', 'H10'], ['S8', 'D12'], ['S9', 'S10']], L3), 0, ['S5']);
+  t3x = E.play(t3x, 1, ['X1']);
+  ok(t3x && t3x.lockRun === 0, '3連しばり: ジョーカーが入ると数えなおす');
+  let t3p = E.play(state([['S5', 'H5', 'C14'], ['S6', 'H6', 'D10'], ['S7', 'H7', 'D12']], L3), 0, ['S5', 'H5']);
+  t3p = E.play(t3p, 1, ['S6', 'H6']);
+  t3p = E.play(t3p, 2, ['S7', 'H7']);
+  ok(t3p && t3p.lock && t3p.lock.join() === 'H,S', '3連しばり: ペアでも同じマークの組が3回でかかる');
+  let t3f = E.play(state([['S5', 'C14'], ['S6', 'H10'], ['D9', 'D12']], L3), 0, ['S5']);
+  t3f = E.play(t3f, 1, ['S6']);
+  t3f = E.pass(t3f, 2);
+  t3f = E.pass(t3f, 0);
+  ok(t3f && t3f.last.flow && t3f.lockRun === 0, '3連しばり: 場が流れたら数えなおす');
+  let t2 = E.play(state([['S5', 'C14'], ['S6', 'H10'], ['S7', 'D12']], { rules: { lock: true, lock3: true } }), 0, ['S5']);
+  t2 = E.play(t2, 1, ['S6']);
+  ok(t2 && t2.lock, '3連しばり: しばりもオンなら2回でかかる');
+  let t0 = E.play(state([['S5', 'C14'], ['S6', 'H10'], ['S7', 'D12']]), 0, ['S5']);
+  t0 = E.play(t0, 1, ['S6']);
+  t0 = E.play(t0, 2, ['S7']);
+  ok(t0 && !t0.lock, '3連しばり: どちらもオフならかからない');
+  // 古い状態（lockRun がない）でも、前の手から数えて2回目のしばりはかかる
+  const old = state([['S6', 'C3'], ['C9']], { rules: { lock: true }, field: fieldOf(['S5'], 1) });
+  delete old.lockRun;
+  const oldp = E.play(old, 0, ['S6']);
+  ok(oldp && oldp.lock, '古い状態でもしばりはかかる');
 
   // 都落ち: 前回の大富豪（prev[0]）が1番にあがれなかったら、その場で抜けて最後
   const M = { rules: { miyakoOchi: true }, prev: [2, 0, 1, 3] };
@@ -478,6 +516,7 @@ function playout(n, rules, seed, useCpu) {
     { tenDiscard: true, jokers: 2, forbiddenFinish: true },
     { numLock: true, lock: true, sevenGive: true, qBomb: true, fiveSkip: true, fourStop: true, tenDiscard: true, eightCut: true, jokers: 2 },
     { numLock: true, sevenGive: true, fiveSkip: true, revolution: true, elevenBack: true, forbiddenFinish: true, jokers: 1 },
+    { lock3: true, numLock: true, sevenGive: true, tenDiscard: true, eightCut: true, jokers: 2 },
   ];
   let bad = 0;
   let first = null;
