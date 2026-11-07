@@ -71,6 +71,7 @@
     .esa-player__status.is-done { color: var(--color-success); }
     .esa-player__disc { font-size: 12px; color: var(--color-error); font-weight: 700; margin-top: 4px; }
     .esa-player__taken { margin-top: 6px; display: flex; flex-wrap: wrap; gap: 4px; }
+    .esa-player__used { margin-top: 4px; font-size: 12px; color: var(--color-muted); }
     .esa-taken-chip {
       display: inline-flex; align-items: center; justify-content: center;
       min-width: 34px; height: 26px; padding: 0 8px; border-radius: 8px;
@@ -713,11 +714,16 @@ function buildMemberRow(room, nick) {
       : '<span class="esa-player__status">考え中…</span>';
   }
   const taken = buildTakenChips(m.taken, nick);
+  // 使ったカードは全員に見せる（記憶の手助け。AGENTS.md「公開情報の設計」）
+  const usedNums = Object.keys((m.used && m.used[nick]) || {})
+    .map(Number).filter((v) => Number.isInteger(v) && v >= 1 && v <= 15).sort((a, b) => a - b);
+  const usedLine = usedNums.length
+    ? '<p class="esa-player__used">出したカード：' + usedNums.join('・') + '</p>' : '';
   return '<li class="esa-player">'
     + '<div class="esa-player__head"><span class="esa-player__name">' + esc(nick) + '</span>' + hostTag + meTag
     + '<span class="esa-player__score">' + total + '点</span></div>'
     + status + disc
-    + '<div class="esa-player__taken">' + taken + '</div></li>';
+    + '<div class="esa-player__taken">' + taken + '</div>' + usedLine + '</li>';
 }
 
 function renderMembers(elId, room) {
