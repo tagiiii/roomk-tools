@@ -70,6 +70,7 @@ wordwolf_rooms/{roomCode}/
   ├── status:           string          # waiting | revealing | discussing | voting | result
   ├── citizenWord:      string          # 市民のお題
   ├── wolfWord:         string          # ウルフのお題
+  ├── usedPairs:        number[]        # このルームで使った組の位置（WORD_PAIRS の添字）。開始の transaction で、ここにない組から選ぶ。全部使ったら空からやり直す（2026-11-08 P3 監査）
   ├── discussionSecs:   number          # 討論時間（秒）
   ├── wolfCount:        number          # ウルフの人数
   ├── discussionEndsAt: number          # 討論終了タイムスタンプ（ms）
@@ -94,6 +95,7 @@ wordwolf_rooms/{roomCode}/
 - DevTools でのカンニングは性善説で許容する（スタッフ監視下での使用のため）
 
 ## 特有のルール・制約
+- お題の組は位置（WORD_PAIRS の添字）で usedPairs に覚える。組を差し替えるときは同じ位置で書きかえ、並べかえや途中への挿入はしない（2026-11-08）
 - ルームコードは6桁英数字（紛らわしい文字除外）
 - ニックネームは1〜8文字・同ルーム内重複NG
 - 遊ぶ人が3人以上でないとゲーム開始不可（進行だけのホストは数えない）
