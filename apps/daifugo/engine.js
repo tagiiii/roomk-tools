@@ -19,6 +19,7 @@
     eightCut: true,         // 8切り: 8を出すと場が流れて、もう一度出せる
     stairs: true,           // 階段: 同じマークで続いた数を3枚以上
     lock: false,            // しばり: 同じマークが続くと、流れるまでそのマークだけ
+    lock3: false,           // 3連しばり: 同じマークが3回続くと、流れるまでそのマークだけ（しばりもオンなら2回でかかる）
     elevenBack: false,      // イレブンバック: J を出すと、流れるまで強さが逆
     tenDiscard: false,      // 10捨て: 10を出すと、出した枚数まで手札を捨てられる
     spade3: false,          // スペ3返し: ジョーカー1枚には ♠3 で勝てる
@@ -93,7 +94,7 @@
     const k = n - nat.length;
     const base = { n, cards: cards.slice(), jokers: k, suits: nat.map(suitOf).sort() };
     // 8切り・10捨て・イレブンバック・7渡し・5飛び・Qボンバー・4止めの数え方。
-    // ジョーカーは、いっしょに出した数（階段ならその位置の数）として数える
+    // ジョーカーは、いっしょに出した数として数える。階段ではどれも起きない（1枚・同じ数の組だけ。2026-11-08）
     const fxOf = (low, high, perCard) => ({
       eight: low <= 8 && 8 <= high,
       tens: low <= 10 && 10 <= high ? perCard : 0,
@@ -125,7 +126,7 @@
       const low = lo - a;
       const high = hi + (extra - a);
       if (low < 3 || high > 15) continue;
-      out.push(Object.assign({}, base, { type: 'stairs', rank: low, low, high, suit: base.suits[0] }, fxOf(low, high, 1)));
+      out.push(Object.assign({}, base, { type: 'stairs', rank: low, low, high, suit: base.suits[0] }, fxOf(0, -1, 0)));
     }
     return out;
   }
@@ -212,6 +213,7 @@
     s.back = false;
     s.lock = null;
     s.numLock = null;
+    s.lockRun = 0;
   }
   function markDone(s, p, foul) {
     if (s.done[p]) return;
@@ -316,7 +318,7 @@
       rules: R, n, hands: sorted,
       done: sorted.map(() => false), places: [], fouls: [],
       passed: sorted.map(() => false),
-      turn: first, field: null, rev: false, back: false, lock: null, numLock: null,
+      turn: first, field: null, rev: false, back: false, lock: null, numLock: null, lockRun: 0,
       pending: null, over: false, seq: 0,
       prev: okPrev ? prev.slice() : null, fallen: null,
       exchange, exchanged: null, exSeq: -1,
@@ -378,7 +380,12 @@
     const revo = pl.n >= 4 && (pl.type === 'group' || s.rules.stairsRevolution);
     if (s.rules.revolution && revo) { s.rev = !s.rev; s.last.fx.push(s.rev ? 'revolution' : 'revolution-back'); }
     if (s.rules.elevenBack && pl.jacks > 0 && !s.back) { s.back = true; s.last.fx.push('back'); }
-    if (s.rules.lock && prev && !s.lock && !pl.jokers && !prev.jokers && pl.suits.join() === prev.suits.join()) {
+    // 同じマークが何回続いたか（ジョーカー入りの手は数えない）。古い状態で lockRun がないときは、前の手から数えなおす
+    const sameSuit = !!(prev && !pl.jokers && !prev.jokers && pl.suits.join() === prev.suits.join());
+    const run0 = typeof s.lockRun === 'number' && s.lockRun > 0 ? s.lockRun : (prev && !prev.jokers ? 1 : 0);
+    s.lockRun = pl.jokers ? 0 : sameSuit ? run0 + 1 : 1;
+    const lockAt = s.rules.lock ? 2 : s.rules.lock3 ? 3 : 0;
+    if (lockAt && !s.lock && s.lockRun >= lockAt) {
       s.lock = pl.type === 'stairs' ? [pl.suit] : pl.suits.slice();
       s.last.fx.push('lock');
     }
