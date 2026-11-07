@@ -236,6 +236,18 @@
     /* ── 進行ステータス ── */
     .ptm-progress { text-align: center; font-size: 14px; color: var(--color-muted); margin: 14px 0; }
 
+    /* ── 遊ぶ人が足りないときの案内と、ホストのそのほかの操作（2026-11-07） ── */
+    .ptm-few { margin-top: 20px; text-align: center; }
+    .ptm-few__text { font-size: 14px; color: var(--color-muted); line-height: 1.6; margin-bottom: 10px; }
+    .ptm-hostmenu { margin-top: 20px; padding: 4px 20px; }
+    .ptm-hostmenu summary { min-height: 44px; display: flex; align-items: center; gap: 6px; color: var(--color-muted); font-size: 14px; font-weight: 700; cursor: pointer; list-style: none; }
+    .ptm-hostmenu summary::-webkit-details-marker { display: none; }
+    .ptm-hostmenu summary::before { content: "expand_more"; font-family: "Material Symbols Rounded"; font-size: 22px; font-weight: 400; color: var(--color-accent); transition: transform .15s; }
+    .ptm-hostmenu[open] summary::before { transform: rotate(180deg); }
+    .ptm-hostmenu[open] { padding-bottom: 16px; }
+    .ptm-hostmenu__row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; padding: 8px 0; border-top: 1px solid var(--color-border); }
+    .ptm-hostmenu__note { font-size: 13px; color: var(--color-muted); line-height: 1.6; }
+
     /* ── きめた後の表示 ── */
     .ptm-decided { text-align: center; padding: 24px 12px 8px; }
     .ptm-decided__msg {
@@ -472,6 +484,20 @@
       <button class="btn btn-secondary btn-full" onclick="hostChangeSpeaker()">出題者を変える</button>
       <p class="text-muted text-center" style="margin-top:8px; font-size:13px">出題者の接続が切れています。新しいものさしで別の人に交代できます</p>
     </div>
+
+    <!-- ホスト用: 遊ぶ人が足りないとき（2026-11-07） -->
+    <div class="ptm-few" id="hinting-few" style="display:none">
+      <p class="ptm-few__text">遊ぶ人が足りないので、ここで終わりにできるよ</p>
+      <button class="btn btn-secondary btn-full" id="btn-hinting-finish" type="button" onclick="hostFinishEarly()">ここで終わる</button>
+    </div>
+    <!-- ホスト用: たまに使う操作（開くと出る） -->
+    <details class="card ptm-hostmenu" id="hinting-host-menu" style="display:none">
+      <summary>そのほかの操作</summary>
+      <div class="ptm-hostmenu__row">
+        <button class="btn btn-secondary btn-sm" id="btn-hinting-menu-finish" type="button" onclick="hostFinishEarly()">ここで終わる</button>
+        <span class="ptm-hostmenu__note">最終ランキングが出るよ</span>
+      </div>
+    </details>
   </div>
 </div>
 
@@ -521,7 +547,7 @@
         <div class="ptm-label">ターゲット（君だけに見えているよ）</div>
         <div id="guessing-target-meter"></div>
       </div>
-      <p class="text-muted text-center" style="font-size:14px">みんながメーターを動かしているよ</p>
+      <p class="text-muted text-center" id="guessing-speaker-note" style="font-size:14px">みんながメーターを動かしているよ</p>
     </div>
 
     <!-- ホスト用 -->
@@ -536,7 +562,22 @@
       <p class="text-muted text-center" id="reveal-hint" style="margin-top:8px; font-size:13px"></p>
     </div>
 
+    <!-- ホスト用: 答える人がいなくなったとき（2026-11-07） -->
+    <div class="ptm-few" id="guessing-few" style="display:none">
+      <p class="ptm-few__text">答える人がいなくなったので、ここで終わりにできるよ</p>
+      <button class="btn btn-secondary btn-full" id="btn-guessing-finish" type="button" onclick="hostFinishEarly()">ここで終わる</button>
+    </div>
+
     <div class="ptm-progress" id="guessing-progress"></div>
+
+    <!-- ホスト用: たまに使う操作（開くと出る） -->
+    <details class="card ptm-hostmenu" id="guessing-host-menu" style="display:none">
+      <summary>そのほかの操作</summary>
+      <div class="ptm-hostmenu__row">
+        <button class="btn btn-secondary btn-sm" id="btn-guessing-menu-finish" type="button" onclick="hostFinishEarly()">ここで終わる</button>
+        <span class="ptm-hostmenu__note">最終ランキングが出るよ</span>
+      </div>
+    </details>
   </div>
 </div>
 
@@ -558,8 +599,9 @@
 
     <!-- ホストのみ -->
     <div id="reveal-host-actions" style="display:none; margin-top:16px">
-      <button class="btn btn-primary btn-full" onclick="hostNextRound()">次のラウンドへ →</button>
-      <button class="btn btn-ghost btn-full" onclick="hostFinish()">終わる</button>
+      <p class="ptm-few__text text-center" id="reveal-few" style="display:none">遊ぶ人が足りないので、ここで終わりにできるよ</p>
+      <button class="btn btn-primary btn-full" id="btn-next-round" onclick="hostNextRound()">次のラウンドへ →</button>
+      <button class="btn btn-ghost btn-full" id="btn-reveal-finish" onclick="hostFinish()">終わる</button>
     </div>
     <div id="reveal-guest-waiting" class="text-center text-muted mt-lg" style="display:none">
       ホストの操作を待っています…
@@ -826,6 +868,18 @@
   // このプレイヤーが回答・出題に参加するかどうか（players エントリ基準）
   function playsInGame(room, p) {
     return !p.isHost || !!room?.hostPlays;
+  }
+
+  // いまルームにいる、回答・出題に入る人（ゲストは切断すると players から消えるので、ここにいる人だけ数える）
+  function playingNames(room) {
+    return Object.entries(room?.players || {})
+      .filter(([, p]) => playsInGame(room, p))
+      .map(([name]) => name);
+  }
+
+  // 1ラウンド遊べる人数か（出題者1人と、答える人が1人以上）
+  function canPlayRound(room) {
+    return playingNames(room).length >= 2;
   }
 
   // 利用回数（回数だけ。stats.js）: ラウンドの始まりと、そのときの遊ぶ人（回答・出題に入る人）の人数
@@ -1362,6 +1416,11 @@
   }
 
   async function startNewRound(room, { keepNumber = false } = {}) {
+    // 出題者のほかに答える人がいないと、回答の画面から先へ進めなくなるので始めない（2026-11-07）
+    if (!canPlayRound(room)) {
+      alert('遊ぶ人が足りないので、次のラウンドを始められません');
+      return false;
+    }
     const next = findNextSpeaker(room, ((room.turnIndex || 0) + 1) % (room.turnOrder || [1]).length);
     if (!next) {
       alert('出題できるゲストがいません');
@@ -1456,6 +1515,13 @@
       clearTimeout(entry.timer);
       _doneCleanups.delete(key);
     }
+  }
+
+  // ヒント・回答の途中で終わる（そのほかの操作／遊ぶ人が足りないときの案内から）。途中のラウンドは数えない
+  async function hostFinishEarly() {
+    if (!state.room || ![ST.HINTING, ST.GUESSING].includes(state.room.status)) return;
+    if (!confirm('ここで終わりにしますか？ 最終ランキングが出ます')) return;
+    await hostFinish();
   }
 
   async function hostFinish() {
@@ -1678,6 +1744,7 @@
   function handleHinting(room) {
     if (state.currentScreen !== 'hinting') {
       showScreen('hinting');
+      document.getElementById('hinting-host-menu').open = false;
       document.getElementById('hint-input').value = '';
       hideError('hint-error');
       state.guessRoundKey = null;
@@ -1700,10 +1767,15 @@
         `${round.speaker}さんが考え中…`;
     }
 
-    // ホスト: 出題者が切断していたら交代ボタンを出す
+    // ホスト: 出題者が切断していたら交代ボタンを出す（交代しても答える人がいないときは出さない）
+    const isHost = state.role === 'host';
     const speakerGone = !(room.players && room.players[round.speaker]);
+    const few = !canPlayRound(room);
     document.getElementById('hinting-host-actions').style.display =
-      (state.role === 'host' && speakerGone) ? 'block' : 'none';
+      (isHost && speakerGone && !few) ? 'block' : 'none';
+    // ホスト: 遊ぶ人が足りないときは理由と「ここで終わる」を出す。ふだんは「そのほかの操作」にたたむ
+    document.getElementById('hinting-few').style.display = (isHost && few) ? 'block' : 'none';
+    document.getElementById('hinting-host-menu').style.display = (isHost && !few) ? 'block' : 'none';
   }
 
   // ── guessing ──
@@ -1713,6 +1785,7 @@
 
     if (state.currentScreen !== 'guessing' || state.guessRoundKey !== roundKey) {
       showScreen('guessing');
+      document.getElementById('guessing-host-menu').open = false;
       state.guessRoundKey = roundKey;
       state.revealRoundKey = null;
       const slider = document.getElementById('guess-slider');
@@ -1758,8 +1831,24 @@
     const answerers = Object.entries(room.players || {})
       .filter(([name, p]) => playsInGame(room, p) && name !== round.speaker);
     const decidedCount = answerers.filter(([, p]) => p.decided).length;
-    document.getElementById('guessing-progress').textContent =
-      `決めた人 ${decidedCount}人 / ${answerers.length}人`;
+    // 答える人がいなくなったとき（みんな接続が切れた）は、ホストに理由と「ここで終わる」を出す（2026-11-07）
+    const noAnswerers = answerers.length === 0;
+    const progress = document.getElementById('guessing-progress');
+    progress.textContent = noAnswerers ? '' : `決めた人 ${decidedCount}人 / ${answerers.length}人`;
+    progress.style.display = noAnswerers ? 'none' : '';
+    const isHost = state.role === 'host';
+    if (isSpeaker) {
+      // ホストが出題者のときは自分で終われるので「ホストの操作を待っています」は出さない
+      document.getElementById('guessing-speaker-note').textContent =
+        (noAnswerers && !isHost) ? 'ホストの操作を待っています…' : 'みんながメーターを動かしているよ';
+    }
+    document.getElementById('guessing-few').style.display = (isHost && noAnswerers) ? 'block' : 'none';
+    document.getElementById('guessing-host-menu').style.display = (isHost && !noAnswerers) ? 'block' : 'none';
+    if (isHost) {
+      document.getElementById('btn-reveal').style.display = noAnswerers ? 'none' : '';
+      document.getElementById('reveal-hint').style.display = noAnswerers ? 'none' : '';
+      if (noAnswerers) document.getElementById('guessing-host-thinking').style.display = 'none';
+    }
 
     if (state.role === 'host') {
       const btn = document.getElementById('btn-reveal');
@@ -1801,6 +1890,16 @@
 
     document.getElementById('reveal-host-actions').style.display =
       state.role === 'host' ? 'block' : 'none';
+    if (state.role === 'host') {
+      // 遊ぶ人が足りないときは「次のラウンドへ」を押せなくし、理由を出して「終わる」を主ボタンにする（2026-11-07）。
+      // 切断した子がもどってくると、また押せるようになる
+      const few = !canPlayRound(room);
+      const nextBtn = document.getElementById('btn-next-round');
+      nextBtn.disabled = few;
+      nextBtn.className = 'btn btn-full ' + (few ? 'btn-secondary' : 'btn-primary');
+      document.getElementById('btn-reveal-finish').className = 'btn btn-full ' + (few ? 'btn-primary' : 'btn-ghost');
+      document.getElementById('reveal-few').style.display = few ? 'block' : 'none';
+    }
     document.getElementById('reveal-guest-waiting').style.display =
       state.role === 'guest' ? 'block' : 'none';
   }
@@ -1950,7 +2049,7 @@
         '結果発表で、ターゲットに近かった人ほど点が入る（ずれ5以内 +3点 / 12以内 +2点 / 25以内 +1点）',
         '出題者のラウンドは出題者に点は入らない。出題は順番に回ってくるよ',
       ] },
-      { heading: '終わりかた', text: 'ラウンドをくりかえして、ホストが「終わる」を押すと最終ランキングが出ておしまい。' },
+      { heading: '終わりかた', text: 'ラウンドをくりかえして、ホストが「終わる」を押すと最終ランキングが出ておしまい。ヒントや回答の途中でも、ホストは「そのほかの操作」の「ここで終わる」で終わりにできる。' },
     ],
   });
 </script>

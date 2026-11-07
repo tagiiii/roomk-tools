@@ -219,6 +219,23 @@
       return { room: Object.assign({}, room, { seats }) };
     });
   }
+  // 待合室で、通信が切れた人の席を外す（進行役が押したときだけ。自動では外さない。2026-11-07）。
+  // 同じ transaction で確かめる: 進行役か・待合室か・端末のある席か（端末のない人は removeSeat）・進行役自身の席でないか・
+  // まだ在室していないか（押すまでにつながりなおしていたら 'online' で外さない）。席が消えると名前が空き、同じ名前で入り直せる
+  async function removeOffline(code, dev, sid) {
+    return transactRoom(code, (room) => {
+      if (!RM.isHost(room, dev)) return { reason: 'host' };
+      if (isExpired(room)) return { reason: 'expired' };
+      if (room.status !== S.WAITING) return { reason: 'started' };
+      const seat = room.seats && room.seats[sid];
+      if (!seat) return { room }; // もういない（やり直しで、前の書き込みが届いていた）
+      if (!seat.dev || seat.dev === room.meta.hostId) return { reason: 'value' };
+      if (room.presence && room.presence[seat.dev]) return { reason: 'online' };
+      const seats = Object.assign({}, room.seats);
+      delete seats[sid];
+      return { room: Object.assign({}, room, { seats }) };
+    });
+  }
 
   // ── ゲーム ─────────────────────────────────────────
   // 始める（待合室から）・同じメンバーでもう一度（結果から）。進行役だけ
@@ -421,7 +438,7 @@
   }
 
   const api = {
-    init, now, isExpired, removeIfExpired, createRoom, readRoom, joinRoom, addProxy, removeSeat, startGame, act, setAnswer,
+    init, now, isExpired, removeIfExpired, createRoom, readRoom, joinRoom, addProxy, removeSeat, removeOffline, startGame, act, setAnswer,
     setArmed, armPresence, release, leaveRoom, closeRoom, watch, unwatch, validCode,
     get authReady() { return authReady; },
     EMU, ROOMS,

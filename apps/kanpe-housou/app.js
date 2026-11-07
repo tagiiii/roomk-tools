@@ -435,6 +435,19 @@
       go(R, 'end');
       return true;
     },
+    // 読む人の通信が切れているとき、その番をとばして次の番組へ（2026-11-07）。
+    // ホストが押したときだけ。読む前（書く段階）か読んでいる途中で、押した画面と同じ番・その人がまだ切れているときに限る。
+    // とばした番はふりかえり（history）にも点にも入れない。ゲームの中の名前・読む順番はそのまま（もどれば次の番から続けられる）
+    skipTurn(R, gid, step, reader) {
+      const g = R.game;
+      if (g.gid !== gid || g.step !== step || g.reader !== reader) return false;
+      if (g.phase !== 'write' && g.phase !== 'read') return false;
+      if (isNodevR(R, reader) || !isAwayR(R, reader)) return 'もどった';
+      g.round += 1;
+      if (g.round >= g.order.length) go(R, 'end');
+      else startRound(R);
+      return true;
+    },
     relobby(R, gid) {
       if (R.status !== STATUS.PLAY || Number(R.game && R.game.gid) !== gid) return false;
       R.status = STATUS.WAITING;
@@ -443,7 +456,7 @@
     },
   };
   // 待合室のほかは、整えたゲームの上で操作する
-  const NEEDS_GAME = ['skipWrite', 'replaceWord', 'openJudge', 'next', 'finish'];
+  const NEEDS_GAME = ['skipWrite', 'replaceWord', 'openJudge', 'next', 'finish', 'skipTurn'];
 
   // ══════════════════════════════════════════════
   // つなぐ（RTDB）
@@ -1499,10 +1512,13 @@
       if (words.childElementCount) li.append(words);
       ul.append(li);
     });
+    // 読む人の番をみなとばしたときは、並べる番組がない
+    if (!g.history.length) ul.append(el('li', 'kh-note', 'きょうは、読んだ番組がなかったよ'));
     box.append(ul);
     wrap.append(box);
 
-    if (g.points) {
+    // 番組が1本もないときは点数のカードを出さない（「読んだ番組がなかった」と食いちがうため）
+    if (g.points && g.history.length) {
       const rank = el('div', 'card');
       rank.append(el('h2', 'kh-h2', '点数'));
       const ol = el('ol', 'kh-rank');
@@ -1533,9 +1549,13 @@
     const early = V.phase === 'write' || (V.phase === 'read' && g.pos < 0);
     const nodevWriters = V.phase === 'write' ? g.writers.filter((id) => nodevOf(V, id)) : [];
     const readerOff = nodevOf(V, g.reader) || awayOf(V, g.reader);
+    // 読む人の通信が切れている（端末のない人はのぞく）。書く段階と読む段階で、ホストはその番をとばせる（2026-11-07）
+    const readerAway = (V.phase === 'write' || V.phase === 'read') && g.reader !== S.me && !nodevOf(V, g.reader) && awayOf(V, g.reader);
+    // 書く段階で、通信が切れたまま出していない人（何を待っているかをホストに出す）
+    const awayWriters = V.phase === 'write' ? g.writers.filter((id) => !g.submitted.includes(id) && !nodevOf(V, id) && awayOf(V, id)) : [];
     // 中身が変わらないうちは作りなおさない（端末のない人の代わりに書いている途中でキーボードが閉じないように）
     const awayJudges = V.phase === 'judge' ? g.judges.filter((id) => awayOf(V, id)) : [];
-    const key = JSON.stringify([V.phase, g.gid, g.round, g.step, g.pos, g.submitted, g.judged, awayJudges, S.showWords, early ? rg.blanks : null, nodevWriters.map((id) => mineOf(rg, id)), readerOff]);
+    const key = JSON.stringify([V.phase, g.gid, g.round, g.step, g.pos, g.submitted, g.judged, awayJudges, S.showWords, early ? rg.blanks : null, nodevWriters.map((id) => mineOf(rg, id)), readerOff, readerAway, awayWriters]);
     if (key === S.toolsKey) return;
     S.toolsKey = key;
     tools.replaceChildren();
@@ -1551,6 +1571,17 @@
     }
     const box = el('div', 'card kh-host');
     box.append(el('p', 'kh-host__label', 'ホストだけ'));
+    const readerAwayNote = () => el('p', 'kh-note', '読む人の ' + nameOf(V, g.reader) + ' を待っています（通信が切れたみたい）');
+    // 読む人の通信が切れているときだけ出す。確かめてから、その番をとばして次の番組（最後ならおしまい）へ
+    const skipTurnButton = () => {
+      const who = nameOf(V, g.reader);
+      const last = g.round + 1 >= g.order.length;
+      return btn('btn btn-secondary btn-full', who + ' の番をとばす', 'redo', async () => {
+        if (!window.confirm(who + ' の番をとばして、' + (last ? 'おしまいの画面へ進む？' : 'つぎの番組へ進む？この番組で書いた言葉は使わないよ'))) return;
+        const out = await hostAct('skipTurn', g.gid, g.step, g.reader);
+        if (out === 'もどった') toast(who + ' がもどってきたので、このまま続けるよ', false);
+      });
+    };
     if (V.phase === 'judge') {
       const waiting = g.judges.filter((id) => !g.judged.includes(id));
       if (waiting.length && g.judged.length) {
@@ -1561,6 +1592,8 @@
     }
     if (V.phase === 'write') {
       const waiting = g.writers.filter((id) => !g.submitted.includes(id));
+      if (readerAway) box.append(readerAwayNote(), skipTurnButton());
+      if (awayWriters.length) box.append(el('p', 'kh-note', listNames(V, awayWriters) + ' を待っています（通信が切れたみたい）'));
       if (waiting.length) {
         box.append(btn('btn btn-secondary btn-full', 'まだの人を待たずに読みはじめる', 'fast_forward', () => {
           if (window.confirm('まだ書いていない人の空らんには、おまかせの言葉が入るよ。読みはじめる？')) hostAct('skipWrite', g.gid, g.step);
@@ -1569,7 +1602,8 @@
     }
     if (V.phase === 'read' && g.reader !== S.me) {
       if (readerOff) {
-        box.append(el('p', 'kh-note', nodevOf(V, g.reader) ? nameOf(V, g.reader) + ' には、みんなにみせる画面の原稿を読んでもらおう' : nameOf(V, g.reader) + ' の通信が切れたみたい'), nextButton(g, true));
+        box.append(nodevOf(V, g.reader) ? el('p', 'kh-note', nameOf(V, g.reader) + ' には、みんなにみせる画面の原稿を読んでもらおう') : readerAwayNote(), nextButton(g, true));
+        if (readerAway) box.append(skipTurnButton());
       } else {
         // 読む人がつながっているのに進まないときのため。押す前に確かめる
         box.append(nextButton(g, true, nameOf(V, g.reader) + ' の代わりに進める？'));

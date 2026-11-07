@@ -45,7 +45,7 @@ RTDB パス `pitahame_rooms/{roomCode}`。実装は末尾 `<script>` 内の **`N
 - **モード分岐**: `state.mode`（`'solo'|'room'`）。パズル画面（`screen-puzzle`）を両モードで再利用し、`applyPuzzleChrome()` で残り時間バー・カバー・フィード・答えボタン表示を切り替える。RTDB 由来の画面遷移・問題切替の直前は必ず `cancelDrag()`（`mountPuzzle` 冒頭で実行）。
 - **共有状態のみ同期**: 参加/退出・ラウンド開始・各人の完成1回・status 遷移・削除だけを書く。ピース移動・ドラッグ・タイマー・選択は同期しない。
 - **リスナー分割購読**: ルート `on('value')` は張らない（finishes 更新のたびに puzzle まで再送されるため）。トップは `status`/`currentRound`/`gameId`/`settings`/`players`/`hostConnected`/`hostDisconnectedAt`/`finishedAt` を個別購読。ラウンドは `rounds/{n}` 配下（`attemptId`/`puzzle`/`startAt`/`endsAt`/`closedAt`/`participants`/`resultOrder`/`finishes`）を個別購読。ルーム消滅は `status` が null になったことで検知。
-- **transaction を使う箇所**: 作成（`createRoom` ルート占有）／参加（`joinRoom`）／ラウンド開始（`startRound`）／完成登録（`onLocalComplete`）／ラウンド終了（`endRound`）／最終遷移（`hostNext`）／やりなおし（`restartRound`）／もういちど（`playAgain`）。すべてルーム全体 transaction。
+- **transaction を使う箇所**: 作成（`createRoom` ルート占有）／参加（`joinRoom`）／ラウンド開始（`startRound`）／完成登録（`onLocalComplete`）／ラウンド終了（`endRound`）／最終遷移（`hostNext` → `finishGame`）／やりなおし（`restartRound`）／もういちど（`playAgain`）。すべてルーム全体 transaction。
 - **⚠️ ルート未同期 → transaction 初回 null 対策（warmTxn 方式）**: リスナーを子ノードに分けたため、素の `roomRef.transaction` は初回ローカル評価が未同期の `null` になり、`undefined` 返し＝中断（再試行なし）で誤中断する。対策は共通ヘルパ `warmTxn(ref, mutator)`：**一時的にルート listener（noop）を張り `.get()` でローカルキャッシュを温めてから transaction を実行**する（listener があると transaction は同期済みの実値をローカル評価に使う）。**実値 `null`＝ルーム消滅は必ず中断**（mutator を呼ばない）。stale スナップショットをフォールバックに使わないため、「.get() 応答〜コミットの間にルームが削除された」ケースでも削除済みルームの再生成（hostConnected=true のまま TTL でも回収不能なゾンビ化）が**構造的に起きない**。`.get()` 失敗時も transaction へ進まず中断。適用: `joinRoom`（expired 時の `return null`＝ルーム削除は仕様として維持し、コミット後に snapshot 非 null を確認してから参加続行）／`tryReconnect` のゲスト復帰／ホスト系は `roomTxn(mutator)`＝`warmTxn(net.roomRef, mutator)`。`createRoom` の「null なら initial を作る」transaction だけは意図的な新規作成なので素のまま。
 - **⚠️ バックグラウンドタブ対策**: 盤面 mount を `requestAnimationFrame` に載せると、タブが非表示のとき rAF が止まり盤面が出ない。room の mount は **同期実行**（`showScreen` 後 `clientWidth` は reflow 済みで取れる）＋保険で次フレーム再レイアウト。
 - **公平性・順位**: `computeResultOrder()`（設計 §9 厳守）。採用時刻＝`completedAt` が有限かつ `startAt≤completedAt≤endsAt` ならそれ、でなければ `receivedAt`。昇順ソート→同着はグループ先頭との差 1000ms 以内→密順位（①①②）。`completedAt=RoomkRTDB.now()`（完成判定直後）、`receivedAt=ServerValue.TIMESTAMP`。results は **`resultOrder` のみ**を描画（finishes を直接ソートしない）。
@@ -61,6 +61,16 @@ RTDB パス `pitahame_rooms/{roomCode}`。実装は末尾 `<script>` 内の **`N
 - **「QRコードを出す」（2026-10-22）**: 待機画面のルームコード欄で「リンクをコピー」の隣（`#btnShowQr`、`Net.showQr`）。スマホ・タブレットなど別の端末で入る人向けに、同じ参加用のリンクを QR コードにして画面の上に大きく出す（画面共有越しにカメラで読みとる）。共通の `RoomkQR.show(code)`（`apps/shared/js/room-qr.js`）
 
 - **作成・参加の認証失敗と二度押し（2026-11-06）**: 作成・参加（`Net.createRoom` / `Net.joinRoom`。中身は `createRoomInner` / `joinRoomInner`）は `withEntryLock()`（`showScreen` の直後。`Net` の外）で、処理の最初から終わり（transaction の完了）まで二度押しをロックし、押したボタン（`#btnCreateGo` / `#btnJoinGo`）を無効にする。入れたらボタンは押せないまま（待合室が出るまでにもう一度押せないように）、入れなかったら押せる状態とフォーカスを戻す。ボタンとロックを押せる状態へ戻すのは、入口の画面（トップ・作成・参加）を出すたびに `showScreen()` の中で行う（特定の退出の処理に頼らず、どの道でトップへ戻っても止まらないように）。ロック中に入口の画面へ戻ったときは、その回の処理を取り消す（世代番号で見分け、入れていたらできたルーム・自分の分を消して、ルームへは進まない）。認証待ちは `waitAuthOrExplain()` で `await authReady` だけを狭く try/catch し、失敗したら「うまくつながらなかったよ。ページを読み込みなおしてね」。`authReady` は一度失敗すると固定されるので再試行は案内しない。transaction まで囲まない（届いたか分からない失敗を認証の失敗と取り違え、孤児ルームを作るため。rtdb-audit 項目8）。直す前はダブルクリックでルームが2つでき、認証失敗は「ルームを作れなかったよ。」「入れなかったよ」とだけ出ていた。通信・transaction の失敗の文言は従来どおり
+
+- **遊ぶ人が足りなくなった結果の画面（2026-11-07）**: ラウンドの途中で子が抜ける（「退出する」・タブを閉じる・通信が切れる）と、`players/{nick}` は `onDisconnect().remove()` で消える。遊ぶ人（`isPlaying !== false`）が2人より少ないと `startRound` は `too_few` で止まるので、直す前は results のホストに「次のラウンドへ」しかなく、押しても「遊ぶ人が2人必要だよ」のトーストだけで、先へも終わりへも進めなかった（読み込み直しても同じ）。
+  - results のホスト操作は `renderResultsHost()` に分け、`players` が変わるたびにも描き直す（答えのアニメはやり直さない）。最後のラウンドでなく遊ぶ人が2人より少ないときは、主ボタンを「結果を見る」にして、その上に「遊ぶ人が足りないので、ここで終わりにできるよ」を出す。押すと `finishGame('too_few')`（ルーム全体 transaction で `status==='results'`・同じ `currentRound`・サーバの `players` でも2人より少ないことを確かめてから `finished`）。そのあいだに子が読み込み直して戻っていたら進めず、ボタンを「次のラウンドへ」に戻して「遊ぶ人がそろっているよ」。
+  - 自動では進めない（ホストが押したときだけ）。一時的に切れた子が読み込み直して戻れば（`tryReconnect` は participants の子を players に戻す）、ボタンは「次のラウンドへ」に戻る。`startRound` の `too_few` の中止はそのまま。
+  - 人数が足りていても results のホストには出口がなかったので、「そのほかの操作」（`#resultsHostMenu`）に確認つきの「ここで終わる」（`finishGame('host')`）を置いた。最後のラウンドと人数が足りないときは主ボタンが同じことをするので出さない。
+  - 利用回数の `finish` は最後のラウンドのあと（`finishGame('last')`）だけ数える。途中で終わった回は数えない（shared-modules.md）。
+  - ラウンドの途中は、抜けた子を待って止まることはない（時間切れの自動終了と「ラウンドを終わる」があるため）ので変えていない。「待たずに進む」は置かない。
+  - 待合室の「外す」も置かない。このアプリは切れた子を `onDisconnect().remove()` で一覧からすぐ消すので、待合室に「通信が切れている人」の行が残らない（名前もすぐ空く）。
+  - 保存した記録で戻ろうとして、ルームは残っているのにゲストの自分が戻れなかったとき（待合室で一覧から消えていた・ラウンドの参加者でない）は、トップへ黙って戻さず「ルームにもどれなかったよ。もう一度参加してね」をトーストで出す。待合室なら、コードと名前を入れた参加画面を開く（`tryReconnect` が `reconnectMiss` を残し、起動の処理が `Net.takeReconnectMiss()` で読む）。待合室で読み込み直したゲストも、古いつながりの `onDisconnect().remove()` で一覧から消えるのでこれに当たる（直す前は黙ってトップへ戻っていた。E2E で確認）。ルームがもうないときは従来どおりトップへ。ほかの子の画面には何も出さない（一覧から静かに消えるだけ）。
+  - ラウンド中に通信が数秒切れて、読み込み直さずに戻った子は `players` に戻らない（P-14 の自動再接続は保留のまま）。その子は画面上は遊び続けられ、完成も数えられる（`participants` で判定）が、results ではホストに「遊ぶ人が足りない」と出ることがある。子が読み込み直せば `tryReconnect` で `players` に戻り、ボタンは「次のラウンドへ」に戻る。
 
 ### 利用回数（2026-10-12）
 

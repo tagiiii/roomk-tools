@@ -509,6 +509,16 @@
       font-size: 13px;
     }
 
+    /* ── ホストの「そのほかの操作」（開くと出る。たまに使う操作） ── */
+    .uj-hostmenu { margin-top: 12px; }
+    .uj-hostmenu summary { min-height: 44px; display: flex; align-items: center; justify-content: center; gap: 6px; color: var(--color-muted); font-size: 14px; font-weight: 700; cursor: pointer; list-style: none; }
+    .uj-hostmenu summary::-webkit-details-marker { display: none; }
+    .uj-hostmenu summary::before { content: "expand_more"; font-family: "Material Symbols Rounded"; font-size: 22px; color: var(--color-accent); transition: transform .15s; }
+    .uj-hostmenu[open] summary::before { transform: rotate(180deg); }
+    .uj-hostmenu__row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; padding: 8px 0; border-top: 1px solid var(--color-border); }
+    .uj-hostmenu__row .btn { width: auto; margin: 0; }
+    .uj-hostmenu__note { font-size: 13px; color: var(--color-muted); }
+
     .uj-overlay {
       position: fixed;
       inset: 0;
@@ -700,6 +710,16 @@
           はじめる
         </button>
         <p class="uj-host-hint" id="host-start-hint"></p>
+        <!-- たまに使う操作（開くと出る） -->
+        <details class="uj-hostmenu" id="room-host-menu">
+          <summary>そのほかの操作</summary>
+          <div class="uj-hostmenu__row">
+            <button type="button" class="btn btn-secondary btn-sm" id="btn-close-room" onclick="hostCloseRoom()">
+              <span class="material-symbols-rounded" aria-hidden="true">close</span>ルームを閉じる
+            </button>
+            <span class="uj-hostmenu__note">参加している人もトップにもどります</span>
+          </div>
+        </details>
       </div>
     </div>
   </div>
@@ -752,6 +772,12 @@
     </div>
     <div class="uj-section-label" style="margin-top:24px">参加者</div>
     <div class="uj-player-list" id="waiting-player-list"></div>
+    <div class="mt-lg">
+      <button type="button" class="btn btn-ghost btn-full" id="btn-guest-leave" onclick="guestLeaveRoom()">
+        <span class="material-symbols-rounded" aria-hidden="true">logout</span>
+        退出する
+      </button>
+    </div>
   </div>
 </div>
 
@@ -813,10 +839,21 @@
       <button class="btn btn-primary btn-full btn-lg" id="btn-to-voting" disabled onclick="hostToVoting()">投票にすすむ</button>
       <button class="btn btn-ghost btn-full" id="btn-force-voting" style="display:none" onclick="hostToVoting()">先にすすむ</button>
       <p class="uj-host-hint" id="writing-host-hint"></p>
+      <button type="button" class="btn btn-secondary btn-full" id="btn-writing-finish" style="display:none" onclick="hostFinishFromGame()">おわる</button>
       <button class="btn btn-ghost btn-full uj-spec-open" onclick="openSpectatorWindow()">
         <span class="material-symbols-rounded" aria-hidden="true">cast</span>
         みんなにみせる画面をひらく
       </button>
+      <!-- たまに使う操作（開くと出る） -->
+      <details class="uj-hostmenu" id="writing-host-menu">
+        <summary>そのほかの操作</summary>
+        <div class="uj-hostmenu__row">
+          <button type="button" class="btn btn-secondary btn-sm" onclick="hostFinishFromGame()">
+            <span class="material-symbols-rounded" aria-hidden="true">flag</span>おわる
+          </button>
+          <span class="uj-hostmenu__note">ここでおしまいにして、みんなのポイントを出す</span>
+        </div>
+      </details>
     </div>
   </div>
 </div>
@@ -842,6 +879,16 @@
         <span class="material-symbols-rounded" aria-hidden="true">cast</span>
         みんなにみせる画面をひらく
       </button>
+      <!-- たまに使う操作（開くと出る） -->
+      <details class="uj-hostmenu" id="voting-host-menu">
+        <summary>そのほかの操作</summary>
+        <div class="uj-hostmenu__row">
+          <button type="button" class="btn btn-secondary btn-sm" onclick="hostFinishFromGame()">
+            <span class="material-symbols-rounded" aria-hidden="true">flag</span>おわる
+          </button>
+          <span class="uj-hostmenu__note">ここでおしまいにして、みんなのポイントを出す</span>
+        </div>
+      </details>
     </div>
   </div>
 </div>
@@ -868,6 +915,7 @@
     <div id="reveal-host-actions" style="display:none; margin-top:24px">
       <button class="btn btn-primary btn-full" onclick="hostNextRound()">つぎへ</button>
       <button class="btn btn-ghost btn-full" onclick="hostFinish()">おわる</button>
+      <p class="uj-host-hint" id="reveal-host-hint" hidden></p>
       <button class="btn btn-ghost btn-full uj-spec-open" onclick="openSpectatorWindow()">
         <span class="material-symbols-rounded" aria-hidden="true">cast</span>
         みんなにみせる画面をひらく
@@ -1079,6 +1127,8 @@
     changingWord: false,
     specTimer: null,          // みんなにみせる画面: ホスト切断の TTL を見るローカルタイマー（退出時に必ず clearTimeout）
     specDoneShown: false,     // みんなにみせる画面: おしまいの画面を出したか（ルームが消えても表示を残す）
+    closingRoom: false,       // ホストが「ルームを閉じる」を押して消している間（自分の画面に「ホストが退出した」を出さない）
+    leavingRoom: false,       // ゲストが「退出する」を押して抜けている間（連打で二重に送らない）
   };
 
   const esc = RoomkRTDB.esc;
@@ -1887,6 +1937,74 @@
     if (committed) scheduleDoneCleanup(doneRoomRef, deleteAt);
   }
 
+  // かく・投票の画面の「おわる」（そのほかの操作／遊ぶ人が足りないとき）。答えが0件でも終われる。
+  // 結果の画面の「おわる」と同じ hostFinish（done → 30秒後に削除）。取り消せないので確認を出す
+  async function hostFinishFromGame() {
+    if (state.role !== 'host' || !state.roomRef) return;
+    if (!window.confirm('ここでおわりにしますか？みんなのポイントを出して終わります')) return;
+    await hostFinish();
+  }
+
+  // 待合室の「ルームを閉じる」（そのほかの操作）。ルームを消して、参加している人もトップへ戻す。
+  // 削除の前に自接続の onDisconnect 予約を取り消す（残ると、削除後にタブを閉じたとき部分 room を作り直す）。
+  // 購読中なので transaction の null は「ルームがない」。まだ待合室で、自分がホストのときだけ消す
+  async function hostCloseRoom() {
+    if (state.role !== 'host' || !state.roomRef || state.closingRoom) return;
+    const room = state.lastRoom;
+    if (!room || room.status !== STATUS.WAITING) return;
+    if (!window.confirm('ルームを閉じますか？参加している人もトップにもどります')) return;
+    const roomRef = state.roomRef;
+    const me = state.nickname;
+    state.closingRoom = true;
+    await RoomkRTDB.cancelRoomOnDisconnect(roomRef);
+    let gone = false;
+    const result = await roomRef.transaction((current) => {
+      gone = false;
+      if (!current) { gone = true; return; }
+      if (current.host !== me || current.status !== STATUS.WAITING) return;
+      return null;
+    }).catch((error) => {
+      console.error('[uso-jisho] close room failed', error);
+      return null;
+    });
+    if ((result && result.committed) || gone) {
+      goToTop();
+      return;
+    }
+    // 閉じられなかった（はじまった・失敗）: 切断の予約を戻して、そのまま続ける
+    state.closingRoom = false;
+    if (state.roomRef === roomRef) {
+      roomRef.onDisconnect().update({
+        hostConnected: false,
+        hostDisconnectedAt: firebase.database.ServerValue.TIMESTAMP,
+      });
+    }
+    RoomkRTDB.showToast('ルームを閉じられませんでした');
+  }
+
+  // ゲストの待合室の「退出する」。自分を players から消してトップへ（同じ名前でまた参加できる）。
+  // 購読中なので transaction の null は「ルームがない」（そのままトップへ）
+  async function guestLeaveRoom() {
+    if (state.role !== 'guest' || !state.roomRef || state.leavingRoom) return;
+    const roomRef = state.roomRef;
+    const me = state.nickname;
+    state.leavingRoom = true;
+    const result = await roomRef.transaction((room) => {
+      if (!room) return;
+      const player = room.players && room.players[me];
+      if (!player || player.isHost || room.status === STATUS.DONE) return;
+      const players = { ...room.players };
+      delete players[me];
+      return { ...room, players };
+    }).catch((error) => {
+      console.error('[uso-jisho] leave failed', error);
+      return null;
+    });
+    // 送れなかったときは、自分の行だけ消す書き込みを残す（つながりしだい届く）
+    if (!result) roomRef.child(`players/${me}`).remove().catch(() => {});
+    goToTop();
+  }
+
   // ---------- ゲスト操作 ----------
 
   async function submitEntry() {
@@ -1950,9 +2068,14 @@
       }
 
       if (!room) {
+        // ホストが自分で「ルームを閉じる」を押したとき（hostCloseRoom がトップへ戻す）
+        if (state.closingRoom) return;
         if (state.currentScreen !== 'done') {
+          const message = state.currentScreen === 'waiting'
+            ? 'ホストがルームを閉じました'
+            : 'ホストが退出したためゲームが終了しました';
           clearSession();
-          alert('ホストが退出したためゲームが終了しました');
+          alert(message);
           goToTop();
         }
         return;
@@ -2145,9 +2268,16 @@
         + (hostPlaysOf(room) && !mySubmitted ? 'btn-secondary' : 'btn-primary');
       const forceBtn = document.getElementById('btn-force-voting');
       forceBtn.style.display = (!allDone && entryCount > 0) ? 'block' : 'none';
+      // 答えが0件で遊ぶ人も足りない（途中で抜けた）ときは、投票へ進めないので「おわる」をすぐ押せる所に出す。
+      // そのときは「そのほかの操作」（中身は同じ「おわる」）を隠して、同じボタンを2つ出さない
+      const tooFew = entryCount === 0 && names.length < MIN_PLAYERS;
+      document.getElementById('btn-writing-finish').style.display = tooFew ? 'block' : 'none';
+      document.getElementById('writing-host-menu').style.display = tooFew ? 'none' : '';
       const hint = document.getElementById('writing-host-hint');
       if (allDone) {
         hint.textContent = '全員がかき終わりました';
+      } else if (tooFew) {
+        hint.textContent = '遊ぶ人が足りないので、ここで終わりにできるよ';
       } else if (entryCount > 0) {
         hint.textContent = 'まだの人は、このラウンドは投票だけ参加します';
       } else {
@@ -2259,6 +2389,11 @@
     renderScoreList('reveal-score-list', room, deltas);
 
     document.getElementById('reveal-host-actions').style.display = state.role === 'host' ? 'block' : 'none';
+    // 遊ぶ人が足りない（途中で抜けた）ときは、次のラウンドで止まらないよう一言そえる
+    const revealHint = document.getElementById('reveal-host-hint');
+    const tooFew = state.role === 'host' && playingNames(room).length < MIN_PLAYERS;
+    revealHint.hidden = !tooFew;
+    revealHint.textContent = tooFew ? '遊ぶ人が足りないので、ここで終わりにできるよ' : '';
     document.getElementById('reveal-guest-waiting').style.display = state.role === 'guest' ? 'block' : 'none';
   }
 
@@ -2339,6 +2474,8 @@
       changingWord: false,
       specTimer: null,
       specDoneShown: false,
+      closingRoom: false,
+      leavingRoom: false,
     });
 
     document.getElementById('host-nickname').value = '';
@@ -2763,7 +2900,7 @@
       },
       {
         heading: 'おわりかた',
-        text: 'ホストが結果の画面で「おわる」を押すと、みんなのポイントが出ておしまい。',
+        text: 'ホストが結果の画面で「おわる」を押すと、みんなのポイントが出ておしまい。かく・投票の画面でも、ホストの「そのほかの操作」の「おわる」で終われる。待合室で抜けるときは、参加者は「退出する」、ホストは「そのほかの操作」の「ルームを閉じる」。',
       },
       {
         heading: 'みんなにみせる画面',

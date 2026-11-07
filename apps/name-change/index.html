@@ -139,6 +139,23 @@
     .nc-secret__body .card { box-shadow: none; padding: 0; margin-bottom: 0; }
     .nc-self-text { text-align: center; font-weight: 700; color: var(--color-accent); margin: 4px 0; }
 
+    /* 通信が切れている人への操作（ホストだけ。2026-11-07） */
+    .player-item .player-name { min-width: 0; overflow-wrap: anywhere; }
+    .nc-row-btn {
+      flex-shrink: 0; min-height: 36px; padding: 4px 14px; border-radius: 99px;
+      border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-text);
+      font-family: var(--font-base); font-size: 0.8rem; font-weight: 700; cursor: pointer;
+    }
+    .nc-row-btn:hover:not(:disabled) { border-color: var(--color-accent); }
+    .nc-row-btn:disabled { opacity: .5; cursor: not-allowed; }
+    .nc-wait { margin-top: 12px; }
+    .nc-wait-note { text-align: center; font-size: 0.875rem; color: var(--color-text); margin: 0 0 8px; }
+    /* ホストのたまに使う操作（そのほかの操作） */
+    .nc-more { margin-top: 16px; border-top: 1px solid var(--color-border); }
+    .nc-more summary { cursor: pointer; padding: 12px 0 8px; text-align: center; font-size: 0.875rem; font-weight: 700; color: var(--color-muted); }
+    .nc-more__body { padding-top: 4px; }
+    .nc-more__note { font-size: 0.8rem; color: var(--color-muted); margin-top: 6px; text-align: center; }
+
     /* Toast */
     #toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #333; color: #fff; padding: 12px 20px; border-radius: 8px; font-size: 0.9rem; opacity: 0; transition: opacity .3s; pointer-events: none; z-index: 1000; white-space: nowrap; }
     #toast.show { opacity: 1; }
@@ -191,6 +208,7 @@
   </div>
   <div class="card">
     <p class="nc-note nc-note--lead" id="joinLinkHint" hidden>リンクから開いたので、ルームコードは入っているよ。元の名前を入れて「参加する」を押してね。</p>
+    <p class="nc-note nc-note--lead" id="rejoinHint" hidden>ルームにもどれなかったよ。もう一度参加してね。ルームコードは入っているよ。</p>
     <div class="form-group">
       <label class="form-label" for="guest-nickname">元の名前（1〜12文字）</label>
       <input id="guest-nickname" class="form-input" type="text" maxlength="12" placeholder="例：たろう">
@@ -243,6 +261,9 @@
   </div>
   <div id="waiting-guest-msg" style="display:none">
     <p class="status-text">GMがゲームを始めるまで待ってね<span class="dots"></span></p>
+    <button type="button" class="btn btn-ghost" id="waiting-leave-btn" onclick="goToTop()">
+      <span class="material-symbols-rounded" aria-hidden="true">logout</span>退出する
+    </button>
   </div>
 </div>
 
@@ -321,6 +342,25 @@
       <span class="material-symbols-rounded" aria-hidden="true">how_to_vote</span>投票フェーズへ進む
     </button>
     <p class="status-text" id="naming-gm-status"></p>
+    <div class="nc-wait" id="naming-gm-wait" hidden>
+      <p class="nc-wait-note" id="naming-gm-wait-text"></p>
+      <button type="button" class="btn btn-secondary" id="naming-skip-btn" onclick="hostSkipOffline('naming')">
+        <span class="material-symbols-rounded" aria-hidden="true">fast_forward</span>待たずに投票へ進む
+      </button>
+    </div>
+    <div class="nc-wait" id="naming-gm-short" hidden>
+      <p class="nc-wait-note">遊ぶ人が足りないので、ここで終わりにできるよ</p>
+      <button type="button" class="btn btn-secondary" id="naming-short-end-btn" onclick="hostEndEarly('naming')">
+        <span class="material-symbols-rounded" aria-hidden="true">stop_circle</span>ここでおわる
+      </button>
+    </div>
+    <details class="nc-more" id="naming-gm-more">
+      <summary>そのほかの操作</summary>
+      <div class="nc-more__body">
+        <button type="button" class="btn btn-secondary btn-sm" id="naming-end-btn" onclick="hostEndEarly('naming')">ここでおわる</button>
+        <p class="nc-more__note">結果発表をせずに、ゲームを終わりにします</p>
+      </div>
+    </details>
   </div>
 </div>
 
@@ -358,6 +398,17 @@
     </div>
   </div>
 
+  <!-- 名前変え・投票のどちらにもならなかった人（GM が待たずに進めたとき） -->
+  <div id="voting-watch-section" style="display:none">
+    <div class="nc-header">
+      <h1>投票中...</h1>
+      <p>投票役が答えを考えています</p>
+    </div>
+    <div class="card" style="text-align:center;padding:32px 20px;">
+      <p class="status-text" style="margin:0">今回は見る側だよ。結果発表まで待ってね<span class="dots"></span></p>
+    </div>
+  </div>
+
   <!-- GM -->
   <div id="voting-gm-section" style="display:none">
     <div class="nc-header">
@@ -376,6 +427,25 @@
     <button class="btn btn-primary btn-lg" onclick="hostStartRevealing()">
       <span class="material-symbols-rounded" aria-hidden="true">celebration</span>結果発表へ進む
     </button>
+    <div class="nc-wait" id="voting-gm-wait" hidden>
+      <p class="nc-wait-note" id="voting-gm-wait-text"></p>
+      <button type="button" class="btn btn-secondary" id="voting-skip-btn" onclick="hostSkipOffline('voting')">
+        <span class="material-symbols-rounded" aria-hidden="true">fast_forward</span>待たずに結果発表へ進む
+      </button>
+    </div>
+    <div class="nc-wait" id="voting-gm-short" hidden>
+      <p class="nc-wait-note">遊ぶ人が足りないので、ここで終わりにできるよ</p>
+      <button type="button" class="btn btn-secondary" id="voting-short-end-btn" onclick="hostEndEarly('voting')">
+        <span class="material-symbols-rounded" aria-hidden="true">stop_circle</span>ここでおわる
+      </button>
+    </div>
+    <details class="nc-more" id="voting-gm-more">
+      <summary>そのほかの操作</summary>
+      <div class="nc-more__body">
+        <button type="button" class="btn btn-secondary btn-sm" id="voting-end-btn" onclick="hostEndEarly('voting')">ここでおわる</button>
+        <p class="nc-more__note">結果発表をせずに、ゲームを終わりにします</p>
+      </div>
+    </details>
   </div>
 </div>
 
@@ -457,7 +527,7 @@ const state = {
   votingRendered: false,
   lastRoom: null, expectedRoomRemoval: false, namingAction: null, voteAction: null,
   votingRoster: '', votingSaved: '', orphanDeadline: null,
-  expiryAction: null, settingAction: null,
+  expiryAction: null, settingAction: null, kickAction: null,
 };
 let guestPresence = null;
 let guestPresenceWork = Promise.resolve();
@@ -531,6 +601,9 @@ function playingEntries(room) {
 // 自分が名前変え・投票をする側か（ゲストは常に、GMは遊ぶ設定のときだけ）
 function selfPlays(room = state.lastRoom) { return !state.isHost || hostPlaysOf(room); }
 const MIN_PLAYING = 2; // 名前変え役・投票役が各1人以上いないと進めないため
+// 通信が切れている人（ホストが押したときだけ外す・待たずに進む。2026-11-07）。GM は数えない
+function isOfflineGuest(player) { return !!player && !player.isHost && !playerConnected(player); }
+function nickList(nicks) { return nicks.map(nick => `${nick}さん`).join('、'); }
 function guestCanAct() {
   return state.isHost || !!(guestPresence?.ready && guestPresence.connected
     && guestPresence.roomRef === state.roomRef && guestPresence.nickname === state.nickname);
@@ -644,6 +717,7 @@ async function expireGuestRoom(ref) {
 function goHostSetup() { showScreen('host-setup'); }
 function goGuestJoin()  {
   document.getElementById('joinLinkHint').hidden = true;
+  document.getElementById('rejoinHint').hidden = true;
   showScreen('guest-join');
 }
 function resetRoomState() {
@@ -655,16 +729,20 @@ function resetRoomState() {
   Object.assign(state, {
     roomCode:null, nickname:null, isHost:false, gameRole:null, roomRef:null,
     orphanTimer:null, myVotes:{}, votingRendered:false, lastRoom:null, expectedRoomRemoval:false,
-    namingAction:null, voteAction:null, votingRoster:'', votingSaved:'', orphanDeadline:null, expiryAction:null, settingAction:null
+    namingAction:null, voteAction:null, votingRoster:'', votingSaved:'', orphanDeadline:null, expiryAction:null, settingAction:null, kickAction:null
   });
   showScreen('top');
 }
-async function cleanupMissingRoom(ref) {
+async function cleanupMissingRoom(ref, room = null) {
   if (state.roomRef !== ref || state.expectedRoomRemoval) return;
+  // ルームは残っていて自分だけがいない（待合室でGMに外された）ゲストは、参加画面へ
+  const miss = !state.isHost && room?.status && !room.players?.[state.nickname]
+    ? { code: state.roomCode, waiting: room.status === 'waiting' } : null;
   state.expectedRoomRemoval = true;
   ref.off();
   const work = stopGuestPresence();
   resetRoomState();
+  if (miss) showRejoin(miss);
   await work;
   await RoomkRTDB.cancelRoomOnDisconnect(ref).catch(error => console.warn('[name-change] cleanup failed', error));
 }
@@ -837,10 +915,12 @@ function showJoinQr() {
 }
 
 // 参加用のリンクでひらいたとき: コードを入れた状態で参加画面を開き、元の名前だけ入れてもらう（コード欄は直せるように残す）
-function openJoinFromLink(code) {
+// rejoin: 保存した記録で戻ろうとしたら、ルームに自分がいなかった（待合室でGMに外された）とき。責めない一言を出す
+function openJoinFromLink(code, rejoin = false) {
   RoomkRTDB.showFormError('join-form-error', '');
   document.getElementById('guest-code').value = code;
-  document.getElementById('joinLinkHint').hidden = false;
+  document.getElementById('joinLinkHint').hidden = rejoin;
+  document.getElementById('rejoinHint').hidden = !rejoin;
   showScreen('guest-join');
   document.getElementById('guest-nickname').focus({ preventScroll: true });
 }
@@ -940,7 +1020,7 @@ function startListener() {
     const me = room?.players?.[state.nickname];
     if (!room || !me || (state.isHost ? room.host !== state.nickname || me.isHost !== true
       : room.host === state.nickname || me.isHost !== false)) {
-      void cleanupMissingRoom(ref); return;
+      void cleanupMissingRoom(ref, room); return;
     }
     state.lastRoom = room;
     if (state.gameRole !== (me.gameRole || null)) { state.gameRole = me.gameRole || null; saveSession(); }
@@ -988,6 +1068,15 @@ function renderWaiting(room, players) {
       <span class="player-name">${esc(nick)}</span>
       ${p.isHost ? '<span class="badge badge-gm">GM</span>' + (hostPlays ? '' : '<span class="badge badge-pending">進行役</span>')
         : !playerConnected(p) ? '<span class="badge badge-pending">再接続待ち</span>' : ''}`;
+    // 通信が切れている人だけ、GMに小さな「外す」を出す（押したときだけ・確認つき）
+    if (state.isHost && isOfflineGuest(p)) {
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'nc-row-btn'; b.textContent = '外す';
+      b.dataset.kick = nick; b.setAttribute('aria-label', `${nick}さんを外す`);
+      b.disabled = !!state.kickAction;
+      b.onclick = () => hostRemoveOffline(nick);
+      d.appendChild(b);
+    }
     list.appendChild(d);
   });
   document.getElementById('waiting-settings').style.display = state.isHost ? 'block' : 'none';
@@ -1000,11 +1089,13 @@ function renderWaiting(room, players) {
     const playing = playingEntries(room).map(([, p]) => p);
     const count = playing.length;
     const offline = playing.some(p => !playerConnected(p));
+    const offlineNicks = Object.entries(players).filter(([, p]) => isOfflineGuest(p)).map(([nick]) => nick);
     const btn = document.getElementById('waiting-start-btn');
     btn.disabled = count < MIN_PLAYING || offline;
     document.getElementById('waiting-count-msg').textContent =
       count < MIN_PLAYING ? `${hostPlays ? 'GMをふくめて' : 'GMのほかに'}${MIN_PLAYING}人以上で開始できます（あと${MIN_PLAYING - count}人）`
-      : offline ? '再接続を待っています' : `遊ぶ人 ${count}人`;
+      : offline ? (offlineNicks.length ? `${nickList(offlineNicks)}を待っています（通信が切れています）` : '再接続を待っています')
+      : `遊ぶ人 ${count}人`;
   } else {
     document.getElementById('waiting-host-ctrl').style.display = 'none';
     document.getElementById('waiting-guest-msg').style.display = 'block';
@@ -1028,6 +1119,41 @@ async function onHostPlaysChange(checked) {
   } finally {
     if (state.settingAction === action) {
       state.settingAction = null;
+      if (actionCurrent(action) && state.lastRoom) handle(state.lastRoom);
+    }
+  }
+}
+
+// 待合室で、通信が切れている人を外す（GMが押したときだけ・確認つき）。room 全体の transaction で、
+// まだ待合室か・その人がまだ切断中かを中で確かめてから players から消す（名前が空くので同じ名前で入り直せる）。
+// null（ルームがない）は canApplyAction で中止し、作り直さない
+async function hostRemoveOffline(nick) {
+  if (!state.isHost || !state.roomRef || state.kickAction) return;
+  if (!isOfflineGuest(state.lastRoom?.players?.[nick])) return;
+  if (!confirm(`${nick}さんを外しますか？`)) return;
+  const action = captureAction('waiting');
+  state.kickAction = action;
+  if (state.lastRoom) handle(state.lastRoom);
+  let reason = null;
+  try {
+    const { committed } = await action.ref.transaction(room => {
+      reason = null;
+      if (state.kickAction !== action || !canApplyAction(action, room)) return;
+      const player = room.players?.[nick];
+      if (!player || player.isHost) { reason = 'gone'; return; }
+      if (playerConnected(player)) { reason = 'back'; return; }
+      const players = { ...room.players };
+      delete players[nick];
+      return { ...room, players };
+    }, undefined, false);
+    if (!committed && actionCurrent(action) && reason !== 'gone') {
+      toast(reason === 'back' ? `${nick}さんはもどってきたよ` : '外せませんでした');
+    }
+  } catch (error) {
+    if (actionCurrent(action)) toast('外せませんでした。接続を確認してください');
+  } finally {
+    if (state.kickAction === action) {
+      state.kickAction = null;
       if (actionCurrent(action) && state.lastRoom) handle(state.lastRoom);
     }
   }
@@ -1084,7 +1210,7 @@ function placeInFold(id, inFold, foldBodyId, screenId) {
   if (el.parentElement !== parent) parent.prepend(el);
 }
 function closeSelfFolds() {
-  ['naming-self', 'voting-self'].forEach(id => { document.getElementById(id).open = false; });
+  ['naming-self', 'voting-self', 'naming-gm-more', 'voting-gm-more'].forEach(id => { document.getElementById(id).open = false; });
 }
 function renderNaming(room, players) {
   if (state.currentScreen !== 'naming') { showScreen('naming'); closeSelfFolds(); }
@@ -1115,6 +1241,7 @@ function renderNaming(room, players) {
       playing.length === 0 ? '入力する人がいません'
       : readyCnt === playing.length ? '全員が入力済みです！' : `${readyCnt} / ${playing.length} 人が入力済み`;
     renderNamingList(playing, 'naming-gm-list', hostSelf);
+    renderNamingWait(playing);
 
   } else if (me.ready) {
     // 送信済み → 待機表示
@@ -1135,6 +1262,24 @@ function renderNaming(room, players) {
     document.getElementById('naming-done').style.display    = 'none';
     document.getElementById('naming-gm-view').style.display = 'none';
   }
+}
+
+// GM画面: 通信が切れていて入力していない人を名前で出し、その人たちだけを待っているときは「待たずに投票へ進む」。
+// 待たずに進めても名前変え役・投票役がそろわないときは「ここでおわる」を出す（自動では進めない）
+function renderNamingWait(playing) {
+  const waiting = playing.filter(([, p]) => !p.ready);
+  const offline = waiting.filter(([, p]) => isOfflineGuest(p));
+  const onlyOffline = offline.length === waiting.length;
+  const ready = playing.filter(([, p]) => p.ready);
+  const short = onlyOffline && (!ready.some(([, p]) => p.gameRole === 'changer') || !ready.some(([, p]) => p.gameRole === 'voter'));
+  document.getElementById('naming-gm-wait').hidden = offline.length === 0;
+  document.getElementById('naming-gm-wait-text').textContent =
+    offline.length ? `${nickList(offline.map(([nick]) => nick))}を待っています（通信が切れています）` : '';
+  document.getElementById('naming-skip-btn').hidden = !(offline.length > 0 && onlyOffline && !short);
+  document.getElementById('naming-gm-short').hidden = !short;
+  const more = document.getElementById('naming-gm-more');
+  more.hidden = short;
+  if (short) more.open = false;
 }
 
 // hideRoles: GMが遊ぶときのGM画面。だれが名前を変える側を選んだかを出さない
@@ -1189,7 +1334,9 @@ async function submitNaming(gameRole, changedName) {
   }
 }
 
-async function hostStartVoting() {
+// skipOffline: 「待たずに投票へ進む」。通信が切れていて入力していない人だけを、この先の名前変え・投票から外して進む
+//（その人の player は残す。gameRole は null のまま＝結果発表まで見る側）。接続中で入力していない人がいれば進まない
+async function hostStartVoting(skipOffline = false) {
   if (!state.isHost || !state.roomRef) return;
   const action = captureAction('naming');
   let abortReason = null;
@@ -1202,7 +1349,10 @@ async function hostStartVoting() {
     const playing = playingEntries(room);
     const changers = playing.filter(([, p]) => p.ready && p.gameRole === 'changer');
     const voters = playing.filter(([, p]) => p.ready && p.gameRole === 'voter');
-    if (playing.some(([, p]) => !p.ready)) { abortReason = 'not_ready'; return; }
+    const waiting = playing.filter(([, p]) => !p.ready);
+    if (waiting.length && (!skipOffline || waiting.some(([, p]) => !isOfflineGuest(p)))) {
+      abortReason = skipOffline ? 'not_ready_online' : 'not_ready'; return;
+    }
     if (changers.length === 0) { abortReason = 'no_changer'; return; }
     if (voters.length === 0) { abortReason = 'no_voter'; return; }
 
@@ -1217,11 +1367,36 @@ async function hostStartVoting() {
     const messages = {
       bad_status: '今は投票フェーズへ進めません',
       not_ready: '全員の入力が終わってから進めてください',
+      not_ready_online: 'まだ入力している人がいます',
       no_changer: '名前を変えた人が1人以上必要です',
       no_voter: '投票役が1人以上必要です',
     };
     toast(messages[abortReason] || '投票フェーズへ進めませんでした');
   }
+}
+
+// 「待たずに進む」（GMが押したときだけ・確認つき）。名前変え → 投票、投票 → 結果発表
+function hostSkipOffline(phase) {
+  if (!state.isHost || !state.roomRef || state.lastRoom?.status !== phase) return;
+  const room = state.lastRoom, players = room.players || {};
+  if (phase === 'naming') {
+    const nicks = playingEntries(room).filter(([, p]) => !p.ready && isOfflineGuest(p)).map(([nick]) => nick);
+    if (!nicks.length || !confirm(`${nickList(nicks)}を待たずに、投票へ進みますか？`)) return;
+    return hostStartVoting(true);
+  }
+  if (phase === 'voting') {
+    const nicks = Object.entries(players).filter(([, p]) => p.gameRole === 'voter' && p.votes == null && isOfflineGuest(p)).map(([nick]) => nick);
+    // GMが遊ぶときは、だれが投票役かをGMの画面に出さない
+    const who = hostPlaysOf(room) ? '通信が切れている人' : nickList(nicks);
+    if (!nicks.length || !confirm(`${who}を待たずに、結果発表へ進みますか？`)) return;
+    return hostStartRevealing(true);
+  }
+}
+// 「ここでおわる」（名前変え・投票の途中。確認つき）。結果発表をせずに終了の画面へ（ゲーム終了と同じ終わり方）
+function hostEndEarly(phase) {
+  if (!state.isHost || !state.roomRef || state.lastRoom?.status !== phase) return;
+  if (!confirm('結果発表をせずに、ここでゲームを終わりにしますか？')) return;
+  return finishRoom(phase);
 }
 
 // ===== Voting =====
@@ -1238,7 +1413,7 @@ function renderVoting(room, players) {
   const voters   = Object.entries(players).filter(([,p]) => p.gameRole === 'voter');
   const votedCnt = voters.filter(([,p]) => p.votes != null).length;
 
-  ['voting-voter-section','voting-changer-section','voting-gm-section']
+  ['voting-voter-section','voting-changer-section','voting-watch-section','voting-gm-section']
     .forEach(id => document.getElementById(id).style.display = 'none');
   // GMが遊ぶときは、自分の投票欄をGM画面の折りたたみの中に出す（summary の文言は役割で変えない）
   const hostSelf = state.isHost && hostPlaysOf(room);
@@ -1256,6 +1431,7 @@ function renderVoting(room, players) {
       voters.length === 0 ? '投票役がいません'
       : votedCnt === voters.length ? '全員が投票しました！'
       : `${votedCnt} / ${voters.length} 人が投票済み`;
+    renderVotingWait(changers, voters, hostSelf);
   }
   // 進行だけのGM・名前変え役のGMには投票欄を出さない
   if (state.isHost && !(hostSelf && me.gameRole === 'voter')) return;
@@ -1277,12 +1453,32 @@ function renderVoting(room, players) {
     }
     updateSubmitBtn();
 
+  } else if (me.gameRole !== 'changer') {
+    // 名前変え・投票のどちらにもならなかった人（GMが待たずに投票へ進めた）
+    document.getElementById('voting-watch-section').style.display = 'block';
   } else {
     // changer
     document.getElementById('voting-changer-section').style.display = 'block';
     document.getElementById('voting-changer-progress').textContent =
       `${votedCnt} / ${voters.length} 人が投票済み`;
   }
+}
+
+// GM画面: 通信が切れていて投票していない人を出す（GMが遊ぶときは名前を出さず人数だけ）。
+// その人たちだけを待っているときは「待たずに結果発表へ進む」。名前変え役か投票役がいないときは「ここでおわる」
+function renderVotingWait(changers, voters, hostSelf) {
+  const unvoted = voters.filter(([, p]) => p.votes == null);
+  const offline = unvoted.filter(([, p]) => isOfflineGuest(p));
+  const short = changers.length === 0 || voters.length === 0;
+  document.getElementById('voting-gm-wait').hidden = short || offline.length === 0;
+  document.getElementById('voting-gm-wait-text').textContent = !offline.length ? ''
+    : hostSelf ? `通信が切れている人を${offline.length}人待っています`
+    : `${nickList(offline.map(([nick]) => nick))}を待っています（通信が切れています）`;
+  document.getElementById('voting-skip-btn').hidden = !(offline.length > 0 && offline.length === unvoted.length);
+  document.getElementById('voting-gm-short').hidden = !short;
+  const more = document.getElementById('voting-gm-more');
+  more.hidden = short;
+  if (short) more.open = false;
 }
 
 function renderVotingCards(changers, savedVotes = null) {
@@ -1385,7 +1581,9 @@ async function submitVotes() {
 }
 
 // ===== Host: Start Revealing =====
-async function hostStartRevealing() {
+// skipOffline: 「待たずに結果発表へ進む」。通信が切れていて投票していない投票役の票を待たずに進む
+//（その人の票は数えない。正解人数の分母は投票した人だけ）。接続中で投票していない人がいれば進まない
+async function hostStartRevealing(skipOffline = false) {
   if (!state.isHost || !state.roomRef) return;
   const action = captureAction('voting');
   let abortReason = null;
@@ -1398,7 +1596,10 @@ async function hostStartRevealing() {
     const voters = Object.entries(players).filter(([, p]) => p.gameRole === 'voter');
     if (changers.length === 0) { abortReason = 'no_changer'; return; }
     if (voters.length === 0) { abortReason = 'no_voter'; return; }
-    if (voters.some(([, p]) => p.votes == null)) { abortReason = 'not_voted'; return; }
+    const unvoted = voters.filter(([, p]) => p.votes == null);
+    if (unvoted.length && (!skipOffline || unvoted.some(([, p]) => !isOfflineGuest(p)))) {
+      abortReason = skipOffline ? 'not_voted_online' : 'not_voted'; return;
+    }
     abortReason = null;
     return {
       ...room,
@@ -1414,6 +1615,7 @@ async function hostStartRevealing() {
       no_changer: '名前を変えた人がいません',
       no_voter: '投票役がいません',
       not_voted: '全員が投票してから進めてください',
+      not_voted_online: 'まだ投票している人がいます',
     };
     toast(messages[abortReason] || '結果発表へ進めませんでした');
   }
@@ -1487,9 +1689,11 @@ function scheduleDoneCleanup(roomRef, deleteAt) {
   }, delay);
 }
 
-async function hostFinish() {
+function hostFinish() { return finishRoom('revealing'); }
+// phase の画面から終了（done）へ。結果発表の「ゲーム終了」と、名前変え・投票の途中の「ここでおわる」で共通
+async function finishRoom(phase) {
   if (!state.isHost || !state.roomRef) return;
-  const action = captureAction('revealing');
+  const action = captureAction(phase);
   const doneRoomRef = state.roomRef;
   const deleteAt = getEstimatedServerNow() + 30000;
   const { committed } = await doneRoomRef.transaction((room) => {
@@ -1497,10 +1701,21 @@ async function hostFinish() {
     return { ...room, status: 'done', deleteAt };
   }, undefined, false).catch(() => ({ committed: false }));
   if (committed) scheduleDoneCleanup(doneRoomRef, deleteAt);
+  else if (actionCurrent(action) && phase !== 'revealing') toast('終わりにできませんでした');
 }
 
 // ===== Reconnect =====
+// 保存した記録で戻ろうとしたら、ルームはあるのに自分がいなかった（待合室でGMに外された）ときの記録
+let reconnectMiss = null;
+function takeReconnectMiss() { const miss = reconnectMiss; reconnectMiss = null; return miss; }
+// 責めない一言で、待合室なら参加画面（コード入り）へ、始まっていたらトップへ。ほかの子の画面には何も出さない
+function showRejoin(miss) {
+  if (miss.waiting && ROOM_CODE_PATTERN.test(miss.code)) { openJoinFromLink(miss.code, true); return; }
+  showScreen('top');
+  toast('ルームにもどれなかったよ', 4000);
+}
 async function tryReconnect() {
+  reconnectMiss = null;
   const saved = sessionStorage.getItem(SESSION_KEY);
   if (!saved) return false;
   try {
@@ -1518,7 +1733,12 @@ async function tryReconnect() {
     }
     let me = room.players?.[nickname];
     if (!ROOM_PHASES.includes(room.status) || (isHost ? room.host !== nickname || me?.isHost !== true
-      : !validGuestRoom(room, nickname))) { clearSession(); return false; }
+      : !validGuestRoom(room, nickname))) {
+      if (!isHost && !me && room.host !== nickname && ROOM_PHASES.includes(room.status)) {
+        reconnectMiss = { code: roomCode, waiting: room.status === 'waiting' };
+      }
+      clearSession(); return false;
+    }
     if (isHost) {
       // hostの従来復帰を維持するが、get後に消えたroomへ部分updateをしない。
       const { committed, snapshot } = await joinTransaction(ref, current => {
@@ -1548,7 +1768,9 @@ async function tryReconnect() {
 // ===== Init =====
 // 再読み込みなどで、保存した記録から同じルームへ戻る（戻れなければトップ）
 async function resumeFromSession() {
-  if (!await tryReconnect()) showScreen('top');
+  if (await tryReconnect()) return;
+  const miss = takeReconnectMiss();
+  if (miss) showRejoin(miss); else showScreen('top');
 }
 
 window.addEventListener('load', async () => {
@@ -1567,7 +1789,7 @@ window.addEventListener('load', async () => {
       const reconnected = await tryReconnect();
       if (reconnected || state.roomRef) return;
       clearSession();
-      openJoinFromLink(linkCode);
+      openJoinFromLink(linkCode, !!takeReconnectMiss());
     } else {
       // 別のルームの記録が残っていても、ひらいたリンクのルームを優先する
       if (saved) clearSession();
@@ -1608,6 +1830,13 @@ window.addEventListener('load', async () => {
       {
         heading: 'おわりかた',
         text: 'GMが「ゲーム終了」を押すとおしまい。「結果をコピー（チャット用）」を押すと、結果をチャットに貼りつけられる。',
+      },
+      {
+        heading: 'こまったとき',
+        items: [
+          '通信が切れた人がいて進めないときは、GMが待合室ではその人の「外す」、名前変え・投票では「待たずに進む」を押す',
+          '途中で終わりにするときは、GMの「そのほかの操作」の「ここでおわる」を押す',
+        ],
       },
     ],
   });

@@ -55,6 +55,8 @@
     }
     .player-tag.me { background: var(--color-muted); }
     .player-tag.role { background: var(--color-primary); }
+    /* 通信が切れたままの人を外す（ホストだけ。待合室の一覧のその人の行） */
+    .player-item .ii-remove { flex-shrink: 0; min-height: 36px; padding: 4px 12px; font-size: 13px; }
 
     /* ── 待合室の設定（ホストの参加） ── */
     .ii-check {
@@ -281,6 +283,7 @@
     <h2>ルームに参加する</h2>
     <div class="card">
       <p class="ii-hint ii-hint--lead" id="joinLinkHint" hidden>リンクから開いたので、ルームコードは入っているよ。ニックネームを入れて「参加する」を押してね。</p>
+      <p class="ii-hint ii-hint--lead" id="rejoinHint" hidden>ルームにもどれなかったよ。もう一度参加してね。</p>
       <div class="error-msg" id="guest-error"></div>
       <div class="form-group">
         <label class="form-label" for="guest-nickname">ニックネーム（8文字以内）</label>
@@ -706,7 +709,10 @@ function goTo(id) {
   showError('host-error', '');
   showError('guest-error', '');
   // トップの「ルームに参加する」から開いたときは、参加用のリンクの案内を隠す
-  if (id === 'guest-join') document.getElementById('joinLinkHint').hidden = true;
+  if (id === 'guest-join') {
+    document.getElementById('joinLinkHint').hidden = true;
+    document.getElementById('rejoinHint').hidden = true;
+  }
   showScreen(id);
 }
 // 参加用のリンクでひらいたとき: コードを入れた状態で参加画面を開き、名前だけ入れてもらう（コード欄は直せるように残す）
@@ -714,9 +720,21 @@ function openJoinFromLink(code) {
   showError('guest-error', '');
   document.getElementById('guest-code').value = code;
   document.getElementById('joinLinkHint').hidden = false;
+  document.getElementById('rejoinHint').hidden = true;
   showScreen('guest-join');
   document.getElementById('guest-nickname').focus({ preventScroll: true });
 }
+// 2026-11-07: 自分がルームの参加者から外れていたとき（ホストが「外す」を押したあとに同じタブで戻った）。
+// 責めずに、コードと名前を入れた参加画面を開く（ルームは待合室なら、そのまま「参加する」で入り直せる）
+function openRejoin(code, nickname) {
+  showError('guest-error', '');
+  document.getElementById('guest-code').value = code;
+  document.getElementById('guest-nickname').value = typeof nickname === 'string' ? nickname : '';
+  document.getElementById('joinLinkHint').hidden = true;
+  document.getElementById('rejoinHint').hidden = false;
+  showScreen('guest-join');
+}
+let pendingRejoin = null; // tryReconnect が「ルームはあるが自分がいない」と分かったときの { code, nickname }
 function showOverlay(id, show) {
   document.getElementById(id).classList.toggle('show', show);
 }
@@ -920,6 +938,42 @@ async function startRound() {
       : abortReason === 'no_answerers' ? '答える人が1人以上いると始められます'
       : abortReason === 'bad_status' ? 'すでにラウンドが進行しています' : '開始に失敗しました');
   }
+}
+
+// ── ホスト: 通信が切れたままの人を外す（2026-11-07。待合室だけ・ホストが押したときだけ） ──
+// 自動では外さない。いま接続している人（接続の子がある人・旧版の人・ホスト）は外せない。
+// 外すと players から消えるので、同じ名前で入り直せる。すでに確定した history（ふりかえり）は残す
+let removeBusy = false;
+async function removeGonePlayer(nick) {
+  if (state.role !== 'host' || !state.roomRef || state.expectedRoomRemoval || removeBusy) return;
+  if (typeof nick !== 'string' || !nick || nick === state.nickname) return;
+  if (!window.confirm(`${nick}さんを参加者から外しますか？\nもどってきたときは、もう一度参加してもらってね。`)) return;
+  if (state.role !== 'host' || !state.roomRef || state.expectedRoomRemoval) return;
+  const ref = state.roomRef, me = state.nickname, round = state.round;
+  let abortReason = null;
+  removeBusy = true;
+  try {
+    // ホストは先にこのルームを購読しているので、transaction の中の null は「ルームがない」
+    const { committed } = await ref.transaction(room => {
+      if (state.roomRef !== ref || state.role !== 'host' || state.expectedRoomRemoval) return;
+      if (!room) { abortReason = 'not_found'; return; }
+      if (room.host !== me || room.status !== 'waiting' || (room.round || 0) !== round) { abortReason = 'bad_status'; return; }
+      const player = room.players?.[nick];
+      if (!player) { abortReason = 'already'; return; }
+      if (player.isHost !== false || nick === room.host || playerConnected(player)) { abortReason = 'connected'; return; }
+      const players = { ...room.players };
+      delete players[nick];
+      abortReason = null;
+      return { ...room, players };
+    });
+    if (committed || state.roomRef !== ref) return;
+    if (abortReason === 'connected') showMsg(`${nick}さんはもどってきたよ`);
+    else if (abortReason === 'bad_status') showMsg('いまは外せません');
+    else if (abortReason !== 'already') showMsg('外せませんでした');
+  } catch (error) {
+    console.warn('[ikutsu-ieru] remove player failed', error);
+    if (state.roomRef === ref) showMsg('外せませんでした');
+  } finally { removeBusy = false; }
 }
 
 // ── ホスト: 自分も答える側で参加するか（待合室のあいだだけ変えられる） ──
@@ -1170,9 +1224,15 @@ function startRoomListener() {
     const room = snap.val();
     if (!room || !ROOM_PHASES.includes(room.status) || (state.role === 'guest'
       && (!room.players?.[state.nickname] || room.players[state.nickname].isHost !== false || room.host === state.nickname))) {
+      // ルームはあるのに自分だけいない（ホストが「外す」を押した）ときは、参加画面にコードと名前を入れて開く
+      const removed = !!room && ROOM_PHASES.includes(room.status) && state.role === 'guest'
+        && !room.players?.[state.nickname] && room.host !== state.nickname;
+      const rejoin = removed ? { code: state.roomCode, nickname: state.nickname } : null;
       stopGuestPresence(); ref.off();
       RoomkRTDB.cancelRoomOnDisconnect(ref).catch(error => console.warn('[ikutsu-ieru] room cleanup failed', error));
-      clearSession(); resetRoomState(); showMsg('ルームまたは参加情報が見つからないため、トップに戻りました');
+      clearSession(); resetRoomState();
+      if (rejoin) openRejoin(rejoin.code, rejoin.nickname);
+      else showMsg('ルームまたは参加情報が見つからないため、トップに戻りました');
       return;
     }
     handleRoom(snap.val());
@@ -1239,8 +1299,12 @@ function handleWaiting(room, players) {
     const box = document.getElementById('w-host-plays');
     if (!state.hostPlaysBusy) box.checked = state.hostPlays;
     const hint = document.getElementById('w-start-hint');
-    hint.hidden = enough;
-    hint.textContent = enough ? '' : `答える人が${MIN_ANSWERERS}人以上いると始められるよ（いま${answerers}人）`;
+    // 通信が切れている人がいるあいだは始められない（自動では外さない）。だれを待っているかを出す
+    const gone = Object.keys(players).filter(nick => players[nick] && !playerConnected(players[nick]));
+    hint.hidden = enough && gone.length === 0;
+    hint.textContent = !enough ? `答える人が${MIN_ANSWERERS}人以上いると始められるよ（いま${answerers}人）`
+      : gone.length ? `${gone.map(nick => nick + 'さん').join('、')}を待っています（通信が切れています）。もどらないときは、名前の横の「外す」で外せるよ`
+      : '';
   }
   document.getElementById('w-count').textContent = `答える人 ${answerers}人`;
   renderPlayerList('w-player-list', players, room);
@@ -1415,16 +1479,26 @@ function renderPlayerList(id, players, room) {
   const ul = document.getElementById(id);
   if (!ul) return;
   const plays = hostPlays(room);
+  // 「外す」はホストの待合室だけ。通信が切れている参加者（ホスト以外）の行にだけ出す
+  const canRemove = state.role === 'host' && room.status === 'waiting';
   ul.innerHTML = Object.entries(players).map(([nick, p]) => {
     const hostTag = p?.isHost ? '<span class="player-tag">ホスト</span>' : '';
     const roleTag = p?.isHost && !plays ? '<span class="player-tag role">進行役</span>' : '';
     const meTag = nick === state.nickname ? '<span class="player-tag me">あなた</span>' : '';
-    const connectionTag = playerConnected(p) ? '' : '<span class="player-tag">再接続待ち</span>';
+    const connected = playerConnected(p);
+    const connectionTag = connected ? '' : '<span class="player-tag">再接続待ち</span>';
+    const removeBtn = canRemove && !connected && p?.isHost === false && nick !== room.host
+      ? `<button type="button" class="btn btn-ghost btn-sm ii-remove" data-remove="${esc(nick)}" aria-label="${esc(nick)}さんを外す">外す</button>`
+      : '';
     return `<li class="player-item">
-      <div class="player-name">${esc(nick)}${hostTag}${roleTag}${meTag}${connectionTag}</div>
+      <div class="player-name">${esc(nick)}${hostTag}${roleTag}${meTag}${connectionTag}</div>${removeBtn}
     </li>`;
   }).join('');
 }
+document.getElementById('w-player-list').addEventListener('click', event => {
+  const button = event.target.closest('button[data-remove]');
+  if (button) removeGonePlayer(button.dataset.remove);
+});
 
 // ── 再接続 ──
 async function tryReconnect() {
@@ -1447,6 +1521,10 @@ async function tryReconnect() {
 
     if (!ROOM_PHASES.includes(room.status) || (role === 'guest' ? !validGuestRoom(room, nickname)
       : room.host !== nickname || room.players?.[nickname]?.isHost !== true)) {
+      // ルームはあるのに自分がいない（ホストが「外す」を押した）: 参加画面にコードと名前を入れて開く
+      if (role === 'guest' && ROOM_PHASES.includes(room.status) && !room.players?.[nickname] && room.host !== nickname) {
+        pendingRejoin = { code: roomCode, nickname };
+      }
       clearSession(); showOverlay('reconnect-overlay', false); return false;
     }
     state.role = role; state.nickname = nickname;
@@ -1473,7 +1551,12 @@ async function tryReconnect() {
 // ── 初期化 ──
 // 再読み込みなどで、保存した記録から同じルームへ戻る（戻れなければトップ）
 function resumeFromSession() {
-  tryReconnect().then(ok => { if (!ok) showScreen('top'); });
+  tryReconnect().then(ok => {
+    if (ok) return;
+    const rejoin = pendingRejoin; pendingRejoin = null;
+    if (rejoin) openRejoin(rejoin.code, rejoin.nickname);
+    else showScreen('top');
+  });
 }
 const startParams = new URLSearchParams(location.search);
 const roomParam = startParams.get('room');
@@ -1491,7 +1574,9 @@ if (roomParam !== null) {
     tryReconnect().then((reconnected) => {
       if (reconnected) return;
       clearSession();
-      openJoinFromLink(linkCode);
+      const rejoin = pendingRejoin; pendingRejoin = null;
+      if (rejoin) openRejoin(rejoin.code, rejoin.nickname);
+      else openJoinFromLink(linkCode);
     });
   } else {
     // 別のルームの記録が残っていても、ひらいたリンクのルームを優先する
@@ -1516,6 +1601,7 @@ if (roomParam !== null) {
         'ほかの人は「ルームに参加する」からニックネームとルームコードを入れて「参加する」を押す。リンクから開いたときは、ルームコードは入っているのでニックネームだけ入れる',
         'ホストがお題と制限時間を決めて「このお題で始める」を押す',
         'ホストは進行だけにすることもできる（待合室の「自分も答える側で参加する」を外す）',
+        '通信が切れたままの人がいると始められない。もどらないときは、ホストが参加者の一覧の「外す」で外せる（外れた人は、同じ名前でもう一度参加できる）',
       ] },
       { heading: 'すすめかた', items: [
         '時間内に、思いついた答えを書いて追加していく（Enterでも追加できるよ）',

@@ -81,6 +81,8 @@
     }
     .player-tag.me { background: var(--color-muted); }
     .player-tag.role { background: var(--color-primary-soft); color: var(--color-primary); }
+    /* 通信が切れたままの人をホストが外す（待合室だけ。2026-11-07） */
+    .player-item .kbz-remove-btn { min-height: 32px; padding: 4px 12px; font-size: 13px; flex-shrink: 0; margin-left: 8px; }
 
     /* ── 待合室の設定（ホストのみ）── */
     .kbz-check {
@@ -458,7 +460,7 @@
       <p class="section-label" style="margin-top:16px">見えているヒント</p>
       <div class="kbz-hints-wrap" id="answer-others-hints"></div>
 
-      <!-- ホスト用：回答者が退出したときの救済 -->
+      <!-- ホスト用：回答者が退出した・通信が切れたままのときの救済（押したときだけ。2026-11-07） -->
       <div id="answer-host-actions" style="display:none;margin-top:16px">
         <button class="btn btn-ghost btn-full" id="btn-answer-skip-guesser" onclick="hostSkipAbsentGuesser()">この回答者をとばして次へ</button>
         <p class="kbz-status-text" id="answer-host-hint" style="margin-top:8px"></p>
@@ -916,6 +918,40 @@ function hintGiversOf(room) {
   return playingNames(room).filter(n => n !== guesser);
 }
 
+// names のうち、通信が切れている人（player は残っているが接続がない）
+function offlineNames(room, names) {
+  const players = (room && room.players) || {};
+  return names.filter(n => players[n] && !playerConnected(players[n]));
+}
+
+// 待合室で、通信が切れたままの人をホストが外す（2026-11-07）。自動では外さない。確認つき。
+// room 全体の transaction の中で、待合室のままか・その人がまだ切断中か・ホストでないかを確かめる。
+// 外すと名前が空くので、同じ名前で入り直せる
+async function hostRemoveOffline(nick) {
+  if (state.role !== 'host' || state.operations.remove) return;
+  const cur = state.lastRoom;
+  const p = cur?.players?.[nick];
+  if (cur?.status !== 'waiting' || !p || p.isHost !== false || playerConnected(p)) return;
+  if (!confirm(`${nick}さんを外しますか？`)) return;
+  const committed = await runOperation('remove', 'waiting', room => {
+    const target = room.players?.[nick];
+    if (room.status !== 'waiting' || !target || target.isHost !== false || room.host === nick || playerConnected(target)) return;
+    const players = { ...room.players };
+    delete players[nick];
+    return { ...room, players };
+  }, true);
+  if (!committed && state.lastRoom?.players?.[nick]) showMsg(`${nick}さんを外せませんでした`);
+}
+let removeListWired = false;
+function wireRemoveList(container) {
+  if (removeListWired || !container) return;
+  removeListWired = true;
+  container.addEventListener('click', e => {
+    const btn = e.target.closest('.kbz-remove-btn');
+    if (btn && container.contains(btn)) void hostRemoveOffline(btn.dataset.remove);
+  });
+}
+
 // 利用回数（回数だけ。stats.js）: ゲームの始まりと、そのときの遊ぶ人の人数
 function countGameStart(playerCount) {
   window.RoomkStats?.count('start');
@@ -1209,6 +1245,12 @@ function handleRoom(room) {
 
   const players = room.players || {};
   const me = players[state.nickname];
+  if (!me && state.role === 'guest' && room.host !== state.nickname) {
+    // 自分が一覧にいない（通信が切れている間にホストが外した）。責めずに参加し直しを案内する（2026-11-07）
+    const code = state.roomCode, nick = state.nickname, waiting = room.status === 'waiting';
+    void cleanupMissingRoom(state.roomRef).then(() => { if (!state.roomRef) showRejoin(code, nick, waiting); });
+    return;
+  }
   if (!me || (state.role === 'host' ? room.host !== state.nickname || me.isHost !== true
     : state.role !== 'guest' || room.host === state.nickname || me.isHost !== false)) {
     void cleanupMissingRoom(state.roomRef); return;
@@ -1300,9 +1342,12 @@ function handleWaiting(room, players) {
     // 最少人数は遊ぶ人だけで数える（進行だけのホストは数えない）
     const count = playingNames(room).length;
     const btn = document.getElementById('btn-start-game');
-    btn.disabled = count < 3 || Object.values(players).some(p => !playerConnected(p));
+    const offline = offlineNames(room, Object.keys(players));
+    btn.disabled = count < 3 || offline.length > 0;
+    // 何を待っているかを出す。戻らないときは一覧の「外す」（ホストが押したときだけ外れる。2026-11-07）
     document.getElementById('waiting-min-msg').textContent =
-      count < 3 ? `あと${3 - count}人で開始できます` : Object.values(players).some(p => !playerConnected(p)) ? '再接続を待っています'
+      count < 3 ? `あと${3 - count}人で開始できます`
+        : offline.length ? `${offline.join('・')}さんを待っています（通信が切れています）。戻らないときは、参加者の「外す」で外せます`
         : hostPlays ? `${count}人参加中` : `遊ぶ人は${count}人（ホストは進行役）`;
   } else {
     hostCtrl.style.display = 'none';
@@ -1352,12 +1397,16 @@ function handleClueInput(room, players) {
     const btn = document.getElementById('btn-force-close-clue');
     btn.disabled = Object.keys(round.hints || {}).length === 0 || !!state.operations.review || !room.gameId;
     const hint = document.getElementById('clue-host-hint');
+    // まだ送っていないヒント役のうち、通信が切れている人（何を待っているかを出す。2026-11-07）
+    const offlineGivers = offlineNames(room, hintGivers.filter(n => !round.hints?.[n]));
+    const waitingText = offlineGivers.length ? `${offlineGivers.join('・')}さんを待っています（通信が切れています）。` : '';
     if (noPlayersLeft) {
-      hint.textContent = round.guesser && players[round.guesser] ? 'ヒントを出す人がいなくなりました' : '遊ぶ人がいなくなりました';
+      hint.textContent = hintGivers.length ? `${waitingText}戻らないときは、遊ぶ人が足りないので、ここで終わりにできます`
+        : round.guesser && players[round.guesser] ? 'ヒントを出す人がいなくなりました' : '遊ぶ人がいなくなりました';
     } else if (Object.keys(round.hints || {}).length === 0) {
       hint.textContent = 'ヒントが1件以上ないと進められません';
     } else if (remaining > 0) {
-      hint.textContent = `未提出の ${remaining} 人は未提出として進めます`;
+      hint.textContent = `${waitingText}未提出の ${remaining} 人は未提出として進めます`;
     } else {
       hint.textContent = '全員が提出済みです';
     }
@@ -1574,13 +1623,18 @@ function handleAnswer(room, players) {
       visible.map(([, h]) => `<span class="kbz-visible-hint">${esc(h.text)}</span>`).join('');
   }
 
-  // ホスト: 回答者が退出していたら「とばす」導線を出す（回答者不在での進行不能を防ぐ）
+  // ホスト: 回答者が退出していた／通信が切れたままなら「とばす」導線を出す（回答者不在での進行不能を防ぐ）。
+  // 通信が切れているだけの人は自動では飛ばさない。ホストが確かめて押したときだけパスとして進む（2026-11-07）
   const answerHostActions = document.getElementById('answer-host-actions');
   const guesserAbsent = !!guesser && !players[guesser];
+  const guesserOffline = !!guesser && !!players[guesser] && !playerConnected(players[guesser]);
   const answerResolved = round.passed === true || (round.answer != null && round.answer !== '');
-  if (state.role === 'host' && !isGuesser && guesserAbsent && !answerResolved) {
+  if (state.role === 'host' && !isGuesser && (guesserAbsent || guesserOffline) && !answerResolved) {
     answerHostActions.style.display = 'block';
-    document.getElementById('answer-host-hint').textContent = `${guesser} が見つかりません。とばして次へ進めます`;
+    document.getElementById('btn-answer-skip-guesser').textContent = guesserAbsent ? 'この回答者をとばして次へ' : '待たずに進む';
+    document.getElementById('answer-host-hint').textContent = guesserAbsent
+      ? `${guesser} が見つかりません。とばして次へ進めます`
+      : `${guesser}さんを待っています（通信が切れています）。「待たずに進む」で、この回はパスとして次へ進めます`;
   } else {
     answerHostActions.style.display = 'none';
   }
@@ -1613,17 +1667,24 @@ async function submitGuess(answer, passed) {
   });
 }
 
-// ホスト救済: 回答者が answer フェーズで退出し進行不能になった場合に、
+// ホスト救済: 回答者が answer フェーズで退出した・通信が切れたまま戻らない場合に、
 // ホストがその回答者をパス扱いで次へ進める。ルーム全体 transaction で
-// フェーズ・回答者不在・未確定を再検証し、既存のパス経路(passed→handleAutoJudge)に乗せる。
+// フェーズ・試合・ラウンド（runOperation）・回答者不在または切断中・未確定を再検証し、
+// 既存のパス経路(passed→handleAutoJudge)に乗せる。通信が切れているだけの人は確認してから（2026-11-07）
 async function hostSkipAbsentGuesser() {
   if (state.role !== 'host') return;
+  const cur = state.lastRoom;
+  const name = cur?.round?.guesser;
+  const gp = name ? cur.players?.[name] : null;
+  if (gp && playerConnected(gp)) return; // いま画面の前にいる回答者はとばさない
+  if (gp && !confirm(`${name}さんの回答を待たずに、この回はパスとして次へ進みますか？`)) return;
   try {
     await runOperation('skip', 'answer', room => {
       if (!room || room.status !== 'answer') return; // フェーズが変わっていたら中止
       const round = room.round || {};
       const players = room.players || {};
-      if (!round.guesser || players[round.guesser]) return; // 回答者が戻った → 中止
+      const target = round.guesser ? players[round.guesser] : null;
+      if (!round.guesser || (target && playerConnected(target))) return; // 回答者が戻った → 中止
       if (round.passed === true || (round.answer != null && round.answer !== '')) return; // 既に確定 → 中止
       return { ...room, round: { ...round, answer: null, passed: true } };
     });
@@ -1875,14 +1936,19 @@ async function endGame() {
   if (committed && lastRound) window.RoomkStats?.count('finish');
 }
 
-// 進行だけのホストで、ヒントの段階にヒント役が0人・ヒント0件になったか（遊ぶ人が抜けて進められない）
+// ヒントの段階に、ヒントを出せる人が0人・ヒント0件になったか（遊ぶ人が抜けた／残りのヒント役の通信が
+// みんな切れている。2026-11-07 にホストが遊ぶ部屋・通信が切れている人にも広げた）。ヒントを送れる人が
+// 1人でもいれば出さない（ホストがヒント役ならホストが送れる）
 function noHintersLeft(room) {
-  return state.role === 'host' && !hostPlaysOf(room) && room?.status === 'clue-input'
-    && hintGiversOf(room).length === 0 && Object.keys(room.round?.hints || {}).length === 0;
+  if (state.role !== 'host' || room?.status !== 'clue-input' || Object.keys(room.round?.hints || {}).length) return false;
+  const players = room.players || {};
+  return hintGiversOf(room).every(n => !playerConnected(players[n]));
 }
-// その場合の終了。書き込みは結果画面の「ゲーム終了」（endGame）と同じ status: 'finished' だけ
+// その場合の終了。書き込みは結果画面の「ゲーム終了」（endGame）と同じ status: 'finished' だけ。
+// 通信が切れているだけの人がいるときは確認してから。transaction の中で、まだヒント0件・送れる人0人かを確かめる
 async function hostEndNoPlayers() {
-  if (state.role !== 'host') return;
+  if (state.role !== 'host' || !state.lastRoom) return;
+  if (hintGiversOf(state.lastRoom).length && !confirm('ゲームを終了して、結果を出しますか？')) return;
   await runOperation('end', 'clue-input', room => noHintersLeft(room) ? { ...room, status: 'finished' } : undefined);
 }
 
@@ -1892,6 +1958,7 @@ async function playAgain() {
   const oldTimer = state.cleanupTimer;
   const a = captureAction('finished');
   let abortReason = null;
+  let offlineList = [];
   let hostPlays = hostPlaysOf(state.lastRoom);
   let playerCount = 0;
   const committed = await withHostLifecycle(async () => {
@@ -1904,7 +1971,8 @@ async function playAgain() {
     const players = playingNames(room);
     playerCount = players.length;
     if (players.length < 3) { abortReason = 'too_few'; return; }
-    if (Object.values(room.players).some(p => !playerConnected(p))) { abortReason = 'offline'; return; }
+    offlineList = offlineNames(room, Object.keys(room.players || {}));
+    if (offlineList.length) { abortReason = 'offline'; return; }
 
     const turnOrder = shuffle(players);
     const { word, index } = pickWord([]);
@@ -1936,6 +2004,12 @@ async function playAgain() {
 
   if (!committed && abortReason === 'too_few') {
     showMsg(tooFewMsg(hostPlays));
+    return;
+  }
+  // 通信が切れている人がいると、もう一度は始めない（全員に順番を配り直すため。2026-11-07）。
+  // だれを待っているかと、既存の「退出する」で終われることを出す。外す・待たずに進むはここでは足さない
+  if (!committed && abortReason === 'offline' && offlineList.length) {
+    showMsg(`${offlineList.join('・')}さんの通信が切れているので、もう一度は始められません。「退出する」で終わりにできます`, true, 6000);
     return;
   }
   if (!committed) {
@@ -2007,10 +2081,14 @@ function renderPlayerList(id, players, room) {
   ul.innerHTML = Object.entries(players).map(([nick, p]) => {
     const meTag = nick === state.nickname ? '<span class="player-tag me">あなた</span>' : '';
     const hostTag = p.isHost ? '<span class="player-tag">ホスト</span>' + roleTag : !playerConnected(p) ? '<span class="player-tag">再接続待ち</span>' : '';
+    // 外すは、ホストの待合室で、通信が切れている参加者の行だけ（2026-11-07）
+    const removeBtn = state.role === 'host' && room?.status === 'waiting' && p.isHost === false && !playerConnected(p)
+      ? `<button type="button" class="btn btn-ghost btn-sm kbz-remove-btn" data-remove="${esc(nick)}" aria-label="${esc(nick)}さんを外す">外す</button>` : '';
     return `<li class="player-item">
-      <div class="player-name">${esc(nick)}${hostTag}${meTag}</div>
+      <div class="player-name">${esc(nick)}${hostTag}${meTag}</div>${removeBtn}
     </li>`;
   }).join('');
+  if (state.role === 'host') wireRemoveList(ul);
 }
 
 function renderRoundInfo(id, round) {
@@ -2059,6 +2137,22 @@ function openJoinFromLink(code) {
   document.getElementById('joinLinkHint').hidden = false;
   showScreen('guest-join');
   document.getElementById('guest-nickname').focus({ preventScroll: true });
+}
+
+// 自分が一覧にいなくなっていた（ホストが外した）とき。待合室なら、コードとニックネームを入れた参加画面を開く。
+// ゲームが始まっていたら入れないのでトップへ。責める言い方はしない（2026-11-07）
+function showRejoin(code, nick, waiting) {
+  if (waiting && SPEC_CODE_RE.test(code || '')) {
+    showMsg('ルームにもどれなかったよ。もう一度参加してね');
+    hideError('guest-error');
+    document.getElementById('guest-code').value = code;
+    document.getElementById('guest-nickname').value = nick || '';
+    document.getElementById('joinLinkHint').hidden = true;
+    showScreen('guest-join');
+  } else {
+    showMsg('ルームにもどれなかったよ');
+    showScreen('top');
+  }
 }
 
 // 再読み込みなどで、保存した記録から同じルームへ戻る（戻れなければトップ）
@@ -2146,6 +2240,12 @@ async function tryReconnect() {
       clearSession(); showOverlay('reconnect-overlay', false); return false;
     }
 
+    if (role === 'guest' && ROOM_PHASES.includes(room.status) && room.host !== nickname && !room.players?.[nickname]) {
+      // 通信が切れている間にホストが外した。待合室なら、コードと名前を入れた参加画面へ（2026-11-07）
+      clearSession(); showOverlay('reconnect-overlay', false);
+      showRejoin(roomCode, nickname, room.status === 'waiting');
+      return room.status === 'waiting' ? 'rejoin' : false;
+    }
     if (role !== 'spectator' && (!ROOM_PHASES.includes(room.status) || (role === 'host'
       ? room.host !== nickname || room.players?.[nickname]?.isHost !== true : !validGuestRoom(room, nickname)))) {
       clearSession(); showOverlay('reconnect-overlay', false); return false;
@@ -2588,6 +2688,7 @@ function renderSpecFinished(room) {
           'ホストが「ヒントを見せる」を押すと、かぶったヒントは消えて、残りが回答者に見える',
           '回答者はヒントを見て「回答する」（「パスする」もOK）',
           'ホストが正解かどうかを判定して、「次のラウンドへ」で進む',
+          '通信が切れたまま戻らない人がいるとき、ホストは待合室なら参加者の「外す」で外せる。回答者を待っているときは「待たずに進む」で、その回をパスにして進める',
         ],
       },
       { heading: 'おわりかた', text: '全員が1回ずつ回答者をやるとおしまい。さいごにみんなでふりかえりを見られる。' },

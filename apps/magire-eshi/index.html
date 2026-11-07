@@ -44,7 +44,9 @@
       padding: 10px 0; border-bottom: 1px solid var(--color-border); font-size: 15px;
     }
     .mgr-player-item:last-child { border-bottom: none; }
-    .mgr-player-item__name { display: flex; align-items: center; gap: 6px; }
+    .mgr-player-item__name { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; min-width: 0; }
+    /* 通信が切れた人の行の「外す」（待合室・ホストだけ。2026-11-07） */
+    .mgr-remove-btn { width: auto; margin: 0 0 0 8px; flex-shrink: 0; min-height: 40px; }
     .mgr-tag {
       font-size: 11px; font-weight: 700; padding: 2px 6px;
       border-radius: 4px; background: var(--color-accent); color: #fff;
@@ -182,6 +184,7 @@
       border-radius: 12px; padding: 14px; margin-bottom: 12px;
       font-size: 14px;
     }
+    .mgr-host-banner .btn { min-height: 40px; }
 
     /* ── オーバーレイ ── */
     .mgr-overlay {
@@ -581,6 +584,7 @@
       <button id="btn-next-round" class="btn btn-primary btn-full" onclick="hostNextRound()">
         <span class="material-symbols-rounded" aria-hidden="true">replay</span>次のラウンドへ
       </button>
+      <p id="rs-next-note" style="display:none;font-size:13px;color:var(--color-muted);text-align:center;margin-top:8px"></p>
       <!-- たまに使う操作（開くと出る） -->
       <details class="mgr-hostmenu" id="rs-host-menu">
         <summary>そのほかの操作</summary>
@@ -1043,6 +1047,14 @@ function countIssueMsg(issue, hostPlays, verb) {
   if (issue === 'too_many') return `遊ぶ人は${MAX_PLAYERS}人までです`;
   return hostPlays ? `${MIN_PLAYERS}人以上で${verb}` : `ホストのほかに${MIN_PLAYERS}人以上で${verb}`;
 }
+// 通信が切れている人（2026-11-07）。ホストが押したときだけ「外す」（待合室）・「待たずに進む」（ゲーム中）の相手になる。
+// 自動では外さない・待つ人数（分母）も変えない。ホストは playerConnected で常に接続扱いなので入らない
+function disconnectedNames(players, names) {
+  return names.filter(nick => players[nick] && !playerConnected(players[nick]));
+}
+function namesText(names) {
+  return names.map(nick => `${nick}さん`).join('、');
+}
 
 // ── ホスト: ルーム作成 ──
 // 作成が例外で終わったとき（送信後の切断・権限エラーなど）も無反応にしない
@@ -1301,6 +1313,43 @@ async function onHostPlaysChange(checked) {
   if (actionCurrent(action) && state.lastRoom?.status === STATUS.WAITING) handleWaiting(state.lastRoom, state.lastRoom.players || {});
 }
 
+// ── 待合室: 通信が切れた参加者を外す（ホストが押したときだけ。2026-11-07） ──
+// 自動では外さない。外すと players から消えるので、同じ名前で入り直せる。ほかの子の画面では一覧から静かに消える
+let removeGuestBusy = false;
+async function hostRemoveGuest(nick) {
+  if (state.role !== 'host' || typeof nick !== 'string' || removeGuestBusy) return;
+  const room = state.lastRoom, target = room?.players?.[nick];
+  if (room?.status !== STATUS.WAITING || !target || target.isHost || playerConnected(target)) return;
+  if (!window.confirm(`${nick}さんを外しますか？`)) return;
+  const action = captureAction();
+  let reason = null;
+  removeGuestBusy = true;
+  try {
+    const { committed } = await action.ref.transaction(r => {
+      if (!canApplyAction(action, r, STATUS.WAITING)) { reason = 'state'; return; }
+      const p = r.players?.[nick];
+      if (!p || p.isHost || r.host === nick) { reason = 'gone'; return; }
+      if (playerConnected(p)) { reason = 'back'; return; }
+      reason = null;
+      const players = { ...r.players };
+      delete players[nick];
+      return { ...r, players };
+    }, undefined, false);
+    if (!committed && actionCurrent(action) && reason !== 'gone') {
+      showMsg(reason === 'back' ? `${nick}さんの通信がもどりました` : '状態が更新されました。画面を確認してください');
+    }
+  } catch (error) {
+    if (actionCurrent(action)) showMsg('外せませんでした。もう一度試してください');
+    console.warn('[magire-eshi] hostRemoveGuest failed', error);
+  } finally {
+    removeGuestBusy = false;
+  }
+}
+document.getElementById('w-player-list').addEventListener('click', (e) => {
+  const btn = e.target.closest('[data-remove-nick]');
+  if (btn) hostRemoveGuest(btn.dataset.removeNick);
+});
+
 // ── 役わりカード ──
 function revealRoleCard() {
   if (state.roleRevealed) return;
@@ -1360,19 +1409,31 @@ async function playerAction(key, phase, update, action = captureAction()) {
 }
 
 // ── ホスト: 描画開始 ──
-async function hostStartDrawing() {
+// skipDisconnected: 「待たずに描き始める」（2026-11-07）。確認していない人のうち、通信が切れている人だけを待たない。
+// その人は描く順・色・投票にそのまま残る（もどれば続けられる。番が来たらホストが「待たずに次の人へ」で進められる）
+async function hostStartDrawing(skipDisconnected = false) {
   if (state.role !== 'host') return;
+  const skip = skipDisconnected === true;
+  if (skip) {
+    const room = state.lastRoom, players = room?.players || {};
+    const skipped = disconnectedNames(players, playingNames(room).filter(nick => !players[nick].confirmed));
+    if (room?.status !== STATUS.REVEAL || !skipped.length) return;
+    if (!window.confirm(`${namesText(skipped)}の確認を待たずに描き始めますか？`)) return;
+  }
   const action = captureAction();
   const minutes = Number(document.getElementById('rv-draw-minutes').value);
   if (!Number.isInteger(minutes) || minutes < 0 || minutes > 5) return;
-  await action.ref.transaction((room) => {
+  const { committed } = await action.ref.transaction((room) => {
     if (!canApplyAction(action, room, STATUS.REVEAL)) return;
     const guests = playingNames(room);
-    if (guests.length < MIN_PLAYERS || guests.some(nick => !room.players[nick].confirmed) || !room.players[room.game?.fakeArtist]) return;
+    // 待つ人: 確認していない人。skip のときは、いまも通信が切れている人を除く（もどってきた人は待つ）
+    const waiting = guests.filter(nick => !room.players[nick].confirmed && !(skip && !playerConnected(room.players[nick])));
+    if (guests.length < MIN_PLAYERS || waiting.length || !room.players[room.game?.fakeArtist]) return;
     return { ...room, status: STATUS.DRAWING, drawMinutes: minutes,
       game: { ...room.game, turnMinutes: minutes || null,
         turnEndsAt: minutes ? getEstimatedServerNow() + minutes * 60 * 1000 : null } };
   }, undefined, false);
+  if (!committed && skip && actionCurrent(action)) showMsg('状態が更新されました。画面を確認してください');
 }
 
 function turnExpired(game) {
@@ -1789,6 +1850,15 @@ function resetRoomState() {
   showScreen('top');
 }
 
+// 自分の参加者の記録がなくてルームにもどれないとき（2026-11-07）。待合室なら参加画面にコードとニックネームを入れて開く
+function showRejoin({ code, nickname, waiting }) {
+  showMsg('ルームにもどれなかったよ。もう一度参加してね');
+  if (!waiting || !SPEC_CODE_RE.test(code || '')) return;
+  openJoinFromLink(code);
+  document.getElementById('joinLinkHint').hidden = true;
+  if (typeof nickname === 'string') document.getElementById('guest-nickname').value = nickname;
+}
+
 // ── Firebase リスナー ──
 function startRoomListener() {
   const ref = state.roomRef;
@@ -1803,9 +1873,14 @@ function startRoomListener() {
     const room = snap.val();
     if (!room || !ROOM_PHASES.includes(room.status) || (state.role === 'guest'
       && (!room.players?.[state.nickname] || room.players[state.nickname].isHost !== false || room.host === state.nickname))) {
+      // 参加者の記録だけがない（通信が切れている間にホストが外した など。2026-11-07）: 待合室なら参加画面にコードを入れて開く
+      const rejoin = state.role === 'guest' && room && ROOM_PHASES.includes(room.status) && !room.players?.[state.nickname]
+        && room.host !== state.nickname ? { code: state.roomCode, nickname: state.nickname, waiting: room.status === STATUS.WAITING } : null;
       stopGuestPresence(); ref.off();
       RoomkRTDB.cancelRoomOnDisconnect(ref).catch(error => console.warn('[magire-eshi] room cleanup failed', error));
-      clearSession(); resetRoomState(); showMsg('ルームまたは参加情報が見つからないため、トップに戻りました');
+      clearSession(); resetRoomState();
+      if (rejoin) { showRejoin(rejoin); return; }
+      showMsg('ルームまたは参加情報が見つからないため、トップに戻りました');
       return;
     }
     handleRoom(snap.val());
@@ -1931,6 +2006,31 @@ function hostFakeGoneBannerHtml(game, players) {
   </div>`;
 }
 
+// お題くばり: 確認していない人の通信が切れているとき、だれを待っているかと「待たずに描き始める」（2026-11-07）。
+// ボタンは、ほかの遊ぶ人が全員確認済みのときだけ出す（つながっている子の確認は待つ）
+function revealWaitingBannerHtml(room, players) {
+  const plays = playingNames(room);
+  const unconfirmed = plays.filter(nick => !players[nick].confirmed);
+  const gone = disconnectedNames(players, unconfirmed);
+  if (!gone.length) return '';
+  const canSkip = gone.length === unconfirmed.length && plays.length >= MIN_PLAYERS && !!players[room.game?.fakeArtist];
+  return `<div class="mgr-host-banner" id="rv-wait-banner">
+    <p>${esc(namesText(gone))}を待っています（通信が切れています）</p>
+    ${canSkip ? '<button type="button" class="btn btn-secondary btn-sm mgr-sep" id="btn-skip-confirm" onclick="hostStartDrawing(true)">待たずに描き始める</button>' : ''}
+  </div>`;
+}
+// おえかき: いまの番の人の通信が切れているとき（制限なしでは止まるため）、ホストに「待たずに次の人へ」（2026-11-07）
+function drawWaitingBannerHtml(room, players) {
+  const g = room.game || {}, order = g.drawOrder || [], ti = g.turnIndex || 0;
+  if (!order.length || ti >= order.length * LAPS || turnExpired(g)) return '';
+  const drawer = order[ti % order.length];
+  if (!players[drawer] || playerConnected(players[drawer])) return '';
+  return `<div class="mgr-host-banner" id="dr-wait-banner">
+    <p>${esc(drawer)}さんを待っています（通信が切れています）</p>
+    <button type="button" class="btn btn-secondary btn-sm mgr-sep" id="btn-skip-gone-turn" onclick="hostSkipTurn()"${state.skipSubmitting ? ' disabled' : ''}>待たずに次の人へ</button>
+  </div>`;
+}
+
 // ── 待機 ──
 function handleWaiting(room, players) {
   if (state.currentScreen !== 'waiting') showScreen('waiting');
@@ -1948,14 +2048,19 @@ function handleWaiting(room, players) {
     document.getElementById('btn-open-watch-hostplays').style.display = hostPlays ? 'flex' : 'none';
     document.getElementById('btn-open-watch-waiting').style.display = hostPlays ? 'none' : 'flex';
     const issue = playerCountIssue(room);
-    document.getElementById('btn-start').disabled = !!issue || guests.some(nick => !playerConnected(players[nick]));
+    const gone = disconnectedNames(players, guests);
+    document.getElementById('btn-start').disabled = !!issue || gone.length > 0;
     let note = startRuleText(hostPlays);
     if (issue === 'too_few') note += `。あと${MIN_PLAYERS - count}人必要です`;
     else if (issue === 'too_many') note = `遊ぶ人は${MAX_PLAYERS}人までです（いま${count}人）`;
+    // 通信が切れた人を待っているときは、だれを待っているかと「外す」を案内する（2026-11-07）
+    if (gone.length) note = `${namesText(gone)}を待っています（通信が切れています）。もどれないときは、一覧の「外す」で外せます`;
     document.getElementById('w-start-note').textContent = note;
   }
   document.getElementById('w-count').textContent = hostPlays ? `${count}人` : `遊ぶ人 ${count}人`;
-  renderPlayerList('w-player-list', players, null, true);
+  // 「外す」はホストの画面の、通信が切れたゲストの行だけ（いま画面の前にいる子は外せない）
+  renderPlayerList('w-player-list', players, isHost ? (nick, p) => (!p.isHost && !playerConnected(p)
+    ? `<button type="button" class="btn btn-ghost btn-sm mgr-remove-btn" data-remove-nick="${esc(nick)}" aria-label="${esc(nick)}さんを外す">外す</button>` : '') : null, true);
 }
 
 // ── お題くばり ──
@@ -1993,7 +2098,7 @@ function handleReveal(room, players) {
     document.getElementById('rv-host-secrets').style.display = showSecrets ? 'block' : 'none';
     document.getElementById('rv-topic-body').textContent = showSecrets ? `${g.topicWord || ''}（${g.topicCategory || ''}）` : '';
     document.getElementById('rv-fake-body').textContent = showSecrets ? g.fakeArtist || '' : '';
-    document.getElementById('rv-host-banner').innerHTML = hostFakeGoneBannerHtml(g, players);
+    document.getElementById('rv-host-banner').innerHTML = hostFakeGoneBannerHtml(g, players) + revealWaitingBannerHtml(room, players);
   }
 
   const guests = playingNames(room);
@@ -2138,7 +2243,7 @@ function handleDrawing(room, players) {
   if (isHost) {
     document.getElementById('dr-secret-body').textContent = showSecrets
       ? `お題「${g.topicWord || ''}」（${g.topicCategory || ''}）／まぎれ絵師: ${g.fakeArtist || ''}` : '';
-    document.getElementById('dr-host-banner').innerHTML = hostFakeGoneBannerHtml(g, players);
+    document.getElementById('dr-host-banner').innerHTML = hostFakeGoneBannerHtml(g, players) + drawWaitingBannerHtml(room, players);
     document.getElementById('btn-skip-turn').disabled = ti >= total || turnExpired(g) || !!state.skipSubmitting;
 
     if (ti < total) {
@@ -2409,8 +2514,17 @@ function handleResult(room, players) {
 
   document.getElementById('rs-host-actions').style.display = (isHost && finalPhase) ? 'block' : 'none';
   document.getElementById('rs-host-watch').style.display = isHost ? 'block' : 'none';
-  document.getElementById('btn-next-round').disabled = !!playerCountIssue(room)
-    || guestNames(players).some(nick => !playerConnected(players[nick]));
+  const nextIssue = playerCountIssue(room);
+  const goneGuests = disconnectedNames(players, guestNames(players));
+  document.getElementById('btn-next-round').disabled = !!nextIssue || goneGuests.length > 0;
+  // 次のラウンドへ進めない理由と、終わりかた（既存の「終わる」）を一言（2026-11-07）
+  let nextNote = '';
+  if (nextIssue === 'too_few') nextNote = '遊ぶ人が足りないので、「そのほかの操作」の「終わる」でここで終わりにできます';
+  else if (nextIssue === 'too_many') nextNote = countIssueMsg(nextIssue, hostPlaysOf(room), '続けられます');
+  else if (goneGuests.length) nextNote = `${namesText(goneGuests)}を待っています（通信が切れています）。もどれないときは、「そのほかの操作」の「終わる」で終わりにできます`;
+  const nextNoteEl = document.getElementById('rs-next-note');
+  nextNoteEl.textContent = nextNote;
+  nextNoteEl.style.display = nextNote ? 'block' : 'none';
 }
 
 // ── おしまい ──
@@ -2461,6 +2575,12 @@ async function tryReconnect() {
       clearSession(); showOverlay('reconnect-overlay', false); return false;
     }
 
+    if (role === 'guest' && ROOM_PHASES.includes(room.status) && !room.players?.[nickname] && room.host !== nickname) {
+      // 自分の記録がない（通信が切れている間にホストが外した など。2026-11-07）
+      clearSession(); showOverlay('reconnect-overlay', false);
+      showRejoin({ code: roomCode, nickname, waiting: room.status === STATUS.WAITING });
+      return false;
+    }
     if (!ROOM_PHASES.includes(room.status) || (role === 'guest' ? !validGuestRoom(room, nickname)
       : room.host !== nickname || room.players?.[nickname]?.isHost !== true)) {
       clearSession(); showOverlay('reconnect-overlay', false); return false;
@@ -2800,7 +2920,8 @@ function renderSpecDone() {
 // そのときは古い再接続の記録を消す（無効な watch のあと、次の再読み込みで別のルームに戻らないように）
 // 次に参加用のリンク ?room=CODE。どちらもないときだけ保存した記録から再接続する
 function resumeFromSession() {
-  tryReconnect().then(ok => { if (!ok) showScreen('top'); });
+  // もどれなかったときに参加画面を開いた場合（showRejoin）は、そのまま残す
+  tryReconnect().then(ok => { if (!ok && state.currentScreen !== 'guest-join') showScreen('top'); });
 }
 (function init() {
   const params = new URLSearchParams(location.search);
@@ -2846,12 +2967,14 @@ function resumeFromSession() {
         '出てきたルームコードをみんなに伝える。ルームコードは「コードをコピー」、参加用のリンクは「リンクをコピー」でチャットに送れる。スマホやタブレットで入る人には「QRコードを出す」をカメラで読み取ってもらう',
         'ほかの人は「ルームに参加する」からニックネームとルームコードを入れて「参加する」を押す。リンクから開いたときは、ルームコードは入っているのでニックネームだけ入れる',
         'ホストははじめ進行役（描かない・投票しない）。待合室で「自分もプレイヤーとして参加する」にチェックすると、いっしょに描いて投票する（まぎれ絵師になることもある）',
+        '待合室で通信が切れた人は、ホストが一覧の「外す」で外せる（同じ名前でまた参加できる）',
       ] },
       { heading: '進めかた', items: [
         '自分のカードをタップして見て、「確認した」を押す',
         'ホストは描く時間を「制限なし」か1人の手番ごとに1〜5分から選んで、「描き始める」を押す',
         '順番が来たら1筆だけ描いて、「これでOK」を押す（「描き直す」もできる）',
         '時間切れになると次の人に進む。ホストは「そのほかの操作」の「この人の番をスキップ」でも次に進められる',
+        '通信が切れた人がいるときは、ホストの画面にだれを待っているかが出る。お題くばりでは「待たずに描き始める」、描く番では「待たずに次の人へ」で進められる',
         '相談タイムで、まぎれ絵師が誰かを声やチャットで話し合う',
         'まぎれ絵師だと思う人に投票する',
         'まぎれ絵師が見つかったら、まぎれ絵師がお題を当てる逆転チャンス。答えはホストが判定する（ホストも遊ぶときは、6つの中から選ぶと自動で判定される）',

@@ -162,6 +162,10 @@
     .jn-check input { width: 20px; height: 20px; accent-color: var(--color-accent); flex-shrink: 0; }
     .jn-note { font-size: 13px; color: var(--color-muted); }
     .jn-note--lead { font-size: 14px; line-height: 1.6; margin: 0 0 16px; }
+    /* GM だけに出す「待っている人」の一言と「待たずに進む」（通信が切れた人を待って止まったとき） */
+    .jn-wait { font-size: 14px; line-height: 1.6; }
+    .jn-wait-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+    .jn-wait-row .jn-wait { flex: 1 1 200px; margin: 0; }
 
     /* ── 夜フェーズ ── */
     .night-screen { background: #0f172a; }
@@ -521,6 +525,7 @@
     <div class="card mt-md">
       <p class="section-lbl">準備状況</p>
       <ul class="player-list" id="role-player-list"></ul>
+      <p class="jn-note" id="role-host-wait" hidden style="margin-top:8px"></p>
       <div id="role-host-start-night" style="display:none;margin-top:12px">
         <button class="btn btn-primary btn-full" onclick="startNight()">
           <span class="material-symbols-rounded">dark_mode</span>夜フェーズへ
@@ -587,6 +592,14 @@
         <p style="font-size:14px;margin-bottom:12px">一緒に退場する相手を選んでください</p>
         <div id="morning-hunter-btns"></div>
       </div>
+    </div>
+
+    <!-- GM 用: ハンターの選択を待っている間の一言（通信が切れているときだけ「待たずに進む」） -->
+    <div id="morning-hunter-wait" class="card mt-md jn-wait-row" hidden>
+      <p class="jn-wait" id="morning-hunter-wait-text"></p>
+      <button class="btn btn-secondary btn-sm" id="morning-hunter-skip" hidden onclick="skipHunterPending()">
+        <span class="material-symbols-rounded">skip_next</span>待たずに進む
+      </button>
     </div>
 
     <div id="morning-host-btn" class="mt-md" style="display:none">
@@ -700,6 +713,14 @@
         </p>
         <div id="hunter-btns"></div>
       </div>
+    </div>
+
+    <!-- GM 用: ハンターの選択を待っている間の一言（通信が切れているときだけ「待たずに進む」） -->
+    <div id="exec-hunter-wait" class="card mt-md jn-wait-row" hidden>
+      <p class="jn-wait" id="exec-hunter-wait-text"></p>
+      <button class="btn btn-secondary btn-sm" id="exec-hunter-skip" hidden onclick="skipHunterPending()">
+        <span class="material-symbols-rounded">skip_next</span>待たずに進む
+      </button>
     </div>
 
     <div id="exec-host-btn" class="mt-md" style="display:none">
@@ -825,6 +846,7 @@ const state = {
   roleFlipped:  false,
   resolveTriggered: false,
   hunterResolved: false,
+  hunterWaitNick: null,   // GM がいま待っているハンター（「待たずに進む」の確認と transaction の照合に使う）
   renderedVoteRound: 0,
   // 待合室: 遊ぶ人数（進行だけのGMは数えない）と GM が遊ぶか
   playingCount: 0,
@@ -1519,12 +1541,27 @@ function handleRole(room, players) {
     setupRoleExtraInfo(room, players, me);
     showScreen('role');
   }
-  // 準備状況リスト
-  renderPlayerList('role-player-list', players,
-    p => p.actionDone
-      ? '<span class="player-tag voted">準備OK</span>'
-      : '<span style="font-size:12px;color:var(--color-muted)">確認中</span>'
-  , null, room);
+  // 準備状況リスト。通信が切れている人には「切断中」と出し、GM には「待たずに進む」を出す（接続中の人には出さない）
+  renderPlayerList('role-player-list', players, (p, nick) => {
+    if (p.actionDone) return '<span class="player-tag voted">準備OK</span>';
+    if (p.connected === false) {
+      return '<span style="font-size:12px;color:var(--color-muted)">切断中</span>'
+        + (state.isHost
+          ? `<button class="btn btn-secondary btn-sm" style="margin-left:8px" data-skip-role-nick="${esc(nick)}">待たずに進む</button>`
+          : '');
+    }
+    return '<span style="font-size:12px;color:var(--color-muted)">確認中</span>';
+  }, null, room);
+  document.querySelectorAll('#role-player-list [data-skip-role-nick]').forEach(btn => {
+    btn.onclick = () => skipRoleCheck(btn.dataset.skipRoleNick);
+  });
+  // GM だけ: 通信が切れていて、まだ確認していない人を一言で出す
+  const roleWait = document.getElementById('role-host-wait');
+  const offline = state.isHost
+    ? playingNames(room, players).filter(nick => !players[nick].actionDone && players[nick].connected === false)
+    : [];
+  roleWait.hidden = offline.length === 0;
+  roleWait.textContent = offline.length ? `${offline.map(n => `${n}さん`).join('、')}を待っています（通信が切れています）` : '';
   // 確認したあとは「確認した！」を副ボタンにする（「夜フェーズへ」と主ボタンが2つ並ばないように）
   if (players[state.nickname]?.actionDone) {
     document.getElementById('btn-role-ready').disabled = true;
@@ -1608,6 +1645,27 @@ function flipRoleCard() {
 async function markRoleReady() {
   document.getElementById('btn-role-ready').disabled = true;
   await state.roomRef.child(`players/${state.nickname}/actionDone`).set(true);
+}
+
+// 役職確認で、通信が切れた人を待たずに進む（GM だけ。2026-11-07）。
+// 役職はもう配っているので外さず、確認済みとして扱う（夜の「スキップ」と同じ考え方）。
+// room 全体の transaction の中で「まだ役職確認の画面・その人が遊ぶ人・まだ切断中・まだ確認していない」を確かめる。
+// ルームは購読中なので、transaction の中の null は「ルームがない」
+async function skipRoleCheck(nick) {
+  if (!state.isHost || !state.roomRef || !nick) return;
+  if (!window.confirm(`${nick}さんを待たずに進みますか？`)) return;
+  const ref = state.roomRef;
+  try {
+    await ref.transaction(room => {
+      if (!room || room.status !== 'role') return;
+      const p = room.players?.[nick];
+      if (!p || !isPlaying(room, nick) || p.actionDone || p.connected !== false) return;
+      return { ...room, players: { ...room.players, [nick]: { ...p, actionDone: true } } };
+    });
+  } catch (error) {
+    console.warn('[jinro] skipRoleCheck failed', error);
+    if (state.roomRef === ref) showMsg('うまく進められませんでした。もう一度押してね');
+  }
 }
 
 async function startNight() {
@@ -1955,14 +2013,63 @@ function handleMorning(room, players) {
   // ホスト: ハンターが選択済みなら道連れ処理
   if (state.isHost && hunterPending && hunterTarget && !state.hunterResolved) {
     state.hunterResolved = true;
+    renderHunterWait('morning', room, players, false);
     resolveHunterKill(room, hunterTarget);
     return;
   }
 
-  // 昼の討論へボタン: ハンター選択待ちの間は非表示
+  // 昼の討論へボタン: ハンター選択待ちの間は非表示（GM には待っている人と、切断中なら「待たずに進む」を出す）
   const waitingForHunter = hunterPending && !hunterTarget;
+  renderHunterWait('morning', room, players, waitingForHunter && !isHunterMe);
   document.getElementById('morning-host-btn').style.display =
     (state.isHost && !waitingForHunter) ? 'block' : 'none';
+}
+
+// ハンターの選択を待っている間、GM にだけ「だれを待っているか」を出す（2026-11-07）。
+// 通信が切れている（connected=false、または players にいない）ときだけ「待たずに進む」を出す
+function renderHunterWait(prefix, room, players, waiting) {
+  const box = document.getElementById(`${prefix}-hunter-wait`);
+  const textEl = document.getElementById(`${prefix}-hunter-wait-text`);
+  const skipBtn = document.getElementById(`${prefix}-hunter-skip`);
+  const show = !!(state.isHost && waiting);
+  box.hidden = !show;
+  if (!show) { skipBtn.hidden = true; textEl.textContent = ''; return; }
+  const nick = room.hunterPending;
+  state.hunterWaitNick = nick;
+  const offline = isHunterOffline(room, players);
+  textEl.textContent = offline
+    ? `${nick}さんを待っています（通信が切れています）`
+    : `${nick}さんが、一緒に退場する相手を選んでいます`;
+  skipBtn.hidden = !offline;
+}
+
+function isHunterOffline(room, players = room?.players || {}) {
+  const p = players[room?.hunterPending];
+  return !p || p.connected === false;
+}
+
+// ハンターを待たずに進む（GM だけ。一緒に退場する人はなしにする。2026-11-07）。
+// room 全体の transaction の中で「同じ画面（追放のあと・朝）・同じハンターを待っている・まだ選んでいない・まだ切断中」を確かめる。
+// 勝敗は追放・夜の解決のときにもう決めてあるので、ここでは変えない。ルームは購読中なので、transaction の中の null は「ルームがない」
+async function skipHunterPending() {
+  if (!state.isHost || !state.roomRef) return;
+  const ref = state.roomRef;
+  const status = state.currentScreen;
+  if (status !== 'execution' && status !== 'morning') return;
+  const nick = state.hunterWaitNick;
+  if (!nick) return;
+  if (!window.confirm(`${nick}さんを待たずに進みますか？`)) return;
+  try {
+    await ref.transaction(room => {
+      if (!room || room.status !== status) return;
+      if (room.hunterPending !== nick || room.hunterTarget) return;
+      if (!isHunterOffline(room)) return;
+      return { ...room, hunterPending: null, hunterTarget: null };
+    });
+  } catch (error) {
+    console.warn('[jinro] skipHunterPending failed', error);
+    if (state.roomRef === ref) showMsg('うまく進められませんでした。もう一度押してね');
+  }
 }
 
 function renderMorningLog(room) {
@@ -2319,12 +2426,14 @@ function handleExecution(room, players) {
   // ハンターが選択済み → ホストが道連れ処理を実行
   if (state.isHost && hunterPending && hunterTarget && !state.hunterResolved) {
     state.hunterResolved = true;
+    renderHunterWait('exec', room, players, false);
     resolveHunterKill(room, hunterTarget);
     return;
   }
 
-  // 続けるボタン：ハンター選択待ちの間は非表示
+  // 続けるボタン：ハンター選択待ちの間は非表示（GM には待っている人と、切断中なら「待たずに進む」を出す）
   const waitingForHunter = hunterPending && !hunterTarget;
+  renderHunterWait('exec', room, players, waitingForHunter && !isHunterMe);
   document.getElementById('exec-host-btn').style.display =
     (state.isHost && !waitingForHunter) ? 'block' : 'none';
 }
@@ -2540,7 +2649,7 @@ function resetLocalState() {
     wolfPartners: [], sharerPartner: null, foxPlayer: null,
     lastGuarded: null, lastGuardedDay: 0, currentDay: 1, nightActionDone: false, myVote: null,
     timerInterval: null, orphanTimer: null, roomListener: null,
-    roleFlipped: false, resolveTriggered: false, hunterResolved: false,
+    roleFlipped: false, resolveTriggered: false, hunterResolved: false, hunterWaitNick: null,
     renderedVoteRound: 0,
   });
   showOverlay('host-off-overlay', false);
@@ -3046,6 +3155,7 @@ RoomkHowto.init({
       '夜は画面に出る自分の役職の行動をして、ほかの人を待つ',
       '昼はみんなで話し合い、時間になったら人狼だと思う人に投票する',
       '結果が出るまで、夜・朝・昼・投票をくり返す',
+      'GMは、通信が切れた人を待って先へ進めないとき、「待たずに進む」を押して進められる',
     ] },
     { heading: '終わりかた', text: '全員の役職と結果を見よう。もう一度遊ぶときは「もう一度」、おしまいにするときは「退出する」を押してね。' },
   ],
