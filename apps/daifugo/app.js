@@ -1129,10 +1129,12 @@ function updateHostOverlay(room) {
 }
 
 /* ── 待合室 ── */
-async function hostTransaction(update, failMessage) {
+// concurrent: 待合室の設定のように、ルームを読み直して1項目だけ変える操作。前の保存が終わる前に押しても捨てない
+// （捨てると、押したボタンの見た目だけ変わって設定は元のまま残っていた。2026-11-08）
+async function hostTransaction(update, failMessage, concurrent) {
   // 処理中の二度押しは何もしない（失敗の通知も出さない）
-  if (state.role !== 'host' || state.busy || !state.roomRef) return null;
-  state.busy = true;
+  if (state.role !== 'host' || (!concurrent && state.busy) || !state.roomRef) return null;
+  if (!concurrent) state.busy = true;
   const uid = currentUid();
   try {
     const result = await state.roomRef.transaction((room) => {
@@ -1145,7 +1147,7 @@ async function hostTransaction(update, failMessage) {
     toast(failMessage);
     return null;
   } finally {
-    state.busy = false;
+    if (!concurrent) state.busy = false;
   }
 }
 
@@ -1155,11 +1157,11 @@ function setSettings(change) {
     if (room.status !== STATUS.WAITING) return;
     const cur = settingsOf(room);
     return { ...room, settings: { ...cur, ...change(cur) } };
-  }, SETTING_FAIL);
+  }, SETTING_FAIL, true);
 }
 
 function setHostPlays(value) {
-  return hostTransaction((room) => (room.status === STATUS.WAITING ? { ...room, hostPlays: !!value } : undefined), SETTING_FAIL);
+  return hostTransaction((room) => (room.status === STATUS.WAITING ? { ...room, hostPlays: !!value } : undefined), SETTING_FAIL, true);
 }
 
 function addCpu() {
