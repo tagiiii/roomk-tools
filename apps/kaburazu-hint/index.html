@@ -1569,7 +1569,7 @@ function handleAnswer(room, players) {
     document.getElementById('answer-hint-cards').innerHTML =
       visible.map(([, h]) => `<span class="kbz-visible-hint">${esc(h.text)}</span>`).join('');
   } else {
-    document.getElementById('answer-guesser-name').textContent = esc(guesser);
+    document.getElementById('answer-guesser-name').textContent = guesser || '';
     document.getElementById('answer-others-hints').innerHTML =
       visible.map(([, h]) => `<span class="kbz-visible-hint">${esc(h.text)}</span>`).join('');
   }
