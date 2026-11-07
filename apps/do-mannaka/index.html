@@ -164,7 +164,7 @@
     .result-item.is-me     { border-color: var(--color-accent); }
     .result-item.is-median { border-color: #F0A500; background: #FFFBEB; }
     .result-item.is-out    { border-color: var(--color-error); background: #FEF2F2; }
-    .result-answer { font-size: 22px; font-weight: 700; min-width: 60px; text-align: right; color: var(--color-primary); }
+    .result-answer { font-size: 22px; font-weight: 700; min-width: 60px; text-align: right; color: var(--color-primary); overflow-wrap: anywhere; }
     .result-name   { flex: 1; font-weight: 700; font-size: 15px; }
     .result-badge  { font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 20px; white-space: nowrap; }
     .badge-median  { background: #F0A500; color: #fff; }
@@ -980,6 +980,8 @@
     const t = value.trim();
     if (t.length === 0) return 'ニックネームを入力してください';
     if (t.length > 8)   return '8文字以内で入力してください';
+    // RTDB のキーにするので、キーに使えない文字は先に断る
+    if (/[.#$\[\]\/\u0000-\u001f\u007f]/.test(t)) return '記号 . # $ [ ] / は使えません';
     return null;
   }
 
@@ -1391,7 +1393,8 @@
     const raw = document.getElementById('answer-input').value.trim();
     const num = Number(raw);
 
-    if (raw === '' || !Number.isInteger(num) || num < 0) {
+    // 2^53 を超える数は丸められて、入れた数と出る数がずれるので受けない
+    if (raw === '' || !Number.isSafeInteger(num) || num < 0) {
       showError('answer-error', '0以上の整数を入力してください');
       return;
     }

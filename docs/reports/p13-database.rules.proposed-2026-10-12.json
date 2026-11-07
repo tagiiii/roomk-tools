@@ -12,6 +12,18 @@
         ".write": "auth != null"
       }
     },
+    "charinbaton_rooms": {
+      "$roomId": {
+        ".read": "auth != null",
+        ".write": "auth != null"
+      }
+    },
+    "daifugo_rooms": {
+      "$roomId": {
+        ".read": "auth != null",
+        ".write": "auth != null"
+      }
+    },
     "domannaka_rooms": {
       "$roomId": {
         ".read": "auth != null",
@@ -60,6 +72,12 @@
         ".write": "auth != null"
       }
     },
+    "kanpe_rooms": {
+      "$roomId": {
+        ".read": "auth != null",
+        ".write": "auth != null"
+      }
+    },
     "kimochiate_rooms": {
       "$roomId": {
         ".read": "auth != null",
@@ -78,7 +96,19 @@
         ".write": "auth != null"
       }
     },
+    "kotobameter_rooms": {
+      "$roomId": {
+        ".read": "auth != null",
+        ".write": "auth != null"
+      }
+    },
     "kotobapair_rooms": {
+      "$roomId": {
+        ".read": "auth != null",
+        ".write": "auth != null"
+      }
+    },
+    "kyoumisugoroku_rooms": {
       "$roomId": {
         ".read": "auth != null",
         ".write": "auth != null"
@@ -114,6 +144,12 @@
         ".write": "auth != null"
       }
     },
+    "oogiri_rooms": {
+      "$roomId": {
+        ".read": "auth != null",
+        ".write": "auth != null"
+      }
+    },
     "oshitsuke_rooms": {
       "$roomId": {
         ".read": "auth != null",
@@ -121,6 +157,12 @@
       }
     },
     "pitahame_rooms": {
+      "$roomId": {
+        ".read": "auth != null",
+        ".write": "auth != null"
+      }
+    },
+    "pittari_beat_rooms": {
       "$roomId": {
         ".read": "auth != null",
         ".write": "auth != null"
@@ -138,7 +180,19 @@
         ".write": "auth != null"
       }
     },
+    "reversi_rooms": {
+      "$roomId": {
+        ".read": "auth != null",
+        ".write": "auth != null"
+      }
+    },
     "sakusenchat_rooms": {
+      "$roomId": {
+        ".read": "auth != null",
+        ".write": "auth != null"
+      }
+    },
+    "shirushi_rooms": {
       "$roomId": {
         ".read": "auth != null",
         ".write": "auth != null"
@@ -151,6 +205,12 @@
       }
     },
     "sukibingo_rooms": {
+      "$roomId": {
+        ".read": "auth != null",
+        ".write": "auth != null"
+      }
+    },
+    "sutonblock_rooms": {
       "$roomId": {
         ".read": "auth != null",
         ".write": "auth != null"
@@ -190,6 +250,28 @@
       "$roomId": {
         ".read": "auth != null",
         ".write": "auth != null"
+      }
+    },
+    "feedback": {
+      ".read": false,
+      "$id": {
+        ".write": "auth != null && !data.exists()",
+        ".validate": "newData.hasChildren(['app', 'kind', 'text', 'at'])",
+        "app": {
+          ".validate": "newData.isString() && newData.val().length <= 40"
+        },
+        "kind": {
+          ".validate": "newData.isString() && newData.val().length <= 20"
+        },
+        "text": {
+          ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 300"
+        },
+        "at": {
+          ".validate": "newData.isNumber()"
+        },
+        "$other": {
+          ".validate": false
+        }
       }
     },
     "stats": {

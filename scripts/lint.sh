@@ -755,7 +755,7 @@ echo ""
 echo -e "${BOLD}[RULES-1] RTDB ルールの名前空間チェック${NC}"
 
 RULES1_OUT=$(python3 - <<'PYEOF'
-import glob, json, re, sys
+import glob, json, os, re, sys
 
 try:
     rules = json.load(open('database.rules.json', encoding='utf-8'))['rules']
@@ -766,7 +766,13 @@ if any(k.startswith('$') for k in rules):
     sys.exit(0)
 
 used = {'stats': ['apps/shared/js/stats.js']}
-for f in sorted(glob.glob('apps/*/index.html') + glob.glob('apps/*/*.js')):
+# 2段より深いページ（apps/guide/feedback/ など）も見る。共通モジュールと vendor は除く。
+# 自前の firebase-config.js を持つアプリ（nemurase-kichi は別の Firebase プロジェクト）は、このルールの対象外
+own_project = {os.path.dirname(c) for c in glob.glob('apps/*/firebase-config.js')}
+files = glob.glob('apps/**/index.html', recursive=True) + glob.glob('apps/**/*.js', recursive=True)
+for f in sorted(set(files)):
+    if f.startswith('apps/shared/') or '/vendor/' in f or any(f.startswith(d + '/') for d in own_project):
+        continue
     t = open(f, encoding='utf-8').read()
     if 'firebase-firestore' in t:
         continue  # Firestore のコレクション名は RTDB のルールの対象外
