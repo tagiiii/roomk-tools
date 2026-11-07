@@ -230,11 +230,11 @@ function renderStart() {
     <div class="stc-panel app-entry">
       <div class="app-hero"><img class="app-illust" src="../assets/illustrations/suki-type-check.webp" alt="" width="156" height="156" decoding="async" onerror="this.parentNode.remove()" /></div>
       <h2 class="stc-panel__title app-title" id="start-title" tabindex="-1">すきタイプチェック</h2>
-      <p class="app-catch">18この質問にこたえると、じぶんの「すき」のタイプがわかる</p>
-      <p class="stc-panel__lead app-entry__lead">18この質問にこたえていくと、じぶんの「すき」のタイプが出てきます。ぜんぶで10分くらい。</p>
+      <p class="app-catch">18個の質問に答えると、自分の「すき」のタイプがわかる</p>
+      <p class="stc-panel__lead app-entry__lead">18個の質問に答えていくと、自分の「すき」のタイプが出てきます。全部で10分くらい。</p>
       <ul class="stc-note-list app-entry__notes">
         <li>正解はありません。ぱっと思ったほうでOK</li>
-        <li>まよったときは、まんなかの「どちらでもない」でOK</li>
+        <li>迷ったときは、真ん中の「どちらでもない」でOK</li>
         <li>タイプは、話のきっかけにするためのものです</li>
       </ul>
       <div class="stc-actions app-entry__actions">
@@ -332,7 +332,7 @@ function renderResult(result) {
       ${examplesHtml}
       ${noteHtml}
       <section class="stc-block">
-        <h3 class="stc-block__title">6つの軸のわりあい</h3>
+        <h3 class="stc-block__title">6つの軸の割合</h3>
         <ul class="stc-bars">${barsHtml}</ul>
         ${secondHtml}
       </section>
@@ -387,7 +387,7 @@ async function copyResult(button) {
   } catch (error) {
     copied = false;
   }
-  if (!copied) showToast('コピーできませんでした。結果を手で書きうつしてください', 'error');
+  if (!copied) showToast('コピーできませんでした。結果を手で書き写してください', 'error');
 }
 
 function handleAction(action, button) {
