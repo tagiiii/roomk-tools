@@ -45,7 +45,7 @@
 2. **15分枠に収まる** — 所要10〜15分を上限に設計。超える構成は「2回に分ける」前提を AGENTS.md と早見表に明記する
 3. **既存の哲学ガードを引き継ぐ**（content-plan.html:140-150）— 非序列・パス同格（「きょうは えらばない」を第1級の値に）・本人がその場で選ぶ・推定/保存/採点/推薦をしない・個人情報を入力させない
 4. **受験系は対象宣言つきの意図的例外** — 面接・小論文は共通コンテンツガイドライン「学校・勉強を連想させる内容を使わない」の例外にあたる。kyapa-graph と同じく、アプリ自身の AGENTS.md に対象（受験を控えた本人が希望した場合に使う）を宣言し、ポータルでは `data-scenes="sakusen"` のみに置く
-5. **共通規約一式** — stats.js / howto.js / `data-scenes` / updates.json / 早見表1行 / Material Symbols（絵文字不可）/ lint エラー0
+5. **共通規約一式** — stats.js / howto.js / `data-scenes` / updates.json / 早見表1行（ゲームのとき。1対1の内面・対話ツールは載せない＝app-registration.md 手順7）/ Material Symbols（絵文字不可）/ lint エラー0
 
 ## 5. フェーズ計画
 
