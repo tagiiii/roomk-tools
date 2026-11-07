@@ -222,7 +222,7 @@ transaction 内の検証（この順に全部）:
   **`selected` を消す経路はすべてこれを通す**: 2秒解除／ホスト watchdog／パス／「次の人へ」／退出者の手番送り／「1組そろえて見せる」。
   これを通さない書き込みを足すと、裏向きモードで**めくられたままの札が盤面に残る**バグになる
 - 乱数（盤面シャッフル・手番シャッフル）は**必ず transaction コールバックの外**で確定させる。コールバックは複数回呼ばれうるため（esadori で確立）
-- ローカルキャッシュ null 対策: リスナー未接続から実行しうる transaction（参加・復帰の書き戻し・期限切れ削除）は、事前 `get()` したスナップショットを `const cur = room || preRoom` で代用してサーバー照会を強制する（oshitsuke-zukan / esadori の確立パターン）
+- ローカルキャッシュ null 対策（2026-11-07 改訂）: 参加と復帰の書き戻しの transaction は、先にルームを購読してから走らせ（`warmRoomCache`。transaction が終わるまで購読を続ける）、transaction の中の null を「ルームがない」として扱う。以前は事前 `get()` の値を `room || preRoom` で代用していたが、読んでから送るまでの間にホストが「ぬける」で閉じると、閉じたルームを古い内容（hostConnected:true）で作り直し、参加した子は待合室で止まった（エミュレーターで参加3/3・読み込み直し3/3 再現。[rtdb.md](../../docs/development/rtdb.md)「やり直す transaction では、事前に読んだ値を…」・PR #103 と同じ直し）。期限切れ削除（`removeExpiredRoom`）は消すだけで作り直さないので `room || preRoom` のまま
 
 ### ホストの watchdog（2種類・ホストクライアントのみ）
 
