@@ -61,6 +61,9 @@
     }
     .ito-check input { width: 20px; height: 20px; accent-color: var(--color-accent); flex-shrink: 0; }
     .player-status { font-size: 13px; color: var(--color-muted); }
+    .player-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+    .player-right .btn-sm { padding: 6px 14px; min-height: 36px; }
+    .ito-conn-note { font-size: 13px; color: var(--color-muted); line-height: 1.7; margin-top: 12px; }
 
     /* ── ルームコード ── */
     .ito-room-code {
@@ -525,7 +528,7 @@
           </label>
           <p style="font-size:12px; color:var(--color-muted); line-height:1.7;">外すと進行役になります。数字は配られず、お題選びと答え合わせを進めます</p>
         </div>
-        <p id="waiting-connection-note" hidden>参加者の接続を待っています。退出すると自分の数字・宣言を削除します</p>
+        <p id="waiting-connection-note" class="ito-conn-note" hidden>参加者の接続を待っています。退出すると自分の数字・宣言を削除します</p>
         <div class="ito-waiting-msg" id="waiting-guest-msg" style="display:none;">
           <span class="spinner" style="display:inline-block; width:20px; height:20px; vertical-align:middle; margin-right:6px;"></span>
           ホストがゲームを始めるのを待っています...
@@ -748,10 +751,14 @@
 
       <!-- アクション -->
       <div style="display:flex; flex-direction:column; gap:12px;">
-        <p id="result-connection-note" hidden>参加者の接続を待って、もう一度プレイできます</p>
+        <p id="result-connection-note" class="ito-conn-note" style="margin-top:0;" hidden>参加者の接続を待って、もう一度プレイできます</p>
         <button id="btn-play-again" class="btn btn-primary btn-full" onclick="startGame()" style="display:none;">
           <span class="material-symbols-rounded" aria-hidden="true">replay</span>
           もう一度プレイ
+        </button>
+        <button id="btn-play-again-skip" class="btn btn-secondary btn-full" onclick="startGameWithoutDisconnected()" style="display:none;">
+          <span class="material-symbols-rounded" aria-hidden="true">fast_forward</span>
+          待たずにもう一度プレイ
         </button>
         <button class="btn btn-ghost btn-full" onclick="leaveGame()">
           <span class="material-symbols-rounded" aria-hidden="true">home</span>
@@ -1076,7 +1083,16 @@
       return Number.isFinite(endsAtNum) && getEstimatedServerNow() >= endsAtNum;
     }
 
-    function renderPlayerList(containerId, players, statusFn, room = null) {
+    // 通信が切れている人（ホストと旧版の参加者は、いつもつながっている扱い）
+    function disconnectedNames(players) {
+      return Object.entries(players || {}).filter(([, p]) => !playerConnected(p)).map(([nick]) => nick);
+    }
+    // 待合室で、ホストだけに、通信が切れている参加者の「外す」を出す（2026-11-07）
+    function kickButtonHtml(nick, p, kickable) {
+      if (!kickable || state.role !== "host" || p.isHost || nick === state.nickname || playerConnected(p)) return "";
+      return `<button type="button" class="btn btn-ghost btn-sm" data-kick="${esc(nick)}" onclick="kickDisconnected(this.dataset.kick)">外す</button>`;
+    }
+    function renderPlayerList(containerId, players, statusFn, room = null, kickable = false) {
       const container = document.getElementById(containerId);
       if (!container) return;
       container.innerHTML = Object.entries(players).map(([nick, p]) => `
@@ -1087,7 +1103,7 @@
             ${p.isHost && room && !hostPlaysOf(room) ? '<span class="player-tag role">進行役</span>' : ""}
             ${nick === state.nickname ? '<span class="player-tag me">あなた</span>' : ""}
           </div>
-          ${playerConnected(p) ? statusFn(nick, p) : '<span class="player-tag">接続を待っています</span>'}
+          ${playerConnected(p) ? statusFn(nick, p) : `<div class="player-right"><span class="player-tag">接続を待っています</span>${kickButtonHtml(nick, p, kickable)}</div>`}
         </li>
       `).join("");
     }
@@ -1403,9 +1419,13 @@
 
     // ── ゲーム進行 ──────────────────────────
 
-    async function startGame() {
+    // opts.skipDisconnected: 結果の画面の「待たずにもう一度プレイ」で、確認した名前の配列。opts.roundId: 押した時点の回（2026-11-07）
+    async function startGame(opts = {}) {
       if (state.role !== "host" || !state.roomRef) return;
       const ref = state.roomRef;
+      const skipNames = Array.isArray(opts.skipDisconnected) ? opts.skipDisconnected : null;
+      const expectedRoundId = opts.roundId ?? null;
+      const me = state.nickname;
       // 候補はトランザクション外で固定して、競合再実行時も同じ候補を使う
       const currentSnap = await ref.get();
       if (state.roomRef !== ref || state.role !== 'host' || state.expectedRoomRemoval) return;
@@ -1430,7 +1450,20 @@
             abortReason = "invalid_state";
             return; // undefined を返してトランザクション中止
           }
-          const players = room.players || {};
+          let players = room.players || {};
+          if (skipNames) {
+            // 待たずにもう一度プレイ: 結果の画面のまま・押した時点と同じ回・ホストが自分のときだけ。
+            // 確認した名前のうち、まだ通信が切れているゲストだけを players から除く（つながりがもどった人は除かない）
+            if (room.status !== "result" || (room.roundId ?? null) !== expectedRoundId || room.host !== me) {
+              abortReason = "stale";
+              return;
+            }
+            players = { ...players };
+            skipNames.forEach((n) => {
+              const p = players[n];
+              if (p && !p.isHost && n !== room.host && !playerConnected(p)) delete players[n];
+            });
+          }
           const nicknames = Object.keys(players);
           // 数字を配るのは遊ぶ人だけ（ホストが進行だけならホストを除く）。人数も遊ぶ人で数える
           hostPlays = hostPlaysOf(room);
@@ -1440,7 +1473,7 @@
             return;
           }
           if (playing.length < 2) {
-            abortReason = "too_few";
+            abortReason = skipNames ? "too_few_after_skip" : "too_few";
             return; // undefined を返してトランザクション中止
           }
           if (playing.length > 100) {
@@ -1476,8 +1509,11 @@
         });
 
         if (!committed) {
+          if (state.roomRef !== ref) return;
           if (abortReason === "disconnected") showMsg("参加者の接続を待っています");
-          if (abortReason === "too_few") showMsg(hostPlays ? "2人以上で始められます" : "ホストのほかに2人以上で始められます");
+          else if (abortReason === "stale") showMsg("始められませんでした。画面を見なおしてね");
+          else if (abortReason === "too_few_after_skip") showMsg("遊ぶ人が足りないので、ここで終わりにできるよ（「退出する」でルームを閉じます）");
+          else if (abortReason === "too_few") showMsg(hostPlays ? "2人以上で始められます" : "ホストのほかに2人以上で始められます");
           else if (abortReason === "too_many") showMsg("人数が多すぎます");
           else if (abortReason === "invalid_state") showMsg("ルームが終了しています。トップへ戻ってください");
           return;
@@ -1490,6 +1526,50 @@
       } catch (e) {
         console.error(e);
         showMsg("ゲームを開始できませんでした");
+      }
+    }
+
+    // 結果の画面: 通信が切れたままのゲストを待たずに、もう一度プレイする（自動では除かない。確認つき。2026-11-07）。
+    // 名前と回（roundId）は押した時点で決め、startGame の transaction の中で「結果のまま・同じ回・まだ切断中」を確かめて除く
+    function startGameWithoutDisconnected() {
+      if (state.role !== "host" || !state.roomRef || state.currentStatus !== "result") return;
+      const players = state.currentPlayers || {};
+      const names = disconnectedNames(players).filter((n) => !players[n]?.isHost && n !== state.nickname);
+      if (!names.length) return;
+      const roundId = state.currentRoundId;
+      if (!window.confirm(`${names.join("さん、")}さんを待たずに始めますか？`)) return;
+      return startGame({ skipDisconnected: names, roundId });
+    }
+
+    // 待合室: 通信が切れたままの参加者を、ホストが外す（自動では外さない。確認つき。2026-11-07）。
+    // room 全体の transaction で、待合室のままか・その人がまだ切断中かを確かめてから players から消す（名前が空くので、同じ名前で入り直せる）。
+    // ルームは購読中なので、transaction の null は「ルームがない」
+    async function kickDisconnected(nick) {
+      if (state.role !== "host" || !state.roomRef || state.currentStatus !== "waiting") return;
+      const p = state.currentPlayers?.[nick];
+      if (!p || p.isHost || nick === state.nickname || playerConnected(p)) return;
+      if (!window.confirm(`${nick}さんを外しますか？`)) return;
+      const ref = state.roomRef;
+      const me = state.nickname;
+      let reason = null;
+      try {
+        const { committed } = await ref.transaction((room) => {
+          if (state.roomRef !== ref || state.role !== "host" || state.expectedRoomRemoval) return;
+          if (!room) { reason = "gone"; return; }
+          const target = room.players?.[nick];
+          if (room.status !== "waiting" || room.host !== me || !target || target.isHost || nick === room.host) { reason = "stale"; return; }
+          if (playerConnected(target)) { reason = "back"; return; }
+          reason = null;
+          const players = { ...room.players };
+          delete players[nick];
+          return { ...room, players };
+        });
+        if (state.roomRef !== ref || committed) return;
+        if (reason === "back") showMsg(`${nick}さんの通信がもどったので、外しませんでした`, false);
+        else if (reason === "stale") showMsg("外せませんでした。画面を見なおしてね");
+      } catch (e) {
+        console.error(e);
+        showMsg("外せませんでした");
       }
     }
 
@@ -1693,6 +1773,13 @@
           return;
         }
         const room = snap.val() || {};
+        if (state.role === 'guest' && ROOM_PHASES.includes(room.status) && !room.players?.[state.nickname]) {
+          // 通信が切れていた間にホストに外された: 責めずに、入り直せる画面へ（待合室なら参加画面にコードを入れて開く）
+          const offer = { code: state.roomCode, nick: state.nickname, waiting: room.status === 'waiting' };
+          stopGuestPresence(); ref.off(); RoomkRTDB.cancelRoomOnDisconnect(ref);
+          clearSession(); resetState(); showOverlay('host-off-overlay', false); showOverlay('guest-off-overlay', false);
+          offerRejoin(offer); return;
+        }
         if (!ROOM_PHASES.includes(room.status) || (state.role === 'guest'
           && (!room.players?.[state.nickname] || room.players[state.nickname].isHost !== false || room.host === state.nickname))) {
           stopGuestPresence(); ref.off(); RoomkRTDB.cancelRoomOnDisconnect(ref);
@@ -1762,7 +1849,7 @@
       const codeEl = document.getElementById("waiting-room-code");
       if (codeEl) codeEl.textContent = state.roomCode || "";
 
-      renderPlayerList("waiting-player-list", players, () => '<div class="player-status">参加中</div>', room);
+      renderPlayerList("waiting-player-list", players, () => '<div class="player-status">参加中</div>', room, true);
 
       // 最少人数は遊ぶ人だけで数える（進行だけのホストは数えない）
       const hostPlays = hostPlaysOf(room);
@@ -1784,7 +1871,13 @@
         minMsg.textContent = msg;
         minMsg.style.display = isHost && msg ? "" : "none";
       }
-      document.getElementById('waiting-connection-note').hidden = Object.values(players).every(playerConnected);
+      // 何を待っているかを出す。ホストには、もどれないときの「外す」も案内する
+      const waitingFor = disconnectedNames(players);
+      const connNote = document.getElementById('waiting-connection-note');
+      connNote.hidden = waitingFor.length === 0;
+      connNote.textContent = isHost
+        ? `${waitingFor.join("さん、")}さんを待っています（通信が切れています）。もどれないときは、名前の横の「外す」で外せます`
+        : "参加者の接続を待っています。退出すると自分の数字・宣言を削除します";
       const startBtn = document.getElementById("btn-start-game");
       if (startBtn) {
         startBtn.style.display = state.role === "host" ? "" : "none";
@@ -2074,12 +2167,32 @@
       }
 
       // もう一度ボタン（ホストのみ）
-      const playAgainBtn = document.getElementById("btn-play-again");
-      document.getElementById('result-connection-note').hidden = Object.values(players).every(playerConnected);
-      if (playAgainBtn) {
-        playAgainBtn.style.display = state.role === "host" ? "" : "none";
-        playAgainBtn.disabled = playingEntries(room, players).length < 2 || !Object.values(players).every(playerConnected);
+      const isHost = state.role === "host";
+      const allConnected = Object.values(players).every(playerConnected);
+      const waitingFor = disconnectedNames(players);
+      // 通信が切れている人を除いても遊ぶ人が2人以上いるか（「待たずにもう一度プレイ」を出す条件）
+      const connectedPlaying = playingEntries(room, players).filter(([, p]) => playerConnected(p)).length;
+      let noteText = "";
+      if (isHost) {
+        if (waitingFor.length) {
+          noteText = `${waitingFor.join("さん、")}さんを待っています（通信が切れています）`;
+          if (connectedPlaying < 2) noteText += "。もどらないときは、遊ぶ人が足りないので、「退出する」で終わりにできるよ";
+        } else if (connectedPlaying < 2) {
+          noteText = "遊ぶ人が足りないので、ここで終わりにできるよ（「退出する」でルームを閉じます）";
+        }
+      } else if (!allConnected) {
+        noteText = "参加者の接続を待って、もう一度プレイできます";
       }
+      const connNote = document.getElementById('result-connection-note');
+      connNote.textContent = noteText;
+      connNote.hidden = !noteText;
+      const playAgainBtn = document.getElementById("btn-play-again");
+      if (playAgainBtn) {
+        playAgainBtn.style.display = isHost ? "" : "none";
+        playAgainBtn.disabled = playingEntries(room, players).length < 2 || !allConnected;
+      }
+      const skipBtn = document.getElementById("btn-play-again-skip");
+      if (skipBtn) skipBtn.style.display = isHost && waitingFor.length > 0 && connectedPlaying >= 2 ? "" : "none";
     }
 
     // ── タイマー ─────────────────────────
@@ -2118,7 +2231,10 @@
 
     // ── 再接続 ────────────────────────────
 
+    // 再接続で自分が見つからなかったとき（通信が切れていた間にホストに外された）に、入り直しを案内するための記録
+    let rejoinOffer = null;
     async function tryReconnect() {
+      rejoinOffer = null;
       showOverlay("reconnect-overlay", true);
       try {
         const session = loadSession();
@@ -2142,6 +2258,9 @@
 
         const players = room.players || {};
         const myPlayer = players[session.nickname];
+        if (!myPlayer && session.role === 'guest' && ROOM_PHASES.includes(room.status)) {
+          rejoinOffer = { code: session.roomCode, nick: session.nickname, waiting: room.status === 'waiting' };
+        }
         if (!myPlayer || !ROOM_PHASES.includes(room.status)
           || (session.role === 'guest' && !validGuestRoom(room, session.nickname))
           || (session.role === 'host' && (room.host !== session.nickname || myPlayer.isHost !== true))) { clearSession(); return false; }
@@ -2263,17 +2382,38 @@
     }
 
     // 参加用のリンクでひらいたとき: コードを入れた状態で参加画面を開き、ニックネームだけ入れてもらう（コード欄は直せるように残す）
+    const LINK_HINT_TEXT = "リンクから開いたので、ルームコードは入っているよ。ニックネームを入れて「参加する」を押してね。";
     function openJoinFromLink(code) {
       hideError("guest-error");
       document.getElementById("guest-code").value = code;
+      document.getElementById("joinLinkHint").textContent = LINK_HINT_TEXT;
       document.getElementById("joinLinkHint").hidden = false;
       showScreen("guest-join");
       document.getElementById("guest-nick").focus({ preventScroll: true });
     }
 
-    // 再読み込みなどで、保存した記録から同じルームへ戻る（戻れなければトップ）
+    // ホストに外されたあと（通信が切れていた間）にもどってきたとき: 責めずに、入り直せる画面へ。
+    // 待合室なら参加画面にコードとニックネームを入れて開く。ゲームが進んでいたら、トップへもどす
+    function offerRejoin(offer) {
+      if (!offer?.waiting || !ROOM_CODE_PATTERN.test(offer.code || "")) {
+        showScreen("top");
+        showMsg("ルームにもどれなかったよ");
+        return;
+      }
+      hideError("guest-error");
+      document.getElementById("guest-code").value = offer.code;
+      document.getElementById("guest-nick").value = offer.nick || "";
+      const hint = document.getElementById("joinLinkHint");
+      hint.textContent = "ルームにもどれなかったよ。もう一度参加してね";
+      hint.hidden = false;
+      showScreen("guest-join");
+    }
+
+    // 再読み込みなどで、保存した記録から同じルームへ戻る（戻れなければトップ。外されていたら入り直しの案内）
     async function resumeFromSession() {
-      if (!await tryReconnect()) showScreen("top");
+      if (await tryReconnect()) return;
+      if (rejoinOffer) offerRejoin(rejoinOffer);
+      else showScreen("top");
     }
 
     window.addEventListener("load", async () => {
@@ -2295,7 +2435,8 @@
         // （再接続中は画面全体を覆うので、その間にほかのルームへつなぐことはない。失敗時の判定は従来どおり戻り値だけで見る）
         if (await tryReconnect()) return;
         clearSession();
-        openJoinFromLink(linkCode);
+        if (rejoinOffer?.waiting) offerRejoin(rejoinOffer);
+        else openJoinFromLink(linkCode);
       } else {
         // 別のルームの記録が残っていても、ひらいたリンクのルームを優先する
         if (saved) clearSession();
@@ -2317,6 +2458,7 @@
           'ほかの人は「ルームに参加する」からニックネームとルームコードを入れて「参加する」を押す。リンクから開いたときは、ルームコードは入っているのでニックネームだけ入れる',
           'ホストが進行だけするときは、待合室の「自分もプレイヤーとして参加する」を外す（ホストには数字が配られない）',
           '遊ぶ人が2人以上そろったら、ホストが「ゲームスタート」を押す',
+          '通信が切れたままの人がいて始められないときは、ホストが名前の横の「外す」を押す。外された人は、同じニックネームで参加し直せる',
         ] },
         { heading: 'すすめかた', items: [
           'カードをタップして自分の数字を見て、「確認した！」を押す。数字はほかの人には秘密',
@@ -2325,7 +2467,7 @@
           '話し合いながら、数字が小さいと思った人から順番に「宣言する！」を押す',
           '全員が宣言したら、ホストが「答え合わせ！」を押す',
         ] },
-        { heading: 'おわりかた', text: '結果を見ながら、感じ方の違いをおしゃべりしよう。「もう一度プレイ」で再戦、「退出する」でおしまい。' },
+        { heading: 'おわりかた', text: '結果を見ながら、感じ方の違いをおしゃべりしよう。「もう一度プレイ」で再戦、「退出する」でおしまい。通信が切れたままの人がいて「もう一度プレイ」が押せないときは、ホストが「待たずにもう一度プレイ」で、その人を除いて始められる。' },
       ],
     });
   </script>
