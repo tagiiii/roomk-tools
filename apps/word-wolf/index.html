@@ -1011,12 +1011,18 @@ async function guestJoinInner() {
 }
 
 // ── ゲームスタート（ホストのみ）──
+// 同じルームで使った組の位置（usedPairs）を除いて選ぶ。全部使ったら一巡して空からやり直す
+function pickPairIndex(usedPairsRaw) {
+  const raw = Array.isArray(usedPairsRaw) ? usedPairsRaw
+    : (usedPairsRaw && typeof usedPairsRaw === 'object') ? Object.values(usedPairsRaw) : [];
+  const used = raw.filter(i => Number.isInteger(i) && i >= 0 && i < WORD_PAIRS.length);
+  const pool = WORD_PAIRS.map((_, i) => i).filter(i => !used.includes(i));
+  const candidates = pool.length ? pool : WORD_PAIRS.map((_, i) => i);
+  const index = candidates[Math.floor(Math.random() * candidates.length)];
+  return { index, usedPairs: pool.length ? [...used, index] : [index] };
+}
+
 async function startGame() {
-  const pair = WORD_PAIRS[Math.floor(Math.random() * WORD_PAIRS.length)];
-  // 50%の確率で市民とウルフのお題を入れ替え（ペアから推測しにくくする）
-  const swapped     = Math.random() < 0.5;
-  const citizenWord = swapped ? pair.wolf    : pair.citizen;
-  const wolfWord    = swapped ? pair.citizen : pair.wolf;
   let abortReason = null;
   let hostPlays = true;
   let playerCount = 0;
@@ -1039,6 +1045,13 @@ async function startGame() {
       abortReason = 'too_few';
       return;
     }
+
+    const picked = pickPairIndex(room.usedPairs);
+    const pair = WORD_PAIRS[picked.index];
+    // 50%の確率で市民とウルフのお題を入れ替え（ペアから推測しにくくする）
+    const swapped     = Math.random() < 0.5;
+    const citizenWord = swapped ? pair.wolf    : pair.citizen;
+    const wolfWord    = swapped ? pair.citizen : pair.wolf;
 
     const shuffled = [...playing].sort(() => Math.random() - 0.5);
     const wolfCount = Math.min(state.wolfCount, playing.length - 1);
@@ -1063,6 +1076,7 @@ async function startGame() {
       status: 'revealing',
       citizenWord,
       wolfWord,
+      usedPairs: picked.usedPairs,
       players: nextPlayers,
     };
   });
