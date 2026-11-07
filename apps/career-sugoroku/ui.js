@@ -404,6 +404,12 @@
   }
 
   // ── サイド（手番とプレイヤー） ──────────────────────────
+  // ほかの人の番で待っているときの一言。通信が切れている人の番は、何を待っているかと、ホストが代わりに押せることを出す（2026-11-07）
+  function turnWaitText(p) {
+    if (RM.isProxySeat(room, p.id)) return `${p.name}さんの番。ホストが押すよ`;
+    if (!RM.seatOnline(room, p.id)) return `${p.name}さんを待っています（通信が切れています）。ホストが代わりに押せるよ`;
+    return `${p.name}さんがサイコロをふるのをまっています`;
+  }
   function renderTurn(rolling) {
     const box = $('cs-turn');
     box.replaceChildren();
@@ -428,7 +434,7 @@
     if (S.last && (S.last.roll || S.last.dice) && S.last.cheer && !rolling) dice.appendChild(h('span', { class: 'cs-die__plus' }, `+${S.last.cheer} 応援`));
     box.appendChild(dice);
     if (S.step && S.step.kind === 'roll' && !busy && !mayAct('roll')) {
-      box.appendChild(h('p', { class: 'cs-turn__wait' }, RM.isProxySeat(room, p.id) ? `${p.name}さんの番。ホストが押すよ` : `${p.name}さんがサイコロをふるのをまっています`));
+      box.appendChild(h('p', { class: 'cs-turn__wait' }, turnWaitText(p)));
     } else if (S.step && S.step.kind === 'roll' && !busy) {
       box.appendChild(h('button', { class: 'cs-btn cs-btn--primary cs-btn--full cs-btn--lg', type: 'button', 'data-primary': '1', onclick: () => doRoll() }, icon('casino'), 'サイコロをふる'));
       if (amHost() && myPid() !== p.id) box.appendChild(h('p', { class: 'cs-turn__proxy' }, proxyNote(p)));
@@ -816,7 +822,13 @@
       const all = S.players.every((q) => ans[q.id] != null);
       btn.disabled = !canGo || (st.game === 'sum' && !all);
       if (!canGo) hint.textContent = `${curP().name}さん${RM.isProxySeat(room, S.cur) ? '（ホスト）' : ''}が「${btnLabel}」を押すと結果が出るよ`;
-      else hint.textContent = all ? '' : (st.game === 'sum' ? '全員の数がそろうのをまってね' : '答えなかった人は、今回は参加なし');
+      else if (all) hint.textContent = '';
+      else if (st.game !== 'sum') hint.textContent = '答えなかった人は、今回は参加なし';
+      else {
+        // 合計ピッタリは全員の数がそろうまで進めない。通信が切れている人を待っているときは、だれかを出す（ホストが代わりに入れられる）
+        const off = S.players.filter((q) => ans[q.id] == null && !RM.isProxySeat(room, q.id) && !RM.seatOnline(room, q.id) && q.id !== me);
+        hint.textContent = off.length ? `${off.map((q) => q.name + 'さん').join('・')}を待っています（通信が切れています）。ホストが代わりに入れられるよ` : '全員の数がそろうのをまってね';
+      }
     };
     openCard([...head(`ミニゲーム・${P(st.by).name}さんが止まった`, 'sports_esports', G.name, G.rule, G.note), lead, h('div', { class: 'cs-mini__rows' }, rows.map((r) => r.el)),
       h('div', { class: 'cs-card__actions cs-card__foot' }, btn, hint)], { wide: S.players.length > 2 });
@@ -1253,7 +1265,7 @@
       h('h3', {}, 'ミニゲーム'),
       h('p', {}, 'ミニゲームマスに止まると、全員でミニゲーム。「大きい？小さい？」（つぎのサイコロを予想）・「じゃんけん」（コンピューターと勝負）・「合計ピッタリ」（相談しないで1〜3を出し、合計を目標に合わせる）のどれかが出る。ルームでは、自分の端末で自分の答えを押す（ほかの人の答えは結果まで見えない）。1台の画面では、みんなが口・チャット・手で出したものを、メンターが1人ずつ押して入れる。当たり・勝ち・ピッタリで +1ポイント。'),
       h('h3', {}, 'ルームで遊ぶとき'),
-      h('p', {}, '自分の番は、自分の端末で押す。ほかの人の番は、その人が選ぶのを見ていてね。端末のない人・つながらなくなった人の番は、ホストが代わりに押す。途中で「退出する」を押しても、その人の番はホストが代わりに押せる。'),
+      h('p', {}, '自分の番は、自分の端末で押す。ほかの人の番は、その人が選ぶのを見ていてね。端末のない人・つながらなくなった人の番は、ホストが代わりに押す。途中で「退出する」を押しても、その人の番はホストが代わりに押せる。待合室で通信が切れた人は、ホストが「外す」で外せる（同じ名前で入り直せる）。'),
       h('h3', {}, '休み・応援'),
       h('p', {}, 'イベントで1回休みになっても、なかまマスでさそってもらうと休みがなくなる。ゴールした人は、まだの人のサイコロに +1 の応援ができる。'),
       h('p', { style: 'margin-top:12px;font-size:14px;color:var(--color-muted)' }, 'ポイントはゲームの中のもの。本当の向き・不向きとは関係ありません。'),
@@ -1570,7 +1582,7 @@
       const code = sess.code;
       bail('このルームはもう終わっています').then(() => NET.removeIfExpired(code));
     } else if (r.reason === 'none') bail('ルームが見つかりませんでした');
-    else if (r.reason === 'gone') bail('このルームから外れました');
+    else if (r.reason === 'gone') bailGone();
   }
 
   function onRoom(r) {
@@ -1583,7 +1595,7 @@
       return;
     }
     const mine = sess.role === 'host' ? RM.isHost(r, sess.dev) : RM.seatList(r).some((x) => x.dev === sess.dev);
-    if (!mine) { bail('このルームから外れました'); return; }
+    if (!mine) { bailGone(); return; }
     // ホストなのに「切断中」のまま（つなぎ直した直後など）なら、在室を登録し直す
     if (sess.role === 'host' && r.meta.hostConnected === false && online && !rearming) {
       rearming = true;
@@ -1642,6 +1654,9 @@
   // 状態は同じまま、在室やミニゲームの答えだけが変わった
   function refreshRoomBits() {
     if ($('cs-play').hidden) return;
+    const wait = $('cs-turn').querySelector('.cs-turn__wait');
+    // つながった・切れたで一言だけ変える。サイコロの番だけ（カードの場面の「盤面のカードを見てね」は変えない）
+    if (wait && S && S.phase === 'play' && S.step && S.step.kind === 'roll') wait.textContent = turnWaitText(curP());
     renderPlayers();
     renderBanner();
     if (miniRefresh && S && S.step && S.step.kind === 'mini') miniRefresh();
@@ -1662,7 +1677,11 @@
       if (st.dev === sess.dev) tags.push(h('span', { class: 'cs-player__tag cs-player__tag--me' }, 'あなた'));
       if (!st.dev) tags.push(h('span', { class: 'cs-player__tag' }, icon('back_hand'), '端末なし（ホストが押す）'));
       else if (!(room.presence && room.presence[st.dev])) tags.push(h('span', { class: 'cs-player__tag cs-player__tag--off' }, icon('wifi_off'), 'つながっていない'));
-      const remove = host && !st.dev ? h('button', { class: 'cs-quiet', type: 'button', 'aria-label': `${st.name}さんを外す`, onclick: () => NET.removeSeat(sess.code, st.sid).catch(() => toast('外せませんでした')) }, '外す') : null;
+      // 外す: 端末のない人はそのまま。通信が切れた人（端末があり在室していない。ホスト自身の席は除く）は確認してから（2026-11-07）
+      const offline = !!st.dev && st.dev !== room.meta.hostId && !(room.presence && room.presence[st.dev]);
+      let remove = null;
+      if (host && !st.dev) remove = h('button', { class: 'cs-quiet', type: 'button', 'aria-label': `${st.name}さんを外す`, onclick: () => NET.removeSeat(sess.code, st.sid).catch(() => toast('外せませんでした')) }, '外す');
+      else if (host && offline) remove = h('button', { class: 'cs-quiet', type: 'button', 'aria-label': `${st.name}さんを外す`, onclick: (ev) => confirmRemoveOffline(st, ev.currentTarget) }, '外す');
       return h('li', { class: 'cs-seat' }, dotIdx(i), h('span', { class: 'cs-seat__name' }, st.name), tags, remove);
     }) : [h('li', { class: 'cs-seat cs-seat--empty' }, 'まだだれもいません。ルームコードを伝えてね')]));
     $('cs-proxy-box').hidden = !host || list.length >= RM.MAX_SEATS;
@@ -1672,6 +1691,17 @@
     $('cs-lobby-leave').hidden = host;
     $('cs-lobby-settings').textContent = `サイコロ: ${room.meta.dice === 1 ? '1つだけ振る（運まかせ）' : '2つ振って、進む目を選ぶ（作戦あり）'}／ステージの表示: ${room.meta.labels === 'age' ? '年齢だけ' : '学校名'}／${list.length}人（${RM.MAX_SEATS}人まで）`;
     renderLobbyWait();
+  }
+  // 待合室で通信が切れた人の席を外す（ホストが押したときだけ）。押すまでにつながりなおしていたら外さない（net.js が確かめる）
+  function confirmRemoveOffline(st, opener) {
+    const body = h('div', {});
+    const code = sess.code;
+    confirmRow(body, `${st.name}さんを外しますか？ 通信が切れています。外したあとも、同じ名前で入り直せます。`, '外す', 'cs-btn--danger', async () => {
+      const r = await NET.removeOffline(code, sess ? sess.dev : '', st.sid).catch(() => ({ ok: false }));
+      if (r.ok || r.reason === 'started' || r.reason === 'none') return;
+      toast(r.reason === 'online' ? `${st.name}さんはつながっているので、外しませんでした` : '外せませんでした。もう一度押してね');
+    });
+    openModal('席を外す', body, opener);
   }
   function renderLobbyWait() {
     if (!inRoom() || $('cs-lobby').hidden) return;
@@ -1776,6 +1806,24 @@
     if (msg) toast(msg);
     return released;
   }
+  // 席がない（待合室で通信が切れているあいだにホストが外した など）と分かったとき。責めない言い方で、
+  // 参加した人は、ルームコードを入れた参加画面へ（待合室なら同じ名前で入り直せる）。ほかの人の画面には何も出さない（2026-11-07）
+  const BACK_MSG = 'ルームにもどれなかったよ。もう一度参加してね';
+  function openJoinAgain(code) {
+    formError('cs-join-error', '');
+    $('cs-join-code').value = code || '';
+    if ($('joinLinkHint')) $('joinLinkHint').hidden = true;
+    show('join');
+    $('cs-join-name').focus({ preventScroll: true });
+  }
+  function bailGone() {
+    const code = sess && sess.code;
+    const guest = !!sess && sess.role !== 'host';
+    const waiting = !room || room.status === RM.STATUS.WAITING; // 席が外れるのは待合室だけ（まだ届いていなければ待合室とみなす）
+    const p = bail(guest ? BACK_MSG : 'このルームから外れました');
+    if (guest && code && waiting) openJoinAgain(code);
+    return p;
+  }
   async function leaveRoomNow() {
     const s = sess;
     bail('');
@@ -1840,7 +1888,12 @@
     if (!r) { clearSession(); toast('ルームが見つかりませんでした'); if (link) openJoinFromLink(link); return; }
     if (NET.isExpired(r)) { clearSession(); NET.removeIfExpired(s.code); toast('このルームはもう終わっています'); if (link) openJoinFromLink(link); return; }
     const ok = s.role === 'host' ? RM.isHost(r, s.dev) : RM.seatList(r).some((x) => x.dev === s.dev);
-    if (!ok) { clearSession(); toast('このルームから外れています'); if (link) openJoinFromLink(link); return; }
+    if (!ok) {
+      // 席がない（待合室でホストが外した など）: 責めない言い方で、待合室ならコードを入れた参加画面へ
+      clearSession();
+      if (s.role !== 'host') { toast(BACK_MSG); if (r.status === RM.STATUS.WAITING) openJoinAgain(s.code); else if (link) openJoinFromLink(link); return; }
+      toast('このルームから外れています'); if (link) openJoinFromLink(link); return;
+    }
     sess = s;
     await enterRoom();
   }
