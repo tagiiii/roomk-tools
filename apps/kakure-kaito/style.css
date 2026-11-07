@@ -492,6 +492,7 @@ body { background: var(--color-bg); }
 
 .kk-tools { display: grid; gap: 10px; justify-items: center; }
 .kk-tools[hidden] { display: none; }
+.kk-tools > .kk-alert { margin: 0; max-width: 420px; text-align: center; word-break: auto-phrase; text-wrap: balance; }
 .kk-tools .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; max-width: 420px; min-height: 52px; }
 /* ゲーム中のホストの「そのほかの操作」（開くと出る） */
 .kk-hostmenu { justify-self: stretch; max-width: 420px; width: 100%; margin: 0 auto; }
