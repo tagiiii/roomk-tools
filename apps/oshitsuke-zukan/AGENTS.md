@@ -244,6 +244,7 @@ oshitsuke_rooms/{roomCode}/
 - 切断中の人へはカードを**渡せない・回せない**（transaction でも拒否）。
 - 切断中の人が手番当事者（actor）のときは進行が止まる。「こっそり見る」のあとに回せる相手が全員切断した場合も同様に止まる。ホストはいつでも「途中で終わる」（確認ダイアログ付き）で `aborted` にできる。自動での途中終了はしない（v1 はホスト判断に一本化）。
 - 再接続: sessionStorage キー **`oshitsuke_session`**（roomCode / nickname / isHost）。リロード時 `tryReconnect()` で復帰し、`connected: true` / `disconnectedAt: null` を書き戻す。ホストは `hostConnected: true` / `hostDisconnectedAt: null` も戻す。
+- **待合室での読み込み直し（2026-11-07）**: 待合室のゲストは切断（読み込み直しを含む）で `players/{nickname}` が消えているので、`tryReconnect()` は `status: 'waiting'` なら `rejoinWaitingRoom()` で自分を足し直す。参加と同じ transaction の中身（`joinRoomUpdate()`。満員・名前の重複・ホスト不在・期限切れ、seat は既存の最大+1）を使い、先に購読して中の null は「ルームがない」として扱う。足し直したら `onDisconnect().remove()` を張り直す。足し直せないときは記録を消し、ルームコードとニックネームを入れた参加画面を開いて「待合室に戻れませんでした。（理由）」を出す（それまでは何も出さずにトップへ戻っていた。P4 監査）。`playing` 以降の `connected: true` の書き戻し・ルームがない／期限切れ（最初の読み取り）でトップへ戻るのは変えていない
 - TTL 判定は `RoomkRTDB.now()` / `isRoomExpired()`（サーバー時刻補正）。`joinRoom` / `tryReconnect` / ルーム監視で期限切れルームを検知したら `remove()` を試みる（`cancelRoomOnDisconnect` を await してから）。
 
 ## 終了とデータ削除

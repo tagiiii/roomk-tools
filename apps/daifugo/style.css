@@ -283,6 +283,10 @@ button.df-card { position: relative; }
   .df-field .df-card { --df-card-w: 54px; --df-card-h: 78px; }
   .df-hand { gap: 5px; }
   .df-actions .btn { min-width: 0; flex: 1 1 0; }
+  /* ジョーカーの「何として出すか」は文が長く、横に並べると1行に2〜3文字の縦長になるので、
+     せまい画面では幅いっぱいのボタンを縦に積む（2026-11-07） */
+  .df-as { display: grid; grid-template-columns: 1fr; }
+  .df-as .btn { width: 100%; }
 }
 
 @media (prefers-reduced-motion: reduce) {

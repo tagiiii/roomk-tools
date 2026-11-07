@@ -182,6 +182,14 @@
   }
   // 遊ぶ人（ホストは「自分も遊ぶ」のときだけ。通信が切れている人は入れない）
   const playersOf = (R) => peopleOf(R).filter((p) => !p.away && (!p.isHost || R.hostPlays)).map((p) => p.id);
+  // おしまいの「もう一回」で配りなおせない理由（配れるときは空）。n は遊ぶ人の数
+  function againReason(n, opts) {
+    const err = E.checkOpts(n, opts);
+    if (!err) return '';
+    if (n < E.MIN) return '遊ぶ人が足りないので、配りなおせないよ（' + E.MIN + '人から）';
+    if (n > E.MAX) return '遊ぶ人が多すぎるので、配りなおせないよ（' + E.MAX + '人まで）';
+    return err + '。待合室にもどると、役を選びなおせるよ';
+  }
 
   function isExpired(room) {
     // status を持たない room は、削除後に onDisconnect が発火して再生成されたゴースト
@@ -398,7 +406,8 @@
       if (R.status === STATUS.PLAY && !(g0 && g0.phase === 'end')) return false;
       const ids = playersOf(R);
       const opts = E.normOpts(R.opts);
-      if (E.checkOpts(ids.length, opts)) return false;
+      const err = E.checkOpts(ids.length, opts);
+      if (err) return R.status === STATUS.PLAY ? againReason(ids.length, opts) : err;
       const d = E.deal(ids, opts);
       const knows = {};
       ids.forEach((id) => { knows[id] = E.knows(d.roles, id); });
@@ -1840,8 +1849,16 @@
           }));
         }
       } else if (phase === 'end') {
+        // 人が抜けた・増えた・役が入りきらないときは、押せなくして理由を出す（画面より先に押されたときは toast）
+        const why = againReason(V.people.filter((p) => !p.away && (p.id !== V.hostId || V.hostPlays)).length, V.opts);
+        const again = btn('btn btn-primary btn-full', 'もう一回（役を配りなおす）', 'replay', async () => {
+          const res = await hostAct('start');
+          if (typeof res === 'string' && res) toast(res);
+        });
+        again.disabled = !!why;
         tools.append(
-          btn('btn btn-primary btn-full', 'もう一回（役を配りなおす）', 'replay', () => hostAct('start')),
+          again,
+          el('p', 'kk-alert', why),
           btn('btn btn-secondary btn-full', '待合室にもどる', 'meeting_room', () => hostAct('relobby', g.gid)),
         );
       }

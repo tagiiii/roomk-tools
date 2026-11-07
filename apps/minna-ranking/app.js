@@ -145,6 +145,20 @@ function playerNames(room) {
     .map(([name]) => name);
 }
 
+// このお題の遊ぶ人（ホストの提出状況・予想状況に出す順）。始めたときの順（roundOrder）に、
+// いま在室の遊ぶ人を足す。通信が切れて在室が消えた子も、黙って消さずに出す（「退出する」で抜けた子は roundOrder から外れる）
+function roundNames(room) {
+  const order = Array.isArray(room.roundOrder) ? room.roundOrder : [];
+  return order.concat(playerNames(room).filter((name) => !order.includes(name)));
+}
+
+// 始めたときに控えた、このお題のゲストの名前と匿名ID（途中でタブを閉じた子の入りなおしに使う）
+function roundMembersOf(room) {
+  return Object.fromEntries(playerNames(room)
+    .filter((name) => !room.players[name].isHost)
+    .map((name) => [name, { uid: room.players[name].uid, joinedAt: room.players[name].joinedAt || 0 }]));
+}
+
 // 自分がこのルームで遊ぶ人か（ゲストは常に、ホストは参加を選んだときだけ）
 function iPlay(room) {
   if (state.role === 'guest') return true;
@@ -331,11 +345,13 @@ function connectToRoom(role, nickname, code, ref) {
           const uid = firebase.auth().currentUser?.uid;
           if (current && current.uid !== uid) return;
           if (current) return;
+          // お題の途中なら、始めたときの参加順を保つ
+          const member = room.roundMembers?.[nickname];
           return {
             ...room,
             players: {
               ...(room.players || {}),
-              [nickname]: { isHost: false, uid, joinedAt: RoomkRTDB.now() },
+              [nickname]: { isHost: false, uid, joinedAt: member?.uid === uid && member.joinedAt ? member.joinedAt : RoomkRTDB.now() },
             },
           };
         });
@@ -482,6 +498,18 @@ async function joinRoom() {
       // 届いたあとにお題が始まっていても入れるよう、始まっているかより先に確かめる
       const own = current.players?.[nickname];
       if (own && !own.isHost && own.uid === uid) return current;
+      // お題の途中でタブを閉じた子（在室は消えている）: 始めたときに控えた名前と匿名IDが同じなら、同じお題に入りなおす。
+      // 新しい名前・ほかの端末の途中参加は今までどおり受けない
+      const member = current.roundMembers?.[nickname];
+      if (!own && current.status !== STATUS.WAITING && member?.uid === uid) {
+        return {
+          ...current,
+          players: {
+            ...(current.players || {}),
+            [nickname]: { isHost: false, uid, joinedAt: member.joinedAt || joinedAt },
+          },
+        };
+      }
       if (current.status !== STATUS.WAITING) { reason = '開始済み'; return; }
       if (own) { reason = '名前'; return; }
       if (guestNames(current).length >= MAX_GUESTS) { reason = '満員'; return; }
@@ -562,6 +590,12 @@ function removeGuest(room, nickname) {
   });
   next.scores = { ...(room.scores || {}) };
   delete next.scores[nickname];
+  // 「退出する」で抜けた子は、このお題の遊ぶ人から外す（公開の「パス」・結果の「0ポイント」に並べない。途中の入りなおしもしない）
+  if (Array.isArray(room.roundOrder)) next.roundOrder = room.roundOrder.filter((name) => name !== nickname);
+  if (room.roundMembers) {
+    next.roundMembers = { ...room.roundMembers };
+    delete next.roundMembers[nickname];
+  }
   if (Array.isArray(room.targets)) {
     next.targets = room.targets.filter((name) => name !== nickname);
     const oldIndex = Number(room.targetIndex) || 0;
@@ -736,6 +770,7 @@ async function startRound() {
         status: STATUS.RANKING,
         round: (Number(room.round) || 0) + 1,
         roundOrder: playerNames(room),
+        roundMembers: roundMembersOf(room),
         topic: { title: topic.title, items: topic.items.slice() },
         phaseStartedAt: firebase.database.ServerValue.TIMESTAMP,
         submissions: null,
@@ -890,7 +925,11 @@ function renderRanking(room) {
   $('guestRankEditor').hidden = !plays || submitted;
   $('guestRankSubmitted').hidden = !plays || !submitted;
   if (host) {
-    renderNames('rankProgress', playerNames(room), (name) => room.submissions?.[name] ? '提出済み' : '作成中');
+    renderNames('rankProgress', roundNames(room), (name) => {
+      const done = !!room.submissions?.[name];
+      if (!room.players?.[name]) return done ? '提出済み・通信が切れています' : '通信が切れています';
+      return done ? '提出済み' : '作成中';
+    });
     $('btnGoGuess').textContent = Object.keys(room.submissions || {}).length
       ? '提出済みの人で予想へ進む'
       : 'このお題をスキップ';
@@ -1011,8 +1050,11 @@ function renderGuess(room) {
     }
   }
   if (host) {
-    renderNames('guessProgress', playerNames(room).filter((name) => name !== target),
-      (name) => room.guesses?.[target]?.[name] ? '予想済み' : '予想中');
+    renderNames('guessProgress', roundNames(room).filter((name) => name !== target), (name) => {
+      const done = !!room.guesses?.[target]?.[name];
+      if (!room.players?.[name]) return done ? '予想済み・通信が切れています' : '通信が切れています';
+      return done ? '予想済み' : '予想中';
+    });
   }
 }
 
@@ -1160,6 +1202,7 @@ async function nextTopic() {
         ...room,
         status: STATUS.WAITING,
         roundOrder: null,
+        roundMembers: null,
         topic: null,
         phaseStartedAt: null,
         submissions: null,

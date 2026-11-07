@@ -1119,7 +1119,7 @@ async function submitVote() {
   if (index == null) return;
   document.getElementById('btn-vote-confirm').disabled = true;
   await state.roomRef.child(`players/${state.nickname}/vote`).set(index);
-  saveSession({ vote: index });
+  saveSession({ vote: index, voteRound: state.lastRoom?.round?.number ?? null });
 }
 
 // ── 開票（ホスト）──
@@ -1310,10 +1310,10 @@ function handleRoom(room) {
   const players = room.players || {};
   state.lastRoom = room;
 
-  // 自分のスコア・投票をセッションに保存（再接続用）
+  // 自分のスコア・投票をセッションに保存（再接続用）。票はどのラウンドの票かも一緒に持つ
   const me = players[state.nickname];
   if (me && state.role === 'guest') {
-    saveSession({ score: me.score || 0, vote: me.vote ?? null });
+    saveSession({ score: me.score || 0, vote: me.vote ?? null, voteRound: room.round?.number ?? null });
   }
 
   if (state.role === 'guest') {
@@ -1674,11 +1674,14 @@ async function tryReconnect() {
     } else {
       const playerRef = roomRef.child(`players/${nickname}`);
       if (!room.players || !room.players[nickname]) {
-        // onDisconnect().remove() で消えた自分を復元（スコア・投票はセッションから）
+        // onDisconnect().remove() で消えた自分を復元（スコア・投票はセッションから）。
+        // 票は、今のラウンドの票で、まだ投票中のときだけ戻す（前のラウンドの票を持ち込まない。2026-11-07）
+        const sameVotingRound = room.status === STATUS.VOTING
+          && Number.isInteger(room.round?.number) && session.voteRound === room.round.number;
         await playerRef.set({
           isHost: false,
           score: session.score || 0,
-          vote: Number.isInteger(session.vote) ? session.vote : null,
+          vote: sameVotingRound && Number.isInteger(session.vote) ? session.vote : null,
         });
       }
       playerRef.onDisconnect().remove();

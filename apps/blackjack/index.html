@@ -48,6 +48,7 @@
     .bj-hostmenu[open] summary::before { transform: rotate(180deg); }
     .bj-hostmenu[open] { padding-bottom: 16px; }
     .bj-hostmenu__row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; padding: 8px 0; border-top: 1px solid var(--color-border); }
+    .bj-gone-note { margin: 12px 0 0; font-size: 14px; line-height: 1.6; text-align: left; }
     .bj-hostmenu__note { font-size: 13px; color: var(--color-muted); line-height: 1.6; }
     .bj-hint--lead { font-size: 14px; text-align: left; margin: 0 0 16px; line-height: 1.6; }
 
@@ -429,6 +430,7 @@ const state = {
   actionBusy:    false,  // かける・引く・ストップの連打防止
   lastRoom:      null,
   lastPhaseKey:  null,
+  goneMenuKey:   null,   // 通信が切れた人を待っているとき「そのほかの操作」を開いたラウンド（1ラウンド1回）
   epoch:         0,      // 退出のたびに増える世代。退出後に完了した復帰書き戻しを無効化する
 };
 
@@ -714,6 +716,15 @@ function pendingActors(m) {
   const done = m.done || {};
   return membersInSeatOrder(m).filter((n) => done[n] == null);
 }
+// いまのラウンドが待っている人のうち、通信が切れている人（players にいない人）。
+// ラウンドは全員を待つので、この人が戻るか、ホストが「途中で終わる」を押すまで進まない
+function goneWaiting(room) {
+  const m = room && room.match;
+  if (!m || room.status !== 'playing') return [];
+  const pend = m.phase === 'betting' ? pendingBetters(m) : (m.phase === 'acting' ? pendingActors(m) : []);
+  const players = room.players || {};
+  return pend.filter((n) => !players[n]);
+}
 
 // ══════════════════════════════════════════════════
 // ロビー
@@ -777,11 +788,25 @@ function handleGame(room) {
   renderMyArea(room);
   renderGameMembers(room);
 
+  // 待っている人の通信が切れているときは、ホストに知らせて「途中で終わる」の場所を伝える
+  const gone = state.role === 'host' ? goneWaiting(room) : [];
+  if (gone.length) {
+    document.getElementById('game-my').insertAdjacentHTML('beforeend',
+      '<p class="alert alert-warning bj-gone-note">' + esc(gone.join('、')) + 'さんを待ってるよ（通信が切れています）。'
+      + '戻ってこないときは、下の「そのほかの操作」の「途中で終わる」で終われるよ</p>');
+  }
+
   // 「途中で終わる」は「そのほかの操作」にたたむ（ホストだけ・精算のあとは出さない）
   const showAbort = state.role === 'host' && m && m.phase !== 'settled';
   const hostMenu = document.getElementById('host-menu');
   hostMenu.style.display = showAbort ? 'block' : 'none';
   if (!showAbort) hostMenu.open = false;
+  // そのラウンドで1回だけ開いておく（ホストが閉じたらそのまま）
+  const goneKey = m ? state.roomCode + '|' + m.matchId + '|' + m.round : null;
+  if (showAbort && gone.length && state.goneMenuKey !== goneKey) {
+    state.goneMenuKey = goneKey;
+    hostMenu.open = true;
+  }
   document.getElementById('btn-guest-leave-game').style.display = state.role === 'guest' ? 'block' : 'none';
 }
 
@@ -1119,7 +1144,11 @@ async function guestJoinInner() {
     // ゲーム中はラウンドの合間（settled）だけ途中参加できる
     if (cur.status === 'playing') {
       const m = cur.match;
-      if (!m || m.phase !== 'settled') { reason = 'in_round'; return; }
+      if (!m || m.phase !== 'settled') {
+        // 通信が切れた人を待っているラウンドは、待っても終わらない（ホストが終えるまで）
+        reason = goneWaiting(cur).length ? 'in_round_gone' : 'in_round';
+        return;
+      }
       if (m.members && m.members[nickname]) { reason = 'nick_taken'; return; }
       reason = null;
       return {
@@ -1147,6 +1176,7 @@ async function guestJoinInner() {
       broken: 'そのルームはもうないみたい',
       host_gone: 'ホストがいないみたいだよ',
       in_round: 'いまのラウンドが終わったら入れるよ。少し待ってもう一度押してね',
+      in_round_gone: 'いまは入れないよ。ホストに伝えてね',
       not_waiting: 'いまは入れないよ',
       nick_taken: 'その名前は使われているよ',
       full: 'このルームはいっぱいだよ（8人まで）',
@@ -1556,7 +1586,7 @@ function resetLocalStateAndShowTop(msg) {
   state.epoch += 1;
   Object.assign(state, {
     role: null, nickname: null, roomCode: null, roomRef: null,
-    lastRoom: null, lastPhaseKey: null,
+    lastRoom: null, lastPhaseKey: null, goneMenuKey: null,
   });
   ['top-host-nickname', 'top-guest-nickname', 'top-guest-code'].forEach((id) => {
     const e = document.getElementById(id); if (e) e.value = '';

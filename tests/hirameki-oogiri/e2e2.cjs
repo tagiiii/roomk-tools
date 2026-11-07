@@ -137,11 +137,11 @@ async function startTopic(h, g) {
   await waitUntil(async () => (await stage(late)) === 'きれてもまつ');
   h.offlineOk = true;
   await h.context.setOffline(true);
-  check('R1 ホストが切れると、参加者にオーバーレイ', await waitUntil(async () => await visible(g, '#hostOffOverlay'), 90000));
+  check('R1 ホストが切れると、遊ぶ画面の参加者には帯（オーバーレイは出さない）', await waitUntil(async () => await visible(g, '#playHostOff'), 90000) && !(await visible(g, '#hostOffOverlay')));
   await rest('PATCH', L.ROOMS + '/' + code + '/game/cur', { endsAt: Date.now() - 1000 });
   check('R2 ホストがいない間も、参加者の端末が押せる時間を終わらせる', await waitUntil(async () => (await stage(g)) === '' && (await listRows(g, '#shownList')).some((r) => r.t === 'きれてもまつ'), 8000));
   await h.context.setOffline(false);
-  check('R3 ホストが戻るとオーバーレイが消える', await waitUntil(async () => !(await visible(g, '#hostOffOverlay')), 30000));
+  check('R3 ホストが戻ると帯が消える', await waitUntil(async () => !(await visible(g, '#playHostOff')) && !(await visible(g, '#hostOffOverlay')), 30000));
   h.offlineOk = false;
   await answer(g, 'もどったあと');
   await approve(h, 'もどったあと');
