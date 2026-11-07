@@ -91,7 +91,7 @@
   .situ--on{ border-color:var(--acc); background:var(--acc-tint); box-shadow:0 4px 12px rgba(0,0,0,.08); }
   .situ--on .situ__t{ color:var(--acc); font-weight:900; }
 
-  /* 演者のがめん／みんなのがめん 対比 */
+  /* 演者の画面／みんなの画面 対比 */
   .screens{ display:grid; grid-template-columns:1fr 1fr; gap:26px; height:100%; }
   .mini{ background:var(--white); border:1.5px solid var(--line); border-radius:18px; padding:16px 22px; display:flex; flex-direction:column; gap:8px; min-height:0; }
   .mini--actor{ border-color:var(--acc); box-shadow:0 8px 22px rgba(0,0,0,.08); }
@@ -269,13 +269,13 @@ const SLIDES = [
   /* 2 */ { type:'title', note:'今日のゲームは『こえだけシアター』\n短いセリフを、気持ちをこめて“声だけ”で演技して、どんな気持ちで言ったのかをみんなで当てるゲームだよ！' },
 
   /* 3 */ { type:'content', accent:'teal', section:'ゲームについて', sectionEn:'summary',
-    headline:'<span class="hl">こえだけ</span>で気持ちをつたえる、<br>あてっこ<ruby>演技<rt>えんぎ</rt></ruby>ゲーム',
+    headline:'<span class="hl">声だけ</span>で気持ちを伝える、<br>当てっこ演技ゲーム',
     body:`<div class="rows">
       <div class="row"><div class="row__ic"><span class="material-symbols-rounded">graphic_eq</span></div><div><div class="row__t">短いセリフを、声だけで演技する</div><div class="row__d">「えー」「まじで」みたいなひとことを、気持ちをこめて言う</div></div></div>
       <div class="row"><div class="row__ic"><span class="material-symbols-rounded">psychology_alt</span></div><div><div class="row__t">どんな気持ちで言ったのかを、みんなで当てる</div><div class="row__d">①〜⑥のシチュエーションから「これだ！」と思うものを選ぶ</div></div></div>
       <div class="row"><div class="row__ic"><span class="material-symbols-rounded">handshake</span></div><div><div class="row__t">伝わるほど、みんながうれしい協力型</div><div class="row__d">当てた人にも演じた人にもポイントが入るよ</div></div></div>
     </div>`,
-    note:'『こえだけシアター』は、短いセリフを“声だけ”で演技するゲーム。\n演じる人は、ひみつのシチュエーション通りの気持ちでセリフを言います。\nみんなは「どんな気持ちで言ったのか」を①〜⑥から当てる！\n伝わるほど、当てた人も演じた人もうれしい協力型だよ' },
+    note:'『こえだけシアター』は、短いセリフを“声だけ”で演技するゲーム。\n演じる人は、秘密のシチュエーション通りの気持ちでセリフを言います。\nみんなは「どんな気持ちで言ったのか」を①〜⑥から当てる！\n伝わるほど、当てた人も演じた人もうれしい協力型だよ' },
 
   /* 4 */ { type:'content', accent:'coral', section:'ゲーム説明', sectionEn:'explain', num:'1',
     headline:'お題は「<span class="hl">セリフ1つ</span> ＋ シチュエーション<span class="hl">①〜⑥</span>」',
@@ -283,15 +283,15 @@ const SLIDES = [
       <div class="serifu-card"><div class="lbl">セリフ</div><div class="txt">えー</div><div class="sub">これを声だけで演技する</div></div>
       <div class="situ-list">${situList(-1)}</div>
     </div>`,
-    note:'お題カードには「セリフ1つ」と「シチュエーション①〜⑥」がのっています。\nたとえばセリフが「えー」なら、シチュエーションは ①びっくり ②うれしい ③ねむい… みたいな6つ。\n同じ「えー」でも、気持ちがちがうと言い方が変わるよね。そこがポイント！' },
+    note:'お題カードには「セリフ1つ」と「シチュエーション①〜⑥」が書いてあります。\nたとえばセリフが「えー」なら、シチュエーションは①びっくり、②うれしい、③ねむい…みたいな6つ。\n同じ「えー」でも、気持ちがちがうと言い方が変わるよね。そこがポイント！' },
 
   /* 5 */ { type:'content', accent:'blue', section:'ゲーム説明', sectionEn:'explain', num:'2',
-    headline:'<ruby>役割<rt>やくわり</rt></ruby>は2つ。<span class="ul">えんじる人は、やりたい人がやる</span>',
+    headline:'役割は2つ。<span class="ul">演じる人は、やりたい人がやる</span>',
     body:`<div class="cols">
       <div class="panel panel--coral">
-        <div class="team-head"><div class="team-ic coral-bg"><span class="material-symbols-rounded">mic</span></div><div class="team-name">えんじる人（1人）</div></div>
+        <div class="team-head"><div class="team-ic coral-bg"><span class="material-symbols-rounded">mic</span></div><div class="team-name">演じる人（1人）</div></div>
         <div class="role-row"><span class="material-symbols-rounded">volunteer_activism</span><div><b>立候補制</b><span class="d">「やってみたい！」って人がやる。声かチャットで教えてね</span></div></div>
-        <div class="role-row"><span class="material-symbols-rounded">graphic_eq</span><div><b>声だけでセリフを演技</b><span class="d">カメラも身ぶりもなし。声にぜんぶこめる主役</span></div></div>
+        <div class="role-row"><span class="material-symbols-rounded">graphic_eq</span><div><b>声だけでセリフを演技</b><span class="d">カメラも身ぶりもなし。声に全部こめる主役</span></div></div>
       </div>
       <div class="panel panel--blue">
         <div class="team-head"><div class="team-ic blue-bg"><span class="material-symbols-rounded">hearing</span></div><div class="team-name">当てる人（みんな）</div></div>
@@ -299,56 +299,56 @@ const SLIDES = [
         <div class="role-row"><span class="material-symbols-rounded">chat</span><div><b>マイクなしでも参加OK</b><span class="d">選ぶだけだから、チャット派・聞き専の人もばっちり</span></div></div>
       </div>
     </div>`,
-    note:'役割は2つ。\nえんじる人（1人）… 立候補制！やってみたい人が、声だけでセリフを演技する主役。\n当てる人（みんな）… 声をよーく聞いて、①〜⑥から推理する。\n声を出さなくても、当てる側でしっかり活躍できるよ。' },
+    note:'役割は2つ。\n演じる人（1人）… 立候補制！やってみたい人が、声だけでセリフを演技する主役。\n当てる人（みんな）… 声をよーく聞いて、①〜⑥から推理する。\n声を出さなくても、当てる側でしっかり活躍できるよ。' },
 
   /* 6 */ { type:'content', accent:'teal', section:'ゲーム説明', sectionEn:'explain', num:'3',
-    headline:'正解は、<span class="hl">えんじる人にだけ</span>見える',
+    headline:'正解は、<span class="hl">演じる人にだけ</span>見える',
     body:`<div class="screens">
       <div class="mini mini--actor">
-        <div class="mini__head"><span class="material-symbols-rounded">mic</span>えんじる人のがめん</div>
+        <div class="mini__head"><span class="material-symbols-rounded">mic</span>演じる人の画面</div>
         ${situList(2)}
         <div class="mini__foot">きみのシチュエーションは ③ ！</div>
       </div>
       <div class="mini">
-        <div class="mini__head"><span class="material-symbols-rounded">hearing</span>みんなのがめん</div>
+        <div class="mini__head"><span class="material-symbols-rounded">hearing</span>みんなの画面</div>
         ${situList(-1)}
         <div class="mini__foot">どれかは、声から推理！</div>
       </div>
     </div>`,
-    note:'正解のシチュエーションは、えんじる人の画面にだけこっそり表示されます。\nたとえば「③ねむくてぼんやりしている」なら、ねむーい感じの「えー」を演技する。\nみんなの画面には①〜⑥がならんでいるだけ。声だけが手がかりだよ' },
+    note:'正解のシチュエーションは、演じる人の画面にだけこっそり表示されます。\nたとえば「③ねむくてぼんやりしている」なら、ねむーい感じの「えー」を演技する。\nみんなの画面には①〜⑥が並んでいるだけ。声だけが手がかりだよ' },
 
   /* 7 */ { type:'content', accent:'coral', section:'ゲーム説明', sectionEn:'explain', num:'4',
     headline:'1ラウンドの<span class="hl">流れ</span>',
     body:`<div class="steps">
       <div class="step"><div class="step__n">1</div><div class="step__t">お題カード</div><div class="step__d">セリフとシチュエーション①〜⑥をみんなで見る</div></div>
-      <div class="step"><div class="step__n">2</div><div class="step__t">えんじる人えらび</div><div class="step__d">やってみたい人が立候補</div></div>
-      <div class="step"><div class="step__n">3</div><div class="step__t">えんぎ</div><div class="step__d">声だけでセリフを言う（何回言ってもOK）</div></div>
-      <div class="step"><div class="step__n">4</div><div class="step__t">とうひょう</div><div class="step__d">みんなが①〜⑥から選ぶ</div></div>
-      <div class="step"><div class="step__n">5</div><div class="step__t">けっか</div><div class="step__d">正解発表！ 何人に伝わったかな？</div></div>
+      <div class="step"><div class="step__n">2</div><div class="step__t">演じる人選び</div><div class="step__d">やってみたい人が立候補して、ホストが決める</div></div>
+      <div class="step"><div class="step__n">3</div><div class="step__t">演技</div><div class="step__d">声だけでセリフを言う（何回言ってもOK）</div></div>
+      <div class="step"><div class="step__n">4</div><div class="step__t">投票</div><div class="step__d">みんなが①〜⑥から選ぶ</div></div>
+      <div class="step"><div class="step__n">5</div><div class="step__t">結果</div><div class="step__d">正解発表！ 何人に伝わったかな？</div></div>
     </div>`,
-    note:'1ラウンドの流れはこれだけ！\n①お題カードを見る → ②えんじる人をえらぶ → ③えんぎ → ④とうひょう → ⑤けっか発表\nテンポよく何ラウンドもできるよ。' },
+    note:'1ラウンドの流れはこれだけ！\n①お題カードを見る → ②演じる人を選ぶ → ③演技 → ④投票 → ⑤結果発表\nテンポよく何ラウンドもできるよ。' },
 
   /* 8 */ { type:'content', accent:'teal', section:'ゲーム説明', sectionEn:'explain', num:'5',
-    headline:'<ruby>得点<rt>とくてん</rt></ruby>：<span class="hl">伝わるほど、みんなうれしい</span>',
+    headline:'得点：<span class="hl">伝わるほど、みんなうれしい</span>',
     body:`<div class="pt-demo">
       <div class="pt-card"><div class="pt-card__ic blue-bg"><span class="material-symbols-rounded">check_circle</span></div><div><div class="pt-card__t">当てた人</div><div class="pt-card__d">正解を選べたら</div></div><div class="pt-badge">＋1pt</div></div>
-      <div class="pt-card"><div class="pt-card__ic coral-bg"><span class="material-symbols-rounded">mic</span></div><div><div class="pt-card__t">えんじた人</div><div class="pt-card__d">当てた人の人数が、そのままポイントに</div></div><div class="pt-badge">＋人数ぶん</div></div>
+      <div class="pt-card"><div class="pt-card__ic coral-bg"><span class="material-symbols-rounded">mic</span></div><div><div class="pt-card__t">演じた人</div><div class="pt-card__d">当てた人の人数が、そのままポイントに</div></div><div class="pt-badge">＋人数ぶん</div></div>
       <div class="pt-note">順位はつけないよ。「何人に伝わったかな？」をみんなで楽しむゲーム</div>
     </div>`,
-    note:'得点はシンプル！\n当てた人 … ＋1pt\nえんじた人 … 当てた人の人数ぶんポイントが入る（3人に伝わったら＋3pt！）\nつまり、伝わるほどみんながうれしい協力型。順位づけはしないよ。' },
+    note:'得点はシンプル！\n当てた人 … ＋1pt\n演じた人 … 当てた人の人数ぶんポイントが入る（3人に伝わったら＋3pt！）\nつまり、伝わるほどみんながうれしい協力型。順位づけはしないよ。' },
 
   /* 9 */ { type:'content', accent:'blue', section:'Q&A', sectionEn:'question & answer',
-    headline:'よくある<ruby>質問<rt>しつもん</rt></ruby>',
+    headline:'よくある質問',
     body:`<div class="qa">
-      <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>セリフは、何回言ってもいい？</div><div class="qa__a"><span class="qa__badge a">A</span>もちろんOK！「もう1回ききたい」のリクエストもありだよ。</div></div>
-      <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>声を出したくないときは？</div><div class="qa__a"><span class="qa__badge a">A</span>当てる側で参加してOK。えんじるのは、やりたい人だけで大丈夫。</div></div>
-      <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>演技がむずかしかったら？</div><div class="qa__a"><span class="qa__badge a">A</span>むずかしいお題もあるよ、だいじょうぶ。伝わらなくてもだれのせいでもない！</div></div>
+      <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>セリフは、何回言ってもいい？</div><div class="qa__a"><span class="qa__badge a">A</span>もちろんOK！「もう1回聞きたい」のリクエストもありだよ。</div></div>
+      <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>声を出したくないときは？</div><div class="qa__a"><span class="qa__badge a">A</span>当てる側で参加してOK。演じるのは、やりたい人だけで大丈夫。</div></div>
+      <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>演技がむずかしかったら？</div><div class="qa__a"><span class="qa__badge a">A</span>むずかしいお題もあるよ、大丈夫。伝わらなくてもだれのせいでもない！</div></div>
     </div>`,
-    note:'よくある質問だよ\nQ. セリフは何回言ってもいい？→ A. もちろんOK！「もう1回！」のリクエストもあり。\nQ. 声を出したくない→ A. 当てる側で参加してOK。えんじるのはやりたい人だけ。\nQ. 演技がむずかしかったら？→ A. むずかしいお題もあるよ、だいじょうぶ！' },
+    note:'よくある質問だよ\nQ. セリフは何回言ってもいい？→ A. もちろんOK！「もう1回！」のリクエストもあり。\nQ. 声を出したくない→ A. 当てる側で参加してOK。演じるのはやりたい人だけ。\nQ. 演技がむずかしかったら？→ A. むずかしいお題もあるよ、大丈夫！' },
 
   /* 10 */ { type:'divider', accent:'blue', icon:'live_help', jp:'質問タイム', en:'any questions?',
     sub:'気になることはある？',
-    note:'ここまでで、質問がある人はいるかな？\nマイクON か チャットで教えてね！' },
+    note:'ここまでで、質問がある人はいるかな？\nマイクONかチャットで教えてね！' },
 
   /* 11 */ { type:'divider', accent:'coral', icon:'how_to_reg', jp:'参加確認', en:"let's check",
     sub:'チャットで教えてね',
@@ -356,23 +356,23 @@ const SLIDES = [
 
   /* 12 */ { type:'divider', accent:'teal', solid:true, icon:'rocket_launch', jp:'＼ ゲームスタート ／', en:'game start',
     sub:'ルームに入ってね！',
-    note:'それでは、こえだけシアタースタート！\nチャットに送ったリンクからルームに入って、ニックネームとルームコードを入れてね。参加用のリンクのときは、ルームコードが入っているので、ニックネームだけ入れてね。わからなくなったら、いつでも聞いてね' },
+    note:'それでは、こえだけシアタースタート！\n「ルームに参加する」から、ニックネームとルームコードを入れてね。参加用のリンクから開いたときは、ルームコードが入っているので、ニックネームだけ入れてね。わからなくなったら、いつでも聞いてね' },
 
-  /* 13 */ { type:'divider', accent:'coral', icon:'volunteer_activism', jp:'えんじる人えらび', en:'casting',
+  /* 13 */ { type:'divider', accent:'coral', icon:'volunteer_activism', jp:'演じる人選び', en:'casting',
     sub:'やってみたい人、いるかな？',
-    note:'お題カードが出たよ！\nえんじてみたい人は、こえかチャットで教えてね\n（だれもいなければ、ランダムでえらぶこともできるよ）' },
+    note:'お題カードが出たよ！\n演じてみたい人は、声かチャットで教えてね\n（だれもいなければ、ランダムで選ぶこともできるよ）' },
 
-  /* 14 */ { type:'divider', accent:'teal', icon:'mic', jp:'えんぎタイム', en:'acting',
+  /* 14 */ { type:'divider', accent:'teal', icon:'mic', jp:'演技タイム', en:'acting',
     sub:'何回言ってもOK',
-    note:'えんじる人さん、じゅんびはいい？セリフをどうぞ！\nみんなは声をよーく聞いてね。「もう1回ききたい！」もありだよ。' },
+    note:'演じる人さん、準備はいい？セリフをどうぞ！\nみんなは声をよーく聞いてね。「もう1回聞きたい！」もありだよ。' },
 
-  /* 15 */ { type:'divider', accent:'blue', icon:'how_to_vote', jp:'とうひょう', en:'voting',
-    sub:'①〜⑥ どれだと思う？',
+  /* 15 */ { type:'divider', accent:'blue', icon:'how_to_vote', jp:'投票', en:'voting',
+    sub:'①〜⑥のどれだと思う？',
     note:'どのシチュエーションだったと思う？\n自分の画面で①〜⑥から選んで「きめた」を押してね！' },
 
-  /* 16 */ { type:'divider', accent:'teal', solid:true, icon:'emoji_events', jp:'けっか', en:'result',
+  /* 16 */ { type:'divider', accent:'teal', solid:true, icon:'emoji_events', jp:'結果', en:'result',
     sub:'何人に伝わったかな？',
-    note:'けっか発表！\n正解はどれだったかな？ 何人に伝わったか、みんなで見てみよう。\nむずかしいお題だったら、それはお題のせい。気にしないでね' },
+    note:'結果発表！\n正解はどれだったかな？ 何人に伝わったか、みんなで見てみよう。\nむずかしいお題だったら、それはお題のせい。気にしないでね' },
 ];
 
 /* ===== ウィンドウ間同期 ===== */
@@ -389,11 +389,11 @@ function slideHTML(s){
       <div class="title-ic"><span class="material-symbols-rounded">theater_comedy</span></div>
       <div class="title-jp">こえだけシアター</div>
       <div class="title-en">koedake theater</div>
-      <div class="title-tag">〜 こえだけで気持ちをつたえる、あてっこ演技ゲーム 〜</div>
+      <div class="title-tag">〜 声だけで気持ちを伝える、当てっこ演技ゲーム 〜</div>
       <div class="title-meta">
         <span class="m"><span class="material-symbols-rounded">group</span>遊ぶ人2〜8人</span>
         <span class="m"><span class="material-symbols-rounded">schedule</span>15〜30分</span>
-        <span class="m"><span class="material-symbols-rounded">graphic_eq</span>こえの演技ゲーム</span>
+        <span class="m"><span class="material-symbols-rounded">graphic_eq</span>声の演技ゲーム</span>
       </div></section>`;
   }
   if(s.type==='divider'){

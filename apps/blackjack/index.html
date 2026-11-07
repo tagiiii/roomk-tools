@@ -1730,7 +1730,7 @@ async function handleReconnected() {
     if (reason === 'norole') return;
     let msg = 'ルームが閉じられたよ';
     if (reason === 'not_member') msg = 'メンバーからはずれたよ。また遊ぶときは入りなおしてね';
-    else if (reason === 'full') msg = '部屋がいっぱいで戻れなかったよ';
+    else if (reason === 'full') msg = 'ルームがいっぱいで戻れなかったよ';
     await bailToTop(msg);
     return;
   }

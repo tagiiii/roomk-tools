@@ -228,89 +228,89 @@ const SLIDES = [
     sub:'今の気分を、ひとことどうぞ',
     note:'まずはチェックインから！\n今の気分や、最近あったことを、ひとことチャットか声で教えてね\n（おしつけずかんの説明は、このあとすぐ！）' },
 
-  /* 2 */ { type:'title', note:'今日のあそびは『おしつけずかん』。\nイヤ〜な生きもののカードを、宣言つきで ほかの人へおしつけあうゲームだよ。「ホントかウソか」を見やぶれるかな？' },
+  /* 2 */ { type:'title', note:'今日の遊びは『おしつけずかん』。\nイヤ〜な生きもののカードを、宣言つきでほかの人へ押しつけ合うゲームだよ。「ホントかウソか」を見やぶれるかな？' },
 
   /* 3 */ { type:'content', accent:'teal', section:'ゲームについて', sectionEn:'summary',
-    headline:'<span class="hl">宣言つき</span>のカードを、<br>おしつけあうブラフゲーム',
+    headline:'<span class="hl">宣言つき</span>のカードを、<br>押しつけ合うブラフゲーム',
     body:`<div class="rows">
-      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">swap_horiz</span></div><div><div class="row__t">「これは ムカデ です」と言って、裏向きでわたす</div><div class="row__d">カードは見せずに、宣言だけ聞いて相手にわたすよ</div></div></div>
-      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">theater_comedy</span></div><div><div class="row__t">宣言は ウソでも ホントでも いい</div><div class="row__d">「見やぶられないように演技する」のが、このゲームの楽しいところ</div></div></div>
-      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">auto_stories</span></div><div><div class="row__t">同じ生きもの4まい か 全8しゅるいで、ひとりまけ</div><div class="row__d">引き取ったカードは、じぶんの「ずかん」にたまっていくよ</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">swap_horiz</span></div><div><div class="row__t">「これはムカデです」と言って、裏向きで渡す</div><div class="row__d">カードは見せずに、宣言だけ伝えて相手に渡すよ</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">theater_comedy</span></div><div><div class="row__t">宣言はウソでもホントでもいい</div><div class="row__d">「見やぶられないように演技する」のが、このゲームの楽しいところ</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">auto_stories</span></div><div><div class="row__t">同じ生きもの4枚か全8種類で、ひとり負け</div><div class="row__d">引き取ったカードは、自分の「ずかん」にたまっていくよ</div></div></div>
     </div>`,
-    note:'『おしつけずかん』は、イヤ〜な生きもののカードを宣言つきでおしつけあうブラフゲーム。\n「これはムカデです」のように言って、裏向きのカードをわたします。宣言はウソでもホントでもOK。\n引き取ったカードは自分の「ずかん」にたまっていって、同じ生きものが4まいになるか、8しゅるいぜんぶがそろったら、その人のひとりまけになるよ。' },
+    note:'『おしつけずかん』は、イヤ〜な生きもののカードを宣言つきで押しつけ合うブラフゲーム。\n「これはムカデです」のように言って、裏向きのカードを渡します。宣言はウソでもホントでもOK。\n引き取ったカードは自分の「ずかん」にたまっていって、同じ生きものが4枚になるか、8種類全部がそろったら、その人のひとり負けになるよ。' },
 
   /* 4 */ { type:'content', accent:'teal', section:'ゲーム説明', sectionEn:'explain', num:'1',
-    headline:'イヤ〜な生きものは<br><span class="hl">8しゅるい</span>',
+    headline:'イヤ〜な生きものは<br><span class="hl">8種類</span>',
     body:`${kindGrid()}<div class="oz-kind-note">絵は出てこないよ。色と名前だけで見分けるカードなんだ。</div>`,
     note:'カードは8種類の生きもの。ナメクジ・ムカデ・カ・ミミズ・ヘビ・ゲジゲジ・ヒル・カラスだよ。\n絵は出てこなくて、色と名前だけで見分けるカードになっているよ。' },
 
   /* 5 */ { type:'content', accent:'blue', section:'ゲーム説明', sectionEn:'explain', num:'2',
-    headline:'自分の番になったら<br><ruby>宣言<rt>せんげん</rt></ruby>つきで「わたす」',
+    headline:'自分の番になったら<br>宣言つきで「渡す」',
     body:`<div class="rows">
-      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">style</span></div><div><div class="row__t">①手札から1まい えらぶ</div><div class="row__d">おしつけたいカードを えらぶよ</div></div></div>
-      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">campaign</span></div><div><div class="row__t">②宣言を えらぶ（①〜⑧）</div><div class="row__d">「これは ○○ です」の ○○ を決める。ウソでもホントでもOK</div></div></div>
-      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">person</span></div><div><div class="row__t">③わたす相手を えらんで「わたす」</div><div class="row__d">だれに おしつけるかを 決めてね</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">style</span></div><div><div class="row__t">①手札から1枚選ぶ</div><div class="row__d">「あなたの手札」から、押しつけたいカードをタップするよ</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">campaign</span></div><div><div class="row__t">②宣言を選ぶ（①〜⑧）</div><div class="row__d">「これは○○です」の○○を決める。ウソでもホントでもOK</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">person</span></div><div><div class="row__t">③渡す相手を選んで「渡す」</div><div class="row__d">だれに押しつけるかを決めてね</div></div></div>
     </div>`,
-    note:'自分の番になったら、①手札から1まい、②宣言（①〜⑧の生きもの）、③わたす相手をえらんで「わたす」ボタンをおすよ。\n宣言はウソでもホントでもいいからね。' },
+    note:'自分の番になったら、①手札から1枚、②宣言（①〜⑧の生きもの）、③渡す相手を選んで「渡す」ボタンを押すよ。\n宣言はウソでもホントでもいいからね。' },
 
   /* 6 */ { type:'content', accent:'coral', section:'ゲーム説明', sectionEn:'explain', num:'3',
-    headline:'カードを うけとったら、<br><span class="hl">2つ</span>から えらぶ',
+    headline:'カードを受け取ったら、<br><span class="hl">2つ</span>から選ぶ',
     body:`<div class="oz-choice-cols">
-      <div class="oz-choice"><div class="oz-choice__ic"><span class="material-symbols-rounded">fact_check</span></div><div class="oz-choice__t">ホント・ウソを あてる</div><div class="oz-choice__d">「ホント」か「ウソ」をえらんで公開。当たれば わたした人が、はずれれば 自分が カードを引き取るよ</div></div>
-      <div class="oz-choice"><div class="oz-choice__ic"><span class="material-symbols-rounded">visibility</span></div><div class="oz-choice__t">「こっそり見る」</div><div class="oz-choice__d">自分だけ 中身を見て、まだ見ていない人に あたらしい宣言をつけて まわすよ</div></div>
+      <div class="oz-choice"><div class="oz-choice__ic"><span class="material-symbols-rounded">fact_check</span></div><div class="oz-choice__t">ホント・ウソを当てる</div><div class="oz-choice__d">「ホント」か「ウソ」を選んで公開。当たれば出した人が、外れれば自分がカードを引き取るよ</div></div>
+      <div class="oz-choice"><div class="oz-choice__ic"><span class="material-symbols-rounded">visibility</span></div><div class="oz-choice__t">「こっそり見る」</div><div class="oz-choice__d">自分だけ中身を見て、まだ見ていない人に新しい宣言をつけて回すよ</div></div>
     </div>`,
-    note:'カードをうけとったら、2つからえらべます。\n①「ホント」「ウソ」をえらんで公開する。当たれば、わたした人がカードを引き取り、はずれれば自分が引き取ります。\n②「こっそり見る」…自分だけ中身を見て、まだ見ていない人に、あたらしい宣言をつけてまわすことができるよ。' },
+    note:'カードを受け取ったら、2つから選べます。\n①「ホント」「ウソ」を選んで公開する。当たれば、出した人がカードを引き取り、外れれば自分が引き取ります。\n②「こっそり見る」…自分だけ中身を見て、まだ見ていない人に、新しい宣言をつけて回すことができるよ。' },
 
   /* 7 */ { type:'content', accent:'teal', section:'ゲーム説明', sectionEn:'explain', num:'4',
-    headline:'あてた けっかで、<br>カードの ゆくえが きまる',
+    headline:'当てた結果で、<br>カードの行き先が決まる',
     body:`<div class="oz-banner-demo">
       <div class="flow"><span>たろうさん</span><span class="material-symbols-rounded">arrow_forward</span><span>はなこさん</span></div>
-      <div class="claim">「これは ムカデ です」</div>
-    </div><div class="oz-kind-note">はなこさんが「ホント」か「ウソ」を選んで公開。<br>当たれば たろうさんが、はずれれば はなこさんが 引き取るよ。</div>`,
-    note:'「ホント」「ウソ」を正しく当てたら、カードを出した人が引き取ります。見ぬけずにはずれたら、自分が引き取ります。\n引き取ったカードは、表向きで「ずかん」にたまっていくよ。' },
+      <div class="claim">「これはムカデです」</div>
+    </div><div class="oz-kind-note">はなこさんが「ホント」か「ウソ」を選んで公開。<br>当たればたろうさんが、外れればはなこさんが引き取るよ。</div>`,
+    note:'「ホント」「ウソ」を正しく当てたら、カードを出した人が引き取ります。見抜けずに外れたら、自分が引き取ります。\n引き取ったカードは、表向きで「ずかん」にたまっていくよ。' },
 
   /* 8 */ { type:'content', accent:'coral', section:'ゲーム説明', sectionEn:'explain', num:'5',
-    headline:'「こっそり見る」は<br><span class="hl">やりなおしできない</span>',
+    headline:'「こっそり見る」は<br><span class="hl">やり直しできない</span>',
     body:`<div class="rows">
-      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">visibility</span></div><div><div class="row__t">見たら「あてる」には もどれない</div><div class="row__d">選ぶ前に「カードを見ると、『ホント』『ウソ』はえらべなくなるよ。見てまわす？」と確認が出るよ</div></div></div>
-      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">redo</span></div><div><div class="row__t">あたらしい宣言をつけて「まわす」</div><div class="row__d">同じ宣言でも、ちがう宣言でもOK</div></div></div>
-      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">block</span></div><div><div class="row__t">まわせるのは まだ見ていない人だけ</div><div class="row__d">みんな見ていたら「ホント」「ウソ」しかえらべなくなるよ</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">visibility</span></div><div><div class="row__t">見たら「ホント」「ウソ」には戻れない</div><div class="row__d">選ぶ前に「カードを見ると、『ホント』『ウソ』は選べなくなるよ。見て回す？」と確認が出るよ</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">redo</span></div><div><div class="row__t">新しい宣言をつけて「回す」</div><div class="row__d">同じ宣言でも、ちがう宣言でもOK</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">block</span></div><div><div class="row__t">回せるのはまだ見ていない人だけ</div><div class="row__d">みんな見ていたら「ホント」「ウソ」しか選べなくなるよ</div></div></div>
     </div>`,
-    note:'「こっそり見る」は、一度えらぶと「あてる」にはもどれません。選ぶ前に確認が出るよ。\n見たあとは、あたらしい宣言をつけて、まだ見ていない人にまわします。まわせる相手がいないときは「ホント」「ウソ」しかえらべないよ。' },
+    note:'「こっそり見る」は、一度選ぶと「ホント」「ウソ」には戻れません。選ぶ前に確認が出るよ。\n見たあとは、新しい宣言をつけて、まだ見ていない人に回します。回せる相手がいないときは「ホント」「ウソ」しか選べないよ。' },
 
   /* 9 */ { type:'content', accent:'coral', section:'ゲーム説明', sectionEn:'explain', num:'6',
-    headline:'同じ生きもの<span class="hl">4まい</span> か <span class="hl">全8しゅるい</span>で、<br>ひとりまけ',
+    headline:'同じ生きもの<span class="hl">4枚</span>か<span class="hl">全8種類</span>で、<br>ひとり負け',
     body:`<div class="rows">
-      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">warning</span></div><div><div class="row__t">ずかんの同じ生きものが4まい、または 全8しゅるいに</div><div class="row__d">そこで、その人の ひとりまけで 終了！</div></div></div>
-      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">hourglass_empty</span></div><div><div class="row__t">手札が0まいに なっても まけ</div><div class="row__d">カードを引き取った人の手札が なくなったとき</div></div></div>
-      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">sentiment_satisfied</span></div><div><div class="row__t">順位づけは しないよ</div><div class="row__d">まける人は1人だけ。せめる演出もなし</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">warning</span></div><div><div class="row__t">ずかんの同じ生きものが4枚、または全8種類に</div><div class="row__d">そこで、その人のひとり負けで終了！</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">hourglass_empty</span></div><div><div class="row__t">手札が0枚になっても負け</div><div class="row__d">カードを引き取った人の手札がなくなったとき</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">sentiment_satisfied</span></div><div><div class="row__t">順位づけはしないよ</div><div class="row__d">負ける人は1人だけ。責める演出もなし</div></div></div>
     </div>`,
-    note:'だれかの「ずかん」で同じ生きものが4まいになるか、8しゅるいぜんぶがそろったら、その人のひとりまけで即終了。\n引き取った人の手札が0まいになっても、まけになります。\n順位づけはしないから、まけた人以外はみんな仲間だよ。' },
+    note:'だれかの「ずかん」で同じ生きものが4枚になるか、8種類全部がそろったら、その人のひとり負けで即終了。\n引き取った人の手札が0枚になっても、負けになります。\n順位づけはしないから、負けた人以外はみんな仲間だよ。' },
 
   /* 10 */ { type:'content', accent:'blue', section:'Q&A', sectionEn:'question & answer',
-    headline:'よくある<ruby>質問<rt>しつもん</rt></ruby>',
+    headline:'よくある質問',
     body:`<div class="qa">
-      <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>宣言は、ぜったいウソをつかなきゃダメ？</div><div class="qa__a"><span class="qa__badge a">A</span>ううん、ホントでもウソでも自由。読みあいがたのしいよ。</div></div>
-      <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>こっそり見たあと、やっぱり あてたいときは？</div><div class="qa__a"><span class="qa__badge a">A</span>それはできないよ。見たら まわすだけになるよ。</div></div>
-      <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>まわせる相手が だれもいないときは？</div><div class="qa__a"><span class="qa__badge a">A</span>「ホント」「ウソ」しか えらべなくなるよ。</div></div>
+      <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>宣言は、絶対ウソをつかなきゃダメ？</div><div class="qa__a"><span class="qa__badge a">A</span>ううん、ホントでもウソでも自由。読み合いが楽しいよ。</div></div>
+      <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>こっそり見たあと、やっぱり当てたいときは？</div><div class="qa__a"><span class="qa__badge a">A</span>それはできないよ。見たら回すだけになるよ。</div></div>
+      <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>回せる相手がだれもいないときは？</div><div class="qa__a"><span class="qa__badge a">A</span>「ホント」「ウソ」しか選べなくなるよ。</div></div>
     </div>`,
-    note:'よくある質問だよ\nQ. 宣言はぜったいウソ？→ A. ホントでもウソでも自由。読みあいがたのしいところだよ。\nQ. こっそり見たあと、やっぱりあてたいときは？→ A. それはできない。見たらまわすだけ。\nQ. まわせる相手がだれもいないときは？→ A.「ホント」「ウソ」しかえらべなくなるよ。' },
+    note:'よくある質問だよ\nQ. 宣言は絶対ウソ？→ A. ホントでもウソでも自由。読み合いが楽しいところだよ。\nQ. こっそり見たあと、やっぱり当てたいときは？→ A. それはできない。見たら回すだけ。\nQ. 回せる相手がだれもいないときは？→ A.「ホント」「ウソ」しか選べなくなるよ。' },
 
   /* 11 */ { type:'divider', accent:'blue', icon:'live_help', jp:'質問タイム', en:'any questions?',
     sub:'気になることはある？',
-    note:'ここまでで、質問がある人はいるかな？\nマイクON か チャットで教えてね！' },
+    note:'ここまでで、質問がある人はいるかな？\nマイクONかチャットで教えてね！' },
 
   /* 12 */ { type:'divider', accent:'coral', icon:'how_to_reg', jp:'参加確認', en:"let's check",
     sub:'チャットで教えてね',
-    note:'やってみたい人〜？\n「①参加」「②見学」「③その他」を、チャットで教えてね！ 見学は「みるだけ」の共有ボードからも見られるよ。' },
+    note:'やってみたい人〜？\n「①参加」「②見学」「③その他」を、チャットで教えてね！ 見学は「見るだけ」からも見られるよ。' },
 
   /* 13 */ { type:'divider', accent:'teal', solid:true, icon:'rocket_launch', jp:'＼ ゲームスタート ／', en:'game start',
     sub:'ウソ、どんどんついていいよ！',
-    note:'それでは、おしつけずかんスタート！\nホストが「ルームをつくる」でコードを出して、みんなに伝えてね。3〜6人であそべます。\n参加用のリンクを送ったときは、リンクをひらくとルームコードが入っているので、ニックネームだけ入れてね。\n画面を共有するときは、TOPの「みるだけ」から共有ボードを開いて見せてね（自分の参加画面には手札が映っちゃうので、共有はここじゃなくて共有ボードから）。\nウソ、どんどんついていいからね！' },
+    note:'それでは、おしつけずかんスタート！\nホストが「ルームを作る」でコードを出して、みんなに伝えてね。3〜6人で遊べます。\n参加用のリンクを送ったときは、リンクを開くとルームコードが入っているので、ニックネームだけ入れてね。\n画面を共有するときは、トップの「見るだけ」から入った画面を見せてね（自分の参加画面には手札が映っちゃうので、共有は「見るだけ」の画面から）。\nウソ、どんどんついていいからね！' },
 
-  /* 14 */ { type:'divider', accent:'teal', solid:true, icon:'emoji_events', jp:'けっか', en:'result',
+  /* 14 */ { type:'divider', accent:'teal', solid:true, icon:'emoji_events', jp:'結果', en:'result',
     sub:'おつかれさま！',
-    note:'けっか発表！\nだれかの ずかんが いっぱいになったかな？ まけた人も、ナイス演技だったね。最後にひとことずつ、感想をどうぞ。' },
+    note:'結果発表！\nだれかのずかんがいっぱいになったかな？ 負けた人も、ナイス演技だったね。最後にひとことずつ、感想をどうぞ。' },
 ];
 
 /* ===== ウィンドウ間同期 ===== */
@@ -327,7 +327,7 @@ function slideHTML(s){
       <div class="title-ic"><span class="material-symbols-rounded">auto_stories</span></div>
       <div class="title-jp">おしつけずかん</div>
       <div class="title-en">oshitsuke zukan</div>
-      <div class="title-tag">〜 イヤ〜な生きものを、宣言つきで おしつけあえ 〜</div>
+      <div class="title-tag">〜 イヤ〜な生きものを、宣言つきで押しつけ合え 〜</div>
       <div class="oz-strip">
         <span style="background:#8D6E63"></span>
         <span style="background:#C62828"></span>

@@ -230,41 +230,41 @@ const SLIDES = [
     sub:'今の気分を、ひとことどうぞ',
     note:'まずはチェックインから！\n今の気分や、最近あったことを、ひとことチャットか声で教えてね\n（人狼ゲームの説明は、このあとすぐ！）' },
 
-  /* 2 */ { type:'title', note:'今日のゲームは『人狼ゲーム』\n村のなかに、こっそり「人狼」がまぎれこんでいます。\nだれが人狼なのか、みんなで話し合って見つけ出すゲームだよ！' },
+  /* 2 */ { type:'title', note:'今日のゲームは『人狼ゲーム』\n村の中に、こっそり「人狼」が紛れ込んでいます。\n誰が人狼なのか、みんなで話し合って見つけ出すゲームだよ！' },
 
   /* 3 */ { type:'content', accent:'navy', section:'ゲームについて', sectionEn:'summary',
-    headline:'村にかくれた<span class="hl">人狼</span>を、<br>話し合いで見つけるゲーム',
+    headline:'村に隠れた<span class="hl">人狼</span>を、<br>話し合いで見つけるゲーム',
     body:`<div class="rows">
-      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">theater_comedy</span></div><div><div class="row__t">自分の役職は、自分だけのヒミツ</div><div class="row__d">ゲームがはじまると、1人1つ「役職」が配られるよ</div></div></div>
-      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">forum</span></div><div><div class="row__t">昼は、みんなで話し合い</div><div class="row__d">「だれがあやしい？」を相談して、1人をえらぶ</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">theater_comedy</span></div><div><div class="row__t">自分の役職は、自分だけのヒミツ</div><div class="row__d">ゲームが始まると、1人1つ「役職」が配られるよ</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">forum</span></div><div><div class="row__t">昼は、みんなで話し合い</div><div class="row__d">「誰があやしい？」を相談して、1人を選ぶ</div></div></div>
       <div class="row"><div class="row__ic"><span class="material-symbols-rounded">dark_mode</span></div><div><div class="row__t">夜は、こっそり行動</div><div class="row__d">占い師や人狼などが、ないしょで動く時間</div></div></div>
     </div>`,
-    note:'『人狼ゲーム』は、村にかくれた人狼を話し合いで見つけるゲーム。\nゲームがはじまると、1人1つ「役職」が配られます。自分の役職は自分だけのヒミツ！\n昼はみんなで話し合い、夜は役職のある人がこっそり行動するよ。' },
+    note:'『人狼ゲーム』は、村に隠れた人狼を話し合いで見つけるゲーム。\nゲームが始まると、1人1つ「役職」が配られます。自分の役職は自分だけのヒミツ！\n昼はみんなで話し合い、夜は役職のある人がこっそり行動するよ。' },
 
   /* 4 */ { type:'content', accent:'purple', section:'ゲーム説明', sectionEn:'explain', num:'1',
-    headline:'チームは3つ。<ruby>役職<rt>やくしょく</rt></ruby>はぜんぶで<span class="hl">14種類</span>',
+    headline:'チームは3つ。役職は全部で<span class="hl">14種類</span>',
     body:`<div class="cols3">
       <div class="panel panel--village">
         <div class="team-head"><div class="team-ic village-bg"><span class="material-symbols-rounded">home</span></div><div class="team-name">村人チーム</div></div>
-        <div class="role-row"><span class="material-symbols-rounded">visibility</span><div><b>占い師</b><span class="d">毎晩1人が人狼チームか調べられる</span></div></div>
-        <div class="role-row"><span class="material-symbols-rounded">shield</span><div><b>騎士</b><span class="d">夜に1人を人狼からまもる</span></div></div>
+        <div class="role-row"><span class="material-symbols-rounded">visibility</span><div><b>占い師</b><span class="d">毎晩1人を、人狼チームかどうか調べられる</span></div></div>
+        <div class="role-row"><span class="material-symbols-rounded">shield</span><div><b>騎士</b><span class="d">夜に1人を人狼から守る</span></div></div>
       </div>
       <div class="panel panel--wolf">
         <div class="team-head"><div class="team-ic wolf-bg"><span class="material-symbols-rounded">pets</span></div><div class="team-name">人狼チーム</div></div>
-        <div class="role-row"><span class="material-symbols-rounded">pets</span><div><b>人狼</b><span class="d">正体をかくして、夜に1人をねらう</span></div></div>
+        <div class="role-row"><span class="material-symbols-rounded">pets</span><div><b>人狼</b><span class="d">正体を隠して、夜に1人をねらう</span></div></div>
         <div class="role-row"><span class="material-symbols-rounded">support_agent</span><div><b>狂人</b><span class="d">人間だけど、人狼の勝ちが自分の勝ち</span></div></div>
       </div>
       <div class="panel panel--third">
         <div class="team-head"><div class="team-ic third-bg"><span class="material-symbols-rounded">auto_awesome</span></div><div class="team-name">第三チーム</div></div>
-        <div class="role-row"><span class="material-symbols-rounded">wb_sunny</span><div><b>てるてる坊主</b><span class="d">昼の投票でえらばれたら勝ち！</span></div></div>
+        <div class="role-row"><span class="material-symbols-rounded">wb_sunny</span><div><b>てるてる坊主</b><span class="d">決められた日まで残って、昼の投票で選ばれたら勝ち！</span></div></div>
         <div class="role-row"><span class="material-symbols-rounded">cruelty_free</span><div><b>妖狐</b><span class="d">人狼にねらわれても平気。占いに弱い</span></div></div>
       </div>
     </div>
-    <div class="panels-note">ほかにも 霊媒師・パン屋・猫又・神様 など、ぜんぶで<b>14種類</b>。アプリの「？」ボタンでいつでも見られるよ</div>`,
-    note:'チームは3つ。\n村人チーム…占い師や騎士など、人狼を見つけたい人たち。\n人狼チーム…正体をかくす人狼と、その味方の狂人など。\n第三チーム…てるてる坊主や妖狐など、自分だけの目標を持つ人たち。\n役職はぜんぶで14種類！ アプリの「？」ボタンでいつでも一覧が見られるよ。' },
+    <div class="panels-note">ほかにも霊媒師・パン屋・猫又・神様など、全部で<b>14種類</b>。アプリの右下の「？」ボタンで、いつでも見られるよ</div>`,
+    note:'チームは3つ。\n村人チーム…占い師や騎士など、人狼を見つけたい人たち。\n人狼チーム…正体を隠す人狼と、その味方の狂人など。\n第三チーム…てるてる坊主や妖狐など、自分だけの目標を持つ人たち。\n役職は全部で14種類！ アプリの右下の「？」ボタンで、いつでも一覧が見られるよ。' },
 
   /* 5 */ { type:'content', accent:'amber', section:'ゲーム説明', sectionEn:'explain', num:'2',
-    headline:'「夜 → 朝 → 昼 → 投票」をくりかえす',
+    headline:'「夜 → 朝 → 昼 → 投票」をくり返す',
     body:`<div class="cycle">
       <div class="step"><div class="step__ic night-bg"><span class="material-symbols-rounded">bedtime</span></div><div class="step__t">夜</div><div class="step__d">役職のある人が<br>こっそり行動</div></div>
       <div class="step-arrow"><span class="material-symbols-rounded">chevron_right</span></div>
@@ -272,41 +272,41 @@ const SLIDES = [
       <div class="step-arrow"><span class="material-symbols-rounded">chevron_right</span></div>
       <div class="step"><div class="step__ic day-bg"><span class="material-symbols-rounded">forum</span></div><div class="step__t">昼</div><div class="step__d">みんなで話し合って<br>あやしい人を考える</div></div>
       <div class="step-arrow"><span class="material-symbols-rounded">chevron_right</span></div>
-      <div class="step"><div class="step__ic vote-bg"><span class="material-symbols-rounded">how_to_vote</span></div><div class="step__t">投票</div><div class="step__d">1人をえらんで<br>村から追放する</div></div>
+      <div class="step"><div class="step__ic vote-bg"><span class="material-symbols-rounded">how_to_vote</span></div><div class="step__t">投票</div><div class="step__d">1人を選んで<br>村から追放する</div></div>
     </div>
-    <div class="notice"><span class="material-symbols-rounded">nightlight</span><div class="notice__t">1日目の夜は、だれもおそいません　<span>まずは安心して、最初の話し合いからスタート！</span></div></div>`,
-    note:'ゲームは「夜→朝→昼→投票」のくりかえし。\n夜…役職のある人がこっそり行動。\n朝…夜に起きたことが知らされる。\n昼…みんなで話し合って、あやしい人を考える。\n投票…1人をえらんで村から追放。\nそして大事なお知らせ：1日目の夜は、だれもおそいません！安心してね。' },
+    <div class="notice"><span class="material-symbols-rounded">nightlight</span><div class="notice__t">1日目の夜は、誰もおそいません　<span>まずは安心して、最初の話し合いからスタート！</span></div></div>`,
+    note:'ゲームは「夜→朝→昼→投票」のくり返し。\n夜…役職のある人がこっそり行動。\n朝…夜に起きたことが知らされる。\n昼…みんなで話し合って、あやしい人を考える。\n投票…1人を選んで村から追放。\nそして大事なお知らせ：1日目の夜は、誰もおそいません！安心してね。' },
 
   /* 6 */ { type:'content', accent:'purple', section:'ゲーム説明', sectionEn:'explain', num:'3',
-    headline:'投票は<span class="hl">1人1票</span>。同点なら決選投票',
+    headline:'投票は<span class="hl">1人1票</span>。同点なら決選投票か追放なし',
     body:`<div class="rows">
       <div class="row"><div class="row__ic"><span class="material-symbols-rounded">how_to_vote</span></div><div><div class="row__t">「あやしい」と思う人に、1人1票</div><div class="row__d">いちばん票が多かった人が、村から追放される</div></div></div>
-      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">balance</span></div><div><div class="row__t">同点になったら → 決選投票</div><div class="row__d">ならんだ人の中から、もういちど投票し直す</div></div></div>
-      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">skip_next</span></div><div><div class="row__t">「今日はスキップ」もできる</div><div class="row__d">まよったら、だれも追放しないでつぎの夜へ進める日もある</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">balance</span></div><div><div class="row__t">同点になったら → 決選投票</div><div class="row__d">GMが決選投票にすると、並んだ人の中から、もう一度投票し直す</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">skip_next</span></div><div><div class="row__t">GMが「今日は誰も追放しない」を押す日もある</div><div class="row__d">誰も追放しないで、次の夜へ進む。押せるのは1日目と、同点になったとき</div></div></div>
     </div>`,
-    note:'昼の話し合いのあとは投票タイム。「あやしい」と思う人に1人1票で、いちばん票が多かった人が村から追放されます。\n同点になったら「決選投票」！ ならんだ人の中から、もういちど投票し直すよ。\nまよったときは「今日はスキップ」で、だれも追放しない日もあります。' },
+    note:'昼の話し合いのあとは投票タイム。「あやしい」と思う人に1人1票で、いちばん票が多かった人が村から追放されます。\n同点になったら、GMが決選投票にするかを決めるよ。決選投票では、並んだ人の中から、もう一度投票し直すよ。\nGMが「今日は誰も追放しない」を押すと、誰も追放しないで次の夜へ進みます。押せるのは1日目と、同点になったときだけだよ。' },
 
   /* 7 */ { type:'content', accent:'navy', section:'ゲーム説明', sectionEn:'explain', num:'4',
-    headline:'勝ちの<ruby>条件<rt>じょうけん</rt></ruby>は、チームごとにちがう',
+    headline:'勝ちの条件は、チームごとにちがう',
     body:`<div class="rows">
-      <div class="row"><div class="row__ic" style="color:#fff;background:var(--village)"><span class="material-symbols-rounded">home</span></div><div><div class="row__t">村人チーム → 人狼をぜんいん見つけたら勝ち！</div><div class="row__d">話し合いと投票で、人狼を村からいなくさせよう</div></div></div>
+      <div class="row"><div class="row__ic" style="color:#fff;background:var(--village)"><span class="material-symbols-rounded">home</span></div><div><div class="row__t">村人チーム → 人狼を全員見つけたら勝ち！</div><div class="row__d">話し合いと投票で、人狼を村からいなくさせよう</div></div></div>
       <div class="row"><div class="row__ic" style="color:#fff;background:var(--wolf)"><span class="material-symbols-rounded">pets</span></div><div><div class="row__t">人狼チーム → 人狼と村人が同じ人数になったら勝ち</div><div class="row__d">最後まで正体がバレなければ、人狼の勝ち</div></div></div>
-      <div class="row"><div class="row__ic" style="color:#fff;background:var(--third)"><span class="material-symbols-rounded">auto_awesome</span></div><div><div class="row__t">第三チーム → 自分だけの目標をめざす</div><div class="row__d">てるてる坊主は「投票でえらばれたら勝ち」など、役職ごとにちがう</div></div></div>
+      <div class="row"><div class="row__ic" style="color:#fff;background:var(--third)"><span class="material-symbols-rounded">auto_awesome</span></div><div><div class="row__t">第三チーム → 自分だけの目標をめざす</div><div class="row__d">てるてる坊主は「決められた日まで残って、投票で選ばれたら勝ち」など、役職ごとにちがう</div></div></div>
     </div>`,
-    note:'勝ちの条件はチームごとにちがうよ。\n村人チーム…人狼をぜんいん見つけたら勝ち！\n人狼チーム…人狼と村人が同じ人数になったら勝ち。\n第三チーム…てるてる坊主は「投票でえらばれたら勝ち」など、役職ごとに自分だけの目標があるよ。' },
+    note:'勝ちの条件はチームごとにちがうよ。\n村人チーム…人狼を全員見つけたら勝ち！\n人狼チーム…人狼と村人が同じ人数になったら勝ち。\n第三チーム…てるてる坊主は「決められた日まで残って、投票で選ばれたら勝ち」など、役職ごとに自分だけの目標があるよ。' },
 
   /* 8 */ { type:'content', accent:'amber', section:'Q&A', sectionEn:'question & answer',
-    headline:'よくある<ruby>質問<rt>しつもん</rt></ruby>',
+    headline:'よくある質問',
     body:`<div class="qa">
-      <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>最初の夜に、いきなりねらわれない？</div><div class="qa__a"><span class="qa__badge a">A</span>だいじょうぶ。1日目の夜は、だれもおそいません。</div></div>
-      <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>騎士は、自分を守ってもいいの？</div><div class="qa__a"><span class="qa__badge a">A</span>いいよ！ ただし、同じ人を2晩つづけて守ることはできません。</div></div>
-      <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>とちゅうで退場したら、どうするの？</div><div class="qa__a"><span class="qa__badge a">A</span>つづきは見ていてOK。自分の役職や知っていることはナイショのままでね。</div></div>
+      <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>最初の夜に、いきなりねらわれない？</div><div class="qa__a"><span class="qa__badge a">A</span>大丈夫。1日目の夜は、誰もおそいません。</div></div>
+      <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>騎士は、自分を守ってもいいの？</div><div class="qa__a"><span class="qa__badge a">A</span>いいよ！ ただし、同じ人を2晩続けて守ることはできません。</div></div>
+      <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>途中で退場したら、どうするの？</div><div class="qa__a"><span class="qa__badge a">A</span>続きは見ていてOK。自分の役職や知っていることはナイショのままでね。</div></div>
     </div>`,
-    note:'よくある質問だよ\nQ. 最初の夜にいきなりねらわれない？→ A. だいじょうぶ、1日目の夜はだれもおそいません。\nQ. 騎士は自分を守ってもいい？→ A. いいよ！ただし同じ人を2晩つづけては守れません。\nQ. とちゅうで退場したら？→ A. つづきは見ていてOK。役職や知っていることはナイショのままでね。' },
+    note:'よくある質問だよ\nQ. 最初の夜にいきなりねらわれない？→ A. 大丈夫、1日目の夜は誰もおそいません。\nQ. 騎士は自分を守ってもいい？→ A. いいよ！ただし同じ人を2晩続けては守れません。\nQ. 途中で退場したら？→ A. 続きは見ていてOK。役職や知っていることはナイショのままでね。' },
 
   /* 9 */ { type:'divider', accent:'purple', icon:'live_help', jp:'質問タイム', en:'any questions?',
     sub:'気になることはある？',
-    note:'ここまでで、質問がある人はいるかな？\nマイクON か チャットで教えてね！' },
+    note:'ここまでで、質問がある人はいるかな？\nマイクONかチャットで教えてね！' },
 
   /* 10 */ { type:'divider', accent:'amber', icon:'how_to_reg', jp:'参加確認', en:"let's check",
     sub:'チャットで教えてね',
@@ -314,27 +314,27 @@ const SLIDES = [
 
   /* 11 */ { type:'divider', accent:'navy', solid:true, icon:'rocket_launch', jp:'＼ ゲームスタート ／', en:'game start',
     sub:'ルームコードを入れて入ろう！',
-    note:'それでは、人狼ゲームスタート！\nチャットに送ったリンクからアプリを開いて、ルームコードとニックネームを入れてね。参加用のリンクのときは、ルームコードが入っているので、ニックネームだけ入れてね。\nわからなくなったら、いつでも聞いてね' },
+    note:'それでは、人狼ゲームスタート！\nチャットに送ったリンクからアプリを開いて「ルームに参加する」を押し、ニックネームとルームコードを入れて「参加する」を押してね。参加用のリンクのときは、ルームコードが入っているので、ニックネームだけ入れて「参加する」を押してね。\n分からなくなったら、いつでも聞いてね' },
 
   /* 12 */ { type:'divider', accent:'purple', icon:'style', jp:'役職確認', en:'your role',
-    sub:'カードをタップしてめくろう（まわりの人には見せないでね）',
-    note:'役職が配られたよ！\nカードをタップして、自分の役職をこっそり確認しよう。\n画面はぜったいに共有しないでね。役職は自分だけのヒミツ' },
+    sub:'カードをタップしてめくろう（周りの人には見せないでね）',
+    note:'役職が配られたよ！\nカードをタップして、自分の役職をこっそり確認しよう。見たら「確認した！」を押してね。\n画面は絶対に共有しないでね。役職は自分だけのヒミツ' },
 
   /* 13 */ { type:'divider', accent:'navy', icon:'bedtime', jp:'夜の時間', en:'night',
     sub:'役職のある人は、こっそり行動',
-    note:'夜になりました\n役職のある人は、画面の案内にそってこっそり行動してね。\n行動のない人は、静かに朝を待とう。' },
+    note:'夜になりました\n役職のある人は、画面の案内に沿って、こっそり行動してね。\n行動のない人は、静かに朝を待とう。' },
 
   /* 14 */ { type:'divider', accent:'amber', icon:'forum', jp:'昼の話し合い', en:'discussion',
-    sub:'だれがあやしいかな？',
-    note:'昼の話し合いタイム\n夜のできごとをヒントに、「だれがあやしいか」をみんなで話そう。\n答えにくいことは、むりに言わなくてもだいじょうぶだよ。' },
+    sub:'誰があやしいかな？',
+    note:'昼の話し合いタイム\n夜の出来事をヒントに、「誰があやしいか」をみんなで話そう。\n答えにくいことは、無理に言わなくても大丈夫だよ。' },
 
   /* 15 */ { type:'divider', accent:'purple', icon:'how_to_vote', jp:'投票タイム', en:'vote',
-    sub:'1人をえらんで投票しよう',
-    note:'投票タイム\n「あやしい」と思う人を1人えらんで、画面から投票してね。\n同点になったら、決選投票かスキップになるよ。' },
+    sub:'1人を選んで投票しよう',
+    note:'投票タイム\n「あやしい」と思う人を1人選んで、画面から投票してね。\n同点になったら、決選投票にするか、誰も追放しないかをGMが決めるよ。' },
 
-  /* 16 */ { type:'divider', accent:'navy', solid:true, icon:'emoji_events', jp:'けっか', en:'result',
+  /* 16 */ { type:'divider', accent:'navy', solid:true, icon:'emoji_events', jp:'結果', en:'result',
     sub:'おつかれさま！',
-    note:'けっか発表！\nどのチームが目標をたっせいできたかな？\n最後にひとことずつ、ふりかえってみよう。' },
+    note:'結果発表！\nどのチームが目標を達成できたかな？\n最後にひとことずつ、振り返ってみよう。' },
 ];
 
 /* ===== ウィンドウ間同期 ===== */
@@ -351,7 +351,7 @@ function slideHTML(s){
       <div class="title-ic"><span class="material-symbols-rounded">groups</span></div>
       <div class="title-jp">人狼ゲーム</div>
       <div class="title-en">jinro game</div>
-      <div class="title-tag">〜 村にかくれた人狼を、話し合いで見つけ出せ 〜</div>
+      <div class="title-tag">〜 村に隠れた人狼を、話し合いで見つけ出せ 〜</div>
       <div class="title-meta">
         <span class="m"><span class="material-symbols-rounded">group</span>4人〜</span>
         <span class="m"><span class="material-symbols-rounded">schedule</span>20〜40分</span>
