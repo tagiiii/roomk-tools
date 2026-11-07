@@ -508,6 +508,11 @@
       <div class="kkn-submit-list" id="host-submit-list"></div>
       <button class="btn btn-ghost btn-full" id="btn-close-round" onclick="hostCloseRound()">締め切る</button>
       <p class="text-muted text-center text-sm" id="host-close-hint" style="margin-top:8px"></p>
+      <!-- 遊ぶ人がみんな退出中で、予想が1件もないときだけ出す（締め切れず、自動でも進まないため。2026-11-07） -->
+      <button class="btn btn-secondary btn-full" id="btn-back-waiting-thinking" hidden onclick="hostBackToWaiting()">
+        <span class="material-symbols-rounded">group_add</span>
+        待合室にもどる
+      </button>
       <button class="btn btn-ghost btn-full" style="margin-top:16px" onclick="openSpectatorWindow()">
         <span class="material-symbols-rounded">cast</span>
         みんなにみせる画面をひらく
@@ -537,7 +542,13 @@
 
     <!-- ホストのみ -->
     <div id="reveal-host-actions" style="display:none; margin-top:8px">
-      <button class="btn btn-primary btn-full" onclick="hostStartRound()">つぎへ</button>
+      <button class="btn btn-primary btn-full" id="btn-next-round" onclick="hostStartRound()">つぎへ</button>
+      <!-- 遊ぶ人が3人より少ないときだけ出す。参加は待合室のあいだだけなので、新しい人が入れるように待合室へもどる（2026-11-07） -->
+      <p class="kkn-start-hint" id="reveal-few-hint" hidden></p>
+      <button class="btn btn-secondary btn-full" id="btn-back-waiting" hidden onclick="hostBackToWaiting()">
+        <span class="material-symbols-rounded">group_add</span>
+        待合室にもどる
+      </button>
       <button class="btn btn-ghost btn-full" onclick="openSpectatorWindow()">
         <span class="material-symbols-rounded">cast</span>
         みんなにみせる画面をひらく
@@ -1205,7 +1216,9 @@
     }
     if (!committed) {
       if (abortReason === 'too_few') {
-        alert(`遊ぶ人が${MIN_PLAYERS}人以上そろうと始められます`);
+        alert(fromReveal
+          ? '遊ぶ人が足りないので、つぎへ進めません。「待合室にもどる」で新しい人を待てます'
+          : `遊ぶ人が${MIN_PLAYERS}人以上そろうと始められます`);
       } else if (abortReason === 'too_many') {
         alert(`遊べるのは${MAX_PLAYERS}人までです`);
       } else {
@@ -1332,6 +1345,59 @@
       console.error('[kakure-number] hostCloseRound failed', error);
       state.revealTriggered = false;
     }
+  }
+
+  // ════════════════════════════════════
+  // ホスト: 待合室にもどる（2026-11-07）
+  //   答え合わせで遊ぶ人が3人より少ないとき、または予想タイムで配られた人がみんな退出中（予想0件）のときだけ。
+  //   参加は待合室のあいだだけなので、もどると新しい人が入れる。ポイント（players/*/score）は残す。
+  //   round は番号だけ残す（次のラウンドの番号が続き、各端末の「新しいラウンド」の判定が働く）。
+  //   条件はルーム全体の transaction の中で確かめなおす（その間に人がもどってきたら、もどさない）。
+  //   ホストはルームを購読しているので、null は「ルームがない」。自動ではもどさない（ホストが押したときだけ）
+  // ════════════════════════════════════
+  // 予想タイムで、配られた人がだれも在室していない・予想が1件もないか
+  function thinkingAllGone(room) {
+    const round = room?.round || {};
+    const players = room?.players || {};
+    const guesses = round.guesses || {};
+    const dealt = Object.keys(round.numbers || {});
+    return dealt.every(name => !players[name]) && !dealt.some(name => guesses[name] !== undefined);
+  }
+  function canBackToWaiting(room) {
+    if (!room) return false;
+    if (room.status === ST.REVEAL) return playingNames(room).length < MIN_PLAYERS;
+    if (room.status === ST.THINKING) return thinkingAllGone(room);
+    return false;
+  }
+
+  let _backWaitingBusy = false;
+  async function hostBackToWaiting() {
+    if (state.role !== 'host' || !state.roomRef || _backWaitingBusy) return;
+    if (!window.confirm('待合室にもどる？（ポイントはそのまま残ります）')) return;
+    const ref = state.roomRef;
+    _backWaitingBusy = true;
+    let abortReason = null;
+    let committed = false;
+    try {
+      ({ committed } = await ref.transaction((room) => {
+        abortReason = null;
+        if (!room) { abortReason = 'not_found'; return; }
+        if (room.status !== ST.REVEAL && room.status !== ST.THINKING) { abortReason = 'invalid_state'; return; }
+        if (!canBackToWaiting(room)) { abortReason = 'enough'; return; }
+        return {
+          ...room,
+          status: ST.WAITING,
+          round: { number: (room.round && room.round.number) || 0 },
+        };
+      }));
+    } catch (error) {
+      console.warn('[kakure-number] back to waiting failed', error);
+    } finally {
+      _backWaitingBusy = false;
+    }
+    if (committed || state.roomRef !== ref || abortReason === 'not_found') return;
+    if (abortReason === 'enough') showToast('遊ぶ人がもどってきたので、このまま続けられます', false);
+    else showToast('待合室にもどれませんでした');
   }
 
   // ════════════════════════════════════
@@ -1514,7 +1580,11 @@
     const btn = document.getElementById('btn-close-round');
     btn.disabled = submittedCount === 0 || state.revealTriggered;
     const hint = document.getElementById('host-close-hint');
-    if (submittedCount === 0) {
+    const allGone = thinkingAllGone(room);
+    document.getElementById('btn-back-waiting-thinking').hidden = !allGone;
+    if (allGone) {
+      hint.textContent = '遊ぶ人がみんな退出中です。もどってくるのを待つか、「待合室にもどる」で新しい人を待てます';
+    } else if (submittedCount === 0) {
       hint.textContent = '予想が1件以上あると締め切れます';
     } else if (presentUnsubmitted.length > 0) {
       hint.textContent = `まだの ${presentUnsubmitted.length} 人を待たずに進めます`;
@@ -1587,6 +1657,18 @@
 
     document.getElementById('reveal-host-actions').style.display =
       state.role === 'host' ? 'block' : 'none';
+    if (state.role === 'host') {
+      // 遊ぶ人が3人より少ないときは「つぎへ」を押せなくし、理由と「待合室にもどる」を出す（2026-11-07）
+      const short = MIN_PLAYERS - playingNames(room).length;
+      const few = short > 0;
+      document.getElementById('btn-next-round').disabled = few;
+      document.getElementById('btn-back-waiting').hidden = !few;
+      const fewHint = document.getElementById('reveal-few-hint');
+      fewHint.hidden = !few;
+      fewHint.textContent = few
+        ? `遊ぶ人が足りないので（あと${short}人）、つぎへ進めません。「待合室にもどる」と新しい人が参加できます（ポイントはそのまま残ります）`
+        : '';
+    }
     document.getElementById('reveal-guest-waiting').style.display =
       state.role === 'guest' ? 'block' : 'none';
   }
@@ -2032,7 +2114,7 @@
         '合計（自分の？と隠しカードも含む）を予想して「きめた」を押す',
         '答え合わせで、本当の合計にいちばん近かった人にポイントが入る',
       ] },
-      { heading: 'おわりかた', text: 'ホストが「つぎへ」を押すとつぎのラウンド、「そのほかの操作」の「おわる」を押すとおしまい。' },
+      { heading: 'おわりかた', text: 'ホストが「つぎへ」を押すとつぎのラウンド、「そのほかの操作」の「おわる」を押すとおしまい。遊ぶ人が3人より少なくなったときは「待合室にもどる」で新しい人を待てる（ポイントはそのまま）。' },
       { heading: 'みんなにみせる画面', items: [
         'TOPの「みんなにみせる画面をひらく」でルームコードを入れて「画面をひらく」を押す（ホストは待合室のボタンからもひらける）',
         'だれが「きめた」かと、答え合わせの結果が見られる。数字は答え合わせまで出ないから、みんなでいっしょに見てだいじょうぶ',
