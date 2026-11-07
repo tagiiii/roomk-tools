@@ -243,6 +243,8 @@
     .kdt-hostmenu__row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; padding: 8px 0; border-top: 1px solid var(--color-border); }
     .kdt-hostmenu__row .btn { width: auto; margin: 0; }
     .kdt-hostmenu__note { font-size: 13px; color: var(--color-muted); }
+    .kdt-few-note { text-align: left; line-height: 1.6; margin: 8px 0 0; }
+    #act-host-note { margin: 0 0 8px; }
   </style>
 </head>
 <body data-genre="atekko">
@@ -395,13 +397,23 @@
       <div class="card">
         <p class="kdt-section-lbl">演じる人を選ぶ</p>
         <div id="cast-guest-btns"></div>
-        <button class="btn btn-secondary btn-full sep" onclick="pickRandomActor()">
+        <button class="btn btn-secondary btn-full sep" id="btn-cast-random" onclick="pickRandomActor()">
           <span class="material-symbols-rounded" aria-hidden="true">casino</span>ランダムに選ぶ
         </button>
       </div>
       <button class="btn btn-primary btn-full mt-md" id="btn-cast-confirm" onclick="confirmActor()" disabled>
         <span class="material-symbols-rounded" aria-hidden="true">check_circle</span>きめた
       </button>
+      <!-- 遊ぶ人が足りないとき（全員が抜けたなど）の案内 -->
+      <p id="cast-few-note" class="kdt-note kdt-few-note" hidden></p>
+      <!-- たまに使う操作（開くと出る） -->
+      <details id="cast-host-menu" class="kdt-hostmenu">
+        <summary>そのほかの操作</summary>
+        <div class="kdt-hostmenu__row">
+          <button class="btn btn-secondary btn-sm" id="btn-finish-cast" onclick="finishGame()">終わる</button>
+          <span class="kdt-hostmenu__note">ここでおしまいにして、これまでのポイントを出す</span>
+        </div>
+      </details>
     </div>
   </div>
 </div>
@@ -445,6 +457,8 @@
     </div>
 
     <div id="act-host-area" class="mt-md" style="display:none">
+      <!-- 演じる人の通信が切れているとき（ホストだけ） -->
+      <p id="act-host-note" class="kdt-note kdt-few-note" hidden></p>
       <button class="btn btn-primary btn-full" onclick="moveToVoting()">
         <span class="material-symbols-rounded" aria-hidden="true">how_to_vote</span>投票へ
       </button>
@@ -454,6 +468,10 @@
         <div class="kdt-hostmenu__row">
           <button class="btn btn-secondary btn-sm" id="btn-reselect" onclick="reselectActor()">演じる人を選び直す</button>
           <span class="kdt-hostmenu__note">同じカードのまま、演じる人を選ぶところにもどる</span>
+        </div>
+        <div class="kdt-hostmenu__row">
+          <button class="btn btn-secondary btn-sm" id="btn-finish-act" onclick="finishGame()">終わる</button>
+          <span class="kdt-hostmenu__note">ここでおしまいにして、これまでのポイントを出す</span>
         </div>
       </details>
     </div>
@@ -523,6 +541,14 @@
       <button class="btn btn-primary btn-full mt-md" id="btn-open-votes" onclick="openVotes()">
         <span class="material-symbols-rounded" aria-hidden="true">celebration</span>結果を見る
       </button>
+      <!-- たまに使う操作（開くと出る） -->
+      <details id="vote-host-menu" class="kdt-hostmenu">
+        <summary>そのほかの操作</summary>
+        <div class="kdt-hostmenu__row">
+          <button class="btn btn-secondary btn-sm" id="btn-finish-vote" onclick="finishGame()">終わる</button>
+          <span class="kdt-hostmenu__note">ここでおしまいにして、これまでのポイントを出す</span>
+        </div>
+      </details>
     </div>
   </div>
 </div>
@@ -555,6 +581,8 @@
       <button class="btn btn-primary btn-full" onclick="nextRound()">
         <span class="material-symbols-rounded" aria-hidden="true">arrow_forward</span>次のラウンドへ
       </button>
+      <!-- 遊ぶ人が足りないとき（全員が抜けたなど）の案内 -->
+      <p id="rev-few-note" class="kdt-note kdt-few-note" hidden></p>
       <!-- たまに使う操作（開くと出る） -->
       <details id="rev-host-menu" class="kdt-hostmenu">
         <summary>そのほかの操作</summary>
@@ -1169,13 +1197,39 @@ async function nextRound() {
 }
 
 // ── おわる（ホスト）──
+// 結果のほか、演じる人えらび・演技・投票の途中でも「そのほかの操作」から終われる（2026-11-07。
+// 遊ぶ人が全員抜けて演じる人を選べないとき、ホストが抜け出せなくなっていたため）。
+// 途中で終わるときは、そのラウンドは開票せず、これまでのポイントでおしまいにする
+const FINISHABLE = [STATUS.CASTING, STATUS.ACTING, STATUS.VOTING, STATUS.REVEAL];
 async function finishGame() {
-  if (!window.confirm('ここで終わる？')) return;
+  if (state.role !== 'host' || !state.roomRef) return;
+  const midRound = state.lastRoom && state.lastRoom.status !== STATUS.REVEAL;
+  const message = midRound
+    ? 'ここで終わる？このラウンドは結果を出さずに、これまでのポイントでおしまいにするよ'
+    : 'ここで終わる？';
+  if (!window.confirm(message)) return;
+  const me = state.nickname;
+  // 購読中なので null は「ルームがない」。フェーズとホストを中で確かめる
   const { committed } = await state.roomRef.transaction((room) => {
-    if (!room || room.status !== STATUS.REVEAL) return;
+    if (!room || room.host !== me || !FINISHABLE.includes(room.status)) return;
     return { ...room, status: STATUS.DONE };
+  }).catch((error) => {
+    console.error('[koedake] finishGame failed', error);
+    return { committed: false };
   });
   if (committed) scheduleDoneCleanup(state.roomRef);
+  else showMsg('終われませんでした');
+}
+
+// 遊ぶ人が足りない（全員が抜けたなど）ときの案内。0人なら「そのほかの操作」をひらいて「終わる」を見せる
+const FEW_PLAYERS_TEXT = '遊ぶ人が足りないので、「そのほかの操作」の「終わる」でおしまいにできるよ';
+function renderFewPlayers(noteId, menuId, count) {
+  const few = count < MIN_PLAYERS;
+  const note = document.getElementById(noteId);
+  note.hidden = !few;
+  note.textContent = few ? FEW_PLAYERS_TEXT : '';
+  const menu = document.getElementById(menuId);
+  if (count === 0 && !menu.open) menu.open = true;
 }
 
 // おしまいの30秒後にルームを消す（ホスト）。
@@ -1404,6 +1458,9 @@ function handleCasting(room, players) {
       btn.onclick = () => selectCastCandidate(btn.dataset.nick);
     });
     document.getElementById('btn-cast-confirm').disabled = !state.castSelection;
+    const count = playingNames(room, players).length;
+    document.getElementById('btn-cast-random').disabled = count === 0;
+    renderFewPlayers('cast-few-note', 'cast-host-menu', count);
   }
 }
 
@@ -1445,6 +1502,15 @@ function handleActing(room, players) {
   }
 
   document.getElementById('act-host-area').style.display = isHost ? 'block' : 'none';
+  if (isHost) {
+    // 演じる人の通信が切れている（切断で players から消えた）とき、何を待っているかを出す。もどれば消える
+    const hostNote = document.getElementById('act-host-note');
+    const actorGone = !!round.actor && !players[round.actor];
+    hostNote.hidden = !actorGone;
+    hostNote.textContent = actorGone
+      ? `${round.actor}さんを待っています（通信が切れています）。もどるのを待つか、「そのほかの操作」から演じる人を選び直せるよ`
+      : '';
+  }
 }
 
 // ── とうひょう ──
@@ -1560,6 +1626,9 @@ function handleReveal(room, players) {
 
   document.getElementById('rev-host-area').style.display =
     state.role === 'host' ? 'block' : 'none';
+  if (state.role === 'host') {
+    renderFewPlayers('rev-few-note', 'rev-host-menu', playingNames(room, players).length);
+  }
 }
 
 // ── おしまい ──
@@ -1677,7 +1746,7 @@ if (roomParam !== null) {
         'ほかの人はどのシチュエーションだったかを選んで「きめた」を押す',
         '結果が出ると、当てた人にも演じた人にもポイントが入る',
       ] },
-      { heading: 'おわりかた', text: 'ホストが「次のラウンドへ」を押すと次のカード、「そのほかの操作」の「終わる」を押すとおしまい。' },
+      { heading: 'おわりかた', text: 'ホストが「次のラウンドへ」を押すと次のカード、「そのほかの操作」の「終わる」を押すとおしまい。演じる人を選ぶ・演技・投票の途中でも、「そのほかの操作」の「終わる」でおしまいにできる。' },
     ],
   });
 </script>
