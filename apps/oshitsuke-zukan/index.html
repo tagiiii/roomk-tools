@@ -1144,6 +1144,43 @@ function warmRoomCache(ref) {
   });
 }
 
+// 参加の transaction の中身。待合室での読み込み直しで自分を足し直すとき（rejoinWaitingRoom）も同じ条件で入れる。
+// null は「ルームがない」（呼ぶ側で先に購読しているので、空のキャッシュではない）
+function joinRoomUpdate(nickname, setReason) {
+  return (room) => {
+    const currentRoom = room;
+    if (!currentRoom) { setReason('not_found'); return; }
+    if (isRoomExpired(currentRoom)) { setReason('expired'); return null; }
+    if (currentRoom.hostConnected === false) { setReason('host_gone'); return; }
+    if (currentRoom.status !== 'waiting') { setReason('not_waiting'); return; }
+    const players = currentRoom.players || {};
+    if (players[nickname]) { setReason('nick_taken'); return; }
+    if (Object.keys(gamePlayersOf(currentRoom, players)).length >= MAX_PLAYERS) { setReason('full'); return; } // 進行だけのホストは数えない
+    // 途中退出で歯抜けになっても重複しないよう、既存 seat の最大値+1 を採番する
+    const maxSeat = Object.values(players).reduce((m, p) => Math.max(m, p.seat ?? 0), -1);
+    setReason(null);
+    return {
+      ...currentRoom,
+      players: {
+        ...players,
+        [nickname]: { isHost: false, seat: maxSeat + 1, connected: true, disconnectedAt: null },
+      },
+    };
+  };
+}
+
+function joinAbortMessage(reason) {
+  switch (reason) {
+    case 'not_found': return 'ルームが見つかりません';
+    case 'expired': return 'このルームは期限切れのため終了しました';
+    case 'host_gone': return 'ホストが切断されています';
+    case 'not_waiting': return 'このルームはすでにゲームが始まっています';
+    case 'nick_taken': return 'そのニックネームはすでに使われています';
+    case 'full': return 'このルームは満員です（6人まで）';
+    default: return '参加に失敗しました';
+  }
+}
+
 async function guestJoinInner() {
   const reportJoinError = message => RoomkRTDB.showFormError('join-form-error', message);
   reportJoinError('');
@@ -1169,34 +1206,12 @@ async function guestJoinInner() {
   }
 
   let abortReason = null;
-  const { committed, snapshot } = await roomRef.transaction((room) => {
-    const currentRoom = room; // null は「ルームがない」（先に購読しているので、空のキャッシュではない）
-    if (!currentRoom) { abortReason = 'not_found'; return; }
-    if (isRoomExpired(currentRoom)) { abortReason = 'expired'; return null; }
-    if (currentRoom.hostConnected === false) { abortReason = 'host_gone'; return; }
-    if (currentRoom.status !== 'waiting') { abortReason = 'not_waiting'; return; }
-    const players = currentRoom.players || {};
-    if (players[nickname]) { abortReason = 'nick_taken'; return; }
-    if (Object.keys(gamePlayersOf(currentRoom, players)).length >= MAX_PLAYERS) { abortReason = 'full'; return; } // 進行だけのホストは数えない
-    // 途中退出で歯抜けになっても重複しないよう、既存 seat の最大値+1 を採番する
-    const maxSeat = Object.values(players).reduce((m, p) => Math.max(m, p.seat ?? 0), -1);
-    abortReason = null;
-    return {
-      ...currentRoom,
-      players: {
-        ...players,
-        [nickname]: { isHost: false, seat: maxSeat + 1, connected: true, disconnectedAt: null },
-      },
-    };
-  }).finally(warm.release);
+  const { committed, snapshot } = await roomRef.transaction(
+    joinRoomUpdate(nickname, (reason) => { abortReason = reason; }),
+  ).finally(warm.release);
 
   if (!committed) {
-    if (abortReason === 'not_found') { reportJoinError('ルームが見つかりません'); return; }
-    if (abortReason === 'host_gone') { reportJoinError('ホストが切断されています'); return; }
-    if (abortReason === 'not_waiting') { reportJoinError('このルームはすでにゲームが始まっています'); return; }
-    if (abortReason === 'nick_taken') { reportJoinError('そのニックネームはすでに使われています'); return; }
-    if (abortReason === 'full') { reportJoinError('このルームは満員です（6人まで）'); return; }
-    reportJoinError('参加に失敗しました');
+    reportJoinError(joinAbortMessage(abortReason));
     return;
   }
   // 期限切れルームを transaction 内で削除（return null）した場合も committed になるため、
@@ -1837,6 +1852,8 @@ async function tryReconnect() {
       clearSession(); showReconnectOverlay(false); return false;
     }
     if (!isHost && (!room.players || !room.players[nickname])) {
+      // 待合室では、切断（読み込み直しを含む）で players から消えている。参加と同じ条件で足し直す
+      if (room.status === 'waiting') return await rejoinWaitingRoom(roomRef, roomCode, nickname);
       clearSession(); showReconnectOverlay(false); return false;
     }
 
@@ -1872,6 +1889,44 @@ async function tryReconnect() {
   } catch {
     clearSession(); showReconnectOverlay(false); return false;
   }
+}
+
+// 待合室のゲストが読み込み直したとき: 参加と同じ transaction（満員・名前の重複・ホスト不在・期限切れ）で自分を足し直す。
+// 先に購読してから transaction を走らせ、中の null は「ルームがない」として扱う（前に読んだ値で代用しない）。
+// 足し直せないときは、理由を出してコードとニックネームを入れた参加画面を開く。
+// 戻り値: true = 待合室に戻った／'join' = 参加画面を開いた（どちらも呼ぶ側でトップを出さない）
+async function rejoinWaitingRoom(roomRef, roomCode, nickname) {
+  const warm = await warmRoomCache(roomRef);
+  let abortReason = null;
+  const { committed, snapshot } = await roomRef.transaction(
+    joinRoomUpdate(nickname, (reason) => { abortReason = reason; }),
+  ).finally(warm.release);
+  // 期限切れのルームを transaction の中で消した（return null）ときも committed になる
+  const expiredRemoved = committed && abortReason === 'expired' && !snapshot?.val();
+  if (!committed || expiredRemoved) {
+    clearSession();
+    showReconnectOverlay(false);
+    openJoinAfterRejoinFailed(roomCode, nickname, joinAbortMessage(expiredRemoved ? 'expired' : abortReason));
+    return 'join';
+  }
+
+  state.role = 'guest';
+  state.nickname = nickname;
+  state.roomCode = roomCode;
+  state.roomRef = roomRef;
+  state.armedPlayingDisconnect = false;
+  await roomRef.child(`players/${nickname}`).onDisconnect().remove();
+  showReconnectOverlay(false);
+  startRoomListener();
+  return true;
+}
+
+function openJoinAfterRejoinFailed(roomCode, nickname, reason) {
+  document.getElementById('joinLinkHint').hidden = true;
+  document.getElementById('guest-room-code').value = roomCode;
+  document.getElementById('guest-nickname').value = nickname;
+  showScreen('guest-join');
+  RoomkRTDB.showFormError('join-form-error', `待合室に戻れませんでした。${reason}`);
 }
 
 // ══════════════════════════════════════════════════
@@ -1914,7 +1969,7 @@ function openJoinFromLink(code) {
   document.getElementById('guest-nickname').focus({ preventScroll: true });
 }
 
-// 再読み込みなどで、保存した記録から同じルームへ戻る（戻れなければトップ）
+// 再読み込みなどで、保存した記録から同じルームへ戻る（戻れなければトップ。待合室に戻れなかったゲストは参加画面＝'join'）
 function resumeFromSession() {
   tryReconnect().then((reconnected) => {
     if (!reconnected) showScreen('top');
