@@ -490,6 +490,7 @@ function cleanupRoom() {
   clearSession();
   resetBoxes();
   $('hostOffOverlay').hidden = true;
+  $('playHostOff').hidden = true;
   $('btnOpenWatch').hidden = true;
   $('roomBar').hidden = true;
 }
@@ -944,9 +945,16 @@ function renderRoom(room) {
   renderIppon(room, game, phase);
 }
 
+// 遊ぶ画面はオーバーレイでかくさず、帯だけ出す（ホストがいなくても答えは出つづけるので、押せる・出せるままにする）
+function showHostOff(room, off) {
+  const playing = phaseOf(room) === STATUS.PLAY;
+  $('hostOffOverlay').hidden = !off || playing;
+  $('playHostOff').hidden = !off || !playing;
+}
+
 function updateHostOverlay(room) {
   if (state.role === 'guest' && room.hostConnected === false) {
-    $('hostOffOverlay').hidden = false;
+    showHostOff(room, true);
     if (!state.orphanTimer) {
       const ref = state.roomRef;
       const at = RoomkRTDB.getHostDisconnectedAt(room);
@@ -957,7 +965,7 @@ function updateHostOverlay(room) {
       }, delay);
     }
   } else {
-    $('hostOffOverlay').hidden = true;
+    showHostOff(room, false);
     clearTimeout(state.orphanTimer);
     state.orphanTimer = null;
   }
@@ -1389,10 +1397,10 @@ function connectWatch(code, ref) {
   startClock();
 }
 
-// ホストが切断している間はオーバーレイを出し、期限切れになったら終わりの表示にする（ルームは消さない）
+// ホストが切断している間はオーバーレイ（遊ぶ画面は帯）を出し、期限切れになったら終わりの表示にする（ルームは消さない）
 function updateWatchOverlay(room) {
   const off = room.hostConnected === false;
-  $('hostOffOverlay').hidden = !off;
+  showHostOff(room, off);
   clearTimeout(state.watchTimer);
   state.watchTimer = null;
   if (!off) return;
@@ -1414,6 +1422,7 @@ function stopWatch() {
   Object.assign(state, { role: null, roomCode: null, roomRef: null, room: null, roomCallback: null, watchTimer: null });
   resetBoxes();
   $('hostOffOverlay').hidden = true;
+  $('playHostOff').hidden = true;
   $('roomBar').hidden = true;
   document.title = DEFAULT_TITLE;
   document.body.classList.remove('is-watch', 'is-play');

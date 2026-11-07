@@ -71,6 +71,8 @@ body { background: var(--color-bg); }
 .og-overlay__panel { background: var(--color-surface); border-radius: 14px; padding: 28px; max-width: 420px; text-align: center; }
 .og-overlay__panel h2 { color: var(--color-primary); font-size: 1.3rem; }
 .og-overlay__panel p { line-height: 1.7; }
+/* ホストが切れている間、遊ぶ画面ではオーバーレイの代わりにこの帯を出す（押せる・出せるまま） */
+.og-hostoff { margin: 0; font-weight: 700; text-align: center; }
 
 
 body { background: var(--color-bg); }
