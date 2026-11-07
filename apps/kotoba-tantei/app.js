@@ -229,7 +229,7 @@ function renderJoin() {
     <section class="card cn-panel">
       <h1 class="cn-title">ルームに参加する</h1>
       <form id="join-form" class="cn-form" novalidate>
-        <p class="text-muted cn-join-link-hint" id="joinLinkHint" ${state.joinLinkCode ? "" : "hidden"}>リンクからひらいたので、ルームコードは入っているよ。名前を入れて「参加する」を押してね。</p>
+        <p class="text-muted cn-join-link-hint" id="joinLinkHint" ${state.joinLinkCode ? "" : "hidden"}>リンクから開いたので、ルームコードは入っているよ。名前を入れて「参加する」を押してね。</p>
         <label class="form-group">
           <span class="form-label">あなたの名前</span>
           <input class="form-input" name="nickname" maxlength="8" autocomplete="nickname" placeholder="例: はなこ" required />
@@ -248,7 +248,7 @@ function renderJoin() {
       </form>
     </section>
   `;
-  // 参加用のリンクからひらいたときは、コードを入れておく（innerHTML に連結せず value に入れる）。コード欄は直せる
+  // 参加用のリンクから開いたときは、コードを入れておく（innerHTML に連結せず value に入れる）。コード欄は直せる
   if (state.joinLinkCode) {
     const form = appEl.querySelector("#join-form");
     form.elements.roomId.value = state.joinLinkCode;
@@ -1145,7 +1145,7 @@ async function handleJoin(form) {
   }
 
   const playerId = generatePlayerId();
-  // 参加用のリンクからひらいた参加画面は、描き直してもコード欄に今のコードが残るようにする
+  // 参加用のリンクから開いた参加画面は、描き直してもコード欄に今のコードが残るようにする
   if (state.joinLinkCode) state.joinLinkCode = roomId;
   state.loading = true;
   state.error = "";
