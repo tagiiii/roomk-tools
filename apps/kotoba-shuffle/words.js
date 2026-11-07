@@ -67,7 +67,7 @@ export const WORDS = [
   // ── 6文字 ──
   { difficulty: 6, word: 'しんかんせん', hint: 'とても速い電車' },
   { difficulty: 6, word: 'おこのみやき', hint: '関西の名物料理' },
-  { difficulty: 6, word: 'うんどうかい', hint: 'みんなで走ったりする' },
+  { difficulty: 6, word: 'すなのおしろ', hint: '砂浜で作るお城' },
   { difficulty: 6, word: 'すいぞくかん', hint: '魚がいっぱいいる場所' },
   { difficulty: 6, word: 'おばけやしき', hint: 'おばけが出てくる' },
   { difficulty: 6, word: 'かいてんずし', hint: 'おすしが回ってくる' },
@@ -95,7 +95,7 @@ export const WORDS = [
   { difficulty: 4, word: 'くつした', hint: '足にはくもの' },
   { difficulty: 4, word: 'くじびき', hint: '運だめしで引くもの' },
   { difficulty: 4, word: 'はなたば', hint: 'お祝いのときに渡す花' },
-  { difficulty: 4, word: 'たまいれ', hint: '運動会でかごに入れる種目' },
+  { difficulty: 4, word: 'たまいれ', hint: 'かごに玉を投げ入れる遊び' },
   { difficulty: 5, word: 'たけとんぼ', hint: '手のひらでとばすおもちゃ' },
   { difficulty: 5, word: 'さつまいも', hint: '秋に土の中からほり出す' },
   { difficulty: 5, word: 'かたぐるま', hint: '高い高いで乗せてもらう' },
