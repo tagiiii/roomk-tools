@@ -514,7 +514,7 @@ const { authReady, db } = RoomkRTDB.initFirebase(firebase);
 // ── トースト通知（alert の代替）──
 const showMsg = RoomkRTDB.showToast;
 
-// ── お題ペア（50組）──
+// ── お題ペア（100組）──
 const WORD_PAIRS = [
   // 食べ物
   { citizen: 'カレー',         wolf: 'シチュー' },
@@ -533,7 +533,7 @@ const WORD_PAIRS = [
   { citizen: 'ジュース',       wolf: 'お茶' },
   { citizen: 'ピザ',           wolf: 'グラタン' },
   // 動物
-  { citizen: '猫',             wolf: 'うさぎ' },
+  { citizen: '猫',             wolf: '犬' },
   { citizen: 'ウサギ',         wolf: 'モルモット' },
   { citizen: 'ライオン',       wolf: 'チーター' },
   { citizen: 'イルカ',         wolf: 'シャチ' },
@@ -543,13 +543,13 @@ const WORD_PAIRS = [
   { citizen: 'カエル',         wolf: 'イモリ' },
   // ゲーム・エンタメ
   { citizen: 'マンガ',         wolf: 'アニメ' },
-  { citizen: 'YouTube',        wolf: 'Instagram' },
+  { citizen: 'YouTube',        wolf: 'テレビ' },
   { citizen: 'カードゲーム',   wolf: 'ボードゲーム' },
   { citizen: 'スマホ',         wolf: 'タブレット' },
   // スポーツ
   { citizen: 'サッカー',       wolf: 'ラグビー' },
   { citizen: 'バスケ',         wolf: 'ハンドボール' },
-  { citizen: '野球',           wolf: 'ボウリング' },
+  { citizen: '野球',           wolf: 'ソフトボール' },
   { citizen: 'テニス',         wolf: 'バドミントン' },
   { citizen: 'スキー',         wolf: 'そり' },
   // 場所・乗り物
@@ -560,7 +560,7 @@ const WORD_PAIRS = [
   { citizen: '山',             wolf: '川' },
   { citizen: 'お風呂',         wolf: '温泉' },
   // 季節・自然
-  { citizen: '夏',             wolf: '冬' },
+  { citizen: '夏祭り',         wolf: '盆おどり' },
   { citizen: '春',             wolf: '秋' },
   { citizen: '桜',             wolf: '紅葉' },
   { citizen: '雨',             wolf: '雪' },
@@ -572,15 +572,15 @@ const WORD_PAIRS = [
   { citizen: '帽子',           wolf: 'ニット帽' },
   { citizen: '誕生日',         wolf: 'お正月' },
   { citizen: '写真',           wolf: 'イラスト' },
-  { citizen: '公園',           wolf: '広場' },
-  { citizen: '旅行',           wolf: 'おでかけ' },
+  { citizen: '公園',           wolf: '庭' },
+  { citizen: 'ホテル',         wolf: '旅館' },
   { citizen: 'プレゼント',     wolf: 'お土産' },
-  { citizen: '時計',           wolf: 'カレンダー' },
-  { citizen: '夢',             wolf: '妄想' },
-  { citizen: '秘密基地',       wolf: '隠れ家' },
+  { citizen: '腕時計',         wolf: '目覚まし時計' },
+  { citizen: '絵本',           wolf: '図鑑' },
+  { citizen: '秘密基地',       wolf: 'テント' },
   { citizen: '花',             wolf: '観葉植物' },
   { citizen: 'ロボット',       wolf: 'AI' },
-  { citizen: 'マスク',         wolf: '手袋' },
+  { citizen: 'マフラー',       wolf: '手袋' },
   { citizen: 'リュック',       wolf: 'ショルダーバッグ' },
   // 食べ物（追加）
   { citizen: 'おにぎり',       wolf: 'サンドイッチ' },
@@ -619,16 +619,16 @@ const WORD_PAIRS = [
   { citizen: '映画館',         wolf: '劇場' },
   { citizen: '図書館',         wolf: '本屋' },
   { citizen: 'カフェ',         wolf: 'ファミレス' },
-  { citizen: '神社',           wolf: '公園' },
+  { citizen: '神社',           wolf: 'お寺' },
   { citizen: '砂浜',           wolf: '岩場' },
   { citizen: '駅',             wolf: '空港' },
   // 季節・自然（追加）
   { citizen: '星',             wolf: '月' },
-  { citizen: '台風',           wolf: '嵐' },
+  { citizen: '雷',             wolf: '夕立' },
   { citizen: '滝',             wolf: '噴水' },
-  { citizen: '朝',             wolf: '夜' },
-  { citizen: '森',             wolf: '林' },
-  { citizen: '湖',             wolf: '池' },
+  { citizen: 'ひなたぼっこ',   wolf: '昼寝' },
+  { citizen: 'ひまわり',       wolf: 'たんぽぽ' },
+  { citizen: '池',             wolf: '水たまり' },
 ];
 
 // ── ユーティリティ ──
@@ -1011,12 +1011,18 @@ async function guestJoinInner() {
 }
 
 // ── ゲームスタート（ホストのみ）──
+// 同じルームで使った組の位置（usedPairs）を除いて選ぶ。全部使ったら一巡して空からやり直す
+function pickPairIndex(usedPairsRaw) {
+  const raw = Array.isArray(usedPairsRaw) ? usedPairsRaw
+    : (usedPairsRaw && typeof usedPairsRaw === 'object') ? Object.values(usedPairsRaw) : [];
+  const used = raw.filter(i => Number.isInteger(i) && i >= 0 && i < WORD_PAIRS.length);
+  const pool = WORD_PAIRS.map((_, i) => i).filter(i => !used.includes(i));
+  const candidates = pool.length ? pool : WORD_PAIRS.map((_, i) => i);
+  const index = candidates[Math.floor(Math.random() * candidates.length)];
+  return { index, usedPairs: pool.length ? [...used, index] : [index] };
+}
+
 async function startGame() {
-  const pair = WORD_PAIRS[Math.floor(Math.random() * WORD_PAIRS.length)];
-  // 50%の確率で市民とウルフのお題を入れ替え（ペアから推測しにくくする）
-  const swapped     = Math.random() < 0.5;
-  const citizenWord = swapped ? pair.wolf    : pair.citizen;
-  const wolfWord    = swapped ? pair.citizen : pair.wolf;
   let abortReason = null;
   let hostPlays = true;
   let playerCount = 0;
@@ -1039,6 +1045,13 @@ async function startGame() {
       abortReason = 'too_few';
       return;
     }
+
+    const picked = pickPairIndex(room.usedPairs);
+    const pair = WORD_PAIRS[picked.index];
+    // 50%の確率で市民とウルフのお題を入れ替え（ペアから推測しにくくする）
+    const swapped     = Math.random() < 0.5;
+    const citizenWord = swapped ? pair.wolf    : pair.citizen;
+    const wolfWord    = swapped ? pair.citizen : pair.wolf;
 
     const shuffled = [...playing].sort(() => Math.random() - 0.5);
     const wolfCount = Math.min(state.wolfCount, playing.length - 1);
@@ -1063,6 +1076,7 @@ async function startGame() {
       status: 'revealing',
       citizenWord,
       wolfWord,
+      usedPairs: picked.usedPairs,
       players: nextPlayers,
     };
   });
