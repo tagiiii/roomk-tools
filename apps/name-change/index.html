@@ -258,6 +258,9 @@
       <span class="material-symbols-rounded" aria-hidden="true">play_arrow</span>ゲームを始める
     </button>
     <p class="status-text" id="waiting-count-msg">2人以上で開始できます</p>
+    <button type="button" class="btn btn-ghost" id="waiting-close-btn" onclick="hostCloseRoom()">
+      <span class="material-symbols-rounded" aria-hidden="true">logout</span>ルームを閉じる
+    </button>
   </div>
   <div id="waiting-guest-msg" style="display:none">
     <p class="status-text">GMがゲームを始めるまで待ってね<span class="dots"></span></p>
@@ -738,11 +741,14 @@ async function cleanupMissingRoom(ref, room = null) {
   // ルームは残っていて自分だけがいない（待合室でGMに外された）ゲストは、参加画面へ
   const miss = !state.isHost && room?.status && !room.players?.[state.nickname]
     ? { code: state.roomCode, waiting: room.status === 'waiting' } : null;
+  // 待合室でルームが消えたゲストは、GMが「ルームを閉じる」を押した（2026-11-08）
+  const closedInWaiting = !state.isHost && !room && state.lastRoom?.status === 'waiting';
   state.expectedRoomRemoval = true;
   ref.off();
   const work = stopGuestPresence();
   resetRoomState();
   if (miss) showRejoin(miss);
+  if (closedInWaiting) toast('GMがルームを閉じました', 4000);
   await work;
   await RoomkRTDB.cancelRoomOnDisconnect(ref).catch(error => console.warn('[name-change] cleanup failed', error));
 }
@@ -1009,6 +1015,21 @@ async function guestJoinInner(isCurrent) {
 }
 
 // ===== Room Listener =====
+// GMが待合室でルームを閉じる（2026-11-08）。みんなの画面もトップに戻る
+async function hostCloseRoom() {
+  const ref = state.roomRef;
+  if (!state.isHost || !ref || state.expectedRoomRemoval) return;
+  if (state.lastRoom && state.lastRoom.status !== 'waiting') return;
+  if (!confirm('ルームを閉じると、みんなの画面もトップに戻るよ。いい？')) return;
+  if (state.roomRef !== ref || state.expectedRoomRemoval) return;
+  state.expectedRoomRemoval = true;
+  ref.off();
+  // 切断の予約（hostConnected:false の update）を取り消してから消す。残すとタブを閉じたときにゴーストができる。
+  // 通信が切れていて返事が来ないときも、5秒で先へ進む（消す書き込みは、つながったときに届く）
+  await Promise.race([RoomkRTDB.cancelRoomOnDisconnect(ref), new Promise(resolve => setTimeout(resolve, 5000))]);
+  ref.remove().catch(error => console.warn('[name-change] close room failed', error));
+  if (state.roomRef === ref) resetRoomState();
+}
 function startListener() {
   const ref = state.roomRef;
   // 参加用のリンク（?room=コード）でひらいたときは、つないだあとにコードをアドレスから外す
@@ -1836,6 +1857,7 @@ window.addEventListener('load', async () => {
         items: [
           '通信が切れた人がいて進めないときは、GMが待合室ではその人の「外す」、名前変え・投票では「待たずに進む」を押す',
           '途中で終わりにするときは、GMの「そのほかの操作」の「ここでおわる」を押す',
+          '始める前にやめるときは、GMは待合室の「ルームを閉じる」、参加した人は「退出する」を押す',
         ],
       },
     ],
