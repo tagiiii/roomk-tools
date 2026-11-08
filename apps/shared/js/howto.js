@@ -45,6 +45,8 @@
     '  box-shadow: 0 4px 14px rgba(0,0,0,0.25);',
     '  display: flex; align-items: center; justify-content: center;',
     '}',
+    '/* 右下の丸ボタンの分だけ、ページの最後に余白をとる（最後のボタンが丸ボタンの下に隠れないように。2026-11-08） */',
+    'html.howto-has-fab body::after { content: ""; display: block; height: 80px; }',
     '.howto-fab--right { right: 16px; }',
     '.howto-fab--left { left: 16px; }',
     '.howto-fab .material-symbols-rounded { font-size: 26px; }',
@@ -177,6 +179,7 @@
     var title = config.title || 'あそびかた';
     injectStyle();
 
+    document.documentElement.classList.add('howto-has-fab');
     var fab = el('button', 'howto-fab ' + (config.position === 'left' ? 'howto-fab--left' : 'howto-fab--right'));
     fab.type = 'button';
     fab.setAttribute('aria-label', title);
