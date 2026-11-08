@@ -276,6 +276,7 @@ function renderQuestion() {
         <button class="btn btn-ghost" type="button" data-action="back"${state.index === 0 ? ' disabled' : ''}>
           <span class="material-symbols-rounded" aria-hidden="true">arrow_back</span>ひとつ前にもどる
         </button>
+        <button class="btn btn-ghost stc-quit" type="button" data-action="quit">今日はここまで</button>
       </div>
     </div>
   `;
@@ -405,6 +406,12 @@ function handleAction(action, button) {
     renderQuestion();
   } else if (action === 'copy') {
     copyResult(button);
+  } else if (action === 'quit') {
+    // 途中でやめる（2026-11-08 P5）。タイプは全部の答えで決まるので、途中の結果は出さずにはじめの画面へ
+    resetAnswers();
+    showScreen('start');
+    renderStart();
+    document.querySelector('#start-title')?.focus();
   } else if (action === 'restart') {
     resetAnswers();
     lastResult = null;
