@@ -438,6 +438,10 @@
 
     /* ── フッター ── */
     .kg-footer {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: var(--space-xs) var(--space-sm);
       text-align: center;
       margin-top: var(--space-lg);
     }
@@ -446,6 +450,27 @@
     }
     .kg-footer .material-symbols-rounded {
       font-size: 18px;
+    }
+
+    /* ── 開いたときの選択（前の入力が残っているとき） ── */
+    .kg-resume {
+      max-width: 440px;
+      margin: 0 auto;
+      background: var(--color-surface);
+      border-radius: var(--radius-card);
+      box-shadow: var(--shadow-soft, var(--shadow-sm));
+      padding: var(--space-lg) var(--space-md);
+      text-align: center;
+    }
+    .kg-resume__text {
+      font-size: var(--font-size-body);
+      color: var(--color-text);
+      margin-bottom: var(--space-md);
+    }
+    .kg-resume__actions {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-sm);
     }
 
     /* ── レスポンシブ ── */
@@ -467,6 +492,8 @@
       .kg-input__btn { font-size: 14px; min-height: 34px; }
       .kg-weeknav__label { min-width: 160px; font-size: 14px; }
       .kg-chart__capline-handle { font-size: 11px; padding: 2px 6px; }
+      /* 右下の丸いボタン（あそびかた・ご意見）にフッターのボタンが重ならないように */
+      .kg-footer { margin-bottom: 64px; }
     }
   </style>
 </head>
@@ -483,6 +510,16 @@
       </p>
     </header>
 
+    <!-- 開いたときの選択（前の入力が残っているときだけ出す） -->
+    <section class="kg-resume" id="kgResume" aria-labelledby="kgResumeText" hidden>
+      <p class="kg-resume__text" id="kgResumeText">前に入れたものが残っています</p>
+      <div class="kg-resume__actions">
+        <button class="btn btn-primary btn-full" id="kgResumeContinue" type="button">つづきから</button>
+        <button class="btn btn-secondary btn-full" id="kgResumeFresh" type="button">まっさらではじめる</button>
+      </div>
+    </section>
+
+    <div id="kgMain" hidden>
     <!-- 週送り -->
     <div class="kg-weeknav">
       <button class="kg-weeknav__btn" id="kgPrevWeek" type="button" aria-label="前の週へ">
@@ -554,7 +591,12 @@
         <span class="material-symbols-rounded" aria-hidden="true">restart_alt</span>
         この週の入力をリセット
       </button>
+      <button class="btn btn-ghost btn-sm" id="kgResetAll" type="button">
+        <span class="material-symbols-rounded" aria-hidden="true">delete_sweep</span>
+        全部まっさらにする
+      </button>
     </footer>
+    </div>
 
   </div>
 
@@ -580,6 +622,11 @@
       { id: 'mytime',   label: '自分の時間',   color: '#D4A5A5', removable: false }
     ];
 
+    // 初期タグの写し（タグ名の編集で DEFAULT_TAGS を書きかえないように、毎回新しいオブジェクトにする）
+    function defaultTags() {
+      return DEFAULT_TAGS.map(t => ({ ...t }));
+    }
+
     const PALETTE = [
       '#5B8FB9', '#9B89B3', '#E07A5F', '#81B29A',
       '#C9676A', '#F2CC8F', '#B5C28C', '#D4A5A5',
@@ -591,7 +638,7 @@
     // ─────────────────────────────────────────────
     const state = {
       days: {},                      // { 'YYYY-MM-DD': { tagId: score } }
-      tags: DEFAULT_TAGS.slice(),
+      tags: defaultTags(),
       capacity: DEFAULT_CAPACITY,
       weekStart: null,               // 表示中の週の月曜（Date）
       activeDateKey: null            // 入力中の日付キー
@@ -698,6 +745,36 @@
           state.capacity = clamp(Math.round(v.capacity), 0, 200);
         }
       } catch (_) {}
+    }
+
+    // 前の入力が残っているか（入力・タグ・キャパラインのどれかが、はじめの状態とちがう）
+    function hasSavedData() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return false;
+        const v = JSON.parse(raw);
+        if (!v || typeof v !== 'object') return false;
+        const days = v.days && typeof v.days === 'object' ? v.days : {};
+        const hasScore = Object.keys(days).some(k => {
+          const d = days[k];
+          return d && typeof d === 'object' && Object.keys(d).some(t => Number(d[t]) > 0);
+        });
+        if (hasScore) return true;
+        if (Number.isFinite(v.capacity) && Math.round(v.capacity) !== DEFAULT_CAPACITY) return true;
+        if (Array.isArray(v.tags)) {
+          const sig = ts => ts.map(t => `${t && t.id}|${t && t.label}`).join(',');
+          if (sig(v.tags) !== sig(DEFAULT_TAGS)) return true;
+        }
+        return false;
+      } catch (_) {
+        return false;
+      }
+    }
+
+    // この端末に残っている入力・タグ・キャパラインをすべて消す
+    function clearSaved() {
+      clearTimeout(saveTimer);
+      try { localStorage.removeItem(STORAGE_KEY); } catch (_) {}
     }
 
     let saveTimer = null;
@@ -1068,6 +1145,15 @@
       renderAll();
     }
 
+    function resetAll() {
+      if (!confirm('タグ・キャパライン・すべての週の入力を消して、はじめの状態にもどしますか？')) return;
+      state.days = {};
+      state.tags = defaultTags();
+      state.capacity = DEFAULT_CAPACITY;
+      clearSaved();
+      renderAll();
+    }
+
     // ─────────────────────────────────────────────
     // 全体描画
     // ─────────────────────────────────────────────
@@ -1089,6 +1175,7 @@
       document.getElementById('kgPrevWeek').addEventListener('click', () => shiftWeek(-1));
       document.getElementById('kgNextWeek').addEventListener('click', () => shiftWeek(1));
       document.getElementById('kgResetWeek').addEventListener('click', resetWeek);
+      document.getElementById('kgResetAll').addEventListener('click', resetAll);
 
       const addInput = document.getElementById('kgTagAddInput');
       const addBtn = document.getElementById('kgTagAddBtn');
@@ -1116,13 +1203,38 @@
     // ─────────────────────────────────────────────
     // 起動
     // ─────────────────────────────────────────────
-    load();
-    const now = new Date();
-    state.weekStart = getWeekStart(now);
-    state.activeDateKey = getDateKey(now);
-    bindControls();
-    bindCaplineDrag();
-    renderAll();
+    function start() {
+      document.getElementById('kgResume').hidden = true;
+      document.getElementById('kgMain').hidden = false;
+      const now = new Date();
+      state.weekStart = getWeekStart(now);
+      state.activeDateKey = getDateKey(now);
+      bindControls();
+      bindCaplineDrag();
+      renderAll();
+    }
+
+    // 前の入力が残っているときは、中身を出す前に「つづきから」か「まっさら」を選ぶ
+    let startedFromResume = false;
+    if (hasSavedData()) {
+      document.getElementById('kgResume').hidden = false;
+      document.getElementById('kgResumeContinue').addEventListener('click', () => {
+        if (startedFromResume) return;
+        startedFromResume = true;
+        load();
+        start();
+      });
+      document.getElementById('kgResumeFresh').addEventListener('click', () => {
+        if (startedFromResume) return;
+        if (!confirm('前に入れたもの（タグ・キャパライン・すべての週）を消して、まっさらではじめますか？')) return;
+        startedFromResume = true;
+        clearSaved();
+        start();
+      });
+    } else {
+      load();
+      start();
+    }
   </script>
 
   <script src="../shared/js/stats.js?v=1" defer></script>
@@ -1141,7 +1253,7 @@
           '「タグの編集」を開くと、タグを消したり「ふやす」で足したりできる',
           '矢印ボタンで、前の週・次の週も見られる',
         ] },
-        { heading: 'おわりかた', text: '入力は自動でこの端末に残る。「この週の入力をリセット」を押すと、見ている週の入力だけ消せる。' },
+        { heading: 'おわりかた', text: '入力は自動でこの端末に残る。次に開いたときは「つづきから」か「まっさらではじめる」を選ぶ。「この週の入力をリセット」は見ている週の入力だけ、「全部まっさらにする」はタグ・キャパライン・ほかの週もまとめて消す。' },
       ],
     });
   </script>

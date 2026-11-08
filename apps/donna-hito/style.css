@@ -453,3 +453,11 @@
 
 /* はじめの画面の型（2026-11-06）: 注意書きは印つきの行なので、左のあきを詰める */
 body .app-entry > .dh-note-list.app-entry__notes { padding-left: 16px; }
+
+/* パス（2026-11-08）: 1〜4の下に、選択肢として中央に置く */
+.dh-pass {
+  display: flex;
+  margin: var(--space-md, 16px) auto 0;
+  min-width: 8em;
+  justify-content: center;
+}

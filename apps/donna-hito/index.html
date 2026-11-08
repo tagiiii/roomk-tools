@@ -10,7 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet" />
   <link rel="stylesheet" href="../shared/css/design-system.css?v=20261106c" />
-  <link rel="stylesheet" href="style.css?v=20261106look" />
+  <link rel="stylesheet" href="style.css?v=20261108p5" />
 </head>
 <body data-genre="talk">
 
@@ -64,6 +64,8 @@
           <button type="button" class="dh-scale__btn" data-value="4" aria-pressed="false"><span class="dh-scale__num">4</span><span class="dh-scale__deg">とても</span></button>
         </div>
         <p class="dh-stage__note" id="q-note" hidden></p>
+        <!-- パスは正式な答え。1〜4のすぐ下に、選択肢として置く（2026-11-08 P5。前は「もどる」「今日はここまで」と同じ段の控えめなボタンだった） -->
+        <button type="button" class="btn btn-secondary dh-pass" id="btn-skip">パス</button>
       </div>
 
       <div class="dh-actions">
@@ -77,10 +79,6 @@
         <button type="button" class="dh-quiet-btn" id="btn-back">
           <span class="material-symbols-rounded" aria-hidden="true">undo</span>
           <span id="btn-back-label">ひとつ前にもどる</span>
-        </button>
-        <button type="button" class="dh-quiet-btn" id="btn-skip">
-          <span class="material-symbols-rounded" aria-hidden="true">redo</span>
-          パス
         </button>
         <button type="button" class="dh-quiet-btn" id="btn-finish">
           <span class="material-symbols-rounded" aria-hidden="true">flag</span>

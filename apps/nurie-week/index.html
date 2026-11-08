@@ -196,6 +196,29 @@
       background: var(--color-primary-soft);
     }
 
+    /* ── 開いたときの選択（前の入力が残っているとき） ── */
+    .nw-resume {
+      max-width: 440px;
+      margin: var(--space-lg) auto 0;
+      background: var(--color-surface);
+      border-radius: var(--radius-card);
+      box-shadow: var(--shadow-soft, var(--shadow-sm));
+      padding: var(--space-lg) var(--space-md);
+      text-align: center;
+    }
+
+    .nw-resume__text {
+      font-size: var(--font-size-body);
+      color: var(--color-text);
+      margin-bottom: var(--space-md);
+    }
+
+    .nw-resume__actions {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-sm);
+    }
+
     /* ── レスポンシブ ── */
     @media (max-width: 600px) {
       .nw-wrapper {
@@ -244,6 +267,15 @@
       <p class="nw-header__sub">ここ1週間の過ごし方を、色で塗ってみよう</p>
     </header>
 
+    <section class="nw-resume" id="nwResume" aria-labelledby="nwResumeText" hidden>
+      <p class="nw-resume__text" id="nwResumeText">前に塗ったものが残っています</p>
+      <div class="nw-resume__actions">
+        <button class="btn btn-primary btn-full" id="btnResume" type="button">つづきから</button>
+        <button class="btn btn-secondary btn-full" id="btnFresh" type="button">まっさらではじめる</button>
+      </div>
+    </section>
+
+    <div id="nwMain" hidden>
     <section class="nw-legend" aria-label="色の選択">
       <p class="nw-legend__hint">色を選んで、マスをクリックかドラッグで塗ろう</p>
       <div class="nw-cats" id="nwCats" role="group" aria-label="カテゴリ"></div>
@@ -258,6 +290,7 @@
 
     <div class="nw-grid-wrap">
       <div class="nw-grid" id="nwGrid" role="grid" aria-label="1週間×24時間のグリッド"></div>
+    </div>
     </div>
 
   </div>
@@ -296,15 +329,29 @@
     // ─────────────────────────────────────────────
     // 保存・読み込み
     // ─────────────────────────────────────────────
-    function load() {
+    function readSaved() {
       try {
         const raw = localStorage.getItem(STORAGE_KEY);
-        if (!raw) return;
+        if (!raw) return null;
         const v = JSON.parse(raw);
         if (Array.isArray(v) && v.length === state.cells.length) {
-          state.cells = v.map(n => (Number.isInteger(n) && n >= 0 && n <= 5) ? n : 0);
+          return v.map(n => (Number.isInteger(n) && n >= 0 && n <= 5) ? n : 0);
         }
       } catch {}
+      return null;
+    }
+    function load() {
+      const cells = readSaved();
+      if (cells) state.cells = cells;
+    }
+    // 1マスでも塗ってある保存があるか（すべてクリアしたあとの空の保存は数えない）
+    function hasSavedCells() {
+      const cells = readSaved();
+      return !!cells && cells.some(n => n !== 0);
+    }
+    function clearSaved() {
+      clearTimeout(saveTimer);
+      try { localStorage.removeItem(STORAGE_KEY); } catch {}
     }
     let saveTimer = null;
     function save() {
@@ -470,11 +517,35 @@
     // ─────────────────────────────────────────────
     // 起動
     // ─────────────────────────────────────────────
-    load();
-    renderCategories();
-    renderGrid();
-    bindGridEvents();
-    bindClear();
+    function start() {
+      document.getElementById('nwResume').hidden = true;
+      document.getElementById('nwMain').hidden = false;
+      renderCategories();
+      renderGrid();
+      bindGridEvents();
+      bindClear();
+    }
+
+    // 前の入力が残っているときは、中身を出す前に「つづきから」か「まっさら」を選ぶ
+    let startedFromResume = false;
+    if (hasSavedCells()) {
+      document.getElementById('nwResume').hidden = false;
+      document.getElementById('btnResume').addEventListener('click', () => {
+        if (startedFromResume) return;
+        startedFromResume = true;
+        load();
+        start();
+      });
+      document.getElementById('btnFresh').addEventListener('click', () => {
+        if (startedFromResume) return;
+        if (!confirm('前に塗ったものを消して、まっさらではじめますか？')) return;
+        startedFromResume = true;
+        clearSaved();
+        start();
+      });
+    } else {
+      start();
+    }
   </script>
 
   <script src="../shared/js/stats.js?v=1" defer></script>
@@ -493,7 +564,7 @@
           '塗りまちがえたら「けす」を選んで塗りなおす',
           '色を変えながら、好きなところまで塗ればOK',
         ] },
-        { heading: 'おわりかた', text: '塗った色は自動でこの端末に残る。まっさらに戻したいときは「すべてクリア」を押す。' },
+        { heading: 'おわりかた', text: '塗った色は自動でこの端末に残る。次に開いたときは「つづきから」か「まっさらではじめる」を選ぶ。途中でまっさらに戻したいときは「すべてクリア」を押す。' },
       ],
     });
   </script>

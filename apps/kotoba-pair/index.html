@@ -425,7 +425,7 @@
         ゲームをはじめる
       </button>
     </div>
-    <button type="button" class="kp-quiet-btn" onclick="leaveGame()">ぬける</button>
+    <button type="button" class="kp-quiet-btn" id="btn-lobby-leave" onclick="leaveGame({ confirmHost: true })">退出する</button>
   </div>
 </div>
 
@@ -469,7 +469,7 @@
       </div>
     </div>
 
-    <button type="button" class="kp-quiet-btn" id="btn-game-leave" onclick="leaveGame()" hidden>ぬける</button>
+    <button type="button" class="kp-quiet-btn" id="btn-game-leave" onclick="leaveGame()" hidden>退出する</button>
   </div>
 </div>
 
@@ -506,7 +506,7 @@
       <div class="spinner" style="width:40px;height:40px;margin:0 auto 20px"></div>
       <p style="font-size:16px;font-weight:500;color:var(--color-primary)">準備しています<span class="kp-dots"></span></p>
     </div>
-    <button type="button" class="kp-quiet-btn" onclick="leaveGame()">ぬける</button>
+    <button type="button" class="kp-quiet-btn" onclick="leaveGame()">退出する</button>
   </div>
 </div>
 
@@ -518,8 +518,8 @@
 <div class="overlay" id="host-off-overlay">
   <span class="material-symbols-rounded" aria-hidden="true" style="font-size:48px">signal_disconnected</span>
   <p class="overlay-title">ホストの戻りを待っています</p>
-  <p class="overlay-sub">少し待っても戻らないときはぬけてね</p>
-  <button class="btn btn-ghost" onclick="leaveGame()">ぬける</button>
+  <p class="overlay-sub">少し待っても戻らないときは退出してね</p>
+  <button class="btn btn-ghost" onclick="leaveGame()">退出する</button>
 </div>
 
 <script>
@@ -1213,6 +1213,8 @@ function renderWaiting(room, players) {
 
   const isHost = state.role === 'host';
   setHidden('waiting-host-controls', !isHost);
+  // ホストが押すとルームごと消えるので、ホストのときは「ルームを閉じる」（2026-11-08 P5。oekaki-dengon と同じ形）
+  document.getElementById('btn-lobby-leave').textContent = isHost ? 'ルームを閉じる' : '退出する';
   if (isHost) {
     const hostPlays = hostPlaysOf(room);
     document.getElementById('set-host-plays').checked = hostPlays;
@@ -1886,7 +1888,10 @@ function leaveCleanup() {
   showOverlay('reconnect-overlay', false);
 }
 
-async function leaveGame() {
+async function leaveGame(opts = {}) {
+  // 待合室でホストが閉じるときだけ確認する（参加している子もトップに戻るため）
+  if (opts.confirmHost && state.role === 'host'
+      && !confirm('ルームを閉じると、みんなの画面もトップに戻るよ。いい？')) return;
   clearSession();
   if (state.roomRef) {
     // remove の前に予約済み onDisconnect を必ず取り消す（ゴースト room の再生成防止）

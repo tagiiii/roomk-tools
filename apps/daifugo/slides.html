@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>説明スライド | 大富豪 | あそびのたな</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@48,500,1,0" rel="stylesheet" />
+<style>
+  :root{
+    --ink:#434343; --ink-soft:#6B6B6B; --paper:#FAFAFA; --white:#FFFFFF;
+    --line:#E6E6E6; --muted:#9A9A9A;
+    --teal:#00A77F; --coral:#E06666; --blue:#3C78D8; --blue-soft:#6D9EEB;
+    --red:#E0574F; --neutral:#C2B69E; --trap:#3A3A3A;
+    --acc:var(--teal); --acc-tint:#E3F4EF;
+    --font:"Zen Kaku Gothic New", -apple-system, "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif;
+  }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  html,body{ height:100%; }
+  body{ font-family:var(--font); color:var(--ink); background:#E9ECEF; overflow:hidden; -webkit-font-smoothing:antialiased; }
+  .material-symbols-rounded{ font-family:"Material Symbols Rounded"; line-height:1; }
+
+  /* accent themes（スライドごとに切替） */
+  .accent-teal { --acc:var(--teal); --acc-tint:#E2F4EF; }
+  .accent-coral{ --acc:var(--coral);--acc-tint:#FBEBEB; }
+  .accent-blue { --acc:var(--blue); --acc-tint:#E7EEFB; }
+
+  /* ===================== 発表（デッキ） ===================== */
+  #deck{ position:fixed; inset:0; }
+  #stage{
+    position:absolute; top:50%; left:50%; width:1280px; height:720px;
+    transform-origin:center center; background:var(--paper);
+    border-radius:18px; box-shadow:0 28px 70px rgba(0,0,0,.35); overflow:hidden;
+  }
+  .slide{
+    position:absolute; inset:0; display:flex; flex-direction:column;
+    padding:56px 72px 76px; opacity:0; visibility:hidden;
+    transition:opacity .3s ease, transform .3s ease; transform:translateY(10px);
+  }
+  .slide.active{ opacity:1; visibility:visible; transform:none; }
+
+  /* セクションヘッダー（日本語＋小さな英語キャプション） */
+  .sec{ display:flex; align-items:baseline; gap:14px; }
+  .sec__jp{ font-size:30px; font-weight:900; color:var(--ink); letter-spacing:.01em; }
+  .sec__en{ font-size:18px; font-weight:700; color:var(--acc); letter-spacing:.12em; }
+  .sec__num{ display:inline-flex; align-items:center; justify-content:center; min-width:30px; height:30px; padding:0 8px;
+    border-radius:8px; background:var(--acc); color:#fff; font-size:18px; font-weight:900; margin-right:2px; }
+
+  .headline{ font-size:46px; font-weight:900; color:var(--ink); line-height:1.32; margin-top:22px; letter-spacing:.005em; }
+  .headline .hl{ color:var(--acc); }
+  .headline .ul{ background:linear-gradient(transparent 62%, var(--acc-tint) 62%); padding:0 2px; }
+  .body{ margin-top:30px; flex:1; min-height:0; }
+
+  /* 役割カード／チーム */
+  .cols{ display:grid; grid-template-columns:1fr 1fr; gap:24px; height:100%; }
+  .panel{ background:var(--white); border:1.5px solid var(--line); border-radius:18px; padding:26px 28px; display:flex; flex-direction:column; gap:14px; }
+  .panel--red{ border-color:#F0CFCB; background:linear-gradient(180deg,#FDF1F0,#fff); }
+  .panel--blue{ border-color:#CBDAF4; background:linear-gradient(180deg,#EEF3FD,#fff); }
+  .team-head{ display:flex; align-items:center; gap:14px; }
+  .team-ic{ width:56px; height:56px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; }
+  .team-ic .material-symbols-rounded{ font-size:34px; }
+  .red-bg{ background:var(--red); } .blue-bg{ background:var(--blue); } .teal-bg{ background:var(--teal); } .coral-bg{ background:var(--coral); } .gray-bg{ background:var(--neutral); } .trap-bg{ background:var(--trap); }
+  .team-name{ font-size:28px; font-weight:900; color:var(--ink); }
+  .role-row{ display:flex; gap:12px; align-items:flex-start; }
+  .role-row .material-symbols-rounded{ font-size:26px; color:var(--acc); flex:none; margin-top:3px; }
+  .role-row b{ font-size:23px; font-weight:900; color:var(--ink); }
+  .role-row .d{ font-size:19px; color:var(--ink-soft); display:block; margin-top:2px; line-height:1.5; }
+
+  /* 箇条書き行 */
+  .rows{ display:flex; flex-direction:column; gap:16px; }
+  .row{ display:flex; gap:18px; align-items:flex-start; background:var(--white); border:1.5px solid var(--line); border-radius:16px; padding:20px 24px; }
+  .row__ic{ flex:none; width:48px; height:48px; border-radius:12px; background:var(--acc-tint); color:var(--acc); display:flex; align-items:center; justify-content:center; }
+  .row__ic .material-symbols-rounded{ font-size:28px; }
+  .row__t{ font-size:25px; font-weight:900; color:var(--ink); line-height:1.4; }
+  .row__d{ font-size:20px; color:var(--ink-soft); margin-top:3px; line-height:1.5; }
+
+  /* トランプの見本 */
+  .cards{ display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap; }
+  .pc{ width:62px; height:88px; border-radius:9px; background:#fff; border:2px solid #D9D9D9; box-shadow:0 3px 8px rgba(0,0,0,.08);
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; color:#2F2F2F; flex:none; }
+  .pc b{ font-size:28px; font-weight:900; line-height:1; }
+  .pc i{ font-style:normal; font-size:22px; line-height:1; }
+  .pc.r{ color:#D2443B; }
+  .pc.jk{ background:#FFF4D6; border-color:#E8C66A; color:#8A6410; }
+  .pc.jk b{ font-size:15px; line-height:1.2; text-align:center; }
+  .pc.sm{ width:50px; height:70px; } .pc.sm b{ font-size:22px; } .pc.sm i{ font-size:18px; } .pc.sm.jk b{ font-size:12px; }
+  .strength{ display:flex; align-items:center; gap:8px; }
+  .strength .lt{ font-size:22px; font-weight:900; color:var(--muted); }
+  .str-cap{ display:flex; justify-content:space-between; font-size:21px; font-weight:900; color:var(--ink-soft); margin-top:12px; }
+  .str-cap .hi{ color:var(--acc); }
+  .demo-rows{ display:flex; flex-direction:column; gap:14px; }
+  .demo{ display:flex; align-items:center; gap:24px; background:var(--white); border:1.5px solid var(--line); border-radius:16px; padding:14px 22px; }
+  .demo__t{ width:250px; flex:none; font-size:25px; font-weight:900; color:var(--ink); line-height:1.35; }
+  .demo__t span{ display:block; font-size:18px; font-weight:500; color:var(--ink-soft); margin-top:2px; }
+  .demo__ex{ flex:1; display:flex; align-items:center; gap:18px; }
+  .demo__ex .cards{ flex-wrap:nowrap; flex:none; }
+  .demo__note{ font-size:20px; color:var(--ink-soft); line-height:1.45; }
+
+  /* ルールのタイル */
+  .tiles{ display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
+  .tiles.two{ grid-template-columns:repeat(2,1fr); }
+  .tile{ background:var(--white); border:1.5px solid var(--line); border-radius:16px; padding:18px 20px; display:flex; flex-direction:column; gap:8px; }
+  .tile__h{ display:flex; align-items:center; gap:10px; font-size:25px; font-weight:900; color:var(--ink); }
+  .tile__h .material-symbols-rounded{ font-size:26px; color:var(--acc); }
+  .tile__d{ font-size:19px; color:var(--ink-soft); line-height:1.5; }
+  .badge{ display:inline-flex; align-items:center; gap:6px; border-radius:999px; padding:5px 14px; font-size:17px; font-weight:900; vertical-align:middle; }
+  .badge .material-symbols-rounded{ font-size:18px; }
+  .badge.on{ background:var(--acc-tint); color:var(--acc); }
+  .badge.opt{ background:#FFF4D6; color:#8A6410; }
+  .foot-note{ margin-top:14px; font-size:19px; color:var(--ink-soft); line-height:1.5; }
+
+  /* 呼び名 */
+  .ranks{ display:flex; gap:12px; }
+  .rank{ flex:1; background:var(--white); border:1.5px solid var(--line); border-radius:16px; padding:16px 10px; text-align:center; }
+  .rank__n{ font-size:18px; font-weight:900; color:var(--muted); }
+  .rank__t{ font-size:27px; font-weight:900; color:var(--ink); margin-top:4px; }
+
+  /* Q&A */
+  .qa{ display:flex; flex-direction:column; gap:16px; }
+  .qa__item{ background:var(--white); border:1.5px solid var(--line); border-radius:16px; padding:18px 24px; }
+  .qa__q{ display:flex; gap:13px; align-items:flex-start; font-size:23px; font-weight:900; color:var(--ink); }
+  .qa__a{ display:flex; gap:13px; align-items:flex-start; font-size:21px; color:var(--ink-soft); margin-top:8px; line-height:1.5; }
+  .qa__badge{ flex:none; width:34px; height:34px; border-radius:9px; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:900; font-size:19px; }
+  .qa__badge.q{ background:var(--blue); } .qa__badge.a{ background:var(--coral); }
+
+  /* タイトルスライド */
+  .title-slide{ align-items:center; justify-content:center; text-align:center; padding-bottom:76px; }
+  .title-ic{ width:118px; height:118px; border-radius:32px; background:var(--teal); color:#fff; display:flex; align-items:center; justify-content:center; box-shadow:0 16px 34px rgba(0,167,127,.32); }
+  .title-ic .material-symbols-rounded{ font-size:72px; }
+  .title-jp{ font-size:74px; font-weight:900; color:var(--ink); margin-top:24px; letter-spacing:.02em; }
+  .title-en{ font-size:22px; font-weight:700; color:var(--teal); letter-spacing:.34em; margin-top:6px; text-transform:lowercase; }
+  .title-tag{ font-size:26px; font-weight:700; color:var(--ink-soft); margin-top:22px; }
+  .title-meta{ display:flex; gap:12px; margin-top:26px; }
+  .title-meta .m{ display:inline-flex; align-items:center; gap:7px; background:var(--white); border:1.5px solid var(--line); border-radius:999px; padding:9px 18px; font-size:18px; font-weight:700; color:var(--ink); }
+  .title-meta .material-symbols-rounded{ font-size:20px; color:var(--teal); }
+
+  /* セクション区切り（divider） */
+  .divider{ align-items:center; justify-content:center; text-align:center; padding-bottom:76px; background:var(--acc-tint); }
+  .divider .d-ic{ width:104px; height:104px; border-radius:50%; background:var(--acc); color:#fff; display:flex; align-items:center; justify-content:center; box-shadow:0 14px 30px rgba(0,0,0,.14); }
+  .divider .d-ic .material-symbols-rounded{ font-size:62px; }
+  .divider .d-jp{ font-size:72px; font-weight:900; color:var(--ink); margin-top:26px; letter-spacing:.03em; }
+  .divider .d-en{ font-size:21px; font-weight:700; color:var(--acc); letter-spacing:.28em; margin-top:8px; text-transform:lowercase; }
+  .divider .d-sub{ font-size:24px; font-weight:700; color:var(--ink-soft); margin-top:20px; }
+  /* 強調（ゲームスタート等） */
+  .divider.solid{ background:var(--acc); }
+  .divider.solid .d-ic{ background:rgba(255,255,255,.16); }
+  .divider.solid .d-jp,.divider.solid .d-sub{ color:#fff; }
+  .divider.solid .d-en{ color:rgba(255,255,255,.85); }
+
+  /* フッター */
+  .footer{ position:absolute; left:0; right:0; bottom:0; height:56px; display:flex; align-items:center; justify-content:space-between;
+    padding:0 30px; background:rgba(255,255,255,.7); border-top:1px solid var(--line); }
+  .brand{ display:flex; align-items:center; gap:9px; font-weight:900; color:var(--ink); font-size:19px; }
+  .brand .material-symbols-rounded{ color:var(--teal); font-size:24px; }
+  .dots{ display:flex; gap:7px; flex-wrap:wrap; max-width:620px; justify-content:center; }
+  .dot{ width:9px; height:9px; border-radius:50%; background:var(--line); transition:.2s; }
+  .dot.on{ background:var(--teal); transform:scale(1.3); }
+  .counter{ font-size:18px; font-weight:900; color:var(--muted); font-variant-numeric:tabular-nums; }
+  .divider .footer,.divider.solid .footer{ background:rgba(255,255,255,.55); }
+
+  /* ナビ矢印 */
+  .nav{ position:absolute; top:50%; transform:translateY(-50%); z-index:5; width:54px; height:54px; border-radius:50%; border:none; cursor:pointer;
+    background:rgba(67,67,67,.1); color:var(--ink); display:flex; align-items:center; justify-content:center; transition:.2s; opacity:0; }
+  #stage:hover .nav{ opacity:.5; } .nav:hover{ opacity:1 !important; background:rgba(67,67,67,.2); }
+  .nav .material-symbols-rounded{ font-size:32px; } .nav.prev{ left:16px; } .nav.next{ right:16px; }
+
+  /* ツールバー */
+  .toolbar{ position:fixed; top:14px; right:16px; z-index:50; display:flex; gap:8px; opacity:.16; transition:.2s; }
+  .toolbar:hover{ opacity:1; }
+  .tbtn{ display:inline-flex; align-items:center; gap:7px; cursor:pointer; background:rgba(255,255,255,.95); color:var(--ink); border:1px solid var(--line);
+    border-radius:999px; padding:9px 15px; font-family:var(--font); font-weight:700; font-size:14px; box-shadow:0 4px 12px rgba(0,0,0,.18); }
+  .tbtn:hover{ background:#fff; } .tbtn .material-symbols-rounded{ font-size:19px; color:var(--teal); }
+  .hint-help{ position:fixed; bottom:12px; left:16px; z-index:50; color:rgba(255,255,255,.5); font-size:13px; }
+  .hint-help kbd{ background:rgba(0,0,0,.18); border-radius:5px; padding:1px 7px; font-family:var(--font); }
+
+  /* ===================== 発表者ビュー ===================== */
+  body.presenter{ background:#EEF1F4; overflow:auto; }
+  #presenter{ max-width:680px; margin:0 auto; padding:18px 20px 40px; }
+  .pv-warn{ background:#FBEBEB; border:1px solid #EFC4C4; color:#B3463F; border-radius:12px; padding:12px 16px; font-size:14px; font-weight:700; display:flex; align-items:center; gap:10px; margin-bottom:16px; }
+  .pv-warn .material-symbols-rounded{ font-size:22px; }
+  .pv-count{ font-size:14px; font-weight:900; color:var(--muted); font-variant-numeric:tabular-nums; }
+  .pv-title{ font-size:26px; font-weight:900; color:var(--ink); line-height:1.3; margin-top:4px; }
+  .pv-lead{ font-size:15px; color:var(--teal); font-weight:700; margin-top:4px; letter-spacing:.04em; }
+  .pv-card{ background:#fff; border:1px solid var(--line); border-radius:16px; padding:18px; margin-top:18px; box-shadow:0 4px 14px rgba(0,0,0,.05); }
+  .pv-card h3{ font-size:14px; font-weight:900; color:var(--teal); display:flex; align-items:center; gap:8px; margin-bottom:12px; }
+  .pv-card h3 .material-symbols-rounded{ font-size:18px; }
+  #pvNote{ width:100%; min-height:175px; resize:vertical; border:1px solid var(--line); border-radius:12px; padding:14px 16px; font-family:var(--font); font-size:17px; line-height:1.7; color:var(--ink); background:#FBFCFD; }
+  #pvNote:focus{ outline:none; border-color:var(--teal); box-shadow:0 0 0 3px rgba(0,167,127,.15); }
+  .pv-actions{ display:flex; gap:10px; margin-top:14px; align-items:center; }
+  .pv-copy{ flex:1; cursor:pointer; border:none; border-radius:12px; padding:15px; font-family:var(--font); font-size:18px; font-weight:900; color:#fff; background:var(--teal); display:flex; align-items:center; justify-content:center; gap:10px; box-shadow:0 6px 16px rgba(0,167,127,.28); transition:.15s; }
+  .pv-copy:active{ transform:translateY(1px); } .pv-copy.done{ background:#1F8F6E; }
+  .pv-copy .material-symbols-rounded{ font-size:22px; }
+  .pv-reset{ cursor:pointer; border:1px solid var(--line); background:#fff; color:var(--muted); border-radius:12px; padding:15px 16px; font-family:var(--font); font-weight:700; font-size:14px; }
+  .pv-reset:hover{ background:#F5F7F9; }
+  .pv-nav{ display:flex; gap:10px; margin-top:18px; }
+  .pv-nav button{ flex:1; cursor:pointer; border:1px solid var(--line); background:#fff; color:var(--ink); border-radius:12px; padding:14px; font-family:var(--font); font-weight:900; font-size:16px; display:flex; align-items:center; justify-content:center; gap:8px; }
+  .pv-nav button:hover{ background:#F5F7F9; } .pv-nav button:disabled{ opacity:.4; cursor:default; }
+  .pv-nav .material-symbols-rounded{ font-size:20px; }
+  .pv-next{ margin-top:16px; font-size:14px; color:var(--muted); padding:0 4px; } .pv-next b{ color:var(--ink); }
+  .pv-conn{ margin-top:14px; font-size:12px; color:var(--muted); text-align:center; }
+</style>
+</head>
+<body>
+
+<div id="deck">
+  <div id="stage">
+    <button class="nav prev" id="navPrev" aria-label="前へ"><span class="material-symbols-rounded">chevron_left</span></button>
+    <button class="nav next" id="navNext" aria-label="次へ"><span class="material-symbols-rounded">chevron_right</span></button>
+    <div id="slides"></div>
+    <div class="footer">
+      <div class="brand"><span class="material-symbols-rounded">playing_cards</span>大富豪</div>
+      <div class="dots" id="dots"></div>
+      <div class="counter" id="counter">1 / 1</div>
+    </div>
+  </div>
+</div>
+
+<div class="toolbar" id="toolbar">
+  <button class="tbtn" id="btnPresenter"><span class="material-symbols-rounded">co_present</span>発表者ノート</button>
+  <button class="tbtn" id="btnFull"><span class="material-symbols-rounded">fullscreen</span>全画面</button>
+</div>
+<div class="hint-help">操作: <kbd>←</kbd> <kbd>→</kbd> めくる ・ <kbd>F</kbd> 全画面 ・ <kbd>P</kbd> 発表者ノート</div>
+
+<div id="presenter" style="display:none">
+  <div class="pv-warn"><span class="material-symbols-rounded">visibility_off</span>この画面は<strong>共有しないで</strong>ください（あなた専用のメモ）</div>
+  <div class="pv-count" id="pvCount">1 / 1</div>
+  <div class="pv-title" id="pvTitle"></div>
+  <div class="pv-lead" id="pvLead"></div>
+  <div class="pv-card">
+    <h3><span class="material-symbols-rounded">chat</span>Metalife チャット用メッセージ</h3>
+    <textarea id="pvNote" spellcheck="false"></textarea>
+    <div class="pv-actions">
+      <button class="pv-copy" id="pvCopy"><span class="material-symbols-rounded">content_copy</span>チャットにコピー</button>
+      <button class="pv-reset" id="pvReset">元に戻す</button>
+    </div>
+  </div>
+  <div class="pv-nav">
+    <button id="pvPrev"><span class="material-symbols-rounded">chevron_left</span>前のスライド</button>
+    <button id="pvNext">次のスライド<span class="material-symbols-rounded">chevron_right</span></button>
+  </div>
+  <div class="pv-next" id="pvNextTitle"></div>
+  <div class="pv-conn" id="pvConn">スライド画面と接続中…</div>
+</div>
+
+<script>
+/* ===== トランプの見本 ===== */
+const SUIT = { s:'♠', h:'♥', d:'♦', c:'♣' };
+function pc(rank, suit, small){
+  if(rank==='JK') return `<div class="pc jk${small?' sm':''}"><b>ジョー<br>カー</b></div>`;
+  const red = (suit==='h'||suit==='d') ? ' r' : '';
+  return `<div class="pc${red}${small?' sm':''}"><b>${rank}</b><i>${SUIT[suit]}</i></div>`;
+}
+function cards(list, small){ return '<div class="cards">'+list.map(([r,s])=>pc(r,s,small)).join('')+'</div>'; }
+
+const SLIDES = [
+  /* 1 */ { type:'divider', accent:'teal', icon:'waving_hand', jp:'チェックイン', en:'check-in',
+    sub:'今の気分を、ひとことどうぞ',
+    note:'まずはチェックインから！\n今の気分や、最近あったことを、ひとことチャットか声で教えてね\n（大富豪の説明は、このあとすぐ！）' },
+
+  /* 2 */ { type:'title', note:'今日のゲームは「大富豪」\n場のカードより強いカードを出していき、手札を早くなくした人からあがるトランプのゲームだよ。3〜6人であそべて、人数が足りないときはCPUを足せるよ。' },
+
+  /* 3 */ { type:'content', accent:'teal', section:'ゲームについて', sectionEn:'summary',
+    headline:'場より<span class="hl">強いカード</span>を出して、<br>手札を早くなくそう',
+    body:`<div class="rows">
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">group</span></div><div><div class="row__t">3〜6人であそぶ</div><div class="row__d">人数が足りないときは、ホストがCPUを足せる</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">smartphone</span></div><div><div class="row__t">自分の手札は、自分の画面だけに出る</div><div class="row__d">それぞれの端末で、自分の手札を見て出す</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">flag</span></div><div><div class="row__t">手札がなくなった人から、あがり</div><div class="row__d">のこりが1人になったら、その回はおしまい</div></div></div>
+    </div>`,
+    note:'「大富豪」は、場に出ているカードより強いカードを出していくゲーム。\n手札がなくなった人から、あがりになるよ。\n自分の手札は、自分の画面にだけ出るので、ほかの人には見えないよ。' },
+
+  /* 4 */ { type:'content', accent:'blue', section:'ゲーム説明', sectionEn:'explain', num:'1',
+    headline:'カードの強さ。<br><span class="ul">3がいちばん弱く、2がいちばん強い</span>',
+    body:`<div class="strength">${cards([['3','c'],['4','d'],['5','s'],['6','h'],['7','c'],['8','d'],['9','s'],['10','h'],['J','c'],['Q','d'],['K','s'],['A','h'],['2','c'],['JK']])}</div>
+      <div class="str-cap"><span>弱い</span><span class="hi">強い</span></div>
+      <div class="foot-note">ジョーカーは、いつもいちばん強い。1枚で出すほか、ほかのカードといっしょに出すと、どの数にもなる。<br>マーク（♠♥♦♣）で強さは変わらない。</div>`,
+    note:'カードの強さだよ。\n3がいちばん弱くて、4、5、6…10、J、Q、K、A、2の順に強くなるよ。\nジョーカーはいつもいちばん強いカード。ほかのカードといっしょに出すと、どの数にもなれるよ。\nマークで強さは変わらないよ。' },
+
+  /* 5 */ { type:'content', accent:'teal', section:'ゲーム説明', sectionEn:'explain', num:'2',
+    headline:'出し方は3つ',
+    body:`<div class="demo-rows">
+      <div class="demo"><div class="demo__t">1枚</div><div class="demo__ex">${cards([['9','h']],true)}</div></div>
+      <div class="demo"><div class="demo__t">同じ数を2〜4枚<span>ジョーカーはどの数にもなる</span></div><div class="demo__ex">${cards([['6','s'],['6','d']],true)}${cards([['K','c'],['K','h'],['JK']],true)}</div></div>
+      <div class="demo"><div class="demo__t">階段<span>同じマークで続いた3枚以上</span></div><div class="demo__ex">${cards([['5','h'],['6','h'],['7','h']],true)}<div class="demo__note">2より上には続かない</div></div></div>
+    </div>`,
+    note:'出し方は3つ。\n1枚だけ出す。\n同じ数を2枚・3枚・4枚まとめて出す。ジョーカーはどの数にもなるよ。\n階段は、同じマークで続いた数を3枚以上まとめて出す出し方。たとえば♥の5・6・7。\n手札のカードを選んで「出す」を押してね。' },
+
+  /* 6 */ { type:'content', accent:'coral', section:'ゲーム説明', sectionEn:'explain', num:'3',
+    headline:'場と<span class="hl">同じ枚数</span>で、場より強いカードを出す',
+    body:`<div class="rows">
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">playing_cards</span></div><div><div class="row__t">♦3を持っている人から。場が空なら好きなカード</div><div class="row__d">次の人からは、場と同じ形・同じ枚数で、場より強いものを出す</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">front_hand</span></div><div><div class="row__t">出せない・出したくないときは「パス」</div><div class="row__d">パスした人は、場が流れるまで出せない</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">refresh</span></div><div><div class="row__t">みんながパスしたら、場が流れる</div><div class="row__d">最後に出した人から、また好きなカードを出せる</div></div></div>
+    </div>`,
+    note:'はじめは、♦3を持っている人から。場が空いているときは、好きなカードを出せるよ。\n次の人からは、場と同じ枚数で、場より強いカードを出す。2枚なら2枚、階段なら同じ長さの階段だよ。\n出せない・出したくないときは「パス」。パスした人は、場が流れるまで出せないよ。\nみんながパスしたら場が流れて、最後に出した人から、また好きなカードを出せるよ。' },
+
+  /* 7 */ { type:'content', accent:'teal', section:'ゲーム説明', sectionEn:'explain', num:'4',
+    headline:'あがった順に、<span class="hl">呼び名</span>がつく',
+    body:`<div class="ranks">
+      <div class="rank"><div class="rank__n">1番</div><div class="rank__t">大富豪</div></div>
+      <div class="rank"><div class="rank__n">2番</div><div class="rank__t">富豪</div></div>
+      <div class="rank"><div class="rank__n">まんなか</div><div class="rank__t">平民</div></div>
+      <div class="rank"><div class="rank__n">うしろから2番</div><div class="rank__t">貧民</div></div>
+      <div class="rank"><div class="rank__n">最後</div><div class="rank__t">大貧民</div></div>
+    </div>
+    <div class="foot-note">のこりが1人になったら、その回はおしまい。結果の「あがった順」に呼び名が出る。<br>3人のときは大富豪・平民・大貧民。ホストは「もう一回（配りなおす）」で、同じ人たちでもう一回あそべる。</div>`,
+    note:'手札がなくなった人から、あがり。のこりが1人になったら、その回はおしまいだよ。\n結果の画面には、あがった順に「大富豪・富豪・平民・貧民・大貧民」の呼び名が出るよ。3人のときは、大富豪・平民・大貧民。\nホストが「もう一回（配りなおす）」を押すと、同じ人たちでもう一回あそべるよ。' },
+
+  /* 8 */ { type:'content', accent:'blue', section:'はじめから入っているルール', sectionEn:'basic rules',
+    headline:'<span class="badge on"><span class="material-symbols-rounded">check_circle</span>はじめからオン</span> 階段・革命・8切り',
+    body:`<div class="tiles two">
+      <div class="tile"><div class="tile__h"><span class="material-symbols-rounded">stairs</span>階段</div><div class="tile__d">同じマークで続いた数を3枚以上まとめて出せる</div></div>
+      <div class="tile"><div class="tile__h"><span class="material-symbols-rounded">sync</span>革命</div><div class="tile__d">同じ数を4枚出すと、強さが逆になる（3がいちばん強い）。もう一度起きると元にもどる</div></div>
+      <div class="tile"><div class="tile__h"><span class="material-symbols-rounded">sync_alt</span>階段革命</div><div class="tile__d">4枚以上の階段でも革命になる。3枚の階段ではならない</div></div>
+      <div class="tile"><div class="tile__h"><span class="material-symbols-rounded">content_cut</span>8切り</div><div class="tile__d">8を出すと場が流れて、出した人が続けて出せる</div></div>
+    </div>
+    <div class="foot-note">ジョーカーは、はじめは1枚（なし・2枚にもできる）。どれもホストが待合室で外せる。</div>`,
+    note:'はじめから入っているルールだよ。\n階段…同じマークで続いた数を3枚以上まとめて出せる。\n革命…同じ数を4枚出すと、強さが逆になって3がいちばん強くなる。もう一度起きると元にもどるよ。\n階段革命…4枚以上の階段でも革命になる。\n8切り…8を出すと場が流れて、出した人が続けて出せる。\nジョーカーは、はじめは1枚。どのルールも、ホストが待合室で変えられるよ。' },
+
+  /* 9 */ { type:'content', accent:'coral', section:'ホストが選べるルール', sectionEn:'local rules 1',
+    headline:'<span class="badge opt"><span class="material-symbols-rounded">tune</span>設定でオンにしたときだけ</span> 数で起きる効果',
+    body:`<div class="tiles">
+      <div class="tile"><div class="tile__h"><span class="material-symbols-rounded">swap_vert</span>イレブンバック</div><div class="tile__d">Jを出すと、場が流れるまで強さが逆になる</div></div>
+      <div class="tile"><div class="tile__h"><span class="material-symbols-rounded">delete</span>10捨て</div><div class="tile__d">10を出すと、出した枚数まで手札を捨てられる（捨てなくてもいい）</div></div>
+      <div class="tile"><div class="tile__h"><span class="material-symbols-rounded">redo</span>7渡し</div><div class="tile__d">7を出すと、出した枚数まで手札を次の人にわたせる（わたさなくてもいい）</div></div>
+      <div class="tile"><div class="tile__h"><span class="material-symbols-rounded">bolt</span>Qボンバー</div><div class="tile__d">Qを出すと場が流れて、出した人が続けて出せる</div></div>
+      <div class="tile"><div class="tile__h"><span class="material-symbols-rounded">fast_forward</span>5飛び</div><div class="tile__d">5を出すと、出した枚数だけ次の人をとばす</div></div>
+      <div class="tile"><div class="tile__h"><span class="material-symbols-rounded">block</span>4止め</div><div class="tile__d">4を出すと場が流れて、出した人が続けて出せる</div></div>
+    </div>
+    <div class="foot-note">どれも、1枚か同じ数でまとめて出したときだけ。階段に入っていても起きない（8切りも同じ）。</div>`,
+    note:'ここからは、ホストが設定でオンにしたときだけ使うルールだよ。\nイレブンバック…Jを出すと、場が流れるまで強さが逆になる。\n10捨て…10を出すと、出した枚数まで手札を捨てられる。\n7渡し…7を出すと、出した枚数まで手札を次の人にわたせる。\nQボンバーと4止め…Qや4を出すと場が流れて、続けて出せる。\n5飛び…5を出すと、出した枚数だけ次の人をとばす。\nどれも1枚か同じ数でまとめて出したときだけで、階段に入っていても起きないよ。' },
+
+  /* 10 */ { type:'content', accent:'blue', section:'ホストが選べるルール', sectionEn:'local rules 2',
+    headline:'<span class="badge opt"><span class="material-symbols-rounded">tune</span>設定でオンにしたときだけ</span> しばりなど',
+    body:`<div class="tiles">
+      <div class="tile"><div class="tile__h"><span class="material-symbols-rounded">lock</span>しばり</div><div class="tile__d">同じマークが2回続くと、場が流れるまでそのマークだけ</div></div>
+      <div class="tile"><div class="tile__h"><span class="material-symbols-rounded">lock_clock</span>3連しばり</div><div class="tile__d">同じマークが3回続くと、場が流れるまでそのマークだけ（しばりもオンなら2回でかかる）</div></div>
+      <div class="tile"><div class="tile__h"><span class="material-symbols-rounded">trending_up</span>数しばり</div><div class="tile__d">続きの数（5の次に6など）が出ると、場が流れるまで続きの数だけ。しばりと重なると「激しばり」</div></div>
+      <div class="tile"><div class="tile__h"><span class="material-symbols-rounded">shield</span>スペ3返し</div><div class="tile__d">ジョーカー1枚には♠3で勝てる</div></div>
+      <div class="tile" style="grid-column:span 2"><div class="tile__h"><span class="material-symbols-rounded">do_not_disturb_on</span>ジョーカー・2・8ではあがれない</div><div class="tile__d">最後の1手に入れられない（革命中は2のかわりに3。8は8切りがオンのとき）。のこり1枚がそのカードなら出せるが、順番は最後になる</div></div>
+    </div>`,
+    note:'これも、設定でオンにしたときだけのルール。\nしばり…同じマークが2回続くと、場が流れるまでそのマークしか出せない。\n3連しばり…同じマークが3回続くとかかる。しばりもオンなら2回でかかるよ。\n数しばり…5の次に6のように続きの数が出ると、続きの数しか出せない。しばりと重なると「激しばり」。\nスペ3返し…ジョーカー1枚には♠3で勝てる。\nジョーカー・2・8ではあがれない…最後の1手にそのカードを入れられない。のこり1枚がそのカードなら出せるけど、順番は最後になるよ。' },
+
+  /* 11 */ { type:'content', accent:'teal', section:'ホストが選べるルール', sectionEn:'joker',
+    headline:'ジョーカーも、<span class="hl">数の効果</span>を数える',
+    body:`<div class="demo-rows">
+      <div class="demo"><div class="demo__t">数といっしょに出す</div><div class="demo__ex">${cards([['10','d'],['JK']],true)}<div class="demo__note">10が2枚として数える。10捨てなら2枚捨てられる（8なら8切り、Jならイレブンバック）</div></div></div>
+      <div class="demo"><div class="demo__t">ジョーカーだけ<span>何として出すかを選ぶ</span></div><div class="demo__ex">${cards([['JK']],true)}<div class="demo__note">「そのまま」「7として」「8として」「10として」「Jとして」から選ぶ。オンのルールの分だけ出る。強さはいちばん強いまま</div></div></div>
+    </div>`,
+    note:'ジョーカーのルールだよ。\nジョーカーを数といっしょに出すと、その数として効果も数えるよ。たとえば10とジョーカーなら、10が2枚。10捨てがオンなら2枚捨てられるよ。\nジョーカーだけを出すときは、「そのまま」か「7として」「8として」「10として」「Jとして」を選べる。ボタンは、オンにしたルールの分だけ出るよ。強さはいちばん強いままで、効果だけつくよ。' },
+
+  /* 12 */ { type:'content', accent:'coral', section:'2回目からのルール', sectionEn:'from round 2',
+    headline:'<span class="badge opt"><span class="material-symbols-rounded">tune</span>設定でオンにしたときだけ</span> カード交換・都落ち',
+    body:`<div class="rows">
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">swap_horiz</span></div><div><div class="row__t">カード交換</div><div class="row__d">配ったあと、前回の大貧民のいちばん強いカード2枚が大富豪へ。大富豪は好きなカード2枚を選んで「返す」。4人以上なら富豪と貧民も1枚ずつ。交換がある回は大貧民から出す</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">south</span></div><div><div class="row__t">都落ち</div><div class="row__d">前回の大富豪がいちばんにあがれなかったら、その場で手札を捨てて抜け、大貧民になる</div></div></div>
+    </div>
+    <div class="foot-note">どちらも2回目から。前回と同じ人たちであそぶときだけ。</div>`,
+    note:'2回目からのルールだよ。これも設定でオンにしたときだけ。\nカード交換…配ったあと、前回の大貧民のいちばん強いカード2枚が大富豪にわたって、大富豪は好きなカード2枚を選んで「返す」。4人以上なら、富豪と貧民も1枚ずつとりかえるよ。交換がある回は、大貧民から出すよ。\n都落ち…前回の大富豪がいちばんにあがれなかったら、その場で抜けて大貧民になるよ。\nどちらも、前回と同じ人たちであそぶときだけだよ。' },
+
+  /* 13 */ { type:'content', accent:'blue', section:'時間とCPU', sectionEn:'time & cpu',
+    headline:'時間切れ・抜けた人の番は<span class="hl">CPU</span>が出す',
+    body:`<div class="rows">
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">timer</span></div><div><div class="row__t">1回に考える時間は、はじめは30秒</div><div class="row__d">時間切れはパスになる。ホストの設定で「CPUが代わりに出す」にもできる</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">smart_toy</span></div><div><div class="row__t">2回続けて時間切れになると、CPUが代わりに出す</div><div class="row__d">「自分でやる」を押すと、自分で出せるようにもどる</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">wifi_off</span></div><div><div class="row__t">通信が切れた人・「退出する」で抜けた人の番も、CPU</div><div class="row__d">同じ名前で入りなおすと、また自分で出せる</div></div></div>
+    </div>`,
+    note:'1回に考える時間は、はじめは30秒。ホストが、なし・15秒・60秒にも変えられるよ。\n時間をすぎるとパスになるよ。\n2回続けて時間切れになると、CPUが代わりに出してくれる。「自分でやる」を押すと、また自分で出せるよ。\n通信が切れた人や、「退出する」で抜けた人の番も、CPUが代わりに出すよ。同じ名前で入りなおせば、また自分で出せるよ。' },
+
+  /* 14 */ { type:'content', accent:'teal', section:'はじめかた', sectionEn:'how to join',
+    headline:'名前 → ルームコード →<br>「参加する」',
+    body:`<div class="rows">
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">login</span></div><div><div class="row__t">「ルームに参加する」を押す</div><div class="row__d">名前、ルームコード（6文字）の順に入れて「参加する」</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">link</span></div><div><div class="row__t">リンクから開いたときは、名前だけ</div><div class="row__d">ルームコードは入っているよ。スマホやタブレットは QR コードを読み取ってもOK</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">play_circle</span></div><div><div class="row__t">そろったら、ホストが「配ってはじめる」</div><div class="row__d">人数が足りないときは、ホストが「CPUを足す」</div></div></div>
+    </div>`,
+    note:'参加のしかただよ。\n「ルームに参加する」を押して、名前、ルームコード（6文字）の順に入れて「参加する」。\nチャットのリンクから開いたときは、ルームコードは入っているので名前だけ入れてね。スマホやタブレットの人は、QR コードを読み取ってもOK。\nみんながそろったら、ホストが「配ってはじめる」を押すよ。人数が足りないときは、CPUを足すよ。' },
+
+  /* 15 */ { type:'content', accent:'coral', section:'Q&A', sectionEn:'question & answer',
+    headline:'よくある質問',
+    body:`<div class="qa">
+      <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>どのカードが出せるか、わからないときは？</div><div class="qa__a"><span class="qa__badge a">A</span>自分の番になると、出せないカードは薄くなるよ（ホストが外していなければ）。</div></div>
+      <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>場が空いているときに、パスできる？</div><div class="qa__a"><span class="qa__badge a">A</span>できないよ。好きなカードを1つ出してね。</div></div>
+      <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>いまどのルールを使っているか見たいときは？</div><div class="qa__a"><span class="qa__badge a">A</span>画面の下の「いまのルール」を開くと見られるよ。</div></div>
+    </div>`,
+    note:'よくある質問だよ\nQ. どのカードが出せるかわからないときは？→ A. 自分の番になると、出せないカードは薄くなるよ。\nQ. 場が空いているときにパスできる？→ A. できないよ。好きなカードを出してね。\nQ. いまどのルールを使っているか見たいときは？→ A. 画面の下の「いまのルール」を開くと見られるよ。' },
+
+  /* 16 */ { type:'divider', accent:'blue', icon:'live_help', jp:'質問タイム', en:'any questions?',
+    sub:'気になることはある？',
+    note:'ここまでで、質問がある人はいるかな？\nマイクON か チャットで教えてね！' },
+
+  /* 17 */ { type:'divider', accent:'coral', icon:'how_to_reg', jp:'参加確認', en:"let's check",
+    sub:'チャットで教えてね',
+    note:'やってみたい人〜？\n「①参加」「②見学」「③その他」を、チャットで教えてね！' },
+
+  /* 18 */ { type:'divider', accent:'teal', solid:true, icon:'rocket_launch', jp:'＼ ゲームスタート ／', en:'game start',
+    sub:'♦3を持っている人から！',
+    note:'それでは、大富豪スタート！\nルームに入る人は、まずはルームに参加してね。♦3を持っている人から出すよ。わからなくなったら、いつでも聞いてね' },
+
+  /* 19 */ { type:'divider', accent:'teal', solid:true, icon:'emoji_events', jp:'結果', en:'result',
+    sub:'おつかれさま！',
+    note:'結果発表！\nおつかれさま。最後にひとことずつ、ふりかえってみよう。' },
+];
+
+/* ===== ウィンドウ間同期 ===== */
+const channel = ('BroadcastChannel' in window) ? new BroadcastChannel('daifugo_deck') : null;
+function send(msg){ if(channel) channel.postMessage(msg); try{ localStorage.setItem('dfg_msg', JSON.stringify({...msg,_t:Date.now()})); }catch(e){} }
+function onMsg(h){ if(channel) channel.onmessage=(e)=>h(e.data); window.addEventListener('storage',(e)=>{ if(e.key==='dfg_msg'&&e.newValue){ try{ h(JSON.parse(e.newValue)); }catch(err){} } }); }
+const isPresenter = new URLSearchParams(location.search).get('view')==='presenter';
+
+/* ===== レンダリング ===== */
+function slideHTML(s){
+  const acc = s.accent ? `accent-${s.accent}` : 'accent-teal';
+  if(s.type==='title'){
+    return `<section class="slide title-slide accent-teal">
+      <div class="title-ic"><span class="material-symbols-rounded">playing_cards</span></div>
+      <div class="title-jp">大富豪</div>
+      <div class="title-en">daifugo</div>
+      <div class="title-tag">〜 場より強いカードを出して、手札を早くなくそう 〜</div>
+      <div class="title-meta">
+        <span class="m"><span class="material-symbols-rounded">group</span>3〜6人（CPUを足せる）</span>
+        <span class="m"><span class="material-symbols-rounded">schedule</span>1回10〜15分</span>
+        <span class="m"><span class="material-symbols-rounded">playing_cards</span>トランプ</span>
+      </div></section>`;
+  }
+  if(s.type==='divider'){
+    return `<section class="slide divider ${acc}${s.solid?' solid':''}">
+      <div class="d-ic"><span class="material-symbols-rounded">${s.icon}</span></div>
+      <div class="d-jp">${s.jp}</div>
+      <div class="d-en">${s.en}</div>
+      ${s.sub?`<div class="d-sub">${s.sub}</div>`:''}</section>`;
+  }
+  // content
+  return `<section class="slide ${acc}">
+    <div class="sec">${s.num?`<span class="sec__num">${s.num}</span>`:''}<span class="sec__jp">${s.section}</span><span class="sec__en">${s.sectionEn}</span></div>
+    <h1 class="headline">${s.headline}</h1>
+    <div class="body">${s.body||''}</div></section>`;
+}
+
+if(!isPresenter){
+  const slidesEl=document.getElementById('slides'), dotsEl=document.getElementById('dots'), counterEl=document.getElementById('counter');
+  let idx=0;
+  SLIDES.forEach((s)=>{ slidesEl.insertAdjacentHTML('beforeend', slideHTML(s)); const d=document.createElement('span'); d.className='dot'; dotsEl.appendChild(d); });
+  const slideEls=[...slidesEl.children], dotEls=[...dotsEl.children];
+  function render(){
+    slideEls.forEach((el,i)=>el.classList.toggle('active',i===idx));
+    dotEls.forEach((el,i)=>el.classList.toggle('on',i===idx));
+    counterEl.textContent=`${idx+1} / ${SLIDES.length}`;
+    document.getElementById('navPrev').style.visibility=idx===0?'hidden':'visible';
+    document.getElementById('navNext').style.visibility=idx===SLIDES.length-1?'hidden':'visible';
+  }
+  function goTo(n,b=true){ n=Math.max(0,Math.min(SLIDES.length-1,n)); if(n!==idx){ idx=n; render(); } if(b) send({t:'idx',i:idx}); }
+  const next=()=>goTo(idx+1), prev=()=>goTo(idx-1);
+  document.getElementById('navNext').onclick=next; document.getElementById('navPrev').onclick=prev;
+  document.addEventListener('keydown',(e)=>{
+    if(['ArrowRight','PageDown',' '].includes(e.key)){ e.preventDefault(); next(); }
+    else if(['ArrowLeft','PageUp'].includes(e.key)){ e.preventDefault(); prev(); }
+    else if(e.key==='Home'){ e.preventDefault(); goTo(0); }
+    else if(e.key==='End'){ e.preventDefault(); goTo(SLIDES.length-1); }
+    else if(e.key==='f'||e.key==='F'){ toggleFull(); }
+    else if(e.key==='p'||e.key==='P'){ openPresenter(); }
+  });
+  const stage=document.getElementById('stage');
+  function fit(){ const sc=Math.min(window.innerWidth/1280, window.innerHeight/720); stage.style.transform=`translate(-50%,-50%) scale(${sc})`; }
+  window.addEventListener('resize',fit); document.addEventListener('fullscreenchange',fit);
+  function toggleFull(){ if(!document.fullscreenElement) document.documentElement.requestFullscreen?.(); else document.exitFullscreen?.(); }
+  document.getElementById('btnFull').onclick=toggleFull;
+  function openPresenter(){ const url=new URL(location.href); url.searchParams.set('view','presenter'); url.hash=''; const w=window.open(url.toString(),'dfg_presenter','width=620,height=800'); if(!w) alert('発表者ノートのウィンドウがブロックされました。\nブラウザのポップアップを許可してから、もう一度お試しください。'); }
+  document.getElementById('btnPresenter').onclick=openPresenter;
+  onMsg((m)=>{ if(m.t==='goto') goTo(m.i,false); else if(m.t==='hello') send({t:'idx',i:idx}); });
+  fit(); render();
+}
+
+if(isPresenter){
+  document.title = '発表者ノート | 大富豪 | あそびのたな';
+  document.body.classList.add('presenter');
+  document.getElementById('deck').style.display='none';
+  document.getElementById('toolbar').style.display='none';
+  document.querySelector('.hint-help').style.display='none';
+  document.getElementById('presenter').style.display='block';
+  const $=(id)=>document.getElementById(id);
+  const elCount=$('pvCount'), elTitle=$('pvTitle'), elLead=$('pvLead'), elNote=$('pvNote'), elNext=$('pvNextTitle'), elConn=$('pvConn');
+  const btnCopy=$('pvCopy'), btnReset=$('pvReset'), btnPrev=$('pvPrev'), btnNext=$('pvNext');
+  let cur=0; const KEY=(i)=>'dfg_note_'+i;
+  function label(s){
+    if(s.type==='title') return '大富豪（タイトル）';
+    if(s.type==='divider') return s.jp.replace(/[＼／]/g,'').trim()+'（区切り）';
+    return `${s.section}${s.num?' '+s.num:''} ／ ${s.sectionEn}`;
+  }
+  function plain(html){ const d=document.createElement('div'); d.innerHTML=html||''; d.querySelectorAll('rt,.material-symbols-rounded').forEach(r=>r.remove()); return (d.textContent||'').replace(/\s+/g,' ').trim(); }
+  function titleOf(s){
+    if(s.type==='title') return '大富豪';
+    if(s.type==='divider') return s.jp;
+    return plain(s.headline);
+  }
+  function show(i){
+    cur=Math.max(0,Math.min(SLIDES.length-1,i));
+    const s=SLIDES[cur];
+    elCount.textContent=`${cur+1} / ${SLIDES.length}`;
+    elTitle.textContent=titleOf(s);
+    elLead.textContent=label(s);
+    const saved=localStorage.getItem(KEY(cur));
+    elNote.value=(saved!==null)?saved:s.note;
+    btnCopy.classList.remove('done');
+    btnCopy.innerHTML='<span class="material-symbols-rounded">content_copy</span>チャットにコピー';
+    elNext.innerHTML=cur<SLIDES.length-1?`次のスライド → <b>${titleOf(SLIDES[cur+1])}</b>`:'<b>最後のスライドです</b>';
+    btnPrev.disabled=cur===0; btnNext.disabled=cur===SLIDES.length-1;
+  }
+  elNote.addEventListener('input',()=>{ try{ localStorage.setItem(KEY(cur),elNote.value); }catch(e){} });
+  async function copyText(t){ try{ await navigator.clipboard.writeText(t); return true; }catch(e){ try{ const ta=document.createElement('textarea'); ta.value=t; ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta); ta.focus(); ta.select(); const ok=document.execCommand('copy'); ta.remove(); return ok; }catch(e2){ return false; } } }
+  btnCopy.onclick=async()=>{
+    const ok=await copyText(elNote.value);
+    if(!ok){ elNote.focus(); elNote.select(); }
+    btnCopy.innerHTML=ok?'<span class="material-symbols-rounded">check</span>コピーしました！':'<span class="material-symbols-rounded">keyboard_command_key</span>選択したのでコピーしてください';
+    btnCopy.classList.toggle('done',ok);
+    setTimeout(()=>{ btnCopy.classList.remove('done'); btnCopy.innerHTML='<span class="material-symbols-rounded">content_copy</span>チャットにコピー'; },2200);
+  };
+  btnReset.onclick=()=>{ localStorage.removeItem(KEY(cur)); elNote.value=SLIDES[cur].note; };
+  function goto(i){ show(i); send({t:'goto',i:cur}); }
+  btnPrev.onclick=()=>goto(cur-1); btnNext.onclick=()=>goto(cur+1);
+  document.addEventListener('keydown',(e)=>{ if(e.target===elNote) return; if(e.key==='ArrowRight'||e.key===' '){ e.preventDefault(); goto(cur+1); } else if(e.key==='ArrowLeft'){ e.preventDefault(); goto(cur-1); } });
+  onMsg((m)=>{ if(m.t==='idx'){ elConn.textContent='スライド画面と接続中 ✓'; show(m.i); } });
+  show(0); send({t:'hello'}); setTimeout(()=>send({t:'hello'}),400);
+}
+</script>
+</body>
+</html>
