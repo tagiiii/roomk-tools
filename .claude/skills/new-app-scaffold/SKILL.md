@@ -23,6 +23,7 @@ description: room-Kの本体アプリを新規追加し、必要な共通機能�
 ## 1. ファイル作成
 
 - `apps/{app-name}/index.html`（+ パターンに応じて app.js / style.css）
+- Realtime Database を使う場合は、公開の前に `database.rules.json` へ `{appname}_rooms` を足す（2026-11-08 からルールは名前空間の一覧。足さないとルームを作れない。変更禁止パスなのでオーナーの承認のもとで行い、lint の [RULES-1] で確かめる。docs/development/firebase.md「現在のセキュリティルール」）
 - Realtime Database を使う場合は AGENTS.md の「Realtime Database 実装ルール」「切断時の挙動」「セッションデータの自動削除」「再接続」を全て実装する（`RoomkRTDB.initFirebase()`・transaction・onDisconnect・`cancelRoomOnDisconnect()`・ORPHAN_TTL_MS=2分・serverTimeOffset・sessionStorage 再接続・終了後削除・認証失敗ハンドリング）
 - ルーム型のゲームは、rtdb.md「ホストも遊ぶかを選ぶ」と「端末のない参加者」を読み、ホスト参加の初期値と、端末のない参加者を作るか作らないかを決めて AGENTS.md に書く。話し合い・読み上げが中心のゲームは ui.md「マイクを使わない子が参加できる手段」も読む
 - 絵文字禁止・Material Symbols Rounded 使用、design-system.css のトークンを再利用

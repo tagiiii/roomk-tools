@@ -16,6 +16,7 @@
 
 1. `apps/{app-name}/` フォルダを作成
 2. 上表のパターンを参考にファイルを作成
+2b. Realtime Database を使うなら、公開の前に `database.rules.json` へ `{appname}_rooms` を足す（2026-11-08 からルールは名前空間の一覧。オーナーの承認のもとで行う。[firebase.md](firebase.md)「現在のセキュリティルール」・lint [RULES-1]）
 3. `apps/index.html` のツール一覧にカードを追記（下記「利用シーンタグ」の `data-scenes`、公開日の `data-added`、種類の `data-genre` を必ず付ける）
 4. アプリ固有の仕様を `apps/{app-name}/AGENTS.md` に記載
 5. `apps/updates.json` の先頭に更新情報を追記（下記「更新情報」参照）

@@ -17,7 +17,7 @@
 
 ### Realtime Database パス命名規則
 
-**新しいアプリを追加するときもルール変更は不要。** 以下の命名規則に従うだけでよい。
+**新しいアプリを追加するときは、公開の前に `database.rules.json` へ名前空間を足す**（2026-11-08 D-5 で、ルールを名前空間の一覧に固定した。足さないとそのアプリだけルームを作れない）。名前は以下の命名規則に従う。
 
 ```
 {appname}_rooms/{roomCode}/...
@@ -30,25 +30,28 @@
 | name-change | `namechange_rooms/{roomCode}/` |
 | （新アプリ例） | `newapp_rooms/{roomCode}/` |
 
-#### 現在のセキュリティルール（変更不要）
+#### 現在のセキュリティルール
 
 正本は [database.rules.json](../../database.rules.json)。読み書きとも**匿名認証が必須**。
 
 ```json
 {
   "rules": {
-    "$app_rooms": {
-      "$roomId": {
-        ".read": "auth != null",
-        ".write": "auth != null"
-      }
+    "feedback": { "…": "フィードバック送信（書けるが読めない・欄を検査する）" },
+    "blackjack_rooms": {
+      "$roomId": { ".read": "auth != null", ".write": "auth != null" }
+    },
+    "…（ルーム用の名前空間を1つずつ並べる）…": {},
+    "stats": {
+      "$app": { ".read": "auth != null", ".write": "auth != null" }
     }
   }
 }
 ```
 
-`$app_rooms` はワイルドカードで任意のトップレベルパスにマッチする。
-新アプリを追加してもルールの更新は**一切不要**。
+2026-11-08（D-5）までは `$app_rooms` のワイルドカードで、任意の最上位の名前に書けた。いまは一覧にない名前・未ログイン・名前空間ごとの読み取り・最上位への書き込みはできない。
+
+**新アプリの手順**: `{appname}_rooms` を `database.rules.json` に、ほかのルーム用と同じ形で足す。`bash scripts/lint.sh` の [RULES-1] が、コードの `ref()` に渡す名前空間がルールにないと ERROR で知らせる。`database.rules.json` は変更禁止パスなので、足すのはオーナーの承認のもとで行い、main に入ると `.github/workflows/firebase-rules.yml` が本番のルールを更新する。**アプリの公開より先に（または同じ PR で）ルールを入れる。** 別の Firebase プロジェクトを使うアプリ（ねむらせ基地）は対象外。
 
 ### その他のセキュリティ方針
 
