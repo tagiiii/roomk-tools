@@ -46,6 +46,15 @@
 絞り込める（指定しているあいだは「くわしく絞り込む」に「Nつ指定中」を出す）。シーンバッジはこの属性から自動描画されるので、カード HTML にバッジを
 手書きしない。1つのツールが複数シーンに属してよい（スペース区切り）。
 `data-scenes` の有無とキーの妥当性は lint（PORTAL-2）で検証される。
+
+**作戦会議（`sakusen`）の札を付けるカードは、`data-speech`（話す量）と `data-self`（自分の話）も必ず付ける**（2026-11-08 P-33・P-34。lint PORTAL-2 で検証）。「くわしく絞り込む」の「話す量」「自分の話」で使う。値はそのツールの AGENTS.md と画面から読める事実だけで決め、複数あてはまれば空白で並べる。上下はつけない。子どもへの合い方は書かない。
+
+| 属性 | 値 |
+|---|---|
+| `data-speech` | `pick`（選ぶだけ）／`short`（ひとことで）／`talk`（話す・説明する）／`silent`（話さなくてよい。声を出さずに参加できる仕組み〈選ぶだけで進む・ホストが代わりに押す・チャットで送る等〉が実装にあるときだけ） |
+| `data-self` | `outside`（外の題材で遊べる）／`little`（自分のことを少し話す）／`center`（自分のことを話すのが中心） |
+
+19本の値と決めた根拠は [sakusen-conditions-draft-2026-11-08.md](../reports/sakusen-conditions-draft-2026-11-08.md)。
 同じく必須の `data-added` は公開日（`YYYY-MM-DD`。`updates.json` の `"new"` と同じ日）、`data-genre` は下の表の種類で、どちらも並び順に使う（lint PORTAL-2 で検証）。
 
 選択中の種類とシーンは URL ハッシュと同期する（例: `…/apps/#scene=bodoge`、`…/apps/#genre=kotoba&scene=bodoge`）。

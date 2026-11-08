@@ -475,7 +475,7 @@ else
 fi
 
 # ─────────────────────────────────────────────────────
-# [PORTAL-2] data-scenes・data-added・data-genre チェック
+# [PORTAL-2] data-scenes・data-added・data-genre チェック（作戦会議の札のカードは data-speech・data-self も）
 #   ポータルの表示中カード全てに data-scenes があり、
 #   シーンキーが有効値のみかを検証（AGENTS.md「利用シーンタグ」）。
 #   並び順に使う data-added（公開日 YYYY-MM-DD）と data-genre（種類）も必須
@@ -515,6 +515,15 @@ for m in re.finditer(r'<a class="app-card"([^>]*)>', html):
     bad = [s for s in scenes if s not in VALID]
     if bad:
         print(f'{name}: 不明なシーンキー {", ".join(bad)}（有効: kotoba/bodoge/hiroba/circle/sakusen）')
+    # 作戦会議の札のカードは「話す量」「自分の話」を持つ（2026-11-08 P-33・P-34。値は docs/reports/sakusen-conditions-draft-2026-11-08.md）
+    SPEECH = {'pick', 'short', 'talk', 'silent'}
+    SELF = {'outside', 'little', 'center'}
+    for attr, valid, label in (('data-speech', SPEECH, '話す量'), ('data-self', SELF, '自分の話')):
+        m = re.search(attr + r'="([^"]*)"', attrs)
+        if 'sakusen' in scenes and not m:
+            print(f'{name}: 作戦会議の札があるのに {attr}（{label}）がありません（有効: {"/".join(sorted(valid))}）')
+        elif m and (not m.group(1).split() or set(m.group(1).split()) - valid):
+            print(f'{name}: {attr} の値が空か不明です（有効: {"/".join(sorted(valid))}）')
 PYEOF
 )
 
