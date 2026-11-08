@@ -238,6 +238,7 @@
 
     /* ── 遊ぶ人が足りないときの案内と、ホストのそのほかの操作（2026-11-07） ── */
     .ptm-few { margin-top: 20px; text-align: center; }
+    .ptm-leave { margin-top: 24px; }
     .ptm-few__text { font-size: 14px; color: var(--color-muted); line-height: 1.6; margin-bottom: 10px; }
     .ptm-hostmenu { margin-top: 20px; padding: 4px 20px; }
     .ptm-hostmenu summary { min-height: 44px; display: flex; align-items: center; gap: 6px; color: var(--color-muted); font-size: 14px; font-weight: 700; cursor: pointer; list-style: none; }
@@ -400,6 +401,10 @@
           <span class="material-symbols-rounded">sports_esports</span>
           ゲームを始める
         </button>
+        <button type="button" class="btn btn-ghost btn-full" id="btn-close-room" onclick="hostCloseRoom()">
+          <span class="material-symbols-rounded" aria-hidden="true">logout</span>
+          ルームを閉じる
+        </button>
       </div>
     </div>
 
@@ -443,6 +448,11 @@
     </div>
     <div class="ptm-label" style="margin-top:24px">参加者</div>
     <div class="ptm-players" id="waiting-player-list"></div>
+    <!-- ゲスト用: 退出（2026-11-08） -->
+    <button type="button" class="btn btn-ghost btn-full ptm-leave" id="btn-waiting-leave" onclick="guestLeave()">
+      <span class="material-symbols-rounded" aria-hidden="true">logout</span>
+      退出する
+    </button>
   </div>
 </div>
 
@@ -498,6 +508,11 @@
         <span class="ptm-hostmenu__note">最終ランキングが出るよ</span>
       </div>
     </details>
+    <!-- ゲスト用: 退出（2026-11-08） -->
+    <button type="button" class="btn btn-ghost btn-full ptm-leave" id="btn-hinting-leave" style="display:none" onclick="guestLeave()">
+      <span class="material-symbols-rounded" aria-hidden="true">logout</span>
+      退出する
+    </button>
   </div>
 </div>
 
@@ -578,6 +593,11 @@
         <span class="ptm-hostmenu__note">最終ランキングが出るよ</span>
       </div>
     </details>
+    <!-- ゲスト用: 退出（2026-11-08） -->
+    <button type="button" class="btn btn-ghost btn-full ptm-leave" id="btn-guessing-leave" style="display:none" onclick="guestLeave()">
+      <span class="material-symbols-rounded" aria-hidden="true">logout</span>
+      退出する
+    </button>
   </div>
 </div>
 
@@ -606,6 +626,11 @@
     <div id="reveal-guest-waiting" class="text-center text-muted mt-lg" style="display:none">
       ホストの操作を待っています…
     </div>
+    <!-- ゲスト用: 退出（2026-11-08） -->
+    <button type="button" class="btn btn-ghost btn-full ptm-leave" id="btn-reveal-leave" style="display:none" onclick="guestLeave()">
+      <span class="material-symbols-rounded" aria-hidden="true">logout</span>
+      退出する
+    </button>
   </div>
 </div>
 
@@ -647,7 +672,7 @@
   <div class="ptm-overlay__countdown" id="host-disconnect-countdown">120</div>
   <p class="ptm-overlay__sub">秒後に自動終了します</p>
   <button class="btn btn-ghost btn-full" style="max-width:280px;margin-top:20px"
-          onclick="leaveGame()">退出する</button>
+          onclick="guestLeave(true)">退出する</button>
 </div>
 
 <script>
@@ -1001,6 +1026,49 @@
       _hostDisconnectTimer = null;
       _hostDisconnectDeadline = null;
     }
+  }
+
+  // 取り消しの返事が来ないとき（通信が切れている）も、少し待ったら先へ進む
+  function settleWithin(promise, ms) {
+    return Promise.race([promise, new Promise(resolve => setTimeout(resolve, ms))]);
+  }
+  const CANCEL_WAIT_MS = 5000;
+
+  // ゲストの退出（自分だけ抜ける。2026-11-08）。skipConfirm はホスト切断の案内からの退出
+  // 自分の players を消すと、遊ぶ人の数から外れる（タブを閉じたときと同じ。進行は 2026-11-07 の
+  //「遊ぶ人が足りなくなったとき」の形でホストが続けられる）。累計得点（scores）は残す
+  async function guestLeave(skipConfirm = false) {
+    if (state.role !== 'guest' || !state.roomRef) { leaveGame(); return; }
+    if (!skipConfirm) {
+      const inGame = !!state.room && state.room.status !== ST.WAITING && state.room.status !== ST.DONE;
+      const msg = inGame
+        ? 'ゲームの途中です。退出しますか？ 退出すると、このゲームにはもどれません'
+        : 'ルームから退出しますか？';
+      if (!confirm(msg)) return;
+    }
+    const ref = state.roomRef;
+    const nick = state.nickname;
+    clearSession();
+    ref.off();
+    // 在室の予約（players/自分 の remove）を取り消してから消す。逆にすると、あとで同じ名前で入った人を
+    // このタブの切断で消してしまう
+    await settleWithin(RoomkRTDB.cancelRoomOnDisconnect(ref), CANCEL_WAIT_MS);
+    ref.child(`players/${nick}`).remove().catch(() => {});
+    leaveGame();
+  }
+
+  // ホストが待合室でルームを閉じる（2026-11-08）。みんなの画面もトップに戻る
+  async function hostCloseRoom() {
+    if (state.role !== 'host' || !state.roomRef) return;
+    if (state.room && state.room.status !== ST.WAITING) return;
+    if (!confirm('ルームを閉じると、みんなの画面もトップに戻るよ。いい？')) return;
+    const ref = state.roomRef;
+    clearSession();
+    ref.off();
+    // 切断の予約（hostConnected:false の update）を取り消してから消す。残すとタブを閉じたときにゴーストができる
+    await settleWithin(RoomkRTDB.cancelRoomOnDisconnect(ref), CANCEL_WAIT_MS);
+    ref.remove().catch(() => {});
+    leaveGame();
   }
 
   function leaveGame(msg) {
@@ -1686,9 +1754,11 @@
 
       if (!room) {
         if (state.currentScreen !== 'done') {
+          // 待合室で消えたときは、ホストが「ルームを閉じる」を押した
+          const closedInWaiting = state.room?.status === ST.WAITING;
           clearSession();
-          alert('ホストが退出したためゲームが終了しました');
           goToTop();
+          alert(closedInWaiting ? 'ホストがルームを閉じました' : 'ホストが退出したためゲームが終了しました');
         }
         return;
       }
@@ -1776,6 +1846,7 @@
     // ホスト: 遊ぶ人が足りないときは理由と「ここで終わる」を出す。ふだんは「そのほかの操作」にたたむ
     document.getElementById('hinting-few').style.display = (isHost && few) ? 'block' : 'none';
     document.getElementById('hinting-host-menu').style.display = (isHost && !few) ? 'block' : 'none';
+    document.getElementById('btn-hinting-leave').style.display = state.role === 'guest' ? '' : 'none';
   }
 
   // ── guessing ──
@@ -1844,6 +1915,7 @@
     }
     document.getElementById('guessing-few').style.display = (isHost && noAnswerers) ? 'block' : 'none';
     document.getElementById('guessing-host-menu').style.display = (isHost && !noAnswerers) ? 'block' : 'none';
+    document.getElementById('btn-guessing-leave').style.display = state.role === 'guest' ? '' : 'none';
     if (isHost) {
       document.getElementById('btn-reveal').style.display = noAnswerers ? 'none' : '';
       document.getElementById('reveal-hint').style.display = noAnswerers ? 'none' : '';
@@ -1902,6 +1974,7 @@
     }
     document.getElementById('reveal-guest-waiting').style.display =
       state.role === 'guest' ? 'block' : 'none';
+    document.getElementById('btn-reveal-leave').style.display = state.role === 'guest' ? '' : 'none';
   }
 
   // ── done ──
@@ -2049,7 +2122,7 @@
         '結果発表で、ターゲットに近かった人ほど点が入る（ずれ5以内 +3点 / 12以内 +2点 / 25以内 +1点）',
         '出題者のラウンドは出題者に点は入らない。出題は順番に回ってくるよ',
       ] },
-      { heading: '終わりかた', text: 'ラウンドをくりかえして、ホストが「終わる」を押すと最終ランキングが出ておしまい。ヒントや回答の途中でも、ホストは「そのほかの操作」の「ここで終わる」で終わりにできる。' },
+      { heading: '終わりかた', text: 'ラウンドをくりかえして、ホストが「終わる」を押すと最終ランキングが出ておしまい。ヒントや回答の途中でも、ホストは「そのほかの操作」の「ここで終わる」で終わりにできる。始める前にやめるときは、ホストは待合室の「ルームを閉じる」を押す。参加した人は「退出する」でいつでも抜けられる。' },
     ],
   });
 </script>
