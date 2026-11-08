@@ -144,7 +144,8 @@ bash scripts/lint.sh
 ```
 
 セキュリティ・規約違反・ポータル整合を機械チェックする。**エラー0・新規警告なしが基準**（現在は警告ゼロで通る状態を維持している）。
-RTDB アプリを新規追加したら `scripts/lint.sh` の `RTDB_HTML_FILES` 配列にも追加する。
+RTDB アプリを新規追加したら `scripts/lint.sh` の `RTDB_HTML_FILES` 配列にも追加し、公開の前に `database.rules.json` へ `{appname}_rooms` を足す（2026-11-08 からルールは名前空間の一覧。変更禁止パスなのでオーナーの承認のもとで。[firebase.md](docs/development/firebase.md)）。
+2026-11 の全観点の点検で決まったこと・確かめるときの落とし穴は [audit-2026-11-summary.md](docs/reports/audit-2026-11-summary.md)。次の点検や同じ所を触る前に読む。
 
 お題・問題などのコンテンツを触った場合は重複監査も実行する。
 

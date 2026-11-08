@@ -58,6 +58,12 @@
 - 読み書きには匿名認証（`auth != null`）が必要。アプリ側は `signInAnonymously` の完了を **await してから** RTDB にアクセスする（rtdb-utils.js の `authReady` を使用）
 - ルームやセッションデータはゲーム・セッション終了後に削除する
 
+### 確かめるときの落とし穴（2026-11-08）
+
+- **隔離エミュレーターは、`firebase.json` のルールを自動では当てないことがある。** `?ns=demo-…` への読み書きが、未ログインでも通ってしまった。ルールを確かめるときは `PUT {DB}/.settings/rules.json?ns=…`（`Authorization: Bearer owner`）で明示的に読み込ませてから試す（`tests/feedback/e2e.cjs` と同じ）。
+- **本番の API キーにはリファラー制限がある。** REST で匿名ログイン（`accounts:signUp`）するときは `Referer: https://tagiiii.github.io/roomk-tools/` を付ける。付けないと ID トークンが取れず、書けるはずの所まですべて 401 に見える。
+- 本番のルールの中身は、フィードバック用のサービスアカウントで `GET {DB}/.settings/rules.json` を読んで、リポジトリと突き合わせられる（読むだけ）。同時接続などの使用状況はこの鍵では読めない（Cloud Monitoring の権限がない）ので、Firebase コンソールで見る。
+
 ### API キー
 
 `AIzaSyC0bqQdDJeTAWrqFYqjOT1NsVFiunPemIw`
