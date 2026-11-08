@@ -1215,16 +1215,22 @@
     }
 
     // 前の入力が残っているときは、中身を出す前に「つづきから」か「まっさら」を選ぶ
+    let startedFromResume = false;
     if (hasSavedData()) {
       document.getElementById('kgResume').hidden = false;
       document.getElementById('kgResumeContinue').addEventListener('click', () => {
+        if (startedFromResume) return;
+        startedFromResume = true;
         load();
         start();
-      }, { once: true });
+      });
       document.getElementById('kgResumeFresh').addEventListener('click', () => {
+        if (startedFromResume) return;
+        if (!confirm('前に入れたもの（タグ・キャパライン・すべての週）を消して、まっさらではじめますか？')) return;
+        startedFromResume = true;
         clearSaved();
         start();
-      }, { once: true });
+      });
     } else {
       load();
       start();

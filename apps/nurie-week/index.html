@@ -527,16 +527,22 @@
     }
 
     // 前の入力が残っているときは、中身を出す前に「つづきから」か「まっさら」を選ぶ
+    let startedFromResume = false;
     if (hasSavedCells()) {
       document.getElementById('nwResume').hidden = false;
       document.getElementById('btnResume').addEventListener('click', () => {
+        if (startedFromResume) return;
+        startedFromResume = true;
         load();
         start();
-      }, { once: true });
+      });
       document.getElementById('btnFresh').addEventListener('click', () => {
+        if (startedFromResume) return;
+        if (!confirm('前に塗ったものを消して、まっさらではじめますか？')) return;
+        startedFromResume = true;
         clearSaved();
         start();
-      }, { once: true });
+      });
     } else {
       start();
     }
