@@ -55,6 +55,8 @@
 | `data-self` | `outside`（外の題材で遊べる）／`little`（自分のことを少し話す）／`center`（自分のことを話すのが中心） |
 
 19本の値と決めた根拠は [sakusen-conditions-draft-2026-11-08.md](../reports/sakusen-conditions-draft-2026-11-08.md)。
+
+そのアプリの `AGENTS.md` にも「セッション条件（ツール一覧のカードと同じ）」の欄を置き、人数・目安時間・利用シーン・話す量・自分の話をカードと同じ値で書く（2026-11-08 P7。カードを変えたら欄も変える）。
 同じく必須の `data-added` は公開日（`YYYY-MM-DD`。`updates.json` の `"new"` と同じ日）、`data-genre` は下の表の種類で、どちらも並び順に使う（lint PORTAL-2 で検証）。
 
 選択中の種類とシーンは URL ハッシュと同期する（例: `…/apps/#scene=bodoge`、`…/apps/#genre=kotoba&scene=bodoge`）。
