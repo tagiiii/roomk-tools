@@ -222,6 +222,12 @@
       }
     }
 
+    /* 話す量・自分の話は選ぶ言葉が長いので、1行を使う（2026-11-08） */
+    .tool-size__item--wide {
+      grid-column: 1 / -1;
+      max-width: 456px;
+    }
+
     .tool-size__field {
       position: relative;
     }
@@ -1083,7 +1089,7 @@
       }
     }
 
-    /* ── くわしく絞り込む（利用シーン・人数・目安時間）── */
+    /* ── くわしく絞り込む（利用シーン・人数・目安時間・話す量・自分の話）── */
     .more-filter__toggle {
       display: inline-flex;
       flex-shrink: 0;
@@ -1867,6 +1873,31 @@
             <span class="material-symbols-rounded tool-size__arrow" aria-hidden="true">expand_more</span>
           </div>
         </div>
+        <div class="tool-size__item tool-size__item--wide">
+          <label class="form-label tool-filter__label" for="filter-speech">話す量</label>
+          <div class="tool-size__field">
+            <select class="form-select tool-size__select" id="filter-speech">
+            <option value="">指定なし</option>
+            <option value="pick">選ぶだけ</option>
+            <option value="short">ひとことで</option>
+            <option value="talk">話す・説明する</option>
+            <option value="silent">話さなくてよい</option>
+            </select>
+            <span class="material-symbols-rounded tool-size__arrow" aria-hidden="true">expand_more</span>
+          </div>
+        </div>
+        <div class="tool-size__item tool-size__item--wide">
+          <label class="form-label tool-filter__label" for="filter-self">自分の話</label>
+          <div class="tool-size__field">
+            <select class="form-select tool-size__select" id="filter-self">
+            <option value="">指定なし</option>
+            <option value="outside">外の題材で遊べる</option>
+            <option value="little">自分のことを少し話す</option>
+            <option value="center">自分のことを話すのが中心</option>
+            </select>
+            <span class="material-symbols-rounded tool-size__arrow" aria-hidden="true">expand_more</span>
+          </div>
+        </div>
       </div>
       </div>
 
@@ -2158,7 +2189,7 @@
 
         <!-- かぶらずヒント -->
         <!-- ことばメーター -->
-        <a class="app-card" href="kotoba-meter/" data-added="2026-10-20" data-genre="kotoba" data-slides data-scenes="kotoba bodoge sakusen" data-keywords="程度、たとえ、感じ方、1対1">
+        <a class="app-card" href="kotoba-meter/" data-added="2026-10-20" data-genre="kotoba" data-slides data-scenes="kotoba bodoge sakusen" data-speech="pick short silent" data-self="outside" data-keywords="程度、たとえ、感じ方、1対1">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">tune</span>
             <img class="app-card__illust" src="assets/illustrations/kotoba-meter.webp" alt="" width="400" height="400" loading="lazy" decoding="async" />
@@ -2396,7 +2427,7 @@
         </a>
 
         <!-- トークテーマカード -->
-        <a class="app-card" href="talk-card/" data-added="2026-03-25" data-genre="talk" data-scenes="circle hiroba sakusen" data-keywords="1対1、雑談、話題">
+        <a class="app-card" href="talk-card/" data-added="2026-03-25" data-genre="talk" data-scenes="circle hiroba sakusen" data-speech="talk" data-self="center" data-keywords="1対1、雑談、話題">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">style</span>
             <img class="app-card__illust" src="assets/illustrations/talk-card.webp" alt="" width="400" height="400" loading="lazy" decoding="async" />
@@ -2452,7 +2483,7 @@
         </a>
 
         <!-- どっちにする？ -->
-        <a class="app-card" href="docchi/" data-added="2026-07-04" data-genre="talk" data-scenes="sakusen" data-keywords="1対1、2択">
+        <a class="app-card" href="docchi/" data-added="2026-07-04" data-genre="talk" data-scenes="sakusen" data-speech="pick short" data-self="little" data-keywords="1対1、2択">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">alt_route</span>
             <img class="app-card__illust" src="assets/illustrations/docchi.webp" alt="" width="400" height="400" loading="lazy" decoding="async" />
@@ -2480,7 +2511,7 @@
         </a>
 
         <!-- すきタイプチェック -->
-        <a class="app-card" href="suki-type-check/" data-added="2026-07-30" data-genre="talk" data-scenes="sakusen" data-old-names="すきなことマップ" data-keywords="1対1、診断、好き">
+        <a class="app-card" href="suki-type-check/" data-added="2026-07-30" data-genre="talk" data-scenes="sakusen" data-speech="pick talk" data-self="center" data-old-names="すきなことマップ" data-keywords="1対1、診断、好き">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">fact_check</span>
             <img class="app-card__illust" src="assets/illustrations/suki-type-check.webp" alt="" width="400" height="400" loading="lazy" decoding="async" />
@@ -2508,7 +2539,7 @@
         </a>
 
         <!-- わたし、ぼくってどんな人？ -->
-        <a class="app-card" href="donna-hito/" data-added="2026-11-05" data-genre="talk" data-scenes="sakusen" data-yomi="わたしぼくってどんなひと" data-keywords="1対1、自己理解">
+        <a class="app-card" href="donna-hito/" data-added="2026-11-05" data-genre="talk" data-scenes="sakusen" data-speech="pick talk" data-self="center" data-yomi="わたしぼくってどんなひと" data-keywords="1対1、自己理解">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">contrast</span>
             <img class="app-card__illust" src="assets/illustrations/donna-hito.webp" alt="" width="400" height="400" loading="lazy" decoding="async" />
@@ -2536,7 +2567,7 @@
         </a>
 
         <!-- つよみカード -->
-        <a class="app-card" href="tsuyomi-card/" data-added="2026-07-05" data-genre="talk" data-scenes="sakusen" data-keywords="1対1、強み、自己理解">
+        <a class="app-card" href="tsuyomi-card/" data-added="2026-07-05" data-genre="talk" data-scenes="sakusen" data-speech="pick talk" data-self="center" data-keywords="1対1、強み、自己理解">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">flare</span>
             <img class="app-card__illust" src="assets/illustrations/tsuyomi-card.webp" alt="" width="400" height="400" loading="lazy" decoding="async" />
@@ -2762,7 +2793,7 @@
         </a>
 
         <!-- え!? 実は○○なんですかゲーム -->
-        <a class="app-card" href="jitsuwa-game/" data-added="2026-03-31" data-genre="suiri" data-scenes="circle hiroba sakusen" data-yomi="えじつはまるまるなんですかげーむ" data-keywords="1対1、推理、自己紹介">
+        <a class="app-card" href="jitsuwa-game/" data-added="2026-03-31" data-genre="suiri" data-scenes="circle hiroba sakusen" data-speech="short talk" data-self="little" data-yomi="えじつはまるまるなんですかげーむ" data-keywords="1対1、推理、自己紹介">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">search_insights</span>
             <img class="app-card__illust" src="assets/illustrations/jitsuwa-game.webp" alt="" width="400" height="400" loading="lazy" decoding="async" />
@@ -2790,7 +2821,7 @@
         </a>
 
         <!-- たとえならべ -->
-        <a class="app-card" href="tatoe-narabe/" data-added="2026-04-02" data-genre="atekko" data-slides data-scenes="kotoba bodoge circle sakusen" data-keywords="1対1、数字、協力">
+        <a class="app-card" href="tatoe-narabe/" data-added="2026-04-02" data-genre="atekko" data-slides data-scenes="kotoba bodoge circle sakusen" data-speech="talk" data-self="outside" data-keywords="1対1、数字、協力">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">filter_1</span>
             <img class="app-card__illust" src="assets/illustrations/tatoe-narabe.webp" alt="" width="400" height="400" loading="lazy" decoding="async" />
@@ -3014,7 +3045,7 @@
         </a>
 
         <!-- カギあわせ -->
-        <a class="app-card" href="kagi-awase/" data-added="2026-10-03" data-genre="atekko" data-slides data-scenes="bodoge sakusen" data-yomi="かぎあわせ" data-keywords="1対1、数字、推理、協力">
+        <a class="app-card" href="kagi-awase/" data-added="2026-10-03" data-genre="atekko" data-slides data-scenes="bodoge sakusen" data-speech="pick silent" data-self="outside" data-yomi="かぎあわせ" data-keywords="1対1、数字、推理、協力">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">key</span>
             <img class="app-card__illust" src="assets/illustrations/kagi-awase.webp" alt="" width="400" height="400" loading="lazy" decoding="async" />
@@ -3070,7 +3101,7 @@
         </a>
 
         <!-- 気持ち当てゲーム -->
-        <a class="app-card" href="kimochi-ate/" data-added="2026-09-26" data-genre="atekko" data-slides data-scenes="circle sakusen bodoge" data-yomi="きもちあてげーむ" data-old-names="きもちのことばマップ" data-keywords="1対1、感情、気持ち">
+        <a class="app-card" href="kimochi-ate/" data-added="2026-09-26" data-genre="atekko" data-slides data-scenes="circle sakusen bodoge" data-speech="pick silent" data-self="little" data-yomi="きもちあてげーむ" data-old-names="きもちのことばマップ" data-keywords="1対1、感情、気持ち">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">mood</span>
             <img class="app-card__illust" src="assets/illustrations/kimochi-ate.webp" alt="" width="400" height="400" loading="lazy" decoding="async" />
@@ -3210,7 +3241,7 @@
         </a>
 
         <!-- リバーシ -->
-        <a class="app-card" href="reversi/" data-added="2026-10-25" data-genre="board" data-slides data-scenes="bodoge hiroba sakusen" data-keywords="1対1、盤ゲーム、定番、対戦、観戦">
+        <a class="app-card" href="reversi/" data-added="2026-10-25" data-genre="board" data-slides data-scenes="bodoge hiroba sakusen" data-speech="pick silent" data-self="outside" data-keywords="1対1、盤ゲーム、定番、対戦、観戦">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">contrast</span>
             <img class="app-card__illust" src="assets/illustrations/reversi.webp" alt="" width="400" height="400" loading="lazy" decoding="async" />
@@ -3237,7 +3268,7 @@
           </div>
         </a>
         <!-- ちゃりんバトン -->
-        <a class="app-card" href="charin-baton/" data-added="2026-11-04" data-genre="puzzle" data-slides data-scenes="bodoge hiroba sakusen" data-keywords="1対1、お金、硬貨、対戦、勝ち残り、持ち時間、ひとり">
+        <a class="app-card" href="charin-baton/" data-added="2026-11-04" data-genre="puzzle" data-slides data-scenes="bodoge hiroba sakusen" data-speech="short silent" data-self="outside" data-keywords="1対1、お金、硬貨、対戦、勝ち残り、持ち時間、ひとり">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">toll</span>
             <img class="app-card__illust" src="assets/illustrations/charin-baton.webp" alt="" width="400" height="400" loading="lazy" decoding="async" />
@@ -3319,7 +3350,7 @@
         </a>
 
         <!-- みんなでランキング -->
-        <a class="app-card" href="minna-ranking/" data-added="2026-07-06" data-genre="talk" data-slides data-scenes="hiroba sakusen" data-keywords="順位、予想">
+        <a class="app-card" href="minna-ranking/" data-added="2026-07-06" data-genre="talk" data-slides data-scenes="hiroba sakusen" data-speech="pick silent" data-self="little" data-keywords="順位、予想">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">format_list_numbered</span>
             <img class="app-card__illust" src="assets/illustrations/minna-ranking.webp" alt="" width="400" height="400" loading="lazy" decoding="async" />
@@ -3347,7 +3378,7 @@
         </a>
 
         <!-- 興味スゴロク -->
-        <a class="app-card" href="kyoumi-sugoroku/" data-added="2026-04-07" data-genre="talk" data-scenes="hiroba sakusen" data-yomi="きょうみすごろく" data-keywords="1対1、すごろく、好き">
+        <a class="app-card" href="kyoumi-sugoroku/" data-added="2026-04-07" data-genre="talk" data-scenes="hiroba sakusen" data-speech="pick talk" data-self="center" data-yomi="きょうみすごろく" data-keywords="1対1、すごろく、好き">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">casino</span>
             <img class="app-card__illust" src="assets/illustrations/kyoumi-sugoroku.webp" alt="" width="400" height="400" loading="lazy" decoding="async" />
@@ -3375,7 +3406,7 @@
         </a>
 
         <!-- 塗り絵カレンダー -->
-        <a class="app-card" href="nurie-week/" data-added="2026-05-26" data-genre="talk" data-scenes="sakusen" data-yomi="ぬりえかれんだー" data-keywords="1対1、1週間、ふりかえり">
+        <a class="app-card" href="nurie-week/" data-added="2026-05-26" data-genre="talk" data-scenes="sakusen" data-speech="pick talk" data-self="center" data-yomi="ぬりえかれんだー" data-keywords="1対1、1週間、ふりかえり">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">calendar_view_week</span>
             <img class="app-card__illust" src="assets/illustrations/nurie-week.webp" alt="" width="400" height="400" loading="lazy" decoding="async" />
@@ -3403,7 +3434,7 @@
         </a>
 
         <!-- バリューカード -->
-        <a class="app-card" href="value-card/" data-added="2026-04-10" data-genre="talk" data-scenes="sakusen" data-keywords="1対1、価値観、大事">
+        <a class="app-card" href="value-card/" data-added="2026-04-10" data-genre="talk" data-scenes="sakusen" data-speech="pick talk" data-self="center" data-keywords="1対1、価値観、大事">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">favorite</span>
             <img class="app-card__illust" src="assets/illustrations/value-card.webp" alt="" width="400" height="400" loading="lazy" decoding="async" />
@@ -3431,7 +3462,7 @@
         </a>
 
         <!-- いくつ言える？ -->
-        <a class="app-card" href="ikutsu-ieru/" data-added="2026-04-21" data-genre="kotoba" data-slides data-scenes="circle hiroba sakusen" data-yomi="いくついえる" data-keywords="1対1、書き出し、お題">
+        <a class="app-card" href="ikutsu-ieru/" data-added="2026-04-21" data-genre="kotoba" data-slides data-scenes="circle hiroba sakusen" data-speech="short silent" data-self="little" data-yomi="いくついえる" data-keywords="1対1、書き出し、お題">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">format_list_numbered</span>
             <img class="app-card__illust" src="assets/illustrations/ikutsu-ieru.webp" alt="" width="400" height="400" loading="lazy" decoding="async" />
@@ -3459,7 +3490,7 @@
         </a>
 
         <!-- キャパグラフ -->
-        <a class="app-card" href="kyapa-graph/" data-added="2026-05-26" data-genre="talk" data-scenes="sakusen" data-keywords="1対1、頑張りすぎ、負荷">
+        <a class="app-card" href="kyapa-graph/" data-added="2026-05-26" data-genre="talk" data-scenes="sakusen" data-speech="pick talk" data-self="center" data-keywords="1対1、頑張りすぎ、負荷">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">monitoring</span>
             <img class="app-card__illust" src="assets/illustrations/kyapa-graph.webp" alt="" width="400" height="400" loading="lazy" decoding="async" />
@@ -3487,7 +3518,7 @@
         </a>
 
         <!-- キャリアすごろく -->
-        <a class="app-card" href="career-sugoroku/" data-added="2026-09-30" data-genre="talk" data-slides data-scenes="bodoge sakusen" data-keywords="1対1、仕事、職業">
+        <a class="app-card" href="career-sugoroku/" data-added="2026-09-30" data-genre="talk" data-slides data-scenes="bodoge sakusen" data-speech="pick silent" data-self="outside" data-keywords="1対1、仕事、職業">
           <div class="app-card__icon">
             <span class="material-symbols-rounded" aria-hidden="true">signpost</span>
             <img class="app-card__illust" src="assets/illustrations/career-sugoroku.webp" alt="" width="400" height="400" loading="lazy" decoding="async" />
@@ -3879,6 +3910,13 @@
       const cardMinutes = cards.map(parseMinutes);
       const peopleSelect = document.getElementById('filter-people');
       const timeSelect = document.getElementById('filter-time');
+      // 話す量・自分の話（2026-11-08 P-33・P-34。作戦会議の札のカードだけが data-speech・data-self を持つ）。
+      // 値のないカードは「記載なし」として、どちらかを選んだときは隠す
+      const speechSelect = document.getElementById('filter-speech');
+      const selfSelect = document.getElementById('filter-self');
+      const cardSpeech = cards.map((card) => (card.dataset.speech || '').split(/\s+/).filter(Boolean));
+      const cardSelf = cards.map((card) => (card.dataset.self || '').split(/\s+/).filter(Boolean));
+      const sizeSelects = [peopleSelect, timeSelect, speechSelect, selfSelect];
 
       function sizeMatch(i) {
         const people = Number(peopleSelect.value);
@@ -3886,6 +3924,8 @@
         const range = cardPeople[i];
         if (people && range && (people < range.min || people > range.max)) return false;
         if (minutes && cardMinutes[i] !== null && cardMinutes[i] > minutes) return false;
+        if (speechSelect.value && !cardSpeech[i].includes(speechSelect.value)) return false;
+        if (selfSelect.value && !cardSelf[i].includes(selfSelect.value)) return false;
         return true;
       }
 
@@ -3902,7 +3942,7 @@
       function applyFilters() {
         const query = searchInput.value.trim();
         const terms = normalize(query).split(/\s+/).filter(Boolean).map(expandTerm);
-        const sizeSet = Boolean(peopleSelect.value || timeSelect.value);
+        const sizeSet = sizeSelects.some((select) => Boolean(select.value));
         let visibleCount = 0;
         let textMatchCount = 0;
         let withoutSizeCount = 0;
@@ -3920,10 +3960,10 @@
           if (textMatch && genreMatch && sizeOk) withoutSceneCount += 1;
           if (!card.hidden) visibleCount += 1;
         });
-        [peopleSelect, timeSelect].forEach((select) => select.classList.toggle('is-set', Boolean(select.value)));
+        sizeSelects.forEach((select) => select.classList.toggle('is-set', Boolean(select.value)));
 
         // 「くわしく絞り込む」の中で指定しているものの数。指定があるときは開いておく（たたむこともできる）
-        const moreCount = (currentScene !== 'all' ? 1 : 0) + (peopleSelect.value ? 1 : 0) + (timeSelect.value ? 1 : 0);
+        const moreCount = (currentScene !== 'all' ? 1 : 0) + sizeSelects.filter((select) => select.value).length;
         moreFilterState.hidden = moreCount === 0;
         moreFilterState.textContent = moreCount + 'つ指定中';
         if (moreCount > 0 && moreCount > lastMoreCount) setMoreOpen(true);
@@ -3936,9 +3976,9 @@
             emptyButton.textContent = '検索をクリア';
             emptyAction = 'clear-search';
           } else if (sizeSet && withoutSizeCount > 0) {
-            emptyTitle.textContent = 'この人数・時間に合うツールがありません';
-            emptyDesc.textContent = `人数・時間の指定をはずすと ${withoutSizeCount}件 見つかります。`;
-            emptyButton.textContent = '人数・時間の指定をはずす';
+            emptyTitle.textContent = 'この条件に合うツールがありません';
+            emptyDesc.textContent = `人数・時間・話す量・自分の話の指定をはずすと ${withoutSizeCount}件 見つかります。`;
+            emptyButton.textContent = '人数・時間などの指定をはずす';
             emptyAction = 'clear-size';
           } else if (currentGenre !== 'all' && withoutGenreCount > 0) {
             const popular = currentGenre === 'popular';
@@ -4223,12 +4263,11 @@
         }
       });
 
-      [peopleSelect, timeSelect].forEach((select) => select.addEventListener('change', applyFilters));
+      sizeSelects.forEach((select) => select.addEventListener('change', applyFilters));
 
       emptyButton.addEventListener('click', () => {
         if (emptyAction === 'clear-size') {
-          peopleSelect.value = '';
-          timeSelect.value = '';
+          sizeSelects.forEach((select) => { select.value = ''; });
           applyFilters();
           peopleSelect.focus();
         } else if (emptyAction === 'clear-search') {
@@ -4250,8 +4289,7 @@
 
       resultClear.addEventListener('click', () => {
         searchInput.value = '';
-        peopleSelect.value = '';
-        timeSelect.value = '';
+        sizeSelects.forEach((select) => { select.value = ''; });
         setScene('all');
         setGenre('all');
         syncHash();
