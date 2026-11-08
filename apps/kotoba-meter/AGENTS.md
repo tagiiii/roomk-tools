@@ -6,6 +6,18 @@
 
 Firebase Realtime Database + 匿名認証。単一 `index.html` にCSS/JSを収録し、`RoomkRTDB.initFirebase()`・サーバー時刻補正・共通CSS・howto・stats を使う。説明スライドは `slides.html`、E2E は `tests/kotoba-meter/`。
 
+## セッション条件（ツール一覧のカードと同じ。2026-11-08）
+
+スタッフがツールを選ぶときの条件。値はツール一覧（`apps/index.html`）のカードの札・`data-scenes`・`data-speech`・`data-self` と同じにする（話す量・自分の話は P-33・P-34 で承認。決めた根拠は [sakusen-conditions-draft-2026-11-08.md](../../docs/reports/sakusen-conditions-draft-2026-11-08.md)）。変えるときはカードと一緒に変える。子ども向けの画面には出さない。
+
+| 項目 | 値 |
+|---|---|
+| 人数 | 2〜20人 |
+| 目安時間 | 1ラウンド2〜3分 |
+| 利用シーン | コトバであそぼ！・ボドゲクラブ・作戦会議 |
+| 話す量 | 選ぶだけ・ひとことで・話さなくてよい |
+| 自分の話 | 外の題材で遊べる |
+
 ## 遊び方（ルール）
 
 ### ラウンドの流れ
