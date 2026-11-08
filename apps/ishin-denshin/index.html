@@ -12,7 +12,7 @@
   <!-- 共通デザインシステム -->
   <link rel="stylesheet" href="../shared/css/design-system.css?v=20261106c" />
   <!-- アプリ固有スタイル -->
-  <link rel="stylesheet" href="style.css?v=20261106look" />
+  <link rel="stylesheet" href="style.css?v=20261108p5" />
 </head>
 <body data-genre="kotoba">
 
@@ -58,6 +58,7 @@
       <div class="isd-card-grid" id="candidateGrid"></div>
 
       <p class="isd-pool-info" id="poolInfo"></p>
+      <button type="button" class="btn btn-ghost isd-quit" data-quit>ここでおしまい</button>
     </div>
 
     <!-- ===== お題表示画面 ===== -->
@@ -86,6 +87,7 @@
             <span class="material-symbols-rounded" aria-hidden="true">arrow_forward</span> 次のラウンドへ
           </button>
         </div>
+        <button type="button" class="btn btn-ghost isd-quit" data-quit>ここでおしまい</button>
       </div>
     </div>
 
@@ -129,7 +131,7 @@
             'かぶらなかった人の勝ち。たしかめたら「次のラウンドへ」を押す',
           ],
         },
-        { heading: 'おわりかた', text: '最後のラウンドで「結果発表へ」を押すとおしまい。「もう一度遊ぶ」でつづけてあそべる。' },
+        { heading: 'おわりかた', text: '最後のラウンドで「結果発表へ」を押すとおしまい。途中で終えるときは「ここでおしまい」。「もう一度遊ぶ」でつづけてあそべる。' },
       ],
     });
   </script>

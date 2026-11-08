@@ -237,6 +237,16 @@ function handleNext() {
   }
 }
 
+// ── 途中でおしまい（お題選択・お題表示の画面から。選んだラウンド数を最後まで送らなくてよい）──
+function finishEarly() {
+  // お題選択の画面ではそのラウンドはまだ遊んでいない
+  const onSelect = document.getElementById('screen-select').classList.contains('active');
+  const played = onSelect ? currentRound - 1 : currentRound;
+  document.getElementById('finalRounds').textContent = played > 0 ? `${played} ラウンドあそんだ` : '';
+  showScreen('final');
+  popIn(document.querySelector('.isd-final'));
+}
+
 // ── 最初からやり直す ──
 function restart() {
   showScreen('top');
@@ -250,3 +260,4 @@ document.getElementById('btnCopy').addEventListener('click', function () {
 });
 document.getElementById('btnRestart').addEventListener('click', restart);
 document.getElementById('btnBackToTop').addEventListener('click', restart);
+document.querySelectorAll('[data-quit]').forEach((btn) => btn.addEventListener('click', finishEarly));
