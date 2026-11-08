@@ -1,0 +1,81 @@
+{
+  "date": "2026-11-16",
+  "weekday": "月曜日",
+  "source": "room-K ポータル（Notion）",
+  "url": "https://katariba.notion.site/room-K-277e1247489c4bbe979b0322df284a73",
+  "items": [
+    {
+      "start": "9:30",
+      "end": "10:15",
+      "name": "ボドゲクラブ",
+      "place": "クラブルーム",
+      "once": false,
+      "thumb": "https://katariba.notion.site/image/attachment%3Ae5aadb72-aedc-4d89-b7cd-72adf7b9109d%3A%E3%82%A2%E3%83%BC%E3%83%88%E3%83%9B%E3%82%99%E3%83%BC%E3%83%88%E3%82%99_1.png?table=block&id=86e5e2da-6ad7-828b-b45b-8124012a4d89&spaceId=ed7047d7-c3e4-46ea-8121-b48641fcbc75&width=480&cache=v2"
+    },
+    {
+      "start": "9:30",
+      "end": "10:15",
+      "name": "ほわぽかひろば",
+      "place": "のんびり",
+      "once": false,
+      "thumb": "https://katariba.notion.site/image/attachment%3A264f7fb6-f691-436f-8447-a1e9721a56d0%3A%E3%82%B5%E3%83%A0%E3%83%8D202610.jpg?table=block&id=3a55e2da-6ad7-8041-9496-e6360c85914d&spaceId=ed7047d7-c3e4-46ea-8121-b48641fcbc75&width=480&cache=v2"
+    },
+    {
+      "start": "10:30",
+      "end": "11:15",
+      "name": "マイクラde理科",
+      "place": "",
+      "once": false,
+      "thumb": "https://katariba.notion.site/image/https%3A%2F%2Fs3-us-west-2.amazonaws.com%2Fsecure.notion-static.com%2F3e808a76-a7b6-4104-a4a2-4e2272cba98e%2F%25E3%2583%259E%25E3%2582%25A4%25E3%2582%25AF%25E3%2583%25A9%25E7%2590%2586%25E7%25A7%2591.jpeg?table=block&id=36f5e2da-6ad7-8273-be6e-81cf9dc2daa2&spaceId=ed7047d7-c3e4-46ea-8121-b48641fcbc75&width=480&cache=v2"
+    },
+    {
+      "start": "10:30",
+      "end": "11:15",
+      "name": "おとマルシェ",
+      "place": "クラブルーム",
+      "once": false,
+      "thumb": "https://katariba.notion.site/image/attachment%3Ae751c468-169d-4aa1-bffa-e385aef24fa6%3A%E3%81%8A%E3%81%A8%E3%83%9E%E3%83%AB%E3%82%B7%E3%82%A7%E3%82%B5%E3%83%A0%E3%83%8D%E3%82%A4%E3%83%AB.png?table=block&id=3f45e2da-6ad7-8062-b136-ca3c4f3d08ec&spaceId=ed7047d7-c3e4-46ea-8121-b48641fcbc75&width=480&cache=v2"
+    },
+    {
+      "start": "11:30",
+      "end": "12:15",
+      "name": "まなP",
+      "place": "スタディルーム",
+      "once": false,
+      "thumb": "https://katariba.notion.site/image/attachment%3Aafdc2089-2881-4f1b-9092-4d79953b10f2%3ABeige_and_Orange_Illustrative_Group_Project_Presentation_(1).png?table=block&id=6d65e2da-6ad7-8246-8aa5-01ae35a8fd46&spaceId=ed7047d7-c3e4-46ea-8121-b48641fcbc75&width=480&cache=v2"
+    },
+    {
+      "start": "11:30",
+      "end": "12:15",
+      "name": "ここよしの部屋",
+      "place": "のんびり",
+      "once": false,
+      "thumb": "https://katariba.notion.site/image/attachment%3A58af819b-0eff-4efe-a7a8-84d6be2161e8%3A%E3%81%93%E3%81%93%E3%82%88%E3%81%97_%E3%81%AE_%E9%83%A8%E5%B1%8B.png?table=block&id=3a55e2da-6ad7-80e8-b163-e7660e0ed15e&spaceId=ed7047d7-c3e4-46ea-8121-b48641fcbc75&width=480&cache=v2"
+    },
+    {
+      "start": "13:00",
+      "end": "13:45",
+      "name": "マイスタ!(My Study)",
+      "place": "スタディルーム",
+      "once": false,
+      "thumb": "https://katariba.notion.site/image/attachment%3Ac62bca2b-1d16-4695-b383-bb63a161aaf5%3ARed_and_Blue_Illustrative_Cute_Study_Group_Project_Presentation_(2).png?table=block&id=49b5e2da-6ad7-820a-b6fa-8131c59b54c9&spaceId=ed7047d7-c3e4-46ea-8121-b48641fcbc75&width=480&cache=v2"
+    },
+    {
+      "start": "13:00",
+      "end": "13:45",
+      "name": "マイクラde英語(第3月曜)",
+      "place": "",
+      "once": false,
+      "thumb": "https://katariba.notion.site/image/attachment%3A1a0efbea-a04f-4458-b7ea-88afd513cb65%3Aimage.png?table=block&id=3a55e2da-6ad7-805e-9864-fbee2e0292dc&spaceId=ed7047d7-c3e4-46ea-8121-b48641fcbc75&width=480&cache=v2"
+    },
+    {
+      "start": "13:00",
+      "end": "13:45",
+      "name": "\"じぶん”探検",
+      "place": "のんびり",
+      "once": false,
+      "thumb": "https://katariba.notion.site/image/attachment%3Add3eb71c-5b49-458b-b60a-597d170ce73a%3ABeing_Mindful.jpg?table=block&id=3a55e2da-6ad7-80bb-9411-f3425bd5c656&spaceId=ed7047d7-c3e4-46ea-8121-b48641fcbc75&width=480&cache=v2"
+    }
+  ],
+  "at": "2026-11-08T11:28:12.587Z"
+}
