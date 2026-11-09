@@ -13,6 +13,7 @@
 | `lib.cjs` | 共通の部品（配信用サーバー・本番あて通信の検出・画面の操作） |
 | `sync-site.sh` | `apps/shared` と `apps/suton-block` を作業フォルダに写し、エミュレーター向けに差し替える |
 | `e2e5.cjs` | じゃまを送る相手を選ぶ（2026-11-09）: ほかの人の盤がボタンになる・はじめは並びのつぎの人・押した人に届く（つぎの人には届かない）・もう一度押すともどる・読み込み直すともどる・375px は名前の一覧で選ぶ（はみ出さない）・ここまでの人は押せない |
+| `e2e6.cjs` | 効果音（2026-11-09）: はじめは切・切のまま置いても音の部品を作らない・入にすると端末に残り見本を1回・読み込み直しても入・置いたら低い音・待合室はホストと参加者に出てみんなにみせる画面には出ない・ルームに書かない・切の人は鳴らない |
 | `firebase.json` | エミュレーターのポート（auth 9771・database 9772・hub 4775・logging 4776）。配信は 6771 |
 
 ## 実行
@@ -36,6 +37,7 @@ node tests/suton-block/e2e2.cjs
 node tests/suton-block/e2e3.cjs
 node tests/suton-block/e2e4.cjs
 node tests/suton-block/e2e5.cjs
+node tests/suton-block/e2e6.cjs
 ```
 
 - 時間で結果が出るところは、エミュレーターの `round/startedAt` を過去へずらして早送りする
