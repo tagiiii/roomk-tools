@@ -551,5 +551,24 @@ function playout(n, rules, seed, useCpu) {
   ok(rounds === 40, '交換ありで40回続けて最後までいく', rounds);
 }
 
+// ── 場が流れるまでに出た手（pile）──
+{
+  let s = state([['S4', 'S9', 'H12'], ['H5', 'H10'], ['D6', 'D11']], { rules: { eightCut: true } });
+  s = E.play(s, 0, ['S4']);
+  s = E.play(s, 1, ['H5']);
+  s = E.play(s, 2, ['D6']);
+  ok(s.pile.length === 3 && s.pile.map((x) => x.by).join() === '0,1,2' && s.pile[1].cards.join() === 'H5', 'pile: 出た順にだれが何を出したか', s.pile);
+  s = E.pass(s, 0); s = E.pass(s, 1);
+  ok(s.field === null && s.pile.length === 0, 'pile: 場が流れたら空になる');
+  let e = state([['S8', 'S9'], ['H5', 'H10'], ['D6', 'D11']], { field: fieldOf(['C5'], 2), turn: 0, pile: [{ by: 2, cards: ['C5'], as: null }] });
+  e = E.play(e, 0, ['S8']);
+  ok(e.pile.length === 0, 'pile: 8切りで空になる');
+  const j = E.play(state([['X1', 'C3'], ['C9']], { rules: { tenDiscard: true } }), 0, ['X1'], 10);
+  ok(j.pile[0].as === 10, 'pile: ジョーカーの「何として」も残る');
+  const old = E.play(state([['S9', 'S4'], ['H10', 'C3'], ['D7']], { field: fieldOf(['C5'], 1) }), 0, ['S9']);
+  ok(old.pile.length === 1 && old.pile[0].by === 0, 'pile: 古い状態（pile なし）でもこの手から');
+  ok(E.newGame(3, {}, () => 0.5).pile.length === 0, 'pile: はじめは空');
+}
+
 console.log(fail ? `NG ${fail} / OK ${pass}` : `OK ${pass}`);
 process.exit(fail ? 1 : 0);

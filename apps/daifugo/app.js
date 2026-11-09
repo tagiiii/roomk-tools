@@ -1472,6 +1472,18 @@ function renderGame(R) {
   $('modes').replaceChildren(...modes.map(([k, t]) => el('span', 'df-mode df-mode--' + k, t)));
   $('modes').hidden = !modes.length;
 
+  // 場が流れるまでに出た手（いちばん新しい手は大きなカードで出すので、それより前の分）
+  const pile = g.field && Array.isArray(g.pile) ? g.pile.slice(0, -1) : [];
+  $('pile').replaceChildren(...pile.map((x) => {
+    const li = el('li', 'df-pile__item');
+    li.append(el('span', 'df-pile__name', seatName(R, x.by) + (x.as ? '（' + E.rankLabel(x.as) + 'として）' : '')));
+    const cs = el('span', 'df-pile__cards');
+    cs.append(...x.cards.map((c) => cardEl(c)));
+    li.append(cs);
+    return li;
+  }));
+  $('pile').hidden = !pile.length;
+
   // 場
   if (g.field) {
     $('field').replaceChildren(...g.field.play.cards.map((c) => cardEl(c)));
