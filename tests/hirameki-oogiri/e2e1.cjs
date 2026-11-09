@@ -24,7 +24,7 @@ async function endWindow(code) {
   check('A2 room-create を数える', await L.waitStats(h, 'room-create', 1));
   check('A3 ホストのすること（画面共有の案内）はホストに出る', await visible(h, '#lobbyGuide'));
   check('A4 ルールはホストに出る', await visible(h, '#lobbyHost'));
-  check('A5 はじめの設定: 半分・15秒・一本が出たら', (await segOn(h, '#ratioOpts')) === '半分' && (await segOn(h, '#showOpts')) === '15秒' && (await segOn(h, '#cutOpts')) === '一本が出たら');
+  check('A5 はじめの設定: 半分・15秒・一本が出たら・ゲージを出す', (await segOn(h, '#ratioOpts')) === '半分' && (await segOn(h, '#showOpts')) === '15秒' && (await segOn(h, '#cutOpts')) === '一本が出たら' && (await segOn(h, '#gaugeOpts')) === '出す');
   check('A6 ホストの参加スタイルは回答者と審査員の両方', (await L.roleOn(h)) === '回答者+審査員' && (await h.page.$$eval('#modeOpts .og-seg__btn', (e) => e.length)) === 2);
   check('A7 審査員が1人では、はじめられない', await h.page.isDisabled('#btnStart'));
   let room = await roomOf(code);
@@ -83,6 +83,10 @@ async function endWindow(code) {
   check('A20 一本になる数「全員」があそびかたに出る', await waitUntil(async () => (await text(g1, '#howtoRatio')).includes('全員')));
   await h.page.click('#ratioOpts .og-seg__btn:text-is("半分")');
   await waitUntil(async () => (await text(g1, '#howtoRatio')).includes('半分'));
+  await h.page.click('#gaugeOpts .og-seg__btn:text-is("出さない")');
+  check('A20b いいねゲージ「出さない」がルームに入り、あそびかたからゲージが消える', !!(await roomWhen(code, (r) => r.rule.gauge === 'hide')) && await waitUntil(async () => !(await text(g1, '#howtoRatio')).includes('ゲージ')) && (await text(h, '#gaugeNote')).includes('出さない'));
+  await h.page.click('#gaugeOpts .og-seg__btn:text-is("出す")');
+  check('A20c 「出す」に戻せる', !!(await roomWhen(code, (r) => r.rule.gauge === 'show')) && await waitUntil(async () => (await text(g1, '#howtoRatio')).includes('いいねゲージ')));
   check('A21 審査員3人', await waitUntil(async () => !(await h.page.isDisabled('#btnStart')) && (await text(h, '#lobbyStartNote')).includes('審査員 3人')));
 
   // ── B. お題を選ぶ ──
@@ -152,6 +156,11 @@ async function endWindow(code) {
   check('D9 審査が終わったら、また出せる', await waitUntil(async () => !(await g1.page.isDisabled('#btnAnswer'))));
   await g1.page.click('#btnAnswer');
   await waitUntil(async () => (await stage(g2)) === 'さんばんめ');
+  // いいねゲージを出さない（設定は待合室で変えるので、ここではルームを書きかえて見る）
+  await rest('PATCH', L.ROOMS + '/' + code + '/rule', { gauge: 'hide' });
+  check('D9b ゲージを出さないときは、参加者にもみんなにみせる画面にも出ない', await waitUntil(async () => (await L.gauge(tv)) === -1 && (await L.gauge(g2)) === -1 && (await L.gauge(h)) === -1) && (await stage(tv)) === 'さんばんめ');
+  await rest('PATCH', L.ROOMS + '/' + code + '/rule', { gauge: 'show' });
+  check('D9c 出すに戻すと、ゲージがまた出る', await waitUntil(async () => (await L.gauge(tv)) === 0 && (await L.gauge(g2)) === 0));
   // このあと出る答えは、出る前にかくせる
   await answer(h, 'まつこたえ');
   check('D10 このあと出る答えは、ホストにだけ名前つきで出る', await waitUntil(async () => (await text(h, '#queueList')).includes('まつこたえ') && (await text(h, '#queueList')).includes('メンターさん')));
