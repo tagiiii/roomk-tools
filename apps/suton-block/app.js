@@ -75,6 +75,71 @@ const state = {
 };
 const $ = (id) => document.getElementById(id);
 
+/* ── 効果音（はじめは切。この端末だけで鳴る。2026-11-09 フィードバックボードの要望でオーナーが決めた） ──
+   鳴るのは、自分がブロックを置いたときと段を消したときだけ。いっぱい・ここまで・じゃまが来たときは鳴らさない */
+const SFX_KEY = 'sutonblock:sfx';
+const sfx = { on: false, ac: null, out: null };
+try { sfx.on = localStorage.getItem(SFX_KEY) === '1'; } catch (e) { /* 使えなければ切のまま */ }
+const SFX_GAIN = 0.25;
+
+function syncSfxInputs() {
+  ['soloSfx', 'roomSfx'].forEach((name) => {
+    const el = document.querySelector('input[name="' + name + '"][value="' + (sfx.on ? 'on' : 'off') + '"]');
+    if (el) el.checked = true;
+  });
+}
+
+function ensureAudio() {
+  if (!sfx.on) return;
+  try {
+    if (!sfx.ac) {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      sfx.ac = new AC({ latencyHint: 'interactive' });
+      sfx.out = sfx.ac.createGain();
+      sfx.out.gain.value = SFX_GAIN;
+      sfx.out.connect(sfx.ac.destination);
+    }
+    if (sfx.ac.state !== 'running') sfx.ac.resume().catch(() => {});
+  } catch (e) { /* 鳴らせなくても遊べる */ }
+}
+
+// 短くやわらかい音を1つ（when は今からの秒）
+function tone(freq, when, level, decay) {
+  const ac = sfx.ac;
+  const t = ac.currentTime + when;
+  const o = ac.createOscillator();
+  const g = ac.createGain();
+  o.type = 'sine';
+  o.frequency.value = freq;
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(level, t + 0.005);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + decay);
+  o.connect(g).connect(sfx.out);
+  o.start(t);
+  o.stop(t + decay + 0.02);
+}
+
+// 置いた: 低く小さく。段を消した: 段の数だけ上がる音。4段・全部消えた: 4つの音で上がる
+const SFX_NOTES = [523, 659, 784, 1047];
+function playSfx(kind, lines = 0) {
+  if (!sfx.on || !sfx.ac || sfx.ac.state !== 'running') return;
+  if (kind === 'place') { tone(196, 0, 0.35, 0.07); return; }
+  const n = kind === 'big' ? 4 : Math.min(3, Math.max(1, lines));
+  for (let i = 0; i < n; i++) tone(SFX_NOTES[i], i * 0.07, 0.5, 0.14);
+}
+
+function setSfx(on) {
+  sfx.on = on;
+  try { localStorage.setItem(SFX_KEY, on ? '1' : '0'); } catch (e) { /* 残せなくてもよい */ }
+  syncSfxInputs();
+  if (on) {
+    ensureAudio();
+    // 入にしたら、どんな音か1回だけ聞かせる
+    setTimeout(() => playSfx('lines', 2), 60);
+  }
+}
+
 /* ── 共通 ── */
 function showScreen(id) {
   document.querySelectorAll('.sb-screen').forEach((node) => node.classList.remove('active'));
@@ -1118,6 +1183,7 @@ function renderWaiting(room, playing) {
   const spectator = state.role === 'spectator';
   const s = settingsOf(room);
   $('lobbyJoin').hidden = !spectator;
+  $('lobbySfx').hidden = spectator;
   $('lobbyJoinCode').textContent = state.roomCode || '';
   const ul = $('lobbyPeople');
   ul.replaceChildren();
@@ -1326,6 +1392,7 @@ function afterLock(res) {
     void el.offsetWidth;
     el.classList.add('sb-lines--up');
   };
+  playSfx(res.lines === 4 || res.allClear ? 'big' : res.lines ? 'lines' : 'place', res.lines);
   if (res.lines && !R.battle) bump(g.lines);
   // 4段いっしょに消したら一言（対戦は attackNote の中で出す）
   if (res.lines === 4 && !R.battle) note(FOUR_LINES_WORD, 1400);
@@ -2110,6 +2177,14 @@ submitOnEnter($('hostName'), createRoom);
 submitOnEnter($('guestName'), joinRoom);
 submitOnEnter($('joinCode'), joinRoom);
 $('btnSoloStart').addEventListener('click', startSolo);
+['soloSfx', 'roomSfx'].forEach((name) => {
+  document.querySelectorAll('input[name="' + name + '"]').forEach((el) => {
+    el.addEventListener('change', () => { if (el.checked) setSfx(el.value === 'on'); });
+  });
+});
+syncSfxInputs();
+// 入のままで読み込み直したときは、音を鳴らせるのが押したあとからなので、押すたびに起こす
+['pointerdown', 'keydown'].forEach((type) => document.addEventListener(type, ensureAudio, { capture: true, passive: true }));
 
 function openWatchFromForm() {
   const code = normalizeRoomCode($('watchCode').value);
