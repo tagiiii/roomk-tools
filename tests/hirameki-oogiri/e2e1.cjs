@@ -1,4 +1,4 @@
-// ひらめき大喜利 E2E その1: 作成・参加・待合室・お題・答え（確認なし）・おもしろゲージ・一本・結果・押せる時間の終わり・
+// ひらめき大喜利 E2E その1: 作成・参加・待合室・お題・答え（確認なし）・いいねゲージ・一本・結果・押せる時間の終わり・
 // 審査が終わるまで出せない・却下・かくす・参加スタイル（回答者・審査員）・おしまい・もう一回あそぶ・時間で区切る・
 // みんなにみせる画面・幅 375px・ルームを閉じる
 // 時間の進みは、エミュレーターのルームの時刻（endsAt・roundEndsAt）を書きかえて早める
@@ -106,7 +106,7 @@ async function endWindow(code) {
   check('B8 審査員だけの人には答えの入力欄がない', !(await visible(g2, '#answerForm')) && !(await visible(g2, '#myCard')) && await visible(g1, '#answerForm'));
   check('B9 ホストの枠はホストにだけ', await visible(h, '#hostPanel') && !(await visible(g1, '#hostPanel')) && !(await visible(tv, '#hostPanel')));
 
-  // ── C. 答え（確認なし）・おもしろゲージ・一本 ──
+  // ── C. 答え（確認なし）・いいねゲージ・一本 ──
   await answer(g1, 'こたえいち');
   check('C1 答えはホストの確認なしで、すぐ全員の画面に出る', await waitUntil(async () => (await stage(g2)) === 'こたえいち' && (await stage(tv)) === 'こたえいち' && (await stage(g1)) === 'こたえいち'));
   check('C2 書いた人の画面に「いま審査中」', await waitUntil(async () => (await listRows(g1, '#mineList')).some((r) => r.t === 'こたえいち' && r.w === 'いま審査中')));
@@ -144,7 +144,7 @@ async function endWindow(code) {
   // 押せる時間を「全員」で見る（あおの答えの審査員はホストとみどり。全員は2人）
   await rest('PATCH', L.ROOMS + '/' + code + '/rule', { ratio: 'all' });
   await g2.page.click('#btnPress');
-  check('D5 おもしろゲージが半分たまる（数字は出さない）', await waitUntil(async () => (await L.gauge(tv)) === 50) && !/\d+人/.test(await text(tv, '#stage')));
+  check('D5 いいねゲージが半分たまる（数字は出さない）', await waitUntil(async () => (await L.gauge(tv)) === 50) && !/\d+人/.test(await text(tv, '#stage')));
   await endWindow(code);
   check('D7 押せる時間が終わると、名前なしで「これまでに出た答え」へ', await waitUntil(async () => (await stage(g2)) === '' && (await listRows(g2, '#shownList')).some((r) => r.t === 'にばんめ' && r.w === '' && !r.ippon)));
   // g2 の画面のあと、書いた人（g1）の画面が追いつくのを待ってから確かめる

@@ -251,8 +251,8 @@ function demoStage(answer, fill){
   return `<div class="odai"><div class="odai__l">お題</div><div class="odai__t">${ODAI}</div></div>
     <div class="stage"><div class="stage__l">いま出ている答え</div><div class="stage__t">${answer}</div>
       <div class="bar"><span></span></div>
-      <span class="press"><span class="material-symbols-rounded">sentiment_very_satisfied</span>おもしろい！</span>
-      ${fill==null?'':`<div class="gauge"><span class="gauge__l">おもしろゲージ</span><div class="gauge__t"><div class="gauge__f" style="width:${fill}%"></div><span class="gauge__g">一本</span></div></div>`}</div>`;
+      <span class="press"><span class="material-symbols-rounded">thumb_up</span>いいね！</span>
+      ${fill==null?'':`<div class="gauge"><span class="gauge__l">いいねゲージ</span><div class="gauge__t"><div class="gauge__f" style="width:${fill}%"></div><span class="gauge__g">一本</span></div></div>`}</div>`;
 }
 
 const SLIDES = [
@@ -267,9 +267,9 @@ const SLIDES = [
     body:`<div class="rows">
       <div class="row"><div class="row__ic"><span class="material-symbols-rounded">edit_note</span></div><div><div class="row__t">お題に、思いついた答えを書いて出す</div><div class="row__d">何回出してもいいよ。思いついた順に出そう</div></div></div>
       <div class="row"><div class="row__ic"><span class="material-symbols-rounded">visibility_off</span></div><div><div class="row__t">答えは1つずつ、だれのか伏せて出る</div><div class="row__d">みんなの画面に、名前なしで大きく出るよ</div></div></div>
-      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">sentiment_very_satisfied</span></div><div><div class="row__t">審査員が「おもしろい！」でゲージをためる</div><div class="row__d">ゲージが「一本」に届いたら「一本！」。順位はつけないよ</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">thumb_up</span></div><div><div class="row__t">審査員が「いいね！」でゲージをためる</div><div class="row__d">ゲージが「一本」に届いたら「一本！」。順位はつけないよ</div></div></div>
     </div>`,
-    note:'ひらめき大喜利は、お題に思いついた答えを何回でも出すゲーム。\n出た答えは1つずつ、だれの答えか伏せて、みんなの画面に出ます。\n審査員が「おもしろい！」を押すと、おもしろゲージがたまって、「一本」に届いたら「一本！」になるよ。順位はつけないよ。' },
+    note:'ひらめき大喜利は、お題に思いついた答えを何回でも出すゲーム。\n出た答えは1つずつ、だれの答えか伏せて、みんなの画面に出ます。\n審査員が「いいね！」を押すと、いいねゲージがたまって、「一本」に届いたら「一本！」になるよ。順位はつけないよ。' },
 
   /* 4 */ { type:'content', accent:'teal', section:'ゲーム説明', sectionEn:'explain', num:'1',
     headline:'参加スタイルは2つ。<br><span class="hl">両方えらんでもいい</span>',
@@ -282,10 +282,10 @@ const SLIDES = [
       <div class="panel">
         <div class="team-head"><div class="team-ic coral-bg"><span class="material-symbols-rounded">gavel</span></div><div class="team-name">審査員</div></div>
         <div class="role-row"><span class="material-symbols-rounded">visibility</span><div><b>出た答えを見る</b><span class="d">自分の答えには押せないよ</span></div></div>
-        <div class="role-row"><span class="material-symbols-rounded">sentiment_very_satisfied</span><div><b>おもしろかったら押す</b><span class="d">「おもしろい！」でゲージがたまる</span></div></div>
+        <div class="role-row"><span class="material-symbols-rounded">thumb_up</span><div><b>おもしろかったら押す</b><span class="d">「いいね！」でゲージがたまる</span></div></div>
       </div>
     </div>`,
-    note:'参加スタイルは「回答者」と「審査員」の2つ。どちらか1つでも、両方でもいいよ。\n回答者… 答えを書いて出す人。自分の答えの審査が終わったら、次の答えを出せるよ。待っている間も、次の答えは書いておけるよ。\n審査員… 出た答えを見て、おもしろかったら「おもしろい！」を押す人。\nどっちにしているかは、ほかの人には見えないよ。遊んでいる途中でも、自分の画面でいつでも切りかえられるよ。' },
+    note:'参加スタイルは「回答者」と「審査員」の2つ。どちらか1つでも、両方でもいいよ。\n回答者… 答えを書いて出す人。自分の答えの審査が終わったら、次の答えを出せるよ。待っている間も、次の答えは書いておけるよ。\n審査員… 出た答えを見て、おもしろかったら「いいね！」を押す人。\nどっちにしているかは、ほかの人には見えないよ。遊んでいる途中でも、自分の画面でいつでも切りかえられるよ。' },
 
   /* 5 */ { type:'content', accent:'blue', section:'ゲーム説明', sectionEn:'explain', num:'2',
     headline:'答えは<span class="ul">1つずつ</span>、<br>名前を伏せて出る',
@@ -294,10 +294,10 @@ const SLIDES = [
       <div class="demo__side">
         <div class="step"><span class="step__n">1</span><div><div class="step__t">書いて「出す」</div><div class="step__d">40文字まで。何回でも</div></div></div>
         <div class="step"><span class="step__n">2</span><div><div class="step__t">順番に、みんなの画面に出る</div><div class="step__d">だれの答えかは出ないよ</div></div></div>
-        <div class="step"><span class="step__n">3</span><div><div class="step__t">審査員が「おもしろい！」</div><div class="step__d">押すたびにゲージがたまる</div></div></div>
+        <div class="step"><span class="step__n">3</span><div><div class="step__t">審査員が「いいね！」</div><div class="step__d">押すたびにゲージがたまる</div></div></div>
       </div>
     </div>`,
-    note:'回答者が答えを書いて「出す」を押すと、順番にみんなの画面に出るよ。\n画面に出るのは1つずつ。だれの答えかは出ないよ。\n答えが出ている間に、審査員はおもしろかったら「おもしろい！」を押してね。押すたびに、おもしろゲージがたまるよ。押せる時間は、上の帯で分かるよ。' },
+    note:'回答者が答えを書いて「出す」を押すと、順番にみんなの画面に出るよ。\n画面に出るのは1つずつ。だれの答えかは出ないよ。\n答えが出ている間に、審査員はおもしろかったら「いいね！」を押してね。押すたびに、いいねゲージがたまるよ。押せる時間は、上の帯で分かるよ。' },
 
   /* 6 */ { type:'content', accent:'coral', section:'ゲーム説明', sectionEn:'explain', num:'3',
     headline:'ゲージが「一本」に届いたら<br><span class="hl">「一本！」</span>',
@@ -311,7 +311,7 @@ const SLIDES = [
         <div class="demo-cap">何人押したかの数字は出ないよ</div>
       </div>
     </div>`,
-    note:'審査員のうち、決めた数の人が「おもしろい！」を押すと、ゲージが「一本」に届いて「一本！」。はじめは半分だよ。\n一本のときだけ、だれの答えかが出ます。\n何人押したかの数字は出ないよ。一本にならなかった答えも、名前を出さずに「これまでに出た答え」に並ぶよ。' },
+    note:'審査員のうち、決めた数の人が「いいね！」を押すと、ゲージが「一本」に届いて「一本！」。はじめは半分だよ。\n一本のときだけ、だれの答えかが出ます。\n何人押したかの数字は出ないよ。一本にならなかった答えも、名前を出さずに「これまでに出た答え」に並ぶよ。' },
 
   /* 7 */ { type:'content', accent:'coral', section:'ゲーム説明', sectionEn:'explain', num:'4',
     headline:'ホストの判定で<br><span class="hl">「却下！」</span>になることも',
@@ -368,7 +368,7 @@ const SLIDES = [
 
   /* 14 */ { type:'divider', accent:'coral', icon:'edit_note', jp:'お題タイム', en:'answer time',
     sub:'思いついたら、どんどん出そう',
-    note:'お題が出たよ！\n回答者は、思いついたら書いて「出す」を押してね。\n審査員は、おもしろい答えが出たら「おもしろい！」を押して、ゲージをためよう。' },
+    note:'お題が出たよ！\n回答者は、思いついたら書いて「出す」を押してね。\n審査員は、おもしろい答えが出たら「いいね！」を押して、ゲージをためよう。' },
 
   /* 15 */ { type:'divider', accent:'teal', solid:true, icon:'workspace_premium', jp:'けっか', en:'result',
     sub:'おつかれさま！',
