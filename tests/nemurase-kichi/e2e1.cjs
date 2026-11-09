@@ -387,6 +387,12 @@ const { E, check, sleep } = L;
   check('近くに隊員がいると、ねむらせるが押せる', await L.waitFor(async () => !(await g1.page.$eval('#actSleep', (b) => b.disabled))));
   await g1.page.click('#actSleep');
   check('ホストがねむる', await L.waitFor(async () => (await L.roomOf(code)).game.asleep?.['ホスト'] === 'slept'));
+  {
+    // 2026-11-09 フィードバック: ねむらせ屋は、ねむった人の真上（ねむっている姿をおいた所）へ移る
+    const body = (await L.roomOf(code)).game.bodies?.['ホスト'];
+    check('ねむらせ屋はねむった人の真上へ移る', !!body && await L.waitFor(async () => { const m = await L.me(g1); return Math.abs(m.x - body.x) < 0.01 && Math.abs(m.y - body.y) < 0.01; }), { body, me: await L.me(g1) });
+    check('移った位置をすぐ送る', await L.waitFor(async () => { const t = (await L.rootOf(code)).p?.['あお']; const d = t && E.decodePos(t); return !!d && Math.abs(d.x - body.x) < 0.2 && Math.abs(d.y - body.y) < 0.2; }));
+  }
   check('ねむった人にお知らせ', await L.waitFor(() => L.visible(host, '#stageBanner')));
   check('ねむった人の役の表示', (await L.text(host, '#hudRole')).includes('ねむっている'));
   check('ねむった人の位置は p から消えて g に移る', await L.waitFor(async () => {

@@ -198,6 +198,7 @@ const { E, check, sleep } = L;
   await g1.page.click('#actSleep');
   check('バリアで ねむらせられない', await L.waitFor(async () => { const g = (await L.roomOf(code)).game; return g.blocked?.by === 'あお' && g.blocked?.t === 'みどり' && !g.asleep?.['みどり'] && !(g.shield || {})['みどり']; }));
   check('ねむらせ屋に「バリアでまもられていて」', await L.waitToast(g1, 'バリアでまもられていて'));
+  check('バリアでねむらせられなかったときは、ねむらせ屋は動かない', await (async () => { const m = await L.me(g1); return Math.abs(m.x - 39.8) < 0.01 && Math.abs(m.y - 48.5) < 0.01; })(), await L.me(g1));
   check('まもり星に「まもれた！」', await L.waitToast(host, 'みどり さんをまもれた'));
   check('みどりには知らせない', !((await L.text(g2, '#roomk-toast').catch(() => '')) || '').includes('バリア'));
   check('ねむらせ屋の待ち時間ははじめから', ((await L.roomOf(code)).game.cooldown['あお'] || 0) > Date.now() + 10000);
