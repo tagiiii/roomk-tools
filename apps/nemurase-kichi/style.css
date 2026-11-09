@@ -486,3 +486,29 @@ button.nk-vote__main:hover { border-color: var(--color-border); }
   .nk-meeting__timer { font-size: 18px; }
   .nk-sab__desc { display: none; }
 }
+
+/* ── みんなを見る（ねむった人・途中から入った見学の子だけ。2026-11-09 子どもの要望「1人1人見えるようにしてほしい」） ── */
+.nk-follow { flex-basis: 100%; order: 8; display: flex; align-items: center; gap: 6px 8px; flex-wrap: wrap; }
+.nk-follow[hidden], .nk-chip[hidden] { display: none; }
+.nk-follow__btn {
+  width: 44px; height: 44px; flex: none; padding: 0; border: none; border-radius: 50%; cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center; background: rgba(255, 255, 255, 0.2); color: #fff;
+}
+.nk-follow__btn:hover { background: rgba(255, 255, 255, 0.32); }
+.nk-follow__btn .material-symbols-rounded { font-size: 28px; }
+.nk-follow__label { margin: 0; min-width: 0; font-weight: 700; line-height: 1.35; }
+.nk-follow__label .nk-chip { vertical-align: -4px; margin-right: 6px; }
+.nk-follow__hint { margin-left: 8px; font-size: 12px; font-weight: 500; opacity: 0.85; }
+.nk-follow__hint:empty { display: none; }
+.nk-follow__self {
+  min-height: 44px; padding: 4px 14px; border-radius: 999px; border: 2px solid rgba(255, 255, 255, 0.75);
+  background: transparent; color: #fff; font-family: inherit; font-size: 14px; font-weight: 700; cursor: pointer;
+}
+.nk-follow__self:hover { background: rgba(255, 255, 255, 0.15); }
+.nk-follow__self[hidden] { display: none; }
+@media (max-width: 760px) {
+  .nk-follow__btn { width: 40px; height: 40px; }
+  .nk-follow__label { font-size: 13px; flex: 1 1 0; }
+  .nk-follow__hint { display: block; margin-left: 0; }
+  .nk-follow__self { min-height: 40px; padding: 4px 10px; font-size: 13px; }
+}

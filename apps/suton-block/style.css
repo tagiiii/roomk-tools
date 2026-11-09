@@ -93,7 +93,8 @@ body { background: var(--color-bg); }
 .sb-people .material-symbols-rounded { font-size: 20px; color: var(--color-accent); }
 
 /* あそぶ画面 */
-.sb-playwrap { min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 0 16px 16px; }
+/* 右下の丸ボタンの分の余白（80px）は共通の howto.js がページの最後にとるので、その分を引いて画面の高さちょうどにする */
+.sb-playwrap { min-height: calc(100vh - 80px); display: flex; flex-direction: column; align-items: center; padding: 0 16px 16px; }
 .sb-bar { width: 100%; max-width: 960px; display: flex; align-items: center; gap: 12px; min-height: 56px; }
 .sb-bar__title { font-weight: 700; color: var(--color-primary); white-space: nowrap; }
 .sb-bar .sb-quiet { white-space: nowrap; }
@@ -113,16 +114,17 @@ body { background: var(--color-bg); }
   font-weight: 700; text-align: center; line-height: 1.5;
   pointer-events: none; /* 盤のマウス操作をじゃましない */
 }
-/* 盤の左に場所があるときは、盤の外の左に出す（盤にかぶせない。幅は layout で決める） */
+/* 一言は小さく、左上に出す。盤の左に場所があるときは、盤の外の左に、盤の上のはしにそろえて（盤にかぶせない。幅は layout で決める） */
 .sb-boardwrap.is-noteleft .sb-boardnote {
-  left: auto; right: calc(100% + 12px); top: 30%; width: var(--sb-note-w, 150px);
+  left: auto; right: calc(100% + 10px); top: 0; width: max-content; max-width: var(--sb-note-w, 150px);
+  padding: 4px 8px; font-size: 13px; line-height: 1.4; text-align: left;
   background: var(--color-surface); border: 1px solid var(--color-border);
 }
-/* 左に場所がないとき（スマホなど）は、盤にかぶせず、右の列（とっておく・つぎ…）の下のはしに重ねて出す */
+/* 左に場所がないとき（スマホなど）は、盤の上の淡い帯（見えない段の2段）の左はしに小さく出す（ふだんの一言は帯に収まる。長い「ここまで！」などは盤が止まってから出るので、盤に少しかかってもよい） */
 .sb-boardwrap:not(.is-noteleft) .sb-boardnote {
-  left: calc(100% + 16px); right: auto; top: auto; bottom: 0; width: var(--sb-side-w, 92px);
-  padding: 6px 8px; font-size: 12px; text-align: left;
-  background: var(--color-surface); border: 1px solid var(--color-border); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  left: 3px; right: auto; top: 3px; width: max-content; max-width: calc(100% - 6px);
+  padding: 2px 6px; font-size: 12px; line-height: 1.3; text-align: left;
+  background: var(--color-surface); border: 1px solid var(--color-border);
 }
 .sb-pause {
   position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px;
@@ -157,6 +159,18 @@ body { background: var(--color-bg); }
 .sb-mini__name { font-size: 12px; font-weight: 700; color: var(--color-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sb-mini__lines { font-size: 12px; color: var(--color-muted); }
 .sb-mini.is-off { opacity: 0.55; }
+/* じゃまを送る相手を選ぶ（ほかの人の盤・一覧を押す）。送る相手は枠の色と「送る」の印 */
+.sb-otherscol { display: flex; flex-direction: column; gap: 4px; }
+.sb-othershint { margin: 0; font-size: 12px; color: var(--color-muted); }
+.sb-target { position: relative; font: inherit; color: inherit; cursor: pointer; }
+button.sb-mini.sb-target { width: 100%; }
+.sb-otherlist .sb-target { display: flex; justify-content: space-between; gap: 4px; width: 100%; min-height: 28px; align-items: center; padding: 2px 4px; background: none; border: 1px solid transparent; border-radius: 4px; font-size: 12px; text-align: left; }
+.sb-target.is-target { border-color: var(--color-accent); box-shadow: 0 0 0 1px var(--color-accent); }
+.sb-target:disabled { cursor: default; }
+.sb-target__tag { position: absolute; top: -7px; right: -4px; padding: 0 5px; border-radius: 8px; background: var(--color-accent); color: #fff; font-size: 11px; font-weight: 700; line-height: 16px; }
+.sb-otherlist li { min-width: 0; }
+.sb-otherlist .sb-target { min-width: 0; }
+.sb-otherlist .sb-target.is-target { background: var(--color-accent-soft); }
 
 .sb-pad { display: grid; grid-template-columns: repeat(4, 64px); gap: 8px; margin-top: 14px; justify-content: center; }
 .sb-padbtn {
@@ -196,7 +210,6 @@ body { background: var(--color-bg); }
   .sb-lines--jama { font-size: 18px; }
   .sb-pad { grid-template-columns: repeat(4, 1fr); width: 100%; max-width: 360px; }
   .sb-keys { display: none; }
-  .sb-playwrap { padding-bottom: 72px; } /* 右下の「？」ボタンとボタンが重ならないように */
   .sb-bar__name { display: none; }
   .sb-appbar { padding: 10px 16px; }
   .sb-roombar { gap: 4px; padding: 6px 8px; }

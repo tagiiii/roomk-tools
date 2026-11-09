@@ -585,6 +585,8 @@ function cleanupRoom() {
     wasWatching: false,
     backNote: false,
     wasAsleep: false,
+    follow: null,
+    followLast: null,
   });
   clearTimeout(state.offlineTimer);
   state.offlineTimer = null;
@@ -2018,8 +2020,11 @@ function takePos(map, id, text) {
   const p = E.decodePos(text);
   if (!p) { delete map[id]; return; }
   const cur = map[id];
-  if (!cur || Math.hypot(cur.tx - p.x, cur.ty - p.y) > 3) map[id] = { x: p.x, y: p.y, tx: p.x, ty: p.y, face: p.face, hidden: p.hidden };
-  else { cur.tx = p.x; cur.ty = p.y; cur.face = p.face; cur.hidden = p.hidden; }
+  // vx・vy: 最後に見えていた（近道の外の）位置。近道の中の人を「みんなを見る」で選んだとき、ここにカメラを置く（2026-11-09）
+  const vx = p.hidden ? cur && cur.vx : p.x;
+  const vy = p.hidden ? cur && cur.vy : p.y;
+  if (!cur || Math.hypot(cur.tx - p.x, cur.ty - p.y) > 3) map[id] = { x: p.x, y: p.y, tx: p.x, ty: p.y, face: p.face, hidden: p.hidden, vx, vy };
+  else { cur.tx = p.x; cur.ty = p.y; cur.face = p.face; cur.hidden = p.hidden; cur.vx = vx; cur.vy = vy; }
 }
 
 function subscribeChannel(key, map) {
@@ -2029,13 +2034,14 @@ function subscribeChannel(key, map) {
   ref.on('child_removed', (snap) => { delete map[snap.key]; });
 }
 
-// 遊んでいる人だけが位置を受け取る。ねむった人だけが g（ねむった人の位置）を受け取る。
+// 遊んでいる人と、途中から入った見学の子が位置を受け取る。ねむった人と途中から入った見学の子が g（ねむった人の位置）を受け取る。
 // ロボットのいるホストは、ロボットのねむらせ屋が隊員の位置を知るために p を受け取る（進行だけでも画面には出さない）
 function updateSubscriptions(room) {
   const g = room.status === STATUS.PLAY ? gameOf(room) : null;
   const playing = isPlaying(g, state.nickname);
-  const wantP = !!g && (playing || (state.role === 'host' && g.players.some(isBot)));
-  const wantG = playing && !E.isAwake(g, state.nickname);
+  const guest = !!g && watcherKind(g) === 'guest';
+  const wantP = !!g && (playing || guest || (state.role === 'host' && g.players.some(isBot)));
+  const wantG = (playing && !E.isAwake(g, state.nickname)) || guest;
   if (wantP && !state.subP) { subscribeChannel('p', PA); state.subP = true; }
   if (!wantP && state.subP) { state.rootRef.child('p').off(); state.subP = false; Object.keys(PA).forEach((k) => delete PA[k]); }
   if (wantG && !state.subG) { subscribeChannel('g', PG); state.subG = true; }
@@ -2296,6 +2302,8 @@ function renderGame(room) {
     state.blockedSeen = null;
     state.guideStep = 0;
     state.guideStepAt = 0;
+    state.follow = null;
+    state.followLast = null;
     GUIDE.key = '';
     GUIDE.goal = null;
     // 前の回のひとことは出さない（読み込み直しでも、いま入っている分は見たことにする）
@@ -2356,8 +2364,8 @@ function renderGame(room) {
       // だれにねむらされたかは、本人の画面にだけ出す（ほかの人には言わない約束。2026-10-28）
       const by = g.sleptBy[state.nickname] ? nameIn(g, g.sleptBy[state.nickname]) + ' さんにねむらされた… ' : 'ねむってしまった… ';
       banner(g.roles[state.nickname] === 'crew'
-        ? by + 'でも、仕事はつづけられるよ。おきている人には見えず、かべも通りぬけられる。だれにねむらされたかは、ないしょだよ'
-        : by + 'あとはみんなの様子を見ていてね', 8000);
+        ? by + 'でも、仕事はつづけられるよ。おきている人には見えず、かべも通りぬけられる。上の ◀ ▶ で、みんなを1人ずつ見られるよ。だれにねむらされたかは、ないしょだよ'
+        : by + '上の ◀ ▶ で、みんなを1人ずつ見ていてね', 8000);
     }
   }
   if (state.backNote && g.stage === 'play') {
@@ -2396,6 +2404,9 @@ function renderGame(room) {
   if (state.sabOpen && (g.stage !== 'play' || !playing || asleep)) { state.sabOpen = false; state.sabDoor = false; }
   if (g.stage !== 'play' || !playing) $('ovRole').hidden = true;
   if (g.stage !== 'play') clearSayTicker();
+  // 会議・結果・おしまいになったら、見ている人を自分（見学は基地ぜんたい）にもどす
+  if (g.stage !== 'play' && state.follow) { state.follow = null; state.followLast = null; }
+  renderFollow(g);
   takeSays(g);
   renderSayBox(g);
   renderMeeting(g, room);
@@ -2456,9 +2467,12 @@ function updateAirHud(g) {
 }
 
 function renderWatchNote() {
+  const g = gameOf(state.room);
   $('watchNote').textContent = state.role === 'host'
     ? 'みんなは基地の中で仕事をしているよ。会議がひらくまで待ってね'
-    : 'いまはゲームの途中。次の回からいっしょに遊べるよ。会議の話し合いは聞いていてね';
+    : g && watcherKind(g) === 'guest'
+      ? 'いまはゲームの途中。次の回からいっしょに遊べるよ。上の ◀ ▶ で、みんなを1人ずつ見られるよ'
+      : 'いまはゲームの途中。次の回からいっしょに遊べるよ。会議の話し合いは聞いていてね';
 }
 
 // 役職の説明（役のお知らせに足す）
@@ -2974,6 +2988,7 @@ function frame(t) {
       // 切れている間は歩けない（つながりなおしたときに、ほかの人が見ていない間に動いた場所へ現れないように）
       const d = inputDir();
       if (d.x || d.y) {
+        if (state.follow) setFollow(null);   // ほかの人を見ている間に歩くと、自分にもどる
         // ねむった人はかべ・ドアを通りぬける。おきている人は、とじているドアも通れない
         const n = awake ? E.step(ME, d.x, d.y, dt, closedNow(g)) : E.stepFree(ME, d.x, d.y, dt);
         if (d.x) ME.face = d.x > 0 ? 1 : -1;
@@ -2986,12 +3001,9 @@ function frame(t) {
     // ふたりの仕事のスイッチ: はなれたらやめる・書き直す・相手がそろったらおわる（位置は毎フレーム変わるので、ここで見る）
     if (g.stage === 'play') tendPair(g);
     else if (state.pairHold) pairRelease();
-    [PA, PG].forEach((map) => Object.values(map).forEach((p) => {
-      const k = Math.min(1, dt * 8);
-      p.x += (p.tx - p.x) * k;
-      p.y += (p.ty - p.y) * k;
-    }));
+    easePositions(dt);
     updateGuide(g);
+    renderFollow(g);
     draw(g);
     drawMini(g);
     tickBattery(g, dt);
@@ -3005,7 +3017,11 @@ function frame(t) {
   } else if (g) {
     if (!miniBtn.hidden) miniBtn.hidden = true;
     if (!miniToggle.hidden) miniToggle.hidden = true;
-    drawOverview(g);
+    // 途中から入った見学の子は、基地ぜんたい（みんなの点）か、選んだ1人のまわりを見る。進行役は地図だけ
+    easePositions(dt);
+    renderFollow(g);
+    if (followPos(g)) draw(g);
+    else drawOverview(g);
     if (state.mapOpen) drawMapOverlay(g);
     updateClock(g);
     updateMeetingTimer(g);
@@ -3023,8 +3039,99 @@ function drawPos(g, id) {
 
 function viewRadius(g) {
   const me = state.nickname;
-  if (!E.isAwake(g, me)) return Infinity;
+  if (!isPlaying(g, me) || !E.isAwake(g, me)) return Infinity;
   return E.viewOf(g.settings, g.roles[me], g.dark);
+}
+
+// 受け取った位置へ、なめらかに近づける
+function easePositions(dt) {
+  const k = Math.min(1, dt * 8);
+  [PA, PG].forEach((map) => Object.values(map).forEach((p) => {
+    p.x += (p.tx - p.x) * k;
+    p.y += (p.ty - p.y) * k;
+  }));
+}
+
+/* ── みんなを見る（2026-11-09 子どもの要望「1人1人見えるようにしてほしい」→ オーナー決定） ──
+   ねむった人と、ゲームの途中から入った見学の子は、上の ◀ ▶ で1人ずつ選んでその人のまわりを見られる。地図（大・小）にもみんなの位置を出す。
+   進行役の画面は画面共有されるので出さない（ねむらせ屋の動きが見えてしまう）。
+   抜けた人（もとは遊ぶ人）も出さない（戻ると続きから遊べるので、見たことを持ちこめてしまう）。
+   役は出さない。へんしん中の人は、なっている人のすがたと名前で出す（ゲームの画面と同じ） */
+function watcherKind(g) {
+  if (!g) return '';
+  const me = state.nickname;
+  if (isPlaying(g, me)) return E.isAwake(g, me) ? '' : 'ghost';
+  return state.role !== 'host' && !g.players.includes(me) ? 'guest' : '';
+}
+const canWatchAll = (g) => !!g && g.stage === 'play' && watcherKind(g) !== '';
+const watchTargets = (g) => g.players.filter((id) => id !== state.nickname && isPlaying(g, id));
+
+// 見ている人の位置（だれも選んでいなければ null）。近道の中にいる間は、最後に見えていた所（入った所）にカメラを置く。
+// 選ぶ前に近道へ入って移っていても、移った先にはカメラを動かさない（行き先が分からないように。見えていた所を知らなければ null＝自分のまま）。
+// 位置の知らせがまだ届いていないときも、前に見ていた所のまま
+function followPos(g) {
+  const id = state.follow;
+  if (!id || !canWatchAll(g) || !isPlaying(g, id)) return null;
+  const raw = BOTS[id] || (E.isAwake(g, id) ? PA[id] : PG[id]);
+  if (raw && !raw.hidden) state.followLast = { x: raw.x, y: raw.y };
+  else if (raw && raw.vx != null) state.followLast = { x: raw.vx, y: raw.vy };
+  return state.followLast;
+}
+
+function setFollow(id) {
+  state.follow = id || null;
+  state.followLast = null;
+  renderFollow(gameOf(state.room));
+}
+
+// 自分（見学は基地ぜんたい）→ 1人目 → … → さいごの人 → 自分 の順にまわる
+function stepFollow(dir) {
+  const g = gameOf(state.room);
+  if (!canWatchAll(g)) return;
+  const seq = [null].concat(watchTargets(g));
+  const i = Math.max(0, seq.indexOf(state.follow));
+  setFollow(seq[(i + dir + seq.length) % seq.length]);
+}
+
+// 地図に出すみんなの位置（見られる人のときだけ）
+function watchPeople(g) {
+  if (!canWatchAll(g)) return null;
+  const now = RoomkRTDB.now();
+  return watchTargets(g).map((id) => {
+    const p = drawPos(g, id);
+    if (!p) return null;
+    const up = E.isAwake(g, id);
+    const look = up ? E.looksAs(g, id, now) : id;
+    return { x: p.x, y: p.y, hex: colorHex(g.colors[look]), name: nameIn(g, look), up, on: id === state.follow };
+  }).filter(Boolean);
+}
+
+function renderFollow(g) {
+  const bar = $('hudFollow');
+  const on = canWatchAll(g);
+  if (bar.hidden === on) bar.hidden = !on;
+  // 見られなくなったら（会議・自分が抜けた人になった・おきた など）、選んでいた人を外す（戻ったときに続きから見えないように）
+  if (!on) { state.follow = null; state.followLast = null; return; }
+  if (state.follow && !isPlaying(g, state.follow)) { state.follow = null; state.followLast = null; }
+  const guest = watcherKind(g) === 'guest';
+  const id = state.follow;
+  const chipEl = $('followChip');
+  if (id) {
+    const up = E.isAwake(g, id);
+    const look = up ? E.looksAs(g, id, RoomkRTDB.now()) : id;
+    setText('followText', nameIn(g, look) + ' さんを見ている' + (up ? '' : '（ねむっている）'));
+    setText('followHint', guest ? '' : '歩くと自分にもどる');
+    const hex = colorHex(g.colors[look]);
+    if (chipEl.dataset.hex !== hex) { chipEl.dataset.hex = hex; chipEl.style.background = hex; }
+    chipEl.hidden = false;
+  } else {
+    setText('followText', guest ? '基地ぜんたいを見ている' : '自分を見ている');
+    setText('followHint', '◀ ▶ で1人ずつ見られる');
+    chipEl.hidden = true;
+  }
+  const self = $('followSelf');
+  if (self.hidden === !!id) self.hidden = !id;
+  setText('followSelfText', guest ? '基地ぜんたい' : '自分にもどる');
 }
 
 function clampCam(v, max) {
@@ -3044,8 +3151,11 @@ function roundRect(x, y, w, h, r) {
 }
 
 function draw(g) {
-  const camX = clampCam(ME.x * TS - CW / 2, E.W * TS - CW);
-  const camY = clampCam(ME.y * TS - CH / 2, E.H * TS - CH);
+  // ほかの人を見ている間（ねむった人・見学の子）は、その人を真ん中にする
+  const fp = followPos(g);
+  const focus = fp || ME;
+  const camX = clampCam(focus.x * TS - CW / 2, E.W * TS - CW);
+  const camY = clampCam(focus.y * TS - CH / 2, E.H * TS - CH);
   const sx = (x) => x * TS - camX;
   const sy = (y) => y * TS - camY;
   ctx.fillStyle = '#2D3642';
@@ -3153,7 +3263,8 @@ function draw(g) {
     }
   });
 
-  const meAwake = E.isAwake(g, me);
+  const playingMe = isPlaying(g, me);
+  const meAwake = playingMe && E.isAwake(g, me);   // 見学の子（遊んでいない）は、ねむった人と同じく、ぜんぶ見える
   const vr = viewRadius(g);
   // 見える広さの中でも、間にかべがあれば描かない（ねむった人は vr が Infinity で、ぜんぶ見える）
   const inView = (p) => vr === Infinity || (E.dist(p, ME) <= vr && E.canSee(ME, p));
@@ -3178,6 +3289,7 @@ function draw(g) {
     // へんしん中は、なっている人の色と名前で描く（自分にも、なっている人のすがたで見える）
     const look = up ? E.looksAs(g, id, now) : id;
     if (shieldOn && up && E.shielded(g, id, now)) drawShield(sx(pos.x), sy(pos.y));
+    if (fp && id === state.follow) drawFollowRing(sx(pos.x), sy(pos.y));
     drawPerson(sx(pos.x), sy(pos.y), colorHex(g.colors[look]), pos.face || 1, up && !(id === me && ME.vent) ? 1 : 0.45, nameIn(g, look), mate);
   });
 
@@ -3212,8 +3324,24 @@ function draw(g) {
     ctx.drawImage(fog, 0, 0);
     ctx.restore();
   }
-  // 自分の仕事への矢印（暗がりの上に描く）
-  drawGuide(g, sx, sy, vr);
+  // 自分の仕事への矢印（暗がりの上に描く。ほかの人を見ている間・見学の子には出さない）
+  if (fp || !playingMe) GUIDE.shown = false;
+  else drawGuide(g, sx, sy, vr);
+}
+
+// 見ている人の足もとの輪（明るい床でも暗い所でも見えるよう、白いふちの上に濃い点線）
+function drawFollowRing(x, y) {
+  ctx.save();
+  ctx.beginPath();
+  ctx.ellipse(x, y + TS * 0.32, TS * 0.6, TS * 0.25, 0, 0, Math.PI * 2);
+  ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+  ctx.lineWidth = 5;
+  ctx.stroke();
+  ctx.strokeStyle = '#3F362D';
+  ctx.lineWidth = 2.5;
+  ctx.setLineDash([6, 4]);
+  ctx.stroke();
+  ctx.restore();
 }
 
 // 置き物が見えているか: 見える広さの中で、置き物にとなり合う床のどこかが見えていればよい
@@ -3231,7 +3359,8 @@ function furnitureSeen(f, vr) {
   return false;
 }
 
-// 遊んでいない人（進行役・見学）の画面: 地図ぜんたいだけ（人・ねむっている姿は描かない。画面共有しても動きが見えないように）
+// 遊んでいない人（進行役・見学）の画面: 地図ぜんたい。進行役には人・ねむっている姿は描かない（画面共有しても動きが見えないように）。
+// 途中から入った見学の子にだけ、みんなの位置を点で出す（2026-11-09）
 function drawOverview(g) {
   const pad = 16;
   const below = 110; // 下のお知らせの分をあける
@@ -3240,12 +3369,13 @@ function drawOverview(g) {
   const oy = pad + (CH - pad - below - E.H * s) / 2;
   const sx = (x) => ox + x * s;
   const sy = (y) => oy + y * s;
-  drawWholeMap(g, sx, sy, s, null);
+  drawWholeMap(g, sx, sy, s, null, false, watchPeople(g));
 }
 
 // 地図ぜんたい（進行役の画面と、遊んでいる人の「地図」・小さな地図で共通）。mine を渡すと、自分の仕事の「!」と（x があれば）自分の位置も描く。
 // small: 小さな地図（部屋の名前を書かず、「!」を小さく）
-function drawWholeMap(g, sx, sy, s, mine, small) {
+// people: みんなの位置（ねむった人・途中から入った見学の子だけ。watchPeople。進行役は null）
+function drawWholeMap(g, sx, sy, s, mine, small, people) {
   ctx.fillStyle = '#2D3642';
   ctx.fillRect(0, 0, CW, CH);
   ctx.fillStyle = E.HALL_FILL;
@@ -3302,6 +3432,35 @@ function drawWholeMap(g, sx, sy, s, mine, small) {
     ctx.fillText('あなた', sx(mine.x), sy(mine.y) - s * 0.7);
   }
   if (g.dark) { ctx.fillStyle = 'rgba(12,16,24,0.45)'; ctx.fillRect(0, 0, CW, CH); }
+  if (people) drawPeopleDots(people, sx, sy, Math.max(5, s * 0.5), true);
+}
+
+// 地図の上のみんなの点（ねむっている人はうすく。見ている人は白い輪で囲む）
+function drawPeopleDots(people, sx, sy, r, named) {
+  ctx.save();
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'bottom';
+  ctx.font = '700 ' + Math.max(11, Math.round(r * 1.25)) + 'px "Noto Sans JP", sans-serif';
+  people.forEach((p) => {
+    const x = sx(p.x);
+    const y = sy(p.y);
+    ctx.globalAlpha = p.up ? 1 : 0.5;
+    ctx.fillStyle = p.hex;
+    ctx.strokeStyle = p.on ? '#fff' : 'rgba(0,0,0,0.55)';
+    ctx.lineWidth = p.on ? 3 : 1.5;
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    if (named) {
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+      ctx.strokeText(p.name, x, y - r - 2);
+      ctx.fillStyle = '#1A1A1A';
+      ctx.fillText(p.name, x, y - r - 2);
+    }
+  });
+  ctx.restore();
 }
 
 /* ── 地図（遊んでいる人。自分の位置と自分の仕事だけ。ほかの人は出ない） ── */
@@ -3340,7 +3499,7 @@ function drawMapOverlay(g) {
   ctx = mctx; CW = w; CH = h;
   // 遊ぶ人は自分の場所と自分の仕事。進行役・見学（会議中に見るとき）は地図だけ
   const mine = isPlaying(g, state.nickname) ? { x: ME.x, y: ME.y, color: g.colors[state.nickname], spots: mySpots(g) } : { spots: [] };
-  drawWholeMap(g, (x) => x * s, (y) => y * s, s, mine);
+  drawWholeMap(g, (x) => x * s, (y) => y * s, s, mine, false, watchPeople(g));
   ctx = saved.ctx; CW = saved.CW; CH = saved.CH;
 }
 // 自分のおわっていない仕事の場所（隊員だけ。ふたりの仕事は2か所）
@@ -3405,6 +3564,14 @@ function drawMini(g) {
   nctx.setTransform(1, 0, 0, 1, 0, 0);
   nctx.drawImage(miniBase, 0, 0);
   nctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  // ねむった人には、みんなの位置も点で出す（名前は大きな地図で）
+  const people = watchPeople(g);
+  if (people) {
+    const saved = ctx;
+    ctx = nctx;
+    drawPeopleDots(people, (x) => x * s, (y) => y * s, Math.max(2.5, s * 0.8), false);
+    ctx = saved;
+  }
   nctx.fillStyle = colorHex(g.colors[state.nickname]);
   nctx.strokeStyle = '#fff';
   nctx.lineWidth = 2;
@@ -4626,6 +4793,23 @@ function submitOnEnter(input, handler) {
   });
 }
 
+// スティックを指で押さえたまま、別の指でボタンを押すと、ブラウザは click を出さない（pointerdown・pointerup は届く）。
+// そのため、右下の操作のボタン（ねむらせる・しかけ・役職のわざ・ひとこと・見つけた・つかう）は、タッチなら同じボタンの上で
+// 指をはなしたとき（pointerup）に動かす。直後に来る click は二重にしない
+function bindTouchAction(btn, fn) {
+  let downId = null;
+  let touchAt = 0;
+  btn.addEventListener('pointerdown', (e) => { if (e.pointerType === 'touch') downId = e.pointerId; });
+  btn.addEventListener('pointercancel', () => { downId = null; });
+  btn.addEventListener('pointerup', (e) => {
+    if (e.pointerType !== 'touch' || e.pointerId !== downId) return;
+    downId = null;
+    touchAt = Date.now();
+    if (!btn.disabled) fn();
+  });
+  btn.addEventListener('click', () => { if (Date.now() - touchAt > 800) fn(); });
+}
+
 function openJoinFromLink(code) {
   $('joinCode').value = code;
   $('joinLinkHint').hidden = false;
@@ -4673,23 +4857,27 @@ function bind() {
     $('menuDialog').close();
     if (window.confirm('このゲームをやめて、みんなを待合室にもどしますか？')) backToLobby(false);
   });
-  $('actUse').addEventListener('click', doUse);
-  $('actFind').addEventListener('click', doFind);
-  $('actSay').addEventListener('click', toggleSayBox);
+  bindTouchAction($('actUse'), doUse);
+  bindTouchAction($('actFind'), doFind);
+  bindTouchAction($('actSay'), toggleSayBox);
   $('btnSayClose').addEventListener('click', () => { state.sayOpen = false; state.sayPending = null; state.sayTarget = null; const g = gameOf(state.room); if (g) renderSayBox(g); });
-  $('actSleep').addEventListener('click', doSleep);
-  $('actSab').addEventListener('click', toggleSabBox);
+  bindTouchAction($('actSleep'), doSleep);
+  bindTouchAction($('actSab'), toggleSabBox);
   $('btnSabClose').addEventListener('click', () => { state.sabOpen = false; state.sabDoor = false; $('sabBox').hidden = true; });
   $('sabDark').addEventListener('click', doDark);
   $('sabAir').addEventListener('click', doAir);
   $('sabDoor').addEventListener('click', () => { state.sabDoor = !state.sabDoor; const g = gameOf(state.room); if (g) renderSabBox(g, RoomkRTDB.now()); });
   $('btnMap').addEventListener('click', () => { if (state.mapOpen) closeMap(); else openMap(); });
   $('btnMapClose').addEventListener('click', closeMap);
+  // みんなを見る（ねむった人・途中から入った見学の子）
+  $('followPrev').addEventListener('click', () => stepFollow(-1));
+  $('followNext').addEventListener('click', () => stepFollow(1));
+  $('followSelf').addEventListener('click', () => setFollow(null));
   $('btnMeetingMap').addEventListener('click', openMap);
   miniBtn.addEventListener('click', openMap);
   setMiniOn(miniOn);
   miniToggle.addEventListener('click', () => setMiniOn(!miniOn));
-  $('actJob').addEventListener('click', doJob);
+  bindTouchAction($('actJob'), doJob);
   $('btnVitalsClose').addEventListener('click', closeVitals);
   $('btnShiftClose').addEventListener('click', () => { state.shiftOpen = false; $('shiftBox').hidden = true; });
   $('btnTasks').addEventListener('click', () => {

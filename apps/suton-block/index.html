@@ -9,13 +9,13 @@
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
   <link rel="stylesheet" href="../shared/css/design-system.css?v=20261106c">
   <!-- index.html と app.js・engine.js・style.css はセットで変わるので、変えたら ?v= をそろえて上げる -->
-  <link rel="stylesheet" href="style.css?v=20261106r2">
+  <link rel="stylesheet" href="style.css?v=20261109d">
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <script src="../shared/js/rtdb-utils.js?v=20261005"></script>
   <script src="../shared/js/room-qr.js?v=20261022"></script>
-  <script src="engine.js?v=20261106r2"></script>
+  <script src="engine.js?v=20261109d"></script>
 </head>
 <body data-genre="puzzle">
 
@@ -245,7 +245,10 @@
           </div>
           <ol id="othersList" class="sb-otherlist" aria-label="ほかの人" hidden></ol>
         </aside>
-        <div id="others" class="sb-others" aria-label="ほかの人の盤" hidden></div>
+        <div id="othersCol" class="sb-otherscol" hidden>
+          <p id="othersHint" class="sb-othershint" hidden>押した人にじゃまを送る</p>
+          <div id="others" class="sb-others" aria-label="ほかの人の盤" hidden></div>
+        </div>
       </div>
       <div class="sb-pad" aria-label="操作のボタン">
         <button type="button" class="sb-padbtn" data-act="left" aria-label="左へ"><span class="material-symbols-rounded" aria-hidden="true">arrow_back</span></button>
@@ -304,7 +307,7 @@
     </div>
   </div>
 
-  <script type="module" src="app.js?v=20261106r2"></script>
+  <script type="module" src="app.js?v=20261109d"></script>
   <script src="../shared/js/stats.js?v=1" defer></script>
   <script src="../shared/js/howto.js"></script>
   <script>
@@ -328,6 +331,9 @@
           'マウスなら、盤の上で左右に動かすとブロックがついてくる。クリックですとん、右クリックで右に回す、ホイールで回す',
           'ひとりであそぶときは、上の「とめる」（キーボードなら P）でとめられる。「つづける」で、とめたところから続く',
         ] },
+        { heading: 'ブロックの出かた', items: [
+          '7種類のブロックが1回ずつ、混ざって出る。7つ出たら、また7種類を混ぜなおす（切れ目では、同じ形が2つ続くこともある）',
+        ] },
         { heading: '回すときのこつ', items: [
           '回せないときは、少しずれて回る。かべぎわでも回せるよ',
           '出っぱりの下のすき間にも、回してもぐりこませられる',
@@ -336,6 +342,7 @@
           'みんな同じ順番でブロックが出る。「あそびかた」は、段の数をくらべるか、対戦かをホストが選ぶ',
           '段の数をくらべる: 時間内に消した段の数をくらべる。盤がいっぱいになっても、からにしてつづく',
           '「じゃまブロック」ありのときは、2段いじょういっしょに消すと、となりの人の盤の下に段が入る。自分も段を消すと、来るじゃまをへらせる',
+          'じゃまを送る相手は、はじめはならびで次の人。ほかの人の盤（スマホは名前）を押すと、その人に送る。もう一度押すと、次の人にもどる',
           '対戦: 消すと、つぎの人の盤の下にじゃまが入る。2段で1、3段で2、4段で4。T を回し入れて消すと、1段で2・2段で4・3段で6。4段や回し入れを、ふつうの消し方をはさまずにつづけると1多い。つづけて消すと、2回目から少しずつ多くなる。盤が全部消えると10',
           '来るじゃまは、消して送るぶんで先にへらせる。消さずに置いたとき、のこりが盤の下から入る',
           '対戦で「その人はここまで」のときは、盤がいっぱいになった人から止まり、のこった人が上。「からにしてつづける」のときは、時間内に送ったじゃまの数をくらべる',
