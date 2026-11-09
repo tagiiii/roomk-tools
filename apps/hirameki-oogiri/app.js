@@ -38,7 +38,12 @@ const CUTS = {
   ippon: { label: '一本が出たら', note: '一本が出たら、答えの受付はおしまい。残りの答えを出し終えたら、結果を見て次のお題へ' },
   time: { label: '時間で', note: '時間になったら答えを締め切る。そのあいだは何回でも一本が出せる' },
 };
-const DEFAULT_RULE = { ratio: 'half', showSec: 15, cut: 'ippon', minutes: 3 };
+// いいねゲージを出すか（2026-11-09 フィードバックで、消せるように）
+const GAUGES = {
+  show: { label: '出す', note: '押した数を帯で出す（数字は出さない）。「一本」の線に届いたら一本' },
+  hide: { label: '出さない', note: 'ゲージは出さない。一本になったときだけ分かる' },
+};
+const DEFAULT_RULE = { ratio: 'half', showSec: 15, cut: 'ippon', minutes: 3, gauge: 'show' };
 
 const { authReady, db } = RoomkRTDB.initFirebase(firebase);
 const DB_PREFIX = 'oogiri_rooms';
@@ -183,6 +188,7 @@ function ruleOf(room) {
     showSec: SHOW_SECS.includes(raw.showSec) ? raw.showSec : DEFAULT_RULE.showSec,
     cut: CUTS[raw.cut] ? raw.cut : DEFAULT_RULE.cut,
     minutes: MINUTES.includes(raw.minutes) ? raw.minutes : DEFAULT_RULE.minutes,
+    gauge: GAUGES[raw.gauge] ? raw.gauge : DEFAULT_RULE.gauge,
   };
 }
 
@@ -1059,7 +1065,7 @@ function renderWaiting(room) {
     if (away) li.append(makeElement('span', 'og-tag og-tag--muted', '通信が切れたみたい'));
     return li;
   }));
-  $('howtoRatio').textContent = '審査員は、おもしろかったら「いいね！」。いいねゲージがたまって、' + RATIOS[rule.ratio].note.replace('一本', '「一本！」');
+  $('howtoRatio').textContent = '審査員は、おもしろかったら「いいね！」。' + (rule.gauge === 'show' ? 'いいねゲージがたまって、' : '') + RATIOS[rule.ratio].note.replace('一本', '「一本！」');
   $('howtoCut').textContent = rule.cut === 'time'
     ? rule.minutes + '分たったら答えを締め切って、結果を見る'
     : '一本が出たら答えの受付はおしまい。残りの答えを出し終えたら、結果を見て次のお題へ';
@@ -1074,6 +1080,8 @@ function renderWaiting(room) {
   $('timeOpts').hidden = rule.cut !== 'time';
   $('timeOpts').replaceChildren(...MINUTES.map((n) => segBtn(n + '分', rule.minutes === n, () => setRule('minutes', n))));
   $('showOpts').replaceChildren(...SHOW_SECS.map((n) => segBtn(n + '秒', rule.showSec === n, () => setRule('showSec', n))));
+  $('gaugeOpts').replaceChildren(...Object.keys(GAUGES).map((k) => segBtn(GAUGES[k].label, rule.gauge === k, () => setRule('gauge', k))));
+  $('gaugeNote').textContent = GAUGES[rule.gauge].note;
   $('cutNote').textContent = CUTS[rule.cut].note + '。ホストはいつでも「答えを締め切る」で区切れるよ';
   const n = allVoters(room).length;
   $('btnStart').disabled = n < MIN_VOTERS;
@@ -1135,11 +1143,11 @@ function renderPlay(room, game) {
     $('btnReject').hidden = !isHost() || c.state === 'reject';
     $('stageHint').textContent = c.state !== 'open' ? ''
       : isWatch() ? 'おもしろかったら、自分の画面で「いいね！」を押してね'
-        : !canPress ? '' : pressed ? '押したよ。ゲージがたまると一本！' : 'おもしろかったら押してね';
+        : !canPress ? '' : pressed ? (rule.gauge === 'show' ? '押したよ。ゲージがたまると一本！' : '押したよ') : 'おもしろかったら押してね';
     // いいねゲージ（押した数は数字で出さない。一本の線までの割合だけ）
     const need = needOf(votersFor(room, c.a.by).length, rule.ratio);
     const ratio = c.state === 'ippon' ? 1 : Number.isFinite(need) ? Math.min(1, pressCount(room, game) / need) : 0;
-    $('gauge').hidden = c.state === 'reject';
+    $('gauge').hidden = c.state === 'reject' || rule.gauge !== 'show';
     $('gauge').classList.toggle('is-full', c.state === 'ippon');
     $('gaugeFill').style.width = (ratio * 100).toFixed(1) + '%';
   } else {
@@ -1495,7 +1503,7 @@ async function setMode(mode) {
 }
 
 async function setRule(key, value) {
-  const valid = { ratio: !!RATIOS[value], showSec: SHOW_SECS.includes(value), cut: !!CUTS[value], minutes: MINUTES.includes(value) };
+  const valid = { ratio: !!RATIOS[value], showSec: SHOW_SECS.includes(value), cut: !!CUTS[value], minutes: MINUTES.includes(value), gauge: !!GAUGES[value] };
   if (!valid[key]) return;
   const ok = await hostTransaction((room) => {
     if (room.status !== STATUS.WAITING) return;
