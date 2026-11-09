@@ -4794,7 +4794,8 @@ function submitOnEnter(input, handler) {
 }
 
 // スティックを指で押さえたまま、別の指でボタンを押すと、ブラウザは click を出さない（pointerdown・pointerup は届く）。
-// そのため、タッチは同じボタンの上で指をはなしたとき（pointerup）に動かす。直後に来る click は二重にしない
+// そのため、右下の操作のボタン（ねむらせる・しかけ・役職のわざ・ひとこと・見つけた・つかう）は、タッチなら同じボタンの上で
+// 指をはなしたとき（pointerup）に動かす。直後に来る click は二重にしない
 function bindTouchAction(btn, fn) {
   let downId = null;
   let touchAt = 0;
@@ -4856,12 +4857,12 @@ function bind() {
     $('menuDialog').close();
     if (window.confirm('このゲームをやめて、みんなを待合室にもどしますか？')) backToLobby(false);
   });
-  $('actUse').addEventListener('click', doUse);
-  $('actFind').addEventListener('click', doFind);
-  $('actSay').addEventListener('click', toggleSayBox);
+  bindTouchAction($('actUse'), doUse);
+  bindTouchAction($('actFind'), doFind);
+  bindTouchAction($('actSay'), toggleSayBox);
   $('btnSayClose').addEventListener('click', () => { state.sayOpen = false; state.sayPending = null; state.sayTarget = null; const g = gameOf(state.room); if (g) renderSayBox(g); });
   bindTouchAction($('actSleep'), doSleep);
-  $('actSab').addEventListener('click', toggleSabBox);
+  bindTouchAction($('actSab'), toggleSabBox);
   $('btnSabClose').addEventListener('click', () => { state.sabOpen = false; state.sabDoor = false; $('sabBox').hidden = true; });
   $('sabDark').addEventListener('click', doDark);
   $('sabAir').addEventListener('click', doAir);
@@ -4876,7 +4877,7 @@ function bind() {
   miniBtn.addEventListener('click', openMap);
   setMiniOn(miniOn);
   miniToggle.addEventListener('click', () => setMiniOn(!miniOn));
-  $('actJob').addEventListener('click', doJob);
+  bindTouchAction($('actJob'), doJob);
   $('btnVitalsClose').addEventListener('click', closeVitals);
   $('btnShiftClose').addEventListener('click', () => { state.shiftOpen = false; $('shiftBox').hidden = true; });
   $('btnTasks').addEventListener('click', () => {

@@ -1,4 +1,4 @@
-// その12: スマホでスティックを押さえたまま「ねむらせる」を押す（2026-11-09 フィードバック「キルボタンがたまに機能しなくなる」）
+// その12: スマホでスティックを押さえたまま「ねむらせる」などの操作のボタンを押す（2026-11-09 フィードバック「キルボタンがたまに機能しなくなる」）
 // 2本目の指のタップでは click が出ない（pointerdown・pointerup は届く）ので、タッチは pointerup で動かす。二重には動かない
 const L = require('./lib.cjs');
 const { E, check, sleep } = L;
@@ -20,22 +20,24 @@ const tp = (id, p) => ({ x: p.x, y: p.y, id, radiusX: 4, radiusY: 4, force: 1 })
   const g1 = await L.newClient('g1', { touch: true, viewport: { width: 375, height: 700 } });
   const code = await L.createRoom(host, 'ホスト');
   await L.joinRoom(g1, 'あお', code);
-  await host.page.click('#btnAddBot');
-  await host.page.click('#btnAddBot');
-  check('ロボット2つで4人', await L.waitFor(async () => (await L.text(host, '#playerCount')) === '4人'));
+  // ロボットは4つ（2人ねむらせても、隊員が3人のこって、ゲームが終わらないように）
+  for (let i = 0; i < 4; i++) await host.page.click('#btnAddBot');
+  check('ロボット4つで6人', await L.waitFor(async () => (await L.text(host, '#playerCount')) === '6人'));
   await host.page.click('#btnStart');
   for (const c of [host, g1]) await L.waitScreen(c, 'game');
   for (const c of [host, g1]) await L.dismissRole(c);
   E.useMap(0);
   const far = Date.now() + 3600000;
   await L.patchGame(code, {
-    roles: { 'ホスト': 'crew', 'あお': 'sleeper', '*1': 'crew', '*2': 'crew' },
-    cooldown: { 'あお': 0, '*1': far, '*2': far },
+    roles: { 'ホスト': 'crew', 'あお': 'sleeper', '*1': 'crew', '*2': 'crew', '*3': 'crew', '*4': 'crew' },
+    cooldown: { 'あお': 0, '*1': far, '*2': far, '*3': far, '*4': far },
     darkReadyAt: far, buttonReadyAt: far,
   });
   const spot = E.SPOTS.reduce((a, b) => (E.dist(b, E.TABLE) > E.dist(a, E.TABLE) ? b : a));
   await freezeBot(host, '*1', spot.x, spot.y + 0.6);
   await freezeBot(host, '*2', E.TABLE.x, E.TABLE.y + 5);
+  await freezeBot(host, '*3', E.TABLE.x + 3, E.TABLE.y + 5);
+  await freezeBot(host, '*4', E.TABLE.x - 3, E.TABLE.y + 5);
   check('スマホのまねでスティックが出る', await L.waitFor(() => L.visible(g1, '#pad')));
   const cdp = await g1.context.newCDPSession(g1.page);
   const send = (type, pts) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: pts });
@@ -63,7 +65,7 @@ const tp = (id, p) => ({ x: p.x, y: p.y, id, radiusX: 4, radiusY: 4, force: 1 })
   // ══ 1本の指のタップでも1回だけ動く（pointerup と click で二重にならない） ══
   // つぎの相手はロボット（ねむったホストの位置は g に移ったので、もう相手にならない）
   await freezeBot(host, '*2', 30.8, 52.1);
-  await L.patchGame(code, { cooldown: { 'あお': 0, '*1': far, '*2': far } });
+  await L.patchGame(code, { cooldown: { 'あお': 0, '*1': far, '*2': far, '*3': far, '*4': far } });
   check('もとにもどすと、また押せる', await L.waitFor(async () => (await L.visible(g1, '#actSleep')) && !(await g1.page.$eval('#actSleep', (b) => b.disabled))));
   // r への transaction の回数を数える（ねむらせるは1回のタップで1回だけ）
   await g1.page.evaluate(() => {
@@ -77,6 +79,38 @@ const tp = (id, p) => ({ x: p.x, y: p.y, id, radiusX: 4, radiusY: 4, force: 1 })
   await sleep(1200);
   const tx = await g1.page.evaluate(() => window.__tx);
   check('1回のタップで transaction は1回だけ（pointerup と click で二重にならない）', tx === 1, tx);
+  // ══ ほかの操作のボタンも、スティックを押さえたまま押せる（2026-11-09 同じ日に広げた） ══
+  // 1本目の指でスティックを押さえ、2本目の指で sel を押す（指はいっしょにはなす）
+  const twoFinger = async (sel) => {
+    const at = await center(g1, sel);
+    const p = await center(g1, '#pad');
+    await send('touchStart', [tp(1, p)]);
+    await send('touchMove', [tp(1, { x: p.x + 4, y: p.y })]);
+    await send('touchStart', [tp(1, { x: p.x + 4, y: p.y }), tp(2, at)]);
+    await sleep(150);
+    await send('touchEnd', []);
+  };
+  await twoFinger('#actSay');
+  check('ひとこと: スティックを押さえたまま押すと一覧がひらく', await L.waitFor(() => L.visible(g1, '#sayBox')));
+  await g1.page.click('#btnSayClose');
+  await L.waitFor(async () => !(await L.visible(g1, '#sayBox')));
+  await twoFinger('#actSab');
+  check('しかけ: スティックを押さえたまま押すと一覧がひらく', await L.waitFor(() => L.visible(g1, '#sabBox')));
+  await sleep(500);
+  check('しかけ: 1回のタップで2回動かない（ひらいたまま）', await L.visible(g1, '#sabBox'));
+  await g1.page.click('#btnSabClose');
+  await L.waitFor(async () => !(await L.visible(g1, '#sabBox')));
+  await L.teleport(g1, E.CAM_STAND.x, E.CAM_STAND.y + 0.5);
+  check('つかう: カメラの台で「カメラを見る」', await L.waitFor(async () => (await L.text(g1, '#actUseLabel')) === 'カメラを見る'));
+  await twoFinger('#actUse');
+  check('つかう: スティックを押さえたまま押すとカメラがひらく', await L.waitFor(() => L.visible(g1, '#ovCam')));
+  await g1.page.click('#btnCamClose');
+  await L.waitFor(async () => !(await L.visible(g1, '#ovCam')));
+  // 見つけた: ねむったロボット（30.8, 52.1）の近くで
+  await L.teleport(g1, 30.8, 51.4);
+  check('見つけた: ねむっている姿の近くで出る', await L.waitFor(() => L.visible(g1, '#actFind')));
+  await twoFinger('#actFind');
+  check('見つけた: スティックを押さえたまま押すと会議になる', await L.waitFor(async () => (await L.roomOf(code)).game.stage === 'meeting'));
   check('エラーなし', g1.errors.length === 0 && host.errors.length === 0, g1.errors.concat(host.errors));
 
   await sleep(200);
