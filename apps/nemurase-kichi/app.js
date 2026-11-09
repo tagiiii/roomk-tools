@@ -3172,9 +3172,12 @@ function draw(g) {
   for (let x = Math.floor(camX / TS); x <= Math.ceil((camX + CW) / TS); x++) { ctx.moveTo(sx(x) + 0.5, 0); ctx.lineTo(sx(x) + 0.5, CH); }
   for (let y = Math.floor(camY / TS); y <= Math.ceil((camY + CH) / TS); y++) { ctx.moveTo(0, sy(y) + 0.5); ctx.lineTo(CW, sy(y) + 0.5); }
   ctx.stroke();
+  // 部屋の明かり（床の上・家具の下。暗がりの下に描くので、見える広さは変わらない）
+  drawRoomLights(g, sx, sy, TS);
   // 家具（部屋の目印）・ドア
   drawFurniture(sx, sy, TS);
   drawDoors(g, sx, sy, TS);
+  drawLamps(g, sx, sy, TS);
   ctx.font = '700 ' + Math.round(TS * 0.42) + 'px "Noto Sans JP", sans-serif';
   ctx.textAlign = 'left';
   ctx.textBaseline = 'top';
@@ -3319,6 +3322,12 @@ function draw(g) {
       const up = FURNITURE_TALL.has((FURNITURE_STYLE[f.kind] || {}).deco) ? 0.3 : 0;   // 上にはみ出す形（画面・葉・あかり）
       fctx.fillRect(sx(f.x), sy(f.y) - TS * up, f.w * TS, (f.h + up) * TS);
     });
+    // かべのライトも、電球が見えていれば、その形の所の暗がりを抜く（かべにかかる台が暗がりに消えないように）
+    roomLamps().forEach((l) => {
+      const bulb = { x: l.x, y: l.y + 0.3 };
+      if (E.dist(bulb, ME) > vr * 0.8 || !E.canSee(ME, bulb)) return;
+      fctx.fillRect(sx(l.x) - TS * 0.36, sy(l.y) - TS * 0.28, TS * 0.72, TS * 0.62);
+    });
     ctx.save();
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.drawImage(fog, 0, 0);
@@ -3327,6 +3336,84 @@ function draw(g) {
   // 自分の仕事への矢印（暗がりの上に描く。ほかの人を見ている間・見学の子には出さない）
   if (fp || !playingMe) GUIDE.shown = false;
   else drawGuide(g, sx, sy, vr);
+}
+
+/* ── 部屋の明かり（2026-11-09 フィードバック「インテリアのライティング」）──
+   どの部屋にも、上のかべにライトを付ける（幅6マスごとに1つ。かべに付けるので、歩ける所・仕事の場所は変わらない）。
+   ライトの下の床を暖かい色で照らし、部屋のすみは少し暗くする。置き物のライト（見はり台）・たき火（パーク）も、まわりを照らす。
+   停電の間は電気のライトが消える（たき火はついたまま） */
+let lampsOf = null;
+let lampList = [];
+function roomLamps() {
+  if (lampsOf === E.ROOMS) return lampList;   // マップが変わったら作りなおす
+  lampsOf = E.ROOMS;
+  lampList = [];
+  // 真下のマスに家具・仕事の場所などがあると重なるので、左右の空いたマスへずらす
+  const taken = new Set();
+  E.FURNITURE.forEach((f) => { if (!f.floor) for (let yy = f.y; yy < f.y + f.h; yy++) for (let xx = f.x; xx < f.x + f.w; xx++) taken.add(xx + ',' + yy); });
+  [...E.SPOTS, ...E.VENTS, ...E.LADDERS, ...E.AIR_PANELS, E.CAM_STAND, E.FIX_SPOT].forEach((p) => p && taken.add(Math.floor(p.x) + ',' + Math.floor(p.y)));
+  E.PAIRS.forEach((p) => ['a', 'b'].forEach((k) => taken.add(Math.floor(p[k].x) + ',' + Math.floor(p[k].y))));
+  const free = (tx, y) => E.isFloor(tx, y) && !E.isFloor(tx, y - 1) && !taken.has(tx + ',' + y);
+  E.ROOMS.forEach((r) => {
+    const n = Math.max(1, Math.round(r.w / 6));
+    for (let i = 0; i < n; i++) {
+      const base = Math.floor(r.x + (r.w * (i + 0.5)) / n);
+      const tx = [0, 1, -1, 2, -2].map((d) => base + d).find((t) => t >= r.x && t < r.x + r.w && free(t, r.y));
+      if (tx === undefined) continue;   // 上が床（同じ部屋の続き・入口）か、近くがふさがっているときは付けない
+      lampList.push({ x: tx + 0.5, y: r.y, reach: Math.min(6, Math.max(3.2, r.h * 0.8)) });
+    }
+  });
+  return lampList;
+}
+function drawRoomLights(g, sx, sy, s) {
+  const on = !g.dark;
+  const roomsPath = () => {
+    ctx.beginPath();
+    E.ROOMS.forEach((r) => ctx.rect(sx(r.x), sy(r.y), r.w * s, r.h * s));
+  };
+  ctx.save();
+  // 部屋の床をひとまわり暗くして、明かりの所との差を出す（重なる四角も1回だけぬる）
+  roomsPath();
+  ctx.fillStyle = on ? 'rgba(70,50,30,0.12)' : 'rgba(20,26,36,0.22)';
+  ctx.fill();
+  roomsPath();
+  ctx.clip();
+  const pool = (x, y, reach, rgb, a) => {
+    const cx = sx(x);
+    const cy = sy(y);
+    const rr = reach * s;
+    if (cx + rr < 0 || cy + rr < 0 || cx - rr > CW || cy - rr > CH) return;
+    const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, rr);
+    grad.addColorStop(0, 'rgba(' + rgb + ',' + a + ')');
+    grad.addColorStop(0.55, 'rgba(' + rgb + ',' + (a * 0.45) + ')');
+    grad.addColorStop(1, 'rgba(' + rgb + ',0)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(cx - rr, cy - rr, rr * 2, rr * 2);
+  };
+  if (on) roomLamps().forEach((l) => pool(l.x, l.y + 0.4, l.reach, '255,228,160', 0.5));
+  E.FURNITURE.forEach((f) => {
+    const deco = (FURNITURE_STYLE[f.kind] || {}).deco;
+    if (deco === 'light' && on) pool(f.x + f.w / 2, f.y + f.h / 2, 3.2, '255,222,130', 0.55);
+    else if (deco === 'campfire') pool(f.x + f.w / 2, f.y + f.h / 2, 3.4, '255,170,90', 0.5);
+  });
+  ctx.restore();
+}
+// かべのライト（台は少しかべにかかり、電球は部屋の床のはしに出す。家具の上に描く）
+function drawLamps(g, sx, sy, s) {
+  const on = !g.dark;
+  roomLamps().forEach((l) => {
+    const x = sx(l.x);
+    const y = sy(l.y);
+    if (x < -s || y < -s || x > CW + s || y > CH + s) return;
+    ctx.fillStyle = '#5B6470';
+    roundRect(x - s * 0.3, y - s * 0.22, s * 0.6, s * 0.26, Math.max(1.5, s * 0.08));
+    if (on) {
+      ctx.fillStyle = 'rgba(255,214,102,0.35)';
+      circle(x, y + s * 0.12, s * 0.3);
+    }
+    ctx.fillStyle = on ? '#FFD966' : '#9AA3AD';
+    circle(x, y + s * 0.12, s * 0.15);
+  });
 }
 
 // 見ている人の足もとの輪（明るい床でも暗い所でも見えるよう、白いふちの上に濃い点線）

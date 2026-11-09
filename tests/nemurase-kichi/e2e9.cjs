@@ -83,6 +83,28 @@ const dark = (px) => px.every((v) => v < 70);
   await L.patchGame(code, { dark: false });
   check('停電がなおると 5.5×2', await L.waitFor(async () => near(await vr(host), E.VIEW.crew * 2)), await vr(host));
 
+  // ══ 部屋の明かり（2026-11-09 フィードバック）: かべのライト・停電で消える ══
+  {
+    const lamps = await g1.page.evaluate(() => window.__NK__.roomLamps());
+    const rooms = E.ROOMS.filter((r) => !r.part).map((r) => r.key);
+    const lit = new Set(lamps.map((l) => E.roomAt(l.x, l.y + 0.5)));
+    check('部屋の明かり: どの部屋にもライトがある', rooms.every((k) => lit.has(k)), rooms.filter((k) => !lit.has(k)));
+    check('部屋の明かり: ライトは部屋の床の上のはし（上はかべ）', lamps.every((l) => E.isFloor(Math.floor(l.x), l.y) && !E.isFloor(Math.floor(l.x), l.y - 1)));
+    check('部屋の明かり: ライトは家具と重ならない', lamps.every((l) => !E.FURNITURE.some((f) => !f.floor && l.x > f.x && l.x < f.x + f.w && l.y >= f.y && l.y < f.y + f.h)));
+    // 電球は小さく、読む点がまわりの光の輪にかかると色が混ざるので、黄色っぽいか（赤が強く青が弱い）・灰色か（赤と青がほぼ同じ）で見る
+    const yellowish = (px) => px[0] > 200 && px[0] - px[2] > 50;
+    const greyish = (px) => Math.abs(px[0] - px[2]) < 30 && px[0] < 200;
+    const lamp = lamps.find((l) => E.roomAt(l.x, l.y + 0.5) === 'radio');
+    await L.teleport(g1, lamp.x, lamp.y + 2.5);
+    await sleep(500);
+    check('部屋の明かり: 電球が光る（黄色）', await L.waitFor(async () => yellowish(await L.pixelAt(g1, lamp.x, lamp.y + 0.12))), await L.pixelAt(g1, lamp.x, lamp.y + 0.12));
+    await L.patchGame(code, { dark: true });
+    check('部屋の明かり: 停電で電球が消える（灰色）', await L.waitFor(async () => greyish(await L.pixelAt(g1, lamp.x, lamp.y + 0.12))), await L.pixelAt(g1, lamp.x, lamp.y + 0.12));
+    await L.patchGame(code, { dark: false });
+    check('部屋の明かり: 停電がなおるとまたつく', await L.waitFor(async () => yellowish(await L.pixelAt(g1, lamp.x, lamp.y + 0.12))));
+    await L.shot(g1, '93-room-lights');
+  }
+
   // ══ 倍率のない部屋（前の版で作った部屋）は1倍 ══
   room = await L.roomOf(code);
   const old = { ...room.game.settings };
