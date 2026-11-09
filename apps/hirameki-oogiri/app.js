@@ -1,5 +1,5 @@
 // ひらめき大喜利：お題に、思いついた答えを何回でも出す大喜利。出た答えは1つずつ、だれのか伏せてみんなの画面に出し、
-// 審査員の何割か（ホストが決める）が「おもしろい！」を押したら「一本！」。ホストは出ている答えを「却下」できる。順位はつけない。
+// 審査員の何割か（ホストが決める）が「いいね！」を押したら「一本！」。ホストは出ている答えを「却下」できる。順位はつけない。
 // ルーム（Realtime Database）で進める。ルームの出入り・切断・再接続・みんなにみせる画面の作りはしるしでヒントにそろえている。
 // 時間で進むこと（答えを出す・押せる時間の終わり・一本の表示・時間で区切る）は、ふだんはホストの端末が進める。
 // ホストのタブが裏に回って遅れたとき（みんなにみせる画面を前に出して共有するときなど）は、参加者の端末が少し遅れて代わりに進める。
@@ -28,10 +28,10 @@ const RATIOS = {
 };
 // 参加スタイル。「回答者」と「審査員」を、どちらか・両方から選ぶ（2026-10-31 オーナー判断）。両方なしは、ホストだけ（進行だけ）
 const MODES = {
-  both: { answer: true, judge: true, note: '回答者と審査員の両方。答えを書いて出せるし、ほかの人の答えに「おもしろい！」も押せるよ' },
-  answer: { answer: true, judge: false, note: '回答者だけ。答えを書いて出すよ。「おもしろい！」は押さないよ（審査員には数えない）' },
-  judge: { answer: false, judge: true, note: '審査員だけ。答えは書かないで、出た答えを見て、おもしろかったら「おもしろい！」を押すよ' },
-  none: { answer: false, judge: false, note: '進行だけ。答えも書かないし「おもしろい！」も押さないよ' },
+  both: { answer: true, judge: true, note: '回答者と審査員の両方。答えを書いて出せるし、ほかの人の答えに「いいね！」も押せるよ' },
+  answer: { answer: true, judge: false, note: '回答者だけ。答えを書いて出すよ。「いいね！」は押さないよ（審査員には数えない）' },
+  judge: { answer: false, judge: true, note: '審査員だけ。答えは書かないで、出た答えを見て、おもしろかったら「いいね！」を押すよ' },
+  none: { answer: false, judge: false, note: '進行だけ。答えも書かないし「いいね！」も押さないよ' },
 };
 const modeFrom = (answer, judge) => (answer ? (judge ? 'both' : 'answer') : (judge ? 'judge' : 'none'));
 const CUTS = {
@@ -1037,7 +1037,7 @@ function renderProxyAdmin(room, phase) {
   $('proxyAdminList').hidden = !px.length;
   $('proxyAdd').hidden = px.length >= MAX_PROXIES;
   $('proxyAdminNote').textContent = px.length >= MAX_PROXIES ? MAX_PROXIES + '人まで足せるよ'
-    : phase === STATUS.WAITING ? '名前を足すと、ホストの画面で代わりに答えを書いたり「おもしろい！」を押したりできるよ（' + MAX_PROXIES + '人まで）'
+    : phase === STATUS.WAITING ? '名前を足すと、ホストの画面で代わりに答えを書いたり「いいね！」を押したりできるよ（' + MAX_PROXIES + '人まで）'
       : '次のお題から参加できるよ（外すのは、もう一回あそぶときの待合室で）';
 }
 
@@ -1059,7 +1059,7 @@ function renderWaiting(room) {
     if (away) li.append(makeElement('span', 'og-tag og-tag--muted', '通信が切れたみたい'));
     return li;
   }));
-  $('howtoRatio').textContent = '審査員は、おもしろかったら「おもしろい！」。おもしろゲージがたまって、' + RATIOS[rule.ratio].note.replace('一本', '「一本！」');
+  $('howtoRatio').textContent = '審査員は、おもしろかったら「いいね！」。いいねゲージがたまって、' + RATIOS[rule.ratio].note.replace('一本', '「一本！」');
   $('howtoCut').textContent = rule.cut === 'time'
     ? rule.minutes + '分たったら答えを締め切って、結果を見る'
     : '一本が出たら答えの受付はおしまい。残りの答えを出し終えたら、結果を見て次のお題へ';
@@ -1130,13 +1130,13 @@ function renderPlay(room, game) {
     $('btnPress').hidden = !canPress;
     $('btnPress').disabled = pressed || c.state !== 'open';
     $('btnPress').classList.toggle('is-pressed', pressed);
-    $('btnPressLabel').textContent = pressed ? '押したよ' : 'おもしろい！';
+    $('btnPressLabel').textContent = pressed ? '押したよ' : 'いいね！';
     $('stageMine').hidden = !mine;
     $('btnReject').hidden = !isHost() || c.state === 'reject';
     $('stageHint').textContent = c.state !== 'open' ? ''
-      : isWatch() ? 'おもしろかったら、自分の画面で「おもしろい！」を押してね'
+      : isWatch() ? 'おもしろかったら、自分の画面で「いいね！」を押してね'
         : !canPress ? '' : pressed ? '押したよ。ゲージがたまると一本！' : 'おもしろかったら押してね';
-    // おもしろゲージ（押した数は数字で出さない。一本の線までの割合だけ）
+    // いいねゲージ（押した数は数字で出さない。一本の線までの割合だけ）
     const need = needOf(votersFor(room, c.a.by).length, rule.ratio);
     const ratio = c.state === 'ippon' ? 1 : Number.isFinite(need) ? Math.min(1, pressCount(room, game) / need) : 0;
     $('gauge').hidden = c.state === 'reject';
@@ -1210,7 +1210,7 @@ function renderProxyBox(room, game) {
     li.append(msIcon('person'), makeElement('span', 'og-list__text', name + 'さん'));
     const own = !!c && c.a.by === name;
     const pressed = !!c && !!c.presses[name];
-    const b = makeElement('button', 'btn btn-sm og-list__btn og-proxy-press' + (pressed ? ' is-pressed' : ''), own ? '本人の答え' : pressed ? '押したよ' : 'おもしろい！');
+    const b = makeElement('button', 'btn btn-sm og-list__btn og-proxy-press' + (pressed ? ' is-pressed' : ''), own ? '本人の答え' : pressed ? '押したよ' : 'いいね！');
     b.type = 'button';
     b.disabled = !c || c.state !== 'open' || own || pressed;
     if (c) {
@@ -1220,7 +1220,7 @@ function renderProxyBox(room, game) {
     li.append(b);
     return li;
   }));
-  $('proxyPressNote').textContent = c && c.state === 'open' ? '「いま出ている答え」に、本人のかわりに「おもしろい！」を押す' : '答えが出たら、本人のかわりに押せるよ';
+  $('proxyPressNote').textContent = c && c.state === 'open' ? '「いま出ている答え」に、本人のかわりに「いいね！」を押す' : '答えが出たら、本人のかわりに押せるよ';
   // 選んでいた名前は残す
   const sel = $('proxyWho');
   const keep = sel.value;
@@ -1668,7 +1668,7 @@ async function submitProxyAnswer() {
   if (!err && cleanAnswer($('proxyInput').value) === text) $('proxyInput').value = '';
 }
 
-// 「おもしろい！」。asName は、ホストが端末のない参加者の代わりに押すとき。
+// 「いいね！」。asName は、ホストが端末のない参加者の代わりに押すとき。
 // みんなが一斉に押してもぶつかりにくいよう、いま出ている答え（game/cur）だけを書きかえる。一本かどうかは時間の進み（stepGame）で見る
 async function pressAnswer(aid, asName) {
   const room = state.room;
@@ -1790,7 +1790,7 @@ async function playAgain() {
 }
 
 // 時間で進むこと。ふだんはホストの端末が進め、参加者の端末は GUEST_LAG_MS 遅れていたときだけ代わりに進める
-// （ホストのタブが裏に回るとタイマーが遅れるため）。force は「おもしろい！」を押した直後（一本かどうかをすぐ見る）。
+// （ホストのタブが裏に回るとタイマーが遅れるため）。force は「いいね！」を押した直後（一本かどうかをすぐ見る）。
 // 進めることがあるときだけ書きこむ。中で同じ進みを確かめるので、だれが進めても結果は同じ
 async function stepTick(force = false) {
   if ((state.role !== 'host' && state.role !== 'guest') || state.stepping || state.leaving) return;
