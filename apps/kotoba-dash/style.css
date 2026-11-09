@@ -1,8 +1,9 @@
 /* ことばダッシュ！ 固有スタイル（接頭辞: kd- / BEM）
    色は共通の変数（こげ茶・茶オレンジ）と、ことば系の種類の色（--g・--g-pale・--g-ink）だけを使う。
-   画面共有でも見やすいよう、文字と流れる場所は大きめにする（2026-11-09 オーナー「なるべく画面や文字は大きく」） */
+   画面共有でも見やすいよう、遊ぶ画面（流れる言葉・入力・こたえ・結果）は大きめにする（2026-11-09 オーナー「なるべく画面や文字は大きく」）。
+   はじめの画面・名前の入力・待合室は、ほかのツールと同じ大きさにして、見出しと中身の差をつける（2026-11-10 オーナー「文字の大きさに違和感」） */
 
-.kd-wrap { max-width: 1040px; margin: 0 auto; padding: 32px 16px 80px; box-sizing: border-box; font-size: 1.1rem; }
+.kd-wrap { max-width: 1040px; margin: 0 auto; padding: 32px 16px 80px; box-sizing: border-box; }
 .kd-screen { display: none; }
 .kd-screen.active { display: block; }
 .kd-screen > * + * { margin-top: 16px; }
@@ -14,38 +15,38 @@
 
 /* 作成・参加 */
 .kd-subhead { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
-.kd-subhead__title { color: var(--color-primary); font-size: 1.3rem; font-weight: 700; margin: 0; }
+.kd-subhead__title { color: var(--color-primary); font-size: 1.2rem; font-weight: 700; margin: 0; }
 .kd-form { max-width: 520px; margin: 0 auto; background: var(--color-surface); border-radius: var(--radius-card); box-shadow: var(--shadow-soft); padding: 22px; }
-.kd-form__label { display: block; color: var(--color-primary); font-size: 1rem; font-weight: 700; margin: 0 0 8px; }
+.kd-form__label { display: block; color: var(--color-primary); font-size: 0.9rem; font-weight: 700; margin: 0 0 8px; }
 .kd-form__input + .kd-form__label { margin-top: 18px; }
-.kd-form__input { width: 100%; box-sizing: border-box; border: 1.5px solid var(--color-border); border-radius: 10px; padding: 12px 14px; font-family: inherit; font-size: 1.15rem; background: var(--color-surface); color: var(--color-text); }
+.kd-form__input { width: 100%; box-sizing: border-box; border: 1.5px solid var(--color-border); border-radius: 10px; padding: 10px 12px; font-family: inherit; font-size: 1rem; background: var(--color-surface); color: var(--color-text); }
 .kd-form__input:focus { outline: none; border-color: var(--color-accent); }
-.kd-form__input--code { text-transform: uppercase; letter-spacing: 0.18em; font-size: 1.4rem; }
-.kd-form__hint { color: var(--color-muted); font-size: 0.95rem; line-height: 1.6; margin: 0 0 16px; }
+.kd-form__input--code { text-transform: uppercase; letter-spacing: 0.18em; font-size: 1.3rem; }
+.kd-form__hint { color: var(--color-muted); font-size: 14px; line-height: 1.6; margin: 0 0 16px; }
 .kd-form__error { color: var(--color-error); background: #fef2f2; border-left: 3px solid var(--color-error); border-radius: 6px; padding: 10px 12px; margin: 12px 0 0; }
 .kd-form > .btn { margin-top: 18px; }
 
 /* ルームのバー */
 .kd-roombar { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; color: var(--color-primary); background: var(--color-surface); border-radius: 12px; box-shadow: var(--shadow-soft); border-top: 4px solid var(--g); padding: 8px 12px; margin-bottom: 18px; }
-.kd-roombar strong { font-size: 1.3rem; letter-spacing: 0.13em; }
+.kd-roombar strong { font-size: 1.25rem; letter-spacing: 0.13em; }
 .kd-roombar #btnLeave { margin-left: auto; }
 
 /* 待合室 */
-.kd-h2 { font-size: 1.35rem; color: var(--color-primary); margin: 0 0 12px; }
-.kd-h3 { font-size: 1.15rem; font-weight: 700; padding: 0; margin: 0 0 8px; }
+.kd-h2 { font-size: 1.2rem; color: var(--color-primary); margin: 0 0 14px; }
+.kd-h3 { font-size: 0.95rem; font-weight: 700; color: var(--color-primary); padding: 0; margin: 0 0 8px; }
 .kd-field { border: 0; padding: 0; margin: 0 0 20px; min-width: 0; }
-.kd-note { font-size: 1rem; color: var(--color-muted); margin: 6px 0 0; }
+.kd-note { font-size: 14px; line-height: 1.6; color: var(--color-muted); margin: 6px 0 0; }
 .kd-note:empty { display: none; }
 .kd-center { text-align: center; }
-.kd-wait { font-size: 1.15rem; color: var(--color-muted); text-align: center; margin: 12px 0 0; }
-.kd-rule { margin: 0; font-size: 1.15rem; line-height: 1.7; }
+.kd-wait { font-size: 1rem; color: var(--color-muted); text-align: center; margin: 12px 0 0; }
+.kd-rule { margin: 0; font-size: 1rem; line-height: 1.7; }
 .kd-players { list-style: none; padding: 0; margin: 0 0 12px; display: flex; flex-wrap: wrap; gap: 8px; }
-.kd-players li { background: var(--g-pale); border-radius: 999px; padding: 8px 16px; font-size: 1.15rem; }
-.kd-players small { color: var(--g-ink); font-weight: 700; margin-left: 6px; font-size: .85rem; }
+.kd-players li { background: var(--g-pale); border-radius: 999px; padding: 6px 14px; font-size: 1rem; }
+.kd-players small { color: var(--g-ink); font-weight: 700; margin-left: 6px; font-size: 12px; }
 .kd-check { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; font-weight: 700; cursor: pointer; }
 .kd-check input { width: 22px; height: 22px; accent-color: var(--color-accent); }
 .kd-more { margin: 0 0 18px; }
-.kd-more > summary { min-height: 44px; display: flex; align-items: center; gap: 6px; font-weight: 700; color: var(--color-primary); cursor: pointer; }
+.kd-more > summary { min-height: 44px; display: flex; align-items: center; gap: 6px; font-size: 15px; font-weight: 700; color: var(--color-primary); cursor: pointer; }
 .kd-more[open] > summary { margin-bottom: 12px; }
 .kd-more > summary { list-style: none; }
 .kd-more > summary::-webkit-details-marker { display: none; }
@@ -54,7 +55,7 @@
 
 /* 1つ選ぶボタン */
 .kd-seg { display: flex; flex-wrap: wrap; gap: 8px; }
-.kd-seg button { min-height: 52px; min-width: 88px; padding: 8px 16px; border-radius: 12px; border: 2px solid var(--color-border); background: var(--color-surface); color: var(--color-text); font: inherit; font-size: 1.1rem; font-weight: 700; cursor: pointer; }
+.kd-seg button { min-height: 48px; min-width: 80px; padding: 8px 16px; border-radius: 12px; border: 2px solid var(--color-border); background: var(--color-surface); color: var(--color-text); font: inherit; font-size: 1rem; font-weight: 700; cursor: pointer; }
 .kd-seg button[aria-checked="true"] { border-color: var(--color-accent); background: var(--color-accent-soft); color: var(--color-accent); }
 
 /* 問題の種類（いくつでも選ぶ） */
@@ -64,8 +65,8 @@
 .kd-kind[aria-pressed="true"] .kd-kind__check { color: var(--color-accent); }
 .kd-kind__check { color: var(--color-border); flex: 0 0 auto; }
 .kd-kind__text { display: flex; flex-direction: column; min-width: 0; }
-.kd-kind__text b { font-size: 1.1rem; }
-.kd-kind__text small { color: var(--color-muted); font-size: .9rem; line-height: 1.4; }
+.kd-kind__text b { font-size: 1rem; }
+.kd-kind__text small { color: var(--color-muted); font-size: 13px; line-height: 1.4; }
 
 /* 遊ぶ */
 .kd-score { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 20px; }
@@ -127,6 +128,10 @@
 .kd-btn-text:hover { color: var(--color-text); }
 .kd-input__row .kd-btn-main { min-height: 68px; padding: 0 32px; }
 #btnStart { margin-top: 8px; }
+
+/* 遊ぶ画面の待ち・送ったよの文は、画面共有でも読めるよう大きめ */
+#screen-q .kd-wait { font-size: 1.3rem; }
+#screen-q .kd-hostbox .kd-note { font-size: 1rem; }
 
 /* こたえが出たとき（自分の画面だけ） */
 .kd-mine { text-align: center; font-size: 1.7rem; font-weight: 700; margin: 0; }
