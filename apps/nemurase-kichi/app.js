@@ -4793,6 +4793,22 @@ function submitOnEnter(input, handler) {
   });
 }
 
+// スティックを指で押さえたまま、別の指でボタンを押すと、ブラウザは click を出さない（pointerdown・pointerup は届く）。
+// そのため、タッチは同じボタンの上で指をはなしたとき（pointerup）に動かす。直後に来る click は二重にしない
+function bindTouchAction(btn, fn) {
+  let downId = null;
+  let touchAt = 0;
+  btn.addEventListener('pointerdown', (e) => { if (e.pointerType === 'touch') downId = e.pointerId; });
+  btn.addEventListener('pointercancel', () => { downId = null; });
+  btn.addEventListener('pointerup', (e) => {
+    if (e.pointerType !== 'touch' || e.pointerId !== downId) return;
+    downId = null;
+    touchAt = Date.now();
+    if (!btn.disabled) fn();
+  });
+  btn.addEventListener('click', () => { if (Date.now() - touchAt > 800) fn(); });
+}
+
 function openJoinFromLink(code) {
   $('joinCode').value = code;
   $('joinLinkHint').hidden = false;
@@ -4844,7 +4860,7 @@ function bind() {
   $('actFind').addEventListener('click', doFind);
   $('actSay').addEventListener('click', toggleSayBox);
   $('btnSayClose').addEventListener('click', () => { state.sayOpen = false; state.sayPending = null; state.sayTarget = null; const g = gameOf(state.room); if (g) renderSayBox(g); });
-  $('actSleep').addEventListener('click', doSleep);
+  bindTouchAction($('actSleep'), doSleep);
   $('actSab').addEventListener('click', toggleSabBox);
   $('btnSabClose').addEventListener('click', () => { state.sabOpen = false; state.sabDoor = false; $('sabBox').hidden = true; });
   $('sabDark').addEventListener('click', doDark);

@@ -79,7 +79,8 @@ let browser;
 const clients = [];
 async function launch() { await loadRules(); browser = await chromium.launch({ channel: 'chrome' }); return browser; }
 async function newContext(label, opts = {}) {
-  const context = await browser.newContext({ viewport: opts.viewport || { width: 1200, height: 800 } });
+  // opts.touch: スマホのまね（タッチの端末。スティックが出る）
+  const context = await browser.newContext({ viewport: opts.viewport || { width: 1200, height: 800 }, ...(opts.touch ? { hasTouch: true, isMobile: true } : {}) });
   await context.grantPermissions(['clipboard-read', 'clipboard-write']).catch(() => {});
   // 待合室の「くわしい設定」（2026-10-30 からたたんである）を、はじめから開いておく（設定の欄を操作するテストのため）。
   // たたんだ状態を確かめるテストは opts.moreClosed で開かない
