@@ -70,6 +70,22 @@
 }
 .df-roombar strong { font-size: 1.25rem; letter-spacing: 0.13em; }
 .df-roombar #btnLeave { margin-left: auto; }
+/* ルームバーの「そのほか」: あそんでいる間だけ出し、コピー・QR・みんなにみせる画面をたたむ（待合室ではいつもどおり並べる） */
+.df-roommore {
+  display: inline-flex; align-items: center; gap: 2px; min-height: 36px; padding: 4px 10px; border: none; border-radius: var(--radius-sm);
+  background: none; color: var(--color-accent); font-family: inherit; font-size: 14px; font-weight: 500; white-space: nowrap; cursor: pointer;
+}
+.df-roommore[hidden] { display: none; }
+.df-roommore:hover { background: rgba(138, 74, 16, 0.08); }
+.df-roommore::after { content: 'expand_more'; font-family: 'Material Symbols Rounded'; font-size: 20px; transition: transform 0.15s; }
+.df-roombar.is-open .df-roommore::after { transform: rotate(180deg); }
+.df-roombar.is-fold:not(.is-open) .df-roomitem { display: none; }
+/* あそんでいる間は、上の見出し（ツール名・ひとこと）を隠して盤面と手札を上に寄せる（みんなにみせる画面の印は残す） */
+.wrapper:has(#screen-game.active) > .df-header > :is(.df-header__title, .df-header__sub) { display: none; }
+.wrapper:has(#screen-game.active) > .df-header { margin-bottom: 12px; }
+.wrapper:has(#screen-game.active) { padding-top: 16px; }
+.wrapper:has(#screen-game.active) .df-roombar { margin-bottom: 12px; padding: 6px 12px; }
+.df-phase-list:has(> .df-table) { gap: 12px; }
 
 .df-phase { text-align: center; margin-bottom: 20px; }
 .df-phase__title { color: var(--color-primary); font-size: 1.5rem; margin: 0 0 6px; }
@@ -151,7 +167,7 @@
 .df-player {
   display: grid; gap: 4px; align-content: start; position: relative;
   padding: 10px 12px; border-radius: 12px; background: var(--color-surface); border: 2px solid var(--color-border);
-  min-height: 76px;
+  min-height: 64px;
 }
 /* 番の人: 太い枠と大きめの札で、ひと目でわかるように（面の色は「あなた」の淡い色と紛れるので変えない） */
 .df-player.is-turn { border-color: var(--color-accent); box-shadow: 0 0 0 3px var(--color-accent); }
@@ -166,23 +182,43 @@
 .df-player__name { font-size: 17px; font-weight: 700; min-width: 0; overflow-wrap: anywhere; line-height: 1.3; }
 .df-player__tags { display: flex; flex-wrap: wrap; gap: 4px; min-height: 20px; }
 .df-player__count { margin-left: auto; padding-left: 6px; font-size: 14px; color: var(--color-muted); white-space: nowrap; line-height: 1.3; }
+.df-player.is-self { display: none; }
+/* 裏向きのカード（のこりの枚数をひと目で） */
+.df-backs { display: flex; padding-left: 7px; min-height: 0; }
+.df-backs:empty { display: none; }
+.df-back {
+  width: 15px; height: 22px; margin-left: -7px; flex: none; border-radius: 3px; border: 1.5px solid #fff;
+  background: repeating-linear-gradient(45deg, #7A4520 0 3px, #9B5E2E 3px 6px); box-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+}
+/* いまの番の人の残り時間 */
+.df-player__time { display: flex; align-items: center; gap: 6px; }
+.df-player__time[hidden] { display: none; }
+.df-player__timebar { flex: 1 1 auto; height: 6px; border-radius: 999px; background: linear-gradient(90deg, var(--color-accent) var(--left, 100%), var(--color-border) var(--left, 100%)); }
+.df-player__timenum { font-size: 13px; font-weight: 700; color: var(--color-accent); white-space: nowrap; min-width: 2.6em; text-align: right; }
+.df-player__time.is-low .df-player__timebar { background: linear-gradient(90deg, var(--color-warning) var(--left, 100%), var(--color-border) var(--left, 100%)); }
+.df-player__time.is-low .df-player__timenum { color: #8A4B00; }
 .df-player__count strong { font-size: 22px; color: var(--color-text); margin-right: 1px; }
 
 .df-table[hidden] { display: none; }
 .df-table {
   position: relative; display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); align-items: center;
-  gap: 16px 10px; padding: 18px; border-radius: 22px;
+  gap: 16px 10px; padding: 22px 18px 18px; border-radius: 22px;
   background: var(--df-felt); border: 3px solid var(--df-felt-dark);
 }
+/* 続いている状態は卓のふちの色と、ふちの小さな見出しで（革命は赤・イレブンバックは紫・しばりはティール） */
+.df-table.is-rev { border-color: #B3303D; box-shadow: 0 0 0 4px #B3303D; }
+.df-table.is-back { border-color: #5B4A93; box-shadow: 0 0 0 4px #5B4A93; }
+.df-table.is-lock { border-color: #286F7C; box-shadow: 0 0 0 4px #286F7C; }
 .df-center { grid-row: 2; grid-column: 4 / 10; display: grid; gap: 8px; justify-items: center; min-width: 0; min-height: 240px; align-content: center; }
 .df-center[hidden] { display: none; }
 .df-player:is([data-side="bottom"], [data-side="top"]) { justify-self: center; width: min(100%, 280px); }
-.df-modes { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
+/* 続いている状態の札は、卓のふち（左上）に重ねる。色は卓のふちと同じ（革命は赤・イレブンバックは紫・しばりはティール）。
+   しばりのティールは固定（アクセント色が茶オレンジになったので変数にしない。2026-11-06 オーナー判断） */
+.df-modes { position: absolute; top: -15px; left: 14px; right: 14px; z-index: 2; display: flex; flex-wrap: wrap; gap: 4px 6px; pointer-events: none; }
 .df-modes[hidden] { display: none; }
-.df-mode { font-size: 13px; font-weight: 700; padding: 4px 10px; border-radius: 999px; background: #FFF4D6; color: #6B4A00; }
-.df-mode--revolution { background: #FCE4E6; color: #8E1F2A; }
-/* しばりの札はティールで固定（ふつうの黄・革命の赤と色合いで見分ける。アクセント色が茶オレンジになったので変数にしない。2026-11-06 オーナー判断） */
-.df-mode--lock { background: #E6F2F4; color: #286F7C; }
+.df-mode { font-size: 13px; font-weight: 700; line-height: 1.4; padding: 3px 12px; border-radius: 999px; background: #5B4A93; color: #fff; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25); }
+.df-mode--revolution { background: #B3303D; }
+.df-mode--lock { background: #286F7C; }
 .df-field { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; min-height: 124px; align-items: center; }
 .df-field .df-card { --df-card-w: 84px; --df-card-h: 120px; box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3); }
 .df-field__empty { margin: 0; color: rgba(255, 255, 255, 0.85); font-weight: 500; }
@@ -191,6 +227,7 @@
 .df-pile { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-end; gap: 8px 6px; max-width: 100%; }
 .df-pile[hidden] { display: none; }
 .df-pile__item { display: grid; justify-items: center; gap: 3px; padding: 6px 8px 4px; border-radius: 10px; background: rgba(0, 0, 0, 0.18); }
+.df-pile__more { align-self: center; padding: 4px 10px; border-radius: 999px; background: rgba(0, 0, 0, 0.18); color: rgba(255, 255, 255, 0.92); font-size: 13px; font-weight: 700; }
 .df-pile__name { max-width: 9em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: rgba(255, 255, 255, 0.92); font-size: 13px; font-weight: 500; }
 .df-pile__cards { display: flex; gap: 3px; }
 .df-pile .df-card { --df-card-w: 40px; --df-card-h: 57px; opacity: 0.92; }
@@ -238,8 +275,24 @@
 .df-log__item { font-size: 14px; color: var(--color-muted); line-height: 1.6; }
 .df-log__item.is-new { color: var(--color-text); font-weight: 500; }
 
+/* 番の表示と手札の欄。あそぶ人の画面では下に固定する（自分の番にスクロールしなくていいように。2026-11-09） */
+.df-dock { display: grid; gap: 8px; }
+.df-dock.is-seated {
+  position: sticky; bottom: 0; z-index: 3; margin: 0 -8px; padding: 10px 8px 12px;
+  background: var(--color-bg) url("../assets/paper-grain.png"); border-top: 1px solid var(--color-border);
+  box-shadow: 0 -6px 14px rgba(63, 54, 45, 0.12);
+}
+/* 自分の番: 手札の欄の枠を太く色づける */
+.df-dock.is-myturn .df-mine { border: 3px solid var(--color-accent); box-shadow: 0 0 0 3px var(--color-accent-soft); }
 .df-turnbox { display: grid; gap: 6px; }
 .df-turnbox[hidden] { display: none; }
+.df-turnbox__row { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: center; gap: 2px 12px; }
+.df-mycount { font-size: 14px; font-weight: 500; color: var(--color-muted); white-space: nowrap; }
+.df-mycount[hidden] { display: none; }
+/* これまでのできごと（たたむ。いちばん新しいことは場の真ん中に出ている） */
+.df-logbox { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 12px; padding: 4px 14px; }
+.df-logbox summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; font-weight: 500; color: var(--color-accent); }
+.df-logbox .df-log { padding: 0 0 12px; }
 .df-status { margin: 0; font-size: 18px; font-weight: 700; color: var(--color-primary); text-align: center; }
 .df-status.is-mine { color: var(--color-accent); }
 .df-timer { display: flex; align-items: center; gap: 10px; }
@@ -250,7 +303,7 @@
 .df-timer.is-low .df-timer__bar { background: var(--color-warning); }
 .df-timer.is-low .df-timer__num { color: #8A4B00; }
 
-.df-mine { display: grid; gap: 10px; padding: 14px 12px; border-radius: 14px; background: var(--color-surface); border: 1px solid var(--color-border); }
+.df-mine { display: grid; gap: 8px; padding: 10px 12px; border-radius: 14px; background: var(--color-surface); border: 1px solid var(--color-border); }
 .df-mine[hidden] { display: none; }
 .df-auto { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 12px; border-radius: 10px; background: #EDE7F6; }
 .df-auto[hidden] { display: none; }
@@ -260,7 +313,7 @@
 .df-mine__done { margin: 0; text-align: center; font-weight: 700; color: #1E6B3A; }
 .df-hand { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; padding-top: 12px; }
 .df-hand[hidden] { display: none; }
-.df-selmsg { margin: 0; min-height: 1.6em; text-align: center; color: var(--color-muted); font-size: 14px; }
+.df-selmsg { margin: 0; min-height: 1.4em; text-align: center; color: var(--color-muted); font-size: 14px; }
 .df-actions { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 10px; }
 .df-actions[hidden] { display: none; }
 .df-actions .btn { min-width: 120px; }
@@ -320,6 +373,14 @@ button.df-card { position: relative; }
 .is-watch .df-field .df-card { --df-card-w: 100px; --df-card-h: 142px; }
 .is-watch .df-field { min-height: 150px; }
 .is-watch .df-news { width: min(100%, 520px); }
+/* みんなにみせる画面: 手札の欄がないので、卓を画面の高さいっぱいに、名前と枚数も大きく */
+.is-watch .df-table { min-height: max(560px, calc(100vh - 230px)); align-content: space-between; padding: 22px; }
+.is-watch .df-center { min-height: 300px; }
+.is-watch .df-player__name { font-size: 21px; }
+.is-watch .df-player__count strong { font-size: 28px; }
+.is-watch .df-player:is([data-side="bottom"], [data-side="top"]) { width: min(100%, 320px); }
+.is-watch .df-back { width: 18px; height: 26px; margin-left: -8px; }
+.is-watch .df-player__timenum { font-size: 16px; }
 .is-watch .df-news__head { font-size: 28px; }
 .is-watch .df-news__sub { font-size: 17px; }
 .is-watch .df-pile .df-card { --df-card-w: 48px; --df-card-h: 68px; }
@@ -329,12 +390,10 @@ button.df-card { position: relative; }
   .wrapper { padding: 28px 16px 64px; }
   .df-roombar #btnLeave { margin-left: 0; }
   .df-checks { grid-template-columns: 1fr; }
-  /* せまい画面: 左右の席は細いので、名前と枚数を2行に。場のカードも少し小さく */
+  /* せまい画面: 場のカードを少し小さく */
   .df-table { padding: 10px 8px; gap: 10px 6px; }
   .df-player { padding: 6px 8px; }
-  .df-player__top { flex-wrap: wrap; }
   .df-player__name { font-size: 14px; }
-  .df-player[data-side="left"] .df-player__count, .df-player[data-side="right"] .df-player__count { margin-left: 0; padding-left: 0; flex-basis: 100%; }
   .df-tag--pass { font-size: 14px; padding: 2px 10px; }
   .df-player { min-width: 0; }
   .df-player:is([data-side="left"], [data-side="right"]) { padding: 6px; }
@@ -342,9 +401,7 @@ button.df-card { position: relative; }
   .df-player:is([data-side="left"], [data-side="right"]) .df-tag--turn { white-space: nowrap; }
   .df-player:is([data-side="left"], [data-side="right"]) .df-tag--pass { font-size: 14px; padding: 2px 10px; }
   .df-field .df-card { --df-card-w: 52px; --df-card-h: 74px; }
-  .df-center { min-height: 150px; }
   .df-player__count strong { font-size: 18px; }
-  .df-player { min-height: 64px; }
   .df-pile { gap: 6px 4px; }
   .df-pile__item { padding: 4px 5px 3px; }
   .df-pile__name { font-size: 12px; max-width: 6em; }
@@ -358,7 +415,30 @@ button.df-card { position: relative; }
   .df-center { grid-row: 3; grid-column: 1 / 13 !important; }
   .df-news__head { font-size: 19px; }
   .df-news__sub { font-size: 14px; }
-  .df-hand { gap: 5px; }
+  /* あそんでいる間は、ルームバーを1行に（退出は小さく） */
+  .wrapper:has(#screen-game.active) .df-roombar { flex-wrap: nowrap; gap: 4px 8px; }
+  .wrapper:has(#screen-game.active) .df-roombar #btnLeave { margin-left: auto; min-height: 36px; padding: 4px 10px; white-space: nowrap; }
+  .wrapper:has(#screen-game.active) .df-roombar strong { font-size: 1.05rem; letter-spacing: 0.08em; }
+  .wrapper:has(#screen-game.active) .df-roombar > span { white-space: nowrap; }
+  .df-mode__note { display: none; }
+  .wrapper:has(#screen-game.active) .df-roombar.is-open { flex-wrap: wrap; }
+  /* 席を詰める（左右の席も幅が半分あるので、名前と枚数は1行に） */
+  .df-player { min-height: 0; padding: 6px 8px; gap: 3px; }
+  .df-player__top { flex-wrap: nowrap; }
+  .df-player__tags { min-height: 0; }
+  .df-player__tags:empty { display: none; }
+  .df-table { gap: 8px 6px; padding: 18px 8px 10px; }
+  .df-center { min-height: 0; gap: 6px; }
+  .df-field { min-height: 76px; }
+  .df-hand { gap: 4px; padding-top: 10px; }
+  .df-hand .df-card { --df-card-w: 40px; --df-card-h: 58px; }
+  .df-dock.is-seated { margin: 0 -10px; padding: 8px 10px 68px; }
+  .df-mine { padding: 8px; gap: 6px; }
+  .df-status { font-size: 16px; }
+  .df-selmsg { font-size: 13px; }
+  .df-actions .btn-lg { min-height: 48px; padding-top: 8px; padding-bottom: 8px; }
+  .df-back { width: 12px; height: 18px; margin-left: -7px; }
+  .wrapper:has(#screen-game.active) { padding-top: 10px; }
   .df-actions .btn { min-width: 0; flex: 1 1 0; }
   /* ジョーカーの「何として出すか」は文が長く、横に並べると1行に2〜3文字の縦長になるので、
      せまい画面では幅いっぱいのボタンを縦に積む（2026-11-07） */
@@ -400,5 +480,9 @@ button.df-card { position: relative; }
 }
 @media (min-width: 1080px) {
   .df-startbar { padding-bottom: 16px; }
+}
+/* 右下の「？」などのボタン（高さ64pxまで）に「出す」「パス」が隠れないよう、せまい画面では下をあける */
+@media (max-width: 1000px) {
+  .df-dock.is-seated { padding-bottom: 68px; }
 }
 #lobbyRulesTop { margin-bottom: 14px; }

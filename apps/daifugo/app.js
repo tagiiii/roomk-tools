@@ -21,6 +21,7 @@ const LEAVE_GRACE_MS = 3000;   // 通信が切れてから、CPU が代わりに
 const CPU_DELAY_MS = 1100;
 const AUTO_AFTER = 2;          // 時間切れがこの回数続いたら CPU にまかせる
 const LOG_MAX = 6;
+const PILE_SHOW = 4; // 場に並べる前の手の数（それより前は「＋N手」）
 const SPLASH_MS = 1500;
 
 const TIME_OPTS = [[0, 'なし'], [15, '15秒'], [30, '30秒'], [60, '60秒']];
@@ -109,6 +110,17 @@ function showScreen(id) {
   $('screen-' + id).classList.add('active');
   state.currentScreen = id;
   $('roomBar').hidden = !state.roomRef;
+  // あそんでいる間はルームバーのボタンを「そのほか」にたたむ（切りかわったときだけ開閉を決める）
+  const fold = id === 'game';
+  $('roomBar').classList.toggle('is-fold', fold);
+  $('btnRoomMore').hidden = !fold;
+  if (state.roomFold !== fold) { setRoomMore(false); state.roomFold = fold; }
+  if (id !== 'game' && state.role !== 'spectator') document.title = DEFAULT_TITLE;
+}
+
+function setRoomMore(open) {
+  $('roomBar').classList.toggle('is-open', open);
+  $('btnRoomMore').setAttribute('aria-expanded', open ? 'true' : 'false');
 }
 
 function setError(id, message) {
@@ -1477,6 +1489,10 @@ function renderGame(R) {
     const count = el('span', 'df-player__count');
     if (!g.done[i]) count.append(el('strong', '', String(g.hands[i].length)), document.createTextNode('枚'));
     top.append(count);
+    // 裏向きのカード（のこりの多い少ないをひと目で。13枚より多い分は数字だけ）
+    const backs = el('div', 'df-backs');
+    backs.setAttribute('aria-hidden', 'true');
+    if (!g.done[i] && !g.over) backs.append(...Array.from({ length: Math.min(13, g.hands[i].length) }, () => el('span', 'df-back')));
     const tags = el('div', 'df-player__tags');
     const place = g.places.indexOf(i);
     if (g.over) tags.append(el('span', 'df-tag df-tag--win', (place + 1) + '番'));
@@ -1488,7 +1504,16 @@ function renderGame(R) {
     if (!g.over && (g.rules.exchange || g.rules.miyakoOchi) && g.prev) tags.append(el('span', 'df-tag df-tag--rank', rankWord(g, i)));
     if (!g.over && p && p.away) tags.append(el('span', 'df-tag df-tag--warn', '通信が切れた・CPUが代わり'));
     else if (!g.over && p && p.auto) tags.append(el('span', 'df-tag df-tag--cpu', 'CPUが代わり'));
-    box.append(top, tags);
+    box.append(top, backs, tags);
+    // いまの番の人の残り時間（updateTimer が埋める。みんなにみせる画面でも見えるように席に出す）
+    if (turn && !g.over) {
+      const tm = el('div', 'df-player__time');
+      tm.hidden = true;
+      tm.append(el('span', 'df-player__timebar'), el('span', 'df-player__timenum'));
+      box.append(tm);
+    }
+    // 自分の席は、下に固定した手札の欄に番・枚数を出すので、卓の上では隠す（結果の画面では出す）
+    if (i === myIdx && !g.over) box.classList.add('is-self');
     const slot = slotOf.get(i);
     box.style.gridRow = String(slot.row);
     box.style.gridColumn = slot.col;
@@ -1505,12 +1530,25 @@ function renderGame(R) {
   if (g.lock && g.numLock != null) modes.push(['lock', '激しばり：' + g.lock.map((x) => E.SUIT_MARK[x]).join('') + 'の' + (nlNext != null ? E.rankLabel(nlNext) : 'ジョーカー') + 'だけ']);
   else if (g.lock) modes.push(['lock', 'しばり：' + g.lock.map((x) => E.SUIT_MARK[x]).join('') + 'だけ']);
   else if (g.numLock != null) modes.push(['lock', '数しばり：次は ' + (nlNext != null ? E.rankLabel(nlNext) : 'ジョーカー') + ' だけ']);
-  $('modes').replaceChildren(...modes.map(([k, t]) => el('span', 'df-mode df-mode--' + k, t)));
+  // 札は「名前」と「（説明）」に分ける（せまい画面では説明を隠して1行に）
+  $('modes').replaceChildren(...modes.map(([k, t]) => {
+    const m = el('span', 'df-mode df-mode--' + k);
+    const cut = t.indexOf('（');
+    m.append(el('span', 'df-mode__name', cut < 0 ? t : t.slice(0, cut)));
+    if (cut >= 0) m.append(el('span', 'df-mode__note', t.slice(cut)));
+    return m;
+  }));
+  // 続いている状態は卓のふちの色でも（革命は赤・イレブンバックは紫・しばりはティール。いちばん上の1つ）
+  const tableMode = g.over ? '' : g.rev && !g.back ? 'rev' : g.back && !g.rev ? 'back' : g.lock || g.numLock != null ? 'lock' : '';
+  ['rev', 'back', 'lock'].forEach((k) => $('table').classList.toggle('is-' + k, tableMode === k));
   $('modes').hidden = !modes.length;
 
   // 場が流れるまでに出た手（いちばん新しい手は大きなカードで出すので、それより前の分）
-  const pile = g.field && Array.isArray(g.pile) ? g.pile.slice(0, -1) : [];
-  $('pile').replaceChildren(...pile.map((x) => {
+  const pileAll = g.field && Array.isArray(g.pile) ? g.pile.slice(0, -1) : [];
+  // 長くなると場を押し下げるので、直近の4手だけ並べ、それより前は「＋N手」にまとめる
+  const pile = pileAll.slice(-PILE_SHOW);
+  const hiddenN = pileAll.length - pile.length;
+  $('pile').replaceChildren(...(hiddenN > 0 ? [el('li', 'df-pile__more', '＋' + hiddenN + '手')] : []), ...pile.map((x) => {
     const li = el('li', 'df-pile__item');
     li.append(el('span', 'df-pile__name', seatName(R, x.by) + (x.as ? '（' + E.rankLabel(x.as) + 'として）' : '')));
     const cs = el('span', 'df-pile__cards');
@@ -1518,14 +1556,16 @@ function renderGame(R) {
     li.append(cs);
     return li;
   }));
-  $('pile').hidden = !pile.length;
+  $('pile').hidden = !pileAll.length;
 
   // 場
   if (g.field) {
     $('field').replaceChildren(...g.field.play.cards.map((c) => cardEl(c)));
     $('fieldBy').textContent = seatName(R, g.field.by) + 'が出したカード' + (g.field.play.as ? '（' + E.rankLabel(g.field.play.as) + 'として）' : '');
   } else {
-    $('field').replaceChildren(el('p', 'df-field__empty', '場は空いているよ'));
+    // 場が空のときは、だれから出せるかもいっしょに
+    const lead = g.over || g.exchange || g.pending || actor < 0 ? '' : actor === myIdx ? 'あなた' : seatName(R, actor);
+    $('field').replaceChildren(el('p', 'df-field__empty', lead ? lead + 'から、好きなカードを出せるよ' : '場は空いているよ'));
     $('fieldBy').textContent = '';
   }
 
@@ -1538,7 +1578,7 @@ function renderGame(R) {
     return row;
   }));
   $('fieldNews').hidden = !news.length;
-  const logs = R.log.slice(-3);
+  const logs = R.log.slice();
   $('log').replaceChildren(...logs.map((x, k) => el('li', 'df-log__item' + (k === logs.length - 1 ? ' is-new' : ''), x.text)));
   if (R.round !== state.fxRound) {
     // 新しい回（前の回の演出は消す）
@@ -1563,9 +1603,20 @@ function renderGame(R) {
       : g.pending.kind === 'give7' ? '7渡し：' + seatName(R, g.pending.to) + 'にわたすカードを' + g.pending.n + '枚まで選んでね'
         : '10捨て：捨てるカードを' + g.pending.n + '枚まで選んでね';
   } else status = seatName(R, actor) + (g.pending ? (g.pending.kind === 'give7' ? 'がわたすカードを選んでいるよ' : 'が捨てるカードを選んでいるよ') : 'の番') + (cpuSeat(R, actor) ? '（CPUが出すよ）' : '');
+  // 自分がパスしたあと（卓の自分の席は隠しているので、ここで伝える）
+  if (!g.over && myIdx >= 0 && !g.done[myIdx] && g.passed[myIdx] && !due.includes(myIdx) && !g.exchange) status = 'パスしたよ。場が流れるまで待ってね（' + status + '）';
   $('gameStatus').textContent = status;
-  $('gameStatus').classList.toggle('is-mine', myIdx >= 0 && due.includes(myIdx));
+  const myTurnNow = myIdx >= 0 && due.includes(myIdx) && !g.over;
+  $('gameStatus').classList.toggle('is-mine', myTurnNow);
   $('turnBox').hidden = g.over;
+  const seatedNow = myIdx >= 0 && !g.over;
+  const rank = seatedNow && (g.rules.exchange || g.rules.miyakoOchi) && g.prev ? rankWord(g, myIdx) : '';
+  $('myCount').hidden = !seatedNow || g.done[myIdx];
+  $('myCount').textContent = seatedNow ? 'のこり' + g.hands[myIdx].length + '枚' + (rank ? '・前回は' + rank : '') : '';
+  $('dock').classList.toggle('is-seated', seatedNow);
+  $('dock').classList.toggle('is-myturn', myTurnNow);
+  // 自分の番は、タブの題名でも（別のタブを見ていても気づけるように。音は鳴らさない）
+  if (!watch) document.title = myTurnNow ? '●あなたの番 | ' + DEFAULT_TITLE : DEFAULT_TITLE;
   $('center').hidden = g.over;
   updateTimer();
 
@@ -1713,9 +1764,17 @@ function updateTimer() {
   const g = R && R.game;
   const show = !!(R && R.phase === 'play' && g && !g.over && R.deadline && R.time.limit && dueSeats(g).some((i) => !cpuSeat(R, i)));
   $('timer').hidden = !show;
+  const seatTimers = document.querySelectorAll('#players .df-player__time');
+  seatTimers.forEach((t) => { t.hidden = !show; });
   if (!show) return;
   const left = Math.max(0, R.deadline - RoomkRTDB.now());
   const sec = Math.ceil(left / 1000);
+  const pct = Math.min(100, (left / (R.time.limit * 1000)) * 100) + '%';
+  seatTimers.forEach((t) => {
+    t.querySelector('.df-player__timebar').style.setProperty('--left', pct);
+    t.querySelector('.df-player__timenum').textContent = sec + '秒';
+    t.classList.toggle('is-low', sec <= 5);
+  });
   $('timerNum').textContent = 'のこり ' + sec + '秒';
   $('timerBar').style.width = Math.min(100, (left / (R.time.limit * 1000)) * 100) + '%';
   $('timer').classList.toggle('is-low', sec <= 5);
@@ -1869,6 +1928,7 @@ $('btnJoinRoom').addEventListener('click', joinRoom);
 submitOnEnter($('hostName'), createRoom);
 submitOnEnter($('guestName'), joinRoom);
 submitOnEnter($('joinCode'), joinRoom);
+$('btnRoomMore').addEventListener('click', () => setRoomMore(!$('roomBar').classList.contains('is-open')));
 $('btnCopyCode').addEventListener('click', (event) => RoomkRTDB.copyRoomCode(state.roomCode, event.currentTarget));
 $('btnCopyLink').addEventListener('click', (event) => {
   if (!state.roomCode || !ROOM_CODE_PATTERN.test(state.roomCode)) {
