@@ -70,6 +70,7 @@ const state = {
   playRound: null,     // ルームで、いまあそんでいる回の id
   playSeed: null,      // その回の種（変わったら作りなおす）
   jamaSeen: new Set(), // 受けとったじゃま（消す前に二重に数えない）
+  jamaTo: null,        // じゃまを送る相手として自分で選んだ人（null は並びのつぎの人）
   finishing: false,
 };
 const $ = (id) => document.getElementById(id);
@@ -1271,6 +1272,7 @@ function syncRun(room, R) {
     state.playRound = R.id;
     state.playSeed = R.seed;
     state.jamaSeen.clear();
+    state.jamaTo = null; // じゃまを送る相手は、回ごとに「並びのつぎの人」からはじめる
     const mine = boardOf(room, R, state.nickname);
     startRun({
       seed: R.seed, speed: R.speed, jama: R.jama, onFull: isOutMode(R) ? 'end' : 'clear',
@@ -1434,20 +1436,51 @@ function nextAlive(room, R, name) {
   return null;
 }
 
+// 自分で選んだ、じゃまを送る相手（ほかの人の盤・一覧を押して選ぶ。2026-11-09 フィードバック）。
+// 選んでいない・その人がもういない（ここまで）なら null（並びのつぎの人へ送る）
+function chosenTarget(room, R) {
+  const to = state.jamaTo;
+  if (!to || to === state.nickname || !R.players.includes(to) || isOut(room, R, to)) return null;
+  return to;
+}
+
+// じゃまを送る相手を選べるか（じゃまのある回で、ほかに2人以上いるとき。1人なら選ぶまでもない）
+function canChooseTarget(R) {
+  return !!R && R.jama && isRoomPlayer() && otherPlayers().length >= 2;
+}
+
+// いまじゃまを送る相手（選んだ人。いなければ並びのつぎの人）
+function currentTarget(room, R) {
+  if (!R || R.players.length < 2) return null;
+  const chosen = chosenTarget(room, R);
+  if (chosen) return chosen;
+  if (isBattle(R)) return nextAlive(room, R, state.nickname);
+  const i = R.players.indexOf(state.nickname);
+  return i < 0 ? null : R.players[(i + 1) % R.players.length];
+}
+
+// 押した人を送る相手にする。もう一度押すと、並びのつぎの人にもどす
+function chooseTarget(name) {
+  const R = roundOf(state.room);
+  if (!canChooseTarget(R) || isOut(state.room, R, name)) return;
+  state.jamaTo = state.jamaTo === name ? null : name;
+  renderOthers();
+}
+
 // 対戦でじゃまを送る相手
 function jamaTarget() {
   const R = roundOf(state.room);
   if (!R || !state.roomRef || R.players.length < 2) return null;
-  return nextAlive(state.room, R, state.nickname);
+  return currentTarget(state.room, R);
 }
 
-// じゃまを送る相手は、あそぶ人の並びで自分のつぎの人（段の数をくらべるときのじゃまブロック）
+// じゃまを送る相手は、選んだ人か、あそぶ人の並びで自分のつぎの人（段の数をくらべるときのじゃまブロック）
 function sendJama(rows) {
   const R = roundOf(state.room);
   if (!R || !state.roomRef) return;
-  const i = R.players.indexOf(state.nickname);
-  if (i < 0 || R.players.length < 2) return;
-  const to = R.players[(i + 1) % R.players.length];
+  if (R.players.indexOf(state.nickname) < 0 || R.players.length < 2) return;
+  const to = currentTarget(state.room, R);
+  if (!to) return;
   state.roomRef.child('jama/' + to).push({ round: R.id, rows, from: state.nickname })
     .catch((error) => console.warn('[suton-block] jama send failed', error));
 }
@@ -1949,21 +1982,56 @@ function renderOthers() {
   const narrow = (document.documentElement.clientWidth || window.innerWidth) <= 480;
   wrap.hidden = narrow || !names.length;
   list.hidden = !narrow || !names.length;
+  $('othersCol').hidden = wrap.hidden;
+  $('othersHint').hidden = true;
   if (!names.length) return;
   const room = state.room;
   const R = roundOf(room);
+  // じゃまのある回で、ほかに2人以上いるときは、押した人へじゃまを送る（送る相手に印。はじめは並びのつぎの人）
+  const choose = canChooseTarget(R);
+  const target = choose ? currentTarget(room, R) : null;
+  $('othersHint').hidden = !choose || narrow;
   if (narrow) {
     names.slice(0, 4).forEach((name) => {
       const b = boardOf(room, R, name);
       const li = document.createElement('li');
-      if (b?.out === true) li.classList.add('is-out');
-      li.append(makeElement('span', 'sb-otherlist__name', name), makeElement('span', 'sb-otherlist__lines', b?.out === true ? 'ここまで' : statText(R, b, true)));
+      const out = b?.out === true;
+      if (out) li.classList.add('is-out');
+      const parts = [makeElement('span', 'sb-otherlist__name', name), makeElement('span', 'sb-otherlist__lines', out ? 'ここまで' : statText(R, b, true))];
+      if (choose) {
+        const btn = targetButton(name, name === target, out, true);
+        btn.append(...parts);
+        li.append(btn);
+      } else li.append(...parts);
       list.append(li);
     });
     return;
   }
   const s = names.length > 4 ? 5 : 6;
-  names.slice(0, 6).forEach((name) => wrap.append(miniCard(name, s)));
+  names.slice(0, 6).forEach((name) => {
+    const card = miniCard(name, s);
+    if (!choose) { wrap.append(card); return; }
+    const btn = targetButton(name, name === target, boardOf(room, R, name)?.out === true);
+    btn.classList.add('sb-mini', ...[...card.classList].filter((c) => c !== 'sb-mini'));
+    btn.append(...card.childNodes);
+    wrap.append(btn);
+  });
+}
+
+// ほかの人を押して、じゃまを送る相手にするボタン（送る相手は枠の色。広い画面の盤には「送る」の印も。スマホの一覧はせまいので枠の色だけ）
+function targetButton(name, isTarget, out, compact = false) {
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'sb-target' + (isTarget ? ' is-target' : '');
+  btn.disabled = out;
+  btn.setAttribute('aria-pressed', String(isTarget));
+  btn.setAttribute('aria-label', name + (isTarget ? '（じゃまを送る相手）' : '（押すと、じゃまを送る相手にする）'));
+  if (isTarget && !compact) btn.append(makeElement('span', 'sb-target__tag', '送る'));
+  btn.addEventListener('click', () => {
+    chooseTarget(name);
+    btn.blur(); // スペース（すとん）でボタンが押されないように
+  });
+  return btn;
 }
 
 // あそぶ人の盤をならべて見る画面

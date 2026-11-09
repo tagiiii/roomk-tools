@@ -393,19 +393,19 @@ const SLIDES = [
     <div class="rows mt">
       <div class="row"><div class="row__ic"><span class="material-symbols-rounded">format_list_numbered</span></div><div><div class="row__t">どちらも、みんな同じ順番でブロックが出る</div><div class="row__d">「はじめる」のあと、3・2・1 で落ちはじめるよ。どちらにするかは、ホストが待合室で選ぶ</div></div></div>
     </div>`,
-    note:'ルームのあそびかたは2つあるよ。\n①段の数をくらべる … 時間は2分・3分・5分のどれか。そのあいだに消した段の数をくらべるよ。盤がいっぱいになっても、からにしてつづく。\n②対戦 … 段を消すと、つぎの人の盤にじゃまが入る。来るじゃまにたえながら、じゃまを送りあうよ。\nどちらも、みんな同じ順番でブロックが出る。「はじめる」のあと、3・2・1 で落ちはじめるよ。どちらにするかは、ホストが待合室で選ぶ。' },
+    note:'ルームのあそびかたは2つあるよ。\n①段の数をくらべる … 時間は2分・3分・5分のどれか。そのあいだに消した段の数をくらべるよ。盤がいっぱいになっても、からにしてつづく。\n②対戦 … 段を消すと、つぎの人の盤にじゃまが入る。来るじゃまにたえながら、じゃまを送りあうよ。ほかの人の盤を押すと、送る相手を選べる。\nどちらも、みんな同じ順番でブロックが出る。「はじめる」のあと、3・2・1 で落ちはじめるよ。どちらにするかは、ホストが待合室で選ぶ。' },
 
   /* 8 */ { type:'content', accent:'coral', section:'じゃまブロック', sectionEn:'jama block',
     headline:'①で、じゃまブロック「<span class="hl">あり</span>」のとき',
     body:`<div class="side">
       ${miniBoard(JAMA, { small:true })}
       <div class="rows">
-        <div class="row"><div class="row__ic"><span class="material-symbols-rounded">keyboard_double_arrow_up</span></div><div><div class="row__t">2段いじょういっしょに消すと、となりの人へ</div><div class="row__d">となりの人の盤の下に、1列あいた段が入る。となりは、ならびで次の人</div></div></div>
+        <div class="row"><div class="row__ic"><span class="material-symbols-rounded">keyboard_double_arrow_up</span></div><div><div class="row__t">2段いじょういっしょに消すと、となりの人へ</div><div class="row__d">となりの人の盤の下に、1列あいた段が入る。となりは、ならびで次の人。ほかの人の盤を押すと、送る相手を選べる</div></div></div>
         <div class="row"><div class="row__ic"><span class="material-symbols-rounded">hourglass_top</span></div><div><div class="row__t">来るじゃまは、横の「来るじゃま」に出る</div><div class="row__d">次に段を消さずに置いたときに入るよ</div></div></div>
         <div class="row"><div class="row__ic"><span class="material-symbols-rounded">remove_circle</span></div><div><div class="row__t">自分が段を消すと、来るじゃまをへらせる</div><div class="row__d">はじめは「なし」。ホストが待合室で選ぶよ</div></div></div>
       </div>
     </div>`,
-    note:'①段の数をくらべるで、じゃまブロックを「あり」にしたときのルールだよ。\n2段いじょういっしょに消すと、となりの人の盤の下に、1列あいた段が入る。となりの人は、ならびで次の人だよ。\n自分に来るじゃまは、横の「来るじゃま」に出て、次に段を消さずに置いたときに入る。\n自分が段を消すと、来るじゃまをへらせるよ。\nはじめは「なし」になっていて、ホストが待合室で選ぶよ。' },
+    note:'①段の数をくらべるで、じゃまブロックを「あり」にしたときのルールだよ。\n2段いじょういっしょに消すと、となりの人の盤の下に、1列あいた段が入る。となりの人は、ならびで次の人だよ。\nほかの人の盤（スマホは名前）を押すと、その人に送れる。もう一度押すと、次の人にもどるよ。\n自分に来るじゃまは、横の「来るじゃま」に出て、次に段を消さずに置いたときに入る。\n自分が段を消すと、来るじゃまをへらせるよ。\nはじめは「なし」になっていて、ホストが待合室で選ぶよ。' },
 
   /* 9 */ { type:'content', accent:'blue', section:'対戦', sectionEn:'versus', num:'1',
     headline:'消し方で、<span class="hl">送るじゃま</span>がかわる',
