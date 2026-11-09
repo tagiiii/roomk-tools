@@ -180,6 +180,8 @@ function entry(tool, category, text, extra = {}) {
 // 重複検査でカバー済みのアプリ（collectEntries が entries を生成する）。
 const COVERED_APPS = [
   'kotoba-meter',
+  // 2026-11-09 追加（流す言葉の一覧）
+  'kotoba-dash',
   // 既存（A2 以前から抽出済み）
   'quiz', 'kotoba-shuffle', 'kanji-sagashi', 'kotoba-relay', 'tatoe-gp',
   'kaburazu-hint', 'kotoba-tantei', 'docchi', 'minna-ranking',
@@ -602,6 +604,35 @@ function collectEntries() {
   });
   if (shirushiProblems.length > 0) {
     throw new Error(`shirushi-hint data.js の構造エラー:\n  ${shirushiProblems.join('\n  ')}`);
+  }
+
+  // kotoba-dash: data.js の window.KOTOBA_DASH_WORDS = { middle, long, cats, similar }（流す言葉）。
+  //   middle・long は流す言葉、cats はなかま分けの言葉。similar は形の似た文字の組（部品なので検査対象外）。
+  //   空の言葉と、middle・long の中の重複はここで fail-fast にする
+  const dashContext = { window: {} };
+  vm.createContext(dashContext);
+  vm.runInContext(read('apps/kotoba-dash/data.js'), dashContext, { filename: 'apps/kotoba-dash/data.js' });
+  const dashWords = dashContext.window.KOTOBA_DASH_WORDS || {};
+  const dashProblems = [];
+  const dashSeen = new Set();
+  ['middle', 'long'].forEach((pool) => {
+    const list = Array.isArray(dashWords[pool]) ? dashWords[pool] : [];
+    if (list.length === 0) dashProblems.push(`${pool} が空`);
+    list.forEach((text, index) => {
+      if (typeof text !== 'string' || !text.trim()) dashProblems.push(`${pool}[${index}] が空`);
+      if (dashSeen.has(text)) dashProblems.push(`${pool}[${index}]「${text}」が重複`);
+      dashSeen.add(text);
+      rows.push(entry('kotoba-dash', 'word', text, { id: `kotoba-dash:${pool}:${index}` }));
+    });
+  });
+  Object.entries(dashWords.cats || {}).forEach(([cat, list]) => {
+    (Array.isArray(list) ? list : []).forEach((text, index) => {
+      if (typeof text !== 'string' || !text.trim()) dashProblems.push(`cats.${cat}[${index}] が空`);
+      rows.push(entry('kotoba-dash', 'cat-word', `${cat}：${text}`, { id: `kotoba-dash:cats:${cat}:${index}` }));
+    });
+  });
+  if (dashProblems.length > 0) {
+    throw new Error(`kotoba-dash data.js の構造エラー:\n  ${dashProblems.join('\n  ')}`);
   }
 
   // hirameki-oogiri: data.js の export const TOPICS = [ '文字列', ... ]（大喜利のお題）。
