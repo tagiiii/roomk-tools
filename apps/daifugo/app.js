@@ -1402,6 +1402,17 @@ function cardEl(c, tag) {
   return b;
 }
 
+// 自分（下）以外の席の置き場所。時計回りに 左→上（左から）→右。グリッドは12列×3行（2行目の4〜9列が場）
+function seatSlots(k) {
+  const L = { row: 2, col: '1 / 4', side: 'left' };
+  const Rt = { row: 2, col: '10 / 13', side: 'right' };
+  const top = (m) => Array.from({ length: m }, (_, j) => ({ row: 1, col: (1 + (12 / m) * j) + ' / ' + (1 + (12 / m) * (j + 1)), side: 'top' }));
+  if (k <= 0) return [];
+  if (k === 1) return [{ row: 1, col: '4 / 10', side: 'top' }];
+  if (k === 2) return [L, Rt];
+  return [L, ...top(k - 2), Rt];
+}
+
 function renderGame(R) {
   const g = R.game;
   const isHost = state.role === 'host';
@@ -1411,11 +1422,19 @@ function renderGame(R) {
   const due = dueSeats(g);
   const dir = E.dirOf(g);
 
-  // あそぶ人
+  // あそぶ人（卓のまわりの置き場所。自分＝見る人なら最初の席を下に、そこから時計回りに 左→上→右）
+  const bottom = myIdx >= 0 ? myIdx : 0;
+  const n = R.seats.length;
+  const others = Array.from({ length: n - 1 }, (_, k) => (bottom + 1 + k) % n);
+  const slots = seatSlots(others.length);
+  const slotOf = new Map([[bottom, { row: 3, col: '4 / 10' }]]);
+  others.forEach((i, k) => slotOf.set(i, slots[k]));
+  $('center').style.gridColumn = others.length >= 2 ? '4 / 10' : '1 / 13';
   $('players').replaceChildren(...R.seats.map((id, i) => {
     const p = personOf(R, id);
     const turn = due.includes(i);
-    const box = el('div', 'df-player' + (turn ? ' is-turn' : '') + (g.done[i] ? ' is-done' : '') + (i === myIdx ? ' is-me' : ''));
+    const passed = !g.over && !g.done[i] && !turn && g.passed[i];
+    const box = el('div', 'df-player' + (turn ? ' is-turn' : '') + (g.done[i] ? ' is-done' : '') + (passed ? ' is-passed' : '') + (i === myIdx ? ' is-me' : ''));
     const top = el('div', 'df-player__top');
     top.append(msIcon(p && p.kind === 'cpu' ? 'smart_toy' : 'person', 'df-player__icon'));
     top.append(el('span', 'df-player__name', seatName(R, i) + (i === myIdx ? '（あなた）' : '')));
@@ -1428,12 +1447,16 @@ function renderGame(R) {
     else if (g.done[i] && g.fouls.includes(i)) tags.append(el('span', 'df-tag df-tag--warn', '反則あがり'));
     else if (g.done[i] && g.fallen === i) tags.append(el('span', 'df-tag df-tag--warn', '都落ち'));
     else if (g.done[i] && place >= 0) tags.append(el('span', 'df-tag df-tag--win', (place + 1) + '番であがり'));
-    else if (turn) tags.append(el('span', 'df-tag df-tag--turn', g.exchange ? '返すカードを選び中' : g.pending ? (g.pending.kind === 'give7' ? 'わたすカードを選び中' : '捨てるカードを選び中') : '番'));
-    else if (g.passed[i]) tags.append(el('span', 'df-tag df-tag--muted', 'パス'));
+    else if (turn) tags.append(el('span', 'df-tag df-tag--turn', g.exchange ? '返すカードを選び中' : g.pending ? (g.pending.kind === 'give7' ? 'わたすカードを選び中' : '捨てるカードを選び中') : 'いまの番'));
+    else if (passed) tags.append(el('span', 'df-tag df-tag--pass', 'パス'));
     if (!g.over && (g.rules.exchange || g.rules.miyakoOchi) && g.prev) tags.append(el('span', 'df-tag df-tag--rank', rankWord(g, i)));
     if (!g.over && p && p.away) tags.append(el('span', 'df-tag df-tag--warn', '通信が切れた・CPUが代わり'));
     else if (!g.over && p && p.auto) tags.append(el('span', 'df-tag df-tag--cpu', 'CPUが代わり'));
     box.append(top, tags);
+    const slot = slotOf.get(i);
+    box.style.gridRow = String(slot.row);
+    box.style.gridColumn = slot.col;
+    box.dataset.side = slot.side || (i === bottom ? 'bottom' : 'top');
     return box;
   }));
 
@@ -1458,7 +1481,9 @@ function renderGame(R) {
     $('fieldBy').textContent = '';
   }
 
-  // できごと
+  // できごと（いちばん新しい1件は場の中にも出す。手札の下だと目に入らないため）
+  const newest = R.log[R.log.length - 1];
+  $('fieldNews').textContent = newest ? newest.text : '';
   const logs = R.log.slice(-3);
   $('log').replaceChildren(...logs.map((x, k) => el('li', 'df-log__item' + (k === logs.length - 1 ? ' is-new' : ''), x.text)));
   if (R.round !== state.fxRound) {
@@ -1487,7 +1512,7 @@ function renderGame(R) {
   $('gameStatus').textContent = status;
   $('gameStatus').classList.toggle('is-mine', myIdx >= 0 && due.includes(myIdx));
   $('turnBox').hidden = g.over;
-  $('table').hidden = g.over;
+  $('center').hidden = g.over;
   updateTimer();
 
   // 自分の手札

@@ -84,7 +84,7 @@ async function newContext(label, opts = {}) {
 async function newPage(context, label) {
   const page = await context.newPage();
   await page.addInitScript(() => {
-    // 音を鳴らす部品が作られた回数を数える（このアプリは音を鳴らさない）
+    // 音を鳴らす部品が作られた回数を数える（効果音ははじめは切なので、入にしないかぎり作られない）
     window.__audioMade = 0;
     ['AudioContext', 'webkitAudioContext', 'Audio'].forEach((name) => {
       const Original = window[name];
@@ -176,7 +176,7 @@ async function finishAll(server) {
   for (const c of clients) {
     check('console errors: ' + c.label, c.errors.length === 0, c.errors.slice(0, 5));
     const audio = c.page.isClosed() ? 0 : await c.page.evaluate(() => window.__audioMade || 0).catch(() => 0);
-    check('no sound: ' + c.label, audio === 0, audio);
+    if (!c.soundOk) check('no sound: ' + c.label, audio === 0, audio); // 効果音を入にした人（soundOk）はのぞく
   }
   check('no production access', T.violations.length === 0, T.violations.slice(0, 5));
   console.log(`pass ${T.pass} / fail ${T.failures.length}`);
