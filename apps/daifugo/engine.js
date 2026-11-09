@@ -209,6 +209,7 @@
   }
   function clearField(s) {
     s.field = null;
+    s.pile = [];
     s.passed = s.passed.map(() => false);
     s.back = false;
     s.lock = null;
@@ -318,7 +319,7 @@
       rules: R, n, hands: sorted,
       done: sorted.map(() => false), places: [], fouls: [],
       passed: sorted.map(() => false),
-      turn: first, field: null, rev: false, back: false, lock: null, numLock: null, lockRun: 0,
+      turn: first, field: null, pile: [], rev: false, back: false, lock: null, numLock: null, lockRun: 0,
       pending: null, over: false, seq: 0,
       prev: okPrev ? prev.slice() : null, fallen: null,
       exchange, exchanged: null, exSeq: -1,
@@ -402,6 +403,8 @@
     if (four) s.last.fx.push('four');
     if (skip) s.last.fx.push('five');
     s.field = { play: pl, by: p };
+    // 場が流れるまでに出た手（だれが・どのカードを。古い状態で pile がないときは、この手から）
+    s.pile = (prev && Array.isArray(s.pile) ? s.pile : []).concat([{ by: p, cards: cards.slice(), as: pl.as || null }]);
     if (!s.hands[p].length) markDone(s, p, c.foul);
 
     const pends = [];
