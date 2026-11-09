@@ -1877,7 +1877,13 @@ function botStep(g, b, dt, now) {
     if (near.length === 1 && watchers.length === 1) {
       const at = knownPos(near[0]);
       b.busyUntil = now + 1500;
-      gameAct(mut.sleep(b.id, near[0], { x: at.x, y: at.y }));
+      sleepAndStand(b.id, near[0], { x: at.x, y: at.y }, (to) => {
+        b.x = to.x;
+        b.y = to.y;
+        b.route = [];
+        b.goal = null;
+        if (gameOf(state.room)) sendPosFor(b.id, b, true, true);
+      });
       return;
     }
   }
@@ -4400,7 +4406,26 @@ function doSleep() {
   if (!t) return;
   const g = gameOf(state.room);
   const at = g && drawPos(g, t);
-  if (at) gameAct(mut.sleep(state.nickname, t, { x: at.x, y: at.y }));
+  if (!at) return;
+  sleepAndStand(state.nickname, t, { x: at.x, y: at.y }, (to) => {
+    if (ME.vent || ME.climb) return;
+    ME.x = to.x;
+    ME.y = to.y;
+    sendPosFor(state.nickname, ME, true, true);
+  });
+}
+// ねむらせたら、ねむらせ屋はねむった人の真上に移る（2026-11-09 フィードバック）。
+// バリアでまもられてねむらせられなかったときは動かない。移る先は、ねむっている姿をおいた所（立てる所のときだけ）
+async function sleepAndStand(actor, target, at, move) {
+  const run = mut.sleep(actor, target, at);
+  let slept = null;
+  const ok = await gameAct((g, now) => {
+    slept = null;
+    if (!run(g, now)) return false;
+    if (g.sleptBy[target] === actor && g.bodies[target]) slept = { x: g.bodies[target].x, y: g.bodies[target].y };
+    return true;
+  });
+  if (ok && slept && E.canStand(slept.x, slept.y)) move(slept);
 }
 function doDark() {
   if ($('sabDark').disabled) return;
