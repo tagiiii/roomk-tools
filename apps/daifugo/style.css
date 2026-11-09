@@ -194,9 +194,31 @@
 .df-pile__name { max-width: 9em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: rgba(255, 255, 255, 0.92); font-size: 13px; font-weight: 500; }
 .df-pile__cards { display: flex; gap: 3px; }
 .df-pile .df-card { --df-card-w: 40px; --df-card-h: 57px; opacity: 0.92; }
-/* いちばん新しいできごと（場の中。8切り・流れたなどがすぐ目に入るように） */
-.df-field__news { margin: 2px 0 0; padding: 6px 12px; border-radius: 10px; background: rgba(0, 0, 0, 0.22); color: #fff; font-size: 15px; font-weight: 500; line-height: 1.5; text-align: center; max-width: 100%; overflow-wrap: anywhere; }
-.df-field__news:empty { display: none; }
+/* いま起きたこと（場の真ん中に大きく。次の手まで出したまま。2026-11-09 フィードバック「パスやイレブンバックなど何が起きたかわからない」）
+   白い札に、種類ごとの色の見出し＋短い説明。種類: pass / cut / back / rev / lock / flow / win / warn / info */
+.df-news { display: grid; gap: 6px; justify-items: center; width: min(100%, 420px); }
+.df-news[hidden] { display: none; }
+.df-news__item {
+  display: grid; justify-items: center; gap: 2px; width: 100%; box-sizing: border-box;
+  padding: 8px 14px; border-radius: 12px; background: #fff; border: 3px solid var(--color-accent);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25); text-align: center;
+}
+.df-news__head { font-size: 22px; font-weight: 700; line-height: 1.3; color: var(--color-accent); overflow-wrap: anywhere; }
+.df-news__sub { font-size: 15px; font-weight: 500; line-height: 1.5; color: var(--df-ink); overflow-wrap: anywhere; }
+.df-news__item--pass { border-color: #5E5850; }
+.df-news__item--pass .df-news__head { color: #4A453F; }
+.df-news__item--cut, .df-news__item--flow { border-color: #1F5444; }
+.df-news__item--cut .df-news__head, .df-news__item--flow .df-news__head { color: #1F5444; }
+.df-news__item--rev { border-color: #8E1F2A; }
+.df-news__item--rev .df-news__head { color: #8E1F2A; }
+.df-news__item--back { border-color: #4A3B78; }
+.df-news__item--back .df-news__head { color: #4A3B78; }
+.df-news__item--lock { border-color: #286F7C; }
+.df-news__item--lock .df-news__head { color: #286F7C; }
+.df-news__item--win { border-color: #1E6B3A; }
+.df-news__item--win .df-news__head { color: #1E6B3A; }
+.df-news__item--warn { border-color: #8A4B00; }
+.df-news__item--warn .df-news__head { color: #8A4B00; }
 .df-splash {
   position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
   font-size: 44px; font-weight: 700; color: #fff; text-shadow: 0 2px 12px rgba(0, 0, 0, 0.45);
@@ -297,6 +319,9 @@ button.df-card { position: relative; }
 /* みんなにみせる画面: 場を大きく */
 .is-watch .df-field .df-card { --df-card-w: 100px; --df-card-h: 142px; }
 .is-watch .df-field { min-height: 150px; }
+.is-watch .df-news { width: min(100%, 520px); }
+.is-watch .df-news__head { font-size: 28px; }
+.is-watch .df-news__sub { font-size: 17px; }
 .is-watch .df-pile .df-card { --df-card-w: 48px; --df-card-h: 68px; }
 
 @media (max-width: 600px) {
@@ -324,6 +349,15 @@ button.df-card { position: relative; }
   .df-pile__item { padding: 4px 5px 3px; }
   .df-pile__name { font-size: 12px; max-width: 6em; }
   .df-pile .df-card { --df-card-w: 28px; --df-card-h: 40px; }
+  .df-news__item { padding: 6px 10px; }
+  /* せまい画面: 場が左右の席にはさまれると細く、できごとの見出しが1〜2文字ずつ折れる。
+     左右の席は2行目に横に並べ、場は3行目を幅いっぱいに、自分は4行目へ（置き場所は app.js がインラインで決めるので !important） */
+  .df-player[data-side="left"] { grid-row: 2 !important; grid-column: 1 / 7 !important; }
+  .df-player[data-side="right"] { grid-row: 2 !important; grid-column: 7 / 13 !important; }
+  .df-player[data-side="bottom"] { grid-row: 4 !important; }
+  .df-center { grid-row: 3; grid-column: 1 / 13 !important; }
+  .df-news__head { font-size: 19px; }
+  .df-news__sub { font-size: 14px; }
   .df-hand { gap: 5px; }
   .df-actions .btn { min-width: 0; flex: 1 1 0; }
   /* ジョーカーの「何として出すか」は文が長く、横に並べると1行に2〜3文字の縦長になるので、
