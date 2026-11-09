@@ -45,7 +45,10 @@ const { E, check, sleep } = L;
   await L.waitScreen(late, 'game');
   check('途中から入った人は見学（次の回から）', await L.waitFor(async () => (await L.visible(late, '#watchNote')) && (await L.text(late, '#watchNote')).includes('次の回から')));
   const ls = await L.subs(late);
-  check('見学の人は位置を受け取らない', ls.p === false && ls.g === false, ls);
+  check('見学の人は位置を受け取る（2026-11-09 みんなを見る）', ls.p === true && ls.g === true, ls);
+  check('進行役は g を受け取らない', (await L.subs(host)).g === false);
+  check('進行役には「みんなを見る」を出さない', !(await L.visible(host, '#hudFollow')));
+  check('進行役の画面に、みんなの点を出さない', (await host.page.evaluate(() => window.__NK__.watchPeople(window.__NK__.gameOf(window.__NK__.state.room)))) === null);
   check('見学の人には操作ボタンが出ない', !(await L.visible(late, '#actUse')));
 
   // ══ 読み込み直すと、同じ役で続きから ══
