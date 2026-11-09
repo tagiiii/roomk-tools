@@ -93,7 +93,8 @@ body { background: var(--color-bg); }
 .sb-people .material-symbols-rounded { font-size: 20px; color: var(--color-accent); }
 
 /* あそぶ画面 */
-.sb-playwrap { min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 0 16px 16px; }
+/* 右下の丸ボタンの分の余白（80px）は共通の howto.js がページの最後にとるので、その分を引いて画面の高さちょうどにする */
+.sb-playwrap { min-height: calc(100vh - 80px); display: flex; flex-direction: column; align-items: center; padding: 0 16px 16px; }
 .sb-bar { width: 100%; max-width: 960px; display: flex; align-items: center; gap: 12px; min-height: 56px; }
 .sb-bar__title { font-weight: 700; color: var(--color-primary); white-space: nowrap; }
 .sb-bar .sb-quiet { white-space: nowrap; }
@@ -209,7 +210,6 @@ button.sb-mini.sb-target { width: 100%; }
   .sb-lines--jama { font-size: 18px; }
   .sb-pad { grid-template-columns: repeat(4, 1fr); width: 100%; max-width: 360px; }
   .sb-keys { display: none; }
-  .sb-playwrap { padding-bottom: 72px; } /* 右下の「？」ボタンとボタンが重ならないように */
   .sb-bar__name { display: none; }
   .sb-appbar { padding: 10px 16px; }
   .sb-roombar { gap: 4px; padding: 6px 8px; }
