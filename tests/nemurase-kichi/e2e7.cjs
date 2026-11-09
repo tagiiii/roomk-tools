@@ -176,7 +176,9 @@ function clear(a, b) {
   // 会議の途中で時間切れにして、票をスキップにそろえてしめきる（結果のあとで時間切れのおしまい）
   await L.patchGame(code, { endsAt: Date.now() - 1000 });
   await L.rest('PATCH', L.ROOMS + '/' + code + '/r/game/ballots/' + (await L.roomOf(code)).game.meeting.seq, { 'ホスト': '*skip', 'あお': '*skip', '*1': '*skip' });
-  await host.page.click('#btnCloseVote');
+  // 全員の票がそろうと、会議は自動で結果へ進み「投票をしめきる」が消えることがある（2026-11-09 にこれで1回止まった）。
+  // まだ出ているときだけ押す。押す間に消えても、続く「おしまい」の検査で確かめる
+  if (await L.visible(host, '#btnCloseVote')) await host.page.click('#btnCloseVote', { timeout: 3000 }).catch(() => {});
   check('時間切れでおしまい', await L.waitFor(() => L.visible(host, '#ovEnd'), 12000));
   await host.page.click('#btnAgain');
   await L.waitScreen(host, 'waiting');
