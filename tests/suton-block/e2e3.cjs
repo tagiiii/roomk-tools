@@ -93,6 +93,17 @@ const { check, sleep, text, visible, waitScreen, waitFor, key, fitsHeight, overf
   await sleep(200);
   check('S20 375px で1画面に収まる（ひとり）', (await overflow(P)) <= 0 && await fitsHeight(P));
   await shot(P, 'e2e3-solo-375');
+  // 一言（2026-11-09 フィードバック）: せまい画面では、盤の上の淡い帯（2段）の左はしに小さく出し、盤の20段にかぶせない
+  const sn = await P.page.evaluate(() => {
+    const el = document.getElementById('playNote');
+    el.textContent = '4段すとん！ 4段おくったよ';
+    el.hidden = false;
+    const n = el.getBoundingClientRect(); const b = document.getElementById('board').getBoundingClientRect();
+    const band = b.top + (b.height / 22) * 2;
+    el.hidden = true;
+    return { nl: n.left, nt: n.top, nb: n.bottom, bl: b.left, bt: b.top, band };
+  });
+  check('S20b 375px の一言は盤の上の帯の左はし（盤の20段にかぶせない）', sn.nl - sn.bl < 8 && sn.nt >= sn.bt && sn.nb <= sn.band, sn);
   // 画面のボタン（押しっぱなしで動く）
   await P.page.click('.sb-padbtn[data-act="drop"]');
   check('S21 画面のボタンでも置ける', true);

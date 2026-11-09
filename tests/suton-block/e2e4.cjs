@@ -73,6 +73,13 @@ const rankText = (c) => c.page.$$eval('.sb-rank li', (lis) => lis.map((li) => li
   check('B14 4段消すと4段送る', Number(room.boards?.['あおい']?.sent) === 4 && Number(room.boards['あおい'].lines) === 4, room.boards?.['あおい']);
   check('B15 送ったじゃまの数が出る', await waitFor(async () => (await text(A, '#playLines')) === '4'));
   check('B16 ひとことが出る（4段消しの一言が先頭）', (await text(A, '#playNote')).startsWith('4段すとん！') && (await text(A, '#playNote')).includes('4段おくったよ'));
+  // 一言は小さく左上に（2026-11-09 フィードバック）。広い画面は盤の外の左で、盤の上のはしにそろえて1行
+  const nr = await A.page.evaluate(() => {
+    const r = (id) => document.getElementById(id).getBoundingClientRect();
+    const n = r('playNote'); const b = r('board');
+    return { right: n.right, top: n.top, h: n.height, left: b.left, btop: b.top };
+  });
+  check('B16b 一言は盤の外の左・盤の上のはしにそろえて1行', nr.right <= nr.left && Math.abs(nr.top - nr.btop) < 2 && nr.h < 34, nr);
   check('B17 ここまでの人をとばして、つぎののこっている人に届く', await waitFor(async () => (await text(H, '#playJama')) === '4段'));
   check('B18 ここまでの人には届かない', !(room.jama && room.jama['はる']));
   await key(H, 'Space');
