@@ -1413,6 +1413,42 @@ function seatSlots(k) {
   return [L, ...top(k - 2), Rt];
 }
 
+// いちばん新しい手で起きたことを [種類, 大きな見出し, 説明] の並びに（ふつうに出しただけなら場のカードでわかるので出さない）
+function centerNews(R, g) {
+  const L = g.last;
+  if (!L) return [];
+  const name = (i) => seatName(R, i);
+  const out = [];
+  const lockText = () => (g.lock || []).map((x) => E.SUIT_MARK[x]).join('') + 'だけ';
+  const nextText = () => (E.numLockNext(g) != null ? '次は ' + E.rankLabel(E.numLockNext(g)) + ' だけ' : '次はジョーカーだけ');
+  if (L.kind === 'pass') out.push(['pass', name(L.by) + 'はパス', '']);
+  else if (L.kind === 'discard') out.push(['info', L.cards.length ? name(L.by) + 'が ' + L.cards.length + '枚 捨てた' : name(L.by) + 'は捨てなかった', '']);
+  else if (L.kind === 'give7') out.push(['info', L.cards.length ? name(L.by) + 'が ' + name(L.to) + 'に ' + L.cards.length + '枚 わたした' : name(L.by) + 'はわたさなかった', '']);
+  else if (L.kind === 'give' && L.fx.includes('exchanged')) out.push(['info', 'カード交換がおわった', '']);
+  const fx = L.fx || [];
+  const has = (f) => fx.includes(f);
+  if (has('revolution')) out.push(['rev', '革命！', '強さが逆になった（3がいちばん強い）']);
+  if (has('revolution-back')) out.push(['rev', '革命返し！', '強さが元にもどった（2がいちばん強い）']);
+  if (has('back')) out.push(['back', 'イレブンバック！', g.rev ? '場が流れるまで、革命中でもふつうの強さ' : '場が流れるまで強さが逆（3がいちばん強い）']);
+  if (has('eight')) out.push(['cut', '8切り！', '8を出したので場が流れる']);
+  if (has('queen')) out.push(['cut', 'Qボンバー！', 'Qを出したので場が流れる']);
+  if (has('four')) out.push(['cut', '4止め！', '4を出したので場が流れる']);
+  if (has('spade3')) out.push(['cut', 'スペ3返し！', '♠3でジョーカーに勝った。場が流れる']);
+  if (has('five')) out.push(['info', '5飛び！', L.skipped && L.skipped.length ? L.skipped.map(name).join('と') + 'をとばした' : '']);
+  if (has('gekilock')) out.push(['lock', '激しばり！', lockText() + '・' + nextText()]);
+  else {
+    if (has('lock')) out.push(['lock', 'しばり！', '場が流れるまで ' + lockText()]);
+    if (has('numlock')) out.push(['lock', '数しばり！', nextText()]);
+  }
+  if (has('ten')) out.push(['info', '10捨て', name(L.by) + 'が捨てるカードを選んでいるよ']);
+  if (has('seven')) out.push(['info', '7渡し', name(L.by) + 'がわたすカードを選んでいるよ']);
+  if (has('done')) out.push(['win', name(L.by) + 'があがり！', (g.places.indexOf(L.by) + 1) + '番']);
+  if (has('foul')) out.push(['warn', name(L.by) + 'は反則あがり', '最後になる']);
+  if (has('fallen')) out.push(['warn', '都落ち！', '前回の大富豪の' + name(g.fallen) + 'は抜けて、最後になる']);
+  if (L.flow && !g.over) out.push(['flow', '場が流れた', name(L.lead) + 'から出せる']);
+  return out;
+}
+
 function renderGame(R) {
   const g = R.game;
   const isHost = state.role === 'host';
@@ -1493,9 +1529,15 @@ function renderGame(R) {
     $('fieldBy').textContent = '';
   }
 
-  // できごと（いちばん新しい1件は場の中にも出す。手札の下だと目に入らないため）
-  const newest = R.log[R.log.length - 1];
-  $('fieldNews').textContent = newest ? newest.text : '';
+  // いま起きたこと（パス・8切り・イレブンバック・場が流れた など）を、場の真ん中に大きく。次の手まで出したまま
+  const news = g.over ? [] : centerNews(R, g);
+  $('fieldNews').replaceChildren(...news.map(([kind, head, sub]) => {
+    const row = el('div', 'df-news__item df-news__item--' + kind);
+    row.append(el('strong', 'df-news__head', head));
+    if (sub) row.append(el('span', 'df-news__sub', sub));
+    return row;
+  }));
+  $('fieldNews').hidden = !news.length;
   const logs = R.log.slice(-3);
   $('log').replaceChildren(...logs.map((x, k) => el('li', 'df-log__item' + (k === logs.length - 1 ? ' is-new' : ''), x.text)));
   if (R.round !== state.fxRound) {
