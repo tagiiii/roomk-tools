@@ -1,0 +1,2146 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+<title>サークルタイム | あそびのたな</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,500,1,0" rel="stylesheet" />
+<link rel="stylesheet" href="../shared/css/design-system.css?v=20261107" />
+<style>
+  body{ --am:#F2B35C; --am-pale:#FFF4E0; --am-ink:#8A5A12; --pm:#E8907B; --pm-pale:#FDEBE6; --pm-ink:#9E4631; --acc-dark:#5A300A; }
+  body{ margin:0; color:var(--color-text); font-family:var(--font-base); min-height:100dvh; }
+  .material-symbols-rounded{ font-family:"Material Symbols Rounded"; line-height:1; vertical-align:middle; }
+  .screen{ display:none; } .screen.active{ display:block; }
+  .wrap{ max-width:1180px; margin:0 auto; padding:18px 16px 60px; }
+  .narrow{ max-width:520px; margin:0 auto; }
+  [hidden]{ display:none !important; }
+  .btn{ cursor:pointer; }
+  .btn-text{ background:none; border:0; color:var(--color-accent); font:700 14px 'Zen Maru Gothic',var(--font-base); cursor:pointer; text-decoration:underline; }
+  .err{ color:var(--color-error); font-size:14px; font-weight:700; margin:8px 0 0; }
+  .tiny{ font-size:12px; color:var(--color-muted); line-height:1.6; margin-top:8px; }
+  .kbd{ display:inline-block; border:1px solid var(--color-border); border-bottom-width:2px; border-radius:5px; padding:0 6px; font-size:12px; background:#fff; }
+  .top-links{ display:flex; justify-content:center; gap:16px; margin-top:12px; font-size:13px; }
+
+  /* 入口・参加 */
+  .form-card{ background:#fff; border-radius:var(--radius-card); box-shadow:var(--shadow-soft); padding:22px 24px; }
+  .form-card h2{ margin:0 0 4px; font-size:22px; color:var(--color-primary); }
+  .form-card .sub{ font-size:14px; color:var(--color-muted); margin:0 0 14px; }
+  .field{ margin-bottom:12px; }
+  .field label{ display:block; font-size:13px; font-weight:700; color:var(--color-muted); margin-bottom:4px; }
+  .field input,.field textarea{ width:100%; box-sizing:border-box; border:1.5px solid var(--color-border); border-radius:10px; padding:10px 12px; font:15px var(--font-base); color:var(--color-text); background:#fff; }
+  .field input.code{ font:700 22px 'Zen Maru Gothic',var(--font-base); letter-spacing:.14em; text-transform:uppercase; text-align:center; }
+  .field .opt3{ display:grid; grid-template-columns:28px 1fr 64px; gap:6px; align-items:center; margin-bottom:6px; font-size:14px; }
+  .field .opt3 .num{ width:26px; height:26px; border-radius:50%; background:var(--color-accent); color:#fff; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; }
+  .field .opt3 label.ok{ display:flex; align-items:center; gap:4px; font-size:12px; color:var(--color-success); font-weight:700; margin:0; cursor:pointer; }
+  .check{ display:flex; align-items:center; gap:8px; font-size:14px; margin:6px 0 14px; cursor:pointer; }
+  .seg{ display:flex; gap:8px; margin-bottom:16px; }
+  .seg button{ flex:1; min-height:48px; border-radius:12px; border:2px solid var(--color-border); background:#fff; font:700 16px 'Zen Maru Gothic',var(--font-base); color:var(--color-text); cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; }
+  .seg-sm button{ min-height:40px; font-size:14px; }
+  .ready{ list-style:none; margin:4px 0 16px; padding:0; display:flex; flex-direction:column; gap:8px; }
+  .ready li{ display:flex; gap:10px; align-items:flex-start; background:var(--color-primary-soft); border-radius:12px; padding:10px 12px; font-size:13px; line-height:1.6; }
+  .ready li > .material-symbols-rounded{ color:var(--color-accent); font-size:22px; flex:none; }
+  .ready li b{ display:block; font-size:14px; color:var(--color-primary); }
+  .ready li.ok{ background:#EAF5EE; } .ready li.ok > .material-symbols-rounded{ color:var(--color-success); }
+  .ready li.none{ background:#FBF6EC; } .ready li.none > .material-symbols-rounded{ color:var(--color-muted); }
+  details.more{ margin-top:14px; border-top:1px dashed var(--color-border); padding-top:10px; }
+  details.more summary{ cursor:pointer; font:700 14px 'Zen Maru Gothic',var(--font-base); color:var(--color-accent); margin-bottom:10px; }
+  /* プログラム（時刻ごと） */
+  .pg{ display:flex; flex-direction:column; }
+  .pg-row{ display:grid; grid-template-columns:110px 1fr; gap:12px; align-items:start; padding:10px 0; border-bottom:1.5px dashed var(--color-border); }
+  .pg-row:last-child{ border-bottom:0; }
+  .pg-row .tm{ font:700 26px 'Zen Maru Gothic',var(--font-base); color:var(--color-accent); }
+  .pg-items{ display:flex; flex-wrap:wrap; gap:8px 22px; }
+  .pg-it{ font-size:25px; font-weight:700; line-height:1.35; }
+  .pg-it small{ font-size:17px; color:var(--color-muted); font-weight:500; margin-left:6px; }
+  .pg-tag{ display:inline-block; font-size:15px; font-weight:700; border-radius:999px; padding:2px 10px; margin-left:6px; vertical-align:3px; background:var(--color-accent-soft); color:var(--color-accent); }
+  .pg-tag.once{ background:#FDEBE6; color:var(--pm-ink); }
+  /* 自由タイム */
+  .freebox{ flex:1; min-height:0; display:grid; grid-template-columns:1fr 330px; gap:26px; margin-top:4px; }
+  .fb-main{ display:flex; flex-direction:column; gap:12px; min-height:0; }
+  .fb-tabs{ display:flex; gap:10px; }
+  .fb-tabs > span{ display:inline-flex; align-items:center; gap:6px; font:700 20px 'Zen Maru Gothic',var(--font-base); padding:8px 16px; border-radius:999px; border:2px solid var(--color-border); background:#fff; color:var(--color-muted); }
+  .fb-tabs > span.on{ border-color:var(--color-accent); background:var(--color-accent); color:#fff; }
+  .fb-tabs .material-symbols-rounded{ font-size:22px; }
+  .fb-card{ flex:1; min-height:0; background:#fff; border-radius:24px; box-shadow:var(--shadow-soft); padding:26px 30px; display:flex; flex-direction:column; justify-content:center; gap:14px; overflow:hidden; }
+  .fb-odai{ font:700 40px 'Zen Maru Gothic',var(--font-base); line-height:1.4; text-align:center; overflow-wrap:anywhere; }
+  .fb-q{ font:700 30px 'Zen Maru Gothic',var(--font-base); line-height:1.4; overflow-wrap:anywhere; }
+  .fb-cs{ display:flex; flex-direction:column; gap:8px; }
+  .fb-c{ display:flex; align-items:center; gap:12px; border:2px solid var(--color-border); border-radius:14px; padding:8px 14px; font-size:24px; font-weight:700; }
+  .fb-c .num{ width:38px; height:38px; border-radius:50%; background:var(--color-accent); color:#fff; display:flex; align-items:center; justify-content:center; font:700 20px 'Zen Maru Gothic',var(--font-base); flex:none; }
+  .fb-c .who{ margin-left:auto; display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end; }
+  .fb-c .who .chip{ font-size:16px; padding:3px 10px; }
+  .fb-c.ok{ border-color:var(--color-success); background:#EAF5EE; }
+  .fb-ex{ font-size:20px; color:var(--color-text); background:var(--color-accent-soft); border-radius:12px; padding:10px 14px; line-height:1.5; }
+  .fb-kana{ text-align:center; font:700 34px 'Zen Maru Gothic',var(--font-base); color:var(--color-muted); }
+  .fb-kana b{ font-size:76px; color:var(--color-accent); margin:0 6px; }
+  .fb-theme{ text-align:center; font:700 52px 'Zen Maru Gothic',var(--font-base); }
+  .fb-note{ text-align:center; font-size:21px; color:var(--color-muted); }
+  .fb-hands{ display:flex; gap:8px; align-items:center; justify-content:center; flex-wrap:wrap; font-size:19px; color:var(--color-muted); }
+  .fb-hint{ font-size:17px; color:var(--color-muted); }
+  .fb-side{ display:flex; flex-direction:column; gap:14px; }
+  .fb-title{ font:700 25px 'Zen Maru Gothic',var(--font-base); color:var(--color-primary); line-height:1.35; }
+  .fb-sub{ font-size:19px; color:var(--color-muted); line-height:1.5; }
+  .fb-side .clock{ display:flex; flex-direction:column; gap:4px; background:var(--color-primary-soft); border-radius:14px; padding:12px 16px; font-size:18px; }
+  .fb-side .clock b{ font:700 34px 'Zen Maru Gothic',var(--font-base); color:var(--color-primary); }
+  .fb-side .here{ justify-content:flex-start; gap:8px; }
+  .fb-side .here .chip{ font-size:18px; padding:4px 12px; }
+  .fb-side .here .cap{ width:100%; font-size:16px; }
+  /* 天気の地図 */
+  .wxmap{ position:absolute; inset:0; width:100%; height:100%; overflow:visible; }
+  .wxmap .land{ fill:#EADBC0; stroke:#C3A980; stroke-width:1.2; stroke-linejoin:round; }
+  .wxmap .inset{ fill:rgba(255,255,255,.35); stroke:var(--color-border); stroke-width:2; stroke-dasharray:6 5; }
+  .wxmap .okl{ font:700 14px var(--font-base); fill:var(--color-muted); }
+  .wxmap .lead{ stroke:#B39668; stroke-width:1.5; }
+  .wxmap .dot{ fill:var(--color-accent); stroke:#fff; stroke-width:2; }
+  .wxmap .wxcard rect{ fill:#fff; stroke:var(--color-border); stroke-width:1.5; }
+  .wxmap text{ font-family:var(--font-base); }
+  .wxmap .nm{ font-size:15px; font-weight:700; fill:var(--color-muted); }
+  .wxmap .ic{ font-family:'Material Symbols Rounded'; font-size:38px; fill:var(--color-accent); }
+  .wxmap .ic.rain{ fill:#3E6FB0; } .wxmap .ic.cloud{ fill:#8C8C8C; } .wxmap .ic.snow{ fill:#6FA7D9; }
+  .wxmap .tp{ font-size:21px; font-weight:700; fill:var(--color-text); }
+  .wxmap .hi{ fill:#C0392B; } .wxmap .lo{ fill:#2E6DB4; }
+  .wxmap .wd{ font-size:12px; fill:var(--color-muted); }
+  .wxmap .src{ font-size:14px; fill:var(--color-muted); }
+  .wxmap .nodata{ font:700 22px var(--font-base); fill:var(--color-muted); }
+  .ask2{ box-sizing:border-box; height:100%; background:#fff; border-radius:18px; box-shadow:var(--shadow-soft); padding:12px 14px; display:flex; flex-direction:column; gap:8px; font-family:var(--font-base); }
+  .ask2 .q{ font:700 22px 'Zen Maru Gothic',var(--font-base); color:var(--color-primary); }
+  .ask2 .opt{ display:flex; flex-direction:column; gap:4px; border-top:1px dashed var(--color-border); padding-top:6px; }
+  .ask2 .opt .ic{ display:flex; align-items:center; gap:6px; font-size:18px; font-weight:700; color:var(--color-text); }
+  .ask2 .opt .ic .material-symbols-rounded{ font-size:26px; color:var(--color-accent); }
+  .ask2 .opt .who{ display:flex; gap:5px; flex-wrap:wrap; }
+  .ask2 .opt .who .chip{ font-size:14px; padding:2px 9px; border-width:1.5px; }
+  .free-ctrls,.game-box{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:10px; background:#FBF6EC; border-radius:12px; padding:10px; font-size:13px; }
+  .free-ctrls .btn,.game-box .btn{ padding:8px 12px; font-size:13px; border-radius:10px; }
+  .free-ctrls .btn[aria-pressed="true"]{ border-color:var(--color-accent); background:var(--color-accent-soft); color:var(--color-accent); }
+  .game-box input{ flex:1; min-width:180px; border:1.5px solid var(--color-border); border-radius:8px; padding:8px; font:14px var(--font-base); }
+  .p-tabs{ display:flex; gap:6px; margin:4px 0 12px; }
+  .p-tabs button{ flex:1; min-height:44px; border-radius:12px; border:2px solid var(--color-border); background:#fff; font:700 14px 'Zen Maru Gothic',var(--font-base); color:var(--color-text); cursor:pointer; }
+  .p-tabs button[aria-pressed="true"]{ border-color:var(--color-accent); background:var(--color-accent-soft); color:var(--color-accent); }
+  .p-free-acts{ display:flex; gap:8px; margin-top:12px; }
+  .p-free-acts .btn{ flex:1; }
+  .p-ex{ font-size:14px; background:var(--color-accent-soft); border-radius:10px; padding:10px 12px; margin-top:10px; line-height:1.6; }
+  .seg button:disabled{ opacity:.45; cursor:default; }
+  .field .opt3 label.ok input{ width:auto; margin:0; padding:0; }
+  .field .opt3 label.ok{ white-space:nowrap; }
+  #day-other{ flex:0 0 auto; padding:0 12px; }
+  .choice .cn{ font-size:20px; color:var(--color-muted); line-height:1.5; }
+  body.watching .howto-fab, body.watching .howto-feedback-fab{ display:none !important; }
+  .seg button[aria-pressed="true"]{ border-color:var(--color-accent); background:var(--color-accent-soft); color:var(--color-accent); }
+  .auto{ background:var(--color-primary-soft); border-radius:12px; padding:10px 12px; font-size:13px; color:var(--color-text); display:flex; gap:8px; align-items:flex-start; margin-bottom:12px; }
+  .auto .material-symbols-rounded{ color:var(--color-accent); font-size:20px; flex:none; }
+  .join-hint{ background:var(--color-accent-soft); color:var(--color-accent); border-radius:10px; padding:10px 12px; font-size:13px; margin-bottom:12px; }
+
+  /* ルームバー */
+  .roombar{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; background:#fff; border-radius:14px; box-shadow:var(--shadow-soft); padding:10px 14px; margin-bottom:14px; font-size:14px; }
+  .roombar .code{ font:700 20px 'Zen Maru Gothic',var(--font-base); letter-spacing:.12em; color:var(--color-primary); }
+  .roombar .spacer{ flex:1; }
+  .roombar .btn{ padding:8px 12px; font-size:13px; border-radius:10px; }
+  .roombar .me{ color:var(--color-muted); }
+
+  /* 舞台（みんなにみせる画面・ホストのプレビュー） */
+  .stage-wrap{ width:100%; aspect-ratio:16/9; position:relative; border-radius:18px; overflow:hidden; box-shadow:var(--shadow-soft); background:#FFFDF8; }
+  .stage{ position:absolute; top:0; left:0; width:1280px; height:720px; transform-origin:0 0; background:#FFFDF8; display:flex; flex-direction:column; }
+  .stage .top{ display:flex; align-items:center; gap:18px; padding:22px 40px 0; }
+  .pill{ display:inline-flex; align-items:center; gap:8px; border-radius:999px; padding:8px 18px; font:700 20px 'Zen Maru Gothic',var(--font-base); background:var(--am-pale); color:var(--am-ink); white-space:nowrap; }
+  .pill .material-symbols-rounded{ font-size:24px; }
+  .stage.pm .pill{ background:var(--pm-pale); color:var(--pm-ink); }
+  .progress{ display:flex; gap:8px; flex:1; justify-content:center; flex-wrap:wrap; }
+  .progress span{ font-size:17px; font-weight:700; padding:7px 14px; border-radius:999px; border:2px solid var(--color-border); color:var(--color-muted); background:#fff; white-space:nowrap; }
+  .progress span.done{ border-color:var(--am); color:var(--am-ink); }
+  .progress span.now{ border-color:var(--color-accent); background:var(--color-accent); color:#fff; }
+  .stage.pm .progress span.done{ border-color:var(--pm); color:var(--pm-ink); }
+  .roomcode{ text-align:right; line-height:1.2; }
+  .roomcode small{ display:block; font-size:14px; color:var(--color-muted); }
+  .roomcode b{ font:700 26px 'Zen Maru Gothic',var(--font-base); letter-spacing:.12em; color:var(--color-primary); }
+  .stage .body{ flex:1; min-height:0; padding:18px 56px 0; display:flex; flex-direction:column; }
+  .stage h1{ margin:0; font:700 40px 'Zen Maru Gothic',var(--font-base); color:var(--color-primary); display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
+  .stage h1 .material-symbols-rounded{ font-size:40px; color:var(--color-accent); }
+  .stage .lead{ font-size:24px; color:var(--color-muted); font-family:var(--font-base); font-weight:400; }
+  .stage .foot{ display:flex; justify-content:space-between; align-items:center; gap:16px; padding:0 56px 20px; font-size:19px; color:var(--color-muted); }
+  .stage .foot b{ color:var(--color-text); font-weight:700; }
+  .stage .foot .how{ display:flex; gap:22px; align-items:center; flex:none; white-space:nowrap; }
+  .stage .foot .how .material-symbols-rounded{ font-size:24px; color:var(--color-accent); margin-right:4px; }
+  .chip{ display:inline-flex; align-items:center; gap:6px; border-radius:999px; padding:6px 16px; font-size:22px; font-weight:700; background:#fff; border:2px solid var(--color-border); color:var(--color-text); white-space:nowrap; }
+  .chip.adult{ border-style:dashed; }
+  .chip .material-symbols-rounded{ font-size:20px; color:var(--color-accent); }
+  .free{ flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; gap:18px; }
+  .free .big{ font:700 64px 'Zen Maru Gothic',var(--font-base); color:var(--color-primary); }
+  .free .sub{ font-size:26px; color:var(--color-muted); }
+  .free .clock{ margin-top:10px; display:inline-flex; gap:14px; align-items:center; font-size:24px; color:var(--color-text); background:var(--color-primary-soft); border-radius:14px; padding:12px 22px; }
+  .free .clock b{ font:700 34px 'Zen Maru Gothic',var(--font-base); color:var(--color-primary); }
+  .free .clock .material-symbols-rounded{ font-size:28px; color:var(--color-accent); }
+  .here{ margin-top:8px; display:flex; gap:10px; flex-wrap:wrap; justify-content:center; align-items:center; }
+  .here .cap{ font-size:19px; color:var(--color-muted); margin-right:4px; }
+  .scale{ flex:1; min-height:0; display:grid; grid-template-columns:56px 1fr; gap:0 26px; margin-top:16px; }
+  .scale .bar{ border-radius:28px; background:linear-gradient(180deg,var(--acc-dark) 0%,var(--color-accent) 45%,#D7B38E 100%); position:relative; }
+  .scale .bar i{ position:absolute; left:50%; transform:translateX(-50%); color:#fff; font-size:28px; font-style:normal; }
+  .scale .bar i.t{ top:14px; } .scale .bar i.b{ bottom:14px; color:var(--acc-dark); }
+  .rows{ display:grid; grid-template-rows:repeat(5,1fr); gap:6px; min-height:0; }
+  .row{ display:grid; grid-template-columns:56px 300px 1fr; align-items:center; gap:14px; border-radius:16px; padding:0 14px; min-height:0; }
+  .row:nth-child(odd){ background:#FBF6EC; }
+  .row .n{ font:700 34px 'Zen Maru Gothic',var(--font-base); color:var(--color-accent); text-align:center; }
+  .row .l{ font-size:27px; font-weight:700; }
+  .row .who{ display:flex; gap:8px; flex-wrap:wrap; }
+  .hidden-ans{ flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:22px; }
+  .hidden-ans .note{ font-size:30px; color:var(--color-muted); }
+  .hidden-ans .cnt{ font:700 56px 'Zen Maru Gothic',var(--font-base); color:var(--color-primary); }
+  .hidden-ans .cnt small{ font-size:28px; color:var(--color-muted); margin-left:6px; }
+  .mini-scale{ display:flex; gap:12px; margin-top:8px; flex-wrap:wrap; }
+  .mini-scale span{ font-size:21px; color:var(--color-muted); background:#FBF6EC; border-radius:10px; padding:8px 14px; }
+  .mini-scale span b{ color:var(--color-accent); font-size:24px; margin-right:6px; }
+  .choices{ flex:1; min-height:0; display:grid; gap:22px; margin-top:22px; align-items:stretch; }
+  .choice{ background:#fff; border:3px solid var(--color-border); border-radius:22px; padding:22px 20px; display:flex; flex-direction:column; gap:14px; box-shadow:var(--shadow-soft); position:relative; min-height:0; }
+  .choice .num{ width:48px; height:48px; border-radius:50%; background:var(--color-accent); color:#fff; font:700 26px 'Zen Maru Gothic',var(--font-base); display:flex; align-items:center; justify-content:center; flex:none; }
+  .choice .t{ font:700 32px 'Zen Maru Gothic',var(--font-base); color:var(--color-text); line-height:1.3; overflow-wrap:anywhere; }
+  .choice .who{ display:flex; gap:8px; flex-wrap:wrap; margin-top:auto; }
+  .choice.ok{ border-color:var(--color-success); }
+  .choice .mark{ position:absolute; top:-18px; right:-12px; width:58px; height:58px; border-radius:50%; background:var(--color-success); color:#fff; display:flex; align-items:center; justify-content:center; }
+  .choice .mark .material-symbols-rounded{ font-size:36px; }
+  .answer-line{ margin-top:16px; font-size:24px; color:var(--color-text); background:var(--color-accent-soft); border-radius:14px; padding:12px 18px; }
+  .answer-line b{ color:var(--color-accent); }
+  .wx{ flex:1; position:relative; margin-top:6px; min-height:0; }
+  .wx .city{ position:absolute; transform:translate(-50%,-50%); background:#fff; border-radius:14px; box-shadow:var(--shadow-soft); padding:8px 12px; text-align:center; min-width:112px; }
+  .wx .city .nm{ font-size:17px; font-weight:700; color:var(--color-muted); }
+  .wx .city .ic .material-symbols-rounded{ font-size:40px; color:var(--color-accent); }
+  .wx .city .ic .material-symbols-rounded.rain{ color:#3E6FB0; }
+  .wx .city .ic .material-symbols-rounded.cloud{ color:#8C8C8C; }
+  .wx .city .ic .material-symbols-rounded.snow{ color:#6FA7D9; }
+  .wx .city .wd{ font-size:13px; color:var(--color-muted); }
+  .wx .city .tp{ font-size:19px; font-weight:700; }
+  .wx .city .tp .hi{ color:#C0392B; } .wx .city .tp .lo{ color:#2E6DB4; }
+  .wx .src{ position:absolute; left:0; bottom:0; font-size:15px; color:var(--color-muted); }
+  .wx .ask{ position:absolute; right:0; bottom:0; background:#fff; border-radius:18px; box-shadow:var(--shadow-soft); padding:14px 18px; display:flex; gap:16px; align-items:center; }
+  .wx .ask .q{ font:700 24px 'Zen Maru Gothic',var(--font-base); color:var(--color-primary); margin-right:4px; }
+  .wx .ask .opt{ display:flex; flex-direction:column; align-items:center; gap:6px; min-width:104px; }
+  .wx .ask .opt .ic{ display:flex; align-items:center; gap:6px; font-size:20px; font-weight:700; }
+  .wx .ask .opt .ic .material-symbols-rounded{ font-size:30px; color:var(--color-accent); }
+  .wx .ask .opt .who{ display:flex; gap:6px; flex-wrap:wrap; justify-content:center; }
+  .wx .ask .opt .who .chip{ font-size:17px; padding:3px 10px; }
+  .wx .empty{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:26px; color:var(--color-muted); }
+  .show{ flex:1; min-height:0; display:flex; gap:28px; margin-top:22px; }
+  .show .card-l{ flex:1; background:#fff; border-radius:22px; box-shadow:var(--shadow-soft); padding:30px 34px; overflow:hidden; }
+  .show .card-l .ttl{ font:700 24px 'Zen Maru Gothic',var(--font-base); color:var(--color-accent); margin-bottom:12px; }
+  .show .line{ display:flex; align-items:baseline; gap:16px; font-size:30px; font-weight:700; padding:12px 0; border-bottom:1.5px dashed var(--color-border); overflow-wrap:anywhere; }
+  .show .line:last-child{ border-bottom:0; }
+  .show .line .tm{ font:700 26px 'Zen Maru Gothic',var(--font-base); color:var(--color-muted); min-width:150px; flex:none; }
+  .show .side{ width:360px; display:flex; flex-direction:column; gap:16px; }
+  .show .side .box{ background:var(--color-primary-soft); border-radius:18px; padding:18px 20px; font-size:21px; line-height:1.6; overflow-wrap:anywhere; }
+  .show .side .box b{ display:block; font:700 20px 'Zen Maru Gothic',var(--font-base); color:var(--color-primary); margin-bottom:6px; }
+  .talk{ flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:22px; }
+  .talk .odai{ width:900px; max-width:100%; background:#fff; border:4px solid var(--color-accent); border-radius:26px; padding:46px 40px; text-align:center; font:700 44px 'Zen Maru Gothic',var(--font-base); color:var(--color-text); line-height:1.4; box-shadow:var(--shadow-soft); overflow-wrap:anywhere; }
+  .talk .hands{ display:flex; gap:10px; align-items:center; font-size:21px; color:var(--color-muted); flex-wrap:wrap; justify-content:center; }
+  .talk .hands .material-symbols-rounded{ color:var(--color-accent); font-size:26px; }
+  .review{ flex:1; min-height:0; display:grid; grid-template-columns:1fr 420px; gap:28px; margin-top:12px; }
+  .review .row{ grid-template-columns:50px 300px 1fr; }
+  .words{ background:#fff; border-radius:22px; box-shadow:var(--shadow-soft); padding:20px 22px; display:flex; flex-direction:column; gap:12px; min-height:0; overflow:hidden; }
+  .words .ttl{ font:700 22px 'Zen Maru Gothic',var(--font-base); color:var(--color-accent); }
+  .words .w{ display:flex; align-items:center; justify-content:space-between; gap:10px; background:#FBF6EC; border-radius:14px; padding:8px 14px; }
+  .words .w .t{ font-size:24px; font-weight:700; }
+  .words .w .who{ display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end; }
+  .words .w .who .chip{ font-size:17px; padding:3px 10px; }
+  .stage .end{ flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; font:700 48px 'Zen Maru Gothic',var(--font-base); color:var(--color-primary); }
+  .stage .end small{ font:400 24px var(--font-base); color:var(--color-muted); }
+
+  /* みんなにみせる画面（全画面） */
+  body.watching{ background:#EDE3CF; }
+  #screen-watch .watch-frame{ position:fixed; inset:0; display:flex; align-items:center; justify-content:center; padding:12px; }
+  #screen-watch .stage-wrap{ width:min(100%, calc((100dvh - 24px) * 16 / 9)); }
+  #screen-watch .watch-bar{ position:fixed; left:12px; bottom:8px; font-size:12px; color:var(--color-muted); background:rgba(255,255,255,.7); padding:4px 10px; border-radius:8px; }
+
+  /* 参加者の画面 */
+  .player{ max-width:520px; margin:0 auto; background:#fff; border-radius:var(--radius-card); box-shadow:var(--shadow-soft); padding:18px 20px 22px; }
+  .p-prog{ display:flex; gap:5px; margin-bottom:14px; }
+  .p-prog span{ flex:1; height:8px; border-radius:99px; background:var(--color-border); }
+  .p-prog span.done{ background:var(--am); } .pm .p-prog span.done{ background:var(--pm); } .p-prog span.now{ background:var(--color-accent); }
+  .player h2{ margin:0; font-size:22px; color:var(--color-primary); display:flex; gap:8px; align-items:center; }
+  .player h2 .material-symbols-rounded{ color:var(--color-accent); }
+  .player .q{ font-size:15px; color:var(--color-muted); margin:4px 0 14px; }
+  .opts{ display:flex; flex-direction:column; gap:10px; }
+  .opt-btn{ display:flex; align-items:center; gap:14px; width:100%; min-height:56px; padding:10px 16px; border-radius:14px; border:2px solid var(--color-border); background:#fff; font:700 18px 'Zen Maru Gothic',var(--font-base); color:var(--color-text); text-align:left; cursor:pointer; }
+  .opt-btn .n{ width:36px; height:36px; border-radius:50%; background:var(--color-primary-soft); color:var(--color-accent); display:flex; align-items:center; justify-content:center; font-size:18px; flex:none; }
+  .opt-btn[aria-pressed="true"]{ border-color:var(--color-accent); background:var(--color-accent-soft); }
+  .opt-btn[aria-pressed="true"] .n{ background:var(--color-accent); color:#fff; }
+  .opt-btn .chk{ margin-left:auto; color:var(--color-accent); opacity:0; }
+  .opt-btn[aria-pressed="true"] .chk{ opacity:1; }
+  .opt-btn:disabled{ opacity:.6; cursor:default; }
+  .p-foot{ display:flex; justify-content:space-between; align-items:center; margin-top:14px; font-size:14px; color:var(--color-muted); gap:10px; }
+  .p-words{ display:flex; flex-wrap:wrap; gap:8px; margin-top:6px; }
+  .p-words button{ border:2px solid var(--color-border); background:#fff; border-radius:999px; padding:10px 16px; font:700 16px 'Zen Maru Gothic',var(--font-base); color:var(--color-text); cursor:pointer; min-height:44px; }
+  .p-words button[aria-pressed="true"]{ border-color:var(--color-accent); background:var(--color-accent-soft); color:var(--color-accent); }
+  .p-sub{ font-size:14px; font-weight:700; color:var(--color-accent); margin:16px 0 6px; }
+  .p-link{ display:flex; align-items:center; gap:10px; padding:14px 16px; border-radius:14px; background:var(--color-accent-soft); color:var(--color-accent); font-weight:700; text-decoration:none; margin-top:10px; }
+  .p-big{ font:700 26px 'Zen Maru Gothic',var(--font-base); color:var(--color-primary); text-align:center; padding:24px 0 8px; }
+  .p-lines{ font-size:17px; line-height:1.8; margin:0; padding-left:0; list-style:none; }
+  .p-lines li{ padding:6px 0; border-bottom:1px dashed var(--color-border); }
+  .p-odai{ background:#fff; border:3px solid var(--color-accent); border-radius:18px; padding:22px 18px; text-align:center; font:700 22px 'Zen Maru Gothic',var(--font-base); line-height:1.5; }
+  .p-wx{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+  .p-wx .opt-btn{ flex-direction:column; justify-content:center; text-align:center; gap:4px; }
+  .p-wx .opt-btn .material-symbols-rounded{ font-size:32px; color:var(--color-accent); }
+  .p-wx .opt-btn .chk{ display:none; }
+  .overlay{ position:fixed; inset:0; background:rgba(63,54,45,.55); display:flex; align-items:center; justify-content:center; padding:16px; z-index:1000; }
+  .overlay .card-o{ background:#fff; border-radius:20px; padding:24px; max-width:420px; width:100%; text-align:center; }
+  .overlay h2{ margin:0 0 8px; font-size:20px; color:var(--color-primary); }
+  .overlay p{ margin:0 0 14px; font-size:14px; color:var(--color-text); line-height:1.7; }
+
+  /* ホストの画面 */
+  .host{ display:grid; grid-template-columns:250px 1fr 320px; gap:16px; align-items:start; }
+  .panel{ background:#fff; border-radius:var(--radius-card); box-shadow:var(--shadow-soft); padding:14px; }
+  .panel h3{ margin:0 0 10px; font-size:15px; color:var(--color-primary); display:flex; align-items:center; justify-content:space-between; gap:8px; }
+  .panel h3 .material-symbols-rounded{ font-size:20px; color:var(--color-accent); }
+  .steplist{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:6px; }
+  .steplist li{ display:flex; align-items:center; gap:4px; padding:6px 6px 6px 10px; border-radius:10px; border:1.5px solid var(--color-border); font-size:14px; font-weight:700; }
+  .steplist li .t{ flex:1; background:none; border:0; text-align:left; font:700 14px var(--font-base); color:inherit; cursor:pointer; padding:4px 0; }
+  .steplist li .ic{ background:none; border:0; cursor:pointer; color:var(--color-muted); padding:4px; display:flex; }
+  .steplist li .ic .material-symbols-rounded{ font-size:18px; }
+  .steplist li.now{ border-color:var(--color-accent); background:var(--color-accent-soft); color:var(--color-accent); }
+  .steplist li.done{ color:var(--color-muted); }
+  .steplist li.off .t{ opacity:.45; text-decoration:line-through; }
+  .add-step{ margin-top:10px; width:100%; border:1.5px dashed var(--color-border); background:#fff; border-radius:10px; padding:10px; font:700 14px 'Zen Maru Gothic',var(--font-base); color:var(--color-accent); cursor:pointer; }
+  .preview{ border-radius:14px; overflow:hidden; border:1px solid var(--color-border); }
+  .ctrls{ display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; align-items:center; }
+  .ctrls .btn{ padding:12px 16px; font-size:15px; border-radius:12px; }
+  .ctrls .spacer{ flex:1; }
+  .edit-box{ margin-top:12px; background:#FBF6EC; border-radius:12px; padding:12px; font-size:13px; color:var(--color-muted); }
+  .edit-box textarea{ width:100%; box-sizing:border-box; margin-top:6px; border:1.5px solid var(--color-border); border-radius:8px; padding:8px; font:14px var(--font-base); color:var(--color-text); resize:vertical; min-height:120px; }
+  .edit-box .row-b{ display:flex; gap:8px; margin-top:8px; }
+  .plist{ display:flex; flex-direction:column; gap:6px; }
+  .prow{ display:grid; grid-template-columns:1fr auto auto; gap:6px; align-items:center; font-size:14px; font-weight:700; }
+  .prow .st{ font-size:12px; color:var(--color-muted); font-weight:500; display:block; }
+  .prow .ans{ min-width:30px; height:30px; padding:0 8px; border-radius:15px; background:var(--color-accent-soft); color:var(--color-accent); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px; }
+  .prow .ans.none{ background:transparent; border:1.5px dashed var(--color-border); color:transparent; }
+  .prow .x{ background:none; border:0; color:var(--color-muted); cursor:pointer; padding:2px; display:flex; }
+  .prow .x .material-symbols-rounded{ font-size:18px; }
+  .proxy{ margin-top:14px; }
+  .proxy .r{ display:grid; grid-template-columns:72px 1fr; gap:6px; align-items:center; margin-bottom:6px; }
+  .proxy .r .nm{ font-size:13px; font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .proxy .r .nm small{ display:block; font-weight:500; color:var(--color-muted); font-size:11px; }
+  .proxy .r .bs{ display:flex; gap:4px; flex-wrap:wrap; }
+  .proxy .r button{ min-width:34px; height:34px; padding:0 8px; border-radius:8px; border:1.5px solid var(--color-border); background:#fff; font:700 14px 'Zen Maru Gothic',var(--font-base); color:var(--color-text); cursor:pointer; }
+  .proxy .r button[aria-pressed="true"]{ border-color:var(--color-accent); background:var(--color-accent); color:#fff; }
+  .proxy .r button.pass{ font-size:12px; color:var(--color-muted); }
+  .add-proxy{ display:flex; gap:6px; margin-top:6px; }
+  .add-proxy input{ flex:1; min-width:0; border:1.5px solid var(--color-border); border-radius:8px; padding:8px; font:14px var(--font-base); }
+  .add-proxy .btn{ padding:8px 12px; font-size:13px; border-radius:8px; }
+  .status-pill{ display:inline-flex; align-items:center; gap:6px; font-size:12px; font-weight:700; padding:4px 10px; border-radius:999px; background:var(--color-primary-soft); color:var(--color-primary); }
+  .status-pill.ok{ background:#E3F5EC; color:var(--color-success); }
+
+  /* ── 2026-11-08 見直し: 表紙・目次・ジャンプ率 ── */
+  .game-box{ flex-direction:column; align-items:stretch; }
+  .gb-row{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+  .game-box .btn[aria-pressed="true"]{ border-color:var(--color-accent); background:var(--color-accent-soft); color:var(--color-accent); }
+  .stage .top{ padding:20px 40px 0; justify-content:center; min-height:34px; }
+  .progress{ gap:6px; }
+  .progress span{ font-size:15px; padding:4px 12px; border:0; background:transparent; color:#B8A88E; }
+  .progress span.done{ color:var(--am-ink); }
+  .progress span.now{ background:var(--color-accent); color:#fff; }
+  .stage .body{ padding:10px 56px 0; }
+  .stage .foot{ min-height:44px; padding:0 56px 18px; font-size:18px; }
+  .stage .foot .how{ display:block; }
+  .stage .kick{ display:flex; align-items:center; gap:8px; font:700 22px 'Zen Maru Gothic',var(--font-base); color:var(--color-accent); }
+  .stage .kick .material-symbols-rounded{ font-size:26px; }
+  .stage h1{ margin:2px 0 0; font:700 46px 'Zen Maru Gothic',var(--font-base); color:var(--color-primary); line-height:1.3; display:block; }
+  .roomcode{ display:flex; align-items:baseline; gap:8px; }
+  .roomcode small{ display:inline; font-size:16px; }
+  .roomcode b{ font-size:28px; }
+  /* 表紙・目次 */
+  .stage.full .body{ padding:0 72px; }
+  .stage.full{ background:var(--am-pale); } .stage.full.pm{ background:var(--pm-pale); }
+  .opening,.cover{ flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; gap:10px; }
+  .opening .op-ic{ font-size:120px; color:var(--am); } .stage.pm .opening .op-ic{ color:var(--pm); }
+  .opening .op-t{ font:700 92px 'Zen Maru Gothic',var(--font-base); color:var(--color-primary); line-height:1.15; }
+  .opening .op-d{ font:700 40px 'Zen Maru Gothic',var(--font-base); color:var(--am-ink); } .stage.pm .opening .op-d{ color:var(--pm-ink); }
+  .cover .cv-no{ font:700 34px 'Zen Maru Gothic',var(--font-base); color:var(--am-ink); background:#fff; border-radius:999px; padding:4px 26px; } .stage.pm .cover .cv-no{ color:var(--pm-ink); }
+  .cover .cv-no small{ font-size:22px; opacity:.7; margin-left:2px; }
+  .cover .cv-ic{ font-size:150px; color:var(--color-accent); margin-top:6px; }
+  .cover .cv-t{ font:700 104px 'Zen Maru Gothic',var(--font-base); color:var(--color-primary); line-height:1.15; }
+  .cover .cv-d{ font-size:34px; color:var(--color-text); margin-top:8px; }
+  .agenda{ flex:1; display:flex; flex-direction:column; justify-content:center; gap:26px; }
+  .agenda .ag-h{ font:700 56px 'Zen Maru Gothic',var(--font-base); color:var(--color-primary); text-align:center; }
+  .ag-list{ list-style:none; margin:0 auto; padding:0; display:grid; grid-auto-flow:column; gap:16px 40px; }
+  .ag-list li{ display:flex; align-items:center; gap:16px; background:#fff; border-radius:20px; padding:16px 28px 16px 18px; font:700 38px 'Zen Maru Gothic',var(--font-base); color:var(--color-text); min-width:420px; box-sizing:border-box; }
+  .ag-list li .no{ width:56px; height:56px; border-radius:50%; background:var(--color-accent); color:#fff; display:flex; align-items:center; justify-content:center; font-size:30px; flex:none; }
+  .ag-list li .material-symbols-rounded{ font-size:40px; color:var(--color-accent); }
+  .ag-list li.done{ opacity:.45; }
+  .ag-list li.done .no{ background:var(--color-muted); }
+  /* 5段階: 答えた人の帯 */
+  .scale{ margin-top:14px; }
+  .row .l{ font-size:30px; }
+  .ans-bar{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-top:12px; background:#fff; border-radius:16px; box-shadow:var(--shadow-soft); padding:10px 18px; font-size:22px; color:var(--color-muted); }
+  .ans-bar .cnt{ font:700 30px 'Zen Maru Gothic',var(--font-base); color:var(--color-primary); }
+  .ans-bar .note{ margin-left:auto; }
+  .ans-bar .chip{ font-size:19px; padding:3px 12px; }
+  .choice .t{ font-size:38px; }
+  .talk .odai{ font-size:58px; padding:56px 44px; width:1000px; }
+  /* 自由タイム */
+  .fr{ flex:1; min-height:0; display:grid; grid-template-columns:1fr; gap:26px; margin-top:14px; }
+  .fr-opts{ display:grid; grid-template-columns:repeat(3,1fr); gap:20px; }
+  .fr-opt{ background:#fff; border:3px solid var(--color-border); border-radius:24px; box-shadow:var(--shadow-soft); padding:24px 20px; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; gap:12px; position:relative; }
+  .fr-opt .num{ position:absolute; top:14px; left:16px; width:44px; height:44px; border-radius:50%; background:var(--color-accent); color:#fff; display:flex; align-items:center; justify-content:center; font:700 24px 'Zen Maru Gothic',var(--font-base); }
+  .fr-opt > .material-symbols-rounded{ font-size:84px; color:var(--color-accent); }
+  .fr-opt b{ font:700 36px 'Zen Maru Gothic',var(--font-base); color:var(--color-text); }
+  .fr-opt small{ font-size:21px; color:var(--color-muted); line-height:1.5; }
+  .fr .fb-card{ height:100%; box-sizing:border-box; }
+  .fr-side{ display:flex; flex-direction:column; gap:14px; }
+  .fr-side .clock{ display:flex; flex-direction:column; gap:4px; background:#fff; border-radius:18px; padding:16px 18px; font-size:19px; box-shadow:var(--shadow-soft); }
+  .fr-side .clock b{ font:700 52px 'Zen Maru Gothic',var(--font-base); color:var(--color-primary); }
+  .fr-side p{ margin:0; font-size:20px; color:var(--color-muted); line-height:1.6; }
+  .fb-odai{ font-size:48px; }
+  /* プログラム（サムネイルつき） */
+  .pgx{ flex:1; min-height:0; display:flex; flex-direction:column; gap:10px; margin-top:16px; overflow:hidden; }
+  .pgx-row{ display:grid; grid-template-columns:110px 1fr; gap:14px; align-items:center; }
+  .pgx-row .tm{ font:700 30px 'Zen Maru Gothic',var(--font-base); color:var(--color-accent); display:flex; flex-direction:column; line-height:1.15; }
+  .pgx-row .tm small{ font-size:18px; color:var(--color-text); }
+  .pgx-items{ display:flex; gap:14px; min-width:0; }
+  .pgx-it{ flex:1 1 0; min-width:0; display:flex; align-items:center; gap:14px; background:#fff; border-radius:16px; box-shadow:var(--shadow-soft); padding:8px 14px 8px 8px; }
+  .pgx-it .th{ width:150px; height:84px; border-radius:10px; flex:none; background:#F1E8D6 center/cover no-repeat; }
+  .pgx-it .nm{ font:700 26px 'Zen Maru Gothic',var(--font-base); line-height:1.25; overflow-wrap:anywhere; }
+  .pgx-it .nm small{ display:block; font:500 17px var(--font-base); color:var(--color-muted); margin-top:2px; }
+  .pgx-it .pg-tag{ font-size:14px; margin:4px 0 0; }
+  .pgx.dense .pgx-it .th{ width:112px; height:63px; } .pgx.dense .pgx-it .nm{ font-size:22px; }
+  .pgx-note{ background:var(--color-primary-soft); border-radius:14px; padding:10px 16px; font-size:21px; }
+  /* ゲーム */
+  .games{ flex:1; min-height:0; display:grid; grid-template-columns:repeat(3,1fr); gap:22px; margin-top:16px; }
+  .game{ background:#fff; border:3px solid var(--color-border); border-radius:22px; box-shadow:var(--shadow-soft); padding:12px 12px 16px; display:flex; flex-direction:column; gap:8px; min-height:0; }
+  .game img{ width:100%; aspect-ratio:16/9; object-fit:cover; border-radius:14px; background:#F1E8D6; }
+  .game .gt{ display:flex; align-items:center; gap:10px; font:700 32px 'Zen Maru Gothic',var(--font-base); line-height:1.2; }
+  .game .gt .num{ width:42px; height:42px; border-radius:50%; background:var(--color-accent); color:#fff; display:flex; align-items:center; justify-content:center; font-size:22px; flex:none; }
+  .game .gh{ font-size:20px; color:var(--color-muted); line-height:1.45; }
+  .game .who{ display:flex; gap:6px; flex-wrap:wrap; margin-top:auto; }
+  .game .who .chip{ font-size:18px; padding:3px 11px; }
+  .game-on{ flex:1; min-height:0; display:grid; grid-template-columns:1fr 380px; gap:28px; margin-top:16px; }
+  .game-on img{ width:100%; height:100%; max-height:470px; object-fit:contain; border-radius:20px; background:#fff; box-shadow:var(--shadow-soft); }
+  .game-on .side{ display:flex; flex-direction:column; gap:14px; }
+  .game-on .box{ background:#fff; border-radius:18px; box-shadow:var(--shadow-soft); padding:16px 20px; font-size:23px; line-height:1.55; }
+  .game-on .box b{ display:block; font:700 20px 'Zen Maru Gothic',var(--font-base); color:var(--color-accent); margin-bottom:4px; }
+  /* 参加者の画面 */
+  .p-cover{ text-align:center; padding:26px 0 14px; display:flex; flex-direction:column; align-items:center; gap:6px; }
+  .p-cover small{ font-size:15px; color:var(--color-muted); font-weight:700; }
+  .p-cover .material-symbols-rounded{ font-size:64px; color:var(--color-accent); }
+  .p-cover b{ font:700 28px 'Zen Maru Gothic',var(--font-base); color:var(--color-primary); }
+  .p-cover p{ margin:0; font-size:16px; color:var(--color-text); }
+  .p-ag{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:8px; }
+  .p-ag li{ display:flex; align-items:center; gap:10px; font:700 17px 'Zen Maru Gothic',var(--font-base); background:#FBF6EC; border-radius:12px; padding:10px 12px; }
+  .p-ag li .no{ width:28px; height:28px; border-radius:50%; background:var(--color-accent); color:#fff; display:flex; align-items:center; justify-content:center; font-size:15px; flex:none; }
+  .p-ag li .material-symbols-rounded{ color:var(--color-accent); font-size:22px; }
+  .p-ag li.done{ opacity:.5; }
+  .opt-btn .th{ width:72px; height:40px; border-radius:6px; object-fit:cover; flex:none; background:#F1E8D6; }
+  .opt-btn small{ display:block; font:500 13px var(--font-base); color:var(--color-muted); margin-top:2px; }
+  .p-lines .th{ width:64px; height:36px; border-radius:6px; object-fit:cover; vertical-align:middle; margin-right:8px; background:#F1E8D6; }
+  .p-game-img{ width:100%; aspect-ratio:16/9; object-fit:cover; border-radius:14px; margin:4px 0 10px; background:#F1E8D6; }
+
+  /* 番号は丸数字の文字だけ（丸の背景を付けない。ui.md「番号は丸数字」） */
+  .choice .num,.fb-c .num,.game .gt .num,.fr-opt .num{ width:auto; height:auto; background:none; border-radius:0; color:var(--color-accent); line-height:1; }
+  .choice .num{ font-size:48px; align-self:flex-start; } .choice .t{ font-size:46px; }
+  .fr-opt .num{ align-self:auto; } .game .gt .num{ display:inline; } .fb-c .num{ font-size:30px; } .game .gt .num{ font-size:36px; } .fr-opt .num{ font-size:40px; }
+  .opt-btn .n.mk{ width:auto; height:auto; background:none; border-radius:0; color:var(--color-accent); font-size:26px; }
+  .opt-btn[aria-pressed="true"] .n.mk{ background:none; color:var(--color-accent); }
+
+  /* 最後のスライド（移動の案内） */
+  .closing{ flex:1; display:flex; flex-direction:column; justify-content:center; gap:10px; }
+  .closing h1{ font-size:60px !important; }
+  .mv{ display:flex; flex-direction:column; gap:16px; margin-top:22px; }
+  .mv-it{ display:flex; align-items:center; gap:18px; background:#fff; border-radius:20px; padding:18px 28px; font-size:40px; }
+  .mv-it b{ font-family:'Zen Maru Gothic',var(--font-base); }
+  .mv-it .th{ width:200px; height:112px; border-radius:12px; flex:none; background:#F1E8D6 center/cover no-repeat; margin:-6px 4px -6px -12px; }
+  .mv-it .material-symbols-rounded{ font-size:44px; color:var(--color-accent); }
+  .mv-it .pl{ font:700 40px 'Zen Maru Gothic',var(--font-base); color:var(--color-accent); }
+
+  /* 選んで送る・ひとこと */
+  .p-send{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:14px; }
+  .p-send .btn{ flex:1; min-height:52px; font-size:17px; }
+  .p-send .btn:disabled{ opacity:.55; }
+  .p-note{ width:100%; box-sizing:border-box; border:1.5px solid var(--color-border); border-radius:12px; padding:10px 12px; font:16px var(--font-base); color:var(--color-text); resize:vertical; }
+  .hands-box{ display:flex; flex-direction:column; gap:10px; align-items:center; }
+  .prow .nt{ display:block; font-size:12px; font-weight:500; color:var(--color-text); background:#FBF6EC; border-radius:8px; padding:4px 8px; margin-top:4px; overflow-wrap:anywhere; }
+  /* ゲームのくじ（音なし） */
+  .games.spin .game{ animation:gspin .6s steps(1) infinite; }
+  .games.spin .game:nth-child(2){ animation-delay:.2s; } .games.spin .game:nth-child(3){ animation-delay:.4s; } .games.spin .game:nth-child(4){ animation-delay:.3s; }
+  @keyframes gspin{ 0%{ border-color:var(--color-accent); box-shadow:0 0 0 6px var(--color-accent-soft); } 33%{ border-color:var(--color-border); box-shadow:var(--shadow-soft); } }
+  .game.on{ border-color:var(--color-accent); box-shadow:0 0 0 6px var(--color-accent-soft); }
+
+  .gb-sub{ font-size:12px; color:var(--color-muted); margin-left:6px; }
+  .gb-more summary{ cursor:pointer; font-size:12px; color:var(--color-accent); font-weight:700; }
+  .game-box a.btn{ padding:8px 12px; font-size:13px; border-radius:10px; text-decoration:none; }
+
+  .free-wish{ display:block; width:100%; font-weight:700; color:var(--color-text); }
+  .free-wish:empty{ display:none; }
+
+  .chip.has-note{ cursor:pointer; border-color:var(--color-accent); font-family:inherit; }
+  .chip.has-note.open{ background:var(--color-accent-soft); }
+  .note-pop{ position:absolute; left:50%; bottom:86px; transform:translateX(-50%); max-width:900px; background:#fff; border:3px solid var(--color-accent); border-radius:22px; box-shadow:var(--shadow-soft); padding:18px 28px; font:700 34px 'Zen Maru Gothic',var(--font-base); color:var(--color-text); line-height:1.45; overflow-wrap:anywhere; z-index:2; }
+  .note-pop b{ display:block; font-size:22px; color:var(--color-accent); margin-bottom:4px; }
+
+  /* ── 絵（表紙・目次・案内） ── */
+  .art{ position:relative; display:inline-flex; align-items:center; justify-content:center; overflow:hidden; flex:none; background:#fff; }
+  .art img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .art > .material-symbols-rounded{ display:none; color:var(--color-accent); }
+  .art.noimg img{ display:none; } .art.noimg > .material-symbols-rounded{ display:block; }
+  .stage.full .body{ padding:0 80px; }
+  .cover{ flex-direction:row; text-align:left; justify-content:center; gap:64px; }
+  .cv-art{ width:400px; height:400px; border-radius:48px; box-shadow:0 18px 40px rgba(110,70,20,.18); transform:rotate(-2deg); }
+  .cv-art > .material-symbols-rounded{ font-size:180px; }
+  .cv-txt{ display:flex; flex-direction:column; align-items:flex-start; gap:14px; max-width:620px; }
+  .cover .cv-t{ font-size:76px; }
+  .cv-txt{ max-width:720px !important; }
+  .cover .cv-d{ font-size:34px; margin:0; line-height:1.5; }
+  .op-art{ width:250px; height:250px; border-radius:40px; box-shadow:0 14px 34px rgba(110,70,20,.16); margin-bottom:10px; }
+  .op-art > .material-symbols-rounded{ font-size:120px; }
+  .opening .op-t{ font-size:84px; }
+  .ag-list li{ padding:12px 28px 12px 14px; }
+  .ag-art{ width:64px; height:64px; border-radius:16px; }
+  .ag-art > .material-symbols-rounded{ font-size:36px; }
+  .closing-wrap{ flex:1; display:flex; align-items:center; gap:56px; }
+  .cl-art{ width:330px; height:330px; border-radius:44px; box-shadow:0 14px 34px rgba(110,70,20,.16); }
+  .cl-art > .material-symbols-rounded{ font-size:150px; }
+  .closing-wrap .closing h1{ font-size:56px !important; }
+  .closing-wrap .mv-it{ font-size:34px; padding:12px 22px; }
+  .fr-art{ width:170px; height:170px; border-radius:30px; }
+  .fr-art > .material-symbols-rounded{ font-size:84px; }
+  .fr-opt{ gap:10px; }
+  .p-art{ width:120px; height:120px; border-radius:24px; margin:6px 0; }
+  .p-art > .material-symbols-rounded{ font-size:56px; }
+  .stage.full{ background:radial-gradient(circle at 18% 22%, #FFF9EE 0, var(--am-pale) 60%); }
+  .stage.full.pm{ background:radial-gradient(circle at 18% 22%, #FFF6F2 0, var(--pm-pale) 60%); }
+
+  /* ── ホストの画面（2026-11-08 見直し） ── */
+  .wrap.wide{ max-width:1400px; }
+  .hbar{ display:flex; align-items:center; gap:14px; flex-wrap:wrap; background:#fff; border-radius:16px; box-shadow:var(--shadow-soft); padding:10px 16px; margin-bottom:14px; }
+  .hb-code{ display:flex; flex-direction:column; line-height:1.1; }
+  .hb-code small{ font-size:11px; color:var(--color-muted); }
+  .hb-code .code{ font:700 24px 'Zen Maru Gothic',var(--font-base); letter-spacing:.12em; color:var(--color-primary); }
+  .hb-join{ display:flex; align-items:center; gap:6px; background:#FBF6EC; border-radius:12px; padding:4px 6px 4px 12px; font-size:12px; color:var(--color-muted); }
+  .hb-join .btn{ padding:6px 10px; font-size:12px; border-radius:9px; }
+  #btn-open-watch{ display:inline-flex; align-items:center; gap:6px; padding:10px 16px; font-size:14px; border-radius:12px; }
+  .hbar .spacer{ flex:1; }
+  .hb-finish{ color:var(--color-muted); font-size:13px; }
+  .host{ grid-template-columns:240px minmax(0,1fr) 330px; }
+  .flow h3 .btn-text{ font-size:12px; }
+  .flow h3 .btn-text[aria-pressed="true"]{ background:var(--color-accent-soft); border-radius:8px; padding:2px 6px; text-decoration:none; }
+  .steplist li{ padding:4px 6px; gap:2px; }
+  .steplist li .t{ display:flex; align-items:center; gap:8px; padding:6px 2px; }
+  .steplist li .sn{ width:22px; height:22px; border-radius:50%; background:var(--color-primary-soft); color:var(--color-accent); font-size:12px; display:flex; align-items:center; justify-content:center; flex:none; }
+  .steplist li .sn:empty{ background:none; }
+  .steplist li.now .sn{ background:var(--color-accent); color:#fff; }
+  .steplist li .tt{ flex:1; line-height:1.3; }
+  .steplist li .ph{ font-size:11px; background:#fff; border:1px solid var(--color-accent); border-radius:999px; padding:1px 7px; flex:none; }
+  .steplist .ro{ display:none; }
+  .steplist.reorder .ro{ display:flex; }
+  .navbar{ display:flex; align-items:stretch; gap:10px; margin-top:12px; }
+  .nav-prev{ padding:0 14px; border-radius:14px; display:flex; align-items:center; }
+  .nav-mid{ flex:1; min-width:0; display:flex; flex-direction:column; justify-content:center; gap:4px; background:#FBF6EC; border-radius:14px; padding:8px 14px; }
+  .nav-mid small{ display:inline-block; min-width:30px; font-size:11px; font-weight:700; color:var(--color-muted); }
+  .nav-now{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .nav-now b{ font:700 17px 'Zen Maru Gothic',var(--font-base); color:var(--color-primary); }
+  .nav-nx{ font-size:13px; color:var(--color-text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .nav-next{ min-width:170px; font-size:19px; border-radius:14px; display:flex; align-items:center; justify-content:center; gap:6px; padding:14px 18px; }
+  .nav-next:disabled{ opacity:.45; }
+  .actions{ margin-top:10px; display:flex; flex-direction:column; gap:8px; }
+  .act-row{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+  .act-row .btn{ padding:10px 16px; font-size:15px; border-radius:12px; }
+  .act-row .spacer{ flex:1; }
+  .act-row .btn-text{ font-size:13px; }
+  .people h3{ align-items:baseline; }
+  .ans-sum{ font-size:13px; color:var(--color-accent); font-weight:700; }
+  .plist{ gap:4px; }
+  .prow{ grid-template-columns:1fr auto auto; padding:8px; border-radius:12px; background:#FDFAF4; }
+  .prow.got{ background:#F3F9F4; }
+  .prow .bs{ grid-column:1/-1; display:flex; gap:4px; flex-wrap:wrap; margin-top:6px; }
+  .prow .bs button{ min-width:34px; height:32px; padding:0 8px; border-radius:8px; border:1.5px solid var(--color-border); background:#fff; font:700 14px 'Zen Maru Gothic',var(--font-base); color:var(--color-text); cursor:pointer; }
+  .prow .bs button[aria-pressed="true"]{ border-color:var(--color-accent); background:var(--color-accent); color:#fff; }
+  .prow .bs button.pass{ font-size:12px; color:var(--color-muted); }
+  .prow .bs button.pass[aria-pressed="true"]{ color:#fff; }
+  @media (max-width: 1180px){ .host{ grid-template-columns:220px minmax(0,1fr); } .people{ grid-column:1/-1; } }
+
+  /* ── 絵とアイコン（2026-11-08 夜） ── */
+  .stage .hd{ display:flex; align-items:center; justify-content:space-between; gap:24px; }
+  .stage .hd-t{ min-width:0; }
+  .row{ grid-template-columns:48px 52px 300px 1fr; }
+  .review .row{ grid-template-columns:48px 52px 300px 1fr; }
+  .row .fc{ font-size:44px; color:var(--color-accent); }
+  .row:nth-child(4) .fc, .row:nth-child(5) .fc{ color:#9C8B73; }
+  .scale .bar{ background:linear-gradient(180deg,#F2B35C 0%,#F7D9A8 50%,#DDD5C8 100%); }
+  .opt-btn .fc{ font-size:28px; color:var(--color-accent); margin-left:-4px; }
+  .p-words button{ display:inline-flex; align-items:center; gap:4px; }
+  .p-words button .material-symbols-rounded{ font-size:20px; color:var(--color-accent); }
+  .p-note-line{ display:flex; align-items:center; gap:6px; margin:8px 0 0; font-size:14px; color:var(--color-muted); }
+  .p-note-line .material-symbols-rounded{ font-size:18px; color:var(--color-accent); }
+  .pb-art{ width:52px; height:52px; border-radius:12px; }
+  .pb-art > .material-symbols-rounded{ font-size:28px; }
+  .opt-btn .n.mk:empty{ width:26px; }
+  .fr-opts{ grid-template-columns:repeat(3,1fr) 0.8fr; }
+  .fr-opt.any{ background:#FFFBF3; border-style:dashed; }
+  .fr-opt.any .fr-art{ width:130px; height:130px; }
+  .gm-art{ width:100%; aspect-ratio:1.6; height:auto; border-radius:16px; }
+  .gm-art img{ object-fit:cover; }
+  .gm-art > .material-symbols-rounded{ font-size:64px; }
+  .game{ justify-content:flex-start; }
+  .games{ align-items:start; }
+  .game .gt{ font-size:34px; } .game .gh{ font-size:22px; }
+  .go-art{ height:100%; max-height:460px; aspect-ratio:1; width:auto; justify-self:center; border-radius:28px; box-shadow:var(--shadow-soft); }
+  .game-on{ grid-template-columns:1fr 440px; align-items:start; }
+  .game-on .box{ font-size:22px; }
+  .go-art > .material-symbols-rounded{ font-size:120px; }
+  .p-game-art{ width:100%; aspect-ratio:1.6; border-radius:14px; margin:4px 0 10px; }
+  .p-game-art > .material-symbols-rounded{ font-size:56px; }
+  .p-gli{ display:flex; align-items:center; gap:10px; }
+  .pl-art{ width:56px; height:56px; border-radius:12px; }
+  .pl-art > .material-symbols-rounded{ font-size:28px; }
+  .choice{ justify-content:flex-start; }
+  .choice .t{ margin:auto 0; font-size:52px; text-align:center; }
+
+  /* ── 見やすさの見直し（2026-11-08 夜） ── */
+  .stage .foot{ font-size:24px; min-height:52px; padding:0 56px 16px; gap:24px; }
+  .stage .foot > span, .stage .foot .how{ min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .stage .foot .roomcode{ flex:none; white-space:nowrap; }
+  .stage .foot .roomcode small{ font-size:20px; } .stage .foot .roomcode b{ font-size:32px; }
+  .progress span{ font-size:19px; color:#8F7D63; padding:5px 14px; }
+  .progress span.done{ color:var(--am-ink); }
+  .stage .kick{ font-size:24px; }
+  .wxmap .nm{ font-size:19px; fill:var(--color-text); }
+  .wxmap .ic{ font-size:48px; }
+  .wxmap .tp{ font-size:27px; }
+  .ask2 .q{ font-size:24px; } .ask2 .opt .ic{ font-size:21px; }
+  #screen-watch .watch-bar{ opacity:0; transition:opacity .3s; pointer-events:none; }
+  body.mouse #screen-watch .watch-bar{ opacity:1; }
+  .p-send .btn.sent, .p-send .btn.sent:disabled{ opacity:1; background:var(--color-success); border-color:var(--color-success); color:#fff; display:inline-flex; align-items:center; justify-content:center; gap:6px; }
+  .pgx.roomy .pgx-row{ grid-template-columns:120px 1fr; } .pgx.roomy .pgx-row .tm{ font-size:36px; }
+  .pgx.roomy .pgx-it .th{ width:220px; height:124px; } .pgx.roomy .pgx-it .nm{ font-size:34px; } .pgx.roomy .pgx-it .nm small{ font-size:22px; }
+  .pgx.roomy{ gap:18px; justify-content:center; }
+  .who.many .chip{ font-size:17px; padding:3px 10px; }
+  .actions{ min-height:58px; }
+  .p-send{ position:sticky; bottom:0; background:#fff; padding:10px 0 6px; margin-bottom:-6px; z-index:1; }
+  @media (max-width: 600px){ #screen-player .roombar{ flex-wrap:nowrap; gap:8px; padding:8px 10px; font-size:13px; } #screen-player .roombar .code{ font-size:17px; } #screen-player .roombar .btn{ padding:6px 10px; font-size:12px; white-space:nowrap; } }
+  .stage.enter .body{ animation:stageIn .28s ease-out; }
+  @keyframes stageIn{ from{ opacity:0; transform:translateY(10px); } to{ opacity:1; transform:none; } }
+  @media (prefers-reduced-motion: reduce){ .stage.enter .body{ animation:none; } .games.spin .game{ animation:none; } }
+  .guide{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; background:var(--color-accent-soft); border-radius:14px; padding:10px 16px; margin:-4px 0 14px; font-size:13px; }
+  .guide b{ color:var(--color-accent); }
+  .guide .g-step{ display:inline-flex; align-items:center; gap:4px; background:#fff; border-radius:999px; padding:4px 12px; font-weight:700; }
+  .guide .g-step .material-symbols-rounded{ font-size:18px; color:var(--color-accent); }
+  .guide .g-step.done{ background:#E3F5EC; color:var(--color-success); }
+  .guide .g-step.done .material-symbols-rounded{ color:var(--color-success); }
+  .guide .spacer{ flex:1; }
+
+  .gb-st{ font-size:12px; color:var(--color-muted); }
+  .gb-st.ok{ color:var(--color-success); font-weight:700; }
+  .game-on .box.gcode span{ display:block; font:700 52px 'Zen Maru Gothic',var(--font-base); letter-spacing:.12em; color:var(--color-primary); }
+  .p-go{ background:var(--color-accent); color:#fff; justify-content:center; font-size:18px; }
+  .p-go .material-symbols-rounded{ color:#fff; }
+  .p-go small{ font-weight:500; font-size:13px; opacity:.85; margin-left:6px; }
+  @media (max-width: 980px){ .host{ grid-template-columns:1fr; } .people{ grid-column:auto; } }
+  @media (max-width: 600px){ .wrap{ padding:12px 12px 50px; } .player{ padding:14px 14px 18px; } .form-card{ padding:18px 16px; } }
+</style>
+</head>
+<body data-genre="talk">
+
+<!-- ========== はじめの画面 ========== -->
+<section class="screen active" id="screen-top">
+  <div class="wrap">
+    <section class="app-entry">
+      <div class="app-hero"><img class="app-illust" src="../assets/illustrations/circle-time.webp" alt="" width="156" height="156" decoding="async" onerror="this.parentNode.remove()" /></div>
+      <h1 class="app-title">サークルタイム</h1>
+      <p class="app-catch">みんなで答えながら、朝と午後のあつまりを進める</p>
+      <p class="app-entry__lead">自由タイムからプログラム紹介までの流れを、ひとつのルームで進めます。参加者は自分の端末のボタンでも、チャットや声でも答えられます。</p>
+      <ul class="app-entry__notes"><li>答えはボタン・チャット・声のどれでもOK</li><li>パスもOK</li><li>進める順番は、その場で変えられる</li></ul>
+      <div class="app-entry__actions">
+        <button type="button" class="btn btn-primary" id="go-create">ルームを作る</button>
+        <button type="button" class="btn btn-outline" id="go-join">ルームに参加する</button>
+        <button type="button" class="btn-text" id="go-watch">みんなにみせる画面を開く</button>
+      </div>
+    </section>
+  </div>
+</section>
+
+<!-- ========== ルームを作る（きょうの準備） ========== -->
+<section class="screen" id="screen-setup">
+  <div class="wrap narrow">
+    <div class="form-card">
+      <h2>きょうの準備</h2>
+      <p class="sub" id="setup-date"></p>
+      <div class="field" id="name-field"><label for="host-name">あなたのニックネーム（8文字まで）</label><input id="host-name" maxlength="8" autocomplete="off" placeholder="例: たぎ" /></div>
+      <div class="seg seg-sm" id="seg-session">
+        <button type="button" data-v="am" aria-pressed="true"><span class="material-symbols-rounded">wb_sunny</span>午前</button>
+        <button type="button" data-v="pm" aria-pressed="false"><span class="material-symbols-rounded">wb_twilight</span>午後</button>
+      </div>
+      <ul class="ready">
+        <li id="rd-wx" class="wait"><span class="material-symbols-rounded">partly_cloudy_day</span><span><b>全国の天気</b><span id="wx-status-text">取りにいきます…</span></span></li>
+        <li id="rd-day" class="wait"><span class="material-symbols-rounded">calendar_today</span><span><b>今日は何の日</b><span id="day-status-text">今朝用意した記念日を確かめています…</span></span></li>
+        <li id="rd-prog" class="wait"><span class="material-symbols-rounded">event_note</span><span><b id="prog-head">今日のプログラム</b><span id="prog-status-text">room-K ポータルの時間割を確かめています…</span></span></li>
+        <li id="rd-topic" class="wait"><span class="material-symbols-rounded">forum</span><span><b>自由タイムのあそび</b><span id="topic-status-text">お題・クイズ・ことばあそびを用意しています…</span></span></li>
+        <li id="rd-game" class="wait" hidden><span class="material-symbols-rounded">casino</span><span><b>みんなでゲームの候補</b><span id="game-status-text">ツール一覧から3つえらんでいます…</span></span></li>
+      </ul>
+      <p class="err" id="setup-error" hidden></p>
+      <button type="button" class="btn btn-primary" id="btn-create" style="width:100%">はじめる</button>
+      <details class="more" id="setup-more"><summary>中身を確かめる・直す</summary>
+        <div id="am-fields">
+          <div class="field"><label>今日は何の日</label>
+            <div class="seg seg-sm" id="day-mode">
+              <button type="button" data-v="one" aria-pressed="true">1つだけ本当</button>
+              <button type="button" data-v="all" aria-pressed="false">3つとも本当</button>
+              <button type="button" id="day-other" aria-pressed="false">別の候補にする</button>
+            </div>
+            <div class="opt3"><span class="num">1</span><input id="day-0" placeholder="○○の日" autocomplete="off" /><label class="ok"><input type="radio" name="day-ok" value="0" checked />本当</label></div>
+            <div class="opt3"><span class="num">2</span><input id="day-1" placeholder="○○の日" autocomplete="off" /><label class="ok"><input type="radio" name="day-ok" value="1" />本当</label></div>
+            <div class="opt3"><span class="num">3</span><input id="day-2" placeholder="○○の日" autocomplete="off" /><label class="ok"><input type="radio" name="day-ok" value="2" />本当</label></div>
+            <input id="day-note" placeholder="答えのあとに出す一行（由来など）" autocomplete="off" style="margin-top:4px" />
+            <p class="tiny" id="day-all-help" hidden>「3つとも本当」は、答えを見せるとカードごとに由来が出ます。</p>
+            <p class="tiny">空のままなら「今日は何の日」は飛ばします。</p>
+          </div>
+        </div>
+        <div class="field"><label for="prog-lines" id="prog-label">プログラム（1行に1つ。「9:30 ボドゲクラブ｜クラブルーム」のように）</label><textarea id="prog-lines" rows="6"></textarea></div>
+        <div class="field"><label for="prog-note">きょうのひとこと（なくてもOK）</label><input id="prog-note" autocomplete="off" /></div>
+      </details>
+      <div class="top-links"><button type="button" class="btn-text" data-back>トップへ戻る</button></div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== ルームに参加する ========== -->
+<section class="screen" id="screen-join">
+  <div class="wrap narrow">
+    <div class="form-card">
+      <h2>ルームに参加する</h2>
+      <p class="sub">ニックネームとルームコードを入れてね</p>
+      <div class="join-hint" id="joinLinkHint" hidden>リンクからひらいたので、ルームコードは入っているよ。名前を入れて「参加する」を押してね。</div>
+      <form id="join-form" novalidate>
+        <div class="field"><label for="join-name">ニックネーム（8文字まで）</label><input id="join-name" maxlength="8" autocomplete="off" /></div>
+        <div class="field"><label for="join-code">ルームコード（6文字）</label><input id="join-code" class="code" autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false" /></div>
+        <label class="check"><input type="checkbox" id="join-adult" />スタッフ（大人）</label>
+        <p class="err" id="join-error" hidden></p>
+        <button type="submit" class="btn btn-primary" style="width:100%">参加する</button>
+      </form>
+      <div class="top-links"><button type="button" class="btn-text" data-back>トップへ戻る</button></div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== みんなにみせる画面を開く ========== -->
+<section class="screen" id="screen-watch-join">
+  <div class="wrap narrow">
+    <div class="form-card">
+      <h2>みんなにみせる画面</h2>
+      <p class="sub">画面共有に使う画面です。ルームコードを入れてね</p>
+      <form id="watch-form" novalidate>
+        <div class="field"><label for="watch-code">ルームコード（6文字）</label><input id="watch-code" class="code" autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false" /></div>
+        <p class="err" id="watch-error" hidden></p>
+        <button type="submit" class="btn btn-primary" style="width:100%">ひらく</button>
+      </form>
+      <div class="top-links"><button type="button" class="btn-text" data-back>トップへ戻る</button></div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== ホストの画面 ========== -->
+<section class="screen" id="screen-host">
+  <div class="wrap wide">
+    <div class="hbar">
+      <div class="hb-code"><small>ルームコード</small><b class="code" id="host-code"></b></div>
+      <div class="hb-join"><span>参加の案内</span>
+        <button type="button" class="btn btn-outline" id="btnCopyCode">コードをコピー</button>
+        <button type="button" class="btn btn-outline" id="btnCopyLink">リンクをコピー</button>
+        <button type="button" class="btn btn-outline" id="btnShowQr">QRコード</button>
+      </div>
+      <button type="button" class="btn btn-primary" id="btn-open-watch"><span class="material-symbols-rounded">cast</span>みんなにみせる画面を開く</button>
+      <span class="spacer"></span>
+      <span class="status-pill" id="host-conn">接続中</span>
+      <button type="button" class="btn-text hb-finish" id="btn-finish">ルームを閉じる</button>
+    </div>
+    <div class="guide" id="host-guide" hidden>
+      <b>はじめに</b>
+      <span class="g-step" data-g="watch"><span class="material-symbols-rounded">cast</span>「みんなにみせる画面を開く」</span>
+      <span class="g-step" data-g="share"><span class="material-symbols-rounded">present_to_all</span>その窓を MetaLife で画面共有</span>
+      <span class="g-step" data-g="link"><span class="material-symbols-rounded">link</span>「リンクをコピー」してチャットへ</span>
+      <span class="spacer"></span>
+      <button type="button" class="btn-text" id="guide-share">共有した</button>
+      <button type="button" class="btn-text" id="guide-off">もう出さない</button>
+    </div>
+    <div class="host">
+      <div class="panel flow">
+        <h3>流れ <button type="button" class="btn-text" id="btn-reorder" aria-pressed="false">並べかえ・飛ばす</button></h3>
+        <ul class="steplist" id="steplist"></ul>
+        <button type="button" class="add-step" id="btn-add-step">＋ その場で聞く（2〜6択）</button>
+        <div class="edit-box" id="add-box" hidden>1行目に質問、2行目から選択肢（2〜6つ）
+          <textarea id="add-text" placeholder="きょうのおやつは？&#10;あまいもの&#10;しょっぱいもの&#10;どっちも"></textarea>
+          <div class="row-b"><button type="button" class="btn btn-primary" id="add-save">足す</button><button type="button" class="btn btn-outline" id="add-cancel">やめる</button></div>
+        </div>
+      </div>
+      <div class="panel stagep">
+        <div class="preview"><div class="stage-wrap" id="host-preview"></div></div>
+        <div class="navbar">
+          <button type="button" class="btn btn-outline nav-prev" id="btn-prev" title="前へ（←）"><span class="material-symbols-rounded">arrow_back</span></button>
+          <div class="nav-mid">
+            <div class="nav-now"><small>いま</small><b id="nav-now"></b><span id="host-step-type" class="status-pill"></span></div>
+            <div class="nav-nx"><small>つぎ</small><span id="nav-next"></span></div>
+          </div>
+          <button type="button" class="btn btn-primary nav-next" id="btn-next">次へ<span class="material-symbols-rounded">arrow_forward</span></button>
+        </div>
+        <div class="actions">
+          <div class="act-row">
+            <button type="button" class="btn btn-primary" id="btn-reveal">せーので見せる</button>
+            <button type="button" class="btn btn-outline" id="btn-answer">答えを見せる</button>
+            <button type="button" class="btn btn-outline" id="btn-topic">つぎのお題</button>
+            <button type="button" class="btn btn-outline" id="btn-close">しめきる</button>
+            <span class="spacer"></span>
+            <button type="button" class="btn-text" id="btn-edit">文を直す</button>
+            <button type="button" class="btn-text" id="btn-chat">チャット用にコピー</button>
+          </div>
+          <div class="free-ctrls" id="free-ctrls" hidden><span id="free-wish" class="free-wish"></span><b>自由タイムのあそび:</b>
+          <button type="button" class="btn btn-outline" data-f="choose">えらぶ画面</button>
+          <button type="button" class="btn btn-outline" data-f="talk">おしゃべりのお題</button>
+          <button type="button" class="btn btn-outline" data-f="quiz">クイズ</button>
+          <button type="button" class="btn btn-outline" data-f="kotoba">ことばあそび</button>
+          <button type="button" class="btn btn-outline" data-f="show">答えを見る</button>
+          <button type="button" class="btn btn-primary" data-f="next">つぎ</button>
+        </div>
+          <div class="game-box" id="game-box" hidden>
+          <div class="gb-row" id="game-picks"></div>
+          <details class="gb-more"><summary>参加用のリンクを貼る（なくてもOK）</summary>
+            <div class="gb-row"><input id="game-link-in" placeholder="ゲームのルームで「リンクをコピー」したものを貼る" autocomplete="off" />
+            <button type="button" class="btn btn-outline" id="game-link-save">出す</button></div>
+            <p class="tiny">貼らなくても、参加者の端末に「ゲームを開く」が出ます。参加者は画面のルームコードで入ります。</p>
+          </details>
+        </div>
+          <div class="edit-box" id="edit-box" hidden><span id="edit-help"></span>
+          <textarea id="edit-text"></textarea>
+          <div class="row-b"><button type="button" class="btn btn-primary" id="edit-save">直す</button><button type="button" class="btn btn-outline" id="edit-cancel">やめる</button></div>
+        </div>
+        </div>
+        <p class="tiny" style="margin:8px 2px 0">この窓は共有しません。<span class="kbd">←</span> <span class="kbd">→</span> で前後、<span class="kbd">Space</span> で見せる・表紙から中身へ。</p>
+      </div>
+      <div class="panel people">
+        <h3><span id="players-title">参加者</span> <span class="ans-sum" id="ans-sum"></span></h3>
+        <div class="plist" id="plist"></div>
+        <div id="proxy-rows" hidden></div>
+        <div class="add-proxy"><input id="proxy-name" maxlength="8" placeholder="端末のない人の名前" autocomplete="off" /><button type="button" class="btn btn-outline" id="btn-add-proxy">足す</button></div>
+        <p class="tiny">MetaLife のチャットや声で答えた人は、名前の下の数字を押すだけ（入れなくても進められます）。わけ・ひとことは名前の下に出ます。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== 参加者の画面 ========== -->
+<section class="screen" id="screen-player">
+  <div class="wrap narrow">
+    <div class="roombar">
+      <span>ルーム <b class="code" id="player-code"></b></span>
+      <span class="me">わたし: <b id="player-name"></b></span>
+      <span class="spacer"></span>
+      <button type="button" class="btn btn-outline" id="btn-leave">退出する</button>
+    </div>
+    <div class="player" id="player-card"></div>
+  </div>
+</section>
+
+<!-- ========== みんなにみせる画面 ========== -->
+<section class="screen" id="screen-watch">
+  <div class="watch-frame"><div class="stage-wrap" id="watch-stage"></div></div>
+  <div class="watch-bar">みんなにみせる画面 ／ ルーム <span id="watch-bar-code"></span></div>
+</section>
+
+<div class="overlay" id="overlay" hidden><div class="card-o"><h2 id="overlay-title"></h2><p id="overlay-text"></p><button type="button" class="btn btn-outline" id="overlay-btn">トップへ戻る</button></div></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+<script src="../shared/js/rtdb-utils.js?v=20261005"></script>
+<script src="../shared/js/room-qr.js?v=20261022"></script>
+<script src="../shared/js/stats.js?v=1" defer></script>
+<script src="../shared/js/howto.js"></script>
+<script>
+(() => {
+'use strict';
+const PREFIX = 'circletime_rooms';
+const ORPHAN_TTL_MS = 2 * 60 * 1000;
+const SESSION_KEY = 'roomk-circle-time-session';
+const PREF_KEY = 'roomk-circle-time-prefs';
+const MAX_PLAYERS = 24;
+const esc = RoomkRTDB.esc;
+const $ = (id) => document.getElementById(id);
+const toast = (m, err = true) => RoomkRTDB.showToast(m, err);
+const CODE_RE = /^[A-HJ-NP-Z2-9]{6}$/;
+
+// ── 文言（オーナー未承認の案。本体化のときに確定する） ──
+const LABELS = {
+  kokoro: ['とても元気', 'まあまあ元気', 'ふつう', 'ちょっと元気がない', '元気がない'],
+  karada: ['とても調子がいい', '調子がいい', 'ふつう', 'ちょっと調子が悪い', '調子が悪い'],
+  review: ['とても楽しかった', '楽しかった', 'ふつう', 'あまり楽しくなかった', '楽しくなかった'],
+};
+const WORDS = ['たのしかった', 'またやりたい', 'わらった', 'ちょっとつかれた', 'ねむい', 'むずかしかった'];
+const WX_OPTIONS = [{ t: 'はれ', i: 'sunny' }, { t: 'くもり', i: 'cloud' }, { t: 'あめ', i: 'rainy' }];
+// 気象庁の府県予報区（最初の区域＝県庁所在地の地方、気温の最初の地点＝その都市）と、画面の位置（%）
+const CITIES = [
+  { n: '札幌', o: '016000', x: 82, y: 12 }, { n: '釧路', o: '014100', x: 94, y: 26 }, { n: '仙台', o: '040000', x: 76, y: 40 },
+  { n: '新潟', o: '150000', x: 63, y: 30 }, { n: '金沢', o: '170000', x: 51, y: 38 }, { n: '東京', o: '130000', x: 74, y: 66 },
+  { n: '名古屋', o: '230000', x: 59, y: 64 }, { n: '大阪', o: '270000', x: 48, y: 66 }, { n: '広島', o: '340000', x: 37, y: 56 },
+  { n: '高知', o: '390000', x: 35, y: 80 }, { n: '福岡', o: '400000', x: 22, y: 58 }, { n: '鹿児島', o: '460100', x: 24, y: 84 },
+  { n: '那覇', o: '471000', x: 9, y: 62 },
+];
+const ICONS = { free: 'schedule', scale: 'favorite', weather: 'partly_cloudy_day', choice: 'calendar_today', show: 'event_note', talk: 'forum', review: 'history' };
+const FALLBACK_TOPICS = ['最近ハマっていることは何？', '好きな食べ物は何？', '最近「これ最高！」と思ったものは何？'];
+// 日本地図（Natural Earth 1:10m の国境、パブリックドメイン。日本だけを取り出し、天気の図の座標 1168×500 に投影して簡略化したもの）
+const JAPAN = {"main": "M410.0,453.3L410.4,455.0L407.8,459.0L406.8,457.7L410.0,453.3ZM457.6,431.8L458.4,433.5L456.8,434.7L452.2,450.8L452.4,452.6L453.5,453.4L452.4,459.0L450.8,461.3L449.5,466.9L447.2,466.4L446.3,464.3L444.7,463.7L442.7,464.4L441.2,467.2L443.5,468.3L442.8,469.7L444.2,469.8L442.4,471.5L441.1,471.7L439.4,474.8L432.2,478.6L432.3,476.5L434.3,474.8L435.7,467.8L433.4,464.1L433.2,461.4L430.5,460.1L431.7,458.9L433.0,459.0L433.8,460.8L434.8,460.8L436.1,458.0L435.2,456.1L431.9,456.0L428.9,462.4L428.6,464.3L429.8,468.1L432.3,470.1L431.7,472.8L430.4,473.8L428.7,473.3L427.0,470.8L421.1,470.9L420.1,468.3L420.8,468.0L418.5,465.7L419.6,465.3L421.3,466.6L422.9,464.6L424.0,460.8L423.8,458.3L419.9,453.6L420.3,452.2L421.5,452.7L420.5,451.4L421.1,449.2L419.9,447.0L420.7,445.4L420.1,444.0L421.8,442.7L422.6,443.7L423.6,443.2L427.4,435.9L428.5,436.2L430.0,432.6L429.5,431.3L430.7,430.9L429.8,429.6L432.5,426.3L426.9,427.2L431.4,424.6L430.5,423.2L431.0,422.0L426.7,417.6L426.2,412.4L424.8,410.7L422.9,410.4L421.6,409.2L419.3,411.6L418.7,411.3L421.1,416.0L420.3,417.9L418.2,419.1L419.4,420.2L421.7,419.1L424.1,419.7L425.0,422.2L424.7,425.1L419.7,428.1L418.8,425.2L420.8,423.0L420.0,421.8L417.9,421.7L415.3,423.2L414.5,422.6L412.8,425.9L408.9,428.9L410.8,425.9L410.4,425.0L411.9,423.9L411.0,424.0L409.7,421.1L408.7,421.4L406.3,417.5L407.4,412.2L409.4,413.7L409.0,415.5L409.6,414.6L411.0,415.8L410.6,417.9L410.1,416.8L410.3,419.1L411.6,420.3L412.5,419.1L415.6,420.1L413.8,417.4L414.1,414.7L412.5,413.2L411.0,413.8L410.4,412.7L409.1,413.1L409.4,410.8L408.6,411.3L408.1,410.0L408.0,411.6L407.1,412.0L407.6,410.7L406.7,409.1L404.2,408.0L405.1,406.2L404.9,403.4L406.5,403.7L407.2,402.5L407.9,404.0L410.6,404.1L411.7,406.3L412.2,402.6L410.1,400.7L410.9,399.8L412.2,401.1L411.4,398.9L411.8,397.6L414.0,398.3L414.0,399.9L415.9,401.0L416.9,399.4L419.8,398.2L417.9,397.0L420.8,394.1L422.9,396.9L425.4,396.0L425.6,393.9L424.4,394.8L422.8,393.5L424.3,394.1L426.8,392.4L427.9,388.0L431.6,387.1L432.9,385.5L434.7,385.2L436.5,385.3L436.3,385.9L438.7,386.9L441.1,384.5L439.9,389.3L441.1,389.4L441.1,391.5L443.5,395.3L450.2,396.9L451.5,396.7L454.1,393.7L457.8,394.0L459.4,396.7L459.6,399.8L458.8,402.2L457.1,401.9L456.0,404.1L453.7,403.6L453.8,406.5L461.7,407.4L463.8,406.7L461.4,411.1L464.0,411.2L463.2,412.8L464.4,413.0L464.8,412.2L465.6,413.3L466.1,412.3L466.5,413.6L464.5,413.7L463.8,415.7L465.2,416.9L468.3,417.0L465.8,418.7L466.2,419.3L465.1,420.7L466.2,420.6L466.2,421.2L463.3,422.1L462.6,425.1L461.7,424.6L459.7,428.3L458.8,428.5L458.3,430.3L459.6,431.3L457.6,431.8ZM534.5,388.9L536.0,388.7L531.7,390.9L524.9,397.0L521.4,407.7L515.1,399.5L510.4,398.1L507.0,398.8L503.4,400.7L502.8,402.4L499.8,404.0L499.0,403.6L498.1,404.8L498.5,406.9L497.3,410.1L495.8,410.8L494.1,414.4L492.9,413.9L491.6,415.6L491.7,419.3L490.5,419.9L492.3,423.4L491.7,424.3L489.4,422.2L486.3,423.4L484.3,421.9L482.2,423.0L482.1,421.5L484.2,418.1L481.9,418.1L480.4,417.2L479.0,418.6L478.2,417.3L479.0,415.4L478.2,413.9L476.9,413.5L475.9,414.5L476.6,413.0L478.5,413.0L477.6,411.5L478.7,411.0L477.4,410.7L477.9,409.7L476.3,408.7L477.9,408.7L478.6,409.8L480.1,408.0L480.0,406.8L478.5,406.4L479.6,405.2L475.8,405.0L476.8,404.3L476.2,402.5L476.9,401.1L474.0,400.4L469.6,403.6L469.0,402.9L466.5,404.1L468.6,402.2L470.5,401.8L470.6,401.0L476.7,398.2L478.9,395.3L483.4,392.4L484.3,386.4L485.4,386.3L485.8,383.5L489.6,381.2L489.7,379.9L489.0,379.5L490.1,378.9L494.8,385.5L499.8,383.7L504.6,384.5L507.9,380.9L507.9,377.6L505.8,375.2L509.4,376.1L515.4,371.5L519.0,372.4L520.6,371.0L521.2,373.1L522.5,372.1L523.8,373.2L523.5,374.1L527.0,375.5L528.1,376.8L532.4,375.4L532.5,376.6L533.4,375.8L532.4,377.6L533.3,377.7L532.1,382.5L534.6,384.9L534.8,386.4L533.4,388.1L535.2,388.2L534.5,388.9ZM493.5,315.8L492.7,318.1L491.9,317.3L491.5,318.7L490.3,317.9L492.6,315.7L493.5,315.8ZM502.3,369.3L498.8,373.2L499.6,371.8L498.2,371.3L498.6,370.7L497.9,369.9L496.2,372.6L496.9,373.6L496.3,374.5L495.7,374.1L493.5,375.2L493.4,373.3L494.5,372.2L495.0,373.3L495.9,372.1L494.0,371.0L493.1,372.9L487.9,374.3L487.4,373.5L485.6,374.8L485.8,375.9L482.9,377.1L481.8,376.5L480.3,377.3L479.0,374.3L479.4,372.2L476.5,371.7L475.0,372.3L471.9,375.8L472.4,378.1L471.4,380.0L471.6,383.7L469.7,385.4L470.3,388.4L467.3,390.5L468.2,388.7L469.0,388.8L468.8,387.5L462.5,383.5L461.8,384.5L460.6,384.4L461.7,382.6L459.7,381.6L455.9,382.2L455.6,383.9L453.1,382.4L452.1,384.1L450.9,383.9L450.8,382.2L449.3,384.6L447.4,385.8L446.3,385.0L445.4,385.6L443.5,382.5L441.8,381.9L438.7,386.1L437.8,385.4L438.7,381.7L437.4,379.8L438.9,377.6L437.6,374.5L438.3,372.1L441.7,371.3L439.2,370.8L439.6,370.1L440.3,369.5L441.1,370.4L444.3,370.3L445.3,371.7L445.2,369.8L447.3,369.5L448.0,370.5L446.7,370.1L446.2,371.7L451.4,370.0L452.4,366.9L454.5,365.5L455.0,363.9L456.0,363.8L456.0,362.5L457.5,362.7L462.6,360.7L463.0,359.3L467.6,355.7L467.8,354.6L474.3,349.7L476.6,346.1L482.4,342.3L483.3,339.4L482.4,337.7L485.2,337.3L484.6,336.7L487.5,335.6L490.8,335.2L493.9,332.6L495.6,333.8L499.4,333.3L498.1,334.7L498.3,335.9L501.8,337.2L506.3,334.7L510.1,335.7L523.0,334.3L530.6,330.3L540.5,331.3L544.5,328.2L548.1,327.1L550.1,330.3L548.9,330.8L547.1,334.3L548.6,332.9L549.2,333.8L548.4,334.4L550.8,335.5L550.4,337.5L551.3,336.2L552.5,336.3L550.9,334.6L554.1,332.5L554.5,335.1L555.3,334.3L555.8,336.0L558.8,334.4L559.3,334.7L558.1,336.2L560.7,336.1L561.3,334.7L559.9,334.3L561.1,333.5L563.5,334.7L562.7,333.4L564.0,333.3L562.9,331.2L565.7,332.3L567.2,331.6L566.6,328.5L568.2,327.3L568.9,329.3L568.4,330.0L569.5,330.6L570.2,327.0L567.5,323.5L566.8,319.9L570.7,313.6L570.8,311.9L572.7,311.5L577.4,307.5L585.2,296.7L587.1,291.6L586.1,284.1L584.7,283.4L586.7,276.8L589.1,275.4L591.4,275.4L596.0,272.6L600.6,271.3L601.7,271.7L602.0,274.0L599.3,275.0L599.6,278.1L595.8,279.1L593.4,282.3L591.8,280.7L589.5,285.7L591.4,285.6L592.6,286.6L594.3,285.0L594.4,289.2L592.8,292.2L593.2,293.3L597.0,295.7L601.5,295.7L602.8,294.5L604.4,290.2L615.8,286.3L620.9,282.7L624.6,282.3L632.4,276.1L637.4,269.2L640.2,261.8L645.5,257.8L649.3,256.7L654.1,252.2L655.8,243.3L659.0,235.8L663.4,230.4L667.0,216.3L669.0,214.2L670.4,208.6L670.7,201.5L669.9,198.4L667.2,196.1L663.1,197.4L661.6,194.1L661.6,192.7L664.1,194.0L665.8,193.4L668.6,188.9L669.4,185.4L669.8,181.6L667.8,179.6L667.3,174.7L665.6,173.5L670.3,168.5L672.3,169.2L676.0,167.1L677.3,160.2L678.5,161.5L678.5,160.4L679.5,160.3L677.4,159.8L676.8,157.6L675.5,157.2L677.3,156.3L677.8,152.7L680.9,155.3L683.1,153.9L685.2,154.9L685.4,159.8L687.0,165.8L689.4,166.2L690.8,164.8L691.2,162.8L690.5,162.6L691.7,160.8L693.2,161.4L693.9,163.1L697.7,165.1L700.3,161.5L701.6,156.2L699.7,152.7L698.6,152.3L698.2,153.6L696.0,155.3L694.0,154.9L689.8,157.0L688.6,156.5L689.5,150.6L692.2,144.0L697.3,146.4L701.5,149.9L704.2,149.3L706.2,147.4L704.3,160.1L705.6,171.6L707.0,175.0L708.0,176.0L709.1,175.6L712.0,178.8L715.6,184.9L715.2,187.0L716.8,188.4L715.9,190.6L718.6,193.0L718.4,195.3L720.0,200.1L718.9,205.2L720.8,204.3L720.7,206.1L721.7,207.1L718.7,210.0L719.8,210.5L720.8,209.3L721.4,209.8L717.5,214.1L719.4,213.5L719.5,214.2L717.3,215.9L717.3,216.7L718.5,216.7L718.1,217.9L716.8,218.0L717.8,219.2L715.9,219.8L717.7,221.5L715.2,221.7L716.6,222.6L715.4,222.8L716.0,223.9L713.0,223.5L713.0,226.2L711.8,225.5L712.1,224.8L710.7,225.1L711.6,229.3L710.7,228.1L709.5,228.4L709.4,230.4L707.8,232.0L708.9,234.0L706.3,235.4L708.1,236.3L706.4,238.3L708.4,239.9L708.3,241.1L707.6,240.2L707.4,242.2L706.5,242.7L706.9,243.9L708.4,244.1L707.2,244.6L708.3,246.8L707.8,247.9L706.3,246.9L705.4,244.3L702.2,243.4L699.7,244.1L698.8,246.1L697.9,244.6L696.5,244.9L695.8,246.5L696.6,247.0L693.7,251.0L692.5,257.5L695.1,265.0L695.6,276.2L694.7,283.9L693.5,289.2L689.6,291.8L688.0,295.5L685.0,303.8L684.8,309.2L683.5,310.9L683.8,314.8L685.5,319.5L691.5,328.8L691.0,329.8L690.2,329.0L685.9,329.8L681.4,333.7L678.9,339.6L679.6,342.1L678.7,346.1L678.0,345.9L677.3,347.5L676.6,347.0L675.2,348.1L672.6,347.8L668.9,351.0L667.3,354.6L665.2,354.8L664.4,353.4L663.0,353.0L662.9,352.4L665.9,351.7L665.0,350.8L664.6,346.6L665.8,343.8L665.3,342.3L663.6,341.6L664.7,341.2L665.2,339.7L666.4,340.1L666.6,338.2L669.3,336.6L671.7,333.6L668.7,330.4L667.1,330.6L667.6,331.4L666.5,332.1L664.3,331.4L663.8,332.5L663.2,330.9L663.8,335.4L660.1,337.2L661.2,337.9L661.2,338.9L659.9,338.9L660.2,342.2L662.7,343.7L662.3,345.1L660.7,345.5L661.2,347.2L659.4,347.4L659.6,344.9L657.6,341.9L654.3,341.5L648.4,343.3L647.5,344.2L647.8,347.3L646.9,346.9L645.7,349.3L646.5,350.1L646.0,351.7L647.4,353.5L647.4,355.8L643.8,360.1L643.6,362.8L642.3,362.4L639.6,364.5L637.4,361.5L638.1,359.6L637.5,355.5L638.5,354.6L637.8,352.3L638.4,350.8L641.4,350.7L638.8,347.8L636.1,347.2L632.5,348.6L631.1,350.6L631.3,351.9L631.9,351.1L631.5,352.3L627.7,354.3L627.1,357.2L623.9,360.8L623.3,363.0L624.3,364.5L617.6,362.2L613.2,363.1L606.9,361.9L593.5,365.0L594.9,362.3L595.9,363.6L600.2,360.2L600.8,361.5L600.9,360.4L601.7,360.3L600.2,357.8L598.0,357.8L597.4,359.2L597.4,358.5L593.5,358.5L592.0,357.0L592.5,354.1L590.9,358.8L592.3,361.3L589.4,359.9L589.6,356.8L588.7,355.7L588.6,353.1L590.2,348.8L589.2,350.4L588.8,349.2L589.0,350.6L588.0,350.1L587.9,350.9L586.1,350.8L584.4,352.2L583.9,355.2L581.3,359.1L580.9,361.8L581.7,364.3L583.8,364.6L590.9,369.6L591.0,371.5L589.9,371.7L590.8,372.1L590.1,373.0L590.4,374.9L587.8,375.4L587.7,374.6L589.0,375.2L589.2,373.6L585.5,374.0L585.6,372.8L583.1,375.0L581.0,374.7L580.8,376.1L579.7,375.8L576.2,377.6L575.3,378.5L575.5,380.6L574.1,380.0L573.2,381.0L574.8,382.9L574.6,384.3L573.6,383.6L572.9,384.3L573.5,385.4L570.4,386.9L566.1,395.6L566.7,396.3L562.9,399.1L561.6,401.4L561.8,399.9L553.6,397.7L550.6,393.9L552.3,392.5L548.2,390.3L545.3,386.8L543.8,387.2L544.9,384.9L544.3,384.1L546.4,382.6L544.7,381.3L545.4,379.1L547.2,378.7L545.4,375.7L543.9,374.9L545.0,373.3L547.6,372.5L551.8,368.0L552.8,365.7L552.8,361.4L549.6,361.0L549.6,361.8L548.8,361.9L548.8,361.2L547.9,361.5L548.5,362.7L547.1,362.0L547.0,362.7L543.5,363.6L541.3,363.0L535.9,359.1L530.1,359.3L529.4,358.4L527.7,360.4L526.3,360.0L525.9,361.0L522.3,360.3L524.0,361.2L520.9,363.2L521.8,363.2L520.7,364.5L519.1,364.9L516.8,364.1L515.4,364.8L515.5,365.8L517.0,364.5L518.1,364.9L515.4,369.1L512.4,368.7L512.6,369.5L511.8,369.3L510.0,366.7L503.5,370.0L504.9,368.1L502.5,368.4L502.3,369.3ZM815.4,85.3L816.7,86.0L811.9,87.7L809.4,92.2L803.7,92.1L799.5,93.5L799.1,94.8L800.2,95.1L797.9,96.5L796.1,96.2L796.3,97.9L793.4,98.2L790.9,96.1L789.3,98.2L790.5,99.6L789.4,100.0L785.8,99.2L782.4,99.6L778.8,97.5L771.7,99.9L767.7,102.5L759.8,110.2L754.1,119.2L753.6,125.9L751.4,131.6L744.2,126.0L731.6,120.7L724.1,114.7L721.5,114.4L715.2,110.3L710.7,109.8L705.4,111.4L696.8,116.9L693.9,119.8L692.8,118.9L694.2,118.5L692.4,117.5L692.0,116.0L687.8,111.4L681.9,110.9L679.7,112.2L677.4,115.6L676.6,121.1L683.1,126.0L687.3,125.1L693.9,132.1L697.2,133.4L699.6,135.7L694.7,138.5L690.1,136.6L687.1,137.4L687.6,135.3L685.9,134.8L684.5,137.7L680.6,139.5L680.1,144.2L676.1,145.8L674.5,148.4L671.4,147.9L669.9,146.4L668.8,141.9L671.3,135.7L672.4,135.2L672.8,129.9L669.9,126.0L667.3,124.9L663.8,121.5L663.4,118.8L665.3,114.4L665.2,109.4L667.1,107.8L670.5,107.3L673.8,103.6L676.3,105.3L678.7,100.9L682.4,97.7L681.5,94.9L677.7,90.9L678.3,87.2L680.2,87.1L681.5,85.7L689.4,91.4L694.8,90.3L695.1,92.0L698.8,93.1L702.2,91.3L705.3,87.5L705.7,84.6L703.6,80.9L704.4,79.2L703.1,74.9L704.3,72.4L707.9,70.9L710.8,67.8L711.5,63.7L711.1,57.0L713.5,52.3L714.6,46.9L713.6,37.7L709.1,27.5L711.0,23.2L710.7,20.7L711.4,19.8L712.1,21.3L715.4,20.6L718.5,17.5L733.6,33.5L735.9,37.7L744.8,47.2L754.2,53.7L755.5,55.7L764.9,59.8L762.5,60.0L763.7,62.2L769.0,62.8L770.6,61.6L773.6,61.7L775.0,62.4L773.3,64.8L774.5,65.2L776.8,62.0L777.7,64.6L780.2,67.2L789.4,68.5L791.7,67.7L797.2,61.9L801.1,59.3L804.6,54.8L805.4,57.9L802.6,63.6L799.6,67.3L797.8,73.0L801.5,78.8L803.9,85.9L806.0,87.9L802.8,86.6L802.5,87.2L804.1,88.8L809.1,90.3L808.6,89.0L810.7,86.9L812.8,85.5L815.4,85.3ZM432.6,498.6L430.8,502.4L427.8,503.3L426.6,502.9L425.1,497.9L426.2,497.8L428.2,495.6L432.6,498.6ZM442.2,483.8L443.1,485.6L442.3,491.0L440.4,494.0L439.9,498.6L437.6,499.5L437.1,495.5L439.1,493.3L439.3,489.1L442.2,483.8ZM419.4,440.5L420.4,441.3L419.3,443.4L418.3,440.8L419.4,440.5ZM425.9,430.7L427.4,430.7L424.7,435.0L424.5,433.5L421.6,434.4L421.1,432.5L424.7,430.2L425.9,430.7ZM419.6,429.6L420.6,431.7L420.7,436.2L417.4,439.9L415.4,440.9L415.7,438.9L414.5,438.9L417.1,437.2L415.0,436.4L416.3,431.6L415.6,430.0L416.6,430.5L419.6,429.6ZM387.1,425.5L387.6,426.5L384.6,426.4L384.4,428.8L383.5,427.8L381.3,428.2L380.0,427.4L380.6,425.7L381.0,426.8L381.3,425.7L381.5,422.1L382.5,423.3L385.3,421.5L387.1,425.5ZM663.9,410.9L666.0,412.4L665.0,413.9L662.6,411.4L662.8,410.6L663.9,410.9ZM392.6,415.5L394.4,415.0L394.8,415.7L392.7,417.7L391.8,421.0L391.0,417.3L389.6,416.8L391.5,415.8L391.4,413.9L392.3,414.4L392.9,409.9L392.6,415.5ZM404.2,402.1L404.4,403.5L402.7,407.4L400.6,409.5L398.8,409.5L399.0,408.4L400.5,409.0L399.7,408.4L400.7,407.7L401.4,404.1L403.4,403.5L403.5,402.3L404.2,402.1ZM409.8,390.6L410.4,391.3L408.8,391.8L408.4,393.0L406.8,391.6L406.5,390.6L407.6,391.1L406.8,389.3L407.6,387.5L409.6,388.4L410.4,390.2L409.8,390.6ZM472.2,387.6L471.7,388.0L471.0,385.9L472.0,384.9L474.5,386.7L478.1,385.4L476.0,386.8L475.7,388.4L474.7,388.2L474.3,387.1L472.2,387.6ZM656.1,381.5L656.3,380.5L657.9,379.8L658.4,380.6L657.4,382.2L656.1,381.5ZM480.3,381.1L477.8,380.6L479.7,377.8L480.2,380.0L480.9,379.6L480.3,381.1ZM491.6,376.8L490.5,377.1L491.4,376.0L490.8,375.4L492.4,374.0L492.9,376.4L491.6,376.8ZM398.1,374.5L399.0,374.3L397.2,379.3L395.7,380.6L394.5,380.0L395.4,373.0L395.8,374.1L397.3,373.2L398.1,374.5ZM542.4,364.1L543.1,365.0L539.7,371.6L541.3,374.8L535.5,377.4L534.8,376.4L535.3,375.4L534.4,375.7L533.6,374.3L534.3,373.0L535.3,372.9L537.2,369.2L542.4,364.1ZM401.6,363.7L401.9,365.8L399.3,370.5L400.1,370.4L400.5,372.2L399.5,373.7L398.4,373.7L397.9,373.1L398.9,373.0L398.9,372.1L397.9,372.5L398.0,371.2L397.4,372.5L396.0,372.1L397.1,371.5L397.0,369.7L398.0,368.8L397.1,368.7L398.4,366.4L397.5,365.3L398.3,362.8L399.7,362.9L400.9,361.3L402.5,361.9L402.3,363.7L401.6,363.7ZM654.4,358.6L655.4,360.0L655.0,361.9L652.7,360.5L652.8,358.1L654.4,358.6ZM500.9,311.2L501.2,313.3L499.9,313.8L499.9,314.9L496.5,313.4L496.9,310.5L499.0,309.0L500.9,311.2ZM630.1,254.2L633.0,254.0L631.1,259.3L627.8,261.8L624.1,262.7L623.9,261.8L625.6,261.2L625.7,259.4L627.1,257.4L626.4,256.5L624.7,257.1L624.3,256.1L626.3,251.0L630.3,246.4L631.5,246.1L629.5,253.7L629.7,254.7L630.1,254.2ZM657.7,121.6L656.7,126.1L655.3,127.7L654.3,123.9L655.3,122.5L657.7,121.6ZM803.9,78.7L805.2,80.0L803.2,81.1L804.4,79.6L801.1,78.1L803.9,78.7ZM702.8,28.6L702.4,30.1L700.9,30.9L698.3,29.4L697.9,27.4L699.7,26.1L702.8,28.6ZM695.9,19.8L696.4,20.6L695.4,25.6L693.7,19.3L695.9,19.8ZM421.1,495.5L422.2,496.6L420.9,497.1L419.1,494.9L421.1,495.5ZM526.3,365.8L525.8,369.7L524.7,369.3L525.1,368.5L523.2,370.1L523.1,368.7L521.1,368.2L521.4,366.9L526.3,365.8ZM413.8,451.1L413.7,452.4L412.7,452.9L411.7,451.5L411.0,451.8L411.6,450.7L413.2,451.8L413.8,451.1ZM387.6,420.9L387.2,422.6L386.1,422.2L386.0,420.5L386.9,421.6L386.7,420.4L387.6,420.9ZM390.9,418.4L390.8,420.0L389.4,419.3L389.8,417.4L390.9,418.4ZM494.0,377.9L492.0,379.6L492.4,377.4L494.0,377.9ZM489.6,374.6L489.5,376.4L487.8,376.6L487.7,375.8L489.6,374.6ZM594.3,283.3L594.0,284.3L591.7,285.1L590.7,283.6L594.3,283.3Z", "inset": "M39.7,451.1L42.8,451.8L41.2,455.3L36.0,454.1L36.4,453.2L37.9,453.3L38.6,450.2L39.7,451.1ZM52.8,445.0L50.6,452.0L49.8,452.8L48.0,452.6L48.1,451.3L46.4,449.7L47.7,448.6L48.4,449.5L49.8,449.3L52.8,445.0ZM79.6,438.7L81.1,440.1L76.4,440.2L76.4,435.4L79.6,438.7ZM115.7,388.8L115.2,390.3L112.9,388.3L114.7,387.7L115.7,388.8ZM154.5,374.7L153.7,377.7L152.1,379.9L149.9,380.3L149.4,382.4L147.3,382.5L144.6,385.7L142.1,386.0L143.9,390.1L141.5,389.9L140.1,393.1L140.2,394.1L141.4,394.1L140.7,395.5L138.9,397.1L137.1,397.3L136.7,393.2L139.3,389.8L138.9,386.3L141.0,385.8L144.9,382.1L144.8,381.1L143.0,380.3L142.8,377.9L145.6,378.0L145.8,379.7L147.4,379.5L151.6,374.5L152.4,371.8L154.5,374.7ZM163.7,353.8L161.4,356.7L159.4,356.7L159.4,355.0L161.6,355.0L163.7,353.8ZM171.0,342.5L172.0,343.7L169.9,346.6L168.5,344.7L168.6,339.9L169.9,339.2L171.0,342.5ZM178.8,332.7L180.1,333.1L179.5,334.0L176.9,333.3L175.8,330.4L178.1,330.9L177.6,331.9L178.8,332.7ZM197.4,324.6L196.5,327.2L194.4,327.0L197.4,324.6ZM189.2,321.8L189.4,322.8L187.0,323.7L183.9,327.3L182.6,327.2L181.9,328.5L183.1,329.6L181.4,331.3L180.2,331.4L180.8,332.7L178.5,330.8L178.1,329.2L177.4,329.7L175.0,328.5L178.1,328.4L178.6,327.4L177.0,326.8L178.0,326.0L183.3,323.1L184.4,324.0L187.1,321.1L186.9,322.5L187.6,322.5L188.3,320.3L189.2,321.8ZM193.9,276.9L194.6,278.7L192.6,277.7L192.8,276.5L193.9,276.9Z"};
+const WX_DOTS = {"札幌": [703.4, 95.7], "釧路": [780.3, 98.2], "仙台": [691.2, 247.8], "新潟": [644.8, 258.9], "金沢": [584.4, 302.1], "東京": [661.3, 329.7], "名古屋": [590.8, 345.9], "大阪": [555.0, 361.5], "広島": [477.9, 371.0], "高知": [505.0, 397.4], "福岡": [425.7, 396.4], "鹿児島": [429.7, 460.9], "那覇": [137.8, 393.3]};
+// 天気のカードを置く場所（左上の角。幅120・高さ92。地図にかぶらないよう海の上と左右に並べる）
+const WX_SLOTS = { '札幌': [530, 10], '釧路': [990, 10], '仙台': [850, 124], '東京': [850, 238], '名古屋': [850, 352], '新潟': [250, 20], '金沢': [250, 116], '広島': [250, 212], '福岡': [250, 308], '鹿児島': [250, 404], '高知': [450, 404], '大阪': [585, 404], '那覇': [16, 286] };
+// 自由タイムのあそび（既存のツールのデータを読む。本体化のときは共通のデータに出す）
+const FREE_MODES = [['talk', 'forum', 'おしゃべりのお題', 'お題について、話したい人が話す'], ['quiz', 'quiz', 'クイズ', '3択のクイズに、みんなで答える'], ['kotoba', 'abc', 'ことばあそび', '頭の文字とお題に合うことばを出し合う']];
+// 表紙: [アイコン, 大きな見出し, 何をするかの一文]
+const COVER = {
+  free: ['schedule', '自由タイム', 'すきなことをして、ゆっくり過ごそう'],
+  kokoro: ['favorite', 'ジブンチェック　心', 'いまの気持ちを、5つの中からえらぶよ'],
+  karada: ['accessibility_new', 'ジブンチェック　体', '体の調子を、5つの中からえらぶよ'],
+  weather: ['partly_cloudy_day', '全国の天気', '各地の天気と、きみのところの天気'],
+  day: ['calendar_today', '今日は何の日？', '3つの中から、本当の記念日をさがそう'],
+  adhoc: ['help', 'みんなに質問', ''],
+  program: ['event_note', '今日のプログラム', 'きょうは、どんなプログラムがあるかな'],
+  tomorrow: ['event_note', '明日のプログラム', 'あしたは、どんなプログラムがあるかな'],
+  talk: ['forum', 'チェックイン', 'お題で、ひとことずつ'],
+  review: ['history', 'ふりかえり', '今日はどうだった？'],
+  game: ['casino', 'みんなでゲーム', '3つの中から、あそぶゲームをえらぼう'],
+};
+// 表紙・目次の絵（fal の Recraft V3 手描き風。tools/illustrations.py）。読めないときはアイコンに戻る
+const ART_BASE = 'assets/';
+const ART = { free: 'free', kokoro: 'kokoro', karada: 'karada', weather: 'weather', day: 'day', adhoc: 'adhoc', program: 'program', tomorrow: 'program', talk: 'talk', review: 'review', game: 'game' };
+const FREE_ART = { talk: 'talk-card', quiz: 'quiz', kotoba: 'kotoba-mikke' };
+const freeArtSrc = (k) => k === 'any' ? ART_BASE + 'omakase.webp' : APPS_BASE + 'assets/illustrations/' + FREE_ART[k] + '.webp';
+const FREE_ANY = ['any', 'casino', 'おまかせ', 'どれでもいいよ'];
+// 5段階の表情（5 → 1）と、ふりかえりのひとことのアイコン（WORDS と同じ順）
+const FACES = ['sentiment_very_satisfied', 'sentiment_satisfied', 'sentiment_neutral', 'sentiment_dissatisfied', 'sentiment_very_dissatisfied'];
+const WORD_ICONS = ['celebration', 'replay', 'mood', 'battery_2_bar', 'bedtime', 'psychology_alt'];
+const gameArt = (g, cls) => art(APPS_BASE + 'assets/illustrations/' + g.slug + '.webp', 'casino', cls);
+// 参加者の画面の短い案内（アイコンつき）
+const pnote = (icon, text) => `<p class="p-note-line"><span class="material-symbols-rounded">${icon}</span>${text}</p>`;
+const art = (file, icon, cls = '') => `<span class="art ${cls}"><img src="${esc(file)}" alt="" onerror="this.parentNode.classList.add('noimg')"><span class="material-symbols-rounded">${icon}</span></span>`;
+const secArt = (s, cls) => art(ART_BASE + (ART[coverKey(s)] || 'adhoc') + '.webp', coverOf(s)[0], cls);
+const SHORT = { free: '自由タイム', kokoro: '心', karada: '体', weather: '天気', day: '何の日', adhoc: '質問', program: 'プログラム', tomorrow: '明日', talk: 'チェックイン', review: 'ふりかえり', game: 'ゲーム' };
+// みんなでゲームの候補: ツール一覧で利用シーンに「サークル」があり、話す・内省以外の種類のもの（自由タイムで使うことばみっけは除く）
+const GAME_GENRES = ['atekko', 'suiri', 'kotoba', 'puzzle'];
+const GAME_EXCLUDE = ['kotoba-mikke'];
+const APPS_BASE = '../';
+const FREE_QUIZ_PACKS = ['zatsugaku-3choice', 'tofuken-zatsugaku', 'kurashi-suiri'];
+const FREE_COOLDOWN_MS = 2500;
+const PROGRAM_URL = 'https://katariba.notion.site/room-K-277e1247489c4bbe979b0322df284a73';
+
+// ── Firebase ──
+let ctx = null; // いまつないでいるルーム（.info/connected は登録と同時に呼ばれるので先に宣言する）
+let db, authReady, setupError;
+try { ({ db, authReady } = RoomkRTDB.initFirebase(firebase)); authReady = authReady.catch((e) => { setupError = e; return null; }); }
+catch (e) { setupError = e; }
+let online = false;
+if (db) db.ref('.info/connected').on('value', (s) => { online = s.val() === true; if (ctx && !ctx.watch) { ctx.ready = false; if (online) ensurePresence(ctx).catch(() => {}); } updateConn(); });
+
+const now = () => RoomkRTDB.now();
+const stamp = () => firebase.database.ServerValue.TIMESTAMP;
+const fail = (text) => new Error(text);
+const expired = (room) => !!room && (!room.status || RoomkRTDB.isRoomExpired(room, ORPHAN_TTL_MS));
+function validateCode(v) {
+  const code = String(v || '').normalize('NFKC').replace(/\s/g, '').toUpperCase();
+  if (!CODE_RE.test(code)) throw fail('ルームコードは英字と数字の6文字だよ。キーボードを英字に切り替えてね。');
+  return code;
+}
+function validateName(v) {
+  const name = String(v || '').normalize('NFKC').trim();
+  if (!name || [...name].length > 8) throw fail('ニックネームは1〜8文字で入れてね。');
+  if (/[.#$\[\]\/\u0000-\u001f\u007f]/.test(name)) throw fail('記号 . # $ [ ] / は使えません。');
+  return name;
+}
+async function authenticated() {
+  if (setupError || !authReady) throw fail('接続の準備に失敗しました。ページを再読み込みしてね。');
+  await authReady;
+  if (setupError || !firebase.auth().currentUser) throw fail('認証できませんでした。ページを再読み込みしてね。');
+  if (!online) await new Promise((resolve, reject) => {
+    const ref = db.ref('.info/connected');
+    const cb = (s) => { if (s.val() === true) { clearTimeout(t); ref.off('value', cb); resolve(); } };
+    const t = setTimeout(() => { ref.off('value', cb); reject(fail('つながりませんでした。通信を確かめてね。')); }, 6000);
+    ref.on('value', cb);
+  });
+}
+async function transactRetry(ref, update) {
+  for (let attempt = 0; ; attempt++) {
+    try { return await ref.transaction(update, undefined, false); }
+    catch (e) { if (e?.message !== 'disconnect' || attempt >= 3) throw e; }
+  }
+}
+function warmRoomCache(ref) {
+  return new Promise((resolve, reject) => { const cb = (snap) => resolve({ snap, release: () => ref.off('value', cb) }); ref.on('value', cb, reject); });
+}
+async function cleanup(ref) { await RoomkRTDB.cancelRoomOnDisconnect(ref); await ref.transaction((room) => expired(room) ? null : undefined, undefined, false); }
+
+// ── セッション ──
+let session = null;
+try { session = JSON.parse(sessionStorage.getItem(SESSION_KEY)); } catch { session = null; }
+function saveSession(v) { session = v; try { v ? sessionStorage.setItem(SESSION_KEY, JSON.stringify(v)) : sessionStorage.removeItem(SESSION_KEY); } catch { /* storage unavailable */ } }
+function loadPrefs() { try { return JSON.parse(localStorage.getItem(PREF_KEY)) || {}; } catch { return {}; } }
+function savePrefs(p) { try { localStorage.setItem(PREF_KEY, JSON.stringify(p)); } catch { /* storage unavailable */ } }
+
+// ── ルームへの接続 ──
+const own = (room, s) => !!s && s.token === firebase.auth().currentUser?.uid && room?.players?.[s.id]?.uid === s.token
+  && ((s.role === 'host' && room.host === s.id) || (s.role === 'guest' && room.host !== s.id));
+async function detach() {
+  const old = ctx; ctx = null;
+  if (!old) return;
+  old.leaving = true;
+  old.ref.off('value', old.listener);
+  if (online) {
+    await old.pending?.catch(() => {});
+    await RoomkRTDB.cancelRoomOnDisconnect(old.ref);
+    if (old.connectionRef) { await old.connectionRef.onDisconnect().cancel(); await old.connectionRef.remove(); }
+  }
+}
+async function attach(code, s, watch) {
+  await detach();
+  const ref = db.ref(`${PREFIX}/${code}`);
+  const c = { code, ref, session: s, watch, data: null, ready: false, pending: null, connectionRef: null, listener: null, leaving: false };
+  ctx = c;
+  await new Promise((resolve, reject) => {
+    c.listener = (snap) => { c.data = snap.val(); resolve(); if (ctx === c && c.attached) onRoomChange(c); };
+    ref.on('value', c.listener, reject);
+  });
+  if (!c.data) { await detach(); throw fail('ルームが見つかりません。終了したようです。'); }
+  if (expired(c.data)) { await cleanup(ref); await detach(); throw fail('接続が切れたまま2分たったため、ルームを終了しました。'); }
+  if (!watch && !own(c.data, s)) { await detach(); throw fail('参加の情報が見つかりません。もう一度参加してね。'); }
+  if (!watch) await ensurePresence(c);
+  c.attached = true;
+  if (ctx === c) onRoomChange(c);
+  return c;
+}
+async function ensurePresence(c) {
+  if (c !== ctx || !online || c.leaving || c.watch) return;
+  if (c.pending) return c.pending;
+  c.pending = (async () => {
+    const s = c.session;
+    const connectionRef = c.ref.child(`players/${s.id}/connections`).push();
+    await connectionRef.onDisconnect().remove();
+    if (c !== ctx || c.leaving || !online) { await connectionRef.onDisconnect().cancel(); return; }
+    if (s.role === 'host') await c.ref.onDisconnect().update({ hostConnected: false, hostDisconnectedAt: stamp() });
+    const previous = c.connectionRef;
+    const result = await transactRetry(c.ref, (room) => {
+      if (c !== ctx || c.leaving || !room || expired(room) || !own(room, s)) return;
+      const p = room.players[s.id];
+      p.connections = { ...(p.connections || {}), [connectionRef.key]: true };
+      if (s.role === 'host') { room.hostConnected = true; room.hostDisconnectedAt = null; }
+      return room;
+    });
+    if (!result.committed) { await connectionRef.onDisconnect().cancel(); return; }
+    c.connectionRef = connectionRef;
+    if (previous && previous.key !== connectionRef.key) { await previous.onDisconnect().cancel(); await previous.remove(); }
+    c.ready = true;
+  })();
+  try { await c.pending; } finally { c.pending = null; }
+}
+
+// ── 画面 ──
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach((s) => s.classList.toggle('active', s.id === 'screen-' + id));
+  document.body.classList.toggle('watching', id === 'watch');
+  if (id !== 'watch' && id !== 'host') stopClock();
+}
+function overlay(title, text, onClose) {
+  $('overlay-title').textContent = title; $('overlay-text').textContent = text;
+  $('overlay').hidden = false;
+  $('overlay-btn').onclick = () => { $('overlay').hidden = true; onClose?.(); };
+}
+function updateConn() { const el = $('host-conn'); if (!el) return; el.textContent = online ? '接続中' : '通信が切れています'; el.classList.toggle('ok', online); }
+
+// ── 流れ（ステップ）の型 ──
+const uid = () => Math.random().toString(36).slice(2, 8);
+function dateLabel(ts) {
+  const d = new Date(ts);
+  const p = new Intl.DateTimeFormat('ja-JP', { timeZone: 'Asia/Tokyo', month: 'numeric', day: 'numeric', weekday: 'short' }).formatToParts(d);
+  const get = (t) => p.find((x) => x.type === t)?.value || '';
+  return `${get('month')}月${get('day')}日（${get('weekday')}）`;
+}
+function jstDate(ts) { return new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Tokyo' }).format(new Date(ts)); }
+function buildSteps(kind, f) {
+  const steps = [];
+  const op = () => steps.push({ id: uid(), type: 'opening' }), ag = () => steps.push({ id: uid(), type: 'agenda' });
+  if (kind === 'am') {
+    op();
+    steps.push({ id: uid(), type: 'free', title: 'みんなでゆっくり過ごそう', sub: '本を読む・なにもしない、どれでもOK', until: '' });
+    ag();
+    steps.push({ id: uid(), type: 'scale', key: 'kokoro', title: 'ジブンチェック　心', sub: 'いまの気持ちは、どのへん？', labels: LABELS.kokoro, mode: 'open' });
+    steps.push({ id: uid(), type: 'scale', key: 'karada', title: 'ジブンチェック　体', sub: '体の調子は、どのへん？', labels: LABELS.karada, mode: 'open' });
+    steps.push({ id: uid(), type: 'weather', title: '全国の天気', sub: f.date });
+    if (f.day) steps.push({ id: uid(), type: 'choice', title: '今日は何の日？', sub: `${f.date.replace(/（.*/, '')}は、どれが本当の記念日？`, options: f.day.options, answer: f.day.answer, note: f.day.note || '', notes: f.day.notes || null, mode: 'hide' });
+    steps.push({ id: uid(), type: 'show', title: '今日のプログラム', ttl: f.prog.ttl || f.date, lines: f.prog.lines, thumbs: f.prog.thumbs || null, link: f.prog.link || PROGRAM_URL, note: f.prog.note || '' });
+  } else {
+    op(); ag();
+    steps.push({ id: uid(), type: 'talk', title: 'チェックイン', sub: 'お題で、ひとことずつ', topic: f.topic || FALLBACK_TOPICS[0] });
+    steps.push({ id: uid(), type: 'review', title: 'ふりかえり', sub: '今日はどうだった？', labels: LABELS.review, words: WORDS, mode: 'open' });
+    steps.push({ id: uid(), type: 'game', title: 'みんなでゲーム', cands: f.games || [], pick: null, gameName: '', link: '', mode: 'open' });
+    steps.push({ id: uid(), type: 'show', title: '明日のプログラム', ttl: f.prog.ttl || '', lines: f.prog.lines, thumbs: f.prog.thumbs || null, link: f.prog.link || PROGRAM_URL, note: f.prog.note || '' });
+  }
+  steps.push({ id: uid(), type: 'closing' });
+  return steps;
+}
+const stepsOf = (room) => Array.isArray(room?.steps) ? room.steps.filter(Boolean) : Object.values(room?.steps || {});
+const visibleSteps = (room) => stepsOf(room).filter((s) => !s.hidden);
+const curStep = (room) => stepsOf(room).find((s) => s.id === room.cur) || visibleSteps(room)[0] || null;
+const playersOf = (room) => {
+  const order = Array.isArray(room.playerOrder) ? room.playerOrder : [];
+  const ids = [...order.filter((id) => room.players?.[id]), ...Object.keys(room.players || {}).filter((id) => !order.includes(id))];
+  return ids.map((id) => ({ id, ...room.players[id] }));
+};
+const answered = (room, stepId) => room.answers?.[stepId] || {};
+const hasCover = (s) => !!s && !['opening', 'agenda', 'closing'].includes(s.type);
+const sectionsOf = (room) => visibleSteps(room).filter(hasCover);
+const onCover = (room, s) => hasCover(s) && room.view === 'cover';
+function coverKey(s) {
+  if (s.type === 'scale') return s.key === 'karada' ? 'karada' : 'kokoro';
+  if (s.type === 'choice') return s.adhoc ? 'adhoc' : 'day';
+  if (s.type === 'show') return /^明日/.test(s.title || '') ? 'tomorrow' : 'program';
+  return s.type;
+}
+function coverOf(s) {
+  const k = coverKey(s), c = COVER[k] || ['circle', s.title || '', ''];
+  if (k === 'adhoc') return [c[0], c[1], s.title || ''];
+  if (k === 'kokoro' || k === 'karada' || k === 'day') return [c[0], s.title || c[1], c[2]];
+  return c;
+}
+const shortName = (s) => SHORT[coverKey(s)] || s.title || '';
+const isRevealed = (room, step) => step.mode !== 'hide' || !!room.reveal?.[step.id];
+const isClosed = (room, step) => !!room.closed?.[step.id];
+
+// ── 天気（気象庁の公開データ。ホストが準備のときに取り、ルームに入れる） ──
+function wxIcon(code) {
+  const c = Number(code), h = Math.floor(c / 100);
+  if (h === 1) return c === 100 ? 'sunny' : 'partly_cloudy_day';
+  if (h === 2) return [201, 210, 211, 223].includes(c) ? 'partly_cloudy_day' : 'cloud';
+  if (h === 3) return 'rainy';
+  if (h === 4) return 'weather_snowy';
+  return 'cloud';
+}
+async function fetchWeather() {
+  const today = jstDate(now());
+  const results = await Promise.all(CITIES.map(async (city) => {
+    try {
+      const res = await fetch(`https://www.jma.go.jp/bosai/forecast/data/forecast/${city.o}.json`, { cache: 'no-store' });
+      if (!res.ok) throw new Error(String(res.status));
+      const d = await res.json();
+      const ts = d[0].timeSeries;
+      const w = ts[0].areas[0];
+      const code = w.weatherCodes[0];
+      const text = String(w.weathers?.[0] || '').split(/\s+/).slice(0, 3).join('').slice(0, 8);
+      let max = null, min = null;
+      const t = ts.find((x) => x.areas?.[0]?.temps);
+      if (t) t.timeDefines.forEach((td, i) => {
+        if (!td.startsWith(today)) return;
+        const v = t.areas[0].temps[i];
+        if (v === '' || v == null) return;
+        if (td.includes('T09:00')) max = Number(v); else if (td.includes('T00:00')) min = Number(v);
+      });
+      return { n: city.n, code: String(code), text, max, min };
+    } catch { return { n: city.n, code: null, text: '', max: null, min: null }; }
+  }));
+  return { at: now(), date: today, cities: results };
+}
+
+// ── トークテーマカードのお題（本体化のときは共通のデータに出す） ──
+let topics = null;
+async function loadTopics() {
+  if (topics) return topics;
+  try {
+    const res = await fetch('../talk-card/app.js', { cache: 'no-store' });
+    const src = await res.text();
+    const start = src.indexOf('const topics = ['), end = src.indexOf('];', start);
+    const block = src.slice(start, end);
+    const list = [...block.matchAll(/'((?:[^'\\]|\\.)*)'/g)].map((m) => m[1]).filter((t) => t.length > 3);
+    topics = list.length >= 10 ? list : FALLBACK_TOPICS;
+  } catch { topics = FALLBACK_TOPICS; }
+  return topics;
+}
+const pickTopic = (list, previous) => { const c = list.filter((t) => t !== previous); return c[Math.floor(Math.random() * c.length)]; };
+const pick = (list) => list[Math.floor(Math.random() * list.length)];
+let quizPool = null, kotobaData = null, appNames = null;
+async function loadQuiz() {
+  if (quizPool) return quizPool;
+  try {
+    const m = await import('../quiz/questions.js');
+    quizPool = m.QUIZ_PACKS.filter((p) => FREE_QUIZ_PACKS.includes(p.id)).flatMap((p) => p.questions)
+      .filter((q) => Array.isArray(q.choices) && q.choices.length >= 2 && q.choices.length <= 4 && Number.isInteger(q.answerIndex))
+      .map((q) => ({ id: q.id, q: q.question, c: q.choices, a: q.answerIndex, e: q.explanation || '' }));
+  } catch { quizPool = []; }
+  return quizPool;
+}
+async function loadKotoba() {
+  if (kotobaData) return kotobaData;
+  try {
+    const src = await (await fetch('../kotoba-mikke/app.js', { cache: 'no-store' })).text();
+    const arr = (name) => { const a = src.indexOf(`const ${name} = [`), b = src.indexOf('];', a); return [...src.slice(a, b).matchAll(/'([^']+)'/g)].map((m) => m[1]); };
+    kotobaData = { initials: arr('INITIALS'), themes: arr('THEMES') };
+    if (!kotobaData.initials.length || !kotobaData.themes.length) throw new Error('empty');
+  } catch { kotobaData = { initials: ['あ', 'か', 'さ', 'た', 'な'], themes: ['おいしいもの', 'やわらかいもの', 'かわいいもの'] }; }
+  return kotobaData;
+}
+// ツール一覧（apps/index.html）のカードから、名前・ひとこと・サムネイル・種類・利用シーンを読む
+let catalog = null;
+async function loadCatalog() {
+  if (catalog) return catalog;
+  try {
+    const html = await (await fetch(APPS_BASE + 'index.html', { cache: 'no-store' })).text();
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    catalog = [...doc.querySelectorAll('a.app-card')].map((a) => ({
+      slug: String(a.getAttribute('href') || '').replace(/\/$/, ''),
+      name: a.querySelector('.app-card__name')?.textContent.trim() || '',
+      hk: a.querySelector('.app-card__hitokoto')?.textContent.trim() || '',
+      thumb: a.querySelector('.app-card__thumbnail')?.getAttribute('src') || '',
+      genre: a.dataset.genre || '', scenes: String(a.dataset.scenes || '').split(/\s+/),
+    })).filter((x) => x.slug && x.name && !x.slug.includes('/'));
+  } catch { catalog = []; }
+  return catalog;
+}
+async function loadAppNames() {
+  if (appNames) return appNames;
+  appNames = Object.fromEntries((await loadCatalog()).map((a) => [a.slug, a.name]));
+  return appNames;
+}
+const gameCard = (a) => ({ slug: a.slug, name: a.name, hk: a.hk, thumb: a.thumb });
+// 3つの候補を、種類がなるべく重ならないように選ぶ（avoid にあるものは外す）
+async function pickGames(avoid = []) {
+  const pool = (await loadCatalog()).filter((a) => a.scenes.includes('circle') && GAME_GENRES.includes(a.genre) && a.thumb && !GAME_EXCLUDE.includes(a.slug));
+  const fresh = pool.filter((a) => !avoid.includes(a.slug));
+  const list = [...(fresh.length >= 3 ? fresh : pool)].sort(() => Math.random() - 0.5);
+  const out = [];
+  for (const a of list) if (out.length < 3 && !out.some((o) => o.genre === a.genre)) out.push(a);
+  for (const a of list) if (out.length < 3 && !out.includes(a)) out.push(a);
+  return out.map(gameCard);
+}
+function makeFree(mode, prev) {
+  if (mode === 'quiz' && quizPool?.length) { const c = quizPool.filter((q) => q.id !== prev?.quiz?.id); return { quiz: pick(c.length ? c : quizPool) }; }
+  if (mode === 'kotoba' && kotobaData) return { kotoba: { i: pick(kotobaData.initials), t: pick(kotobaData.themes) } };
+  return { topic: pickTopic(topics || FALLBACK_TOPICS, prev?.topic) };
+}
+// 自由タイムのあそびを変える・つぎへ・答えを見る（ホストも参加者も押せる。続けて押されないよう少し待つ）
+async function freeAct(action, v) {
+  const c = ctx; if (!c || !c.data) return;
+  await Promise.all([loadTopics(), loadQuiz(), loadKotoba()]);
+  const prev = c.data.free || {};
+  const mode = action === 'mode' ? (v || null) : (prev.mode || null);
+  if (action === 'next' && !mode) return;
+  const content = action === 'show' || !mode ? {} : makeFree(mode, prev);
+  let tooSoon = false;
+  try {
+    await transactRetry(c.ref.child('free'), (f) => {
+      f = f || {};
+      tooSoon = false;
+      if (action === 'show') { if (f.mode !== 'quiz' || f.shown) return; return { ...f, shown: true }; }
+      if (action === 'mode' && (f.mode || null) === mode) return;
+      if (action === 'next' && f.mode !== mode) return;
+      if (f.at && now() - f.at < FREE_COOLDOWN_MS) { tooSoon = true; return; }
+      return { mode, n: (f.n || 0) + 1, ...content, shown: false, at: now() };
+    });
+    if (tooSoon) toast('ちょっとまってね。少ししてから押せるよ');
+  } catch (e) { toast('送れませんでした。もう一度ためしてね。'); }
+}
+
+// ── 作成・参加・退出 ──
+let setupKind = 'am';
+async function createRoom(form) {
+  await authenticated();
+  const name = validateName(form.name);
+  const token = firebase.auth().currentUser.uid, id = crypto.randomUUID(), createdAt = now();
+  const steps = buildSteps(setupKind, form);
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const code = RoomkRTDB.generateRoomCode(), ref = db.ref(`${PREFIX}/${code}`);
+    const initial = { status: 'live', host: id, hostUid: token, hostConnected: false, hostDisconnectedAt: createdAt, createdAt,
+      kind: setupKind, date: form.date, steps, cur: steps[0].id, view: null, weather: form.weather || null, free: form.free || null, playerOrder: [id],
+      players: { [id]: { name, uid: token, isHost: true, adult: true } } };
+    const result = await transactRetry(ref, (room) => room ? (room.host === id && room.hostUid === token ? room : undefined) : initial);
+    if (!result.committed) continue;
+    const s = { code, id, token, role: 'host' };
+    saveSession(s);
+    await attach(code, s, false);
+    return code;
+  }
+  throw fail('ルームを作れませんでした。もう一度ためしてね。');
+}
+async function joinRoom(codeIn, nameIn, adult) {
+  await authenticated();
+  const name = validateName(nameIn), code = validateCode(codeIn);
+  const token = firebase.auth().currentUser.uid, id = crypto.randomUUID();
+  const ref = db.ref(`${PREFIX}/${code}`), warm = await warmRoomCache(ref);
+  let reason = '';
+  try {
+    if (expired(warm.snap.val())) { await cleanup(ref); throw fail('このルームは終了しました。'); }
+    const result = await transactRetry(ref, (room) => {
+      reason = '';
+      if (!room || expired(room)) { reason = 'ルームが見つかりません。終了したようです。'; return; }
+      if (room.players?.[id]?.uid === token) return room;
+      if (room.status === 'finished') { reason = 'このルームは、おしまいになったよ。'; return; }
+      const players = room.players || {};
+      if (Object.values(players).some((p) => p.name === name)) { reason = 'そのニックネームは使われているよ。別の名前にしてね。'; return; }
+      if (Object.keys(players).length >= MAX_PLAYERS) { reason = `このルームは${MAX_PLAYERS}人まで参加できるよ。`; return; }
+      room.playerOrder = [...(Array.isArray(room.playerOrder) ? room.playerOrder : []).filter((x) => players[x]), id];
+      room.players = { ...players, [id]: { name, uid: token, isHost: false, adult: !!adult } };
+      return room;
+    });
+    if (!result.committed) throw fail(reason || '参加できませんでした。もう一度ためしてね。');
+    const s = { code, id, token, role: 'guest' };
+    saveSession(s);
+    await attach(code, s, false);
+    return code;
+  } finally { warm.release(); }
+}
+async function leaveRoom() {
+  const c = ctx; if (!c) return goTop();
+  c.leaving = true;
+  await c.pending?.catch(() => {});
+  await RoomkRTDB.cancelRoomOnDisconnect(c.ref);
+  const s = c.session;
+  try {
+    await c.ref.transaction((room) => {
+      if (!room || !own(room, s)) return room ? undefined : room;
+      if (s.role === 'host') return null;
+      delete room.players[s.id];
+      if (Array.isArray(room.playerOrder)) room.playerOrder = room.playerOrder.filter((x) => x !== s.id);
+      Object.values(room.answers || {}).forEach((a) => { delete a[s.id]; });
+      Object.values(room.hands || {}).forEach((a) => { delete a[s.id]; });
+      Object.values(room.notes || {}).forEach((a) => { delete a[s.id]; });
+      return room;
+    }, undefined, false);
+  } catch (e) { console.warn(e); }
+  await detach();
+  saveSession(null);
+  goTop();
+}
+function goTop() { stopClock(); showScreen('top'); }
+
+// ── ホストの操作（ルームを transaction で直す） ──
+async function hostUpdate(fn) {
+  const c = ctx; if (!c || c.session?.role !== 'host') return;
+  try {
+    let skipped = false;
+    const result = await transactRetry(c.ref, (room) => { if (!room) return; const r = fn(room); if (r === false) { skipped = true; return; } return room; });
+    if (!result.committed && !skipped) toast('うまく保存できませんでした。もう一度ためしてね。');
+  } catch (e) { toast('通信に失敗しました。もう一度ためしてね。'); console.warn(e); }
+}
+// 表紙のある画面は「表紙 → 中身」の順。名前から移るときは表紙から
+const setView = (id, view) => hostUpdate((room) => { room.cur = id; room.view = view; });
+const setCur = (id) => { const s = stepsOf(ctx?.data).find((x) => x.id === id); return setView(id, hasCover(s) ? 'cover' : null); };
+function navTarget(room, delta) {
+  const cur = curStep(room), list = visibleSteps(room), i = list.findIndex((s) => s.id === cur?.id), cov = onCover(room, cur);
+  if (delta > 0) { if (cov) return [cur.id, null]; const n = list[i + 1]; return n ? [n.id, hasCover(n) ? 'cover' : null] : null; }
+  if (hasCover(cur) && !cov) return [cur.id, 'cover'];
+  const p = list[i - 1]; return p ? [p.id, null] : null;
+}
+function moveBy(delta) { const room = ctx?.data; if (!room) return; const t = navTarget(room, delta); if (t) setView(t[0], t[1]); }
+const toggleReveal = () => hostUpdate((room) => { const s = curStep(room); if (!s || s.mode !== 'hide') return false; room.reveal = { ...(room.reveal || {}), [s.id]: !room.reveal?.[s.id] }; });
+const toggleClosed = () => hostUpdate((room) => { const s = curStep(room); if (!s) return false; room.closed = { ...(room.closed || {}), [s.id]: !room.closed?.[s.id] }; });
+const toggleAnswer = () => hostUpdate((room) => { const s = curStep(room); if (!s || s.type !== 'choice') return false; room.answerShown = { ...(room.answerShown || {}), [s.id]: !room.answerShown?.[s.id] }; });
+function editSteps(fn) { return hostUpdate((room) => { const steps = stepsOf(room); const r = fn(steps, room); if (r === false) return false; room.steps = steps; if (!steps.some((s) => s.id === room.cur && !s.hidden)) room.cur = (steps.find((s) => !s.hidden) || steps[0])?.id || null; }); }
+const toggleHidden = (id) => editSteps((steps) => { const s = steps.find((x) => x.id === id); if (!s) return false; s.hidden = !s.hidden; });
+const moveStep = (id, delta) => editSteps((steps) => { const i = steps.findIndex((x) => x.id === id), j = i + delta; if (i < 0 || j < 0 || j >= steps.length) return false; [steps[i], steps[j]] = [steps[j], steps[i]]; });
+const addChoiceStep = (title, options) => editSteps((steps, room) => { const i = steps.findIndex((s) => s.id === room.cur); steps.splice(i + 1, 0, { id: uid(), type: 'choice', title, sub: '', options, answer: null, note: '', mode: 'hide', adhoc: true }); });
+const nextTopic = async () => { const list = await loadTopics(); return editSteps((steps, room) => { const s = steps.find((x) => x.id === room.cur); if (!s || s.type !== 'talk') return false; s.topic = pickTopic(list, s.topic); }); };
+// みんなでゲーム: くじで決める（2.4秒、候補が順に光る。音なし）・候補を入れかえる・進行役が1つに決める
+const DRAW_MS = 2400;
+let drawTimer = null;
+function isDrawing(s) {
+  const left = s.drawAt ? DRAW_MS - (now() - s.drawAt) : 0;
+  if (left > 0 && !drawTimer) drawTimer = setTimeout(() => { drawTimer = null; render(); }, left + 60);
+  return left > 0;
+}
+// くじを押した瞬間に結果を決め、そのゲームのタブを開く（押した操作の中で開かないとブラウザに止められる）
+const drawGame = () => {
+  const cur = ctx?.data && curStep(ctx.data), n = (cur?.cands || []).length; if (!cur || cur.type !== 'game' || !n) return;
+  const pick = Math.floor(Math.random() * n);
+  openGameWindow(cur.cands[pick].slug);
+  return editSteps((steps, room) => { const s = steps.find((x) => x.id === room.cur); if (!s || s.type !== 'game' || !(s.cands || [])[pick]) return false; s.pick = pick; s.drawAt = now(); s.gameName = s.cands[pick].name; s.link = ''; s.gameCode = ''; });
+};
+// ゲームのタブ: サークルタイムから開いたタブ（同じサイト）の sessionStorage から、作ったルームのコードを拾う
+let gameWin = null, gamePoll = null;
+function openGameWindow(slug) {
+  if (!slug) return;
+  try { gameWin = window.open(new URL(APPS_BASE + slug + '/', location.href).href, 'roomk-circle-game'); } catch { gameWin = null; }
+  if (!gameWin) { toast('ゲームのタブを開けませんでした。「ルームを作る」を押してね'); return; }
+  watchGameWindow(slug);
+}
+function findRoomCode(win) {
+  const ss = win.sessionStorage;
+  for (let i = 0; i < ss.length; i++) {
+    const key = ss.key(i); if (key === SESSION_KEY || key === PREF_KEY) continue; // 開いたタブには、このタブの sessionStorage が写されるので除く
+    let v; try { v = JSON.parse(ss.getItem(key)); } catch { continue; }
+    if (!v || typeof v !== 'object') continue;
+    const code = String(v.roomCode || v.code || v.roomId || '').toUpperCase();
+    if (CODE_RE.test(code) && code !== ctx?.code) return code;
+  }
+  return null;
+}
+function watchGameWindow(slug) {
+  clearInterval(gamePoll);
+  const t0 = Date.now();
+  gamePoll = setInterval(() => {
+    if (!gameWin || gameWin.closed || Date.now() - t0 > 30 * 60 * 1000) { clearInterval(gamePoll); gamePoll = null; return; }
+    let code = null;
+    try { if (!gameWin.location.pathname.includes('/' + slug + '/')) return; code = findRoomCode(gameWin); } catch { return; }
+    const room = ctx?.data, cur = room && curStep(room);
+    if (!code || !cur || cur.type !== 'game') return;
+    const g = cur.pick != null ? cur.cands?.[cur.pick] : null;
+    if (!g || g.slug !== slug || cur.gameCode === code) return;
+    const link = new URL(APPS_BASE + slug + '/?room=' + code, location.href).href;
+    editSteps((steps, r) => { const s = steps.find((x) => x.id === r.cur); if (!s || s.type !== 'game') return false; s.link = link; s.gameCode = code; });
+    toast(`${g.name}のルーム（${code}）を、みんなの端末に出しました`, false);
+  }, 1000);
+}
+const reshuffleGames = async () => { const room = ctx?.data, cur = room && curStep(room); if (!cur || cur.type !== 'game') return; const next = await pickGames((cur.cands || []).map((g) => g.slug)); if (!next.length) return toast('ツール一覧を読めませんでした'); await editSteps((steps, r) => { const s = steps.find((x) => x.id === r.cur); if (!s || s.type !== 'game') return false; s.cands = next; s.pick = null; s.drawAt = null; s.link = ''; s.gameCode = ''; s.gameName = ''; if (r.answers) delete r.answers[s.id]; }); };
+const decideGame = (i) => {
+  const cur = ctx?.data && curStep(ctx.data); if (!cur || cur.type !== 'game') return;
+  if (cur.pick !== i) openGameWindow(cur.cands?.[i]?.slug);
+  return editSteps((steps, room) => { const s = steps.find((x) => x.id === room.cur); if (!s || s.type !== 'game') return false; s.drawAt = null; s.pick = s.pick === i ? null : i; s.gameName = s.pick == null ? '' : (s.cands?.[i]?.name || ''); s.link = ''; s.gameCode = ''; });
+};
+// 代わりに入れる（端末のない子・チャットの子・自分）
+const setAnswer = (stepId, playerId, value) => hostUpdate((room) => { room.answers = room.answers || {}; room.answers[stepId] = room.answers[stepId] || {}; if (value == null) delete room.answers[stepId][playerId]; else room.answers[stepId][playerId] = value; });
+const addProxy = async (nameIn) => {
+  const name = validateName(nameIn), current = ctx?.data || {};
+  if (Object.values(current.players || {}).some((p) => p.name === name)) throw fail('その名前は使われているよ。');
+  if (Object.keys(current.players || {}).length >= MAX_PLAYERS) throw fail(`${MAX_PLAYERS}人までだよ。`);
+  const id = 'p_' + uid();
+  return hostUpdate((room) => {
+  if (Object.values(room.players || {}).some((p) => p.name === name)) return false;
+  room.players = { ...(room.players || {}), [id]: { name, proxy: true, isHost: false, adult: false } };
+  room.playerOrder = [...(Array.isArray(room.playerOrder) ? room.playerOrder : []), id];
+  });
+};
+const removePlayer = (id) => hostUpdate((room) => { if (!room.players?.[id] || id === room.host) return false; delete room.players[id]; if (Array.isArray(room.playerOrder)) room.playerOrder = room.playerOrder.filter((x) => x !== id); Object.values(room.answers || {}).forEach((a) => { delete a[id]; }); Object.values(room.hands || {}).forEach((a) => { delete a[id]; }); Object.values(room.notes || {}).forEach((a) => { delete a[id]; }); });
+async function finishRoom() {
+  const c = ctx; if (!c) return;
+  if (!confirm('ルームを閉じます。みんなの画面もおしまいになります。よろしいですか？')) return;
+  c.leaving = true;
+  await c.pending?.catch(() => {});
+  await RoomkRTDB.cancelRoomOnDisconnect(c.ref);
+  try { await c.ref.update({ status: 'finished' }); await new Promise((r) => setTimeout(r, 1500)); await c.ref.remove(); } catch (e) { console.warn(e); }
+  await detach(); saveSession(null); goTop();
+}
+
+// ── 参加者の操作 ──
+async function guestAnswer(stepId, value) {
+  const c = ctx; if (!c || c.session?.role === undefined) return;
+  const s = c.session;
+  try { await c.ref.child(`answers/${stepId}/${s.id}`).set(value); } catch (e) { toast('送れませんでした。もう一度ためしてね。'); }
+}
+async function guestWord(stepId, index, on) {
+  const c = ctx; if (!c) return;
+  try { await c.ref.child(`answers/${stepId}/${c.session.id}/w/${index}`).set(on ? true : null); } catch (e) { toast('送れませんでした。もう一度ためしてね。'); }
+}
+// 話したい（true）・チャットに書いた（'chat'）・取り消し（null）
+async function guestHand(stepId, value) {
+  const c = ctx; if (!c) return;
+  try { await c.ref.child(`hands/${stepId}/${c.session.id}`).set(value ?? null); } catch (e) { toast('送れませんでした。もう一度ためしてね。'); }
+}
+
+// ── 変化への反応 ──
+let lastRoom = null;
+function onRoomChange(c) {
+  const room = c.data;
+  if (!room) {
+    if (c.leaving) return;
+    detach(); saveSession(null);
+    overlay('おしまい', 'ルームが閉じられました。', goTop);
+    showScreen('top');
+    return;
+  }
+  if (room.status === 'finished' && !c.watch && c.session?.role !== 'host') { detach(); saveSession(null); overlay('おしまい', 'きょうのサークルタイムは、ここまで。', goTop); showScreen('top'); return; }
+  if (!c.watch && !room.players?.[c.session.id]) { detach(); saveSession(null); overlay('ルームから外れました', '進行役が外したか、参加の情報が消えました。もう一度参加できます。', goTop); showScreen('top'); return; }
+  if (expired(room)) { cleanup(c.ref).catch(() => {}); return; }
+  lastRoom = room;
+  render();
+}
+function render() {
+  const c = ctx; if (!c || !c.data) return;
+  const room = c.data;
+  if (c.watch) renderWatch(room);
+  else if (c.session.role === 'host') renderHost(room);
+  else renderPlayer(room);
+}
+
+// ── 舞台の描画（みんなにみせる画面・ホストのプレビュー） ──
+const chip = (p, extra = '') => `<span class="chip${p.adult ? ' adult' : ''}${extra}">${esc(p.name)}</span>`;
+// 話したい人・チャットに書いた人（名前つき。手を挙げるのと同じ）
+function handsHtml(room, players, key) {
+  const h = room.hands?.[key] || {}, talk = players.filter((p) => h[p.id] === true), chat = players.filter((p) => h[p.id] === 'chat');
+  const line = (icon, label, list) => `<div class="hands"><span class="material-symbols-rounded">${icon}</span>${label}　${list.map((p) => chip(p)).join('') || '<span style="color:var(--color-muted)">（まだいません）</span>'}</div>`;
+  return `<div class="hands-box">${line('front_hand', '話したい人', talk)}${line('chat', 'チャットに書いた人', chat)}</div>`;
+}
+// みんなの画面で名前を押して開いた「わけ」（その画面の中だけ。同期しない）
+let noteOpen = null;
+function stageHtml(room, code) {
+  const cur = curStep(room), kindPm = room.kind === 'pm', secs = sectionsOf(room), vis = visibleSteps(room);
+  const si = secs.findIndex((s) => s.id === cur?.id);
+  const session = `${kindPm ? '午後' : '午前'}のサークルタイム`;
+  const codeTag = `<div class="roomcode"><small>ルームコード</small><b>${esc(code)}</b></div>`;
+  const how = (what) => `<div class="how">端末・チャット（${what}）・声、どれでもOK</div>`;
+  const wrap = (body, foot = '', opt = {}) => `<div class="stage${kindPm ? ' pm' : ''}${opt.full ? ' full' : ''}">${opt.full ? '' : `<div class="top"><div class="progress">${secs.map((s, i) => `<span class="${i < si ? 'done' : i === si ? 'now' : ''}">${esc(shortName(s))}</span>`).join('')}</div></div>`}<div class="body">${body}</div><div class="foot">${foot}</div></div>`;
+  if (room.status === 'finished' || !cur) return wrap(`<div class="end">おしまい<small>きょうもありがとう</small></div>`, '', { full: true });
+  if (cur.type === 'opening') return wrap(`<div class="opening">${art(ART_BASE + (kindPm ? 'opening-pm' : 'opening-am') + '.webp', kindPm ? 'wb_twilight' : 'wb_sunny', 'op-art')}<div class="op-t">${session}</div><div class="op-d">${esc(room.date || '')}</div></div>`, `<span>チャットのリンクから、自分の端末でも入れるよ</span>${codeTag}`, { full: true });
+  if (cur.type === 'agenda') {
+    const ai = vis.findIndex((s) => s.id === cur.id);
+    const items = secs.map((s, i) => { const [ic, t] = coverOf(s); return `<li class="${vis.indexOf(s) < ai ? 'done' : ''}"><span class="no">${i + 1}</span>${secArt(s, 'ag-art')}${esc(t)}</li>`; }).join('');
+    return wrap(`<div class="agenda"><div class="ag-h">きょうの流れ</div><ol class="ag-list" style="grid-template-rows:repeat(${secs.length <= 4 ? secs.length : Math.ceil(secs.length / 2)},auto)">${items}</ol></div>`, '', { full: true });
+  }
+  if (cur.type === 'closing') {
+    if (kindPm) return wrap(`<div class="opening">${art(ART_BASE + 'closing-pm.webp', 'door_open', 'op-art')}<div class="op-t">エントランスに移動しよう</div><div class="op-d">きょうもありがとう</div></div>`, '', { full: true });
+    const first = firstSlot(room);
+    const items = first ? `<div class="mv">${first.items.map((it) => `<div class="mv-it">${it.thumb ? `<span class="th" style="background-image:url('${esc(it.thumb).replace(/'/g, '%27')}')"></span>` : ''}<b>${esc(it.name)}</b>${it.place ? `<span class="material-symbols-rounded">arrow_forward</span><span class="pl">${esc(it.place)}</span>` : ''}</div>`).join('')}</div>` : '';
+    return wrap(`<div class="closing-wrap">${art(ART_BASE + 'closing-am.webp', 'directions_walk', 'cl-art')}<div class="closing"><div class="kick"><span class="material-symbols-rounded">directions_walk</span>このあと${first ? `（${esc(first.tm)}から）` : ''}</div><h1>${first ? '1コマ目のプログラムに移動しよう' : 'それぞれのプログラムに移動しよう'}</h1>${items}</div></div>`, '', { full: true });
+  }
+  if (onCover(room, cur)) {
+    const [ic, t, d] = coverOf(cur);
+    return wrap(`<div class="cover">${secArt(cur, 'cv-art')}<div class="cv-txt"><div class="cv-no">${si + 1}<small>／${secs.length}</small></div><div class="cv-t">${esc(t)}</div>${d ? `<div class="cv-d">${esc(d)}</div>` : ''}</div></div>`, '', { full: true });
+  }
+  const players = playersOf(room), ans = answered(room, cur.id), revealed = isRevealed(room, cur);
+  const byValue = (v) => players.filter((p) => ans[p.id] === v || (ans[p.id] && typeof ans[p.id] === 'object' && ans[p.id].n === v));
+  const answeredPlayers = players.filter((p) => Object.hasOwn(ans, p.id));
+  // プレイ中の画面に絵は置かない（ui.md）。絵は表紙・目次・最後の案内だけ
+  const head = (icon, label, q) => `<div class="hd"><div class="hd-t"><div class="kick"><span class="material-symbols-rounded">${icon}</span>${esc(label)}</div>${q ? `<h1>${esc(q)}</h1>` : ''}</div></div>`;
+  const [cic, ctitle] = coverOf(cur);
+  if (cur.type === 'free') {
+    const f = room.free || {}, fk = 'free' + (f.n || 0), fans = room.answers?.[fk] || {};
+    const side = '';
+    const mode = FREE_MODES.find(([k]) => k === f.mode);
+    let main;
+    if (!mode) main = `<div class="fr-opts">${[...FREE_MODES, FREE_ANY].map(([k, ic, t, d], i) => `<div class="fr-opt${k === 'any' ? ' any' : ''}">${i < 3 ? `<span class="num">${'①②③'[i]}</span>` : ''}${art(freeArtSrc(k), ic, 'fr-art')}<b>${t}</b><small>${d}</small></div>`).join('')}</div>`;
+    else {
+      let content = '';
+      if (f.mode === 'talk') content = `<div class="fb-odai">${esc(f.topic || '')}</div>${handsHtml(room, players, fk)}`;
+      else if (f.mode === 'quiz' && f.quiz) { const q = f.quiz; content = `<div class="fb-q">${esc(q.q)}</div><div class="fb-cs">${(q.c || []).map((c, k) => `<div class="fb-c${f.shown && q.a === k ? ' ok' : ''}"><span class="num">${'①②③④'[k]}</span>${esc(c)}<div class="who">${players.filter((p) => fans[p.id] === k).map((p) => chip(p)).join('')}</div></div>`).join('')}</div>${f.shown ? `<div class="fb-ex"><b>答えは ${'①②③④'[q.a]}</b>　${esc(q.e || '')}</div>` : ''}`; }
+      else if (f.mode === 'kotoba' && f.kotoba) { content = `<div class="fb-kana">「<b>${esc(f.kotoba.i)}</b>」からはじまる</div><div class="fb-theme">${esc(f.kotoba.t)}</div><div class="fb-note">思いついたら、チャットに書いてね</div>`; }
+      main = `<div class="fb-card">${content}</div>`;
+    }
+    return wrap(head('schedule', '自由タイム', mode ? mode[2] : 'みんなで、なにしてあそぶ？') + `<div class="fr">${main}${side}</div>`, `<span class="ft">${mode ? 'やらなくてもOK' : 'やりたいものを、自分の端末でえらんでね'}</span>${codeTag}`);
+  }
+  if (cur.type === 'scale' || cur.type === 'review') {
+    const labels = cur.labels || LABELS.review;
+    const canOpen = (p) => cur.type === 'scale' && !!room.notes?.[cur.id]?.[p.id];
+    const nchip = (p) => canOpen(p) ? `<button type="button" class="chip has-note${p.adult ? ' adult' : ''}${noteOpen === cur.id + '|' + p.id ? ' open' : ''}" data-note="${esc(p.id)}">${esc(p.name)}<span class="material-symbols-rounded">chat_bubble</span></button>` : chip(p);
+    const rows = `<div class="rows">${labels.map((l, i) => { const v = 5 - i; return `<div class="row"><span class="n">${v}</span><span class="fc material-symbols-rounded">${FACES[i]}</span><span class="l">${esc(l)}</span><div class="who${byValue(v).length > 6 ? ' many' : ''}">${revealed ? byValue(v).map(nchip).join('') : ''}</div></div>`; }).join('')}</div>`;
+    const op = noteOpen && noteOpen.startsWith(cur.id + '|') ? players.find((p) => p.id === noteOpen.slice(cur.id.length + 1)) : null;
+    const pop = op && canOpen(op) ? `<div class="note-pop"><b>${esc(op.name)}</b>${esc(room.notes[cur.id][op.id])}</div>` : '';
+    if (cur.type === 'scale') {
+      let body = head(cic, cur.title, cur.sub) + `<div class="scale"><div class="bar"></div>${rows}</div>${pop}`;
+      if (!revealed) body += `<div class="ans-bar"><span class="cnt">${answeredPlayers.length}／${players.length}</span>人 答えたよ ${answeredPlayers.map((p) => chip(p)).join('')}<span class="note">${isClosed(room, cur) ? 'しめきりました' : 'そろったら、せーので見せます'}</span></div>`;
+      return wrap(body, `<div class="how">端末・チャット（数字）・声、どれでもOK</div>${room.notes?.[cur.id] && Object.keys(room.notes[cur.id]).length ? '<div class="how"><span class="material-symbols-rounded" style="font-size:24px;color:var(--color-accent);vertical-align:-4px">chat_bubble</span> の名前を押すと、わけが出るよ</div>' : ''}`);
+    }
+    return wrap(head('history', 'ふりかえり', cur.sub) + `<div class="scale">${rows.replace('<div class="rows">', '<div class="rows" style="grid-column:1/-1">')}</div>`, '<div class="how">端末・チャット（数字）・声、どれでもOK</div>');
+  }
+  if (cur.type === 'choice') {
+    const n = (cur.options || []).length, shown = !!room.answerShown?.[cur.id], all = cur.answer === 'all';
+    const cards = (cur.options || []).map((o, i) => { const ok = shown && (all || cur.answer === i); const cn = shown && all && cur.notes?.[i] ? `<div class="cn">${esc(cur.notes[i])}</div>` : ''; return `<div class="choice${ok ? ' ok' : ''}">${ok ? '<span class="mark"><span class="material-symbols-rounded">check</span></span>' : ''}<span class="num">${'①②③④⑤⑥'[i]}</span><div class="t">${esc(o)}</div>${cn}<div class="who${byValue(i).length > 6 ? ' many' : ''}">${revealed ? byValue(i).map((p) => chip(p)).join('') : ''}</div></div>`; }).join('');
+    let body = head(cic, ctitle, cur.adhoc ? cur.title : cur.sub) + `<div class="choices" style="grid-template-columns:repeat(${Math.min(n, 3)},1fr)">${cards}</div>`;
+    if (!revealed) body += `<div class="answer-line">${answeredPlayers.length}／${players.length}人 答えたよ　${answeredPlayers.map((p) => esc(p.name)).join('・')}${isClosed(room, cur) ? '　しめきりました' : ''}</div>`;
+    else if (shown && all) body += `<div class="answer-line"><b>3つとも本当！</b>　${esc(cur.note || 'どれも本当にある記念日です')}</div>`;
+    else if (shown && cur.answer != null) body += `<div class="answer-line"><b>答えは ${'①②③④⑤⑥'[cur.answer]}</b>　${esc(cur.note || '')}</div>`;
+    return wrap(body, how('番号'));
+  }
+  if (cur.type === 'weather') return wrap(head('partly_cloudy_day', '全国の天気', '') + `<div class="wx">${wxSvg(room, byValue)}</div>`, how('「はれ」など'));
+  if (cur.type === 'game') {
+    const cands = cur.cands || [], drawing = isDrawing(cur), g = !drawing && cur.pick != null ? cands[cur.pick] : null;
+    if (g) return wrap(head('casino', 'みんなでゲーム', g.name) + `<div class="game-on">${g.slug ? gameArt(g, 'go-art') : '<span></span>'}<div class="side">${cur.gameCode ? `<div class="box gcode"><b>ルームコード</b><span>${esc(cur.gameCode)}</span></div><div class="box"><b>入り方</b>自分の端末の「ゲームに入る」か、チャットのリンクを押してね</div>` : `<div class="box"><b>入り方</b>${cur.link ? 'チャットのリンクを押してね' : 'ルームができたら、自分の端末に「ゲームに入る」が出るよ'}</div>`}<div class="box"><b>端末がない人</b>画面を見て、チャットや声で参加してね</div>${cur.gameCode ? '' : '<div class="box">はじめに、あそびかたを説明します。見ているだけでもOK</div>'}</div></div>`);
+    if (!cands.length) return wrap(head('casino', 'みんなでゲーム', cur.gameName || 'これから決めます'));
+    return wrap(head('casino', 'みんなでゲーム', drawing ? 'くじを引いています…' : 'きょうは、この中からくじで決めるよ') + `<div class="games${drawing ? ' spin' : ''}">${cands.map((c, i) => `<div class="game">${c.slug ? gameArt(c, 'gm-art') : ''}<div class="gt"><span class="num">${'①②③④'[i]}</span>${esc(c.name)}</div><div class="gh">${esc(c.hk)}</div></div>`).join('')}</div>`);
+  }
+  if (cur.type === 'show') {
+    const pg = programHtml(cur.lines, cur.thumbs) || '<div class="fb-note">（まだありません。ホストの「文を直す」で書けます）</div>';
+    return wrap(head('event_note', cur.ttl || '', cur.title) + pg + (cur.note ? `<div class="pgx-note"><b>きょうのひとこと</b>　${esc(cur.note)}</div>` : ''), `<span>${cur.link ? 'くわしくは room-K ポータルで' : ''}</span>`);
+  }
+  if (cur.type === 'talk') {
+    return wrap(head('forum', 'チェックイン', '') + `<div class="talk"><div class="odai">${esc(cur.topic || '')}</div>${handsHtml(room, players, cur.id)}</div>`, '<span>マイクでもチャットでもOK。聞くだけでもOK</span>');
+  }
+  return wrap(head(cic, ctitle, ''));
+}
+// 午前の最後: 1コマ目（その日のプログラムの、いちばん早い時刻のもの。場所つき）
+function firstSlot(room) {
+  const pg = stepsOf(room).find((s) => s.type === 'show' && !/^明日/.test(s.title || ''));
+  const items = (pg?.lines || []).map(parseLine).filter((x) => x.name && x.tm && x.tm !== '—');
+  if (!items.length) return null;
+  const th = (n) => { const u = pg.thumbs?.[n]; return /^https:\/\//.test(u || '') ? u : ''; };
+  return { tm: items[0].tm, items: items.filter((x) => x.tm === items[0].tm).map((x) => ({ ...x, thumb: th(x.name) })) };
+}
+// プログラムの1行「9:30 ボドゲクラブ｜クラブルーム｜この日だけ」を読む
+const PG_TAGS = ['この日だけ', '申し込み制'];
+function parseLine(l) {
+  const m = String(l).match(/^(\d{1,2}:\d{2}|—)\s+(.*)$/);
+  const tm = m ? m[1] : '', rest = m ? m[2] : String(l);
+  const parts = rest.split('｜').map((x) => x.trim()).filter(Boolean);
+  const name = parts.shift() || '';
+  return { tm, name, place: parts.filter((x) => !PG_TAGS.includes(x)).join('・'), tags: parts.filter((x) => PG_TAGS.includes(x)) };
+}
+// 時刻の早い順に「1コマ目」「2コマ目」…（時刻のないものは数えない）
+function komaOf(items) { const out = {}; let n = 0; for (const it of items) if (it.tm && it.tm !== '—' && !out[it.tm]) out[it.tm] = ++n; return out; }
+function programHtml(lines, thumbs) {
+  const items = (lines || []).map(parseLine).filter((x) => x.name);
+  if (!items.length) return '';
+  const groups = [];
+  for (const it of items) { const g = groups[groups.length - 1]; if (g && g.tm === it.tm) g.items.push(it); else groups.push({ tm: it.tm, items: [it] }); }
+  const dense = groups.length > 4 || groups.some((g) => g.items.length > 2), roomy = !dense && groups.length <= 3;
+  const th = (name) => { const u = thumbs?.[name]; return /^https:\/\//.test(u || '') ? `<span class="th" style="background-image:url('${esc(u).replace(/'/g, '%27')}')"></span>` : ''; };
+  const koma = komaOf(items);
+  return `<div class="pgx${dense ? ' dense' : roomy ? ' roomy' : ''}">${groups.map((g) => `<div class="pgx-row"><span class="tm">${koma[g.tm] ? `<small>${koma[g.tm]}コマ目</small>` : ''}${esc(g.tm === '—' ? '' : g.tm)}</span><div class="pgx-items">${g.items.map((it) => `<div class="pgx-it">${th(it.name)}<div class="nm">${esc(it.name)}${it.place ? `<small>${esc(it.place)}</small>` : ''}${it.tags.map((t) => `<span class="pg-tag${t === 'この日だけ' ? ' once' : ''}">${esc(t)}</span>`).join('')}</div></div>`).join('')}</div></div>`).join('')}</div>`;
+}
+// 全国の天気（日本地図に、都市ごとのカードと線）
+function wxSvg(room, byValue) {
+  const wx = room.weather, CW = 120, CH = 92;
+  const byName = Object.fromEntries((wx?.cities || []).map((c) => [c.n, c]));
+  let s = '<svg class="wxmap" viewBox="0 0 1168 500" preserveAspectRatio="xMidYMid meet" role="img" aria-label="全国の天気">';
+  s += '<rect class="inset" x="8" y="280" width="228" height="196" rx="14"/><text class="okl" x="22" y="470">沖縄</text>';
+  s += `<path class="land" d="${JAPAN.main}"/><path class="land" d="${JAPAN.inset}"/>`;
+  let lines = '', cards = '';
+  for (const [name, [x, y]] of Object.entries(WX_SLOTS)) {
+    const [dx, dy] = WX_DOTS[name];
+    const px = Math.min(Math.max(dx, x), x + CW), py = Math.min(Math.max(dy, y), y + CH);
+    lines += `<line class="lead" x1="${dx}" y1="${dy}" x2="${px}" y2="${py}"/><circle class="dot" cx="${dx}" cy="${dy}" r="5"/>`;
+    const c = byName[name];
+    const ic = c?.code ? wxIcon(c.code) : 'remove';
+    const cls = ic === 'rainy' ? ' rain' : ic === 'cloud' ? ' cloud' : ic === 'weather_snowy' ? ' snow' : '';
+    const tp = c && (c.max != null || c.min != null) ? `${c.max != null ? `<tspan class="hi">${c.max}</tspan>` : ''}${c.max != null && c.min != null ? '/' : ''}${c.min != null ? `<tspan class="lo">${c.min}</tspan>` : ''}` : '';
+    cards += `<g class="wxcard" data-city="${esc(name)}"><rect x="${x}" y="${y}" width="${CW}" height="${CH}" rx="12"/><text class="nm" x="${x + 60}" y="${y + 25}" text-anchor="middle">${esc(name)}</text><text class="ic${cls}" x="${x + 32}" y="${y + 76}" text-anchor="middle">${ic}</text><text class="tp" x="${x + 86}" y="${y + 68}" text-anchor="middle">${tp}</text></g>`;
+  }
+  s += lines + cards;
+  s += `<foreignObject x="10" y="8" width="230" height="266"><div xmlns="http://www.w3.org/1999/xhtml" class="ask2"><div class="q">きみのところは？</div>${WX_OPTIONS.map((o, i) => `<div class="opt"><span class="ic"><span class="material-symbols-rounded">${o.i}</span>${o.t}</span><div class="who">${byValue(i).map((p) => chip(p)).join('')}</div></div>`).join('')}</div></foreignObject>`;
+  if (!wx?.cities) s += '<text class="nodata" x="600" y="250" text-anchor="middle">天気はまだ取れていません</text>';
+  s += `<text class="src" x="1160" y="494" text-anchor="end">出典: 気象庁${wx?.at ? `（${new Date(wx.at).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tokyo' })} に取得）` : ''}</text>`;
+  return s + '</svg>';
+}
+['watch-stage', 'host-preview'].forEach((id) => $(id).addEventListener('click', (e) => {
+  const b = e.target.closest('[data-note]'), room = ctx?.data, cur = room && curStep(room); if (!cur) return;
+  const key = b ? cur.id + '|' + b.dataset.note : null;
+  const next = key && noteOpen !== key ? key : null;
+  if (next === noteOpen) return;
+  noteOpen = next; render();
+}));
+function fitStages() {
+  document.querySelectorAll('.stage-wrap').forEach((w) => { const s = w.clientWidth / 1280; w.querySelectorAll(':scope > .stage').forEach((st) => { st.style.transform = `scale(${s})`; }); });
+}
+window.addEventListener('resize', fitStages);
+let clockTimer = null;
+function clockText() { return new Intl.DateTimeFormat('ja-JP', { hour: 'numeric', minute: '2-digit', timeZone: 'Asia/Tokyo' }).format(new Date()); }
+function startClock() { if (clockTimer) return; clockTimer = setInterval(() => { document.querySelectorAll('.clock-now').forEach((el) => { el.textContent = clockText(); }); }, 1000); }
+function stopClock() { if (clockTimer) { clearInterval(clockTimer); clockTimer = null; } }
+let mouseTimer = null;
+window.addEventListener('mousemove', () => { document.body.classList.add('mouse'); clearTimeout(mouseTimer); mouseTimer = setTimeout(() => document.body.classList.remove('mouse'), 2500); });
+// 画面が変わったときだけ、ふわっと出す（答えが届いたなどの描き直しでは出さない）
+const lastStageKey = {};
+function enterIfChanged(id, room) {
+  const key = (room.cur || '') + '|' + (room.view || '') + '|' + (room.status || '');
+  if (lastStageKey[id] !== undefined && lastStageKey[id] !== key) $(id).querySelector('.stage')?.classList.add('enter');
+  lastStageKey[id] = key;
+}
+function renderWatch(room) {
+  showScreen('watch');
+  $('watch-bar-code').textContent = ctx.code;
+  $('watch-stage').innerHTML = stageHtml(room, ctx.code);
+  enterIfChanged('watch-stage', room);
+  fitStages(); startClock();
+  if (room.hostConnected === false && room.status !== 'finished') showAway(room); else hideAway();
+}
+function showAway(room) {
+  if (!$('overlay').hidden && $('overlay').dataset.kind === 'away') return;
+  $('overlay').dataset.kind = 'away';
+  $('overlay-title').textContent = '進行役の戻りを待っています';
+  $('overlay-text').textContent = '通信が切れたようです。2分もどらなければ、このルームは終了します。';
+  $('overlay-btn').textContent = ctx?.watch ? 'とじる' : '退出する';
+  $('overlay-btn').onclick = () => { $('overlay').hidden = true; delete $('overlay').dataset.kind; if (!ctx?.watch) leaveRoom(); };
+  $('overlay').hidden = false;
+}
+function hideAway() { if ($('overlay').dataset.kind === 'away') { $('overlay').hidden = true; delete $('overlay').dataset.kind; $('overlay-btn').textContent = 'トップへ戻る'; } }
+
+// ── 参加者の画面 ──
+function renderPlayer(room) {
+  showScreen('player');
+  $('player-code').textContent = ctx.code;
+  const me = room.players?.[ctx.session.id]; $('player-name').textContent = me?.name || '';
+  if (room.hostConnected === false) showAway(room); else hideAway();
+  const cur = curStep(room), secs = sectionsOf(room), vis = visibleSteps(room), idx = secs.findIndex((s) => s.id === cur?.id);
+  const prog = `<div class="p-prog">${secs.map((s, i) => `<span class="${i < idx ? 'done' : i === idx ? 'now' : ''}"></span>`).join('')}</div>`;
+  const card = $('player-card'); card.classList.toggle('pm', room.kind === 'pm');
+  if (cur && document.activeElement?.id === 'p-note' && card.dataset.key === cur.id + '|' + (room.view || '')) { renderLater = true; return refreshSend(); }
+  if (!cur) { card.innerHTML = prog + '<div class="p-big">ちょっとまってね</div>'; return; }
+  const mine = room.answers?.[cur.id]?.[ctx.session.id];
+  const closed = isClosed(room, cur);
+  const h2 = (icon, t, q) => `<h2><span class="material-symbols-rounded">${icon}</span>${esc(t)}</h2><p class="q">${esc(q || '')}</p>`;
+  const sent = (what) => `<div class="p-foot"><span>${what}</span>${closed ? '<span>しめきりました</span>' : `<button type="button" class="btn-text" data-act="pass">パスする</button>`}</div>`;
+  const optBtn = (value, label, num) => `<button type="button" class="opt-btn" data-act="ans" data-v="${esc(String(value))}" aria-pressed="${mine === value || (mine && mine.n === value)}" ${closed ? 'disabled' : ''}>${num != null ? `<span class="n${typeof num === 'string' && /[①-⑳]/.test(num) ? ' mk' : ''}">${num}</span>` : ''}${esc(label)}<span class="material-symbols-rounded chk">check</span></button>`;
+  let html = prog;
+  const agendaList = () => { const ai = vis.findIndex((s) => s.id === cur.id); return `<ol class="p-ag">${secs.map((s, i) => { const [ic, t] = coverOf(s); return `<li class="${vis.indexOf(s) < ai ? 'done' : ''}"><span class="no">${i + 1}</span><span class="material-symbols-rounded">${ic}</span>${esc(t)}</li>`; }).join('')}</ol>`; };
+  if (cur.type === 'opening' || cur.type === 'agenda') {
+    html += `<div class="p-cover"><span class="material-symbols-rounded">${room.kind === 'pm' ? 'wb_twilight' : 'wb_sunny'}</span><b>${room.kind === 'pm' ? '午後' : '午前'}のサークルタイム</b><p>${esc(room.date || '')}</p></div><div class="p-sub">きょうの流れ</div>` + agendaList();
+    card.innerHTML = html; return;
+  }
+  if (cur.type === 'closing') {
+    const first = room.kind === 'pm' ? null : firstSlot(room);
+    html += room.kind === 'pm' ? `<div class="p-cover"><span class="material-symbols-rounded">door_open</span><b>エントランスに移動しよう</b><p>きょうもありがとう</p></div>`
+      : `<div class="p-cover"><span class="material-symbols-rounded">directions_walk</span><b>${first ? '1コマ目のプログラムに移動しよう' : 'それぞれのプログラムに移動しよう'}</b>${first ? `<p>${esc(first.tm)}から</p>` : ''}</div>${first ? `<ul class="p-lines">${first.items.map((it) => `<li>${it.thumb ? `<img class="th" src="${esc(it.thumb)}" alt="">` : ''}<b>${esc(it.name)}</b>${it.place ? `　→ ${esc(it.place)}` : ''}</li>`).join('')}</ul>` : ''}`;
+    card.innerHTML = html; return;
+  }
+  if (onCover(room, cur)) {
+    const [ic, t, d] = coverOf(cur);
+    html += `<div class="p-cover"><small>${idx + 1}／${secs.length}　つぎは</small>${secArt(cur, 'p-art')}<b>${esc(t)}</b>${d ? `<p>${esc(d)}</p>` : ''}</div>`;
+    card.innerHTML = html; return;
+  }
+  if (cur.type === 'free') {
+    const f = room.free || {}, fk = 'free' + (f.n || 0), myF = room.answers?.[fk]?.[ctx.session.id];
+    const mode = FREE_MODES.find(([k]) => k === f.mode);
+    if (!mode) {
+      const wish = room.answers?.['fwish' + (f.n || 0)]?.[ctx.session.id];
+      html += h2('schedule', '自由タイム', 'みんなであそびたい人は、やりたいものをえらんでね。自由にすごしてもOK') + `<div class="opts">${[...FREE_MODES, FREE_ANY].map(([k, ic, t, d], i) => `<button type="button" class="opt-btn" data-act="fwish" data-v="${k}" aria-pressed="${wish === k}">${i < 3 ? `<span class="n mk">${'①②③'[i]}</span>` : '<span class="n mk"></span>'}${art(freeArtSrc(k), ic, 'pb-art')}<span>${t}<small>${d}</small></span><span class="material-symbols-rounded chk">check</span></button>`).join('')}</div>${pnote('visibility_off', 'だれが何をえらんだかは出ないよ')}${pnote('how_to_vote', '人数を見て、進行役が決めるよ')}`;
+      card.innerHTML = html; return;
+    }
+    html += h2(mode[1], mode[2], '');
+    if (f.mode === 'talk') { const hv = room.hands?.[fk]?.[ctx.session.id]; html += `<div class="p-odai">${esc(f.topic || '')}</div>` + `<div class="p-words" style="justify-content:center;margin-top:14px"><button type="button" data-act="fhand" aria-pressed="${hv === true}"><span class="material-symbols-rounded" style="font-size:20px;margin-right:4px">front_hand</span>話したい</button><button type="button" data-act="fchat" aria-pressed="${hv === 'chat'}"><span class="material-symbols-rounded" style="font-size:20px;margin-right:4px">chat</span>チャットに書いたよ</button></div><p class="q" style="text-align:center;margin-top:10px">マイクで話す人は「話したい」、MetaLife のチャットに書いた人は「チャットに書いたよ」。聞くだけでもOK</p>`; }
+    else if (f.mode === 'quiz' && f.quiz) { html += `<p class="q" style="font-size:17px;color:var(--color-text);font-weight:700">${esc(f.quiz.q)}</p><div class="opts">${f.quiz.c.map((c, k) => `<button type="button" class="opt-btn" data-act="fq" data-v="${k}" aria-pressed="${myF === k}"><span class="n mk">${'①②③④'[k]}</span>${esc(c)}<span class="material-symbols-rounded chk">check</span></button>`).join('')}</div>${f.shown ? `<div class="p-ex"><b>答えは ${'①②③④'[f.quiz.a]}</b>　${esc(f.quiz.e || '')}</div>` : ''}`; }
+    else if (f.mode === 'kotoba' && f.kotoba) { html += `<div class="p-odai">「${esc(f.kotoba.i)}」からはじまる<br>${esc(f.kotoba.t)}</div><p class="q" style="text-align:center;margin-top:8px">思いついたら、チャットに書いてね</p>`; }
+    html += `<p class="q" style="margin-top:12px">やらなくてもOK。見ているだけでもいいよ</p>`;
+  }
+  else if (cur.type === 'scale' || cur.type === 'review') {
+    const d = draftFor(room, cur), review = cur.type === 'review';
+    html += h2(review ? 'history' : cur.key === 'karada' ? 'accessibility_new' : 'favorite', cur.title, cur.sub)
+      + `<div class="opts">${(cur.labels || []).map((l, i) => `<button type="button" class="opt-btn" data-act="pick" data-v="${5 - i}" aria-pressed="${d.n === 5 - i}" ${closed ? 'disabled' : ''}><span class="n">${5 - i}</span><span class="fc material-symbols-rounded">${FACES[i]}</span>${esc(l)}<span class="material-symbols-rounded chk">check</span></button>`).join('')}</div>`
+      + (review ? `<div class="p-sub">ひとこと（いくつでも・なくてもOK）</div><div class="p-words">${(cur.words || WORDS).map((t, i) => `<button type="button" data-act="pickw" data-v="${i}" aria-pressed="${!!d.w[i]}" ${closed ? 'disabled' : ''}>${WORD_ICONS[i] ? `<span class="material-symbols-rounded">${WORD_ICONS[i]}</span>` : ''}${esc(t)}</button>`).join('')}</div>` : '')
+      + (`<div class="p-sub">${review ? '自由に書いてもOK' : 'わけ・ひとこと（なくてもOK）'}</div><textarea id="p-note" class="p-note" maxlength="${NOTE_MAX}" rows="2" placeholder="${review ? 'きょうのこと、なんでも' : '書きたいことがあれば'}" ${closed ? 'disabled' : ''}>${esc(d.t)}</textarea>${review ? pnote('lock', '進行役にだけとどくよ') : pnote('chat_bubble', 'みんなの画面で名前を押すと出るよ')}`)
+      + sendRow(room, cur, d, closed);
+  } else if (cur.type === 'choice') {
+    const shown = !!room.answerShown?.[cur.id];
+    html += h2(cur.adhoc ? 'help' : 'calendar_today', cur.title, cur.sub) + `<div class="opts">${(cur.options || []).map((o, i) => optBtn(i, o, '①②③④⑤⑥'[i])).join('')}</div>` + (shown && cur.answer === 'all' ? `<div class="p-big" style="font-size:20px">3つとも本当！</div><ul class="p-lines">${(cur.options || []).map((o, i) => `<li><b>${esc(o)}</b>${cur.notes?.[i] ? '　' + esc(cur.notes[i]) : ''}</li>`).join('')}</ul>` : shown && cur.answer != null ? `<div class="p-big" style="font-size:20px">答えは ${'①②③④⑤⑥'[cur.answer]}</div><p class="q" style="text-align:center">${esc(cur.note || '')}</p>` : sent(mine === 'pass' ? 'パスしたよ' : typeof mine === 'number' ? `${'①②③④⑤⑥'[mine]} を送ったよ` : 'まだ送っていないよ'));
+  } else if (cur.type === 'weather') {
+    html += h2('partly_cloudy_day', cur.title, 'きみのところは、いまどんな天気？') + `<div class="p-wx">${WX_OPTIONS.map((o, i) => `<button type="button" class="opt-btn" data-act="ans" data-v="${i}" aria-pressed="${mine === i}" ${closed ? 'disabled' : ''}><span class="material-symbols-rounded">${o.i}</span>${o.t}</button>`).join('')}</div>` + sent(typeof mine === 'number' ? `${WX_OPTIONS[mine].t} を送ったよ` : 'まだ送っていないよ');
+  } else if (cur.type === 'game') {
+    const cands = cur.cands || [], drawing = isDrawing(cur), g = !drawing && cur.pick != null ? cands[cur.pick] : null;
+    const href = cur.link && /^https?:\/\//.test(cur.link) ? cur.link : g?.slug ? APPS_BASE + g.slug + '/' : '';
+    if (g) html += h2('casino', 'みんなでゲーム', 'これであそぶよ') + `${g.slug ? gameArt(g, 'p-game-art') : ''}<div class="p-big" style="padding:0 0 6px">${esc(g.name)}</div><p class="q" style="text-align:center">${esc(g.hk || '')}</p>` + (cur.link ? `<a class="p-link p-go" href="${esc(href)}" target="_blank" rel="noopener"><span class="material-symbols-rounded">login</span>ゲームに入る${cur.gameCode ? `<small>ルーム ${esc(cur.gameCode)}</small>` : ''}</a>` : `<p class="q" style="text-align:center;margin-top:8px">ルームができたら、ここに「ゲームに入る」が出るよ</p>${href ? `<a class="p-link" href="${esc(href)}" target="_blank" rel="noopener"><span class="material-symbols-rounded">open_in_new</span>先にゲームを開いておく</a>` : ''}`);
+    else if (!cands.length) html += h2('casino', 'みんなでゲーム', cur.gameName || 'これから決めます');
+    else html += h2('casino', 'みんなでゲーム', drawing ? 'くじを引いています…' : 'この中から、くじで決めるよ') + `<ul class="p-lines">${cands.map((c, i) => `<li class="p-gli">${c.slug ? gameArt(c, 'pl-art') : ''}<span>${'①②③④'[i]} ${esc(c.name)}</span></li>`).join('')}</ul>`;
+  } else if (cur.type === 'show') {
+    const th = (n) => /^https:\/\//.test(cur.thumbs?.[n] || '') ? `<img class="th" src="${esc(cur.thumbs[n])}" alt="">` : '';
+    const pitems = (cur.lines || []).map(parseLine).filter((x) => x.name), koma = komaOf(pitems);
+    const pl = pitems.map((x) => `<li>${th(x.name)}<b>${koma[x.tm] ? `${koma[x.tm]}コマ目 ` : ''}${esc(x.tm === '—' ? '' : x.tm)}</b> ${esc(x.name)}${x.place ? `（${esc(x.place)}）` : ''}${x.tags.map((t) => ` <span class="pg-tag${t === 'この日だけ' ? ' once' : ''}" style="font-size:12px">${esc(t)}</span>`).join('')}</li>`).join('');
+    html += h2('event_note', cur.title, cur.ttl || '') + `<ul class="p-lines">${pl}</ul>` + (cur.note ? `<p class="q" style="margin-top:12px">${esc(cur.note)}</p>` : '') + (cur.link && /^https?:\/\//.test(cur.link) ? `<a class="p-link" href="${esc(cur.link)}" target="_blank" rel="noopener"><span class="material-symbols-rounded">open_in_new</span>くわしく開く</a>` : '');
+  } else if (cur.type === 'talk') {
+    const hv = room.hands?.[cur.id]?.[ctx.session.id];
+    html += h2('forum', 'チェックイン', '') + `<div class="p-odai">${esc(cur.topic || '')}</div>` + `<div class="p-words" style="justify-content:center;margin-top:14px"><button type="button" data-act="hand" aria-pressed="${hv === true}"><span class="material-symbols-rounded" style="font-size:20px;margin-right:4px">front_hand</span>話したい</button><button type="button" data-act="chat" aria-pressed="${hv === 'chat'}"><span class="material-symbols-rounded" style="font-size:20px;margin-right:4px">chat</span>チャットに書いたよ</button></div><p class="q" style="text-align:center;margin-top:10px">マイクで話す人は「話したい」、MetaLife のチャットに書いた人は「チャットに書いたよ」。聞くだけでもOK</p>`;
+  }
+  card.innerHTML = html;
+  card.dataset.key = cur.id + '|' + (room.view || '');
+}
+// 心・体・ふりかえりの下書き（送るまでは自分の端末だけ）
+const NOTE_MAX = 60;
+let draft = null, renderLater = false;
+function storedOf(room, cur) {
+  const me = ctx.session.id, a = room.answers?.[cur.id]?.[me];
+  return { a, n: a && typeof a === 'object' ? (a.n ?? null) : (typeof a === 'number' ? a : null), w: a && typeof a === 'object' ? { ...(a.w || {}) } : {}, t: room.notes?.[cur.id]?.[me] || '', };
+}
+function draftFor(room, cur) {
+  if (!draft || draft.key !== cur.id) { const st = storedOf(room, cur); draft = { key: cur.id, n: st.n, w: st.w, t: st.t }; }
+  return draft;
+}
+const sameW = (a, b) => JSON.stringify(Object.keys(a).filter((k) => a[k]).sort()) === JSON.stringify(Object.keys(b).filter((k) => b[k]).sort());
+function sendState(room, cur, d) {
+  const st = storedOf(room, cur), has = st.a != null && st.a !== 'pass';
+  const dirty = d.n !== st.n || !sameW(d.w, st.w) || d.t.trim() !== st.t;
+  const can = d.n != null || (cur.type === 'review' && (Object.values(d.w).some(Boolean) || d.t.trim()));
+  return { st, has, dirty, can, label: has && !dirty ? '送ったよ' : has ? '送りなおす' : '送る', status: st.a === 'pass' ? 'パスしたよ' : has ? (dirty ? '変えたら「送りなおす」を押してね' : `${st.n != null ? st.n + ' を' : ''}送ったよ。変えたいときは、選びなおして送りなおしてね`) : 'えらんで「送る」を押してね' };
+}
+function sendRow(room, cur, d, closed) {
+  const ss = sendState(room, cur, d);
+  return `<div class="p-send"><button type="button" class="btn btn-primary${ss.has && !ss.dirty ? ' sent' : ''}" id="p-send" data-act="send" ${closed || !ss.can || (ss.has && !ss.dirty) ? 'disabled' : ''}>${ss.has && !ss.dirty ? '<span class="material-symbols-rounded">check_circle</span>' : ''}${ss.label}</button>${closed ? '<span>しめきりました</span>' : '<button type="button" class="btn-text" data-act="pass">パスする</button>'}</div><p class="q" id="p-send-status">${esc(ss.status)}</p>`;
+}
+function refreshSend() {
+  const room = ctx?.data, cur = room && curStep(room), b = $('p-send'); if (!b || !draft || !cur) return;
+  const ss = sendState(room, cur, draft);
+  b.innerHTML = (ss.has && !ss.dirty ? '<span class="material-symbols-rounded">check_circle</span>' : '') + ss.label; b.classList.toggle('sent', ss.has && !ss.dirty); b.disabled = isClosed(room, cur) || !ss.can || (ss.has && !ss.dirty); $('p-send-status').textContent = ss.status;
+}
+async function sendDraft() {
+  const c = ctx, room = c?.data, cur = room && curStep(room); if (!cur || !draft) return;
+  const t = draft.t.trim().slice(0, NOTE_MAX), w = Object.fromEntries(Object.entries(draft.w).filter(([, v]) => v));
+  const value = cur.type === 'review' ? { n: draft.n ?? null, w } : draft.n;
+  try { await c.ref.child(`answers/${cur.id}/${c.session.id}`).set(value); await c.ref.child(`notes/${cur.id}/${c.session.id}`).set(t || null); draft.t = t; }
+  catch { toast('送れませんでした。もう一度ためしてね。'); }
+}
+$('player-card').addEventListener('input', (e) => { if (e.target.id === 'p-note' && draft) { draft.t = e.target.value; refreshSend(); } });
+$('player-card').addEventListener('focusout', (e) => { if (e.target.id === 'p-note' && renderLater) { renderLater = false; setTimeout(render, 0); } });
+$('player-card').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-act]'); if (!b || b.disabled) return;
+  const room = ctx?.data, cur = room && curStep(room); if (!cur) return;
+  const act = b.dataset.act, v = b.dataset.v;
+  const mine = room.answers?.[cur.id]?.[ctx.session.id];
+  if (act === 'pick') { const d = draftFor(room, cur), val = Number(v); d.n = d.n === val ? null : val; return render(); }
+  if (act === 'pickw') { const d = draftFor(room, cur); d.w[v] = !d.w[v]; return render(); }
+  if (act === 'send') return sendDraft();
+  if (act === 'pass' && (cur.type === 'scale' || cur.type === 'review')) { draft = null; guestAnswer(cur.id, mine === 'pass' ? null : 'pass'); ctx.ref.child(`notes/${cur.id}/${ctx.session.id}`).set(null).catch(() => {}); return; }
+  if (act === 'chat') return guestHand(cur.id, b.getAttribute('aria-pressed') === 'true' ? null : 'chat');
+  if (act === 'fchat') { const fk = 'free' + (room.free?.n || 0); return guestHand(fk, b.getAttribute('aria-pressed') === 'true' ? null : 'chat'); }
+  if (act === 'ans') { const val = Number(v); guestAnswer(cur.id, mine === val ? null : val); }
+  else if (act === 'pass') guestAnswer(cur.id, mine === 'pass' ? null : 'pass');
+  else if (act === 'rn') { const val = Number(v); const cur0 = mine && typeof mine === 'object' ? mine : {}; guestAnswer(cur.id, { ...cur0, n: cur0.n === val ? null : val }); }
+  else if (act === 'rw') { const i = Number(v); const on = !(mine && typeof mine === 'object' && mine.w?.[i]); if (!mine || typeof mine !== 'object') guestAnswer(cur.id, { n: typeof mine === 'number' ? mine : null, w: { [i]: true } }); else guestWord(cur.id, i, on); }
+  else if (act === 'hand') guestHand(cur.id, b.getAttribute('aria-pressed') !== 'true' ? true : null);
+  else if (act === 'fwish') { const fk = 'fwish' + (room.free?.n || 0); guestAnswer(fk, room.answers?.[fk]?.[ctx.session.id] === v ? null : v); }
+  else if (act === 'fq') { const fk = 'free' + (room.free?.n || 0), val = Number(v); guestAnswer(fk, room.answers?.[fk]?.[ctx.session.id] === val ? null : val); }
+  else if (act === 'fhand') { const fk = 'free' + (room.free?.n || 0); guestHand(fk, b.getAttribute('aria-pressed') !== 'true' ? true : null); }
+});
+$('btn-leave').addEventListener('click', () => { if (confirm('ルームから退出しますか？')) leaveRoom(); });
+
+// ── ホストの画面 ──
+let editing = false;
+function renderHost(room) {
+  if (!$('screen-host').classList.contains('active')) guideShow();
+  showScreen('host');
+  $('host-code').textContent = ctx.code;
+  const steps = stepsOf(room), cur = curStep(room), players = playersOf(room);
+  const curIdx = steps.findIndex((s) => s.id === cur?.id);
+  const secNo = (s) => { const k = sectionsOf(room).findIndex((x) => x.id === s.id); return k >= 0 ? k + 1 : ''; };
+  $('steplist').innerHTML = steps.map((s, i) => `<li class="${s.id === cur?.id ? 'now' : i < curIdx ? 'done' : ''}${s.hidden ? ' off' : ''}"><button type="button" class="t" data-go="${s.id}"><span class="sn">${s.hidden ? '' : secNo(s)}</span><span class="tt">${esc(stepName(s))}</span>${s.id === cur?.id && hasCover(s) ? `<span class="ph">${room.view === 'cover' ? '表紙' : '中身'}</span>` : ''}</button><span class="ro"><button type="button" class="ic" data-up="${s.id}" title="上へ"><span class="material-symbols-rounded">arrow_upward</span></button><button type="button" class="ic" data-down="${s.id}" title="下へ"><span class="material-symbols-rounded">arrow_downward</span></button><button type="button" class="ic" data-hide="${s.id}" title="${s.hidden ? '出す' : '飛ばす'}"><span class="material-symbols-rounded">${s.hidden ? 'visibility_off' : 'visibility'}</span></button></span></li>`).join('');
+  // いま・つぎ
+  const label = (id, view) => { const s = stepsOf(room).find((x) => x.id === id); if (!s) return ''; return hasCover(s) ? `${stepName(s)}（${view === 'cover' ? '表紙' : '中身'}）` : stepName(s); };
+  const nt = navTarget(room, 1);
+  $('nav-now').textContent = cur ? label(cur.id, room.view) : '';
+  $('nav-next').textContent = nt ? label(nt[0], nt[1]) : 'ここでおしまい';
+  $('host-preview').innerHTML = stageHtml(room, ctx.code); enterIfChanged('host-preview', room); fitStages(); startClock();
+  const typeName = { closing: '移動の案内', free: '自由タイム', scale: '5段階', weather: '天気', choice: '選択肢', show: '表示', talk: 'お題', review: 'ふりかえり', game: 'ゲーム', opening: '表紙', agenda: '目次' };
+  const cov = onCover(room, cur), main = cur && !cov;
+  $('host-step-type').textContent = !cur ? '' : cov ? 'セクションの表紙' : typeName[cur.type] || cur.type;
+  const hideMode = main && cur.mode === 'hide', revealed = cur && isRevealed(room, cur), closed = cur && isClosed(room, cur);
+  $('btn-reveal').hidden = !hideMode; $('btn-reveal').textContent = revealed ? 'また伏せる' : 'せーので見せる';
+  $('btn-close').hidden = !main || !['scale', 'choice', 'review', 'weather'].includes(cur.type); $('btn-close').textContent = closed ? 'しめきりをとく' : 'しめきる';
+  $('btn-answer').hidden = !main || cur.type !== 'choice' || cur.answer == null; $('btn-answer').textContent = room.answerShown?.[cur?.id] ? '答えをかくす' : '答えを見せる';
+  $('btn-topic').hidden = !main || cur.type !== 'talk';
+  $('btn-edit').hidden = !main || ['game', 'opening', 'agenda', 'closing'].includes(cur.type);
+  $('free-ctrls').hidden = !main || cur.type !== 'free';
+  if (main && cur.type === 'free') {
+    const wv = Object.values(room.answers?.['fwish' + (room.free?.n || 0)] || {}), cnt = (k) => wv.filter((x) => x === k).length;
+    $('free-wish').textContent = room.free?.mode ? '' : `やりたい（人数だけ）: おしゃべり ${cnt('talk')}・クイズ ${cnt('quiz')}・ことばあそび ${cnt('kotoba')}・おまかせ ${cnt('any')}`;
+  }
+  if (main && cur.type === 'free') document.querySelectorAll('#free-ctrls [data-f]').forEach((b) => { const k = b.dataset.f; if (['talk', 'quiz', 'kotoba'].includes(k)) b.setAttribute('aria-pressed', String(room.free?.mode === k)); if (k === 'choose') b.setAttribute('aria-pressed', String(!room.free?.mode)); if (k === 'show') b.hidden = room.free?.mode !== 'quiz' || !!room.free?.shown; if (k === 'next') b.hidden = !room.free?.mode; });
+  $('game-box').hidden = !main || cur.type !== 'game';
+  if (main && cur.type === 'game') {
+    const g = cur.pick != null ? cur.cands?.[cur.pick] : null;
+    $('game-picks').innerHTML = `<button type="button" class="btn btn-primary" data-draw>${cur.pick == null ? 'くじで決める' : 'くじを引きなおす'}</button>` + (g?.slug ? `<button type="button" class="btn btn-outline" data-open>${cur.gameCode ? `${esc(g.name)} のタブを開く` : `${esc(g.name)} のルームを作る（タブを開く）`}</button><span class="gb-st${cur.gameCode ? ' ok' : ''}">${cur.gameCode ? `ルーム ${esc(cur.gameCode)} をみんなの端末に出しました` : '開いたタブでルームを作ると、自動でみんなの端末に出ます'}</span>` : '') + '<button type="button" class="btn btn-outline" data-reshuffle>候補を入れかえる</button><span class="gb-sub">進行役が決める:</span>' + (cur.cands || []).map((c, i) => `<button type="button" class="btn btn-outline" data-pick="${i}" aria-pressed="${cur.pick === i}">${'①②③④'[i]} ${esc(c.name)}</button>`).join('');
+    if (document.activeElement !== $('game-link-in')) $('game-link-in').value = cur.link || '';
+  }
+  $('btn-prev').disabled = !navTarget(room, -1); $('btn-next').disabled = !navTarget(room, 1);
+  // 参加者と答え
+  const ans = cur ? answered(room, cur.id) : {};
+  const fmt = (v) => v == null ? '' : v === 'pass' ? 'パス' : typeof v === 'object' ? [v.n, ...Object.keys(v.w || {}).map((i) => (cur.words || WORDS)[i]).filter(Boolean)].filter((x) => x != null).join('・') : cur?.type === 'choice' || cur?.type === 'game' ? '①②③④⑤⑥'[v] : cur?.type === 'weather' ? WX_OPTIONS[v]?.t : String(v);
+  $('players-title').textContent = `参加者 ${players.length}人`;
+  const notes = cur ? room.notes?.[cur.id] || {} : {}, hk = cur?.type === 'free' ? 'free' + (room.free?.n || 0) : cur?.id;
+  const handTxt = (pid) => { const h = room.hands?.[hk]?.[pid]; return h === true ? '話したい' : h === 'chat' ? 'チャット' : ''; };
+  const canAnswer = main && ['scale', 'choice', 'review', 'weather'].includes(cur.type);
+  const done = players.filter((p) => ans[p.id] != null).length;
+  $('ans-sum').textContent = canAnswer ? `答えた ${done}／${players.length}人` : '';
+  const quick = (p) => {
+    if (!canAnswer) return '';
+    const v = ans[p.id], cv = typeof v === 'object' && v ? v.n : v;
+    let bs = '';
+    if (cur.type === 'scale' || cur.type === 'review') bs = [5, 4, 3, 2, 1].map((n) => `<button type="button" data-pid="${p.id}" data-v="${n}" aria-pressed="${cv === n}">${n}</button>`).join('');
+    else if (cur.type === 'choice') bs = (cur.options || []).map((o, i) => `<button type="button" data-pid="${p.id}" data-v="${i}" aria-pressed="${cv === i}">${'①②③④⑤⑥'[i]}</button>`).join('');
+    else if (cur.type === 'weather') bs = WX_OPTIONS.map((o, i) => `<button type="button" data-pid="${p.id}" data-v="${i}" aria-pressed="${cv === i}">${o.t}</button>`).join('');
+    return `<div class="bs">${bs}<button type="button" class="pass" data-pid="${p.id}" data-v="pass" aria-pressed="${v === 'pass'}">パス</button></div>`;
+  };
+  const ordered = canAnswer ? [...players.filter((p) => ans[p.id] == null), ...players.filter((p) => ans[p.id] != null)] : players;
+  $('plist').innerHTML = ordered.map((p) => { const connected = p.proxy || Object.keys(p.connections || {}).length > 0; const a = fmt(ans[p.id]) || handTxt(p.id); return `<div class="prow${ans[p.id] != null ? ' got' : ''}"><span class="pn">${esc(p.name)}<span class="st">${p.id === room.host ? '自分' : p.proxy ? '端末なし' : connected ? '' : '接続が切れています'}${p.adult ? '・大人' : ''}</span>${notes[p.id] ? `<span class="nt">${esc(notes[p.id])}</span>` : ''}</span><span class="ans${a ? '' : ' none'}">${esc(a || '-')}</span>${p.id === room.host ? '<span></span>' : `<button type="button" class="x" data-remove="${p.id}" title="外す"><span class="material-symbols-rounded">close</span></button>`}${quick(p)}</div>`; }).join('');
+  if (!editing) { $('edit-box').hidden = true; }
+}
+function stepName(s) {
+  if (s.type === 'closing') return 'このあと（移動の案内）';
+  if (s.type === 'opening') return '表紙';
+  if (s.type === 'agenda') return '目次（きょうの流れ）';
+  if (s.type === 'free') return '自由タイム';
+  if (s.type === 'scale') return s.key === 'kokoro' ? 'ジブンチェック 心' : s.key === 'karada' ? 'ジブンチェック 体' : s.title;
+  if (s.type === 'talk') return 'チェックイン（お題）';
+  return s.title || s.type;
+}
+function stepToText(s) {
+  if (s.type === 'scale' || s.type === 'review') return [s.title, s.sub || '', ...(s.labels || [])].join('\n');
+  if (s.type === 'choice') return [s.title, s.sub || '', ...(s.options || []), (s.note ? '答えのあと: ' + s.note : '')].join('\n');
+  if (s.type === 'show') return [s.title, s.ttl || '', ...(s.lines || []), (s.link ? 'リンク: ' + s.link : ''), (s.note ? 'ひとこと: ' + s.note : '')].join('\n');
+  if (s.type === 'talk') return [s.title, s.sub || '', s.topic || ''].join('\n');
+  if (s.type === 'free') return [s.title, s.sub || '', s.until || ''].join('\n');
+  return [s.title, s.sub || ''].join('\n');
+}
+function textToStep(s, text) {
+  const lines = text.split('\n').map((l) => l.trim());
+  const [title, second, ...rest] = lines;
+  if (!title) throw fail('1行目は見出しです。');
+  s.title = title;
+  if (s.type === 'scale' || s.type === 'review') { s.sub = second || ''; const labels = rest.filter(Boolean).slice(0, 5); if (labels.length === 5) s.labels = labels; }
+  else if (s.type === 'choice') { s.sub = second || ''; const body = rest.filter(Boolean); const noteLine = body.find((l) => l.startsWith('答えのあと:')); const options = body.filter((l) => !l.startsWith('答えのあと:')).slice(0, 6); if (options.length >= 2) s.options = options; if (typeof s.answer === 'number' && s.answer >= s.options.length) s.answer = null; s.note = noteLine ? noteLine.replace('答えのあと:', '').trim() : ''; }
+  else if (s.type === 'show') { s.ttl = second || ''; const body = rest.filter(Boolean); s.link = (body.find((l) => l.startsWith('リンク:')) || '').replace('リンク:', '').trim(); s.note = (body.find((l) => l.startsWith('ひとこと:')) || '').replace('ひとこと:', '').trim(); s.lines = body.filter((l) => !l.startsWith('リンク:') && !l.startsWith('ひとこと:')); }
+  else if (s.type === 'talk') { s.sub = second || ''; s.topic = rest.filter(Boolean)[0] || s.topic; }
+  else if (s.type === 'free') { s.sub = second || ''; s.until = rest.filter(Boolean)[0] || ''; }
+  else s.sub = second || '';
+}
+const EDIT_HELP = { scale: '1行目: 見出し ／ 2行目: 問い ／ 3〜7行目: 5から1の言葉', review: '1行目: 見出し ／ 2行目: 問い ／ 3〜7行目: 5から1の言葉', choice: '1行目: 質問 ／ 2行目: 添える一言 ／ 3行目から: 選択肢（2〜6） ／ 「答えのあと: …」で由来', show: '1行目: 見出し ／ 2行目: 小見出し ／ 3行目から: 1行に1つ ／ 「リンク: https://…」「ひとこと: …」', talk: '1行目: 見出し ／ 2行目: 添える一言 ／ 3行目: お題', free: '1行目: 大きな文 ／ 2行目: 小さな文 ／ 3行目: 声をかける時刻の文', weather: '1行目: 見出し ／ 2行目: 添える一言' };
+function chatText(room, cur) {
+  if (!cur) return '';
+  const link = (ctx && RoomkRTDB.roomLink(ctx.code)) || '';
+  if (cur.type === 'scale' || cur.type === 'review') return `${cur.title} ${cur.sub || ''}\n${(cur.labels || []).map((l, i) => `${5 - i} ${l}`).join(' / ')}\n→ 数字をチャットに書いてね。パスもOK${cur.type === 'review' ? `\nひとこと: ${(cur.words || WORDS).join(' / ')}` : ''}`;
+  if (cur.type === 'choice') return `${cur.title} ${cur.sub || ''}\n${(cur.options || []).map((o, i) => `${i + 1} ${o}`).join(' / ')}\n→ 番号をチャットに書いてね。パスもOK`;
+  if (cur.type === 'weather') return `きみのところは、いまどんな天気？ はれ / くもり / あめ\n→ チャットに書いてね`;
+  if (cur.type === 'show') return `${cur.title}\n${(cur.lines || []).join('\n')}${cur.link ? '\n' + cur.link : ''}`;
+  if (cur.type === 'talk') return `${cur.title}: ${cur.topic || ''}\n→ マイクで話してもいいし、このチャットに書いてもいいよ。聞くだけでもOK`;
+  if (cur.type === 'free') return `${cur.title}\n${cur.until || ''}\n参加用のリンク: ${link}`;
+  if (cur.type === 'closing') { const f = room.kind === 'pm' ? null : firstSlot(room); return room.kind === 'pm' ? 'このあとは、エントランスに移動しよう' : f ? `このあとは1コマ目（${f.tm}から）のプログラムへ\n${f.items.map((it) => `${it.name}${it.place ? ' → ' + it.place : ''}`).join('\n')}` : 'このあとは、それぞれのプログラムへ'; }
+  if (cur.type === 'opening' || cur.type === 'agenda') return `${room.kind === 'pm' ? '午後' : '午前'}のサークルタイム ${room.date || ''}\nきょうの流れ: ${sectionsOf(room).map((s, i) => `${i + 1} ${coverOf(s)[1]}`).join(' / ')}\n参加用のリンク: ${link}`;
+  if (cur.type === 'game') { const g = cur.pick != null ? cur.cands?.[cur.pick] : null; return g ? `みんなでゲーム: ${g.name}\n${cur.link || new URL(APPS_BASE + g.slug + '/', location.href).href}` : `みんなでゲーム: この中からくじで決めるよ\n${(cur.cands || []).map((c, i) => `${'①②③④'[i]} ${c.name}`).join(' / ')}`; }
+  return cur.title;
+}
+$('btn-reorder').addEventListener('click', (e) => { const on = e.currentTarget.getAttribute('aria-pressed') !== 'true'; e.currentTarget.setAttribute('aria-pressed', String(on)); $('steplist').classList.toggle('reorder', on); });
+$('steplist').addEventListener('click', (e) => {
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.go) setCur(b.dataset.go); else if (b.dataset.up) moveStep(b.dataset.up, -1); else if (b.dataset.down) moveStep(b.dataset.down, 1); else if (b.dataset.hide) toggleHidden(b.dataset.hide);
+});
+$('btn-prev').addEventListener('click', () => moveBy(-1));
+$('btn-next').addEventListener('click', () => moveBy(1));
+$('btn-reveal').addEventListener('click', toggleReveal);
+$('btn-close').addEventListener('click', toggleClosed);
+$('btn-answer').addEventListener('click', toggleAnswer);
+$('btn-topic').addEventListener('click', () => nextTopic());
+$('free-ctrls').addEventListener('click', (e) => { const b = e.target.closest('[data-f]'); if (!b) return; const k = b.dataset.f; if (k === 'next') freeAct('next'); else if (k === 'show') freeAct('show'); else freeAct('mode', k === 'choose' ? '' : k); });
+$('game-picks').addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; if (b.dataset.pick != null) decideGame(Number(b.dataset.pick)); else if (b.hasAttribute('data-reshuffle')) reshuffleGames(); else if (b.hasAttribute('data-draw')) drawGame(); else if (b.hasAttribute('data-open')) { const c = ctx?.data && curStep(ctx.data); const g = c?.cands?.[c.pick]; if (g) openGameWindow(g.slug); } });
+$('game-link-save').addEventListener('click', async () => {
+  const raw = $('game-link-in').value.trim();
+  let url; try { url = new URL(raw); } catch { return toast('リンクの形がちがうよ。ゲームのルームで「リンクをコピー」したものを貼ってね'); }
+  if (!/^https?:$/.test(url.protocol)) return toast('リンクの形がちがうよ');
+  const slug = url.pathname.split('/').filter(Boolean).pop() || '';
+  const app = (await loadCatalog()).find((a) => a.slug === slug);
+  const gameName = app?.name || slug || 'きょうのゲーム';
+  await editSteps((steps, room) => {
+    const s = steps.find((x) => x.id === room.cur); if (!s || s.type !== 'game') return false;
+    s.cands = s.cands || [];
+    let i = s.cands.findIndex((g) => g.slug === slug);
+    if (i < 0) { s.cands.push(app ? gameCard(app) : { slug, name: gameName, hk: '', thumb: '' }); i = s.cands.length - 1; }
+    s.pick = i; s.drawAt = null; s.link = url.href; s.gameCode = ''; s.gameName = gameName;
+  });
+  toast(`「${gameName}」を出しました`, false);
+});
+$('btn-edit').addEventListener('click', () => { const cur = ctx?.data && curStep(ctx.data); if (!cur) return; editing = true; $('edit-help').textContent = EDIT_HELP[cur.type] || '1行目: 見出し'; $('edit-text').value = stepToText(cur); $('edit-box').hidden = false; $('edit-text').focus(); });
+$('edit-cancel').addEventListener('click', () => { editing = false; $('edit-box').hidden = true; });
+$('edit-save').addEventListener('click', async () => {
+  const text = $('edit-text').value;
+  if (!text.split('\n')[0].trim()) return toast('1行目は見出しです。');
+  try {
+    await editSteps((steps, room) => { const s = steps.find((x) => x.id === room.cur); if (!s) return false; textToStep(s, text); });
+    editing = false; $('edit-box').hidden = true; toast('直しました', false);
+  } catch (e) { toast(e.message || '直せませんでした'); }
+});
+$('btn-chat').addEventListener('click', (e) => { const room = ctx?.data; const cur = room && curStep(room); RoomkRTDB.copyText(chatText(room, cur), e.currentTarget, 'チャット用の文をコピーしました', 'コピーできませんでした'); });
+$('btn-add-step').addEventListener('click', () => { $('add-box').hidden = false; $('add-text').focus(); });
+$('add-cancel').addEventListener('click', () => { $('add-box').hidden = true; });
+$('add-save').addEventListener('click', async () => {
+  const lines = $('add-text').value.split('\n').map((l) => l.trim()).filter(Boolean);
+  if (lines.length < 3 || lines.length > 7) return toast('1行目に質問、2行目から選択肢を2〜6つ書いてね');
+  await addChoiceStep(lines[0], lines.slice(1));
+  $('add-text').value = ''; $('add-box').hidden = true; toast('足しました。流れの一覧から移れます', false);
+});
+$('plist').addEventListener('click', (e) => {
+  const b = e.target.closest('button[data-pid]'); if (!b) return;
+  const room = ctx?.data, cur = room && curStep(room); if (!cur) return;
+  const pid = b.dataset.pid, raw = b.dataset.v, on = b.getAttribute('aria-pressed') === 'true';
+  const value = raw === 'pass' ? 'pass' : Number(raw);
+  if (on) return setAnswer(cur.id, pid, null);
+  if (cur.type === 'review' && value !== 'pass') { const prev = room.answers?.[cur.id]?.[pid]; return setAnswer(cur.id, pid, { ...(prev && typeof prev === 'object' ? prev : {}), n: value }); }
+  setAnswer(cur.id, pid, value);
+});
+$('btn-add-proxy').addEventListener('click', async () => { try { await addProxy($('proxy-name').value); $('proxy-name').value = ''; } catch (e) { toast(e.message); } });
+$('proxy-name').addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); $('btn-add-proxy').click(); } });
+$('plist').addEventListener('click', (e) => { const b = e.target.closest('button[data-remove]'); if (!b) return; const p = ctx?.data?.players?.[b.dataset.remove]; if (p && confirm(`${p.name} を外しますか？`)) removePlayer(b.dataset.remove); });
+$('btn-finish').addEventListener('click', finishRoom);
+$('btnCopyCode').addEventListener('click', (e) => RoomkRTDB.copyRoomCode(ctx?.code, e.currentTarget));
+$('btnCopyLink').addEventListener('click', (e) => RoomkRTDB.copyRoomLink(ctx?.code, e.currentTarget));
+$('btnShowQr').addEventListener('click', () => { if (ctx?.code) RoomkQR.show(ctx.code); });
+// はじめに（この端末で「もう出さない」を押すまで出す。済んだ手順には印）
+const guideDone = new Set();
+function guideMark(k) { guideDone.add(k); document.querySelectorAll('#host-guide .g-step').forEach((e) => e.classList.toggle('done', guideDone.has(e.dataset.g))); }
+function guideShow() { $('host-guide').hidden = !!loadPrefs().guideOff; }
+$('guide-off').addEventListener('click', () => { savePrefs({ ...loadPrefs(), guideOff: true }); $('host-guide').hidden = true; });
+$('guide-share').addEventListener('click', () => guideMark('share'));
+['btnCopyLink', 'btnCopyCode', 'btnShowQr'].forEach((id) => $(id).addEventListener('click', () => guideMark('link')));
+$('btn-open-watch').addEventListener('click', () => { guideMark('watch'); });
+$('btn-open-watch').addEventListener('click', () => { if (ctx?.code) window.open(location.pathname + '?watch=' + ctx.code, '_blank', 'noopener'); });
+document.addEventListener('keydown', (e) => {
+  if (!ctx || ctx.watch || ctx.session?.role !== 'host') return;
+  if (['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) return;
+  if (e.key === 'ArrowRight') { e.preventDefault(); moveBy(1); }
+  else if (e.key === 'ArrowLeft') { e.preventDefault(); moveBy(-1); }
+  else if (e.key === ' ') { e.preventDefault(); const cur = curStep(ctx.data); if (!cur) return; if (onCover(ctx.data, cur)) moveBy(1); else if (cur.mode === 'hide') toggleReveal(); else if (['review', 'weather'].includes(cur.type)) toggleClosed(); }
+});
+
+// ── 準備の画面 ──
+let weatherData = null;
+// 今日は何の日: 毎朝の定期タスクが daily/YYYY-MM-DD.json に用意する（本当の記念日と作り話2つ。AGENTS.md）
+let daily = null, dayMode = 'one', dayPick = 0, dayNotes = null;
+async function loadDaily() {
+  daily = null; dayPick = 0;
+  try {
+    const res = await fetch(`daily/${jstDate(now())}.json`, { cache: 'no-store' });
+    if (!res.ok) throw new Error(String(res.status));
+    const d = await res.json();
+    if (!Array.isArray(d.real) || !d.real.length || !Array.isArray(d.fake) || d.fake.length < 2) throw new Error('shape');
+    daily = d;
+  } catch { daily = null; }
+  if (daily) { $('day-status-text').textContent = `今朝用意した記念日が入っています（${daily.source || '出典あり'}）。中身を確かめて、気になるところは直してください。`; setDayMode(prefDayMode()); }
+  else { $('day-status-text').textContent = '今日の分はまだ用意されていません。手で入れるか、空のままなら「今日は何の日」は飛ばします。'; setDayMode('one', false); }
+}
+function prefDayMode() { const m = loadPrefs().dayMode; return m === 'all' && daily?.real.length >= 3 ? 'all' : 'one'; }
+function setDayMode(mode, fill = true) {
+  dayMode = mode;
+  document.querySelectorAll('#day-mode button[data-v]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.v === mode)));
+  const allBtn = document.querySelector('#day-mode button[data-v="all"]'); allBtn.disabled = !daily || daily.real.length < 3;
+  $('day-other').disabled = !daily || (mode === 'all' ? daily.real.length <= 3 : daily.real.length <= 1);
+  document.querySelectorAll('#am-fields label.ok').forEach((l) => { l.hidden = mode === 'all'; });
+  $('day-all-help').hidden = mode !== 'all';
+  if (fill && daily) fillDay();
+}
+function fillDay() {
+  const real = daily.real, n = real.length;
+  let options, answer, note, notes;
+  if (dayMode === 'all') {
+    const start = (dayPick * 3) % n;
+    const picked = [0, 1, 2].map((k) => real[(start + k) % n]);
+    options = picked.map((r) => r.name); notes = picked.map((r) => r.note || ''); answer = 'all'; note = 'どれも本当にある記念日です';
+  } else {
+    const r = real[dayPick % n];
+    answer = (Number(daily.date.slice(-2)) + dayPick) % 3;
+    const fakes = daily.fake.slice(0, 2).map((f) => f.name);
+    options = [0, 1, 2].map((k) => k === answer ? r.name : fakes.shift());
+    note = r.note || ''; notes = options.map((o, k) => k === answer ? note : '');
+  }
+  options.forEach((o, i) => { $('day-' + i).value = o; });
+  if (answer !== 'all') document.querySelector(`input[name="day-ok"][value="${answer}"]`).checked = true;
+  $('day-note').value = note; dayNotes = notes;
+}
+$('day-mode').addEventListener('click', (e) => {
+  const b = e.target.closest('button'); if (!b || b.disabled) return;
+  if (b.id === 'day-other') { dayPick += 1; fillDay(); return; }
+  if (b.dataset.v) { dayPick = 0; setDayMode(b.dataset.v); }
+});
+function setReady(id, state, text, textId) { const li = $(id); li.className = state; if (text != null) $(textId).textContent = text; }
+function jstHour(ts) { return Number(new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Tokyo', hour: 'numeric', hourCycle: 'h23' }).format(new Date(ts))); }
+function nextWeekdayStr(dateStr) { const d = new Date(dateStr + 'T12:00:00+09:00'); do { d.setDate(d.getDate() + 1); } while ([0, 6].includes(d.getDay())); return jstDate(d.getTime()); }
+let progToken = 0, progMeta = { link: PROGRAM_URL, ttl: '', thumbs: null }, setupGames = [];
+async function loadProgram(kind) {
+  const token = ++progToken, today = jstDate(now());
+  const date = kind === 'am' ? today : nextWeekdayStr(today);
+  const label = dateLabel(new Date(date + 'T12:00:00+09:00').getTime());
+  progMeta = { link: PROGRAM_URL, ttl: label, thumbs: null };
+  $('prog-head').textContent = kind === 'am' ? '今日のプログラム' : '明日のプログラム';
+  setReady('rd-prog', 'wait', 'room-K ポータルの時間割を確かめています…', 'prog-status-text');
+  try {
+    const res = await fetch(`daily/${date}.program.json`, { cache: 'no-store' });
+    if (!res.ok) throw new Error(String(res.status));
+    const d = await res.json();
+    if (token !== progToken) return;
+    const items = Array.isArray(d.items) ? d.items : [];
+    $('prog-lines').value = items.map((x) => `${x.start || '—'} ${x.name}${x.place ? '｜' + x.place : ''}${x.once ? '｜この日だけ' : ''}`).join('\n');
+    progMeta = { link: d.url || PROGRAM_URL, ttl: label, thumbs: Object.fromEntries(items.filter((x) => /^https:\/\//.test(x.thumb || '')).map((x) => [x.name, x.thumb])) };
+    const once = items.filter((x) => x.once).length;
+    setReady('rd-prog', items.length ? 'ok' : 'none', items.length ? `${label}の${items.length}件を room-K ポータルから入れました${once ? `（この日だけのもの ${once}件）` : ''}。` : `${label}のプログラムは見つかりませんでした。`, 'prog-status-text');
+  } catch {
+    if (token !== progToken) return;
+    $('prog-lines').value = '';
+    setReady('rd-prog', 'none', `${label}の分はまだ用意されていません。「中身を確かめる・直す」で書けます。`, 'prog-status-text');
+  }
+}
+function fillSetup() {
+  const prefs = loadPrefs();
+  $('setup-date').textContent = dateLabel(now());
+  $('host-name').value = prefs.name || '';
+  $('prog-note').value = '';
+  $('setup-more').open = false;
+  setKind(jstHour(now()) < 12 ? 'am' : 'pm');
+  weatherData = null;
+  for (let i = 0; i < 3; i++) $('day-' + i).value = '';
+  $('day-note').value = ''; dayNotes = null;
+  setReady('rd-day', 'wait', '今朝用意した記念日を確かめています…', 'day-status-text');
+  loadDaily();
+  setReady('rd-wx', 'wait', '気象庁から取りにいきます…', 'wx-status-text');
+  fetchWeather().then((w) => { const got = w.cities.filter((c) => c.code).length; weatherData = got ? w : null; setReady('rd-wx', got ? 'ok' : 'none', got ? `${got}都市を取りました（気象庁）。` : '取れませんでした。「全国の天気」は飛ばすか、あとで作りなおしてね。', 'wx-status-text'); }).catch(() => setReady('rd-wx', 'none', '取れませんでした。', 'wx-status-text'));
+  setReady('rd-topic', 'wait', 'お題・クイズ・ことばあそびを用意しています…', 'topic-status-text');
+  Promise.all([loadTopics(), loadQuiz(), loadKotoba()]).then(([t, q]) => setReady('rd-topic', 'ok', `お題${t.length}・クイズ${q.length}問・ことばあそびを用意しました。`, 'topic-status-text'));
+}
+function setKind(k) { setupKind = k; document.querySelectorAll('#seg-session button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.v === k))); $('am-fields').hidden = k !== 'am'; $('rd-day').hidden = k !== 'am'; $('rd-game').hidden = k !== 'pm'; loadProgram(k); if (k === 'pm') loadGames(); }
+let gameToken = 0, gamesReady = null;
+function loadGames() { gamesReady = loadGames0(); return gamesReady; }
+async function loadGames0() {
+  const token = ++gameToken;
+  setReady('rd-game', 'wait', 'ツール一覧から3つえらんでいます…', 'game-status-text');
+  const list = await pickGames();
+  if (token !== gameToken) return;
+  setupGames = list;
+  setReady('rd-game', list.length ? 'ok' : 'none', list.length ? `${list.map((g) => g.name).join('・')}（ゲームの画面で入れかえられます）` : 'ツール一覧を読めませんでした。ゲームの画面でリンクを貼れば出せます。', 'game-status-text');
+}
+$('seg-session').addEventListener('click', (e) => { const b = e.target.closest('button[data-v]'); if (b) setKind(b.dataset.v); });
+$('btn-create').addEventListener('click', async () => {
+  const btn = $('btn-create'); btn.disabled = true; $('setup-error').hidden = true;
+  try {
+    const dayOpts = [0, 1, 2].map((i) => $('day-' + i).value.trim());
+    const all = dayMode === 'all';
+    const day = dayOpts.every(Boolean) ? { options: dayOpts, answer: all ? 'all' : Number(document.querySelector('input[name="day-ok"]:checked')?.value || 0), note: $('day-note').value.trim(), notes: all ? (dayNotes || null) : null } : null;
+    const prog = { lines: $('prog-lines').value.split('\n').map((l) => l.trim()).filter(Boolean), link: progMeta.link, ttl: progMeta.ttl, thumbs: progMeta.thumbs, note: $('prog-note').value.trim() };
+    const list = await loadTopics();
+    if (setupKind === 'pm' && gamesReady) await gamesReady;
+    const form = { name: $('host-name').value, date: dateLabel(now()), day, prog, weather: weatherData, topic: pickTopic(list, null), games: setupKind === 'pm' ? setupGames : [], free: { mode: null, n: 1, at: 0 } };
+    savePrefs({ ...loadPrefs(), name: form.name, dayMode });
+    await createRoom(form);
+    history.replaceState(null, '', location.pathname);
+  } catch (e) { $('setup-error').textContent = e.message || '作れませんでした'; $('setup-error').hidden = false; }
+  finally { btn.disabled = false; }
+});
+
+// ── 入口 ──
+$('go-create').addEventListener('click', () => { fillSetup(); showScreen('setup'); if (!$('host-name').value) $('host-name').focus(); });
+$('go-join').addEventListener('click', () => { $('joinLinkHint').hidden = true; $('join-error').hidden = true; showScreen('join'); $('join-name').focus(); });
+$('go-watch').addEventListener('click', () => { $('watch-error').hidden = true; showScreen('watch-join'); $('watch-code').focus(); });
+document.querySelectorAll('[data-back]').forEach((b) => b.addEventListener('click', goTop));
+$('join-form').addEventListener('submit', async (e) => {
+  e.preventDefault(); $('join-error').hidden = true;
+  const btn = e.target.querySelector('button[type=submit]'); btn.disabled = true;
+  try { await joinRoom($('join-code').value, $('join-name').value, $('join-adult').checked); history.replaceState(null, '', location.pathname); }
+  catch (err) { $('join-error').textContent = err.message || '参加できませんでした'; $('join-error').hidden = false; }
+  finally { btn.disabled = false; }
+});
+$('watch-form').addEventListener('submit', async (e) => {
+  e.preventDefault(); $('watch-error').hidden = true;
+  try { const code = validateCode($('watch-code').value); await openWatch(code); }
+  catch (err) { $('watch-error').textContent = err.message || 'ひらけませんでした'; $('watch-error').hidden = false; }
+});
+async function openWatch(code) {
+  await authenticated();
+  await attach(code, null, true);
+  history.replaceState(null, '', location.pathname + '?watch=' + code);
+}
+async function tryReconnect() {
+  if (!session || !session.code) return false;
+  try { await authenticated(); await attach(session.code, session, false); return true; }
+  catch (e) { saveSession(null); return false; }
+}
+window.addEventListener('load', async () => {
+  fitStages();
+  const q = new URLSearchParams(location.search);
+  const watch = q.get('watch'), room = q.get('room');
+  if (watch) {
+    try { await openWatch(validateCode(watch)); return; } catch (e) { toast(e.message || 'ひらけませんでした'); history.replaceState(null, '', location.pathname); }
+  }
+  if (room) {
+    let code = null;
+    try { code = validateCode(room); } catch { toast('ルームコードが正しくないよ'); history.replaceState(null, '', location.pathname); }
+    if (code) {
+      if (session && session.code === code && await tryReconnect()) { history.replaceState(null, '', location.pathname); return; }
+      saveSession(null);
+      $('join-code').value = code; $('joinLinkHint').hidden = false; showScreen('join'); $('join-name').focus();
+      return;
+    }
+  }
+  if (await tryReconnect()) return;
+  showScreen('top');
+});
+})();
+</script>
+<script>RoomkHowto.init({ title: 'つかいかた', lead: '午前と午後のサークルタイムを、ひとつのルームで進めるよ。画面を見ながら、ボタン・チャット・声のどれで答えてもいいよ。', sections: [
+  { heading: '参加する人', items: ['「ルームに参加する」でニックネーム、ルームコード（6文字）の順に入れて「参加する」。リンクからひらいたときは、ニックネームだけでいいよ。', '画面が変わったら、自分の端末でえらんで「送る」を押してね。選びなおして送りなおすことも、「パスする」もできるよ。', '心・体・ふりかえりでは、わけやひとことを書いて送れるよ（なくてもOK）。心・体で書いたことは、みんなの画面で名前を押すと出るよ。ふりかえりで書いたことは進行役にだけとどくよ。', 'チェックインでは、マイクで話す人は「話したい」、MetaLife のチャットに書いた人は「チャットに書いたよ」を押してね。', '自由タイムは自由にすごしてOK。みんなであそびたい人は、おしゃべりのお題・クイズ・ことばあそび・おまかせから、やりたいものを自分の端末でえらんでね。だれが何をえらんだかは出ないよ。進行役が決めるよ。', 'みんなでゲームは、3つの候補からくじで決まるよ。決まったら「ゲームを開く」から入って、画面に出るルームコードを入れてね。', '端末がない人は、チャットに数字や言葉を書くか、声で言えばOK。進行役が代わりに入れるよ。'] },
+  { heading: '進行役', items: ['「ルームを作る」を押して「はじめる」。天気・今日は何の日・room-K ポータルのプログラム・自由タイムのあそびは自動で入るよ。直したいときは「中身を確かめる・直す」。', 'みんなでゲームは、3つの候補を出して「くじで決める」。決まったら「○○を開く（ルームを作る）」でゲームのルームを作り、その画面を共有すれば、参加者は自分の端末の「ゲームを開く」から入れるよ。リンクを貼るのは、なくてもOK。候補は「候補を入れかえる」で変えられるよ。', 'セクションごとに表紙が出るよ。「次へ」で表紙から中身に進む。', 'ルームコードは「コードをコピー」、参加用のリンクは「リンクをコピー」でチャットに送れるよ。スマホやタブレットで入る人には、「QRコードを出す」をカメラで読みとってもらってね。', '画面共有には「みんなにみせる画面を開く」でひらいた窓を使ってね。進行役の画面は共有しないよ。', '「次へ」「前へ」（矢印キー）で進める。答えを伏せる画面は「せーので見せる」（スペース）でいっせいに出るよ。', '流れの一覧から、好きな画面へ移る・飛ばす・並べかえる、ができるよ。「文を直す」「その場で聞く」で、その場で変えられるよ。', 'チャットや声で答えた人、端末のない人の分は「代わりに入れる」で名前の横を押してね（入れなくても進められるよ）。わけ・ひとことは参加者の一覧に出るよ。', '終わるときは「ルームを閉じる」。'] },
+] });</script>
+</body>
+</html>

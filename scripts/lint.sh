@@ -23,6 +23,7 @@ ALL_JS_FILES=(apps/*/app.js)
 
 # Realtime Database アプリ
 RTDB_HTML_FILES=(
+  "apps/circle-time/index.html"
   "apps/kotoba-meter/index.html"
   "apps/blackjack/index.html"
   "apps/daifugo/index.html"

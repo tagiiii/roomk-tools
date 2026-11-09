@@ -12,6 +12,12 @@
         ".write": "auth != null"
       }
     },
+    "circletime_rooms": {
+      "$roomId": {
+        ".read": "auth != null",
+        ".write": "auth != null"
+      }
+    },
     "charinbaton_rooms": {
       "$roomId": {
         ".read": "auth != null",

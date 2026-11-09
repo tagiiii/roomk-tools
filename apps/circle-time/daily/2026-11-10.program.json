@@ -1,0 +1,89 @@
+{
+  "date": "2026-11-10",
+  "weekday": "火曜日",
+  "source": "room-K ポータル（Notion）",
+  "url": "https://katariba.notion.site/room-K-277e1247489c4bbe979b0322df284a73",
+  "items": [
+    {
+      "start": "9:30",
+      "end": "10:15",
+      "name": "イラストクラブ",
+      "place": "クラブルーム",
+      "once": false,
+      "thumb": "https://katariba.notion.site/image/attachment%3A076cc359-f60a-4e03-9bd4-79c121f5387c%3A%E3%82%B9%E3%82%AF%E3%83%AA%E3%83%BC%E3%83%B3%E3%82%B7%E3%83%A7%E3%83%83%E3%83%88_2026-04-07_160319.png?table=block&id=a1a5e2da-6ad7-832c-bac3-8106e8fab10d&spaceId=ed7047d7-c3e4-46ea-8121-b48641fcbc75&width=480&cache=v2"
+    },
+    {
+      "start": "9:30",
+      "end": "10:15",
+      "name": "ほわぽかひろば",
+      "place": "のんびり",
+      "once": false,
+      "thumb": "https://katariba.notion.site/image/attachment%3A264f7fb6-f691-436f-8447-a1e9721a56d0%3A%E3%82%B5%E3%83%A0%E3%83%8D202610.jpg?table=block&id=3a55e2da-6ad7-8041-9496-e6360c85914d&spaceId=ed7047d7-c3e4-46ea-8121-b48641fcbc75&width=480&cache=v2"
+    },
+    {
+      "start": "9:30",
+      "end": "10:15",
+      "name": "マイクラ同好会",
+      "place": "マイクラルーム",
+      "once": false,
+      "thumb": "https://katariba.notion.site/image/attachment%3Ad293c15e-a0c2-4e49-82d7-768c9e78a4fb%3A%E3%83%9E%E3%82%A4%E3%82%AF%E3%83%A9%E5%90%8C%E5%A5%BD%E4%BC%9A.png?table=block&id=3a55e2da-6ad7-8074-86db-e9c340fcc76d&spaceId=ed7047d7-c3e4-46ea-8121-b48641fcbc75&width=480&cache=v2"
+    },
+    {
+      "start": "10:30",
+      "end": "11:15",
+      "name": "クイズで1UP!おもしろイングリッシュ!",
+      "place": "学びの沼",
+      "once": false,
+      "thumb": "https://katariba.notion.site/image/attachment%3A389e161a-0737-4eb2-ac8d-4fc4cb8a6bec%3A%E3%82%AF%E3%82%A4%E3%82%BA%E3%81%A7%EF%BC%91UP!%E3%81%8A%E3%82%82%E3%81%97%E3%82%8D%E3%82%A4%E3%83%B3%E3%82%B0%E3%83%AA%E3%83%83%E3%82%B7%E3%83%A5_-_%E3%82%B5%E3%83%A0%E3%83%8D%E3%82%A4%E3%83%AB.png?table=block&id=28a5e2da-6ad7-8342-8ae2-817d783d30a1&spaceId=ed7047d7-c3e4-46ea-8121-b48641fcbc75&width=480&cache=v2"
+    },
+    {
+      "start": "10:30",
+      "end": "11:15",
+      "name": "みんなであそぼ!",
+      "place": "クラブルーム",
+      "once": false,
+      "thumb": "https://katariba.notion.site/image/attachment%3A3ccf773b-1bc3-4ea8-9363-2495ec0cfbce%3A%E3%83%97%E3%83%AD%E3%82%B0%E3%83%A9%E3%83%A0%E3%82%B5%E3%83%A0%E3%83%8D.png?table=block&id=3a55e2da-6ad7-8033-a22e-d0752276f980&spaceId=ed7047d7-c3e4-46ea-8121-b48641fcbc75&width=480&cache=v2"
+    },
+    {
+      "start": "11:30",
+      "end": "12:15",
+      "name": "マイクラ同好会",
+      "place": "マイクラルーム",
+      "once": false,
+      "thumb": "https://katariba.notion.site/image/attachment%3Ad293c15e-a0c2-4e49-82d7-768c9e78a4fb%3A%E3%83%9E%E3%82%A4%E3%82%AF%E3%83%A9%E5%90%8C%E5%A5%BD%E4%BC%9A.png?table=block&id=3a55e2da-6ad7-8074-86db-e9c340fcc76d&spaceId=ed7047d7-c3e4-46ea-8121-b48641fcbc75&width=480&cache=v2"
+    },
+    {
+      "start": "11:30",
+      "end": "12:15",
+      "name": "まなP",
+      "place": "スタディルーム",
+      "once": false,
+      "thumb": "https://katariba.notion.site/image/attachment%3Aafdc2089-2881-4f1b-9092-4d79953b10f2%3ABeige_and_Orange_Illustrative_Group_Project_Presentation_(1).png?table=block&id=6d65e2da-6ad7-8246-8aa5-01ae35a8fd46&spaceId=ed7047d7-c3e4-46ea-8121-b48641fcbc75&width=480&cache=v2"
+    },
+    {
+      "start": "11:30",
+      "end": "12:15",
+      "name": "おもしろい!算数・すうがくひろば",
+      "place": "学びの沼",
+      "once": false,
+      "thumb": "https://katariba.notion.site/image/attachment%3Ac1681c1f-fd15-41ef-a8d6-e09386253e5e%3Aimage.png?table=block&id=4fa5e2da-6ad7-83a3-ab11-81d7b29a21b2&spaceId=ed7047d7-c3e4-46ea-8121-b48641fcbc75&width=480&cache=v2"
+    },
+    {
+      "start": "13:00",
+      "end": "13:45",
+      "name": "マイスタ!(My Study)",
+      "place": "スタディルーム",
+      "once": false,
+      "thumb": "https://katariba.notion.site/image/attachment%3Ac62bca2b-1d16-4695-b383-bb63a161aaf5%3ARed_and_Blue_Illustrative_Cute_Study_Group_Project_Presentation_(2).png?table=block&id=49b5e2da-6ad7-820a-b6fa-8131c59b54c9&spaceId=ed7047d7-c3e4-46ea-8121-b48641fcbc75&width=480&cache=v2"
+    },
+    {
+      "start": "13:00",
+      "end": "13:45",
+      "name": "ココロちゃんねる",
+      "place": "のんびり",
+      "once": false,
+      "thumb": "https://katariba.notion.site/image/attachment%3A59084d9f-523f-431d-96da-ed1504faa5da%3Acecf54d6-018a-4379-ba39-b2dde2656627.jpg?table=block&id=3945e2da-6ad7-8272-90d5-0142d800f9d7&spaceId=ed7047d7-c3e4-46ea-8121-b48641fcbc75&width=480&cache=v2"
+    }
+  ],
+  "at": "2026-11-08T22:59:00.642Z"
+}
