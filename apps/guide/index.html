@@ -62,6 +62,30 @@
       line-height: 1.7;
     }
 
+    /* ── スタッフが進めるツールの入口（ツール一覧には出さない） ── */
+    .gd-staff-tool {
+      display: flex;
+      align-items: center;
+      gap: var(--space-md);
+      margin-bottom: var(--space-md);
+      padding: 12px 16px;
+      background: #fff;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-card);
+      box-shadow: var(--shadow-sm);
+      color: var(--color-text);
+      text-decoration: none;
+      min-height: 44px;
+    }
+    .gd-staff-tool:hover { border-color: var(--color-accent); }
+    .gd-staff-tool:focus-visible { outline: 3px solid var(--color-accent); outline-offset: 2px; }
+    .gd-staff-tool img { width: 64px; height: 64px; border-radius: 12px; flex: none; }
+    .gd-staff-tool__body { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+    .gd-staff-tool__name { font-weight: 700; color: var(--color-accent); }
+    .gd-staff-tool__desc { font-size: 14px; line-height: 1.6; color: var(--color-muted); }
+    .gd-staff-tool > .material-symbols-rounded { color: var(--color-accent); flex: none; }
+    @media (max-width: 600px) { .gd-staff-tool { gap: 12px; padding: 12px; } .gd-staff-tool img { width: 48px; height: 48px; } }
+
     /* ── 注記・凡例 ── */
     .gd-notice {
       margin-bottom: var(--space-md);
@@ -263,6 +287,15 @@
       </a>
 
       <p class="gd-first">はじめて使うときは、先に<a href="hajimete/">はじめての人へ</a>（ルームの作り方・困ったとき・1人で練習する方法）を読んでください。</p>
+
+      <a class="gd-staff-tool" href="../circle-time/">
+        <img src="../assets/illustrations/circle-time.webp" alt="" width="64" height="64" decoding="async" onerror="this.remove()" />
+        <span class="gd-staff-tool__body">
+          <span class="gd-staff-tool__name">サークルタイムを進める</span>
+          <span class="gd-staff-tool__desc">午前・午後のサークルタイムのルームを作って、画面共有しながら進めます。参加者には、ルームの中で出る参加用のリンクを送ります。</span>
+        </span>
+        <span class="material-symbols-rounded" aria-hidden="true">arrow_forward</span>
+      </a>
 
       <div class="alert alert-info gd-notice">
         本文中の市販ゲーム名は、遊び方をイメージするための参考情報として挙げています。各アプリは制作者個人による独自制作で、各作品の権利者・販売元とは関係ありません（公式・公認ではありません）。
