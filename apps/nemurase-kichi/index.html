@@ -9,7 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
   <link rel="stylesheet" href="../shared/css/design-system.css?v=20261106d">
   <!-- index.html と app.js・engine.js・minigames.js・style.css はセットで変わるので、変えたら ?v= をそろえて上げる -->
-  <link rel="stylesheet" href="style.css?v=20261106r4">
+  <link rel="stylesheet" href="style.css?v=20261109a">
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
@@ -17,8 +17,8 @@
   <script src="../shared/js/room-qr.js?v=20261022"></script>
   <!-- ねむらせ基地だけ、本体と別の Firebase プロジェクトにつなぐ（firebase-config.js） -->
   <script src="firebase-config.js?v=20261028b"></script>
-  <script src="engine.js?v=20261106r4"></script>
-  <script src="minigames.js?v=20261106r4"></script>
+  <script src="engine.js?v=20261109a"></script>
+  <script src="minigames.js?v=20261109a"></script>
 </head>
 <body data-genre="suiri">
 
@@ -141,6 +141,13 @@
       <button type="button" class="nk-hud__menu" id="btnMenu" aria-label="メニュー">
         <span class="material-symbols-rounded" aria-hidden="true">menu</span>
       </button>
+      <!-- みんなを見る（ねむった人・途中から入った見学の子だけ。2026-11-09） -->
+      <div class="nk-follow" id="hudFollow" hidden>
+        <button type="button" class="nk-follow__btn" id="followPrev" aria-label="前の人を見る"><span class="material-symbols-rounded" aria-hidden="true">chevron_left</span></button>
+        <p class="nk-follow__label" aria-live="polite"><span class="nk-chip" id="followChip" aria-hidden="true" hidden></span><span id="followText"></span><span class="nk-follow__hint" id="followHint"></span></p>
+        <button type="button" class="nk-follow__btn" id="followNext" aria-label="次の人を見る"><span class="material-symbols-rounded" aria-hidden="true">chevron_right</span></button>
+        <button type="button" class="nk-follow__self" id="followSelf" hidden><span id="followSelfText">自分にもどる</span></button>
+      </div>
       <p class="nk-mute" id="hudMute" role="status" hidden><span class="material-symbols-rounded" aria-hidden="true" id="hudMuteIcon">mic_off</span><span id="hudMuteText"></span></p>
     </header>
 
@@ -373,7 +380,7 @@
     </div>
   </div>
 
-  <script type="module" src="app.js?v=20261106r4"></script>
+  <script type="module" src="app.js?v=20261109a"></script>
   <script src="../shared/js/stats.js?v=1" defer></script>
   <script src="../shared/js/howto.js"></script>
   <script>
@@ -389,7 +396,7 @@
           '見える広さ（暗がりの大きさ）は、ホストが待合室の「くわしい設定」で、隊員とねむらせ屋それぞれ 0.5〜4倍にできる（大きいほど遠くまで見える）',
           'はじまると、自分が「隊員」か「ねむらせ屋」かが出る。ほかの人には言わないでね',
           '声は会議の時間だけ。歩いている間はミュートにして、「ひとこと」ボタン（キーは T）で決まった言葉を送る。歩いている間のひとことは近くの人にだけ届く（ささやき）。会議中はみんなに届く。名前の入る言葉は「だれ？」で人を選ぶ。5秒に1回まで',
-          '画面の右上に、小さな地図が出る（自分の場所と、自分の仕事の「!」）。押すか「地図」ボタン（キーは M）で大きくなる。ほかの人は出ない。右上の×でかくせる。会議の間も「地図」ボタンで見られる',
+          '画面の右上に、小さな地図が出る（自分の場所と、自分の仕事の「!」）。押すか「地図」ボタン（キーは M）で大きくなる。おきている間は、ほかの人は出ない。右上の×でかくせる。会議の間も「地図」ボタンで見られる',
         ] },
         { heading: '隊員', items: [
           '矢印キー（スマホは左下のスティック）で歩く。自分のまわりの黄色い矢印が、次の仕事への道を指す（メニューの「補助をかくす」で、自分の画面から消せる）。黄色い「!」の場所で「仕事をする」を押すと、短いミニゲームが出る',
@@ -399,6 +406,7 @@
           '停電したら、停電をなおすスイッチのある部屋で「電気をなおす」（部屋の名前は画面に出る）。スイッチを順に入れなおすミニゲームをおえると直る',
           '「空気が止まった！」と出たら、60秒のうちに2つのパネルを両方なおす（パネルのある部屋は画面に出る）。間に合わないと、ねむらせ屋の勝ち。ふたり以上で手分けしよう',
           'ねむらされても、仕事はつづけられる。かべを通りぬけて歩ける。だれにねむらされたかは自分の画面にだけ出るので、ないしょにしてね',
+          'ねむったあとは、画面の上の ◀ ▶ で、ほかの人を1人ずつ選んで見られる（歩くと自分にもどる）。地図にも、みんなの場所が出る',
           'みんなの仕事がぜんぶおわったら勝ち',
           'ねむっている人を見つけたら「見つけた！」。会議のテーブルでは「会議ボタン」も押せる（はじめと会議のあと20秒は押せない。空気が止まっている間も押せない）',
         ] },
@@ -418,6 +426,7 @@
           '話し合って、ねむらせ屋だと思う人に投票する。わからなければ「スキップする」',
           'いちばん多く票が入った人はねむる。ねむっても、仕事はつづけられるよ。時間切れのとき、まだ投票していない人はスキップとして数える',
           '15分たったら「時間切れ」で引き分け',
+          'ゲームの途中から入った人は、次の回まで見学。画面の上の ◀ ▶ で、遊んでいる人を1人ずつ見られる',
         ] },
       ],
     });
