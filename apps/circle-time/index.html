@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
-<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet" />
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,500,1,0" rel="stylesheet" />
 <link rel="stylesheet" href="../shared/css/design-system.css?v=20261107" />
 <style>
@@ -650,6 +650,61 @@
   .p-go small{ font-weight:500; font-size:13px; opacity:.85; margin-left:6px; }
   @media (max-width: 980px){ .host{ grid-template-columns:1fr; } .people{ grid-column:auto; } }
   @media (max-width: 600px){ .wrap{ padding:12px 12px 50px; } .player{ padding:14px 14px 18px; } .form-card{ padding:18px 16px; } }
+  /* ── 切り紙の表紙（2026-11-10）: 生成した絵をやめ、色紙を切って重ねたような形と大きな文字で組む ── */
+  .kg{ position:absolute; inset:0; overflow:hidden; --kg-a:var(--am); --kg-b:var(--pm); --kg-c:#B9C27A; --kg-hill1:#E7C98F; --kg-hill2:#C99A55; --kg-ink:var(--am-ink); }
+  .stage.pm .kg{ --kg-a:var(--pm); --kg-b:var(--am); --kg-hill1:#EDB9A6; --kg-hill2:#C98670; --kg-ink:var(--pm-ink); }
+  .stage.full:has(.kg){ background:var(--am-pale); } .stage.full.pm:has(.kg){ background:var(--pm-pale); }
+  .stage.full:has(.kg) .foot{ position:relative; z-index:2; }
+  .kg-paper{ position:absolute; filter:drop-shadow(4px 5px 0 rgba(90,48,10,.14)); }
+  .kg-zm{ font-family:'Zen Maru Gothic',var(--font-base); font-feature-settings:'palt'; }
+  .kg-sun{ width:430px; height:430px; border-radius:50%; background:var(--kg-a); right:70px; bottom:-150px; }
+  .stage.pm .kg-sun{ width:230px; height:230px; right:56px; top:34px; bottom:auto; }
+  .kg-hill1{ width:1500px; height:420px; border-radius:50%; background:var(--kg-hill1); left:-420px; bottom:-300px; transform:rotate(3deg); }
+  .kg-hill2{ width:1200px; height:400px; border-radius:50%; background:var(--kg-hill2); right:-330px; bottom:-310px; transform:rotate(-4deg); }
+  .kg-cloud{ background:#fff; border-radius:60px; height:64px; }
+  .kg-cloud::before,.kg-cloud::after{ content:''; position:absolute; background:#fff; border-radius:50%; }
+  .kg-cloud::before{ width:84px; height:84px; left:34px; top:-40px; } .kg-cloud::after{ width:60px; height:60px; right:30px; top:-24px; }
+  .kg-date{ left:84px; top:96px; display:flex; align-items:baseline; gap:6px; background:#fff; padding:8px 18px 10px 26px; transform:rotate(-2deg); font-weight:700; font-size:30px; color:var(--kg-ink); line-height:1; }
+  .kg-date .n{ font-size:50px; font-weight:900; letter-spacing:-.01em; margin:0 2px 0 4px; }
+  .kg-date .n:first-child{ margin-left:0; }
+  .kg-date .wd{ align-self:center; width:50px; height:50px; border-radius:50%; background:var(--kg-ink); color:#fff; font-size:28px; display:flex; align-items:center; justify-content:center; margin-left:6px; }
+  .kg-op{ position:absolute; left:80px; top:196px; color:var(--color-primary); }
+  .kg-op .lead{ display:block; font-size:60px; font-weight:700; letter-spacing:.06em; color:var(--kg-ink); line-height:1.2; }
+  .kg-op .main{ display:block; font-size:132px; font-weight:900; line-height:1.1; letter-spacing:-.01em; white-space:nowrap; }
+  .kg-op .sub{ display:block; font-size:44px; font-weight:700; color:var(--kg-ink); margin-top:14px; }
+  .kg-op.long .main{ font-size:92px; }
+  .kg-num{ left:64px; top:20px; font-size:560px; line-height:1; font-weight:900; color:var(--kg-a); transform:rotate(-5deg); min-width:330px; text-align:center; }
+  .kg.c1 .kg-num{ color:var(--kg-b); } .kg.c2 .kg-num{ color:var(--kg-c); }
+  .kg-motif{ left:318px; top:356px; width:250px; height:250px; transform:rotate(7deg); }
+  .kg-motif svg, .kg-mini svg, .p-art svg, .cl-art svg{ display:block; width:100%; height:100%; overflow:visible; }
+  .kg-of{ left:104px; top:616px; font-size:34px; font-weight:700; color:var(--kg-ink); background:#fff; padding:2px 22px 4px; transform:rotate(-3deg); line-height:1.3; }
+  .kg-of small{ font-size:24px; opacity:.75; margin-left:2px; }
+  .kg-cv{ position:absolute; left:626px; right:56px; top:0; bottom:40px; display:flex; flex-direction:column; justify-content:center; color:var(--color-primary); }
+  .kg-cv .lead{ display:block; font-size:46px; font-weight:700; letter-spacing:.06em; color:var(--kg-ink); line-height:1.25; }
+  .kg-cv .main{ display:block; font-weight:900; line-height:1.08; letter-spacing:-.01em; word-break:auto-phrase; text-wrap:balance; overflow-wrap:anywhere; }
+  .kg-cv .d{ font-size:36px; line-height:1.5; margin-top:22px; color:var(--color-text); font-weight:500; word-break:auto-phrase; text-wrap:balance; }
+  .kg-agh{ position:absolute; left:84px; top:64px; font-size:76px; font-weight:900; color:var(--color-primary); line-height:1.1; }
+  .kg-agh small{ display:block; font-size:30px; font-weight:700; color:var(--kg-ink); letter-spacing:.2em; margin-bottom:8px; }
+  .stage .kg .ag-list{ position:absolute; left:84px; right:84px; top:240px; margin:0; display:grid; grid-auto-flow:column; gap:32px 56px; grid-auto-columns:1fr; }
+  .stage .kg .ag-list li{ position:relative; background:#fff; border-radius:0; min-width:0; padding:18px 22px 20px 112px; font-size:46px; font-weight:700; line-height:1.25; filter:drop-shadow(4px 5px 0 rgba(90,48,10,.12)); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .stage .kg .ag-list li:nth-child(odd){ transform:rotate(-1deg); } .stage .kg .ag-list li:nth-child(even){ transform:rotate(.8deg); }
+  .stage .kg .ag-list li .no{ position:absolute; left:0; top:0; bottom:0; width:86px; height:auto; border-radius:0; font-size:50px; font-weight:900; color:#fff; background:var(--kg-a); }
+  .stage .kg .ag-list li:nth-child(3n+2) .no{ background:var(--kg-b); } .stage .kg .ag-list li:nth-child(3n) .no{ background:var(--kg-c); }
+  .stage .kg .ag-list li.done{ opacity:1; background:#FBF3E4; color:#A89B8A; } .stage .kg .ag-list li.done .no{ background:#D9CDBA; }
+  .stage .kg .ag-list.small li{ font-size:34px; padding:12px 18px 14px 92px; } .stage .kg .ag-list.small li .no{ width:72px; font-size:40px; }
+  .kg-door{ right:120px; bottom:60px; width:330px; height:330px; transform:rotate(3deg); }
+  .cl-art.kg-pic{ background:none; border-radius:0; box-shadow:none; overflow:visible; filter:drop-shadow(4px 5px 0 rgba(90,48,10,.14)); transform:rotate(-3deg); }
+  .p-art.kg-pic{ background:none; border-radius:0; overflow:visible; filter:drop-shadow(2px 3px 0 rgba(90,48,10,.14)); display:inline-block; }
+  .stage .kg .ag-list.one{ right:auto; width:640px; }
+  .closing-wrap.kgc{ position:relative; z-index:1; }
+  .closing-wrap.kgc .kick{ font-size:34px; letter-spacing:.04em; color:var(--am-ink); }
+  .closing-wrap.kgc .kick .material-symbols-rounded{ font-size:36px; }
+  .closing-wrap.kgc .closing h1{ font-family:'Zen Maru Gothic',var(--font-base); font-weight:900; font-feature-settings:'palt'; font-size:62px !important; line-height:1.16; word-break:auto-phrase; text-wrap:balance; }
+  .closing-wrap.kgc.tight .closing h1{ font-size:50px !important; }
+  .closing-wrap.kgc .mv-it{ border-radius:0; filter:drop-shadow(4px 5px 0 rgba(90,48,10,.12)); }
+  .closing-wrap.kgc .mv-it:nth-child(odd){ transform:rotate(-.6deg); } .closing-wrap.kgc .mv-it:nth-child(even){ transform:rotate(.5deg); }
+  .closing-wrap.kgc .mv-it .th{ border-radius:0; }
+  .closing-wrap.kgc .mv-it b{ font-feature-settings:'palt'; }
 </style>
 </head>
 <body data-genre="talk">
@@ -658,7 +713,7 @@
 <section class="screen active" id="screen-top">
   <div class="wrap">
     <section class="app-entry">
-      <div class="app-hero"><img class="app-illust" src="../assets/illustrations/circle-time.webp" alt="" width="156" height="156" decoding="async" onerror="this.parentNode.remove()" /></div>
+      <div class="app-hero"><img class="app-illust" src="assets/cover.svg" alt="" width="156" height="156" decoding="async" onerror="this.parentNode.remove()" /></div>
       <h1 class="app-title">サークルタイム</h1>
       <p class="app-catch">みんなで答えながら、朝と午後のあつまりを進める</p>
       <p class="app-entry__lead">自由タイムからプログラム紹介までの流れを、ひとつのルームで進めます。参加者は自分の端末のボタンでも、チャットや声でも答えられます。</p>
@@ -942,9 +997,43 @@ const COVER = {
   review: ['history', 'ふりかえり', '今日はどうだった？'],
   game: ['casino', 'みんなでゲーム', 'きょうあそぶゲームの紹介'],
 };
-// 表紙・目次の絵（fal の Recraft V3 手描き風。tools/illustrations.py）。読めないときはアイコンに戻る
-const ART_BASE = 'assets/';
-const ART = { free: 'free', kokoro: 'kokoro', karada: 'karada', weather: 'weather', day: 'day', adhoc: 'adhoc', program: 'program', tomorrow: 'program', talk: 'talk', review: 'review', game: 'game' };
+// ── 切り紙の表紙の形（手で組んだ SVG。生成した絵は使わない） ──
+const KG_COL = { a: '#F2B35C', b: '#E8907B', c: '#B9C27A', w: '#fff', k: '#6A4F35', h: '#C99A55' };
+const KG_STAR = (cx, cy, r, fill) => { const p = []; for (let i = 0; i < 10; i++) { const a = Math.PI * (i / 5 - 0.5), q = i % 2 ? r * 0.46 : r; p.push((cx + q * Math.cos(a)).toFixed(1) + ',' + (cy + q * Math.sin(a)).toFixed(1)); } return `<polygon points="${p.join(' ')}" fill="${fill}" stroke="${fill}" stroke-width="10" stroke-linejoin="round"/>`; };
+const KG_Q = (x, y, size, fill) => `<text x="${x}" y="${y}" text-anchor="middle" font-family="'Zen Maru Gothic',sans-serif" font-weight="900" font-size="${size}" fill="${fill}">?</text>`;
+const MOTIF = {
+  free: `<path d="M74 52c-11-12 9-19-1-33M108 52c-11-12 9-19-1-33" stroke="${KG_COL.h}" stroke-width="9" fill="none" stroke-linecap="round"/><path d="M136 94h16a21 21 0 0 1 0 42h-16" fill="none" stroke="${KG_COL.w}" stroke-width="16"/><rect x="40" y="70" width="100" height="104" rx="14" fill="${KG_COL.w}"/><rect x="40" y="106" width="100" height="24" fill="${KG_COL.b}"/>`,
+  kokoro: `<path d="M100 178C42 134 14 102 14 66c0-28 21-46 44-46 18 0 33 10 42 27 9-17 24-27 42-27 23 0 44 18 44 46 0 36-28 68-86 112z" fill="${KG_COL.b}"/>`,
+  karada: `<path d="M100 66c-14-16-60-12-60 40 0 44 29 74 45 74 8 0 9-5 15-5s7 5 15 5c16 0 45-30 45-74 0-52-46-56-60-40z" fill="${KG_COL.b}"/><path d="M100 66c0-15 4-27 14-36" stroke="${KG_COL.k}" stroke-width="9" fill="none" stroke-linecap="round"/><path d="M112 42c10-19 35-23 48-15-6 19-29 28-48 15z" fill="${KG_COL.c}"/>`,
+  weather: `<circle cx="140" cy="72" r="48" fill="${KG_COL.a}"/><g fill="${KG_COL.w}"><rect x="20" y="106" width="150" height="60" rx="30"/><circle cx="76" cy="104" r="40"/><circle cx="124" cy="112" r="28"/></g>`,
+  day: `<rect x="32" y="44" width="136" height="136" rx="12" fill="${KG_COL.w}"/><path d="M32 56a12 12 0 0 1 12-12h112a12 12 0 0 1 12 12v32H32z" fill="${KG_COL.b}"/><rect x="62" y="26" width="15" height="36" rx="7.5" fill="${KG_COL.k}"/><rect x="123" y="26" width="15" height="36" rx="7.5" fill="${KG_COL.k}"/>${KG_Q(100, 164, 80, KG_COL.k)}`,
+  program: `<rect x="24" y="48" width="92" height="70" rx="8" fill="${KG_COL.a}" transform="rotate(-9 70 83)"/><rect x="94" y="34" width="88" height="68" rx="8" fill="${KG_COL.c}" transform="rotate(7 138 68)"/><g transform="rotate(-2 104 140)"><rect x="52" y="100" width="104" height="78" rx="8" fill="${KG_COL.w}"/><rect x="68" y="120" width="72" height="10" rx="5" fill="${KG_COL.b}"/><rect x="68" y="142" width="48" height="10" rx="5" fill="#E3D5BE"/></g>`,
+  talk: `<path d="M30 30h100a18 18 0 0 1 18 18v48a18 18 0 0 1-18 18H76l-30 26v-26H30a18 18 0 0 1-18-18V48a18 18 0 0 1 18-18z" fill="${KG_COL.w}"/><g fill="${KG_COL.h}"><circle cx="50" cy="72" r="8"/><circle cx="80" cy="72" r="8"/><circle cx="110" cy="72" r="8"/></g><path d="M100 100h72a16 16 0 0 1 16 16v38a16 16 0 0 1-16 16h-6v22l-26-22h-40a16 16 0 0 1-16-16v-38a16 16 0 0 1 16-16z" fill="${KG_COL.b}"/>`,
+  review: `${KG_STAR(92, 104, 78, KG_COL.a)}${KG_STAR(160, 44, 26, KG_COL.w)}`,
+  game: `<g transform="rotate(-10 100 100)"><rect x="34" y="34" width="132" height="132" rx="26" fill="${KG_COL.w}"/><g fill="${KG_COL.b}"><circle cx="68" cy="68" r="13"/><circle cx="132" cy="68" r="13"/><circle cx="100" cy="100" r="13"/><circle cx="68" cy="132" r="13"/><circle cx="132" cy="132" r="13"/></g></g>`,
+  adhoc: `<circle cx="100" cy="100" r="84" fill="${KG_COL.c}"/>${KG_Q(100, 146, 130, KG_COL.w)}`,
+  door: `<path d="M40 184V100a60 60 0 0 1 120 0v84z" fill="${KG_COL.h}"/><path d="M60 184V102a40 40 0 0 1 80 0v82z" fill="${KG_COL.a}"/><circle cx="124" cy="128" r="8" fill="${KG_COL.k}"/><rect x="14" y="178" width="172" height="14" rx="7" fill="${KG_COL.c}"/>`,
+};
+MOTIF.tomorrow = MOTIF.program;
+const motifSvg = (key) => `<svg viewBox="0 0 200 200" aria-hidden="true">${MOTIF[key] || MOTIF.adhoc}</svg>`;
+// 大きな見出しの組み方: 前置き（小さく）とことば（大きく）。初期の見出しのままのときだけ分ける。全角の空白があれば、そこで分ける
+const KG_SPLIT = { '今日は何の日？': ['今日は', '何の日？'], '今日のプログラム': ['今日の', 'プログラム'], '明日のプログラム': ['明日の', 'プログラム'], 'みんなでゲーム': ['みんなで', 'ゲーム'], 'みんなに質問': ['みんなに', '質問'], '全国の天気': ['全国の', '天気'] };
+function kgTitle(t) {
+  t = String(t || '');
+  const m = t.match(/^(.+?)([　 ]+)(\S+)$/);
+  const [lead, gap, main] = m ? [m[1], m[2], m[3]] : KG_SPLIT[t] ? [KG_SPLIT[t][0], '', KG_SPLIT[t][1]] : ['', '', t];
+  const n = [...main].length, size = Math.max(72, Math.min(250, Math.floor(590 / Math.max(n, 1))));
+  return `${lead ? `<span class="lead">${esc(lead)}</span>${gap}` : ''}<span class="main" style="font-size:${size}px">${esc(main)}</span>`;
+}
+function kgDate(s) {
+  const m = String(s || '').match(/^(\d+)月(\d+)日（(.)）$/);
+  return m ? `<span class="n">${m[1]}</span>月<span class="n">${m[2]}</span>日<span class="wd">${m[3]}</span>` : esc(s || '');
+}
+const kgSky = (pm) => `<div class="kg-paper kg-sun"></div><div class="kg-paper kg-hill1"></div><div class="kg-paper kg-hill2"></div>` + (pm ? `<div class="kg-paper kg-cloud" style="width:200px; right:330px; top:100px"></div><div class="kg-paper kg-cloud" style="width:170px; right:70px; top:350px; transform:scale(.8)"></div>` : `<div class="kg-paper kg-cloud" style="width:210px; right:330px; top:120px"></div><div class="kg-paper kg-cloud" style="width:170px; right:60px; top:230px; transform:scale(.8)"></div>`);
+const kgOpening = (pm, date) => `<div class="kg">${kgSky(pm)}<div class="kg-paper kg-date kg-zm">${kgDate(date)}</div><div class="kg-op kg-zm"><span class="lead">${pm ? '午後の' : '午前の'}</span><span class="main">サークルタイム</span></div></div>`;
+const kgCover = (key, no, total, t, d) => `<div class="kg c${(no - 1) % 3}"><div class="kg-paper kg-num kg-zm" aria-hidden="true">${no}</div><div class="kg-paper kg-motif">${motifSvg(key)}</div><div class="kg-paper kg-of kg-zm cv-no">${no}<small>／${total}</small></div><div class="kg-cv"><div class="cv-t kg-zm">${kgTitle(t)}</div>${d ? `<div class="d cv-d">${esc(d)}</div>` : ''}</div></div>`;
+const kgAgenda = (pm, items, rows) => `<div class="kg"><div class="kg-paper kg-hill1" style="bottom:-330px"></div><div class="kg-paper kg-hill2" style="bottom:-345px"></div><div class="kg-agh kg-zm ag-h"><small>${pm ? '午後' : '午前'}</small>きょうの流れ</div><ol class="ag-list kg-zm${rows > 4 ? ' small' : ''}${rows === (items.match(/<li/g) || []).length ? ' one' : ''}" style="grid-template-rows:repeat(${rows},auto)">${items}</ol></div>`;
+const kgClosingPm = () => `<div class="kg"><div class="kg-paper kg-hill1"></div><div class="kg-paper kg-hill2"></div><div class="kg-paper kg-door">${motifSvg('door')}</div><div class="kg-op kg-zm long" style="top:150px"><span class="lead">このあとは</span><span class="main op-t">エントランスに<br>移動しよう</span><span class="sub op-d">きょうもありがとう</span></div></div>`;
 // 5段階の表情（5 → 1）と、ふりかえりのひとことのアイコン（WORDS と同じ順）
 const FACES = ['sentiment_very_satisfied', 'sentiment_satisfied', 'sentiment_neutral', 'sentiment_dissatisfied', 'sentiment_very_dissatisfied'];
 const WORD_ICONS = ['celebration', 'replay', 'mood', 'battery_2_bar', 'bedtime', 'psychology_alt'];
@@ -952,7 +1041,6 @@ const gameArt = (g, cls) => art(APPS_BASE + 'assets/illustrations/' + g.slug + '
 // 参加者の画面の短い案内（アイコンつき）
 const pnote = (icon, text) => `<p class="p-note-line"><span class="material-symbols-rounded">${icon}</span>${text}</p>`;
 const art = (file, icon, cls = '') => `<span class="art ${cls}"><img src="${esc(file)}" alt="" onerror="this.parentNode.classList.add('noimg')"><span class="material-symbols-rounded">${icon}</span></span>`;
-const secArt = (s, cls) => art(ART_BASE + (ART[coverKey(s)] || 'adhoc') + '.webp', coverOf(s)[0], cls);
 const SHORT = { free: '自由タイム', kokoro: '心', karada: '体', weather: '天気', day: '何の日', adhoc: '質問', program: 'プログラム', tomorrow: '明日', talk: 'チェックイン', review: 'ふりかえり', game: 'ゲーム' };
 // みんなでゲームにえらべるもの: ツール一覧で利用シーンに「サークル」があり、話す・内省以外の種類のもの（自由タイムで使うことばみっけは除く）
 const GAME_GENRES = ['atekko', 'suiri', 'kotoba', 'puzzle'];
@@ -1526,21 +1614,21 @@ function stageHtml(room, code) {
   const how = (what) => `<div class="how">端末・チャット（${what}）・声、どれでもOK</div>`;
   const wrap = (body, foot = '', opt = {}) => `<div class="stage${kindPm ? ' pm' : ''}${opt.full ? ' full' : ''}">${opt.full ? '' : `<div class="top"><div class="progress">${secs.map((s, i) => `<span class="${i < si ? 'done' : i === si ? 'now' : ''}">${esc(shortName(s))}</span>`).join('')}</div></div>`}<div class="body">${body}</div><div class="foot">${foot}</div></div>`;
   if (room.status === 'finished' || !cur) return wrap(`<div class="end">おしまい<small>きょうもありがとう</small></div>`, '', { full: true });
-  if (cur.type === 'opening') return wrap(`<div class="opening">${art(ART_BASE + (kindPm ? 'opening-pm' : 'opening-am') + '.webp', kindPm ? 'wb_twilight' : 'wb_sunny', 'op-art')}<div class="op-t">${session}</div><div class="op-d">${esc(room.date || '')}</div></div>`, `<span>チャットのリンクから、自分の端末でも入れるよ</span>${codeTag}`, { full: true });
+  if (cur.type === 'opening') return wrap(kgOpening(kindPm, room.date), `<span>チャットのリンクから、自分の端末でも入れるよ</span>${codeTag}`, { full: true });
   if (cur.type === 'agenda') {
     const ai = vis.findIndex((s) => s.id === cur.id);
-    const items = secs.map((s, i) => { const [ic, t] = coverOf(s); return `<li class="${vis.indexOf(s) < ai ? 'done' : ''}"><span class="no">${i + 1}</span>${secArt(s, 'ag-art')}${esc(t)}</li>`; }).join('');
-    return wrap(`<div class="agenda"><div class="ag-h">きょうの流れ</div><ol class="ag-list" style="grid-template-rows:repeat(${secs.length <= 4 ? secs.length : Math.ceil(secs.length / 2)},auto)">${items}</ol></div>`, '', { full: true });
+    const items = secs.map((s, i) => `<li class="${vis.indexOf(s) < ai ? 'done' : ''}"><span class="no">${i + 1}</span>${esc(coverOf(s)[1])}</li>`).join('');
+    return wrap(kgAgenda(kindPm, items, secs.length <= 3 ? secs.length : Math.ceil(secs.length / 2)), '', { full: true });
   }
   if (cur.type === 'closing') {
-    if (kindPm) return wrap(`<div class="opening">${art(ART_BASE + 'closing-pm.webp', 'door_open', 'op-art')}<div class="op-t">エントランスに移動しよう</div><div class="op-d">きょうもありがとう</div></div>`, '', { full: true });
+    if (kindPm) return wrap(kgClosingPm(), '', { full: true });
     const first = firstSlot(room);
     const items = first ? `<div class="mv${first.items.length >= 4 ? ' many lots' : first.items.length === 3 ? ' many' : ''}">${first.items.map((it) => `<div class="mv-it">${it.thumb ? `<span class="th" style="background-image:url('${esc(it.thumb).replace(/'/g, '%27')}')"></span>` : ''}<b>${esc(it.name)}</b>${it.place ? `<span class="material-symbols-rounded">arrow_forward</span><span class="pl">${esc(it.place)}</span>` : ''}</div>`).join('')}</div>` : '';
-    return wrap(`<div class="closing-wrap${first && first.items.length >= 3 ? ' tight' : ''}">${art(ART_BASE + 'closing-am.webp', 'directions_walk', 'cl-art')}<div class="closing"><div class="kick"><span class="material-symbols-rounded">directions_walk</span>このあと${first ? `（${esc(first.tm)}から）` : ''}</div><h1>${first ? '1コマ目のプログラムに移動しよう' : 'それぞれのプログラムに移動しよう'}</h1>${items}</div></div>`, '', { full: true });
+    return wrap(`<div class="kg"><div class="kg-paper kg-hill1" style="bottom:-345px"></div><div class="kg-paper kg-hill2" style="bottom:-360px"></div></div><div class="closing-wrap kgc${first && first.items.length >= 3 ? ' tight' : ''}"><span class="cl-art kg-pic">${motifSvg('door')}</span><div class="closing"><div class="kick"><span class="material-symbols-rounded">directions_walk</span>このあと${first ? `（${esc(first.tm)}から）` : ''}</div><h1>${first ? '1コマ目のプログラムに移動しよう' : 'それぞれのプログラムに移動しよう'}</h1>${items}</div></div>`, '', { full: true });
   }
   if (onCover(room, cur)) {
     const [ic, t, d] = coverOf(cur);
-    return wrap(`<div class="cover">${secArt(cur, 'cv-art')}<div class="cv-txt"><div class="cv-no">${si + 1}<small>／${secs.length}</small></div><div class="cv-t">${esc(t)}</div>${d ? `<div class="cv-d">${esc(d)}</div>` : ''}</div></div>`, '', { full: true });
+    return wrap(kgCover(coverKey(cur), si + 1, secs.length, t, d), '', { full: true });
   }
   const players = playersOf(room), ans = answered(room, cur.id), revealed = isRevealed(room, cur);
   const byValue = (v) => players.filter((p) => ans[p.id] === v || (ans[p.id] && typeof ans[p.id] === 'object' && ans[p.id].n === v));
@@ -1728,7 +1816,7 @@ function renderPlayer(room) {
   }
   if (onCover(room, cur)) {
     const [ic, t, d] = coverOf(cur);
-    html += `<div class="p-cover"><small>${idx + 1}／${secs.length}　つぎは</small>${secArt(cur, 'p-art')}<b>${esc(t)}</b>${d ? `<p>${esc(d)}</p>` : ''}</div>`;
+    html += `<div class="p-cover"><small>${idx + 1}／${secs.length}　つぎは</small><span class="p-art kg-pic">${motifSvg(coverKey(cur))}</span><b>${esc(t)}</b>${d ? `<p>${esc(d)}</p>` : ''}</div>`;
     card.innerHTML = html; return;
   }
   if (cur.type === 'free') {
