@@ -178,6 +178,22 @@ const { check, sleep, text, visible, waitScreen, waitFor, key, fitsHeight, overf
   check('S30 S で下まで動かすと、すとんを押さなくても置ける', afterS.some((v, i) => v !== beforeS[i] && beforeS[i] === emptyCell));
   await shot(W2, 'e2e3-wasd');
 
+  // ひとりでも大技の一言を出す（2026-11-10 フィードバック）。消し方の見分けはしくみのテストで確かめているので、ここでは結果を差しかえて一言だけ見る
+  const techNote = async (fake) => {
+    await W2.page.evaluate((f) => {
+      const E = window.SutonEngine;
+      const orig = E.hardDrop;
+      E.hardDrop = (g) => { E.hardDrop = orig; return Object.assign(orig(g), f); };
+    }, fake);
+    await key(W2, 'Space');
+    await sleep(150);
+    return text(W2, '#playNote');
+  };
+  const n1 = await techNote({ lines: 2, spin: 'spin', b2b: true, combo: 1, allClear: false });
+  check('S31 ひとりでも回し入れ・つづけて大技・れんぞくの一言が出る', n1.includes('回し入れ！') && n1.includes('つづけて大技！') && n1.includes('2れんぞく！') && !n1.includes('おくった'), n1);
+  const n2 = await techNote({ lines: 4, spin: null, b2b: false, combo: 0, allClear: true });
+  check('S32 ひとりでも全部消えた・4段の一言が出る', n2.includes('全部消えた！') && n2.includes('4段すとん！'), n2);
+
   // ── マウス（ルームで、盤をルームの記録と照らし合わせる）──
   const M = await L.newClient('mouse', { viewport: { width: 1000, height: 820 } });
   const code = await L.createRoom(M, 'そら');
