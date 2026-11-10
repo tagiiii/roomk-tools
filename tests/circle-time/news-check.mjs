@@ -1,9 +1,11 @@
 // サークルタイム「自由タイムのニュース」の毎朝のデータを確かめる
 // 使い方: node tests/circle-time/news-check.mjs apps/circle-time/daily/2026-11-10.news.json [...]
 // 確かめること: 形・長さ・絵文字なし・リンクは https で開ける（404・410 は失敗）・子ども向けに選ばない話題の言葉が入っていない
+// 写真（img。なくてもよい）は Wikimedia Commons の自由に使えるライセンスのもので、撮影者とライセンスが Commons の記載と合う
 // 話題の言葉はおおまかな網。選ぶときの判断（circle-daily.md）が本体
 import fs from 'node:fs';
 import path from 'node:path';
+import { imageInfo, toImg } from '../../scripts/circle-time/commons-image.mjs';
 
 const EMOJI = /[\u{1F000}-\u{1FAFF}☀-➿️]/u;
 const UA = { 'User-Agent': 'roomk-tools-circle-daily/0.1 (local check)' };
@@ -33,6 +35,23 @@ for (const file of process.argv.slice(2)) {
     if (hit.length) ng(file, `子ども向けに選ばない話題の言葉（${hit.join('・')}）: ${label}`);
   }
   if (new Set(items.map((x) => x?.title)).size !== items.length) ng(file, '同じ見出しがある');
+  for (const x of items) {
+    if (x?.img === undefined) continue;
+    const m = x.img || {}, label = x.title;
+    const hit = String(m.src || '').match(/^https:\/\/(?:upload|thumb)\.wikimedia\.org\/wikipedia\/commons\/(?:thumb\/)?[0-9a-f]\/[0-9a-f]{2}\/([^/?\s]+)/);
+    if (!hit || /[?\s"'()]/.test(m.src)) { ng(file, `img.src は Wikimedia Commons の画像のアドレス（? なし）: ${label}`); continue; }
+    if (typeof m.credit !== 'string' || !m.credit.trim() || [...m.credit].length > 40) ng(file, `img.credit（撮影者）は40文字まで: ${label}`);
+    try {
+      const pages = await imageInfo({ titles: 'File:' + decodeURIComponent(hit[1]) });
+      if (!pages.length) { ng(file, `img の写真が Commons に見つからない: ${label}`); continue; }
+      const info = toImg(pages[0]);
+      if (!info.free) ng(file, `img のライセンスが自由に使えるものではない（${info.license}）: ${label}`);
+      if (m.license !== info.license) ng(file, `img.license が Commons の記載（${info.license}）と合わない: ${label}`);
+      if (m.credit !== info.credit) ng(file, `img.credit が Commons の記載（${info.credit}）と合わない: ${label}`);
+      const res = await fetch(m.src, { method: 'HEAD', headers: UA });
+      if (!res.ok) ng(file, `img.src が開けない（${res.status}）: ${label}`);
+    } catch (e) { console.log(`  注意 img を確かめられない（${e.message}）: ${label}`); }
+  }
   for (const x of items) {
     if (!/^https:\/\//.test(x?.url || '')) continue;
     try {

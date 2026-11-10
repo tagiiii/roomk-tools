@@ -69,7 +69,7 @@ function jmaBody(office) {
 
 // 子ども向けのニュースの差し替え（毎朝のタスクが書く形）
 const NEWS_FIX = [
-  { title: '白浜のパンダの赤ちゃん、初めて外へ', text: '和歌山県白浜町の動物園で8月に生まれたパンダの赤ちゃんが、9日に初めて外の運動場に出ました。体重は約10kgです。', ask: '見てみたい動物はいる？', source: 'テスト新聞', url: 'https://example.com/news/1', on: '11月9日' },
+  { title: '白浜のパンダの赤ちゃん、初めて外へ', text: '和歌山県白浜町の動物園で8月に生まれたパンダの赤ちゃんが、9日に初めて外の運動場に出ました。体重は約10kgです。', ask: '見てみたい動物はいる？', source: 'テスト新聞', url: 'https://example.com/news/1', on: '11月9日', img: { src: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Giant_Panda_2.JPG/960px-Giant_Panda_2.JPG', credit: 'Sheila Lau', license: 'Public domain' } },
   { title: '国の宇宙望遠鏡から星の写真', text: '国の宇宙望遠鏡が、約1500光年はなれた星が生まれる場所の写真を送ってきました。', source: 'テスト放送', url: 'https://example.com/news/2', on: '11月9日' },
   { title: '札幌で初雪', text: '北海道の札幌市で9日の朝、この冬はじめての雪がふりました。去年より5日おそいそうです。', ask: '雪でやりたいことは？', source: 'テスト新聞', url: 'https://example.com/news/3', on: '11月9日' },
 ];
@@ -108,6 +108,8 @@ async function newClient(label, opts = {}) {
     if (!opts.news || date !== (opts.newsDate || jstToday())) return route.fulfill({ status: 404, contentType: 'text/plain', body: 'not found' });
     return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ date, items: opts.news }) });
   });
+  // ニュースの写真（Wikimedia Commons）は外へ取りにいかず、小さな画像を返す
+  await context.route('https://upload.wikimedia.org/**', (route) => route.fulfill({ status: 200, contentType: 'image/png', body: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64') }));
   // プログラムのサムネイル（Notion の公開ページの画像）は外へ取りにいかず、小さな画像を返す
   await context.route('https://katariba.notion.site/image/**', (route) => route.fulfill({ status: 200, contentType: 'image/png', body: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64') }));
   const page = await context.newPage();
