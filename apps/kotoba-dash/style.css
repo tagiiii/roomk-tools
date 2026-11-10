@@ -108,7 +108,7 @@
 /* こたえる */
 .kd-input__label { display: block; margin: 0 0 8px; font-size: 1.4rem; font-weight: 700; color: var(--color-primary); }
 .kd-input__row { display: flex; gap: 8px; }
-.kd-input__box { flex: 1 1 auto; min-width: 0; font-size: 2rem; min-height: 68px; }
+.kd-input__box { flex: 1 1 auto; min-width: 0; font-size: 2rem; min-height: 56px; padding-top: 4px; padding-bottom: 4px; }
 .kd-input__row .btn { white-space: nowrap; flex: 0 0 auto; }
 .kd-choices { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
 .kd-choice { min-height: 76px; font-size: 1.8rem; }
@@ -121,14 +121,15 @@
 .kd-cell.is-open { border-style: solid; background: var(--g-pale); }
 
 /* ボタンの大事さを大きさの差（ジャンプ率）で見せる（2026-11-09 オーナー）
+   高さは 56（主）・48（ふつう）・36（ルームのバーなど小）の3段だけにして、同じ行のボタンの高さをそろえる（2026-11-10 オーナー「縦幅も揃っていますか」）
    いちばん押すもの（こたえる・はじめる・つぎの問題へ・もう一回）は大きく、補助（ヒント・もう一回流す・とめる）は小さく、パスは文字だけ */
-.kd-btn-main { min-height: 60px; padding: 0 32px; font-size: 1.3rem; font-weight: 700; letter-spacing: .04em; }
-.kd-btn-mid { min-height: 52px; padding: 6px 20px; font-size: 1.1rem; }
-.kd-btn-sub { min-height: 44px; padding: 6px 16px; font-size: .95rem; display: inline-flex; align-items: center; gap: 4px; }
+.kd-btn-main { min-height: 56px; padding: 0 32px; font-size: 1.3rem; font-weight: 700; letter-spacing: .04em; }
+.kd-btn-mid { min-height: 48px; padding: 6px 20px; font-size: 1.1rem; }
+.kd-btn-sub { min-height: 48px; padding: 6px 16px; font-size: .95rem; display: inline-flex; align-items: center; gap: 4px; }
 .kd-btn-sub .material-symbols-rounded { font-size: 1.15rem; }
 .kd-btn-text { min-height: 44px; padding: 4px 8px; margin-top: 6px; border: 0; background: transparent; color: var(--color-muted); font: inherit; font-size: 1rem; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
 .kd-btn-text:hover { color: var(--color-text); }
-.kd-input__row .kd-btn-main { min-height: 68px; padding: 0 28px; }
+.kd-input__row .kd-btn-main { padding: 0 28px; }
 #btnStart { margin-top: 8px; }
 
 /* 遊ぶ画面の待ち・送ったよの文は、画面共有でも読めるよう大きめ */
@@ -143,7 +144,7 @@
 .kd-hostbox { background: var(--color-surface); border: 1px dashed var(--color-border); border-radius: 12px; padding: 12px 16px; }
 .kd-hostbox .kd-note { margin: 0 0 8px; }
 .kd-hostbox__btns { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-.kd-hostbox .kd-btn-main { flex: 1 1 100%; order: -1; min-height: 60px; font-size: 1.3rem; }
+.kd-hostbox .kd-btn-main { flex: 1 1 100%; order: -1; }
 
 /* 結果（個人戦。順位の数字はつけない） */
 .kd-result { text-align: center; }
@@ -173,14 +174,14 @@
   .kd-count.is-ready { font-size: 3rem; }
   .kd-stage__answer { font-size: 2.8rem; }
   .kd-stage__answer.is-long { font-size: 2rem; }
-  .kd-input__box { font-size: 1.6rem; min-height: 60px; }
+  .kd-input__box { font-size: 1.6rem; }
   .kd-choices { grid-template-columns: 1fr 1fr; }
   .kd-choice { font-size: 1.4rem; min-height: 64px; }
   .kd-cell { width: 48px; height: 48px; font-size: 1.8rem; }
   .kd-score__me { font-size: 1.35rem; }
   .kd-score__me b { font-size: 2rem; }
   .kd-btn-main { min-height: 56px; font-size: 1.2rem; padding: 0 24px; }
-  .kd-input__row .kd-btn-main { min-height: 60px; font-size: 1.25rem; padding: 0 18px; }
+  .kd-input__row .kd-btn-main { font-size: 1.2rem; padding: 0 18px; }
   .kd-roombar #btnLeave { margin-left: 0; }
 }
 @media (prefers-reduced-motion: reduce) {
