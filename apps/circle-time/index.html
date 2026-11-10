@@ -93,6 +93,13 @@
   .fb-news-a{ display:flex; align-items:center; gap:10px; font:700 26px 'Zen Maru Gothic',var(--font-base); color:var(--color-accent); }
   .fb-news-a .material-symbols-rounded{ font-size:32px; }
   .fb-news-s{ font-size:18px; color:var(--color-muted); }
+  .fb-news{ display:grid; grid-template-columns:400px 1fr; gap:28px; align-items:center; min-height:0; }
+  .fb-news.noimg{ grid-template-columns:1fr; } .fb-news.noimg .fb-news-img{ display:none; }
+  .fb-news-b{ display:flex; flex-direction:column; gap:14px; min-width:0; }
+  .fb-news-img{ margin:0; display:flex; flex-direction:column; gap:6px; }
+  .fb-news-img img{ width:100%; aspect-ratio:4/3; object-fit:cover; border-radius:18px; background:#F1E8D6; }
+  .fb-news-img figcaption{ font-size:13px; color:var(--color-muted); line-height:1.4; overflow-wrap:anywhere; }
+  .fb-news .fb-news-t{ font-size:36px; } .fb-news .fb-news-x{ font-size:26px; }
   .fb-hands{ display:flex; gap:8px; align-items:center; justify-content:center; flex-wrap:wrap; font-size:19px; color:var(--color-muted); }
   .fb-hint{ font-size:17px; color:var(--color-muted); }
   .fb-side{ display:flex; flex-direction:column; gap:14px; }
@@ -296,6 +303,9 @@
   .p-news p{ margin:0 0 6px; font-size:15px; }
   .p-news p.ask{ font-weight:700; color:var(--color-accent); }
   .p-news small{ color:var(--color-muted); font-size:12px; }
+  .p-news-img{ margin:0 0 10px; }
+  .p-news-img img{ width:100%; aspect-ratio:4/3; object-fit:cover; border-radius:10px; background:#F1E8D6; display:block; }
+  .p-news-img figcaption{ font-size:11px; color:var(--color-muted); margin-top:4px; overflow-wrap:anywhere; }
   .p-wx{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
   .p-wx .opt-btn{ flex-direction:column; justify-content:center; text-align:center; gap:4px; }
   .p-wx .opt-btn .material-symbols-rounded{ font-size:32px; color:var(--color-accent); }
@@ -1211,8 +1221,14 @@ const gameOptions = (pool, slug) => pool.map((g) => `<option value="${esc(g.slug
 const NEWS_MAX = 5;
 function validNews(d) {
   const ok = (x) => x && typeof x.title === 'string' && x.title && typeof x.text === 'string' && x.text && typeof x.source === 'string' && /^https:\/\//.test(x.url || '');
-  return Array.isArray(d?.items) ? d.items.filter(ok).slice(0, NEWS_MAX).map((x) => ({ title: x.title, text: x.text, source: x.source, url: x.url, on: String(x.on || ''), ask: String(x.ask || '') })) : [];
+  return Array.isArray(d?.items) ? d.items.filter(ok).slice(0, NEWS_MAX).map((x) => ({ title: x.title, text: x.text, source: x.source, url: x.url, on: String(x.on || ''), ask: String(x.ask || ''), img: newsImg(x.img) })) : [];
 }
+// ニュースの写真: 自由に使える写真（Wikimedia Commons）だけ。撮影者とライセンスを添える
+function newsImg(m) {
+  if (!m || !/^https:\/\/(upload|thumb)\.wikimedia\.org\/[^\s"'()?]+$/.test(m.src || '') || typeof m.credit !== 'string' || !m.credit.trim() || typeof m.license !== 'string' || !m.license.trim()) return null;
+  return { src: m.src, credit: m.credit.trim().slice(0, 40), license: m.license.trim().slice(0, 24) };
+}
+const newsCredit = (m) => `写真（イメージ）: ${esc(m.credit)}・${esc(m.license)}・Wikimedia Commons`;
 let newsData = null;
 async function loadNews() {
   if (newsData) return newsData;
@@ -1510,7 +1526,7 @@ function stageHtml(room, code) {
     if (!mode) main = `<div class="fb-card"><div class="fb-odai">すきなことをして、ゆっくり過ごそう</div></div>`;
     else {
       let content = '';
-      if (f.mode === 'news' && f.news) { const nw = f.news; content = `<div class="fb-news-t">${esc(nw.title)}</div><div class="fb-news-x">${esc(nw.text)}</div>${nw.ask ? `<div class="fb-news-a"><span class="material-symbols-rounded">forum</span>${esc(nw.ask)}</div>` : ''}<div class="fb-news-s">出典: ${esc(nw.source)}${nw.on ? `（${esc(nw.on)}）` : ''}</div>`; }
+      if (f.mode === 'news' && f.news) { const nw = f.news, im = newsImg(nw.img); const txt = `<div class="fb-news-t">${esc(nw.title)}</div><div class="fb-news-x">${esc(nw.text)}</div>${nw.ask ? `<div class="fb-news-a"><span class="material-symbols-rounded">forum</span>${esc(nw.ask)}</div>` : ''}<div class="fb-news-s">出典: ${esc(nw.source)}${nw.on ? `（${esc(nw.on)}）` : ''}</div>`; content = im ? `<div class="fb-news"><figure class="fb-news-img"><img src="${esc(im.src)}" alt="" onerror="this.closest('.fb-news').classList.add('noimg')"><figcaption>${newsCredit(im)}</figcaption></figure><div class="fb-news-b">${txt}</div></div>` : txt; }
       else if (f.mode === 'talk') content = `<div class="fb-odai">${esc(f.topic || '')}</div>`;
       else if (f.mode === 'quiz' && f.quiz) { const q = f.quiz; content = `<div class="fb-q">${esc(q.q)}</div><div class="fb-cs">${(q.c || []).map((c, k) => `<div class="fb-c${f.shown && q.a === k ? ' ok' : ''}"><span class="num">${'①②③④'[k]}</span>${esc(c)}<div class="who">${players.filter((p) => fans[p.id] === k).map((p) => chip(p)).join('')}</div></div>`).join('')}</div>${f.shown ? `<div class="fb-ex"><b>答えは ${'①②③④'[q.a]}</b>　${esc(q.e || '')}</div>` : ''}`; }
       else if (f.mode === 'kotoba' && f.kotoba) { content = `<div class="fb-kana">「<b>${esc(f.kotoba.i)}</b>」からはじまる</div><div class="fb-theme">${esc(f.kotoba.t)}</div><div class="fb-note">思いついたら、チャットに書いてね</div>`; }
@@ -1693,7 +1709,7 @@ function renderPlayer(room) {
       card.innerHTML = html; return;
     }
     html += h2(mode[1], mode[2], '');
-    if (f.mode === 'news' && f.news) { const nw = f.news; html += `<div class="p-news"><b>${esc(nw.title)}</b><p>${esc(nw.text)}</p>${nw.ask ? `<p class="ask">${esc(nw.ask)}</p>` : ''}<small>出典: ${esc(nw.source)}${nw.on ? `（${esc(nw.on)}）` : ''}</small></div><a class="p-link" href="${esc(nw.url)}" target="_blank" rel="noopener"><span class="material-symbols-rounded">open_in_new</span>くわしく読む</a>`; }
+    if (f.mode === 'news' && f.news) { const nw = f.news, im = newsImg(nw.img); html += `<div class="p-news">${im ? `<figure class="p-news-img"><img src="${esc(im.src)}" alt="" onerror="this.parentNode.remove()"><figcaption>${newsCredit(im)}</figcaption></figure>` : ''}<b>${esc(nw.title)}</b><p>${esc(nw.text)}</p>${nw.ask ? `<p class="ask">${esc(nw.ask)}</p>` : ''}<small>出典: ${esc(nw.source)}${nw.on ? `（${esc(nw.on)}）` : ''}</small></div><a class="p-link" href="${esc(nw.url)}" target="_blank" rel="noopener"><span class="material-symbols-rounded">open_in_new</span>くわしく読む</a>`; }
     else if (f.mode === 'talk') { html += `<div class="p-odai">${esc(f.topic || '')}</div>`; }
     else if (f.mode === 'quiz' && f.quiz) { html += `<p class="q" style="font-size:17px;color:var(--color-text);font-weight:700">${esc(f.quiz.q)}</p><div class="opts">${f.quiz.c.map((c, k) => `<button type="button" class="opt-btn" data-act="fq" data-v="${k}" aria-pressed="${myF === k}"><span class="n mk">${'①②③④'[k]}</span>${esc(c)}<span class="material-symbols-rounded chk">check</span></button>`).join('')}</div>${f.shown ? `<div class="p-ex"><b>答えは ${'①②③④'[f.quiz.a]}</b>　${esc(f.quiz.e || '')}</div>` : ''}`; }
     else if (f.mode === 'kotoba' && f.kotoba) { html += `<div class="p-odai">「${esc(f.kotoba.i)}」からはじまる<br>${esc(f.kotoba.t)}</div><p class="q" style="text-align:center;margin-top:8px">思いついたら、チャットに書いてね</p>`; }

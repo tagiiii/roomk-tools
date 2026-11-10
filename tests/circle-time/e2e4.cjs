@@ -58,16 +58,18 @@ const PROGRAM = [
   await L.waitStage(W, L.NEWS_FIX[0].title);
   const st = await L.stage(W);
   check('B1 みせる画面にニュースの見出し・紹介・問いかけ・出典（希望をえらぶ画面・話したいの印・やらなくてもOKは出さない）', st.includes(L.NEWS_FIX[0].text) && st.includes(L.NEWS_FIX[0].ask) && st.includes('出典: テスト新聞（11月9日）') && !st.includes('なにしてあそぶ') && !(await W.page.$('#watch-stage .fr-opt')) && !(await W.page.$('#watch-stage .hands-box')) && !st.includes('やらなくても'));
+  check('B1b 写真と「写真（イメージ）: 撮影者・ライセンス」', await W.page.evaluate(() => { const i = document.querySelector('#watch-stage .fb-news-img img'); return !!i && i.complete && i.naturalWidth > 0; }) && st.includes('写真（イメージ）: Sheila Lau・Public domain・Wikimedia Commons'));
   check('B2 時刻と名前の一覧は出さない', !st.includes('9:15') && !st.includes('ゆい'));
   check('B3 ホストに自由タイムの操作（ニュースに印・つぎのニュース・答えを見るは出さない）', await L.visible(H, '#free-ctrls') && await L.pressed(H, '#free-ctrls [data-f="news"]') && !(await L.visible(H, '#free-ctrls [data-f="show"]')) && (await L.text(H, '#free-ctrls [data-f="next"]')) === 'つぎのニュース');
   await L.waitPlayer(A, L.NEWS_FIX[0].title);
+  check('B3c0 参加者の端末にも写真と撮影者', !!(await A.page.$('#player-card .p-news-img img')) && (await L.player(A)).includes('Sheila Lau'));
   check('B3c 参加者に見出しと「くわしく読む」（元の記事）・希望や話したいのボタン・やらなくてもOKはない', (await A.page.getAttribute('#player-card a.p-link', 'href')) === L.NEWS_FIX[0].url && (await A.page.evaluate(() => document.querySelectorAll('#player-card [data-act="fwish"],#player-card [data-act="fhand"],#player-card [data-act="fchat"]').length)) === 0 && !(await L.player(A)).includes('やらなくても'));
   await L.shot(W, 'free-news', false);
   await L.shot(A, 'free-player-news');
   await H.page.click('#free-ctrls [data-f="next"]');
   room = await L.waitRoom(code, (r) => r.free?.n === 2);
   await L.waitStage(W, L.NEWS_FIX[1].title);
-  check('B3e 「つぎのニュース」で2本目・問いかけのないものは出さない', room.free.newsAt === 1 && !(await L.stage(W)).includes(L.NEWS_FIX[0].ask));
+  check('B3e 「つぎのニュース」で2本目・問いかけのないもの・写真のないものは出さない', room.free.newsAt === 1 && !(await L.stage(W)).includes(L.NEWS_FIX[0].ask) && !(await W.page.$('#watch-stage .fb-news-img')));
   // 進行役が別のあそびに変える
   await sleep(2700);
   await H.page.click('#free-ctrls [data-f="talk"]');

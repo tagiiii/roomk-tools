@@ -47,10 +47,18 @@ git worktree add --detach "${TMPDIR:-/tmp}/roomk-circle-daily" origin/main
    - **具体的に書く**。どこの（施設・町・国の名前）・だれ／なにが・いつ・どうなったか・数や大きさなど、記事にある固有名詞と事実を入れる。「動物園で」「ある町で」のようにぼかさない（2026-11-10 オーナー「どこの動物園など話が抽象的すぎる」）。見出しにも、できれば名前を入れる
    - `ask` は MetaLife のチャットで話すきっかけの問い（30文字まで・なくてもよい）。答えたくなる軽いもの（「見てみたい動物はいる？」など）。正解を求めない
    - `source` は出典の名前（20文字まで。「NHK」「朝日小学生新聞」など）、`url` は読んだ記事（https）、`on` はその記事の日付（「11月9日」）
+   - `img` は話題に合う**自由に使える写真**（なくてもよい。なるべく付ける）。記事の写真は使わない（報道各社の著作物のため）。Wikimedia Commons から探す
+     ```bash
+     node scripts/circle-time/commons-image.mjs "giant panda cub"
+     ```
+     - 出てきた候補の `img`（`src`・`credit`・`license`）をそのまま入れる。書きかえない。英語の検索語がよく当たる。そのものの名前（施設・場所・動物の種類・乗りもの）で探す
+     - 写真は画面に「写真（イメージ）」と出る。出来事そのものの写真でなくてよいが、話題とずれないもの（パンダの話にパンダ、札幌の話に札幌の景色）
+     - 選ばない: 人の顔が大きく写るもの・子どもが写るもの・けが・血・こわい感じのもの・文字が大きく写るもの。`page` を開いて中身を確かめる
    ```json
    { "date": "2026-11-10",
      "items": [{ "title": "和歌山のパンダの赤ちゃん、初めて外へ", "text": "和歌山県白浜町のアドベンチャーワールドで8月に生まれたパンダの赤ちゃんが、9日に初めて外の運動場に出ました。体重は約10kgで、木に前足をかける姿も見られました。",
-                 "ask": "見てみたい動物はいる？", "source": "NHK", "url": "https://...", "on": "11月9日" }] }
+                 "ask": "見てみたい動物はいる？", "source": "NHK", "url": "https://...", "on": "11月9日",
+                 "img": { "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/...jpg", "credit": "撮影者", "license": "CC BY-SA 4.0" } }] }
    ```
    ```bash
    node tests/circle-time/news-check.mjs apps/circle-time/daily/YYYY-MM-DD.news.json
