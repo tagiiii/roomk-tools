@@ -114,6 +114,7 @@ const PROGRAM = [
   await L.waitRoom(code, (r) => !r.free?.mode && r.free?.n === 7);
   await L.waitStage(W, 'ゆっくり過ごそう');
   await L.waitPlayer(A, 'ゆっくり過ごそう');
+  await L.waitHidden(H, '#free-ctrls [data-f="next"]');
   check('B12b 「なし」にすると、あそびを出さず自由に過ごす画面・つぎは出さない', await L.pressed(H, '#free-ctrls [data-f="none"]') && !(await L.visible(H, '#free-ctrls [data-f="next"]')));
   check('B13 参加者の画面は375pxではみ出ない', (await L.overflow(A)) <= 0);
   await L.shot(A, 'free-player');
