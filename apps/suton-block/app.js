@@ -1406,13 +1406,15 @@ function afterLock(res) {
     R.pending -= cancel;
     atk -= cancel;
     // 送るじゃまは、盤（送った数・来るじゃま）と同じ1回の update で書く（片方だけ届くと、読み込み直したとき数がずれる）
-    const to = atk > 0 ? jamaTarget() : null;
-    if (to) {
-      R.sent += atk;
-      outgoing = { ['jama/' + to + '/' + state.roomRef.child('jama/' + to).push().key]: { round: state.playRound, rows: atk, from: state.nickname } };
+    // 「ねらってきた人みんな」のときは、その全員に同じ段の数を送る（送ったじゃまの数は、送った全部を足す）
+    const tos = atk > 0 ? jamaTargets() : [];
+    if (tos.length) {
+      R.sent += atk * tos.length;
+      outgoing = {};
+      tos.forEach((to) => { outgoing['jama/' + to + '/' + state.roomRef.child('jama/' + to).push().key] = { round: state.playRound, rows: atk, from: state.nickname }; });
       bump(R.sent);
     }
-    attackNote(res, to ? atk : 0, cancel);
+    attackNote(res, tos.length ? atk : 0, cancel, tos.length);
     if (!res.lines && R.pending > 0 && !g.over) {
       const rows = R.pending;
       R.pending = 0;
@@ -1458,9 +1460,9 @@ function techParts(res) {
   return parts;
 }
 
-function attackNote(res, sent, cancel) {
+function attackNote(res, sent, cancel, people = 1) {
   const parts = techParts(res);
-  if (sent > 0) parts.push(sent + '段おくったよ');
+  if (sent > 0) parts.push(people > 1 ? people + '人に' + sent + '段ずつおくったよ' : sent + '段おくったよ');
   else if (cancel > 0) parts.push('来るじゃまを' + cancel + '段へらしたよ');
   if (parts.length) note(parts.join(' '), 1400);
 }
@@ -1482,6 +1484,7 @@ function sendBoard(done = false, extra = null) {
     b: E.packBoard(g.board),
     h: E.packHidden(g.hidden) || null, // 盤の上の見えない段（読み込み直し用。何もなければ書かない）
     lines: g.lines,
+    to: state.jamaTo || null, // 選んだ送る相手（ほかの人の画面で「ねらっている人」を数える）
     pieces: g.pieces,
     resets: g.resets,
     taken: g.taken,
@@ -1512,12 +1515,45 @@ function nextAlive(room, R, name) {
   return null;
 }
 
-// 自分で選んだ、じゃまを送る相手（ほかの人の盤・一覧を押して選ぶ。2026-11-09 フィードバック）。
-// 選んでいない・その人がもういない（ここまで）なら null（並びのつぎの人へ送る）
-function chosenTarget(room, R) {
-  const to = state.jamaTo;
-  if (!to || to === state.nickname || !R.players.includes(to) || isOut(room, R, to)) return null;
-  return to;
+// 「ねらってきた人みんな」を選んだしるし（2026-11-10 フィードバック）。jamaTo と boards/{名前}/to に入る
+const COUNTER = '*';
+
+// name の人のいつもの送る相手（あそぶ人の並びで、つぎの人。対戦では「ここまで」になった人をとばす）
+function defaultTarget(room, R, name) {
+  if (!R || R.players.length < 2) return null;
+  if (isBattle(R)) return nextAlive(room, R, name);
+  const i = R.players.indexOf(name);
+  return i < 0 ? null : R.players[(i + 1) % R.players.length];
+}
+
+// name の人が選んだもの（自分は手元の値、ほかの人は盤に書いた to）。null は選んでいない
+function choiceOf(room, R, name) {
+  return name === state.nickname ? state.jamaTo : boardOf(room, R, name)?.to || null;
+}
+
+// name の人が1人を選んでいればその人、でなければいつもの相手（選んだ人がもういない・「ねらってきた人みんな」のときも、いつもの相手）
+function singleTarget(room, R, name) {
+  const c = choiceOf(room, R, name);
+  if (c && c !== COUNTER && c !== name && R.players.includes(c) && !isOut(room, R, c)) return c;
+  return defaultTarget(room, R, name);
+}
+
+// name の人がいまじゃまを送る相手（何人でも）。「ねらってきた人みんな」は、name を1人として選んでいる人（いつもの相手が name の人も）。
+// だれもねらっていなければ、いつもの相手
+function targetsOf(room, R, name) {
+  if (!R || R.players.length < 2 || isOut(room, R, name)) return [];
+  if (choiceOf(room, R, name) === COUNTER) {
+    const back = R.players.filter((p) => p !== name && !isOut(room, R, p) && singleTarget(room, R, p) === name);
+    if (back.length) return back;
+  }
+  const to = singleTarget(room, R, name);
+  return to ? [to] : [];
+}
+
+// name の人をねらっている人（ここまでの人は入れない）
+function attackersOf(room, R, name) {
+  if (!R) return [];
+  return R.players.filter((p) => p !== name && !isOut(room, R, p) && targetsOf(room, R, p).includes(name));
 }
 
 // じゃまを送る相手を選べるか（じゃまのある回で、ほかに2人以上いるとき。1人なら選ぶまでもない）
@@ -1525,40 +1561,34 @@ function canChooseTarget(R) {
   return !!R && R.jama && isRoomPlayer() && otherPlayers().length >= 2;
 }
 
-// いまじゃまを送る相手（選んだ人。いなければ並びのつぎの人）
-function currentTarget(room, R) {
-  if (!R || R.players.length < 2) return null;
-  const chosen = chosenTarget(room, R);
-  if (chosen) return chosen;
-  if (isBattle(R)) return nextAlive(room, R, state.nickname);
-  const i = R.players.indexOf(state.nickname);
-  return i < 0 ? null : R.players[(i + 1) % R.players.length];
-}
-
-// 押した人を送る相手にする。もう一度押すと、並びのつぎの人にもどす
+// 押した人（か「ねらってきた人みんな」）を送る相手にする。もう一度押すと、並びのつぎの人にもどす。
+// ほかの人の画面で「ねらっている人」を数えられるよう、選んだものを自分の盤に書く
 function chooseTarget(name) {
   const R = roundOf(state.room);
-  if (!canChooseTarget(R) || isOut(state.room, R, name)) return;
+  if (!canChooseTarget(R) || (name !== COUNTER && isOut(state.room, R, name))) return;
   state.jamaTo = state.jamaTo === name ? null : name;
+  if (state.roomRef && !state.leaving) {
+    state.roomRef.update({ ['boards/' + state.nickname + '/to']: state.jamaTo || null, ['boards/' + state.nickname + '/round']: R.id })
+      .catch((error) => console.warn('[suton-block] target send failed', error));
+  }
   renderOthers();
 }
 
-// 対戦でじゃまを送る相手
-function jamaTarget() {
+// いまじゃまを送る相手（何人でも。いなければ空）
+function jamaTargets() {
   const R = roundOf(state.room);
-  if (!R || !state.roomRef || R.players.length < 2) return null;
-  return currentTarget(state.room, R);
+  if (!R || !state.roomRef || R.players.indexOf(state.nickname) < 0 || R.players.length < 2) return [];
+  return targetsOf(state.room, R, state.nickname);
 }
 
-// じゃまを送る相手は、選んだ人か、あそぶ人の並びで自分のつぎの人（段の数をくらべるときのじゃまブロック）
+// 段の数をくらべるときのじゃまブロック。送る相手は jamaTargets（「ねらってきた人みんな」なら、その全員に同じ段の数）
 function sendJama(rows) {
   const R = roundOf(state.room);
-  if (!R || !state.roomRef) return;
-  if (R.players.indexOf(state.nickname) < 0 || R.players.length < 2) return;
-  const to = currentTarget(state.room, R);
-  if (!to) return;
-  state.roomRef.child('jama/' + to).push({ round: R.id, rows, from: state.nickname })
-    .catch((error) => console.warn('[suton-block] jama send failed', error));
+  const tos = jamaTargets();
+  if (!tos.length) return;
+  const updates = {};
+  tos.forEach((to) => { updates['jama/' + to + '/' + state.roomRef.child('jama/' + to).push().key] = { round: R.id, rows, from: state.nickname }; });
+  state.roomRef.update(updates).catch((error) => console.warn('[suton-block] jama send failed', error));
 }
 
 function receiveJama(room, R) {
@@ -2054,6 +2084,7 @@ function renderOthers() {
   const list = $('othersList');
   wrap.replaceChildren();
   list.replaceChildren();
+  $('counterBtn')?.remove();
   const names = otherPlayers();
   const narrow = (document.documentElement.clientWidth || window.innerWidth) <= 480;
   wrap.hidden = narrow || !names.length;
@@ -2065,8 +2096,14 @@ function renderOthers() {
   const R = roundOf(room);
   // じゃまのある回で、ほかに2人以上いるときは、押した人へじゃまを送る（送る相手に印。はじめは並びのつぎの人）
   const choose = canChooseTarget(R);
-  const target = choose ? currentTarget(room, R) : null;
+  const targets = choose ? targetsOf(room, R, state.nickname) : [];
+  const aimers = choose ? attackersOf(room, R, state.nickname) : [];
   $('othersHint').hidden = !choose || narrow;
+  if (choose) {
+    // 「ねらってきた人みんな」（2026-11-10 フィードバック）。広い画面は盤の列の上、スマホは一覧の上
+    const cb = counterButton(aimers.length, narrow);
+    if (narrow) list.before(cb); else $('othersHint').after(cb);
+  }
   if (narrow) {
     names.slice(0, 4).forEach((name) => {
       const b = boardOf(room, R, name);
@@ -2075,7 +2112,7 @@ function renderOthers() {
       if (out) li.classList.add('is-out');
       const parts = [makeElement('span', 'sb-otherlist__name', name), makeElement('span', 'sb-otherlist__lines', out ? 'ここまで' : statText(R, b, true))];
       if (choose) {
-        const btn = targetButton(name, name === target, out, true);
+        const btn = targetButton(name, targets.includes(name), out, true, aimers.includes(name));
         btn.append(...parts);
         li.append(btn);
       } else li.append(...parts);
@@ -2087,7 +2124,7 @@ function renderOthers() {
   names.slice(0, 6).forEach((name) => {
     const card = miniCard(name, s);
     if (!choose) { wrap.append(card); return; }
-    const btn = targetButton(name, name === target, boardOf(room, R, name)?.out === true);
+    const btn = targetButton(name, targets.includes(name), boardOf(room, R, name)?.out === true, false, aimers.includes(name));
     btn.classList.add('sb-mini', ...[...card.classList].filter((c) => c !== 'sb-mini'));
     btn.append(...card.childNodes);
     wrap.append(btn);
@@ -2095,16 +2132,35 @@ function renderOthers() {
 }
 
 // ほかの人を押して、じゃまを送る相手にするボタン（送る相手は枠の色。広い画面の盤には「送る」の印も。スマホの一覧はせまいので枠の色だけ）
-function targetButton(name, isTarget, out, compact = false) {
+// aiming: その人が自分をねらっている（左上に「ねらってる」。スマホの一覧は名前の前に小さな印）
+function targetButton(name, isTarget, out, compact = false, aiming = false) {
   const btn = document.createElement('button');
   btn.type = 'button';
   btn.className = 'sb-target' + (isTarget ? ' is-target' : '');
   btn.disabled = out;
-  btn.setAttribute('aria-pressed', String(isTarget));
-  btn.setAttribute('aria-label', name + (isTarget ? '（じゃまを送る相手）' : '（押すと、じゃまを送る相手にする）'));
+  btn.setAttribute('aria-pressed', String(isTarget && state.jamaTo !== COUNTER));
+  btn.setAttribute('aria-label', name + (aiming ? '（あなたをねらっている）' : '') + (isTarget ? '（じゃまを送る相手）' : '（押すと、じゃまを送る相手にする）'));
   if (isTarget && !compact) btn.append(makeElement('span', 'sb-target__tag', '送る'));
+  if (aiming) btn.append(makeElement('span', 'sb-target__aim' + (compact ? ' is-compact' : ''), compact ? '' : 'ねらってる'));
   btn.addEventListener('click', () => {
     chooseTarget(name);
+    btn.blur(); // スペース（すとん）でボタンが押されないように
+  });
+  return btn;
+}
+
+// 「ねらってきた人みんな」に送るかの切りかえ。いまねらっている人の数も出す
+function counterButton(n, narrow) {
+  const on = state.jamaTo === COUNTER;
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.id = 'counterBtn';
+  btn.className = 'sb-counter' + (on ? ' is-on' : '');
+  btn.setAttribute('aria-pressed', String(on));
+  btn.append(makeElement('span', 'sb-counter__main', narrow ? 'みんなに返す' : 'ねらってきた人みんなに送る'), makeElement('span', 'sb-counter__sub', narrow ? 'ねらう人 ' + n + '人' : 'いま ' + n + '人にねらわれている'));
+  btn.setAttribute('aria-label', 'ねらってきた人みんなに送る（いま ' + n + '人にねらわれている）');
+  btn.addEventListener('click', () => {
+    chooseTarget(COUNTER);
     btn.blur(); // スペース（すとん）でボタンが押されないように
   });
   return btn;
