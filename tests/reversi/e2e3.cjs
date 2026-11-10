@@ -121,6 +121,71 @@ const { E, check, sleep, waitFor, cell } = L;
   check('M4 1手もどすと時間も最初から', (await L.turnOf(P)) === 'b' && /^b:のこり 1[45]秒$/.test(await L.clockText(P)) && !(await L.status(P)).includes('時間切れ'), await L.clockText(P));
   await L.shot(P, 'local-clock');
 
+  // CPU と対戦する（2026-11-11）
+  await P.page.click('#btnQuit');
+  await P.page.click('#btnGoLocal');
+  check('C0 はじめは「人どうし」', await P.page.isChecked('input[name="localVs"][value=""]'));
+  await P.page.click('label:has(input[name="localVs"][value="w"])');
+  check('C1 CPU（自分が黒）にすると、白の名前の欄は押せない', await P.page.isDisabled('#localNameW') && !(await P.page.isDisabled('#localNameB')) && await P.page.isDisabled('#btnLocalSwap'));
+  await P.page.fill('#localNameB', 'そら');
+  await P.page.selectOption('#localMoveTime', '0');
+  await P.page.click('#btnLocalStart');
+  await L.waitScreen(P, 'game');
+  const seatText = () => P.page.$eval('#seats', (x) => x.textContent);
+  check('C2 自分の番と（あなた）・白は CPU', (await L.status(P)).startsWith('あなたの番だよ（黒）') && (await seatText()).includes('黒（あなた）') && (await seatText()).includes('CPU'), [await L.status(P), await seatText()]);
+  await P.page.click(cell(19));
+  check('C3 置くと CPU の番（考え中）', (await L.status(P)) === '白（CPU）が考え中' && (await L.turnOf(P)) === 'w', await L.status(P));
+  // CPU が置く前（0.9秒の間）に、白の置ける場所を押して、その場で数える
+  const c4 = await P.page.evaluate(() => {
+    const spot = document.querySelector('#board .rv-cell .rv-mark.is-spot')?.parentElement
+      || [...document.querySelectorAll('#board .rv-cell')].find((x) => !x.querySelector('.rv-stone'));
+    spot?.click();
+    return [...document.querySelectorAll('#seats .rv-seat__count')].map((x) => Number(x.textContent));
+  });
+  check('C4 CPU の番は押しても置けない', JSON.stringify(c4) === '[4,1]', c4);
+  check('C5 少し待つと CPU が置き、どこに置いたか出る', await waitFor(async () => (await L.turnOf(P)) === 'b' && /^CPU は [A-H][1-8] に置いたよ。あなたの番だよ（黒）/.test(await L.status(P)), 4000), await L.status(P));
+  const sum = (await L.counts(P)).reduce((a, b) => a + b, 0);
+  check('C6 石は6こ（2手ぶん）', sum === 6, await L.counts(P));
+  await P.page.reload();
+  await L.waitScreen(P, 'game');
+  check('C7 読み込み直しても CPU と対戦のまま', (await L.status(P)).includes('あなたの番だよ（黒）') && (await seatText()).includes('CPU'), await L.status(P));
+  await P.page.click('#btnUndo');
+  check('C8 1手もどすと、CPU の手と自分の手をいっしょにもどす', JSON.stringify(await L.counts(P)) === '[2,2]' && (await L.turnOf(P)) === 'b' && await P.page.isDisabled('#btnUndo'), await L.counts(P));
+  await sleep(1300);
+  check('C9 もどしたあと CPU は勝手に置かない', JSON.stringify(await L.counts(P)) === '[2,2]', await L.counts(P));
+  // 最後まで（自分は置ける場所の最初に置く）
+  const playToEnd = async (me) => {
+    for (let guard = 0; guard < 300; guard += 1) {
+      if (await L.visible(P, '#resultBox')) return;
+      if ((await L.turnOf(P)) === me && !(await L.status(P)).includes('考え中')) {
+        const sp = await L.spots(P);
+        if (sp.length) await P.page.click(cell(sp[0]));
+      }
+      await sleep(250);
+    }
+  };
+  await playToEnd('b');
+  check('C10 CPU と最後まで遊べる', await L.visible(P, '#resultBox') && /の勝ち！|引き分け！/.test(await L.status(P)), await L.status(P));
+  await L.shot(P, 'local-cpu-result');
+  await P.page.click('#btnAgain');
+  check('C11 もう一回で黒と白を入れかえ、CPU が黒で先に置く', await waitFor(async () => (await L.turnOf(P)) === 'w' && (await L.status(P)).startsWith('CPU は '), 4000) && (await seatText()).includes('白（あなた）'), [await L.status(P), await seatText()]);
+  check('C12 自分がまだ置いていないので、1手もどすは押せない', await P.page.isDisabled('#btnUndo'));
+  await playToEnd('w');
+  check('C12b 自分が白でも最後まで遊べる', await L.visible(P, '#resultBox'));
+  await P.page.click('#btnRelobby');
+  await L.waitScreen(P, 'local');
+  check('C13 「名前と補助を変える」で、CPU（自分が白）のまま準備の画面へ', await P.page.isChecked('input[name="localVs"][value="b"]') && await P.page.isDisabled('#localNameB') && (await P.page.inputValue('#localNameW')) === 'そら');
+  await P.page.click('label:has(input[name="localVs"][value=""])');
+  check('C14 人どうしにもどすと、名前の欄はどちらも押せる', !(await P.page.isDisabled('#localNameB')) && !(await P.page.isDisabled('#localNameW')));
+  await P.page.selectOption('#localMoveTime', '15');
+  await P.page.click('label:has(input[name="localVs"][value="w"])');
+  await P.page.click('#btnLocalStart');
+  await L.waitScreen(P, 'game');
+  await P.page.click(cell(19));
+  check('C15 制限時間があっても、CPU の番は残り時間を出さない', (await L.status(P)) === '白（CPU）が考え中' && (await L.clockText(P)) === '', await L.clockText(P));
+  check('C16 自分の番になると、時間は最初から', await waitFor(async () => /^b:のこり 1[45]秒$/.test(await L.clockText(P)), 4000), await L.clockText(P));
+  await L.shot(P, 'local-cpu');
+
   // 幅
   await P.page.setViewportSize({ width: 375, height: 760 });
   await sleep(300);
