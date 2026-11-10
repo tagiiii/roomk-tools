@@ -1402,6 +1402,9 @@ function afterLock(res) {
   if (R.battle) {
     // 対戦: 送るじゃまは表で決める（attack）。来るじゃまがあれば先にへらし、のこりを送る
     let atk = res.attack || 0;
+    // 2人いじょうにねらわれているときは、送るぶんがあれば足す（2人で＋1・3人で＋2・4人いじょうで＋3。2026-11-10 フィードバック）
+    const aimed = atk > 0 ? aimBonus() : { people: 0, bonus: 0 };
+    atk += aimed.bonus;
     const cancel = Math.min(R.pending, atk);
     R.pending -= cancel;
     atk -= cancel;
@@ -1414,7 +1417,7 @@ function afterLock(res) {
       tos.forEach((to) => { outgoing['jama/' + to + '/' + state.roomRef.child('jama/' + to).push().key] = { round: state.playRound, rows: atk, from: state.nickname }; });
       bump(R.sent);
     }
-    attackNote(res, tos.length ? atk : 0, cancel, tos.length);
+    attackNote(res, tos.length ? atk : 0, cancel, tos.length, aimed);
     if (!res.lines && R.pending > 0 && !g.over) {
       const rows = R.pending;
       R.pending = 0;
@@ -1460,8 +1463,9 @@ function techParts(res) {
   return parts;
 }
 
-function attackNote(res, sent, cancel, people = 1) {
+function attackNote(res, sent, cancel, people = 1, aimed = null) {
   const parts = techParts(res);
+  if (aimed?.bonus) parts.push(aimed.people + '人にねらわれて＋' + aimed.bonus);
   if (sent > 0) parts.push(people > 1 ? people + '人に' + sent + '段ずつおくったよ' : sent + '段おくったよ');
   else if (cancel > 0) parts.push('来るじゃまを' + cancel + '段へらしたよ');
   if (parts.length) note(parts.join(' '), 1400);
@@ -1572,6 +1576,15 @@ function chooseTarget(name) {
       .catch((error) => console.warn('[suton-block] target send failed', error));
   }
   renderOthers();
+}
+
+// ねらわれている人数で足すじゃまの数（対戦だけ）。2人で＋1・3人で＋2・4人いじょうで＋3
+const AIM_BONUS_MAX = 3;
+function aimBonus() {
+  const R = roundOf(state.room);
+  if (!isBattle(R) || !isRoomPlayer()) return { people: 0, bonus: 0 };
+  const people = attackersOf(state.room, R, state.nickname).length;
+  return { people, bonus: people >= 2 ? Math.min(people - 1, AIM_BONUS_MAX) : 0 };
 }
 
 // いまじゃまを送る相手（何人でも。いなければ空）
@@ -2152,12 +2165,13 @@ function targetButton(name, isTarget, out, compact = false, aiming = false) {
 // 「ねらってきた人みんな」に送るかの切りかえ。いまねらっている人の数も出す
 function counterButton(n, narrow) {
   const on = state.jamaTo === COUNTER;
+  const bonus = isBattle(roundOf(state.room)) && n >= 2 ? Math.min(n - 1, AIM_BONUS_MAX) : 0; // 2人いじょうにねらわれているときに足す数（対戦）
   const btn = document.createElement('button');
   btn.type = 'button';
   btn.id = 'counterBtn';
   btn.className = 'sb-counter' + (on ? ' is-on' : '');
   btn.setAttribute('aria-pressed', String(on));
-  btn.append(makeElement('span', 'sb-counter__main', narrow ? 'みんなに返す' : 'ねらってきた人みんなに送る'), makeElement('span', 'sb-counter__sub', narrow ? 'ねらう人 ' + n + '人' : 'いま ' + n + '人にねらわれている'));
+  btn.append(makeElement('span', 'sb-counter__main', narrow ? 'みんなに返す' : 'ねらってきた人みんなに送る'), makeElement('span', 'sb-counter__sub', narrow ? 'ねらう人 ' + n + '人' : 'いま ' + n + '人にねらわれている' + (bonus ? '（送るじゃま＋' + bonus + '）' : '')));
   btn.setAttribute('aria-label', 'ねらってきた人みんなに送る（いま ' + n + '人にねらわれている）');
   btn.addEventListener('click', () => {
     chooseTarget(COUNTER);

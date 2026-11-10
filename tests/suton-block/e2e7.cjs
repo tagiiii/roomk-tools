@@ -1,6 +1,7 @@
 // すとんブロック E2E その7: ねらってきた人みんなに送る（2026-11-10 フィードバック）
 // 自分をねらっている人に「ねらってる」の印・人数が出る。「ねらってきた人みんなに送る」を押すと、その全員に同じ段の数が届く。
 // 選んだもの（boards/{名前}/to）をほかの人の画面でも数える・もう一度押すともどる・375px
+// 対戦では、2人いじょうにねらわれていると送るじゃまが増える（2人で＋1・3人で＋2）
 const L = require('./lib.cjs');
 const { E, check, sleep, rest, roomOf, roomWhen, text, visible, waitText, waitFor, key, shot, overflow, ROOMS } = L;
 
@@ -56,6 +57,7 @@ async function setFourWell(c, code, R, name) {
   room = await roomWhen(code, (r) => r.boards?.['はる']?.to === 'あおい');
   check('U3 選んだ相手を自分の盤に書く（boards/はる/to）', room.boards['はる'].to === 'あおい' && Number(room.boards['はる'].round) === R.id);
   check('U4 あおいの画面で、ねらっている人が2人（メンター・はる）になる', await waitFor(async () => same(await aimersOf(A, '#others'), ['メンター', 'はる']) && (await text(A, '#counterBtn')).includes('いま 2人')));
+  check('U4b 2人にねらわれていると、ボタンに「送るじゃま＋1」', (await text(A, '#counterBtn')).includes('送るじゃま＋1'), await text(A, '#counterBtn'));
 
   // あおいが「ねらってきた人みんなに送る」
   await A.page.click('#counterBtn');
@@ -70,16 +72,29 @@ async function setFourWell(c, code, R, name) {
   await key(A, 'ArrowUp');
   await key(A, 'ArrowLeft', 5);
   await key(A, 'Space');
-  room = await roomWhen(code, (r) => Number(r.boards?.['あおい']?.sent) === 8);
-  check('U9 4段消すと、2人に4段ずつ（送ったじゃまは8）', Number(room.boards['あおい'].sent) === 8);
-  check('U10 メンターとはるに4段ずつ届く', await waitFor(async () => (await text(H, '#playJama')) === '4段' && (await text(B, '#playJama')) === '4段'));
+  room = await roomWhen(code, (r) => Number(r.boards?.['あおい']?.sent) === 10);
+  check('U9 4段消すと、2人にねらわれているので＋1して、2人に5段ずつ（送ったじゃまは10）', Number(room.boards['あおい'].sent) === 10);
+  check('U10 メンターとはるに5段ずつ届く', await waitFor(async () => (await text(H, '#playJama')) === '5段' && (await text(B, '#playJama')) === '5段'));
   check('U11 ねらっていない そら には届かない', (await text(C, '#playJama')) === '0段');
-  check('U12 一言は「2人に4段ずつおくったよ」', (await text(A, '#playNote')).includes('2人に4段ずつおくったよ'), await text(A, '#playNote'));
+  check('U12 一言は「2人にねらわれて＋1」「2人に5段ずつおくったよ」', (await text(A, '#playNote')).includes('2人にねらわれて＋1') && (await text(A, '#playNote')).includes('2人に5段ずつおくったよ'), await text(A, '#playNote'));
 
   await A.page.click('#counterBtn');
   check('U13 もう一度押すと、並びのつぎの人（はる）にもどる', same(await namesOf(A, '#others', '.is-target'), ['はる']) && (await A.page.getAttribute('#counterBtn', 'aria-pressed')) === 'false');
   room = await roomWhen(code, (r) => !r.boards?.['あおい']?.to);
   check('U14 もどしたら盤の to も消える', !room.boards['あおい'].to);
+
+  // 3人にねらわれると＋2（そらも あおい を選ぶ）。あおいは並びのつぎの はる へ
+  await clickTarget(C, '#others', 'あおい');
+  await roomWhen(code, (r) => r.boards?.['そら']?.to === 'あおい');
+  await setFourWell(A, code, R, 'あおい');
+  check('U14b 3人にねらわれている', await waitFor(async () => same(await aimersOf(A, '#others'), ['メンター', 'はる', 'そら']) && (await text(A, '#counterBtn')).includes('送るじゃま＋2')));
+  await key(A, 'ArrowUp');
+  await key(A, 'ArrowLeft', 5);
+  await key(A, 'Space');
+  room = await roomWhen(code, (r) => Number(r.boards?.['あおい']?.sent) === 6);
+  check('U14c 3人にねらわれて4段消すと6段（4＋2）', Number(room.boards['あおい'].sent) === 6 && (await text(A, '#playNote')).includes('3人にねらわれて＋2'), await text(A, '#playNote'));
+  await clickTarget(C, '#others', 'あおい');
+  await roomWhen(code, (r) => !r.boards?.['そら']?.to);
 
   // ── 375px ──
   await A.page.click('#counterBtn');
