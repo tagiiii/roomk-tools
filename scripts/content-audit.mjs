@@ -182,6 +182,7 @@ const COVERED_APPS = [
   'kotoba-meter',
   // 2026-11-09 追加（流す言葉の一覧）
   'kotoba-dash',
+  'tsunagete-story',
   // 既存（A2 以前から抽出済み）
   'quiz', 'kotoba-shuffle', 'kanji-sagashi', 'kotoba-relay', 'tatoe-gp',
   'kaburazu-hint', 'kotoba-tantei', 'docchi', 'minna-ranking',
@@ -633,6 +634,38 @@ function collectEntries() {
   });
   if (dashProblems.length > 0) {
     throw new Error(`kotoba-dash data.js の構造エラー:\n  ${dashProblems.join('\n  ')}`);
+  }
+
+  // tsunagete-story: data.js の window.TSUNAGETE_STORY_WORDS = { when, where, who, what, why, how, next, themes }。
+  //   ふつうの候補（項目ごと）・「そのあと…」の候補・お題ごとの候補。空の言葉と、同じ欄の中の重複はここで fail-fast にする
+  const storyContext = { window: {} };
+  vm.createContext(storyContext);
+  vm.runInContext(read('apps/tsunagete-story/data.js'), storyContext, { filename: 'apps/tsunagete-story/data.js' });
+  const storyWords = storyContext.window.TSUNAGETE_STORY_WORDS || {};
+  const storyProblems = [];
+  const storyList = (label, list, category, idBase) => {
+    if (!Array.isArray(list) || list.length === 0) { storyProblems.push(`${label} が空`); return; }
+    const seen = new Set();
+    list.forEach((text, index) => {
+      if (typeof text !== 'string' || !text.trim()) storyProblems.push(`${label}[${index}] が空`);
+      if (seen.has(text)) storyProblems.push(`${label}[${index}]「${text}」が重複`);
+      seen.add(text);
+      rows.push(entry('tsunagete-story', category, text, { id: `${idBase}:${index}` }));
+    });
+  };
+  ['when', 'where', 'who', 'what', 'why', 'how'].forEach((key) => storyList(key, storyWords[key], `word-${key}`, `tsunagete-story:${key}`));
+  storyList('next', storyWords.next, 'next-line', 'tsunagete-story:next');
+  const storyThemeIds = new Set();
+  (Array.isArray(storyWords.themes) ? storyWords.themes : []).forEach((theme, t) => {
+    if (!theme || !theme.id || !theme.title) { storyProblems.push(`themes[${t}] に id か title がない`); return; }
+    if (storyThemeIds.has(theme.id)) storyProblems.push(`themes[${t}] の id「${theme.id}」が重複`);
+    storyThemeIds.add(theme.id);
+    rows.push(entry('tsunagete-story', 'theme', theme.title, { id: `tsunagete-story:theme:${theme.id}` }));
+    ['when', 'where', 'who', 'what'].forEach((key) => storyList(`themes.${theme.id}.${key}`, theme[key], `theme-${key}`, `tsunagete-story:theme:${theme.id}:${key}`));
+  });
+  if (storyThemeIds.size === 0) storyProblems.push('themes が空');
+  if (storyProblems.length > 0) {
+    throw new Error(`tsunagete-story data.js の構造エラー:\n  ${storyProblems.join('\n  ')}`);
   }
 
   // hirameki-oogiri: data.js の export const TOPICS = [ '文字列', ... ]（大喜利のお題）。

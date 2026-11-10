@@ -246,6 +246,12 @@
         ".write": "auth != null"
       }
     },
+    "tsunagetestory_rooms": {
+      "$roomId": {
+        ".read": "auth != null",
+        ".write": "auth != null"
+      }
+    },
     "uso_rooms": {
       "$roomId": {
         ".read": "auth != null",
