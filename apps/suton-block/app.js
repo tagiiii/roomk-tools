@@ -14,6 +14,10 @@ const NO_TIME_CAP_S = 30 * 60; // 対戦の「時間なし」も、ルームが�
 const BATTLE_END_MS = 800;     // 対戦で1人になってから、最後の盤が届くのを待って結果を出す
 // あそぶ盤の上に、盤のすぐ上の見えない段を2段だけ出す（ブロックが出る所。押し上げられたマスや、はみ出して置いたマスも見える）
 const TOP_ROWS = 2;
+// すとん・段を消したときの動き（drawFx。2026-11-11）
+const FX_DROP_MS = 200;
+const FX_CLEAR_MS = 320;
+const fx = { drops: [], clears: [] };
 const TOP_COLOR = '#4B5866';
 const LOCK_MS = 500;        // 着地してから置かれるまで
 const LOCK_RESETS = 15;     // 着地したまま動かして待ちを延ばせる回数
@@ -1320,6 +1324,7 @@ function stopRun() {
   cancelAnimationFrame(state.run.raf);
   clearTimeout(state.run.noteTimer);
   state.run = null;
+  fx.drops = []; fx.clears = [];
   stopRepeat();
   $('countdown').hidden = true;
   $('pauseCover').hidden = true;
@@ -1396,6 +1401,7 @@ function afterLock(res) {
     el.classList.add('sb-lines--up');
   };
   playSfx(res.lines === 4 || res.allClear ? 'big' : res.lines ? 'lines' : 'place', res.lines);
+  if (res.lines && Array.isArray(res.rows)) fxClear(res.rows);
   if (res.lines && !R.battle) bump(g.lines);
   // 4段いっしょに消したら一言（対戦は attackNote・ひとりは techParts の中で出す）
   if (state.role === 'solo') {
@@ -1767,7 +1773,7 @@ function tick() {
       else R.lockAt = null;
     }
     draw();
-  }
+  } else if (fx.drops.length || fx.clears.length) draw(); // おわったあとも、動きは消えるまで描く
   R.raf = requestAnimationFrame(tick);
 }
 
@@ -1811,7 +1817,14 @@ function act(name) {
       if (E.move(g, 0, 1)) { state.run.lastFall = nowOf(); afterMove(true); }
       else if (state.run.lockAt === null) state.run.lockAt = nowOf() + LOCK_MS;
       break;
-    case 'drop': afterLock(E.hardDrop(g)); break;
+    case 'drop': {
+      const p = g.piece;
+      const from = p ? { kind: p.kind, x: p.x, y: p.y, cells: p.cells.map((c) => c.slice()) } : null;
+      const res = E.hardDrop(g);
+      if (from && res.dist > 0) fxDrop(from, res.dist);
+      afterLock(res);
+      break;
+    }
     case 'rotr': afterMove(E.rotate(g, 1)); break;
     case 'rotl': afterMove(E.rotate(g, -1)); break;
     case 'hold': {
@@ -2260,6 +2273,60 @@ function drawWell(ctx, board, s) {
   }
 }
 
+/* ── 動き（2026-11-11 フィードバックボード「すとん・段を消したときのアニメーションがほしい」）──
+   自分のあそぶ盤だけ。しくみ（置く・消す・時間）は待たせず、描くときに上へ重ねるだけ。
+   すとん: 落ちる前の所から置いた所まで、ブロックの色の残像がすっと消える（FX_DROP_MS）＋盤が少し沈む。
+   段を消す: 消えた段の所が白く光って、上下からしぼんで消える（FX_CLEAR_MS）。
+   動きを減らす設定では、盤を沈ませず、残像は出さず、光るのは段の所が薄く光って消えるだけにする */
+function fxDrop(from, dist) {
+  if (reducedMotion()) return;
+  fx.drops.push({ ...from, dist, at: performance.now() });
+  const cv = $('board');
+  cv.classList.remove('is-thud');
+  void cv.offsetWidth;
+  cv.classList.add('is-thud');
+}
+function fxClear(rows) {
+  fx.clears.push({ rows: rows.slice(), at: performance.now() });
+}
+function drawFx(ctx) {
+  const now = performance.now();
+  fx.drops = fx.drops.filter((d) => now - d.at < FX_DROP_MS);
+  fx.clears = fx.clears.filter((c) => now - c.at < FX_CLEAR_MS);
+  const top = -TOP_ROWS * CELL;
+  fx.drops.forEach((d) => {
+    const k = 1 - (now - d.at) / FX_DROP_MS;
+    // 列ごとに、落ちる前のいちばん上から、置いた所のいちばん上まで
+    const cols = {};
+    d.cells.forEach(([cx, cy]) => {
+      const x = d.x + cx;
+      cols[x] = Math.min(cols[x] ?? Infinity, d.y + cy);
+    });
+    Object.keys(cols).forEach((x) => {
+      const y0 = Math.max(top, cols[x] * CELL);
+      const y1 = (cols[x] + d.dist) * CELL;
+      if (y1 <= y0) return;
+      const grad = ctx.createLinearGradient(0, y0, 0, y1);
+      grad.addColorStop(0, 'rgba(255,255,255,0)');
+      grad.addColorStop(1, COLORS[d.kind]);
+      ctx.globalAlpha = 0.45 * k;
+      ctx.fillStyle = grad;
+      ctx.fillRect(Number(x) * CELL + 3, y0, CELL - 6, y1 - y0);
+    });
+  });
+  ctx.globalAlpha = 1;
+  const calm = reducedMotion();
+  fx.clears.forEach((c) => {
+    const t = (now - c.at) / FX_CLEAR_MS;
+    c.rows.forEach((y) => {
+      if (y < -TOP_ROWS) return;
+      const h = calm ? CELL : CELL * (1 - t * t);
+      ctx.fillStyle = 'rgba(255,255,255,' + (0.9 * (1 - t)).toFixed(3) + ')';
+      ctx.fillRect(0, y * CELL + (CELL - h) / 2, CELL * E.W, h);
+    });
+  });
+}
+
 function draw() {
   const g = state.game;
   if (!g || state.currentScreen !== 'play') return;
@@ -2293,6 +2360,7 @@ function draw() {
     p.cells.forEach(([cx, cy]) => { if (seen(gy + cy)) cellRect(ctx, (p.x + cx) * CELL, (gy + cy) * CELL, CELL, COLORS[p.kind], true); });
     p.cells.forEach(([cx, cy]) => { if (seen(p.y + cy)) cellRect(ctx, (p.x + cx) * CELL, (p.y + cy) * CELL, CELL, COLORS[p.kind]); });
   }
+  drawFx(ctx);
   ctx.restore();
   drawNext();
   drawHold();
