@@ -120,9 +120,9 @@
   .wxmap .wxcard rect{ fill:#fff; stroke:var(--color-border); stroke-width:1.5; }
   .wxmap text{ font-family:var(--font-base); }
   .wxmap .nm{ font-size:15px; font-weight:700; fill:var(--color-muted); }
-  .wxmap .ic{ font-family:'Material Symbols Rounded'; font-size:38px; fill:var(--color-accent); }
+  .wxmap .ic{ font-family:'Material Symbols Rounded'; font-size:40px; fill:var(--color-accent); }
   .wxmap .ic.rain{ fill:#3E6FB0; } .wxmap .ic.cloud{ fill:#8C8C8C; } .wxmap .ic.snow{ fill:#6FA7D9; }
-  .wxmap .tp{ font-size:21px; font-weight:700; fill:var(--color-text); }
+  .wxmap .tp{ font-size:22px; font-weight:700; fill:var(--color-text); }
   .wxmap .hi{ fill:#C0392B; } .wxmap .lo{ fill:#2E6DB4; }
   .wxmap .wd{ font-size:12px; fill:var(--color-muted); }
   .wxmap .src{ font-size:14px; fill:var(--color-muted); }
@@ -1734,8 +1734,10 @@ function wxSvg(room, byValue) {
     const c = byName[name];
     const ic = c?.code ? wxIcon(c.code) : 'remove';
     const cls = ic === 'rainy' ? ' rain' : ic === 'cloud' ? ' cloud' : ic === 'weather_snowy' ? ' snow' : '';
-    const tp = c && (c.max != null || c.min != null) ? `${c.max != null ? `<tspan class="hi">${c.max}</tspan>` : ''}${c.max != null && c.min != null ? '/' : ''}${c.min != null ? `<tspan class="lo">${c.min}</tspan>` : ''}` : '';
-    cards += `<g class="wxcard" data-city="${esc(name)}"><rect x="${x}" y="${y}" width="${CW}" height="${CH}" rx="12"/><text class="nm" x="${x + 60}" y="${y + 25}" text-anchor="middle">${esc(name)}</text><text class="ic${cls}" x="${x + 32}" y="${y + 76}" text-anchor="middle">${ic}</text><text class="tp" x="${x + 86}" y="${y + 68}" text-anchor="middle">${tp}</text></g>`;
+    // 気温は右に2段（上が最高・下が最低）。横に「21/10」と並べると、しるしに重なる
+    const temps = c ? [['hi', c.max], ['lo', c.min]].filter(([, v]) => v != null) : [];
+    const tp = temps.map(([k, v], i) => `<text class="tp ${k}" x="${x + 88}" y="${y + (temps.length === 2 ? 55 + i * 25 : 68)}" text-anchor="middle">${v}°</text>`).join('');
+    cards += `<g class="wxcard" data-city="${esc(name)}"><rect x="${x}" y="${y}" width="${CW}" height="${CH}" rx="12"/><text class="nm" x="${x + 60}" y="${y + 24}" text-anchor="middle">${esc(name)}</text><text class="ic${cls}" x="${x + 36}" y="${y + 78}" text-anchor="middle">${ic}</text>${tp}</g>`;
   }
   s += lines + cards;
   s += `<foreignObject x="10" y="8" width="230" height="266"><div xmlns="http://www.w3.org/1999/xhtml" class="ask2"><div class="q">きみのところは？</div>${WX_OPTIONS.map((o, i) => `<div class="opt"><span class="ic"><span class="material-symbols-rounded">${o.i}</span>${o.t}</span><div class="who">${byValue(i).map((p) => chip(p)).join('')}</div></div>`).join('')}</div></foreignObject>`;
@@ -1827,7 +1829,7 @@ function renderPlayer(room) {
       card.innerHTML = html; return;
     }
     html += h2(mode[1], mode[2], '');
-    if (f.mode === 'news' && f.news) { const nw = f.news, im = newsImg(nw.img); html += `<div class="p-news">${im ? `<figure class="p-news-img"><img src="${esc(im.src)}" alt="" onerror="this.parentNode.remove()"><figcaption>${newsCredit(im)}</figcaption></figure>` : ''}<b>${esc(nw.title)}</b><p>${esc(nw.text)}</p>${nw.ask ? `<p class="ask">${esc(nw.ask)}</p>` : ''}<small>出典: ${esc(nw.source)}${nw.on ? `（${esc(nw.on)}）` : ''}</small></div><a class="p-link" href="${esc(nw.url)}" target="_blank" rel="noopener"><span class="material-symbols-rounded">open_in_new</span>くわしく読む</a>`; }
+    if (f.mode === 'news' && f.news) { const nw = f.news, im = newsImg(nw.img); html += `<div class="p-news">${im ? `<figure class="p-news-img"><img src="${esc(im.src)}" alt="" onerror="this.parentNode.remove()"><figcaption>${newsCredit(im)}</figcaption></figure>` : ''}<b>${esc(nw.title)}</b><p>${esc(nw.text)}</p>${nw.ask ? `<p class="ask">${esc(nw.ask)}</p>` : ''}<small>出典: ${esc(nw.source)}${nw.on ? `（${esc(nw.on)}）` : ''}</small></div>${/^https:\/\//.test(nw.url || '') ? `<a class="p-link" href="${esc(nw.url)}" target="_blank" rel="noopener"><span class="material-symbols-rounded">open_in_new</span>くわしく読む</a>` : ''}`; }
     else if (f.mode === 'talk') { html += `<div class="p-odai">${esc(f.topic || '')}</div>`; }
     else if (f.mode === 'quiz' && f.quiz) { html += `<p class="q" style="font-size:17px;color:var(--color-text);font-weight:700">${esc(f.quiz.q)}</p><div class="opts">${f.quiz.c.map((c, k) => `<button type="button" class="opt-btn" data-act="fq" data-v="${k}" aria-pressed="${myF === k}"><span class="n mk">${'①②③④'[k]}</span>${esc(c)}<span class="material-symbols-rounded chk">check</span></button>`).join('')}</div>${f.shown ? `<div class="p-ex"><b>答えは ${'①②③④'[f.quiz.a]}</b>　${esc(f.quiz.e || '')}</div>` : ''}`; }
     else if (f.mode === 'kotoba' && f.kotoba) { html += `<div class="p-odai">「${esc(f.kotoba.i)}」からはじまる<br>${esc(f.kotoba.t)}</div><p class="q" style="text-align:center;margin-top:8px">思いついたら、チャットに書いてね</p>`; }

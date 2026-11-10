@@ -54,7 +54,7 @@ function isProd(hostname) {
 
 // 気象庁の応答の差し替え（本物と同じ形。日付は日本時間のきょう）
 const jstToday = () => new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Tokyo' }).format(new Date());
-const WX_FIX = { '016000': ['205', 'くもり　時々　雪', '3', '1'], '130000': ['100', '晴れ', '21', '10'], '471000': ['313', '雨　時々　くもり', '26', '22'] };
+const WX_FIX = { '016000': ['205', 'くもり　時々　雪', '-2', '-11'], '130000': ['100', '晴れ', '21', '10'], '471000': ['313', '雨　時々　くもり', '26', '22'] };
 function jmaBody(office) {
   const today = jstToday();
   const d = new Date(today + 'T00:00:00+09:00'); d.setDate(d.getDate() + 1);

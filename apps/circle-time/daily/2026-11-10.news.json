@@ -1,0 +1,44 @@
+{
+  "date": "2026-11-10",
+  "items": [
+    {
+      "title": "旭山動物園でアムールヒョウの赤ちゃん",
+      "text": "北海道旭川市の旭山動物園が10日、8月に生まれたアムールヒョウの赤ちゃんを報道向けに公開しました。野生では100頭ほどしかいないめずらしいヒョウです。おくびょうな性格で、この日は姿を見せませんでした。",
+      "ask": "名前をつけるなら、どんな名前？",
+      "source": "NHK",
+      "url": "https://news.web.nhk/newsweb/na/nd-20261110de73393",
+      "on": "11月10日",
+      "img": {
+        "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/00/Amur_Leopard_Panthera_pardus_orientalis_Facing_Forward_1761px.jpg/960px-Amur_Leopard_Panthera_pardus_orientalis_Facing_Forward_1761px.jpg",
+        "credit": "Photo by Derek Ramsey (Ram-Man)",
+        "license": "CC BY-SA 2.5"
+      }
+    },
+    {
+      "title": "明け方の空で金星とスピカが大接近",
+      "text": "明けの明星の金星と、おとめ座の1等星スピカが、10日ごろにいちばん近づきました。間は満月2個分ほどです。明け方の東南東の低い空で、11月下旬ごろまで並んで見られます。",
+      "ask": "朝や夜の空、最近見た？",
+      "source": "tenki.jp",
+      "url": "https://tenki.jp/forecaster/t_fujikawa/2026/11/09/41261.html",
+      "on": "11月9日",
+      "img": {
+        "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/Venus_Over_Dunes_%2839916414910%29.jpg/960px-Venus_Over_Dunes_%2839916414910%29.jpg",
+        "credit": "Great Sand Dunes National Park and Pr ほか",
+        "license": "Public domain"
+      }
+    },
+    {
+      "title": "浅間山と男体山に初冠雪",
+      "text": "群馬県と長野県にまたがる浅間山で10日、この冬はじめて山の上に雪が積もる「初冠雪」が発表されました。9日には栃木県日光市の男体山でも観測されています。関東のまわりの山に冬の便りが届きました。",
+      "ask": "雪が積もったら、やりたいことは？",
+      "source": "tenki.jp",
+      "url": "https://news.yahoo.co.jp/articles/8720afc74cdafa9571f76595e964e94a91ee0957",
+      "on": "11月10日",
+      "img": {
+        "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/aa/Mt._Asama_seen_from_the_south%2C_Dec._2011_a.jpg/960px-Mt._Asama_seen_from_the_south%2C_Dec._2011_a.jpg",
+        "credit": "tokotyan2 from Japan.",
+        "license": "CC BY-SA 2.1 jp"
+      }
+    }
+  ]
+}
