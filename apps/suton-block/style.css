@@ -308,7 +308,11 @@ button.sb-mini.sb-target { width: 100%; }
   70% { transform: translate(-50%, -110%) scale(1); opacity: 1; }
   100% { transform: translate(-50%, -150%) scale(1); opacity: 0; }
 }
+/* すとんで盤が少し沈む（2026-11-11） */
+.sb-board.is-thud { animation: sb-thud 0.16s ease-out; }
+@keyframes sb-thud { 35% { transform: translateY(4px); } }
 @media (prefers-reduced-motion: reduce) {
+  .sb-board.is-thud { animation: none; }
   .is-hit { animation: none; box-shadow: 0 0 0 3px var(--color-warning); }
   .sb-hit { animation: none; transform: translate(-50%, -50%); }
 }
