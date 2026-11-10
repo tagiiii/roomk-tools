@@ -1,0 +1,32 @@
+{
+  "date": "2026-11-11",
+  "items": [
+    {
+      "title": "仙台の八木山動物公園にスマトラトラ",
+      "text": "1歳のメスのスマトラトラ「レスタ」が、東京の上野動物園から仙台市の八木山動物公園に引っこしてきました。野生には300頭ほどしかいないトラです。いつから見られるかは、動物園のホームページで知らせるそうです。",
+      "ask": "動物園で一番見たい動物は？",
+      "source": "ミヤギテレビ",
+      "url": "https://news.yahoo.co.jp/articles/abba1c0181e9189d230a519b92b8f7c19590eee2",
+      "on": "11月10日",
+      "img": { "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e1/Sumatran_Tiger_Berlin_Tierpark.jpg/960px-Sumatran_Tiger_Berlin_Tierpark.jpg", "credit": "Captain Herbert", "license": "CC BY-SA 3.0" }
+    },
+    {
+      "title": "火星へ向かう探査機MMX、順調に飛行中",
+      "text": "10月に打ち上げられた日本の探査機「MMX」は、地球から約600万km離れた宇宙を順調に飛んでいると、JAXAが10日に伝えました。火星の月「フォボス」の砂を持ち帰る計画です。",
+      "ask": "宇宙に行けたら、どこに行ってみたい？",
+      "source": "NHK",
+      "url": "https://news.web.nhk/newsweb/na/nd-20261110de73663",
+      "on": "11月10日",
+      "img": { "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5c/Phobos_colour_2008.jpg/960px-Phobos_colour_2008.jpg", "credit": "NASA / JPL-Caltech / University of Ar ほか", "license": "Public domain" }
+    },
+    {
+      "title": "三陸鉄道の三陸駅に「柿のれん」",
+      "text": "岩手県大船渡市にある三陸鉄道の三陸駅で、毎年恒例の干し柿作りが行われました。たくさんの柿がのれんのようにつるされ、駅のホームがオレンジ色になりました。30年ほど前から続いているそうです。",
+      "ask": "干し柿、食べたことある？",
+      "source": "NHK",
+      "url": "https://news.web.nhk/newsweb/na/nd-20261110de73575",
+      "on": "11月10日",
+      "img": { "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/19/Hanging_Hachiya_Persimmons_to_become_Hoshigaki.jpg/960px-Hanging_Hachiya_Persimmons_to_become_Hoshigaki.jpg", "credit": "Tachikoma805", "license": "CC BY 3.0" }
+    }
+  ]
+}
