@@ -60,6 +60,7 @@ body { background: var(--color-bg); }
 .rv-aid { margin-top: 20px; }
 .card .rv-aid { margin-top: 0; }
 .rv-seg { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 12px; }
+.rv-seg--3 { grid-template-columns: repeat(3, 1fr); }
 .rv-seg__opt { position: relative; }
 .rv-seg__opt input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
 .rv-seg__opt span {
@@ -289,6 +290,7 @@ body { background: var(--color-bg); }
   .rv-roombar .btn { padding: 4px 8px; font-size: 13px; min-height: 36px; }
   .rv-main { padding: 14px 12px 56px; }
   .rv-seg { grid-template-columns: repeat(2, 1fr); }
+  .rv-seg--3 { grid-template-columns: 1fr; }
   .rv-status.is-result { font-size: 20px; }
   .rv-seat { padding: 8px 10px; gap: 8px; }
   .rv-seat__stone { width: 24px; height: 24px; }

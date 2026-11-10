@@ -57,6 +57,8 @@ const state = {
   pickKey: null,
   clockTimer: null,    // 残り時間の表示と、時間切れの見はり
   autoKey: null,       // 時間切れの代わりの手を、同じ手番で二度送らないための印
+  cpuTimer: null,      // 1台の画面で CPU と対戦するとき、CPU が置くまでの待ち
+  cpuKey: null,        // CPU が同じ手番で二度置かないための印
 };
 const $ = (id) => document.getElementById(id);
 
@@ -1156,6 +1158,8 @@ function remainingMs(V) {
   if (!g || g.over || !g.moveTime) return null;
   // ホストが切れている間は時計を止める（戻ると、その番の時間を最初から数えなおす）
   if (V.room && V.room.hostConnected === false) return null;
+  // CPU と対戦するときの CPU の番は、時間を数えない
+  if (V.cpu && g.turn === V.cpu) return null;
   const now = state.role === 'local' ? Date.now() : RoomkRTDB.now();
   const start = g.turnAt == null ? now : g.turnAt;
   return Math.max(0, start + g.moveTime * 1000 - now);
@@ -1213,6 +1217,7 @@ function loadLocal() {
     return {
       names: { b: String(saved.names?.b || '').slice(0, 8), w: String(saved.names?.w || '').slice(0, 8) },
       aid: normAid(saved.aid),
+      cpu: cpuOf(saved.cpu),
       // 読み込み直したら、いまの番の時間は最初から数えなおす
       game: { ...game, turnAt: Date.now() },
     };
@@ -1229,9 +1234,51 @@ function clearLocal() {
   }
 }
 
-function openLocalSetup(names, moveTime = 0) {
-  $('localNameB').value = names?.b || '';
-  $('localNameW').value = names?.w || '';
+/* ── CPU と対戦する（1台の画面だけ。2026-11-11 フィードバックボード「人とCPUで対戦したい」）──
+   CPU の色を選ぶと、その色は CPU が置く（名前は「CPU」）。置き方は時間切れの手と同じ autoMove（強すぎず、でたらめすぎない）。
+   CPU の番は CPU_MS 待ってから置く（どこに置いたか見えるように）。CPU の番は時間を数えない */
+const CPU_NAME = 'CPU';
+const CPU_MS = 900;
+const cpuOf = (v) => (v === 'b' || v === 'w' ? v : null);
+const cpuTurnKey = (L) => L.game.ply + ':' + L.game.hist.length + ':' + L.game.turnAt;
+function stopCpu() {
+  clearTimeout(state.cpuTimer);
+  state.cpuTimer = null;
+  state.cpuKey = null;
+}
+function scheduleCpu() {
+  const L = state.local;
+  if (state.role !== 'local' || !L?.cpu || L.game.over || L.game.turn !== L.cpu) return;
+  const key = cpuTurnKey(L);
+  if (state.cpuKey === key) return;
+  clearTimeout(state.cpuTimer);
+  state.cpuKey = key;
+  state.cpuTimer = setTimeout(() => {
+    state.cpuTimer = null;
+    const cur = state.local;
+    if (state.role !== 'local' || cur !== L || cur.game.over || cur.game.turn !== cur.cpu || cpuTurnKey(cur) !== key) return;
+    placeLocal(-1, false, true);
+  }, CPU_MS);
+}
+const localVs = () => cpuOf(document.querySelector('input[name="localVs"]:checked')?.value);
+// CPU の色の名前の欄は、使わないので押せなくする
+function syncLocalVs() {
+  const cpu = localVs();
+  ['b', 'w'].forEach((c) => {
+    const input = $(c === 'b' ? 'localNameB' : 'localNameW');
+    input.disabled = cpu === c;
+    input.placeholder = cpu === c ? CPU_NAME : '';
+    if (cpu === c) input.value = '';
+  });
+  $('btnLocalSwap').disabled = !!cpu;
+}
+
+function openLocalSetup(names, moveTime = 0, cpu = null) {
+  const radio = document.querySelector('input[name="localVs"][value="' + (cpuOf(cpu) || '') + '"]');
+  if (radio) radio.checked = true;
+  $('localNameB').value = cpu === 'b' ? '' : names?.b || '';
+  $('localNameW').value = cpu === 'w' ? '' : names?.w || '';
+  syncLocalVs();
   $('localMoveTime').value = String(moveTimeOf(moveTime));
   state.localAid = normAid(state.localAid);
   aidEditor($('localAid'), state.localAid, (a) => { state.localAid = a; });
@@ -1243,10 +1290,12 @@ function newLocalGame(moveTime) {
 }
 
 function startLocal() {
-  const nameB = $('localNameB').value.trim().slice(0, 8);
-  const nameW = $('localNameW').value.trim().slice(0, 8);
+  const cpu = localVs();
+  const nameB = cpu === 'b' ? CPU_NAME : $('localNameB').value.trim().slice(0, 8);
+  const nameW = cpu === 'w' ? CPU_NAME : $('localNameW').value.trim().slice(0, 8);
   state.role = 'local';
-  state.local = { names: { b: nameB, w: nameW }, aid: normAid(state.localAid), game: newLocalGame($('localMoveTime').value) };
+  stopCpu();
+  state.local = { names: { b: nameB, w: nameW }, aid: normAid(state.localAid), cpu, game: newLocalGame($('localMoveTime').value) };
   saveLocal();
   window.RoomkStats?.count('local-start');
   showScreen('game');
@@ -1254,14 +1303,14 @@ function startLocal() {
   renderGame();
 }
 
-// i に置く。auto のときは時間切れの代わりの手（CPU が選ぶ）
-function placeLocal(i, auto = false) {
+// i に置く。auto のときは時間切れの代わりの手、bot のときは対戦相手の CPU の手（どちらも CPU が選ぶ）
+function placeLocal(i, auto = false, bot = false) {
   const L = state.local;
-  const at = auto ? E.autoMove(L.game.board, L.game.turn) : i;
+  const at = auto || bot ? E.autoMove(L.game.board, L.game.turn) : i;
   const ng = E.play(L.game, at);
   if (!ng) return;
   const first = ng.over && !L.game.ended;
-  L.game = { ...ng, hist: [...L.game.hist, snapOf(L.game)], moveTime: L.game.moveTime, turnAt: Date.now(), auto: auto ? L.game.turn : null, ended: L.game.ended || ng.over };
+  L.game = { ...ng, hist: [...L.game.hist, snapOf(L.game)], moveTime: L.game.moveTime, turnAt: Date.now(), auto: auto ? L.game.turn : null, bot: bot ? L.game.turn : null, ended: L.game.ended || ng.over };
   state.pick = -1;
   if (first) window.RoomkStats?.count('local-finish');
   saveLocal();
@@ -1275,6 +1324,7 @@ function quitLocal() {
   state.local = null;
   state.role = null;
   stopClock();
+  stopCpu();
   resetBoxes();
   showScreen('top');
 }
@@ -1448,8 +1498,9 @@ function viewModel() {
       name: (c) => L.names[c],
       away: () => false,
       proxy: () => false,
-      canPlay: () => !L.game.over,
-      mine: () => false,
+      cpu: L.cpu,
+      canPlay: () => !L.game.over && L.game.turn !== L.cpu,
+      mine: (c) => !!L.cpu && c !== L.cpu,
       key: 'local',
     };
   }
@@ -1510,21 +1561,22 @@ function renderGame() {
   // いまの番・パス・結果
   const can = V.canPlay();
   const ad = aidFor(V.aid, g.turn);
-  const autoNote = g.auto && g.last >= 0 ? '時間切れ。CPU が' + COLOR[g.auto] + 'の代わりに ' + E.coord(g.last) + ' に置いたよ。' : '';
+  const autoNote = g.auto && g.last >= 0 ? '時間切れ。CPU が' + COLOR[g.auto] + 'の代わりに ' + E.coord(g.last) + ' に置いたよ。'
+    : local && V.cpu && g.bot === V.cpu && g.last >= 0 ? 'CPU は ' + E.coord(g.last) + ' に置いたよ。' : '';
   const pass = autoNote + (g.passed && !g.over ? seatLabel(V, g.passed) + 'は置ける場所がないので、パス。' : '');
   let status = '';
   if (g.over) {
     const w = E.winner(g.board);
     status = autoNote + (w === 'draw' ? '引き分け！' : seatLabel(V, w) + 'の勝ち！') + '　黒 ' + n.b + ' ー 白 ' + n.w;
-  } else if (local) status = pass + seatLabel(V, g.turn) + 'の番だよ';
+  } else if (local && !V.cpu) status = pass + seatLabel(V, g.turn) + 'の番だよ';
   else if (V.mine(g.turn)) status = pass + 'あなたの番だよ（' + COLOR[g.turn] + '）';
   else if (can) status = pass + seatLabel(V, g.turn) + 'の番。代わりに置いてね';
   else status = pass + seatLabel(V, g.turn) + 'が考え中';
-  if (!g.over && can && ad.spots && !local) status += '。置ける場所に印が出ているよ';
+  if (!g.over && can && ad.spots && (!local || V.cpu)) status += '。置ける場所に印が出ているよ';
   const st = $('gameStatus');
   st.textContent = status;
   st.classList.toggle('is-pass', !!pass && !g.over);
-  st.classList.toggle('is-mine', can && !local && !g.over);
+  st.classList.toggle('is-mine', can && (!local || !!V.cpu) && !g.over);
   st.classList.toggle('is-result', g.over);
 
   renderBoard($('board'), g, { canPlay: can, aid: ad, pick: state.pick, key: V.key });
@@ -1555,9 +1607,11 @@ function renderGame() {
 
   // そのほかの操作（1台の画面・ホスト）
   $('tools').hidden = !(host || local);
-  $('btnUndo').disabled = !g.hist.length;
+  // CPU と対戦するときは、自分の手までもどす（自分がまだ置いていなければ押せない）
+  $('btnUndo').disabled = !g.hist.length || (local && !!V.cpu && !g.hist.some((h) => h.turn !== V.cpu));
   $('btnReset').textContent = local ? '最初からやりなおす' : 'この対局をやめる';
   $('btnQuit').hidden = !local;
+  if (local) scheduleCpu();
 }
 
 /* ── 盤 ── */
@@ -1766,6 +1820,7 @@ $('btnLocalSwap').addEventListener('click', () => {
   $('localNameW').value = b;
 });
 $('btnLocalStart').addEventListener('click', startLocal);
+document.querySelectorAll('input[name="localVs"]').forEach((r) => r.addEventListener('change', syncLocalVs));
 
 $('btnPlace').addEventListener('click', () => { if (state.pick >= 0) place(state.pick); });
 $('btnUnpick').addEventListener('click', () => { state.pick = -1; renderGame(); });
@@ -1774,8 +1829,12 @@ $('btnUndo').addEventListener('click', () => {
     const L = state.local;
     if (!L.game.hist.length) return;
     const hist = L.game.hist.slice();
-    const prev = hist.pop();
-    L.game = { ...prev, flipped: [], over: false, hist, moveTime: L.game.moveTime, turnAt: Date.now(), auto: null, ended: L.game.ended };
+    let prev = hist.pop();
+    // CPU と対戦するときは、自分の番までもどす（CPU の手と、その前の自分の手をいっしょに）
+    while (L.cpu && prev.turn === L.cpu && hist.length) prev = hist.pop();
+    if (L.cpu && prev.turn === L.cpu) return;
+    stopCpu();
+    L.game = { ...prev, flipped: [], over: false, hist, moveTime: L.game.moveTime, turnAt: Date.now(), auto: null, bot: null, ended: L.game.ended };
     state.pick = -1;
     saveLocal();
     renderGame();
@@ -1801,6 +1860,7 @@ $('btnReset').addEventListener('click', () => {
   if (state.role === 'local') {
     const g = state.local.game;
     if (!g.over && g.ply && !window.confirm('最初からやりなおす？')) return;
+    stopCpu();
     state.local.game = newLocalGame(state.local.game.moveTime);
     state.pick = -1;
     saveLocal();
@@ -1815,6 +1875,8 @@ $('btnAgain').addEventListener('click', () => {
   if (state.role === 'local') {
     const L = state.local;
     L.names = { b: L.names.w, w: L.names.b };
+    if (L.cpu) L.cpu = E.other(L.cpu);
+    stopCpu();
     L.game = newLocalGame(L.game.moveTime);
     state.pick = -1;
     saveLocal();
@@ -1828,13 +1890,15 @@ $('btnRelobby').addEventListener('click', () => {
   if (state.role === 'local') {
     const names = state.local.names;
     const moveTime = state.local.game.moveTime;
+    const cpu = state.local.cpu;
     state.localAid = state.local.aid;
     clearLocal();
     state.local = null;
     state.role = null;
     stopClock();
+    stopCpu();
     resetBoxes();
-    openLocalSetup(names, moveTime);
+    openLocalSetup(names, moveTime, cpu);
   } else if (state.role === 'host') {
     backToLobby();
   }
