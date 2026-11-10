@@ -194,6 +194,44 @@ const { check, sleep, text, visible, waitScreen, waitFor, key, fitsHeight, overf
   const n2 = await techNote({ lines: 4, spin: null, b2b: false, combo: 0, allClear: true });
   check('S32 ひとりでも全部消えた・4段の一言が出る', n2.includes('全部消えた！') && n2.includes('4段すとん！'), n2);
 
+  // ── 下の押しっぱなし（2026-11-11）: 押したときから SOFT_DROP_MS（0.08秒）ごとに1マス、同じ速さ。OS のくり返しを使わない ──
+  // 盤の1列目（ブロックはまん中に出て、まん中に積むので、いつも空き）の色を空きとして、ブロックのいちばん上の段を見る
+  const D = await L.newClient('soft');
+  await L.open(D);
+  await D.page.click('#btnGoSolo');
+  await waitScreen(D, 'solo');
+  await D.page.click('#btnSoloStart');
+  await waitScreen(D, 'play');
+  await sleep(400);
+  const topRow = () => D.page.$eval('#board', (c) => {
+    const ctx = c.getContext('2d'); const rows = 22;
+    const px = (x, r) => ctx.getImageData(Math.floor((x + 0.5) * c.width / 10), Math.floor((r + 0.5) * c.height / rows), 1, 1).data.join(',');
+    for (let r = 0; r < rows; r++) {
+      const empty = px(0, r);
+      for (let x = 1; x < 10; x++) if (px(x, r) !== empty) return r;
+    }
+    return -1;
+  });
+  const fallBy = async (press, release, ms) => {
+    const a = await topRow();
+    await press(); await sleep(ms); await release();
+    await sleep(30);
+    const b = await topRow();
+    await D.page.keyboard.press('Space');
+    await sleep(150);
+    return b - a;
+  };
+  const padBox = await (await D.page.$('.sb-padbtn[data-act="down"]')).boundingBox();
+  const padDown = async () => { await D.page.mouse.move(padBox.x + padBox.width / 2, padBox.y + padBox.height / 2); await D.page.mouse.down(); };
+  const kLong = await fallBy(() => D.page.keyboard.down('ArrowDown'), () => D.page.keyboard.up('ArrowDown'), 1040);
+  const pLong = await fallBy(padDown, () => D.page.mouse.up(), 1040);
+  const kShort = await fallBy(() => D.page.keyboard.down('ArrowDown'), () => D.page.keyboard.up('ArrowDown'), 520);
+  const pShort = await fallBy(padDown, () => D.page.mouse.up(), 520);
+  // 0.08秒ごと: 0.52秒で 1＋6＝7マス・1.04秒で 1＋13＝14マスほど（0.055秒ごとなら1.04秒で16マスいじょう）
+  check('S33 ↓を押しっぱなしにすると、OS のくり返しを待たずに同じ速さで落ちる', kShort >= 5 && kShort <= 8 && kLong >= 11 && kLong <= 15, { kShort, kLong });
+  check('S34 画面の下のボタンも、待たずに同じ速さ', pShort >= 5 && pShort <= 8 && pLong >= 11 && pLong <= 15, { pShort, pLong });
+  check('S35 長く押しても途中で速くならない（2倍の時間でおよそ2倍）', kLong - kShort >= 5 && kLong - kShort <= 8 && pLong - pShort >= 5 && pLong - pShort <= 8, { kShort, kLong, pShort, pLong });
+
   // ── マウス（ルームで、盤をルームの記録と照らし合わせる）──
   const M = await L.newClient('mouse', { viewport: { width: 1000, height: 820 } });
   const code = await L.createRoom(M, 'そら');
