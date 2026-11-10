@@ -2015,6 +2015,24 @@ const REPEATABLE = { left: true, right: true, down: true };
 const SHIFT_DELAY_MS = 130;
 const SHIFT_REPEAT_MS = 30;
 const SIDE = { left: true, right: true };
+// 下を押しっぱなしにしたときは、押したときから同じ速さ（SOFT_DROP_MS ごとに1マス）で落とす。途中で速くならない。
+// キーボードは OS のくり返しを使わない。画面のボタンも同じ（2026-11-11 フィードバックボード）
+const SOFT_DROP_MS = 80;
+let downRep = null;  // { key, i }（キーボードの下）
+function stopDownRepeat() {
+  if (!downRep) return;
+  clearInterval(downRep.i);
+  downRep = null;
+}
+function startDownRepeat(key) {
+  stopDownRepeat();
+  const r = { key, i: 0 };
+  r.i = setInterval(() => {
+    if (state.currentScreen !== 'play' || $('screen-play').inert) { stopDownRepeat(); return; }
+    act('down');
+  }, SOFT_DROP_MS);
+  downRep = r;
+}
 let keyRep = null;   // { key, a, t, i }
 const sideHeld = []; // 押している左右のキー（あとから押したものが後ろ）
 function stopKeyRepeat() {
@@ -2037,6 +2055,7 @@ function startKeyRepeat(key, a) {
 document.addEventListener('keyup', (e) => {
   const k = keyOf(e);
   const a = KEYMAP[k];
+  if (downRep && downRep.key === k) stopDownRepeat();
   if (!SIDE[a]) return;
   const at = sideHeld.indexOf(k);
   if (at >= 0) sideHeld.splice(at, 1);
@@ -2046,7 +2065,7 @@ document.addEventListener('keyup', (e) => {
   const back = sideHeld[sideHeld.length - 1];
   if (back) startKeyRepeat(back, KEYMAP[back]);
 });
-window.addEventListener('blur', () => { sideHeld.length = 0; stopKeyRepeat(); });
+window.addEventListener('blur', () => { sideHeld.length = 0; stopKeyRepeat(); stopDownRepeat(); });
 document.addEventListener('keydown', (e) => {
   // 「あそびかた」を開いている間は、あそぶ画面が inert になるので動かさない
   if (state.currentScreen !== 'play' || $('screen-play').inert || e.ctrlKey || e.metaKey || e.altKey) return;
@@ -2066,6 +2085,12 @@ document.addEventListener('keydown', (e) => {
     if (!sideHeld.includes(k)) sideHeld.push(k);
     act(a);
     startKeyRepeat(k, a);
+    return;
+  }
+  if (a === 'down') {
+    if (e.repeat) return;
+    act(a);
+    startDownRepeat(k);
     return;
   }
   if (e.repeat && !REPEATABLE[a]) return;
@@ -2114,6 +2139,7 @@ boardCanvas.addEventListener('wheel', (e) => {
 let rep = null;
 function stopRepeat() {
   stopKeyRepeat();
+  stopDownRepeat();
   if (!rep) return;
   clearTimeout(rep.t);
   clearInterval(rep.i);
@@ -2128,7 +2154,8 @@ document.querySelectorAll('.sb-padbtn').forEach((btn) => {
     if (REPEATABLE[a]) {
       const side = SIDE[a];
       const r = { t: 0, i: 0 };
-      r.t = setTimeout(() => { if (rep === r) r.i = setInterval(() => act(a), side ? SHIFT_REPEAT_MS : 55); }, side ? SHIFT_DELAY_MS : 180);
+      // 下は待たずに、押したときから同じ速さ（SOFT_DROP_MS ごと）
+      r.t = setTimeout(() => { if (rep === r) r.i = setInterval(() => act(a), side ? SHIFT_REPEAT_MS : SOFT_DROP_MS); }, side ? SHIFT_DELAY_MS : 0);
       rep = r;
     }
   });
