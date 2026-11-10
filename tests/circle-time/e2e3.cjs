@@ -70,9 +70,10 @@ const DAILY = {
   await L.answerBtn(A, 0);
   await L.waitStage(W, '1／2人');
   check('C2 答える前は由来を出さない', !(await L.stage(W)).includes('語呂合わせ'));
-  await H.page.click('#btn-reveal');
+  await H.page.click('#btn-next');
   await W.page.waitForFunction(() => document.querySelectorAll('#watch-stage .choice .chip').length === 1);
-  await H.page.click('#btn-answer');
+  await L.waitText(H, '#btn-next', '答えを見せる');
+  await H.page.click('#btn-next');
   await W.page.waitForFunction(() => document.querySelectorAll('#watch-stage .choice.ok').length === 3);
   const sw = await L.stage(W);
   check('C3 3枚とも正解の印・「3つとも本当！」', sw.includes('3つとも本当！'));
