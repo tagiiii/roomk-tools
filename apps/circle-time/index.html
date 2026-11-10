@@ -46,6 +46,15 @@
   .ready li b{ display:block; font-size:14px; color:var(--color-primary); }
   .ready li.ok{ background:#EAF5EE; } .ready li.ok > .material-symbols-rounded{ color:var(--color-success); }
   .ready li.none{ background:#FBF6EC; } .ready li.none > .material-symbols-rounded{ color:var(--color-muted); }
+  .plan{ border-top:1px dashed var(--color-border); padding-top:12px; margin-bottom:14px; }
+  .plan h3{ font:700 16px 'Zen Maru Gothic',var(--font-base); color:var(--color-primary); margin:0 0 10px; }
+  .plan .seg-wrap{ flex-wrap:wrap; margin-bottom:4px; }
+  .plan .seg-wrap button{ flex:1 1 30%; min-width:120px; }
+  .plan .seg-wrap button .material-symbols-rounded{ font-size:20px; }
+  .plan-row{ display:flex; gap:8px; }
+  .plan-row input{ flex:1; min-width:0; }
+  .plan-row .btn{ flex:none; padding:8px 14px; font-size:14px; }
+  .field select{ width:100%; box-sizing:border-box; border:1.5px solid var(--color-border); border-radius:10px; padding:10px 12px; font:15px var(--font-base); color:var(--color-text); background:#fff; min-height:44px; }
   details.more{ margin-top:14px; border-top:1px dashed var(--color-border); padding-top:10px; }
   details.more summary{ cursor:pointer; font:700 14px 'Zen Maru Gothic',var(--font-base); color:var(--color-accent); margin-bottom:10px; }
   /* プログラム（時刻ごと） */
@@ -79,6 +88,11 @@
   .fb-kana b{ font-size:76px; color:var(--color-accent); margin:0 6px; }
   .fb-theme{ text-align:center; font:700 52px 'Zen Maru Gothic',var(--font-base); }
   .fb-note{ text-align:center; font-size:21px; color:var(--color-muted); }
+  .fb-news-t{ font:700 40px 'Zen Maru Gothic',var(--font-base); line-height:1.35; color:var(--color-primary); overflow-wrap:anywhere; }
+  .fb-news-x{ font-size:28px; line-height:1.6; overflow-wrap:anywhere; }
+  .fb-news-a{ display:flex; align-items:center; gap:10px; font:700 26px 'Zen Maru Gothic',var(--font-base); color:var(--color-accent); }
+  .fb-news-a .material-symbols-rounded{ font-size:32px; }
+  .fb-news-s{ font-size:18px; color:var(--color-muted); }
   .fb-hands{ display:flex; gap:8px; align-items:center; justify-content:center; flex-wrap:wrap; font-size:19px; color:var(--color-muted); }
   .fb-hint{ font-size:17px; color:var(--color-muted); }
   .fb-side{ display:flex; flex-direction:column; gap:14px; }
@@ -277,6 +291,11 @@
   .p-lines{ font-size:17px; line-height:1.8; margin:0; padding-left:0; list-style:none; }
   .p-lines li{ padding:6px 0; border-bottom:1px dashed var(--color-border); }
   .p-odai{ background:#fff; border:3px solid var(--color-accent); border-radius:18px; padding:22px 18px; text-align:center; font:700 22px 'Zen Maru Gothic',var(--font-base); line-height:1.5; }
+  .p-news{ background:#fff; border:1.5px solid var(--color-border); border-radius:14px; padding:14px; line-height:1.6; }
+  .p-news b{ display:block; font:700 18px 'Zen Maru Gothic',var(--font-base); color:var(--color-primary); margin-bottom:6px; }
+  .p-news p{ margin:0 0 6px; font-size:15px; }
+  .p-news p.ask{ font-weight:700; color:var(--color-accent); }
+  .p-news small{ color:var(--color-muted); font-size:12px; }
   .p-wx{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
   .p-wx .opt-btn{ flex-direction:column; justify-content:center; text-align:center; gap:4px; }
   .p-wx .opt-btn .material-symbols-rounded{ font-size:32px; color:var(--color-accent); }
@@ -377,12 +396,6 @@
   .talk .odai{ font-size:58px; padding:56px 44px; width:1000px; }
   /* 自由タイム */
   .fr{ flex:1; min-height:0; display:grid; grid-template-columns:1fr; gap:26px; margin-top:14px; }
-  .fr-opts{ display:grid; grid-template-columns:repeat(3,1fr); gap:20px; }
-  .fr-opt{ background:#fff; border:3px solid var(--color-border); border-radius:24px; box-shadow:var(--shadow-soft); padding:24px 20px; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; gap:12px; position:relative; }
-  .fr-opt .num{ position:absolute; top:14px; left:16px; width:44px; height:44px; border-radius:50%; background:var(--color-accent); color:#fff; display:flex; align-items:center; justify-content:center; font:700 24px 'Zen Maru Gothic',var(--font-base); }
-  .fr-opt > .material-symbols-rounded{ font-size:84px; color:var(--color-accent); }
-  .fr-opt b{ font:700 36px 'Zen Maru Gothic',var(--font-base); color:var(--color-text); }
-  .fr-opt small{ font-size:21px; color:var(--color-muted); line-height:1.5; }
   .fr .fb-card{ height:100%; box-sizing:border-box; }
   .fr-side{ display:flex; flex-direction:column; gap:14px; }
   .fr-side .clock{ display:flex; flex-direction:column; gap:4px; background:#fff; border-radius:18px; padding:16px 18px; font-size:19px; box-shadow:var(--shadow-soft); }
@@ -403,14 +416,6 @@
   .pgx.dense .pgx-it .th{ width:112px; height:63px; } .pgx.dense .pgx-it .nm{ font-size:22px; }
   .pgx-note{ background:var(--color-primary-soft); border-radius:14px; padding:10px 16px; font-size:21px; }
   /* ゲーム */
-  .games{ flex:1; min-height:0; display:grid; grid-template-columns:repeat(3,1fr); gap:22px; margin-top:16px; }
-  .game{ background:#fff; border:3px solid var(--color-border); border-radius:22px; box-shadow:var(--shadow-soft); padding:12px 12px 16px; display:flex; flex-direction:column; gap:8px; min-height:0; }
-  .game img{ width:100%; aspect-ratio:16/9; object-fit:cover; border-radius:14px; background:#F1E8D6; }
-  .game .gt{ display:flex; align-items:center; gap:10px; font:700 32px 'Zen Maru Gothic',var(--font-base); line-height:1.2; }
-  .game .gt .num{ width:42px; height:42px; border-radius:50%; background:var(--color-accent); color:#fff; display:flex; align-items:center; justify-content:center; font-size:22px; flex:none; }
-  .game .gh{ font-size:20px; color:var(--color-muted); line-height:1.45; }
-  .game .who{ display:flex; gap:6px; flex-wrap:wrap; margin-top:auto; }
-  .game .who .chip{ font-size:18px; padding:3px 11px; }
   .game-on{ flex:1; min-height:0; display:grid; grid-template-columns:1fr 380px; gap:28px; margin-top:16px; }
   .game-on img{ width:100%; height:100%; max-height:470px; object-fit:contain; border-radius:20px; background:#fff; box-shadow:var(--shadow-soft); }
   .game-on .side{ display:flex; flex-direction:column; gap:14px; }
@@ -433,9 +438,9 @@
   .p-game-img{ width:100%; aspect-ratio:16/9; object-fit:cover; border-radius:14px; margin:4px 0 10px; background:#F1E8D6; }
 
   /* 番号は丸数字の文字だけ（丸の背景を付けない。ui.md「番号は丸数字」） */
-  .choice .num,.fb-c .num,.game .gt .num,.fr-opt .num{ width:auto; height:auto; background:none; border-radius:0; color:var(--color-accent); line-height:1; }
+  .choice .num,.fb-c .num{ width:auto; height:auto; background:none; border-radius:0; color:var(--color-accent); line-height:1; }
+  .fb-c .num{ font-size:30px; }
   .choice .num{ font-size:48px; align-self:flex-start; } .choice .t{ font-size:46px; }
-  .fr-opt .num{ align-self:auto; } .game .gt .num{ display:inline; } .fb-c .num{ font-size:30px; } .game .gt .num{ font-size:36px; } .fr-opt .num{ font-size:40px; }
   .opt-btn .n.mk{ width:auto; height:auto; background:none; border-radius:0; color:var(--color-accent); font-size:26px; }
   .opt-btn[aria-pressed="true"] .n.mk{ background:none; color:var(--color-accent); }
 
@@ -457,17 +462,11 @@
   .hands-box{ display:flex; flex-direction:column; gap:10px; align-items:center; }
   .prow .nt{ display:block; font-size:12px; font-weight:500; color:var(--color-text); background:#FBF6EC; border-radius:8px; padding:4px 8px; margin-top:4px; overflow-wrap:anywhere; }
   /* ゲームのくじ（音なし） */
-  .games.spin .game{ animation:gspin .6s steps(1) infinite; }
-  .games.spin .game:nth-child(2){ animation-delay:.2s; } .games.spin .game:nth-child(3){ animation-delay:.4s; } .games.spin .game:nth-child(4){ animation-delay:.3s; }
-  @keyframes gspin{ 0%{ border-color:var(--color-accent); box-shadow:0 0 0 6px var(--color-accent-soft); } 33%{ border-color:var(--color-border); box-shadow:var(--shadow-soft); } }
-  .game.on{ border-color:var(--color-accent); box-shadow:0 0 0 6px var(--color-accent-soft); }
 
   .gb-sub{ font-size:12px; color:var(--color-muted); margin-left:6px; }
   .gb-more summary{ cursor:pointer; font-size:12px; color:var(--color-accent); font-weight:700; }
   .game-box a.btn{ padding:8px 12px; font-size:13px; border-radius:10px; text-decoration:none; }
 
-  .free-wish{ display:block; width:100%; font-weight:700; color:var(--color-text); }
-  .free-wish:empty{ display:none; }
 
   .chip.has-note{ cursor:pointer; border-color:var(--color-accent); font-family:inherit; }
   .chip.has-note.open{ background:var(--color-accent-soft); }
@@ -498,9 +497,6 @@
   .cl-art > .material-symbols-rounded{ font-size:150px; }
   .closing-wrap .closing h1{ font-size:56px !important; }
   .closing-wrap .mv-it{ font-size:34px; padding:12px 22px; }
-  .fr-art{ width:170px; height:170px; border-radius:30px; }
-  .fr-art > .material-symbols-rounded{ font-size:84px; }
-  .fr-opt{ gap:10px; }
   .p-art{ width:120px; height:120px; border-radius:24px; margin:6px 0; }
   .p-art > .material-symbols-rounded{ font-size:56px; }
   .stage.full{ background:radial-gradient(circle at 18% 22%, #FFF9EE 0, var(--am-pale) 60%); }
@@ -568,27 +564,13 @@
   .p-words button .material-symbols-rounded{ font-size:20px; color:var(--color-accent); }
   .p-note-line{ display:flex; align-items:center; gap:6px; margin:8px 0 0; font-size:14px; color:var(--color-muted); }
   .p-note-line .material-symbols-rounded{ font-size:18px; color:var(--color-accent); }
-  .pb-art{ width:52px; height:52px; border-radius:12px; }
-  .pb-art > .material-symbols-rounded{ font-size:28px; }
   .opt-btn .n.mk:empty{ width:26px; }
-  .fr-opts{ grid-template-columns:repeat(3,1fr) 0.8fr; }
-  .fr-opt.any{ background:#FFFBF3; border-style:dashed; }
-  .fr-opt.any .fr-art{ width:130px; height:130px; }
-  .gm-art{ width:100%; aspect-ratio:1.6; height:auto; border-radius:16px; }
-  .gm-art img{ object-fit:cover; }
-  .gm-art > .material-symbols-rounded{ font-size:64px; }
-  .game{ justify-content:flex-start; }
-  .games{ align-items:start; }
-  .game .gt{ font-size:34px; } .game .gh{ font-size:22px; }
   .go-art{ height:100%; max-height:460px; aspect-ratio:1; width:auto; justify-self:center; border-radius:28px; box-shadow:var(--shadow-soft); }
   .game-on{ grid-template-columns:1fr 440px; align-items:start; }
   .game-on .box{ font-size:22px; }
   .go-art > .material-symbols-rounded{ font-size:120px; }
   .p-game-art{ width:100%; aspect-ratio:1.6; border-radius:14px; margin:4px 0 10px; }
   .p-game-art > .material-symbols-rounded{ font-size:56px; }
-  .p-gli{ display:flex; align-items:center; gap:10px; }
-  .pl-art{ width:56px; height:56px; border-radius:12px; }
-  .pl-art > .material-symbols-rounded{ font-size:28px; }
   .choice{ justify-content:flex-start; }
   .choice .t{ margin:auto 0; font-size:52px; text-align:center; }
 
@@ -616,7 +598,7 @@
   @media (max-width: 600px){ #screen-player .roombar{ flex-wrap:nowrap; gap:8px; padding:8px 10px; font-size:13px; } #screen-player .roombar .code{ font-size:17px; } #screen-player .roombar .btn{ padding:6px 10px; font-size:12px; white-space:nowrap; } }
   .stage.enter .body{ animation:stageIn .28s ease-out; }
   @keyframes stageIn{ from{ opacity:0; transform:translateY(10px); } to{ opacity:1; transform:none; } }
-  @media (prefers-reduced-motion: reduce){ .stage.enter .body{ animation:none; } .games.spin .game{ animation:none; } }
+  @media (prefers-reduced-motion: reduce){ .stage.enter .body{ animation:none; } }
   .guide{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; background:var(--color-accent-soft); border-radius:14px; padding:10px 16px; margin:-4px 0 14px; font-size:13px; }
   .guide b{ color:var(--color-accent); }
   .guide .g-step{ display:inline-flex; align-items:center; gap:4px; background:#fff; border-radius:999px; padding:4px 12px; font-weight:700; }
@@ -670,9 +652,29 @@
         <li id="rd-wx" class="wait"><span class="material-symbols-rounded">partly_cloudy_day</span><span><b>全国の天気</b><span id="wx-status-text">取りにいきます…</span></span></li>
         <li id="rd-day" class="wait"><span class="material-symbols-rounded">calendar_today</span><span><b>今日は何の日</b><span id="day-status-text">今朝用意した記念日を確かめています…</span></span></li>
         <li id="rd-prog" class="wait"><span class="material-symbols-rounded">event_note</span><span><b id="prog-head">今日のプログラム</b><span id="prog-status-text">room-K ポータルの時間割を確かめています…</span></span></li>
-        <li id="rd-topic" class="wait"><span class="material-symbols-rounded">forum</span><span><b>自由タイムのあそび</b><span id="topic-status-text">お題・クイズ・ことばあそびを用意しています…</span></span></li>
-        <li id="rd-game" class="wait" hidden><span class="material-symbols-rounded">casino</span><span><b>みんなでゲームの候補</b><span id="game-status-text">ツール一覧から3つえらんでいます…</span></span></li>
+        <li id="rd-topic" class="wait"><span class="material-symbols-rounded">forum</span><span><b>お題・クイズ・ニュース</b><span id="topic-status-text">お題・クイズ・ことばあそび・ニュースを用意しています…</span></span></li>
       </ul>
+      <div class="plan">
+        <h3>きょうやること</h3>
+        <div class="field" id="plan-free"><label>自由タイムのあそび</label>
+          <div class="seg seg-sm seg-wrap" id="free-pick">
+            <button type="button" data-v="news" aria-pressed="false"><span class="material-symbols-rounded">newspaper</span>ニュース</button>
+            <button type="button" data-v="talk" aria-pressed="false"><span class="material-symbols-rounded">forum</span>おしゃべり</button>
+            <button type="button" data-v="quiz" aria-pressed="false"><span class="material-symbols-rounded">quiz</span>クイズ</button>
+            <button type="button" data-v="kotoba" aria-pressed="false"><span class="material-symbols-rounded">abc</span>ことばあそび</button>
+            <button type="button" data-v="none" aria-pressed="false"><span class="material-symbols-rounded">self_improvement</span>なし（自由に過ごす）</button>
+          </div>
+          <p class="tiny" id="free-pick-help"></p>
+        </div>
+        <div class="field" id="plan-topic" hidden><label for="topic-in">チェックインのお題</label>
+          <div class="plan-row"><input id="topic-in" maxlength="40" autocomplete="off" /><button type="button" class="btn btn-outline" id="topic-other">別のお題</button></div>
+        </div>
+        <div class="field" id="plan-game" hidden><label for="game-sel">みんなでゲーム</label>
+          <select id="game-sel"></select>
+          <p class="tiny" id="game-hk">ツール一覧を読んでいます…</p>
+        </div>
+        <p class="tiny">当日の子どもたちの声で、あとから変えられます。</p>
+      </div>
       <p class="err" id="setup-error" hidden></p>
       <button type="button" class="btn btn-primary" id="btn-create" style="width:100%">はじめる</button>
       <details class="more" id="setup-more"><summary>中身を確かめる・直す</summary>
@@ -788,11 +790,12 @@
             <button type="button" class="btn-text" id="btn-edit">文を直す</button>
             <button type="button" class="btn-text" id="btn-chat">チャット用にコピー</button>
           </div>
-          <div class="free-ctrls" id="free-ctrls" hidden><span id="free-wish" class="free-wish"></span><b>自由タイムのあそび:</b>
-          <button type="button" class="btn btn-outline" data-f="choose">えらぶ画面</button>
+          <div class="free-ctrls" id="free-ctrls" hidden><b>自由タイムのあそびを変える:</b>
+          <button type="button" class="btn btn-outline" data-f="news">ニュース</button>
           <button type="button" class="btn btn-outline" data-f="talk">おしゃべりのお題</button>
           <button type="button" class="btn btn-outline" data-f="quiz">クイズ</button>
           <button type="button" class="btn btn-outline" data-f="kotoba">ことばあそび</button>
+          <button type="button" class="btn btn-outline" data-f="none">なし</button>
           <button type="button" class="btn btn-outline" data-f="show">答えを見る</button>
           <button type="button" class="btn btn-primary" data-f="next">つぎ</button>
         </div>
@@ -887,7 +890,7 @@ const WX_DOTS = {"札幌": [703.4, 95.7], "釧路": [780.3, 98.2], "仙台": [69
 // 天気のカードを置く場所（左上の角。幅120・高さ92。地図にかぶらないよう海の上と左右に並べる）
 const WX_SLOTS = { '札幌': [530, 10], '釧路': [990, 10], '仙台': [850, 124], '東京': [850, 238], '名古屋': [850, 352], '新潟': [250, 20], '金沢': [250, 116], '広島': [250, 212], '福岡': [250, 308], '鹿児島': [250, 404], '高知': [450, 404], '大阪': [585, 404], '那覇': [16, 286] };
 // 自由タイムのあそび（既存のツールのデータを読む。本体化のときは共通のデータに出す）
-const FREE_MODES = [['talk', 'forum', 'おしゃべりのお題', 'お題について、話したい人が話す'], ['quiz', 'quiz', 'クイズ', '3択のクイズに、みんなで答える'], ['kotoba', 'abc', 'ことばあそび', '頭の文字とお題に合うことばを出し合う']];
+const FREE_MODES = [['news', 'newspaper', 'ニュース', '子ども向けのニュースを読んで、チャットで話す'], ['talk', 'forum', 'おしゃべりのお題', 'お題について、チャットで話す'], ['quiz', 'quiz', 'クイズ', '3択のクイズに、みんなで答える'], ['kotoba', 'abc', 'ことばあそび', '頭の文字とお題に合うことばを出し合う']];
 // 表紙: [アイコン, 大きな見出し, 何をするかの一文]
 const COVER = {
   free: ['schedule', '自由タイム', 'すきなことをして、ゆっくり過ごそう'],
@@ -900,14 +903,11 @@ const COVER = {
   tomorrow: ['event_note', '明日のプログラム', 'あしたは、どんなプログラムがあるかな'],
   talk: ['forum', 'チェックイン', 'お題で、ひとことずつ'],
   review: ['history', 'ふりかえり', '今日はどうだった？'],
-  game: ['casino', 'みんなでゲーム', '3つの中から、あそぶゲームをえらぼう'],
+  game: ['casino', 'みんなでゲーム', 'きょうあそぶゲームの紹介'],
 };
 // 表紙・目次の絵（fal の Recraft V3 手描き風。tools/illustrations.py）。読めないときはアイコンに戻る
 const ART_BASE = 'assets/';
 const ART = { free: 'free', kokoro: 'kokoro', karada: 'karada', weather: 'weather', day: 'day', adhoc: 'adhoc', program: 'program', tomorrow: 'program', talk: 'talk', review: 'review', game: 'game' };
-const FREE_ART = { talk: 'talk-card', quiz: 'quiz', kotoba: 'kotoba-mikke' };
-const freeArtSrc = (k) => k === 'any' ? ART_BASE + 'omakase.webp' : APPS_BASE + 'assets/illustrations/' + FREE_ART[k] + '.webp';
-const FREE_ANY = ['any', 'casino', 'おまかせ', 'どれでもいいよ'];
 // 5段階の表情（5 → 1）と、ふりかえりのひとことのアイコン（WORDS と同じ順）
 const FACES = ['sentiment_very_satisfied', 'sentiment_satisfied', 'sentiment_neutral', 'sentiment_dissatisfied', 'sentiment_very_dissatisfied'];
 const WORD_ICONS = ['celebration', 'replay', 'mood', 'battery_2_bar', 'bedtime', 'psychology_alt'];
@@ -917,7 +917,7 @@ const pnote = (icon, text) => `<p class="p-note-line"><span class="material-symb
 const art = (file, icon, cls = '') => `<span class="art ${cls}"><img src="${esc(file)}" alt="" onerror="this.parentNode.classList.add('noimg')"><span class="material-symbols-rounded">${icon}</span></span>`;
 const secArt = (s, cls) => art(ART_BASE + (ART[coverKey(s)] || 'adhoc') + '.webp', coverOf(s)[0], cls);
 const SHORT = { free: '自由タイム', kokoro: '心', karada: '体', weather: '天気', day: '何の日', adhoc: '質問', program: 'プログラム', tomorrow: '明日', talk: 'チェックイン', review: 'ふりかえり', game: 'ゲーム' };
-// みんなでゲームの候補: ツール一覧で利用シーンに「サークル」があり、話す・内省以外の種類のもの（自由タイムで使うことばみっけは除く）
+// みんなでゲームにえらべるもの: ツール一覧で利用シーンに「サークル」があり、話す・内省以外の種類のもの（自由タイムで使うことばみっけは除く）
 const GAME_GENRES = ['atekko', 'suiri', 'kotoba', 'puzzle'];
 const GAME_EXCLUDE = ['kotoba-mikke'];
 const APPS_BASE = '../';
@@ -1071,7 +1071,7 @@ function buildSteps(kind, f) {
     op(); ag();
     steps.push({ id: uid(), type: 'talk', title: 'チェックイン', sub: 'お題で、ひとことずつ', topic: f.topic || FALLBACK_TOPICS[0] });
     steps.push({ id: uid(), type: 'review', title: 'ふりかえり', sub: '今日はどうだった？', labels: LABELS.review, words: WORDS, mode: 'open' });
-    steps.push({ id: uid(), type: 'game', title: 'みんなでゲーム', cands: f.games || [], pick: null, gameName: '', link: '', mode: 'open' });
+    steps.push({ id: uid(), type: 'game', title: 'みんなでゲーム', game: f.game || null, link: '', gameCode: '', mode: 'open' });
     steps.push({ id: uid(), type: 'show', title: '明日のプログラム', ttl: f.prog.ttl || '', lines: f.prog.lines, thumbs: f.prog.thumbs || null, link: f.prog.link || PROGRAM_URL, note: f.prog.note || '' });
   }
   steps.push({ id: uid(), type: 'closing' });
@@ -1199,17 +1199,37 @@ async function loadAppNames() {
   return appNames;
 }
 const gameCard = (a) => ({ slug: a.slug, name: a.name, hk: a.hk, thumb: a.thumb });
-// 3つの候補を、種類がなるべく重ならないように選ぶ（avoid にあるものは外す）
-async function pickGames(avoid = []) {
-  const pool = (await loadCatalog()).filter((a) => a.scenes.includes('circle') && GAME_GENRES.includes(a.genre) && a.thumb && !GAME_EXCLUDE.includes(a.slug));
-  const fresh = pool.filter((a) => !avoid.includes(a.slug));
-  const list = [...(fresh.length >= 3 ? fresh : pool)].sort(() => Math.random() - 0.5);
-  const out = [];
-  for (const a of list) if (out.length < 3 && !out.some((o) => o.genre === a.genre)) out.push(a);
-  for (const a of list) if (out.length < 3 && !out.includes(a)) out.push(a);
-  return out.map(gameCard);
+// みんなでゲームにえらべるもの（名前の順）
+let poolCache = null;
+async function gamePool() {
+  if (poolCache) return poolCache;
+  return poolCache = (await loadCatalog()).filter((a) => a.scenes.includes('circle') && GAME_GENRES.includes(a.genre) && a.thumb && !GAME_EXCLUDE.includes(a.slug))
+    .sort((a, b) => a.name.localeCompare(b.name, 'ja')).map(gameCard);
 }
-function makeFree(mode, prev) {
+const gameOptions = (pool, slug) => pool.map((g) => `<option value="${esc(g.slug)}"${g.slug === slug ? ' selected' : ''}>${esc(g.name)}</option>`).join('');
+// 子ども向けのニュース（毎朝のタスクが daily/YYYY-MM-DD.news.json に書く。なければ前の日の分）
+const NEWS_MAX = 5;
+function validNews(d) {
+  const ok = (x) => x && typeof x.title === 'string' && x.title && typeof x.text === 'string' && x.text && typeof x.source === 'string' && /^https:\/\//.test(x.url || '');
+  return Array.isArray(d?.items) ? d.items.filter(ok).slice(0, NEWS_MAX).map((x) => ({ title: x.title, text: x.text, source: x.source, url: x.url, on: String(x.on || ''), ask: String(x.ask || '') })) : [];
+}
+let newsData = null;
+async function loadNews() {
+  if (newsData) return newsData;
+  const today = jstDate(now()), d0 = new Date(today + 'T12:00:00+09:00'); d0.setDate(d0.getDate() - 1);
+  newsData = { date: '', items: [] };
+  for (const date of [today, jstDate(d0.getTime())]) {
+    try {
+      const res = await fetch(`daily/${date}.news.json`, { cache: 'no-store' });
+      if (!res.ok) continue;
+      const items = validNews(await res.json());
+      if (items.length) { newsData = { date, items }; break; }
+    } catch { /* 次の日付へ */ }
+  }
+  return newsData;
+}
+function makeFree(mode, prev, news) {
+  if (mode === 'news' && news?.length) { const i = prev?.mode === 'news' && Number.isInteger(prev.newsAt) ? (prev.newsAt + 1) % news.length : 0; return { news: news[i], newsAt: i }; }
   if (mode === 'quiz' && quizPool?.length) { const c = quizPool.filter((q) => q.id !== prev?.quiz?.id); return { quiz: pick(c.length ? c : quizPool) }; }
   if (mode === 'kotoba' && kotobaData) return { kotoba: { i: pick(kotobaData.initials), t: pick(kotobaData.themes) } };
   return { topic: pickTopic(topics || FALLBACK_TOPICS, prev?.topic) };
@@ -1218,10 +1238,11 @@ function makeFree(mode, prev) {
 async function freeAct(action, v) {
   const c = ctx; if (!c || !c.data) return;
   await Promise.all([loadTopics(), loadQuiz(), loadKotoba()]);
-  const prev = c.data.free || {};
+  const prev = c.data.free || {}, news = Array.isArray(c.data.news) ? c.data.news : [];
   const mode = action === 'mode' ? (v || null) : (prev.mode || null);
   if (action === 'next' && !mode) return;
-  const content = action === 'show' || !mode ? {} : makeFree(mode, prev);
+  if (mode === 'news' && !news.length) return toast('きょうのニュースは用意されていません');
+  const content = action === 'show' || !mode ? {} : makeFree(mode, prev, news);
   let tooSoon = false;
   try {
     await transactRetry(c.ref.child('free'), (f) => {
@@ -1247,7 +1268,7 @@ async function createRoom(form) {
   for (let attempt = 0; attempt < 5; attempt++) {
     const code = RoomkRTDB.generateRoomCode(), ref = db.ref(`${PREFIX}/${code}`);
     const initial = { status: 'live', host: id, hostUid: token, hostConnected: false, hostDisconnectedAt: createdAt, createdAt,
-      kind: setupKind, date: form.date, steps, cur: steps[0].id, view: null, weather: form.weather || null, free: form.free || null, playerOrder: [id],
+      kind: setupKind, date: form.date, steps, cur: steps[0].id, view: null, weather: form.weather || null, free: form.free || null, news: form.news?.length ? form.news : null, playerOrder: [id],
       players: { [id]: { name, uid: token, isHost: true, adult: true } } };
     const result = await transactRetry(ref, (room) => room ? (room.host === id && room.hostUid === token ? room : undefined) : initial);
     if (!result.committed) continue;
@@ -1336,21 +1357,7 @@ const toggleHidden = (id) => editSteps((steps) => { const s = steps.find((x) => 
 const moveStep = (id, delta) => editSteps((steps) => { const i = steps.findIndex((x) => x.id === id), j = i + delta; if (i < 0 || j < 0 || j >= steps.length) return false; [steps[i], steps[j]] = [steps[j], steps[i]]; });
 const addChoiceStep = (title, options) => editSteps((steps, room) => { const i = steps.findIndex((s) => s.id === room.cur); steps.splice(i + 1, 0, { id: uid(), type: 'choice', title, sub: '', options, answer: null, note: '', mode: 'hide', adhoc: true }); });
 const nextTopic = async () => { const list = await loadTopics(); return editSteps((steps, room) => { const s = steps.find((x) => x.id === room.cur); if (!s || s.type !== 'talk') return false; s.topic = pickTopic(list, s.topic); }); };
-// みんなでゲーム: くじで決める（2.4秒、候補が順に光る。音なし）・候補を入れかえる・進行役が1つに決める
-const DRAW_MS = 2400;
-let drawTimer = null;
-function isDrawing(s) {
-  const left = s.drawAt ? DRAW_MS - (now() - s.drawAt) : 0;
-  if (left > 0 && !drawTimer) drawTimer = setTimeout(() => { drawTimer = null; render(); }, left + 60);
-  return left > 0;
-}
-// くじを押した瞬間に結果を決め、そのゲームのタブを開く（押した操作の中で開かないとブラウザに止められる）
-const drawGame = () => {
-  const cur = ctx?.data && curStep(ctx.data), n = (cur?.cands || []).length; if (!cur || cur.type !== 'game' || !n) return;
-  const pick = Math.floor(Math.random() * n);
-  openGameWindow(cur.cands[pick].slug);
-  return editSteps((steps, room) => { const s = steps.find((x) => x.id === room.cur); if (!s || s.type !== 'game' || !(s.cands || [])[pick]) return false; s.pick = pick; s.drawAt = now(); s.gameName = s.cands[pick].name; s.link = ''; s.gameCode = ''; });
-};
+// みんなでゲーム: 準備の画面で決めたゲームを出す。子どもたちの声で、進行役が別のゲームに変えられる
 // ゲームのタブ: サークルタイムから開いたタブ（同じサイト）の sessionStorage から、作ったルームのコードを拾う
 let gameWin = null, gamePoll = null;
 function openGameWindow(slug) {
@@ -1379,18 +1386,16 @@ function watchGameWindow(slug) {
     try { if (!gameWin.location.pathname.includes('/' + slug + '/')) return; code = findRoomCode(gameWin); } catch { return; }
     const room = ctx?.data, cur = room && curStep(room);
     if (!code || !cur || cur.type !== 'game') return;
-    const g = cur.pick != null ? cur.cands?.[cur.pick] : null;
+    const g = cur.game;
     if (!g || g.slug !== slug || cur.gameCode === code) return;
     const link = new URL(APPS_BASE + slug + '/?room=' + code, location.href).href;
     editSteps((steps, r) => { const s = steps.find((x) => x.id === r.cur); if (!s || s.type !== 'game') return false; s.link = link; s.gameCode = code; });
     toast(`${g.name}のルーム（${code}）を、みんなの端末に出しました`, false);
   }, 1000);
 }
-const reshuffleGames = async () => { const room = ctx?.data, cur = room && curStep(room); if (!cur || cur.type !== 'game') return; const next = await pickGames((cur.cands || []).map((g) => g.slug)); if (!next.length) return toast('ツール一覧を読めませんでした'); await editSteps((steps, r) => { const s = steps.find((x) => x.id === r.cur); if (!s || s.type !== 'game') return false; s.cands = next; s.pick = null; s.drawAt = null; s.link = ''; s.gameCode = ''; s.gameName = ''; if (r.answers) delete r.answers[s.id]; }); };
-const decideGame = (i) => {
-  const cur = ctx?.data && curStep(ctx.data); if (!cur || cur.type !== 'game') return;
-  if (cur.pick !== i) openGameWindow(cur.cands?.[i]?.slug);
-  return editSteps((steps, room) => { const s = steps.find((x) => x.id === room.cur); if (!s || s.type !== 'game') return false; s.drawAt = null; s.pick = s.pick === i ? null : i; s.gameName = s.pick == null ? '' : (s.cands?.[i]?.name || ''); s.link = ''; s.gameCode = ''; });
+const changeGame = async (slug) => {
+  const g = (await gamePool()).find((x) => x.slug === slug); if (!g) return;
+  return editSteps((steps, room) => { const s = steps.find((x) => x.id === room.cur); if (!s || s.type !== 'game' || s.game?.slug === slug) return false; s.game = g; s.link = ''; s.gameCode = ''; });
 };
 // 代わりに入れる（端末のない子・チャットの子・自分）
 const setAnswer = (stepId, playerId, value) => hostUpdate((room) => { room.answers = room.answers || {}; room.answers[stepId] = room.answers[stepId] || {}; if (value == null) delete room.answers[stepId][playerId]; else room.answers[stepId][playerId] = value; });
@@ -1502,15 +1507,16 @@ function stageHtml(room, code) {
     const side = '';
     const mode = FREE_MODES.find(([k]) => k === f.mode);
     let main;
-    if (!mode) main = `<div class="fr-opts">${[...FREE_MODES, FREE_ANY].map(([k, ic, t, d], i) => `<div class="fr-opt${k === 'any' ? ' any' : ''}">${i < 3 ? `<span class="num">${'①②③'[i]}</span>` : ''}${art(freeArtSrc(k), ic, 'fr-art')}<b>${t}</b><small>${d}</small></div>`).join('')}</div>`;
+    if (!mode) main = `<div class="fb-card"><div class="fb-odai">すきなことをして、ゆっくり過ごそう</div></div>`;
     else {
       let content = '';
-      if (f.mode === 'talk') content = `<div class="fb-odai">${esc(f.topic || '')}</div>${handsHtml(room, players, fk)}`;
+      if (f.mode === 'news' && f.news) { const nw = f.news; content = `<div class="fb-news-t">${esc(nw.title)}</div><div class="fb-news-x">${esc(nw.text)}</div>${nw.ask ? `<div class="fb-news-a"><span class="material-symbols-rounded">forum</span>${esc(nw.ask)}</div>` : ''}<div class="fb-news-s">出典: ${esc(nw.source)}${nw.on ? `（${esc(nw.on)}）` : ''}</div>`; }
+      else if (f.mode === 'talk') content = `<div class="fb-odai">${esc(f.topic || '')}</div>`;
       else if (f.mode === 'quiz' && f.quiz) { const q = f.quiz; content = `<div class="fb-q">${esc(q.q)}</div><div class="fb-cs">${(q.c || []).map((c, k) => `<div class="fb-c${f.shown && q.a === k ? ' ok' : ''}"><span class="num">${'①②③④'[k]}</span>${esc(c)}<div class="who">${players.filter((p) => fans[p.id] === k).map((p) => chip(p)).join('')}</div></div>`).join('')}</div>${f.shown ? `<div class="fb-ex"><b>答えは ${'①②③④'[q.a]}</b>　${esc(q.e || '')}</div>` : ''}`; }
       else if (f.mode === 'kotoba' && f.kotoba) { content = `<div class="fb-kana">「<b>${esc(f.kotoba.i)}</b>」からはじまる</div><div class="fb-theme">${esc(f.kotoba.t)}</div><div class="fb-note">思いついたら、チャットに書いてね</div>`; }
       main = `<div class="fb-card">${content}</div>`;
     }
-    return wrap(head('schedule', '自由タイム', mode ? mode[2] : 'みんなで、なにしてあそぶ？') + `<div class="fr">${main}${side}</div>`, `<span class="ft">${mode ? 'やらなくてもOK' : 'やりたいものを、自分の端末でえらんでね'}</span>${codeTag}`);
+    return wrap(head('schedule', '自由タイム', mode ? mode[2] : '') + `<div class="fr">${main}${side}</div>`, `<span></span>${codeTag}`);
   }
   if (cur.type === 'scale' || cur.type === 'review') {
     const labels = cur.labels || LABELS.review;
@@ -1537,10 +1543,9 @@ function stageHtml(room, code) {
   }
   if (cur.type === 'weather') return wrap(head('partly_cloudy_day', '全国の天気', '') + `<div class="wx">${wxSvg(room, byValue)}</div>`, how('「はれ」など'));
   if (cur.type === 'game') {
-    const cands = cur.cands || [], drawing = isDrawing(cur), g = !drawing && cur.pick != null ? cands[cur.pick] : null;
+    const g = cur.game;
     if (g) return wrap(head('casino', 'みんなでゲーム', g.name) + `<div class="game-on">${g.slug ? gameArt(g, 'go-art') : '<span></span>'}<div class="side">${cur.gameCode ? `<div class="box gcode"><b>ルームコード</b><span>${esc(cur.gameCode)}</span></div><div class="box"><b>入り方</b>自分の端末の「ゲームに入る」か、チャットのリンクを押してね</div>` : `<div class="box"><b>入り方</b>${cur.link ? 'チャットのリンクを押してね' : 'ルームができたら、自分の端末に「ゲームに入る」が出るよ'}</div>`}<div class="box"><b>端末がない人</b>画面を見て、チャットや声で参加してね</div>${cur.gameCode ? '' : '<div class="box">はじめに、あそびかたを説明します。見ているだけでもOK</div>'}</div></div>`);
-    if (!cands.length) return wrap(head('casino', 'みんなでゲーム', cur.gameName || 'これから決めます'));
-    return wrap(head('casino', 'みんなでゲーム', drawing ? 'くじを引いています…' : 'きょうは、この中からくじで決めるよ') + `<div class="games${drawing ? ' spin' : ''}">${cands.map((c, i) => `<div class="game">${c.slug ? gameArt(c, 'gm-art') : ''}<div class="gt"><span class="num">${'①②③④'[i]}</span>${esc(c.name)}</div><div class="gh">${esc(c.hk)}</div></div>`).join('')}</div>`);
+    return wrap(head('casino', 'みんなでゲーム', 'これから決めます'));
   }
   if (cur.type === 'show') {
     const pg = programHtml(cur.lines, cur.thumbs) || '<div class="fb-note">（まだありません。ホストの「文を直す」で書けます）</div>';
@@ -1684,15 +1689,14 @@ function renderPlayer(room) {
     const f = room.free || {}, fk = 'free' + (f.n || 0), myF = room.answers?.[fk]?.[ctx.session.id];
     const mode = FREE_MODES.find(([k]) => k === f.mode);
     if (!mode) {
-      const wish = room.answers?.['fwish' + (f.n || 0)]?.[ctx.session.id];
-      html += h2('schedule', '自由タイム', 'みんなであそびたい人は、やりたいものをえらんでね。自由にすごしてもOK') + `<div class="opts">${[...FREE_MODES, FREE_ANY].map(([k, ic, t, d], i) => `<button type="button" class="opt-btn" data-act="fwish" data-v="${k}" aria-pressed="${wish === k}">${i < 3 ? `<span class="n mk">${'①②③'[i]}</span>` : '<span class="n mk"></span>'}${art(freeArtSrc(k), ic, 'pb-art')}<span>${t}<small>${d}</small></span><span class="material-symbols-rounded chk">check</span></button>`).join('')}</div>${pnote('visibility_off', 'だれが何をえらんだかは出ないよ')}${pnote('how_to_vote', '人数を見て、進行役が決めるよ')}`;
+      html += h2('schedule', '自由タイム', '') + `<div class="p-odai">すきなことをして、ゆっくり過ごそう</div>`;
       card.innerHTML = html; return;
     }
     html += h2(mode[1], mode[2], '');
-    if (f.mode === 'talk') { const hv = room.hands?.[fk]?.[ctx.session.id]; html += `<div class="p-odai">${esc(f.topic || '')}</div>` + `<div class="p-words" style="justify-content:center;margin-top:14px"><button type="button" data-act="fhand" aria-pressed="${hv === true}"><span class="material-symbols-rounded" style="font-size:20px;margin-right:4px">front_hand</span>話したい</button><button type="button" data-act="fchat" aria-pressed="${hv === 'chat'}"><span class="material-symbols-rounded" style="font-size:20px;margin-right:4px">chat</span>チャットに書いたよ</button></div><p class="q" style="text-align:center;margin-top:10px">マイクで話す人は「話したい」、MetaLife のチャットに書いた人は「チャットに書いたよ」。聞くだけでもOK</p>`; }
+    if (f.mode === 'news' && f.news) { const nw = f.news; html += `<div class="p-news"><b>${esc(nw.title)}</b><p>${esc(nw.text)}</p>${nw.ask ? `<p class="ask">${esc(nw.ask)}</p>` : ''}<small>出典: ${esc(nw.source)}${nw.on ? `（${esc(nw.on)}）` : ''}</small></div><a class="p-link" href="${esc(nw.url)}" target="_blank" rel="noopener"><span class="material-symbols-rounded">open_in_new</span>くわしく読む</a>`; }
+    else if (f.mode === 'talk') { html += `<div class="p-odai">${esc(f.topic || '')}</div>`; }
     else if (f.mode === 'quiz' && f.quiz) { html += `<p class="q" style="font-size:17px;color:var(--color-text);font-weight:700">${esc(f.quiz.q)}</p><div class="opts">${f.quiz.c.map((c, k) => `<button type="button" class="opt-btn" data-act="fq" data-v="${k}" aria-pressed="${myF === k}"><span class="n mk">${'①②③④'[k]}</span>${esc(c)}<span class="material-symbols-rounded chk">check</span></button>`).join('')}</div>${f.shown ? `<div class="p-ex"><b>答えは ${'①②③④'[f.quiz.a]}</b>　${esc(f.quiz.e || '')}</div>` : ''}`; }
     else if (f.mode === 'kotoba' && f.kotoba) { html += `<div class="p-odai">「${esc(f.kotoba.i)}」からはじまる<br>${esc(f.kotoba.t)}</div><p class="q" style="text-align:center;margin-top:8px">思いついたら、チャットに書いてね</p>`; }
-    html += `<p class="q" style="margin-top:12px">やらなくてもOK。見ているだけでもいいよ</p>`;
   }
   else if (cur.type === 'scale' || cur.type === 'review') {
     const d = draftFor(room, cur), review = cur.type === 'review';
@@ -1707,11 +1711,10 @@ function renderPlayer(room) {
   } else if (cur.type === 'weather') {
     html += h2('partly_cloudy_day', cur.title, 'きみのところは、いまどんな天気？') + `<div class="p-wx">${WX_OPTIONS.map((o, i) => `<button type="button" class="opt-btn" data-act="ans" data-v="${i}" aria-pressed="${mine === i}" ${closed ? 'disabled' : ''}><span class="material-symbols-rounded">${o.i}</span>${o.t}</button>`).join('')}</div>` + sent(typeof mine === 'number' ? `${WX_OPTIONS[mine].t} を送ったよ` : 'まだ送っていないよ');
   } else if (cur.type === 'game') {
-    const cands = cur.cands || [], drawing = isDrawing(cur), g = !drawing && cur.pick != null ? cands[cur.pick] : null;
+    const g = cur.game;
     const href = cur.link && /^https?:\/\//.test(cur.link) ? cur.link : g?.slug ? APPS_BASE + g.slug + '/' : '';
     if (g) html += h2('casino', 'みんなでゲーム', 'これであそぶよ') + `${g.slug ? gameArt(g, 'p-game-art') : ''}<div class="p-big" style="padding:0 0 6px">${esc(g.name)}</div><p class="q" style="text-align:center">${esc(g.hk || '')}</p>` + (cur.link ? `<a class="p-link p-go" href="${esc(href)}" target="_blank" rel="noopener"><span class="material-symbols-rounded">login</span>ゲームに入る${cur.gameCode ? `<small>ルーム ${esc(cur.gameCode)}</small>` : ''}</a>` : `<p class="q" style="text-align:center;margin-top:8px">ルームができたら、ここに「ゲームに入る」が出るよ</p>${href ? `<a class="p-link" href="${esc(href)}" target="_blank" rel="noopener"><span class="material-symbols-rounded">open_in_new</span>先にゲームを開いておく</a>` : ''}`);
-    else if (!cands.length) html += h2('casino', 'みんなでゲーム', cur.gameName || 'これから決めます');
-    else html += h2('casino', 'みんなでゲーム', drawing ? 'くじを引いています…' : 'この中から、くじで決めるよ') + `<ul class="p-lines">${cands.map((c, i) => `<li class="p-gli">${c.slug ? gameArt(c, 'pl-art') : ''}<span>${'①②③④'[i]} ${esc(c.name)}</span></li>`).join('')}</ul>`;
+    else html += h2('casino', 'みんなでゲーム', 'これから決めます');
   } else if (cur.type === 'show') {
     const th = (n) => /^https:\/\//.test(cur.thumbs?.[n] || '') ? `<img class="th" src="${esc(cur.thumbs[n])}" alt="">` : '';
     const pitems = (cur.lines || []).map(parseLine).filter((x) => x.name), koma = komaOf(pitems);
@@ -1770,15 +1773,12 @@ $('player-card').addEventListener('click', (e) => {
   if (act === 'send') return sendDraft();
   if (act === 'pass' && (cur.type === 'scale' || cur.type === 'review')) { draft = null; guestAnswer(cur.id, mine === 'pass' ? null : 'pass'); ctx.ref.child(`notes/${cur.id}/${ctx.session.id}`).set(null).catch(() => {}); return; }
   if (act === 'chat') return guestHand(cur.id, b.getAttribute('aria-pressed') === 'true' ? null : 'chat');
-  if (act === 'fchat') { const fk = 'free' + (room.free?.n || 0); return guestHand(fk, b.getAttribute('aria-pressed') === 'true' ? null : 'chat'); }
   if (act === 'ans') { const val = Number(v); guestAnswer(cur.id, mine === val ? null : val); }
   else if (act === 'pass') guestAnswer(cur.id, mine === 'pass' ? null : 'pass');
   else if (act === 'rn') { const val = Number(v); const cur0 = mine && typeof mine === 'object' ? mine : {}; guestAnswer(cur.id, { ...cur0, n: cur0.n === val ? null : val }); }
   else if (act === 'rw') { const i = Number(v); const on = !(mine && typeof mine === 'object' && mine.w?.[i]); if (!mine || typeof mine !== 'object') guestAnswer(cur.id, { n: typeof mine === 'number' ? mine : null, w: { [i]: true } }); else guestWord(cur.id, i, on); }
   else if (act === 'hand') guestHand(cur.id, b.getAttribute('aria-pressed') !== 'true' ? true : null);
-  else if (act === 'fwish') { const fk = 'fwish' + (room.free?.n || 0); guestAnswer(fk, room.answers?.[fk]?.[ctx.session.id] === v ? null : v); }
   else if (act === 'fq') { const fk = 'free' + (room.free?.n || 0), val = Number(v); guestAnswer(fk, room.answers?.[fk]?.[ctx.session.id] === val ? null : val); }
-  else if (act === 'fhand') { const fk = 'free' + (room.free?.n || 0); guestHand(fk, b.getAttribute('aria-pressed') !== 'true' ? true : null); }
 });
 $('btn-leave').addEventListener('click', () => { if (confirm('ルームから退出しますか？')) leaveRoom(); });
 
@@ -1808,15 +1808,12 @@ function renderHost(room) {
   $('btn-topic').hidden = !main || cur.type !== 'talk';
   $('btn-edit').hidden = !main || ['game', 'opening', 'agenda', 'closing'].includes(cur.type);
   $('free-ctrls').hidden = !main || cur.type !== 'free';
-  if (main && cur.type === 'free') {
-    const wv = Object.values(room.answers?.['fwish' + (room.free?.n || 0)] || {}), cnt = (k) => wv.filter((x) => x === k).length;
-    $('free-wish').textContent = room.free?.mode ? '' : `やりたい（人数だけ）: おしゃべり ${cnt('talk')}・クイズ ${cnt('quiz')}・ことばあそび ${cnt('kotoba')}・おまかせ ${cnt('any')}`;
-  }
-  if (main && cur.type === 'free') document.querySelectorAll('#free-ctrls [data-f]').forEach((b) => { const k = b.dataset.f; if (['talk', 'quiz', 'kotoba'].includes(k)) b.setAttribute('aria-pressed', String(room.free?.mode === k)); if (k === 'choose') b.setAttribute('aria-pressed', String(!room.free?.mode)); if (k === 'show') b.hidden = room.free?.mode !== 'quiz' || !!room.free?.shown; if (k === 'next') b.hidden = !room.free?.mode; });
+  if (main && cur.type === 'free') document.querySelectorAll('#free-ctrls [data-f]').forEach((b) => { const k = b.dataset.f, m = room.free?.mode || null; if (['news', 'talk', 'quiz', 'kotoba'].includes(k)) b.setAttribute('aria-pressed', String(m === k)); if (k === 'news') b.disabled = !(room.news || []).length; if (k === 'none') b.setAttribute('aria-pressed', String(!m)); if (k === 'show') b.hidden = m !== 'quiz' || !!room.free?.shown; if (k === 'next') { b.hidden = !m || (m === 'news' && (room.news || []).length < 2); b.textContent = m === 'news' ? 'つぎのニュース' : 'つぎ'; } });
   $('game-box').hidden = !main || cur.type !== 'game';
   if (main && cur.type === 'game') {
-    const g = cur.pick != null ? cur.cands?.[cur.pick] : null;
-    $('game-picks').innerHTML = `<button type="button" class="btn btn-primary" data-draw>${cur.pick == null ? 'くじで決める' : 'くじを引きなおす'}</button>` + (g?.slug ? `<button type="button" class="btn btn-outline" data-open>${cur.gameCode ? `${esc(g.name)} のタブを開く` : `${esc(g.name)} のルームを作る（タブを開く）`}</button><span class="gb-st${cur.gameCode ? ' ok' : ''}">${cur.gameCode ? `ルーム ${esc(cur.gameCode)} をみんなの端末に出しました` : '開いたタブでルームを作ると、自動でみんなの端末に出ます'}</span>` : '') + '<button type="button" class="btn btn-outline" data-reshuffle>候補を入れかえる</button><span class="gb-sub">進行役が決める:</span>' + (cur.cands || []).map((c, i) => `<button type="button" class="btn btn-outline" data-pick="${i}" aria-pressed="${cur.pick === i}">${'①②③④'[i]} ${esc(c.name)}</button>`).join('');
+    const g = cur.game;
+    if (!poolCache) gamePool().then(() => { if (ctx?.data) render(); });
+    if (document.activeElement?.id !== 'game-change') $('game-picks').innerHTML = (g?.slug ? `<button type="button" class="btn btn-primary" data-open>${cur.gameCode ? `${esc(g.name)} のタブを開く` : `${esc(g.name)} のルームを作る（タブを開く）`}</button><span class="gb-st${cur.gameCode ? ' ok' : ''}">${cur.gameCode ? `ルーム ${esc(cur.gameCode)} をみんなの端末に出しました` : '開いたタブでルームを作ると、自動でみんなの端末に出ます'}</span>` : '') + `<label class="gb-sub" for="game-change">ゲームを変える:</label><select id="game-change">${g ? '' : '<option value="">えらんでください</option>'}${gameOptions(poolCache || (g ? [g] : []), g?.slug)}</select>`;
     if (document.activeElement !== $('game-link-in')) $('game-link-in').value = cur.link || '';
   }
   $('btn-prev').disabled = !navTarget(room, -1); $('btn-next').disabled = !navTarget(room, 1);
@@ -1883,7 +1880,7 @@ function chatText(room, cur) {
   if (cur.type === 'free') return `${cur.title}\n${cur.until || ''}\n参加用のリンク: ${link}`;
   if (cur.type === 'closing') { const f = room.kind === 'pm' ? null : firstSlot(room); return room.kind === 'pm' ? 'このあとは、エントランスに移動しよう' : f ? `このあとは1コマ目（${f.tm}から）のプログラムへ\n${f.items.map((it) => `${it.name}${it.place ? ' → ' + it.place : ''}`).join('\n')}` : 'このあとは、それぞれのプログラムへ'; }
   if (cur.type === 'opening' || cur.type === 'agenda') return `${room.kind === 'pm' ? '午後' : '午前'}のサークルタイム ${room.date || ''}\nきょうの流れ: ${sectionsOf(room).map((s, i) => `${i + 1} ${coverOf(s)[1]}`).join(' / ')}\n参加用のリンク: ${link}`;
-  if (cur.type === 'game') { const g = cur.pick != null ? cur.cands?.[cur.pick] : null; return g ? `みんなでゲーム: ${g.name}\n${cur.link || new URL(APPS_BASE + g.slug + '/', location.href).href}` : `みんなでゲーム: この中からくじで決めるよ\n${(cur.cands || []).map((c, i) => `${'①②③④'[i]} ${c.name}`).join(' / ')}`; }
+  if (cur.type === 'game') { const g = cur.game; return g ? `みんなでゲーム: ${g.name}\n${cur.link || new URL(APPS_BASE + g.slug + '/', location.href).href}` : 'みんなでゲーム: これから決めます'; }
   return cur.title;
 }
 $('btn-reorder').addEventListener('click', (e) => { const on = e.currentTarget.getAttribute('aria-pressed') !== 'true'; e.currentTarget.setAttribute('aria-pressed', String(on)); $('steplist').classList.toggle('reorder', on); });
@@ -1897,8 +1894,9 @@ $('btn-reveal').addEventListener('click', toggleReveal);
 $('btn-close').addEventListener('click', toggleClosed);
 $('btn-answer').addEventListener('click', toggleAnswer);
 $('btn-topic').addEventListener('click', () => nextTopic());
-$('free-ctrls').addEventListener('click', (e) => { const b = e.target.closest('[data-f]'); if (!b) return; const k = b.dataset.f; if (k === 'next') freeAct('next'); else if (k === 'show') freeAct('show'); else freeAct('mode', k === 'choose' ? '' : k); });
-$('game-picks').addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; if (b.dataset.pick != null) decideGame(Number(b.dataset.pick)); else if (b.hasAttribute('data-reshuffle')) reshuffleGames(); else if (b.hasAttribute('data-draw')) drawGame(); else if (b.hasAttribute('data-open')) { const c = ctx?.data && curStep(ctx.data); const g = c?.cands?.[c.pick]; if (g) openGameWindow(g.slug); } });
+$('free-ctrls').addEventListener('click', (e) => { const b = e.target.closest('[data-f]'); if (!b) return; const k = b.dataset.f; if (k === 'next') freeAct('next'); else if (k === 'show') freeAct('show'); else freeAct('mode', k === 'none' ? '' : k); });
+$('game-picks').addEventListener('click', (e) => { const b = e.target.closest('button[data-open]'); if (!b) return; const c = ctx?.data && curStep(ctx.data); if (c?.game?.slug) openGameWindow(c.game.slug); });
+$('game-picks').addEventListener('change', (e) => { if (e.target.id === 'game-change' && e.target.value) { const v = e.target.value; e.target.blur(); changeGame(v); } });
 $('game-link-save').addEventListener('click', async () => {
   const raw = $('game-link-in').value.trim();
   let url; try { url = new URL(raw); } catch { return toast('リンクの形がちがうよ。ゲームのルームで「リンクをコピー」したものを貼ってね'); }
@@ -1908,10 +1906,8 @@ $('game-link-save').addEventListener('click', async () => {
   const gameName = app?.name || slug || 'きょうのゲーム';
   await editSteps((steps, room) => {
     const s = steps.find((x) => x.id === room.cur); if (!s || s.type !== 'game') return false;
-    s.cands = s.cands || [];
-    let i = s.cands.findIndex((g) => g.slug === slug);
-    if (i < 0) { s.cands.push(app ? gameCard(app) : { slug, name: gameName, hk: '', thumb: '' }); i = s.cands.length - 1; }
-    s.pick = i; s.drawAt = null; s.link = url.href; s.gameCode = ''; s.gameName = gameName;
+    if (s.game?.slug !== slug) s.game = app ? gameCard(app) : { slug, name: gameName, hk: '', thumb: '' };
+    s.link = url.href; s.gameCode = '';
   });
   toast(`「${gameName}」を出しました`, false);
 });
@@ -2019,7 +2015,7 @@ $('day-mode').addEventListener('click', (e) => {
 function setReady(id, state, text, textId) { const li = $(id); li.className = state; if (text != null) $(textId).textContent = text; }
 function jstHour(ts) { return Number(new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Tokyo', hour: 'numeric', hourCycle: 'h23' }).format(new Date(ts))); }
 function nextWeekdayStr(dateStr) { const d = new Date(dateStr + 'T12:00:00+09:00'); do { d.setDate(d.getDate() + 1); } while ([0, 6].includes(d.getDay())); return jstDate(d.getTime()); }
-let progToken = 0, progMeta = { link: PROGRAM_URL, ttl: '', thumbs: null }, setupGames = [];
+let progToken = 0, progMeta = { link: PROGRAM_URL, ttl: '', thumbs: null };
 async function loadProgram(kind) {
   const token = ++progToken, today = jstDate(now());
   const date = kind === 'am' ? today : nextWeekdayStr(today);
@@ -2048,6 +2044,7 @@ function fillSetup() {
   $('setup-date').textContent = dateLabel(now());
   $('host-name').value = prefs.name || '';
   $('prog-note').value = '';
+  $('topic-in').value = '';
   $('setup-more').open = false;
   setKind(jstHour(now()) < 12 ? 'am' : 'pm');
   weatherData = null;
@@ -2057,19 +2054,36 @@ function fillSetup() {
   loadDaily();
   setReady('rd-wx', 'wait', '気象庁から取りにいきます…', 'wx-status-text');
   fetchWeather().then((w) => { const got = w.cities.filter((c) => c.code).length; weatherData = got ? w : null; setReady('rd-wx', got ? 'ok' : 'none', got ? `${got}都市を取りました（気象庁）。` : '取れませんでした。「全国の天気」は飛ばすか、あとで作りなおしてね。', 'wx-status-text'); }).catch(() => setReady('rd-wx', 'none', '取れませんでした。', 'wx-status-text'));
-  setReady('rd-topic', 'wait', 'お題・クイズ・ことばあそびを用意しています…', 'topic-status-text');
-  Promise.all([loadTopics(), loadQuiz(), loadKotoba()]).then(([t, q]) => setReady('rd-topic', 'ok', `お題${t.length}・クイズ${q.length}問・ことばあそびを用意しました。`, 'topic-status-text'));
+  setReady('rd-topic', 'wait', 'お題・クイズ・ことばあそび・ニュースを用意しています…', 'topic-status-text');
+  newsData = null; freePick = null; renderFreePick();
+  Promise.all([loadTopics(), loadQuiz(), loadKotoba(), loadNews()]).then(([t, q, , nw]) => {
+    const nd = nw.date ? dateLabel(new Date(nw.date + 'T12:00:00+09:00').getTime()).replace(/（.*/, '') : '';
+    setReady('rd-topic', 'ok', `お題${t.length}・クイズ${q.length}問・ことばあそび・${nw.items.length ? `ニュース${nw.items.length}本（${nd}に用意したもの）` : 'ニュースはまだ用意されていません'}。`, 'topic-status-text');
+    if (!$('topic-in').value) $('topic-in').value = pickTopic(t, null);
+    renderFreePick();
+  });
 }
-function setKind(k) { setupKind = k; document.querySelectorAll('#seg-session button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.v === k))); $('am-fields').hidden = k !== 'am'; $('rd-day').hidden = k !== 'am'; $('rd-game').hidden = k !== 'pm'; loadProgram(k); if (k === 'pm') loadGames(); }
-let gameToken = 0, gamesReady = null;
-function loadGames() { gamesReady = loadGames0(); return gamesReady; }
+// 自由タイムのあそび（準備の画面で決める。前に決めたものを先にえらんでおく。ニュースがなければおしゃべりのお題）
+let freePick = null;
+const FREE_PICKS = ['news', 'talk', 'quiz', 'kotoba', 'none'];
+function renderFreePick() {
+  const hasNews = !!newsData?.items.length, loading = !newsData;
+  if (!freePick || (freePick === 'news' && !hasNews && !loading)) { const pref = loadPrefs().freeMode; freePick = FREE_PICKS.includes(pref) && !(pref === 'news' && !hasNews && !loading) ? pref : hasNews || loading ? 'news' : 'talk'; }
+  document.querySelectorAll('#free-pick button').forEach((b) => { b.setAttribute('aria-pressed', String(b.dataset.v === freePick)); if (b.dataset.v === 'news') b.disabled = !hasNews && !loading; });
+  $('free-pick-help').textContent = freePick === 'news' ? (hasNews ? `「${newsData.items[0].title}」ほか、${newsData.items.length}本を順に出します。` : 'ニュースを読んでいます…') : freePick === 'none' ? 'あそびは出さず、「すきなことをして、ゆっくり過ごそう」と出します。' : freePick === 'quiz' ? '3択のクイズを1問ずつ出します。' : freePick === 'kotoba' ? '頭の文字とお題を出して、合うことばを出し合います。' : 'お題を出して、チャットで話します。';
+}
+$('free-pick').addEventListener('click', (e) => { const b = e.target.closest('button[data-v]'); if (!b || b.disabled) return; freePick = b.dataset.v; renderFreePick(); });
+$('topic-other').addEventListener('click', async () => { $('topic-in').value = pickTopic(await loadTopics(), $('topic-in').value); });
+$('game-sel').addEventListener('change', () => { const g = poolCache?.find((x) => x.slug === $('game-sel').value); $('game-hk').textContent = g ? g.hk : ''; });
+function setKind(k) { setupKind = k; document.querySelectorAll('#seg-session button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.v === k))); $('am-fields').hidden = k !== 'am'; $('rd-day').hidden = k !== 'am'; $('plan-free').hidden = k !== 'am'; $('plan-topic').hidden = $('plan-game').hidden = k !== 'pm'; loadProgram(k); if (k === 'pm') loadGames(); }
+// みんなでゲーム: えらべるものを並べ、はじめは1つをくじで入れておく（前の回と同じものはなるべく避ける）
+let gamesReady = null;
+function loadGames() { if (!gamesReady) gamesReady = loadGames0(); return gamesReady; }
 async function loadGames0() {
-  const token = ++gameToken;
-  setReady('rd-game', 'wait', 'ツール一覧から3つえらんでいます…', 'game-status-text');
-  const list = await pickGames();
-  if (token !== gameToken) return;
-  setupGames = list;
-  setReady('rd-game', list.length ? 'ok' : 'none', list.length ? `${list.map((g) => g.name).join('・')}（ゲームの画面で入れかえられます）` : 'ツール一覧を読めませんでした。ゲームの画面でリンクを貼れば出せます。', 'game-status-text');
+  const pool = await gamePool(), sel = $('game-sel');
+  if (!pool.length) { sel.innerHTML = ''; sel.disabled = true; $('game-hk').textContent = 'ツール一覧を読めませんでした。ゲームの画面でリンクを貼れば出せます。'; gamesReady = null; return; }
+  const last = loadPrefs().lastGame, fresh = pool.filter((g) => g.slug !== last), first = pick(fresh.length ? fresh : pool);
+  sel.disabled = false; sel.innerHTML = gameOptions(pool, first.slug); $('game-hk').textContent = first.hk;
 }
 $('seg-session').addEventListener('click', (e) => { const b = e.target.closest('button[data-v]'); if (b) setKind(b.dataset.v); });
 $('btn-create').addEventListener('click', async () => {
@@ -2080,9 +2094,17 @@ $('btn-create').addEventListener('click', async () => {
     const day = dayOpts.every(Boolean) ? { options: dayOpts, answer: all ? 'all' : Number(document.querySelector('input[name="day-ok"]:checked')?.value || 0), note: $('day-note').value.trim(), notes: all ? (dayNotes || null) : null } : null;
     const prog = { lines: $('prog-lines').value.split('\n').map((l) => l.trim()).filter(Boolean), link: progMeta.link, ttl: progMeta.ttl, thumbs: progMeta.thumbs, note: $('prog-note').value.trim() };
     const list = await loadTopics();
-    if (setupKind === 'pm' && gamesReady) await gamesReady;
-    const form = { name: $('host-name').value, date: dateLabel(now()), day, prog, weather: weatherData, topic: pickTopic(list, null), games: setupKind === 'pm' ? setupGames : [], free: { mode: null, n: 1, at: 0 } };
-    savePrefs({ ...loadPrefs(), name: form.name, dayMode });
+    let game = null, free = { mode: null, n: 1, at: 0 }, news = [];
+    if (setupKind === 'pm') { await loadGames(); game = poolCache?.find((g) => g.slug === $('game-sel').value) || null; }
+    else {
+      await Promise.all([loadQuiz(), loadKotoba(), loadNews()]);
+      news = newsData?.items || [];
+      const mode = freePick === 'none' || (freePick === 'news' && !news.length) ? null : freePick;
+      if (mode) free = { mode, n: 1, ...makeFree(mode, null, news), shown: false, at: 0 };
+    }
+    const topic = $('topic-in').value.trim() || pickTopic(list, null);
+    const form = { name: $('host-name').value, date: dateLabel(now()), day, prog, weather: weatherData, topic, game, news, free };
+    savePrefs({ ...loadPrefs(), name: form.name, dayMode, ...(setupKind === 'am' ? { freeMode: freePick } : { lastGame: game?.slug || null }) });
     await createRoom(form);
     history.replaceState(null, '', location.pathname);
   } catch (e) { $('setup-error').textContent = e.message || '作れませんでした'; $('setup-error').hidden = false; }
@@ -2139,8 +2161,8 @@ window.addEventListener('load', async () => {
 })();
 </script>
 <script>RoomkHowto.init({ title: 'つかいかた', lead: '午前と午後のサークルタイムを、ひとつのルームで進めるよ。画面を見ながら、ボタン・チャット・声のどれで答えてもいいよ。', sections: [
-  { heading: '参加する人', items: ['「ルームに参加する」でニックネーム、ルームコード（6文字）の順に入れて「参加する」。リンクからひらいたときは、ニックネームだけでいいよ。', '画面が変わったら、自分の端末でえらんで「送る」を押してね。選びなおして送りなおすことも、「パスする」もできるよ。', '心・体・ふりかえりでは、わけやひとことを書いて送れるよ（なくてもOK）。心・体で書いたことは、みんなの画面で名前を押すと出るよ。ふりかえりで書いたことは進行役にだけとどくよ。', 'チェックインでは、マイクで話す人は「話したい」、MetaLife のチャットに書いた人は「チャットに書いたよ」を押してね。', '自由タイムは自由にすごしてOK。みんなであそびたい人は、おしゃべりのお題・クイズ・ことばあそび・おまかせから、やりたいものを自分の端末でえらんでね。だれが何をえらんだかは出ないよ。進行役が決めるよ。', 'みんなでゲームは、3つの候補からくじで決まるよ。決まったら「ゲームを開く」から入って、画面に出るルームコードを入れてね。', '端末がない人は、チャットに数字や言葉を書くか、声で言えばOK。進行役が代わりに入れるよ。'] },
-  { heading: '進行役', items: ['「ルームを作る」を押して「はじめる」。天気・今日は何の日・room-K ポータルのプログラム・自由タイムのあそびは自動で入るよ。直したいときは「中身を確かめる・直す」。', 'みんなでゲームは、3つの候補を出して「くじで決める」。決まったら「○○を開く（ルームを作る）」でゲームのルームを作り、その画面を共有すれば、参加者は自分の端末の「ゲームを開く」から入れるよ。リンクを貼るのは、なくてもOK。候補は「候補を入れかえる」で変えられるよ。', 'セクションごとに表紙が出るよ。「次へ」で表紙から中身に進む。', 'ルームコードは「コードをコピー」、参加用のリンクは「リンクをコピー」でチャットに送れるよ。スマホやタブレットで入る人には、「QRコードを出す」をカメラで読みとってもらってね。', '画面共有には「みんなにみせる画面を開く」でひらいた窓を使ってね。進行役の画面は共有しないよ。', '「次へ」「前へ」（矢印キー）で進める。答えを伏せる画面は「せーので見せる」（スペース）でいっせいに出るよ。', '流れの一覧から、好きな画面へ移る・飛ばす・並べかえる、ができるよ。「文を直す」「その場で聞く」で、その場で変えられるよ。', 'チャットや声で答えた人、端末のない人の分は「代わりに入れる」で名前の横を押してね（入れなくても進められるよ）。わけ・ひとことは参加者の一覧に出るよ。', '終わるときは「ルームを閉じる」。'] },
+  { heading: '参加する人', items: ['「ルームに参加する」でニックネーム、ルームコード（6文字）の順に入れて「参加する」。リンクからひらいたときは、ニックネームだけでいいよ。', '画面が変わったら、自分の端末でえらんで「送る」を押してね。選びなおして送りなおすことも、「パスする」もできるよ。', '心・体・ふりかえりでは、わけやひとことを書いて送れるよ（なくてもOK）。心・体で書いたことは、みんなの画面で名前を押すと出るよ。ふりかえりで書いたことは進行役にだけとどくよ。', 'チェックインでは、マイクで話す人は「話したい」、MetaLife のチャットに書いた人は「チャットに書いたよ」を押してね。', '自由タイムは自由にすごしてOK。ニュースやおしゃべりのお題が出たら、MetaLife のチャットで話そう。ニュースは「くわしく読む」で元の記事が開くよ。', 'みんなでゲームは、きょうあそぶゲームが出るよ。「ゲームに入る」から入って、画面に出るルームコードを入れてね。', '端末がない人は、チャットに数字や言葉を書くか、声で言えばOK。進行役が代わりに入れるよ。'] },
+  { heading: '進行役', items: ['「ルームを作る」を押して、「きょうやること」（午前は自由タイムのあそび、午後はチェックインのお題とみんなでゲーム）をえらんで「はじめる」。天気・今日は何の日・room-K ポータルのプログラム・ニュースは自動で入るよ。直したいときは「中身を確かめる・直す」。', '自由タイムのあそびは「自由タイムのあそびを変える」で変えられるよ。ニュースは「つぎのニュース」で次の話題へ。', 'みんなでゲームは、準備でえらんだゲームが出るよ。「○○のルームを作る（タブを開く）」でゲームのルームを作り、その画面を共有すれば、参加者は自分の端末の「ゲームに入る」から入れるよ。リンクを貼るのは、なくてもOK。子どもたちの声で変えたいときは「ゲームを変える」。', 'セクションごとに表紙が出るよ。「次へ」で表紙から中身に進む。', 'ルームコードは「コードをコピー」、参加用のリンクは「リンクをコピー」でチャットに送れるよ。スマホやタブレットで入る人には、「QRコードを出す」をカメラで読みとってもらってね。', '画面共有には「みんなにみせる画面を開く」でひらいた窓を使ってね。進行役の画面は共有しないよ。', '「次へ」「前へ」（矢印キー）で進める。答えを伏せる画面は「せーので見せる」（スペース）でいっせいに出るよ。', '流れの一覧から、好きな画面へ移る・飛ばす・並べかえる、ができるよ。「文を直す」「その場で聞く」で、その場で変えられるよ。', 'チャットや声で答えた人、端末のない人の分は「代わりに入れる」で名前の横を押してね（入れなくても進められるよ）。わけ・ひとことは参加者の一覧に出るよ。', '終わるときは「ルームを閉じる」。'] },
 ] });</script>
 </body>
 </html>

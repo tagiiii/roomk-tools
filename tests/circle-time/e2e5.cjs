@@ -1,4 +1,4 @@
-// サークルタイム E2E その5: みんなでゲームで決めると、そのゲームのタブが開き、本物のツール（クイズパック）でルームを作ると、参加リンクが自動でみんなの端末に出る
+// サークルタイム E2E その5: 準備で決めたみんなでゲームの「ルームを作る」で、そのゲームのタブが開き、本物のツール（クイズパック）でルームを作ると、参加リンクが自動でみんなの端末に出る
 const L = require('./lib.cjs');
 const { check } = L;
 
@@ -8,20 +8,19 @@ const { check } = L;
   const H = await L.newClient('host');
   const A = await L.newClient('yui', { viewport: { width: 375, height: 812 } });
   const W = await L.newClient('watch', { viewport: { width: 1280, height: 720 } });
-  const code = await L.createRoom(H, 'みほ', { kind: 'pm' });
+  // 準備の画面でクイズパックをえらぶ（このテストの場所には、クイズパックが写してある）
+  const code = await L.createRoom(H, 'みほ', { kind: 'pm', game: 'quiz' });
   let room = await L.roomOf(code);
   const gi = room.steps.findIndex((s) => s.type === 'game');
-  // 候補の1つ目をクイズパックにする（このテストの場所には、クイズパックが写してある）
-  await L.rest('PUT', `${L.ROOMS}/${code}/steps/${gi}/cands/0`, { slug: 'quiz', name: 'クイズパック', hk: '3択・2択のクイズをテンポよく', thumb: 'assets/thumbnails/quiz.png' });
   await L.joinRoom(A, 'ゆい', code);
   await L.openWatch(W, code);
   await L.goMain(H, code, room.steps[gi].id);
   await L.waitStage(W, 'クイズパック');
   const popupP = H.context.waitForEvent('page');
-  await H.page.click('#game-picks [data-pick="0"]');
+  await H.page.click('#game-picks [data-open]');
   const popup = await popupP;
   await popup.waitForLoadState();
-  check('E1 「これにする」でクイズパックのタブが開く', popup.url().includes('/apps/quiz/'), popup.url());
+  check('E1 「ルームを作る」でクイズパックのタブが開く', popup.url().includes('/apps/quiz/'), popup.url());
   // 開いたタブで、いつもどおりルームを作る
   await popup.click('#btnGoCreate');
   await popup.fill('#hostName', 'みほ');

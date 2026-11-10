@@ -1,4 +1,4 @@
-// サークルタイム E2E その2: 午後のルーム（お題・話したい・ふりかえりの数字とひとこと・ゲーム）・読み込み直し・進行役の切断と復帰・ルームを閉じる・外された参加者・天気が取れないとき
+// サークルタイム E2E その2: 午後のルーム（お題・話したい・ふりかえりの数字とひとこと・準備で決めたゲーム・ゲームを変える）・読み込み直し・進行役の切断と復帰・ルームを閉じる・外された参加者・天気が取れないとき
 const L = require('./lib.cjs');
 const { check, sleep } = L;
 
@@ -11,13 +11,13 @@ const { check, sleep } = L;
   const W = await L.newClient('watch', { viewport: { width: 1280, height: 720 } });
 
   // ── A. 午後のルーム ──
-  const code = await L.createRoom(H, 'みほ', { kind: 'pm', prog: ['9:00 午前のサークルタイム'] });
+  const code = await L.createRoom(H, 'みほ', { kind: 'pm', prog: ['9:00 午前のサークルタイム'], game: 'word-wolf', topic: '最近ハマっていることは何？' });
   let room = await L.roomOf(code);
   const types = room.steps.map((s) => s.type);
   check('A1 午後の流れは表紙・目次と4つ', room.kind === 'pm' && JSON.stringify(types) === JSON.stringify(['opening', 'agenda', 'talk', 'review', 'game', 'show', 'closing']), types);
-  check('A2 お題が入っている（トークテーマカードから）', typeof room.steps[2].topic === 'string' && room.steps[2].topic.length > 3, room.steps[2].topic);
-  const cands = room.steps[4].cands || [];
-  check('A2b ゲームの候補は3つ・サムネイルつき', cands.length === 3 && cands.every((g) => g.name && /^assets\/thumbnails\//.test(g.thumb)), cands);
+  check('A2 お題は準備の画面で入れたもの', room.steps[2].topic === '最近ハマっていることは何？', room.steps[2].topic);
+  const g0 = room.steps[4].game;
+  check('A2b ゲームは準備の画面でえらんだもの・サムネイルつき・くじの候補はない', g0?.slug === 'word-wolf' && g0.name && /^assets\/thumbnails\//.test(g0.thumb) && !room.steps[4].cands, room.steps[4]);
   await L.joinRoom(A, 'ゆい', code);
   await L.joinRoom(B, 'そら', code);
   await L.openWatch(W, code);
@@ -94,29 +94,22 @@ const { check, sleep } = L;
 
   // ── D. ゲームの画面 ──
   await L.nextMain(H, code);
-  await L.waitStage(W, 'くじで決める');
-  check('D0 ゲームの画面でだけくじと候補の操作が出る', await L.visible(H, '#game-box') && await L.visible(H, '#game-picks [data-draw]') && (await H.page.evaluate(() => document.querySelectorAll('#game-picks [data-pick]').length)) === 3);
-  check('D0b みせる画面に3つのカードとサムネイル', (await W.page.evaluate(() => [...document.querySelectorAll('#watch-stage .game img')].filter((i) => i.complete && i.naturalWidth > 0).length)) === 3);
-  await L.waitPlayer(A, 'くじで決める');
-  check('D0c 票を入れるボタンは出さない', (await A.page.evaluate(() => document.querySelectorAll('#player-card [data-act="ans"]').length)) === 0);
-  await L.shot(W, 'pm-game-choose', false);
-  await L.shot(A, 'pm-player-game-choose');
-  const popupP = H.context.waitForEvent('page');
-  await H.page.click('#game-picks [data-draw]');
-  const popup = await popupP;
-  await W.page.waitForFunction(() => !!document.querySelector('#watch-stage .games.spin'));
-  check('D0d くじのあいだは候補が順に光る', (await L.stage(W)).includes('くじを引いています'));
-  await L.waitStage(W, 'あそびかたを説明', 6000);
-  room = await L.roomOf(code);
-  const picked = room.steps[4].cands[room.steps[4].pick];
-  check('D0e くじで1つに決まる', !!picked && (await L.stage(W)).includes(picked.name));
+  await L.waitStage(W, 'あそびかたを説明');
+  check('D0 ゲームの画面は、決めたゲームがはじめから出る・くじはない', (await L.stage(W)).includes(g0.name) && !(await L.stage(W)).includes('くじ') && await L.visible(H, '#game-box') && !(await H.page.$('#game-picks [data-draw]')) && (await H.page.evaluate(() => document.querySelectorAll('#game-change option').length)) > 3);
+  check('D0b みせる画面にゲームの絵', (await W.page.evaluate(() => [...document.querySelectorAll('#watch-stage .game-on img')].filter((i) => i.complete && i.naturalWidth > 0).length)) === 1);
   await L.waitPlayer(A, 'これであそぶよ');
-  check('D0f くじを押すと、決まったゲームのタブが開く', popup.url().endsWith('/apps/' + picked.slug + '/'), popup.url());
+  check('D0c 参加者に決めたゲーム・票を入れるボタンは出さない', (await L.player(A)).includes(g0.name) && (await A.page.evaluate(() => document.querySelectorAll('#player-card [data-act="ans"]').length)) === 0);
+  await L.shot(H, 'pm-host-game', false);
+  await L.shot(A, 'pm-player-game');
+  const popupP = H.context.waitForEvent('page');
+  await H.page.click('#game-picks [data-open]');
+  const popup = await popupP;
+  check('D0f 「ルームを作る」で、決めたゲームのタブが開く', popup.url().endsWith('/apps/' + g0.slug + '/'), popup.url());
   check('D0f2 ルームができるまでは「ルームができたら…」', (await L.player(A)).includes('ルームができたら') && !(await A.page.$('#player-card .p-go')));
   // 開いたタブでルームを作る（ゲームのツールがタブに残すのと同じ形）
   await popup.evaluate(() => sessionStorage.setItem('roomk-test-session', JSON.stringify({ roomCode: 'QWERTY', role: 'host' })));
   await L.waitPlayer(A, 'ゲームに入る', 6000);
-  check('D0f3 ルームのコードを拾って、参加者に「ゲームに入る」（?room= つき）', (await A.page.getAttribute('#player-card .p-go', 'href')).endsWith('/apps/' + picked.slug + '/?room=QWERTY'));
+  check('D0f3 ルームのコードを拾って、参加者に「ゲームに入る」（?room= つき）', (await A.page.getAttribute('#player-card .p-go', 'href')).endsWith('/apps/' + g0.slug + '/?room=QWERTY'));
   await L.waitStage(W, 'QWERTY');
   check('D0f4 みんなの画面にルームコード・ホストに「出しました」', (await L.text(H, '#game-picks')).includes('ルーム QWERTY をみんなの端末に出しました'));
   await H.page.click('#btn-chat');
@@ -124,11 +117,12 @@ const { check, sleep } = L;
   check('D0f5 チャット用の文に参加リンク', (await H.page.evaluate(() => navigator.clipboard.readText())).includes('?room=QWERTY'));
   await popup.close();
   await L.shot(W, 'pm-game-picked', false);
-  const before = room.steps[4].cands.map((g) => g.slug).join();
-  await H.page.click('#game-picks [data-reshuffle]');
-  await L.waitRoom(code, (r) => r.steps[4].cands.map((g) => g.slug).join() !== before);
-  room = await L.roomOf(code);
-  check('D0g 候補を入れかえると3つとも別のもの・決まりはとける', room.steps[4].cands.length === 3 && room.steps[4].cands.every((g) => !before.split(',').includes(g.slug)) && room.steps[4].pick == null, room.steps[4].cands.map((g) => g.slug));
+  // 子どもたちの声で、別のゲームに変える
+  const other = await H.page.evaluate((cur) => [...document.querySelectorAll('#game-change option')].map((o) => o.value).find((v) => v && v !== cur), g0.slug);
+  await H.page.selectOption('#game-change', other);
+  room = await L.waitRoom(code, (r) => r.steps[4].game?.slug === other);
+  await L.waitStage(W, room.steps[4].game.name);
+  check('D0g 「ゲームを変える」で別のゲームに・ルームのコードはとける', !room.steps[4].gameCode && !room.steps[4].link && !(await L.stage(W)).includes('QWERTY') && (await L.player(A)).includes(room.steps[4].game.name));
   await H.page.evaluate(() => { document.querySelector('#game-box details').open = true; });
   await H.page.fill('#game-link-in', 'not a link');
   await H.page.click('#game-link-save');
