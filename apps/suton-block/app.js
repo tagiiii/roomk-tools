@@ -1419,6 +1419,7 @@ function afterLock(res) {
       outgoing = {};
       tos.forEach((to) => { outgoing['jama/' + to + '/' + state.roomRef.child('jama/' + to).push().key] = { round: state.playRound, rows: atk, from: state.nickname }; });
       bump(R.sent);
+      sendFx(tos, atk);
     }
     attackNote(res, tos.length ? atk : 0, cancel, tos.length, aimed);
     if (!res.lines && R.pending > 0 && !g.over) {
@@ -1605,6 +1606,63 @@ function sendJama(rows) {
   const updates = {};
   tos.forEach((to) => { updates['jama/' + to + '/' + state.roomRef.child('jama/' + to).push().key] = { round: R.id, rows, from: state.nickname }; });
   state.roomRef.update(updates).catch((error) => console.warn('[suton-block] jama send failed', error));
+  sendFx(tos, rows);
+}
+
+/* ── じゃまを送ったときの見せ方（2026-11-10 フィードバックボード「送るボタンはあるけど送った感がない」） ──
+   自分の盤から送った相手の盤（スマホは一覧の名前）へ「＋◯段」が飛び、着いたら相手の盤が揺れて「＋◯段」が出る。
+   ほかの人の欄は、ルームの更新のたびに作りなおすので、揺れている間かどうかは sendHits に持ち、作りなおしても続きから動かす */
+const SEND_FLY_MS = 420;
+const SEND_HIT_MS = 900;
+const sendHits = {}; // 名前 → { at: 着いた時刻, rows }
+const reducedMotion = () => window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+function otherEl(name) {
+  return [...document.querySelectorAll('#others [data-name], #othersList [data-name]')].find((el) => el.dataset.name === name && el.offsetParent !== null) || null;
+}
+function sendFx(tos, rows) {
+  const from = $('board').getBoundingClientRect();
+  tos.forEach((name) => {
+    const hit = () => {
+      sendHits[name] = { at: Date.now(), rows };
+      const el = otherEl(name);
+      if (el) applyHit(el, name);
+    };
+    const el = otherEl(name);
+    if (!el || reducedMotion() || !from.width) { hit(); return; }
+    const to = el.getBoundingClientRect();
+    const fly = makeElement('div', 'sb-sendfx', '＋' + rows + '段');
+    document.body.append(fly);
+    const x0 = from.left + from.width / 2;
+    const y0 = from.top + from.height * 0.3;
+    const x1 = to.left + to.width / 2;
+    const y1 = to.top + to.height / 2;
+    fly.style.left = x0 + 'px';
+    fly.style.top = y0 + 'px';
+    const anim = fly.animate([
+      { transform: 'translate(-50%, -50%) scale(1.3)', opacity: 1 },
+      { transform: 'translate(calc(-50% + ' + (x1 - x0) + 'px), calc(-50% + ' + (y1 - y0) + 'px)) scale(0.8)', opacity: 0.9 },
+    ], { duration: SEND_FLY_MS, easing: 'cubic-bezier(0.5, 0, 0.75, 0.6)' });
+    anim.onfinish = () => { fly.remove(); hit(); };
+    anim.oncancel = () => fly.remove();
+  });
+}
+// 揺れと「＋◯段」の印を付ける（作りなおした欄でも、着いてからの時間ぶん進めたところから）
+function applyHit(el, name) {
+  const h = sendHits[name];
+  const past = h ? Date.now() - h.at : Infinity;
+  if (past >= SEND_HIT_MS) { delete sendHits[name]; return; }
+  el.querySelector('.sb-hit')?.remove();
+  el.classList.remove('is-hit');
+  void el.offsetWidth;
+  el.style.setProperty('--sb-hit-delay', -past + 'ms');
+  el.classList.add('is-hit');
+  const tag = makeElement('span', 'sb-hit', '＋' + h.rows + '段');
+  el.append(tag);
+  setTimeout(() => {
+    if (!el.isConnected) return;
+    el.classList.remove('is-hit');
+    tag.remove();
+  }, SEND_HIT_MS - past);
 }
 
 function receiveJama(room, R) {
@@ -1628,6 +1686,13 @@ function receiveJama(room, R) {
   });
   if (!Object.keys(done).length) return;
   run.pending = Math.min(run.pending + added, E.H);
+  // じゃまが来たら、来るじゃまの数をはずませる
+  if (added > 0) {
+    const jel = $('playJama');
+    jel.classList.remove('sb-lines--up');
+    void jel.offsetWidth;
+    jel.classList.add('sb-lines--up');
+  }
   // 来るじゃまの数を自分の盤の記録に書くのと、受けとったじゃまを消すのを同じ1回の update にする
   // （先に消すと、つぎに置く前に読み込み直したとき、来るじゃまがなくなる）
   done['boards/' + state.nickname + '/pending'] = run.pending;
@@ -2298,6 +2363,7 @@ function renderOthers() {
     names.slice(0, 4).forEach((name) => {
       const b = boardOf(room, R, name);
       const li = document.createElement('li');
+      li.dataset.name = name;
       const out = b?.out === true;
       if (out) li.classList.add('is-out');
       const parts = [makeElement('span', 'sb-otherlist__name', name), makeElement('span', 'sb-otherlist__lines', out ? 'ここまで' : statText(R, b, true))];
@@ -2307,17 +2373,22 @@ function renderOthers() {
         li.append(btn);
       } else li.append(...parts);
       list.append(li);
+      if (sendHits[name]) applyHit(li, name);
     });
     return;
   }
   const s = names.length > 4 ? 5 : 6;
   names.slice(0, 6).forEach((name) => {
     const card = miniCard(name, s);
-    if (!choose) { wrap.append(card); return; }
-    const btn = targetButton(name, targets.includes(name), boardOf(room, R, name)?.out === true, false, aimers.includes(name));
-    btn.classList.add('sb-mini', ...[...card.classList].filter((c) => c !== 'sb-mini'));
-    btn.append(...card.childNodes);
-    wrap.append(btn);
+    let el = card;
+    if (choose) {
+      el = targetButton(name, targets.includes(name), boardOf(room, R, name)?.out === true, false, aimers.includes(name));
+      el.classList.add('sb-mini', ...[...card.classList].filter((c) => c !== 'sb-mini'));
+      el.append(...card.childNodes);
+    }
+    el.dataset.name = name;
+    wrap.append(el);
+    if (sendHits[name]) applyHit(el, name);
   });
 }
 
