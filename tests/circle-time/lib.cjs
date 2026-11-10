@@ -217,8 +217,15 @@ async function waitRoom(code, pred, timeout = 8000) {
 // 「次へ」で次の画面の中身まで進む（表紙があれば、もう一度「次へ」）
 async function nextMain(c, code) {
   const r0 = await roomOf(code);
-  await c.page.click('#btn-next');
-  const r1 = await waitRoom(code, (r) => r.cur !== r0.cur || (r.view || null) !== (r0.view || null));
+  // 伏せて集める画面では、大きいボタンが先に「せーので見せる」「答えを見せる」になる。画面が変わるまで押す
+  const key = (r) => JSON.stringify([r.cur, r.view || null, r.reveal || null, r.answerShown || null]);
+  let r1 = r0;
+  for (let i = 0; i < 3; i++) {
+    const before = key(r1);
+    await c.page.click('#btn-next');
+    r1 = await waitRoom(code, (r) => key(r) !== before);
+    if (r1.cur !== r0.cur || (r1.view || null) !== (r0.view || null)) break;
+  }
   if (r1.view === 'cover') { await waitText(c, '#host-step-type', '表紙'); await c.page.click('#btn-next'); await waitRoom(code, (r) => r.cur === r1.cur && !r.view); await waitNoText(c, '#host-step-type', '表紙'); }
 }
 // 一覧の名前から移って、中身まで進む

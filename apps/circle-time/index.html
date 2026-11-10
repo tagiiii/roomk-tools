@@ -507,6 +507,19 @@
   .cl-art > .material-symbols-rounded{ font-size:150px; }
   .closing-wrap .closing h1{ font-size:56px !important; }
   .closing-wrap .mv-it{ font-size:34px; padding:12px 22px; }
+  .mv-it b{ min-width:0; }
+  .mv-it .pl{ white-space:nowrap; }
+  .closing-wrap.tight{ gap:40px; }
+  .closing-wrap.tight .cl-art{ width:250px; height:250px; border-radius:36px; flex:none; }
+  .closing-wrap.tight .closing{ min-width:0; }
+  .closing-wrap.tight .closing h1{ font-size:46px !important; }
+  .closing-wrap .mv.many{ gap:10px; margin-top:16px; }
+  .closing-wrap .mv.many .mv-it{ font-size:28px; padding:8px 18px; gap:14px; }
+  .closing-wrap .mv.many .mv-it .th{ width:142px; height:80px; margin:-2px 2px -2px -8px; }
+  .closing-wrap .mv.many .mv-it .pl{ font-size:30px; }
+  .closing-wrap .mv.many .mv-it .material-symbols-rounded{ font-size:32px; }
+  .closing-wrap .mv.lots .mv-it{ font-size:26px; padding:10px 18px; }
+  .closing-wrap .mv.lots .mv-it .th{ display:none; }
   .p-art{ width:120px; height:120px; border-radius:24px; margin:6px 0; }
   .p-art > .material-symbols-rounded{ font-size:56px; }
   .stage.full{ background:radial-gradient(circle at 18% 22%, #FFF9EE 0, var(--am-pale) 60%); }
@@ -523,7 +536,16 @@
   #btn-open-watch{ display:inline-flex; align-items:center; gap:6px; padding:10px 16px; font-size:14px; border-radius:12px; }
   .hbar .spacer{ flex:1; }
   .hb-finish{ color:var(--color-muted); font-size:13px; }
-  .host{ grid-template-columns:240px minmax(0,1fr) 330px; }
+  .hb-clock{ display:inline-flex; align-items:center; gap:4px; font:700 18px 'Zen Maru Gothic',var(--font-base); color:var(--color-primary); }
+  .hb-clock .material-symbols-rounded{ font-size:18px; color:var(--color-muted); }
+  .free-until{ flex-basis:100%; margin:2px 0 0; }
+  .flow .edit-box .row-b .btn{ flex:1; padding:10px 8px; font-size:14px; white-space:nowrap; }
+  .steplist.reorder .ph{ display:none; }
+  #game-change{ border:1.5px solid var(--color-border); border-radius:10px; padding:8px 10px; font:14px var(--font-base); background:#fff; color:var(--color-text); max-width:100%; }
+  .p-sub + .p-note-line{ margin:0 0 6px; }
+  @media (max-width: 600px){ body:has(#screen-player.active .p-send) .howto-fab, body:has(#screen-player.active .p-send) .howto-feedback-fab{ bottom:84px; } }
+  .host{ grid-template-columns:240px minmax(0,1fr) 372px; }
+  @media (min-width: 1181px){ .people{ position:sticky; top:12px; max-height:calc(100vh - 24px); overflow-y:auto; box-sizing:border-box; padding-bottom:72px; } }
   .flow h3 .btn-text{ font-size:12px; }
   .flow h3 .btn-text[aria-pressed="true"]{ background:var(--color-accent-soft); border-radius:8px; padding:2px 6px; text-decoration:none; }
   .steplist li{ padding:4px 6px; gap:2px; }
@@ -552,10 +574,13 @@
   .people h3{ align-items:baseline; }
   .ans-sum{ font-size:13px; color:var(--color-accent); font-weight:700; }
   .plist{ gap:4px; }
-  .prow{ grid-template-columns:1fr auto auto; padding:8px; border-radius:12px; background:#FDFAF4; }
+  .prow{ grid-template-columns:minmax(64px,1fr) auto 22px; padding:6px 8px; border-radius:12px; background:#FDFAF4; }
+  .prow .pn{ min-width:0; line-height:1.25; overflow-wrap:anywhere; }
+  .prow .st:empty{ display:none; }
+  .prow .nt{ grid-column:1/-1; margin-top:0; }
   .prow.got{ background:#F3F9F4; }
-  .prow .bs{ grid-column:1/-1; display:flex; gap:4px; flex-wrap:wrap; margin-top:6px; }
-  .prow .bs button{ min-width:34px; height:32px; padding:0 8px; border-radius:8px; border:1.5px solid var(--color-border); background:#fff; font:700 14px 'Zen Maru Gothic',var(--font-base); color:var(--color-text); cursor:pointer; }
+  .prow .bs{ display:flex; gap:3px; flex-wrap:wrap; justify-content:flex-end; }
+  .prow .bs button{ min-width:30px; height:32px; padding:0 6px; border-radius:8px; border:1.5px solid var(--color-border); background:#fff; font:700 14px 'Zen Maru Gothic',var(--font-base); color:var(--color-text); cursor:pointer; }
   .prow .bs button[aria-pressed="true"]{ border-color:var(--color-accent); background:var(--color-accent); color:#fff; }
   .prow .bs button.pass{ font-size:12px; color:var(--color-muted); }
   .prow .bs button.pass[aria-pressed="true"]{ color:#fff; }
@@ -758,6 +783,7 @@
       </div>
       <button type="button" class="btn btn-primary" id="btn-open-watch"><span class="material-symbols-rounded">cast</span>みんなにみせる画面を開く</button>
       <span class="spacer"></span>
+      <span class="hb-clock" title="いまの時刻"><span class="material-symbols-rounded">schedule</span><span class="clock-now"></span></span>
       <span class="status-pill" id="host-conn">接続中</span>
       <button type="button" class="btn-text hb-finish" id="btn-finish">ルームを閉じる</button>
     </div>
@@ -792,7 +818,7 @@
         </div>
         <div class="actions">
           <div class="act-row">
-            <button type="button" class="btn btn-primary" id="btn-reveal">せーので見せる</button>
+            <button type="button" class="btn btn-outline" id="btn-reveal">また伏せる</button>
             <button type="button" class="btn btn-outline" id="btn-answer">答えを見せる</button>
             <button type="button" class="btn btn-outline" id="btn-topic">つぎのお題</button>
             <button type="button" class="btn btn-outline" id="btn-close">しめきる</button>
@@ -808,6 +834,7 @@
           <button type="button" class="btn btn-outline" data-f="none">なし</button>
           <button type="button" class="btn btn-outline" data-f="show">答えを見る</button>
           <button type="button" class="btn btn-primary" data-f="next">つぎ</button>
+          <p class="tiny free-until" id="free-until">自由タイムは 9:15 ごろまでが目安です（ようすを見て変えてOK）。</p>
         </div>
           <div class="game-box" id="game-box" hidden>
           <div class="gb-row" id="game-picks"></div>
@@ -829,7 +856,7 @@
         <div class="plist" id="plist"></div>
         <div id="proxy-rows" hidden></div>
         <div class="add-proxy"><input id="proxy-name" maxlength="8" placeholder="端末のない人の名前" autocomplete="off" /><button type="button" class="btn btn-outline" id="btn-add-proxy">足す</button></div>
-        <p class="tiny">MetaLife のチャットや声で答えた人は、名前の下の数字を押すだけ（入れなくても進められます）。わけ・ひとことは名前の下に出ます。</p>
+        <p class="tiny">MetaLife のチャットや声で答えた人は、名前の右の数字を押すだけ（入れなくても進められます）。わけ・ひとことは名前の下に出ます。</p>
       </div>
     </div>
   </div>
@@ -1367,6 +1394,9 @@ function navTarget(room, delta) {
 function moveBy(delta) { const room = ctx?.data; if (!room) return; const t = navTarget(room, delta); if (t) setView(t[0], t[1]); }
 const toggleReveal = () => hostUpdate((room) => { const s = curStep(room); if (!s || s.mode !== 'hide') return false; room.reveal = { ...(room.reveal || {}), [s.id]: !room.reveal?.[s.id] }; });
 const toggleClosed = () => hostUpdate((room) => { const s = curStep(room); if (!s) return false; room.closed = { ...(room.closed || {}), [s.id]: !room.closed?.[s.id] }; });
+// 伏せて集める画面（今日は何の日・その場で聞く）は、大きいボタンが「せーので見せる → 答えを見せる → 次へ」の順に変わる
+function nextStage(room) { const cur = room && curStep(room); if (!cur || onCover(room, cur) || cur.mode !== 'hide') return null; if (!isRevealed(room, cur)) return 'reveal'; if (cur.type === 'choice' && cur.answer != null && !room.answerShown?.[cur.id]) return 'answer'; return null; }
+function primaryAction() { const room = ctx?.data; if (!room) return; const st = nextStage(room); if (st === 'reveal') toggleReveal(); else if (st === 'answer') toggleAnswer(); else moveBy(1); }
 const toggleAnswer = () => hostUpdate((room) => { const s = curStep(room); if (!s || s.type !== 'choice') return false; room.answerShown = { ...(room.answerShown || {}), [s.id]: !room.answerShown?.[s.id] }; });
 function editSteps(fn) { return hostUpdate((room) => { const steps = stepsOf(room); const r = fn(steps, room); if (r === false) return false; room.steps = steps; if (!steps.some((s) => s.id === room.cur && !s.hidden)) room.cur = (steps.find((s) => !s.hidden) || steps[0])?.id || null; }); }
 const toggleHidden = (id) => editSteps((steps) => { const s = steps.find((x) => x.id === id); if (!s) return false; s.hidden = !s.hidden; });
@@ -1505,8 +1535,8 @@ function stageHtml(room, code) {
   if (cur.type === 'closing') {
     if (kindPm) return wrap(`<div class="opening">${art(ART_BASE + 'closing-pm.webp', 'door_open', 'op-art')}<div class="op-t">エントランスに移動しよう</div><div class="op-d">きょうもありがとう</div></div>`, '', { full: true });
     const first = firstSlot(room);
-    const items = first ? `<div class="mv">${first.items.map((it) => `<div class="mv-it">${it.thumb ? `<span class="th" style="background-image:url('${esc(it.thumb).replace(/'/g, '%27')}')"></span>` : ''}<b>${esc(it.name)}</b>${it.place ? `<span class="material-symbols-rounded">arrow_forward</span><span class="pl">${esc(it.place)}</span>` : ''}</div>`).join('')}</div>` : '';
-    return wrap(`<div class="closing-wrap">${art(ART_BASE + 'closing-am.webp', 'directions_walk', 'cl-art')}<div class="closing"><div class="kick"><span class="material-symbols-rounded">directions_walk</span>このあと${first ? `（${esc(first.tm)}から）` : ''}</div><h1>${first ? '1コマ目のプログラムに移動しよう' : 'それぞれのプログラムに移動しよう'}</h1>${items}</div></div>`, '', { full: true });
+    const items = first ? `<div class="mv${first.items.length >= 4 ? ' many lots' : first.items.length === 3 ? ' many' : ''}">${first.items.map((it) => `<div class="mv-it">${it.thumb ? `<span class="th" style="background-image:url('${esc(it.thumb).replace(/'/g, '%27')}')"></span>` : ''}<b>${esc(it.name)}</b>${it.place ? `<span class="material-symbols-rounded">arrow_forward</span><span class="pl">${esc(it.place)}</span>` : ''}</div>`).join('')}</div>` : '';
+    return wrap(`<div class="closing-wrap${first && first.items.length >= 3 ? ' tight' : ''}">${art(ART_BASE + 'closing-am.webp', 'directions_walk', 'cl-art')}<div class="closing"><div class="kick"><span class="material-symbols-rounded">directions_walk</span>このあと${first ? `（${esc(first.tm)}から）` : ''}</div><h1>${first ? '1コマ目のプログラムに移動しよう' : 'それぞれのプログラムに移動しよう'}</h1>${items}</div></div>`, '', { full: true });
   }
   if (onCover(room, cur)) {
     const [ic, t, d] = coverOf(cur);
@@ -1638,7 +1668,7 @@ function fitStages() {
 window.addEventListener('resize', fitStages);
 let clockTimer = null;
 function clockText() { return new Intl.DateTimeFormat('ja-JP', { hour: 'numeric', minute: '2-digit', timeZone: 'Asia/Tokyo' }).format(new Date()); }
-function startClock() { if (clockTimer) return; clockTimer = setInterval(() => { document.querySelectorAll('.clock-now').forEach((el) => { el.textContent = clockText(); }); }, 1000); }
+function startClock() { if (clockTimer) return; const tick = () => { document.querySelectorAll('.clock-now').forEach((el) => { el.textContent = clockText(); }); }; tick(); clockTimer = setInterval(tick, 1000); }
 function stopClock() { if (clockTimer) { clearInterval(clockTimer); clockTimer = null; } }
 let mouseTimer = null;
 window.addEventListener('mousemove', () => { document.body.classList.add('mouse'); clearTimeout(mouseTimer); mouseTimer = setTimeout(() => document.body.classList.remove('mouse'), 2500); });
@@ -1719,7 +1749,7 @@ function renderPlayer(room) {
     html += h2(review ? 'history' : cur.key === 'karada' ? 'accessibility_new' : 'favorite', cur.title, cur.sub)
       + `<div class="opts">${(cur.labels || []).map((l, i) => `<button type="button" class="opt-btn" data-act="pick" data-v="${5 - i}" aria-pressed="${d.n === 5 - i}" ${closed ? 'disabled' : ''}><span class="n">${5 - i}</span><span class="fc material-symbols-rounded">${FACES[i]}</span>${esc(l)}<span class="material-symbols-rounded chk">check</span></button>`).join('')}</div>`
       + (review ? `<div class="p-sub">ひとこと（いくつでも・なくてもOK）</div><div class="p-words">${(cur.words || WORDS).map((t, i) => `<button type="button" data-act="pickw" data-v="${i}" aria-pressed="${!!d.w[i]}" ${closed ? 'disabled' : ''}>${WORD_ICONS[i] ? `<span class="material-symbols-rounded">${WORD_ICONS[i]}</span>` : ''}${esc(t)}</button>`).join('')}</div>` : '')
-      + (`<div class="p-sub">${review ? '自由に書いてもOK' : 'わけ・ひとこと（なくてもOK）'}</div><textarea id="p-note" class="p-note" maxlength="${NOTE_MAX}" rows="2" placeholder="${review ? 'きょうのこと、なんでも' : '書きたいことがあれば'}" ${closed ? 'disabled' : ''}>${esc(d.t)}</textarea>${review ? pnote('lock', '進行役にだけとどくよ') : pnote('chat_bubble', 'みんなの画面で名前を押すと出るよ')}`)
+      + (`<div class="p-sub">${review ? '自由に書いてもOK' : 'わけ・ひとこと（なくてもOK）'}</div>${review ? pnote('lock', '進行役にだけとどくよ') : pnote('chat_bubble', '書いたことは、みんなの画面で名前を押すと出るよ')}<textarea id="p-note" class="p-note" maxlength="${NOTE_MAX}" rows="2" placeholder="${review ? 'きょうのこと、なんでも' : '書きたいことがあれば'}" ${closed ? 'disabled' : ''}>${esc(d.t)}</textarea>`)
       + sendRow(room, cur, d, closed);
   } else if (cur.type === 'choice') {
     const shown = !!room.answerShown?.[cur.id];
@@ -1818,9 +1848,9 @@ function renderHost(room) {
   const cov = onCover(room, cur), main = cur && !cov;
   $('host-step-type').textContent = !cur ? '' : cov ? 'セクションの表紙' : typeName[cur.type] || cur.type;
   const hideMode = main && cur.mode === 'hide', revealed = cur && isRevealed(room, cur), closed = cur && isClosed(room, cur);
-  $('btn-reveal').hidden = !hideMode; $('btn-reveal').textContent = revealed ? 'また伏せる' : 'せーので見せる';
+  $('btn-reveal').hidden = !hideMode || !revealed;
   $('btn-close').hidden = !main || !['scale', 'choice', 'review', 'weather'].includes(cur.type); $('btn-close').textContent = closed ? 'しめきりをとく' : 'しめきる';
-  $('btn-answer').hidden = !main || cur.type !== 'choice' || cur.answer == null; $('btn-answer').textContent = room.answerShown?.[cur?.id] ? '答えをかくす' : '答えを見せる';
+  $('btn-answer').hidden = !main || cur.type !== 'choice' || cur.answer == null || (hideMode && revealed && !room.answerShown?.[cur.id]); $('btn-answer').textContent = room.answerShown?.[cur?.id] ? '答えをかくす' : '答えを見せる';
   $('btn-topic').hidden = !main || cur.type !== 'talk';
   $('btn-edit').hidden = !main || ['game', 'opening', 'agenda', 'closing'].includes(cur.type);
   $('free-ctrls').hidden = !main || cur.type !== 'free';
@@ -1832,7 +1862,10 @@ function renderHost(room) {
     if (document.activeElement?.id !== 'game-change') $('game-picks').innerHTML = (g?.slug ? `<button type="button" class="btn btn-primary" data-open>${cur.gameCode ? `${esc(g.name)} のタブを開く` : `${esc(g.name)} のルームを作る（タブを開く）`}</button><span class="gb-st${cur.gameCode ? ' ok' : ''}">${cur.gameCode ? `ルーム ${esc(cur.gameCode)} をみんなの端末に出しました` : '開いたタブでルームを作ると、自動でみんなの端末に出ます'}</span>` : '') + `<label class="gb-sub" for="game-change">ゲームを変える:</label><select id="game-change">${g ? '' : '<option value="">えらんでください</option>'}${gameOptions(poolCache || (g ? [g] : []), g?.slug)}</select>`;
     if (document.activeElement !== $('game-link-in')) $('game-link-in').value = cur.link || '';
   }
-  $('btn-prev').disabled = !navTarget(room, -1); $('btn-next').disabled = !navTarget(room, 1);
+  const stg = nextStage(room);
+  $('btn-next').innerHTML = stg === 'reveal' ? 'せーので見せる<span class="material-symbols-rounded">visibility</span>' : stg === 'answer' ? '答えを見せる<span class="material-symbols-rounded">lightbulb</span>' : '次へ<span class="material-symbols-rounded">arrow_forward</span>';
+  $('btn-prev').disabled = !navTarget(room, -1); $('btn-next').disabled = !stg && !navTarget(room, 1);
+  $('free-until').hidden = room.kind === 'pm';
   // 参加者と答え
   const ans = cur ? answered(room, cur.id) : {};
   const fmt = (v) => v == null ? '' : v === 'pass' ? 'パス' : typeof v === 'object' ? [v.n, ...Object.keys(v.w || {}).map((i) => (cur.words || WORDS)[i]).filter(Boolean)].filter((x) => x != null).join('・') : cur?.type === 'choice' || cur?.type === 'game' ? '①②③④⑤⑥'[v] : cur?.type === 'weather' ? WX_OPTIONS[v]?.t : String(v);
@@ -1852,7 +1885,14 @@ function renderHost(room) {
     return `<div class="bs">${bs}<button type="button" class="pass" data-pid="${p.id}" data-v="pass" aria-pressed="${v === 'pass'}">パス</button></div>`;
   };
   const ordered = canAnswer ? [...players.filter((p) => ans[p.id] == null), ...players.filter((p) => ans[p.id] != null)] : players;
-  $('plist').innerHTML = ordered.map((p) => { const connected = p.proxy || Object.keys(p.connections || {}).length > 0; const a = fmt(ans[p.id]) || handTxt(p.id); return `<div class="prow${ans[p.id] != null ? ' got' : ''}"><span class="pn">${esc(p.name)}<span class="st">${p.id === room.host ? '自分' : p.proxy ? '端末なし' : connected ? '' : '接続が切れています'}${p.adult ? '・大人' : ''}</span>${notes[p.id] ? `<span class="nt">${esc(notes[p.id])}</span>` : ''}</span><span class="ans${a ? '' : ' none'}">${esc(a || '-')}</span>${p.id === room.host ? '<span></span>' : `<button type="button" class="x" data-remove="${p.id}" title="外す"><span class="material-symbols-rounded">close</span></button>`}${quick(p)}</div>`; }).join('');
+  $('plist').innerHTML = ordered.map((p) => {
+    const connected = p.proxy || Object.keys(p.connections || {}).length > 0, a = fmt(ans[p.id]) || handTxt(p.id);
+    const st = [p.id === room.host ? '自分' : p.proxy ? '端末なし' : connected ? '' : '接続が切れています', p.adult ? '大人' : ''].filter(Boolean).join('・');
+    // 答えを入れる画面では、数字のボタンが答えの印をかねる。ひとことつきの答え（ふりかえり）だけ、下の行に文字で出す
+    const mid = canAnswer ? quick(p) : `<span class="ans${a ? '' : ' none'}">${esc(a || '-')}</span>`;
+    const more = canAnswer && typeof ans[p.id] === 'object' && ans[p.id] && a.includes('・') ? `<span class="nt">${esc(a)}</span>` : '';
+    return `<div class="prow${ans[p.id] != null ? ' got' : ''}"><span class="pn">${esc(p.name)}<span class="st">${st}</span></span>${mid}${p.id === room.host ? '<span></span>' : `<button type="button" class="x" data-remove="${p.id}" title="外す"><span class="material-symbols-rounded">close</span></button>`}${more}${notes[p.id] ? `<span class="nt">${esc(notes[p.id])}</span>` : ''}</div>`;
+  }).join('');
   if (!editing) { $('edit-box').hidden = true; }
 }
 function stepName(s) {
@@ -1905,7 +1945,7 @@ $('steplist').addEventListener('click', (e) => {
   if (b.dataset.go) setCur(b.dataset.go); else if (b.dataset.up) moveStep(b.dataset.up, -1); else if (b.dataset.down) moveStep(b.dataset.down, 1); else if (b.dataset.hide) toggleHidden(b.dataset.hide);
 });
 $('btn-prev').addEventListener('click', () => moveBy(-1));
-$('btn-next').addEventListener('click', () => moveBy(1));
+$('btn-next').addEventListener('click', primaryAction);
 $('btn-reveal').addEventListener('click', toggleReveal);
 $('btn-close').addEventListener('click', toggleClosed);
 $('btn-answer').addEventListener('click', toggleAnswer);
@@ -1976,7 +2016,7 @@ document.addEventListener('keydown', (e) => {
   if (['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) return;
   if (e.key === 'ArrowRight') { e.preventDefault(); moveBy(1); }
   else if (e.key === 'ArrowLeft') { e.preventDefault(); moveBy(-1); }
-  else if (e.key === ' ') { e.preventDefault(); const cur = curStep(ctx.data); if (!cur) return; if (onCover(ctx.data, cur)) moveBy(1); else if (cur.mode === 'hide') toggleReveal(); else if (['review', 'weather'].includes(cur.type)) toggleClosed(); }
+  else if (e.key === ' ') { e.preventDefault(); const cur = curStep(ctx.data); if (!cur) return; if (onCover(ctx.data, cur)) moveBy(1); else if (nextStage(ctx.data)) primaryAction(); else if (['review', 'weather'].includes(cur.type)) toggleClosed(); }
 });
 
 // ── 準備の画面 ──
@@ -1992,7 +2032,7 @@ async function loadDaily() {
     if (!Array.isArray(d.real) || !d.real.length || !Array.isArray(d.fake) || d.fake.length < 2) throw new Error('shape');
     daily = d;
   } catch { daily = null; }
-  if (daily) { $('day-status-text').textContent = `今朝用意した記念日が入っています（${daily.source || '出典あり'}）。中身を確かめて、気になるところは直してください。`; setDayMode(prefDayMode()); }
+  if (daily) { setReady('rd-day', 'ok', `今朝用意した記念日が入っています（${daily.source || '出典あり'}）。このまま始められます。`, 'day-status-text'); setDayMode(prefDayMode()); }
   else { $('day-status-text').textContent = '今日の分はまだ用意されていません。手で入れるか、空のままなら「今日は何の日」は飛ばします。'; setDayMode('one', false); }
 }
 function prefDayMode() { const m = loadPrefs().dayMode; return m === 'all' && daily?.real.length >= 3 ? 'all' : 'one'; }
