@@ -9,13 +9,13 @@
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
   <link rel="stylesheet" href="../shared/css/design-system.css?v=20261106c">
   <!-- index.html と app.js・engine.js・style.css はセットで変わるので、変えたら ?v= をそろえて上げる -->
-  <link rel="stylesheet" href="style.css?v=20261110f">
+  <link rel="stylesheet" href="style.css?v=20261110g">
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <script src="../shared/js/rtdb-utils.js?v=20261005"></script>
   <script src="../shared/js/room-qr.js?v=20261022"></script>
-  <script src="engine.js?v=20261110f"></script>
+  <script src="engine.js?v=20261110g"></script>
 </head>
 <body data-genre="puzzle">
 
@@ -75,6 +75,7 @@
         </div>
         <p class="sb-note sb-note--tight">この端末だけで鳴る。ブロックを置いたときと段を消したときに、短い音が鳴る。</p>
       </fieldset>
+      <button type="button" class="sb-quiet sb-keysbtn mt-md" data-open-keys><span class="material-symbols-rounded" aria-hidden="true">keyboard</span>キーボードのキーを変える</button>
       <button type="button" class="btn btn-primary btn-full mt-lg" id="btnSoloStart">はじめる</button>
     </div>
   </section>
@@ -158,6 +159,7 @@
           </div>
           <p class="sb-note sb-note--tight">この端末だけで鳴る。ブロックを置いたときと段を消したときに、短い音が鳴る。</p>
         </fieldset>
+        <button type="button" class="sb-quiet sb-keysbtn mt-md" data-open-keys><span class="material-symbols-rounded" aria-hidden="true">keyboard</span>キーボードのキーを変える</button>
       </div>
 
       <div class="card" id="lobbyHost" hidden>
@@ -278,7 +280,7 @@
         <button type="button" class="sb-padbtn" data-act="rotr" aria-label="右に回す"><span class="material-symbols-rounded" aria-hidden="true">rotate_right</span></button>
         <button type="button" class="sb-padbtn" data-act="hold" aria-label="とっておく"><span class="material-symbols-rounded" aria-hidden="true">inventory_2</span></button>
       </div>
-      <p class="sb-keys">キーボード: ← → 動かす／↓ 下へ／スペース すとん／↑ か X 右に回す／Z 左に回す／C か Shift とっておく／P とめる（ひとりのとき）<br>W A S D でも動かせる（W は右に回す）／マウス: 盤の上で左右に動かす／クリック すとん／右クリック 右に回す／ホイール 回す</p>
+      <p class="sb-keys"><span id="keysHintKeys"></span><br>マウス: 盤の上で左右に動かす／クリック すとん／右クリック 右に回す／ホイール 回す</p>
     </div>
   </section>
 
@@ -326,7 +328,19 @@
     </div>
   </div>
 
-  <script type="module" src="app.js?v=20261110f"></script>
+  <!-- キーボードのキーを変える（この端末だけ） -->
+  <dialog id="keysDialog" class="sb-dialog" aria-labelledby="keysDialogTitle">
+    <h2 id="keysDialogTitle" class="sb-h2">キーボードのキー</h2>
+    <p class="sb-note sb-note--tight">「＋」を押してから、使いたいキーを押す。×で外す。1つの動きに3つまで。この端末だけで使う。</p>
+    <ul id="keysList" class="sb-keylist"></ul>
+    <p id="keysMsg" class="sb-keysmsg" aria-live="polite"></p>
+    <div class="sb-dialog__foot">
+      <button type="button" class="btn btn-secondary" id="btnKeysReset">はじめにもどす</button>
+      <button type="button" class="btn btn-primary" id="btnKeysClose">閉じる</button>
+    </div>
+  </dialog>
+
+  <script type="module" src="app.js?v=20261110g"></script>
   <script src="../shared/js/stats.js?v=1" defer></script>
   <script src="../shared/js/howto.js"></script>
   <script>
@@ -346,7 +360,7 @@
           '回すボタンは左回りと右回り',
           '箱のボタンで、いまのブロックを1つとっておける。とっておいたものと入れかえて出せる（1つのブロックにつき1回）',
           '盤の中の枠は、そのまま落としたときに入る場所',
-          'キーボードなら ← → ↓（A D S でも）で動かす、スペースですとん、↑（W でも）か X で右に回す、Z で左に回す、C か Shift でとっておく',
+          'キーボードなら ← → ↓（A D S でも）で動かす、スペースですとん、↑（W でも）か X で右に回す、Z で左に回す、C か Shift でとっておく。キーは、ひとりであそぶの画面か待合室の「キーボードのキーを変える」で変えられる（その端末だけ）',
           'マウスなら、盤の上で左右に動かすとブロックがついてくる。クリックですとん、右クリックで右に回す、ホイールで回す',
           'ひとりであそぶときは、上の「とめる」（キーボードなら P）でとめられる。「つづける」で、とめたところから続く',
         ] },

@@ -142,6 +142,9 @@ function setSfx(on) {
 
 /* ── 共通 ── */
 function showScreen(id) {
+  // キーを変えている間に回がはじまったときなどは、ダイアログを閉じる
+  const kd = $('keysDialog');
+  if (kd && kd.open) kd.close();
   document.querySelectorAll('.sb-screen').forEach((node) => node.classList.remove('active'));
   $('screen-' + id).classList.add('active');
   state.currentScreen = id;
@@ -1760,14 +1763,187 @@ function act(name) {
   }
 }
 
-// 文字のキーは小文字で引く（Caps Lock でも同じに動く）。WASD は矢印キーと同じ（W は ↑ と同じ右に回す）
-const KEYMAP = {
+/* ── キーボードのキー（2026-11-10 フィードバックボードの要望で、各自が変えられるようにした） ──
+   はじめの割り当ては DEFAULT_KEYMAP。変えたものはこの端末に残す（localStorage `sutonblock:keys`。ルームには書かない）。
+   文字のキーは小文字で引く（Caps Lock でも同じに動く）。WASD は矢印キーと同じ（W は ↑ と同じ右に回す） */
+const KEYS_KEY = 'sutonblock:keys';
+const KEY_ACTIONS = [
+  { a: 'left', label: '左へ' },
+  { a: 'right', label: '右へ' },
+  { a: 'down', label: '下へ' },
+  { a: 'drop', label: 'すとん' },
+  { a: 'rotr', label: '右に回す' },
+  { a: 'rotl', label: '左に回す' },
+  { a: 'hold', label: 'とっておく' },
+  { a: 'pause', label: 'とめる（ひとりのとき）' },
+];
+const DEFAULT_KEYMAP = {
   ArrowLeft: 'left', ArrowRight: 'right', ArrowDown: 'down', ArrowUp: 'rotr',
   a: 'left', d: 'right', s: 'down', w: 'rotr',
   ' ': 'drop', x: 'rotr', z: 'rotl',
   c: 'hold', Shift: 'hold',
+  p: 'pause',
 };
+const KEYS_PER_ACTION = 3;
 const keyOf = (e) => (e.key.length === 1 ? e.key.toLowerCase() : e.key);
+function loadKeymap() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(KEYS_KEY) || 'null');
+    if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
+      const map = {};
+      Object.keys(raw).forEach((k) => {
+        if (k.length <= 24 && KEY_ACTIONS.some((x) => x.a === raw[k])) map[k] = raw[k];
+      });
+      return map;
+    }
+  } catch (e) { /* 読めなければはじめの割り当て */ }
+  return { ...DEFAULT_KEYMAP };
+}
+let KEYMAP = loadKeymap();
+function saveKeymap() {
+  try {
+    if (sameKeymap(KEYMAP, DEFAULT_KEYMAP)) localStorage.removeItem(KEYS_KEY);
+    else localStorage.setItem(KEYS_KEY, JSON.stringify(KEYMAP));
+  } catch (e) { /* 残せなくても、開いている間は使える */ }
+}
+function sameKeymap(x, y) {
+  const kx = Object.keys(x);
+  return kx.length === Object.keys(y).length && kx.every((k) => x[k] === y[k]);
+}
+const KEY_NAMES = {
+  ' ': 'スペース', ArrowLeft: '←', ArrowRight: '→', ArrowUp: '↑', ArrowDown: '↓',
+};
+const keyLabel = (k) => KEY_NAMES[k] || (k.length === 1 ? k.toUpperCase() : k);
+const keysOfAction = (a) => Object.keys(KEYMAP).filter((k) => KEYMAP[k] === a);
+
+// あそぶ画面の下の、キーの一覧（広い画面だけ出る）
+function renderKeysHint() {
+  const parts = KEY_ACTIONS.map(({ a, label }) => {
+    const ks = keysOfAction(a);
+    return ks.length ? ks.map(keyLabel).join(' か ') + ' ' + label : '';
+  }).filter(Boolean);
+  $('keysHintKeys').textContent = parts.length ? 'キーボード: ' + parts.join('／') : 'キーボード: キーなし';
+}
+
+// キーを変えるダイアログ。「＋」を押してから使いたいキーを押す
+const keysDialog = $('keysDialog');
+let keyCapture = null; // 押すのを待っている動き
+const KEY_REJECT = { Tab: true, Escape: true, Control: true, Meta: true, Alt: true, AltGraph: true, CapsLock: true, Fn: true, OS: true };
+function renderKeysDialog(focusAct) {
+  const list = $('keysList');
+  list.textContent = '';
+  KEY_ACTIONS.forEach(({ a, label }) => {
+    const li = document.createElement('li');
+    li.className = 'sb-keyrow';
+    const name = document.createElement('span');
+    name.className = 'sb-keyrow__name';
+    name.textContent = label;
+    name.tabIndex = -1;
+    name.dataset.act = a;
+    li.appendChild(name);
+    const keys = document.createElement('span');
+    keys.className = 'sb-keyrow__keys';
+    const ks = keysOfAction(a);
+    ks.forEach((k) => {
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'sb-keychip';
+      chip.setAttribute('aria-label', label + 'から ' + keyLabel(k) + ' を外す');
+      const t = document.createElement('span');
+      t.textContent = keyLabel(k);
+      const x = document.createElement('span');
+      x.className = 'material-symbols-rounded';
+      x.setAttribute('aria-hidden', 'true');
+      x.textContent = 'close';
+      chip.append(t, x);
+      chip.addEventListener('click', () => {
+        delete KEYMAP[k];
+        afterKeymapChange(a, keyLabel(k) + ' を外したよ');
+      });
+      keys.appendChild(chip);
+    });
+    if (keyCapture === a) {
+      const wait = document.createElement('span');
+      wait.className = 'sb-keychip sb-keychip--wait';
+      wait.textContent = 'キーを押してね（Esc でやめる）';
+      keys.appendChild(wait);
+    } else if (ks.length < KEYS_PER_ACTION) {
+      const add = document.createElement('button');
+      add.type = 'button';
+      add.className = 'sb-keyadd';
+      add.setAttribute('aria-label', label + 'にキーを足す');
+      const icon = document.createElement('span');
+      icon.className = 'material-symbols-rounded';
+      icon.setAttribute('aria-hidden', 'true');
+      icon.textContent = 'add';
+      add.appendChild(icon);
+      add.addEventListener('click', () => { keyCapture = a; setKeysMsg(''); renderKeysDialog(); });
+      keys.appendChild(add);
+    }
+    if (!ks.length && keyCapture !== a) {
+      const none = document.createElement('span');
+      none.className = 'sb-keyrow__none';
+      none.textContent = 'なし';
+      keys.insertBefore(none, keys.firstChild);
+    }
+    li.appendChild(keys);
+    list.appendChild(li);
+  });
+  $('btnKeysReset').disabled = sameKeymap(KEYMAP, DEFAULT_KEYMAP);
+  if (focusAct) {
+    const target = list.querySelector('.sb-keyrow__name[data-act="' + focusAct + '"]');
+    if (target) target.focus();
+  }
+}
+function setKeysMsg(text) { $('keysMsg').textContent = text; }
+function afterKeymapChange(focusAct, msg) {
+  saveKeymap();
+  renderKeysHint();
+  renderKeysDialog(focusAct);
+  setKeysMsg(msg || '');
+}
+function openKeys() {
+  keyCapture = null;
+  setKeysMsg('');
+  renderKeysDialog();
+  keysDialog.showModal();
+}
+function closeKeys() {
+  keyCapture = null;
+  if (keysDialog.open) keysDialog.close();
+}
+keysDialog.addEventListener('close', () => { keyCapture = null; });
+// 待っている間は、押したキーをほかに使わせない（Esc でダイアログが閉じない・スペースでボタンが押されない）
+window.addEventListener('keydown', (e) => {
+  if (!keyCapture || !keysDialog.open) return;
+  e.preventDefault();
+  e.stopPropagation();
+  const a = keyCapture;
+  if (e.key === 'Escape') { keyCapture = null; renderKeysDialog(a); setKeysMsg(''); return; }
+  if (e.isComposing || e.key === 'Process' || e.key === 'Dead' || e.key === 'Unidentified') {
+    setKeysMsg('日本語入力を切ってから押してね');
+    return;
+  }
+  if (KEY_REJECT[e.key] || e.ctrlKey || e.metaKey || e.altKey) {
+    setKeysMsg(keyLabel(e.key) + ' は使えないよ。ほかのキーを押してね');
+    return;
+  }
+  const k = keyOf(e);
+  keyCapture = null;
+  const before = KEYMAP[k];
+  if (before === a) { afterKeymapChange(a, keyLabel(k) + ' はもう入っているよ'); return; }
+  KEYMAP[k] = a;
+  const from = before && KEY_ACTIONS.find((x) => x.a === before);
+  afterKeymapChange(a, from ? keyLabel(k) + ' を「' + from.label + '」から移したよ' : '');
+}, true);
+document.querySelectorAll('[data-open-keys]').forEach((btn) => btn.addEventListener('click', openKeys));
+$('btnKeysClose').addEventListener('click', closeKeys);
+$('btnKeysReset').addEventListener('click', () => {
+  keyCapture = null;
+  KEYMAP = { ...DEFAULT_KEYMAP };
+  afterKeymapChange(null, 'はじめのキーにもどしたよ');
+});
+renderKeysHint();
 const REPEATABLE = { left: true, right: true, down: true };
 // 左右を押しっぱなしにしたとき、はじめの1マスのあと SHIFT_DELAY_MS 待って、SHIFT_REPEAT_MS ごとに動く。
 // キーボードは OS のくり返し（待ちが0.5秒ほどと長い）を使わず、この時間で動かす
@@ -1809,15 +1985,16 @@ window.addEventListener('blur', () => { sideHeld.length = 0; stopKeyRepeat(); })
 document.addEventListener('keydown', (e) => {
   // 「あそびかた」を開いている間は、あそぶ画面が inert になるので動かさない
   if (state.currentScreen !== 'play' || $('screen-play').inert || e.ctrlKey || e.metaKey || e.altKey) return;
-  // ひとりのときは P でとめる・つづける
   const k = keyOf(e);
-  if (k === 'p' && state.role === 'solo' && state.run) {
+  const a = KEYMAP[k];
+  if (!a) return;
+  // ひとりのときは P（変えたときはそのキー）でとめる・つづける。ルームでは何もしない
+  if (a === 'pause') {
+    if (state.role !== 'solo' || !state.run) return;
     e.preventDefault();
     if (!e.repeat) setPaused(!state.run.paused);
     return;
   }
-  const a = KEYMAP[k];
-  if (!a) return;
   e.preventDefault();
   if (SIDE[a]) {
     if (e.repeat) return;
