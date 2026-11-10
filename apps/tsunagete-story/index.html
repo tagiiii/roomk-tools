@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+  <title>つなげてストーリー | あそびのたな</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
+  <link rel="stylesheet" href="../shared/css/design-system.css?v=20261106c">
+  <link rel="stylesheet" href="style.css?v=20261110">
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+  <script src="../shared/js/rtdb-utils.js?v=20261005"></script>
+  <script src="../shared/js/room-qr.js?v=20261022"></script>
+</head>
+<body data-genre="kotoba">
+  <div class="ts-wrap">
+    <header class="ts-header">
+      <h1 class="ts-header__title app-title">つなげてストーリー</h1>
+    </header>
+    <main>
+      <!-- はじめの画面 -->
+      <section class="ts-screen active" id="screen-top">
+        <div class="app-entry">
+          <div class="app-hero"><img class="app-illust" src="../assets/illustrations/tsunagete-story.webp" alt="" width="156" height="156" decoding="async" onerror="this.parentNode.remove()" /></div>
+          <h1 class="app-title">つなげてストーリー</h1>
+          <p class="app-catch">みんなの言葉をつないで、ふしぎな文を作ろう</p>
+          <p class="app-entry__lead">お題にそって「いつ」「どこで」「だれが」「何をした」を1人ずつ書いて、つなげて読むよ。どんな文ができるかな？1回10〜20分くらい。</p>
+          <ul class="app-entry__notes">
+            <li>ほかの人が何を書いたかは、読むまでわからないよ</li>
+            <li>思いつかないときは「候補から選ぶ」があるよ</li>
+          </ul>
+          <div class="app-entry__actions">
+            <button type="button" class="btn btn-primary btn-full" id="btnGoCreate">ルームをつくる</button>
+            <button type="button" class="btn btn-secondary btn-full" id="btnGoJoin">ルームに参加する</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="ts-screen" id="screen-create">
+        <div class="ts-subhead"><button type="button" class="btn btn-ghost btn-sm" id="btnCreateBack">トップへ戻る</button><h2 class="ts-subhead__title">ルームをつくる</h2></div>
+        <div class="ts-form">
+          <label class="ts-form__label" for="hostName">ホストの名前（8文字まで）</label>
+          <input class="ts-form__input" id="hostName" maxlength="8" autocomplete="nickname">
+          <p class="ts-form__error" id="createError" role="alert" hidden></p>
+          <button type="button" class="btn btn-primary btn-full" id="btnCreateRoom">ルームをつくる</button>
+        </div>
+      </section>
+
+      <section class="ts-screen" id="screen-join">
+        <div class="ts-subhead"><button type="button" class="btn btn-ghost btn-sm" id="btnJoinBack">トップへ戻る</button><h2 class="ts-subhead__title">ルームに参加する</h2></div>
+        <div class="ts-form">
+          <p class="ts-form__hint" id="joinLinkHint" hidden>リンクからひらいたので、ルームコードは入っているよ。名前を入れて「参加する」を押してね。</p>
+          <label class="ts-form__label" for="guestName">名前（8文字まで）</label>
+          <input class="ts-form__input" id="guestName" maxlength="8" autocomplete="nickname">
+          <label class="ts-form__label" for="joinCode">ルームコード（6文字）</label>
+          <input class="ts-form__input ts-form__input--code" id="joinCode" maxlength="6" autocorrect="off" autocapitalize="characters" autocomplete="off" spellcheck="false">
+          <p class="ts-form__error" id="joinError" role="alert" hidden></p>
+          <button type="button" class="btn btn-primary btn-full" id="btnJoinRoom">参加する</button>
+        </div>
+      </section>
+
+      <div class="ts-roombar" id="roomBar" hidden>
+        <span>ルーム <strong id="roomCodeLabel"></strong></span>
+        <button type="button" class="btn btn-ghost btn-sm" id="btnCopyCode">コードをコピー</button>
+        <button type="button" class="btn btn-ghost btn-sm" id="btnCopyLink">リンクをコピー</button>
+        <button type="button" class="btn btn-ghost btn-sm" id="btnShowQr">QRコードを出す</button>
+        <button type="button" class="btn btn-ghost btn-sm" id="btnLeave">退出する</button>
+      </div>
+
+      <!-- 待合室 -->
+      <section class="ts-screen" id="screen-lobby">
+        <div class="card">
+          <h2 class="ts-h2">参加する人</h2>
+          <ul class="ts-players" id="lobbyPlayers"></ul>
+          <label class="ts-check" id="hostPlaysField" hidden><input type="checkbox" id="setHostPlays"><span>自分も書く</span></label>
+          <p class="ts-wait" id="lobbyWait" hidden>ホストがはじめるのを待っているよ</p>
+        </div>
+        <div class="card" id="lobbyHost" hidden>
+          <h2 class="ts-h2">ルール</h2>
+          <fieldset class="ts-field">
+            <legend class="ts-h3">文の項目</legend>
+            <p class="ts-note ts-note--top">いつ・どこで・だれが・何をした に足す項目を選ぶ（いくつでも）</p>
+            <div id="extraOpts" class="ts-toggles"></div>
+            <p id="extraNote" class="ts-note"></p>
+          </fieldset>
+          <fieldset class="ts-field">
+            <legend class="ts-h3">お題</legend>
+            <div id="themeOpts" class="ts-seg" role="radiogroup" aria-label="お題"></div>
+            <p id="themeNote" class="ts-note"></p>
+          </fieldset>
+          <button type="button" class="btn btn-primary btn-full ts-btn-main" id="btnStart">はじめる</button>
+          <p class="ts-note ts-center" id="startNote"></p>
+        </div>
+        <div class="card" id="lobbyInfo">
+          <h2 class="ts-h2">いまのルール</h2>
+          <p id="lobbyRule" class="ts-rule"></p>
+        </div>
+      </section>
+
+      <!-- お題を決める -->
+      <section class="ts-screen" id="screen-theme">
+        <p id="tRound" class="ts-round"></p>
+        <h2 class="ts-theme-head">きょうのお題は？</h2>
+        <p id="tLead" class="ts-wait ts-theme-lead"></p>
+        <div id="tChoices" class="ts-choices"></div>
+        <div id="tHost" class="ts-hostbox" hidden>
+          <div class="ts-hostbox__btns">
+            <button id="btnBegin" type="button" class="btn btn-primary ts-btn-main" disabled>このお題で書きはじめる</button>
+            <button id="btnTheme" type="button" class="btn btn-secondary ts-btn-sub"><span class="material-symbols-rounded" aria-hidden="true">casino</span><span>ほかの3つにする</span></button>
+          </div>
+        </div>
+        <p id="tWait" class="ts-wait" hidden>決まったら書きはじめるよ</p>
+      </section>
+
+      <!-- 書く -->
+      <section class="ts-screen" id="screen-write">
+        <p id="wRound" class="ts-round"></p>
+        <p id="wTheme" class="ts-theme" hidden></p>
+        <div id="wFormBox" class="ts-formbox">
+          <div id="wTemplate" class="ts-template" aria-hidden="true"></div>
+          <div id="wSlots" class="ts-slots"></div>
+          <button id="wSend" type="button" class="btn btn-primary btn-full ts-btn-main" disabled>送る</button>
+        </div>
+        <div id="wSent" class="card ts-sent" hidden>
+          <p class="ts-sent__lead"><span class="material-symbols-rounded" aria-hidden="true">check_circle</span>送ったよ</p>
+          <p id="wSentText" class="ts-sent__text"></p>
+          <p id="wSentRest" class="ts-wait"></p>
+          <button id="wRedo" type="button" class="ts-btn-text">書きなおす</button>
+        </div>
+        <p id="wWatch" class="ts-wait" hidden>みんなが書いているよ。つぎの回から参加できるよ</p>
+        <div id="wHost" class="ts-hostbox" hidden>
+          <p id="wProgress" class="ts-note"></p>
+          <div class="ts-hostbox__btns">
+            <button id="btnReadNow" type="button" class="btn btn-secondary ts-btn-sub">待たずに読む</button>
+          </div>
+          <p class="ts-note">まだの所は、候補からおまかせで入るよ</p>
+        </div>
+      </section>
+
+      <!-- 読む -->
+      <section class="ts-screen" id="screen-read">
+        <p id="rRound" class="ts-round"></p>
+        <p id="rTheme" class="ts-theme ts-theme--small" hidden></p>
+        <div class="ts-stage">
+          <div id="rPieces" class="ts-pieces"></div>
+          <p id="rHidden" class="ts-stage__hidden" hidden>この文は、とばしたよ</p>
+        </div>
+        <ul id="rLines" class="ts-lines"></ul>
+
+        <div id="rNextBox" class="card" hidden>
+          <h2 class="ts-h2">そのあと、どうなった？</h2>
+          <p class="ts-note ts-note--top">自分で書いて足そう。声で言ってもいいよ。思いつかないときは「候補から選ぶ」</p>
+          <form id="rFree" class="ts-free" autocomplete="off">
+            <label class="ts-form__label" for="rFreeInput">そのあと…</label>
+            <div class="ts-free__row">
+              <input id="rFreeInput" class="ts-form__input" type="text" maxlength="24" autocomplete="off" enterkeyhint="done">
+              <button type="submit" class="btn btn-primary">足す</button>
+            </div>
+          </form>
+          <div id="rCands" class="ts-cands" hidden></div>
+          <div class="ts-row">
+            <button id="rFreeOpen" type="button" class="btn btn-secondary ts-btn-sub"><span class="material-symbols-rounded" aria-hidden="true">list</span><span>候補から選ぶ</span></button>
+            <button id="rMore" type="button" class="btn btn-secondary ts-btn-sub" hidden><span class="material-symbols-rounded" aria-hidden="true">refresh</span><span>ほかの候補</span></button>
+          </div>
+        </div>
+        <p id="rFull" class="ts-wait" hidden>お話ができたね</p>
+
+        <div id="rHost" class="ts-hostbox" hidden>
+          <div class="ts-hostbox__btns">
+            <button id="btnNext" type="button" class="btn btn-primary ts-btn-main" hidden>つぎの文へ</button>
+            <button id="btnRound" type="button" class="btn btn-primary ts-btn-main" hidden>もう1回書く</button>
+            <button id="btnReplay" type="button" class="btn btn-secondary ts-btn-sub"><span class="material-symbols-rounded" aria-hidden="true">replay</span><span>もう一度出す</span></button>
+            <button id="btnHide" type="button" class="btn btn-secondary ts-btn-sub"><span class="material-symbols-rounded" aria-hidden="true">visibility_off</span><span>この文をとばす</span></button>
+            <button id="btnEnd" type="button" class="btn btn-secondary ts-btn-sub" hidden>おしまい</button>
+          </div>
+        </div>
+        <p id="rWait" class="ts-wait" hidden></p>
+      </section>
+
+      <!-- おしまい -->
+      <section class="ts-screen" id="screen-result">
+        <div class="card">
+          <h2 class="ts-h2">きょうできたお話</h2>
+          <ol id="endBook" class="ts-book"></ol>
+          <p id="endNone" class="ts-wait" hidden>お話はなかったよ</p>
+        </div>
+        <button type="button" class="btn btn-primary btn-full ts-btn-main" id="btnAgain" hidden>もう一回（待合室へ）</button>
+        <p id="endWait" class="ts-wait" hidden>ホストが次の回をはじめるのを待っているよ</p>
+      </section>
+    </main>
+  </div>
+  <div class="ts-overlay" id="hostOffOverlay" hidden><div class="ts-overlay__panel"><h2>ホストの戻りを待っています</h2><p>しばらく待っても戻らないときは退出してね。</p><button type="button" class="btn btn-secondary" id="btnOverlayLeave">退出する</button></div></div>
+  <script src="data.js?v=20261110"></script>
+  <script type="module" src="app.js?v=20261110"></script>
+  <script src="../shared/js/stats.js?v=1" defer></script>
+  <script src="../shared/js/howto.js"></script>
+  <script>
+    RoomkHowto.init({
+      title: 'あそびかた',
+      lead: 'お題にそって、みんなで1つずつ言葉を書いて、つなげて文にする遊び。',
+      sections: [
+        { heading: 'はじめかた', items: [
+          'ホストが「ルームをつくる」で名前を入れる。ルームコードは「コードをコピー」、参加用のリンクは「リンクをコピー」でチャットに送れる。スマホやタブレットで入る人には「QRコードを出す」をカメラで読み取ってもらう',
+          '参加する人は「ルームに参加する」で名前、ルームコード（6文字）の順に入れ、「参加する」を押す。リンクからひらいたときは、ルームコードは入っているので名前だけ入れる',
+          'ホストは「文の項目」で「だれと」「なぜ」「どのように」を足せる。お題を出すかも選んで「はじめる」を押す。ホストも書くかは「自分も書く」で選ぶ',
+          'それぞれの端末の画面で遊ぶよ',
+        ] },
+        { heading: 'すすめかた', items: [
+          'お題が3つ出る。ホストが1つ選んで「このお題で書きはじめる」を押す。「ほかの3つにする」で入れかえられる',
+          '「いつ」「どこで」「だれが」「何をした」などのうち、自分のうけもちが出る。お題に合わせて自分で書こう。思いつかないときは「候補から選ぶ」',
+          '書けたら「送る」。ほかの人のうけもちは見えないよ。送ったあとも、読む前なら「書きなおす」で直せる',
+          'みんなが送ったら、1つずつ順に出て文ができる。ホストは「待たずに読む」で、みんなを待たずに読める',
+          'できた文に「そのあと…」を足して、お話の続きを作ろう。だれが足してもいいよ',
+          'ホストは「つぎの文へ」で次の文、「もう1回書く」で次の回に進む。合わない文は「この文をとばす」でとばせる',
+          '途中から入った人は、つぎの回から書ける',
+        ] },
+        { heading: 'おわりかた', text: 'ホストが「おしまい」を押すと、その日にできたお話が並ぶ。ホストは「もう一回（待合室へ）」で続けて遊べる。' },
+      ],
+    });
+  </script>
+</body>
+</html>
