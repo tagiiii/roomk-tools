@@ -427,6 +427,30 @@ t('盤が全部消えたら10段', () => {
   assert.strictEqual(r.attack, 10);
 });
 
+t('全部消した回数（allClears）: 全部消えたら1つ増え、いっぱいでからにしたのとは別に数える・読み込み直しで戻る（2026-11-11）', () => {
+  const g = E.createGame({ seed: 1 });
+  assert.strictEqual(g.allClears, 0);
+  g.board = boardFrom(['....XXXXXX']);
+  g.piece = Object.assign(E.newPiece({ kind: 'I' }), { x: 0, y: E.H - 2 });
+  E.lock(g);
+  assert.strictEqual(g.allClears, 1);
+  assert.strictEqual(g.resets, 0, '全部消えたのは、からにした回数に入れない');
+  // 消したあと盤が残るときは数えない
+  g.board = boardFrom(['X.........', '....XXXXXX']);
+  g.piece = Object.assign(E.newPiece({ kind: 'I' }), { x: 0, y: E.H - 2 });
+  const r = E.lock(g);
+  assert.ok(r.lines >= 1 && !r.allClear);
+  assert.strictEqual(g.allClears, 1);
+  // いっぱいでからにしても増えない
+  const f = E.createGame({ seed: 5, onFull: 'clear' });
+  for (let i = 0; i < 200 && f.resets === 0; i++) E.hardDrop(f);
+  assert.ok(f.resets >= 1);
+  assert.strictEqual(f.allClears, 0);
+  const b = E.restoreGame({ seed: 1 }, { b: E.packBoard(E.emptyBoard()), taken: 3, allClears: 2 });
+  assert.strictEqual(b.allClears, 2);
+  assert.strictEqual(E.restoreGame({ seed: 1 }, { taken: 3, allClears: 'x' }).allClears, 0);
+});
+
 t('小さな回し入れ（出っぱりの側のすみが1つあいている）は、ふつうに消したのと同じ', () => {
   const g = E.createGame({ seed: 1 });
   // 右向きの T を左はしに。うしろ（左）のすみはかべ。出っぱりの側は右下だけうまっている
