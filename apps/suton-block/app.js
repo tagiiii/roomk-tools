@@ -1093,6 +1093,7 @@ function maybeFinishRound(room) {
         lines: num(b?.lines),
         sent: num(b?.sent),
         resets: num(b?.resets),
+        allClears: num(b?.allClears),
         out: b?.out === true,
         outAt: num(b?.outAt),
       };
@@ -1228,6 +1229,7 @@ function renderRoomResult(room) {
     lines: num(r?.lines),
     sent: num(r?.sent),
     resets: num(r?.resets),
+    allClears: num(r?.allClears),
     out: r?.out === true,
     outAt: num(r?.outAt),
   })), mode, full);
@@ -1266,6 +1268,7 @@ function showRanking(rows, mode = 'lines', full = 'out') {
       sub.push('消した段 ' + r.lines);
     }
     if (!(mode === 'battle' && full === 'out')) sub.push('からにした ' + r.resets + '回');
+    sub.push('全部消した ' + r.allClears + '回');
     who.append(makeElement('span', 'sb-rank__name', r.name), makeElement('span', 'sb-rank__sub', sub.join('・')));
     const main = mode === 'battle' ? '送った ' + r.sent + '段' : r.lines + '段';
     li.append(makeElement('span', 'sb-rank__no', rank + '位'), who, makeElement('span', 'sb-rank__lines', main));
@@ -1278,6 +1281,7 @@ function showSoloResult(g) {
   const p = makeElement('p', 'sb-solo-result');
   p.append('消した段 ', makeElement('strong', null, g.lines), document.createElement('br'), '置いたブロック ' + g.pieces + 'こ');
   if (g.onFull === 'clear') p.append(document.createElement('br'), 'からにした ' + g.resets + '回');
+  p.append(document.createElement('br'), '全部消した ' + g.allClears + '回');
   $('resultBody').replaceChildren(p);
   $('btnAgain').hidden = false;
   $('btnResultTop').hidden = false;
@@ -1501,6 +1505,7 @@ function sendBoard(done = false, extra = null) {
     to: state.jamaTo || null, // 選んだ送る相手（ほかの人の画面で「ねらっている人」を数える）
     pieces: g.pieces,
     resets: g.resets,
+    allClears: g.allClears,
     taken: g.taken,
     hold: g.hold || null,
     holdUsed: !!g.holdUsed,

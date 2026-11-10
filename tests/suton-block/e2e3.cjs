@@ -66,6 +66,7 @@ const { check, sleep, text, visible, waitScreen, waitFor, key, fitsHeight, overf
   await P.page.evaluate(() => { window.__realNow = Date.now; Date.now = () => window.__realNow.call(Date) + 130000; });
   await waitScreen(P, 'result');
   check('S13 時間になったら結果', (await text(P, '#resultBody')).includes('消した段'));
+  check('S13b ひとりの結果にも、全部消した回数', (await text(P, '#resultBody')).includes('全部消した 0回'), await text(P, '#resultBody'));
   check('S14 solo-finish を数える', (await stats(P, 'solo-finish')) === 1);
   check('S15 ひとりの結果は「もう一回」「トップへ戻る」', await visible(P, '#btnAgain') && await visible(P, '#btnResultTop') && !(await visible(P, '#resultWait')));
   await P.page.evaluate(() => { Date.now = window.__realNow; });

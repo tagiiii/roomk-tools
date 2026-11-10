@@ -156,10 +156,21 @@ const rankText = (c) => c.page.$$eval('.sb-rank li', (lis) => lis.map((li) => li
   await H.page.click('#btnStartGame');
   await Promise.all([H, B].map((c) => L.waitPlaying(c)));
   check('B27 段の数をくらべるときは「消した段」', (await text(B, '#playLinesLabel')) === '消した段');
+  // 全部消した回数（2026-11-11）: 数え方はしくみのテストで見ているので、ここでは全部消えたことにして、盤→結果に届くかを見る
+  await B.page.evaluate(() => {
+    const E = window.SutonEngine;
+    const orig = E.hardDrop;
+    E.hardDrop = (g) => { E.hardDrop = orig; const r = orig(g); g.allClears += 1; return r; };
+  });
+  await key(B, 'Space');
+  room = await roomWhen(code, (r) => Number(r.boards?.['はる']?.allClears) === 1);
+  check('B27b 全部消した回数を盤といっしょに送る', Number(room.boards['はる'].allClears) === 1);
   await H.page.click('#btnPlayEnd');
   await waitScreen(H, 'result', 8000);
   const ranks3 = await rankText(H);
   check('B28 段の数をくらべる結果にも、からにした回数', ranks3.length === 2 && ranks3.every((t) => /\d+段$/.test(t) && t.includes('からにした 0回')), ranks3);
+  check('B28b 結果に、全部消した回数（からにした回数とは別）', ranks3.some((t) => t.includes('はる') && t.includes('全部消した 1回')) && ranks3.some((t) => t.includes('メンター') && t.includes('全部消した 0回')), ranks3);
+  await shot(H, 'e2e4-result-allclears');
 
   await L.finishAll(server);
 })().catch((e) => { console.error(e); process.exit(1); });

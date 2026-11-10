@@ -156,6 +156,7 @@
       lines: 0,
       pieces: 0,
       resets: 0,
+      allClears: 0,     // 段を消して盤を全部消した回数（「全部消えた」。いっぱいでからにした resets とは別）
       taken: 0,         // 出る順番の列から取り出した数（読み込み直したとき、同じところから続けるため）
       over: false,
       overBy: null,     // おしまいになったわけ（'spawn' = つぎが出る所に入らない / 'top' = 全部が盤より上で置いた / 'jama' = じゃまで見えない段より上へ押し出された）
@@ -287,6 +288,7 @@
     }
     splitField(g, f);
     const allClear = rows.length > 0 && f.every((r) => r.every((c) => !c));
+    if (allClear) g.allClears++;
     const atk = attackOf(g, rows.length, spin, allClear);
     let res;
     if (allAbove && !rows.length) {
@@ -390,6 +392,7 @@
     g.lines = Math.max(0, Number(s.lines) || 0);
     g.pieces = Math.max(0, Number(s.pieces) || 0);
     g.resets = Math.max(0, Number(s.resets) || 0);
+    g.allClears = Math.max(0, Number(s.allClears) || 0);
     g.hold = s.hold && SHAPES[s.hold.kind] ? { kind: s.hold.kind } : null;
     g.holdUsed = !!s.holdUsed;
     g.b2b = s.b2b === true;
