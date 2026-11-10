@@ -133,7 +133,7 @@ const PROGRAM = [
   }));
   check('C1 日本地図（本州・沖縄の2つ）', wx.land === 2 && wx.landLen[0] > 5000 && wx.landLen[1] > 300, wx.landLen);
   check('C2 13都市のカードと点', wx.cards === 13 && wx.dots === 13, wx);
-  check('C3 東京は晴れ 21/10（天気の言葉は出さない）', /東京.*sunny.*21\/10/.test(wx.tokyo || '') && !(wx.tokyo || '').includes('晴れ'), wx.tokyo);
+  check('C3 東京は晴れ 21°・10°（天気の言葉は出さない）', /東京.*sunny.*21°.*10°/.test(wx.tokyo || '') && !(wx.tokyo || '').includes('晴れ'), wx.tokyo);
   check('C4 きみのところは？は地図の中', wx.ask);
   // カードどうしが重ならない
   const overlap = await W.page.evaluate(() => {
@@ -144,6 +144,18 @@ const PROGRAM = [
     return n;
   });
   check('C5 カードと「きみのところは？」が重ならない', overlap === 0, overlap);
+  // カードの中で、気温がしるしの右にあり（横に重ならない）、カードからはみ出さない。2段の気温は上下に分かれる
+  const inCard = await W.page.evaluate(() => {
+    let n = 0;
+    document.querySelectorAll('#watch-stage .wxcard').forEach((g) => {
+      const box = g.querySelector('rect').getBoundingClientRect(), ic = g.querySelector('.ic').getBoundingClientRect();
+      const tps = [...g.querySelectorAll('.tp')];
+      tps.forEach((e) => { const t = e.getBoundingClientRect(); if (t.left < ic.right || t.right > box.right - 2) n++; });
+      if (tps.length === 2 && !(Number(tps[1].getAttribute('y')) - Number(tps[0].getAttribute('y')) >= 22)) n++;
+    });
+    return n;
+  });
+  check('C5b カードの中でしるしと気温が重ならない', inCard === 0, inCard);
   await L.shot(W, 'weather-map', false);
 
   // ── D. プログラム ──
