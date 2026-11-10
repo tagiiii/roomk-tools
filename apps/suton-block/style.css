@@ -171,6 +171,13 @@ button.sb-mini.sb-target { width: 100%; }
 .sb-otherlist li { min-width: 0; }
 .sb-otherlist .sb-target { min-width: 0; }
 .sb-otherlist .sb-target.is-target { background: var(--color-accent-soft); }
+/* 自分をねらっている人の印と、「ねらってきた人みんなに送る」の切りかえ（2026-11-10） */
+.sb-target__aim { position: absolute; bottom: -7px; left: -4px; padding: 0 5px; border-radius: 8px; background: var(--color-warning); color: #fff; font-size: 11px; font-weight: 700; line-height: 16px; }
+.sb-target__aim.is-compact { position: static; flex: none; width: 8px; height: 8px; padding: 0; border-radius: 50%; order: -1; }
+.sb-counter { display: grid; gap: 1px; width: 100%; min-height: 44px; padding: 4px 6px; align-content: center; font: inherit; text-align: left; cursor: pointer; background: var(--color-surface); color: var(--color-text); border: 1px solid var(--color-border); border-radius: var(--radius-sm); }
+.sb-counter.is-on { border-color: var(--color-accent); box-shadow: 0 0 0 1px var(--color-accent); background: var(--color-accent-soft); }
+.sb-counter__main { font-size: 12px; font-weight: 700; color: var(--color-primary); }
+.sb-counter__sub { font-size: 11px; color: var(--color-muted); }
 
 .sb-pad { display: grid; grid-template-columns: repeat(4, 64px); gap: 8px; margin-top: 14px; justify-content: center; }
 .sb-padbtn {
