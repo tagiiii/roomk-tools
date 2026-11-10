@@ -78,7 +78,7 @@ body { background: var(--color-bg); }
 body { background: var(--color-bg); }
 
 .og-start { display: grid; gap: 4px; text-align: center; }
-.og-start .btn { min-height: 52px; font-size: 18px; }
+.og-start .btn { min-height: 56px; font-size: 18px; }
 /* ホストのすること */
 .og-guide { border: 2px dashed var(--color-accent); background: var(--color-accent-soft); }
 .og-guide strong { color: var(--color-primary); }
