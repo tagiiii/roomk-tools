@@ -1,4 +1,4 @@
-// サークルタイム E2E その4: 準備は自動（入力欄はたたむ・4つの準備のようす・午前午後は時刻で）・プログラム（Notion のファイルから・時刻ごと・場所・この日だけ・サムネイル・申し込み制の印は出さない・午後は次の平日）・日本地図の天気・自由タイム（お題・クイズ・ことばあそび・参加者も押せる・続けて押せない・答えを見る）
+// サークルタイム E2E その4: 準備は自動（入力欄はたたむ・4つの準備のようす・午前午後は時刻で）・プログラム（Notion のファイルから・時刻ごと・場所・この日だけ・サムネイル・申し込み制の印は出さない・午後は次の平日）・日本地図の天気・自由タイム（準備で決めたニュースから・つぎのニュース・お題・クイズ・ことばあそび・なし・続けて押せない・答えを見る）
 const L = require('./lib.cjs');
 const { check, sleep } = L;
 
@@ -12,7 +12,7 @@ const PROGRAM = [
 (async () => {
   const server = await L.startServer();
   await L.launch();
-  const H = await L.newClient('host', { program: PROGRAM });
+  const H = await L.newClient('host', { program: PROGRAM, news: L.NEWS_FIX });
   const A = await L.newClient('yui', { viewport: { width: 375, height: 812 } });
   const W = await L.newClient('watch', { viewport: { width: 1280, height: 720 } });
 
@@ -37,57 +37,51 @@ const PROGRAM = [
   await H.page.click('#seg-session button[data-v="pm"]');
   await L.waitText(H, '#prog-head', '明日のプログラム');
   check('A7 午後は明日のプログラム・何の日は出さない', !(await L.visible(H, '#rd-day')) && !(await L.visible(H, '#am-fields')));
+  await H.page.waitForFunction(() => document.querySelectorAll('#game-sel option').length > 3);
+  check('A7c 午後は、チェックインのお題とみんなでゲームを決める欄（自由タイムの欄は出さない）', await L.visible(H, '#topic-in') && (await H.page.inputValue('#topic-in')).length > 3 && await L.visible(H, '#game-sel') && !(await L.visible(H, '#free-pick')) && (await L.text(H, '#game-hk')).length > 3);
   await H.page.click('#seg-session button[data-v="am"]');
   await L.waitText(H, '#prog-status-text', '件を room-K ポータルから');
+  check('A7b 午前は自由タイムのあそびを決める。ニュースがある日はニュースを先にえらんでおく', (await L.text(H, '#topic-status-text')).includes('ニュース3本') && await L.pressed(H, '#free-pick button[data-v="news"]') && (await L.text(H, '#free-pick-help')).includes(L.NEWS_FIX[0].title) && !(await L.visible(H, '#game-sel')));
   await H.page.fill('#host-name', 'たぎ');
   await L.shot(H, 'setup-auto');
   await H.page.click('#btn-create');
   await L.waitScreen(H, 'host');
   const code = (await L.text(H, '#host-code')).trim();
   let room = await L.roomOf(code);
-  check('A8 自由タイムは、あそびを決めずに始まる', !room.free?.mode && room.free?.n === 1);
+  check('A8 自由タイムは、準備で決めたニュースから始まる', room.free?.mode === 'news' && room.free?.n === 1 && room.free.news.title === L.NEWS_FIX[0].title && room.news?.length === 3, room.free);
 
   // ── B. 自由タイム ──
   await L.joinRoom(A, 'ゆい', code);
   await L.openWatch(W, code);
   await L.waitStage(W, '午前のサークルタイム');
   await L.nextMain(H, code);
-  await L.waitStage(W, 'なにしてあそぶ');
-  check('B1 みせる画面に3つのあそびとおまかせ・説明', (await W.page.evaluate(() => document.querySelectorAll('#watch-stage .fr-opt').length)) === 4 && (await W.page.evaluate(() => [...document.querySelectorAll('#watch-stage .fr-opt img')].filter((i) => i.complete && i.naturalWidth > 0).length)) === 4 && (await L.stage(W)).includes('話したい人が話す'));
-  check('B2 時刻と名前の一覧は出さない', !(await L.stage(W)).includes('9:15') && !(await L.stage(W)).includes('ゆい'));
-  check('B3 ホストに自由タイムの操作（つぎ・答えを見るはまだ出さない）', await L.visible(H, '#free-ctrls') && !(await L.visible(H, '#free-ctrls [data-f="show"]')) && !(await L.visible(H, '#free-ctrls [data-f="next"]')));
-  check('B3b 番号は丸の中に丸を入れない', await W.page.evaluate(() => getComputedStyle(document.querySelector('#watch-stage .fr-opt .num')).backgroundColor === 'rgba(0, 0, 0, 0)'));
-  // 参加者は、やりたいもの（おまかせも）を送るだけ。画面は変わらず、だれが何をえらんだかも出ない
-  const K = await L.newClient('sora');
-  await L.joinRoom(K, 'そら', code);
-  await L.waitPlayer(A, 'おまかせ');
-  check('B3c 参加者に3つとおまかせ', (await A.page.evaluate(() => document.querySelectorAll('#player-card [data-act="fwish"]').length)) === 4);
-  await L.shot(W, 'free-choose', false);
-  await A.page.click('#player-card [data-act="fwish"][data-v="quiz"]');
-  await K.page.click('#player-card [data-act="fwish"][data-v="any"]');
-  await L.waitText(H, '#free-wish', 'おまかせ 1');
-  room = await L.roomOf(code);
-  check('B3d 進行役には人数だけ', (await L.text(H, '#free-wish')).includes('クイズ 1') && !(await L.text(H, '#plist')).includes('クイズ') && !(await L.text(H, '#plist')).includes('おまかせ'));
-  check('B3e 押しても画面のあそびは変わらない・名前も出ない', !room.free.mode && (await L.stage(W)).includes('なにしてあそぶ') && !(await L.stage(W)).includes('ゆい') && !(await L.stage(W)).includes('そら'));
-  check('B3f 自分の端末では、えらんだものに印', await L.pressed(A, '#player-card [data-act="fwish"][data-v="quiz"]'));
-  await L.shot(A, 'free-player-choose');
-  // 進行役がえらぶ
+  await L.waitStage(W, L.NEWS_FIX[0].title);
+  const st = await L.stage(W);
+  check('B1 みせる画面にニュースの見出し・紹介・問いかけ・出典（希望をえらぶ画面・話したいの印・やらなくてもOKは出さない）', st.includes(L.NEWS_FIX[0].text) && st.includes(L.NEWS_FIX[0].ask) && st.includes('出典: テスト新聞（11月9日）') && !st.includes('なにしてあそぶ') && !(await W.page.$('#watch-stage .fr-opt')) && !(await W.page.$('#watch-stage .hands-box')) && !st.includes('やらなくても'));
+  check('B2 時刻と名前の一覧は出さない', !st.includes('9:15') && !st.includes('ゆい'));
+  check('B3 ホストに自由タイムの操作（ニュースに印・つぎのニュース・答えを見るは出さない）', await L.visible(H, '#free-ctrls') && await L.pressed(H, '#free-ctrls [data-f="news"]') && !(await L.visible(H, '#free-ctrls [data-f="show"]')) && (await L.text(H, '#free-ctrls [data-f="next"]')) === 'つぎのニュース');
+  await L.waitPlayer(A, L.NEWS_FIX[0].title);
+  check('B3c 参加者に見出しと「くわしく読む」（元の記事）・希望や話したいのボタン・やらなくてもOKはない', (await A.page.getAttribute('#player-card a.p-link', 'href')) === L.NEWS_FIX[0].url && (await A.page.evaluate(() => document.querySelectorAll('#player-card [data-act="fwish"],#player-card [data-act="fhand"],#player-card [data-act="fchat"]').length)) === 0 && !(await L.player(A)).includes('やらなくても'));
+  await L.shot(W, 'free-news', false);
+  await L.shot(A, 'free-player-news');
+  await H.page.click('#free-ctrls [data-f="next"]');
+  room = await L.waitRoom(code, (r) => r.free?.n === 2);
+  await L.waitStage(W, L.NEWS_FIX[1].title);
+  check('B3e 「つぎのニュース」で2本目・問いかけのないものは出さない', room.free.newsAt === 1 && !(await L.stage(W)).includes(L.NEWS_FIX[0].ask));
+  // 進行役が別のあそびに変える
+  await sleep(2700);
   await H.page.click('#free-ctrls [data-f="talk"]');
   room = await L.waitRoom(code, (r) => r.free?.mode === 'talk');
-  await L.waitStage(W, 'チャットに書いた人');
-  check('B3g 進行役が「おしゃべりのお題」にする', room.free.n === 2 && (await L.stage(W)).includes(room.free.topic));
-  await L.waitPlayer(A, '話したい');
-  check('B3h 参加者に「つぎ」「えらびなおす」は出さない', !(await A.page.$('#player-card [data-act="fnext"]')) && !(await L.player(A)).includes('えらびなおす'));
+  await L.waitStage(W, room.free.topic);
+  check('B3g 進行役が「おしゃべりのお題」に変える・話したいの印は出さない', room.free.n === 3 && !(await W.page.$('#watch-stage .hands-box')));
+  await L.waitPlayer(A, room.free.topic);
+  check('B3h 参加者に「つぎ」「えらびなおす」「話したい」は出さない', !(await A.page.$('#player-card [data-act="fnext"]')) && !(await L.player(A)).includes('えらびなおす') && !(await A.page.$('#player-card [data-act="fhand"]')));
   await L.shot(W, 'free-talk', false);
-  await A.page.click('#player-card [data-act="fhand"]');
-  await W.page.waitForFunction(() => document.querySelector('#watch-stage .hands-box')?.textContent.includes('ゆい'));
-  check('B4 参加者の「話したい」が出る', true);
   await sleep(2700);
   await H.page.click('#free-ctrls [data-f="quiz"]');
   await L.waitStage(W, '①');
   room = await L.roomOf(code);
-  check('B5 進行役がクイズに変える', room.free.mode === 'quiz' && room.free.n === 3 && room.free.quiz.c.length >= 2);
-  check('B6 話したいは次のあそびに持ちこさない', !(await L.stage(W)).includes('話したい人'));
+  check('B5 進行役がクイズに変える', room.free.mode === 'quiz' && room.free.n === 4 && room.free.quiz.c.length >= 2);
   await L.waitPlayer(A, room.free.quiz.q.slice(0, 6));
   await A.page.click('#player-card [data-act="fq"][data-v="0"]');
   await W.page.waitForFunction(() => document.querySelector('#watch-stage .fb-c')?.textContent.includes('ゆい'));
@@ -95,7 +89,7 @@ const PROGRAM = [
   // すぐ「つぎ」は押せない
   await H.page.click('#free-ctrls [data-f="next"]');
   await L.waitToast(H, 'ちょっとまってね');
-  check('B8 続けて押すと待ってねと出る', (await L.roomOf(code)).free.n === 3);
+  check('B8 続けて押すと待ってねと出る', (await L.roomOf(code)).free.n === 4);
   await H.page.click('#free-ctrls [data-f="show"]');
   await W.page.waitForFunction(() => !!document.querySelector('#watch-stage .fb-c.ok'));
   room = await L.roomOf(code);
@@ -111,13 +105,14 @@ const PROGRAM = [
   await L.shot(W, 'free-kotoba', false);
   await sleep(2700);
   await H.page.click('#free-ctrls [data-f="next"]');
-  await L.waitRoom(code, (r) => r.free?.n === 5);
+  await L.waitRoom(code, (r) => r.free?.n === 6);
   check('B12 進行役の「つぎ」で入れかわる', true);
   await sleep(2700);
-  await H.page.click('#free-ctrls [data-f="choose"]');
-  await L.waitRoom(code, (r) => !r.free?.mode && r.free?.n === 6);
-  await L.waitText(H, '#free-wish', 'クイズ 0');
-  check('B12b えらぶ画面に戻ると、やりたいはまっさら', (await L.text(H, '#free-wish')).includes('おまかせ 0') && !(await L.pressed(A, '#player-card [data-act="fwish"][data-v="quiz"]').catch(() => false)));
+  await H.page.click('#free-ctrls [data-f="none"]');
+  await L.waitRoom(code, (r) => !r.free?.mode && r.free?.n === 7);
+  await L.waitStage(W, 'ゆっくり過ごそう');
+  await L.waitPlayer(A, 'ゆっくり過ごそう');
+  check('B12b 「なし」にすると、あそびを出さず自由に過ごす画面・つぎは出さない', await L.pressed(H, '#free-ctrls [data-f="none"]') && !(await L.visible(H, '#free-ctrls [data-f="next"]')));
   check('B13 参加者の画面は375pxではみ出ない', (await L.overflow(A)) <= 0);
   await L.shot(A, 'free-player');
 

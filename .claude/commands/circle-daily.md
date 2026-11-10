@@ -1,4 +1,4 @@
-サークルタイム（`apps/circle-time/`）の毎朝のデータ（room-K ポータルのプログラムと「今日は何の日」）を用意してください。
+サークルタイム（`apps/circle-time/`）の毎朝のデータ（room-K ポータルのプログラム・「今日は何の日」・自由タイムのニュース）を用意してください。
 正本: `apps/circle-time/AGENTS.md`「今日は何の日の用意」。返答・報告は日本語。
 
 ページに届けるには main への push が要る（2026-11-09 オーナー判断で、このタスクが `apps/circle-time/daily/` のファイルだけを push する）。
@@ -39,13 +39,30 @@ git worktree add --detach "${TMPDIR:-/tmp}/roomk-circle-daily" origin/main
    node tests/circle-time/daily-check.mjs apps/circle-time/daily/YYYY-MM-DD.json
    ```
    - 子ども向けに合う本当の記念日が1つもない日は、ファイルを作らない（準備の画面は「まだ用意されていません」と出て、手で入れられる）
-6. `apps/circle-time/daily/` の、14日より前の日付のファイル（`.json` と `.program.json`）を消す（このタスクが作ったものだけ。ほかのファイルには触らない）
+5b. 自由タイムのニュース（日本時間のきょうの分だけ。`daily/YYYY-MM-DD.news.json` がもうあり、検査に通るなら作らない）
+   - 前の日〜きょうに出た子ども向けのニュースを探して読む（読むだけ）。NHK「NEWS WEB EASY」・新聞社の子ども向けページ・大手の報道を当たる。なるべく前の日の夕方〜きょうの朝の新しいものにする
+   - **3本** 選ぶ（3本そろわない日は、合うものだけでよい）。選びやすい: 動物・宇宙・科学の発見・季節・食べもの・スポーツの明るい話題・新しい道具や乗りもの・文化やイベント。話して楽しい、正解のないもの
+   - 選ばない: 事件・事故・災害・病気・死・戦争・政治・選挙・宗教・学校・勉強・試験・登校・恋愛・お酒・たばこ・怖い話にかかわるもの、だれかを笑いものにする話、意見が強く分かれる話
+   - `title`（30文字まで）と `text`（140文字まで、2〜3文）は**自分の言葉で書く**。記事の文を写さない。通常表記（漢字まじり）・やさしい言い方・です/ます
+   - **具体的に書く**。どこの（施設・町・国の名前）・だれ／なにが・いつ・どうなったか・数や大きさなど、記事にある固有名詞と事実を入れる。「動物園で」「ある町で」のようにぼかさない（2026-11-10 オーナー「どこの動物園など話が抽象的すぎる」）。見出しにも、できれば名前を入れる
+   - `ask` は MetaLife のチャットで話すきっかけの問い（30文字まで・なくてもよい）。答えたくなる軽いもの（「見てみたい動物はいる？」など）。正解を求めない
+   - `source` は出典の名前（20文字まで。「NHK」「朝日小学生新聞」など）、`url` は読んだ記事（https）、`on` はその記事の日付（「11月9日」）
+   ```json
+   { "date": "2026-11-10",
+     "items": [{ "title": "和歌山のパンダの赤ちゃん、初めて外へ", "text": "和歌山県白浜町のアドベンチャーワールドで8月に生まれたパンダの赤ちゃんが、9日に初めて外の運動場に出ました。体重は約10kgで、木に前足をかける姿も見られました。",
+                 "ask": "見てみたい動物はいる？", "source": "NHK", "url": "https://...", "on": "11月9日" }] }
+   ```
+   ```bash
+   node tests/circle-time/news-check.mjs apps/circle-time/daily/YYYY-MM-DD.news.json
+   ```
+   - 合うニュースが見つからない日は、ファイルを作らない（準備の画面では前の日の分が出るか、ニュースを選べない）
+6. `apps/circle-time/daily/` の、14日より前の日付のファイル（`.json`・`.program.json`・`.news.json`）を消す（このタスクが作ったものだけ。ほかのファイルには触らない）
 7. `apps/circle-time/daily/` だけをコミットして main に push し、一時的な作業ツリーを消す。ほかのファイルは足さない・変えない。変わったファイルがなければコミットしない
    ```bash
    git add -A apps/circle-time/daily
-   git diff --cached --quiet || git commit -m "chore(circle-time): YYYY-MM-DD の今日は何の日とプログラム"
+   git diff --cached --quiet || git commit -m "chore(circle-time): YYYY-MM-DD の今日は何の日・プログラム・ニュース"
    git push origin HEAD:main || { git pull -q --rebase origin main && git push origin HEAD:main; }
    cd ~/dev/roomk-tools && git worktree remove --force "${TMPDIR:-/tmp}/roomk-circle-daily"
    ```
    - push が2回とも通らなければ、その旨を報告に書く（作業ツリーは消してよい。翌朝また作る）
-8. 作った日・プログラムの件数・選んだ記念日・作り話を短く報告する
+8. 作った日・プログラムの件数・選んだ記念日・作り話・選んだニュースの見出しを短く報告する

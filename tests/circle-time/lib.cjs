@@ -67,6 +67,13 @@ function jmaBody(office) {
   ] }, {}]);
 }
 
+// 子ども向けのニュースの差し替え（毎朝のタスクが書く形）
+const NEWS_FIX = [
+  { title: '白浜のパンダの赤ちゃん、初めて外へ', text: '和歌山県白浜町の動物園で8月に生まれたパンダの赤ちゃんが、9日に初めて外の運動場に出ました。体重は約10kgです。', ask: '見てみたい動物はいる？', source: 'テスト新聞', url: 'https://example.com/news/1', on: '11月9日' },
+  { title: '国の宇宙望遠鏡から星の写真', text: '国の宇宙望遠鏡が、約1500光年はなれた星が生まれる場所の写真を送ってきました。', source: 'テスト放送', url: 'https://example.com/news/2', on: '11月9日' },
+  { title: '札幌で初雪', text: '北海道の札幌市で9日の朝、この冬はじめての雪がふりました。去年より5日おそいそうです。', ask: '雪でやりたいことは？', source: 'テスト新聞', url: 'https://example.com/news/3', on: '11月9日' },
+];
+
 let browser;
 const clients = [];
 async function launch() { browser = await chromium.launch({ channel: 'chrome' }); return browser; }
@@ -95,6 +102,12 @@ async function newClient(label, opts = {}) {
     const date = route.request().url().match(/(\d{4}-\d{2}-\d{2})\.program\.json/)[1];
     return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ date, url: 'https://katariba.notion.site/room-K-277e1247489c4bbe979b0322df284a73', items: opts.program }) });
   });
+  // 子ども向けのニュース（毎朝のデータ）。opts.news があれば opts.newsDate（なければきょう）の分だけ返し、ほかは 404
+  await context.route('**/apps/circle-time/daily/*.news.json', (route) => {
+    const date = route.request().url().match(/(\d{4}-\d{2}-\d{2})\.news\.json/)[1];
+    if (!opts.news || date !== (opts.newsDate || jstToday())) return route.fulfill({ status: 404, contentType: 'text/plain', body: 'not found' });
+    return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ date, items: opts.news }) });
+  });
   // プログラムのサムネイル（Notion の公開ページの画像）は外へ取りにいかず、小さな画像を返す
   await context.route('https://katariba.notion.site/image/**', (route) => route.fulfill({ status: 200, contentType: 'image/png', body: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64') }));
   const page = await context.newPage();
@@ -114,6 +127,7 @@ async function newClient(label, opts = {}) {
     const url = (msg.location() || {}).url || '';
     if (/favicon\.ico$/.test(url)) return;
     if (/\/daily\/\d{4}-\d{2}-\d{2}\.json/.test(url) && !opts.daily) return;
+    if (/\/daily\/\d{4}-\d{2}-\d{2}\.news\.json/.test(url)) return; // ニュースはきょう→前の日の順に探すので、ない日の 404 は想定どおり
     if (/\/daily\/\d{4}-\d{2}-\d{2}\.program\.json/.test(url) && !opts.program) return; // プログラムがまだないときの 404 も想定どおり // 今日の分がまだないときの 404 は想定どおり
     if (opts.weatherDown && /jma\.go\.jp/.test(url)) return; // 天気を取れない場面では、取りにいった失敗の表示は想定どおり
     client.errors.push(msg.text() + ' @ ' + url);
@@ -161,6 +175,13 @@ async function createRoom(c, name, opts = {}) {
   if (opts.prog) await c.page.fill('#prog-lines', opts.prog.join('\n'));
   if (opts.note) await c.page.fill('#prog-note', opts.note);
   if (!opts.skipWeatherWait) await waitText(c, '#wx-status-text', opts.weatherDown ? '取れません' : '取りました', 15000);
+  await c.page.waitForFunction(() => document.getElementById('rd-topic').className === 'ok');
+  if (opts.free) await c.page.click(`#free-pick button[data-v="${opts.free}"]`);
+  if ((opts.kind || 'am') === 'pm') {
+    await c.page.waitForFunction(() => document.querySelectorAll('#game-sel option').length > 0);
+    if (opts.game) await c.page.selectOption('#game-sel', opts.game);
+    if (opts.topic) await c.page.fill('#topic-in', opts.topic);
+  }
   await c.page.click('#btn-create');
   await waitScreen(c, 'host');
   await c.page.waitForFunction(() => /^[A-HJ-NP-Z2-9]{6}$/.test(document.querySelector('#host-code').textContent));
@@ -221,5 +242,5 @@ module.exports = {
   T, check, sleep, startServer, rest, roomOf, launch, newClient, gate, open,
   text, waitText, waitNoText, visible, waitVisible, waitHidden, overflow, pressed, waitToast, screenActive, waitScreen, shot,
   createRoom, joinRoom, openWatch, waitRoom, nextMain, goMain, stage, hostStage, player, waitStage, waitPlayer, answerBtn, curStepId, whoIn, finishAll,
-  BASE, OUT, NS, DB, ROOMS, clients, jstToday,
+  BASE, OUT, NS, DB, ROOMS, clients, jstToday, NEWS_FIX,
 };
