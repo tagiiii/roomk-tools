@@ -1,0 +1,32 @@
+{
+  "date": "2026-11-12",
+  "items": [
+    {
+      "title": "千葉のレッサーパンダ「風太」が世界記録に",
+      "text": "千葉市動物公園のレッサーパンダ「風太」が、動物園などでくらすレッサーパンダの中で世界一の長生きとして、ギネス世界記録に認定されることになりました。17日の認定式の日で23歳135日です。これまでの記録はアメリカの21歳265日でした。",
+      "ask": "世界一を目指すなら、何で目指す？",
+      "source": "毎日新聞",
+      "url": "https://news.yahoo.co.jp/articles/f1a446436e5ca0be56268dd76c7f3507bdca1082",
+      "on": "11月10日",
+      "img": { "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d9/Futa_red_panda_Chiba_Zoological_Park_2010_01.jpg/960px-Futa_red_panda_Chiba_Zoological_Park_2010_01.jpg", "credit": "KQuhen", "license": "CC BY-SA 4.0" }
+    },
+    {
+      "title": "幕張メッセで人型ロボットの展示会",
+      "text": "千葉市の幕張メッセで11日、AIを使って動く最新の人型ロボットを集めた展示会が始まりました。日本や海外の30の会社や団体が、自分たちのロボットを出しています。展示会は13日までの3日間です。",
+      "ask": "ロボットに手伝ってほしいことは？",
+      "source": "NHK",
+      "url": "https://news.web.nhk/newsweb/na/nd-20261111de74355",
+      "on": "11月11日",
+      "img": { "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/97/View_of_Makuhari_Messe_from_Messe-Ohashi_Bridge.jpg/960px-View_of_Makuhari_Messe_from_Messe-Ohashi_Bridge.jpg", "credit": "掬茶", "license": "CC BY-SA 3.0" }
+    },
+    {
+      "title": "ズーラシアのオカピの赤ちゃん、名前を投票中",
+      "text": "横浜市のよこはま動物園ズーラシアで、9月3日に生まれたオカピの赤ちゃんの名前を決める投票が23日まで行われています。候補は「ジェマ」「アシャ」「アマニ」「ヘリ」の4つです。赤ちゃんは13日の午前にも見られる予定です。",
+      "ask": "4つの中なら、どの名前がいい？",
+      "source": "よこはま動物園ズーラシア",
+      "url": "https://www.hama-midorinokyokai.or.jp/zoo/zoorasia/details/2026/post-558970.php",
+      "on": "10月23日",
+      "img": { "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b4/Okapi_and_son.jpg/960px-Okapi_and_son.jpg", "credit": "Alan Eng from Brussels, Belgium", "license": "CC BY 2.0" }
+    }
+  ]
+}
