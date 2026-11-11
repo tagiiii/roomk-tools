@@ -603,20 +603,70 @@ function drawMap(box, name, mp, keyId, edit) {
   box.textContent = '';
   const genres = mp ? mp.genres : [];
   const nG = genres.length;
-  // せまい画面では枝を短くして、そのぶん文字を大きく見せる
-  const K = box.clientWidth > 0 && box.clientWidth < 520 ? 0.78 : 1;
-  const R1 = (nG <= 1 ? 130 : nG <= 3 ? 165 : nG <= 6 ? 215 : 280) * K;
-  const nodes = [];  // { x, y, kind, label, icon, key, hw, hh }
-  const lines = [];  // { from, to, kind, key }（from・to は nodes の点）
+  // せまい画面（スマホ）では、放射に広げると文字が小さくなる。上から下へ枝をのばす形にして、文字を実寸で出す
+  const tree = box.clientWidth > 0 && box.clientWidth < 520;
+  const LF = tree ? 16 : 19; // 好きなものの文字の大きさ
+  const leafW = (t) => textW(t, LF) + 28 + (edit ? 24 : 0);
+  const R1 = nG <= 1 ? 130 : nG <= 3 ? 165 : nG <= 6 ? 215 : 280;
+  const nodes = [];  // { x, y, kind, label, icon, key, w, h }
+  const lines = [];  // { from, to, kind, key }（from・to は nodes の点）か { x1, y1, x2, y2, kind, key }
   const me = { x: 0, y: 0, kind: 'me', label: name, key: 'me' };
   const meW = Math.max(96, textW(name, 22) + 36);
+  let treeSize = null;
+  if (tree) {
+    // 名前を左上に置き、その下に幹を1本おろす。ジャンルは幹から右へ、好きなものはジャンルの下に折り返して並べる
+    const W = box.clientWidth;
+    const TRUNK = 26; const GX = 44; const SUB = 54; const LX = 66; const RIGHT = W - 4;
+    me.x = 4 + meW / 2; me.y = 32;
+    let y = 32 + 30 + 34; // 1つめのジャンルのまん中
+    let trunkEnd = 62;
+    genres.forEach((gid) => {
+      const g = genreOf(gid);
+      const gw = textW(g.label, 18) + 62;
+      const gn = { x: GX + gw / 2, y, kind: 'genre', label: g.label, icon: g.icon, key: `g:${gid}`, g, gid };
+      nodes.push(gn);
+      lines.push({ x1: TRUNK, y1: y, x2: GX, y2: y, kind: 'genre', key: `lg:${gid}`, g });
+      trunkEnd = y;
+      const items = ((mp.items && mp.items[gid]) || []).slice();
+      if (edit) items.push(null); // さいごに「＋」を1つ並べる
+      let cx = LX;
+      let rowY = y + 24 + 12 + 19;
+      const rows = [];
+      items.forEach((t) => {
+        const w = t === null ? 40 : leafW(t);
+        if (cx > LX && cx + w > RIGHT) { cx = LX; rowY += 46; }
+        if (!rows.includes(rowY)) rows.push(rowY);
+        nodes.push(t === null
+          ? { x: cx + w / 2, y: rowY, kind: 'plus', label: `${g.label}に足す`, key: `plus:${gid}`, g, gid }
+          : { x: cx + w / 2, y: rowY, kind: 'leaf', label: t, key: `i:${gid}:${t}`, free: !g.items.includes(t), g, gid });
+        cx += w + 8;
+      });
+      if (rows.length) {
+        lines.push({ x1: SUB, y1: y + 24, x2: SUB, y2: rows[rows.length - 1], kind: 'leaf', key: `ls:${gid}`, g });
+        rows.forEach((ry, i) => lines.push({ x1: SUB, y1: ry, x2: LX, y2: ry, kind: 'leaf', key: `lr:${gid}:${i}`, g }));
+        y = rows[rows.length - 1] + 19 + 20 + 24;
+      } else {
+        y += 24 + 16 + 24;
+      }
+    });
+    if (edit && edit.canAdd) {
+      const al = nG ? 'ジャンルを足す' : '好きなジャンルを足す';
+      const aw = textW(al, 17) + 58;
+      nodes.push({ x: GX + aw / 2, y, kind: 'add', label: al, key: 'add' });
+      lines.push({ x1: TRUNK, y1: y, x2: GX, y2: y, kind: 'ghost', key: 'ladd', g: { color: 'currentColor' } });
+      lines.push({ x1: TRUNK, y1: trunkEnd, x2: TRUNK, y2: y, kind: 'ghost', key: 'ladd2', g: { color: 'currentColor' } });
+      y += 24 + 16 + 24;
+    }
+    if (nG) lines.unshift({ x1: TRUNK, y1: 62, x2: TRUNK, y2: trunkEnd, kind: 'trunk', key: 'trunk', g: { color: 'currentColor' } });
+    treeSize = { W, H: Math.max(y - 24 - 16 + 8, 70) };
+  }
   // まん中の名前と重ならない距離（横に並ぶときは幅のぶん遠くする）
   const reach = (a, w, h) => Math.max(R1, Math.min((meW / 2 + w / 2 + 34) / Math.max(0.001, Math.abs(Math.cos(a))), (30 + h / 2 + 34) / Math.max(0.001, Math.abs(Math.sin(a)))));
-  nodes.push(me);
+  nodes.unshift(me);
   const slots = nG + (edit && edit.canAdd ? 1 : 0); // 「＋」も枝の1つとして並べる
   const per = slots ? (Math.PI * 2) / slots : 0;
   const a0 = slots === 2 ? Math.PI : -Math.PI / 2; // 2つのときは左右に広げる
-  genres.forEach((gid, gi) => {
+  if (!tree) genres.forEach((gid, gi) => {
     const g = genreOf(gid);
     const a = a0 + per * gi;
     const gr = reach(a, textW(g.label, 18) + 62, 48);
@@ -631,7 +681,7 @@ function drawMap(box, name, mp, keyId, edit) {
     const twoRows = k > 6;
     items.forEach((t, i) => {
       const la = k === 1 ? a : a + spread * (i / (k - 1) - 0.5);
-      const r = (124 + (twoRows && i % 2 ? 64 : 0)) * (K < 1 ? 0.85 : 1);
+      const r = 124 + (twoRows && i % 2 ? 64 : 0);
       const ln = t === null
         ? { x: gn.x + Math.cos(la) * (r - 24), y: gn.y + Math.sin(la) * (r - 24), kind: 'plus', label: `${g.label}に足す`, key: `plus:${gid}`, move: true, g, gid }
         : { x: gn.x + Math.cos(la) * r, y: gn.y + Math.sin(la) * r, kind: 'leaf', label: t, key: `i:${gid}:${t}`, free: !g.items.includes(t), move: true, g, gid };
@@ -641,7 +691,7 @@ function drawMap(box, name, mp, keyId, edit) {
   });
 
   // まだ何も選んでいないときは、広がる先をうすく見せる
-  if (edit && edit.canAdd) {
+  if (!tree && edit && edit.canAdd) {
     const a = a0 + per * nG;
     const al = nG ? 'ジャンルを足す' : '好きなジャンルを足す';
     const ar = reach(a, textW(al, 17) + 58, 48);
@@ -649,7 +699,7 @@ function drawMap(box, name, mp, keyId, edit) {
     nodes.push(an);
     lines.push({ from: me, to: an, kind: 'ghost', key: 'ladd', g: { color: 'currentColor' } });
   }
-  if (!nG && !edit) {
+  if (!tree && !nG && !edit) {
     [-150, -30, 90].forEach((deg, i) => {
       const a = (deg * Math.PI) / 180;
       const gh = { x: Math.cos(a) * 130, y: Math.sin(a) * 130, kind: 'ghost', label: '', key: `ghost${i}` };
@@ -665,11 +715,11 @@ function drawMap(box, name, mp, keyId, edit) {
     else if (n.kind === 'ghost') { n.w = 84; n.h = 44; }
     else if (n.kind === 'add') { n.w = textW(n.label, 17) + 58; n.h = 48; }
     else if (n.kind === 'plus') { n.w = 44; n.h = 44; }
-    else { n.w = textW(n.label, 19) + 28 + (edit ? 24 : 0); n.h = 38; }
+    else { n.w = leafW(n.label); n.h = 38; }
   });
   // 重なった葉を少しずつ押しのける（まん中とジャンルは動かさない）
   const GAP = 10;
-  for (let it = 0; it < 80; it += 1) {
+  for (let it = 0; it < (tree ? 0 : 80); it += 1) {
     let moved = false;
     for (let i = 0; i < nodes.length; i += 1) {
       for (let j = i + 1; j < nodes.length; j += 1) {
@@ -702,11 +752,13 @@ function drawMap(box, name, mp, keyId, edit) {
   });
   const pad = 16;
   // 点が少ないうちに大きくなりすぎないよう、図の広さに下限を置く
-  const MIN_W = K < 1 ? 400 : 600; const MIN_H = K < 1 ? 300 : 340;
+  const MIN_W = 600; const MIN_H = 340;
   if (maxX - minX < MIN_W) { const c = (minX + maxX) / 2; minX = c - MIN_W / 2; maxX = c + MIN_W / 2; }
   if (maxY - minY < MIN_H) { const c = (minY + maxY) / 2; minY = c - MIN_H / 2; maxY = c + MIN_H / 2; }
   const root = svg('svg', {
-    viewBox: `${minX - pad} ${minY - pad} ${maxX - minX + pad * 2} ${maxY - minY + pad * 2}`,
+    // 上から下の形は、1目盛り＝1px（文字が実寸で出る）
+    viewBox: treeSize ? `0 0 ${treeSize.W} ${treeSize.H}` : `${minX - pad} ${minY - pad} ${maxX - minX + pad * 2} ${maxY - minY + pad * 2}`,
+    class: treeSize ? 'mp--tree' : 'mp--radial',
     role: edit ? 'group' : 'img',
     'aria-label': `${name}の好きなものマップ`,
   });
@@ -716,7 +768,7 @@ function drawMap(box, name, mp, keyId, edit) {
 
   const gLines = svg('g', { class: 'mp-lines' });
   lines.forEach((l) => {
-    gLines.appendChild(svg('line', { x1: l.from.x, y1: l.from.y, x2: l.to.x, y2: l.to.y, class: `mp-line mp-line--${l.kind}${isNew(l.key) ? ' is-new' : ''}`, style: `--c:${l.g.color}` }));
+    gLines.appendChild(svg('line', { x1: l.from ? l.from.x : l.x1, y1: l.from ? l.from.y : l.y1, x2: l.to ? l.to.x : l.x2, y2: l.to ? l.to.y : l.y2, class: `mp-line mp-line--${l.kind}${isNew(l.key) ? ' is-new' : ''}`, style: `--c:${l.g.color}` }));
   });
   root.appendChild(gLines);
 
@@ -1258,6 +1310,16 @@ function resumeFromSession() {
     }
   });
 }
+
+// 画面の幅が変わったら（スマホを横にしたときなど）、マップを描きなおす
+let resizeTimer = null;
+let lastWidth = window.innerWidth;
+window.addEventListener('resize', () => {
+  if (window.innerWidth === lastWidth) return; // 高さだけの変化（キーボードが出た）は描きなおさない
+  lastWidth = window.innerWidth;
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(render, 150);
+});
 
 showScreen('top');
 const roomParam = new URLSearchParams(location.search).get('room');

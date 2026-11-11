@@ -139,11 +139,41 @@ async function waitRoom(code, test, timeout = 5000) {
   for (const [i, g] of ['食べもの', 'おやつ', '音楽', '乗りもの', 'おでかけ'].entries()) {
     await node(mio, i === 0 ? '好きなジャンルを足す' : 'ジャンルを足す').click();
     await pickGenre(mio, g);
-    if (i === 0) { await pickItem(mio, 'ラーメン'); await L.shot(mio, '06-pop-375', false); }
+    if (i === 0) {
+      for (const t of ['ラーメン', 'お寿司', 'カレー', 'ハンバーグ']) await pickItem(mio, t);
+      // いちばん長い「自分で書く」（12文字）も、はみ出さずに入る
+      await mio.page.locator('#p-items .sm-item--add').click();
+      await mio.page.fill('#p-free-input', 'あいうえおかきくけこさし');
+      await mio.page.press('#p-free-input', 'Enter');
+      await mio.page.waitForFunction(() => [...document.querySelectorAll('#p-items .sm-item')].some((b) => b.textContent.includes('あいうえおかきくけこさし')));
+      await L.shot(mio, '06-pop-375', false);
+    }
     await mio.page.click('#p-pop-close');
   }
   check('max: add node hidden at the limit', (await mio.page.locator('#p-map g.mp-node--add').count()) === 0);
   check('pick 375: no overflow', (await L.overflow(mio)) <= 0);
+  // スマホの幅では、上から下へ枝をのばす形で、文字が実寸（16px以上）で出る
+  const phone = await mio.page.evaluate(() => {
+    const svg = document.querySelector('#p-map svg');
+    const box = svg.getBoundingClientRect();
+    const vb = svg.viewBox.baseVal;
+    const rects = [...svg.querySelectorAll('.mp-node')].map((n) => n.getBoundingClientRect());
+    const leaf = svg.querySelector('.mp-leaf__text');
+    const plus = svg.querySelector('.mp-node--plus').getBoundingClientRect();
+    return {
+      tree: svg.classList.contains('mp--tree'),
+      scale: box.width / vb.width,
+      leafPx: parseFloat(getComputedStyle(leaf).fontSize) * (box.width / vb.width),
+      genrePx: parseFloat(getComputedStyle(svg.querySelector('.mp-genre__text')).fontSize) * (box.width / vb.width),
+      inside: rects.every((r) => r.left >= box.left - 1 && r.right <= box.right + 1 && r.bottom <= box.bottom + 1),
+      plusSize: Math.min(plus.width, plus.height),
+    };
+  });
+  check('phone: top-down layout', phone.tree, phone);
+  check('phone: text at real size', phone.leafPx >= 15.5 && phone.genrePx >= 17.5 && Math.abs(phone.scale - 1) < 0.03, phone);
+  check('phone: every node inside the map', phone.inside, phone);
+  check('phone: plus is easy to tap', phone.plusSize >= 38, phone);
+  check('pc: radial layout stays', await yu.page.evaluate(() => { const v = document.querySelector('#p-map svg, #p-sent-map svg'); return !!v && v.classList.contains('mp--radial'); }));
   await L.shot(mio, '07-map-375');
 
   // ゆう: 完成 → 読み込み直しても、できあがりのまま
