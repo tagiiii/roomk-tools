@@ -80,16 +80,36 @@ const state = {
 const $ = (id) => document.getElementById(id);
 
 /* ── 効果音（はじめは切。この端末だけで鳴る。2026-11-09 フィードバックボードの要望でオーナーが決めた） ──
-   鳴るのは、自分がブロックを置いたときと段を消したときだけ。いっぱい・ここまで・じゃまが来たときは鳴らさない */
+   2026-11-11 フィードバックボードの「回したとき・ブロックが送られてきたときなどの音を」で、鳴る所を増やした:
+   動かす・回す・とっておく・置く・すとん・段を消す（れんぞくで高くなる）・回し入れ・全部消えた・じゃまを送った・
+   じゃまが来た・じゃまが盤に入った・カウントダウン・時間になった。
+   いっぱい・ここまで・からにしたときは鳴らさない（失敗の音は作らない）。
+   音は sfx/{名前}.mp3（SFX_FILES にある名前だけ読む）。読めていない音は Web Audio の合成音（SYNTH）で鳴らす */
 const SFX_KEY = 'sutonblock:sfx';
-const sfx = { on: false, ac: null, out: null };
+const sfx = { on: false, ac: null, out: null, noise: null, buf: {}, loading: false };
 try { sfx.on = localStorage.getItem(SFX_KEY) === '1'; } catch (e) { /* 使えなければ切のまま */ }
 const SFX_GAIN = 0.25;
+// sfx/ に置いた音の名前（SYNTH と同じ名前）と、それぞれの大きさ。ファイルを足したら ?v= も上げる
+const SFX_FILES = {};
+const SFX_VER = '20261111d';
 
 function syncSfxInputs() {
   ['soloSfx', 'roomSfx'].forEach((name) => {
     const el = document.querySelector('input[name="' + name + '"][value="' + (sfx.on ? 'on' : 'off') + '"]');
     if (el) el.checked = true;
+  });
+}
+
+// 音のファイルは、入にした端末だけが読む（切の人は通信しない）
+function loadSamples() {
+  if (sfx.loading || !sfx.ac) return;
+  sfx.loading = true;
+  Object.keys(SFX_FILES).forEach((name) => {
+    fetch('sfx/' + name + '.mp3?v=' + SFX_VER)
+      .then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(String(r.status)))))
+      .then((data) => sfx.ac.decodeAudioData(data))
+      .then((buf) => { sfx.buf[name] = buf; })
+      .catch(() => { /* 読めなければ合成音のまま */ });
   });
 }
 
@@ -103,19 +123,24 @@ function ensureAudio() {
       sfx.out = sfx.ac.createGain();
       sfx.out.gain.value = SFX_GAIN;
       sfx.out.connect(sfx.ac.destination);
+      loadSamples();
     }
     if (sfx.ac.state !== 'running') sfx.ac.resume().catch(() => {});
   } catch (e) { /* 鳴らせなくても遊べる */ }
 }
 
-// 短くやわらかい音を1つ（when は今からの秒）
-function tone(freq, when, level, decay) {
+// 短くやわらかい音を1つ（when は今からの秒。to があれば、その高さへすべらせる）
+function tone(freq, when, level, decay, type = 'sine', to = 0) {
   const ac = sfx.ac;
   const t = ac.currentTime + when;
   const o = ac.createOscillator();
   const g = ac.createGain();
-  o.type = 'sine';
+  o.type = type;
   o.frequency.value = freq;
+  if (to) {
+    o.frequency.setValueAtTime(freq, t);
+    o.frequency.exponentialRampToValueAtTime(to, t + decay);
+  }
   g.gain.setValueAtTime(0.0001, t);
   g.gain.exponentialRampToValueAtTime(level, t + 0.005);
   g.gain.exponentialRampToValueAtTime(0.0001, t + decay);
@@ -124,13 +149,92 @@ function tone(freq, when, level, decay) {
   o.stop(t + decay + 0.02);
 }
 
-// 置いた: 低く小さく。段を消した: 段の数だけ上がる音。4段・全部消えた: 4つの音で上がる
+// ざらっとした音を1つ（置いた手ざわり・送る風の音に使う。from から to へ、通す高さをすべらせる）
+function hiss(when, level, decay, kind, from, to = 0) {
+  const ac = sfx.ac;
+  if (!sfx.noise) {
+    sfx.noise = ac.createBuffer(1, ac.sampleRate, ac.sampleRate);
+    const d = sfx.noise.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  }
+  const t = ac.currentTime + when;
+  const src = ac.createBufferSource();
+  const f = ac.createBiquadFilter();
+  const g = ac.createGain();
+  src.buffer = sfx.noise;
+  f.type = kind;
+  f.frequency.setValueAtTime(from, t);
+  if (to) f.frequency.exponentialRampToValueAtTime(to, t + decay);
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(level, t + 0.01);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + decay);
+  src.connect(f).connect(g).connect(sfx.out);
+  src.start(t, Math.random() * 0.5);
+  src.stop(t + decay + 0.02);
+}
+
+// 段を消した音: 段の数だけ上がる音（1オクターブ上を薄く重ねる）。rate はれんぞくで上げる高さ
 const SFX_NOTES = [523, 659, 784, 1047];
-function playSfx(kind, lines = 0) {
-  if (!sfx.on || !sfx.ac || sfx.ac.state !== 'running') return;
-  if (kind === 'place') { tone(196, 0, 0.35, 0.07); return; }
-  const n = kind === 'big' ? 4 : Math.min(3, Math.max(1, lines));
-  for (let i = 0; i < n; i++) tone(SFX_NOTES[i], i * 0.07, 0.5, 0.14);
+function chime(n, rate, sparkle = false) {
+  for (let i = 0; i < n; i++) {
+    tone(SFX_NOTES[i] * rate, i * 0.07, 0.5, 0.16);
+    tone(SFX_NOTES[i] * 2 * rate, i * 0.07, 0.1, 0.1, 'triangle');
+  }
+  if (sparkle) {
+    tone(1319 * rate, n * 0.07, 0.3, 0.3);
+    tone(1568 * rate, n * 0.07 + 0.07, 0.3, 0.4);
+  }
+}
+
+// 合成音（ファイルが読めていない音はこれで鳴る）。失敗の音は作らない
+const SYNTH = {
+  move: () => tone(660, 0, 0.1, 0.03, 'triangle'),
+  rotate: () => tone(740, 0, 0.2, 0.06, 'triangle', 1100),
+  hold: () => { tone(392, 0, 0.22, 0.07, 'triangle'); tone(587, 0.06, 0.22, 0.1, 'triangle'); },
+  place: () => tone(196, 0, 0.35, 0.07),
+  drop: () => { tone(196, 0, 0.5, 0.11, 'sine', 90); hiss(0, 0.25, 0.06, 'lowpass', 900, 200); },
+  line1: (rate) => chime(1, rate),
+  line2: (rate) => chime(2, rate),
+  line3: (rate) => chime(3, rate),
+  line4: (rate) => chime(4, rate),
+  allclear: (rate) => chime(4, rate, true),
+  spin: (rate) => { tone(988 * rate, 0, 0.3, 0.09, 'triangle', 1480 * rate); tone(1480 * rate, 0.08, 0.3, 0.2); },
+  send: () => hiss(0, 0.3, 0.2, 'bandpass', 500, 2600),
+  jamain: () => { tone(147, 0, 0.4, 0.12, 'triangle'); tone(110, 0.1, 0.4, 0.16, 'triangle'); },
+  jamaup: () => { tone(82, 0, 0.5, 0.22, 'sine', 55); hiss(0, 0.3, 0.2, 'lowpass', 500, 120); },
+  count: () => tone(440, 0, 0.35, 0.12),
+  go: () => { tone(880, 0, 0.4, 0.3); tone(1760, 0, 0.08, 0.2, 'triangle'); },
+  finish: () => { tone(784, 0, 0.35, 0.2); tone(659, 0.14, 0.35, 0.2); tone(1047, 0.28, 0.4, 0.45); },
+};
+
+// れんぞくで上げる高さ（1回ごとに半音。1オクターブまで）
+const SFX_COMBO_MAX = 12;
+const comboRate = (combo) => Math.pow(2, Math.min(SFX_COMBO_MAX, Math.max(0, combo || 0)) / 12);
+
+// 音を1つ鳴らす（name は SYNTH の名前。when は今からの秒）
+function playSfx(name, rate = 1, when = 0) {
+  if (!sfx.on || !sfx.ac || sfx.ac.state !== 'running' || !SYNTH[name]) return;
+  const buf = sfx.buf[name];
+  if (!buf) {
+    if (when) setTimeout(() => { if (sfx.on && sfx.ac.state === 'running') SYNTH[name](rate); }, when * 1000);
+    else SYNTH[name](rate);
+    return;
+  }
+  const src = sfx.ac.createBufferSource();
+  const g = sfx.ac.createGain();
+  src.buffer = buf;
+  src.playbackRate.value = rate;
+  g.gain.value = SFX_FILES[name] || 1;
+  src.connect(g).connect(sfx.out);
+  src.start(sfx.ac.currentTime + when);
+}
+
+// 置いたとき: 段を消したら消した段の数の音（れんぞくで高く）、消さなければ置いた音（すとんは重い音）
+function lockSfx(res) {
+  if (!res.lines) { playSfx(res.dist !== undefined ? 'drop' : 'place'); return; }
+  const rate = comboRate(res.combo);
+  playSfx(res.allClear ? 'allclear' : 'line' + Math.min(4, res.lines), rate);
+  if (res.spin === 'spin' && !res.allClear) playSfx('spin', rate, 0.05);
 }
 
 function setSfx(on) {
@@ -140,7 +244,7 @@ function setSfx(on) {
   if (on) {
     ensureAudio();
     // 入にしたら、どんな音か1回だけ聞かせる
-    setTimeout(() => playSfx('lines', 2), 60);
+    setTimeout(() => playSfx('line2'), 60);
   }
 }
 
@@ -1404,7 +1508,7 @@ function afterLock(res) {
     void el.offsetWidth;
     el.classList.add('sb-lines--up');
   };
-  playSfx(res.lines === 4 || res.allClear ? 'big' : res.lines ? 'lines' : 'place', res.lines);
+  lockSfx(res);
   if (res.lines && Array.isArray(res.rows)) fxClear(res.rows);
   if (res.lines && !R.battle) bump(g.lines);
   // 4段いっしょに消したら一言（対戦は attackNote・ひとりは techParts の中で出す）
@@ -1437,6 +1541,7 @@ function afterLock(res) {
       R.pending = 0;
       const gr = E.addGarbage(g, rows, Math.floor(Math.random() * E.W));
       if (gr.cleared) res = { ...res, cleared: true };
+      else playSfx('jamaup', 1, 0.06);
     }
     renderJama();
   } else if (R.jama) {
@@ -1452,6 +1557,7 @@ function afterLock(res) {
       R.pending = 0;
       const gr = E.addGarbage(g, rows, Math.floor(Math.random() * E.W));
       if (gr.cleared) res = { ...res, cleared: true };
+      else playSfx('jamaup', 1, 0.06);
     }
     renderJama();
   }
@@ -1631,6 +1737,7 @@ function otherEl(name) {
   return [...document.querySelectorAll('#others [data-name], #othersList [data-name]')].find((el) => el.dataset.name === name && el.offsetParent !== null) || null;
 }
 function sendFx(tos, rows) {
+  playSfx('send', 1, 0.08);
   const from = $('board').getBoundingClientRect();
   tos.forEach((name) => {
     const hit = () => {
@@ -1699,6 +1806,7 @@ function receiveJama(room, R) {
   run.pending = Math.min(run.pending + added, E.H);
   // じゃまが来たら、来るじゃまの数をはずませる
   if (added > 0) {
+    playSfx('jamain');
     const jel = $('playJama');
     jel.classList.remove('sb-lines--up');
     void jel.offsetWidth;
@@ -1751,13 +1859,17 @@ function tick() {
   const cd = $('countdown');
   if (now < R.startAt) {
     cd.hidden = false;
-    cd.textContent = String(Math.min(3, Math.ceil((R.startAt - now) / 1000)));
+    const count = Math.min(3, Math.ceil((R.startAt - now) / 1000));
+    cd.textContent = String(count);
+    if (R.counted !== count) { R.counted = count; playSfx('count'); }
     R.lastFall = now;
     draw();
     R.raf = requestAnimationFrame(tick);
     return;
   }
   cd.hidden = true;
+  // カウントダウンを見たあとだけ、はじまりの音（読み込み直して途中から続けるときは鳴らさない）
+  if (R.counted) { R.counted = 0; playSfx('go'); }
   if (R.endAt) {
     if (R.showTimer) {
       const t = $('playTimer');
@@ -1795,6 +1907,7 @@ function finishRun() {
   R.done = true;
   stopRepeat();
   draw();
+  if (!state.game.over) playSfx('finish');
   if (state.role === 'solo') {
     const g = state.game;
     stopRun();
@@ -1812,12 +1925,18 @@ function finishRun() {
 }
 
 // ── 操作 ──
+// 動かせた・回せたときだけ鳴らす（かべで動かなかったときは鳴らさない）
+function moveSfx(moved, name) {
+  if (moved) playSfx(name);
+  afterMove(moved);
+}
+
 function act(name) {
   if (!playing()) return;
   const g = state.game;
   switch (name) {
-    case 'left': afterMove(E.move(g, -1, 0)); break;
-    case 'right': afterMove(E.move(g, 1, 0)); break;
+    case 'left': moveSfx(E.move(g, -1, 0), 'move'); break;
+    case 'right': moveSfx(E.move(g, 1, 0), 'move'); break;
     case 'down':
       if (E.move(g, 0, 1)) { state.run.lastFall = nowOf(); afterMove(true); }
       else if (state.run.lockAt === null) state.run.lockAt = nowOf() + LOCK_MS;
@@ -1830,11 +1949,12 @@ function act(name) {
       afterLock(res);
       break;
     }
-    case 'rotr': afterMove(E.rotate(g, 1)); break;
-    case 'rotl': afterMove(E.rotate(g, -1)); break;
+    case 'rotr': moveSfx(E.rotate(g, 1), 'rotate'); break;
+    case 'rotl': moveSfx(E.rotate(g, -1), 'rotate'); break;
     case 'hold': {
       const res = E.hold(g);
       if (!res) break;
+      playSfx('hold');
       const R = state.run;
       R.lockAt = null; R.resets = 0; R.lastFall = nowOf();
       if (res.cleared) note('盤がいっぱいになったので、からにしたよ。つづけよう', 1800);

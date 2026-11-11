@@ -403,14 +403,15 @@ t('1段0・2段1・3段2・4段4。ふつうに消すと、つづけて大技が
   assert.strictEqual(E.lock(g).attack, 4, '切れたあとの4段は4のまま');
 });
 
-t('れんぞくで消すと 0・0・1・1・2…と足す（消さずに置くともどる。つづけて大技はのこる）', () => {
+t('れんぞくで消すと 0・0・1・1・1・1・1・2…と足す（8回目からは2。消さずに置くともどる。つづけて大技はのこる）', () => {
   const g = E.createGame({ seed: 1 });
   const got = [];
-  for (let i = 0; i < 5; i++) {
+  for (let i = 0; i < 12; i++) {
     g.board = boardFrom(wellRows(2, 0)); g.piece = iDown(0);
     got.push(E.lock(g).attack);
   }
-  assert.deepStrictEqual(got, [1, 1, 2, 2, 3]);
+  // 2段消し（1）＋れんぞく。12回つづけても、れんぞくのぶんは 0+0+1+1+1+1+1+2+2+2+2+2=15
+  assert.deepStrictEqual(got, [1, 1, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3]);
   g.board = boardFrom(wellRows(4, 0)); g.piece = iDown(0); E.lock(g);
   g.board = E.emptyBoard(); g.piece = iDown(0);
   const r = E.lock(g);
