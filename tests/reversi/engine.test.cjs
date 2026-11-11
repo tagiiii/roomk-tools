@@ -77,5 +77,35 @@ for (let t = 0; t < 300; t += 1) {
 }
 ok(E.autoMove(E.initialBoard().replace(/b/g, 'w'), 'b') === -1, '置けなければ -1');
 
+// 対戦相手の CPU の強さ（2026-11-11）
+for (const level of ['weak', 'normal', 'strong']) {
+  for (let t = 0; t < (level === 'strong' ? 5 : 100); t += 1) {
+    let g = E.newGame();
+    while (!g.over) {
+      const i = E.cpuMove(g.board, g.turn, level);
+      ok(E.flipsAt(g.board, i, g.turn).length > 0, 'CPU（' + level + '）の手は置ける場所');
+      g = E.play(g, i);
+    }
+  }
+}
+{
+  // つよいは、ふつうに勝ち越す（黒白を入れかえて10局ずつ）
+  let strongWins = 0;
+  for (let t = 0; t < 20; t += 1) {
+    const strong = t % 2 ? 'w' : 'b';
+    let g = E.newGame();
+    while (!g.over) g = E.play(g, E.cpuMove(g.board, g.turn, g.turn === strong ? 'strong' : 'normal'));
+    if (E.winner(g.board) === strong) strongWins += 1;
+  }
+  ok(strongWins >= 15, 'つよいはふつうに勝ち越す', strongWins);
+  // 角が取れる局面では、つよいは角を取る（初期局面に角が取れる形を作る）
+  const a = Array(64).fill('.');
+  a[9] = 'w'; a[18] = 'b'; a[27] = 'w'; a[36] = 'b';
+  const board = a.join('');
+  ok(E.flipsAt(board, 0, 'b').length > 0, '角の前提');
+  ok(E.cpuMove(board, 'b', 'strong') === 0, 'つよいは角を取る');
+}
+ok(E.cpuMove(E.initialBoard().replace(/b/g, 'w'), 'b', 'strong') === -1, '置けなければ -1（つよい）');
+
 console.log(fail ? 'FAIL' : 'OK', pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);

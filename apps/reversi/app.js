@@ -1218,6 +1218,7 @@ function loadLocal() {
       names: { b: String(saved.names?.b || '').slice(0, 8), w: String(saved.names?.w || '').slice(0, 8) },
       aid: normAid(saved.aid),
       cpu: cpuOf(saved.cpu),
+      level: levelOf(saved.level),
       // 読み込み直したら、いまの番の時間は最初から数えなおす
       game: { ...game, turnAt: Date.now() },
     };
@@ -1235,11 +1236,13 @@ function clearLocal() {
 }
 
 /* ── CPU と対戦する（1台の画面だけ。2026-11-11 フィードバックボード「人とCPUで対戦したい」）──
-   CPU の色を選ぶと、その色は CPU が置く（名前は「CPU」）。置き方は時間切れの手と同じ autoMove（強すぎず、でたらめすぎない）。
+   CPU の色を選ぶと、その色は CPU が置く（名前は「CPU」）。置き方は選んだ強さの cpuMove（「ふつう」は時間切れの手と同じ autoMove）。
    CPU の番は CPU_MS 待ってから置く（どこに置いたか見えるように）。CPU の番は時間を数えない */
 const CPU_NAME = 'CPU';
 const CPU_MS = 900;
 const cpuOf = (v) => (v === 'b' || v === 'w' ? v : null);
+// CPU の強さ（よわい・ふつう・つよい）。はじめは「ふつう」（時間切れの手と同じ置き方）
+const levelOf = (v) => (v === 'weak' || v === 'strong' ? v : 'normal');
 const cpuTurnKey = (L) => L.game.ply + ':' + L.game.hist.length + ':' + L.game.turnAt;
 function stopCpu() {
   clearTimeout(state.cpuTimer);
@@ -1261,6 +1264,7 @@ function scheduleCpu() {
   }, CPU_MS);
 }
 const localVs = () => cpuOf(document.querySelector('input[name="localVs"]:checked')?.value);
+const localLevel = () => levelOf(document.querySelector('input[name="localLevel"]:checked')?.value);
 // CPU の色の名前の欄は、使わないので押せなくする
 function syncLocalVs() {
   const cpu = localVs();
@@ -1271,11 +1275,14 @@ function syncLocalVs() {
     if (cpu === c) input.value = '';
   });
   $('btnLocalSwap').disabled = !!cpu;
+  $('localLevelBox').hidden = !cpu;
 }
 
-function openLocalSetup(names, moveTime = 0, cpu = null) {
+function openLocalSetup(names, moveTime = 0, cpu = null, level = 'normal') {
   const radio = document.querySelector('input[name="localVs"][value="' + (cpuOf(cpu) || '') + '"]');
   if (radio) radio.checked = true;
+  const lv = document.querySelector('input[name="localLevel"][value="' + levelOf(level) + '"]');
+  if (lv) lv.checked = true;
   $('localNameB').value = cpu === 'b' ? '' : names?.b || '';
   $('localNameW').value = cpu === 'w' ? '' : names?.w || '';
   syncLocalVs();
@@ -1295,7 +1302,7 @@ function startLocal() {
   const nameW = cpu === 'w' ? CPU_NAME : $('localNameW').value.trim().slice(0, 8);
   state.role = 'local';
   stopCpu();
-  state.local = { names: { b: nameB, w: nameW }, aid: normAid(state.localAid), cpu, game: newLocalGame($('localMoveTime').value) };
+  state.local = { names: { b: nameB, w: nameW }, aid: normAid(state.localAid), cpu, level: localLevel(), game: newLocalGame($('localMoveTime').value) };
   saveLocal();
   window.RoomkStats?.count('local-start');
   showScreen('game');
@@ -1306,7 +1313,8 @@ function startLocal() {
 // i に置く。auto のときは時間切れの代わりの手、bot のときは対戦相手の CPU の手（どちらも CPU が選ぶ）
 function placeLocal(i, auto = false, bot = false) {
   const L = state.local;
-  const at = auto || bot ? E.autoMove(L.game.board, L.game.turn) : i;
+  // 時間切れの代わりの手はいつも「ふつう」。対戦相手の CPU は選んだ強さ
+  const at = bot ? E.cpuMove(L.game.board, L.game.turn, levelOf(L.level)) : auto ? E.autoMove(L.game.board, L.game.turn) : i;
   const ng = E.play(L.game, at);
   if (!ng) return;
   const first = ng.over && !L.game.ended;
@@ -1891,6 +1899,7 @@ $('btnRelobby').addEventListener('click', () => {
     const names = state.local.names;
     const moveTime = state.local.game.moveTime;
     const cpu = state.local.cpu;
+    const level = state.local.level;
     state.localAid = state.local.aid;
     clearLocal();
     state.local = null;
@@ -1898,7 +1907,7 @@ $('btnRelobby').addEventListener('click', () => {
     stopClock();
     stopCpu();
     resetBoxes();
-    openLocalSetup(names, moveTime, cpu);
+    openLocalSetup(names, moveTime, cpu, level);
   } else if (state.role === 'host') {
     backToLobby();
   }
