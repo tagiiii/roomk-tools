@@ -256,6 +256,8 @@ function connectToRoom(role, nickname, code, ref) {
           return { ...room, players: { ...(room.players || {}), [nickname]: { isHost: false, uid, joinedAt: now() } } };
         });
       }
+      // 通信が切れているあいだに選んだものは、届いていないことがある。つながりなおしたら、いまのマップを送りなおす
+      if (state.roomRef === ref) resendDrafts();
     } catch (error) {
       console.warn('[suki-mono-map] presence recovery failed', error);
       toast('再接続に失敗しました。ページを読み直してね');
@@ -859,8 +861,17 @@ async function pushMap(name) {
     });
   } catch (error) {
     console.warn('[suki-mono-map] map send failed', error);
-    toast('うまく送れなかったよ。もう一度押してみてね');
+    // 通信が切れて止まった分は、つながりなおしたときに送りなおす（resendDrafts）ので、ここでは知らせない
+    if (error?.message !== 'disconnect') toast('うまく送れなかったよ。もう一度押してみてね');
   }
+}
+// 作っている途中のマップを、ルームに送りなおす（つながりなおしたとき）
+function resendDrafts() {
+  const room = state.room;
+  if (!room || room.status !== STATUS.PICK) return;
+  pickTargets(room).forEach((name) => {
+    if (state.picks[`${room.round}:${room.seq || 0}:${name}`]) pushMap(name);
+  });
 }
 // 選ぶたびに送ると多いので、少しまとめて送る
 function sendDraft(name, nowFlag) {
