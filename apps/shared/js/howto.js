@@ -19,6 +19,7 @@
  *       position: 'right',               // 'left' で左下に配置（既存FABとの衝突回避用）
  *       slides: 'slides.html',           // 任意。説明スライドがあるアプリだけ指定する
  *       feedback: false,                 // 任意。「フィードバックを送信する」ボタンを出さないときだけ false
+ *       home: false,                     // 任意。「あそびのたなのトップへ」を出さないときだけ false
  *     });
  *   </script>
  *
@@ -29,6 +30,10 @@
  * 「？」のとなりに「フィードバック」の丸ボタン、モーダルの末尾に「フィードバックを送信する」ボタンが出る
  * （どちらも apps/guide/feedback/ を別タブで開く。?app= に URL の最後の区切りを入れる）。
  * 遊んでいる画面はそのまま残る。feedback: false で両方とも消せる。
+ *
+ * モーダルのいちばん下に「あそびのたなのトップへ」（ツール一覧へ戻るリンク・同じタブ）が出る
+ * （2026-11-11 フィードバックボード）。遊んでいる途中にうっかり押さないよう、丸ボタンにはせず
+ * モーダルの中の弱いリンクにしている。home: false で消せる。
  *
  * 後方互換で追加のみ。破壊的変更をする場合は ?v= 付き読み込みに切り替えること。
  */
@@ -97,6 +102,13 @@
     '.howto-steps li { margin-bottom: 5px; }',
     '.howto-slides-btn { margin-bottom: 14px; }',
     '.howto-feedback { margin-top: 20px; }',
+    '.howto-home {',
+    '  display: flex; align-items: center; justify-content: center; gap: 4px;',
+    '  margin: 16px auto 0; min-height: 36px; padding: 4px 12px;',
+    '  color: var(--color-primary); font-size: 14px; font-weight: 700; text-decoration: none;',
+    '}',
+    '.howto-home:hover { text-decoration: underline; }',
+    '.howto-home .material-symbols-rounded { font-size: 20px; }',
     // アプリ側の重ね表示（最大 1100）より上、共通トースト（9999）より下
     '.howto-slides {',
     '  display: none; position: fixed; inset: 0; z-index: 9000;',
@@ -148,7 +160,27 @@
       }
     });
     if (config.feedback !== false) body.appendChild(buildFeedbackLink('btn btn-secondary btn-full howto-feedback', true));
+    if (config.home !== false) body.appendChild(buildHomeLink());
     return body;
+  }
+
+  // ツール一覧（あそびのたなのトップ）の場所。公開先は /roomk-tools/、リポジトリごと配信したときは /…/apps/、
+  // 手元の確認（apps/ を配信）は /
+  function portalUrl() {
+    var seg = window.location.pathname.split('/').filter(Boolean);
+    var i = seg.indexOf('roomk-tools');
+    if (i < 0) i = seg.indexOf('apps');
+    return i >= 0 ? '/' + seg.slice(0, i + 1).join('/') + '/' : '/';
+  }
+
+  function buildHomeLink() {
+    var link = el('a', 'howto-home');
+    link.href = portalUrl();
+    var icon = el('span', 'material-symbols-rounded', 'home');
+    icon.setAttribute('aria-hidden', 'true');
+    link.appendChild(icon);
+    link.appendChild(document.createTextNode('あそびのたなのトップへ'));
+    return link;
   }
 
   // URL の最後の区切りをアプリ名にする（stats.js の detectAppName と同じ考え方）
