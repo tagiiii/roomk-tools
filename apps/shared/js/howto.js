@@ -20,6 +20,7 @@
  *       slides: 'slides.html',           // 任意。説明スライドがあるアプリだけ指定する
  *       feedback: false,                 // 任意。「フィードバックを送信する」ボタンを出さないときだけ false
  *       home: false,                     // 任意。「あそびのたなのトップへ」を出さないときだけ false
+ *       updates: false,                  // 任意。「このツールの更新」を出さないときだけ false
  *     });
  *   </script>
  *
@@ -34,6 +35,11 @@
  * モーダルのいちばん下に「あそびのたなのトップへ」（ツール一覧へ戻るリンク・同じタブ）が出る
  * （2026-11-11 フィードバックボード）。遊んでいる途中にうっかり押さないよう、丸ボタンにはせず
  * モーダルの中の弱いリンクにしている。home: false で消せる。
+ *
+ * モーダルの説明のあとに「このツールの更新」が出る（2026-11-11 フィードバックボード）。
+ * ツール一覧の更新情報（apps/updates.json）から、app がこのツールのものだけを新しい順に並べる。
+ * はじめは3件で、「ほかの更新を見る」で残りを開く。モーダルを初めて開いたときに1回だけ読みに行き、
+ * 1件も無い・読めなかったときは何も出さない。updates: false で消せる。
  *
  * 後方互換で追加のみ。破壊的変更をする場合は ?v= 付き読み込みに切り替えること。
  */
@@ -101,6 +107,11 @@
     '.howto-steps { padding-left: 20px; margin: 6px 0; }',
     '.howto-steps li { margin-bottom: 5px; }',
     '.howto-slides-btn { margin-bottom: 14px; }',
+    '.howto-updates-list { list-style: none; padding: 0; margin: 6px 0; }',
+    '.howto-updates-list li { padding: 8px 0; border-top: 1px dashed var(--color-border); }',
+    '.howto-updates-list li:first-child { border-top: none; padding-top: 0; }',
+    '.howto-updates-date { display: block; font-size: 12px; color: var(--color-muted); }',
+    '.howto-updates-more { margin-top: 4px; }',
     '.howto-feedback { margin-top: 20px; }',
     '.howto-home {',
     '  display: flex; align-items: center; justify-content: center; gap: 4px;',
@@ -159,6 +170,12 @@
         body.appendChild(list);
       }
     });
+    if (config.updates !== false) {
+      // 中身は初めて開いたときに loadUpdates が入れる。それまでは隠しておく
+      var updates = el('div', 'howto-updates');
+      updates.hidden = true;
+      body.appendChild(updates);
+    }
     if (config.feedback !== false) body.appendChild(buildFeedbackLink('btn btn-secondary btn-full howto-feedback', true));
     if (config.home !== false) body.appendChild(buildHomeLink());
     return body;
@@ -190,6 +207,47 @@
     var last = seg[seg.length - 1];
     if (!last || last === 'apps' || last === 'roomk-tools') return 'portal';
     return last;
+  }
+
+  // 「このツールの更新」: ツール一覧の更新情報から、このツールの分だけを出す
+  var UPDATES_SHOWN = 3;
+  function loadUpdates(box) {
+    var appId = appIdFromPath();
+    fetch(portalUrl() + 'updates.json')
+      .then(function (res) { if (!res.ok) throw new Error(res.status); return res.json(); })
+      .then(function (entries) {
+        var mine = (Array.isArray(entries) ? entries : []).filter(function (e) {
+          return e && e.app === appId && typeof e.text === 'string' && typeof e.date === 'string';
+        });
+        if (!mine.length) return;
+        mine.sort(function (a, b) { return b.date.localeCompare(a.date); });
+        box.appendChild(el('div', 'howto-h', 'このツールの更新'));
+        var list = el('ul', 'howto-updates-list');
+        mine.forEach(function (e, i) {
+          var li = el('li');
+          li.appendChild(el('span', 'howto-updates-date', e.date.replace(/-/g, '/')));
+          li.appendChild(document.createTextNode(e.text));
+          if (i >= UPDATES_SHOWN) li.hidden = true;
+          list.appendChild(li);
+        });
+        box.appendChild(list);
+        if (mine.length > UPDATES_SHOWN) {
+          var more = el('button', 'btn btn-ghost btn-sm howto-updates-more', 'ほかの更新を見る');
+          more.type = 'button';
+          more.setAttribute('aria-expanded', 'false');
+          more.addEventListener('click', function () {
+            var expand = more.getAttribute('aria-expanded') !== 'true';
+            Array.prototype.forEach.call(list.children, function (li, i) {
+              li.hidden = !expand && i >= UPDATES_SHOWN;
+            });
+            more.textContent = expand ? '閉じる' : 'ほかの更新を見る';
+            more.setAttribute('aria-expanded', String(expand));
+          });
+          box.appendChild(more);
+        }
+        box.hidden = false;
+      })
+      .catch(function () { /* 読めないときは何も出さない */ });
   }
 
   // 送信ページへのリンク。withText=false なら丸ボタン（アイコンだけ・aria-label つき）
@@ -251,7 +309,9 @@
       slidesBtn.appendChild(slidesIcon);
       slidesBtn.appendChild(document.createTextNode('説明スライドを見る'));
     }
-    sheet.appendChild(buildBody(config, slidesBtn));
+    var bodyEl = buildBody(config, slidesBtn);
+    sheet.appendChild(bodyEl);
+    var updatesBox = bodyEl.querySelector('.howto-updates');
     modal.appendChild(sheet);
 
     // 背景の不活性化（docs/reports/c8-modal-overlay-classification.md のパターン4）。
@@ -278,6 +338,7 @@
       modal.classList.add('show');
       setBackgroundInert(true);
       closeBtn.focus();
+      if (updatesBox) { loadUpdates(updatesBox); updatesBox = null; }
     }
     function close() {
       modal.classList.remove('show');
