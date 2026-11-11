@@ -162,6 +162,12 @@
 .sm-map--edit svg { max-height: min(64vh, 640px); }
 .sm-sent .sm-map svg { max-height: 360px; }
 .sm-map--big svg { max-height: 62vh; }
+/* スマホの幅: 上から下へ枝をのばす形（app.js の drawMap）。1目盛り＝1px で、高さは中身のぶんだけ */
+.sm-map svg.mp--tree { max-height: none; }
+.mp--tree .mp-leaf__text { font-size: 16px; }
+.mp--tree .mp-line--genre { stroke-width: 4; }
+.mp--tree .mp-line--trunk { stroke: var(--color-border); stroke-width: 4; }
+.mp--tree .mp-line--ghost { stroke-dasharray: 2 8; }
 .mp-line { stroke: var(--c); stroke-linecap: round; }
 .mp-line--genre { stroke-width: 6; }
 .mp-line--leaf { stroke-width: 3; }
