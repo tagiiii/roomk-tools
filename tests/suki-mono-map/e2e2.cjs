@@ -62,6 +62,10 @@ async function addGenre(c, first, label, item) {
   check('host reload: guest not kicked', (await L.visible(yu, '#p-box')) && JSON.stringify(await genres(yu)) === JSON.stringify(['動物']));
 
   // 2. ホストが切れる → 参加する人に「ホストの戻りを待っています」
+  // ゆうはポップアップをひらいたまま（選んでいる途中）
+  await node(yu, '動物に足す').click();
+  await yu.page.locator('#p-items .sm-item', { hasText: '猫' }).first().click();
+  check('before host off: popup open', await yu.page.evaluate(() => document.querySelector('#p-pop').open));
   await goAway(host);
   const a2 = await waitRoom(code, (r) => r?.hostConnected === false);
   check('host off: recorded', a2.hostConnected === false && typeof a2.hostDisconnectedAt === 'number', [a2.hostConnected, a2.hostDisconnectedAt]);
@@ -69,6 +73,10 @@ async function addGenre(c, first, label, item) {
   await L.waitVisible(yu, '#hostOffOverlay');
   await L.waitVisible(mio, '#hostOffOverlay');
   check('host off: overlay text', (await L.text(yu, '#hostOffOverlay')).includes('ホストの戻りを待っています'));
+  // ひらいていたポップアップは閉じて、待つ画面がいちばん手前に見える。選んだものは残る
+  check('host off: popup closed', !(await yu.page.evaluate(() => document.querySelector('#p-pop').open)));
+  check('host off: overlay is on top', await yu.page.evaluate(() => { const r = document.querySelector('#btnOverlayLeave').getBoundingClientRect(); const top = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); return !!top && top.id === 'btnOverlayLeave'; }));
+  check('host off: picks kept', arr((await waitRoom(code, (r) => arr(r?.maps?.['ゆう']?.items?.animal).includes('猫'))).maps['ゆう'].items.animal).includes('猫'));
   await L.shot(yu, '21-host-off-overlay', false);
   await L.shot(mio, '22-host-off-overlay-375', false);
   check('host off 375: no overflow', (await L.overflow(mio)) <= 0);
