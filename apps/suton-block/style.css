@@ -311,7 +311,24 @@ button.sb-mini.sb-target { width: 100%; }
 /* すとんで盤が少し沈む（2026-11-11） */
 .sb-board.is-thud { animation: sb-thud 0.16s ease-out; }
 @keyframes sb-thud { 35% { transform: translateY(4px); } }
+/* もっとリッチな動き（2026-11-11）: じゃまが入ると盤が少し浮く・大技で盤のまわりが光る・とっておく／一言／カウントダウンの数字がぽんと出る */
+.sb-board.is-bump { animation: sb-bump 0.22s ease-out; }
+@keyframes sb-bump { 35% { transform: translateY(-5px); } }
+.sb-boardwrap.is-glow .sb-board { animation: sb-glow 0.55s ease-out; }
+.sb-boardwrap.is-glow .sb-board.is-thud { animation: sb-thud 0.16s ease-out, sb-glow 0.55s ease-out; }
+@keyframes sb-glow {
+  0% { box-shadow: 0 0 0 0 rgba(255, 214, 102, 0); }
+  25% { box-shadow: 0 0 0 4px rgba(255, 214, 102, 0.9), 0 0 22px 6px rgba(255, 214, 102, 0.55); }
+  100% { box-shadow: 0 0 0 0 rgba(255, 214, 102, 0); }
+}
+.sb-next.is-pop { animation: sb-pop 0.2s ease-out; }
+.sb-boardnote.is-pop { animation: sb-pop 0.22s ease-out; transform-origin: left top; }
+@keyframes sb-pop { 0% { transform: scale(0.8); } 60% { transform: scale(1.08); } 100% { transform: scale(1); } }
+.sb-countdown__num { display: inline-block; animation: sb-count 0.45s ease-out; }
+@keyframes sb-count { 0% { transform: scale(1.6); opacity: 0.2; } 100% { transform: scale(1); opacity: 1; } }
 @media (prefers-reduced-motion: reduce) {
+  .sb-board.is-bump, .sb-boardwrap.is-glow .sb-board, .sb-boardwrap.is-glow .sb-board.is-thud,
+  .sb-next.is-pop, .sb-boardnote.is-pop, .sb-countdown__num { animation: none; }
   .sb-board.is-thud { animation: none; }
   .is-hit { animation: none; box-shadow: 0 0 0 3px var(--color-warning); }
   .sb-hit { animation: none; transform: translate(-50%, -50%); }
