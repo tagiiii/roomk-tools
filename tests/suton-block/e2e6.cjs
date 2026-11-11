@@ -93,8 +93,8 @@ async function countTones(c, files = false) {
   check('F1 切のうちは音のファイルを読まない', asked.length === 0, asked);
   await F.page.click('label:has(input[name="soloSfx"][value="on"])');
   F.soundOk = true;
-  await waitFor(async () => asked.length === 12);
-  check('F2 入にすると12個のファイルを読む', asked.length === 12, asked.length);
+  await waitFor(async () => asked.length === 14);
+  check('F2 入にすると14個のファイルを読む', asked.length === 14, asked.length);
   await sleep(800);
   await F.page.click('#btnSoloStart');
   await waitFalling(F);
@@ -112,6 +112,14 @@ async function countTones(c, files = false) {
   await countTones(A);
   const code = await L.createRoom(H, 'メンター');
   await L.joinRoom(A, 'あおい', code);
+  // 音のファイルを読める参加者（カウントダウンがファイルの音で鳴るのを見る。ひとりにはカウントダウンがない）
+  const B = await L.newClient('files-room', { viewport: { width: 1280, height: 900 } });
+  await countTones(B, true);
+  await L.joinRoom(B, 'みどり', code);
+  await B.page.click('label:has(input[name="roomSfx"][value="on"])');
+  B.soundOk = true;
+  await sleep(1000);
+  await B.page.evaluate(() => { window.__bufs.length = 0; window.__tones.length = 0; });
   const W = await L.newClient('watch');
   await L.open(W, '?watch=' + code);
   await waitText(H, '#lobbyPeople', 'あおい');
@@ -125,8 +133,10 @@ async function countTones(c, files = false) {
   check('R4 入にしてもルームには書かない', !JSON.stringify(room).includes('sfx'));
   check('R5 ホストの端末は切のまま', (await sfxValue(H, 'roomSfx')) === 'off');
   await H.page.click('#btnStartGame');
-  await Promise.all([waitFalling(H), waitFalling(A)]);
+  await Promise.all([waitFalling(H), waitFalling(A), waitFalling(B)]);
   await sleep(150);
+  const cdBufs = await B.page.evaluate(() => window.__bufs.slice());
+  check('R5c 音のファイルが読めた人は、カウントダウン3回とはじまりがファイルの音で鳴る（合成音は鳴らない）', cdBufs.length === 4 && (await tones(B)).length === 0, [cdBufs, await tones(B)]);
   const startTones = await tones(A);
   check('R5b カウントダウンで3回・はじまりで1回鳴る', startTones.filter((f) => f === 440).length === 3 && startTones.includes(880), startTones);
   await clearTones(A);

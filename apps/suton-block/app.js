@@ -84,18 +84,18 @@ const $ = (id) => document.getElementById(id);
    動かす・回す・とっておく・置く・すとん・段を消す（れんぞくで高くなる）・回し入れ・全部消えた・じゃまを送った・
    じゃまが来た・じゃまが盤に入った・カウントダウン・時間になった。
    いっぱい・ここまで・からにしたときは鳴らさない（失敗の音は作らない）。
-   音は sfx/{名前}.mp3（SFX_FILES にある名前だけ読む。「入」にした端末だけ）。読めていない音と、カウントダウン・はじまりは Web Audio の合成音（SYNTH） */
+   音は sfx/{名前}.mp3（SFX_FILES にある名前だけ読む。「入」にした端末だけ）。読めていない音は Web Audio の合成音（SYNTH） */
 const SFX_KEY = 'sutonblock:sfx';
 const sfx = { on: false, ac: null, out: null, noise: null, buf: {}, loading: false };
 try { sfx.on = localStorage.getItem(SFX_KEY) === '1'; } catch (e) { /* 使えなければ切のまま */ }
 const SFX_GAIN = 0.25;
 // sfx/ に置いた音（ElevenLabs で作った。作り方は scripts/suton-block/sfx.py）と、それぞれの大きさ。ファイルを変えたら SFX_VER を上げる
-// ding は段を消した音の素材（1音）。段の数だけ、高さを変えて重ねる。カウントダウンとはじまりはファイルなし（合成音）
+// ding は段を消した音の素材（1音）。段の数だけ、高さを変えて重ねる
 const SFX_FILES = {
   move: 0.35, rotate: 0.5, hold: 0.6, place: 0.6, drop: 0.8, ding: 0.8, allclear: 0.7,
-  spin: 0.7, send: 0.5, jamain: 0.9, jamaup: 0.7, finish: 0.8,
+  spin: 0.7, send: 0.5, jamain: 0.9, jamaup: 0.7, finish: 0.8, count: 0.7, go: 0.7,
 };
-const SFX_VER = '20261111e';
+const SFX_VER = '20261111f';
 // 段を消した音で重ねる ding の数と、それぞれの高さ（ド・ミ・ソ・上のド）
 const SFX_DINGS = { line1: 1, line2: 2, line3: 3, line4: 4, allclear: 4 };
 const DING_RATES = [1, 1.26, 1.498, 2];

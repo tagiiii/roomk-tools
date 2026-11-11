@@ -23,14 +23,16 @@ SOUNDS = {
     'send':     ('Short soft airy whoosh, something small flying away quickly, no impact', 0.5, 0.40),
     'jamain':   ('Two soft muted low drum thumps, gentle notice in a puzzle game, not scary, short', 0.6, 0.50),
     'jamaup':   ('Short low soft rumble, heavy stone blocks sliding up from below, muted, not scary', 0.7, 0.60),
-    # カウントダウンとはじまりの音は合成音のまま（生成だと1つの澄んだ音にならなかった）
+    # カウントダウンとはじまり（「ビープ音」と頼むと澄んだ1音にならなかったので、楽器の1音で頼む。候補から図で選んだ）
+    'count':    ('One single soft marimba note, medium pitch, exactly one note, countdown tick in a friendly game, dry', 0.5, 0.35),
+    'go':       ('One single bright bell chime with a short shimmer, exactly one note, friendly game start signal', 0.8, 0.80),
     'finish':   ('Gentle calm three-note marimba jingle, time is up in a friendly puzzle game, soft ending', 1.3, 1.30),
 }
 
 
 def generate(key, name, raw_dir):
     text, dur, _keep = SOUNDS[name]
-    body = json.dumps({'text': text, 'duration_seconds': dur, 'prompt_influence': 0.8 if name == 'ding' else 0.6}).encode()
+    body = json.dumps({'text': text, 'duration_seconds': dur, 'prompt_influence': 0.8 if name in ('ding', 'count', 'go') else 0.6}).encode()
     req = urllib.request.Request(
         'https://api.elevenlabs.io/v1/sound-generation?output_format=mp3_44100_128',
         data=body, headers={'xi-api-key': key, 'Content-Type': 'application/json'})
