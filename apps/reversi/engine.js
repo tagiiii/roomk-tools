@@ -106,7 +106,85 @@
     return pool[Math.min(pool.length - 1, Math.floor(random() * pool.length))];
   }
 
-  const api = { SIZE, COLS, other, coord, initialBoard, flipsAt, legalMoves, hasMove, count, newGame, play, winner, autoMove };
+  // 1台の画面で CPU と対戦するときの手。level: 'weak'（置ける場所からくじ）/ 'normal'（autoMove）/ 'strong'（数手先まで読む）
+  const WEIGHTS = [
+    100, -20, 10, 5, 5, 10, -20, 100,
+    -20, -40, -2, -2, -2, -2, -40, -20,
+    10, -2, 1, 1, 1, 1, -2, 10,
+    5, -2, 1, 0, 0, 1, -2, 5,
+    5, -2, 1, 0, 0, 1, -2, 5,
+    10, -2, 1, 1, 1, 1, -2, 10,
+    -20, -40, -2, -2, -2, -2, -40, -20,
+    100, -20, 10, 5, 5, 10, -20, 100,
+  ];
+  // c から見た局面の良さ。角を取ったあとは、そのとなりの減点をやめる
+  function evaluate(board, c) {
+    const o = other(c);
+    let s = 0;
+    for (let i = 0; i < SIZE * SIZE; i += 1) {
+      if (board[i] === '.') continue;
+      let w = WEIGHTS[i];
+      if (w < 0 && !nearEmptyCorner(board, i)) w = 1;
+      s += board[i] === c ? w : board[i] === o ? -w : 0;
+    }
+    const mine = Object.keys(legalMoves(board, c)).length;
+    const theirs = Object.keys(legalMoves(board, o)).length;
+    return s + 3 * (mine - theirs);
+  }
+  const putStone = (board, i, c) => {
+    const a = board.split('');
+    a[i] = c;
+    flipsAt(board, i, c).forEach((j) => { a[j] = c; });
+    return a.join('');
+  };
+  // me から見た値（アルファベータ）
+  function search(board, turn, me, depth, alpha, beta) {
+    const moves = Object.keys(legalMoves(board, turn)).map(Number);
+    if (!moves.length) {
+      if (!hasMove(board, other(turn))) {
+        const n = count(board);
+        const d = me === 'b' ? n.b - n.w : n.w - n.b;
+        return d * 10000;
+      }
+      return search(board, other(turn), me, depth, alpha, beta);
+    }
+    if (depth <= 0) return evaluate(board, me);
+    if (turn === me) {
+      let v = -Infinity;
+      for (const i of moves) {
+        v = Math.max(v, search(putStone(board, i, turn), other(turn), me, depth - 1, alpha, beta));
+        alpha = Math.max(alpha, v);
+        if (alpha >= beta) break;
+      }
+      return v;
+    }
+    let v = Infinity;
+    for (const i of moves) {
+      v = Math.min(v, search(putStone(board, i, turn), other(turn), me, depth - 1, alpha, beta));
+      beta = Math.min(beta, v);
+      if (alpha >= beta) break;
+    }
+    return v;
+  }
+  function cpuMove(board, c, level, rnd) {
+    const random = typeof rnd === 'function' ? rnd : Math.random;
+    const moves = Object.keys(legalMoves(board, c)).map(Number);
+    if (!moves.length) return -1;
+    if (level === 'weak') return moves[Math.min(moves.length - 1, Math.floor(random() * moves.length))];
+    if (level !== 'strong') return autoMove(board, c, random);
+    // 残りが少ないときは最後まで読む
+    const empties = board.split('').filter((ch) => ch === '.').length;
+    const depth = empties <= 10 ? empties : 4;
+    let best = -Infinity;
+    let picks = [];
+    moves.forEach((i) => {
+      const v = search(putStone(board, i, c), other(c), c, depth - 1, -Infinity, Infinity);
+      if (v > best) { best = v; picks = [i]; } else if (v === best) picks.push(i);
+    });
+    return picks[Math.min(picks.length - 1, Math.floor(random() * picks.length))];
+  }
+
+  const api = { SIZE, COLS, other, coord, initialBoard, flipsAt, legalMoves, hasMove, count, newGame, play, winner, autoMove, cpuMove };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.ReversiEngine = api;
 })(typeof window !== 'undefined' ? window : this);
