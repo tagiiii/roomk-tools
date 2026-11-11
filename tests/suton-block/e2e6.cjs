@@ -1,5 +1,5 @@
 // すとんブロック E2E その6: 効果音（2026-11-09 フィードバック）
-// はじめは切・入にするとこの端末だけで鳴る（置いた・段を消した）・設定は端末に残る・ルームには書かない・みんなにみせる画面には出さない
+// はじめは切・入にするとこの端末だけで鳴る（動かす・回す・とっておく・置く・段を消す・じゃま・カウントダウン。2026-11-11 に増やした）・設定は端末に残る・ルームには書かない・みんなにみせる画面には出さない
 const L = require('./lib.cjs');
 const { check, sleep, roomOf, visible, waitText, waitFor, key, waitScreen, overflow } = L;
 
@@ -40,7 +40,7 @@ async function countTones(c) {
   await sleep(300);
   S.soundOk = true;
   check('S3 入にすると端末に残り、待合室の切りかえもそろう', (await stored(S)) === '1' && (await sfxValue(S, 'roomSfx')) === 'on');
-  check('S4 入にした瞬間に見本の音を1回', JSON.stringify(await tones(S)) === '[523,659]', await tones(S));
+  check('S4 入にした瞬間に見本の音を1回', JSON.stringify(await tones(S)) === '[523,1046,659,1318]', await tones(S));
   await S.page.reload();
   await S.page.waitForFunction(() => document.querySelector('.sb-screen.active'));
   await S.page.click('#btnGoSolo');
@@ -53,7 +53,26 @@ async function countTones(c) {
   await clearTones(S);
   await key(S, 'Space');
   await sleep(200);
-  check('S7 置いたら低い音が1つ', JSON.stringify(await tones(S)) === '[196]', await tones(S));
+  check('S7 すとんで置いたら低い音が1つ', JSON.stringify(await tones(S)) === '[196]', await tones(S));
+  // 2026-11-11: 回す・動かす・とっておくでも鳴る（動かせなかったときは鳴らさない）
+  await clearTones(S);
+  await key(S, 'ArrowUp');
+  await sleep(100);
+  check('S8 回したら短い音が1つ', JSON.stringify(await tones(S)) === '[740]', await tones(S));
+  await clearTones(S);
+  await key(S, 'ArrowLeft');
+  await sleep(100);
+  check('S9 動かしたら短い音が1つ', JSON.stringify(await tones(S)) === '[660]', await tones(S));
+  await key(S, 'ArrowLeft', 12);
+  await sleep(100);
+  await clearTones(S);
+  await key(S, 'ArrowLeft');
+  await sleep(100);
+  check('S10 かべで動かなかったら鳴らさない', (await tones(S)).length === 0, await tones(S));
+  await clearTones(S);
+  await key(S, 'c');
+  await sleep(200);
+  check('S11 とっておいたら2つの音', JSON.stringify(await tones(S)) === '[392,587]', await tones(S));
   await S.page.click('label:has(input[name="soloSfx"][value="off"])').catch(() => {});
 
   // ── ルーム ──
@@ -76,6 +95,8 @@ async function countTones(c) {
   check('R5 ホストの端末は切のまま', (await sfxValue(H, 'roomSfx')) === 'off');
   await H.page.click('#btnStartGame');
   await Promise.all([waitFalling(H), waitFalling(A)]);
+  const startTones = await tones(A);
+  check('R5b カウントダウンで3回・はじまりで1回鳴る', startTones.filter((f) => f === 440).length === 3 && startTones.includes(880), startTones);
   await clearTones(A);
   await key(A, 'Space');
   await sleep(300);
