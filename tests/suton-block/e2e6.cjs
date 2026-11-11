@@ -9,8 +9,14 @@ const stored = (c) => c.page.evaluate(() => localStorage.getItem('sutonblock:sfx
 const tones = (c) => c.page.evaluate(() => window.__tones.slice());
 const clearTones = (c) => c.page.evaluate(() => { window.__tones.length = 0; });
 // 鳴らした音の高さを数える（音の部品が作られた数は lib の __audioMade）
-async function countTones(c) {
+// files が false のときは、音のファイル（sfx/*.mp3）を読めなくして、合成音で鳴るのを見る
+async function countTones(c, files = false) {
+  if (!files) await c.page.route('**/sfx/*.mp3*', (route) => route.fulfill({ status: 200, contentType: 'audio/mpeg', body: 'x' }));
   await c.page.addInitScript(() => {
+    // ファイルで鳴らした音は、長さ（秒・小数2けた）を覚える
+    window.__bufs = [];
+    const startBuf = AudioBufferSourceNode.prototype.start;
+    AudioBufferSourceNode.prototype.start = function (...args) { if (this.buffer && this.buffer.duration < 0.99) window.__bufs.push(Math.round(this.buffer.duration * 100) / 100); return startBuf.apply(this, args); };
     window.__tones = [];
     const start = OscillatorNode.prototype.start;
     OscillatorNode.prototype.start = function (...args) { window.__tones.push(Math.round(this.frequency.value)); return start.apply(this, args); };
@@ -75,6 +81,31 @@ async function countTones(c) {
   check('S11 とっておいたら2つの音', JSON.stringify(await tones(S)) === '[392,587]', await tones(S));
   await S.page.click('label:has(input[name="soloSfx"][value="off"])').catch(() => {});
 
+  // ── 音のファイル（2026-11-11。ElevenLabs で作った sfx/*.mp3） ──
+  const F = await L.newClient('files');
+  await countTones(F, true);
+  const asked = [];
+  F.page.on('request', (r) => { if (r.url().includes('/sfx/')) asked.push(r.url()); });
+  await L.open(F);
+  await F.page.click('#btnGoSolo');
+  await waitScreen(F, 'solo');
+  await sleep(300);
+  check('F1 切のうちは音のファイルを読まない', asked.length === 0, asked);
+  await F.page.click('label:has(input[name="soloSfx"][value="on"])');
+  F.soundOk = true;
+  await waitFor(async () => asked.length === 12);
+  check('F2 入にすると12個のファイルを読む', asked.length === 12, asked.length);
+  await sleep(800);
+  await F.page.click('#btnSoloStart');
+  await waitFalling(F);
+  await F.page.evaluate(() => { window.__bufs.length = 0; window.__tones.length = 0; });
+  await key(F, 'ArrowUp');
+  await key(F, 'Space');
+  await sleep(300);
+  const bufs = await F.page.evaluate(() => window.__bufs.slice());
+  check('F3 回す・すとんがファイルの音で鳴る（合成音は鳴らない）', bufs.length === 2 && (await tones(F)).length === 0, [bufs, await tones(F)]);
+  await F.page.click('label:has(input[name="soloSfx"][value="off"])').catch(() => {});
+
   // ── ルーム ──
   const H = await L.newClient('host', { viewport: { width: 1280, height: 900 } });
   const A = await L.newClient('aoi', { viewport: { width: 1280, height: 900 } });
@@ -95,6 +126,7 @@ async function countTones(c) {
   check('R5 ホストの端末は切のまま', (await sfxValue(H, 'roomSfx')) === 'off');
   await H.page.click('#btnStartGame');
   await Promise.all([waitFalling(H), waitFalling(A)]);
+  await sleep(150);
   const startTones = await tones(A);
   check('R5b カウントダウンで3回・はじまりで1回鳴る', startTones.filter((f) => f === 440).length === 3 && startTones.includes(880), startTones);
   await clearTones(A);

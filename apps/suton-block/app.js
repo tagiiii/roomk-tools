@@ -84,14 +84,21 @@ const $ = (id) => document.getElementById(id);
    動かす・回す・とっておく・置く・すとん・段を消す（れんぞくで高くなる）・回し入れ・全部消えた・じゃまを送った・
    じゃまが来た・じゃまが盤に入った・カウントダウン・時間になった。
    いっぱい・ここまで・からにしたときは鳴らさない（失敗の音は作らない）。
-   音は sfx/{名前}.mp3（SFX_FILES にある名前だけ読む）。読めていない音は Web Audio の合成音（SYNTH）で鳴らす */
+   音は sfx/{名前}.mp3（SFX_FILES にある名前だけ読む。「入」にした端末だけ）。読めていない音と、カウントダウン・はじまりは Web Audio の合成音（SYNTH） */
 const SFX_KEY = 'sutonblock:sfx';
 const sfx = { on: false, ac: null, out: null, noise: null, buf: {}, loading: false };
 try { sfx.on = localStorage.getItem(SFX_KEY) === '1'; } catch (e) { /* 使えなければ切のまま */ }
 const SFX_GAIN = 0.25;
-// sfx/ に置いた音の名前（SYNTH と同じ名前）と、それぞれの大きさ。ファイルを足したら ?v= も上げる
-const SFX_FILES = {};
-const SFX_VER = '20261111d';
+// sfx/ に置いた音（ElevenLabs で作った。作り方は scripts/suton-block/sfx.py）と、それぞれの大きさ。ファイルを変えたら SFX_VER を上げる
+// ding は段を消した音の素材（1音）。段の数だけ、高さを変えて重ねる。カウントダウンとはじまりはファイルなし（合成音）
+const SFX_FILES = {
+  move: 0.35, rotate: 0.5, hold: 0.6, place: 0.6, drop: 0.8, ding: 0.8, allclear: 0.7,
+  spin: 0.7, send: 0.5, jamain: 0.9, jamaup: 0.7, finish: 0.8,
+};
+const SFX_VER = '20261111e';
+// 段を消した音で重ねる ding の数と、それぞれの高さ（ド・ミ・ソ・上のド）
+const SFX_DINGS = { line1: 1, line2: 2, line3: 3, line4: 4, allclear: 4 };
+const DING_RATES = [1, 1.26, 1.498, 2];
 
 function syncSfxInputs() {
   ['soloSfx', 'roomSfx'].forEach((name) => {
@@ -211,22 +218,29 @@ const SYNTH = {
 const SFX_COMBO_MAX = 12;
 const comboRate = (combo) => Math.pow(2, Math.min(SFX_COMBO_MAX, Math.max(0, combo || 0)) / 12);
 
-// 音を1つ鳴らす（name は SYNTH の名前。when は今からの秒）
-function playSfx(name, rate = 1, when = 0) {
-  if (!sfx.on || !sfx.ac || sfx.ac.state !== 'running' || !SYNTH[name]) return;
-  const buf = sfx.buf[name];
-  if (!buf) {
-    if (when) setTimeout(() => { if (sfx.on && sfx.ac.state === 'running') SYNTH[name](rate); }, when * 1000);
-    else SYNTH[name](rate);
-    return;
-  }
+// 読みこんだ音のファイルを1つ鳴らす
+function playBuf(name, rate, when) {
   const src = sfx.ac.createBufferSource();
   const g = sfx.ac.createGain();
-  src.buffer = buf;
+  src.buffer = sfx.buf[name];
   src.playbackRate.value = rate;
   g.gain.value = SFX_FILES[name] || 1;
   src.connect(g).connect(sfx.out);
   src.start(sfx.ac.currentTime + when);
+}
+
+// 音を1つ鳴らす（name は SYNTH の名前。when は今からの秒）。ファイルが読めていればファイルで、なければ合成音で
+function playSfx(name, rate = 1, when = 0) {
+  if (!sfx.on || !sfx.ac || sfx.ac.state !== 'running' || !SYNTH[name]) return;
+  const dings = SFX_DINGS[name];
+  if (dings && sfx.buf.ding) {
+    for (let i = 0; i < dings; i++) playBuf('ding', rate * DING_RATES[i], when + i * 0.07);
+    if (name === 'allclear' && sfx.buf.allclear) playBuf('allclear', 1, when + 0.2);
+    return;
+  }
+  if (!dings && sfx.buf[name]) { playBuf(name, rate, when); return; }
+  if (when) setTimeout(() => { if (sfx.on && sfx.ac.state === 'running') SYNTH[name](rate); }, when * 1000);
+  else SYNTH[name](rate);
 }
 
 // 置いたとき: 段を消したら消した段の数の音（れんぞくで高く）、消さなければ置いた音（すとんは重い音）
