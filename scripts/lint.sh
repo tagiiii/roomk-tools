@@ -26,6 +26,7 @@ RTDB_HTML_FILES=(
   "apps/circle-time/index.html"
   "apps/kotoba-dash/index.html"
   "apps/tsunagete-story/index.html"
+  "apps/suki-mono-map/index.html"
   "apps/kotoba-meter/index.html"
   "apps/blackjack/index.html"
   "apps/daifugo/index.html"

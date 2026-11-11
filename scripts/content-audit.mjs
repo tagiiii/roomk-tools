@@ -183,6 +183,8 @@ const COVERED_APPS = [
   // 2026-11-09 追加（流す言葉の一覧）
   'kotoba-dash',
   'tsunagete-story',
+  // 2026-11-11 追加（ジャンルと、その中の選択肢・見せあいの質問）
+  'suki-mono-map',
   // 既存（A2 以前から抽出済み）
   'quiz', 'kotoba-shuffle', 'kanji-sagashi', 'kotoba-relay', 'tatoe-gp',
   'kaburazu-hint', 'kotoba-tantei', 'docchi', 'minna-ranking',
@@ -274,8 +276,11 @@ const REPEAT_EXPECTED_VARIANTS = new Set([
 //   - suki-bingo はテーマ（variant＝テーマの id）ごとに24語で、同じ語が別のテーマに出るのは設計どおり
 //     （同じテーマ内の重複は collectEntries で fail-fast にしている）。2026-11-08 P3 監査で、
 //     要確認の17組がすべてこれだったため外した
+//   - suki-mono-map はジャンル（variant＝ジャンルの id）ごとの選択肢で、同じ語が別のジャンルに出るのは設計どおり
+//     （「ダンス」が音楽・スポーツ・動画に、「料理」が動画・つくるに入る。同じジャンル内の重複は collectEntries で fail-fast）
 const CROSS_VARIANT_EXPECTED_TOOLS = new Set([
   'suki-bingo',
+  'suki-mono-map',
 ]);
 
 // 禁止題材の候補語（ルート AGENTS.md「使用しない表現・トピック」）。見つけたら stderr に警告を出すだけで、
@@ -666,6 +671,38 @@ function collectEntries() {
   if (storyThemeIds.size === 0) storyProblems.push('themes が空');
   if (storyProblems.length > 0) {
     throw new Error(`tsunagete-story data.js の構造エラー:\n  ${storyProblems.join('\n  ')}`);
+  }
+
+  // suki-mono-map: data.js の window.SUKI_MONO_MAP_DATA = { genres: [ { id, label, ask, items: [...] } ], asks: [...] }。
+  //   ジャンルの名前・ジャンルごとの選択肢・見せあいの質問。空と、同じジャンルの中の重複はここで fail-fast にする
+  const mapContext = { window: {} };
+  vm.createContext(mapContext);
+  vm.runInContext(read('apps/suki-mono-map/data.js'), mapContext, { filename: 'apps/suki-mono-map/data.js' });
+  const mapData = mapContext.window.SUKI_MONO_MAP_DATA || {};
+  const mapProblems = [];
+  const mapGenreIds = new Set();
+  (Array.isArray(mapData.genres) ? mapData.genres : []).forEach((genre, g) => {
+    if (!genre || !genre.id || !genre.label || !genre.ask) { mapProblems.push(`genres[${g}] に id・label・ask のどれかがない`); return; }
+    if (mapGenreIds.has(genre.id)) mapProblems.push(`genres[${g}] の id「${genre.id}」が重複`);
+    mapGenreIds.add(genre.id);
+    rows.push(entry('suki-mono-map', 'genre', genre.label, { id: `suki-mono-map:genre:${genre.id}`, variant: 'genre' }));
+    if (!Array.isArray(genre.items) || genre.items.length === 0) { mapProblems.push(`genres.${genre.id}.items が空`); return; }
+    const seen = new Set();
+    genre.items.forEach((text, index) => {
+      if (typeof text !== 'string' || !text.trim()) mapProblems.push(`genres.${genre.id}.items[${index}] が空`);
+      if (seen.has(text)) mapProblems.push(`genres.${genre.id}.items[${index}]「${text}」が重複`);
+      seen.add(text);
+      rows.push(entry('suki-mono-map', genre.id, text, { id: `suki-mono-map:${genre.id}:${index}`, variant: genre.id }));
+    });
+  });
+  if (mapGenreIds.size === 0) mapProblems.push('genres が空');
+  if (!Array.isArray(mapData.asks) || mapData.asks.length === 0) mapProblems.push('asks が空');
+  (Array.isArray(mapData.asks) ? mapData.asks : []).forEach((text, index) => {
+    if (typeof text !== 'string' || !text.includes('{x}')) mapProblems.push(`asks[${index}] に {x} がない`);
+    rows.push(entry('suki-mono-map', 'ask', text, { id: `suki-mono-map:ask:${index}`, variant: 'ask' }));
+  });
+  if (mapProblems.length > 0) {
+    throw new Error(`suki-mono-map data.js の構造エラー:\n  ${mapProblems.join('\n  ')}`);
   }
 
   // hirameki-oogiri: data.js の export const TOPICS = [ '文字列', ... ]（大喜利のお題）。

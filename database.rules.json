@@ -222,6 +222,12 @@
         ".write": "auth != null"
       }
     },
+    "sukimonomap_rooms": {
+      "$roomId": {
+        ".read": "auth != null",
+        ".write": "auth != null"
+      }
+    },
     "sutonblock_rooms": {
       "$roomId": {
         ".read": "auth != null",
