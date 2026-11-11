@@ -133,6 +133,8 @@ async function countTones(c, files = false) {
   check('R4 入にしてもルームには書かない', !JSON.stringify(room).includes('sfx'));
   check('R5 ホストの端末は切のまま', (await sfxValue(H, 'roomSfx')) === 'off');
   await H.page.click('#btnStartGame');
+  // カウントダウンが出てから消えるまで待つ（出る前は hidden なので、出るのを先に待つ）
+  await waitFor(async () => (await visible(A, '#countdown')) || (await visible(B, '#countdown')), 3000);
   await Promise.all([waitFalling(H), waitFalling(A), waitFalling(B)]);
   await sleep(150);
   const cdBufs = await B.page.evaluate(() => window.__bufs.slice());

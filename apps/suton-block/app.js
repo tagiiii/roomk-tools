@@ -17,7 +17,12 @@ const TOP_ROWS = 2;
 // すとん・段を消したときの動き（drawFx。2026-11-11）
 const FX_DROP_MS = 200;
 const FX_CLEAR_MS = 320;
-const fx = { drops: [], clears: [] };
+const FX_LOCK_MS = 140;   // 置いたブロックが光る
+const FX_FALL_MS = 140;   // 消えた段の上が、すべり落ちる
+const FX_SWEEP_MS = 600;  // 全部消えたときの光の帯
+const FX_PART_MAX = 420;  // 破片がいちばん長く残る時間
+const fx = { drops: [], clears: [], locks: [], parts: [], fall: null, sweepAt: 0 };
+const fxBusy = () => fx.drops.length || fx.clears.length || fx.locks.length || fx.parts.length || fx.fall || fx.sweepAt;
 const TOP_COLOR = '#4B5866';
 const LOCK_MS = 500;        // 着地してから置かれるまで
 const LOCK_RESETS = 15;     // 着地したまま動かして待ちを延ばせる回数
@@ -1511,8 +1516,9 @@ function afterMove(moved) {
   draw();
 }
 
-function afterLock(res) {
+function afterLock(res, placed = null) {
   const R = state.run, g = state.game;
+  fx.fall = null;
   let outgoing = null;
   R.lockAt = null; R.resets = 0; R.lastFall = nowOf();
   const bump = (value) => {
@@ -1523,7 +1529,8 @@ function afterLock(res) {
     el.classList.add('sb-lines--up');
   };
   lockSfx(res);
-  if (res.lines && Array.isArray(res.rows)) fxClear(res.rows);
+  if (res.lines && Array.isArray(res.rows)) fxClear(res.rows, placed, res);
+  else if (placed && !res.cleared && !g.over) fxLock(placed, res.dist > 0);
   if (res.lines && !R.battle) bump(g.lines);
   // 4段いっしょに消したら一言（対戦は attackNote・ひとりは techParts の中で出す）
   if (state.role === 'solo') {
@@ -1555,7 +1562,7 @@ function afterLock(res) {
       R.pending = 0;
       const gr = E.addGarbage(g, rows, Math.floor(Math.random() * E.W));
       if (gr.cleared) res = { ...res, cleared: true };
-      else playSfx('jamaup', 1, 0.06);
+      else { playSfx('jamaup', 1, 0.06); fxBump(); }
     }
     renderJama();
   } else if (R.jama) {
@@ -1571,11 +1578,11 @@ function afterLock(res) {
       R.pending = 0;
       const gr = E.addGarbage(g, rows, Math.floor(Math.random() * E.W));
       if (gr.cleared) res = { ...res, cleared: true };
-      else playSfx('jamaup', 1, 0.06);
+      else { playSfx('jamaup', 1, 0.06); fxBump(); }
     }
     renderJama();
   }
-  if (res.cleared) note('盤がいっぱいになったので、からにしたよ。つづけよう', 1800);
+  if (res.cleared) { fx.fall = null; fx.locks = []; note('盤がいっぱいになったので、からにしたよ。つづけよう', 1800); }
   sendBoard(false, outgoing);
   if (g.over) { finishRun(); return; }
   draw();
@@ -1609,6 +1616,7 @@ function note(text, ms) {
   const el = $('playNote');
   el.textContent = text;
   el.hidden = false;
+  popClass(el, 'is-pop');
   clearTimeout(state.run.noteTimer);
   if (ms) state.run.noteTimer = setTimeout(() => { el.hidden = true; }, ms);
 }
@@ -1874,8 +1882,12 @@ function tick() {
   if (now < R.startAt) {
     cd.hidden = false;
     const count = Math.min(3, Math.ceil((R.startAt - now) / 1000));
-    cd.textContent = String(count);
-    if (R.counted !== count) { R.counted = count; playSfx('count'); }
+    if (R.counted !== count) {
+      R.counted = count;
+      playSfx('count');
+      // 数字が変わるたびに、大きく出て元の大きさにもどる
+      cd.replaceChildren(makeElement('span', 'sb-countdown__num', String(count)));
+    }
     R.lastFall = now;
     draw();
     R.raf = requestAnimationFrame(tick);
@@ -1900,11 +1912,11 @@ function tick() {
       else if (R.lockAt === null) R.lockAt = now + LOCK_MS;
     }
     if (R.lockAt !== null && now >= R.lockAt) {
-      if (grounded()) { afterLock(E.lock(g)); if (!state.run) return; }
+      if (grounded()) { const placed = placedOf(g.piece, 0); afterLock(E.lock(g), placed); if (!state.run) return; }
       else R.lockAt = null;
     }
     draw();
-  } else if (fx.drops.length || fx.clears.length) draw(); // おわったあとも、動きは消えるまで描く
+  } else if (fxBusy()) draw(); // おわったあとも、動きは消えるまで描く
   R.raf = requestAnimationFrame(tick);
 }
 
@@ -1960,7 +1972,7 @@ function act(name) {
       const from = p ? { kind: p.kind, x: p.x, y: p.y, cells: p.cells.map((c) => c.slice()) } : null;
       const res = E.hardDrop(g);
       if (from && res.dist > 0) fxDrop(from, res.dist);
-      afterLock(res);
+      afterLock(res, from ? placedOf(from, res.dist || 0) : null);
       break;
     }
     case 'rotr': moveSfx(E.rotate(g, 1), 'rotate'); break;
@@ -1969,6 +1981,7 @@ function act(name) {
       const res = E.hold(g);
       if (!res) break;
       playSfx('hold');
+      popClass($('hold'), 'is-pop');
       const R = state.run;
       R.lockAt = null; R.resets = 0; R.lastFall = nowOf();
       if (res.cleared) note('盤がいっぱいになったので、からにしたよ。つづけよう', 1800);
@@ -2393,7 +2406,7 @@ function cellRect(ctx, x, y, s, color, ghost) {
   }
 }
 
-function drawWell(ctx, board, s) {
+function drawWell(ctx, board, s, shiftOf = null) {
   const w = s * E.W, h = s * E.H;
   ctx.clearRect(0, 0, w, h);
   ctx.fillStyle = '#1F2A36';
@@ -2408,30 +2421,107 @@ function drawWell(ctx, board, s) {
   }
   for (let y = 0; y < E.H; y++) for (let x = 0; x < E.W; x++) {
     const c = board[y][x];
-    if (c) cellRect(ctx, x * s, y * s, s, COLORS[c]);
+    if (c) cellRect(ctx, x * s, y * s + (shiftOf ? shiftOf(y) : 0), s, COLORS[c]);
   }
 }
 
-/* ── 動き（2026-11-11 フィードバックボード「すとん・段を消したときのアニメーションがほしい」）──
+/* ── 動き（2026-11-11 フィードバックボード「すとん・段を消したときのアニメーションがほしい」「動きやアニメーションをもっとリッチに」）──
    自分のあそぶ盤だけ。しくみ（置く・消す・時間）は待たせず、描くときに上へ重ねるだけ。
-   すとん: 落ちる前の所から置いた所まで、ブロックの色の残像がすっと消える（FX_DROP_MS）＋盤が少し沈む。
-   段を消す: 消えた段の所が白く光って、上下からしぼんで消える（FX_CLEAR_MS）。
-   動きを減らす設定では、盤を沈ませず、残像は出さず、光るのは段の所が薄く光って消えるだけにする */
+   すとん: 落ちる前の所から置いた所まで、ブロックの色の残像がすっと消える（FX_DROP_MS）＋盤が少し沈む＋着いた所から小さなほこり。
+   置く: 置いたブロックが一瞬白く光る（FX_LOCK_MS）。
+   段を消す: 消えた段の所が白く光って、上下からしぼんで消える（FX_CLEAR_MS）＋破片が飛びちる＋上の段がすべり落ちる（FX_FALL_MS）。
+   4段・回し入れ・つづけて大技・全部消えた: 盤のまわりが光る。全部消えた: 光の帯が下から上へ通る（FX_SWEEP_MS）。
+   じゃまが入った: 盤が下から押されて少し浮く。とっておく・一言・カウントダウンの数字: ぽんと出る。
+   動きを減らす設定では、消えた段と置いたブロックが薄く光って消えるだけにする（飛ぶ・すべる・ゆれる動きは出さない） */
+function popClass(el, name) {
+  if (!el) return;
+  el.classList.remove(name);
+  void el.offsetWidth;
+  el.classList.add(name);
+}
+// 置いたブロックのマス（盤の列・段）と種類
+function placedOf(p, dist) {
+  if (!p) return null;
+  return { kind: p.kind, cells: p.cells.map(([cx, cy]) => [p.x + cx, p.y + cy + dist]) };
+}
 function fxDrop(from, dist) {
   if (reducedMotion()) return;
   fx.drops.push({ ...from, dist, at: performance.now() });
+  $('board').classList.remove('is-bump');
+  popClass($('board'), 'is-thud');
+}
+// 破片を1つ（x・y は盤の中の px。速さは1秒あたりのマス数）
+function addPart(x, y, vx, vy, color, size, life) {
+  if (fx.parts.length >= 160) return;
+  fx.parts.push({ x, y, vx: vx * CELL, vy: vy * CELL, color, size, life, at: performance.now() });
+}
+function fxLock(placed, dropped) {
+  const now = performance.now();
+  fx.locks.push({ cells: placed.cells, at: now });
+  if (!dropped || reducedMotion()) return;
+  // すとんで着いた所（列ごとのいちばん下）の左右へ、小さなほこり
+  const low = {};
+  placed.cells.forEach(([x, y]) => { low[x] = Math.max(low[x] ?? -Infinity, y); });
+  Object.keys(low).forEach((key) => {
+    const x = Number(key), y = (low[key] + 1) * CELL;
+    [-1, 1].forEach((dir) => addPart((x + 0.5) * CELL, y - 2, dir * (2 + Math.random() * 3), -(1 + Math.random() * 2.5), 'rgba(255,255,255,0.75)', Math.max(2, CELL / 8), 220 + Math.random() * 60));
+  });
+}
+function fxClear(rows, placed = null, res = null) {
+  const now = performance.now();
+  fx.clears.push({ rows: rows.slice(), at: now });
+  const big = res && (res.lines === 4 || res.spin === 'spin' || res.b2b || res.allClear);
+  if (big) {
+    // 光り終わったら印を外す（残すと、つぎに盤が沈むときにもう一度光る）
+    const wrap = $('board').parentElement;
+    popClass(wrap, 'is-glow');
+    clearTimeout(fx.glowTimer);
+    fx.glowTimer = setTimeout(() => wrap.classList.remove('is-glow'), 600);
+  }
+  if (reducedMotion()) return;
+  // 破片: 消えた段のマスごとに1つ。置いたブロックの色と白
+  const color = placed ? COLORS[placed.kind] : '#FFFFFF';
+  rows.forEach((y) => {
+    if (y < -TOP_ROWS) return;
+    for (let x = 0; x < E.W; x++) {
+      addPart((x + 0.5) * CELL, (y + 0.5) * CELL, (Math.random() - 0.5) * 9, -(2 + Math.random() * 7),
+        (x + y) % 2 ? color : '#FFFFFF', Math.max(3, CELL / 3.5), 300 + Math.random() * (FX_PART_MAX - 300));
+    }
+  });
+  // 上の段がすべり落ちる: いまの段ごとに、何段ぶん落ちてきたか
+  const gone = new Set(rows);
+  const shift = {};
+  let to = E.H - 1;
+  for (let from = E.H - 1; from >= -E.HB; from--) {
+    if (gone.has(from)) continue;
+    shift[to] = to - from;
+    to--;
+  }
+  fx.fall = { shift, at: now };
+  if (res && res.allClear) fx.sweepAt = now;
+}
+// じゃまが入った: 盤が下から押されて少し浮く
+function fxBump() {
+  if (reducedMotion()) return;
   const cv = $('board');
   cv.classList.remove('is-thud');
-  void cv.offsetWidth;
-  cv.classList.add('is-thud');
+  popClass(cv, 'is-bump');
 }
-function fxClear(rows) {
-  fx.clears.push({ rows: rows.slice(), at: performance.now() });
+// すべり落ちている間の、段ごとのずらし（px。上にずらしておいて、0 へもどす）
+function fallShift() {
+  const f = fx.fall;
+  if (!f) return null;
+  const t = (performance.now() - f.at) / FX_FALL_MS;
+  if (t >= 1) { fx.fall = null; return null; }
+  const k = 1 - t * t;
+  return (y) => -(f.shift[y] || 0) * CELL * k;
 }
 function drawFx(ctx) {
   const now = performance.now();
   fx.drops = fx.drops.filter((d) => now - d.at < FX_DROP_MS);
   fx.clears = fx.clears.filter((c) => now - c.at < FX_CLEAR_MS);
+  fx.locks = fx.locks.filter((l) => now - l.at < FX_LOCK_MS);
+  fx.parts = fx.parts.filter((q) => now - q.at < q.life);
   const top = -TOP_ROWS * CELL;
   fx.drops.forEach((d) => {
     const k = 1 - (now - d.at) / FX_DROP_MS;
@@ -2454,6 +2544,12 @@ function drawFx(ctx) {
     });
   });
   ctx.globalAlpha = 1;
+  // 置いたブロックが一瞬光る
+  fx.locks.forEach((l) => {
+    const k = 1 - (now - l.at) / FX_LOCK_MS;
+    ctx.fillStyle = 'rgba(255,255,255,' + (0.45 * k).toFixed(3) + ')';
+    l.cells.forEach(([x, y]) => { if (y >= -TOP_ROWS) ctx.fillRect(x * CELL + 1, y * CELL + 1, CELL - 2, CELL - 2); });
+  });
   const calm = reducedMotion();
   fx.clears.forEach((c) => {
     const t = (now - c.at) / FX_CLEAR_MS;
@@ -2464,6 +2560,31 @@ function drawFx(ctx) {
       ctx.fillRect(0, y * CELL + (CELL - h) / 2, CELL * E.W, h);
     });
   });
+  // 全部消えた: 光の帯が下から上へ通る
+  if (fx.sweepAt) {
+    const t = (now - fx.sweepAt) / FX_SWEEP_MS;
+    if (t >= 1) fx.sweepAt = 0;
+    else {
+      const band = CELL * 6, h = CELL * E.H;
+      const y = h + band - (h + band * 2) * t;
+      const grad = ctx.createLinearGradient(0, y - band, 0, y);
+      grad.addColorStop(0, 'rgba(255,255,255,0)');
+      grad.addColorStop(0.5, 'rgba(255,255,255,0.3)');
+      grad.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, y - band, CELL * E.W, band);
+    }
+  }
+  // 破片: 飛びながら落ちて、小さく薄くなる
+  fx.parts.forEach((q) => {
+    const t = (now - q.at) / 1000, k = 1 - (now - q.at) / q.life;
+    const x = q.x + q.vx * t, y = q.y + q.vy * t + 0.5 * 30 * CELL * t * t;
+    const size = q.size * (0.4 + 0.6 * k);
+    ctx.globalAlpha = Math.min(1, k * 1.6);
+    ctx.fillStyle = q.color;
+    ctx.fillRect(x - size / 2, y - size / 2, size, size);
+  });
+  ctx.globalAlpha = 1;
 }
 
 function draw() {
@@ -2477,10 +2598,11 @@ function draw() {
   ctx.fillRect(0, 0, w, off);
   ctx.save();
   ctx.translate(0, off);
-  drawWell(ctx, g.board, CELL);
+  const shiftOf = fallShift();
+  drawWell(ctx, g.board, CELL, shiftOf);
   for (let y = -TOP_ROWS; y < 0; y++) for (let x = 0; x < E.W; x++) {
     const c = g.hidden[E.HB + y][x];
-    if (c) cellRect(ctx, x * CELL, y * CELL, CELL, COLORS[c]);
+    if (c) cellRect(ctx, x * CELL, y * CELL + (shiftOf ? shiftOf(y) : 0), CELL, COLORS[c]);
   }
   const p = g.piece;
   const seen = (y) => y >= -TOP_ROWS;
