@@ -267,6 +267,10 @@ function connectToRoom(role, nickname, code, ref) {
 function handleRoom(room) {
   if (state.role === 'guest' && room.hostConnected === false) {
     $('hostOffOverlay').hidden = false;
+    // ポップアップ（<dialog>）はいちばん手前に出るので、ひらいたままだと「ホストの戻りを待っています」が後ろに隠れる。閉じておく（選んだものは残る）
+    state.pop = null;
+    state.freeOpen = false;
+    state.confirmDel = false;
     if (!state.orphanTimer) {
       const at = RoomkRTDB.getHostDisconnectedAt(room);
       const delay = at == null ? ORPHAN_TTL_MS : Math.max(0, at + ORPHAN_TTL_MS - now());
