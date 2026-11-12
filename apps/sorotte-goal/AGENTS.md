@@ -142,7 +142,7 @@ apps/sorotte-goal/
 - `scripts/content-audit.mjs` の `NO_CONTENT_APPS` に追加（ステージは番号からその場で作る。お題・問題は持たない）
 - `apps/index.html` にカード・`apps/updates.json` 先頭に `type: "new"`・`apps/guide/index.html` に1行
 - イラスト `apps/assets/illustrations/sorotte-goal.webp`（旗・カギ・箱。`scripts/illustrations/prompts.json`）
-- 説明スライド（`slides.html`）はまだない
+- 説明スライド `slides.html`（17枚。2026-11-13。エンジンは `apps/kotoba-tantei/slides.html` のまま、チャンネル `sorotte_goal_deck`・保存キー `sgs_`）。「？」の「説明スライドを見る」と、ツール一覧のカード（`data-slides`）から開ける。3枚目に、ツール一覧と同じ画面例（`../assets/thumbnails/sorotte-goal.png`）を出している。ルールを変えたら、スライドと発表者ノートも合わせる
 
 ## 画面構成・フロー
 
