@@ -793,7 +793,7 @@
       return `<p class="h-label">だれの表を出す？（みんなの画面も切りかわる）</p>
         <div class="h-seg">${r.order.map((pid) => `<button type="button" data-act="sel" data-pid="${esc(pid)}" class="${pid === r.sel ? 'on' : ''}">${esc(r.persons[pid].name)}</button>`).join('')}</div>
         <label class="h-check"><input type="checkbox" data-act="school" data-pid="${esc(r.sel)}"${p.school ? ' checked' : ''} />${esc(p.name)}さんの選択肢に、学校の予定も出す</label>
-        <p class="h-hint">上の表のマスを押すと、${esc(p.name)}さんの予定を入れられる。ふせんは、つかんで別のマスへ動かせる。</p>`;
+        <p class="h-hint">表のマスを押すと、${esc(p.name)}さんの予定を入れられる。ふせんは、つかんで別のマスへ動かせる。</p>`;
     }
     return '<p class="h-hint">次回の日と時刻は、右の「次回の日」で直せる。</p>';
   }
@@ -875,6 +875,8 @@
     keepScroll($('h-ops'), [r.cur, r.view, r.decided, r.wide, !!r.tool, browse.open, browse.tab].join('|'), () => setHTML($('h-ops'), hostOps(r)));
     $('h-ops').querySelectorAll('details[data-keep-open]').forEach((el) => { if (openKeep[el.dataset.keepOpen]) el.open = true; });
     $('h-ops').querySelectorAll('input[data-keep]').forEach((el) => { const k = keep[el.dataset.keep]; if (k) { el.value = k.v; if (k.f) el.focus(); } });
+    // 予定の確認では、操作の欄（だれの表を出す？）を表のとなりに出せるように、並びの印をつける（並べ方は style.css）
+    document.querySelector('.h-grid').dataset.ops = r.cur === 'plan' && !onCover(r) ? 'side' : '';
     fillSearch();
     setHTML($('h-steps'), STEPS.map((s) => `<li class="${s.id === r.cur ? 'cur' : ''}${r.skip[s.id] ? ' skip' : ''}">
       <button type="button" class="go" data-act="jump" data-id="${esc(s.id)}"><span class="no">${s.sec || ''}</span>${esc(s.name)}</button>
