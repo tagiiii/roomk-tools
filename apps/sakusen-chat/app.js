@@ -141,8 +141,13 @@ function setError(id, message) {
   RoomkRTDB.showFormError(id, message);
 }
 
+// メッセージは共通の showToast が body の末尾に出す。窓（<dialog> の showModal）はその手前に重なり、
+// 画像を大きく見る窓は縦に長い画像だと画面の下まで広がってメッセージを隠す。ひらいている窓があれば、その中へ移して手前に出す
 function toast(message, isError = true) {
   RoomkRTDB.showToast(message, isError);
+  const node = document.getElementById('roomk-toast');
+  const open = [...document.querySelectorAll('dialog[open]')].pop();
+  if (node && open) open.appendChild(node);
 }
 
 function currentUid() {
