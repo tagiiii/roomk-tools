@@ -1026,8 +1026,29 @@
     return cell && cell.dataset.pid === pid ? cell : null;
   }
   function clearDrop() { document.querySelectorAll('.drop').forEach((el) => el.classList.remove('drop')); }
+  function markDrop() {
+    clearDrop();
+    const cell = cellAt(drag.px, drag.py, drag.pid);
+    if (cell && cell.dataset.cell !== drag.from) cell.classList.add('drop');
+  }
+  // つかんだまま画面の上下のはしへ寄せると、ページが送られる（スマホで、見えていない日へ動かすため）。
+  // はしに近いほど速い。指を止めていても送りつづけるので、指の動きではなくコマごとに見る
+  const EDGE = 72;
+  let edgeRaf = 0;
+  function edgeScroll() {
+    edgeRaf = 0;
+    if (!drag || !drag.ghost) return;
+    const over = drag.py < EDGE ? drag.py - EDGE : Math.max(0, drag.py - (window.innerHeight - EDGE));
+    if (over) {
+      const y0 = window.scrollY;
+      window.scrollBy(0, Math.sign(over) * (3 + Math.min(1, Math.abs(over) / EDGE) * 13));
+      if (window.scrollY !== y0) markDrop();
+    }
+    edgeRaf = requestAnimationFrame(edgeScroll);
+  }
   function endDrag() {
     if (drag && drag.ghost) { drag.ghost.remove(); dropJust = true; setTimeout(() => { dropJust = false; }, 60); }
+    if (edgeRaf) { cancelAnimationFrame(edgeRaf); edgeRaf = 0; }
     document.body.classList.remove('dragging'); clearDrop(); drag = null;
   }
   function onPointerDown(e) {
@@ -1049,9 +1070,9 @@
     }
     drag.ghost.style.left = e.clientX + 'px';
     drag.ghost.style.top = e.clientY + 'px';
-    clearDrop();
-    const cell = cellAt(e.clientX, e.clientY, drag.pid);
-    if (cell && cell.dataset.cell !== drag.from) cell.classList.add('drop');
+    drag.px = e.clientX; drag.py = e.clientY;
+    markDrop();
+    if (!edgeRaf) edgeRaf = requestAnimationFrame(edgeScroll);
   }
   function onPointerUp(e) {
     if (!drag) return;
