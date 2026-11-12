@@ -351,3 +351,17 @@ body { background: var(--color-bg); }
 .cb-hostmenu summary::before { content: "expand_more"; font-family: "Material Symbols Rounded"; font-size: 22px; color: var(--color-accent); transition: transform .15s; }
 .cb-hostmenu[open] summary::before { transform: rotate(180deg); }
 .cb-hostmenu .cb-proxyadd { margin-top: 4px; }
+
+/* ── まぜる ── */
+.cb-jams { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; width: 100%; max-width: 520px; }
+.cb-jambtn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 48px; padding: 8px 16px; }
+.cb-jambtn .material-symbols-rounded { font-size: 22px; }
+.cb-jambtn__left { font-size: 12px; font-weight: 400; opacity: 0.85; white-space: nowrap; }
+.cb-waitnote + .cb-jambtn { margin: 0 auto; }
+.cb-tray.is-mixed { animation: cb-mixed 0.35s ease-out; }
+@keyframes cb-mixed {
+  0% { transform: scale(0.96) rotate(-1.2deg); }
+  50% { transform: scale(1.02) rotate(1deg); }
+  100% { transform: none; }
+}
+@media (prefers-reduced-motion: reduce) { .cb-tray.is-mixed { animation: none; } }

@@ -372,4 +372,76 @@ t('2人以上の勝ち負けは前のまま（winner は番号）', () => {
   assert.strictEqual(S.winner, 1);
 });
 
+t('うごくは、ばらばらと同じ置き方（重ならない）', () => {
+  const rng = E.makeRng(61);
+  for (let i = 0; i < 300; i += 1) {
+    const p = E.makeProblem(rng, { count: 2 + (i % 5), kinds: 'all', arrange: 'move', prevKey: null });
+    p.coins.forEach((a, ai) => p.coins.forEach((b, bi) => {
+      if (bi > ai) assert.ok(Math.hypot(a.x - b.x, a.y - b.y) >= E.COINS[a.v].d / 2 + E.COINS[b.v].d / 2);
+    }));
+  }
+});
+
+t('まぜる: なしなら使えない。ありなら番でない人がならべなおせて、金額・時計・番・場面の番号は変わらない', () => {
+  const rng = E.makeRng(62);
+  const off = begin(SET0(), rng);
+  assert.deepStrictEqual(off.jam, [0, 0]);
+  assert.strictEqual(E.jam(off, 1, 1000, rng), off);
+
+  const S0 = begin(Object.assign(SET0(), { jam: 3 }), rng);
+  assert.deepStrictEqual(S0.jam, [3, 3]);
+  // 番の人・いない番号は使えない
+  assert.strictEqual(E.jam(S0, S0.turn, 1000, rng), S0);
+  assert.strictEqual(E.jam(S0, 5, 1000, rng), S0);
+  assert.strictEqual(E.jam(S0, -1, 1000, rng), S0);
+  const other = 1 - S0.turn;
+  const S1 = E.jam(S0, other, 1000, rng);
+  assert.notStrictEqual(S1, S0);
+  assert.strictEqual(S1.jam[other], 2);
+  assert.strictEqual(S1.jam[S0.turn], 3);
+  assert.strictEqual(S1.problem.mix, 1);
+  assert.strictEqual(S1.problem.total, S0.problem.total);
+  assert.strictEqual(S1.problem.key, S0.problem.key);
+  assert.deepStrictEqual(S1.problem.coins.map((c) => c.v), S0.problem.coins.map((c) => c.v));
+  assert.notDeepStrictEqual(S1.problem.coins, S0.problem.coins);
+  assert.strictEqual(S1.rev, S0.rev);
+  assert.strictEqual(S1.turn, S0.turn);
+  assert.strictEqual(S1.at, S0.at);
+  assert.deepStrictEqual(S1.rem, S0.rem);
+  // まぜたあとも、同じ金額で正解になる
+  assert.strictEqual(E.answer(S1, S1.turn, S1.problem.total, 2000).result, 'ok');
+  // 3回で使いきる
+  let S = S1;
+  S = E.jam(S, other, 1100, rng);
+  S = E.jam(S, other, 1200, rng);
+  assert.strictEqual(S.jam[other], 0);
+  assert.strictEqual(S.problem.mix, 3);
+  assert.strictEqual(E.jam(S, other, 1300, rng), S);
+});
+
+t('まぜる: 番の間だけ。次の小銭では mix が消え、残りの回数は持ちこす。「ここまで」の人は使えない', () => {
+  const rng = E.makeRng(63);
+  const THREE = { players: ['A', 'B', 'C'].map((name) => ({ name, time: 30, kinds: 'all' })), maxCoins: 5, arrange: 'move', first: 0, jam: 3 };
+  const R = E.createDuel(THREE, 0, rng);
+  assert.strictEqual(E.jam(R, 1, 100, rng), R); // 3・2・1 の間
+  let S = E.tick(R, E.READY_MS, rng);
+  S = E.jam(S, 1, E.READY_MS + 100, rng);
+  assert.strictEqual(S.problem.mix, 1);
+  const ok = E.answer(S, 0, S.problem.total, E.READY_MS + 500).state;
+  assert.strictEqual(E.jam(ok, 1, E.READY_MS + 600, rng), ok); // 正解の帯の間
+  S = E.tick(ok, E.READY_MS + 500 + E.REVEAL_MS, rng);
+  assert.strictEqual(S.turn, 1);
+  assert.ok(!S.problem.mix);
+  assert.deepStrictEqual(S.jam, [3, 2, 3]);
+  // B の時計を0にして「ここまで」。B はもう使えない
+  S = E.tick(S, S.at + 30000, rng);
+  assert.strictEqual(S.phase, 'out');
+  S = E.tick(S, S.phaseEnd, rng);
+  assert.strictEqual(S.turn, 2);
+  assert.strictEqual(E.jam(S, 1, S.at + 100, rng), S);
+  assert.notStrictEqual(E.jam(S, 0, S.at + 100, rng), S);
+  // 時間が残っていない番の人には使えない
+  assert.strictEqual(E.jam(S, 0, S.at + 30000, rng), S);
+});
+
 console.log('all ' + n + ' passed');
