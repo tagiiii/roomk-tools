@@ -207,4 +207,30 @@ t('2つ同時のスイッチ（pair）: 1つだけでは開かず、2つおさ�
   assert.strictEqual(E.held(S, c), true);
 });
 
+t('詰み: 箱がスイッチまで運べない場所に入ると分かる。はじめは、どのステージも詰んでいない', () => {
+  let S = fixed(1);
+  assert.strictEqual(E.stuck(S), false);
+  S = go(S, 0, 'down', 'right', 'right', 'right', 'right');
+  S = go(S, 1, 'up', 'right', 'right', 'right');
+  S = go(S, 0, 'right');
+  assert.strictEqual(E.stuck(S), false);            // スイッチの1つ手前
+  const on = go(S, 0, 'right');
+  assert.strictEqual(E.stuck(on), false);           // スイッチの上（とびらが開いた）
+  const over = go(on, 0, 'right');
+  assert.deepStrictEqual(over.boxes[0], [9, 2]);
+  assert.strictEqual(E.stuck(over), true);          // 押しすぎた
+  assert.strictEqual(E.stuck(fixed(0)), false);     // 箱のないステージ
+  let withBox = 0;
+  for (const level of ['normal', 'hard']) {
+    for (const players of [2, 4, 7, 12]) {
+      for (let seed = 1; seed <= 80; seed += 1) {
+        const G = E.create(gen(level, players, seed));
+        if (G.boxes.length) withBox += 1;
+        assert.strictEqual(E.stuck(G), false, level + ' ' + players + '人 #' + seed);
+      }
+    }
+  }
+  assert.ok(withBox > 100);
+});
+
 console.log('all ' + n + ' passed');

@@ -48,7 +48,7 @@
 
 /* ── 盤 ── */
 /* 盤は、はばと画面の高さの両方に収まる大きさにする（--head は盤の上下に要る高さ） */
-.sg-boardhost { --head: 120px; position: relative; width: min(100%, var(--bw, 860px), calc((100dvh - var(--head)) * var(--w) / var(--h))); min-width: min(100%, 260px); aspect-ratio: var(--w) / var(--h); margin: 0 auto; container-type: inline-size; overflow: hidden; border-radius: 14px; box-shadow: var(--shadow-md); background: var(--sg-wall); }
+.sg-boardhost { --head: 146px; position: relative; width: min(100%, var(--bw, 860px), calc((100dvh - var(--head)) * var(--w) / var(--h))); min-width: min(100%, 260px); aspect-ratio: var(--w) / var(--h); margin: 0 auto; container-type: inline-size; overflow: hidden; border-radius: 14px; box-shadow: var(--shadow-md); background: var(--sg-wall); }
 /* 近くを映すときは、盤を大きくして、動かすコマがまん中に来るようにずらす（app.js の camera） */
 .sg-board { position: absolute; inset: 0; --cell: calc(100cqw / var(--w)); background: var(--sg-wall); transform-origin: 0 0; transition: transform 0.28s ease-out; }
 
@@ -217,7 +217,24 @@
 
 .sg-legend { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; align-self: stretch; color: var(--color-muted); font-size: var(--font-size-sub); }
 .sg-legend li { display: flex; align-items: flex-start; gap: 4px; line-height: 1.4; }
-.sg-legend .material-symbols-rounded { font-size: 20px; }
+.sg-legend li { align-items: center; }
+/* 説明の絵は、盤と同じ絵を小さく出す */
+.sg-legend__ic { --cell: 28px; position: relative; flex: none; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; }
+.sg-legend__ic--sw { border-radius: 50%; background: radial-gradient(circle at 35% 28%, color-mix(in srgb, var(--sg-a) 55%, #fff), var(--sg-a) 62%); box-shadow: 0 2px 0 color-mix(in srgb, var(--sg-a) 60%, #000); color: #fff; width: 24px; height: 24px; margin: 0 2px; }
+.sg-legend__ic--sw .sg-mark { width: 54%; height: 54%; }
+.sg-legend__ic--pair::after { content: '2'; position: absolute; right: -4px; top: -4px; width: 14px; height: 14px; border-radius: 50%; background: #fff; color: var(--sg-a); border: 1px solid var(--sg-a); font-weight: 700; font-size: 10px; line-height: 1; display: flex; align-items: center; justify-content: center; box-sizing: border-box; }
+.sg-legend__ic--bridge { background: repeating-linear-gradient(90deg, #C99A5E 0 21%, #8C6336 21% 25%); border-top: 2px solid var(--c); border-bottom: 2px solid var(--c); height: 20px; margin: 4px 0; }
+.sg-legend__ic--bridge span { width: 16px; height: 16px; border-radius: 50%; background: var(--c); border: 1px solid #fff; color: #fff; font-weight: 700; font-size: 10px; line-height: 1; display: flex; align-items: center; justify-content: center; box-sizing: border-box; }
+
+/* 進めなかったときの一言（場所をあけておき、出ても盤が動かないようにする） */
+.sg-tip { margin: 2px 0 0; min-height: 1.6em; font-weight: 700; color: var(--color-accent); font-size: var(--font-size-sub); line-height: 1.6; opacity: 0; transition: opacity 0.2s; }
+.sg-tip.is-on { opacity: 1; }
+/* 詰んだときの案内 */
+.sg-stuck { margin: 0; align-self: stretch; display: flex; gap: 6px; align-items: flex-start; padding: 10px 12px; border-radius: var(--radius-btn); background: var(--color-accent-soft); color: var(--color-accent); font-weight: 700; font-size: var(--font-size-sub); line-height: 1.5; }
+.sg-stuck[hidden] { display: none; }
+.sg-stuck .material-symbols-rounded { font-size: 20px; flex: none; }
+/* 盤のコマを押してえらべるとき */
+.sg-board.is-pickable .sg-piece--player { pointer-events: auto; cursor: pointer; }
 
 .sg-tools { display: flex; flex-direction: column; align-items: center; gap: var(--space-sm); }
 .sg-jump { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
@@ -235,6 +252,7 @@
 .sg-seg__btn:disabled { opacity: 0.4; cursor: not-allowed; }
 .sg-stepper { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .sg-stepper__btn { width: 44px; height: 44px; border: 2px solid var(--color-border); border-radius: var(--radius-btn); background: var(--color-surface); color: var(--color-primary); cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.sg-stepper__btn:disabled { opacity: 0.4; cursor: not-allowed; }
 .sg-stepper__num { min-width: 64px; text-align: center; font-size: var(--font-size-lg); font-weight: 700; }
 .sg-who { padding: var(--space-md); border: 1px dashed var(--color-border); border-radius: var(--radius-card); }
 .sg-who[hidden] { display: none; }
@@ -289,11 +307,18 @@
 @media (max-width: 900px) {
   .sg-game { grid-template-columns: minmax(0, 1fr); }
   .sg-side { position: static; max-height: none; overflow: visible; }
-  .sg-boardhost { --head: 400px; }
+  .sg-boardhost { --head: 430px; }
   .sg-legend { align-self: center; }
 }
 @media (max-width: 520px) {
   .sg-wrap { padding: var(--space-sm); }
+  /* トップ: 主ボタンがはじめの画面に入るよう、かざりと余白をつめる */
+  .sg-panel { margin: var(--space-sm) auto; padding: var(--space-md); }
+  .sg-duo { height: 52px; gap: 4px; }
+  .sg-duo__one { width: 44px; height: 44px; }
+  .sg-lead { margin-bottom: var(--space-md); font-size: var(--font-size-sub); line-height: 1.6; }
+  .sg-set { gap: var(--space-sm); margin-bottom: var(--space-md); }
+  .sg-set .sg-note { display: none; }
   .sg-pad { grid-template-columns: repeat(3, 48px); grid-template-rows: auto repeat(2, 48px); }
   .sg-pad__btn { min-height: 48px; }
 }
