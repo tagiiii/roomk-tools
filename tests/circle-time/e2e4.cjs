@@ -6,7 +6,8 @@ const PROGRAM = [
   { start: '9:30', end: '10:15', name: 'ボドゲクラブ', place: 'クラブルーム', once: false, thumb: 'https://katariba.notion.site/image/attachment%3Atest%3Aboardgame.png?table=block&id=x&width=480' },
   { start: '9:30', end: '10:15', name: 'ほわぽかひろば', place: 'のんびり', once: false, thumb: '' },
   { start: '10:30', end: '11:15', name: 'コトバであそぼ!', place: '学びの沼', once: false, apply: true },
-  { start: '13:00', end: '13:45', name: 'マイクラのミッション', place: 'マイクラルーム', once: true },
+  // 名前に RTDB のキーに使えない字（.）がある（2026-11-12 本番で午後のルームを作れなかった形）
+  { start: '13:00', end: '13:45', name: 'マイクラのミッションVol.2', place: 'マイクラルーム', once: true, thumb: 'https://katariba.notion.site/image/attachment%3Atest%3Amc.png?table=block&id=y&width=480' },
 ];
 
 (async () => {
@@ -33,7 +34,7 @@ const PROGRAM = [
   check('A5 クイズは既存のパックから読む', qn >= 30, qn);
   await H.page.evaluate(() => { document.getElementById('setup-more').open = true; });
   const lines = (await H.page.inputValue('#prog-lines')).split('\n');
-  check('A6 プログラムの文の形', lines[0] === '9:30 ボドゲクラブ｜クラブルーム' && lines[2] === '10:30 コトバであそぼ!｜学びの沼' && lines[3] === '13:00 マイクラのミッション｜マイクラルーム｜この日だけ', lines);
+  check('A6 プログラムの文の形', lines[0] === '9:30 ボドゲクラブ｜クラブルーム' && lines[2] === '10:30 コトバであそぼ!｜学びの沼' && lines[3] === '13:00 マイクラのミッションVol.2｜マイクラルーム｜この日だけ', lines);
   await H.page.click('#seg-session button[data-v="pm"]');
   await L.waitText(H, '#prog-head', '明日のプログラム');
   check('A7 午後は明日のプログラム・何の日は出さない', !(await L.visible(H, '#rd-day')) && !(await L.visible(H, '#am-fields')));
@@ -171,7 +172,7 @@ const PROGRAM = [
   check('D1 時刻ごとにまとまり、1コマ目から数える', JSON.stringify(pg.rows) === JSON.stringify(['1コマ目9:30', '2コマ目10:30', '3コマ目13:00']), pg.rows);
   check('D2 同じ時刻は1行に・場所も出る', pg.first.includes('ボドゲクラブ') && pg.first.includes('ほわぽかひろば') && pg.first.includes('クラブルーム'));
   check('D3 この日だけの印・申し込み制の印は出さない', pg.once === 'この日だけ' && !pg.apply.includes('申し込み制'), pg.apply);
-  check('D3b サムネイルは画像のあるものだけ', pg.thumbs.length === 1 && pg.thumbs[0].includes('katariba.notion.site/image/'), pg.thumbs);
+  check('D3b サムネイルは画像のあるものだけ・名前に「.」があっても出る', pg.thumbs.length === 2 && pg.thumbs.every((t) => t.includes('katariba.notion.site/image/')), pg.thumbs);
   await L.waitPlayer(A, 'ボドゲクラブ');
   check('D4 参加者の画面にもコマ目・時刻・場所', (await L.player(A)).includes('1コマ目 9:30') && (await L.player(A)).includes('（クラブルーム）'));
   await L.shot(W, 'program', false);

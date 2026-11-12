@@ -1721,7 +1721,7 @@ function firstSlot(room) {
   const pg = stepsOf(room).find((s) => s.type === 'show' && !/^明日/.test(s.title || ''));
   const items = (pg?.lines || []).map(parseLine).filter((x) => x.name && x.tm && x.tm !== '—');
   if (!items.length) return null;
-  const th = (n) => { const u = pg.thumbs?.[n]; return /^https:\/\//.test(u || '') ? u : ''; };
+  const th = (n) => { const u = pg.thumbs?.[thumbKey(n)]; return /^https:\/\//.test(u || '') ? u : ''; };
   return { tm: items[0].tm, items: items.filter((x) => x.tm === items[0].tm).map((x) => ({ ...x, thumb: th(x.name) })) };
 }
 // プログラムの1行「9:30 ボドゲクラブ｜クラブルーム｜この日だけ」を読む
@@ -1735,13 +1735,15 @@ function parseLine(l) {
 }
 // 時刻の早い順に「1コマ目」「2コマ目」…（時刻のないものは数えない）
 function komaOf(items) { const out = {}; let n = 0; for (const it of items) if (it.tm && it.tm !== '—' && !out[it.tm]) out[it.tm] = ++n; return out; }
+// サムネイルはプログラムの名前で引く。RTDB のキーに使えない字（. # $ / [ ]）が名前にあるので、キーは変換して持つ
+function thumbKey(name) { return encodeURIComponent(String(name)).replace(/\./g, '%2E'); }
 function programHtml(lines, thumbs) {
   const items = (lines || []).map(parseLine).filter((x) => x.name);
   if (!items.length) return '';
   const groups = [];
   for (const it of items) { const g = groups[groups.length - 1]; if (g && g.tm === it.tm) g.items.push(it); else groups.push({ tm: it.tm, items: [it] }); }
   const dense = groups.length > 4 || groups.some((g) => g.items.length > 2), roomy = !dense && groups.length <= 3;
-  const th = (name) => { const u = thumbs?.[name]; return /^https:\/\//.test(u || '') ? `<span class="th" style="background-image:url('${esc(u).replace(/'/g, '%27')}')"></span>` : ''; };
+  const th = (name) => { const u = thumbs?.[thumbKey(name)]; return /^https:\/\//.test(u || '') ? `<span class="th" style="background-image:url('${esc(u).replace(/'/g, '%27')}')"></span>` : ''; };
   const koma = komaOf(items);
   return `<div class="pgx${dense ? ' dense' : roomy ? ' roomy' : ''}">${groups.map((g) => `<div class="pgx-row"><span class="tm">${koma[g.tm] ? `<small>${koma[g.tm]}コマ目</small>` : ''}${esc(g.tm === '—' ? '' : g.tm)}</span><div class="pgx-items">${g.items.map((it) => `<div class="pgx-it">${th(it.name)}<div class="nm">${esc(it.name)}${it.place ? `<small>${esc(it.place)}</small>` : ''}${it.tags.map((t) => `<span class="pg-tag${t === 'この日だけ' ? ' once' : ''}">${esc(t)}</span>`).join('')}</div></div>`).join('')}</div></div>`).join('')}</div>`;
 }
@@ -1878,7 +1880,7 @@ function renderPlayer(room) {
     if (g) html += h2('casino', 'みんなでゲーム', 'これであそぶよ') + `${g.slug ? gameArt(g, 'p-game-art') : ''}<div class="p-big" style="padding:0 0 6px">${esc(g.name)}</div><p class="q" style="text-align:center">${esc(g.hk || '')}</p>` + (cur.link ? `<a class="p-link p-go" href="${esc(href)}" target="_blank" rel="noopener"><span class="material-symbols-rounded">login</span>ゲームに入る${cur.gameCode ? `<small>ルーム ${esc(cur.gameCode)}</small>` : ''}</a>` : `<p class="q" style="text-align:center;margin-top:8px">ルームができたら、ここに「ゲームに入る」が出るよ</p>`);
     else html += h2('casino', 'みんなでゲーム', 'これから決めます');
   } else if (cur.type === 'show') {
-    const th = (n) => /^https:\/\//.test(cur.thumbs?.[n] || '') ? `<img class="th" src="${esc(cur.thumbs[n])}" alt="">` : '';
+    const th = (n) => /^https:\/\//.test(cur.thumbs?.[thumbKey(n)] || '') ? `<img class="th" src="${esc(cur.thumbs[thumbKey(n)])}" alt="">` : '';
     const pitems = (cur.lines || []).map(parseLine).filter((x) => x.name), koma = komaOf(pitems);
     const pl = pitems.map((x) => `<li>${th(x.name)}<b>${koma[x.tm] ? `${koma[x.tm]}コマ目 ` : ''}${esc(x.tm === '—' ? '' : x.tm)}</b> ${esc(x.name)}${x.place ? `（${esc(x.place)}）` : ''}${x.tags.map((t) => ` <span class="pg-tag${t === 'この日だけ' ? ' once' : ''}" style="font-size:12px">${esc(t)}</span>`).join('')}</li>`).join('');
     html += h2('event_note', cur.title, cur.ttl || '') + `<ul class="p-lines">${pl}</ul>` + (cur.note ? `<p class="q" style="margin-top:12px">${esc(cur.note)}</p>` : '') + (cur.link && /^https?:\/\//.test(cur.link) ? `<a class="p-link" href="${esc(cur.link)}" target="_blank" rel="noopener"><span class="material-symbols-rounded">open_in_new</span>くわしく開く</a>` : '');
@@ -2202,7 +2204,7 @@ async function loadProgram(kind) {
     if (token !== progToken) return;
     const items = Array.isArray(d.items) ? d.items : [];
     $('prog-lines').value = items.map((x) => `${x.start || '—'} ${x.name}${x.place ? '｜' + x.place : ''}${x.once ? '｜この日だけ' : ''}`).join('\n');
-    progMeta = { link: d.url || PROGRAM_URL, ttl: label, thumbs: Object.fromEntries(items.filter((x) => /^https:\/\//.test(x.thumb || '')).map((x) => [x.name, x.thumb])) };
+    progMeta = { link: d.url || PROGRAM_URL, ttl: label, thumbs: Object.fromEntries(items.filter((x) => /^https:\/\//.test(x.thumb || '') && thumbKey(x.name).length <= 700).map((x) => [thumbKey(x.name), x.thumb])) };
     const once = items.filter((x) => x.once).length;
     setReady('rd-prog', items.length ? 'ok' : 'none', items.length ? `${label}の${items.length}件を room-K ポータルから入れました${once ? `（この日だけのもの ${once}件）` : ''}。` : `${label}のプログラムは見つかりませんでした。`, 'prog-status-text');
   } catch {
