@@ -110,7 +110,8 @@
 
 /* ポップアップ */
 .ym-pop { position: fixed; z-index: 60; inset: 0; margin: auto; width: min(600px, calc(100vw - 32px)); max-height: min(86vh, 720px); padding: 0; border: 0; border-radius: 20px; background: var(--color-surface); color: var(--color-text); box-shadow: 0 16px 48px rgba(63, 54, 45, .28); overflow: hidden; }
-.ym-pop[open] { display: flex; flex-direction: column; animation: ym-rise .2s ease-out both; }
+/* 動きのあとに transform を残さない（both だと、中へ移したメッセージの位置の基準がポップアップになる） */
+.ym-pop[open] { display: flex; flex-direction: column; animation: ym-rise .2s ease-out backwards; }
 .ym-pop::backdrop { background: rgba(63, 54, 45, .45); }
 .ym-pop__body { flex: 1 1 auto; overflow-y: auto; padding: 20px 20px 16px; }
 .ym-pop__foot { flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 12px 20px 14px; border-top: 1px solid var(--color-border); }
