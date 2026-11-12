@@ -436,6 +436,22 @@ body { background: var(--color-bg); }
 /* 箱の札: 押すのに要る人数 */
 .sg-boxnum { position: absolute; right: -4%; top: -8%; min-width: 40%; height: 40%; padding: 0 4%; box-sizing: border-box; border-radius: 999px; background: #5E4020; color: #fff; border: calc(var(--cell) * 0.04) solid #fff; font-weight: 700; font-size: calc(var(--cell) * 0.28); line-height: 1; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3); z-index: 2; }
 
+/* ── 砂時計 ── */
+.sg-timer { margin: 0; font-weight: 700; color: var(--color-primary); font-variant-numeric: tabular-nums; display: inline-flex; align-items: center; gap: 4px; }
+.sg-timer .material-symbols-rounded { font-size: 20px; }
+.sg-timer.is-low { color: var(--color-accent); }
+.sg-clear__big--time { color: var(--color-primary); }
+.sg-hostmenu--set { margin-top: 0; }
+.sg-hostmenu--set .sg-set { padding-bottom: 8px; }
+
+/* ── くらやみ ──
+   まだ見ていないマスはまっ暗に、前に見たマスはうす暗く出す。いま見えているのは、自分のコマのまわりだけ。
+   見えていないマスの人・箱・カギ・星は出さない */
+.sg-cell.is-unseen { filter: brightness(0.08) grayscale(1); }
+.sg-cell.is-unseen > * { visibility: hidden; }
+.sg-cell.is-dim { filter: brightness(0.5) saturate(0.5); }
+.sg-piece.is-hidden { display: none; }
+
 /* 本体で足した分 */
 .sg-play { min-width: 0; }
 /* 通信が切れた人のコマは、うすく出す */

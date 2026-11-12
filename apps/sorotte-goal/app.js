@@ -21,7 +21,9 @@ const LEVEL_NOTE = {
   hard: 'しかけは5つ。カギや星が、とびらの先にある。1人がスイッチをおさえて、もう1人がとりに行く。',
   expert: '部屋は6つ。どのしかけも、2人以上で力を合わせないと通れない。',
 };
-const DEFAULT_SET = { level: 'easy', stage: 1, hostPlays: true };
+const DEFAULT_SET = { level: 'easy', stage: 1, hostPlays: true, dark: false, time: 0 };
+const TIMES = [0, 3, 5, 10];   // 砂時計（分）。0 はなし
+const LIGHT = 2;               // くらやみで見える広さ（自分のコマから、たて・よこ・ななめに何マスまで）
 const KIND_NAME = { relay: 'とびら', relayJ: '橋の先のスイッチ', key: 'カギ', keyJ: '橋の先のカギ', keyDoor: 'とびらの先のカギ', box: '重い箱', boxBig: 'みんなで押す箱', pair: '同時におさえるスイッチ' };
 const MARK_NAME = { a: 'まる', b: 'さんかく', c: 'しかく', d: 'ほし', e: 'ひしがた', f: 'プラス', h: 'ろっかく', i: 'つき' };
 // ひとこと: 決まった言葉をえらんで、みんなに知らせる（声を出さなくても伝えられる）。自由に打つ欄は置かない。
@@ -80,6 +82,9 @@ const state = {
   sayAt: 0,            // 最後にひとことを送った時刻（ひとり5秒に1回まで）
   saySeen: {},         // 席ごとの、最後に見たひとこと { v: 値, until: 出しておく時刻 }
   sayTimer: null,
+  seen: new Set(),     // くらやみで、前に見たマス
+  timeUpShown: false,  // 「時間だよ」を出しているか
+  clockTimer: null,
   prev: null,          // 直前に出した状態（どこが変わったかを見て、動きを付ける）
   drawn: '',           // いま盤に出しているステージ（対決の番号＋ステージ）
   pieces: {},
@@ -169,10 +174,12 @@ function normSet(raw) {
     level: LEVELS.includes(s.level) ? s.level : DEFAULT_SET.level,
     stage: Number.isInteger(s.stage) && s.stage >= 1 && s.stage <= MAX_STAGE ? s.stage : DEFAULT_SET.stage,
     hostPlays: typeof s.hostPlays === 'boolean' ? s.hostPlays : DEFAULT_SET.hostPlays,
+    dark: s.dark === true,
+    time: TIMES.includes(s.time) ? s.time : DEFAULT_SET.time,
   };
 }
 const levelLabel = (level) => E.LEVELS[level].label;
-const settingSummary = (set) => 'むずかしさは「' + levelLabel(set.level) + '」・ステージ ' + set.stage;
+const settingSummary = (set) => 'むずかしさは「' + levelLabel(set.level) + '」・ステージ ' + set.stage + (set.dark ? '・くらやみ' : '') + (set.time ? '・砂時計 ' + set.time + '分' : '');
 
 /* ── ルームの読み取り ── */
 function byJoined(entries) {
@@ -226,8 +233,32 @@ function gameOf(room) {
     proxy: seats.map((_, i) => proxy[i] === true),
     spec,
     S,
+    // くらやみ・砂時計（分。0 はなし）・ステージをはじめた時刻・クリアした時刻
+    dark: g.dark === true,
+    limit: TIMES.includes(g.limit) ? g.limit : 0,
+    startAt: Number(g.startAt) || 0,
+    doneAt: Number(room.play?.[id]?.doneAt) || 0,
   };
 }
+
+/* ── 砂時計 ──
+   残り時間は、それぞれの端末が「はじめた時刻＋決めた時間」から出す（時間のための書き込みはしない）。
+   ホストが切れている間は、切れた時刻で止める（戻ったときに、その分だけはじめた時刻をずらす）。
+   0になっても終わりではない。「時間だよ」を出して、ホストがつづけるか、ほかのステージにするかをえらぶ */
+function roomNow(room) {
+  const now = RoomkRTDB.now();
+  if (room && room.hostConnected === false) return RoomkRTDB.getHostDisconnectedAt(room) ?? now;
+  return now;
+}
+// 残りの時間（ms）。砂時計なし・クリアした時刻が分からないときは null
+function timeLeft(room, game) {
+  if (!game.limit || !game.startAt) return null;
+  const end = game.startAt + game.limit * 60000;
+  if (game.S.cleared) return game.doneAt ? end - game.doneAt : null;
+  return end - roomNow(room);
+}
+const timeUp = (room, game) => !game.S.cleared && timeLeft(room, game) !== null && timeLeft(room, game) <= 0;
+const mmss = (ms) => { const s = Math.max(0, Math.ceil(ms / 1000)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
 
 // その席の人が、いまルームにいるか（端末なしの参加者はいつもいる）
 function seatPresent(room, game, i) {
@@ -341,6 +372,11 @@ function resetView() {
   ['board', 'pads', 'pick', 'roster', 'legend', 'lobbyPeople'].forEach((id) => $(id).replaceChildren());
   $('pads').dataset.sig = '';
   clearTimeout(state.sayTimer);
+  $('timeBox').hidden = true;
+  $('timer').hidden = true;
+  $('board').classList.remove('is-dark');
+  state.seen = new Set();
+  state.timeUpShown = false;
   Object.assign(state, { picked: -1, near: null, nearNow: false, prev: null, drawn: '', pieces: {}, setKey: null, saySeen: {}, sayTimer: null });
   $('sayPanel').hidden = true;
   $('clearBox').hidden = true;
@@ -350,6 +386,8 @@ function resetView() {
 
 function cleanupRoom() {
   clearInterval(state.timerInterval);
+  clearInterval(state.clockTimer);
+  state.clockTimer = null;
   clearTimeout(state.orphanTimer);
   if (state.roomRef && state.roomCallback) state.roomRef.off('value', state.roomCallback);
   if (state.connectedRef && state.connectedCallback) state.connectedRef.off('value', state.connectedCallback);
@@ -435,6 +473,8 @@ function connectToRoom(role, nickname, code, ref, joinedAt) {
   };
   state.connectedRef.on('value', state.connectedCallback);
   state.timerInterval = setInterval(tickRoom, 1000);
+  clearInterval(state.clockTimer);
+  state.clockTimer = setInterval(tickClock, 500);
 }
 
 function tickRoom() {
@@ -469,7 +509,12 @@ async function ensurePresence(force = false) {
       // 手元の値で確かめてから、2つの欄だけを書く（ルーム全体の transaction は、みんなが動いている間は通りにくい）
       const room = state.room;
       if (room.hostUid === uid && !isExpired(room) && !(room.hostConnected === true && room.hostDisconnectedAt == null)) {
-        await ref.update({ hostConnected: true, hostDisconnectedAt: null });
+        const back = { hostConnected: true, hostDisconnectedAt: null };
+        // 切れていた間は砂時計を止めていたので、その分だけ、はじめた時刻をずらす
+        const game = room.status === STATUS.PLAY ? gameOf(room) : null;
+        const at = room.hostConnected === false ? RoomkRTDB.getHostDisconnectedAt(room) : null;
+        if (game && game.limit && game.startAt && at != null && !game.S.cleared) back['game/startAt'] = game.startAt + Math.max(0, RoomkRTDB.now() - at);
+        await ref.update(back);
       }
     } else if (role === 'guest') {
       await ref.child('players/' + nickname).onDisconnect().remove();
@@ -766,6 +811,8 @@ async function enterWatch(code, fromForm = false) {
 
 function connectWatch(code, ref) {
   state.role = 'spectator';
+  clearInterval(state.clockTimer);
+  state.clockTimer = setInterval(tickClock, 500);
   // 共有するタブ・ウィンドウを選ぶときに見分けられるよう、題名と見出しを変える
   document.title = 'みんなにみせる画面 | そろってゴール | あそびのたな';
   document.body.classList.add('is-watch');
@@ -818,6 +865,8 @@ function updateWatchOverlay(room) {
 // 購読とタイマーを止めて、アドレスから watch を外す（ルームには触らない）
 function stopWatch() {
   clearTimeout(state.watchTimer);
+  clearInterval(state.clockTimer);
+  state.clockTimer = null;
   if (state.roomRef && state.roomCallback) state.roomRef.off('value', state.roomCallback);
   Object.assign(state, { role: null, roomCode: null, roomRef: null, room: null, roomCallback: null, watchTimer: null });
   resetView();
@@ -918,8 +967,9 @@ function newGameFor(room, seats, level, seed) {
   const proxy = seats.map((name) => !!room.proxies?.[name]);
   const uids = seats.map((name, i) => (proxy[i] ? '' : room.players[name].uid));
   const spec = { kind: 'gen', level, n: seats.length, seed };
-  // game はステージの決まり（だれが何番か・どのステージか）、play はそのステージの動く部分
-  return { game: { id, seats: seats.slice(), uids, proxy, spec: { level, n: seats.length, seed } }, play: E.toRoom(E.create(spec)) };
+  // game はステージの決まり（だれが何番か・どのステージか・くらやみ・砂時計）、play はそのステージの動く部分
+  const set = normSet(room.set);
+  return { game: { id, seats: seats.slice(), uids, proxy, spec: { level, n: seats.length, seed }, dark: set.dark, limit: set.time, startAt: RoomkRTDB.now() }, play: E.toRoom(E.create(spec)) };
 }
 
 async function startGame() {
@@ -936,7 +986,10 @@ async function startGame() {
   if (ok) {
     window.RoomkStats?.count('start');
     window.RoomkStats?.count('players-' + n);
-    window.RoomkStats?.count('level-' + normSet(state.room?.set).level);
+    const used = normSet(state.room?.set);
+    window.RoomkStats?.count('level-' + used.level);
+    if (used.dark) window.RoomkStats?.count('dark');
+    if (used.time) window.RoomkStats?.count('timer-' + used.time);
   } else if (ok === false) {
     toast('遊ぶ人が2人そろっていないよ。だれかが入るのを待つか、「ホストも遊ぶ」をオンにしてね');
   }
@@ -1004,8 +1057,13 @@ async function backToLobby() {
 function sendStep(game, who, next) {
   const ref = state.roomRef;
   if (!ref) return;
-  if (next.cleared && !game.S.cleared) window.RoomkStats?.count('finish');
-  ref.child('play/' + game.id).update(E.patch(game.S, next, who)).catch((error) => {
+  const write = E.patch(game.S, next, who);
+  if (next.cleared && !game.S.cleared) {
+    window.RoomkStats?.count('finish');
+    // 砂時計があるときは、クリアした時刻を残す（あとから見た人にも、残り時間が同じに出るように）
+    if (game.limit) write.doneAt = RoomkRTDB.now();
+  }
+  ref.child('play/' + game.id).update(write).catch((error) => {
     console.warn('[sorotte-goal] step failed', error);
     // 続けて失敗しても、知らせるのは5秒に1回まで
     if (Date.now() - state.stepFailAt > 5000) {
@@ -1019,6 +1077,8 @@ function step(dir) {
   const room = state.room;
   const game = gameOf(room);
   if (!room || !game || state.currentScreen !== 'game' || room.hostConnected === false || game.S.cleared) return;
+  // 「時間だよ」が出ている間は動かせない（ホストがえらぶまで）
+  if (timeUp(room, game)) return;
   const who = state.picked;
   if (!movableSeats(room, game).includes(who)) return;
   const S = game.S;
@@ -1162,9 +1222,11 @@ function renderWaiting(room) {
   $('lobbySet').hidden = !host;
   $('lobbySetView').hidden = host;
   if (host) {
-    const key = set.level + ':' + set.stage;
+    const key = set.level + ':' + set.stage + ':' + set.dark + ':' + set.time;
     if (state.setKey !== key) {
       state.setKey = key;
+      seg($('darkSeg'), [[false, 'なし'], [true, 'あり']], set.dark, (v) => saveSet((s) => ({ ...s, dark: v })));
+      seg($('timeSeg'), TIMES.map((t) => [t, t ? t + '分' : 'なし']), set.time, (v) => saveSet((s) => ({ ...s, time: v })));
       seg($('levelSeg'), LEVELS.map((k) => [k, levelLabel(k)]), set.level, (v) => saveSet((s) => ({ ...s, level: v })));
       $('levelNote').textContent = LEVEL_NOTE[set.level];
       $('stageNum').textContent = String(set.stage);
@@ -1236,11 +1298,13 @@ function drawStage(game) {
   state.prev = null;
   state.near = null;
   state.saySeen = {};
+  state.seen = new Set();
   state.drawn = game.id + ':' + E.specKey(S.spec);
   $('stageName').textContent = T.name + '・' + game.spec.n + '人　ステージ ' + game.spec.seed;
   replay($('stageName'), 'is-new');
   // このステージに出るしかけの名前をならべる（くわしい説明は、横の一覧と、進めなかったときの一言）
-  $('stageHint').textContent = 'しかけ: ' + Array.from(new Set(T.kinds.map((k) => KIND_NAME[k]))).join('・') + '。星は、とってもとらなくてもいい。';
+  $('stageHint').textContent = 'しかけ: ' + Array.from(new Set(T.kinds.map((k) => KIND_NAME[k]))).join('・') + '。星は、とってもとらなくてもいい。'
+    + (game.dark ? 'くらやみ: 自分のコマのまわりだけ見える。' : '');
   $('clearBox').hidden = true;
   showTip('');
   buildLegend(T);
@@ -1461,8 +1525,12 @@ function renderGame() {
   board.classList.toggle('is-pickable', movable.length > 1);
   board.classList.toggle('is-calm', S.players.length > 4);
 
+  // くらやみ: 見えるマスと、見えているコマを決める
+  applyDark(game, movable, mine);
+
   // 星（歩数は、あそんでいる間は出さない。クリアのときに「ぜんぶで○歩」とだけ出す）
   $('hud').replaceChildren(starRow(S.got, T.stars.length));
+  renderTimer();
 
   // 横: 自分の表示・動かすコマ・矢印・遊ぶ人の一覧
   const you = $('youLine');
@@ -1502,12 +1570,75 @@ function renderGame() {
   if (S.cleared) {
     const sub = [el('span', '', 'ぜんぶで' + S.rev + '歩')];
     if (T.stars.length) sub.unshift(starRow(S.got, T.stars.length));
+    // 砂時計があって、時間内にクリアしたとき
+    const left = timeLeft(room, game);
+    if (left !== null && left > 0) sub.push(el('span', '', '時間内にクリア！（のこり ' + mmss(left) + '）'));
     $('clearSub').replaceChildren(...sub);
     $('clearBtns').hidden = !host;
     $('clearWait').hidden = host || watch;
   }
+  // 時間だよ（砂時計が0。クリアの札とは同時に出ない）
+  const up = timeUp(room, game);
+  state.timeUpShown = up;
+  $('timeBox').hidden = !up;
+  $('timeBtns').hidden = !host;
+  $('timeWait').hidden = host || watch;
   state.prev = S;
   camera();
+}
+
+// 砂時計の残り時間。1秒に2回、ここだけ描きなおす。0をまたいだら、全体を描きなおす
+function renderTimer() {
+  const room = state.room;
+  const game = gameOf(room);
+  const node = $('timer');
+  if (!room || !game) return;
+  const left = timeLeft(room, game);
+  node.hidden = left === null;
+  if (left === null) return;
+  node.replaceChildren(icon('hourglass_top'), document.createTextNode('のこり ' + mmss(left)));
+  node.classList.toggle('is-low', left <= 30000 && !game.S.cleared);
+}
+function tickClock() {
+  if (state.currentScreen !== 'game' || !state.room) return;
+  const game = gameOf(state.room);
+  if (!game || !game.limit) return;
+  if (timeUp(state.room, game) !== !!state.timeUpShown) renderGame();
+  else renderTimer();
+}
+
+/* ── くらやみ ──
+   「くらやみ」のステージでは、自分のコマ（ホストは、代わりに動かしているコマも）のまわり LIGHT マスだけが見える。
+   みんなにみせる画面・進行だけのホスト・見る番の人は、みんなの明かりを合わせた範囲が見える（だれも行っていない所は見えない）。
+   前に見たマスは、うす暗く残す（かべやしかけの場所はおぼえている。人・箱・カギ・星は、いま見えている所だけ）。
+   見える範囲は端末の側で決めるだけで、ルームには何も書かない。クリアしたら、ぜんぶ見せる */
+function applyDark(game, movable, mine) {
+  const board = $('board');
+  const dark = game.dark && !game.S.cleared;
+  if (!dark) {
+    if (board.classList.contains('is-dark')) {
+      board.classList.remove('is-dark');
+      board.querySelectorAll('.is-unseen, .is-dim').forEach((n) => n.classList.remove('is-unseen', 'is-dim'));
+      board.querySelectorAll('.sg-piece.is-hidden').forEach((n) => n.classList.remove('is-hidden'));
+    }
+    return;
+  }
+  board.classList.add('is-dark');
+  const S = game.S;
+  // 明かりのもと: 動かせるコマがあれば、自分のコマと、いまえらんでいるコマ。なければ、みんな
+  const own = movable.length ? S.players.filter((_, i) => i === mine || i === state.picked) : S.players;
+  const lit = (x, y) => own.some((p) => Math.abs(p.x - x) <= LIGHT && Math.abs(p.y - y) <= LIGHT);
+  board.querySelectorAll('.sg-cell').forEach((cell) => {
+    const [x, y] = cell.dataset.pos.split(',').map(Number);
+    const on = lit(x, y);
+    if (on) state.seen.add(cell.dataset.pos);
+    cell.classList.toggle('is-unseen', !on && !state.seen.has(cell.dataset.pos));
+    cell.classList.toggle('is-dim', !on && state.seen.has(cell.dataset.pos));
+  });
+  Object.keys(state.pieces).forEach((id) => {
+    const node = state.pieces[id];
+    node.classList.toggle('is-hidden', !lit(Number(node.style.getPropertyValue('--x')), Number(node.style.getPropertyValue('--y'))));
+  });
 }
 
 // 画面の矢印のボタンと、動かすコマをえらぶ一覧（ホストが、ほかの人のコマも動かせるとき）
@@ -1800,6 +1931,20 @@ $('btnAgain').addEventListener('click', () => restartGame('again'));
 $('btnRetry').addEventListener('click', () => restartGame('again'));
 $('btnSkip').addEventListener('click', () => restartGame('skip'));
 $('btnLobby').addEventListener('click', backToLobby);
+// 時間だよ → このままつづける: 砂時計を、このステージの間だけ止める（ホストだけ）
+$('btnTimeGo').addEventListener('click', async () => {
+  if (state.role !== 'host' || !state.roomRef || state.busy) return;
+  state.busy = true;
+  try {
+    await state.roomRef.child('game/limit').set(0);
+  } catch (error) {
+    console.warn('[sorotte-goal] timer off failed', error);
+    toast('つづけられませんでした。もう一度ためしてね');
+  } finally {
+    state.busy = false;
+  }
+});
+$('btnTimeSkip').addEventListener('click', () => restartGame('skip'));
 $('btnView').addEventListener('click', () => { state.near = !state.nearNow; camera(); });
 $('btnSay').addEventListener('click', () => { const panel = $('sayPanel'); panel.hidden = !panel.hidden; $('btnSay').setAttribute('aria-expanded', panel.hidden ? 'false' : 'true'); });
 PC_MQ.addEventListener?.('change', () => { $('pads').dataset.sig = ''; if (state.currentScreen === 'game') renderGame(); });
