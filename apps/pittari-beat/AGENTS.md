@@ -38,7 +38,7 @@
 ## 技術スタック
 
 - 分割ファイル: `index.html`（画面）・`app.js`（画面・音・操作・ルーム。type="module"）・`engine.js`（譜面・判定・点数・順位・タイミング合わせの計算。音や画面に関係しない）・`style.css`（接頭辞 `pb-`）
-- Realtime Database（compat 10.14.1）。`RoomkRTDB.initFirebase()`・`now()`・`isRoomExpired()`・`cancelRoomOnDisconnect()`・`copyRoomCode()`・`copyRoomLink()`・`showToast()` を使う
+- Realtime Database（compat 13.3.0）。`RoomkRTDB.initFirebase()`・`now()`・`isRoomExpired()`・`cancelRoomOnDisconnect()`・`copyRoomCode()`・`copyRoomLink()`・`showToast()` を使う
 - 音: Web Audio。**時間は音の時計（AudioContext）を基準にする。** `getOutputTimestamp()` で「いま耳に届いている音の位置」と画面の時計を対応させ、しるしの位置も判定もそこから出す（使えないブラウザは `currentTime − outputLatency`）。たたいた時刻はイベントの `timeStamp`
 - 曲は `music/*.mp3` を `fetch` → `decodeAudioData` し、`AudioBufferSourceNode` で鳴らす。止めて再開するときは `start(when, offset)` で2秒前から
 - iPhone のマナーモードでも鳴るよう `navigator.audioSession.type = 'playback'`（対応しているブラウザだけ）

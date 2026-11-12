@@ -93,7 +93,7 @@ apps/kanpe-housou/
 ```
 
 - 分割型。index.html・app.js・engine.js・data.js・style.css を変えたら `?v=` をそろえて上げる
-- Firebase compat SDK **10.14.1**（app / auth / database）+ 匿名認証
+- Firebase compat SDK **13.3.0**（app / auth / database）+ 匿名認証
 - `../shared/js/rtdb-utils.js?v=20261005`・`../shared/js/room-qr.js?v=20261022`
 - CSS 接頭辞: **`kh-`**（BEM）。画面切替は `.kh-screen` / `.active`。ルームの中は `body[data-phase]`（lobby・write・read・judge・result・end）
 - 描画は DOM API（textContent）だけ。innerHTML は使わない

@@ -88,7 +88,7 @@ apps/reversi/
 ```
 
 - 分割型。index.html・app.js・engine.js・style.css を変えたら `?v=` をそろえて上げる
-- Firebase compat SDK **10.14.1**（app / auth / database）+ 匿名認証
+- Firebase compat SDK **13.3.0**（app / auth / database）+ 匿名認証
 - `../shared/js/rtdb-utils.js?v=20261005`・`../shared/js/room-qr.js?v=20261022`
 - CSS 接頭辞: **`rv-`**（BEM）。画面切替は `.rv-screen` / `.active`
 - 描画はすべて DOM API（textContent）。innerHTML は使わない

@@ -1147,7 +1147,7 @@ MVP ではゲーム内タイマーを置かない（急かさない方針。koto
 |---|---|---|
 | ホスティング | GitHub Pages（main へ push で自動デプロイ） | 既存 |
 | フロントエンド | Vanilla JS / HTML / CSS（ビルドなし）。RTDB 単一ファイル型＋外部 packs.js | 既存パターン |
-| リアルタイム同期 | Firebase Realtime Database（compat SDK v10.14.1） | 既存。`{app}_rooms/{code}` 命名でルール変更不要 |
+| リアルタイム同期 | Firebase Realtime Database（compat SDK v13.3.0） | 既存。`{app}_rooms/{code}` 命名でルール変更不要 |
 | 認証 | Firebase 匿名認証 | 既存 |
 | コンテンツ | 静的 packs.js（git 正本） | 第11章 |
 | 共有モジュール | rtdb-utils.js / howto.js / stats.js / design-system.css | 既存 |

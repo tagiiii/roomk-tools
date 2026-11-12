@@ -9,9 +9,9 @@
 // 仕様の正本: apps/stats-view/AGENTS.md
 // =============================================
 
-import { getApp, initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
-import { getAuth, signInAnonymously } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
-import { getDatabase, get, ref } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js';
+import { getApp, initializeApp } from 'https://www.gstatic.com/firebasejs/13.3.0/firebase-app.js';
+import { getAuth, signInAnonymously } from 'https://www.gstatic.com/firebasejs/13.3.0/firebase-auth.js';
+import { getDatabase, get, ref } from 'https://www.gstatic.com/firebasejs/13.3.0/firebase-database.js';
 
 // stats.js の FIREBASE_CONFIG と同一内容（databaseURL 必須）
 const FIREBASE_CONFIG = {

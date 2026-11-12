@@ -17,9 +17,9 @@
 Realtime Database の単一ファイルアプリでは、Firebase SDK の後・メインのインライン `<script>` の前に通常スクリプトとして読み込む。
 
 ```html
-<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/13.3.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/13.3.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/13.3.0/firebase-database-compat.js"></script>
 <script src="../shared/js/rtdb-utils.js"></script>
 <script>
   // Firebase 初期化とアプリ本体
@@ -133,7 +133,7 @@ slides.html があるアプリは `slides` 指定とポータルの `data-slides
 
 ### firebase-config.js
 
-Firebase SDK v10.14.1 (compat ではなくモジュール版) で Firestore と匿名認証を初期化済み。
+Firebase SDK v13.3.0 (compat ではなくモジュール版) で Firestore と匿名認証を初期化済み。
 
 ```js
 import { db, auth } from '../shared/js/firebase-config.js';

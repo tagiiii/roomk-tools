@@ -97,7 +97,7 @@ apps/kakure-kaito/
 ```
 
 - 分割型。index.html・app.js・engine.js・style.css を変えたら `?v=` をそろえて上げる
-- Firebase compat SDK **10.14.1**（app / auth / database）+ 匿名認証
+- Firebase compat SDK **13.3.0**（app / auth / database）+ 匿名認証
 - `../shared/js/rtdb-utils.js?v=20261005`・`../shared/js/room-qr.js?v=20261022`
 - CSS 接頭辞: **`kk-`**（BEM）。画面切替は `.kk-screen` / `.active`。ルームの中は `body[data-phase]`（lobby・reveal・propose・vote・voteResult・mission・missionResult・lens・lensResult・guess・end）
 - 描画は DOM API（textContent）。innerHTML は宝石の絵（決まった文字列だけ）にだけ使う

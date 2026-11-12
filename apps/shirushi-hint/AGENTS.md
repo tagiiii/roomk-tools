@@ -56,7 +56,7 @@ apps/shirushi-hint/
 ```
 
 - 構成はスタンプあてゲームと同じ分割型。index.html・app.js・data.js・style.css を変えたら `?v=` をそろえて上げる（app.js の `import ... from './data.js?v=…'` も）
-- Firebase compat SDK **10.14.1**（app / auth / database）+ 匿名認証
+- Firebase compat SDK **13.3.0**（app / auth / database）+ 匿名認証
 - `../shared/js/rtdb-utils.js?v=20261005`
 - CSS 接頭辞: **`sh-`**（BEM）。画面切替は `.sh-screen` / `.active`
 - 描画はすべて DOM API（textContent）。innerHTML は使わない

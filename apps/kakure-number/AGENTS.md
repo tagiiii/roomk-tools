@@ -23,7 +23,7 @@ apps/kakure-number/
 └── index.html   # 単一ファイルで完結（CSS・JS インライン）
 ```
 
-- Firebase compat SDK **10.14.1**（app / auth / database）+ 匿名認証
+- Firebase compat SDK **13.3.0**（app / auth / database）+ 匿名認証
 - 共有ヘルパー `../shared/js/rtdb-utils.js`（`RoomkRTDB.initServerTime` / `now` / `isRoomExpired` / `generateRoomCode`）
 - `../shared/css/design-system.css` のトークン・`btn` クラスを再利用
 - CSS 接頭辞: **`kkn-`**（BEM）。画面切替は共通パターンの `.screen` / `.active`

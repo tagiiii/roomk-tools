@@ -76,7 +76,7 @@ apps/kagi-awase/
 ```
 
 - 構成はスタンプあてゲーム（`apps/stamp-ate/`）と同じ分割型。接続・切断・再接続・みんなにみせる画面の作りもスタンプあてゲームのものを使っている。index.html・app.js・style.css を変えたら `?v=` をそろえて上げる
-- Firebase compat SDK **10.14.1**（app / auth / database）+ 匿名認証
+- Firebase compat SDK **13.3.0**（app / auth / database）+ 匿名認証
 - `../shared/js/rtdb-utils.js?v=20261005`（`initFirebase` / `now` / `isRoomExpired` / `getHostDisconnectedAt` / `generateRoomCode` / `cancelRoomOnDisconnect` / `copyRoomCode` / `showToast`）
 - CSS 接頭辞: **`kag-`**（BEM。`ka-` は気持ち当てゲーム、`kg-` はキャパグラフが使用）。画面切替は `.kag-screen` / `.active`
 - 描画はすべて DOM API（textContent）。innerHTML は使わない

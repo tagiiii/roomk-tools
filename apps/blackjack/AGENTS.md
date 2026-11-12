@@ -64,7 +64,7 @@ apps/blackjack/
 └── index.html   # 単一ファイルで完結（CSS・JS インライン）
 ```
 
-- Firebase compat SDK **10.14.1**（app / auth / database）+ 匿名認証
+- Firebase compat SDK **13.3.0**（app / auth / database）+ 匿名認証
 - 共有ヘルパー `../shared/js/rtdb-utils.js?v=20261005`（`initFirebase` / `now` / `isRoomExpired` /
   `generateRoomCode` / `esc` / `cancelRoomOnDisconnect` / `showToast`）
 - CSS 接頭辞: **`bj-`**（BEM）。画面切替は共通パターンの `.screen` / `.active`

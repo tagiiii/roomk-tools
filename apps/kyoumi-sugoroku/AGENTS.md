@@ -50,7 +50,7 @@ apps/kyoumi-sugoroku/
 
 - index.html・app.js・logic.js・style.css はセットで変わるので、変えたら `?v=` をそろえて上げる（app.js の `import ... from './logic.js?v=…'` も）
 - `QUESTIONS` は app.js に置く（`scripts/content-audit.mjs` が app.js から読む）
-- Firebase compat SDK **10.14.1**（app / auth / database）+ 匿名認証、`../shared/js/rtdb-utils.js?v=20261005`、`../shared/js/room-qr.js?v=20261022`
+- Firebase compat SDK **13.3.0**（app / auth / database）+ 匿名認証、`../shared/js/rtdb-utils.js?v=20261005`、`../shared/js/room-qr.js?v=20261022`
 - ゲームの通信は、ルームを作る・参加する・再読み込みでルームにもどるときだけ準備する（`firebaseReady`）。1台の画面では Firebase を初期化せず、接続もしない
 - 共通の `shared/js/utils.js` の `shuffle`（1台の画面の質問の山）・`popIn`（質問・ゴールのカード）
 - 描画は DOM API（textContent）。名前は innerHTML に入れない

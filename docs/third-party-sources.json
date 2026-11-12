@@ -1,11 +1,11 @@
 {
-  "checkedOn": "2026-09-17",
+  "checkedOn": "2026-11-12",
   "noticeFile": "apps/third-party-notices.html",
   "hashEncoding": "SHA-256 of upstream response bytes before newline normalization",
   "sources": [
     {
-      "component": "Firebase JavaScript SDK 10.14.1",
-      "source": "https://raw.githubusercontent.com/firebase/firebase-js-sdk/firebase%4010.14.1/LICENSE",
+      "component": "Firebase JavaScript SDK 13.3.0",
+      "source": "https://raw.githubusercontent.com/firebase/firebase-js-sdk/firebase%4013.3.0/LICENSE",
       "sha256": "065e45b5674f9bf76670496e5472611b3fbd87fbeaf99336725430a9909cb687"
     },
     {
@@ -79,8 +79,8 @@
     },
     {
       "component": "firebase-app.js bundled notices",
-      "source": "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js",
-      "sha256": "19f05d67deadb1a1fba077c18611c3c9b2fdd5b4ebbd0a5e391498925ebae23e"
+      "source": "https://www.gstatic.com/firebasejs/13.3.0/firebase-app.js",
+      "sha256": "b2c16199a1b65cda4d2f17e6d7707858c0e1264ee2a076058ed4d4509c61f68c"
     },
     {
       "component": "html2canvas-dist.js bundled notices",

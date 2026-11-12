@@ -19,7 +19,7 @@ apps/magire-eshi/
 └── index.html   # 単一ファイルで完結（Firebase Realtime Database 使用）
 ```
 
-- Firebase compat SDK 10.14.1（app / auth / database）
+- Firebase compat SDK 13.3.0（app / auth / database）
 - `../shared/js/rtdb-utils.js`（`RoomkRTDB.initServerTime` / `now` / `isRoomExpired` / `generateRoomCode` / `showToast`）
 - `../shared/css/design-system.css` のトークン・`btn` クラスを再利用
 - CSS 接頭辞: `.mgr-`（BEM）
