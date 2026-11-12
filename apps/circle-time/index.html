@@ -1593,12 +1593,29 @@ function onRoomChange(c) {
   }
   if (room.status === 'finished' && !c.watch && c.session?.role !== 'host') { detach(); saveSession(null); overlay('おしまい', 'きょうのサークルタイムは、ここまで。', goTop); showScreen('top'); return; }
   if (!c.watch && !room.players?.[c.session.id]) { detach(); saveSession(null); overlay('ルームから外れました', '進行役が外したか、参加の情報が消えました。もう一度参加できます。', goTop); showScreen('top'); return; }
+  // 進行役はつながっているのに「切断」になっていたら、在室を入れなおす。通信が切れて戻ったとき、古い接続の
+  // 切断の予約が、入れなおしたあとに遅れて動くことがある（そのままだと、2分で期限切れになる。作戦会議で見つかった）
+  if (!c.watch && c.session?.role === 'host' && online && room.hostConnected === false && !c.pending && !c.leaving) { c.ready = false; ensurePresence(c).catch(() => {}); }
   if (expired(room)) { cleanup(c.ref).catch(() => {}); return; }
   lastRoom = room;
   render();
 }
+// 押している間は描きなおさない。ボタンを押してから離すまでの間に画面を描きなおすと、押していたボタンが
+// 作り直されて「押した」が届かない（12人が同時に答える場面で、ほかの人の答えが届くたびに起きる。
+// 2026-11-12 検証: 押している間に更新が1つ届くと、6回中6回とも選べなかった）。離したあとに、まとめて描きなおす
+let pressing = false, renderWaiting = false, pressTimer = null;
+function endPress() {
+  if (!pressing) return;
+  pressing = false; clearTimeout(pressTimer);
+  if (renderWaiting) { renderWaiting = false; render(); }
+}
+document.addEventListener('pointerdown', () => { pressing = true; clearTimeout(pressTimer); pressTimer = setTimeout(endPress, 2000); }, true);
+// 離したあとの「押した」（click）が届いてから、描きなおす
+['pointerup', 'pointercancel'].forEach((t) => document.addEventListener(t, () => setTimeout(endPress, 0), true));
+window.addEventListener('blur', endPress);
 function render() {
   const c = ctx; if (!c || !c.data) return;
+  if (pressing) { renderWaiting = true; return; }
   const room = c.data;
   if (c.watch) renderWatch(room);
   else if (c.session.role === 'host') renderHost(room);
