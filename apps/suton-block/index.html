@@ -9,13 +9,13 @@
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
   <link rel="stylesheet" href="../shared/css/design-system.css?v=20261106c">
   <!-- index.html と app.js・engine.js・style.css はセットで変わるので、変えたら ?v= をそろえて上げる -->
-  <link rel="stylesheet" href="style.css?v=20261111g">
+  <link rel="stylesheet" href="style.css?v=20261112b">
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <script src="../shared/js/rtdb-utils.js?v=20261005"></script>
   <script src="../shared/js/room-qr.js?v=20261022"></script>
-  <script src="engine.js?v=20261111g"></script>
+  <script src="engine.js?v=20261112b"></script>
 </head>
 <body data-genre="puzzle">
 
@@ -74,6 +74,14 @@
           <label class="sb-seg__opt"><input type="radio" name="soloSfx" value="on"><span>入</span></label>
         </div>
         <p class="sb-note sb-note--tight">この端末だけで鳴る。ブロックを動かす・回す・置く・段を消す・じゃまが来たときなどに、短い音が鳴る。</p>
+      </fieldset>
+      <fieldset class="sb-fieldset mt-md">
+        <legend class="sb-legend">音楽</legend>
+        <div class="sb-seg sb-seg--2">
+          <label class="sb-seg__opt"><input type="radio" name="soloBgm" value="off" checked><span>切</span></label>
+          <label class="sb-seg__opt"><input type="radio" name="soloBgm" value="on"><span>入</span></label>
+        </div>
+        <p class="sb-note sb-note--tight">この端末だけで鳴る。あそんでいる間、小さめの音楽が流れる。</p>
       </fieldset>
       <button type="button" class="sb-quiet sb-keysbtn mt-md" data-open-keys><span class="material-symbols-rounded" aria-hidden="true">keyboard</span>キーボードのキーを変える</button>
       <button type="button" class="btn btn-primary btn-full mt-lg" id="btnSoloStart">はじめる</button>
@@ -158,6 +166,14 @@
             <label class="sb-seg__opt"><input type="radio" name="roomSfx" value="on"><span>入</span></label>
           </div>
           <p class="sb-note sb-note--tight">この端末だけで鳴る。ブロックを動かす・回す・置く・段を消す・じゃまが来たときなどに、短い音が鳴る。</p>
+        </fieldset>
+        <fieldset class="sb-fieldset mt-md">
+          <legend class="sb-legend">音楽</legend>
+          <div class="sb-seg sb-seg--2">
+            <label class="sb-seg__opt"><input type="radio" name="roomBgm" value="off" checked><span>切</span></label>
+            <label class="sb-seg__opt"><input type="radio" name="roomBgm" value="on"><span>入</span></label>
+          </div>
+          <p class="sb-note sb-note--tight">この端末だけで鳴る。あそんでいる間、小さめの音楽が流れる。</p>
         </fieldset>
         <button type="button" class="sb-quiet sb-keysbtn mt-md" data-open-keys><span class="material-symbols-rounded" aria-hidden="true">keyboard</span>キーボードのキーを変える</button>
       </div>
@@ -340,7 +356,7 @@
     </div>
   </dialog>
 
-  <script type="module" src="app.js?v=20261111g"></script>
+  <script type="module" src="app.js?v=20261112b"></script>
   <script src="../shared/js/stats.js?v=1" defer></script>
   <script src="../shared/js/howto.js"></script>
   <script>
