@@ -615,16 +615,20 @@ async function finishOne() {
   const uid = firebase.auth().currentUser?.uid;
   const nick = state.nickname;
   let first = false;
+  let gone = false;
   try {
     const result = await ref.transaction((room) => {
+      gone = false;
       if (!room || room.status !== STATUS.PICK || modeOf(room) !== 'one' || !room.focus) return undefined;
-      if (room.players?.[nick]?.uid !== uid) return undefined;
+      gone = room.players?.[nick]?.uid !== uid;
+      if (gone) return undefined;
       if (room.hostUid !== uid && nick !== room.focus) return undefined;
       if (!arr(mapOf(room, room.focus)?.yosa).length) return undefined;
       first = !room.shown;
       return { ...room, status: STATUS.SHOW, shown: true, show: { order: [room.focus], idx: 0, ask: askFor(room, room.focus) } };
     });
     if (result?.committed && first) window.RoomkStats?.count('finish');
+    if (!result?.committed && gone) toast(OFFLINE_MESSAGE);
   } catch (error) {
     console.warn('[yosa-map] finish failed', error);
     toast('完成にできませんでした。もう一度ためしてね');
@@ -915,6 +919,7 @@ function editCtx(room) {
   return { name, self: solo, by: state.by || (solo ? 'self' : 'other'), pickBy: true, host };
 }
 
+const OFFLINE_MESSAGE = '通信が切れたみたい。つながったら、もう一度押してね';
 // マップを書きかえる（ルームの transaction）。change(mp, who) はマップを直接書きかえ、変えないときは false を返す
 //   who: { host, mine: 自分のマップか, one: みんなで1人のマップか, nick }
 async function editMap(name, change) {
@@ -925,10 +930,14 @@ async function editMap(name, change) {
   const seq = room.seq || 0;
   const nick = state.nickname;
   const uid = firebase.auth().currentUser?.uid;
+  // 通信が切れると、SDK は「切断したら在室を消す」の予約を手元の写しにも当てる。そのあいだに押したものは通らないので、知らせる
+  let gone = false;
   try {
-    await ref.transaction((cur) => {
+    const result = await ref.transaction((cur) => {
+      gone = false;
       if (!cur || cur.status !== STATUS.PICK || cur.round !== round || (cur.seq || 0) !== seq) return undefined;
-      if (cur.players?.[nick]?.uid !== uid) return undefined;
+      gone = cur.players?.[nick]?.uid !== uid;
+      if (gone) return undefined;
       const host = cur.hostUid === uid;
       const one = modeOf(cur) === 'one';
       // 書けるマップ: みんなで1人のマップはその人の分だけ。それぞれのマップは自分の分（ホストは端末なしの参加者の分も）
@@ -938,9 +947,10 @@ async function editMap(name, change) {
       if (change(mp, { host, mine: name === nick, one, nick }) === false) return undefined;
       return { ...cur, maps: { ...(cur.maps || {}), [name]: packMap(mp, round) } };
     });
+    if (!result?.committed && gone) toast(OFFLINE_MESSAGE);
   } catch (error) {
     console.warn('[yosa-map] map edit failed', error);
-    toast(error?.message === 'disconnect' ? '通信が切れたみたい。つながったら、もう一度押してね' : 'うまく送れなかったよ。もう一度押してみてね');
+    toast(error?.message === 'disconnect' ? OFFLINE_MESSAGE : 'うまく送れなかったよ。もう一度押してみてね');
   }
 }
 // 本人として動かせるか（本人・それぞれのマップ・本人の代わりに押すホスト）
