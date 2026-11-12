@@ -234,6 +234,12 @@
         ".write": "auth != null"
       }
     },
+    "yosamap_rooms": {
+      "$roomId": {
+        ".read": "auth != null",
+        ".write": "auth != null"
+      }
+    },
     "sutonblock_rooms": {
       "$roomId": {
         ".read": "auth != null",
