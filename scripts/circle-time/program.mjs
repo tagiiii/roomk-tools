@@ -70,9 +70,28 @@ function nthOk(name, date) {
   return Math.ceil(Number(date.slice(8, 10)) / 7) === Number(m[1]);
 }
 
-const dates = process.argv.slice(2).length ? process.argv.slice(2) : (() => { const t = jst(new Date()); return [t, nextWeekday(t)]; })();
+const dateArgs = process.argv.slice(2).filter((a) => !a.startsWith('--'));
+const dates = dateArgs.length ? dateArgs : (() => { const t = jst(new Date()); return [t, nextWeekday(t)]; })();
 const [regular, once] = await Promise.all([query(REGULAR), query(ONCE)]);
 fs.mkdirSync(OUT_DIR, { recursive: true });
+// 単発実施プログラムのうち、きょうから先のものを once.json に書く（作戦会議の「お知らせ」が読む。apps/sakusen-kaigi）。
+// 日付のつかない名前なので、毎朝このファイルを書きかえる。`--once` を付けると、これだけを書く
+{
+  const today = jst(new Date());
+  const items = [];
+  for (const r of once) {
+    const name = clean(r['Name']); const date = r['日付'];
+    if (!name || !/^\d{4}-\d{2}-\d{2}$/.test(date || '') || date < today) continue;
+    const ss = slots(r['開催時間']);
+    const where = place(String(r['集合場所'] || '').split(',').filter((x) => !WEEKDAYS.includes(x.trim())).join(','));
+    const cat = clean(String(r['カテゴリー'] || '').split(',')[0]);
+    for (const t of (ss.length ? ss : [{ start: '', end: '' }])) items.push({ date, ...t, name, place: where, cat });
+  }
+  items.sort((a, b) => (a.date + (a.start || '')).localeCompare(b.date + (b.start || '')));
+  fs.writeFileSync(path.join(OUT_DIR, 'once.json'), JSON.stringify({ source: 'room-K ポータル（Notion）', url: PAGE_URL, items, at: new Date().toISOString() }, null, 2) + '\n');
+  console.log(`単発実施プログラム（${today} から先）: ${items.length}件 ${items.map((i) => `${i.date} ${i.name}`).join(' / ')}`);
+}
+if (process.argv.includes('--once')) process.exit(0);
 for (const date of dates) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new Error('日付は YYYY-MM-DD: ' + date);
   const wd = WEEKDAYS[new Date(date + 'T12:00:00+09:00').getDay()];

@@ -19,6 +19,7 @@ git worktree add --detach "${TMPDIR:-/tmp}/roomk-circle-daily" origin/main
    node scripts/circle-time/program.mjs
    ```
    - 失敗したら（Notion のページの作りが変わった・通信できない）、その旨を報告に書いて、何の日の手順へ進む
+   - 同じ実行で `daily/once.json`（単発実施プログラムのうち、きょうから先のもの）も書きかわる。作戦会議（`apps/sakusen-kaigi`）の「お知らせ」が読む。日付のつかない名前なので、手順6の古いファイルの掃除では消さない。手順7で `apps/circle-time/daily/` をコミットするときに、いっしょに入る
 1. 日本時間のきょうと、次の平日（金曜なら月曜）を対象にする。`apps/circle-time/daily/YYYY-MM-DD.json` がもうあり、手順 5 の検査に通るなら、その日は作らない
 2. その日の Wikipedia の日付ページの「記念日・年中行事」を読む（読むだけ）
    ```bash

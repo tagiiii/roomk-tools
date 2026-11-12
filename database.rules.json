@@ -198,6 +198,12 @@
         ".write": "auth != null"
       }
     },
+    "sakusenkaigi_rooms": {
+      "$roomId": {
+        ".read": "auth != null",
+        ".write": "auth != null"
+      }
+    },
     "sakusenchat_rooms": {
       "$roomId": {
         ".read": "auth != null",
