@@ -115,6 +115,40 @@ const { check, sleep } = L;
   await tA.end(); await sleep(600);
   const sy1 = await A.page.evaluate(() => window.scrollY);
   check('T13 ふせんのない所から指を動かすと、ページがスクロールする・窓は開かない', sy1 - sy0 > 100 && !(await pickerOpen(A)), [sy0, sy1]);
+
+  // つかんだまま画面のはしへ寄せると、ページが送られて、見えていなかった日へ動かせる
+  await A.page.evaluate(() => window.scrollTo(0, 0)); await sleep(200);
+  const far = async (fromSel, toCell, edgeY) => {
+    await A.page.locator(fromSel).evaluate((el) => el.scrollIntoView({ block: 'center' })); await sleep(200);
+    const fb = await A.page.locator(fromSel).boundingBox();
+    const fx = fb.x + fb.width / 2; const fy = fb.y + fb.height / 2;
+    const s0 = await A.page.evaluate(() => window.scrollY);
+    const hidden0 = await A.page.locator(g(toCell)).evaluate((el) => { const r = el.getBoundingClientRect(); return r.bottom < 0 || r.top > window.innerHeight; });
+    await tA.start(fx, fy); await sleep(120);
+    await tA.glide(fx, fy, fx, edgeY);
+    // 指は止めたまま。行き先のマスが画面の中ほどに来るまで待つ
+    let seen = false;
+    for (let i = 0; i < 100 && !seen; i++) { await sleep(50); seen = await A.page.locator(g(toCell)).evaluate((el) => { const r = el.getBoundingClientRect(); return r.top > 120 && r.bottom < window.innerHeight - 120; }); }
+    // はしからはなす（画面のまん中へ）。送りが止まってから、行き先のマスの位置を取る
+    await tA.glide(fx, edgeY, fx, 406, 4); await sleep(150);
+    const s1 = await A.page.evaluate(() => window.scrollY);
+    const tb = await A.page.locator(g(toCell)).boundingBox();
+    await tA.glide(fx, 406, tb.x + tb.width / 2, tb.y + tb.height / 2, 6);
+    const st = await A.page.evaluate(() => ({ drop: document.querySelector('.drop')?.dataset.cell || null }));
+    await sleep(300);
+    const s2 = await A.page.evaluate(() => window.scrollY);
+    await tA.end();
+    return { hidden0, seen, s0, s1, s2, drop: st.drop };
+  };
+  const down = await far(`${g('1-todo')} [data-drag="room-K"]`, '6-pm', 800);
+  check('T18 つかんだまま下のはしへ寄せると、ページが送られて、見えていなかった日が出る', down.hidden0 && down.seen && down.s1 - down.s0 > 200, down);
+  check('T19 はしからはなれると、送りが止まる・行き先のマスに色がつく', down.s2 === down.s1 && down.drop === '6-pm', down);
+  check('T20 そこで指をはなすと、遠い日へ動く', await waitCell('6-pm', 'room-K') && !has(await cellsOf(), '1-todo', 'room-K'), await cellsOf());
+  await A.page.waitForSelector(`${g('6-pm')} [data-drag="room-K"]`); await sleep(300);
+  check('T21 動かしたあと、窓は開かない・ページはもう送られない', !(await pickerOpen(A)) && Math.abs((await A.page.evaluate(() => window.scrollY)) - down.s2) < 5);
+  const up = await far(`${g('6-pm')} [data-drag="room-K"]`, '0-am', 12);
+  check('T22 上のはしへ寄せると、上へ送られて、はじめの日へもどせる', up.hidden0 && up.seen && up.s0 - up.s1 > 200 && await waitCell('0-am', 'room-K'), { up, cells: await cellsOf() });
+  await A.page.evaluate(() => window.scrollTo(0, 0)); await sleep(200);
   await L.shot(A, 'touch-guest');
 
   // ── 進行役（タブレットの大きさ・指） ──
