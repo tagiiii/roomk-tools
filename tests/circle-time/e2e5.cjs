@@ -16,10 +16,15 @@ const { check } = L;
   await L.openWatch(W, code);
   await L.goMain(H, code, room.steps[gi].id);
   await L.waitStage(W, 'クイズパック');
+  // 進行役のタブに、前に作った別のツールのルームの記録が残っている（開いたタブにも写る）
+  await H.page.evaluate(() => sessionStorage.setItem('old_tool_session', JSON.stringify({ roomCode: 'ZZZ234' })));
   const popupP = H.context.waitForEvent('page');
   await H.page.click('#game-picks [data-open]');
   const popup = await popupP;
   await popup.waitForLoadState();
+  await new Promise((r) => setTimeout(r, 3000));
+  room = await L.roomOf(code);
+  check('E0 ルームを作る前は、前のルームの記録を参加リンクとして送らない', !room.steps[gi].gameCode && !room.steps[gi].link && !(await A.page.$('#player-card .p-go')), room.steps[gi]);
   check('E1 「ルームを作る」でクイズパックのタブが開く', popup.url().includes('/apps/quiz/'), popup.url());
   // 開いたタブで、いつもどおりルームを作る
   await popup.click('#btnGoCreate');

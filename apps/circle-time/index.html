@@ -1493,22 +1493,31 @@ const addChoiceStep = (title, options) => editSteps((steps, room) => { const i =
 const nextTopic = async () => { const list = await loadTopics(); return editSteps((steps, room) => { const s = steps.find((x) => x.id === room.cur); if (!s || s.type !== 'talk') return false; s.topic = pickTopic(list, s.topic); }); };
 // みんなでゲーム: 準備の画面で決めたゲームを出す。子どもたちの声で、進行役が別のゲームに変えられる
 // ゲームのタブ: サークルタイムから開いたタブ（同じサイト）の sessionStorage から、作ったルームのコードを拾う
-let gameWin = null, gamePoll = null;
-function openGameWindow(slug) {
-  if (!slug) return;
-  try { gameWin = window.open(new URL(APPS_BASE + slug + '/', location.href).href, 'roomk-circle-game'); } catch { gameWin = null; }
-  if (!gameWin) { toast('ゲームのタブを開けませんでした。「ルームを作る」を押してね'); return; }
-  watchGameWindow(slug);
-}
-function findRoomCode(win) {
-  const ss = win.sessionStorage;
+let gameWin = null, gamePoll = null, gameBefore = new Set();
+// その sessionStorage に入っているルームのコードをぜんぶ拾う
+function roomCodesIn(ss) {
+  const found = new Set();
   for (let i = 0; i < ss.length; i++) {
     const key = ss.key(i); if (key === SESSION_KEY || key === PREF_KEY) continue; // 開いたタブには、このタブの sessionStorage が写されるので除く
     let v; try { v = JSON.parse(ss.getItem(key)); } catch { continue; }
     if (!v || typeof v !== 'object') continue;
     const code = String(v.roomCode || v.code || v.roomId || '').toUpperCase();
-    if (CODE_RE.test(code) && code !== ctx?.code) return code;
+    if (CODE_RE.test(code)) found.add(code);
   }
+  return found;
+}
+function openGameWindow(slug) {
+  if (!slug) return;
+  try { gameWin = window.open(new URL(APPS_BASE + slug + '/', location.href).href, 'roomk-circle-game'); } catch { gameWin = null; }
+  if (!gameWin) { toast('ゲームのタブを開けませんでした。「ルームを作る」を押してね'); return; }
+  // 開いた時点でもう入っているコードは、前に作ったルームのもの（このタブの記録が写る・前のゲームのタブを使い回す）。
+  // それを送ると、ルームを作る前に参加者が入れてしまう（2026-11-12 作戦会議で見つかった。apps/sakusen-kaigi と同じ直し方）。
+  // 開いたあとに新しく増えたコードだけを、いま作ったルームとして送る
+  try { gameBefore = roomCodesIn(gameWin.sessionStorage); } catch { try { gameBefore = roomCodesIn(sessionStorage); } catch { gameBefore = new Set(); } }
+  watchGameWindow(slug);
+}
+function findRoomCode(win) {
+  for (const code of roomCodesIn(win.sessionStorage)) if (!gameBefore.has(code) && code !== ctx?.code) return code;
   return null;
 }
 function watchGameWindow(slug) {
