@@ -22,7 +22,14 @@
   const qs = new URLSearchParams(location.search);
   const $ = (id) => document.getElementById(id);
   const esc = RoomkRTDB.esc;
-  const toast = (m, err = true) => RoomkRTDB.showToast(m, err);
+  // メッセージは共通の showToast が body の末尾に出す。予定を入れる窓（<dialog> の showModal）はその手前に重なり、
+  // 小さい画面ではメッセージを隠す。ひらいている窓があれば、その中へ移して手前に出す
+  const toast = (m, err = true) => {
+    RoomkRTDB.showToast(m, err);
+    const node = document.getElementById('roomk-toast');
+    const open = [...document.querySelectorAll('dialog[open]')].pop();
+    if (node && open) open.appendChild(node);
+  };
   const fail = (text) => new Error(text);
   const ic = (name) => `<span class="material-symbols-rounded" aria-hidden="true">${esc(name)}</span>`;
   // 中身が前と同じなら、書きかえない。書きかえると、押している途中のボタンが消えて「押した」が届かない
