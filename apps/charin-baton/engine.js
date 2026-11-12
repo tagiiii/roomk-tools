@@ -24,6 +24,7 @@
   const PASS_MS = 3000;        // パスで待つ間（自分の時計は減る）
   const READY_MS = 3000;       // はじまる前の 3・2・1（時計は止まっている・小銭はかくす）
   const MIN_COINS = 2;
+  const JAM_MAX = 3;           // 「まぜる」は、ひとり3回まで（ありにしたとき）
 
   // ── くじ ──
   // seed つきの乱数（テストで同じ並びを出すため）。ふだんは Math.random
@@ -68,7 +69,7 @@
     return best;
   }
 
-  // 並べる。ばらばら（重ならない・少し回す）／そろえる（金額の大きい順に並べる）
+  // 並べる。ばらばら（重ならない・少し回す）／そろえる（金額の大きい順に並べる）／うごく（ばらばらに置き、画面の側で動かす）
   function layout(rng, values, arrange) {
     if (arrange !== 'sort') {
       const placed = tryScatter(rng, values);
@@ -133,7 +134,7 @@
 
   // ══════════════════════════════════════════════
   // 対決（2〜6人の勝ち残り。2人なら1対1の対決。1人なら、時計が0になるまで数えつづける。勝ち負けはなく、正解の数が点数）
-  // settings = { players: [{ name, time(秒), kinds }, …], maxCoins, arrange, first: 先に答える人の番号 }
+  // settings = { players: [{ name, time(秒), kinds }, …], maxCoins, arrange, first: 先に答える人の番号, jam: 「まぜる」をひとり何回使えるか（0 はなし） }
   // phase: ready（はじまる前の 3・2・1）→ play
   //        play（番の人が数える）→ reveal（正解を見せる。時計は止まる）→ 残っている次の人の play
   //        play → pass（問題をかくして3秒。自分の時計は減る）→ 同じ人の play
@@ -168,6 +169,8 @@
     return from;
   }
 
+  const jamOf = (settings) => (Number.isInteger(settings.jam) && settings.jam > 0 ? Math.min(settings.jam, JAM_MAX) : 0);
+
   function createDuel(settings, now, rng) {
     const n = settings.players.length;
     const first = Number.isInteger(settings.first) && settings.first >= 0 && settings.first < n ? settings.first : 0;
@@ -180,6 +183,7 @@
       phaseEnd: now + READY_MS,
       correct: settings.players.map(() => 0),
       out: settings.players.map(() => false), // 時計が0になって「ここまで」になった人
+      jam: settings.players.map(() => jamOf(settings)), // 「まぜる」の残りの回数
       problem: null,
       history: [],      // 出た問題（だれが解いたかは画面に出さない）
       last: null,       // 直前の正解 { total, by }
@@ -245,6 +249,22 @@
     S.phase = 'pass';
     S.phaseEnd = now + PASS_MS;
     S.rev += 1;
+    return S;
+  }
+
+  // まぜる: 番でない人（まだ残っている人）が、番の人の小銭をならべなおす。金額・時計・番は変えない。
+  // 場面の番号（rev）は進めない（番の人が入れている途中の数字と、同時に送った正解を取りこぼさないため）。
+  // ならべなおした回数は problem.mix に持つ（画面がならべなおしに気づくため）
+  function jam(S0, who, now, rng) {
+    if (S0.phase !== 'play' || !Number.isInteger(who) || who < 0 || who >= S0.settings.players.length) return S0;
+    if (who === S0.turn || S0.out[who] || !S0.jam || !(S0.jam[who] > 0)) return S0;
+    if (remaining(S0, S0.turn, now) <= 0) return S0;
+    const placed = tryScatter(rng, S0.problem.coins.map((c) => c.v));
+    if (!placed) return S0;
+    const S = clone(S0);
+    S.jam[who] -= 1;
+    S.problem.coins = placed;
+    S.problem.mix = (S0.problem.mix || 0) + 1;
     return S;
   }
 
@@ -314,9 +334,9 @@
   }
 
   const api = {
-    COINS, KINDS, TRAY, REVEAL_MS, PASS_MS, READY_MS, OUT_MS, SAME_MAX, MIN_PLAYERS, MAX_PLAYERS,
+    COINS, KINDS, TRAY, REVEAL_MS, PASS_MS, READY_MS, OUT_MS, SAME_MAX, MIN_PLAYERS, MAX_PLAYERS, JAM_MAX,
     makeRng, coinCountFor, makeCoins, layout, makeProblem, breakdown, keyOf, totalOf,
-    createDuel, remaining, answer, pass, tick, resume, due, nextAlive, aliveCount,
+    createDuel, remaining, answer, pass, jam, tick, resume, due, nextAlive, aliveCount,
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.CharinEngine = api;

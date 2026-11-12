@@ -12,11 +12,15 @@ const MAX_SEATS = E.MAX_PLAYERS;
 const orderLabel = (i) => (i + 1) + '番目';
 const TIMES = [30, 45, 60, 90, 120, 180];
 const MAXES = [4, 5, 6, 8];
-const ARRANGES = { scatter: 'ばらばら', sort: 'そろえる（大きい順）' };
+const ARRANGES = { scatter: 'ばらばら', sort: 'そろえる（大きい順）', move: 'うごく' };
+// まぜる: 番でない人が、番の人の小銭をならべなおせる（ひとり何回まで。0 はなし）
+const JAMS = { 0: 'なし', [E.JAM_MAX]: 'あり（ひとり' + E.JAM_MAX + '回まで）' };
+const MOVE_MIN = 12;         // うごく小銭の速さ（トレーの目盛り／秒）
+const MOVE_MAX = 22;
 const FIRSTS = { random: 'くじで決める', top: 'いちばん上の人から' };
 const KIND_LABEL = { all: 'ぜんぶ（6種類）', three: '1・10・100円だけ' };
 // 持ち時間と小銭の種類はみんな同じ。hostPlays はホストも対戦するか（外すとホストは進行だけ）
-const DEFAULT_SET = { time: 45, kinds: 'all', maxCoins: 5, arrange: 'scatter', first: 'random', hostPlays: true };
+const DEFAULT_SET = { time: 45, kinds: 'all', maxCoins: 5, arrange: 'scatter', first: 'random', hostPlays: true, jam: 0 };
 const PHASES = ['ready', 'play', 'reveal', 'pass', 'out', 'over'];
 const LOW_MS = 10000;        // 番の人の残りが10秒を切ったら札を赤くする（音は鳴らさない）
 const CLOCK_MS = 200;
@@ -68,6 +72,8 @@ const state = {
   leaving: false,
   busy: false,
   answering: false,    // 正解・パスを送っている途中（二度押しよけ。ほかの操作の busy とは分ける）
+  jamming: false,      // 「まぜる」を送っている途中
+  mixSeen: '',         // 最後に出した小銭のならべなおしの回数（ならべなおしたときだけトレーをゆらす）
   watchTimer: null,
   // 端末の中だけで持つ状態
   local: null,         // 1台の画面の対決 { duel, savedAt }
@@ -156,11 +162,12 @@ function normSet(raw) {
     arrange: ARRANGES[s.arrange] ? s.arrange : DEFAULT_SET.arrange,
     first: FIRSTS[s.first] ? s.first : DEFAULT_SET.first,
     hostPlays: typeof s.hostPlays === 'boolean' ? s.hostPlays : DEFAULT_SET.hostPlays,
+    jam: JAMS[s.jam] ? Number(s.jam) : DEFAULT_SET.jam,
   };
 }
 
 function settingSummary(set) {
-  return '持ち時間 ' + set.time + '秒・小銭は' + KIND_LABEL[set.kinds] + '・2枚から' + set.maxCoins + '枚まで増える・ならべ方は' + ARRANGES[set.arrange] + '・先に答える人は' + (set.first === 'random' ? 'くじで決める' : 'いちばん上の人');
+  return '持ち時間 ' + set.time + '秒・小銭は' + KIND_LABEL[set.kinds] + '・2枚から' + set.maxCoins + '枚まで増える・ならべ方は' + ARRANGES[set.arrange] + '・先に答える人は' + (set.first === 'random' ? 'くじで決める' : 'いちばん上の人') + (set.jam ? '・まぜるは' + JAMS[set.jam] : '');
 }
 
 // 対決のルールに渡す設定。names は答える順の名前、first は先に答える人の番号
@@ -170,6 +177,7 @@ function duelSettings(names, set, first) {
     maxCoins: set.maxCoins,
     arrange: set.arrange,
     first,
+    jam: set.jam,
   };
 }
 const firstOf = (set, n) => (set.first === 'random' ? Math.floor(Math.random() * n) : 0);
@@ -201,8 +209,9 @@ function buildCommon(box, set, onChange) {
     selectField('小銭の枚数', box.id + '-max', MAXES.map((m) => [m, m + '枚まで']), set.maxCoins, (v) => { set.maxCoins = Number(v); onChange(['maxCoins'], Number(v)); }),
     selectField('ならべ方', box.id + '-arrange', Object.keys(ARRANGES).map((k) => [k, ARRANGES[k]]), set.arrange, (v) => { set.arrange = v; onChange(['arrange'], v); }),
     selectField('先に答える人', box.id + '-first', Object.keys(FIRSTS).map((k) => [k, FIRSTS[k]]), set.first, (v) => { set.first = v; onChange(['first'], v); }),
+    selectField('まぜる', box.id + '-jam', Object.keys(JAMS).map((k) => [k, JAMS[k]]), set.jam, (v) => { set.jam = Number(v); onChange(['jam'], Number(v)); }),
   );
-  box.replaceChildren(grid, makeElement('p', 'cb-note', '持ち時間と小銭の種類は、みんな同じ。小銭は2枚からはじまり、正解2回ごとに1枚ずつ増える。時計が0になった人から「ここまで」で、最後まで残った人の勝ち（ひとりのときは、時計が0でおしまい。正解した数がその回の点数）。'));
+  box.replaceChildren(grid, makeElement('p', 'cb-note', '持ち時間と小銭の種類は、みんな同じ。小銭は2枚からはじまり、正解2回ごとに1枚ずつ増える。時計が0になった人から「ここまで」で、最後まで残った人の勝ち（ひとりのときは、時計が0でおしまい。正解した数がその回の点数）。「うごく」は、小銭がトレーの中を動きまわる。「まぜる」をありにすると、番でない人が、番の人の小銭をならべなおせる。'));
 }
 
 /* ── 硬貨のトレー（SVG） ── */
@@ -213,16 +222,101 @@ function svgEl(tag, attrs) {
   return node;
 }
 
-function drawTray(box, coins, hide) {
+// move: 'run'（動かす）／'hold'（動いた先で止めて見せる）／なし（置いた場所のまま）
+function drawTray(box, coins, hide, move) {
   const svg = svgEl('svg', { viewBox: '0 0 ' + E.TRAY.w + ' ' + E.TRAY.h, role: 'img', class: 'cb-tray__svg' });
   svg.append(svgEl('rect', { x: 0, y: 0, width: E.TRAY.w, height: E.TRAY.h, rx: 6, fill: TRAY_BG }));
   if (coins && !hide) {
     svg.setAttribute('aria-label', '小銭が' + coins.length + '枚');
-    coins.forEach((c) => svg.append(drawCoin(c)));
+    if (move && box.id) {
+      const key = box.id + '|' + coins.map((c) => c.v + ',' + c.x + ',' + c.y).join(';');
+      if (motion.key !== key) initMotion(key, coins);
+      motion.items.forEach((m) => { m.g = drawCoin(m); svg.append(m.g); });
+    } else {
+      coins.forEach((c) => svg.append(drawCoin(c)));
+    }
   } else {
     svg.setAttribute('aria-label', '小銭はかくれています');
   }
   box.replaceChildren(svg);
+  if (box.id && motion.key.startsWith(box.id + '|')) {
+    stopMotion();
+    if (coins && !hide && move === 'run' && !REDUCE_MQ.matches) {
+      motion.last = performance.now();
+      motion.raf = requestAnimationFrame(stepMotion);
+    }
+  }
+}
+
+/* ── うごく小銭 ──
+   置いた場所から、この端末の中だけで動かす（ルームには書かない。端末ごとに場所はそろわない）。
+   小銭どうし・トレーのふちではね返るので、重ならず、数字はいつも読める。
+   端末の「動きを減らす」設定のときは動かさない。 */
+const REDUCE_MQ = window.matchMedia('(prefers-reduced-motion: reduce)');
+const motion = { key: '', items: [], raf: 0, last: 0 };
+const MOVE_GAP = 1.2;
+
+function initMotion(key, coins) {
+  let h = 2166136261;
+  for (let i = 0; i < key.length; i += 1) h = Math.imul(h ^ key.charCodeAt(i), 16777619);
+  const rng = E.makeRng(h);
+  motion.key = key;
+  motion.items = coins.map((c) => {
+    const a = rng() * Math.PI * 2;
+    const sp = MOVE_MIN + rng() * (MOVE_MAX - MOVE_MIN);
+    return { v: c.v, x: c.x, y: c.y, rot: c.rot, r: E.COINS[c.v].d / 2, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, g: null };
+  });
+}
+
+function stopMotion() {
+  if (motion.raf) cancelAnimationFrame(motion.raf);
+  motion.raf = 0;
+}
+
+function stepMotion(ts) {
+  motion.raf = 0;
+  const items = motion.items;
+  if (!items.length || !items[0].g || !items[0].g.isConnected) return;
+  // タブをかくしていた間は進めない（戻ったときに飛ばない）
+  const dt = Math.min(0.05, Math.max(0, (ts - motion.last) / 1000));
+  motion.last = ts;
+  moveCoins(items, dt);
+  items.forEach((m) => m.g.setAttribute('transform', 'translate(' + m.x.toFixed(2) + ' ' + m.y.toFixed(2) + ') rotate(' + m.rot + ')'));
+  motion.raf = requestAnimationFrame(stepMotion);
+}
+
+function moveCoins(items, dt) {
+  items.forEach((m) => {
+    m.x += m.vx * dt;
+    m.y += m.vy * dt;
+    const lo = m.r + MOVE_GAP;
+    if (m.x < lo) { m.x = lo; m.vx = Math.abs(m.vx); }
+    if (m.x > E.TRAY.w - lo) { m.x = E.TRAY.w - lo; m.vx = -Math.abs(m.vx); }
+    if (m.y < lo) { m.y = lo; m.vy = Math.abs(m.vy); }
+    if (m.y > E.TRAY.h - lo) { m.y = E.TRAY.h - lo; m.vy = -Math.abs(m.vy); }
+  });
+  for (let i = 0; i < items.length; i += 1) {
+    for (let j = i + 1; j < items.length; j += 1) {
+      const a = items[i];
+      const b = items[j];
+      const dx = b.x - a.x;
+      const dy = b.y - a.y;
+      const dist = Math.hypot(dx, dy);
+      const min = a.r + b.r + MOVE_GAP;
+      if (dist >= min || dist === 0) continue;
+      const nx = dx / dist;
+      const ny = dy / dist;
+      const push = (min - dist) / 2;
+      a.x -= nx * push; a.y -= ny * push;
+      b.x += nx * push; b.y += ny * push;
+      // 近づいているときだけ、ぶつかった向きの速さを入れかえる
+      const p = (a.vx - b.vx) * nx + (a.vy - b.vy) * ny;
+      if (p > 0) {
+        a.vx -= p * nx; a.vy -= p * ny;
+        b.vx += p * nx; b.vy += p * ny;
+      }
+    }
+  }
 }
 
 function drawCoin(c) {
@@ -310,8 +404,9 @@ function normDuel(d) {
     settings: {
       players: players.map((p) => ({ name: String(p?.name || ''), time: TIMES.includes(p?.time) ? p.time : 45, kinds: E.KINDS[p?.kinds] ? p.kinds : 'all' })),
       maxCoins: MAXES.includes(d.settings.maxCoins) ? d.settings.maxCoins : 5,
-      arrange: d.settings.arrange === 'sort' ? 'sort' : 'scatter',
+      arrange: ARRANGES[d.settings.arrange] ? d.settings.arrange : 'scatter',
       first: idx(d.settings.first) ? d.settings.first : 0,
+      jam: JAMS[d.settings.jam] ? Number(d.settings.jam) : 0,
     },
     phase: d.phase,
     turn: d.turn,
@@ -320,7 +415,8 @@ function normDuel(d) {
     phaseEnd: num(d.phaseEnd, 0),
     correct: players.map((_, i) => num(correct[i], 0)),
     out: out.slice(),
-    problem: { coins, key: E.keyOf(values), total: E.totalOf(values) },
+    jam: players.map((_, i) => Math.max(0, Math.min(E.JAM_MAX, Math.floor(num(asList(d.jam)[i], 0))))),
+    problem: { coins, key: E.keyOf(values), total: E.totalOf(values), mix: Math.max(0, Math.floor(num(d.problem?.mix, 0))) },
     history: asList(d.history)
       .map((h) => ({ coins: normCoins(h?.coins), how: ['ok', 'pass', 'timeout'].includes(h?.how) ? h.how : 'ok' }))
       .filter((h) => h.coins.length)
@@ -368,6 +464,12 @@ function mayAnswer(room, game, i, uid, nickname, role) {
   if (game.proxy[i]) return isHost;
   if (game.seats[i] === nickname && game.uids[i] === uid) return true;
   return isHost && !room.players?.[game.seats[i]];
+}
+
+// この端末の人の席の番号（自分の端末で対戦している人だけ。なければ -1）
+function selfSeat(game, uid, nickname, role) {
+  if (role !== 'host' && role !== 'guest') return -1;
+  return game.seats.findIndex((name, i) => !game.proxy[i] && name === nickname && game.uids[i] === uid);
 }
 
 // 時間で進める書き込み（3・2・1 のおわり・正解の帯のおわり・「ここまで」のおわり・パスのおわり・時間切れ）をしてよい端末
@@ -1193,8 +1295,10 @@ async function duelTransaction(gid, rev, step, needSeat) {
     if (!r || isExpired(r) || r.status !== STATUS.PLAY || r.hostConnected === false) return;
     const cur = gameOf(r);
     if (!cur || cur.id !== gid || cur.duel.rev !== rev) return;
-    if (needSeat ? !mayAnswer(r, cur, cur.duel.turn, uid, nickname, role) : !mayAdvance(r, cur, uid, nickname, role)) return;
-    const next = step(cur.duel, RoomkRTDB.now());
+    // needSeat: true は番の人（代わりに入れるホストも）・'self' は自分の席のある人（まぜる）・false は時間で進める端末
+    const self = needSeat === 'self' ? selfSeat(cur, uid, nickname, role) : -1;
+    if (needSeat === 'self' ? self < 0 : needSeat ? !mayAnswer(r, cur, cur.duel.turn, uid, nickname, role) : !mayAdvance(r, cur, uid, nickname, role)) return;
+    const next = step(cur.duel, RoomkRTDB.now(), self);
     if (!next || next === cur.duel) return;
     finished = next.phase === 'over' && !cur.ended;
     return { ...r, game: { ...r.game, duel: next, ended: cur.ended || next.phase === 'over' } };
@@ -1234,6 +1338,27 @@ async function passRoom() {
   } finally {
     state.answering = false;
   }
+}
+
+// まぜる（ルーム）。番でない、まだ残っている人が、番の人の小銭をならべなおす
+async function jamRoom() {
+  const V = viewModel();
+  if (!V || V.local || state.jamming || !canJam(V, V.me)) return;
+  state.jamming = true;
+  try {
+    await duelTransaction(V.game.id, V.duel.rev, (duel, now, self) => E.jam(duel, self, now, Math.random), 'self');
+  } catch (error) {
+    console.warn('[charin-baton] jam failed', error);
+    toast('まぜられませんでした。もう一度ためしてね');
+  } finally {
+    state.jamming = false;
+  }
+}
+
+// i 番の人が、いま「まぜる」を使えるか
+function canJam(V, i) {
+  const D = V.duel;
+  return i >= 0 && D.phase === 'play' && i !== D.turn && !D.out[i] && D.jam[i] > 0 && (V.local || V.room.hostConnected !== false);
 }
 
 // 時間で進める。ホストと対戦する2人の端末がそれぞれためし、場面の番号（rev）の照合で1つだけ通る
@@ -1515,7 +1640,7 @@ function renderWaiting(room) {
   $('lobbyCommon').hidden = !host;
   $('lobbyCommonView').hidden = host;
   if (host) {
-    const keyOf = (x) => JSON.stringify([x.time, x.kinds, x.maxCoins, x.arrange, x.first]);
+    const keyOf = (x) => JSON.stringify([x.time, x.kinds, x.maxCoins, x.arrange, x.first, x.jam]);
     const key = keyOf(set);
     if ($('lobbyCommon')._key !== key) {
       const common = JSON.parse(JSON.stringify(set));
@@ -1545,6 +1670,7 @@ function viewModel() {
       mine: () => false,
       canAnswer: () => L.duel.phase === 'play',
       key: 'local:' + L.duel.startedAt,
+      me: -1,
       local: true,
     };
   }
@@ -1564,6 +1690,7 @@ function viewModel() {
     canAnswer: () => game.duel.phase === 'play' && room.hostConnected !== false && mayAnswer(room, game, game.duel.turn, uid, state.nickname, state.role),
     mayAdvance: () => mayAdvance(room, game, uid, state.nickname, state.role),
     key: state.roomCode + ':' + game.id,
+    me: selfSeat(game, uid, state.nickname, state.role),
     local: false,
   };
 }
@@ -1578,7 +1705,7 @@ function renderGame() {
   const n = D.settings.players.length;
   // 場面の番号に加えて、段階と小銭の組み合わせも見る（同じ番号のまま中身がかわっても作りなおす）
   const scene = D.rev + ':' + D.phase + ':' + D.turn + ':' + D.problem.key + ':' + D.startedAt;
-  const sig = [V.key, scene, V.canAnswer(), V.names.map((_, i) => (V.away(i) ? 1 : 0)).join(''), state.role, state.showPad, PC_MQ.matches].join('|');
+  const sig = [V.key, scene, V.canAnswer(), V.names.map((_, i) => (V.away(i) ? 1 : 0)).join(''), state.role, state.showPad, PC_MQ.matches, D.jam.join(',') + ':' + D.problem.mix].join('|');
   if (sig === state.renderSig) { updateClock(); return; }
   // 場面が変わったら、入れている途中の数字を消す（番・小銭・答える人が変わっているため）
   const prev = state.renderSig ? state.renderSig.split('|') : [];
@@ -1635,7 +1762,17 @@ function renderGame() {
   else { turn.classList.add('is-over'); turn.replaceChildren(msIcon('emoji_events'), nameOf(D.winner), text(' の勝ち！')); }
 
   // 小銭は、はじまる前とパスの間だけかくす。正解と時間切れは小銭を見せたまま、下に金額と内訳を出す
-  drawTray($('tray'), D.problem.coins, D.phase === 'pass' || D.phase === 'ready');
+  // 「うごく」は、番の間だけ動かす（正解・時間切れの帯の間は、動いた先で止めて見せる）
+  drawTray($('tray'), D.problem.coins, D.phase === 'pass' || D.phase === 'ready', D.settings.arrange === 'move' ? (D.phase === 'play' ? 'run' : 'hold') : null);
+  // ならべなおされたら、トレーを小さくゆらして知らせる（だれがまぜたかは出さない）
+  const mixKey = V.key + ':' + scene;
+  if (state.mixSeen.startsWith(mixKey + '#') && Number(state.mixSeen.slice(mixKey.length + 1)) < D.problem.mix) {
+    const tray = $('tray');
+    tray.classList.remove('is-mixed');
+    void tray.offsetWidth;
+    tray.classList.add('is-mixed');
+  }
+  state.mixSeen = mixKey + '#' + D.problem.mix;
   const over = $('trayOver');
   over.hidden = !(D.phase === 'pass' || D.phase === 'ready');
   if (D.phase === 'ready') {
@@ -1696,6 +1833,10 @@ function renderInput(V) {
     else if (D.phase === 'pass') note = who + 'はパス。もうすぐ次の小銭が出るよ';
     else note = who + 'が数えているよ' + (nextMine ? '。次はあなたの番' : '');
     box.append(makeElement('p', 'cb-waitnote', note));
+    // まぜる（ありのとき）。番でない、まだ残っている人の画面に出す
+    if (!local && V.me >= 0 && D.settings.jam > 0 && !D.out[V.me] && V.me !== D.turn && (D.phase === 'play' || D.phase === 'pass')) {
+      box.append(jamButton(V, V.me, 'まぜる', jamRoom));
+    }
     return;
   }
   const active = V.canAnswer();
@@ -1762,6 +1903,15 @@ function renderInput(V) {
     acts.append(ok);
   }
   box.append(acts);
+  // 1台の画面のまぜる: 番でない人が声で言ったら、画面を動かす人が押す
+  if (local && D.settings.jam > 0 && !revealing) {
+    const row = makeElement('div', 'cb-jams');
+    V.names.forEach((name, i) => {
+      if (i === D.turn || D.out[i]) return;
+      row.append(jamButton(V, i, name + 'がまぜる', () => applyLocal(E.jam(state.local.duel, i, Date.now(), Math.random))));
+    });
+    if (row.childNodes.length) box.append(row);
+  }
   if (pc) {
     const tog = makeElement('button', 'cb-quiet cb-padtoggle', padOn ? '画面の数字ボタンをかくす' : '画面の数字ボタンを出す');
     tog.type = 'button';
@@ -1773,6 +1923,15 @@ function renderInput(V) {
     });
     box.append(tog);
   }
+}
+
+function jamButton(V, i, label, onClick) {
+  const b = makeElement('button', 'btn btn-secondary cb-jambtn');
+  b.type = 'button';
+  b.append(msIcon('cyclone'), makeElement('span', '', label), makeElement('small', 'cb-jambtn__left', 'あと' + V.duel.jam[i] + '回'));
+  b.disabled = !canJam(V, i);
+  b.addEventListener('click', onClick);
+  return b;
 }
 
 function refreshDisplay() {
@@ -1991,9 +2150,9 @@ function renderCount() {
   $('countOpts').replaceChildren(
     step,
     segmented('種類', [['all', 'ぜんぶ'], ['three', '1・10・100円だけ']], C.kinds, (v) => { C.kinds = v; newCount(); }),
-    segmented('ならべ方', [['scatter', 'ばらばら'], ['sort', 'そろえる']], C.arrange, (v) => { C.arrange = v; newCount(); }),
+    segmented('ならべ方', [['scatter', 'ばらばら'], ['sort', 'そろえる'], ['move', 'うごく']], C.arrange, (v) => { C.arrange = v; newCount(); }),
   );
-  drawTray($('countTray'), C.problem.coins, false);
+  drawTray($('countTray'), C.problem.coins, false, C.arrange === 'move' ? (C.shown ? 'hold' : 'run') : null);
   const ans = $('countAnswer');
   if (C.shown) ans.replaceChildren(makeElement('p', 'cb-countans__total', 'ぜんぶで ' + yen(C.problem.total)), makeElement('p', 'cb-countans__break', E.breakdown(C.problem.coins)));
   else ans.replaceChildren();
