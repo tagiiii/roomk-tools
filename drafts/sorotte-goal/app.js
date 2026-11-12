@@ -386,6 +386,7 @@
       const node = piece(id, () => makePiece('sg-piece--box', ART.BOX));
       const was = P && P.boxes[i];
       if (was && (was[0] !== x || was[1] !== y)) replay(node, 'is-slide');
+      node.style.zIndex = String(100 + y * 2);
       place(node, x, y);
     });
     S.players.forEach((p, i) => {
@@ -417,15 +418,17 @@
       if (!p.key && carry) carry.remove();
       if (was && p.key && !was.key) fxSpark(p.x, p.y, '#F6CE4B');
       if (was && !p.key && was.key) fxSpark(p.x, p.y, '#FFFFFF');
+      // 下のマスにいるコマほど手前に出す（上のコマの足が、下のコマの頭にかぶらない）
+      node.style.zIndex = String(100 + p.y * 2 + 1);
       place(node, p.x, p.y);
     });
     Object.keys(state.pieces).forEach((id) => {
       if (!live.has(id)) { state.pieces[id].remove(); delete state.pieces[id]; }
     });
 
-    // 星と歩数
-    $('hud').replaceChildren(starRow(S.got, T.stars.length), el('span', '', S.rev + '歩'));
-    $('hud').hidden = !T.stars.length && false;
+    // 星（歩数は、あそんでいる間は出さない。クリアのときに「ぜんぶで○歩」とだけ出す）
+    $('hud').replaceChildren(starRow(S.got, T.stars.length));
+    $('hud').hidden = !T.stars.length;
 
     const you = $('youLine');
     you.hidden = state.mode !== 'two';
@@ -442,9 +445,12 @@
     $('clearBox').hidden = !S.cleared;
     if (S.cleared) {
       $('clearText').textContent = 'クリア！';
-      $('clearSub').replaceChildren(starRow(S.got, T.stars.length), el('span', '', S.rev + '歩'));
+      const sub = [el('span', '', 'ぜんぶで' + S.rev + '歩')];
+      if (T.stars.length) sub.unshift(starRow(S.got, T.stars.length));
+      $('clearSub').replaceChildren(...sub);
     }
     board.classList.toggle('is-pickable', selecting());
+    board.classList.toggle('is-calm', S.players.length > 4);
     $('stuckBox').hidden = !E.stuck(S);
     state.prev = S;
     camera();
