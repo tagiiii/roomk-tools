@@ -144,3 +144,8 @@
 - **文字組**: 書体は ui.md の決まりどおり Zen Maru Gothic と Noto Sans JP のまま、太さ 900 を足した。詰め（`palt`）、文節で折る（`word-break:auto-phrase`）、行の長さをそろえる（`text-wrap:balance`）。対応しないブラウザではふつうの折り返しになる
 - 参加者の端末のコーナーの表紙も同じ形（`.p-art.kg-pic`）。はじめの画面と早見表の入口の絵は `assets/cover.svg`（太陽・丘・雲）
 - 見本は `drafts/circle-time-cover-mock/`（A 切り紙・B しおり・C しるし）
+
+## 2026-11-12 プログラムの名前に「.」があると午後のルームを作れなかった
+
+- サムネイル（`steps[].thumbs`）はプログラムの名前で引く。名前に RTDB のキーに使えない字（`.` `#` `$` `/` `[` `]`）があると、ルームを作る transaction が失敗した（本番で「…ミッションVol.2」の日に発生）。キーは `thumbKey(name)`（`encodeURIComponent` ＋ `.` を `%2E`）で変換して持ち、引くときも同じ関数を通す
+- **外から来た文字（Notion のプログラム名など）を、そのまま RTDB のキーにしない**
