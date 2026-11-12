@@ -105,7 +105,7 @@ const { check, sleep } = L;
   await H.page.click('#game-picks [data-open]');
   const popup = await popupP;
   check('D0f 「ルームを作る」で、決めたゲームのタブが開く', popup.url().endsWith('/apps/' + g0.slug + '/'), popup.url());
-  check('D0f2 ルームができるまでは「ルームができたら…」', (await L.player(A)).includes('ルームができたら') && !(await A.page.$('#player-card .p-go')));
+  check('D0f2 ルームができるまでは「ルームができたら…」だけ・参加者にゲームを開くリンクは出さない', (await L.player(A)).includes('ルームができたら') && !(await A.page.$('#player-card .p-go')) && !(await A.page.$('#player-card a')));
   // 開いたタブでルームを作る（ゲームのツールがタブに残すのと同じ形）
   await popup.evaluate(() => sessionStorage.setItem('roomk-test-session', JSON.stringify({ roomCode: 'QWERTY', role: 'host' })));
   await L.waitPlayer(A, 'ゲームに入る', 6000);
