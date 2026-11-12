@@ -222,6 +222,8 @@ const COVERED_APPS = [
 const NO_CONTENT_APPS = [
   // 進行役のツール。自由タイムのお題は talk-card・quiz・kotoba-mikke から読む。今日は何の日は毎朝の日付ファイル（その日だけ）
   'circle-time',
+  // 進行役のツール（作戦会議の流れ）。チェックインのお題は talk-card から読む。予定のふせん・選択肢は語のリストで、お題集ではない
+  'sakusen-kaigi',
   'suki-type-check', 'kakure-number', 'jinro', 'kakure-kaito',
   'name-change', 'kyapa-graph', 'nurie-week',
   // カードゲーム・パズルの部品だけ（トランプ・数字札・かなタイル・生き物8種・ピースと盤面）
