@@ -1898,6 +1898,9 @@ function handleRoom(room) {
     const expired = isRoomExpired(room);
     showOverlay('host-off-overlay', hostGone);
     if (hostGone) {
+      // 切れたままのあいだに切れた時刻だけが新しくなったら（ホストの通信が短く揺れたとき）、期限のタイマーを仕掛けなおす。
+      // 古い時刻のまま動くと「まだ期限前」で消せず、待つ画面のまま残る（2026-11-13）
+      if (state.orphanTimer && state.orphanAt !== getHostDisconnectedAt(room)) { clearTimeout(state.orphanTimer); state.orphanTimer = null; }
       const disconnectedAt = getHostDisconnectedAt(room);
       const delay = disconnectedAt == null
         ? ORPHAN_TTL_MS
@@ -1907,6 +1910,7 @@ function handleRoom(room) {
         state.orphanTimer = null;
         expireGuestRoom(state.roomRef);
       } else if (!state.orphanTimer) {
+        state.orphanAt = getHostDisconnectedAt(room);
         const ref = state.roomRef;
         state.orphanTimer = setTimeout(() => {
           state.orphanTimer = null;
