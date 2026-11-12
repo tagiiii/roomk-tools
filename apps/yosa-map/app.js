@@ -295,6 +295,23 @@ function connectToRoom(role, nickname, code, ref) {
   state.connectedRef.on('value', state.connectedCallback);
 }
 
+// ホストが切れたままのとき、期限（切れた時刻の2分後）に、参加する人の画面からルームを消す。
+// 切れたままのあいだに、切れた時刻だけが新しくなることがある（ホストの通信が短く揺れたとき）。
+// はじめに見た時刻でタイマーが動いたときにまだ期限前なら、残りの時間で仕掛けなおす
+// （仕掛けなおさないと、消す処理が「まだ期限前」で何もせず、待つ画面のまま残る。2026-11-12）
+function armOrphanTimer(room) {
+  if (state.orphanTimer) return;
+  const at = RoomkRTDB.getHostDisconnectedAt(room);
+  const delay = at == null ? ORPHAN_TTL_MS : Math.max(0, at + ORPHAN_TTL_MS - now());
+  state.orphanTimer = setTimeout(() => {
+    state.orphanTimer = null;
+    const cur = state.room;
+    if (!state.roomRef || !cur) return;
+    if (state.role === 'guest' && cur.hostConnected === false && !isExpired(cur)) { armOrphanTimer(cur); return; }
+    removeExpired(state.roomRef, cur);
+  }, delay);
+}
+
 function handleRoom(room) {
   if (state.role === 'guest' && room.hostConnected === false) {
     $('hostOffOverlay').hidden = false;
@@ -302,14 +319,7 @@ function handleRoom(room) {
     state.pop = null;
     state.freeOpen = false;
     state.confirmDel = false;
-    if (!state.orphanTimer) {
-      const at = RoomkRTDB.getHostDisconnectedAt(room);
-      const delay = at == null ? ORPHAN_TTL_MS : Math.max(0, at + ORPHAN_TTL_MS - now());
-      state.orphanTimer = setTimeout(() => {
-        state.orphanTimer = null;
-        if (state.roomRef && state.room) removeExpired(state.roomRef, state.room);
-      }, delay);
-    }
+    armOrphanTimer(room);
   } else {
     $('hostOffOverlay').hidden = true;
     clearTimeout(state.orphanTimer);
