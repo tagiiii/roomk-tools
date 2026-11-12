@@ -1,0 +1,88 @@
+/* 神経衰弱
+   色は共通の変数と、ボードゲームの種類の色（--g・--g-pale・--g-ink）。絵の色だけ data.js に直書き */
+body { color: var(--color-text); margin: 0; }
+[hidden] { display: none !important; }
+
+/* ── はじめの画面 ── */
+.ss-front { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px 16px; box-sizing: border-box; }
+.ss-head { position: relative; height: 150px; display: flex; align-items: center; justify-content: center; gap: 10px; background: var(--g-pale); overflow: hidden; }
+.ss-head__card { width: 64px; height: 80px; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: var(--color-surface); border: 3px solid var(--g); box-shadow: var(--shadow-soft); color: var(--g-ink); }
+.ss-head__card .material-symbols-rounded { font-size: 40px; }
+.ss-head__card--back { background: var(--g-ink); border-color: var(--g-ink); color: #fff; font-family: 'Zen Maru Gothic', var(--font-base); font-weight: 700; font-size: 1.5rem; }
+
+.ss-setup { margin: 4px 0 20px; }
+.ss-field { border: 0; padding: 0; margin: 0 0 18px; min-width: 0; }
+.ss-field__name { font-size: .95rem; font-weight: 700; color: var(--color-primary); padding: 0; margin: 0 0 8px; }
+.ss-note { font-size: 14px; color: var(--color-muted); margin: 8px 0 0; line-height: 1.6; }
+
+/* 1つ選ぶボタン */
+.ss-seg { display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: 8px; }
+.ss-seg--2 { grid-template-columns: repeat(2, 1fr); }
+.ss-seg button { min-height: 48px; padding: 6px 10px; border-radius: 12px; border: 2px solid var(--color-border); background: var(--color-surface); color: var(--color-text); font: inherit; font-size: 16px; font-weight: 700; cursor: pointer; }
+.ss-seg button:hover { background: var(--color-primary-soft); }
+.ss-seg button[aria-checked="true"] { border-color: var(--color-accent); background: var(--color-accent-soft); color: var(--color-accent); }
+
+.ss-names { display: grid; gap: 8px; }
+.ss-names__row { display: grid; grid-template-columns: 4.5em 1fr; align-items: center; gap: 8px; }
+.ss-names__row label { font-size: 14px; color: var(--color-muted); }
+.ss-names__row .form-input { margin: 0; min-height: 48px; box-sizing: border-box; width: 100%; }
+.ss-names__fixed { min-height: 48px; display: flex; align-items: center; padding: 0 12px; border-radius: var(--radius-sm); background: var(--color-primary-soft); color: var(--color-muted); font-weight: 700; }
+
+/* ── 遊ぶ画面 ── */
+.ss-app { min-height: 100vh; }
+.ss-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 16px; padding: 10px 16px; background: var(--color-surface); box-shadow: var(--shadow-soft); border-top: 4px solid var(--g); }
+.ss-bar__title { font-size: 1.15rem; margin: 0; color: var(--color-primary); }
+.ss-bar__level { margin: 0; flex: 1 1 auto; font-size: .9rem; color: var(--color-muted); }
+.ss-main { max-width: 1040px; margin: 0 auto; padding: 12px 16px 32px; box-sizing: border-box; }
+
+.ss-players { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.ss-player { display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 4px 16px; border-radius: 999px; background: var(--color-surface); border: 2px solid var(--color-border); box-sizing: border-box; }
+.ss-player__name { font-weight: 700; overflow-wrap: anywhere; }
+.ss-player__turn { font-size: .8rem; font-weight: 700; color: #fff; background: var(--color-accent); border-radius: 999px; padding: 2px 10px; }
+.ss-player__pairs { font-family: 'Zen Maru Gothic', var(--font-base); font-weight: 700; font-size: 1.3rem; color: var(--color-primary); }
+.ss-player__unit { font-size: .85rem; color: var(--color-muted); margin-left: 2px; }
+.ss-player.is-turn { border-color: var(--color-accent); background: var(--color-accent-soft); }
+
+.ss-status { margin: 10px 0 12px; min-height: 1.6em; text-align: center; font-family: 'Zen Maru Gothic', var(--font-base); font-size: 1.35rem; font-weight: 700; color: var(--color-primary); }
+
+.ss-result { max-width: 520px; margin: 0 auto 16px; text-align: center; }
+.ss-result__head { margin: 0 0 6px; font-size: 1.5rem; color: var(--color-accent); }
+.ss-result__body { margin: 0 0 16px; }
+.ss-result__btns { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px; }
+
+/* 盤。画面の高さに収まるよう、幅を高さからも決める（--cols・--rows・--maxw は app.js が入れる） */
+.ss-board-wrap {
+  margin: 0 auto;
+  max-width: min(var(--maxw, 640px), max(260px, calc((100dvh - 215px) * var(--cols, 5) / var(--rows, 4))));
+  container-type: inline-size;
+}
+.ss-board { display: grid; grid-template-columns: repeat(var(--cols, 5), 1fr); gap: calc(8cqw / var(--cols, 5)); }
+
+.ss-card { display: block; aspect-ratio: 1 / 1; padding: 0; border: 0; background: transparent; cursor: pointer; perspective: 600px; border-radius: 12%; -webkit-tap-highlight-color: transparent; }
+.ss-card:focus-visible { outline: 3px solid var(--color-accent); outline-offset: 2px; }
+.ss-card__inner { position: relative; display: block; width: 100%; height: 100%; transform-style: preserve-3d; transition: transform .35s ease; }
+.ss-card.is-up .ss-card__inner { transform: rotateY(180deg); }
+.ss-card__back, .ss-card__front { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; border-radius: 12%; backface-visibility: hidden; -webkit-backface-visibility: hidden; box-sizing: border-box; }
+.ss-card__back { background: var(--g-ink); color: #fff; box-shadow: var(--shadow-soft); font-family: 'Zen Maru Gothic', var(--font-base); font-weight: 700; font-size: calc(34cqw / var(--cols, 5)); }
+.ss-card:not(.is-up):hover .ss-card__back { background: var(--g); }
+.ss-card__front { background: var(--color-surface); border: 3px solid var(--g); transform: rotateY(180deg); }
+.ss-card__front .material-symbols-rounded { font-size: calc(58cqw / var(--cols, 5)); line-height: 1; }
+.ss-card__front svg { width: 86%; height: 86%; display: block; }
+.ss-card__front-num { position: absolute; top: 4%; left: 8%; font-size: calc(13cqw / var(--cols, 5)); font-weight: 700; color: var(--color-muted); line-height: 1; }
+.ss-card.is-got { cursor: default; }
+/* 取ったカードは表のまま薄くする（inner に opacity を付けると裏が透けて出るので、面のほうに付ける） */
+.ss-card.is-got .ss-card__back { visibility: hidden; }
+.ss-card.is-got .ss-card__front { border-color: var(--color-border); opacity: .35; }
+.ss-board.is-locked .ss-card:not(.is-up) { cursor: default; }
+.ss-board.is-locked .ss-card:not(.is-up):hover .ss-card__back { background: var(--g-ink); }
+
+@media (prefers-reduced-motion: reduce) {
+  .ss-card__inner { transition: none; }
+}
+
+@media (max-width: 600px) {
+  .ss-main { padding: 10px 10px 24px; }
+  .ss-status { font-size: 1.1rem; }
+  .ss-player { padding: 4px 12px; gap: 8px; }
+  .ss-board-wrap { max-width: min(var(--maxw, 640px), max(240px, calc((100dvh - 230px) * var(--cols, 4) / var(--rows, 5)))); }
+}
