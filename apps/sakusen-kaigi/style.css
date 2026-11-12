@@ -498,6 +498,14 @@ body.dragging, body.dragging * { cursor: grabbing !important; user-select: none;
   .h-grid[data-ops="side"] .h-side { grid-column: 2; grid-row: 3 / span 4; }
 }
 
+/* 予定の確認で操作の欄を右へ出したとき、高さの足りない画面（横にしたタブレット 1180×820px など）では、
+   「参加する人」の見出しと名前の一覧をたたむ。すぐ上の「だれの表を出す？」に同じ名前が並んでいるので、
+   名前を足す欄と「次回の日」までスクロールなしで見えるほうを取る（名前を消す×は、ほかの画面で押せる） */
+@media (min-width: 721px) and (max-width: 1100px) and (max-height: 900px), (min-width: 1101px) and (max-width: 1400px) and (pointer: coarse) and (max-height: 900px) {
+  .h-grid[data-ops="side"] .h-side .h-box:first-child .h-h2,
+  .h-grid[data-ops="side"] .h-people { display: none; }
+}
+
 /* ══ 本体: 画面の切りかえ・参加の画面・おしらせ ══ */
 .screen { display: none; }
 .screen.active { display: block; }
