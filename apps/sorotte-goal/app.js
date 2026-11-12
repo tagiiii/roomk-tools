@@ -14,15 +14,32 @@ const MIN_SEATS = 2;         // 協力のしかけは2人から
 const MAX_SEATS = E.MAX_PLAYERS;
 const MAX_PROXIES = 4;       // 端末なしの参加者（ホストが代わりに動かす）
 const MAX_STAGE = 9999;
-const LEVELS = ['easy', 'normal', 'hard'];
+const LEVELS = ['easy', 'normal', 'hard', 'expert'];
 const LEVEL_NOTE = {
   easy: 'しかけは2つ。はじめてなら、ここから。',
   normal: 'しかけは3つ。重い箱や、番号の人だけ渡れる橋が出る。',
-  hard: 'しかけは4〜5つ。部屋が多く、時間もかかる。',
+  hard: 'しかけは5つ。カギや星が、とびらの先にある。1人がスイッチをおさえて、もう1人がとりに行く。',
+  expert: '部屋は6つ。どのしかけも、2人以上で力を合わせないと通れない。',
 };
 const DEFAULT_SET = { level: 'easy', stage: 1, hostPlays: true };
-const KIND_NAME = { relay: 'とびら', relayJ: '橋の先のスイッチ', key: 'カギ', keyJ: '橋の先のカギ', box: '重い箱', pair: '2つ同時のスイッチ' };
-const MARK_NAME = { a: 'まる', b: 'さんかく', c: 'しかく', d: 'ほし', e: 'ひしがた' };
+const KIND_NAME = { relay: 'とびら', relayJ: '橋の先のスイッチ', key: 'カギ', keyJ: '橋の先のカギ', keyDoor: 'とびらの先のカギ', box: '重い箱', pair: '2つ同時のスイッチ' };
+const MARK_NAME = { a: 'まる', b: 'さんかく', c: 'しかく', d: 'ほし', e: 'ひしがた', f: 'プラス', h: 'ろっかく', i: 'つき' };
+// ひとこと: 決まった言葉をえらんで、みんなに知らせる（声を出さなくても伝えられる）。自由に打つ欄は置かない。
+// 言葉を足す・変えるときは、オーナーが決める（docs/development/ui.md「マイクを使わない子が参加できる手段」）
+const SAYS = [
+  'スイッチに乗るよ', 'スイッチに乗って',
+  'そこで待ってて', 'いま通って',
+  '箱を押そう', 'うしろから押して',
+  'カギをとるよ', 'こっちに来て',
+  'ちょっと待って', 'どうする？',
+  'OK', 'ありがとう',
+  'ナイス！', 'たすけて',
+];
+const SAY_EVERY_MS = 5000;   // ひとり5秒に1回まで
+const SAY_SHOW_MS = 6000;    // 吹き出しを出しておく長さ
+// マウスのある端末（PC）。矢印キーの案内は、PC にだけ出す
+const PC_MQ = window.matchMedia('(hover: hover) and (pointer: fine)');
+const NARROW_MQ = window.matchMedia('(max-width: 900px)');
 const CONFETTI = ['#E0762B', '#2A93B4', '#F6CE4B', '#3FAE5A', '#8A5CC4', '#F28B9B'];
 const NEAR_CELL = 54;        // 近くを映すときの、1マスの目安（px）
 const SMALL_CELL = 40;       // これより小さいと、はじめから近くを映す
@@ -59,6 +76,10 @@ const state = {
   // 端末の中だけで持つ状態
   picked: -1,          // いま動かすコマ（席の番号）。自分のコマか、ホストが代わりに動かすコマ
   near: null,          // 近くを映すか（null は、マスが小さいときだけ近くを映す）
+  nearNow: false,      // いま近くを映しているか
+  sayAt: 0,            // 最後にひとことを送った時刻（ひとり5秒に1回まで）
+  saySeen: {},         // 席ごとの、最後に見たひとこと { v: 値, until: 出しておく時刻 }
+  sayTimer: null,
   prev: null,          // 直前に出した状態（どこが変わったかを見て、動きを付ける）
   drawn: '',           // いま盤に出しているステージ（対決の番号＋ステージ）
   pieces: {},
@@ -318,7 +339,10 @@ function clearSession() {
 /* ── ルームへの出入り ── */
 function resetView() {
   ['board', 'pads', 'pick', 'roster', 'legend', 'lobbyPeople'].forEach((id) => $(id).replaceChildren());
-  Object.assign(state, { picked: -1, near: null, prev: null, drawn: '', pieces: {}, setKey: null });
+  $('pads').dataset.sig = '';
+  clearTimeout(state.sayTimer);
+  Object.assign(state, { picked: -1, near: null, nearNow: false, prev: null, drawn: '', pieces: {}, setKey: null, saySeen: {}, sayTimer: null });
+  $('sayPanel').hidden = true;
   $('clearBox').hidden = true;
   $('board').style.transform = '';
   showTip('');
@@ -1211,6 +1235,7 @@ function drawStage(game) {
   state.pieces = {};
   state.prev = null;
   state.near = null;
+  state.saySeen = {};
   state.drawn = game.id + ':' + E.specKey(S.spec);
   $('stageName').textContent = T.name + '・' + game.spec.n + '人　ステージ ' + game.spec.seed;
   replay($('stageName'), 'is-new');
@@ -1335,6 +1360,9 @@ function renderGame() {
   const mine = selfSeat(game);
   if (!movable.includes(state.picked)) state.picked = movable.includes(mine) ? mine : (movable[0] ?? -1);
 
+  // ひとこと: 席ごとに、いま出しておく言葉
+  const says = currentSays(room, game);
+
   // とびらの開け閉め
   board.querySelectorAll('.sg-cell--door').forEach((cell) => {
     const [x, y] = cell.dataset.pos.split(',').map(Number);
@@ -1411,6 +1439,17 @@ function renderGame() {
     if (!p.key && carry) carry.remove();
     if (was && p.key && !was.key) fxSpark(p.x, p.y, '#F6CE4B');
     if (was && !p.key && was.key) fxSpark(p.x, p.y, '#FFFFFF');
+    // ひとことの吹き出し
+    const said = says[i];
+    let bubble = node.querySelector('.sg-say');
+    if (said && (!bubble || bubble.textContent !== said)) {
+      if (bubble) bubble.remove();
+      bubble = el('div', 'sg-say', said);
+      node.append(bubble);
+    } else if (!said && bubble) {
+      bubble.remove();
+    }
+    node.classList.toggle('has-say', !!said);
     // 下のマスにいるコマほど手前に出す
     node.style.zIndex = String(100 + p.y * 2 + 1);
     place(node, p.x, p.y);
@@ -1434,11 +1473,13 @@ function renderGame() {
   you.textContent = line;
   if (mine >= 0) tint(you, mine); else you.style.removeProperty('--c');
   renderPads(game, movable);
+  renderSay(movable);
   $('roster').replaceChildren(...game.seats.map((name, i) => {
     const li = el('li');
     li.append(tint(el('span', 'sg-num', i + 1), i), el('span', '', name));
     if (i === mine) li.append(el('span', 'sg-chip sg-chip--you', 'あなた'));
     if (!seatPresent(room, game, i)) li.append(el('span', 'sg-chip sg-chip--warn', '通信が切れた'));
+    if (says[i]) li.append(el('span', 'sg-roster__say', says[i]));
     // 「端末なし」の印はホストの画面にだけ出す
     if (host && game.proxy[i]) li.append(el('span', 'sg-chip sg-chip--muted', '端末なし'));
     return li;
@@ -1489,7 +1530,7 @@ function renderPads(game, movable) {
   if (!movable.length) { pads.replaceChildren(); return; }
   const i = state.picked;
   const pad = tint(el('div', 'sg-pad'), i);
-  pad.append(el('p', 'sg-pad__label', game.seats[i] + '（矢印キー・W A S D）'));
+  pad.append(el('p', 'sg-pad__label', game.seats[i] + (PC_MQ.matches ? '（矢印キー・W A S D）' : '')));
   [['up', 'arrow_upward', '上へ'], ['left', 'arrow_back', '左へ'], ['down', 'arrow_downward', '下へ'], ['right', 'arrow_forward', '右へ']].forEach(([dir, name, label]) => {
     const b = el('button', 'sg-pad__btn sg-pad__btn--' + dir);
     b.type = 'button';
@@ -1501,8 +1542,10 @@ function renderPads(game, movable) {
   pads.replaceChildren(pad);
 }
 
-/* ── 近くを映す ──
-   マスが小さいとき（人数が多い・画面がせまい）は、盤を大きくして、動かすコマのまわりを映す。
+/* ── 盤の大きさと、映す場所 ──
+   盤のわくの高さを、画面に収まるように決める（スマホは、下に矢印のボタンが入る分をあける）。
+   全体を映すとき: 盤をわくに収まるまで縮めて、まん中に置く。
+   近くを映すとき: マスが小さい（人数が多い・画面がせまい）ときに、盤を大きくして、動かすコマをまん中にする。
    みんなにみせる画面・進行だけのホスト・見る番の人は、いつも全体。 */
 function camera() {
   const game = gameOf(state.room);
@@ -1512,20 +1555,97 @@ function camera() {
   if (!game) return;
   const T = E.staticOf(game.S.spec);
   const W = host.clientWidth;
-  const H = host.clientHeight;
+  if (!W) return;
   const cell = W / T.w;
+  const boardH = cell * T.h;
+  const top = host.getBoundingClientRect().top + window.scrollY;
+  // スマホは、盤の下に矢印のボタンが入り、右下の固定のボタン（？など）にかからない分をあける
+  const avail = Math.max(160, window.innerHeight - top - (NARROW_MQ.matches ? 330 : 16));
+  const fit = Math.min(1, avail / boardH);
   const who = state.picked;
-  const can = who >= 0 && cell > 0 && cell < NEAR_CELL - 4;
-  const near = can && (state.near == null ? cell < SMALL_CELL : state.near);
+  const can = who >= 0 && cell * fit < NEAR_CELL - 4;
+  const near = can && (state.near == null ? cell * fit < SMALL_CELL : state.near);
+  state.nearNow = near;
   btn.hidden = !can;
   if (can) btn.replaceChildren(icon(near ? 'zoom_out_map' : 'zoom_in'), document.createTextNode(near ? '全体を見る' : '近くを見る'));
-  if (!near) { board.style.transform = ''; return; }
-  const scale = Math.min(5, NEAR_CELL / cell);
-  const p = game.S.players[who];
-  const clamp = (v, lo) => Math.max(lo, Math.min(0, v));
-  const tx = clamp(W / 2 - (p.x + 0.5) * cell * scale, W - W * scale);
-  const ty = clamp(H / 2 - (p.y + 0.5) * cell * scale, H - H * scale);
+  const scale = near ? Math.min(5, NEAR_CELL / cell) : fit;
+  const bw = W * scale;
+  const bh = boardH * scale;
+  const H = near ? Math.min(avail, bh) : bh;
+  host.style.height = H.toFixed(1) + 'px';
+  // わくより小さい向きはまん中に。大きい向きは、動かすコマがまん中に来るように（はしは、はみ出さない）
+  const p = near ? game.S.players[who] : null;
+  const along = (size, view, at) => (size <= view ? (view - size) / 2 : Math.max(view - size, Math.min(0, view / 2 - at)));
+  const tx = along(bw, W, p ? (p.x + 0.5) * cell * scale : 0);
+  const ty = along(bh, H, p ? (p.y + 0.5) * cell * scale : 0);
   board.style.transform = 'translate(' + tx.toFixed(1) + 'px, ' + ty.toFixed(1) + 'px) scale(' + scale.toFixed(3) + ')';
+}
+
+/* ── ひとこと ──
+   play/{対決の番号}/say/{席の番号} に「言葉の番号.何回目」を書く（同じ言葉を続けて送っても、変わったと分かるように回数を付ける）。
+   送れるのは、コマを動かせる人（自分のコマ。ホストは、代わりに動かしているコマの分も）。ひとり5秒に1回まで。
+   吹き出しは、届いてから6秒出す。音は鳴らさない。 */
+function currentSays(room, game) {
+  const raw = room.play?.[game.id]?.say;
+  const now = Date.now();
+  const out = {};
+  let next = 0;
+  game.seats.forEach((_, i) => {
+    const v = raw && typeof raw === 'object' ? raw[i] : null;
+    const seen = state.saySeen[i];
+    if (typeof v === 'string' && (!seen || seen.v !== v)) {
+      // はじめて見た値。ステージの画面を開いた時点でもう置いてあった言葉は出さない（いつ送られたか分からない）
+      state.saySeen[i] = { v, until: state.prev ? now + SAY_SHOW_MS : 0 };
+    }
+    const cur = state.saySeen[i];
+    if (!cur || cur.until <= now) return;
+    const text = SAYS[Number(String(cur.v).split('.')[0])];
+    if (!text) return;
+    out[i] = text;
+    next = next ? Math.min(next, cur.until) : cur.until;
+  });
+  // いちばん早く消える吹き出しの時刻に、描きなおす
+  clearTimeout(state.sayTimer);
+  if (next) state.sayTimer = setTimeout(() => { if (state.currentScreen === 'game') renderGame(); }, next - now + 30);
+  return out;
+}
+
+function sendSay(index) {
+  const room = state.room;
+  const game = gameOf(room);
+  if (!room || !game || room.hostConnected === false) return;
+  const who = state.picked;
+  if (!movableSeats(room, game).includes(who)) return;
+  const wait = state.sayAt + SAY_EVERY_MS - Date.now();
+  if (wait > 0) {
+    toast('ひとことは、5秒に1回までだよ（あと' + Math.ceil(wait / 1000) + '秒）', false);
+    return;
+  }
+  state.sayAt = Date.now();
+  $('sayPanel').hidden = true;
+  $('btnSay').setAttribute('aria-expanded', 'false');
+  const prev = String(room.play?.[game.id]?.say?.[who] || '');
+  const count = (Number(prev.split('.')[1]) || 0) + 1;
+  state.roomRef.child('play/' + game.id + '/say/' + who).set(index + '.' + count).catch((error) => {
+    console.warn('[sorotte-goal] say failed', error);
+    toast('送れなかったよ。通信を確かめてね');
+  });
+  window.RoomkStats?.count('say');
+}
+
+function renderSay(movable) {
+  const btn = $('btnSay');
+  const panel = $('sayPanel');
+  btn.hidden = !movable.length;
+  if (!movable.length) { panel.hidden = true; return; }
+  if (!panel.childNodes.length) {
+    panel.replaceChildren(...SAYS.map((text, i) => {
+      const b = el('button', 'sg-saypanel__btn', text);
+      b.type = 'button';
+      b.addEventListener('click', () => sendSay(i));
+      return b;
+    }));
+  }
 }
 
 // 説明の絵は、盤と同じ絵を小さく出す
@@ -1540,6 +1660,8 @@ function buildLegend(T) {
   if (T.keys.length) items.push([art('sg-legend__ic', ART.KEY), 'カギ。持っていると、かぎつきのとびらを開けられる'], [art('sg-legend__ic', ART.LOCK), 'かぎつきのとびら']);
   if (E.BRIDGES.some(has)) items.push([bridge(), '橋。同じ番号の人だけ渡れる']);
   if (T.stars.length) items.push([art('sg-legend__ic', ART.GEM), '星。とった数がクリアのときに出る']);
+  // すみのカギ・星の入口がとびらのとき（そのスイッチは、同じ部屋に1つだけある）
+  if (E.SWITCHES.some((c) => !T.boxSw.includes(c) && T.tiles.filter((t) => t === c).length === 1)) items.push([sw(false), 'すみのカギや星は、1人がスイッチをおさえている間に、もう1人がとる']);
   $('legend').replaceChildren(...items.map(([pic, text]) => {
     const li = el('li');
     pic.setAttribute('aria-hidden', 'true');
@@ -1670,7 +1792,9 @@ $('btnAgain').addEventListener('click', () => restartGame('again'));
 $('btnRetry').addEventListener('click', () => restartGame('again'));
 $('btnSkip').addEventListener('click', () => restartGame('skip'));
 $('btnLobby').addEventListener('click', backToLobby);
-$('btnView').addEventListener('click', () => { state.near = !/scale/.test($('board').style.transform); camera(); });
+$('btnView').addEventListener('click', () => { state.near = !state.nearNow; camera(); });
+$('btnSay').addEventListener('click', () => { const panel = $('sayPanel'); panel.hidden = !panel.hidden; $('btnSay').setAttribute('aria-expanded', panel.hidden ? 'false' : 'true'); });
+PC_MQ.addEventListener?.('change', () => { $('pads').dataset.sig = ''; if (state.currentScreen === 'game') renderGame(); });
 // 盤のコマを押して、動かすコマをえらぶ（ホストが、ほかの人のコマも動かせるとき）
 $('board').addEventListener('click', (event) => {
   const node = event.target.closest('.sg-piece--player');

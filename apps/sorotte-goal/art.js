@@ -83,7 +83,7 @@
     '</svg>',
   ].join('');
 
-  // しるし（まる・さんかく・しかく・ほし・ひしがた）。色は currentColor
+  // しるし（まる・さんかく・しかく・ほし・ひしがた・プラス・ろっかく・つき）。色は currentColor
   const mark = (inner) => '<svg class="sg-mark" viewBox="0 0 24 24" aria-hidden="true">' + inner + '</svg>';
   const MARK = {
     a: mark('<circle cx="12" cy="12" r="7.5" fill="currentColor"/>'),
@@ -91,6 +91,9 @@
     c: mark('<rect x="5" y="5" width="14" height="14" rx="2.5" fill="currentColor"/>'),
     d: mark('<path d="M12 2.5 L14.8 9 L21.8 9.6 L16.5 14.2 L18.1 21 L12 17.4 L5.9 21 L7.5 14.2 L2.2 9.6 L9.2 9 Z" fill="currentColor"/>'),
     e: mark('<path d="M12 2.5 L20.5 12 L12 21.5 L3.5 12 Z" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>'),
+    f: mark('<path d="M9.5 3.5 H14.5 V9.5 H20.5 V14.5 H14.5 V20.5 H9.5 V14.5 H3.5 V9.5 H9.5 Z" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>'),
+    h: mark('<path d="M12 2.8 L20 7.4 V16.6 L12 21.2 L4 16.6 V7.4 Z" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>'),
+    i: mark('<path d="M15.5 3.2 A9.3 9.3 0 1 0 20.8 16.2 A7.2 7.2 0 0 1 15.5 3.2 Z" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>'),
   };
 
   // とる星

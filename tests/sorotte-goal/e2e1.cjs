@@ -49,6 +49,12 @@ async function play(code, path, clientOf) {
   check('A4 2人そろうと、はじめられる', await waitFor(async () => !(await H.page.$eval('#btnStartGame', (b) => b.disabled))));
   check('A5 参加した順に番号が付く', await waitFor(async () => (await H.page.$$eval('#lobbyPeople .sg-num', (xs) => xs.map((x) => x.textContent).join())) === '1,2'));
   check('A6 参加者の画面に、設定の欄とはじめるは出ない', !(await L.visible(A, '#lobbySet')) && !(await L.visible(A, '#btnStartGame')) && await L.visible(A, '#lobbyWait'));
+  check('A6b むずかしさは4つ（やさしい・ふつう・むずかしい・げきむず）', (await H.page.$$eval('#levelSeg .sg-seg__btn', (bs) => bs.map((b) => b.textContent).join())) === 'やさしい,ふつう,むずかしい,げきむず');
+  await H.page.click('#levelSeg .sg-seg__btn >> nth=3');
+  await L.roomWhen(code, (r) => r.set.level === 'expert');
+  check('A6c えらんだむずかしさが、参加者の画面にも出る', await waitFor(async () => (await L.text(A, '#lobbySetView')).includes('げきむず')));
+  await H.page.click('#levelSeg .sg-seg__btn >> nth=0');
+  await L.roomWhen(code, (r) => r.set.level === 'easy');
   await H.page.click('#btnStageNext');
   await L.roomWhen(code, (r) => r.set.stage === 2);
   await H.page.click('#btnStagePrev');
@@ -95,6 +101,24 @@ async function play(code, path, clientOf) {
   check('B11 ホストの画面に、コマをえらぶ一覧は出ない（自分のコマだけ）', !(await L.visible(H, '#pick')));
   await L.shot(H, 'e1-host-game');
   await L.shot(A, 'e1-guest-game');
+
+  // ── B'. ひとこと（決まった言葉をえらんで送る） ──
+  check('B12 みんなにみせる画面に「ひとこと」は出ない・遊ぶ人には出る', !(await L.visible(W, '#btnSay')) && await L.visible(A, '#btnSay') && await L.visible(H, '#btnSay'));
+  await A.page.click('#btnSay');
+  check('B13 言葉の一覧がひらく（自由に打つ欄はない）', await L.visible(A, '#sayPanel') && (await A.page.$$('#sayPanel .sg-saypanel__btn')).length >= 10 && (await A.page.$$('#sayPanel input, #sayPanel textarea')).length === 0);
+  const phrase = await A.page.$eval('#sayPanel .sg-saypanel__btn >> nth=1', (b) => b.textContent);
+  await A.page.click('#sayPanel .sg-saypanel__btn >> nth=1');
+  // いまのステージの動く部分（番号のキーは、配列で返ってくることがあるので、番号で引く）
+  const playOf = (r) => r.play[r.game.id];
+  const said = await L.roomWhen(code, (r) => playOf(r).say);
+  check('B14 送った言葉の番号が、自分の席に書かれる', said && playOf(said).say[1] === '1.1', said && playOf(said).say);
+  check('B15 ほかの人の画面・みんなにみせる画面のコマに、吹き出しが出る', await waitFor(async () => (await L.text(H, '.sg-piece--player[data-seat="1"] .sg-say')) === phrase && (await L.text(W, '.sg-piece--player[data-seat="1"] .sg-say')) === phrase));
+  check('B16 横の一覧にも出る・送ったあと一覧はとじる', (await L.text(H, '#roster')).includes(phrase) && !(await L.visible(A, '#sayPanel')));
+  await A.page.click('#btnSay');
+  await A.page.click('#sayPanel .sg-saypanel__btn >> nth=0');
+  await sleep(500);
+  check('B17 5秒たつ前の2回目は送らない', playOf(await L.roomOf(code)).say[1] === '1.1' && (await L.text(A, '#roomk-toast')).includes('5秒に1回'));
+  check('B18 吹き出しは、しばらくすると消える', await waitFor(async () => (await H.page.$$('.sg-say')).length === 0, 9000));
 
   // ── C. クリアまで ──
   G = await L.gameOf(code);

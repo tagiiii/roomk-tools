@@ -9,14 +9,14 @@
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
   <link rel="stylesheet" href="../shared/css/design-system.css?v=20261106c">
   <!-- index.html と app.js・engine.js・art.js・style.css はセットで変わるので、変えたら ?v= をそろえて上げる -->
-  <link rel="stylesheet" href="style.css?v=20261112">
+  <link rel="stylesheet" href="style.css?v=20261113">
   <script src="https://www.gstatic.com/firebasejs/13.3.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/13.3.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/13.3.0/firebase-database-compat.js"></script>
   <script src="../shared/js/rtdb-utils.js?v=20261005"></script>
   <script src="../shared/js/room-qr.js?v=20261022"></script>
-  <script src="engine.js?v=20261112"></script>
-  <script src="art.js?v=20261112"></script>
+  <script src="engine.js?v=20261113"></script>
+  <script src="art.js?v=20261113"></script>
 </head>
 <body data-genre="atekko">
 
@@ -188,6 +188,8 @@
         <div class="sg-pick" id="pick" hidden></div>
         <div class="sg-pads" id="pads"></div>
         <button type="button" class="sg-quiet sg-view" id="btnView" hidden></button>
+        <button type="button" class="btn btn-secondary sg-saybtn" id="btnSay" aria-expanded="false" aria-controls="sayPanel" hidden><span class="material-symbols-rounded" aria-hidden="true">chat_bubble</span><span id="sayLabel">ひとこと</span></button>
+        <div class="sg-saypanel" id="sayPanel" hidden></div>
         <p class="sg-stuck" id="stuckBox" role="status" hidden><span class="material-symbols-rounded" aria-hidden="true">info</span><span id="stuckText"></span></p>
         <ul class="sg-roster" id="roster"></ul>
         <ul class="sg-legend" id="legend"></ul>
@@ -220,7 +222,7 @@
     </div>
   </div>
 
-  <script type="module" src="app.js?v=20261112"></script>
+  <script type="module" src="app.js?v=20261113"></script>
   <script src="../shared/js/stats.js?v=1" defer></script>
   <script src="../shared/js/howto.js"></script>
   <script>
@@ -232,14 +234,16 @@
           'ホストが「ルームを作る」で名前を入れる。ルームコードは「コードをコピー」、参加用のリンクは「リンクをコピー」でチャットに送れる。スマホやタブレットで入る人には「QRコードを出す」をカメラで読み取ってもらう',
           '参加する人は「ルームに参加する」で名前、ルームコード（6文字）の順に入れ、「参加する」を押す。リンクから開いたときは、ルームコードは入っているので名前だけ入れる',
           '参加している人みんなで遊ぶ（2〜12人）。端末のない人は、ホストが名前を足して、その人のコマを代わりに動かす。見るだけの人は「みんなにみせる画面をひらく」から見られる',
-          'ホストが「むずかしさ」と「ステージ番号」を選んで「はじめる」を押す',
+          'ホストが「むずかしさ」（やさしい・ふつう・むずかしい・げきむず）と「ステージ番号」を選んで「はじめる」を押す',
         ] },
         { heading: 'あそびかた', items: [
           '自分のコマ（上に「あなた」と出ているコマ）を、矢印キーか画面の矢印のボタンで1マスずつ動かす',
           'スイッチに乗っている間だけ、同じしるしのとびらが開く。「2」の付いたスイッチは、2つ同時におさえる',
           '重い箱は、うしろからもう1人が押すと動く。箱をスイッチに乗せると、とびらが開いたままになる',
           'カギを持っていると、かぎつきのとびらを開けられる。番号の付いた橋は、同じ番号の人だけ渡れる',
+          'すみにあるカギや星は、1人がスイッチをおさえている間に、もう1人がとびらを通ってとりに行く',
           '進めないときは、どうして進めないかが盤の上に出る',
+          '「ひとこと」を押すと、「スイッチに乗って」「いま通って」などの言葉をえらんで、みんなに知らせられる。声を出さなくても伝えられる',
           '星は、とってもとらなくてもいい',
         ] },
         { heading: 'おわりかた', items: [
