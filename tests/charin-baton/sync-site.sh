@@ -8,6 +8,8 @@ rm -rf "$SP/site"; mkdir -p "$SP/site"
 cp -R "$REPO/apps/shared" "$SP/site/shared"
 if [ -d "$REPO/apps/assets" ]; then cp -R "$REPO/apps/assets" "$SP/site/assets"; fi
 cp -R "$REPO/apps/charin-baton" "$SP/site/charin-baton"
+# 「？」の中の「このツールの更新」が読む（2026-11-11 から。無いと、「？」を開く検査で 404 がコンソールに出る）
+cp "$REPO/apps/updates.json" "$SP/site/updates.json"
 python3 - "$SP/site/shared/js/rtdb-utils.js" <<'PY'
 import sys
 p = sys.argv[1]

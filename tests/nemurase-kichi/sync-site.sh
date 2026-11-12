@@ -8,6 +8,8 @@ rm -rf "$SP/site"; mkdir -p "$SP/site"
 cp -R "$REPO/apps/shared" "$SP/site/shared"
 if [ -d "$REPO/apps/assets" ]; then cp -R "$REPO/apps/assets" "$SP/site/assets"; fi
 cp -R "$REPO/apps/nemurase-kichi" "$SP/site/nemurase-kichi"
+# 「？」の中の「このツールの更新」が読む（2026-11-11 から。無いと、「？」を開く検査で 404 がコンソールに出る）
+cp "$REPO/apps/updates.json" "$SP/site/updates.json"
 # 接続先: ねむらせ基地の設定ファイルだけを、エミュレーター向けにまるごと差し替える
 cat > "$SP/site/nemurase-kichi/firebase-config.js" <<'JS'
 (function () {
