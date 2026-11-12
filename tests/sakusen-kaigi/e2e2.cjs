@@ -157,6 +157,20 @@ const { check, sleep } = L;
   await H.page.waitForSelector('#h-preview [data-drag="おでかけ"]');
   const hs = await H.page.evaluate(() => { const st = document.querySelector('#h-preview [data-drag="おでかけ"]').getBoundingClientRect(); return { coarse: matchMedia('(pointer: coarse)').matches, preview: Math.round(document.getElementById('h-preview').clientWidth), w: Math.round(st.width), h: Math.round(st.height) }; });
   check('T23 指で使うタブレットでは、プレビューが広く、ふせんが大きい（高さ20px以上）', hs.coarse && hs.preview >= 800 && hs.h >= 20, hs);
+  await H.page.evaluate(() => window.scrollTo(0, 0)); await sleep(200);
+  const lay = await H.page.evaluate(() => { const box = (id) => { const r = document.getElementById(id).getBoundingClientRect(); return { l: Math.round(r.left), t: Math.round(r.top), r: Math.round(r.right), b: Math.round(r.bottom) }; }; return { vh: innerHeight, ops: box('h-ops'), preview: box('h-preview'), next: box('h-next'), people: box('h-people'), over: document.documentElement.scrollWidth - innerWidth }; });
+  check('T24 予定の確認では、「だれの表を出す？」の欄が表のとなりに出て、スクロールしなくても全部見える', lay.ops.l >= lay.preview.r && lay.ops.t >= 0 && lay.ops.b <= lay.vh && lay.over === 0, lay);
+  // 4人にしても、右の列のいちばん下（次回の日）まで、スクロールしなくても見える（右下の丸いボタンにもかからない）
+  for (const n of ['はると', 'みなみ', 'ゆうき']) { await H.page.fill('#h-add-name', n); await H.page.locator('#h-add button[type=submit]').tap(); await sleep(400); }
+  await H.page.evaluate(() => window.scrollTo(0, 0)); await sleep(300);
+  const lay4 = await H.page.evaluate(() => { const box = (el) => { const r = el.getBoundingClientRect(); return { l: Math.round(r.left), t: Math.round(r.top), r: Math.round(r.right), b: Math.round(r.bottom) }; }; const fab = [...document.querySelectorAll('.howto-fab, .howto-feedback-fab')].map(box); return { vh: innerHeight, ops: box(document.getElementById('h-ops')), add: box(document.getElementById('h-add')), time: box(document.getElementById('h-next-time')), next: box(document.getElementById('h-next')), fabTop: Math.min(...fab.map((f) => f.t)), listShown: !!document.getElementById('h-people').offsetParent, scrollable: document.documentElement.scrollHeight - innerHeight }; });
+  check('T25 4人でも、表・「次の画面」・名前を足す欄・「次回の日」が、スクロールしなくても見える', lay4.ops.t >= 0 && lay4.next.b <= lay4.vh && lay4.add.t >= lay4.ops.b && lay4.time.b <= lay4.vh, lay4);
+  check('T26 「次回の日」は、右下の丸いボタンにかからない・名前の一覧はたたまれている', lay4.time.b <= lay4.fabTop && !lay4.listShown, lay4);
+  // もっと小さいタブレット（1024×768）でも、4人で「次回の日」の時刻の欄が、右下の丸いボタンにかくれない
+  await H.page.setViewportSize({ width: 1024, height: 768 }); await sleep(600); await H.page.evaluate(() => window.scrollTo(0, 0)); await sleep(200);
+  const small = await H.page.evaluate(() => { const t = document.getElementById('h-next-time').getBoundingClientRect(); const fab = [...document.querySelectorAll('.howto-fab, .howto-feedback-fab')].map((f) => f.getBoundingClientRect()); return { timeB: Math.round(t.bottom), timeR: Math.round(t.right), fabTop: Math.round(Math.min(...fab.map((f) => f.top))), fabLeft: Math.round(Math.min(...fab.map((f) => f.left))), nextB: Math.round(document.getElementById('h-next').getBoundingClientRect().bottom), vh: innerHeight }; });
+  check('T27 1024×768・4人でも、「次回の日」の時刻の欄は、右下の丸いボタンにかくれない', small.timeB <= small.fabTop && small.nextB <= small.vh, small);
+  await H.page.setViewportSize({ width: 1180, height: 820 }); await sleep(600); await H.page.evaluate(() => window.scrollTo(0, 0)); await sleep(200);
   [x0, y0] = await mid(H, '#h-preview [data-drag="おでかけ"]');
   [x1, y1] = await mid(H, '#h-preview .cell[data-cell="4-am"]');
   [x0, y0] = await mid(H, '#h-preview [data-drag="おでかけ"]');

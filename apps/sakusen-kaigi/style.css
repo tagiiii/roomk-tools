@@ -486,6 +486,31 @@ body.dragging, body.dragging * { cursor: grabbing !important; user-select: none;
   .h-check--small { margin: 0; padding: 0; border: 0; }
   .h-bar__next { min-width: 130px; }
   .h-ans button { height: 36px; }
+  /* 予定の確認: 操作の欄（だれの表を出す？）を右の列のいちばん上へ。表の下だと、横にしたタブレットでは画面の外に出て、
+     人を選ぶ→マスを押す、が1画面でできない。.h-main の箱をほどいて、中身を1つずつ並べる */
+  /* 右の列が表より長いとき（人が多いとき）のあまりは、いちばん下の行（1fr）に寄せる。寄せないと、表と「次の画面」の間があく */
+  .h-grid[data-ops="side"] { grid-template-rows: auto auto auto auto auto minmax(0, 1fr); }
+  .h-grid[data-ops="side"] .h-main { display: contents; }
+  .h-grid[data-ops="side"] .sl-wrap { grid-column: 1; grid-row: 2 / span 2; align-self: start; }
+  .h-grid[data-ops="side"] .h-bar { grid-column: 1; grid-row: 4; margin-top: 0; }
+  .h-grid[data-ops="side"] .h-chatrow { grid-column: 1; grid-row: 5; margin-top: -8px; }
+  .h-grid[data-ops="side"] .h-ops { grid-column: 2; grid-row: 2; margin-top: 0; min-height: 0; }
+  .h-grid[data-ops="side"] .h-side { grid-column: 2; grid-row: 3 / span 4; }
+}
+
+/* 予定の確認で操作の欄を右へ出したとき、高さの足りない画面（横にしたタブレット 1180×820px など）では、
+   「参加する人」の見出しと名前の一覧をたたむ。すぐ上の「だれの表を出す？」に同じ名前が並んでいるので、
+   名前を足す欄と「次回の日」までスクロールなしで見えるほうを取る（名前を消す×は、ほかの画面で押せる） */
+@media (min-width: 721px) and (max-width: 1100px) and (max-height: 900px), (min-width: 1101px) and (max-width: 1400px) and (pointer: coarse) and (max-height: 900px) {
+  .h-grid[data-ops="side"] .h-side .h-box:first-child .h-h2,
+  .h-grid[data-ops="side"] .h-people { display: none; }
+  /* 右の列の余白も少し詰める。詰めないと、1024×768px・4人で「次回の日」の時刻の欄が、右下の丸いボタン（？と意見）の下にかくれる */
+  .h-grid[data-ops="side"] .h-ops { padding: 10px 14px; }
+  .h-grid[data-ops="side"] .h-ops .h-check { margin-top: 8px; }
+  .h-grid[data-ops="side"] .h-ops .h-hint:not(:first-child) { margin-top: 6px; line-height: 1.6; }
+  .h-grid[data-ops="side"] .h-side { gap: 10px; margin-top: -6px; }
+  .h-grid[data-ops="side"] .h-side .h-box { padding: 10px 14px; }
+  .h-grid[data-ops="side"] .h-side .h-h2 { margin-bottom: 6px; padding-bottom: 4px; }
 }
 
 /* ══ 本体: 画面の切りかえ・参加の画面・おしらせ ══ */

@@ -33,7 +33,8 @@ const NET_ERROR = /ERR_INTERNET_DISCONNECTED|ERR_NETWORK|net::ERR|WebSocket|Fail
   const server = await L.startServer();
   await L.launch();
   const host = await L.newClient('host');
-  const yu = await L.newClient('yu');
+  // ゆうはスマホの幅。ポップアップが画面の下まで広がるので、メッセージがその手前に出ることを確かめる
+  const yu = await L.newClient('yu', { viewport: { width: 375, height: 812 } });
 
   const code = await L.createRoom(host, 'ホスト');
   await L.joinRoom(yu, 'ゆう', code);
@@ -62,6 +63,13 @@ const NET_ERROR = /ERR_INTERNET_DISCONNECTED|ERR_NETWORK|net::ERR|WebSocket|Fail
   await sleep(1500);
   check('guest offline press: nothing is added on the screen', JSON.stringify(await leaves(yu)) === JSON.stringify(['だれかが困っているとき']), await leaves(yu));
   check('guest offline press: a message tells the connection is off', (await toastText(yu)).includes('通信が切れたみたい'), await toastText(yu));
+  const toastTop = await yu.page.evaluate(() => {
+    const t = document.querySelector('#roomk-toast');
+    if (!t) return null;
+    const r = t.getBoundingClientRect();
+    return { inPop: t.closest('dialog') === document.querySelector('#p-pop'), inView: r.left >= 0 && r.right <= innerWidth && r.top >= 0 && r.bottom <= innerHeight };
+  });
+  check('guest offline press: the message is in front of the popup, inside the screen (375px)', !!toastTop && toastTop.inPop && toastTop.inView, toastTop);
   check('guest offline press: popup stays, no overlay', (await popOpen(yu)) && !(await L.visible(yu, '#hostOffOverlay')));
   check('guest offline press: room untouched', JSON.stringify(texts(await roomOf(code), 'ゆう', 'kind')) === JSON.stringify(['だれかが困っているとき']));
   await L.shot(yu, '31-guest-offline-press', false);

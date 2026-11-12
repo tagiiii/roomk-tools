@@ -96,7 +96,14 @@ function setError(id, message) {
   node.textContent = message || '';
   node.hidden = !message;
 }
-const toast = (message, error = true) => RoomkRTDB.showToast(message, error);
+// メッセージは共通の showToast が body の末尾に出す。ポップアップ（<dialog> の showModal）はその手前に重なり、
+// スマホの幅では画面の下まで広がってメッセージを隠す。ひらいているポップアップがあれば、その中へ移して手前に出す
+function toast(message, error = true) {
+  RoomkRTDB.showToast(message, error);
+  const node = document.getElementById('roomk-toast');
+  const open = [...document.querySelectorAll('dialog[open]')].pop();
+  if (node && open) open.appendChild(node);
+}
 
 function validNickname(value) {
   if (!value) return '名前を入れてね';
