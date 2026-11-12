@@ -896,7 +896,7 @@
           <details class="gb-more"><summary>参加用のリンクを貼る（なくてもOK）</summary>
             <div class="gb-row"><input id="game-link-in" placeholder="ゲームのルームで「リンクをコピー」したものを貼る" autocomplete="off" />
             <button type="button" class="btn btn-outline" id="game-link-save">出す</button></div>
-            <p class="tiny">貼らなくても、参加者の端末に「ゲームを開く」が出ます。参加者は画面のルームコードで入ります。</p>
+            <p class="tiny">貼らなくても、開いたタブでルームを作れば、参加者の端末に「ゲームに入る」が出ます。</p>
           </details>
         </div>
           <div class="edit-box" id="edit-box" hidden><span id="edit-help"></span>
@@ -1875,7 +1875,7 @@ function renderPlayer(room) {
   } else if (cur.type === 'game') {
     const g = cur.game;
     const href = cur.link && /^https?:\/\//.test(cur.link) ? cur.link : g?.slug ? APPS_BASE + g.slug + '/' : '';
-    if (g) html += h2('casino', 'みんなでゲーム', 'これであそぶよ') + `${g.slug ? gameArt(g, 'p-game-art') : ''}<div class="p-big" style="padding:0 0 6px">${esc(g.name)}</div><p class="q" style="text-align:center">${esc(g.hk || '')}</p>` + (cur.link ? `<a class="p-link p-go" href="${esc(href)}" target="_blank" rel="noopener"><span class="material-symbols-rounded">login</span>ゲームに入る${cur.gameCode ? `<small>ルーム ${esc(cur.gameCode)}</small>` : ''}</a>` : `<p class="q" style="text-align:center;margin-top:8px">ルームができたら、ここに「ゲームに入る」が出るよ</p>${href ? `<a class="p-link" href="${esc(href)}" target="_blank" rel="noopener"><span class="material-symbols-rounded">open_in_new</span>先にゲームを開いておく</a>` : ''}`);
+    if (g) html += h2('casino', 'みんなでゲーム', 'これであそぶよ') + `${g.slug ? gameArt(g, 'p-game-art') : ''}<div class="p-big" style="padding:0 0 6px">${esc(g.name)}</div><p class="q" style="text-align:center">${esc(g.hk || '')}</p>` + (cur.link ? `<a class="p-link p-go" href="${esc(href)}" target="_blank" rel="noopener"><span class="material-symbols-rounded">login</span>ゲームに入る${cur.gameCode ? `<small>ルーム ${esc(cur.gameCode)}</small>` : ''}</a>` : `<p class="q" style="text-align:center;margin-top:8px">ルームができたら、ここに「ゲームに入る」が出るよ</p>`);
     else html += h2('casino', 'みんなでゲーム', 'これから決めます');
   } else if (cur.type === 'show') {
     const th = (n) => /^https:\/\//.test(cur.thumbs?.[n] || '') ? `<img class="th" src="${esc(cur.thumbs[n])}" alt="">` : '';
@@ -2052,7 +2052,7 @@ function chatText(room, cur) {
   if (cur.type === 'free') return `${cur.title}\n${cur.until || ''}\n参加用のリンク: ${link}`;
   if (cur.type === 'closing') { const f = room.kind === 'pm' ? null : firstSlot(room); return room.kind === 'pm' ? 'このあとは、エントランスに移動しよう' : f ? `このあとは1コマ目（${f.tm}から）のプログラムへ\n${f.items.map((it) => `${it.name}${it.place ? ' → ' + it.place : ''}`).join('\n')}` : 'このあとは、それぞれのプログラムへ'; }
   if (cur.type === 'opening' || cur.type === 'agenda') return `${room.kind === 'pm' ? '午後' : '午前'}のサークルタイム ${room.date || ''}\nきょうの流れ: ${sectionsOf(room).map((s, i) => `${i + 1} ${coverOf(s)[1]}`).join(' / ')}\n参加用のリンク: ${link}`;
-  if (cur.type === 'game') { const g = cur.game; return g ? `みんなでゲーム: ${g.name}\n${cur.link || new URL(APPS_BASE + g.slug + '/', location.href).href}` : 'みんなでゲーム: これから決めます'; }
+  if (cur.type === 'game') { const g = cur.game; return g ? `みんなでゲーム: ${g.name}\n${cur.link || 'ルームができたら、自分の端末に「ゲームに入る」が出るよ'}` : 'みんなでゲーム: これから決めます'; }
   return cur.title;
 }
 $('btn-reorder').addEventListener('click', (e) => { const on = e.currentTarget.getAttribute('aria-pressed') !== 'true'; e.currentTarget.setAttribute('aria-pressed', String(on)); $('steplist').classList.toggle('reorder', on); });
@@ -2333,7 +2333,7 @@ window.addEventListener('load', async () => {
 })();
 </script>
 <script>RoomkHowto.init({ title: 'つかいかた', lead: '午前と午後のサークルタイムを、ひとつのルームで進めるよ。画面を見ながら、ボタン・チャット・声のどれで答えてもいいよ。', sections: [
-  { heading: '参加する人', items: ['「ルームに参加する」でニックネーム、ルームコード（6文字）の順に入れて「参加する」。リンクからひらいたときは、ニックネームだけでいいよ。', '画面が変わったら、自分の端末でえらんで「送る」を押してね。選びなおして送りなおすことも、「パスする」もできるよ。', '心・体・ふりかえりでは、わけやひとことを書いて送れるよ（なくてもOK）。心・体で書いたことは、みんなの画面で名前を押すと出るよ。ふりかえりで書いたことは進行役にだけとどくよ。', 'チェックインでは、マイクで話す人は「話したい」、MetaLife のチャットに書いた人は「チャットに書いたよ」を押してね。', '自由タイムは自由にすごしてOK。ニュースやおしゃべりのお題が出たら、MetaLife のチャットで話そう。ニュースは「くわしく読む」で元の記事が開くよ。', 'みんなでゲームは、きょうあそぶゲームが出るよ。「ゲームに入る」から入って、画面に出るルームコードを入れてね。', '端末がない人は、チャットに数字や言葉を書くか、声で言えばOK。進行役が代わりに入れるよ。'] },
+  { heading: '参加する人', items: ['「ルームに参加する」でニックネーム、ルームコード（6文字）の順に入れて「参加する」。リンクからひらいたときは、ニックネームだけでいいよ。', '画面が変わったら、自分の端末でえらんで「送る」を押してね。選びなおして送りなおすことも、「パスする」もできるよ。', '心・体・ふりかえりでは、わけやひとことを書いて送れるよ（なくてもOK）。心・体で書いたことは、みんなの画面で名前を押すと出るよ。ふりかえりで書いたことは進行役にだけとどくよ。', 'チェックインでは、マイクで話す人は「話したい」、MetaLife のチャットに書いた人は「チャットに書いたよ」を押してね。', '自由タイムは自由にすごしてOK。ニュースやおしゃべりのお題が出たら、MetaLife のチャットで話そう。ニュースは「くわしく読む」で元の記事が開くよ。', 'みんなでゲームは、きょうあそぶゲームが出るよ。進行役がルームを作ると、自分の端末に「ゲームに入る」が出るよ。押して入ってね。', '端末がない人は、チャットに数字や言葉を書くか、声で言えばOK。進行役が代わりに入れるよ。'] },
   { heading: '進行役', items: ['「ルームを作る」を押して、「きょうやること」（午前は自由タイムのあそび、午後はチェックインのお題とみんなでゲーム）をえらんで「はじめる」。天気・今日は何の日・room-K ポータルのプログラム・ニュースは自動で入るよ。直したいときは「中身を確かめる・直す」。', '自由タイムのあそびは「自由タイムのあそびを変える」で変えられるよ。ニュースは「つぎのニュース」で次の話題へ。', 'みんなでゲームは、準備でえらんだゲームが出るよ。「○○のルームを作る（タブを開く）」でゲームのルームを作り、その画面を共有すれば、参加者は自分の端末の「ゲームに入る」から入れるよ。リンクを貼るのは、なくてもOK。子どもたちの声で変えたいときは「ゲームを変える」。', 'セクションごとに表紙が出るよ。「次へ」で表紙から中身に進む。', 'ルームコードは「コードをコピー」、参加用のリンクは「リンクをコピー」でチャットに送れるよ。スマホやタブレットで入る人には、「QRコードを出す」をカメラで読みとってもらってね。', '画面共有には「みんなにみせる画面を開く」でひらいた窓を使ってね。進行役の画面は共有しないよ。', '「次へ」「前へ」（矢印キー）で進める。答えを伏せる画面は「せーので見せる」（スペース）でいっせいに出るよ。', '流れの一覧から、好きな画面へ移る・飛ばす・並べかえる、ができるよ。「文を直す」「その場で聞く」で、その場で変えられるよ。', 'チャットや声で答えた人、端末のない人の分は「代わりに入れる」で名前の横を押してね（入れなくても進められるよ）。わけ・ひとことは参加者の一覧に出るよ。', '終わるときは「ルームを閉じる」。'] },
 ] });</script>
 </body>
