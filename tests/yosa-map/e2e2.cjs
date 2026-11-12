@@ -327,6 +327,27 @@ async function addYosa(c, label, item) {
   await L.waitVisible(yu, '#screen-top');
   check('close (one): room removed', (await waitRoom(code5, (r) => r === null)) === null);
 
+  // ══ ルーム6: 切れたままのあいだに、切れた時刻だけが新しくなる（ホストの通信が短く揺れたとき） ══
+  // 参加する人の期限のタイマーは、はじめに見た時刻で動く。そのときまだ期限前なら、残りの時間で仕掛けなおす
+  const code6 = await L.createRoom(host, 'ホスト');
+  await goAway(host);
+  const r6 = await waitRoom(code6, (r) => r?.hostConnected === false);
+  const t6 = Date.now();
+  await rest('PATCH', `${L.ROOMS}/${code6}`, { hostDisconnectedAt: r6.hostDisconnectedAt - TTL + 8000 });   // 期限まであと8秒
+  await L.open(late, '?room=' + code6);
+  await late.page.fill('#guestName', 'おそい');
+  await late.page.click('#btnJoinRoom');
+  await L.waitVisible(late, '#hostOffOverlay');
+  await rest('PATCH', `${L.ROOMS}/${code6}`, { hostDisconnectedAt: r6.hostDisconnectedAt - TTL + 16000 });  // 時刻だけ8秒うしろへ（期限まであと16秒）
+  check('later disconnect time: set before the first deadline', Date.now() - t6 < 7000, Date.now() - t6);
+  await sleep(Math.max(0, t6 + 11000 - Date.now()));
+  check('later disconnect time: still waiting after the first deadline', (await L.visible(late, '#hostOffOverlay')) && (await roomOf(code6)) !== null);
+  let top6 = false;
+  while (Date.now() - t6 < 30000 && !top6) { top6 = await L.visible(late, '#screen-top'); if (!top6) await sleep(250); }
+  check('later disconnect time: guest goes back to top after the new deadline', top6 && Date.now() - t6 > 14000, [top6, Date.now() - t6]);
+  check('later disconnect time: room removed', (await waitRoom(code6, (r) => r === null, 5000)) === null);
+  if ((await roomOf(code6)) !== null) await rest('DELETE', `${L.ROOMS}/${code6}`);
+
   await L.finishAll(server);
 })().catch(async (error) => {
   console.error(error);
