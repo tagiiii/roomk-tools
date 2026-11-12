@@ -62,6 +62,7 @@ RTDB_HTML_FILES=(
   "apps/reversi/index.html"
   "apps/charin-baton/index.html"
   "apps/suton-block/index.html"
+  "apps/sorotte-goal/index.html"
   "apps/shirushi-hint/index.html"
   "apps/hirameki-oogiri/index.html"
   "apps/suki-bingo/index.html"
