@@ -3,8 +3,8 @@
 // ここでは通信だけを落とし（context.setOffline）、2分の期限も実時間で待つ。1回およそ4〜6分かかる。
 //
 // 切れているあいだに押したときの動き（2026-11-12 にこのテストで確かめた。マップの書きかえは1操作ごとのルームの transaction）:
-//   参加する人: 押しても札は出ない・メッセージも出ない・あとからも届かない（SDK は、切れた時点で「切断したら在室を消す」の予約を
-//     手元の写しにも当てる。editMap は在室のない人の書きかえを通さないので、何も起きない）。つながりなおせば、また押せる
+//   参加する人: 押しても札は出ず、「通信が切れたみたい」と出る。あとからも届かない（SDK は、切れた時点で「切断したら在室を消す」の予約を
+//     手元の写しにも当てる。editMap は在室のない人の書きかえを通さず、そこでメッセージを出す）。つながりなおせば、また押せる
 //   ホスト: 押したものはすぐ画面に出て、つながりなおしたときにルームへ届く（ホストの在室は切断で消さない）。進行の操作も同じ
 const L = require('./lib.cjs');
 const { check, sleep, roomOf } = L;
@@ -57,11 +57,11 @@ const NET_ERROR = /ERR_INTERNET_DISCONNECTED|ERR_NETWORK|net::ERR|WebSocket|Fail
   console.log('  guest offline → presence removed after ' + sec(g1.ms));
   check('guest offline: server removes the presence, map kept', g1.ok && texts(g1.room, 'ゆう', 'kind').length === 1, g1.ms);
   check('guest offline: host screen keeps going', (await L.visible(host, '#p-box')) && !(await L.visible(host, '#hostOffOverlay')));
-  // 切れているあいだに押す → 札は出ない・メッセージも出ない（いまの動き。上の説明を参照）。ルームは変わらず、画面もこわれない
+  // 切れているあいだに押す → 札は出ず、「通信が切れたみたい」と出る。ルームは変わらず、画面もこわれない
   await pickItem(yu, '人の話を聞くとき');
   await sleep(1500);
   check('guest offline press: nothing is added on the screen', JSON.stringify(await leaves(yu)) === JSON.stringify(['だれかが困っているとき']), await leaves(yu));
-  check('guest offline press: no message is shown (current behaviour)', (await toastText(yu)) === '', await toastText(yu));
+  check('guest offline press: a message tells the connection is off', (await toastText(yu)).includes('通信が切れたみたい'), await toastText(yu));
   check('guest offline press: popup stays, no overlay', (await popOpen(yu)) && !(await L.visible(yu, '#hostOffOverlay')));
   check('guest offline press: room untouched', JSON.stringify(texts(await roomOf(code), 'ゆう', 'kind')) === JSON.stringify(['だれかが困っているとき']));
   await L.shot(yu, '31-guest-offline-press', false);
