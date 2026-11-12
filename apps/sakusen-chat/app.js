@@ -14,7 +14,7 @@ const KEY_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const KEY_LENGTH = 20;
 const KEY_RE = /^[A-HJ-NP-Z2-9]{20}$/;
 // メンター用のリンク（?mentor=…）のカギの SHA-256。カギそのものはリポジトリに置かない
-const MENTOR_KEY_HASH = 'eccb9f86a20618e1125343c0fdb38532d55cb52a688e1c43a5e53db0c0dd9cde';
+const MENTOR_KEY_HASH = 'f82db39995aa33620dbf25dad5c5d80e600c3f477416839d31c6842c008d6371';
 
 const MAX_GUESTS = 2;
 const NAME_MAX = 8;
