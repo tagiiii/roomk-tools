@@ -258,6 +258,7 @@ const getEstimatedServerNow = RoomkRTDB.now;
 
 - TTL 判定は `Date.now()` のみで行わず、`RoomkRTDB.now()` / `RoomkRTDB.isRoomExpired()` でサーバー時刻寄りに補正する
 - `joinRoom()`、`tryReconnect()`、ルーム監視の各タイミングで期限切れルームを検知し、`remove()` を試みる
+- ゲスト側の期限のタイマー（`orphanTimer`）は、**切れた時刻（`hostDisconnectedAt`）が変わったら仕掛けなおす**。ホストの通信が短く揺れると、`hostConnected` が false のまま切れた時刻だけが新しくなることがある。はじめの時刻のまま動くと、消す処理（期限を確かめなおす transaction）が「まだ期限前」で何もせず、ゲストが「ホストの戻りを待っています」のまま残る。仕掛けた時刻を `orphanAt` に持ち、ちがっていたら `clearTimeout` して仕掛けなおす（2026-11-13 に23本へ入れた。よさマップは、動いたときに期限前なら残りの時間で仕掛けなおす形）。期限を確かめずに `remove()` する作り（声だけシアター・ピタハメ・とおまわし・人狼）と観戦画面のタイマーは、止まらないので変えていない
 - ホスト再接続時は `hostConnected=true` と `hostDisconnectedAt=null` を戻す
 
 ### 最小参加人数
