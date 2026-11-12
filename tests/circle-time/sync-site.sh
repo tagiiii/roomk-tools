@@ -12,6 +12,8 @@ cp -R "$REPO/apps/quiz" "$SP/site/apps/quiz"
 cp -R "$REPO/apps/kotoba-mikke" "$SP/site/apps/kotoba-mikke"
 cp "$REPO/apps/index.html" "$SP/site/apps/index.html"
 cp -R "$REPO/apps/circle-time" "$SP/site/apps/circle-time"
+# 「？」の中の「このツールの更新」が読む（2026-11-11 から。無いと、「？」を開く検査で 404 がコンソールに出る）
+cp "$REPO/apps/updates.json" "$SP/site/apps/updates.json"
 python3 - "$SP/site/apps/shared/js/rtdb-utils.js" <<'PY'
 import sys
 p = sys.argv[1]
