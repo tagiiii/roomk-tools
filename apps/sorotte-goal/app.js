@@ -4,8 +4,9 @@
    ・みんなにみせる画面（?watch=）: 見るだけ。ルームに書き込まない
    ルール（ステージの作り方・動き）は engine.js、絵は art.js。音は鳴らさない。
 
-   1歩ごとの通信を小さくするため、動く部分は game/s に1本の短い文字列で置き、1歩はその文字列だけへの transaction で書く
-   （ルーム全体を書きかえるのは、はじめる・次のステージ・やりなおしなど、ホストのたまの操作だけ）。 */
+   動く部分（人・箱・カギ・星）は play/{対決の番号}/ に分けて置き、1歩で書くのは、ふつう自分のコマの場所だけ。
+   全員ぶんを1つにまとめて書くと、同時に動いたときに書きなおしがぶつかって、人数が多いほど進めなくなる。
+   同じ理由で、あそんでいる間に起きる書き込み（参加・戻る・退出・ステージの作りなおし）は、ルーム全体の transaction を使わない。 */
 const E = window.SorotteEngine;
 const ART = window.SorotteArt;
 
@@ -192,8 +193,9 @@ function gameOf(room) {
   const spec = { kind: 'gen', level: g.spec?.level, n: Number(g.spec?.n), seed: Number(g.spec?.seed) };
   if (!E.validSpec(spec) || spec.n !== n) return null;
   const id = Number(g.id) || 0;
-  const read = E.decode(g.s, spec);
-  if (!read || read.id !== id) return null;
+  // 動く部分は play/{id}。前のステージへの遅れた1歩が届いても、いまのステージには当たらない
+  const S = E.fromRoom(room.play?.[id], spec);
+  if (!S) return null;
   const uids = asList(g.uids);
   const proxy = asList(g.proxy);
   return {
@@ -202,7 +204,7 @@ function gameOf(room) {
     uids: seats.map((_, i) => (typeof uids[i] === 'string' ? uids[i] : '')),   // 端末なしの人は ''
     proxy: seats.map((_, i) => proxy[i] === true),
     spec,
-    S: read.S,
+    S,
   };
 }
 
@@ -440,38 +442,28 @@ async function ensurePresence(force = false) {
         hostConnected: false,
         hostDisconnectedAt: serverTimestamp(),
       });
-      await ref.transaction((room) => {
-        if (!room || room.hostUid !== uid || isExpired(room)) return;
-        if (room.hostConnected === true && room.hostDisconnectedAt == null) return;
-        return { ...room, hostConnected: true, hostDisconnectedAt: null };
-      });
+      // 手元の値で確かめてから、2つの欄だけを書く（ルーム全体の transaction は、みんなが動いている間は通りにくい）
+      const room = state.room;
+      if (room.hostUid === uid && !isExpired(room) && !(room.hostConnected === true && room.hostDisconnectedAt == null)) {
+        await ref.update({ hostConnected: true, hostDisconnectedAt: null });
+      }
     } else if (role === 'guest') {
       await ref.child('players/' + nickname).onDisconnect().remove();
       let full = false;
       let taken = false;
-      await ref.transaction((room) => {
-        full = false;
-        taken = false;
-        if (!room || isExpired(room) || room.players?.[nickname]) return;
-        if (nickname === room.host || room.proxies?.[nickname] || reservedByOther(room, nickname, uid)) {
-          taken = true;
-          return;
-        }
-        // 戻るときは参加したときの順番のまま。ステージの途中の、自分のコマがある人は人数の上限を見ない
+      // ルームの様子は手元の値で確かめ、書くのは自分の在室だけ（ほかの人が入っていたら書かない）
+      const room = state.room;
+      if (!isExpired(room) && !room.players?.[nickname]) {
         const game = gameOf(room);
         const seated = room.status === STATUS.PLAY && game && game.seats.includes(nickname);
-        if (!seated && playerCount(room) >= MAX_SEATS) {
-          full = true;
-          return;
+        if (nickname === room.host || room.proxies?.[nickname] || reservedByOther(room, nickname, uid)) taken = true;
+        // 戻るときは参加したときの順番のまま。ステージの途中の、自分のコマがある人は人数の上限を見ない
+        else if (!seated && playerCount(room) >= MAX_SEATS) full = true;
+        else {
+          const result = await ref.child('players/' + nickname).transaction((cur) => (cur ? undefined : { isHost: false, uid, joinedAt }));
+          if (!result.committed && result.snapshot.val()?.uid !== uid) taken = true;
         }
-        return {
-          ...room,
-          players: {
-            ...(room.players || {}),
-            [nickname]: { isHost: false, uid, joinedAt },
-          },
-        };
-      });
+      }
       if ((full || taken) && state.roomRef === ref && !state.leaving) {
         await RoomkRTDB.cancelRoomOnDisconnect(ref);
         leaveLocally(full ? FULL_MESSAGE : '同じ名前の人がいるので、ルームから外れました。名前を変えて入りなおしてね');
@@ -587,40 +579,35 @@ async function joinRoom() {
     }
     const uid = currentUid();
     const joinedAt = RoomkRTDB.now();
-    let reason = '';
-    let rejoinAt = null;
-    const result = await transactRetry(ref, (room) => {
-      reason = '';
-      rejoinAt = null;
-      if (!room) { reason = '見つからない'; return; }
-      if (isExpired(room)) { reason = '終了'; return; }
-      // タブが落ちた直後・送信後の切断のやり直しなど、自分の在室が残っていたら入りなおしとして上書きする
-      const stale = room.players?.[nickname];
-      const mine = !!stale && !stale.isHost && stale.uid === uid;
-      if (nickname === room.host || room.proxies?.[nickname] || (stale && !mine) || reservedByOther(room, nickname, uid)) {
-        reason = '名前';
-        return;
-      }
-      const game = gameOf(room);
-      const seated = room.status === STATUS.PLAY && game && game.seats.includes(nickname);
-      if (mine) rejoinAt = Number(stale.joinedAt) || joinedAt;
-      else if (!seated && playerCount(room) >= MAX_SEATS) { reason = '満員'; return; }
-      return {
-        ...room,
-        players: {
-          ...(room.players || {}),
-          [nickname]: { isHost: false, uid, joinedAt: rejoinAt || joinedAt },
-        },
-      };
-    });
+    // ルームの様子（名前・人数）は、いま読んだ値で確かめる。書くのは自分の在室だけ
+    // （ルーム全体の transaction にすると、みんなが動いている間は書きなおしがぶつかって入れない）
+    const fail = (message) => setError('joinError', message);
+    const room = initial;
+    const stale = room.players?.[nickname];
+    // タブが落ちた直後・送信後の切断のやり直しなど、自分の在室が残っていたら入りなおしとして上書きする
+    const mine = !!stale && !stale.isHost && stale.uid === uid;
+    if (nickname === room.host || room.proxies?.[nickname] || (stale && !mine) || reservedByOther(room, nickname, uid)) {
+      fail('その名前は使われているよ。少し変えてみてね');
+      return;
+    }
+    const game = gameOf(room);
+    const seated = room.status === STATUS.PLAY && game && game.seats.includes(nickname);
+    if (!mine && !seated && playerCount(room) >= MAX_SEATS) {
+      fail(FULL_MESSAGE);
+      return;
+    }
+    const rejoinAt = mine ? Number(stale.joinedAt) || joinedAt : null;
+    // 同じ名前の人が同時に入っていたら、先に書いた人のもの（同じ匿名IDなら、自分の入りなおし）
+    const result = await transactRetry(ref.child('players/' + nickname), (cur) => (cur && cur.uid !== uid ? undefined : { isHost: false, uid, joinedAt: rejoinAt || joinedAt }));
     if (!result.committed) {
-      const messages = {
-        '見つからない': 'ルームが見つからないよ。コードを確かめてね',
-        '終了': 'このルームは終わったみたい',
-        '名前': 'その名前は使われているよ。少し変えてみてね',
-        '満員': FULL_MESSAGE,
-      };
-      setError('joinError', messages[reason] || '参加できませんでした。もう一度ためしてね');
+      fail('その名前は使われているよ。少し変えてみてね');
+      return;
+    }
+    // 読んでから書くまでの間に、ホストがルームを閉じていたら、在室だけの残りを消してやめる
+    const after = (await ref.get()).val();
+    if (!after || !after.status) {
+      await ref.child('players/' + nickname).remove();
+      fail('このルームは終わったみたい');
       return;
     }
     connectToRoom('guest', nickname, code, ref, rejoinAt || joinedAt);
@@ -701,16 +688,9 @@ async function leaveRoom() {
     if (role === 'host') {
       await ref.remove();
     } else {
-      // 自分の在室だけを消す（ステージの途中のコマは残り、ホストが代わりに動かせる）
-      await ref.transaction((room) => {
-        if (!room) return;
-        const mine = room.players?.[nickname];
-        // ほかの匿名IDの人がその名前で在室しているときは触らない
-        if (mine && mine.uid !== uid) return;
-        const players = { ...(room.players || {}) };
-        delete players[nickname];
-        return { ...room, players };
-      });
+      // 自分の在室だけを消す（ステージの途中のコマは残り、ホストが代わりに動かせる）。
+      // ほかの匿名IDの人がその名前で在室しているときは触らない
+      await ref.child('players/' + nickname).transaction((cur) => (cur && cur.uid === uid ? null : undefined));
     }
   } catch (error) {
     console.warn('[sorotte-goal] leave failed', error);
@@ -914,7 +894,8 @@ function newGameFor(room, seats, level, seed) {
   const proxy = seats.map((name) => !!room.proxies?.[name]);
   const uids = seats.map((name, i) => (proxy[i] ? '' : room.players[name].uid));
   const spec = { kind: 'gen', level, n: seats.length, seed };
-  return { id, seats: seats.slice(), uids, proxy, spec: { level, n: seats.length, seed }, s: E.encode(E.create(spec), id) };
+  // game はステージの決まり（だれが何番か・どのステージか）、play はそのステージの動く部分
+  return { game: { id, seats: seats.slice(), uids, proxy, spec: { level, n: seats.length, seed } }, play: E.toRoom(E.create(spec)) };
 }
 
 async function startGame() {
@@ -923,10 +904,10 @@ async function startGame() {
     // ステージのデータがこわれて play のまま残ったときも、待合室の画面から始めなおせるようにする
     if (room.status !== STATUS.WAITING && !(room.status === STATUS.PLAY && !gameOf(room))) return;
     const set = normSet(room.set);
-    const game = newGameFor(room, seatList(room), set.level, set.stage);
-    if (!game) return;
-    n = game.seats.length;
-    return { ...room, status: STATUS.PLAY, lastGameId: game.id, game };
+    const made = newGameFor(room, seatList(room), set.level, set.stage);
+    if (!made) return;
+    n = made.game.seats.length;
+    return { ...room, status: STATUS.PLAY, lastGameId: made.game.id, game: made.game, play: { [made.game.id]: made.play } };
   }, 'はじめられませんでした。もう一度ためしてね');
   if (ok) {
     window.RoomkStats?.count('start');
@@ -946,60 +927,61 @@ async function restartGame(mode) {
   const moving = cur.S.rev > 0 && !cur.S.cleared;
   if (mode === 'again' && moving && !window.confirm('このステージを、はじめからやりなおす？ みんなのコマが、はじめの場所にもどるよ。')) return;
   if (mode === 'skip' && moving && !window.confirm('ほかのステージにする？ このステージの進みは消えるよ。')) return;
-  let reason = '';
-  let left = [];
-  const ok = await hostTransaction((room) => {
-    reason = '';
-    left = [];
-    const game = gameOf(room);
-    if (room.status !== STATUS.PLAY || !game || game.id !== gid) return;
-    if (mode === 'next' && !game.S.cleared) return;
-    const seats = seatList(room);
-    const seed = mode === 'again' ? game.spec.seed : (game.spec.seed % MAX_STAGE) + 1;
-    const next = newGameFor(room, seats, game.spec.level, seed);
-    if (!next) { reason = '人数'; return; }
-    left = game.seats.filter((name) => !seats.includes(name));
-    return { ...room, lastGameId: next.id, set: { ...normSet(room.set), stage: seed }, game: next };
-  }, 'ステージを作れませんでした。もう一度ためしてね');
-  if (ok) {
+  // 手元の値から次のステージを作り、要る欄だけをまとめて書く（ステージを作りなおせるのはホストだけなので、
+  // ほかの端末と取り合いにならない。ルーム全体の transaction は、みんなが動いている間は通りにくい）
+  if (state.busy || state.role !== 'host' || !state.roomRef) return;
+  const room = state.room;
+  if (room.hostUid !== currentUid() || room.status !== STATUS.PLAY) return;
+  if (mode === 'next' && !cur.S.cleared) return;
+  const seats = seatList(room);
+  const seed = mode === 'again' ? cur.spec.seed : (cur.spec.seed % MAX_STAGE) + 1;
+  const made = newGameFor(room, seats, cur.spec.level, seed);
+  if (!made) {
+    toast('遊ぶ人が2人そろっていないよ。「待合室へ」でだれかが入るのを待ってね');
+    return;
+  }
+  const left = cur.seats.filter((name) => !seats.includes(name));
+  state.busy = true;
+  try {
+    // play は、新しい番号のものだけにする（前のステージの分を消す）
+    await state.roomRef.update({ lastGameId: made.game.id, 'set/stage': seed, game: made.game, play: { [made.game.id]: made.play } });
     window.RoomkStats?.count(mode);
     if (left.length) toast(left.join('・') + 'は、いないのでこのステージには入っていないよ', false);
-  } else if (ok === false && reason) {
-    toast('遊ぶ人が2人そろっていないよ。「待合室へ」でだれかが入るのを待ってね');
+  } catch (error) {
+    console.warn('[sorotte-goal] restart failed', error);
+    toast('ステージを作れませんでした。もう一度ためしてね');
+  } finally {
+    state.busy = false;
   }
 }
 
 async function backToLobby() {
   const game = gameOf(state.room);
-  const gid = game?.id;
   if (game && game.S.rev > 0 && !game.S.cleared && !window.confirm('このステージをやめて、待合室にもどる？')) return;
-  await hostTransaction((room) => {
-    const cur = gameOf(room);
-    if (room.status !== STATUS.PLAY || (cur && cur.id !== gid)) return;
-    return { ...room, status: STATUS.WAITING, game: null };
-  }, 'もどれませんでした。もう一度ためしてね');
+  if (state.busy || state.role !== 'host' || !state.roomRef) return;
+  const room = state.room;
+  if (room.hostUid !== currentUid() || room.status !== STATUS.PLAY) return;
+  state.busy = true;
+  try {
+    await state.roomRef.update({ status: STATUS.WAITING, game: null, play: null });
+  } catch (error) {
+    console.warn('[sorotte-goal] back to lobby failed', error);
+    toast('もどれませんでした。もう一度ためしてね');
+  } finally {
+    state.busy = false;
+  }
 }
 
-/* ── 1歩（game/s だけへの transaction） ──
-   手元の盤はすぐ動き（SDK が先に手元へ反映する）、ほかの人の1歩とぶつかったときは SDK が今の値で計算しなおす。
-   対決の番号（id）がちがうときは書かない（古い画面からの1歩を、次のステージに当てない）。 */
-function sendStep(game, who, dir) {
+/* ── 1歩 ──
+   書くのは、さわった所だけ（ふつうは自分のコマの場所の1か所。箱を押したときは箱とうしろの人、
+   カギ・星をとったときはそのカギ・星も、まとめて1回で書く）。手元の盤は、送る前に SDK が先に反映するので、すぐ動く。
+   ほかの人と同じマスへ同時に入ったときは、2人が重なることがある（次の1歩で出られる。ルールの上で困らない）。
+   書く先は play/{対決の番号}。ステージが作りなおされたあとに遅れて届いた1歩は、いまのステージに当たらない。 */
+function sendStep(game, who, next) {
   const ref = state.roomRef;
   if (!ref) return;
-  const gid = game.id;
-  const spec = game.spec;
-  let cleared = false;
-  ref.child('game/s').transaction((cur) => {
-    cleared = false;
-    const read = E.decode(cur, spec);
-    if (!read || read.id !== gid || read.S.cleared) return;
-    const next = E.move(read.S, who, dir);
-    if (next === read.S) return;
-    cleared = next.cleared;
-    return E.encode(next, gid);
-  }).then((result) => {
-    if (result.committed && cleared) window.RoomkStats?.count('finish');
-  }).catch((error) => {
+  if (next.cleared && !game.S.cleared) window.RoomkStats?.count('finish');
+  ref.child('play/' + game.id).update(E.patch(game.S, next, who)).catch((error) => {
     console.warn('[sorotte-goal] step failed', error);
     // 続けて失敗しても、知らせるのは5秒に1回まで
     if (Date.now() - state.stepFailAt > 5000) {
@@ -1019,7 +1001,7 @@ function step(dir) {
   const next = E.move(S, who, dir);
   if (next !== S) {
     showTip('');
-    sendStep(game, who, dir);
+    sendStep(game, who, next);
     return;
   }
   // 進めなかった（書かない）: その向きへ体を当てる。重い箱はぐらつき、閉じたとびらはがたつく。理由を一言出す

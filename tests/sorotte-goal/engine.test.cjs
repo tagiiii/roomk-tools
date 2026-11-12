@@ -145,20 +145,43 @@ t('おまかせ: 2〜12人のどのむずかしさでも、人数ぶんのはじ
   console.log('   作って調べたステージ: ' + made);
 });
 
-t('おまかせ: 2人のやさしい・ふつうは、総当たりでクリアできる。1人だけではクリアできない', () => {
-  let solved = 0;
-  let skipped = 0;
-  for (const level of ['easy', 'normal']) {
-    for (let seed = 1; seed <= (level === 'easy' ? 40 : 15); seed += 1) {
-      const steps = solve(gen(level, 2, seed));
-      if (steps === null) { skipped += 1; continue; }
+t('おまかせ: 2人は、どのむずかしさも総当たりでクリアできる。1人だけではクリアできない', () => {
+  const COUNT = { easy: 40, normal: 20, hard: 12, expert: 12 };
+  for (const level of Object.keys(E.LEVELS)) {
+    let solved = 0;
+    let longest = 0;
+    for (let seed = 1; seed <= COUNT[level]; seed += 1) {
+      const steps = solve(gen(level, 2, seed), null, 4000000);
+      assert.ok(steps !== null, level + ' #' + seed + ' 調べきれない');
       assert.ok(steps > 0, level + ' #' + seed + '\n' + E.staticOf(gen(level, 2, seed)).rows.join('\n'));
       assert.notStrictEqual(solve(gen(level, 2, seed), 0, 100000) > 0, true, level + ' #' + seed + ' 1人でクリアできてしまう');
       solved += 1;
+      longest = Math.max(longest, steps);
     }
+    console.log('   ' + E.LEVELS[level].label + ': ' + solved + '個クリアできた（いちばん少ない歩数の、いちばん長いもの ' + longest + '歩）');
   }
-  console.log('   クリアできた: ' + solved + '・調べきれなかった: ' + skipped);
-  assert.ok(solved >= 30);
+});
+
+t('おまかせ: とびらの先のカギ（keyDoor）は、1人がスイッチをおさえている間だけ、もう1人がとれる', () => {
+  let spec = null;
+  for (let seed = 1; seed <= 100 && !spec; seed += 1) {
+    if (E.staticOf(gen('normal', 2, seed)).kinds.includes('keyDoor')) spec = gen('normal', 2, seed);
+  }
+  assert.ok(spec, 'keyDoor の出るステージがある');
+  const T = E.staticOf(spec);
+  // カギのとなりの、とびらのマスをさがす
+  const [kx, ky] = T.keys[0];
+  const door = [[1, 0], [-1, 0], [0, 1], [0, -1]].map(([dx, dy]) => [kx + dx, ky + dy]).find(([x, y]) => E.SWITCH_OF[T.tiles[y * T.w + x]]);
+  assert.ok(door, 'カギのとなりに、とびらがある');
+  const sw = E.SWITCH_OF[T.tiles[door[1] * T.w + door[0]]];
+  const i = T.tiles.indexOf(sw);
+  const S = E.create(spec);
+  assert.strictEqual(E.doorOpen(S, door[0], door[1]), false);
+  S.players[1].x = i % T.w;
+  S.players[1].y = Math.floor(i / T.w);
+  assert.strictEqual(E.doorOpen(S, door[0], door[1]), true);
+  // 箱のスイッチではないので、詰みの判定には入らない
+  assert.ok(!T.boxSw.includes(sw));
 });
 
 t('おまかせ: 3人のやさしいも、総当たりでクリアできる', () => {
@@ -221,7 +244,7 @@ t('詰み: 箱がスイッチまで運べない場所に入ると分かる。は
   assert.strictEqual(E.stuck(over), true);          // 押しすぎた
   assert.strictEqual(E.stuck(fixed(0)), false);     // 箱のないステージ
   let withBox = 0;
-  for (const level of ['normal', 'hard']) {
+  for (const level of ['normal', 'hard', 'expert']) {
     for (const players of [2, 4, 7, 12]) {
       for (let seed = 1; seed <= 80; seed += 1) {
         const G = E.create(gen(level, players, seed));
@@ -233,29 +256,104 @@ t('詰み: 箱がスイッチまで運べない場所に入ると分かる。は
   assert.ok(withBox > 100);
 });
 
-t('ルームに置く形: 文字列にして読みもどすと、同じ状態になる。こわれた値・ちがうステージの値は読まない', () => {
-  for (const [level, players, seed] of [['easy', 2, 1], ['normal', 4, 9], ['hard', 12, 3], ['normal', 7, 44]]) {
+// ルームの代わり: { 場所: 値 } を、入れ子の値に書きこむ（null は消す）
+function applyPatch(room, patch) {
+  Object.keys(patch).forEach((path) => {
+    const [a, k] = path.split('/');
+    if (!room[a]) room[a] = {};
+    if (patch[path] === null) delete room[a][k];
+    else room[a][k] = patch[path];
+  });
+}
+// 歩数（n）をのぞいて、ルールの上の状態をくらべる
+const plain = (S) => ({
+  players: S.players.map((p) => [p.x, p.y, p.key]),
+  boxes: S.boxes, keys: S.keys.slice().sort(), stars: S.stars.slice().sort(), open: S.open.slice().sort(),
+  got: S.got, cleared: S.cleared, rev: S.rev,
+});
+
+t('ルームに置く形: 1歩ごとに書く所だけを当てていくと、ルールの上の状態と同じになる', () => {
+  for (const [level, players, seed] of [['easy', 2, 1], ['normal', 4, 9], ['hard', 12, 3], ['normal', 7, 44], ['hard', 5, 8]]) {
     const spec = gen(level, players, seed);
     let S = E.create(spec);
+    const room = JSON.parse(JSON.stringify(E.toRoom(S)));
+    assert.deepStrictEqual(plain(E.fromRoom(room, spec)), plain(S));
     const rng = E.makeRng(seed);
-    for (let i = 0; i < 300; i += 1) S = E.move(S, Math.floor(rng() * players), Object.keys(E.DIRS)[Math.floor(rng() * 4)]);
-    const text = E.encode(S, 7);
-    const back = E.decode(text, spec);
-    assert.ok(back, text);
-    assert.strictEqual(back.id, 7);
-    assert.deepStrictEqual(back.S, S);
-    assert.ok(text.length < 60 + players * 10, '長さ ' + text.length);
+    let wrote = 0;
+    let single = 0;
+    for (let i = 0; i < 1500; i += 1) {
+      const who = Math.floor(rng() * players);
+      const next = E.move(S, who, Object.keys(E.DIRS)[Math.floor(rng() * 4)]);
+      if (next === S) continue;
+      const patch = E.patch(E.fromRoom(room, spec), next, who);
+      wrote += 1;
+      if (Object.keys(patch).length === 1) single += 1;
+      assert.ok(patch['p/' + who], '動いた人の場所を書く');
+      applyPatch(room, patch);
+      S = next;
+      assert.deepStrictEqual(plain(E.fromRoom(JSON.parse(JSON.stringify(room)), spec)), plain(S), level + ' ' + players + '人 ' + i);
+    }
+    assert.ok(wrote > 50);
+    // ほとんどの1歩は、自分の場所の1か所だけを書く
+    assert.ok(single / wrote > 0.9, '1か所だけの割合 ' + (single / wrote).toFixed(2));
   }
-  const spec = gen('easy', 2, 1);
-  const text = E.encode(E.create(spec), 1);
-  assert.strictEqual(E.decode(text, gen('easy', 3, 1)), null);          // 人数がちがう
-  assert.strictEqual(E.decode(text.replace(/\|/, '|x|'), spec), null);  // 欄の数がちがう
-  assert.strictEqual(E.decode('1|0|0|0|0.0.0,0.0.0||||', spec), null);  // かべの中
-  assert.strictEqual(E.decode(null, spec), null);
-  assert.strictEqual(E.decode(text, { kind: 'gen', level: 'x', n: 2, seed: 1 }), null);
-  // 手で作ったステージでも同じ
-  const F = { kind: 'fixed', index: 1 };
-  assert.deepStrictEqual(E.decode(E.encode(E.create(F), 3), F).S, E.create(F));
+});
+
+t('ルームに置く形: 手で作ったステージを、手順のとおりに進めても同じ（箱・カギ・かぎつきのとびら）', () => {
+  for (let index = 0; index < E.FIXED.length; index += 1) {
+    const spec = { kind: 'fixed', index };
+    let S = E.create(spec);
+    const room = JSON.parse(JSON.stringify(E.toRoom(S)));
+    // はば優先で見つけた手順をたどる
+    const seen = new Set();
+    let frontier = [{ S, path: [] }];
+    let path = null;
+    while (frontier.length && !path) {
+      const nextF = [];
+      for (const node of frontier) {
+        if (node.S.cleared) { path = node.path; break; }
+        for (let who = 0; who < 2; who += 1) for (const dir of Object.keys(E.DIRS)) {
+          const N = E.move(node.S, who, dir);
+          const k = JSON.stringify([N.players, N.boxes, N.keys, N.open]);
+          if (N === node.S || seen.has(k)) continue;
+          seen.add(k);
+          nextF.push({ S: N, path: node.path.concat([[who, dir]]) });
+        }
+      }
+      frontier = nextF;
+    }
+    assert.ok(path, 'ステージ' + index);
+    for (const [who, dir] of path) {
+      const next = E.move(S, who, dir);
+      applyPatch(room, E.patch(E.fromRoom(room, spec), next, who));
+      S = next;
+    }
+    const back = E.fromRoom(JSON.parse(JSON.stringify(room)), spec);
+    assert.strictEqual(back.cleared, true);
+    assert.deepStrictEqual(plain(back), plain(S));
+  }
+});
+
+t('ルームに置く形: こわれた値は、その所だけはじめの値で読む。配列で返ってきても読める', () => {
+  const spec = gen('normal', 3, 7);
+  const T = E.staticOf(spec);
+  const room = E.toRoom(E.create(spec));
+  // かべの中・形のちがう値・足りない値
+  const broken = { p: ['0.0.0.0', 'x', room.p[2]], b: room.b, k: room.k, st: room.st };
+  const S = E.fromRoom(broken, spec);
+  assert.deepStrictEqual([S.players[0].x, S.players[0].y], T.starts[0]);
+  assert.deepStrictEqual([S.players[1].x, S.players[1].y], T.starts[1]);
+  assert.strictEqual(S.open.length, 0);
+  // 星の 0 番をとったあと、Realtime Database が [null, 1, 1] の配列で返す形
+  const arr = E.fromRoom({ p: room.p, b: room.b, k: room.k, st: [null, 1, 1] }, spec);
+  assert.strictEqual(arr.stars.length, 2);
+  assert.strictEqual(arr.got, 1);
+  // 星もカギもぜんぶ消えた（空の入れ物は Realtime Database から消える）
+  const none = E.fromRoom({ p: room.p, b: room.b }, spec);
+  assert.strictEqual(none.stars.length, 0);
+  assert.strictEqual(none.keys.length, 0);
+  assert.strictEqual(E.fromRoom(null, spec), null);
+  assert.strictEqual(E.fromRoom(room, { kind: 'gen', level: 'x', n: 3, seed: 7 }), null);
 });
 
 console.log('all ' + n + ' passed');

@@ -1,6 +1,6 @@
 /* そろってゴール — ステージと動きのルール
    画面と通信に触らない。ブラウザでは window.SorotteEngine、node では module.exports。
-   状態は JSON にできる値だけで持つ。ルームには encode で1本の短い文字列にして置く（1歩ごとの通信を小さくするため）。
+   状態は JSON にできる値だけで持つ。ルームには toRoom の形で、さわった所だけ書けるように分けて置く。
 
    ステージは spec で指す:
      { kind: 'fixed', index }            手で作った2人用の3つ（ルールのテストで使う。画面からは選べない）
@@ -9,7 +9,7 @@
    マスの記号:
      #  かべ          .  ゆか          G  ゴール
      1 2  はじめの場所（れんしゅうのステージだけ。おまかせは、作るときに場所を別に持つ）
-     a〜e  スイッチ   A〜E  とびら（同じしるしのスイッチに、人か箱が乗っている間だけ開く）
+     a b c d e f h i  スイッチ   A B C D E F H I  とびら（同じしるしのスイッチに、人か箱が乗っている間だけ開く。g・G はゴールとまぎれるので使わない）
      O  重い箱（うしろからもう1人が押すと動く）
      k  カギ          L  かぎつきのとびら（カギを持った人が入ると開いたままになる）
      p q r … z o  橋（順に、1・2・3 … 11・12人目だけ渡れる）
@@ -31,6 +31,7 @@
     },
     {
       name: '重い箱',
+      boxSw: ['a'],
       hint: '重い箱は、うしろからもう1人が押すと動く。箱をスイッチに乗せると、とびらが開いたままになる。',
       rows: [
         '#############',
@@ -77,12 +78,22 @@
     },
     hard: {
       label: 'むずかしい',
-      stars: 'mix',
+      stars: 'door',
       layouts: [
         [[0, 0], [1, 0], [2, 0], [2, 1], [1, 1], [0, 1]],
         [[0, 0], [0, 1], [1, 1], [1, 0], [2, 0], [2, 1]],
         [[0, 1], [0, 0], [1, 0], [1, 1], [2, 1], [2, 0]],
         [[0, 0], [1, 0], [1, 1], [2, 1], [2, 0]],
+      ],
+    },
+    // げきむず: 部屋6つ。どの関門も、2人以上で力を合わせないと通れない。星もとびらの先
+    expert: {
+      label: 'げきむず',
+      stars: 'door',
+      layouts: [
+        [[0, 0], [1, 0], [2, 0], [2, 1], [1, 1], [0, 1]],
+        [[0, 0], [0, 1], [1, 1], [1, 0], [2, 0], [2, 1]],
+        [[0, 1], [0, 0], [1, 0], [1, 1], [2, 1], [2, 0]],
       ],
     },
   };
@@ -92,8 +103,9 @@
   // 部屋の中の広さ（人数が多いほど広い。4人まで 5×5・8人まで 7×7・12人まで 9×9）
   const roomSize = (n) => (n <= 4 ? 5 : n <= 8 ? 7 : 9);
   const DIRS = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
-  const SWITCHES = ['a', 'b', 'c', 'd', 'e'];
-  const SWITCH_OF = { A: 'a', B: 'b', C: 'c', D: 'd', E: 'e' };
+  const SWITCHES = 'abcdefhi'.split('');
+  const SWITCH_OF = {};
+  SWITCHES.forEach((c) => { SWITCH_OF[c.toUpperCase()] = c; });
   const BRIDGES = 'pqrstuvwxyzo'.split('');
   const BRIDGE_OF = {};
   BRIDGES.forEach((ch, i) => { BRIDGE_OF[ch] = i; });
@@ -127,6 +139,9 @@
        keyJ    カギが、j 人目だけ渡れる橋の先にある
        box     とびら。手前の部屋の重い箱を、2人で押してスイッチに乗せる
        pair    とびら。同じしるしのスイッチを2つ同時におさえている間だけ開く（4人から。手前に2つ・先に2つ）
+       keyDoor かぎつきのとびら。カギは、べつのとびらの先のすみにある。1人がスイッチをおさえている間に、もう1人がとりに行く
+     星も、むずかしい・げきむずでは、とびらの先のすみに置く（1人がおさえて、もう1人がとる）。
+     しるしは8つ。使いきったら、とびらの先に置くのをやめて、橋の先か、ゆかに置く。
      部屋の中は、列・行とも 0〜R-1（R は部屋の広さ）。関門はかべのまん中にあり、そのとなりのマスには物を置かない。
      箱の通り道は 1 行目か R-2 行目をまるごと使う。置くだけのスイッチ・カギ・星は、それ以外の行。 */
   function generate(level, n, seed) {
@@ -191,14 +206,14 @@
       put(room, x, y, ch);
       return true;
     }
-    // すみに置き、j 人目だけ渡れる橋でふさぐ（すみ・橋・かべの3マス）
-    function nook(room, ch, j) {
+    // すみに置き、入口を gate（j 人目だけ渡れる橋か、とびら）でふさぐ（すみ・入口・かべの3マス）
+    function nook(room, ch, gate) {
       for (const [cx, cy] of shuffle(rng, [[0, 0], [E1, 0], [0, E1], [E1, E1]])) {
         const bx = cx === 0 ? 1 : E1 - 1;
         const wy = cy === 0 ? 1 : E1 - 1;
         if (!free(room, cx, cy) || !free(room, bx, cy) || !free(room, cx, wy)) continue;
         put(room, cx, cy, ch);
-        put(room, bx, cy, BRIDGES[j]);
+        put(room, bx, cy, gate);
         put(room, cx, wy, '#');
         return true;
       }
@@ -220,24 +235,40 @@
 
     // 関門の種類をえらぶ
     let kinds;
+    const big = n >= 4;
     if (level === 'easy') kinds = shuffle(rng, ['relay', 'key']);
-    else if (level === 'normal') kinds = shuffle(rng, ['relay', 'relayJ', 'keyJ', 'box'].concat(n >= 4 ? ['pair'] : [])).slice(0, 3);
-    else kinds = shuffle(rng, ['box', 'relayJ', 'keyJ', pick(rng, ['relay', 'box']), pick(rng, n >= 4 ? ['pair', 'pair', 'relayJ'] : ['relayJ', 'keyJ'])]);
+    else if (level === 'normal') kinds = shuffle(rng, ['relay', 'relayJ', 'keyJ', 'box', 'keyDoor'].concat(big ? ['pair'] : [])).slice(0, 3);
+    else if (level === 'hard') kinds = shuffle(rng, ['box', 'keyDoor', 'relayJ', pick(rng, ['box', 'keyJ']), pick(rng, big ? ['pair', 'pair', 'keyDoor'] : ['relayJ', 'keyDoor'])]);
+    else kinds = shuffle(rng, ['box', 'box', 'keyDoor', 'keyDoor', big ? 'pair' : 'relayJ']);
 
     let color = 0;
+    const nextColor = () => { const sw = SWITCHES[color]; if (sw) color += 1; return sw || null; };
+    const bridgeOf = () => BRIDGES[Math.floor(rng() * n)];
+    // とびらの先のすみに置く（しるしが残っていて、すみと、スイッチを置くマスがあるとき）
+    function doorNook(room, ch) {
+      if (color >= SWITCHES.length) return false;
+      const sw = SWITCHES[color];
+      if (!nook(room, ch, sw.toUpperCase())) return false;
+      color += 1;
+      plain(room, sw);
+      return true;
+    }
     const used = [];
     const need = {};
+    const boxSw = [];
     gates.forEach((g, i) => {
       let kind = kinds[i];
-      if (kind === 'key' || kind === 'keyJ') {
+      if (kind === 'key' || kind === 'keyJ' || kind === 'keyDoor') {
         grid[g.gy][g.gx] = 'L';
-        if (!(kind === 'keyJ' && nook(g.A, 'k', Math.floor(rng() * n)))) { plain(g.A, 'k'); if (kind === 'keyJ') kind = 'key'; }
+        if (kind === 'keyDoor' && !doorNook(g.A, 'k')) kind = 'keyJ';
+        if (kind === 'keyJ' && !nook(g.A, 'k', bridgeOf())) kind = 'key';
+        if (kind === 'key') plain(g.A, 'k');
       } else {
-        const sw = SWITCHES[color];
-        color += 1;
+        const sw = nextColor();
         grid[g.gy][g.gx] = sw.toUpperCase();
         if (kind === 'box' && !lane(g.A, sw)) kind = 'relay';
-        if (kind === 'relayJ' && !nook(g.A, sw, Math.floor(rng() * n))) kind = 'relay';
+        if (kind === 'box') boxSw.push(sw);
+        if (kind === 'relayJ' && !nook(g.A, sw, bridgeOf())) kind = 'relay';
         if (kind === 'pair') { need[sw] = 2; plain(g.A, sw); plain(g.B, sw); }
         if (kind === 'relay' || kind === 'pair') plain(g.A, sw);
         if (kind !== 'box') plain(g.B, sw);
@@ -245,12 +276,14 @@
       used.push(kind);
     });
 
-    // 星を3つ。部屋をかえて置く。ふつう・むずかしいは、橋の先にも置く
+    // 星を3つ。部屋をかえて置く。ふつうは橋の先にも、むずかしい・げきむずは、とびらの先（だめなら橋の先）に置く
     shuffle(rng, rooms).slice(0, STARS).forEach((room) => {
-      if (!(L.stars === 'mix' && rng() < 0.5 && nook(room, '*', Math.floor(rng() * n)))) plain(room, '*');
+      if (L.stars === 'door' && doorNook(room, '*')) return;
+      if (L.stars !== 'floor' && (L.stars === 'door' || rng() < 0.5) && nook(room, '*', bridgeOf())) return;
+      plain(room, '*');
     });
 
-    return { rows: grid.map((r) => r.join('')), kinds: used, starts, need };
+    return { rows: grid.map((r) => r.join('')), kinds: used, starts, need, boxSw };
   }
 
   /* ── ステージの動かない部分（かべ・ゆか・スイッチ・とびら・橋・ゴール）。人・箱・カギ・星は抜いて、ゆかにする ── */
@@ -262,6 +295,7 @@
     const boxes = [];
     const keys = [];
     const stars = [];
+    const locks = [];
     rows.forEach((row, y) => {
       if (row.length !== w) throw new Error('ステージの行の長さがそろっていない');
       row.split('').forEach((ch, x) => {
@@ -269,10 +303,11 @@
         else if (ch === 'O') { boxes.push([x, y]); tiles.push('.'); }
         else if (ch === 'k') { keys.push([x, y]); tiles.push('.'); }
         else if (ch === '*') { stars.push([x, y]); tiles.push('.'); }
+        else if (ch === 'L') { locks.push([x, y]); tiles.push(ch); }
         else tiles.push(ch);
       });
     });
-    return { w, h, tiles, starts, boxes, keys, stars };
+    return { w, h, tiles, starts, boxes, keys, stars, locks };
   }
 
   const cache = {};
@@ -285,10 +320,10 @@
     if (!cache[key]) {
       if (spec.kind === 'fixed') {
         const st = FIXED[spec.index];
-        cache[key] = Object.assign(parse(st.rows), { name: st.name, hint: st.hint, rows: st.rows, need: {} });
+        cache[key] = Object.assign(parse(st.rows), { name: st.name, hint: st.hint, rows: st.rows, need: {}, boxSw: st.boxSw || [] });
       } else {
         const g = generate(spec.level, spec.n, spec.seed);
-        cache[key] = Object.assign(parse(g.rows), { name: LEVELS[spec.level].label, hint: '', rows: g.rows, kinds: g.kinds, starts: g.starts, need: g.need });
+        cache[key] = Object.assign(parse(g.rows), { name: LEVELS[spec.level].label, hint: '', rows: g.rows, kinds: g.kinds, starts: g.starts, need: g.need, boxSw: g.boxSw });
       }
     }
     return cache[key];
@@ -378,7 +413,7 @@
   }
 
   // 重い箱が、もうスイッチまで運べない場所に入ったか（詰み）。
-  // 箱で開けるとびらは、同じしるしのスイッチがステージに1つだけある。そのスイッチにまだ箱が乗っていなくて、
+  // 箱で開けるとびらのスイッチ（ステージを作るときに boxSw に入れてある）に、まだ箱が乗っていなくて、
   // どの箱も（人やほかの箱がいないとしても）そこまで押していけないなら、詰み。
   // 押すには、箱の手前に2マス（押す人・うしろの人）と、箱の先に置けるマスが要る
   function stuck(S) {
@@ -390,7 +425,7 @@
     const stands = (t) => t !== '#' && !SWITCH_OF[t] && t !== 'L';
     // 人が乗っておさえているだけでは、その人が先へ進めないので、箱が乗っているかどうかで見る
     const boxOn = (c) => S.boxes.some((b) => tile(b[0], b[1]) === c);
-    const targets = SWITCHES.filter((c) => T.tiles.filter((t) => t === c).length === 1 && !boxOn(c));
+    const targets = T.boxSw.filter((c) => !boxOn(c));
     if (!targets.length) return false;
     const reach = new Set();
     const stack = S.boxes.map((b) => [b[0], b[1]]);
@@ -412,56 +447,90 @@
   }
 
   /* ── ルームに置く形 ──
-     動く部分（人・箱・カギ・星・開けたとびら・歩数）を1本の文字列にする。ステージの形は spec から作りなおすので入れない。
-       id|rev|got|cleared|人,人,…|箱,…|カギ,…|星,…|開けたとびら,…      人は x.y.k（k はカギを持っていれば 1）、ほかは x.y
-     id は対決の番号（ステージを作りなおすたびに変わる）。古い画面からの1歩を、次のステージに当てないために入れる */
-  const pair = (list) => list.map((p) => p[0] + '.' + p[1]).join(',');
-  function encode(S, id) {
-    return [
-      id, S.rev, S.got, S.cleared ? 1 : 0,
-      S.players.map((p) => p.x + '.' + p.y + '.' + (p.key ? 1 : 0)).join(','),
-      pair(S.boxes), pair(S.keys), pair(S.stars), pair(S.open),
-    ].join('|');
-  }
-  // 読めない・ステージと合わない値は null
-  function decode(text, spec) {
-    if (typeof text !== 'string' || !validSpec(spec)) return null;
-    const T = staticOf(spec);
-    const part = text.split('|');
-    if (part.length !== 9) return null;
-    const int = (v) => (/^\d{1,6}$/.test(v) ? Number(v) : NaN);
-    const [id, rev, got] = part.slice(0, 3).map(int);
-    if (![id, rev, got].every(Number.isInteger) || (part[3] !== '0' && part[3] !== '1')) return null;
-    const inside = (x, y) => Number.isInteger(x) && Number.isInteger(y) && x >= 0 && y >= 0 && x < T.w && y < T.h && T.tiles[y * T.w + x] !== '#';
-    const cells = (v, width) => {
-      if (v === '') return [];
-      const out = v.split(',').map((c) => c.split('.').map(int));
-      return out.every((c) => c.length === width && inside(c[0], c[1])) ? out : null;
-    };
-    const players = cells(part[4], 3);
-    const boxes = cells(part[5], 2);
-    const keys = cells(part[6], 2);
-    const stars = cells(part[7], 2);
-    const open = cells(part[8], 2);
-    if (!players || !boxes || !keys || !stars || !open) return null;
-    if (players.length !== T.starts.length || boxes.length !== T.boxes.length) return null;
-    if (keys.length > T.keys.length || stars.length > T.stars.length || got > T.stars.length) return null;
-    if (!players.every((p) => p[2] === 0 || p[2] === 1)) return null;
+     動く部分を、さわった所だけ書けるように分けて置く（ステージの形は spec から作りなおすので入れない）。
+       p: ["x.y.k.n", …]   人ごと。k はカギを持っていれば 1、n はその人の歩数
+       b: ["x.y", …]       箱ごと
+       k / st: { 番号: 1 }  まだ置いてあるカギ・星（とったら消す。番号は、ステージのカギ・星のならび順）
+       o: { 番号: 1 }       開けた、かぎつきのとびら（番号は、ステージのかぎつきのとびらのならび順）
+     1歩で書くのは、ふつうは自分の p/番号 だけ。全員ぶんを1つの値にまとめて transaction で書くと、
+     ほかの人の1歩が先に届くたびに書きなおしになる。通信の往復に 0.1〜0.2 秒かかる本番で12人が動くと、
+     書きなおしが続いて進めなくなるおそれがあるので、人ごとに分けた（2026-11-13。本番で測ったわけではない）。
+     こわれた値・ステージに合わない値は、その所だけはじめの値で読む（1つこわれても、全体を読めなくしない） */
+  const cellText = (c) => c[0] + '.' + c[1];
+  const index1 = (list) => { const o = {}; list.forEach((_, i) => { o[i] = 1; }); return o; };
+  // 配列でも { 番号: 値 } でも、[番号, 値] のならびにする（Realtime Database は、番号のキーを配列で返すことがある）
+  const entries = (v) => (v && typeof v === 'object' ? Object.keys(v).map((k) => [Number(k), v[k]]).filter(([k, x]) => Number.isInteger(k) && k >= 0 && x != null) : []);
+  const ints = (text, width) => {
+    if (typeof text !== 'string') return null;
+    const part = text.split('.');
+    if (part.length !== width || !part.every((x) => /^\d{1,6}$/.test(x))) return null;
+    return part.map(Number);
+  };
+
+  function toRoom(S) {
+    const T = staticOf(S.spec);
+    const pick = (all, left) => { const o = {}; all.forEach((c, i) => { if (at(left, c[0], c[1]) >= 0) o[i] = 1; }); return o; };
+    const o = {};
+    T.locks.forEach((c, i) => { if (at(S.open, c[0], c[1]) >= 0) o[i] = 1; });
     return {
-      id,
-      S: {
-        spec: clone(spec),
-        players: players.map((p) => ({ x: p[0], y: p[1], key: p[2] === 1 })),
-        boxes, keys, stars, got, open,
-        cleared: part[3] === '1',
-        rev,
-      },
+      p: S.players.map((q) => q.x + '.' + q.y + '.' + (q.key ? 1 : 0) + '.' + (q.n || 0)),
+      b: S.boxes.map(cellText),
+      k: pick(T.keys, S.keys),
+      st: pick(T.stars, S.stars),
+      o,
     };
+  }
+
+  function fromRoom(d, spec) {
+    if (!d || typeof d !== 'object' || !validSpec(spec)) return null;
+    const T = staticOf(spec);
+    const floor = (x, y) => x >= 0 && y >= 0 && x < T.w && y < T.h && T.tiles[y * T.w + x] !== '#';
+    const pMap = new Map(entries(d.p));
+    const bMap = new Map(entries(d.b));
+    const players = T.starts.map((c, i) => {
+      const v = ints(pMap.get(i), 4);
+      return v && floor(v[0], v[1]) ? { x: v[0], y: v[1], key: v[2] === 1, n: v[3] } : { x: c[0], y: c[1], key: false, n: 0 };
+    });
+    const boxes = T.boxes.map((c, i) => {
+      const v = ints(bMap.get(i), 2);
+      return v && floor(v[0], v[1]) ? v : [c[0], c[1]];
+    });
+    const left = (all, v) => { const on = new Set(entries(v).map(([k]) => k)); return all.filter((_, i) => on.has(i)).map((c) => [c[0], c[1]]); };
+    const stars = left(T.stars, d.st);
+    const S = {
+      spec: clone(spec),
+      players,
+      boxes,
+      keys: left(T.keys, d.k),
+      stars,
+      got: T.stars.length - stars.length,
+      open: left(T.locks, d.o),
+      cleared: false,
+      rev: players.reduce((a, q) => a + q.n, 0),
+    };
+    S.cleared = S.players.every((q) => tileAt(S, q.x, q.y) === 'G');
+    return S;
+  }
+
+  // who が動いて S が next になったとき、ルームに書く所（{ 場所: 値 }。消す所は null）
+  function patch(S, next, who) {
+    const T = staticOf(S.spec);
+    const out = {};
+    next.players.forEach((q, i) => {
+      const was = S.players[i];
+      if (i !== who && was.x === q.x && was.y === q.y && was.key === q.key) return;
+      out['p/' + i] = q.x + '.' + q.y + '.' + (q.key ? 1 : 0) + '.' + ((was.n || 0) + (i === who ? 1 : 0));
+    });
+    next.boxes.forEach((c, i) => { if (S.boxes[i][0] !== c[0] || S.boxes[i][1] !== c[1]) out['b/' + i] = cellText(c); });
+    T.keys.forEach((c, i) => { if (at(S.keys, c[0], c[1]) >= 0 && at(next.keys, c[0], c[1]) < 0) out['k/' + i] = null; });
+    T.stars.forEach((c, i) => { if (at(S.stars, c[0], c[1]) >= 0 && at(next.stars, c[0], c[1]) < 0) out['st/' + i] = null; });
+    T.locks.forEach((c, i) => { if (at(S.open, c[0], c[1]) < 0 && at(next.open, c[0], c[1]) >= 0) out['o/' + i] = 1; });
+    return out;
   }
 
   const api = {
     FIXED, LEVELS, MIN_PLAYERS, MAX_PLAYERS, STARS, DIRS, SWITCHES, SWITCH_OF, BRIDGES, BRIDGE_OF,
-    roomSize, makeRng, generate, validSpec, specKey, staticOf, create, tileAt, held, doorOpen, move, stuck, encode, decode,
+    roomSize, makeRng, generate, validSpec, specKey, staticOf, create, tileAt, held, doorOpen, move, stuck, toRoom, fromRoom, patch,
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.SorotteEngine = api;
