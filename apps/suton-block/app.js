@@ -267,6 +267,95 @@ function setSfx(on) {
   }
 }
 
+/* ── 音楽（はじめは切。この端末だけで鳴る。2026-11-12 「ゲーム中のプレイ音楽がほしい」の意見でオーナーが決めた） ──
+   あそんでいる間（カウントダウンのあと〜おわるまで）だけ流す。とめている間・あそびかたを開いている間・画面が裏のときは止める。
+   音は bgm/play.mp3（ElevenLabs で作った。作り方は scripts/suton-block/bgm.py）。「入」にした端末だけが読む。
+   メモリを使いすぎないように、<audio> で流しながら鳴らす（Web Audio で全部を広げると 78秒で30MBほどになる）。
+   「切」にしたら <audio> を手放す。大きさはファイルの中で小さくしてある（iOS は <audio> の音量を変えられない） */
+const BGM_KEY = 'sutonblock:bgm';
+const BGM_VER = '20261112b';
+// want: いま流したいか（null はまだ決めていない）。unlocked: 押した操作の中で1回 play() できたか（Safari はこれがないと、あとから流せない）
+const bgm = { on: false, el: null, want: null, unlocked: false, unlocking: false, blocked: false };
+try { bgm.on = localStorage.getItem(BGM_KEY) === '1'; } catch (e) { /* 使えなければ切のまま */ }
+
+function syncBgmInputs() {
+  ['soloBgm', 'roomBgm'].forEach((name) => {
+    const el = document.querySelector('input[name="' + name + '"][value="' + (bgm.on ? 'on' : 'off') + '"]');
+    if (el) el.checked = true;
+  });
+}
+
+function bgmWanted() {
+  const R = state.run;
+  return bgm.on && !!R && !R.done && !R.paused && state.currentScreen === 'play'
+    && !$('screen-play').inert && !document.hidden && nowOf() >= R.startAt;
+}
+
+function bgmEl() {
+  if (!bgm.el) {
+    const el = new Audio();
+    el.preload = 'none';
+    el.loop = true;
+    el.src = 'bgm/play.mp3?v=' + BGM_VER;
+    bgm.el = el;
+  }
+  return bgm.el;
+}
+
+// 流したいかが変わったときだけ、流す・止める（tick から毎回よぶ）
+function syncBgm() {
+  if (!bgm.on) return;
+  const want = bgmWanted();
+  if (want === bgm.want || (want && bgm.blocked)) return;
+  bgm.want = want;
+  // 音を出さずに play() している間（unlockBgm）は、そちらが終わったときに止める
+  if (!want) { if (bgm.el && !bgm.unlocking) bgm.el.pause(); return; }
+  const el = bgmEl();
+  el.muted = false;
+  const p = el.play();
+  if (p) p.then(() => { bgm.unlocked = true; }).catch((e) => {
+    // まだ何も押していない端末では流せない。つぎに押したとき（unlockBgm）にやり直す
+    if (e && e.name === 'NotAllowedError') { bgm.blocked = true; bgm.want = null; }
+  });
+}
+
+// 押した操作の中で1回 play() しておく（ルームでは、回がはじまるのがホストの操作なので、自分が押していない時に流しはじめることになる）
+function unlockBgm() {
+  if (!bgm.on || bgm.unlocked) return;
+  if (bgm.blocked) { bgm.blocked = false; syncBgm(); }
+  if (bgm.unlocked || bgmWanted()) return;
+  const el = bgmEl();
+  bgm.unlocked = true;
+  bgm.unlocking = true;
+  el.muted = true;
+  const p = el.play();
+  const done = () => {
+    if (bgm.el !== el) return;
+    bgm.unlocking = false;
+    if (!bgm.want) { el.pause(); try { el.currentTime = 0; } catch (e) { /* まだ読めていない */ } }
+    el.muted = false;
+  };
+  if (p) p.then(done).catch(() => { if (bgm.el === el) { bgm.unlocking = false; el.muted = false; bgm.unlocked = false; } });
+  else done();
+}
+
+// 回のはじめは、曲の頭から
+function rewindBgm() {
+  if (!bgm.el || !bgm.el.paused) return;
+  try { bgm.el.currentTime = 0; } catch (e) { /* まだ読めていない */ }
+}
+
+function setBgm(on) {
+  bgm.on = on;
+  try { localStorage.setItem(BGM_KEY, on ? '1' : '0'); } catch (e) { /* 残せなくてもよい */ }
+  syncBgmInputs();
+  if (on) { unlockBgm(); return; }
+  // 切にしたら、読んだ音を手放す
+  const el = bgm.el;
+  bgm.el = null; bgm.want = null; bgm.unlocked = false; bgm.unlocking = false; bgm.blocked = false;
+  if (el) { el.pause(); el.removeAttribute('src'); el.load(); }
+}
+
 /* ── 共通 ── */
 function showScreen(id) {
   // キーを変えている間に回がはじまったときなどは、ダイアログを閉じる
@@ -1443,6 +1532,7 @@ function startRun(o) {
   showScreen('play');
   renderOthers(); // スマホのほかの人の一覧の高さを、layout で「つぎ」の数を決めるときに使う
   layout();
+  rewindBgm();
   state.run.raf = requestAnimationFrame(tick);
 }
 
@@ -1455,6 +1545,7 @@ function stopRun() {
   stopRepeat();
   $('countdown').hidden = true;
   $('pauseCover').hidden = true;
+  syncBgm();
 }
 
 // ひとりのときだけ、とめる・つづける（とめている間は落ちず、時間も進まない。ずらすのは tick）
@@ -1465,6 +1556,7 @@ function setPaused(on) {
   stopRepeat();
   $('pauseCover').hidden = !on;
   $('btnPause').hidden = on;
+  syncBgm();
 }
 
 // ルームの値から、あそんでいる回を始める・時計を合わせる・じゃまを受けとる
@@ -1863,6 +1955,7 @@ function tick() {
   const R = state.run;
   if (!R) return;
   const now = nowOf();
+  syncBgm();
   // ひとりのときは「とめる」の間と「あそびかた」を開いている間（あそぶ画面が inert）は止め、つづけたら止めていたぶんだけずらす
   if (state.role === 'solo') {
     if (R.paused || $('screen-play').inert) {
@@ -2865,9 +2958,19 @@ $('btnSoloStart').addEventListener('click', startSolo);
     el.addEventListener('change', () => { if (el.checked) setSfx(el.value === 'on'); });
   });
 });
+['soloBgm', 'roomBgm'].forEach((name) => {
+  document.querySelectorAll('input[name="' + name + '"]').forEach((el) => {
+    el.addEventListener('change', () => { if (el.checked) setBgm(el.value === 'on'); });
+  });
+});
+syncBgmInputs();
+// 画面が裏に回ったら止める（tick は裏では回らないので、ここで見る）。もどったら tick が流しなおす
+document.addEventListener('visibilitychange', syncBgm);
 syncSfxInputs();
 // 入のままで読み込み直したときは、音を鳴らせるのが押したあとからなので、押すたびに起こす
 ['pointerdown', 'keydown'].forEach((type) => document.addEventListener(type, ensureAudio, { capture: true, passive: true }));
+// 音楽は、押した操作の中で1回 play() しておく（pointerdown は Safari では「押した操作」に数えないので、離したとき）
+['pointerup', 'click', 'keydown'].forEach((type) => document.addEventListener(type, unlockBgm, { capture: true, passive: true }));
 
 function openWatchFromForm() {
   const code = normalizeRoomCode($('watchCode').value);
