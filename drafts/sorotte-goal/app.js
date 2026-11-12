@@ -21,6 +21,7 @@
     mode: null,   // 'one'（1台の画面）／'two'（ウィンドウごとに1人）
     me: -1,       // ウィンドウごとに1人のときの自分の番号
     picked: 0,    // 1台の画面（3人以上）で、いま動かすコマ
+    near: null,   // 近くを映すか（null は、マスが小さいときだけ近くを映す）
     S: null,
     prev: null,   // 直前に出した状態（どこが変わったかを見て、動きを付ける）
     drawn: '',    // いま盤に出しているステージ（E.specKey）
@@ -212,10 +213,12 @@
   function drawStage(S) {
     const T = E.staticOf(S.spec);
     const board = $('board');
-    board.style.setProperty('--w', T.w);
-    board.style.setProperty('--h', T.h);
-    // マスが大きくなりすぎないよう、盤のはばをマスの数で決める
-    $('boardHost').style.setProperty('--bw', Math.min(1200, T.w * 62) + 'px');
+    // 盤の大きさは、わくの側で決める（はば・画面の高さ・マスの上限のうち、いちばん小さいもの）
+    const host = $('boardHost');
+    host.style.setProperty('--w', T.w);
+    host.style.setProperty('--h', T.h);
+    host.style.setProperty('--bw', (T.w * 64) + 'px');
+    state.near = null;
     board.replaceChildren();
     for (let y = 0; y < T.h; y += 1) {
       for (let x = 0; x < T.w; x += 1) board.append(makeCell(S, T, T.tiles[y * T.w + x], x, y));
@@ -381,7 +384,14 @@
     S.players.forEach((p, i) => {
       const id = 'player' + i;
       live.add(id);
-      const node = piece(id, () => tint(makePiece('sg-piece--player', ART.char(i)), i));
+      const node = piece(id, () => {
+        const n = tint(makePiece('sg-piece--player', ART.char(i)), i);
+        // 番号の札と、自分の印
+        const pin = el('div', 'sg-pin');
+        pin.append(el('span', 'sg-pin__label', state.mode === 'two' && state.me === i ? 'あなた' : ''));
+        n.append(el('span', 'sg-tag', String(i + 1)), pin);
+        return n;
+      });
       const was = P && P.players[i];
       if (was && (was.x !== p.x || was.y !== p.y)) {
         const dx = Math.sign(p.x - was.x);
@@ -428,6 +438,44 @@
       $('clearSub').replaceChildren(starRow(S.got, T.stars.length), el('span', '', S.rev + '歩'));
     }
     state.prev = S;
+    camera();
+  }
+
+  /* ── 近くを映す ──
+     マスが小さいとき（人数が多い・画面がせまい）は、盤を大きくして、動かすコマのまわりを映す。
+     動かすコマ: ウィンドウごとに1人なら自分、1台の画面の3人以上ならえらんだコマ。 */
+  const NEAR_CELL = 54;   // 近くを映すときの、1マスの目安（px）
+  const SMALL_CELL = 40;  // これより小さいと、はじめから近くを映す
+  function focusIndex() {
+    const S = state.S;
+    if (!S) return -1;
+    if (state.mode === 'two') return state.me;
+    return S.players.length > 2 ? state.picked : -1;
+  }
+  function camera() {
+    const S = state.S;
+    const host = $('boardHost');
+    const board = $('board');
+    const btn = $('btnView');
+    if (!S) return;
+    const T = E.staticOf(S.spec);
+    const W = host.clientWidth;
+    const H = host.clientHeight;
+    const cell = W / T.w;
+    const who = focusIndex();
+    const can = who >= 0 && cell > 0 && cell < NEAR_CELL - 4;
+    const near = can && (state.near == null ? cell < SMALL_CELL : state.near);
+    btn.hidden = !can;
+    if (can) {
+      btn.replaceChildren(icon(near ? 'zoom_out_map' : 'zoom_in'), document.createTextNode(near ? '全体を見る' : '近くを見る'));
+    }
+    if (!near) { board.style.transform = ''; return; }
+    const scale = Math.min(5, NEAR_CELL / cell);
+    const p = S.players[who];
+    const clamp = (v, lo) => Math.max(lo, Math.min(0, v));
+    const tx = clamp(W / 2 - (p.x + 0.5) * cell * scale, W - W * scale);
+    const ty = clamp(H / 2 - (p.y + 0.5) * cell * scale, H - H * scale);
+    board.style.transform = 'translate(' + tx.toFixed(1) + 'px, ' + ty.toFixed(1) + 'px) scale(' + scale.toFixed(3) + ')';
   }
 
   function buildLegend(T) {
@@ -518,7 +566,7 @@
   const WASD = { KeyW: 'up', KeyS: 'down', KeyA: 'left', KeyD: 'right' };
   document.addEventListener('keydown', (event) => {
     if (!state.mode || !state.S || !$('screen-game').classList.contains('active')) return;
-    if (event.isComposing || event.ctrlKey || event.metaKey || event.altKey) return;
+    if (event.isComposing || event.ctrlKey || event.metaKey || event.altKey || $('askBox').open) return;
     const n = state.S.players.length;
     const select = state.mode === 'one' && n > 2;
     // 数字キーで、動かすコマをえらぶ（1〜9。0 は10人目）
@@ -555,10 +603,25 @@
   $('btnStageRandom').addEventListener('click', () => { state.set.stage = 1 + Math.floor(Math.random() * MAX_STAGE); saveSet(); renderTop(); });
   $('btnOne').addEventListener('click', () => start('one', -1));
   $('btnTwo').addEventListener('click', () => { $('whoBox').hidden = !$('whoBox').hidden; });
-  $('btnRetry').addEventListener('click', () => restart(state.S.spec));
+  // みんなの進みが消える操作は、1歩でも進んでいたら、たしかめてから
+  let askThen = null;
+  function ask(text, yes, then) {
+    if (!state.S || state.S.rev === 0 || state.S.cleared) { then(); return; }
+    $('askText').textContent = text;
+    $('btnAskYes').textContent = yes;
+    askThen = then;
+    $('askBox').showModal();
+    $('btnAskNo').focus();
+  }
+  $('btnAskNo').addEventListener('click', () => { askThen = null; $('askBox').close(); });
+  $('btnAskYes').addEventListener('click', () => { const then = askThen; askThen = null; $('askBox').close(); if (then) then(); });
+  $('askBox').addEventListener('close', () => { askThen = null; });
+  $('btnRetry').addEventListener('click', () => ask('このステージを、はじめからやりなおす？', 'やりなおす', () => restart(state.S.spec)));
+  $('btnView').addEventListener('click', () => { state.near = !/scale/.test($('board').style.transform); camera(); });
+  window.addEventListener('resize', camera);
   $('btnAgain').addEventListener('click', () => restart(state.S.spec));
   $('btnNext').addEventListener('click', () => { if (state.S.cleared) restart(specWithStage(state.S.spec, 1)); });
-  $('btnSkip').addEventListener('click', () => restart(specWithStage(state.S.spec, 1)));
+  $('btnSkip').addEventListener('click', () => ask('ほかのステージにする？', 'ほかのステージにする', () => restart(specWithStage(state.S.spec, 1))));
   $('btnTop').addEventListener('click', () => {
     // 次に始めるときは、いま遊んでいたステージの番号から
     const spec = state.S && state.S.spec;
