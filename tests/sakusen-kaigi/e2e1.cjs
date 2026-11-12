@@ -83,6 +83,22 @@ const { check, sleep } = L;
   await L.waitText(H, '#h-count', '3／3');
   check('C4 進行役が代わりに入れる・パスも出る', (await L.stageText(H, '#h-count')).includes('3／3'), await L.stageText(H, '#h-count'));
   await L.shot(W, 'heart-watch'); await L.shot(A, 'heart-guest');
+  // 押している間に、ほかの人の答えが届いて画面が変わっても、「押した」が届く
+  const holdPress = async (c, sel, bump) => {
+    await c.page.locator(sel).scrollIntoViewIfNeeded();
+    const b = await c.page.locator(sel).boundingBox();
+    await c.page.mouse.move(b.x + b.width / 2, b.y + b.height / 2);
+    await c.page.mouse.down();
+    await bump(); await sleep(350);
+    await c.page.mouse.up();
+  };
+  const heartIs = async (name, v) => { for (let i = 0; i < 30; i++) { if ((await L.roomOf(code)).heart[ids[name]] === v) return true; await sleep(100); } return false; };
+  await holdPress(H, `#h-people [data-act="ans-heart"][data-pid="${ids['はると']}"][data-val="3"]`, () => L.rest('PUT', `${L.ROOMS}/${code}/heart/${ids['そうた']}`, 1));
+  check('C5 進行役が押している間にほかの人の答えが届いても、押した分が入る', await heartIs('はると', 3), (await L.roomOf(code)).heart);
+  await holdPress(A, '[data-act="g-heart"][data-val="5"]', () => L.rest('PUT', `${L.ROOMS}/${code}/heart/${ids['はると']}`, 1));
+  check('C6 子どもが押している間にほかの人の答えが届いても、押した分が入る', await heartIs('そうた', 5), (await L.roomOf(code)).heart);
+  await W.page.waitForFunction(() => [...document.querySelectorAll('#watch-wrap .lv li')].some((li) => li.innerText.includes('5') && li.innerText.includes('そうた')));
+  check('C7 離したあとに、届いていた分もまとめて画面に出る', (await L.stageText(A, '#guest')).length > 0 && (await L.stageText(H, '#h-count')).includes('3／3'));
 
   // ── 今日は何する？（決めるのは進行役）──
   await L.goBody(H, 'menu');

@@ -513,3 +513,7 @@ body.dragging, body.dragging * { cursor: grabbing !important; user-select: none;
 .g-leave { max-width: 520px; margin: -96px auto 0; padding: 0 14px 28px; text-align: center; }
 /* みんなにみせる画面では、「？」とフィードバックのボタンを出さない */
 body.watching .howto-fab, body.watching .howto-feedback-fab { display: none !important; }
+
+/* 予定の表: きょうの列・きょうのカードに色をつける（表はきょうから7日ぶん） */
+.sl .dh.today { background: var(--a); border-radius: 999px; }
+.g-day.today { background: #FFFBE6; }

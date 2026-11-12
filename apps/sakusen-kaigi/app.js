@@ -88,8 +88,9 @@
   function fmtDay(s) { const p = parts(s); return `${p.m}月${p.d}日(${p.w})`; }
   function dateTag(s) { const p = parts(s); return `<span class="n">${p.m}</span>月<span class="n">${p.d}</span>日<span class="wd">${p.w}</span>`; }
   function today() { return /^\d{4}-\d{2}-\d{2}$/.test(qs.get('today') || '') ? qs.get('today') : ymd(new Date()); }
-  // 予定の表は、あしたから7日ぶん（ふつうは最後の日が次回の作戦会議）
-  function days(room) { return [1, 2, 3, 4, 5, 6, 7].map((n) => addDays(room.date, n)); }
+  // 予定の表は、きょうから7日ぶん（2026-11-12 オーナー「今日の日付を基準に1週間」。はじめは、あしたから7日だった）。
+  // 次回の作戦会議がこの中に入るときだけ、その日に「作戦会議」を入れておく
+  function days(room) { return [0, 1, 2, 3, 4, 5, 6].map((n) => addDays(room.date, n)); }
   const timeText = (t) => (t ? t.replace(/^0/, '') + '〜' : '');
 
   // RTDB は空の入れもの（{}・[]）を保存しないので、読んだあとに足りない入れものを足す
@@ -667,7 +668,7 @@
     const pid = r.sel && r.persons[r.sel] ? r.sel : null;
     if (!pid) return `${kicker(stepOf('plan'))}<h1 class="q zm">これからの予定</h1><p class="none">参加する人の名前を足すと、表が出るよ</p>`;
     const tabs = r.order.length > 1 ? `<p class="tabs zm">${r.order.map((p) => `<span class="${p === pid ? 'on' : ''}">${esc(r.persons[p].name)}</span>`).join('')}</p>` : '';
-    const head = days(r).map((d) => { const p = parts(d); return `<p class="dh zm${p.rest ? ' rest' : ''}${d === r.next.date ? ' next' : ''}"><small>${p.m}/</small>${p.d}<span class="wd">${p.w}</span></p>`; }).join('');
+    const head = days(r).map((d) => { const p = parts(d); return `<p class="dh zm${p.rest ? ' rest' : ''}${d === r.date ? ' today' : ''}${d === r.next.date ? ' next' : ''}"><small>${p.m}/</small>${p.d}<span class="wd">${p.w}</span></p>`; }).join('');
     const body = ROWS.map((row) => `<p class="rh zm">${esc(row.name)}</p>` + days(r).map((d, di) => {
       const cell = di + '-' + row.id;
       const items = (r.sched[pid] && r.sched[pid][cell]) || [];
@@ -943,7 +944,7 @@
     }
     if (st.id === 'plan') {
       return `<section class="g-card"><p class="g-kick zm">予定の確認</p><h1 class="g-q zm">これからの予定</h1><p class="g-foot g-foot--top">押して入れてね。ふせんは、つかんで動かせるよ。空いたままでもOK</p></section>
-        ${days(r).map((d, di) => { const p = parts(d); return `<section class="g-day${p.rest ? ' rest' : ''}${d === r.next.date ? ' next' : ''}"><h2 class="zm">${p.m}月<b>${p.d}</b>日<span class="wd">${p.w}</span></h2>
+        ${days(r).map((d, di) => { const p = parts(d); return `<section class="g-day${p.rest ? ' rest' : ''}${d === r.date ? ' today' : ''}${d === r.next.date ? ' next' : ''}"><h2 class="zm">${p.m}月<b>${p.d}</b>日<span class="wd">${p.w}</span></h2>
           ${ROWS.map((row) => { const cell = di + '-' + row.id; const items = (r.sched[me] && r.sched[me][cell]) || [];
             return `<button type="button" data-act="cell" data-pid="${esc(me)}" data-cell="${esc(cell)}"><span class="rw">${esc(row.name)}</span><span class="its">${items.map((it) => `<span class="st st-${esc(it.c || 'w')}"${it.c !== 'k' ? ` data-drag="${esc(it.t)}"` : ''}>${esc(it.t)}</span>`).join('')}</span>${ic('add')}</button>`; }).join('')}</section>`; }).join('')}`;
     }
@@ -958,8 +959,24 @@
     keepScroll($('guest'), [r.cur, r.view, r.decided, G.wide, !!r.tool].join('|'), () => setHTML($('guest'), `<header class="g-top"><p class="g-top__t zm">作戦会議</p><p class="g-top__me">${esc(r.persons[S.me].name)}</p><div class="g-prog" aria-hidden="true">${prog}</div></header><main class="g-main" data-step="${esc(onCover(r) ? 'seccover' : r.cur)}">${gBody(r, S.me)}</main>`));
   }
 
+  // 押している間は描きなおさない。押してから離すまでの間に画面を描きなおすと、押していたボタンが作り直されて
+  // 「押した」が届かない（ほかの人の操作が届くたびに起きる）。離したあとに、まとめて描きなおす。
+  // 中身が同じなら書きかえない（setHTML）だけでは、中身が変わる所（参加する人の一覧など）を守れない
+  let pressing = false;
+  let renderWaiting = false;
+  let pressTimer = null;
+  function endPress() {
+    if (!pressing) return;
+    pressing = false; clearTimeout(pressTimer);
+    if (renderWaiting) { renderWaiting = false; render(); }
+  }
+  document.addEventListener('pointerdown', () => { pressing = true; clearTimeout(pressTimer); pressTimer = setTimeout(endPress, 2000); }, true);
+  // 離したあとの「押した」（click）が届いてから、描きなおす
+  ['pointerup', 'pointercancel'].forEach((t) => document.addEventListener(t, () => setTimeout(endPress, 0), true));
+  window.addEventListener('blur', endPress);
   function render() {
     if (!S.room || !ctx) return;
+    if (pressing) { renderWaiting = true; return; }
     const r = S.room;
     showScreen(S.role);
     if (S.role === 'watch') setHTML($('watch-wrap'), slide(r, false));
