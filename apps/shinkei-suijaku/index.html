@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>神経衰弱 | あそびのたな</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet" />
+  <link rel="stylesheet" href="../shared/css/design-system.css?v=20261106c" />
+  <!-- index.html と app.js・data.js・style.css はセットで変わるので、変えたら ?v= をそろえて上げる -->
+  <link rel="stylesheet" href="style.css?v=20261112b" />
+</head>
+<body data-genre="board">
+
+  <!-- はじめの画面（設定） -->
+  <main id="ss-front" class="ss-front">
+    <section class="app-entry" aria-labelledby="ss-front-title">
+      <div class="app-entry__head ss-head" aria-hidden="true">
+        <span class="ss-head__card ss-head__card--back">1</span>
+        <span class="ss-head__card"><span class="material-symbols-rounded">pets</span></span>
+        <span class="ss-head__card ss-head__card--back">3</span>
+        <span class="ss-head__card"><span class="material-symbols-rounded">pets</span></span>
+      </div>
+      <h1 id="ss-front-title" class="app-title">神経衰弱</h1>
+      <p class="app-catch">めくって、同じ絵を2枚そろえよう</p>
+      <p class="app-entry__lead">カードを2枚めくって、同じ絵ならもらえるよ。そろったら、もう1回めくれる。カードには番号がついているので、「5番と12番」のように声で言ってもいいよ。</p>
+
+      <div class="ss-setup">
+        <fieldset class="ss-field">
+          <legend class="ss-field__name">対戦の相手</legend>
+          <div id="opp-opts" class="ss-seg" role="radiogroup" aria-label="対戦の相手"></div>
+        </fieldset>
+
+        <fieldset id="cpu-field" class="ss-field">
+          <legend class="ss-field__name">CPU の強さ</legend>
+          <div id="cpu-opts" class="ss-seg" role="radiogroup" aria-label="CPU の強さ"></div>
+        </fieldset>
+
+        <fieldset id="count-field" class="ss-field" hidden>
+          <legend class="ss-field__name">人数</legend>
+          <div id="count-opts" class="ss-seg" role="radiogroup" aria-label="人数"></div>
+        </fieldset>
+
+        <fieldset class="ss-field">
+          <legend class="ss-field__name">名前</legend>
+          <div id="name-list" class="ss-names"></div>
+        </fieldset>
+
+        <fieldset class="ss-field">
+          <legend class="ss-field__name">むずかしさ</legend>
+          <div id="level-opts" class="ss-seg ss-seg--2" role="radiogroup" aria-label="むずかしさ"></div>
+          <p id="level-note" class="ss-note"></p>
+        </fieldset>
+      </div>
+
+      <div class="app-entry__actions">
+        <button id="btn-start" type="button" class="btn btn-primary btn-lg">はじめる</button>
+      </div>
+    </section>
+  </main>
+
+  <!-- 遊ぶ画面 -->
+  <div id="ss-app" class="ss-app" hidden>
+    <header class="ss-bar">
+      <h1 class="ss-bar__title app-title">神経衰弱</h1>
+      <p id="bar-level" class="ss-bar__level"></p>
+      <button id="btn-quit" type="button" class="btn btn-ghost btn-sm">設定にもどる</button>
+    </header>
+
+    <main class="ss-main">
+      <ul id="players" class="ss-players" aria-label="取ったペアの数"></ul>
+      <p id="status" class="ss-status" role="status" aria-live="polite"></p>
+
+      <div id="result" class="card ss-result" hidden>
+        <h2 id="result-head" class="ss-result__head"></h2>
+        <p id="result-body" class="ss-result__body"></p>
+        <div class="ss-result__btns">
+          <button id="btn-again" type="button" class="btn btn-primary btn-lg">もう一回</button>
+          <button id="btn-back" type="button" class="btn btn-secondary">設定にもどる</button>
+        </div>
+      </div>
+
+      <div id="board-wrap" class="ss-board-wrap">
+        <div id="board" class="ss-board"></div>
+      </div>
+    </main>
+  </div>
+
+  <svg id="ss-svg-ns" width="0" height="0" aria-hidden="true" hidden></svg>
+  <script src="data.js?v=20261112b"></script>
+  <script src="app.js?v=20261112b"></script>
+  <script src="../shared/js/stats.js?v=1" defer></script>
+  <script src="../shared/js/howto.js"></script>
+  <script>
+    RoomkHowto.init({
+      title: 'あそびかた',
+      lead: '裏になったカードを2枚めくって、同じ絵をそろえるゲーム。ペアをいちばん多く取った人の勝ち。',
+      sections: [
+        { heading: 'はじめかた', items: [
+          '「対戦の相手」で「CPU」か「人どうし」を選ぶ。「人どうし」は2〜4人が、1台の画面で順番に遊ぶ',
+          '「CPU」のときは「CPU の強さ」を「よわい・ふつう・つよい」から選ぶ',
+          '「むずかしさ」を選ぶ。「かんたん」は12枚、「ふつう」は20枚、「むずかしい」は30枚、「激ムズ」は40枚',
+          '「はじめる」を押す',
+        ] },
+        { heading: 'すすめかた', items: [
+          '自分の番になったら、カードを2枚めくる',
+          '同じ絵ならもらえて、もう1回めくれる',
+          'ちがう絵なら、カードは裏にもどって次の人の番になる',
+          'カードには番号がついている。画面共有で遊ぶときは「5番と12番」のように声やチャットで伝えて、押してもらってもいい',
+        ] },
+        { heading: '激ムズのカード', text: '丸・三角・四角・星・ハートが、1つから4つまでかいてある。形も数も同じカードがペアになる。' },
+        { heading: 'おわりかた', text: 'カードがぜんぶなくなったらおしまい。「もう一回」で、同じ設定のままもう一度遊べる（はじめの人は順番に交代する）。「設定にもどる」で相手やむずかしさを選びなおせる。' },
+      ],
+    });
+  </script>
+</body>
+</html>
