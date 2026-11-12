@@ -5,10 +5,6 @@ body { color: var(--color-text); margin: 0; }
 
 /* ── はじめの画面 ── */
 .ss-front { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px 16px; box-sizing: border-box; }
-.ss-head { position: relative; height: 150px; display: flex; align-items: center; justify-content: center; gap: 10px; background: var(--g-pale); overflow: hidden; }
-.ss-head__card { width: 64px; height: 80px; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: var(--color-surface); border: 3px solid var(--g); box-shadow: var(--shadow-soft); color: var(--g-ink); }
-.ss-head__card .material-symbols-rounded { font-size: 40px; }
-.ss-head__card--back { background: var(--g-ink); border-color: var(--g-ink); color: #fff; font-family: 'Zen Maru Gothic', var(--font-base); font-weight: 700; font-size: 1.5rem; }
 
 .ss-setup { margin: 4px 0 20px; }
 .ss-field { border: 0; padding: 0; margin: 0 0 18px; min-width: 0; }
