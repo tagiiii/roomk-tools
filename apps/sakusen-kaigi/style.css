@@ -473,8 +473,9 @@ body.dragging, body.dragging * { cursor: grabbing !important; user-select: none;
 .h-noone .h-row { margin-top: 10px; max-width: 420px; }
 .h-check--small { margin-top: 12px; padding-top: 10px; border-top: 2px solid #EAE2D6; font-size: 13px; color: var(--color-muted); }
 .h-check--small input { width: 18px; height: 18px; }
-/* 進行役の画面: 中くらいの幅（ノートPCの半分の窓など）は、流れを上に横並び・右に参加する人 */
-@media (min-width: 721px) and (max-width: 1100px) {
+/* 進行役の画面: 中くらいの幅（ノートPCの半分の窓など）は、流れを上に横並び・右に参加する人。
+   指で使う端末（横にしたタブレット）は 1400px までこの並びにして、プレビューを広くする（予定のふせんを指でつかみやすくするため） */
+@media (min-width: 721px) and (max-width: 1100px), (min-width: 1101px) and (max-width: 1400px) and (pointer: coarse) {
   .h-grid { grid-template-columns: minmax(0, 1fr) 280px; }
   .h-flow { order: 0; grid-column: 1 / -1; padding: 10px 14px; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; }
   .h-flow .h-h2 { margin: 0; }

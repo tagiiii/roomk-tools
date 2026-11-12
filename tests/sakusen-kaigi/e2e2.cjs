@@ -155,6 +155,8 @@ const { check, sleep } = L;
   const tH = await touch(H);
   await tap(H, `#h-ops [data-act=sel][data-pid="${sota}"]`);
   await H.page.waitForSelector('#h-preview [data-drag="おでかけ"]');
+  const hs = await H.page.evaluate(() => { const st = document.querySelector('#h-preview [data-drag="おでかけ"]').getBoundingClientRect(); return { coarse: matchMedia('(pointer: coarse)').matches, preview: Math.round(document.getElementById('h-preview').clientWidth), w: Math.round(st.width), h: Math.round(st.height) }; });
+  check('T23 指で使うタブレットでは、プレビューが広く、ふせんが大きい（高さ20px以上）', hs.coarse && hs.preview >= 800 && hs.h >= 20, hs);
   [x0, y0] = await mid(H, '#h-preview [data-drag="おでかけ"]');
   [x1, y1] = await mid(H, '#h-preview .cell[data-cell="4-am"]');
   [x0, y0] = await mid(H, '#h-preview [data-drag="おでかけ"]');
