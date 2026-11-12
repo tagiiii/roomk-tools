@@ -65,7 +65,7 @@ function writeNotices(items) {
 let browser;
 async function launch() { browser = await chromium.launch({ channel: 'chrome' }); return browser; }
 async function newClient(label, opts = {}) {
-  const context = await browser.newContext({ viewport: opts.viewport || { width: 1440, height: 900 } });
+  const context = await browser.newContext({ viewport: opts.viewport || { width: 1440, height: 900 }, hasTouch: !!opts.touch });
   await context.grantPermissions(['clipboard-read', 'clipboard-write']).catch(() => {});
   await context.route('**/*', (route) => {
     const host = new URL(route.request().url()).hostname;
