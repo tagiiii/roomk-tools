@@ -131,6 +131,13 @@
     return a;
   }
 
+  // 3人以上で押す箱の人数（その箱を押すのに、たてにならぶ人数）。部屋の広さに収まる数まで
+  //   3・4人 → 3、5・6人 → 4、7・8人 → 5、9・10人 → 6、11・12人 → 7
+  const teamFor = (n, room) => Math.max(2, Math.min(n, room - 2, 2 + Math.floor((n - 1) / 2)));
+  // 同時におさえるスイッチの数。おさえた人も先へ行けるよう、通る人がおさえる人より少なくならない数まで
+  //   4・5人 → 2、6・7人 → 3、8人から → 4
+  const needFor = (n) => Math.max(2, Math.min(4, Math.floor(n / 2)));
+
   /* ── おまかせステージを作る ──
      部屋を一列につなぎ、部屋と部屋のあいだに関門を1つずつ置く。関門はどれも、作り方から必ず通れる:
        relay   とびら。手前の部屋と先の部屋に、同じしるしのスイッチ（1人がおさえて通し、先でおさえ返す）
@@ -138,7 +145,9 @@
        key     かぎつきのとびら。カギは手前の部屋に置いてある
        keyJ    カギが、j 人目だけ渡れる橋の先にある
        box     とびら。手前の部屋の重い箱を、2人で押してスイッチに乗せる
-       pair    とびら。同じしるしのスイッチを2つ同時におさえている間だけ開く（4人から。手前に2つ・先に2つ）
+       boxBig  box の箱が、もっと重い。人数に合わせて、3〜7人がたてにならんで押す（3人から。teamFor）
+       pair    とびら。同じしるしのスイッチを、人数に合わせて2〜4つ同時におさえている間だけ開く（4人から。needFor。
+               手前と先に、同じ数ずつ置く。おさえる人が先へ行けるよう、通る人がおさえる人より多い数にする）
        keyDoor かぎつきのとびら。カギは、べつのとびらの先のすみにある。1人がスイッチをおさえている間に、もう1人がとりに行く
      星も、むずかしい・げきむずでは、とびらの先のすみに置く（1人がおさえて、もう1人がとる）。
      しるしは8つ。使いきったら、とびらの先に置くのをやめて、橋の先か、ゆかに置く。
@@ -219,15 +228,18 @@
       }
       return false;
     }
-    // 重い箱の通り道: 1 行目か R-2 行目をまるごと。箱はまん中、スイッチははし
-    function lane(room, sw) {
+    // 重い箱の通り道: 1 行目か R-2 行目をまるごと。スイッチははし。箱の手前に、押す人数ぶん（team）のマスをあける
+    function lane(room, sw, team) {
       for (const y of shuffle(rng, [1, ROOM - 2])) {
         let ok = true;
         for (let x = 0; x < ROOM; x += 1) if (!free(room, x, y)) ok = false;
         if (!ok) continue;
         for (let x = 0; x < ROOM; x += 1) room.used.add(id(x, y));
-        grid[room.oy + y][room.ox + M] = 'O';
-        grid[room.oy + y][room.ox + (rng() < 0.5 ? 0 : E1)] = sw;
+        const right = rng() < 0.5;
+        const bx = right ? team : E1 - team;
+        grid[room.oy + y][room.ox + bx] = 'O';
+        grid[room.oy + y][room.ox + (right ? E1 : 0)] = sw;
+        teamAt[(room.ox + bx) + ',' + (room.oy + y)] = team;
         return true;
       }
       return false;
@@ -235,11 +247,16 @@
 
     // 関門の種類をえらぶ
     let kinds;
+    // 人数に合わせた協力: 3人からは、3人以上で押す箱。4人からは、2つ以上同時におさえるスイッチ
     const big = n >= 4;
+    const trio = n >= 3;
     if (level === 'easy') kinds = shuffle(rng, ['relay', 'key']);
-    else if (level === 'normal') kinds = shuffle(rng, ['relay', 'relayJ', 'keyJ', 'box', 'keyDoor'].concat(big ? ['pair'] : [])).slice(0, 3);
-    else if (level === 'hard') kinds = shuffle(rng, ['box', 'keyDoor', 'relayJ', pick(rng, ['box', 'keyJ']), pick(rng, big ? ['pair', 'pair', 'keyDoor'] : ['relayJ', 'keyDoor'])]);
-    else kinds = shuffle(rng, ['box', 'box', 'keyDoor', 'keyDoor', big ? 'pair' : 'relayJ']);
+    else if (level === 'normal') kinds = shuffle(rng, ['relay', 'relayJ', 'keyJ', 'box', 'keyDoor'].concat(trio ? ['boxBig'] : [], big ? ['pair'] : [])).slice(0, 3);
+    else if (level === 'hard') kinds = shuffle(rng, ['box', 'keyDoor', 'relayJ', pick(rng, trio ? ['boxBig', 'boxBig', 'keyJ'] : ['box', 'keyJ']), pick(rng, big ? ['pair', 'pair', 'keyDoor'] : ['relayJ', 'keyDoor'])]);
+    else if (big) kinds = shuffle(rng, ['boxBig', 'pair', 'keyDoor', 'box', pick(rng, ['boxBig', 'pair'])]);
+    else if (trio) kinds = shuffle(rng, ['boxBig', 'boxBig', 'keyDoor', 'keyDoor', 'box']);
+    else kinds = shuffle(rng, ['box', 'box', 'keyDoor', 'keyDoor', 'relayJ']);
+    const teamAt = {};
 
     let color = 0;
     const nextColor = () => { const sw = SWITCHES[color]; if (sw) color += 1; return sw || null; };
@@ -266,12 +283,16 @@
       } else {
         const sw = nextColor();
         grid[g.gy][g.gx] = sw.toUpperCase();
-        if (kind === 'box' && !lane(g.A, sw)) kind = 'relay';
-        if (kind === 'box') boxSw.push(sw);
+        if (kind === 'boxBig' && !lane(g.A, sw, teamFor(n, ROOM))) kind = 'relay';
+        if (kind === 'box' && !lane(g.A, sw, 2)) kind = 'relay';
+        if (kind === 'box' || kind === 'boxBig') boxSw.push(sw);
         if (kind === 'relayJ' && !nook(g.A, sw, bridgeOf())) kind = 'relay';
-        if (kind === 'pair') { need[sw] = 2; plain(g.A, sw); plain(g.B, sw); }
-        if (kind === 'relay' || kind === 'pair') plain(g.A, sw);
-        if (kind !== 'box') plain(g.B, sw);
+        if (kind === 'pair') {
+          need[sw] = needFor(n);
+          for (let k = 0; k < need[sw]; k += 1) { plain(g.A, sw); plain(g.B, sw); }
+        }
+        if (kind === 'relay') plain(g.A, sw);
+        if (kind === 'relay' || kind === 'relayJ') plain(g.B, sw);
       }
       used.push(kind);
     });
@@ -283,7 +304,7 @@
       plain(room, '*');
     });
 
-    return { rows: grid.map((r) => r.join('')), kinds: used, starts, need, boxSw };
+    return { rows: grid.map((r) => r.join('')), kinds: used, starts, need, boxSw, teamAt };
   }
 
   /* ── ステージの動かない部分（かべ・ゆか・スイッチ・とびら・橋・ゴール）。人・箱・カギ・星は抜いて、ゆかにする ── */
@@ -321,9 +342,12 @@
       if (spec.kind === 'fixed') {
         const st = FIXED[spec.index];
         cache[key] = Object.assign(parse(st.rows), { name: st.name, hint: st.hint, rows: st.rows, need: {}, boxSw: st.boxSw || [] });
+        cache[key].team = cache[key].boxes.map(() => 2);
       } else {
         const g = generate(spec.level, spec.n, spec.seed);
         cache[key] = Object.assign(parse(g.rows), { name: LEVELS[spec.level].label, hint: '', rows: g.rows, kinds: g.kinds, starts: g.starts, need: g.need, boxSw: g.boxSw });
+        // 箱ごとの、押す人数（箱のならびは、はじめの場所の順）
+        cache[key].team = cache[key].boxes.map((c) => g.teamAt[c[0] + ',' + c[1]] || 2);
       }
     }
     return cache[key];
@@ -374,6 +398,18 @@
     return at(S.boxes, x, y) < 0 && !S.players.some((p) => p.x === x && p.y === y) && at(S.keys, x, y) < 0 && at(S.stars, x, y) < 0;
   }
 
+  // 箱を押す人 who のうしろに、たてにならんでいる人（team - 1 人）。足りなければ null
+  function pushers(S, who, dx, dy, team) {
+    const me = S.players[who];
+    const out = [];
+    for (let k = 1; k < team; k += 1) {
+      const h = S.players.findIndex((q, i) => i !== who && q.x === me.x - k * dx && q.y === me.y - k * dy);
+      if (h < 0) return null;
+      out.push(h);
+    }
+    return out;
+  }
+
   // who 番の人が dir へ1マス動く。動けないときは同じ状態を返す
   function move(S0, who, dir) {
     const d = DIRS[dir];
@@ -393,12 +429,12 @@
     const p = S.players[who];
     const bi = at(S.boxes, tx, ty);
     if (bi >= 0) {
-      // 重い箱: うしろ（進む向きの反対どなり）にもう1人いるときだけ動く。うしろの人もいっしょに1マス進む
-      const helper = S.players.findIndex((q, i) => i !== who && q.x === me.x - dx && q.y === me.y - dy);
-      if (helper < 0 || !boxCanEnter(S0, tx + dx, ty + dy)) return S0;
+      // 重い箱: 押す人のうしろ（進む向きの反対がわ）に、要る人数ぶんがたてにならんでいるときだけ動く。
+      // ふつうの箱は2人（うしろに1人）、もっと重い箱は3人以上。ならんだ人も、いっしょに1マス進む
+      const helpers = pushers(S0, who, dx, dy, staticOf(S0.spec).team[bi] || 2);
+      if (!helpers || !boxCanEnter(S0, tx + dx, ty + dy)) return S0;
       S.boxes[bi] = [tx + dx, ty + dy];
-      S.players[helper].x = me.x;
-      S.players[helper].y = me.y;
+      helpers.forEach((h) => { S.players[h].x += dx; S.players[h].y += dy; });
     }
     p.x = tx;
     p.y = ty;
@@ -428,18 +464,25 @@
     const targets = T.boxSw.filter((c) => !boxOn(c));
     if (!targets.length) return false;
     const reach = new Set();
-    const stack = S.boxes.map((b) => [b[0], b[1]]);
-    while (stack.length) {
-      const [x, y] = stack.pop();
-      const k = x + ',' + y;
-      if (reach.has(k)) continue;
-      reach.add(k);
-      Object.keys(DIRS).forEach((d) => {
-        const [dx, dy] = DIRS[d];
-        if (!stands(tile(x - dx, y - dy)) || !stands(tile(x - 2 * dx, y - 2 * dy)) || !holds(tile(x + dx, y + dy))) return;
-        stack.push([x + dx, y + dy]);
-      });
-    }
+    S.boxes.forEach((b, bi) => {
+      const team = T.team[bi] || 2;
+      const seen = new Set();
+      const stack = [[b[0], b[1]]];
+      while (stack.length) {
+        const [x, y] = stack.pop();
+        const k = x + ',' + y;
+        if (seen.has(k)) continue;
+        seen.add(k);
+        reach.add(k);
+        Object.keys(DIRS).forEach((d) => {
+          const [dx, dy] = DIRS[d];
+          if (!holds(tile(x + dx, y + dy))) return;
+          // 箱の手前に、押す人数ぶんのマスが要る
+          for (let n = 1; n <= team; n += 1) if (!stands(tile(x - n * dx, y - n * dy))) return;
+          stack.push([x + dx, y + dy]);
+        });
+      }
+    });
     return targets.some((c) => {
       const i = T.tiles.indexOf(c);
       return !reach.has((i % T.w) + ',' + Math.floor(i / T.w));
@@ -530,7 +573,7 @@
 
   const api = {
     FIXED, LEVELS, MIN_PLAYERS, MAX_PLAYERS, STARS, DIRS, SWITCHES, SWITCH_OF, BRIDGES, BRIDGE_OF,
-    roomSize, makeRng, generate, validSpec, specKey, staticOf, create, tileAt, held, doorOpen, move, stuck, toRoom, fromRoom, patch,
+    roomSize, teamFor, needFor, pushers, makeRng, generate, validSpec, specKey, staticOf, create, tileAt, held, doorOpen, move, stuck, toRoom, fromRoom, patch,
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.SorotteEngine = api;

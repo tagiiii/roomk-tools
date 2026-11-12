@@ -230,6 +230,74 @@ t('2つ同時のスイッチ（pair）: 1つだけでは開かず、2つおさ�
   assert.strictEqual(E.held(S, c), true);
 });
 
+t('人数に合わせた協力: 押す人数とスイッチの数は、人数で決まる', () => {
+  const team = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((p) => E.teamFor(p, E.roomSize(p)));
+  assert.deepStrictEqual(team, [2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7]);
+  assert.deepStrictEqual([4, 5, 6, 7, 8, 12].map(E.needFor), [2, 2, 3, 3, 4, 4]);
+  // おさえる人も先へ行けるよう、通る人がおさえる人より少なくならない
+  for (let p = 4; p <= 12; p += 1) assert.ok(p - E.needFor(p) >= E.needFor(p), p + '人');
+});
+
+t('3人以上で押す箱: 人数が足りないと動かない。たてにならぶと、みんなそろって1マス進む', () => {
+  let spec = null;
+  for (let seed = 1; seed <= 100 && !spec; seed += 1) {
+    const T = E.staticOf(gen('normal', 3, seed));
+    if (T.team.includes(3)) spec = gen('normal', 3, seed);
+  }
+  assert.ok(spec, '3人で押す箱の出るステージがある');
+  const T = E.staticOf(spec);
+  const bi = T.team.indexOf(3);
+  const [bx, by] = T.boxes[bi];
+  // 箱は通り道の行にある。スイッチのあるがわへ押す
+  const row = T.tiles.slice(by * T.w, by * T.w + T.w);
+  const sx = row.findIndex((c, x) => T.boxSw.includes(c) && Math.abs(x - bx) <= 8 && row.slice(Math.min(x, bx), Math.max(x, bx)).every((t) => t !== '#'));
+  assert.ok(sx >= 0, 'スイッチが同じ行にある');
+  const dx = Math.sign(sx - bx);
+  const dir = dx > 0 ? 'right' : 'left';
+  const S = E.create(spec);
+  const put = (i, x) => { S.players[i].x = x; S.players[i].y = by; };
+  put(0, bx - dx);
+  put(1, bx - 2 * dx);
+  assert.strictEqual(E.move(S, 0, dir), S);                 // 2人では動かない
+  put(2, bx - 3 * dx);
+  const N = E.move(S, 0, dir);
+  assert.notStrictEqual(N, S);
+  assert.deepStrictEqual(N.boxes[bi], [bx + dx, by]);
+  assert.deepStrictEqual(N.players.map((p) => p.x), [bx, bx - dx, bx - 2 * dx]);
+  // ルームに書く所: 箱と、ならんだ3人
+  assert.deepStrictEqual(Object.keys(E.patch(S, N, 0)).sort(), ['b/' + bi, 'p/0', 'p/1', 'p/2']);
+  // あいだが1人ぬけていると動かない
+  put(1, bx - 2 * dx); S.players[1].y = by === 1 ? by + 1 : by - 1;
+  assert.strictEqual(E.move(S, 0, dir), S);
+});
+
+t('同時におさえるスイッチ: 6人なら3つ。2つでは開かず、3つおさえると開く', () => {
+  let spec = null;
+  for (let seed = 1; seed <= 200 && !spec; seed += 1) {
+    if (E.staticOf(gen('normal', 6, seed)).kinds.includes('pair')) spec = gen('normal', 6, seed);
+  }
+  assert.ok(spec);
+  const T = E.staticOf(spec);
+  const c = Object.keys(T.need)[0];
+  assert.strictEqual(T.need[c], 3);
+  const cells = [];
+  T.tiles.forEach((ch, i) => { if (ch === c) cells.push([i % T.w, Math.floor(i / T.w)]); });
+  assert.strictEqual(cells.length, 6);   // 手前に3つ・先に3つ
+  const S = E.create(spec);
+  [0, 1].forEach((i) => { S.players[i].x = cells[i][0]; S.players[i].y = cells[i][1]; });
+  assert.strictEqual(E.held(S, c), false);
+  S.players[2].x = cells[2][0]; S.players[2].y = cells[2][1];
+  assert.strictEqual(E.held(S, c), true);
+});
+
+t('おまかせ: 3人の、3人で押す箱の入ったステージも、総当たりでクリアできる（30秒ほどかかる）', () => {
+  const spec = gen('normal', 3, 2);
+  assert.ok(E.staticOf(spec).kinds.includes('boxBig'), E.staticOf(spec).kinds.join());
+  const steps = solve(spec, null, 8000000);
+  assert.ok(steps > 0, String(steps));
+  console.log('   いちばん少なくて ' + steps + ' 歩');
+});
+
 t('詰み: 箱がスイッチまで運べない場所に入ると分かる。はじめは、どのステージも詰んでいない', () => {
   let S = fixed(1);
   assert.strictEqual(E.stuck(S), false);

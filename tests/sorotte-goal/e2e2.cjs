@@ -94,10 +94,18 @@ const allPos = (c) => c.page.$$eval('.sg-piece--player', (ps) => ps
   await H.page.fill('#proxyName', 'たろう');
   await H.page.click('#btnAddProxy');
   check('D3 12人のときは、端末なしの参加者も足せない', await waitFor(async () => (await L.text(H, '#proxyError')).includes('12人まで')));
+  // 「むずかしい」のステージ1（12人）には、7人で押す箱と、4つ同時におさえるスイッチが入る
+  await H.page.click('#levelSeg .sg-seg__btn >> nth=2');
+  await L.roomWhen(code, (r) => r.set.level === 'hard');
   await H.page.click('#btnStartGame');
   await L.waitScreen(H, 'game');
   const G12 = await L.gameOf(code);
   check('D4 12人のステージができる', G12 && G12.spec.n === 12 && G12.S.players.length === 12);
+  const T12 = L.E.staticOf(G12.spec);
+  check('D4b 人数に合わせた協力が入る（7人で押す箱・4つ同時のスイッチ）', T12.team.includes(7) && Object.values(T12.need).includes(4), [T12.kinds, T12.team, T12.need]);
+  check('D4c 箱の札に押す人数、スイッチととびらに同時におさえる数が出る',
+    (await H.page.$$eval('.sg-boxnum', (xs) => xs.map((x) => x.textContent))).includes('7')
+    && (await H.page.$$('.sg-cell--sw[data-need="4"]')).length === 8 && (await H.page.$$('.sg-cell--door[data-need="4"]')).length === 1);
   check('D5 コマ12・ゴール12', await waitFor(async () => (await H.page.$$('.sg-piece--player')).length === 12 && (await H.page.$$('.sg-cell--goal')).length === 12));
   check('D6 動く部分は、前のステージの分が残っていない・人ごとの値は短い', Object.keys(G12.play).length === 1 && G12.play[G12.id].p.every((x) => x.length <= 12), Object.keys(G12.play));
   const fit = await H.page.evaluate(() => ({

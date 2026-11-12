@@ -9,14 +9,14 @@
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
   <link rel="stylesheet" href="../shared/css/design-system.css?v=20261106c">
   <!-- index.html と app.js・engine.js・art.js・style.css はセットで変わるので、変えたら ?v= をそろえて上げる -->
-  <link rel="stylesheet" href="style.css?v=20261113">
+  <link rel="stylesheet" href="style.css?v=20261113b">
   <script src="https://www.gstatic.com/firebasejs/13.3.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/13.3.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/13.3.0/firebase-database-compat.js"></script>
   <script src="../shared/js/rtdb-utils.js?v=20261005"></script>
   <script src="../shared/js/room-qr.js?v=20261022"></script>
-  <script src="engine.js?v=20261113"></script>
-  <script src="art.js?v=20261113"></script>
+  <script src="engine.js?v=20261113b"></script>
+  <script src="art.js?v=20261113b"></script>
 </head>
 <body data-genre="atekko">
 
@@ -222,7 +222,7 @@
     </div>
   </div>
 
-  <script type="module" src="app.js?v=20261113"></script>
+  <script type="module" src="app.js?v=20261113b"></script>
   <script src="../shared/js/stats.js?v=1" defer></script>
   <script src="../shared/js/howto.js"></script>
   <script>
@@ -238,8 +238,9 @@
         ] },
         { heading: 'あそびかた', items: [
           '自分のコマ（上に「あなた」と出ているコマ）を、矢印キーか画面の矢印のボタンで1マスずつ動かす',
-          'スイッチに乗っている間だけ、同じしるしのとびらが開く。「2」の付いたスイッチは、2つ同時におさえる',
-          '重い箱は、うしろからもう1人が押すと動く。箱をスイッチに乗せると、とびらが開いたままになる',
+          'スイッチに乗っている間だけ、同じしるしのとびらが開く。数字の付いたスイッチは、その数だけ同時におさえる',
+          '重い箱は、札の数字の人数が、たてにならんで押すと動く（「2」なら、うしろからもう1人）。箱をスイッチに乗せると、とびらが開いたままになる',
+          '人数が多いと、3人以上で押す箱や、3つ・4つ同時におさえるスイッチも出る',
           'カギを持っていると、かぎつきのとびらを開けられる。番号の付いた橋は、同じ番号の人だけ渡れる',
           'すみにあるカギや星は、1人がスイッチをおさえている間に、もう1人がとびらを通ってとりに行く',
           '進めないときは、どうして進めないかが盤の上に出る',

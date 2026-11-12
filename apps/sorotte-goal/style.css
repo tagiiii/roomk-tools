@@ -184,7 +184,7 @@ body { background: var(--color-bg); }
 .sg-cell--h, .sg-cell--H { --c: var(--sg-h); }
 .sg-cell--i, .sg-cell--I { --c: var(--sg-i); }
 /* 2つ同時におさえるスイッチと、そのとびら */
-.sg-cell.is-pair::after { content: '2'; position: absolute; right: 4%; top: 2%; z-index: 4; min-width: 34%; height: 34%; border-radius: 50%; background: #fff; color: var(--c); border: calc(var(--cell) * 0.035) solid var(--c); font-weight: 700; font-size: calc(var(--cell) * 0.24); line-height: 1; display: flex; align-items: center; justify-content: center; box-sizing: border-box; }
+.sg-cell.is-pair::after { content: attr(data-need); position: absolute; right: 4%; top: 2%; z-index: 4; min-width: 34%; height: 34%; border-radius: 50%; background: #fff; color: var(--c); border: calc(var(--cell) * 0.035) solid var(--c); font-weight: 700; font-size: calc(var(--cell) * 0.24); line-height: 1; display: flex; align-items: center; justify-content: center; box-sizing: border-box; }
 .sg-cell--L { --c: var(--sg-lock); }
 .sg-sw { position: absolute; inset: 12%; }
 .sg-sw__base { position: absolute; inset: 0; border-radius: 50%; background: color-mix(in srgb, var(--c) 45%, #3a2a1a); box-shadow: 0 calc(var(--cell) * 0.03) 0 rgba(0, 0, 0, 0.25); }
@@ -331,7 +331,7 @@ body { background: var(--color-bg); }
 .sg-legend__ic { --cell: 28px; position: relative; flex: none; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; }
 .sg-legend__ic--sw { border-radius: 50%; background: radial-gradient(circle at 35% 28%, color-mix(in srgb, var(--sg-a) 55%, #fff), var(--sg-a) 62%); box-shadow: 0 2px 0 color-mix(in srgb, var(--sg-a) 60%, #000); color: #fff; width: 24px; height: 24px; margin: 0 2px; }
 .sg-legend__ic--sw .sg-mark { width: 54%; height: 54%; }
-.sg-legend__ic--pair::after { content: '2'; position: absolute; right: -4px; top: -4px; width: 14px; height: 14px; border-radius: 50%; background: #fff; color: var(--sg-a); border: 1px solid var(--sg-a); font-weight: 700; font-size: 10px; line-height: 1; display: flex; align-items: center; justify-content: center; box-sizing: border-box; }
+.sg-legend__ic--pair::after { content: attr(data-need); position: absolute; right: -4px; top: -4px; width: 14px; height: 14px; border-radius: 50%; background: #fff; color: var(--sg-a); border: 1px solid var(--sg-a); font-weight: 700; font-size: 10px; line-height: 1; display: flex; align-items: center; justify-content: center; box-sizing: border-box; }
 .sg-legend__ic--bridge { background: repeating-linear-gradient(90deg, #C99A5E 0 21%, #8C6336 21% 25%); border-top: 2px solid var(--c); border-bottom: 2px solid var(--c); height: 20px; margin: 4px 0; }
 .sg-legend__ic--bridge span { width: 16px; height: 16px; border-radius: 50%; background: var(--c); border: 1px solid #fff; color: #fff; font-weight: 700; font-size: 10px; line-height: 1; display: flex; align-items: center; justify-content: center; box-sizing: border-box; }
 
@@ -432,6 +432,9 @@ body { background: var(--color-bg); }
 @media (max-width: 900px) {
   .sg-saybtn { align-self: flex-start; margin-left: var(--space-md); }
 }
+
+/* 箱の札: 押すのに要る人数 */
+.sg-boxnum { position: absolute; right: -4%; top: -8%; min-width: 40%; height: 40%; padding: 0 4%; box-sizing: border-box; border-radius: 999px; background: #5E4020; color: #fff; border: calc(var(--cell) * 0.04) solid #fff; font-weight: 700; font-size: calc(var(--cell) * 0.28); line-height: 1; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3); z-index: 2; }
 
 /* 本体で足した分 */
 .sg-play { min-width: 0; }

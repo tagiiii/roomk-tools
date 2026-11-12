@@ -22,7 +22,7 @@ const LEVEL_NOTE = {
   expert: '部屋は6つ。どのしかけも、2人以上で力を合わせないと通れない。',
 };
 const DEFAULT_SET = { level: 'easy', stage: 1, hostPlays: true };
-const KIND_NAME = { relay: 'とびら', relayJ: '橋の先のスイッチ', key: 'カギ', keyJ: '橋の先のカギ', keyDoor: 'とびらの先のカギ', box: '重い箱', pair: '2つ同時のスイッチ' };
+const KIND_NAME = { relay: 'とびら', relayJ: '橋の先のスイッチ', key: 'カギ', keyJ: '橋の先のカギ', keyDoor: 'とびらの先のカギ', box: '重い箱', boxBig: 'みんなで押す箱', pair: '同時におさえるスイッチ' };
 const MARK_NAME = { a: 'まる', b: 'さんかく', c: 'しかく', d: 'ほし', e: 'ひしがた', f: 'プラス', h: 'ろっかく', i: 'つき' };
 // ひとこと: 決まった言葉をえらんで、みんなに知らせる（声を出さなくても伝えられる）。自由に打つ欄は置かない。
 // 言葉を足す・変えるときは、オーナーが決める（docs/development/ui.md「マイクを使わない子が参加できる手段」）
@@ -1199,14 +1199,14 @@ function makeCell(S, T, t, x, y) {
     cell.append(el('div', 'sg-goal__pad'), art('sg-goal__flag', ART.FLAG));
   } else if (E.SWITCHES.includes(t)) {
     cell.classList.add('sg-cell--sw', 'sg-cell--' + t);
-    if (T.need[t] > 1) cell.classList.add('is-pair');
+    if (T.need[t] > 1) { cell.classList.add('is-pair'); cell.dataset.need = String(T.need[t]); }
     const sw = el('div', 'sg-sw');
     sw.append(el('div', 'sg-sw__base'), art('sg-sw__cap', ART.MARK[t]));
     cell.append(sw);
   } else if (E.SWITCH_OF[t] || t === 'L') {
     // 左右がゆかなら、戸は上下のかべの中へ開く。上下がゆかなら、左右へ開く
     cell.classList.add('sg-cell--door', 'sg-cell--' + t, wall(0, -1) && wall(0, 1) ? 'sg-door--h' : 'sg-door--v');
-    if (T.need[E.SWITCH_OF[t]] > 1) cell.classList.add('is-pair');
+    if (T.need[E.SWITCH_OF[t]] > 1) { cell.classList.add('is-pair'); cell.dataset.need = String(T.need[E.SWITCH_OF[t]]); }
     cell.append(el('div', 'sg-door__p sg-door__p--1'), el('div', 'sg-door__p sg-door__p--2'),
       art('sg-door__mark', t === 'L' ? ART.LOCK : ART.MARK[E.SWITCH_OF[t]]));
   } else if (E.BRIDGE_OF[t] !== undefined) {
@@ -1399,7 +1399,8 @@ function renderGame() {
   S.boxes.forEach(([x, y], i) => {
     const id = 'box' + i;
     live.add(id);
-    const node = piece(id, () => makePiece('sg-piece--box', ART.BOX));
+    // 箱の札の数字は、押すのに要る人数（たてにならぶ人数）
+    const node = piece(id, () => { const n = makePiece('sg-piece--box', ART.BOX); n.append(el('span', 'sg-boxnum', T.team[i] || 2)); return n; });
     const was = P && P.boxes[i];
     if (was && (was[0] !== x || was[1] !== y)) { replay(node, 'is-slide'); pushed.push(was); }
     node.style.zIndex = String(100 + y * 2);
@@ -1651,12 +1652,17 @@ function renderSay(movable) {
 // 説明の絵は、盤と同じ絵を小さく出す
 function buildLegend(T) {
   const has = (ch) => T.tiles.includes(ch);
-  const sw = (pair) => art('sg-legend__ic sg-legend__ic--sw' + (pair ? ' sg-legend__ic--pair' : ''), ART.MARK.a);
+  // 説明の絵のスイッチ。同時におさえる数は、このステージの数を出す
+  const sw = (pair) => {
+    const node = art('sg-legend__ic sg-legend__ic--sw' + (pair ? ' sg-legend__ic--pair' : ''), ART.MARK.a);
+    if (pair) node.dataset.need = String(Math.max(...Object.values(T.need)));
+    return node;
+  };
   const bridge = () => { const b = tint(el('span', 'sg-legend__ic sg-legend__ic--bridge'), 0); b.append(el('span', '', '1')); return b; };
   const items = [[art('sg-legend__ic', ART.FLAG), '全員が入るとクリア']];
   if (E.SWITCHES.some(has)) items.push([sw(false), 'スイッチ。乗っている間、同じしるしのとびらが開く']);
-  if (Object.keys(T.need).length) items.push([sw(true), '「2」のスイッチは、2つ同時におさえる']);
-  if (T.boxes.length) items.push([art('sg-legend__ic', ART.BOX), '重い箱。うしろからもう1人が押すと動く']);
+  if (Object.keys(T.need).length) items.push([sw(true), '数字の付いたスイッチは、その数だけ同時におさえる']);
+  if (T.boxes.length) items.push([art('sg-legend__ic', ART.BOX), '重い箱。数字の人数が、たてにならんで押すと動く']);
   if (T.keys.length) items.push([art('sg-legend__ic', ART.KEY), 'カギ。持っていると、かぎつきのとびらを開けられる'], [art('sg-legend__ic', ART.LOCK), 'かぎつきのとびら']);
   if (E.BRIDGES.some(has)) items.push([bridge(), '橋。同じ番号の人だけ渡れる']);
   if (T.stars.length) items.push([art('sg-legend__ic', ART.GEM), '星。とった数がクリアのときに出る']);
@@ -1693,13 +1699,15 @@ function whyBlocked(game, who, dx, dy) {
   if (E.SWITCH_OF[t]) {
     const c = E.SWITCH_OF[t];
     return T.need[c] > 1
-      ? '「2」のとびらは、同じしるし（' + MARK_NAME[c] + '）のスイッチを2つ同時におさえると開く。'
+      ? '「' + T.need[c] + '」のとびらは、同じしるし（' + MARK_NAME[c] + '）のスイッチを' + T.need[c] + 'つ同時におさえると開く。'
       : '同じしるし（' + MARK_NAME[c] + '）のスイッチに、だれかが乗ると開く。';
   }
   if (t === 'L') return 'カギを持っていると開けられる。';
-  if (S.boxes.some((b) => b[0] === tx && b[1] === ty)) {
-    const helper = S.players.some((q, i) => i !== who && q.x === p.x - dx && q.y === p.y - dy);
-    return helper ? '箱の先がふさがっていて、押せない。' : '重い箱は、うしろからもう1人が押すと動く。';
+  const bi = S.boxes.findIndex((b) => b[0] === tx && b[1] === ty);
+  if (bi >= 0) {
+    const team = T.team[bi] || 2;
+    if (E.pushers(S, who, dx, dy, team)) return '箱の先がふさがっていて、押せない。';
+    return team === 2 ? '重い箱は、うしろからもう1人が押すと動く。' : '「' + team + '」の箱は、' + team + '人がたてにならんで押すと動く。';
   }
   return '';
 }
