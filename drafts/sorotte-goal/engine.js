@@ -377,9 +377,43 @@
     return S;
   }
 
+  // 重い箱が、もうスイッチまで運べない場所に入ったか（詰み）。
+  // 箱で開けるとびらは、同じしるしのスイッチがステージに1つだけある。そのスイッチにまだ箱が乗っていなくて、
+  // どの箱も（人やほかの箱がいないとしても）そこまで押していけないなら、詰み。
+  // 押すには、箱の手前に2マス（押す人・うしろの人）と、箱の先に置けるマスが要る
+  function stuck(S) {
+    if (!S.boxes.length || S.cleared) return false;
+    const T = staticOf(S.spec);
+    const tile = (x, y) => (x < 0 || y < 0 || x >= T.w || y >= T.h ? '#' : T.tiles[y * T.w + x]);
+    const holds = (t) => t === '.' || t === 'G' || SWITCHES.includes(t);
+    // 押す人・うしろの人が立てるマス（とびらの中からは押せないものとして数える）
+    const stands = (t) => t !== '#' && !SWITCH_OF[t] && t !== 'L';
+    // 人が乗っておさえているだけでは、その人が先へ進めないので、箱が乗っているかどうかで見る
+    const boxOn = (c) => S.boxes.some((b) => tile(b[0], b[1]) === c);
+    const targets = SWITCHES.filter((c) => T.tiles.filter((t) => t === c).length === 1 && !boxOn(c));
+    if (!targets.length) return false;
+    const reach = new Set();
+    const stack = S.boxes.map((b) => [b[0], b[1]]);
+    while (stack.length) {
+      const [x, y] = stack.pop();
+      const k = x + ',' + y;
+      if (reach.has(k)) continue;
+      reach.add(k);
+      Object.keys(DIRS).forEach((d) => {
+        const [dx, dy] = DIRS[d];
+        if (!stands(tile(x - dx, y - dy)) || !stands(tile(x - 2 * dx, y - 2 * dy)) || !holds(tile(x + dx, y + dy))) return;
+        stack.push([x + dx, y + dy]);
+      });
+    }
+    return targets.some((c) => {
+      const i = T.tiles.indexOf(c);
+      return !reach.has((i % T.w) + ',' + Math.floor(i / T.w));
+    });
+  }
+
   const api = {
     FIXED, LEVELS, MIN_PLAYERS, MAX_PLAYERS, STARS, DIRS, SWITCHES, SWITCH_OF, BRIDGES, BRIDGE_OF,
-    roomSize, makeRng, generate, validSpec, specKey, staticOf, create, tileAt, held, doorOpen, move,
+    roomSize, makeRng, generate, validSpec, specKey, staticOf, create, tileAt, held, doorOpen, move, stuck,
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.SorotteEngine = api;

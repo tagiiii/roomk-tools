@@ -16,6 +16,11 @@
   const MARK_NAME = { a: 'まる', b: 'さんかく', c: 'しかく', d: 'ほし', e: 'ひしがた' };
   const $ = (id) => document.getElementById(id);
   const nameOf = (i) => (i + 1) + '人目';
+  // せまい画面（スマホ）では、1台の画面の2人も、動かすコマをえらぶ形にする（キーボードを2人で分ける形は使えないため）
+  const NARROW_MQ = window.matchMedia('(max-width: 900px)');
+  // 1台の画面で、動かすコマをえらぶ形か
+  const selecting = () => state.mode === 'one' && !!state.S && (state.S.players.length > 2 || NARROW_MQ.matches);
+  const KIND_NAME = { relay: 'とびら', relayJ: '橋の先のスイッチ', key: 'カギ', keyJ: '橋の先のカギ', box: '重い箱', pair: '2つ同時のスイッチ' };
 
   const state = {
     mode: null,   // 'one'（1台の画面）／'two'（ウィンドウごとに1人）
@@ -91,13 +96,13 @@
       if (v === 'practice') set.stage = Math.min(set.stage, E.FIXED.length);
       saveSet(); renderTop();
     });
-    const counts = [];
-    for (let i = E.MIN_PLAYERS; i <= E.MAX_PLAYERS; i += 1) counts.push([i, String(i), practice && i !== 2]);
-    seg($('countSeg'), counts, playersOf(set), (v) => { set.n = v; saveSet(); renderTop(); });
+    $('countNum').textContent = playersOf(set) + '人';
+    $('btnCountPrev').disabled = practice || set.n <= E.MIN_PLAYERS;
+    $('btnCountNext').disabled = practice || set.n >= E.MAX_PLAYERS;
     $('stageNum').textContent = String(set.stage);
     $('btnStageRandom').hidden = practice;
     const n = playersOf(set);
-    $('oneNote').textContent = n === 2
+    $('oneNote').textContent = n === 2 && !NARROW_MQ.matches
       ? '1つのキーボードを2人で使う。1人目は W・A・S・D、2人目は矢印キー。'
       : '動かすコマをえらんでから、矢印キーで動かす（数字キーでもえらべる）。1人で全員ぶんを動かして確かめるのにも使える。';
     const who = [];
@@ -231,7 +236,9 @@
       ? 'れんしゅう' + (spec.index + 1) + '　' + T.name
       : T.name + '・' + spec.n + '人　ステージ ' + spec.seed;
     replay($('stageName'), 'is-new');
-    $('stageHint').textContent = T.hint || '全員がゴールに入るとクリア。星は、とってもとらなくてもいい。';
+    // おまかせは、このステージに出るしかけの名前をならべる（くわしい説明は、横の一覧と、進めなかったときの一言）
+    $('stageHint').textContent = T.hint || 'しかけ: ' + Array.from(new Set(T.kinds.map((k) => KIND_NAME[k]))).join('・') + '。星は、とってもとらなくてもいい。';
+    showTip('');
     buildLegend(T);
     buildPads();
   }
@@ -401,7 +408,7 @@
         fxDust(was.x, was.y, dx, dy);
       }
       node.classList.toggle('is-me', state.mode === 'two' && state.me === i);
-      node.classList.toggle('is-picked', state.mode === 'one' && S.players.length > 2 && state.picked === i);
+      node.classList.toggle('is-picked', selecting() && state.picked === i);
       node.classList.toggle('is-cheer', S.cleared);
       // 持っているカギ
       const inner = node.querySelector('.sg-piece__in');
@@ -437,6 +444,8 @@
       $('clearText').textContent = 'クリア！';
       $('clearSub').replaceChildren(starRow(S.got, T.stars.length), el('span', '', S.rev + '歩'));
     }
+    board.classList.toggle('is-pickable', selecting());
+    $('stuckBox').hidden = !E.stuck(S);
     state.prev = S;
     camera();
   }
@@ -450,7 +459,7 @@
     const S = state.S;
     if (!S) return -1;
     if (state.mode === 'two') return state.me;
-    return S.players.length > 2 ? state.picked : -1;
+    return selecting() ? state.picked : -1;
   }
   function camera() {
     const S = state.S;
@@ -478,20 +487,57 @@
     board.style.transform = 'translate(' + tx.toFixed(1) + 'px, ' + ty.toFixed(1) + 'px) scale(' + scale.toFixed(3) + ')';
   }
 
+  // 説明の絵は、盤と同じ絵を小さく出す
   function buildLegend(T) {
     const has = (ch) => T.tiles.includes(ch);
-    const items = [['flag', '全員が入るとクリア']];
-    if (E.SWITCHES.some(has)) items.push(['radio_button_checked', 'スイッチ（乗っている間、同じしるしのとびらが開く）']);
-    if (Object.keys(T.need).length) items.push(['looks_two', '「2」の付いたスイッチは、2つ同時におさえる']);
-    if (T.boxes.length) items.push(['package_2', '重い箱（うしろから押してもらうと動く）']);
-    if (T.keys.length) items.push(['key', 'カギ'], ['lock', 'かぎつきのとびら']);
-    if (E.BRIDGES.some(has)) items.push(['counter_1', '橋（同じ番号の人だけ渡れる）']);
-    if (T.stars.length) items.push(['star', '星（とった数がクリアのときに出る）']);
-    $('legend').replaceChildren(...items.map(([name, text]) => {
+    const sw = (pair) => art('sg-legend__ic sg-legend__ic--sw' + (pair ? ' sg-legend__ic--pair' : ''), ART.MARK.a);
+    const bridge = () => { const b = tint(el('span', 'sg-legend__ic sg-legend__ic--bridge'), 0); b.append(el('span', '', '1')); return b; };
+    const items = [[art('sg-legend__ic', ART.FLAG), '全員が入るとクリア']];
+    if (E.SWITCHES.some(has)) items.push([sw(false), 'スイッチ。乗っている間、同じしるしのとびらが開く']);
+    if (Object.keys(T.need).length) items.push([sw(true), '「2」のスイッチは、2つ同時におさえる']);
+    if (T.boxes.length) items.push([art('sg-legend__ic', ART.BOX), '重い箱。うしろからもう1人が押すと動く']);
+    if (T.keys.length) items.push([art('sg-legend__ic', ART.KEY), 'カギ。持っていると、かぎつきのとびらを開けられる'], [art('sg-legend__ic', ART.LOCK), 'かぎつきのとびら']);
+    if (E.BRIDGES.some(has)) items.push([bridge(), '橋。同じ番号の人だけ渡れる']);
+    if (T.stars.length) items.push([art('sg-legend__ic', ART.GEM), '星。とった数がクリアのときに出る']);
+    $('legend').replaceChildren(...items.map(([pic, text]) => {
       const li = el('li');
-      li.append(icon(name), document.createTextNode(text));
+      pic.setAttribute('aria-hidden', 'true');
+      li.append(pic, document.createTextNode(text));
       return li;
     }));
+  }
+
+  // 進めなかったときの一言（なぜ進めないかを、その場で出す）
+  let tipTimer = 0;
+  function showTip(text) {
+    const tip = $('tip');
+    clearTimeout(tipTimer);
+    if (!text) { tip.classList.remove('is-on'); return; }
+    tip.textContent = text;
+    tip.classList.add('is-on');
+    tipTimer = setTimeout(() => tip.classList.remove('is-on'), 4500);
+  }
+  function whyBlocked(S, who, dx, dy) {
+    const T = E.staticOf(S.spec);
+    const p = S.players[who];
+    const tx = p.x + dx;
+    const ty = p.y + dy;
+    const t = E.tileAt(S, tx, ty);
+    if (t === '#') return '';
+    if (S.players.some((q, i) => i !== who && q.x === tx && q.y === ty)) return '';
+    if (E.BRIDGE_OF[t] !== undefined) return 'この橋は、' + (E.BRIDGE_OF[t] + 1) + '人目だけ渡れる。';
+    if (E.SWITCH_OF[t]) {
+      const c = E.SWITCH_OF[t];
+      return T.need[c] > 1
+        ? '「2」のとびらは、同じしるし（' + MARK_NAME[c] + '）のスイッチを2つ同時におさえると開く。'
+        : '同じしるし（' + MARK_NAME[c] + '）のスイッチに、だれかが乗ると開く。';
+    }
+    if (t === 'L') return 'カギを持っていると開けられる。';
+    if (S.boxes.some((b) => b[0] === tx && b[1] === ty)) {
+      const helper = S.players.some((q, i) => i !== who && q.x === p.x - dx && q.y === p.y - dy);
+      return helper ? '箱の先がふさがっていて、押せない。' : '重い箱は、うしろからもう1人が押すと動く。';
+    }
+    return '';
   }
 
   /* ── 動かす ── */
@@ -504,11 +550,13 @@
     const [dx, dy] = E.DIRS[dir];
     const p = S.players[who];
     if (moved) {
+      showTip('');
       // 箱を押して進んだとき（箱が、自分の1つ先にある）
       if (S.boxes.some((b) => b[0] === p.x + dx && b[1] === p.y + dy)) replay(me, 'is-push');
       return;
     }
-    // 進めなかった: その向きへ体を当てる。重い箱はぐらつき、閉じたとびらはがたつく
+    // 進めなかった: その向きへ体を当てる。重い箱はぐらつき、閉じたとびらはがたつく。理由を一言出す
+    showTip(whyBlocked(S, who, dx, dy));
     aim(me, dir);
     replay(me, 'is-bump');
     const tx = p.x + dx;
@@ -531,7 +579,7 @@
     const S = state.S;
     if (!S) return;
     const n = S.players.length;
-    const select = state.mode === 'one' && n > 2;
+    const select = selecting();
     const who = state.mode === 'two' ? [state.me] : select ? [state.picked] : [0, 1];
     const pick = $('pick');
     pick.hidden = !select;
@@ -567,8 +615,7 @@
   document.addEventListener('keydown', (event) => {
     if (!state.mode || !state.S || !$('screen-game').classList.contains('active')) return;
     if (event.isComposing || event.ctrlKey || event.metaKey || event.altKey || $('askBox').open) return;
-    const n = state.S.players.length;
-    const select = state.mode === 'one' && n > 2;
+    const select = selecting();
     // 数字キーで、動かすコマをえらぶ（1〜9。0 は10人目）
     if (select && /^[0-9]$/.test(event.key)) {
       event.preventDefault();
@@ -594,6 +641,20 @@
     state.S = S;
     render();
   });
+
+  // 盤のコマを押して、動かすコマをえらぶ（1台の画面で、えらぶ形のとき）
+  $('board').addEventListener('click', (event) => {
+    if (!selecting()) return;
+    const node = event.target.closest('.sg-piece--player');
+    if (!node) return;
+    const i = Object.keys(state.pieces).find((id) => state.pieces[id] === node);
+    if (i) pickPlayer(Number(i.replace('player', '')));
+  });
+  // 画面のはばが変わって、えらぶ形かどうかが変わったら、操作のボタンを作りなおす
+  NARROW_MQ.addEventListener('change', () => { if (state.S) { buildPads(); render(); } else renderTop(); });
+  const stepCount = (d) => { state.set.n = Math.max(E.MIN_PLAYERS, Math.min(E.MAX_PLAYERS, state.set.n + d)); saveSet(); renderTop(); };
+  $('btnCountPrev').addEventListener('click', () => stepCount(-1));
+  $('btnCountNext').addEventListener('click', () => stepCount(1));
 
   loadSet();
   renderTop();
