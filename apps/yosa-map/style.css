@@ -1,0 +1,271 @@
+/* よさマップ 固有スタイル（接頭辞: ym- / BEM。マップの図は mp-。もとは apps/suki-mono-map の style.css）
+   色は共通の変数（こげ茶・茶オレンジ）と、トーク系の種類の色（--g・--g-pale・--g-ink）を使う。
+   マップの枝と選ぶ札は、よさごとの色（data.js の color・pale・ink → --c・--p・--i）で見分ける（ボタンには使わない）。
+   ほかの人から見えた場面は、アクセント色の点線の札（もらう前）・アクセント色のふち（もらったあと）と目の印で見分ける。
+   大きくするのは遊ぶ画面（マップ・質問）だけ。はじめの画面・名前の入力・待合室はほかのツールと同じ大きさ（ui.md「画面の幅と文字の大きさ」）。
+   ボタンの高さは 56（主）・48（ふつう・補助）・36（ルームのバー・もどる）の3段。塗りの主ボタンは1画面に1つ */
+
+.ym-wrap { max-width: 760px; margin: 0 auto; padding: 32px 16px 80px; box-sizing: border-box; }
+/* 広い場所がいるのは、マップを作る画面と見せあう画面だけ */
+.ym-wrap:has(#screen-pick.active), .ym-wrap:has(#screen-show.active) { max-width: 1040px; }
+.ym-screen { display: none; }
+.ym-screen.active { display: block; }
+.ym-screen > * + * { margin-top: 16px; }
+
+/* ヘッダー（はじめの画面のあいだは隠す。入口の型の中に同じ名前を出す） */
+.ym-header { text-align: center; margin-bottom: 20px; }
+.ym-header__title { color: var(--color-primary); font-size: 1.6rem; font-weight: 700; margin: 0; }
+.ym-wrap.is-top .ym-header { display: none; }
+
+/* 作成・参加 */
+.ym-subhead { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
+.ym-subhead__title { color: var(--color-primary); font-size: 1.2rem; font-weight: 700; margin: 0; }
+.ym-form { max-width: 520px; margin: 0 auto; background: var(--color-surface); border-radius: var(--radius-card); box-shadow: var(--shadow-soft); padding: 22px; }
+.ym-form__label { display: block; color: var(--color-primary); font-size: 0.9rem; font-weight: 700; margin: 0 0 8px; }
+.ym-form__input + .ym-form__label { margin-top: 18px; }
+.ym-form__input { width: 100%; box-sizing: border-box; min-height: 48px; border: 1.5px solid var(--color-border); border-radius: 10px; padding: 10px 12px; font-family: inherit; font-size: 1rem; background: var(--color-surface); color: var(--color-text); }
+.ym-form__input:focus { outline: none; border-color: var(--color-accent); }
+.ym-form__input--code { text-transform: uppercase; letter-spacing: 0.18em; font-size: 1.3rem; }
+.ym-form__hint { color: var(--color-muted); font-size: 14px; line-height: 1.6; margin: 0 0 16px; }
+.ym-form__error { color: var(--color-error); background: #fef2f2; border-left: 3px solid var(--color-error); border-radius: 6px; padding: 10px 12px; margin: 12px 0 0; }
+.ym-form > .btn { margin-top: 18px; }
+
+/* ルームのバー */
+.ym-roombar { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; color: var(--color-primary); background: var(--color-surface); border-radius: 12px; box-shadow: var(--shadow-soft); border-top: 4px solid var(--g); padding: 8px 12px; margin-bottom: 18px; }
+.ym-roombar strong { font-size: 1.25rem; letter-spacing: 0.13em; }
+.ym-roombar #btnLeave { margin-left: auto; }
+
+/* 待合室（ほかのツールと同じ大きさ） */
+.ym-h2 { font-size: 1.2rem; color: var(--color-primary); margin: 0 0 14px; }
+.ym-h3 { display: block; font-size: 0.95rem; font-weight: 700; color: var(--color-primary); padding: 0; margin: 0 0 8px; }
+.ym-field { border: 0; padding: 0; margin: 0 0 20px; min-width: 0; }
+.ym-note { font-size: 14px; line-height: 1.6; color: var(--color-muted); margin: 8px 0 0; }
+.ym-note:empty { display: none; }
+.ym-center { text-align: center; }
+.ym-wait { font-size: 1rem; color: var(--color-muted); text-align: center; margin: 12px 0 0; }
+.ym-rule { margin: 0; font-size: 1rem; line-height: 1.7; }
+.ym-players { list-style: none; padding: 0; margin: 0 0 12px; display: flex; flex-wrap: wrap; gap: 8px; }
+.ym-players li { display: inline-flex; align-items: center; background: var(--g-pale); border-radius: 999px; padding: 6px 14px; font-size: 1rem; }
+.ym-players small { color: var(--g-ink); font-weight: 700; margin-left: 6px; font-size: 12px; }
+.ym-chip-x { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; margin: -6px -10px -6px 2px; border: 0; border-radius: 50%; background: transparent; color: var(--color-muted); cursor: pointer; }
+.ym-chip-x:hover { color: var(--color-text); background: var(--color-surface); }
+.ym-chip-x .material-symbols-rounded { font-size: 1.1rem; }
+.ym-check { display: inline-flex; align-items: center; gap: 8px; min-height: 48px; font-weight: 700; cursor: pointer; }
+.ym-check input { width: 22px; height: 22px; accent-color: var(--color-accent); }
+.ym-check--box { padding: 0 16px; border-radius: 12px; background: var(--color-primary-soft); font-weight: 500; }
+.ym-inputrow { display: flex; align-items: stretch; gap: 8px; }
+.ym-inputrow .ym-form__input { flex: 1 1 auto; min-width: 0; }
+.ym-inputrow .btn { flex: 0 0 auto; min-height: 48px; white-space: nowrap; }
+#btnStart + .ym-note { margin-top: 10px; }
+
+/* ホストの戻りを待つ */
+.ym-overlay { position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(40, 30, 20, .45); }
+.ym-overlay__panel { max-width: 420px; width: 100%; background: var(--color-surface); border-radius: var(--radius-card); padding: 24px; text-align: center; box-shadow: var(--shadow-soft); }
+.ym-overlay__panel h2 { margin: 0 0 8px; font-size: 1.3rem; color: var(--color-primary); }
+
+/* 1つ選ぶ */
+.ym-seg { display: flex; flex-wrap: wrap; gap: 8px; }
+.ym-seg button { min-height: 48px; min-width: 104px; padding: 8px 16px; border-radius: 12px; border: 2px solid var(--color-border); background: var(--color-surface); color: var(--color-text); font: inherit; font-weight: 700; cursor: pointer; }
+.ym-seg button:hover { background: var(--color-primary-soft); }
+.ym-seg button[aria-checked="true"] { border-color: var(--color-accent); background: var(--color-accent-soft); color: var(--color-accent); }
+
+/* たたむ（くわしい設定・そのほかの操作） */
+.ym-more { margin: 0 0 20px; border-top: 1px solid var(--color-border); }
+.ym-more > summary { display: flex; align-items: center; gap: 4px; min-height: 48px; cursor: pointer; font-weight: 700; color: var(--color-muted); list-style: none; }
+.ym-more > summary::-webkit-details-marker { display: none; }
+.ym-more > summary::before { content: 'chevron_right'; font-family: 'Material Symbols Rounded'; font-weight: 400; font-size: 1.3rem; line-height: 1; transition: transform .15s; }
+.ym-more[open] > summary::before { transform: rotate(90deg); }
+.ym-more > summary:hover { color: var(--color-text); }
+.ym-more > :last-child { margin-bottom: 16px; }
+.ym-more--ops { margin: 12px 0 0; }
+.ym-more--ops > :last-child { margin-bottom: 0; }
+.ym-more__btns { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* 弱いボタン（もどる・選びなおす） */
+.ym-quiet { min-height: 36px; padding: 4px 8px; border: 0; background: transparent; color: var(--color-muted); font: inherit; font-size: .95rem; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; border-radius: 8px; }
+.ym-quiet:hover { color: var(--color-text); }
+
+/* ホストの操作 */
+.ym-hostbox { background: var(--color-primary-soft); border-radius: 14px; padding: 12px 16px 14px; }
+.ym-hostbox__label { margin: 0 0 8px; font-size: .8rem; font-weight: 700; color: var(--color-muted); letter-spacing: .04em; }
+.ym-hostbox__row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; }
+.ym-hostbox__row--nav { justify-content: center; }
+.ym-hostbox__text { margin: 0; font-weight: 700; }
+.ym-hostbox .btn { display: inline-flex; align-items: center; justify-content: center; gap: 2px; }
+.ym-hostbox .btn-secondary { background: var(--color-surface); }
+
+/* ── 選ぶ ── */
+.ym-switch { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.ym-switch__label { font-size: .95rem; font-weight: 700; color: var(--color-muted); }
+.ym-switch button { display: inline-flex; align-items: center; gap: 4px; min-height: 48px; padding: 6px 16px; border-radius: 999px; border: 2px solid var(--color-border); background: var(--color-surface); color: var(--color-text); font: inherit; font-weight: 700; cursor: pointer; }
+.ym-switch button[aria-selected="true"] { border-color: var(--color-accent); background: var(--color-accent-soft); color: var(--color-accent); }
+.ym-switch .material-symbols-rounded { font-size: 1.1rem; color: var(--color-success); }
+
+/* マップだけの画面。「＋」を押すとポップアップで選ぶ */
+.ym-pick { display: flex; flex-direction: column; gap: 12px; }
+.ym-pick__map { padding: 12px 12px 14px; }
+.ym-hint { margin: 6px 0 0; text-align: center; font-size: .875rem; color: var(--color-muted); }
+.ym-finish { display: flex; justify-content: center; }
+.ym-finish__btn { width: min(100%, 360px); }
+
+/* ポップアップ */
+.ym-pop { position: fixed; z-index: 60; inset: 0; margin: auto; width: min(600px, calc(100vw - 32px)); max-height: min(86vh, 720px); padding: 0; border: 0; border-radius: 20px; background: var(--color-surface); color: var(--color-text); box-shadow: 0 16px 48px rgba(63, 54, 45, .28); overflow: hidden; }
+.ym-pop[open] { display: flex; flex-direction: column; animation: ym-rise .2s ease-out both; }
+.ym-pop::backdrop { background: rgba(63, 54, 45, .45); }
+.ym-pop__body { flex: 1 1 auto; overflow-y: auto; padding: 20px 20px 16px; }
+.ym-pop__foot { flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 12px 20px 14px; border-top: 1px solid var(--color-border); }
+.ym-pop__close { width: min(100%, 320px); min-height: 48px; }
+@keyframes ym-rise { from { transform: translateY(12px); opacity: 0; } to { transform: none; opacity: 1; } }
+.ym-panel__head { display: flex; align-items: center; gap: 10px; }
+.ym-panel__head .ym-genre__icon { flex: 0 0 auto; width: 44px; height: 44px; }
+.ym-title { margin: 0; font-size: 1.45rem; line-height: 1.35; color: var(--color-primary); }
+.ym-title:focus { outline: none; }
+.ym-lead { margin: 6px 0 16px; font-size: .95rem; color: var(--color-muted); }
+.ym-del { display: flex; align-items: center; gap: 2px; margin: 0; text-decoration: none; }
+.ym-del span:last-child { text-decoration: underline; text-underline-offset: 3px; }
+.ym-del .material-symbols-rounded { font-size: 1.15rem; }
+.ym-delconfirm { margin-top: 16px; padding: 12px; border-radius: 14px; background: var(--color-primary-soft); text-align: center; }
+.ym-delconfirm__q { margin: 0 0 10px; font-weight: 700; }
+.ym-delconfirm__btns { display: flex; justify-content: center; gap: 8px; }
+.ym-delconfirm__btns .btn { min-width: 104px; }
+
+/* ジャンルの札 */
+.ym-genres { display: grid; grid-template-columns: repeat(auto-fill, minmax(124px, 1fr)); gap: 8px; }
+.ym-genre { position: relative; min-height: 96px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 12px 8px; border-radius: 16px; border: 2px solid var(--color-border); background: var(--color-surface); color: var(--color-text); font: inherit; cursor: pointer; transition: transform .1s, border-color .1s, background .1s; }
+.ym-genre__icon { display: inline-flex; align-items: center; justify-content: center; width: 48px; height: 48px; border-radius: 50%; background: var(--p); color: var(--i); }
+.ym-genre__icon .material-symbols-rounded { font-size: 1.75rem; }
+.ym-genre__label { font-family: 'Zen Maru Gothic', var(--font-base); font-size: 1rem; font-weight: 700; line-height: 1.3; text-align: center; }
+.ym-genre:hover:not(:disabled) { border-color: var(--c); transform: translateY(-2px); }
+.ym-genre.is-on { border-color: var(--color-accent); background: var(--color-accent-soft); color: var(--color-accent); }
+.ym-genre .ym-genre__check { position: absolute; top: 6px; right: 6px; font-size: 1.4rem; color: var(--color-accent); }
+.ym-genre:disabled { opacity: .4; cursor: default; }
+
+/* くわしくの札 */
+.ym-items { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 8px; }
+.ym-item { display: flex; align-items: center; justify-content: flex-start; gap: 6px; min-height: 56px; padding: 8px 12px; border-radius: 14px; border: 2px solid var(--c); text-align: left; background: var(--color-surface); color: var(--color-text); font-family: 'Zen Maru Gothic', var(--font-base); font-size: 1.05rem; font-weight: 700; line-height: 1.35; cursor: pointer; transition: transform .1s, background .1s; }
+.ym-item:hover { background: var(--p); transform: translateY(-1px); }
+.ym-item .material-symbols-rounded { font-size: 1.2rem; flex: 0 0 auto; }
+.ym-item[aria-pressed="true"] { border: 3px solid var(--color-accent); background: var(--color-accent-soft); color: var(--color-accent); padding: 7px 11px; }
+.ym-item--add { border-style: dashed; border-color: var(--color-border); color: var(--color-muted); font-family: var(--font-base); font-size: .95rem; }
+.ym-item--add:hover { background: var(--color-primary-soft); }
+.ym-item--add[aria-expanded="true"] { border-color: var(--color-muted); background: var(--color-primary-soft); }
+.ym-free { margin-top: 12px; padding: 12px; border-radius: 14px; background: var(--color-primary-soft); }
+
+/* できあがり */
+.ym-sent { max-width: 640px; margin-left: auto; margin-right: auto; padding: 24px; text-align: center; }
+.ym-sent__lead { display: flex; align-items: center; justify-content: center; gap: 6px; margin: 0 0 8px; font-family: 'Zen Maru Gothic', var(--font-base); font-size: 1.5rem; font-weight: 700; color: var(--color-primary); }
+.ym-sent__lead .material-symbols-rounded { color: var(--color-success); font-size: 1.8rem; }
+.ym-sent .ym-wait { margin: 8px 0 12px; font-size: 1.05rem; }
+.ym-sent .ym-quiet { display: block; margin: 8px auto 0; }
+
+/* ── マップの図 ── */
+.ym-map svg { display: block; width: 100%; height: auto; max-height: 480px; }
+.ym-map--edit svg { max-height: min(70vh, 720px); }
+.ym-sent .ym-map svg { max-height: 360px; }
+.ym-map--big svg { max-height: 62vh; }
+/* スマホの幅: 上から下へ枝をのばす形（app.js の drawMap）。1目盛り＝1px で、高さは中身のぶんだけ */
+.ym-map svg.mp--tree { max-height: none; }
+.mp--tree .mp-leaf__text { font-size: 16px; }
+.mp--tree .mp-line--genre { stroke-width: 4; }
+.mp--tree .mp-line--trunk { stroke: var(--color-border); stroke-width: 4; }
+.mp--tree .mp-line--ghost { stroke-dasharray: 2 8; }
+.mp-line { stroke: var(--c); stroke-linecap: round; }
+.mp-line--genre { stroke-width: 6; }
+.mp-line--leaf { stroke-width: 3; }
+.mp-line--ghost { stroke: var(--color-border); stroke-width: 4; stroke-dasharray: 2 10; }
+.mp-ghost { fill: none; stroke: var(--color-border); stroke-width: 3; stroke-dasharray: 6 6; }
+.mp-me { fill: var(--color-accent); }
+.mp-me__text { fill: #fff; font-family: 'Zen Maru Gothic', var(--font-base); font-size: 22px; font-weight: 700; }
+.mp-genre { fill: var(--color-surface); stroke: var(--c); stroke-width: 4; }
+.mp-genre__icon { fill: var(--i); font-family: 'Material Symbols Rounded'; font-size: 26px; font-feature-settings: 'liga'; }
+.mp-genre__text { fill: var(--i); font-family: 'Zen Maru Gothic', var(--font-base); font-size: 18px; font-weight: 700; }
+.mp-leaf { fill: var(--p); stroke: var(--c); stroke-width: 2; }
+.mp-leaf__x { fill: var(--i); font-family: 'Material Symbols Rounded'; font-size: 17px; font-feature-settings: 'liga'; opacity: .65; }
+.mp-add { fill: var(--color-surface); stroke: var(--color-accent); stroke-width: 3; stroke-dasharray: 7 5; }
+.mp-add__icon { fill: var(--color-accent); font-family: 'Material Symbols Rounded'; font-size: 26px; font-feature-settings: 'liga'; }
+.mp-add__text { fill: var(--color-accent); font-family: 'Zen Maru Gothic', var(--font-base); font-size: 17px; font-weight: 700; }
+.mp-line--plus { stroke-width: 3; stroke-dasharray: 2 7; }
+.mp-plus { fill: var(--color-surface); stroke: var(--c); stroke-width: 3; stroke-dasharray: 5 4; }
+.mp-plus__icon { fill: var(--i); font-family: 'Material Symbols Rounded'; font-size: 24px; font-feature-settings: 'liga'; }
+.mp-node--plus.is-tap:hover > circle { fill: var(--p); stroke-dasharray: none; }
+.mp-node.is-tap:focus-visible > circle { stroke: var(--color-accent); stroke-width: 5; stroke-dasharray: none; }
+/* 押せる点 */
+.mp-node.is-tap { cursor: pointer; }
+.mp-node.is-tap:focus { outline: none; }
+.mp-node.is-tap:focus-visible > rect { stroke: var(--color-accent); stroke-width: 5; stroke-dasharray: none; }
+.mp-node--genre.is-tap:hover > rect { fill: var(--p); }
+.mp-node--genre.is-selected > rect { fill: var(--p); stroke-width: 6; }
+.mp-node--add.is-tap:hover > rect, .mp-node--add.is-selected > rect { fill: var(--color-accent-soft); }
+.mp-node--leaf.is-tap:hover > rect { fill: var(--color-surface); stroke-dasharray: 4 3; }
+.mp-node--leaf.is-tap:hover .mp-leaf__x { opacity: 1; }
+.mp-leaf__text { fill: var(--i); font-family: 'Zen Maru Gothic', var(--font-base); font-size: 18px; font-weight: 700; }
+.mp-node.is-new > * { animation: ym-pop .45s cubic-bezier(.2, .8, .3, 1) both; transform-box: fill-box; transform-origin: center; }
+.mp-line.is-new { animation: ym-fade .45s ease-out both; }
+@keyframes ym-pop { from { transform: scale(.4); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes ym-fade { from { opacity: 0; } }
+
+/* ── 見せあう ── */
+.ym-people { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.ym-person { min-height: 48px; padding: 6px 18px; border-radius: 999px; border: 2px solid var(--color-border); background: var(--color-surface); color: var(--color-muted); font: inherit; font-weight: 700; cursor: pointer; }
+.ym-person:disabled { cursor: default; }
+.ym-person[aria-selected="true"] { border-color: var(--color-accent); background: var(--color-accent-soft); color: var(--color-accent); font-size: 1.1rem; }
+.ym-showmap { padding: 16px; }
+.ym-askcard { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px 14px; padding: 18px 16px; background: var(--color-surface); border: 3px solid var(--color-accent); border-radius: var(--radius-card); box-shadow: var(--shadow-soft); }
+.ym-askcard__label { font-size: .9rem; font-weight: 700; color: #fff; background: var(--color-accent); border-radius: 999px; padding: 2px 12px; }
+.ym-askcard__text { margin: 0; font-family: 'Zen Maru Gothic', var(--font-base); font-size: 1.6rem; font-weight: 700; line-height: 1.4; color: var(--color-primary); text-align: center; }
+.ym-askcard .btn { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 4px; }
+.ym-askcard .btn .material-symbols-rounded { font-size: 1.1rem; }
+
+@media (max-width: 600px) {
+  /* せまい画面では、完成のボタンを下にとめ、ポップアップは下から出す */
+  .ym-pick__map { padding: 8px 8px 10px; }
+  .ym-map--edit svg { max-height: 58vh; }
+  /* 右下の丸ボタン（？・フィードバック）に重ならないよう、帯の下に余白をとる */
+  .ym-finish { position: sticky; bottom: 0; z-index: 2; margin: 0 -16px; padding: 10px 16px 76px; background: var(--color-bg); border-top: 1px solid var(--color-border); }
+  .ym-pop { width: 100vw; max-width: 100vw; max-height: 84vh; margin: auto 0 0; border-radius: 20px 20px 0 0; }
+  .ym-pop__body { padding: 16px 16px 12px; }
+}
+@media (max-width: 600px) {
+  .ym-title { font-size: 1.3rem; }
+  .ym-genres { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .ym-genre { min-height: 96px; }
+  .ym-genre__label { font-size: .95rem; }
+  .ym-items { grid-template-columns: 1fr; }
+  .ym-offer__text { font-size: 1.4rem; }
+  .ym-askcard__text { font-size: 1.35rem; }
+  .ym-hostbox__row--nav { justify-content: space-between; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mp-node.is-new > *, .mp-line.is-new, .ym-pop[open] { animation: none; }
+  .ym-genre, .ym-item { transition: none; }
+}
+
+/* ── よさマップで足したもの ── */
+.ym-seg--col { flex-direction: column; }
+.ym-seg--col button { text-align: left; }
+.ym-maptitle { margin: 0; text-align: center; font-family: 'Zen Maru Gothic', var(--font-base); font-size: 1.3rem; font-weight: 700; color: var(--color-primary); }
+.ym-legend { display: flex; align-items: center; justify-content: center; gap: 6px; margin: 8px 0 0; font-size: .9rem; color: var(--color-accent); }
+.ym-legend .material-symbols-rounded { font-size: 1.15rem; }
+.ym-hostbox__text--head { margin: 12px 0 8px; }
+.ym-hostbox .ym-seg button { background: var(--color-surface); }
+/* だれが見つけたものとして足すか（ホスト） */
+.ym-by { margin: 0 0 14px; padding: 10px 12px 12px; border-radius: 14px; background: var(--color-primary-soft); }
+.ym-by__label { margin: 0 0 6px; font-size: .8rem; font-weight: 700; color: var(--color-muted); }
+.ym-by .ym-seg button { background: var(--color-surface); }
+.ym-by .ym-seg button[aria-checked="true"] { background: var(--color-accent-soft); }
+/* 場面の札: ほかの人から見えた札・添え書き */
+.ym-item.is-offer { border: 2px dashed var(--color-accent); background: var(--color-surface); color: var(--color-accent); padding: 8px 12px; }
+.ym-item__from { margin-left: auto; font-family: var(--font-base); font-size: .75rem; font-weight: 500; white-space: nowrap; color: var(--color-muted); }
+/* 見えた場面をもらう */
+.ym-offer { text-align: center; padding: 8px 0 4px; }
+.ym-offer__from { display: inline-flex; align-items: center; gap: 6px; margin: 0 0 10px; font-size: .95rem; font-weight: 700; color: var(--color-accent); }
+.ym-offer__text { margin: 0 0 18px; font-family: 'Zen Maru Gothic', var(--font-base); font-size: 1.7rem; font-weight: 700; line-height: 1.4; color: var(--color-primary); }
+.ym-offer__text:focus { outline: none; }
+.ym-offer__btns { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.ym-offer__btns .btn { width: min(100%, 320px); min-height: 48px; }
+/* マップの札: ほかの人から見えた場面（もらう前は点線・もらったあとはアクセント色のふち） */
+.mp-leaf--offer { fill: var(--color-surface); stroke: var(--color-accent); stroke-width: 2.5; stroke-dasharray: 6 4; }
+.mp-leaf--kept { stroke: var(--color-accent); stroke-width: 3; }
+.mp-node--leaf.is-offer .mp-leaf__text { fill: var(--color-accent); }
+.mp-leaf__from { fill: var(--color-accent); font-family: 'Material Symbols Rounded'; font-size: 18px; font-feature-settings: 'liga'; }
+.mp-node--leaf.is-offer.is-tap:hover > rect { fill: var(--color-accent-soft); stroke-dasharray: 6 4; }

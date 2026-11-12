@@ -185,6 +185,8 @@ const COVERED_APPS = [
   'tsunagete-story',
   // 2026-11-11 追加（ジャンルと、その中の選択肢・見せあいの質問）
   'suki-mono-map',
+  // 2026-11-12 追加（よさと、そのよさが出る場面・ながめるときの質問）
+  'yosa-map',
   // 既存（A2 以前から抽出済み）
   'quiz', 'kotoba-shuffle', 'kanji-sagashi', 'kotoba-relay', 'tatoe-gp',
   'kaburazu-hint', 'kotoba-tantei', 'docchi', 'minna-ranking',
@@ -282,9 +284,12 @@ const REPEAT_EXPECTED_VARIANTS = new Set([
 //     要確認の17組がすべてこれだったため外した
 //   - suki-mono-map はジャンル（variant＝ジャンルの id）ごとの選択肢で、同じ語が別のジャンルに出るのは設計どおり
 //     （「ダンス」が音楽・スポーツ・動画に、「料理」が動画・つくるに入る。同じジャンル内の重複は collectEntries で fail-fast）
+//   - yosa-map はよさ（variant＝よさの id）ごとの場面で、同じ場面が別のよさに出るのは設計どおり
+//     （「絵をかくとき」が想像力・手先が器用に入る。同じよさの中の重複は collectEntries で fail-fast）
 const CROSS_VARIANT_EXPECTED_TOOLS = new Set([
   'suki-bingo',
   'suki-mono-map',
+  'yosa-map',
 ]);
 
 // 禁止題材の候補語（ルート AGENTS.md「使用しない表現・トピック」）。見つけたら stderr に警告を出すだけで、
@@ -707,6 +712,38 @@ function collectEntries() {
   });
   if (mapProblems.length > 0) {
     throw new Error(`suki-mono-map data.js の構造エラー:\n  ${mapProblems.join('\n  ')}`);
+  }
+
+  // yosa-map: data.js の window.YOSA_MAP_DATA = { yosa: [ { id, label, items: [...] } ], asks: [...] }。
+  //   よさの名前・よさごとの場面・ながめるときの質問。空と、同じよさの中の重複はここで fail-fast にする
+  const yosaContext = { window: {} };
+  vm.createContext(yosaContext);
+  vm.runInContext(read('apps/yosa-map/data.js'), yosaContext, { filename: 'apps/yosa-map/data.js' });
+  const yosaData = yosaContext.window.YOSA_MAP_DATA || {};
+  const yosaProblems = [];
+  const yosaIds = new Set();
+  (Array.isArray(yosaData.yosa) ? yosaData.yosa : []).forEach((yosa, g) => {
+    if (!yosa || !yosa.id || !yosa.label) { yosaProblems.push(`yosa[${g}] に id・label のどちらかがない`); return; }
+    if (yosaIds.has(yosa.id)) yosaProblems.push(`yosa[${g}] の id「${yosa.id}」が重複`);
+    yosaIds.add(yosa.id);
+    rows.push(entry('yosa-map', 'yosa', yosa.label, { id: `yosa-map:yosa:${yosa.id}`, variant: 'yosa' }));
+    if (!Array.isArray(yosa.items) || yosa.items.length === 0) { yosaProblems.push(`yosa.${yosa.id}.items が空`); return; }
+    const seen = new Set();
+    yosa.items.forEach((text, index) => {
+      if (typeof text !== 'string' || !text.trim()) yosaProblems.push(`yosa.${yosa.id}.items[${index}] が空`);
+      if (seen.has(text)) yosaProblems.push(`yosa.${yosa.id}.items[${index}]「${text}」が重複`);
+      seen.add(text);
+      rows.push(entry('yosa-map', yosa.id, text, { id: `yosa-map:${yosa.id}:${index}`, variant: yosa.id }));
+    });
+  });
+  if (yosaIds.size === 0) yosaProblems.push('yosa が空');
+  if (!Array.isArray(yosaData.asks) || yosaData.asks.length === 0) yosaProblems.push('asks が空');
+  (Array.isArray(yosaData.asks) ? yosaData.asks : []).forEach((text, index) => {
+    if (typeof text !== 'string' || !(text.includes('{x}') || text.includes('{s}'))) yosaProblems.push(`asks[${index}] に {x} も {s} もない`);
+    rows.push(entry('yosa-map', 'ask', text, { id: `yosa-map:ask:${index}`, variant: 'ask' }));
+  });
+  if (yosaProblems.length > 0) {
+    throw new Error(`yosa-map data.js の構造エラー:\n  ${yosaProblems.join('\n  ')}`);
   }
 
   // hirameki-oogiri: data.js の export const TOPICS = [ '文字列', ... ]（大喜利のお題）。
