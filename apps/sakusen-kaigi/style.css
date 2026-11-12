@@ -504,6 +504,13 @@ body.dragging, body.dragging * { cursor: grabbing !important; user-select: none;
 @media (min-width: 721px) and (max-width: 1100px) and (max-height: 900px), (min-width: 1101px) and (max-width: 1400px) and (pointer: coarse) and (max-height: 900px) {
   .h-grid[data-ops="side"] .h-side .h-box:first-child .h-h2,
   .h-grid[data-ops="side"] .h-people { display: none; }
+  /* 右の列の余白も少し詰める。詰めないと、1024×768px・4人で「次回の日」の時刻の欄が、右下の丸いボタン（？と意見）の下にかくれる */
+  .h-grid[data-ops="side"] .h-ops { padding: 10px 14px; }
+  .h-grid[data-ops="side"] .h-ops .h-check { margin-top: 8px; }
+  .h-grid[data-ops="side"] .h-ops .h-hint:not(:first-child) { margin-top: 6px; line-height: 1.6; }
+  .h-grid[data-ops="side"] .h-side { gap: 10px; margin-top: -6px; }
+  .h-grid[data-ops="side"] .h-side .h-box { padding: 10px 14px; }
+  .h-grid[data-ops="side"] .h-side .h-h2 { margin-bottom: 6px; padding-bottom: 4px; }
 }
 
 /* ══ 本体: 画面の切りかえ・参加の画面・おしらせ ══ */
