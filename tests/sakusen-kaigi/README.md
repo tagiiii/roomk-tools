@@ -23,7 +23,8 @@ node tests/sakusen-kaigi/e2e1.cjs
 
 - エミュレーターには Java が要る（無ければ、Temurin の JRE を一時フォルダに取って `JAVA_HOME` と `PATH` に入れる）
 - 画面の写真は `$SK_WORK/out/` に出る
-- 2026-11-12 本体化のときの結果: 53項目すべて合格（Playwright 1.64・システムの Chrome・firebase-tools 15.29.0・Temurin 21 JRE）
+- 2026-11-12 本体化のときの結果: 53項目すべて合格（3回続けて）。進行役の切断と復帰（H4）は、古い接続の切断の予約が遅れて動く順番があり、在室を入れなおす処理を足す前は、たまに不合格になった
+- （同じ日・はじめの結果）53項目すべて合格（Playwright 1.64・システムの Chrome・firebase-tools 15.29.0・Temurin 21 JRE）
 
 ## 確かめたときに見つけたこと（2026-11-12）
 

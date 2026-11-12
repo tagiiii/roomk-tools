@@ -68,7 +68,7 @@
     { id: 'plan', name: '予定の確認', sec: 3, motif: 'cal', lead: '予定の', main: '確認', memo: ['予定の', '確認'], desc: 'これから1週間の予定を入れてみよう' },
     { id: 'news', name: 'お知らせ', sec: 4, motif: 'mega', lead: '', main: 'お知らせ', memo: ['お知らせ'], desc: 'room-K のお知らせと、次回の日' },
   ];
-  const ROWS = [{ id: 'am', name: '午前' }, { id: 'pm', name: '午後' }, { id: 'todo', name: 'するべきこと' }];
+  const ROWS = [{ id: 'am', name: '午前' }, { id: 'pm', name: '午後' }, { id: 'todo', name: 'やること' }];
   const WD = ['日', '月', '火', '水', '木', '金', '土'];
   const MAX_ITEMS = 3;
   const MAX_PEOPLE = 6; // 子ども（端末あり・なしを合わせて）
@@ -377,6 +377,9 @@
     }
     if (room.status === 'finished' && !c.watch && c.session.role !== 'host') { detach(); saveSession(null); overlay('おしまい', 'きょうの作戦会議は、ここまで。', goTop); goTop(); return; }
     if (!c.watch && !(room.players && room.players[c.session.id])) { detach(); saveSession(null); overlay('ルームから外れました', '進行役が外したか、参加の情報が消えました。もう一度参加できます。', goTop); goTop(); return; }
+    // 進行役はつながっているのに「切断」になっていたら、在室を入れなおす。通信が切れて戻ったとき、
+    // 古い接続の切断の予約が、入れなおしたあとに遅れて動くことがある（そのままだと、2分で期限切れになる）
+    if (!c.watch && c.session.role === 'host' && online && room.hostConnected === false && !c.pending && !c.leaving) { c.ready = false; ensurePresence(c).catch(() => {}); }
     if (expired(room)) { cleanup(c.ref).catch(() => {}); return; }
     S.room = norm(room);
     S.code = c.code;

@@ -211,7 +211,9 @@ const { check, sleep } = L;
   check('H3 進行役の通信が切れると、子どもとみんなの画面に「待っています」', (await L.stageText(W, '#overlay')).includes('待っています'));
   await H.context.setOffline(false);
   await A.page.waitForFunction(() => document.getElementById('overlay').hidden, null, { timeout: 20000 });
-  check('H4 戻ると「待っています」が消える', (await L.roomOf(code)).hostConnected === true);
+  // 古い接続の切断の予約が遅れて動いても、進行役が在室を入れなおして「接続中」に戻る
+  await sleep(4000);
+  check('H4 戻ると「待っています」が消え、そのまま接続中でいる', (await L.roomOf(code)).hostConnected === true && await A.page.evaluate(() => document.getElementById('overlay').hidden), (await L.roomOf(code)).hostConnected);
 
   // ── 外す・退出・閉じる ──
   await H.page.click(`#h-people [data-act=remove][data-pid="${ids['そうた']}"]`);
