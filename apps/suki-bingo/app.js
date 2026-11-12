@@ -1012,7 +1012,11 @@ function renderStale() {
 function updateHostOverlay(room) {
   if (state.role === 'guest' && room.hostConnected === false) {
     $('hostOffOverlay').hidden = false;
+    // 切れたままのあいだに切れた時刻だけが新しくなったら（ホストの通信が短く揺れたとき）、期限のタイマーを仕掛けなおす。
+    // 古い時刻のまま動くと「まだ期限前」で消せず、待つ画面のまま残る（2026-11-13）
+    if (state.orphanTimer && state.orphanAt !== RoomkRTDB.getHostDisconnectedAt(room)) { clearTimeout(state.orphanTimer); state.orphanTimer = null; }
     if (!state.orphanTimer) {
+      state.orphanAt = RoomkRTDB.getHostDisconnectedAt(room);
       const ref = state.roomRef;
       const at = RoomkRTDB.getHostDisconnectedAt(room);
       const delay = at == null ? ORPHAN_TTL_MS : Math.max(0, at + ORPHAN_TTL_MS - RoomkRTDB.now());
