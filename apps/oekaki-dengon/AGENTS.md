@@ -109,7 +109,7 @@ apps/oekaki-dengon/
 └── slides.html  # 画面共有用説明スライド（slides-generator で作成）
 ```
 
-- Firebase compat SDK **10.14.1**（app / auth / database）+ 匿名認証
+- Firebase compat SDK **13.3.0**（app / auth / database）+ 匿名認証
 - `../shared/js/rtdb-utils.js?v=20261005`（`initFirebase` / `now` / `isRoomExpired` / `generateRoomCode` / `esc` / `cancelRoomOnDisconnect` / `copyRoomCode` / `showFormError` / `showToast`）
 - `../shared/css/design-system.css` のトークン・`btn` クラスを再利用
 - CSS 接頭辞: **`oek-`**（BEM）。画面切替は `.screen` / `.active`

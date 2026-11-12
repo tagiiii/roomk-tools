@@ -37,7 +37,7 @@ apps/toomawashi/
 
 - `slides.html` は画面共有用の説明スライド（全14枚。slides-generator で作成。エンジンは正本テンプレート kotoba-tantei と同じで、中身だけ差し替えた）。ボタン名・進め方・5つの観点のボタンを変えたら、スライドと発表者ノートの文も合わせる
 
-- Firebase compat SDK **10.14.1**（app / auth / database）+ 匿名認証
+- Firebase compat SDK **13.3.0**（app / auth / database）+ 匿名認証
 - 共有ヘルパー `../shared/js/rtdb-utils.js?v=20261005`
   （`initFirebase` / `now` / `getHostDisconnectedAt` / `isRoomExpired` / `generateRoomCode` /
   `esc` / `cancelRoomOnDisconnect` / `showToast`）

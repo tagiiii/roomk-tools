@@ -12,7 +12,7 @@
 (function () {
   'use strict';
 
-  const SDK_BASE = 'https://www.gstatic.com/firebasejs/10.14.1/';
+  const SDK_BASE = 'https://www.gstatic.com/firebasejs/13.3.0/';
   const FIREBASE_CONFIG = {
     apiKey: 'AIzaSyC0bqQdDJeTAWrqFYqjOT1NsVFiunPemIw',
     authDomain: 'roomk-tools.firebaseapp.com',

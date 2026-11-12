@@ -4,12 +4,12 @@
 // =============================================
 // 使用例:
 //   import { db } from "../../shared/js/firebase-config.js";
-//   import { collection, addDoc } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+//   import { collection, addDoc } from "https://www.gstatic.com/firebasejs/13.3.0/firebase-firestore.js";
 // =============================================
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
-import { getFirestore } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
-import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/13.3.0/firebase-app.js";
+import { getFirestore } from "https://www.gstatic.com/firebasejs/13.3.0/firebase-firestore.js";
+import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/13.3.0/firebase-auth.js";
 
 // TODO: Firebase コンソールの「プロジェクトの設定」から取得してここに貼り付ける
 // 参照: docs/firebase-setup.md

@@ -229,7 +229,7 @@ apps/nemurase-kichi/
 ```
 
 - 分割型。index.html・app.js・engine.js・minigames.js・firebase-config.js・style.css を変えたら `?v=` をそろえて上げる
-- Firebase compat SDK **10.14.1**（app / auth / database）+ 匿名認証
+- Firebase compat SDK **13.3.0**（app / auth / database）+ 匿名認証
 - `../shared/js/rtdb-utils.js?v=20261005`・`../shared/js/room-qr.js?v=20261022`
 - CSS 接頭辞: **`nk-`**（BEM）。画面切替は `.nk-screen` / `.active`
 - 描画はマップと人を canvas、ほかは DOM API（textContent）。innerHTML は使わない

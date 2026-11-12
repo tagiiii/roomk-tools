@@ -62,7 +62,7 @@ apps/hirameki-oogiri/
 ```
 
 - 構成はしるしでヒントと同じ分割型。index.html・app.js・data.js・style.css を変えたら `?v=` をそろえて上げる（app.js の `import ... from './data.js?v=…'` も）
-- Firebase compat SDK **10.14.1**（app / auth / database）+ 匿名認証
+- Firebase compat SDK **13.3.0**（app / auth / database）+ 匿名認証
 - `../shared/js/rtdb-utils.js?v=20261005`・`../shared/js/room-qr.js?v=20261022`
 - CSS 接頭辞: **`og-`**（BEM）。画面切替は `.og-screen` / `.active`。遊ぶ画面（`.og-screen--wide`）だけ広い2列（900px 以上）。せまい画面では1列にして、ホストの枠を「いま出ている答え」のすぐ下に出す
 - 描画はすべて DOM API（textContent）。innerHTML は使わない

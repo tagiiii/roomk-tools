@@ -55,7 +55,7 @@ apps/stamp-ate/
 ```
 
 - 構成は気持ち当てゲーム（`apps/kimochi-ate/`）と同じ分割型。index.html・app.js・style.css を変えたら `?v=` をそろえて上げる
-- Firebase compat SDK **10.14.1**（app / auth / database）+ 匿名認証
+- Firebase compat SDK **13.3.0**（app / auth / database）+ 匿名認証
 - `../shared/js/rtdb-utils.js?v=20261005`（`initFirebase` / `now` / `isRoomExpired` / `getHostDisconnectedAt` / `generateRoomCode` / `cancelRoomOnDisconnect` / `copyRoomCode` / `showToast`）
 - CSS 接頭辞: **`sa-`**（BEM）。画面切替は `.sa-screen` / `.active`
 - 描画はすべて DOM API（textContent・createElementNS）。innerHTML は使わない

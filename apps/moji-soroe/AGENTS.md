@@ -68,7 +68,7 @@ apps/moji-soroe/
 - `slides.html` は画面共有用の説明スライド（全14枚。slides-generator で作成。エンジンは正本テンプレート kotoba-tantei と同じで、
   文字タイルの見本と中身だけ差し替えた）。ボタン名・進め方・そろえる形（2文字・3文字・3文字）を変えたら、スライドと発表者ノートの文も合わせる
 
-- Firebase compat SDK **10.14.1**（app / auth / database）+ 匿名認証
+- Firebase compat SDK **13.3.0**（app / auth / database）+ 匿名認証
 - 共有ヘルパー `../shared/js/rtdb-utils.js?v=20261005`（`initFirebase` / `now` / `isRoomExpired` /
   `generateRoomCode` / `esc` / `cancelRoomOnDisconnect` / `showToast`）
 - CSS 接頭辞: **`ms-`**（BEM）。画面切替は共通パターンの `.screen` / `.active`

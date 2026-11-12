@@ -4,7 +4,7 @@ import {
   onSnapshot,
   runTransaction,
   Timestamp,
-} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+} from "https://www.gstatic.com/firebasejs/13.3.0/firebase-firestore.js";
 import { auth, authReady, db } from "../shared/js/firebase-config.js";
 import { generateSessionId, shuffle } from "../shared/js/utils.js";
 

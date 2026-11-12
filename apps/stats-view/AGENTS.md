@@ -17,7 +17,7 @@
 ## 技術スタック
 
 - ファイル構成: `index.html` + `app.js` + `style.css`（分割構成。otona-talk と同パターン）
-- Firebase モジュール版 SDK 10.14.1 を CDN から `import`。Realtime Database + 匿名認証
+- Firebase モジュール版 SDK 13.3.0 を CDN から `import`。Realtime Database + 匿名認証
   - `signInAnonymously()` の完了を **await してから** 読む
   - Firebase アプリは名前付き（`roomk-stats-view`）で初期化する
 - **読み取り専用。** `set` / `update` / `remove` / `transaction` は一切書かない

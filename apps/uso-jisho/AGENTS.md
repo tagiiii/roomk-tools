@@ -27,7 +27,7 @@ apps/uso-jisho/
 └── index.html   # 単一ファイルで完結（CSS・JS インライン）
 ```
 
-- Firebase Realtime Database（compat SDK 10.14.1）+ 匿名認証
+- Firebase Realtime Database（compat SDK 13.3.0）+ 匿名認証
 - 共有ヘルパー `../shared/js/rtdb-utils.js`（`RoomkRTDB.*`）
 - `../shared/css/design-system.css` のトークン・`btn` クラスを再利用
 - CSS 接頭辞: `uj-`（BEM）
