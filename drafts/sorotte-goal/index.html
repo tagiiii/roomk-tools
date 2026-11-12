@@ -9,7 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet" />
   <link rel="stylesheet" href="../../apps/shared/css/design-system.css?v=20261106c" />
-  <link rel="stylesheet" href="style.css?v=20261112b" />
+  <link rel="stylesheet" href="style.css?v=20261112c" />
 </head>
 <body>
   <main class="sg-wrap">
@@ -20,13 +20,38 @@
         <div class="sg-duo" id="duo" aria-hidden="true"></div>
         <p class="sg-badge">試作</p>
         <h1 class="sg-title">そろってゴール</h1>
-        <p class="sg-lead">2人でコマを1マスずつ動かして、2人ともゴールに入るとクリア。とびら・重い箱・カギは、1人では進めない。声をかけ合って進もう。</p>
+        <p class="sg-lead">みんなでコマを1マスずつ動かして、全員がゴールに入るとクリア。とびら・重い箱・カギは、1人では進めない。声をかけ合って進もう。</p>
+
+        <div class="sg-set">
+          <div class="sg-field">
+            <p class="sg-field__label" id="lblLevel">むずかしさ</p>
+            <div class="sg-seg" id="levelSeg" role="group" aria-labelledby="lblLevel"></div>
+          </div>
+          <div class="sg-field" id="countField">
+            <p class="sg-field__label" id="lblCount">人数</p>
+            <div class="sg-seg sg-seg--num" id="countSeg" role="group" aria-labelledby="lblCount"></div>
+          </div>
+          <div class="sg-field" id="stageField">
+            <p class="sg-field__label" id="lblStage">ステージ番号</p>
+            <div class="sg-stepper" role="group" aria-labelledby="lblStage">
+              <button type="button" class="sg-stepper__btn" id="btnStagePrev" aria-label="前の番号"><span class="material-symbols-rounded">chevron_left</span></button>
+              <span class="sg-stepper__num" id="stageNum" aria-live="polite"></span>
+              <button type="button" class="sg-stepper__btn" id="btnStageNext" aria-label="次の番号"><span class="material-symbols-rounded">chevron_right</span></button>
+              <button type="button" class="sg-quiet" id="btnStageRandom">くじで決める</button>
+            </div>
+            <p class="sg-note">番号ごとに、部屋のならびとしかけがちがう。同じ番号なら、いつでも同じステージ。</p>
+          </div>
+        </div>
+
         <div class="sg-actions">
           <button type="button" class="btn btn-primary btn-lg btn-full" id="btnOne">1台の画面でためす</button>
-          <p class="sg-note">1つのキーボードを2人で使う。1人目は W・A・S・D、2人目は矢印キー。</p>
-          <button type="button" class="btn btn-secondary btn-full" id="btnTwo1">2つのウィンドウでためす（1人目になる）</button>
-          <button type="button" class="btn btn-secondary btn-full" id="btnTwo2">2つのウィンドウでためす（2人目になる）</button>
-          <p class="sg-note">このページをもう1つのウィンドウで開き、もう一方を選ぶ。同じパソコンの中だけでつながる（通信はしない）。</p>
+          <p class="sg-note" id="oneNote"></p>
+          <button type="button" class="btn btn-secondary btn-full" id="btnTwo">ウィンドウごとに1人でためす</button>
+          <div class="sg-who" id="whoBox" hidden>
+            <p class="sg-field__label">このウィンドウは何人目？</p>
+            <div class="sg-seg sg-seg--num" id="whoSeg"></div>
+            <p class="sg-note">人数ぶんのウィンドウでこのページを開き、ちがう番号を選ぶ。同じパソコンの中だけでつながる（通信はしない）。ほかのウィンドウが先に始めていたら、そのステージに入る。</p>
+          </div>
         </div>
       </div>
     </section>
@@ -36,34 +61,40 @@
       <div class="sg-head">
         <p class="sg-stage" id="stageName"></p>
         <p class="sg-hint" id="stageHint"></p>
+        <p class="sg-hud" id="hud" aria-live="polite"></p>
         <p class="sg-you" id="youLine" hidden></p>
       </div>
 
-      <div class="sg-boardhost">
+      <div class="sg-boardhost" id="boardHost">
         <div class="sg-board" id="board" role="img" aria-label="ステージ"></div>
         <div class="sg-clear" id="clearBox" aria-live="polite" hidden>
           <div class="sg-clear__card">
             <p class="sg-clear__big" id="clearText"></p>
-            <button type="button" class="btn btn-primary btn-lg" id="btnNext"></button>
+            <p class="sg-clear__sub" id="clearSub"></p>
+            <div class="sg-clear__btns">
+              <button type="button" class="btn btn-primary btn-lg" id="btnNext">次のステージへ</button>
+              <button type="button" class="btn btn-secondary" id="btnAgain">もう一回</button>
+            </div>
           </div>
         </div>
       </div>
 
+      <div class="sg-pick" id="pick" hidden></div>
       <div class="sg-pads" id="pads"></div>
 
       <ul class="sg-legend" id="legend"></ul>
 
       <div class="sg-tools">
         <button type="button" class="btn btn-secondary" id="btnRetry">このステージをやりなおす</button>
-        <div class="sg-jump" id="jump"></div>
+        <button type="button" class="sg-quiet" id="btnSkip">ほかのステージにする</button>
         <button type="button" class="sg-quiet" id="btnTop">トップへ戻る</button>
       </div>
     </section>
 
   </main>
 
-  <script src="engine.js?v=20261112b"></script>
-  <script src="art.js?v=20261112b"></script>
-  <script src="app.js?v=20261112b"></script>
+  <script src="engine.js?v=20261112c"></script>
+  <script src="art.js?v=20261112c"></script>
+  <script src="app.js?v=20261112c"></script>
 </body>
 </html>
