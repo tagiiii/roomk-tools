@@ -18,6 +18,12 @@
         ".write": "auth != null"
       }
     },
+    "sorottegoal_rooms": {
+      "$roomId": {
+        ".read": "auth != null",
+        ".write": "auth != null"
+      }
+    },
     "charinbaton_rooms": {
       "$roomId": {
         ".read": "auth != null",
