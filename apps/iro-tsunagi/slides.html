@@ -113,7 +113,7 @@
   .mode__d b{ color:var(--acc); font-weight:900; }
 
   /* 操作ボタン */
-  .pad{ display:grid; grid-template-columns:repeat(3, 1fr); gap:16px; }
+  .pad{ display:grid; grid-template-columns:repeat(4, 1fr); gap:16px; }
   .padbtn{ background:var(--white); border:1.5px solid var(--line); border-radius:16px; padding:16px 12px 14px; display:flex; flex-direction:column; align-items:center; gap:8px; }
   .padbtn__ic{ width:58px; height:58px; border-radius:14px; background:var(--acc-tint); color:var(--acc); display:flex; align-items:center; justify-content:center; }
   .padbtn__ic .material-symbols-rounded{ font-size:34px; }
@@ -297,13 +297,14 @@ const CHAIN_BEFORE = ['......','......','..2...','..1...','1....4','11.222'];
 // じゃまの玉
 const JAMA = ['......','......','......','9..9..','1399..','113224','999999'];
 
+// 並びはアプリの画面と同じ（すとんブロックと同じ置き場所）: 1段目 左・右・下げる・一気に落とす、2段目 回す2つ
 const PAD = [
   { ic:'arrow_back', t:'左へ', k:'← か A' },
-  { ic:'rotate_left', t:'左に回す', k:'Z' },
-  { ic:'rotate_right', t:'右に回す', k:'↑・W・X' },
   { ic:'arrow_forward', t:'右へ', k:'→ か D' },
   { ic:'arrow_downward', t:'下げる', k:'↓ か S' },
   { ic:'vertical_align_bottom', t:'一気に落とす', k:'スペース' },
+  { ic:'rotate_left', t:'左に回す', k:'Z' },
+  { ic:'rotate_right', t:'右に回す', k:'↑・W・X' },
 ];
 function padHTML(){
   return '<div class="pad">'+PAD.map(p=>'<div class="padbtn"><div class="padbtn__ic"><span class="material-symbols-rounded">'+p.ic+'</span></div><div class="padbtn__t">'+p.t+'</div><div class="padbtn__k"><span class="key">'+p.k+'</span></div></div>').join('')+'</div>';
@@ -348,7 +349,7 @@ const SLIDES = [
   /* 6 */ { type:'content', accent:'teal', section:'ゲーム説明', sectionEn:'controls', num:'3',
     headline:'動かしかた',
     body:`${padHTML()}
-    <div class="demo-cap">左・右・下は、<b>押しっぱなしで続けて動く</b>よ。下の段の文字はキーボードのキー。スマホやタブレットは、盤の下のボタンで動かす。</div>`,
+    <div class="demo-cap">ボタンは盤の下。左・右・下は、<b>押しっぱなしで続けて動く</b>よ。下の段の文字はキーボードのキー。「とめる」「おわる」は上のバー。</div>`,
     note:'動かしかただよ。\n左・右・下のボタンで動かす。押しっぱなしにすると、続けて動くよ。\n回すボタンは、左に回すと右に回すの2つ。\n下に線のあるボタンで、一気に落とす。\nキーボードなら、← →（A D でも）で動かす、↓（S でも）で下げる、スペースで一気に落とす、↑（W でも）か X で右に回す、Z で左に回すだよ。' },
 
   /* 7 */ { type:'content', accent:'blue', section:'ゲーム説明', sectionEn:'tips', num:'4',

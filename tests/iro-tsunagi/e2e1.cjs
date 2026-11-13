@@ -101,7 +101,7 @@ function plan(seed, colors, n) {
   await page.click('#btnStart');
   check('T4 あそぶ画面になる', await waitFor(async () => (await st(page)).mode === 'play'));
   check('T5 はじめるを数える', (await page.evaluate(() => window.__counts['solo-start'])) === 1);
-  check('T6 時間なしのときは、のこりを出さない', !(await page.isVisible('#timerBox')));
+  check('T6 時間なしのときは、のこりを出さない', !(await page.isVisible('#timer')));
   let s = await st(page);
   check('T7 軸の玉は左から3列目のいちばん上に出る', s.piece.x === 2 && s.piece.y === 0 && s.piece.rot === 0, s.piece);
 
