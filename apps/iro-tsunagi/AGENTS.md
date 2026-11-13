@@ -214,6 +214,11 @@ irotsunagi_rooms/{roomCode}/
 - 対戦の「ここまで」は、早くここまでになった子が待つ時間が長くなる。人数が多いときや、まだ慣れていない子がいるときは「からにしてつづける」で
 - 点で落ち込む子には、れんさになった場面や、うまくつなげた場面をほめる
 
+## 説明スライド（slides.html）
+
+- 18枚（2026-11-13）。正本テンプレート（kotoba-tantei）と同じエンジンを、すとんブロックのスライドから写した（チャンネル `iro-tsunagi_deck`・localStorage の接頭辞 `its_`）
+- 玉の見本は、アプリと同じ色・中の形を SVG で描く（`BALL`・`MARK`）。盤の見本は6列（`miniBoard`）。ルール（送るじゃまの数・盤がいっぱい・設定）を変えたら、スライドの文と発表者ノートも合わせる
+
 ## 共通モジュールの使用箇所
 
 | モジュール | 使用箇所 |
@@ -222,7 +227,7 @@ irotsunagi_rooms/{roomCode}/
 | rtdb-utils.js（`?v=20261005`） | `initFirebase`・`generateRoomCode`・`now`・`getHostDisconnectedAt`・`cancelRoomOnDisconnect`・`copyRoomCode`・`copyRoomLink`・`showToast` |
 | room-qr.js（`?v=20261022`） | 「QRコードを出す」（`RoomkQR.show`） |
 | stats.js（`?v=1`） | 起動回数（`open`）と、上の「利用回数」 |
-| howto.js | 「あそびかた」モーダル |
+| howto.js | 「あそびかた」モーダル（`slides: 'slides.html'` で「説明スライドを見る」） |
 
 ## 確かめたこと
 
