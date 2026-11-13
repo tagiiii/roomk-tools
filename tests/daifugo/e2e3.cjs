@@ -81,13 +81,35 @@ const audioMade = (c) => c.page.evaluate(() => window.__audioMade);
   const sndAfterDeal = await snd(M);
   check('deal sounds (mobile)', sndAfterDeal > 3, sndAfterDeal);
 
+  // 自分の番の合図: 番の人にだけ卓のふちの「あなたの番！」が出る（みんなにみせる画面には出ない）
+  let markSeen = 0; let markWrong = 0; let shotTurn = false;
+  const markCheck = async () => {
+    for (const c of [H, M]) {
+      const st = await c.page.evaluate(() => ({ mark: !document.getElementById('myTurnMark').hidden, mine: document.getElementById('dock').classList.contains('is-myturn') }));
+      if (st.mark !== st.mine) markWrong += 1;
+      if (st.mark) {
+        markSeen += 1;
+        if (!shotTurn) {
+          shotTurn = true;
+          await c.page.screenshot({ path: L.OUT + '/e3-myturn-' + c.label + '.png' });
+          // 札が下の手札の欄に隠れていない（札の下のほうに札そのものがある。札は押せない作りなので、確かめる間だけ押せるようにする）
+          const top = await c.page.evaluate(() => { const m = document.getElementById('myTurnMark'); m.style.pointerEvents = 'auto'; const r = m.getBoundingClientRect(); const n = document.elementFromPoint(r.left + r.width / 2, r.top + r.height * 0.75); m.style.pointerEvents = ''; return !!n && !!n.closest('#myTurnMark'); });
+          check('my turn mark not covered: ' + c.label, top);
+        }
+      }
+    }
+    if (!(await W.page.evaluate(() => document.getElementById('myTurnMark').hidden))) markWrong += 100;
+  };
   // 最後まで（ホストとスマホの人の番を進める）
   for (let n = 0; n < 900; n += 1) {
     if (await L.isOver(H)) break;
+    await markCheck();
     await L.humanMove(H);
     await L.humanMove(M);
     await sleep(100);
   }
+  check('my turn mark shown on my turn', markSeen > 0, markSeen);
+  check('my turn mark only on my turn, never on watch', markWrong === 0, markWrong);
   await sleep(3000);
   for (const c of [H, W, M]) {
     const F = await fx(c);
