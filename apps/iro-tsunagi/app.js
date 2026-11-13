@@ -1417,7 +1417,7 @@
   function hud() {
     if (!run) return;
     $('score').textContent = String(run.battle ? run.sent : run.shownScore);
-    $('best').textContent = String(g ? g.bestChain : 0);
+    $('best').textContent = String(run.shownBest);
     $('jama').textContent = String(run.pending);
     $('jamaBox').classList.toggle('is-coming', run.pending > 0);
     if (run.limit) $('timer').textContent = fmtTime(run.limit - Math.max(0, run.t()));
@@ -1448,7 +1448,7 @@
       solo: !!o.solo, speed: SPEED[o.speed] || SPEED.slow, full: o.full, limit: o.limit || 0, startAt: o.startAt || 0,
       elapsed: 0, battle: !!o.battle, pending: Math.max(0, Math.min(999, Number(o.pending) || 0)), sent: Math.max(0, Number(o.sent) || 0),
       outAt: Number(o.outAt) || null, out: false, done: false, paused: false,
-      mode: 'play', fallAcc: 0, lockWait: null, resets: 0, anim: null, fullT: 0, shownScore: g.score, lastChain: 0,
+      mode: 'play', fallAcc: 0, lockWait: null, resets: 0, anim: null, fullT: 0, shownScore: g.score, shownBest: g.bestChain, lastChain: 0,
     };
     run.t = run.solo ? () => run.elapsed : () => RoomkRTDB.now() - run.startAt;
     parts = [];
@@ -1663,6 +1663,8 @@
     const st = run.anim.steps[run.anim.i];
     if (st.type !== 'pop') return;
     playChain(st.chain);
+    // 最高れんさは、消える動きで見せたれんさまでを出す（先に最後のれんさの数を出さない）
+    if (st.chain > run.shownBest) { run.shownBest = st.chain; hud(); }
     if (st.chain >= 2) message(st.chain + 'れんさ！');
   }
   function burst(groups) {
@@ -1698,6 +1700,7 @@
   // 落とす・消すがおわったあと: 対戦で来るじゃまがあり、いま消さなかったら落とす → つぎの組を出す
   function afterSettle(afterJama) {
     run.shownScore = g.score;
+    run.shownBest = g.bestChain;
     if (run.battle && !afterJama && run.pending > 0 && run.lastChain === 0) {
       const n = Math.min(run.pending, E.JAMA_MAX);
       run.pending -= n;
