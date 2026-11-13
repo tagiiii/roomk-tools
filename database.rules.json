@@ -252,6 +252,12 @@
         ".write": "auth != null"
       }
     },
+    "irotsunagi_rooms": {
+      "$roomId": {
+        ".read": "auth != null",
+        ".write": "auth != null"
+      }
+    },
     "tatoegp_rooms": {
       "$roomId": {
         ".read": "auth != null",

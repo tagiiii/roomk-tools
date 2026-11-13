@@ -52,7 +52,7 @@
 .it-msgcol { width: 160px; flex: none; display: flex; justify-content: flex-end; padding-top: 8px; }
 .it-msg {
   margin: 0; text-align: right; min-height: 1.4em; pointer-events: none;
-  font-family: 'Zen Maru Gothic', var(--font-base); font-weight: 700; font-size: 1.5rem; color: var(--color-accent);
+  font-family: 'Zen Maru Gothic', var(--font-base); font-weight: 700; font-size: 1.25rem; line-height: 1.4; color: var(--color-accent);
   opacity: 0; transform: translateX(8px); transition: opacity .15s, transform .15s;
 }
 .it-msg.show { opacity: 1; transform: none; }
@@ -114,4 +114,107 @@
 
 @media (prefers-reduced-motion: reduce) {
   .it-msg, .it-more__sum::before { transition: none; }
+}
+
+/* ---------- ルーム ---------- */
+.it-panel__title { margin: 0 0 16px; font-size: 1.2rem; color: var(--color-primary); }
+.it-back { margin: -8px 0 4px -8px; }
+.it-alert { margin: 12px 0 0; color: var(--color-error); font-weight: 500; }
+.it-hint { margin: 0 0 16px; padding: 10px 14px; border-radius: var(--radius-sm); background: var(--color-accent-soft); color: var(--color-primary); line-height: 1.6; font-size: 14px; }
+.it-code-input { text-transform: uppercase; letter-spacing: 0.15em; }
+.it-check { display: flex; align-items: center; gap: 10px; min-height: 44px; font-weight: 500; cursor: pointer; }
+.it-check input { width: 20px; height: 20px; accent-color: var(--color-accent); }
+.it-more__sub { margin-left: 10px; font-size: 13px; font-weight: 500; color: var(--color-muted); }
+.it-panel .it-more { margin-top: 4px; }
+
+.it-appbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding: 12px 20px; background: var(--color-primary); color: #fff; }
+.it-appbar__title { margin: 0; font-size: 18px; color: #fff; }
+.it-appbar__badge { margin: 0; padding: 2px 10px; border-radius: 999px; background: #fff; color: var(--color-primary); font-size: 13px; font-weight: 700; }
+.it-appbar__me { margin: 0 0 0 auto; font-size: 14px; opacity: 0.9; }
+.it-roombar { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 4px 6px; padding: 6px 12px; background: var(--color-surface); border-bottom: 1px solid var(--color-border); }
+.it-roombar__code { margin-right: 6px; font-size: 14px; color: var(--color-muted); }
+.it-roombar__code strong { color: var(--color-primary); letter-spacing: 0.1em; font-size: 16px; }
+.is-watch .it-roombar .btn { display: none; }
+.is-watch .it-roombar #btnLeave { display: inline-flex; }
+
+.it-main { max-width: 560px; margin: 0 auto; display: grid; gap: 16px; padding-bottom: 88px; }
+.it-main .card { margin: 0; }
+.it-h2 { margin: 0 0 12px; font-size: 1.1rem; color: var(--color-primary); }
+.it-wait { margin: 8px 0 0; text-align: center; color: var(--color-muted); }
+.it-settings-view { margin: 0; padding: 12px 16px; border-radius: var(--radius-sm); background: var(--color-accent-soft); color: var(--color-primary); text-align: center; }
+.it-joininfo { background: var(--color-surface); border: 2px solid var(--color-accent); border-radius: 16px; padding: 20px; text-align: center; }
+.it-joininfo__label { margin: 0 0 6px; font-size: 13px; font-weight: 500; color: var(--color-accent); letter-spacing: 0.08em; }
+.it-joininfo__text { margin: 0; }
+.it-joininfo__code { margin: 6px 0 0; font-size: 40px; font-weight: 700; letter-spacing: 0.15em; color: var(--color-primary); }
+.it-people { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.it-people li { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); }
+.it-people .it-tag { margin-left: auto; font-size: 12px; color: var(--color-muted); }
+.it-people .material-symbols-rounded { font-size: 20px; color: var(--color-accent); overflow: hidden; max-width: 24px; }
+.it-startbar { position: sticky; bottom: 0; padding: 12px 0; background: linear-gradient(to top, var(--color-bg) 70%, transparent); }
+.it-startbar[hidden] { display: none; }
+.it-startbar .it-alert { margin: 8px 0 0; }
+
+.it-hostover { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.45); display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 60; }
+.it-hostover[hidden] { display: none; }
+.it-hostover__panel { background: var(--color-surface); border-radius: 16px; padding: 24px; max-width: 360px; text-align: center; display: grid; gap: 12px; }
+.it-hostover__panel h2 { margin: 0; font-size: 20px; color: var(--color-primary); }
+.it-hostover__panel p { margin: 0; color: var(--color-muted); line-height: 1.6; }
+.it-hostoff { margin: 0; font-size: 13px; font-weight: 700; color: var(--color-error); }
+
+/* カウントダウン（3・2・1） */
+.it-countdown {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none;
+  font-family: 'Zen Maru Gothic', var(--font-base); font-weight: 700; font-size: 6rem; color: var(--color-accent);
+  text-shadow: 0 2px 0 #fff, 0 0 18px #fff;
+}
+.it-countdown[hidden] { display: none; }
+
+/* 来るじゃま */
+.it-stat--jama.is-coming { box-shadow: 0 0 0 3px #8C8378, var(--shadow-soft); }
+.it-stat--jama.is-bump .it-stat__num { animation: it-bump .35s ease-out; }
+@keyframes it-bump { 0% { transform: scale(1.5); } 100% { transform: scale(1); } }
+
+/* ほかの人の盤（広い画面）・一覧（せまい画面） */
+.it-wrap:has(#screen-play.active #others:not([hidden])) { max-width: 1240px; }
+.it-others { display: flex; flex-wrap: wrap; gap: 10px; align-content: flex-start; max-width: 300px; }
+.it-other { display: grid; gap: 2px; justify-items: center; background: var(--color-surface); border-radius: 10px; padding: 6px; box-shadow: var(--shadow-soft); }
+.it-other canvas { border-radius: 6px; }
+.it-other__name { margin: 0; font-size: 13px; font-weight: 700; max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.it-other__info { margin: 0; font-size: 11px; color: var(--color-muted); max-width: 100px; text-align: center; line-height: 1.3; }
+.it-other.is-dim { opacity: 0.6; }
+.it-otherlist { list-style: none; margin: 8px auto 0; padding: 0; max-width: 420px; display: flex; flex-wrap: wrap; gap: 4px 6px; }
+.it-otherlist[hidden] { display: none; }
+.it-otherlist li { display: flex; gap: 6px; align-items: baseline; padding: 4px 10px; border-radius: 999px; background: var(--color-surface); font-size: 13px; }
+.it-otherlist__name { font-weight: 700; }
+.it-otherlist__info { color: var(--color-muted); }
+.it-otherlist li.is-dim { opacity: 0.6; }
+
+/* みんなにみせる画面・ホストが見る画面 */
+.it-wrap:has(#screen-watch.active) { max-width: 1240px; }
+.it-watchbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin-bottom: 12px; }
+.it-watchbar__title { font-weight: 700; color: var(--color-primary); font-size: 1.1rem; }
+.it-watchbar__timer { font-weight: 700; font-size: 1.3rem; font-variant-numeric: tabular-nums; }
+.it-watchbar .it-quiet { margin-left: auto; }
+.it-watchgrid { display: grid; gap: 16px; justify-content: center; }
+.it-wboard { display: grid; gap: 4px; justify-items: center; background: var(--color-surface); border-radius: 12px; padding: 10px; box-shadow: var(--shadow-soft); }
+.it-wboard canvas { border-radius: 8px; box-shadow: 0 0 0 3px var(--g, #6A4F35); }
+.it-wboard__name { margin: 0; font-weight: 700; font-size: 1.1rem; }
+.it-wboard__info { margin: 0; font-size: 0.95rem; color: var(--color-muted); }
+.it-wboard.is-dim { opacity: 0.6; }
+
+/* 結果の順位 */
+.it-rank { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.it-rank li { display: grid; grid-template-columns: 48px 1fr auto; align-items: center; gap: 8px; padding: 10px 12px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); }
+.it-rank__no { font-weight: 700; color: var(--color-accent); }
+.it-rank__who { display: grid; min-width: 0; }
+.it-rank__name { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.it-rank__sub { font-size: 12px; color: var(--color-muted); }
+.it-rank__main { font-weight: 700; color: var(--color-primary); font-variant-numeric: tabular-nums; }
+.it-rank li.is-me { border: 2px solid var(--color-accent); }
+
+@media (max-width: 700px) {
+  .it-appbar { padding: 10px 16px; }
+  .it-roombar { gap: 4px; padding: 6px 8px; }
+  .it-startbar { padding-bottom: 88px; }
+  .it-countdown { font-size: 4rem; }
 }

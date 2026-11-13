@@ -1,5 +1,6 @@
-// いろつなぎ E2E その1（ひとりで遊ぶ・通信しない）
+// いろつなぎ E2E その1（ひとりであそぶ・通信しない）
 // apps/ をこのテストの中で 127.0.0.1 に配信し、外への通信はすべて止める（stats.js は数えるだけの写しに差し替える）。
+// Firebase の SDK（gstatic）も止める。読めない端末でも、ひとりであそぶが動くことも確かめる。
 // PLAYWRIGHT=（playwright のフォルダ） node tests/iro-tsunagi/e2e1.cjs
 'use strict';
 const { chromium } = require(process.env.PLAYWRIGHT || 'playwright');
@@ -72,11 +73,12 @@ function plan(seed, colors, n) {
         return route.continue();
       }
       if (/fonts\.(googleapis|gstatic)\.com$/.test(u.hostname)) return route.abort();   // 字は手元の字で見る
+      if (u.hostname === 'www.gstatic.com') return route.abort();   // Firebase の SDK は読ませない（本番に入らない）
       outside.push(u.href);
       return route.abort();
     });
     const page = await ctx.newPage();
-    page.on('console', (m) => { if (m.type() === 'error' && !/ERR_FAILED|fonts/.test(m.text())) errors.push(m.text()); });
+    page.on('console', (m) => { if (m.type() === 'error' && !/ERR_FAILED|fonts|Failed to load resource/.test(m.text())) errors.push(m.text()); });
     page.on('pageerror', (e) => errors.push(String(e)));
     return page;
   }
@@ -95,9 +97,10 @@ function plan(seed, colors, n) {
   check('T2 「？」が出る', await page.isVisible('.howto-fab'));
   check('T3 効果音ははじめ切', await page.isChecked('input[name="sfx"][value="off"]'));
   await shot(page, 'top-pc');
+  await page.click('#btnGoSolo');
   await page.click('#btnStart');
   check('T4 あそぶ画面になる', await waitFor(async () => (await st(page)).mode === 'play'));
-  check('T5 はじめるを数える', (await page.evaluate(() => window.__counts.start)) === 1);
+  check('T5 はじめるを数える', (await page.evaluate(() => window.__counts['solo-start'])) === 1);
   check('T6 時間なしのときは、のこりを出さない', !(await page.isVisible('#timerBox')));
   let s = await st(page);
   check('T7 軸の玉は左から3列目のいちばん上に出る', s.piece.x === 2 && s.piece.y === 0 && s.piece.rot === 0, s.piece);
@@ -139,8 +142,9 @@ function plan(seed, colors, n) {
   await page.click('#btnResume').catch(() => {});
   await waitFor(async () => !(await st(page)).paused);
   await page.click('#btnQuit');
-  check('T19 「おわる」で結果', await page.isVisible('#screen-end'));
-  check('T20 結果に全部消した・からにした', (await page.textContent('#endAll')) === '0回' && (await page.isVisible('#endClearsRow')));
+  check('T19 「おわる」で結果', await page.isVisible('#screen-result'));
+  const body0 = await page.textContent('#resultBody');
+  check('T20 結果に全部消した・からにした', body0.includes('全部消した0回') && body0.includes('からにした0回'), body0);
   await page.close();
 
   // ---- 3. れんさ（同じ seed・同じ手順で、Node と同じ盤になる） ----
@@ -150,6 +154,7 @@ function plan(seed, colors, n) {
   check('T21 れんさが出る手順が見つかる', p && p.best >= 2, seed);
   page = await newPage();
   await page.goto(BASE + '?test=1&seed=' + seed);
+  await page.click('#btnGoSolo');
   await page.click('label:has(input[name="colors"][value="3"])');
   await page.click('#btnStart');
   const seen = new Set();
@@ -179,6 +184,7 @@ function plan(seed, colors, n) {
   // ---- 4. 盤がいっぱい（からにしてつづける）・時間・おしまい ----
   page = await newPage();
   await page.goto(BASE + '?test=1&seed=9');
+  await page.click('#btnGoSolo');
   await page.click('label:has(input[name="colors"][value="5"])');
   await page.evaluate(() => { document.querySelector('.it-more').open = true; });
   await page.click('label:has(input[name="time"][value="120"])');
@@ -198,23 +204,24 @@ function plan(seed, colors, n) {
   check('T30 からにして続く', await waitFor(async () => { const v = await st(page); return v.mode === 'play' && v.clears === 1; }, 4000));
   check('T31 盤がからになっている', (await st(page)).board.every((r) => r.every((v) => v === 0)));
   await page.evaluate(() => window.__iro.setTimeLeft(300));
-  check('T32 時間になると結果', await waitFor(async () => await page.isVisible('#screen-end')));
+  check('T32 時間になると結果', await waitFor(async () => await page.isVisible('#screen-result')));
   check('T33 「時間になったよ」', (await page.textContent('#endTitle')) === '時間になったよ');
-  check('T34 からにした 1回', (await page.textContent('#endClears')) === '1回');
+  check('T34 からにした 1回', (await page.textContent('#resultBody')).includes('からにした1回'));
   await page.click('#btnTop');
+  await page.click('#btnGoSolo');
   await page.evaluate(() => { document.querySelector('.it-more').open = true; });
   await page.click('label:has(input[name="time"][value="0"])');
   await page.click('label:has(input[name="full"][value="end"])');
   await page.click('#btnStart');
   let ended = false;
   for (let i = 0; i < 30 && !ended; i++) {
-    await waitFor(async () => (await page.isVisible('#screen-end')) || ((await st(page)).mode === 'play' && (await st(page)).piece));
-    if (await page.isVisible('#screen-end')) { ended = true; break; }
+    await waitFor(async () => (await page.isVisible('#screen-result')) || ((await st(page)).mode === 'play' && (await st(page)).piece));
+    if (await page.isVisible('#screen-result')) { ended = true; break; }
     await page.keyboard.press('Space');
     await sleep(30);
   }
-  check('T35 「おしまい」なら、いっぱいで結果', ended || await waitFor(async () => page.isVisible('#screen-end'), 3000));
-  check('T36 「おしまい」のときは、からにしたを出さない', await page.isHidden('#endClearsRow'));
+  check('T35 「おしまい」なら、いっぱいで結果', ended || await waitFor(async () => page.isVisible('#screen-result'), 3000));
+  check('T36 「おしまい」のときは、からにしたを出さない', !(await page.textContent('#resultBody')).includes('からにした'));
   await page.click('#btnAgain');
   check('T37 「もう一回」ですぐあそぶ画面', await waitFor(async () => (await st(page)).mode === 'play' && (await st(page)).score === 0));
   await page.close();
@@ -224,11 +231,13 @@ function plan(seed, colors, n) {
   const mp3 = [];
   page.on('request', (r) => { if (r.url().endsWith('.mp3') || r.url().includes('.mp3?')) mp3.push(r.url()); });
   await page.goto(BASE + '?test=1&seed=3');
+  await page.click('#btnGoSolo');
   await page.click('#btnStart');
   await sleep(500);
   check('T38 切のうちは音のファイルを読まない', mp3.length === 0, mp3);
   await page.click('#btnQuit');
   await page.click('#btnTop');
+  await page.click('#btnGoSolo');
   await page.evaluate(() => { document.querySelector('.it-more').open = true; });
   await page.click('label:has(input[name="sfx"][value="on"])');
   await page.click('#btnStart');
@@ -242,6 +251,7 @@ function plan(seed, colors, n) {
   await page.goto(BASE + '?test=1&seed=4');
   check('T41 はじめの画面が横にはみ出さない', (await page.evaluate(() => document.documentElement.scrollWidth)) <= 375);
   await shot(page, 'top-375');
+  await page.click('#btnGoSolo');
   await page.click('#btnStart');
   await waitFor(async () => (await st(page)).mode === 'play');
   await sleep(200);
