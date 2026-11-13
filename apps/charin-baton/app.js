@@ -319,6 +319,74 @@ function moveCoins(items, dt) {
   }
 }
 
+/* ── まぜるの動き ──
+   まぜる前に見えていた場所から、トレーのまん中のまわりを1回まわりながら新しい場所へ移す。
+   金額は変わらないので、小銭の順番（i 番目どうし）をそのまま結ぶ。
+   「うごく」なら、移りおわってからまた動きだす。動きを減らす設定では、トレーを小さくゆらすだけ */
+const MIX_MS = 750;
+const mixAnim = { raf: 0 };
+
+// いまトレーに見えている小銭の場所（順番どおり）
+function coinSpots(box) {
+  return Array.from(box.querySelectorAll('.cb-tray__svg > g')).map((g) => {
+    const m = /translate\(([-\d.]+)[ ,]+([-\d.]+)\)\s*rotate\(([-\d.]+)\)/.exec(g.getAttribute('transform') || '');
+    return m ? { x: Number(m[1]), y: Number(m[2]), rot: Number(m[3]) } : null;
+  });
+}
+
+function mixTray(box, from) {
+  if (mixAnim.raf) cancelAnimationFrame(mixAnim.raf);
+  mixAnim.raf = 0;
+  const gs = Array.from(box.querySelectorAll('.cb-tray__svg > g'));
+  if (REDUCE_MQ.matches || !gs.length || !from || from.length !== gs.length || from.some((f) => !f)) {
+    box.classList.remove('is-mixed');
+    void box.offsetWidth;
+    box.classList.add('is-mixed');
+    return;
+  }
+  const to = coinSpots(box);
+  // 「うごく」で動いていたら、まわしている間は止める
+  const resume = box.id && motion.key.startsWith(box.id + '|') && motion.raf !== 0;
+  if (resume) stopMotion();
+  // 横長のトレーなので、だ円に沿って回し、ふちの内側におさめる
+  const cx = E.TRAY.w / 2;
+  const cy = E.TRAY.h / 2;
+  const rs = gs.map((g) => Number(g.querySelector('circle')?.getAttribute('r')) || 0);
+  const start = performance.now();
+  const place = (k) => {
+    const e = k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
+    const a = e * Math.PI * 2;
+    const cos = Math.cos(a);
+    const sin = Math.sin(a);
+    gs.forEach((g, i) => {
+      const f = from[i];
+      const t = to[i];
+      const ux = (f.x + (t.x - f.x) * e - cx) / cx;
+      const uy = (f.y + (t.y - f.y) * e - cy) / cy;
+      const lo = rs[i] + MOVE_GAP;
+      const x = Math.min(E.TRAY.w - lo, Math.max(lo, cx + (ux * cos - uy * sin) * cx));
+      const y = Math.min(E.TRAY.h - lo, Math.max(lo, cy + (ux * sin + uy * cos) * cy));
+      const rot = f.rot + (t.rot - f.rot) * e + e * 360;
+      g.setAttribute('transform', 'translate(' + x.toFixed(2) + ' ' + y.toFixed(2) + ') rotate(' + rot.toFixed(1) + ')');
+    });
+  };
+  const step = (ts) => {
+    mixAnim.raf = 0;
+    // 途中で画面が描きなおされたら、そこでやめる（新しい画面は移った先で出ている）
+    if (!gs[0].isConnected) return;
+    const k = Math.min(1, (ts - start) / MIX_MS);
+    place(k);
+    if (k < 1) { mixAnim.raf = requestAnimationFrame(step); return; }
+    gs.forEach((g, i) => g.setAttribute('transform', 'translate(' + to[i].x + ' ' + to[i].y + ') rotate(' + to[i].rot + ')'));
+    if (resume && motion.items[0] && motion.items[0].g === gs[0]) {
+      motion.last = performance.now();
+      motion.raf = requestAnimationFrame(stepMotion);
+    }
+  };
+  place(0);
+  mixAnim.raf = requestAnimationFrame(step);
+}
+
 function drawCoin(c) {
   const info = E.COINS[c.v];
   const look = LOOK[c.v];
@@ -1767,16 +1835,15 @@ function renderGame() {
 
   // 小銭は、はじまる前とパスの間だけかくす。正解と時間切れは小銭を見せたまま、下に金額と内訳を出す
   // 「うごく」は、番の間だけ動かす（正解・時間切れの帯の間は、動いた先で止めて見せる）
-  drawTray($('tray'), D.problem.coins, D.phase === 'pass' || D.phase === 'ready', D.settings.arrange === 'move' ? (D.phase === 'play' ? 'run' : 'hold') : null);
-  // ならべなおされたら、トレーを小さくゆらして知らせる（だれがまぜたかは出さない）
+  // ならべなおされたら、小銭がトレーの中をくるっと回って新しい場所へ移る（だれがまぜたかは出さない）
   const mixKey = V.key + ':' + scene;
-  if (state.mixSeen.startsWith(mixKey + '#') && Number(state.mixSeen.slice(mixKey.length + 1)) < D.problem.mix) {
-    const tray = $('tray');
-    tray.classList.remove('is-mixed');
-    void tray.offsetWidth;
-    tray.classList.add('is-mixed');
-  }
-  state.mixSeen = mixKey + '#' + D.problem.mix;
+  // problem.mix は、はじめてまぜるまで無い（0 とみなす）
+  const mixN = D.problem.mix || 0;
+  const mixed = state.mixSeen.startsWith(mixKey + '#') && Number(state.mixSeen.slice(mixKey.length + 1)) < mixN;
+  state.mixSeen = mixKey + '#' + mixN;
+  const mixFrom = mixed ? coinSpots($('tray')) : null;
+  drawTray($('tray'), D.problem.coins, D.phase === 'pass' || D.phase === 'ready', D.settings.arrange === 'move' ? (D.phase === 'play' ? 'run' : 'hold') : null);
+  if (mixed) mixTray($('tray'), mixFrom);
   const over = $('trayOver');
   over.hidden = !(D.phase === 'pass' || D.phase === 'ready');
   if (D.phase === 'ready') {
