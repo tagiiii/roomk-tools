@@ -222,7 +222,7 @@ function boardRows(rows) {
   await waitFor(async () => { const r = await roomOf(code); return r.settings.mode === 'battle' && r.settings.time === 0 && r.settings.colors === 4; });
   await H.page.click('#btnStartGame');
   check('R32 対戦がはじまる', await waitPlaying(H) && await waitPlaying(G));
-  check('R33 対戦では「来るじゃま」と「送ったじゃま」を出し、時間なしは、のこりを出さない', await shown(G, '#jamaBox') && (await text(G, '#scoreLabel')) === '送ったじゃま' && !(await shown(G, '#timerBox')));
+  check('R33 対戦では「来るじゃま」と「送ったじゃま」を出し、時間なしは、のこりを出さない', await shown(G, '#jamaBox') && (await text(G, '#scoreLabel')) === '送ったじゃま' && !(await shown(G, '#timer')));
   // ゲストのいまの玉を、ちがう2色（1 と 2）にする
   await waitPieceTop(G);
   await G.page.evaluate(() => window.__iro.setPiece(1, 2));

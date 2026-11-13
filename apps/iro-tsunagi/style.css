@@ -39,7 +39,24 @@
 .it-quiet:hover { background: rgba(138, 74, 16, 0.08); }
 .it-quiet--center { display: flex; margin: 8px auto 0; }
 
-/* あそぶ画面 */
+/* あそぶ画面（並びはすとんブロックと同じ: 上のバー → 盤と右の欄 → 操作ボタン → キーボードの説明） */
+.it-bar { width: 100%; max-width: 960px; margin: -8px auto 8px; display: flex; align-items: center; gap: 12px; min-height: 48px; }
+.it-bar__title { font-weight: 700; color: var(--color-primary); white-space: nowrap; }
+.it-bar .it-quiet { white-space: nowrap; margin: 0 0 0 auto; }
+.it-bar .it-quiet:not([hidden]) ~ .it-quiet { margin-left: 0; }   /* 「とめる」が出ているときは「おわる」をそのとなりに */
+.it-timer { font-size: 22px; font-weight: 700; color: var(--color-primary); font-variant-numeric: tabular-nums; }
+.it-timer[hidden] { display: none; }
+.it-pad { display: grid; grid-template-columns: repeat(4, 64px); gap: 8px; margin: 14px auto 0; justify-content: center; }
+.it-pad__btn {
+  height: 56px; min-width: 0; overflow: hidden; border-radius: 12px; border: 1px solid var(--color-border); background: var(--color-surface);
+  color: var(--color-primary); cursor: pointer; touch-action: manipulation; -webkit-user-select: none; user-select: none;
+  display: flex; align-items: center; justify-content: center;
+}
+.it-pad__btn:active { background: var(--color-accent-soft); }
+.it-pad__btn .material-symbols-rounded { font-size: 28px; max-width: 100%; overflow: hidden; }
+.it-keys { color: var(--color-muted); font-size: 13px; margin: 12px 0 0; text-align: center; }
+@media (hover: none) { .it-keys { display: none; } }
+
 .it-wrap:has(#screen-play.active) { max-width: 960px; }
 .it-play { display: flex; gap: 24px; justify-content: center; align-items: flex-start; }
 .it-boardbox { position: relative; flex: none; }
@@ -70,39 +87,8 @@
 .it-next__c { width: 60px; height: 110px; }
 .it-next__c--sub { width: 42px; height: 77px; opacity: .8; }
 .it-stat__num { margin: 0; font-size: 2rem; font-weight: 700; color: var(--color-text); font-variant-numeric: tabular-nums; line-height: 1.2; }
-.it-side__btns { display: flex; flex-direction: column; gap: 6px; align-items: stretch; }
-.it-keys { margin: 0; font-size: 13px; line-height: 1.6; color: var(--color-muted); }
 
-.it-pad { display: none; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; margin: 14px auto 0; max-width: 420px; }
-.it-pad__btn {
-  min-height: 56px; border-radius: 12px; border: 1px solid var(--color-border); background: var(--color-surface);
-  color: var(--color-primary); cursor: pointer; touch-action: manipulation; -webkit-user-select: none; user-select: none;
-  display: flex; align-items: center; justify-content: center;
-}
-.it-pad__btn:active { background: var(--color-accent-soft); }
-.it-pad__btn { min-width: 0; overflow: hidden; }
-.it-pad__btn .material-symbols-rounded { font-size: 28px; max-width: 100%; overflow: hidden; }
 
-/* さわれる画面では操作ボタンを出す */
-@media (hover: none), (max-width: 700px) {
-  .it-pad { display: grid; }
-  .it-keys { display: none; }
-}
-@media (max-width: 700px) {
-  .it-wrap { padding: 12px 12px 24px; }
-  .it-play { flex-direction: column; align-items: center; gap: 10px; }
-  .it-side { width: 100%; max-width: 420px; flex-direction: row; flex-wrap: wrap; gap: 8px; }
-  .it-next, .it-stat { padding: 6px 10px; flex: 1 1 0; min-width: 0; }
-  .it-next { flex: 0 0 auto; }
-  .it-next__c { width: 30px; height: 55px; }
-  .it-next__c--sub { width: 24px; height: 44px; }
-  .it-stat__num { font-size: 1.4rem; }
-  .it-side__label { font-size: 12px; }
-  .it-side__btns { flex-direction: row; width: 100%; justify-content: space-between; }
-  .it-msgcol { width: 100%; max-width: 420px; justify-content: center; padding: 0; min-height: 26px; order: -1; }
-  .it-msg { font-size: 1.2rem; text-align: center; transform: translateY(4px); }
-  .it-side { order: -2; }
-}
 
 /* おしまい */
 .it-panel { max-width: 440px; margin: 0 auto; background: var(--color-surface); border-radius: var(--radius-lg, 16px); box-shadow: var(--shadow-soft); padding: 28px 24px; }
@@ -213,6 +199,21 @@
 .it-rank li.is-me { border: 2px solid var(--color-accent); }
 
 @media (max-width: 700px) {
+  .it-wrap { padding: 12px 12px 24px; }
+  .it-bar { margin-top: 0; min-height: 40px; }
+  .it-bar__title { display: none; }
+  .it-play { flex-wrap: wrap; gap: 8px; }
+  .it-msgcol { width: 100%; justify-content: center; padding: 0; min-height: 26px; order: -1; }
+  .it-msg { font-size: 1.2rem; text-align: center; transform: translateY(4px); }
+  .it-side { width: 92px; gap: 6px; }
+  .it-next, .it-stat { padding: 6px 8px; }
+  .it-next__pairs { gap: 4px; }
+  .it-next__c { width: 30px; height: 55px; }
+  .it-next__c--sub { width: 22px; height: 40px; }
+  .it-stat__num { font-size: 1.3rem; }
+  .it-side__label { font-size: 11px; }
+  .it-pad { grid-template-columns: repeat(4, 1fr); width: 100%; max-width: 360px; }
+  .it-keys { display: none; }
   .it-appbar { padding: 10px 16px; }
   .it-roombar { gap: 4px; padding: 6px 8px; }
   .it-startbar { padding-bottom: 88px; }

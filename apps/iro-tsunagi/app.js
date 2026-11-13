@@ -1200,12 +1200,14 @@
     const narrow = window.innerWidth <= 700;
     const pad = document.querySelector('.it-pad');
     // 操作ボタンが出るときは、その下に右下の丸ボタン（「？」・フィードバック）の分（80px）をあけ、重ならないようにする
-    const padH = pad.offsetHeight ? pad.offsetHeight + 14 + 80 : 0;
-    const sideH = narrow ? document.querySelector('.it-side').offsetHeight + 10 : 0;
-    const listH = narrow && !$('othersList').hidden ? $('othersList').offsetHeight + 8 : 0;
+    // すとんブロックと同じ並び: 上のバー → 盤 → 操作ボタン → キーボードの説明。せまい画面では、操作ボタンの下に右下の丸ボタン（「？」・フィードバック）の分（80px）をあける
+    const keys = document.querySelector('.it-keys');
+    const padH = pad.offsetHeight + 14 + (narrow ? 80 : 0) + (keys.offsetHeight ? keys.offsetHeight + 12 : 0);
+    const barH = document.querySelector('.it-bar').offsetHeight;
+    const listH = !$('othersList').hidden ? $('othersList').offsetHeight + 8 : 0;
     const msgH = narrow ? 30 : 0;
-    const availH = window.innerHeight - padH - sideH - listH - msgH - (narrow ? 24 : 64);
-    const availW = narrow ? window.innerWidth - 40 : 600;
+    const availH = window.innerHeight - barH - padH - listH - msgH - (narrow ? 16 : 32);
+    const availW = narrow ? window.innerWidth - 24 - document.querySelector('.it-side').offsetWidth - 8 : 600;
     cell = Math.max(20, Math.min(52, Math.floor(availH / (E.H + 0.5)), Math.floor(availW / E.W)));
     topPx = Math.round(cell * 0.5);
     const dpr = window.devicePixelRatio || 1;
@@ -1457,7 +1459,7 @@
     stopRepeat();
     hideOverlay();
     $('chainText').classList.remove('show');
-    $('timerBox').hidden = !run.limit;
+    $('timer').hidden = !run.limit;
     $('scoreLabel').textContent = run.battle ? '送ったじゃま' : '点';
     $('jamaBox').hidden = !run.battle;
     $('btnPause').hidden = !run.solo;
