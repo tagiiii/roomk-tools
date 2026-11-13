@@ -77,6 +77,7 @@
     playSeed: null,
     jamaSeen: new Set(),
     backFrom: null,      // この回で最後に自分へじゃまを送ってきた人（送る相手になる。2026-11-13 フィードバック）
+    spectating: false,   // 対戦の「ここまで」のあと、のこっている人の盤をならべて見ているか（2026-11-13 フィードバック）
     finishing: false,
   };
 
@@ -406,7 +407,7 @@
       role: null, nickname: null, roomCode: null, roomRef: null, room: null, joinedAt: null,
       timerInterval: null, orphanTimer: null, orphanAt: null, connectedRef: null, connectedCallback: null, roomCallback: null,
       isConnected: false, presenceDirty: false, presenceAt: 0, leaving: false, watchTimer: null,
-      playRound: null, playSeed: null, finishing: false,
+      playRound: null, playSeed: null, finishing: false, spectating: false,
     });
     state.jamaSeen.clear();
     clearSession();
@@ -992,9 +993,21 @@
       renderRoomResult(room);
     } else if (isPlayer) {
       syncRun(room, R);
+      // 対戦の「ここまで」になった人は、のこっている人の盤をならべて見られる（2026-11-13 フィードバック）
+      const out = isOutNow();
+      $('btnSpectate').hidden = !out;
+      if (!out) state.spectating = false;
+      if (state.spectating) {
+        if (state.currentScreen !== 'watch') showScreen('watch');
+        $('btnWatchMine').hidden = false;
+        $('btnWatchEnd').hidden = state.role !== 'host';
+        $('btnWatchLeave').hidden = true;
+        renderWatch();
+      } else if (state.currentScreen === 'watch') showScreen('play');
     } else if (playing && (state.role === 'spectator' || state.role === 'host')) {
       if (run) stopRun();
       if (state.currentScreen !== 'watch') showScreen('watch');
+      $('btnWatchMine').hidden = true;
       $('btnWatchEnd').hidden = state.role !== 'host';
       $('btnWatchLeave').hidden = state.role !== 'spectator';
       renderWatch();
@@ -1008,6 +1021,16 @@
     else if (state.role === 'guest') me = state.nickname;
     $('barMe').hidden = !me;
     $('barMe').textContent = me;
+  }
+  // 自分の回が対戦の「ここまで」でおわったか（ほかの人はまだあそんでいる）
+  function isOutNow() {
+    return !!(run && !run.solo && run.done && run.out);
+  }
+  // のこっている人の盤をならべて見る／自分の盤にもどる
+  function setSpectating(on) {
+    state.spectating = on && isOutNow();
+    if (state.room) renderRoom(state.room);
+    if (!state.spectating && state.currentScreen === 'play') { fit(); draw(); }
   }
   function renderWaiting(room, playing) {
     const host = state.role === 'host';
@@ -1446,6 +1469,8 @@
   // o: { solo, seed, colors, speed, full: 'clear'|'end', limit(ms・0はなし), startAt(ルームの時刻), battle, saved, pending, sent, outAt }
   function startRun(o) {
     stopRun();
+    state.spectating = false;
+    $('btnSpectate').hidden = true;
     g = o.saved ? E.restoreGame({ colors: o.colors, seed: o.seed }, o.saved) : E.newGame({ colors: o.colors, seed: o.seed });
     run = {
       solo: !!o.solo, speed: SPEED[o.speed] || SPEED.slow, full: o.full, limit: o.limit || 0, startAt: o.startAt || 0,
@@ -1767,7 +1792,8 @@
     if (reason === 'out') {
       run.out = true;
       run.outAt = run.outAt || RoomkRTDB.now();
-      showOverlay('ここまで！\nのこりの人の盤を見て待とう', false);
+      showOverlay('ここまで！\n「みんなの盤を見る」で、のこりの人の盤を大きく見られるよ', false);
+      $('btnSpectate').hidden = false;
     } else {
       play('finish');
       showOverlay('時間になったよ\n結果を待っているよ', false);
@@ -2006,6 +2032,8 @@
   $('lobbyHost').addEventListener('change', saveSettings);
   $('btnStartGame').addEventListener('click', startGame);
   $('btnWatchEnd').addEventListener('click', endEarly);
+  $('btnSpectate').addEventListener('click', () => setSpectating(true));
+  $('btnWatchMine').addEventListener('click', () => setSpectating(false));
   $('btnWatchLeave').addEventListener('click', leaveWatch);
   document.querySelectorAll('input[name="roomSfx"], input[name="sfx"]').forEach((el) => el.addEventListener('change', () => setSfx(el.value === 'on')));
   document.querySelectorAll('input[name="roomBgm"], input[name="bgm"]').forEach((el) => el.addEventListener('change', () => setBgm(el.value === 'on')));

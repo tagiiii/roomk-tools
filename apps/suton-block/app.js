@@ -81,6 +81,7 @@ const state = {
   jamaSeen: new Set(), // 受けとったじゃま（消す前に二重に数えない）
   jamaTo: null,        // じゃまを送る相手として自分で選んだ人（null はいつもの相手: 送ってきた人か、並びのつぎの人）
   backFrom: null,      // この回で最後に自分へじゃまを送ってきた人（いつもの送る相手。2026-11-13 フィードバック）
+  spectating: false,   // 対戦の「ここまで」のあと、のこっている人の盤をならべて見ているか
   finishing: false,
 };
 const $ = (id) => document.getElementById(id);
@@ -639,6 +640,7 @@ function cleanupRoom() {
     playRound: null,
     playSeed: null,
     finishing: false,
+    spectating: false,
   });
   state.jamaSeen.clear();
   clearSession();
@@ -1377,9 +1379,21 @@ function renderRoom(room) {
     renderRoomResult(room);
   } else if (isPlayer) {
     syncRun(room, R);
+    // 対戦の「ここまで」になった人は、のこっている人の盤をならべて見られる（2026-11-13 フィードバック）
+    const out = isOutNow();
+    $('btnSpectate').hidden = !out;
+    if (!out) state.spectating = false;
+    if (state.spectating) {
+      if (state.currentScreen !== 'watch') showScreen('watch');
+      $('btnWatchMine').hidden = false;
+      $('btnWatchEnd').hidden = state.role !== 'host';
+      $('btnWatchLeave').hidden = true;
+      renderWatch();
+    } else if (state.currentScreen === 'watch') showScreen('play');
   } else if (playing && (state.role === 'spectator' || state.role === 'host')) {
     if (state.run) stopRun();
     if (state.currentScreen !== 'watch') showScreen('watch');
+    $('btnWatchMine').hidden = true;
     $('btnWatchEnd').hidden = state.role !== 'host';
     $('btnWatchLeave').hidden = state.role !== 'spectator';
     renderWatch();
@@ -1389,6 +1403,18 @@ function renderRoom(room) {
     renderWaiting(room, playing);
   }
   renderBar();
+}
+
+// 自分の回が対戦の「ここまで」でおわったか（ほかの人はまだあそんでいる）
+function isOutNow() {
+  return !!(state.run && state.run.done && state.game && state.game.over && state.role !== 'solo');
+}
+
+// のこっている人の盤をならべて見る／自分の盤にもどる
+function setSpectating(on) {
+  state.spectating = on && isOutNow();
+  if (state.room) renderRoom(state.room);
+  if (!state.spectating && state.currentScreen === 'play') { layout(); draw(); }
 }
 
 function renderBar() {
@@ -1507,6 +1533,8 @@ const nowOf = () => (state.role === 'solo' ? Date.now() : RoomkRTDB.now());
 
 function startRun(o) {
   stopRun();
+  state.spectating = false;
+  $('btnSpectate').hidden = true;
   state.game = o.saved ? E.restoreGame({ seed: o.seed, onFull: o.onFull }, o.saved) : E.createGame({ seed: o.seed, onFull: o.onFull });
   const now = nowOf();
   state.run = {
@@ -2054,7 +2082,8 @@ function finishRun() {
   }
   sendBoard(true);
   if (state.game.over) {
-    note('ここまで！ ' + (OVER_WHY[state.game.overBy] || '') + 'ほかの人がおわるのを待ってね', 0);
+    note('ここまで！ ' + (OVER_WHY[state.game.overBy] || '') + 'ほかの人がおわるのを待ってね。「みんなの盤を見る」で、ほかの人の盤を大きく見られるよ', 0);
+    $('btnSpectate').hidden = false;
     return;
   }
   if (R.showTimer) $('playTimer').textContent = '0:00';
@@ -3034,6 +3063,8 @@ $('btnOverlayLeave').addEventListener('click', leaveRoom);
 $('lobbyHost').addEventListener('change', saveSettings);
 $('btnStartGame').addEventListener('click', startGame);
 $('btnWatchEnd').addEventListener('click', endEarly);
+$('btnSpectate').addEventListener('click', () => setSpectating(true));
+$('btnWatchMine').addEventListener('click', () => setSpectating(false));
 $('btnWatchLeave').addEventListener('click', leaveWatch);
 $('btnPlayEnd').addEventListener('click', () => {
   if (state.role === 'host') endEarly();
