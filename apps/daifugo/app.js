@@ -22,7 +22,11 @@ const CPU_DELAY_MS = 1100;
 const AUTO_AFTER = 2;          // 時間切れがこの回数続いたら CPU にまかせる
 const LOG_MAX = 6;
 const PILE_SHOW = 4; // 場に並べる前の手の数（それより前は「＋N手」）
-const SPLASH_MS = 1500;
+const SPLASH_MS = 1700;
+const FLY_MS = 520;        // カードが席から場へ飛ぶ時間
+const FLY_STEP = 60;       // 2枚目からの遅れ
+const FLOW_HOLD_MS = 420;  // 8切りなどで、場に着いたカードを見せておく時間
+const TURN_GLOW_MS = 1600; // 番の人の枠の光の1回分（style.css の df-turn と同じ）
 
 const TIME_OPTS = [[0, 'なし'], [15, '15秒'], [30, '30秒'], [60, '60秒']];
 const TIMEOUT_OPTS = [['pass', 'パスする'], ['cpu', 'CPUが代わりに出す']];
@@ -52,6 +56,11 @@ const AS_LABEL = { 7: '7として（わたせる）', 8: '8として（8切り�
 const FX_SPLASH = {
   revolution: '革命！', 'revolution-back': '革命返し！', eight: '8切り！', back: 'イレブンバック！', spade3: 'スペ3返し！',
   gekilock: '激しばり！', lock: 'しばり！', numlock: '数しばり！', queen: 'Qボンバー！', four: '4止め！', five: '5飛び！',
+};
+// 大きな演出の色の種類（いま起きたことの札と同じ色分け）
+const FX_KIND = {
+  revolution: 'rev', 'revolution-back': 'rev', back: 'back', eight: 'cut', queen: 'cut', four: 'cut', spade3: 'cut',
+  gekilock: 'lock', lock: 'lock', numlock: 'lock', five: 'info',
 };
 const SPLASH_ORDER = ['revolution', 'revolution-back', 'gekilock', 'eight', 'queen', 'four', 'back', 'spade3', 'five', 'lock', 'numlock'];
 const REASON = {
@@ -98,6 +107,9 @@ const state = {
   selRound: null,
   fxSeq: -1,
   fxRound: -1,
+  fxMyTurn: false,
+  fxGen: 0,           // 写しの世代（新しい手が来たら上げて、前の手の続きの動きを出さない）
+  selPulse: null,     // いま押した手札のカード（上げ下げの動きをつける）
   splashTimer: null,
   gameCache: { raw: null, val: null },
   rulesKey: null,
@@ -658,6 +670,8 @@ function resetBoxes() {
   state.selRound = null;
   state.fxSeq = -1;
   state.fxRound = -1;
+  state.fxMyTurn = false;
+  document.getElementById('fxLayer')?.replaceChildren();
   clearTimeout(state.splashTimer);
   $('splash').hidden = true;
 }
@@ -1473,6 +1487,9 @@ function renderGame(R) {
   const actor = g.over ? -1 : actorOf(g);
   const due = dueSeats(g);
   const dir = E.dirOf(g);
+  // 新しい手が来たら、描きかえる前のカードの位置をとっておく（動きの出発点にする）
+  const fresh = R.round === state.fxRound && g.seq !== state.fxSeq;
+  const before = fresh ? fxSnapshot() : null;
 
   // あそぶ人（卓のまわりの置き場所。自分＝見る人なら最初の席を下に、そこから時計回りに 左→上→右）
   const bottom = myIdx >= 0 ? myIdx : 0;
@@ -1592,7 +1609,10 @@ function renderGame(R) {
     state.fxSeq = g.seq;
   } else if (g.seq !== state.fxSeq) {
     const fx = SPLASH_ORDER.find((f) => g.last?.fx?.includes(f));
-    if (fx) splash(FX_SPLASH[fx]);
+    // 8切りなどで出したとたんに場が流れたときは、カードが場に着いてから出す
+    const L = g.last;
+    const wait = L && L.kind === 'play' && L.flow && !g.field && motionOK() ? FLY_MS + (L.cards.length - 1) * FLY_STEP : 0;
+    if (fx) splash(FX_SPLASH[fx], FX_KIND[fx], wait);
     state.fxSeq = g.seq;
   }
 
@@ -1646,6 +1666,264 @@ function renderGame(R) {
 
   $('gameRules').replaceChildren(...rulesSummary(R));
   $('gameTools').hidden = !isHost || g.over;
+
+  // 番の人の枠の光は、描きかえても途中から続くように（描きかえのたびに最初からにならないように）
+  const phase = -(Date.now() % TURN_GLOW_MS) + 'ms';
+  document.querySelectorAll('#players .df-player.is-turn').forEach((b) => { b.style.animationDelay = phase; });
+  const myTurnStart = myTurnNow && !state.fxMyTurn;
+  state.fxMyTurn = myTurnNow;
+  if (fresh) runFx(R, g, before, myIdx);
+  if (myTurnStart && motionOK()) {
+    $('mine').animate([{ transform: 'scale(1)' }, { transform: 'scale(1.025)', offset: 0.35 }, { transform: 'scale(1)' }], { duration: 480, easing: 'ease-out' });
+  }
+}
+
+/* ── 動き（2026-11-13 オーナー依頼「アニメーションをリッチに」）。音は鳴らさない。動きを減らす設定なら出さない ── */
+function motionOK() {
+  return !window.matchMedia('(prefers-reduced-motion: reduce)').matches && !document.hidden;
+}
+
+function fxSnapshot() {
+  const rects = (sel) => [...document.querySelectorAll(sel)].map((n) => ({ c: n.dataset.card, r: n.getBoundingClientRect() }));
+  return { field: rects('#field .df-card'), hand: new Map(rects('#hand .df-card').map((x) => [x.c, x.r])) };
+}
+
+function rectCenter(r) {
+  return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+}
+
+// 席の位置（自分の席は卓の上では隠しているので、下の手札の欄）
+function seatRect(i, myIdx) {
+  if (i === myIdx) return (!$('hand').hidden ? $('hand') : $('dock')).getBoundingClientRect();
+  const box = $('players').children[i];
+  return box && box.offsetParent ? box.getBoundingClientRect() : null;
+}
+
+// 画面いっぱいの透明な層（動きのためだけのカードの写しを置く。押せない）
+function fxLayer() {
+  let layer = $('fxLayer');
+  if (!layer) {
+    layer = el('div', 'df-fx');
+    layer.id = 'fxLayer';
+    layer.setAttribute('aria-hidden', 'true');
+    document.body.append(layer);
+  }
+  return layer;
+}
+
+// 写しのカード（cards が null なら裏向き）を、中心 (x, y) に置く
+function fxGhost(c, x, y, small) {
+  const n = c ? cardEl(c) : el('span', 'df-card df-card--back');
+  n.classList.add('df-fx__card');
+  if (small) n.classList.add('is-small');
+  else {
+    // 場のカードと同じ大きさ（画面の幅・みんなにみせる画面で変わる）
+    const [w, h] = fieldCardSize();
+    n.style.setProperty('--df-card-w', w + 'px');
+    n.style.setProperty('--df-card-h', h + 'px');
+  }
+  n.style.left = x + 'px';
+  n.style.top = y + 'px';
+  fxLayer().append(n);
+  return n;
+}
+
+function fieldCardSize() {
+  const probe = el('span', 'df-card');
+  probe.style.visibility = 'hidden';
+  probe.style.position = 'absolute';
+  $('field').append(probe);
+  const r = probe.getBoundingClientRect();
+  probe.remove();
+  return [r.width || 84, r.height || 120];
+}
+
+function fxRow(n, center, w, gap) {
+  const total = n * w + (n - 1) * gap;
+  return Array.from({ length: n }, (_, k) => ({ x: center.x - total / 2 + w / 2 + k * (w + gap), y: center.y }));
+}
+
+function fxDone(anim, node) {
+  anim.finished.then(() => node.remove(), () => node.remove());
+}
+
+// 前の手の写し（カード・光の線）を片づける。紙ふぶきは残す
+function fxClear() {
+  state.fxGen += 1;
+  const layer = $('fxLayer');
+  if (layer) layer.querySelectorAll('.df-fx__card, .df-fx__slash').forEach((n) => n.remove());
+}
+
+function runFx(R, g, before, myIdx) {
+  fxClear();
+  const L = g.last;
+  if (!L || !motionOK()) return;
+  const gen = state.fxGen;
+  const fx = L.fx || [];
+  const has = (f) => fx.includes(f);
+  const fieldBox = $('field').getBoundingClientRect();
+  const fieldC = rectCenter(fieldBox);
+  const from = seatRect(L.by, myIdx);
+  const fromC = from ? rectCenter(from) : { x: fieldC.x, y: fieldC.y + 260 };
+  // 自分が出したカードは、手札にあった場所から
+  const startOf = (c) => (L.by === myIdx && before.hand.has(c) ? rectCenter(before.hand.get(c)) : fromC);
+  const tilt = () => (Math.random() * 24 - 12).toFixed(1);
+
+  // 前の場のカードを流す（場が流れたとき）。delay は、出したカードが場に着くのを待つ分
+  const sweep = (items, delay) => items.forEach((it, k) => {
+    const node = fxGhost(it.c, it.x, it.y);
+    const a = node.animate([
+      { transform: 'translate(-50%, -50%)', opacity: 1 },
+      { transform: 'translate(-50%, -50%) translateY(-6px) rotate(' + (k % 2 ? 4 : -4) + 'deg)', opacity: 1, offset: 0.25 },
+      { transform: 'translate(-50%, -50%) translate(' + (140 + k * 24) + 'px, -40px) rotate(' + (24 + k * 6) + 'deg) scale(0.6)', opacity: 0 },
+    ], { duration: 520, delay: delay + k * 50, easing: 'cubic-bezier(.5,0,.75,0)', fill: 'both' });
+    fxDone(a, node);
+  });
+
+  if (L.kind === 'play') {
+    const real = [...document.querySelectorAll('#field .df-card')];
+    if (g.field && g.field.by === L.by && real.length) {
+      // 場に残るとき: 本物の場のカードを、出した人の席から飛ばす
+      real.forEach((node, k) => {
+        const s = startOf(node.dataset.card);
+        const c = rectCenter(node.getBoundingClientRect());
+        node.animate([
+          { transform: 'translate(' + (s.x - c.x) + 'px, ' + (s.y - c.y) + 'px) rotate(' + tilt() + 'deg) scale(0.55)', opacity: 0.3 },
+          { transform: 'translate(0, 0) rotate(0deg) scale(1.08)', opacity: 1, offset: 0.75 },
+          { transform: 'none', opacity: 1 },
+        ], { duration: FLY_MS, delay: k * FLY_STEP, easing: 'cubic-bezier(.2,.8,.25,1)', fill: 'backwards' });
+        if (has('revolution') || has('revolution-back')) {
+          node.animate([{ transform: 'rotateY(0deg)' }, { transform: 'rotateY(360deg)' }], { duration: 700, delay: FLY_MS + k * FLY_STEP, easing: 'ease-in-out' });
+        }
+      });
+      // 前の手は、場の上の小さな列へ
+      const lastPile = $('pile').querySelector('.df-pile__item:last-child');
+      if (lastPile && before.field.length) {
+        lastPile.animate([{ transform: 'translateY(40px) scale(1.4)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 420, easing: 'cubic-bezier(.2,.8,.25,1)' });
+      }
+    } else if (L.flow && L.cards.length) {
+      // 8切りなどで、出したとたんに場が流れたとき: 写しを場まで飛ばして、少し見せてから流す
+      const spots = fxRow(L.cards.length, fieldC, fieldCardSize()[0], 8);
+      const land = FLY_MS + (L.cards.length - 1) * FLY_STEP;
+      const hold = FLOW_HOLD_MS;
+      L.cards.forEach((c, k) => {
+        const s = startOf(c);
+        const node = fxGhost(c, spots[k].x, spots[k].y);
+        const a = node.animate([
+          { transform: 'translate(-50%, -50%) translate(' + (s.x - spots[k].x) + 'px, ' + (s.y - spots[k].y) + 'px) rotate(' + tilt() + 'deg) scale(0.55)', opacity: 0.3 },
+          { transform: 'translate(-50%, -50%) scale(1.08)', opacity: 1, offset: 0.75 },
+          { transform: 'translate(-50%, -50%)', opacity: 1 },
+        ], { duration: FLY_MS, delay: k * FLY_STEP, easing: 'cubic-bezier(.2,.8,.25,1)', fill: 'backwards' });
+        a.finished.then(() => {
+          node.remove();
+          if (gen !== state.fxGen) return;
+          sweep([{ c, x: spots[k].x, y: spots[k].y }], land + hold - (FLY_MS + k * FLY_STEP));
+        }, () => node.remove());
+      });
+      sweep(before.field.map((it) => ({ c: it.c, ...rectCenter(it.r) })), land + hold);
+      if (has('eight') || has('queen') || has('four') || has('spade3')) fxSlash(fieldC, land);
+    }
+  } else if (L.kind === 'pass') {
+    const box = $('players').children[L.by];
+    if (box && box.offsetParent) {
+      box.animate([
+        { transform: 'translateX(0)' }, { transform: 'translateX(-6px)' }, { transform: 'translateX(5px)' },
+        { transform: 'translateX(-3px)' }, { transform: 'translateX(0)' },
+      ], { duration: 380, easing: 'ease-out' });
+    }
+    if (L.flow) sweep(before.field.map((it) => ({ c: it.c, ...rectCenter(it.r) })), 250);
+  } else if (L.kind === 'discard' && L.cards.length) {
+    // 10捨て: 席から場へ出して、下へ落とす
+    L.cards.forEach((c, k) => {
+      const s = startOf(c);
+      const t = { x: fieldC.x + (k - (L.cards.length - 1) / 2) * 30, y: fieldC.y };
+      // 捨てたカードは、捨てた人のほかには裏向きで
+      const node = fxGhost(L.by === myIdx ? c : null, t.x, t.y, true);
+      const a = node.animate([
+        { transform: 'translate(-50%, -50%) translate(' + (s.x - t.x) + 'px, ' + (s.y - t.y) + 'px) scale(0.7)', opacity: 0.4 },
+        { transform: 'translate(-50%, -50%)', opacity: 1, offset: 0.4 },
+        { transform: 'translate(-50%, -50%) rotate(' + tilt() + 'deg)', opacity: 1, offset: 0.65 },
+        { transform: 'translate(-50%, -50%) translateY(90px) rotate(' + (tilt() * 3) + 'deg) scale(0.7)', opacity: 0 },
+      ], { duration: 1100, delay: k * 70, easing: 'ease-in-out', fill: 'both' });
+      fxDone(a, node);
+    });
+  } else if (L.kind === 'give7' && L.cards.length) {
+    // 7渡し: 裏向きのカードを、わたす人の席からもらう人の席へ（何のカードかは、もらった人にだけ見える）
+    const to = seatRect(L.to, myIdx);
+    if (to) {
+      const tc = rectCenter(to);
+      L.cards.forEach((c, k) => {
+        const s = startOf(c);
+        const node = fxGhost(null, tc.x, tc.y, true);
+        const a = node.animate([
+          { transform: 'translate(-50%, -50%) translate(' + (s.x - tc.x) + 'px, ' + (s.y - tc.y) + 'px) rotate(-10deg)', opacity: 0 },
+          { transform: 'translate(-50%, -50%) translate(' + ((s.x - tc.x) / 2) + 'px, ' + ((s.y - tc.y) / 2 - 50) + 'px) rotate(0deg) scale(1.15)', opacity: 1, offset: 0.5 },
+          { transform: 'translate(-50%, -50%) scale(0.8)', opacity: 0 },
+        ], { duration: 800, delay: k * 90, easing: 'ease-in-out', fill: 'both' });
+        fxDone(a, node);
+      });
+    }
+  }
+
+  // 革命: 卓をゆらす
+  if (has('revolution') || has('revolution-back')) {
+    $('table').animate([
+      { transform: 'none' }, { transform: 'rotate(-1.2deg)' }, { transform: 'rotate(1.2deg)' },
+      { transform: 'rotate(-0.6deg)' }, { transform: 'none' },
+    ], { duration: 600, delay: 150, easing: 'ease-in-out' });
+  }
+  // あがり: 席から紙ふぶき
+  if (has('done')) {
+    const r = seatRect(L.by, myIdx);
+    if (r) fxConfetti(rectCenter(r));
+  }
+  // いま起きたことの札は、ふわっと出す
+  [...$('fieldNews').children].forEach((n, k) => {
+    n.classList.add('is-fresh');
+    n.style.setProperty('--i', String(k));
+  });
+  // 結果は、1番から順に下から出す
+  if (g.over) {
+    [...$('resultList').children].forEach((n, k) => {
+      n.classList.add('is-reveal');
+      n.style.setProperty('--i', String(k));
+    });
+  }
+}
+
+// 8切りなど: 場を横切る光の線
+function fxSlash(c, delay) {
+  const s = el('span', 'df-fx__slash');
+  s.style.left = c.x + 'px';
+  s.style.top = c.y + 'px';
+  fxLayer().append(s);
+  const a = s.animate([
+    { transform: 'translate(-50%, -50%) rotate(-28deg) scaleX(0)', opacity: 1 },
+    { transform: 'translate(-50%, -50%) rotate(-28deg) scaleX(1)', opacity: 1, offset: 0.45 },
+    { transform: 'translate(-50%, -50%) rotate(-28deg) scaleX(1)', opacity: 0 },
+  ], { duration: 520, delay, easing: 'ease-out', fill: 'both' });
+  fxDone(a, s);
+}
+
+const CONFETTI_COLORS = ['#E8A33D', '#B3303D', '#286F7C', '#5B4A93', '#1E6B3A', '#FFFFFF'];
+function fxConfetti(c) {
+  for (let k = 0; k < 26; k += 1) {
+    const p = el('span', 'df-fx__bit');
+    p.style.left = c.x + 'px';
+    p.style.top = c.y + 'px';
+    p.style.background = CONFETTI_COLORS[k % CONFETTI_COLORS.length];
+    fxLayer().append(p);
+    const ang = (Math.PI * 2 * k) / 26 + Math.random() * 0.4;
+    const dist = 70 + Math.random() * 90;
+    const dx = Math.cos(ang) * dist;
+    const dy = Math.sin(ang) * dist - 40;
+    const a = p.animate([
+      { transform: 'translate(-50%, -50%) scale(0.4) rotate(0deg)', opacity: 1 },
+      { transform: 'translate(-50%, -50%) translate(' + dx + 'px, ' + dy + 'px) rotate(' + (Math.random() * 360) + 'deg)', opacity: 1, offset: 0.55 },
+      { transform: 'translate(-50%, -50%) translate(' + dx * 1.15 + 'px, ' + (dy + 90) + 'px) rotate(' + (Math.random() * 720) + 'deg)', opacity: 0 },
+    ], { duration: 1300 + Math.random() * 400, easing: 'cubic-bezier(.15,.7,.4,1)', fill: 'both' });
+    fxDone(a, p);
+  }
 }
 
 function renderMine(R, g, myIdx, actor, dir) {
@@ -1709,10 +1987,13 @@ function renderMine(R, g, myIdx, actor, dir) {
     b.classList.toggle('is-sel', on);
     b.classList.toggle('is-dim', !!playable && !playable.has(c));
     b.classList.toggle('is-got', got.includes(c));
+    if (c === state.selPulse) b.classList.add(on ? 'is-lift' : 'is-drop');
     b.setAttribute('aria-pressed', on ? 'true' : 'false');
     b.addEventListener('click', () => {
       state.sel = state.sel.includes(c) ? state.sel.filter((x) => x !== c) : state.sel.concat([c]);
+      state.selPulse = c;
       if (state.view) renderGame(state.view);
+      state.selPulse = null;
     });
     return b;
   }));
@@ -1784,15 +2065,24 @@ function updateTimer() {
   $('timer').classList.toggle('is-low', sec <= 5);
 }
 
-function splash(text) {
+function splash(text, kind, wait = 0) {
   const s = $('splash');
-  s.textContent = text;
+  // 文字を1つずつはねさせる。うしろに光の輪（色は種類ごと）
+  s.className = 'df-splash df-splash--' + (kind || 'info');
+  const word = el('span', 'df-splash__text');
+  [...text].forEach((ch, k) => {
+    const sp = el('span', 'df-splash__ch', ch);
+    sp.style.setProperty('--i', String(k));
+    word.append(sp);
+  });
+  s.replaceChildren(el('span', 'df-splash__burst'), el('span', 'df-splash__ring'), word);
+  s.style.setProperty('--wait', wait + 'ms');
   s.hidden = false;
   s.classList.remove('is-on');
   void s.offsetWidth; // eslint-disable-line no-void
   s.classList.add('is-on');
   clearTimeout(state.splashTimer);
-  state.splashTimer = setTimeout(() => { s.hidden = true; }, SPLASH_MS);
+  state.splashTimer = setTimeout(() => { s.hidden = true; }, SPLASH_MS + wait);
 }
 
 /* ── みんなにみせる画面（見るだけ。書き込まない） ── */
