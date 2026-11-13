@@ -312,7 +312,7 @@
 .df-fx { position: fixed; inset: 0; z-index: 4; pointer-events: none; overflow: hidden; }
 .df-fx__card { position: fixed; --df-card-w: 84px; --df-card-h: 120px; transform: translate(-50%, -50%); box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35); }
 .df-fx__card.is-small { --df-card-w: 52px; --df-card-h: 74px; }
-.df-card--back { background: repeating-linear-gradient(45deg, #7A4520 0 6px, #9B5E2E 6px 12px); border: 3px solid #fff; }
+.df-card.df-card--back { background: repeating-linear-gradient(45deg, #7A4520 0 6px, #9B5E2E 6px 12px); border: 3px solid #fff; }
 .df-fx__slash {
   position: fixed; width: 360px; height: 8px; border-radius: 999px; transform-origin: center;
   background: linear-gradient(90deg, transparent, #fff 20%, #FFF4D6 50%, #fff 80%, transparent);
@@ -430,6 +430,13 @@ button.df-card { position: relative; }
 .df-result__name { font-weight: 500; }
 .df-result__actions { display: grid; gap: 10px; }
 
+.df-sfx[hidden], .df-sfxrow[hidden] { display: none; }
+.df-sfx .df-seg { max-width: 240px; }
+.df-sfx .df-note { margin-top: 8px; }
+/* ゲームの画面の効果音（いまのルールの上に小さく） */
+.df-sfxrow { display: flex; align-items: center; gap: 12px; padding: 4px 14px; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 12px; }
+.df-sfxrow__label { font-weight: 500; color: var(--color-accent); white-space: nowrap; }
+.df-sfxrow .df-seg { flex: 0 1 180px; }
 .df-rulesbox { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 12px; padding: 4px 14px; }
 .df-rulesbox summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; font-weight: 500; color: var(--color-accent); }
 .df-rulesbox .df-rulesview { padding: 0 0 12px; }

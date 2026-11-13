@@ -79,7 +79,7 @@ async function newContext(label, opts = {}) {
 async function newPage(context, label) {
   const page = await context.newPage();
   await page.addInitScript(() => {
-    // 音を鳴らす部品が作られた回数を数える（このアプリは音を鳴らさない）
+    // 音を鳴らす部品が作られた回数を数える（効果音ははじめは切。入にしない限り作られない。2026-11-13）
     window.__audioMade = 0;
     ['AudioContext', 'webkitAudioContext', 'Audio'].forEach((name) => {
       const Original = window[name];

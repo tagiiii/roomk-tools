@@ -118,6 +118,8 @@ const $ = (id) => document.getElementById(id);
 
 /* ── 共通 ── */
 function showScreen(id) {
+  // 待合室の下のほうを見ていても、ゲームの画面は卓（いちばん上）から見えるように（配るところが見える）
+  if (id === 'game' && state.currentScreen !== 'game') window.scrollTo(0, 0);
   document.querySelectorAll('.df-screen').forEach((node) => node.classList.remove('active'));
   $('screen-' + id).classList.add('active');
   state.currentScreen = id;
@@ -1416,6 +1418,7 @@ function renderLobby(R) {
   $('lobbyHost').hidden = !isHost;
   if (isHost) $('btnStartGame').disabled = n < E.PLAYERS_MIN;
   $('lobbyWait').hidden = isHost || watch;
+  $('lobbySfx').hidden = watch;
 }
 
 /* ── あそんでいる間 ── */
@@ -1490,6 +1493,8 @@ function renderGame(R) {
   // 新しい手が来たら、描きかえる前のカードの位置をとっておく（動きの出発点にする）
   const fresh = R.round === state.fxRound && g.seq !== state.fxSeq;
   const before = fresh ? fxSnapshot() : null;
+  // 配ったばかりの回を、はじめて描くとき（まだだれも出していない）
+  const dealNow = R.round !== state.fxRound && !g.over && g.last && g.last.kind === 'start';
 
   // あそぶ人（卓のまわりの置き場所。自分＝見る人なら最初の席を下に、そこから時計回りに 左→上→右）
   const bottom = myIdx >= 0 ? myIdx : 0;
@@ -1639,7 +1644,7 @@ function renderGame(R) {
   $('myCount').textContent = seatedNow ? 'のこり' + g.hands[myIdx].length + '枚' + (rank ? '・前回は' + rank : '') : '';
   $('dock').classList.toggle('is-seated', seatedNow);
   $('dock').classList.toggle('is-myturn', myTurnNow);
-  // 自分の番は、タブの題名でも（別のタブを見ていても気づけるように。音は鳴らさない）
+  // 自分の番は、タブの題名でも（別のタブを見ていても気づけるように。効果音を入にした端末では短い音も）
   if (!watch) document.title = myTurnNow ? '●あなたの番 | ' + DEFAULT_TITLE : DEFAULT_TITLE;
   $('center').hidden = g.over;
   updateTimer();
@@ -1666,13 +1671,18 @@ function renderGame(R) {
 
   $('gameRules').replaceChildren(...rulesSummary(R));
   $('gameTools').hidden = !isHost || g.over;
+  $('gameSfx').hidden = watch;
 
   // 番の人の枠の光は、描きかえても途中から続くように（描きかえのたびに最初からにならないように）
   const phase = -(Date.now() % TURN_GLOW_MS) + 'ms';
   document.querySelectorAll('#players .df-player.is-turn').forEach((b) => { b.style.animationDelay = phase; });
   const myTurnStart = myTurnNow && !state.fxMyTurn;
   state.fxMyTurn = myTurnNow;
+  // はじめて描くときは、ゲームの画面がまだ出ていないことがあるので、次の描画で（位置がとれるように）
+  if (dealNow) requestAnimationFrame(() => runDeal(R, g, myIdx));
   if (fresh) runFx(R, g, before, myIdx);
+  if (fresh) fxSound(g, myIdx);
+  if (myTurnStart) playSfx('turn', dealNow ? 1.3 : fresh && g.last && g.last.kind === 'play' ? 0.35 : 0.1);
   if (myTurnStart && motionOK()) {
     $('mine').animate([{ transform: 'scale(1)' }, { transform: 'scale(1.025)', offset: 0.35 }, { transform: 'scale(1)' }], { duration: 480, easing: 'ease-out' });
   }
@@ -1751,7 +1761,7 @@ function fxDone(anim, node) {
 function fxClear() {
   state.fxGen += 1;
   const layer = $('fxLayer');
-  if (layer) layer.querySelectorAll('.df-fx__card, .df-fx__slash').forEach((n) => n.remove());
+  if (layer) layer.querySelectorAll('.df-fx__card:not(.is-deal), .df-fx__slash').forEach((n) => n.remove());
 }
 
 function runFx(R, g, before, myIdx) {
@@ -1992,6 +2002,7 @@ function renderMine(R, g, myIdx, actor, dir) {
     b.addEventListener('click', () => {
       state.sel = state.sel.includes(c) ? state.sel.filter((x) => x !== c) : state.sel.concat([c]);
       state.selPulse = c;
+      playSfx('pick');
       if (state.view) renderGame(state.view);
       state.selPulse = null;
     });
@@ -2063,6 +2074,186 @@ function updateTimer() {
   $('timerNum').textContent = 'のこり ' + sec + '秒';
   $('timerBar').style.width = Math.min(100, (left / (R.time.limit * 1000)) * 100) + '%';
   $('timer').classList.toggle('is-low', sec <= 5);
+}
+
+/* ── 配る（2026-11-13 オーナー依頼「配る演出も」）: 卓の真ん中から、裏向きのカードを席へ順に配る。自分の手札は1枚ずつ表に返る ── */
+const DEAL_ROUNDS = 5;   // 写しで配る周の数（全部は配らない。53枚を飛ばすと長すぎるので）
+const DEAL_STEP = 50;    // 1枚ごとの間（ミリ秒）
+const DEAL_FLY = 380;
+function runDeal(R, g, myIdx) {
+  if (!motionOK() || !$('table').offsetParent) { playSfx('deal'); return; }
+  const c = rectCenter($('center').getBoundingClientRect());
+  const n = R.seats.length;
+  const targets = R.seats.map((_, i) => seatRect(i, myIdx));
+  let k = 0;
+  for (let r = 0; r < DEAL_ROUNDS; r += 1) {
+    for (let i = 0; i < n; i += 1) {
+      const t = targets[i];
+      if (!t || g.hands[i].length <= r) continue;
+      const tc = rectCenter(t);
+      const node = fxGhost(null, tc.x, tc.y, true);
+      node.classList.add('is-deal');
+      const delay = k * DEAL_STEP;
+      const a = node.animate([
+        { transform: 'translate(-50%, -50%) translate(' + (c.x - tc.x) + 'px, ' + (c.y - tc.y) + 'px) rotate(0deg) scale(0.9)', opacity: 1 },
+        { transform: 'translate(-50%, -50%) rotate(' + (i % 2 ? 200 : -200) + 'deg) scale(0.6)', opacity: 0.9, offset: 0.85 },
+        { transform: 'translate(-50%, -50%) rotate(' + (i % 2 ? 220 : -220) + 'deg) scale(0.5)', opacity: 0 },
+      ], { duration: DEAL_FLY, delay, easing: 'cubic-bezier(.3,.7,.4,1)', fill: 'both' });
+      fxDone(a, node);
+      if (k % 2 === 0) playSfx('deal', delay / 1000);
+      k += 1;
+    }
+  }
+  const total = k * DEAL_STEP + DEAL_FLY;
+  // 席の裏向きのカードは、配っている間に1枚ずつ増える
+  [...$('players').children].forEach((box) => {
+    const backs = [...box.querySelectorAll('.df-back')];
+    backs.forEach((b, j) => b.animate([{ transform: 'scale(0)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 200, delay: (j / Math.max(1, backs.length)) * total, easing: 'ease-out', fill: 'backwards' }));
+  });
+  // 自分の手札: 真ん中から飛んできて、表に返る
+  const hand = [...document.querySelectorAll('#hand .df-card')];
+  hand.forEach((node, j) => {
+    const r = rectCenter(node.getBoundingClientRect());
+    const delay = (j / Math.max(1, hand.length)) * (total - DEAL_FLY) + 120;
+    node.animate([
+      { transform: 'translate(' + (c.x - r.x) + 'px, ' + (c.y - r.y) + 'px) rotateY(180deg) scale(0.6)', opacity: 0 },
+      { transform: 'translate(0, 0) rotateY(90deg) scale(0.9)', opacity: 1, offset: 0.6 },
+      { transform: 'none', opacity: 1 },
+    ], { duration: 460, delay, easing: 'cubic-bezier(.25,.8,.3,1)', fill: 'backwards' });
+  });
+}
+
+/* ── 効果音（2026-11-13 オーナー依頼「音も選んで入・切できるように」）──
+   はじめは「切」。待合室とゲームの画面の「効果音」で各自が「入」にする（みんなにみせる画面には出さない）。
+   この端末だけで鳴り、設定は端末に残す（localStorage daifugo:sfx。ルームには書かない）。音は Web Audio の合成音だけ（ファイルは読まない）。
+   失敗の音は作らない（反則あがり・都落ち・時間切れでは鳴らさない）。大きさは小さめで固定（SFX_GAIN） */
+const SFX_KEY = 'daifugo:sfx';
+const SFX_GAIN = 0.22;
+const sfx = { on: false, ac: null, out: null, noise: null };
+try { sfx.on = localStorage.getItem(SFX_KEY) === '1'; } catch (e) { /* 使えなければ切のまま */ }
+
+function ensureAudio() {
+  if (!sfx.on) return;
+  try {
+    if (!sfx.ac) {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      sfx.ac = new AC({ latencyHint: 'interactive' });
+      sfx.out = sfx.ac.createGain();
+      sfx.out.gain.value = SFX_GAIN;
+      sfx.out.connect(sfx.ac.destination);
+    }
+    if (sfx.ac.state !== 'running') sfx.ac.resume().catch(() => {});
+  } catch (e) { /* 鳴らせなくても遊べる */ }
+}
+
+// 短くやわらかい音を1つ（when は今からの秒。to があれば、その高さへすべらせる）
+function tone(freq, when, level, decay, type = 'sine', to = 0) {
+  const ac = sfx.ac;
+  const t = ac.currentTime + when;
+  const o = ac.createOscillator();
+  const gn = ac.createGain();
+  o.type = type;
+  o.frequency.setValueAtTime(freq, t);
+  if (to) o.frequency.exponentialRampToValueAtTime(to, t + decay);
+  gn.gain.setValueAtTime(0.0001, t);
+  gn.gain.exponentialRampToValueAtTime(level, t + 0.005);
+  gn.gain.exponentialRampToValueAtTime(0.0001, t + decay);
+  o.connect(gn).connect(sfx.out);
+  o.start(t);
+  o.stop(t + decay + 0.02);
+}
+
+// ざらっとした音を1つ（カードのこすれ・風の音。from から to へ、通す高さをすべらせる）
+function hiss(when, level, decay, kind, from, to = 0) {
+  const ac = sfx.ac;
+  if (!sfx.noise) {
+    sfx.noise = ac.createBuffer(1, ac.sampleRate, ac.sampleRate);
+    const d = sfx.noise.getChannelData(0);
+    for (let i = 0; i < d.length; i += 1) d[i] = Math.random() * 2 - 1;
+  }
+  const t = ac.currentTime + when;
+  const src = ac.createBufferSource();
+  const f = ac.createBiquadFilter();
+  const gn = ac.createGain();
+  src.buffer = sfx.noise;
+  f.type = kind;
+  f.frequency.setValueAtTime(from, t);
+  if (to) f.frequency.exponentialRampToValueAtTime(to, t + decay);
+  gn.gain.setValueAtTime(0.0001, t);
+  gn.gain.exponentialRampToValueAtTime(level, t + 0.008);
+  gn.gain.exponentialRampToValueAtTime(0.0001, t + decay);
+  src.connect(f).connect(gn).connect(sfx.out);
+  src.start(t, Math.random() * 0.5);
+  src.stop(t + decay + 0.02);
+}
+
+const arp = (notes, gap, level, decay) => notes.forEach((f, i) => { tone(f, i * gap, level, decay); tone(f * 2, i * gap, level * 0.2, decay * 0.6, 'triangle'); });
+// 音の名前ごとの合成音（失敗の音は作らない）
+const SYNTH = {
+  deal: () => hiss(0, 0.18, 0.05, 'bandpass', 3200, 1800),
+  pick: () => tone(1200, 0, 0.08, 0.03, 'triangle'),
+  play: () => { hiss(0, 0.35, 0.06, 'highpass', 2500); tone(220, 0, 0.25, 0.08, 'triangle', 140); },
+  pass: () => tone(392, 0, 0.12, 0.09, 'triangle'),
+  flow: () => hiss(0, 0.28, 0.32, 'bandpass', 2400, 400),
+  cut: () => { hiss(0, 0.35, 0.22, 'bandpass', 600, 4200); tone(1319, 0.12, 0.25, 0.3); tone(1760, 0.18, 0.18, 0.35); },
+  rev: () => { arp([196, 262, 330, 392, 523], 0.07, 0.35, 0.3); tone(98, 0, 0.4, 0.6, 'sine', 196); },
+  back: () => { tone(988, 0, 0.3, 0.15, 'triangle', 740); tone(740, 0.12, 0.3, 0.25, 'triangle', 494); },
+  lock: () => { tone(587, 0, 0.3, 0.12, 'square'); tone(587, 0.1, 0.25, 0.18, 'triangle'); },
+  info: () => { tone(659, 0, 0.25, 0.12); tone(880, 0.08, 0.25, 0.18); },
+  give: () => hiss(0, 0.22, 0.18, 'bandpass', 1200, 3000),
+  turn: () => { tone(784, 0, 0.28, 0.18); tone(1047, 0.11, 0.28, 0.28); },
+  done: () => arp([523, 659, 784, 1047], 0.08, 0.35, 0.3),
+  finish: () => { arp([523, 659, 784], 0.12, 0.35, 0.3); tone(1047, 0.36, 0.4, 0.6); tone(1568, 0.36, 0.12, 0.5, 'triangle'); },
+};
+
+// 音を1つ鳴らす（when は今からの秒）
+function playSfx(name, when = 0) {
+  if (!sfx.on || !sfx.ac || sfx.ac.state !== 'running' || !SYNTH[name] || state.role === 'spectator') return;
+  try {
+    if (when > 0) setTimeout(() => { if (sfx.on && sfx.ac.state === 'running') SYNTH[name](); }, when * 1000);
+    else SYNTH[name]();
+  } catch (e) { /* 鳴らせなくても遊べる */ }
+}
+
+// 新しい手の音（いちばん目立つことを1つ。カードが場に着くころに）
+function fxSound(g, myIdx) {
+  const L = g.last;
+  if (!L) return;
+  const fx = L.fx || [];
+  const has = (f) => fx.includes(f);
+  const land = motionOK() && L.kind === 'play' ? (FLY_MS * 0.75 + (L.cards.length - 1) * FLY_STEP) / 1000 : 0;
+  if (L.kind === 'play') playSfx('play', land);
+  else if (L.kind === 'pass') playSfx('pass');
+  else if (L.kind === 'discard' || L.kind === 'give7') { if (L.cards.length) playSfx('give'); }
+  else if (L.kind === 'give') playSfx('give');
+  if (g.over && !has('foul') && !has('fallen')) { playSfx('finish', land + 0.15); return; }
+  if (has('done')) playSfx('done', land + 0.1);
+  else if (has('revolution') || has('revolution-back')) playSfx('rev', land);
+  else if (has('eight') || has('queen') || has('four') || has('spade3')) playSfx('cut', land);
+  else if (has('back')) playSfx('back', land);
+  else if (has('gekilock') || has('lock') || has('numlock')) playSfx('lock', land + 0.05);
+  else if (has('five') || has('ten') || has('seven')) playSfx('info', land + 0.05);
+  else if (L.flow) playSfx('flow', L.kind === 'pass' ? 0.1 : land);
+  void myIdx;
+}
+
+function syncSfxInputs() {
+  ['lobbySfx', 'gameSfx'].forEach((name) => {
+    const r = document.querySelector('input[name="' + name + '"][value="' + (sfx.on ? 'on' : 'off') + '"]');
+    if (r) r.checked = true;
+  });
+}
+
+function setSfx(on) {
+  sfx.on = on;
+  try { localStorage.setItem(SFX_KEY, on ? '1' : '0'); } catch (e) { /* 残せなくてもよい */ }
+  syncSfxInputs();
+  if (on) {
+    ensureAudio();
+    // 入にしたら、どんな音か1回だけ聞かせる
+    setTimeout(() => playSfx('turn'), 60);
+  }
 }
 
 function splash(text, kind, wait = 0) {
@@ -2305,6 +2496,12 @@ const pendKind = () => (state.view?.game?.pending?.kind === 'give7' ? 'give7' : 
 $('btnDiscard').addEventListener('click', () => act(pendKind(), state.sel.slice()));
 $('btnNoDiscard').addEventListener('click', () => act(pendKind(), []));
 $('btnSelf').addEventListener('click', takeBack);
+document.querySelectorAll('input[name="lobbySfx"], input[name="gameSfx"]').forEach((r) => {
+  r.addEventListener('change', () => { if (r.checked) setSfx(r.value === 'on'); });
+});
+syncSfxInputs();
+// 音は押した操作のあとでないと鳴らせない（ブラウザの決まり）。何かを押したら、入の端末だけ鳴らせる状態にしておく
+['pointerdown', 'keydown'].forEach((type) => document.addEventListener(type, ensureAudio, { capture: true, passive: true }));
 $('btnAgain').addEventListener('click', () => startGame(true));
 $('btnRelobby').addEventListener('click', backToLobby);
 $('btnStop').addEventListener('click', () => {
