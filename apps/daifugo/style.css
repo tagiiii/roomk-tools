@@ -257,19 +257,93 @@
 .df-news__item--warn { border-color: #8A4B00; }
 .df-news__item--warn .df-news__head { color: #8A4B00; }
 .df-splash {
-  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
-  font-size: 44px; font-weight: 700; color: #fff; text-shadow: 0 2px 12px rgba(0, 0, 0, 0.45);
-  pointer-events: none;
+  position: absolute; inset: 0; z-index: 5; display: flex; align-items: center; justify-content: center;
+  pointer-events: none; overflow: hidden; border-radius: inherit;
+  --fx: var(--color-accent);
 }
 .df-splash[hidden] { display: none; }
-.df-splash.is-on { animation: df-pop 1.5s ease-out both; }
-@keyframes df-pop {
-  0% { opacity: 0; transform: scale(0.6); }
-  15% { opacity: 1; transform: scale(1.08); }
-  30% { transform: scale(1); }
-  80% { opacity: 1; }
-  100% { opacity: 0; }
+/* 種類ごとの色（いま起きたことの札・卓のふちと同じ） */
+.df-splash--rev { --fx: #B3303D; }
+.df-splash--back { --fx: #5B4A93; }
+.df-splash--cut { --fx: #1F5444; }
+.df-splash--lock { --fx: #286F7C; }
+.df-splash__burst {
+  position: absolute; width: 520px; height: 520px; border-radius: 50%;
+  background: repeating-conic-gradient(from 0deg, color-mix(in srgb, var(--fx) 55%, transparent) 0deg 9deg, transparent 9deg 22deg);
+  -webkit-mask-image: radial-gradient(circle, #000 18%, transparent 68%); mask-image: radial-gradient(circle, #000 18%, transparent 68%);
+  opacity: 0;
 }
+.df-splash__ring { position: absolute; width: 120px; height: 120px; border-radius: 50%; border: 6px solid #fff; opacity: 0; }
+.df-splash__text {
+  position: relative; display: inline-flex; padding: 10px 26px 12px; border-radius: 999px;
+  background: var(--fx); color: #fff; font-size: 44px; font-weight: 700; line-height: 1.15; letter-spacing: 0.02em;
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.35), 0 0 0 4px #fff; opacity: 0;
+}
+.df-splash__ch { display: inline-block; }
+.df-splash.is-on .df-splash__text { animation: df-pop 1.7s cubic-bezier(.2,.9,.3,1.2) var(--wait, 0ms) both; }
+.df-splash.is-on .df-splash__ch { animation: df-hop 0.5s cubic-bezier(.3,1.6,.5,1) both; animation-delay: calc(var(--wait, 0ms) + 0.12s + var(--i) * 0.05s); }
+.df-splash.is-on .df-splash__burst { animation: df-burst 1.7s ease-out var(--wait, 0ms) both; }
+.df-splash.is-on .df-splash__ring { animation: df-ring 0.7s ease-out var(--wait, 0ms) both; }
+@keyframes df-pop {
+  0% { opacity: 0; transform: scale(0.4) rotate(-6deg); }
+  14% { opacity: 1; transform: scale(1.12) rotate(2deg); }
+  26% { transform: scale(1) rotate(0deg); }
+  82% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.06) translateY(-10px); }
+}
+@keyframes df-hop {
+  0% { transform: translateY(14px) scale(0.6); }
+  60% { transform: translateY(-8px) scale(1.15); }
+  100% { transform: none; }
+}
+@keyframes df-burst {
+  0% { opacity: 0; transform: scale(0.3) rotate(0deg); }
+  15% { opacity: 1; }
+  75% { opacity: 0.8; }
+  100% { opacity: 0; transform: scale(1.15) rotate(40deg); }
+}
+@keyframes df-ring {
+  0% { opacity: 0.9; transform: scale(0.4); }
+  100% { opacity: 0; transform: scale(4); }
+}
+
+/* 動きのためだけのカードの写し（画面いっぱいの透明な層。押せない。app.js の runFx） */
+/* 重なり: 卓の席・手札の欄（z-index 3）より上、大きな演出（5）より下 */
+.df-fx { position: fixed; inset: 0; z-index: 4; pointer-events: none; overflow: hidden; }
+.df-fx__card { position: fixed; --df-card-w: 84px; --df-card-h: 120px; transform: translate(-50%, -50%); box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35); }
+.df-fx__card.is-small { --df-card-w: 52px; --df-card-h: 74px; }
+.df-card--back { background: repeating-linear-gradient(45deg, #7A4520 0 6px, #9B5E2E 6px 12px); border: 3px solid #fff; }
+.df-fx__slash {
+  position: fixed; width: 360px; height: 8px; border-radius: 999px; transform-origin: center;
+  background: linear-gradient(90deg, transparent, #fff 20%, #FFF4D6 50%, #fff 80%, transparent);
+  box-shadow: 0 0 14px 4px rgba(255, 244, 214, 0.8);
+}
+.df-fx__bit { position: fixed; width: 9px; height: 14px; border-radius: 2px; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2); }
+/* いま起きたことの札: 新しい手のときだけ、ふわっと出す */
+.df-news__item.is-fresh { animation: df-news-in 0.45s cubic-bezier(.2,.9,.3,1.3) both; animation-delay: calc(var(--i, 0) * 0.08s); }
+@keyframes df-news-in {
+  0% { opacity: 0; transform: translateY(10px) scale(0.85); }
+  100% { opacity: 1; transform: none; }
+}
+/* 番の人の枠: ゆっくり光る（app.js が animation-delay で描きかえても途中から続ける） */
+.df-player.is-turn { animation: df-turn 1.6s ease-in-out infinite; }
+@keyframes df-turn {
+  0%, 100% { box-shadow: 0 0 0 3px var(--color-accent); }
+  50% { box-shadow: 0 0 0 3px var(--color-accent), 0 0 0 9px color-mix(in srgb, var(--color-accent) 30%, transparent); }
+}
+/* 結果: 1番から順に下から出す。1番は光をすべらせる */
+.df-result__item.is-reveal { animation: df-rise 0.5s cubic-bezier(.2,.8,.25,1) both; animation-delay: calc(0.15s + var(--i, 0) * 0.14s); }
+.df-result__item.is-reveal:first-child { position: relative; overflow: hidden; }
+.df-result__item.is-reveal:first-child::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, 0.75) 50%, transparent 70%);
+  transform: translateX(-100%); animation: df-shine 0.9s ease-in-out 0.8s both;
+}
+@keyframes df-rise {
+  0% { opacity: 0; transform: translateY(18px); }
+  100% { opacity: 1; transform: none; }
+}
+@keyframes df-shine { to { transform: translateX(100%); } }
 
 .df-log { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
 .df-log__item { font-size: 14px; color: var(--color-muted); line-height: 1.6; }
@@ -338,6 +412,14 @@ button.df-card:hover { box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18); }
 button.df-card:focus-visible { outline: 3px solid var(--color-accent); outline-offset: 2px; }
 button.df-card.is-sel { transform: translateY(-12px); border: 2px solid var(--color-accent); box-shadow: 0 6px 12px rgba(138, 74, 16, 0.3); }
 button.df-card.is-dim { opacity: 0.4; }
+/* 押したカードだけ、上げ下げを動かす（手札は押すたびに描きなおすので transition では動かない） */
+button.df-card.is-lift { animation: df-lift 0.18s cubic-bezier(.3,1.5,.5,1) both; }
+button.df-card.is-drop { animation: df-drop 0.15s ease-out both; }
+@keyframes df-lift { from { transform: translateY(0); } to { transform: translateY(-12px); } }
+@keyframes df-drop { from { transform: translateY(-12px); } to { transform: translateY(0); } }
+@media (hover: hover) {
+  button.df-card:not(.is-sel):hover { transform: translateY(-4px); }
+}
 button.df-card.is-got::after { content: ''; position: absolute; top: 4px; right: 4px; width: 8px; height: 8px; border-radius: 50%; background: var(--color-warning); }
 button.df-card { position: relative; }
 
@@ -387,6 +469,8 @@ button.df-card { position: relative; }
 
 @media (max-width: 600px) {
   :root { --df-card-w: 44px; --df-card-h: 64px; }
+  .df-splash__text { font-size: 28px; padding: 8px 18px 10px; }
+  .df-splash__burst { width: 360px; height: 360px; }
   .wrapper { padding: 28px 16px 64px; }
   .df-roombar #btnLeave { margin-left: 0; }
   .df-checks { grid-template-columns: 1fr; }
@@ -447,9 +531,14 @@ button.df-card { position: relative; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .df-splash.is-on { animation: none; }
+  .df-splash.is-on .df-splash__text { animation: df-fade 1.7s linear var(--wait, 0ms) both; }
+  .df-splash.is-on :is(.df-splash__ch, .df-splash__burst, .df-splash__ring) { animation: none; }
   button.df-card, .df-timer__bar { transition: none; }
+  .df-player.is-turn, .df-news__item.is-fresh, .df-result__item.is-reveal, .df-result__item.is-reveal::after,
+  button.df-card.is-lift, button.df-card.is-drop { animation: none; }
+  button.df-card:not(.is-sel):hover { transform: none; }
 }
+@keyframes df-fade { 0%, 85% { opacity: 1; } 100% { opacity: 0; } }
 
 /* ── はじめの画面の型（2026-11-06）: ツール名・ひとこと・絵は、はじめの画面の白い面（.app-entry）に入れた。
    そのあいだだけ、ヘッダーのツール名とひとことを隠す（ほかの画面では今までどおり出る。みんなにみせる画面の印は隠さない） ── */
