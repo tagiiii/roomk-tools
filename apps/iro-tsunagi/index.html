@@ -9,13 +9,13 @@
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
   <link rel="stylesheet" href="../shared/css/design-system.css?v=20261106c">
   <!-- index.html と app.js・engine.js・style.css はセットで変わるので、変えたら ?v= をそろえて上げる -->
-  <link rel="stylesheet" href="style.css?v=20261113e">
+  <link rel="stylesheet" href="style.css?v=20261113f">
   <script src="https://www.gstatic.com/firebasejs/13.3.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/13.3.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/13.3.0/firebase-database-compat.js"></script>
   <script src="../shared/js/rtdb-utils.js?v=20261005"></script>
   <script src="../shared/js/room-qr.js?v=20261022"></script>
-  <script src="engine.js?v=20261113e"></script>
+  <script src="engine.js?v=20261113f"></script>
 </head>
 <body data-genre="puzzle">
 
@@ -260,6 +260,7 @@
         <span class="it-bar__title">いろつなぎ</span>
         <span id="timer" class="it-timer" hidden></span>
         <span class="it-hostoff" id="playHostOff" hidden>ホストの通信が切れています</span>
+        <button type="button" class="it-quiet" id="btnSpectate" hidden>みんなの盤を見る</button>
         <button type="button" class="it-quiet" id="btnPause">とめる</button>
         <button type="button" class="it-quiet" id="btnQuit">おわる</button>
       </div>
@@ -319,6 +320,7 @@
         <span class="it-watchbar__title">あそぶ人の盤</span>
         <span class="it-watchbar__timer" id="watchTimer"></span>
         <span class="it-hostoff" id="watchHostOff" hidden>ホストの通信が切れています</span>
+        <button type="button" class="it-quiet" id="btnWatchMine" hidden>自分の盤にもどる</button>
         <button type="button" class="it-quiet" id="btnWatchEnd" hidden>早めにおわる</button>
         <button type="button" class="it-quiet" id="btnWatchLeave" hidden>トップへ戻る</button>
       </div>
@@ -355,7 +357,7 @@
     </div>
   </div>
 
-  <script src="app.js?v=20261113e"></script>
+  <script src="app.js?v=20261113f"></script>
   <script src="../shared/js/stats.js?v=1" defer></script>
   <script src="../shared/js/howto.js"></script>
   <script>
@@ -395,7 +397,7 @@
           '対戦: れんさをすると、送る相手の盤にじゃまの玉（灰色）が落ちる。送る相手は、最後にじゃまを送ってきた人（まだだれからも来ていなければ、ならびでつぎの人）。れんさが長いほどたくさん。2れんさで3こ、3れんさで6こ、4れんさで10こ。5つ以上つなげて消すと、そのぶんも足す。全部消えたら＋6こ',
           'じゃまの玉はつながらないが、となりの玉が消えると、いっしょに消える',
           '来るじゃまは、自分が送るぶんで先にへらせる。のこったじゃまは、つぎに置いて消えなかったときに、上から30こまで落ちてくる',
-          '対戦で盤がいっぱいになったら、「その人はここまで」（のこった人が上）か「からにしてつづける」（送ったじゃまの数をくらべる）をホストが選ぶ',
+          '対戦で盤がいっぱいになったら、「その人はここまで」（のこった人が上）か「からにしてつづける」（送ったじゃまの数をくらべる）をホストが選ぶ。ここまでになった人は、上の「みんなの盤を見る」で、のこっている人の盤を大きく見られる（「自分の盤にもどる」でもどる）',
           'ホストが「ホストもあそぶ」を外すと、ホストの画面はあそぶ人の盤をならべて見る画面になる。「みんなにみせる画面」は、画面共有でみんなに見せる見るだけの画面',
         ] },
         { heading: '盤がいっぱいになったら', items: [

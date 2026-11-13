@@ -181,6 +181,7 @@
 .it-watchbar__title { font-weight: 700; color: var(--color-primary); font-size: 1.1rem; }
 .it-watchbar__timer { font-weight: 700; font-size: 1.3rem; font-variant-numeric: tabular-nums; }
 .it-watchbar .it-quiet { margin-left: auto; }
+.it-watchbar .it-quiet:not([hidden]) ~ .it-quiet { margin-left: 0; }   /* 「自分の盤にもどる」と「早めにおわる」をとなりに */
 .it-watchgrid { display: grid; gap: 16px; justify-content: center; }
 .it-wboard { display: grid; gap: 4px; justify-items: center; background: var(--color-surface); border-radius: 12px; padding: 10px; box-shadow: var(--shadow-soft); }
 .it-wboard canvas { border-radius: 8px; box-shadow: 0 0 0 3px var(--g, #6A4F35); }
