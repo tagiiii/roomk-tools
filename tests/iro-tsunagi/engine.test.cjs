@@ -1,7 +1,7 @@
-// node drafts/iro-tsunagi/engine.test.cjs
+// node tests/iro-tsunagi/engine.test.cjs
 'use strict';
 const assert = require('assert');
-const E = require('./engine.js');
+const E = require('../../apps/iro-tsunagi/engine.js');
 
 let n = 0;
 function t(name, fn) { fn(); n++; console.log('ok', name); }
@@ -71,11 +71,31 @@ t('床で下向きに回すと1つ上がる', () => {
   assert.deepStrictEqual([g.piece.y, g.piece.rot], [E.H - 2, 2]);
 });
 
-t('1列のすき間では上下を入れかえる', () => {
+t('1列のすき間では、flip のときだけ上下を入れかえる', () => {
   const g = game(['3.4...', '4.3...', '3.4...', '4.3...']);
   g.piece = { x: 1, y: E.H - 2, rot: 0, a: 1, b: 2 };
-  assert.ok(E.rotate(g, 1));
+  assert.strictEqual(E.rotate(g, 1), false);
+  assert.deepStrictEqual([g.piece.rot, g.piece.a, g.piece.b], [0, 1, 2]);
+  assert.ok(E.rotate(g, 1, true));
   assert.deepStrictEqual([g.piece.rot, g.piece.a, g.piece.b], [0, 2, 1]);
+});
+
+t('はじめの1袋は3色だけ、そのあとはどの色も袋ごとに同じ数', () => {
+  const g = E.newGame({ colors: 5, seed: 42 });
+  const seen = [];
+  for (let i = 0; i < 6 + 10 * 4; i++) { E.spawn(g); seen.push(...E.cells(g.piece).map((q) => q.c)); g.piece = null; }
+  assert.ok(seen.slice(0, 12).every((c) => c <= 3));
+  const rest = seen.slice(12, 12 + 5 * E.PER_COLOR * 2);
+  for (let c = 1; c <= 5; c++) assert.strictEqual(rest.filter((v) => v === c).length, E.PER_COLOR * 2);
+});
+
+t('消して盤が全部なくなったら allClear', () => {
+  const g = game(['1.....', '1.....', '1.....', '1.....']);
+  const r = E.settle(g);
+  assert.strictEqual(r.allClear, true);
+  assert.strictEqual(g.allClears, 1);
+  const g2 = game(['1.....', '1.....', '1.....', '12....']);
+  assert.strictEqual(E.settle(g2).allClear, false);
 });
 
 t('出る所がふさがると spawn は false', () => {
@@ -103,7 +123,7 @@ t('ためしに1000手おいても盤の外に玉が出ない', () => {
   for (let i = 0; i < 1000; i++) {
     if (!E.spawn(g)) { E.clearBoard(g); E.spawn(g); }
     const r = Math.floor(rand() * 4);
-    for (let k = 0; k < r; k++) E.rotate(g, 1);
+    for (let k = 0; k < r; k++) E.rotate(g, 1, k % 2 === 1);
     const dx = Math.floor(rand() * 6) - 3;
     for (let k = 0; k < Math.abs(dx); k++) E.move(g, Math.sign(dx));
     E.hardDropRows(g);

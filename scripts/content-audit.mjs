@@ -246,6 +246,8 @@ const NO_CONTENT_APPS = [
   'charin-baton',
   // 落ちてくるブロック（1〜4マスの8種類の形）だけ
   'suton-block',
+  // 色の玉（5色と、色ごとの形）だけ
+  'iro-tsunagi',
   // トランプ（52枚＋ジョーカー）だけ
   'daifugo',
   // マップと仕事のミニゲーム（線・番号・メーター）だけ
