@@ -9,13 +9,13 @@
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
   <link rel="stylesheet" href="../shared/css/design-system.css?v=20261106c">
   <!-- index.html と app.js・engine.js・style.css はセットで変わるので、変えたら ?v= をそろえて上げる -->
-  <link rel="stylesheet" href="style.css?v=20261113d">
+  <link rel="stylesheet" href="style.css?v=20261113e">
   <script src="https://www.gstatic.com/firebasejs/13.3.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/13.3.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/13.3.0/firebase-database-compat.js"></script>
   <script src="../shared/js/rtdb-utils.js?v=20261005"></script>
   <script src="../shared/js/room-qr.js?v=20261022"></script>
-  <script src="engine.js?v=20261113d"></script>
+  <script src="engine.js?v=20261113e"></script>
 </head>
 <body data-genre="puzzle">
 
@@ -355,7 +355,7 @@
     </div>
   </div>
 
-  <script src="app.js?v=20261113d"></script>
+  <script src="app.js?v=20261113e"></script>
   <script src="../shared/js/stats.js?v=1" defer></script>
   <script src="../shared/js/howto.js"></script>
   <script>
@@ -392,7 +392,7 @@
         { heading: 'ルーム', items: [
           '「あそびかた」は、点をくらべるか、対戦かをホストが選ぶ',
           '点をくらべる: 時間内にとった点をくらべる。盤がいっぱいになっても、からにしてつづく',
-          '対戦: れんさをすると、つぎの人の盤にじゃまの玉（灰色）が落ちる。れんさが長いほどたくさん。2れんさで3こ、3れんさで6こ、4れんさで10こ。5つ以上つなげて消すと、そのぶんも足す。全部消えたら＋6こ',
+          '対戦: れんさをすると、送る相手の盤にじゃまの玉（灰色）が落ちる。送る相手は、最後にじゃまを送ってきた人（まだだれからも来ていなければ、ならびでつぎの人）。れんさが長いほどたくさん。2れんさで3こ、3れんさで6こ、4れんさで10こ。5つ以上つなげて消すと、そのぶんも足す。全部消えたら＋6こ',
           'じゃまの玉はつながらないが、となりの玉が消えると、いっしょに消える',
           '来るじゃまは、自分が送るぶんで先にへらせる。のこったじゃまは、つぎに置いて消えなかったときに、上から30こまで落ちてくる',
           '対戦で盤がいっぱいになったら、「その人はここまで」（のこった人が上）か「からにしてつづける」（送ったじゃまの数をくらべる）をホストが選ぶ',

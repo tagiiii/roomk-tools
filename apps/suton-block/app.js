@@ -79,7 +79,8 @@ const state = {
   playRound: null,     // ルームで、いまあそんでいる回の id
   playSeed: null,      // その回の種（変わったら作りなおす）
   jamaSeen: new Set(), // 受けとったじゃま（消す前に二重に数えない）
-  jamaTo: null,        // じゃまを送る相手として自分で選んだ人（null は並びのつぎの人）
+  jamaTo: null,        // じゃまを送る相手として自分で選んだ人（null はいつもの相手: 送ってきた人か、並びのつぎの人）
+  backFrom: null,      // この回で最後に自分へじゃまを送ってきた人（いつもの送る相手。2026-11-13 フィードバック）
   finishing: false,
 };
 const $ = (id) => document.getElementById(id);
@@ -1191,7 +1192,7 @@ function applyLobbyFields(s) {
   $('fsFull').hidden = !battle;
   $('fsJama').hidden = battle;
   $('modeNote').textContent = battle
-    ? '2段いじょう消す・T を回し入れて消す・つづけて消すと、つぎの人の盤の下にじゃまが入る。来るじゃまは、送るぶんで先にへらせる。'
+    ? '2段いじょう消す・T を回し入れて消す・つづけて消すと、相手の盤の下にじゃまが入る。送る相手は、じゃまを送ってきた人（まだならつぎの人）。来るじゃまは、送るぶんで先にへらせる。'
     : '時間内に消した段の数をくらべる。';
   $('timeNone').hidden = !noTime;
   $('timeSeg').classList.toggle('sb-seg--4', noTime);
@@ -1565,8 +1566,9 @@ function syncRun(room, R) {
     state.playRound = R.id;
     state.playSeed = R.seed;
     state.jamaSeen.clear();
-    state.jamaTo = null; // じゃまを送る相手は、回ごとに「並びのつぎの人」からはじめる
+    state.jamaTo = null; // じゃまを送る相手は、回ごとに「いつもの相手」からはじめる
     const mine = boardOf(room, R, state.nickname);
+    state.backFrom = (mine && typeof mine.back === 'string' && mine.back) || null; // 読み込み直したときは、送ってきた人を盤から戻す
     startRun({
       seed: R.seed, speed: R.speed, jama: R.jama, onFull: isOutMode(R) ? 'end' : 'clear',
       startAt: playStartOf(R), endAt: endOf(R), showTimer: R.time > 0,
@@ -1723,6 +1725,7 @@ function sendBoard(done = false, extra = null) {
     h: E.packHidden(g.hidden) || null, // 盤の上の見えない段（読み込み直し用。何もなければ書かない）
     lines: g.lines,
     to: state.jamaTo || null, // 選んだ送る相手（ほかの人の画面で「ねらっている人」を数える）
+    back: state.backFrom || null, // 最後に送ってきた人（いつもの送る相手。ほかの人の画面でも同じに数える）
     pieces: g.pieces,
     resets: g.resets,
     allClears: g.allClears,
@@ -1757,9 +1760,12 @@ function nextAlive(room, R, name) {
 // 「ねらってきた人みんな」を選んだしるし（2026-11-10 フィードバック）。jamaTo と boards/{名前}/to に入る
 const COUNTER = '*';
 
-// name の人のいつもの送る相手（あそぶ人の並びで、つぎの人。対戦では「ここまで」になった人をとばす）
+// name の人のいつもの送る相手。この回で最後にじゃまを送ってきた人（のこっていれば）。
+// まだだれからも来ていなければ、あそぶ人の並びで、つぎの人（対戦では「ここまで」になった人をとばす）
 function defaultTarget(room, R, name) {
   if (!R || R.players.length < 2) return null;
+  const back = name === state.nickname ? state.backFrom : boardOf(room, R, name)?.back || null;
+  if (back && back !== name && R.players.includes(back) && !isOut(room, R, back)) return back;
   if (isBattle(R)) return nextAlive(room, R, name);
   const i = R.players.indexOf(name);
   return i < 0 ? null : R.players[(i + 1) % R.players.length];
@@ -1800,7 +1806,7 @@ function canChooseTarget(R) {
   return !!R && R.jama && isRoomPlayer() && otherPlayers().length >= 2;
 }
 
-// 押した人（か「ねらってきた人みんな」）を送る相手にする。もう一度押すと、並びのつぎの人にもどす。
+// 押した人（か「ねらってきた人みんな」）を送る相手にする。もう一度押すと、いつもの相手（送ってきた人か並びのつぎ）にもどす。
 // ほかの人の画面で「ねらっている人」を数えられるよう、選んだものを自分の盤に書く
 function chooseTarget(name) {
   const R = roundOf(state.room);
@@ -1905,6 +1911,7 @@ function receiveJama(room, R) {
   const owners = [state.nickname];
   if (isOutMode(R)) R.players.forEach((name) => { if (name !== state.nickname && isOut(room, R, name) && nextAlive(room, R, name) === state.nickname) owners.push(name); });
   let added = 0;
+  let from = null; // この中で最後に送ってきた人（いつもの送る相手になる）
   const done = {};
   owners.forEach((owner) => {
     const box = room.jama?.[owner];
@@ -1912,7 +1919,11 @@ function receiveJama(room, R) {
     Object.entries(box).forEach(([key, v]) => {
       if (state.jamaSeen.has(key)) return;
       state.jamaSeen.add(key);
-      if (Number(v?.round) === R.id) added += Math.max(0, Math.min(E.H, Number(v.rows) || 0));
+      if (Number(v?.round) === R.id) {
+        const rows = Math.max(0, Math.min(E.H, Number(v.rows) || 0));
+        added += rows;
+        if (rows > 0 && typeof v.from === 'string' && v.from !== state.nickname && R.players.includes(v.from)) from = v.from;
+      }
       done['jama/' + owner + '/' + key] = null;
     });
   });
@@ -1930,6 +1941,11 @@ function receiveJama(room, R) {
   // （先に消すと、つぎに置く前に読み込み直したとき、来るじゃまがなくなる）
   done['boards/' + state.nickname + '/pending'] = run.pending;
   done['boards/' + state.nickname + '/round'] = R.id;
+  const prevFrom = state.backFrom;
+  if (from) {
+    state.backFrom = from;
+    done['boards/' + state.nickname + '/back'] = from;
+  }
   const keys = Object.keys(done).filter((k) => k.startsWith('jama/')).map((k) => k.split('/').pop());
   state.roomRef.update(done).catch((error) => {
     // 書けなかったら、数えたぶんをもどし、つぎのルームの更新でやりなおす
@@ -1937,10 +1953,12 @@ function receiveJama(room, R) {
     keys.forEach((k) => state.jamaSeen.delete(k));
     if (state.run === run) {
       run.pending = Math.max(0, run.pending - added);
+      state.backFrom = prevFrom;
       renderJama();
     }
   });
   renderJama();
+  if (from && from !== prevFrom) renderOthers(); // 送る相手の印を付けかえる
 }
 
 function renderJama() {
@@ -2798,7 +2816,7 @@ function renderOthers() {
   if (!names.length) return;
   const room = state.room;
   const R = roundOf(room);
-  // じゃまのある回で、ほかに2人以上いるときは、押した人へじゃまを送る（送る相手に印。はじめは並びのつぎの人）
+  // じゃまのある回で、ほかに2人以上いるときは、押した人へじゃまを送る（送る相手に印。はじめは送ってきた人か、並びのつぎの人）
   const choose = canChooseTarget(R);
   const targets = choose ? targetsOf(room, R, state.nickname) : [];
   const aimers = choose ? attackersOf(room, R, state.nickname) : [];

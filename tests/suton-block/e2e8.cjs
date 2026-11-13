@@ -94,7 +94,8 @@ function watchFx(c, sel) {
   await A.page.waitForTimeout(250);
   await shot(A, 'e2e8-fly-375');
   const seen2 = await fx2;
-  check('F7 375px でも「＋4段」が飛び、一覧の はる が揺れる', seen2.fly === '＋4段' && seen2.hitName === 'はる' && seen2.hitTag === '＋4段', seen2);
+  // 1回目で あおいに送られた はる は、いつもの相手があおい（送ってきた人）になる。メンター（並びのつぎがあおい）と2人にねらわれるので＋1（2026-11-13）
+  check('F7 375px でも「＋5段」（4段＋2人にねらわれて1）が飛び、一覧の はる が揺れる', seen2.fly === '＋5段' && seen2.hitName === 'はる' && seen2.hitTag === '＋5段', seen2);
   check('F8 375px で横にはみ出さない', (await overflow(A)) <= 0);
 
   // ── 動きを減らす設定: 飛ばさず、相手に印だけ ──
@@ -104,7 +105,7 @@ function watchFx(c, sel) {
   const fx3 = watchFx(A, '#others');
   await dropFour(A);
   const seen3 = await fx3;
-  check('F9 動きを減らす設定では飛ばさず、相手に「＋4段」だけ出す', seen3.fly === '' && seen3.hitName === 'はる' && seen3.hitTag === '＋4段', seen3);
+  check('F9 動きを減らす設定では飛ばさず、相手に「＋5段」だけ出す', seen3.fly === '' && seen3.hitName === 'はる' && seen3.hitTag === '＋5段', seen3);
   check('F10 エラーなし', A.errors.length === 0 && H.errors.length === 0 && B.errors.length === 0, A.errors.concat(H.errors, B.errors));
   await L.finishAll(server);
 })().catch((e) => { console.error(e); process.exit(1); });
