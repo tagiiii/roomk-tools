@@ -76,6 +76,7 @@
     playRound: null,
     playSeed: null,
     jamaSeen: new Set(),
+    backFrom: null,      // この回で最後に自分へじゃまを送ってきた人（送る相手になる。2026-11-13 フィードバック）
     finishing: false,
   };
 
@@ -842,7 +843,7 @@
     const noTime = battle && s.full === 'out';
     $('fsFull').hidden = !battle;
     $('modeNote').textContent = battle
-      ? 'れんさをすると、つぎの人の盤にじゃまの玉が落ちる。来るじゃまは、送るぶんで先にへらせる。'
+      ? 'れんさをすると、相手の盤にじゃまの玉が落ちる。送る相手は、じゃまを送ってきた人（まだならつぎの人）。来るじゃまは、送るぶんで先にへらせる。'
       : '時間内にとった点をくらべる。盤がいっぱいになっても、からにしてつづく。';
     $('timeNone').hidden = !noTime;
     $('timeSeg').classList.toggle('it-seg--4', noTime);
@@ -1507,6 +1508,7 @@
       state.playSeed = R.seed;
       state.jamaSeen.clear();
       const mine = boardOf(room, R, state.nickname);
+      state.backFrom = (mine && typeof mine.back === 'string' && mine.back) || null; // 読み込み直したときは、送ってきた人を盤から戻す
       startRun({
         seed: R.seed, colors: R.colors, speed: R.speed, full: isOutMode(R) ? 'end' : 'clear',
         limit: R.time ? endOf(R) - playStartOf(R) : 0, startAt: playStartOf(R), battle: isBattle(R),
@@ -1590,7 +1592,7 @@
     beginStep();
   }
 
-  // 対戦: 送るじゃま。来るじゃまがあれば先にへらし、のこりをつぎの人に送る（盤といっしょの1回の update で）
+  // 対戦: 送るじゃま。来るじゃまがあれば先にへらし、のこりを送る相手に送る（盤といっしょの1回の update で）
   function attack(n) {
     const cancel = Math.min(run.pending, n);
     run.pending -= cancel;
@@ -1618,9 +1620,12 @@
     }
     return null;
   }
+  // 送る相手: この回で最後にじゃまを送ってきた人（のこっていれば）。まだだれからも来ていなければ、並びのつぎの、のこっている人
   function jamaTarget() {
     const R = roundOf(state.room);
     if (!R || !state.roomRef || R.players.length < 2) return null;
+    const back = state.backFrom;
+    if (back && back !== state.nickname && R.players.includes(back) && !isOut(state.room, R, back)) return back;
     return nextAlive(state.room, R, state.nickname);
   }
   function receiveJama(room, R) {
@@ -1629,6 +1634,7 @@
     const owners = [state.nickname];
     if (isOutMode(R)) R.players.forEach((name) => { if (name !== state.nickname && isOut(room, R, name) && nextAlive(room, R, name) === state.nickname) owners.push(name); });
     let added = 0;
+    let from = null; // この中で最後に送ってきた人（送る相手になる）
     const done = {};
     owners.forEach((owner) => {
       const box = room.jama && room.jama[owner];
@@ -1636,7 +1642,11 @@
       Object.entries(box).forEach(([key, v]) => {
         if (state.jamaSeen.has(key)) return;
         state.jamaSeen.add(key);
-        if (v && Number(v.round) === R.id) added += Math.max(0, Math.min(999, Number(v.n) || 0));
+        if (v && Number(v.round) === R.id) {
+          const n = Math.max(0, Math.min(999, Number(v.n) || 0));
+          added += n;
+          if (n > 0 && typeof v.from === 'string' && v.from !== state.nickname && R.players.includes(v.from)) from = v.from;
+        }
         done['jama/' + owner + '/' + key] = null;
       });
     });
@@ -1645,12 +1655,17 @@
     // 来るじゃまの数を自分の盤の記録に書くのと、受けとったじゃまを消すのを同じ1回の update にする
     done['boards/' + state.nickname + '/pending'] = run.pending;
     done['boards/' + state.nickname + '/round'] = R.id;
+    const prevFrom = state.backFrom;
+    if (from) {
+      state.backFrom = from;
+      done['boards/' + state.nickname + '/back'] = from;
+    }
     const keys = Object.keys(done).filter((k) => k.startsWith('jama/')).map((k) => k.split('/').pop());
     const r0 = run;
     state.roomRef.update(done).catch((error) => {
       console.warn('[iro-tsunagi] jama receive failed', error);
       keys.forEach((k) => state.jamaSeen.delete(k));
-      if (run === r0) { run.pending = Math.max(0, run.pending - added); hud(); }
+      if (run === r0) { run.pending = Math.max(0, run.pending - added); state.backFrom = prevFrom; hud(); }
     });
     if (added > 0) {
       const el = $('jamaBox');
@@ -1771,6 +1786,7 @@
       score: g.score, bestChain: g.bestChain, pops: g.pops, clears: g.clears, allClears: g.allClears,
       taken: g.taken - (g.piece ? 1 : 0),   // 落ちている途中の組は、読み込み直したら出しなおす
       sent: run.sent, pending: run.pending,
+      back: state.backFrom || null, // 最後にじゃまを送ってきた人（読み込み直し用）
       done: !!(done || run.done),
       out: !!run.out,
       outAt: run.out ? (run.outAt = run.outAt || RoomkRTDB.now()) : null,
