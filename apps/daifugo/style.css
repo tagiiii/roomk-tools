@@ -357,7 +357,25 @@
   box-shadow: 0 -6px 14px rgba(63, 54, 45, 0.12);
 }
 /* 自分の番: 手札の欄の枠を太く色づける */
-.df-dock.is-myturn .df-mine { border: 3px solid var(--color-accent); box-shadow: 0 0 0 3px var(--color-accent-soft); }
+.df-dock.is-myturn .df-mine { border: 3px solid var(--color-accent); box-shadow: 0 0 0 3px var(--color-accent-soft); background: #FFF6EC; animation: df-mine-glow 1.6s ease-in-out infinite; }
+@keyframes df-mine-glow {
+  0%, 100% { box-shadow: 0 0 0 3px var(--color-accent-soft); }
+  50% { box-shadow: 0 0 0 3px var(--color-accent-soft), 0 0 18px 6px color-mix(in srgb, var(--color-accent) 35%, transparent); }
+}
+/* 自分の番: 番の文を、色をぬった大きな札に（2026-11-13 オーナー「自分のターンがわかりづらい」） */
+.df-dock.is-myturn .df-status { display: inline-block; padding: 4px 18px; border-radius: 14px; background: var(--color-accent); color: #fff; font-size: 20px; box-shadow: 0 2px 8px rgba(138, 74, 16, 0.35); }
+/* 卓の下のふちに重ねる「あなたの番！」（自分の席は卓の上では隠しているので） */
+.df-myturn {
+  position: absolute; left: 50%; bottom: -20px; z-index: 4; transform: translateX(-50%); /* 下に固定した手札の欄（3）より上 */
+  display: inline-flex; align-items: center; gap: 6px; padding: 6px 18px; border-radius: 999px; white-space: nowrap;
+  background: var(--color-accent); color: #fff; font-size: 20px; font-weight: 700; line-height: 1.3;
+  border: 3px solid #fff; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3); pointer-events: none;
+  animation: df-myturn-in 0.45s cubic-bezier(.2,.9,.3,1.4) both, df-myturn-bob 1.6s ease-in-out 0.45s infinite;
+}
+.df-myturn[hidden] { display: none; }
+.df-myturn .material-symbols-rounded { font-size: 20px; }
+@keyframes df-myturn-in { from { transform: translateX(-50%) translateY(14px) scale(0.6); opacity: 0; } to { transform: translateX(-50%); opacity: 1; } }
+@keyframes df-myturn-bob { 0%, 100% { transform: translateX(-50%); } 50% { transform: translateX(-50%) translateY(4px); } }
 .df-turnbox { display: grid; gap: 6px; }
 .df-turnbox[hidden] { display: none; }
 .df-turnbox__row { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: center; gap: 2px 12px; }
@@ -526,6 +544,8 @@ button.df-card { position: relative; }
   .df-dock.is-seated { margin: 0 -10px; padding: 8px 10px 68px; }
   .df-mine { padding: 8px; gap: 6px; }
   .df-status { font-size: 16px; }
+  .df-dock.is-myturn .df-status { font-size: 17px; padding: 3px 14px; }
+  .df-myturn { font-size: 17px; bottom: -18px; padding: 4px 14px; }
   .df-selmsg { font-size: 13px; }
   .df-actions .btn-lg { min-height: 48px; padding-top: 8px; padding-bottom: 8px; }
   .df-back { width: 12px; height: 18px; margin-left: -7px; }
@@ -538,6 +558,7 @@ button.df-card { position: relative; }
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .df-myturn, .df-dock.is-myturn .df-mine { animation: none; }
   .df-splash.is-on .df-splash__text { animation: df-fade 1.7s linear var(--wait, 0ms) both; }
   .df-splash.is-on :is(.df-splash__ch, .df-splash__burst, .df-splash__ring) { animation: none; }
   button.df-card, .df-timer__bar { transition: none; }

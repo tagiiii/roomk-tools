@@ -1644,6 +1644,9 @@ function renderGame(R) {
   $('myCount').textContent = seatedNow ? 'のこり' + g.hands[myIdx].length + '枚' + (rank ? '・前回は' + rank : '') : '';
   $('dock').classList.toggle('is-seated', seatedNow);
   $('dock').classList.toggle('is-myturn', myTurnNow);
+  // 卓の下のふちにも大きく（カード交換・10捨て・7渡しの番は、することを短く）
+  $('myTurnMark').hidden = !myTurnNow;
+  if (myTurnNow) $('myTurnText').textContent = myGive ? 'カードを返す番！' : g.pending ? (g.pending.kind === 'give7' ? 'わたすカードを選ぶ番！' : '捨てるカードを選ぶ番！') : 'あなたの番！';
   // 自分の番は、タブの題名でも（別のタブを見ていても気づけるように。効果音を入にした端末では短い音も）
   if (!watch) document.title = myTurnNow ? '●あなたの番 | ' + DEFAULT_TITLE : DEFAULT_TITLE;
   $('center').hidden = g.over;
