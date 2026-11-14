@@ -1,8 +1,8 @@
-/* 将棋（試作）のルールのテスト
-   実行: node drafts/shogi/engine.test.cjs */
+/* 将棋のルールのテスト
+   実行: node tests/shogi/engine.test.cjs */
 'use strict';
 const assert = require('assert');
-const E = require('./engine.js');
+const E = require('../../apps/shogi/engine.js');
 
 let pass = 0;
 function test(name, fn) {
@@ -172,7 +172,7 @@ test('取った駒は成りをもどして持ち駒になる・記録の表記',
   const r = E.legalMoves(V).find((mm) => mm.from === at(V, 1, 1) && mm.to === at(V, 1, 2));
   const W = E.apply(V, r);
   const d = E.legalMoves(W).find((mm) => mm.drop === 'B' && mm.to === at(W, 1, 3));
-  assert.strictEqual(E.apply(W, d).last.text, '▲１三角打');
+  assert.strictEqual(E.apply(W, d).last.text, '▲１三角');   // 盤の駒が同じ所へ動けないので「打」は付けない
 });
 
 test('千日手は引き分け、王手をかけ続けた側は負け', () => {
@@ -223,6 +223,118 @@ test('千日手は引き分け、王手をかけ続けた側は負け', () => {
     P = go(P, 2, 1, 1, 1);
   }
   assert.deepStrictEqual(P.over, { winner: 1, reason: 'perpetual' });
+});
+
+test('表記: 上・引・寄・右・左・直・打（日本将棋連盟の決まり）', () => {
+  const S = pos('hon', [
+    '. . . . k . . . .',
+    '. . . . . . . . .',
+    '. . . . . . . . .',
+    '. . . . . . . . .',
+    '. . . . . . . . .',
+    '. . . . . . . . .',
+    '. . . . G . . . .',
+    '. . . . . G . . .',
+    '. . . G G G . S K',
+  ], 0, [{ S: 1 }]);
+  const text = (from, to, drop) => {
+    const m = E.legalMoves(S).find((mm) => (drop ? mm.drop === drop : mm.from === from) && mm.to === to && !mm.promote);
+    assert.ok(m, 'move ' + from + '->' + to);
+    return E.apply(S, m).last.text;
+  };
+  // ５八へは5枚の金が動ける
+  assert.strictEqual(text(at(S, 5, 7), at(S, 5, 8)), '▲５八金引');
+  assert.strictEqual(text(at(S, 4, 8), at(S, 5, 8)), '▲５八金寄');
+  assert.strictEqual(text(at(S, 5, 9), at(S, 5, 8)), '▲５八金直');
+  assert.strictEqual(text(at(S, 6, 9), at(S, 5, 8)), '▲５八金左');
+  assert.strictEqual(text(at(S, 4, 9), at(S, 5, 8)), '▲５八金右上');
+  // ６八へ: ６九は「直」、５九は「右」
+  assert.strictEqual(text(at(S, 6, 9), at(S, 6, 8)), '▲６八金直');
+  assert.strictEqual(text(at(S, 5, 9), at(S, 6, 8)), '▲６八金右');
+  // 銀を３八に打つ: ２九の銀も動けるので「打」
+  assert.strictEqual(text(-1, at(S, 3, 8), 'S'), '▲３八銀打');
+  assert.strictEqual(text(at(S, 2, 9), at(S, 3, 8)), '▲３八銀');
+  // 後手から見た右・左（後手の金が４一と６一から５二へ）
+  const G = pos('hon', [
+    '. . . G k G . . .',
+    '. . . . . . . . .',
+    '. . . . . . . . .',
+    '. . . . . . . . .',
+    '. . . . . . . . .',
+    '. . . . . . . . .',
+    '. . . . . . . . .',
+    '. . . . . . . . .',
+    'K . . . . . . . .',
+  ].map((r) => r.replace(/G/g, 'g')), 1);
+  const gm = (f) => E.apply(G, E.legalMoves(G).find((mm) => mm.from === at(G, f, 1) && mm.to === at(G, 5, 2))).last.text;
+  assert.strictEqual(gm(6), '△５二金右');
+  assert.strictEqual(gm(4), '△５二金左');
+});
+
+test('表記: ピンされて動けない駒は数えない', () => {
+  // 先手の玉５九・金５八（後手の飛車５一にピンされている）・金４七。４八へ指せる金は４七だけ
+  const S = pos('hon', [
+    '. . . . r . . . k',
+    '. . . . . . . . .',
+    '. . . . . . . . .',
+    '. . . . . . . . .',
+    '. . . . . . . . .',
+    '. . . . . . . . .',
+    '. . . . . G . . .',
+    '. . . . G . . . .',
+    '. . . . K . . . .',
+  ], 0, [{ G: 1 }]);
+  const m = E.legalMoves(S).find((mm) => mm.from === at(S, 4, 7) && mm.to === at(S, 4, 8));
+  assert.strictEqual(E.apply(S, m).last.text, '▲４八金');
+  const d = E.legalMoves(S).find((mm) => mm.drop === 'G' && mm.to === at(S, 4, 9));
+  // ４九へは４七の金は届かず、５八の金はピンされているので「打」は付けない
+  assert.strictEqual(E.apply(S, d).last.text, '▲４九金');
+});
+
+test('5五将棋の千日手は先手の負け', () => {
+  const go = (S, f1, r1, f2, r2) => {
+    const m = E.legalMoves(S).find((mm) => mm.from === at(S, f1, r1) && mm.to === at(S, f2, r2) && !mm.promote);
+    assert.ok(m);
+    return E.apply(S, m);
+  };
+  let S = pos('mini', [
+    '. . . . k',
+    '. . . . .',
+    '. . . . .',
+    '. . . . .',
+    'K . . . .',
+  ], 0, [{}, {}]);
+  for (let i = 0; i < 3; i += 1) {
+    S = go(S, 5, 5, 4, 5);
+    S = go(S, 1, 1, 2, 1);
+    S = go(S, 4, 5, 5, 5);
+    S = go(S, 2, 1, 1, 1);
+  }
+  assert.deepStrictEqual(S.over, { winner: 1, reason: 'sennichite' });
+});
+
+test('入玉宣言（27点法）', () => {
+  // 先手の玉が１二。相手の陣に飛・角・金4・銀4（10枚・18点）＋持ち駒で28点にする
+  const rows = [
+    'R B G G G G . . .',
+    'S S S S . . . K .',
+    '. . . . . . . . .',
+    '. . . . . . . . .',
+    '. . . . . . . . .',
+    '. . . . . . . . .',
+    '. . . . . . . . .',
+    '. . . . . . . . .',
+    '. . . . k . . . .',
+  ];
+  const S = pos('hon', rows, 0, [{ P: 10 }]);
+  assert.deepStrictEqual(E.declarePoints(S, 0), { points: 28, count: 10 });
+  assert.strictEqual(E.canDeclare(S), true);
+  const T = pos('hon', rows, 0, [{ P: 9 }]);
+  assert.strictEqual(E.canDeclare(T), false, '27点では足りない（先手）');
+  const U = pos('hon', rows, 1, [{ P: 10 }]);
+  assert.strictEqual(E.canDeclare(U), false, '相手の番には宣言できない');
+  const M = pos('mini', ['. . . K k', '. . . . .', '. . . . .', '. . . . .', '. . . . .'], 0);
+  assert.strictEqual(E.canDeclare(M), false, '5五将棋は宣言しない');
 });
 
 test('でたらめ対局（ルールの破綻がない）', () => {

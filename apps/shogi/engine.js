@@ -1,4 +1,4 @@
-/* 将棋（試作） 盤のルール
+/* 将棋 盤のルール
    画面と通信に触らない。ブラウザでは window.ShogiEngine、node では module.exports。
 
    盤: 長さ n*n の配列。添字は 行*n + 列。行0 が上（後手の陣）、列0 が左（先手から見て n筋）。
@@ -300,7 +300,8 @@
     return T;
   }
 
-  // 千日手: 同じ局面（盤・持ち駒・手番）が4回目。片方がずっと王手をかけ続けていたら、その人の負け
+  // 千日手: 同じ局面（盤・持ち駒・手番）が4回目。片方がずっと王手をかけ続けていたら、その人の負け。
+  // それ以外は、本将棋は引き分け（指しなおしのかわり）、5五将棋は先手の負け（5五将棋の決まり）
   function repetition(T, key) {
     const hits = [];
     T.keys.forEach((k, i) => { if (k === key) hits.push(i); });
@@ -313,7 +314,7 @@
       if (!T.checks[i]) allCheck[mover] = false;
     }
     if (allCheck[0] !== allCheck[1]) return { winner: allCheck[0] ? 1 : 0, reason: 'perpetual' };
-    return { winner: -1, reason: 'sennichite' };
+    return { winner: T.v === 'mini' ? 1 : -1, reason: 'sennichite' };
   }
 
   /* ── 表記 ── */
@@ -321,11 +322,15 @@
     const r = Math.floor(i / n); const c = i % n;
     return WIDE_NUM[n - c - 1] + KANJI_NUM[r];
   }
-  // 「▲７六歩」の形（同じ動きの駒が2枚あるときの「右」「上」などは付けない）
+  // 「▲７六歩」の形。同じ種類の駒が2枚以上そこへ動けるときは、日本将棋連盟の表記の決まりで
+  // 「上・引・寄」「右・左・直」を付ける。打つ手は、盤の駒も同じ所へ動けるときだけ「打」を付ける
   function moveText(S, m) {
     const mark = S.turn === 0 ? '▲' : '△';
     const where = S.last && S.last.to === m.to ? '同' : squareName(S.n, m.to);
-    if (m.from < 0) return mark + where + NAME[m.drop] + '打';
+    if (m.from < 0) {
+      const same = S.board.some((c, i) => c && ownerOf(c) === S.turn && kindOf(c) === m.drop && canReach(S, i, m.to));
+      return mark + where + NAME[m.drop] + (same ? '打' : '');
+    }
     const c = S.board[m.from];
     let tail = '';
     const t = typeOf(c);
@@ -335,7 +340,72 @@
       if (m.promote) tail = '成';
       else if (could) tail = '不成';
     }
-    return mark + where + pieceName(c) + tail;
+    return mark + where + pieceName(c) + relative(S, m.from, m.to) + tail;
+  }
+  // 指す人から見た向き: 前へ進むと dr<0、右へ動くと dc>0
+  // その駒が to へ指せるか（ピンされて動けない駒は数えない）
+  function canReach(S, i, to) {
+    if (!targetsOf(S.board, S.n, i).includes(to)) return false;
+    return leavesKingSafe(S, { from: i, to, promote: false }) || leavesKingSafe(S, { from: i, to, promote: true });
+  }
+  function relative(S, from, to) {
+    const { board, n, turn } = S;
+    const kind = kindOf(board[from]);
+    const others = [];
+    board.forEach((c, i) => {
+      if (i !== from && c && ownerOf(c) === turn && kindOf(c) === kind && canReach(S, i, to)) others.push(i);
+    });
+    if (!others.length) return '';
+    const sign = turn === 0 ? 1 : -1;
+    const rel = (i) => ({ dr: (Math.floor(to / n) - Math.floor(i / n)) * sign, dc: ((to % n) - (i % n)) * sign, col: (i % n) * sign });
+    const vert = (i) => { const d = rel(i).dr; return d < 0 ? '上' : d > 0 ? '引' : '寄'; };
+    const me = rel(from);
+    // まず「上・引・寄」で区別し、決まらなければ「右・左・直」（龍・馬は「直」を使わない）
+    const mv = vert(from);
+    const sameMv = others.filter((i) => vert(i) === mv);
+    if (!sameMv.length) return mv;
+    // まっすぐ前へ進む金・銀（成った駒をふくむ）は「直」
+    const goldLike = kind === 'G' || kind === 'S' || kind === '+S' || kind === '+N' || kind === '+L' || kind === '+P';
+    if (goldLike && me.dr === -1 && me.dc === 0) return '直';
+    const side = (list) => {
+      const cols = list.map((i) => rel(i).col);
+      if (cols.every((x) => me.col > x)) return '右';
+      if (cols.every((x) => me.col < x)) return '左';
+      return '';
+    };
+    // 右・左だけで決まればそれだけ。決まらなければ、同じ動きの駒の中での右・左に「上・引・寄」を足す
+    const all = side(others);
+    if (all) return all;
+    const part = side(sameMv);
+    // 3枚以上で真ん中のときなどは、ここで決まらない（めったにないので、上・引・寄だけを付ける）
+    return part ? part + mv : mv;
+  }
+
+  // 入玉宣言（本将棋。日本将棋連盟の27点法）。宣言する人の番に、次をすべて満たすと勝ち
+  // ・王が相手の陣（奥の3段）にいる ・王手されていない ・相手の陣に王のほかの自分の駒が10枚以上
+  // ・相手の陣の駒と持ち駒の点（飛・角とその成り駒は5点、ほかは1点。王は数えない）が先手28点・後手27点以上
+  const DECLARE_NEED = [28, 27];
+  function declarePoints(S, owner) {
+    const zone = VARIANTS[S.v].zone;
+    let points = 0;
+    let count = 0;
+    S.board.forEach((c, i) => {
+      if (!c || ownerOf(c) !== owner || typeOf(c) === 'K') return;
+      if (!inZone(S.n, zone, Math.floor(i / S.n), owner)) return;
+      count += 1;
+      points += typeOf(c) === 'R' || typeOf(c) === 'B' ? 5 : 1;
+    });
+    HAND_ORDER.forEach((t) => { points += S.hands[owner][t] * (t === 'R' || t === 'B' ? 5 : 1); });
+    return { points, count };
+  }
+  function canDeclare(S) {
+    if (S.over || S.v !== 'hon') return false;
+    const me = S.turn;
+    const k = kingSquare(S.board, me);
+    if (k < 0 || !inZone(S.n, VARIANTS[S.v].zone, Math.floor(k / S.n), me)) return false;
+    if (inCheck(S.board, S.n, me)) return false;
+    const { points, count } = declarePoints(S, me);
+    return count >= 10 && points >= DECLARE_NEED[me];
   }
 
   // 取られそうな駒（そのますに相手の駒が利いている、自分の駒）
@@ -362,6 +432,7 @@
     ownerOf, typeOf, isProm, kindOf, specOf, pieceName,
     create, keyOf, legalMoves, pseudoMoves, apply, replay, whyIllegal,
     inCheck, attacked, targetsOf, threatened, squareName, moveText, sameMove, kingSquare,
+    canDeclare, declarePoints, DECLARE_NEED,
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.ShogiEngine = api;

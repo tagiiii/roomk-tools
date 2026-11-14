@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+  <title>将棋 | あそびのたな</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Noto+Serif+JP:wght@700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
+  <link rel="stylesheet" href="../shared/css/design-system.css?v=20261106c">
+  <!-- index.html と app.js・engine.js・style.css はセットで変わるので、変えたら ?v= をそろえて上げる -->
+  <link rel="stylesheet" href="style.css?v=20261114a">
+  <script src="https://www.gstatic.com/firebasejs/13.3.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/13.3.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/13.3.0/firebase-database-compat.js"></script>
+  <script src="../shared/js/rtdb-utils.js?v=20261005"></script>
+  <script src="../shared/js/room-qr.js?v=20261022"></script>
+  <script src="engine.js?v=20261114a"></script>
+</head>
+<body data-genre="board">
+
+  <!-- トップ -->
+  <section class="sh-screen sh-front active" id="screen-top">
+    <div class="sh-panel app-entry">
+      <h1 class="sh-panel__title app-title">将棋</h1>
+      <p class="sh-panel__lead app-entry__lead">2人で交互に駒を動かして、相手の王を詰ませたら勝ち。小さい盤の「5五将棋」なら、1局が5〜10分で終わる。</p>
+      <ul class="sh-panel__notes app-entry__notes">
+        <li>はじめてなら、動ける所に印が出る「補助」を使ってみてね</li>
+        <li>対戦しない人も、ルームに入れば対局を見られるよ</li>
+      </ul>
+      <div class="sh-panel__actions app-entry__actions">
+        <button type="button" class="btn btn-primary btn-full" id="btnGoCreate">ルームを作る</button>
+        <button type="button" class="btn btn-secondary btn-full" id="btnGoJoin">ルームに参加する</button>
+        <button type="button" class="btn btn-secondary btn-full" id="btnGoLocal">1台の画面であそぶ</button>
+        <button type="button" class="sh-quiet sh-quiet--center" id="btnGoWatch">みんなにみせる画面をひらく</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ルームを作る -->
+  <section class="sh-screen sh-front" id="screen-create">
+    <div class="sh-panel">
+      <button type="button" class="sh-quiet sh-back" id="btnCreateBack">トップへ戻る</button>
+      <h2 class="sh-panel__title sh-panel__title--sub">ルームを作る</h2>
+      <label class="form-label" for="hostName">ホストの名前（8文字まで）</label>
+      <input class="form-input" id="hostName" maxlength="8" autocomplete="nickname">
+      <p class="sh-alert" id="createError" hidden></p>
+      <button type="button" class="btn btn-primary btn-full mt-md" id="btnCreateRoom">ルームを作る</button>
+    </div>
+  </section>
+
+  <!-- ルームに参加する -->
+  <section class="sh-screen sh-front" id="screen-join">
+    <div class="sh-panel">
+      <button type="button" class="sh-quiet sh-back" id="btnJoinBack">トップへ戻る</button>
+      <h2 class="sh-panel__title sh-panel__title--sub">ルームに参加する</h2>
+      <p class="sh-hint" id="joinLinkHint" hidden>リンクから開いたので、ルームコードは入っているよ。名前を入れて「参加する」を押してね。</p>
+      <label class="form-label" for="guestName">名前（8文字まで）</label>
+      <input class="form-input" id="guestName" maxlength="8" autocomplete="nickname">
+      <label class="form-label mt-md" for="joinCode">ルームコード（6文字）</label>
+      <input class="form-input sh-code-input" id="joinCode" maxlength="6" autocorrect="off" autocapitalize="characters" autocomplete="off" spellcheck="false">
+      <p class="sh-alert" id="joinError" hidden></p>
+      <button type="button" class="btn btn-primary btn-full mt-md" id="btnJoinRoom">参加する</button>
+    </div>
+  </section>
+
+  <!-- みんなにみせる画面をひらく -->
+  <section class="sh-screen sh-front" id="screen-watch-join">
+    <div class="sh-panel">
+      <button type="button" class="sh-quiet sh-back" id="btnWatchBack">トップへ戻る</button>
+      <h2 class="sh-panel__title sh-panel__title--sub">みんなにみせる画面をひらく</h2>
+      <p class="sh-hint">画面共有でみんなに見せるための画面です。ルームには入らず、見るだけです。</p>
+      <label class="form-label" for="watchCode">ルームコード（6文字）</label>
+      <input class="form-input sh-code-input" id="watchCode" maxlength="6" autocorrect="off" autocapitalize="characters" autocomplete="off" spellcheck="false">
+      <p class="sh-alert" id="watchError" hidden></p>
+      <button type="button" class="btn btn-primary btn-full mt-md" id="btnWatchOpen">画面をひらく</button>
+    </div>
+  </section>
+
+  <!-- 1台の画面であそぶ -->
+  <section class="sh-screen sh-front" id="screen-local">
+    <div class="sh-panel sh-panel--wide">
+      <button type="button" class="sh-quiet sh-back" id="btnLocalBack">トップへ戻る</button>
+      <h2 class="sh-panel__title sh-panel__title--sub">1台の画面であそぶ</h2>
+      <p class="sh-panel__lead">1台の画面をみんなで見てあそぶ。駒を動かすのは、画面を動かす人。</p>
+      <fieldset class="sh-fieldset">
+        <legend class="sh-legend">盤</legend>
+        <div class="sh-variants" id="localVariant"></div>
+      </fieldset>
+      <fieldset class="sh-fieldset mt-md">
+        <legend class="sh-legend">対戦する人の名前（なくてもいい）</legend>
+        <div class="sh-names">
+          <label class="sh-name">
+            <span class="sh-name__label">▲ 先手（先に指す）</span>
+            <input id="localName0" class="form-input" type="text" maxlength="8" autocomplete="off">
+          </label>
+          <button id="btnLocalSwap" type="button" class="sh-iconbtn" aria-label="先手と後手の名前を入れかえる">
+            <span class="material-symbols-rounded" aria-hidden="true">swap_horiz</span>
+          </button>
+          <label class="sh-name">
+            <span class="sh-name__label">△ 後手</span>
+            <input id="localName1" class="form-input" type="text" maxlength="8" autocomplete="off">
+          </label>
+        </div>
+      </fieldset>
+      <div id="localAid" class="sh-aid"></div>
+      <button type="button" class="btn btn-primary btn-full mt-lg" id="btnLocalStart">はじめる</button>
+    </div>
+  </section>
+
+  <!-- ゲームの画面（ルーム・1台の画面・みんなにみせる画面） -->
+  <header class="sh-bar" id="appBar" hidden>
+    <h1 class="sh-bar__title">将棋</h1>
+    <p class="sh-bar__badge" id="watchBadge" hidden>みんなにみせる画面</p>
+    <p class="sh-bar__me" id="barMe" hidden></p>
+  </header>
+  <div class="sh-roombar" id="roomBar" hidden>
+    <span class="sh-roombar__code">ルーム <strong id="roomCodeLabel"></strong></span>
+    <button type="button" class="btn btn-ghost btn-sm" id="btnCopyCode">コードをコピー</button>
+    <button type="button" class="btn btn-ghost btn-sm" id="btnCopyLink">リンクをコピー</button>
+    <button type="button" class="btn btn-ghost btn-sm" id="btnShowQr">QRコードを出す</button>
+    <button type="button" class="btn btn-ghost btn-sm" id="btnOpenWatch" hidden>みんなにみせる画面</button>
+    <button type="button" class="btn btn-ghost btn-sm" id="btnLeave">退出する</button>
+  </div>
+
+  <!-- 待合室 -->
+  <section class="sh-screen" id="screen-waiting">
+    <div class="sh-main sh-phase">
+      <div id="lobbyJoin" class="sh-joininfo" hidden>
+        <p class="sh-joininfo__label">参加のしかた</p>
+        <p class="sh-joininfo__text">「ルームに参加する」で、名前とルームコードを入れてね</p>
+        <p id="lobbyJoinCode" class="sh-joininfo__code"></p>
+      </div>
+
+      <div class="card">
+        <h2 class="sh-h2">対戦する人</h2>
+        <div id="seatEdit" class="sh-seats-edit" hidden>
+          <label class="sh-seatsel">
+            <span class="sh-name__label">▲ 先手（先に指す）</span>
+            <select id="seat0" class="form-input"></select>
+          </label>
+          <button id="btnSeatSwap" type="button" class="sh-iconbtn" aria-label="先手と後手を入れかえる">
+            <span class="material-symbols-rounded" aria-hidden="true">swap_horiz</span>
+          </button>
+          <label class="sh-seatsel">
+            <span class="sh-name__label">△ 後手</span>
+            <select id="seat1" class="form-input"></select>
+          </label>
+        </div>
+        <div id="seatView" class="sh-seats-view" hidden></div>
+        <p id="seatNote" class="sh-note" hidden></p>
+      </div>
+
+      <div class="card">
+        <h2 class="sh-h2">参加している人</h2>
+        <ul id="lobbyPeople" class="sh-people"></ul>
+        <p class="sh-note">対戦しない人は、自分の画面で対局を見られるよ。</p>
+        <div id="proxyForm" class="sh-proxyadd" hidden>
+          <label class="form-label" for="proxyName">端末なしの参加者を足す</label>
+          <div class="sh-row sh-row--nowrap">
+            <input id="proxyName" class="form-input" type="text" maxlength="8" autocomplete="off">
+            <button id="btnAddProxy" type="button" class="btn btn-secondary">足す</button>
+          </div>
+          <p class="sh-note">その人の番には、ホストが代わりに指す。</p>
+          <p id="proxyError" class="sh-alert" hidden></p>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 class="sh-h2">盤</h2>
+        <div id="lobbyVariant" class="sh-variants" hidden></div>
+        <p id="lobbyVariantView" class="sh-aid-view" hidden></p>
+      </div>
+
+      <div class="card">
+        <h2 class="sh-h2">補助</h2>
+        <div id="lobbyAid" class="sh-aid" hidden></div>
+        <p id="lobbyAidView" class="sh-aid-view" hidden></p>
+      </div>
+
+      <button id="btnStartGame" type="button" class="btn btn-primary btn-full btn-lg" hidden>はじめる</button>
+      <p id="lobbyWait" class="sh-wait" hidden>ホストがはじめるのを待っているよ</p>
+    </div>
+  </section>
+
+  <!-- 対局 -->
+  <section class="sh-screen" id="screen-game">
+    <div class="sh-main sh-game">
+      <p id="gameStatus" class="sh-status" role="status" aria-live="polite"></p>
+      <div id="sideTop" class="sh-side"></div>
+      <div id="board" class="sh-boardbox"></div>
+      <div id="sideBottom" class="sh-side"></div>
+      <p id="gameMsg" class="sh-msg" aria-live="polite"></p>
+      <p id="lastLine" class="sh-lastline"></p>
+
+      <div id="declareBox" class="sh-declare" hidden>
+        <button id="btnDeclare" type="button" class="btn btn-secondary">入玉宣言で勝ちにする</button>
+      </div>
+
+      <div id="resultBox" class="sh-result" hidden>
+        <div id="resultHost" class="sh-result__actions" hidden>
+          <button id="btnAgain" type="button" class="btn btn-primary btn-full"></button>
+          <button id="btnRelobby" type="button" class="btn btn-secondary btn-full"></button>
+        </div>
+        <p id="resultWait" class="sh-wait" hidden>ホストが次を決めるのを待っているよ</p>
+      </div>
+
+      <div id="tools" class="sh-tools">
+        <button id="btnUndo" type="button" class="sh-quiet">
+          <span class="material-symbols-rounded" aria-hidden="true">undo</span>1手もどす
+        </button>
+        <button id="btnFlip" type="button" class="sh-quiet">
+          <span class="material-symbols-rounded" aria-hidden="true">swap_vert</span>盤の向きを変える
+        </button>
+        <button id="btnAid" type="button" class="sh-quiet">
+          <span class="material-symbols-rounded" aria-hidden="true">tune</span>補助の設定
+        </button>
+        <button id="btnResign" type="button" class="sh-quiet">
+          <span class="material-symbols-rounded" aria-hidden="true">flag</span>投了する
+        </button>
+        <button id="btnReset" type="button" class="sh-quiet"></button>
+        <button id="btnQuit" type="button" class="sh-quiet" hidden>トップへ戻る</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- みんなにみせる画面のおわり -->
+  <section class="sh-screen sh-front" id="screen-watch-end">
+    <div class="sh-panel">
+      <h2 class="sh-panel__title sh-panel__title--sub" id="watchEndTitle">このルームは終わりました</h2>
+      <p class="sh-panel__lead">遊んでくれてありがとう。</p>
+      <button type="button" class="btn btn-secondary btn-full" id="btnWatchEndTop">トップへ戻る</button>
+    </div>
+  </section>
+
+  <!-- 補助の設定（あそんでいる間） -->
+  <dialog id="aidDialog" class="sh-dialog" aria-labelledby="aidDialogTitle">
+    <h2 id="aidDialogTitle" class="sh-h2">補助の設定</h2>
+    <div id="dialogAid" class="sh-aid"></div>
+    <div class="sh-row sh-row--center mt-lg">
+      <button id="btnAidClose" type="button" class="btn btn-primary">閉じる</button>
+    </div>
+  </dialog>
+
+  <!-- 成る・成らない -->
+  <dialog id="promoDialog" class="sh-dialog sh-dialog--promo" aria-labelledby="promoTitle">
+    <h2 id="promoTitle" class="sh-h2">成りますか？</h2>
+    <div class="sh-choices">
+      <button type="button" class="sh-choice" id="btnPromoYes"><span class="sh-choice__piece" id="promoYesPiece"></span><span>成る</span></button>
+      <button type="button" class="sh-choice" id="btnPromoNo"><span class="sh-choice__piece" id="promoNoPiece"></span><span>成らない</span></button>
+    </div>
+    <button type="button" class="sh-quiet" id="btnPromoCancel">やめる</button>
+  </dialog>
+
+  <div class="sh-overlay" id="hostOffOverlay" hidden>
+    <div class="sh-overlay__panel">
+      <h2>ホストの戻りを待っています</h2>
+      <p id="hostOffText">しばらく待っても戻らないときは退出してね。</p>
+      <button type="button" class="btn btn-secondary" id="btnOverlayLeave">退出する</button>
+    </div>
+  </div>
+
+  <script type="module" src="app.js?v=20261114a"></script>
+  <script src="../shared/js/stats.js?v=1" defer></script>
+  <script src="../shared/js/howto.js"></script>
+  <script>
+    RoomkHowto.init({
+      title: 'あそびかた',
+      lead: '2人で交互に駒を動かして、相手の王（玉）を詰ませたら勝ち。小さい盤の「5五将棋」と、ふつうの「本将棋」から選べる。',
+      sections: [
+        { heading: 'はじめかた', items: [
+          'ホストが「ルームを作る」で名前を入れる。ルームコードは「コードをコピー」、参加用のリンクは「リンクをコピー」でチャットに送れる。スマホやタブレットで入る人には「QRコードを出す」をカメラで読み取ってもらう',
+          '参加する人は「ルームに参加する」で名前、ルームコード（6文字）の順に入れ、「参加する」を押す。リンクから開いたときは、ルームコードは入っているので名前だけ入れる',
+          '対戦するのは2人。ほかの人は、自分の画面で対局を見られる',
+          '1台の画面でみんなで見るときは「1台の画面であそぶ」',
+        ] },
+        { heading: '指しかた', items: [
+          '先手（▲）から指す。自分の駒を押してから、動かしたい所を押す',
+          '相手の駒がある所へ動くと、その駒を取れる。取った駒は「持ち駒」になり、自分の番に盤の空いている所へ打てる（持ち駒を押してから、打つ所を押す）',
+          '相手の陣（5五将棋は奥の1段、本将棋は奥の3段）に入るか、そこから出るときに「成る」を選べる。成ると動き方が変わり、字が赤くなる',
+          '同じたての列に自分の歩を2枚置く「二歩」、歩を打ってすぐ詰ませる「打ち歩詰め」はできない。王手をかけられたら、よけないといけない',
+        ] },
+        { heading: '補助', items: [
+          '「動ける所を見せる」: 駒を選ぶと、動ける所・打てる所に点が出る',
+          '「駒に動ける向きを出す」: 駒のふちに、動ける向きの印が出る。線は、どこまでも進める向き',
+          '「取られそうな駒を知らせる」: 相手の駒が利いている自分の駒に、点線の枠が出る',
+        ] },
+        { heading: 'おわりかた', items: [
+          '相手の王が、どう動いても取られてしまう形（詰み）になったら勝ち',
+          '「投了する」を押すと、負けを認めて終わりにできる（相手の番でもよい）',
+          '同じ形が4回くり返されると「千日手」。本将棋は引き分け、5五将棋は先手の負け。王手を続けて千日手になったときは、王手をかけていた人の負け',
+          '本将棋で、自分の王が相手の陣に入り、条件がそろうと「入玉宣言で勝ちにする」が出る。押すと勝ち',
+          '場所は、盤のふちの数字（１〜９）と漢数字（一〜九）を合わせて「７六」のように言うと伝わるよ',
+        ] },
+      ],
+    });
+  </script>
+</body>
+</html>
