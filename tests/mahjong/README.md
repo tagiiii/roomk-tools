@@ -10,6 +10,7 @@
 | `e2e2.cjs` | 人が押すポンとロン。配ったあとに `game` を REST で書きかえて局面を作る（ポンのボタンと牌の絵・鳴いた組・ポンのあと押せる・待ちのヒント・ロン・結果の文・みんなにみせる画面に「聞いている」を出さない） |
 | `yaku.test.cjs` | 役ありのルール（`apps/mahjong/yaku.js` と `engine.js` の役ありの分岐）。`node tests/mahjong/yaku.test.cjs`（エミュレーター不要・1〜2分） |
 | `e2e3.cjs` | 役ありの画面（待合室で選ぶ・ドラ表示牌・リーチ・ツモの役と翻数・東2局・暗槓）。局面は `game` を REST で書きかえて作る |
+| `shot.cjs` | ポータルの画面の例を撮る（`MJ_WORK/out/thumb.png`。リポジトリの `apps/assets/thumbnails/mahjong.png` へは手で写す） |
 | `lib.cjs` | 共通の部品（配信用サーバー・本番あて通信の検出・画面の操作） |
 | `sync-site.sh` | `apps/shared` と `apps/mahjong` を作業フォルダに写し、エミュレーター向けに差し替える |
 | `firebase.json` | エミュレーターのポート（auth 9641・database 9642・hub 4641・logging 4642。配信 6642） |
