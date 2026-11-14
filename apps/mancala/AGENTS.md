@@ -88,7 +88,8 @@ apps/mancala/
 ├── index.html   # 画面の骨組み・howto.js の設定
 ├── app.js       # 進行・描画（ES module）。リバーシの app.js を土台にした
 ├── engine.js    # 盤のルール（window.MancalaEngine。node では module.exports）
-└── style.css    # 固有スタイル
+├── style.css    # 固有スタイル
+└── slides.html  # 画面共有用説明スライド（16枚）
 ```
 
 - 分割型。index.html・app.js・engine.js・style.css を変えたら `?v=` をそろえて上げる
@@ -107,6 +108,7 @@ apps/mancala/
 - `apps/index.html` にカード（`data-scenes="bodoge hiroba sakusen"`）
 - `apps/updates.json` 先頭に `type: "new"`
 - `apps/guide/index.html` の「すごろく・ボードゲーム系」に1行（リバーシの下）
+- 説明スライド `slides.html`（16枚。リバーシのスライドと同じエンジン。チャンネル `mancala_deck`・保存キー `mcs_`。盤の見本は `mini()` で描く）。「？」の「説明スライドを見る」とポータルの「スライド」から開ける（2026-11-14）
 
 ## 画面構成・フロー・status 遷移
 
@@ -149,7 +151,6 @@ mancala_rooms/{roomCode}/
 - ほかのルール（石の数・よこどりの有無・時計まわり など）の切りかえ。オーナーが「よくあるルール」を選んだ
 - どの手が強いかの印（「いい手に印」は もう1回・よこどり だけ）
 - 勝ち数・対戦成績の記録、順位
-- 説明スライド（あとで足すときは `slides-generator`）
 
 ## 既知の制約（v1）
 
@@ -173,7 +174,7 @@ mancala_rooms/{roomCode}/
 | rtdb-utils.js（`?v=20261005`） | `initFirebase`・`generateRoomCode`・`now`・`isRoomExpired`・`getHostDisconnectedAt`・`cancelRoomOnDisconnect`・`copyRoomCode`・`copyRoomLink`・`showToast` |
 | room-qr.js（`?v=20261022`） | 「QRコードを出す」（`RoomkQR.show`） |
 | stats.js（`?v=1`） | 起動回数（`open`）と、上の「利用回数」 |
-| howto.js | 「あそびかた」モーダル |
+| howto.js | 「あそびかた」モーダル（`slides: 'slides.html'` で「説明スライドを見る」） |
 
 ## 確かめたこと
 
