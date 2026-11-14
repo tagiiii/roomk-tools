@@ -92,7 +92,7 @@ apps/shogi/
 - `database.rules.json` に `shogi_rooms`（2026-11-14 オーナー承認）
 - `scripts/lint.sh` の `RTDB_HTML_FILES` に追加
 - `scripts/content-audit.mjs` の `NO_CONTENT_APPS` に追加（盤と駒だけ）
-- `apps/index.html` にカード（`data-slides`・`data-scenes="bodoge hiroba sakusen"`・イラスト `assets/illustrations/shogi.webp`。サムネイルはまだない）
+- `apps/index.html` にカード（`data-slides`・`data-scenes="bodoge hiroba sakusen"`・イラスト `assets/illustrations/shogi.webp`・サムネイル `assets/thumbnails/shogi.png`（撮り方は `docs/development/thumbnails.md`））
 - イラスト（2026-11-14・fal の Recraft V3 手描き風。指示文は `scripts/illustrations/prompts.json`。字のない五角形の駒と盤の目。3回作って2回目を選んだ）。はじめの画面の `.app-hero` にも出す
 - `apps/updates.json` 先頭に `type: "new"`
 - `apps/guide/index.html` の「すごろく・ボードゲーム系」に1行（リバーシの次）
@@ -232,7 +232,6 @@ shogi_rooms/{roomCode}/
 - 盤の向きを変えると、筋の数字と段の漢数字も反対から並ぶ（盤といっしょに回る）
 - 同じ名前・同じ匿名IDのタブが2つ開いていると、両方が同じ `players/{name}` に切断予約を張る（ほかのルーム型ゲームと共通）
 - 確定の応答が届く前に通信が切れると、`start`・`finish` などを数え漏れることがある（少なめに出る側の誤差）
-- サムネイル（カードの説明に出す画面の例）はまだない
 
 ## メンター向けの心得（画面には出さない）
 
