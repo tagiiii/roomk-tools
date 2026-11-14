@@ -290,6 +290,7 @@ body { background: var(--color-bg); }
   .sh-roombar .btn { padding: 4px 8px; font-size: 13px; min-height: 36px; }
   .sh-main { padding: 14px 12px 56px; }
   .sh-seg { grid-template-columns: repeat(2, 1fr); }
+  .sh-seg--3 { grid-template-columns: 1fr; }
   .sh-variants { grid-template-columns: 1fr; }
   .sh-status { font-size: 16px; }
   .sh-status.is-result { font-size: 19px; }
