@@ -13,7 +13,7 @@ const { E, check, sleep, waitFor } = L;
   // ── A. 作成 ──
   await L.open(H);
   check('A0 トップの主ボタンは1つ', (await H.page.$$('#screen-top .btn-primary')).length === 1);
-  check('A0b トップに色の玉', (await H.page.$$('#hero .hbw-peg')).length === 4);
+  check('A0b はじめの画面にイラスト', await H.page.$eval('#screen-top .app-hero img', (n) => n.complete && n.naturalWidth === 400));
   await H.page.click('#btnGoCreate');
   await H.page.click('#btnCreateRoom');
   check('A1 名前がないと作れない', (await L.text(H, '#createError')).includes('名前'));

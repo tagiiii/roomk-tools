@@ -63,7 +63,7 @@ apps/hit-blow/
 
 - `scripts/lint.sh` の `RTDB_HTML_FILES` に追加
 - `scripts/content-audit.mjs` の `NO_CONTENT_APPS` に追加（8色の玉だけ。答えはその場でくじで作る）
-- `apps/index.html` にカード（`data-genre="atekko"`・`data-scenes="bodoge hiroba sakusen"`・`data-speech="pick silent"`・`data-self="outside"`）。イラスト・サムネイルはまだない。説明スライド `slides.html`（15枚。リバーシと同じエンジン・チャンネル `hitblow_deck`・保存キー `hbs_`）は「？」とポータルから開ける（2026-11-14）
+- `apps/index.html` にカード（`data-genre="atekko"`・`data-scenes="bodoge hiroba sakusen"`・`data-speech="pick silent"`・`data-self="outside"`）。イラスト（`assets/illustrations/hit-blow.webp`。少しあいた箱と、しるしつきの色の玉と虫めがね）とサムネイル（`assets/thumbnails/hit-blow.png`）は 2026-11-14 に足した（はじめの画面にも同じ絵）。説明スライド `slides.html`（15枚。リバーシと同じエンジン・チャンネル `hitblow_deck`・保存キー `hbs_`）は「？」とポータルから開ける（2026-11-14）
 - `apps/updates.json` 先頭に `type: "new"`
 - `apps/guide/index.html` の「すごろく・ボードゲーム系」に1行（節の説明に「色のならびを当て合う推理ゲーム」を足した）
 - `database.rules.json` に `hitblow_rooms` を足す（変更禁止パス。オーナーの承認と本番ルールへの反映が要る）
