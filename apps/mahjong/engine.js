@@ -137,6 +137,40 @@
     return null;
   }
 
+  // 手の中で、もうそろっている組（3枚の組と同じ2枚）を見つける（見せる用。あがっていない手でも使う）。
+  // 3枚の組を3点、同じ2枚を2点として、点がいちばん多い分け方。同じ点なら3枚の組が多いほう
+  // 返り値: [{ type: 'set' | 'run' | 'pair', kinds: [...] }]（組に入らなかった牌はふくまない）
+  function groupHand(c) {
+    const cc = c.slice();
+    let best = { score: -1, melds: -1, groups: [] };
+    const cur = [];
+    function dfs(i, score, melds) {
+      while (i < KINDS && cc[i] === 0) i += 1;
+      if (i >= KINDS) {
+        if (score > best.score || (score === best.score && melds > best.melds)) best = { score, melds, groups: cur.slice() };
+        return;
+      }
+      if (cc[i] >= 3) {
+        cc[i] -= 3; cur.push({ type: 'set', kinds: [i, i, i] });
+        dfs(i, score + 3, melds + 1);
+        cur.pop(); cc[i] += 3;
+      }
+      if (i < 27 && i % 9 <= 6 && cc[i + 1] && cc[i + 2]) {
+        cc[i] -= 1; cc[i + 1] -= 1; cc[i + 2] -= 1; cur.push({ type: 'run', kinds: [i, i + 1, i + 2] });
+        dfs(i, score + 3, melds + 1);
+        cur.pop(); cc[i] += 1; cc[i + 1] += 1; cc[i + 2] += 1;
+      }
+      if (cc[i] >= 2) {
+        cc[i] -= 2; cur.push({ type: 'pair', kinds: [i, i] });
+        dfs(i, score + 2, melds);
+        cur.pop(); cc[i] += 2;
+      }
+      cc[i] -= 1; dfs(i, score, melds); cc[i] += 1;
+    }
+    dfs(0, 0, 0);
+    return best.groups;
+  }
+
   // テンパイのときの待ち（手が 13 − 3×鳴き の枚数のとき）
   function waits(c, open, opts) {
     const out = [];
@@ -440,7 +474,7 @@
 
   const api = {
     KINDS, SUIT_NAMES, kindOf, suitOf, numOf, isHonor, kindName, counts,
-    shanten, shantenRegular, shantenPairs, decompose, waits,
+    shanten, shantenRegular, shantenPairs, decompose, waits, groupHand,
     createRound, act, canTsumo, claimOptions, visibleCounts,
     discardAdvice, handShanten, handWaits, cpuAction, waitingFor,
   };

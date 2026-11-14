@@ -54,11 +54,20 @@ async function playUntilOver(people, watcher, timeout = 240000, ponRate = 0.3) {
   check('guest rules view chiitoi off', (await L.text(guest, '#lobbyRulesView')).includes('あがりにしない'));
   await host.page.click('input[data-rule="chiitoi"]');
 
+  // ── 見え方は、待合室でひとりずつ選べる（ルームには書かない） ──
+  check('lobby view card for guest', await L.visible(guest, '#lobbyView'));
+  check('groups on by default', await guest.page.isChecked('#lobbyView input[data-opt="groups"]'));
+  await guest.page.uncheck('#lobbyView input[data-opt="groups"]');
+  check('guest groups off stored locally', await guest.page.evaluate(() => JSON.parse(localStorage.getItem('mahjong:view')).groups === false));
+  check('host still on', await host.page.isChecked('#lobbyView input[data-opt="groups"]'));
+  check('view not written to room', !JSON.stringify(await L.roomOf(code)).includes('groups'));
+
   // ── みんなにみせる画面 ──
   const watch = await L.newClient('watch');
   await L.open(watch, '?watch=' + code);
   await L.waitScreen(watch, 'lobby');
   check('watch join info', await L.visible(watch, '#lobbyJoin'));
+  check('watch has no lobby view card', !(await L.visible(watch, '#lobbyView')));
   check('watch title', (await watch.page.title()).startsWith('みんなにみせる画面 | 麻雀'));
 
   // ── はじめる ──
@@ -86,11 +95,29 @@ async function playUntilOver(people, watcher, timeout = 240000, ponRate = 0.3) {
   check('timer visible (30s)', await L.visible(host, '#timer'));
   check('tab title my turn', (await host.page.title()).startsWith('●あなたの番'));
   // 見え方: 名前を出す（この端末だけ・ルームに書かない）
-  await host.page.check('#optNames');
+  await host.page.check('#viewOpts input[data-opt="names"]');
   check('names shown', (await host.page.$$('#me .mj-cap')).length === 14);
   check('names stored locally', await host.page.evaluate(() => JSON.parse(localStorage.getItem('mahjong:view')).names === true));
   check('guest has no names', (await guest.page.$$('#me .mj-cap')).length === 0);
-  await host.page.uncheck('#optNames');
+  await host.page.uncheck('#viewOpts input[data-opt="names"]');
+  // 見え方: そろった組の枠（はじめはオン。うみは待合室で切った）
+  const hostSets = await host.page.$$eval('#me .mj-set', (xs) => xs.map((x) => x.querySelectorAll('.mj-tile').length));
+  const expect = await host.page.evaluate(() => {
+    const ids = [...document.querySelectorAll('#me .mj-hand button')].map((b) => Number(b.dataset.id));
+    const drawn = document.querySelector('#me .mj-gap + button');
+    const rest = ids.filter((x) => !drawn || x !== Number(drawn.dataset.id));
+    return window.MahjongEngine.groupHand(window.MahjongEngine.counts(rest)).map((g) => g.kinds.length);
+  });
+  check('host frames match groupHand', JSON.stringify(hostSets) === JSON.stringify(expect), [hostSets, expect]);
+  check('host still 14 tiles with frames', (await host.page.$$('#me .mj-hand button')).length === 14);
+  check('guest has no frames (chose off)', (await guest.page.$$('#me .mj-set')).length === 0);
+  check('guest game toggle synced off', !(await guest.page.isChecked('#viewOpts input[data-opt="groups"]')));
+  await guest.page.check('#viewOpts input[data-opt="groups"]');
+  check('guest lobby toggle synced on', await guest.page.isChecked('#lobbyView input[data-opt="groups"]'));
+  check('watch has no view options', !(await L.visible(watch, '#viewOpts')));
+  await host.page.uncheck('#viewOpts input[data-opt="groups"]');
+  check('host frames off', (await host.page.$$('#me .mj-set')).length === 0);
+  await host.page.check('#viewOpts input[data-opt="groups"]');
 
   // 自分の番でない人は押せない
   check('guest tiles disabled', await guest.page.$$eval('#me .mj-hand button', (xs) => xs.every((x) => x.disabled)));

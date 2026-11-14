@@ -140,13 +140,13 @@ function parseJson(raw) {
   }
 }
 
-// ヒント・牌の名前は、この端末だけの見え方（ルームには書かない）
+// ヒント・そろった組の枠・牌の名前は、この端末だけの見え方（ルームには書かない。ひとりずつ選ぶ）
 function loadViewOpts() {
   try {
     const v = JSON.parse(localStorage.getItem(VIEW_KEY));
-    return { hint: v?.hint !== false, names: !!v?.names };
+    return { hint: v?.hint !== false, groups: v?.groups !== false, names: !!v?.names };
   } catch {
-    return { hint: true, names: false };
+    return { hint: true, groups: true, names: false };
   }
 }
 
@@ -1226,6 +1226,7 @@ function renderLobby(R) {
   $('lobbyHost').hidden = !isHost;
   if (isHost) $('btnStartGame').disabled = n < 1;
   $('lobbyWait').hidden = isHost || watch;
+  $('lobbyView').hidden = watch;
 }
 
 /* ── 牌 ── */
@@ -1338,7 +1339,24 @@ function renderGame(R) {
       b.disabled = !myTurn || state.acting;
       return b;
     };
-    rest.forEach((id) => hand.append(tile(id)));
+    if (state.opts.groups) {
+      // そろっている組は枠で囲む（引いた牌は右に離したまま、組には入れない）。組と、組に入らない牌を、種類の順に並べる
+      const pool = rest.slice();
+      const take = (k) => pool.splice(pool.findIndex((x) => E.kindOf(x) === k), 1)[0];
+      const units = E.groupHand(E.counts(rest)).map((grp) => ({ k: grp.kinds[0], grp, ids: grp.kinds.map(take) }));
+      pool.forEach((id) => units.push({ k: E.kindOf(id), ids: [id] }));
+      units.sort((a, b) => a.k - b.k || (b.grp ? 1 : 0) - (a.grp ? 1 : 0));
+      units.forEach((u) => {
+        if (!u.grp) { hand.append(tile(u.ids[0])); return; }
+        const box = el('span', 'mj-set mj-set--' + (u.grp.type === 'pair' ? 'pair' : 'meld'));
+        box.setAttribute('role', 'group');
+        box.setAttribute('aria-label', u.grp.type === 'pair' ? '同じ2枚' : 'そろった組');
+        u.ids.forEach((id) => box.append(tile(id)));
+        hand.append(box);
+      });
+    } else {
+      rest.forEach((id) => hand.append(tile(id)));
+    }
     if (drawn !== null && drawn !== undefined) hand.append(el('span', 'mj-gap'), tile(drawn));
   } else {
     g.seats[bottom].hand.forEach(() => hand.append(backEl('md')));
@@ -1691,13 +1709,17 @@ $('me').addEventListener('click', (event) => {
   if (!b || b.disabled) return;
   act({ type: 'discard', id: Number(b.dataset.id) });
 });
-$('optHint').checked = state.opts.hint;
-$('optNames').checked = state.opts.names;
-['optHint', 'optNames'].forEach((id) => $(id).addEventListener('change', () => {
-  state.opts = { hint: $('optHint').checked, names: $('optNames').checked };
+// 見え方の切りかえは、待合室とゲームの画面の両方にある（同じ設定。片方を変えるともう片方もそろえる）
+function syncViewInputs() {
+  document.querySelectorAll('input[data-opt]').forEach((c) => { c.checked = !!state.opts[c.dataset.opt]; });
+}
+document.querySelectorAll('input[data-opt]').forEach((c) => c.addEventListener('change', () => {
+  state.opts = { ...state.opts, [c.dataset.opt]: c.checked };
   saveViewOpts();
+  syncViewInputs();
   if (state.view?.phase === 'play') renderGame(state.view);
 }));
+syncViewInputs();
 
 // トップの飾り（東・白・發・中・五筒・五索）
 [27, 31, 32, 33, 13, 22].forEach((k) => {
