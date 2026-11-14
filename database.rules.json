@@ -258,6 +258,12 @@
         ".write": "auth != null"
       }
     },
+    "mahjong_rooms": {
+      "$roomId": {
+        ".read": "auth != null",
+        ".write": "auth != null"
+      }
+    },
     "tatoegp_rooms": {
       "$roomId": {
         ".read": "auth != null",

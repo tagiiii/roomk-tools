@@ -250,6 +250,8 @@ const NO_CONTENT_APPS = [
   'iro-tsunagi',
   // トランプ（52枚＋ジョーカー）だけ
   'daifugo',
+  // 麻雀の牌（34種類）だけ
+  'mahjong',
   // マップと仕事のミニゲーム（線・番号・メーター）だけ
   'nemurase-kichi',
 ];

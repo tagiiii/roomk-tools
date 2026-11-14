@@ -1,7 +1,7 @@
-// 麻雀（試作）のルールのテスト。node drafts/mahjong/engine.test.cjs
+// 麻雀のルールのテスト。node tests/mahjong/engine.test.cjs
 'use strict';
 const assert = require('assert');
-const E = require('./engine.js');
+const E = require('../../apps/mahjong/engine.js');
 
 let n = 0;
 const t = (name, fn) => { fn(); n += 1; console.log('ok', n, name); };

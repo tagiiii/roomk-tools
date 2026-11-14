@@ -1,4 +1,4 @@
-/* 麻雀（試作） — ルール
+/* 麻雀 — ルール
    画面と通信に触らない。ブラウザでは window.MahjongEngine、node では module.exports。
    状態は JSON にできる値だけで持つ（本体にするとき、そのままルームに置ける形）。
 
@@ -166,7 +166,8 @@
     }
     for (const s of seats) s.hand.sort((a, b) => a - b);
     const S = {
-      rev: 0, seed: o.seed, opts, dealer, wall, seats,
+      // rev: 操作のたびに1つ増える。disc: 捨てた回数（ロン・ポン・チーの答えが、どの捨て牌へのものかを確かめる）
+      rev: 0, disc: 0, seed: o.seed, opts, dealer, wall, seats,
       turn: dealer, phase: 'discard', drawn: null,
       last: null, pending: null, result: null, log: [],
     };
@@ -298,6 +299,7 @@
       me.hand.sort((x, y) => x - y);
       me.river.push({ id: a.id, called: false });
       S.last = { seat, id: a.id };
+      S.disc += 1;
       S.drawn = null;
       S.log.push({ t: 'discard', seat, id: a.id });
       nextAfterDiscard(S);
