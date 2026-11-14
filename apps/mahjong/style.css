@@ -237,6 +237,30 @@
 
 .mj-view { display: flex; flex-wrap: wrap; gap: 0 24px; padding: 2px 4px; }
 
+/* ── 役ありの部品 ── */
+.mj-dora { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 4px; margin: 0; }
+.mj-dora__label { font-size: 13px; font-weight: 700; color: var(--color-muted); margin: 0 2px 0 6px; }
+.mj-dora__label:first-child { margin-left: 0; }
+.mj-tile.is-dora .mj-svg { filter: drop-shadow(0 0 3px var(--mj-turn)); }
+.mj-tag--riichi { background: #C2382C; color: #fff; font-weight: 700; }
+/* リーチの宣言牌は、オレンジの枠と上の帯で目立たせる（横に倒すと6枚の並びからはみ出すため） */
+.mj-tile.is-riichi .mj-svg { outline: 3px solid #E0762B; outline-offset: -1px; border-radius: 6px; }
+.mj-tile.is-riichi::before { content: ''; position: absolute; left: 3px; right: 3px; top: -5px; height: 3px; border-radius: 2px; background: #E0762B; }
+/* 自分の番に、いまは捨てられない牌（リーチ中・喰い替え・リーチの捨て牌選び） */
+.mj-hand.is-active button.mj-tile.is-locked { opacity: 0.45; }
+.mj-hand .is-riichi-pick .mj-svg { outline: 3px solid var(--mj-turn); outline-offset: -1px; border-radius: 7px; }
+.mj-hint__warn { display: inline-block; margin-left: 6px; padding: 2px 10px; border-radius: var(--radius-full); background: #FFF1DD; color: #8A4B00; font-weight: 700; font-size: 14px; }
+.mj-yaku { list-style: none; margin: 0 auto 12px; padding: 0; max-width: 360px; display: grid; gap: 4px; text-align: left; }
+.mj-yaku:empty { display: none; }
+.mj-yaku__item { display: flex; justify-content: space-between; gap: 12px; padding: 4px 10px; border-radius: 8px; background: var(--color-bg); }
+.mj-yaku__han { font-weight: 700; white-space: nowrap; }
+.mj-yaku__total { background: var(--color-accent-soft); font-weight: 700; }
+.mj-dora--result { justify-content: center; margin-bottom: 14px; }
+.mj-dora--result:empty { display: none; }
+.mj-yakulist { margin: 0; padding: 0 0 12px; display: grid; grid-template-columns: 3.5em 1fr; gap: 6px 10px; line-height: 1.7; font-size: 14px; }
+.mj-yakulist dt { font-weight: 700; color: var(--color-primary); }
+.mj-yakulist dd { margin: 0; }
+
 /* ── 結果 ── */
 .mj-result { text-align: center; }
 .mj-result__title { margin: 0; font-size: 1.6rem; font-weight: 900; color: var(--color-primary); }
