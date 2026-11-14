@@ -74,7 +74,8 @@ apps/shogi/
 ├── index.html   # 画面の骨組み・howto.js の設定
 ├── app.js       # 進行・描画（ES module）
 ├── engine.js    # 盤のルール（window.ShogiEngine。node では module.exports）
-└── style.css    # 固有スタイル
+├── style.css    # 固有スタイル
+└── slides.html  # 画面共有用説明スライド（18枚）
 ```
 
 - 分割型。index.html・app.js・engine.js・style.css を変えたら `?v=` をそろえて上げる
@@ -91,9 +92,10 @@ apps/shogi/
 - `database.rules.json` に `shogi_rooms`（2026-11-14 オーナー承認）
 - `scripts/lint.sh` の `RTDB_HTML_FILES` に追加
 - `scripts/content-audit.mjs` の `NO_CONTENT_APPS` に追加（盤と駒だけ）
-- `apps/index.html` にカード（`data-scenes="bodoge hiroba sakusen"`。イラスト・サムネイル・説明スライドはまだない）
+- `apps/index.html` にカード（`data-slides`・`data-scenes="bodoge hiroba sakusen"`。イラスト・サムネイルはまだない）
 - `apps/updates.json` 先頭に `type: "new"`
 - `apps/guide/index.html` の「すごろく・ボードゲーム系」に1行（リバーシの次）
+- 説明スライド `slides.html`（18枚。リバーシのスライドと同じエンジン。チャンネル `shogi_deck`・保存キー `shs_`）。盤と駒の図は `sboard`・`mvFig` で描く（アプリの駒と同じ五角形）。「？」の「説明スライドを見る」とポータルの「スライド」から開ける（2026-11-14）
 
 ## 画面構成・フロー
 
@@ -229,7 +231,7 @@ shogi_rooms/{roomCode}/
 - 盤の向きを変えると、筋の数字と段の漢数字も反対から並ぶ（盤といっしょに回る）
 - 同じ名前・同じ匿名IDのタブが2つ開いていると、両方が同じ `players/{name}` に切断予約を張る（ほかのルーム型ゲームと共通）
 - 確定の応答が届く前に通信が切れると、`start`・`finish` などを数え漏れることがある（少なめに出る側の誤差）
-- イラスト・サムネイル・説明スライドはまだない（イラストは fal を使うので、作るかはオーナーに確かめる）
+- イラスト・サムネイルはまだない（イラストは fal を使うので、作るかはオーナーに確かめる）
 
 ## メンター向けの心得（画面には出さない）
 
@@ -247,7 +249,7 @@ shogi_rooms/{roomCode}/
 | rtdb-utils.js（`?v=20261005`） | `initFirebase`・`generateRoomCode`・`now`・`isRoomExpired`・`getHostDisconnectedAt`・`cancelRoomOnDisconnect`・`copyRoomCode`・`copyRoomLink`・`showToast` |
 | room-qr.js（`?v=20261022`） | 「QRコードを出す」（`RoomkQR.show`） |
 | stats.js（`?v=1`） | 起動回数（`open`）と、上の「利用回数」 |
-| howto.js | 「あそびかた」モーダル |
+| howto.js | 「あそびかた」モーダル（`slides: 'slides.html'` で「説明スライドを見る」） |
 
 ## 確かめたこと
 

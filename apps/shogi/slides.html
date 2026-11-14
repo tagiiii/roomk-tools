@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>説明スライド | 将棋 | あそびのたな</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=Noto+Serif+JP:wght@700&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@48,500,1,0" rel="stylesheet" />
+<style>
+  :root{
+    --ink:#434343; --ink-soft:#6B6B6B; --paper:#FAFAFA; --white:#FFFFFF;
+    --line:#E6E6E6; --muted:#9A9A9A;
+    --teal:#00A77F; --coral:#E06666; --blue:#3C78D8; --blue-soft:#6D9EEB;
+    --red:#E0574F; --neutral:#C2B69E; --trap:#3A3A3A;
+    --acc:var(--teal); --acc-tint:#E3F4EF;
+    --font:"Zen Kaku Gothic New", -apple-system, "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif;
+  }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  html,body{ height:100%; }
+  body{ font-family:var(--font); color:var(--ink); background:#E9ECEF; overflow:hidden; -webkit-font-smoothing:antialiased; }
+  .material-symbols-rounded{ font-family:"Material Symbols Rounded"; line-height:1; }
+
+  /* accent themes（スライドごとに切替） */
+  .accent-teal { --acc:var(--teal); --acc-tint:#E2F4EF; }
+  .accent-coral{ --acc:var(--coral);--acc-tint:#FBEBEB; }
+  .accent-blue { --acc:var(--blue); --acc-tint:#E7EEFB; }
+
+  /* ===================== 発表（デッキ） ===================== */
+  #deck{ position:fixed; inset:0; }
+  #stage{
+    position:absolute; top:50%; left:50%; width:1280px; height:720px;
+    transform-origin:center center; background:var(--paper);
+    border-radius:18px; box-shadow:0 28px 70px rgba(0,0,0,.35); overflow:hidden;
+  }
+  .slide{
+    position:absolute; inset:0; display:flex; flex-direction:column;
+    padding:56px 72px 76px; opacity:0; visibility:hidden;
+    transition:opacity .3s ease, transform .3s ease; transform:translateY(10px);
+  }
+  .slide.active{ opacity:1; visibility:visible; transform:none; }
+
+  /* セクションヘッダー（日本語＋小さな英語キャプション） */
+  .sec{ display:flex; align-items:baseline; gap:14px; }
+  .sec__jp{ font-size:30px; font-weight:900; color:var(--ink); letter-spacing:.01em; }
+  .sec__en{ font-size:18px; font-weight:700; color:var(--acc); letter-spacing:.12em; }
+  .sec__num{ display:inline-flex; align-items:center; justify-content:center; min-width:30px; height:30px; padding:0 8px;
+    border-radius:8px; background:var(--acc); color:#fff; font-size:18px; font-weight:900; margin-right:2px; }
+
+  .headline{ font-size:46px; font-weight:900; color:var(--ink); line-height:1.32; margin-top:22px; letter-spacing:.005em; }
+  .headline .hl{ color:var(--acc); }
+  .headline .ul{ background:linear-gradient(transparent 62%, var(--acc-tint) 62%); padding:0 2px; }
+  .body{ margin-top:30px; flex:1; min-height:0; }
+
+  /* 役割カード／チーム */
+  .cols{ display:grid; grid-template-columns:1fr 1fr; gap:24px; height:100%; }
+  .panel{ background:var(--white); border:1.5px solid var(--line); border-radius:18px; padding:26px 28px; display:flex; flex-direction:column; gap:14px; }
+  .panel--red{ border-color:#F0CFCB; background:linear-gradient(180deg,#FDF1F0,#fff); }
+  .panel--blue{ border-color:#CBDAF4; background:linear-gradient(180deg,#EEF3FD,#fff); }
+  .team-head{ display:flex; align-items:center; gap:14px; }
+  .team-ic{ width:56px; height:56px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; }
+  .team-ic .material-symbols-rounded{ font-size:34px; }
+  .red-bg{ background:var(--red); } .blue-bg{ background:var(--blue); } .teal-bg{ background:var(--teal); } .coral-bg{ background:var(--coral); } .gray-bg{ background:var(--neutral); } .trap-bg{ background:var(--trap); }
+  .team-name{ font-size:28px; font-weight:900; color:var(--ink); }
+  .role-row{ display:flex; gap:12px; align-items:flex-start; }
+  .role-row .material-symbols-rounded{ font-size:26px; color:var(--acc); flex:none; margin-top:3px; }
+  .role-row b{ font-size:23px; font-weight:900; color:var(--ink); }
+  .role-row .d{ font-size:19px; color:var(--ink-soft); display:block; margin-top:2px; line-height:1.5; }
+
+  /* 箇条書き行 */
+  .rows{ display:flex; flex-direction:column; gap:16px; }
+  .row{ display:flex; gap:18px; align-items:flex-start; background:var(--white); border:1.5px solid var(--line); border-radius:16px; padding:20px 24px; }
+  .row__ic{ flex:none; width:48px; height:48px; border-radius:12px; background:var(--acc-tint); color:var(--acc); display:flex; align-items:center; justify-content:center; }
+  .row__ic .material-symbols-rounded{ font-size:28px; }
+  .row__t{ font-size:25px; font-weight:900; color:var(--ink); line-height:1.4; }
+  .row__d{ font-size:20px; color:var(--ink-soft); margin-top:3px; line-height:1.5; }
+
+  /* 盤の見本 */
+  .boards{ display:flex; align-items:center; justify-content:center; gap:34px; }
+  .bfig{ display:flex; flex-direction:column; align-items:center; gap:12px; }
+  .bfig__cap{ font-size:22px; font-weight:900; color:var(--ink); text-align:center; line-height:1.4; }
+  .bfig__cap span{ color:var(--acc); }
+  .barrow .material-symbols-rounded{ font-size:56px; color:var(--acc); }
+  .sb{ display:grid; grid-template-columns:repeat(var(--n), var(--c)) 22px; grid-template-rows:22px repeat(var(--n), var(--c)); --c:62px;
+    background:#E9C47E; border-radius:10px; padding:6px 6px 10px 10px; }
+  .sb.small{ --c:30px; }
+  .sb.mid{ --c:52px; }
+  .sb.m44{ --c:44px; }
+  .sb__lab{ display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:900; color:#8A5A22; }
+  .sb__lab.on{ color:var(--coral); font-size:18px; }
+  .sb__cell{ position:relative; border-right:1px solid #8A5A22; border-bottom:1px solid #8A5A22; display:flex; align-items:center; justify-content:center; }
+  .sb__cell.l{ border-left:1px solid #8A5A22; } .sb__cell.t{ border-top:1px solid #8A5A22; }
+  .sb__cell.ring{ box-shadow:inset 0 0 0 4px var(--coral); }
+  .sb__cell.zone{ background:rgba(224,102,102,.16); }
+  .sb__cell.check{ background:rgba(179,38,30,.35); }
+  .sb__cell.last{ background:rgba(224,118,43,.32); }
+  .pc{ position:relative; width:84%; height:92%; display:flex; align-items:center; justify-content:center; }
+  .pc::before{ content:''; position:absolute; inset:0; background:#B98A45; clip-path:polygon(50% 0, 86% 14%, 100% 100%, 0 100%, 14% 14%); }
+  .pc::after{ content:''; position:absolute; inset:2px; background:#F7E3B5; clip-path:polygon(50% 1%, 85% 15%, 98% 99%, 2% 99%, 15% 15%); }
+  .pc.down{ transform:rotate(180deg); }
+  .pc b{ position:relative; z-index:1; margin-top:12%; font-family:"Noto Serif JP", serif; font-weight:700; color:#2B1D10; font-size:calc(var(--c) * .48); line-height:1; }
+  .pc b.two{ writing-mode:vertical-rl; font-size:calc(var(--c) * .28); }
+  .pc.prom b{ color:#B3261E; }
+  .sb__dot{ position:absolute; width:28%; height:28%; border-radius:50%; background:rgba(42,147,180,.85); z-index:2; }
+  .sb__dot.take{ width:84%; height:84%; background:none; border:4px solid rgba(42,147,180,.9); }
+  .sb__dot.line{ background:rgba(42,147,180,.45); }
+  .sb__dot.jump{ background:#3FAE5A; }
+  /* 駒の動きの図 */
+  .moves{ display:grid; grid-template-columns:repeat(var(--k), 1fr); gap:18px; }
+  .mv{ background:var(--white); border:1.5px solid var(--line); border-radius:16px; padding:14px 10px 12px; display:flex; flex-direction:column; align-items:center; gap:8px; }
+  .mv .sb{ --c:46px; background:transparent; padding:0; grid-template-columns:repeat(5, var(--c)); grid-template-rows:repeat(5, var(--c)); }
+  .mv .sb__cell{ border:1px solid #E0D2B4; background:#FBF3E2; }
+  .mv__name{ font-size:22px; font-weight:900; color:var(--ink); }
+  .mv__d{ font-size:16px; color:var(--ink-soft); text-align:center; line-height:1.45; }
+  .demo-cap{ font-size:22px; color:var(--ink-soft); line-height:1.6; text-align:center; margin-top:18px; }
+  .demo-cap b{ color:var(--acc); font-weight:900; }
+  .side{ display:grid; grid-template-columns:auto 1fr; gap:40px; align-items:center; height:100%; }
+  .rows.tight{ gap:12px; } .rows.tight .row{ padding:14px 20px; } .rows.tight .row__t{ font-size:22px; } .rows.tight .row__d{ font-size:18px; }
+
+  /* Q&A */
+  .qa{ display:flex; flex-direction:column; gap:16px; }
+  .qa__item{ background:var(--white); border:1.5px solid var(--line); border-radius:16px; padding:18px 24px; }
+  .qa__q{ display:flex; gap:13px; align-items:flex-start; font-size:23px; font-weight:900; color:var(--ink); }
+  .qa__a{ display:flex; gap:13px; align-items:flex-start; font-size:21px; color:var(--ink-soft); margin-top:8px; line-height:1.5; }
+  .qa__badge{ flex:none; width:34px; height:34px; border-radius:9px; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:900; font-size:19px; }
+  .qa__badge.q{ background:var(--blue); } .qa__badge.a{ background:var(--coral); }
+
+  /* タイトルスライド */
+  .title-slide{ align-items:center; justify-content:center; text-align:center; padding-bottom:76px; }
+  .title-ic{ width:118px; height:118px; border-radius:32px; background:var(--teal); color:#fff; display:flex; align-items:center; justify-content:center; box-shadow:0 16px 34px rgba(0,167,127,.32); }
+  .title-ic .material-symbols-rounded{ font-size:72px; }
+  .title-jp{ font-size:74px; font-weight:900; color:var(--ink); margin-top:24px; letter-spacing:.02em; }
+  .title-en{ font-size:22px; font-weight:700; color:var(--teal); letter-spacing:.34em; margin-top:6px; text-transform:lowercase; }
+  .title-tag{ font-size:26px; font-weight:700; color:var(--ink-soft); margin-top:22px; }
+  .title-meta{ display:flex; gap:12px; margin-top:26px; }
+  .title-meta .m{ display:inline-flex; align-items:center; gap:7px; background:var(--white); border:1.5px solid var(--line); border-radius:999px; padding:9px 18px; font-size:18px; font-weight:700; color:var(--ink); }
+  .title-meta .material-symbols-rounded{ font-size:20px; color:var(--teal); }
+
+  /* セクション区切り（divider） */
+  .divider{ align-items:center; justify-content:center; text-align:center; padding-bottom:76px; background:var(--acc-tint); }
+  .divider .d-ic{ width:104px; height:104px; border-radius:50%; background:var(--acc); color:#fff; display:flex; align-items:center; justify-content:center; box-shadow:0 14px 30px rgba(0,0,0,.14); }
+  .divider .d-ic .material-symbols-rounded{ font-size:62px; }
+  .divider .d-jp{ font-size:72px; font-weight:900; color:var(--ink); margin-top:26px; letter-spacing:.03em; }
+  .divider .d-en{ font-size:21px; font-weight:700; color:var(--acc); letter-spacing:.28em; margin-top:8px; text-transform:lowercase; }
+  .divider .d-sub{ font-size:24px; font-weight:700; color:var(--ink-soft); margin-top:20px; }
+  /* 強調（ゲームスタート等） */
+  .divider.solid{ background:var(--acc); }
+  .divider.solid .d-ic{ background:rgba(255,255,255,.16); }
+  .divider.solid .d-jp,.divider.solid .d-sub{ color:#fff; }
+  .divider.solid .d-en{ color:rgba(255,255,255,.85); }
+
+  /* フッター */
+  .footer{ position:absolute; left:0; right:0; bottom:0; height:56px; display:flex; align-items:center; justify-content:space-between;
+    padding:0 30px; background:rgba(255,255,255,.7); border-top:1px solid var(--line); }
+  .brand{ display:flex; align-items:center; gap:9px; font-weight:900; color:var(--ink); font-size:19px; }
+  .brand .material-symbols-rounded{ color:var(--teal); font-size:24px; }
+  .dots{ display:flex; gap:7px; flex-wrap:wrap; max-width:620px; justify-content:center; }
+  .dot{ width:9px; height:9px; border-radius:50%; background:var(--line); transition:.2s; }
+  .dot.on{ background:var(--teal); transform:scale(1.3); }
+  .counter{ font-size:18px; font-weight:900; color:var(--muted); font-variant-numeric:tabular-nums; }
+  .divider .footer,.divider.solid .footer{ background:rgba(255,255,255,.55); }
+
+  /* ナビ矢印 */
+  .nav{ position:absolute; top:50%; transform:translateY(-50%); z-index:5; width:54px; height:54px; border-radius:50%; border:none; cursor:pointer;
+    background:rgba(67,67,67,.1); color:var(--ink); display:flex; align-items:center; justify-content:center; transition:.2s; opacity:0; }
+  #stage:hover .nav{ opacity:.5; } .nav:hover{ opacity:1 !important; background:rgba(67,67,67,.2); }
+  .nav .material-symbols-rounded{ font-size:32px; } .nav.prev{ left:16px; } .nav.next{ right:16px; }
+
+  /* ツールバー */
+  .toolbar{ position:fixed; top:14px; right:16px; z-index:50; display:flex; gap:8px; opacity:.16; transition:.2s; }
+  .toolbar:hover{ opacity:1; }
+  .tbtn{ display:inline-flex; align-items:center; gap:7px; cursor:pointer; background:rgba(255,255,255,.95); color:var(--ink); border:1px solid var(--line);
+    border-radius:999px; padding:9px 15px; font-family:var(--font); font-weight:700; font-size:14px; box-shadow:0 4px 12px rgba(0,0,0,.18); }
+  .tbtn:hover{ background:#fff; } .tbtn .material-symbols-rounded{ font-size:19px; color:var(--teal); }
+  .hint-help{ position:fixed; bottom:12px; left:16px; z-index:50; color:rgba(255,255,255,.5); font-size:13px; }
+  .hint-help kbd{ background:rgba(0,0,0,.18); border-radius:5px; padding:1px 7px; font-family:var(--font); }
+
+  /* ===================== 発表者ビュー ===================== */
+  body.presenter{ background:#EEF1F4; overflow:auto; }
+  #presenter{ max-width:680px; margin:0 auto; padding:18px 20px 40px; }
+  .pv-warn{ background:#FBEBEB; border:1px solid #EFC4C4; color:#B3463F; border-radius:12px; padding:12px 16px; font-size:14px; font-weight:700; display:flex; align-items:center; gap:10px; margin-bottom:16px; }
+  .pv-warn .material-symbols-rounded{ font-size:22px; }
+  .pv-count{ font-size:14px; font-weight:900; color:var(--muted); font-variant-numeric:tabular-nums; }
+  .pv-title{ font-size:26px; font-weight:900; color:var(--ink); line-height:1.3; margin-top:4px; }
+  .pv-lead{ font-size:15px; color:var(--teal); font-weight:700; margin-top:4px; letter-spacing:.04em; }
+  .pv-card{ background:#fff; border:1px solid var(--line); border-radius:16px; padding:18px; margin-top:18px; box-shadow:0 4px 14px rgba(0,0,0,.05); }
+  .pv-card h3{ font-size:14px; font-weight:900; color:var(--teal); display:flex; align-items:center; gap:8px; margin-bottom:12px; }
+  .pv-card h3 .material-symbols-rounded{ font-size:18px; }
+  #pvNote{ width:100%; min-height:175px; resize:vertical; border:1px solid var(--line); border-radius:12px; padding:14px 16px; font-family:var(--font); font-size:17px; line-height:1.7; color:var(--ink); background:#FBFCFD; }
+  #pvNote:focus{ outline:none; border-color:var(--teal); box-shadow:0 0 0 3px rgba(0,167,127,.15); }
+  .pv-actions{ display:flex; gap:10px; margin-top:14px; align-items:center; }
+  .pv-copy{ flex:1; cursor:pointer; border:none; border-radius:12px; padding:15px; font-family:var(--font); font-size:18px; font-weight:900; color:#fff; background:var(--teal); display:flex; align-items:center; justify-content:center; gap:10px; box-shadow:0 6px 16px rgba(0,167,127,.28); transition:.15s; }
+  .pv-copy:active{ transform:translateY(1px); } .pv-copy.done{ background:#1F8F6E; }
+  .pv-copy .material-symbols-rounded{ font-size:22px; }
+  .pv-reset{ cursor:pointer; border:1px solid var(--line); background:#fff; color:var(--muted); border-radius:12px; padding:15px 16px; font-family:var(--font); font-weight:700; font-size:14px; }
+  .pv-reset:hover{ background:#F5F7F9; }
+  .pv-nav{ display:flex; gap:10px; margin-top:18px; }
+  .pv-nav button{ flex:1; cursor:pointer; border:1px solid var(--line); background:#fff; color:var(--ink); border-radius:12px; padding:14px; font-family:var(--font); font-weight:900; font-size:16px; display:flex; align-items:center; justify-content:center; gap:8px; }
+  .pv-nav button:hover{ background:#F5F7F9; } .pv-nav button:disabled{ opacity:.4; cursor:default; }
+  .pv-nav .material-symbols-rounded{ font-size:20px; }
+  .pv-next{ margin-top:16px; font-size:14px; color:var(--muted); padding:0 4px; } .pv-next b{ color:var(--ink); }
+  .pv-conn{ margin-top:14px; font-size:12px; color:var(--muted); text-align:center; }
+</style>
+</head>
+<body>
+
+<div id="deck">
+  <div id="stage">
+    <button class="nav prev" id="navPrev" aria-label="前へ"><span class="material-symbols-rounded">chevron_left</span></button>
+    <button class="nav next" id="navNext" aria-label="次へ"><span class="material-symbols-rounded">chevron_right</span></button>
+    <div id="slides"></div>
+    <div class="footer">
+      <div class="brand"><span class="material-symbols-rounded">chess</span>将棋</div>
+      <div class="dots" id="dots"></div>
+      <div class="counter" id="counter">1 / 1</div>
+    </div>
+  </div>
+</div>
+
+<div class="toolbar" id="toolbar">
+  <button class="tbtn" id="btnPresenter"><span class="material-symbols-rounded">co_present</span>発表者ノート</button>
+  <button class="tbtn" id="btnFull"><span class="material-symbols-rounded">fullscreen</span>全画面</button>
+</div>
+<div class="hint-help">操作: <kbd>←</kbd> <kbd>→</kbd> めくる ・ <kbd>F</kbd> 全画面 ・ <kbd>P</kbd> 発表者ノート</div>
+
+<div id="presenter" style="display:none">
+  <div class="pv-warn"><span class="material-symbols-rounded">visibility_off</span>この画面は<strong>共有しないで</strong>ください（あなた専用のメモ）</div>
+  <div class="pv-count" id="pvCount">1 / 1</div>
+  <div class="pv-title" id="pvTitle"></div>
+  <div class="pv-lead" id="pvLead"></div>
+  <div class="pv-card">
+    <h3><span class="material-symbols-rounded">chat</span>Metalife チャット用メッセージ</h3>
+    <textarea id="pvNote" spellcheck="false"></textarea>
+    <div class="pv-actions">
+      <button class="pv-copy" id="pvCopy"><span class="material-symbols-rounded">content_copy</span>チャットにコピー</button>
+      <button class="pv-reset" id="pvReset">元に戻す</button>
+    </div>
+  </div>
+  <div class="pv-nav">
+    <button id="pvPrev"><span class="material-symbols-rounded">chevron_left</span>前のスライド</button>
+    <button id="pvNext">次のスライド<span class="material-symbols-rounded">chevron_right</span></button>
+  </div>
+  <div class="pv-next" id="pvNextTitle"></div>
+  <div class="pv-conn" id="pvConn">スライド画面と接続中…</div>
+</div>
+
+<script>
+/* ===== 盤の見本 ===== */
+// rows: 1行ずつ、ますを空白で区切る（'.' 空き・先手は大文字・後手は小文字・成った駒は前に '+'）
+// 場所は「32」（３二）のように筋と段の数字で書く
+const KJ = ['一','二','三','四','五','六','七','八','九'];
+const WN = ['１','２','３','４','５','６','７','８','９'];
+const PN = { R:'飛', B:'角', G:'金', S:'銀', N:'桂', L:'香', P:'歩' };
+const PPN = { R:'龍', B:'馬', S:'成銀', N:'成桂', L:'成香', P:'と' };
+function piece(t){
+  const prom = t[0] === '+', ch = t.slice(-1), up = ch === ch.toUpperCase(), T = ch.toUpperCase();
+  const name = T === 'K' ? (up ? '玉' : '王') : prom ? PPN[T] : PN[T];
+  return '<span class="pc' + (up ? '' : ' down') + (prom ? ' prom' : '') + '"><b' + (name.length > 1 ? ' class="two"' : '') + '>' + name + '</b></span>';
+}
+function sboard(rows, o){
+  o = o || {};
+  const grid = rows.map((r) => r.trim().split(/\s+/));
+  const n = grid.length;
+  const key = (sq) => (Number(sq[1]) - 1) + ',' + (n - Number(sq[0]));
+  const dots = {}; (o.dots || []).forEach((sq) => { dots[key(sq)] = ''; }); (o.takes || []).forEach((sq) => { dots[key(sq)] = 'take'; });
+  const ring = o.ring ? key(o.ring) : '', check = o.check ? key(o.check) : '', last = o.last ? key(o.last) : '';
+  let h = '<div class="sb ' + (o.size || '') + '" style="--n:' + n + '">';
+  for (let c = 0; c < n; c++) h += '<span class="sb__lab' + (o.coords && ring.split(',')[1] == c ? ' on' : '') + '">' + WN[n - c - 1] + '</span>';
+  h += '<span></span>';
+  for (let r = 0; r < n; r++) {
+    for (let c = 0; c < n; c++) {
+      const k = r + ',' + c, t = grid[r][c];
+      let cls = 'sb__cell' + (c === 0 ? ' l' : '') + (r === 0 ? ' t' : '');
+      if (k === ring) cls += ' ring';
+      if (k === check) cls += ' check';
+      if (k === last) cls += ' last';
+      if (o.zone && o.zone.includes(r)) cls += ' zone';
+      let inner = t !== '.' ? piece(t) : '';
+      if (k in dots) inner += '<span class="sb__dot' + (dots[k] ? ' ' + dots[k] : '') + '"></span>';
+      h += '<span class="' + cls + '">' + inner + '</span>';
+    }
+    h += '<span class="sb__lab' + (o.coords && ring.split(',')[0] == r ? ' on' : '') + '">' + KJ[r] + '</span>';
+  }
+  return h + '</div>';
+}
+// 駒の動きの図（先手の向き。点＝1つだけ動ける、うすい点の列＝どこまでも進める、緑＝跳ぶ）
+const ORTH = [[-1,0],[1,0],[0,-1],[0,1]], DIAG = [[-1,-1],[-1,1],[1,-1],[1,1]];
+const GOLD = [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,0]];
+const SPEC = {
+  K:{ s:ORTH.concat(DIAG), l:[] }, G:{ s:GOLD, l:[] }, S:{ s:[[-1,-1],[-1,0],[-1,1],[1,-1],[1,1]], l:[] },
+  N:{ s:[[-2,-1],[-2,1]], l:[] }, L:{ s:[], l:[[-1,0]] }, P:{ s:[[-1,0]], l:[] },
+  R:{ s:[], l:ORTH }, B:{ s:[], l:DIAG }, '+R':{ s:DIAG, l:ORTH }, '+B':{ s:ORTH, l:DIAG },
+};
+function mvFig(kind, name, d){
+  const sp = SPEC[kind];
+  const marks = {};
+  sp.s.forEach(([dr, dc]) => { marks[(2 + dr) + ',' + (2 + dc)] = Math.abs(dr) === 2 ? 'jump' : ''; });
+  sp.l.forEach(([dr, dc]) => { for (let k = 1; k <= 2; k++) marks[(2 + dr * k) + ',' + (2 + dc * k)] = 'line'; });
+  let h = '<div class="mv"><div class="sb">';
+  for (let r = 0; r < 5; r++) for (let c = 0; c < 5; c++) {
+    const k = r + ',' + c;
+    let inner = r === 2 && c === 2 ? piece(kind) : '';
+    if (k in marks) inner += '<span class="sb__dot' + (marks[k] ? ' ' + marks[k] : '') + '"></span>';
+    h += '<span class="sb__cell">' + inner + '</span>';
+  }
+  return h + '</div><div class="mv__name">' + name + '</div><div class="mv__d">' + d + '</div></div>';
+}
+const MINI = ['r b s g k', '. . . . p', '. . . . .', 'P . . . .', 'K G S B R'];
+const HON = ['l n s g k g s n l', '. r . . . . . b .', 'p p p p p p p p p', '. . . . . . . . .', '. . . . . . . . .', '. . . . . . . . .', 'P P P P P P P P P', '. B . . . . . R .', 'L N S G K G S N L'];
+const MATE = ['. . k . .', '. . G . .', '. . P . .', '. . . . .', 'K . . . .'];
+
+const SLIDES = [
+  /* 1 */ { type:'divider', accent:'teal', icon:'waving_hand', jp:'チェックイン', en:'check-in',
+    sub:'今の気分を、ひとことどうぞ',
+    note:'まずはチェックインから！\n今の気分や、最近あったことを、ひとことチャットか声で教えてね\n（将棋の説明は、このあとすぐ！）' },
+
+  /* 2 */ { type:'title', note:'今日のゲームは「将棋」\n2人で交互に駒を動かして、相手の王を詰ませたら勝ちのゲームだよ。小さい盤の「5五将棋」なら、1局が5分から10分で終わるよ。' },
+
+  /* 3 */ { type:'content', accent:'teal', section:'ゲームについて', sectionEn:'summary',
+    headline:'駒を動かして、<br><span class="hl">相手の王を詰ませよう</span>',
+    body:`<div class="rows">
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">swap_horiz</span></div><div><div class="row__t">先手（▲）と後手（△）で、交互に1手ずつ指す</div><div class="row__d">先手から指すよ。自分の番に、駒を1つ動かすか、持ち駒を1つ打つ</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">back_hand</span></div><div><div class="row__t">相手の駒がある所へ動くと、その駒を取れる</div><div class="row__d">取った駒は「持ち駒」になって、あとで自分の駒として使える</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">emoji_events</span></div><div><div class="row__t">相手の王が、どう動いても取られる形にしたら勝ち</div><div class="row__d">これを「詰み」というよ。対戦しない人も、自分の画面で見られる</div></div></div>
+    </div>`,
+    note:'将棋は、先手と後手で交互に1手ずつ指すゲーム。先手から指すよ。\n自分の番には、駒を1つ動かすか、持ち駒を1つ打つ。\n相手の駒がある所へ動くと、その駒を取れて、取った駒は「持ち駒」になって、あとで自分の駒として使えるよ。\n相手の王が、どう動いても取られてしまう形にしたら勝ち。これを「詰み」というよ。' },
+
+  /* 4 */ { type:'content', accent:'blue', section:'盤をえらぶ', sectionEn:'two boards',
+    headline:'小さい<span class="hl">5五将棋</span>と、ふつうの<span class="hl">本将棋</span>',
+    body:`<div class="boards">
+      <div class="bfig">${sboard(MINI, { size:'mid' })}<div class="bfig__cap">5五将棋（5×5）<br><span>5〜10分</span>で終わる</div></div>
+      <div class="bfig">${sboard(HON, { size:'small' })}<div class="bfig__cap">本将棋（9×9）<br><span>30分以上</span>かかることも</div></div>
+    </div>
+    <div class="demo-cap">5五将棋には、桂と香がないよ。はじめての人は<b>5五将棋</b>からがおすすめ。</div>`,
+    note:'盤は2つから選べるよ。\n5五将棋は、5かける5の小さい盤。駒が少なくて、5分から10分で終わる。桂と香はないよ。\n本将棋は、9かける9のふつうの将棋。30分以上かかることもあるよ。\nはじめての人は、5五将棋からがおすすめ。' },
+
+  /* 5 */ { type:'content', accent:'teal', section:'駒の動き', sectionEn:'how pieces move', num:'1',
+    headline:'青い点の所へ、<span class="hl">1つだけ</span>動ける',
+    body:`<div class="moves" style="--k:4">
+      ${mvFig('K', '玉・王', 'まわり8か所の<br>どこへでも')}
+      ${mvFig('G', '金', 'ななめうしろ<br>以外')}
+      ${mvFig('S', '銀', '前3つと<br>ななめうしろ')}
+      ${mvFig('P', '歩', 'まっすぐ前へ<br>1つ')}
+    </div>
+    <div class="demo-cap">図は先手の向き。後手の駒は、反対の向きに動くよ。</div>`,
+    note:'駒の動きを見ていこう。青い点の所へ、1つだけ動けるよ。\n玉と王は、まわり8か所のどこへでも。\n金は、ななめうしろ以外。\n銀は、前の3つとななめうしろ。\n歩は、まっすぐ前へ1つ。\n図は先手の向きで、後手の駒は反対の向きに動くよ。' },
+
+  /* 6 */ { type:'content', accent:'teal', section:'駒の動き', sectionEn:'how pieces move', num:'2',
+    headline:'うすい点の列は、<span class="hl">どこまでも</span>進める',
+    body:`<div class="moves" style="--k:4">
+      ${mvFig('R', '飛', 'たて・よこに<br>どこまでも')}
+      ${mvFig('B', '角', 'ななめに<br>どこまでも')}
+      ${mvFig('L', '香', '前へ<br>どこまでも')}
+      ${mvFig('N', '桂', '2つ前の左右へ<br>跳ぶ（緑の点）')}
+    </div>
+    <div class="demo-cap">飛・角・香は、ほかの駒を<b>とびこえられない</b>。桂だけは、とびこえて跳べるよ。（香と桂は本将棋だけ）</div>`,
+    note:'うすい点の列は、どこまでも進める向きだよ。\n飛は、たてとよこにどこまでも。角は、ななめにどこまでも。香は、前へどこまでも。\nただし、ほかの駒をとびこえることはできないよ。\n桂は、2つ前の左右へ跳ぶ。桂だけは、間に駒があってもとびこえられるよ。香と桂は本将棋だけの駒だよ。' },
+
+  /* 7 */ { type:'content', accent:'coral', section:'成る', sectionEn:'promotion',
+    headline:'相手の陣に入ると<span class="hl">「成る」</span>を選べる',
+    body:`<div class="side">
+      <div class="moves" style="--k:2">
+        ${mvFig('+R', '龍（飛が成る）', '飛の動き＋<br>ななめに1つ')}
+        ${mvFig('+B', '馬（角が成る）', '角の動き＋<br>たて・よこに1つ')}
+      </div>
+      <div class="rows tight">
+        <div class="row"><div class="row__ic"><span class="material-symbols-rounded">upgrade</span></div><div><div class="row__t">相手の陣に入るか、そこから出るとき</div><div class="row__d">5五将棋は奥の1段、本将棋は奥の3段。「成りますか？」と聞かれる</div></div></div>
+        <div class="row"><div class="row__ic"><span class="material-symbols-rounded">format_color_text</span></div><div><div class="row__t">成ると、字が赤くなって動きが変わる</div><div class="row__d">銀・桂・香・歩は、成ると金と同じ動き（歩は「と」になる）</div></div></div>
+        <div class="row"><div class="row__ic"><span class="material-symbols-rounded">block</span></div><div><div class="row__t">金と玉は成らない</div><div class="row__d">もう先へ進めない所では、自動で成るよ</div></div></div>
+      </div>
+    </div>`,
+    note:'相手の陣に入るか、そこから出るときに「成る」を選べるよ。5五将棋は奥の1段、本将棋は奥の3段が相手の陣。\n成ると字が赤くなって、動きが変わる。飛は龍、角は馬になって、もとの動きに1つずつ動ける向きが増えるよ。\n銀・桂・香・歩は、成ると金と同じ動きになる。歩が成ると「と」になるよ。\n金と玉は成らない。もう先へ進めない所では、自動で成るよ。' },
+
+  /* 8 */ { type:'content', accent:'blue', section:'持ち駒', sectionEn:'drop',
+    headline:'取った駒は、<span class="hl">空いている所</span>に打てる',
+    body:`<div class="rows">
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">touch_app</span></div><div><div class="row__t">持ち駒を押してから、打つ所を押す</div><div class="row__d">持ち駒は、自分の名前の下に出ているよ。1手で打てるのは1枚</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">do_not_disturb_on</span></div><div><div class="row__t">同じたての列に、自分の歩を2枚置けない（二歩）</div><div class="row__d">歩を打ってすぐに詰ませるのもできない（打ち歩詰め）</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">info</span></div><div><div class="row__t">指せない所を押すと、理由が出る</div><div class="row__d">反則の手は、まちがえて指してしまうことがないよ</div></div></div>
+    </div>`,
+    note:'取った駒は、自分の番に、盤の空いている所に打てるよ。持ち駒を押してから、打つ所を押してね。\nただし、同じたての列に自分の歩を2枚置く「二歩」はできない。歩を打ってすぐに詰ませる「打ち歩詰め」もできないよ。\n指せない所を押すと、画面に理由が出るから、まちがえて反則することはないよ。' },
+
+  /* 9 */ { type:'content', accent:'coral', section:'王手と詰み', sectionEn:'check & checkmate',
+    headline:'王手をかけられたら、<span class="hl">よけよう</span>',
+    body:`<div class="side">
+      <div class="bfig">${sboard(MATE, { size:'mid', check:'31', last:'32' })}<div class="bfig__cap">▲３二金で<span>詰み</span></div></div>
+      <div class="rows tight">
+        <div class="row"><div class="row__ic"><span class="material-symbols-rounded">warning</span></div><div><div class="row__t">次に王が取られそうな形が「王手」</div><div class="row__d">画面に「王手」と出て、王のますが赤くなる</div></div></div>
+        <div class="row"><div class="row__ic"><span class="material-symbols-rounded">directions_run</span></div><div><div class="row__t">王手をかけられたら、よけないといけない</div><div class="row__d">王が逃げる・王手をしている駒を取る・あいだに駒を置く</div></div></div>
+        <div class="row"><div class="row__ic"><span class="material-symbols-rounded">flag</span></div><div><div class="row__t">どうやってもよけられないのが「詰み」</div><div class="row__d">図は、王がどこへ逃げても金に取られる。金は歩が守っている</div></div></div>
+      </div>
+    </div>`,
+    note:'次に王が取られそうな形を「王手」というよ。画面に「王手」と出て、王のますが赤くなる。\n王手をかけられたら、よけないといけない。王が逃げる、王手をしている駒を取る、あいだに駒を置く、のどれかだよ。\nどうやってもよけられないのが「詰み」。図は、王がどこへ逃げても金に取られて、金を取ると歩に取られる。これで詰み、勝ちだよ。' },
+
+  /* 10 */ { type:'content', accent:'teal', section:'おわりかた', sectionEn:'how it ends',
+    headline:'詰みのほかにも、<br>おわりかたがあるよ',
+    body:`<div class="rows">
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">flag</span></div><div><div class="row__t">「投了する」で、負けを認めて終わりにできる</div><div class="row__d">相手の番でも押せるよ</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">repeat</span></div><div><div class="row__t">同じ形が4回くり返されると「千日手」</div><div class="row__d">本将棋は引き分け、5五将棋は先手の負け。王手を続けていた人は負け</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">stars</span></div><div><div class="row__t">本将棋で、王が相手の陣に入ったら「入玉宣言」</div><div class="row__d">条件がそろうと「入玉宣言で勝ちにする」が出る。押すと勝ち</div></div></div>
+    </div>`,
+    note:'詰みのほかにも、おわりかたがあるよ。\n「投了する」を押すと、負けを認めて終わりにできる。相手の番でも押せるよ。\n同じ形が4回くり返されると「千日手」。本将棋は引き分け、5五将棋は先手の負けになる。王手を続けて千日手になったときは、王手をかけていた人の負けだよ。\n本将棋で、王が相手の陣に入って条件がそろうと、「入玉宣言で勝ちにする」が出て、押すと勝ちになるよ。' },
+
+  /* 11 */ { type:'content', accent:'coral', section:'補助', sectionEn:'assist',
+    headline:'はじめてでも安心。<br><span class="ul">補助</span>を使えるよ',
+    body:`<div class="side">
+      <div class="bfig">${sboard(MINI.map((r, i) => i === 3 ? '. . . . .' : i === 2 ? 'P . . . .' : r), { size:'mid', dots:['52'], ring:'53' })}<div class="bfig__cap">歩を選ぶと、<span>動ける所に点</span></div></div>
+      <div class="rows tight">
+        <div class="row"><div class="row__ic"><span class="material-symbols-rounded">radio_button_checked</span></div><div><div class="row__t">動ける所を見せる</div><div class="row__d">駒や持ち駒を選ぶと、動ける所・打てる所に点が出る</div></div></div>
+        <div class="row"><div class="row__ic"><span class="material-symbols-rounded">open_with</span></div><div><div class="row__t">駒に動ける向きを出す</div><div class="row__d">駒のふちに、動ける向きの印が出る</div></div></div>
+        <div class="row"><div class="row__ic"><span class="material-symbols-rounded">shield</span></div><div><div class="row__t">取られそうな駒を知らせる</div><div class="row__d">相手の駒が利いている自分の駒に、点線の枠が出る</div></div></div>
+      </div>
+    </div>`,
+    note:'はじめての人も安心。「補助」を使えるよ。\n動ける所を見せる … 駒や持ち駒を選ぶと、動ける所・打てる所に点が出る。\n駒に動ける向きを出す … 駒のふちに、動ける向きの印が出る。\n取られそうな駒を知らせる … 相手の駒が利いている自分の駒に、点線の枠が出る。\n補助は、先手の人だけ・後手の人だけにもできるよ。' },
+
+  /* 12 */ { type:'content', accent:'blue', section:'場所の言いかた', sectionEn:'where to move',
+    headline:'場所は「<span class="hl">７六</span>」のように言おう',
+    body:`<div class="side">
+      ${sboard(HON, { size:'m44', ring:'76', coords:true })}
+      <div class="rows tight">
+        <div class="row"><div class="row__ic"><span class="material-symbols-rounded">west</span></div><div><div class="row__t">横は、右から１〜９（盤の上の数字）</div></div></div>
+        <div class="row"><div class="row__ic"><span class="material-symbols-rounded">south</span></div><div><div class="row__t">たては、上から一〜九（盤の右の漢数字）</div></div></div>
+        <div class="row"><div class="row__ic"><span class="material-symbols-rounded">screen_rotation</span></div><div><div class="row__t">後手の人の画面は、盤が逆向き</div><div class="row__d">自分の駒が手前に来るよ。「盤の向きを変える」でもどせる</div></div></div>
+        <div class="row"><div class="row__ic"><span class="material-symbols-rounded">record_voice_over</span></div><div><div class="row__t">1台の画面で遊ぶときは、声かチャットで伝える</div><div class="row__d">「７六に歩」のように言うと、画面を動かす人が指すよ</div></div></div>
+      </div>
+    </div>`,
+    note:'場所は「７六」のように言うよ。\n横は右から１から９、盤の上の数字。たては上から一から九、盤の右の漢数字だよ。\n後手の人の画面は、自分の駒が手前に来るように盤が逆向きになっているよ。\n1台の画面でみんなで遊ぶときは、「７六に歩」のように声かチャットで教えてね。画面を動かす人が指すよ。' },
+
+  /* 13 */ { type:'content', accent:'coral', section:'はじめかた', sectionEn:'how to join',
+    headline:'名前 → ルームコード →<br>「参加する」',
+    body:`<div class="rows">
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">login</span></div><div><div class="row__t">「ルームに参加する」を押す</div><div class="row__d">名前、ルームコード（6文字）の順に入れて「参加する」</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">link</span></div><div><div class="row__t">リンクから開いたときは、名前だけ</div><div class="row__d">ルームコードは入っているよ。スマホやタブレットは QR コードを読み取ってもOK</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">groups</span></div><div><div class="row__t">対戦するのは2人。ほかの人は観戦</div><div class="row__d">だれが先手と後手になるかは、ホストが決めるよ</div></div></div>
+    </div>`,
+    note:'参加のしかただよ。\n「ルームに参加する」を押して、名前、ルームコード（6文字）の順に入れて「参加する」。\nチャットのリンクから開いたときは、ルームコードは入っているので名前だけ入れてね。スマホやタブレットの人は、QR コードを読み取ってもOK。\n対戦するのは2人で、ほかの人は自分の画面で対局を見られるよ。だれが先手と後手になるかは、ホストが決めるよ。' },
+
+  /* 14 */ { type:'content', accent:'teal', section:'Q&A', sectionEn:'question & answer',
+    headline:'よくある質問',
+    body:`<div class="qa">
+      <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>指せない所を押したら？</div><div class="qa__a"><span class="qa__badge a">A</span>理由が出るだけで、駒は動かないよ。もう一度、駒から選びなおしてね。</div></div>
+      <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>相手の番のときは？</div><div class="qa__a"><span class="qa__badge a">A</span>盤は押せないよ。相手がどこに指すか、いっしょに見ていてね。</div></div>
+      <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>まちがえて指しちゃったら？</div><div class="qa__a"><span class="qa__badge a">A</span>ホストに伝えてね。「1手もどす」でもどせるよ。</div></div>
+    </div>`,
+    note:'よくある質問だよ\nQ. 指せない所を押したら？→ A. 理由が出るだけで、駒は動かないよ。\nQ. 相手の番のときは？→ A. 盤は押せないよ。相手がどこに指すか見ていてね。\nQ. まちがえて指しちゃったら？→ A. ホストに伝えてね。「1手もどす」でもどせるよ。' },
+
+  /* 15 */ { type:'divider', accent:'blue', icon:'live_help', jp:'質問タイム', en:'any questions?',
+    sub:'気になることはある？',
+    note:'ここまでで、質問がある人はいるかな？\nマイクON か チャットで教えてね！' },
+
+  /* 16 */ { type:'divider', accent:'coral', icon:'how_to_reg', jp:'参加確認', en:"let's check",
+    sub:'チャットで教えてね',
+    note:'対戦してみたい人〜？\n「①対戦したい」「②見ていたい」「③その他」を、チャットで教えてね！' },
+
+  /* 17 */ { type:'divider', accent:'teal', solid:true, icon:'rocket_launch', jp:'＼ ゲームスタート ／', en:'game start',
+    sub:'先手から指そう！',
+    note:'それでは、将棋スタート！\nルームに入る人は、まずはルームに参加してね。先手の人から指そう。わからなくなったら、いつでも聞いてね' },
+
+  /* 18 */ { type:'divider', accent:'teal', solid:true, icon:'emoji_events', jp:'けっか', en:'result',
+    sub:'おつかれさま！',
+    note:'けっか発表！\nおつかれさま。最後にひとことずつ、ふりかえってみよう。' },
+];
+
+/* ===== ウィンドウ間同期 ===== */
+const channel = ('BroadcastChannel' in window) ? new BroadcastChannel('shogi_deck') : null;
+function send(msg){ if(channel) channel.postMessage(msg); try{ localStorage.setItem('shs_msg', JSON.stringify({...msg,_t:Date.now()})); }catch(e){} }
+function onMsg(h){ if(channel) channel.onmessage=(e)=>h(e.data); window.addEventListener('storage',(e)=>{ if(e.key==='shs_msg'&&e.newValue){ try{ h(JSON.parse(e.newValue)); }catch(err){} } }); }
+const isPresenter = new URLSearchParams(location.search).get('view')==='presenter';
+
+/* ===== レンダリング ===== */
+function slideHTML(s){
+  const acc = s.accent ? `accent-${s.accent}` : 'accent-teal';
+  if(s.type==='title'){
+    return `<section class="slide title-slide accent-teal">
+      <div class="title-ic"><span class="material-symbols-rounded">chess</span></div>
+      <div class="title-jp">将棋</div>
+      <div class="title-en">shogi</div>
+      <div class="title-tag">〜 駒を動かして、相手の王を詰ませよう 〜</div>
+      <div class="title-meta">
+        <span class="m"><span class="material-symbols-rounded">group</span>対戦は2人</span>
+        <span class="m"><span class="material-symbols-rounded">schedule</span>5五将棋は5〜10分</span>
+        <span class="m"><span class="material-symbols-rounded">visibility</span>観戦できる</span>
+      </div></section>`;
+  }
+  if(s.type==='divider'){
+    return `<section class="slide divider ${acc}${s.solid?' solid':''}">
+      <div class="d-ic"><span class="material-symbols-rounded">${s.icon}</span></div>
+      <div class="d-jp">${s.jp}</div>
+      <div class="d-en">${s.en}</div>
+      ${s.sub?`<div class="d-sub">${s.sub}</div>`:''}</section>`;
+  }
+  // content
+  return `<section class="slide ${acc}">
+    <div class="sec">${s.num?`<span class="sec__num">${s.num}</span>`:''}<span class="sec__jp">${s.section}</span><span class="sec__en">${s.sectionEn}</span></div>
+    <h1 class="headline">${s.headline}</h1>
+    <div class="body">${s.body||''}</div></section>`;
+}
+
+if(!isPresenter){
+  const slidesEl=document.getElementById('slides'), dotsEl=document.getElementById('dots'), counterEl=document.getElementById('counter');
+  let idx=0;
+  SLIDES.forEach((s)=>{ slidesEl.insertAdjacentHTML('beforeend', slideHTML(s)); const d=document.createElement('span'); d.className='dot'; dotsEl.appendChild(d); });
+  const slideEls=[...slidesEl.children], dotEls=[...dotsEl.children];
+  function render(){
+    slideEls.forEach((el,i)=>el.classList.toggle('active',i===idx));
+    dotEls.forEach((el,i)=>el.classList.toggle('on',i===idx));
+    counterEl.textContent=`${idx+1} / ${SLIDES.length}`;
+    document.getElementById('navPrev').style.visibility=idx===0?'hidden':'visible';
+    document.getElementById('navNext').style.visibility=idx===SLIDES.length-1?'hidden':'visible';
+  }
+  function goTo(n,b=true){ n=Math.max(0,Math.min(SLIDES.length-1,n)); if(n!==idx){ idx=n; render(); } if(b) send({t:'idx',i:idx}); }
+  const next=()=>goTo(idx+1), prev=()=>goTo(idx-1);
+  document.getElementById('navNext').onclick=next; document.getElementById('navPrev').onclick=prev;
+  document.addEventListener('keydown',(e)=>{
+    if(['ArrowRight','PageDown',' '].includes(e.key)){ e.preventDefault(); next(); }
+    else if(['ArrowLeft','PageUp'].includes(e.key)){ e.preventDefault(); prev(); }
+    else if(e.key==='Home'){ e.preventDefault(); goTo(0); }
+    else if(e.key==='End'){ e.preventDefault(); goTo(SLIDES.length-1); }
+    else if(e.key==='f'||e.key==='F'){ toggleFull(); }
+    else if(e.key==='p'||e.key==='P'){ openPresenter(); }
+  });
+  const stage=document.getElementById('stage');
+  function fit(){ const sc=Math.min(window.innerWidth/1280, window.innerHeight/720); stage.style.transform=`translate(-50%,-50%) scale(${sc})`; }
+  window.addEventListener('resize',fit); document.addEventListener('fullscreenchange',fit);
+  function toggleFull(){ if(!document.fullscreenElement) document.documentElement.requestFullscreen?.(); else document.exitFullscreen?.(); }
+  document.getElementById('btnFull').onclick=toggleFull;
+  function openPresenter(){ const url=new URL(location.href); url.searchParams.set('view','presenter'); url.hash=''; const w=window.open(url.toString(),'shs_presenter','width=620,height=800'); if(!w) alert('発表者ノートのウィンドウがブロックされました。\nブラウザのポップアップを許可してから、もう一度お試しください。'); }
+  document.getElementById('btnPresenter').onclick=openPresenter;
+  onMsg((m)=>{ if(m.t==='goto') goTo(m.i,false); else if(m.t==='hello') send({t:'idx',i:idx}); });
+  fit(); render();
+}
+
+if(isPresenter){
+  document.title = '発表者ノート | 将棋 | あそびのたな';
+  document.body.classList.add('presenter');
+  document.getElementById('deck').style.display='none';
+  document.getElementById('toolbar').style.display='none';
+  document.querySelector('.hint-help').style.display='none';
+  document.getElementById('presenter').style.display='block';
+  const $=(id)=>document.getElementById(id);
+  const elCount=$('pvCount'), elTitle=$('pvTitle'), elLead=$('pvLead'), elNote=$('pvNote'), elNext=$('pvNextTitle'), elConn=$('pvConn');
+  const btnCopy=$('pvCopy'), btnReset=$('pvReset'), btnPrev=$('pvPrev'), btnNext=$('pvNext');
+  let cur=0; const KEY=(i)=>'shs_note_'+i;
+  function label(s){
+    if(s.type==='title') return '将棋（タイトル）';
+    if(s.type==='divider') return s.jp.replace(/[＼／]/g,'').trim()+'（区切り）';
+    return `${s.section}${s.num?' '+s.num:''} ／ ${s.sectionEn}`;
+  }
+  function plain(html){ const d=document.createElement('div'); d.innerHTML=html||''; d.querySelectorAll('rt').forEach(r=>r.remove()); return (d.textContent||'').replace(/\s+/g,' ').trim(); }
+  function titleOf(s){
+    if(s.type==='title') return '将棋';
+    if(s.type==='divider') return s.jp;
+    return plain(s.headline);
+  }
+  function show(i){
+    cur=Math.max(0,Math.min(SLIDES.length-1,i));
+    const s=SLIDES[cur];
+    elCount.textContent=`${cur+1} / ${SLIDES.length}`;
+    elTitle.textContent=titleOf(s);
+    elLead.textContent=label(s);
+    const saved=localStorage.getItem(KEY(cur));
+    elNote.value=(saved!==null)?saved:s.note;
+    btnCopy.classList.remove('done');
+    btnCopy.innerHTML='<span class="material-symbols-rounded">content_copy</span>チャットにコピー';
+    elNext.innerHTML=cur<SLIDES.length-1?`次のスライド → <b>${titleOf(SLIDES[cur+1])}</b>`:'<b>最後のスライドです</b>';
+    btnPrev.disabled=cur===0; btnNext.disabled=cur===SLIDES.length-1;
+  }
+  elNote.addEventListener('input',()=>{ try{ localStorage.setItem(KEY(cur),elNote.value); }catch(e){} });
+  async function copyText(t){ try{ await navigator.clipboard.writeText(t); return true; }catch(e){ try{ const ta=document.createElement('textarea'); ta.value=t; ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta); ta.focus(); ta.select(); const ok=document.execCommand('copy'); ta.remove(); return ok; }catch(e2){ return false; } } }
+  btnCopy.onclick=async()=>{
+    const ok=await copyText(elNote.value);
+    if(!ok){ elNote.focus(); elNote.select(); }
+    btnCopy.innerHTML=ok?'<span class="material-symbols-rounded">check</span>コピーしました！':'<span class="material-symbols-rounded">keyboard_command_key</span>選択したのでコピーしてください';
+    btnCopy.classList.toggle('done',ok);
+    setTimeout(()=>{ btnCopy.classList.remove('done'); btnCopy.innerHTML='<span class="material-symbols-rounded">content_copy</span>チャットにコピー'; },2200);
+  };
+  btnReset.onclick=()=>{ localStorage.removeItem(KEY(cur)); elNote.value=SLIDES[cur].note; };
+  function goto(i){ show(i); send({t:'goto',i:cur}); }
+  btnPrev.onclick=()=>goto(cur-1); btnNext.onclick=()=>goto(cur+1);
+  document.addEventListener('keydown',(e)=>{ if(e.target===elNote) return; if(e.key==='ArrowRight'||e.key===' '){ e.preventDefault(); goto(cur+1); } else if(e.key==='ArrowLeft'){ e.preventDefault(); goto(cur-1); } });
+  onMsg((m)=>{ if(m.t==='idx'){ elConn.textContent='スライド画面と接続中 ✓'; show(m.i); } });
+  show(0); send({t:'hello'}); setTimeout(()=>send({t:'hello'}),400);
+}
+</script>
+</body>
+</html>
