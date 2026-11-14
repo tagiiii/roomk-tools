@@ -1,0 +1,205 @@
+/* ヒット&ブロー 接頭辞 hbw- */
+
+body { background: var(--color-bg); }
+
+:root {
+  --hbw-peg: 46px;
+  --hbw-hole: #EFE3CC;
+}
+
+/* 画面の切り替え */
+.hbw-screen { display: none; }
+.hbw-screen.active { display: block; }
+.hbw-front.active { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px 16px; }
+.hbw-panel { width: 100%; max-width: 440px; background: var(--color-surface); border-radius: var(--radius-card); padding: 32px 28px; border: 1px solid var(--color-border); }
+.hbw-panel--wide { max-width: 560px; }
+.hbw-panel__title { font-size: 30px; color: var(--color-primary); margin: 8px 0 12px; }
+.hbw-panel__title--sub { font-size: 24px; }
+.hbw-panel__lead { color: var(--color-text); line-height: 1.7; margin: 0 0 16px; }
+.hbw-panel__notes { margin: 0 0 24px; padding-left: 1.2em; color: var(--color-muted); line-height: 1.8; }
+.hbw-panel__actions { display: grid; gap: 12px; }
+.hbw-alert { margin: 12px 0 0; color: var(--color-error); font-weight: 500; }
+.hbw-back { margin: -8px 0 4px -8px; }
+.hbw-hint { margin: 0 0 16px; padding: 10px 14px; border-radius: var(--radius-sm); background: var(--color-accent-soft); color: var(--color-primary); line-height: 1.6; font-size: 14px; }
+.hbw-code-input { text-transform: uppercase; letter-spacing: 0.2em; font-weight: 700; }
+.hbw-hero { display: flex; justify-content: center; gap: 10px; margin-bottom: 12px; }
+.hbw-hero .hbw-peg { animation: hbw-bob 2.6s ease-in-out infinite; }
+.hbw-hero .hbw-peg:nth-child(2) { animation-delay: -0.6s; }
+.hbw-hero .hbw-peg:nth-child(3) { animation-delay: -1.2s; }
+.hbw-hero .hbw-peg:nth-child(4) { animation-delay: -1.8s; }
+
+/* 弱いボタン（テキストリンク風） */
+.hbw-quiet {
+  display: inline-flex; align-items: center; gap: 4px;
+  min-height: 44px; padding: 8px 10px; border: none; background: none;
+  color: var(--color-accent); font-family: inherit; font-size: 15px; font-weight: 500; cursor: pointer;
+  border-radius: var(--radius-sm);
+}
+.hbw-quiet:hover { background: rgba(138, 74, 16, 0.08); }
+.hbw-quiet:disabled { color: var(--color-muted); opacity: 0.55; cursor: not-allowed; background: none; }
+.hbw-quiet .material-symbols-rounded { font-size: 20px; }
+.hbw-quiet--center { justify-self: center; }
+
+/* 選ぶボタン・人数 */
+.hbw-field { margin-bottom: 16px; }
+.hbw-legend { font-weight: 700; color: var(--color-primary); margin: 0 0 8px; }
+.hbw-seg { display: flex; flex-wrap: wrap; gap: 6px; }
+.hbw-seg__btn { min-height: 44px; padding: 8px 16px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-surface); color: var(--color-text); font: inherit; font-size: 15px; font-weight: 500; cursor: pointer; }
+.hbw-seg__btn:hover { border-color: var(--color-accent); }
+.hbw-seg__btn[aria-pressed="true"] { border: 2px solid var(--color-accent); background: var(--color-accent-soft); color: var(--color-primary); font-weight: 700; }
+.hbw-seg__btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.hbw-stepper { display: flex; align-items: center; gap: 10px; }
+.hbw-stepper__btn { width: 44px; height: 44px; display: grid; place-items: center; border: 1px solid var(--color-border); border-radius: 50%; background: var(--color-surface); color: var(--color-accent); cursor: pointer; }
+.hbw-stepper__btn:disabled { opacity: 0.4; cursor: default; }
+.hbw-stepper__num { min-width: 3em; text-align: center; font-size: 20px; font-weight: 700; color: var(--color-primary); }
+
+/* バー */
+.hbw-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding: 12px 20px; background: var(--color-primary); color: #fff; }
+.hbw-bar__title { font-size: 18px; margin: 0; margin-right: auto; }
+.hbw-bar__me { margin: 0; font-size: 14px; }
+.hbw-bar__badge { margin: 0; padding: 2px 10px; border-radius: 999px; background: var(--color-accent); font-size: 13px; font-weight: 700; }
+.hbw-roombar { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 4px 6px; padding: 6px 12px; background: var(--color-surface); border-bottom: 1px solid var(--color-border); }
+.hbw-roombar__code { margin-right: 6px; font-size: 14px; color: var(--color-muted); }
+.hbw-roombar__code strong { color: var(--color-primary); letter-spacing: 0.1em; font-size: 16px; }
+.is-watch .hbw-roombar .btn { display: none; }
+.is-watch .hbw-roombar #btnLeave { display: inline-flex; }
+
+/* ホストの戻りを待つ */
+.hbw-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.45); display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 60; }
+.hbw-overlay__panel { background: var(--color-surface); border-radius: var(--radius-card); padding: 24px; max-width: 360px; text-align: center; display: grid; gap: 12px; }
+.hbw-overlay__panel h2 { margin: 0; font-size: 20px; color: var(--color-primary); }
+.hbw-overlay__panel p { margin: 0; color: var(--color-muted); line-height: 1.6; }
+
+.hbw-main { max-width: 800px; margin: 0 auto; padding: 20px 16px 64px; }
+.hbw-phase { display: grid; gap: 16px; }
+.hbw-h2 { font-size: 18px; color: var(--color-primary); margin: 0 0 12px; }
+.hbw-note { margin: 10px 0 0; color: var(--color-muted); font-size: 14px; line-height: 1.6; }
+.hbw-note:empty { display: none; }
+.hbw-view { margin: 0; font-weight: 500; }
+.hbw-wait { margin: 0; color: var(--color-muted); text-align: center; font-weight: 500; }
+.hbw-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.hbw-row--nowrap { flex-wrap: nowrap; }
+.hbw-row--nowrap .form-input { flex: 1 1 auto; min-width: 0; }
+.hbw-row--pegs { gap: 8px; flex-wrap: nowrap; }
+
+/* 待合室 */
+.hbw-people { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+.hbw-person { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 8px; background: var(--color-bg); min-height: 44px; }
+.hbw-person .material-symbols-rounded { color: var(--color-muted); font-size: 20px; }
+.hbw-person__name { font-weight: 500; }
+.hbw-person__acts { margin-left: auto; display: flex; gap: 4px; }
+.hbw-person__acts .hbw-quiet { min-height: 36px; padding: 4px 8px; }
+.hbw-tag { font-size: 12px; padding: 2px 8px; border-radius: 999px; background: var(--color-accent); color: #fff; white-space: nowrap; font-weight: 500; }
+.hbw-tag--muted { background: var(--color-border); color: var(--color-text); }
+.hbw-tag--watch { background: transparent; color: var(--color-muted); border: 1px solid var(--color-border); }
+.hbw-tag--warn { background: #FFF4E5; color: var(--color-warning); }
+.hbw-tag--win { background: var(--color-success); }
+.hbw-proxyadd { margin-top: 16px; }
+.hbw-proxyadd .btn { flex: none; white-space: nowrap; }
+
+.hbw-joininfo { background: var(--color-surface); border: 2px solid var(--color-accent); border-radius: var(--radius-box); padding: 20px; text-align: center; }
+.hbw-joininfo__label { margin: 0 0 6px; font-size: 13px; font-weight: 500; color: var(--color-accent); letter-spacing: 0.08em; }
+.hbw-joininfo__text { margin: 0; }
+.hbw-joininfo__code { margin: 6px 0 0; font-size: 40px; font-weight: 700; letter-spacing: 0.15em; color: var(--color-primary); }
+
+/* ── しるしつきの色（ペグ） ── */
+.hbw-peg { width: var(--hbw-peg); height: var(--hbw-peg); flex: none; display: grid; place-items: center; border-radius: 50%; background: var(--c); color: #fff; box-shadow: inset 0 -4px 0 rgba(0, 0, 0, 0.18), 0 2px 3px rgba(0, 0, 0, 0.15); }
+.hbw-peg.is-dark { color: rgba(40, 28, 10, 0.78); }
+.hbw-peg .material-symbols-rounded { font-size: calc(var(--hbw-peg) * 0.52); }
+.hbw-peg--empty { background: var(--hbw-hole); box-shadow: inset 0 3px 4px rgba(0, 0, 0, 0.12); }
+.hbw-peg.is-new { animation: hbw-pop 0.32s cubic-bezier(0.3, 1.6, 0.5, 1); }
+
+/* ── ゲーム ── */
+.hbw-game { display: grid; gap: 14px; }
+.hbw-sub { margin: 0; text-align: center; color: var(--color-muted); font-size: 14px; font-weight: 700; }
+.hbw-seats { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.hbw-seat { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; background: var(--color-surface); border: 2px solid var(--color-border); font-weight: 700; color: var(--color-primary); }
+.hbw-seat.is-turn { border-color: var(--color-accent); box-shadow: 0 0 0 3px rgba(138, 74, 16, 0.18); }
+.hbw-seat.is-away { color: var(--color-muted); }
+.hbw-seat .material-symbols-rounded { font-size: 18px; color: var(--color-accent); }
+.hbw-status { margin: 0; min-height: 1.6em; text-align: center; font-size: 20px; font-weight: 700; color: var(--color-primary); }
+.hbw-status.is-mine { color: var(--color-accent); }
+.hbw-status.is-result { font-size: 26px; }
+.hbw-status.is-new { animation: hbw-pop 0.4s cubic-bezier(0.3, 1.5, 0.5, 1); }
+.hbw-legend-line { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 18px; margin: 0; font-size: 14px; color: var(--color-muted); }
+.hbw-legend-line__item { display: inline-flex; align-items: center; gap: 6px; }
+
+.hbw-dot { width: 16px; height: 16px; border-radius: 50%; flex: none; box-sizing: border-box; display: inline-block; }
+.hbw-dot.is-hit { background: var(--color-accent); }
+.hbw-dot.is-blow { border: 3px solid var(--color-accent); background: var(--color-surface); }
+.hbw-dot.is-none { background: var(--color-border); transform: scale(0.5); }
+
+.hbw-mine { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px 14px; margin: 0 auto; padding: 10px 16px; width: fit-content; max-width: 100%; background: var(--color-primary-soft); border-radius: var(--radius-card); }
+.hbw-mine__label { margin: 0; font-weight: 700; font-size: 14px; color: var(--color-primary); }
+.hbw-mine .hbw-peg { --hbw-peg: 34px; }
+
+.hbw-boards { display: grid; gap: 16px; }
+.hbw-boards.is-duel { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.hbw-board { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-card); padding: 16px; min-width: 0; }
+.hbw-board.is-active { border-color: var(--color-accent); box-shadow: 0 0 0 3px var(--color-accent-soft); }
+.hbw-board__title { margin: 0 0 8px; font-size: 16px; font-weight: 700; color: var(--color-primary); line-height: 1.4; }
+.hbw-board__list { display: grid; gap: 8px; max-height: min(52vh, 520px); overflow-y: auto; }
+.hbw-board__empty { margin: 0; color: var(--color-muted); font-size: 14px; }
+.hbw-try { display: grid; grid-template-columns: 3.4em auto 1fr; align-items: center; gap: 10px; padding: 6px 8px; border-radius: 12px; background: #FBF6EC; }
+.hbw-try.is-new { animation: hbw-slide 0.35s ease-out; }
+.hbw-try.is-solved { background: var(--color-accent-soft); }
+.hbw-try__no { font-size: 13px; color: var(--color-muted); text-align: right; line-height: 1.3; overflow-wrap: anywhere; }
+.hbw-try__who { display: block; font-weight: 700; color: var(--color-primary); }
+.hbw-try .hbw-peg { --hbw-peg: 34px; }
+.hbw-try__res { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; justify-self: end; }
+.hbw-try__dots { display: grid; grid-template-columns: repeat(2, 16px); gap: 4px; }
+/* 2人で対戦は一覧が半分のはばなので、ヒントを色の下に出す */
+.hbw-boards.is-duel .hbw-try { grid-template-columns: 3.4em 1fr; }
+.hbw-boards.is-duel .hbw-try__res { grid-column: 2; justify-self: start; }
+#lobbyModeEdit .hbw-legend { margin-top: 16px; }
+.hbw-mine .hbw-quiet { min-height: 36px; padding: 4px 8px; }
+.hbw-try__text { font-size: 14px; font-weight: 700; white-space: nowrap; }
+
+.hbw-input { width: 100%; max-width: 560px; margin: 0 auto; padding: 16px; background: var(--color-surface); border: 2px solid var(--color-accent); border-radius: var(--radius-card); box-shadow: var(--shadow-md); text-align: center; box-sizing: border-box; }
+.hbw-input__title { margin: 0 0 8px; font-weight: 700; color: var(--color-primary); }
+.hbw-slots { display: flex; justify-content: center; gap: 10px; margin-bottom: 16px; }
+.hbw-slots .hbw-peg { --hbw-peg: 56px; border: none; padding: 0; cursor: pointer; font: inherit; }
+.hbw-slots .hbw-peg--empty { cursor: default; outline: 3px dashed var(--color-border); outline-offset: -3px; }
+.hbw-slots .hbw-peg--empty.is-next { outline-color: var(--color-accent); }
+.hbw-palette { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-bottom: 16px; }
+.hbw-palette .hbw-peg { --hbw-peg: 52px; border: none; padding: 0; cursor: pointer; transition: transform var(--transition-base), opacity var(--transition-base); }
+.hbw-palette .hbw-peg:hover:not(:disabled) { transform: translateY(-2px); }
+.hbw-palette .hbw-peg:disabled { opacity: 0.25; cursor: default; box-shadow: none; }
+.hbw-palette .hbw-peg:focus-visible, .hbw-slots .hbw-peg:focus-visible { outline: 3px solid var(--color-accent); outline-offset: 3px; }
+.hbw-input__actions { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; }
+
+.hbw-result { width: 100%; max-width: 480px; margin: 0 auto; display: grid; gap: 14px; }
+.hbw-result__answers { display: grid; gap: 10px; justify-items: center; }
+.hbw-result__answer { display: grid; gap: 4px; justify-items: center; }
+.hbw-result__answer p { margin: 0; font-size: 14px; font-weight: 700; color: var(--color-muted); }
+.hbw-result__actions { display: grid; gap: 10px; }
+.hbw-tools { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 8px; }
+
+@keyframes hbw-pop { from { transform: scale(0.6); } to { transform: scale(1); } }
+@keyframes hbw-slide { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: none; } }
+@keyframes hbw-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+@media (prefers-reduced-motion: reduce) {
+  .hbw-peg, .hbw-try, .hbw-status { animation: none !important; }
+}
+
+/* みんなにみせる画面 */
+.is-watch .hbw-main { padding-top: 12px; max-width: 1100px; }
+.is-watch .hbw-status { font-size: 26px; }
+.is-watch .hbw-board__list { max-height: none; }
+
+@media (max-width: 600px) {
+  .hbw-panel { padding: 24px 18px; }
+  .hbw-bar { padding: 10px 16px; }
+  .hbw-roombar { gap: 4px; padding: 6px 8px; }
+  .hbw-roombar .btn { padding: 4px 8px; font-size: 13px; min-height: 36px; }
+  .hbw-main { padding: 14px 12px 56px; }
+  .hbw-boards.is-duel { grid-template-columns: minmax(0, 1fr); }
+  .hbw-status { font-size: 18px; }
+  .hbw-status.is-result { font-size: 22px; }
+  .hbw-try { grid-template-columns: 3.2em 1fr; }
+  .hbw-try__res { grid-column: 2; justify-self: start; }
+  .hbw-try .hbw-peg { --hbw-peg: 30px; }
+  .hbw-slots .hbw-peg { --hbw-peg: 50px; }
+  .hbw-palette .hbw-peg { --hbw-peg: 44px; }
+  .hbw-palette { gap: 8px; }
+}

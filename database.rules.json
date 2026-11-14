@@ -198,6 +198,12 @@
         ".write": "auth != null"
       }
     },
+    "hitblow_rooms": {
+      "$roomId": {
+        ".read": "auth != null",
+        ".write": "auth != null"
+      }
+    },
     "reversi_rooms": {
       "$roomId": {
         ".read": "auth != null",
