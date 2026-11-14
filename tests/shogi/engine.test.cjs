@@ -337,6 +337,69 @@ test('入玉宣言（27点法）', () => {
   assert.strictEqual(E.canDeclare(M), false, '5五将棋は宣言しない');
 });
 
+test('CPU: 指せる手を返す・1手詰めを見つける・ただで取れる駒を取る', () => {
+  let seed = 3;
+  const rnd = () => { seed = (seed * 1103515245 + 12345) % 2147483648; return seed / 2147483648; };
+  ['mini', 'hon'].forEach((v) => {
+    ['weak', 'normal', 'strong'].forEach((lv) => {
+      const S = E.create(v);
+      const m = E.cpuMove(S, lv, rnd, 300);
+      assert.ok(E.legalMoves(S).some((x) => E.sameMove(x, m)), v + ' ' + lv);
+    });
+  });
+  // 1手詰め（持ち駒の金を３二に打つ）
+  const M = pos('mini', ['. . k . .', '. . . . .', '. . P . .', '. . . . .', 'K . . . .'], 0, [{ G: 1 }]);
+  ['normal', 'strong'].forEach((lv) => {
+    const T = E.apply(M, E.cpuMove(M, lv, rnd, 500));
+    assert.deepStrictEqual(T.over, { winner: 0, reason: 'mate' }, lv);
+  });
+  // ただで取れる飛車（だれも守っていない）を取る
+  // （王手と飛車取りの両取りにならないよう、後手の王は１一に置く）
+  const F = pos('mini', ['. . . . k', '. . . . .', '. . . . r', '. . . . .', 'K . B . .'], 0);
+  ['normal', 'strong'].forEach((lv) => {
+    const m = E.cpuMove(F, lv, rnd, 500);
+    assert.strictEqual(m.to, at(F, 1, 3), lv);
+  });
+  // 指せる手がないときは null
+  const N = pos('mini', ['. . k . .', '. . G . .', '. . P . .', '. . . . .', 'K . . . .'], 1);
+  assert.strictEqual(E.cpuMove(N, 'normal', rnd, 200), null);
+});
+
+test('CPU（ふつう・つよい）は1手詰めの形を避ける（2026-11-14 レビューで見つけた局面）', () => {
+  const seq = ['５三歩', '２二銀', '１三飛', '３一銀', '４四銀', '１四角', '３三飛', '４一角', '３一飛不成', '１三歩', '３三銀', '３二角', '１五銀', '５二飛', '４二銀', '１二王', '２一飛不成'];
+  let G = E.create('mini');
+  seq.forEach((t, i) => {
+    const want = (i % 2 === 0 ? '▲' : '△') + t;
+    const m = E.legalMoves(G).find((x) => E.moveText(G, x) === want);
+    assert.ok(m, want);
+    G = E.apply(G, m);
+  });
+  ['normal', 'strong'].forEach((lv) => {
+    const T = E.apply(G, E.cpuMove(G, lv, () => 0.5, 1500));
+    const mateIn1 = E.legalMoves(T).some((x) => { const U = E.apply(T, x); return U.over && U.over.reason === 'mate'; });
+    assert.ok(!mateIn1, lv + ' が選んだ ' + T.last.text + ' のあと、1手で詰む');
+  });
+});
+
+test('CPU の強さの差（5五将棋の CPU どうし）', () => {
+  let seed = 1;
+  const rnd = () => { seed = (seed * 1103515245 + 12345) % 2147483648; return seed / 2147483648; };
+  const match = (A, B, games) => {
+    let winA = 0;
+    for (let g = 0; g < games; g += 1) {
+      const side = g % 2 === 0 ? [A, B] : [B, A];
+      let S = E.create('mini');
+      while (!S.over && S.ply < 160) S = E.apply(S, E.cpuMove(S, side[S.turn], rnd, side[S.turn] === 'strong' ? 400 : undefined));
+      if (S.over && S.over.winner >= 0 && side[S.over.winner] === A) winA += 1;
+    }
+    return winA;
+  };
+  const nw = match('normal', 'weak', 8);
+  assert.ok(nw >= 7, 'ふつうはよわいに8局中7局以上勝つ: ' + nw);
+  const sn = match('strong', 'normal', 6);
+  assert.ok(sn >= 4, 'つよいはふつうに6局中4局以上勝つ: ' + sn);
+});
+
 test('でたらめ対局（ルールの破綻がない）', () => {
   let seed = 7;
   const rnd = () => { seed = (seed * 1103515245 + 12345) % 2147483648; return seed / 2147483648; };

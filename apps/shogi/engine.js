@@ -427,7 +427,140 @@
     return a.from === b.from && a.to === b.to && (a.drop || '') === (b.drop || '') && !!a.promote === !!b.promote;
   }
 
+  /* ── CPU（1台の画面で対戦する相手） ──
+     読みは「王を取られる手も指せる形」（自分の王が取られる手は、次の手で王を取られて大負けになる）で、
+     速さのために合法かどうかの確認を省く。いちばん上の手だけは legalMoves の正しい手から選ぶ。
+     強さ: weak＝1手だけ見て、ばらつきを大きく／normal＝2手先まで＋取り合いの読み／strong＝時間の許すかぎり6手先まで（1.5秒で打ち切り） */
+  const VALUE = { P: 100, L: 300, N: 350, S: 500, G: 550, B: 800, R: 1000, K: 0 };
+  const PVALUE = { P: 520, L: 500, N: 500, S: 550, B: 1100, R: 1300 };
+  const MATE = 100000;
+  const LEVELS = {
+    weak: { depth: 1, ms: 300, noise: 320, flat: true },
+    normal: { depth: 2, ms: 700, noise: 50 },
+    strong: { depth: 6, ms: 1500, noise: 8 },
+  };
+  const pieceValue = (c) => (isProm(c) ? PVALUE[typeOf(c)] : VALUE[typeOf(c)]);
+
+  // 番の人から見た点数（駒の価値・持ち駒・前に出た駒・王のまわりの守り）
+  function evaluate(N) {
+    const { board, n, hands, turn } = N;
+    let s = 0;
+    for (let i = 0; i < board.length; i += 1) {
+      const c = board[i];
+      if (!c) continue;
+      const o = ownerOf(c);
+      let v = pieceValue(c);
+      const t = typeOf(c);
+      if (!isProm(c) && (t === 'P' || t === 'S' || t === 'N' || t === 'L')) {
+        const r = Math.floor(i / n);
+        v += (o === 0 ? n - 1 - r : r) * 4;
+      }
+      s += o === turn ? v : -v;
+    }
+    HAND_ORDER.forEach((t) => { s += (hands[turn][t] - hands[1 - turn][t]) * VALUE[t] * 1.1; });
+    for (const o of [0, 1]) {
+      const k = kingSquare(board, o);
+      if (k < 0) { s += o === turn ? -MATE : MATE; continue; }
+      const kr = Math.floor(k / n); const kc = k % n;
+      let guard = 0;
+      for (const [dr, dc] of KING) {
+        const r = kr + dr; const c = kc + dc;
+        if (r >= 0 && r < n && c >= 0 && c < n && board[r * n + c] && ownerOf(board[r * n + c]) === o) guard += 1;
+      }
+      // 王が自分の陣から前に出るほど減点（序盤・中盤で王を前に出さない）
+      const out = o === 0 ? n - 1 - kr : kr;
+      s += (o === turn ? 1 : -1) * (guard * 12 - out * 30);
+    }
+    return s;
+  }
+  function childOf(N, m) {
+    const { board, hands } = playOnBoard(N, m);
+    return { v: N.v, n: N.n, board, hands, turn: 1 - N.turn };
+  }
+  // 取る手（高い駒を安い駒で）・成る手を先に読む
+  function ordered(N, quiet) {
+    let ms = pseudoMoves(N);
+    if (quiet) ms = ms.filter((m) => m.from >= 0 && (N.board[m.to] || m.promote));
+    const score = (m) => {
+      const cap = N.board[m.to];
+      if (cap && typeOf(cap) === 'K') return 1e9;
+      let s = 0;
+      if (cap) s += pieceValue(cap) * 10 - (m.from >= 0 ? pieceValue(N.board[m.from]) : 0);
+      if (m.promote) s += 400;
+      if (m.from < 0) s -= 50;
+      return s;
+    };
+    return ms.map((m) => ({ m, s: score(m) })).sort((a, b) => b.s - a.s).map((x) => x.m);
+  }
+  const STOP = {};
+  function search(N, depth, alpha, beta, ctx, ply) {
+    if ((++ctx.nodes & 255) === 0 && Date.now() > ctx.deadline) throw STOP;
+    const quiet = depth <= 0;
+    // 王手されているときは、そこで止めずに、よける手をすべて読む（詰みを見のがさないように）
+    const checked = quiet && inCheck(N.board, N.n, N.turn);
+    if (quiet && depth < -6) return evaluate(N);
+    let best = -Infinity;
+    if (quiet && !checked) {
+      best = evaluate(N);
+      if (best >= beta || depth < -4) return best;
+      if (best > alpha) alpha = best;
+    }
+    for (const m of ordered(N, quiet && !checked)) {
+      const cap = N.board[m.to];
+      if (cap && typeOf(cap) === 'K') return MATE - ply;
+      const v = -search(childOf(N, m), depth - 1, -beta, -alpha, ctx, ply + 1);
+      if (v > best) best = v;
+      if (v > alpha) alpha = v;
+      if (alpha >= beta) break;
+    }
+    if (best === -Infinity) return quiet ? evaluate(N) : -MATE + ply;
+    return best;
+  }
+  // CPU の手。rnd はくじ（テストで固定するため）、ms は考える時間の上限（はぶくと強さごとの値）。指せる手がなければ null
+  function cpuMove(S, level, rnd, ms) {
+    const r = rnd || Math.random;
+    const L = LEVELS[level] || LEVELS.normal;
+    const roots = legalMoves(S);
+    if (!roots.length) return null;
+    const N0 = { v: S.v, n: S.n, board: S.board, hands: S.hands, turn: S.turn };
+    const ctx = { nodes: 0, deadline: Date.now() + (ms || L.ms) };
+    let scores = roots.map(() => 0);
+    let order = roots.map((m, i) => i);
+    for (let d = 1; d <= L.depth; d += 1) {
+      const next = roots.map(() => -Infinity);
+      try {
+        let alpha = -Infinity;
+        for (const i of order) {
+          // 前の深さでいちばんよかった手より少しでも悪い手は、くわしく読まない（窓を少し広げて、ばらつきの余地を残す）
+          const C = childOf(N0, roots[i]);
+          // よわいは相手の返し手も読まず、指したあとの形だけを見る
+          const v = L.flat ? -evaluate(C) : -search(C, d - 1, -Infinity, -(alpha - L.noise), ctx, 1);
+          next[i] = v;
+          if (v > alpha) alpha = v;
+        }
+      } catch (e) {
+        if (e !== STOP) throw e;
+        // 読みきれなかった深さは使わない（1手目だけは、時間がなくても読みおえた分を使う）
+        if (d > 1) break;
+        next.forEach((v, i) => { if (v === -Infinity) next[i] = -MATE; });
+      }
+      scores = next;
+      order = order.slice().sort((a, b) => scores[b] - scores[a]);
+      if (scores[order[0]] >= MATE - 10) break;   // 詰ませる手が見つかった
+    }
+    let pick = order[0];
+    let top = -Infinity;
+    for (const i of order) {
+      // 詰みや、大きく損をしない範囲でだけくじを使う
+      if (scores[i] < scores[order[0]] - L.noise * 2) break;
+      const v = scores[i] + (Math.abs(scores[i]) >= MATE - 100 ? 0 : r() * L.noise);
+      if (v > top) { top = v; pick = i; }
+    }
+    return roots[pick];
+  }
+
   const api = {
+    cpuMove, LEVELS,
     VARIANTS, HAND_ORDER, NAME, PNAME, SPEC, KANJI_NUM, WIDE_NUM,
     ownerOf, typeOf, isProm, kindOf, specOf, pieceName,
     create, keyOf, legalMoves, pseudoMoves, apply, replay, whyIllegal,

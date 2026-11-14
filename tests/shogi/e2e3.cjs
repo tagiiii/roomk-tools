@@ -121,5 +121,69 @@ const { E, check, cell, waitFor } = L;
   await M.page.reload();
   check('L28 トップへ戻ったあとは続きを出さない', (await L.screen(M)) === 'top');
 
+  // ── CPU と対戦する（2026-11-14） ──
+  const C = await L.newClient('cpu');
+  await L.open(C);
+  await C.page.click('#btnGoLocal');
+  await L.waitScreen(C, 'local');
+  check('C1 はじめは人どうし・CPU の強さは出ない', (await C.page.isChecked('input[name="localVs"][value=""]')) && !(await L.visible(C, '#localLevelBox')));
+  await C.page.fill('#localName0', 'ひかり');
+  await C.page.fill('#localName1', 'はる');
+  await C.page.check('input[name="localVs"][value="1"]');
+  await C.page.check('input[name="localVs"][value=""]');
+  check('C1b CPU を選んで人どうしにもどしても、入れた名前は残る', (await C.page.inputValue('#localName0')) === 'ひかり' && (await C.page.inputValue('#localName1')) === 'はる');
+  await C.page.check('input[name="localVs"][value="0"]');   // CPU が先手（自分が後手）
+  check('C2 CPU を選ぶと強さが出て、CPU の名前の欄は押せない', (await L.visible(C, '#localLevelBox')) && (await C.page.isDisabled('#localName0')) && !(await C.page.isDisabled('#localName1')));
+  await C.page.check('input[name="localLevel"][value="weak"]');
+  await C.page.fill('#localName1', 'そら');
+  await C.page.click('#btnLocalStart');
+  await L.waitScreen(C, 'game');
+  check('C3 CPU が先手なら CPU から指す', await waitFor(async () => (await L.lastLine(C)).startsWith('1手目　▲'), 6000), await L.lastLine(C));
+  check('C4 自分の番の表示', (await L.status(C)).startsWith('あなたの番（△後手）'), await L.status(C));
+  check('C5 自分（後手）が手前', (await C.page.getAttribute('#board .sh-cell >> nth=0', 'data-i')) === '24');
+  check('C6 CPU の札の名前は CPU', (await L.text(C, '#sideTop')).includes('CPU'));
+  check('C7 CPU の1手だけでは「1手もどす」は押せない', await C.page.isDisabled('#btnUndo'));
+  // 自分の手（ページの中のルールで、指せる手を1つ選ぶ）
+  const mine = async () => C.page.evaluate(() => {
+    const L = JSON.parse(sessionStorage.getItem('shogi_local'));
+    const E = window.ShogiEngine;
+    const G = E.replay(L.v, L.moves);
+    const m = E.legalMoves(G).find((x) => x.from >= 0 && !x.promote);
+    return { from: m.from, to: m.to };
+  });
+  let m = await mine();
+  await L.move(C, m.from, m.to);
+  check('C8 自分が指すと CPU が考える', (await L.status(C)).includes('（CPU）が考え中'), await L.status(C));
+  check('C9 CPU の番は盤を押せない', await C.page.isDisabled(cell(m.to)));
+  check('C10 CPU が指しかえす', await waitFor(async () => (await L.lastLine(C)).startsWith('3手目　▲'), 6000), await L.lastLine(C));
+  // 1手もどすと、CPU の手と自分の手をいっしょにもどす
+  await C.page.click('#btnUndo');
+  check('C11 1手もどすと自分の番まで', (await L.lastLine(C)).startsWith('1手目　▲') && (await L.status(C)).startsWith('あなたの番'), await L.lastLine(C));
+  // 読み込み直しても CPU と対戦のまま
+  m = await mine();
+  await L.move(C, m.from, m.to);
+  await C.page.reload();
+  check('C12 読み込み直しても CPU が指しかえす', await waitFor(async () => (await L.screen(C)) === 'game' && (await L.lastLine(C)).startsWith('3手目　▲'), 8000), await L.lastLine(C));
+  // 投了（自分だけ。CPU が考えている間に押しても、投了するのは自分）
+  m = await mine();
+  await L.move(C, m.from, m.to);
+  check('C13 CPU の番でも投了のボタンは出る', (await L.status(C)).includes('（CPU）が考え中') && (await L.visible(C, '#btnResign')));
+  await C.page.click('#btnResign');
+  check('C14 投了の結果', (await L.status(C)) === '△後手（そら）が投了。▲先手（CPU）の勝ち！', await L.status(C));
+  // もう一回で CPU の側も入れかわる
+  await C.page.click('#btnAgain');
+  check('C15 もう一回で自分が先手・CPU が後手', (await L.status(C)).startsWith('あなたの番（▲先手）') && (await L.text(C, '#sideTop')).includes('CPU'), await L.status(C));
+  check('C16 先手の自分が手前', (await C.page.getAttribute('#board .sh-cell >> nth=0', 'data-i')) === '0');
+  // 盤と補助を変える → CPU の設定が残る
+  await C.page.click('#btnResign');
+  await C.page.click('#btnRelobby');
+  await L.waitScreen(C, 'local');
+  check('C17 準備にもどると CPU と強さが残る', (await C.page.isChecked('input[name="localVs"][value="1"]')) && (await C.page.isChecked('input[name="localLevel"][value="weak"]')));
+  await C.page.check('input[name="localVs"][value=""]');
+  check('C18 人どうしにもどすと名前の欄が押せる', !(await C.page.isDisabled('#localName0')) && !(await C.page.isDisabled('#localName1')) && !(await L.visible(C, '#localLevelBox')));
+  await C.page.setViewportSize({ width: 375, height: 812 });
+  check('C19 幅375pxで準備の画面がはみ出さない', (await L.overflow(C)) <= 0, await L.overflow(C));
+  await L.shot(C, 'e2e3-cpu-setup-narrow');
+
   await L.finishAll(server);
 })().catch((e) => { console.error(e); process.exit(1); });

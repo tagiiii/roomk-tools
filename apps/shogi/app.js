@@ -56,6 +56,8 @@ const state = {
   local: null,         // 1台の画面の対局 { v, names, aid, moves, resign, declare, ended }
   localAid: null,
   localVariant: 'mini',
+  cpuTimer: null,      // CPU が指すまでの待ち
+  cpuKey: null,        // CPU が同じ番で二度指さないための印
   sel: null,           // 選んでいる駒 { from } か持ち駒 { drop }
   selKey: null,
   msg: '',
@@ -261,7 +263,7 @@ function swapAid(aid) {
 // 投了できる人。1台の画面は番の人。ルームは自分の席の人（相手の番でもよい）か、ホストが代わりに指している人
 function resignSide(V) {
   if (V.over) return null;
-  if (state.role === 'local') return V.G.turn;
+  if (state.role === 'local') return V.cpu != null ? 1 - V.cpu : V.G.turn;
   if (V.mine(0) !== V.mine(1)) return V.mine(0) ? 0 : 1;
   if (V.mine(0) && V.mine(1)) return V.G.turn;
   return V.canPlay() ? V.G.turn : null;
@@ -1242,7 +1244,10 @@ function loadLocal() {
       declare: saved.declare === 0 || saved.declare === 1 ? saved.declare : null,
       ended: saved.ended === true,
       rev: Number(saved.rev) || 0,
+      cpu: cpuOf(saved.cpu),
+      level: levelOf(saved.level),
     };
+    if (L.cpu != null) L.names[L.cpu] = CPU_NAME;
     // 読めない手は落とす
     L.moves = L.moves.slice(0, engineOf(L.v, L.moves).ply);
     return L;
@@ -1259,9 +1264,73 @@ function clearLocal() {
   }
 }
 
-function openLocalSetup(names, v) {
-  $('localName0').value = names?.[0] || '';
-  $('localName1').value = names?.[1] || '';
+/* ── CPU と対戦する（1台の画面だけ。2026-11-14 オーナー依頼「CPU と対戦できるようにして」）──
+   CPU の側を選ぶと、その側は CPU が指す（名前は「CPU」）。指し手は engine.js の cpuMove（強さ よわい・ふつう・つよい）。
+   CPU の番は CPU_MS 待ってから考えはじめる（どこに指したか見えるように）。ルームには入れない（リバーシと同じ） */
+const CPU_NAME = 'CPU';
+const CPU_MS = 700;
+const cpuOf = (v) => (v === 0 || v === 1 ? v : v === '0' ? 0 : v === '1' ? 1 : null);
+const levelOf = (v) => (v === 'weak' || v === 'strong' ? v : 'normal');
+const localVs = () => cpuOf(document.querySelector('input[name="localVs"]:checked')?.value);
+const localLevel = () => levelOf(document.querySelector('input[name="localLevel"]:checked')?.value);
+const cpuTurnKey = (L) => L.v + ':' + L.rev + ':' + L.moves.length;
+function stopCpu() {
+  clearTimeout(state.cpuTimer);
+  state.cpuTimer = null;
+  state.cpuKey = null;
+}
+function cpuThinking() {
+  const L = state.local;
+  if (state.role !== 'local' || !L || L.cpu == null) return false;
+  const G = engineOf(L.v, L.moves);
+  return !overOf(L, G) && G.turn === L.cpu;
+}
+function scheduleCpu() {
+  const L = state.local;
+  if (!cpuThinking()) return;
+  const key = cpuTurnKey(L);
+  if (state.cpuKey === key) return;
+  clearTimeout(state.cpuTimer);
+  state.cpuKey = key;
+  state.cpuTimer = setTimeout(() => {
+    state.cpuTimer = null;
+    const cur = state.local;
+    if (cur !== L || !cpuThinking() || cpuTurnKey(cur) !== key) return;
+    const G = engineOf(cur.v, cur.moves);
+    // 入玉宣言できるなら宣言する（本将棋）
+    if (E.canDeclare(G)) { actLocal('declare'); return; }
+    const m = E.cpuMove(G, cur.level);
+    if (m) actLocal('move', m);
+  }, CPU_MS);
+}
+// CPU の側の名前の欄は、使わないので押せなくする
+function syncLocalVs() {
+  const cpu = localVs();
+  [0, 1].forEach((side) => {
+    const input = $('localName' + side);
+    // CPU の側にした名前は消さずに取っておき、人にもどしたら入れなおす
+    if (cpu === side && !input.disabled) { input.dataset.saved = input.value; input.value = ''; }
+    if (cpu !== side && input.disabled) { input.value = input.dataset.saved || ''; input.dataset.saved = ''; }
+    input.disabled = cpu === side;
+    input.placeholder = cpu === side ? CPU_NAME : '';
+  });
+  $('btnLocalSwap').disabled = cpu != null;
+  $('localLevelBox').hidden = cpu == null;
+}
+
+function openLocalSetup(names, v, cpu = null, level = 'normal') {
+  const radio = document.querySelector('input[name="localVs"][value="' + (cpuOf(cpu) ?? '') + '"]');
+  if (radio) radio.checked = true;
+  const lv = document.querySelector('input[name="localLevel"][value="' + levelOf(level) + '"]');
+  if (lv) lv.checked = true;
+  // 前の対局の名前を入れる（CPU の側は空にして、人にもどしたときも空のまま）
+  [0, 1].forEach((side) => {
+    const input = $('localName' + side);
+    input.value = cpu === side ? '' : names?.[side] || '';
+    input.dataset.saved = '';
+    input.disabled = false;
+  });
+  syncLocalVs();
   state.localVariant = variantOf(v || state.localVariant);
   variantPicker($('localVariant'), state.localVariant, (nv) => { state.localVariant = nv; });
   state.localAid = normAid(state.localAid);
@@ -1269,14 +1338,17 @@ function openLocalSetup(names, v) {
   showScreen('local');
 }
 
-function newLocal(v, names, aid) {
-  return { v: variantOf(v), names, aid: normAid(aid), moves: [], resign: null, declare: null, ended: false, rev: 0 };
+function newLocal(v, names, aid, cpu = null, level = 'normal') {
+  const n = names.slice();
+  if (cpu != null) n[cpu] = CPU_NAME;
+  return { v: variantOf(v), names: n, aid: normAid(aid), moves: [], resign: null, declare: null, ended: false, rev: 0, cpu, level: levelOf(level) };
 }
 
 function startLocal() {
   state.role = 'local';
   resetBoxes();
-  state.local = newLocal(state.localVariant, [$('localName0').value.trim().slice(0, 8), $('localName1').value.trim().slice(0, 8)], state.localAid);
+  stopCpu();
+  state.local = newLocal(state.localVariant, [$('localName0').value.trim().slice(0, 8), $('localName1').value.trim().slice(0, 8)], state.localAid, localVs(), localLevel());
   saveLocal();
   window.RoomkStats?.count('local-start');
   window.RoomkStats?.count(state.local.v === 'hon' ? 'board-9' : 'board-5');
@@ -1284,7 +1356,7 @@ function startLocal() {
   renderGame();
 }
 
-function actLocal(kind, m) {
+function actLocal(kind, m, side) {
   const L = state.local;
   const G = engineOf(L.v, L.moves);
   if (overOf(L, G)) return;
@@ -1294,7 +1366,10 @@ function actLocal(kind, m) {
     L.moves = L.moves.concat([m]);
     finished = !!E.apply(G, m).over;
   } else if (kind === 'resign') {
-    L.resign = G.turn;
+    // 投了したのは押した人（CPU と対戦するときは、CPU の番でも自分の側）
+    const who = side === 0 || side === 1 ? side : G.turn;
+    if (L.cpu != null && who === L.cpu) return;
+    L.resign = who;
     finished = true;
   } else if (kind === 'declare') {
     if (!E.canDeclare(G)) return;
@@ -1314,10 +1389,17 @@ function undoLocal() {
     L.resign = null;
     L.declare = null;
   } else if (L.moves.length) {
-    L.moves = L.moves.slice(0, -1);
+    let moves = L.moves.slice(0, -1);
+    // CPU と対戦するときは、自分の番までもどす（CPU の手と、その前の自分の手をいっしょに）
+    if (L.cpu != null && engineOf(L.v, moves).turn === L.cpu) {
+      if (!moves.length) return;
+      moves = moves.slice(0, -1);
+    }
+    L.moves = moves;
   } else {
     return;
   }
+  stopCpu();
   L.rev += 1;
   state.msg = '1手もどしたよ。';
   saveLocal();
@@ -1327,6 +1409,7 @@ function undoLocal() {
 function quitLocal() {
   const L = state.local;
   if (L && !overOf(L, engineOf(L.v, L.moves)) && L.moves.length && !window.confirm('おわりにして、トップへ戻る？')) return;
+  stopCpu();
   clearLocal();
   state.local = null;
   state.role = null;
@@ -1523,8 +1606,9 @@ function viewModel() {
       name: (side) => L.names[side],
       away: () => false,
       proxy: () => false,
-      canPlay: () => !overOf(L, G),
-      mine: () => false,
+      cpu: L.cpu,
+      canPlay: () => !overOf(L, G) && G.turn !== L.cpu,
+      mine: (side) => L.cpu != null && side !== L.cpu,
       key: 'local:' + L.v,
       rev: L.rev,
     };
@@ -1595,7 +1679,9 @@ function renderGame() {
     st.textContent = overText(V, V.over);
   } else {
     let line;
-    if (local) line = sideLabel(V, G.turn) + 'の番';
+    if (local && V.cpu != null && G.turn === V.cpu) line = sideLabel(V, G.turn) + 'が考え中';
+    else if (local && V.cpu != null) line = 'あなたの番（' + MARK[G.turn] + SIDE[G.turn] + '）';
+    else if (local) line = sideLabel(V, G.turn) + 'の番';
     else if (V.mine(G.turn)) line = 'あなたの番（' + MARK[G.turn] + SIDE[G.turn] + '）';
     else if (can) line = sideLabel(V, G.turn) + 'の番。代わりに指してね';
     else line = sideLabel(V, G.turn) + 'が考え中';
@@ -1627,11 +1713,14 @@ function renderGame() {
   // そのほかの操作
   const rec = V.rec;
   $('btnUndo').hidden = !(host || local);
-  $('btnUndo').disabled = !rec.moves.length && rec.resign == null && rec.declare == null;
+  // CPU と対戦するときは、自分がまだ指していなければもどせない（CPU が先手で1手目のあと）
+  const ownMoves = local && V.cpu != null ? rec.moves.filter((m, i) => i % 2 !== V.cpu).length : rec.moves.length;
+  $('btnUndo').disabled = !ownMoves && rec.resign == null && rec.declare == null;
   $('btnAid').hidden = !(host || local);
   $('btnResign').hidden = resignSide(V) == null;
   $('btnReset').hidden = !(host || local);
   $('btnReset').textContent = local ? '最初からやりなおす' : 'この対局をやめる';
+  if (local) scheduleCpu();
   $('btnQuit').hidden = !local;
 }
 
@@ -1857,7 +1946,7 @@ function resign() {
   if (side == null) return;
   const who = state.role === 'local' || !V.mine(side) ? sideLabel(V, side) + 'が' : '';
   if (!window.confirm(who + '投了する？（負けを認めて、この対局を終わりにするよ）')) return;
-  if (state.role === 'local') actLocal('resign');
+  if (state.role === 'local') actLocal('resign', null, side);
   else actRoom('resign', null, side);
 }
 
@@ -1954,6 +2043,7 @@ $('btnLocalSwap').addEventListener('click', () => {
   $('localName1').value = a;
 });
 $('btnLocalStart').addEventListener('click', startLocal);
+document.querySelectorAll('input[name="localVs"]').forEach((r) => r.addEventListener('change', syncLocalVs));
 
 $('btnPromoYes').addEventListener('click', () => closePromo(true));
 $('btnPromoNo').addEventListener('click', () => closePromo(false));
@@ -1989,7 +2079,8 @@ $('btnReset').addEventListener('click', () => {
   if (state.role === 'local') {
     const L = state.local;
     if (!overOf(L, engineOf(L.v, L.moves)) && L.moves.length && !window.confirm('最初からやりなおす？')) return;
-    state.local = newLocal(L.v, L.names, L.aid);
+    stopCpu();
+    state.local = newLocal(L.v, L.names, L.aid, L.cpu, L.level);
     state.local.rev = L.rev + 1;
     saveLocal();
     window.RoomkStats?.count('local-start');
@@ -2002,7 +2093,9 @@ $('btnQuit').addEventListener('click', quitLocal);
 $('btnAgain').addEventListener('click', () => {
   if (state.role === 'local') {
     const L = state.local;
-    state.local = newLocal(L.v, [L.names[1], L.names[0]], swapAid(L.aid));
+    // 先手と後手を入れかえる（CPU の側も入れかわる。CPU が先手になると、CPU から指す）
+    stopCpu();
+    state.local = newLocal(L.v, [L.names[1], L.names[0]], swapAid(L.aid), L.cpu == null ? null : 1 - L.cpu, L.level);
     state.local.rev = L.rev + 1;
     saveLocal();
     window.RoomkStats?.count('local-start');
@@ -2015,11 +2108,12 @@ $('btnRelobby').addEventListener('click', () => {
   if (state.role === 'local') {
     const L = state.local;
     state.localAid = L.aid;
+    stopCpu();
     clearLocal();
     state.local = null;
     state.role = null;
     resetBoxes();
-    openLocalSetup(L.names, L.v);
+    openLocalSetup(L.names, L.v, L.cpu, L.level);
   } else if (state.role === 'host') {
     backToLobby();
   }
