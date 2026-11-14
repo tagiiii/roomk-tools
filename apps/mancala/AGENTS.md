@@ -97,7 +97,7 @@ apps/mancala/
 - `../shared/js/rtdb-utils.js?v=20261005`・`../shared/js/room-qr.js?v=20261022`
 - CSS 接頭辞: **`mc-`**（BEM）。画面切替は `.mc-screen` / `.active`
 - 描画はすべて DOM API（textContent）。innerHTML は使わない
-- アイコン: Material Symbols Rounded（ポータルは `grain`）。ツール一覧のイラストはまだない（作るかはオーナーに確かめる）
+- アイコン: Material Symbols Rounded（ポータルは `grain`）。ツール一覧のカードとはじめの画面のイラストは `assets/illustrations/mancala.webp`（2026-11-14 オーナー依頼。fal の手描き風。4回めで、人・文字が出ず石の入ったカップが並ぶ絵になった）
 - RTDB パス: `mancala_rooms/{roomCode}`、sessionStorage キー: `mancala_session`・`mancala_local`
 
 ### 横断更新
