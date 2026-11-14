@@ -9,20 +9,20 @@
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
   <link rel="stylesheet" href="../shared/css/design-system.css?v=20261106c">
   <!-- index.html と app.js・engine.js・style.css はセットで変わるので、変えたら ?v= をそろえて上げる -->
-  <link rel="stylesheet" href="style.css?v=20261114a">
+  <link rel="stylesheet" href="style.css?v=20261114b">
   <script src="https://www.gstatic.com/firebasejs/13.3.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/13.3.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/13.3.0/firebase-database-compat.js"></script>
   <script src="../shared/js/rtdb-utils.js?v=20261005"></script>
   <script src="../shared/js/room-qr.js?v=20261022"></script>
-  <script src="engine.js?v=20261114a"></script>
+  <script src="engine.js?v=20261114b"></script>
 </head>
 <body data-genre="atekko">
 
   <!-- トップ -->
   <section class="hbw-screen hbw-front active" id="screen-top">
     <div class="hbw-panel app-entry">
-      <div class="hbw-hero" id="hero" aria-hidden="true"></div>
+      <div class="app-hero"><img class="app-illust" src="../assets/illustrations/hit-blow.webp" alt="" width="156" height="156" decoding="async" onerror="this.parentNode.remove()" /></div>
       <h1 class="hbw-panel__title app-title">ヒット&amp;ブロー</h1>
       <p class="hbw-panel__lead app-entry__lead">かくれた色のならびを当てよう。予想を出すと、色も場所もあっている数（ヒット）と、色はあるけれど場所がちがう数（ブロー）がわかる。ヒントを手がかりに、先にそろえた人の勝ち。</p>
       <ul class="hbw-panel__notes app-entry__notes">
@@ -242,7 +242,7 @@
     </div>
   </div>
 
-  <script type="module" src="app.js?v=20261114a"></script>
+  <script type="module" src="app.js?v=20261114b"></script>
   <script src="../shared/js/stats.js?v=1" defer></script>
   <script src="../shared/js/howto.js"></script>
   <script>

@@ -1769,9 +1769,6 @@ function resumeLocal() {
   renderGame();
 }
 
-// トップの飾り（色の玉を4つ）
-$('hero').replaceChildren(...E.COLORS.slice(0, 4).map((c) => peg(c.id)));
-
 showScreen('top');
 const startParams = new URLSearchParams(location.search);
 const watchParam = startParams.get('watch');
