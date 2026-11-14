@@ -1,4 +1,4 @@
-/* 麻雀（試作） — 牌の絵（SVG の文字列を返す）。window.MahjongArt
+/* 麻雀 — 牌の絵（SVG の文字列を返す）。window.MahjongArt
    すべて自作の図形。数字・漢字の牌は文字で描く。 */
 (function (root) {
   'use strict';

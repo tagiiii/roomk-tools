@@ -33,6 +33,7 @@ RTDB_HTML_FILES=(
   "apps/kotoba-meter/index.html"
   "apps/blackjack/index.html"
   "apps/daifugo/index.html"
+  "apps/mahjong/index.html"
   "apps/career-sugoroku/index.html"
   "apps/do-mannaka/index.html"
   "apps/esadori/index.html"
