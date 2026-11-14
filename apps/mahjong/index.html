@@ -8,15 +8,16 @@
   <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
   <link rel="stylesheet" href="../shared/css/design-system.css?v=20261106c">
-  <!-- index.html と app.js・engine.js・art.js・style.css はセットで変わるので、変えたら ?v= をそろえて上げる -->
-  <link rel="stylesheet" href="style.css?v=20261114b">
+  <!-- index.html と app.js・engine.js・yaku.js・art.js・style.css はセットで変わるので、変えたら ?v= をそろえて上げる -->
+  <link rel="stylesheet" href="style.css?v=20261114c">
   <script src="https://www.gstatic.com/firebasejs/13.3.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/13.3.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/13.3.0/firebase-database-compat.js"></script>
   <script src="../shared/js/rtdb-utils.js?v=20261005"></script>
   <script src="../shared/js/room-qr.js?v=20261022"></script>
-  <script src="engine.js?v=20261114b"></script>
-  <script src="art.js?v=20261114b"></script>
+  <script src="yaku.js?v=20261114c"></script>
+  <script src="engine.js?v=20261114c"></script>
+  <script src="art.js?v=20261114c"></script>
 </head>
 <body data-genre="board">
   <div class="wrapper">
@@ -31,8 +32,8 @@
           <div class="mj-hero" id="hero" aria-hidden="true"></div>
           <h1 class="app-title">麻雀</h1>
           <p class="app-catch">牌を1枚引いて1枚捨て、組をそろえてあがろう</p>
-          <p class="mj-lead app-entry__lead">3枚の組を4つと、同じ2枚を1組そろえたら「あがり」。役や点数のない、かんたんなルールで遊べるよ。1〜4人で、あいている席はCPUが打つ。</p>
-          <p class="mj-note">1局は10分くらい。ポン・チー・CPUの強さ・考える時間は、ホストが待合室で選べるよ。</p>
+          <p class="mj-lead app-entry__lead">3枚の組を4つと、同じ2枚を1組そろえたら「あがり」。役のない「かんたん」と、リーチ・ドラ・カンもある「役あり」を選べるよ（点数は出さない）。1〜4人で、あいている席はCPUが打つ。</p>
+          <p class="mj-note">1局は10分くらい。ルール・ポン・チー・CPUの強さ・考える時間は、ホストが待合室で選べるよ。</p>
           <div class="app-entry__actions">
             <button type="button" class="btn btn-primary btn-full" id="btnGoCreate">ルームを作る</button>
             <button type="button" class="btn btn-secondary btn-full" id="btnGoJoin">ルームに参加する</button>
@@ -138,6 +139,7 @@
           <div class="mj-bar">
             <p class="mj-round" id="roundLine"></p>
             <p class="mj-wall"><span class="material-symbols-rounded" aria-hidden="true">view_module</span>山 <b id="wallCount">0</b> 枚</p>
+            <p class="mj-dora" id="doraLine" hidden></p>
           </div>
 
           <!-- 結果（局が終わったとき） -->
@@ -145,6 +147,8 @@
             <p class="mj-result__title" id="resultTitle"></p>
             <p class="mj-result__sub" id="resultSub"></p>
             <div class="mj-result__hand" id="resultHand"></div>
+            <ul class="mj-yaku" id="resultYaku" aria-label="あがった役"></ul>
+            <p class="mj-dora mj-dora--result" id="resultDora"></p>
             <div class="mj-result__actions" id="resultHost" hidden>
               <button type="button" class="btn btn-primary btn-full" id="btnAgain">次の局へ</button>
               <button type="button" class="btn btn-secondary btn-full" id="btnRelobby">待合室にもどる（ルール・人を変える）</button>
@@ -182,6 +186,19 @@
             <ol class="mj-log" id="log" aria-label="ここまでのできごと"></ol>
           </details>
 
+          <!-- 役の一覧（役ありのときだけ） -->
+          <details class="mj-rulesbox" id="yakuList" hidden>
+            <summary>役の一覧</summary>
+            <dl class="mj-yakulist">
+              <dt>1翻</dt><dd>立直（門前でテンパイしたら宣言）・一発（リーチから1巡以内にあがる）・門前清自摸和（鳴かずにツモ）・平和（4つとも順子、あたまが役牌でなく、両面待ち）・断么九（1・9・字牌を使わない）・一盃口（同じ順子2つ。門前）・役牌（白・發・中・場風・自風の刻子）・嶺上開花・槍槓・海底摸月・河底撈魚</dd>
+              <dt>2翻</dt><dd>ダブル立直・七対子・三色同順（鳴くと1翻）・一気通貫（鳴くと1翻）・混全帯么九（鳴くと1翻）・対々和・三暗刻・三色同刻・三槓子・小三元・混老頭</dd>
+              <dt>3翻</dt><dd>二盃口（門前）・混一色（鳴くと2翻）・純全帯么九（鳴くと2翻）</dd>
+              <dt>6翻</dt><dd>清一色（鳴くと5翻）</dd>
+              <dt>役満</dt><dd>国士無双・四暗刻・大三元・字一色・緑一色・清老頭・小四喜・大四喜・四槓子・九蓮宝燈・天和・地和</dd>
+              <dt>ドラ</dt><dd>ドラ表示牌の次の牌（9の次は1、北の次は東、中の次は白）。1枚で1翻。役がないとドラだけではあがれない。リーチであがると裏ドラも数える</dd>
+            </dl>
+          </details>
+
           <details class="mj-rulesbox">
             <summary>いまのルール</summary>
             <ul class="mj-rulesview" id="gameRules"></ul>
@@ -202,7 +219,7 @@
     </main>
   </div>
   <div class="mj-overlay" id="hostOffOverlay" hidden><div class="mj-overlay__panel"><h2>ホストの戻りを待っています</h2><p id="hostOffText">しばらく待っても戻らないときは退出してね。</p><button type="button" class="btn btn-secondary" id="btnOverlayLeave">退出する</button></div></div>
-  <script type="module" src="app.js?v=20261114b"></script>
+  <script type="module" src="app.js?v=20261114c"></script>
   <script src="../shared/js/stats.js?v=1" defer></script>
   <script src="../shared/js/howto.js"></script>
   <script>
@@ -226,6 +243,15 @@
           '引いた牌でそろったら「ツモ」、だれかが捨てた牌でそろったら「ロン」であがり',
           'ほかの人が捨てた牌で同じ牌3枚ができるなら「ポン」、左の人が捨てた牌で続いた数ができるなら「チー」でもらえる。もらった組はみんなに見せて、1枚捨てる。いらないときは「パス」',
           '山がなくなったら引き分け',
+        ] },
+        { heading: '役ありのルール（ホストが選んだとき）', items: [
+          '役が1つ以上ないとあがれない。役の名前は、ゲームの画面の「役の一覧」で見られる。点数は出さず、あがったときに役の名前と翻数を出す',
+          '鳴かずにテンパイしたら「リーチ」を押して、捨てる牌を選ぶ。リーチすると、それだけで役が1つつく。リーチのあとは引いた牌を捨てる',
+          'ドラ表示牌の次の牌がドラ。ドラは1枚で1翻ふえる',
+          '手の中に同じ牌が4枚そろったら「カン」。ポンした牌の4枚目を引いたときも「カン」。カンすると、もう1枚引いて、ドラ表示牌が1枚ふえる',
+          '自分が捨てた牌であがれる形のときや、あがれる牌を見逃したときは「フリテン」で、ロンはできない（ツモはできる）',
+          '最初の番で、1・9・字牌が9種類以上あれば「流す（九種九牌）」で局を流せる',
+          '局は東1局から。親があがるかテンパイで終わると、同じ人が続けて親になる',
         ] },
         { heading: '見え方（ひとりずつ選べる）', items: [
           '「ヒントを出す」: あがりまであと何枚か、おすすめの捨て牌（オレンジの点）、待っている牌が出る',
