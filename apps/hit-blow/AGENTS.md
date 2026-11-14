@@ -47,7 +47,8 @@ apps/hit-blow/
 ├── index.html   # 画面の骨組み・howto.js の設定
 ├── app.js       # 進行・描画（ES module）
 ├── engine.js    # ルール（window.HitBlowEngine。node では module.exports）
-└── style.css    # 固有スタイル
+├── style.css    # 固有スタイル
+└── slides.html  # 画面共有用説明スライド（15枚）
 ```
 
 - 分割型（リバーシと同じ作り）。index.html・app.js・engine.js・style.css を変えたら `?v=` をそろえて上げる
@@ -62,7 +63,7 @@ apps/hit-blow/
 
 - `scripts/lint.sh` の `RTDB_HTML_FILES` に追加
 - `scripts/content-audit.mjs` の `NO_CONTENT_APPS` に追加（8色の玉だけ。答えはその場でくじで作る）
-- `apps/index.html` にカード（`data-genre="atekko"`・`data-scenes="bodoge hiroba sakusen"`・`data-speech="pick silent"`・`data-self="outside"`）。イラスト・サムネイル・説明スライドはまだない
+- `apps/index.html` にカード（`data-genre="atekko"`・`data-scenes="bodoge hiroba sakusen"`・`data-speech="pick silent"`・`data-self="outside"`）。イラスト・サムネイルはまだない。説明スライド `slides.html`（15枚。リバーシと同じエンジン・チャンネル `hitblow_deck`・保存キー `hbs_`）は「？」とポータルから開ける（2026-11-14）
 - `apps/updates.json` 先頭に `type: "new"`
 - `apps/guide/index.html` の「すごろく・ボードゲーム系」に1行（節の説明に「色のならびを当て合う推理ゲーム」を足した）
 - `database.rules.json` に `hitblow_rooms` を足す（変更禁止パス。オーナーの承認と本番ルールへの反映が要る）
@@ -252,7 +253,7 @@ hitblow_rooms/{roomCode}/
 | rtdb-utils.js（`?v=20261005`） | `initFirebase`・`generateRoomCode`・`now`・`isRoomExpired`・`getHostDisconnectedAt`・`cancelRoomOnDisconnect`・`copyRoomCode`・`copyRoomLink`・`showToast` |
 | room-qr.js（`?v=20261022`） | 「QRコードを出す」（`RoomkQR.show`） |
 | stats.js（`?v=1`） | 起動回数（`open`）と、上の「利用回数」 |
-| howto.js | 「あそびかた」モーダル |
+| howto.js | 「あそびかた」モーダル（`slides: 'slides.html'` で「説明スライドを見る」） |
 
 ## 確かめたこと
 
