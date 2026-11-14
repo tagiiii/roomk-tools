@@ -241,9 +241,17 @@
     // 歩の王手は、駒を打ってさえぎれない。動かす手だけ調べればよい
     return !pseudoMoves(T).some((mm) => mm.from >= 0 && leavesKingSafe(T, mm));
   }
-  function legalMoves(S) {
+  // 指せる手。loose のときは、王手をよけない手・王が取られる所へ動く手（うっかり）も指せる。
+  // そのときは相手が王を取って勝つ（正式な将棋では、王手を見のがす手は反則負け）。二歩・打ち歩詰め・行き所のない駒は、どちらでも指せない
+  function legalMoves(S, loose) {
     if (S.over) return [];
+    if (loose) return pseudoMoves(S).filter((m) => !isUchifuzume(S, m));
     return pseudoMoves(S).filter((m) => leavesKingSafe(S, m) && !isUchifuzume(S, m));
+  }
+  // 番の人が、相手の王を取れるか（相手がうっかり王手を見のがしたとき）
+  function canTakeKing(S) {
+    const k = kingSquare(S.board, 1 - S.turn);
+    return k >= 0 && attacked(S.board, S.n, k, S.turn);
   }
   function hasLegalMove(S) {
     return pseudoMoves(S).some((m) => leavesKingSafe(S, m) && !isUchifuzume(S, m));
@@ -267,7 +275,9 @@
     const c = board[from];
     if (!c || ownerOf(c) !== turn) return 'その駒は動かせないよ。';
     if (!targetsOf(board, n, from).includes(to)) return 'その駒は、そこへは動けないよ。';
-    const opts = [{ from, to, promote: false }, { from, to, promote: true }];
+    // 成れる駒だけ「成った場合」も試す（王・金を成らせると、王が盤から消えて安全に見えてしまう）
+    const canProm = PROMOTABLE[typeOf(c)] && !isProm(c);
+    const opts = canProm ? [{ from, to, promote: false }, { from, to, promote: true }] : [{ from, to, promote: false }];
     if (!opts.some((m) => leavesKingSafe(S, m))) {
       if (typeOf(c) === 'K') return 'そこへ動くと王が取られてしまうので、動けないよ。';
       return inCheck(board, n, turn) ? '王手をよけていないので、動かせないよ。' : 'その駒が動くと王が取られてしまうので、動かせないよ。';
@@ -291,7 +301,9 @@
     const key = keyOf(T);
     T.keys.push(key);
     T.checks.push(T.check);
-    if (!hasLegalMove(T)) {
+    if (captured && typeOf(captured) === 'K') {
+      T.over = { winner: mover, reason: 'king' };
+    } else if (!hasLegalMove(T)) {
       T.over = { winner: mover, reason: T.check ? 'mate' : 'nomove' };
     } else {
       const rep = repetition(T, key);
@@ -346,7 +358,9 @@
   // その駒が to へ指せるか（ピンされて動けない駒は数えない）
   function canReach(S, i, to) {
     if (!targetsOf(S.board, S.n, i).includes(to)) return false;
-    return leavesKingSafe(S, { from: i, to, promote: false }) || leavesKingSafe(S, { from: i, to, promote: true });
+    const c = S.board[i];
+    const canProm = PROMOTABLE[typeOf(c)] && !isProm(c);
+    return leavesKingSafe(S, { from: i, to, promote: false }) || (canProm && leavesKingSafe(S, { from: i, to, promote: true }));
   }
   function relative(S, from, to) {
     const { board, n, turn } = S;
@@ -565,7 +579,7 @@
     ownerOf, typeOf, isProm, kindOf, specOf, pieceName,
     create, keyOf, legalMoves, pseudoMoves, apply, replay, whyIllegal,
     inCheck, attacked, targetsOf, threatened, squareName, moveText, sameMove, kingSquare,
-    canDeclare, declarePoints, DECLARE_NEED,
+    canDeclare, declarePoints, DECLARE_NEED, canTakeKing,
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.ShogiEngine = api;

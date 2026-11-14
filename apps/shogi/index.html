@@ -9,13 +9,13 @@
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
   <link rel="stylesheet" href="../shared/css/design-system.css?v=20261106c">
   <!-- index.html と app.js・engine.js・style.css はセットで変わるので、変えたら ?v= をそろえて上げる -->
-  <link rel="stylesheet" href="style.css?v=20261114b">
+  <link rel="stylesheet" href="style.css?v=20261114c">
   <script src="https://www.gstatic.com/firebasejs/13.3.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/13.3.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/13.3.0/firebase-database-compat.js"></script>
   <script src="../shared/js/rtdb-utils.js?v=20261005"></script>
   <script src="../shared/js/room-qr.js?v=20261022"></script>
-  <script src="engine.js?v=20261114b"></script>
+  <script src="engine.js?v=20261114c"></script>
 </head>
 <body data-genre="board">
 
@@ -277,7 +277,7 @@
     </div>
   </div>
 
-  <script type="module" src="app.js?v=20261114b"></script>
+  <script type="module" src="app.js?v=20261114c"></script>
   <script src="../shared/js/stats.js?v=1" defer></script>
   <script src="../shared/js/howto.js"></script>
   <script>
@@ -296,15 +296,16 @@
           '先手（▲）から指す。自分の駒を押してから、動かしたい所を押す',
           '相手の駒がある所へ動くと、その駒を取れる。取った駒は「持ち駒」になり、自分の番に盤の空いている所へ打てる（持ち駒を押してから、打つ所を押す）',
           '相手の陣（5五将棋は奥の1段、本将棋は奥の3段）に入るか、そこから出るときに「成る」を選べる。成ると動き方が変わり、字が赤くなる',
-          '同じたての列に自分の歩を2枚置く「二歩」、歩を打ってすぐ詰ませる「打ち歩詰め」はできない。王手をかけられたら、よけないといけない',
+          '同じたての列に自分の歩を2枚置く「二歩」、歩を打ってすぐ詰ませる「打ち歩詰め」はできない。王手をかけられたら、よけよう。よけないで指すと、相手に王を取られて負けになる',
         ] },
         { heading: '補助', items: [
           '「動ける所を見せる」: 駒を選ぶと、動ける所・打てる所に点が出る',
           '「駒に動ける向きを出す」: 駒のふちに、動ける向きの印が出る。線は、どこまでも進める向き',
           '「取られそうな駒を知らせる」: 相手の駒が利いている自分の駒に、点線の枠が出る',
+          '「王が取られる手は指せないようにする」: 王手をよけない手・王が取られる所へ動く手を止めて、理由を出す',
         ] },
         { heading: 'おわりかた', items: [
-          '相手の王が、どう動いても取られてしまう形（詰み）になったら勝ち',
+          '相手の王が、どう動いても取られてしまう形（詰み）になったら勝ち。相手がうっかり王手をよけなかったときは、王を取ったら勝ち',
           '「投了する」を押すと、負けを認めて終わりにできる（相手の番でもよい）',
           '同じ形が4回くり返されると「千日手」。本将棋は引き分け、5五将棋は先手の負け。王手を続けて千日手になったときは、王手をかけていた人の負け',
           '本将棋で、自分の王が相手の陣に入り、条件がそろうと「入玉宣言で勝ちにする」が出る。押すと勝ち',

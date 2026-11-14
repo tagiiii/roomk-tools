@@ -121,6 +121,53 @@ const { E, check, cell, waitFor } = L;
   await M.page.reload();
   check('L28 トップへ戻ったあとは続きを出さない', (await L.screen(M)) === 'top');
 
+  // ── うっかりの手と、王を取って勝つ（2026-11-14 オーナーの指摘） ──
+  const K = await L.newClient('king');
+  await L.open(K);
+  await K.page.click('#btnGoLocal');
+  await L.waitScreen(K, 'local');
+  check('K1 「王が取られる手は指せないようにする」は、はじめはオフ', !(await K.page.isChecked('#localAid input[data-key="guard"]')));
+  await K.page.click('#btnLocalStart');
+  await L.waitScreen(K, 'game');
+  // 5五将棋: 先手の歩を進めて玉の前をあけ、後手の角を５四に利かせる。先手の玉が５四へうっかり動く
+  await L.move(K, 15, 10);           // ▲５三歩
+  await L.move(K, 1, 7);             // △３二角（４一→３二。５四に利く）
+  const into = await K.page.evaluate(() => {
+    const E = window.ShogiEngine;
+    const L = JSON.parse(sessionStorage.getItem('shogi_local'));
+    const G = E.replay(L.v, L.moves);
+    // 先手の玉が、相手に取られる所へ動く手を1つ探す
+    const m = E.legalMoves(G, true).find((x) => x.from === E.kingSquare(G.board, 0) && !E.legalMoves(G).some((y) => E.sameMove(x, y)));
+    return m ? { from: m.from, to: m.to } : null;
+  });
+  check('K2 王が取られる所へ動く手がある局面', !!into, into);
+  if (into) {
+    await K.page.click(cell(into.from));
+    check('K3 補助がオフなら、王が取られる所にも点が出る', (await L.spots(K)).includes(into.to), await L.spots(K));
+    await K.page.click(cell(into.to));
+    check('K4 うっかりの手を指せて、後手に「王が取れる」', (await L.status(K)).includes('王が取れる'), await L.status(K));
+    const take = await K.page.evaluate(() => {
+      const E = window.ShogiEngine;
+      const L = JSON.parse(sessionStorage.getItem('shogi_local'));
+      const G = E.replay(L.v, L.moves);
+      const k = E.kingSquare(G.board, 0);
+      const m = E.legalMoves(G).find((x) => x.to === k);
+      return { from: m.from, to: m.to, two: E.legalMoves(G).filter((x) => x.from === m.from && x.to === m.to).length === 2 };
+    });
+    await L.move(K, take.from, take.to, take.two ? false : undefined);
+    check('K5 王を取ったら勝ち', (await L.status(K)) === '王を取った。△後手の勝ち！', await L.status(K));
+    // 1手もどして、補助をオンにすると止まる
+    await K.page.click('#btnUndo');
+    await K.page.click('#btnUndo');
+    await K.page.click('#btnAid');
+    await K.page.click('#dialogAid input[data-key="guard"]');
+    await K.page.click('#btnAidClose');
+    await K.page.click(cell(into.from));
+    check('K6 補助をオンにすると、王が取られる所には点が出ない', !(await L.spots(K)).includes(into.to), await L.spots(K));
+    await K.page.click(cell(into.to));
+    check('K7 押すと理由が出て、指さない', (await L.text(K, '#gameMsg')).includes('王が取られて'), await L.text(K, '#gameMsg'));
+  }
+
   // ── CPU と対戦する（2026-11-14） ──
   const C = await L.newClient('cpu');
   await L.open(C);

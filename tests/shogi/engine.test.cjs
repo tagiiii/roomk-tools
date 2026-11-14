@@ -337,6 +337,28 @@ test('入玉宣言（27点法）', () => {
   assert.strictEqual(E.canDeclare(M), false, '5五将棋は宣言しない');
 });
 
+test('うっかり（王手を見のがす手）も指せる形と、王を取って勝つ', () => {
+  // 先手の玉５五、後手の飛車１四。先手の玉が４四（飛車の利き）へ動く手
+  const S = pos('mini', ['. . . . k', '. . . . .', '. . . . .', '. . . . r', 'K . . . .'], 0);
+  const into = (ms) => ms.some((m) => m.from === at(S, 5, 5) && m.to === at(S, 5, 4));
+  assert.ok(!into(E.legalMoves(S)), 'ふつうは指せない');
+  assert.ok(into(E.legalMoves(S, true)), 'loose なら指せる');
+  const T = E.apply(S, E.legalMoves(S, true).find((m) => m.from === at(S, 5, 5) && m.to === at(S, 5, 4)));
+  assert.strictEqual(T.over, null);
+  assert.strictEqual(E.canTakeKing(T), true, '後手は王を取れる');
+  const take = E.legalMoves(T).find((m) => m.to === at(T, 5, 4));
+  const U = E.apply(T, take);
+  assert.deepStrictEqual(U.over, { winner: 1, reason: 'king' });
+  // 王が取られる所へ動こうとしたときの理由（王を「成った」扱いで試して、理由が空になる不具合があった）
+  assert.ok(E.whyIllegal(S, at(S, 5, 5), at(S, 5, 4)).includes('王が取られて'), E.whyIllegal(S, at(S, 5, 5), at(S, 5, 4)));
+  // 二歩は loose でも指せない
+  const N = pos('mini', ['. . . . k', '. . . . .', '. . . . .', 'P . . . .', 'K . . . .'], 0, [{ P: 1 }]);
+  assert.ok(!E.legalMoves(N, true).some((m) => m.drop === 'P' && m.to % 5 === 0));
+  // CPU は王を取れるなら取る
+  assert.strictEqual(E.cpuMove(T, 'weak').to, at(T, 5, 4));
+  assert.strictEqual(E.cpuMove(T, 'normal', null, 300).to, at(T, 5, 4));
+});
+
 test('CPU: 指せる手を返す・1手詰めを見つける・ただで取れる駒を取る', () => {
   let seed = 3;
   const rnd = () => { seed = (seed * 1103515245 + 12345) % 2147483648; return seed / 2147483648; };

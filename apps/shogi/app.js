@@ -16,8 +16,9 @@ const VARIANT_OPTS = [
 ];
 const variantOf = (v) => (v === 'hon' ? 'hon' : 'mini');
 const variantName = (v) => VARIANT_OPTS.find(([k]) => k === variantOf(v))[1];
-// 補助: who＝使う人（both | s | g | none）、spots＝動ける所、arrows＝動ける向きの印、danger＝取られそうな駒
-const DEFAULT_AID = { who: 'both', spots: true, arrows: false, danger: false };
+// 補助: who＝使う人（both | s | g | none）、spots＝動ける所、arrows＝動ける向きの印、danger＝取られそうな駒、
+// guard＝王が取られる手（王手を見のがす手）を止める（はじめはオフ。オフなら、うっかり指せて、相手が王を取って勝つ。2026-11-14 オーナーの指摘）
+const DEFAULT_AID = { who: 'both', spots: true, arrows: false, danger: false, guard: false };
 const WHO_OPTS = [['both', 'ふたりとも'], ['s', '先手だけ'], ['g', '後手だけ'], ['none', '使わない']];
 
 const { authReady, db } = RoomkRTDB.initFirebase(firebase);
@@ -131,6 +132,7 @@ function normAid(aid) {
     spots: typeof a.spots === 'boolean' ? a.spots : DEFAULT_AID.spots,
     arrows: typeof a.arrows === 'boolean' ? a.arrows : DEFAULT_AID.arrows,
     danger: typeof a.danger === 'boolean' ? a.danger : DEFAULT_AID.danger,
+    guard: typeof a.guard === 'boolean' ? a.guard : DEFAULT_AID.guard,
   };
 }
 
@@ -138,7 +140,7 @@ function normAid(aid) {
 function aidFor(aid, side) {
   const a = normAid(aid);
   const on = a.who === 'both' || a.who === KEYS[side];
-  return { spots: on && a.spots, arrows: on && a.arrows, danger: on && a.danger };
+  return { spots: on && a.spots, arrows: on && a.arrows, danger: on && a.danger, guard: on && a.guard };
 }
 
 function aidSummary(aid) {
@@ -147,6 +149,7 @@ function aidSummary(aid) {
   if (a.spots) parts.push('動ける所');
   if (a.arrows) parts.push('動ける向きの印');
   if (a.danger) parts.push('取られそうな駒');
+  if (a.guard) parts.push('王が取られる手を止める');
   if (a.who === 'none' || !parts.length) return '使わない';
   return WHO_OPTS.find(([v]) => v === a.who)[1] + '：' + parts.join('・');
 }
@@ -189,6 +192,7 @@ function aidEditor(root, aid, onChange) {
   mk('spots', '動ける所を見せる', '駒を選ぶと、動ける所・打てる所に点が出る');
   mk('arrows', '駒に動ける向きを出す', '駒のふちに、動ける向きの印が出る（線は、どこまでも進める向き）');
   mk('danger', '取られそうな駒を知らせる', '相手の駒が利いている自分の駒に、点線の枠が出る');
+  mk('guard', '王が取られる手は指せないようにする', '王手をよけない手・王が取られる所へ動く手を止めて、理由を出す。オフなら指せて、相手が王を取ったら相手の勝ち');
   fs.append(checks);
   root.append(fs);
   function sync() {
@@ -237,7 +241,7 @@ function engineOf(v, moves) {
   for (let i = from; i < moves.length; i += 1) {
     const m = moves[i];
     // 読めない手（壊れた記録）があれば、そこまでの局面にする
-    if (G.over || !E.legalMoves(G).some((x) => E.sameMove(x, m))) break;
+    if (G.over || !E.legalMoves(G, true).some((x) => E.sameMove(x, m))) break;
     G = E.apply(G, m);
   }
   cache.v = V;
@@ -1188,7 +1192,8 @@ async function actRoom(kind, m, side) {
       if (!mayMove(r, cur, kind === 'resign' ? side : G.turn, uid, nickname, role)) return;
       const next = { ...r.game, rev: cur.rev + 1, moves: valid.map(packMove) };
       if (kind === 'move') {
-        if (!E.legalMoves(G).some((x) => E.sameMove(x, m))) return;
+        // 「王が取られる手を止める」がオフの人は、うっかりの手も指せる
+        if (!E.legalMoves(G, !aidFor(r.aid, G.turn).guard).some((x) => E.sameMove(x, m))) return;
         next.moves = valid.concat([m]).map(packMove);
         finished = !!E.apply(G, m).over;
       } else if (kind === 'resign') {
@@ -1362,7 +1367,7 @@ function actLocal(kind, m, side) {
   if (overOf(L, G)) return;
   let finished = false;
   if (kind === 'move') {
-    if (!E.legalMoves(G).some((x) => E.sameMove(x, m))) return;
+    if (!E.legalMoves(G, !aidFor(L.aid, G.turn).guard).some((x) => E.sameMove(x, m))) return;
     L.moves = L.moves.concat([m]);
     finished = !!E.apply(G, m).over;
   } else if (kind === 'resign') {
@@ -1639,6 +1644,7 @@ const sideLabel = (V, side) => MARK[side] + SIDE[side] + (V.name(side) ? '（' +
 function overText(V, o) {
   if (o.reason === 'resign') return sideLabel(V, 1 - o.winner) + 'が投了。' + sideLabel(V, o.winner) + 'の勝ち！';
   if (o.reason === 'declare') return '入玉宣言。' + sideLabel(V, o.winner) + 'の勝ち！';
+  if (o.reason === 'king') return '王を取った。' + sideLabel(V, o.winner) + 'の勝ち！';
   if (o.reason === 'sennichite') return o.winner < 0 ? '同じ形が4回出たので、千日手で引き分け' : '同じ形が4回出た千日手なので、' + sideLabel(V, o.winner) + 'の勝ち！';
   if (o.reason === 'perpetual') return '王手を続けた千日手なので、' + sideLabel(V, o.winner) + 'の勝ち！';
   if (o.reason === 'nomove') return sideLabel(V, 1 - o.winner) + 'は指せる手がないので、' + sideLabel(V, o.winner) + 'の勝ち！';
@@ -1687,6 +1693,8 @@ function renderGame() {
     else line = sideLabel(V, G.turn) + 'が考え中';
     st.append(makeElement('span', '', line));
     if (G.check) st.append(makeElement('span', 'sh-check-badge', '王手'));
+    // 相手がうっかり王手を見のがしたとき
+    if (E.canTakeKing(G)) st.append(makeElement('span', 'sh-check-badge', '王が取れる'));
   }
 
   // 盤の向き: 後手の席の人は後手を手前に。「盤の向きを変える」で逆に
@@ -1760,7 +1768,9 @@ function arrowsNode(c) {
 
 function selTargets(G) {
   if (!state.sel) return [];
-  return E.legalMoves(G).filter((m) => (state.sel.drop ? m.drop === state.sel.drop : m.from === state.sel.from));
+  const V = viewModel();
+  const loose = !aidFor(V ? V.aid : null, G.turn).guard;
+  return E.legalMoves(G, loose).filter((m) => (state.sel.drop ? m.drop === state.sel.drop : m.from === state.sel.from));
 }
 
 function renderBoard(V, bottom, can) {
