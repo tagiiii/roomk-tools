@@ -62,6 +62,7 @@ RTDB_HTML_FILES=(
   "apps/stamp-ate/index.html"
   "apps/pittari-beat/index.html"
   "apps/reversi/index.html"
+  "apps/mancala/index.html"
   "apps/charin-baton/index.html"
   "apps/suton-block/index.html"
   "apps/sorotte-goal/index.html"

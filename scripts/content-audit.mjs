@@ -238,6 +238,8 @@ const NO_CONTENT_APPS = [
   'pittari-beat',
   // 盤と黒白の石だけ
   'reversi',
+  // 盤と石だけ（穴6つ×石4つ）
+  'mancala',
   // 絵のカード（アイコン25種類と、形×数の20種類）だけ
   'shinkei-suijaku',
   // 盤のしかけ（とびら・箱・カギ・橋）だけ（ステージは番号からその場で作る）
