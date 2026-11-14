@@ -217,7 +217,7 @@ mahjong_rooms/{CODE}
 |---|---|
 | `rtdb-utils.js` | `initFirebase`・`generateRoomCode`・`now`・`isRoomExpired`・`getHostDisconnectedAt`・`cancelRoomOnDisconnect`・`copyRoomCode`・`copyRoomLink`・`showToast` |
 | `room-qr.js` | 「QRコードを出す」 |
-| `howto.js` | あそびかた（説明スライドはまだない） |
+| `howto.js` | あそびかた。`slides: 'slides.html'` で「？」から説明スライド（`slides.html`・18枚。かんたんと役ありの両方。牌の絵はアプリと同じ `art.js`）を開ける |
 | `stats.js` | 上の「利用回数」 |
 
 ## 確かめたこと
