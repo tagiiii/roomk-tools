@@ -377,9 +377,9 @@ const SLIDES = [
     body:`<div class="rows">
       <div class="row"><div class="row__ic"><span class="material-symbols-rounded">touch_app</span></div><div><div class="row__t">持ち駒を押してから、打つ所を押す</div><div class="row__d">持ち駒は、自分の名前の下に出ているよ。1手で打てるのは1枚</div></div></div>
       <div class="row"><div class="row__ic"><span class="material-symbols-rounded">do_not_disturb_on</span></div><div><div class="row__t">同じたての列に、自分の歩を2枚置けない（二歩）</div><div class="row__d">歩を打ってすぐに詰ませるのもできない（打ち歩詰め）</div></div></div>
-      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">info</span></div><div><div class="row__t">指せない所を押すと、理由が出る</div><div class="row__d">反則の手は、まちがえて指してしまうことがないよ</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">info</span></div><div><div class="row__t">二歩や打ち歩詰めの所を押すと、理由が出る</div><div class="row__d">その手は指せないので、まちがえて反則することはないよ</div></div></div>
     </div>`,
-    note:'取った駒は、自分の番に、盤の空いている所に打てるよ。持ち駒を押してから、打つ所を押してね。\nただし、同じたての列に自分の歩を2枚置く「二歩」はできない。歩を打ってすぐに詰ませる「打ち歩詰め」もできないよ。\n指せない所を押すと、画面に理由が出るから、まちがえて反則することはないよ。' },
+    note:'取った駒は、自分の番に、盤の空いている所に打てるよ。持ち駒を押してから、打つ所を押してね。\nただし、同じたての列に自分の歩を2枚置く「二歩」はできない。歩を打ってすぐに詰ませる「打ち歩詰め」もできないよ。\n二歩や打ち歩詰めの所を押すと、画面に理由が出て、その手は指せないよ。' },
 
   /* 9 */ { type:'content', accent:'coral', section:'王手と詰み', sectionEn:'check & checkmate',
     headline:'王手をかけられたら、<span class="hl">よけよう</span>',
@@ -387,11 +387,11 @@ const SLIDES = [
       <div class="bfig">${sboard(MATE, { size:'mid', check:'31', last:'32' })}<div class="bfig__cap">▲３二金で<span>詰み</span></div></div>
       <div class="rows tight">
         <div class="row"><div class="row__ic"><span class="material-symbols-rounded">warning</span></div><div><div class="row__t">次に王が取られそうな形が「王手」</div><div class="row__d">画面に「王手」と出て、王のますが赤くなる</div></div></div>
-        <div class="row"><div class="row__ic"><span class="material-symbols-rounded">directions_run</span></div><div><div class="row__t">王手をかけられたら、よけないといけない</div><div class="row__d">王が逃げる・王手をしている駒を取る・あいだに駒を置く</div></div></div>
+        <div class="row"><div class="row__ic"><span class="material-symbols-rounded">directions_run</span></div><div><div class="row__t">王手をかけられたら、よけよう</div><div class="row__d">王が逃げる・王手をしている駒を取る・あいだに駒を置く。よけないと、相手に王を取られて負け</div></div></div>
         <div class="row"><div class="row__ic"><span class="material-symbols-rounded">flag</span></div><div><div class="row__t">どうやってもよけられないのが「詰み」</div><div class="row__d">図は、王がどこへ逃げても金に取られる。金は歩が守っている</div></div></div>
       </div>
     </div>`,
-    note:'次に王が取られそうな形を「王手」というよ。画面に「王手」と出て、王のますが赤くなる。\n王手をかけられたら、よけないといけない。王が逃げる、王手をしている駒を取る、あいだに駒を置く、のどれかだよ。\nどうやってもよけられないのが「詰み」。図は、王がどこへ逃げても金に取られて、金を取ると歩に取られる。これで詰み、勝ちだよ。' },
+    note:'次に王が取られそうな形を「王手」というよ。画面に「王手」と出て、王のますが赤くなる。\n王手をかけられたら、よけよう。王が逃げる、王手をしている駒を取る、あいだに駒を置く、のどれかだよ。うっかりよけないで指すと、相手に王を取られて負けになるよ。\nどうやってもよけられないのが「詰み」。図は、王がどこへ逃げても金に取られて、金を取ると歩に取られる。これで詰み、勝ちだよ。' },
 
   /* 10 */ { type:'content', accent:'teal', section:'おわりかた', sectionEn:'how it ends',
     headline:'詰みのほかにも、<br>おわりかたがあるよ',
@@ -412,7 +412,7 @@ const SLIDES = [
         <div class="row"><div class="row__ic"><span class="material-symbols-rounded">shield</span></div><div><div class="row__t">取られそうな駒を知らせる</div><div class="row__d">相手の駒が利いている自分の駒に、点線の枠が出る</div></div></div>
       </div>
     </div>`,
-    note:'はじめての人も安心。「補助」を使えるよ。\n動ける所を見せる … 駒や持ち駒を選ぶと、動ける所・打てる所に点が出る。\n駒に動ける向きを出す … 駒のふちに、動ける向きの印が出る。\n取られそうな駒を知らせる … 相手の駒が利いている自分の駒に、点線の枠が出る。\n補助は、先手の人だけ・後手の人だけにもできるよ。' },
+    note:'はじめての人も安心。「補助」を使えるよ。\n動ける所を見せる … 駒や持ち駒を選ぶと、動ける所・打てる所に点が出る。\n駒に動ける向きを出す … 駒のふちに、動ける向きの印が出る。\n取られそうな駒を知らせる … 相手の駒が利いている自分の駒に、点線の枠が出る。\n「王が取られる手は指せないようにする」をオンにすると、王手をよけない手は止めてくれるよ。\n補助は、先手の人だけ・後手の人だけにもできるよ。' },
 
   /* 12 */ { type:'content', accent:'blue', section:'場所の言いかた', sectionEn:'where to move',
     headline:'場所は「<span class="hl">７六</span>」のように言おう',
