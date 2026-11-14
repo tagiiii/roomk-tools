@@ -202,6 +202,9 @@
 .mj-handrow { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
 .mj-hand { display: flex; align-items: flex-end; gap: 3px; flex-wrap: wrap; min-height: 60px; }
 .mj-gap { width: 14px; flex: none; }
+/* そろった組の枠（見え方の「そろった組を枠で囲む」。3枚の組は線、同じ2枚は点線） */
+.mj-set { display: inline-flex; align-items: flex-end; gap: 2px; padding: 3px; border-radius: 9px; border: 2px solid rgba(255, 255, 255, 0.8); background: rgba(255, 255, 255, 0.08); }
+.mj-set--pair { border-style: dashed; border-color: rgba(255, 255, 255, 0.65); background: none; }
 .mj-hand button.mj-tile { cursor: default; transition: transform 0.12s; }
 .mj-hand.is-active button.mj-tile:not(:disabled) { cursor: pointer; }
 .mj-hand.is-active button.mj-tile:not(:disabled):hover, .mj-hand.is-active button.mj-tile:focus-visible { transform: translateY(-8px); }
@@ -296,6 +299,7 @@
   /* 手牌は2段に分けて、押せる大きさを保つ */
   .mj-hand { row-gap: 14px; }
   .mj-tile--lg { width: calc((100vw - 120px) / 7); max-width: 46px; }
+  .mj-set { padding: 2px; gap: 1px; }
   .mj-hand .is-best::after { width: 8px; height: 8px; margin-left: -4px; top: -10px; }
   .mj-status { font-size: 16px; }
   .mj-status.is-mine { font-size: 17px; }

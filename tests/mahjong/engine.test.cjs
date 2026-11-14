@@ -56,6 +56,27 @@ t('組に分ける', () => {
   assert.strictEqual(d.groups[0].type, 'pair');
 });
 
+t('そろっている組を見つける', () => {
+  const show = (str) => E.groupHand(parse(str)).map((g) => g.type + ':' + g.kinds.map(E.kindName).join('')).join(' ');
+  assert.strictEqual(show('123m456p11z'), 'run:一萬二萬三萬 run:4筒5筒6筒 pair:東東');
+  // 3枚の組を2枚より先に（111 は組、11 にしない）
+  assert.strictEqual(show('111m9p'), 'set:一萬一萬一萬');
+  // 1223 は 123 の組（2が1枚あまる）
+  assert.strictEqual(show('1223m'), 'run:一萬二萬三萬');
+  // 組がなければ空
+  assert.strictEqual(show('159m159p1z'), '');
+  // 同じ2枚がいくつもあれば、ぜんぶ
+  assert.strictEqual(E.groupHand(parse('1122m3344p')).filter((g) => g.type === 'pair').length, 4);
+  // 組に入った牌は、手の枚数をこえない
+  for (let seed = 1; seed <= 200; seed += 1) {
+    const S = E.createRound({ seed, seats: [0, 1, 2, 3].map((i) => ({ name: 'P' + i })), dealer: 0 });
+    const c = E.counts(S.seats[0].hand);
+    const used = new Array(34).fill(0);
+    E.groupHand(c).forEach((g) => g.kinds.forEach((k) => { used[k] += 1; }));
+    assert.ok(used.every((n, k) => n <= c[k]));
+  }
+});
+
 const seats = [0, 1, 2, 3].map((i) => ({ name: 'P' + i, cpu: true }));
 
 function playOut(seed, o = {}) {
