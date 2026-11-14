@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>麻雀（試作） | あそびのたな</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet" />
+  <link rel="stylesheet" href="../../apps/shared/css/design-system.css?v=20261106c" />
+  <link rel="stylesheet" href="style.css?v=20261114a" />
+</head>
+<body>
+  <main class="mj-wrap">
+
+    <!-- トップ -->
+    <section class="mj-screen active" id="screen-top">
+      <div class="mj-panel">
+        <div class="mj-hero" id="hero" aria-hidden="true"></div>
+        <p class="mj-badge">試作</p>
+        <h1 class="mj-title">麻雀</h1>
+        <p class="mj-lead">1枚引いて1枚捨てる、をくり返して、3枚の組を4つと、同じ2枚を1組そろえたら「あがり」。役や点数のない、かんたんなルールで遊べます。あいている席はコンピューターが打ちます。</p>
+
+        <fieldset class="mj-set">
+          <legend>ルール</legend>
+          <label class="mj-check"><input type="checkbox" id="optCalls" checked /> ポン・チーをする</label>
+          <label class="mj-check"><input type="checkbox" id="optPairs" checked /> 同じ2枚 × 7組でもあがり（七対子）</label>
+        </fieldset>
+        <fieldset class="mj-set">
+          <legend>見え方</legend>
+          <label class="mj-check"><input type="checkbox" id="optHint" checked /> ヒントを出す（あと何枚・おすすめの捨て牌・待ち）</label>
+          <label class="mj-check"><input type="checkbox" id="optNames" /> 牌の下に名前を出す</label>
+        </fieldset>
+        <fieldset class="mj-set">
+          <legend>コンピューター</legend>
+          <div class="mj-seg" role="radiogroup" aria-label="コンピューターの強さ">
+            <label><input type="radio" name="level" value="easy" checked /> <span>やさしい</span></label>
+            <label><input type="radio" name="level" value="normal" /> <span>ふつう</span></label>
+          </div>
+          <p class="mj-note">やさしいは、ポンをせず、ときどき遠回りの牌を捨てます。</p>
+        </fieldset>
+
+        <button type="button" class="btn btn-primary btn-lg btn-full" id="btnStart">はじめる</button>
+
+        <details class="mj-howto">
+          <summary>あそびかた</summary>
+          <ul>
+            <li>自分の番になると、山から1枚引きます。手の中から、いらない牌を1枚押して捨てます。</li>
+            <li>組は「同じ牌3枚（例: 東 東 東）」か「同じ種類の続いた数3枚（例: 3 4 5 の筒子）」。字牌は続けられません。</li>
+            <li>引いた牌でそろったら「ツモ」、だれかが捨てた牌でそろったら「ロン」であがり。</li>
+            <li>ほかの人が捨てた牌で、同じ牌3枚ができるなら「ポン」、自分の前の人が捨てた牌で続いた数ができるなら「チー」でもらえます。もらった組はみんなに見せて、1枚捨てます。</li>
+            <li>山がなくなったら引き分け。あがった回数だけ数えます。</li>
+          </ul>
+        </details>
+        <p class="mj-note">いまはこの画面の中だけで、1人とコンピューター3人で遊びます。ルームでいっしょに遊ぶ形と、役のあるルールは、本体にするときに足す予定です。</p>
+      </div>
+    </section>
+
+    <!-- 卓 -->
+    <section class="mj-screen" id="screen-game">
+      <div class="mj-bar">
+        <p class="mj-round" id="roundLine"></p>
+        <p class="mj-wall"><span class="material-symbols-rounded" aria-hidden="true">view_module</span>山 <b id="wallCount">0</b> 枚</p>
+        <button type="button" class="mj-quiet" id="btnQuit">トップへ戻る</button>
+      </div>
+
+      <div class="mj-opps" id="opps"></div>
+
+      <div class="mj-mat">
+        <p class="mj-msg" id="msg" aria-live="polite"></p>
+        <div class="mj-me" id="me">
+          <div class="mj-me__head">
+            <p class="mj-name" id="myName"></p>
+            <p class="mj-wins" id="myWins"></p>
+          </div>
+          <div class="mj-river mj-river--me" id="myRiver" aria-label="自分の捨て牌"></div>
+          <div class="mj-handrow">
+            <div class="mj-hand" id="myHand" aria-label="自分の手"></div>
+            <div class="mj-melds" id="myMelds" aria-label="鳴いた組"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mj-hintline" id="hintLine" aria-live="polite"></div>
+      <div class="mj-actions" id="actions"></div>
+
+      <div class="mj-result" id="result" hidden>
+        <div class="mj-result__card" role="dialog" aria-modal="true" aria-labelledby="resultTitle">
+          <p class="mj-result__title" id="resultTitle"></p>
+          <p class="mj-result__sub" id="resultSub"></p>
+          <div class="mj-result__hand" id="resultHand"></div>
+          <div class="mj-result__btns">
+            <button type="button" class="btn btn-primary btn-lg" id="btnNext">次の局へ</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="engine.js?v=20261114a"></script>
+  <script src="art.js?v=20261114a"></script>
+  <script src="app.js?v=20261114a"></script>
+</body>
+</html>
