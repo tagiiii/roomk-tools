@@ -62,6 +62,7 @@ RTDB_HTML_FILES=(
   "apps/stamp-ate/index.html"
   "apps/pittari-beat/index.html"
   "apps/reversi/index.html"
+  "apps/hit-blow/index.html"
   "apps/mancala/index.html"
   "apps/shogi/index.html"
   "apps/charin-baton/index.html"

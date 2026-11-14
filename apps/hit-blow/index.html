@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+  <title>ヒット&amp;ブロー | あそびのたな</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
+  <link rel="stylesheet" href="../shared/css/design-system.css?v=20261106c">
+  <!-- index.html と app.js・engine.js・style.css はセットで変わるので、変えたら ?v= をそろえて上げる -->
+  <link rel="stylesheet" href="style.css?v=20261114a">
+  <script src="https://www.gstatic.com/firebasejs/13.3.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/13.3.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/13.3.0/firebase-database-compat.js"></script>
+  <script src="../shared/js/rtdb-utils.js?v=20261005"></script>
+  <script src="../shared/js/room-qr.js?v=20261022"></script>
+  <script src="engine.js?v=20261114a"></script>
+</head>
+<body data-genre="atekko">
+
+  <!-- トップ -->
+  <section class="hbw-screen hbw-front active" id="screen-top">
+    <div class="hbw-panel app-entry">
+      <div class="hbw-hero" id="hero" aria-hidden="true"></div>
+      <h1 class="hbw-panel__title app-title">ヒット&amp;ブロー</h1>
+      <p class="hbw-panel__lead app-entry__lead">かくれた色のならびを当てよう。予想を出すと、色も場所もあっている数（ヒット）と、色はあるけれど場所がちがう数（ブロー）がわかる。ヒントを手がかりに、先にそろえた人の勝ち。</p>
+      <ul class="hbw-panel__notes app-entry__notes">
+        <li>2人で答えをかくし合って当てる「2人で対戦」と、コンピューターの答えを順番に当てる「みんなで対戦」がある</li>
+        <li>遊ばない人も、ルームに入れば予想とヒントを見られるよ</li>
+      </ul>
+      <div class="hbw-panel__actions app-entry__actions">
+        <button type="button" class="btn btn-primary btn-full" id="btnGoCreate">ルームを作る</button>
+        <button type="button" class="btn btn-secondary btn-full" id="btnGoJoin">ルームに参加する</button>
+        <button type="button" class="btn btn-secondary btn-full" id="btnGoLocal">1台の画面であそぶ</button>
+        <button type="button" class="hbw-quiet hbw-quiet--center" id="btnGoWatch">みんなにみせる画面をひらく</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ルームを作る -->
+  <section class="hbw-screen hbw-front" id="screen-create">
+    <div class="hbw-panel">
+      <button type="button" class="hbw-quiet hbw-back" id="btnCreateBack">トップへ戻る</button>
+      <h2 class="hbw-panel__title hbw-panel__title--sub">ルームを作る</h2>
+      <label class="form-label" for="hostName">ホストの名前（8文字まで）</label>
+      <input class="form-input" id="hostName" maxlength="8" autocomplete="nickname">
+      <p class="hbw-alert" id="createError" hidden></p>
+      <button type="button" class="btn btn-primary btn-full mt-md" id="btnCreateRoom">ルームを作る</button>
+    </div>
+  </section>
+
+  <!-- ルームに参加する -->
+  <section class="hbw-screen hbw-front" id="screen-join">
+    <div class="hbw-panel">
+      <button type="button" class="hbw-quiet hbw-back" id="btnJoinBack">トップへ戻る</button>
+      <h2 class="hbw-panel__title hbw-panel__title--sub">ルームに参加する</h2>
+      <p class="hbw-hint" id="joinLinkHint" hidden>リンクから開いたので、ルームコードは入っているよ。名前を入れて「参加する」を押してね。</p>
+      <label class="form-label" for="guestName">名前（8文字まで）</label>
+      <input class="form-input" id="guestName" maxlength="8" autocomplete="nickname">
+      <label class="form-label mt-md" for="joinCode">ルームコード（6文字）</label>
+      <input class="form-input hbw-code-input" id="joinCode" maxlength="6" autocorrect="off" autocapitalize="characters" autocomplete="off" spellcheck="false">
+      <p class="hbw-alert" id="joinError" hidden></p>
+      <button type="button" class="btn btn-primary btn-full mt-md" id="btnJoinRoom">参加する</button>
+    </div>
+  </section>
+
+  <!-- みんなにみせる画面をひらく -->
+  <section class="hbw-screen hbw-front" id="screen-watch-join">
+    <div class="hbw-panel">
+      <button type="button" class="hbw-quiet hbw-back" id="btnWatchBack">トップへ戻る</button>
+      <h2 class="hbw-panel__title hbw-panel__title--sub">みんなにみせる画面をひらく</h2>
+      <p class="hbw-hint">画面共有でみんなに見せるための画面です。ルームには入らず、見るだけです。</p>
+      <label class="form-label" for="watchCode">ルームコード（6文字）</label>
+      <input class="form-input hbw-code-input" id="watchCode" maxlength="6" autocorrect="off" autocapitalize="characters" autocomplete="off" spellcheck="false">
+      <p class="hbw-alert" id="watchError" hidden></p>
+      <button type="button" class="btn btn-primary btn-full mt-md" id="btnWatchOpen">画面をひらく</button>
+    </div>
+  </section>
+
+  <!-- 1台の画面であそぶ -->
+  <section class="hbw-screen hbw-front" id="screen-local">
+    <div class="hbw-panel hbw-panel--wide">
+      <button type="button" class="hbw-quiet hbw-back" id="btnLocalBack">トップへ戻る</button>
+      <h2 class="hbw-panel__title hbw-panel__title--sub">1台の画面であそぶ</h2>
+      <p class="hbw-panel__lead">1台の画面をみんなで見てあそぶ。色をならべるのは、画面を動かす人。</p>
+      <div class="hbw-field">
+        <p class="hbw-legend" id="lblLocalMode">あそびかた</p>
+        <div class="hbw-seg" id="localModeSeg" role="group" aria-labelledby="lblLocalMode"></div>
+        <p class="hbw-note" id="localModeNote"></p>
+      </div>
+      <div class="hbw-field">
+        <p class="hbw-legend" id="lblLocalLevel">むずかしさ</p>
+        <div class="hbw-seg" id="localLevelSeg" role="group" aria-labelledby="lblLocalLevel"></div>
+        <p class="hbw-note" id="localLevelNote"></p>
+      </div>
+      <div class="hbw-field" id="localCountField">
+        <p class="hbw-legend" id="lblLocalCount">人数</p>
+        <div class="hbw-stepper" role="group" aria-labelledby="lblLocalCount">
+          <button type="button" class="hbw-stepper__btn" id="btnLocalCountPrev" aria-label="1人へらす"><span class="material-symbols-rounded" aria-hidden="true">remove</span></button>
+          <span class="hbw-stepper__num" id="localCountNum" aria-live="polite"></span>
+          <button type="button" class="hbw-stepper__btn" id="btnLocalCountNext" aria-label="1人ふやす"><span class="material-symbols-rounded" aria-hidden="true">add</span></button>
+        </div>
+      </div>
+      <button type="button" class="btn btn-primary btn-full mt-lg" id="btnLocalStart">はじめる</button>
+    </div>
+  </section>
+
+  <!-- ゲームの画面（ルーム・1台の画面・みんなにみせる画面） -->
+  <header class="hbw-bar" id="appBar" hidden>
+    <h1 class="hbw-bar__title">ヒット&amp;ブロー</h1>
+    <p class="hbw-bar__badge" id="watchBadge" hidden>みんなにみせる画面</p>
+    <p class="hbw-bar__me" id="barMe" hidden></p>
+  </header>
+  <div class="hbw-roombar" id="roomBar" hidden>
+    <span class="hbw-roombar__code">ルーム <strong id="roomCodeLabel"></strong></span>
+    <button type="button" class="btn btn-ghost btn-sm" id="btnCopyCode">コードをコピー</button>
+    <button type="button" class="btn btn-ghost btn-sm" id="btnCopyLink">リンクをコピー</button>
+    <button type="button" class="btn btn-ghost btn-sm" id="btnShowQr">QRコードを出す</button>
+    <button type="button" class="btn btn-ghost btn-sm" id="btnOpenWatch" hidden>みんなにみせる画面</button>
+    <button type="button" class="btn btn-ghost btn-sm" id="btnLeave">退出する</button>
+  </div>
+
+  <!-- 待合室 -->
+  <section class="hbw-screen" id="screen-waiting">
+    <div class="hbw-main hbw-phase">
+      <div id="lobbyJoin" class="hbw-joininfo" hidden>
+        <p class="hbw-joininfo__label">参加のしかた</p>
+        <p class="hbw-joininfo__text">「ルームに参加する」で、名前とルームコードを入れてね</p>
+        <p id="lobbyJoinCode" class="hbw-joininfo__code"></p>
+      </div>
+
+      <div class="card">
+        <h2 class="hbw-h2">あそびかた</h2>
+        <div id="lobbyModeEdit" hidden>
+          <div class="hbw-seg" id="lobbyModeSeg" role="group" aria-label="あそびかた"></div>
+          <p class="hbw-legend mt-md">むずかしさ</p>
+          <div class="hbw-seg" id="lobbyLevelSeg" role="group" aria-label="むずかしさ"></div>
+        </div>
+        <p id="lobbyModeView" class="hbw-view" hidden></p>
+        <p id="lobbyModeNote" class="hbw-note"></p>
+      </div>
+
+      <div class="card">
+        <h2 class="hbw-h2">参加している人</h2>
+        <ul id="lobbyPeople" class="hbw-people"></ul>
+        <p id="seatNote" class="hbw-note"></p>
+        <div id="proxyForm" class="hbw-proxyadd" hidden>
+          <label class="form-label" for="proxyName">端末なしの参加者を足す</label>
+          <div class="hbw-row hbw-row--nowrap">
+            <input id="proxyName" class="form-input" type="text" maxlength="8" autocomplete="off">
+            <button id="btnAddProxy" type="button" class="btn btn-secondary">足す</button>
+          </div>
+          <p class="hbw-note">その人の番には、ホストが代わりに色をならべる。2人で対戦のときは、その人の答えをコンピューターが決める。</p>
+          <p id="proxyError" class="hbw-alert" hidden></p>
+        </div>
+      </div>
+
+      <button id="btnStartGame" type="button" class="btn btn-primary btn-full btn-lg" hidden>はじめる</button>
+      <p id="lobbyWait" class="hbw-wait" hidden>ホストがはじめるのを待っているよ</p>
+    </div>
+  </section>
+
+  <!-- ゲーム -->
+  <section class="hbw-screen" id="screen-game">
+    <div class="hbw-main hbw-game">
+      <p class="hbw-sub" id="gameSub"></p>
+      <div id="seats" class="hbw-seats"></div>
+      <p id="gameStatus" class="hbw-status" role="status" aria-live="polite"></p>
+      <p class="hbw-legend-line">
+        <span class="hbw-legend-line__item"><span class="hbw-dot is-hit" aria-hidden="true"></span>ヒット: 色も場所もあっている</span>
+        <span class="hbw-legend-line__item"><span class="hbw-dot is-blow" aria-hidden="true"></span>ブロー: 色はあるが場所がちがう</span>
+      </p>
+
+      <div class="hbw-mine" id="mineBox" hidden>
+        <p class="hbw-mine__label">あなたの答え（相手が当てる）</p>
+        <div class="hbw-row hbw-row--pegs" id="mineRow"></div>
+        <button type="button" class="hbw-quiet" id="btnMineToggle" hidden>見る</button>
+      </div>
+
+      <!-- 答えを決める（2人で対戦） -->
+      <div class="hbw-input" id="setupBox" hidden>
+        <p class="hbw-input__title">相手に当ててもらう答えを決めよう</p>        <div class="hbw-slots" id="setupSlots"></div>
+        <div class="hbw-palette" id="setupPalette"></div>
+        <div class="hbw-input__actions">
+          <button type="button" class="btn btn-ghost" id="btnSetupBlind" hidden>見ないでおまかせで決める</button>
+          <button type="button" class="btn btn-ghost" id="btnSetupRandom">おまかせ</button>
+          <button type="button" class="btn btn-primary" id="btnSetupOk" disabled>これにする</button>
+        </div>
+      </div>
+
+      <!-- 予想を出す -->
+      <div class="hbw-input" id="guessBox" hidden>
+        <p class="hbw-input__title" id="guessTitle"></p>
+        <div class="hbw-slots" id="guessSlots"></div>
+        <div class="hbw-palette" id="guessPalette"></div>
+        <div class="hbw-input__actions">
+          <button type="button" class="btn btn-ghost" id="btnGuessClear">ぜんぶけす</button>
+          <button type="button" class="btn btn-primary" id="btnGuessOk" disabled>これで聞く</button>
+        </div>
+      </div>
+      <p class="hbw-wait" id="waitText" hidden></p>
+
+      <div id="resultBox" class="hbw-result" hidden>
+        <div class="hbw-result__answers" id="resultAnswers"></div>
+        <div id="resultHost" class="hbw-result__actions" hidden>
+          <button id="btnAgain" type="button" class="btn btn-primary btn-full">もう一回</button>
+          <button id="btnRelobby" type="button" class="btn btn-secondary btn-full"></button>
+        </div>
+        <p id="resultWait" class="hbw-wait" hidden>ホストが次を決めるのを待っているよ</p>
+      </div>
+
+      <div class="hbw-boards" id="boards"></div>
+
+      <div id="tools" class="hbw-tools" hidden>
+        <button id="btnAutoSecret" type="button" class="hbw-quiet" hidden>
+          <span class="material-symbols-rounded" aria-hidden="true">casino</span><span id="autoSecretLabel"></span>
+        </button>
+        <button id="btnSkip" type="button" class="hbw-quiet" hidden>
+          <span class="material-symbols-rounded" aria-hidden="true">skip_next</span>この人の番をとばす
+        </button>
+        <button id="btnReset" type="button" class="hbw-quiet"></button>
+        <button id="btnQuit" type="button" class="hbw-quiet" hidden>トップへ戻る</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- みんなにみせる画面のおわり -->
+  <section class="hbw-screen hbw-front" id="screen-watch-end">
+    <div class="hbw-panel">
+      <h2 class="hbw-panel__title hbw-panel__title--sub" id="watchEndTitle">このルームは終わりました</h2>
+      <p class="hbw-panel__lead">遊んでくれてありがとう。</p>
+      <button type="button" class="btn btn-secondary btn-full" id="btnWatchEndTop">トップへ戻る</button>
+    </div>
+  </section>
+
+  <div class="hbw-overlay" id="hostOffOverlay" hidden>
+    <div class="hbw-overlay__panel">
+      <h2>ホストの戻りを待っています</h2>
+      <p id="hostOffText">しばらく待っても戻らないときは退出してね。</p>
+      <button type="button" class="btn btn-secondary" id="btnOverlayLeave">退出する</button>
+    </div>
+  </div>
+
+  <script type="module" src="app.js?v=20261114a"></script>
+  <script src="../shared/js/stats.js?v=1" defer></script>
+  <script src="../shared/js/howto.js"></script>
+  <script>
+    RoomkHowto.init({
+      title: 'あそびかた',
+      lead: 'かくれた色のならびを当てるゲーム。予想を出すたびに、ヒットとブローの数がヒントとしてわかる。',
+      sections: [
+        { heading: 'はじめかた', items: [
+          'ホストが「ルームを作る」で名前を入れる。ルームコードは「コードをコピー」、参加用のリンクは「リンクをコピー」でチャットに送れる。スマホやタブレットで入る人には「QRコードを出す」をカメラで読み取ってもらう',
+          '参加する人は「ルームに参加する」で名前、ルームコード（6文字）の順に入れ、「参加する」を押す。リンクから開いたときは、ルームコードは入っているので名前だけ入れる',
+          'ホストは待合室で、あそびかた・むずかしさと、遊ぶ人を決めて「はじめる」を押す。遊ばない人は、自分の画面で予想とヒントを見られる',
+          '端末のない子は、ホストが名前を足して代わりに押す',
+          '1台の画面でみんなで見るときは「1台の画面であそぶ」',
+        ] },
+        { heading: '当てかた', items: [
+          '答えは、同じ色を使わずにならべた色（やさしいは6色から3つ、ふつうは6色から4つ、むずかしいは8色から4つ）',
+          '自分の番に、色を押してならべ、「これで聞く」を押す。ならべた色を押すと、その色をけせる',
+          'ヒット: 色も場所もあっている数。ブロー: 色はあるけれど場所がちがう数。ぜんぶヒットになったら当たり',
+        ] },
+        { heading: '2人で対戦', items: [
+          'はじめに、相手に当ててもらう答えを決めて「これにする」を押す（「おまかせ」でも決められる）',
+          '相手の答えを交互に当てる。先に当てた人の勝ち',
+          '先の番の人が当てたときは、後の人にもう1回だけ番がある。後の人も当てたら引き分け',
+        ] },
+        { heading: 'みんなで対戦', items: [
+          'コンピューターがかくした答えを、順番に1つずつ予想する',
+          'みんなの予想とヒントは全員に見えるので、ほかの人のヒントも手がかりにできる。最初に当てた人の勝ち',
+        ] },
+      ],
+    });
+  </script>
+</body>
+</html>

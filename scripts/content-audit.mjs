@@ -238,6 +238,8 @@ const NO_CONTENT_APPS = [
   'pittari-beat',
   // 盤と黒白の石だけ
   'reversi',
+  // 8色の玉（しるしつき）だけ（答えはその場でくじで作る）
+  'hit-blow',
   // 盤と石だけ（穴6つ×石4つ）
   'mancala',
   // 盤と駒だけ（本将棋・5五将棋のはじめの並び）
