@@ -1854,13 +1854,6 @@ document.querySelectorAll('input[data-opt]').forEach((c) => c.addEventListener('
 }));
 syncViewInputs();
 
-// トップの飾り（東・白・發・中・五筒・五索）
-[27, 31, 32, 33, 13, 22].forEach((k) => {
-  const node = el('span', 'mj-tile mj-tile--md');
-  node.insertAdjacentHTML('afterbegin', A.face(k));
-  $('hero').append(node);
-});
-
 showScreen('top');
 const startParams = new URLSearchParams(location.search);
 const watchParam = startParams.get('watch');

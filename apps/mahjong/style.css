@@ -37,9 +37,6 @@
 .mj-note { color: var(--color-muted); font-size: 14px; line-height: 1.6; margin: 10px 0 0; }
 .mj-panel .mj-note { margin: 0; }
 .mj-note:empty { display: none; }
-.mj-hero { display: flex; justify-content: center; gap: 6px; padding-top: 10px; margin-bottom: 14px; }
-.mj-hero .mj-tile:nth-child(odd) { transform: rotate(-4deg); }
-.mj-hero .mj-tile:nth-child(even) { transform: rotate(3deg) translateY(4px); }
 
 .mj-subhead { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
 .mj-subhead__title { color: var(--color-primary); font-size: 1.2rem; font-weight: 700; margin: 0; }
