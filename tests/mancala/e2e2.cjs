@@ -51,7 +51,7 @@ async function sowFirst(c, code) {
   check('T7 時間切れで CPU がまく', room.game.ply === 2 && room.game.auto === 'w', { ply: room.game.ply, auto: room.game.auto });
   const autoNo = E.pitNumber(room.game.last);
   await Promise.all([L.settled(A), L.settled(W)]);
-  check('T8 みんなに「時間切れ」のお知らせ', await waitFor(async () => (await L.status(W)).startsWith('時間切れ。CPU が後の代わりに ' + autoNo + '番めの穴からまいたよ。')), await L.status(W));
+  check('T8 みんなに「時間切れ」のお知らせ', await waitFor(async () => (await L.status(W)).startsWith('時間切れ。CPU が後の代わりに上の段の右から' + autoNo + '番めの穴からまいたよ。')), await L.status(W));
   await sleep(2500);
   room = await L.roomOf(code);
   check('T9 CPU は1回だけ（次の番は時間が残っている）', room.game.ply === 2, room.game.ply);

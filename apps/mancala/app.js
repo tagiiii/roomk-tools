@@ -1192,7 +1192,8 @@ function updateClock() {
   const V = (state.currentScreen === 'game') ? viewModel() : null;
   const ms = remainingMs(V);
   document.querySelectorAll('.mc-seat__clock').forEach((node) => {
-    const show = ms != null && node.dataset.color === V.game.turn;
+    // 石を入れる動きの間は出さない（札の「いまの番」がまいている人のままなので。時間は裏で進む）
+    const show = ms != null && !state.animating && node.dataset.color === V.game.turn;
     node.hidden = !show;
     if (!show) return;
     const sec = Math.ceil(ms / 1000);
@@ -1569,6 +1570,14 @@ function renderGame() {
   const pickKey = V.key + ':' + g.ply + ':' + g.rev;
   if (state.pickKey !== pickKey) { state.pick = -1; state.pickKey = pickKey; }
   const bottom = bottomSide(V);
+  // 動きの途中で局面が変わった（やりなおし・もどす・次の手が届いた）ときは、ここで動きを止めてから描く。
+  // 止めずに進むと、番の表示と押せる穴が「動きの途中」のまま残る（2026-11-15）
+  const boardRoot = $('board');
+  if (state.animating && boardRoot._animKey !== drawnKeyOf(V.key, g)) {
+    boardRoot._token = (boardRoot._token || 0) + 1;
+    boardRoot._animKey = null;
+    state.animating = false;
+  }
 
   // 対戦する2人（盤の上が相手の側、下が自分の側）
   const seatBox = (c) => {
@@ -1608,8 +1617,8 @@ function renderGame() {
   const ad = aidFor(V.aid, g.turn);
   const mover = g.hist.length ? g.hist[g.hist.length - 1].turn : null;
   let note = '';
-  if (g.auto && E.isPit(g.last)) note = '時間切れ。CPU が' + COLOR[g.auto] + 'の代わりに ' + E.pitNumber(g.last) + '番めの穴からまいたよ。';
-  else if (local && V.cpu && g.bot === V.cpu && E.isPit(g.last)) note = 'CPU は ' + E.pitNumber(g.last) + '番めの穴からまいたよ。';
+  if (g.auto && E.isPit(g.last)) note = '時間切れ。CPU が' + COLOR[g.auto] + 'の代わりに' + pitWhere(g.last, bottom) + 'からまいたよ。';
+  else if (local && V.cpu && g.bot === V.cpu && E.isPit(g.last)) note = 'CPU は' + pitWhere(g.last, bottom) + 'からまいたよ。';
   if (g.capture && mover) note += seatLabel(V, mover) + 'は向かいの' + (g.capture.count - 1) + 'こをよこどり。';
   if (g.extra && !g.over) note += 'もう1回！ ';
   let status = '';
@@ -1625,9 +1634,13 @@ function renderGame() {
   st.classList.toggle('is-mine', can && (!local || !!V.cpu) && !g.over);
   st.classList.toggle('is-result', g.over && !state.animating);
 
-  renderBoard($('board'), g, { canPlay: can, aid: ad, pick: state.pick, key: V.key, bottom, V });
-  // 新しい手が届いた描画では、ここで動きが始まる。動きの間は「自分の番」の色と結果の大きい文字を出さない
-  if (state.animating) st.classList.remove('is-mine', 'is-result');
+  renderBoard(boardRoot, g, { canPlay: can, aid: ad, pick: state.pick, key: V.key, bottom, V });
+  // 新しい手が届いた描画では、ここで動きが始まる。動きの間は「自分の番」の色と結果の大きい文字を出さず、
+  // 札の「いまの番」も、まいている人のままにする
+  if (state.animating) {
+    st.classList.remove('is-mine', 'is-result');
+    markTurn(boardRoot._animMover);
+  }
 
   // たしかめる
   const picking = can && ad.confirm && state.pick >= 0;
@@ -1703,7 +1716,7 @@ function buildBoard(root, bottom) {
     seeds.setAttribute('aria-hidden', 'true');
     const count = makeElement('span', 'mc-count');
     count.setAttribute('aria-hidden', 'true');
-    const hint = makeElement('span', 'mc-hint');
+    const hint = makeElement('span', 'mc-holehint');
     hint.setAttribute('aria-hidden', 'true');
     node.append(seeds, count, hint);
     if (store) node.disabled = true;
@@ -1770,7 +1783,7 @@ function paintBoard(root, board, marks) {
     hint.hidden = !h;
     hint.replaceChildren(...(h ? [msIcon(h === 'extra' ? 'replay' : 'back_hand')] : []));
     const side = E.ownerOf(i) === bottom ? '下の側' : '上の側';
-    let label = store ? side + 'のゴール 石' + board[i] + 'こ' : side + 'の' + E.pitNumber(i) + '番めの穴 石' + board[i] + 'こ';
+    let label = store ? side + 'のゴール 石' + board[i] + 'こ' : pitWhere(i, bottom) + ' 石' + board[i] + 'こ';
     if (h) label += h === 'extra' ? '（もう1回になる）' : '（よこどりできる）';
     node.setAttribute('aria-label', label);
   }
@@ -1785,14 +1798,39 @@ function paintSeatGoals(board) {
   });
 }
 
+// 描いた局面の印。局面の番号だけでなく、盤とまいた穴も入れる（同じ番号で別の手が確定したとき＝時間切れの手と人の手が重なったときに見分ける）
+function drawnKeyOf(key, g) {
+  return key + ':' + g.ply + ':' + g.rev + ':' + g.last + ':' + g.board.join(',');
+}
+
+/* 穴の場所を、この画面での見え方で言う。上の段は右から左へ数える側なので「右から」と言う
+   （その人から見た番号のまま「3番め」と言うと、上の段を左から数えてちがう穴を探してしまう） */
+function pitWhere(i, bottom) {
+  return E.ownerOf(i) === bottom
+    ? '下の段の左から' + E.pitNumber(i) + '番めの穴'
+    : '上の段の右から' + E.pitNumber(i) + '番めの穴';
+}
+
+// 札の「いまの番」を、その色の人に付けなおす（石を入れる動きの間は、まいている人のまま）
+function markTurn(color) {
+  if (color !== 'b' && color !== 'w') return;
+  document.querySelectorAll('.mc-seat').forEach((box) => {
+    const mine = box.classList.contains('mc-seat--' + color);
+    box.classList.toggle('is-turn', mine);
+    const tags = box.querySelector('.mc-seat__tags');
+    const tag = tags?.querySelector('.mc-tag--turn');
+    if (!mine) tag?.remove();
+    else if (tags && !tag) tags.prepend(makeElement('span', 'mc-tag mc-tag--turn', 'いまの番'));
+  });
+}
+
 function renderBoard(root, g, opt) {
   if (!root._holes || root._bottom !== opt.bottom) {
     root._token = (root._token || 0) + 1;
     state.animating = false;
     buildBoard(root, opt.bottom);
   }
-  // 局面の番号だけでなく、盤とまいた穴も入れる（同じ番号で別の手が確定したとき＝時間切れの手と人の手が重なったときに見分ける）
-  const drawnKey = opt.key + ':' + g.ply + ':' + g.rev + ':' + g.last + ':' + g.board.join(',');
+  const drawnKey = drawnKeyOf(opt.key, g);
   // 動きの途中で、同じ局面のまま描きなおすとき（補助の変更・在室の変化など）は、動きを続ける（札のゴールの数は途中の盤に合わせなおす）
   if (state.animating && root._animKey === drawnKey) {
     if (root._animBoard) paintSeatGoals(root._animBoard);
@@ -1846,11 +1884,13 @@ async function sowAnimation(root, before, g, opt, drawnKey) {
   const b = before.slice();
   state.animating = true;
   root._animKey = drawnKey;
+  root._animMover = mover;
   const st = $('gameStatus');
   st.classList.remove('is-mine', 'is-result');
+  const where = pitWhere(g.last, opt.bottom);
   st.textContent = g.auto
-    ? '時間切れ。CPU が' + COLOR[g.auto] + 'の代わりに ' + E.pitNumber(g.last) + '番めの穴からまいているよ'
-    : who + 'が ' + E.pitNumber(g.last) + '番めの穴からまいているよ';
+    ? '時間切れ。CPU が' + COLOR[g.auto] + 'の代わりに' + where + 'からまいているよ'
+    : who + 'が' + where + 'からまいているよ';
   b[g.last] = 0;
   paintBoard(root, b, { hand: g.last, last: g.last });
   const step = g.path.length > 12 ? STEP_FAST_MS : STEP_MS;
