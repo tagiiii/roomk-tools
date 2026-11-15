@@ -53,27 +53,25 @@
   .topic-text.pop{ animation:pop .45s cubic-bezier(.3,1.6,.5,1); }
   @keyframes pop{ from{ transform:scale(.85); opacity:0; } to{ transform:scale(1); opacity:1; } }
 
-  .tabs{ position:absolute; left:62px; top:196px; width:1098px; display:flex; gap:4px; align-items:center; }
-  .tab{ font:700 18px var(--zm); color:var(--muted); background:transparent; border:0; border-radius:999px; padding:8px 13px; white-space:nowrap; cursor:pointer; display:inline-flex; align-items:center; gap:6px; }
-  .tab.on{ background:var(--paper); color:var(--ink); }
-  .pager{ margin-left:auto; display:flex; align-items:center; gap:6px; font:700 18px var(--zm); color:var(--muted); white-space:nowrap; }
-  .pager button{ width:40px; height:40px; border-radius:50%; border:0; background:var(--paper); color:var(--ink); cursor:pointer; display:flex; align-items:center; justify-content:center; }
-  .pager button:disabled{ opacity:.35; cursor:default; }
-  .pager .ms{ font-size:26px; }
-  .grid{ position:absolute; left:70px; top:262px; width:1090px; display:grid; grid-template-columns:repeat(6,1fr); grid-auto-rows:162px; gap:18px; }
-  .gm{ position:relative; margin:0; border:0; background:var(--paper); border-radius:20px; padding:10px 10px 8px; cursor:pointer; user-select:none; font:inherit; color:inherit;
+  .count{ position:absolute; left:70px; top:200px; font:700 22px var(--zm); color:var(--muted); display:flex; align-items:center; gap:8px; }
+  .count .ms{ font-size:26px; color:var(--accent); }
+  .grid{ position:absolute; left:70px; top:250px; width:1090px; display:grid; grid-template-columns:repeat(4,1fr); grid-auto-rows:260px; gap:26px 24px; }
+  .gm{ position:relative; margin:0; border:0; background:var(--paper); border-radius:26px; padding:20px 14px 14px; cursor:pointer; user-select:none; font:inherit; color:inherit;
        display:flex; flex-direction:column; align-items:center; transition:transform .15s; }
   .gm:hover{ transform:translateY(-2px); }
-  .gm.has{ box-shadow:0 0 0 4px var(--accent); }
-  .gm .num{ position:absolute; left:-8px; top:-10px; min-width:42px; height:42px; padding:0 8px; border-radius:21px; background:var(--g-pale); color:var(--g-ink); box-shadow:inset 0 0 0 3px var(--g);
-            font:900 23px var(--zm); display:flex; align-items:center; justify-content:center; z-index:1; }
-  .gm img{ width:92px; height:92px; border-radius:16px; background:var(--g-pale); object-fit:cover; flex:none; }
-  .gm .nm{ font:900 17px/1.2 var(--zm); letter-spacing:-.02em; text-align:center; margin-top:6px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
-  .gm .tokens{ position:absolute; right:8px; top:8px; width:34px; display:flex; flex-direction:column; gap:4px; align-items:flex-end; }
-  .tok{ width:20px; height:20px; border-radius:50%; background:var(--accent); box-shadow:inset 0 0 0 3px rgba(255,255,255,.55); animation:tokin .3s ease-out; }
+  .gm.has{ box-shadow:0 0 0 5px var(--accent); }
+  .gm .num{ position:absolute; left:-12px; top:-14px; width:58px; height:58px; border-radius:50%; background:var(--g-pale); color:var(--g-ink); box-shadow:inset 0 0 0 4px var(--g);
+            font:900 32px var(--zm); display:flex; align-items:center; justify-content:center; z-index:1; }
+  .gm img{ width:150px; height:150px; border-radius:22px; background:var(--g-pale); object-fit:cover; flex:none; }
+  .gm .nm{ font:900 25px/1.2 var(--zm); letter-spacing:-.02em; text-align:center; margin-top:12px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+  .gm .tokens{ position:absolute; right:12px; top:14px; width:26px; display:flex; flex-direction:column; gap:5px; align-items:center; }
+  .tok{ width:22px; height:22px; border-radius:50%; background:var(--accent); box-shadow:inset 0 0 0 3px rgba(255,255,255,.55); animation:tokin .3s ease-out; }
   @keyframes tokin{ from{ transform:scale(0); } to{ transform:scale(1); } }
   .gm .more{ font:900 16px var(--zm); color:var(--accent); }
-  .grid .none{ grid-column:1 / -1; font:700 26px var(--zm); color:var(--muted); padding:40px 10px; }
+  .gm .rm{ position:absolute; left:14px; bottom:12px; font-size:22px; color:var(--muted); width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; opacity:0; transition:opacity .2s; }
+  .gm:hover .rm{ opacity:1; }
+  .gm .rm:hover{ background:var(--accent-soft); color:var(--accent); }
+  body.idle .gm .rm{ opacity:0 !important; }
 
   .picked{ position:absolute; left:1196px; top:196px; width:344px; bottom:92px; display:flex; flex-direction:column; }
   .picked-box{ background:var(--paper); border-radius:24px; padding:18px 20px; flex:1; min-height:0; display:flex; flex-direction:column; }
@@ -145,11 +143,11 @@
   #bar button.main{ background:#E8907B; color:#2b241d; font-weight:700; }
   #bar button:disabled{ opacity:.4; cursor:default; }
   #bar .ms{ font-size:20px; }
-  #bar input{ font:14px 'Noto Sans JP',sans-serif; border:0; border-radius:8px; padding:6px 8px; width:130px; }
+  #bar input{ font:14px 'Noto Sans JP',sans-serif; border:0; border-radius:8px; padding:6px 8px; width:170px; }
   #bar .ppl{ display:inline-flex; align-items:center; gap:4px; font:500 14px 'Noto Sans JP',sans-serif; }
   #bar .ppl button{ min-height:32px; padding:4px 8px; }
   #bar .ppl b{ min-width:34px; text-align:center; }
-  #numBuf{ font:700 15px 'Noto Sans JP',sans-serif; color:#FFE7B0; min-width:0; }
+
   #bar .sep{ width:1px; height:26px; background:rgba(255,255,255,.25); }
   body[data-view="ask"] .w-only, body[data-view="wheel"] .a-only{ display:none !important; }
   body.idle #bar, body.idle .howto-fab, body.idle .howto-feedback-fab{ opacity:0; pointer-events:none; }
@@ -174,9 +172,7 @@
         <div class="topic-text" id="topicText"></div>
       </div>
     </div>
-    <div class="tabs" id="tabs">
-      <div class="pager"><span id="countText"></span><button type="button" id="pgPrev" aria-label="前のページ"><span class="ms" aria-hidden="true">chevron_left</span></button><span id="pgText"></span><button type="button" id="pgNext" aria-label="次のページ"><span class="ms" aria-hidden="true">chevron_right</span></button></div>
-    </div>
+    <div class="count"><span class="ms" aria-hidden="true">sports_esports</span><span id="countText"></span></div>
     <div class="grid" id="grid"></div>
     <div class="picked">
       <div class="picked-box paper">
@@ -229,8 +225,8 @@
 
 <div id="bar">
   <span class="ppl a-only">人数<button type="button" id="pplMinus" aria-label="1人へらす">−</button><b id="pplText"></b><button type="button" id="pplPlus" aria-label="1人ふやす">＋</button></span>
-  <label class="a-only">さがす：<input id="searchInput" type="search" maxlength="20" placeholder="ゲームの名前" /></label>
-  <span class="a-only" id="numBuf" aria-live="polite"></span>
+  <label class="a-only">ほかのゲーム：<input id="searchInput" type="text" list="gameNames" maxlength="20" placeholder="名前を入れて選ぶ" /></label>
+  <datalist id="gameNames"></datalist>
   <button type="button" class="a-only" id="btnTopic" title="T"><span class="ms" aria-hidden="true">shuffle</span>お題をかえる</button>
   <button type="button" class="a-only" id="btnClear"><span class="ms" aria-hidden="true">restart_alt</span>えらんだ数を消す</button>
   <button type="button" class="a-only main" id="btnToWheel" title="Enter"><span class="ms" aria-hidden="true">casino</span>ルーレットへ</button>
@@ -314,15 +310,8 @@
     {"id":"career-sugoroku","n":"キャリアすごろく","g":"talk","y":"","min":1,"max":6},
   ];
 
-  const GENRES = [
-    ['all',    'すべて'],
-    ['kotoba', 'ことば',         'chat_bubble'],
-    ['puzzle', 'クイズ・パズル', 'extension'],
-    ['suiri',  '推理',           'search'],
-    ['atekko', '当てっこ・協力', 'lightbulb'],
-    ['board',  'カード・ボード', 'style'],
-    ['talk',   '話す',           'sentiment_satisfied'],
-  ];
+  // よく開かれた順（apps/ranking.json の order の写し）。はじめの候補はこの順で、その人数で遊べるものから選ぶ
+  const ORDER = ["suton-block", "nemurase-kichi", "kanpe-housou", "charin-baton", "reversi", "kotoba-dash", "magire-eshi", "hirameki-oogiri", "kakure-kaito", "daifugo", "pita-hame", "talk-card", "pittari-beat", "kyoumi-sugoroku", "tsunagete-story", "stamp-ate", "kanji-sagashi", "toomawashi", "kimochi-ate", "donna-hito", "suki-mono-map", "kotoba-shuffle", "oekaki-dengon", "blackjack", "quiz", "uso-jisho", "kotoba-pair", "suki-type-check", "ishin-denshin", "moji-soroe", "kotoba-meter", "kotoba-theme", "kotoba-relay", "esadori", "jitsuwa-game", "shirushi-hint", "suki-bingo", "kagi-awase", "oshitsuke-zukan", "kotoba-mikke", "tsuyomi-card", "ikutsu-ieru", "tatoe-narabe", "do-mannaka", "kotoba-tantei", "docchi", "tatoe-gp", "kossori-word", "kaburazu-hint", "career-sugoroku", "kyapa-graph", "pittari-meter", "jinro", "koedake-theater", "value-card", "word-wolf", "kakure-number", "minna-ranking", "otona-talk", "nurie-week", "name-change", "shinkei-suijaku", "yosa-map"];
   const COLORS = ['#F2B35C','#9CC8D3','#E8907B','#9FCFB4','#C4A9D6','#B9C27A','#E7C98F','#F0A8B8','#8FC1E3','#D9B38C'];
   const TOPICS = [
     'いまの気分を天気でいうと？', 'さいきん、ちょっとうれしかったこと', 'いま食べたいもの', 'さいきんハマっているもの',
@@ -331,7 +320,7 @@
     '好きなお菓子', 'ちょっと自慢したいもの', 'いま聞いている曲', '好きな飲みもの',
     'もし1日だけ何でもできるなら？', '好きなキャラクター', 'さいきん買ってよかったもの', '朝ごはんに食べたいもの',
   ];
-  const PER_PAGE = 18;
+  const MAX_CANDS = 8;
   const APPS = '../../apps/';
 
   const $ = (id) => document.getElementById(id);
@@ -341,7 +330,8 @@
   const byId = Object.fromEntries(GAMES.map(g => [g.id, g]));
 
   let votes = {};             // id → 数（えらばれた順を保つ）
-  let people = 5, genre = 'all', query = '', page = 0;
+  let people = 5;
+  let cands = [];             // 画面に出す候補（8つまで）
   let topicIdx = Math.floor(Math.random() * TOPICS.length);
   let excluded = new Set();   // ルーレットから外したもの（凡例を押す）
   let flow = [];              // 決まったもの
@@ -363,42 +353,40 @@
     const el = $('topicText'); el.textContent = TOPICS[topicIdx];
     if (anim){ el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); }
   }
-  const hira = (t) => t.replace(/[ァ-ヶ]/g, c => String.fromCharCode(c.charCodeAt(0) - 0x60)).toLowerCase();
-  function shown(){
-    const q = hira(query.trim());
-    return GAMES.filter(g => people >= g.min && people <= g.max
-      && (genre === 'all' || g.g === genre)
-      && (!q || hira(g.n).includes(q) || hira(g.y).includes(q)));
+  const fits = (g) => people >= g.min && people <= g.max;
+  function fillCands(){
+    // えらばれているものは残し、空いたところをよく開かれた順で埋める
+    cands = cands.filter(id => votes[id] > 0 || fits(byId[id]));
+    const pool = ORDER.filter(id => byId[id]).concat(GAMES.map(g => g.id).filter(id => !ORDER.includes(id)));
+    for (const id of pool){ if (cands.length >= MAX_CANDS) break; if (!cands.includes(id) && fits(byId[id])) cands.push(id); }
   }
-  function buildTabs(){
-    const box = $('tabs'), pager = box.querySelector('.pager');
-    GENRES.forEach(([k, name, ic]) => {
-      const b = document.createElement('button'); b.type = 'button'; b.className = 'tab'; b.dataset.k = k;
-      b.textContent = name;
-      b.addEventListener('click', () => { genre = k; page = 0; renderGrid(); });
-      box.insertBefore(b, pager);
-    });
+  function addCand(id){
+    if (cands.includes(id)) return;
+    if (cands.length >= MAX_CANDS){
+      // えらばれていない候補のうち、いちばん後ろのものと入れかえる
+      let k = -1; for (let i = cands.length - 1; i >= 0; i--) if (!votes[cands[i]]) { k = i; break; }
+      if (k < 0) return;
+      cands[k] = id;
+    } else cands.push(id);
+    renderGrid();
   }
+  function removeCand(id){ cands = cands.filter(x => x !== id); delete votes[id]; renderGrid(); }
   function renderGrid(){
-    document.querySelectorAll('.tab').forEach(t => t.classList.toggle('on', t.dataset.k === genre));
-    const list = shown(), pages = Math.max(1, Math.ceil(list.length / PER_PAGE));
-    page = Math.min(page, pages - 1);
-    $('countText').textContent = `${people}人で遊べる ${list.length}こ`;
-    $('pgText').textContent = `${page + 1} / ${pages}`;
-    $('pgPrev').disabled = page === 0; $('pgNext').disabled = page >= pages - 1;
+    $('countText').textContent = `${people}人で遊べるゲームから`;
     const box = $('grid'); box.textContent = '';
-    if (!list.length){ const d = document.createElement('div'); d.className = 'none'; d.textContent = '見つからないよ'; box.appendChild(d); }
-    list.slice(page * PER_PAGE, (page + 1) * PER_PAGE).forEach((g, k) => {
-      const no = page * PER_PAGE + k + 1;
-      const b = document.createElement('button'); b.type = 'button'; b.className = 'gm paper'; b.dataset.genre = g.g; b.dataset.id = g.id;
-      b.setAttribute('aria-label', `${no} ${g.n}（押すと1つ足す・右クリックで1つ減らす）`);
-      const num = document.createElement('span'); num.className = 'num'; num.textContent = no;
-      const img = document.createElement('img'); img.src = `${APPS}assets/illustrations/${g.id}.webp`; img.alt = ''; img.loading = 'lazy'; img.width = 92; img.height = 92;
+    cands.forEach((id, k) => {
+      const g = byId[id];
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'gm paper'; b.dataset.genre = g.g; b.dataset.id = id;
+      b.setAttribute('aria-label', `${k + 1} ${g.n}（押すと1つ足す・右クリックで1つ減らす）`);
+      const num = document.createElement('span'); num.className = 'num'; num.textContent = k + 1;
+      const img = document.createElement('img'); img.src = `${APPS}assets/illustrations/${id}.webp`; img.alt = ''; img.width = 150; img.height = 150;
       const nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = g.n;
       const tok = document.createElement('span'); tok.className = 'tokens';
-      b.append(num, img, nm, tok);
-      b.addEventListener('click', (e) => addVote(g.id, e.shiftKey ? -1 : 1));
-      b.addEventListener('contextmenu', (e) => { e.preventDefault(); addVote(g.id, -1); });
+      const x = document.createElement('span'); x.className = 'rm ms'; x.textContent = 'close'; x.title = '候補から外す';
+      x.addEventListener('click', (e) => { e.stopPropagation(); removeCand(id); });
+      b.append(num, img, nm, tok, x);
+      b.addEventListener('click', (e) => addVote(id, e.shiftKey ? -1 : 1));
+      b.addEventListener('contextmenu', (e) => { e.preventDefault(); addVote(id, -1); });
       box.appendChild(b);
     });
     renderTokens();
@@ -407,11 +395,11 @@
     document.querySelectorAll('#grid .gm').forEach(card => {
       const n = votes[card.dataset.id] || 0, tok = card.querySelector('.tokens');
       card.classList.toggle('has', n > 0);
-      const want = Math.min(n, 4);
+      const want = Math.min(n, 6);
       tok.querySelectorAll('.more').forEach(m => m.remove());
       while (tok.children.length > want) tok.lastChild.remove();
       while (tok.children.length < want){ const d = document.createElement('span'); d.className = 'tok'; tok.appendChild(d); }
-      if (n > 4){ const m = document.createElement('span'); m.className = 'more'; m.textContent = `+${n - 4}`; tok.appendChild(m); }
+      if (n > 6){ const m = document.createElement('span'); m.className = 'more'; m.textContent = `+${n - 6}`; tok.appendChild(m); }
     });
     const ul = $('pickedList'); ul.textContent = '';
     const ids = Object.keys(votes).filter(id => votes[id] > 0);
@@ -430,20 +418,16 @@
     if (n) votes[id] = n; else delete votes[id];
     renderTokens();
   }
-  function voteByNumber(no){
-    const g = shown()[no - 1];
-    if (!g) return;
-    page = Math.floor((no - 1) / PER_PAGE); renderGrid(); addVote(g.id, 1);
-  }
+  function voteByNumber(no){ const id = cands[no - 1]; if (id) addVote(id, 1); }
 
   // ───── ルーレット ─────
   const short = (n) => n.length > 9 ? n.slice(0, 8) + '…' : n;
   function entries(){
     const ids = Object.keys(votes).filter(id => votes[id] > 0);
     if (ids.length) return ids.map(id => ({ key:id, name:byId[id].n, label:short(byId[id].n), c:color(id), w:votes[id] }));
-    // だれもえらんでいないときは、いま出ているものから8つまでを同じ大きさで
+    // だれもえらんでいないときは、候補を同じ大きさで
     if (!omakase.length){
-      const pool = shown().slice();
+      const pool = cands.slice();
       for (let i = pool.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
       omakase = pool.slice(0, 8).map(g => g.id);
     }
@@ -596,25 +580,20 @@
   }
   function resetAll(){
     if (spinning) return;
-    votes = {}; flow = []; excluded = new Set(); lastWon = null; rot = 0; query = ''; $('searchInput').value = ''; genre = 'all'; page = 0;
-    renderGrid(); renderFlow(); go('ask');
+    votes = {}; flow = []; excluded = new Set(); lastWon = null; rot = 0; $('searchInput').value = ''; cands = [];
+    fillCands(); renderGrid(); renderFlow(); go('ask');
   }
-  function setPeople(n){ people = Math.max(1, Math.min(12, n)); $('pplText').textContent = `${people}人`; page = 0; renderGrid(); }
-
-  // 番号のキー入力（2けたもある。少し待ってから足す）
-  let numBuf = '', numT;
-  function pushDigit(d){
-    numBuf = (numBuf + d).slice(-2); $('numBuf').textContent = `番号 ${numBuf}`;
-    clearTimeout(numT); numT = setTimeout(commitNum, 900);
-  }
-  function commitNum(){ clearTimeout(numT); if (numBuf) voteByNumber(parseInt(numBuf, 10)); numBuf = ''; $('numBuf').textContent = ''; }
+  function setPeople(n){ people = Math.max(1, Math.min(12, n)); $('pplText').textContent = `${people}人`; fillCands(); renderGrid(); }
 
   $('btnTopic').addEventListener('click', () => { topicIdx = (topicIdx + 1 + Math.floor(Math.random() * (TOPICS.length - 1))) % TOPICS.length; showTopic(true); });
-  $('searchInput').addEventListener('input', (e) => { query = e.target.value; page = 0; renderGrid(); });
+  // ほかのゲームを候補に入れる（名前を選ぶ）
+  (function(){ const dl = $('gameNames'); GAMES.forEach(g => { const o = document.createElement('option'); o.value = g.n; dl.appendChild(o); }); })();
+  $('searchInput').addEventListener('change', (e) => {
+    const v = e.target.value.trim(), g = GAMES.find(x => x.n === v) || GAMES.find(x => v && (x.n.includes(v) || x.y.includes(v)));
+    if (g){ addCand(g.id); e.target.value = ''; }
+  });
   $('pplMinus').addEventListener('click', () => setPeople(people - 1));
   $('pplPlus').addEventListener('click', () => setPeople(people + 1));
-  $('pgPrev').addEventListener('click', () => { page--; renderGrid(); });
-  $('pgNext').addEventListener('click', () => { page++; renderGrid(); });
   $('btnClear').addEventListener('click', () => { votes = {}; renderTokens(); });
   $('btnToWheel').addEventListener('click', () => go('wheel'));
   $('btnBack').addEventListener('click', () => go('ask'));
@@ -629,27 +608,26 @@
     if (e.target.tagName === 'INPUT' || e.metaKey || e.ctrlKey || e.altKey) return;
     if (document.querySelector('.howto-overlay:not([hidden]), dialog[open]')) return;
     const view = document.body.dataset.view;
-    if (view === 'ask' && /^[0-9]$/.test(e.key)){ pushDigit(e.key); e.preventDefault(); return; }
+    if (view === 'ask' && /^Digit[1-9]$|^Numpad[1-9]$/.test(e.code)){ const id = cands[+e.code.slice(-1) - 1]; if (id) addVote(id, e.shiftKey ? -1 : 1); e.preventDefault(); return; }
     if (e.key === 'f' || e.key === 'F'){ toggleFull(); return; }
     if (view === 'ask' && (e.key === 't' || e.key === 'T')){ $('btnTopic').click(); return; }
-    if (view === 'ask' && e.key === 'Enter'){ if (numBuf) commitNum(); else go('wheel'); e.preventDefault(); return; }
-    if (view === 'ask' && e.key === 'ArrowLeft' && !$('pgPrev').disabled){ $('pgPrev').click(); return; }
-    if (view === 'ask' && e.key === 'ArrowRight' && !$('pgNext').disabled){ $('pgNext').click(); return; }
+    if (view === 'ask' && e.key === 'Enter'){ go('wheel'); e.preventDefault(); return; }
     if (view === 'wheel' && e.key === ' '){ closeResult(); spin(); e.preventDefault(); return; }
     if (view === 'wheel' && e.key === 'Escape'){ closeResult(); return; }
   });
 
-  showTopic(false); buildTabs(); setPeople(people); renderFlow();
+  showTopic(false); setPeople(people); renderFlow();
 })();
 </script>
 <script src="../../apps/shared/js/howto.js"></script>
 <script>RoomkHowto.init({ title: 'つかいかた', lead: 'コマのはじめに、ひとことを言いながら遊びたいゲームをおしえてもらって、ルーレットで決める画面だよ。', sections: [
   { heading: '進行役', items: [
     'この画面をひらいて全画面（F キー）にし、画面共有する。マウスを止めると、下の操作の帯とカーソルが消えるよ。',
-    'はじめに下の帯の「人数」を、その日の人数（スタッフもふくめて）にする。その人数で遊べるゲームだけが並ぶよ。上の種類で絞ったり、帯の「さがす」で名前からさがしたりもできる。',
+    'はじめに下の帯の「人数」を、その日の人数（スタッフもふくめて）にする。その人数で遊べるゲームのうち、よく遊ばれている8つが候補に並ぶよ。',
+    '候補にないゲームを言われたら、帯の「ほかのゲーム」に名前を入れて選ぶと、候補に入る（8つあるときは、えらばれていない候補と入れかわる）。候補の右上の × で外せるよ。',
     '1人ずつ、お題へのひとことと、遊びたいゲームの番号を言ってもらう（チャットに番号だけでもOK）。お題は「お題をかえる」（T キー）で変わるよ。',
-    '聞いたゲームを押すと、丸が1つ増える。数字キーで番号を打ってもいい（12 なら 1・2 と打つ）。右クリックか Shift を押しながらで1つ減る。だれの分かは出ないよ。',
-    '「ルーレットへ」（Enter）で、えらばれたゲームだけのルーレットになる。えらばれた数が多いほどマスが大きい。だれもえらんでいないときは、いま並んでいるものから8つを同じ大きさで入れるよ。',
+    '聞いたゲームを押すと、丸が1つ増える（数字キーの 1〜8 でも増える）。右クリックか Shift を押しながらで1つ減る。だれの分かは出ないよ。',
+    '「ルーレットへ」（Enter）で、えらばれたゲームだけのルーレットになる。えらばれた数が多いほどマスが大きい。だれもえらんでいないときは、候補を同じ大きさで入れるよ。',
     'まんなかの「まわす」か Space でまわす。決まったら「ゲームをひらく」で、そのゲームが新しいタブで開くよ。「もう1つ決める」で、決まったものを外してもう1回まわせる。右の名前を押すと、そのマスを外したりもどしたりできるよ。',
   ] },
 ] });</script>
