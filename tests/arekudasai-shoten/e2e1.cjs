@@ -94,22 +94,32 @@ async function offer(c, name, word) {
   check('decline shown', (await text(C, '#stage')).includes('うちにはないです'));
   check('box shows word', (await text(C, '#stage .ak-offer')).includes(word1));
   check('raw d has word', (await gameOf(code)).r.d[holderSeat] === want + ':' + word1);
+  // 出さなかった人は、ぴったりだと思う箱をおすすめする。お客さんにはおすすめの数が見える
+  await waitText(other, '#stage', 'おすすめしよう');
+  check('customer cannot vote', !(await text(C, '#stage')).includes('おすすめしよう'));
+  await other.page.click('#stage button.ak-offer--vote');
+  await waitText(other, '#stage', 'あなたのおすすめ');
+  await waitText(C, '#stage .ak-offer', 'おすすめ 1');
+  check('raw vote', (await gameOf(code)).r.v[g.seats.indexOf(other.name)] === holderSeat);
   await C.page.click('#stage button.ak-offer');
   for (const c of [...players, watch]) await waitText(c, '#stage', 'ぴったり！', 6000);
   check('wanted revealed to watch', (await text(watch, '#stage')).includes(E.item(want).name));
   check('answer shown', (await text(watch, '#stage')).includes('答え合わせ'));
-  check('gain shown to customer', (await text(C, '#stage')).includes('あなた +2ポイント'));
-  check('gain shown to holder', (await text(H, '#stage')).includes('あなた +2ポイント'));
-  // 「出さない」をえらんだお店: ヒントに合う物がお店になければ、正しく断れたので1ポイント
+  check('gain shown to customer', (await text(C, '#stage')).includes('あなた +3ポイント'));
+  check('gain shown to holder', (await text(H, '#stage')).includes('あなた +3ポイント'));
+  check('vote shown to all', (await text(watch, '#stage')).includes('ぴったりの箱をおすすめした ' + other.name));
+  // 「出さない」をえらんだお店: ヒントに合う物がお店になければ、正しく断れたので1ポイント（ぴったりの番なので入る）。おすすめが当たって1ポイント
   const otherSeat = g.seats.indexOf(other.name);
   const rightNo = !g.S.players[otherSeat].hand.some((id) => E.fits(id, tags));
-  check('decline point shown', (await text(other, '#stage')).includes('あなた +1ポイント') === rightNo, rightNo);
+  const otherGain = (rightNo ? 1 : 0) + 1;
+  check('decline+vote point shown', (await text(other, '#stage')).includes('あなた +' + otherGain + 'ポイント'), otherGain);
   g = await gameOf(code);
-  check('points', g.S.players[g.seats.indexOf(cust)].points === 2 && g.S.players[holderSeat].points === 2 && g.S.players[otherSeat].points === (rightNo ? 1 : 0), g.S.players.map((p) => p.points));
+  check('points', g.S.players[g.seats.indexOf(cust)].points === 3 && g.S.players[holderSeat].points === 3 && g.S.players[otherSeat].points === otherGain, g.S.players.map((p) => p.points));
   check('no list', (g.last.no || '') === (rightNo ? String(otherSeat) : ''), g.last.no);
+  check('vote list', g.last.vt === String(otherSeat), g.last.vt);
   check('round advanced', g.r.n === 2 && g.last.n === 1 && g.last.hit === true);
   check('ask counted', g.S.players[g.seats.indexOf(other.name)].stat.ask === 1);
-  check('town shows points (showAll)', (await text(a, '#town')).includes('2ポイント'));
+  check('town shows points (showAll)', (await text(a, '#town')).includes('3ポイント'));
   await shot(watch, '02-result-watch');
   await L.waitStats(C, 'hit', 1);
 
@@ -135,14 +145,21 @@ async function offer(c, name, word) {
   g = await gameOf(code);
   const c3 = g.S.turn;
   want = g.S.players[c3].order;
-  const t3 = E.item(want).tags.slice(0, 2);
   const h3 = E.holderOf(g.S, want);
   const y3 = [0, 1, 2].find((i) => i !== c3 && i !== h3);
-  const alt = E.ITEMS.find((it) => it.id !== want && t3.every((t) => it.tags.includes(t)) && E.holderOf(g.S, it.id) < 0 && g.S.deck.includes(it.id));
+  // ヒント2つ（ほしい物の特徴3つから2つ）と、それに合う別の品物（山か、y3 のお店にある物）をさがす
+  const wt = E.item(want).tags;
+  let t3 = null, alt = null;
+  for (const pair of [[wt[0], wt[1]], [wt[0], wt[2]], [wt[1], wt[2]]]) {
+    alt = E.ITEMS.find((it) => it.id !== want && pair.every((t) => it.tags.includes(t)) && (g.S.deck.includes(it.id) || g.S.players[y3].hand.includes(it.id)));
+    if (alt) { t3 = pair; break; }
+  }
   check('found a fitting item', !!alt);
-  // 合う物を y3 のお店に入れる（山から入れかえ）
-  const hand = g.S.players[y3].hand.slice(); hand[0] = alt.id;
-  await rest('PUT', `${L.ROOMS}/${code}/play/${g.id}/h/${y3}`, hand.join(','));
+  // 合う物を y3 のお店に入れる（山から入れかえ。もうお店にあれば、そのまま）
+  if (!g.S.players[y3].hand.includes(alt.id)) {
+    const hand = g.S.players[y3].hand.slice(); hand[0] = alt.id;
+    await rest('PUT', `${L.ROOMS}/${code}/play/${g.id}/h/${y3}`, hand.join(','));
+  }
   C = byName(g.seats[c3]);
   await waitText(C, '#stage', 'あなたのほしい物');
   for (const t of t3) await C.page.click(`#stage .ak-chip-btn:has-text("${t}")`);
@@ -159,7 +176,7 @@ async function offer(c, name, word) {
   check('fit message', (await text(Y, '#stage')).includes('ヒントに合う物を出した'));
   check('fit gain', (await text(Y, '#stage')).includes('あなた +1ポイント'));
   g = await gameOf(code);
-  check('fit points', g.S.players[y3].points === before[y3] + 1 && g.S.players[h3].points === before[h3] + 2, [before, g.S.players.map((p) => p.points)]);
+  check('fit points', g.S.players[y3].points === before[y3] + 1 && g.S.players[h3].points === before[h3] + 3, [before, g.S.players.map((p) => p.points)]);
   check('fit item stays', g.S.players[y3].hand.includes(alt.id));
 
   // ── 4回目: ちがう物がえらばれると、出したお店は1ポイント減る（本人の画面にだけ出す） ──
@@ -185,6 +202,7 @@ async function offer(c, name, word) {
   await C.page.click(`#stage button.ak-offer:has-text("${g.seats[x4]}のお店")`);
   await waitText(X, '#stage', 'ちがう物！', 6000);
   await waitText(watch, '#stage', 'ちがう物！', 6000);
+  await waitText(C, '#stage', 'ちがう物！', 6000);
   check('loss shown to giver', (await text(X, '#stage')).includes('あなたは -1ポイント'));
   check('loss not shown to customer', !(await text(C, '#stage')).includes('-1'));
   check('loss not shown to watch', !(await text(watch, '#stage')).includes('-1') && !(await text(watch, '#stage')).includes('減'));
