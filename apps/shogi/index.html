@@ -9,7 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
   <link rel="stylesheet" href="../shared/css/design-system.css?v=20261106c">
   <!-- index.html と app.js・engine.js・style.css はセットで変わるので、変えたら ?v= をそろえて上げる -->
-  <link rel="stylesheet" href="style.css?v=20261115d">
+  <link rel="stylesheet" href="style.css?v=20261115e">
   <script src="https://www.gstatic.com/firebasejs/13.3.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/13.3.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/13.3.0/firebase-database-compat.js"></script>
@@ -199,33 +199,14 @@
       </div>
 
       <div class="card">
-        <h2 class="sh-h2">盤</h2>
-        <div id="lobbyVariant" class="sh-variants" hidden></div>
-        <p id="lobbyVariantView" class="sh-aid-view" hidden></p>
+        <h2 class="sh-h2">設定</h2>
+        <dl class="sh-setsum">
+          <div class="sh-setsum__row"><dt>盤</dt><dd id="sumVariant"></dd></div>
+          <div class="sh-setsum__row"><dt>持ち時間</dt><dd id="sumClock"></dd></div>
+          <div class="sh-setsum__row"><dt>補助</dt><dd id="sumAid"></dd></div>
+        </dl>
+        <button id="btnLobbySet" type="button" class="btn btn-secondary btn-full mt-md" hidden>設定を変える</button>
       </div>
-
-      <div class="card">
-        <h2 class="sh-h2">持ち時間</h2>
-        <div id="lobbyClock" class="sh-clockset" hidden>
-          <label class="sh-seatsel">
-            <span class="sh-name__label">持ち時間</span>
-            <select id="clockMain" class="form-input"></select>
-          </label>
-          <label class="sh-seatsel">
-            <span class="sh-name__label">秒読み</span>
-            <select id="clockByo" class="form-input"></select>
-          </label>
-        </div>
-        <p id="lobbyClockView" class="sh-aid-view" hidden></p>
-        <p class="sh-note">時間が切れたら負け。秒読みは、持ち時間を使い切ったあと、1手ごとに使える時間。</p>
-      </div>
-
-      <div class="card">
-        <h2 class="sh-h2">補助</h2>
-        <div id="lobbyAid" class="sh-aid" hidden></div>
-        <p id="lobbyAidView" class="sh-aid-view" hidden></p>
-      </div>
-
       <button id="btnStartGame" type="button" class="btn btn-primary btn-full btn-lg" hidden>はじめる</button>
       <p id="lobbyWait" class="sh-wait" hidden>ホストがはじめるのを待っているよ</p>
     </div>
@@ -281,6 +262,30 @@
     </div>
   </section>
 
+  <!-- 待合室の設定（ホストだけ。変えるとすぐ全員に届く） -->
+  <dialog id="lobbySetDialog" class="sh-dialog" aria-labelledby="lobbySetTitle">
+    <h2 id="lobbySetTitle" class="sh-h2" tabindex="-1" autofocus>設定を変える</h2>
+    <h3 class="sh-h3">盤</h3>
+    <div id="lobbyVariant" class="sh-variants"></div>
+    <h3 class="sh-h3">持ち時間</h3>
+    <div id="lobbyClock" class="sh-clockset">
+      <label class="sh-seatsel">
+        <span class="sh-name__label">持ち時間</span>
+        <select id="clockMain" class="form-input"></select>
+      </label>
+      <label class="sh-seatsel">
+        <span class="sh-name__label">秒読み</span>
+        <select id="clockByo" class="form-input"></select>
+      </label>
+    </div>
+    <p class="sh-note">時間が切れたら負け。秒読みは、持ち時間を使い切ったあと、1手ごとに使える時間。</p>
+    <h3 class="sh-h3">補助</h3>
+    <div id="lobbyAid" class="sh-aid"></div>
+    <div class="sh-row sh-row--center mt-lg">
+      <button id="btnLobbySetClose" type="button" class="btn btn-primary">閉じる</button>
+    </div>
+  </dialog>
+
   <!-- 補助の設定（あそんでいる間） -->
   <dialog id="aidDialog" class="sh-dialog" aria-labelledby="aidDialogTitle">
     <h2 id="aidDialogTitle" class="sh-h2">補助の設定</h2>
@@ -308,7 +313,7 @@
     </div>
   </div>
 
-  <script type="module" src="app.js?v=20261115d"></script>
+  <script type="module" src="app.js?v=20261115e"></script>
   <script src="../shared/js/stats.js?v=1" defer></script>
   <script src="../shared/js/howto.js"></script>
   <script>
@@ -323,6 +328,7 @@
           '対戦するのは2人。ほかの人は、自分の画面で対局を見られる',
           '1台の画面でみんなで見るときは「1台の画面であそぶ」。そこで相手を「CPU」にすると、CPU と対戦できる。CPU の強さは「よわい・ふつう・つよい」から選べる',
           'ルームでも、ホストが席に「CPU」を選ぶと、CPU と対戦できる',
+          'ルームでは、ホストが待合室の「設定を変える」で、盤・持ち時間・補助を選ぶ',
           '「持ち時間」を選ぶと、時計が出る。自分の番の時間だけが減り、なくなると「秒読み」になる。秒読みは1手ごとにもとにもどる。時間が切れたら負け',
         ] },
         { heading: '指しかた', items: [

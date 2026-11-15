@@ -553,6 +553,7 @@ function resetBoxes() {
   state.drawnRev = -1;
   state.drawnPly = -1;
   if ($('aidDialog').open) $('aidDialog').close();
+  if ($('lobbySetDialog').open) $('lobbySetDialog').close();
   if ($('promoDialog').open) $('promoDialog').close();
 }
 
@@ -1716,6 +1717,7 @@ function renderRoom(room) {
   const next = playing ? 'game' : 'waiting';
   if (state.currentScreen !== next) {
     if ($('aidDialog').open) $('aidDialog').close();
+    if ($('lobbySetDialog').open) $('lobbySetDialog').close();
     if ($('promoDialog').open) $('promoDialog').close();
     showScreen(next);
   }
@@ -1845,43 +1847,29 @@ function renderWaiting(room) {
   }));
   $('proxyForm').hidden = !host;
 
-  // 盤
-  $('lobbyVariant').hidden = !host;
-  $('lobbyVariantView').hidden = host;
+  // 設定（盤・持ち時間・補助）は、みんなには1行ずつのまとめで見せ、ホストは「設定を変える」のダイアログで変える
+  $('sumVariant').textContent = variantName(room.v) + '（' + E.VARIANTS[variantOf(room.v)].size + '）';
+  $('sumClock').textContent = clockSummary(room.clock);
+  $('sumAid').textContent = aidSummary(room.aid);
+  $('btnLobbySet').hidden = !host;
   if (host) {
-    const key = variantOf(room.v);
-    if ($('lobbyVariant')._key !== key) {
-      variantPicker($('lobbyVariant'), key, (v) => { $('lobbyVariant')._key = v; setVariant(v); });
-      $('lobbyVariant')._key = key;
+    const vKey = variantOf(room.v);
+    if ($('lobbyVariant')._key !== vKey) {
+      variantPicker($('lobbyVariant'), vKey, (v) => { $('lobbyVariant')._key = v; setVariant(v); });
+      $('lobbyVariant')._key = vKey;
     }
-  } else {
-    $('lobbyVariantView').textContent = variantName(room.v) + '（' + E.VARIANTS[variantOf(room.v)].size + '）';
-  }
-
-  // 持ち時間
-  $('lobbyClock').hidden = !host;
-  $('lobbyClockView').hidden = host;
-  if (host) {
-    const key = JSON.stringify(normClockCfg(room.clock));
-    if ($('lobbyClock')._key !== key) {
+    const cKey = JSON.stringify(normClockCfg(room.clock));
+    if ($('lobbyClock')._key !== cKey) {
       clockSelects($('clockMain'), $('clockByo'), room.clock);
-      $('lobbyClock')._key = key;
+      $('lobbyClock')._key = cKey;
     }
-  } else {
-    $('lobbyClockView').textContent = clockSummary(room.clock);
-  }
-
-  // 補助
-  $('lobbyAid').hidden = !host;
-  $('lobbyAidView').hidden = host;
-  if (host) {
-    const key = JSON.stringify(normAid(room.aid));
-    if ($('lobbyAid')._key !== key) {
+    const aKey = JSON.stringify(normAid(room.aid));
+    if ($('lobbyAid')._key !== aKey) {
       aidEditor($('lobbyAid'), room.aid, (a) => { $('lobbyAid')._key = JSON.stringify(a); setAid(a); });
-      $('lobbyAid')._key = key;
+      $('lobbyAid')._key = aKey;
     }
-  } else {
-    $('lobbyAidView').textContent = aidSummary(room.aid);
+  } else if ($('lobbySetDialog').open) {
+    $('lobbySetDialog').close();
   }
 
   $('btnStartGame').hidden = !host;
@@ -2394,6 +2382,14 @@ $('btnAid').addEventListener('click', () => {
   $('aidDialog').showModal();
 });
 $('btnAidClose').addEventListener('click', () => $('aidDialog').close());
+$('btnLobbySet').addEventListener('click', () => {
+  const d = $('lobbySetDialog');
+  d.showModal();
+  // 開いたときは見出しから見せる（はじめに選べる欄へ飛んで、見出しが隠れないように）
+  $('lobbySetTitle').focus({ preventScroll: true });
+  d.scrollTop = 0;
+});
+$('btnLobbySetClose').addEventListener('click', () => $('lobbySetDialog').close());
 $('btnResign').addEventListener('click', resign);
 $('btnDeclare').addEventListener('click', declare);
 $('btnReset').addEventListener('click', () => {

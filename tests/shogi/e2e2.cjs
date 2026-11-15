@@ -90,7 +90,9 @@ const pack = (m) => (m.from < 0 ? { f: -1, t: m.to, d: m.drop, p: false } : { f:
   await H.page.click('#btnReset');
   await L.waitScreen(A, 'waiting');
   await H.page.selectOption('#seat1', 'ひかり');
+  await H.page.click('#btnLobbySet');
   await H.page.click('#lobbyVariant input[value="hon"]');
+  await H.page.click('#btnLobbySetClose');
   await L.roomWhen(code, (r) => r.v === 'hon' && r.seats.g === 'ひかり');
   await H.page.click('#btnStartGame');
   await L.waitScreen(A, 'game');

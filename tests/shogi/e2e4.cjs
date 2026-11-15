@@ -15,11 +15,13 @@ const movesOf = (room) => (room?.game?.moves ? Object.keys(room.game.moves).leng
   await L.joinRoom(G, 'みどり', code);
 
   // ── 持ち時間の設定 ──
+  await H.page.click('#btnLobbySet');
   check('T1 ホストに持ち時間の欄', (await L.visible(H, '#lobbyClock')) && (await H.page.inputValue('#clockMain')) === '0' && (await H.page.inputValue('#clockByo')) === '0');
-  check('T2 参加者にははじめ「なし」', await waitFor(async () => (await L.text(G, '#lobbyClockView')) === 'なし'));
+  check('T2 参加者にははじめ「なし」', await waitFor(async () => (await L.text(G, '#sumClock')) === 'なし'));
   await H.page.selectOption('#clockByo', '10');
+  await H.page.click('#btnLobbySetClose');
   check('T3 ルームに秒読みが入る', !!(await L.roomWhen(code, (r) => r.clock && r.clock.b === 10 && r.clock.m === 0)));
-  check('T4 参加者に設定が見える', await waitFor(async () => (await L.text(G, '#lobbyClockView')) === '持ち時間なし・秒読み 10秒'), await L.text(G, '#lobbyClockView'));
+  check('T4 参加者に設定が見える', await waitFor(async () => (await L.text(G, '#sumClock')) === '持ち時間なし・秒読み 10秒'), await L.text(G, '#sumClock'));
 
   await H.page.selectOption('#seat0', 'ほすと');
   await H.page.selectOption('#seat1', 'みどり');
@@ -42,8 +44,10 @@ const movesOf = (room) => (room?.game?.moves ? Object.keys(room.game.moves).leng
   // ── ルームの CPU ──
   await H.page.click('#btnRelobby');
   await L.waitScreen(H, 'waiting');
+  await H.page.click('#btnLobbySet');
   await H.page.selectOption('#clockMain', '3');
   await H.page.selectOption('#clockByo', '0');
+  await H.page.click('#btnLobbySetClose');
   check('T13 持ち時間を変える', !!(await L.roomWhen(code, (r) => r.clock && r.clock.m === 3 && !r.clock.b)));
   const cpuOpts = await H.page.$$eval('#seat1 option', (os) => os.map((o) => o.textContent));
   check('T14 席に CPU の3つ', ['CPU（よわい）', 'CPU（ふつう）', 'CPU（つよい）'].every((x) => cpuOpts.includes(x)), cpuOpts);
