@@ -66,6 +66,18 @@ const movesOf = (room) => (room?.game?.moves ? Object.keys(room.game.moves).leng
   check('T21 またホストの番', await waitFor(async () => (await L.status(H)).startsWith('あなたの番（▲先手）')), await L.status(H));
   await H.page.click('#btnUndo');
   check('T23 1手もどすで CPU の手と自分の手をもどす', !!(await L.roomWhen(code, (r) => movesOf(r) === 0)));
+  // CPU の入玉宣言をもどす（宣言の条件は、CPU（後手）の番だけそろうように差しかえる）
+  await waitFor(async () => (await L.status(H)).startsWith('あなたの番'));
+  for (const c of [H, G]) await c.page.evaluate(() => { const E = window.ShogiEngine; E.__canDeclare = E.canDeclare; E.canDeclare = (S) => S.turn === 1; });
+  await L.move(H, 15, 10);
+  const rd = await L.roomWhen(code, (r) => r.game && r.game.declare === 'g', 8000);
+  check('T23d ルームの CPU が入玉宣言する', !!rd && movesOf(rd) === 1);
+  check('T23e 結果「入玉宣言。後手（CPU）の勝ち」', await waitFor(async () => (await L.status(G)).startsWith('入玉宣言。△後手（CPU）の勝ち！')), await L.status(G));
+  await H.page.click('#btnUndo');
+  const ru = await L.roomWhen(code, (r) => r.game && r.game.declare == null && movesOf(r) === 0, 8000);
+  await L.sleep(1500);
+  check('T23f 1手もどすと CPU の宣言と自分の手が消え、ホストの番', !!ru && movesOf(await L.roomOf(code)) === 0 && (await L.status(H)).startsWith('あなたの番'), await L.status(H));
+  for (const c of [H, G]) await c.page.evaluate(() => { const E = window.ShogiEngine; E.canDeclare = E.__canDeclare; });
   // ホストの通信が切れている間は、CPU は指さない
   await waitFor(async () => (await L.status(H)).startsWith('あなたの番'));
   await L.move(H, 15, 10);

@@ -40,8 +40,15 @@ const pack = (m) => (m.from < 0 ? { f: -1, t: m.to, d: m.drop, p: false } : { f:
   await H.page.evaluate(() => firebase.database().goOffline());
   H.offlineOk = true;
   check('T1 ホストが切れると参加者に「ホストの戻りを待っています」', await waitFor(async () => (await L.visible(A, '#hostOffOverlay')), 15000));
+  const off = await A.page.evaluate(() => ({
+    role: document.getElementById('hostOffOverlay').getAttribute('role'),
+    focus: document.activeElement?.id,
+    boardInert: !!document.getElementById('board').closest('[inert]'),
+  }));
+  check('T1b 待つ画面はダイアログとして読まれ、「退出する」に移り、うしろの盤は押せない', off.role === 'dialog' && off.focus === 'btnOverlayLeave' && off.boardInert, off);
   await H.page.evaluate(() => firebase.database().goOnline());
   check('T2 ホストが戻るとお知らせが消える', await waitFor(async () => !(await L.visible(A, '#hostOffOverlay')), 15000));
+  check('T2b 戻るとうしろの画面がまた押せる', !(await A.page.evaluate(() => !!document.querySelector('body > [inert]'))));
   let room = await L.roomWhen(code, (r) => r.hostConnected === true);
   check('T3 ホストの在室が戻る', room.hostConnected === true);
 
@@ -60,6 +67,8 @@ const pack = (m) => (m.from < 0 ? { f: -1, t: m.to, d: m.drop, p: false } : { f:
   await X.page.fill('#guestName', 'そら');
   await X.page.click('#btnJoinRoom');
   await L.waitText(X, '#joinError', 'その名前は使われている');
+  const err = await X.page.evaluate(() => [document.getElementById('joinError').getAttribute('role'), document.getElementById('guestName').getAttribute('aria-invalid'), document.getElementById('guestName').getAttribute('aria-describedby')]);
+  check('D4b まちがいは読み上げられ、名前の欄が「まちがい」になる', err[0] === 'alert' && err[1] === 'true' && err[2] === 'joinError', err);
   check('D5 席の名前は別の人には使えない', true);
   await X.page.close();
 
