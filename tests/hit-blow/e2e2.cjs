@@ -182,5 +182,31 @@ const { E, check, sleep, waitFor } = L;
   await L.waitScreen(A, 'top');
   check('K1 ルームを閉じる', (await L.roomOf(code)) === null);
 
+  // ── L. ホストが「見る」で答えを出したままルームを閉じても、次のルームの最初のゲームでは折りたたみ ──
+  // （どちらのルームも最初のゲームは同じ番号になるので、出している印が残ると開いたまま出ていた）
+  const hostDuelFirstGame = async () => {
+    const c = await L.createRoom(H, 'メンター');
+    await H.page.fill('#proxyName', 'ゆい');
+    await H.page.click('#btnAddProxy');
+    await L.roomWhen(c, (r) => r.seated?.['ゆい']);
+    await H.page.click('#btnStartGame');
+    await L.waitVisible(H, '#btnSetupBlind');
+    await H.page.click('#btnSetupBlind');
+    await L.roomWhen(c, (r) => r.game?.phase === 'play');
+    return c;
+  };
+  const code2 = await hostDuelFirstGame();
+  await L.waitVisible(H, '#btnMineToggle');
+  await H.page.click('#btnMineToggle');
+  check('L1 「見る」で出す', await waitFor(async () => (await H.page.$$('#mineRow .hbw-peg')).length === 3));
+  await H.page.click('#btnLeave');
+  await L.waitScreen(H, 'top');
+  await L.roomWhen(code2, (r) => !r, 8000).catch(() => {});
+  await hostDuelFirstGame();
+  await L.waitVisible(H, '#btnMineToggle');
+  check('L2 次のルームでは折りたたみのまま', (await L.text(H, '#btnMineToggle')) === '見る' && (await H.page.$$('#mineRow .hbw-peg')).length === 0);
+  await H.page.click('#btnLeave');
+  await L.waitScreen(H, 'top');
+
   await L.finishAll(server);
 })().catch((e) => { console.error(e); process.exit(1); });

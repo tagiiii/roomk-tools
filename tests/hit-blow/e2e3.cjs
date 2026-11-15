@@ -27,6 +27,16 @@ const localS = (c) => c.page.evaluate(() => JSON.parse(sessionStorage.getItem('h
   await L.guess(M, S.secrets[1].slice().reverse());
   check('A8 番が2人目に', await waitFor(async () => (await L.status(M)) === '2人目の番'));
   check('A9 ヒントが出る', (await L.tries(M)).length === 1);
+  // せまい画面で一覧が上下にならぶときは、番の人（2人目）の一覧が上
+  const wide = M.page.viewportSize();
+  await M.page.setViewportSize({ width: 375, height: 760 });
+  const boardTops = () => M.page.$$eval('#boards .hbw-board', (bs) => bs.map((b) => ({ active: b.classList.contains('is-active'), top: b.getBoundingClientRect().top, title: b.querySelector('.hbw-board__title').textContent })));
+  let tops = await boardTops();
+  const act = tops.find((b) => b.active);
+  check('A10 375px では番の人の一覧が上', !!act && act.title.startsWith('2人目') && tops.every((b) => b.active || b.top > act.top), tops);
+  await M.page.setViewportSize(wide);
+  tops = await boardTops();
+  check('A11 広い画面では左右の並びはそのまま（1人目が左）', tops[0].title.startsWith('1人目') && Math.abs(tops[0].top - tops[1].top) < 2, tops);
   // 読み込み直しても続きから
   await M.page.reload();
   await L.waitScreen(M, 'game');
@@ -72,10 +82,13 @@ const localS = (c) => c.page.evaluate(() => JSON.parse(sessionStorage.getItem('h
   await L.guess(M, S.secrets[0].slice().reverse());
   await L.guess(M, S.secrets[0].slice(1).concat(S.secrets[0][0]));
   check('D7 3人目の番', await waitFor(async () => (await L.status(M)) === '3人目の番'));
-  check('D8 一覧にだれの予想か', (await L.text(M, '#boards')).includes('1人目1回め') && (await L.text(M, '#boards')).includes('2人目2回め'));
+  // 「○回め」はその人が何回めに出したか（全体の通し番号ではない）
+  check('D8 一覧にだれの予想か', (await L.text(M, '#boards')).includes('1人目1回め') && (await L.text(M, '#boards')).includes('2人目1回め'));
   // 番をとばす（1台の画面でも）
   await M.page.click('#btnSkip');
   check('D8b 1台の画面でも番をとばせる', await waitFor(async () => (await L.status(M)) === '1人目の番') && (await L.tries(M)).length === 2);
+  await L.guess(M, S.secrets[0].slice().reverse());
+  check('D8c 同じ人の2つめは「2回め」', await waitFor(async () => (await L.text(M, '#boards')).includes('1人目2回め')));
   // 最初からやりなおす
   await M.page.click('#btnReset');
   check('D9 最初からやりなおす', await waitFor(async () => (await L.tries(M)).length === 0) && (await L.status(M)) === '1人目の番');

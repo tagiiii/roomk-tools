@@ -364,6 +364,8 @@ function cleanupRoom() {
     presenceAt: 0,
     leaving: false,
     watchTimer: null,
+    // 次のルームの最初のゲームで、ホストの答えが開いたまま出ないように
+    mineShownFor: null,
   });
   clearSession();
   resetBoxes();
@@ -1361,7 +1363,6 @@ function setStatus(text, cls, key) {
 function renderGame() {
   const V = viewModel();
   const S = V.S;
-  const L = E.levelOf(S.level);
   const duel = S.mode === 'duel';
   const local = state.role === 'local';
   $('gameSub').textContent = E.MODES[S.mode].name + '・' + levelText(S.level);
@@ -1414,7 +1415,8 @@ function renderGame() {
   // 答えを決める
   const needSetup = duel && S.phase === 'setup' && V.me >= 0 && !S.secrets[V.me];
   $('setupBox').hidden = !needSetup;
-  $('btnSetupBlind').hidden = !(needSetup && state.role === 'host');  if (needSetup) buildInput($('setupSlots'), $('setupPalette'), $('btnSetupOk'), 'secretPick', S, !state.sending);
+  $('btnSetupBlind').hidden = !(needSetup && state.role === 'host');
+  if (needSetup) buildInput($('setupSlots'), $('setupPalette'), $('btnSetupOk'), 'secretPick', S, !state.sending);
 
   // 予想を出す
   const canGuess = V.can(S.turn);
@@ -1479,7 +1481,12 @@ function renderBoards(V) {
     b.append(makeElement('h2', 'hbw-board__title', title));
     const list = makeElement('div', 'hbw-board__list');
     if (!entries.length) list.append(makeElement('p', 'hbw-board__empty', 'まだ予想はありません'));
-    entries.forEach(({ t, k }, n) => list.append(tryRow(t, n + 1, k >= prev, withWho ? V.label(t.by) : null)));
+    // 「○回め」は、その人が何回めに出した予想か（みんなで対戦で、全体の通し番号に読めないように）
+    const counts = {};
+    entries.forEach(({ t, k }) => {
+      counts[t.by] = (counts[t.by] || 0) + 1;
+      list.append(tryRow(t, counts[t.by], k >= prev, withWho ? V.label(t.by) : null));
+    });
     b.append(list);
     lists.push(list);
     return b;
@@ -1498,6 +1505,8 @@ function renderBoards(V) {
     nodes.push(make('みんなの予想', all, S.phase === 'play', true));
   }
   boards.classList.toggle('is-duel', duel);
+  // 自分の席がない画面（1台の画面・見るだけ）では、せまい画面で番の人の一覧を先に出す（style.css）
+  boards.classList.toggle('has-me', V.me >= 0);
   boards.replaceChildren(...nodes);
   lists.forEach((l) => { l.scrollTop = l.scrollHeight; });
 }

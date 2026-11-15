@@ -88,7 +88,6 @@ body { background: var(--color-bg); }
 .hbw-tag--muted { background: var(--color-border); color: var(--color-text); }
 .hbw-tag--watch { background: transparent; color: var(--color-muted); border: 1px solid var(--color-border); }
 .hbw-tag--warn { background: #FFF4E5; color: var(--color-warning); }
-.hbw-tag--win { background: var(--color-success); }
 .hbw-proxyadd { margin-top: 16px; }
 .hbw-proxyadd .btn { flex: none; white-space: nowrap; }
 
@@ -172,7 +171,6 @@ body { background: var(--color-bg); }
 
 @keyframes hbw-pop { from { transform: scale(0.6); } to { transform: scale(1); } }
 @keyframes hbw-slide { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: none; } }
-@keyframes hbw-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
 @media (prefers-reduced-motion: reduce) {
   .hbw-peg, .hbw-try, .hbw-status { animation: none !important; }
 }
@@ -189,6 +187,8 @@ body { background: var(--color-bg); }
   .hbw-roombar .btn { padding: 4px 8px; font-size: 13px; min-height: 36px; }
   .hbw-main { padding: 14px 12px 56px; }
   .hbw-boards.is-duel { grid-template-columns: minmax(0, 1fr); }
+  /* 上下にならぶときは、番の人の一覧を上に（自分の席がある画面は「あなたが当てる」が先のまま） */
+  .hbw-boards.is-duel:not(.has-me) .hbw-board.is-active { order: -1; }
   .hbw-status { font-size: 18px; }
   .hbw-status.is-result { font-size: 22px; }
   .hbw-try { grid-template-columns: 3.2em 1fr; }
