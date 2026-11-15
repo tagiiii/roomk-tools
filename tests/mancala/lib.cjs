@@ -164,7 +164,7 @@ const readBoard = (c) => c.page.$$eval('#board .mc-hole', (hs) => {
 const turnOf = (c) => c.page.evaluate(() => (document.querySelector('.mc-seat--b.is-turn') ? 'b' : document.querySelector('.mc-seat--w.is-turn') ? 'w' : null));
 const goals = (c) => c.page.evaluate(() => ({ b: Number(document.querySelector('.mc-seat__count[data-color="b"]')?.textContent), w: Number(document.querySelector('.mc-seat__count[data-color="w"]')?.textContent) }));
 const playable = (c) => c.page.$$eval('#board .mc-hole.is-playable', (xs) => xs.map((x) => Number(x.dataset.i)).sort((a, b) => a - b));
-const hints = (c) => c.page.$$eval('#board .mc-hint:not([hidden])', (xs) => xs.map((x) => Number(x.parentElement.dataset.i)).sort((a, b) => a - b));
+const hints = (c) => c.page.$$eval('#board .mc-holehint:not([hidden])', (xs) => xs.map((x) => Number(x.parentElement.dataset.i)).sort((a, b) => a - b));
 const bottomRow = (c) => c.page.$$eval('#board .mc-hole', (xs) => xs.filter((x) => x.style.gridRow === '2').map((x) => Number(x.dataset.i)));
 const status = (c) => text(c, '#gameStatus');
 // 石を入れる動きがおわるまで待つ（動きの間は盤が押せない）
