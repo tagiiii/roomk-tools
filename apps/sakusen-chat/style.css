@@ -654,8 +654,10 @@ body.sc-chatting .howto-fab {
 
 /* ───────── たしかめる・画像を大きく見る ───────── */
 
+/* dialog は字の色を引きつがないので、ほかの画面と同じ色にする */
 .sc-dialog {
   margin: auto;
+  color: var(--color-text);
   width: min(92vw, 420px);
   padding: 24px;
   border: 0;
