@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>なにするルーレット（試作） | あそびのたな</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,500,1,0" rel="stylesheet" />
+<link rel="stylesheet" href="../../apps/shared/css/design-system.css?v=20261107" />
+<style>
+  body{
+    --bg:#F6ECD8; --paper:#FFFDF8; --ink:#3F362D; --muted:#6B5D4F; --accent:#8A4A10; --accent-soft:#FFF1E0;
+    --sun:#F2B35C; --rose:#E8907B; --leaf:#B9C27A; --sky:#9CC8D3; --lilac:#C4A9D6; --sand:#E7C98F; --mint:#9FCFB4;
+    --hill1:#E7C98F; --hill2:#C99A55; --shadow:rgba(90,48,10,.14);
+    --zm:'Zen Maru Gothic','Noto Sans JP',sans-serif;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; height:100%; background:#2b241d; overflow:hidden; }
+  html body{ background-image:none; }
+  body{ font-family:'Noto Sans JP',sans-serif; color:var(--ink); }
+  body.idle{ cursor:none; }
+  .ms{ font-family:'Material Symbols Rounded'; font-weight:normal; line-height:1; display:inline-block; vertical-align:middle; }
+
+  /* 1600x900 の舞台を窓に合わせて拡大縮小する */
+  #stage{ position:absolute; left:50%; top:50%; width:1600px; height:900px; transform-origin:center; background:var(--bg); overflow:hidden; }
+  .paper{ filter:drop-shadow(5px 6px 0 var(--shadow)); }
+  .bg{ position:absolute; inset:0; pointer-events:none; }
+  .bg .paper{ position:absolute; }
+  .sun{ width:150px; height:150px; border-radius:50%; background:var(--sun); right:110px; top:-50px; }
+  .hill1{ width:1500px; height:420px; border-radius:50%; background:var(--hill1); left:-420px; bottom:-350px; transform:rotate(3deg); }
+  .hill2{ width:1200px; height:400px; border-radius:50%; background:var(--hill2); right:-330px; bottom:-355px; transform:rotate(-4deg); }
+
+  .view{ position:absolute; inset:0; display:none; }
+  body[data-view="ask"] #ask, body[data-view="wheel"] #wheel{ display:block; }
+
+  /* ───── 聞く画面（ひとこと＋したいこと） ───── */
+  .ask-head{ position:absolute; left:80px; top:56px; right:80px; display:flex; gap:40px; align-items:flex-start; }
+  .ask-title{ font-family:var(--zm); font-weight:900; font-size:64px; line-height:1.15; margin:0; white-space:nowrap; letter-spacing:.02em; }
+  .ask-title small{ display:block; font-size:28px; font-weight:700; color:var(--muted); margin-top:14px; letter-spacing:0; }
+  .topic{ flex:1; background:var(--paper); border-radius:28px; padding:22px 30px 24px; position:relative; margin-top:6px; }
+  .topic::before{ content:''; position:absolute; left:-22px; top:46px; border:14px solid transparent; border-right:22px solid var(--paper); border-left:0; }
+  .topic-label{ font-family:var(--zm); font-weight:700; font-size:22px; color:var(--accent); display:flex; align-items:center; gap:8px; }
+  .topic-label .ms{ font-size:28px; }
+  .topic-text{ font-family:var(--zm); font-weight:900; font-size:44px; line-height:1.3; margin-top:6px; }
+  .topic-text.pop{ animation:pop .45s cubic-bezier(.3,1.6,.5,1); }
+  @keyframes pop{ from{ transform:scale(.85); opacity:0; } to{ transform:scale(1); opacity:1; } }
+
+  .cards{ position:absolute; left:80px; right:80px; top:300px; display:grid; grid-template-columns:repeat(4,1fr); grid-auto-rows:220px; align-items:start; gap:36px 28px; }
+  .opt{ margin:0; position:relative; background:var(--paper); border-radius:26px; height:220px; padding:22px 22px 18px; cursor:pointer; user-select:none;
+         display:flex; flex-direction:column; transition:transform .15s; border:0; text-align:left; font:inherit; color:inherit; }
+  .opt:hover{ transform:translateY(-3px); }
+  .opt .num{ position:absolute; left:-12px; top:-14px; width:62px; height:62px; border-radius:50%; background:var(--c); color:var(--ink);
+              font-family:var(--zm); font-weight:900; font-size:36px; display:flex; align-items:center; justify-content:center; }
+  .opt .ic{ font-size:64px; color:var(--c-dark,var(--accent)); align-self:flex-end; }
+  .opt .nm{ font-family:var(--zm); font-weight:900; font-size:31px; white-space:nowrap; letter-spacing:-.01em; line-height:1.2; margin-top:auto; }
+  .opt .sub{ font-size:19px; color:var(--muted); margin-top:4px; min-height:1.4em; }
+  .tokens{ position:absolute; left:22px; top:22px; right:90px; display:flex; flex-wrap:wrap; gap:6px; padding-left:44px; }
+  .tok{ width:22px; height:22px; border-radius:50%; background:var(--c); box-shadow:inset 0 0 0 3px rgba(255,255,255,.6); animation:tokin .35s cubic-bezier(.3,1.7,.5,1); }
+  @keyframes tokin{ from{ transform:scale(0); } to{ transform:scale(1); } }
+  .opt.bump{ animation:bump .3s; }
+  @keyframes bump{ 40%{ transform:scale(1.04) rotate(-1deg); } }
+  .opt.note{ background:transparent; filter:none; cursor:default; justify-content:center; align-items:flex-start; padding:16px 10px; }
+  .opt.note:hover{ transform:none; }
+  .note-line{ display:flex; align-items:center; gap:12px; font-family:var(--zm); font-weight:700; font-size:26px; line-height:1.35; margin:6px 0; }
+  .note-line .ms{ font-size:34px; color:var(--accent); }
+
+  /* ───── ルーレット画面 ───── */
+  .wheel-wrap{ position:absolute; left:110px; top:90px; width:720px; height:720px; }
+  #wheelSvg{ position:absolute; inset:0; width:720px; height:720px; overflow:visible; }
+  .rim{ position:absolute; inset:-26px; border-radius:50%; background:var(--accent); }
+  .bulb{ position:absolute; width:18px; height:18px; margin:-9px; border-radius:50%; background:#FFE7B0; opacity:.45; }
+  .bulb.on{ opacity:1; box-shadow:0 0 14px 4px rgba(255,214,120,.8); }
+  .pointer{ position:absolute; left:50%; top:-58px; width:72px; height:96px; margin-left:-36px; transform-origin:50% 22px; z-index:3; }
+  .pointer svg{ width:100%; height:100%; overflow:visible; }
+  .pointer.tick{ animation:tick .16s ease-out; }
+  @keyframes tick{ 0%{ transform:rotate(0); } 35%{ transform:rotate(-22deg); } 100%{ transform:rotate(0); } }
+  .hub{ position:absolute; left:50%; top:50%; width:170px; height:170px; margin:-85px; border-radius:50%; background:var(--paper); border:8px solid var(--accent);
+        display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; z-index:2; font:inherit; color:var(--accent); }
+  .hub .ms{ font-size:56px; }
+  .hub span:last-child{ font-family:var(--zm); font-weight:900; font-size:30px; margin-top:2px; }
+  .hub:disabled{ cursor:default; opacity:.9; }
+  body.spinning .hub span{ animation:wob .5s infinite; }
+  @keyframes wob{ 50%{ transform:rotate(12deg) scale(1.08); } }
+
+  .side{ position:absolute; left:930px; top:90px; right:80px; bottom:90px; display:flex; flex-direction:column; }
+  .side h2{ font-family:var(--zm); font-weight:900; font-size:54px; margin:0 0 6px; line-height:1.2; }
+  .side .lead{ font-size:24px; color:var(--muted); margin:0 0 26px; font-weight:500; }
+  .legend{ display:flex; flex-direction:column; gap:12px; }
+  .lg{ display:flex; align-items:center; gap:14px; background:var(--paper); border-radius:18px; padding:12px 18px; font-family:var(--zm); font-weight:700; font-size:28px; cursor:pointer; border:0; text-align:left; color:inherit; transition:opacity .2s; }
+  .lg .sw{ width:30px; height:30px; border-radius:50%; background:var(--c); flex:none; }
+  .lg .ms{ font-size:34px; color:var(--muted); }
+  .lg.off{ opacity:.35; text-decoration:line-through; }
+  .lg.won{ outline:4px solid var(--accent); }
+  .flow{ margin-top:auto; background:var(--accent-soft); border-radius:22px; padding:18px 24px; }
+  .flow-h{ font-family:var(--zm); font-weight:900; font-size:24px; color:var(--accent); display:flex; align-items:center; gap:8px; }
+  .flow ol{ list-style:none; margin:8px 0 0; padding:0; display:flex; flex-wrap:wrap; gap:10px 14px; align-items:center; }
+  .flow li{ font-family:var(--zm); font-weight:900; font-size:28px; display:flex; align-items:center; gap:8px; }
+  .flow li .n{ width:40px; height:40px; border-radius:50%; background:var(--accent); color:#fff; display:flex; align-items:center; justify-content:center; font-size:22px; }
+  .flow li + li::before{ content:'arrow_forward'; font-family:'Material Symbols Rounded'; font-size:28px; color:var(--muted); margin-right:4px; }
+  .flow .empty{ font-size:22px; color:var(--muted); font-weight:500; margin-top:6px; }
+
+  /* 決まったとき */
+  .result{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(63,54,45,.35); opacity:0; pointer-events:none; transition:opacity .3s; z-index:10; }
+  .result.show{ opacity:1; pointer-events:auto; }
+  .result-card{ background:var(--paper); border-radius:40px; padding:46px 80px 44px; text-align:center; min-width:760px; transform:scale(.6) rotate(-4deg); transition:transform .5s cubic-bezier(.3,1.6,.5,1); }
+  .result.show .result-card{ transform:scale(1) rotate(-1.5deg); }
+  .result-kicker{ font-family:var(--zm); font-weight:900; font-size:34px; color:var(--accent); }
+  .result-ic{ font-size:120px; color:var(--accent); margin:10px 0 0; }
+  .result-name{ font-family:var(--zm); font-weight:900; font-size:88px; line-height:1.15; margin:6px 0 18px; }
+  .result-note{ display:inline-flex; gap:10px; align-items:center; font-family:var(--zm); font-weight:700; font-size:26px; color:var(--muted); background:var(--accent-soft); border-radius:999px; padding:10px 26px; }
+  .result-hint{ font-size:20px; color:var(--muted); margin-top:18px; }
+  body.idle .result-hint{ visibility:hidden; }
+  .confetti{ position:absolute; top:-40px; width:16px; height:26px; border-radius:4px; z-index:11; pointer-events:none; animation:fall var(--t) cubic-bezier(.3,.4,.6,1) forwards; animation-delay:var(--dl); }
+  @keyframes fall{ to{ transform:translate(var(--dx),980px) rotate(var(--rot)); } }
+
+  /* 操作の帯（マウスを止めると消える） */
+  #bar{ position:fixed; left:50%; bottom:14px; transform:translateX(-50%); display:flex; gap:8px; align-items:center; flex-wrap:wrap; justify-content:center;
+        background:rgba(43,36,29,.92); color:#fff; padding:8px 12px; border-radius:16px; z-index:50; transition:opacity .3s; max-width:calc(100vw - 24px); }
+  #bar button, #bar label{ font:500 14px 'Noto Sans JP',sans-serif; color:#fff; background:rgba(255,255,255,.12); border:0; border-radius:10px; padding:8px 12px; cursor:pointer; display:inline-flex; align-items:center; gap:6px; min-height:40px; }
+  #bar button:hover{ background:rgba(255,255,255,.22); }
+  #bar button.main{ background:#E8907B; color:#2b241d; font-weight:700; }
+  #bar button:disabled{ opacity:.4; cursor:default; }
+  #bar .ms{ font-size:20px; }
+  #bar input{ font:14px 'Noto Sans JP',sans-serif; border:0; border-radius:8px; padding:6px 8px; width:150px; }
+  #bar .sep{ width:1px; height:26px; background:rgba(255,255,255,.25); }
+  body[data-view="ask"] .w-only, body[data-view="wheel"] .a-only{ display:none !important; }
+  body.idle #bar, body.idle .howto-fab, body.idle .howto-feedback-fab{ opacity:0; pointer-events:none; }
+  .howto-fab, .howto-feedback-fab{ transition:opacity .3s; }
+
+  @media (prefers-reduced-motion: reduce){
+    .confetti{ display:none; }
+  }
+</style>
+</head>
+<body data-view="ask">
+<div id="stage">
+  <div class="bg">
+    <div class="paper sun"></div>
+    <div class="paper hill1"></div>
+    <div class="paper hill2"></div>
+  </div>
+
+  <!-- 聞く画面 -->
+  <section id="ask" class="view" aria-label="この時間、なにする？">
+    <div class="ask-head">
+      <h1 class="ask-title">この時間、<br>なにする？<small>ひとことと、番号をおしえてね</small></h1>
+      <div class="topic paper">
+        <div class="topic-label"><span class="ms" aria-hidden="true">chat_bubble</span>ひとことのお題</div>
+        <div class="topic-text" id="topicText"></div>
+      </div>
+    </div>
+    <div class="cards" id="cards"></div>
+  </section>
+
+  <!-- ルーレット画面 -->
+  <section id="wheel" class="view" aria-label="ルーレット">
+    <div class="wheel-wrap">
+      <div class="rim paper" id="rim"></div>
+      <svg id="wheelSvg" viewBox="-360 -360 720 720" aria-hidden="true"><g id="wheelG"></g></svg>
+      <div class="pointer" id="pointer" aria-hidden="true">
+        <svg viewBox="0 0 72 96"><path d="M36 92 L8 26 A30 30 0 1 1 64 26 Z" fill="#C2502E" stroke="#FFFDF8" stroke-width="6" stroke-linejoin="round"/><circle cx="36" cy="24" r="9" fill="#FFFDF8"/></svg>
+      </div>
+      <button class="hub" id="hub" type="button"><span class="ms" aria-hidden="true">casino</span><span>まわす</span></button>
+    </div>
+    <div class="side">
+      <h2 id="wheelTitle">ルーレットで決めよう</h2>
+      <p class="lead" id="wheelLead">えらんでくれた数だけ、マスが大きくなるよ</p>
+      <div class="legend" id="legend"></div>
+      <div class="flow">
+        <div class="flow-h"><span class="ms" aria-hidden="true">route</span>この時間のながれ</div>
+        <ol id="flowList"></ol>
+        <div class="empty" id="flowEmpty">ルーレットで決まったものが、ここに並ぶよ</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="result" id="result" aria-live="polite">
+    <div class="result-card paper">
+      <div class="result-kicker" id="resultKicker">決まり！</div>
+      <span class="ms result-ic" id="resultIc" aria-hidden="true">celebration</span>
+      <div class="result-name" id="resultName"></div>
+      <div class="result-note"><span class="ms" aria-hidden="true">visibility</span>見てるだけ・途中からでもOK</div>
+      <div class="result-hint">クリックで閉じる</div>
+    </div>
+  </div>
+</div>
+
+<div id="bar">
+  <button type="button" class="a-only" id="btnTopic" title="T"><span class="ms" aria-hidden="true">shuffle</span>お題をかえる</button>
+  <label class="a-only">その他：<input id="otherInput" type="text" maxlength="14" placeholder="中身を書く" /></label>
+  <button type="button" class="a-only" id="btnClear"><span class="ms" aria-hidden="true">restart_alt</span>えらんだ数を消す</button>
+  <button type="button" class="a-only main" id="btnToWheel" title="Enter"><span class="ms" aria-hidden="true">casino</span>ルーレットへ</button>
+  <button type="button" class="w-only" id="btnBack"><span class="ms" aria-hidden="true">arrow_back</span>もどる</button>
+  <button type="button" class="w-only main" id="btnSpin" title="Space"><span class="ms" aria-hidden="true">casino</span>まわす</button>
+  <button type="button" class="w-only" id="btnNext"><span class="ms" aria-hidden="true">playlist_add</span>つぎにやることも決める</button>
+  <button type="button" class="w-only" id="btnGames"><span class="ms" aria-hidden="true">sports_esports</span>遊ぶゲームも決める</button>
+  <span class="sep"></span>
+  <button type="button" id="btnReset"><span class="ms" aria-hidden="true">replay</span>はじめから</button>
+  <button type="button" id="btnFull" title="F"><span class="ms" aria-hidden="true">fullscreen</span>全画面</button>
+</div>
+
+<script>
+// なにするルーレット（試作）
+// コマのはじめに、ひとこと（お題）を言いながら、したいことの番号をおしえてもらう。
+// 進行役がカードを押して数を足し、ルーレットで決める。だれが何をえらんだかは出さない。保存もしない。
+(() => {
+  const OPTIONS = [
+    { id:'free',  name:'フリートーク',       icon:'forum',          c:'#F2B35C', dark:'#9A5B12' },
+    { id:'theme', name:'テーマトークカード', icon:'style',          c:'#E8907B', dark:'#A5432C' },
+    { id:'play',  name:'みんなで遊ぶ',       icon:'sports_esports', c:'#9FCFB4', dark:'#2F7550' },
+    { id:'quiz',  name:'クイズ・なぞなぞ',   icon:'quiz',           c:'#9CC8D3', dark:'#2F6B7A' },
+    { id:'radio', name:'ラジオ参加',         icon:'radio',          c:'#C4A9D6', dark:'#6A4A84' },
+    { id:'omakase', name:'おまかせ',         icon:'auto_awesome',   c:'#E7C98F', dark:'#8A6A20', sub:'どれになってもOK', noWheel:true },
+    { id:'other', name:'その他',             icon:'edit_note',      c:'#B9C27A', dark:'#5E6A1E' },
+  ];
+  const GAMES = [
+    { id:'g1', name:'なんの絵を描いているでしょう', short:'なんの絵？', icon:'brush' },
+    { id:'g2', name:'ドまんなか',     icon:'adjust' },
+    { id:'g3', name:'ピタハメ',       icon:'extension' },
+    { id:'g4', name:'ゲッサー',       icon:'psychology_alt' },
+    { id:'g5', name:'まぎれ絵師',     icon:'draw' },
+    { id:'g6', name:'お絵描き伝言ゲーム', short:'お絵描き伝言', icon:'gesture' },
+  ];
+  const GAME_COLORS = ['#F2B35C','#E8907B','#9FCFB4','#9CC8D3','#C4A9D6','#B9C27A'];
+  const TOPICS = [
+    'いまの気分を天気でいうと？', 'さいきん、ちょっとうれしかったこと', 'いま食べたいもの', 'さいきんハマっているもの',
+    '行ってみたい場所', '好きな季節とそのわけ', 'いまの元気を色でいうと？', 'さいきん見た動画やアニメ',
+    '動物になれるなら何になる？', '好きなおにぎりの具', 'もらってうれしいもの', '超能力を1つもらえるなら？',
+    '好きなお菓子', 'ちょっと自慢したいもの', 'いま聞いている曲', '好きな飲みもの',
+    'もし1日だけ何でもできるなら？', '好きなキャラクター', 'さいきん買ってよかったもの', '朝ごはんに食べたいもの',
+  ];
+
+  const $ = (id) => document.getElementById(id);
+  const stage = $('stage');
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const SVGNS = $('wheelSvg').namespaceURI;
+
+  let votes = {}; OPTIONS.forEach(o => votes[o.id] = 0);
+  let otherName = '';
+  let topicIdx = Math.floor(Math.random() * TOPICS.length);
+  let mode = 'main';          // main=したいこと / games=遊ぶゲーム
+  let excluded = new Set();   // ルーレットから外したもの（凡例を押す）
+  let flow = [];              // 決まったもの
+  let segs = [];              // いまのマス [{key,name,icon,c,a0,a1}]
+  let rot = 0, spinning = false, lastWon = null;
+
+  // 舞台の拡大縮小
+  function fit(){ const s = Math.min(innerWidth/1600, innerHeight/900); stage.style.transform = `translate(-50%,-50%) scale(${s})`; }
+  addEventListener('resize', fit); fit();
+
+  // マウスを止めると帯を消す
+  let idleT;
+  function wake(){ document.body.classList.remove('idle'); clearTimeout(idleT); idleT = setTimeout(() => document.body.classList.add('idle'), 2500); }
+  ['mousemove','mousedown','keydown','touchstart'].forEach(e => addEventListener(e, wake, { passive:true })); wake();
+
+  // ───── 聞く画面 ─────
+  function showTopic(anim){
+    const el = $('topicText'); el.textContent = TOPICS[topicIdx];
+    if (anim){ el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); }
+  }
+  function optName(o){ return o.id === 'other' && otherName ? otherName : o.name; }
+
+  function buildCards(){
+    const box = $('cards'); box.textContent = '';
+    OPTIONS.forEach((o, i) => {
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'opt paper'; b.dataset.id = o.id;
+      b.style.setProperty('--c', o.c); b.style.setProperty('--c-dark', o.dark);
+      b.setAttribute('aria-label', `${i+1} ${o.name}（押すと1つ足す・右クリックで1つ減らす）`);
+      const num = document.createElement('span'); num.className = 'num'; num.textContent = i + 1;
+      const tok = document.createElement('span'); tok.className = 'tokens';
+      const ic = document.createElement('span'); ic.className = 'ms ic'; ic.setAttribute('aria-hidden','true'); ic.textContent = o.icon;
+      const nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = optName(o);
+      const sub = document.createElement('span'); sub.className = 'sub'; sub.textContent = o.sub || '';
+      b.append(num, tok, ic, nm, sub);
+      b.addEventListener('click', (e) => addVote(o.id, e.shiftKey ? -1 : 1));
+      b.addEventListener('contextmenu', (e) => { e.preventDefault(); addVote(o.id, -1); });
+      box.appendChild(b);
+    });
+    const note = document.createElement('div'); note.className = 'opt note';
+    [['chat','チャットに番号だけでもOK'], ['visibility','見てるだけ・途中からでもOK']].forEach(([ic, t]) => {
+      const p = document.createElement('div'); p.className = 'note-line';
+      const s = document.createElement('span'); s.className = 'ms'; s.setAttribute('aria-hidden','true'); s.textContent = ic;
+      p.append(s, document.createTextNode(t)); note.appendChild(p);
+    });
+    box.appendChild(note);
+    renderTokens();
+  }
+  function renderTokens(){
+    document.querySelectorAll('#cards .opt[data-id]').forEach(card => {
+      const id = card.dataset.id, tok = card.querySelector('.tokens');
+      const n = votes[id];
+      while (tok.children.length > n) tok.lastChild.remove();
+      while (tok.children.length < n){ const d = document.createElement('span'); d.className = 'tok'; tok.appendChild(d); }
+      card.querySelector('.nm').textContent = optName(OPTIONS.find(o => o.id === id));
+    });
+  }
+  function addVote(id, d){
+    votes[id] = Math.max(0, Math.min(12, votes[id] + d));
+    renderTokens();
+    const card = document.querySelector(`#cards .opt[data-id="${id}"]`);
+    if (card && d > 0){ card.classList.remove('bump'); void card.offsetWidth; card.classList.add('bump'); }
+  }
+
+  // ───── ルーレット ─────
+  function entries(){
+    if (mode === 'games'){
+      return GAMES.map((g, i) => ({ key:g.id, name:g.name, label:g.short || g.name, icon:g.icon, c:GAME_COLORS[i], w:1 }));
+    }
+    const wheelOpts = OPTIONS.filter(o => !o.noWheel);
+    let list = wheelOpts.filter(o => votes[o.id] > 0).map(o => ({ key:o.id, name:optName(o), label:optName(o), icon:o.icon, c:o.c, w:votes[o.id] }));
+    // まだだれもえらんでいない（おまかせだけ）なら、その他以外を同じ大きさで
+    if (!list.length) list = wheelOpts.filter(o => o.id !== 'other' || otherName).map(o => ({ key:o.id, name:optName(o), label:optName(o), icon:o.icon, c:o.c, w:1 }));
+    return list;
+  }
+  function activeEntries(){ return entries().filter(e => !excluded.has(e.key)); }
+
+  function buildWheel(){
+    const list = activeEntries();
+    const total = list.reduce((s, e) => s + e.w, 0) || 1;
+    const g = $('wheelG'); g.textContent = '';
+    segs = []; let a = 0;
+    const R = 340;
+    list.forEach(e => {
+      const span = 360 * e.w / total, a0 = a, a1 = a + span; a = a1;
+      segs.push({ ...e, a0, a1 });
+      const path = document.createElementNS(SVGNS, 'path');
+      if (list.length === 1){
+        path.setAttribute('d', `M 0 ${-R} A ${R} ${R} 0 1 1 -0.01 ${-R} Z`);
+      } else {
+        const p0 = polar(R, a0), p1 = polar(R, a1);
+        path.setAttribute('d', `M 0 0 L ${p0.x} ${p0.y} A ${R} ${R} 0 ${span > 180 ? 1 : 0} 1 ${p1.x} ${p1.y} Z`);
+      }
+      path.setAttribute('fill', e.c); path.setAttribute('stroke', '#FFFDF8'); path.setAttribute('stroke-width', '5');
+      g.appendChild(path);
+      // ラベル（縦書き。マスが上に来たとき、外から内へ読める向き）
+      const mid = (a0 + a1) / 2;
+      const lg = document.createElementNS(SVGNS, 'g');
+      lg.setAttribute('transform', `rotate(${mid})`);
+      const fs = Math.max(16, Math.min(36, 222 / Math.max(4, e.label.length), span * 1.4));
+      const tx = document.createElementNS(SVGNS, 'text');
+      tx.setAttribute('x', 0); tx.setAttribute('y', -318); tx.setAttribute('writing-mode', 'tb'); tx.style.writingMode = 'vertical-rl';
+      tx.setAttribute('font-family', "'Zen Maru Gothic','Noto Sans JP',sans-serif"); tx.setAttribute('font-weight', '900');
+      tx.setAttribute('font-size', fs); tx.setAttribute('fill', '#3F362D');
+      tx.textContent = e.label;
+      lg.append(tx); g.appendChild(lg);
+    });
+    $('wheelG').setAttribute('transform', `rotate(${rot})`);
+    buildLegend();
+    const can = list.length > 0;
+    $('hub').disabled = !can || spinning; $('btnSpin').disabled = !can || spinning;
+  }
+  function polar(r, deg){ const t = (deg - 90) * Math.PI / 180; return { x: +(r * Math.cos(t)).toFixed(2), y: +(r * Math.sin(t)).toFixed(2) }; }
+
+  function buildLegend(){
+    const box = $('legend'); box.textContent = '';
+    entries().forEach(e => {
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'lg';
+      if (excluded.has(e.key)) b.classList.add('off');
+      if (lastWon === e.key && !spinning) b.classList.add('won');
+      b.style.setProperty('--c', e.c);
+      b.title = '押すとルーレットから外す／もどす';
+      const sw = document.createElement('span'); sw.className = 'sw';
+      const ic = document.createElement('span'); ic.className = 'ms'; ic.setAttribute('aria-hidden','true'); ic.textContent = e.icon;
+      b.append(sw, ic, document.createTextNode(e.name));
+      b.addEventListener('click', () => {
+        if (spinning) return;
+        if (excluded.has(e.key)) excluded.delete(e.key); else excluded.add(e.key);
+        buildWheel();
+      });
+      box.appendChild(b);
+    });
+    $('wheelTitle').textContent = mode === 'games' ? '遊ぶゲームを決めよう' : 'ルーレットで決めよう';
+    $('wheelLead').textContent = mode === 'games' ? 'どれになるかな？' : (entries().some(e => e.w > 1) ? 'えらんでくれた数だけ、マスが大きくなるよ' : 'どれになるかな？');
+    $('btnGames').style.display = (mode === 'main' && flow.some(f => f.key === 'play')) ? '' : 'none';
+    $('btnNext').disabled = !lastWon || spinning || activeEntries().filter(e => e.key !== lastWon).length === 0;
+  }
+
+  function renderFlow(){
+    const ol = $('flowList'); ol.textContent = '';
+    flow.forEach((f, i) => {
+      const li = document.createElement('li');
+      const n = document.createElement('span'); n.className = 'n'; n.textContent = i + 1;
+      li.append(n, document.createTextNode(f.name)); ol.appendChild(li);
+    });
+    $('flowEmpty').style.display = flow.length ? 'none' : '';
+  }
+
+  // 縁の電球
+  const bulbs = [];
+  (function makeBulbs(){
+    const rim = $('rim'), N = 28;
+    for (let i = 0; i < N; i++){
+      const t = (i / N) * Math.PI * 2, b = document.createElement('span');
+      b.className = 'bulb'; b.style.left = `${50 + 48.3 * Math.cos(t)}%`; b.style.top = `${50 + 48.3 * Math.sin(t)}%`;
+      rim.appendChild(b); bulbs.push(b);
+    }
+  })();
+  let bulbPhase = 0, bulbTimer = null;
+  function bulbsIdle(){ clearInterval(bulbTimer); bulbTimer = setInterval(() => { bulbPhase ^= 1; bulbs.forEach((b, i) => b.classList.toggle('on', i % 2 === bulbPhase)); }, 700); }
+  function bulbsChase(){ clearInterval(bulbTimer); let k = 0; bulbTimer = setInterval(() => { k++; bulbs.forEach((b, i) => b.classList.toggle('on', (i + k) % 4 === 0)); }, 60); }
+  function bulbsWin(){ clearInterval(bulbTimer); let k = 0; bulbTimer = setInterval(() => { k++; bulbs.forEach(b => b.classList.toggle('on', k % 2 === 0)); if (k > 9) bulbsIdle(); }, 160); }
+  bulbsIdle();
+
+  function segAt(r){
+    const a = ((-r) % 360 + 360) % 360;
+    return segs.findIndex(s => a >= s.a0 && a < s.a1);
+  }
+  function spin(){
+    if (spinning || !segs.length) return;
+    if (segs.length === 1){ return finish(segs[0]); }
+    spinning = true; document.body.classList.add('spinning'); lastWon = null;
+    $('hub').disabled = true; $('btnSpin').disabled = true; $('btnNext').disabled = true;
+    buildLegend();
+    // 止まる場所はでたらめに選ぶ（マスの大きさに比例して当たりやすい）。境目ぎりぎりは避ける
+    const target = Math.random() * 360;
+    const idx = segs.findIndex(s => target >= s.a0 && target < s.a1);
+    const s = segs[Math.max(0, idx)], m = (s.a1 - s.a0) * 0.12;
+    const t = Math.min(s.a1 - m, Math.max(s.a0 + m, target));
+    const r0 = rot, base = ((-t - r0) % 360 + 360) % 360;
+    const r1 = r0 + 360 * (reduce ? 1 : 6) + base;
+    const dur = reduce ? 1200 : 6200;
+    const t0 = performance.now();
+    let lastIdx = segAt(r0);
+    bulbsChase();
+    const ptr = $('pointer');
+    function frame(now){
+      const p = Math.min(1, (now - t0) / dur);
+      const e = 1 - Math.pow(1 - p, 4);
+      rot = r0 + (r1 - r0) * e;
+      $('wheelG').setAttribute('transform', `rotate(${rot})`);
+      const i = segAt(rot);
+      if (i !== lastIdx){ lastIdx = i; ptr.classList.remove('tick'); void ptr.offsetWidth; ptr.classList.add('tick'); }
+      if (p < 1) requestAnimationFrame(frame);
+      else { rot = r1 % 360; $('wheelG').setAttribute('transform', `rotate(${rot})`); spinning = false; document.body.classList.remove('spinning'); finish(s); }
+    }
+    requestAnimationFrame(frame);
+  }
+
+  function finish(s){
+    lastWon = s.key;
+    flow.push({ key:s.key, name:s.name });
+    renderFlow();
+    bulbsWin();
+    $('resultKicker').textContent = mode === 'games' ? '遊ぶゲームは…' : (flow.length === 1 ? 'この時間は、まず…' : `${flow.length}つめは…`);
+    $('resultIc').textContent = s.icon;
+    $('resultName').textContent = s.name;
+    $('result').classList.add('show');
+    confetti();
+    $('hub').disabled = false; $('btnSpin').disabled = false;
+    buildLegend();
+  }
+  function closeResult(){ $('result').classList.remove('show'); }
+  $('result').addEventListener('click', closeResult);
+
+  function confetti(){
+    if (reduce) return;
+    const cols = ['#F2B35C','#E8907B','#9FCFB4','#9CC8D3','#C4A9D6','#B9C27A','#FFFDF8'];
+    for (let i = 0; i < 70; i++){
+      const d = document.createElement('span'); d.className = 'confetti';
+      d.style.left = `${Math.random() * 1600}px`;
+      d.style.background = cols[i % cols.length];
+      d.style.setProperty('--t', `${2.2 + Math.random() * 1.6}s`);
+      d.style.setProperty('--dl', `${Math.random() * .5}s`);
+      d.style.setProperty('--dx', `${(Math.random() - .5) * 300}px`);
+      d.style.setProperty('--rot', `${(Math.random() - .5) * 1080}deg`);
+      stage.appendChild(d); setTimeout(() => d.remove(), 4600);
+    }
+  }
+
+  // ───── 画面の切りかえ ─────
+  function go(view){
+    closeResult();
+    document.body.dataset.view = view;
+    if (view === 'wheel') buildWheel();
+  }
+  function nextRound(){
+    if (!lastWon) return;
+    excluded.add(lastWon); lastWon = null; closeResult(); buildWheel();
+  }
+  function toGames(){ mode = 'games'; excluded = new Set(); lastWon = null; closeResult(); buildWheel(); }
+  function backFromWheel(){
+    if (mode === 'games'){ mode = 'main'; excluded = new Set(flow.filter(f => !f.key.startsWith('g')).map(f => f.key)); lastWon = null; buildWheel(); closeResult(); return; }
+    go('ask');
+  }
+  function resetAll(){
+    if (spinning) return;
+    OPTIONS.forEach(o => votes[o.id] = 0); flow = []; excluded = new Set(); mode = 'main'; lastWon = null; rot = 0;
+    renderTokens(); renderFlow(); go('ask');
+  }
+
+  $('btnTopic').addEventListener('click', () => { topicIdx = (topicIdx + 1 + Math.floor(Math.random() * (TOPICS.length - 1))) % TOPICS.length; showTopic(true); });
+  $('otherInput').addEventListener('input', (e) => { otherName = e.target.value.trim(); renderTokens(); });
+  $('btnClear').addEventListener('click', () => { OPTIONS.forEach(o => votes[o.id] = 0); renderTokens(); });
+  $('btnToWheel').addEventListener('click', () => go('wheel'));
+  $('btnBack').addEventListener('click', backFromWheel);
+  $('btnSpin').addEventListener('click', () => { closeResult(); spin(); });
+  $('hub').addEventListener('click', () => { closeResult(); spin(); });
+  $('btnNext').addEventListener('click', nextRound);
+  $('btnGames').addEventListener('click', toGames);
+  $('btnReset').addEventListener('click', resetAll);
+  $('btnFull').addEventListener('click', toggleFull);
+  function toggleFull(){ if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen?.(); }
+
+  addEventListener('keydown', (e) => {
+    if (e.target.tagName === 'INPUT' || e.metaKey || e.ctrlKey || e.altKey) return;
+    if (document.querySelector('.howto-overlay:not([hidden]), dialog[open]')) return;
+    const view = document.body.dataset.view;
+    const n = parseInt(e.code.replace('Digit', '').replace('Numpad', ''), 10);
+    if (view === 'ask' && n >= 1 && n <= OPTIONS.length){ addVote(OPTIONS[n - 1].id, e.shiftKey ? -1 : 1); e.preventDefault(); return; }
+    if (e.key === 'f' || e.key === 'F'){ toggleFull(); return; }
+    if (view === 'ask' && (e.key === 't' || e.key === 'T')){ $('btnTopic').click(); return; }
+    if (view === 'ask' && e.key === 'Enter'){ go('wheel'); e.preventDefault(); return; }
+    if (view === 'wheel' && e.key === ' '){ closeResult(); spin(); e.preventDefault(); return; }
+    if (view === 'wheel' && e.key === 'Escape'){ closeResult(); return; }
+  });
+
+  showTopic(false); buildCards(); renderFlow();
+})();
+</script>
+<script src="../../apps/shared/js/howto.js"></script>
+<script>RoomkHowto.init({ title: 'つかいかた', lead: 'コマのはじめに、ひとことを言いながら、したいことをおしえてもらって、ルーレットで決める画面だよ。', sections: [
+  { heading: '進行役', items: [
+    'この画面をひらいて全画面（F キー）にし、画面共有する。マウスを止めると、下の操作の帯とカーソルが消えるよ。',
+    '1人ずつ、お題へのひとことと、したいことの番号を言ってもらう（チャットに番号だけでもOK）。お題は「お題をかえる」（T キー）で変わるよ。',
+    '聞いた番号のカードを押すと、丸が1つ増える（数字キーの 1〜7 でも増える。右クリックか Shift を押しながらで1つ減る）。だれの分かは出ないよ。',
+    '「その他」の中身は、下の帯の欄に書くとカードとルーレットに出るよ。「おまかせ」はルーレットには入らない。',
+    '「ルーレットへ」（Enter）で、えらばれたものだけのルーレットになる。えらんだ数が多いほどマスが大きい。だれもえらんでいないときは、同じ大きさで全部が入るよ。',
+    'まんなかの「まわす」か Space でまわす。決まったものは右下の「この時間のながれ」に並ぶ。「つぎにやることも決める」で、決まったものを外してもう1回まわせるよ。',
+    '「みんなで遊ぶ」に決まったら「遊ぶゲームも決める」で、ゲームのルーレットにできる。右の名前を押すと、そのマスを外したりもどしたりできるよ。',
+  ] },
+] });</script>
+</body>
+</html>
