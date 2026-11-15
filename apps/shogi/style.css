@@ -82,6 +82,13 @@ body { background: var(--color-bg); }
 .sh-check__sub { font-size: 13px; color: var(--color-muted); line-height: 1.5; }
 .sh-check input:disabled ~ .sh-check__text { color: var(--color-muted); opacity: 0.55; }
 .sh-aid-view { margin: 0; font-weight: 500; }
+.sh-setsum { margin: 0; display: grid; gap: 6px; }
+.sh-setsum__row { display: flex; gap: 12px; align-items: baseline; }
+.sh-setsum dt { flex: none; width: 5.5em; color: var(--color-muted); font-size: 14px; }
+.sh-setsum dd { margin: 0; font-weight: 500; min-width: 0; }
+#lobbySetTitle:focus { outline: none; }
+.sh-h3 { margin: 20px 0 8px; font-size: 16px; color: var(--color-primary); }
+.sh-dialog .sh-aid { margin-top: 0; }
 
 /* バー */
 .sh-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding: 12px 20px; background: var(--color-primary); color: #fff; }

@@ -50,15 +50,33 @@ const pack = (m) => (m.from < 0 ? { f: -1, t: m.to, d: m.drop, p: false } : { f:
   const W = await L.newClient('watch');
   await L.open(W, '?watch=' + code);
   check('A5 みんなにみせる画面は参加のしかたとコード', await waitFor(async () => (await L.visible(W, '#lobbyJoin')) && (await L.text(W, '#lobbyJoinCode')) === code));
-  check('A6 ゲストには盤が「5五将棋」と出る', (await L.text(A, '#lobbyVariantView')).includes('5五将棋'));
+  check('A6 ゲストには盤が「5五将棋」と出る', (await L.text(A, '#sumVariant')).includes('5五将棋'));
 
   // 盤を本将棋にしてもどす・補助を変える
+  check('A6b ゲストには「設定を変える」が出ない', !(await L.visible(A, '#btnLobbySet')));
+  await H.page.click('#btnLobbySet');
+  check('A6c ホストは「設定を変える」でダイアログを開く', await L.visible(H, '#lobbySetDialog'));
   await H.page.click('#lobbyVariant input[value="hon"]');
-  check('A7 盤を本将棋にすると全員に届く', await waitFor(async () => (await L.text(A, '#lobbyVariantView')).includes('本将棋')));
+  check('A7 盤を本将棋にすると全員に届く', await waitFor(async () => (await L.text(A, '#sumVariant')).includes('本将棋')));
   await H.page.click('#lobbyVariant input[value="mini"]');
-  await waitFor(async () => (await L.text(A, '#lobbyVariantView')).includes('5五将棋'));
+  await waitFor(async () => (await L.text(A, '#sumVariant')).includes('5五将棋'));
   await H.page.click('#lobbyAid input[data-key="arrows"]');
-  check('A8 補助の変更が届く', await waitFor(async () => (await L.text(A, '#lobbyAidView')).includes('動ける向きの印')));
+  check('A8 補助の変更が届く', await waitFor(async () => (await L.text(A, '#sumAid')).includes('動ける向きの印')));
+  check('A8b ホストのまとめも変わる', (await L.text(H, '#sumAid')).includes('動ける向きの印') && (await L.text(H, '#sumVariant')).includes('5五将棋'));
+  await H.page.click('#btnLobbySetClose');
+  check('A8c 閉じるでダイアログが閉じる', !(await L.visible(H, '#lobbySetDialog')));
+  const startY = await H.page.$eval('#btnStartGame', (b) => Math.round(b.getBoundingClientRect().bottom + scrollY));
+  check('A8d 待合室の「はじめる」が上のほうにある（4人で 1,300px より上。前は約1,700px）', startY < 1300, startY);
+  await L.shot(H, 'e2e1-lobby-compact');
+  await L.shot(A, 'e2e1-lobby-compact-guest');
+  await H.page.setViewportSize({ width: 375, height: 812 });
+  await L.shot(H, 'e2e1-lobby-compact-375');
+  await H.page.click('#btnLobbySet');
+  check('A8e 幅375pxで設定のダイアログがはみ出さない', (await L.overflow(H)) <= 0, await L.overflow(H));
+  check('A8f ダイアログは見出しから見える（はじめの欄へ飛ばない）', (await H.page.$eval('#lobbySetDialog', (d) => d.scrollTop)) === 0, await H.page.evaluate(() => [document.activeElement.id, document.getElementById('lobbySetDialog').scrollTop]));
+  await L.shot(H, 'e2e1-lobby-dialog-375', { fullPage: false });
+  await H.page.click('#btnLobbySetClose');
+  await H.page.setViewportSize({ width: 1100, height: 900 });
   check('A9 ゲストの「はじめる」はない', !(await L.visible(A, '#btnStartGame')));
 
   // ── 対局 ──
@@ -143,7 +161,9 @@ const pack = (m) => (m.from < 0 ? { f: -1, t: m.to, d: m.drop, p: false } : { f:
   await L.roomWhen(code, (r) => r.proxies && r.proxies['てつ']);
   await H.page.selectOption('#seat0', 'てつ');
   await H.page.selectOption('#seat1', 'ひかり');
+  await H.page.click('#btnLobbySet');
   await H.page.click('#lobbyVariant input[value="hon"]');
+  await H.page.click('#btnLobbySetClose');
   room = await L.roomWhen(code, (r) => r.seats.s === 'てつ' && r.seats.g === 'ひかり' && r.v === 'hon');
   check('F1 端末なしの人を席に', room.seats.s === 'てつ', room.seats);
   check('F2 「端末なし」の印はホストだけ', (await L.text(H, '#lobbyPeople')).includes('端末なし') && !(await L.text(A, '#lobbyPeople')).includes('端末なし'));
