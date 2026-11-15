@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>なにするルーレット（試作） | あそびのたな</title>
+<title>なにするルーレット | あそびのたな</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet" />
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,500,1,0" rel="stylesheet" />
-<link rel="stylesheet" href="../../apps/shared/css/design-system.css?v=20261107" />
+<link rel="stylesheet" href="../shared/css/design-system.css?v=20261107" />
 <style>
   body{
     --bg:#F6ECD8; --paper:#FFFDF8; --ink:#3F362D; --muted:#6B5D4F; --accent:#8A4A10; --accent-soft:#FFF1E0;
@@ -55,9 +55,13 @@
   .intro-koma .tm{ font-weight:700; opacity:.9; }
   .intro-title{ font:900 60px/1.15 var(--zm); margin:18px 0 0; letter-spacing:.02em; }
   .intro-title small{ display:block; font-size:24px; font-weight:700; color:var(--muted); margin-top:12px; letter-spacing:0; }
-  .progs{ position:absolute; left:70px; right:70px; top:330px; display:grid; gap:28px; }
-  .prog{ background:var(--paper); border-radius:28px; padding:30px 34px; min-height:200px; display:flex; flex-direction:column; justify-content:center; gap:14px; }
-  .prog .pn{ font:900 44px/1.25 var(--zm); }
+  .progs{ position:absolute; left:70px; right:70px; top:290px; display:grid; gap:28px; align-items:start; }
+  .prog{ background:var(--paper); border-radius:28px; padding:20px 20px 26px; display:flex; flex-direction:column; gap:12px; }
+  .prog .th{ width:100%; aspect-ratio:16/9; border-radius:18px; object-fit:cover; background:#F1E4CC; display:block; }
+  .prog .th.none{ display:flex; align-items:center; justify-content:center; color:#C9AE85; }
+  .prog .th.none .ms{ font-size:72px; }
+  .prog .pn{ font:900 38px/1.25 var(--zm); padding:0 10px; }
+  .prog .pp{ padding:0 10px; }
   .prog .pp{ display:inline-flex; align-items:center; gap:8px; font:700 26px var(--zm); color:var(--muted); }
   .prog .pp .ms{ font-size:30px; color:var(--accent); }
   .intro-none{ position:absolute; left:70px; top:360px; font:700 30px/1.6 var(--zm); color:var(--muted); }
@@ -224,7 +228,7 @@
       <h1 class="intro-title">この時間のプログラム<small>どれに参加しても、ここでみんなと過ごしてもOK</small></h1>
     </div>
     <div class="progs" id="progs"></div>
-    <div class="intro-none" id="introNone" hidden>この時間のプログラムは見つかりませんでした</div>
+    <div class="intro-none" id="introNone" hidden>この日のプログラムが見つかりませんでした。<br>そのまま「どう過ごしたい？」へ進めます</div>
   </section>
 
   <!-- 2. どう過ごしたい？ -->
@@ -329,77 +333,15 @@
   <button type="button" id="btnFull" title="F"><span class="ms" aria-hidden="true">fullscreen</span>全画面</button>
 </div>
 
-<script>
-// なにするルーレット（試作）
-// コマのはじめに、ひとこと（お題）を言いながら、遊びたいゲームの番号をおしえてもらう。
+<script type="module">
+import { shuffle } from '../shared/js/utils.js';
+// なにするルーレット（スタッフ向け。仕様と理由は AGENTS.md）
+// ①このコマのプログラム → ②どう過ごしたい？ → ③遊びを決める（ゲームを選んでルーレット）。
 // 進行役が押して数を足し、えらばれた数に比例した大きさのマスのルーレットで決める（多数決にしない）。
 // だれが何をえらんだかは出さない。保存もしない。
-// GAMES はツール一覧（apps/index.html）のカードから作った写し（1対1向け・作戦会議だけの道具はのぞく）。
+// ゲームはツール一覧（apps/index.html）のカードを読む（1対1向け・作戦会議だけの道具はのぞく）。プログラムはサークルタイムの毎朝のデータを読む。
 (() => {
-  const GAMES = [
-    {"id":"kotoba-mikke","n":"ことばみっけ","g":"kotoba","y":"","min":1,"max":99},
-    {"id":"kotoba-relay","n":"ことばリレー","g":"kotoba","y":"","min":2,"max":99},
-    {"id":"hirameki-oogiri","n":"ひらめき大喜利","g":"kotoba","y":"ひらめきおおぎり","min":2,"max":99},
-    {"id":"kanpe-housou","n":"カンペ放送局","g":"kotoba","y":"かんぺほうそうきょく","min":3,"max":8},
-    {"id":"tatoe-gp","n":"たとえグランプリ","g":"kotoba","y":"","min":3,"max":99},
-    {"id":"tsunagete-story","n":"つなげてストーリー","g":"kotoba","y":"","min":2,"max":13},
-    {"id":"kotoba-dash","n":"ことばダッシュ！","g":"kotoba","y":"","min":1,"max":13},
-    {"id":"kotoba-meter","n":"ことばメーター","g":"kotoba","y":"","min":2,"max":20},
-    {"id":"kaburazu-hint","n":"かぶらずヒント","g":"kotoba","y":"","min":3,"max":99},
-    {"id":"kotoba-tantei","n":"ことば探偵","g":"kotoba","y":"ことばたんてい","min":4,"max":99},
-    {"id":"moji-soroe","n":"もじそろえゲーム","g":"kotoba","y":"","min":2,"max":5},
-    {"id":"kotoba-pair","n":"コトバペア","g":"kotoba","y":"","min":2,"max":9},
-    {"id":"toomawashi","n":"とおまわしクイズ","g":"kotoba","y":"","min":2,"max":10},
-    {"id":"ishin-denshin","n":"以心伝心しないゲーム","g":"kotoba","y":"いしんでんしんしないげーむ","min":3,"max":99},
-    {"id":"uso-jisho","n":"うそつき辞書","g":"kotoba","y":"うそつきじしょ","min":2,"max":8},
-    {"id":"ikutsu-ieru","n":"いくつ言える？","g":"kotoba","y":"いくついえる","min":1,"max":99},
-    {"id":"quiz","n":"クイズパック","g":"puzzle","y":"","min":1,"max":99},
-    {"id":"kotoba-shuffle","n":"ことばシャッフル","g":"puzzle","y":"","min":1,"max":99},
-    {"id":"kanji-sagashi","n":"漢字さがし","g":"puzzle","y":"かんじさがし","min":1,"max":99},
-    {"id":"pittari-beat","n":"ぴったりビート","g":"puzzle","y":"ぴったりびーと","min":1,"max":99},
-    {"id":"suton-block","n":"すとんブロック","g":"puzzle","y":"すとんぶろっく","min":1,"max":99},
-    {"id":"iro-tsunagi","n":"いろつなぎ","g":"puzzle","y":"","min":1,"max":99},
-    {"id":"pita-hame","n":"ピタハメ","g":"puzzle","y":"","min":1,"max":99},
-    {"id":"charin-baton","n":"ちゃりんバトン","g":"puzzle","y":"","min":1,"max":6},
-    {"id":"word-wolf","n":"ワードウルフ","g":"suiri","y":"","min":3,"max":99},
-    {"id":"nemurase-kichi","n":"ねむらせ基地","g":"suiri","y":"ねむらせきち","min":4,"max":10},
-    {"id":"kossori-word","n":"こっそりワード","g":"suiri","y":"","min":3,"max":99},
-    {"id":"jinro","n":"人狼ゲーム","g":"suiri","y":"じんろうげーむ","min":4,"max":99},
-    {"id":"kakure-kaito","n":"かくれ怪盗","g":"suiri","y":"かくれかいとう","min":4,"max":10},
-    {"id":"name-change","n":"名前変えゲーム","g":"suiri","y":"なまえかえげーむ","min":3,"max":99},
-    {"id":"jitsuwa-game","n":"え!? 実は○○なんですかゲーム","g":"suiri","y":"えじつはまるまるなんですかげーむ","min":2,"max":99},
-    {"id":"magire-eshi","n":"まぎれ絵師","g":"suiri","y":"まぎれえし","min":3,"max":8},
-    {"id":"shirushi-hint","n":"しるしでヒント","g":"atekko","y":"しるしでひんと","min":2,"max":99},
-    {"id":"do-mannaka","n":"ドまんなか","g":"atekko","y":"","min":3,"max":99},
-    {"id":"tatoe-narabe","n":"たとえならべ","g":"atekko","y":"","min":2,"max":99},
-    {"id":"oekaki-dengon","n":"お絵描き伝言ゲーム","g":"atekko","y":"おえかきでんごんげーむ","min":3,"max":8},
-    {"id":"stamp-ate","n":"スタンプあてゲーム","g":"atekko","y":"すたんぷあてげーむ","min":3,"max":9},
-    {"id":"pittari-meter","n":"ピッタリメーター","g":"atekko","y":"","min":3,"max":99},
-    {"id":"kakure-number","n":"かくれナンバー","g":"atekko","y":"","min":3,"max":8},
-    {"id":"kagi-awase","n":"カギあわせ","g":"atekko","y":"かぎあわせ","min":2,"max":5},
-    {"id":"koedake-theater","n":"こえだけシアター","g":"atekko","y":"","min":3,"max":99},
-    {"id":"kimochi-ate","n":"気持ち当てゲーム","g":"atekko","y":"きもちあてげーむ","min":2,"max":9},
-    {"id":"hit-blow","n":"ヒット&ブロー","g":"atekko","y":"ひっとあんどぶろー","min":2,"max":6},
-    {"id":"arekudasai-shoten","n":"あれください商店","g":"atekko","y":"あれくださいしょうてん","min":2,"max":12},
-    {"id":"sorotte-goal","n":"そろってゴール","g":"atekko","y":"","min":2,"max":12},
-    {"id":"oshitsuke-zukan","n":"おしつけずかん","g":"board","y":"","min":3,"max":6},
-    {"id":"esadori","n":"エサドリ","g":"board","y":"","min":2,"max":6},
-    {"id":"blackjack","n":"ブラックジャック","g":"board","y":"","min":1,"max":8},
-    {"id":"reversi","n":"リバーシ","g":"board","y":"","min":1,"max":99},
-    {"id":"mancala","n":"マンカラ","g":"board","y":"まんから","min":1,"max":99},
-    {"id":"shogi","n":"将棋","g":"board","y":"しょうぎ","min":1,"max":99},
-    {"id":"shinkei-suijaku","n":"神経衰弱","g":"board","y":"しんけいすいじゃく","min":1,"max":4},
-    {"id":"daifugo","n":"大富豪","g":"board","y":"だいふごう","min":3,"max":6},
-    {"id":"mahjong","n":"麻雀","g":"board","y":"まーじゃん","min":1,"max":4},
-    {"id":"yosa-map","n":"よさマップ","g":"talk","y":"","min":2,"max":13},
-    {"id":"suki-mono-map","n":"好きなものマップ","g":"talk","y":"すきなものまっぷ","min":2,"max":13},
-    {"id":"talk-card","n":"トークテーマカード","g":"talk","y":"","min":1,"max":99},
-    {"id":"otona-talk","n":"おとなトークカード","g":"talk","y":"","min":1,"max":99},
-    {"id":"suki-bingo","n":"好きなものビンゴ","g":"talk","y":"すきなものびんご","min":2,"max":10},
-    {"id":"minna-ranking","n":"みんなでランキング","g":"talk","y":"","min":3,"max":5},
-    {"id":"kyoumi-sugoroku","n":"興味スゴロク","g":"talk","y":"きょうみすごろく","min":1,"max":6},
-    {"id":"career-sugoroku","n":"キャリアすごろく","g":"talk","y":"","min":1,"max":6},
-  ];
+  const GAMES = [];          // ツール一覧から読む（loadGames）
 
   const COLORS = ['#F2B35C','#9CC8D3','#E8907B','#9FCFB4','#C4A9D6','#B9C27A','#E7C98F','#F0A8B8','#8FC1E3','#D9B38C'];
   const TOPICS = [
@@ -409,9 +351,9 @@
     '好きなお菓子', 'ちょっと自慢したいもの', 'いま聞いている曲', '好きな飲みもの',
     'もし1日だけ何でもできるなら？', '好きなキャラクター', 'さいきん買ってよかったもの', '朝ごはんに食べたいもの',
   ];
-  // 試作ではネット通信ができないので、サークルタイムの毎朝のデータ（circle-time/daily/2026-11-16.program.json）を写して使う。
-  // 本体にするときは、休み時間ボードと同じく ../circle-time/daily/{今日}.program.json を読む
-  const MOCK_PROGRAM = [{"start": "9:30", "end": "10:15", "name": "ボドゲクラブ", "place": "クラブルーム"}, {"start": "9:30", "end": "10:15", "name": "ほわぽかひろば", "place": "のんびり"}, {"start": "10:30", "end": "11:15", "name": "マイクラde理科", "place": ""}, {"start": "10:30", "end": "11:15", "name": "おとマルシェ", "place": "クラブルーム"}, {"start": "11:30", "end": "12:15", "name": "まなP", "place": "スタディルーム"}, {"start": "11:30", "end": "12:15", "name": "ここよしの部屋", "place": "のんびり"}, {"start": "13:00", "end": "13:45", "name": "マイスタ!(My Study)", "place": "スタディルーム"}, {"start": "13:00", "end": "13:45", "name": "マイクラde英語(第3月曜)", "place": ""}, {"start": "13:00", "end": "13:45", "name": "\"じぶん”探検", "place": "のんびり"}];
+  const DAILY = '../circle-time/daily/';
+  // ツール一覧に載っていても、ここで選ぶものではないもの（ゲームの前にテーマを紹介する道具）
+  const GAME_EXCLUDE = ['kotoba-theme'];
   const SUGOSHI = [
     { k:'self',  n:'自分のことをする', ic:'edit_note',     c:'#9CC8D3' },
     { k:'play',  n:'みんなと遊ぶ',     ic:'sports_esports', c:'#F2B35C' },
@@ -421,13 +363,13 @@
     { k:'think', n:'考え中',           ic:'hourglass_empty', c:'#E7C98F' },
   ];
   const MAX_CANDS = 8;
-  const APPS = '../../apps/';
+  const APPS = '../';
 
   const $ = (id) => document.getElementById(id);
   const stage = $('stage');
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const SVGNS = $('wheelSvg').namespaceURI;
-  const byId = Object.fromEntries(GAMES.map(g => [g.id, g]));
+  const byId = {};
 
   let votes = {};             // id → 数（えらばれた順を保つ）
   let people = 5;
@@ -462,7 +404,6 @@
     const pool = shuffle(GAMES.filter(g => fits(g) && !cands.includes(g.id)).map(g => g.id));
     while (cands.length < MAX_CANDS && pool.length) cands.push(pool.pop());
   }
-  function shuffle(a){ for (let i = a.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
   function reshuffle(){
     // えらばれていない候補だけを入れかえる（えらばれたものは同じ番号のまま）
     const keep = cands.map(id => votes[id] > 0 ? id : null);
@@ -705,28 +646,45 @@
   const qs = new URLSearchParams(location.search);
   const toMin = (t) => { const [h, m] = String(t).split(':').map(Number); return h * 60 + m; };
   const fmtT = (m) => `${Math.floor(m / 60)}:${String(m % 60).padStart(2, '0')}`;
-  const slots = (() => {
-    const by = new Map();
-    MOCK_PROGRAM.forEach(it => { if (!by.has(it.start)) by.set(it.start, []); by.get(it.start).push(it); });
-    return [...by.entries()].sort((a, b) => toMin(a[0]) - toMin(b[0])).map(([st, its], i) => ({ koma: i + 1, start: toMin(st), end: Math.max(...its.map(x => toMin(x.end))), items: its }));
-  })();
+  const jst = (d) => Object.fromEntries(new Intl.DateTimeFormat('en-CA', { timeZone:'Asia/Tokyo', year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', hourCycle:'h23' }).formatToParts(d).map(x => [x.type, x.value]));
+  const today = () => { const p = jst(new Date()); return `${p.year}-${p.month}-${p.day}`; };
+  const DATE = /^\d{4}-\d{2}-\d{2}$/.test(qs.get('date') || '') ? qs.get('date') : today();
   function nowMin(){
     const t = qs.get('t'); if (t && /^\d{1,2}:\d{2}$/.test(t)) return toMin(t);
-    const d = new Date(); return d.getHours() * 60 + d.getMinutes();
+    const p = jst(new Date()); return Number(p.hour) * 60 + Number(p.minute);
   }
-  // いまのコマ。はじまる15分前からはそのコマ、すべて終わったあとは最後のコマ
-  let slotIdx = (() => { const t = nowMin(); const i = slots.findIndex(s => t < s.end && t >= s.start - 15); if (i >= 0) return i; const j = slots.findIndex(s => s.start > t); return j >= 0 ? j : slots.length - 1; })();
+  let slots = [], slotIdx = 0, programLoaded = false;
+  async function loadProgram(){
+    let prog = null;
+    try { const r = await fetch(`${DAILY}${DATE}.program.json`, { cache:'no-store' }); if (r.ok) prog = await r.json(); } catch (e) { /* 無い日 */ }
+    const items = (prog && Array.isArray(prog.items) ? prog.items : []).filter(it => it && it.start && it.end && it.name);
+    const by = new Map();
+    items.forEach(it => { if (!by.has(it.start)) by.set(it.start, []); by.get(it.start).push(it); });
+    slots = [...by.entries()].sort((a, b) => toMin(a[0]) - toMin(b[0])).map(([st, its], i) => ({ koma: i + 1, start: toMin(st), end: Math.max(...its.map(x => toMin(x.end))), items: its }));
+    // いまのコマ。はじまる15分前からはそのコマ、すべて終わったあとは最後のコマ
+    const t = nowMin(), i = slots.findIndex(s => t < s.end && t >= s.start - 15), j = slots.findIndex(s => s.start > t);
+    slotIdx = i >= 0 ? i : (j >= 0 ? j : Math.max(0, slots.length - 1));
+    programLoaded = true; renderIntro();
+  }
+  function thumbEl(it){
+    const none = () => { const d = document.createElement('div'); d.className = 'th none'; const ic = document.createElement('span'); ic.className = 'ms'; ic.setAttribute('aria-hidden', 'true'); ic.textContent = 'event'; d.appendChild(ic); return d; };
+    if (!(typeof it.thumb === 'string' && /^https:\/\//.test(it.thumb))) return none();
+    // Notion の公開ページの画像を直接読む（リポジトリには写さない）。読めなければアイコン
+    const img = document.createElement('img'); img.className = 'th'; img.alt = ''; img.referrerPolicy = 'no-referrer'; img.decoding = 'async';
+    img.addEventListener('error', () => img.replaceWith(none()), { once:true });
+    img.src = it.thumb; return img;
+  }
   function renderIntro(){
     const s = slots[slotIdx], box = $('progs'); box.textContent = '';
-    $('introNone').hidden = !!s;
+    $('introNone').hidden = !programLoaded || !!s;
     if (!s){ $('introKoma').textContent = ''; $('introTime').textContent = ''; return; }
     $('introKoma').textContent = `${s.koma}コマ目`;
     $('introTime').textContent = `${fmtT(s.start)}〜${fmtT(s.end)}`;
-    box.style.gridTemplateColumns = `repeat(${Math.min(Math.max(s.items.length, 2), 4)},1fr)`;
+    box.style.gridTemplateColumns = `repeat(${Math.min(Math.max(s.items.length, 3), 4)},1fr)`;
     s.items.forEach(it => {
       const d = document.createElement('div'); d.className = 'prog paper';
       const n = document.createElement('div'); n.className = 'pn'; n.textContent = it.name;
-      d.appendChild(n);
+      d.append(thumbEl(it), n);
       if (it.place){ const pl = document.createElement('div'); pl.className = 'pp'; const ic = document.createElement('span'); ic.className = 'ms'; ic.setAttribute('aria-hidden', 'true'); ic.textContent = 'meeting_room'; pl.append(ic, it.place); d.appendChild(pl); }
       box.appendChild(d);
     });
@@ -738,6 +696,33 @@
 
   // ───── 2. どう過ごしたい？（だれが選んだかは出さず、数だけ） ─────
   let sgVotes = {};
+
+  // ───── ツール一覧のゲームを読む ─────
+  async function loadGames(){
+    try {
+      const html = await (await fetch(`${APPS}index.html`, { cache:'no-store' })).text();
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      doc.querySelectorAll('a.app-card').forEach(a => {
+        const id = String(a.getAttribute('href') || '').replace(/\/$/, '');
+        const name = a.querySelector('.app-card__name')?.textContent.trim() || '';
+        const scenes = String(a.dataset.scenes || '').split(/\s+/).filter(Boolean);
+        if (!id || id.includes('/') || !name || GAME_EXCLUDE.includes(id)) return;
+        if (scenes.length && scenes.every(x => x === 'sakusen')) return;   // 作戦会議だけの道具
+        // 人数のバッジ（group の印）。無いもの＝1対1向けはのぞく
+        const badge = [...a.querySelectorAll('.meta-badge')].find(b => b.querySelector('.material-symbols-rounded')?.textContent.trim() === 'group');
+        if (!badge) return;
+        let t = badge.textContent.replace('group', '').trim().replace(/[〜～]/g, '~'), host = 0, min = 1, max = 99, m;
+        if (t.startsWith('ホスト＋')){ host = 1; t = t.slice(4); }
+        if ((m = t.match(/^(\d+)~(\d+)人/))){ min = +m[1] + host; max = +m[2] + host; }
+        else if ((m = t.match(/^(\d+)人~/))) min = +m[1] + host;
+        else if ((m = t.match(/^(\d+)人/))){ min = max = +m[1] + host; }
+        const g = { id, n:name, g:a.dataset.genre || '', y:a.dataset.yomi || '', min, max };
+        GAMES.push(g); byId[id] = g;
+      });
+    } catch (e) { /* 読めなければ候補なし */ }
+    findIdx = GAMES.map(g => kana(g.n) + ' ' + kana(g.y));
+    cands = []; fillCands(); renderGrid();
+  }
   function renderSugoshi(){
     const box = $('sgGrid'); box.textContent = '';
     SUGOSHI.forEach((o, k) => {
@@ -774,7 +759,7 @@
   }
   // ゲームをさがす：名前・読みの一部で探し、選ぶと候補に入って丸が1つ付く
   const kana = (t) => t.replace(/[\u30a1-\u30f6]/g, c => String.fromCharCode(c.charCodeAt(0) - 0x60)).toLowerCase().replace(/[\s・！!？?ー〜]/g, '');
-  const findIdx = GAMES.map(g => kana(g.n) + ' ' + kana(g.y));
+  let findIdx = [];
   let findHits = [], findOn = 0;
   function renderFind(){
     const v = kana($('findInput').value.trim()), ul = $('findList'); ul.textContent = '';
@@ -843,10 +828,12 @@
     if (view === 'wheel' && e.key === 'Escape'){ closeResult(); return; }
   });
 
-  showTopic(false); setPeople(people); renderFlow(); renderIntro(); renderSugoshi(); go('intro');
+  showTopic(false); setPeople(people); renderFlow(); renderSugoshi(); go('intro');
+  loadProgram(); loadGames();
 })();
 </script>
-<script src="../../apps/shared/js/howto.js"></script>
+<script src="../shared/js/stats.js?v=1" defer></script>
+<script src="../shared/js/howto.js"></script>
 <script>RoomkHowto.init({ title: 'つかいかた', lead: 'コマのはじめに、プログラムを紹介して、どう過ごしたいかを聞き、みんなで遊ぶゲームをルーレットで決める画面だよ。', sections: [
   { heading: '進行役', items: [
     'この画面をひらいて全画面（F キー）にし、画面共有する。マウスを止めると、下の操作の帯とカーソルが消えるよ。',

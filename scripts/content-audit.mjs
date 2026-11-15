@@ -228,6 +228,8 @@ const NO_CONTENT_APPS = [
   'sakusen-kaigi',
   // 進行役のツール（休み時間とおしらせの画面）。プログラムはサークルタイムの毎朝のデータを読むだけ
   'yasumi-board',
+  // 進行役のツール（みんなのひろばのはじめ）。プログラムは毎朝のデータ、ゲームはツール一覧を読む。お題20個と過ごし方6つは語のリストで、お題集ではない
+  'hiroba-roulette',
   'suki-type-check', 'kakure-number', 'jinro', 'kakure-kaito',
   'name-change', 'kyapa-graph', 'nurie-week',
   // カードゲーム・パズルの部品だけ（トランプ・数字札・かなタイル・生き物8種・ピースと盤面）
