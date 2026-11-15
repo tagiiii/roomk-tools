@@ -27,6 +27,12 @@
 - サムネイル: Notion の公開ページの画像の配信口（`thumb`）を直接指す（リポジトリに写さない）。読めなければアイコン
 - ゲーム: ツール一覧（`../index.html`）のカードをひらいたときに読む。人数のバッジ（group の印）から人数の幅を取り、バッジが無いもの（1対1向け）・利用シーンが作戦会議だけのもの・`GAME_EXCLUDE`（ことばのテーマ紹介）はのぞく。絵は `assets/illustrations/{id}.webp`
 
+## 絵
+
+- イラスト `../assets/illustrations/hiroba-roulette.webp`（2026-11-15。作り方は docs/development/illustrations.md）。早見表のリンク・1段目の右上・説明スライドの表紙に出す
+- サムネイル `../assets/thumbnails/hiroba-roulette.png`（3段目の画面例）。ツール一覧に載せていないので、いまは使っていない
+- 説明スライド `slides.html`（子ども向けに流れを伝える9枚）。「？」の「説明スライドを見る」から
+
 ## 確かめ方
 
 `?date=2026-11-16&t=13:05` のように付けると、その日のデータを読み、その時刻のコマを出す。

@@ -96,6 +96,7 @@
   .title-slide{ align-items:center; justify-content:center; text-align:center; padding-bottom:76px; }
   .title-ic{ width:118px; height:118px; border-radius:32px; background:var(--teal); color:#fff; display:flex; align-items:center; justify-content:center; box-shadow:0 16px 34px rgba(163,86,26,.3); }
   .title-ic .material-symbols-rounded{ font-size:72px; }
+  .title-illust{ width:150px; height:150px; border-radius:34px; object-fit:cover; display:block; box-shadow:0 16px 34px rgba(163,86,26,.25); }
   .title-jp{ font-size:74px; font-weight:900; color:var(--ink); margin-top:24px; letter-spacing:.02em; }
   .title-en{ font-size:22px; font-weight:700; color:var(--teal); letter-spacing:.34em; margin-top:6px; text-transform:lowercase; }
   .title-tag{ font-size:26px; font-weight:700; color:var(--ink-soft); margin-top:22px; }
@@ -289,7 +290,7 @@ function slideHTML(s){
   const acc = s.accent ? `accent-${s.accent}` : 'accent-teal';
   if(s.type==='title'){
     return `<section class="slide title-slide accent-teal">
-      <div class="title-ic"><span class="material-symbols-rounded">casino</span></div>
+      <img class="title-illust" src="../assets/illustrations/hiroba-roulette.webp" alt="" width="150" height="150" decoding="async" />
       <div class="title-jp">なにするルーレット</div>
       <div class="title-en">what shall we do?</div>
       <div class="title-tag">〜 この時間の過ごし方を、みんなで決めよう 〜</div>
