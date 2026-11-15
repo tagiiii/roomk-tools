@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>休み時間ボード | あそびのたな</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,500,1,0" rel="stylesheet" />
+<link rel="stylesheet" href="../shared/css/design-system.css?v=20261107" />
+<style>
+  body{
+    --bg:#F6ECD8; --paper:#FFFDF8; --ink:#3F362D; --muted:#6B5D4F; --accent:#8A4A10; --accent-soft:#FFF1E0;
+    --sun:#F2B35C; --rose:#E8907B; --leaf:#B9C27A; --hill1:#E7C98F; --hill2:#C99A55; --sky:#CFE3E8;
+    --once:#C2502E; --shadow:rgba(90,48,10,.14);
+    --zm:'Zen Maru Gothic','Noto Sans JP',sans-serif;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; height:100%; background:#2b241d; overflow:hidden; }
+  html body{ background-image:none; }
+  body{ font-family:'Noto Sans JP',sans-serif; color:var(--ink); }
+  body.idle{ cursor:none; }
+  .ms{ font-family:'Material Symbols Rounded'; font-weight:normal; line-height:1; display:inline-block; vertical-align:middle; }
+
+  /* 1600x900 の舞台を窓に合わせて拡大縮小する（画面共有で見え方が変わらないように） */
+  #stage{ position:absolute; left:50%; top:50%; width:1600px; height:900px; transform-origin:center; background:var(--bg); overflow:hidden; }
+  .paper{ filter:drop-shadow(5px 6px 0 var(--shadow)); }
+  .bg .paper{ position:absolute; }
+
+  /* 背景の切り紙 */
+  .bg{ position:absolute; inset:0; pointer-events:none; }
+  .sun{ width:150px; height:150px; border-radius:50%; background:var(--sun); right:120px; top:-40px; }
+  .hill1{ width:1500px; height:420px; border-radius:50%; background:var(--hill1); left:-420px; bottom:-330px; transform:rotate(3deg); }
+  .hill2{ width:1200px; height:400px; border-radius:50%; background:var(--hill2); right:-330px; bottom:-335px; transform:rotate(-4deg); }
+  .cloud{ height:52px; border-radius:40px; background:#fff; top:var(--y); left:-260px; width:var(--w); animation:drift var(--d) linear infinite; animation-delay:var(--dl); }
+  .cloud::before{ content:''; position:absolute; width:46%; height:150%; border-radius:50%; background:#fff; left:18%; bottom:30%; }
+  @keyframes drift{ from{ transform:translateX(0); } to{ transform:translateX(2000px); } }
+
+  .view{ position:absolute; inset:0; }
+
+  /* 入ってくる動き */
+  .rise{ opacity:0; transform:translateY(26px); animation:rise .6s cubic-bezier(.2,.8,.2,1) forwards; animation-delay:calc(var(--i,0) * 110ms + 150ms); }
+  @keyframes rise{ to{ opacity:1; transform:none; } }
+  .pop{ opacity:0; transform:scale(.86) rotate(var(--r,0deg)); animation:pop .7s cubic-bezier(.3,1.5,.5,1) forwards; animation-delay:calc(var(--i,0) * 110ms); }
+  @keyframes pop{ to{ opacity:1; transform:scale(1) rotate(var(--r,0deg)); } }
+
+  /* ===== 休み時間 ===== */
+  .yz-left{ position:absolute; left:90px; top:96px; width:620px; }
+  .yz-kick{ font:700 34px/1 var(--zm); color:var(--accent); letter-spacing:.06em; }
+  .yz-title{ font:900 148px/1.05 var(--zm); letter-spacing:.02em; margin:14px 0 0; color:var(--ink); font-feature-settings:'palt'; white-space:nowrap; }
+  .yz-title.lunch{ font-size:136px; }
+  .yz-count{ display:flex; align-items:center; gap:30px; margin-top:44px; }
+  .ring{ position:relative; width:220px; height:220px; flex:none; }
+  .ring svg{ position:absolute; inset:0; transform:rotate(-90deg); }
+  .ring .track{ fill:none; stroke:#EAD9BB; stroke-width:22; }
+  .ring .bar{ fill:none; stroke:var(--sun); stroke-width:22; stroke-linecap:round; transition:stroke-dashoffset 1s linear; }
+  .ring .face{ position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; font-family:var(--zm); }
+  .ring .face small{ font-size:28px; font-weight:700; color:var(--muted); }
+  .ring .face b{ font-size:88px; font-weight:900; line-height:1; }
+  .ring .face b i{ font-style:normal; font-size:34px; margin-left:4px; }
+  .ring .face b.soon{ font-size:44px; line-height:1.2; text-align:center; }
+  .yz-at{ font-family:var(--zm); }
+  .yz-at .tm{ font-size:76px; font-weight:900; line-height:1; color:var(--accent); }
+  .yz-at .tm i{ font-style:normal; font-size:38px; margin-left:6px; color:var(--ink); }
+  .yz-at p{ margin:12px 0 0; font-size:28px; font-weight:700; white-space:nowrap; letter-spacing:-.02em; }
+  .yz-rest{ display:flex; gap:14px; margin-top:44px; }
+  .chip{ display:flex; align-items:center; gap:10px; background:var(--paper); border-radius:40px; padding:12px 22px 12px 14px; font:700 24px var(--zm); }
+  .chip .ms{ font-size:32px; width:46px; height:46px; border-radius:50%; display:flex; align-items:center; justify-content:center; background:var(--accent-soft); color:var(--accent); }
+
+  .card-panel{ position:absolute; right:80px; top:84px; width:780px; background:var(--paper); border-radius:28px; padding:34px 38px 30px; --r:-1.2deg; }
+  .cp-head{ display:flex; align-items:baseline; gap:18px; margin-bottom:22px; font-family:var(--zm); }
+  .cp-head b{ font-size:44px; font-weight:900; }
+  .cp-head span{ font-size:28px; font-weight:700; color:var(--accent); }
+  .pg{ display:flex; gap:22px; align-items:center; padding:14px 0; border-top:2px dashed #E8D8BE; }
+  .pg:first-of-type{ border-top:0; padding-top:4px; }
+  .pg .th{ width:224px; height:126px; border-radius:14px; object-fit:cover; flex:none; background:#F1E4CC; }
+  .pg .th.none{ display:flex; align-items:center; justify-content:center; color:#C9AE85; }
+  .pg .th.none .ms{ font-size:56px; }
+  .pg .nm{ font:900 40px/1.2 var(--zm); font-feature-settings:'palt'; word-break:keep-all; overflow-wrap:anywhere; }
+  .pg .pl{ margin-top:8px; font:700 26px var(--zm); color:var(--muted); display:flex; align-items:center; gap:6px; }
+  .pg .pl .ms{ font-size:30px; color:var(--accent); }
+  .tag-once{ display:inline-block; margin-left:10px; padding:4px 14px; border-radius:30px; background:var(--once); color:#fff; font:700 22px var(--zm); vertical-align:middle; }
+  .card-panel.dense .pg{ padding:10px 0; }
+  .card-panel.dense .pg .th{ width:168px; height:95px; }
+  .card-panel.dense .pg .nm{ font-size:32px; }
+  .card-panel.dense .pg .pl{ font-size:22px; margin-top:4px; }
+  .cp-empty{ font:700 32px/1.6 var(--zm); color:var(--muted); padding:30px 0; }
+
+  .ribbon{ position:absolute; left:90px; right:80px; bottom:40px; display:flex; align-items:center; gap:18px; background:var(--accent); color:#fff; border-radius:22px; padding:16px 28px; font:700 28px var(--zm); }
+  .ribbon .ms{ font-size:36px; }
+  .ribbon .lbl{ background:#fff; color:var(--accent); border-radius:30px; padding:4px 16px; font-size:24px; flex:none; }
+  .ribbon .rb-ev{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .ribbon.soft{ background:var(--paper); color:var(--ink); }
+  .ribbon.soft .ms{ color:var(--accent); }
+
+  /* ===== おしらせ ===== */
+  .os-head{ position:absolute; left:90px; top:64px; right:90px; display:flex; align-items:baseline; gap:24px; font-family:var(--zm); }
+  .os-head h1{ margin:0; font-size:84px; font-weight:900; letter-spacing:.02em; }
+  .os-head .sub{ font-size:32px; font-weight:700; color:var(--accent); }
+  .os-cols{ position:absolute; left:90px; right:90px; top:210px; bottom:120px; display:grid; gap:26px; align-items:start; }
+  .col{ background:var(--paper); border-radius:24px; padding:22px 22px 18px; --r:var(--rr); }
+  .col-t{ display:flex; align-items:center; gap:12px; margin-bottom:14px; font-family:var(--zm); }
+  .col-t .no{ background:var(--sun); color:var(--ink); border-radius:30px; padding:4px 16px; font-size:24px; font-weight:900; }
+  .col.now .col-t .no{ background:var(--accent); color:#fff; }
+  .col-t .tm{ font-size:38px; font-weight:900; }
+  .col-it{ padding:12px 0; border-top:2px dashed #E8D8BE; }
+  .col-it:first-of-type{ border-top:0; padding-top:2px; }
+  .col-it .th{ width:100%; aspect-ratio:16/9; border-radius:12px; object-fit:cover; background:#F1E4CC; display:block; }
+  .col-it .nm{ margin-top:10px; font:900 30px/1.25 var(--zm); font-feature-settings:'palt'; word-break:keep-all; overflow-wrap:anywhere; }
+  .col-it .pl{ margin-top:4px; font:700 22px var(--zm); color:var(--muted); display:flex; align-items:center; gap:4px; }
+  .col-it .pl .ms{ font-size:26px; color:var(--accent); }
+  .col-it .tag-once{ font-size:18px; padding:2px 12px; margin:6px 0 0; }
+  .os-cols.many .col-it .th{ display:none; }
+  .os-cols.many .col-it .nm{ margin-top:0; font-size:26px; }
+
+  .ev-list{ position:absolute; left:90px; right:90px; top:210px; display:grid; grid-template-columns:repeat(2,1fr); gap:28px; }
+  .ev{ display:flex; gap:26px; align-items:center; background:var(--paper); border-radius:24px; padding:24px 28px; --r:var(--rr); }
+  .ev .dt{ flex:none; width:150px; height:150px; border-radius:22px; background:var(--accent-soft); display:flex; flex-direction:column; align-items:center; justify-content:center; font-family:var(--zm); color:var(--accent); }
+  .ev .dt b{ font-size:58px; font-weight:900; line-height:1; }
+  .ev .dt small{ font-size:26px; font-weight:700; margin-top:8px; }
+  .ev .dt.today{ background:var(--once); color:#fff; }
+  .ev .cat{ display:inline-block; font:700 20px var(--zm); color:var(--accent); border:2px solid var(--accent); border-radius:30px; padding:2px 12px; }
+  .ev .nm{ margin-top:8px; font:900 34px/1.25 var(--zm); font-feature-settings:'palt'; word-break:keep-all; overflow-wrap:anywhere; }
+  .ev .pl{ margin-top:6px; font:700 24px var(--zm); color:var(--muted); }
+
+  .dots{ position:absolute; left:0; right:0; bottom:44px; display:flex; justify-content:center; gap:14px; }
+  .dots i{ width:16px; height:16px; border-radius:50%; background:#fff; opacity:.6; }
+  .dots i.on{ opacity:1; background:var(--accent); width:44px; border-radius:10px; transition:width .3s; }
+
+  .msg{ position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:20px; font:700 34px/1.6 var(--zm); text-align:center; color:var(--muted); }
+  .msg b{ font-size:54px; color:var(--ink); }
+
+  /* ===== 進行役の操作（マウスを動かしたときだけ出る） ===== */
+  #bar{ position:fixed; left:50%; bottom:16px; transform:translateX(-50%); display:flex; align-items:center; gap:6px; background:rgba(40,32,24,.92); color:#fff; border-radius:16px; padding:8px 10px; font:500 14px 'Noto Sans JP',sans-serif; transition:opacity .3s; z-index:10; box-shadow:0 6px 24px rgba(0,0,0,.3); }
+  body.idle #bar, body.idle .howto-fab, body.idle .howto-feedback-fab{ opacity:0; pointer-events:none; }
+  .howto-fab, .howto-feedback-fab{ transition:opacity .3s; }
+  #bar button{ background:transparent; color:#fff; border:0; border-radius:10px; padding:8px 12px; font:inherit; cursor:pointer; display:flex; align-items:center; gap:6px; min-height:40px; }
+  #bar button:hover{ background:rgba(255,255,255,.12); }
+  #bar button[aria-pressed="true"]{ background:#F2B35C; color:#2b241d; font-weight:700; }
+  #bar .sep{ width:1px; height:24px; background:rgba(255,255,255,.25); margin:0 4px; }
+  #bar .ms{ font-size:22px; }
+  #bar .clock{ padding:0 8px; opacity:.85; font-variant-numeric:tabular-nums; }
+  #bar input[type=date]{ background:#4a3d30; color:#fff; border:0; border-radius:8px; padding:6px 8px; font:inherit; color-scheme:dark; }
+
+  @media (prefers-reduced-motion: reduce){
+    .rise,.pop{ animation:none; opacity:1; transform:rotate(var(--r,0deg)); }
+    .cloud{ animation:none; left:var(--x); }
+  }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div class="bg">
+    <div class="paper sun"></div>
+    <div class="paper cloud" style="--y:70px; --w:200px; --d:95s; --dl:-30s; --x:640px"></div>
+    <div class="paper cloud" style="--y:150px; --w:150px; --d:120s; --dl:-85s; --x:1100px"></div>
+    <div class="paper hill1"></div>
+    <div class="paper hill2"></div>
+  </div>
+  <div class="view" id="view"></div>
+</div>
+
+<div id="bar" role="toolbar" aria-label="進行役の操作">
+  <button data-mode="auto" aria-pressed="true"><span class="ms">schedule</span>時刻で自動</button>
+  <button data-mode="yasumi" aria-pressed="false"><span class="ms">local_cafe</span>休み時間</button>
+  <button data-mode="oshirase" aria-pressed="false"><span class="ms">campaign</span>おしらせ</button>
+  <span class="sep"></span>
+  <button id="prev" title="前のページ（←）"><span class="ms">chevron_left</span></button>
+  <button id="next" title="次のページ（→）"><span class="ms">chevron_right</span></button>
+  <span class="sep"></span>
+  <input type="date" id="date" aria-label="日付" />
+  <span class="clock" id="clock"></span>
+  <button id="fs" title="全画面（F）"><span class="ms">fullscreen</span></button>
+</div>
+
+<script>
+// 休み時間ボード（スタッフ向け。仕様と理由は AGENTS.md）
+// サークルタイムが毎朝用意するプログラムのデータ（apps/circle-time/daily/）を読み、
+// 時刻に合わせて「休み時間（つぎのコマ）」と「おしらせ（このあと・もうすぐのイベント）」を切りかえる。
+// 確かめるとき: ?date=2026-11-16&t=10:20 で、その日のその時刻から時計を進める。
+'use strict';
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const DATA_BASES = ['../circle-time/daily/'];
+// 午後のサークルタイム（Notion のプログラムの表には無いので、ここで足す）
+const EXTRA = [{ start: '14:00', end: '14:30', name: 'サークルタイム', place: 'ラウンジルーム', fixed: true }];
+const WD = ['日', '月', '火', '水', '木', '金', '土'];
+const PAGE_MS = 15000;
+
+const qs = new URLSearchParams(location.search);
+const jstParts = (d) => Object.fromEntries(new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Tokyo', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23' }).formatToParts(d).map((p) => [p.type, p.value]));
+const toMin = (t) => { const [h, m] = String(t).split(':').map(Number); return h * 60 + m; };
+const fmt = (m) => `${Math.floor(m / 60)}:${String(Math.floor(m % 60)).padStart(2, '0')}`;
+const mdw = (ds) => { const d = new Date(ds + 'T12:00:00+09:00'); return { md: `${d.getMonth() + 1}/${d.getDate()}`, wd: WD[d.getDay()] }; };
+
+// 時計（?t= があればその時刻から進める）
+const startReal = Date.now();
+const tParam = qs.get('t') && /^\d{1,2}:\d{2}$/.test(qs.get('t')) ? toMin(qs.get('t')) : null;
+function nowMin() {
+  if (tParam != null) return tParam + (Date.now() - startReal) / 60000;
+  const p = jstParts(new Date());
+  return Number(p.hour) * 60 + Number(p.minute) + Number(p.second) / 60;
+}
+const todayJst = () => { const p = jstParts(new Date()); return `${p.year}-${p.month}-${p.day}`; };
+
+const S = { date: qs.get('date') || todayJst(), mode: 'auto', program: null, once: [], slots: [], page: 0, shown: '', pageTimer: null, loadError: false };
+
+async function getJson(name) {
+  for (const base of DATA_BASES) {
+    try { const r = await fetch(base + name, { cache: 'no-store' }); if (r.ok) return await r.json(); } catch (e) { /* 次の候補へ */ }
+  }
+  return null;
+}
+async function load() {
+  S.program = null; S.slots = []; S.shown = '';
+  const [prog, once] = await Promise.all([getJson(`${S.date}.program.json`), getJson('once.json')]);
+  S.program = prog;
+  S.once = (once && Array.isArray(once.items)) ? once.items : [];
+  const items = (prog && Array.isArray(prog.items) ? prog.items : []).filter((it) => it.start && it.end).concat(prog ? EXTRA : []);
+  const by = new Map();
+  for (const it of items) { if (!by.has(it.start)) by.set(it.start, []); by.get(it.start).push(it); }
+  let n = 0;
+  S.slots = [...by.entries()].sort((a, b) => toMin(a[0]) - toMin(b[0])).map(([start, its]) => ({
+    start: toMin(start), end: Math.max(...its.map((x) => toMin(x.end))), items: its,
+    koma: its.every((x) => x.fixed) ? null : ++n, label: its.every((x) => x.fixed) ? its[0].name : null,
+  }));
+  render(true);
+}
+
+// いまの状態: 休み時間（前のコマが終わって、つぎがまだ）／コマの最中／はじまる前／ぜんぶ終わった
+function phase(t) {
+  const sl = S.slots;
+  if (!sl.length) return { kind: 'none' };
+  if (t < sl[0].start) return { kind: 'before', next: 0 };
+  for (let i = 0; i < sl.length; i++) {
+    if (t >= sl[i].start && t < sl[i].end) return { kind: 'in', cur: i };
+    if (i + 1 < sl.length && t >= sl[i].end && t < sl[i + 1].start) return { kind: 'break', prev: i, next: i + 1 };
+  }
+  return { kind: 'after' };
+}
+function slotName(s) { return s.koma ? `${s.koma}コマ目` : s.label; }
+function upcomingEvents() {
+  const lim = new Date(S.date + 'T12:00:00+09:00'); lim.setDate(lim.getDate() + 21);
+  const limStr = new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Tokyo' }).format(lim);
+  return S.once.filter((e) => e.date && e.date > S.date && e.date <= limStr).sort((a, b) => (a.date + a.start).localeCompare(b.date + b.start));
+}
+
+// ===== 画面 =====
+const thumb = (it, cls = 'th') => it.thumb && /^https:\/\//.test(it.thumb)
+  ? `<img class="${cls}" src="${esc(it.thumb)}" alt="" referrerpolicy="no-referrer" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'${cls} none',innerHTML:'<span class=&quot;ms&quot;>event</span>'}))">`
+  : `<div class="${cls} none"><span class="ms">${it.fixed ? 'groups' : 'event'}</span></div>`;
+const place = (it) => it.place ? `<div class="pl"><span class="ms">location_on</span>${esc(it.place)}</div>` : '';
+const onceTag = (it) => it.once ? '<span class="tag-once">この日だけ</span>' : '';
+
+function viewYasumi(ph) {
+  const t = nowMin();
+  let next, prevEnd;
+  if (ph.kind === 'break') { next = S.slots[ph.next]; prevEnd = S.slots[ph.prev].end; }
+  else { const i = S.slots.findIndex((s) => s.start > t); next = S.slots[i >= 0 ? i : 0]; prevEnd = next ? next.start - 15 : t; }
+  if (!next) return viewMsg('つぎのプログラムはありません', '');
+  const lunch = next.start - prevEnd >= 40;
+  const dense = next.items.length > 3;
+  const evs = upcomingEvents();
+  const rib = evs.length
+    ? `<div class="ribbon rise" style="--i:6"><span class="ms">celebration</span><span class="lbl">もうすぐ</span><span class="rb-ev">${evs.slice(0, 2).map((e) => { const d = mdw(e.date); return `${d.md}（${d.wd}）${esc(e.name)}`; }).join('　／　')}</span></div>`
+    : `<div class="ribbon soft rise" style="--i:6"><span class="ms">waving_hand</span><span class="rb-ev">困ったことがあったら、いつでも声をかけてね</span></div>`;
+  return `
+    <div class="yz-left">
+      <div class="yz-kick rise" style="--i:0">ただいま</div>
+      <div class="yz-title rise${lunch ? ' lunch' : ''}" style="--i:1">${lunch ? 'お昼休み' : '休み時間'}</div>
+      <div class="yz-count rise" style="--i:2">
+        <div class="ring" data-from="${prevEnd}" data-to="${next.start}">
+          <svg viewBox="0 0 220 220"><circle class="track" cx="110" cy="110" r="94"/><circle class="bar" cx="110" cy="110" r="94" stroke-dasharray="590.6" stroke-dashoffset="0"/></svg>
+          <div class="face"></div>
+        </div>
+        <div class="yz-at"><div class="tm">${fmt(next.start)}<i>から</i></div><p>${next.koma ? 'つぎの時間がはじまるよ' : `${esc(next.label)}がはじまるよ`}</p></div>
+      </div>
+      <div class="yz-rest">
+        <span class="chip rise" style="--i:3"><span class="ms">visibility</span>目を休める</span>
+        <span class="chip rise" style="--i:4"><span class="ms">local_drink</span>飲み物</span>
+        <span class="chip rise" style="--i:5"><span class="ms">self_improvement</span>のびをする</span>
+      </div>
+    </div>
+    <div class="card-panel paper pop${dense ? ' dense' : ''}" style="--i:2">
+      <div class="cp-head"><b>つぎは ${esc(slotName(next))}</b><span>${fmt(next.start)}〜${fmt(next.end)}</span></div>
+      ${next.items.slice(0, 5).map((it, k) => `<div class="pg rise" style="--i:${k + 3}">${thumb(it)}<div><div class="nm">${esc(it.name)}${onceTag(it)}</div>${place(it)}</div></div>`).join('')}
+    </div>
+    ${rib}`;
+}
+
+function oshirasePages() {
+  const t = nowMin();
+  const pages = [];
+  const rest = S.slots.filter((s) => s.end > t);
+  for (let i = 0; i < rest.length; i += 4) pages.push({ type: 'slots', slots: rest.slice(i, i + 4) });
+  const evs = upcomingEvents();
+  for (let i = 0; i < evs.length; i += 4) pages.push({ type: 'events', evs: evs.slice(i, i + 4) });
+  return pages;
+}
+function viewOshirase() {
+  const pages = oshirasePages();
+  if (!pages.length) return viewMsg('きょうのプログラムはおしまい', 'またね');
+  S.page = ((S.page % pages.length) + pages.length) % pages.length;
+  const pg = pages[S.page], t = nowMin();
+  const dots = pages.length > 1 ? `<div class="dots">${pages.map((_, i) => `<i class="${i === S.page ? 'on' : ''}"></i>`).join('')}</div>` : '';
+  const d = mdw(S.date);
+  if (pg.type === 'slots') {
+    const many = pg.slots.reduce((a, s) => Math.max(a, s.items.length), 0) > 2;
+    return `
+      <div class="os-head rise" style="--i:0"><h1>このあとのプログラム</h1><span class="sub">${d.md}（${d.wd}）</span></div>
+      <div class="os-cols${many ? ' many' : ''}" style="grid-template-columns:repeat(${Math.max(pg.slots.length, 3)},1fr)">
+        ${pg.slots.map((s, i) => `<div class="col paper pop${s.start <= t ? ' now' : ''}" style="--i:${i + 1}; --rr:${[-1, .8, -.6, 1][i % 4]}deg">
+          <div class="col-t"><span class="no">${s.start <= t ? 'いま' : esc(slotName(s))}</span><span class="tm">${fmt(s.start)}</span></div>
+          ${s.items.map((it) => `<div class="col-it">${thumb(it)}<div class="nm">${esc(it.name)}</div>${place(it)}${onceTag(it)}</div>`).join('')}
+        </div>`).join('')}
+      </div>${dots}`;
+  }
+  return `
+    <div class="os-head rise" style="--i:0"><h1>もうすぐあるイベント</h1><span class="sub">この日だけのプログラム</span></div>
+    <div class="ev-list">
+      ${pg.evs.map((e, i) => { const x = mdw(e.date); return `<div class="ev paper pop" style="--i:${i + 1}; --rr:${[-.8, .7, .5, -.6][i % 4]}deg">
+        <div class="dt"><b>${x.md}</b><small>${x.wd}曜日</small></div>
+        <div>${e.cat ? `<span class="cat">${esc(e.cat)}</span>` : ''}<div class="nm">${esc(e.name)}</div><div class="pl">${esc(e.start || '')}${e.end ? '〜' + esc(e.end) : ''}${e.place ? `　${esc(e.place)}` : ''}</div></div>
+      </div>`; }).join('')}
+    </div>${dots}`;
+}
+function viewMsg(title, sub) { return `<div class="msg rise"><b>${esc(title)}</b>${sub ? `<div>${esc(sub)}</div>` : ''}</div>`; }
+
+// ===== 描きかえ =====
+function decide() {
+  if (S.program === null) return { key: 'nodata', html: () => viewMsg('この日のプログラムが見つかりません', '下の操作で日付をえらんでください') };
+  const ph = phase(nowMin());
+  let mode = S.mode;
+  if (mode === 'auto') mode = (ph.kind === 'break') ? 'yasumi' : 'oshirase';
+  if (mode === 'yasumi') return { key: `y:${ph.kind}:${ph.next ?? ''}`, html: () => viewYasumi(ph) };
+  const pages = oshirasePages().length;
+  return { key: `o:${S.page}:${pages}:${S.slots.filter((s) => s.end > nowMin()).length}:${S.slots.filter((s) => s.start <= nowMin()).length}`, html: viewOshirase };
+}
+function render(force) {
+  const d = decide();
+  if (force || d.key !== S.shown) {
+    S.shown = d.key;
+    document.getElementById('view').innerHTML = d.html();
+    schedulePage();
+  }
+  tickRing();
+}
+function schedulePage() {
+  clearTimeout(S.pageTimer);
+  if (!S.shown.startsWith('o:') || oshirasePages().length < 2) return;
+  S.pageTimer = setTimeout(() => { S.page++; render(true); }, PAGE_MS);
+}
+function tickRing() {
+  const r = document.querySelector('.ring');
+  if (!r) return;
+  const from = Number(r.dataset.from), to = Number(r.dataset.to), t = nowMin();
+  const left = Math.max(0, to - t), frac = Math.min(1, left / Math.max(1, to - from));
+  r.querySelector('.bar').style.strokeDashoffset = String(590.6 * (1 - frac));
+  const face = r.querySelector('.face');
+  const html = left < 1 ? '<b class="soon">まもなく</b>' : `<small>あと</small><b>${Math.ceil(left)}<i>分</i></b>`;
+  if (face.innerHTML !== html) face.innerHTML = html;
+}
+
+// ===== 操作 =====
+function setMode(m) { S.mode = m; S.page = 0; document.querySelectorAll('#bar [data-mode]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.mode === m))); render(true); }
+document.querySelectorAll('#bar [data-mode]').forEach((b) => b.addEventListener('click', () => setMode(b.dataset.mode)));
+document.getElementById('prev').addEventListener('click', () => { S.page--; render(true); });
+document.getElementById('next').addEventListener('click', () => { S.page++; render(true); });
+const fsToggle = () => (document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen()).catch(() => {});
+document.getElementById('fs').addEventListener('click', fsToggle);
+const dateIn = document.getElementById('date');
+dateIn.value = S.date;
+dateIn.addEventListener('change', () => { if (dateIn.value) { S.date = dateIn.value; load(); } });
+addEventListener('keydown', (e) => {
+  if (e.target.tagName === 'INPUT') return;
+  if (e.key === 'ArrowRight') { S.page++; render(true); }
+  else if (e.key === 'ArrowLeft') { S.page--; render(true); }
+  else if (e.key === 'f' || e.key === 'F') fsToggle();
+  else if (e.key === '1') setMode('auto');
+  else if (e.key === '2') setMode('yasumi');
+  else if (e.key === '3') setMode('oshirase');
+});
+let idleT;
+function wake() { document.body.classList.remove('idle'); clearTimeout(idleT); idleT = setTimeout(() => document.body.classList.add('idle'), 2500); }
+addEventListener('mousemove', wake); addEventListener('keydown', wake); wake();
+
+function fit() {
+  const s = Math.min(innerWidth / 1600, innerHeight / 900);
+  document.getElementById('stage').style.transform = `translate(-50%,-50%) scale(${s})`;
+}
+addEventListener('resize', fit); fit();
+
+setInterval(() => {
+  document.getElementById('clock').textContent = fmt(nowMin());
+  render(false);
+}, 1000);
+load();
+</script>
+<script src="../shared/js/stats.js?v=1" defer></script>
+<script src="../shared/js/howto.js"></script>
+<script>RoomkHowto.init({ title: 'つかいかた', lead: 'コマの合間の休み時間と、このあとのプログラムを、画面共有で知らせる画面だよ。', sections: [
+  { heading: '進行役', items: ['この画面をひらいて全画面（F キー）にし、画面共有するだけ。マウスを止めると、下の操作の帯とカーソルが消えるよ。', '「時刻で自動」のときは、コマとコマのあいだは「休み時間」（あいだが長いときは「お昼休み」）、それ以外の時間は「おしらせ」が出るよ。', '休み時間は、つぎのコマのプログラムと、何時からか・あと何分かが出るよ。下の帯には、もうすぐある単発のイベントが出るよ。', 'おしらせは「このあとのプログラム」と「もうすぐあるイベント」を15秒ごとに切りかえるよ。←→ で自分で送ることもできるよ。', '「休み時間」「おしらせ」を押すと、時刻に関係なくその画面になるよ（数字キーの 1・2・3 でも切りかえられる）。', 'プログラムは、サークルタイムが毎朝 room-K ポータルから用意するデータを読んでいるよ。プログラムが出ない日は、日付の欄でほかの日を選んで確かめられるよ。'] },
+] });</script>
+</body>
+</html>
