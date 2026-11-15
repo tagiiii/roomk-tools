@@ -36,11 +36,22 @@ for (let n = E.MIN_PLAYERS; n <= E.MAX_PLAYERS; n++) {
       const offers = [];
       for (let p = 0; p < n; p++) if (p !== c && !(away && away[p])) { const o = shopOffer(s, p, tags, rng); if (o) offers.push(o); }
       const chosen = offers.length ? Math.floor(rng() * offers.length) : -1;
-      const before = s.players.reduce((a, p) => a + p.points, 0);
-      const res = E.resolve(s, offers, chosen, tags, { [(c + 1) % n]: 1 }, rng, away);
+      const declined = [];
+      for (let p = 0; p < n; p++) if (p !== c && !(away && away[p]) && !offers.some((o) => o.from === p)) declined.push(p);
+      // 正しく断れるのは、ヒントに合う物がお店にないとき
+      const rightNo = declined.filter((p) => !s.players[p].hand.some((id) => E.fits(id, tags)));
+      const beforeEach = s.players.map((p) => p.points);
+      const before = beforeEach.reduce((a, b) => a + b, 0);
+      const res = E.resolve(s, offers, chosen, tags, { [(c + 1) % n]: 1 }, rng, away, declined);
       const after = s.players.reduce((a, p) => a + p.points, 0);
-      if (res.none) assert.strictEqual(after, before);
-      else assert.strictEqual(after - before, res.pt * 2 + res.fit.length * E.PT_FIT);
+      assert.deepStrictEqual(res.no.slice().sort(), rightNo.slice().sort(), '正しく断れたお店');
+      assert.strictEqual(after - before, Object.values(res.delta).reduce((a, b) => a + b, 0), 'delta の合計');
+      assert.ok(s.players.every((p) => p.points >= 0), '0より下にならない');
+      if (!res.none) {
+        assert.strictEqual(res.pc, res.hit ? E.PT_HIT : E.PT_ODD);
+        if (res.hit) assert.strictEqual(res.pg, E.PT_HIT);
+        else assert.strictEqual(res.pg, beforeEach[res.from] > 0 ? E.PT_MISS : 0, 'ちがう物は1減る（0のときは0のまま）');
+      }
       // 品物は増えも減りもせず、だれかのお店・山・渡した物のどれか
       const inPlay = s.players.reduce((a, p) => a + p.hand.length, 0) + s.deck.length;
       assert.ok(inPlay <= 60);
