@@ -115,7 +115,7 @@
   .item__art{ width:120px; height:120px; } .item__art svg{ display:block; width:100%; height:100%; overflow:visible; }
   .item--big{ width:300px; flex:none; } .item--big .item__art{ width:170px; height:170px; }
   .item__name{ font-size:24px; font-weight:900; color:var(--ink); text-align:center; }
-  .item__tags{ display:flex; flex-wrap:wrap; justify-content:center; gap:6px; }
+  .item__cue{ display:flex; flex-wrap:wrap; justify-content:center; align-items:center; gap:6px; font-size:18px; font-weight:700; color:var(--ink-soft); }
   .tag{ display:inline-flex; align-items:center; gap:4px; background:var(--acc-tint); color:var(--ink); border-radius:999px; padding:4px 12px; font-size:18px; font-weight:700; }
   .tag svg{ width:18px; height:18px; color:var(--acc); }
   .demo{ display:flex; gap:34px; align-items:center; height:100%; } .demo__side{ flex:1; }
@@ -251,8 +251,8 @@
   <div class="pv-conn" id="pvConn">スライド画面と接続中…</div>
 </div>
 
-<script src="engine.js?v=20261115b"></script>
-<script src="art.js?v=20261115b"></script>
+<script src="engine.js?v=20261115c"></script>
+<script src="art.js?v=20261115c"></script>
 <script>
 const row = (icon, title, desc) => `<div class="row"><div class="row__ic"><span class="material-symbols-rounded">${icon}</span></div><div><div class="row__t">${title}</div><div class="row__d">${desc}</div></div></div>`;
 const rows = (...items) => `<div class="rows">${items.map((x) => row(x[0], x[1], x[2])).join('')}</div>`;
@@ -261,7 +261,9 @@ const qa = (q, a) => `<div class="qa__item"><div class="qa__q"><span class="qa__
 
 // 品物の絵（art.js の決まった絵）と、名前・ヒント
 const ITEMS = Object.fromEntries(ArekuEngine.ITEMS.map((it) => [it.id, it]));
-const item = (id, big) => { const it = ITEMS[id]; return `<div class="item${big ? ' item--big' : ''}"><div class="item__art">${ArekuArt.item(id)}</div><div class="item__name">${it.name}</div><div class="item__tags">${it.tags.map((t) => `<span class="tag">${ArekuArt.tag(t)}${t}</span>`).join('')}</div></div>`; };
+// 品物の札（アプリと同じく、絵と名前だけ。cue は、絵のどこを見るかの短い説明）
+const item = (id, big, cue) => { const it = ITEMS[id]; return `<div class="item${big ? ' item--big' : ''}"><div class="item__art">${ArekuArt.item(id)}</div><div class="item__name">${it.name}</div>${cue ? `<div class="item__cue">${cue}</div>` : ''}</div>`; };
+const tag = (t) => `<span class="tag">${ArekuArt.tag(t)}${t}</span>`;
 
 const SLIDES = [
   /* 1 */ { type:'divider', accent:'teal', icon:'waving_hand', jp:'チェックイン', en:'check-in',
@@ -291,7 +293,7 @@ const SLIDES = [
       <div class="panel panel--blue">
         <div class="team-head"><div class="team-ic teal-bg"><span class="material-symbols-rounded">storefront</span></div><div class="team-name">お店の人（ほかの人の番）</div></div>
         ${role('hearing', 'ヒントを聞いて、自分のお店を見る', '画面の下の「あなたのお店」')}
-        ${role('touch_app', '出すか、出さないかを決める', '決める時間は25秒')}
+        ${role('touch_app', '出すか、出さないかを決める', '決める時間は30秒')}
         ${role('help', 'まよったら、お客さんに質問できる', '2回まで')}
       </div>
     </div>`,
@@ -300,43 +302,44 @@ const SLIDES = [
   /* 5 */ { type:'content', accent:'coral', section:'あそびかた', sectionEn:'how to play', num:'1',
     headline:'お客さん: <span class="hl">ヒントを2つ</span>えらんで<br>「これください！」',
     body:`<div class="demo">${item('reizouko', true)}<div class="demo__side">${rows(
-      ['visibility', 'たとえば、ほしい物が「歌う冷蔵庫」なら', '名前は言えないので、特徴からヒントをえらぶ'],
-      ['label', '「つめたい」「大きい」をえらんで、「これください！」', 'どの2つをえらぶと伝わりやすいか、考えてみよう'],
+      ['visibility', 'たとえば、ほしい物が「ものしりな冷蔵庫」なら', '名前は言えない。絵をよく見て、特徴を考える'],
+      ['image_search', '雪の結晶は「つめたい」、音符は「音が出る」', '形から「大きい」とも考えられるね'],
+      ['label', '2つえらんで、「これください！」', 'どの2つなら伝わりやすいか、考えてみよう'],
     )}</div></div>`,
-    note:'お客さんの番は、こんな流れ。\nたとえば、ほしい物が「歌う冷蔵庫」だったら、名前は言えないから、特徴からヒントを2つえらぶよ。\n「つめたい」と「大きい」をえらんで、「これください！」を押す。\nどの2つをえらぶと伝わりやすいか、考えてみてね。' },
+    note:'お客さんの番は、こんな流れ。\nたとえば、ほしい物が「ものしりな冷蔵庫」だったら、名前は言えないから、絵をよく見て特徴を考えるよ。\n雪の結晶があるから「つめたい」、音符があるから「音が出る」。形を見ると「大きい」とも考えられるね。\nヒントを2つえらんで、「これください！」を押す。どの2つなら伝わりやすいか、考えてみてね。' },
 
   /* 6 */ { type:'content', accent:'teal', section:'あそびかた', sectionEn:'how to play', num:'2',
     headline:'お店の人: <span class="hl">3つ</span>のうちから、えらぶ',
     body: rows(
-      ['add_shopping_cart', '① 品物を出す', '「これかな？」と思う物を、下の「あなたのお店」から押す'],
+      ['add_shopping_cart', '① 品物を出す', '「これかな？」と思う物を押して、箱にそえる「ひとこと」を1つえらぶ'],
       ['help', '② お客さんに質問する', 'まよったとき。「それは、まるい？」のように聞くと、はい・いいえが出る（2回まで）'],
       ['do_not_disturb_on', '③ 出さない', '合う物がないとき。「うちにはないです、ごめんね」と伝わるよ'],
     ),
-    note:'お店の人は、この3つからえらぶよ。\n①品物を出す。「これかな？」と思う物を、下の「あなたのお店」から押してね。\n②お客さんに質問する。まよったら「それは、まるい？」みたいに聞けるよ。はい・いいえが出る。2回までね。\n③出さない。合う物がないときは、出さなくていいよ。「うちにはないです、ごめんね」と伝わるよ。\n決める時間は25秒。時間が来たら、まだ決めていないお店は、出さなかったことになるよ。' },
+    note:'お店の人は、この3つからえらぶよ。\n①品物を出す。「これかな？」と思う物を、下の「あなたのお店」から押してね。そのあと、箱にそえる「ひとこと」をヒントの言葉から1つえらぶよ。その品物の特徴だと思う言葉をえらんでね。\n②お客さんに質問する。まよったら「それは、まるい？」みたいに聞けるよ。はい・いいえが出る。2回までね。\n③出さない。合う物がないときは、出さなくていいよ。「うちにはないです、ごめんね」と伝わるよ。\n決める時間は30秒。時間が来たら、まだ決めていないお店は、出さなかったことになるよ。' },
 
   /* 7 */ { type:'content', accent:'blue', section:'あそびかた', sectionEn:'how to play', num:'3',
-    headline:'同じヒントに合う物は、<span class="hl">いくつもある</span>',
-    body:`<div class="demo-row">${item('donatsu')}${item('ame')}${item('manju')}</div><p class="demo-cap">「まるい」「あまい」に合う物だけでも、こんなにあるよ。どれが出てくるかな？</p>`,
-    note:'同じヒントに合う品物は、いくつもあるよ。\nたとえば「まるい」「あまい」なら、鳴るドーナツも、光るアメも、ほかほかまんじゅうも合う。\nだから、ちがう物が出てくることもあるんだ。\nお店の人は、まよったら質問してみよう。' },
+    headline:'特徴の言葉は書いていない。<br><span class="hl">絵をよく見て</span>考えよう',
+    body:`<div class="demo-row">${item('kotatsu', false, `羽 → ${tag('とぶ')} 湯気 → ${tag('あたたかい')}`)}${item('donatsu', false, `音符 → ${tag('音が出る')}`)}${item('kakigoori', false, `きらきら → ${tag('光る')} 雪 → ${tag('つめたい')}`)}</div><p class="demo-cap">「大きい」「まるい」「かたい」などは、形から考えよう。まよったら質問！</p>`,
+    note:'品物の札には、特徴の言葉は書いていないよ。絵をよく見て考えよう。\n羽があったら「とぶ」、湯気は「あたたかい」、音符は「音が出る」、きらきらは「光る」、雪の結晶は「つめたい」。\n「大きい」「まるい」「かたい」みたいな特徴は、形から考えてね。\nまよったら、お客さんに質問してみよう。' },
 
   /* 8 */ { type:'content', accent:'coral', section:'あそびかた', sectionEn:'how to play', num:'4',
     headline:'出てきた<span class="hl">箱</span>から、1つ受け取る',
     body: rows(
-      ['inventory_2', 'お客さんは、出てきた箱から1つえらぶ', '箱には「○○のお店」と書いてあるよ。中は開けるまでわからない'],
-      ['celebration', '箱が開いて、何が出てきたか、みんなの画面に出る', 'ぴったりのときも、ちがう物のときもあるよ'],
+      ['inventory_2', 'お客さんは、出てきた箱から1つえらぶ', '箱には、お店の人の「ひとこと」が付いている。ひとことを見てえらぼう'],
+      ['celebration', '箱が開いて、何が出てきたか、みんなの画面に出る', '出てきた物の特徴が3つとも出るよ（答え合わせ）'],
       ['replay', 'どのお店も出さなかったら、「べつの物にする」', '次の人の番になるよ'],
     ),
-    note:'お店の人が決めたら、お客さんの画面に箱が出てくるよ。\n箱には「○○のお店」と書いてあるけど、中は開けるまでわからない。1つえらんで受け取ってね。\n箱が開くと、何が出てきたか、みんなの画面に出るよ。\nどのお店も出さなかったときは「べつの物にする」で、次の人の番になるよ。' },
+    note:'お店の人が決めたら、お客さんの画面に箱が出てくるよ。\n中は開けるまでわからないけど、箱にはお店の人の「ひとこと」が付いているよ。ひとことを見て、1つえらんで受け取ってね。\n箱が開くと、何が出てきたか、みんなの画面に出るよ。出てきた物の特徴も3つとも出るから、答え合わせしてみよう。\nどのお店も出さなかったときは「べつの物にする」で、次の人の番になるよ。' },
 
   /* 9 */ { type:'content', accent:'teal', section:'ポイント', sectionEn:'points',
-    headline:'ちがう物でも、<span class="hl">ポイント</span>がもらえる',
+    headline:'ぴったりと、<span class="hl">正しく断る</span>とポイント',
     body: rows(
       ['stars', 'ぴったり: お客さんと、出したお店の人に2ポイントずつ', ''],
-      ['star', 'ちがう物: お客さんと、出したお店の人に1ポイントずつ', ''],
+      ['star', 'ちがう物: お客さんに1ポイント。出したお店は1ポイント減る', '0より下にはならないよ'],
       ['thumb_up', 'えらばれなくても、ヒントに合う物を出したお店に1ポイント', 'ヒントをよく聞いたら、もらえるよ'],
-      ['add_circle', 'ポイントは減らない', '画面に出るのは、自分のポイントだけ'],
+      ['do_not_disturb_on', '合う物がなくて「出さない」をえらんだら、1ポイント', '画面に出るのは、自分のポイントだけ'],
     ),
-    note:'ポイントのつき方だよ。\nぴったりなら、お客さんと出したお店の人に2ポイントずつ。\nちがう物でも、1ポイントずつもらえるよ。\nえらばれなかったお店でも、ヒントに合う物を出していたら1ポイント。\nポイントは減らないよ。画面に出るのは、自分のポイントだけ。' },
+    note:'ポイントのつき方だよ。\nぴったりなら、お客さんと出したお店の人に2ポイントずつ。\nちがう物なら、お客さんに1ポイント。出したお店は1ポイント減るよ。0より下にはならないよ。\nえらばれなかったお店でも、ヒントに合う物を出していたら1ポイント。\n合う物が自分のお店になくて「出さない」をえらんだら、1ポイント。だから、とりあえず出すより、よく考えて決めよう。\n画面に出るのは、自分のポイントだけ。' },
 
   /* 10 */ { type:'content', accent:'blue', section:'おわり', sectionEn:'finish',
     headline:'時間が来たら、<span class="hl">おしまい</span>',
@@ -350,11 +353,11 @@ const SLIDES = [
   /* 11 */ { type:'content', accent:'coral', section:'Q&A', sectionEn:'question & answer',
     headline:'よくある質問',
     body:`<div class="qa">
-      ${qa('出さないと、だめ？', 'だいじょうぶ。合う物がないときは「出さない」をえらんでね。ポイントは減らないよ。')}
+      ${qa('出さないと、だめ？', 'だいじょうぶ。合う物が本当にないなら、「出さない」で1ポイントもらえるよ。')}
       ${qa('とちゅうから入ったら？', 'その回は見る番。ホストが「もう一回」を押すと、お店が出るよ。')}
       ${qa('自分の端末がない人は？', '「みんなにみせる画面」を見ながら、声やチャットで、いっしょに考えてね。')}
     </div>`,
-    note:'よくある質問だよ\nQ. 出さないとだめ？→ A. だいじょうぶ。合う物がないときは「出さない」をえらんでね。ポイントは減らないよ。\nQ. とちゅうから入ったら？→ A. その回は見る番。ホストが「もう一回」を押すと、お店が出るよ。\nQ. 自分の端末がない人は？→ A. 「みんなにみせる画面」を見ながら、声やチャットで、いっしょに考えてね。' },
+    note:'よくある質問だよ\nQ. 出さないとだめ？→ A. だいじょうぶ。合う物が本当にないなら、「出さない」で1ポイントもらえるよ。\nQ. とちゅうから入ったら？→ A. その回は見る番。ホストが「もう一回」を押すと、お店が出るよ。\nQ. 自分の端末がない人は？→ A. 「みんなにみせる画面」を見ながら、声やチャットで、いっしょに考えてね。' },
 
   /* 12 */ { type:'divider', accent:'blue', icon:'live_help', jp:'質問タイム', en:'any questions?',
     sub:'気になることはある？',

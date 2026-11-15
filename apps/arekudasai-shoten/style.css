@@ -184,13 +184,17 @@ button.ak-offer:hover { transform: translateY(-2px); }
 .ak-offer__box { display: block; width: 56px; height: 56px; margin: 0 auto 4px; }
 button.ak-offer:hover .ak-offer__box { animation: ak-shake 0.5s ease-in-out; }
 .ak-offer b { display: block; overflow-wrap: anywhere; }
-.ak-offer span { display: block; font-size: var(--font-size-sm); white-space: nowrap; }
+.ak-boxword { display: inline-flex; align-items: center; gap: 4px; margin-top: 4px; padding: 2px 10px; border-radius: var(--radius-full); background: #FFF7E8; font-weight: 700; white-space: nowrap; }
+.ak-answer { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 4px 6px; }
+.ak-answer__label { font-size: var(--font-size-sub); color: var(--color-muted); margin-right: 4px; }
+.ak-card[aria-pressed="true"] { background: var(--color-accent-soft); }
 
 /* 結果 */
 .ak-result { font-size: var(--font-size-xl); font-weight: 700; color: var(--color-accent); animation: ak-pop 0.4s cubic-bezier(0.3, 1.5, 0.5, 1); }
 .ak-result--hit { color: var(--color-success); }
 .ak-got { display: inline-block; padding: 10px 20px; border-radius: var(--radius-sm); background: var(--color-accent-soft); font-size: var(--font-size-lg); font-weight: 700; }
 .ak-voice { font-weight: 700; }
+.ak-loss { display: inline-block; padding: 2px 14px; border-radius: var(--radius-full); background: var(--color-primary-soft); color: var(--color-text); font-weight: 700; }
 .ak-gain { display: inline-block; padding: 2px 14px; border-radius: var(--radius-full); background: var(--color-accent-soft); color: var(--color-accent); font-weight: 700; animation: ak-pop 0.4s cubic-bezier(0.3, 1.5, 0.5, 1); }
 
 /* 品物の絵 */

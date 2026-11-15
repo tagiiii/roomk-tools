@@ -14,7 +14,7 @@ const MIN_SEATS = E.MIN_PLAYERS;
 const MAX_SEATS = E.MAX_PLAYERS;
 const TIMES = [5, 10, 15, 0];   // あそぶ時間（分）。0 はなし
 const DEFAULT_SET = { hostPlays: true, time: 10, showAll: false };
-const OFFER_MS = 25000;         // お店の人が決める時間（お客さんがヒントを送ってから）
+const OFFER_MS = 30000;         // お店の人が決める時間（お客さんがヒントを送ってから。品物と、箱にそえるひとことをえらぶ）
 const RESULT_MS = 6000;         // 結果の札を出しておく長さ
 const OPEN_MS = 900;            // 箱がゆれてから開くまで
 // ちがう物が出てきたときの、お客さんのひとこと
@@ -62,6 +62,7 @@ const state = {
   // 端末の中だけで持つ状態
   round: '',           // いま出している番（対決の番号:番の番号）。変わったら、質問の欄をとじる
   asking: false,       // お店の人が「お客さんに質問する」をひらいているか
+  offering: null,      // お店の人がえらんだ品物（箱にそえるひとことをえらぶ途中）
   picks: [],           // お客さんがえらんでいるヒント（送る前）
   lastSeen: null,      // 結果の札を出した番 { game, key }（はじめて開いたときは、前の結果を出さない）
   result: null,        // いま出している結果の札 { last, until, openUntil, voice }
@@ -209,8 +210,10 @@ function gameOf(room) {
   Object.entries(r.d && typeof r.d === 'object' ? r.d : {}).forEach(([k, v]) => {
     const i = Number(k);
     if (!Number.isInteger(i) || i < 0 || i >= n || i === S.turn || typeof v !== 'string') return;
-    // 出した品物は、いまもそのお店にある物だけ
-    if (v === '-' || S.players[i].hand.includes(v)) d[i] = v;
+    if (v === '-') { d[i] = '-'; return; }
+    // 出した品物（いまもそのお店にある物だけ）と、箱にそえるひとこと（ヒントの言葉）
+    const [item, word] = v.split(':');
+    if (S.players[i].hand.includes(item) && E.isTag(word)) d[i] = { item, word };
   });
   const q = {};
   Object.entries(r.q && typeof r.q === 'object' ? r.q : {}).forEach(([k, v]) => {
@@ -291,7 +294,7 @@ const offerLeft = (room, game) => Math.max(0, Math.ceil((game.at + OFFER_MS - ro
 
 // 出された箱（お店の番号の順）
 function offersOf(game) {
-  return Object.keys(game.d).map(Number).sort((a, b) => a - b).filter((i) => game.d[i] !== '-').map((i) => ({ from: i, item: game.d[i] }));
+  return Object.keys(game.d).map(Number).sort((a, b) => a - b).filter((i) => game.d[i] !== '-').map((i) => ({ from: i, item: game.d[i].item, word: game.d[i].word }));
 }
 const shopName = (game, i) => game.seats[i] + 'のお店';
 
@@ -384,7 +387,7 @@ function clearSession() {
 /* ── ルームへの出入り ── */
 function resetView() {
   ['town', 'stage', 'shelf', 'lobbyPeople'].forEach((id) => $(id).replaceChildren());
-  Object.assign(state, { round: '', asking: false, picks: [], lastSeen: null, result: null, phaseKey: '', sending: false, setKey: null, endShown: '' });
+  Object.assign(state, { round: '', asking: false, offering: null, picks: [], lastSeen: null, result: null, phaseKey: '', sending: false, setKey: null, endShown: '' });
 }
 
 function cleanupRoom() {
@@ -1059,16 +1062,17 @@ function sendHints() {
     .finally(() => { state.sending = false; });
 }
 
-// お店の人: 品物を出す（id）か、出さない（'-'）
-function decide(id) {
+// お店の人: 品物を出す（id と、箱にそえるひとこと word）か、出さない（'-'）
+function decide(id, word) {
   const live = liveGame();
   if (!live) return;
   const { room, game } = live;
   const me = selfSeat(game);
   if (me < 0 || me === game.S.turn || game.d[me] != null || phaseOf(room, game) !== 'offer') return;
-  if (id !== '-' && !game.S.players[me].hand.includes(id)) return;
+  if (id !== '-' && (!game.S.players[me].hand.includes(id) || !E.isTag(word))) return;
   state.asking = false;
-  playRef(game).child('r/d/' + me).set(id).catch((error) => writeFailed(error));
+  state.offering = null;
+  playRef(game).child('r/d/' + me).set(id === '-' ? '-' : id + ':' + word).catch((error) => writeFailed(error));
 }
 
 // お店の人: お客さんに質問する（答えは、お客さんのほしい物から、その場で決まる）
@@ -1113,12 +1117,16 @@ async function settle(from, skip = false) {
       const chosen = skip ? -1 : offers.findIndex((o) => o.from === from);
       const asked = {};
       Object.entries(g.q).forEach(([k, v]) => { asked[k] = v.length; });
-      res = E.resolve(S, offers, chosen, g.hints, asked, Math.random, away);
+      // 「出さない」をえらんだお店（正しく断れたかは、ルールの側でお店の品物から決める）
+      const declined = skip ? [] : Object.keys(g.d).map(Number).filter((i) => g.d[i] === '-');
+      res = E.resolve(S, offers, chosen, g.hints, asked, Math.random, away, declined);
       const out = E.toRoom(S);
       out.r = { n: n + 1 };
       out.last = {
         n, c: res.c, none: res.none, w: res.wanted || '-', h: g.hints.join(','), v: voice, skip: skip === true,
-        ...(res.none ? {} : { hit: res.hit, g: res.got, f: res.from, p: res.pt, fit: res.fit.join(',') }),
+        // 席ごとに増えた（減った）ポイント "席:数,…"・正しく断れたお店 "席,…"
+        dl: Object.entries(res.delta).map(([k, v]) => k + ':' + v).join(','), no: res.no.join(','),
+        ...(res.none ? {} : { hit: res.hit, g: res.got, f: res.from, fit: res.fit.join(',') }),
       };
       return out;
     });
@@ -1259,6 +1267,7 @@ function renderGame() {
   if (state.round !== roundKey) {
     state.round = roundKey;
     state.asking = false;
+    state.offering = null;
     state.picks = [];
   }
   state.phaseKey = roundKey + ':' + phase;
@@ -1330,6 +1339,13 @@ function roleLine(kind) {
   p.append(el('span', '', '今のあなた'), el('b', '', kind === 'ask' ? 'お客さん' : 'お店の人'));
   return p;
 }
+// 品物の特徴（3つ）。結果の札の答え合わせで出す
+function tagRow(id, label) {
+  const p = el('p', 'ak-answer');
+  if (label) p.append(el('span', 'ak-answer__label', label));
+  (E.item(id)?.tags || []).forEach((t) => p.append(tagLabel(el('span', 'ak-tag'), t)));
+  return p;
+}
 function saidLine(hints) {
   const p = el('p', 'ak-said-row');
   hints.forEach((h) => p.append(tagLabel(el('span', 'ak-said'), h)));
@@ -1364,7 +1380,7 @@ function renderAsk(room, game, me, host) {
     st.append(roleLine('ask'), el('h2', '', 'あなたのほしい物'));
     st.append(art('ak-art ak-art--mid ak-art--live', A.item(want)), el('p', 'ak-order', E.item(want).name));
     st.append(el('p', 'ak-small', '商店街の、どこかのお店にある。'));
-    st.append(el('p', '', '名前を思い出せない。ヒントを' + E.HINTS + 'つえらんで、お店の人たちに聞こう。'));
+    st.append(el('p', '', '名前を思い出せない。絵をよく見て、ヒントを' + E.HINTS + 'つえらんで、お店の人たちに聞こう。'));
     st.append(chips((t) => {
       const i = state.picks.indexOf(t);
       if (i >= 0) state.picks.splice(i, 1);
@@ -1407,7 +1423,7 @@ function renderOffer(room, game, me) {
   st.append(countdown);
   const decided = game.d[me];
   if (decided != null) {
-    st.append(el('p', 'ak-done', decided === '-' ? '出さないことにした。ほかのお店を待っているよ。' : '「' + E.item(decided).name + '」を出した。ほかのお店を待っているよ。'));
+    st.append(el('p', 'ak-done', decided === '-' ? '出さないことにした。ほかのお店を待っているよ。' : '「' + E.item(decided.item).name + '」を出した（ひとこと「' + decided.word + '」）。ほかのお店を待っているよ。'));
     return;
   }
   if (state.asking) {
@@ -1415,6 +1431,14 @@ function renderOffer(room, game, me) {
     const used = game.hints.concat((game.q[me] || []).map((a) => a.tag));
     st.append(chips(askTag, null, (t) => used.includes(t), '？'));
     st.append(btn('btn btn-secondary', '質問をやめる', () => { state.asking = false; renderGame(); }));
+    return;
+  }
+  if (state.offering) {
+    const it = E.item(state.offering);
+    st.append(el('p', 'ak-choices__title', '「' + (it ? it.name : '') + '」を出す'));
+    st.append(el('p', '', '箱にそえるひとことを、1つえらんでね。この品物の特徴だと思う言葉を、絵を見てえらぼう。お客さんは、ひとことを見て箱をえらぶよ。'));
+    st.append(chips((t) => decide(state.offering, t)));
+    st.append(btn('btn btn-secondary', '品物をえらびなおす', () => { state.offering = null; renderGame(); }));
     return;
   }
   if (!game.S.players[me].hand.length) {
@@ -1425,7 +1449,7 @@ function renderOffer(room, game, me) {
   st.append(el('p', 'ak-choices__title', 'どうする？'));
   const row = el('div', 'ak-choices');
   const give = el('div', 'ak-choice ak-choice--point');
-  give.append(el('b', '', '品物を出す'), el('span', '', '「これかな？」と思う物を、下の「あなたのお店」からえらぶ'));
+  give.append(el('b', '', '品物を出す'), el('span', '', '「これかな？」と思う物を、下の「あなたのお店」から押して、箱にそえるひとことをえらぶ。ちがう物がえらばれると1ポイント減る'));
   row.append(give);
   const rest = E.ASK_MAX - (game.q[me] || []).length;
   const ask = btn('ak-choice', '', () => { state.asking = true; renderGame(); });
@@ -1433,7 +1457,7 @@ function renderOffer(room, game, me) {
   ask.disabled = rest <= 0;
   row.append(ask);
   const no = btn('ak-choice', '', () => decide('-'));
-  no.append(el('b', '', '出さない'), el('span', '', '合う物がないとき。「うちにはないです、ごめんね」と伝える'));
+  no.append(el('b', '', '出さない'), el('span', '', '合う物がないとき。「うちにはないです、ごめんね」と伝える。本当になかったら1ポイント'));
   row.append(no);
   st.append(row);
 }
@@ -1450,7 +1474,7 @@ function renderPick(room, game, me, host) {
     offers.forEach((o) => {
       const card = mineTurn ? btn('ak-offer', '', () => settle(o.from)) : el('div', 'ak-offer');
       if (mineTurn && state.sending) card.disabled = true;
-      card.append(art('ak-offer__box', A.box()), el('b', '', shopName(game, o.from)), el('span', '', E.fits(o.item, game.hints) ? '「うちにあるよ！」' : '「これかな…？」'));
+      card.append(art('ak-offer__box', A.box()), el('b', '', shopName(game, o.from)), tagLabel(el('span', 'ak-boxword'), o.word));
       box.append(card);
     });
     st.append(box);
@@ -1479,6 +1503,7 @@ function renderResult(room, game, me) {
   if (L.none) {
     st.append(el('h2', '', L.skip ? rq + 'の番を飛ばした' : 'だれも出さなかった'));
     st.append(el('p', '', rq + 'は、べつの物をさがすことにする。'));
+    resultPoints(st, game, me, L);
     st.append(btn('btn btn-secondary', 'とじる', closeResult));
     return;
   }
@@ -1492,18 +1517,31 @@ function renderResult(room, game, me) {
   if (!got) return;
   st.append(el('p', 'ak-result' + (L.hit ? ' ak-result--hit' : ''), L.hit ? 'ぴったり！' : 'あれ？ ちがう物！'));
   st.append(art('ak-art ak-art--big ak-art--live ak-art--pop', A.item(L.g)), el('p', 'ak-got', got.name));
-  if (L.hit) st.append(el('p', '', rq + 'のほしい物が、' + fr + 'のお店にあった。'));
-  else {
+  if (L.hit) {
+    st.append(el('p', '', rq + 'のほしい物が、' + fr + 'のお店にあった。'));
+    st.append(tagRow(L.g, '答え合わせ'));
+  } else {
     st.append(el('p', '', rq + 'がほしかったのは「' + (wanted ? wanted.name : '') + '」。' + fr + 'のお店から出てきたのは、これ。'));
     if (typeof L.v === 'string') st.append(el('p', 'ak-voice', rq + L.v));
+    st.append(tagRow(L.g, '出てきた物'));
+    if (wanted) st.append(tagRow(L.w, 'ほしかった物'));
   }
-  const p = Number(L.p) || 0;
-  st.append(el('p', 'ak-small', 'お客さんの' + rq + 'と、お店の' + fr + 'に' + p + 'ポイントずつ'));
-  const fit = typeof L.fit === 'string' && L.fit ? L.fit.split(',').map(Number).filter((i) => game.seats[i]) : [];
+  st.append(el('p', 'ak-small', L.hit ? 'お客さんの' + rq + 'と、お店の' + fr + 'に' + E.PT_HIT + 'ポイントずつ' : 'お客さんの' + rq + 'に' + E.PT_ODD + 'ポイント'));
+  const fit = seatList_(game, L.fit);
   if (fit.length) st.append(el('p', 'ak-small', 'ヒントに合う物を出した ' + fit.map((i) => shopName(game, i)).join('・') + 'にも' + E.PT_FIT + 'ポイント'));
-  const gain = me === L.c || me === L.f ? p : fit.includes(me) ? E.PT_FIT : 0;
-  if (me >= 0 && gain) st.append(el('p', 'ak-gain', 'あなた +' + gain + 'ポイント'));
+  resultPoints(st, game, me, L);
   st.append(btn('btn btn-secondary', 'とじる', closeResult));
+}
+const seatList_ = (game, str) => (typeof str === 'string' && str ? str.split(',').map(Number).filter((i) => Number.isInteger(i) && game.seats[i]) : []);
+// 正しく断れたお店（みんなに出す）と、自分のポイントの増減（自分の画面にだけ出す。減ったことは、ほかの人に出さない）
+function resultPoints(st, game, me, L) {
+  const no = seatList_(game, L.no);
+  if (no.length) st.append(el('p', 'ak-small', '合う物がないと伝えた ' + no.map((i) => shopName(game, i)).join('・') + 'に' + E.PT_NO + 'ポイント'));
+  if (me < 0) return;
+  let mine = 0;
+  String(L.dl || '').split(',').forEach((x) => { const [k, v] = x.split(':'); if (Number(k) === me) mine = Number(v) || 0; });
+  if (mine > 0) st.append(el('p', 'ak-gain', 'あなた +' + mine + 'ポイント'));
+  else if (mine < 0) st.append(el('p', 'ak-loss', 'ちがう物がえらばれたので、あなたは ' + mine + 'ポイント'));
 }
 function closeResult() {
   state.result = null;
@@ -1518,19 +1556,16 @@ function renderShelf(room, game, me, phase) {
   const offer = phase === 'offer' && !state.result;
   const can = offer && !state.asking && game.d[me] == null && seatPresent(room, game, me);
   box.className = 'ak-shelfbox ' + (offer ? 'is-give' : 'is-rest');
-  $('shelfNote').textContent = can ? 'ここから1つ出す' : '';
-  const yes = (game.q[me] || []).filter((a) => a.yes).map((a) => a.tag);
-  const hints = offer ? game.hints.concat(yes) : [];
+  $('shelfNote').textContent = can ? (state.offering ? 'ひとことをえらんでね' : 'ここから1つ出す') : '';
+  const sent = game.d[me] && game.d[me] !== '-' ? game.d[me].item : null;
   const shelf = $('shelf');
+  // 札には絵と名前だけを出す（特徴の言葉は出さない。絵を見て考える）
   shelf.replaceChildren(...game.S.players[me].hand.map((id) => {
     const it = E.item(id);
-    const card = can ? btn('ak-card', '', () => decide(id)) : el('div', 'ak-card');
-    if (game.d[me] === id) card.classList.add('is-sent');
-    card.append(art('ak-art ak-art--card', A.item(id)));
-    const info = el('span', 'ak-card__info');
-    info.append(el('b', '', it.name));
-    it.tags.forEach((t) => info.append(tagLabel(el('span', 'ak-tag' + (hints.includes(t) ? ' is-match' : '')), t)));
-    card.append(info);
+    const card = can ? btn('ak-card', '', () => { state.offering = id; renderGame(); }) : el('div', 'ak-card');
+    if (sent === id || (can && state.offering === id)) card.classList.add('is-sent');
+    if (can) card.setAttribute('aria-pressed', state.offering === id ? 'true' : 'false');
+    card.append(art('ak-art ak-art--card', A.item(id)), el('b', '', it.name));
     return card;
   }));
   if (!game.S.players[me].hand.length) shelf.append(el('p', 'ak-small', 'お店は空。'));

@@ -78,12 +78,16 @@ const { E, check, sleep, roomWhen, gameOf, waitScreen, waitText, visible, waitVi
     if (i === g.S.turn) continue;
     const c = byName(g.seats[i]);
     await waitText(c, '#stage', 'どうする？');
-    if (i === holder) await c.page.click(`#shelf button.ak-card:has-text("${E.item(want).name}")`);
-    else if (i % 3 === 0) await c.page.click('#shelf button.ak-card >> nth=0');
-    else await c.page.click('#stage .ak-choice:has-text("出さない")');
+    if (i === holder || i % 3 === 0) {
+      // 品物の札を押して、箱にそえるひとことをえらぶ
+      if (i === holder) await c.page.click(`#shelf button.ak-card:has-text("${E.item(want).name}")`);
+      else await c.page.click('#shelf button.ak-card >> nth=0');
+      await waitText(c, '#stage', 'ひとことを、1つえらんでね');
+      await c.page.click('#stage .ak-chip-btn >> nth=' + (i % 13));
+    } else await c.page.click('#stage .ak-choice:has-text("出さない")');
   }
   await waitText(C, '#stage', 'どの箱を受け取る？', 8000);
-  check('pick before deadline', Date.now() - started < 24000, Date.now() - started);
+  check('pick before deadline', Date.now() - started < 29000, Date.now() - started);
   check('mobile no overflow (pick)', (await overflow(guests[0])) <= 0);
   await shot(C, '13-pick-12');
   await C.page.click(`#stage button.ak-offer:has-text("${g.seats[holder]}のお店")`);
