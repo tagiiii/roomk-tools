@@ -81,7 +81,7 @@
           <div class="ks-themes" id="theme-list"></div>
         </div>
 
-        <div class="error-msg" id="settings-error"></div>
+        <div class="error-msg" id="settings-error" role="alert"></div>
 
         <button class="btn btn-primary btn-full btn-lg" id="btn-start">
           <span class="material-symbols-rounded" aria-hidden="true">play_arrow</span>
@@ -99,7 +99,7 @@
       <div class="card ks-form">
         <label class="ks-form__label" for="hostName">ホストの名前（8文字まで）</label>
         <input class="form-input" id="hostName" maxlength="8" autocomplete="nickname" />
-        <p class="ks-form__error" id="createError" hidden></p>
+        <p class="ks-form__error" id="createError" hidden role="alert"></p>
         <button type="button" class="btn btn-primary btn-full" id="btnCreateRoom">ルームを作る</button>
       </div>
     </section>
@@ -116,7 +116,7 @@
         <input class="form-input" id="guestName" maxlength="8" autocomplete="nickname" />
         <label class="ks-form__label" for="joinCode">ルームコード（6文字）</label>
         <input class="form-input ks-form__code" id="joinCode" maxlength="6" autocorrect="off" autocapitalize="characters" autocomplete="off" spellcheck="false" />
-        <p class="ks-form__error" id="joinError" hidden></p>
+        <p class="ks-form__error" id="joinError" hidden role="alert"></p>
         <button type="button" class="btn btn-primary btn-full" id="btnJoinRoom">参加する</button>
       </div>
     </section>
@@ -162,7 +162,7 @@
               <button type="button" class="btn btn-secondary" id="btnAddProxy">足す</button>
             </div>
             <p class="ks-form__hint">端末のない人の番は、ホストが代わりに押します。</p>
-            <p class="ks-form__error" id="proxyError" hidden></p>
+            <p class="ks-form__error" id="proxyError" hidden role="alert"></p>
           </div>
         </div>
         <button type="button" class="btn btn-primary btn-full btn-lg" id="btnStartGame">
@@ -255,15 +255,16 @@
     </div>
   </div>
 
-  <div class="ks-overlay" id="hostOffOverlay" hidden>
+  <div class="ks-overlay" id="hostOffOverlay" hidden data-roomk-blocking role="dialog" aria-modal="true" aria-labelledby="hostOffOverlay-title">
     <div class="ks-overlay__panel">
-      <h2>ホストの戻りを待っています</h2>
+      <h2 id="hostOffOverlay-title">ホストの戻りを待っています</h2>
       <p>しばらく待っても戻らないときは退出してね。</p>
       <button type="button" class="btn btn-secondary" id="btnOverlayLeave">退出する</button>
     </div>
   </div>
 
   <script type="module" src="app.js?v=20261113"></script>
+  <script src="../shared/js/overlay-a11y.js?v=1" defer></script>
   <script src="../shared/js/stats.js?v=1" defer></script>
   <script src="../shared/js/howto.js"></script>
   <script>

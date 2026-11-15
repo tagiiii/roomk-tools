@@ -553,9 +553,9 @@
 </div>
 
 <!-- 再接続オーバーレイ -->
-<div class="oek-overlay" id="reconnect-overlay">
+<div class="oek-overlay" id="reconnect-overlay" data-roomk-blocking role="dialog" aria-modal="true" aria-labelledby="reconnect-overlay-title">
   <div class="spinner"></div>
-  <p class="oek-overlay__title">つなぎ直しているよ...</p>
+  <p class="oek-overlay__title" id="reconnect-overlay-title">つなぎ直しているよ...</p>
   <button type="button" class="oek-quiet-btn" id="btn-reconnect-cancel" onclick="cancelReconnect()" hidden>トップへ戻る</button>
 </div>
 
@@ -566,9 +566,9 @@
 </div>
 
 <!-- ホスト切断オーバーレイ（ゲスト用） -->
-<div class="oek-overlay" id="host-disconnect-overlay">
+<div class="oek-overlay" id="host-disconnect-overlay" data-roomk-blocking role="dialog" aria-modal="true" aria-labelledby="host-disconnect-overlay-title">
   <span class="material-symbols-rounded" style="font-size:48px;color:var(--color-error)" aria-hidden="true">signal_disconnected</span>
-  <p class="oek-overlay__title">ホストの通信が切れています</p>
+  <p class="oek-overlay__title" id="host-disconnect-overlay-title">ホストの通信が切れています</p>
   <p class="oek-overlay__sub">戻ってくるのを待っているよ</p>
   <div class="oek-overlay__countdown" id="host-disconnect-countdown">120</div>
   <p class="oek-overlay__sub">秒後に自動で終わるよ</p>
@@ -3329,6 +3329,7 @@ if (roomParam !== null) {
   resumeFromSession();
 }
 </script>
+<script src="../shared/js/overlay-a11y.js?v=1" defer></script>
 <script src="../shared/js/stats.js?v=1" defer></script>
 <script src="../shared/js/howto.js"></script>
 <script>

@@ -187,6 +187,8 @@ db.ref(`{appname}_rooms/${code}/players/${nick}`).onDisconnect().remove();
 再接続をサポートするアプリでは、ホスト側で `onDisconnect().remove()` を使わない。
 通常リロードでも切断扱いになるため、復帰フローと両立しない。
 
+ホストの戻りを待つ画面・つなぎ直している画面など、画面全体をふさぐお知らせには `data-roomk-blocking` と `role="dialog" aria-modal="true"`・見出しの `aria-labelledby` を付け、共通の `overlay-a11y.js` を読む（出ている間はうしろを inert にし、「退出する」へフォーカスを移す。[shared-modules.md](shared-modules.md)「overlay-a11y.js」。2026-11-15 に全ルーム型へ入れた）。入力のまちがいを出す要素には `role="alert"` を付ける。
+
 ### セッションデータの自動削除
 
 ゲーム・セッション終了後は Firebase からデータを削除する。

@@ -80,6 +80,19 @@ QR を作るライブラリ `vendor/qrcode-generator-2.0.4.js`（Kazuhiko Arase�
 | `show(code, link?, options?)` | QR とルームコードを重ねて出す。`options.showCode: false` でルームコードを出さない（画面に出していない秘密のカギを使う作戦会議チャット用）。`link` を省くと `location.origin + location.pathname + '?room=' + code`。`code` が空ならトースト「ルームコードがありません」（RoomkRTDB があるとき）で `false`。「とじる」・Esc・外側で閉じ、押したボタンへフォーカスを戻す。背景は inert。ライブラリを読み込めなければ「リンクをコピー」を案内する |
 | `close()` | 開いていれば閉じる |
 
+### overlay-a11y.js（非モジュール通常スクリプト）
+
+画面全体をふさぐお知らせ（ホストの戻りを待つ画面・つなぎ直している画面・参加者の接続を待つ画面）を、ダイアログとして扱う（2026-11-15 追加）。`window.RoomkOverlay` 名前空間に公開する。
+お知らせの要素に `data-roomk-blocking` と `role="dialog" aria-modal="true"`・見出しの `aria-labelledby` を付け、stats.js の直前に `<script src="../shared/js/overlay-a11y.js?v=1" defer></script>` で読む。出し方（`hidden`・class・style）はアプリのままでよい（MutationObserver で `hidden`・`class`・`style` の変化を見る）。
+出ている間は body の子を `inert` にし（script・dialog・`role="status"`/`role="alert"`/`aria-live` の要素・お知らせを中に持つ要素・もともと inert のものは除く）、見えている最初のボタン（なければお知らせ自身）へフォーカスを移す。消えたら、自分で inert にしたものだけもどす。
+出ているかは `hidden` 属性・`getClientRects()`（自分か親が `display: none` なら空）・`visibility` で見る。**opacity だけで消すお知らせには使わない**（出たままとみなして、うしろを押せなくする）。
+将棋・リバーシ・マンカラ（`setHostOff`）・ことばメーター・気持ち当てゲームは、同じ処理をアプリの中に持つので `data-roomk-blocking` を付けない（ことばメーターは、みんなにみせる画面ではフォーカスを移さない）。
+**後方互換で追加のみ。**
+
+| API | 説明 |
+|-----|------|
+| `sync()` | お知らせが出ているかを見なおして、inert とフォーカスを合わせる（ふつうは自動で呼ばれる。MutationObserver が拾えない出し方をしたときに呼ぶ） |
+
 ### howto.js（非モジュール通常スクリプト）
 
 - 右下の丸ボタン（「？」とフィードバック）を出したページは、`html` に `howto-has-fab` を付け、`body::after` でページの最後に 80px の余白をとる（最後のボタンが丸ボタンの下に隠れないように。2026-11-08）。画面の下に固定する帯（`position: sticky; bottom: 0`）はこの余白では避けられないので、帯の側で幅の狭い画面に下の余白をとる（大富豪・かくれ怪盗・すとんブロックの待合室と同じ）

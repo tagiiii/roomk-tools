@@ -620,13 +620,13 @@
 </div>
 
 <!-- オーバーレイ -->
-<div class="kdt-overlay" id="reconnect-overlay">
+<div class="kdt-overlay" id="reconnect-overlay" data-roomk-blocking role="dialog" aria-modal="true" aria-labelledby="reconnect-overlay-title">
   <div class="kdt-spinner"></div>
-  <p class="kdt-overlay__title">再接続しています...</p>
+  <p class="kdt-overlay__title" id="reconnect-overlay-title">再接続しています...</p>
 </div>
-<div class="kdt-overlay" id="host-off-overlay">
+<div class="kdt-overlay" id="host-off-overlay" data-roomk-blocking role="dialog" aria-modal="true" aria-labelledby="host-off-overlay-title">
   <span class="material-symbols-rounded" aria-hidden="true" style="font-size:48px">signal_disconnected</span>
-  <p class="kdt-overlay__title">ホストが一時的に切断されました</p>
+  <p class="kdt-overlay__title" id="host-off-overlay-title">ホストが一時的に切断されました</p>
   <p class="kdt-overlay__sub">再接続を待っています</p>
   <button class="btn btn-ghost" style="margin-top:16px" onclick="leaveGame()">退出する</button>
 </div>
@@ -1729,6 +1729,7 @@ if (roomParam !== null) {
   resumeFromSession();
 }
 </script>
+<script src="../shared/js/overlay-a11y.js?v=1" defer></script>
 <script src="../shared/js/stats.js?v=1" defer></script>
 <script src="../shared/js/howto.js"></script>
 <script>

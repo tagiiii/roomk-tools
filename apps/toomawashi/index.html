@@ -362,7 +362,7 @@
           <span class="tw-toggle__note">聞き手の画面に ①②③ の答えの候補が出ます</span>
         </span>
       </label>
-      <div class="error-msg" id="create-error"></div>
+      <div class="error-msg" id="create-error" role="alert"></div>
     </div>
     <button class="btn btn-primary btn-full btn-lg" onclick="hostCreate()">
       <span class="material-symbols-rounded" aria-hidden="true">meeting_room</span>
@@ -382,7 +382,7 @@
       <input type="text" id="join-nickname" class="form-input" maxlength="8" placeholder="本当の名前じゃなくてOK">
       <label class="form-label" style="margin-top:16px" for="join-code">ルームコード（6文字）</label>
       <input type="text" id="join-code" class="form-input tw-code-input" maxlength="6" autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="6文字">
-      <div class="error-msg" id="join-error"></div>
+      <div class="error-msg" id="join-error" role="alert"></div>
     </div>
     <button class="btn btn-primary btn-full btn-lg" onclick="guestJoin()">
       <span class="material-symbols-rounded" aria-hidden="true">login</span>
@@ -494,7 +494,7 @@
       <div class="card">
         <label class="form-label" for="listener-input">自分の言葉で答える</label>
         <input type="text" id="listener-input" class="form-input" maxlength="20" placeholder="何かわかったら書いてね">
-        <div class="error-msg" id="listener-error"></div>
+        <div class="error-msg" id="listener-error" role="alert"></div>
         <button class="btn btn-primary btn-full" style="margin-top:12px" onclick="submitTypedAnswer()">
           <span class="material-symbols-rounded" aria-hidden="true">send</span>
           答えを送る
@@ -634,13 +634,13 @@
 </div>
 
 <!-- ═══════════════ Overlays ═══════════════ -->
-<div class="overlay" id="reconnect-overlay">
+<div class="overlay" id="reconnect-overlay" data-roomk-blocking role="dialog" aria-modal="true" aria-labelledby="reconnect-overlay-title">
   <div class="spinner"></div>
-  <p class="overlay-title">つなぎ直しています<span class="dots"></span></p>
+  <p class="overlay-title" id="reconnect-overlay-title">つなぎ直しています<span class="dots"></span></p>
 </div>
-<div class="overlay" id="host-off-overlay">
+<div class="overlay" id="host-off-overlay" data-roomk-blocking role="dialog" aria-modal="true" aria-labelledby="host-off-overlay-title">
   <span class="material-symbols-rounded" aria-hidden="true" style="font-size:48px">signal_disconnected</span>
-  <p class="overlay-title">ホストの戻りを待っています</p>
+  <p class="overlay-title" id="host-off-overlay-title">ホストの戻りを待っています</p>
   <p class="overlay-sub">少し待っても戻らないときは、一度出て入り直してね</p>
   <button class="btn btn-ghost" onclick="leaveGame()">退出する</button>
 </div>
@@ -1927,6 +1927,7 @@ function resumeFromSession() {
   }
 }());
 </script>
+<script src="../shared/js/overlay-a11y.js?v=1" defer></script>
 <script src="../shared/js/stats.js?v=1" defer></script>
 <script src="../shared/js/howto.js"></script>
 <script>

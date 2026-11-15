@@ -262,7 +262,7 @@
   <div class="page">
     <h2>ルームを作る</h2>
     <div class="card">
-      <div class="error-msg" id="host-error"></div>
+      <div class="error-msg" id="host-error" role="alert"></div>
       <div class="form-group">
         <label class="form-label" for="host-nickname">ニックネーム（8文字以内）</label>
         <input class="form-input" id="host-nickname" type="text" maxlength="8" placeholder="例: たろう">
@@ -284,7 +284,7 @@
     <div class="card">
       <p class="ii-hint ii-hint--lead" id="joinLinkHint" hidden>リンクから開いたので、ルームコードは入っているよ。ニックネームを入れて「参加する」を押してね。</p>
       <p class="ii-hint ii-hint--lead" id="rejoinHint" hidden>ルームにもどれなかったよ。もう一度参加してね。</p>
-      <div class="error-msg" id="guest-error"></div>
+      <div class="error-msg" id="guest-error" role="alert"></div>
       <div class="form-group">
         <label class="form-label" for="guest-nickname">ニックネーム（8文字以内）</label>
         <input class="form-input" id="guest-nickname" type="text" maxlength="8" placeholder="例: はなこ">
@@ -361,7 +361,7 @@
             <option value="90" selected>90秒</option>
           </select>
         </div>
-        <div class="error-msg" id="w-error"></div>
+        <div class="error-msg" id="w-error" role="alert"></div>
         <button id="w-start" class="btn btn-primary btn-full mt-md" onclick="startRound()">
           <span class="material-symbols-rounded">play_arrow</span>このお題で始める
         </button>
@@ -402,7 +402,7 @@
         <span class="material-symbols-rounded">add</span>
       </button>
     </div>
-    <div class="error-msg" id="i-error"></div>
+    <div class="error-msg" id="i-error" role="alert"></div>
 
     <ul class="ii-answer-list" id="i-answer-list"></ul>
     </div>
@@ -471,18 +471,18 @@
 </div>
 
 <!-- オーバーレイ -->
-<div class="overlay" id="guest-off-overlay">
-  <p class="overlay-title">接続を確認しています</p>
+<div class="overlay" id="guest-off-overlay" data-roomk-blocking role="dialog" aria-modal="true" aria-labelledby="guest-off-overlay-title">
+  <p class="overlay-title" id="guest-off-overlay-title">接続を確認しています</p>
   <p class="overlay-sub">回答を残して再接続を待っています</p>
   <button class="btn btn-secondary" onclick="leaveGame()">退出する</button>
 </div>
-<div class="overlay" id="reconnect-overlay">
+<div class="overlay" id="reconnect-overlay" data-roomk-blocking role="dialog" aria-modal="true" aria-labelledby="reconnect-overlay-title">
   <div class="spinner"></div>
-  <p class="overlay-title">再接続しています...</p>
+  <p class="overlay-title" id="reconnect-overlay-title">再接続しています...</p>
 </div>
-<div class="overlay" id="host-off-overlay">
+<div class="overlay" id="host-off-overlay" data-roomk-blocking role="dialog" aria-modal="true" aria-labelledby="host-off-overlay-title">
   <span class="material-symbols-rounded" style="font-size:48px">signal_disconnected</span>
-  <p class="overlay-title">ホストが一時的に切断されました</p>
+  <p class="overlay-title" id="host-off-overlay-title">ホストが一時的に切断されました</p>
   <p class="overlay-sub">再接続を待っています</p>
   <button class="btn btn-ghost" style="margin-top:16px" onclick="leaveGame()">退出する</button>
 </div>
@@ -1594,6 +1594,7 @@ if (roomParam !== null) {
   resumeFromSession();
 }
 </script>
+<script src="../shared/js/overlay-a11y.js?v=1" defer></script>
 <script src="../shared/js/stats.js?v=1" defer></script>
 <script src="../shared/js/howto.js"></script>
 <script>

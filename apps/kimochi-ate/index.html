@@ -48,7 +48,7 @@
             <span>ホストも遊ぶ</span>
           </label>
           <p class="ka-form__hint">ホストも主役になったり、予想したりします。進行だけにするときは外してね。</p>
-          <p class="ka-form__error" id="createError" hidden></p>
+          <p class="ka-form__error" id="createError" hidden role="alert"></p>
           <button type="button" class="btn btn-primary btn-full" id="btnCreateRoom">ルームを作る</button>
         </div>
       </section>
@@ -61,7 +61,7 @@
           <input class="ka-form__input" id="guestName" maxlength="8" autocomplete="nickname">
           <label class="ka-form__label" for="joinCode">ルームコード（6文字）</label>
           <input class="ka-form__input ka-form__input--code" id="joinCode" maxlength="6" autocorrect="off" autocapitalize="characters" autocomplete="off" spellcheck="false">
-          <p class="ka-form__error" id="joinError" hidden></p>
+          <p class="ka-form__error" id="joinError" hidden role="alert"></p>
           <button type="button" class="btn btn-primary btn-full" id="btnJoinRoom">参加する</button>
         </div>
       </section>
@@ -72,7 +72,7 @@
           <p class="ka-form__hint ka-form__hint--lead">画面共有でみんなに見せるための画面です。ルームには入らず、見るだけです。</p>
           <label class="ka-form__label" for="watchCode">ルームコード（6文字）</label>
           <input class="ka-form__input ka-form__input--code" id="watchCode" maxlength="6" autocorrect="off" autocapitalize="characters" autocomplete="off" spellcheck="false">
-          <p class="ka-form__error" id="watchError" hidden></p>
+          <p class="ka-form__error" id="watchError" hidden role="alert"></p>
           <button type="button" class="btn btn-primary btn-full" id="btnWatchOpen">画面をひらく</button>
         </div>
       </section>
@@ -192,7 +192,7 @@
           <input class="ka-form__input" id="proxyName" maxlength="8" autocomplete="off">
           <button type="button" class="btn btn-secondary" id="btnAddProxy">足す</button>
         </div>
-        <p class="ka-form__error" id="proxyError" hidden></p>
+        <p class="ka-form__error" id="proxyError" hidden role="alert"></p>
       </div>
 
       <section class="ka-screen" id="screen-watch-end">

@@ -368,7 +368,7 @@
         </label>
         <p class="text-muted" style="font-size:12px; margin-top:6px">少人数で全員遊ぶときにチェック。進行に専念するときはそのままでOK</p>
       </div>
-      <div class="ptm-error" id="host-nickname-error"></div>
+      <div class="ptm-error" id="host-nickname-error" role="alert"></div>
       <button class="btn btn-primary btn-full" id="btn-create-room" onclick="hostCreateRoom()">ルームを作る</button>
       <button class="btn btn-ghost btn-full" onclick="showScreen('top')">← 戻る</button>
     </div>
@@ -430,7 +430,7 @@
       <input class="form-input ptm-input-code" id="guest-room-code" type="text"
              maxlength="6" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="XXXXXX" autocomplete="off">
     </div>
-    <div class="ptm-error" id="guest-join-error"></div>
+    <div class="ptm-error" id="guest-join-error" role="alert"></div>
     <button class="btn btn-primary btn-full" id="btn-guest-join" onclick="guestJoin()">参加する</button>
     <button class="btn btn-ghost btn-full" onclick="showScreen('top')">← 戻る</button>
   </div>
@@ -476,7 +476,7 @@
         <input class="form-input" id="hint-input" type="text" maxlength="20"
                placeholder="例：にくまん" autocomplete="off">
       </div>
-      <div class="ptm-error" id="hint-error"></div>
+      <div class="ptm-error" id="hint-error" role="alert"></div>
       <button class="btn btn-primary btn-lg btn-full" onclick="speakerSubmitHint()">ヒントを送る</button>
     </div>
 
@@ -659,15 +659,15 @@
 </div>
 
 <!-- 再接続中オーバーレイ -->
-<div class="ptm-overlay" id="reconnect-overlay">
+<div class="ptm-overlay" id="reconnect-overlay" data-roomk-blocking role="dialog" aria-modal="true" aria-labelledby="reconnect-overlay-title">
   <div class="spinner"></div>
-  <p class="ptm-overlay__title">再接続しています...</p>
+  <p class="ptm-overlay__title" id="reconnect-overlay-title">再接続しています...</p>
 </div>
 
 <!-- ホスト切断オーバーレイ（ゲスト用） -->
-<div class="ptm-overlay" id="host-disconnect-overlay">
+<div class="ptm-overlay" id="host-disconnect-overlay" data-roomk-blocking role="dialog" aria-modal="true" aria-labelledby="host-disconnect-overlay-title">
   <div class="spinner"></div>
-  <p class="ptm-overlay__title">ホストが一時的に接続を失いました</p>
+  <p class="ptm-overlay__title" id="host-disconnect-overlay-title">ホストが一時的に接続を失いました</p>
   <p class="ptm-overlay__sub">再接続を待っています</p>
   <div class="ptm-overlay__countdown" id="host-disconnect-countdown">120</div>
   <p class="ptm-overlay__sub">秒後に自動終了します</p>
@@ -2102,6 +2102,7 @@
     resumeFromSession();
   }
 </script>
+<script src="../shared/js/overlay-a11y.js?v=1" defer></script>
 <script src="../shared/js/stats.js?v=1" defer></script>
 <script src="../shared/js/howto.js"></script>
 <script>

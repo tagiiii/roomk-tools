@@ -181,9 +181,10 @@
       </section>
     </main>
   </div>
-  <div class="kd-overlay" id="hostOffOverlay" hidden><div class="kd-overlay__panel"><h2>ホストの戻りを待っています</h2><p>しばらく待っても戻らないときは退出してね。</p><button type="button" class="btn btn-secondary" id="btnOverlayLeave">退出する</button></div></div>
+  <div class="kd-overlay" id="hostOffOverlay" hidden data-roomk-blocking role="dialog" aria-modal="true" aria-labelledby="hostOffOverlay-title"><div class="kd-overlay__panel"><h2 id="hostOffOverlay-title">ホストの戻りを待っています</h2><p>しばらく待っても戻らないときは退出してね。</p><button type="button" class="btn btn-secondary" id="btnOverlayLeave">退出する</button></div></div>
   <script src="data.js?v=20261109"></script>
   <script type="module" src="app.js?v=20261113"></script>
+  <script src="../shared/js/overlay-a11y.js?v=1" defer></script>
   <script src="../shared/js/stats.js?v=1" defer></script>
   <script src="../shared/js/howto.js"></script>
   <script>

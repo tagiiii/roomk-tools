@@ -426,15 +426,15 @@
 </div>
 
 <!-- 再接続オーバーレイ -->
-<div class="esa-overlay" id="reconnect-overlay">
+<div class="esa-overlay" id="reconnect-overlay" data-roomk-blocking role="dialog" aria-modal="true" aria-labelledby="reconnect-overlay-title">
   <div class="spinner"></div>
-  <p class="esa-overlay__title">つなぎ直しているよ...</p>
+  <p class="esa-overlay__title" id="reconnect-overlay-title">つなぎ直しているよ...</p>
 </div>
 
 <!-- ホスト切断オーバーレイ（ゲスト用） -->
-<div class="esa-overlay" id="host-disconnect-overlay">
+<div class="esa-overlay" id="host-disconnect-overlay" data-roomk-blocking role="dialog" aria-modal="true" aria-labelledby="host-disconnect-overlay-title">
   <span class="material-symbols-rounded" style="font-size:48px;color:var(--color-error)">signal_disconnected</span>
-  <p class="esa-overlay__title">ホストの通信が切れています</p>
+  <p class="esa-overlay__title" id="host-disconnect-overlay-title">ホストの通信が切れています</p>
   <p class="esa-overlay__sub">戻ってくるのを待っているよ</p>
   <div class="esa-overlay__countdown" id="host-disconnect-countdown">120</div>
   <p class="esa-overlay__sub">秒後に自動で終わるよ</p>
@@ -1759,6 +1759,7 @@ if (roomParam !== null) {
   resumeFromSession();
 }
 </script>
+<script src="../shared/js/overlay-a11y.js?v=1" defer></script>
 <script src="../shared/js/stats.js?v=1" defer></script>
 <script src="../shared/js/howto.js"></script>
 <script>

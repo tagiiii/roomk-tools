@@ -585,7 +585,7 @@
           <span class="ph-field__label">ニックネーム</span>
           <input type="text" class="ph-input" id="createNick" maxlength="8" placeholder="8文字まで" autocomplete="off" />
         </label>
-        <p class="ph-field__error" id="createError"></p>
+        <p class="ph-field__error" id="createError" role="alert"></p>
         <button type="button" class="btn btn-primary btn-full btn-lg" id="btnCreateGo">ルームを作る</button>
       </div>
     </section>
@@ -608,7 +608,7 @@
           <span class="ph-field__label">ルームコード（6文字）</span>
           <input type="text" class="ph-input ph-input--code" id="joinCode" maxlength="6" autocorrect="off" spellcheck="false" placeholder="ABCDEF" autocomplete="off" autocapitalize="characters" />
         </label>
-        <p class="ph-field__error" id="joinError"></p>
+        <p class="ph-field__error" id="joinError" role="alert"></p>
         <button type="button" class="btn btn-primary btn-full btn-lg" id="btnJoinGo">参加する</button>
       </div>
     </section>
@@ -751,7 +751,7 @@
   <div class="ph-confetti" id="confetti" aria-hidden="true"></div>
 
   <!-- みんなで: ホスト切断オーバーレイ（ゲスト向け）-->
-  <div class="ph-overlay" id="overlayHostOff" role="dialog" aria-modal="true" aria-labelledby="hostOffTitle">
+  <div class="ph-overlay" id="overlayHostOff" role="dialog" aria-modal="true" aria-labelledby="hostOffTitle" data-roomk-blocking>
     <div class="ph-modal">
       <p class="ph-modal__title" id="hostOffTitle" style="font-size:var(--font-size-xl);color:var(--color-primary)">ホストとはなれちゃった</p>
       <p class="ph-modal__sub">ホストの通信が切れています。<br />戻ってくるのを待ってね。</p>
@@ -3032,6 +3032,7 @@
   </script>
 
   <!-- あそびかたモーダル（共通）。パズル画面の操作ボタン（右下）と重ならないよう左下に配置 -->
+  <script src="../shared/js/overlay-a11y.js?v=1" defer></script>
   <script src="../shared/js/stats.js?v=1" defer></script>
   <script src="../shared/js/howto.js"></script>
   <script>

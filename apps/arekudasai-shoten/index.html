@@ -46,7 +46,7 @@
       <h2 class="ak-panel__title ak-panel__title--sub">ルームを作る</h2>
       <label class="form-label" for="hostName">ホストの名前（8文字まで）</label>
       <input class="form-input" id="hostName" maxlength="8" autocomplete="nickname">
-      <p class="ak-alert" id="createError" hidden></p>
+      <p class="ak-alert" id="createError" hidden role="alert"></p>
       <button type="button" class="btn btn-primary btn-full mt-md" id="btnCreateRoom">ルームを作る</button>
     </div>
   </section>
@@ -61,7 +61,7 @@
       <input class="form-input" id="guestName" maxlength="8" autocomplete="nickname">
       <label class="form-label mt-md" for="joinCode">ルームコード（6文字）</label>
       <input class="form-input ak-code-input" id="joinCode" maxlength="6" autocorrect="off" autocapitalize="characters" autocomplete="off" spellcheck="false">
-      <p class="ak-alert" id="joinError" hidden></p>
+      <p class="ak-alert" id="joinError" hidden role="alert"></p>
       <button type="button" class="btn btn-primary btn-full mt-md" id="btnJoinRoom">参加する</button>
     </div>
   </section>
@@ -74,7 +74,7 @@
       <p class="ak-hint">画面共有でみんなに見せるための画面です。ルームには入らず、見るだけです。</p>
       <label class="form-label" for="watchCode">ルームコード（6文字）</label>
       <input class="form-input ak-code-input" id="watchCode" maxlength="6" autocorrect="off" autocapitalize="characters" autocomplete="off" spellcheck="false">
-      <p class="ak-alert" id="watchError" hidden></p>
+      <p class="ak-alert" id="watchError" hidden role="alert"></p>
       <button type="button" class="btn btn-primary btn-full mt-md" id="btnWatchOpen">画面をひらく</button>
     </div>
   </section>
@@ -173,15 +173,16 @@
     </div>
   </section>
 
-  <div class="ak-overlay-page" id="hostOffOverlay" hidden>
+  <div class="ak-overlay-page" id="hostOffOverlay" hidden data-roomk-blocking role="dialog" aria-modal="true" aria-labelledby="hostOffOverlay-title">
     <div class="ak-overlay-page__panel">
-      <h2>ホストの戻りを待っています</h2>
+      <h2 id="hostOffOverlay-title">ホストの戻りを待っています</h2>
       <p id="hostOffText">しばらく待っても戻らないときは退出してね。</p>
       <button type="button" class="btn btn-secondary" id="btnOverlayLeave">退出する</button>
     </div>
   </div>
 
   <script type="module" src="app.js?v=20261115a"></script>
+  <script src="../shared/js/overlay-a11y.js?v=1" defer></script>
   <script src="../shared/js/stats.js?v=1" defer></script>
   <script src="../shared/js/howto.js"></script>
   <script>

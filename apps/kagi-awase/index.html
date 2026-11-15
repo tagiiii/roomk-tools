@@ -44,7 +44,7 @@
         <div class="kag-form">
           <label class="kag-form__label" for="hostName">ホストの名前（8文字まで）</label>
           <input class="kag-form__input" id="hostName" maxlength="8" autocomplete="nickname">
-          <p class="kag-form__error" id="createError" hidden></p>
+          <p class="kag-form__error" id="createError" hidden role="alert"></p>
           <button type="button" class="btn btn-primary btn-full" id="btnCreateRoom">ルームを作る</button>
         </div>
       </section>
@@ -57,7 +57,7 @@
           <input class="kag-form__input" id="guestName" maxlength="8" autocomplete="nickname">
           <label class="kag-form__label" for="joinCode">ルームコード（6文字）</label>
           <input class="kag-form__input kag-form__input--code" id="joinCode" maxlength="6" autocorrect="off" autocapitalize="characters" autocomplete="off" spellcheck="false">
-          <p class="kag-form__error" id="joinError" hidden></p>
+          <p class="kag-form__error" id="joinError" hidden role="alert"></p>
           <button type="button" class="btn btn-primary btn-full" id="btnJoinRoom">参加する</button>
         </div>
       </section>
@@ -68,7 +68,7 @@
           <p class="kag-form__hint kag-form__hint--lead">画面共有でみんなに見せるための画面です。ルームには入らず、見るだけです。</p>
           <label class="kag-form__label" for="watchCode">ルームコード（6文字）</label>
           <input class="kag-form__input kag-form__input--code" id="watchCode" maxlength="6" autocorrect="off" autocapitalize="characters" autocomplete="off" spellcheck="false">
-          <p class="kag-form__error" id="watchError" hidden></p>
+          <p class="kag-form__error" id="watchError" hidden role="alert"></p>
           <button type="button" class="btn btn-primary btn-full" id="btnWatchOpen">画面をひらく</button>
         </div>
       </section>
@@ -150,8 +150,9 @@
       </section>
     </main>
   </div>
-  <div class="kag-overlay" id="hostOffOverlay" hidden><div class="kag-overlay__panel"><h2>ホストの戻りを待っています</h2><p id="hostOffText">しばらく待っても戻らないときは退出してね。</p><button type="button" class="btn btn-secondary" id="btnOverlayLeave">退出する</button></div></div>
+  <div class="kag-overlay" id="hostOffOverlay" hidden data-roomk-blocking role="dialog" aria-modal="true" aria-labelledby="hostOffOverlay-title"><div class="kag-overlay__panel"><h2 id="hostOffOverlay-title">ホストの戻りを待っています</h2><p id="hostOffText">しばらく待っても戻らないときは退出してね。</p><button type="button" class="btn btn-secondary" id="btnOverlayLeave">退出する</button></div></div>
   <script type="module" src="app.js?v=20261113"></script>
+  <script src="../shared/js/overlay-a11y.js?v=1" defer></script>
   <script src="../shared/js/stats.js?v=1" defer></script>
   <script src="../shared/js/howto.js"></script>
   <script>
