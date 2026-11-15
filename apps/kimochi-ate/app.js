@@ -166,6 +166,15 @@ function showScreen(id) {
   $('roomBar').hidden = !state.roomRef;
 }
 
+// ホストの戻りを待つ画面。出ている間は、うしろの画面をキーボードでも操作できなくする
+function setHostOff(on) {
+  const overlay = $('hostOffOverlay');
+  const was = !overlay.hidden;
+  overlay.hidden = !on;
+  document.querySelector('.wrapper').inert = on;
+  if (on && !was) $('btnOverlayLeave').focus();
+}
+
 function setError(id, message) {
   const node = $(id);
   node.textContent = message || '';
@@ -444,9 +453,10 @@ function cleanupRoom() {
   $('starWords').className = 'ka-words';
   $('doneText').textContent = '';
   $('infoText').textContent = '';
-  $('hostOffOverlay').hidden = true;
+  setHostOff(false);
   $('btnOpenWatch').hidden = true;
   $('roomBar').hidden = true;
+  $('roomBar').classList.remove('ka-roombar--slim');
 }
 
 function leaveLocally(message, isError = true) {
@@ -834,6 +844,8 @@ function handleRoom(room) {
   if (state.presenceDirty) ensurePresence(true);
   else if (needsPresence(room)) ensurePresence();
   updateHostOverlay(room);
+  // スマホでは、遊んでいる間の参加者のルームバーを1段にする（コピー・QR は待機中とホストにだけ出す。style.css）
+  $('roomBar').classList.toggle('ka-roombar--slim', state.role === 'guest' && room.status !== STATUS.WAITING);
   syncUiKey(room);
   switch (room.status) {
     case STATUS.CASTING: renderCasting(room); break;
@@ -845,7 +857,7 @@ function handleRoom(room) {
 
 function updateHostOverlay(room) {
   if (state.role === 'guest' && room.hostConnected === false) {
-    $('hostOffOverlay').hidden = false;
+    setHostOff(true);
     // 切れたままのあいだに切れた時刻だけが新しくなったら（ホストの通信が短く揺れたとき）、期限のタイマーを仕掛けなおす。
     // 古い時刻のまま動くと「まだ期限前」で消せず、待つ画面のまま残る（2026-11-13）
     if (state.orphanTimer && state.orphanAt !== RoomkRTDB.getHostDisconnectedAt(room)) { clearTimeout(state.orphanTimer); state.orphanTimer = null; }
@@ -860,7 +872,7 @@ function updateHostOverlay(room) {
       }, delay);
     }
   } else {
-    $('hostOffOverlay').hidden = true;
+    setHostOff(false);
     clearTimeout(state.orphanTimer);
     state.orphanTimer = null;
   }
@@ -1213,6 +1225,8 @@ function connectWatch(code, ref) {
   // 共有するタブ・ウィンドウを選ぶときに見分けられるよう、題名と見出しを変える
   document.title = 'みんなにみせる画面 | 気持ち当てゲーム | あそびのたな';
   $('watchBadge').hidden = false;
+  // 共有の1画面（1280×720）に収まるよう、見出し・ルームバー・一覧を詰めた見た目にする（style.css の .ka-watch）
+  document.body.classList.add('ka-watch');
   state.roomCode = code;
   state.roomRef = ref;
   $('roomCodeLabel').textContent = code;
@@ -1253,7 +1267,7 @@ function handleSpectator(room) {
 // ホストが切断している間はオーバーレイを出し、期限切れになったら終わりの表示にする（ルームは消さない）
 function updateWatchOverlay(room) {
   const off = room.hostConnected === false;
-  $('hostOffOverlay').hidden = !off;
+  setHostOff(off);
   clearTimeout(state.watchTimer);
   state.watchTimer = null;
   if (!off) return;
@@ -1314,8 +1328,9 @@ function stopWatch() {
   const box = $('watchGroups');
   box.replaceChildren();
   delete box.dataset.key;
-  $('hostOffOverlay').hidden = true;
+  setHostOff(false);
   $('roomBar').hidden = true;
+  document.body.classList.remove('ka-watch');
   document.title = DEFAULT_TITLE;
   $('watchBadge').hidden = true;
   history.replaceState(null, '', location.pathname);
