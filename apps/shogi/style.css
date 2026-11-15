@@ -294,6 +294,10 @@ body { background: var(--color-bg); }
   .sh-roombar { gap: 4px; padding: 6px 8px; }
   .sh-roombar .btn { padding: 4px 8px; font-size: 13px; min-height: 36px; }
   .sh-main { padding: 14px 12px 56px; }
+  /* 列の幅を欄の幅に固定する（札の幅「盤＋40px」で列が広がって、横にはみ出さないように） */
+  .sh-main.sh-game { padding-left: 4px; padding-right: 4px; grid-template-columns: minmax(0, 1fr); }
+  /* 盤のほかのボタンは、ふちから少しあける */
+  .sh-result, .sh-declare { padding: 0 8px; box-sizing: border-box; }
   .sh-seg { grid-template-columns: repeat(2, 1fr); }
   .sh-seg--3 { grid-template-columns: 1fr; }
   .sh-variants { grid-template-columns: 1fr; }
@@ -310,4 +314,14 @@ body { background: var(--color-bg); }
   .sh-seats-edit { flex-direction: column; align-items: stretch; }
   .sh-seats-edit .sh-seatsel { flex: none; }
   .sh-seats-edit .sh-iconbtn { align-self: center; transform: rotate(90deg); }
+}
+
+/* 幅の狭い画面: 対局の欄の左右の余白を詰めて、盤の大きさを欄の実際の幅（cqw）から決める
+   （375px で本将棋のマスが 35px → 37px 台）。100vw はパソコンでスクロールバーの幅もふくみ、横にはみ出すので使わない */
+@supports (container-type: inline-size) {
+  @media (max-width: 600px) {
+    .sh-main.sh-game { container-type: inline-size; }
+    /* 右の段の数字 18px・盤のふち 9px と、少しの余り */
+    .sh-game > * { --sh-board: min(calc(100cqw - 29px), 560px); }
+  }
 }

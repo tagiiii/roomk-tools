@@ -428,7 +428,16 @@ const SLIDES = [
     </div>`,
     note:'場所は「７六」のように言うよ。\n横は右から１から９、盤の上の数字。たては上から一から九、盤の右の漢数字だよ。\n後手の人の画面は、自分の駒が手前に来るように盤が逆向きになっているよ。\n1台の画面でみんなで遊ぶときは、「７六に歩」のように声かチャットで教えてね。画面を動かす人が指すよ。' },
 
-  /* 13 */ { type:'content', accent:'coral', section:'はじめかた', sectionEn:'how to join',
+  /* 13 */ { type:'content', accent:'blue', section:'遊びかた', sectionEn:'vs CPU',
+    headline:'<span class="hl">CPU</span> とも対戦できる',
+    body:`<div class="rows">
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">devices</span></div><div><div class="row__t">「1台の画面であそぶ」で、対戦の相手を「CPU」にする</div><div class="row__d">自分が先手か後手かも選べるよ。先手が先に指す</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">groups</span></div><div><div class="row__t">ルームでは、ホストが席に「CPU」を選べる</div><div class="row__d">ほかの人は、CPU との対局を観戦できるよ</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">smart_toy</span></div><div><div class="row__t">CPU の強さは「よわい・ふつう・つよい」</div><div class="row__d">CPU は時間を使わないよ。「1手もどす」で、CPU の手と自分の手をいっしょにもどせる</div></div></div>
+    </div>`,
+    note:'CPU とも対戦できるよ。\n1台の画面で遊ぶときは、「1台の画面であそぶ」で対戦の相手を「CPU」にしてね。自分が先手か後手かも選べる。先手が先に指すよ。\nルームでは、ホストが席に「CPU」を選べる。ほかの人は、CPU との対局を観戦できるよ。\nCPU の強さは、よわい・ふつう・つよいの3つ。持ち時間があっても、CPU は時間を使わないよ。「1手もどす」を押すと、CPU の手と、その前の自分の手をいっしょにもどせるよ。' },
+
+  /* 14 */ { type:'content', accent:'coral', section:'はじめかた', sectionEn:'how to join',
     headline:'名前 → ルームコード →<br>「参加する」',
     body:`<div class="rows">
       <div class="row"><div class="row__ic"><span class="material-symbols-rounded">login</span></div><div><div class="row__t">「ルームに参加する」を押す</div><div class="row__d">名前、ルームコード（6文字）の順に入れて「参加する」</div></div></div>
@@ -437,7 +446,7 @@ const SLIDES = [
     </div>`,
     note:'参加のしかただよ。\n「ルームに参加する」を押して、名前、ルームコード（6文字）の順に入れて「参加する」。\nチャットのリンクから開いたときは、ルームコードは入っているので名前だけ入れてね。スマホやタブレットの人は、QR コードを読み取ってもOK。\n対戦するのは2人で、ほかの人は自分の画面で対局を見られるよ。だれが先手と後手になるかは、ホストが決めるよ。ホストが席に CPU を選ぶと、CPU と対戦できるよ。' },
 
-  /* 14 */ { type:'content', accent:'teal', section:'Q&A', sectionEn:'question & answer',
+  /* 15 */ { type:'content', accent:'teal', section:'Q&A', sectionEn:'question & answer',
     headline:'よくある質問',
     body:`<div class="qa">
       <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>指せない所を押したら？</div><div class="qa__a"><span class="qa__badge a">A</span>理由が出るだけで、駒は動かないよ。もう一度、駒から選びなおしてね。</div></div>
@@ -446,19 +455,19 @@ const SLIDES = [
     </div>`,
     note:'よくある質問だよ\nQ. 指せない所を押したら？→ A. 理由が出るだけで、駒は動かないよ。\nQ. 相手の番のときは？→ A. 盤は押せないよ。相手がどこに指すか見ていてね。\nQ. まちがえて指しちゃったら？→ A. ホストに伝えてね。「1手もどす」でもどせるよ。' },
 
-  /* 15 */ { type:'divider', accent:'blue', icon:'live_help', jp:'質問タイム', en:'any questions?',
+  /* 16 */ { type:'divider', accent:'blue', icon:'live_help', jp:'質問タイム', en:'any questions?',
     sub:'気になることはある？',
     note:'ここまでで、質問がある人はいるかな？\nマイクON か チャットで教えてね！' },
 
-  /* 16 */ { type:'divider', accent:'coral', icon:'how_to_reg', jp:'参加確認', en:"let's check",
+  /* 17 */ { type:'divider', accent:'coral', icon:'how_to_reg', jp:'参加確認', en:"let's check",
     sub:'チャットで教えてね',
     note:'対戦してみたい人〜？\n「①対戦したい」「②見ていたい」「③その他」を、チャットで教えてね！' },
 
-  /* 17 */ { type:'divider', accent:'teal', solid:true, icon:'rocket_launch', jp:'＼ ゲームスタート ／', en:'game start',
+  /* 18 */ { type:'divider', accent:'teal', solid:true, icon:'rocket_launch', jp:'＼ ゲームスタート ／', en:'game start',
     sub:'先手から指そう！',
     note:'それでは、将棋スタート！\nルームに入る人は、まずはルームに参加してね。先手の人から指そう。わからなくなったら、いつでも聞いてね' },
 
-  /* 18 */ { type:'divider', accent:'teal', solid:true, icon:'emoji_events', jp:'けっか', en:'result',
+  /* 19 */ { type:'divider', accent:'teal', solid:true, icon:'emoji_events', jp:'けっか', en:'result',
     sub:'おつかれさま！',
     note:'けっか発表！\nおつかれさま。最後にひとことずつ、ふりかえってみよう。' },
 ];

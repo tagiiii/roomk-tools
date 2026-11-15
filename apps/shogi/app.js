@@ -1502,7 +1502,7 @@ function clearLocal() {
 
 /* ── CPU と対戦する（1台の画面だけ。2026-11-14 オーナー依頼「CPU と対戦できるようにして」）──
    CPU の側を選ぶと、その側は CPU が指す（名前は「CPU」）。指し手は engine.js の cpuMove（強さ よわい・ふつう・つよい）。
-   CPU の番は CPU_MS 待ってから考えはじめる（どこに指したか見えるように）。ルームには入れない（リバーシと同じ） */
+   CPU の番は CPU_MS 待ってから考えはじめる（どこに指したか見えるように）。ルームの CPU は scheduleRoomCpu（2026-11-15） */
 const CPU_NAME = 'CPU';
 const CPU_MS = 700;
 const cpuOf = (v) => (v === 0 || v === 1 ? v : v === '0' ? 0 : v === '1' ? 1 : null);
