@@ -52,6 +52,12 @@ const { E, check, sleep, waitFor, cell } = L;
   await H.page.evaluate(() => firebase.database().goOffline());
   H.offlineOk = true;
   check('T13 ホストの切断が届く', await waitFor(async () => (await L.visible(A, '#hostOffOverlay')), 15000));
+  const off = await A.page.evaluate(() => ({
+    role: document.getElementById('hostOffOverlay').getAttribute('role'),
+    focus: document.activeElement?.id,
+    boardInert: !!document.getElementById('board').closest('[inert]'),
+  }));
+  check('T13b 待つ画面はダイアログとして読まれ、「退出する」に移り、うしろの盤は押せない', off.role === 'dialog' && off.focus === 'btnOverlayLeave' && off.boardInert, off);
   // 白（そら）の番の締め切りを過ぎさせる
   const oldAt = Date.now() - 20000;
   await L.rest('PUT', L.ROOMS + '/' + code + '/game/turnAt', oldAt);
@@ -61,6 +67,7 @@ const { E, check, sleep, waitFor, cell } = L;
   check('T15 ホストが切れている間は残り時間を出さない', (await L.clockText(B)) === '' && (await L.clockText(W)) === '', await L.clockText(B));
   await H.page.evaluate(() => firebase.database().goOnline());
   check('T16 ホストが戻るとお知らせが消える', await waitFor(async () => !(await L.visible(A, '#hostOffOverlay')), 15000));
+  check('T16b 戻るとうしろの画面がまた押せる', !(await A.page.evaluate(() => !!document.querySelector('body > [inert]'))));
   room = await L.roomWhen(code, (r) => r.game.turnAt > oldAt + 10000, 6000);
   check('T17 ホストが戻ると、その番の時間を最初から数えなおす', room.game.turnAt > oldAt + 10000 && room.game.ply === 3, { at: room.game.turnAt, ply: room.game.ply });
   check('T18 戻ったあとの残り時間', await waitFor(async () => /^w:のこり 1[2345]秒$/.test(await L.clockText(B))), await L.clockText(B));
@@ -98,6 +105,8 @@ const { E, check, sleep, waitFor, cell } = L;
   await X.page.fill('#guestName', 'あおい');
   await X.page.click('#btnJoinRoom');
   await L.waitText(X, '#joinError', 'その名前は使われている');
+  const err = await X.page.evaluate(() => [document.getElementById('joinError').getAttribute('role'), document.getElementById('guestName').getAttribute('aria-invalid'), document.getElementById('guestName').getAttribute('aria-describedby')]);
+  check('D4b まちがいは読み上げられ、名前の欄が「まちがい」になる', err[0] === 'alert' && err[1] === 'true' && err[2] === 'joinError', err);
   check('D5 席の名前は別の人には使えない', true);
   await X.page.close();
 
