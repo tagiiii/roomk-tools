@@ -73,7 +73,21 @@
   .gm .rm:hover{ background:var(--accent-soft); color:var(--accent); }
   body.idle .gm .rm{ opacity:0 !important; }
 
-  .picked{ position:absolute; left:1196px; top:196px; width:344px; bottom:92px; display:flex; flex-direction:column; }
+  .find{ position:absolute; left:1196px; top:186px; width:344px; z-index:5; }
+  .find-box{ display:flex; align-items:center; gap:8px; background:var(--paper); border-radius:20px; padding:10px 16px; box-shadow:0 0 0 3px var(--accent-soft); }
+  .find-box:focus-within{ box-shadow:0 0 0 4px var(--accent); }
+  .find-box .ms{ font-size:30px; color:var(--accent); }
+  .find-box input{ flex:1; min-width:0; border:0; background:transparent; font:900 24px var(--zm); color:var(--ink); outline:none; }
+  .find-box input::placeholder{ color:var(--muted); font-weight:700; }
+  .find-list{ list-style:none; margin:8px 0 0; padding:8px; background:var(--paper); border-radius:20px; box-shadow:0 10px 30px rgba(63,54,45,.18); display:flex; flex-direction:column; gap:4px; }
+  .find-list[hidden]{ display:none; }
+  .find-list button{ width:100%; display:flex; align-items:center; gap:12px; border:0; background:transparent; border-radius:14px; padding:6px 8px; cursor:pointer; font:inherit; color:inherit; text-align:left; }
+  .find-list button:hover, .find-list button.on{ background:var(--accent-soft); }
+  .find-list img{ width:56px; height:56px; border-radius:12px; background:var(--g-pale); flex:none; }
+  .find-list .fn{ flex:1; min-width:0; font:900 22px/1.2 var(--zm); }
+  .find-list .fp{ display:block; font:500 15px 'Noto Sans JP',sans-serif; color:var(--muted); margin-top:2px; }
+  .find-list .none{ font:500 18px/1.5 'Noto Sans JP',sans-serif; color:var(--muted); padding:6px 8px; }
+  .picked{ position:absolute; left:1196px; top:272px; width:344px; bottom:92px; display:flex; flex-direction:column; }
   .picked-box{ background:var(--paper); border-radius:24px; padding:18px 20px; flex:1; min-height:0; display:flex; flex-direction:column; }
   .picked-h{ font:900 26px var(--zm); display:flex; align-items:center; gap:8px; color:var(--accent); }
   .picked ul{ list-style:none; margin:10px 0 0; padding:0; display:flex; flex-direction:column; gap:8px; overflow:hidden; }
@@ -174,6 +188,10 @@
     </div>
     <div class="count"><span class="ms" aria-hidden="true">sports_esports</span><span id="countText"></span></div>
     <div class="grid" id="grid"></div>
+    <div class="find">
+      <label class="find-box"><span class="ms" aria-hidden="true">search</span><input id="findInput" type="text" maxlength="20" autocomplete="off" placeholder="ゲームをさがす" aria-label="ゲームをさがす" /></label>
+      <ul class="find-list" id="findList" hidden></ul>
+    </div>
     <div class="picked">
       <div class="picked-box paper">
         <div class="picked-h"><span class="ms" aria-hidden="true">how_to_vote</span>えらばれたゲーム</div>
@@ -225,8 +243,7 @@
 
 <div id="bar">
   <span class="ppl a-only">人数<button type="button" id="pplMinus" aria-label="1人へらす">−</button><b id="pplText"></b><button type="button" id="pplPlus" aria-label="1人ふやす">＋</button></span>
-  <label class="a-only">ほかのゲーム：<input id="searchInput" type="text" list="gameNames" maxlength="20" placeholder="名前を入れて選ぶ" /></label>
-  <datalist id="gameNames"></datalist>
+  <button type="button" class="a-only" id="btnShuffle"><span class="ms" aria-hidden="true">autorenew</span>ほかの候補</button>
   <button type="button" class="a-only" id="btnTopic" title="T"><span class="ms" aria-hidden="true">shuffle</span>お題をかえる</button>
   <button type="button" class="a-only" id="btnClear"><span class="ms" aria-hidden="true">restart_alt</span>えらんだ数を消す</button>
   <button type="button" class="a-only main" id="btnToWheel" title="Enter"><span class="ms" aria-hidden="true">casino</span>ルーレットへ</button>
@@ -310,8 +327,6 @@
     {"id":"career-sugoroku","n":"キャリアすごろく","g":"talk","y":"","min":1,"max":6},
   ];
 
-  // よく開かれた順（apps/ranking.json の order の写し）。はじめの候補はこの順で、その人数で遊べるものから選ぶ
-  const ORDER = ["suton-block", "nemurase-kichi", "kanpe-housou", "charin-baton", "reversi", "kotoba-dash", "magire-eshi", "hirameki-oogiri", "kakure-kaito", "daifugo", "pita-hame", "talk-card", "pittari-beat", "kyoumi-sugoroku", "tsunagete-story", "stamp-ate", "kanji-sagashi", "toomawashi", "kimochi-ate", "donna-hito", "suki-mono-map", "kotoba-shuffle", "oekaki-dengon", "blackjack", "quiz", "uso-jisho", "kotoba-pair", "suki-type-check", "ishin-denshin", "moji-soroe", "kotoba-meter", "kotoba-theme", "kotoba-relay", "esadori", "jitsuwa-game", "shirushi-hint", "suki-bingo", "kagi-awase", "oshitsuke-zukan", "kotoba-mikke", "tsuyomi-card", "ikutsu-ieru", "tatoe-narabe", "do-mannaka", "kotoba-tantei", "docchi", "tatoe-gp", "kossori-word", "kaburazu-hint", "career-sugoroku", "kyapa-graph", "pittari-meter", "jinro", "koedake-theater", "value-card", "word-wolf", "kakure-number", "minna-ranking", "otona-talk", "nurie-week", "name-change", "shinkei-suijaku", "yosa-map"];
   const COLORS = ['#F2B35C','#9CC8D3','#E8907B','#9FCFB4','#C4A9D6','#B9C27A','#E7C98F','#F0A8B8','#8FC1E3','#D9B38C'];
   const TOPICS = [
     'いまの気分を天気でいうと？', 'さいきん、ちょっとうれしかったこと', 'いま食べたいもの', 'さいきんハマっているもの',
@@ -355,10 +370,18 @@
   }
   const fits = (g) => people >= g.min && people <= g.max;
   function fillCands(){
-    // えらばれているものは残し、空いたところをよく開かれた順で埋める
+    // えらばれているもの・さがして入れたものは残し、空いたところをその人数で遊べるゲームからランダムに埋める
     cands = cands.filter(id => votes[id] > 0 || fits(byId[id]));
-    const pool = ORDER.filter(id => byId[id]).concat(GAMES.map(g => g.id).filter(id => !ORDER.includes(id)));
-    for (const id of pool){ if (cands.length >= MAX_CANDS) break; if (!cands.includes(id) && fits(byId[id])) cands.push(id); }
+    const pool = shuffle(GAMES.filter(g => fits(g) && !cands.includes(g.id)).map(g => g.id));
+    while (cands.length < MAX_CANDS && pool.length) cands.push(pool.pop());
+  }
+  function shuffle(a){ for (let i = a.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+  function reshuffle(){
+    // えらばれていない候補だけを入れかえる（えらばれたものは同じ番号のまま）
+    const keep = cands.map(id => votes[id] > 0 ? id : null);
+    const pool = shuffle(GAMES.filter(g => fits(g) && !cands.includes(g.id)).map(g => g.id));
+    cands = keep.map(id => id || pool.pop()).filter(Boolean);
+    fillCands(); renderGrid();
   }
   function addCand(id){
     if (cands.includes(id)) return;
@@ -580,18 +603,54 @@
   }
   function resetAll(){
     if (spinning) return;
-    votes = {}; flow = []; excluded = new Set(); lastWon = null; rot = 0; $('searchInput').value = ''; cands = [];
+    votes = {}; flow = []; excluded = new Set(); lastWon = null; rot = 0; $('findInput').value = ''; renderFind(); cands = [];
     fillCands(); renderGrid(); renderFlow(); go('ask');
   }
   function setPeople(n){ people = Math.max(1, Math.min(12, n)); $('pplText').textContent = `${people}人`; fillCands(); renderGrid(); }
 
   $('btnTopic').addEventListener('click', () => { topicIdx = (topicIdx + 1 + Math.floor(Math.random() * (TOPICS.length - 1))) % TOPICS.length; showTopic(true); });
-  // ほかのゲームを候補に入れる（名前を選ぶ）
-  (function(){ const dl = $('gameNames'); GAMES.forEach(g => { const o = document.createElement('option'); o.value = g.n; dl.appendChild(o); }); })();
-  $('searchInput').addEventListener('change', (e) => {
-    const v = e.target.value.trim(), g = GAMES.find(x => x.n === v) || GAMES.find(x => v && (x.n.includes(v) || x.y.includes(v)));
-    if (g){ addCand(g.id); e.target.value = ''; }
+  // ゲームをさがす：名前・読みの一部で探し、選ぶと候補に入って丸が1つ付く
+  const kana = (t) => t.replace(/[\u30a1-\u30f6]/g, c => String.fromCharCode(c.charCodeAt(0) - 0x60)).toLowerCase().replace(/[\s・！!？?ー〜]/g, '');
+  const findIdx = GAMES.map(g => kana(g.n) + ' ' + kana(g.y));
+  let findHits = [], findOn = 0;
+  function renderFind(){
+    const v = kana($('findInput').value.trim()), ul = $('findList'); ul.textContent = '';
+    if (!v){ ul.hidden = true; findHits = []; return; }
+    findHits = GAMES.filter((g, i) => findIdx[i].includes(v)).sort((a, b) => fits(b) - fits(a)).slice(0, 5);
+    findOn = 0; ul.hidden = false;
+    if (!findHits.length){ const li = document.createElement('li'); li.className = 'none'; li.textContent = '見つからなかったよ。ちがう言葉でさがしてみてね'; ul.appendChild(li); return; }
+    findHits.forEach((g, k) => {
+      const li = document.createElement('li'), b = document.createElement('button'); b.type = 'button'; b.dataset.genre = g.g;
+      if (k === findOn) b.classList.add('on');
+      const img = document.createElement('img'); img.src = `${APPS}assets/illustrations/${g.id}.webp`; img.alt = ''; img.width = 56; img.height = 56;
+      const fn = document.createElement('span'); fn.className = 'fn'; fn.textContent = g.n;
+      const fp = document.createElement('span'); fp.className = 'fp';
+      fp.textContent = g.max >= 99 ? `${g.min}人から` : (g.min === g.max ? `${g.min}人` : `${g.min}〜${g.max}人`);
+      fn.appendChild(fp); b.append(img, fn);
+      b.addEventListener('mousedown', (e) => e.preventDefault());
+      b.addEventListener('click', () => pickFound(g.id));
+      li.appendChild(b); ul.appendChild(li);
+    });
+  }
+  function pickFound(id){
+    addCand(id);
+    if (cands.includes(id)) addVote(id, 1);
+    $('findInput').value = ''; renderFind(); $('findInput').blur();
+  }
+  $('findInput').addEventListener('input', renderFind);
+  $('findInput').addEventListener('blur', () => setTimeout(() => { $('findList').hidden = true; }, 150));
+  $('findInput').addEventListener('focus', renderFind);
+  $('findInput').addEventListener('keydown', (e) => {
+    if (e.isComposing) return;
+    const bs = [...$('findList').querySelectorAll('button')];
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp'){
+      if (!bs.length) return; e.preventDefault();
+      findOn = (findOn + (e.key === 'ArrowDown' ? 1 : -1) + bs.length) % bs.length;
+      bs.forEach((b, k) => b.classList.toggle('on', k === findOn));
+    } else if (e.key === 'Enter'){ e.preventDefault(); if (findHits[findOn]) pickFound(findHits[findOn].id); }
+    else if (e.key === 'Escape'){ $('findInput').value = ''; renderFind(); $('findInput').blur(); }
   });
+  $('btnShuffle').addEventListener('click', reshuffle);
   $('pplMinus').addEventListener('click', () => setPeople(people - 1));
   $('pplPlus').addEventListener('click', () => setPeople(people + 1));
   $('btnClear').addEventListener('click', () => { votes = {}; renderTokens(); });
@@ -623,8 +682,8 @@
 <script>RoomkHowto.init({ title: 'つかいかた', lead: 'コマのはじめに、ひとことを言いながら遊びたいゲームをおしえてもらって、ルーレットで決める画面だよ。', sections: [
   { heading: '進行役', items: [
     'この画面をひらいて全画面（F キー）にし、画面共有する。マウスを止めると、下の操作の帯とカーソルが消えるよ。',
-    'はじめに下の帯の「人数」を、その日の人数（スタッフもふくめて）にする。その人数で遊べるゲームのうち、よく遊ばれている8つが候補に並ぶよ。',
-    '候補にないゲームを言われたら、帯の「ほかのゲーム」に名前を入れて選ぶと、候補に入る（8つあるときは、えらばれていない候補と入れかわる）。候補の右上の × で外せるよ。',
+    'はじめに下の帯の「人数」を、その日の人数（スタッフもふくめて）にする。その人数で遊べるゲームから、ランダムに8つが候補に並ぶよ。「ほかの候補」で、えらばれていない候補を入れかえられる。',
+    '遊びたいゲームが候補にないときは、右上の「ゲームをさがす」に、言われた名前や言葉の一部を入れる。出てきたゲームを選ぶと、候補に入って丸が1つ付くよ（8つあるときは、えらばれていない候補と入れかわる）。↑↓ と Enter でも選べる。候補の左下の × で外せるよ。',
     '1人ずつ、お題へのひとことと、遊びたいゲームの番号を言ってもらう（チャットに番号だけでもOK）。お題は「お題をかえる」（T キー）で変わるよ。',
     '聞いたゲームを押すと、丸が1つ増える（数字キーの 1〜8 でも増える）。右クリックか Shift を押しながらで1つ減る。だれの分かは出ないよ。',
     '「ルーレットへ」（Enter）で、えらばれたゲームだけのルーレットになる。えらばれた数が多いほどマスが大きい。だれもえらんでいないときは、候補を同じ大きさで入れるよ。',
