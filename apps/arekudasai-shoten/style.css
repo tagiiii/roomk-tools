@@ -188,15 +188,12 @@ button.ak-offer:hover .ak-offer__box { animation: ak-shake 0.5s ease-in-out; }
 .ak-votes.is-zero { opacity: 0.6; font-weight: 500; }
 .ak-myvote { display: inline-block; margin-top: 4px; padding: 1px 8px; border-radius: var(--radius-full); background: #1F6F78; color: #fff; font-size: var(--font-size-sm); font-weight: 700; }
 button.ak-offer--vote[aria-pressed="true"] { box-shadow: 0 0 0 4px color-mix(in srgb, #1F6F78 45%, transparent); }
-.ak-offer .ak-boxword { white-space: normal; max-width: 100%; box-sizing: border-box; justify-content: center; line-height: 1.4; }
-.ak-boxword--wait { background: transparent; font-weight: 500; opacity: 0.75; }
 .ak-sent { display: flex; align-items: center; justify-content: center; gap: 12px; margin: var(--space-sm) auto; padding: 12px 16px; max-width: 560px; border: 2px solid #1F6F78; border-radius: var(--radius-card); background: #E3F1F2; text-align: left; }
 .ak-sent--ask { border-style: dashed; }
 .ak-sent__text b { display: block; font-size: var(--font-size-lg); color: #1F6F78; }
 .ak-sent__text span { display: block; font-size: var(--font-size-sub); color: var(--color-muted); }
 .ak-card { position: relative; }
 .ak-card__sent { position: absolute; top: 6px; right: 6px; padding: 1px 10px; border-radius: var(--radius-full); background: var(--color-accent); color: #fff; font-size: var(--font-size-sm); font-weight: 700; }
-.ak-boxword { display: inline-flex; align-items: center; gap: 4px; margin-top: 4px; padding: 2px 10px; border-radius: var(--radius-full); background: #FFF7E8; font-weight: 700; white-space: nowrap; }
 .ak-answer { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 4px 6px; }
 .ak-answer__label { font-size: var(--font-size-sub); color: var(--color-muted); margin-right: 4px; }
 .ak-card[aria-pressed="true"] { background: var(--color-accent-soft); }
