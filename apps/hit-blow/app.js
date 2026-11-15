@@ -1455,6 +1455,11 @@ function renderGame() {
 
   renderBoards(V);
 
+  // 広い画面では、入力と一覧を横にならべる（style.css の .hbw-stage.is-side）。
+  // 色をならべる画面（1台の画面・遊ぶ人・端末なしの子の代わりに押すホスト）だけ。番が変わっても並びが動かないよう、ゲームの間は同じにする
+  const side = local || V.me >= 0 || (V.host && !!V.game?.proxy.some(Boolean));
+  $('stage').classList.toggle('is-side', side);
+
   // そのほかの操作
   const tools = V.host && !over;
   $('tools').hidden = !(tools || local);

@@ -9,13 +9,13 @@
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
   <link rel="stylesheet" href="../shared/css/design-system.css?v=20261106c">
   <!-- index.html と app.js・engine.js・style.css はセットで変わるので、変えたら ?v= をそろえて上げる -->
-  <link rel="stylesheet" href="style.css?v=20261115">
+  <link rel="stylesheet" href="style.css?v=20261115b">
   <script src="https://www.gstatic.com/firebasejs/13.3.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/13.3.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/13.3.0/firebase-database-compat.js"></script>
   <script src="../shared/js/rtdb-utils.js?v=20261005"></script>
   <script src="../shared/js/room-qr.js?v=20261022"></script>
-  <script src="engine.js?v=20261115"></script>
+  <script src="engine.js?v=20261115b"></script>
 </head>
 <body data-genre="atekko">
 
@@ -172,46 +172,49 @@
         <span class="hbw-legend-line__item"><span class="hbw-dot is-blow" aria-hidden="true"></span>ブロー: 色はあるが場所がちがう</span>
       </p>
 
-      <div class="hbw-mine" id="mineBox" hidden>
-        <p class="hbw-mine__label">あなたの答え（相手が当てる）</p>
-        <div class="hbw-row hbw-row--pegs" id="mineRow"></div>
-        <button type="button" class="hbw-quiet" id="btnMineToggle" hidden>見る</button>
-      </div>
+      <div class="hbw-stage" id="stage">
+        <div class="hbw-stage__main">
+          <div class="hbw-mine" id="mineBox" hidden>
+            <p class="hbw-mine__label">あなたの答え（相手が当てる）</p>
+            <div class="hbw-row hbw-row--pegs" id="mineRow"></div>
+            <button type="button" class="hbw-quiet" id="btnMineToggle" hidden>見る</button>
+          </div>
 
-      <!-- 答えを決める（2人で対戦） -->
-      <div class="hbw-input" id="setupBox" hidden>
-        <p class="hbw-input__title">相手に当ててもらう答えを決めよう</p>
-        <div class="hbw-slots" id="setupSlots"></div>
-        <div class="hbw-palette" id="setupPalette"></div>
-        <div class="hbw-input__actions">
-          <button type="button" class="btn btn-ghost" id="btnSetupBlind" hidden>見ないでおまかせで決める</button>
-          <button type="button" class="btn btn-ghost" id="btnSetupRandom">おまかせ</button>
-          <button type="button" class="btn btn-primary" id="btnSetupOk" disabled>これにする</button>
+          <!-- 答えを決める（2人で対戦） -->
+          <div class="hbw-input" id="setupBox" hidden>
+            <p class="hbw-input__title">相手に当ててもらう答えを決めよう</p>
+            <div class="hbw-slots" id="setupSlots"></div>
+            <div class="hbw-palette" id="setupPalette"></div>
+            <div class="hbw-input__actions">
+              <button type="button" class="btn btn-ghost" id="btnSetupBlind" hidden>見ないでおまかせで決める</button>
+              <button type="button" class="btn btn-ghost" id="btnSetupRandom">おまかせ</button>
+              <button type="button" class="btn btn-primary" id="btnSetupOk" disabled>これにする</button>
+            </div>
+          </div>
+
+          <!-- 予想を出す -->
+          <div class="hbw-input" id="guessBox" hidden>
+            <p class="hbw-input__title" id="guessTitle"></p>
+            <div class="hbw-slots" id="guessSlots"></div>
+            <div class="hbw-palette" id="guessPalette"></div>
+            <div class="hbw-input__actions">
+              <button type="button" class="btn btn-ghost" id="btnGuessClear">ぜんぶけす</button>
+              <button type="button" class="btn btn-primary" id="btnGuessOk" disabled>これで聞く</button>
+            </div>
+          </div>
+          <p class="hbw-wait" id="waitText" hidden></p>
+
+          <div id="resultBox" class="hbw-result" hidden>
+            <div class="hbw-result__answers" id="resultAnswers"></div>
+            <div id="resultHost" class="hbw-result__actions" hidden>
+              <button id="btnAgain" type="button" class="btn btn-primary btn-full">もう一回</button>
+              <button id="btnRelobby" type="button" class="btn btn-secondary btn-full"></button>
+            </div>
+            <p id="resultWait" class="hbw-wait" hidden>ホストが次を決めるのを待っているよ</p>
+          </div>
         </div>
+        <div class="hbw-boards" id="boards"></div>
       </div>
-
-      <!-- 予想を出す -->
-      <div class="hbw-input" id="guessBox" hidden>
-        <p class="hbw-input__title" id="guessTitle"></p>
-        <div class="hbw-slots" id="guessSlots"></div>
-        <div class="hbw-palette" id="guessPalette"></div>
-        <div class="hbw-input__actions">
-          <button type="button" class="btn btn-ghost" id="btnGuessClear">ぜんぶけす</button>
-          <button type="button" class="btn btn-primary" id="btnGuessOk" disabled>これで聞く</button>
-        </div>
-      </div>
-      <p class="hbw-wait" id="waitText" hidden></p>
-
-      <div id="resultBox" class="hbw-result" hidden>
-        <div class="hbw-result__answers" id="resultAnswers"></div>
-        <div id="resultHost" class="hbw-result__actions" hidden>
-          <button id="btnAgain" type="button" class="btn btn-primary btn-full">もう一回</button>
-          <button id="btnRelobby" type="button" class="btn btn-secondary btn-full"></button>
-        </div>
-        <p id="resultWait" class="hbw-wait" hidden>ホストが次を決めるのを待っているよ</p>
-      </div>
-
-      <div class="hbw-boards" id="boards"></div>
 
       <div id="tools" class="hbw-tools" hidden>
         <button id="btnAutoSecret" type="button" class="hbw-quiet" hidden>
@@ -243,7 +246,7 @@
     </div>
   </div>
 
-  <script type="module" src="app.js?v=20261115"></script>
+  <script type="module" src="app.js?v=20261115b"></script>
   <script src="../shared/js/stats.js?v=1" defer></script>
   <script src="../shared/js/howto.js"></script>
   <script>

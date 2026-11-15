@@ -34,9 +34,26 @@ const localS = (c) => c.page.evaluate(() => JSON.parse(sessionStorage.getItem('h
   let tops = await boardTops();
   const act = tops.find((b) => b.active);
   check('A10 375px では番の人の一覧が上', !!act && act.title.startsWith('2人目') && tops.every((b) => b.active || b.top > act.top), tops);
-  await M.page.setViewportSize(wide);
+  // 広い画面では、入力（左）と一覧（右）を横にならべる。1140px 以上は2人分の一覧も左右（1人目が左）
+  const boxOf = (sel) => M.page.$eval(sel, (n) => { const b = n.getBoundingClientRect(); return { left: b.left, right: b.right, top: b.top }; });
+  await M.page.setViewportSize({ width: 1280, height: 900 });
+  let gb = await boxOf('#guessBox');
+  let bd = await boxOf('#boards');
   tops = await boardTops();
-  check('A11 広い画面では左右の並びはそのまま（1人目が左）', tops[0].title.startsWith('1人目') && Math.abs(tops[0].top - tops[1].top) < 2, tops);
+  check('A11 1280px: 入力が左・一覧が右', bd.left >= gb.right && Math.abs(bd.top - gb.top) < 2, { gb, bd });
+  check('A11b 1280px: 2人分の一覧は左右（1人目が左）', tops[0].title.startsWith('1人目') && Math.abs(tops[0].top - tops[1].top) < 2, tops);
+  // 1000〜1139px は、右の列で2人分の一覧を上下に重ねる（1人目が上のまま）
+  await M.page.setViewportSize({ width: 1100, height: 900 });
+  gb = await boxOf('#guessBox');
+  bd = await boxOf('#boards');
+  tops = await boardTops();
+  check('A11c 1100px: 入力が左・一覧が右で、一覧は上下', bd.left >= gb.right && tops[0].title.startsWith('1人目') && tops[1].top > tops[0].top, { gb, bd, tops });
+  // 900px は横にならべない（入力の下に一覧）
+  await M.page.setViewportSize({ width: 900, height: 900 });
+  gb = await boxOf('#guessBox');
+  bd = await boxOf('#boards');
+  check('A11d 900px: 入力の下に一覧', bd.top > gb.top && bd.left < gb.right, { gb, bd });
+  await M.page.setViewportSize(wide);
   // 読み込み直しても続きから
   await M.page.reload();
   await L.waitScreen(M, 'game');

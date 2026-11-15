@@ -136,6 +136,10 @@ const { E, check, sleep, waitFor } = L;
     check('F6 ヒントが全員に届く ' + label, await waitFor(async () => (await L.tries(c)).includes(want)), await L.tries(c));
   }
   check('F7 点の数は予想の数と同じ', (await W.page.$$('#boards .hbw-try .hbw-dot')).length === 4);
+  // 広い画面で入力と一覧を横にならべるのは、色をならべる画面だけ（遊ぶ人）。番が変わっても並びは同じ
+  const sideOf = (c) => c.page.$eval('#stage', (n) => n.classList.contains('is-side'));
+  check('F7b 遊ぶ人は番でなくても横にならべる形', (await sideOf(A)) && (await sideOf(B)));
+  check('F7c 遊ばないホスト・みんなにみせる画面は一覧だけ（横にならべない）', !(await sideOf(H)) && !(await sideOf(W)));
   check('F8 番が移る', await waitFor(async () => (await L.status(B)) === 'あなたの番') && !(await L.visible(A, '#guessBox')));
   check('F9 番が変わると組み立て中の予想は空', (await B.page.$$('#guessSlots .hbw-peg--empty')).length === 4);
   // 秘密がほかの画面に出ていない（相手の答えが「あなたの答え」に出ない・結果まで答えの欄が出ない）
