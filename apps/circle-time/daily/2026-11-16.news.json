@@ -1,0 +1,32 @@
+{
+  "date": "2026-11-16",
+  "items": [
+    {
+      "title": "スターシップを巨大なアームでキャッチ",
+      "text": "アメリカのスペースXが14日、宇宙船「スターシップ」を発射台の2本の大きなアームで空中キャッチすることに初めて成功しました。宇宙船は約22時間で地球を14周してから、テキサス州の基地にもどってきました。",
+      "ask": "宇宙に行けたら、何を見てみたい？",
+      "source": "AFP＝時事",
+      "url": "https://news.yahoo.co.jp/articles/9baf41dc957fe8fe3efbda1b64ebecb5b190755b",
+      "on": "11月15日",
+      "img": { "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/SpaceX_Starship_SN8_launch_as_viewed_from_South_Padre_Island.jpg/960px-SpaceX_Starship_SN8_launch_as_viewed_from_South_Padre_Island.jpg", "credit": "Forest Katsch", "license": "CC BY-SA 4.0" }
+    },
+    {
+      "title": "侍ジャパン、アジアの大会で3連覇",
+      "text": "野球の日本代表「侍ジャパン」が15日、東京ドームであったアジアプロ野球チャンピオンシップの決勝で韓国に5対1で勝ち、優勝しました。この大会で3回続けての優勝です。大会のMVPには宗山塁選手が選ばれました。",
+      "ask": "好きなスポーツや、見てみたい試合はある？",
+      "source": "Yahoo!ニュース",
+      "url": "https://news.yahoo.co.jp/pickup/6602727",
+      "on": "11月15日",
+      "img": { "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4a/Tokyo_Dome_2015-5-12.JPG/960px-Tokyo_Dome_2015-5-12.JPG", "credit": "賀正", "license": "CC BY-SA 4.0" }
+    },
+    {
+      "title": "脱出ゲームの世界大会で日本のチームがメダル",
+      "text": "ヨーロッパであった脱出ゲームの世界大会の決勝で、謎解きを作る会社「RIDDLER」のメンバーがいる日本のチームが1位と3位に入りました。3位のチームには、謎解きクリエーターの松丸亮吾さんもいました。",
+      "ask": "なぞなぞや謎解きは好き？",
+      "source": "スポニチ",
+      "url": "https://news.yahoo.co.jp/articles/be86b17ae1e0b39ece9077e68468362bf4dae399",
+      "on": "11月15日",
+      "img": { "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9e/5-digit_Wordlock_locked_with_combination_Basin_and_hardened_shackle.jpg/960px-5-digit_Wordlock_locked_with_combination_Basin_and_hardened_shackle.jpg", "credit": "User:Mysid", "license": "Public domain" }
+    }
+  ]
+}
