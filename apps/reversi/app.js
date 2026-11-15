@@ -76,6 +76,8 @@ function setError(id, message) {
   const node = $(id);
   node.textContent = message || '';
   node.hidden = !message;
+  // まちがいのあいだは、つながった入力欄を「まちがい」として読ませる
+  document.querySelectorAll('[aria-describedby="' + id + '"]').forEach((el) => (message ? el.setAttribute('aria-invalid', 'true') : el.removeAttribute('aria-invalid')));
 }
 
 function toast(message, error = true) {
@@ -417,7 +419,7 @@ function cleanupRoom() {
   });
   clearSession();
   resetBoxes();
-  $('hostOffOverlay').hidden = true;
+  setHostOff(false);
   $('btnOpenWatch').hidden = true;
   $('barMe').hidden = true;
   $('barMe').textContent = '';
@@ -885,7 +887,7 @@ function connectWatch(code, ref) {
 // ホストが切断している間はオーバーレイを出し、期限切れになったら終わりの表示にする（ルームは消さない）
 function updateWatchOverlay(room) {
   const off = room.hostConnected === false;
-  $('hostOffOverlay').hidden = !off;
+  setHostOff(off);
   clearTimeout(state.watchTimer);
   state.watchTimer = null;
   if (!off) return;
@@ -906,7 +908,7 @@ function stopWatch() {
   if (state.roomRef && state.roomCallback) state.roomRef.off('value', state.roomCallback);
   Object.assign(state, { role: null, roomCode: null, roomRef: null, room: null, roomCallback: null, watchTimer: null });
   resetBoxes();
-  $('hostOffOverlay').hidden = true;
+  setHostOff(false);
   document.title = DEFAULT_TITLE;
   document.body.classList.remove('is-watch');
   $('watchBadge').hidden = true;
@@ -1365,9 +1367,28 @@ function renderRoom(room) {
   else renderWaiting(room);
 }
 
+// ホストの戻りを待つ画面は、ダイアログとして読ませ、うしろの画面を押せない・読まないようにする
+const hostOffInert = new Set();
+function setHostOff(show) {
+  const o = $('hostOffOverlay');
+  if (o.hidden === !show) return;
+  o.hidden = !show;
+  if (show) {
+    for (const el of document.body.children) {
+      if (el === o || el.tagName === 'SCRIPT' || el.tagName === 'DIALOG' || el.inert) continue;
+      el.inert = true;
+      hostOffInert.add(el);
+    }
+    $('btnOverlayLeave').focus({ preventScroll: true });
+  } else {
+    hostOffInert.forEach((el) => { el.inert = false; });
+    hostOffInert.clear();
+  }
+}
+
 function updateHostOverlay(room) {
   if (state.role === 'guest' && room.hostConnected === false) {
-    $('hostOffOverlay').hidden = false;
+    setHostOff(true);
     // 切れたままのあいだに切れた時刻だけが新しくなったら（ホストの通信が短く揺れたとき）、期限のタイマーを仕掛けなおす。
     // 古い時刻のまま動くと「まだ期限前」で消せず、待つ画面のまま残る（2026-11-13）
     if (state.orphanTimer && state.orphanAt !== RoomkRTDB.getHostDisconnectedAt(room)) { clearTimeout(state.orphanTimer); state.orphanTimer = null; }
@@ -1382,7 +1403,7 @@ function updateHostOverlay(room) {
       }, delay);
     }
   } else {
-    $('hostOffOverlay').hidden = true;
+    setHostOff(false);
     clearTimeout(state.orphanTimer);
     state.orphanTimer = null;
   }
