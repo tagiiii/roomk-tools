@@ -188,6 +188,7 @@ db.ref(`{appname}_rooms/${code}/players/${nick}`).onDisconnect().remove();
 通常リロードでも切断扱いになるため、復帰フローと両立しない。
 
 ホストの戻りを待つ画面・つなぎ直している画面など、画面全体をふさぐお知らせには `data-roomk-blocking` と `role="dialog" aria-modal="true"`・見出しの `aria-labelledby` を付け、共通の `overlay-a11y.js` を読む（出ている間はうしろを inert にし、「退出する」へフォーカスを移す。[shared-modules.md](shared-modules.md)「overlay-a11y.js」。2026-11-15 に全ルーム型へ入れた）。入力のまちがいを出す要素には `role="alert"` を付ける。
+遊ぶ画面のボタンを描くたびに作りなおすときは、`focus-keep.js` を読むか、将棋のように描く前後でフォーカスを覚えてもどす（キーボードで選んでいた位置が消えるため）。
 
 ### セッションデータの自動削除
 
