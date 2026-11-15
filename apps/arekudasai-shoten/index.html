@@ -9,14 +9,14 @@
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
   <link rel="stylesheet" href="../shared/css/design-system.css?v=20261106c">
   <!-- index.html と app.js・engine.js・art.js・style.css はセットで変わるので、変えたら ?v= をそろえて上げる -->
-  <link rel="stylesheet" href="style.css?v=20261115c">
+  <link rel="stylesheet" href="style.css?v=20261115d">
   <script src="https://www.gstatic.com/firebasejs/13.3.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/13.3.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/13.3.0/firebase-database-compat.js"></script>
   <script src="../shared/js/rtdb-utils.js?v=20261005"></script>
   <script src="../shared/js/room-qr.js?v=20261022"></script>
-  <script src="engine.js?v=20261115c"></script>
-  <script src="art.js?v=20261115c"></script>
+  <script src="engine.js?v=20261115d"></script>
+  <script src="art.js?v=20261115d"></script>
 </head>
 <body data-genre="atekko">
 
@@ -27,7 +27,7 @@
       <h1 class="ak-panel__title app-title">あれください商店</h1>
       <p class="ak-panel__lead app-entry__lead">へんな物ばかりの商店街。1人が1つずつ、自分のお店を持つ（2〜12人）。番の人だけがお客さんになって、ほしい物をさがす。名前を思い出せないので、ヒント2つで聞く。ちがう物が出てくることもある。</p>
       <ul class="ak-panel__notes app-entry__notes">
-        <li>ぴったりなら、お客さんと出したお店の人に2ポイントずつ。合う物がなくて正しく断れたお店にも1ポイント</li>
+        <li>ぴったりなら、お客さんと出したお店の人に3ポイントずつ。品物を出さなかったお店の人は、ぴったりだと思う箱をおすすめできる</li>
         <li>お店の人は、まよったらお客さんに質問できる。合う物がなければ出さなくていい</li>
         <li>あそぶ時間は、ホストが決める（5分・10分・15分・なし）</li>
       </ul>
@@ -181,7 +181,7 @@
     </div>
   </div>
 
-  <script type="module" src="app.js?v=20261115c"></script>
+  <script type="module" src="app.js?v=20261115d"></script>
   <script src="../shared/js/overlay-a11y.js?v=1" defer></script>
   <script src="../shared/js/focus-keep.js?v=1" defer></script>
   <script src="../shared/js/stats.js?v=1" defer></script>
@@ -210,8 +210,9 @@
           '合う物がなければ「出さない」を押す。決める時間は30秒。時間が来たら、まだ決めていないお店は出さなかったことになる',
         ] },
         { heading: 'ポイントとおわり', items: [
-          'ぴったりなら、お客さんと出したお店の人に2ポイントずつ。ちがう物なら、お客さんに1ポイント、出したお店は1ポイント減る（0より下にはならない）',
-          'ヒントに合う物が自分のお店になくて「出さない」をえらんだら、1ポイント',
+          'ぴったりなら、お客さんと出したお店の人に3ポイントずつ。ちがう物なら、お客さんに1ポイント、出したお店は1ポイント減る（0より下にはならない）',
+          'ヒントに合う物が自分のお店になくて「出さない」をえらんだら、ぴったりが届いた番に1ポイント',
+          '品物を出さなかったお店の人は、お客さんが箱をえらぶ前に、ぴったりだと思う箱を「おすすめ」できる。お客さんには、箱ごとのおすすめの数が見える。おすすめした箱がぴったりなら1ポイント',
           'えらばれなかったお店も、ヒント2つに合う物を出していたら1ポイント',
           '箱が開くと、出てきた物の特徴が3つとも出る（答え合わせ）',
           'あそぶ時間が0になるか、品物がなくなったらおしまい。1人ずつ、ちがう名前（「名ヒント」など）が出る',

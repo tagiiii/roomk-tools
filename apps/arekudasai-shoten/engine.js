@@ -85,13 +85,16 @@
   const HAND = 4;        // はじめの品物の数（12人で48こ。のこり12こが補充の山）
   const HINTS = 2;       // 1回に聞けるヒント
   const ASK_MAX = 2;     // お店の人が、1人のお客さんにできる質問の数
-  const PT_HIT = 2;      // ぴったり: お客さん・出したお店の人に
+  const PT_HIT = 3;      // ぴったり: お客さん・出したお店の人に
   const PT_ODD = 1;      // ちがう物: お客さんに
   const PT_MISS = -1;    // ちがう物: 出したお店の人（0より下にはしない）
   const PT_FIT = 1;      // えらばれなかったけれど、ヒント2つに合う物を出したお店に
-  const PT_NO = 1;       // ヒントに合う物が自分のお店になくて、「出さない」をえらんだお店に
+  const PT_NO = 1;       // ヒントに合う物が自分のお店になくて「出さない」をえらんだお店に。その番にぴったりが届いたときだけ
+  const PT_VOTE = 1;     // 品物を出さなかったお店の人が「おすすめ」した箱が、ぴったりだったとき
   // とりあえず出すほうが得にならないように（2026-11-15 オーナー「ポイントをもらえるならとりあえず出しておいたほうが得、という意見」）
-  // 正しく断れたら1ポイント、ちがう物が選ばれたら出したお店は1ポイント減る
+  // 正しく断れたら1ポイント、ちがう物が選ばれたら出したお店は1ポイント減る。
+  // そのあと試算で「いつも断る」が「考えて出す」とほぼ同じになると分かり（12人ではポイントの大半が断った分）、
+  // オーナー「面白くなるようにおまかせ」で: ぴったりを3に・断った分はぴったりの番だけ・おすすめを足した
 
   function shuffle(a, rng) {
     for (let i = a.length - 1; i > 0; i--) {
@@ -112,7 +115,7 @@
   // ヒントがぜんぶ当てはまるか
   function fits(id, hints) { return hints.length > 0 && matchScore(id, hints) === hints.length; }
 
-  function newPlayer() { return { hand: [], order: null, points: 0, stat: { hit: 0, give: 0, odd: 0, ask: 0, fit: 0, no: 0 } }; }
+  function newPlayer() { return { hand: [], order: null, points: 0, stat: { hit: 0, give: 0, odd: 0, ask: 0, fit: 0, no: 0, vote: 0 } }; }
 
   function newGame(n, rng) {
     rng = rng || Math.random;
@@ -181,8 +184,9 @@
      chosen: お客さんがえらんだ offers の番号。-1 は「べつの物にする」（だれも出さなかった・この番を飛ばす）
      hints: お客さんが聞いたヒント。asked: お店の人ごとの質問の数 { 席: 回数 }
      away: いまルームにいない人の席 { 席: true }。declined: 「出さない」をえらんだお店の席 [席, …]
+     votes: 品物を出さなかったお店の人の「おすすめ」 { 席: おすすめした箱のお店の席 }
      返す値の delta は、席ごとに実際に増えた（減った）ポイント */
-  function resolve(s, offers, chosen, hints, asked, rng, away, declined) {
+  function resolve(s, offers, chosen, hints, asked, rng, away, declined, votes) {
     rng = rng || Math.random;
     const c = s.turn;
     const req = s.players[c];
@@ -198,21 +202,22 @@
       const i = Number(k);
       if (s.players[i] && i !== c) s.players[i].stat.ask += Math.max(0, Math.min(ASK_MAX, Number(asked[k]) || 0));
     });
-    // 正しく断れた: ヒントに合う物が自分のお店になくて、「出さない」をえらんだ（品物が動く前のお店で見る）
-    const no = [];
+    // 正しく断れた: ヒントに合う物が自分のお店になくて、「出さない」をえらんだ（品物が動く前のお店で見る）。
+    // ポイントは、その番にぴったりが届いたときだけ（下で足す）
+    const noCand = [];
     (declined || []).forEach(function (i) {
-      if (!s.players[i] || i === c || no.indexOf(i) >= 0 || !hints.length) return;
+      if (!s.players[i] || i === c || noCand.indexOf(i) >= 0 || !hints.length) return;
       if (s.players[i].hand.some(function (id) { return fits(id, hints); })) return;
-      add(i, PT_NO);
-      s.players[i].stat.no++;
-      no.push(i);
+      noCand.push(i);
     });
+    const no = [];
+    const vote = [];
     let res;
     const pickOffer = chosen >= 0 ? offers[chosen] : null;
     const valid = pickOffer && s.players[pickOffer.from] && pickOffer.from !== c && s.players[pickOffer.from].hand.indexOf(pickOffer.item) >= 0;
     if (!valid) {
       req.order = null;
-      res = { none: true, c: c, wanted: wanted, fit: [], no: no, delta: delta };
+      res = { none: true, c: c, wanted: wanted, fit: [], no: no, vote: vote, delta: delta };
     } else {
       const giver = s.players[pickOffer.from];
       giver.hand.splice(giver.hand.indexOf(pickOffer.item), 1);
@@ -232,8 +237,20 @@
         s.players[o.from].stat.fit++;
         fit.push(o.from);
       });
+      if (hit) {
+        // みんなでぴったりが届いた番: 正しく断れたお店と、ぴったりの箱をおすすめした人に
+        noCand.forEach(function (i) { add(i, PT_NO); s.players[i].stat.no++; no.push(i); });
+        const offered = offers.map(function (o) { return o.from; });
+        Object.keys(votes || {}).forEach(function (k) {
+          const i = Number(k);
+          if (!s.players[i] || i === c || offered.indexOf(i) >= 0 || Number(votes[k]) !== pickOffer.from) return;
+          add(i, PT_VOTE);
+          s.players[i].stat.vote++;
+          vote.push(i);
+        });
+      }
       req.order = null;
-      res = { none: false, hit: hit, c: c, wanted: wanted, got: pickOffer.item, from: pickOffer.from, pc: delta[c] || 0, pg: delta[pickOffer.from] || 0, fit: fit, no: no, delta: delta };
+      res = { none: false, hit: hit, c: c, wanted: wanted, got: pickOffer.item, from: pickOffer.from, pc: delta[c] || 0, pg: delta[pickOffer.from] || 0, fit: fit, no: no, vote: vote, delta: delta };
     }
     fixOrders(s, rng, away);
     if (!s.over) nextTurn(s, away);
@@ -247,7 +264,8 @@
     { key: 'odd', name: 'びっくり名人', text: '思いがけない物で商店街をわかせた' },
     { key: 'fit', name: 'よく聞く名人', text: 'ヒントにぴったりの物を出した' },
     { key: 'ask', name: 'しつもん名人', text: '質問してからえらんだ' },
-    { key: 'no', name: 'つたえ名人', text: 'ないときは、ないとはっきり伝えた' }
+    { key: 'no', name: 'つたえ名人', text: 'ないときは、ないとはっきり伝えた' },
+    { key: 'vote', name: 'みきわめ名人', text: 'ぴったりの箱をおすすめした' }
   ];
   const SPARE = [
     { name: '商店街のささえ', text: 'みんなの買い物をささえた' },
@@ -275,7 +293,7 @@
 
   /* ── ルームに置く形 ──
      h: 席ごとの品物 "id,id,…"・o: 席ごとのほしい物（なしは "-"）・pt: 席ごとのポイント・
-     st: 席ごとの "hit.give.odd.ask.fit.no"・deck: 補充の山 "id,…"・turn・hits・odds・over */
+     st: 席ごとの "hit.give.odd.ask.fit.no.vote"・deck: 補充の山 "id,…"・turn・hits・odds・over */
   const list = function (v) { return Array.isArray(v) ? v : (v && typeof v === 'object' ? Object.keys(v).sort(function (a, b) { return a - b; }).map(function (k) { return v[k]; }) : []); };
   const ids = function (str) { return typeof str === 'string' && str ? str.split(',').filter(function (id) { return !!BY_ID[id]; }) : []; };
 
@@ -284,7 +302,7 @@
       h: s.players.map(function (p) { return p.hand.join(','); }),
       o: s.players.map(function (p) { return p.order || '-'; }),
       pt: s.players.map(function (p) { return p.points; }),
-      st: s.players.map(function (p) { return [p.stat.hit, p.stat.give, p.stat.odd, p.stat.ask, p.stat.fit, p.stat.no].join('.'); }),
+      st: s.players.map(function (p) { return [p.stat.hit, p.stat.give, p.stat.odd, p.stat.ask, p.stat.fit, p.stat.no, p.stat.vote].join('.'); }),
       deck: s.deck.join(','),
       turn: s.turn, hits: s.hits, odds: s.odds, over: !!s.over
     };
@@ -301,7 +319,7 @@
       p.order = typeof o[i] === 'string' && BY_ID[o[i]] ? o[i] : null;
       p.points = Math.max(0, Number(pt[i]) || 0);
       const v = String(st[i] || '').split('.').map(function (x) { return Math.max(0, Number(x) || 0); });
-      p.stat = { hit: v[0] || 0, give: v[1] || 0, odd: v[2] || 0, ask: v[3] || 0, fit: v[4] || 0, no: v[5] || 0 };
+      p.stat = { hit: v[0] || 0, give: v[1] || 0, odd: v[2] || 0, ask: v[3] || 0, fit: v[4] || 0, no: v[5] || 0, vote: v[6] || 0 };
       players.push(p);
     }
     const turn = Number(raw.turn);
@@ -317,7 +335,7 @@
 
   return {
     TAGS: TAGS, ITEMS: ITEMS, MIN_PLAYERS: MIN_PLAYERS, MAX_PLAYERS: MAX_PLAYERS, HAND: HAND, HINTS: HINTS, ASK_MAX: ASK_MAX,
-    PT_HIT: PT_HIT, PT_ODD: PT_ODD, PT_MISS: PT_MISS, PT_FIT: PT_FIT, PT_NO: PT_NO,
+    PT_HIT: PT_HIT, PT_ODD: PT_ODD, PT_MISS: PT_MISS, PT_FIT: PT_FIT, PT_NO: PT_NO, PT_VOTE: PT_VOTE,
     item: item, isTag: isTag, matchScore: matchScore, fits: fits, newGame: newGame, holderOf: holderOf,
     answer: answer, resolve: resolve, titles: titles, toRoom: toRoom, fromRoom: fromRoom
   };

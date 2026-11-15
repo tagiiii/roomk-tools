@@ -40,11 +40,17 @@ for (let n = E.MIN_PLAYERS; n <= E.MAX_PLAYERS; n++) {
       for (let p = 0; p < n; p++) if (p !== c && !(away && away[p]) && !offers.some((o) => o.from === p)) declined.push(p);
       // 正しく断れるのは、ヒントに合う物がお店にないとき
       const rightNo = declined.filter((p) => !s.players[p].hand.some((id) => E.fits(id, tags)));
+      // 出さなかったお店は、箱のどれかをおすすめする
+      const votes = {};
+      if (offers.length) declined.forEach((p) => { votes[p] = offers[Math.floor(rng() * offers.length)].from; });
       const beforeEach = s.players.map((p) => p.points);
       const before = beforeEach.reduce((a, b) => a + b, 0);
-      const res = E.resolve(s, offers, chosen, tags, { [(c + 1) % n]: 1 }, rng, away, declined);
+      const chosenFrom = chosen >= 0 ? offers[chosen].from : -1;
+      const res = E.resolve(s, offers, chosen, tags, { [(c + 1) % n]: 1 }, rng, away, declined, votes);
       const after = s.players.reduce((a, p) => a + p.points, 0);
-      assert.deepStrictEqual(res.no.slice().sort(), rightNo.slice().sort(), '正しく断れたお店');
+      // 正しく断れた分・おすすめの分は、ぴったりが届いた番だけ
+      assert.deepStrictEqual(res.no.slice().sort(), res.hit ? rightNo.slice().sort() : [], '正しく断れたお店');
+      assert.deepStrictEqual(res.vote.slice().sort(), res.hit ? declined.filter((p) => votes[p] === chosenFrom).sort() : [], 'おすすめが当たった人');
       assert.strictEqual(after - before, Object.values(res.delta).reduce((a, b) => a + b, 0), 'delta の合計');
       assert.ok(s.players.every((p) => p.points >= 0), '0より下にならない');
       if (!res.none) {
