@@ -40,6 +40,10 @@ const { E, check, sleep, waitFor, cell } = L;
 
   // 補助の設定
   await P.page.click('#btnAid');
+  await P.page.waitForSelector('#aidDialog[open]');
+  const gap = await P.page.$eval('#aidDialog', (n) => { const b = n.getBoundingClientRect(); return [b.left, window.innerWidth - b.right, b.top, window.innerHeight - b.bottom]; });
+  check('L11b 補助の設定が画面の中央に出る', Math.abs(gap[0] - gap[1]) < 4 && Math.abs(gap[2] - gap[3]) < 4, gap);
+  await P.page.screenshot({ path: L.OUT + '/e2e3-aid-dialog.png' });
   await P.page.check('#dialogAid input[data-key=count]');
   await P.page.check('#dialogAid input[data-key=confirm]');
   await P.page.click('#btnAidClose');
