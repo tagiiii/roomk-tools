@@ -106,9 +106,6 @@
   .shot-wrap{ display:flex; gap:34px; align-items:center; height:100%; }
   .shot{ flex:none; height:100%; max-height:400px; aspect-ratio:1 / 1; border-radius:16px; border:1.5px solid var(--line); box-shadow:0 8px 22px rgba(0,0,0,.1); object-fit:cover; }
   .shot-wrap .rows{ flex:1; }
-  /* ひとことの言葉の札 */
-  .says{ display:flex; flex-wrap:wrap; gap:10px; margin-top:18px; }
-  .say{ background:var(--white); border:2px solid var(--acc); border-radius:999px; padding:8px 18px; font-size:21px; font-weight:700; color:var(--ink); }
 
   /* 品物の例（アプリの絵をそのまま使う） */
   .item{ background:var(--white); border:1.5px solid var(--line); border-radius:18px; padding:18px 18px 16px; display:flex; flex-direction:column; align-items:center; gap:8px; width:250px; }
@@ -251,8 +248,8 @@
   <div class="pv-conn" id="pvConn">スライド画面と接続中…</div>
 </div>
 
-<script src="engine.js?v=20261115f"></script>
-<script src="art.js?v=20261115f"></script>
+<script src="engine.js?v=20261115g"></script>
+<script src="art.js?v=20261115g"></script>
 <script>
 const row = (icon, title, desc) => `<div class="row"><div class="row__ic"><span class="material-symbols-rounded">${icon}</span></div><div><div class="row__t">${title}</div><div class="row__d">${desc}</div></div></div>`;
 const rows = (...items) => `<div class="rows">${items.map((x) => row(x[0], x[1], x[2])).join('')}</div>`;
@@ -325,11 +322,11 @@ const SLIDES = [
   /* 8 */ { type:'content', accent:'coral', section:'あそびかた', sectionEn:'how to play', num:'4',
     headline:'出てきた<span class="hl">箱</span>から、1つ受け取る',
     body: rows(
-      ['campaign', '箱が届いたら、出したお店の人が「ひとこと」をそえる', '「あつあつだよ」「あまくておいしいよ」など。お客さんは、ひとことを見て箱をえらぶ'],
+      ['inventory_2', '箱には、出したお店の名前が出る', '中は、開けるまでわからない'],
       ['recommend', '品物を出さなかった人は、ぴったりだと思う箱を「おすすめ」できる', 'お客さんには、箱ごとのおすすめの数が見えるよ'],
       ['celebration', '箱が開いて、何が出てきたか、みんなの画面に出る', '出てきた物の特徴が3つとも出るよ（答え合わせ）'],
     ),
-    note:'お店の人が決めたら、お客さんの画面に箱が出てくるよ。\n中は開けるまでわからないけど、箱が届いたら、出したお店の人が「あつあつだよ」「あまくておいしいよ」みたいな「ひとこと」をそえるよ。お客さんは、ひとことを見てから、1つえらんで受け取ってね。\n品物を出さなかった人は、お客さんがえらぶ前に、ぴったりだと思う箱を「おすすめ」できるよ。お客さんには、おすすめの数が見える。えらぶのはお客さんだよ。\n箱が開くと、何が出てきたか、みんなの画面に出るよ。出てきた物の特徴も3つとも出るから、答え合わせしてみよう。\nどのお店も出さなかったときは「べつの物にする」で、次の人の番になるよ。' },
+    note:'お店の人が決めたら、お客さんの画面に箱が出てくるよ。\n箱には、出したお店の名前が出る。中は開けるまでわからないよ。お客さんは、1つえらんで受け取ってね。\n品物を出さなかった人は、お客さんがえらぶ前に、ぴったりだと思う箱を「おすすめ」できるよ。お客さんには、おすすめの数が見える。えらぶのはお客さんだよ。\n箱が開くと、何が出てきたか、みんなの画面に出るよ。出てきた物の特徴も3つとも出るから、答え合わせしてみよう。\nどのお店も出さなかったときは「べつの物にする」で、次の人の番になるよ。' },
 
   /* 9 */ { type:'content', accent:'teal', section:'ポイント', sectionEn:'points',
     headline:'みんなで<span class="hl">ぴったり</span>を届けると、ポイント',

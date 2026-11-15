@@ -11,11 +11,6 @@ async function offer(c, name) {
   await c.page.click('#stage button:has-text("この品物を出す")');
   await waitText(c, '#stage', '箱に入れて出したよ');
 }
-// 品物を出したお店の人: 箱が届いたら、ひとこと（お店の言い方）をえらぶ
-async function pitchWord(c, phrase) {
-  await waitText(c, '#stage', 'ひとことをそえよう');
-  await c.page.click(`#stage .ak-pitch .ak-chip-btn:has-text("${phrase}")`);
-}
 
 (async () => {
   const server = await L.startServer();
@@ -102,13 +97,10 @@ async function pitchWord(c, phrase) {
   await waitText(C, '#stage', 'どの箱を受け取る？');
   check('one box', (await C.page.$$('#stage .ak-offer')).length === 1);
   check('decline shown', (await text(C, '#stage')).includes('うちにはないです'));
-  check('word waiting', (await text(C, '#stage .ak-offer')).includes('ひとことを考え中'));
-  // 箱が届いたあとに、出した人がひとこと（3つめの特徴のお店の言い方）をえらぶ
-  const PITCH = { '大きい': 'どーんと大きいよ', '小さい': 'ちっちゃくてかわいいよ', 'まるい': 'まんまるだよ', 'ながい': 'ながーいよ', 'ふわふわ': 'ふわふわだよ', 'かたい': 'かちかちだよ', '光る': 'ぴかぴか光るよ', 'とぶ': '空をとぶよ', 'はねる': 'ぴょんぴょんはねるよ', 'あまい': 'あまくておいしいよ', 'つめたい': 'ひんやりつめたいよ', 'あたたかい': 'あつあつだよ', '音が出る': 'いい音がするよ' };
-  const word1 = E.item(want).tags[2];
-  await pitchWord(H, PITCH[word1]);
-  await waitText(C, '#stage .ak-offer', PITCH[word1]);
-  check('raw w', (await gameOf(code)).r.w[holderSeat] === word1);
+  // 箱にそえる言葉はない（出した人には、出したことだけが出る）
+  check('no box word', !(await text(C, '#stage .ak-offer')).includes('ひとこと'));
+  await waitText(H, '#stage', 'お客さんがえらぶのを待とう');
+  check('no pitch chips', (await H.page.$$('#stage .ak-pitch')).length === 0);
   // 出さなかった人は、ぴったりだと思う箱をおすすめする。お客さんにはおすすめの数が見える
   await waitText(other, '#stage', 'おすすめしよう');
   check('customer cannot vote', !(await text(C, '#stage')).includes('おすすめしよう'));
@@ -139,7 +131,7 @@ async function pitchWord(c, phrase) {
   await L.waitStats(C, 'hit', 1);
 
   // ── 2回目: 時間が来て、だれも出さなかった ──
-  for (const c of players) await c.page.click('#stage button:has-text("とじる")').catch(() => {});
+  await sleep(6500);   // 結果の札は自動で閉じる
   cust = g.seats[g.S.turn];
   C = byName(cust);
   want = g.S.players[g.S.turn].order;
@@ -156,7 +148,7 @@ async function pitchWord(c, phrase) {
   check('none round', g.last.none === true && g.r.n === 3);
 
   // ── 3回目: えらばれなかったけれど、ヒントに合う物を出したお店にも1ポイント ──
-  for (const c of players) await c.page.click('#stage button:has-text("とじる")').catch(() => {});
+  await sleep(6500);   // 結果の札は自動で閉じる
   g = await gameOf(code);
   const c3 = g.S.turn;
   want = g.S.players[c3].order;
@@ -195,7 +187,7 @@ async function pitchWord(c, phrase) {
   check('fit item stays', g.S.players[y3].hand.includes(alt.id));
 
   // ── 4回目: ちがう物がえらばれると、出したお店は1ポイント減る（本人の画面にだけ出す） ──
-  for (const c of players) await c.page.click('#stage button:has-text("とじる")').catch(() => {});
+  await sleep(6500);   // 結果の札は自動で閉じる
   g = await gameOf(code);
   const c4 = g.S.turn;
   const w4 = g.S.players[c4].order;
@@ -231,7 +223,7 @@ async function pitchWord(c, phrase) {
   check('reload keeps seat', (await text(a, '#myPointsBox')) !== null && await visible(a, '#myPointsBox'));
 
   // ── 退出した人の番は、ホストが飛ばせる ──
-  for (const c of players) await c.page.click('#stage button:has-text("とじる")').catch(() => {});
+  await sleep(6500);   // 結果の札は自動で閉じる
   await b.page.click('#btnLeave');
   await L.waitScreen(b, 'top');
   await roomWhen(code, (r) => !r.players['みどり']);
@@ -248,7 +240,7 @@ async function pitchWord(c, phrase) {
   await L.waitStats(host, 'skip', 1);
 
   // ── ここで終わる → おわり ──
-  await host.page.click('#stage button:has-text("とじる")').catch(() => {});
+  await sleep(6500);
   await host.page.click('#btnEndNow');
   for (const c of [host, a, watch]) await waitText(c, '#stage', 'おしまい', 6000);
   check('titles', (await host.page.$$('#stage .ak-titles li')).length === 3);
