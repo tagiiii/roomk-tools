@@ -66,6 +66,7 @@ const state = {
   currentScreen: null,
   timerInterval: null,
   orphanTimer: null,
+  orphanAt: null,
   connectedRef: null,
   connectedCallback: null,
   roomCallback: null,
@@ -402,6 +403,7 @@ function cleanupRoom() {
     joinedAt: null,
     timerInterval: null,
     orphanTimer: null,
+    orphanAt: null,
     connectedRef: null,
     connectedCallback: null,
     roomCallback: null,
@@ -1137,7 +1139,10 @@ function renderRoom(room) {
 function updateHostOverlay(room) {
   if (state.role === 'guest' && room.hostConnected === false) {
     $('hostOffOverlay').hidden = false;
+    // 切れたままのあいだに切れた時刻だけが新しくなったら（ホストの通信が短く揺れたとき）、期限のタイマーを仕掛けなおす
+    if (state.orphanTimer && state.orphanAt !== RoomkRTDB.getHostDisconnectedAt(room)) { clearTimeout(state.orphanTimer); state.orphanTimer = null; }
     if (!state.orphanTimer) {
+      state.orphanAt = RoomkRTDB.getHostDisconnectedAt(room);
       const ref = state.roomRef;
       const at = RoomkRTDB.getHostDisconnectedAt(room);
       const delay = at == null ? ORPHAN_TTL_MS : Math.max(0, at + ORPHAN_TTL_MS - RoomkRTDB.now());

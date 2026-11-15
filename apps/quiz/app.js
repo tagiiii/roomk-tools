@@ -137,6 +137,7 @@ const state = {
   timerInterval: null,
   roomCountdownTimer: null,
   orphanTimer: null,
+  orphanAt: null,
   closeTimer: null,
   closeTimerKey: null,
   closeTimerReason: null, // 'all' | 'manual'
@@ -1528,7 +1529,10 @@ function updateHostOverlay(data) {
     const answering = data.status === ROOM_STATUS.QUESTION;
     hostOffOverlay.hidden = answering;
     hostOffBanner.hidden = !answering;
+    // 切れたままのあいだに切れた時刻だけが新しくなったら（ホストの通信が短く揺れたとき）、期限のタイマーを仕掛けなおす
+    if (state.orphanTimer && state.orphanAt !== RoomkRTDB.getHostDisconnectedAt(data)) { clearTimeout(state.orphanTimer); state.orphanTimer = null; }
     if (!state.orphanTimer) {
+      state.orphanAt = RoomkRTDB.getHostDisconnectedAt(data);
       const ref = state.roomRef;
       const at = RoomkRTDB.getHostDisconnectedAt(data);
       const delay = at == null ? ORPHAN_TTL_MS : Math.max(0, at + ORPHAN_TTL_MS - RoomkRTDB.now());
