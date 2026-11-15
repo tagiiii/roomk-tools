@@ -13,8 +13,11 @@ const A = window.ArekuArt;
 const MIN_SEATS = E.MIN_PLAYERS;
 const MAX_SEATS = E.MAX_PLAYERS;
 const TIMES = [5, 10, 15, 0];   // あそぶ時間（分）。0 はなし
-const DEFAULT_SET = { hostPlays: true, time: 10, showAll: false };
-const OFFER_MS = 30000;         // お店の人が決める時間（お客さんがヒントを送ってから。品物と、箱にそえるひとことをえらぶ）
+const DEFAULT_SET = { hostPlays: true, time: 10, showAll: false, offer: 30, ask: 0 };
+// お店の人が決める時間（秒。お客さんがヒントを送ってから、品物を出すか決めるまで）。ホストが待合室でえらぶ
+// （2026-11-15 オーナー「商品を説明する時間がかかりすぎる人がいる。商品を出すまでの時間を設定できるように」）
+const OFFERS = [15, 20, 30, 45, 60];
+const ASKS = [0, 20, 30, 45, 60];   // お客さんがヒントを決める時間（秒。0 はなし）
 const RESULT_MS = 6000;         // 結果の札を出しておく長さ
 const OPEN_MS = 900;            // 箱がゆれてから開くまで
 // ちがう物が出てきたときの、お客さんのひとこと
@@ -62,7 +65,7 @@ const state = {
   // 端末の中だけで持つ状態
   round: '',           // いま出している番（対決の番号:番の番号）。変わったら、質問の欄をとじる
   asking: false,       // お店の人が「お客さんに質問する」をひらいているか
-  offering: null,      // お店の人がえらんだ品物（箱にそえるひとことをえらぶ途中）
+  offering: null,      // お店の人がえらんだ品物（「この品物を出す」を押す前）
   picks: [],           // お客さんがえらんでいるヒント（送る前）
   lastSeen: null,      // 結果の札を出した番 { game, key }（はじめて開いたときは、前の結果を出さない）
   result: null,        // いま出している結果の札 { last, until, openUntil, voice }
@@ -160,10 +163,13 @@ function normSet(raw) {
     hostPlays: typeof s.hostPlays === 'boolean' ? s.hostPlays : DEFAULT_SET.hostPlays,
     time: TIMES.includes(s.time) ? s.time : DEFAULT_SET.time,
     showAll: s.showAll === true,
+    offer: OFFERS.includes(s.offer) ? s.offer : DEFAULT_SET.offer,
+    ask: ASKS.includes(s.ask) ? s.ask : DEFAULT_SET.ask,
   };
 }
 const timeLabel = (t) => (t ? t + '分' : 'なし');
-const settingSummary = (set) => 'あそぶ時間は ' + timeLabel(set.time) + (set.showAll ? '・みんなのポイントを見せる' : '');
+const askLabel = (t) => (t ? t + '秒' : 'なし');
+const settingSummary = (set) => 'あそぶ時間は ' + timeLabel(set.time) + '・お客さんがヒントを決める時間は ' + askLabel(set.ask) + '・お店の人が決める時間は ' + set.offer + '秒' + (set.showAll ? '・みんなのポイントを見せる' : '');
 
 /* ── ルームの読み取り ── */
 function byJoined(entries) {
@@ -211,9 +217,13 @@ function gameOf(room) {
     const i = Number(k);
     if (!Number.isInteger(i) || i < 0 || i >= n || i === S.turn || typeof v !== 'string') return;
     if (v === '-') { d[i] = '-'; return; }
-    // 出した品物（いまもそのお店にある物だけ）と、箱にそえるひとこと（ヒントの言葉）
-    const [item, word] = v.split(':');
-    if (S.players[i].hand.includes(item) && E.isTag(word)) d[i] = { item, word };
+    // 出した品物（いまもそのお店にある物だけ）。箱にそえるひとことは、箱が届いたあとに r/w/{席} へ
+    const item = v.split(':')[0];
+    if (S.players[i].hand.includes(item)) d[i] = { item, word: null };
+  });
+  Object.entries(r.w && typeof r.w === 'object' ? r.w : {}).forEach(([k, val]) => {
+    const i = Number(k);
+    if (d[i] && d[i] !== '-' && E.isTag(val)) d[i].word = val;
   });
   const q = {};
   Object.entries(r.q && typeof r.q === 'object' ? r.q : {}).forEach(([k, v]) => {
@@ -237,6 +247,8 @@ function gameOf(room) {
     seats: seats.slice(),
     uids: seats.map((_, i) => (typeof uids[i] === 'string' ? uids[i] : '')),
     limit: TIMES.includes(g.limit) ? g.limit : 0,
+    offerMs: (OFFERS.includes(g.offer) ? g.offer : DEFAULT_SET.offer) * 1000,
+    askMs: (ASKS.includes(g.ask) ? g.ask : 0) * 1000,
     startAt: Number(g.startAt) || 0,
     endAt: Number(g.endAt) || 0,
     showAll: g.showAll === true,
@@ -244,6 +256,7 @@ function gameOf(room) {
     n: Number.isInteger(r.n) ? r.n : 0,
     hints,
     at: Number(r.at) || 0,
+    askAt: Number(r.s) || 0,   // お客さんがヒントをえらびはじめる時刻（前の結果の札を出しおえるころ）
     d,
     q,
     last,
@@ -297,16 +310,25 @@ function phaseOf(room, game) {
   if (!game.hints.length) return 'ask';
   const shops = game.seats.map((_, i) => i).filter((i) => i !== game.S.turn && seatPresent(room, game, i));
   const all = shops.every((i) => game.d[i] != null);
-  if (all || roomNow(room) >= game.at + OFFER_MS) return 'pick';
+  if (all || roomNow(room) >= game.at + game.offerMs) return 'pick';
   return 'offer';
 }
-const offerLeft = (room, game) => Math.max(0, Math.ceil((game.at + OFFER_MS - roomNow(room)) / 1000));
+const offerLeft = (room, game) => Math.max(0, Math.ceil((game.at + game.offerMs - roomNow(room)) / 1000));
+// お客さんがヒントを決める、のこり秒（時間をえらんでいないときは null。前の結果の札を出している間は数えない）
+const askLeft = (room, game) => (game.askMs && game.askAt ? Math.max(0, Math.min(game.askMs / 1000, Math.ceil((game.askAt + game.askMs - roomNow(room)) / 1000))) : null);
 
 // 出された箱（お店の番号の順）
 function offersOf(game) {
   return Object.keys(game.d).map(Number).sort((a, b) => a - b).filter((i) => game.d[i] !== '-').map((i) => ({ from: i, item: game.d[i].item, word: game.d[i].word }));
 }
 const shopName = (game, i) => game.seats[i] + 'のお店';
+// 箱にそえるひとこと: ヒントの言葉ごとに、お店の言い方（データにはヒントの言葉を置く）
+const PITCH = {
+  '大きい': 'どーんと大きいよ', '小さい': 'ちっちゃくてかわいいよ', 'まるい': 'まんまるだよ', 'ながい': 'ながーいよ',
+  'ふわふわ': 'ふわふわだよ', 'かたい': 'かちかちだよ', '光る': 'ぴかぴか光るよ', 'とぶ': '空をとぶよ', 'はねる': 'ぴょんぴょんはねるよ',
+  'あまい': 'あまくておいしいよ', 'つめたい': 'ひんやりつめたいよ', 'あたたかい': 'あつあつだよ', '音が出る': 'いい音がするよ',
+};
+const pitchOf = (t) => '「' + (PITCH[t] || t) + '」';
 
 // 対決の途中は、遊んでいる人の名前を同じ人（匿名ID）だけが使える
 function reservedByOther(room, name, uid) {
@@ -534,6 +556,7 @@ async function ensurePresence(force = false) {
           const gap = Math.max(0, RoomkRTDB.now() - at);
           if (game.limit && game.startAt) back['game/startAt'] = game.startAt + gap;
           if (game.at) back['play/' + game.id + '/r/at'] = game.at + gap;
+          else if (game.askAt) back['play/' + game.id + '/r/s'] = game.askAt + gap;
         }
         await ref.update(back);
       }
@@ -954,9 +977,9 @@ function newGameFor(room, seats) {
   const id = (Number(room.lastGameId) || 0) + 1;
   const set = normSet(room.set);
   const play = E.toRoom(E.newGame(seats.length));
-  play.r = { n: 1 };
+  play.r = { n: 1, s: RoomkRTDB.now() };
   return {
-    game: { id, seats: seats.slice(), uids: seats.map((name) => room.players[name].uid), limit: set.time, showAll: set.showAll, startAt: RoomkRTDB.now() },
+    game: { id, seats: seats.slice(), uids: seats.map((name) => room.players[name].uid), limit: set.time, showAll: set.showAll, offer: set.offer, ask: set.ask, startAt: RoomkRTDB.now() },
     play,
   };
 }
@@ -976,6 +999,8 @@ async function startGame() {
     window.RoomkStats?.count('players-' + n);
     const used = normSet(state.room?.set);
     window.RoomkStats?.count('time-' + (used.time || 'none'));
+    window.RoomkStats?.count('offer-' + used.offer);
+    window.RoomkStats?.count('ask-' + (used.ask || 'none'));
     if (used.showAll) window.RoomkStats?.count('show-all');
   } else if (ok === false) {
     toast('遊ぶ人が2人そろっていないよ。だれかが入るのを待つか、「ホストも遊ぶ」をオンにしてね');
@@ -1059,12 +1084,17 @@ function liveGame() {
 }
 
 // お客さん: ヒントを送る
-function sendHints() {
+// auto: 決める時間が来た（えらんだヒントで送る。1つもえらんでいなければ、ほしい物に合うヒントを1つ）
+function sendHints(auto = false) {
   const live = liveGame();
   if (!live || state.sending) return;
   const { room, game } = live;
   if (selfSeat(game) !== game.S.turn || game.hints.length || phaseOf(room, game) !== 'ask') return;
-  const picks = state.picks.filter(E.isTag).slice(0, E.HINTS);
+  let picks = state.picks.filter(E.isTag).slice(0, E.HINTS);
+  if (!picks.length && auto === true) {
+    const tags = E.item(game.S.players[game.S.turn].order).tags;
+    picks = [tags[Math.floor(Math.random() * tags.length)]];
+  }
   if (!picks.length) return;
   state.sending = true;
   playRef(game).child('r').update({ h: picks.join(','), at: serverTimestamp() })
@@ -1072,17 +1102,27 @@ function sendHints() {
     .finally(() => { state.sending = false; });
 }
 
-// お店の人: 品物を出す（id と、箱にそえるひとこと word）か、出さない（'-'）
-function decide(id, word) {
+// お店の人: 品物を出す（id）か、出さない（'-'）
+function decide(id) {
   const live = liveGame();
   if (!live) return;
   const { room, game } = live;
   const me = selfSeat(game);
   if (me < 0 || me === game.S.turn || game.d[me] != null || phaseOf(room, game) !== 'offer') return;
-  if (id !== '-' && (!game.S.players[me].hand.includes(id) || !E.isTag(word))) return;
+  if (id !== '-' && !game.S.players[me].hand.includes(id)) return;
   state.asking = false;
   state.offering = null;
-  playRef(game).child('r/d/' + me).set(id === '-' ? '-' : id + ':' + word).catch((error) => writeFailed(error));
+  playRef(game).child('r/d/' + me).set(id).catch((error) => writeFailed(error));
+}
+
+// 品物を出したお店の人: 箱が届いたあとに、箱にそえるひとことをえらぶ（お客さんがえらぶまで、変えられる）
+function pitch(tag) {
+  const live = liveGame();
+  if (!live) return;
+  const { room, game } = live;
+  const me = selfSeat(game);
+  if (me < 0 || !game.d[me] || game.d[me] === '-' || phaseOf(room, game) !== 'pick' || !E.isTag(tag) || game.d[me].word === tag) return;
+  playRef(game).child('r/w/' + me).set(tag).catch((error) => writeFailed(error));
 }
 
 // 品物を出さなかったお店の人: お客さんが箱をえらぶ前に、ぴったりだと思う箱をおすすめする（何度でも変えられる）
@@ -1142,7 +1182,7 @@ async function settle(from, skip = false) {
       const declined = skip ? [] : Object.keys(g.d).map(Number).filter((i) => g.d[i] === '-');
       res = E.resolve(S, offers, chosen, g.hints, asked, Math.random, away, declined, skip ? {} : g.v);
       const out = E.toRoom(S);
-      out.r = { n: n + 1 };
+      out.r = { n: n + 1, s: RoomkRTDB.now() + RESULT_MS };   // 結果の札を出しおえてから、ヒントを決める時間を数える
       out.last = {
         n, c: res.c, none: res.none, w: res.wanted || '-', h: g.hints.join(','), v: voice, skip: skip === true,
         // 席ごとに増えた（減った）ポイント "席:数,…"・正しく断れたお店 "席,…"
@@ -1260,10 +1300,12 @@ function renderWaiting(room) {
   $('lobbySet').hidden = !host;
   $('lobbySetView').hidden = host;
   if (host) {
-    const key = set.time + ':' + set.showAll;
+    const key = set.time + ':' + set.showAll + ':' + set.offer + ':' + set.ask;
     if (state.setKey !== key) {
       state.setKey = key;
       seg($('timeSeg'), TIMES.map((t) => [t, timeLabel(t)]), set.time, (v) => saveSet((s) => ({ ...s, time: v })));
+      seg($('askSeg'), ASKS.map((t) => [t, askLabel(t)]), set.ask, (v) => saveSet((s) => ({ ...s, ask: v })));
+      seg($('offerSeg'), OFFERS.map((t) => [t, t + '秒']), set.offer, (v) => saveSet((s) => ({ ...s, offer: v })));
       $('showAll').checked = set.showAll;
     }
   } else {
@@ -1393,6 +1435,11 @@ function askedList(game, only) {
   return ul.children.length ? ul : null;
 }
 
+function askCount(left) {
+  const p = el('p', 'ak-count', 'のこり ' + left + '秒');
+  p.id = 'askCount';
+  return p;
+}
 function renderAsk(room, game, me, host) {
   const st = $('stage');
   const c = game.S.turn;
@@ -1402,18 +1449,22 @@ function renderAsk(room, game, me, host) {
     st.append(art('ak-art ak-art--mid ak-art--live', A.item(want)), el('p', 'ak-order', E.item(want).name));
     st.append(el('p', 'ak-small', '商店街の、どこかのお店にある。'));
     st.append(el('p', '', '名前を思い出せない。絵をよく見て、ヒントを' + E.HINTS + 'つえらんで、お店の人たちに聞こう。'));
+    const left = askLeft(room, game);
+    if (left !== null) st.append(askCount(left), el('p', 'ak-small', '時間が来たら、えらんだヒントで送るよ。'));
     st.append(chips((t) => {
       const i = state.picks.indexOf(t);
       if (i >= 0) state.picks.splice(i, 1);
       else if (state.picks.length < E.HINTS) state.picks.push(t);
       renderGame();
     }, state.picks, (t) => state.picks.length >= E.HINTS && !state.picks.includes(t)));
-    const go = btn('btn btn-primary btn-lg', 'これください！', sendHints);
+    const go = btn('btn btn-primary btn-lg', 'これください！', () => sendHints());
     go.disabled = state.picks.length === 0 || state.sending;
     st.append(go);
     return;
   }
   st.append(face(c, 'ak-face--big'), el('h2', '', 'お客さんの' + game.seats[c] + 'が、ヒントをえらんでいるよ'));
+  const left = askLeft(room, game);
+  if (left !== null) st.append(askCount(left));
   st.append(el('p', 'ak-small', me >= 0 ? 'ヒントが届いたら、あなたのお店から「これかな？」と思う物を出そう。' : 'ヒントが届くのを待っているよ。'));
   if (host && !seatPresent(room, game, c)) {
     st.append(el('p', 'ak-alert', game.seats[c] + 'の通信が切れているよ。'), btn('btn btn-secondary', 'この番を飛ばす', () => settle(-1, true)));
@@ -1444,7 +1495,17 @@ function renderOffer(room, game, me) {
   st.append(countdown);
   const decided = game.d[me];
   if (decided != null) {
-    st.append(el('p', 'ak-done', decided === '-' ? '出さないことにした。ほかのお店を待っているよ。' : '「' + E.item(decided.item).name + '」を出した（ひとこと「' + decided.word + '」）。ほかのお店を待っているよ。'));
+    if (decided === '-') {
+      st.append(el('p', 'ak-done', '出さないことにした。ほかのお店を待っているよ。'));
+      return;
+    }
+    // 出したことが、ひと目でわかるように
+    const sent = el('div', 'ak-sent');
+    sent.append(art('ak-art ak-art--card', A.box()), art('ak-art ak-art--card', A.item(decided.item)));
+    const txt = el('div', 'ak-sent__text');
+    txt.append(el('b', '', '「' + E.item(decided.item).name + '」を箱に入れて出したよ'), el('span', '', '箱がお客さんに届いたら、箱にそえるひとことをえらぼう。ほかのお店を待っているよ。'));
+    sent.append(txt);
+    st.append(sent);
     return;
   }
   if (state.asking) {
@@ -1456,10 +1517,15 @@ function renderOffer(room, game, me) {
   }
   if (state.offering) {
     const it = E.item(state.offering);
-    st.append(el('p', 'ak-choices__title', '「' + (it ? it.name : '') + '」を出す'));
-    st.append(el('p', '', '箱にそえるひとことを、1つえらんでね。この品物の特徴だと思う言葉を、絵を見てえらぼう。お客さんは、ひとことを見て箱をえらぶよ。'));
-    st.append(chips((t) => decide(state.offering, t)));
-    st.append(btn('btn btn-secondary', '品物をえらびなおす', () => { state.offering = null; renderGame(); }));
+    const pick1 = el('div', 'ak-sent ak-sent--ask');
+    pick1.append(art('ak-art ak-art--card', A.item(state.offering)));
+    const txt = el('div', 'ak-sent__text');
+    txt.append(el('b', '', '「' + (it ? it.name : '') + '」を出す？'), el('span', '', 'ちがう物がえらばれると1ポイント減るよ。'));
+    pick1.append(txt);
+    st.append(pick1);
+    const row = el('div', 'ak-row');
+    row.append(btn('btn btn-primary btn-lg', 'この品物を出す', () => decide(state.offering)), btn('btn btn-secondary', 'えらびなおす', () => { state.offering = null; renderGame(); }));
+    st.append(row);
     return;
   }
   if (!game.S.players[me].hand.length) {
@@ -1470,7 +1536,7 @@ function renderOffer(room, game, me) {
   st.append(el('p', 'ak-choices__title', 'どうする？'));
   const row = el('div', 'ak-choices');
   const give = el('div', 'ak-choice ak-choice--point');
-  give.append(el('b', '', '品物を出す'), el('span', '', '「これかな？」と思う物を、下の「あなたのお店」から押して、箱にそえるひとことをえらぶ。ちがう物がえらばれると1ポイント減る'));
+  give.append(el('b', '', '品物を出す'), el('span', '', '「これかな？」と思う物を、下の「あなたのお店」から押して、「この品物を出す」で決める。ちがう物がえらばれると1ポイント減る'));
   row.append(give);
   const rest = E.ASK_MAX - (game.q[me] || []).length;
   const ask = btn('ak-choice', '', () => { state.asking = true; renderGame(); });
@@ -1494,9 +1560,23 @@ function renderPick(room, game, me, host) {
   const canVote = me >= 0 && !mineTurn && !(game.d[me] && game.d[me] !== '-') && offers.length > 0;
   const count = {};
   Object.values(game.v).forEach((to) => { count[to] = (count[to] || 0) + 1; });
+  // 品物を出したお店の人は、箱にそえるひとことをえらぶ
+  const mineBox = me >= 0 && game.d[me] && game.d[me] !== '-' ? game.d[me] : null;
   if (offers.length) {
-    if (mineTurn) st.append(el('p', 'ak-small', 'お店の人のおすすめも見てみよう。えらぶのは、あなた。'));
+    if (mineTurn) st.append(el('p', 'ak-small', 'お店の人のひとことと、おすすめを見てからえらぼう。えらぶのは、あなた。'));
     if (canVote) st.append(el('p', 'ak-choices__title', 'ぴったりだと思う箱を、お客さんにおすすめしよう（当たったら' + E.PT_VOTE + 'ポイント）'));
+    if (mineBox) {
+      const it = E.item(mineBox.item);
+      st.append(el('p', 'ak-choices__title', '「' + (it ? it.name : '') + '」を箱に入れて出したよ。箱にひとことをそえよう'));
+      const box = el('div', 'ak-chips ak-pitch');
+      E.TAGS.forEach((t) => {
+        const b = tagLabel(btn('ak-chip-btn', '', () => pitch(t)), t);
+        b.lastChild.textContent = PITCH[t];
+        b.setAttribute('aria-pressed', mineBox.word === t ? 'true' : 'false');
+        box.append(b);
+      });
+      st.append(box);
+    }
     const box = el('div', 'ak-offers');
     offers.forEach((o) => {
       let card;
@@ -1505,7 +1585,9 @@ function renderPick(room, game, me, host) {
       else card = el('div', 'ak-offer');
       if (mineTurn && state.sending) card.disabled = true;
       if (canVote) card.setAttribute('aria-pressed', game.v[me] === o.from ? 'true' : 'false');
-      card.append(art('ak-offer__box', A.box()), el('b', '', shopName(game, o.from)), tagLabel(el('span', 'ak-boxword'), o.word));
+      card.append(art('ak-offer__box', A.box()), el('b', '', o.from === me ? 'あなたの箱' : shopName(game, o.from)));
+      if (o.word) { const w = tagLabel(el('span', 'ak-boxword'), o.word); w.lastChild.textContent = pitchOf(o.word); card.append(w); }
+      else card.append(el('span', 'ak-boxword ak-boxword--wait', 'ひとことを考え中…'));
       card.append(el('span', 'ak-votes' + (count[o.from] ? '' : ' is-zero'), 'おすすめ ' + (count[o.from] || 0)));
       if (canVote && game.v[me] === o.from) card.append(el('span', 'ak-myvote', 'あなたのおすすめ'));
       box.append(card);
@@ -1591,14 +1673,15 @@ function renderShelf(room, game, me, phase) {
   const offer = phase === 'offer' && !state.result;
   const can = offer && !state.asking && game.d[me] == null && seatPresent(room, game, me);
   box.className = 'ak-shelfbox ' + (offer ? 'is-give' : 'is-rest');
-  $('shelfNote').textContent = can ? (state.offering ? 'ひとことをえらんでね' : 'ここから1つ出す') : '';
   const sent = game.d[me] && game.d[me] !== '-' ? game.d[me].item : null;
+  $('shelfNote').textContent = can ? (state.offering ? '「この品物を出す」を押してね' : 'ここから1つえらぶ') : (sent ? '出した品物に印が付いているよ' : '');
   const shelf = $('shelf');
   // 札には絵と名前だけを出す（特徴の言葉は出さない。絵を見て考える）
   shelf.replaceChildren(...game.S.players[me].hand.map((id) => {
     const it = E.item(id);
     const card = can ? btn('ak-card', '', () => { state.offering = id; renderGame(); }) : el('div', 'ak-card');
     if (sent === id || (can && state.offering === id)) card.classList.add('is-sent');
+    if (sent === id) card.append(el('span', 'ak-card__sent', '出した'));
     if (can) card.setAttribute('aria-pressed', state.offering === id ? 'true' : 'false');
     card.append(art('ak-art ak-art--card', A.item(id)), el('b', '', it.name));
     return card;
@@ -1659,6 +1742,13 @@ function tickClock() {
   renderClock(room, game);
   const count = $('offerCount');
   if (count && phase === 'offer') count.textContent = 'のこり ' + offerLeft(room, game) + '秒';
+  if (phase === 'ask' && !state.result) {
+    const left = askLeft(room, game);
+    const ac = $('askCount');
+    if (ac && left !== null) ac.textContent = 'のこり ' + left + '秒';
+    // 決める時間が来たら、お客さんの端末が送る
+    if (left === 0 && selfSeat(game) === game.S.turn && !state.sending) sendHints(true);
+  }
 }
 
 // Enter で送る（日本語入力の変換の確定は除く）

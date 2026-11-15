@@ -37,7 +37,7 @@ const { E, sleep, rest } = L;
   S.players.forEach((p, i) => { if (i !== hi) p.order = S.players[(i + 1) % 4].hand.find((id) => id !== aoAdd) || null; });
   S.turn = hi;
   const play = E.toRoom(S);
-  play.r = { n: 1, h: 'まるい,あまい', at: Date.now() - 7000, d: { [ao]: aoAdd + ':あたたかい' }, q: { [mi]: 'あたたかい:1' } };
+  play.r = { n: 1, h: 'まるい,あまい', at: Date.now() - 7000, d: { [ao]: aoAdd }, q: { [mi]: 'あたたかい:1' } };
   await rest('PUT', `${L.ROOMS}/${code}/play/${g.id}`, play);
 
   const M = guests.find((c) => c.name === 'みどり');
