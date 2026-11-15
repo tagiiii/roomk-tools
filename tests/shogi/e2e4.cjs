@@ -147,6 +147,12 @@ const movesOf = (room) => (room?.game?.moves ? Object.keys(room.game.moves).leng
   check('T43b 新しい対局でも時間切れになる', await waitFor(async () => (await L.status(M)) === '▲先手の時間が切れた。△後手の勝ち！', 20000), await L.status(M));
   await M.page.setViewportSize({ width: 375, height: 800 });
   check('T44 幅 375px ではみ出さない', !(await L.overflow(M)));
+  // 盤は欄の実際の幅から大きさを決める（375px で盤の幅 330px 以上。本将棋のマス 37px 前後。2026-11-15）
+  const boardW = await M.page.evaluate(() => {
+    const n = document.querySelector('.sh-board').classList.contains('is-mini') ? 5 : 9;
+    return document.querySelector('.sh-cell').getBoundingClientRect().width * n;
+  });
+  check('T44b 幅 375px で盤を大きく出す', boardW >= 330, boardW);
   await L.shot(M, 'e2e4-local-375');
   const clockLeftX = await M.page.$eval('#sideBottom .sh-clock', (n) => n.getBoundingClientRect().right);
   check('T45 スマホ幅で時計が右下の丸ボタンにかからない（左寄り）', clockLeftX < 240, clockLeftX);
