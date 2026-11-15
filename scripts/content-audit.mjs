@@ -250,6 +250,8 @@ const NO_CONTENT_APPS = [
   'shinkei-suijaku',
   // 盤のしかけ（とびら・箱・カギ・橋）だけ（ステージは番号からその場で作る）
   'sorotte-goal',
+  // 品物の絵と名前（60種類。お店の部品で、お題・問題ではない）だけ
+  'arekudasai-shoten',
   // 6種類の小銭の絵だけ（問題はその場でくじで作る）
   'charin-baton',
   // 落ちてくるブロック（1〜4マスの8種類の形）だけ
