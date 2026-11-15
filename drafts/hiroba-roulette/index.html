@@ -70,19 +70,16 @@
   .wheel-wrap{ position:absolute; left:110px; top:90px; width:720px; height:720px; }
   #wheelSvg{ position:absolute; inset:0; width:720px; height:720px; overflow:visible; }
   .rim{ position:absolute; inset:-26px; border-radius:50%; background:var(--accent); }
-  .bulb{ position:absolute; width:18px; height:18px; margin:-9px; border-radius:50%; background:#FFE7B0; opacity:.45; }
-  .bulb.on{ opacity:1; box-shadow:0 0 14px 4px rgba(255,214,120,.8); }
+  .bulb{ position:absolute; width:12px; height:12px; margin:-6px; border-radius:50%; background:#FFE7B0; opacity:.55; }
   .pointer{ position:absolute; left:50%; top:-58px; width:72px; height:96px; margin-left:-36px; transform-origin:50% 22px; z-index:3; }
   .pointer svg{ width:100%; height:100%; overflow:visible; }
-  .pointer.tick{ animation:tick .16s ease-out; }
-  @keyframes tick{ 0%{ transform:rotate(0); } 35%{ transform:rotate(-22deg); } 100%{ transform:rotate(0); } }
+  .pointer.tick{ animation:tick .14s ease-out; }
+  @keyframes tick{ 0%{ transform:rotate(0); } 35%{ transform:rotate(-7deg); } 100%{ transform:rotate(0); } }
   .hub{ position:absolute; left:50%; top:50%; width:170px; height:170px; margin:-85px; border-radius:50%; background:var(--paper); border:8px solid var(--accent);
         display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; z-index:2; font:inherit; color:var(--accent); }
   .hub .ms{ font-size:56px; }
   .hub span:last-child{ font-family:var(--zm); font-weight:900; font-size:30px; margin-top:2px; }
   .hub:disabled{ cursor:default; opacity:.9; }
-  body.spinning .hub span{ animation:wob .5s infinite; }
-  @keyframes wob{ 50%{ transform:rotate(12deg) scale(1.08); } }
 
   .side{ position:absolute; left:930px; top:90px; right:80px; bottom:90px; display:flex; flex-direction:column; }
   .side h2{ font-family:var(--zm); font-weight:900; font-size:54px; margin:0 0 6px; line-height:1.2; }
@@ -104,16 +101,14 @@
   /* 決まったとき */
   .result{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(63,54,45,.35); opacity:0; pointer-events:none; transition:opacity .3s; z-index:10; }
   .result.show{ opacity:1; pointer-events:auto; }
-  .result-card{ background:var(--paper); border-radius:40px; padding:46px 80px 44px; text-align:center; min-width:760px; transform:scale(.6) rotate(-4deg); transition:transform .5s cubic-bezier(.3,1.6,.5,1); }
-  .result.show .result-card{ transform:scale(1) rotate(-1.5deg); }
+  .result-card{ background:var(--paper); border-radius:40px; padding:46px 80px 44px; text-align:center; min-width:760px; transform:scale(.96); transition:transform .3s ease-out; }
+  .result.show .result-card{ transform:scale(1); }
   .result-kicker{ font-family:var(--zm); font-weight:900; font-size:34px; color:var(--accent); }
   .result-ic{ font-size:120px; color:var(--accent); margin:10px 0 0; }
   .result-name{ font-family:var(--zm); font-weight:900; font-size:88px; line-height:1.15; margin:6px 0 18px; }
   .result-note{ display:inline-flex; gap:10px; align-items:center; font-family:var(--zm); font-weight:700; font-size:26px; color:var(--muted); background:var(--accent-soft); border-radius:999px; padding:10px 26px; }
   .result-hint{ font-size:20px; color:var(--muted); margin-top:18px; }
   body.idle .result-hint{ visibility:hidden; }
-  .confetti{ position:absolute; top:-40px; width:16px; height:26px; border-radius:4px; z-index:11; pointer-events:none; animation:fall var(--t) cubic-bezier(.3,.4,.6,1) forwards; animation-delay:var(--dl); }
-  @keyframes fall{ to{ transform:translate(var(--dx),980px) rotate(var(--rot)); } }
 
   /* 操作の帯（マウスを止めると消える） */
   #bar{ position:fixed; left:50%; bottom:14px; transform:translateX(-50%); display:flex; gap:8px; align-items:center; flex-wrap:wrap; justify-content:center;
@@ -129,9 +124,6 @@
   body.idle #bar, body.idle .howto-fab, body.idle .howto-feedback-fab{ opacity:0; pointer-events:none; }
   .howto-fab, .howto-feedback-fab{ transition:opacity .3s; }
 
-  @media (prefers-reduced-motion: reduce){
-    .confetti{ display:none; }
-  }
 </style>
 </head>
 <body data-view="ask">
@@ -388,7 +380,7 @@
     $('flowEmpty').style.display = flow.length ? 'none' : '';
   }
 
-  // 縁の電球
+  // 縁の点（飾り。光らせない）
   const bulbs = [];
   (function makeBulbs(){
     const rim = $('rim'), N = 28;
@@ -398,11 +390,6 @@
       rim.appendChild(b); bulbs.push(b);
     }
   })();
-  let bulbPhase = 0, bulbTimer = null;
-  function bulbsIdle(){ clearInterval(bulbTimer); bulbTimer = setInterval(() => { bulbPhase ^= 1; bulbs.forEach((b, i) => b.classList.toggle('on', i % 2 === bulbPhase)); }, 700); }
-  function bulbsChase(){ clearInterval(bulbTimer); let k = 0; bulbTimer = setInterval(() => { k++; bulbs.forEach((b, i) => b.classList.toggle('on', (i + k) % 4 === 0)); }, 60); }
-  function bulbsWin(){ clearInterval(bulbTimer); let k = 0; bulbTimer = setInterval(() => { k++; bulbs.forEach(b => b.classList.toggle('on', k % 2 === 0)); if (k > 9) bulbsIdle(); }, 160); }
-  bulbsIdle();
 
   function segAt(r){
     const a = ((-r) % 360 + 360) % 360;
@@ -420,11 +407,10 @@
     const s = segs[Math.max(0, idx)], m = (s.a1 - s.a0) * 0.12;
     const t = Math.min(s.a1 - m, Math.max(s.a0 + m, target));
     const r0 = rot, base = ((-t - r0) % 360 + 360) % 360;
-    const r1 = r0 + 360 * (reduce ? 1 : 6) + base;
-    const dur = reduce ? 1200 : 6200;
+    const r1 = r0 + 360 * (reduce ? 1 : 4) + base;
+    const dur = reduce ? 1200 : 4000;
     const t0 = performance.now();
     let lastIdx = segAt(r0);
-    bulbsChase();
     const ptr = $('pointer');
     function frame(now){
       const p = Math.min(1, (now - t0) / dur);
@@ -443,32 +429,15 @@
     lastWon = s.key;
     flow.push({ key:s.key, name:s.name });
     renderFlow();
-    bulbsWin();
     $('resultKicker').textContent = mode === 'games' ? '遊ぶゲームは…' : (flow.length === 1 ? 'この時間は、まず…' : `${flow.length}つめは…`);
     $('resultIc').textContent = s.icon;
     $('resultName').textContent = s.name;
     $('result').classList.add('show');
-    confetti();
     $('hub').disabled = false; $('btnSpin').disabled = false;
     buildLegend();
   }
   function closeResult(){ $('result').classList.remove('show'); }
   $('result').addEventListener('click', closeResult);
-
-  function confetti(){
-    if (reduce) return;
-    const cols = ['#F2B35C','#E8907B','#9FCFB4','#9CC8D3','#C4A9D6','#B9C27A','#FFFDF8'];
-    for (let i = 0; i < 70; i++){
-      const d = document.createElement('span'); d.className = 'confetti';
-      d.style.left = `${Math.random() * 1600}px`;
-      d.style.background = cols[i % cols.length];
-      d.style.setProperty('--t', `${2.2 + Math.random() * 1.6}s`);
-      d.style.setProperty('--dl', `${Math.random() * .5}s`);
-      d.style.setProperty('--dx', `${(Math.random() - .5) * 300}px`);
-      d.style.setProperty('--rot', `${(Math.random() - .5) * 1080}deg`);
-      stage.appendChild(d); setTimeout(() => d.remove(), 4600);
-    }
-  }
 
   // ───── 画面の切りかえ ─────
   function go(view){
