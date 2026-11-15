@@ -65,6 +65,12 @@ async function sowFirst(c, code) {
   await H.page.evaluate(() => firebase.database().goOffline());
   H.offlineOk = true;
   check('T11 ホストの切断が届く', await waitFor(async () => (await L.visible(A, '#hostOffOverlay')), 15000));
+  const off = await A.page.evaluate(() => ({
+    role: document.getElementById('hostOffOverlay').getAttribute('role'),
+    focus: document.activeElement?.id,
+    boardInert: !!document.getElementById('board').closest('[inert]'),
+  }));
+  check('T11b 待つ画面はダイアログとして読まれ、「退出する」に移り、うしろの盤は押せない', off.role === 'dialog' && off.focus === 'btnOverlayLeave' && off.boardInert, off);
   const ply3 = (await L.roomOf(code)).game.ply;
   const oldAt = Date.now() - 20000;
   await L.rest('PUT', L.ROOMS + '/' + code + '/game/turnAt', oldAt);
@@ -74,6 +80,7 @@ async function sowFirst(c, code) {
   check('T13 ホストが切れている間は残り時間を出さない', (await L.clockText(B)) === '' && (await L.clockText(W)) === '', await L.clockText(B));
   await H.page.evaluate(() => firebase.database().goOnline());
   check('T14 ホストが戻るとお知らせが消える', await waitFor(async () => !(await L.visible(A, '#hostOffOverlay')), 15000));
+  check('T14b 戻るとうしろの画面がまた押せる', !(await A.page.evaluate(() => !!document.querySelector('body > [inert]'))));
   room = await L.roomWhen(code, (r) => r.game.turnAt > oldAt + 10000, 6000);
   check('T15 ホストが戻ると、その番の時間を最初から', room.game.turnAt > oldAt + 10000 && room.game.ply === ply3, { at: room.game.turnAt, ply: room.game.ply });
 
@@ -107,6 +114,8 @@ async function sowFirst(c, code) {
   await X.page.fill('#guestName', 'あおい');
   await X.page.click('#btnJoinRoom');
   await L.waitText(X, '#joinError', 'その名前は使われている');
+  const err = await X.page.evaluate(() => [document.getElementById('joinError').getAttribute('role'), document.getElementById('guestName').getAttribute('aria-invalid'), document.getElementById('guestName').getAttribute('aria-describedby')]);
+  check('D4b まちがいは読み上げられ、名前の欄が「まちがい」になる', err[0] === 'alert' && err[1] === 'true' && err[2] === 'joinError', err);
   check('D5 席の名前は別の人には使えない', true);
   await X.page.close();
 

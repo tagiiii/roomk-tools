@@ -36,15 +36,20 @@ const same = (x, y) => JSON.stringify(x) === JSON.stringify(y);
   check('まだまいていない', same(await readBoard(a), E.newGame().board));
   await a.page.click('#btnUnpick');
   check('やめると印が消える', !(await visible(a, '#confirmBox')) && (await a.page.$$('#board .mc-hole.is-path')).length === 0);
-  // もう1回押す → まく（動きの途中を見る）
-  await a.page.click(hole(2));
-  await a.page.click(hole(2));
+  // もう1回押す → まく（動きの途中を見る）。キーボードで押す
+  await a.page.focus(hole(2));
+  await a.page.keyboard.press('Enter');
+  check('キーボードで選んでも、その穴にとどまる', (await a.page.evaluate(() => document.activeElement?.dataset?.i)) === '2', await a.page.evaluate(() => document.activeElement?.className));
+  await a.page.keyboard.press('Enter');
   await sleep(350);
   check('動きの途中は押せない', (await playable(a)).length === 0);
   check('動きの途中の表示', (await status(a)).includes('まいている'), await status(a));
   const mid = await readBoard(a);
   check('途中の盤（すくった穴は0・ゴールはまだ）', mid[2] === 0 && mid[6] === 0, mid);
   await settled(a);
+  // 動きが終わって押せる穴がもどるのを待ってから見る
+  await a.page.waitForFunction(() => document.querySelectorAll('#board .mc-hole.is-playable').length > 0, null, { timeout: 15000 });
+  check('まき終わったあとも、キーボードの位置が盤の穴にある', await a.page.evaluate(() => !!document.activeElement?.closest('#board')), await a.page.evaluate(() => document.activeElement?.tagName + '.' + document.activeElement?.className));
   const b1 = await readBoard(a);
   check('まいたあとの盤', same(b1, [4, 4, 0, 5, 5, 5, 1, 4, 4, 4, 4, 4, 4, 0]), b1);
   check('もう1回で先の番のまま', (await turnOf(a)) === 'b');
