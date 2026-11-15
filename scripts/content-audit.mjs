@@ -226,6 +226,8 @@ const NO_CONTENT_APPS = [
   'circle-time',
   // 進行役のツール（作戦会議の流れ）。チェックインのお題は talk-card から読む。予定のふせん・選択肢は語のリストで、お題集ではない
   'sakusen-kaigi',
+  // 進行役のツール（休み時間とおしらせの画面）。プログラムはサークルタイムの毎朝のデータを読むだけ
+  'yasumi-board',
   'suki-type-check', 'kakure-number', 'jinro', 'kakure-kaito',
   'name-change', 'kyapa-graph', 'nurie-week',
   // カードゲーム・パズルの部品だけ（トランプ・数字札・かなタイル・生き物8種・ピースと盤面）
