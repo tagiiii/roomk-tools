@@ -280,9 +280,16 @@
     S.phase = 'discard';
   }
 
+  // 待ち（鳴いた組・カンもふくめて、4枚とも自分で使っている牌は待ちにしない）
+  function liveWaits(S, seat, c) {
+    const used = new Array(KINDS).fill(0);
+    S.seats[seat].melds.forEach((m) => m.tiles.forEach((x) => { used[kindOf(x)] += 1; }));
+    return waits(c, openCount(S, seat), S.opts).filter((w) => c[w] + used[w] < 4);
+  }
+
   function endDraw(S) {
     S.phase = 'end';
-    const tenpai = [0, 1, 2, 3].filter((s) => waits(handCounts(S, s), openCount(S, s), S.opts).length > 0);
+    const tenpai = [0, 1, 2, 3].filter((s) => liveWaits(S, s, handCounts(S, s)).length > 0);
     S.result = { type: 'draw', tenpai };
     S.log.push({ t: 'draw-game' });
   }
@@ -338,7 +345,7 @@
   function shapeWaits(S, seat) {
     const c = handCounts(S, seat);
     if (c.reduce((a, b) => a + b, 0) !== 13 - openCount(S, seat) * 3) return [];
-    return waits(c, openCount(S, seat), S.opts);
+    return liveWaits(S, seat, c);
   }
 
   // フリテン（役ありだけ）: 待ちの牌を自分で捨てている・見逃した・リーチのあとに見逃した
@@ -584,7 +591,8 @@
     for (let k = 0; k < KINDS; k += 1) {
       if (!c[k]) continue;
       c[k] -= 1;
-      okKind[k] = shanten(c, openCount(S, seat), S.opts) === 0;
+      // 待ちが1つ以上あるときだけ（4枚とも自分で使っている牌だけを待つ形はテンパイにしない）
+      okKind[k] = liveWaits(S, seat, c).length > 0;
       c[k] += 1;
     }
     return me.hand.filter((id) => okKind[kindOf(id)]);
@@ -643,7 +651,9 @@
       me.melds.push({ type: 'ankan', tiles });
       addKan(S, seat);
       breakFirst(S);
-      S.doraN += 1;
+      // 前の明槓・加槓のドラがまだなら、先にめくる
+      S.doraN += S.pendDora + 1;
+      S.pendDora = 0;
       S.log.push({ t: 'ankan', seat });
       draw(S, seat, true);
     } else if (a.type === 'kakan') {
@@ -655,6 +665,7 @@
       m.tiles = m.tiles.concat([id]).sort((x, y) => x - y);
       m.added = id;
       S.drawn = null;
+      if (S.pendDora) { S.doraN += S.pendDora; S.pendDora = 0; }
       S.chankan = { seat, id };
       S.log.push({ t: 'kakan', seat });
       // 加えた牌で、ほかの人がロンできるか（槍槓）

@@ -1,5 +1,6 @@
 // 麻雀の E2E その2（隔離エミュレーター）: 人が押すポン・ロン。配ったあとに game を REST で書きかえて局面を作る
 // そら（席0・親）が東を捨てる → うみ（席1）が「ポン」→ うみが捨てる番（引かない）→ うみが捨てた五萬で、そらが「ロン」
+// 2026-11-15: 聞かれている人の枠をほかの人に出さない・うみの端末の効果音と声・結果の文・ゲームの記録が読めないとき
 const L = require('./lib.cjs');
 const { check, sleep } = L;
 const id = (k, copy) => k * 4 + copy;
@@ -12,6 +13,19 @@ const id = (k, copy) => k * 4 + copy;
   const watch = await L.newClient('watch');
   const code = await L.createRoom(host, 'そら');
   await L.joinRoom(guest, 'うみ', code);
+  // うみは効果音と声を入にする（鳴らした音の名前を記録する）
+  guest.soundOk = true;
+  const sfxFetched = [];
+  guest.page.on('request', (rq) => { if (rq.url().includes('/sfx/')) sfxFetched.push(rq.url()); });
+  host.page.on('request', (rq) => { if (rq.url().includes('/sfx/')) sfxFetched.push('host ' + rq.url()); });
+  check('sfx off by default', !(await guest.page.isChecked('#lobbyView input[data-opt="sfx"]')));
+  await guest.page.check('#lobbyView input[data-opt="sfx"]');
+  check('sfx synced to game toggle', await guest.page.isChecked('#viewOpts input[data-opt="sfx"]'));
+  await guest.page.evaluate(() => {
+    window.__snd = [];
+    const orig = window.MahjongSound.play;
+    window.MahjongSound.play = (n, w) => { window.__snd.push(n); return orig(n, w); };
+  });
   await host.page.click('label.mj-seg__opt:has(input[name="time-limit"][value="0"])');
   await L.roomWhen(code, (r) => r.settings.time === 0);
   await host.page.click('#btnStartGame');
@@ -46,9 +60,14 @@ const id = (k, copy) => k * 4 + copy;
   check('pon button shows 3 tiles', (await guest.page.$$('#actions .mj-callbtn .mj-tile')).length === 3);
   check('host sees no buttons', (await host.page.$$('#actions button')).length === 0);
   check('watch status does not reveal claim', !(await L.text(watch, '#gameStatus')).includes('聞いている'));
+  check('host: no turn frame while guest is asked', (await host.page.$$('.mj-opp.is-turn, #me.is-turn')).length === 0);
+  check('watch: no turn frame while guest is asked', (await watch.page.$$('.mj-opp.is-turn, #me.is-turn')).length === 0);
+  check('guest: own frame while asked', (await guest.page.$$('#me.is-turn')).length === 1);
+  check('guest heard discard + turn', await guest.page.evaluate(() => window.__snd.includes('discard') && window.__snd.includes('turn')));
   await guest.page.click('#actions .mj-callbtn');
   await L.waitText(guest, '#gameStatus', '組を見せたよ');
   check('guest meld shown', (await guest.page.$$('#me .mj-meld')).length === 1);
+  check('guest heard pon voice', await guest.page.evaluate(() => window.__snd.includes('v-pon')));
   check('taken tile marked', (await guest.page.$$('#me .mj-meld .is-taken')).length === 1);
   check('host sees guest meld', (await host.page.$$('#opps .mj-meld')).length === 1);
   check('called tile dimmed in river', (await host.page.$$('#me .mj-river .is-called')).length === 1);
@@ -75,11 +94,28 @@ const id = (k, copy) => k * 4 + copy;
   check('guest result title', (await L.text(guest, '#resultTitle')) === 'そらのあがり');
   check('ron from guest', (await L.text(host, '#resultSub')).includes('うみ'));
   check('guest sees ron from self', (await L.text(guest, '#resultSub')).includes('あなた'));
+  check('result sub names tile', (await L.text(host, '#resultSub')) === 'ロン：うみが捨てた 五萬 でそろった', await L.text(host, '#resultSub'));
+  check('status line has result', (await L.text(watch, '#gameStatus')).includes('そらがロンであがり'));
+  await guest.page.waitForFunction(() => window.__snd.includes('win'));
+  check('guest heard ron voice + win', await guest.page.evaluate(() => window.__snd.includes('v-ron') && window.__snd.includes('win')));
+  check('sfx files fetched only by guest', sfxFetched.length > 0 && !sfxFetched.some((u) => u.startsWith('host')), sfxFetched.slice(0, 3));
   const r2 = await L.roomOf(code);
   check('wins', JSON.parse(r2.wins)['p:そら'] === 1, r2.wins);
   check('stats finish on host (ron pressed)', await L.waitStats(host, 'finish', 1));
   check('log has pon and ron', /うみがポン/.test(await L.text(host, '#log')) && /そらがロン/.test(await L.text(host, '#log')));
   await host.page.screenshot({ path: L.OUT + '/ron.png', fullPage: true });
+
+  // ゲームの記録が読めなくなったとき: ホストに「待合室にもどす」を出す
+  await L.rest('PUT', L.ROOMS + '/' + code + '/game', JSON.stringify('{"broken":true}'));
+  await L.waitVisible(host, '#lobbyBroken');
+  check('host sees fix button', await L.visible(host, '#btnFixLobby'));
+  check('start bar hidden while broken', !(await L.visible(host, '#btnStartGame')));
+  await L.waitVisible(guest, '#lobbyBroken');
+  check('guest sees broken note without button', !(await L.visible(guest, '#btnFixLobby')));
+  await host.page.click('#btnFixLobby');
+  await L.roomWhen(code, (r) => r.status === 'waiting');
+  await L.waitVisible(host, '#btnStartGame');
+  check('back to lobby after fix', !(await L.visible(host, '#lobbyBroken')));
 
   await host.page.click('#btnLeave');
   await L.waitScreen(guest, 'top', 10000);

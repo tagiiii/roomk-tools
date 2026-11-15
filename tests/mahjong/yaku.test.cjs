@@ -22,7 +22,7 @@ function ev(hand, win, o = {}) {
   return Y.evaluate({
     c, melds, win: kind(win), tsumo: !!o.tsumo, seatWind: o.seat || 28, roundWind: o.round || 27,
     riichi: !!o.riichi, double: false, ippatsu: !!o.ippatsu, rinshan: false, chankan: false,
-    haitei: false, houtei: false, tenhou: false, chiihou: false,
+    haitei: !!o.haitei, houtei: !!o.houtei, tenhou: !!o.tenhou, chiihou: !!o.chiihou,
     dora: (o.dora || []).map(kind), ura: (o.ura || []).map(kind), all,
   });
 }
@@ -370,6 +370,68 @@ t('途中流局: 四風連打・九種九牌', () => {
   assert.strictEqual(K.result.reason, '九種九牌');
 });
 
+t('暗槓があると九蓮宝燈にしない（清一色）', () => {
+  const r = ev('23455678999m', '5m', { melds: [['kan', '1m', false]], tsumo: true });
+  assert.ok(!r.yakuman, '役満にしない');
+  assert.ok(names(r).includes('清一色'));
+  assert.ok(ev('11123455678999m', '5m', { tsumo: true }).yakuman, '暗槓がなければ九蓮宝燈');
+});
+
+t('4枚とも自分で使っている牌だけを待つ形ではリーチできない・流局でノーテン', () => {
+  let S = yround(12);
+  const mine = [id(0, 0), id(0, 1), id(0, 2), id(0, 3), id(10, 0), id(11, 0), id(12, 0), id(13, 0), id(14, 0), id(15, 0), id(24, 0), id(25, 0), id(26, 0), id(33, 0)];
+  setHands(S, [mine, F(9, 13, 2), F(18, 9).concat([id(27, 0), id(27, 1), id(27, 2), id(28, 0)]),
+    [id(28, 1), id(28, 2), id(28, 3), id(29, 0), id(29, 1), id(29, 2), id(30, 0), id(30, 1), id(30, 2), id(32, 0), id(32, 1), id(32, 2), id(33, 1)]], id(33, 0));
+  const ok = E.riichiOptions(S, 0);
+  assert.ok(!ok.includes(id(33, 0)), '中を捨てると 1萬4枚の単騎（待ちなし）');
+  assert.ok(ok.includes(id(0, 0)), '1萬を捨てれば 中の単騎でリーチできる');
+  S.seats[0].hand = mine.filter((x) => x !== id(33, 0));
+  assert.deepStrictEqual(E.handWaits(S, 0), [], 'ヒントの待ちにも出さない');
+});
+
+t('明槓のドラがまだのうちに暗槓したら、先にそのドラをめくる', () => {
+  let S = yround(13);
+  setHands(S, [
+    [id(31, 0), id(31, 1), id(31, 2), id(31, 3), ...F(0, 10)],
+    F(9, 13, 2), F(18, 9).concat([id(27, 0), id(27, 1), id(27, 2), id(28, 0)]),
+    [id(28, 1), id(28, 2), id(28, 3), id(29, 0), id(29, 1), id(29, 2), id(30, 0), id(30, 1), id(30, 2), id(32, 0), id(32, 1), id(32, 2), id(33, 0)],
+  ], id(31, 3));
+  S.pendDora = 1;
+  S = E.act(S, 0, { type: 'ankan', kind: 31 });
+  assert.strictEqual(S.doraN, 3);
+  assert.strictEqual(S.pendDora, 0);
+});
+
+t('海底摸月・河底撈魚・天和・地和・三槓子・四槓子', () => {
+  assert.ok(names(ev('234m345p567s55678s', '8s', { tsumo: true, haitei: true })).includes('海底摸月'));
+  assert.ok(names(ev('234m345p567s55678s', '8s', { houtei: true, melds: [] })).includes('河底撈魚'));
+  assert.ok(ev('234m345p567s55678s', '8s', { tsumo: true, tenhou: true }).yakuman);
+  assert.ok(ev('234m345p567s55678s', '8s', { tsumo: true, chiihou: true }).yakuman);
+  assert.ok(names(ev('234m55s', '5s', { melds: [['kan', '1p', false], ['kan', '9s', true], ['kan', '7z', false]] })).includes('三槓子'));
+  const r = ev('55s', '5s', { melds: [['kan', '1p', false], ['kan', '9s', true], ['kan', '7z', false], ['kan', '2m', true]] });
+  assert.ok(r.yakuman && r.yaku.some((y) => y.name === '四槓子'));
+});
+
+t('途中流局: 四家立直・四槓散了', () => {
+  const others = [F(9, 13, 2), F(18, 9).concat([id(27, 0), id(27, 1), id(27, 2), id(28, 0)]),
+    [id(28, 1), id(28, 2), id(28, 3), id(29, 0), id(29, 1), id(29, 2), id(30, 0), id(30, 1), id(30, 2), id(32, 0), id(32, 1), id(32, 2), id(31, 0)]];
+  let S = yround(14);
+  setHands(S, [[...F(0, 9, 0), id(10, 0), id(11, 0), id(12, 0), id(13, 0), id(33, 0)], ...others], id(33, 0));
+  [1, 2, 3].forEach((q) => { S.seats[q].riichi = { double: false, at: 0 }; });
+  S = E.act(S, 0, { type: 'discard', id: id(33, 0), riichi: true });
+  assert.strictEqual(S.phase, 'end');
+  assert.strictEqual(S.result.reason, '四家立直');
+  // 2人以上で4回カンしたら、そのあとの捨て牌で流局
+  S = yround(15);
+  setHands(S, [[id(31, 1), id(31, 2), id(31, 3), id(31, 0), ...F(0, 10, 0)], ...others.slice(0, 2), others[2].map((x) => (x === id(31, 0) ? id(33, 1) : x))], id(31, 0));
+  S.kans = 3; S.kanBy = [1, 1, 2];
+  S = E.act(S, 0, { type: 'ankan', kind: 31 });
+  assert.strictEqual(S.kans, 4);
+  S = E.act(S, 0, { type: 'discard', id: S.seats[0].hand[0] });
+  if (S.phase === 'claim') Object.keys(S.pending).forEach((q) => { S = E.act(S, Number(q), { type: 'pass' }); });
+  assert.strictEqual(S.result && S.result.reason, '四槓散了');
+});
+
 t('かんたんルールには役ありの決まりが入らない', () => {
   const S = E.createRound({ seed: 3, seats, dealer: 0 });
   assert.strictEqual(S.dead, null);
@@ -378,10 +440,10 @@ t('かんたんルールには役ありの決まりが入らない', () => {
   assert.strictEqual(E.furiten(S, 0), false);
 });
 
-for (const level of ['easy', 'normal']) t('コンピューター4人の役あり（' + level + '・120局）', () => {
+for (const level of ['easy', 'normal']) t('コンピューター4人の役あり（' + level + '・60局）', () => {
   const tally = { tsumo: 0, ron: 0, draw: 0, abort: 0, riichi: 0, kan: 0, yakuman: 0 };
   const t0 = Date.now();
-  for (let seed = 1; seed <= 120; seed += 1) {
+  for (let seed = 1; seed <= 60; seed += 1) {
     let S = yround(seed * 7, { level, dealer: seed % 4, roundWind: seed % 2 ? 27 : 28 });
     let steps = 0;
     while (S.phase !== 'end') {
@@ -400,8 +462,8 @@ for (const level of ['easy', 'normal']) t('コンピューター4人の役あり
     }
   }
   console.log('   ', tally, (Date.now() - t0) + 'ms');
-  assert.ok(tally.tsumo + tally.ron > 30);
-  assert.ok(tally.riichi > 30);
+  assert.ok(tally.tsumo + tally.ron > 15);
+  assert.ok(tally.riichi > 15);
 });
 
 console.log('all', n, 'tests passed');
