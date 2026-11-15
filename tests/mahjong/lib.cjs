@@ -172,7 +172,7 @@ async function finishAll(server) {
   for (const c of clients) {
     check('console errors: ' + c.label, c.errors.length === 0, c.errors.slice(0, 5));
     const audio = c.page.isClosed() ? 0 : await c.page.evaluate(() => window.__audioMade || 0).catch(() => 0);
-    check('no sound: ' + c.label, audio === 0, audio);
+    if (!c.soundOk) check('no sound: ' + c.label, audio === 0, audio);
   }
   check('no production access', T.violations.length === 0, T.violations.slice(0, 5));
   console.log(`pass ${T.pass} / fail ${T.failures.length}`);

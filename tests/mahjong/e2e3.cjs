@@ -91,6 +91,13 @@ const F = (k0, n, copy) => Array.from({ length: n }, (_, i) => id(k0 + i, copy))
   const en2 = await guest.page.$$eval('#me .mj-hand button:not(:disabled)', (xs) => xs.map((x) => Number(x.dataset.id)));
   check('in riichi only drawn tile enabled', en2.length === 1 && en2[0] === id(22, 1), en2);
   check('status in riichi', (await L.text(guest, '#gameStatus')).includes('リーチ中'));
+  // ツモであがれるときは、牌を1回押しても捨てない（選んだ印がつく）
+  await guest.page.click('#me .mj-hand button[data-id="' + id(22, 1) + '"]');
+  check('first tap only picks when tsumo is possible', (await guest.page.$$('#me .mj-hand .is-picked')).length === 1);
+  check('picked status', (await L.text(guest, '#gameStatus')).includes('もう一度押すと捨てる'));
+  check('still 14 tiles after first tap', (await guest.page.$$('#me .mj-hand button')).length === 14);
+  await guest.page.keyboard.press('Escape');
+  check('Esc unpicks', (await guest.page.$$('#me .mj-hand .is-picked')).length === 0);
   await guest.page.click('#actions button:text-is("ツモ（あがる）")');
   await Promise.all([L.waitVisible(host, '#result'), L.waitVisible(guest, '#result')]);
   const yk = await host.page.$$eval('#resultYaku .mj-yaku__name', (xs) => xs.map((x) => x.textContent));
@@ -138,6 +145,15 @@ const F = (k0, n, copy) => Array.from({ length: n }, (_, i) => id(k0 + i, copy))
   await sleep(300);
   check('375 no overflow', (await L.overflow(guest)) <= 0, await L.overflow(guest));
   await guest.page.screenshot({ path: L.OUT + '/yaku-375.png', fullPage: true });
+  check('375: opponents in 3 columns', await guest.page.evaluate(() => {
+    const xs = [...document.querySelectorAll('#opps .mj-opp')].map((n) => n.getBoundingClientRect().top);
+    return xs.length === 3 && Math.max(...xs) - Math.min(...xs) < 2;
+  }));
+  check('375: hand starts within first screen', await guest.page.evaluate(() => document.querySelector('#me .mj-hand').getBoundingClientRect().top + window.scrollY < 760));
+  await guest.page.setViewportSize({ width: 320, height: 640 });
+  await sleep(300);
+  check('320 no overflow', (await L.overflow(guest)) <= 0, await L.overflow(guest));
+  await guest.page.screenshot({ path: L.OUT + '/yaku-320.png', fullPage: true });
 
   await host.page.click('#btnLeave');
   await L.waitScreen(guest, 'top', 10000);

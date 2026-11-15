@@ -45,7 +45,7 @@ const state = {
   view: null,
   joinedAt: null,
   currentScreen: null,
-  timerInterval: null,
+  presenceTimer: null,
   orphanTimer: null,
   orphanAt: null,
   connectedRef: null,
@@ -71,7 +71,8 @@ const state = {
   riichiMode: false,   // リーチを押して、捨てる牌を選んでいる間
   gameCache: { raw: null, val: null },
   rulesKey: null,
-  shownRev: null,
+  picked: null,        // 2回押して捨てるとき、1回目に押した牌
+  shown: null,         // 前に描いた局面（落ちる動き・音・自分の番になったときを決める）
   opts: loadViewOpts(),
 };
 const $ = (id) => document.getElementById(id);
@@ -192,7 +193,11 @@ function parseGame(raw, fresh = false) {
     && G.seats.every((x) => x && typeof x.id === 'string' && typeof x.name === 'string')
     && s && Array.isArray(s.seats) && s.seats.length === SEATS && Array.isArray(s.wall)
     && s.seats.every((x) => x && Array.isArray(x.hand) && Array.isArray(x.melds) && Array.isArray(x.river))
-    && Number.isInteger(s.rev) && typeof s.phase === 'string';
+    && Number.isInteger(s.rev) && typeof s.phase === 'string'
+    && s.opts && typeof s.opts === 'object' && Number.isInteger(s.turn) && Number.isInteger(s.dealer)
+    && (s.phase !== 'claim' || (s.pending && typeof s.pending === 'object'))
+    && (s.phase !== 'end' || (s.result && typeof s.result === 'object'))
+    && (s.opts.rule !== 'yaku' || (s.dead && Array.isArray(s.dead.dora) && Array.isArray(s.dead.ura)));
   const val = ok ? {
     seats: G.seats,
     s: { ...s, disc: Number(s.disc) || 0, log: Array.isArray(s.log) ? s.log : [] },
@@ -211,17 +216,17 @@ function parseGame(raw, fresh = false) {
 // self: ホストの画面で使うとき。ホスト自身の席は、この画面が動いているので在室とみなす
 function seatState(room, G, i, self = false) {
   const seat = G.seats[i];
-  if (!seat || seat.cpu) return { kind: 'cpu', away: false, auto: false, cpu: true };
+  if (!seat || seat.cpu) return { away: false, auto: false, cpu: true };
   const away = seat.name === room.host ? !self && room.hostConnected === false : !room.players?.[seat.name];
   const auto = !!G.auto[seat.id];
-  return { kind: 'human', away, auto, cpu: away || auto };
+  return { away, auto, cpu: away || auto };
 }
 
 function makeView(room) {
   const G = room.status === STATUS.PLAYING ? parseGame(room.game) : null;
   const people = [];
   Object.entries(room.players || {}).forEach(([name, p]) => {
-    people.push({ id: 'p:' + name, name, kind: 'human', joinedAt: p?.joinedAt, away: name === room.host && room.hostConnected === false && state.role !== 'host' });
+    people.push({ id: 'p:' + name, name, joinedAt: p?.joinedAt, away: name === room.host && room.hostConnected === false && state.role !== 'host' });
   });
   people.sort(byJoined);
   const seatInfo = G ? G.seats.map((seat, i) => seatState(room, G, i, state.role === 'host')) : [];
@@ -236,6 +241,8 @@ function makeView(room) {
     round: Number(room.round) || 0,
     G,
     seatInfo,
+    // あそんでいるはずなのに、ゲームの記録が読めない（ホストに「待合室にもどす」を出す）
+    broken: room.status === STATUS.PLAYING && !G,
   };
 }
 
@@ -417,19 +424,19 @@ function mySeatIn(room, G, uid) {
   return G.seats.findIndex((x) => !x.cpu && x.name === state.nickname);
 }
 
-// 自分の操作（捨てる・ツモ・ロン・ポン・チー・パス）
+// 自分の操作（捨てる・ツモ・ロン・ポン・チー・カン・パス）
 async function act(a) {
   const g = state.view?.G?.s;
   if (state.acting || !g) return;
   state.acting = true;
-  const claim = ['ron', 'pon', 'chi', 'pass'].includes(a.type);
+  const claim = ['ron', 'pon', 'chi', 'minkan', 'pass'].includes(a.type);
   const rev = g.rev;
   const disc = g.disc;
   const claimKind = g.claim || null;
   const round = state.view.round;
   try {
     const ok = await gameTx((room, G, settings, uid) => {
-      // ロン・ポン・チー・パスはほかの人と同時に答えるので、同じ捨て牌への答えかだけを見る
+      // ロン・ポン・チー・カン・パスはほかの人と同時に答えるので、同じ捨て牌への答えかだけを見る
       if (claim ? G.s.phase !== 'claim' || G.s.disc !== disc || (G.s.claim || null) !== claimKind : G.s.rev !== rev) return false;
       const i = mySeatIn(room, G, uid);
       if (i < 0) return false;
@@ -493,9 +500,10 @@ function hostTick() {
   G.seats.forEach((seat, i) => {
     if (seat.cpu) return;
     const st = seatState(room, G, i, true);
-    awayNow[seat.id] = st.away;
     if (st.away && !state.awaySince[seat.id]) state.awaySince[seat.id] = now;
     if (!st.away) delete state.awaySince[seat.id];
+    // 読み込み直しですぐもどる人は書かない（切れてから LEAVE_GRACE_MS たったら「通信が切れた」）
+    awayNow[seat.id] = st.away && now - state.awaySince[seat.id] >= LEAVE_GRACE_MS;
   });
   if (!state.seenAway) state.seenAway = awayNow;
   const changed = Object.keys(awayNow).filter((id) => !!state.seenAway[id] !== awayNow[id]);
@@ -597,12 +605,13 @@ function clearSession() {
 function resetBoxes() {
   ['lobbyPeople', 'lobbyRulesView', 'lobbyRules', 'opps', 'me', 'actions', 'hintLine', 'log', 'gameRules', 'resultHand', 'resultYaku', 'resultDora', 'doraLine'].forEach((id) => $(id).replaceChildren());
   state.rulesKey = null;
-  state.shownRev = null;
+  state.shown = null;
+  state.picked = null;
   state.riichiMode = false;
 }
 
 function cleanupRoom() {
-  clearInterval(state.timerInterval);
+  clearInterval(state.presenceTimer);
   state.tickTimer?.stop();
   clearTimeout(state.orphanTimer);
   if (state.roomRef && state.roomCallback) state.roomRef.off('value', state.roomCallback);
@@ -617,7 +626,7 @@ function cleanupRoom() {
     room: null,
     view: null,
     joinedAt: null,
-    timerInterval: null,
+    presenceTimer: null,
     tickTimer: null,
     orphanTimer: null,
     orphanAt: null,
@@ -694,7 +703,7 @@ function connectToRoom(role, nickname, code, ref, joinedAt) {
     }
   };
   state.connectedRef.on('value', state.connectedCallback);
-  state.timerInterval = setInterval(tickRoom, 1000);
+  state.presenceTimer = setInterval(tickRoom, 1000);
   state.tickTimer = startTicker(() => {
     hostTick();
     updateTimer();
@@ -1107,8 +1116,8 @@ async function startGame(again = false) {
   const ok = await hostTransaction((room) => {
     if (again ? room.status !== STATUS.PLAYING : room.status !== STATUS.WAITING) return;
     let seats;
+    const old = again ? parseGame(room.game, true) : null;
     if (again) {
-      const old = parseGame(room.game, true);
       if (!old || old.s.phase !== 'end') return;
       seats = old.seats;
     } else {
@@ -1124,7 +1133,6 @@ async function startGame(again = false) {
     let dealer = (round - 1) % SEATS;
     let kyoku = 0;
     if (settings.rule === 'yaku') {
-      const old = again ? parseGame(room.game, true) : null;
       if (old && Number.isInteger(old.kyoku)) {
         const r0 = old.s.result || {};
         const keep = r0.winner === old.s.dealer || r0.type === 'abort' || (r0.type === 'draw' && (r0.tenpai || []).includes(old.s.dealer));
@@ -1269,10 +1277,19 @@ function renderLobby(R) {
     }
   } else $('lobbyRulesView').replaceChildren(...rulesSummary(R.settings));
 
-  $('lobbyHost').hidden = !isHost;
+  $('lobbyBroken').hidden = !R.broken;
+  if (R.broken) {
+    $('lobbyBrokenText').textContent = isHost
+      ? 'ゲームの記録が読めなくなったよ。「待合室にもどす」を押して、もう一度はじめてね'
+      : 'ゲームの記録が読めなくなったよ。ホストが待合室にもどすのを待ってね';
+    $('btnFixLobby').hidden = !isHost;
+  }
+  $('lobbyHost').hidden = !isHost || R.broken;
   if (isHost) $('btnStartGame').disabled = n < 1;
-  $('lobbyWait').hidden = isHost || watch;
+  $('lobbyWait').hidden = isHost || watch || R.broken;
   $('lobbyView').hidden = watch;
+  // 次にゲームの画面を描くとき、配る音を鳴らす目印
+  state.shown = { round: null };
 }
 
 /* ── 牌 ── */
@@ -1307,7 +1324,10 @@ function riverEl(g, i, fresh) {
   const river = g.seats[i].river;
   river.forEach((r, k) => {
     const last = g.last && g.last.seat === i && k === river.length - 1 && !r.called;
-    box.append(tileEl(E.kindOf(r.id), { size: 'sm', caption: false, extra: [r.called ? 'is-called' : '', r.riichi ? 'is-riichi' : '', last ? 'is-last' : '', last && fresh ? 'is-new' : ''].join(' ').trim() }));
+    const t = tileEl(E.kindOf(r.id), { size: 'sm', caption: false, extra: [r.called ? 'is-called' : '', r.riichi ? 'is-riichi' : '', last ? 'is-last' : '', last && fresh ? 'is-new' : ''].join(' ').trim() });
+    const marks = [r.riichi ? 'リーチ' : '', r.called ? '鳴かれた' : '', last ? 'いま捨てた' : ''].filter(Boolean);
+    if (marks.length) t.setAttribute('aria-label', E.kindName(E.kindOf(r.id)) + '（' + marks.join('・') + '）');
+    box.append(t);
   });
   return box;
 }
@@ -1357,8 +1377,18 @@ function renderGame(R) {
   const seated = myIdx >= 0;
   const over = g.phase === 'end';
   const due = over ? [] : E.waitingFor(g);
-  const fresh = state.shownRev !== null && state.shownRev !== g.rev;
+  // 聞かれている間は、聞かれている人をほかの人に見せない（鳴ける牌を持っているとわかってしまうため）。枠は自分の席だけ
+  const shownDue = g.phase === 'claim' ? due.filter((i) => i === myIdx) : due;
+  // 前に描いた同じ局の局面。捨て牌が増えたときだけ落ちる動きにする（パスのたびには動かさない）
+  const prev = state.shown && state.shown.round === R.round ? state.shown : null;
+  const fresh = !!prev && prev.disc !== g.disc;
   const bottom = seated ? myIdx : 0;
+  // 描き直してもキーボードで選んでいた所にもどれるように、いまの場所を覚えておく
+  const ae = document.activeElement;
+  const focusKey = ae && ae !== document.body && $('screen-game').contains(ae)
+    ? (ae.dataset.id && $('me').contains(ae) ? { tile: ae.dataset.id } : $('actions').contains(ae) ? { action: ae.textContent } : null)
+    : null;
+  const focusInGame = !ae || ae === document.body || $('screen-game').contains(ae);
 
   const yaku = g.opts?.rule === 'yaku';
   $('roundLine').textContent = roundTitle(G, R.round) + (yaku ? ' · 親は ' : ' · はじめは ') + G.seats[g.dealer].name;
@@ -1370,19 +1400,23 @@ function renderGame(R) {
     $('doraLine').replaceChildren(el('span', 'mj-dora__label', 'ドラ表示牌'), ...inds.map((x) => tileEl(E.kindOf(x), { size: 'sm' })),
       el('span', 'mj-dora__label', 'ドラ'), ...inds.map((x) => tileEl(window.MahjongYaku.doraOf(E.kindOf(x)), { size: 'sm', extra: 'is-dora' })));
   }
-  const myTurn0 = myIdx >= 0 && !over && g.phase === 'discard' && g.turn === myIdx;
-  if (!myTurn0) state.riichiMode = false;
-  const riichiOpts = myTurn0 ? E.riichiOptions(g, myIdx) : [];
+  const myTurn = seated && !over && g.phase === 'discard' && g.turn === myIdx;
+  if (!myTurn) state.riichiMode = false;
+  const riichiOpts = myTurn ? E.riichiOptions(g, myIdx) : [];
   if (!riichiOpts.length) state.riichiMode = false;
+  // スマホなど（指で押す画面）と、ツモであがれるときは、1回目で牌を上げ、2回目で捨てる（押しまちがいであがりを逃さないように）
+  state.twoTap = myTurn && (window.matchMedia('(pointer: coarse)').matches || E.canTsumo(g, myIdx));
+  if (!myTurn || !state.twoTap || (prev && prev.rev !== g.rev)) state.picked = null;
 
   // ほかの3人（左・向かい・右）
   $('opps').replaceChildren(...PLACES.map(([d, place]) => {
     const i = (bottom + d) % SEATS;
-    const box = el('section', 'mj-opp' + (due.includes(i) ? ' is-turn' : ''));
+    const box = el('section', 'mj-opp' + (shownDue.includes(i) ? ' is-turn' : ''));
     box.setAttribute('aria-label', G.seats[i].name);
     const head = seatHead(R, i, myIdx);
     head.insertBefore(el('span', 'mj-place', place), head.children[2]);
     const hand = el('div', 'mj-opp__hand');
+    hand.dataset.count = '手牌 ' + g.seats[i].hand.length + '枚';
     g.seats[i].hand.forEach(() => hand.append(backEl('xs')));
     hand.append(meldsEl(g, i, 'xs'));
     box.append(head, hand, riverEl(g, i, fresh));
@@ -1390,15 +1424,15 @@ function renderGame(R) {
   }));
 
   // 自分（見る人は、最初の席を下に、手牌は裏で）
-  const myTurn = seated && !over && g.phase === 'discard' && g.turn === myIdx;
   const me = $('me');
-  me.classList.toggle('is-turn', due.includes(bottom));
+  me.classList.toggle('is-turn', shownDue.includes(bottom));
   const advice = myTurn && state.opts.hint ? E.discardAdvice(g, myIdx) : null;
   const best = new Set(advice ? advice.list.filter((x) => x.best).map((x) => x.kind) : []);
   const hand = el('div', 'mj-hand' + (myTurn ? ' is-active' : ''));
   hand.setAttribute('aria-label', seated ? 'あなたの手牌' : '手牌');
+  const drawnNow = myTurn ? g.drawn : null;
   if (seated) {
-    const drawn = myTurn ? g.drawn : null;
+    const drawn = drawnNow;
     const rest = g.seats[myIdx].hand.filter((id) => id !== drawn).sort((a, b) => a - b);
     const me0 = g.seats[myIdx];
     // 捨てられる牌: リーチ中は引いた牌だけ、リーチを選んでいる間はテンパイのまま捨てられる牌だけ、鳴いた直後は喰い替えにならない牌だけ
@@ -1409,10 +1443,13 @@ function renderGame(R) {
       if (state.riichiMode) return riichiOpts.includes(id);
       return !(g.kuikae || []).includes(E.kindOf(id));
     };
+    if (state.picked !== null && (!g.seats[myIdx].hand.includes(state.picked) || !canDiscard(state.picked))) state.picked = null;
+    const drewNow = !!prev && prev.drawn !== drawn;
     const tile = (id) => {
-      const b = tileEl(E.kindOf(id), { size: 'lg', button: true, id, extra: (best.has(E.kindOf(id)) && !state.riichiMode ? 'is-best' : '') + (id === drawn && fresh ? ' is-drawn' : '') + (state.riichiMode && riichiOpts.includes(id) ? ' is-riichi-pick' : '') });
+      const b = tileEl(E.kindOf(id), { size: 'lg', button: true, id, extra: (best.has(E.kindOf(id)) && !state.riichiMode ? 'is-best' : '') + (id === drawn && drewNow ? ' is-drawn' : '') + (state.riichiMode && riichiOpts.includes(id) ? ' is-riichi-pick' : '') + (id === state.picked ? ' is-picked' : '') });
       b.disabled = !canDiscard(id);
       if (myTurn && b.disabled) b.classList.add('is-locked');
+      if (id === state.picked) b.setAttribute('aria-label', E.kindName(E.kindOf(id)) + '（選んだ。もう一度押すと捨てる）');
       return b;
     };
     if (state.opts.groups) {
@@ -1446,7 +1483,7 @@ function renderGame(R) {
   let status = '';
   const L = g.log[g.log.length - 1];
   const nameOf = (i) => (i === myIdx ? 'あなた' : G.seats[i].name);
-  if (over) status = 'この局はおしまい';
+  if (over) status = 'この局はおしまい。' + resultLine(g, nameOf);
   else if (pend && !pend.answer) {
     const ct = claimTile(g);
     status = nameOf(ct.seat) + (g.claim === 'chankan' ? 'がカンで ' + tileName(ct.id) + ' を加えたよ。ロンできる（槍槓）。どうする？' : 'が ' + tileName(ct.id) + ' を捨てたよ。どうする？');
@@ -1454,8 +1491,11 @@ function renderGame(R) {
   else if (pend) status = 'ほかの人が答えるのを待っているよ';
   else if (myTurn) {
     const called = L && (L.t === 'pon' || L.t === 'chi') && L.seat === myIdx;
-    if (state.riichiMode) status = 'リーチ：捨てる牌を選んでね（押せるのは、テンパイのまま捨てられる牌）';
+    const kuikae = yaku && called && (g.kuikae || []).some((k) => g.seats[myIdx].hand.some((id) => E.kindOf(id) === k));
+    if (state.picked !== null) status = tileName(state.picked) + 'を選んだよ。もう一度押すと捨てる（ほかの牌を押すと選びなおし）';
+    else if (state.riichiMode) status = 'リーチ：捨てる牌を選んでね（押せるのは、テンパイのまま捨てられる牌）';
     else if (yaku && g.seats[myIdx].riichi) status = 'リーチ中。引いた牌を押して捨てよう';
+    else if (kuikae) status = '組を見せたよ。いらない牌を1枚押して捨てよう（うすい牌は、鳴いた牌と同じ形にもどるので、この番では捨てられない）';
     else status = called ? '組を見せたよ。いらない牌を1枚押して捨てよう' : 'あなたの番。いらない牌を1枚押して捨てよう';
   } else if (g.phase === 'claim') {
     // 聞かれていない人には「聞いている」と出さない（だれかが鳴ける牌を持っていることがわかってしまうため）
@@ -1489,7 +1529,58 @@ function renderGame(R) {
   $('yakuList').hidden = !yaku;
   $('gameTools').hidden = !isHost || over;
   updateTimer();
-  state.shownRev = g.rev;
+
+  // キーボードの場所をもどす。聞かれたばかりのときは、最初のボタンへ
+  const becameDue = myDue && !(prev && prev.myDue);
+  if (focusKey?.tile) $('me').querySelector('button[data-id="' + focusKey.tile + '"]:not(:disabled)')?.focus({ preventScroll: true });
+  else if (focusKey?.action) ([...$('actions').querySelectorAll('button')].find((b) => b.textContent === focusKey.action) || $('actions').querySelector('button'))?.focus({ preventScroll: true });
+  else if (becameDue && pend && focusInGame) $('actions').querySelector('button')?.focus({ preventScroll: true });
+  // 自分の番になったのに、手牌が画面の外なら、見える所まで動かす（せまい画面で、相手の席の下に隠れないように）
+  if (becameDue && state.currentScreen === 'game') {
+    const box = $('me').getBoundingClientRect();
+    if (box.bottom > window.innerHeight || box.top < 0) {
+      const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      $('gameStatus').scrollIntoView({ block: 'start', behavior: reduce ? 'auto' : 'smooth' });
+    }
+  }
+  if (!watch) playSounds(prev, R, g, myDue, over);
+  state.shown = { round: R.round, rev: g.rev, disc: g.disc, drawn: drawnNow, logLen: g.log.length, doraN: g.doraN || 0, myDue };
+}
+
+// 局の終わりの1行（結果の文と同じ言い方）
+function resultLine(g, nameOf) {
+  const res = g.result;
+  if (!res || res.type === 'draw') return '引き分け';
+  if (res.type === 'abort') return '途中流局（' + res.reason + '）';
+  return nameOf(res.winner) + 'が' + (res.type === 'tsumo' ? 'ツモ' : res.chankan ? '槍槓' : 'ロン') + 'であがり';
+}
+
+// 効果音と声（入にした端末だけ。みんなにみせる画面では鳴らさない）。新しく増えたできごとの分だけ鳴らす
+const VOICE_OF = { riichi: 'v-riichi', pon: 'v-pon', chi: 'v-chi', minkan: 'v-kan', ankan: 'v-kan', kakan: 'v-kan', tsumo: 'v-tsumo', ron: 'v-ron' };
+function playSounds(prev, R, g, myDue, over) {
+  const snd = window.MahjongSound;
+  if (!snd || !snd.isOn()) return;
+  if (!prev) {
+    // 待合室・前の局から、新しい局を描いたとき（読み込み直したときは鳴らさない）
+    if (state.shown && state.shown.round !== R.round) snd.play('deal');
+    return;
+  }
+  let t = 0;
+  g.log.slice(prev.logLen).forEach((l) => {
+    if (VOICE_OF[l.t]) {
+      snd.play(VOICE_OF[l.t], t);
+      t += 0.35;
+      if (l.t === 'tsumo' || l.t === 'ron') { snd.play('win', t + 0.15); t += 0.4; }
+    } else if (l.t === 'discard') {
+      snd.play('discard', t);
+      t += 0.12;
+    } else if (l.t === 'draw-game' || l.t === 'abort') {
+      snd.play('draw', t);
+      t += 0.3;
+    }
+  });
+  if ((g.doraN || 0) > prev.doraN) snd.play('dora', t + 0.1);
+  if (myDue && !prev.myDue && !over) snd.play('turn', t + 0.15);
 }
 
 // 聞かれている牌（捨て牌か、加槓で加えた牌）
@@ -1582,8 +1673,10 @@ function renderResult(R, g, myIdx) {
     return;
   }
   $('resultTitle').textContent = res.winner === myIdx ? 'あがり！' : G.seats[res.winner].name + 'のあがり';
-  $('resultSub').textContent = res.type === 'tsumo' ? 'ツモ（自分で引いた牌でそろった）'
-    : (res.chankan ? '槍槓（' : 'ロン（') + name(res.from) + (res.chankan ? 'がカンで加えた牌でそろった）' : 'の捨てた牌でそろった）');
+  // ふつうの麻雀と同じく、ロンはだれが捨てた牌かも出す
+  $('resultSub').textContent = res.type === 'tsumo' ? 'ツモ：自分で引いた ' + tileName(res.tile) + ' でそろった'
+    : res.chankan ? '槍槓：' + name(res.from) + 'がカンで加えた ' + tileName(res.tile) + ' でそろった'
+      : 'ロン：' + name(res.from) + 'が捨てた ' + tileName(res.tile) + ' でそろった';
   const winK = E.kindOf(res.tile);
   let marked = false;
   const groups = (res.shape ? res.shape.groups : []).map((grp) => {
@@ -1623,8 +1716,11 @@ function updateTimer() {
   const R = state.view;
   const G = R && R.G;
   const g = G && G.s;
+  // 聞かれている間の残り時間は、聞かれた本人にだけ出す（ほかの人に、だれかが鳴けるとわからないように）
+  const myIdx = R && G && state.role !== 'spectator' ? G.seats.findIndex((x) => !x.cpu && x.name === state.nickname) : -1;
+  const shownWait = g && g.phase === 'claim' ? (myIdx >= 0 && g.pending?.[myIdx] && !g.pending[myIdx].answer ? [myIdx] : []) : g ? E.waitingFor(g) : [];
   const show = !!(R && R.phase === 'play' && g && g.phase !== 'end' && G.deadline && R.settings.time
-    && E.waitingFor(g).some((i) => !cpuSeat(R, i)));
+    && shownWait.some((i) => !cpuSeat(R, i)));
   $('timer').hidden = !show;
   if (!show) return;
   const left = Math.max(0, G.deadline - RoomkRTDB.now());
@@ -1834,19 +1930,54 @@ $('btnStop').addEventListener('click', () => {
   if (window.confirm('この局をやめて、待合室にもどる？')) backToLobby();
 });
 $('btnSelf').addEventListener('click', takeBack);
-// 手牌を押したら捨てる
+// 手牌を押したら捨てる（2回押す決まりのときは、1回目で牌を上げる）
 $('me').addEventListener('click', (event) => {
   const b = event.target.closest('button[data-id]');
   if (!b || b.disabled) return;
+  const id = Number(b.dataset.id);
+  if (state.twoTap && state.picked !== id) {
+    state.picked = id;
+    window.MahjongSound?.play('pick');
+    renderGame(state.view);
+    return;
+  }
+  state.picked = null;
   const riichi = state.riichiMode;
   state.riichiMode = false;
-  act(riichi ? { type: 'discard', id: Number(b.dataset.id), riichi: true } : { type: 'discard', id: Number(b.dataset.id) });
+  act(riichi ? { type: 'discard', id, riichi: true } : { type: 'discard', id });
 });
-// 見え方の切りかえは、待合室とゲームの画面の両方にある（同じ設定。片方を変えるともう片方もそろえる）
+// Esc で、選んだ牌をもどす
+document.addEventListener('keydown', (event) => {
+  if (event.key !== 'Escape' || state.picked === null || state.view?.phase !== 'play') return;
+  state.picked = null;
+  renderGame(state.view);
+});
+$('btnFixLobby').addEventListener('click', backToLobby);
+// 効果音は、何かを押したあとでないと鳴らせない（ブラウザの決まり）
+['pointerdown', 'keydown'].forEach((type) => document.addEventListener(type, () => window.MahjongSound?.ensure(), { capture: true, passive: true }));
+// 見え方と音の切りかえは、待合室とゲームの画面の両方にある（同じ設定。片方を変えるともう片方もそろえる）
+const VIEW_ROWS = [
+  ['hint', 'ヒントを出す', 'あと何枚・おすすめの捨て牌・待ち'],
+  ['groups', 'そろった組を枠で囲む', '3枚の組は線、同じ2枚は点線'],
+  ['names', '牌の下に名前を出す', '「三萬」「5筒」「東」など'],
+  ['sfx', '効果音と声を出す', '牌を捨てる音、「ロン」「ポン」などの声'],
+];
+document.querySelectorAll('[data-viewopts]').forEach((box) => box.replaceChildren(...VIEW_ROWS.map(([key, label, sub]) => {
+  const row = checkRow(label, sub, false, () => {});
+  row.querySelector('input').dataset.opt = key;
+  return row;
+})));
 function syncViewInputs() {
-  document.querySelectorAll('input[data-opt]').forEach((c) => { c.checked = !!state.opts[c.dataset.opt]; });
+  document.querySelectorAll('input[data-opt]').forEach((c) => {
+    c.checked = c.dataset.opt === 'sfx' ? !!window.MahjongSound?.isOn() : !!state.opts[c.dataset.opt];
+  });
 }
 document.querySelectorAll('input[data-opt]').forEach((c) => c.addEventListener('change', () => {
+  if (c.dataset.opt === 'sfx') {
+    window.MahjongSound?.setOn(c.checked);
+    syncViewInputs();
+    return;
+  }
   state.opts = { ...state.opts, [c.dataset.opt]: c.checked };
   saveViewOpts();
   syncViewInputs();

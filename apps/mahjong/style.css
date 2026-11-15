@@ -208,6 +208,9 @@
 .mj-hand button.mj-tile:focus-visible { outline: 3px solid var(--mj-turn); outline-offset: 2px; border-radius: 8px; }
 .mj-hand button.mj-tile:disabled { opacity: 1; }
 .mj-hand .is-drawn { animation: mj-drop 0.3s ease-out; }
+/* 2回押して捨てるときの、1回目に押した牌（上げて枠をつける） */
+.mj-hand button.mj-tile.is-picked { transform: translateY(-12px); }
+.mj-hand button.mj-tile.is-picked .mj-svg { outline: 3px solid var(--mj-turn); outline-offset: -1px; border-radius: 7px; }
 .mj-hand .is-best::after { content: ''; position: absolute; left: 50%; top: -12px; width: 10px; height: 10px; margin-left: -5px; border-radius: 50%; background: var(--mj-best); box-shadow: 0 0 0 2px #fff; }
 .mj-melds { display: flex; gap: 8px; flex-wrap: wrap; }
 .mj-meld { display: inline-flex; align-items: flex-end; gap: 1px; padding: 4px; border-radius: 8px; background: rgba(0, 0, 0, 0.18); }
@@ -278,6 +281,8 @@
 .mj-log__item.is-new { color: var(--color-text); font-weight: 500; }
 .mj-rulesbox .mj-rulesview { padding: 0 0 12px; }
 .mj-tools { display: flex; justify-content: center; }
+.mj-broken { display: grid; gap: 12px; justify-items: center; text-align: center; }
+.mj-broken__text { margin: 0; line-height: 1.7; }
 
 /* ── ホスト切断のオーバーレイ ── */
 .mj-overlay {
@@ -312,11 +317,25 @@
 @media (max-width: 760px) {
   .wrapper { padding: 28px 16px 64px; }
   .mj-roombar #btnLeave { margin-left: 0; }
-  .mj-opps { grid-template-columns: 1fr; }
-  .mj-opp { padding: 8px; }
-  .mj-opp__hand { min-height: 0; }
-  .mj-river, .mj-me .mj-river, .is-watch .mj-river, .is-watch .mj-me .mj-river { grid-template-columns: repeat(12, 22px); min-height: 32px; }
-  .mj-river .mj-tile--sm, .is-watch .mj-river .mj-tile--sm { width: 22px; }
+  /* ほかの3人は横に3つ並べて小さくし、自分の手牌が上に来るようにする（手牌の裏は数だけ） */
+  .mj-opps { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+  .mj-opp { padding: 6px; border-radius: 10px; }
+  .mj-opp .mj-seat__head { gap: 3px; margin-bottom: 4px; }
+  .mj-opp .mj-name { font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+  .mj-opp .mj-seat__icon { display: none; }
+  .mj-opp .mj-tag, .mj-opp .mj-place { font-size: 10px; padding: 1px 5px; }
+  .mj-opp .mj-wins { margin-left: 0; font-size: 11px; width: 100%; }
+  .mj-opp__hand { min-height: 0; margin-bottom: 4px; gap: 3px; }
+  .mj-opp__hand > .mj-tile--back { display: none; }
+  .mj-opp__hand::before { content: attr(data-count); font-size: 11px; opacity: 0.85; width: 100%; }
+  .mj-opp .mj-melds { gap: 3px; }
+  .mj-opp .mj-meld { padding: 2px; }
+  .mj-opp .mj-meld .mj-tile--xs { width: 14px; }
+  .mj-opp .mj-meld__label { display: none; }
+  .mj-opp .mj-river, .is-watch .mj-opp .mj-river { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 2px; min-height: 30px; }
+  .mj-opp .mj-river .mj-tile--sm, .is-watch .mj-opp .mj-river .mj-tile--sm { width: 100%; max-width: 24px; }
+  .mj-me .mj-river, .is-watch .mj-me .mj-river { grid-template-columns: repeat(12, minmax(0, 22px)); gap: 2px; min-height: 32px; }
+  .mj-me .mj-river .mj-tile--sm, .is-watch .mj-me .mj-river .mj-tile--sm { width: 100%; }
   /* 手牌は2段に分けて、押せる大きさを保つ */
   .mj-hand { row-gap: 14px; }
   .mj-tile--lg { width: calc((100vw - 120px) / 7); max-width: 46px; }

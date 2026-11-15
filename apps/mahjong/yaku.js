@@ -164,7 +164,7 @@
       if (winds === 4) YM.push('大四喜');
       else if (winds === 3 && isWind(pair)) YM.push('小四喜');
       if (kans === 4) YM.push('四槓子');
-      if (menzen && suits.size === 1 && !hasHonor) {
+      if (!ctx.melds.length && suits.size === 1 && !hasHonor) {
         const s = [...suits][0] * 9;
         const n = [3, 1, 1, 1, 1, 1, 1, 1, 3].every((need, i) => all[s + i] >= need);
         if (n) YM.push('九蓮宝燈');
