@@ -229,7 +229,14 @@ function mayAct(room, game, i, uid, nickname, role) {
   const isHost = role === 'host' && room.hostUid === uid;
   if (game.proxy[i]) return isHost;
   if (game.names[i] === nickname && game.uids[i] === uid) return true;
-  return isHost && !room.players?.[game.names[i]];
+  if (!isHost || room.players?.[game.names[i]]) return false;
+  // 2人で対戦でホストも遊んでいるときは、切れた相手の番を代わりに押さない（ホストが自分の答えを当てることになるので、戻るのを待つ）
+  return !offlineWaitOnly(game, uid);
+}
+
+// ホストも遊ぶ2人で対戦か（切れた相手の番は待つだけにする）
+function offlineWaitOnly(game, hostUid) {
+  return game.S.mode === 'duel' && game.uids.includes(hostUid);
 }
 
 // その席の本人の端末か（答えを決めるのは本人だけ）
@@ -1432,7 +1439,7 @@ function renderGame() {
   // 待つ表示
   let wait = '';
   if (S.phase === 'setup' && !needSetup) wait = V.me >= 0 ? '相手が答えを決めるのを待っています' : '2人が答えを決めるのを待っています';
-  else if (S.phase === 'play' && !canGuess) wait = V.names[S.turn] + 'が考えています';
+  else if (S.phase === 'play' && !canGuess) wait = V.names[S.turn] + (V.away(S.turn) ? 'の通信が戻るのを待っています' : 'が考えています');
   $('waitText').hidden = !wait;
   $('waitText').textContent = wait;
 

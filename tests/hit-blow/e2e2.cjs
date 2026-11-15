@@ -1,4 +1,4 @@
-// ヒット&ブロー E2E その2: みんなで対戦（順番・全員に見える一覧・答えは結果まで出さない）・端末なしの参加者・席の人が抜けたらホストが代わりに押す・番をとばす・再読み込み・ゲーム中に入った人は見るだけ・2人で対戦の端末なし／おまかせで決める
+// ヒット&ブロー E2E その2: みんなで対戦（順番・全員に見える一覧・答えは結果まで出さない）・端末なしの参加者・席の人が抜けたらホストが代わりに押す・番をとばす・再読み込み・ゲーム中に入った人は見るだけ・2人で対戦の端末なし／おまかせで決める／ホストも遊ぶ2人で対戦で相手が切れたら待つだけ
 const L = require('./lib.cjs');
 const { E, check, sleep, waitFor } = L;
 
@@ -177,10 +177,47 @@ const { E, check, sleep, waitFor } = L;
   room = await L.roomWhen(code, (r) => r.game?.phase === 'play');
   check('J2 おまかせで決まって、予想に進む', !!room && E.validCode(E.normalize(room.game).secrets[1], 'easy'));
   check('J3 ホストには答えが出ない', !(await L.visible(H, '#mineBox')));
+  // ホストが遊ばない2人で対戦なら、切れた人の番はホストが代わりに押せる
+  g = E.normalize(room.game);
+  if (g.turn === 0) {
+    await L.waitVisible(A, '#guessBox');
+    await L.guess(A, L.missOf(g.secrets[1], 'easy'));
+  }
+  check('J4 ホストが遊ばないなら、切れた人の番は代わりに押せる', await waitFor(async () => (await L.visible(H, '#guessBox')) && (await L.text(H, '#guessTitle')) === 'りくの番。代わりにならべてね'));
+  await H.page.click('#btnReset');
+  await L.waitScreen(H, 'waiting');
+
+  // ── M. ホストも遊ぶ2人で対戦で相手が切れたら、相手の番は代わりに押さず、戻るのを待つ ──
+  // （ホストが相手の番を押すと、自分の答えを当てることになるため）
+  room = await L.roomWhen(code, (r) => !r.seated?.['りく']);
+  await toggleOn('メンター').click();
+  room = await L.roomWhen(code, (r) => r.seated?.['メンター'] && r.seated?.['あおい'] && Object.keys(r.seated).length === 2);
+  check('M0 メンターとあおい', !!room, room?.seated);
+  await H.page.click('#btnStartGame');
+  await L.waitVisible(H, '#setupBox');
+  await H.page.click('#btnSetupBlind');
+  await L.waitVisible(A, '#setupBox');
+  await L.setSecret(A, ['purple', 'orange', 'red']);
+  room = await L.roomWhen(code, (r) => r.game?.phase === 'play');
+  g = E.normalize(room.game);
+  if (g.turn === 1) {
+    await L.waitVisible(A, '#guessBox');
+    await L.guess(A, L.missOf(g.secrets[0], 'easy'));
+  }
+  await L.waitVisible(H, '#guessBox');
+  await L.guess(H, L.missOf(g.secrets[1], 'easy'));
+  room = await L.roomWhen(code, (r) => E.normalize(r.game)?.turn === 1);
+  const logLen = E.normalize(room.game).log.length;
+  await L.waitVisible(A, '#guessBox');
+  await A.page.close();
+  check('M1 切れた人の札に「通信が切れた」', await waitFor(async () => (await L.text(H, '#seats')).includes('通信が切れた'), 15000));
+  check('M2 ホストに「戻るのを待っています」', await waitFor(async () => (await L.visible(H, '#waitText')) && (await L.text(H, '#waitText')) === 'あおいの通信が戻るのを待っています'));
+  check('M3 ホストは相手の番を代わりに押せない', !(await L.visible(H, '#guessBox')));
+  await sleep(500);
+  check('M4 ゲームは進まない', E.normalize((await L.roomOf(code)).game).log.length === logLen);
 
   await H.page.click('#btnLeave');
-  await L.waitScreen(A, 'top');
-  check('K1 ルームを閉じる', (await L.roomOf(code)) === null);
+  check('K1 ルームを閉じる', await waitFor(async () => (await L.roomOf(code)) === null));
 
   // ── L. ホストが「見る」で答えを出したままルームを閉じても、次のルームの最初のゲームでは折りたたみ ──
   // （どちらのルームも最初のゲームは同じ番号になるので、出している印が残ると開いたまま出ていた）
