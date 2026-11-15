@@ -83,7 +83,8 @@ apps/arekudasai-shoten/
 - `scripts/content-audit.mjs` の `NO_CONTENT_APPS` に追加（品物はお店の部品で、お題・問題ではない）
 - `apps/index.html` にカード・`apps/updates.json` 先頭に `type: "new"`・`apps/guide/index.html`（ヒントの系統）に1行
 - イラスト `apps/assets/illustrations/arekudasai-shoten.webp`（日よけのあるお店の台に、顔の付いた品物と、ひもをかけた包み。`scripts/illustrations/prompts.json`。2026-11-15）。ツール一覧のカードと、はじめの画面（`.app-hero`）に出す
-- 説明スライド・サムネイルは、まだない（作るかはオーナーが決める）
+- 説明スライド `slides.html`（16枚。2026-11-15。エンジンは `apps/kotoba-tantei/slides.html` のまま、チャンネル `arekudasai_shoten_deck`・保存キー `aks_`）。品物の例は、アプリの `engine.js`・`art.js` を読んで同じ絵で出す。「？」の「説明スライドを見る」と、ツール一覧のカード（`data-slides`）から開ける。ルールを変えたら、スライドと発表者ノートも合わせる
+- サムネイル（カードの説明に出す画面の例）は、まだない
 
 ## 画面構成・フロー
 
