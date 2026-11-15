@@ -141,11 +141,13 @@ const { E, check, sleep, waitFor, cell } = L;
   check('C2 自分の番と（あなた）・白は CPU', (await L.status(P)).startsWith('あなたの番だよ（黒）') && (await seatText()).includes('黒（あなた）') && (await seatText()).includes('CPU'), [await L.status(P), await seatText()]);
   await P.page.click(cell(19));
   check('C3 置くと CPU の番（考え中）', (await L.status(P)) === '白（CPU）が考え中' && (await L.turnOf(P)) === 'w', await L.status(P));
-  // CPU が置く前（0.9秒の間）に、白の置ける場所を押して、その場で数える
+  check('C3b CPU の番は補助の印を出さない', (await P.page.$$('#board .rv-mark.is-spot')).length === 0);
+  // CPU が置く前（0.9秒の間）に、白の置ける場所を押して、その場で数える（印は出ないので、ルールから置ける場所を選ぶ）
   const c4 = await P.page.evaluate(() => {
-    const spot = document.querySelector('#board .rv-cell .rv-mark.is-spot')?.parentElement
-      || [...document.querySelectorAll('#board .rv-cell')].find((x) => !x.querySelector('.rv-stone'));
-    spot?.click();
+    const E = window.ReversiEngine;
+    const board = [...document.querySelectorAll('#board .rv-cell')].map((x) => (x.firstChild.classList.contains('is-b') ? 'b' : x.firstChild.classList.contains('is-w') ? 'w' : '.')).join('');
+    const at = Number(Object.keys(E.legalMoves(board, 'w'))[0]);
+    document.querySelector('#board .rv-cell[data-i="' + at + '"]').click();
     return [...document.querySelectorAll('#seats .rv-seat__count')].map((x) => Number(x.textContent));
   });
   check('C4 CPU の番は押しても置けない', JSON.stringify(c4) === '[4,1]', c4);
@@ -155,6 +157,7 @@ const { E, check, sleep, waitFor, cell } = L;
   await P.page.reload();
   await L.waitScreen(P, 'game');
   check('C7 読み込み直しても CPU と対戦のまま', (await L.status(P)).includes('あなたの番だよ（黒）') && (await seatText()).includes('CPU'), await L.status(P));
+  check('C7b 読み込み直しても、CPU がどこに置いたか出る', /^CPU は [A-H][1-8] に置いたよ。/.test(await L.status(P)), await L.status(P));
   const savedLevel = await P.page.evaluate(() => JSON.parse(sessionStorage.getItem('reversi_local') || '{}').level);
   check('CL2 選んだ強さ（つよい）で対戦し、読み込み直しても残る', savedLevel === 'strong', savedLevel);
   await P.page.click('#btnUndo');
@@ -199,6 +202,8 @@ const { E, check, sleep, waitFor, cell } = L;
   await P.page.setViewportSize({ width: 375, height: 760 });
   await sleep(300);
   check('W1 375px で横にはみ出さない', (await L.overflow(P)) <= 0);
+  const cw = await P.page.$eval(cell(0), (x) => x.getBoundingClientRect().width);
+  check('W2 375px でマスが 42px 以上', cw >= 42, cw);
   await L.shot(P, 'local-375');
 
   await L.finishAll(server);

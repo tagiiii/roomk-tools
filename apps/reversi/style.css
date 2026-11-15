@@ -290,6 +290,7 @@ body { background: var(--color-bg); }
   .rv-roombar { gap: 4px; padding: 6px 8px; }
   .rv-roombar .btn { padding: 4px 8px; font-size: 13px; min-height: 36px; }
   .rv-main { padding: 14px 12px 56px; }
+  .rv-main.rv-game { padding-left: 4px; padding-right: 4px; }
   .rv-seg { grid-template-columns: repeat(2, 1fr); }
   .rv-seg--3 { grid-template-columns: 1fr; }
   .rv-status.is-result { font-size: 20px; }
@@ -300,4 +301,14 @@ body { background: var(--color-bg); }
   .rv-coords-top { grid-template-columns: 18px repeat(8, calc(var(--rv-board) / 8)); }
   .rv-coords-left { width: 10px; }
   .rv-coord { font-size: 11px; }
+}
+
+/* 幅の狭い画面: 盤の左右の余白を詰めて、マスを指で押しやすくする（375px で 39px → 42px 台）。
+   100vw はパソコンでスクロールバーの幅もふくむので、対局の欄の実際の幅（cqw）から盤の大きさを決める */
+@supports (container-type: inline-size) {
+  @media (max-width: 600px) {
+    .rv-main.rv-game { container-type: inline-size; }
+    /* 左の数字 10px・すき間 4px・盤のふち 8px と、少しの余り */
+    .rv-game > * { --rv-board: min(calc(100cqw - 26px), 560px); }
+  }
 }

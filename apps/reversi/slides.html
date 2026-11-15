@@ -326,7 +326,16 @@ const SLIDES = [
     </div>`,
     note:'参加のしかただよ。\n「ルームに参加する」を押して、名前、ルームコード（6文字）の順に入れて「参加する」。\nチャットのリンクから開いたときは、ルームコードは入っているので名前だけ入れてね。スマホやタブレットの人は、QR コードを読み取ってもOK。\n対戦するのは2人で、ほかの人は自分の画面で勝負を見られるよ。だれが黒と白になるかは、ホストが決めるよ。' },
 
-  /* 10 */ { type:'content', accent:'teal', section:'Q&A', sectionEn:'question & answer',
+  /* 10 */ { type:'content', accent:'blue', section:'遊びかた', sectionEn:'vs CPU',
+    headline:'1台の画面なら、<br><span class="hl">CPU</span> とも対戦できる',
+    body:`<div class="rows">
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">devices</span></div><div><div class="row__t">「1台の画面であそぶ」で、対戦の相手を「CPU」にする</div><div class="row__d">自分が黒か白かも選べるよ。黒が先に置く</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">smart_toy</span></div><div><div class="row__t">CPU の強さは「よわい・ふつう・つよい」</div><div class="row__d">はじめは「ふつう」。CPU が置いた場所は、画面にお知らせが出るよ</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">undo</span></div><div><div class="row__t">「1手もどす」で、自分の番までもどせる</div><div class="row__d">CPU の手と、その前の自分の手をいっしょにもどすよ</div></div></div>
+    </div>`,
+    note:'1台の画面で遊ぶときは、CPU とも対戦できるよ。\n「1台の画面であそぶ」を押して、対戦の相手を「CPU」にしてね。自分が黒か白かも選べる。黒が先に置くよ。\nCPU の強さは、よわい・ふつう・つよいの3つ。はじめは「ふつう」。CPU がどこに置いたかは、画面にお知らせが出るよ。\n「1手もどす」を押すと、CPU の手と、その前の自分の手をいっしょにもどして、自分の番にもどれるよ。' },
+
+  /* 11 */ { type:'content', accent:'teal', section:'Q&A', sectionEn:'question & answer',
     headline:'よくある質問',
     body:`<div class="qa">
       <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>置けない場所を押したら？</div><div class="qa__a"><span class="qa__badge a">A</span>お知らせが出るだけで、石は置かれないよ。点のある場所をさがしてね。</div></div>
@@ -335,19 +344,19 @@ const SLIDES = [
     </div>`,
     note:'よくある質問だよ\nQ. 置けない場所を押したら？→ A. お知らせが出るだけで、石は置かれないよ。\nQ. 相手の番のときは？→ A. 盤は押せないよ。相手がどこに置くか見ていてね。\nQ. まちがえて置いちゃったら？→ A. ホストに伝えてね。「1手もどす」でもどせるよ。' },
 
-  /* 11 */ { type:'divider', accent:'blue', icon:'live_help', jp:'質問タイム', en:'any questions?',
+  /* 12 */ { type:'divider', accent:'blue', icon:'live_help', jp:'質問タイム', en:'any questions?',
     sub:'気になることはある？',
     note:'ここまでで、質問がある人はいるかな？\nマイクON か チャットで教えてね！' },
 
-  /* 12 */ { type:'divider', accent:'coral', icon:'how_to_reg', jp:'参加確認', en:"let's check",
+  /* 13 */ { type:'divider', accent:'coral', icon:'how_to_reg', jp:'参加確認', en:"let's check",
     sub:'チャットで教えてね',
     note:'対戦してみたい人〜？\n「①対戦したい」「②見ていたい」「③その他」を、チャットで教えてね！' },
 
-  /* 13 */ { type:'divider', accent:'teal', solid:true, icon:'rocket_launch', jp:'＼ ゲームスタート ／', en:'game start',
+  /* 14 */ { type:'divider', accent:'teal', solid:true, icon:'rocket_launch', jp:'＼ ゲームスタート ／', en:'game start',
     sub:'黒から置こう！',
     note:'それでは、リバーシスタート！\nルームに入る人は、まずはルームに参加してね。黒の人から置こう。わからなくなったら、いつでも聞いてね' },
 
-  /* 14 */ { type:'divider', accent:'teal', solid:true, icon:'emoji_events', jp:'けっか', en:'result',
+  /* 15 */ { type:'divider', accent:'teal', solid:true, icon:'emoji_events', jp:'けっか', en:'result',
     sub:'おつかれさま！',
     note:'けっか発表！\nおつかれさま。最後にひとことずつ、ふりかえってみよう。' },
 ];
