@@ -328,6 +328,8 @@ function clockAfterMove(c, mover, now) {
 }
 // 1手もどしたあとは、使った時間はそのままで、番の人の時計を今から動かす
 const clockRestart = (c, now) => ({ m: c.m, b: c.b, used: { ...c.used }, at: now });
+// 指した・おわったときの時計。CPU の番は使った時間を足さない（CPU は時間を使わない）
+const settleClock = (c, mover, now, cpu) => (cpu ? clockRestart(c, now) : clockAfterMove(c, mover, now));
 function fmtClock(ms) {
   const sec = Math.max(0, Math.ceil(ms / 1000));
   return Math.floor(sec / 60) + ':' + String(sec % 60).padStart(2, '0');
@@ -627,6 +629,11 @@ function connectToRoom(role, nickname, code, ref, joinedAt) {
     if (state.isConnected && state.roomRef === ref) {
       state.presenceDirty = true;
       ensurePresence(true);
+    }
+    // ホストの通信が切れたら CPU を止め、もどったら CPU の番かを見なおす
+    if (state.role === 'host' && state.roomRef === ref) {
+      if (!state.isConnected) stopCpu();
+      else if (state.room && state.currentScreen === 'game') renderGame();
     }
   };
   state.connectedRef.on('value', state.connectedCallback);
@@ -1314,10 +1321,12 @@ async function actRoom(kind, m, side, quiet = false) {
       const now = RoomkRTDB.now();
       const next = { ...r.game, rev: cur.rev + 1, moves: valid.map(packMove) };
       // 時間が切れたあとの手・宣言は、時間切れにする
+      // CPU の番は時計を進めない（CPU は時間切れにならない）
+      const cpuTurn = cpuSideOf(cur) === G.turn;
       let what = kind;
-      if ((kind === 'move' || kind === 'declare') && cur.clock && clockLate(cur.clock, G.turn, now)) what = 'timeout';
+      if ((kind === 'move' || kind === 'declare') && cur.clock && !cpuTurn && clockLate(cur.clock, G.turn, now)) what = 'timeout';
       if (what === 'timeout') {
-        if (!cur.clock || !clockLate(cur.clock, G.turn, now)) return;
+        if (!cur.clock || cpuTurn || !clockLate(cur.clock, G.turn, now)) return;
         // 時間切れを書けるのは、ホストと対局している人（見ている人は書かない）
         const seated = KEYS.some((k) => cur.seats[k] === nickname && cur.uids[k] === uid);
         if (!((role === 'host' && r.hostUid === uid) || (role === 'guest' && seated))) return;
@@ -1331,7 +1340,7 @@ async function actRoom(kind, m, side, quiet = false) {
         // 「王が取られる手を止める」がオフの人は、うっかりの手も指せる
         if (!E.legalMoves(G, !aidFor(r.aid, G.turn).guard).some((x) => E.sameMove(x, m))) return;
         next.moves = valid.concat([m]).map(packMove);
-        if (cur.clock) next.clock = clockAfterMove(cur.clock, G.turn, now);
+        if (cur.clock) next.clock = settleClock(cur.clock, G.turn, now, cpuTurn);
         finished = !!E.apply(G, m).over;
       } else if (kind === 'resign') {
         if (side !== 0 && side !== 1) return;
@@ -1345,7 +1354,7 @@ async function actRoom(kind, m, side, quiet = false) {
         return;
       }
       // 投了・宣言のときは、番の人の使った時間をそろえて止める（おわったあとに時計がもどって見えないように）
-      if (cur.clock && (kind === 'resign' || kind === 'declare') && next.timeout == null) next.clock = clockAfterMove(cur.clock, G.turn, now);
+      if (cur.clock && (kind === 'resign' || kind === 'declare') && next.timeout == null) next.clock = settleClock(cur.clock, G.turn, now, cpuTurn);
       finished = finished && !cur.ended;
       next.ended = cur.ended || finished;
       return { ...r, game: next };
@@ -1369,7 +1378,7 @@ async function actRoom(kind, m, side, quiet = false) {
    待合室で席に「CPU（よわい・ふつう・つよい）」を選べる。CPU の番は、ホストの端末が CPU_MS 待ってから考えて書く。
    ホストの通信が切れている間は CPU も指さない（もどれば続きから） */
 function scheduleRoomCpu(V) {
-  if (state.role !== 'host' || !V || V.over || V.cpu == null || V.G.turn !== V.cpu) return;
+  if (state.role !== 'host' || !state.isConnected || !V || V.over || V.cpu == null || V.G.turn !== V.cpu) return;
   const level = cpuLevelOfSeat(V.rec.seats[KEYS[V.cpu]]);
   const key = V.key + ':' + V.rev;
   if (state.cpuKey === key) return;
@@ -1379,11 +1388,14 @@ function scheduleRoomCpu(V) {
     state.cpuTimer = null;
     const W = viewModel();
     if (state.role !== 'host' || !W || W.over || W.key + ':' + W.rev !== key || W.G.turn !== W.cpu) return;
+    // 待つ間に通信が切れたら指さない（もどったときに考えなおす）
+    if (!state.isConnected) { state.cpuKey = null; return; }
     let ok = false;
     if (E.canDeclare(W.G)) ok = await actRoom('declare', null, null, true);
     else {
       const m = E.cpuMove(W.G, level);
-      ok = m ? await actRoom('move', m, null, true) : false;
+      // 考えている間に通信が切れたら書かない
+      ok = m && state.isConnected ? await actRoom('move', m, null, true) : false;
     }
     // 書けなかったとき（ほかの書きこみと重なったなど）は、少しあとで考えなおす
     if (!ok && state.cpuKey === key) {
@@ -1408,7 +1420,8 @@ function updateClocks() {
   const c = V?.rec.clock;
   if (!c) { stopClock(); return; }
   const now = V.now();
-  const turn = V.over ? -1 : V.G.turn;
+  // CPU の番は、どちらの時計も止めて見せる
+  const turn = V.over || V.G.turn === V.cpu ? -1 : V.G.turn;
   document.querySelectorAll('.sh-clock').forEach((node) => {
     const side = Number(node.dataset.side);
     let text;
@@ -1423,7 +1436,7 @@ function updateClocks() {
     if (node.textContent !== text) node.textContent = text;
     node.classList.toggle('is-low', low);
   });
-  if (!V.over && clockLate(c, V.G.turn, now)) claimTimeout(V);
+  if (turn >= 0 && clockLate(c, turn, now)) claimTimeout(V);
 }
 function claimTimeout(V) {
   const key = V.key + ':' + V.rev;
@@ -1591,15 +1604,16 @@ function actLocal(kind, m, side) {
   let finished = false;
   const now = Date.now();
   // 時間が切れたあとの手・宣言は、時間切れにする
-  if ((kind === 'move' || kind === 'declare') && L.clock && clockLate(L.clock, G.turn, now)) kind = 'timeout';
+  const cpuTurn = L.cpu != null && G.turn === L.cpu;
+  if ((kind === 'move' || kind === 'declare') && L.clock && !cpuTurn && clockLate(L.clock, G.turn, now)) kind = 'timeout';
   if (kind === 'timeout') {
-    if (!L.clock || !clockLate(L.clock, G.turn, now)) return;
+    if (!L.clock || cpuTurn || !clockLate(L.clock, G.turn, now)) return;
     L.timeout = G.turn;
     finished = true;
   } else if (kind === 'move') {
     if (!E.legalMoves(G, !aidFor(L.aid, G.turn).guard).some((x) => E.sameMove(x, m))) return;
     L.moves = L.moves.concat([m]);
-    if (L.clock) L.clock = clockAfterMove(L.clock, G.turn, now);
+    if (L.clock) L.clock = settleClock(L.clock, G.turn, now, cpuTurn);
     finished = !!E.apply(G, m).over;
   } else if (kind === 'resign') {
     // 投了したのは押した人（CPU と対戦するときは、CPU の番でも自分の側）
@@ -1612,7 +1626,7 @@ function actLocal(kind, m, side) {
     L.declare = G.turn;
     finished = true;
   }
-  if (L.clock && (kind === 'resign' || kind === 'declare')) L.clock = clockAfterMove(L.clock, G.turn, now);
+  if (L.clock && (kind === 'resign' || kind === 'declare')) L.clock = settleClock(L.clock, G.turn, now, cpuTurn);
   L.rev += 1;
   if (finished && !L.ended) window.RoomkStats?.count('local-finish');
   L.ended = L.ended || finished;
