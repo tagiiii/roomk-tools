@@ -394,13 +394,14 @@ const SLIDES = [
     note:'次に王が取られそうな形を「王手」というよ。画面に「王手」と出て、王のますが赤くなる。\n王手をかけられたら、よけよう。王が逃げる、王手をしている駒を取る、あいだに駒を置く、のどれかだよ。うっかりよけないで指すと、相手に王を取られて負けになるよ。\nどうやってもよけられないのが「詰み」。図は、王がどこへ逃げても金に取られて、金を取ると歩に取られる。これで詰み、勝ちだよ。' },
 
   /* 10 */ { type:'content', accent:'teal', section:'おわりかた', sectionEn:'how it ends',
-    headline:'詰みのほかにも、<br>おわりかたがあるよ',
-    body:`<div class="rows">
+    headline:'詰みのほかにも、おわりかたがあるよ',
+    body:`<div class="rows tight">
       <div class="row"><div class="row__ic"><span class="material-symbols-rounded">flag</span></div><div><div class="row__t">「投了する」で、負けを認めて終わりにできる</div><div class="row__d">相手の番でも押せるよ</div></div></div>
       <div class="row"><div class="row__ic"><span class="material-symbols-rounded">repeat</span></div><div><div class="row__t">同じ形が4回くり返されると「千日手」</div><div class="row__d">本将棋は引き分け、5五将棋は先手の負け。王手を続けていた人は負け</div></div></div>
       <div class="row"><div class="row__ic"><span class="material-symbols-rounded">stars</span></div><div><div class="row__t">本将棋で、王が相手の陣に入ったら「入玉宣言」</div><div class="row__d">条件がそろうと「入玉宣言で勝ちにする」が出る。押すと勝ち</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">timer</span></div><div><div class="row__t">持ち時間があるときは、時間が切れたら負け</div><div class="row__d">自分の番の時間だけ減る。なくなると秒読みになり、1手ごとにもとにもどるよ</div></div></div>
     </div>`,
-    note:'詰みのほかにも、おわりかたがあるよ。\n「投了する」を押すと、負けを認めて終わりにできる。相手の番でも押せるよ。\n同じ形が4回くり返されると「千日手」。本将棋は引き分け、5五将棋は先手の負けになる。王手を続けて千日手になったときは、王手をかけていた人の負けだよ。\n本将棋で、王が相手の陣に入って条件がそろうと、「入玉宣言で勝ちにする」が出て、押すと勝ちになるよ。' },
+    note:'詰みのほかにも、おわりかたがあるよ。\n「投了する」を押すと、負けを認めて終わりにできる。相手の番でも押せるよ。\n同じ形が4回くり返されると「千日手」。本将棋は引き分け、5五将棋は先手の負けになる。王手を続けて千日手になったときは、王手をかけていた人の負けだよ。\n本将棋で、王が相手の陣に入って条件がそろうと、「入玉宣言で勝ちにする」が出て、押すと勝ちになるよ。\n持ち時間があるときは、自分の番の時間だけが減って、なくなると秒読みになるよ。秒読みは1手ごとにもとにもどる。時間が切れたら負けだよ。' },
 
   /* 11 */ { type:'content', accent:'coral', section:'補助', sectionEn:'assist',
     headline:'はじめてでも安心。<br><span class="ul">補助</span>を使えるよ',
@@ -432,9 +433,9 @@ const SLIDES = [
     body:`<div class="rows">
       <div class="row"><div class="row__ic"><span class="material-symbols-rounded">login</span></div><div><div class="row__t">「ルームに参加する」を押す</div><div class="row__d">名前、ルームコード（6文字）の順に入れて「参加する」</div></div></div>
       <div class="row"><div class="row__ic"><span class="material-symbols-rounded">link</span></div><div><div class="row__t">リンクから開いたときは、名前だけ</div><div class="row__d">ルームコードは入っているよ。スマホやタブレットは QR コードを読み取ってもOK</div></div></div>
-      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">groups</span></div><div><div class="row__t">対戦するのは2人。ほかの人は観戦</div><div class="row__d">だれが先手と後手になるかは、ホストが決めるよ</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">groups</span></div><div><div class="row__t">対戦するのは2人。ほかの人は観戦</div><div class="row__d">だれが先手と後手になるかは、ホストが決めるよ。CPU と対戦することもできる</div></div></div>
     </div>`,
-    note:'参加のしかただよ。\n「ルームに参加する」を押して、名前、ルームコード（6文字）の順に入れて「参加する」。\nチャットのリンクから開いたときは、ルームコードは入っているので名前だけ入れてね。スマホやタブレットの人は、QR コードを読み取ってもOK。\n対戦するのは2人で、ほかの人は自分の画面で対局を見られるよ。だれが先手と後手になるかは、ホストが決めるよ。' },
+    note:'参加のしかただよ。\n「ルームに参加する」を押して、名前、ルームコード（6文字）の順に入れて「参加する」。\nチャットのリンクから開いたときは、ルームコードは入っているので名前だけ入れてね。スマホやタブレットの人は、QR コードを読み取ってもOK。\n対戦するのは2人で、ほかの人は自分の画面で対局を見られるよ。だれが先手と後手になるかは、ホストが決めるよ。ホストが席に CPU を選ぶと、CPU と対戦できるよ。' },
 
   /* 14 */ { type:'content', accent:'teal', section:'Q&A', sectionEn:'question & answer',
     headline:'よくある質問',
