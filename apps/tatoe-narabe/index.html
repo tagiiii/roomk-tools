@@ -419,7 +419,7 @@
       <div class="ito-page-title">ルームを作る</div>
       <div class="ito-page-sub">ニックネームを入力してルームを作成します</div>
 
-      <div class="error-msg" id="host-error"></div>
+      <div class="error-msg" id="host-error" role="alert"></div>
 
       <div class="card" style="padding:20px;">
         <label for="host-nick" style="display:block; font-size:13px; font-weight:700; margin-bottom:8px; color:var(--color-primary);">
@@ -453,7 +453,7 @@
       <div class="ito-page-title">ルームに参加する</div>
       <div class="ito-page-sub">ホストからコードを聞いて入力してください</div>
 
-      <div class="error-msg" id="guest-error"></div>
+      <div class="error-msg" id="guest-error" role="alert"></div>
 
       <div class="card" style="padding:20px;">
         <p class="ito-link-hint" id="joinLinkHint" hidden>リンクから開いたので、ルームコードは入っているよ。ニックネームを入れて「参加する」を押してね。</p>
@@ -771,19 +771,19 @@
   <!-- ============================= -->
   <!-- オーバーレイ                  -->
   <!-- ============================= -->
-  <div class="overlay" id="host-off-overlay">
+  <div class="overlay" id="host-off-overlay" data-roomk-blocking role="dialog" aria-modal="true" aria-labelledby="host-off-overlay-title">
     <span class="material-symbols-rounded" aria-hidden="true">signal_disconnected</span>
-    <p>ホストが切断されました</p>
+    <p id="host-off-overlay-title">ホストが切断されました</p>
     <button class="btn btn-ghost" onclick="leaveGame()">退出する</button>
   </div>
 
-  <div class="overlay" id="reconnect-overlay">
+  <div class="overlay" id="reconnect-overlay" data-roomk-blocking role="dialog" aria-modal="true" aria-labelledby="reconnect-overlay-title">
     <div class="spinner" style="width:48px;height:48px;border-width:4px;"></div>
-    <p>再接続中...</p>
+    <p id="reconnect-overlay-title">再接続中...</p>
   </div>
-  <div class="overlay" id="guest-off-overlay">
+  <div class="overlay" id="guest-off-overlay" data-roomk-blocking role="dialog" aria-modal="true" aria-labelledby="guest-off-overlay-title">
     <div class="spinner"></div>
-    <p>接続を待っています。数字や宣言はそのままです</p>
+    <p id="guest-off-overlay-title">接続を待っています。数字や宣言はそのままです</p>
     <p>退出すると自分の数字・宣言を削除します</p>
     <button class="btn btn-ghost" onclick="leaveGame()">退出する</button>
   </div>
@@ -2448,6 +2448,7 @@
       }
     });
   </script>
+  <script src="../shared/js/overlay-a11y.js?v=1" defer></script>
   <script src="../shared/js/stats.js?v=1" defer></script>
   <script src="../shared/js/howto.js"></script>
   <script>

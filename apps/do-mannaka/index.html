@@ -279,7 +279,7 @@
         <input class="form-input" id="host-nickname" type="text" maxlength="8"
                placeholder="例：たろう" autocomplete="off">
       </div>
-      <div class="error-msg" id="host-nickname-error"></div>
+      <div class="error-msg" id="host-nickname-error" role="alert"></div>
       <button class="btn btn-primary btn-full" onclick="hostCreateRoom()">ルームを作る</button>
       <button class="btn btn-ghost btn-full" onclick="showScreen('top')">← 戻る</button>
     </div>
@@ -344,7 +344,7 @@
       <input class="form-input form-input-code" id="guest-room-code" type="text"
              maxlength="6" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="XXXXXX" autocomplete="off">
     </div>
-    <div class="error-msg" id="guest-join-error"></div>
+    <div class="error-msg" id="guest-join-error" role="alert"></div>
     <button class="btn btn-primary btn-full" onclick="guestJoin()">参加する</button>
     <button class="btn btn-ghost btn-full" onclick="showScreen('top')">← 戻る</button>
   </div>
@@ -409,7 +409,7 @@
         <input class="form-input form-input-number" id="answer-input"
                type="number" min="0" step="1" placeholder="数字を入力" inputmode="numeric">
       </div>
-      <div class="error-msg" id="answer-error"></div>
+      <div class="error-msg" id="answer-error" role="alert"></div>
       <button class="btn btn-primary btn-full btn-lg" onclick="submitAnswer()">回答を送信</button>
     </div>
 
@@ -490,15 +490,15 @@
 </div>
 
 <!-- 再接続中オーバーレイ -->
-<div class="overlay" id="reconnect-overlay">
+<div class="overlay" id="reconnect-overlay" data-roomk-blocking role="dialog" aria-modal="true" aria-labelledby="reconnect-overlay-title">
   <div class="spinner"></div>
-  <p class="overlay-title">再接続しています...</p>
+  <p class="overlay-title" id="reconnect-overlay-title">再接続しています...</p>
 </div>
 
 <!-- ホスト切断オーバーレイ（ゲスト用） -->
-<div class="overlay" id="host-disconnect-overlay">
+<div class="overlay" id="host-disconnect-overlay" data-roomk-blocking role="dialog" aria-modal="true" aria-labelledby="host-disconnect-overlay-title">
   <div class="spinner"></div>
-  <p class="overlay-title">ホストが一時的に接続を失いました</p>
+  <p class="overlay-title" id="host-disconnect-overlay-title">ホストが一時的に接続を失いました</p>
   <p class="overlay-sub">再接続を待っています</p>
   <!-- 残り秒数は表示時に deadline から算出して埋める（数値の直書きはしない） -->
   <div class="overlay-countdown" id="host-disconnect-countdown"></div>
@@ -1905,6 +1905,7 @@
     resumeFromSession();
   }
 </script>
+<script src="../shared/js/overlay-a11y.js?v=1" defer></script>
 <script src="../shared/js/stats.js?v=1" defer></script>
 <script src="../shared/js/howto.js"></script>
 <script>

@@ -500,9 +500,9 @@
 </div>
 
 <div id="toast"></div>
-<div class="overlay" id="guest-off-overlay">
+<div class="overlay" id="guest-off-overlay" data-roomk-blocking role="dialog" aria-modal="true" aria-labelledby="guest-off-overlay-title">
   <div class="overlay-box">
-    <h3>接続を確認しています</h3>
+    <h3 id="guest-off-overlay-title">接続を確認しています</h3>
     <p>参加情報と送信済みの内容は残っています。接続が戻るまでお待ちください。未送信の投票は選び直してください。</p>
     <button class="btn btn-secondary" onclick="goToTop()">退出してトップへ戻る</button>
   </div>
@@ -1822,6 +1822,7 @@ window.addEventListener('load', async () => {
   }
 });
 </script>
+<script src="../shared/js/overlay-a11y.js?v=1" defer></script>
 <script src="../shared/js/stats.js?v=1" defer></script>
 <script src="../shared/js/howto.js"></script>
 <script>

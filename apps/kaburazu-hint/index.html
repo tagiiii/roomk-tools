@@ -276,7 +276,7 @@
     <div class="card">
       <label class="form-label" for="host-nickname">ニックネーム</label>
       <input type="text" id="host-nickname" class="form-input" maxlength="8" placeholder="8文字以内">
-      <div class="error-msg" id="host-error"></div>
+      <div class="error-msg" id="host-error" role="alert"></div>
     </div>
     <button class="btn btn-primary btn-full" onclick="hostCreate()">
       <span class="material-symbols-rounded" aria-hidden="true">meeting_room</span>
@@ -296,7 +296,7 @@
       <input type="text" id="guest-nickname" class="form-input" maxlength="8" placeholder="8文字以内">
       <label class="form-label" style="margin-top:16px" for="guest-code">ルームコード（6文字）</label>
       <input type="text" id="guest-code" class="form-input kbz-code-input" maxlength="6" autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="6文字のコード">
-      <div class="error-msg" id="guest-error"></div>
+      <div class="error-msg" id="guest-error" role="alert"></div>
     </div>
     <button class="btn btn-primary btn-full" onclick="guestJoin()">
       <span class="material-symbols-rounded" aria-hidden="true">login</span>
@@ -314,7 +314,7 @@
     <div class="card">
       <label class="form-label" for="spectate-code">ルームコード（6文字）</label>
       <input type="text" id="spectate-code" class="form-input kbz-code-input" maxlength="6" autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="6文字のコード">
-      <div class="error-msg" id="spectate-error"></div>
+      <div class="error-msg" id="spectate-error" role="alert"></div>
     </div>
     <button class="btn btn-primary btn-full" onclick="spectateJoin()">
       <span class="material-symbols-rounded" aria-hidden="true">cast</span>
@@ -376,7 +376,7 @@
         <div class="card">
           <label class="form-label" for="clue-hint-input">ヒントを1つ入力</label>
           <input type="text" id="clue-hint-input" class="form-input" maxlength="20" placeholder="1語で入力">
-          <div class="error-msg" id="clue-error"></div>
+          <div class="error-msg" id="clue-error" role="alert"></div>
         </div>
         <button class="btn btn-primary btn-full" onclick="submitHint()">
           <span class="material-symbols-rounded" aria-hidden="true">send</span>
@@ -444,7 +444,7 @@
       <div class="card">
         <label class="form-label" for="answer-input">答えを入力</label>
         <input type="text" id="answer-input" class="form-input" maxlength="20" placeholder="お題は何？">
-        <div class="error-msg" id="answer-error"></div>
+        <div class="error-msg" id="answer-error" role="alert"></div>
       </div>
       <button class="btn btn-primary btn-full btn-lg" onclick="submitAnswer()">
         <span class="material-symbols-rounded" aria-hidden="true">lightbulb</span>
@@ -548,24 +548,24 @@
 </div>
 
 <!-- ═══════════════ Overlays ═══════════════ -->
-<div class="overlay" id="reconnect-overlay">
+<div class="overlay" id="reconnect-overlay" data-roomk-blocking role="dialog" aria-modal="true" aria-labelledby="reconnect-overlay-title">
   <div class="spinner"></div>
-  <p class="overlay-title">再接続しています...</p>
+  <p class="overlay-title" id="reconnect-overlay-title">再接続しています...</p>
 </div>
-<div class="overlay" id="host-off-overlay">
+<div class="overlay" id="host-off-overlay" data-roomk-blocking role="dialog" aria-modal="true" aria-labelledby="host-off-overlay-title">
   <span class="material-symbols-rounded" aria-hidden="true" style="font-size:48px">signal_disconnected</span>
-  <p class="overlay-title">ホストが一時的に切断されました</p>
+  <p class="overlay-title" id="host-off-overlay-title">ホストが一時的に切断されました</p>
   <p class="overlay-sub">再接続を待っています</p>
   <button class="btn btn-ghost" onclick="leaveGame()">退出する</button>
 </div>
-<div class="overlay" id="spec-host-off-overlay">
+<div class="overlay" id="spec-host-off-overlay" data-roomk-blocking role="dialog" aria-modal="true" aria-labelledby="spec-host-off-overlay-title">
   <span class="material-symbols-rounded" aria-hidden="true" style="font-size:48px">signal_disconnected</span>
-  <p class="overlay-title">ホストが一時的に切断されました</p>
+  <p class="overlay-title" id="spec-host-off-overlay-title">ホストが一時的に切断されました</p>
   <p class="overlay-sub">再接続を待っています</p>
   <button class="btn btn-ghost" onclick="spectatorLeave()">トップへ戻る</button>
 </div>
-<div class="overlay" id="guest-off-overlay">
-  <p class="overlay-title">接続を確認しています</p>
+<div class="overlay" id="guest-off-overlay" data-roomk-blocking role="dialog" aria-modal="true" aria-labelledby="guest-off-overlay-title">
+  <p class="overlay-title" id="guest-off-overlay-title">接続を確認しています</p>
   <p class="overlay-sub">送信済みの内容は残っています。接続が戻るまでお待ちください。未送信の入力は入れ直してください。</p>
   <button class="btn btn-ghost" onclick="leaveGame()">退出する</button>
 </div>
@@ -2668,6 +2668,7 @@ function renderSpecFinished(room) {
   }
 }());
 </script>
+<script src="../shared/js/overlay-a11y.js?v=1" defer></script>
 <script src="../shared/js/stats.js?v=1" defer></script>
 <script src="../shared/js/howto.js"></script>
 <script>

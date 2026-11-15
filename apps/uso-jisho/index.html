@@ -664,7 +664,7 @@
         <label class="form-label" for="host-nickname">ニックネーム（1〜8文字）</label>
         <input class="form-input" id="host-nickname" type="text" maxlength="8" placeholder="例：たろう" autocomplete="off">
       </div>
-      <div class="uj-error" id="host-nickname-error"></div>
+      <div class="uj-error" id="host-nickname-error" role="alert"></div>
       <button class="btn btn-primary btn-full" onclick="hostCreateRoom()">ルームをつくる</button>
       <button class="btn btn-ghost btn-full" onclick="showScreen('top')">← もどる</button>
     </div>
@@ -739,7 +739,7 @@
       <label class="form-label" for="guest-room-code">ルームコード（6文字）</label>
       <input class="form-input" id="guest-room-code" type="text" maxlength="6" autocapitalize="characters" autocorrect="off" spellcheck="false" style="text-transform:uppercase" placeholder="XXXXXX" autocomplete="off">
     </div>
-    <div class="uj-error" id="guest-join-error"></div>
+    <div class="uj-error" id="guest-join-error" role="alert"></div>
     <button class="btn btn-primary btn-full" onclick="guestJoin()">参加する</button>
     <button class="btn btn-ghost btn-full" onclick="showScreen('top')">← もどる</button>
   </div>
@@ -754,7 +754,7 @@
       <label class="form-label" for="spectate-code">ルームコード（6文字）</label>
       <input class="form-input" id="spectate-code" type="text" maxlength="6" autocapitalize="characters" autocorrect="off" spellcheck="false" style="text-transform:uppercase" placeholder="XXXXXX" autocomplete="off">
     </div>
-    <div class="uj-error" id="spectate-error"></div>
+    <div class="uj-error" id="spectate-error" role="alert"></div>
     <button class="btn btn-primary btn-full" onclick="spectateJoin()">
       <span class="material-symbols-rounded" aria-hidden="true">cast</span>
       画面をひらく
@@ -820,7 +820,7 @@
         <div class="uj-preview__label">できあがりの文</div>
         <div class="uj-preview__text" id="entry-preview"></div>
       </div>
-      <div class="uj-error" id="entry-error"></div>
+      <div class="uj-error" id="entry-error" role="alert"></div>
       <button class="btn btn-primary btn-full btn-lg" onclick="submitEntry()">だす</button>
     </div>
 
@@ -959,23 +959,23 @@
   </div>
 </div>
 
-<div class="uj-overlay" id="reconnect-overlay">
+<div class="uj-overlay" id="reconnect-overlay" data-roomk-blocking role="dialog" aria-modal="true" aria-labelledby="reconnect-overlay-title">
   <div class="spinner"></div>
-  <p class="uj-overlay__title">再接続しています...</p>
+  <p class="uj-overlay__title" id="reconnect-overlay-title">再接続しています...</p>
 </div>
 
-<div class="uj-overlay" id="host-disconnect-overlay">
+<div class="uj-overlay" id="host-disconnect-overlay" data-roomk-blocking role="dialog" aria-modal="true" aria-labelledby="host-disconnect-overlay-title">
   <div class="spinner"></div>
-  <p class="uj-overlay__title">ホストが一時的に接続を失いました</p>
+  <p class="uj-overlay__title" id="host-disconnect-overlay-title">ホストが一時的に接続を失いました</p>
   <p class="uj-overlay__sub">再接続を待っています</p>
   <div class="uj-overlay__countdown" id="host-disconnect-countdown">120</div>
   <p class="uj-overlay__sub">秒後に自動終了します</p>
   <button class="btn btn-ghost btn-full" style="max-width:280px;margin-top:20px" onclick="leaveGame()">退出する</button>
 </div>
 
-<div class="uj-overlay" id="spec-host-off-overlay">
+<div class="uj-overlay" id="spec-host-off-overlay" data-roomk-blocking role="dialog" aria-modal="true" aria-labelledby="spec-host-off-overlay-title">
   <div class="spinner"></div>
-  <p class="uj-overlay__title">ホストが一時的に接続を失いました</p>
+  <p class="uj-overlay__title" id="spec-host-off-overlay-title">ホストが一時的に接続を失いました</p>
   <p class="uj-overlay__sub">再接続を待っています</p>
   <button class="btn btn-ghost btn-full" style="max-width:280px;margin-top:20px" onclick="spectatorLeave()">トップへ戻る</button>
 </div>
@@ -2871,6 +2871,7 @@
   }());
 
 </script>
+<script src="../shared/js/overlay-a11y.js?v=1" defer></script>
 <script src="../shared/js/stats.js?v=1" defer></script>
 <script src="../shared/js/howto.js"></script>
 <script>
