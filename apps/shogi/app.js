@@ -29,6 +29,19 @@ const LEVEL_NAMES = { weak: 'よわい', normal: 'ふつう', strong: 'つよい
 const WHO_OPTS = [['both', 'ふたりとも'], ['s', '先手だけ'], ['g', '後手だけ'], ['none', '使わない']];
 
 const { authReady, db } = RoomkRTDB.initFirebase(firebase);
+// 時計の時刻（RoomkRTDB.now）は、サーバーとの時刻のずれが届いてから合う。届くまでは、時計を書く操作を待つ（最大3秒）
+let timeSynced = false;
+const timeSync = new Promise((resolve) => {
+  const ref = db.ref('.info/serverTimeOffset');
+  const onOffset = (snap) => {
+    if (snap.val() == null) return;
+    timeSynced = true;
+    ref.off('value', onOffset);
+    resolve();
+  };
+  ref.on('value', onOffset);
+});
+const waitTimeSync = () => (timeSynced ? null : Promise.race([timeSync, new Promise((r) => setTimeout(r, 3000))]));
 const DB_PREFIX = 'shogi_rooms';
 const SESSION_KEY = 'shogi_session';
 const LOCAL_KEY = 'shogi_local';
@@ -1207,6 +1220,7 @@ function countStart(v, game) {
 }
 
 async function startGame() {
+  await waitTimeSync();
   let v = null;
   const ok = await hostTransaction((room) => {
     if (room.status !== STATUS.WAITING) return;
@@ -1220,6 +1234,7 @@ async function startGame() {
 }
 
 async function undoMove() {
+  await waitTimeSync();
   const before = gameOf(state.room);
   if (!before) return;
   const gid = before.id;
@@ -1257,6 +1272,7 @@ async function undoMove() {
 
 // もう一回（先手と後手を入れかえる）
 async function playAgain() {
+  await waitTimeSync();
   const gid = gameOf(state.room)?.id;
   let reason = '';
   let v = null;
@@ -1308,6 +1324,7 @@ async function actRoom(kind, m, side, quiet = false) {
   let committed = false;
   state.moving = true;
   try {
+    await waitTimeSync();
     const result = await state.roomRef.transaction((r) => {
       finished = false;
       if (!r || isExpired(r) || r.status !== STATUS.PLAY) return;
@@ -1920,15 +1937,17 @@ function viewModel() {
 }
 const sideLabel = (V, side) => MARK[side] + SIDE[side] + (V.name(side) ? '（' + V.name(side) + '）' : '');
 
-function overText(V, o) {
-  if (o.reason === 'resign') return sideLabel(V, 1 - o.winner) + 'が投了。' + sideLabel(V, o.winner) + 'の勝ち！';
-  if (o.reason === 'declare') return '入玉宣言。' + sideLabel(V, o.winner) + 'の勝ち！';
-  if (o.reason === 'king') return '王を取った。' + sideLabel(V, o.winner) + 'の勝ち！';
-  if (o.reason === 'time') return sideLabel(V, 1 - o.winner) + 'の時間が切れた。' + sideLabel(V, o.winner) + 'の勝ち！';
-  if (o.reason === 'sennichite') return o.winner < 0 ? '同じ形が4回出たので、千日手で引き分け' : '同じ形が4回出た千日手なので、' + sideLabel(V, o.winner) + 'の勝ち！';
-  if (o.reason === 'perpetual') return '王手を続けた千日手なので、' + sideLabel(V, o.winner) + 'の勝ち！';
-  if (o.reason === 'nomove') return sideLabel(V, 1 - o.winner) + 'は指せる手がないので、' + sideLabel(V, o.winner) + 'の勝ち！';
-  return '詰み。' + sideLabel(V, o.winner) + 'の勝ち！';
+// 結果の文は「☗先手（名前）」のところで折り返さないよう、部品に分けて返す（名前の部分は { label }）
+function overParts(V, o) {
+  const L = (side) => ({ label: sideLabel(V, side) });
+  if (o.reason === 'resign') return [L(1 - o.winner), 'が投了。', L(o.winner), 'の勝ち！'];
+  if (o.reason === 'declare') return ['入玉宣言。', L(o.winner), 'の勝ち！'];
+  if (o.reason === 'king') return ['王を取った。', L(o.winner), 'の勝ち！'];
+  if (o.reason === 'time') return [L(1 - o.winner), 'の時間が切れた。', L(o.winner), 'の勝ち！'];
+  if (o.reason === 'sennichite') return o.winner < 0 ? ['同じ形が4回出たので、千日手で引き分け'] : ['同じ形が4回出た千日手なので、', L(o.winner), 'の勝ち！'];
+  if (o.reason === 'perpetual') return ['王手を続けた千日手なので、', L(o.winner), 'の勝ち！'];
+  if (o.reason === 'nomove') return [L(1 - o.winner), 'は指せる手がないので、', L(o.winner), 'の勝ち！'];
+  return ['詰み。', L(o.winner), 'の勝ち！'];
 }
 
 function renderGame() {
@@ -1962,7 +1981,9 @@ function renderGame() {
   st.classList.toggle('is-result', !!V.over);
   st.classList.toggle('is-mine', can && !local && !V.over);
   if (V.over) {
-    st.textContent = overText(V, V.over);
+    const line = makeElement('span', 'sh-result');
+    for (const p of overParts(V, V.over)) line.append(typeof p === 'string' ? p : makeElement('span', 'sh-nowrap', p.label));
+    st.append(line);
   } else {
     let line;
     if (local && V.cpu != null && G.turn === V.cpu) line = sideLabel(V, G.turn) + 'が考え中';
