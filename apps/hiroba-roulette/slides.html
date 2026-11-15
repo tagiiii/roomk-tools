@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>説明スライド | なにするルーレット | あそびのたな</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@48,500,1,0" rel="stylesheet" />
+<style>
+  :root{
+    --ink:#434343; --ink-soft:#6B6B6B; --paper:#FBF6EC; --white:#FFFFFF;
+    --line:#E6E6E6; --muted:#9A9A9A;
+    --teal:#A3561A; --coral:#D9714F; --blue:#3F86A8; --blue-soft:#7FB3CC;
+    --red:#E0574F; --neutral:#C2B69E; --trap:#3A3A3A;
+    --acc:var(--teal); --acc-tint:#E3F4EF;
+    --font:"Zen Kaku Gothic New", -apple-system, "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif;
+  }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  html,body{ height:100%; }
+  body{ font-family:var(--font); color:var(--ink); background:#E9ECEF; overflow:hidden; -webkit-font-smoothing:antialiased; }
+  .material-symbols-rounded{ font-family:"Material Symbols Rounded"; line-height:1; }
+  ruby rt{ font-size:.42em; font-weight:700; color:var(--acc); letter-spacing:0; transform:translateY(2px); }
+
+  /* accent themes（スライドごとに切替） */
+  .accent-teal { --acc:var(--teal); --acc-tint:#FBEBDA; }
+  .accent-coral{ --acc:var(--coral);--acc-tint:#FBE7DF; }
+  .accent-blue { --acc:var(--blue); --acc-tint:#E3EFF4; }
+
+  /* ===================== 発表（デッキ） ===================== */
+  #deck{ position:fixed; inset:0; }
+  #stage{
+    position:absolute; top:50%; left:50%; width:1280px; height:720px;
+    transform-origin:center center; background:var(--paper);
+    border-radius:18px; box-shadow:0 28px 70px rgba(0,0,0,.35); overflow:hidden;
+  }
+  .slide{
+    position:absolute; inset:0; display:flex; flex-direction:column;
+    padding:56px 72px 76px; opacity:0; visibility:hidden;
+    transition:opacity .3s ease, transform .3s ease; transform:translateY(10px);
+  }
+  .slide.active{ opacity:1; visibility:visible; transform:none; }
+
+  /* セクションヘッダー（日本語＋小さな英語キャプション） */
+  .sec{ display:flex; align-items:baseline; gap:14px; }
+  .sec__jp{ font-size:30px; font-weight:900; color:var(--ink); letter-spacing:.01em; }
+  .sec__en{ font-size:18px; font-weight:700; color:var(--acc); letter-spacing:.12em; }
+  .sec__num{ display:inline-flex; align-items:center; justify-content:center; min-width:30px; height:30px; padding:0 8px;
+    border-radius:8px; background:var(--acc); color:#fff; font-size:18px; font-weight:900; margin-right:2px; }
+
+  .headline{ font-size:46px; font-weight:900; color:var(--ink); line-height:1.32; margin-top:22px; letter-spacing:.005em; }
+  .headline .hl{ color:var(--acc); }
+  .headline .ul{ background:linear-gradient(transparent 62%, var(--acc-tint) 62%); padding:0 2px; }
+  .body{ margin-top:30px; flex:1; min-height:0; }
+
+  /* 箇条書き行 */
+  .rows{ display:flex; flex-direction:column; gap:16px; }
+  .row{ display:flex; gap:18px; align-items:flex-start; background:var(--white); border:1.5px solid var(--line); border-radius:16px; padding:20px 24px; }
+  .row__ic{ flex:none; width:48px; height:48px; border-radius:12px; background:var(--acc-tint); color:var(--acc); display:flex; align-items:center; justify-content:center; }
+  .row__ic .material-symbols-rounded{ font-size:28px; }
+  .row__t{ font-size:25px; font-weight:900; color:var(--ink); line-height:1.4; }
+  .row__d{ font-size:20px; color:var(--ink-soft); margin-top:3px; line-height:1.5; }
+
+  /* 過ごし方の札（6つ） */
+  .opts{ display:grid; grid-template-columns:repeat(3,1fr); gap:18px; }
+  .opt{ display:flex; align-items:center; gap:12px; background:var(--white); border:1.5px solid var(--line); border-radius:18px; padding:20px 16px; }
+  .opt__n{ flex:none; width:38px; height:38px; border-radius:50%; background:var(--acc-tint); color:var(--acc); font-size:21px; font-weight:900; display:flex; align-items:center; justify-content:center; }
+  .opt__ic{ flex:none; width:60px; height:60px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; }
+  .opt__ic .material-symbols-rounded{ font-size:34px; }
+  .opt__t{ font-size:23px; white-space:nowrap; font-weight:900; color:var(--ink); line-height:1.3; }
+  .note-line{ margin-top:22px; font-size:22px; font-weight:700; color:var(--ink-soft); display:flex; align-items:center; gap:10px; }
+  .note-line .material-symbols-rounded{ font-size:28px; color:var(--acc); }
+
+  /* 3つのステップ */
+  .steps3{ display:grid; grid-template-columns:repeat(3,1fr); gap:22px; height:100%; }
+  .step{ background:var(--white); border:1.5px solid var(--line); border-radius:20px; padding:28px 26px; display:flex; flex-direction:column; gap:14px; }
+  .step__n{ width:52px; height:52px; border-radius:50%; background:var(--acc); color:#fff; font-size:28px; font-weight:900; display:flex; align-items:center; justify-content:center; }
+  .step__t{ font-size:30px; font-weight:900; color:var(--ink); line-height:1.3; }
+  .step__d{ font-size:21px; color:var(--ink-soft); line-height:1.55; }
+
+  /* ルーレットの絵 */
+  .wheel-demo{ display:flex; gap:44px; align-items:center; height:100%; }
+  .wheel-demo svg{ width:300px; height:300px; flex:none; }
+  .wheel-demo .rows{ flex:1; }
+
+  /* Q&A */
+  .qa{ display:flex; flex-direction:column; gap:16px; }
+  .qa__item{ background:var(--white); border:1.5px solid var(--line); border-radius:16px; padding:18px 24px; }
+  .qa__q{ display:flex; gap:13px; align-items:flex-start; font-size:23px; font-weight:900; color:var(--ink); }
+  .qa__a{ display:flex; gap:13px; align-items:flex-start; font-size:21px; color:var(--ink-soft); margin-top:8px; line-height:1.5; }
+  .qa__badge{ flex:none; width:34px; height:34px; border-radius:9px; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:900; font-size:19px; }
+  .qa__badge.q{ background:var(--blue); } .qa__badge.a{ background:var(--coral); }
+
+  /* タイトルスライド */
+  .title-slide{ align-items:center; justify-content:center; text-align:center; padding-bottom:76px; }
+  .title-ic{ width:118px; height:118px; border-radius:32px; background:var(--teal); color:#fff; display:flex; align-items:center; justify-content:center; box-shadow:0 16px 34px rgba(163,86,26,.3); }
+  .title-ic .material-symbols-rounded{ font-size:72px; }
+  .title-jp{ font-size:74px; font-weight:900; color:var(--ink); margin-top:24px; letter-spacing:.02em; }
+  .title-en{ font-size:22px; font-weight:700; color:var(--teal); letter-spacing:.34em; margin-top:6px; text-transform:lowercase; }
+  .title-tag{ font-size:26px; font-weight:700; color:var(--ink-soft); margin-top:22px; }
+  .title-meta{ display:flex; gap:12px; margin-top:26px; }
+  .title-meta .m{ display:inline-flex; align-items:center; gap:7px; background:var(--white); border:1.5px solid var(--line); border-radius:999px; padding:9px 18px; font-size:18px; font-weight:700; color:var(--ink); }
+  .title-meta .material-symbols-rounded{ font-size:20px; color:var(--teal); }
+
+  /* セクション区切り（divider） */
+  .divider{ align-items:center; justify-content:center; text-align:center; padding-bottom:76px; background:var(--acc-tint); }
+  .divider .d-ic{ width:104px; height:104px; border-radius:50%; background:var(--acc); color:#fff; display:flex; align-items:center; justify-content:center; box-shadow:0 14px 30px rgba(0,0,0,.14); }
+  .divider .d-ic .material-symbols-rounded{ font-size:62px; }
+  .divider .d-jp{ font-size:72px; font-weight:900; color:var(--ink); margin-top:26px; letter-spacing:.03em; }
+  .divider .d-en{ font-size:21px; font-weight:700; color:var(--acc); letter-spacing:.28em; margin-top:8px; text-transform:lowercase; }
+  .divider .d-sub{ font-size:24px; font-weight:700; color:var(--ink-soft); margin-top:20px; }
+  /* 強調（ゲームスタート等） */
+  .divider.solid{ background:var(--acc); }
+  .divider.solid .d-ic{ background:rgba(255,255,255,.16); }
+  .divider.solid .d-jp,.divider.solid .d-sub{ color:#fff; }
+  .divider.solid .d-en{ color:rgba(255,255,255,.85); }
+
+  /* フッター */
+  .footer{ position:absolute; left:0; right:0; bottom:0; height:56px; display:flex; align-items:center; justify-content:space-between;
+    padding:0 30px; background:rgba(255,255,255,.7); border-top:1px solid var(--line); }
+  .brand{ display:flex; align-items:center; gap:9px; font-weight:900; color:var(--ink); font-size:19px; }
+  .brand .material-symbols-rounded{ color:var(--teal); font-size:24px; }
+  .dots{ display:flex; gap:7px; flex-wrap:wrap; max-width:620px; justify-content:center; }
+  .dot{ width:9px; height:9px; border-radius:50%; background:var(--line); transition:.2s; }
+  .dot.on{ background:var(--teal); transform:scale(1.3); }
+  .counter{ font-size:18px; font-weight:900; color:var(--muted); font-variant-numeric:tabular-nums; }
+  .divider .footer,.divider.solid .footer{ background:rgba(255,255,255,.55); }
+
+  /* ナビ矢印 */
+  .nav{ position:absolute; top:50%; transform:translateY(-50%); z-index:5; width:54px; height:54px; border-radius:50%; border:none; cursor:pointer;
+    background:rgba(67,67,67,.1); color:var(--ink); display:flex; align-items:center; justify-content:center; transition:.2s; opacity:0; }
+  #stage:hover .nav{ opacity:.5; } .nav:hover{ opacity:1 !important; background:rgba(67,67,67,.2); }
+  .nav .material-symbols-rounded{ font-size:32px; } .nav.prev{ left:16px; } .nav.next{ right:16px; }
+
+  /* ツールバー */
+  .toolbar{ position:fixed; top:14px; right:16px; z-index:50; display:flex; gap:8px; opacity:.16; transition:.2s; }
+  .toolbar:hover{ opacity:1; }
+  .tbtn{ display:inline-flex; align-items:center; gap:7px; cursor:pointer; background:rgba(255,255,255,.95); color:var(--ink); border:1px solid var(--line);
+    border-radius:999px; padding:9px 15px; font-family:var(--font); font-weight:700; font-size:14px; box-shadow:0 4px 12px rgba(0,0,0,.18); }
+  .tbtn:hover{ background:#fff; } .tbtn .material-symbols-rounded{ font-size:19px; color:var(--teal); }
+  .hint-help{ position:fixed; bottom:12px; left:16px; z-index:50; color:rgba(255,255,255,.5); font-size:13px; }
+  .hint-help kbd{ background:rgba(0,0,0,.18); border-radius:5px; padding:1px 7px; font-family:var(--font); }
+
+  /* ===================== 発表者ビュー ===================== */
+  body.presenter{ background:#EEF1F4; overflow:auto; }
+  #presenter{ max-width:680px; margin:0 auto; padding:18px 20px 40px; }
+  .pv-warn{ background:#FBEBEB; border:1px solid #EFC4C4; color:#B3463F; border-radius:12px; padding:12px 16px; font-size:14px; font-weight:700; display:flex; align-items:center; gap:10px; margin-bottom:16px; }
+  .pv-warn .material-symbols-rounded{ font-size:22px; }
+  .pv-count{ font-size:14px; font-weight:900; color:var(--muted); font-variant-numeric:tabular-nums; }
+  .pv-title{ font-size:26px; font-weight:900; color:var(--ink); line-height:1.3; margin-top:4px; }
+  .pv-lead{ font-size:15px; color:var(--teal); font-weight:700; margin-top:4px; letter-spacing:.04em; }
+  .pv-card{ background:#fff; border:1px solid var(--line); border-radius:16px; padding:18px; margin-top:18px; box-shadow:0 4px 14px rgba(0,0,0,.05); }
+  .pv-card h3{ font-size:14px; font-weight:900; color:var(--teal); display:flex; align-items:center; gap:8px; margin-bottom:12px; }
+  .pv-card h3 .material-symbols-rounded{ font-size:18px; }
+  #pvNote{ width:100%; min-height:175px; resize:vertical; border:1px solid var(--line); border-radius:12px; padding:14px 16px; font-family:var(--font); font-size:17px; line-height:1.7; color:var(--ink); background:#FBFCFD; }
+  #pvNote:focus{ outline:none; border-color:var(--teal); box-shadow:0 0 0 3px rgba(163,86,26,.15); }
+  .pv-actions{ display:flex; gap:10px; margin-top:14px; align-items:center; }
+  .pv-copy{ flex:1; cursor:pointer; border:none; border-radius:12px; padding:15px; font-family:var(--font); font-size:18px; font-weight:900; color:#fff; background:var(--teal); display:flex; align-items:center; justify-content:center; gap:10px; box-shadow:0 6px 16px rgba(163,86,26,.28); transition:.15s; }
+  .pv-copy:active{ transform:translateY(1px); } .pv-copy.done{ background:#7E4213; }
+  .pv-copy .material-symbols-rounded{ font-size:22px; }
+  .pv-reset{ cursor:pointer; border:1px solid var(--line); background:#fff; color:var(--muted); border-radius:12px; padding:15px 16px; font-family:var(--font); font-weight:700; font-size:14px; }
+  .pv-reset:hover{ background:#F5F7F9; }
+  .pv-nav{ display:flex; gap:10px; margin-top:18px; }
+  .pv-nav button{ flex:1; cursor:pointer; border:1px solid var(--line); background:#fff; color:var(--ink); border-radius:12px; padding:14px; font-family:var(--font); font-weight:900; font-size:16px; display:flex; align-items:center; justify-content:center; gap:8px; }
+  .pv-nav button:hover{ background:#F5F7F9; } .pv-nav button:disabled{ opacity:.4; cursor:default; }
+  .pv-nav .material-symbols-rounded{ font-size:20px; }
+  .pv-next{ margin-top:16px; font-size:14px; color:var(--muted); padding:0 4px; } .pv-next b{ color:var(--ink); }
+  .pv-conn{ margin-top:14px; font-size:12px; color:var(--muted); text-align:center; }
+</style>
+</head>
+<body>
+
+<div id="deck">
+  <div id="stage">
+    <button class="nav prev" id="navPrev" aria-label="前へ"><span class="material-symbols-rounded">chevron_left</span></button>
+    <button class="nav next" id="navNext" aria-label="次へ"><span class="material-symbols-rounded">chevron_right</span></button>
+    <div id="slides"></div>
+    <div class="footer">
+      <div class="brand"><span class="material-symbols-rounded">casino</span>なにするルーレット</div>
+      <div class="dots" id="dots"></div>
+      <div class="counter" id="counter">1 / 1</div>
+    </div>
+  </div>
+</div>
+
+<div class="toolbar" id="toolbar">
+  <button class="tbtn" id="btnPresenter"><span class="material-symbols-rounded">co_present</span>発表者ノート</button>
+  <button class="tbtn" id="btnFull"><span class="material-symbols-rounded">fullscreen</span>全画面</button>
+</div>
+<div class="hint-help">操作: <kbd>←</kbd> <kbd>→</kbd> めくる ・ <kbd>F</kbd> 全画面 ・ <kbd>P</kbd> 発表者ノート</div>
+
+<div id="presenter" style="display:none">
+  <div class="pv-warn"><span class="material-symbols-rounded">visibility_off</span>この画面は<strong>共有しないで</strong>ください（あなた専用のメモ）</div>
+  <div class="pv-count" id="pvCount">1 / 1</div>
+  <div class="pv-title" id="pvTitle"></div>
+  <div class="pv-lead" id="pvLead"></div>
+  <div class="pv-card">
+    <h3><span class="material-symbols-rounded">chat</span>Metalife チャット用メッセージ</h3>
+    <textarea id="pvNote" spellcheck="false"></textarea>
+    <div class="pv-actions">
+      <button class="pv-copy" id="pvCopy"><span class="material-symbols-rounded">content_copy</span>チャットにコピー</button>
+      <button class="pv-reset" id="pvReset">元に戻す</button>
+    </div>
+  </div>
+  <div class="pv-nav">
+    <button id="pvPrev"><span class="material-symbols-rounded">chevron_left</span>前のスライド</button>
+    <button id="pvNext">次のスライド<span class="material-symbols-rounded">chevron_right</span></button>
+  </div>
+  <div class="pv-next" id="pvNextTitle"></div>
+  <div class="pv-conn" id="pvConn">スライド画面と接続中…</div>
+</div>
+
+<script>
+const SLIDES = [
+  /* 1 */ { type:'title', note:'これから「なにするルーレット」で、この時間の過ごし方を決めるよ。\nやることは3つ。プログラムを見て、どう過ごしたいかを聞いて、みんなで遊ぶゲームをルーレットで決めます。' },
+
+  /* 2 */ { type:'content', accent:'teal', section:'やること', sectionEn:'3 steps',
+    headline:'3つのステップで、<span class="hl">この時間の過ごし方</span>を決める',
+    body:`<div class="steps3">
+      <div class="step"><div class="step__n">1</div><div class="step__t">このコマの<br>プログラム</div><div class="step__d">この時間に、どんなプログラムがあるかを見る</div></div>
+      <div class="step"><div class="step__n">2</div><div class="step__t">どう過ごしたい？</div><div class="step__d">ひとことと、決まっていたら過ごし方の番号をおしえてね</div></div>
+      <div class="step"><div class="step__n">3</div><div class="step__t">遊びを決める</div><div class="step__d">遊びたいゲームの番号をおしえて、ルーレットで決める</div></div>
+    </div>`,
+    note:'やることは3つ。\n1. このコマのプログラムを見る\n2. どう過ごしたいかをおしえてもらう\n3. みんなで遊ぶゲームを、ルーレットで決める' },
+
+  /* 3 */ { type:'content', accent:'blue', section:'ステップ', sectionEn:'program', num:'1',
+    headline:'この時間の<span class="hl">プログラム</span>を見る',
+    body:`<div class="rows">
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">event</span></div><div><div class="row__t">いまの時間のプログラムが並ぶ</div><div class="row__d">名前と、どの部屋でやっているかが出るよ</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">meeting_room</span></div><div><div class="row__t">参加しても、ここでみんなと過ごしてもOK</div><div class="row__d">気になるプログラムがあれば、その部屋へ行こう</div></div></div>
+    </div>`,
+    note:'まずは、この時間にあるプログラムを見てみよう。\n名前と、どの部屋でやっているかが出るよ。\n参加してもいいし、ここでみんなと過ごしてもOKです。' },
+
+  /* 4 */ { type:'content', accent:'coral', section:'ステップ', sectionEn:'how to spend', num:'2',
+    headline:'どう過ごしたい？ <span class="hl">決まっていたら番号</span>をおしえてね',
+    body:`<div class="opts"><div class="opt"><span class="opt__n">①</span><span class="opt__ic" style="background:#7FB3CC"><span class="material-symbols-rounded">edit_note</span></span><span class="opt__t">自分のことをする</span></div><div class="opt"><span class="opt__n">②</span><span class="opt__ic" style="background:#E9A54B"><span class="material-symbols-rounded">sports_esports</span></span><span class="opt__t">みんなと遊ぶ</span></div><div class="opt"><span class="opt__n">③</span><span class="opt__ic" style="background:#D9714F"><span class="material-symbols-rounded">forum</span></span><span class="opt__t">テーマトーク</span></div><div class="opt"><span class="opt__n">④</span><span class="opt__ic" style="background:#A98BC4"><span class="material-symbols-rounded">radio</span></span><span class="opt__t">ラジオ参加</span></div><div class="opt"><span class="opt__n">⑤</span><span class="opt__ic" style="background:#6FB592"><span class="material-symbols-rounded">thumb_up</span></span><span class="opt__t">おまかせ</span></div><div class="opt"><span class="opt__n">⑥</span><span class="opt__ic" style="background:#C9A86A"><span class="material-symbols-rounded">hourglass_empty</span></span><span class="opt__t">考え中</span></div></div>
+      <div class="note-line"><span class="material-symbols-rounded">chat_bubble</span>ひとことのお題にも答えてね。まだ決まっていなければ「考え中」でOK</div>`,
+    note:'どう過ごしたいかを聞くよ。\n①自分のことをする ②みんなと遊ぶ ③テーマトーク ④ラジオ参加 ⑤おまかせ ⑥考え中\n画面のお題へのひとことと一緒に、決まっていたら番号をおしえてね。まだ決まっていなければ「考え中」でOK。' },
+
+  /* 5 */ { type:'content', accent:'teal', section:'ステップ', sectionEn:'pick a game', num:'3',
+    headline:'遊びたい<span class="hl">ゲームの番号</span>をおしえてね',
+    body:`<div class="rows">
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">grid_view</span></div><div><div class="row__t">画面に、ゲームが8つ並ぶ</div><div class="row__d">その人数で遊べるものから、毎回ちがう8つが出るよ</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">pin</span></div><div><div class="row__t">遊びたいゲームの番号を言う</div><div class="row__d">声でも、チャットに番号だけでもOK</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">search</span></div><div><div class="row__t">ほかに遊びたいゲームがあったら、名前をおしえて</div><div class="row__d">さがして、候補に入れられるよ</div></div></div>
+    </div>`,
+    note:'つぎは、みんなで遊ぶゲームを決めるよ。\n画面にゲームが8つ並ぶので、遊びたいゲームの番号をおしえてね。声でも、チャットに番号だけでもOK。\nほかに遊びたいゲームがあったら、名前をおしえてくれたら、さがして候補に入れるよ。' },
+
+  /* 6 */ { type:'content', accent:'coral', section:'ステップ', sectionEn:'roulette', num:'3',
+    headline:'<span class="hl">ルーレット</span>をまわして決める',
+    body:`<div class="wheel-demo"><svg viewBox="-110 -120 220 230" aria-hidden="true"><circle r="104" fill="#A3561A"/>
+        <path d="M0 0 L0 -96 A96 96 0 0 1 83.1 48 Z" fill="#E9A54B"/><path d="M0 0 L83.1 48 A96 96 0 0 1 -48 83.1 Z" fill="#7FB3CC"/>
+        <path d="M0 0 L-48 83.1 A96 96 0 0 1 -83.1 -48 Z" fill="#D9714F"/><path d="M0 0 L-83.1 -48 A96 96 0 0 1 0 -96 Z" fill="#6FB592"/>
+        <circle r="26" fill="#FBF6EC"/><path d="M0 -92 L-12 -116 L12 -116 Z" fill="#C2502E" stroke="#fff" stroke-width="3" stroke-linejoin="round"/></svg>
+      <div class="rows">
+        <div class="row"><div class="row__ic"><span class="material-symbols-rounded">casino</span></div><div><div class="row__t">えらばれたゲームが、ルーレットに入る</div><div class="row__d">えらんだ人が多いほど、マスが大きくなるよ</div></div></div>
+        <div class="row"><div class="row__ic"><span class="material-symbols-rounded">visibility</span></div><div><div class="row__t">見てるだけ・途中からでもOK</div><div class="row__d">決まったゲームを、みんなで遊ぼう</div></div></div>
+      </div>
+    </div>`,
+    note:'えらばれたゲームが、ルーレットに入るよ。えらんだ人が多いゲームほど、マスが大きくなります。\nまわして止まったゲームを、みんなで遊ぼう。見てるだけでも、途中からでもOKだよ。' },
+
+  /* 7 */ { type:'content', accent:'blue', section:'Q&A', sectionEn:'question & answer',
+    headline:'よくある質問',
+    body:`<div class="qa">
+      <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>どう過ごしたいか、まだ決まっていない</div><div class="qa__a"><span class="qa__badge a">A</span>「考え中」でOK。話しながら決めよう</div></div>
+      <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>声を出さなくてもいい？</div><div class="qa__a"><span class="qa__badge a">A</span>チャットに番号だけでもOKだよ</div></div>
+      <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>あとから変えてもいい？</div><div class="qa__a"><span class="qa__badge a">A</span>いいよ。途中から入っても、見てるだけでもOK</div></div>
+    </div>`,
+    note:'よくある質問だよ\nQ. まだ決まっていない → A. 「考え中」でOK。話しながら決めよう\nQ. 声を出さなくてもいい？ → A. チャットに番号だけでもOK\nQ. あとから変えてもいい？ → A. いいよ。途中から入っても、見てるだけでもOK' },
+
+  /* 8 */ { type:'divider', accent:'blue', icon:'live_help', jp:'質問タイム', en:'any questions?',
+    sub:'気になることはある？',
+    note:'ここまでで、気になることはあるかな？\nマイクかチャットで教えてね！' },
+
+  /* 9 */ { type:'divider', accent:'teal', solid:true, icon:'casino', jp:'＼ はじめよう ／', en:"let's start",
+    sub:'まずは、このコマのプログラムから',
+    note:'それでは、はじめよう！\nまずは、このコマのプログラムから見ていくよ。' },
+];
+
+/* ===== ウィンドウ間同期 ===== */
+const channel = ('BroadcastChannel' in window) ? new BroadcastChannel('hiroba_roulette_deck') : null;
+function send(msg){ if(channel) channel.postMessage(msg); try{ localStorage.setItem('hrl_msg', JSON.stringify({...msg,_t:Date.now()})); }catch(e){} }
+function onMsg(h){ if(channel) channel.onmessage=(e)=>h(e.data); window.addEventListener('storage',(e)=>{ if(e.key==='hrl_msg'&&e.newValue){ try{ h(JSON.parse(e.newValue)); }catch(err){} } }); }
+const isPresenter = new URLSearchParams(location.search).get('view')==='presenter';
+
+/* ===== レンダリング ===== */
+function slideHTML(s){
+  const acc = s.accent ? `accent-${s.accent}` : 'accent-teal';
+  if(s.type==='title'){
+    return `<section class="slide title-slide accent-teal">
+      <div class="title-ic"><span class="material-symbols-rounded">casino</span></div>
+      <div class="title-jp">なにするルーレット</div>
+      <div class="title-en">what shall we do?</div>
+      <div class="title-tag">〜 この時間の過ごし方を、みんなで決めよう 〜</div>
+      <div class="title-meta">
+        <span class="m"><span class="material-symbols-rounded">event</span>プログラムを見る</span>
+        <span class="m"><span class="material-symbols-rounded">chat_bubble</span>どう過ごしたいか言う</span>
+        <span class="m"><span class="material-symbols-rounded">casino</span>ルーレットで決める</span>
+      </div></section>`;
+  }
+  if(s.type==='divider'){
+    return `<section class="slide divider ${acc}${s.solid?' solid':''}">
+      <div class="d-ic"><span class="material-symbols-rounded">${s.icon}</span></div>
+      <div class="d-jp">${s.jp}</div>
+      <div class="d-en">${s.en}</div>
+      ${s.sub?`<div class="d-sub">${s.sub}</div>`:''}</section>`;
+  }
+  // content
+  return `<section class="slide ${acc}">
+    <div class="sec">${s.num?`<span class="sec__num">${s.num}</span>`:''}<span class="sec__jp">${s.section}</span><span class="sec__en">${s.sectionEn}</span></div>
+    <h1 class="headline">${s.headline}</h1>
+    <div class="body">${s.body||''}</div></section>`;
+}
+
+if(!isPresenter){
+  const slidesEl=document.getElementById('slides'), dotsEl=document.getElementById('dots'), counterEl=document.getElementById('counter');
+  let idx=0;
+  SLIDES.forEach((s)=>{ slidesEl.insertAdjacentHTML('beforeend', slideHTML(s)); const d=document.createElement('span'); d.className='dot'; dotsEl.appendChild(d); });
+  const slideEls=[...slidesEl.children], dotEls=[...dotsEl.children];
+  function render(){
+    slideEls.forEach((el,i)=>el.classList.toggle('active',i===idx));
+    dotEls.forEach((el,i)=>el.classList.toggle('on',i===idx));
+    counterEl.textContent=`${idx+1} / ${SLIDES.length}`;
+    document.getElementById('navPrev').style.visibility=idx===0?'hidden':'visible';
+    document.getElementById('navNext').style.visibility=idx===SLIDES.length-1?'hidden':'visible';
+  }
+  function goTo(n,b=true){ n=Math.max(0,Math.min(SLIDES.length-1,n)); if(n!==idx){ idx=n; render(); } if(b) send({t:'idx',i:idx}); }
+  const next=()=>goTo(idx+1), prev=()=>goTo(idx-1);
+  document.getElementById('navNext').onclick=next; document.getElementById('navPrev').onclick=prev;
+  document.addEventListener('keydown',(e)=>{
+    if(['ArrowRight','PageDown',' '].includes(e.key)){ e.preventDefault(); next(); }
+    else if(['ArrowLeft','PageUp'].includes(e.key)){ e.preventDefault(); prev(); }
+    else if(e.key==='Home'){ e.preventDefault(); goTo(0); }
+    else if(e.key==='End'){ e.preventDefault(); goTo(SLIDES.length-1); }
+    else if(e.key==='f'||e.key==='F'){ toggleFull(); }
+    else if(e.key==='p'||e.key==='P'){ openPresenter(); }
+  });
+  const stage=document.getElementById('stage');
+  function fit(){ const sc=Math.min(window.innerWidth/1280, window.innerHeight/720); stage.style.transform=`translate(-50%,-50%) scale(${sc})`; }
+  window.addEventListener('resize',fit); document.addEventListener('fullscreenchange',fit);
+  function toggleFull(){ if(!document.fullscreenElement) document.documentElement.requestFullscreen?.(); else document.exitFullscreen?.(); }
+  document.getElementById('btnFull').onclick=toggleFull;
+  function openPresenter(){ const url=new URL(location.href); url.searchParams.set('view','presenter'); url.hash=''; const w=window.open(url.toString(),'hrl_presenter','width=620,height=800'); if(!w) alert('発表者ノートのウィンドウがブロックされました。\nブラウザのポップアップを許可してから、もう一度お試しください。'); }
+  document.getElementById('btnPresenter').onclick=openPresenter;
+  onMsg((m)=>{ if(m.t==='goto') goTo(m.i,false); else if(m.t==='hello') send({t:'idx',i:idx}); });
+  fit(); render();
+}
+
+if(isPresenter){
+  document.title = '発表者ノート | なにするルーレット | あそびのたな';
+  document.body.classList.add('presenter');
+  document.getElementById('deck').style.display='none';
+  document.getElementById('toolbar').style.display='none';
+  document.querySelector('.hint-help').style.display='none';
+  document.getElementById('presenter').style.display='block';
+  const $=(id)=>document.getElementById(id);
+  const elCount=$('pvCount'), elTitle=$('pvTitle'), elLead=$('pvLead'), elNote=$('pvNote'), elNext=$('pvNextTitle'), elConn=$('pvConn');
+  const btnCopy=$('pvCopy'), btnReset=$('pvReset'), btnPrev=$('pvPrev'), btnNext=$('pvNext');
+  let cur=0; const KEY=(i)=>'hrl_note_'+i;
+  function label(s){
+    if(s.type==='title') return 'なにするルーレット（タイトル）';
+    if(s.type==='divider') return s.jp.replace(/[＼／]/g,'').trim()+'（区切り）';
+    return `${s.section}${s.num?' '+s.num:''} ／ ${s.sectionEn}`;
+  }
+  function plain(html){ const d=document.createElement('div'); d.innerHTML=html||''; d.querySelectorAll('rt').forEach(r=>r.remove()); return (d.textContent||'').replace(/\s+/g,' ').trim(); }
+  function titleOf(s){
+    if(s.type==='title') return 'なにするルーレット';
+    if(s.type==='divider') return s.jp;
+    return plain(s.headline);
+  }
+  function show(i){
+    cur=Math.max(0,Math.min(SLIDES.length-1,i));
+    const s=SLIDES[cur];
+    elCount.textContent=`${cur+1} / ${SLIDES.length}`;
+    elTitle.textContent=titleOf(s);
+    elLead.textContent=label(s);
+    const saved=localStorage.getItem(KEY(cur));
+    elNote.value=(saved!==null)?saved:s.note;
+    btnCopy.classList.remove('done');
+    btnCopy.innerHTML='<span class="material-symbols-rounded">content_copy</span>チャットにコピー';
+    elNext.innerHTML=cur<SLIDES.length-1?`次のスライド → <b>${titleOf(SLIDES[cur+1])}</b>`:'<b>最後のスライドです</b>';
+    btnPrev.disabled=cur===0; btnNext.disabled=cur===SLIDES.length-1;
+  }
+  elNote.addEventListener('input',()=>{ try{ localStorage.setItem(KEY(cur),elNote.value); }catch(e){} });
+  async function copyText(t){ try{ await navigator.clipboard.writeText(t); return true; }catch(e){ try{ const ta=document.createElement('textarea'); ta.value=t; ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta); ta.focus(); ta.select(); const ok=document.execCommand('copy'); ta.remove(); return ok; }catch(e2){ return false; } } }
+  btnCopy.onclick=async()=>{
+    const ok=await copyText(elNote.value);
+    if(!ok){ elNote.focus(); elNote.select(); }
+    btnCopy.innerHTML=ok?'<span class="material-symbols-rounded">check</span>コピーしました！':'<span class="material-symbols-rounded">keyboard_command_key</span>選択したのでコピーしてください';
+    btnCopy.classList.toggle('done',ok);
+    setTimeout(()=>{ btnCopy.classList.remove('done'); btnCopy.innerHTML='<span class="material-symbols-rounded">content_copy</span>チャットにコピー'; },2200);
+  };
+  btnReset.onclick=()=>{ localStorage.removeItem(KEY(cur)); elNote.value=SLIDES[cur].note; };
+  function goto(i){ show(i); send({t:'goto',i:cur}); }
+  btnPrev.onclick=()=>goto(cur-1); btnNext.onclick=()=>goto(cur+1);
+  document.addEventListener('keydown',(e)=>{ if(e.target===elNote) return; if(e.key==='ArrowRight'||e.key===' '){ e.preventDefault(); goto(cur+1); } else if(e.key==='ArrowLeft'){ e.preventDefault(); goto(cur-1); } });
+  onMsg((m)=>{ if(m.t==='idx'){ elConn.textContent='スライド画面と接続中 ✓'; show(m.i); } });
+  show(0); send({t:'hello'}); setTimeout(()=>send({t:'hello'}),400);
+}
+</script>
+</body>
+</html>
