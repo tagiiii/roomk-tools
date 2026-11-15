@@ -79,11 +79,11 @@ const { E, check, sleep, roomWhen, gameOf, waitScreen, waitText, visible, waitVi
     const c = byName(g.seats[i]);
     await waitText(c, '#stage', 'どうする？');
     if (i === holder || i % 3 === 0) {
-      // 品物の札を押して、箱にそえるひとことをえらぶ
+      // 品物の札を押して、「この品物を出す」で決める
       if (i === holder) await c.page.click(`#shelf button.ak-card:has-text("${E.item(want).name}")`);
       else await c.page.click('#shelf button.ak-card >> nth=0');
-      await waitText(c, '#stage', 'ひとことを、1つえらんでね');
-      await c.page.click('#stage .ak-chip-btn >> nth=' + (i % 13));
+      await waitText(c, '#stage', 'を出す？');
+      await c.page.click('#stage button:has-text("この品物を出す")');
     } else await c.page.click('#stage .ak-choice:has-text("出さない")');
   }
   await waitText(C, '#stage', 'どの箱を受け取る？', 8000);

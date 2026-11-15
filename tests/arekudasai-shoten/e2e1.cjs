@@ -3,12 +3,18 @@
 // 隔離エミュレーターだけを使う（本番には接続しない）。README.md を参照
 const L = require('./lib.cjs');
 const { E, check, sleep, rest, roomWhen, gameOf, waitScreen, waitText, visible, waitVisible, text, overflow, waitFor, shot } = L;
-// お店の人: 品物の札を押して、箱にそえるひとことをえらぶ
-async function offer(c, name, word) {
+// お店の人: 品物の札を押して、「この品物を出す」で決める
+async function offer(c, name) {
   await waitVisible(c, '#shelf button.ak-card');
   await c.page.click(`#shelf button.ak-card:has-text("${name}")`);
-  await waitText(c, '#stage', 'ひとことを、1つえらんでね');
-  await c.page.click(`#stage .ak-chip-btn:has-text("${word}")`);
+  await waitText(c, '#stage', 'を出す？');
+  await c.page.click('#stage button:has-text("この品物を出す")');
+  await waitText(c, '#stage', '箱に入れて出したよ');
+}
+// 品物を出したお店の人: 箱が届いたら、ひとこと（お店の言い方）をえらぶ
+async function pitchWord(c, phrase) {
+  await waitText(c, '#stage', 'ひとことをそえよう');
+  await c.page.click(`#stage .ak-pitch .ak-chip-btn:has-text("${phrase}")`);
 }
 
 (async () => {
@@ -29,9 +35,11 @@ async function offer(c, name, word) {
   // 設定: 5分・みんなのポイントを見せる
   await host.page.click('#timeSeg .ak-seg__btn:nth-child(1)');
   await host.page.check('#showAll');
-  await roomWhen(code, (r) => r.set.time === 5 && r.set.showAll === true);
+  // お店の人が決める時間: 45秒
+  await host.page.click('#offerSeg .ak-seg__btn:has-text("45秒")');
+  await roomWhen(code, (r) => r.set.time === 5 && r.set.showAll === true && r.set.offer === 45);
   await waitText(a, '#lobbySetView', '5分');
-  check('guest summary updated', (await text(a, '#lobbySetView')).includes('みんなのポイント'));
+  check('guest summary updated', (await text(a, '#lobbySetView')).includes('みんなのポイント') && (await text(a, '#lobbySetView')).includes('45秒'));
 
   // みんなにみせる画面
   const watch = await L.newClient('watch');
@@ -44,6 +52,7 @@ async function offer(c, name, word) {
   let g = await gameOf(code);
   check('game seats', g && g.seats.length === 3, g?.seats);
   check('limit 5', g.raw.limit === 5);
+  check('offer 45', g.raw.offer === 45);
   await shot(host, '01-start');
 
   // ── 1回目: ぴったり ──
@@ -86,14 +95,20 @@ async function offer(c, name, word) {
   // 札には特徴の言葉を出さない・名前にも入っていない
   check('no tags on shelf', (await H.page.$$('#shelf .ak-tag')).length === 0);
   check('name has no tag word', !E.TAGS.some((t) => E.item(want).name.includes(t)));
-  // 持っている人: ほしい物を出し、ひとことに3つめの特徴をそえる
-  const word1 = E.item(want).tags[2];
-  await offer(H, E.item(want).name, word1);
+  // 持っている人: ほしい物を出す（出したことが大きく出て、札に「出した」の印）
+  await offer(H, E.item(want).name);
+  check('sent badge on shelf', (await text(H, '#shelf')).includes('出した'));
+  check('raw d is item', (await gameOf(code)).r.d[holderSeat] === want);
   await waitText(C, '#stage', 'どの箱を受け取る？');
   check('one box', (await C.page.$$('#stage .ak-offer')).length === 1);
   check('decline shown', (await text(C, '#stage')).includes('うちにはないです'));
-  check('box shows word', (await text(C, '#stage .ak-offer')).includes(word1));
-  check('raw d has word', (await gameOf(code)).r.d[holderSeat] === want + ':' + word1);
+  check('word waiting', (await text(C, '#stage .ak-offer')).includes('ひとことを考え中'));
+  // 箱が届いたあとに、出した人がひとこと（3つめの特徴のお店の言い方）をえらぶ
+  const PITCH = { '大きい': 'どーんと大きいよ', '小さい': 'ちっちゃくてかわいいよ', 'まるい': 'まんまるだよ', 'ながい': 'ながーいよ', 'ふわふわ': 'ふわふわだよ', 'かたい': 'かちかちだよ', '光る': 'ぴかぴか光るよ', 'とぶ': '空をとぶよ', 'はねる': 'ぴょんぴょんはねるよ', 'あまい': 'あまくておいしいよ', 'つめたい': 'ひんやりつめたいよ', 'あたたかい': 'あつあつだよ', '音が出る': 'いい音がするよ' };
+  const word1 = E.item(want).tags[2];
+  await pitchWord(H, PITCH[word1]);
+  await waitText(C, '#stage .ak-offer', PITCH[word1]);
+  check('raw w', (await gameOf(code)).r.w[holderSeat] === word1);
   // 出さなかった人は、ぴったりだと思う箱をおすすめする。お客さんにはおすすめの数が見える
   await waitText(other, '#stage', 'おすすめしよう');
   check('customer cannot vote', !(await text(C, '#stage')).includes('おすすめしよう'));
@@ -133,7 +148,7 @@ async function offer(c, name, word) {
   await C.page.click('#stage button:has-text("これください！")');
   await roomWhen(code, (r) => r.play[r.game.id].r.h);
   // 決める時間を早送り
-  await rest('PUT', `${L.ROOMS}/${code}/play/${g.id}/r/at`, Date.now() - 30000);
+  await rest('PUT', `${L.ROOMS}/${code}/play/${g.id}/r/at`, Date.now() - 50000);
   await waitText(C, '#stage', 'どのお店にも', 6000);
   await C.page.click('#stage button:has-text("べつの物にする")');
   for (const c of players) await waitText(c, '#stage', 'だれも出さなかった', 6000);
@@ -166,8 +181,8 @@ async function offer(c, name, word) {
   await C.page.click('#stage button:has-text("これください！")');
   const Y = byName(g.seats[y3]);
   const H3 = byName(g.seats[h3]);
-  await offer(Y, alt.name, alt.tags[0]);
-  await offer(H3, E.item(want).name, E.item(want).tags[1]);
+  await offer(Y, alt.name);
+  await offer(H3, E.item(want).name);
   await waitText(C, '#stage', 'どの箱を受け取る？');
   check('two boxes', (await C.page.$$('#stage .ak-offer')).length === 2);
   const before = (await gameOf(code)).S.players.map((p) => p.points);
@@ -194,7 +209,7 @@ async function offer(c, name, word) {
   await C.page.click('#stage button:has-text("これください！")');
   const X = byName(g.seats[x4]);
   const Z = byName(g.seats[z4]);
-  await offer(X, E.item(wrong).name, E.item(wrong).tags[0]);
+  await offer(X, E.item(wrong).name);
   await waitText(Z, '#stage', 'どうする？');
   await Z.page.click('#stage .ak-choice:has-text("出さない")');
   await waitText(C, '#stage', 'どの箱を受け取る？');
