@@ -175,6 +175,28 @@ body { background: var(--color-bg); }
   .hbw-peg, .hbw-try, .hbw-status { animation: none !important; }
 }
 
+/* 入力・結果の列と一覧 */
+.hbw-stage, .hbw-stage__main { display: grid; gap: 14px; }
+.hbw-stage__main:not(:has(> :not([hidden]))) { display: none; }
+
+/* 広い画面: 入力（左）と一覧（右）を横にならべ、色をならべながらこれまでのヒントを見られるようにする */
+@media (min-width: 1000px) {
+  .hbw-main.hbw-game:has(.hbw-stage.is-side) { max-width: 1180px; }
+  .hbw-stage.is-side { grid-template-columns: minmax(0, 540px) minmax(0, 1fr); align-items: start; gap: 20px; }
+  .hbw-stage.is-side .hbw-stage__main { position: sticky; top: 12px; }
+  .hbw-stage.is-side .hbw-input, .hbw-stage.is-side .hbw-result { max-width: none; }
+  /* 一覧は画面の高さに収め、中をスクロールする（上の札・番の表示のぶんをひく） */
+  .hbw-stage.is-side .hbw-board__list { max-height: max(240px, calc(100vh - 340px)); }
+}
+/* 横にならべたときの右の列は 2人分の一覧には少しせまいので、上下に重ねる */
+@media (min-width: 1000px) and (max-width: 1139px) {
+  .hbw-stage.is-side .hbw-boards.is-duel { grid-template-columns: minmax(0, 1fr); }
+  .hbw-stage.is-side .hbw-boards.is-duel .hbw-board__list { max-height: max(160px, calc(50vh - 220px)); }
+  /* 重ねると一覧のはばは足りるので、ヒントは色の右に出して1行を低くする（見える行をふやす） */
+  .hbw-stage.is-side .hbw-boards.is-duel .hbw-try { grid-template-columns: 3.4em auto 1fr; }
+  .hbw-stage.is-side .hbw-boards.is-duel .hbw-try__res { grid-column: auto; justify-self: end; }
+}
+
 /* みんなにみせる画面 */
 .is-watch .hbw-main { padding-top: 12px; max-width: 1100px; }
 .is-watch .hbw-status { font-size: 26px; }
