@@ -1,0 +1,260 @@
+/* あれください商店 接頭辞 ak- */
+
+body { background: var(--color-bg); }
+
+body { background: var(--color-bg); }
+
+/* 画面の切り替え */
+.ak-screen { display: none; }
+.ak-screen.active { display: block; }
+.ak-front.active { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px 16px; }
+.ak-panel { width: 100%; max-width: 440px; background: var(--color-surface); border-radius: var(--radius-card); padding: 32px 28px; border: 1px solid var(--color-border); }
+.ak-panel__title { font-size: 30px; color: var(--color-primary); margin: 8px 0 12px; }
+.ak-panel__title--sub { font-size: 24px; }
+.ak-panel__lead { color: var(--color-text); line-height: 1.7; margin: 0 0 16px; }
+.ak-panel__notes { margin: 0 0 24px; padding-left: 1.2em; color: var(--color-muted); line-height: 1.8; }
+.ak-panel__actions { display: grid; gap: 12px; }
+.ak-alert { margin: 12px 0 0; color: var(--color-error); font-weight: 500; }
+.ak-back { margin: -8px 0 4px -8px; }
+.ak-hint { margin: 0 0 16px; padding: 10px 14px; border-radius: var(--radius-sm); background: var(--color-accent-soft); color: var(--color-primary); line-height: 1.6; font-size: 14px; }
+.ak-code-input { text-transform: uppercase; letter-spacing: 0.2em; font-weight: 700; }
+
+/* 弱いボタン（テキストリンク風） */
+.ak-quiet {
+  display: inline-flex; align-items: center; gap: 4px;
+  min-height: 44px; padding: 8px 10px; border: none; background: none;
+  color: var(--color-accent); font-family: inherit; font-size: 15px; font-weight: 500; cursor: pointer;
+  border-radius: var(--radius-sm);
+}
+.ak-quiet:hover { background: rgba(138, 74, 16, 0.08); }
+.ak-quiet:disabled { color: var(--color-muted); opacity: 0.55; cursor: not-allowed; background: none; }
+.ak-quiet .material-symbols-rounded { font-size: 20px; }
+.ak-quiet--center { justify-self: center; align-self: center; }
+
+/* バー */
+.ak-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding: 12px 20px; background: var(--color-primary); color: #fff; }
+.ak-bar__title { font-size: 18px; margin: 0; margin-right: auto; }
+.ak-bar__me { margin: 0; font-size: 14px; }
+.ak-bar__badge { margin: 0; padding: 2px 10px; border-radius: 999px; background: var(--color-accent); font-size: 13px; font-weight: 700; }
+.ak-roombar { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 4px 6px; padding: 6px 12px; background: var(--color-surface); border-bottom: 1px solid var(--color-border); }
+.ak-roombar__code { margin-right: 6px; font-size: 14px; color: var(--color-muted); }
+.ak-roombar__code strong { color: var(--color-primary); letter-spacing: 0.1em; font-size: 16px; }
+.is-watch .ak-roombar .btn { display: none; }
+.is-watch .ak-roombar #btnLeave { display: inline-flex; }
+
+/* ホストの戻りを待つ */
+.ak-overlay-page { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.45); display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 60; }
+.ak-overlay-page__panel { background: var(--color-surface); border-radius: var(--radius-card); padding: 24px; max-width: 360px; text-align: center; display: grid; gap: 12px; }
+.ak-overlay-page__panel h2 { margin: 0; font-size: 20px; color: var(--color-primary); }
+.ak-overlay-page__panel p { margin: 0; color: var(--color-muted); line-height: 1.6; }
+
+/* 待合室 */
+.ak-main { max-width: 720px; margin: 0 auto; padding: 20px 16px 64px; }
+.ak-phase { display: grid; gap: 16px; }
+.ak-h2 { font-size: 18px; color: var(--color-primary); margin: 0 0 12px; }
+.ak-note { margin: 10px 0 0; color: var(--color-muted); font-size: 14px; line-height: 1.6; }
+.ak-wait { margin: 0; color: var(--color-muted); text-align: center; }
+.ak-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.ak-row--nowrap { flex-wrap: nowrap; }
+.ak-row--nowrap .form-input { flex: 1 1 auto; min-width: 0; }
+.ak-setview { margin: 0; font-weight: 500; line-height: 1.7; }
+.ak-people { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+.ak-person { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 8px; background: var(--color-bg); min-height: 44px; }
+.ak-person .material-symbols-rounded { color: var(--color-muted); font-size: 20px; }
+.ak-person__name { font-weight: 500; }
+.ak-person__del { margin-left: auto; min-height: 36px; }
+.ak-chip { font-size: 12px; padding: 2px 8px; border-radius: 999px; background: var(--color-accent); color: #fff; white-space: nowrap; font-weight: 500; }
+.ak-chip--muted { background: var(--color-border); color: var(--color-text); }
+.ak-chip--you { background: transparent; color: var(--color-muted); border: 1px solid var(--color-border); }
+.ak-chip--warn { background: #FFF4E5; color: var(--color-warning); }
+.ak-joininfo { background: var(--color-surface); border: 2px solid var(--color-accent); border-radius: var(--radius-box); padding: 20px; text-align: center; }
+.ak-joininfo__label { margin: 0 0 6px; font-size: 13px; font-weight: 500; color: var(--color-accent); letter-spacing: 0.08em; }
+.ak-joininfo__text { margin: 0; }
+.ak-joininfo__code { margin: 6px 0 0; font-size: 40px; font-weight: 700; letter-spacing: 0.15em; color: var(--color-primary); }
+.ak-check { display: flex; align-items: center; gap: 10px; min-height: 44px; margin-top: 10px; cursor: pointer; font-weight: 500; }
+.ak-check input { width: 20px; height: 20px; accent-color: var(--color-accent); flex: none; }
+
+/* ホストがたまに使う操作（「そのほかの操作」。開くと出る） */
+.ak-hostmenu { margin-top: 12px; border-top: 1px solid var(--color-border); }
+.ak-hostmenu[hidden] { display: none; }
+.ak-hostmenu summary {
+  min-height: 44px; display: flex; align-items: center; gap: 6px;
+  color: var(--color-muted); font-size: 14px; font-weight: 700; cursor: pointer; list-style: none;
+}
+.ak-hostmenu summary::-webkit-details-marker { display: none; }
+.ak-hostmenu summary::before { content: "expand_more"; font-family: "Material Symbols Rounded"; font-size: 22px; color: var(--color-accent); transition: transform .15s; }
+.ak-hostmenu[open] summary::before { transform: rotate(180deg); }
+.ak-hostmenu__body { display: grid; gap: 8px; padding-bottom: 4px; }
+
+
+
+/* 設定（待合室） */
+.ak-set { display: grid; gap: var(--space-md); }
+.ak-set[hidden] { display: none; }
+.ak-field .ak-note { margin-top: 6px; }
+.ak-field__label { margin: 0 0 6px; font-weight: 700; font-size: var(--font-size-sub); color: var(--color-primary); }
+.ak-seg { display: flex; flex-wrap: wrap; gap: 6px; }
+.ak-seg__btn { min-height: 48px; padding: 6px 14px; border: 2px solid var(--color-border); border-radius: var(--radius-btn); background: var(--color-surface); color: var(--color-text); font: inherit; font-weight: 700; cursor: pointer; }
+.ak-seg--num .ak-seg__btn { min-width: 44px; padding: 6px 8px; }
+.ak-seg__btn.is-on { border-color: var(--color-accent); background: var(--color-accent-soft); color: var(--color-accent); }
+.ak-seg__btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+@media (max-width: 600px) {
+  .ak-panel { padding: 24px 18px; }
+  .ak-bar { padding: 10px 16px; }
+  .ak-roombar { gap: 4px; padding: 6px 8px; }
+  .ak-roombar .btn { padding: 4px 8px; font-size: 13px; min-height: 36px; }
+  .ak-main { padding: 14px 12px 56px; }
+}
+
+/* ───────── 対決の画面 ───────── */
+.ak-game { max-width: 860px; display: grid; gap: var(--space-md); }
+.ak-h2__count { margin-left: 8px; font-size: 15px; color: var(--color-muted); font-weight: 500; }
+.ak-hero { display: flex; justify-content: center; gap: 10px; margin-bottom: var(--space-sm); }
+.ak-hero .ak-art { width: 72px; height: 72px; }
+
+/* 上の帯: のこり時間・自分のポイント */
+.ak-top { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-sm) var(--space-md); }
+.ak-stat { margin: 0; display: inline-flex; align-items: center; gap: 4px; font-weight: 700; color: var(--color-primary); font-variant-numeric: tabular-nums; }
+.ak-stat[hidden] { display: none; }
+.ak-stat b { font-size: var(--font-size-lg); }
+.ak-stat .material-symbols-rounded { color: var(--color-accent); }
+.ak-stat.is-low { color: var(--color-accent); }
+.ak-stat--me { margin-left: auto; }
+.ak-timebar { height: 8px; margin-top: -8px; border-radius: var(--radius-full); background: var(--color-primary-soft); overflow: hidden; }
+.ak-timebar[hidden] { display: none; }
+.ak-timebar i { display: block; height: 100%; width: 100%; background: var(--color-accent); transition: width 0.5s linear; }
+
+/* 商店街（遊ぶ人のお店） */
+.ak-town { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: var(--space-sm); }
+.ak-house { padding: 8px 6px; background: var(--color-surface); border: 2px solid var(--color-border); border-radius: var(--radius-sm); text-align: center; font-size: var(--font-size-sub); line-height: 1.45; }
+.ak-house.is-turn { border-color: var(--c); box-shadow: 0 0 0 3px color-mix(in srgb, var(--c) 25%, transparent); }
+.ak-house.is-away { opacity: 0.55; }
+.ak-house__name { display: block; font-weight: 700; color: color-mix(in srgb, var(--c) 75%, #000); overflow-wrap: anywhere; }
+.ak-house__you { display: inline-block; margin: 2px 0; padding: 0 8px; border: 1px solid var(--color-border); border-radius: var(--radius-full); font-size: var(--font-size-sm); color: var(--color-muted); }
+.ak-house__sub { display: block; color: var(--color-muted); font-size: var(--font-size-sm); }
+.ak-town.is-many .ak-house .ak-face { width: 34px; height: 34px; }
+
+/* 顔とヒントの印 */
+.ak-face { display: block; width: 44px; height: 44px; margin: 0 auto 2px; color: var(--c); }
+.ak-face--sm { display: inline-block; width: 28px; height: 28px; margin: 0; flex: none; }
+.ak-face--big { width: 72px; height: 72px; margin: 0 auto var(--space-sm); }
+.ak-ti { display: inline-block; width: 1.05em; height: 1.05em; flex: none; }
+.ak-art svg, .ak-face svg, .ak-ti svg, .ak-offer__box svg { display: block; width: 100%; height: 100%; overflow: visible; }
+
+/* 役割。お客さんは茶オレンジ、お店の人は青みどり */
+.ak-role b, .ak-house__role { display: inline-block; padding: 1px 10px; border-radius: var(--radius-full); background: #1F6F78; color: #fff; font-weight: 700; white-space: nowrap; }
+.ak-role--ask b, .ak-house__role.is-ask { background: var(--color-accent); }
+.ak-role { display: flex; justify-content: center; align-items: center; gap: 8px; margin: 0 0 var(--space-sm); font-size: var(--font-size-sub); color: var(--color-muted); }
+.ak-role b { font-size: 16px; padding: 3px 14px; }
+.ak-house__role { margin: 2px 0; font-size: var(--font-size-sm); }
+
+/* まんなか */
+.ak-stage { min-height: 260px; padding: var(--space-md); background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-card); box-shadow: var(--shadow-sm); text-align: center; }
+.ak-stage h2 { margin: 0 0 var(--space-sm); font-size: var(--font-size-lg); color: var(--color-primary); }
+.ak-stage p { margin: 0 0 var(--space-sm); line-height: 1.7; }
+.ak-stage .btn { margin-top: 4px; }
+.ak-order { display: inline-block; padding: 8px 18px; border: 2px solid var(--color-accent); border-radius: var(--radius-sm); font-size: var(--font-size-lg); font-weight: 700; }
+.ak-small { color: var(--color-muted); font-size: var(--font-size-sub); }
+.ak-count { font-weight: 700; color: var(--color-primary); font-variant-numeric: tabular-nums; }
+.ak-done { font-weight: 700; color: #1F6F78; }
+.ak-chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 0 0 var(--space-md); }
+.ak-chip-btn { display: inline-flex; align-items: center; gap: 5px; min-height: 48px; padding: 6px 14px; border: 2px solid var(--color-border); border-radius: var(--radius-full); background: var(--color-surface); color: var(--color-text); font: inherit; font-weight: 700; cursor: pointer; }
+.ak-chip-btn[aria-pressed="true"] { border-color: var(--color-accent); background: var(--color-accent-soft); color: var(--color-accent); }
+.ak-chip-btn:disabled { opacity: 0.45; cursor: default; }
+.ak-said-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
+.ak-said { display: inline-flex; align-items: center; gap: 5px; padding: 4px 14px; border-radius: var(--radius-full); background: var(--color-accent-soft); color: var(--color-accent); font-weight: 700; font-size: var(--font-size-lg); }
+.ak-asked { margin: 0 0 var(--space-sm); padding: 0; list-style: none; display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 8px; font-size: var(--font-size-sub); }
+.ak-asked li { padding: 3px 10px; border-radius: var(--radius-full); background: var(--color-primary-soft); }
+.ak-refuse { color: var(--color-muted); font-size: var(--font-size-sub); }
+
+/* お店の人のできること（出す・質問する・出さない） */
+.ak-choices__title { margin: var(--space-sm) 0 6px; font-weight: 700; color: #1F6F78; }
+.ak-choices { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-sm); text-align: left; }
+.ak-choice { display: block; min-height: 48px; padding: 10px 12px; border: 2px solid #1F6F78; border-radius: var(--radius-sm); background: var(--color-surface); color: var(--color-text); font: inherit; text-align: left; line-height: 1.6; cursor: pointer; }
+.ak-choice b { display: block; color: #1F6F78; }
+.ak-choice span { display: block; font-size: var(--font-size-sm); color: var(--color-muted); }
+.ak-choice:hover:not(:disabled) { background: #E3F1F2; }
+.ak-choice:disabled { opacity: 0.5; cursor: default; }
+.ak-choice--point { border-style: dashed; background: #E3F1F2; cursor: default; }
+
+/* 出された箱（中は見えない） */
+.ak-offers { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--space-sm); margin: var(--space-sm) 0; }
+.ak-offer { width: 140px; padding: 10px 6px; border: 2px solid #8A6532; border-radius: var(--radius-sm); background: #C99A5B; color: #3A2A12; font: inherit; line-height: 1.5; }
+button.ak-offer { cursor: pointer; }
+button.ak-offer:hover { transform: translateY(-2px); }
+.ak-offer__box { display: block; width: 56px; height: 56px; margin: 0 auto 4px; }
+button.ak-offer:hover .ak-offer__box { animation: ak-shake 0.5s ease-in-out; }
+.ak-offer b { display: block; overflow-wrap: anywhere; }
+.ak-offer span { display: block; font-size: var(--font-size-sm); white-space: nowrap; }
+
+/* 結果 */
+.ak-result { font-size: var(--font-size-xl); font-weight: 700; color: var(--color-accent); animation: ak-pop 0.4s cubic-bezier(0.3, 1.5, 0.5, 1); }
+.ak-result--hit { color: var(--color-success); }
+.ak-got { display: inline-block; padding: 10px 20px; border-radius: var(--radius-sm); background: var(--color-accent-soft); font-size: var(--font-size-lg); font-weight: 700; }
+.ak-voice { font-weight: 700; }
+.ak-gain { display: inline-block; padding: 2px 14px; border-radius: var(--radius-full); background: var(--color-accent-soft); color: var(--color-accent); font-weight: 700; animation: ak-pop 0.4s cubic-bezier(0.3, 1.5, 0.5, 1); }
+
+/* 品物の絵 */
+.ak-art { display: block; flex: none; }
+.ak-art--card { width: 64px; height: 64px; }
+.ak-art--mid { width: 96px; height: 96px; margin: 0 auto 6px; }
+.ak-art--big { width: 140px; height: 140px; margin: 6px auto 10px; }
+
+/* 動き。大きな絵（ほしい物・結果・はじめの画面）だけ */
+.ak-art--live .a-fly, .ak-art--live .a-hop, .ak-art--live .a-twinkle, .ak-art--live .a-wing { transform-box: fill-box; transform-origin: 50% 50%; }
+.ak-art--live .a-fly { animation: ak-fly 2.6s ease-in-out infinite; }
+.ak-art--live .a-hop { transform-origin: 50% 100%; animation: ak-hop 1.1s cubic-bezier(0.3, 0, 0.4, 1) infinite; }
+.ak-art--live .a-twinkle { animation: ak-twinkle 1.4s ease-in-out infinite; }
+.ak-art--live .a-steam { animation: ak-steam 2s ease-in-out infinite; }
+.ak-art--live .a-note { animation: ak-note 1.2s ease-in-out infinite; }
+.ak-art--pop { animation: ak-pop 0.45s cubic-bezier(0.3, 1.5, 0.5, 1); }
+.ak-art--shake svg { animation: ak-shake 0.45s ease-in-out 2; }
+@keyframes ak-fly { 0%, 100% { transform: translateY(2px); } 50% { transform: translateY(-5px); } }
+@keyframes ak-hop { 0%, 100% { transform: translateY(0) scale(1.06, 0.92); } 45% { transform: translateY(-9px) scale(0.96, 1.05); } }
+@keyframes ak-twinkle { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.35; transform: scale(0.8); } }
+@keyframes ak-steam { 0%, 100% { opacity: 0.4; transform: translateY(2px); } 50% { opacity: 1; transform: translateY(-2px); } }
+@keyframes ak-note { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+@keyframes ak-shake { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(-7deg); } 75% { transform: rotate(7deg); } }
+@keyframes ak-pop { from { transform: scale(0.6); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+/* あなたのお店 */
+.ak-shelfbox { padding: var(--space-sm) var(--space-md) var(--space-md); border: 2px solid var(--color-border); border-radius: var(--radius-card); background: var(--color-surface); }
+.ak-shelfbox[hidden] { display: none; }
+.ak-shelfbox.is-give { border-color: #1F6F78; background: #E3F1F2; }
+.ak-shelfbox.is-rest .ak-shelf { opacity: 0.6; }
+.ak-shelfbox__title { margin: 0 0 6px; font-weight: 700; color: var(--color-primary); }
+.ak-shelfbox__note { margin-left: 10px; font-weight: 700; font-size: var(--font-size-sub); color: #1F6F78; }
+.ak-shelf { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--space-sm); }
+.ak-card { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px; border: 2px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-surface); color: var(--color-text); font: inherit; text-align: center; }
+.ak-card b { display: block; margin-bottom: 4px; }
+.ak-card.is-sent { border-color: var(--color-accent); }
+button.ak-card { cursor: pointer; border-color: #1F6F78; }
+button.ak-card:hover { box-shadow: 0 0 0 3px color-mix(in srgb, #1F6F78 25%, transparent); }
+.ak-tag { white-space: nowrap; display: inline-flex; align-items: center; gap: 3px; margin: 2px 4px 0 0; padding: 1px 8px; border-radius: var(--radius-full); background: var(--color-primary-soft); font-size: var(--font-size-sm); }
+.ak-tag.is-match { background: var(--color-accent-soft); color: var(--color-accent); font-weight: 700; }
+
+/* おわり */
+.ak-endtitle { font-size: var(--font-size-xl) !important; }
+.ak-endlabel { margin: 0 !important; font-weight: 700; color: var(--color-primary); }
+.ak-endbig { margin: 0 0 var(--space-sm) !important; font-size: 56px; font-weight: 700; color: var(--color-accent); line-height: 1.2 !important; }
+.ak-titles { list-style: none; margin: var(--space-sm) auto var(--space-md); padding: 0; display: grid; gap: var(--space-sm); max-width: 560px; text-align: left; }
+.ak-titles li { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 8px; padding: 8px 12px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); line-height: 1.6; }
+.ak-titles b { color: var(--color-accent); }
+.ak-endbtns { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--space-sm); }
+
+/* みんなにみせる画面: 操作は出さない */
+.is-watch .ak-hostmenu { display: none; }
+
+@media (max-width: 600px) {
+  .ak-town { grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .ak-house { padding: 6px 4px; }
+  .ak-house .ak-face { width: 34px; height: 34px; }
+  .ak-choices { grid-template-columns: 1fr; }
+  .ak-offer { width: 120px; }
+  .ak-shelf { grid-template-columns: repeat(2, 1fr); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ak-result, .ak-gain, .ak-art--pop, .ak-art--shake svg, button.ak-offer:hover .ak-offer__box, .ak-art--live .a-fly, .ak-art--live .a-hop, .ak-art--live .a-twinkle, .ak-art--live .a-steam, .ak-art--live .a-note, .ak-art--live .a-wing { animation: none; }
+  button.ak-offer:hover { transform: none; }
+}

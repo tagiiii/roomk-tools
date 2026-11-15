@@ -1,0 +1,208 @@
+// あれください商店 E2E その1: 作成・参加・待合室・お客さん・お店の人・質問・結果・決める時間・合う物のポイント・
+// 読み込み直し・退出した人の番を飛ばす・ここで終わる・もう一回・時間切れ・待合室へ・ルームを閉じる・みんなにみせる画面
+// 隔離エミュレーターだけを使う（本番には接続しない）。README.md を参照
+const L = require('./lib.cjs');
+const { E, check, sleep, rest, roomWhen, gameOf, waitScreen, waitText, visible, waitVisible, text, overflow, waitFor, shot } = L;
+
+(async () => {
+  const server = await L.startServer();
+  await L.launch();
+  const host = await L.newClient('host'); host.name = 'ホスト';
+  const a = await L.newClient('a'); a.name = 'あおい';
+  const b = await L.newClient('b'); b.name = 'みどり';
+  const players = [host, a, b];
+  const code = await L.createRoom(host, 'ホスト');
+  check('room code', /^[A-HJ-NP-Z2-9]{6}$/.test(code), code);
+  await L.joinRoom(a, 'あおい', code);
+  await L.joinRoom(b, 'みどり', code);
+  await waitText(host, '#peopleCount', '3人');
+  check('lobby count', (await text(host, '#peopleCount')) === '3人');
+  check('host sees settings', await visible(host, '#timeSeg'));
+  check('guest sees summary', (await text(a, '#lobbySetView')).includes('10分'));
+  // 設定: 5分・みんなのポイントを見せる
+  await host.page.click('#timeSeg .ak-seg__btn:nth-child(1)');
+  await host.page.check('#showAll');
+  await roomWhen(code, (r) => r.set.time === 5 && r.set.showAll === true);
+  await waitText(a, '#lobbySetView', '5分');
+  check('guest summary updated', (await text(a, '#lobbySetView')).includes('みんなのポイント'));
+
+  // みんなにみせる画面
+  const watch = await L.newClient('watch');
+  await L.open(watch, '?watch=' + code);
+  await waitScreen(watch, 'waiting');
+  check('watch join info', (await text(watch, '#lobbyJoinCode')) === code);
+
+  await host.page.click('#btnStartGame');
+  for (const c of [...players, watch]) await waitScreen(c, 'game');
+  let g = await gameOf(code);
+  check('game seats', g && g.seats.length === 3, g?.seats);
+  check('limit 5', g.raw.limit === 5);
+  await shot(host, '01-start');
+
+  // ── 1回目: ぴったり ──
+  const byName = (name) => players.find((c) => c.name === name);
+  let cust = g.seats[g.S.turn];
+  let want = g.S.players[g.S.turn].order;
+  let C = byName(cust);
+  await waitText(C, '#stage', 'あなたのほしい物');
+  check('customer sees wanted', (await text(C, '#stage')).includes(E.item(want).name));
+  for (const o of players.filter((x) => x !== C)) {
+    await waitText(o, '#stage', 'ヒントをえらんでいる');
+    check('others do not see wanted: ' + o.label, !(await text(o, '#stage')).includes(E.item(want).name));
+  }
+  check('watch does not see wanted', !(await text(watch, '#stage')).includes(E.item(want).name));
+  check('customer has no shelf', !(await visible(C, '#shelfBox')));
+  // ヒント2つ（ほしい物のヒントから）
+  const tags = E.item(want).tags.slice(0, 2);
+  for (const t of tags) await C.page.click(`#stage .ak-chip-btn:has-text("${t}")`);
+  check('third hint disabled', await C.page.evaluate(() => [...document.querySelectorAll('#stage .ak-chip-btn')].filter((b) => b.disabled).length === 11));
+  await C.page.click('#stage button:has-text("これください！")');
+  g = await roomWhen(code, (r) => r.play[r.game.id].r.h).then(() => gameOf(code));
+  check('hints written', g.r.h === tags.join(','), g.r);
+  const holderSeat = E.holderOf(g.S, want);
+  const H = byName(g.seats[holderSeat]);
+  const other = players.find((x) => x !== C && x !== H);
+  await waitText(H, '#stage', 'どうする？');
+  check('countdown shown', /のこり \d+秒/.test(await text(H, '#stage')));
+  check('watch sees hints', (await text(watch, '#stage')).includes(tags[0]));
+  // もう1人のお店: 質問してから出さない
+  await waitText(other, '#stage', 'どうする？');
+  await other.page.click('#stage .ak-choice:has-text("お客さんに質問する")');
+  const askTag = E.TAGS.find((t) => !tags.includes(t));
+  await other.page.click(`#stage .ak-chip-btn:has-text("${askTag}")`);
+  const yes = E.item(want).tags.includes(askTag);
+  await waitText(other, '#stage', 'それは、' + askTag + '？');
+  check('answer right', (await text(other, '#stage')).includes(cust + '「' + (yes ? 'はい' : 'いいえ') + '」'));
+  await waitText(C, '#stage', 'それは、' + askTag);
+  check('rest count', (await text(other, '#stage')).includes('あと1回'));
+  await other.page.click('#stage .ak-choice:has-text("出さない")');
+  // 持っている人: ほしい物を出す
+  await waitVisible(H, '#shelf button.ak-card');
+  await H.page.click(`#shelf button.ak-card:has-text("${E.item(want).name}")`);
+  await waitText(C, '#stage', 'どの箱を受け取る？');
+  check('one box', (await C.page.$$('#stage .ak-offer')).length === 1);
+  check('decline shown', (await text(C, '#stage')).includes('うちにはないです'));
+  check('box label sure', (await text(C, '#stage')).includes('うちにあるよ'));
+  await C.page.click('#stage button.ak-offer');
+  for (const c of [...players, watch]) await waitText(c, '#stage', 'ぴったり！', 6000);
+  check('wanted revealed to watch', (await text(watch, '#stage')).includes(E.item(want).name));
+  check('gain shown to customer', (await text(C, '#stage')).includes('あなた +2ポイント'));
+  check('gain shown to holder', (await text(H, '#stage')).includes('あなた +2ポイント'));
+  check('no gain for other', !(await text(other, '#stage')).includes('あなた +'));
+  g = await gameOf(code);
+  check('points', g.S.players[g.seats.indexOf(cust)].points === 2 && g.S.players[holderSeat].points === 2, g.S.players.map((p) => p.points));
+  check('round advanced', g.r.n === 2 && g.last.n === 1 && g.last.hit === true);
+  check('ask counted', g.S.players[g.seats.indexOf(other.name)].stat.ask === 1);
+  check('town shows points (showAll)', (await text(a, '#town')).includes('2ポイント'));
+  await shot(watch, '02-result-watch');
+  await L.waitStats(C, 'hit', 1);
+
+  // ── 2回目: 時間が来て、だれも出さなかった ──
+  for (const c of players) await c.page.click('#stage button:has-text("とじる")').catch(() => {});
+  cust = g.seats[g.S.turn];
+  C = byName(cust);
+  want = g.S.players[g.S.turn].order;
+  await waitText(C, '#stage', 'あなたのほしい物');
+  await C.page.click(`#stage .ak-chip-btn:has-text("${E.item(want).tags[0]}")`);
+  await C.page.click('#stage button:has-text("これください！")');
+  await roomWhen(code, (r) => r.play[r.game.id].r.h);
+  // 決める時間を早送り
+  await rest('PUT', `${L.ROOMS}/${code}/play/${g.id}/r/at`, Date.now() - 30000);
+  await waitText(C, '#stage', 'どのお店にも', 6000);
+  await C.page.click('#stage button:has-text("べつの物にする")');
+  for (const c of players) await waitText(c, '#stage', 'だれも出さなかった', 6000);
+  g = await gameOf(code);
+  check('none round', g.last.none === true && g.r.n === 3);
+
+  // ── 3回目: えらばれなかったけれど、ヒントに合う物を出したお店にも1ポイント ──
+  for (const c of players) await c.page.click('#stage button:has-text("とじる")').catch(() => {});
+  g = await gameOf(code);
+  const c3 = g.S.turn;
+  want = g.S.players[c3].order;
+  const t3 = E.item(want).tags.slice(0, 2);
+  const h3 = E.holderOf(g.S, want);
+  const y3 = [0, 1, 2].find((i) => i !== c3 && i !== h3);
+  const alt = E.ITEMS.find((it) => it.id !== want && t3.every((t) => it.tags.includes(t)) && E.holderOf(g.S, it.id) < 0 && g.S.deck.includes(it.id));
+  check('found a fitting item', !!alt);
+  // 合う物を y3 のお店に入れる（山から入れかえ）
+  const hand = g.S.players[y3].hand.slice(); hand[0] = alt.id;
+  await rest('PUT', `${L.ROOMS}/${code}/play/${g.id}/h/${y3}`, hand.join(','));
+  C = byName(g.seats[c3]);
+  await waitText(C, '#stage', 'あなたのほしい物');
+  for (const t of t3) await C.page.click(`#stage .ak-chip-btn:has-text("${t}")`);
+  await C.page.click('#stage button:has-text("これください！")');
+  const Y = byName(g.seats[y3]);
+  const H3 = byName(g.seats[h3]);
+  await waitVisible(Y, '#shelf button.ak-card');
+  await Y.page.click(`#shelf button.ak-card:has-text("${alt.name}")`);
+  await waitVisible(H3, '#shelf button.ak-card');
+  await H3.page.click(`#shelf button.ak-card:has-text("${E.item(want).name}")`);
+  await waitText(C, '#stage', 'どの箱を受け取る？');
+  check('two boxes', (await C.page.$$('#stage .ak-offer')).length === 2);
+  const before = (await gameOf(code)).S.players.map((p) => p.points);
+  await C.page.click(`#stage button.ak-offer:has-text("${g.seats[h3]}のお店")`);
+  await waitText(Y, '#stage', 'ぴったり！', 6000);
+  check('fit message', (await text(Y, '#stage')).includes('ヒントに合う物を出した'));
+  check('fit gain', (await text(Y, '#stage')).includes('あなた +1ポイント'));
+  g = await gameOf(code);
+  check('fit points', g.S.players[y3].points === before[y3] + 1 && g.S.players[h3].points === before[h3] + 2, [before, g.S.players.map((p) => p.points)]);
+  check('fit item stays', g.S.players[y3].hand.includes(alt.id));
+
+  // ── 読み込み直し（参加者）: 同じ席にもどる ──
+  await a.page.reload();
+  await waitScreen(a, 'game');
+  check('reload keeps seat', (await text(a, '#myPointsBox')) !== null && await visible(a, '#myPointsBox'));
+
+  // ── 退出した人の番は、ホストが飛ばせる ──
+  for (const c of players) await c.page.click('#stage button:has-text("とじる")').catch(() => {});
+  await b.page.click('#btnLeave');
+  await L.waitScreen(b, 'top');
+  await roomWhen(code, (r) => !r.players['みどり']);
+  // みどりの番にする
+  g = await gameOf(code);
+  const mi = g.seats.indexOf('みどり');
+  if (g.S.turn !== mi) await rest('PUT', `${L.ROOMS}/${code}/play/${g.id}/turn`, mi);
+  await waitText(host, '#stage', '通信が切れているよ');
+  check('away in town', (await text(host, '#town')).includes('通信が切れた'));
+  await host.page.click('#stage button:has-text("この番を飛ばす")');
+  await waitText(host, '#stage', 'の番を飛ばした', 6000);
+  g = await gameOf(code);
+  check('skipped', g.last.skip === true && g.S.turn !== mi);
+  await L.waitStats(host, 'skip', 1);
+
+  // ── ここで終わる → おわり ──
+  await host.page.click('#stage button:has-text("とじる")').catch(() => {});
+  await host.page.click('#btnEndNow');
+  for (const c of [host, a, watch]) await waitText(c, '#stage', 'おしまい', 6000);
+  check('titles', (await host.page.$$('#stage .ak-titles li')).length === 3);
+  check('end my points', (await text(a, '#stage')).includes('あなたのポイント'));
+  check('watch no my points', !(await text(watch, '#stage')).includes('あなたのポイント'));
+  check('guest waits', (await text(a, '#stage')).includes('ホストが、もう一回'));
+  check('no shelf at end', !(await visible(a, '#shelfBox')));
+  await shot(host, '03-end');
+  await L.waitStats(host, 'finish', 1);
+
+  // ── もう一回（いる人で決めなおす: みどりは外れる） ──
+  await host.page.click('#stage button:has-text("もう一回")');
+  await waitText(host, '#stage', '', 6000);
+  g = await roomWhen(code, (r) => r.game.id === 2).then(() => gameOf(code));
+  check('again seats', g.seats.length === 2 && !g.seats.includes('みどり'), g.seats);
+  await waitFor(async () => !(await text(a, '#stage')).includes('おしまい'));
+
+  // ── 時間切れ ──
+  await rest('PUT', `${L.ROOMS}/${code}/game/startAt`, Date.now() - 6 * 60000);
+  for (const c of [host, a]) await waitText(c, '#stage', 'おしまい', 6000);
+  check('time up clock', (await text(host, '#clockText')) === '0:00');
+
+  // ── 待合室へ → ルームを閉じる ──
+  await host.page.click('#stage button:has-text("待合室へ")');
+  for (const c of [host, a, watch]) await waitScreen(c, 'waiting');
+  await host.page.click('#btnLeave');
+  await waitScreen(a, 'top');
+  await waitScreen(watch, 'watch-end');
+  check('room removed', (await L.roomOf(code)) === null);
+
+  // スマホ幅: はみ出さない
+  check('no overflow host', (await overflow(host)) <= 0);
+  await L.finishAll(server);
+})().catch(async (e) => { console.error(e); process.exit(1); });
