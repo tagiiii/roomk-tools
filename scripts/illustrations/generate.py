@@ -6,6 +6,7 @@
 
 - 絵の中身は scripts/illustrations/prompts.json の {app} の文（英語）。新しいツールは先にここへ足す。
 - 色は apps/index.html のカードの data-genre から、その種類の色を2つ渡す（GENRE_COLORS）。
+  カードがないスタッフ向けのツールは STAFF_COLORS の色。
 - できた絵は 400px の webp にして apps/assets/illustrations/{app}.webp に書く（上書きする）。
   1枚でも失敗したら終了コード 1 で終わる。
 - 1枚ごとに fal の料金がかかる（2026-11 時点で約 0.04 ドル）。
@@ -41,6 +42,11 @@ GENRE_COLORS = {
     'talk': ('#E07BAA', '#9E2F63'),
 }
 
+# ツール一覧にカードがないスタッフ向けのツール（data-genre がない）の色。画面の地の色に合わせる
+STAFF_COLORS = {
+    'hiroba-roulette': ('#F2B35C', '#8A4A10'),
+}
+
 STYLE_SUFFIX = (
     'Warm hand-drawn picture book illustration with soft crayon and colored pencil texture, '
     'gentle colors, cheerful and friendly for children. '
@@ -67,7 +73,7 @@ def card_genres():
 
 
 def generate(app, prompt, genre, key):
-    color, ink = GENRE_COLORS[genre]
+    color, ink = STAFF_COLORS[app] if app in STAFF_COLORS else GENRE_COLORS[genre]
     body = {
         'prompt': prompt + '. ' + STYLE_SUFFIX,
         'image_size': 'square_hd',
@@ -103,13 +109,13 @@ def main():
     for app in apps:
         if app not in prompts:
             sys.exit('%s の文が prompts.json にありません' % app)
-        if genres.get(app) not in GENRE_COLORS:
+        if app not in STAFF_COLORS and genres.get(app) not in GENRE_COLORS:
             sys.exit('%s のカード（data-genre）が apps/index.html にありません' % app)
     os.makedirs(OUT_DIR, exist_ok=True)
 
     def run(app):
         try:
-            return True, generate(app, prompts[app], genres[app], key)
+            return True, generate(app, prompts[app], genres.get(app), key)
         except Exception as error:  # 1枚の失敗でほかを止めない
             return False, '%s: 失敗 %s' % (app, error)
 

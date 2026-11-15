@@ -53,6 +53,7 @@
   .intro-head{ position:absolute; left:70px; top:50px; right:70px; }
   .intro-koma{ display:inline-flex; align-items:center; gap:14px; background:var(--accent); color:#fff; border-radius:999px; padding:8px 26px; font:900 30px var(--zm); }
   .intro-koma .tm{ font-weight:700; opacity:.9; }
+  .intro-illust{ position:absolute; right:300px; top:60px; width:176px; height:176px; border-radius:30px; object-fit:cover; background:var(--paper); }
   .intro-title{ font:900 60px/1.15 var(--zm); margin:18px 0 0; letter-spacing:.02em; }
   .intro-title small{ display:block; font-size:24px; font-weight:700; color:var(--muted); margin-top:12px; letter-spacing:0; }
   .progs{ position:absolute; left:70px; right:70px; top:290px; display:grid; gap:28px; align-items:start; }
@@ -227,6 +228,7 @@
       <div class="intro-koma"><span id="introKoma"></span><span class="tm" id="introTime"></span></div>
       <h1 class="intro-title">この時間のプログラム<small>どれに参加しても、ここでみんなと過ごしてもOK</small></h1>
     </div>
+    <img class="intro-illust paper" src="../assets/illustrations/hiroba-roulette.webp" alt="" width="176" height="176" decoding="async" onerror="this.remove()" />
     <div class="progs" id="progs"></div>
     <div class="intro-none" id="introNone" hidden>この日のプログラムが見つかりませんでした。<br>そのまま「どう過ごしたい？」へ進めます</div>
   </section>
