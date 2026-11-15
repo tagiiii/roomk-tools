@@ -236,7 +236,8 @@ body { background: var(--color-bg); }
 .mc-tools { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 8px; }
 
 /* 補助の設定（あそんでいる間） */
-.mc-dialog { width: min(520px, calc(100vw - 32px)); border: none; border-radius: var(--radius-card); padding: 24px 20px; }
+/* 共通の CSS が全要素の余白を0にしているので、ダイアログの中央寄せと字の色をもどす */
+.mc-dialog { width: min(520px, calc(100vw - 32px)); margin: auto; color: var(--color-text); border: none; border-radius: var(--radius-card); padding: 24px 20px; }
 .mc-dialog::backdrop { background: rgba(0, 0, 0, 0.4); }
 
 /* みんなにみせる画面 */
