@@ -39,7 +39,41 @@
   [data-genre="board"] { --g:#E8707B; --g-pale:#FDE9EB; --g-ink:#A3303C; }
   [data-genre="talk"]  { --g:#E07BAA; --g-pale:#FCE9F2; --g-ink:#9E2F63; }
   .view{ position:absolute; inset:0; display:none; }
-  body[data-view="ask"] #ask, body[data-view="wheel"] #wheel{ display:block; }
+  body[data-view="intro"] #intro, body[data-view="sugoshi"] #sugoshi, body[data-view="ask"] #ask, body[data-view="wheel"] #wheel{ display:block; }
+
+  /* ───── いまどの段か ───── */
+  .steps{ position:absolute; left:70px; top:12px; display:flex; align-items:center; gap:10px; font:700 17px var(--zm); color:var(--muted); z-index:4; }
+  .steps .st{ display:flex; align-items:center; gap:6px; opacity:.55; }
+  .steps .st b{ width:24px; height:24px; border-radius:50%; background:var(--muted); color:#fff; display:flex; align-items:center; justify-content:center; font-size:14px; }
+  .steps .st.on{ opacity:1; color:var(--accent); }
+  .steps .st.on b{ background:var(--accent); }
+  .steps .ar{ opacity:.4; font-size:18px; }
+
+  /* ───── 1. このコマのプログラム ───── */
+  .intro-head{ position:absolute; left:70px; top:50px; right:70px; }
+  .intro-koma{ display:inline-flex; align-items:center; gap:14px; background:var(--accent); color:#fff; border-radius:999px; padding:8px 26px; font:900 30px var(--zm); }
+  .intro-koma .tm{ font-weight:700; opacity:.9; }
+  .intro-title{ font:900 60px/1.15 var(--zm); margin:18px 0 0; letter-spacing:.02em; }
+  .intro-title small{ display:block; font-size:24px; font-weight:700; color:var(--muted); margin-top:12px; letter-spacing:0; }
+  .progs{ position:absolute; left:70px; right:70px; top:330px; display:grid; gap:28px; }
+  .prog{ background:var(--paper); border-radius:28px; padding:30px 34px; min-height:200px; display:flex; flex-direction:column; justify-content:center; gap:14px; }
+  .prog .pn{ font:900 44px/1.25 var(--zm); }
+  .prog .pp{ display:inline-flex; align-items:center; gap:8px; font:700 26px var(--zm); color:var(--muted); }
+  .prog .pp .ms{ font-size:30px; color:var(--accent); }
+  .intro-none{ position:absolute; left:70px; top:360px; font:700 30px/1.6 var(--zm); color:var(--muted); }
+
+  /* ───── 2. 過ごし方 ───── */
+  .sg-grid{ position:absolute; left:70px; right:70px; top:250px; display:grid; grid-template-columns:repeat(3,1fr); grid-auto-rows:240px; gap:30px 28px; }
+  .sg{ position:relative; border:0; background:var(--paper); border-radius:28px; cursor:pointer; font:inherit; color:inherit; display:flex; align-items:center; gap:24px; padding:0 30px 0 36px; text-align:left; transition:transform .15s; user-select:none; }
+  .sg:hover{ transform:translateY(-2px); }
+  .sg.has{ box-shadow:0 0 0 5px var(--accent); }
+  .sg .num{ position:absolute; left:-12px; top:-14px; width:58px; height:58px; border-radius:50%; background:var(--accent-soft); color:var(--accent); box-shadow:inset 0 0 0 4px var(--accent);
+            font:900 32px var(--zm); display:flex; align-items:center; justify-content:center; }
+  .sg .ic{ width:120px; height:120px; border-radius:50%; background:var(--c); display:flex; align-items:center; justify-content:center; flex:none; }
+  .sg .ic .ms{ font-size:70px; color:#fff; }
+  .sg .lb{ font:900 38px/1.25 var(--zm); flex:1; }
+  .sg .tokens{ position:absolute; right:16px; top:16px; display:flex; flex-wrap:wrap; justify-content:flex-end; gap:5px; width:120px; }
+  .sg-notes{ position:absolute; left:70px; bottom:40px; display:flex; gap:40px; }
 
   /* ───── 聞く画面（ひとこと＋したいこと） ───── */
   .ask-head{ position:absolute; left:70px; top:40px; right:60px; display:flex; gap:40px; align-items:flex-start; }
@@ -163,13 +197,13 @@
   #bar .ppl b{ min-width:34px; text-align:center; }
 
   #bar .sep{ width:1px; height:26px; background:rgba(255,255,255,.25); }
-  body[data-view="ask"] .w-only, body[data-view="wheel"] .a-only{ display:none !important; }
+  body:not([data-view="intro"]) .i-only, body:not([data-view="sugoshi"]) .s-only, body:not([data-view="ask"]) .a-only, body:not([data-view="wheel"]) .w-only{ display:none !important; }
   body.idle #bar, body.idle .howto-fab, body.idle .howto-feedback-fab{ opacity:0; pointer-events:none; }
   .howto-fab, .howto-feedback-fab{ transition:opacity .3s; }
 
 </style>
 </head>
-<body data-view="ask">
+<body data-view="intro">
 <div id="stage">
   <div class="bg">
     <div class="paper sun"></div>
@@ -177,13 +211,45 @@
     <div class="paper hill2"></div>
   </div>
 
-  <!-- 聞く画面 -->
+  <div class="steps" aria-hidden="true">
+    <span class="st" data-st="1"><b>1</b>このコマのプログラム</span><span class="ms ar">chevron_right</span>
+    <span class="st" data-st="2"><b>2</b>どう過ごしたい？</span><span class="ms ar">chevron_right</span>
+    <span class="st" data-st="3"><b>3</b>遊びを決める</span>
+  </div>
+
+  <!-- 1. このコマのプログラム -->
+  <section id="intro" class="view" aria-label="このコマのプログラム">
+    <div class="intro-head">
+      <div class="intro-koma"><span id="introKoma"></span><span class="tm" id="introTime"></span></div>
+      <h1 class="intro-title">この時間のプログラム<small>どれに参加しても、ここでみんなと過ごしてもOK</small></h1>
+    </div>
+    <div class="progs" id="progs"></div>
+    <div class="intro-none" id="introNone" hidden>この時間のプログラムは見つかりませんでした</div>
+  </section>
+
+  <!-- 2. どう過ごしたい？ -->
+  <section id="sugoshi" class="view" aria-label="この時間、どう過ごしたい？">
+    <div class="ask-head">
+      <h1 class="ask-title">この時間、どう過ごしたい？<small>ひとことと、決まっていたら番号をおしえてね</small></h1>
+      <div class="topic paper">
+        <div class="topic-label"><span class="ms" aria-hidden="true">chat_bubble</span>ひとことのお題</div>
+        <div class="topic-text" data-topic></div>
+      </div>
+    </div>
+    <div class="sg-grid" id="sgGrid"></div>
+    <div class="sg-notes">
+      <div class="note-line"><span class="ms" aria-hidden="true">chat</span>チャットに番号だけでもOK</div>
+      <div class="note-line"><span class="ms" aria-hidden="true">schedule</span>あとから変えてもOK</div>
+    </div>
+  </section>
+
+  <!-- 3. 遊びを決める -->
   <section id="ask" class="view" aria-label="この時間、なにして遊ぶ？">
     <div class="ask-head">
       <h1 class="ask-title">この時間、なにして遊ぶ？<small>ひとことと、遊びたいゲームの番号をおしえてね</small></h1>
       <div class="topic paper">
         <div class="topic-label"><span class="ms" aria-hidden="true">chat_bubble</span>ひとことのお題</div>
-        <div class="topic-text" id="topicText"></div>
+        <div class="topic-text" data-topic></div>
       </div>
     </div>
     <div class="count"><span class="ms" aria-hidden="true">sports_esports</span><span id="countText"></span></div>
@@ -242,6 +308,14 @@
 </div>
 
 <div id="bar">
+  <button type="button" class="i-only" id="kPrev" title="←"><span class="ms" aria-hidden="true">chevron_left</span>前のコマ</button>
+  <button type="button" class="i-only" id="kNext" title="→">つぎのコマ<span class="ms" aria-hidden="true">chevron_right</span></button>
+  <button type="button" class="i-only main" id="toSugoshi" title="Enter"><span class="ms" aria-hidden="true">arrow_forward</span>どう過ごしたい？へ</button>
+  <button type="button" class="s-only" id="sBack"><span class="ms" aria-hidden="true">arrow_back</span>もどる</button>
+  <button type="button" class="s-only" id="sTopic" title="T"><span class="ms" aria-hidden="true">shuffle</span>お題をかえる</button>
+  <button type="button" class="s-only" id="sClear"><span class="ms" aria-hidden="true">restart_alt</span>えらんだ数を消す</button>
+  <button type="button" class="s-only main" id="toAsk" title="Enter"><span class="ms" aria-hidden="true">arrow_forward</span>遊びを決めるへ</button>
+  <button type="button" class="a-only" id="aBack"><span class="ms" aria-hidden="true">arrow_back</span>もどる</button>
   <span class="ppl a-only">人数<button type="button" id="pplMinus" aria-label="1人へらす">−</button><b id="pplText"></b><button type="button" id="pplPlus" aria-label="1人ふやす">＋</button></span>
   <button type="button" class="a-only" id="btnShuffle"><span class="ms" aria-hidden="true">autorenew</span>ほかの候補</button>
   <button type="button" class="a-only" id="btnTopic" title="T"><span class="ms" aria-hidden="true">shuffle</span>お題をかえる</button>
@@ -335,6 +409,17 @@
     '好きなお菓子', 'ちょっと自慢したいもの', 'いま聞いている曲', '好きな飲みもの',
     'もし1日だけ何でもできるなら？', '好きなキャラクター', 'さいきん買ってよかったもの', '朝ごはんに食べたいもの',
   ];
+  // 試作ではネット通信ができないので、サークルタイムの毎朝のデータ（circle-time/daily/2026-11-16.program.json）を写して使う。
+  // 本体にするときは、休み時間ボードと同じく ../circle-time/daily/{今日}.program.json を読む
+  const MOCK_PROGRAM = [{"start": "9:30", "end": "10:15", "name": "ボドゲクラブ", "place": "クラブルーム"}, {"start": "9:30", "end": "10:15", "name": "ほわぽかひろば", "place": "のんびり"}, {"start": "10:30", "end": "11:15", "name": "マイクラde理科", "place": ""}, {"start": "10:30", "end": "11:15", "name": "おとマルシェ", "place": "クラブルーム"}, {"start": "11:30", "end": "12:15", "name": "まなP", "place": "スタディルーム"}, {"start": "11:30", "end": "12:15", "name": "ここよしの部屋", "place": "のんびり"}, {"start": "13:00", "end": "13:45", "name": "マイスタ!(My Study)", "place": "スタディルーム"}, {"start": "13:00", "end": "13:45", "name": "マイクラde英語(第3月曜)", "place": ""}, {"start": "13:00", "end": "13:45", "name": "\"じぶん”探検", "place": "のんびり"}];
+  const SUGOSHI = [
+    { k:'self',  n:'自分のことをする', ic:'edit_note',     c:'#9CC8D3' },
+    { k:'play',  n:'みんなと遊ぶ',     ic:'sports_esports', c:'#F2B35C' },
+    { k:'talk',  n:'テーマトーク',     ic:'forum',          c:'#E8907B' },
+    { k:'radio', n:'ラジオ参加',       ic:'radio',          c:'#C4A9D6' },
+    { k:'any',   n:'おまかせ',         ic:'thumb_up',       c:'#9FCFB4' },
+    { k:'think', n:'考え中',           ic:'hourglass_empty', c:'#E7C98F' },
+  ];
   const MAX_CANDS = 8;
   const APPS = '../../apps/';
 
@@ -365,8 +450,10 @@
 
   // ───── 聞く画面 ─────
   function showTopic(anim){
-    const el = $('topicText'); el.textContent = TOPICS[topicIdx];
-    if (anim){ el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); }
+    document.querySelectorAll('[data-topic]').forEach(el => {
+      el.textContent = TOPICS[topicIdx];
+      if (anim){ el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); }
+    });
   }
   const fits = (g) => people >= g.min && people <= g.max;
   function fillCands(){
@@ -595,6 +682,8 @@
   function go(view){
     closeResult();
     document.body.dataset.view = view;
+    const st = { intro:'1', sugoshi:'2', ask:'3', wheel:'3' }[view];
+    document.querySelectorAll('.steps .st').forEach(el => el.classList.toggle('on', el.dataset.st === st));
     if (view === 'wheel'){ omakase = []; excluded = new Set(flow.map(f => f.key)); lastWon = null; buildWheel(); }
   }
   function nextRound(){
@@ -603,12 +692,86 @@
   }
   function resetAll(){
     if (spinning) return;
-    votes = {}; flow = []; excluded = new Set(); lastWon = null; rot = 0; $('findInput').value = ''; renderFind(); cands = [];
-    fillCands(); renderGrid(); renderFlow(); go('ask');
+    votes = {}; sgVotes = {}; askVisited = false; flow = []; excluded = new Set(); lastWon = null; rot = 0; $('findInput').value = ''; renderFind(); cands = [];
+    fillCands(); renderGrid(); renderSugoshi(); renderFlow(); go('intro');
   }
   function setPeople(n){ people = Math.max(1, Math.min(12, n)); $('pplText').textContent = `${people}人`; fillCands(); renderGrid(); }
 
-  $('btnTopic').addEventListener('click', () => { topicIdx = (topicIdx + 1 + Math.floor(Math.random() * (TOPICS.length - 1))) % TOPICS.length; showTopic(true); });
+  function nextTopic(){ topicIdx = (topicIdx + 1 + Math.floor(Math.random() * (TOPICS.length - 1))) % TOPICS.length; showTopic(true); }
+  $('btnTopic').addEventListener('click', nextTopic);
+  $('sTopic').addEventListener('click', nextTopic);
+
+  // ───── 1. このコマのプログラム ─────
+  const qs = new URLSearchParams(location.search);
+  const toMin = (t) => { const [h, m] = String(t).split(':').map(Number); return h * 60 + m; };
+  const fmtT = (m) => `${Math.floor(m / 60)}:${String(m % 60).padStart(2, '0')}`;
+  const slots = (() => {
+    const by = new Map();
+    MOCK_PROGRAM.forEach(it => { if (!by.has(it.start)) by.set(it.start, []); by.get(it.start).push(it); });
+    return [...by.entries()].sort((a, b) => toMin(a[0]) - toMin(b[0])).map(([st, its], i) => ({ koma: i + 1, start: toMin(st), end: Math.max(...its.map(x => toMin(x.end))), items: its }));
+  })();
+  function nowMin(){
+    const t = qs.get('t'); if (t && /^\d{1,2}:\d{2}$/.test(t)) return toMin(t);
+    const d = new Date(); return d.getHours() * 60 + d.getMinutes();
+  }
+  // いまのコマ。はじまる15分前からはそのコマ、すべて終わったあとは最後のコマ
+  let slotIdx = (() => { const t = nowMin(); const i = slots.findIndex(s => t < s.end && t >= s.start - 15); if (i >= 0) return i; const j = slots.findIndex(s => s.start > t); return j >= 0 ? j : slots.length - 1; })();
+  function renderIntro(){
+    const s = slots[slotIdx], box = $('progs'); box.textContent = '';
+    $('introNone').hidden = !!s;
+    if (!s){ $('introKoma').textContent = ''; $('introTime').textContent = ''; return; }
+    $('introKoma').textContent = `${s.koma}コマ目`;
+    $('introTime').textContent = `${fmtT(s.start)}〜${fmtT(s.end)}`;
+    box.style.gridTemplateColumns = `repeat(${Math.min(Math.max(s.items.length, 2), 4)},1fr)`;
+    s.items.forEach(it => {
+      const d = document.createElement('div'); d.className = 'prog paper';
+      const n = document.createElement('div'); n.className = 'pn'; n.textContent = it.name;
+      d.appendChild(n);
+      if (it.place){ const pl = document.createElement('div'); pl.className = 'pp'; const ic = document.createElement('span'); ic.className = 'ms'; ic.setAttribute('aria-hidden', 'true'); ic.textContent = 'meeting_room'; pl.append(ic, it.place); d.appendChild(pl); }
+      box.appendChild(d);
+    });
+    $('kPrev').disabled = slotIdx <= 0; $('kNext').disabled = slotIdx >= slots.length - 1;
+  }
+  function moveSlot(d){ slotIdx = Math.max(0, Math.min(slots.length - 1, slotIdx + d)); renderIntro(); }
+  $('kPrev').addEventListener('click', () => moveSlot(-1));
+  $('kNext').addEventListener('click', () => moveSlot(1));
+
+  // ───── 2. どう過ごしたい？（だれが選んだかは出さず、数だけ） ─────
+  let sgVotes = {};
+  function renderSugoshi(){
+    const box = $('sgGrid'); box.textContent = '';
+    SUGOSHI.forEach((o, k) => {
+      const n = sgVotes[o.k] || 0;
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'sg paper' + (n ? ' has' : '');
+      b.setAttribute('aria-label', `${k + 1} ${o.n}（押すと1つ足す・右クリックで1つ減らす）`);
+      const num = document.createElement('span'); num.className = 'num'; num.textContent = k + 1;
+      const ic = document.createElement('span'); ic.className = 'ic'; ic.style.setProperty('--c', o.c);
+      const ms = document.createElement('span'); ms.className = 'ms'; ms.setAttribute('aria-hidden', 'true'); ms.textContent = o.ic; ic.appendChild(ms);
+      const lb = document.createElement('span'); lb.className = 'lb'; lb.textContent = o.n;
+      const tok = document.createElement('span'); tok.className = 'tokens';
+      for (let i = 0; i < Math.min(n, 12); i++){ const d = document.createElement('span'); d.className = 'tok'; tok.appendChild(d); }
+      b.append(num, ic, lb, tok);
+      b.addEventListener('click', (e) => addSg(o.k, e.shiftKey ? -1 : 1));
+      b.addEventListener('contextmenu', (e) => { e.preventDefault(); addSg(o.k, -1); });
+      box.appendChild(b);
+    });
+  }
+  function addSg(k, d){ const n = Math.max(0, Math.min(12, (sgVotes[k] || 0) + d)); if (n) sgVotes[k] = n; else delete sgVotes[k]; renderSugoshi(); }
+  $('sClear').addEventListener('click', () => { sgVotes = {}; renderSugoshi(); });
+  $('toSugoshi').addEventListener('click', () => go('sugoshi'));
+  $('sBack').addEventListener('click', () => go('intro'));
+  $('toAsk').addEventListener('click', toAsk);
+  $('aBack').addEventListener('click', () => go('sugoshi'));
+  let askVisited = false;
+  function toAsk(){
+    // はじめて来たとき: お題を新しくし、「みんなと遊ぶ」「おまかせ」の数に進行役1人を足した人数にする（帯で直せる）
+    if (!askVisited){
+      askVisited = true; nextTopic();
+      const n = (sgVotes.play || 0) + (sgVotes.any || 0);
+      if (n) setPeople(n + 1);
+    }
+    go('ask');
+  }
   // ゲームをさがす：名前・読みの一部で探し、選ぶと候補に入って丸が1つ付く
   const kana = (t) => t.replace(/[\u30a1-\u30f6]/g, c => String.fromCharCode(c.charCodeAt(0) - 0x60)).toLowerCase().replace(/[\s・！!？?ー〜]/g, '');
   const findIdx = GAMES.map(g => kana(g.n) + ' ' + kana(g.y));
@@ -667,6 +830,11 @@
     if (e.target.tagName === 'INPUT' || e.metaKey || e.ctrlKey || e.altKey) return;
     if (document.querySelector('.howto-overlay:not([hidden]), dialog[open]')) return;
     const view = document.body.dataset.view;
+    if (view === 'intro' && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')){ moveSlot(e.key === 'ArrowLeft' ? -1 : 1); e.preventDefault(); return; }
+    if (view === 'intro' && e.key === 'Enter'){ go('sugoshi'); e.preventDefault(); return; }
+    if (view === 'sugoshi' && /^Digit[1-6]$|^Numpad[1-6]$/.test(e.code)){ addSg(SUGOSHI[+e.code.slice(-1) - 1].k, e.shiftKey ? -1 : 1); e.preventDefault(); return; }
+    if (view === 'sugoshi' && (e.key === 't' || e.key === 'T')){ nextTopic(); return; }
+    if (view === 'sugoshi' && e.key === 'Enter'){ toAsk(); e.preventDefault(); return; }
     if (view === 'ask' && /^Digit[1-9]$|^Numpad[1-9]$/.test(e.code)){ const id = cands[+e.code.slice(-1) - 1]; if (id) addVote(id, e.shiftKey ? -1 : 1); e.preventDefault(); return; }
     if (e.key === 'f' || e.key === 'F'){ toggleFull(); return; }
     if (view === 'ask' && (e.key === 't' || e.key === 'T')){ $('btnTopic').click(); return; }
@@ -675,14 +843,17 @@
     if (view === 'wheel' && e.key === 'Escape'){ closeResult(); return; }
   });
 
-  showTopic(false); setPeople(people); renderFlow();
+  showTopic(false); setPeople(people); renderFlow(); renderIntro(); renderSugoshi(); go('intro');
 })();
 </script>
 <script src="../../apps/shared/js/howto.js"></script>
-<script>RoomkHowto.init({ title: 'つかいかた', lead: 'コマのはじめに、ひとことを言いながら遊びたいゲームをおしえてもらって、ルーレットで決める画面だよ。', sections: [
+<script>RoomkHowto.init({ title: 'つかいかた', lead: 'コマのはじめに、プログラムを紹介して、どう過ごしたいかを聞き、みんなで遊ぶゲームをルーレットで決める画面だよ。', sections: [
   { heading: '進行役', items: [
     'この画面をひらいて全画面（F キー）にし、画面共有する。マウスを止めると、下の操作の帯とカーソルが消えるよ。',
-    'はじめに下の帯の「人数」を、その日の人数（スタッフもふくめて）にする。その人数で遊べるゲームから、ランダムに8つが候補に並ぶよ。「ほかの候補」で、えらばれていない候補を入れかえられる。',
+    '1. このコマのプログラム：いまの時刻のコマのプログラムが出る。ちがうコマは「前のコマ」「つぎのコマ」（← →）で変えられる。紹介したら Enter でつぎへ。',
+    '2. どう過ごしたい？：お題へのひとことと、決まっていれば過ごし方の番号を言ってもらう。押すか数字キー 1〜6 で丸が1つ増え、右クリックか Shift で減る。だれの分かは出ないよ。お題は「お題をかえる」（T キー）で変わる。',
+    '3. 遊びを決める：はじめて来たとき、お題が新しくなり、人数は「みんなと遊ぶ」「おまかせ」の数に進行役1人を足した数になる（帯の「人数」で直せる）。',
+    '下の帯の「人数」を、その日の人数（スタッフもふくめて）にする。その人数で遊べるゲームから、ランダムに8つが候補に並ぶよ。「ほかの候補」で、えらばれていない候補を入れかえられる。',
     '遊びたいゲームが候補にないときは、右上の「ゲームをさがす」に、言われた名前や言葉の一部を入れる。出てきたゲームを選ぶと、候補に入って丸が1つ付くよ（8つあるときは、えらばれていない候補と入れかわる）。↑↓ と Enter でも選べる。候補の左下の × で外せるよ。',
     '1人ずつ、お題へのひとことと、遊びたいゲームの番号を言ってもらう（チャットに番号だけでもOK）。お題は「お題をかえる」（T キー）で変わるよ。',
     '聞いたゲームを押すと、丸が1つ増える（数字キーの 1〜8 でも増える）。右クリックか Shift を押しながらで1つ減る。だれの分かは出ないよ。',
