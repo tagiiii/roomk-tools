@@ -32,6 +32,9 @@ const { E, check, cell, waitFor } = L;
   // 二歩: 先手の持ち駒の角を打つ所の点・歩は持っていない
   await M.page.click('#sideBottom .sh-handpiece');
   check('L9 持ち駒を選ぶと打てる所に点', (await L.spots(M)).length > 30, (await L.spots(M)).length);
+  const spotColor = await M.page.$eval('#board .sh-spot', (x) => getComputedStyle(x).backgroundColor);
+  check('L9b 動ける所の点は濃い色（盤と約3.9:1）', spotColor === 'rgb(23, 102, 128)', spotColor);
+  await M.page.locator('#board').screenshot({ path: require('path').join(L.OUT, 'e2e3-spots.png') });
   await M.page.click(cell(33));
   check('L10 相手の駒のある所には打てない', (await L.text(M, '#gameMsg')).includes('駒のあるますには打てない'), await L.text(M, '#gameMsg'));
   // 角を ４五 に打つ（王手ではない）→ 表記に「打」は付かない
@@ -52,6 +55,13 @@ const { E, check, cell, waitFor } = L;
   // 投了（先手の番）
   await M.page.click('#btnResign');
   check('L15 投了の結果', (await L.status(M)) === '▲先手（あおい）が投了。△後手（そら）の勝ち！', await L.status(M));
+  // せまい画面で、結果の文が「▲先手（名前）」の途中で折り返さない
+  await M.page.setViewportSize({ width: 375, height: 812 });
+  const labelLines = await M.page.$$eval('#gameStatus .sh-nowrap', (xs) => xs.map((x) => x.getClientRects().length));
+  const resultLines = await M.page.$eval('#gameStatus .sh-result', (x) => Math.round(x.getBoundingClientRect().height / parseFloat(getComputedStyle(x).lineHeight || 30)));
+  check('L15b 幅375pxで結果の文が名前の途中で折れない', labelLines.length === 2 && labelLines.every((n) => n === 1) && (await L.overflow(M)) <= 0, { labelLines, resultLines });
+  await M.page.locator('#gameStatus').screenshot({ path: require('path').join(L.OUT, 'e2e3-result-narrow.png') });
+  await M.page.setViewportSize({ width: 1100, height: 900 });
   check('L16 local-finish を数える', await L.waitStats(M, 'local-finish', 1));
   check('L17 結果のボタン', (await L.visible(M, '#btnAgain')) && (await L.text(M, '#btnRelobby')) === '盤と補助を変える');
   check('L18 投了のボタンは消える', !(await L.visible(M, '#btnResign')));
