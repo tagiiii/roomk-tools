@@ -122,7 +122,7 @@
   .demo-row{ display:flex; gap:28px; justify-content:center; }
   .demo-cap{ margin-top:26px; text-align:center; font-size:24px; font-weight:700; color:var(--ink-soft); }
   .row__d:empty{ display:none; }
-  .shot{ object-fit:cover; }
+  .shot{ object-fit:contain; background:var(--white); }
 
   /* Q&A */
   .qa{ display:flex; flex-direction:column; gap:16px; }
@@ -274,7 +274,7 @@ const SLIDES = [
 
   /* 3 */ { type:'content', accent:'teal', section:'どんなあそび？', sectionEn:'summary',
     headline:'へんな物ばかりの<span class="hl">商店街</span>で、<br>ほしい物をさがそう',
-    body:`<div class="shot-wrap"><img class="shot" src="../assets/illustrations/arekudasai-shoten.webp" alt="" />${rows(
+    body:`<div class="shot-wrap"><img class="shot" src="../assets/thumbnails/arekudasai-shoten.png" alt="あれください商店の画面の例" />${rows(
       ['storefront', '1人が1つずつ、自分のお店を持つ', 'お店には、へんな品物が4つずつ並んでいるよ'],
       ['shopping_bag', '番の人だけが、お客さんになる', 'ほしい物をさがして、商店街のお店に聞く'],
       ['psychology_alt', 'でも、名前を思い出せない', 'だから、ヒント2つで聞くよ。ちがう物が出てくることもある'],
