@@ -12,9 +12,9 @@
     deal: 0.6, discard: 0.7, pick: 0.35, turn: 0.55, win: 0.75, draw: 0.6, dora: 0.6,
     'v-ron': 1, 'v-tsumo': 1, 'v-pon': 1, 'v-chi': 1, 'v-kan': 1, 'v-riichi': 1,
   };
-  // 声のファイルがまだないあいだは読まない（合成音で鳴る）
-  const VOICE_FILES = false;
-  const VER = '20261115a';
+  // 声のファイル（scripts/mahjong/voice.py で作った）を読むか。false のあいだは合成音で鳴る
+  const VOICE_FILES = true;
+  const VER = '20261115b';
   const S = { on: false, ac: null, out: null, noise: null, buf: {}, loading: false };
   try { S.on = localStorage.getItem(KEY) === '1'; } catch (e) { /* 使えなければ切のまま */ }
 

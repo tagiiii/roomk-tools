@@ -99,6 +99,8 @@ const id = (k, copy) => k * 4 + copy;
   await guest.page.waitForFunction(() => window.__snd.includes('win'));
   check('guest heard ron voice + win', await guest.page.evaluate(() => window.__snd.includes('v-ron') && window.__snd.includes('win')));
   check('sfx files fetched only by guest', sfxFetched.length > 0 && !sfxFetched.some((u) => u.startsWith('host')), sfxFetched.slice(0, 3));
+  check('voice files fetched', ['v-ron', 'v-pon', 'v-riichi'].every((v) => sfxFetched.some((u) => u.includes('/sfx/' + v + '.mp3'))));
+  check('voice decoded', await guest.page.evaluate(() => fetch('sfx/v-ron.mp3').then((r) => r.arrayBuffer()).then((b) => new AudioContext().decodeAudioData(b)).then((x) => x.duration > 0.1)));
   const r2 = await L.roomOf(code);
   check('wins', JSON.parse(r2.wins)['p:そら'] === 1, r2.wins);
   check('stats finish on host (ron pressed)', await L.waitStats(host, 'finish', 1));
