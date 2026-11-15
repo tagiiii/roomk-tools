@@ -58,9 +58,22 @@ const movesOf = (room) => (room?.game?.moves ? Object.keys(room.game.moves).leng
   check('T19 CPU の番は「考え中」', await waitFor(async () => (await L.status(G)) === '△後手（CPU）が考え中'), await L.status(G));
   const r2 = await L.roomWhen(code, (r) => movesOf(r) === 2, 8000);
   check('T20 CPU が指す', movesOf(r2) === 2);
+  check('T20b CPU は時間を使わない（CPU の持ち時間は減らない）', !!r2 && r2.game.clock.used.g === 0, r2 && r2.game.clock);
   check('T21 またホストの番', await waitFor(async () => (await L.status(H)).startsWith('あなたの番（▲先手）')), await L.status(H));
   await H.page.click('#btnUndo');
   check('T23 1手もどすで CPU の手と自分の手をもどす', !!(await L.roomWhen(code, (r) => movesOf(r) === 0)));
+  // ホストの通信が切れている間は、CPU は指さない
+  await waitFor(async () => (await L.status(H)).startsWith('あなたの番'));
+  await L.move(H, 15, 10);
+  await L.roomWhen(code, (r) => movesOf(r) === 1, 5000);
+  await H.page.evaluate(() => firebase.database().goOffline());
+  await L.sleep(3000);
+  check('T23b 通信が切れている間は CPU が指さない', movesOf(await L.roomOf(code)) === 1);
+  await H.page.evaluate(() => firebase.database().goOnline());
+  check('T23c 通信がもどると CPU が指す', movesOf(await L.roomWhen(code, (r) => movesOf(r) === 2, 10000)) === 2);
+  await waitFor(async () => (await L.status(H)).startsWith('あなたの番'));
+  await H.page.click('#btnUndo');
+  await L.roomWhen(code, (r) => movesOf(r) === 0);
   check('T24 もどしたあとも CPU は指さない（ホストの番）', await waitFor(async () => (await L.status(H)) === 'あなたの番（▲先手）'));
   await L.sleep(1500);
   check('T25 ホストの番のまま', movesOf(await L.roomOf(code)) === 0);
@@ -102,6 +115,10 @@ const movesOf = (room) => (room?.game?.moves ? Object.keys(room.game.moves).leng
   await H.page.selectOption('#seat1', '#cpu:strong');
   check('T35 CPU どうしは「はじめる」を押せない', await waitFor(async () => H.page.isDisabled('#btnStartGame')));
   check('T36 CPU どうしの知らせ', (await L.text(H, '#seatNote')).includes('CPU どうし'), await L.text(H, '#seatNote'));
+  await H.page.setViewportSize({ width: 375, height: 800 });
+  const seatW = await H.page.$eval('#seat0', (n) => n.getBoundingClientRect().width);
+  check('T36b スマホ幅では席の選びが縦に並び、幅が広い', seatW > 280, seatW);
+  await H.page.setViewportSize({ width: 1100, height: 900 });
 
   // ── 1台の画面の持ち時間 ──
   const M = await L.newClient('local');
@@ -131,6 +148,13 @@ const movesOf = (room) => (room?.game?.moves ? Object.keys(room.game.moves).leng
   await M.page.setViewportSize({ width: 375, height: 800 });
   check('T44 幅 375px ではみ出さない', !(await L.overflow(M)));
   await L.shot(M, 'e2e4-local-375');
+  const clockLeftX = await M.page.$eval('#sideBottom .sh-clock', (n) => n.getBoundingClientRect().right);
+  check('T45 スマホ幅で時計が右下の丸ボタンにかからない（左寄り）', clockLeftX < 240, clockLeftX);
+  await M.page.click('#btnAid');
+  await M.page.waitForSelector('#aidDialog[open]');
+  const gap = await M.page.$eval('#aidDialog', (n) => { const b = n.getBoundingClientRect(); return [b.left, window.innerWidth - b.right, b.top, window.innerHeight - b.bottom]; });
+  check('T46 補助の設定のダイアログが画面の中央に出る', Math.abs(gap[0] - gap[1]) < 4 && Math.abs(gap[2] - gap[3]) < 4, gap);
+  await M.page.click('#btnAidClose');
 
   await L.finishAll(server);
 })();

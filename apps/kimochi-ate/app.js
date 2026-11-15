@@ -118,6 +118,8 @@ const SESSION_KEY = 'kimochiate_session';
 const ORPHAN_TTL_MS = 2 * 60 * 1000;
 const PRESENCE_RETRY_MS = 3000;
 const MAX_GUESTS = 8;
+// 端末なしの参加者（ホストが代わりに選ぶ）の上限。ゲストの8人の中に数える
+const MAX_PROXIES = 4;
 const ROOM_CODE_PATTERN = /^[A-HJ-NP-Z2-9]{6}$/;
 const STATUS = {
   WAITING: 'waiting',
@@ -155,6 +157,8 @@ const state = {
   starGroup: null,
   starWord: null,
   guessGroup: null,
+  // ホストが代わりに選んでいる、端末なしの参加者の名前（null ならホスト自身）
+  proxyFor: null,
 };
 const $ = (id) => document.getElementById(id);
 
@@ -164,6 +168,15 @@ function showScreen(id) {
   $('screen-' + id).classList.add('active');
   state.currentScreen = id;
   $('roomBar').hidden = !state.roomRef;
+}
+
+// ホストの戻りを待つ画面。出ている間は、うしろの画面をキーボードでも操作できなくする
+function setHostOff(on) {
+  const overlay = $('hostOffOverlay');
+  const was = !overlay.hidden;
+  overlay.hidden = !on;
+  document.querySelector('.wrapper').inert = on;
+  if (on && !was) $('btnOverlayLeave').focus();
 }
 
 function setError(id, message) {
@@ -213,6 +226,20 @@ function memberNames(room) {
 
 function guestNames(room) {
   return memberNames(room).filter((name) => !room.players[name].isHost);
+}
+
+// 端末なしの参加者（在室を持たず、ホストが代わりに選ぶ。uid はホストの匿名ID）
+function isProxy(room, name) {
+  return !!name && room?.players?.[name]?.proxy === true;
+}
+
+function proxyNames(room) {
+  return memberNames(room).filter((name) => isProxy(room, name));
+}
+
+// 端末なしの子が主役の場面は、ホストがその子の気持ちを代わりに入れて知っているので、ホスト自身は予想しない
+function hostSitsOut(room) {
+  return !!room?.hostPlays && isProxy(room, room.star);
 }
 
 // 主役・予想をする人か（ホストは「ホストも遊ぶ」のときだけ）
@@ -305,6 +332,7 @@ function roundOrder(room) {
   Object.keys(roundPicks(room)).forEach((name) => {
     if (!order.has(name)) order.set(name, Number.MAX_SAFE_INTEGER);
   });
+  if (hostSitsOut(room)) order.delete(room.host);
   return [...order.entries()]
     .sort((a, b) => a[1] - b[1] || a[0].localeCompare(b[0], 'ja'))
     .map(([name]) => name);
@@ -430,6 +458,7 @@ function cleanupRoom() {
     uiKey: null,
     castPick: null,
     watchTimer: null,
+    proxyFor: null,
   });
   resetChoice();
   clearSession();
@@ -444,9 +473,15 @@ function cleanupRoom() {
   $('starWords').className = 'ka-words';
   $('doneText').textContent = '';
   $('infoText').textContent = '';
-  $('hostOffOverlay').hidden = true;
+  $('proxyTools').hidden = true;
+  $('proxyList').replaceChildren();
+  delete $('proxyList').dataset.key;
+  $('proxyName').value = '';
+  setError('proxyError', '');
+  setHostOff(false);
   $('btnOpenWatch').hidden = true;
   $('roomBar').hidden = true;
+  $('roomBar').classList.remove('ka-roombar--slim');
 }
 
 function leaveLocally(message, isError = true) {
@@ -834,6 +869,8 @@ function handleRoom(room) {
   if (state.presenceDirty) ensurePresence(true);
   else if (needsPresence(room)) ensurePresence();
   updateHostOverlay(room);
+  // スマホでは、遊んでいる間の参加者のルームバーを1段にする（コピー・QR は待機中とホストにだけ出す。style.css）
+  $('roomBar').classList.toggle('ka-roombar--slim', state.role === 'guest' && room.status !== STATUS.WAITING);
   syncUiKey(room);
   switch (room.status) {
     case STATUS.CASTING: renderCasting(room); break;
@@ -841,11 +878,49 @@ function handleRoom(room) {
     case STATUS.REVEAL: renderReveal(room); break;
     default: renderWaiting(room);
   }
+  renderProxyTools(room);
+}
+
+// 端末なしの参加者を足す・外す欄（ホストだけ）。待機・主役えらび・公開の画面の決まった場所に移して出す。
+// 選ぶ途中（answering）は出さない（その場面の参加者を変えないため）
+const PROXY_SLOTS = { [STATUS.WAITING]: 'proxySlotWaiting', [STATUS.CASTING]: 'proxySlotCasting', [STATUS.REVEAL]: 'proxySlotReveal' };
+function renderProxyTools(room) {
+  const panel = $('proxyTools');
+  const slotId = state.role === 'host' ? PROXY_SLOTS[room.status || STATUS.WAITING] : null;
+  if (!slotId) {
+    panel.hidden = true;
+    return;
+  }
+  const slot = $(slotId);
+  if (panel.parentNode !== slot) slot.append(panel);
+  panel.hidden = false;
+  const names = proxyNames(room);
+  const list = $('proxyList');
+  const key = names.join('\n');
+  if (list.dataset.key !== key) {
+    const focused = list.contains(document.activeElement);
+    list.replaceChildren();
+    names.forEach((name) => {
+      const row = makeElement('li', 'ka-people__item');
+      const button = makeElement('button', 'btn btn-ghost btn-sm', '外す');
+      button.type = 'button';
+      button.setAttribute('aria-label', name + 'を外す');
+      button.addEventListener('click', () => removeProxy(name));
+      row.append(makeElement('span', 'ka-people__name', name), button);
+      list.append(row);
+    });
+    list.dataset.key = key;
+    if (focused) $('proxyName').focus();
+  }
+  list.hidden = !names.length;
+  const full = names.length >= MAX_PROXIES || guestNames(room).length >= MAX_GUESTS;
+  $('btnAddProxy').disabled = full;
+  $('proxyName').disabled = full;
 }
 
 function updateHostOverlay(room) {
   if (state.role === 'guest' && room.hostConnected === false) {
-    $('hostOffOverlay').hidden = false;
+    setHostOff(true);
     // 切れたままのあいだに切れた時刻だけが新しくなったら（ホストの通信が短く揺れたとき）、期限のタイマーを仕掛けなおす。
     // 古い時刻のまま動くと「まだ期限前」で消せず、待つ画面のまま残る（2026-11-13）
     if (state.orphanTimer && state.orphanAt !== RoomkRTDB.getHostDisconnectedAt(room)) { clearTimeout(state.orphanTimer); state.orphanTimer = null; }
@@ -860,7 +935,7 @@ function updateHostOverlay(room) {
       }, delay);
     }
   } else {
-    $('hostOffOverlay').hidden = true;
+    setHostOff(false);
     clearTimeout(state.orphanTimer);
     state.orphanTimer = null;
   }
@@ -874,6 +949,7 @@ function syncUiKey(room) {
   if (key === state.uiKey) return;
   state.uiKey = key;
   state.castPick = null;
+  state.proxyFor = null;
   resetChoice();
 }
 
@@ -893,6 +969,11 @@ function mineTag(name) {
   return name === state.nickname ? ['あなた'] : [];
 }
 
+// 「端末なし」の印はホストの画面にだけ出す（子どもどうしの画面では区別しない）
+function proxyTag(room, name) {
+  return state.role === 'host' && isProxy(room, name) ? ['端末なし'] : [];
+}
+
 function renderWaiting(room) {
   showScreen('waiting');
   const host = state.role === 'host';
@@ -904,7 +985,7 @@ function renderWaiting(room) {
   renderPeople('waitingPlayers', memberNames(room), (name) => {
     if (!room.players[name].isHost) return '参加中';
     return room.hostPlays ? 'ホスト（遊ぶ）' : 'ホスト（進行）';
-  }, mineTag);
+  }, (name) => mineTag(name).concat(proxyTag(room, name)));
   $('hostWaitingTools').hidden = !host;
   if (!host) return;
   const enough = playingNames(room).length >= 2;
@@ -916,7 +997,7 @@ function renderWaiting(room) {
 
 function renderCastChoices(candidates) {
   const box = $('castChoices');
-  const key = candidates.join('\n');
+  const key = candidates.map((name) => name + (isProxy(state.room, name) ? '*' : '')).join('\n');
   if (box.dataset.key !== key) {
     const focused = box.contains(document.activeElement) ? document.activeElement.dataset.name : null;
     box.replaceChildren();
@@ -927,6 +1008,7 @@ function renderCastChoices(candidates) {
       button.setAttribute('aria-label', (index + 1) + '番: ' + name);
       button.append(makeElement('span', 'ka-castbtn__num', circledNum(index + 1)), makeElement('span', '', name));
       if (name === state.nickname) button.append(makeElement('span', 'ka-tag', 'あなた'));
+      if (isProxy(state.room, name)) button.append(makeElement('span', 'ka-tag', '端末なし'));
       button.addEventListener('click', () => {
         state.castPick = name;
         if (state.room) renderCasting(state.room);
@@ -959,7 +1041,9 @@ function renderCasting(room) {
   renderCastChoices(candidates);
   const enough = candidates.length >= 2;
   $('btnConfirmStar').disabled = !enough || !state.castPick;
-  $('castNote').textContent = enough ? '' : '遊ぶ人が2人以上になったら始められるよ。';
+  $('castNote').textContent = enough
+    ? (isProxy(room, state.castPick) && room.hostPlays ? '端末なしの子が主役のときは、ホストが代わりに選ぶので、ホストは予想しません。' : '')
+    : '遊ぶ人が2人以上になったら始められるよ。';
 }
 
 // 系の番号・系名・代表語。代表語は語の途中で折り返さない（語ごとにまとめ、区切りの「・」で折り返す）
@@ -1050,19 +1134,36 @@ function updateStarAway(room, starPick, host) {
       : (starLeft ? 'ホストが主役をえらびなおすまで待ってね。' : '戻るのを待つか、ホストが主役をえらびなおすまで待ってね。'));
 }
 
+// ホストが代わりに選んでいる端末なしの子（いなくなった・もう選んだときはやめる）
+function currentProxy(room) {
+  const name = state.proxyFor;
+  if (!name) return null;
+  if (state.role !== 'host' || !isProxy(room, name) || !room.members?.[name] || pickOf(room, name)) {
+    state.proxyFor = null;
+    resetChoice();
+    return null;
+  }
+  return name;
+}
+
 function renderAnswering(room) {
   showScreen('answering');
   $('answeringScene').textContent = sceneText(room);
-  const me = state.nickname;
   const uid = currentUid();
+  const proxy = currentProxy(room);
+  // 選ぶ人: ふだんは自分。ホストが端末なしの子の代わりに選んでいる間は、その子
+  const me = proxy || state.nickname;
   const star = room.star;
   const isStar = star === me && room.starUid === uid;
   const starPick = pickOf(room, star);
   const passed = !!starPick?.pass;
-  const guessing = !isStar && playsName(room, me) && room.players?.[me]?.uid === uid;
+  const sitsOut = !proxy && state.role === 'host' && hostSitsOut(room);
+  const guessing = !isStar && !sitsOut && playsName(room, me) && room.players?.[me]?.uid === uid;
   const myPick = isStar ? starPick : pickOf(room, me);
 
-  $('answeringTitle').textContent = isStar ? 'あなたが主役だよ' : (star || '') + 'さんが主役';
+  $('proxyBanner').hidden = !proxy;
+  if (proxy) $('proxyBannerText').textContent = proxy + 'さんの代わりに選んでいます' + (isStar ? '（主役）' : '');
+  $('answeringTitle').textContent = isStar ? (proxy ? proxy + 'さんが主役' : 'あなたが主役だよ') : (star || '') + 'さんが主役';
   $('answeringLead').textContent = isStar
     ? '選んだことは、公開するまでほかの人には見えないよ。'
     : (guessing ? '主役の気持ちがどの系か、予想してね。' : '主役とみんなが選んでいます。');
@@ -1087,6 +1188,10 @@ function renderAnswering(room) {
       show.starGroupPanel = true;
       renderGroupChoices('starGroups', null, chooseStarGroup);
     }
+  } else if (sitsOut && !passed) {
+    show.infoPanel = true;
+    $('infoText').textContent = star + 'さんの代わりに主役を選ぶので、この場面はホストは予想しません。'
+      + (starPick ? '公開するときは「公開する」を押してね。' : '「代わりに選ぶ」から入れてね。');
   } else if (guessing && passed) {
     show.infoPanel = true;
     $('infoText').textContent = passWait;
@@ -1109,13 +1214,65 @@ function renderAnswering(room) {
   if (!host) return;
   const names = [star].concat(roundOrder(room).filter((name) => name !== star));
   renderPeople('answerProgress', names.filter(Boolean), (name) => progressLabel(room, name),
-    (name) => (name === star ? ['主役'] : []).concat(mineTag(name)));
-  // ホストも遊んでいて、まだ自分が選んでいない間は「公開する」を副ボタンにする（主ボタンは1画面に1つ）
-  const hostChoosing = playsName(room, me) && !pickOf(room, me) && !passed;
+    (name) => (name === star ? ['主役'] : []).concat(mineTag(name), proxyTag(room, name)));
+  renderProxyAnswers(room, names.filter((name) => isProxy(room, name) && room.members?.[name]), proxy);
+  // ホストが選ぶ途中（自分の分か、端末なしの子の分）は「公開する」を副ボタンにする（主ボタンは1画面に1つ）
+  const hostChoosing = !!proxy || (playsName(room, state.nickname) && !hostSitsOut(room) && !pickOf(room, state.nickname) && !passed);
   $('btnReveal').hidden = passed;
   $('btnReveal').disabled = !starPick || passed;
   $('btnReveal').className = 'btn btn-full ' + (hostChoosing ? 'btn-secondary' : 'btn-primary');
   $('btnChangeScene').hidden = !passed;
+}
+
+// ホストの画面: 端末なしの子ごとに「代わりに選ぶ」「えらびなおす」（中身は出さない）
+function renderProxyAnswers(room, names, active) {
+  $('proxyAnswerPanel').hidden = !names.length;
+  const list = $('proxyAnswerList');
+  const focusedName = list.contains(document.activeElement) ? document.activeElement.dataset.name : null;
+  list.replaceChildren();
+  names.forEach((name) => {
+    const row = makeElement('li', 'ka-people__item');
+    const who = makeElement('span', 'ka-people__name', name);
+    if (name === room.star) who.append(makeElement('span', 'ka-tag', '主役'));
+    const side = makeElement('span', 'ka-proxyrow');
+    const pick = pickOf(room, name);
+    const starPassed = !!pickOf(room, room.star)?.pass;
+    side.append(makeElement('span', 'ka-people__status', name === active ? '選んでいます' : progressLabel(room, name)));
+    let button = null;
+    if (pick) {
+      button = makeElement('button', 'btn btn-ghost btn-sm', pick.pass ? 'パスをやめる' : 'えらびなおす');
+      button.addEventListener('click', () => withdrawPick(name));
+    } else if (name !== active && (name === room.star || !starPassed)) {
+      button = makeElement('button', 'btn btn-secondary btn-sm', '代わりに選ぶ');
+      button.addEventListener('click', () => startProxy(name));
+    }
+    if (button) {
+      button.type = 'button';
+      button.dataset.name = name;
+      button.setAttribute('aria-label', name + 'さんの' + button.textContent);
+      side.append(button);
+    }
+    row.append(who, side);
+    list.append(row);
+    if (button && name === focusedName) button.focus();
+  });
+}
+
+function startProxy(name) {
+  state.proxyFor = name;
+  resetChoice();
+  if (!state.room) return;
+  renderAnswering(state.room);
+  $('proxyBanner').scrollIntoView({ block: 'start', behavior: 'smooth' });
+  focusVisible('#starGroups .ka-groupbtn', '#guessGroups .ka-groupbtn');
+}
+
+function stopProxy() {
+  const name = state.proxyFor;
+  state.proxyFor = null;
+  resetChoice();
+  if (state.room) handleRoom(state.room);
+  focusVisible(`#proxyAnswerList button[data-name="${CSS.escape(name || '')}"]`, '#proxyAnswerList button');
 }
 
 function renderReveal(room) {
@@ -1151,7 +1308,7 @@ function renderReveal(room) {
     const group = GROUPS[guess.group];
     const row = makeElement('li', 'ka-guesses__item');
     const who = makeElement('span', 'ka-guesses__name', name);
-    mineTag(name).forEach((tag) => who.append(makeElement('span', 'ka-tag', tag)));
+    mineTag(name).concat(proxyTag(room, name)).forEach((tag) => who.append(makeElement('span', 'ka-tag', tag)));
     const chip = makeElement('span', 'ka-chip ka-group--' + group.key);
     chip.append(makeElement('span', 'ka-chip__num', circledNum(guess.group + 1)), makeElement('span', '', group.name));
     const mark = makeElement('span', 'ka-guesses__pick');
@@ -1213,6 +1370,8 @@ function connectWatch(code, ref) {
   // 共有するタブ・ウィンドウを選ぶときに見分けられるよう、題名と見出しを変える
   document.title = 'みんなにみせる画面 | 気持ち当てゲーム | あそびのたな';
   $('watchBadge').hidden = false;
+  // 共有の1画面（1280×720）に収まるよう、見出し・ルームバー・一覧を詰めた見た目にする（style.css の .ka-watch）
+  document.body.classList.add('ka-watch');
   state.roomCode = code;
   state.roomRef = ref;
   $('roomCodeLabel').textContent = code;
@@ -1253,7 +1412,7 @@ function handleSpectator(room) {
 // ホストが切断している間はオーバーレイを出し、期限切れになったら終わりの表示にする（ルームは消さない）
 function updateWatchOverlay(room) {
   const off = room.hostConnected === false;
-  $('hostOffOverlay').hidden = !off;
+  setHostOff(off);
   clearTimeout(state.watchTimer);
   state.watchTimer = null;
   if (!off) return;
@@ -1314,8 +1473,9 @@ function stopWatch() {
   const box = $('watchGroups');
   box.replaceChildren();
   delete box.dataset.key;
-  $('hostOffOverlay').hidden = true;
+  setHostOff(false);
   $('roomBar').hidden = true;
+  document.body.classList.remove('ka-watch');
   document.title = DEFAULT_TITLE;
   $('watchBadge').hidden = true;
   history.replaceState(null, '', location.pathname);
@@ -1347,12 +1507,14 @@ function chooseGuessGroup(index) {
   if (state.room) renderAnswering(state.room);
 }
 
-// 自分の選択を、今のラウンドの枠にだけ書く。進行が変わっていたら書かない
-async function writePick(makePick, failMessage) {
+// 自分の選択（ホストが代わりに選ぶときは、その端末なしの子の選択）を、今のラウンドの枠にだけ書く。進行が変わっていたら書かない
+async function writePick(makePick, failMessage, target = state.nickname) {
   if (state.role !== 'host' && state.role !== 'guest') return false;
   if (state.busy || !state.roomRef || !state.room) return false;
+  if (target !== state.nickname && state.role !== 'host') return false;
   const round = state.room.round;
-  const nickname = state.nickname;
+  const nickname = target;
+  const forProxy = target !== state.nickname;
   const uid = currentUid();
   state.busy = true;
   try {
@@ -1362,6 +1524,7 @@ async function writePick(makePick, failMessage) {
       if (!room || isExpired(room)) return;
       if (room.status !== STATUS.ANSWERING) { reason = 'moved'; return; }
       if (room.round !== round) { reason = 'changed'; return; }
+      if (forProxy && (room.hostUid !== uid || !isProxy(room, nickname))) return;
       const pick = makePick(room, nickname, uid);
       if (!pick) return;
       const key = 'r' + room.round;
@@ -1386,25 +1549,39 @@ async function writePick(makePick, failMessage) {
   }
 }
 
+// 選んだあと: 代わりに選んでいたときは、その子の行へ戻る
+function afterSubmit(target) {
+  if (target === state.nickname) {
+    afterPickChange('#btnWithdraw');
+    return;
+  }
+  state.proxyFor = null;
+  afterPickChange(`#proxyAnswerList button[data-name="${CSS.escape(target)}"]`, '#proxyAnswerList button');
+}
+
 async function submitStar(choice) {
+  const target = state.proxyFor || state.nickname;
   const ok = await writePick((room, nickname, uid) => {
     if (room.star !== nickname || room.starUid !== uid) return null;
     if (choice.pass) return { pass: true };
     if (!isGroupIndex(choice.group)) return null;
     if (choice.word == null) return { group: choice.group };
     return isWordIndex(choice.group, choice.word) ? { group: choice.group, word: choice.word } : null;
-  }, 'えらべませんでした。もう一度ためしてね');
-  if (ok) afterPickChange('#btnWithdraw');
+  }, 'えらべませんでした。もう一度ためしてね', target);
+  if (ok) afterSubmit(target);
 }
 
 async function submitGuess(choice) {
+  const target = state.proxyFor || state.nickname;
   const ok = await writePick((room, nickname, uid) => {
     if (room.star === nickname || !playsName(room, nickname)) return null;
+    // 端末なしの子が主役の場面は、ホスト自身は予想しない
+    if (room.players[nickname]?.isHost && hostSitsOut(room)) return null;
     if (room.players[nickname].uid !== uid || reservedByOther(room, nickname, uid)) return null;
     if (choice.skip) return { skip: true };
     return isGroupIndex(choice.group) ? { group: choice.group } : null;
-  }, '予想を出せませんでした。もう一度ためしてね');
-  if (ok) afterPickChange('#btnWithdraw');
+  }, '予想を出せませんでした。もう一度ためしてね', target);
+  if (ok) afterSubmit(target);
 }
 
 // 選ぶ・取り消すでパネルが切り替わったあと、フォーカスが body に飛ばないよう次の操作へ移す
@@ -1425,11 +1602,12 @@ function focusVisible(...selectors) {
   }
 }
 
-async function withdrawPick() {
+async function withdrawPick(target) {
   if (state.role !== 'host' && state.role !== 'guest') return;
   if (state.busy || !state.roomRef || !state.room) return;
+  const nickname = typeof target === 'string' ? target : state.nickname;
+  if (nickname !== state.nickname && (state.role !== 'host' || !isProxy(state.room, nickname))) return;
   const round = state.room.round;
-  const nickname = state.nickname;
   const uid = currentUid();
   state.busy = true;
   let committed = false;
@@ -1454,7 +1632,10 @@ async function withdrawPick() {
   } finally {
     state.busy = false;
   }
-  if (committed) afterPickChange('#starGroups .ka-groupbtn', '#guessGroups .ka-groupbtn');
+  if (committed && nickname !== state.nickname) {
+    // 端末なしの子の分を取り消したら、そのまま代わりに選びなおす
+    startProxy(nickname);
+  } else if (committed) afterPickChange('#starGroups .ka-groupbtn', '#guessGroups .ka-groupbtn');
   else if (state.room) handleRoom(state.room);
 }
 
@@ -1477,6 +1658,53 @@ async function hostTransaction(update, failMessage) {
   } finally {
     state.busy = false;
   }
+}
+
+// 端末なしの参加者を足す（待機・主役えらび・公開の間だけ）。在室を持たないので、いつも遊べる人として扱う
+async function addProxy() {
+  const name = $('proxyName').value.trim();
+  const error = validNickname(name);
+  if (error) {
+    setError('proxyError', error);
+    return;
+  }
+  setError('proxyError', '');
+  const uid = currentUid();
+  let reason = '';
+  const ok = await hostTransaction((room) => {
+    reason = '';
+    if (!PROXY_SLOTS[room.status || STATUS.WAITING]) { reason = 'phase'; return; }
+    if (name === room.host || room.players?.[name] || reservedByOther(room, name, uid)) { reason = 'name'; return; }
+    if (proxyNames(room).length >= MAX_PROXIES) { reason = 'proxies'; return; }
+    if (guestNames(room).length >= MAX_GUESTS) { reason = 'full'; return; }
+    return {
+      ...room,
+      players: { ...(room.players || {}), [name]: { isHost: false, proxy: true, uid, joinedAt: RoomkRTDB.now() } },
+    };
+  }, '足せませんでした。もう一度ためしてね');
+  if (ok) {
+    // 書き込みを待つ間に次の名前を打ちはじめていたら、それは消さない
+    if ($('proxyName').value.trim() === name) $('proxyName').value = '';
+    $('proxyName').focus();
+    return;
+  }
+  if (ok === false) {
+    setError('proxyError', {
+      name: 'その名前は使われているよ。少し変えてみてね',
+      proxies: '端末なしの参加者は' + MAX_PROXIES + '人までです',
+      full: 'このルームはいっぱいです',
+    }[reason] || '足せませんでした。画面を確かめてね');
+  }
+}
+
+async function removeProxy(name) {
+  const ok = await hostTransaction((room) => {
+    if (!PROXY_SLOTS[room.status || STATUS.WAITING] || !isProxy(room, name)) return;
+    const players = { ...room.players };
+    delete players[name];
+    return { ...room, players };
+  }, '外せませんでした。もう一度ためしてね');
+  if (ok) focusVisible('#proxyList button', '#proxyName');
 }
 
 // 利用回数（回数だけ。stats.js）: 1場面の始まりと、そのときの遊ぶ人の人数
@@ -1541,7 +1769,9 @@ async function confirmStar() {
       starUid: player.uid,
       lastStar: { name, joinedAt: Number(player.joinedAt) || 0 },
       picks: null,
-      members: Object.fromEntries(playingNames(room).map((member) => [member, memberEntry(room.players[member])])),
+      members: Object.fromEntries(playingNames(room)
+        .filter((member) => !(isProxy(room, name) && room.players[member].isHost))
+        .map((member) => [member, memberEntry(room.players[member])])),
     };
   }, '始められませんでした。もう一度ためしてね');
   if (ok === false) toast('その人は今いないみたい。主役を選びなおしてね');
@@ -1712,7 +1942,10 @@ $('btnSubmitGuess').addEventListener('click', () => {
   if (isGroupIndex(state.guessGroup)) submitGuess({ group: state.guessGroup });
 });
 $('btnSkipGuess').addEventListener('click', () => submitGuess({ skip: true }));
-$('btnWithdraw').addEventListener('click', withdrawPick);
+$('btnWithdraw').addEventListener('click', () => withdrawPick());
+$('btnProxyCancel').addEventListener('click', stopProxy);
+$('btnAddProxy').addEventListener('click', addProxy);
+submitOnEnter($('proxyName'), addProxy);
 
 showScreen('top');
 const startParams = new URLSearchParams(location.search);

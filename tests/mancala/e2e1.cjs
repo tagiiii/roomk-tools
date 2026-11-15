@@ -75,7 +75,8 @@ const same = (x, y) => JSON.stringify(x) === JSON.stringify(y);
   check('B13 もう1回で先のまま', (await L.turnOf(B)) === 'b' && (await L.status(A)).includes('もう1回'));
   await A.page.click(hole(0));
   await A.page.click(hole(0));
-  await Promise.all([L.settled(A), L.settled(B)]);
+  // 動きの間の「いまの番」はまいた人のままなので、動きがおわって後の番に移るのを待つ（settled は動きが届く前に通ることがある）
+  await L.waitFor(async () => (await L.turnOf(A)) === 'w' && (await L.playable(B)).length > 0, 15000);
   const g2 = E.play(g1, 0);
   check('B14 後の番になる', (await L.turnOf(A)) === 'w' && (await L.playable(B)).length === E.legalMoves(g2.board, 'w').length);
   room = await L.roomOf(code);

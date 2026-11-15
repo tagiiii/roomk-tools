@@ -641,6 +641,58 @@
   padding: 3px 10px;
 }
 
+/* ── 端末なしの参加者（ホストの画面だけ）── */
+.ka-proxyslot:empty { display: none; }
+.ka-proxyslot { margin-top: 24px; }
+.ka-form__hint--flat { margin: 0 0 8px; }
+.ka-proxytools .ka-people:not(:empty) { margin-bottom: 4px; }
+.ka-proxytools .ka-form__label.ka-gap { margin-top: 14px; }
+
+.ka-inline {
+  display: flex;
+  gap: 8px;
+}
+
+.ka-inline .ka-form__input { flex: 1 1 auto; min-width: 0; }
+.ka-inline .btn { flex: 0 0 auto; }
+
+.ka-proxyrow {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.ka-proxyrow .btn-sm,
+.ka-proxytools .btn-sm { min-height: 44px; }
+
+/* 代わりに選んでいる間の帯 */
+.ka-proxybanner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--color-primary);
+  background: var(--color-accent-soft);
+  border: 2px solid var(--color-accent);
+  border-radius: 12px;
+  padding: 6px 8px 6px 16px;
+  margin: 0 0 16px;
+  scroll-margin-top: 12px;
+}
+
+.ka-proxybanner .ka-quiet-btn { flex-shrink: 0; white-space: nowrap; padding: 10px 12px; }
+
+.ka-proxybanner p {
+  margin: 0;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+/* ホストの操作（えらんだ人の一覧・公開する）は、上の「この場面はパス」などのボタンとくっつけない */
+#hostAnswerTools { margin-top: 16px; }
+
 /* ── ホスト切断のオーバーレイ ── */
 .ka-overlay {
   position: fixed;
@@ -663,13 +715,22 @@
 .ka-overlay__panel h2 {
   color: var(--color-primary);
   font-size: 1.3rem;
+  margin: 0 0 10px;
 }
 
-.ka-overlay__panel p { line-height: 1.7; }
+.ka-overlay__panel p {
+  line-height: 1.7;
+  margin: 0 0 18px;
+}
 
 @media (max-width: 600px) {
   .wrapper { padding: 28px 16px 64px; }
-  .ka-roombar #btnLeave { margin-left: 0; }
+  .ka-roombar { gap: 8px; }
+  .ka-roombar__code { flex: 1 1 auto; white-space: nowrap; }
+  .ka-roombar .btn { order: 2; flex: 1 1 calc(50% - 4px); padding-left: 8px; padding-right: 8px; }
+  .ka-roombar #btnLeave { order: 1; flex: 0 0 auto; margin-left: 0; padding-left: 16px; padding-right: 16px; }
+  .ka-roombar #btnOpenWatch { font-size: 13px; letter-spacing: 0; padding-left: 4px; padding-right: 4px; white-space: nowrap; min-width: 0; min-height: 44px; }
+  .ka-roombar--slim :is(#btnCopyCode, #btnCopyLink, #btnShowQr) { display: none; }
   .ka-phase__title { font-size: 1.3rem; }
   .ka-scene { padding: 24px 20px; }
   .ka-scene__text { font-size: 22px; }
@@ -688,3 +749,65 @@
    （みんなにみせる画面の印は隠さない。ほかの画面では今までどおり出る） */
 .wrapper:has(#screen-top.active) > .ka-header > :is(.ka-header__title, .ka-header__sub) { display: none; }
 .wrapper:has(#screen-top.active) > .ka-header:has(> .ka-watchbadge[hidden]) { margin-bottom: 0; }
+
+/* ── みんなにみせる画面（body.ka-watch。app.js の connectWatch で付ける）──
+   画面共有の1画面（1280×720）に、スクロールなしで収める。
+   見出しは1行に、ルームバーはコードと「QRコードを出す」だけにして、上の場所を空ける */
+body.ka-watch .ka-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 4px 12px;
+  margin-bottom: 8px;
+}
+body.ka-watch .ka-header__title { font-size: 1.2rem; margin: 0; }
+body.ka-watch .ka-header__sub { display: none; }
+body.ka-watch .ka-watchbadge { margin: 0; }
+body.ka-watch .ka-roombar { margin-bottom: 10px; }
+body.ka-watch :is(#btnCopyCode, #btnCopyLink) { display: none; }
+
+@media (min-width: 900px) {
+  body.ka-watch .wrapper { max-width: 1040px; padding: 12px 20px 16px; }
+  /* 見出しと案内は横に並べて1行に */
+  body.ka-watch .ka-phase {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: center;
+    gap: 0 18px;
+    margin-bottom: 8px;
+  }
+  body.ka-watch .ka-phase__title { font-size: 1.3rem; margin: 0; }
+  body.ka-watch .ka-phase__sub:empty { display: none; }
+  /* 場面カードは「場面」の札を省いて低くする（枠の形でお題とわかる） */
+  body.ka-watch .ka-scene { padding: 14px 28px; margin-bottom: 12px; }
+  body.ka-watch .ka-scene__label { display: none; }
+  body.ka-watch .ka-question { margin-bottom: 8px; }
+  /* 6つの系を3列×2段に（番号を見てチャットで送るので、①〜⑥が一度に見えるように） */
+  body.ka-watch .ka-groups { grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 10px; }
+  body.ka-watch .ka-groupbtn { padding: 8px 14px; }
+  body.ka-watch .ka-groupbtn__body { gap: 0; }
+  body.ka-watch .ka-groupbtn__name { line-height: 1.3; }
+  body.ka-watch .ka-chatnote { padding: 8px 16px; margin-bottom: 10px; }
+  /* 公開: 主役のことばと系の札を横に並べる */
+  body.ka-watch .ka-answer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 6px 20px;
+    padding: 14px 20px;
+    margin-bottom: 12px;
+  }
+  body.ka-watch .ka-answer[hidden] { display: none; }
+  body.ka-watch .ka-answer__word { margin: 0; }
+  body.ka-watch .ka-panel { padding: 10px 20px; margin-bottom: 0; }
+  body.ka-watch .ka-panel__title { margin-bottom: 4px; }
+  /* 名前の一覧は3列に並べる（9人でも3段）。公開の予想は、系の札と「同じ」が折り返さないよう2列（8人で4段） */
+  body.ka-watch :is(.ka-people, .ka-guesses) { display: grid; grid-template-columns: repeat(3, 1fr); column-gap: 28px; }
+  body.ka-watch .ka-guesses { grid-template-columns: repeat(2, 1fr); column-gap: 40px; }
+  body.ka-watch .ka-guesses__item { flex-wrap: nowrap; }
+  body.ka-watch :is(.ka-people__item, .ka-guesses__item) { padding: 4px 0; border-bottom: none; }
+  body.ka-watch #revealWait { display: none; }
+}

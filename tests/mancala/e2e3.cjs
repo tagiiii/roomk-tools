@@ -131,7 +131,25 @@ const same = (x, y) => JSON.stringify(x) === JSON.stringify(y);
   await waitScreen(m, 'game');
   check('375: 盤のはみ出しなし', (await overflow(m)) <= 0, await overflow(m));
   const w = await m.page.$eval(hole(0), (x) => x.getBoundingClientRect().width);
-  check('375: 穴の幅', w >= 38, w);
+  check('375: 穴の幅（44px 以上）', w >= 44, w);
   await shot(m, 'local-375');
+  // 動きの間の「いまの番」はまいている人のまま・動きの途中の「最初からやりなおす」で止まらない（2026-11-15）
+  await m.page.click(hole(0));
+  await m.page.click(hole(0));
+  await sleep(350);
+  check('動きの間の「いまの番」はまいた人', (await turnOf(m)) === 'b' && (await m.page.$$('.mc-seat--w .mc-tag--turn')).length === 0, await turnOf(m));
+  check('動きの間の表示は段と向き', (await status(m)).includes('下の段の左から1番めの穴からまいている'), await status(m));
+  await m.page.click('#btnReset');
+  await sleep(1500);
+  check('動きの途中のやりなおし: はじめの盤', same(await readBoard(m), E.newGame().board), await readBoard(m));
+  check('動きの途中のやりなおし: 押せる', same(await playable(m), [0, 1, 2, 3, 4, 5]), await playable(m));
+  check('動きの途中のやりなおし: 番の表示', (await status(m)).includes('先の番'), await status(m));
+  // 参加用のリンクの案内文が、ふつうの段落として出る（盤の印と同じ名前で小さな丸になっていた）
+  await m.page.evaluate(() => sessionStorage.clear());
+  await open(m, '?room=ABCDEF');
+  await waitScreen(m, 'join');
+  const hint = await m.page.$eval('#joinLinkHint', (x) => ({ pos: getComputedStyle(x).position, w: x.getBoundingClientRect().width }));
+  check('リンクの案内文がふつうに出る', hint.pos === 'static' && hint.w > 250, hint);
+  check('375: 参加画面のはみ出しなし', (await overflow(m)) <= 0, await overflow(m));
   await finishAll(server);
 })().catch((e) => { console.error(e); process.exit(1); });

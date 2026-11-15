@@ -260,41 +260,51 @@ const SLIDES = [
       <div class="row"><div class="row__ic"><span class="material-symbols-rounded">chat</span></div><div><div class="row__t">ルームに入っていない人は、番号（①〜⑥）をチャットで送る</div><div class="row__d">共有の「みんなにみせる画面」を見ながら参加できる</div></div></div>
       <div class="row"><div class="row__ic"><span class="material-symbols-rounded">campaign</span></div><div><div class="row__t">ホストが「公開する」を押すと、主役の気持ちとみんなの予想が出る</div><div class="row__d">どの予想にも、点数はつかない</div></div></div>
     </div>`,
-    note:'主役が選び終わったら、ほかの人は、主役の気持ちがどの系かを予想して「きめた」を押してね。「今回は予想しない」も選べるよ。\nルームに入っていない人は、共有の画面を見ながら、系の番号（①〜⑥）をチャットで送ってね。\nホストが「公開する」を押すと、主役の気持ちとみんなの予想が出ます。' },
+    note:'ほかの人は、主役の気持ちがどの系かを予想して「きめた」を押してね。主役が選んでいる間に選んでもOK。「今回は予想しない」も選べるよ。\nルームに入っていない人は、共有の画面を見ながら、主役が選び終わってから、系の番号（①〜⑥）をチャットで送ってね。\nホストが「公開する」を押すと、主役の気持ちとみんなの予想が出ます。' },
 
-  /* 7 */ { type:'content', accent:'blue', section:'Q&A', sectionEn:'question & answer',
+  /* 7 */ { type:'content', accent:'coral', section:'ゲーム説明', sectionEn:'explain', num:'4',
+    headline:'端末がない人は、<span class="hl">ホストが代わりに押す</span>',
+    body:`<div class="rows">
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">person_add</span></div><div><div class="row__t">ホストが、名前を足す</div><div class="row__d">ルームに入っている人と同じように遊べる（4人まで）</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">touch_app</span></div><div><div class="row__t">予想は、声かチャットでホストに伝える</div><div class="row__d">ホストが代わりに選んで「きめた」を押す</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">lock</span></div><div><div class="row__t">主役もできる。選んだ気持ちは、ホストにだけこっそり伝える</div><div class="row__d">チャットの個別メッセージなどで。その場面は、ホストは予想しない</div></div></div>
+    </div>`,
+    note:'自分の端末がない人は、ホストが名前を足すと、ルームに入っている人と同じように遊べるよ。\n予想は、声かチャットでホストに伝えてね。ホストが代わりに選んで「きめた」を押します。\n主役もできるよ。主役のときは、選んだ気持ちを、チャットの個別メッセージなどでホストにだけこっそり伝えてね。その場面は、ホストは予想しません。' },
+
+  /* 8 */ { type:'content', accent:'blue', section:'Q&A', sectionEn:'question & answer',
     headline:'よくある質問',
     body:`<div class="qa">
       <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>主役は、やらないとだめ？</div><div class="qa__a"><span class="qa__badge a">A</span>やらなくてOK。主役になっても「この場面はパス」を選べるよ。</div></div>
       <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>主役とちがう予想だったら？</div><div class="qa__a"><span class="qa__badge a">A</span>点数はないよ。「そう感じるんだ」を知るのが面白いところ。</div></div>
+      <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>端末がなくても、主役になれる？</div><div class="qa__a"><span class="qa__badge a">A</span>なれるよ。選んだ気持ちを、ホストにだけこっそり伝えてね。</div></div>
     </div>`,
-    note:'よくある質問だよ\nQ. 主役は、やらないとだめ？→ A. やらなくてOK。主役になっても「この場面はパス」を選べるよ。\nQ. 主役とちがう予想だったら？→ A. 点数はないよ。「そう感じるんだ」を知るのが面白いところ。' },
+    note:'よくある質問だよ\nQ. 主役は、やらないとだめ？→ A. やらなくてOK。主役になっても「この場面はパス」を選べるよ。\nQ. 主役とちがう予想だったら？→ A. 点数はないよ。「そう感じるんだ」を知るのが面白いところ。\nQ. 端末がなくても、主役になれる？→ A. なれるよ。選んだ気持ちを、ホストにだけこっそり伝えてね。' },
 
-  /* 8 */ { type:'divider', accent:'blue', icon:'live_help', jp:'質問タイム', en:'any questions?',
+  /* 9 */ { type:'divider', accent:'blue', icon:'live_help', jp:'質問タイム', en:'any questions?',
     sub:'気になることはある？',
     note:'ここまでで、質問がある人はいるかな？\nマイクON か チャットで教えてね！' },
 
-  /* 9 */ { type:'divider', accent:'coral', icon:'how_to_reg', jp:'参加確認', en:'let\'s check',
+  /* 10 */ { type:'divider', accent:'coral', icon:'how_to_reg', jp:'参加確認', en:'let\'s check',
     sub:'チャットで教えてね',
-    note:'やってみたい人〜？\n「①ルームに入って参加」「②チャットで予想」「③見学」を、チャットで教えてね！' },
+    note:'やってみたい人〜？\n「①ルームに入って参加」「②端末がないので、ホストに代わりに押してもらう」「③チャットで予想」「④見学」を、チャットで教えてね！' },
 
-  /* 10 */ { type:'divider', accent:'teal', solid:true, icon:'rocket_launch', jp:'＼ ゲームスタート ／', en:'game start',
+  /* 11 */ { type:'divider', accent:'teal', solid:true, icon:'rocket_launch', jp:'＼ ゲームスタート ／', en:'game start',
     sub:'リンクをひらいて、名前を入れよう',
-    note:'それでは、気持ち当てゲームスタート！\nルームに入る人は、このあと送るリンクをひらいて、名前を入れて「参加する」を押してね。\nチャットで予想する人は、ルームに入らなくてOK。共有の画面を見ていてね。' },
+    note:'それでは、気持ち当てゲームスタート！\nルームに入る人は、このあと送るリンクをひらいて、名前を入れて「参加する」を押してね。\n端末がない人は、ホストが名前を足すので待っていてね。\nチャットで予想する人は、ルームに入らなくてOK。共有の画面を見ていてね。' },
 
-  /* 11 */ { type:'divider', accent:'coral', icon:'lock', jp:'主役の時間', en:'choose',
+  /* 12 */ { type:'divider', accent:'coral', icon:'lock', jp:'主役の時間', en:'choose',
     sub:'主役は、こっそり選んでね',
-    note:'主役の時間だよ。\n主役さんは、この場面で自分ならどんな気持ちになるか、系とことばを選んで「きめた」を押してね。\nほかのみんなは、少し待っていてね。' },
+    note:'主役の時間だよ。\n主役さんは、この場面で自分ならどんな気持ちになるか、系とことばを選んで「きめた」を押してね。端末がない人が主役のときは、選んだ気持ちをホストにだけこっそり伝えてね。\nルームに入っている人は、主役の気持ちを予想して、もう選びはじめてOK。\nチャットで予想する人は、主役が選び終わるまで待っていてね。' },
 
-  /* 12 */ { type:'divider', accent:'blue', icon:'psychology_alt', jp:'予想タイム', en:'guess',
+  /* 13 */ { type:'divider', accent:'blue', icon:'psychology_alt', jp:'予想タイム', en:'guess',
     sub:'主役の気持ちは、どの系かな？',
-    note:'予想タイム！\n主役の気持ちは、どの系だと思う？\nルームに入っている人は選んで「きめた」を、入っていない人は系の番号（①〜⑥）をチャットで送ってね。' },
+    note:'予想タイム！\n主役の気持ちは、どの系だと思う？\nルームに入っている人は選んで「きめた」を、入っていない人は系の番号（①〜⑥）をチャットで送ってね。\n端末がない人は、声かチャットでホストに伝えてね。' },
 
-  /* 13 */ { type:'divider', accent:'teal', icon:'campaign', jp:'公開', en:'reveal',
+  /* 14 */ { type:'divider', accent:'teal', icon:'campaign', jp:'公開', en:'reveal',
     sub:'同じだった？ ちがった？',
     note:'公開！ 主役の気持ちはこれでした。\n予想と同じだったかな、ちがったかな。\n主役さん、よかったら、どうしてその気持ちを選んだか教えてね。' },
 
-  /* 14 */ { type:'divider', accent:'teal', solid:true, icon:'forum', jp:'ふりかえり', en:'look back',
+  /* 15 */ { type:'divider', accent:'teal', solid:true, icon:'forum', jp:'ふりかえり', en:'look back',
     sub:'「そう感じるんだ」と思った場面は？',
     note:'おつかれさま！\n「そう感じるんだ」と思った場面はあったかな？\nひとことずつ、チャットか声で教えてね' },
 ];

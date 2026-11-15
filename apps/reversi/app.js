@@ -1219,8 +1219,9 @@ function loadLocal() {
       aid: normAid(saved.aid),
       cpu: cpuOf(saved.cpu),
       level: levelOf(saved.level),
-      // 読み込み直したら、いまの番の時間は最初から数えなおす
-      game: { ...game, turnAt: Date.now() },
+      // 読み込み直したら、いまの番の時間は最初から数えなおす。
+      // 直前の手を CPU が置いたかの印（bot）も残す（ないと「CPU は D3 に置いたよ。」が消える。2026-11-15）
+      game: { ...game, turnAt: Date.now(), bot: saved.game?.bot === 'b' || saved.game?.bot === 'w' ? saved.game.bot : null },
     };
   } catch {
     return null;
@@ -1572,7 +1573,8 @@ function renderGame() {
 
   // いまの番・パス・結果
   const can = V.canPlay();
-  const ad = aidFor(V.aid, g.turn);
+  // CPU と対戦するときの CPU の番は、補助の印を出さない（押せないのに、自分の置ける場所に見えるため）
+  const ad = V.cpu && g.turn === V.cpu ? { spots: false, count: false, confirm: false } : aidFor(V.aid, g.turn);
   const autoNote = g.auto && g.last >= 0 ? '時間切れ。CPU が' + COLOR[g.auto] + 'の代わりに ' + E.coord(g.last) + ' に置いたよ。'
     : local && V.cpu && g.bot === V.cpu && g.last >= 0 ? 'CPU は ' + E.coord(g.last) + ' に置いたよ。' : '';
   const pass = autoNote + (g.passed && !g.over ? seatLabel(V, g.passed) + 'は置ける場所がないので、パス。' : '');
