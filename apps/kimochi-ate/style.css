@@ -641,6 +641,55 @@
   padding: 3px 10px;
 }
 
+/* ── 端末なしの参加者（ホストの画面だけ）── */
+.ka-proxyslot:empty { display: none; }
+.ka-proxyslot { margin-top: 24px; }
+.ka-form__hint--flat { margin: 0 0 8px; }
+.ka-proxytools .ka-people:not(:empty) { margin-bottom: 4px; }
+.ka-proxytools .ka-form__label.ka-gap { margin-top: 14px; }
+
+.ka-inline {
+  display: flex;
+  gap: 8px;
+}
+
+.ka-inline .ka-form__input { flex: 1 1 auto; min-width: 0; }
+.ka-inline .btn { flex: 0 0 auto; }
+
+.ka-proxyrow {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.ka-proxyrow .btn-sm,
+.ka-proxytools .btn-sm { min-height: 44px; }
+
+/* 代わりに選んでいる間の帯 */
+.ka-proxybanner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--color-primary);
+  background: var(--color-accent-soft);
+  border: 2px solid var(--color-accent);
+  border-radius: 12px;
+  padding: 6px 8px 6px 16px;
+  margin: 0 0 16px;
+  scroll-margin-top: 12px;
+}
+
+.ka-proxybanner .ka-quiet-btn { flex-shrink: 0; white-space: nowrap; padding: 10px 12px; }
+
+.ka-proxybanner p {
+  margin: 0;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
 /* ホストの操作（えらんだ人の一覧・公開する）は、上の「この場面はパス」などのボタンとくっつけない */
 #hostAnswerTools { margin-top: 16px; }
 
