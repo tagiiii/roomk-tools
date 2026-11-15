@@ -155,6 +155,47 @@ const F = (k0, n, copy) => Array.from({ length: n }, (_, i) => id(k0 + i, copy))
   check('320 no overflow', (await L.overflow(guest)) <= 0, await L.overflow(guest));
   await guest.page.screenshot({ path: L.OUT + '/yaku-320.png', fullPage: true });
 
+  // せまい画面で自分の番が来たら、手牌と操作のボタンが右下の丸ボタン（意見・？）の下に入らないところまで動かす（2026-11-15）
+  const underFab = () => guest.page.evaluate(() => {
+    const fabs = [...document.querySelectorAll('.howto-fab, .howto-feedback-fab')].map((n) => n.getBoundingClientRect()).filter((r) => r.width);
+    const hit = (a, b) => a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
+    // 手牌・操作のボタン・ヒントの文が、丸ボタンに重なるか、画面の下からはみ出していたら挙げる
+    const hint = document.getElementById('hintLine');
+    return [...document.querySelectorAll('#me .mj-hand button, #actions button')].concat(hint.textContent ? [hint] : [])
+      .filter((n) => { const r = n.getBoundingClientRect(); return r.bottom > window.innerHeight || fabs.some((f) => hit(r, f)); })
+      .map((n) => n.dataset.id || n.id || n.textContent);
+  });
+  for (const [w, h] of [[320, 640], [375, 812]]) {
+    await guest.page.setViewportSize({ width: w, height: h });
+    // ほかの人の番にしてから、うみの番にする（自分の番に「なった」ときに動かすので）
+    room = await L.roomOf(code);
+    G = L.gameOf(room);
+    const umi3 = [...F(0, 9, 3), id(9, 3), id(10, 3), id(11, 3), id(12, 3), id(13, 3)];
+    const sora3 = [...F(18, 9, 3), id(27, 3), id(28, 3), id(29, 3), id(30, 3)];
+    const c23 = [...F(14, 4, 2), id(31, 2), id(32, 2), id(33, 2), id(27, 2), id(28, 2), id(29, 2), id(30, 2), id(26, 2), id(25, 2)];
+    const c33 = [...F(14, 4, 1), id(31, 1), id(32, 1), id(33, 1), id(27, 1), id(28, 1), id(29, 1), id(30, 1), id(26, 1), id(25, 1)];
+    rebuild(G.s, [sora3, umi3.slice(0, 13), c23, c33], 0, null);
+    G.s.dealer = 1;
+    G.s.wall = G.s.wall.filter((x) => x !== id(17, 3) && x !== umi3[13]);
+    G.s.seats[0].hand.push(id(17, 3));
+    G.s.drawn = id(17, 3);
+    G.s.rev += 1;
+    await putGame(code, G);
+    await guest.page.waitForFunction(() => document.querySelectorAll('#me .mj-hand button').length === 13);
+    await guest.page.evaluate(() => window.scrollTo(0, 0));
+    await sleep(200);
+    G.s.seats[0].hand = G.s.seats[0].hand.filter((x) => x !== id(17, 3));
+    G.s.seats[0].river.push({ id: id(17, 3), called: false, riichi: false });
+    G.s.seats[1].hand.push(umi3[13]);
+    G.s.turn = 1; G.s.drawn = umi3[13]; G.s.disc += 1; G.s.rev += 1;
+    await putGame(code, G);
+    await guest.page.waitForFunction(() => document.querySelectorAll('#me .mj-hand button:not(:disabled)').length === 14);
+    await sleep(900);
+    const hidden = await underFab();
+    check(w + ': my turn: tiles, buttons and hint are above the round buttons and on screen', hidden.length === 0, hidden);
+  }
+  await guest.page.screenshot({ path: L.OUT + '/yaku-375-turn.png' });
+
   await host.page.click('#btnLeave');
   await L.waitScreen(guest, 'top', 10000);
   await L.finishAll(server);

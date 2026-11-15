@@ -24,6 +24,8 @@ const MAX_GUESTS = 12;
 const TICK_MS = 250;
 const LEAVE_GRACE_MS = 3000;   // 通信が切れてから、CPU が代わりに打つまで待つ時間（読み込み直しならその間にもどれる）
 const CPU_DELAY_MS = 900;
+// 右下の丸ボタン（意見・？。共通の howto.js）が画面の下にかぶる高さ（ボタン 48px＋下のあき 16px＋少しの余り）
+const FAB_ZONE_PX = 80;
 const AUTO_AFTER = 2;          // 捨てる番で時間切れがこの回数続いたら CPU にまかせる
 const LOG_MAX = 6;
 const CPU_NAMES = ['CPU 1', 'CPU 2', 'CPU 3'];
@@ -1535,10 +1537,13 @@ function renderGame(R) {
   if (focusKey?.tile) $('me').querySelector('button[data-id="' + focusKey.tile + '"]:not(:disabled)')?.focus({ preventScroll: true });
   else if (focusKey?.action) ([...$('actions').querySelectorAll('button')].find((b) => b.textContent === focusKey.action) || $('actions').querySelector('button'))?.focus({ preventScroll: true });
   else if (becameDue && pend && focusInGame) $('actions').querySelector('button')?.focus({ preventScroll: true });
-  // 自分の番になったのに、手牌が画面の外なら、見える所まで動かす（せまい画面で、相手の席の下に隠れないように）
+  // 自分の番になったのに、手牌・ヒント・操作のボタンが画面の外か、右下の丸ボタン（意見・？）の下なら、見える所まで動かす
+  // （せまい画面で、相手の席の下や丸ボタンの下に隠れないように。丸ボタンの分は 2026-11-15）
   if (becameDue && state.currentScreen === 'game') {
     const box = $('me').getBoundingClientRect();
-    if (box.bottom > window.innerHeight || box.top < 0) {
+    const bottom = Math.max(box.bottom, ...['hintLine', 'actions'].map((id) => $(id).getBoundingClientRect().bottom));
+    const fab = document.documentElement.classList.contains('howto-has-fab') ? FAB_ZONE_PX : 0;
+    if (bottom > window.innerHeight - fab || box.top < 0) {
       const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       $('gameStatus').scrollIntoView({ block: 'start', behavior: reduce ? 'auto' : 'smooth' });
     }
