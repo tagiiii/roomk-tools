@@ -1676,9 +1676,6 @@ function resumeFromSession() {
   });
 }
 
-// はじめの画面の絵（品物を4つ）
-['kotatsu', 'purin', 'hoshi', 'yakan'].forEach((id) => $('hero').append(art('ak-art ak-art--live', A.item(id))));
-
 showScreen('top');
 const startParams = new URLSearchParams(location.search);
 const watchParam = startParams.get('watch');
