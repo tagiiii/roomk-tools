@@ -22,7 +22,14 @@ const { E, check, cell, waitFor } = L;
   check('L5 ルームのバーは出ない', !(await L.visible(M, '#roomBar')));
 
   // ▲７六歩 △３四歩 ▲２二角成 △同銀
-  await L.move(M, 56, 47);
+  // キーボードで指す（盤を描きなおしても、選んでいたますにとどまる）
+  await M.page.focus(cell(56));
+  await M.page.keyboard.press('Enter');
+  check('L5b キーボードで駒を選んでも、そのますにとどまる', (await M.page.evaluate(() => document.activeElement?.dataset?.i)) === '56');
+  await M.page.focus(cell(47));
+  await M.page.keyboard.press('Enter');
+  await waitFor(async () => (await L.status(M)) === '△後手（そら）の番');
+  check('L5c キーボードで指したあとも、そのますにとどまる', (await M.page.evaluate(() => document.activeElement?.dataset?.i)) === '47');
   check('L6 後手の番になる', (await L.status(M)) === '△後手（そら）の番', await L.status(M));
   await L.move(M, 24, 33);
   await L.move(M, 64, 16, true);
@@ -216,6 +223,15 @@ const { E, check, cell, waitFor } = L;
   // 1手もどすと、CPU の手と自分の手をいっしょにもどす
   await C.page.click('#btnUndo');
   check('C11 1手もどすと自分の番まで', (await L.lastLine(C)).startsWith('1手目　▲') && (await L.status(C)).startsWith('あなたの番'), await L.lastLine(C));
+  // CPU の入玉宣言をもどす（宣言の条件は、CPU（先手）の番だけそろうように差しかえる）
+  await C.page.evaluate(() => { const E = window.ShogiEngine; E.__canDeclare = E.canDeclare; E.canDeclare = (S) => S.turn === 0; });
+  m = await mine();
+  await L.move(C, m.from, m.to);
+  check('C11b CPU が入玉宣言して勝つ', await waitFor(async () => (await L.status(C)).startsWith('入玉宣言。▲先手（CPU）の勝ち！'), 6000), await L.status(C));
+  await C.page.click('#btnUndo');
+  await L.sleep(1500);
+  check('C11c 1手もどすと CPU の宣言と自分の手が消え、自分の番（CPU はすぐまた宣言しない）', (await L.lastLine(C)).startsWith('1手目　▲') && (await L.status(C)).startsWith('あなたの番'), [await L.lastLine(C), await L.status(C)]);
+  await C.page.evaluate(() => { const E = window.ShogiEngine; E.canDeclare = E.__canDeclare; });
   // 読み込み直しても CPU と対戦のまま
   m = await mine();
   await L.move(C, m.from, m.to);

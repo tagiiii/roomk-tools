@@ -107,6 +107,8 @@ function setError(id, message) {
   const node = $(id);
   node.textContent = message || '';
   node.hidden = !message;
+  // まちがいのあいだは、つながった入力欄を「まちがい」として読ませる
+  document.querySelectorAll('[aria-describedby="' + id + '"]').forEach((el) => (message ? el.setAttribute('aria-invalid', 'true') : el.removeAttribute('aria-invalid')));
 }
 
 function toast(message, error = true) {
@@ -587,7 +589,7 @@ function cleanupRoom() {
   });
   clearSession();
   resetBoxes();
-  $('hostOffOverlay').hidden = true;
+  setHostOff(false);
   $('btnOpenWatch').hidden = true;
   $('barMe').hidden = true;
   $('barMe').textContent = '';
@@ -1050,7 +1052,7 @@ function connectWatch(code, ref) {
 // ホストが切断している間はオーバーレイを出し、期限切れになったら終わりの表示にする（ルームは消さない）
 function updateWatchOverlay(room) {
   const off = room.hostConnected === false;
-  $('hostOffOverlay').hidden = !off;
+  setHostOff(off);
   clearTimeout(state.watchTimer);
   state.watchTimer = null;
   if (!off) return;
@@ -1069,7 +1071,7 @@ function stopWatch() {
   if (state.roomRef && state.roomCallback) state.roomRef.off('value', state.roomCallback);
   Object.assign(state, { role: null, roomCode: null, roomRef: null, room: null, roomCallback: null, watchTimer: null });
   resetBoxes();
-  $('hostOffOverlay').hidden = true;
+  setHostOff(false);
   document.title = DEFAULT_TITLE;
   document.body.classList.remove('is-watch');
   $('watchBadge').hidden = true;
@@ -1729,9 +1731,28 @@ function renderRoom(room) {
   }
 }
 
+// ホストの戻りを待つ画面は、ダイアログとして読ませ、うしろの画面を押せない・読まないようにする
+const hostOffInert = new Set();
+function setHostOff(show) {
+  const o = $('hostOffOverlay');
+  if (o.hidden === !show) return;
+  o.hidden = !show;
+  if (show) {
+    for (const el of document.body.children) {
+      if (el === o || el.tagName === 'SCRIPT' || el.tagName === 'DIALOG' || el.inert) continue;
+      el.inert = true;
+      hostOffInert.add(el);
+    }
+    $('btnOverlayLeave').focus({ preventScroll: true });
+  } else {
+    hostOffInert.forEach((el) => { el.inert = false; });
+    hostOffInert.clear();
+  }
+}
+
 function updateHostOverlay(room) {
   if (state.role === 'guest' && room.hostConnected === false) {
-    $('hostOffOverlay').hidden = false;
+    setHostOff(true);
     // 切れたままのあいだに切れた時刻だけが新しくなったら（ホストの通信が短く揺れたとき）、期限のタイマーを仕掛けなおす
     if (state.orphanTimer && state.orphanAt !== RoomkRTDB.getHostDisconnectedAt(room)) { clearTimeout(state.orphanTimer); state.orphanTimer = null; }
     if (!state.orphanTimer) {
@@ -1745,7 +1766,7 @@ function updateHostOverlay(room) {
       }, delay);
     }
   } else {
-    $('hostOffOverlay').hidden = true;
+    setHostOff(false);
     clearTimeout(state.orphanTimer);
     state.orphanTimer = null;
   }
@@ -2125,7 +2146,10 @@ function renderBoard(V, bottom, can) {
     }
     board.append(makeElement('span', 'sh-coord', E.KANJI_NUM[r]));
   }
+  // 盤は描くたびに作りなおすので、キーボードで選んでいたますにもどす
+  const focusedCell = root.contains(document.activeElement) ? document.activeElement.dataset.i : null;
   root.replaceChildren(board);
+  if (focusedCell != null) board.querySelector('.sh-cell[data-i="' + focusedCell + '"]')?.focus({ preventScroll: true });
   state.drawnKey = V.key;
   state.drawnRev = V.rev;
   state.drawnPly = G.ply;
@@ -2134,6 +2158,8 @@ function renderBoard(V, bottom, can) {
 function renderSide(box, V, side, isBottom, can) {
   const G = V.G;
   const turn = !V.over && G.turn === side;
+  // 持ち駒も作りなおすので、キーボードで選んでいた駒にもどす
+  const focusedDrop = box.contains(document.activeElement) ? document.activeElement.dataset.drop : null;
   box.replaceChildren();
   box.classList.toggle('is-turn', turn);
   const head = makeElement('div', 'sh-side__head');
@@ -2168,11 +2194,13 @@ function renderSide(box, V, side, isBottom, can) {
     btn.append(pieceNode(side === 0 ? t : t.toLowerCase(), isBottom, false));
     if (count > 1) btn.append(makeElement('span', 'sh-handpiece__count', '×' + count));
     btn.setAttribute('aria-label', '持ち駒の' + E.NAME[t] + ' ' + count + '枚');
+    btn.dataset.drop = t;
     btn.addEventListener('click', () => onHand(t, side));
     hand.append(btn);
   });
   if (!any) hand.append(makeElement('span', 'sh-hand__none', '持ち駒なし'));
   box.append(hand);
+  if (focusedDrop) hand.querySelector('[data-drop="' + focusedDrop + '"]')?.focus({ preventScroll: true });
 }
 
 /* ── 押したとき ── */
