@@ -1,11 +1,11 @@
-/* のりあいロード（試作）— ステージと動きのきまり。画面と通信には触らない（node でも読める）
+/* のりあいロード — ステージと動きのきまり。画面と通信には触らない（node でも読める）
  *
  * 座標はマス単位。x は右へ、y は下へ増える。マス (tx, ty) は x∈[tx, tx+1]・y∈[ty, ty+1]。
  * ステージは「区間」を左からつないで作る。どの区間も、はじめと終わりの床の高さは y=10。
  *
- * 遅れに強くするための決まり（ウィンドウごとに1人のとき）:
+ * 遅れに強くするための決まり（ルームで、それぞれの端末から遊ぶとき）:
  *  - 自分のキャラの動きは、自分の端末で計算する（stepPlayer）
- *  - 箱・動く床・とびら・カギ・ボールは、1人目の端末だけが計算する（stepObjects）
+ *  - 箱・動く床・とびら・カギ・ボールは、ホストの端末だけが計算する（stepObjects）
  *  - 人の上に乗っているときは「だれの上の、どこに乗っているか」を送る（ground と rx）。
  *    受けとった側は、下の人の描く位置に乗せて描くので、遅れても下の人とずれない
  */
@@ -687,7 +687,8 @@
       g.anim = Math.max(0, Math.min(1, g.anim));
     }
 
-    world.clear = players.length === world.n && players.every((q) => q.entered && !q.away);
+    // クリア: いる人がみんなとびらに入った（ルームからいなくなった人 absent は数えない）
+    world.clear = players.length === world.n && players.some((q) => !q.absent) && players.every((q) => q.absent || (q.entered && !q.away));
   }
 
   function holdingOf(world, seat) {
@@ -735,10 +736,76 @@
     }
   }
 
+
+  /* ── ルームに置く形 ──
+   * 人: [x, y, 向き, 乗っているもの, 押している向き, とびらに入った(0/1), 頭の上での横の位置]
+   * ワールド（ホストが書く）: 箱・床・カギとボール・とびら・スイッチ・かご・ゴールのカギ・クリア
+   */
+  const r2 = (v) => Math.round(v * 100) / 100;
+  function encodePlayer(p) {
+    const out = [r2(p.x), r2(p.y), p.face < 0 ? -1 : 1, p.ground || 0, p.inDir || 0, p.entered ? 1 : 0];
+    if (p.ground && p.ground[0] === 's') out.push(r2(p.rx));
+    return out;
+  }
+  // こわれた値は null
+  function decodePlayer(v) {
+    if (!Array.isArray(v) || v.length < 6) return null;
+    const x = Number(v[0]);
+    const y = Number(v[1]);
+    if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
+    const g = typeof v[3] === 'string' && /^(t|g|[pbs]\d+)$/.test(v[3]) ? v[3] : null;
+    return { x, y, face: v[2] < 0 ? -1 : 1, ground: g, inDir: v[4] > 0 ? 1 : v[4] < 0 ? -1 : 0, entered: v[5] === 1, rx: Number(v[6]) || 0 };
+  }
+  function snapshot(world) {
+    return {
+      b: world.boxes.map((b) => [r2(b.x), r2(b.y)]),
+      p: world.plats.map((p) => [r2(p.x), r2(p.y), p.riders]),
+      i: world.items.map((it) => [r2(it.x), r2(it.y), it.holder, it.hooped ? 1 : 0, it.gone ? 1 : 0]),
+      g: world.gates.map((g) => (g.open ? 1 : 0)).join('') || '-',
+      s: world.switches.map((s) => (s.on ? 1 : 0)).join('') || '-',
+      h: world.hoops.map((h) => (h.done ? 1 : 0)).join('') || '-',
+      d: world.door && world.door.locked ? 1 : 0,
+      c: world.clear ? 1 : 0,
+    };
+  }
+  const num = (v, d) => (Number.isFinite(Number(v)) ? Number(v) : d);
+  const listOf = (v) => (Array.isArray(v) ? v : v && typeof v === 'object' ? Object.values(v) : []);
+  // とびら・スイッチなどの印と、カギ・ボールの持ち主を当てる（位置は positions のときだけ）
+  function applySnapshot(world, w, positions) {
+    if (!w || typeof w !== 'object') return;
+    const bs = listOf(w.b), ps = listOf(w.p), is = listOf(w.i);
+    const bit = (str, k) => typeof str === 'string' && str[k] === '1';
+    world.gates.forEach((g, k) => { g.open = bit(w.g, k); });
+    world.switches.forEach((s, k) => { s.on = bit(w.s, k); });
+    world.hoops.forEach((h, k) => { h.done = bit(w.h, k); });
+    if (world.door) world.door.locked = w.d === 1;
+    world.clear = w.c === 1;
+    world.items.forEach((it, k) => {
+      const v = listOf(is[k]);
+      if (v.length < 5) return;
+      const holder = Math.trunc(num(v[2], 0));
+      it.holder = holder >= 1 && holder <= world.n ? holder : 0;
+      it.hooped = v[3] === 1; it.gone = v[4] === 1;
+      if (positions) { it.x = num(v[0], it.x); it.y = num(v[1], it.y); it.vx = 0; it.vy = 0; }
+    });
+    world.plats.forEach((p, k) => {
+      const v = listOf(ps[k]);
+      if (v.length < 2) return;
+      p.riders = Math.max(0, Math.trunc(num(v[2], 0)));
+      if (positions) { p.x = num(v[0], p.x); p.y = num(v[1], p.y); }
+    });
+    if (positions) {
+      world.boxes.forEach((b, k) => { const v = listOf(bs[k]); if (v.length >= 2) { b.x = num(v[0], b.x); b.y = num(v[1], b.y); b.vy = 0; b.ground = null; } });
+      for (const s of world.seesaws) s.off = world.plats[s.left].y - s.rest;
+      for (const g of world.gates) g.anim = g.open ? 1 : 0;
+    }
+  }
+
   const api = {
     H, VIEW, PW, PH, ITEM, ROPE_LEN, JUMP_H, GRAV, JUMP_V, SPEED,
     STAGES, buildStage, createWorld, makePlayer, stepPlayer, stepObjects, stepLocal,
     throwItem, holdingOf, camLeft, mapSeat, solidTile, respawnX, surfaceY, gateRect, rootOf,
+    encodePlayer, decodePlayer, snapshot, applySnapshot, MIN_PLAYERS: 2, MAX_PLAYERS: 4,
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.NoriaiEngine = api;
