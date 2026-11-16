@@ -107,6 +107,10 @@
   .shot{ flex:none; height:100%; max-height:400px; aspect-ratio:1 / 1; border-radius:16px; border:1.5px solid var(--line); box-shadow:0 8px 22px rgba(0,0,0,.1); object-fit:cover; }
   .shot-wrap .rows{ flex:1; }
 
+  /* コメントの言葉の札 */
+  .says{ display:flex; flex-wrap:wrap; gap:12px; margin-bottom:22px; }
+  .say{ background:var(--white); border:2px solid var(--acc); border-radius:999px; padding:10px 22px; font-size:24px; font-weight:700; color:var(--ink); }
+
   /* 品物の例（アプリの絵をそのまま使う） */
   .item{ background:var(--white); border:1.5px solid var(--line); border-radius:18px; padding:18px 18px 16px; display:flex; flex-direction:column; align-items:center; gap:8px; width:250px; }
   .item__art{ width:120px; height:120px; } .item__art svg{ display:block; width:100%; height:100%; overflow:visible; }
@@ -308,18 +312,26 @@ const SLIDES = [
   /* 6 */ { type:'content', accent:'teal', section:'あそびかた', sectionEn:'how to play', num:'2',
     headline:'お店の人: <span class="hl">3つ</span>のうちから、えらぶ',
     body: rows(
-      ['add_shopping_cart', '① 品物を出す', '「これかな？」と思う物を押して、「この品物を出す」で決める。「箱に入れて出したよ」と出る'],
+      ['add_shopping_cart', '① 品物を出す', '「これかな？」と思う物を押して、「この品物を出す」で決める。「箱に入れて出したよ」と出て、コメントも送れる'],
       ['help', '② お客さんに質問する', 'まよったとき。「それは、まるい？」のように聞くと、はい・いいえが出る（2回まで）'],
       ['do_not_disturb_on', '③ 出さない', '合う物がないとき。「うちにはないです、ごめんね」と伝わるよ'],
     ),
     note:'お店の人は、この3つからえらぶよ。\n①品物を出す。「これかな？」と思う物を、下の「あなたのお店」から押してね。押したら「この品物を出す」で決めてね。「箱に入れて出したよ」と出て、出した品物には「出した」の印が付くよ。\n②お客さんに質問する。まよったら「それは、まるい？」みたいに聞けるよ。はい・いいえが出る。2回までね。\n③出さない。合う物がないときは、出さなくていいよ。「うちにはないです、ごめんね」と伝わるよ。\n決める時間は、ホストが決めた時間（はじめは30秒）。時間が来たら、まだ決めていないお店は、出さなかったことになるよ。' },
 
-  /* 7 */ { type:'content', accent:'blue', section:'あそびかた', sectionEn:'how to play', num:'3',
+  /* 6b */ { type:'content', accent:'coral', section:'あそびかた', sectionEn:'how to play', num:'3',
+    headline:'箱を出したら、<span class="hl">コメント</span>を送ろう',
+    body:`<div class="says">${['どうぞ！', 'これだと思う！', 'たぶん、これかな', 'ちょっと自信ないけど…', 'ちがったらごめんね', 'おすすめです'].map((t) => `<span class="say">${t}</span>`).join('')}</div>${rows(
+      ['touch_app', '言葉を1つえらんで、「送る」を押す', 'お客さんが箱をえらぶまで、「送りなおす」で変えられる'],
+      ['inventory_2', 'コメントは、その箱の下に出る', '送らなくても、だいじょうぶ'],
+    )}`,
+    note:'品物を出したら、お客さんにコメントを送れるよ。\n「どうぞ！」「これだと思う！」「たぶん、これかな」「ちょっと自信ないけど…」「ちがったらごめんね」「おすすめです」の6つから、1つえらんで「送る」を押してね。\nコメントは、お客さんが箱をえらぶ画面で、その箱の下に出るよ。お客さんが箱をえらぶまでは、「送りなおす」で変えられる。\n送らなくても、だいじょうぶだよ。' },
+
+  /* 7 */ { type:'content', accent:'blue', section:'あそびかた', sectionEn:'how to play', num:'4',
     headline:'特徴の言葉は書いていない。<br><span class="hl">絵をよく見て</span>考えよう',
     body:`<div class="demo-row">${item('kotatsu', false, `羽 → ${tag('とぶ')} 湯気 → ${tag('あたたかい')}`)}${item('donatsu', false, `音符 → ${tag('音が出る')}`)}${item('kakigoori', false, `きらきら → ${tag('光る')} 雪 → ${tag('つめたい')}`)}</div><p class="demo-cap">「大きい」「まるい」「かたい」などは、形から考えよう。まよったら質問！</p>`,
     note:'品物の札には、特徴の言葉は書いていないよ。絵をよく見て考えよう。\n羽があったら「とぶ」、湯気は「あたたかい」、音符は「音が出る」、きらきらは「光る」、雪の結晶は「つめたい」。\n「大きい」「まるい」「かたい」みたいな特徴は、形から考えてね。\nまよったら、お客さんに質問してみよう。' },
 
-  /* 8 */ { type:'content', accent:'coral', section:'あそびかた', sectionEn:'how to play', num:'4',
+  /* 8 */ { type:'content', accent:'coral', section:'あそびかた', sectionEn:'how to play', num:'5',
     headline:'出てきた<span class="hl">箱</span>から、1つ受け取る',
     body: rows(
       ['inventory_2', '箱には、出したお店の名前とコメントが出る', '「どうぞ！」「これだと思う！」など、出した人がえらんで送る。中は、開けるまでわからない'],
