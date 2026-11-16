@@ -36,6 +36,11 @@ const STAGE_NOTE = [
   'シーソーと、投げてわたすボール。',
   'となりの番号の人と、ひもでつながる（5人からは組に分かれる）。',
   'これまでのしかけが全部出てくる。',
+  '人の塔で上がる3マスの台と、箱の足場。',
+  'ばねで、広い穴と高いかべをこえる。',
+  '同時におさえるスイッチと、番号のスイッチ。',
+  'ひもでつながったまま、高い台に上がる。',
+  'ステージ6〜9のしかけが全部出てくる。',
 ];
 // 1台のパソコンで遊ぶときのキー（1〜4番）
 const KEYSETS = [
@@ -1325,6 +1330,7 @@ function draw() {
   const x1 = Math.min(w.W - 1, Math.ceil(cam + E.VIEW) + 1);
   drawTiles(w, x0, x1, T);
   drawCheckpoints(w, T);
+  drawSprings(w, T);
   drawSwitches(w, T);
   drawGates(w, T);
   drawDoor(w, T);
@@ -1423,6 +1429,39 @@ function drawSwitches(w, T) {
     rr((s.x + 0.15) * T, (s.y + 1 - 0.08 - h) * T, T * 0.7, h * T, T * 0.05);
     g.fill();
     shape(LINK_SHAPES[s.letter], (s.x + 0.5) * T, (s.y + 1 - 0.45) * T, T * 0.14, s.on ? c : c + 'AA');
+    // 番号のスイッチ: その番号の人の色と番号
+    if (s.seatN) {
+      const cx = (s.x + 0.5) * T, cy = (s.y + 1 - 0.85) * T;
+      g.fillStyle = SEAT_COLORS[s.seatN - 1];
+      g.beginPath(); g.arc(cx, cy, T * 0.24, 0, Math.PI * 2); g.fill();
+      g.fillStyle = '#FFFFFF';
+      g.beginPath(); g.arc(cx, cy, T * 0.17, 0, Math.PI * 2); g.fill();
+      label(String(s.seatN), cx, cy, T * 0.24, SEAT_DARK[s.seatN - 1]);
+    }
+  }
+}
+// ばね: 床の上のばね。乗ると高く跳ぶ
+function drawSprings(w, T) {
+  for (const sp of w.springs) {
+    const x = (sp.x + 0.12) * T, wd = T * 0.76, base = sp.y * T;
+    g.fillStyle = '#6E5A45';
+    g.fillRect(x, base - T * 0.08, wd, T * 0.08);
+    g.strokeStyle = '#6E5A45';
+    g.lineWidth = Math.max(2, T * 0.06);
+    g.beginPath();
+    const top = base - T * 0.42;
+    for (let k = 0; k <= 4; k++) {
+      const yy = base - T * 0.08 - (k / 4) * (base - T * 0.08 - top);
+      g.lineTo(k % 2 ? x + wd * 0.8 : x + wd * 0.2, yy);
+    }
+    g.stroke();
+    g.fillStyle = '#D9572E';
+    rr(x - T * 0.04, top - T * 0.1, wd + T * 0.08, T * 0.14, T * 0.05);
+    g.fill();
+    g.fillStyle = '#FFFFFF';
+    g.beginPath(); g.moveTo(x + wd / 2, top - T * 0.42); g.lineTo(x + wd / 2 - T * 0.13, top - T * 0.24); g.lineTo(x + wd / 2 + T * 0.13, top - T * 0.24); g.fill();
+    g.fillStyle = '#D9572E';
+    g.beginPath(); g.moveTo(x + wd / 2, top - T * 0.38); g.lineTo(x + wd / 2 - T * 0.09, top - T * 0.26); g.lineTo(x + wd / 2 + T * 0.09, top - T * 0.26); g.fill();
   }
 }
 function drawGates(w, T) {
@@ -1449,6 +1488,15 @@ function drawGates(w, T) {
     g.fillRect(x, y + h * T - T * 0.12, T, T * 0.12);
     shape(LINK_SHAPES[gt.letter], x + T / 2, y + h * T - T * 0.45, T * 0.2, '#FFFFFF');
     shape(LINK_SHAPES[gt.letter], x + T / 2, y + h * T - T * 0.45, T * 0.13, c);
+    // 同時におさえるとびら: おさえているスイッチの数
+    if (gt.all) {
+      const sw = w.switches.filter((s) => s.letter === gt.letter);
+      const on = sw.filter((s) => s.on).length;
+      g.fillStyle = 'rgba(255,255,255,0.92)';
+      rr(x + T * 0.04, y + h * T - T * 1.55, T * 0.92, T * 0.5, T * 0.18);
+      g.fill();
+      label(on + '/' + sw.length, x + T / 2, y + h * T - T * 1.3, T * 0.32, '#5C5146');
+    }
     if (gt.seatN) {
       g.fillStyle = '#FFFFFF';
       g.beginPath(); g.arc(x + T / 2, y + h * T - T * 1.05, T * 0.26, 0, Math.PI * 2); g.fill();

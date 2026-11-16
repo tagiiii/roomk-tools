@@ -68,6 +68,10 @@
   .role-row .material-symbols-rounded{ font-size:26px; color:var(--acc); flex:none; margin-top:3px; }
   .role-row b{ font-size:23px; font-weight:900; color:var(--ink); }
   .role-row .d{ font-size:19px; color:var(--ink-soft); display:block; margin-top:2px; line-height:1.5; }
+  /* 行の多いパネル（ステージの一覧）を1枚に収める */
+  .cols--tight .panel{ padding:18px 24px; gap:8px; }
+  .cols--tight .role-row b{ font-size:21px; }
+  .cols--tight .role-row .d{ font-size:16px; margin-top:0; line-height:1.4; }
 
   /* 箇条書き行 */
   .rows{ display:flex; flex-direction:column; gap:16px; }
@@ -320,16 +324,25 @@ const SLIDES = [
     ),
     note:'ステージ4は、となりの番号の人と、ひもでつながっているよ。5人より多いときは、いくつかの組に分かれるよ。はなれすぎると進めない。ぶら下がったら、ジャンプで上がれるよ。\nそれから、みんなが画面の中にいるように動くから、ひとりだけ先へは行けないよ。\n落ちても、すぐ近くから戻れるから、安心してね。' },
 
-  /* 10 */ { type:'content', accent:'blue', section:'ゴール', sectionEn:'goal',
+  /* 10 */ { type:'content', accent:'teal', section:'しかけ', sectionEn:'gimmicks', num:'7',
+    headline:'<span class="hl">ばね</span>と、<span class="hl">同時のスイッチ</span>',
+    body: rows(
+      ['height', 'ばねに乗ると、高く跳べる', 'ふつうのジャンプでとどかない穴や、高いかべをこえられる'],
+      ['join', 'しるしのとびらに「0/2」とあったら、スイッチを全部同時に', '手分けしておさえよう。一度開くと、ずっと開いたまま'],
+      ['counter_1', '番号のスイッチは、その番号の人だけがおさえられる', '3マスの高い台は、2人重なった上から跳ぶと上がれる'],
+    ),
+    note:'ステージ6からは、新しいしかけが出てくるよ。\nばねに乗ると、高く跳べる。ふつうのジャンプでとどかない穴や、高いかべをこえられるよ。\nとびらに「0/2」と書いてあったら、同じしるしのスイッチを全部、同時におさえると開くよ。手分けしよう。一度開いたら、ずっと開いたまま。\n番号のスイッチは、その番号の人だけがおさえられる。\n3マスの高い台は、2人重なった上から跳ぶと上がれるよ。' },
+
+  /* 11 */ { type:'content', accent:'blue', section:'ゴール', sectionEn:'goal',
     headline:'全員が<span class="hl">ゴールのとびら</span>に入ると、クリア！',
     body: rows(
       ['key', 'カギがいるステージもある', 'カギを持ってとびらにふれると、とびらが開く'],
       ['meeting_room', '開いたとびらにふれると、中に入る', 'まだ手伝うことがあったら、下の矢印か「出る」のボタンで出られる'],
-      ['skip_next', 'クリアしたら、ホストが「次のステージへ」', 'ステージは5つあるよ'],
+      ['skip_next', 'クリアしたら、ホストが「次のステージへ」', 'ステージは10こあるよ'],
     ),
     note:'ゴールは、とびら。カギがいるステージでは、カギを持ってとびらにふれると開くよ。\n開いたとびらにふれると、中に入る。まだ手伝うことがあったら、下の矢印か「出る」のボタンで出られるよ。\n全員が入るとクリア！ ホストが「次のステージへ」を押すと、次のステージがはじまるよ。' },
 
-  /* 11 */ { type:'content', accent:'teal', section:'ひとこと', sectionEn:'quick words',
+  /* 12 */ { type:'content', accent:'teal', section:'ひとこと', sectionEn:'quick words',
     headline:'「ひとこと」で、<br><span class="hl">言葉をえらんで</span>知らせられる',
     body:`${rows(
       ['chat_bubble', '「ひとこと」を押して、言葉をえらぶ', '自分のキャラの上に、吹き出しが出るよ'],
@@ -337,24 +350,29 @@ const SLIDES = [
     )}<div class="says"><span class="say">待って</span><span class="say">行くよ</span><span class="say">乗って</span><span class="say">押して</span><span class="say">ありがとう</span><span class="say">いいね</span></div>`,
     note:'声のほかに、「ひとこと」でも伝えられるよ。\n「ひとこと」を押すと言葉の一覧が出るから、1つえらんでね。自分のキャラの上に、吹き出しが出るよ。\n「待って」「乗って」「押して」などがあるよ。\n声でも、ひとことでも、どちらで伝えてもOK！' },
 
-  /* 12 */ { type:'content', accent:'blue', section:'ステージ', sectionEn:'stages',
-    headline:'ステージは<span class="hl">5つ</span>',
-    body:`<div class="cols">
+  /* 13 */ { type:'content', accent:'blue', section:'ステージ', sectionEn:'stages',
+    headline:'ステージは<span class="hl">10こ</span>',
+    body:`<div class="cols cols--tight">
       <div class="panel">
         <div class="team-head"><div class="team-ic teal-bg"><span class="material-symbols-rounded">extension</span></div><div class="team-name">しかけを1つずつ</div></div>
         ${role('looks_one', '1. のりあいの練習', '頭に乗る・スイッチ・番号のかべ・カギ')}
         ${role('looks_two', '2. 重い箱と動く床', '人数で押す箱、人数で動くリフトと床')}
         ${role('looks_3', '3. シーソーとボール', 'シーソーと、投げてわたすボール')}
+        ${role('looks_4', '4. ひもでつながる', 'となりの番号の人と、ひもでつながる')}
+        ${role('looks_5', '5. ぜんぶ', 'ここまでのしかけが全部出てくる')}
       </div>
       <div class="panel">
-        <div class="team-head"><div class="team-ic coral-bg"><span class="material-symbols-rounded">emoji_events</span></div><div class="team-name">チャレンジ</div></div>
-        ${role('looks_4', '4. ひもでつながる', 'となりの番号の人と、ひもでつながる')}
-        ${role('looks_5', '5. ぜんぶ', 'これまでのしかけが全部出てくる')}
+        <div class="team-head"><div class="team-ic coral-bg"><span class="material-symbols-rounded">emoji_events</span></div><div class="team-name">新しいしかけ</div></div>
+        ${role('looks_6', '6. 高い台', '人の塔で上がる3マスの台と、箱の足場')}
+        ${role('filter_7', '7. ばねでとぶ', 'ばねで、広い穴と高いかべをこえる')}
+        ${role('filter_8', '8. 手分けの道', '同時におさえるスイッチと、番号のスイッチ')}
+        ${role('filter_9', '9. ひもと高い台', 'ひもでつながったまま、高い台に上がる')}
+        ${role('filter_9_plus', '10. さいごの道', 'ステージ6〜9のしかけが全部出てくる')}
       </div>
     </div>`,
-    note:'ステージは5つあるよ。\n1つ目は「のりあいの練習」。頭に乗る、スイッチ、番号のかべ、カギが出てくるよ。\n2つ目は「重い箱と動く床」、3つ目は「シーソーとボール」、4つ目は「ひもでつながる」。\nさいごの5つ目は「ぜんぶ」。これまでのしかけが全部出てくるよ。' },
+    note:'ステージは10こあるよ。\n1つ目は「のりあいの練習」。頭に乗る、スイッチ、番号のかべ、カギが出てくるよ。\n2つ目は「重い箱と動く床」、3つ目は「シーソーとボール」、4つ目は「ひもでつながる」、5つ目は「ぜんぶ」。\n6つ目からは新しいしかけ。「高い台」「ばねでとぶ」「手分けの道」「ひもと高い台」、さいごの10こ目は「さいごの道」だよ。' },
 
-  /* 13 */ { type:'content', accent:'coral', section:'Q&A', sectionEn:'question & answer',
+  /* 14 */ { type:'content', accent:'coral', section:'Q&A', sectionEn:'question & answer',
     headline:'よくある質問',
     body:`<div class="qa">
       ${qa('進めなくなったら、どうする？', 'ホストが「このステージをやりなおす」で、はじめの場所にもどせるよ。')}
@@ -363,23 +381,23 @@ const SLIDES = [
     </div>`,
     note:'よくある質問だよ\nQ. 進めなくなったら？→ A. ホストが「このステージをやりなおす」で、はじめの場所にもどせるよ。\nQ. とちゅうから入ったら？→ A. そのステージは見る番。次のステージからキャラが出るよ。\nQ. 1台のパソコンで遊べる？→ A. トップの「1台のパソコンで遊ぶ」で、1つのキーボードで2〜4人を動かせるよ。' },
 
-  /* 14 */ { type:'divider', accent:'blue', icon:'live_help', jp:'質問タイム', en:'any questions?',
+  /* 15 */ { type:'divider', accent:'blue', icon:'live_help', jp:'質問タイム', en:'any questions?',
     sub:'気になることはある？',
     note:'ここまでで、質問がある人はいるかな？\nマイクON か チャットで教えてね！' },
 
-  /* 15 */ { type:'divider', accent:'coral', icon:'how_to_reg', jp:'参加確認', en:"let's check",
+  /* 16 */ { type:'divider', accent:'coral', icon:'how_to_reg', jp:'参加確認', en:"let's check",
     sub:'チャットで教えてね',
     note:'やってみたい人〜？\n「①参加」「②見学」「③その他」を、チャットで教えてね！' },
 
-  /* 16 */ { type:'divider', accent:'teal', solid:true, icon:'rocket_launch', jp:'＼ ゲームスタート ／', en:'game start',
+  /* 17 */ { type:'divider', accent:'teal', solid:true, icon:'rocket_launch', jp:'＼ ゲームスタート ／', en:'game start',
     sub:'まずは、ルームに入ろう',
     note:'それでは、のりあいロード スタート！\n「ルームに参加する」を押して、名前とルームコードを入れてね。\nチャットのリンクから開いた人は、名前だけ入れればOKだよ。' },
 
-  /* 17 */ { type:'divider', accent:'blue', icon:'forum', jp:'声をかけ合おう', en:'talk together',
+  /* 18 */ { type:'divider', accent:'blue', icon:'forum', jp:'声をかけ合おう', en:'talk together',
     sub:'「乗って」「押して」「待って」',
     note:'ステージがはじまったよ。\nまずは、自分のキャラを動かしてみよう。\n「乗って」「押して」「待って」って、声か「ひとこと」で伝え合ってね。' },
 
-  /* 18 */ { type:'divider', accent:'teal', solid:true, icon:'flag', jp:'クリア！', en:'clear',
+  /* 19 */ { type:'divider', accent:'teal', solid:true, icon:'flag', jp:'クリア！', en:'clear',
     sub:'おつかれさま！',
     note:'クリア、おめでとう！ みんなで力を合わせたね。\nもう1ステージやる？ それとも、今日はここまでにする？\nさいごに、ひとことずつ感想を教えてね。' },
 ];
