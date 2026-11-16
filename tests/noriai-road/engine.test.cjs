@@ -1,7 +1,7 @@
-// のりあいロード（試作）のエンジンのテスト。node drafts/noriai-road/engine.test.cjs
+// のりあいロードのエンジンのテスト。node tests/noriai-road/engine.test.cjs
 'use strict';
 const assert = require('assert');
-const E = require('./engine.js');
+const E = require('../../apps/noriai-road/engine.js');
 
 const DT = 1 / 60;
 let passed = 0;
@@ -302,6 +302,42 @@ test('全員が画面の中にいる（ひとりだけ先へ行けない）', ()
   run(w, 300, () => [{ r: true }, {}]);
   const [a, b] = w.players;
   assert(a.x - b.x <= E.VIEW, 'はなれすぎ ' + (a.x - b.x));
+});
+
+test('ルームに置く形: 人は書いて読むと同じ', () => {
+  const p = E.makePlayer(2, 3.456, 8.2);
+  p.ground = 's1'; p.rx = 0.123; p.face = -1; p.inDir = 1;
+  const d = E.decodePlayer(JSON.parse(JSON.stringify(E.encodePlayer(p))));
+  assert.deepStrictEqual([d.x, d.y, d.face, d.ground, d.inDir, d.entered, d.rx], [3.46, 8.2, -1, 's1', 1, false, 0.12]);
+  assert.strictEqual(E.decodePlayer(['a', 1, 1, 0, 0, 0]), null, 'こわれた値は null');
+  assert.strictEqual(E.decodePlayer([1, 1, 1, 'x9', 0, 0]).ground, null, '知らない乗りものは null');
+});
+
+test('ルームに置く形: ワールドを書いて読みこむと、印と位置がそろう', () => {
+  const w = E.createWorld(4, 3);
+  w.boxes[0].x += 2; w.gates[1].open = true; w.items[0].holder = 2; w.hoops[0].done = true; w.door.locked = false;
+  w.plats[0].y = 6; w.seesaws[0].off = 1.5; w.plats[w.seesaws[0].left].y = 11.5; w.plats[w.seesaws[0].right].y = 8.5;
+  const snap = JSON.parse(JSON.stringify(E.snapshot(w)));
+  const v = E.createWorld(4, 3);
+  E.applySnapshot(v, snap, true);
+  assert(near(v.boxes[0].x, w.boxes[0].x));
+  assert(v.gates[1].open && v.items[0].holder === 2 && v.hoops[0].done && !v.door.locked);
+  assert(near(v.plats[0].y, 6) && near(v.seesaws[0].off, 1.5));
+  // 位置なし: 印だけ
+  const u = E.createWorld(4, 3);
+  E.applySnapshot(u, snap, false);
+  assert(u.gates[1].open && near(u.boxes[0].x, u.boxes[0].x0));
+  // こわれた値でも落ちない
+  E.applySnapshot(u, { b: 'x', p: null, i: [[1]], g: 5 }, true);
+});
+
+test('いなくなった人は、クリアの数に入れない', () => {
+  const w = E.createWorld(0, 3);
+  w.door.locked = false;
+  w.players[2].absent = true; w.players[2].entered = true;
+  w.players.slice(0, 2).forEach((p) => { p.x = w.door.x; p.y = 9.1; });
+  run(w, 5);
+  assert(w.clear);
 });
 
 console.log(`\n${passed} ok`);

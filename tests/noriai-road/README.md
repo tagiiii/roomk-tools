@@ -1,0 +1,33 @@
+# のりあいロードのテスト
+
+ルールのテスト（エミュレーター不要）と、隔離した Firebase エミュレーター＋Playwright の E2E。
+**本番の Firebase には接続しない**（共通の `rtdb-utils.js` をエミュレーター向けに差し替えた写しを使い、本番あての通信が出たら失敗にする）。
+
+| ファイル | 内容 |
+|---|---|
+| `engine.test.cjs` | ルール（ひとりで2マスに上がれない・頭に乗れる・乗って運ばれる・スイッチ・番号のかべ・カギとゴール・箱の人数・リフト・動く床・シーソー・ボールとかご・ひも・落ちて戻る・画面そろえ）、ルームに置く形（人・ワールドを書いて読むと同じ・こわれた値）、いなくなった人をクリアの数に入れない。`node tests/noriai-road/engine.test.cjs` |
+| `e2e1.cjs` | 作成・参加・待合室（番号・ステージ）・はじめる・歩く同期・止まっている間は書かない・頭に乗ったまま運ばれる（両方の画面）・ひとこと（5秒に1回）・クリアの出し分けと finish は1回・次のステージ・2人で押す箱・読み込み直し（ホストはワールドの続き・参加者は自分の位置）・投げる（ホストが投げて印を消す）・待合室へ・3人目・スマホ幅と画面のボタン・**通信量**（3人のうち2人が歩く5秒）・退出した人をのぞいてクリア・ルームを閉じる・1台のパソコンで遊ぶ・音を作らない |
+| `lib.cjs` | 共通の部品（配信用サーバー・本番あて通信の検出・WebSocket のバイト数・画面の操作・ページの中の状態を読む `st`） |
+| `sync-site.sh` | `apps/shared`・`apps/assets`・`apps/noriai-road`・`apps/updates.json` を作業フォルダに写し、エミュレーター向けに差し替える |
+| `firebase.json` | エミュレーターのポート（auth 9971・database 9972・hub 4971・logging 4972）。配信は 6971 |
+
+## 実行
+
+```bash
+export NR_WORK=/tmp/noriai-road-e2e
+export PLAYWRIGHT=（playwright のフォルダ）
+
+# 1. 写しを作る（アプリを直すたびにやり直す）
+bash tests/noriai-road/sync-site.sh
+
+# 2. エミュレーターを起動する（別の端末で。設定とルールは作業フォルダに置く）
+cp tests/noriai-road/firebase.json database.rules.json "$NR_WORK"/
+(cd "$NR_WORK" && npx --yes firebase-tools@15.29.0 emulators:start --only auth,database --project demo-roomk-nr)
+
+# 3. 流す
+node tests/noriai-road/e2e1.cjs
+```
+
+- ページの中の状態は、写しのときだけ作る `window.__noriaiTest`（`state` と `E`）で読む・置く
+- 位置を書くのは変わったときだけなので、「止まっている間は書かない」を WebSocket の送ったバイト数で確かめている
+- 終わったらエミュレーターを止め、ポートが空いたことを確かめる

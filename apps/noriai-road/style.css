@@ -1,0 +1,137 @@
+/* のりあいロード 接頭辞 nr- */
+
+body { background: var(--color-bg); }
+
+/* 画面の切り替え */
+.nr-screen { display: none; }
+.nr-screen.active { display: block; }
+.nr-front.active { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px 16px; }
+.nr-panel { width: 100%; max-width: 440px; background: var(--color-surface); border-radius: var(--radius-card); padding: 32px 28px; border: 1px solid var(--color-border); }
+.nr-panel__title { font-size: 30px; color: var(--color-primary); margin: 8px 0 12px; }
+.nr-panel__title--sub { font-size: 24px; }
+.nr-panel__lead { color: var(--color-text); line-height: 1.7; margin: 0 0 16px; }
+.nr-panel__notes { margin: 0 0 24px; padding-left: 1.2em; color: var(--color-muted); line-height: 1.8; }
+.nr-panel__actions { display: grid; gap: 12px; }
+.nr-alert { margin: 12px 0 0; color: var(--color-error); font-weight: 500; }
+.nr-back { margin: -8px 0 4px -8px; }
+.nr-hint { margin: 0 0 16px; padding: 10px 14px; border-radius: var(--radius-sm); background: var(--color-accent-soft); color: var(--color-primary); line-height: 1.6; font-size: 14px; }
+.nr-code-input { text-transform: uppercase; letter-spacing: 0.2em; font-weight: 700; }
+.nr-field { display: grid; gap: 8px; margin-top: 16px; }
+.nr-field__label { margin: 0; font-weight: 700; }
+.nr-keys { list-style: none; margin: 0 0 4px; padding: 10px 14px; display: grid; grid-template-columns: 1fr 1fr; gap: 6px 12px; background: var(--color-primary-soft); border-radius: var(--radius-sm); }
+.nr-keys li { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+
+/* 弱いボタン（テキストリンク風） */
+.nr-quiet {
+  display: inline-flex; align-items: center; gap: 4px;
+  min-height: 44px; padding: 8px 10px; border: none; background: none;
+  color: var(--color-accent); font-family: inherit; font-size: 15px; font-weight: 500; cursor: pointer;
+  border-radius: var(--radius-sm);
+}
+.nr-quiet:hover { background: rgba(138, 74, 16, 0.08); }
+.nr-quiet:disabled { color: var(--color-muted); opacity: 0.55; cursor: not-allowed; background: none; }
+.nr-quiet--center { justify-self: center; align-self: center; }
+.nr-quiet:focus-visible, .nr-seg__btn:focus-visible, .nr-pad:focus-visible, .nr-saypanel button:focus-visible { outline: 3px solid var(--color-accent); outline-offset: 2px; }
+
+/* 選ぶボタンの列 */
+.nr-seg { display: flex; flex-wrap: wrap; gap: 8px; }
+.nr-seg--col { display: grid; grid-template-columns: 1fr; }
+.nr-seg__btn { min-height: 48px; padding: 8px 14px; border: 2px solid var(--color-border); border-radius: var(--radius-btn); background: var(--color-surface); color: var(--color-text); font-family: inherit; font-size: 15px; font-weight: 500; cursor: pointer; text-align: left; }
+.nr-seg__btn.is-on { border-color: var(--color-accent); background: var(--color-accent-soft); color: var(--color-accent); font-weight: 700; }
+.nr-seg__btn small { display: block; font-size: 13px; font-weight: 400; color: var(--color-muted); margin-top: 2px; line-height: 1.5; }
+
+/* バー */
+.nr-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding: 12px 20px; background: var(--color-primary); color: #fff; }
+.nr-bar__title { font-size: 18px; margin: 0; margin-right: auto; }
+.nr-bar__me { margin: 0; font-size: 14px; }
+.nr-roombar { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 4px 6px; padding: 6px 12px; background: var(--color-surface); border-bottom: 1px solid var(--color-border); }
+.nr-roombar__code { margin-right: 6px; font-size: 14px; color: var(--color-muted); }
+.nr-roombar__code strong { color: var(--color-primary); letter-spacing: 0.1em; font-size: 16px; }
+
+/* ホストの戻りを待つ */
+.nr-overlay-page { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.45); display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 60; }
+.nr-overlay-page[hidden] { display: none; }
+.nr-overlay-page__panel { background: var(--color-surface); border-radius: var(--radius-card); padding: 24px; max-width: 360px; text-align: center; display: grid; gap: 12px; }
+.nr-overlay-page__panel h2 { margin: 0; font-size: 20px; color: var(--color-primary); }
+.nr-overlay-page__panel p { margin: 0; color: var(--color-muted); line-height: 1.6; }
+
+/* 待合室 */
+.nr-main { max-width: 760px; margin: 0 auto; padding: 20px 16px 64px; }
+.nr-phase { display: grid; gap: 16px; }
+.nr-h2 { font-size: 18px; color: var(--color-primary); margin: 0 0 12px; }
+.nr-note { margin: 10px 0 0; color: var(--color-muted); font-size: 14px; line-height: 1.6; }
+.nr-wait { margin: 0; color: var(--color-muted); text-align: center; }
+.nr-people { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+.nr-person { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 8px; background: var(--color-bg); min-height: 44px; }
+.nr-person .material-symbols-rounded { color: var(--color-muted); font-size: 20px; }
+.nr-person__name { font-weight: 500; }
+/* 番号の丸。キャラの色と同じ */
+.nr-num { --cd: color-mix(in srgb, var(--c) 70%, #000); flex: none; min-width: 26px; height: 26px; padding: 0 6px; box-sizing: border-box; border-radius: 999px; background: var(--cd); color: #fff; font-weight: 700; font-size: 14px; line-height: 1; display: inline-flex; align-items: center; justify-content: center; }
+.nr-chip { font-size: 12px; padding: 2px 8px; border-radius: 999px; white-space: nowrap; font-weight: 500; }
+.nr-chip--muted { background: var(--color-border); color: var(--color-text); }
+.nr-chip--you { background: transparent; color: var(--color-muted); border: 1px solid var(--color-border); }
+.nr-check { display: flex; align-items: center; gap: 10px; min-height: 44px; margin-top: 10px; cursor: pointer; font-weight: 500; }
+.nr-check input { width: 20px; height: 20px; accent-color: var(--color-accent); flex: none; }
+
+/* ステージ */
+.nr-game { max-width: 1120px; margin: 0 auto; padding: 10px 16px 32px; display: grid; gap: 10px; }
+.nr-head { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; }
+.nr-stage { margin: 0; font-size: var(--font-size-lg); font-weight: 700; color: var(--color-primary); font-family: 'Zen Maru Gothic', var(--font-base); }
+.nr-you { margin: 0; font-weight: 700; font-size: 14px; padding: 2px 12px; border-radius: 999px; color: #fff; background: var(--color-primary); }
+.nr-head__hint { margin-left: auto; }
+.nr-hint--stage { margin: 0; background: var(--color-surface); color: var(--color-text); }
+.nr-stagebox { position: relative; width: min(100%, calc((100vh - 300px) * 22 / 13)); min-width: min(100%, 480px); aspect-ratio: 22 / 13; margin: 0 auto; border-radius: var(--radius-card); overflow: hidden; box-shadow: var(--shadow-md); background: #FBEFD9; }
+.nr-canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+.nr-watching { position: absolute; left: 50%; top: 10px; transform: translateX(-50%); margin: 0; padding: 4px 14px; border-radius: 999px; background: rgba(255, 255, 255, 0.92); color: var(--color-text); font-size: 14px; font-weight: 500; white-space: nowrap; }
+.nr-over { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(63, 54, 45, 0.35); }
+.nr-over[hidden] { display: none; }
+.nr-over__card { background: var(--color-surface); border-radius: var(--radius-box); padding: 24px 28px; text-align: center; box-shadow: var(--shadow-lg); max-width: 90%; }
+.nr-over__big { font-size: var(--font-size-xl); font-weight: 700; margin: 0 0 6px; color: var(--color-primary); font-family: 'Zen Maru Gothic', var(--font-base); }
+.nr-over__sub { margin: 0 0 16px; color: var(--color-muted); }
+.nr-over__btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+.nr-over__btns[hidden] { display: none; }
+.nr-over__wait { margin: 0; color: var(--color-muted); }
+
+.nr-under { display: grid; gap: 12px; max-width: 900px; width: 100%; margin: 0 auto; }
+.nr-pick { display: grid; gap: 6px; }
+.nr-pads { display: flex; justify-content: space-between; gap: 12px; }
+.nr-pads[hidden] { display: none; }
+.nr-pads__group { display: flex; gap: 10px; }
+.nr-pad { min-width: 88px; min-height: 56px; border-radius: var(--radius-card); border: 2px solid var(--color-primary); background: var(--color-surface); color: var(--color-primary); font-family: 'Zen Maru Gothic', var(--font-base); font-weight: 700; font-size: var(--font-size-btn); cursor: pointer; user-select: none; -webkit-user-select: none; touch-action: none; }
+.nr-pad .material-symbols-rounded { font-size: 32px; }
+.nr-pad.is-down { background: var(--color-primary-soft); }
+.nr-pad--jump { min-width: 112px; background: var(--color-primary); color: #fff; }
+.nr-pad--jump.is-down { background: var(--color-primary-dark); }
+.nr-keyhint { margin: 0; text-align: center; }
+.nr-sayrow { display: grid; gap: 8px; justify-items: start; }
+.nr-sayrow[hidden] { display: none; }
+.nr-saybtn { display: inline-flex; align-items: center; gap: 6px; }
+.nr-saypanel { display: flex; flex-wrap: wrap; gap: 8px; }
+.nr-saypanel[hidden] { display: none; }
+.nr-saypanel button { min-height: 44px; padding: 6px 16px; border-radius: 999px; border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-text); font-family: inherit; font-size: 15px; cursor: pointer; }
+.nr-saypanel button:disabled { opacity: 0.5; cursor: not-allowed; }
+.nr-roster { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: var(--font-size-sub); }
+.nr-roster li { display: inline-flex; align-items: center; gap: 6px; min-height: 28px; }
+.nr-roster .nr-num { min-width: 22px; height: 22px; font-size: 12px; }
+.nr-roster .is-off { color: var(--color-muted); }
+
+/* ホストがたまに使う操作（開くと出る） */
+.nr-hostmenu { border-top: 1px solid var(--color-border); }
+.nr-hostmenu[hidden] { display: none; }
+.nr-hostmenu summary { min-height: 44px; display: flex; align-items: center; gap: 6px; color: var(--color-muted); font-size: 14px; font-weight: 700; cursor: pointer; list-style: none; }
+.nr-hostmenu summary::-webkit-details-marker { display: none; }
+.nr-hostmenu summary::before { content: "expand_more"; font-family: "Material Symbols Rounded"; font-size: 22px; color: var(--color-accent); transition: transform .15s; }
+.nr-hostmenu[open] summary::before { transform: rotate(180deg); }
+.nr-hostmenu__body { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; padding-bottom: 4px; }
+
+@media (max-width: 600px) {
+  .nr-panel { padding: 24px 18px; }
+  .nr-bar { padding: 10px 16px; }
+  .nr-roombar { gap: 4px; padding: 6px 8px; }
+  .nr-roombar .btn { padding: 4px 8px; font-size: 13px; min-height: 36px; }
+  .nr-main { padding: 14px 12px 56px; }
+  .nr-game { padding: 8px 8px 24px; }
+  .nr-stagebox { width: 100%; min-width: 0; }
+  .nr-pad { min-width: 64px; }
+  .nr-pad--jump { min-width: 92px; }
+}
