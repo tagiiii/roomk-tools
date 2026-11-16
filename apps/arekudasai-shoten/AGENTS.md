@@ -93,7 +93,7 @@ apps/arekudasai-shoten/
 - `scripts/lint.sh` の `RTDB_HTML_FILES` に追加
 - `scripts/content-audit.mjs` の `NO_CONTENT_APPS` に追加（品物はお店の部品で、お題・問題ではない）
 - `apps/index.html` にカード・`apps/updates.json` 先頭に `type: "new"`・`apps/guide/index.html`（ヒントの系統）に1行
-- イラスト `apps/assets/illustrations/arekudasai-shoten.webp`（日よけのあるお店の台に、顔の付いた品物と、ひもをかけた包み。`scripts/illustrations/prompts.json`。2026-11-15）。ツール一覧のカードと、はじめの画面（`.app-hero`）に出す
+- イラスト `apps/assets/illustrations/arekudasai-shoten.webp`（日よけのあるお店の台に、顔の付いた段ボール箱と、そこから出る吹き出しと、顔の付いたプリン。`scripts/illustrations/prompts.json`。2026-11-15。11-16 に、箱に入れて出す・コメントを送る遊び方に合わせて作りなおした。3回作り、箱がまん中に大きく入った3回目にした）。ツール一覧のカードと、はじめの画面（`.app-hero`）に出す
 - 説明スライド `slides.html`（17枚。2026-11-15。11-16 にコメントの1枚を足した。エンジンは `apps/kotoba-tantei/slides.html` のまま、チャンネル `arekudasai_shoten_deck`・保存キー `aks_`）。品物の例は、アプリの `engine.js`・`art.js` を読んで同じ絵で出す。「？」の「説明スライドを見る」と、ツール一覧のカード（`data-slides`）から開ける。ルールを変えたら、スライドと発表者ノートも合わせる
 - サムネイル `apps/assets/thumbnails/arekudasai-shoten.png`（お店の人が品物を出してコメントを送った画面。撮り方は `tests/arekudasai-shoten/shot.cjs`。2026-11-15。11-16 にコメントが写るよう撮り直した）。ツール一覧のカードの説明と、説明スライドの3枚目に出す
 
