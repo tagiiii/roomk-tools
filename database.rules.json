@@ -234,6 +234,12 @@
         ".write": "auth != null"
       }
     },
+    "shinkeisuijaku_rooms": {
+      "$roomId": {
+        ".read": "auth != null",
+        ".write": "auth != null"
+      }
+    },
     "sakusenkaigi_rooms": {
       "$roomId": {
         ".read": "auth != null",
