@@ -1,0 +1,32 @@
+{
+  "date": "2026-11-17",
+  "items": [
+    {
+      "title": "はやぶさ2、新しい小惑星をめざすことに",
+      "text": "日本の探査機「はやぶさ2」は、エンジンの調子が悪くなり、2031年に予定していた小惑星「1998 KY26」への到着が難しくなりました。かわりに2028年度、小惑星「2015 BM510」のそばを速いスピードで通りながら観測する計画です。",
+      "ask": "小惑星に名前をつけるなら、どんな名前にする？",
+      "source": "朝日新聞",
+      "url": "https://news.yahoo.co.jp/articles/5cc5363f292b558bdccb75b830d11cb50b95a360",
+      "on": "11月16日",
+      "img": { "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/eb/Hayabusa2_front_view.jpg/960px-Hayabusa2_front_view.jpg", "credit": "DLR German Aerospace Center", "license": "CC BY 2.0" }
+    },
+    {
+      "title": "中井亜美選手、スケートアメリカで優勝",
+      "text": "フィギュアスケートの中井亜美選手（18歳）が、アメリカのワシントン州であったグランプリシリーズ第4戦「スケートアメリカ」で優勝しました。合計236.81点は今シーズン世界最高の点数で、グランプリファイナルへの出場も決まりました。",
+      "ask": "やってみたいウインタースポーツはある？",
+      "source": "THE ANSWER",
+      "url": "https://news.yahoo.co.jp/articles/ed7dabf663b02702a575a879dfb27b635e6b48d2",
+      "on": "11月16日",
+      "img": { "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/26/White_figure_skates.jpg/960px-White_figure_skates.jpg", "credit": "Santeri Viinamäki", "license": "CC BY-SA 4.0" }
+    },
+    {
+      "title": "グラミー賞にアジアの音楽の新しい部門",
+      "text": "アメリカの音楽の賞「グラミー賞」に、アジアのポップ音楽の部門が新しくできました。16日に発表された候補6組には、日本のBABYMETALやLiSAが入りました。結果は来年2月7日にロサンゼルスで発表されます。",
+      "ask": "最近よく聞いている曲はある？",
+      "source": "スポニチ",
+      "url": "https://news.yahoo.co.jp/articles/95fe21a33edca36a80ca5acf26546e6b84114e95",
+      "on": "11月17日",
+      "img": { "src": "https://upload.wikimedia.org/wikipedia/commons/d/d6/VictorVPhonograph.jpg", "credit": "Norman Bruderhofer", "license": "CC BY-SA 2.5" }
+    }
+  ]
+}
