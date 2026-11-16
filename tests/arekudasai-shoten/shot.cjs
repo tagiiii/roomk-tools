@@ -1,5 +1,5 @@
 // ポータルの画面の例を撮る（隔離エミュレーター。名前は撮影用の「そら」「みどり」「あお」「ひかり」）。
-// お店の人（みどり）の画面で、お客さんのヒントが届き、質問を1回したところ。出力は AK_WORK/out/thumb.png。リポジトリへは手で写す
+// お店の人（みどり）の画面で、お客さんのヒントが届き、質問を1回してからドーナツを出し、コメントを送ったところ。出力は AK_WORK/out/thumb.png。リポジトリへは手で写す
 const L = require('./lib.cjs');
 const { E, sleep, rest } = L;
 
@@ -37,11 +37,11 @@ const { E, sleep, rest } = L;
   S.players.forEach((p, i) => { if (i !== hi) p.order = S.players[(i + 1) % 4].hand.find((id) => id !== aoAdd) || null; });
   S.turn = hi;
   const play = E.toRoom(S);
-  play.r = { n: 1, h: 'まるい,あまい', at: Date.now() - 7000, d: { [ao]: aoAdd }, q: { [mi]: 'あたたかい:1' } };
+  play.r = { n: 1, h: 'まるい,あまい', at: Date.now() - 7000, d: { [ao]: aoAdd, [mi]: 'donatsu' }, q: { [mi]: 'あたたかい:1' }, m: { [mi]: 1 } };
   await rest('PUT', `${L.ROOMS}/${code}/play/${g.id}`, play);
 
   const M = guests.find((c) => c.name === 'みどり');
-  await L.waitText(M, '#stage', 'どうする？');
+  await L.waitText(M, '#stage', 'と送ったよ');
   await M.page.addStyleTag({ content: '.howto-fab, .howto-feedback-fab { display: none !important; } .ak-art--live * { animation: none !important; }' });
   await M.page.mouse.move(2, 2);
   await sleep(600);
