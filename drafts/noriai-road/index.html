@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>のりあいロード（試作） | あそびのたな</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet" />
+  <link rel="stylesheet" href="../../apps/shared/css/design-system.css?v=20261106c" />
+  <link rel="stylesheet" href="style.css?v=20261116a" />
+</head>
+<body>
+  <main class="nr-wrap">
+
+    <!-- トップ -->
+    <section class="nr-screen active" id="screen-top">
+      <div class="nr-panel">
+        <p class="nr-badge">試作</p>
+        <h1 class="nr-title">のりあいロード</h1>
+        <p class="nr-lead">みんなで右へ進む、横スクロールの協力アクション。友だちの頭に乗って高い所へ上がったり、重い箱をみんなで押したり。全員がゴールのとびらに入るとクリア。</p>
+
+        <div class="nr-set">
+          <div class="nr-field">
+            <p class="nr-field__label" id="lblStage">ステージ</p>
+            <div class="nr-seg nr-seg--wrap" id="stageSeg" role="group" aria-labelledby="lblStage"></div>
+            <p class="nr-note" id="stageNote"></p>
+          </div>
+          <div class="nr-field">
+            <p class="nr-field__label" id="lblCount">人数</p>
+            <div class="nr-seg nr-seg--num" id="countSeg" role="group" aria-labelledby="lblCount"></div>
+          </div>
+        </div>
+
+        <div class="nr-actions">
+          <button type="button" class="btn btn-primary btn-lg btn-full" id="btnOne">1台の画面でためす</button>
+          <p class="nr-note">1台のキーボードで、人数ぶんを動かす。1番は矢印キー、2番は W A S D、3番は I J K L、4番は T F G H（上でジャンプ・下で投げる）。</p>
+
+          <button type="button" class="btn btn-secondary btn-full" id="btnTwo">ウィンドウごとに1人でためす</button>
+          <div class="nr-who" id="whoBox" hidden>
+            <div class="nr-field">
+              <p class="nr-field__label" id="lblSeat">このウィンドウは何番？</p>
+              <div class="nr-seg nr-seg--num" id="seatSeg" role="group" aria-labelledby="lblSeat"></div>
+            </div>
+            <div class="nr-field">
+              <p class="nr-field__label" id="lblLag">通信の遅れをまねる</p>
+              <div class="nr-seg" id="lagSeg" role="group" aria-labelledby="lblLag"></div>
+            </div>
+            <div class="nr-field">
+              <p class="nr-field__label" id="lblRate">位置を送る回数（1秒に）</p>
+              <div class="nr-seg" id="rateSeg" role="group" aria-labelledby="lblRate"></div>
+            </div>
+            <p class="nr-note">人数ぶんのウィンドウでこのページを開き、ちがう番号を選んで「はじめる」。同じパソコンのウィンドウの間だけでつながる（外へは通信しない）。ステージと人数は1番のウィンドウのものを使う。遅れは、送る前にわざと待たせてまねる。</p>
+            <button type="button" class="btn btn-primary btn-full" id="btnTwoGo">はじめる</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ゲーム -->
+    <section class="nr-screen" id="screen-game">
+      <div class="nr-game">
+        <div class="nr-head">
+          <p class="nr-stage" id="stageName"></p>
+          <p class="nr-you" id="youLine" hidden></p>
+          <button type="button" class="nr-quiet" id="btnHint" aria-expanded="true" aria-controls="hintText">しかけの説明</button>
+        </div>
+        <p class="nr-hint" id="hintText"></p>
+
+        <div class="nr-stagebox" id="stageBox">
+          <canvas class="nr-canvas" id="canvas" role="img" aria-label="ステージ"></canvas>
+          <div class="nr-over" id="overBox" hidden>
+            <div class="nr-over__card">
+              <p class="nr-over__big" id="overText"></p>
+              <p class="nr-over__sub" id="overSub"></p>
+              <div class="nr-over__btns" id="overBtns">
+                <button type="button" class="btn btn-primary btn-lg" id="btnNext">次のステージへ</button>
+                <button type="button" class="btn btn-secondary" id="btnAgain">もう一回</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="nr-under">
+          <div class="nr-pick" id="pickBox" hidden>
+            <p class="nr-field__label" id="lblPick">画面のボタンで動かす人</p>
+            <div class="nr-seg nr-seg--num" id="pickSeg" role="group" aria-labelledby="lblPick"></div>
+          </div>
+
+          <div class="nr-pads" id="pads">
+            <div class="nr-pads__group">
+              <button type="button" class="nr-pad" data-key="l" aria-label="左へ"><span class="material-symbols-rounded" aria-hidden="true">arrow_back</span></button>
+              <button type="button" class="nr-pad" data-key="r" aria-label="右へ"><span class="material-symbols-rounded" aria-hidden="true">arrow_forward</span></button>
+            </div>
+            <div class="nr-pads__group">
+              <button type="button" class="nr-pad nr-pad--act" data-key="a">投げる</button>
+              <button type="button" class="nr-pad nr-pad--jump" data-key="j">ジャンプ</button>
+            </div>
+          </div>
+
+          <div class="nr-say" id="sayBox" role="group" aria-label="ひとこと"></div>
+
+          <div class="nr-meter" id="meter" hidden>
+            <p class="nr-meter__title">通信のめやす（試作の計測）</p>
+            <p class="nr-meter__line" id="meterLine"></p>
+          </div>
+
+          <div class="nr-tools">
+            <button type="button" class="btn btn-secondary" id="btnRetry">このステージをやりなおす</button>
+            <button type="button" class="nr-quiet" id="btnSkip">次のステージにする</button>
+            <button type="button" class="nr-quiet" id="btnTop">トップへ戻る</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <dialog class="nr-ask" id="askBox" aria-labelledby="askText">
+      <p class="nr-ask__text" id="askText"></p>
+      <p class="nr-ask__note">みんな、はじめの場所にもどるよ。</p>
+      <div class="nr-ask__btns">
+        <button type="button" class="btn btn-secondary" id="btnAskNo">やめる</button>
+        <button type="button" class="btn btn-primary" id="btnAskYes"></button>
+      </div>
+    </dialog>
+
+  </main>
+
+  <script src="engine.js?v=20261116a"></script>
+  <script src="app.js?v=20261116a"></script>
+</body>
+</html>
