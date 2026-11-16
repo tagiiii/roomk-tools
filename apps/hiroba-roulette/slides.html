@@ -214,18 +214,27 @@
 
 <script>
 const SLIDES = [
-  /* 1 */ { type:'title', note:'これから「なにするルーレット」で、この時間の過ごし方を決めるよ。\nやることは3つ。プログラムを見て、どう過ごしたいかを聞いて、みんなで遊ぶゲームをルーレットで決めます。' },
+  /* 1 */ { type:'title', note:'これから「なにするルーレット」で、この時間の過ごし方を決めるよ。\nやることは3つ。プログラムを見て、どう過ごしたいかを聞いて、みんなで遊ぶゲームをルーレットで決めます。\n自分の端末で選ぶこともできるよ。' },
 
   /* 2 */ { type:'content', accent:'teal', section:'やること', sectionEn:'3 steps',
     headline:'3つのステップで、<span class="hl">この時間の過ごし方</span>を決める',
     body:`<div class="steps3">
       <div class="step"><div class="step__n">1</div><div class="step__t">このコマの<br>プログラム</div><div class="step__d">この時間に、どんなプログラムがあるかを見る</div></div>
-      <div class="step"><div class="step__n">2</div><div class="step__t">どう過ごしたい？</div><div class="step__d">ひとことと、決まっていたら過ごし方の番号をおしえてね</div></div>
-      <div class="step"><div class="step__n">3</div><div class="step__t">遊びを決める</div><div class="step__d">遊びたいゲームの番号をおしえて、ルーレットで決める</div></div>
+      <div class="step"><div class="step__n">2</div><div class="step__t">どう過ごしたい？</div><div class="step__d">ひとことと、決まっていたら過ごし方をおしえてね。自分の端末で押してもOK</div></div>
+      <div class="step"><div class="step__n">3</div><div class="step__t">遊びを決める</div><div class="step__d">遊びたいゲームをえらんで、ルーレットで決める</div></div>
     </div>`,
     note:'やることは3つ。\n1. このコマのプログラムを見る\n2. どう過ごしたいかをおしえてもらう\n3. みんなで遊ぶゲームを、ルーレットで決める' },
 
-  /* 3 */ { type:'content', accent:'blue', section:'ステップ', sectionEn:'program', num:'1',
+  /* 3 */ { type:'content', accent:'coral', section:'ルーム', sectionEn:'join the room',
+    headline:'<span class="hl">自分の端末</span>でも選べるよ',
+    body:`<div class="rows">
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">link</span></div><div><div class="row__t">リンクかQRコードからひらいて、名前を入れる</div><div class="row__d">「参加する」を押せば入れるよ。スマホでも、パソコンでもOK</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">touch_app</span></div><div><div class="row__t">2と3のときに、自分の端末で1つ押す</div><div class="row__d">もう一度押すと取り消せるよ。共有画面には、えらんだ数だけが出るよ</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">record_voice_over</span></div><div><div class="row__t">端末がなくても大丈夫</div><div class="row__d">声やチャットで番号をおしえてね。かわりに押すよ</div></div></div>
+    </div>`,
+    note:'自分の端末で選ぶこともできるよ。\nチャットに送ったリンクか、画面のQRコードからひらいてね。名前を入れて「参加する」を押せば入れます。\nどう過ごしたいかと、遊びたいゲームを決めるときに、自分の端末で1つ押してね。もう一度押すと取り消せるよ。共有画面には、えらんだ数だけが出ます。\n端末がなくても大丈夫。声やチャットで番号をおしえてくれたら、かわりに押すよ。' },
+
+  /* 4 */ { type:'content', accent:'blue', section:'ステップ', sectionEn:'program', num:'1',
     headline:'この時間の<span class="hl">プログラム</span>を見る',
     body:`<div class="rows">
       <div class="row"><div class="row__ic"><span class="material-symbols-rounded">event</span></div><div><div class="row__t">いまの時間のプログラムが並ぶ</div><div class="row__d">名前と、どの部屋でやっているかが出るよ</div></div></div>
@@ -233,22 +242,22 @@ const SLIDES = [
     </div>`,
     note:'まずは、この時間にあるプログラムを見てみよう。\n名前と、どの部屋でやっているかが出るよ。\n参加してもいいし、ここでみんなと過ごしてもOKです。' },
 
-  /* 4 */ { type:'content', accent:'coral', section:'ステップ', sectionEn:'how to spend', num:'2',
+  /* 5 */ { type:'content', accent:'coral', section:'ステップ', sectionEn:'how to spend', num:'2',
     headline:'どう過ごしたい？ <span class="hl">決まっていたら番号</span>をおしえてね',
     body:`<div class="opts"><div class="opt"><span class="opt__n">①</span><span class="opt__ic" style="background:#7FB3CC"><span class="material-symbols-rounded">edit_note</span></span><span class="opt__t">自分のことをする</span></div><div class="opt"><span class="opt__n">②</span><span class="opt__ic" style="background:#E9A54B"><span class="material-symbols-rounded">sports_esports</span></span><span class="opt__t">みんなと遊ぶ</span></div><div class="opt"><span class="opt__n">③</span><span class="opt__ic" style="background:#D9714F"><span class="material-symbols-rounded">forum</span></span><span class="opt__t">テーマトーク</span></div><div class="opt"><span class="opt__n">④</span><span class="opt__ic" style="background:#A98BC4"><span class="material-symbols-rounded">radio</span></span><span class="opt__t">ラジオ参加</span></div><div class="opt"><span class="opt__n">⑤</span><span class="opt__ic" style="background:#6FB592"><span class="material-symbols-rounded">thumb_up</span></span><span class="opt__t">おまかせ</span></div><div class="opt"><span class="opt__n">⑥</span><span class="opt__ic" style="background:#C9A86A"><span class="material-symbols-rounded">hourglass_empty</span></span><span class="opt__t">考え中</span></div></div>
-      <div class="note-line"><span class="material-symbols-rounded">chat_bubble</span>ひとことのお題にも答えてね。リンクをひらいた人は自分の端末で押してもOK</div>`,
-    note:'どう過ごしたいかを聞くよ。\n①自分のことをする ②みんなと遊ぶ ③テーマトーク ④ラジオ参加 ⑤おまかせ ⑥考え中\n画面のお題へのひとことと一緒に、決まっていたら番号をおしえてね。まだ決まっていなければ「考え中」でOK。' },
+      <div class="note-line"><span class="material-symbols-rounded">chat_bubble</span>ひとことのお題にも答えてね。自分の端末で押してもOK（もう一度押すと取り消し）</div>`,
+    note:'どう過ごしたいかを聞くよ。\n①自分のことをする ②みんなと遊ぶ ③テーマトーク ④ラジオ参加 ⑤おまかせ ⑥考え中\n画面のお題へのひとことと一緒に、決まっていたら番号をおしえてね。ルームに入っている人は、自分の端末で押してもOK。もう一度押すと取り消せるよ。\nまだ決まっていなければ「考え中」でOK。' },
 
-  /* 5 */ { type:'content', accent:'teal', section:'ステップ', sectionEn:'pick a game', num:'3',
+  /* 6 */ { type:'content', accent:'teal', section:'ステップ', sectionEn:'pick a game', num:'3',
     headline:'遊びたい<span class="hl">ゲームの番号</span>をおしえてね',
     body:`<div class="rows">
       <div class="row"><div class="row__ic"><span class="material-symbols-rounded">grid_view</span></div><div><div class="row__t">画面に、ゲームが8つ並ぶ</div><div class="row__d">その人数で遊べるものから、毎回ちがう8つが出るよ</div></div></div>
       <div class="row"><div class="row__ic"><span class="material-symbols-rounded">pin</span></div><div><div class="row__t">遊びたいゲームの番号を言う</div><div class="row__d">声でも、チャットに番号だけでも、自分の端末で押してもOK</div></div></div>
-      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">search</span></div><div><div class="row__t">ほかに遊びたいゲームがあったら、名前をおしえて</div><div class="row__d">さがして、候補に入れられるよ</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">search</span></div><div><div class="row__t">ほかに遊びたいゲームは、さがして選べる</div><div class="row__d">自分の端末の「ゲームをさがす」で。端末がなければ、名前をおしえてね</div></div></div>
     </div>`,
-    note:'つぎは、みんなで遊ぶゲームを決めるよ。\n画面にゲームが8つ並ぶので、遊びたいゲームの番号をおしえてね。声でも、チャットに番号だけでもOK。リンクをひらいた人は、自分の端末で押してもいいよ。\nほかに遊びたいゲームがあったら、名前をおしえてくれたら、さがして候補に入れるよ。' },
+    note:'つぎは、みんなで遊ぶゲームを決めるよ。\n画面にゲームが8つ並ぶので、遊びたいゲームの番号をおしえてね。声でも、チャットに番号だけでもOK。ルームに入っている人は、自分の端末で押してもいいよ。\nほかに遊びたいゲームがあったら、自分の端末の「ゲームをさがす」でさがして選べるよ。端末がなければ、名前をおしえてくれたら、さがして候補に入れるよ。' },
 
-  /* 6 */ { type:'content', accent:'coral', section:'ステップ', sectionEn:'roulette', num:'3',
+  /* 7 */ { type:'content', accent:'coral', section:'ステップ', sectionEn:'roulette', num:'3',
     headline:'<span class="hl">ルーレット</span>をまわして決める',
     body:`<div class="wheel-demo"><svg viewBox="-110 -120 220 230" aria-hidden="true"><circle r="104" fill="#A3561A"/>
         <path d="M0 0 L0 -96 A96 96 0 0 1 83.1 48 Z" fill="#E9A54B"/><path d="M0 0 L83.1 48 A96 96 0 0 1 -48 83.1 Z" fill="#7FB3CC"/>
@@ -257,24 +266,25 @@ const SLIDES = [
       <div class="rows">
         <div class="row"><div class="row__ic"><span class="material-symbols-rounded">casino</span></div><div><div class="row__t">えらばれたゲームが、ルーレットに入る</div><div class="row__d">えらんだ人が多いほど、マスが大きくなるよ</div></div></div>
         <div class="row"><div class="row__ic"><span class="material-symbols-rounded">visibility</span></div><div><div class="row__t">見てるだけ・途中からでもOK</div><div class="row__d">決まったゲームを、みんなで遊ぼう</div></div></div>
+        <div class="row"><div class="row__ic"><span class="material-symbols-rounded">smartphone</span></div><div><div class="row__t">決まったゲームは、自分の端末にも出る</div><div class="row__d">ルームに入っている人の画面に出るよ</div></div></div>
       </div>
     </div>`,
-    note:'えらばれたゲームが、ルーレットに入るよ。えらんだ人が多いゲームほど、マスが大きくなります。\nまわして止まったゲームを、みんなで遊ぼう。見てるだけでも、途中からでもOKだよ。' },
+    note:'えらばれたゲームが、ルーレットに入るよ。えらんだ人が多いゲームほど、マスが大きくなります。\nまわして止まったゲームを、みんなで遊ぼう。決まったゲームは、ルームに入っている人の端末にも出るよ。\n見てるだけでも、途中からでもOKだよ。' },
 
-  /* 7 */ { type:'content', accent:'blue', section:'Q&A', sectionEn:'question & answer',
+  /* 8 */ { type:'content', accent:'blue', section:'Q&A', sectionEn:'question & answer',
     headline:'よくある質問',
     body:`<div class="qa">
       <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>どう過ごしたいか、まだ決まっていない</div><div class="qa__a"><span class="qa__badge a">A</span>「考え中」でOK。話しながら決めよう</div></div>
-      <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>声を出さなくてもいい？</div><div class="qa__a"><span class="qa__badge a">A</span>チャットに番号だけでもOKだよ</div></div>
+      <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>声を出さなくてもいい？</div><div class="qa__a"><span class="qa__badge a">A</span>チャットに番号だけでも、自分の端末で押してもOKだよ</div></div>
       <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>あとから変えてもいい？</div><div class="qa__a"><span class="qa__badge a">A</span>いいよ。途中から入っても、見てるだけでもOK</div></div>
     </div>`,
-    note:'よくある質問だよ\nQ. まだ決まっていない → A. 「考え中」でOK。話しながら決めよう\nQ. 声を出さなくてもいい？ → A. チャットに番号だけでもOK\nQ. あとから変えてもいい？ → A. いいよ。途中から入っても、見てるだけでもOK' },
+    note:'よくある質問だよ\nQ. まだ決まっていない → A. 「考え中」でOK。話しながら決めよう\nQ. 声を出さなくてもいい？ → A. チャットに番号だけでも、自分の端末で押してもOK\nQ. あとから変えてもいい？ → A. いいよ。途中から入っても、見てるだけでもOK' },
 
-  /* 8 */ { type:'divider', accent:'blue', icon:'live_help', jp:'質問タイム', en:'any questions?',
+  /* 9 */ { type:'divider', accent:'blue', icon:'live_help', jp:'質問タイム', en:'any questions?',
     sub:'気になることはある？',
     note:'ここまでで、気になることはあるかな？\nマイクかチャットで教えてね！' },
 
-  /* 9 */ { type:'divider', accent:'teal', solid:true, icon:'casino', jp:'＼ はじめよう ／', en:"let's start",
+  /* 10 */ { type:'divider', accent:'teal', solid:true, icon:'casino', jp:'＼ はじめよう ／', en:"let's start",
     sub:'まずは、このコマのプログラムから',
     note:'それでは、はじめよう！\nまずは、このコマのプログラムから見ていくよ。' },
 ];

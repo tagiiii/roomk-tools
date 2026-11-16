@@ -43,7 +43,7 @@
 
 - イラスト `../assets/illustrations/hiroba-roulette.webp`（2026-11-15。作り方は docs/development/illustrations.md）。早見表のリンク・1段目の右上・説明スライドの表紙に出す
 - サムネイル `../assets/thumbnails/hiroba-roulette.png`（3段目の画面例）。ツール一覧に載せていないので、いまは使っていない
-- 説明スライド `slides.html`（子ども向けに流れを伝える9枚）。「？」の「説明スライドを見る」から
+- 説明スライド `slides.html`（子ども向けに流れを伝える10枚。3枚目で自分の端末で入る・選ぶことを伝える）。「？」の「説明スライドを見る」から
 
 ## 確かめ方
 
