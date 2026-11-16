@@ -135,7 +135,7 @@ async function goOut(c) {
   const tall = [];
   for (let y = 1; y < E.H; y++) tall.push('..' + (y % 2 ? '1' : '2') + '...');
   await c.page.evaluate((b) => window.__iro.setBoard(b), boardRows(tall));
-  await c.page.keyboard.press('Space');
+  await c.page.evaluate(() => window.__iro.place());
   return waitFor(async () => (await st(c)).out);
 }
 

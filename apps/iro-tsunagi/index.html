@@ -9,13 +9,13 @@
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
   <link rel="stylesheet" href="../shared/css/design-system.css?v=20261106c">
   <!-- index.html と app.js・engine.js・style.css はセットで変わるので、変えたら ?v= をそろえて上げる -->
-  <link rel="stylesheet" href="style.css?v=20261113f">
+  <link rel="stylesheet" href="style.css?v=20261116a">
   <script src="https://www.gstatic.com/firebasejs/13.3.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/13.3.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/13.3.0/firebase-database-compat.js"></script>
   <script src="../shared/js/rtdb-utils.js?v=20261005"></script>
   <script src="../shared/js/room-qr.js?v=20261022"></script>
-  <script src="engine.js?v=20261113f"></script>
+  <script src="engine.js?v=20261116a"></script>
 </head>
 <body data-genre="puzzle">
 
@@ -307,11 +307,10 @@
         <button type="button" class="it-pad__btn" data-act="left" aria-label="左へ"><span class="material-symbols-rounded" aria-hidden="true">arrow_back</span></button>
         <button type="button" class="it-pad__btn" data-act="right" aria-label="右へ"><span class="material-symbols-rounded" aria-hidden="true">arrow_forward</span></button>
         <button type="button" class="it-pad__btn" data-act="down" aria-label="下げる"><span class="material-symbols-rounded" aria-hidden="true">arrow_downward</span></button>
-        <button type="button" class="it-pad__btn" data-act="drop" aria-label="一気に落とす"><span class="material-symbols-rounded" aria-hidden="true">vertical_align_bottom</span></button>
         <button type="button" class="it-pad__btn" data-act="rotL" aria-label="左に回す"><span class="material-symbols-rounded" aria-hidden="true">rotate_left</span></button>
         <button type="button" class="it-pad__btn" data-act="rotR" aria-label="右に回す"><span class="material-symbols-rounded" aria-hidden="true">rotate_right</span></button>
       </div>
-      <p class="it-keys">キーボード: ← →（A D）で動かす・↓（S）で下げる・スペースで一気に落とす・↑（W）か X で右に回す・Z で左に回す<span id="keysPause">・P でとめる</span></p>
+      <p class="it-keys">キーボード: ← →（A D）で動かす・↓（S）で下げる・↑（W）か X で右に回す・Z で左に回す<span id="keysPause">・P でとめる</span></p>
     </section>
 
     <!-- あそぶ人の盤をならべて見る画面（ホストがあそばないとき・みんなにみせる画面） -->
@@ -357,7 +356,7 @@
     </div>
   </div>
 
-  <script src="app.js?v=20261113f"></script>
+  <script src="app.js?v=20261116a"></script>
   <script src="../shared/js/overlay-a11y.js?v=1" defer></script>
   <script src="../shared/js/stats.js?v=1" defer></script>
   <script src="../shared/js/howto.js"></script>
@@ -374,11 +373,10 @@
         ] },
         { heading: '動かしかた', items: [
           '左・右・下のボタンで動かす（押しっぱなしで続けて動く）',
-          '下に線のあるボタンで、一気に落とす',
           '回すボタンは左回りと右回り。かべや玉に当たるときは、少しずれて回る',
           '1列のすき間で回せないときは、すぐにもう一度回すと上下が入れかわる',
           '盤の中の点線の丸は、そのまま落としたときに玉が入る場所',
-          'キーボードなら ← →（A D でも）で動かす、↓（S でも）で下げる、スペースで一気に落とす、↑（W でも）か X で右に回す、Z で左に回す',
+          'キーボードなら ← →（A D でも）で動かす、↓（S でも）で下げる、↑（W でも）か X で右に回す、Z で左に回す',
           'ひとりであそぶときは、「とめる」（キーボードなら P）でとめられる。「つづける」で、とめたところから続く',
         ] },
         { heading: '消しかた', items: [

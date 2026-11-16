@@ -136,7 +136,7 @@ async function chain2(c) {
   const p = (await st(c)).piece;
   const c1 = [1, 2, 3, 4].filter((x) => x !== p.a && x !== p.b)[0];
   await c.page.evaluate((b) => window.__iro.setBoard(b), boardRows([`${p.a}....${c1}`, `${p.a}${p.a}.${p.b}${p.b}${p.b}`]));
-  await c.page.keyboard.press('Space');
+  await c.page.evaluate(() => window.__iro.place());
 }
 const sentTo = (c, name) => waitFor(async () => (await text(c, '#chainText')).includes(name + 'に3こおくったよ'), 6000);
 
@@ -199,7 +199,7 @@ const sentTo = (c, name) => waitFor(async () => (await text(c, '#chainText')).in
   const tall = [];
   for (let y = 1; y < E.H; y++) tall.push('..' + (y % 2 ? '1' : '2') + '...');
   await H.page.evaluate((b) => window.__iro.setBoard(b), boardRows(tall));
-  await H.page.keyboard.press('Space');
+  await H.page.evaluate(() => window.__iro.place());
   check('B12 ホストがここまで', await waitFor(async () => (await roomOf(code)).boards['ホスト'].out === true));
   await chain2(A);
   check('B13 送ってきた人がここまでなら、並びのつぎの人（はる）へ', await sentTo(A, 'はる'));
