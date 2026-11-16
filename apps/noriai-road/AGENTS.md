@@ -59,6 +59,7 @@ apps/noriai-road/
 ├── AGENTS.md    # この仕様書
 ├── index.html   # 画面の骨組み・howto.js の設定
 ├── app.js       # ルーム・同期・入力・描画（ES module。canvas に描く）
+├── slides.html  # 画面共有用の説明スライド（18枚）
 ├── engine.js    # ステージと動きのルール・ルームに置く形（window.NoriaiEngine。node では module.exports）
 └── style.css    # 固有スタイル
 ```
@@ -80,7 +81,7 @@ apps/noriai-road/
 - `apps/index.html` にカード・`apps/updates.json` 先頭に `type: "new"`・`apps/guide/index.html` に1行
 - イラスト `apps/assets/illustrations/noriai-road.webp`（積み重なった丸いキャラ3つ・高い段・カギ・箱。`scripts/illustrations/prompts.json`。1回目の「丘の丸いとびら」は有名な物語の家に見えやすいので作りなおした）
 - サムネイル `apps/assets/thumbnails/noriai-road.png`（撮り方は `docs/development/thumbnails.md`）
-- 説明スライドは、まだない
+- 説明スライド `slides.html`（18枚。2026-11-16。エンジンは `apps/kotoba-tantei/slides.html` のまま（そろってゴールの写し）、チャンネル `noriai_road_deck`・保存キー `nrs_`）。「？」の「説明スライドを見る」と、ツール一覧のカード（`data-slides`）から開ける。3枚目に、ツール一覧と同じ画面例（`../assets/thumbnails/noriai-road.png`）を出している。ルールを変えたら、スライドと発表者ノートも合わせる
 
 ## 画面構成・フロー
 
