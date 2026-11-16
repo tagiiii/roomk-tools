@@ -58,7 +58,7 @@ const { check, sleep, until, st } = L;
     check('参加者が歩いた', gMine > gx0 + 2, [gx0, gMine]);
     check('ホストの画面でも同じ所に来た', Math.abs(gMine - gOnHost) < 0.05, [gMine, gOnHost]);
     room = await L.roomOf(code);
-    check('ルームの位置も同じ', Math.abs(room.live[gid].p[2][0] - gMine) < 0.02, room.live[gid].p[2]);
+    check('ルームの位置も同じ（1つの文字列で書く）', typeof room.live[gid].p[2] === 'string' && Math.abs(Number(room.live[gid].p[2].split(',')[0]) - gMine) < 0.02, room.live[gid].p[2]);
 
     // 止まっている間は書かない
     let before = guest.wsSent || 0;

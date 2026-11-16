@@ -27,7 +27,7 @@ const near = (a, b, e = 0.05) => Math.abs(a - b) <= e;
 
 test('どのステージも作れて、スタートの場所が空いている', () => {
   E.STAGES.forEach((st, i) => {
-    for (let n = 2; n <= 4; n++) {
+    for (let n = 2; n <= E.MAX_PLAYERS; n++) {
       const w = E.createWorld(i, n);
       for (const p of w.players) {
         for (let tx = Math.floor(p.x); tx <= Math.floor(p.x + E.PW); tx++) {
@@ -173,7 +173,8 @@ test('リフトは、数字の人数が乗ると上がり、おりると下が�
   // 上の台へ歩いて出る
   run(w, 60, () => [{ r: true }, { r: true }]);
   assert(near(a.y, 4 - E.PH, 0.05), '台に出た');
-  run(w, 200);
+  // 最後の人がおりてから1.5秒待って下がる
+  run(w, 300);
   assert(near(lift.y, lift.ay), 'おりたら下がった');
 });
 
@@ -307,10 +308,20 @@ test('全員が画面の中にいる（ひとりだけ先へ行けない）', ()
 test('ルームに置く形: 人は書いて読むと同じ', () => {
   const p = E.makePlayer(2, 3.456, 8.2);
   p.ground = 's1'; p.rx = 0.123; p.face = -1; p.inDir = 1;
-  const d = E.decodePlayer(JSON.parse(JSON.stringify(E.encodePlayer(p))));
+  const enc = E.encodePlayer(p);
+  assert.strictEqual(typeof enc, 'string', '1つの文字列で書く');
+  const d = E.decodePlayer(JSON.parse(JSON.stringify(enc)));
   assert.deepStrictEqual([d.x, d.y, d.face, d.ground, d.inDir, d.entered, d.rx], [3.46, 8.2, -1, 's1', 1, false, 0.12]);
   assert.strictEqual(E.decodePlayer(['a', 1, 1, 0, 0, 0]), null, 'こわれた値は null');
   assert.strictEqual(E.decodePlayer([1, 1, 1, 'x9', 0, 0]).ground, null, '知らない乗りものは null');
+  assert.strictEqual(E.decodePlayer('a,1,1,0,0,0'), null, 'こわれた文字列は null');
+  const q = E.makePlayer(3, 21.2, 9.1); q.ground = 'p0'; q.rx = 1.2;
+  assert.deepStrictEqual([E.decodePlayer(E.encodePlayer(q)).ground, E.decodePlayer(E.encodePlayer(q)).rx], ['p0', 1.2], '動く床の上の位置も書く');
+  assert.strictEqual(E.decodePlayer('1,2'), null, '短い文字列は null');
+  assert.strictEqual(E.decodePlayer('1,2,1,0,0,0').ground, null, '乗っていない');
+  assert.strictEqual(E.decodePlayer('1,2,1,t,-1,1').entered, true);
+  // 前の版が書いた配列も読める
+  assert.deepStrictEqual(E.decodePlayer([3.46, 8.2, -1, 's1', 1, 0, 0.12]), d);
 });
 
 test('ルームに置く形: ワールドを書いて読みこむと、印と位置がそろう', () => {
@@ -338,6 +349,95 @@ test('いなくなった人は、クリアの数に入れない', () => {
   w.players.slice(0, 2).forEach((p) => { p.x = w.door.x; p.y = 9.1; });
   run(w, 5);
   assert(w.clear);
+});
+
+/* ── 大人数（5〜10人） ── */
+test('「みんな」の数字は5までで、ほかの数字は人数で頭打ち', () => {
+  assert.strictEqual(E.MAX_PLAYERS, 10);
+  for (let n = 2; n <= 10; n++) {
+    const w = E.createWorld(1, n);
+    assert.strictEqual(w.boxes[0].need, Math.min(n, 5), 'box n=' + n);
+    assert.strictEqual(w.plats[0].need, Math.min(n, 5), 'lift n=' + n);
+    const v = E.createWorld(4, n);
+    assert.strictEqual(v.boxes[0].need, 2, '数字2の箱 n=' + n);
+  }
+});
+
+test('10人でも、はじめの場所に全員が並べる', () => {
+  const w = E.createWorld(0, 10);
+  const bump = w.checkpoints[1];
+  for (const p of w.players) assert(p.x + E.PW < bump + 2, 'seat ' + p.seat + ' が次の区間に入っている x=' + p.x);
+  run(w, 30);
+  for (const p of w.players) assert(p.ground === 't', 'seat ' + p.seat + ' が床に立っていない');
+});
+
+test('7人: リフトは5人で上がり、残りの2人だけでも上がれる', () => {
+  const w = E.createWorld(1, 7);
+  const lift = w.plats[0];
+  const ps = w.players;
+  ps.slice(0, 5).forEach((p, k) => place(p, lift.x + 0.1 + k * 0.5, lift.y - E.PH));
+  ps.slice(5).forEach((p, k) => place(p, lift.x - 2 - k * 0.5, 10 - E.PH));
+  run(w, 10);
+  assert.strictEqual(E.platNeed(lift, ps), 5);
+  run(w, 200);
+  assert(near(lift.y, lift.by), '5人で上がった y=' + lift.y);
+  // 5人は上の台へ出る
+  run(w, 90, () => ps.map((p, k) => (k < 5 ? { r: true } : {})));
+  ps.slice(0, 5).forEach((p) => assert(p.x + E.PW / 2 > lift.x + lift.w && p.y < 4, 'seat ' + p.seat + ' が台に出た'));
+  run(w, 240);
+  assert(near(lift.y, lift.ay), '下がってきた');
+  assert.strictEqual(E.platNeed(lift, ps), 2, '残りは2人');
+  ps.slice(5).forEach((p, k) => place(p, lift.x + 0.3 + k, lift.y - E.PH));
+  run(w, 200);
+  assert(near(lift.y, lift.by), '2人で上がった');
+});
+
+test('通信が切れた人は、動く床の人数に入れない', () => {
+  const w = E.createWorld(1, 3);
+  const br = w.plats[1];
+  const [a, b, c] = w.players;
+  c.absent = true;
+  assert.strictEqual(E.platNeed(br, w.players), 2);
+  place(a, br.x + 0.2, 10 - E.PH);
+  place(b, br.x + 1.2, 10 - E.PH);
+  run(w, 300);
+  assert(near(br.x, br.bx), '2人でわたった');
+});
+
+test('ひもの組: 4人までは1本、5人からは4人までの組', () => {
+  assert.deepStrictEqual(E.ropeGroups(4), [[1, 4]]);
+  assert.deepStrictEqual(E.ropeGroups(5), [[1, 3], [4, 5]]);
+  assert.deepStrictEqual(E.ropeGroups(8), [[1, 4], [5, 8]]);
+  assert.deepStrictEqual(E.ropeGroups(10), [[1, 4], [5, 7], [8, 10]]);
+  for (let n = 2; n <= 10; n++) {
+    const gs = E.ropeGroups(n);
+    assert.strictEqual(gs[gs.length - 1][1], n);
+    assert(gs.every(([lo, hi]) => hi - lo + 1 >= 2 && hi - lo + 1 <= 4), 'n=' + n);
+  }
+  assert(E.ropeLinked(10, 3, 4) && !E.ropeLinked(10, 4, 5) && E.ropeLinked(10, 5, 6) && !E.ropeLinked(10, 7, 8));
+  assert(!E.ropeLinked(10, 1, 3) && !E.ropeLinked(4, 4, 5));
+});
+
+test('ひも: 組がちがう人とは、はなれられる', () => {
+  const w = E.createWorld(3, 6);
+  run(w, 10);
+  // 1〜3番は右へ、4〜6番は止まる
+  run(w, 150, () => w.players.map((p) => (p.seat <= 3 ? { r: true } : {})));
+  const [p1, p2, p3, p4] = w.players;
+  assert(Math.hypot(p1.x - p2.x, p1.y - p2.y) <= E.ROPE_LEN + 0.05, '同じ組ははなれない');
+  assert(Math.hypot(p2.x - p3.x, p2.y - p3.y) <= E.ROPE_LEN + 0.05, '同じ組ははなれない');
+  assert(p3.x - p4.x > E.ROPE_LEN + 0.5, '組がちがうとはなれられる d=' + (p3.x - p4.x));
+});
+
+test('10人: 頭の上に積み重なっても、リフトの人数に数える', () => {
+  const w = E.createWorld(1, 10);
+  const lift = w.plats[0];
+  const ps = w.players;
+  for (let k = 0; k < 5; k++) place(ps[k], lift.x + 1, lift.y - E.PH * (k + 1) - 0.02 * k);
+  ps.slice(5).forEach((p, k) => place(p, lift.x - 3 - k * 0.4, 10 - E.PH));
+  run(w, 60);
+  assert.strictEqual(lift.riders, 5);
+  assert(lift.y < lift.ay - 0.5, '上がりはじめた');
 });
 
 console.log(`\n${passed} ok`);
