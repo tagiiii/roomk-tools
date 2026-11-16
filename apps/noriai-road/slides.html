@@ -291,9 +291,9 @@ const SLIDES = [
     body: rows(
       ['package_2', '重い箱は、数字の人数で押すと動く', 'みんなで同じ向きに押そう。箱は、とびらの前で止まる'],
       ['elevator', 'リフトは、数字の人数が乗ると上がる', '人の頭に乗っている人も、数に入るよ'],
-      ['moving', '動く床は、数字の人数が乗ると向こうへわたる', '途中でおりると、もどってしまうよ'],
+      ['moving', '動く床は、数字の人数が乗ると向こうへわたる', '途中でおりると、もどってしまうよ。人数が多いときは、何回かに分かれて乗ろう'],
     ),
-    note:'箱やリフトに書いてある数字は、要る人数だよ。\n重い箱は、その人数で同じ向きに押すと動く。\nリフトは、その人数が乗ると上がるよ。人の頭に乗っている人も、ちゃんと数に入る。\n動く床も同じ。全員乗ると向こうへわたるけど、途中でおりると、もどってしまうよ。' },
+    note:'箱やリフトに書いてある数字は、要る人数だよ。\n重い箱は、その人数で同じ向きに押すと動く。\nリフトは、その人数が乗ると上がるよ。人の頭に乗っている人も、ちゃんと数に入る。\n動く床も同じ。数字の人数が乗ると向こうへわたるけど、途中でおりると、もどってしまうよ。\n人数が多いときは、数字は5までになるから、何回かに分かれて乗ってね。' },
 
   /* 8 */ { type:'content', accent:'teal', section:'しかけ', sectionEn:'gimmicks', num:'5',
     headline:'<span class="hl">シーソー</span>と<span class="hl">ボール</span>',
@@ -314,11 +314,11 @@ const SLIDES = [
   /* 9 */ { type:'content', accent:'coral', section:'しかけ', sectionEn:'gimmicks', num:'6',
     headline:'<span class="hl">ひも</span>と、みんなの画面',
     body: rows(
-      ['link', 'ステージ4は、となりの番号の人とひもでつながる', 'はなれすぎると進めない。ぶら下がったら、ジャンプで上がれる'],
+      ['link', 'ステージ4は、となりの番号の人とひもでつながる', 'はなれすぎると進めない。ぶら下がったら、ジャンプで上がれる。5人からは、いくつかの組に分かれる'],
       ['fit_screen', 'みんなが画面の中にいるように動く', 'ひとりだけ先へは行けないよ。待っててあげよう'],
       ['replay', '落ちても、すぐ近くから戻れる', '何回落ちても、だれも困らないよ'],
     ),
-    note:'ステージ4は、となりの番号の人と、ひもでつながっているよ。はなれすぎると進めない。ぶら下がったら、ジャンプで上がれるよ。\nそれから、みんなが画面の中にいるように動くから、ひとりだけ先へは行けないよ。\n落ちても、すぐ近くから戻れるから、安心してね。' },
+    note:'ステージ4は、となりの番号の人と、ひもでつながっているよ。5人より多いときは、いくつかの組に分かれるよ。はなれすぎると進めない。ぶら下がったら、ジャンプで上がれるよ。\nそれから、みんなが画面の中にいるように動くから、ひとりだけ先へは行けないよ。\n落ちても、すぐ近くから戻れるから、安心してね。' },
 
   /* 10 */ { type:'content', accent:'blue', section:'ゴール', sectionEn:'goal',
     headline:'全員が<span class="hl">ゴールのとびら</span>に入ると、クリア！',
@@ -400,7 +400,7 @@ function slideHTML(s){
       <div class="title-en">noriai road</div>
       <div class="title-tag">〜 頭に乗り合って、全員でゴールへ 〜</div>
       <div class="title-meta">
-        <span class="m"><span class="material-symbols-rounded">group</span>2〜4人</span>
+        <span class="m"><span class="material-symbols-rounded">group</span>2〜10人</span>
         <span class="m"><span class="material-symbols-rounded">schedule</span>1ステージ 5分くらい</span>
         <span class="m"><span class="material-symbols-rounded">devices</span>それぞれの端末で</span>
       </div></section>`;

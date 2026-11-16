@@ -1,5 +1,5 @@
 /* のりあいロード
-   ・ルーム: Realtime Database。遊ぶ2〜4人がそれぞれの端末で自分のキャラを動かし、全員がゴールのとびらに入るとクリア
+   ・ルーム: Realtime Database。遊ぶ2〜10人がそれぞれの端末で自分のキャラを動かし、全員がゴールのとびらに入るとクリア
    ・1台のパソコンで遊ぶ: 通信しない。1つのキーボードで人数ぶんを動かす
    ルール（ステージ・動き）は engine.js。音は鳴らさない。
 
@@ -20,18 +20,21 @@ const DEFAULT_SET = { stage: 0, hostPlays: true };
 const SAYS = ['待って', '行くよ', '乗って', '押して', 'ありがとう', 'いいね'];
 const SAY_EVERY_MS = 5000;   // ひとり5秒に1回まで
 const SAY_SHOW_MS = 4000;    // 吹き出しを出しておく長さ
-const SEND_MS = 100;         // 位置・ワールドを書くのは、1秒に10回まで
-const INTERP_MS = 140;       // ほかの人の位置を、どれだけ前の時刻に合わせて描くか
+// 位置・ワールドを書く間かく。人数が多いほど受けとる量がふえるので、間をあける
+// （4人まで 1秒に10回・7人まで 約7回・10人まで 5回）
+const sendMsFor = (n) => (n <= 4 ? 100 : n <= 7 ? 150 : 200);
+let SEND_MS = 100;
+let INTERP_MS = 140;         // ほかの人の位置を、どれだけ前の時刻に合わせて描くか（書く間かくの1.4倍）
 const DT = 1 / 60;
-const SEAT_COLORS = ['#E4572E', '#2E86DE', '#3B9B55', '#9B59B6'];
-const SEAT_DARK = ['#A63A17', '#1D5F9E', '#276B3A', '#6C3A82'];
+const SEAT_COLORS = ['#E4572E', '#2E86DE', '#3B9B55', '#9B59B6', '#E39A1C', '#17A3A3', '#D9578E', '#8D6E4F', '#7F9A1E', '#5C6BC0'];
+const SEAT_DARK = ['#A63A17', '#1D5F9E', '#276B3A', '#6C3A82', '#9A6408', '#0E6E6E', '#9C2F5E', '#5B4430', '#566A10', '#36438F'];
 const LINK_COLORS = { A: '#C9A227', B: '#2B9C96', C: '#D0609A', D: '#6D7F8E', E: '#B5651D', F: '#5A8F29', G: '#C74B4B', H: '#4B6EC7' };
 const LINK_SHAPES = { A: 'circle', B: 'triangle', C: 'square', D: 'diamond', E: 'star', F: 'circle', G: 'triangle', H: 'square' };
 const STAGE_NOTE = [
   '人の頭に乗る・スイッチ・番号のかべ・カギ。はじめてなら、ここから。',
   '人数で押す重い箱、人数で動くリフトと床。',
   'シーソーと、投げてわたすボール。',
-  'となりの番号の人と、ひもでつながる。',
+  'となりの番号の人と、ひもでつながる（5人からは組に分かれる）。',
   'これまでのしかけが全部出てくる。',
 ];
 // 1台のパソコンで遊ぶときのキー（1〜4番）
@@ -152,7 +155,7 @@ function icon(name) {
 }
 function numBadge(seat) {
   const node = el('span', 'nr-num', seat);
-  node.style.setProperty('--c', SEAT_COLORS[(seat - 1) % 4]);
+  node.style.setProperty('--c', SEAT_COLORS[(seat - 1) % SEAT_COLORS.length]);
   return node;
 }
 function asList(value) {
@@ -866,6 +869,8 @@ function startWorld(room, game) {
   resetGame();
   const w = E.createWorld(game.stage, game.n);
   state.world = w;
+  SEND_MS = sendMsFor(game.n);
+  INTERP_MS = Math.round(SEND_MS * 1.4);
   state.gameId = game.id;
   state.seat = selfSeat(game);
   const live = room.live?.[game.id] || {};
@@ -977,6 +982,10 @@ function updateRemotes(now) {
         if (!done.has(s)) continue;
         const q = w.players[s - 1];
         if (q && !q.entered) { p.x = q.x + p.hrx; p.y = q.y - E.PH; } else { p.x = p.hx; p.y = p.hy; }
+      } else if (g && (g[0] === 'p' || g[0] === 'b')) {
+        // 動く床・箱の上: この端末で描いている床・箱の上に乗せる（書く間かくをあけても、床からずれて見えない）
+        const c = (g[0] === 'p' ? w.plats : w.boxes)[+g.slice(1)];
+        if (c) { p.x = c.x + p.hrx; p.y = c.y - E.PH; } else { p.x = p.hx; p.y = p.hy; }
       } else { p.x = p.hx; p.y = p.hy; }
       done.add(p.seat);
       todo.splice(k, 1);
@@ -1495,7 +1504,8 @@ function drawPlats(w, T) {
       g.fillStyle = 'rgba(255,255,255,0.9)';
       rr(tx - T * 0.55, ty - T * 0.22, T * 1.1, T * 0.44, T * 0.2);
       g.fill();
-      label(p.riders + '/' + p.need + '人', tx, ty, T * 0.3, p.riders >= p.need ? '#1F6E3C' : '#5C5146');
+      const need = E.platNeed(p, w.players);
+      label(p.riders + '/' + need + '人', tx, ty, T * 0.3, p.riders >= need ? '#1F6E3C' : '#5C5146');
     } else {
       label('重さ ' + p.riders, x + pw / 2, y + ph + T * 0.3, T * 0.26, '#5C5146', 500);
     }
@@ -1521,6 +1531,7 @@ function drawRopes(w, T) {
   g.strokeStyle = '#8C6A3F';
   g.lineWidth = Math.max(2, T * 0.06);
   for (let s = 1; s < w.n; s++) {
+    if (!E.ropeLinked(w.n, s, s + 1)) continue;
     const a = w.players[s - 1], b = w.players[s];
     if (!visible(a) || !visible(b)) continue;
     const ax = (a.x + E.PW / 2) * T, ay = (a.y + E.PH * 0.55) * T;

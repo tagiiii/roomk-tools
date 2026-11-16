@@ -6,7 +6,7 @@
  * 遅れに強くするための決まり（ルームで、それぞれの端末から遊ぶとき）:
  *  - 自分のキャラの動きは、自分の端末で計算する（stepPlayer）
  *  - 箱・動く床・とびら・カギ・ボールは、ホストの端末だけが計算する（stepObjects）
- *  - 人の上に乗っているときは「だれの上の、どこに乗っているか」を送る（ground と rx）。
+ *  - 人・動く床・箱の上に乗っているときは「なにの上の、どこに乗っているか」を送る（ground と rx）。
  *    受けとった側は、下の人の描く位置に乗せて描くので、遅れても下の人とずれない
  */
 (function (root) {
@@ -34,6 +34,9 @@
   const THROW = { ball: { vx: 6.5, vy: -16 }, key: { vx: 4, vy: -7 } };
   const EPS = 1e-4;
   const LINKS = 'ABCDEFGH';
+  const MAX_PLAYERS = 10;
+  const ALL_CAP = 5;          // 「みんな」の数字の上限（人数が多いときは、5人ずつに分かれて動かす）
+  const SPAWN_GAP = 1.05;     // はじめに並ぶ間かく
 
   /* ── ステージを作る道具 ── */
   function builder() {
@@ -64,11 +67,12 @@
   /* ── 区間（どれも左はしの床から始まり、右はしの床で終わる） ── */
   const SEG = {
     // はじめの場所。左のかべとスタート
-    start(b) {
+    // n: 遊ぶ人数（多いときは、みんなが並べるように広くする）
+    start(b, n) {
       b.begin();
       b.fill(0, 0, 0, H - 1, '#');
       b.meta.spawn = 1.2;
-      b.advance(7);
+      b.advance(Math.max(7, Math.ceil(1.2 + (n || 1) * SPAWN_GAP + 1)));
     },
     // 1マスの段（跳ぶ練習）
     bump(b) {
@@ -199,7 +203,7 @@
     },
     {
       name: '重い箱と動く床',
-      hint: '箱の数字は、押すのに要る人数。リフトと動く床は、数字の人数が乗ると動くよ。',
+      hint: '箱の数字は、押すのに要る人数。リフトと動く床は、数字の人数が乗ると動くよ。人数が多いときは、何回かに分かれて乗ろう。',
       parts: [['start'], ['boxSwitch', 'all'], ['lift', 'all'], ['bridge', 'all'], ['door', false]],
     },
     {
@@ -209,7 +213,7 @@
     },
     {
       name: 'ひもでつながる',
-      hint: 'となりの番号の人と、ひもでつながっている。はなれすぎると進めない。ぶら下がったら、ジャンプで上がれるよ。',
+      hint: 'となりの番号の人と、ひもでつながっている（5人からは、いくつかの組に分かれる）。はなれすぎると進めない。ぶら下がったら、ジャンプで上がれるよ。',
       rope: true,
       parts: [['start'], ['pit', 3], ['stairs'], ['floats'], ['ledge'], ['door', false]],
     },
@@ -220,20 +224,48 @@
     },
   ];
 
-  function buildStage(index) {
+  function buildStage(index, n) {
     const st = STAGES[index];
     const b = builder();
-    for (const [name, arg] of st.parts) SEG[name](b, arg);
+    for (const [name, arg] of st.parts) SEG[name](b, name === 'start' ? n : arg);
     return { cols: b.cols, meta: b.meta, W: b.cols.length };
   }
 
   /* ── 番号・人数 ── */
   const mapSeat = (seat, n) => ((seat - 1) % n) + 1;
-  const resolveNeed = (need, n) => (need === 'all' ? n : Math.min(need, n));
+  const resolveNeed = (need, n) => (need === 'all' ? Math.min(n, ALL_CAP) : Math.min(need, n));
+
+  // ひもの組: 4人までは1本につながる。5人からは、4人までの組に分ける（10人なら 4・3・3）
+  function ropeGroups(n) {
+    const k = Math.ceil(n / 4);
+    const out = [];
+    let seat = 1;
+    for (let g = 0; g < k; g++) {
+      const size = Math.floor(n / k) + (g < n % k ? 1 : 0);
+      out.push([seat, seat + size - 1]);
+      seat += size;
+    }
+    return out;
+  }
+  // a と b（番号）がひもでつながっているか
+  function ropeLinked(n, a, b) {
+    if (Math.abs(a - b) !== 1 || a < 1 || b < 1 || a > n || b > n) return false;
+    return ropeGroups(n).some(([lo, hi]) => a >= lo && a <= hi && b >= lo && b <= hi);
+  }
+
+  // 動く床が動くのに要る人数: 数字の人数と、まだ向こうへ行っていない人の少ないほう
+  // （人数が多くて何回かに分けて運ぶとき、最後の組が数字より少なくても動けるように）
+  function platNeed(p, players) {
+    if (p.seesaw >= 0) return 0;
+    const edge = p.bx !== p.ax ? Math.max(p.ax, p.bx) : p.ax + p.w;
+    let left = 0;
+    for (const q of players) if (!q.entered && !q.absent && q.x + PW / 2 < edge) left++;
+    return Math.max(1, Math.min(p.need, left));
+  }
 
   /* ── ワールド ── */
   function createWorld(stage, n) {
-    const { cols, meta, W } = buildStage(stage);
+    const { cols, meta, W } = buildStage(stage, n);
     const world = {
       stage, n, W, cols,
       rope: !!STAGES[stage].rope,
@@ -257,7 +289,7 @@
     for (let s = 1; s <= n; s++) world.players.push(makePlayer(s, spawnX(world, s), 10 - PH));
     return world;
   }
-  function spawnX(world, seat) { return world.spawn + (seat - 1) * 1.05; }
+  function spawnX(world, seat) { return world.spawn + (seat - 1) * SPAWN_GAP; }
 
   function makePlayer(seat, x, y) {
     return {
@@ -466,8 +498,9 @@
     // 縦
     const r = moveY(p, p.vy * dt, world, p.seat, solids, tops);
     if (r.land) { p.vy = 0; p.ground = r.land; } else { p.ground = null; if (r.bump) p.vy = Math.max(0, p.vy); }
-    if (p.ground && p.ground[0] === 's') {
-      const q = findPlayer(ctx.players, +p.ground.slice(1));
+    // 人・動く床・箱の上では、乗っているものからの横の位置も書く（受けた側は、描いている乗りものの上に乗せる）
+    if (p.ground && 'spb'.includes(p.ground[0])) {
+      const q = carryOf(p.ground, ctx);
       p.rx = q ? p.x - q.x : 0;
     }
 
@@ -501,6 +534,7 @@
   function ropeFix(world, p, ctx, solids) {
     const e = { x: p.x, y: p.y, w: PW, h: PH };
     for (const s of [p.seat - 1, p.seat + 1]) {
+      if (!ropeLinked(world.n, p.seat, s)) continue;
       const q = findPlayer(ctx.players, s);
       if (!q || q.entered) continue;
       const cx = p.x + PW / 2;
@@ -525,7 +559,7 @@
    * players: 全員（自分は本当の位置、ほかの人は描く位置）
    */
   function rootOf(ref, players, depth) {
-    if (!ref || depth > 6) return ref;
+    if (!ref || depth > MAX_PLAYERS) return ref;
     if (ref[0] === 's') {
       const q = findPlayer(players, +ref.slice(1));
       return q && !q.entered ? rootOf(q.ground, players, depth + 1) : null;
@@ -550,7 +584,7 @@
       p.riders = weight[i];
       if (p.seesaw >= 0) return;
       // 人数がそろったら向こうへ。へっても少し待ってから戻る（おりる間に下がらないように）
-      if (p.riders >= p.need) p.hold = PLAT_WAIT; else p.hold = Math.max(0, (p.hold || 0) - dt);
+      if (p.riders >= platNeed(p, players)) p.hold = PLAT_WAIT; else p.hold = Math.max(0, (p.hold || 0) - dt);
       const toB = p.hold > 0;
       const tx = toB ? p.bx : p.ax;
       const ty = toB ? p.by : p.ay;
@@ -742,19 +776,21 @@
    * ワールド（ホストが書く）: 箱・床・カギとボール・とびら・スイッチ・かご・ゴールのカギ・クリア
    */
   const r2 = (v) => Math.round(v * 100) / 100;
+  // 1つの文字列にまとめて書く（配列より短く、通信量が少ない）。例 "12.3,9.1,1,0,0,0"
   function encodePlayer(p) {
     const out = [r2(p.x), r2(p.y), p.face < 0 ? -1 : 1, p.ground || 0, p.inDir || 0, p.entered ? 1 : 0];
-    if (p.ground && p.ground[0] === 's') out.push(r2(p.rx));
-    return out;
+    if (p.ground && 'spb'.includes(p.ground[0])) out.push(r2(p.rx));
+    return out.join(',');
   }
-  // こわれた値は null
-  function decodePlayer(v) {
+  // こわれた値は null（前の版が書いた配列も読む）
+  function decodePlayer(raw) {
+    const v = typeof raw === 'string' ? raw.split(',').map((x, k) => (k === 3 ? x : Number(x))) : raw;
     if (!Array.isArray(v) || v.length < 6) return null;
     const x = Number(v[0]);
     const y = Number(v[1]);
     if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
     const g = typeof v[3] === 'string' && /^(t|g|[pbs]\d+)$/.test(v[3]) ? v[3] : null;
-    return { x, y, face: v[2] < 0 ? -1 : 1, ground: g, inDir: v[4] > 0 ? 1 : v[4] < 0 ? -1 : 0, entered: v[5] === 1, rx: Number(v[6]) || 0 };
+    return { x, y, face: v[2] < 0 ? -1 : 1, ground: g, inDir: v[4] > 0 ? 1 : v[4] < 0 ? -1 : 0, entered: Number(v[5]) === 1, rx: Number(v[6]) || 0 };
   }
   function snapshot(world) {
     return {
@@ -805,7 +841,7 @@
     H, VIEW, PW, PH, ITEM, ROPE_LEN, JUMP_H, GRAV, JUMP_V, SPEED,
     STAGES, buildStage, createWorld, makePlayer, stepPlayer, stepObjects, stepLocal,
     throwItem, holdingOf, camLeft, mapSeat, solidTile, respawnX, surfaceY, gateRect, rootOf,
-    encodePlayer, decodePlayer, snapshot, applySnapshot, MIN_PLAYERS: 2, MAX_PLAYERS: 4,
+    encodePlayer, decodePlayer, snapshot, applySnapshot, MIN_PLAYERS: 2, MAX_PLAYERS, ALL_CAP, ropeGroups, ropeLinked, platNeed,
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.NoriaiEngine = api;
