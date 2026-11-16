@@ -23,7 +23,7 @@ const LEVEL_NOTE = {
 };
 const DEFAULT_SET = { level: 'easy', stage: 1, hostPlays: true, dark: false, time: 0 };
 const TIMES = [0, 3, 5, 10];   // 砂時計（分）。0 はなし
-const LIGHT = 2;               // くらやみで見える広さ（自分のコマから、たて・よこ・ななめに何マスまで）
+const LIGHT = 2.5;             // くらやみで見える円の半径（自分のコマのまん中から、何マス分まで）
 const KIND_NAME = { relay: 'とびら', relayJ: '橋の先のスイッチ', key: 'カギ', keyJ: '橋の先のカギ', keyDoor: 'とびらの先のカギ', box: '重い箱', boxBig: 'みんなで押す箱', pair: '同時におさえるスイッチ' };
 const MARK_NAME = { a: 'まる', b: 'さんかく', c: 'しかく', d: 'ほし', e: 'ひしがた', f: 'プラス', h: 'ろっかく', i: 'つき' };
 // ひとこと: 決まった言葉をえらんで、みんなに知らせる（声を出さなくても伝えられる）。自由に打つ欄は置かない。
@@ -1613,7 +1613,9 @@ function tickClock() {
 }
 
 /* ── くらやみ ──
-   「くらやみ」のステージでは、自分のコマ（ホストは、代わりに動かしているコマも）のまわり LIGHT マスだけが見える。
+   「くらやみ」のステージでは、自分のコマ（ホストは、代わりに動かしているコマも）を中心にした、半径 LIGHT マスの円の中だけが見える。
+   円の形は、盤の上に重ねた SVG（円の所だけ穴をあけた暗いまく）で出す。マスの側は、まん中が円に入るマスの人・箱・カギ・星を出し、
+   すこしでも円にかかるマスを「見た」ことにする。
    みんなにみせる画面・進行だけのホスト・見る番の人は、みんなの明かりを合わせた範囲が見える（だれも行っていない所は見えない）。
    前に見たマスは、うす暗く残す（かべやしかけの場所はおぼえている。人・箱・カギ・星は、いま見えている所だけ）。
    見える範囲は端末の側で決めるだけで、ルームには何も書かない。クリアしたら、ぜんぶ見せる */
@@ -1623,6 +1625,7 @@ function applyDark(game, movable, mine) {
   if (!dark) {
     if (board.classList.contains('is-dark')) {
       board.classList.remove('is-dark');
+      board.querySelector('.sg-dark')?.remove();
       board.querySelectorAll('.is-unseen, .is-dim').forEach((n) => n.classList.remove('is-unseen', 'is-dim'));
       board.querySelectorAll('.sg-piece.is-hidden').forEach((n) => n.classList.remove('is-hidden'));
     }
@@ -1632,11 +1635,17 @@ function applyDark(game, movable, mine) {
   const S = game.S;
   // 明かりのもと: 動かせるコマがあれば、自分のコマと、いまえらんでいるコマ。なければ、みんな
   const own = movable.length ? S.players.filter((_, i) => i === mine || i === state.picked) : S.players;
-  const lit = (x, y) => own.some((p) => Math.abs(p.x - x) <= LIGHT && Math.abs(p.y - y) <= LIGHT);
+  const R2 = LIGHT * LIGHT;
+  // マスのまん中が円に入る
+  const lit = (x, y) => own.some((p) => (p.x - x) ** 2 + (p.y - y) ** 2 <= R2);
+  // マスのどこかが円にかかる
+  const near = (d) => Math.max(0, Math.abs(d) - 0.5);
+  const touch = (x, y) => own.some((p) => near(p.x - x) ** 2 + near(p.y - y) ** 2 < R2);
+  drawLights(board, game, own);
   board.querySelectorAll('.sg-cell').forEach((cell) => {
     const [x, y] = cell.dataset.pos.split(',').map(Number);
     const on = lit(x, y);
-    if (on) state.seen.add(cell.dataset.pos);
+    if (touch(x, y)) state.seen.add(cell.dataset.pos);
     cell.classList.toggle('is-unseen', !on && !state.seen.has(cell.dataset.pos));
     cell.classList.toggle('is-dim', !on && state.seen.has(cell.dataset.pos));
   });
@@ -1644,6 +1653,39 @@ function applyDark(game, movable, mine) {
     const node = state.pieces[id];
     node.classList.toggle('is-hidden', !lit(Number(node.style.getPropertyValue('--x')), Number(node.style.getPropertyValue('--y'))));
   });
+}
+
+// 盤の上の暗いまく。明かりのもとのまわりだけ、ふちをぼかした円の穴をあける（円は、コマといっしょにすべって動く）
+const SVG_NS = 'http://www.w3.org/2000/svg';
+function drawLights(board, game, own) {
+  const T = E.staticOf(game.S.spec);
+  let svg = board.querySelector('.sg-dark');
+  if (!svg) {
+    svg = document.createElementNS(SVG_NS, 'svg');
+    svg.setAttribute('class', 'sg-dark');
+    svg.setAttribute('aria-hidden', 'true');
+    svg.setAttribute('preserveAspectRatio', 'none');
+    svg.innerHTML = '<defs><radialGradient id="sgLightGrad"><stop offset="0.72" stop-color="#000"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient>'
+      + '<mask id="sgLightMask" maskUnits="userSpaceOnUse"><rect class="sg-dark__bg" fill="#fff"/><g class="sg-dark__holes"></g></mask></defs>'
+      + '<rect class="sg-dark__veil" mask="url(#sgLightMask)"/>';
+    board.append(svg);
+  }
+  svg.setAttribute('viewBox', '0 0 ' + T.w + ' ' + T.h);
+  svg.querySelectorAll('rect').forEach((r) => { r.setAttribute('x', -1); r.setAttribute('y', -1); r.setAttribute('width', T.w + 2); r.setAttribute('height', T.h + 2); });
+  svg.querySelector('mask').setAttribute('x', -1);
+  svg.querySelector('mask').setAttribute('y', -1);
+  svg.querySelector('mask').setAttribute('width', T.w + 2);
+  svg.querySelector('mask').setAttribute('height', T.h + 2);
+  const holes = svg.querySelector('.sg-dark__holes');
+  const want = own.length;
+  while (holes.childNodes.length > want) holes.lastChild.remove();
+  while (holes.childNodes.length < want) {
+    const c = document.createElementNS(SVG_NS, 'circle');
+    c.setAttribute('r', LIGHT);
+    c.setAttribute('fill', 'url(#sgLightGrad)');
+    holes.append(c);
+  }
+  own.forEach((p, i) => { holes.childNodes[i].style.transform = 'translate(' + (p.x + 0.5) + 'px, ' + (p.y + 0.5) + 'px)'; });
 }
 
 // 画面の矢印のボタンと、動かすコマをえらぶ一覧（ホストが、ほかの人のコマも動かせるとき）
