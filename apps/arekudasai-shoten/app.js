@@ -29,6 +29,8 @@ const VOICES = [
   '「たのんだ物よりいいかもしれない」',
   '「どこに置こうかな…」',
 ];
+// 箱を出したお店の人が、お客さんに送るコメント（接客の言葉。品物の特徴は言わない。データには番号を置く）
+const COMMENTS = ['どうぞ！', 'これだと思う！', 'たぶん、これかな', 'ちょっと自信ないけど…', 'ちがったらごめんね', 'おすすめです'];
 const CALM = window.matchMedia('(prefers-reduced-motion: reduce)');
 
 const { authReady, db } = RoomkRTDB.initFirebase(firebase);
@@ -67,6 +69,7 @@ const state = {
   asking: false,       // お店の人が「お客さんに質問する」をひらいているか
   offering: null,      // お店の人がえらんだ品物（「この品物を出す」を押す前）
   picks: [],           // お客さんがえらんでいるヒント（送る前）
+  comment: null,       // お店の人がえらんでいるコメントの番号（送る前）
   lastSeen: null,      // 結果の札を出した番 { game, key }（はじめて開いたときは、前の結果を出さない）
   result: null,        // いま出している結果の札 { last, until, openUntil, voice }
   phaseKey: '',        // いま出している場面（時間が来て場面が変わったら、出しなおす）
@@ -236,9 +239,16 @@ function gameOf(room) {
     if (d[i] && d[i] !== '-') return;
     if (d[to] && d[to] !== '-') v[i] = to;
   });
+  // コメント: 箱を出したお店の人が送った言葉の番号 { 席: 番号 }
+  const m = {};
+  Object.entries(r.m && typeof r.m === 'object' ? r.m : {}).forEach(([k, val]) => {
+    const i = Number(k);
+    if (d[i] && d[i] !== '-' && Number.isInteger(val) && val >= 0 && val < COMMENTS.length) m[i] = val;
+  });
   const last = raw.last && typeof raw.last === 'object' && Number.isInteger(raw.last.n) ? raw.last : null;
   return {
     v,
+    m,
     id,
     seats: seats.slice(),
     uids: seats.map((_, i) => (typeof uids[i] === 'string' ? uids[i] : '')),
@@ -408,7 +418,7 @@ function clearSession() {
 /* ── ルームへの出入り ── */
 function resetView() {
   ['town', 'stage', 'shelf', 'lobbyPeople'].forEach((id) => $(id).replaceChildren());
-  Object.assign(state, { round: '', asking: false, offering: null, picks: [], lastSeen: null, result: null, phaseKey: '', sending: false, setKey: null, endShown: '' });
+  Object.assign(state, { round: '', asking: false, offering: null, picks: [], comment: null, lastSeen: null, result: null, phaseKey: '', sending: false, setKey: null, endShown: '' });
 }
 
 function cleanupRoom() {
@@ -1115,6 +1125,37 @@ function recommend(from) {
   playRef(game).child('r/v/' + me).set(from).catch((error) => writeFailed(error));
 }
 
+// 箱を出したお店の人: お客さんにコメントを送る（お客さんが箱をえらぶまで、送りなおせる）
+function sendComment() {
+  const live = liveGame();
+  if (!live) return;
+  const { room, game } = live;
+  const me = selfSeat(game);
+  const idx = state.comment;
+  const phase = phaseOf(room, game);
+  if (me < 0 || !game.d[me] || game.d[me] === '-' || (phase !== 'offer' && phase !== 'pick')) return;
+  if (!Number.isInteger(idx) || idx < 0 || idx >= COMMENTS.length || game.m[me] === idx) return;
+  playRef(game).child('r/m/' + me).set(idx).catch((error) => writeFailed(error));
+}
+// コメントをえらんで送る欄
+function commentPanel(game, me) {
+  const box = el('div', 'ak-comment');
+  const sent = game.m[me];
+  const pick = state.comment != null ? state.comment : sent;
+  box.append(el('p', 'ak-choices__title', sent != null ? '「' + COMMENTS[sent] + '」と送ったよ' : 'お客さんにコメントを送ろう'));
+  const chipsBox = el('div', 'ak-chips');
+  COMMENTS.forEach((text, i) => {
+    const b = btn('ak-chip-btn', text, () => { state.comment = i; renderGame(); });
+    b.setAttribute('aria-pressed', pick === i ? 'true' : 'false');
+    chipsBox.append(b);
+  });
+  box.append(chipsBox);
+  const go = btn('btn btn-primary', sent != null ? '送りなおす' : '送る', sendComment);
+  go.disabled = state.comment == null || state.comment === sent;
+  box.append(go);
+  return box;
+}
+
 // お店の人: お客さんに質問する（答えは、お客さんのほしい物から、その場で決まる）
 function askTag(tag) {
   const live = liveGame();
@@ -1311,6 +1352,7 @@ function renderGame() {
     state.asking = false;
     state.offering = null;
     state.picks = [];
+    state.comment = null;
   }
   state.phaseKey = roundKey + ':' + phase;
 
@@ -1484,7 +1526,7 @@ function renderOffer(room, game, me) {
     const txt = el('div', 'ak-sent__text');
     txt.append(el('b', '', '「' + E.item(decided.item).name + '」を箱に入れて出したよ'), el('span', '', 'ほかのお店を待っているよ。'));
     sent.append(txt);
-    st.append(sent);
+    st.append(sent, commentPanel(game, me));
     return;
   }
   if (state.asking) {
@@ -1546,7 +1588,7 @@ function renderPick(room, game, me, host) {
     if (canVote) st.append(el('p', 'ak-choices__title', 'ぴったりだと思う箱を、お客さんにおすすめしよう（当たったら' + E.PT_VOTE + 'ポイント）'));
     if (mineBox) {
       const it = E.item(mineBox.item);
-      st.append(el('p', 'ak-choices__title', '「' + (it ? it.name : '') + '」を箱に入れて出したよ。お客さんがえらぶのを待とう'));
+      st.append(el('p', 'ak-small', '「' + (it ? it.name : '') + '」を箱に入れて出したよ。お客さんがえらぶのを待とう'), commentPanel(game, me));
     }
     const box = el('div', 'ak-offers');
     offers.forEach((o) => {
@@ -1557,6 +1599,7 @@ function renderPick(room, game, me, host) {
       if (mineTurn && state.sending) card.disabled = true;
       if (canVote) card.setAttribute('aria-pressed', game.v[me] === o.from ? 'true' : 'false');
       card.append(art('ak-offer__box', A.box()), el('b', '', o.from === me ? 'あなたの箱' : shopName(game, o.from)));
+      if (game.m[o.from] != null) card.append(el('span', 'ak-boxcomment', '「' + COMMENTS[game.m[o.from]] + '」'));
       card.append(el('span', 'ak-votes' + (count[o.from] ? '' : ' is-zero'), 'おすすめ ' + (count[o.from] || 0)));
       if (canVote && game.v[me] === o.from) card.append(el('span', 'ak-myvote', 'あなたのおすすめ'));
       box.append(card);
