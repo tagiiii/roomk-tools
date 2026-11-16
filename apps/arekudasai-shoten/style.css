@@ -269,3 +269,6 @@ button.ak-card:hover { box-shadow: 0 0 0 3px color-mix(in srgb, #1F6F78 25%, tra
   .ak-result, .ak-gain, .ak-art--pop, .ak-art--shake svg, button.ak-offer:hover .ak-offer__box, .ak-art--live .a-fly, .ak-art--live .a-hop, .ak-art--live .a-twinkle, .ak-art--live .a-steam, .ak-art--live .a-note, .ak-art--live .a-wing { animation: none; }
   button.ak-offer:hover { transform: none; }
 }
+/* 箱を出したお店の人のコメント */
+.ak-comment { margin: var(--space-sm) auto var(--space-md); max-width: 640px; text-align: center; }
+.ak-boxcomment { display: block; margin-top: 4px; padding: 2px 10px; border-radius: var(--radius-full); background: #FFF7E8; font-weight: 700; line-height: 1.4; }

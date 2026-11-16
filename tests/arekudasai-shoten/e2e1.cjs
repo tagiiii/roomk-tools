@@ -98,9 +98,21 @@ async function offer(c, name) {
   check('one box', (await C.page.$$('#stage .ak-offer')).length === 1);
   check('decline shown', (await text(C, '#stage')).includes('うちにはないです'));
   // 箱にそえる言葉はない（出した人には、出したことだけが出る）
-  check('no box word', !(await text(C, '#stage .ak-offer')).includes('ひとこと'));
-  await waitText(H, '#stage', 'お客さんがえらぶのを待とう');
-  check('no pitch chips', (await H.page.$$('#stage .ak-pitch')).length === 0);
+  check('no comment yet', (await C.page.$$('#stage .ak-boxcomment')).length === 0);
+  // 箱を出した人は、コメントをえらんで「送る」。その箱の下に出る。送りなおせる
+  await waitText(H, '#stage', 'お客さんにコメントを送ろう');
+  check('send disabled before pick', await H.page.isDisabled('#stage .ak-comment button.btn:has-text("送る")'));
+  await H.page.click('#stage .ak-comment .ak-chip-btn:has-text("これだと思う！")');
+  await H.page.click('#stage .ak-comment button.btn:has-text("送る")');
+  await waitText(C, '#stage .ak-offer', '「これだと思う！」');
+  check('raw m', (await gameOf(code)).r.m[holderSeat] === 1);
+  await waitText(H, '#stage', '「これだと思う！」と送ったよ');
+  await H.page.click('#stage .ak-comment .ak-chip-btn:has-text("どうぞ！")');
+  await H.page.click('#stage .ak-comment button.btn:has-text("送りなおす")');
+  await waitText(C, '#stage .ak-offer', '「どうぞ！」');
+  check('comment resent', (await gameOf(code)).r.m[holderSeat] === 0);
+  await shot(C, '04-comment-customer');
+  await shot(H, '05-comment-shop');
   // 出さなかった人は、ぴったりだと思う箱をおすすめする。お客さんにはおすすめの数が見える
   await waitText(other, '#stage', 'おすすめしよう');
   check('customer cannot vote', !(await text(C, '#stage')).includes('おすすめしよう'));
