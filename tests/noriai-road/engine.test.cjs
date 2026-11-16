@@ -139,6 +139,27 @@ test('番号のブロックの中のカギは、その人だけがとれて、�
   assert(w.clear, 'クリア');
 });
 
+test('とびらに入った人は、下（投げる）で出られて、出たまま歩ける', () => {
+  const w = E.createWorld(1, 2);
+  const d = w.door;
+  const [a, b] = w.players;
+  place(a, d.x, 10 - E.PH);
+  place(b, d.x - 6, 10 - E.PH);
+  run(w, 5);
+  assert(a.entered, '入った');
+  run(w, 2, (f) => [{ act: f === 0 }, {}]);
+  run(w, 30);
+  assert(!a.entered, '出たまま（すぐ入りなおさない）');
+  assert(a.x + E.PW <= d.x && a.ground, 'とびらの左の床に出た x=' + a.x);
+  assert(!w.clear, 'クリアにならない');
+  // 左へ歩ける・右へ戻るとまた入れる
+  const x0 = a.x;
+  run(w, 20, () => [{ l: true }, {}]);
+  assert(a.x < x0 - 0.5, '左へ歩けた');
+  run(w, 60, () => [{ r: true }, {}]);
+  assert(a.entered, 'また入れた');
+});
+
 test('重い箱は、数字の人数で押すと動く', () => {
   const w = E.createWorld(1, 3);
   const box = w.boxes[0];

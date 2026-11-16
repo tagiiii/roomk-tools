@@ -454,7 +454,7 @@
     p.dx = 0; p.dy = 0;
     p.blink = Math.max(0, p.blink - dt);
     if (p.entered) {
-      if (inp.actPressed) { p.entered = false; p.vy = 0; p.ground = null; }
+      if (inp.actPressed) exitDoor(world, p, ctx.door);
       return out;
     }
     const x0 = p.x;
@@ -520,6 +520,16 @@
     p.dx = p.x - x0;
     p.dy = p.y - y0;
     return out;
+  }
+
+  // とびらから出る: とびらの左どなりの床に出す（とびらに重なったままだと、次のこまでまた入ってしまうため）
+  function exitDoor(world, p, d) {
+    p.entered = false;
+    p.vx = 0; p.vy = 0; p.ground = null;
+    if (!d) return;
+    p.x = d.x - PW - 0.1;
+    p.y = surfaceY(world, p.x + PW / 2) - PH;
+    p.blink = 0.6;
   }
 
   function respawn(world, p) {
