@@ -34,6 +34,7 @@
 - 5つのファイルはセットで変わるので、変えたら `?v=` をそろえて上げる
 - 横断更新（2026-11-16）: `database.rules.json` に `shinkeisuijaku_rooms`（オーナー承認）・`scripts/lint.sh` の `RTDB_HTML_FILES`・ツール一覧のカード（人数「1〜6人」・`pick silent`・Realtime Database同期）・早見表の行
 - ルーム（2026-11-12 の本体化のときは入れなかった）は 2026-11-16 に足した。観戦の人・みんなにみせる画面は作っていない（遊ぶ人の画面を共有すればよい）
+- 説明スライド `slides.html`（15枚。2026-11-16）。エンジンは `apps/kotoba-tantei/slides.html` の型のまま（のりあいロードの写し）、チャンネル `shinkei_suijaku_deck`・保存キー `sss_`。「？」の「説明スライドを見る」と、ツール一覧のカード（`data-slides`）から開ける。3枚目にツール一覧と同じ画面例（`../assets/thumbnails/shinkei-suijaku.png`）、4〜5枚目にアプリと同じ形のカード（アプリと同じ色。裏は濃い赤に番号、表は白に絵と小さな番号）を描いている。ルールを変えたら、スライドと発表者ノートも合わせる
 
 ## 画面構成・フロー
 
