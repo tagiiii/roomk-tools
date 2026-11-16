@@ -1251,9 +1251,28 @@ function frame(t) {
     }
     if (steps >= 6) state.acc = 0;
     draw();
+    updateActLabel();
     updateClear();
   }
   requestAnimationFrame(frame);
+}
+
+// とびらに入っている間は、「投げる」のボタンを「出る」に（スマホの幅でも1行に収まる長さ）、キーの案内を出かたにする
+function updateActLabel() {
+  const w = state.world;
+  const seat = state.mode === 'local' ? state.pick : state.seat;
+  const me = seat ? w.players[seat - 1] : null;
+  const inside = !!(me && me.entered && !me.away);
+  if (state.actInside === inside) return;
+  state.actInside = inside;
+  const pad = document.querySelector('.nr-pad[data-key="a"]');
+  if (pad) {
+    pad.textContent = inside ? '出る' : '投げる';
+    if (inside) pad.setAttribute('aria-label', 'とびらから出る'); else pad.removeAttribute('aria-label');
+  }
+  $('keyHint').textContent = inside
+    ? 'とびらの中にいるよ。下の矢印キー（S でも）で、とびらから出られる'
+    : 'キーボード: 左右で動く・上かスペースでジャンプ・下で投げる';
 }
 
 function updateClear() {
