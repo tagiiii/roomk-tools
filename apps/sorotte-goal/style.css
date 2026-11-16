@@ -445,11 +445,15 @@ body { background: var(--color-bg); }
 .sg-hostmenu--set .sg-set { padding-bottom: 8px; }
 
 /* ── くらやみ ──
-   まだ見ていないマスはまっ暗に、前に見たマスはうす暗く出す。いま見えているのは、自分のコマのまわりだけ。
+   まだ見ていないマスはまっ暗に、前に見たマスはうす暗く出す。いま見えているのは、自分のコマを中心にした円の中だけ。
    見えていないマスの人・箱・カギ・星は出さない */
 .sg-cell.is-unseen { filter: brightness(0.08) grayscale(1); }
 .sg-cell.is-unseen > * { visibility: hidden; }
-.sg-cell.is-dim { filter: brightness(0.5) saturate(0.5); }
+.sg-cell.is-dim { filter: saturate(0.5); }
+/* 盤の上の暗いまく（app.js の drawLights）。円の穴の所だけ明るく見える。前に見たマスは、このまくで、うす暗くなる */
+.sg-dark { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 6; overflow: visible; }
+.sg-dark__veil { fill: rgba(12, 8, 24, 0.55); }
+.sg-dark__holes circle { transition: transform 0.16s cubic-bezier(0.3, 0.6, 0.4, 1); }
 .sg-piece.is-hidden { display: none; }
 
 /* 本体で足した分 */
