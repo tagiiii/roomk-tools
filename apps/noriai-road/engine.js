@@ -37,11 +37,13 @@
   const MAX_PLAYERS = 10;
   const ALL_CAP = 5;          // 「みんな」の数字の上限（人数が多いときは、5人ずつに分かれて動かす）
   const SPAWN_GAP = 1.05;     // はじめに並ぶ間かく
+  const SPRING_H = 4.6;       // ばねで跳べる高さ（4マスのかべをこえられる）
+  const SPRING_V = Math.sqrt(2 * GRAV * SPRING_H);
 
   /* ── ステージを作る道具 ── */
   function builder() {
     const cols = [];
-    const meta = { gates: [], switches: [], plats: [], seesaws: [], boxes: [], items: [], hoops: [], checkpoints: [], door: null };
+    const meta = { gates: [], switches: [], plats: [], seesaws: [], boxes: [], items: [], hoops: [], springs: [], checkpoints: [], door: null };
     let ox = 0;
     let link = 0;
     function ensure(x) {
@@ -64,11 +66,11 @@
     };
   }
 
-  /* ── 区間（どれも左はしの床から始まり、右はしの床で終わる） ── */
+  /* ── 区間（どれも左はしの床から始まり、右はしの床で終わる）。SEG.名前(b, ステージに書いた引数, 遊ぶ人数) ── */
   const SEG = {
     // はじめの場所。左のかべとスタート
     // n: 遊ぶ人数（多いときは、みんなが並べるように広くする）
-    start(b, n) {
+    start(b, _, n) {
       b.begin();
       b.fill(0, 0, 0, H - 1, '#');
       b.meta.spawn = 1.2;
@@ -184,6 +186,69 @@
       b.fill(o + 11, o + 12, 9, 9, '#');
       b.advance(16);
     },
+    // 人の塔: 3マスの台（2人なら2マス）。上のスイッチをおさえている間だけ、下のとびらが開く。
+    // 3マスは、2人重なった上から跳ぶと上がれる（ひとりで跳べる 1.7マス＋頭2つぶん）
+    tower(b, _, n) {
+      b.begin();
+      const o = b.ox;
+      const L = b.nextLink();
+      const row = 10 - (n >= 3 ? 3 : 2);
+      b.fill(o + 3, o + 12, row, row, '#');
+      b.meta.gates.push({ letter: L, x: o + 3, y0: row + 1, y1: 9, seat: 0 });
+      // スイッチは、とびらのすぐ上（ひもでつながっていても、下の人がとびらを通れる近さ）
+      b.meta.switches.push({ letter: L, x: o + 4, y: row - 1 });
+      b.advance(14);
+    },
+    // 箱を足場にする: 3マスの台。箱をとびらの前まで押して、箱の上の人の頭から跳ぶ
+    boxStep(b) {
+      b.begin();
+      const o = b.ox;
+      const L = b.nextLink();
+      b.meta.boxes.push({ x: o + 2, y: 9, need: 1 });
+      b.fill(o + 7, o + 15, 7, 7, '#');
+      b.meta.gates.push({ letter: L, x: o + 7, y0: 8, y1: 9, seat: 0 });
+      b.meta.switches.push({ letter: L, x: o + 8, y: 6 });
+      b.advance(17);
+    },
+    // 手分け: 下のスイッチと、高い足場の上のスイッチを同時におさえると、とびらがずっと開く
+    split(b) {
+      b.begin();
+      const o = b.ox;
+      const L = b.nextLink();
+      b.meta.switches.push({ letter: L, x: o + 2, y: 9 });
+      b.fill(o + 7, o + 10, 8, 8, '#');
+      b.meta.switches.push({ letter: L, x: o + 9, y: 7 });
+      b.meta.gates.push({ letter: L, x: o + 13, y0: 0, y1: 9, seat: 0, all: true, latch: true });
+      b.advance(16);
+    },
+    // 番号のスイッチ: 1番と、いちばん大きい番号の人が、同時におさえると、とびらがずっと開く（片方は高い足場の上）
+    numPair(b) {
+      b.begin();
+      const o = b.ox;
+      const L = b.nextLink();
+      b.meta.switches.push({ letter: L, x: o + 2, y: 9, seat: 1 });
+      b.fill(o + 6, o + 8, 8, 8, '#');
+      b.meta.switches.push({ letter: L, x: o + 7, y: 7, seat: 'last' });
+      b.meta.gates.push({ letter: L, x: o + 11, y0: 0, y1: 9, seat: 0, all: true, latch: true });
+      b.advance(14);
+    },
+    // ばねで穴をこえる（ふつうのジャンプでは、とどかない幅）
+    springPit(b) {
+      b.begin();
+      const o = b.ox;
+      b.meta.springs.push({ x: o + 2, y: 10 });
+      b.fill(o + 4, o + 7, 10, H - 1, '.');
+      b.advance(11);
+    },
+    // ばねで4マスのかべをこえる。かべの上にカギなど
+    springWall(b, item) {
+      b.begin();
+      const o = b.ox;
+      b.meta.springs.push({ x: o + 2, y: 10 });
+      b.fill(o + 4, o + 7, 6, 9, '#');
+      if (item) b.meta.items.push({ kind: item, x: o + 5.7, y: 5.4 });
+      b.advance(11);
+    },
     // ゴールのとびら。locked ならカギを持った人がふれると開く
     door(b, locked) {
       b.begin();
@@ -222,12 +287,38 @@
       hint: 'これまでのしかけが全部出てくる。カギはシーソーの先、ボールはかごの手前にあるよ。',
       parts: [['start'], ['ledge'], ['boxSwitch', 2], ['colorGate', 3], ['lift', 'all'], ['seesaw', 'key'], ['bridge', 'all'], ['ballHoop', true], ['door', true]],
     },
+    {
+      name: '高い台',
+      hint: '3マスの台は、2人重なった上から跳ぶと上がれる（2人のときは2マス）。箱も足場になるよ。台の上のスイッチをおさえている間だけ、下のとびらが開く。',
+      parts: [['start'], ['bump'], ['tower'], ['boxStep'], ['door', false]],
+    },
+    {
+      name: 'ばねでとぶ',
+      hint: 'ばねに乗ると、高く跳べる。ふつうのジャンプでとどかない穴や、高いかべをこえよう。カギはかべの上にあるよ。',
+      parts: [['start'], ['springPit'], ['springWall', 'key'], ['pit', 2], ['door', true]],
+    },
+    {
+      name: '手分けの道',
+      hint: '同じしるしのスイッチを全部、同時におさえると、とびらがずっと開く。番号のスイッチは、その番号の人だけがおさえられるよ。',
+      parts: [['start'], ['split'], ['numPair'], ['lift', 'all'], ['door', false]],
+    },
+    {
+      name: 'ひもと高い台',
+      hint: 'となりの番号の人と、ひもでつながっている（5人からは、いくつかの組に分かれる）。箱や友だちの頭を足場にして、高い台に上がろう。',
+      rope: true,
+      parts: [['start'], ['boxStep'], ['stairs'], ['tower'], ['door', false]],
+    },
+    {
+      name: 'さいごの道',
+      hint: 'これまでのしかけが全部出てくる。カギは、ばねで上がるかべの上にあるよ。',
+      parts: [['start'], ['springPit'], ['split'], ['tower'], ['boxSwitch', 2], ['springWall', 'key'], ['bridge', 'all'], ['numPair'], ['door', true]],
+    },
   ];
 
   function buildStage(index, n) {
     const st = STAGES[index];
     const b = builder();
-    for (const [name, arg] of st.parts) SEG[name](b, name === 'start' ? n : arg);
+    for (const [name, arg] of st.parts) SEG[name](b, arg, n);
     return { cols: b.cols, meta: b.meta, W: b.cols.length };
   }
 
@@ -269,8 +360,8 @@
     const world = {
       stage, n, W, cols,
       rope: !!STAGES[stage].rope,
-      gates: meta.gates.map((g) => ({ ...g, seatN: g.seat ? mapSeat(g.seat, n) : 0, open: false, anim: 0 })),
-      switches: meta.switches.map((s) => ({ ...s, on: false })),
+      gates: meta.gates.map((g) => ({ ...g, seatN: g.seat ? mapSeat(g.seat, n) : 0, open: false, latched: false, anim: 0 })),
+      switches: meta.switches.map((s) => ({ ...s, seatN: s.seat === 'last' ? n : s.seat ? mapSeat(s.seat, n) : 0, on: false })),
       boxes: meta.boxes.map((b) => ({ x: b.x, y: b.y, w: 1, h: 1, x0: b.x, y0: b.y, need: resolveNeed(b.need, n), vx: 0, vy: 0, ground: null, dx: 0, dy: 0, pushers: 0 })),
       plats: meta.plats.map((p) => ({
         x: p.x, y: p.y, w: p.w, h: 0.35, ax: p.ax, ay: p.ay, bx: p.bx, by: p.by,
@@ -280,6 +371,7 @@
       seesaws: meta.seesaws.map((s) => ({ ...s, off: 0, wl: 0, wr: 0 })),
       items: meta.items.map((it) => ({ kind: it.kind, x: it.x, y: it.y, x0: it.x, y0: it.y, w: ITEM, h: ITEM, vx: 0, vy: 0, holder: 0, cool: {}, hooped: false, gone: false })),
       hoops: meta.hoops.map((h) => ({ ...h, done: false })),
+      springs: meta.springs.map((sp) => ({ ...sp })),
       door: meta.door ? { x: meta.door.x, y: meta.door.y, w: 1.2, h: 2, locked: meta.door.locked } : null,
       checkpoints: meta.checkpoints.slice(),
       spawn: meta.spawn || 1.2,
@@ -294,7 +386,7 @@
   function makePlayer(seat, x, y) {
     return {
       seat, x, y, w: PW, h: PH, vx: 0, vy: 0, face: 1, ground: null, coyote: 0, jumpBuf: 0,
-      entered: false, dx: 0, dy: 0, inDir: 0, ropeTaut: false, blink: 0, rx: 0,
+      entered: false, dx: 0, dy: 0, inDir: 0, ropeTaut: false, blink: 0, rx: 0, boost: false,
     };
   }
 
@@ -484,7 +576,8 @@
       p.coyote = 0;
       p.ground = null;
     }
-    if (!inp.jump && p.vy < -JUMP_V * 0.45) p.vy = -JUMP_V * 0.45;
+    if (!inp.jump && !p.boost && p.vy < -JUMP_V * 0.45) p.vy = -JUMP_V * 0.45;
+    if (p.vy >= 0) p.boost = false;
     p.vy = Math.min(MAX_FALL, p.vy + GRAV * dt);
     p.ropeTaut = false;
 
@@ -498,6 +591,8 @@
     // 縦
     const r = moveY(p, p.vy * dt, world, p.seat, solids, tops);
     if (r.land) { p.vy = 0; p.ground = r.land; } else { p.ground = null; if (r.bump) p.vy = Math.max(0, p.vy); }
+    // ばね: 床のばねの上に立つと、高く跳ぶ（ジャンプのキーをはなしても、低くならない）
+    if (r.land === 't' && onSpring(world, p)) { p.vy = -SPRING_V; p.ground = null; p.coyote = 0; p.boost = true; }
     // 人・動く床・箱の上では、乗っているものからの横の位置も書く（受けた側は、描いている乗りものの上に乗せる）
     if (p.ground && 'spb'.includes(p.ground[0])) {
       const q = carryOf(p.ground, ctx);
@@ -522,6 +617,13 @@
     return out;
   }
 
+  function onSpring(world, p) {
+    for (const sp of world.springs) {
+      if (Math.abs(p.y + PH - sp.y) < 0.05 && p.x + PW > sp.x + 0.15 && p.x < sp.x + 0.85) return true;
+    }
+    return false;
+  }
+
   // とびらから出る: とびらの左どなりの床に出す（とびらに重なったままだと、次のこまでまた入ってしまうため）
   function exitDoor(world, p, d) {
     p.entered = false;
@@ -536,7 +638,7 @@
     const x = respawnX(world, p.x);
     p.x = x;
     p.y = surfaceY(world, x) - PH - 1.5;
-    p.vx = 0; p.vy = 0; p.ground = null;
+    p.vx = 0; p.vy = 0; p.ground = null; p.boost = false;
     p.blink = 1.2;
   }
 
@@ -654,7 +756,8 @@
       const plate = { x: s.x + 0.15, w: 0.7 };
       const top = s.y + 1;
       const pressed = (e) => e.y + e.h > top - 0.3 && e.y + e.h < top + 0.05 && e.x < plate.x + plate.w && e.x + e.w > plate.x;
-      s.on = live.some((q) => pressed({ x: q.x, y: q.y, w: PW, h: PH })) || world.boxes.some(pressed);
+      // 番号のスイッチは、その番号の人だけ（箱ではおさえられない）
+      s.on = live.some((q) => (!s.seatN || q.seat === s.seatN) && pressed({ x: q.x, y: q.y, w: PW, h: PH })) || (!s.seatN && world.boxes.some(pressed));
     }
 
     // カギ・ボール
@@ -723,7 +826,11 @@
 
     // とびら
     for (const g of world.gates) {
-      const want = world.switches.some((s) => s.letter === g.letter && s.on) || world.hoops.some((h) => h.letter === g.letter && h.done);
+      // all: 同じしるしのスイッチが全部おさえられたとき。latch: 一度開いたら、ずっと開いたまま
+      const mine = world.switches.filter((s) => s.letter === g.letter);
+      let want = (g.all ? mine.length > 0 && mine.every((s) => s.on) : mine.some((s) => s.on)) || world.hoops.some((h) => h.letter === g.letter && h.done);
+      if (g.latch && want) g.latched = true;
+      if (g.latched) want = true;
       const r = gateRect(g);
       const blocked = live.some((q) => overlap({ x: q.x, y: q.y, w: PW, h: PH }, r)) || world.boxes.some((b) => overlap(b, r));
       g.open = want || (g.open && blocked);
@@ -843,12 +950,12 @@
     if (positions) {
       world.boxes.forEach((b, k) => { const v = listOf(bs[k]); if (v.length >= 2) { b.x = num(v[0], b.x); b.y = num(v[1], b.y); b.vy = 0; b.ground = null; } });
       for (const s of world.seesaws) s.off = world.plats[s.left].y - s.rest;
-      for (const g of world.gates) g.anim = g.open ? 1 : 0;
+      for (const g of world.gates) { g.anim = g.open ? 1 : 0; if (g.latch) g.latched = g.open; }
     }
   }
 
   const api = {
-    H, VIEW, PW, PH, ITEM, ROPE_LEN, JUMP_H, GRAV, JUMP_V, SPEED,
+    H, VIEW, PW, PH, ITEM, ROPE_LEN, JUMP_H, GRAV, JUMP_V, SPEED, SPRING_H,
     STAGES, buildStage, createWorld, makePlayer, stepPlayer, stepObjects, stepLocal,
     throwItem, holdingOf, camLeft, mapSeat, solidTile, respawnX, surfaceY, gateRect, rootOf,
     encodePlayer, decodePlayer, snapshot, applySnapshot, MIN_PLAYERS: 2, MAX_PLAYERS, ALL_CAP, ropeGroups, ropeLinked, platNeed,
