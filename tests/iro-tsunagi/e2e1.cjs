@@ -119,6 +119,8 @@ function plan(seed, colors, n) {
   check('T11 W で右に回す（かべぎわなので左にずれる）', (await st(page)).piece.rot === 1 && (await st(page)).piece.x === 4, await st(page));
   await page.keyboard.press('z');
   check('T12 Z で左に回す', (await st(page)).piece.rot === 0);
+  await page.keyboard.press('Space');
+  check('T12b スペースでは落とさない（一気に落とすはない）', (await st(page)).board.every((r) => r.every((v) => v === 0)) && (await st(page)).piece);
   const y0 = (await st(page)).piece.y;
   await page.keyboard.down('s');
   await sleep(500);
@@ -165,7 +167,7 @@ function plan(seed, colors, n) {
     await waitFor(async () => { const v = await st(page); return v.mode === 'play' && v.piece && v.piece.y === 0; });
     for (let j = 0; j < step.k; j++) await page.keyboard.press('ArrowUp');
     for (let j = 0; j < Math.abs(step.dx); j++) await page.keyboard.press(step.dx < 0 ? 'ArrowLeft' : 'ArrowRight');
-    await page.keyboard.press('Space');
+    await page.evaluate(() => window.__iro.place());
   }
   await waitFor(async () => (await st(page)).mode === 'play');
   await sleep(300);
@@ -194,7 +196,7 @@ function plan(seed, colors, n) {
   for (let i = 0; i < 30 && !full; i++) {
     await waitFor(async () => { const v = await st(page); return v.mode === 'full' || (v.mode === 'play' && v.piece); });
     if ((await st(page)).mode === 'full') { full = true; break; }
-    await page.keyboard.press('Space');
+    await page.evaluate(() => window.__iro.place());
     await sleep(30);
   }
   full = full || await waitFor(async () => (await st(page)).mode === 'full', 3000);
@@ -217,7 +219,7 @@ function plan(seed, colors, n) {
   for (let i = 0; i < 30 && !ended; i++) {
     await waitFor(async () => (await page.isVisible('#screen-result')) || ((await st(page)).mode === 'play' && (await st(page)).piece));
     if (await page.isVisible('#screen-result')) { ended = true; break; }
-    await page.keyboard.press('Space');
+    await page.evaluate(() => window.__iro.place());
     await sleep(30);
   }
   check('T35 「おしまい」なら、いっぱいで結果', ended || await waitFor(async () => page.isVisible('#screen-result'), 3000));
@@ -241,7 +243,7 @@ function plan(seed, colors, n) {
   await page.evaluate(() => { document.querySelector('.it-more').open = true; });
   await page.click('label:has(input[name="sfx"][value="on"])');
   await page.click('#btnStart');
-  check('T39 入にすると7つの音を読む', await waitFor(async () => (await st(page)).sfxLoaded.length === 7), (await st(page)).sfxLoaded);
+  check('T39 入にすると6つの音を読む', await waitFor(async () => (await st(page)).sfxLoaded.length === 6), (await st(page)).sfxLoaded);
   await page.reload();
   check('T40 読み込み直しても入のまま', await page.isChecked('input[name="sfx"][value="on"]'));
   await page.close();
@@ -255,7 +257,7 @@ function plan(seed, colors, n) {
   await page.click('#btnStart');
   await waitFor(async () => (await st(page)).mode === 'play');
   await sleep(200);
-  check('T42 操作ボタンが6つ出る', (await page.$$eval('.it-pad__btn', (b) => b.filter((x) => x.offsetParent).length)) === 6);
+  check('T42 操作ボタンが5つ出る（一気に落とすはない）', (await page.$$eval('.it-pad__btn', (b) => b.filter((x) => x.offsetParent).length)) === 5 && !(await page.$('[data-act="drop"]')));
   const padBottom = await page.$eval('.it-pad', (el) => el.getBoundingClientRect().bottom);
   const fabTop = await page.$eval('.howto-fab', (el) => el.getBoundingClientRect().top);
   check('T43 盤と操作ボタンが1画面に収まり、右下の丸ボタンより上で終わる', padBottom <= fabTop, { padBottom, fabTop });
@@ -265,8 +267,9 @@ function plan(seed, colors, n) {
   check('T45 左のボタンで1マス', (await st(page)).piece.x === 1);
   await page.dispatchEvent('[data-act="rotR"]', 'pointerdown');
   check('T46 右回しのボタン', (await st(page)).piece.rot === 1);
-  await page.dispatchEvent('[data-act="drop"]', 'pointerdown');
-  check('T47 一気に落とすボタンで置く', await waitFor(async () => { const v = await st(page); return v.board.some((r) => r.some((c) => c)); }));
+  await page.dispatchEvent('[data-act="down"]', 'pointerdown');
+  check('T47 下げるボタンの押しっぱなしで置く', await waitFor(async () => { const v = await st(page); return v.board.some((r) => r.some((c) => c)); }, 6000));
+  await page.dispatchEvent('[data-act="down"]', 'pointerup');
   await shot(page, 'play-375');
   await page.close();
 

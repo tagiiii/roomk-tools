@@ -86,7 +86,6 @@
   let g = null;
   let last = 0;
   let parts = [];            // 消えたときの粒 { x, y, vx, vy, c, t }
-  let trail = null;          // 一気に落としたときの跡 { cells, t }
   let lastRotFail = -1e9;
   let softHeld = false;
 
@@ -95,7 +94,7 @@
   const SFX_VER = '20261113a';
   const SFX_GAIN = 0.25;
   // 音のファイルは「すとんブロック」と同じもの（ElevenLabs で作った）
-  const SFX_FILES = { move: 0.35, rotate: 0.5, place: 0.6, drop: 0.8, ding: 0.8, allclear: 0.7, finish: 0.8 };
+  const SFX_FILES = { move: 0.35, rotate: 0.5, place: 0.6, ding: 0.8, allclear: 0.7, finish: 0.8 };
   const sfx = { on: false, ac: null, out: null, buf: {}, loading: false };
   try { sfx.on = localStorage.getItem(SFX_KEY) === '1'; } catch (e) { /* 使えなければ切のまま */ }
   function syncSfxInputs() {
@@ -1349,16 +1348,6 @@
     ctx.stroke();
     ctx.restore();
 
-    if (trail && !reduce.matches) {
-      const a = Math.max(0, 1 - trail.t / 220) * 0.35;
-      trail.cells.forEach((q) => {
-        ctx.fillStyle = BALL[q.c].fill;
-        ctx.globalAlpha = a;
-        ctx.fillRect(q.x * cell + cell * 0.2, topPx + q.from * cell + cell / 2, cell * 0.6, (q.to - q.from) * cell);
-        ctx.globalAlpha = 1;
-      });
-    }
-
     const r = cell * 0.44;
     const anim = run.anim;
     const board = anim ? anim.snap : g.board;
@@ -1480,7 +1469,6 @@
     };
     run.t = run.solo ? () => run.elapsed : () => RoomkRTDB.now() - run.startAt;
     parts = [];
-    trail = null;
     softHeld = false;
     stopRepeat();
     hideOverlay();
@@ -1572,14 +1560,6 @@
     } else if (name === 'down') {
       ok = E.down(g);
       if (ok) { run.fallAcc = 0; run.lockWait = null; }
-    } else if (name === 'drop') {
-      const before = E.cells(g.piece);
-      E.hardDropRows(g);
-      const after = E.cells(g.piece);
-      trail = { cells: before.map((q, i) => ({ x: q.x, from: q.y, to: after[i].y, c: q.c })), t: 0 };
-      play('drop');
-      doLock(true);
-      return true;
     }
     if (ok && run.lockWait !== null && name !== 'down' && run.resets < MAX_RESETS) {
       run.lockWait = grounded() ? 0 : null;
@@ -1601,9 +1581,9 @@
     return steps;
   }
 
-  function doLock(dropped) {
+  function doLock() {
     E.lock(g);
-    if (!dropped) play('place');
+    play('place');
     const snap = g.board.map((row) => row.slice());   // 置いた直後の盤。ここから順に落とす・消すを見せる
     const res = E.settle(g);
     run.lockWait = null;
@@ -1881,7 +1861,6 @@
       }
       if (run) {
         if (run.limit && t >= 0) hud();
-        if (trail) { trail.t += dt; if (trail.t > 220) trail = null; }
         if (parts.length) {
           const k = dt / 1000;
           parts.forEach((q) => { q.t += dt; q.x += q.vx * k; q.y += q.vy * k; q.vy += 9 * k; });
@@ -1905,7 +1884,7 @@
       }
       if (grounded()) {
         run.lockWait = (run.lockWait === null ? 0 : run.lockWait + dt);
-        if (run.lockWait >= LOCK_MS) doLock(false);
+        if (run.lockWait >= LOCK_MS) doLock();
       } else {
         run.lockWait = null;
       }
@@ -1947,7 +1926,6 @@
     ArrowDown: 'down', s: 'down', S: 'down',
     ArrowUp: 'rotR', w: 'rotR', W: 'rotR', x: 'rotR', X: 'rotR',
     z: 'rotL', Z: 'rotL',
-    ' ': 'drop',
     p: 'pause', P: 'pause', Escape: 'pause',
   };
   const playingScreen = () => state.currentScreen === 'play' && !modalOpen();
@@ -2120,6 +2098,8 @@
       addPending: (n) => { if (run) { run.pending += n; hud(); } },
       setBoard: (rows) => { if (g) { g.board = rows.map((r) => r.slice()); draw(); } },
       setPiece: (a, b) => { if (g && g.piece) { g.piece.a = a; g.piece.b = b; draw(); } },
+      // テストで手早く置くため（画面には一気に落とす操作はない）
+      place: () => { if (!active() || run.mode !== 'play' || !g.piece) return false; E.hardDropRows(g); doLock(); return true; },
     };
   }
 

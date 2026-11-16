@@ -46,7 +46,9 @@
 .it-bar .it-quiet:not([hidden]) ~ .it-quiet { margin-left: 0; }   /* 「とめる」が出ているときは「おわる」をそのとなりに */
 .it-timer { font-size: 22px; font-weight: 700; color: var(--color-primary); font-variant-numeric: tabular-nums; }
 .it-timer[hidden] { display: none; }
-.it-pad { display: grid; grid-template-columns: repeat(4, 64px); gap: 8px; margin: 14px auto 0; justify-content: center; }
+.it-pad { display: grid; grid-template-columns: repeat(6, 32px); gap: 8px; margin: 14px auto 0; justify-content: center; }
+.it-pad__btn { grid-column: span 2; }
+.it-pad__btn[data-act^="rot"] { grid-column: span 3; }   /* 1段目 左・右・下げる、2段目 回す2つ */
 .it-pad__btn {
   height: 56px; min-width: 0; overflow: hidden; border-radius: 12px; border: 1px solid var(--color-border); background: var(--color-surface);
   color: var(--color-primary); cursor: pointer; touch-action: manipulation; -webkit-user-select: none; user-select: none;
@@ -213,7 +215,7 @@
   .it-next__c--sub { width: 22px; height: 40px; }
   .it-stat__num { font-size: 1.3rem; }
   .it-side__label { font-size: 11px; }
-  .it-pad { grid-template-columns: repeat(4, 1fr); width: 100%; max-width: 360px; }
+  .it-pad { grid-template-columns: repeat(6, 1fr); width: 100%; max-width: 280px; }
   .it-keys { display: none; }
   .it-appbar { padding: 10px 16px; }
   .it-roombar { gap: 4px; padding: 6px 8px; }

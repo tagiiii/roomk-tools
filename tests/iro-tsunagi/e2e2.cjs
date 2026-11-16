@@ -189,11 +189,11 @@ function boardRows(rows) {
   check('R19 のこり時間が出る', /^(2:00|1:5\d)$/.test(await text(G, '#timer')));
   check('R20 あそんでいる間はルームのバーを出さない', !(await shown(G, '#roomBar')));
   check('R21 ほかの人の盤（広い画面）', await shown(H, '#others .it-other'));
-  await G.page.keyboard.press('Space');
+  await G.page.evaluate(() => window.__iro.place());
   check('R22 置くと盤を送る', await waitFor(async () => { const r = await roomOf(code); return r.boards && r.boards['ゲスト'] && /[1-5]/.test(r.boards['ゲスト'].b || ''); }));
   await waitPieceTop(G);
   await G.page.keyboard.press('ArrowLeft');
-  await G.page.keyboard.press('Space');
+  await G.page.evaluate(() => window.__iro.place());
   await waitPieceTop(G);
   const before = await st(G);
   await G.page.reload();
@@ -236,7 +236,7 @@ function boardRows(rows) {
   ];
   const pre = await st(G);
   await G.page.evaluate((b) => window.__iro.setBoard(b), boardRows(rows));
-  await G.page.keyboard.press('Space');
+  await G.page.evaluate(() => window.__iro.place());
   await sleep(100);
   const post = await st(G);
   check('R34 2れんさが出る', await waitFor(async () => (await text(G, '#chainText')).includes('2れんさ'), 4000));
@@ -244,7 +244,7 @@ function boardRows(rows) {
   check('R36 ホストの「来るじゃま」が3になる', await waitFor(async () => (await st(H)).pending === 3), (await st(H)).pending);
   check('R37 ルームの盤に来るじゃまを書く', await waitFor(async () => { const r = await roomOf(code); return r.boards && r.boards['ホスト'] && r.boards['ホスト'].pending === 3; }));
   await waitPieceTop(H);
-  await H.page.keyboard.press('Space');
+  await H.page.evaluate(() => window.__iro.place());
   check('R38 置くと、じゃまの玉が落ちてくる', await waitFor(async () => { const v = await st(H); return v.pending === 0 && v.board.flat().filter((x) => x === E.JAMA).length === 3; }), await st(H));
   await shot(H, 'room-battle-host');
   // ホストの盤をいっぱいにして「ここまで」にする
@@ -252,7 +252,7 @@ function boardRows(rows) {
   const tall = [];
   for (let y = 1; y < E.H; y++) tall.push('..' + (y % 2 ? '1' : '2') + '...');
   await H.page.evaluate((b) => window.__iro.setBoard(b), boardRows(tall));
-  await H.page.keyboard.press('Space');
+  await H.page.evaluate(() => window.__iro.place());
   check('R39 いっぱいになると「ここまで」', await waitFor(async () => (await st(H)).out && (await text(H, '#overlayText')).includes('ここまで')));
   check('R40 のこりが1人になると結果', await waitScreen(G, 'result', 8000));
   const rt = await text(G, '#resultBody');
@@ -275,7 +275,7 @@ function boardRows(rows) {
   check('R46 みんなにみせる画面も盤をならべる', await waitScreen(W, 'watch') && await waitFor(async () => (await W.page.$$('#watchGrid .it-wboard')).length === 1));
   check('R47 回の人はゲストだけ', await waitFor(async () => { const r = await roomOf(code); return r.round && r.round.players.length === 1 && r.round.players[0] === 'ゲスト'; }));
   await waitPlaying(G);
-  await G.page.keyboard.press('Space');
+  await G.page.evaluate(() => window.__iro.place());
   check('R48 みんなにみせる画面に盤が出る', await waitFor(async () => (await text(W, '#watchGrid')).includes('点')));
   await shot(W, 'room-watch');
   await H.page.click('#btnWatchEnd');
