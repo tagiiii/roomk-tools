@@ -154,7 +154,7 @@ CPU と対戦かどうか・むずかしさは分けていない。
 
 ## 特有のルール・制約
 
-- イラスト（`apps/assets/illustrations/shinkei-suijaku.webp`）は 2026-11-12 に作った（星のカードが2枚そろい、下に裏のカードが並ぶ絵。指示文は `scripts/illustrations/prompts.json`。6回めで採用）。ツール一覧のカードと、はじめの画面の絵の面（`.app-hero`）に出す。サムネイル（`apps/assets/thumbnails/shinkei-suijaku.png`）も同じ日に撮り、2026-11-16 にルームの画面で撮り直した（撮影は `tests/shinkei-suijaku/shot.cjs`。撮り方は docs/development/thumbnails.md。遊ぶ画面の見た目を変えたら撮り直す）
+- イラスト（`apps/assets/illustrations/shinkei-suijaku.webp`）は 2026-11-12 に作った（星のカードが2枚そろい、下に裏のカードが並ぶ絵。指示文は `scripts/illustrations/prompts.json`。6回めで採用）。2026-11-16 にルーム（自分の端末で遊ぶ）に合わせて作りなおした（指示文にスマホ2台を足した。15回作り、星のカード2枚がまるごと入り、スマホの画面にも見える14回めにした。スマホそのものは描かれていない）。ツール一覧のカードと、はじめの画面の絵の面（`.app-hero`）に出す。サムネイル（`apps/assets/thumbnails/shinkei-suijaku.png`）も同じ日に撮り、2026-11-16 にルームの画面で撮り直した（撮影は `tests/shinkei-suijaku/shot.cjs`。撮り方は docs/development/thumbnails.md。遊ぶ画面の見た目を変えたら撮り直す）
 - 盤は画面の高さに収まるように、幅を高さからも決めている（`.ss-board-wrap` の `max-width`。`--cols`・`--rows`・`--maxw` は `app.js` の `applyCols` が入れる）。600px 以下では列の数を減らす（`levels` の `colsSp`）
 - 取ったカードを薄くするとき、`.ss-card__inner` に `opacity` を付けない（3D の裏返しがつぶれて裏の面が出る）。面のほうに付ける
 - SVG の名前空間は、`index.html` の空の `<svg id="ss-svg-ns">` から取っている（試作用 lint が外部 URL の文字列を禁じていたため。そのままにしてある）
