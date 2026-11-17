@@ -215,6 +215,15 @@ const topics = [
   '作ってみたい動画はある？',
 ];
 
+// 一覧（「お題の一覧から選ぶ」）で種類の見出しを出す位置。キーはその種類の最初のお題、値は見出し
+const groupStarts = new Map([
+  ['最近ハマっていることは何？', '好きなもの'],
+  ['最近あったちょっといいことは？', '日常・生活'],
+  ['魔法が1つ使えたら何をする？', 'もしも'],
+  ['一人でいるのと誰かといるの、どっちが落ち着く？', '自分のこと'],
+  ['将来やってみたいことは何かある？', 'やってみたいこと'],
+]);
+
 // ── 状態 ──
 let pool   = [];
 let hand   = [];
@@ -285,6 +294,10 @@ function pick(idx, card, topic) {
     if (i !== idx) c.classList.add('dimmed');
   });
 
+  showTopic(topic);
+}
+
+function showTopic(topic) {
   // お題表示（M-5: popIn）
   const area = document.querySelector('#topicArea');
   document.querySelector('#topicText').textContent = topic;
@@ -293,6 +306,45 @@ function pick(idx, card, topic) {
 
   // 引き直しボタン非表示
   document.querySelector('#redrawArea').style.visibility = 'hidden';
+}
+
+// ── お題の一覧から選ぶ ──
+// 一覧で選んだお題は、カードを引いたときと同じ「今日のお題」に出す。3枚のカードはすべて薄くし、
+// 選んだお題は残りの山から抜く（このあと引くカードに同じお題が出ないように）
+function buildTopicList() {
+  const body = document.querySelector('#topicListBody');
+  let ul = null;
+  topics.forEach((topic) => {
+    if (!ul || groupStarts.has(topic)) {
+      if (groupStarts.has(topic)) {
+        const h = document.createElement('h3');
+        h.className = 'topic-list__heading';
+        h.textContent = groupStarts.get(topic);
+        body.appendChild(h);
+      }
+      ul = document.createElement('ul');
+      ul.className = 'topic-list__items';
+      body.appendChild(ul);
+    }
+    const li = document.createElement('li');
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'topic-list__item';
+    btn.textContent = topic;
+    btn.addEventListener('click', () => pickFromList(topic));
+    li.appendChild(btn);
+    ul.appendChild(li);
+  });
+}
+
+function pickFromList(topic) {
+  document.querySelector('#topicList').close();
+  chosen = -1;
+  document.querySelectorAll('#cardGrid .flip-card').forEach((c) => c.classList.add('dimmed'));
+  pool = pool.filter((t) => t !== topic);
+  updatePoolInfo();
+  showTopic(topic);
+  document.querySelector('#topicArea').scrollIntoView({ block: 'nearest', behavior: 'smooth' });
 }
 
 function startNew() {
@@ -323,7 +375,16 @@ document.querySelector('#btnCopy').addEventListener('click', function () {
 document.querySelector('#btnNext').addEventListener('click', startNew);
 document.querySelector('#btnRedraw').addEventListener('click', drawNew);
 
+const topicList = document.querySelector('#topicList');
+document.querySelector('#btnList').addEventListener('click', () => topicList.showModal());
+document.querySelector('#btnListClose').addEventListener('click', () => topicList.close());
+// 一覧の外側（背景）を押しても閉じる
+topicList.addEventListener('click', (e) => {
+  if (e.target === topicList) topicList.close();
+});
+
 // ── 初期化 ──
+buildTopicList();
 refill();
 drawHand();
 render();

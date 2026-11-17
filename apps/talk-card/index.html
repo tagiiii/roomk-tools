@@ -11,7 +11,7 @@
   <!-- 共通デザインシステム（M-1〜M-6）-->
   <link rel="stylesheet" href="../shared/css/design-system.css?v=20261106c" />
   <!-- アプリ固有スタイル -->
-  <link rel="stylesheet" href="style.css?v=20261106look" />
+  <link rel="stylesheet" href="style.css?v=20261117list" />
 </head>
 <body data-genre="talk">
 
@@ -45,7 +45,22 @@
     <!-- プール残数 -->
     <p class="pool-info" id="poolInfo"></p>
 
+    <!-- お題の一覧から選ぶ -->
+    <div class="list-open-area">
+      <button type="button" class="tc-quiet-btn" id="btnList">お題の一覧から選ぶ</button>
+    </div>
+
   </div>
+
+  <!-- お題の一覧（ここで選んだお題を「今日のお題」に出す）-->
+  <dialog class="topic-list" id="topicList" aria-labelledby="topicListTitle">
+    <div class="topic-list__head">
+      <h2 class="topic-list__title" id="topicListTitle">お題の一覧</h2>
+      <button type="button" class="btn btn-secondary btn-sm" id="btnListClose">閉じる</button>
+    </div>
+    <p class="topic-list__lead">お題を押すと、そのお題を出します。</p>
+    <div class="topic-list__body" id="topicListBody"></div>
+  </dialog>
 
   <script type="module" src="app.js"></script>
   <script src="../shared/js/stats.js?v=1" defer></script>
@@ -62,6 +77,7 @@
             '出てきたお題について、みんなでおしゃべりする',
             '「コピーする」を押すと、お題をチャットに貼りつけられる',
             '「別のカードを引く」を押すと、新しい3枚が出てくる',
+            '話したいお題が決まっているときは、「お題の一覧から選ぶ」から選べる',
           ],
         },
         { heading: 'おわりかた', text: '好きなタイミングで終わってOK。とくに操作はいらない。' },
