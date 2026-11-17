@@ -228,12 +228,11 @@ const groupStarts = new Map([
 let pool   = [];
 let hand   = [];
 let chosen = null;
-// 一覧でしぼったお題の残り（null のときはいつものカード）。しぼったお題だけで裏向きのカードを作り、
+// 一覧でしぼったお題の残り（null のときはいつものカード）。しぼったお題から3枚を裏向きで出し、
 // 参加者に番号で選んでもらう。開いたお題はここからも抜き、2つ未満になったらいつものカードにもどす
 let narrowed = null;
 // 一覧で選んでいるお題（「カードを作る」を押すまでの間）
 const selected = new Set();
-const NARROW_MAX = 6;
 
 // ── M-3: プール管理 ──
 function refill() {
@@ -242,7 +241,7 @@ function refill() {
 
 function drawHand() {
   if (narrowed) {
-    hand = shuffle(narrowed);
+    hand = shuffle(narrowed).slice(0, 3);
     return;
   }
   if (pool.length < 3) refill();
@@ -253,9 +252,8 @@ function drawHand() {
 function render() {
   const grid = document.querySelector('#cardGrid');
   grid.innerHTML = '';
-  // 4枚は横に4つ、5・6枚は3つずつ2段
-  grid.style.setProperty('--cols', hand.length === 4 ? 4 : Math.min(hand.length, 3));
-  grid.classList.toggle('card-grid--many', hand.length > 3);
+  // しぼったお題の残りが2つのときは2枚
+  grid.style.setProperty('--cols', hand.length);
 
   hand.forEach((topic, i) => {
     // M-4: flip-card 構造を使用
@@ -328,7 +326,7 @@ function showTopic(topic) {
 
 // ── お題の一覧から選ぶ ──
 // 1つだけ選んだら、そのお題をそのまま「今日のお題」に出す（カードはすべて薄くし、残りの山から抜く）。
-// 2つ以上選んだら、選んだお題だけで裏向きのカードを作る
+// 2つ以上選んだら、選んだお題から3枚を裏向きで出す
 function buildTopicList() {
   const body = document.querySelector('#topicListBody');
   let ul = null;
@@ -359,23 +357,20 @@ function buildTopicList() {
 
 function toggleSelect(topic) {
   if (selected.has(topic)) selected.delete(topic);
-  else if (selected.size < NARROW_MAX) selected.add(topic);
+  else selected.add(topic);
   updateListUi();
 }
 
 function updateListUi() {
-  const full = selected.size >= NARROW_MAX;
   document.querySelectorAll('#topicListBody .topic-list__item').forEach((btn) => {
-    const on = selected.has(btn.dataset.topic);
-    btn.setAttribute('aria-pressed', on ? 'true' : 'false');
-    btn.disabled = full && !on;
+    btn.setAttribute('aria-pressed', selected.has(btn.dataset.topic) ? 'true' : 'false');
   });
   const n = selected.size;
   document.querySelector('#listCount').textContent =
-    n === 0 ? 'お題を選んでください' : `${n}つ選んでいます${full ? '（ここまで）' : ''}`;
+    n === 0 ? 'お題を選んでください' : `${n}つ選んでいます`;
   const go = document.querySelector('#btnListGo');
   go.disabled = n === 0;
-  go.textContent = n >= 2 ? `この${n}つでカードを作る` : 'このお題を出す';
+  go.textContent = n >= 2 ? 'この中からカードを引く' : 'このお題を出す';
   document.querySelector('#btnListClear').hidden = n === 0;
 }
 
@@ -428,10 +423,9 @@ function backToNormal() {
   startNew();
 }
 
-// しぼったカードのときは「3枚引き直す」を「並べ直す」にし、「いつものカードにもどる」を出す
+// しぼったカードのときは「いつものカードにもどる」を出す
 function updateModeUi() {
   const isNarrow = narrowed !== null;
-  document.querySelector('#btnRedraw').textContent = isNarrow ? '並べ直す' : '3枚引き直す';
   document.querySelector('#btnNormal').hidden = !isNarrow;
   document.querySelector('#poolInfo').textContent = isNarrow
     ? `残り ${narrowed.length} 枚`

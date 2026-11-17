@@ -294,14 +294,7 @@
   .topic-list__items { grid-template-columns: 1fr; }
 }
 
-/* ── しぼったお題のカード（4〜6枚）と、一覧での選択（2026-11-17）── */
-.card-grid--many .flip-card { aspect-ratio: 3 / 4; }
-.card-grid--many .card-number { font-size: 52px; }
-
-@media (max-width: 600px) {
-  .card-grid--many .card-number { font-size: 34px; }
-  .card-grid--many .card-hint { font-size: 10px; }
-}
+/* ── 一覧での選択（2026-11-17）── */
 
 .list-open-area .tc-quiet-btn + .tc-quiet-btn { margin-left: 8px; }
 
@@ -321,11 +314,6 @@
   vertical-align: -4px;
   margin-right: 6px;
   color: var(--g-ink);
-}
-
-.topic-list__item:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
 }
 
 .topic-list__foot {
