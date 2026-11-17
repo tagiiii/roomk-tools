@@ -1042,8 +1042,9 @@ const gameArt = (g, cls) => art(APPS_BASE + 'assets/illustrations/' + g.slug + '
 const pnote = (icon, text) => `<p class="p-note-line"><span class="material-symbols-rounded">${icon}</span>${text}</p>`;
 const art = (file, icon, cls = '') => `<span class="art ${cls}"><img src="${esc(file)}" alt="" onerror="this.parentNode.classList.add('noimg')"><span class="material-symbols-rounded">${icon}</span></span>`;
 const SHORT = { free: '自由タイム', kokoro: '心', karada: '体', weather: '天気', day: '何の日', adhoc: '質問', program: 'プログラム', tomorrow: '明日', talk: 'チェックイン', review: 'ふりかえり', game: 'ゲーム' };
-// みんなでゲームにえらべるもの: ツール一覧で利用シーンに「サークル」があり、話す・内省以外の種類のもの（自由タイムで使うことばみっけは除く）
-const GAME_GENRES = ['atekko', 'suiri', 'kotoba', 'puzzle'];
+// みんなでゲームにえらべるもの: ツール一覧の、話す・内省以外の種類のもの全部。利用シーンに「サークル」があるものを先にまとめ、ほかは種類ごとに並べる
+// はじめにくじで入れるのは「サークル」のものだけ（自由タイムで使うことばみっけは除く）
+const GAME_GENRES = [['kotoba', 'ことばのゲーム'], ['puzzle', 'クイズ・パズル'], ['suiri', '推理・正体かくし'], ['atekko', '当てっこ・協力ゲーム'], ['board', 'カード・ボードゲーム']];
 const GAME_EXCLUDE = ['kotoba-mikke'];
 const APPS_BASE = '../';
 const FREE_QUIZ_PACKS = ['zatsugaku-3choice', 'tofuken-zatsugaku', 'kurashi-suiri'];
@@ -1324,14 +1325,24 @@ async function loadAppNames() {
   return appNames;
 }
 const gameCard = (a) => ({ slug: a.slug, name: a.name, hk: a.hk, thumb: a.thumb });
-// みんなでゲームにえらべるもの（名前の順）
+// みんなでゲームにえらべるもの（名前の順）。poolGroup は slug → 'circle' か種類（選択欄の見出しに使う）
 let poolCache = null;
+const poolGroup = {};
 async function gamePool() {
   if (poolCache) return poolCache;
-  return poolCache = (await loadCatalog()).filter((a) => a.scenes.includes('circle') && GAME_GENRES.includes(a.genre) && a.thumb && !GAME_EXCLUDE.includes(a.slug))
-    .sort((a, b) => a.name.localeCompare(b.name, 'ja')).map(gameCard);
+  const genres = GAME_GENRES.map(([g]) => g);
+  const list = (await loadCatalog()).filter((a) => genres.includes(a.genre) && a.thumb).sort((a, b) => a.name.localeCompare(b.name, 'ja'));
+  list.forEach((a) => { poolGroup[a.slug] = a.scenes.includes('circle') ? 'circle' : a.genre; });
+  return poolCache = list.map(gameCard);
 }
-const gameOptions = (pool, slug) => pool.map((g) => `<option value="${esc(g.slug)}"${g.slug === slug ? ' selected' : ''}>${esc(g.name)}</option>`).join('');
+// はじめにくじで入れる候補（サークル向けのもの）
+const circlePool = (pool) => { const c = pool.filter((g) => poolGroup[g.slug] === 'circle' && !GAME_EXCLUDE.includes(g.slug)); return c.length ? c : pool; };
+const gameOptions = (pool, slug) => {
+  const opt = (g) => `<option value="${esc(g.slug)}"${g.slug === slug ? ' selected' : ''}>${esc(g.name)}</option>`;
+  const groups = [['circle', 'サークル向け'], ...GAME_GENRES].map(([k, label]) => [label, pool.filter((g) => poolGroup[g.slug] === k)]).filter(([, gs]) => gs.length);
+  const rest = pool.filter((g) => !poolGroup[g.slug]);
+  return rest.map(opt).join('') + groups.map(([label, gs]) => `<optgroup label="${esc(label)}">${gs.map(opt).join('')}</optgroup>`).join('');
+};
 // 子ども向けのニュース（毎朝のタスクが daily/YYYY-MM-DD.news.json に書く。なければ前の日の分）
 const NEWS_MAX = 5;
 function validNews(d) {
@@ -2256,7 +2267,7 @@ function loadGames() { if (!gamesReady) gamesReady = loadGames0(); return gamesR
 async function loadGames0() {
   const pool = await gamePool(), sel = $('game-sel');
   if (!pool.length) { sel.innerHTML = ''; sel.disabled = true; $('game-hk').textContent = 'ツール一覧を読めませんでした。ゲームの画面でリンクを貼れば出せます。'; gamesReady = null; return; }
-  const last = loadPrefs().lastGame, fresh = pool.filter((g) => g.slug !== last), first = pick(fresh.length ? fresh : pool);
+  const last = loadPrefs().lastGame, base = circlePool(pool), fresh = base.filter((g) => g.slug !== last), first = pick(fresh.length ? fresh : base);
   sel.disabled = false; sel.innerHTML = gameOptions(pool, first.slug); $('game-hk').textContent = first.hk;
 }
 $('seg-session').addEventListener('click', (e) => { const b = e.target.closest('button[data-v]'); if (b) setKind(b.dataset.v); });
