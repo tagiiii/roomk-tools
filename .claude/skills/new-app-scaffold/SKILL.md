@@ -67,6 +67,10 @@ description: room-Kの本体アプリを新規追加し、必要な共通機能�
 
 系統に当てはまるセクションがない場合だけ新セクションと目次（`gd-toc`）を足す。
 
+## 4.5. フィードバック送信ページの一覧に足す
+
+`apps/guide/feedback/index.html` の `APPS`（「どのツールについて？」の選択肢）に `['{app-name}', '表示名', '読み']` を1つ足す（app-registration.md 手順9）。早見表に載せないツールも足す。名前と読みはポータルのカードの `app-card__name`・`data-yomi` と同じにし、読みは `data-yomi` があるときだけ付ける。ポータルから自動では作られないので、足さないとそのツールの「？」から開いても選べない。
+
 ## 5. AGENTS.md 作成
 
 `apps/{app-name}/AGENTS.md` を必ず作る。見出し構成の見本:
@@ -94,6 +98,7 @@ description: room-Kの本体アプリを新規追加し、必要な共通機能�
 - [ ] apps/index.html にカード追加（`data-scenes`・`data-added`（公開日）・`data-genre`（種類）必須・slides があれば `data-slides` と howto の `slides`）
 - [ ] apps/updates.json の先頭に更新情報を追記（`type: "new"`）
 - [ ] apps/guide/index.html の早見表に1行追加（1対1の内面・対話ツールは載せない）
+- [ ] apps/guide/feedback/index.html の `APPS` に1つ追加（早見表に載せないツールも。ポータルのカードと突き合わせて漏れ0）
 - [ ] apps/{name}/AGENTS.md（逸脱の明文化を含む）
 - [ ] lint.sh の RTDB_HTML_FILES（RTDB の場合）
 - [ ] lint エラー0・警告0

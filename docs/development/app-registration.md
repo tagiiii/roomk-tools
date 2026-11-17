@@ -23,6 +23,12 @@
 6. 共通の「あそびかた／つかいかた」モーダル（`apps/shared/js/howto.js`、[shared-modules.md](shared-modules.md)「howto.js」参照）を組み込む
 7. `apps/guide/` の早見表（スタッフ向け「ゲームえらび早見表」）に1行追加。作戦会議の1対1の内面・対話ツール（例: つよみカード・すきタイプチェック・バリューカード・どっちにする？・キャパグラフ）は載せない（早見表はゲームえらび用。2026-11-07 オーナー判断）
 8. `scripts/content-audit.mjs` の台帳に登録（コンテンツがなくても必須。下記「重複監査の台帳」参照）
+9. フィードバック送信ページ（`apps/guide/feedback/index.html`）の `APPS` に `[id, 名前, 読み]` を1つ足す。名前と読みはポータルのカードの `app-card__name`・`data-yomi` と同じにする（読みは `data-yomi` があるときだけ）。ポータルから自動では作られないので、足さないとそのツールの「？」から開いても選べず「どれでもない・わからない」になる（2026-11-02 に3本、2026-11-17 に15本の漏れを足した）。ポータルのカードとの突き合わせは下のとおり
+
+   ```bash
+   comm -23 <(grep -o 'class="app-card" href="[a-z0-9-]*/"' apps/index.html | sed 's/.*href="//;s/\/"//' | sort -u) \
+            <(grep -o "\['[a-z0-9-]*'" apps/guide/feedback/index.html | tr -d "['" | sort -u)
+   ```
 
 ### アプリ名のつけかた
 
