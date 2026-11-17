@@ -228,6 +228,11 @@ const groupStarts = new Map([
 let pool   = [];
 let hand   = [];
 let chosen = null;
+// 一覧でしぼったお題の残り（null のときはいつものカード）。しぼったお題から3枚を裏向きで出し、
+// 参加者に番号で選んでもらう。開いたお題はここからも抜き、2つ未満になったらいつものカードにもどす
+let narrowed = null;
+// 一覧で選んでいるお題（「カードを作る」を押すまでの間）
+const selected = new Set();
 
 // ── M-3: プール管理 ──
 function refill() {
@@ -235,6 +240,10 @@ function refill() {
 }
 
 function drawHand() {
+  if (narrowed) {
+    hand = shuffle(narrowed).slice(0, 3);
+    return;
+  }
   if (pool.length < 3) refill();
   hand = pool.splice(0, 3);
 }
@@ -243,6 +252,8 @@ function drawHand() {
 function render() {
   const grid = document.querySelector('#cardGrid');
   grid.innerHTML = '';
+  // しぼったお題の残りが2つのときは2枚
+  grid.style.setProperty('--cols', hand.length);
 
   hand.forEach((topic, i) => {
     // M-4: flip-card 構造を使用
@@ -280,7 +291,7 @@ function render() {
     grid.appendChild(card);
   });
 
-  updatePoolInfo();
+  updateModeUi();
 }
 
 function pick(idx, card, topic) {
@@ -289,11 +300,16 @@ function pick(idx, card, topic) {
   // M-4: フリップ
   card.classList.add('flipped');
 
-  // 他2枚をdimmed
+  // ほかのカードをdimmed
   document.querySelectorAll('#cardGrid .flip-card').forEach((c, i) => {
     if (i !== idx) c.classList.add('dimmed');
   });
 
+  if (narrowed) {
+    narrowed = narrowed.filter((t) => t !== topic);
+    pool = pool.filter((t) => t !== topic);
+    updateModeUi();
+  }
   showTopic(topic);
 }
 
@@ -309,8 +325,8 @@ function showTopic(topic) {
 }
 
 // ── お題の一覧から選ぶ ──
-// 一覧で選んだお題は、カードを引いたときと同じ「今日のお題」に出す。3枚のカードはすべて薄くし、
-// 選んだお題は残りの山から抜く（このあと引くカードに同じお題が出ないように）
+// 1つだけ選んだら、そのお題をそのまま「今日のお題」に出す（カードはすべて薄くし、残りの山から抜く）。
+// 2つ以上選んだら、選んだお題から3枚を裏向きで出す
 function buildTopicList() {
   const body = document.querySelector('#topicListBody');
   let ul = null;
@@ -331,24 +347,65 @@ function buildTopicList() {
     btn.type = 'button';
     btn.className = 'topic-list__item';
     btn.textContent = topic;
-    btn.addEventListener('click', () => pickFromList(topic));
+    btn.dataset.topic = topic;
+    btn.setAttribute('aria-pressed', 'false');
+    btn.addEventListener('click', () => toggleSelect(topic));
     li.appendChild(btn);
     ul.appendChild(li);
   });
 }
 
-function pickFromList(topic) {
+function toggleSelect(topic) {
+  if (selected.has(topic)) selected.delete(topic);
+  else selected.add(topic);
+  updateListUi();
+}
+
+function updateListUi() {
+  document.querySelectorAll('#topicListBody .topic-list__item').forEach((btn) => {
+    btn.setAttribute('aria-pressed', selected.has(btn.dataset.topic) ? 'true' : 'false');
+  });
+  const n = selected.size;
+  document.querySelector('#listCount').textContent =
+    n === 0 ? 'お題を選んでください' : `${n}つ選んでいます`;
+  const go = document.querySelector('#btnListGo');
+  go.disabled = n === 0;
+  go.textContent = n >= 2 ? 'この中からカードを引く' : 'このお題を出す';
+  document.querySelector('#btnListClear').hidden = n === 0;
+}
+
+function applyList() {
+  const list = [...selected];
+  if (list.length === 0) return;
+  selected.clear();
+  updateListUi();
   document.querySelector('#topicList').close();
+  if (list.length === 1) {
+    pickFromList(list[0]);
+    return;
+  }
+  narrowed = list;
+  chosen = null;
+  document.querySelector('#topicArea').classList.remove('visible');
+  document.querySelector('#redrawArea').style.visibility = 'visible';
+  drawHand();
+  render();
+  document.querySelector('#cardGrid').scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+}
+
+function pickFromList(topic) {
   chosen = -1;
   document.querySelectorAll('#cardGrid .flip-card').forEach((c) => c.classList.add('dimmed'));
   pool = pool.filter((t) => t !== topic);
-  updatePoolInfo();
+  if (narrowed) narrowed = narrowed.filter((t) => t !== topic);
+  updateModeUi();
   showTopic(topic);
   document.querySelector('#topicArea').scrollIntoView({ block: 'nearest', behavior: 'smooth' });
 }
 
 function startNew() {
   chosen = null;
+  if (narrowed && narrowed.length < 2) narrowed = null;
   document.querySelector('#topicArea').classList.remove('visible');
   document.querySelector('#redrawArea').style.visibility = 'visible';
   drawHand();
@@ -361,9 +418,18 @@ function drawNew() {
   render();
 }
 
-function updatePoolInfo() {
-  document.querySelector('#poolInfo').textContent =
-    `残り ${pool.length} / ${topics.length} 枚`;
+function backToNormal() {
+  narrowed = null;
+  startNew();
+}
+
+// しぼったカードのときは「いつものカードにもどる」を出す
+function updateModeUi() {
+  const isNarrow = narrowed !== null;
+  document.querySelector('#btnNormal').hidden = !isNarrow;
+  document.querySelector('#poolInfo').textContent = isNarrow
+    ? `残り ${narrowed.length} 枚`
+    : `残り ${pool.length} / ${topics.length} 枚`;
 }
 
 // ── イベント ──
@@ -374,10 +440,19 @@ document.querySelector('#btnCopy').addEventListener('click', function () {
 
 document.querySelector('#btnNext').addEventListener('click', startNew);
 document.querySelector('#btnRedraw').addEventListener('click', drawNew);
+document.querySelector('#btnNormal').addEventListener('click', backToNormal);
 
 const topicList = document.querySelector('#topicList');
-document.querySelector('#btnList').addEventListener('click', () => topicList.showModal());
+document.querySelector('#btnList').addEventListener('click', () => {
+  updateListUi();
+  topicList.showModal();
+});
 document.querySelector('#btnListClose').addEventListener('click', () => topicList.close());
+document.querySelector('#btnListGo').addEventListener('click', applyList);
+document.querySelector('#btnListClear').addEventListener('click', () => {
+  selected.clear();
+  updateListUi();
+});
 // 一覧の外側（背景）を押しても閉じる
 topicList.addEventListener('click', (e) => {
   if (e.target === topicList) topicList.close();

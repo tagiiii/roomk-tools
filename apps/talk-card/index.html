@@ -11,7 +11,7 @@
   <!-- 共通デザインシステム（M-1〜M-6）-->
   <link rel="stylesheet" href="../shared/css/design-system.css?v=20261106c" />
   <!-- アプリ固有スタイル -->
-  <link rel="stylesheet" href="style.css?v=20261117list" />
+  <link rel="stylesheet" href="style.css?v=20261117narrow" />
 </head>
 <body data-genre="talk">
 
@@ -48,6 +48,7 @@
     <!-- お題の一覧から選ぶ -->
     <div class="list-open-area">
       <button type="button" class="tc-quiet-btn" id="btnList">お題の一覧から選ぶ</button>
+      <button type="button" class="tc-quiet-btn" id="btnNormal" hidden>いつものカードにもどる</button>
     </div>
 
   </div>
@@ -58,8 +59,13 @@
       <h2 class="topic-list__title" id="topicListTitle">お題の一覧</h2>
       <button type="button" class="btn btn-secondary btn-sm" id="btnListClose">閉じる</button>
     </div>
-    <p class="topic-list__lead">お題を押すと、そのお題を出します。</p>
+    <p class="topic-list__lead">1つ選ぶと、そのお題をそのまま出します。2つ以上選ぶと、選んだお題の中から3枚を裏向きのカードで出します。</p>
     <div class="topic-list__body" id="topicListBody"></div>
+    <div class="topic-list__foot">
+      <p class="topic-list__count" id="listCount" aria-live="polite">お題を選んでください</p>
+      <button type="button" class="tc-quiet-btn" id="btnListClear" hidden>選び直す</button>
+      <button type="button" class="btn btn-primary" id="btnListGo" disabled>このお題を出す</button>
+    </div>
   </dialog>
 
   <script type="module" src="app.js"></script>
@@ -77,7 +83,7 @@
             '出てきたお題について、みんなでおしゃべりする',
             '「コピーする」を押すと、お題をチャットに貼りつけられる',
             '「別のカードを引く」を押すと、新しい3枚が出てくる',
-            '話したいお題が決まっているときは、「お題の一覧から選ぶ」から選べる',
+            '話したいお題が決まっているときは、「お題の一覧から選ぶ」から選べる。2つ以上選ぶと、その中からカードを引ける',
           ],
         },
         { heading: 'おわりかた', text: '好きなタイミングで終わってOK。とくに操作はいらない。' },
