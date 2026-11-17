@@ -199,4 +199,27 @@ t('読み込み直すと、同じ種で同じ順番の続きになる', () => {
   }
 });
 
+t('点のボーナスの表（れんさ・つながり・色の数）', () => {
+  assert.deepStrictEqual([1, 2, 3, 4, 5, 6, 7].map(E.chainBonus), [0, 8, 16, 32, 64, 96, 128]);
+  assert.deepStrictEqual([4, 5, 6, 7, 8, 9, 10, 11, 20].map(E.groupBonus), [0, 2, 3, 4, 5, 6, 7, 10, 10]);
+  assert.deepStrictEqual([1, 2, 3, 4, 5].map(E.colorBonus), [0, 3, 6, 12, 24]);
+});
+
+t('点: 玉の数 ×（ボーナスの合計。0なら1）× 10', () => {
+  // 4つだけ: 4 × 1 × 10
+  let g = game(['1.....', '1.....', '1.....', '1.....']);
+  E.settle(g); assert.strictEqual(g.score, 40);
+  // 5つ: 5 × 2 × 10
+  g = game(['1.....', '1.....', '1.....', '11....']);
+  E.settle(g); assert.strictEqual(g.score, 100);
+  // 2色を同時に4つずつ: 8 × 3 × 10
+  g = game(['12....', '12....', '12....', '12....']);
+  E.settle(g); assert.strictEqual(g.score, 240);
+  // 2れんさ: 1つめ 4 × 1 × 10、2つめ 4 × 8 × 10
+  g = game(['2.....', '1.....', '1.....', '1.....', '12....', '22....']);
+  E.settle(g); assert.strictEqual(g.score, 40 + 320);
+  // 6つと5つの同じ色の2つのまとまり＋れんさ3: (16 + 3 + 2) を pointsOf で
+  assert.strictEqual(E.pointsOf(11, 3, [{ c: 1, cells: new Array(6) }, { c: 1, cells: new Array(5) }]), 11 * 21 * 10);
+});
+
 console.log(n + ' tests passed');

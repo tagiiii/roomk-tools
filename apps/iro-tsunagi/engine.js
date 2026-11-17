@@ -208,6 +208,33 @@
     return groups;
   }
 
+  // 点（2026-11-17 フィードバックからオーナーが決めた式）:
+  // 消えた玉の数 ×（れんさ＋つながり＋色の数 のボーナス。合計が0なら1）× 10。じゃまの玉は数えない
+  // れんさ: 1→0・2→8・3→16・4→32、5からは1つ前＋32
+  function chainBonus(chain) {
+    if (chain <= 1) return 0;
+    if (chain <= 4) return 8 * Math.pow(2, chain - 2);
+    return 32 + (chain - 4) * 32;
+  }
+  // つながり（まとまりごとに足す）: 4→0・5→2、6〜10は1つ前＋1、11からは10
+  function groupBonus(size) {
+    if (size <= 4) return 0;
+    if (size <= 10) return size - 3;
+    return 10;
+  }
+  // 色の数: 1→0・2→3、3からは1つ前×2
+  function colorBonus(colors) {
+    if (colors <= 1) return 0;
+    return 3 * Math.pow(2, colors - 2);
+  }
+  function pointsOf(n, chain, groups) {
+    const colors = {};
+    let bonus = chainBonus(chain);
+    groups.forEach(function (gr) { bonus += groupBonus(gr.cells.length); colors[gr.c] = true; });
+    bonus += colorBonus(Object.keys(colors).length);
+    return n * Math.max(1, bonus) * 10;
+  }
+
   // 1回分の「消す」。消えたら { groups, chain, points } を返し、なければ null
   function popOnce(g, chain) {
     const groups = findGroups(g.board);
@@ -229,7 +256,7 @@
       n += gr.cells.length;
     });
     jama.forEach(function (q) { set(g.board, q.x, q.y, 0); });
-    const points = n * 10 * chain * (groups.length > 1 ? groups.length : 1);
+    const points = pointsOf(n, chain, groups);
     if (jama.length) groups.push({ c: JAMA, cells: jama });   // 画面で消えるのを見せる（点には入れない）
     g.score += points;
     g.pops += n;
@@ -352,7 +379,7 @@
     W, H, TOP, POP, DX, DY,
     emptyBoard, get, set, rng, newGame, cells, fits, spawn, move, down, rotate,
     hardDropRows, lock, gravity, findGroups, popOnce, settle, clearBoard, ghost, isEmpty, PER_COLOR,
-    JAMA, JAMA_MAX, chainSend, attackOf, addJama, packBoard, unpackBoard, restoreGame,
+    JAMA, JAMA_MAX, chainSend, attackOf, pointsOf, chainBonus, groupBonus, colorBonus, addJama, packBoard, unpackBoard, restoreGame,
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.IroEngine = api;
