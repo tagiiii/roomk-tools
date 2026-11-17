@@ -11,7 +11,7 @@
   <!-- 共通デザインシステム（M-1〜M-6）-->
   <link rel="stylesheet" href="../shared/css/design-system.css?v=20261106c" />
   <!-- アプリ固有スタイル -->
-  <link rel="stylesheet" href="style.css?v=20261117narrow" />
+  <link rel="stylesheet" href="style.css?v=20261117tabs" />
 </head>
 <body data-genre="talk">
 
@@ -59,7 +59,8 @@
       <h2 class="topic-list__title" id="topicListTitle">お題の一覧</h2>
       <button type="button" class="btn btn-secondary btn-sm" id="btnListClose">閉じる</button>
     </div>
-    <p class="topic-list__lead">1つ選ぶと、そのお題をそのまま出します。2つ以上選ぶと、選んだお題の中から3枚を裏向きのカードで出します。</p>
+    <p class="topic-list__lead">1つ選ぶとそのお題を出し、2つ以上選ぶとその中から3枚をカードで出します。</p>
+    <div class="topic-list__tabs" id="topicListTabs" role="tablist" aria-label="お題の種類"></div>
     <div class="topic-list__body" id="topicListBody"></div>
     <div class="topic-list__foot">
       <p class="topic-list__count" id="listCount" aria-live="polite">お題を選んでください</p>
