@@ -335,3 +335,64 @@
   .topic-list__foot { padding: 10px 16px 14px; }
   .topic-list__foot .btn-primary { flex: 1 1 100%; }
 }
+
+/* ── 一覧の種類タブ（2026-11-17）── */
+.topic-list__tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0 24px 12px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.topic-list__tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 4px 12px;
+  font: inherit;
+  font-size: 14px;
+  color: var(--color-text);
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.topic-list__tab[aria-selected="true"] {
+  background: var(--g-ink);
+  border-color: var(--g-ink);
+  color: #fff;
+  font-weight: 700;
+}
+
+.topic-list__tab-count {
+  min-width: 22px;
+  padding: 0 6px;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 22px;
+  text-align: center;
+  border-radius: 999px;
+  background: var(--g-ink);
+  color: #fff;
+}
+
+.topic-list__tab[aria-selected="true"] .topic-list__tab-count {
+  background: #fff;
+  color: var(--g-ink);
+}
+
+.topic-list__body { padding-top: 14px; }
+
+.topic-list__empty {
+  font-size: 15px;
+  color: var(--color-muted);
+  padding: 12px 0;
+}
+
+@media (max-width: 600px) {
+  .topic-list__tabs { padding: 0 16px 10px; gap: 6px; }
+  .topic-list__tab { padding: 4px 10px; }
+}

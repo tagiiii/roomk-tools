@@ -327,32 +327,112 @@ function showTopic(topic) {
 // ── お題の一覧から選ぶ ──
 // 1つだけ選んだら、そのお題をそのまま「今日のお題」に出す（カードはすべて薄くし、残りの山から抜く）。
 // 2つ以上選んだら、選んだお題から3枚を裏向きで出す
+// 一覧は種類ごとのタブで切り替える（200あると1列に並べると長すぎるため）。最後のタブ「選んだお題」で選んだものを見直せる
+const SELECTED_TAB = 'selected';
+let activeTab = 0;
+
+function makeTopicButton(topic) {
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'topic-list__item';
+  btn.textContent = topic;
+  btn.dataset.topic = topic;
+  btn.setAttribute('aria-pressed', 'false');
+  btn.addEventListener('click', () => toggleSelect(topic));
+  return btn;
+}
+
 function buildTopicList() {
+  const tabs = document.querySelector('#topicListTabs');
   const body = document.querySelector('#topicListBody');
-  let ul = null;
+  const groups = [];
   topics.forEach((topic) => {
-    if (!ul || groupStarts.has(topic)) {
-      if (groupStarts.has(topic)) {
-        const h = document.createElement('h3');
-        h.className = 'topic-list__heading';
-        h.textContent = groupStarts.get(topic);
-        body.appendChild(h);
-      }
-      ul = document.createElement('ul');
-      ul.className = 'topic-list__items';
-      body.appendChild(ul);
+    if (groups.length === 0 || groupStarts.has(topic)) {
+      groups.push({ name: groupStarts.get(topic) || 'お題', items: [] });
     }
+    groups[groups.length - 1].items.push(topic);
+  });
+
+  const addTab = (key, name, panel) => {
+    const tab = document.createElement('button');
+    tab.type = 'button';
+    tab.className = 'topic-list__tab';
+    tab.id = `topicTab-${key}`;
+    tab.dataset.key = String(key);
+    tab.setAttribute('role', 'tab');
+    tab.setAttribute('aria-controls', panel.id);
+    tab.innerHTML = '<span class="topic-list__tab-name"></span><span class="topic-list__tab-count" hidden></span>';
+    tab.querySelector('.topic-list__tab-name').textContent = name;
+    tab.addEventListener('click', () => showTab(key));
+    tab.addEventListener('keydown', onTabKey);
+    tabs.appendChild(tab);
+    panel.setAttribute('role', 'tabpanel');
+    panel.setAttribute('aria-labelledby', tab.id);
+    body.appendChild(panel);
+  };
+
+  groups.forEach((g, i) => {
+    const ul = document.createElement('ul');
+    ul.className = 'topic-list__items';
+    ul.id = `topicPanel-${i}`;
+    g.items.forEach((topic) => {
+      const li = document.createElement('li');
+      li.appendChild(makeTopicButton(topic));
+      ul.appendChild(li);
+    });
+    addTab(i, g.name, ul);
+  });
+
+  const sel = document.createElement('div');
+  sel.id = `topicPanel-${SELECTED_TAB}`;
+  addTab(SELECTED_TAB, '選んだお題', sel);
+  showTab(0);
+}
+
+function onTabKey(e) {
+  if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+  const all = [...document.querySelectorAll('#topicListTabs .topic-list__tab')];
+  const i = all.indexOf(e.currentTarget);
+  const next = all[(i + (e.key === 'ArrowRight' ? 1 : all.length - 1)) % all.length];
+  e.preventDefault();
+  next.focus();
+  next.click();
+}
+
+function showTab(key) {
+  activeTab = key;
+  document.querySelectorAll('#topicListTabs .topic-list__tab').forEach((tab) => {
+    const on = tab.dataset.key === String(key);
+    tab.setAttribute('aria-selected', on ? 'true' : 'false');
+    tab.tabIndex = on ? 0 : -1;
+  });
+  document.querySelectorAll('#topicListBody [role="tabpanel"]').forEach((panel) => {
+    panel.hidden = panel.id !== `topicPanel-${key}`;
+  });
+  if (key === SELECTED_TAB) renderSelectedPanel();
+  document.querySelector('#topicListBody').scrollTop = 0;
+}
+
+function renderSelectedPanel() {
+  const panel = document.querySelector(`#topicPanel-${SELECTED_TAB}`);
+  panel.innerHTML = '';
+  if (selected.size === 0) {
+    const p = document.createElement('p');
+    p.className = 'topic-list__empty';
+    p.textContent = 'まだ選んでいません。ほかのタブでお題を押して選びます。';
+    panel.appendChild(p);
+    return;
+  }
+  const ul = document.createElement('ul');
+  ul.className = 'topic-list__items';
+  selected.forEach((topic) => {
     const li = document.createElement('li');
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'topic-list__item';
-    btn.textContent = topic;
-    btn.dataset.topic = topic;
-    btn.setAttribute('aria-pressed', 'false');
-    btn.addEventListener('click', () => toggleSelect(topic));
+    const btn = makeTopicButton(topic);
+    btn.setAttribute('aria-pressed', 'true');
     li.appendChild(btn);
     ul.appendChild(li);
   });
+  panel.appendChild(ul);
 }
 
 function toggleSelect(topic) {
@@ -364,6 +444,16 @@ function toggleSelect(topic) {
 function updateListUi() {
   document.querySelectorAll('#topicListBody .topic-list__item').forEach((btn) => {
     btn.setAttribute('aria-pressed', selected.has(btn.dataset.topic) ? 'true' : 'false');
+  });
+  // タブに、そのタブで選んでいる数を出す（「選んだお題」は全部の数）
+  document.querySelectorAll('#topicListTabs .topic-list__tab').forEach((tab) => {
+    const key = tab.dataset.key;
+    const count = key === SELECTED_TAB
+      ? selected.size
+      : [...document.querySelectorAll(`#topicPanel-${key} .topic-list__item`)].filter((b) => selected.has(b.dataset.topic)).length;
+    const badge = tab.querySelector('.topic-list__tab-count');
+    badge.textContent = String(count);
+    badge.hidden = count === 0;
   });
   const n = selected.size;
   document.querySelector('#listCount').textContent =
