@@ -180,3 +180,114 @@
 .card-grid .flip-card:not(.dimmed):not(.flipped):hover .card-face-back { background-color: #7E2550; }
 .card-face-front, .topic-area { border-color: var(--g); }
 .card-number, .card-topic, .topic-area__label { font-family: 'Zen Maru Gothic', var(--font-base); }
+
+/* ── お題の一覧から選ぶ（2026-11-17）── */
+.list-open-area {
+  text-align: center;
+  margin-top: 12px;
+}
+
+.tc-quiet-btn {
+  background: none;
+  border: none;
+  padding: 8px 12px;
+  min-height: 44px;
+  font: inherit;
+  font-size: 14px;
+  color: var(--color-muted);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.tc-quiet-btn:hover { color: var(--color-primary); }
+
+.topic-list {
+  margin: auto; /* design-system の margin:0 を打ち消して中央に出す */
+  width: min(760px, calc(100vw - 32px));
+  max-height: min(80vh, 720px);
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-box);
+  background: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+}
+
+.topic-list[open] {
+  display: flex;
+  flex-direction: column;
+}
+
+.topic-list::backdrop { background: rgba(0, 0, 0, 0.4); }
+
+.topic-list__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 20px 24px 8px;
+}
+
+.topic-list__title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.topic-list__lead {
+  font-size: 14px;
+  color: var(--color-muted);
+  padding: 0 24px 12px;
+}
+
+.topic-list__body {
+  overflow-y: auto;
+  padding: 0 24px 24px;
+}
+
+.topic-list__heading {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--g-ink);
+  margin: 16px 0 8px;
+}
+
+.topic-list__heading:first-child { margin-top: 4px; }
+
+.topic-list__items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 8px;
+}
+
+.topic-list__item {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 14px;
+  text-align: left;
+  font: inherit;
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--color-text);
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.topic-list__item:hover,
+.topic-list__item:focus-visible {
+  border-color: var(--g);
+  color: var(--color-primary);
+}
+
+@media (max-width: 600px) {
+  .topic-list__head { padding: 16px 16px 8px; }
+  .topic-list__lead { padding: 0 16px 10px; }
+  .topic-list__body { padding: 0 16px 16px; }
+  .topic-list__items { grid-template-columns: 1fr; }
+}
