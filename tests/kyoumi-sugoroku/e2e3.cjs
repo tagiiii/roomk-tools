@@ -339,6 +339,14 @@ const { check, sleep } = L;
   room = await gameWhen((g) => g.step === 'life4-roll' && !g.q);
   check('W20 みんな1マス進み、次の人の番', JSON.stringify(room.game.pos) === '[4,6,10]' && room.game.turn === 2, room.game);
   await set({ cards: null });
+  // みんなで: みんな選んだ形のカードを開いても、番の人かホストが進められる
+  await set({ step: 'life4-talk', turn: 2, pos: { 0: 4, 1: 6, 2: 10 }, q: { kind: 'minna', scene: 'ima', idx: 0, n: 9, picks: { 0: 2, 1: 0, 2: 1 } } });
+  await cardWhen(A, '好きなくだものを、1つずつ選ぼう'); // 直前とちがうお題にして、画面が切りかわったのを待つ
+  await L.waitVisible(B, '#btn-next');
+  check('W21 みんな選んだ形で開いても、番の人に「進む」が出る', (await L.text(B, '#btn-next')).includes('進む') && !(await L.card(A)).next);
+  await B.page.click('#btn-next');
+  room = await gameWhen((g) => g.step === 'life4-roll' && !g.q);
+  check('W22 選んだ人が1マス進む', JSON.stringify(room.game.pos) === '[5,7,11]', room.game.pos);
 
   // ── F2. レビューの指摘から: 退出・壊れた値・いない相手 ──
   // 読めないカードで止まったら、ホストの見はりが次の人へ進める

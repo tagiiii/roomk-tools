@@ -953,21 +953,24 @@ function fillLifeCard(c) {
 function fillMinnaCard(c) {
   const kind = LIFE_KINDS.minna;
   const who = c.playerName;
-  const complete = c.picker == null && Object.keys(c.picks).length > 0;
+  // ended: もう選ぶ人がいない（みんな選んだ・選べるものがなくなった・選べる人がいなくなった）
+  // complete: そのうえで、1人以上が選んでいる（選んだ人が1マス進む）
+  const ended = c.picker == null;
   const started = Object.keys(c.picks).length > 0;
+  const complete = ended && started;
   fillQuestion(null, { q: `${c.theme.title}を、1つずつ選ぼう`, choices: null }, who, {
     head: { key: 'life-' + c.scene.key, icon: kind.icon, label: `${c.scene.label}・${kind.label}` },
     playerIndex: c.picker != null ? c.picker : c.playerIndex,
     dice: c.dice || null,
     canPress: false,
     onChoose: () => {},
-    toText: complete ? 'みんな選べたね' : `${c.order[c.picker] ?? who} さんの番（ほかの人が選んだものは選べないよ）`,
+    toText: complete ? 'みんな選べたね' : ended ? '選ぶ人が、いまいないよ' : `${c.order[c.picker]} さんの番（ほかの人が選んだものは選べないよ）`,
     effect: complete ? 'みんな選べた！ みんな1マス進む' : '',
-    // みんな選んだら「進む」。お題を変えられるのは、だれかが選ぶ前だけ
-    showNext: complete && c.act, showSkip: !started && c.act,
-    nextLabel: '進む', nextIcon: 'arrow_forward',
+    // 選ぶ人がいなくなったら「進む」（だれも選んでいなければ、だれも進まずに次の人へ）。お題を変えられるのは、だれかが選ぶ前で、選ぶ人がいるときだけ
+    showNext: ended && c.act, showSkip: !started && !ended && c.act,
+    nextLabel: complete ? '進む' : '次の人へ', nextIcon: 'arrow_forward',
     skipLabel: '別のお題',
-    waitText: complete ? (c.act ? '' : `${who}さんが進めるのを待ってね`) : (c.act ? '好きなものを1つ選んでね' : `${c.order[c.picker]}さんが選んでいるよ`),
+    waitText: ended ? (c.act ? '' : `${who}さんが進めるのを待ってね`) : (c.act ? '好きなものを1つ選んでね' : `${c.order[c.picker]}さんが選んでいるよ`),
   });
   const choicesEl = $('modal-choices');
   choicesEl.replaceChildren();
@@ -983,7 +986,7 @@ function fillMinnaCard(c) {
       btn.appendChild(makeElement('span', `ks-pawn ks-pawn--${by}`, by + 1));
       btn.setAttribute('aria-label', `${text}（${c.order[by]} さんが選んだ）`);
     }
-    btn.disabled = by != null || complete || !c.act || c.busy;
+    btn.disabled = by != null || ended || !c.act || c.busy;
     btn.addEventListener('click', () => roomChoose(i));
     grid.appendChild(btn);
   });
@@ -2075,7 +2078,8 @@ function renderRoomGame(room, game) {
     if (net.arrivedKey !== arrivedKey) { net.arrivedKey = arrivedKey; celebrate(); }
   }
 
-  if (L.isOldLife(game) && !goal) note.textContent = 'このゲームは続けられなくなったよ。ホストの画面が待合室にもどすのを待ってね';
+  // 前の版が作ったゲーム（ツールが新しくなる前から開いたままの画面で作ったもの）。この版では進められない
+  if (L.isOldLife(game) && !goal) note.textContent = 'このゲームは続けられなくなったよ。ホストの画面が待合室にもどすのを待ってね。しばらく待ってもそのままなら、みんなで画面を読みこみなおしてね';
   $('btnRoomBack').hidden = net.offline || !(net.role === 'host' && !goal);
   $('btn-back').hidden = !net.offline;
 
