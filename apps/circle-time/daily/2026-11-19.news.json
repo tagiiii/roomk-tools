@@ -1,0 +1,32 @@
+{
+  "date": "2026-11-19",
+  "items": [
+    {
+      "title": "のとじま水族館で「こびとづかん」探し",
+      "text": "石川県七尾市ののとじま水族館で、18日から「こびとづかん」とのコラボが始まりました。水にまつわるコビトのパネル16枚が水槽などにかくれていて、地図を見ながら探します。来年1月3日までです。",
+      "ask": "水族館で見つけたい生きものはいる？",
+      "source": "北陸中日新聞",
+      "url": "https://www.chunichi.co.jp/article/1341304",
+      "on": "11月19日",
+      "img": { "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/Jinbe_Zame_a.jpg/960px-Jinbe_Zame_a.jpg", "credit": "Fuseoyama", "license": "CC BY-SA 3.0" }
+    },
+    {
+      "title": "たんば恐竜博物館で頭突き恐竜の化石",
+      "text": "兵庫県丹波市のたんば恐竜博物館で「大恐竜展」が開かれています。モンゴルのゴビ砂漠で見つかった新種の頭突き恐竜「ザヴァケファレ」の頭の化石が、関西で初めて公開されました。展示は来年2月23日までです。",
+      "ask": "好きな恐竜はいる？",
+      "source": "サンテレビ",
+      "url": "https://www.sun-tv.co.jp/suntvnews/news/2026/11/18/97942/",
+      "on": "11月18日",
+      "img": { "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/28/Pachycephalosaurus_skull.jpg/960px-Pachycephalosaurus_skull.jpg", "credit": "Eduard Solà", "license": "CC BY 3.0" }
+    },
+    {
+      "title": "まんのう公園に65万球の光",
+      "text": "香川県の国営讃岐まんのう公園で、21日から「ウィンターファンタジー」が始まります。LED電球65万球が光り、高さ10メートルのツリーや、グラス4900個を積んだタワーも見られます。来年1月11日までです。",
+      "ask": "光の飾り、どんな形が見てみたい？",
+      "source": "FINDERS",
+      "url": "https://news.yahoo.co.jp/articles/5bd7bbaf76a25fc2a3611c3296843c76bf6e6c52",
+      "on": "11月18日",
+      "img": { "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ae/Sanuki-mannou-park.JPG/960px-Sanuki-mannou-park.JPG", "credit": "本人", "license": "Public domain" }
+    }
+  ]
+}
