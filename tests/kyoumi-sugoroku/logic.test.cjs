@@ -793,6 +793,39 @@ function test(name, fn) {
     assert.strictEqual(L.canAct(base, 'uH', 'ホスト', 'host'), true);
   });
 
+  test('みんなで選ぶマス: まだの人がいなくなって、いる人がみんな選んだ形になったら開ける', () => {
+    const base = voteCard('issho');
+    const two = L.vote(L.vote(base, 1, 1, 1, 1, 0), 1, 1, 1, 0, 0); // みどりだけ、まだ
+    assert.strictEqual(L.votesComplete(two, two.game), false);
+    assert.strictEqual(L.openIfComplete(two), null);
+    const { 'みどり': _m, ...rest } = two.players;
+    const left = { ...two, players: rest };
+    assert.strictEqual(L.votesComplete(left, left.game), true);
+    const opened = L.openIfComplete(left);
+    assert.strictEqual(L.lifeQuestionOf(opened.game).open, true);
+    assert.strictEqual(L.votesComplete(opened, opened.game), false); // もう開いている
+    assert.strictEqual(L.openIfComplete(opened), null);
+    // だれもいないとき・みんなで選ぶマスでないときは開かない
+    assert.strictEqual(L.votesComplete({ ...base, players: {} }, base.game), false);
+    const erabu = withCard(lifeRoom(), { kind: 'erabu', scene: 's0', idx: 1, n: 1 });
+    assert.strictEqual(L.votesComplete(erabu, erabu.game), false);
+  });
+
+  test('位置は順番の番号で読む（途中の欠けた形で返っても、人がずれない）', () => {
+    const base = voteCard('issho');
+    const sparse = { ...base.game, pos: { 0: 3, 2: 5 } }; // 2人目の位置が欠けている
+    assert.deepStrictEqual([0, 1, 2].map((i) => L.posOf(sparse, i)), [3, 0, 5]);
+    assert.deepStrictEqual([0, 1, 2].map((i) => L.posOf({ ...base.game, pos: [3, null, 5] }, i)), [3, 0, 5]);
+    assert.deepStrictEqual([0, 1].map((i) => L.posOf({ ...base.game, pos: 'x' }, i)), [0, 0]);
+    assert.deepStrictEqual([0, 1].map((i) => L.posOf({ ...base.game, pos: null }, i)), [0, 0]);
+    // 欠けた形のまま結果を確かめても、ほかの人の位置を書きかえない
+    const room = { ...base, game: { ...sparse, q: { ...base.game.q, votes: { 0: 1, 1: 1, 2: 0 }, open: true } } };
+    assert.deepStrictEqual(L.nextPlayer(room, 1, 1).game.pos, [4, 0, 5]);
+    // 今までの遊び方でも同じ
+    const theme = L.startGame(waitingRoom(), COUNTS);
+    assert.deepStrictEqual([0, 1, 2].map((i) => L.posOf({ ...theme.game, pos: { 0: 2, 2: 7 } }, i)), [2, 0, 7]);
+  });
+
   console.log(`logic: ${passed} passed`);
 })().catch((error) => {
   console.error(error);

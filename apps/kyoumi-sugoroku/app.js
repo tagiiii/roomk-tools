@@ -978,7 +978,7 @@ function fillVoteCard(c) {
   let effect;
   if (r.answer == null) effect = `${who}さんが選ばなかったので、だれも進まないよ`;
   else if (issho && r.all) effect = 'みんないっしょ！ みんな進むよ';
-  else if (!r.same.length) effect = issho ? 'いっしょの人はいなかったよ' : '当たった人はいなかったよ';
+  else if (!r.same.length) effect = issho ? 'みんなちがう答えだったよ' : '今回は、だれも進まないよ';
   else if (issho) effect = `${names(r.same)}さんがいっしょ！ 1マス進む`;
   else effect = `${names(r.same)}さんが当たり！ ${who}さんもいっしょに1マス進む`;
   const moving = Object.keys(r.moves).length > 0;
@@ -994,7 +994,9 @@ function fillVoteCard(c) {
   votersEl.hidden = true;
   choicesEl.replaceChildren();
   c.question.choices.forEach((text, i) => {
-    const picked = Object.keys(c.votes).map(Number).filter((v) => c.votes[v] === i);
+    // いっしょ: みんなの自分の答えを出す（「えらぶ」で選んだものをみんなに出すのと同じ）。
+    // よそう: 番の人の答えと、当てた人だけを出す（外れた人の予想は、だれのものかを出さない）
+    const picked = Object.keys(c.votes).map(Number).filter((v) => c.votes[v] === i && (issho || r.answer === i));
     const row = makeElement('div', 'ks-result' + (r.answer === i ? ' is-answer' : ''));
     const head = makeElement('div', 'ks-result__head');
     head.append(makeElement('span', 'ks-choice__num', NUMBERS[i]), makeElement('span', 'ks-choice__text', text));
@@ -2271,7 +2273,9 @@ function hostWatchAbsent(room) {
   // カードが出ている段階なのに読めるカードがない・目を選ぶ段階なのに目が読めないとき（壊れた値）→ 立て直す
   const broken = playing && L.talkBroken(game, COUNTS);
   const badPick = playing && L.pickBroken(game);
-  const kind = old ? 'o' : broken ? 'b' : badPick ? 'p' : skip ? 's' : '';
+  // みんなが同時に選ぶマスで、まだ選んでいない人がいなくなって、いる人がみんな選んだ形になったとき → 開く
+  const ready = playing && L.votesComplete(room, game);
+  const kind = old ? 'o' : broken ? 'b' : badPick ? 'p' : ready ? 'v' : skip ? 's' : '';
   const key = kind ? `${game.id}:${game.rollNo}:${L.turnOf(game)}:${kind}` : null;
   if (key === net.skipKey) return;
   clearTimeout(net.skipTimer);
@@ -2287,6 +2291,7 @@ function hostWatchAbsent(room) {
       if (kind === 'o') return L.isOldLife(g) ? L.backToWaiting(r, g.id) : undefined;
       if (kind === 'b') return L.talkBroken(g, COUNTS) ? L.dropTalk(r) : undefined;
       if (kind === 'p') return L.dropPick(r);
+      if (kind === 'v') return L.openIfComplete(r);
       return L.skipAbsent(r);
     }, '');
     if (ok && kind === 'o') toast('ゲームを続けられなくなったので、待合室にもどりました。「はじめる」でもう一度あそべます', false);

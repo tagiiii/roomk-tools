@@ -262,8 +262,10 @@ export function actingIndex(room, game) {
 }
 
 export function posOf(game, i) {
-  const n = Number(asList(game?.pos)[i]);
-  return Number.isInteger(n) && n >= 0 ? n : 0;
+  // 順番の番号でそのまま読む（Realtime Database が途中の欠けた数値キーの形で返しても、ほかの人の位置を読まない）
+  const raw = game?.pos != null && typeof game.pos === 'object' ? game.pos[i] : undefined;
+  const n = Number(raw);
+  return raw != null && Number.isInteger(n) && n >= 0 ? n : 0;
 }
 
 export function turnOf(game) {
@@ -575,6 +577,19 @@ export function vote(room, gameId, rollNo, qn, voter, choice) {
   const next = { ...game.q, votes };
   if (all) next.open = true;
   return { ...room, game: { ...game, q: next } };
+}
+// いまいる人がみんな選んでいるのに、まだ開いていない（まだ選んでいない人が切断・退出したとき）
+export function votesComplete(room, game) {
+  const q = lifeQuestionOf(game);
+  if (room?.status !== STATUS.PLAYING || !isTalkStep(game) || !q || !isVoteKind(q.kind) || q.open) return false;
+  const list = voters(room, game);
+  return list.length > 0 && list.every((i) => q.votes[i] != null);
+}
+// そのときに開く（ホストの見はりから）
+export function openIfComplete(room) {
+  const game = gameOf(room);
+  if (!game || !votesComplete(room, game)) return null;
+  return { ...room, game: { ...game, q: { ...game.q, open: true } } };
 }
 // 開く（みんなが選ぶ前に、番の人かホストが開く。選んでいない人は進まない）
 export function openVotes(room, gameId, rollNo, qn) {

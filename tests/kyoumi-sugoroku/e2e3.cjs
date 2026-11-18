@@ -220,6 +220,38 @@ const { check, sleep } = L;
   room = await gameWhen((g) => g.step === 'life3-roll' && !g.q);
   check('V16 番の人が選ばなかったら、だれも進まない', JSON.stringify(room.game.pos) === '[5,5,8]' && room.game.turn === 1, room.game);
 
+  // よそう: 外れた人の予想は、だれのものかを出さない（当てた人と、番の人の答えだけ）
+  await set({ step: 'life3-talk', turn: 2, q: { kind: 'yosou', scene: 'ima', idx: 2, n: 1 } });
+  await cardWhen(A, '元気が出るのは？');
+  await B.page.click('#modal-choices button.ks-choice >> nth=2');
+  await gameWhen((g) => g.q && g.q.votes && g.q.votes[2] === 2);
+  await H.page.click('#modal-choices button.ks-choice >> nth=2');
+  await gameWhen((g) => g.q && g.q.votes && g.q.votes[0] === 2);
+  await A.page.click('#modal-choices button.ks-choice >> nth=0'); // あおは外れ
+  await gameWhen((g) => g.q && g.q.open === true);
+  await L.waitText(A, '#modal-effect', '当たり');
+  const yrows = await A.page.$$eval('#modal-choices .ks-result', (els) => els.map((e) => ({ answer: e.classList.contains('is-answer'), people: [...e.querySelectorAll('.ks-result__person')].map((p) => p.textContent.replace(/^\d+/, '')) })));
+  check('V17 よそうの結果は、番の人の答えと当てた人だけ（外れた人の予想は出さない）', yrows[2].answer && yrows[2].people.join() === 'ほすと,みどり' && yrows[0].people.length === 0 && yrows[1].people.length === 0
+    && !(await L.text(A, '#modal-choices')).includes('あお'), yrows);
+  await B.page.click('#btn-next');
+  await gameWhen((g) => g.step === 'life3-roll' && !g.q);
+  // まだ選んでいない人がいなくなったら、ホストの画面が開く
+  await set({ step: 'life3-talk', turn: 0, q: { kind: 'issho', scene: 'chiisai', idx: 0, n: 1 } });
+  await cardWhen(A, '小さいころ、よく遊んだのは？');
+  await H.page.click('#modal-choices button.ks-choice >> nth=0');
+  await gameWhen((g) => g.q && g.q.votes && g.q.votes[0] === 0);
+  await A.page.click('#modal-choices button.ks-choice >> nth=0');
+  room = await gameWhen((g) => g.q && g.q.votes && g.q.votes[1] === 0);
+  check('V18a まだの人がいる間は開かない', !room.game.q.open, room.game.q);
+  await B.page.click('#btnLeave');
+  await L.waitScreen(B, 'top');
+  room = await L.roomWhen(code, (r) => r.game && r.game.q && r.game.q.open === true, 12000);
+  check('V18b まだの人がいなくなったら、いる人のぶんで開く', room.game.q && room.game.q.open === true, room.game.q);
+  await L.waitText(A, '#modal-effect', 'みんないっしょ');
+  await H.page.click('#btn-next');
+  await gameWhen((g) => g.step === 'life3-roll' && !g.q);
+  await rejoin(B, 'みどり');
+
   // ── F2. レビューの指摘から: 退出・壊れた値・いない相手 ──
   // 読めないカードで止まったら、ホストの見はりが次の人へ進める
   await set({ step: 'life3-talk', turn: 0, q: { kind: 'map', idx: 0, n: 1 }, pos: { 0: 5, 1: 6, 2: 8 } });
